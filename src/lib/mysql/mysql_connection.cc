@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,23 +6,30 @@
 
 #include <config.h>
 
+#include <asiolink/io_service.h>
+#include <asiolink/process_spawn.h>
+#include <database/database_connection.h>
 #include <database/db_log.h>
 #include <exceptions/exceptions.h>
 #include <mysql/mysql_connection.h>
-#include <util/file_utilities.h>
+#include <util/filesystem.h>
 
 #include <boost/lexical_cast.hpp>
 
-#include <algorithm>
-#include <stdint.h>
-#include <string>
+#include <cstdint>
+#include <exception>
 #include <limits>
+#include <string>
+#include <unordered_map>
 
 using namespace isc;
+using namespace isc::asiolink;
 using namespace std;
 
 namespace isc {
 namespace db {
+
+std::string MySqlConnection::KEA_ADMIN_ = KEA_ADMIN;
 
 int MySqlHolder::atexit_ = [] {
     return atexit([] { mysql_library_end(); });
@@ -65,30 +72,11 @@ MySqlConnection::openDatabase() {
     }
 
     unsigned int port = 0;
-    string sport;
     try {
-        sport = getParameter("port");
-    } catch (...) {
-        // No port parameter, we are going to use the default port.
-        sport = "";
-    }
+        setIntParameterValue("port", 0, numeric_limits<uint16_t>::max(), port);
 
-    if (sport.size() > 0) {
-        // Port was given, so try to convert it to an integer.
-
-        try {
-            port = boost::lexical_cast<unsigned int>(sport);
-        } catch (...) {
-            // Port given but could not be converted to an unsigned int.
-            // Just fall back to the default value.
-            port = 0;
-        }
-
-        // The port is only valid when it is in the 0..65535 range.
-        // Again fall back to the default when the given value is invalid.
-        if (port > numeric_limits<uint16_t>::max()) {
-            port = 0;
-        }
+    } catch (const std::exception& ex) {
+        isc_throw(DbInvalidPort, ex.what());
     }
 
     const char* user = NULL;
@@ -120,40 +108,21 @@ MySqlConnection::openDatabase() {
     }
 
     unsigned int connect_timeout = MYSQL_DEFAULT_CONNECTION_TIMEOUT;
-    string stimeout;
+    unsigned int read_timeout = 0;
+    unsigned int write_timeout = 0;
     try {
-        stimeout = getParameter("connect-timeout");
-    } catch (...) {
-        // No timeout parameter, we are going to use the default timeout.
-        stimeout = "";
-    }
-
-    if (stimeout.size() > 0) {
-        // Timeout was given, so try to convert it to an integer.
-
-        try {
-            connect_timeout = boost::lexical_cast<unsigned int>(stimeout);
-        } catch (...) {
-            // Timeout given but could not be converted to an unsigned int. Set
-            // the connection timeout to an invalid value to trigger throwing
-            // of an exception.
-            connect_timeout = 0;
-        }
-
         // The timeout is only valid if greater than zero, as depending on the
         // database, a zero timeout might signify something like "wait
         // indefinitely".
-        //
-        // The check below also rejects a value greater than the maximum
-        // integer value.  The lexical_cast operation used to obtain a numeric
-        // value from a string can get confused if trying to convert a negative
-        // integer to an unsigned int: instead of throwing an exception, it may
-        // produce a large positive value.
-        if ((connect_timeout == 0) ||
-            (connect_timeout > numeric_limits<int>::max())) {
-            isc_throw(DbInvalidTimeout, "database connection timeout (" <<
-                      stimeout << ") must be an integer greater than 0");
-        }
+        setIntParameterValue("connect-timeout", 1, numeric_limits<int>::max(), connect_timeout);
+        // Other timeouts can be 0, meaning that the database client will follow a default
+        // behavior. Earlier MySQL versions didn't have these parameters, so we allow 0
+        // to skip setting them.
+        setIntParameterValue("read-timeout", 0, numeric_limits<int>::max(), read_timeout);
+        setIntParameterValue("write-timeout", 0, numeric_limits<int>::max(), write_timeout);
+
+    } catch (const std::exception& ex) {
+        isc_throw(DbInvalidTimeout, ex.what());
     }
 
     const char* ca_file(0);
@@ -203,16 +172,20 @@ MySqlConnection::openDatabase() {
 
     // Set options for the connection:
     //
-    // Set options for the connection:
-    // Make sure auto_reconnect is OFF! Enabling it leaves us with an unusable
+    int result;
+#ifdef HAS_MYSQL_OPT_RECONNECT
+    // Though still supported by Mariadb (as of 11.5.0), MYSQL_OPT_RECONNECT is
+    // deprecated as of MySQL 8.0.34. Where it is still supported we should
+    // continue to ensure it is off. Enabling it leaves us with an unusable
     // connection after a reconnect as among other things, it drops all our
     // pre-compiled statements.
     my_bool auto_reconnect = MLM_FALSE;
-    int result = mysql_options(mysql_, MYSQL_OPT_RECONNECT, &auto_reconnect);
+    result = mysql_options(mysql_, MYSQL_OPT_RECONNECT, &auto_reconnect);
     if (result != 0) {
         isc_throw(DbOpenError, "unable to set auto-reconnect option: " <<
                   mysql_error(mysql_));
     }
+#endif
 
     // Make sure we have a large idle time window ... say 30 days...
     const char *wait_time = "SET SESSION wait_timeout = 30 * 86400";
@@ -241,11 +214,53 @@ MySqlConnection::openDatabase() {
                   mysql_error(mysql_));
     }
 
+    // Set the read timeout if it has been specified. Otherwise, the timeout is
+    // not used.
+    if (read_timeout > 0) {
+        result = mysql_options(mysql_, MYSQL_OPT_READ_TIMEOUT, &read_timeout);
+        if (result != 0) {
+            isc_throw(DbOpenError, "unable to set database read timeout: " <<
+                      mysql_error(mysql_));
+        }
+    }
+
+    // Set the write timeout if it has been specified. Otherwise, the timeout
+    // is not used.
+    if (write_timeout > 0) {
+        result = mysql_options(mysql_, MYSQL_OPT_WRITE_TIMEOUT, &write_timeout);
+        if (result != 0) {
+            isc_throw(DbOpenError, "unable to set database write timeout: " <<
+                      mysql_error(mysql_));
+        }
+    }
+
     // If TLS is enabled set it. If something should go wrong it will happen
     // later at the mysql_real_connect call.
     if (tls_) {
-        mysql_ssl_set(mysql_, key_file, cert_file, ca_file, ca_dir,
-                      cipher_list);
+        result = mysql_options(mysql_, MYSQL_OPT_SSL_KEY, key_file);
+        if (result != 0) {
+            isc_throw(DbOpenError, "unable to set key: " << mysql_error(mysql_));
+        }
+
+        result = mysql_options(mysql_, MYSQL_OPT_SSL_CERT, cert_file);
+        if (result != 0) {
+            isc_throw(DbOpenError, "unable to set certificate: " << mysql_error(mysql_));
+        }
+
+        result = mysql_options(mysql_, MYSQL_OPT_SSL_CA, ca_file);
+        if (result != 0) {
+            isc_throw(DbOpenError, "unable to set CA: " << mysql_error(mysql_));
+        }
+
+        result = mysql_options(mysql_, MYSQL_OPT_SSL_CAPATH, ca_dir);
+        if (result != 0) {
+            isc_throw(DbOpenError, "unable to set CA path: " << mysql_error(mysql_));
+        }
+
+        result = mysql_options(mysql_, MYSQL_OPT_SSL_CIPHER, cipher_list);
+        if (result != 0) {
+            isc_throw(DbOpenError, "unable to set cipher: " << mysql_error(mysql_));
+        }
     }
 
     // Open the database.
@@ -261,7 +276,23 @@ MySqlConnection::openDatabase() {
     MYSQL* status = mysql_real_connect(mysql_, host, user, password, name,
                                        port, NULL, CLIENT_FOUND_ROWS);
     if (status != mysql_) {
-        isc_throw(DbOpenError, mysql_error(mysql_));
+        std::string error_message = mysql_error(mysql_);
+
+        auto const& rec = reconnectCtl();
+        if (rec && DatabaseConnection::retry_) {
+            // Start the connection recovery.
+            startRecoverDbConnection();
+
+            std::ostringstream s;
+
+            s << " (scheduling retry " << rec->retryIndex() + 1 << " of " << rec->maxRetries() << " in " << rec->retryInterval() << " milliseconds)";
+
+            error_message += s.str();
+
+            isc_throw(DbOpenErrorWithRetry, error_message);
+        }
+
+        isc_throw(DbOpenError, error_message);
     }
 
     // Enable autocommit. In case transaction is explicitly used, this
@@ -286,9 +317,16 @@ MySqlConnection::openDatabase() {
 // Get schema version.
 
 std::pair<uint32_t, uint32_t>
-MySqlConnection::getVersion(const ParameterMap& parameters) {
+MySqlConnection::getVersion(const ParameterMap& parameters,
+                            const IOServiceAccessorPtr& ac,
+                            const DbCallback& cb,
+                            const string& timer_name) {
     // Get a connection.
-    MySqlConnection conn(parameters);
+    MySqlConnection conn(parameters, ac, cb);
+
+    if (!timer_name.empty()) {
+        conn.makeReconnectCtl(timer_name);
+    }
 
     // Open the database.
     conn.openDatabase();
@@ -349,7 +387,6 @@ MySqlConnection::getVersion(const ParameterMap& parameters) {
 
         // Discard the statement and its resources
         mysql_stmt_close(stmt);
-
         return (std::make_pair(version, minor));
 
     } catch (const std::exception&) {
@@ -359,6 +396,119 @@ MySqlConnection::getVersion(const ParameterMap& parameters) {
         // Send the exception to the caller.
         throw;
     }
+}
+
+void
+MySqlConnection::ensureSchemaVersion(const ParameterMap& parameters,
+                                     const DbCallback& cb,
+                                     const string& timer_name) {
+    // retry-on-startup?
+    bool const retry(parameters.count("retry-on-startup") &&
+                     parameters.at("retry-on-startup") == "true");
+
+    IOServiceAccessorPtr ac(new IOServiceAccessor(&DatabaseConnection::getIOService));
+    pair<uint32_t, uint32_t> schema_version;
+    try {
+        schema_version = getVersion(parameters, ac, cb, retry ? timer_name : string());
+    } catch (DbOpenError const& exception) {
+        throw;
+    } catch (DbOpenErrorWithRetry const& exception) {
+        throw;
+    } catch (exception const& exception) {
+        // This failure may occur for a variety of reasons. We are looking at
+        // initializing schema as the only potential mitigation. We could narrow
+        // down on the error that would suggest an uninitialized schema
+        // which would sound something along the lines of
+        // "table schema_version does not exist", but we do not necessarily have
+        // to. If the error had another cause, it will fail again during
+        // initialization or during the subsequent version retrieval and that is
+        // fine, and the error should still be relevant.
+        initializeSchema(parameters);
+
+        // Retrieve again because the initial retrieval failed.
+        schema_version = getVersion(parameters, ac, cb, retry ? timer_name : string());
+    }
+
+    // Check that the versions match.
+    pair<uint32_t, uint32_t> const expected_version(MYSQL_SCHEMA_VERSION_MAJOR,
+                                                    MYSQL_SCHEMA_VERSION_MINOR);
+    if (schema_version != expected_version) {
+        isc_throw(DbOpenError, "MySQL schema version mismatch: expected version: "
+                                   << expected_version.first << "." << expected_version.second
+                                   << ", found version: " << schema_version.first << "."
+                                   << schema_version.second);
+    }
+}
+
+void
+MySqlConnection::initializeSchema(const ParameterMap& parameters) {
+    if (parameters.count("readonly") && parameters.at("readonly") == "true") {
+        // The readonly flag is historically used for host backends. Still, if
+        // enabled, it is a strong indication that we should not meDDLe with it.
+        return;
+    }
+
+    if (!isc::util::file::isFile(KEA_ADMIN_)) {
+        // It can happen for kea-admin to not exist, especially with
+        // packages that install it in a separate package.
+        return;
+    }
+
+    // Convert parameters.
+    vector<string> kea_admin_parameters(toKeaAdminParameters(parameters));
+    ProcessEnvVars const vars;
+    kea_admin_parameters.insert(kea_admin_parameters.begin(), "db-init");
+
+    // Run.
+    ProcessSpawn kea_admin(ProcessSpawn::SYNC, KEA_ADMIN_, kea_admin_parameters, vars,
+                           /* inherit_env = */ true);
+    DB_LOG_INFO(MYSQL_INITIALIZE_SCHEMA).arg(kea_admin.getCommandLine());
+    pid_t const pid(kea_admin.spawn());
+    if (kea_admin.isRunning(pid)) {
+        isc_throw(SchemaInitializationFailed, "kea-admin still running");
+    }
+    int const exit_code(kea_admin.getExitStatus(pid));
+    if (exit_code != 0) {
+        isc_throw(SchemaInitializationFailed, "Expected exit code 0 for kea-admin. Got " << exit_code);
+    }
+}
+
+vector<string>
+MySqlConnection::toKeaAdminParameters(ParameterMap const& params) {
+    vector<string> result{"mysql"};
+    for (auto const& p : params) {
+        string const& keyword(p.first);
+        string const& value(p.second);
+
+        // These Kea parameters are the same as the kea-admin parameters.
+        if (keyword == "user" ||
+            keyword == "password" ||
+            keyword == "host" ||
+            keyword == "port" ||
+            keyword == "name") {
+            result.push_back("--" + keyword);
+            result.push_back(value);
+            continue;
+        }
+
+        // These Kea parameters do not have a direct kea-admin equivalent.
+        // But they do have a mariadb client flag equivalent.
+        // We pass them to kea-admin using the --extra flag.
+        static unordered_map<string, string> conversions{
+            {"connect-timeout", "connect_timeout"},
+            {"cipher-list", "ssl-cipher"},
+            {"cert-file", "ssl-cert"},
+            {"key-file", "ssl-key"},
+            {"trust-anchor", "ssl-ca"},
+            // {"read-timeout", "--net-read-timeout"},  // available in docs, but client says unknown variable?
+            // {"write-timeout", "--net-write-timeout"},  // available in docs, but client says unknown variable?
+        };
+        if (conversions.count(keyword)) {
+            result.push_back("--extra");
+            result.push_back("--" + conversions.at(keyword) + " " + value);
+        }
+    }
+    return result;
 }
 
 // Prepared statement setup.  The textual form of an SQL statement is stored
@@ -409,17 +559,12 @@ MySqlConnection::prepareStatements(const TaggedStatement* start_statement,
     }
 }
 
-void MySqlConnection::clearStatements() {
-    statements_.clear();
-    text_statements_.clear();
-}
-
 /// @brief Destructor
 MySqlConnection::~MySqlConnection() {
     // Free up the prepared statements, ignoring errors. (What would we do
     // about them? We're destroying this object and are not really concerned
     // with errors on a database connection that is about to go away.)
-    for (int i = 0; i < statements_.size(); ++i) {
+    for (size_t i = 0; i < statements_.size(); ++i) {
         if (statements_[i] != NULL) {
             (void) mysql_stmt_close(statements_[i]);
             statements_[i] = NULL;
@@ -514,6 +659,38 @@ MySqlConnection::rollback() {
     if (mysql_rollback(mysql_) != 0) {
         isc_throw(DbOperationError, "rollback failed: "
                   << mysql_error(mysql_));
+    }
+}
+
+template<typename T>
+void
+MySqlConnection::setIntParameterValue(const std::string& name, int64_t min, int64_t max, T& value) {
+    string svalue;
+    try {
+        svalue = getParameter(name);
+    } catch (...) {
+        // Do nothing if the parameter is not present.
+    }
+    if (svalue.empty()) {
+        return;
+    }
+    try {
+        // Try to convert the value.
+        auto parsed_value = boost::lexical_cast<T>(svalue);
+        // Check if the value is within the specified range.
+        if ((parsed_value < min) || (parsed_value > max)) {
+            isc_throw(BadValue, "bad " << svalue << " value");
+        }
+        // Everything is fine. Return the parsed value.
+        value = parsed_value;
+
+    } catch (...) {
+        // We may end up here when lexical_cast fails or when the
+        // parsed value is not within the desired range. In both
+        // cases let's throw the same general error.
+        isc_throw(BadValue, name << " parameter (" <<
+                  svalue << ") must be an integer between "
+                  << min << " and " << max);
     }
 }
 

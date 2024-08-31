@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -34,11 +34,12 @@ public:
     /// @brief Constructor.
     ///
     /// @param io_service IO service.
-    explicit TLSAcceptor(IOService& io_service) : TCPAcceptor<C>(io_service) {
+    explicit TLSAcceptor(const IOServicePtr& io_service) : TCPAcceptor<C>(io_service) {
     }
 
     /// @brief Destructor.
-    virtual ~TLSAcceptor() { }
+    virtual ~TLSAcceptor() {
+    }
 
     /// @brief Asynchronously accept new connection.
     ///

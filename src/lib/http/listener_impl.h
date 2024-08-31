@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -44,7 +44,7 @@ public:
     ///
     /// @throw HttpListenerError when any of the specified parameters is
     /// invalid.
-    HttpListenerImpl(asiolink::IOService& io_service,
+    HttpListenerImpl(const asiolink::IOServicePtr& io_service,
                      const asiolink::IOAddress& server_address,
                      const unsigned short server_port,
                      const asiolink::TlsContextPtr& tls_context,
@@ -58,6 +58,17 @@ public:
 
     /// @brief Returns reference to the current listener endpoint.
     const asiolink::TCPEndpoint& getEndpoint() const;
+
+    /// @brief file descriptor of the underlying acceptor socket.
+    int getNative() const;
+
+    /// @brief Use external sockets flag.
+    ///
+    /// Add sockets as external sockets of the interface manager
+    /// so available I/O on them makes a waiting select to return.
+    ///
+    /// @param use_external True add external sockets.
+    void addExternalSockets(bool use_external);
 
     /// @brief Starts accepting new connections.
     ///
@@ -102,8 +113,8 @@ protected:
     virtual HttpConnectionPtr createConnection(const HttpResponseCreatorPtr& response_creator,
                                                const HttpAcceptorCallback& callback);
 
-    /// @brief Reference to the IO service.
-    asiolink::IOService& io_service_;
+    /// @brief Pointer to the IO service.
+    asiolink::IOServicePtr io_service_;
 
     /// @brief TLS context.
     asiolink::TlsContextPtr tls_context_;
@@ -127,6 +138,9 @@ protected:
     /// @brief Timeout after which idle persistent connection is closed by
     /// the server.
     long idle_timeout_;
+
+    /// @brief Use external sockets flag.
+    bool use_external_;
 };
 
 

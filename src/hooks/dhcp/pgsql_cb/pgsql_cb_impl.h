@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -106,12 +106,14 @@ public:
 
     /// @brief Constructor.
     ///
+    /// @param space The DHCP space (v4 or v6).
     /// @param parameters A data structure relating keywords and values
     /// concerned with the database.
     /// @param db_reconnect_callback The connection recovery callback.
     /// @param last_insert_id_index statement index of the SQL statement to
     /// use when fetching the last insert id for a given table.
-    explicit PgSqlConfigBackendImpl(const db::DatabaseConnection::ParameterMap& parameters,
+    explicit PgSqlConfigBackendImpl(const std::string& space,
+                                    const db::DatabaseConnection::ParameterMap& parameters,
                                     const db::DbCallback db_reconnect_callback,
                                     const size_t last_insert_id_index);
 
@@ -496,6 +498,7 @@ public:
     /// - formatted_value,
     /// - space,
     /// - persistent,
+    /// - cancelled,
     /// - dhcp4_subnet_id/dhcp6_subnet_id,
     /// - scope_id,
     /// - user_context,
@@ -597,11 +600,9 @@ public:
     void addRequiredClassesBinding(db::PsqlBindArray& bindings, const T& object) {
         // Create JSON list of required classes.
         data::ElementPtr required_classes_element = data::Element::createList();
-        const auto& required_classes = object->getRequiredClasses();
-        for (auto required_class = required_classes.cbegin();
-             required_class != required_classes.cend();
-             ++required_class) {
-            required_classes_element->add(data::Element::create(*required_class));
+        auto const& required_classes = object->getRequiredClasses();
+        for (auto const& required_class : required_classes) {
+            required_classes_element->add(data::Element::create(required_class));
         }
 
         bindings.add(required_classes_element);
@@ -691,7 +692,7 @@ public:
     void multipleUpdateDeleteQueries(T first_index, R... other_indexes) {
         std::vector<T> indexes({ first_index, other_indexes... });
         db::PsqlBindArray in_bindings;
-        for (auto index : indexes) {
+        for (auto const& index : indexes) {
             updateDeleteQuery(index, in_bindings);
         }
     }
@@ -799,18 +800,6 @@ public:
         return (parameters_);
     }
 
-    /// @brief Sets IO service to be used by the PostgreSQL config backend.
-    ///
-    /// @param IOService object, used for all ASIO operations.
-    static void setIOService(const isc::asiolink::IOServicePtr& io_service) {
-        io_service_ = io_service;
-    }
-
-    /// @brief Returns pointer to the IO service.
-    static isc::asiolink::IOServicePtr& getIOService() {
-        return (io_service_);
-    }
-
     /// @brief Fetches the SQL statement for a given statement index.
     ///
     /// Derivations must override the implementation. The reference
@@ -871,6 +860,20 @@ public:
     /// @return Number of affected rows.
     uint64_t updateDeleteQuery(size_t index, const db::PsqlBindArray& in_bindings);
 
+    /// @brief Get the hook I/O service.
+    ///
+    /// @return the hook I/O service.
+    static isc::asiolink::IOServicePtr getIOService() {
+        return (io_service_);
+    }
+
+    /// @brief Set the hook I/O service.
+    ///
+    /// @param io_service the hook I/O service.
+    static void setIOService(isc::asiolink::IOServicePtr io_service) {
+        io_service_ = io_service;
+    }
+
     /// @brief Represents connection to the PostgreSQL database.
     db::PgSqlConnection conn_;
 
@@ -887,7 +890,7 @@ private:
     /// @brief Connection parameters
     isc::db::DatabaseConnection::ParameterMap parameters_;
 
-    /// @brief The IOService object, used for all ASIO operations.
+    /// @brief The hook I/O service.
     static isc::asiolink::IOServicePtr io_service_;
 
     /// @brief Statement index of the SQL statement to use for fetching

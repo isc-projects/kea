@@ -1,5 +1,5 @@
 ..
-   Copyright (C) 2019-2021 Internet Systems Consortium, Inc. ("ISC")
+   Copyright (C) 2019-2024 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
    See the COPYRIGHT file distributed with this work for additional
    information regarding copyright ownership.
 
+.. iscman:: perfdhcp
 
 ``perfdhcp`` - DHCP benchmarking tool
 -------------------------------------
@@ -15,7 +16,7 @@
 Synopsis
 ~~~~~~~~
 
-:program:`perfdhcp` [**-1**] [**-4** | **-6**] [**-A** encapsulation-level] [**-b** base] [**-B**] [**-c**] [**-C** separator] [**-d** drop-time] [**-D** max-drop] [-e lease-type] [**-E** time-offset] [**-f** renew-rate] [**-F** release-rate] [**-g** thread-mode] [**-h**] [**-i**] [**-I** ip-offset] [**-J** remote-address-list-file] [**-l** local-address|interface] [**-L** local-port] [**-M** mac-list-file] [**-n** num-request] [**-N** remote-port] [**-O** random-offset] [**-o** code,hexstring] [**-p** test-period] [**-P** preload] [**-r** rate] [**-R** num-clients] [**-s** seed] [**-S** srvid-offset] [**--scenario** name] [**-t** report] [**-T** template-file] [**-u**] [**-v**] [**-W** exit-wait-time] [**-w** script_name] [**-x** diagnostic-selector] [**-X** xid-offset] [server]
+:program:`perfdhcp` [**-1**] [**-4** | **-6**] [**-A** encapsulation-level] [**-b** base] [**-B**] [**-c**] [**-C** separator] [**-d** drop-time] [**-D** max-drop] [-e lease-type] [**-E** time-offset] [**-f** renew-rate] [**-F** release-rate] [**-g** thread-mode] [**-h**] [**-i**] [**-I** ip-offset] [**-J** remote-address-list-file] [**-l** local-address|interface] [**-L** local-port] [**-M** mac-list-file] [**-n** num-request] [**-N** remote-port] [**-O** random-offset] [**-o** code,hexstring] [**--or** encapsulation-level:code,hexstring] [**-p** test-period] [**-P** preload] [**-r** rate] [**-R** num-clients] [**-s** seed] [**-S** srvid-offset] [**--scenario** name] [**-t** report] [**-T** template-file] [**-u**] [**-v**] [**-W** exit-wait-time] [**-w** script_name] [**-x** diagnostic-selector] [**-X** xid-offset] [server]
 
 Description
 ~~~~~~~~~~~
@@ -239,16 +240,15 @@ Options
 
 ``-o code,hexstring``
    Forces ``perfdhcp`` to insert the specified extra option (or options if
-   used several times) into packets being transmitted. The code
-   specifies the option code and the hexstring is a hexadecimal string that
-   defines the content of the option. Care should be taken as ``perfdhcp``
-   does not offer any kind of logic behind those options; they are simply
+   used multiple times) into packets being transmitted. The code
+   specifies the option code, and the hexstring is a hexadecimal string that
+   defines the content of the option. Care should be taken, as ``perfdhcp``
+   does not offer any kind of logic behind the options; they are simply
    inserted into packets and sent as is. Be careful not to duplicate
-   options that are already inserted. For example, to insert client
-   class identifier (option code 60) with a string "docsis", use
-   "-o 60,646f63736973". The ``-o`` may be used multiple times. It is
-   necessary to specify the protocol family (either ``-4`` or ``-6``) before
-   using ``-o``.
+   options that are already inserted. For example, to insert the
+   client-class identifier (option code 60) with the string "docsis", use
+   ``-o 60,646f63736973``. The ``-o`` may be used multiple times. The protocol
+   family (``-4`` or ``-6``) must be specified before using ``-o``.
 
 ``-P preload``
    Initiates preload exchanges back-to-back at startup. Must be 0
@@ -286,7 +286,10 @@ Options
    releasing it.
 
 ``-v``
-   Prints the version of this program.
+   Displays the Kea version.
+
+``-V``
+   Displays the extended Kea version.
 
 ``-W exit-wait-time``
    Specifies the exit-wait-time parameter, which causes ``perfdhcp`` to wait for
@@ -326,13 +329,13 @@ Options
    ``T``
       When finished, prints templates.
 
-``-y seconds``
-   Time in seconds after which ``perfdhcp`` starts simulating the client waiting longer for server responses. This increases the
-   ``secs`` field in DHCPv4 and sends increased values in the ``Elapsed Time`` option in DHCPv6. Must be used with ``-Y``.
-
 ``-Y seconds``
+   Time in seconds after which ``perfdhcp`` starts simulating the client waiting longer for server responses. This increases the
+   ``secs`` field in DHCPv4 and sends increased values in the ``Elapsed Time`` option in DHCPv6. Must be used with ``-y``.
+
+``-y seconds``
    Time in seconds during which ``perfdhcp`` simulates the client waiting longer for server responses. This increases
-   the ``secs`` field in DHCPv4 and sends increased values in the ``Elapsed Time`` option in DHCPv6. Must be used with ``-y``.
+   the ``secs`` field in DHCPv4 and sends increased values in the ``Elapsed Time`` option in DHCPv6. Must be used with ``-Y``.
 
 DHCPv4-Only Options
 ~~~~~~~~~~~~~~~~~~~
@@ -356,6 +359,21 @@ The following options only apply for DHCPv6 (i.e. when ``-6`` is given).
    simulated. Currently the only supported encapsulation-level value is
    1, which means that the generated traffic is equivalent to the amount of
    traffic passing through a single relay agent.
+
+``--or encapsulation-level:code,hexstring``
+   Forces ``perfdhcp`` to insert the specified extra option (or options if
+   used multiple times) into a relayed DHCPv6 message at the given level of
+   encapsulation; currently, the only supported encapsulation-level value is 1.
+   This option is very similar to ``-o``: the code
+   specifies the option code, and the hexstring is a hexadecimal string that
+   defines the content of the option. Care should be taken, as ``perfdhcp``
+   does not offer any kind of logic behind the options; they are simply
+   inserted into packets and sent as is. ``encapsulation-level:``
+   is optional; if it is omitted, the default encapsulation-level value 1 is used.
+   For example, to insert the Subscriber identifier (option code 38) with a
+   value 1234 at the first level of encapsulation, use ``--or 38,31323334``
+   or ``--or 1:38,31323334``. The ``--or`` may be used multiple times, and
+   it must be used in conjunction with ``-A``.
 
 Template-Related Options
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -394,7 +412,7 @@ Options Controlling a Test
 
 ``-D max-drop``
    Aborts the test immediately if "max-drop" requests have been dropped.
-   Use ``-D 0`` to abort if even a single request has
+   Use ``-D 1`` to abort if even a single request has
    been dropped. "max-drop" must be a positive integer. If "max-drop"
    includes the suffix ``%``, it specifies the maximum percentage of
    requests that may be dropped before aborting. In this case, testing of
@@ -416,10 +434,10 @@ Options Controlling a Test
    Sets the delay (in seconds) between two successive reports.
 
 ``-C separator``
-    Suppresses the preliminary output and causes the interim data to
-    only contain the values delimited by ``separator``. Used in
-    conjunction with ``-t`` to produce easily parsable
-    reports at ``-t`` intervals.
+   Suppresses the preliminary output and causes the interim data to
+   only contain the values delimited by ``separator``. Used in
+   conjunction with ``-t`` to produce easily parsable
+   reports at ``-t`` intervals.
 
 Arguments
 ~~~~~~~~~

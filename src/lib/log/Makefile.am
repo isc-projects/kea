@@ -37,18 +37,17 @@ EXTRA_DIST  = logging.dox
 EXTRA_DIST += logimpl_messages.mes
 EXTRA_DIST += log_messages.mes
 
-# Note: the ordering matters: -Wno-... must follow -Wextra (defined in
-# KEA_CXXFLAGS)
+# Note: the ordering matters: -Wno-... must follow -Wextra (defined in KEA_CXXFLAGS)
 libkea_log_la_CXXFLAGS = $(AM_CXXFLAGS)
 if USE_GXX
 libkea_log_la_CXXFLAGS += -Wno-unused-parameter -Wno-deprecated-declarations
 endif
 libkea_log_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
-libkea_log_la_LIBADD   = $(top_builddir)/src/lib/log/interprocess/libkea-log_interprocess.la
-libkea_log_la_LIBADD  += $(top_builddir)/src/lib/util/libkea-util.la
-libkea_log_la_LIBADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-libkea_log_la_LIBADD  += $(LOG4CPLUS_LIBS)
-libkea_log_la_LDFLAGS = -no-undefined -version-info 34:0:0
+libkea_log_la_LIBADD  = $(top_builddir)/src/lib/log/interprocess/libkea-log_interprocess.la
+libkea_log_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
+libkea_log_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+libkea_log_la_LIBADD += $(LOG4CPLUS_LIBS)
+libkea_log_la_LDFLAGS = -no-undefined -version-info 72:0:0
 
 # Specify the headers for copying into the installation directory tree.
 libkea_log_includedir = $(pkgincludedir)/log
@@ -105,11 +104,19 @@ if GENERATE_MESSAGES
 messages: log_messages.cc log_messages.h logimpl_messages.cc logimpl_messages.h
 	@echo Message files regenerated
 
+# If bootstrapping, do not generate log messages because there is nothing to generate them with.
+# A second make command or an explicit "make messages" command should do the job.
 log_messages.cc log_messages.h: log_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/log/log_messages.mes
+	@if test -f $(top_builddir)/src/lib/log/compiler/kea-msg-compiler; then \
+		$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/log/log_messages.mes; \
+	fi
 
+# If bootstrapping, do not generate log messages because there is nothing to generate them with.
+# A second make command or an explicit "make messages" command should do the job.
 logimpl_messages.cc logimpl_messages.h: logimpl_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/log/logimpl_messages.mes
+	@if test -f $(top_builddir)/src/lib/log/compiler/kea-msg-compiler; then \
+		$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/log/logimpl_messages.mes; \
+	fi
 
 else
 

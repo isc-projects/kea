@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -70,6 +70,13 @@ public:
         isc::Exception(file, line, what) { };
 };
 
+/// @brief Wrapper exception thrown by unpackOptionsX functions to
+/// add option type and len to the underlying error.
+class OptionParseError : public Exception {
+public:
+    OptionParseError (const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
 
 class Option {
 public:
@@ -516,6 +523,7 @@ protected:
     /// directly by other classes.
     ///
     /// @param [out] buf output buffer.
+    /// @param check if set to false, allows options larger than 255 for v4
     void packHeader(isc::util::OutputBuffer& buf, bool check = true) const;
 
     /// @brief Store sub options in a buffer.
@@ -526,6 +534,7 @@ protected:
     /// derived classes that override pack.
     ///
     /// @param [out] buf output buffer.
+    /// @param check if set to false, allows options larger than 255 for v4
     ///
     /// @todo The set of exceptions thrown by this function depend on
     /// exceptions thrown by pack methods invoked on objects

@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,7 +12,7 @@
 #include <database/backend_selector.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_string.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp6/dhcp6_srv.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/json_config_parser.h>
@@ -22,10 +22,9 @@
 #include <dhcpsrv/testutils/generic_backend_unittest.h>
 #include <dhcpsrv/testutils/test_config_backend_dhcp6.h>
 
-#include "dhcp6_test_utils.h"
-#include "get_config_unittest.h"
+#include <dhcp6/tests/dhcp6_test_utils.h>
+#include <dhcp6/tests/get_config_unittest.h>
 
-#include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
 
 #include <iostream>
@@ -134,7 +133,7 @@ public:
         ASSERT_TRUE(status);
 
         int rcode;
-        ConstElementPtr comment = parseAnswer(rcode, status);
+        ConstElementPtr comment = parseAnswerText(rcode, status);
         ASSERT_EQ(expected_code, rcode) << " comment: "
                     << comment->stringValue();
 
@@ -193,12 +192,16 @@ TEST_F(Dhcp6CBTest, mergeGlobals) {
     StampedValuePtr server_tag(new StampedValue("server-tag", "second-server"));
     StampedValuePtr decline_period(new StampedValue("decline-probation-period", Element::create(86400)));
     StampedValuePtr renew_timer(new StampedValue("renew-timer", Element::create(500)));
+    StampedValuePtr mt_enabled(new StampedValue("multi-threading.enable-multi-threading", Element::create(true)));
+    StampedValuePtr mt_pool_size(new StampedValue("multi-threading.thread-pool-size", Element::create(256)));
 
     // Let's add all of the globals to the second backend.  This will verify
     // we find them there.
     db2_->createUpdateGlobalParameter6(ServerSelector::ALL(), server_tag);
     db2_->createUpdateGlobalParameter6(ServerSelector::ALL(), decline_period);
     db2_->createUpdateGlobalParameter6(ServerSelector::ALL(), renew_timer);
+    db2_->createUpdateGlobalParameter6(ServerSelector::ALL(), mt_enabled);
+    db2_->createUpdateGlobalParameter6(ServerSelector::ALL(), mt_pool_size);
 
     // Should parse and merge without error.
     ASSERT_NO_FATAL_FAILURE(configure(base_config, CONTROL_RESULT_SUCCESS, ""));
@@ -220,6 +223,8 @@ TEST_F(Dhcp6CBTest, mergeGlobals) {
     // Verify that the implicit globals from the backend are there.
     ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, server_tag));
     ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, renew_timer));
+    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, mt_enabled));
+    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, mt_pool_size));
 }
 
 // This test verifies that externally configured option definitions
@@ -320,19 +325,19 @@ TEST_F(Dhcp6CBTest, mergeOptions) {
         "   } \n"
         "} \n";
 
-
     OptionDescriptorPtr opt;
     // Add solmax-rt to the first backend.
     opt.reset(new OptionDescriptor(
               createOption<OptionString>(Option::V6, D6O_BOOTFILE_URL,
-                                         true, false, "updated-boot-file")));
+                                         true, false, false,
+                                         "updated-boot-file")));
     opt->space_name_ = DHCP6_OPTION_SPACE;
     db1_->createUpdateOption6(ServerSelector::ALL(), opt);
 
     // Add solmax-rt to the second backend.
     opt.reset(new OptionDescriptor(
               createOption<OptionUint32>(Option::V6, D6O_SOL_MAX_RT,
-                                         false, true, 700)));
+                                         false, false, true, 700)));
     opt->space_name_ = DHCP6_OPTION_SPACE;
     db2_->createUpdateOption6(ServerSelector::ALL(), opt);
 
@@ -358,6 +363,68 @@ TEST_F(Dhcp6CBTest, mergeOptions) {
     OptionUint32Ptr opint = boost::dynamic_pointer_cast<OptionUint32>(found_opt.option_);
     ASSERT_TRUE(opint);
     EXPECT_EQ(500, opint->getValue());
+}
+
+// This test verifies that DHCP options fetched from the config backend
+// encapsulate their suboptions.
+TEST_F(Dhcp6CBTest, mergeOptionsWithSuboptions) {
+    string base_config =
+        "{ \n"
+        "    \"option-def\": [ { \n"
+        "        \"name\": \"option-1024\", \n"
+        "        \"code\": 1024, \n"
+        "        \"type\": \"empty\", \n"
+        "        \"space\": \"dhcp6\", \n"
+        "        \"encapsulate\": \"option-1024-space\" \n"
+        "    }, \n"
+        "    { \n"
+        "        \"name\": \"option-1025\", \n"
+        "        \"code\": 1025, \n"
+        "        \"type\": \"string\", \n"
+        "        \"space\": \"option-1024-space\" \n"
+        "    } ], \n"
+        "    \"config-control\": { \n"
+        "       \"config-databases\": [ { \n"
+        "               \"type\": \"memfile\", \n"
+        "               \"host\": \"db1\" \n"
+        "           },{ \n"
+        "               \"type\": \"memfile\", \n"
+        "               \"host\": \"db2\" \n"
+        "           } \n"
+        "       ] \n"
+        "   } \n"
+        "} \n";
+
+    extractConfig(base_config);
+
+    // Create option 1024 instance and store it in the database.
+    OptionDescriptorPtr opt;
+    opt.reset(new OptionDescriptor(
+              createEmptyOption(Option::V6, 1024, true, false)));
+    opt->space_name_ = DHCP6_OPTION_SPACE;
+    db1_->createUpdateOption6(ServerSelector::ALL(), opt);
+
+    // Create option 1024 suboption and store it in the database.
+    opt.reset(new OptionDescriptor(
+              createOption<OptionString>(Option::V6, 1025, true, false, false,
+                                         "http://server:8080")
+          )
+    );
+    opt->space_name_ = "option-1024-space";
+    db1_->createUpdateOption6(ServerSelector::ALL(), opt);
+
+    // Fetch the configuration from the config backend.
+    ASSERT_NO_FATAL_FAILURE(configure(base_config, CONTROL_RESULT_SUCCESS, ""));
+
+    auto staging_cfg = CfgMgr::instance().getStagingCfg();
+
+    // Make sure that option 1024 has been fetched.
+    auto found_opt_desc = staging_cfg->getCfgOption()->get(DHCP6_OPTION_SPACE, 1024);
+    ASSERT_TRUE(found_opt_desc.option_);
+
+    // Make sure that the option 1024 contains its suboption.
+    auto found_subopt = found_opt_desc.option_->getOption(1025);
+    EXPECT_TRUE(found_subopt);
 }
 
 // This test verifies that externally configured shared-networks are
@@ -449,8 +516,8 @@ TEST_F(Dhcp6CBTest, mergeSubnets) {
     extractConfig(base_config);
 
     // Make a few subnets
-    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:1::"), 64, 1, 2, 100, 100, SubnetID(1)));
-    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:3::"), 64, 1, 2, 100, 100, SubnetID(3)));
+    auto subnet1 = Subnet6::create(IOAddress("2001:1::"), 64, 1, 2, 100, 100, SubnetID(1));
+    auto subnet3 = Subnet6::create(IOAddress("2001:3::"), 64, 1, 2, 100, 100, SubnetID(3));
 
     // Add subnet1 to db1 and subnet3 to db2
     db1_->createUpdateSubnet6(ServerSelector::ALL(), subnet1);

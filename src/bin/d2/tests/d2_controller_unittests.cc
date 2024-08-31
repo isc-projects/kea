@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +12,7 @@
 #include <d2/d2_controller.h>
 #include <d2/d2_process.h>
 #include <process/testutils/d_test_stubs.h>
+#include <testutils/gtest_utils.h>
 
 #include <boost/pointer_cast.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -119,7 +120,7 @@ TEST_F(D2ControllerTest, commandLineArgs) {
     EXPECT_TRUE(checkVerbose(false));
 
     // Verify that standard options can be parsed without error.
-    EXPECT_NO_THROW(parseArgs(argc, argv));
+    EXPECT_NO_THROW_LOG(parseArgs(argc, argv));
 
     // Verify that verbose flag is true.
     EXPECT_TRUE(checkVerbose(true));
@@ -131,7 +132,7 @@ TEST_F(D2ControllerTest, commandLineArgs) {
     char* argv2[] = { const_cast<char*>("progName"),
                       const_cast<char*>("-x") };
     argc = 2;
-    EXPECT_THROW(parseArgs(argc, argv2), InvalidUsage);
+    EXPECT_THROW_MSG(parseArgs(argc, argv2), InvalidUsage, "unsupported option: -x");
 }
 
 /// @brief Tests application process creation and initialization.
@@ -206,7 +207,7 @@ TEST_F(D2ControllerTest, invalidConfigReload) {
     scheduleTimedWrite("{ \"string_test\": BOGUS JSON }", 100);
 
     // Setup to raise SIGHUP in 200 ms.
-    TimedSignal sighup(*getIOService(), SIGHUP, 200);
+    TimedSignal sighup(getIOService(), SIGHUP, 200);
 
     // Write valid_d2_config and then run launch() for a maximum of 500 ms.
     time_duration elapsed_time;
@@ -245,7 +246,7 @@ TEST_F(D2ControllerTest, validConfigReload) {
     scheduleTimedWrite(second_cfg, 100);
 
     // Setup to raise SIGHUP in 200 ms.
-    TimedSignal sighup(*getIOService(), SIGHUP, 200);
+    TimedSignal sighup(getIOService(), SIGHUP, 200);
 
     // Write valid_d2_config and then run launch() for a maximum of 500ms.
     time_duration elapsed_time;
@@ -268,7 +269,7 @@ TEST_F(D2ControllerTest, validConfigReload) {
 // Tests that the SIGINT triggers a normal shutdown.
 TEST_F(D2ControllerTest, sigintShutdown) {
     // Setup to raise SIGINT in 1 ms.
-    TimedSignal sighup(*getIOService(), SIGINT, 1);
+    TimedSignal sighup(getIOService(), SIGINT, 1);
 
     // Write valid_d2_config and then run launch() for a maximum of 1000 ms.
     time_duration elapsed_time;
@@ -285,7 +286,7 @@ TEST_F(D2ControllerTest, sigintShutdown) {
 // Tests that the SIGTERM triggers a normal shutdown.
 TEST_F(D2ControllerTest, sigtermShutdown) {
     // Setup to raise SIGTERM in 1 ms.
-    TimedSignal sighup(*getIOService(), SIGTERM, 1);
+    TimedSignal sighup(getIOService(), SIGTERM, 1);
 
     // Write valid_d2_config and then run launch() for a maximum of 1 s.
     time_duration elapsed_time;

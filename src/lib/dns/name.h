@@ -1,11 +1,14 @@
-// Copyright (C) 2009-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef NAME_H
-#define NAME_H 1
+#define NAME_H
+
+#include <util/buffer.h>
+#include <dns/messagerenderer.h>
 
 #include <stdint.h>
 
@@ -15,14 +18,7 @@
 #include <dns/exceptions.h>
 
 namespace isc {
-namespace util {
-class InputBuffer;
-class OutputBuffer;
-}
-
 namespace dns {
-class AbstractMessageRenderer;
-
 ///
 /// \brief A standard DNS module exception that is thrown if the name parser
 /// encounters an empty label in the middle of a name.
@@ -88,11 +84,11 @@ public:
         NameParserException(file, line, what) {}
 };
 
-/// \brief Thrown when origin is NULL and is needed.
+/// \brief Thrown when origin is null and is needed.
 ///
 /// The exception is thrown when the Name constructor for master file
 /// is used, the provided data is relative and the origin parameter is
-/// set to NULL.
+/// set to null.
 class MissingNameOrigin : public NameParserException {
 public:
     MissingNameOrigin(const char* file, size_t line, const char* what) :
@@ -261,7 +257,7 @@ public:
     /// This acts similar to the above. But the data is passed as raw C-string
     /// instead of wrapped-up C++ std::string.
     ///
-    /// Also, when the origin is non-NULL and the name_data is not ending with
+    /// Also, when the origin is non-null and the name_data is not ending with
     /// a dot, it is considered relative and the origin is appended to it.
     ///
     /// If the name_data is equal to "@", the content of origin is copied.
@@ -269,13 +265,13 @@ public:
     /// \param name_data The raw data of the name.
     /// \param data_len How many bytes in name_data is valid and considered
     ///     part of the name.
-    /// \param origin If non-NULL, it is taken as the origin to complete
+    /// \param origin If non-null, it is taken as the origin to complete
     ///     relative names.
     /// \param downcase Whether to convert upper case letters to lower case.
     /// \throw NameParserException or any of its descendants in case the
     ///     input data is invalid.
-    /// \throw isc::InvalidParameter In case name_data is NULL or data_len is
-    ///     0.
+    /// \throw isc::InvalidParameter In case name_data is null or
+    ///     data_len is 0.
     /// \throw std::bad_alloc In case allocation fails.
     /// \note This constructor is specially designed for the use of master
     ///     file parser. It mimics the behaviour of names in the master file
@@ -300,9 +296,9 @@ public:
     /// In addition, if resource allocation for the new name fails, a
     /// corresponding standard exception will be thrown.
     ///
-    /// \param buffer A buffer storing the wire format %data.
+    /// \param buff A buffer storing the wire format %data.
     /// \param downcase Whether to convert upper case alphabets to lower case.
-    explicit Name(isc::util::InputBuffer& buffer, bool downcase = false);
+    explicit Name(isc::util::InputBuffer& buff, bool downcase = false);
     ///
     /// We use the default copy constructor intentionally.
     //@}
@@ -424,8 +420,8 @@ public:
     /// <code>buffer.getCapacity() - buffer.getLength() >= Name::MAX_WIRE</code>
     /// then this method should not throw an exception.
     ///
-    /// \param buffer An output buffer to store the wire %data.
-    void toWire(isc::util::OutputBuffer& buffer) const;
+    /// \param buff An output buffer to store the wire %data.
+    void toWire(isc::util::OutputBuffer& buff) const;
     //@}
 
     ///
@@ -760,7 +756,3 @@ operator<<(std::ostream& os, const Name& name);
 }
 }
 #endif // NAME_H
-
-// Local Variables:
-// mode: c++
-// End:

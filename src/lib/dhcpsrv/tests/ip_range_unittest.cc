@@ -1,4 +1,4 @@
-// Copyright (C) 2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -34,15 +34,39 @@ TEST(PrefixRangeTest, constructor) {
     boost::scoped_ptr<PrefixRange> range;
     ASSERT_NO_THROW(range.reset(new PrefixRange(IOAddress("2001:db8:1::"), 64, 96)));
     EXPECT_EQ("2001:db8:1::", range->start_.toText());
-    EXPECT_EQ("2001:db8:1:0:ffff:ffff::", range->end_.toText());
+    EXPECT_EQ("2001:db8:1:0:ffff:ffff:ffff:ffff", range->end_.toText());
+    EXPECT_EQ(64, range->prefix_length_);
+    EXPECT_EQ(96, range->delegated_length_);
 
     ASSERT_NO_THROW(range.reset(new PrefixRange(IOAddress("2001:db8:1:2::"), 80, 120)));
     EXPECT_EQ("2001:db8:1:2::", range->start_.toText());
-    EXPECT_EQ("2001:db8:1:2:0:ffff:ffff:ff00", range->end_.toText());
+    EXPECT_EQ("2001:db8:1:2:0:ffff:ffff:ffff", range->end_.toText());
+    EXPECT_EQ(80, range->prefix_length_);
+    EXPECT_EQ(120, range->delegated_length_);
 
-    ASSERT_NO_THROW(range.reset(new PrefixRange(IOAddress("2001:db8:1:2::"), 80, 127)));
+    ASSERT_NO_THROW(range.reset(new PrefixRange(IOAddress("2001:db8:1:2::"), 120, 127)));
     EXPECT_EQ("2001:db8:1:2::", range->start_.toText());
-    EXPECT_EQ("2001:db8:1:2:0:ffff:ffff:fffe", range->end_.toText());
+    EXPECT_EQ("2001:db8:1:2::ff", range->end_.toText());
+    EXPECT_EQ(120, range->prefix_length_);
+    EXPECT_EQ(127, range->delegated_length_);
+
+    ASSERT_NO_THROW(range.reset(new PrefixRange(IOAddress("2001:db8:1::"), IOAddress("2001:db8:1:0:ffff:ffff:ffff:ffff"), 96)));
+    EXPECT_EQ("2001:db8:1::", range->start_.toText());
+    EXPECT_EQ("2001:db8:1:0:ffff:ffff:ffff:ffff", range->end_.toText());
+    EXPECT_EQ(64, range->prefix_length_);
+    EXPECT_EQ(96, range->delegated_length_);
+
+    ASSERT_NO_THROW(range.reset(new PrefixRange(IOAddress("2001:db8:1:2::"), IOAddress("2001:db8:1:2:0:ffff:ffff:ffff"), 120)));
+    EXPECT_EQ("2001:db8:1:2::", range->start_.toText());
+    EXPECT_EQ("2001:db8:1:2:0:ffff:ffff:ffff", range->end_.toText());
+    EXPECT_EQ(80, range->prefix_length_);
+    EXPECT_EQ(120, range->delegated_length_);
+
+    ASSERT_NO_THROW(range.reset(new PrefixRange(IOAddress("2001:db8:1:2::"), IOAddress("2001:db8:1:2::ff"), 127)));
+    EXPECT_EQ("2001:db8:1:2::", range->start_.toText());
+    EXPECT_EQ("2001:db8:1:2::ff", range->end_.toText());
+    EXPECT_EQ(120, range->prefix_length_);
+    EXPECT_EQ(127, range->delegated_length_);
 }
 
 // This test verifies that exception is thrown upon an attempt to
@@ -57,6 +81,13 @@ TEST(PrefixRangeTest, constructorWithInvalidValues) {
     EXPECT_THROW(PrefixRange(IOAddress("2001:db8:1::"), 200, 204), BadValue);
     // End must not be lower than start.
     EXPECT_THROW(PrefixRange(IOAddress("2001:db8:1:1::6:0"), IOAddress("2001:db8:1::5:0"), 112),
+                 BadValue);
+    // Length must not exceed 128.
+    EXPECT_THROW(PrefixRange(IOAddress("2001:db8:1:1::"), IOAddress("2001:db8:1:f::"), 200),
+                 BadValue);
+    // The upper boundary of the prefix range must have non-significant
+    // bits set to 1.
+    EXPECT_THROW(PrefixRange(IOAddress("2001:db8:1:1::"), IOAddress("2001:db8:1:1::ff00"), 112),
                  BadValue);
 }
 

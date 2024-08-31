@@ -1,11 +1,11 @@
-// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/tests/dhcp6_client.h>
 #include <dhcp/option6_addrlst.h>
@@ -44,6 +44,7 @@ const char* CONFIGS[] = {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ { "
+        "    \"id\": 1, "
         "    \"pools\": [ { \"pool\": \"2001:db8:2::/64\" } ],"
         "    \"pd-pools\": ["
         "        { \"prefix\": \"2001:db8:3::\", "
@@ -67,6 +68,7 @@ const char* CONFIGS[] = {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ { "
+        "    \"id\": 1, "
         "    \"option-data\": [ {"
         "    \"name\": \"sip-server-addr\","
         "    \"data\": \"2001:db8::abcd\""
@@ -88,6 +90,7 @@ const char* CONFIGS[] = {
         "        \"data\": \"2001:db8::1\""
         "    } ],"
         "\"subnet6\": [ { "
+        "    \"id\": 1, "
         "    \"subnet\": \"2001:db8::/32\", "
         "    \"interface\": \"eth0\","
         "    \"option-data\": [ {"

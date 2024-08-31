@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -81,9 +81,15 @@ StopwatchImpl::getTotalDuration() const {
 std::string
 StopwatchImpl::logFormat(const boost::posix_time::time_duration& duration) {
     std::ostringstream s;
-    s << duration.total_milliseconds() << ".";
-    s << std::setfill('0') << std::setw(3) << (duration.total_microseconds() % 1000)
-      << " ms";
+    if (duration.total_seconds() > 0) {
+        s << duration.total_seconds() << "."
+          << std::setfill('0') << std::setw(2) << (duration.total_milliseconds()/10 % 100)
+          << " s";
+    } else {
+        s << duration.total_milliseconds() << ".";
+        s << std::setfill('0') << std::setw(3) << (duration.total_microseconds() % 1000)
+          << " ms";
+    }
     return (s.str());
 }
 

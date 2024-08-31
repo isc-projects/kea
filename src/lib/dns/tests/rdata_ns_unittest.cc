@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,34 +6,34 @@
 
 #include <config.h>
 
-#include <util/buffer.h>
 #include <dns/exceptions.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
-
-#include <gtest/gtest.h>
-
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
 #include <util/unittests/wiredata.h>
+#include <util/buffer.h>
 
-using namespace std;
+#include <gtest/gtest.h>
+
 using namespace isc::dns;
-using namespace isc::util;
 using namespace isc::dns::rdata;
+using namespace isc::util;
 using isc::UnitTestUtil;
 using isc::util::unittests::matchWireData;
+
+using namespace std;
 
 namespace {
 class Rdata_NS_Test : public RdataTest {
 public:
     Rdata_NS_Test() :
         rdata_ns("ns.example.com."),
-        rdata_ns2("ns2.example.com.")
-    {}
+        rdata_ns2("ns2.example.com.") {
+    }
 
     const generic::NS rdata_ns;
     const generic::NS rdata_ns2;
@@ -103,7 +103,7 @@ TEST_F(Rdata_NS_Test, createFromLexer) {
         *test::createRdataUsingLexer(RRType::NS(), RRClass::IN(),
                                      "ns8")));
 
-    // Exceptions cause NULL to be returned.
+    // Exceptions cause null to be returned.
     EXPECT_FALSE(test::createRdataUsingLexer(RRType::NS(), RRClass::IN(),
                                              ""));
 

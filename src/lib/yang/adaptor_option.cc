@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,9 +6,10 @@
 
 #include <config.h>
 
-#include <yang/adaptor_option.h>
-#include <dhcp/std_option_defs.h>
 #include <dhcp/docsis3_option_defs.h>
+#include <dhcp/std_option_defs.h>
+#include <yang/adaptor_option.h>
+#include <yang/netconf_error.h>
 
 using namespace std;
 using namespace isc::data;
@@ -16,12 +17,6 @@ using namespace isc::dhcp;
 
 namespace isc {
 namespace yang {
-
-AdaptorOption::AdaptorOption() {
-}
-
-AdaptorOption::~AdaptorOption() {
-}
 
 void
 AdaptorOption::setSpace(ElementPtr option, const string& space) {
@@ -53,7 +48,7 @@ AdaptorOption::collect(ConstElementPtr option, OptionCodes& codes) {
         ConstElementPtr code = option->get("code");
         string index = space->stringValue() + "@" + name->stringValue();
         uint16_t val = static_cast<uint16_t>(code->intValue());
-        codes.insert(std::pair<string, uint16_t>(index, val));
+        codes.insert(pair<string, uint16_t>(index, val));
     }
 }
 
@@ -120,9 +115,9 @@ AdaptorOption::initCodesInternal(OptionCodes& codes, const string& space,
                                  size_t params_size) {
     for (size_t i = 0; i < params_size; ++i) {
         string index = space + "@" + params[i].name;
-        codes.insert(std::pair<string, uint16_t>(index, params[i].code));
+        codes.insert(pair<string, uint16_t>(index, params[i].code));
     }
 }
 
-}; // end of namespace isc::yang
-}; // end of namespace isc
+}  // namespace yang
+}  // namespace isc

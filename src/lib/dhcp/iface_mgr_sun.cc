@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -31,8 +31,10 @@ namespace dhcp {
 /// only, as earlier versions did not support getifaddrs() API.
 void
 IfaceMgr::detectIfaces(bool update_only) {
-    if (isTestMode() && update_only) {
-        return;
+    if (detect_callback_) {
+        if (!detect_callback_(update_only)) {
+            return;
+        }
     }
 
     struct ifaddrs* iflist = 0;// The whole interface list
@@ -112,14 +114,13 @@ IfaceMgr::detectIfaces(bool update_only) {
     freeifaddrs(iflist);
 
     // Interfaces registering
-    for (IfaceLst::const_iterator iface_iter = ifaces.begin();
-        iface_iter != ifaces.end(); ++iface_iter) {
+    for (auto const& iface_it : ifaces) {
         IfacePtr iface;
         if (update_only) {
-            iface = getIface(iface_iter->first);
+            iface = getIface(iface_it.first);
         }
         if (!iface) {
-            addInterface(iface_iter->second);
+            addInterface(iface_it.second);
         }
     }
 }
@@ -157,7 +158,7 @@ IfaceMgr::openMulticastSocket(Iface& iface,
         openSocket(iface.getName(), addr, port, iface.flag_multicast_);
 
     } catch (const Exception& ex) {
-        IFACEMGR_ERROR(SocketConfigError, error_handler,
+        IFACEMGR_ERROR(SocketConfigError, error_handler, IfacePtr(),
                        "Failed to open link-local socket on "
                        "interface " << iface.getName() << ": "
                        << ex.what());

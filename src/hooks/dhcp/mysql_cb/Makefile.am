@@ -1,4 +1,4 @@
-SUBDIRS = . tests
+SUBDIRS = . tests libloadtests
 
 AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(MYSQL_CPPFLAGS)
@@ -35,20 +35,20 @@ libdhcp_mysql_cb_la_LDFLAGS  += -avoid-version -export-dynamic -module
 
 libdhcp_mysql_cb_la_LIBADD  = libmysqlcb.la
 libdhcp_mysql_cb_la_LIBADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
+libdhcp_mysql_cb_la_LIBADD += $(top_builddir)/src/lib/process/libkea-process.la
 libdhcp_mysql_cb_la_LIBADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 libdhcp_mysql_cb_la_LIBADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
-libdhcp_mysql_cb_la_LIBADD += $(top_builddir)/src/lib/process/libkea-process.la
 libdhcp_mysql_cb_la_LIBADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 libdhcp_mysql_cb_la_LIBADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 libdhcp_mysql_cb_la_LIBADD += $(top_builddir)/src/lib/http/libkea-http.la
 libdhcp_mysql_cb_la_LIBADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+libdhcp_mysql_cb_la_LIBADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libdhcp_mysql_cb_la_LIBADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
 libdhcp_mysql_cb_la_LIBADD += $(top_builddir)/src/lib/database/libkea-database.la
-libdhcp_mysql_cb_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libdhcp_mysql_cb_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+libdhcp_mysql_cb_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libdhcp_mysql_cb_la_LIBADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 libdhcp_mysql_cb_la_LIBADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
-libdhcp_mysql_cb_la_LIBADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libdhcp_mysql_cb_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
 libdhcp_mysql_cb_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libdhcp_mysql_cb_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la

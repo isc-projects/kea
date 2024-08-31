@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,8 +10,8 @@
 #include <dhcp/option.h>
 #include <dhcp/option_space.h>
 #include <exceptions/exceptions.h>
-#include <util/encode/hex.h>
-#include <util/io_utilities.h>
+#include <util/encode/encode.h>
+#include <util/io.h>
 
 #include <boost/make_shared.hpp>
 
@@ -236,6 +236,12 @@ std::string Option::toText(int indent) const {
         output << setfill('0') << setw(2) << hex
                << static_cast<unsigned short>(data_[i]);
     }
+    if (data_.empty()) {
+        output << "''";
+    } else if (str::isPrintable(data_)) {
+        std::string printable(data_.cbegin(), data_.cend());
+        output << " '" << printable << "'";
+    }
 
     // Append suboptions.
     output << suboptionsToText(indent + 2);
@@ -329,6 +335,12 @@ Option::getHeaderLen() const {
 }
 
 void Option::addOption(OptionPtr opt) {
+    if (this == opt.get()) {
+        // Do not allow options to be added to themselves as this
+        // can lead to infinite recursion.
+        isc_throw(InvalidOperation, "option cannot be added to itself: " << toText());
+    }
+
     options_.insert(make_pair(opt->getType(), opt));
 }
 

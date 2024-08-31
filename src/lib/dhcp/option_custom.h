@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,7 +11,6 @@
 #include <dhcp/option.h>
 #include <dhcp/option_definition.h>
 #include <exceptions/isc_assert.h>
-#include <util/io_utilities.h>
 
 namespace isc {
 namespace dhcp {
@@ -342,6 +341,7 @@ public:
     /// @brief Writes DHCP option in a wire format to a buffer.
     ///
     /// @param buf output buffer (option will be stored there).
+    /// @param check if set to false, allows options larger than 255 for v4
     virtual void pack(isc::util::OutputBuffer& buf, bool check = true) const;
 
     /// @brief Parses received buffer.

@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,20 +7,21 @@
 #include <config.h>
 
 #include <yang/translator_shared_network.h>
-#include <yang/adaptor.h>
 #include <yang/yang_models.h>
+
 #include <sstream>
 
 using namespace std;
 using namespace isc::data;
+using namespace libyang;
 using namespace sysrepo;
 
 namespace isc {
 namespace yang {
 
-TranslatorSharedNetwork::TranslatorSharedNetwork(S_Session session,
+TranslatorSharedNetwork::TranslatorSharedNetwork(Session session,
                                                  const string& model)
-    : TranslatorBasic(session, model),
+    : Translator(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model),
       TranslatorPool(session, model),
@@ -33,169 +34,110 @@ TranslatorSharedNetwork::TranslatorSharedNetwork(S_Session session,
       TranslatorSubnets(session, model) {
 }
 
-TranslatorSharedNetwork::~TranslatorSharedNetwork() {
-}
-
 ElementPtr
-TranslatorSharedNetwork::getSharedNetwork(const string& xpath) {
+TranslatorSharedNetwork::getSharedNetwork(DataNode const& data_node) {
     try {
         if (model_ == KEA_DHCP4_SERVER) {
-            return (getSharedNetworkKea(xpath, "subnet4"));
+            return (getSharedNetworkKea(data_node, "subnet4"));
         } else if (model_ == KEA_DHCP6_SERVER) {
-            return (getSharedNetworkKea(xpath, "subnet6"));
+            return (getSharedNetworkKea(data_node, "subnet6"));
         }
-    } catch (const sysrepo_exception& ex) {
-        isc_throw(SysrepoError,
-                  "sysrepo error getting shared network at '" << xpath
-                  << "': " << ex.what());
+    } catch (Error const& ex) {
+        isc_throw(NetconfError,
+                  "getting shared network:"
+                  << ex.what());
     }
     isc_throw(NotImplemented,
               "getSharedNetwork not implemented for the model: " << model_);
 }
 
 ElementPtr
-TranslatorSharedNetwork::getSharedNetworkKea(const string& xpath,
-                                             const std::string& subsel) {
+TranslatorSharedNetwork::getSharedNetworkFromAbsoluteXpath(string const& xpath) {
+    try {
+        return getSharedNetwork(findXPath(xpath));
+    } catch (NetconfError const&) {
+        return ElementPtr();
+    }
+}
+
+ElementPtr
+TranslatorSharedNetwork::getSharedNetworkKea(DataNode const& data_node,
+                                             string const& subsel) {
     ElementPtr result = Element::createMap();
-    ConstElementPtr name = getItem(xpath + "/name");
-    if (!name) {
-        // Can't happen as the name is the key.
-        isc_throw(Unexpected, "getSharedNetworkKea requires name: " << xpath);
-    }
-    result->set("name", name);
-    ConstElementPtr subnets = getSubnets(xpath);
-    if (subnets && (subnets->size() > 0)) {
-        result->set(subsel, subnets);
-    }
-    if (subsel == "subnet6") {
-        ConstElementPtr preferred = getItem(xpath + "/preferred-lifetime");
-        if (preferred) {
-            result->set("preferred-lifetime", preferred);
-        }
-        ConstElementPtr min_pref = getItem(xpath + "/min-preferred-lifetime");
-        if (min_pref) {
-            result->set("min-preferred-lifetime", min_pref);
-        }
-        ConstElementPtr max_pref = getItem(xpath + "/max-preferred-lifetime");
-        if (max_pref) {
-            result->set("max-preferred-lifetime", max_pref);
-        }
-    }
-    ConstElementPtr valid = getItem(xpath + "/valid-lifetime");
-    if (valid) {
-        result->set("valid-lifetime", valid);
-    }
-    ConstElementPtr min_valid = getItem(xpath + "/min-valid-lifetime");
-    if (min_valid) {
-        result->set("min-valid-lifetime", min_valid);
-    }
-    ConstElementPtr max_valid = getItem(xpath + "/max-valid-lifetime");
-    if (max_valid) {
-        result->set("max-valid-lifetime", max_valid);
-    }
-    ConstElementPtr renew = getItem(xpath + "/renew-timer");
-    if (renew) {
-        result->set("renew-timer", renew);
-    }
-    ConstElementPtr rebind = getItem(xpath + "/rebind-timer");
-    if (rebind) {
-        result->set("rebind-timer", rebind);
-    }
-    ConstElementPtr calculate = getItem(xpath + "/calculate-tee-times");
-    if (calculate) {
-        result->set("calculate-tee-times", calculate);
-    }
-    ConstElementPtr t1_percent = getItem(xpath + "/t1-percent");
-    if (t1_percent) {
-        result->set("t1-percent", t1_percent);
-    }
-    ConstElementPtr t2_percent = getItem(xpath + "/t2-percent");
-    if (t2_percent) {
-        result->set("t2-percent", t2_percent);
-    }
-    ConstElementPtr options = getOptionDataList(xpath);
-    if (options && (options->size() > 0)) {
+
+    getMandatoryLeaf(result, data_node, "name");
+
+    checkAndGetLeaf(result, data_node, "allocator");
+    checkAndGetLeaf(result, data_node, "cache-max-age");
+    checkAndGetLeaf(result, data_node, "cache-threshold");
+    checkAndGetLeaf(result, data_node, "calculate-tee-times");
+    checkAndGetLeaf(result, data_node, "client-class");
+    checkAndGetLeaf(result, data_node, "ddns-generated-prefix");
+    checkAndGetLeaf(result, data_node, "ddns-override-client-update");
+    checkAndGetLeaf(result, data_node, "ddns-override-no-update");
+    checkAndGetLeaf(result, data_node, "ddns-qualifying-suffix");
+    checkAndGetLeaf(result, data_node, "ddns-replace-client-name");
+    checkAndGetLeaf(result, data_node, "ddns-send-updates");
+    checkAndGetLeaf(result, data_node, "ddns-ttl-percent");
+    checkAndGetLeaf(result, data_node, "ddns-update-on-renew");
+    checkAndGetLeaf(result, data_node, "ddns-use-conflict-resolution");
+    checkAndGetLeaf(result, data_node, "ddns-conflict-resolution-mode");
+    checkAndGetLeaf(result, data_node, "hostname-char-replacement");
+    checkAndGetLeaf(result, data_node, "hostname-char-set");
+    checkAndGetLeaf(result, data_node, "interface");
+    checkAndGetLeaf(result, data_node, "max-valid-lifetime");
+    checkAndGetLeaf(result, data_node, "min-valid-lifetime");
+    checkAndGetLeaf(result, data_node, "rebind-timer");
+    checkAndGetLeaf(result, data_node, "renew-timer");
+    checkAndGetLeaf(result, data_node, "require-client-classes");
+    checkAndGetLeaf(result, data_node, "reservations-global");
+    checkAndGetLeaf(result, data_node, "reservations-in-subnet");
+    checkAndGetLeaf(result, data_node, "reservations-out-of-pool");
+    checkAndGetLeaf(result, data_node, "store-extended-info");
+    checkAndGetLeaf(result, data_node, "t1-percent");
+    checkAndGetLeaf(result, data_node, "t2-percent");
+    checkAndGetLeaf(result, data_node, "valid-lifetime");
+
+    checkAndGetAndJsonifyLeaf(result, data_node, "user-context");
+
+    ConstElementPtr options = getOptionDataList(data_node);
+    if (options) {
         result->set("option-data", options);
     }
-    ConstElementPtr interface = getItem(xpath + "/interface");
-    if (interface) {
-        result->set("interface", interface);
+
+    ConstElementPtr subnets = getSubnets(data_node);
+    if (subnets) {
+        result->set(subsel, subnets);
     }
+
+    checkAndGet(result, data_node, "relay",
+                [&](DataNode const& node) -> ElementPtr const {
+                    ElementPtr relay(Element::createMap());
+                    checkAndGetLeaf(relay, node, "ip-addresses");
+                    return relay;
+                });
+
     if (subsel == "subnet6") {
-        ConstElementPtr interface_id = getItem(xpath + "/interface-id");
-        if (interface_id) {
-            result->set("interface-id", interface_id);
-        }
-        ConstElementPtr rapid_commit = getItem(xpath + "/rapid-commit");
-        if (rapid_commit) {
-            result->set("rapid-commit", rapid_commit);
-        }
+        checkAndGetLeaf(result, data_node, "interface-id");
+        checkAndGetLeaf(result, data_node, "max-preferred-lifetime");
+        checkAndGetLeaf(result, data_node, "min-preferred-lifetime");
+        checkAndGetLeaf(result, data_node, "pd-allocator");
+        checkAndGetLeaf(result, data_node, "preferred-lifetime");
+        checkAndGetLeaf(result, data_node, "rapid-commit");
+    } else if (subsel == "subnet4") {
+        checkAndGetLeaf(result, data_node, "authoritative");
+        checkAndGetLeaf(result, data_node, "boot-file-name");
+        checkAndGetLeaf(result, data_node, "match-client-id");
+        checkAndGetLeaf(result, data_node, "next-server");
+        checkAndGetLeaf(result, data_node, "offer-lifetime");
+        checkAndGetLeaf(result, data_node, "server-hostname");
     }
-    ConstElementPtr guard =  getItem(xpath + "/client-class");
-    if (guard) {
-        result->set("client-class", guard);
-    }
-    ConstElementPtr required = getItems(xpath + "/require-client-classes");
-    if (required && (required->size() > 0)) {
-        result->set("require-client-classes", required);
-    }
-    ConstElementPtr mode = getItem(xpath + "/reservation-mode");
-    if (mode) {
-        result->set("reservation-mode", mode);
-    }
-    ConstElementPtr relay = getItems(xpath + "/relay/ip-addresses");
-    if (relay && (relay->size() > 0)) {
-        ElementPtr relay_map = Element::createMap();
-        relay_map->set("ip-addresses", relay);
-        result->set("relay", relay_map);
-    }
-    if (subsel == "subnet4") {
-        ConstElementPtr match = getItem(xpath + "/match-client-id");
-        if (match) {
-            result->set("match-client-id", match);
-        }
-        ConstElementPtr auth = getItem(xpath + "/authoritative");
-        if (auth) {
-            result->set("authoritative", auth);
-        }
-        ConstElementPtr next = getItem(xpath + "/next-server");
-        if (next) {
-            result->set("next-server", next);
-        }
-        ConstElementPtr hostname = getItem(xpath + "/server-hostname");
-        if (hostname) {
-            result->set("server-hostname", hostname);
-        }
-        ConstElementPtr boot = getItem(xpath + "/boot-file-name");
-        if (boot) {
-            result->set("boot-file-name", boot);
-        }
-    }
-    ConstElementPtr context = getItem(xpath + "/user-context");
-    if (context) {
-        result->set("user-context", Element::fromJSON(context->stringValue()));
-    }
-    checkAndGetLeaf(result, xpath, "cache-max-age");
-    checkAndGetLeaf(result, xpath, "cache-threshold");
-    checkAndGetLeaf(result, xpath, "ddns-generated-prefix");
-    checkAndGetLeaf(result, xpath, "ddns-override-client-update");
-    checkAndGetLeaf(result, xpath, "ddns-override-no-update");
-    checkAndGetLeaf(result, xpath, "ddns-qualifying-suffix");
-    checkAndGetLeaf(result, xpath, "ddns-replace-client-name");
-    checkAndGetLeaf(result, xpath, "ddns-send-updates");
-    checkAndGetLeaf(result, xpath, "ddns-update-on-renew");
-    checkAndGetLeaf(result, xpath, "ddns-use-conflict-resolution");
-    checkAndGetLeaf(result, xpath, "hostname-char-replacement");
-    checkAndGetLeaf(result, xpath, "hostname-char-set");
-    checkAndGetLeaf(result, xpath, "reservations-global");
-    checkAndGetLeaf(result, xpath, "reservations-in-subnet");
-    checkAndGetLeaf(result, xpath, "reservations-out-of-pool");
-    checkAndGetLeaf(result, xpath, "store-extended-info");
-    return (result);
+
+    return (result->empty() ? ElementPtr() : result);
 }
 
 void
-TranslatorSharedNetwork::setSharedNetwork(const string& xpath,
+TranslatorSharedNetwork::setSharedNetwork(string const& xpath,
                                           ConstElementPtr elem) {
     try {
         if (model_ == KEA_DHCP4_SERVER) {
@@ -207,160 +149,97 @@ TranslatorSharedNetwork::setSharedNetwork(const string& xpath,
                       "setSharedNetwork not implemented for the model: "
                       << model_);
         }
-    } catch (const sysrepo_exception& ex) {
-        isc_throw(SysrepoError,
-                  "sysrepo error setting shared network '" << elem->str()
-                  << "' at '" << xpath << "': " << ex.what());
+    } catch (Error const& ex) {
+        isc_throw(NetconfError,
+                  "setting shared network '" << elem->str()
+                  << "' : " << ex.what());
     }
 }
 
 void
-TranslatorSharedNetwork::setSharedNetworkKea(const string& xpath,
+TranslatorSharedNetwork::setSharedNetworkKea(string const& xpath,
                                              ConstElementPtr elem,
-                                             const std::string& subsel) {
-    // Skip name which is the key.
-    ConstElementPtr subnets = elem->get(subsel);
-    if (subnets && (subnets->size() > 0)) {
-        setSubnets(xpath, subnets);
-    }
-    if (subsel == "subnet6") {
-        ConstElementPtr preferred = elem->get("preferred-lifetime");
-        if (preferred) {
-            setItem(xpath + "/preferred-lifetime", preferred, SR_UINT32_T);
-        }
-        ConstElementPtr min_pref = elem->get("min-preferred-lifetime");
-        if (min_pref) {
-            setItem(xpath + "/min-preferred-lifetime", min_pref, SR_UINT32_T);
-        }
-        ConstElementPtr max_pref = elem->get("max-preferred-lifetime");
-        if (max_pref) {
-            setItem(xpath + "/max-preferred-lifetime", max_pref, SR_UINT32_T);
-        }
-    }
-    ConstElementPtr valid = elem->get("valid-lifetime");
-    if (valid) {
-        setItem(xpath + "/valid-lifetime", valid, SR_UINT32_T);
-    }
-    ConstElementPtr min_valid = elem->get("min-valid-lifetime");
-    if (min_valid) {
-        setItem(xpath + "/min-valid-lifetime", min_valid, SR_UINT32_T);
-    }
-    ConstElementPtr max_valid = elem->get("max-valid-lifetime");
-    if (max_valid) {
-        setItem(xpath + "/max-valid-lifetime", max_valid, SR_UINT32_T);
-    }
-    ConstElementPtr renew = elem->get("renew-timer");
-    if (renew) {
-        setItem(xpath + "/renew-timer", renew, SR_UINT32_T);
-    }
-    ConstElementPtr rebind = elem->get("rebind-timer");
-    if (rebind) {
-        setItem(xpath + "/rebind-timer", rebind, SR_UINT32_T);
-    }
-    ConstElementPtr calculate = elem->get("calculate-tee-times");
-    if (calculate) {
-        setItem(xpath + "/calculate-tee-times", calculate, SR_BOOL_T);
-    }
-    ConstElementPtr t1_percent =  elem->get("t1-percent");
-    if (t1_percent) {
-        setItem(xpath + "/t1-percent", t1_percent, SR_DECIMAL64_T);
-    }
-    ConstElementPtr t2_percent =  elem->get("t2-percent");
-    if (t2_percent) {
-        setItem(xpath + "/t2-percent", t2_percent, SR_DECIMAL64_T);
-    }
-    ConstElementPtr options = elem->get("option-data");
-    if (options && (options->size() > 0)) {
-        setOptionDataList(xpath, options);
-    }
-    ConstElementPtr interface = elem->get("interface");
-    if (interface) {
-        setItem(xpath + "/interface", interface, SR_STRING_T);
-    }
-    if (subsel == "subnet6") {
-        ConstElementPtr interface_id = elem->get("interface-id");
-        if (interface_id) {
-            setItem(xpath + "/interface-id", interface_id, SR_STRING_T);
-        }
-        ConstElementPtr rapid_commit = elem->get("rapid-commit");
-        if (rapid_commit) {
-            setItem(xpath + "/rapid-commit", rapid_commit, SR_BOOL_T);
-        }
-    }
-    ConstElementPtr guard = elem->get("client-class");
-    if (guard) {
-        setItem(xpath + "/client-class", guard, SR_STRING_T);
-    }
-    ConstElementPtr required = elem->get("require-client-classes");
-    if (required && (required->size() > 0)) {
-        for (ConstElementPtr rclass : required->listValue()) {
-            setItem(xpath + "/require-client-classes", rclass, SR_STRING_T);
-        }
-    }
-    ConstElementPtr mode = elem->get("reservation-mode");
-    if (mode) {
-        setItem(xpath + "/reservation-mode", mode, SR_ENUM_T);
-    }
+                                             string const& subsel) {
+    // Set the list element. This is important in case we have no other elements except the key.
+    setItem(xpath, ElementPtr(), LeafBaseType::Unknown);
+
+    // Skip key "name" since it was set with the list element in the call above
+    // with the LeafBaseType::Unknown parameter.
+
+    checkAndSetLeaf(elem, xpath, "allocator", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "cache-max-age", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "cache-threshold", LeafBaseType::Dec64);
+    checkAndSetLeaf(elem, xpath, "calculate-tee-times", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "client-class", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "ddns-generated-prefix", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "ddns-override-client-update", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "ddns-override-no-update", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "ddns-qualifying-suffix", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "ddns-replace-client-name", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "ddns-send-updates", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "ddns-ttl-percent", LeafBaseType::Dec64);
+    checkAndSetLeaf(elem, xpath, "ddns-update-on-renew", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "ddns-use-conflict-resolution", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "ddns-conflict-resolution-mode", LeafBaseType::Enum);
+    checkAndSetLeaf(elem, xpath, "hostname-char-replacement", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "hostname-char-set", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "interface", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "max-valid-lifetime", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "min-valid-lifetime", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "rebind-timer", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "renew-timer", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "reservations-global", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "reservations-in-subnet", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "reservations-out-of-pool", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "store-extended-info", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "t1-percent", LeafBaseType::Dec64);
+    checkAndSetLeaf(elem, xpath, "t2-percent", LeafBaseType::Dec64);
+    checkAndSetLeaf(elem, xpath, "valid-lifetime", LeafBaseType::Uint32);
+
+    checkAndSetLeafList(elem, xpath, "require-client-classes", LeafBaseType::String);
+
+    checkAndSetUserContext(elem, xpath);
+
     ConstElementPtr relay = elem->get("relay");
     if (relay) {
-        ConstElementPtr address = relay->get("ip-address");
         ConstElementPtr addresses = relay->get("ip-addresses");
-        if (address) {
-            setItem(xpath + "/relay/ip-addresses", address, SR_STRING_T);
-        } else if (addresses && (addresses->size() > 0)) {
-            for (ConstElementPtr addr : addresses->listValue()) {
-                setItem(xpath + "/relay/ip-addresses", addr, SR_STRING_T);
+        if (addresses && !addresses->empty()) {
+            for (ElementPtr const& addr : addresses->listValue()) {
+                setItem(xpath + "/relay/ip-addresses", addr, LeafBaseType::String);
             }
         }
     }
-    if (subsel == "subnet4") {
-        ConstElementPtr match = elem->get("match-client-id");
-        if (match) {
-            setItem(xpath + "/match-client-id", match, SR_BOOL_T);
-        }
-        ConstElementPtr auth = elem->get("authoritative");
-        if (auth) {
-            setItem(xpath + "/authoritative", auth, SR_BOOL_T);
-        }
-        ConstElementPtr next = elem->get("next-server");
-        if (next) {
-            setItem(xpath + "/next-server", next, SR_STRING_T);
-        }
-        ConstElementPtr hostname = elem->get("server-hostname");
-        if (hostname) {
-            setItem(xpath + "/server-hostname", hostname, SR_STRING_T);
-        }
-        ConstElementPtr boot = elem->get("boot-file-name");
-        if (boot) {
-            setItem(xpath + "/boot-file-name", boot, SR_STRING_T);
-        }
+
+    ConstElementPtr options = elem->get("option-data");
+    if (options && !options->empty()) {
+        setOptionDataList(xpath, options);
     }
-    ConstElementPtr context = Adaptor::getContext(elem);
-    if (context) {
-        ConstElementPtr repr = Element::create(context->str());
-        setItem(xpath + "/user-context", repr, SR_STRING_T);
+
+    ConstElementPtr subnets = elem->get(subsel);
+    if (subnets && !subnets->empty()) {
+        setSubnets(xpath, subnets);
     }
-    checkAndSetLeaf(elem, xpath, "cache-max-age", SR_UINT32_T);
-    checkAndSetLeaf(elem, xpath, "cache-threshold", SR_DECIMAL64_T);
-    checkAndSetLeaf(elem, xpath, "ddns-generated-prefix", SR_STRING_T);
-    checkAndSetLeaf(elem, xpath, "ddns-override-client-update", SR_BOOL_T);
-    checkAndSetLeaf(elem, xpath, "ddns-override-no-update", SR_BOOL_T);
-    checkAndSetLeaf(elem, xpath, "ddns-qualifying-suffix", SR_STRING_T);
-    checkAndSetLeaf(elem, xpath, "ddns-replace-client-name", SR_STRING_T);
-    checkAndSetLeaf(elem, xpath, "ddns-send-updates", SR_BOOL_T);
-    checkAndSetLeaf(elem, xpath, "ddns-update-on-renew", SR_BOOL_T);
-    checkAndSetLeaf(elem, xpath, "ddns-use-conflict-resolution", SR_BOOL_T);
-    checkAndSetLeaf(elem, xpath, "hostname-char-replacement", SR_STRING_T);
-    checkAndSetLeaf(elem, xpath, "hostname-char-set", SR_STRING_T);
-    checkAndSetLeaf(elem, xpath, "reservations-global", SR_BOOL_T);
-    checkAndSetLeaf(elem, xpath, "reservations-in-subnet", SR_BOOL_T);
-    checkAndSetLeaf(elem, xpath, "reservations-out-of-pool", SR_BOOL_T);
-    checkAndSetLeaf(elem, xpath, "store-extended-info", SR_BOOL_T);
+
+    if (subsel == "subnet6") {
+        checkAndSetLeaf(elem, xpath, "interface-id", LeafBaseType::String);
+        checkAndSetLeaf(elem, xpath, "max-preferred-lifetime", LeafBaseType::Uint32);
+        checkAndSetLeaf(elem, xpath, "min-preferred-lifetime", LeafBaseType::Uint32);
+        checkAndSetLeaf(elem, xpath, "pd-allocator", LeafBaseType::String);
+        checkAndSetLeaf(elem, xpath, "preferred-lifetime", LeafBaseType::Uint32);
+        checkAndSetLeaf(elem, xpath, "rapid-commit", LeafBaseType::Bool);
+    } else {
+        checkAndSetLeaf(elem, xpath, "authoritative", LeafBaseType::Bool);
+        checkAndSetLeaf(elem, xpath, "boot-file-name", LeafBaseType::String);
+        checkAndSetLeaf(elem, xpath, "match-client-id", LeafBaseType::Bool);
+        checkAndSetLeaf(elem, xpath, "next-server", LeafBaseType::String);
+        checkAndSetLeaf(elem, xpath, "offer-lifetime", LeafBaseType::Uint32);
+        checkAndSetLeaf(elem, xpath, "server-hostname", LeafBaseType::String);
+    }
 }
 
-TranslatorSharedNetworks::TranslatorSharedNetworks(S_Session session,
+TranslatorSharedNetworks::TranslatorSharedNetworks(Session session,
                                                    const string& model)
-    : TranslatorBasic(session, model),
+    : Translator(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model),
       TranslatorPool(session, model),
@@ -374,17 +253,23 @@ TranslatorSharedNetworks::TranslatorSharedNetworks(S_Session session,
       TranslatorSharedNetwork(session, model) {
 }
 
-TranslatorSharedNetworks::~TranslatorSharedNetworks() {
-}
-
 ElementPtr
-TranslatorSharedNetworks::getSharedNetworks(const string& xpath) {
-    return getList<TranslatorSharedNetwork>(xpath + "/shared-network", *this,
+TranslatorSharedNetworks::getSharedNetworks(DataNode const& data_node) {
+    return getList<TranslatorSharedNetwork>(data_node, "shared-network", *this,
                                             &TranslatorSharedNetwork::getSharedNetwork);
 }
 
+ElementPtr
+TranslatorSharedNetworks::getSharedNetworksFromAbsoluteXpath(string const& xpath) {
+    try {
+        return getSharedNetworks(findXPath(xpath));
+    } catch (NetconfError const&) {
+        return ElementPtr();
+    }
+}
+
 void
-TranslatorSharedNetworks::setSharedNetworks(const string& xpath,
+TranslatorSharedNetworks::setSharedNetworks(string const& xpath,
                                             ConstElementPtr elem) {
     try {
         if ((model_ == KEA_DHCP4_SERVER) ||
@@ -395,18 +280,18 @@ TranslatorSharedNetworks::setSharedNetworks(const string& xpath,
                       "setSharedNetworks not implemented for the model: "
                       << model_);
         }
-    } catch (const sysrepo_exception& ex) {
-        isc_throw(SysrepoError,
-                  "sysrepo error setting shared networks '" << elem->str()
-                  << "' at '" << xpath << "': " << ex.what());
+    } catch (Error const& ex) {
+        isc_throw(NetconfError,
+                  "setting shared networks '" << elem->str()
+                  << "' : " << ex.what());
     }
 }
 
 void
-TranslatorSharedNetworks::setSharedNetworksKea(const string& xpath,
+TranslatorSharedNetworks::setSharedNetworksKea(string const& xpath,
                                                ConstElementPtr elem) {
     for (size_t i = 0; i < elem->size(); ++i) {
-        ConstElementPtr network = elem->get(i);
+        ElementPtr network = elem->getNonConst(i);
         if (!network->contains("name")) {
             isc_throw(BadValue, "setSharedNetworksKea requires name: "
                       << network->str());

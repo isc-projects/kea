@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,12 +10,12 @@
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/pkt6.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp/opaque_data_tuple.h>
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor_class.h>
 #include <dhcp/option6_addrlst.h>
-#include <dhcp/tests/pkt_captures.h>
+#include <dhcp/testutils/pkt_captures.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/tests/dhcp6_client.h>
@@ -158,6 +158,7 @@ const char* CONFIGS[] = {
         "\"subnet6\": [ "
         "{   \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
         "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"id\": 1, "
         "    \"interface\": \"eth1\","
         "    \"reservations\": ["
         "    {"
@@ -214,6 +215,7 @@ const char* CONFIGS[] = {
         "],"
         "\"subnet6\": [ "
         "{   \"subnet\": \"2001:db8:1::/48\", "
+        "    \"id\": 1, "
         "    \"interface\": \"eth1\","
         "    \"pools\": [ "
         "        { \"pool\": \"2001:db8:1:1::/64\","
@@ -274,6 +276,7 @@ const char* CONFIGS[] = {
         "],"
         "\"subnet6\": [ "
         "{   \"subnet\": \"2001:db8::/32\", "
+        "    \"id\": 1, "
         "    \"interface\": \"eth1\","
         "    \"pd-pools\": [ "
         "        { \"prefix\": \"2001:db8:1::\","
@@ -317,6 +320,7 @@ const char* CONFIGS[] = {
         "],"
         "\"subnet6\": [ "
         "{   \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
+        "    \"id\": 1, "
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"interface\": \"eth1\""
         " } ],"
@@ -337,6 +341,7 @@ const char* CONFIGS[] = {
         "],"
         "\"subnet6\": [ "
         "{   \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
+        "    \"id\": 1, "
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"interface\": \"eth1\","
         "    \"reservations\": ["
@@ -369,6 +374,7 @@ const char* CONFIGS[] = {
         "],"
         "\"subnet6\": [ "
         "{   \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
+        "    \"id\": 1, "
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"interface\": \"eth1\","
         "    \"reservations\": ["
@@ -578,6 +584,7 @@ TEST_F(ClassifyTest, matchClassification) {
         "    \"type\": \"boolean\" }],"
         "\"subnet6\": [ "
         "{   \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
+        "    \"id\": 1, "
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"interface\": \"eth1\" } ],"
         "\"client-classes\": [ "
@@ -585,7 +592,13 @@ TEST_F(ClassifyTest, matchClassification) {
         "    \"option-data\": ["
         "        {    \"name\": \"ipv6-forwarding\", "
         "             \"data\": \"true\" } ], "
-        "    \"test\": \"option[host-name].text == 'foo'\" } ] }";
+        "    \"test\": \"option[host-name].text == 'foo'\" },"
+        "{   \"name\": \"template-client-id\","
+        "    \"template-test\": \"substring(option[1].hex,0,3)\" },"
+        "{   \"name\": \"SPAWN_template-hostname_foo\" },"
+        "{   \"name\": \"template-hostname\","
+        "    \"template-test\": \"option[host-name].text\"} ] }";
+
     ASSERT_NO_THROW(configure(config));
 
     // Create packets with enough to select the subnet
@@ -611,28 +624,58 @@ TEST_F(ClassifyTest, matchClassification) {
     srv.classifyPacket(query2);
     srv.classifyPacket(query3);
 
+    EXPECT_EQ(query1->classes_.size(), 6);
+    EXPECT_EQ(query2->classes_.size(), 3);
+    EXPECT_EQ(query3->classes_.size(), 6);
+
+    EXPECT_TRUE(query1->inClass("ALL"));
+    EXPECT_TRUE(query2->inClass("ALL"));
+    EXPECT_TRUE(query3->inClass("ALL"));
+
     // Packets with the exception of the second should be in the router class
     EXPECT_TRUE(query1->inClass("router"));
     EXPECT_FALSE(query2->inClass("router"));
     EXPECT_TRUE(query3->inClass("router"));
 
+    EXPECT_TRUE(query1->inClass("template-hostname"));
+    EXPECT_FALSE(query2->inClass("template-hostname"));
+    EXPECT_TRUE(query3->inClass("template-hostname"));
+
+    EXPECT_TRUE(query1->inClass("SPAWN_template-hostname_foo"));
+    EXPECT_FALSE(query2->inClass("SPAWN_template-hostname_foo"));
+    EXPECT_TRUE(query3->inClass("SPAWN_template-hostname_foo"));
+
+    EXPECT_TRUE(query1->inClass("template-client-id"));
+    EXPECT_TRUE(query2->inClass("template-client-id"));
+    EXPECT_TRUE(query3->inClass("template-client-id"));
+
+    EXPECT_TRUE(query1->inClass("SPAWN_template-client-id_def"));
+    EXPECT_TRUE(query2->inClass("SPAWN_template-client-id_def"));
+    EXPECT_TRUE(query3->inClass("SPAWN_template-client-id_def"));
+
     // Process queries
     AllocEngine::ClientContext6 ctx1;
     bool drop = !srv.earlyGHRLookup(query1, ctx1);
     ASSERT_FALSE(drop);
-    srv.initContext(query1, ctx1, drop);
+    ctx1.subnet_ = srv_.selectSubnet(query1, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx1, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response1 = srv.processSolicit(ctx1);
     AllocEngine::ClientContext6 ctx2;
     drop = !srv.earlyGHRLookup(query2, ctx2);
     ASSERT_FALSE(drop);
-    srv.initContext(query2, ctx2, drop);
+    ctx2.subnet_ = srv_.selectSubnet(query2, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx2, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response2 = srv.processSolicit(ctx2);
     AllocEngine::ClientContext6 ctx3;
     drop = !srv.earlyGHRLookup(query3, ctx3);
     ASSERT_FALSE(drop);
-    srv.initContext(query3, ctx3, drop);
+    ctx3.subnet_ = srv_.selectSubnet(query3, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx3, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response3 = srv.processSolicit(ctx3);
 
@@ -672,6 +715,7 @@ TEST_F(ClassifyTest, required) {
         "    \"type\": \"boolean\" }],"
         "\"subnet6\": [ "
         "{   \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
+        "    \"id\": 1, "
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"interface\": \"eth1\" } ],"
         "\"client-classes\": [ "
@@ -731,19 +775,25 @@ TEST_F(ClassifyTest, required) {
     AllocEngine::ClientContext6 ctx1;
     bool drop = !srv.earlyGHRLookup(query1, ctx1);
     ASSERT_FALSE(drop);
-    srv.initContext(query1, ctx1, drop);
+    ctx1.subnet_ = srv_.selectSubnet(query1, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx1, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response1 = srv.processSolicit(ctx1);
     AllocEngine::ClientContext6 ctx2;
     drop = !srv.earlyGHRLookup(query2, ctx2);
     ASSERT_FALSE(drop);
-    srv.initContext(query2, ctx2, drop);
+    ctx2.subnet_ = srv_.selectSubnet(query2, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx2, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response2 = srv.processSolicit(ctx2);
     AllocEngine::ClientContext6 ctx3;
     drop = !srv.earlyGHRLookup(query3, ctx3);
     ASSERT_FALSE(drop);
-    srv.initContext(query3, ctx3, drop);
+    ctx3.subnet_ = srv_.selectSubnet(query3, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx3, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response3 = srv.processSolicit(ctx3);
 
@@ -779,6 +829,7 @@ TEST_F(ClassifyTest, requiredClassification) {
         "    \"type\": \"boolean\" }],"
         "\"subnet6\": [ "
         "{   \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
+        "    \"id\": 1, "
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"require-client-classes\": [ \"router\" ], "
         "    \"interface\": \"eth1\" } ],"
@@ -839,19 +890,25 @@ TEST_F(ClassifyTest, requiredClassification) {
     AllocEngine::ClientContext6 ctx1;
     bool drop = !srv.earlyGHRLookup(query1, ctx1);
     ASSERT_FALSE(drop);
-    srv.initContext(query1, ctx1, drop);
+    ctx1.subnet_ = srv_.selectSubnet(query1, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx1, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response1 = srv.processSolicit(ctx1);
     AllocEngine::ClientContext6 ctx2;
     drop = !srv.earlyGHRLookup(query2, ctx2);
     ASSERT_FALSE(drop);
-    srv.initContext(query2, ctx2, drop);
+    ctx2.subnet_ = srv_.selectSubnet(query2, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx2, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response2 = srv.processSolicit(ctx2);
     AllocEngine::ClientContext6 ctx3;
     drop = !srv.earlyGHRLookup(query3, ctx3);
     ASSERT_FALSE(drop);
-    srv.initContext(query3, ctx3, drop);
+    ctx3.subnet_ = srv_.selectSubnet(query3, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx3, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response3 = srv.processSolicit(ctx3);
 
@@ -892,6 +949,7 @@ TEST_F(ClassifyTest, subnetClassPriority) {
         "    \"type\": \"boolean\" }],"
         "\"subnet6\": [ "
         "{   \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
+        "    \"id\": 1, "
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"interface\": \"eth1\", "
         "    \"option-data\": ["
@@ -930,7 +988,9 @@ TEST_F(ClassifyTest, subnetClassPriority) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(query, ctx);
     ASSERT_FALSE(drop);
-    srv.initContext(query, ctx,  drop);
+    ctx.subnet_ = srv_.selectSubnet(query, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response = srv.processSolicit(ctx);
 
@@ -970,6 +1030,7 @@ TEST_F(ClassifyTest, subnetGlobalPriority) {
         "         \"data\": \"false\" } ], "
         "\"subnet6\": [ "
         "{   \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
+        "    \"id\": 1, "
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"interface\": \"eth1\", "
         "    \"option-data\": ["
@@ -996,7 +1057,9 @@ TEST_F(ClassifyTest, subnetGlobalPriority) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(query, ctx);
     ASSERT_FALSE(drop);
-    srv.initContext(query, ctx,  drop);
+    ctx.subnet_ = srv_.selectSubnet(query, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response = srv.processSolicit(ctx);
 
@@ -1033,6 +1096,7 @@ TEST_F(ClassifyTest, classGlobalPriority) {
         "    \"type\": \"boolean\" }],"
         "\"subnet6\": [ "
         "{   \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
+        "    \"id\": 1, "
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"interface\": \"eth1\" } ],"
         "\"option-data\": ["
@@ -1071,7 +1135,9 @@ TEST_F(ClassifyTest, classGlobalPriority) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(query, ctx);
     ASSERT_FALSE(drop);
-    srv.initContext(query, ctx,  drop);
+    ctx.subnet_ = srv_.selectSubnet(query, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response = srv.processSolicit(ctx);
 
@@ -1111,15 +1177,18 @@ TEST_F(ClassifyTest, classGlobalPersistency) {
         "\"option-data\": ["
         "    {    \"name\": \"ipv6-forwarding\", "
         "         \"data\": \"false\", "
-        "         \"always-send\": true } ], "
+        "         \"always-send\": true, "
+        "         \"never-send\": false } ], "
         "\"subnet6\": [ "
         "{   \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
+        "    \"id\": 1, "
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"interface\": \"eth1\", "
         "    \"option-data\": ["
         "        {    \"name\": \"ipv6-forwarding\", "
         "             \"data\": \"false\", "
-        "             \"always-send\": false } ] } ] }";
+        "             \"always-send\": false, "
+        "             \"never-send\": false } ] } ] }";
     ASSERT_NO_THROW(configure(config));
 
     // Create a packet with enough to select the subnet and go through
@@ -1139,7 +1208,9 @@ TEST_F(ClassifyTest, classGlobalPersistency) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(query, ctx);
     ASSERT_FALSE(drop);
-    srv.initContext(query, ctx,  drop);
+    ctx.subnet_ = srv_.selectSubnet(query, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response = srv.processSolicit(ctx);
 
@@ -1150,6 +1221,73 @@ TEST_F(ClassifyTest, classGlobalPersistency) {
     // Global sets the value to true/1, subnet to false/0
     // Here subnet has the priority
     EXPECT_EQ(0, opt->getUint8());
+}
+
+// Checks class never-send options have the priority over everything else.
+TEST_F(ClassifyTest, classNeverSend) {
+    IfaceMgrTestConfig test_config(true);
+
+    NakedDhcpv6Srv srv(0);
+
+    // Subnet sets an ipv6-forwarding option in the response.
+    // The router class matches incoming packets with foo in a host-name
+    // option (code 1234) and sets an ipv6-forwarding option in the response.
+    // Note the cancellation flag follows a "OR" semantic so to set
+    // it to false (or to leave the default) has no effect.
+    std::string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000, "
+        "\"option-def\": [ "
+        "{   \"name\": \"host-name\","
+        "    \"code\": 1234,"
+        "    \"type\": \"string\" },"
+        "{   \"name\": \"ipv6-forwarding\","
+        "    \"code\": 2345,"
+        "    \"type\": \"boolean\" }],"
+        "\"option-data\": ["
+        "    {    \"name\": \"ipv6-forwarding\", "
+        "         \"data\": \"false\", "
+        "         \"always-send\": true, "
+        "         \"never-send\": false } ], "
+        "\"subnet6\": [ "
+        "{   \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
+        "    \"id\": 1, "
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth1\", "
+        "    \"option-data\": ["
+        "        {    \"name\": \"ipv6-forwarding\", "
+        "             \"always-send\": false, "
+        "             \"never-send\": true } ] } ] }";
+    ASSERT_NO_THROW(configure(config));
+
+    // Create a packet with enough to select the subnet and go through
+    // the SOLICIT processing
+    Pkt6Ptr query = createSolicit();
+
+    // Do not add an ORO.
+    OptionPtr oro = query->getOption(D6O_ORO);
+    EXPECT_FALSE(oro);
+
+    // Create and add a host-name option to the query
+    OptionStringPtr hostname(new OptionString(Option::V6, 1234, "foo"));
+    ASSERT_TRUE(hostname);
+    query->addOption(hostname);
+
+    // Process the query
+    AllocEngine::ClientContext6 ctx;
+    bool drop = !srv.earlyGHRLookup(query, ctx);
+    ASSERT_FALSE(drop);
+    ctx.subnet_ = srv_.selectSubnet(query, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx, drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr response = srv.processSolicit(ctx);
+
+    // Processing should not add an ip-forwarding option
+    EXPECT_FALSE(response->getOption(2345));
 }
 
 // Checks if the client-class field is indeed used for subnet selection.
@@ -1174,10 +1312,12 @@ TEST_F(ClassifyTest, clientClassifySubnet) {
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ "
         " {  \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"id\": 1, "
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"client-class\": \"foo\" "
         " }, "
         " {  \"pools\": [ { \"pool\": \"2001:db8:2::/64\" } ],"
+        "    \"id\": 2, "
         "    \"subnet\": \"2001:db8:2::/48\", "
         "    \"client-class\": \"xyzzy\" "
         " } "
@@ -1244,6 +1384,7 @@ TEST_F(ClassifyTest, clientClassifyPool) {
         "       \"client-class\": \"xyzzy\" "
         "    } "
         "   ], "
+        "   \"id\": 1, "
         "   \"subnet\": \"2001:db8::/40\" "
         " } "
         "], "
@@ -1261,7 +1402,9 @@ TEST_F(ClassifyTest, clientClassifyPool) {
     AllocEngine::ClientContext6 ctx1;
     bool drop = !srv.earlyGHRLookup(query1, ctx1);
     ASSERT_FALSE(drop);
-    srv.initContext(query1, ctx1,  drop);
+    ctx1.subnet_ = srv_.selectSubnet(query1, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx1, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response1 = srv.processSolicit(ctx1);
     ASSERT_TRUE(response1);
@@ -1277,7 +1420,9 @@ TEST_F(ClassifyTest, clientClassifyPool) {
     AllocEngine::ClientContext6 ctx2;
     drop = !srv.earlyGHRLookup(query2, ctx2);
     ASSERT_FALSE(drop);
-    srv.initContext(query2, ctx2,  drop);
+    ctx2.subnet_ = srv_.selectSubnet(query2, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx2, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response2 = srv.processSolicit(ctx2);
     ASSERT_TRUE(response2);
@@ -1293,7 +1438,9 @@ TEST_F(ClassifyTest, clientClassifyPool) {
     AllocEngine::ClientContext6 ctx3;
     drop = !srv.earlyGHRLookup(query3, ctx3);
     ASSERT_FALSE(drop);
-    srv.initContext(query3, ctx3,  drop);
+    ctx3.subnet_ = srv_.selectSubnet(query3, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx3, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response3 = srv.processSolicit(ctx3);
     ASSERT_TRUE(response3);
@@ -1328,6 +1475,7 @@ TEST_F(ClassifyTest, clientClassifyPoolKnown) {
         "       \"client-class\": \"UNKNOWN\" "
         "    } "
         "   ], "
+        "   \"id\": 1, "
         "   \"subnet\": \"2001:db8::/40\", "
         "   \"reservations\": [ "
         "      { \"duid\": \"01:02:03:04\", \"hostname\": \"foo\" } ] "
@@ -1350,7 +1498,9 @@ TEST_F(ClassifyTest, clientClassifyPoolKnown) {
     AllocEngine::ClientContext6 ctx1;
     bool drop = !srv.earlyGHRLookup(query1, ctx1);
     ASSERT_FALSE(drop);
-    srv.initContext(query1, ctx1, drop);
+    ctx1.subnet_ = srv_.selectSubnet(query1, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx1, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response1 = srv.processSolicit(ctx1);
     ASSERT_TRUE(response1);
@@ -1380,7 +1530,9 @@ TEST_F(ClassifyTest, clientClassifyPoolKnown) {
     AllocEngine::ClientContext6 ctx2;
     drop = !srv.earlyGHRLookup(query2, ctx2);
     ASSERT_FALSE(drop);
-    srv.initContext(query2, ctx2, drop);
+    ctx2.subnet_ = srv_.selectSubnet(query2, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx2, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response2 = srv.processSolicit(ctx2);
     ASSERT_TRUE(response2);
@@ -1439,16 +1591,18 @@ TEST_F(ClassifyTest, relayOverrideAndClientClass) {
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ "
         " {  \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"id\": 1, "
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"client-class\": \"foo\", "
         "    \"relay\": { "
-        "        \"ip-address\": \"2001:db8:3::1\""
+        "        \"ip-addresses\": [ \"2001:db8:3::1\" ]"
         "    }"
         " }, "
         " {  \"pools\": [ { \"pool\": \"2001:db8:2::/64\" } ],"
+        "    \"id\": 2, "
         "    \"subnet\": \"2001:db8:2::/48\", "
         "    \"relay\": { "
-        "        \"ip-address\": \"2001:db8:3::1\""
+        "        \"ip-addresses\": [ \"2001:db8:3::1\" ]"
         "    }"
         " } "
         "],"
@@ -1587,6 +1741,7 @@ TEST_F(ClassifyTest, member) {
         "    \"type\": \"boolean\" }],"
         "\"subnet6\": [ "
         "{   \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
+        "    \"id\": 1, "
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"interface\": \"eth1\" } ],"
         "\"client-classes\": [ "
@@ -1678,19 +1833,25 @@ TEST_F(ClassifyTest, member) {
     AllocEngine::ClientContext6 ctx1;
     bool drop = !srv.earlyGHRLookup(query1, ctx1);
     ASSERT_FALSE(drop);
-    srv.initContext(query1, ctx1, drop);
+    ctx1.subnet_ = srv_.selectSubnet(query1, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx1, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response1 = srv.processSolicit(ctx1);
     AllocEngine::ClientContext6 ctx2;
     drop = !srv.earlyGHRLookup(query2, ctx2);
     ASSERT_FALSE(drop);
-    srv.initContext(query2, ctx2, drop);
+    ctx2.subnet_ = srv_.selectSubnet(query2, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx2, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response2 = srv.processSolicit(ctx2);
     AllocEngine::ClientContext6 ctx3;
     drop = !srv.earlyGHRLookup(query3, ctx3);
     ASSERT_FALSE(drop);
-    srv.initContext(query3, ctx3, drop);
+    ctx3.subnet_ = srv_.selectSubnet(query3, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx3, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response3 = srv.processSolicit(ctx3);
 

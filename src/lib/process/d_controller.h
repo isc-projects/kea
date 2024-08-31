@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -73,7 +73,6 @@ public:
         isc::Exception(file, line, what) { };
 };
 
-
 /// @brief Defines a shared pointer to DControllerBase.
 class DControllerBase;
 typedef boost::shared_ptr<DControllerBase> DControllerBasePtr;
@@ -136,8 +135,8 @@ public:
     /// in their main function. Such a logger uses environmental variables to
     /// control severity, verbosity etc.
     ///
-    /// @param argc  is the number of command line arguments supplied
-    /// @param argv  is the array of string (char *) command line arguments
+    /// @param argc is the number of command line arguments supplied
+    /// @param argv is the array of string (char *) command line arguments
     /// @param test_mode is a bool value which indicates if
     /// @c DControllerBase::launch should be run in the test mode (if true).
     /// This parameter doesn't have default value to force test implementers to
@@ -145,7 +144,7 @@ public:
     ///
     /// @throw throws one of the following exceptions:
     /// InvalidUsage - Indicates invalid command line.
-    /// ProcessInitError  - Failed to create and initialize application
+    /// ProcessInitError - Failed to create and initialize application
     /// process object.
     /// ProcessRunError - A fatal error occurred while in the application
     /// process event loop.
@@ -158,7 +157,7 @@ public:
     /// implementation will merge the configuration update into the existing
     /// configuration and then invoke the application process' configure method.
     ///
-    /// @param  new_config is the new configuration
+    /// @param new_config is the new configuration
     ///
     /// @return returns an Element that contains the results of configuration
     /// update composed of an integer status value (0 means successful,
@@ -173,7 +172,7 @@ public:
     /// configuration and then invoke the application process' configure method
     /// with a final rollback.
     ///
-    /// @param  new_config is the new configuration
+    /// @param new_config is the new configuration
     ///
     /// @return returns an Element that contains the results of configuration
     /// update composed of an integer status value (0 means successful,
@@ -266,9 +265,21 @@ public:
     configGetHandler(const std::string& command,
                      isc::data::ConstElementPtr args);
 
+    /// @brief handler for config-hash-get command
+    ///
+    /// This method handles the config-hash-get command, which retrieves
+    /// the current configuration and returns it in response.
+    ///
+    /// @param command (ignored)
+    /// @param args (ignored)
+    /// @return hash of current configuration wrapped in a response
+    isc::data::ConstElementPtr
+    configHashGetHandler(const std::string& command,
+                         isc::data::ConstElementPtr args);
+
     /// @brief handler for config-write command
     ///
-    /// This handle processes write-config command, which writes the
+    /// This handle processes config-write command, which writes the
     /// current configuration to disk. This command takes one optional
     /// parameter called filename. If specified, the current configuration
     /// will be written to that file. If not specified, the file used during
@@ -484,13 +495,12 @@ protected:
     /// -c/t for specifying the configuration file, -d for verbose logging,
     /// and -v/V/W for version reports.
     ///
-    /// @param argc  is the number of command line arguments supplied
-    /// @param argv  is the array of string (char *) command line arguments
+    /// @param argc is the number of command line arguments supplied
+    /// @param argv is the array of string (char *) command line arguments
     ///
     /// @throw InvalidUsage when there are usage errors.
     /// @throw VersionMessage if the -v, -V or -W arguments is given.
     void parseArgs(int argc, char* argv[]);
-
 
     ///@brief Parse a given file into Elements
     ///
@@ -598,7 +608,7 @@ protected:
     /// version text returned when DControllerBase::getVersion(true) is
     /// invoked.
     /// @return a string containing additional version info
-    virtual std::string getVersionAddendum() { return (""); }
+    virtual std::string getVersionAddendum() { return (std::string()); }
 
     /// @brief Deals with other (i.e. not application name) global objects.
     ///
@@ -642,12 +652,28 @@ private:
     /// @brief Singleton instance value.
     static DControllerBasePtr controller_;
 
-// DControllerTest is named a friend class to facilitate unit testing while
-// leaving the intended member scopes intact.
-friend class DControllerTest;
+    // DControllerTest is named a friend class to facilitate unit testing while
+    // leaving the intended member scopes intact.
+    friend class DControllerTest;
+
+    /// @brief Structure used in parseArgs() to reset arguments in case parseArgs() is called again.
+    struct ExhaustOptions {
+        ExhaustOptions(int argc, char* argv[], std::string opts)
+            : argc_(argc), argv_(argv), opts_(opts) {
+        }
+        ~ExhaustOptions() {
+            while (getopt(argc_, argv_, opts_.c_str()) != -1) {
+            }
+        }
+
+    private:
+        int argc_;
+        char** argv_;
+        std::string opts_;
+    };
 };
 
-} // namespace isc::process
-} // namespace isc
+}  // namespace process
+}  // namespace isc
 
 #endif

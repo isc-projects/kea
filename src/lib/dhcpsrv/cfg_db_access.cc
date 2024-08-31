@@ -1,29 +1,32 @@
-// Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+#include <database/database_connection.h>
 #include <dhcpsrv/cfg_db_access.h>
 #include <dhcpsrv/db_type.h>
+#include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <boost/algorithm/string.hpp>
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <sstream>
 #include <vector>
 
 using namespace isc::data;
+using namespace isc::db;
 
 namespace isc {
 namespace dhcp {
 
 CfgDbAccess::CfgDbAccess()
     : appended_parameters_(), lease_db_access_("type=memfile"),
-      host_db_access_(), ip_reservations_unique_(true) {
+      host_db_access_(), ip_reservations_unique_(true),
+      extended_info_tables_enabled_(false) {
 }
 
 std::string
@@ -54,9 +57,20 @@ CfgDbAccess::getHostDbAccessStringList() const {
 
 void
 CfgDbAccess::createManagers() const {
-    // Recreate lease manager.
-    LeaseMgrFactory::destroy();
-    LeaseMgrFactory::create(getLeaseDbAccessString());
+    std::string access = getLeaseDbAccessString();
+    try {
+        // Recreate lease manager without preserving the registered callbacks.
+        LeaseMgrFactory::recreate(access, false);
+    } catch (const isc::db::DbOpenErrorWithRetry& err) {
+        std::string redacted;
+        try {
+            DatabaseConnection::ParameterMap parameters = DatabaseConnection::parse(access);
+            redacted = DatabaseConnection::redactedAccessString(parameters);
+        } catch (...) {
+        }
+        LOG_INFO(dhcpsrv_logger, DHCPSRV_LEASE_MGR_DB_OPEN_CONNECTION_WITH_RETRY_FAILED)
+                .arg(redacted).arg(err.what());
+    }
 
     // Recreate host data source.
     HostMgr::create();
@@ -69,7 +83,18 @@ CfgDbAccess::createManagers() const {
     // Add database backends.
     std::list<std::string> host_db_access_list = getHostDbAccessStringList();
     for (std::string& hds : host_db_access_list) {
-        HostMgr::addBackend(hds);
+        try {
+            HostMgr::addBackend(hds);
+        } catch (const isc::db::DbOpenErrorWithRetry& err) {
+            std::string redacted;
+            try {
+                DatabaseConnection::ParameterMap parameters = DatabaseConnection::parse(hds);
+                redacted = DatabaseConnection::redactedAccessString(parameters);
+            } catch (...) {
+            }
+            LOG_INFO(dhcpsrv_logger, DHCPSRV_HOST_MGR_DB_OPEN_CONNECTION_WITH_RETRY_FAILED)
+                    .arg(redacted).arg(err.what());
+        }
     }
 
     // Check for a host cache.

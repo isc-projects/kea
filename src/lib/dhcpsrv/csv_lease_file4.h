@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -28,8 +28,7 @@ namespace dhcp {
 ///
 /// @todo This class doesn't validate the lease values read from the file.
 /// The @c Lease4 is a structure that should be itself responsible for this
-/// validation (see http://oldkea.isc.org/ticket/2405). However, when #2405
-/// is implemented, the @c next function may need to be updated to use the
+/// validation. However, the @c next function may need to be updated to use the
 /// validation capability of @c Lease4.
 class CSVLeaseFile4 : public isc::util::VersionedCSVFile, public LeaseFileStats {
 public:
@@ -81,8 +80,7 @@ public:
     /// (false).
     ///
     /// @todo Make sure that the values read from the file are correct.
-    /// The appropriate @c Lease4 validation mechanism should be used once
-    /// ticket http://oldkea.isc.org/ticket/2405 is implemented.
+    /// The appropriate @c Lease4 validation mechanism should be used.
     bool next(Lease4Ptr& lease);
 
 private:
@@ -101,6 +99,7 @@ private:
     /// - hostname
     /// - state
     /// - user_context
+    /// - pool_id
     void initColumns();
 
     ///
@@ -138,6 +137,11 @@ private:
     /// @param row CSV file row holding lease information.
     SubnetID readSubnetID(const util::CSVRow& row);
 
+    /// @brief Reads pool id from the CSV file row.
+    ///
+    /// @param row CSV file row holding lease information.
+    uint32_t readPoolID(const util::CSVRow& row);
+
     /// @brief Reads the FQDN forward flag from the CSV file row.
     ///
     /// @param row CSV file row holding lease information.
@@ -163,7 +167,6 @@ private:
     /// @param row CSV file row holding lease information.
     data::ConstElementPtr readContext(const util::CSVRow& row);
     //@}
-
 };
 
 } // namespace isc::dhcp

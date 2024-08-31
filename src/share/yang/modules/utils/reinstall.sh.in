@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -59,8 +59,18 @@ while test ${#} -gt 0; do
   esac; shift
 done
 
+SYSREPO_PREFIX='@SYSREPO_PREFIX@'
+
 # Default arguments
-test -z "${sysrepo+x}" && sysrepo='/usr/local'
+if test -z "${sysrepo+x}"; then
+  if test -d "${SYSREPO_PREFIX}"; then
+    sysrepo="${SYSREPO_PREFIX}"
+    LD_LIBRARY_PATH="${LD_LIBRARY_PATH-}:${SYSREPO_PREFIX}/lib:${SYSREPO_PREFIX}/lib64"
+    export LD_LIBRARY_PATH
+  else
+    sysrepo='/usr/local'
+  fi
+fi
 test -z "${uninstall_first+x}" && uninstall_first='false'
 
 #------------------------------------------------------------------------------#
@@ -96,7 +106,7 @@ export LD_LIBRARY_PATH="${LD_LIBRARY_PATH-}:${sysrepo}/lib:${sysrepo}/lib64"
 # Check if module is installed.
 is_module_installed() {
   module=${1}
-  if test "$("${sysrepo}/bin/sysrepoctl" -l | grep -F '| I' | cut -d ' ' -f 1 | tail -n +7 | head -n -1 | grep -Ec "^${module}")" -eq 0; then
+  if test "$("${sysrepo}/bin/sysrepoctl" -l | grep -F '| I' | cut -d ' ' -f 1 | grep -Ec "^${module}")" -eq 0; then
     # not installed
     return 1
   fi

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -96,7 +96,7 @@ public:
     ///
     /// @throw HttpListenerError when any of the specified parameters is
     /// invalid.
-    HttpListener(asiolink::IOService& io_service,
+    HttpListener(const asiolink::IOServicePtr& io_service,
                  const asiolink::IOAddress& server_address,
                  const unsigned short server_port,
                  const asiolink::TlsContextPtr& tls_context,
@@ -114,6 +114,17 @@ public:
 
     /// @brief Returns local port on which server is listening.
     uint16_t getLocalPort() const;
+
+    /// @brief file descriptor of the underlying acceptor socket.
+    int getNative() const;
+
+    /// @brief Use external sockets flag.
+    ///
+    /// Add sockets as external sockets of the interface manager
+    /// so available I/O on them makes a waiting select to return.
+    ///
+    /// @param use_external True add external sockets (default false).
+    void addExternalSockets(bool use_external = false);
 
     /// @brief Starts accepting new connections.
     ///

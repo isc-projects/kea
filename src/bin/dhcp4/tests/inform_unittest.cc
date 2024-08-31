@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,7 +9,7 @@
 #include <cc/data.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/libdhcp++.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp4/tests/dhcp4_client.h>
 #include <stats/stats_mgr.h>
@@ -70,6 +70,7 @@ const char* INFORM_CONFIGS[] = {
         "\"valid-lifetime\": 600,"
         "\"subnet4\": [ { "
         "    \"subnet\": \"10.0.0.0/24\", "
+        "    \"id\": 1, "
         "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
         "    \"option-data\": [ {"
         "        \"name\": \"routers\","
@@ -97,6 +98,7 @@ const char* INFORM_CONFIGS[] = {
         "\"valid-lifetime\": 600,"
         "\"subnet4\": [ { "
         "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"id\": 1, "
         "    \"option-data\": [ {"
         "        \"name\": \"routers\","
         "        \"data\": \"192.0.2.200,192.0.2.201\""
@@ -126,6 +128,7 @@ const char* INFORM_CONFIGS[] = {
         "\"boot-file-name\": \"nofile\","
         "\"subnet4\": [ { "
         "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"id\": 1, "
         "    \"reservations\": [ "
         "       {"
         "         \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
@@ -157,6 +160,7 @@ const char* INFORM_CONFIGS[] = {
         "],"
         "\"subnet4\": [ { "
         "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"id\": 1, "
         "    \"reservations\": [ "
         "       {"
         "         \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
@@ -499,11 +503,9 @@ TEST_F(InformTest, messageFieldsLongOptions) {
     // Client requests big option.
     client.requestOption(240);
     // Client also sends multiple options with the same code.
-    OptionDefinitionPtr rai_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                        DHO_DHCP_AGENT_OPTIONS);
-    ASSERT_TRUE(rai_def);
+    const OptionDefinition& rai_def = LibDHCP::DHO_DHCP_AGENT_OPTIONS_DEF();
     // Create RAI options which should be fused by the server.
-    OptionCustomPtr rai(new OptionCustom(*rai_def, Option::V4));
+    OptionCustomPtr rai(new OptionCustom(rai_def, Option::V4));
     for (uint8_t i = 0; i < 4; ++i) {
         // Create a buffer holding some binary data. This data will be
         // used as reference when we read back the data from a created
@@ -547,9 +549,9 @@ TEST_F(InformTest, messageFieldsLongOptions) {
     // then restored.
     uint32_t count = 0;
     uint8_t index = 0;
-    for (auto const& option : client.getContext().query_->options_) {
-        if (option.first == 231) {
-            for (auto const& value : option.second->getData()) {
+    for (auto const& opt : client.getContext().query_->options_) {
+        if (opt.first == 231) {
+            for (auto const& value : opt.second->getData()) {
                 ASSERT_EQ(value, index);
                 index++;
             }
@@ -559,11 +561,11 @@ TEST_F(InformTest, messageFieldsLongOptions) {
     ASSERT_EQ(1, count);
 
     count = 0;
-    for (auto const& option : resp->options_) {
-        if (option.first == DHO_DHCP_AGENT_OPTIONS) {
-            for (auto const& suboption: option.second->getOptions()) {
+    for (auto const& opt : resp->options_) {
+        if (opt.first == DHO_DHCP_AGENT_OPTIONS) {
+            for (auto const& suboption: opt.second->getOptions()) {
                 if (suboption.first == RAI_OPTION_AGENT_CIRCUIT_ID) {
-                    uint8_t index = 0;
+                    index = 0;
                     for (auto const& value : suboption.second->getData()) {
                         ASSERT_EQ(value, index);
                         index++;
@@ -584,10 +586,10 @@ TEST_F(InformTest, messageFieldsLongOptions) {
 
     count = 0;
     string value = "";
-    for (auto const& option : resp->options_) {
-        if (option.second->getType() == 240) {
-            value += string(reinterpret_cast<const char*>(&option.second->getData()[0]),
-                            option.second->getData().size());
+    for (auto const& opt : resp->options_) {
+        if (opt.second->getType() == 240) {
+            value += string(reinterpret_cast<const char*>(&opt.second->getData()[0]),
+                            opt.second->getData().size());
             count++;
         }
     }

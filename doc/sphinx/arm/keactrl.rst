@@ -1,21 +1,21 @@
 .. _keactrl:
 
-*****************************
-Managing Kea with ``keactrl``
-*****************************
+***********************************
+Managing Kea with :iscman:`keactrl`
+***********************************
 
 .. _keactrl-overview:
 
 Overview
 ========
 
-``keactrl`` is a shell script which controls the startup, shutdown, and
-reconfiguration of the Kea servers (``kea-dhcp4``, ``kea-dhcp6``,
-``kea-dhcp-ddns``, ``kea-ctrl-agent``, and ``kea-netconf``). It also
+:iscman:`keactrl` is a shell script which controls the startup, shutdown, and
+reconfiguration of the Kea servers (:iscman:`kea-dhcp4`, :iscman:`kea-dhcp6`,
+:iscman:`kea-dhcp-ddns`, :iscman:`kea-ctrl-agent`, and :iscman:`kea-netconf`). It also
 provides the means for checking the current status of the servers and
 determining the configuration files in use.
 
-``keactrl`` is available only when Kea is built from sources. When installing
+:iscman:`keactrl` is available only when Kea is built from sources. When installing
 Kea using native packages, the native ``systemd`` scripts are provided. See
 :ref:`systemd` Section for details.
 
@@ -24,7 +24,7 @@ Kea using native packages, the native ``systemd`` scripts are provided. See
 Command Line Options
 ====================
 
-``keactrl`` is run as follows:
+:iscman:`keactrl` is run as follows:
 
 .. code-block:: console
 
@@ -33,24 +33,24 @@ Command Line Options
 ``<command>`` is one of the commands described in :ref:`keactrl-commands`.
 
 The optional ``-c keactrl-config-file`` switch allows specification of
-an alternate ``keactrl`` configuration file. (``--ctrl-config`` is a
-synonym for ``-c``.) In the absence of ``-c``, ``keactrl`` uses the
+an alternate :iscman:`keactrl` configuration file. (``--ctrl-config`` is a
+synonym for ``-c``.) In the absence of ``-c``, :iscman:`keactrl` uses the
 default configuration file ``[kea-install-dir]/etc/kea/keactrl.conf``.
 
 The optional ``-s server[,server,...]`` switch selects the servers to
 which the command is issued. (``--server`` is a synonym for ``-s``.) If
-absent, the command is sent to all servers enabled in the ``keactrl``
+absent, the command is sent to all servers enabled in the :iscman:`keactrl`
 configuration file. If multiple servers are specified, they should be
 separated by commas with no intervening spaces.
 
 .. _keactrl-config-file:
 
-The ``keactrl`` Configuration File
-==================================
+The :iscman:`keactrl` Configuration File
+========================================
 
 Depending on the administrator's requirements, it may not be
 necessary to run all of the available servers.
-The ``keactrl`` configuration file sets which servers are enabled and
+The :iscman:`keactrl` configuration file sets which servers are enabled and
 which are disabled. The default configuration file is
 ``[kea-install-dir]/etc/kea/keactrl.conf``, but this can be overridden
 on a per-command basis using the ``-c`` switch.
@@ -105,21 +105,21 @@ The contents of ``keactrl.conf`` are:
    the appropriate values when Kea is installed.
 
 Setting the ``dhcp4``, ``dhcp6``, ``dhcp_ddns``, ``ctrl_agent``, and ``netconf``
-parameters set to "yes" configures ``keactrl`` to manage (start,
-reconfigure) all servers, i.e. ``kea-dhcp4``, ``kea-dhcp6``,
-``kea-dhcp-ddns``, ``kea-ctrl-agent``, and ``kea-netconf``. When any of
-these parameters is set to "no", ``keactrl`` ignores the
+parameters set to "yes" configures :iscman:`keactrl` to manage (start,
+reconfigure) all servers, i.e. :iscman:`kea-dhcp4`, :iscman:`kea-dhcp6`,
+:iscman:`kea-dhcp-ddns`, :iscman:`kea-ctrl-agent`, and :iscman:`kea-netconf`. When any of
+these parameters is set to "no", :iscman:`keactrl` ignores the
 corresponding server when starting or reconfiguring Kea. Some daemons
 (dhcp_ddns and netconf) are disabled by default.
 
-By default, Kea servers managed by ``keactrl`` are located in
+By default, Kea servers managed by :iscman:`keactrl` are located in
 ``[kea-install-dir]/sbin``. This should work for most installations. If
 the default location needs to be altered, the paths
 specified with the ``dhcp4_srv``, ``dhcp6_srv``, ``dhcp_ddns_srv``,
 ``ctrl_agent_srv``, and ``netconf_srv`` parameters should be modified.
 
 The ``kea_verbose`` parameter specifies the verbosity of the servers
-being started. When ``kea_verbose`` is set to "yes," the logging level of
+being started. When ``kea_verbose`` is set to ``yes``, the logging level of
 the server is set to DEBUG. Modification of the logging severity in a
 configuration file, as described in :ref:`logging`, will have no
 effect as long as ``kea_verbose`` is set to "yes." Setting it to
@@ -138,7 +138,7 @@ default settings are used.
 Commands
 ========
 
-The following commands are supported by ``keactrl``:
+The following commands are supported by :iscman:`keactrl`:
 
 -  ``start`` - starts the selected servers.
 
@@ -150,10 +150,10 @@ The following commands are supported by ``keactrl``:
 -  ``status`` - returns the status of the servers (active or inactive)
    and the names of the configuration files in use.
 
--  ``version`` - prints out the version of the ``keactrl`` tool itself,
+-  ``version`` - prints out the version of the :iscman:`keactrl` tool itself,
    together with the versions of the Kea daemons.
 
-Typical output from ``keactrl`` when starting the servers looks similar
+Typical output from :iscman:`keactrl` when starting the servers looks similar
 to the following:
 
 .. code-block:: console
@@ -166,7 +166,7 @@ to the following:
    INFO/keactrl: Starting kea-netconf -c /usr/local/etc/kea/kea-netconf.conf -d
 
 Kea's servers create PID files upon startup. These files are used by
-``keactrl`` to determine whether a given server is running. If one or more
+:iscman:`keactrl` to determine whether a given server is running. If one or more
 servers are running when the start command is issued, the output
 looks similar to the following:
 
@@ -183,8 +183,8 @@ During normal shutdowns, these PID files are deleted; they may, however,
 be left over as remnants following a system crash. It is possible,
 though highly unlikely, that upon system restart the PIDs they contain
 may actually refer to processes unrelated to Kea. This condition will
-cause ``keactrl`` to decide that the servers are running, when in fact they
-are not. In such a case the PID files listed in the ``keactrl`` output
+cause :iscman:`keactrl` to decide that the servers are running, when in fact they
+are not. In such a case the PID files listed in the :iscman:`keactrl` output
 must be manually deleted.
 
 The following command stops all servers:
@@ -214,10 +214,16 @@ in the ``stop`` command output below.
 
 As already mentioned, the reconfiguration of each Kea server is
 triggered by the SIGHUP signal. The ``reload`` command sends the SIGHUP
-signal to any servers that are enabled in the ``keactrl`` configuration
+signal to any servers that are enabled in the :iscman:`keactrl` configuration
 file and that are currently running. When a server receives the SIGHUP signal
 it rereads its configuration file and, if the new configuration is
-valid, uses the new configuration. A reload is executed as follows:
+valid, uses the new configuration.
+If the new configuration proves to be invalid, the server retains its
+current configuration; however, in some cases a fatal error message is logged
+indicating that the server is no longer providing any service: a working
+configuration must be loaded as soon as possible.
+
+A reload is executed as follows:
 
 .. code-block:: console
 
@@ -229,7 +235,7 @@ valid, uses the new configuration. A reload is executed as follows:
 
 If any of the servers are not running, an informational message is
 displayed as in the ``reload`` command output below.
-``kea-netconf`` does not support the SIGHUP signal. If its
+:iscman:`kea-netconf` does not support the SIGHUP signal. If its
 configuration has changed, please stop and restart it for the change to
 take effect.
 
@@ -246,14 +252,14 @@ take effect.
 
    NETCONF is an optional feature that is disabled by default and can be
    enabled during compilation. If Kea was compiled without NETCONF
-   support, ``keactrl`` does not provide
+   support, :iscman:`keactrl` does not provide
    information about it. The NETCONF entries are still present in
    the ``keactrl.conf`` file, but NETCONF status is not shown and other
    commands ignore it.
 
 .. note::
 
-   Currently ``keactrl`` does not report configuration failures when the
+   Currently :iscman:`keactrl` does not report configuration failures when the
    server is started or reconfigured. To check if the server's
    configuration succeeded, the Kea log must be examined for errors. By
    default, the log is written to the `syslog` file.
@@ -286,16 +292,16 @@ Overriding the Server Selection
 ===============================
 
 The optional ``-s`` switch allows the selection of the server(s) to which
-the ``keactrl`` command is issued. For example, the following instructs
-``keactrl`` to stop the ``kea-dhcp4`` and ``kea-dhcp6`` servers and
-leave the ``kea-dhcp-ddns`` and ``kea-ctrl-agent`` running:
+the :iscman:`keactrl` command is issued. For example, the following instructs
+:iscman:`keactrl` to stop the :iscman:`kea-dhcp4` and :iscman:`kea-dhcp6` servers and
+leave the :iscman:`kea-dhcp-ddns` and :iscman:`kea-ctrl-agent` running:
 
 .. code-block:: console
 
    $ keactrl stop -s dhcp4,dhcp6
 
-Similarly, the following starts only the ``kea-dhcp4`` and
-``kea-dhcp-ddns`` servers, but not ``kea-dhcp6`` or ``kea-ctrl-agent``.
+Similarly, the following starts only the :iscman:`kea-dhcp4` and
+:iscman:`kea-dhcp-ddns` servers, but not :iscman:`kea-dhcp6` or :iscman:`kea-ctrl-agent`.
 
 .. code-block:: console
 
@@ -303,24 +309,24 @@ Similarly, the following starts only the ``kea-dhcp4`` and
 
 Note that the behavior of the ``-s`` switch with the ``start`` and
 ``reload`` commands is different from its behavior with the ``stop``
-command. On ``start`` and ``reload``, ``keactrl`` checks whether the
+command. On ``start`` and ``reload``, :iscman:`keactrl` checks whether the
 servers given as parameters to the ``-s`` switch are enabled in the
-``keactrl`` configuration file; if not, the server is ignored. For
+:iscman:`keactrl` configuration file; if not, the server is ignored. For
 ``stop``, however, this check is not made; the command is applied to all
 listed servers, regardless of whether they have been enabled in the
 file.
 
 The following keywords can be used with the ``-s`` command-line option:
 
--  ``dhcp4`` for ``kea-dhcp4``.
+-  ``dhcp4`` for :iscman:`kea-dhcp4`.
 
--  ``dhcp6`` for ``kea-dhcp6``.
+-  ``dhcp6`` for :iscman:`kea-dhcp6`.
 
--  ``dhcp_ddns`` for ``kea-dhcp-ddns``.
+-  ``dhcp_ddns`` for :iscman:`kea-dhcp-ddns`.
 
--  ``ctrl_agent`` for ``kea-ctrl-agent``.
+-  ``ctrl_agent`` for :iscman:`kea-ctrl-agent`.
 
--  ``netconf`` for ``kea-netconf``.
+-  ``netconf`` for :iscman:`kea-netconf`.
 
 -  ``all`` for all servers (default).
 
@@ -329,7 +335,7 @@ The following keywords can be used with the ``-s`` command-line option:
 Native Packages and ``systemd``
 ===============================
 
-``keactrl`` is a script that was developed to assist in managing Kea processes.
+:iscman:`keactrl` is a script that was developed to assist in managing Kea processes.
 However, all modern operating systems have their own process-management scripts,
 such as ``systemd``. In general, these native scripts should be used,
 as they have several advantages. ``systemd`` scripts handle processes in a uniform
@@ -341,17 +347,17 @@ the ability to enable or disable services using commands, and the ability to tem
 service.
 
 Thus, it is recommended to use ``systemctl`` commands if they are available. Native
-Kea packages do not provide ``keactrl``; ``systemctl`` service definitions are
+Kea packages do not provide :iscman:`keactrl`; ``systemctl`` service definitions are
 provided instead. Consult the system documentation for details.
 
 Briefly, here are example commands to check status, start, stop, and restart various Kea daemons:
 
 .. code-block:: console
 
-   # systemctl status isc-kea-ctrl-agent
-   # systemctl start isc-kea-dhcp4-server
-   # systemctl stop isc-kea-dhcp6-server
-   # systemctl restart isc-kea-dhcp-ddns-server
+   # systemctl status kea-ctrl-agent
+   # systemctl start kea-dhcp4
+   # systemctl stop kea-dhcp6
+   # systemctl restart kea-dhcp-ddns
 
 Note that the service names may be slightly different between Linux distributions; in general,
 we have followed the naming conventions in third-party packages. In particular,

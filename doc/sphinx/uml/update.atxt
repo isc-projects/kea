@@ -1,0 +1,13 @@
+         DNS Update Exchange (GSS-TSIG hook)
+
+     ,-------------.                ,----------.
+     |Kea D2 server|                |DNS server|
+     `------+------'                `----+-----'
+            |DNS update request (signed) |
+            |---------------------------->
+            |                            |
+            |DNS update response (signed)|
+            |<----------------------------
+     ,------+------.                ,----+-----.
+     |Kea D2 server|                |DNS server|
+     `-------------'                `----------'

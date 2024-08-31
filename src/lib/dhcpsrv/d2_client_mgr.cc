@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -25,7 +25,8 @@ D2ClientMgr::D2ClientMgr() : d2_client_config_(new D2ClientConfig()),
     // Default constructor initializes with a disabled configuration.
 }
 
-D2ClientMgr::~D2ClientMgr(){
+D2ClientMgr::~D2ClientMgr() {
+    stop();
     stopSender();
 }
 
@@ -68,7 +69,7 @@ D2ClientMgr::setD2ClientConfig(D2ClientConfigPtr& new_config) {
                                                 new_config->getServerIp(),
                                                 new_config->getServerPort(),
                                                 new_config->getNcrFormat(),
-                                                *this,
+                                                shared_from_this(),
                                                 new_config->getMaxQueueSize()));
                 break;
                 }
@@ -177,7 +178,6 @@ D2ClientMgr::generateFqdn(const asiolink::IOAddress& address,
     return (qualifyName(gen_name.str(), ddns_params, trailing_dot));
 }
 
-
 std::string
 D2ClientMgr::qualifyName(const std::string& partial_name,
                          const DdnsParams& ddns_params,
@@ -259,14 +259,14 @@ D2ClientMgr::startSender(D2ClientErrorHandler error_handler) {
     // Create a our own service instance when we are not being multiplexed
     // into an external service..
     private_io_service_.reset(new asiolink::IOService());
-    startSender(error_handler, *private_io_service_);
+    startSender(error_handler, private_io_service_);
     LOG_INFO(dhcpsrv_logger, DHCPSRV_DHCP_DDNS_SENDER_STARTED)
              .arg(d2_client_config_->toText());
 }
 
 void
 D2ClientMgr::startSender(D2ClientErrorHandler error_handler,
-                         isc::asiolink::IOService& io_service) {
+                         const isc::asiolink::IOServicePtr& io_service) {
     if (amSending()) {
         return;
     }
@@ -312,6 +312,10 @@ D2ClientMgr::stopSender() {
         name_change_sender_->stopSending();
         LOG_INFO(dhcpsrv_logger, DHCPSRV_DHCP_DDNS_SENDER_STOPPED);
     }
+
+    if (private_io_service_) {
+        private_io_service_->stopAndPoll();
+    }
 }
 
 void
@@ -354,7 +358,7 @@ D2ClientMgr::getQueueSize() const {
         isc_throw(D2ClientError, "D2ClientMgr::getQueueSize sender is null");
     }
 
-    return(name_change_sender_->getQueueSize());
+    return (name_change_sender_->getQueueSize());
 }
 
 size_t
@@ -363,10 +367,8 @@ D2ClientMgr::getQueueMaxSize() const {
         isc_throw(D2ClientError, "D2ClientMgr::getQueueMaxSize sender is null");
     }
 
-    return(name_change_sender_->getQueueMaxSize());
+    return (name_change_sender_->getQueueMaxSize());
 }
-
-
 
 const dhcp_ddns::NameChangeRequestPtr&
 D2ClientMgr::peekAt(const size_t index) const {
@@ -397,6 +399,11 @@ D2ClientMgr::operator()(const dhcp_ddns::NameChangeSender::Result result,
     }
 }
 
+void
+D2ClientMgr::stop() {
+    name_change_sender_.reset();
+}
+
 int
 D2ClientMgr::getSelectFd() {
     if (!amSending()) {
@@ -418,6 +425,5 @@ D2ClientMgr::runReadyIO() {
     name_change_sender_->runReadyIO();
 }
 
-};  // namespace dhcp
-
-};  // namespace isc
+}  // namespace dhcp
+}  // namespace isc

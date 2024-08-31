@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 #include <bootp_log.h>
 #include <hooks/hooks.h>
 #include <dhcp/pkt4.h>
+#include <process/daemon.h>
 #include <stats/stats_mgr.h>
 
 #include <vector>
@@ -18,6 +19,7 @@ using namespace isc::bootp;
 using namespace isc::dhcp;
 using namespace isc::hooks;
 using namespace isc::log;
+using namespace isc::process;
 using namespace isc::stats;
 
 namespace {
@@ -185,6 +187,11 @@ int pkt4_send(CalloutHandle& handle) {
 ///
 /// @return always 0.
 int load(LibraryHandle& /* handle */) {
+    const std::string& proc_name = Daemon::getProcName();
+    if (proc_name != "kea-dhcp4") {
+        isc_throw(isc::Unexpected, "Bad process name: " << proc_name
+                  << ", expected kea-dhcp4");
+    }
     LOG_INFO(bootp_logger, BOOTP_LOAD);
     return (0);
 }

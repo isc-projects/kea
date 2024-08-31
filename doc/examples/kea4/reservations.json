@@ -4,9 +4,9 @@
 { "Dhcp4":
 
 {
-// Kea is told to listen on ethX interface only.
+// Kea is told to listen on eth0 interface only.
   "interfaces-config": {
-    "interfaces": [ "ethX" ]
+    "interfaces": [ "eth0" ]
   },
 
 // We need to specify the database used to store leases. As of April
@@ -48,11 +48,10 @@
 // to the dynamic pool. Kea is able to handle this case, but it is not
 // recommended from a performance perspective, as Kea would not only need to
 // check if a given address is free, but also whether it is reserved.
-// To avoid this check, one can change reservation-mode to out-of-pool, rather
-// than 'all'. If a subnet does not have reservations at all, the reservation
-// lookup can be skipped altogether (reservation-mode is set to 'disabled').
-// The reservation-mode has been replaced by reservations-global,
-// reservations-in-subnet and reservations-out-of-pool.
+// To avoid this check, one can set "reservations-out-of-pool" to true, beside
+// the "reservations-in-subnet" which should be also set to true. If a subnet
+// does not have reservations at all, the reservation lookup can be skipped
+// altogether by setting "reservations-in-subnet" to false.
 
 // Note that the second reservation is for an address which is within the
 // range of the pool of the dynamically allocated address. The server will
@@ -61,25 +60,25 @@
   "subnet4": [
     {
         "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
+        "id": 1,
         "subnet": "192.0.2.0/24",
         "interface": "eth0",
         // This directive tells Kea that reservations may be made both in-pool
         // and out-of-pool. For improved performance, you may move all reservations
-        // out of the dynamic pool and change reservation-mode to "out-of-pool".
+        // out of the dynamic pool and set "reservations-out-of-pool" to true.
         // Kea will then be able to skip querying for host reservations when
         // assigning leases from dynamic pool.
-        // "reservation-mode": "all",
-        // It is replaced by the "reservations-global", "reservations-in-subnet"
-        // and "reservations-out-of-pool" parameters.
 
-        // Specify if server should lookup global reservations.
+        // Specify whether the server should look up global reservations.
+        // Defaults to false.
         "reservations-global": false,
 
-        // Specify if server should lookup in-subnet reservations.
+        // Specify whether the server should look up in-subnet reservations.
+        // Defaults to true.
         "reservations-in-subnet": true,
 
-        // Specify if server can assume that all reserved addresses
-        // are out-of-pool.
+        // Specify whether the server can assume that all reserved addresses
+        // are out-of-pool. Defaults to false.
         // Ignored when reservations-in-subnet is false.
         // If specified, it is inherited by "shared-networks" and
         // "subnet4" levels.
@@ -155,7 +154,7 @@
 // Note: flexible identifier requires flex_id hook library to be
 // loaded to work.
         {
-            "flex-id": "s0mEVaLue",
+            "flex-id": "'s0mEVaLue'",
             "ip-address": "192.0.2.206"
         }
 
@@ -169,7 +168,7 @@
     "loggers": [
         {
             "name": "kea-dhcp4",
-            "output_options": [
+            "output-options": [
                 {
                     "output": "stdout"
                 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,17 +12,16 @@
 // See the description of the namespace below.
 #include <config.h>
 
-#include <unistd.h>             // for some network system calls
+
+#include <exceptions/exceptions.h>
+#include <asiolink/io_error.h>
+#include <asiolink/io_socket.h>
+#include <util/buffer.h>
 
 #include <functional>
 #include <string>
 
-#include <exceptions/exceptions.h>
-
-#include <util/buffer.h>
-
-#include <asiolink/io_error.h>
-#include <asiolink/io_socket.h>
+#include <unistd.h>             // for some network system calls
 
 // We want to use coroutine.hpp from the system's boost headers if possible.
 // However, very old Boost versions (provided by RHEL 7 or CentOS 7) didn't have
@@ -106,7 +105,7 @@ protected:
     IOAsioSocket() {}
 public:
     /// The destructor.
-    virtual ~IOAsioSocket() {}
+    virtual ~IOAsioSocket() = default;
     //@}
 
     /// \brief Return the "native" representation of the socket.
@@ -147,7 +146,7 @@ public:
     /// asynchronous operation.  On a UDP socket, it is just a call to "open()"
     /// and completes synchronously.
     ///
-    /// For TCP, signalling of the completion of the operation is done by
+    /// For TCP, signaling of the completion of the operation is done by
     /// by calling the callback function in the normal way.  This could be done
     /// for UDP (by posting en event on the event queue); however, that will
     /// incur additional overhead in the most common case.  So we give the
@@ -171,7 +170,7 @@ public:
     /// \brief Open AsioSocket
     ///
     /// Opens the socket for asynchronous I/O.  The open will complete
-    /// synchronously on UCP or asynchronously on TCP (in which case a callback
+    /// synchronously on UDP or asynchronously on TCP (in which case a callback
     /// will be queued).
     ///
     /// \param endpoint Pointer to the endpoint object.  This is ignored for
@@ -258,20 +257,20 @@ public:
     ///        really the TCP count field and is set to that value when enough
     ///        of a TCP message is received.  It should be initialized to -1
     ///        before the first read is executed.
-    /// \param outbuff Output buffer.  Data in the staging buffer may be copied
+    /// \param buff Output buffer.  Data in the staging buffer may be copied
     ///        to this output buffer in the call.
     ///
     /// \return true if the receive is complete, false if another receive is
-    ///         needed.  This is always true for UDP, but for TCP involves
-    ///         checking the amount of data received so far against the amount
-    ///         expected (as indicated by the two-byte count field).  If this
-    ///         method returns false, another read should be queued and data
-    ///         should be read into the staging buffer at offset given by the
-    ///         "offset" parameter.
+    ///        needed.  This is always true for UDP, but for TCP involves
+    ///        checking the amount of data received so far against the amount
+    ///        expected (as indicated by the two-byte count field).  If this
+    ///        method returns false, another read should be queued and data
+    ///        should be read into the staging buffer at offset given by the
+    ///        "offset" parameter.
     virtual bool processReceivedData(const void* staging, size_t length,
-                                     size_t& cumulative, size_t& offset,
-                                     size_t& expected,
-                                     isc::util::OutputBufferPtr& outbuff) = 0;
+                                     size_t& cumulative,
+                                     size_t& offset, size_t& expected,
+                                     isc::util::OutputBufferPtr& buff) = 0;
 
     /// \brief Cancel I/O On AsioSocket
     virtual void cancel() = 0;
@@ -375,7 +374,7 @@ private:
     const int protocol_;
 };
 
-} // namespace asiolink
-} // namespace isc
+}  // namespace asiolink
+}  // namespace isc
 
 #endif // IO_ASIO_SOCKET_H

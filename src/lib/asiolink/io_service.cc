@@ -1,10 +1,11 @@
-// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/io_service.h>
 
@@ -16,110 +17,105 @@
 namespace isc {
 namespace asiolink {
 
-namespace {
-// A trivial wrapper for std::function.  SunStudio doesn't seem to be capable
-// of handling a std::function object if directly passed to
-// io_service::post().
-class CallbackWrapper {
-public:
-
-    /// \brief Constructor
-    CallbackWrapper(const std::function<void()>& callback) :
-        callback_(callback) {}
-
-    /// \brief Function operator
-    void operator()() {
-        callback_();
-    }
-
-private:
-
-    /// \brief The callback function
-    std::function<void()> callback_;
-};
-}
-
 class IOServiceImpl {
+    /// @brief Constructors and Destructor.
+    ///
+    /// @note The copy constructor and the assignment operator are
+    /// intentionally defined as private, making this class non-copyable.
+    //@{
 private:
     IOServiceImpl(const IOService& source);
     IOServiceImpl& operator=(const IOService& source);
 public:
-    /// \brief The constructor
+    /// @brief The constructor.
     IOServiceImpl() :
         io_service_(),
         work_(new boost::asio::io_service::work(io_service_)) {
     };
 
-    /// \brief The destructor.
-    ~IOServiceImpl() {};
+    /// @brief The destructor.
+    ~IOServiceImpl() = default;
     //@}
 
-    /// \brief Start the underlying event loop.
+    /// @brief Start the underlying event loop.
     ///
     /// This method does not return control to the caller until
-    /// the \c stop() method is called via some handler.
+    /// the @ref stop() or @ref stopWork() method is called via some handler.
     void run() {
         io_service_.run();
     };
 
-    /// \brief Run the underlying event loop for a single event.
+    /// @brief Run the underlying event loop for a single event.
     ///
     /// This method return control to the caller as soon as the
     /// first handler has completed.  (If no handlers are ready when
     /// it is run, it will block until one is.)
-    void run_one() {
-        io_service_.run_one();
+    ///
+    /// @return The number of handlers that were executed.
+    size_t runOne() {
+        return (static_cast<size_t>(io_service_.run_one()));
     };
 
-    /// \brief Run the underlying event loop for a ready events.
+    /// @brief Run the underlying event loop for a ready events.
     ///
     /// This method executes handlers for all ready events and returns.
     /// It will return immediately if there are no ready events.
-    void poll() {
-        io_service_.poll();
+    ///
+    /// @return The number of handlers that were executed.
+    size_t poll() {
+        return (static_cast<size_t>(io_service_.poll()));
     };
 
-    /// \brief Stop the underlying event loop.
+    /// @brief Run the underlying event loop for a ready events.
     ///
-    /// This will return the control to the caller of the \c run() method.
+    /// This method executes handlers for all ready events and returns.
+    /// It will return immediately if there are no ready events.
+    ///
+    /// @return The number of handlers that were executed.
+    size_t pollOne() {
+        return (static_cast<size_t>(io_service_.poll_one()));
+    };
+
+    /// @brief Stop the underlying event loop.
+    ///
+    /// This will return the control to the caller of the @ref run() method.
     void stop() {
         io_service_.stop();
     }
 
-    /// \brief Indicates if the IOService has been stopped.
+    /// @brief Indicates if the IOService has been stopped.
     ///
-    /// \return true if the IOService has been stopped, false otherwise.
+    /// @return true if the IOService has been stopped, false otherwise.
     bool stopped() const {
         return (io_service_.stopped());
     }
 
-    /// \brief Restarts the IOService in preparation for a subsequent \c run() invocation.
+    /// @brief Restarts the IOService in preparation for a subsequent @ref run() invocation.
     void restart() {
         io_service_.reset();
     }
 
-    /// \brief Removes IO service work object to let it finish running
+    /// @brief Removes IO service work object to let it finish running
     /// when all handlers have been invoked.
     void stopWork() {
         work_.reset();
     }
 
-    /// \brief Return the native \c io_service object used in this wrapper.
+    /// @brief Return the native @c io_service object used in this wrapper.
     ///
     /// This is a short term work around to support other Kea modules
-    /// that share the same \c io_service with the authoritative server.
+    /// that share the same @c io_service with the authoritative server.
     /// It will eventually be removed once the wrapper interface is
     /// generalized.
-    boost::asio::io_service& get_io_service() {
+    boost::asio::io_service& getInternalIOService() {
         return (io_service_);
     }
 
-    /// \brief Post a callback on the IO service
+    /// @brief Post a callback on the IO service.
     ///
-    /// \param callback The callback to be run on the IO service.
+    /// @param callback The callback to be run on the IO service.
     void post(const std::function<void ()>& callback) {
-        const CallbackWrapper wrapper(callback);
-        io_service_.post(wrapper);
+        io_service_.post(callback);
     }
 
 private:
@@ -138,14 +134,19 @@ IOService::run() {
     io_impl_->run();
 }
 
-void
-IOService::run_one() {
-    io_impl_->run_one();
+size_t
+IOService::runOne() {
+    return (io_impl_->runOne());
 }
 
-void
+size_t
 IOService::poll() {
-    io_impl_->poll();
+    return (io_impl_->poll());
+}
+
+size_t
+IOService::pollOne() {
+    return (io_impl_->pollOne());
 }
 
 void
@@ -169,8 +170,8 @@ IOService::stopWork() {
 }
 
 boost::asio::io_service&
-IOService::get_io_service() {
-    return (io_impl_->get_io_service());
+IOService::getInternalIOService() {
+    return (io_impl_->getInternalIOService());
 }
 
 void
@@ -178,5 +179,20 @@ IOService::post(const std::function<void ()>& callback) {
     return (io_impl_->post(callback));
 }
 
-} // namespace asiolink
-} // namespace isc
+void
+IOService::stopAndPoll(bool ignore_errors) {
+    stop();
+    restart();
+    if (ignore_errors) {
+        try {
+            poll();
+        } catch (...) {
+            // Ignore all exceptions.
+        }
+    } else {
+        poll();
+    }
+}
+
+}  // namespace asiolink
+}  // namespace isc

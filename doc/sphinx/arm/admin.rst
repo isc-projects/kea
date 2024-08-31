@@ -37,21 +37,22 @@ version, it will fail; administrative action is required to upgrade the schema.
 
 .. _kea-admin:
 
-The ``kea-admin`` Tool
-======================
+The :iscman:`kea-admin` Tool
+============================
 
-To manage the databases, Kea provides the ``kea-admin`` tool. It can
+To manage the databases, Kea provides the :iscman:`kea-admin` tool. It can
 initialize a new backend, check its version number, perform a backend
 upgrade, and dump lease data to a text file.
 
-``kea-admin`` takes two mandatory parameters: ``command`` and
+:iscman:`kea-admin` takes two mandatory parameters: ``command`` and
 ``backend``. Additional, non-mandatory options may be specified. The
 currently supported commands are:
 
--  ``db-init`` — initializes a new database schema. This is useful
-   during a new Kea installation. The database is initialized to the
-   latest version supported by the version of the software being
-   installed.
+-  ``db-init`` — initializes a new database schema, which is useful
+   during a new Kea installation. The new database is updated to
+   match the Kea version being installed. :iscman:`kea-admin` is
+   automatically invoked with this command if a missing schema is
+   detected during startup or reconfiguration of Kea DHCP servers.
 
 -  ``db-version`` — reports the database backend version number. This
    is not necessarily equal to the Kea version number, as each backend
@@ -135,7 +136,7 @@ configuration file. (There are no plans to add a host reservations
 storage capability to this backend.)
 
 No special initialization steps are necessary for the memfile backend.
-During the first run, both ``kea-dhcp4`` and ``kea-dhcp6`` create
+During the first run, both :iscman:`kea-dhcp4` and :iscman:`kea-dhcp6` create
 an empty lease file if one is not present. Necessary disk-write
 permission is required.
 
@@ -165,6 +166,18 @@ MySQL
 MySQL is able to store leases, host reservations, options defined on a
 per-host basis, and a subset of the server configuration parameters
 (serving as a configuration backend).
+
+.. _mysql-database-engine:
+
+MySQL 5.7 vs MySQL 8 vs MariaDB 10 and 11
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In our Kea performance testing, MySQL 8 shows a 60-90% drop in speed
+in comparison with MySQL 5.7.
+Due to the upcoming MySQL 5.7 EOL, we recommend using MariaDB instead of MySQL 8.
+
+MySQL 5.7, MySQL 8, MariaDB 10, and MariaDB 11 are fully compatible,
+interchangeable, and tested with Kea.
 
 .. _mysql-database-create:
 
@@ -208,7 +221,7 @@ Usually the setting is configured in the [mysqld] section in ``/etc/mysql/my.cnf
 When setting up the MySQL database for the first time, the
 database area must be created within MySQL, and the MySQL user ID under
 which Kea will access the database must be set up. This needs to be done manually,
-rather than via ``kea-admin``.
+rather than via :iscman:`kea-admin`.
 
 To create the database:
 
@@ -249,14 +262,14 @@ To create the database:
       mysql> quit
       Bye
 
-    Then use the  ``kea-admin`` tool to create the database.
+    Then use the  :iscman:`kea-admin` tool to create the database.
 
     .. code-block:: console
 
         $ kea-admin db-init mysql -u database-user -p database-password -n database-name
 
     While it is possible to create the database from within the MySQL client, we recommend
-    using the ``kea-admin`` tool as it performs some necessary validations to ensure Kea can
+    using the :iscman:`kea-admin` tool as it performs some necessary validations to ensure Kea can
     access the database at runtime. Among those checks is verification that the schema does not contain
     any pre-existing tables; any pre-existing tables must be removed
     manually. An additional check examines the user's ability to create functions and
@@ -310,18 +323,18 @@ To create the database:
       mysql> quit
       Bye
 
-If the tables were not created in Step 4, run the ``kea-admin`` tool
+If the tables were not created in Step 4, run the :iscman:`kea-admin` tool
 to create them now:
 
 .. code-block:: console
 
    $ kea-admin db-init mysql -u database-user -p database-password -n database-name
 
-Do not do this if the tables were created in Step 4. ``kea-admin``
+Do not do this if the tables were created in Step 4. :iscman:`kea-admin`
 implements rudimentary checks; it will refuse to initialize a database
 that contains any existing tables. To start from scratch,
 all data must be removed manually. (This process is a manual operation
-on purpose, to avoid accidentally irretrievable mistakes by ``kea-admin``.)
+on purpose, to avoid accidentally irretrievable mistakes by :iscman:`kea-admin`.)
 
 .. _mysql-upgrade:
 
@@ -449,7 +462,7 @@ the files may be located in ``/var/lib/pgsql/data``.
 The first task is to create both the database and the user under
 which the servers will access it. A number of steps are required:
 
-1. Log into PostgreSQL as "root":
+1. Log into PostgreSQL as "postgres":
 
    .. code-block:: console
 
@@ -476,6 +489,10 @@ which the servers will access it. A number of steps are required:
       CREATE ROLE
       postgres=# GRANT ALL PRIVILEGES ON DATABASE database-name TO user-name;
       GRANT
+      postgres=# \c database-name
+      You are now connected to database "database-name" as user "postgres".
+      postgres=# GRANT ALL PRIVILEGES ON SCHEMA public TO user-name;
+      GRANT
       postgres=#
 
 4. Exit PostgreSQL:
@@ -487,7 +504,7 @@ which the servers will access it. A number of steps are required:
       $
 
 5. At this point, create the database tables either
-   using the ``kea-admin`` tool, as explained in the next section
+   using the :iscman:`kea-admin` tool, as explained in the next section
    (recommended), or manually. To create the tables manually, enter the
    following command. PostgreSQL will prompt the administrator to enter the
    new user's password that was specified in Step 3. When the command
@@ -529,8 +546,8 @@ which the servers will access it. A number of steps are required:
    file is normally located in the primary data directory for the
    PostgreSQL server. The precise path may vary depending on the
    operating system and version, but the default location for PostgreSQL is
-   ``/etc/postgresql/*/main/postgresql.conf``. However, on some systems
-   (notably CentOS 8), the file may reside in ``/var/lib/pgsql/data``.
+   ``/etc/postgresql/*/main/postgresql.conf``. However, on some systems, the
+   file may reside in ``/var/lib/pgsql/data``.
 
    Assuming Kea is running on the same host as PostgreSQL, adding lines
    similar to the following should be sufficient to provide
@@ -549,21 +566,51 @@ which the servers will access it. A number of steps are required:
    may be necessary to restart PostgreSQL for the changes to
    take effect.
 
-Initialize the PostgreSQL Database Using ``kea-admin``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Initialize the PostgreSQL Database Using :iscman:`kea-admin`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If the tables were not created manually, do so now by
-running the ``kea-admin`` tool:
+running the :iscman:`kea-admin` tool:
 
 .. code-block:: console
 
    $ kea-admin db-init pgsql -u database-user -p database-password -n database-name
 
-Do not do this if the tables were already created manually. ``kea-admin``
+Do not do this if the tables were already created manually. :iscman:`kea-admin`
 implements rudimentary checks; it will refuse to initialize a database
 that contains any existing tables. To start from scratch,
 all data must be removed manually. (This process is a manual operation
-on purpose, to avoid accidentally irretrievable mistakes by ``kea-admin``.)
+on purpose, to avoid accidentally irretrievable mistakes by :iscman:`kea-admin`.)
+
+Upgrading a PostgreSQL Engine From an Earlier Version
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you upgraded your PostgreSQL from a version prior to 15.0, you need to
+grant additional privileges to the user:
+
+First, log into PostgreSQL as "postgres":
+
+   .. code-block:: console
+
+      $ sudo -u postgres psql -d database-name -U postgres
+      Enter password:
+      postgres=#
+
+Next, grant the access to the ``public`` schema.
+
+   .. code-block:: psql
+
+      postgres=# GRANT ALL PRIVILEGES ON SCHEMA public TO user-name;
+      GRANT
+      postgres=#
+
+Now, quit the PostgreSQL client:
+
+   .. code-block:: psql
+
+      postgres=# \q
+      Bye
+      $
 
 .. _pgsql-upgrade:
 
@@ -598,6 +645,42 @@ supported:
 .. code-block:: console
 
    $ ./configure [other-options] --disable-pgsql-ssl
+
+.. _pgsql-performance:
+
+Improved Performance With PostgreSQL
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Changing the PostgreSQL internal value ``synchronous_commit`` from the default value
+of ON to OFF can result in significant gains in Kea performance; on slow systems, the gain
+can be over 1000%. It can be set per-session for testing:
+
+.. code-block:: psql
+
+    postgres=# SET synchronous_commit = OFF;
+
+or permanently via command (preferred method):
+
+.. code-block:: psql
+
+    postgres=# ALTER SYSTEM SET synchronous_commit=OFF;
+
+or permanently in ``/etc/postgresql/[version]/main/postgresql.conf``:
+
+.. code-block:: ini
+
+    synchronous_commit = off
+
+Changing this value can cause problems during data recovery
+after a crash, so we recommend a careful read of the `PostgreSQL documentation
+<https://www.postgresql.org/docs/current/wal-async-commit.html>`__.
+With the default value of ON, PostgreSQL writes changes to disk after every INSERT or UPDATE query
+(in Kea terms, every time a client gets a new lease or renews an existing lease). When
+``synchronous_commit`` is set to OFF, PostgreSQL adds some delay before writing the changes.
+Batching writes gives a substantial performance boost,
+but in the worst-case scenario, all changes in the last moment before a crash
+could be lost. Since Kea is stable software and crashes very rarely,
+most deployments find the performance benefits outweigh the potential risks.
 
 Using Read-Only Databases With Host Reservations
 ------------------------------------------------

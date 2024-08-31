@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -47,7 +47,6 @@ public:
         DHCP4O6_PORT,
         COMMENT,
         SERVER_TAG,
-        RESERVATION_MODE,
         RESERVATIONS_GLOBAL,
         RESERVATIONS_IN_SUBNET,
         RESERVATIONS_OUT_OF_POOL,
@@ -71,8 +70,16 @@ public:
         IP_RESERVATIONS_UNIQUE,
         RESERVATIONS_LOOKUP_FIRST,
         DDNS_UPDATE_ON_RENEW,
-        DDNS_USE_CONFLICT_RESOLUTION,
         PARKED_PACKET_LIMIT,
+        ALLOCATOR,
+        DDNS_TTL_PERCENT,
+        DDNS_CONFLICT_RESOLUTION_MODE,
+        COMPATIBILITY,
+        DHCP_DDNS,
+        EXPIRED_LEASES_PROCESSING,
+        MULTI_THREADING,
+        SANITY_CHECKS,
+        DHCP_QUEUE_CONTROL,
 
         // DHCPv4 specific parameters.
         ECHO_CLIENT_ID,
@@ -81,12 +88,16 @@ public:
         NEXT_SERVER,
         SERVER_HOSTNAME,
         BOOT_FILE_NAME,
+        OFFER_LIFETIME,
+        STASH_AGENT_OPTIONS,
 
         // DHCPv6 specific parameters.
         DATA_DIRECTORY,
         PREFERRED_LIFETIME,
         MIN_PREFERRED_LIFETIME,
         MAX_PREFERRED_LIFETIME,
+        PD_ALLOCATOR,
+        SERVER_ID,
 
         // Size sentinel.
         SIZE

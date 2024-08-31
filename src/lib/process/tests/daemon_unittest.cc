@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -248,7 +248,7 @@ TEST_F(DaemonTest, createPIDFileOverwrite) {
 // Verifies that Daemon destruction deletes the PID file
 TEST_F(DaemonTest, PIDFileCleanup) {
     boost::shared_ptr<DaemonImpl> instance;
-    instance.reset(new DaemonImpl);
+    instance.reset(new DaemonImpl());
 
     instance->setConfigFile("test.conf");
     instance->setProcName("daemon_test");
@@ -283,7 +283,7 @@ TEST_F(DaemonTest, parsingConsoleOutput) {
     "{ \"loggers\": ["
     "    {"
     "        \"name\": \"kea\","
-    "        \"output_options\": ["
+    "        \"output-options\": ["
     "            {"
     "                \"output\": \"stdout\""
     "            }"

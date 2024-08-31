@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,22 +6,7 @@
 
 #include <config.h>
 
-#include <stdint.h>
-
-#include <algorithm>
-#include <cassert>
-#include <string>
-#include <sstream>
-#include <vector>
-
-#include <boost/foreach.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/shared_ptr.hpp>
-
 #include <exceptions/exceptions.h>
-
-#include <util/buffer.h>
-
 #include <dns/edns.h>
 #include <dns/exceptions.h>
 #include <dns/message.h>
@@ -36,11 +21,22 @@
 #include <dns/rrttl.h>
 #include <dns/rrset.h>
 #include <dns/tsig.h>
+#include <util/buffer.h>
+
+#include <stdint.h>
+#include <algorithm>
+#include <cassert>
+#include <string>
+#include <sstream>
+#include <vector>
+#include <boost/lexical_cast.hpp>
+#include <boost/shared_ptr.hpp>
+
+using namespace isc::dns::rdata;
+using namespace isc::util;
 
 using namespace std;
 using boost::lexical_cast;
-using namespace isc::dns::rdata;
-using namespace isc::util;
 
 namespace isc {
 namespace dns {
@@ -93,7 +89,7 @@ public:
     Message::Mode mode_;
     qid_t qid_;
 
-    // We want to use NULL for [op,r]code_ to mean the code being not
+    // We want to use null for [op,r]code_ to mean the code being not
     // correctly parsed or set.  We store the real code object in
     // xxcode_placeholder_ and have xxcode_ refer to it when the object
     // is valid.
@@ -139,11 +135,13 @@ public:
     void toWire(AbstractMessageRenderer& renderer, TSIGContext* tsig_ctx);
 };
 
+/// @brief Pointer to the @ref MessageImpl object.
+typedef boost::shared_ptr<MessageImpl> MessageImplPtr;
+
 MessageImpl::MessageImpl(Message::Mode mode) :
     mode_(mode),
-    rcode_placeholder_(Rcode(0)), // as a placeholder the value doesn't matter
-    opcode_placeholder_(Opcode(0)) // ditto
-{
+    rcode_placeholder_(Rcode(0)), // for placeholders the value doesn't matter
+    opcode_placeholder_(Opcode(0)) {
     init();
 }
 
@@ -151,8 +149,8 @@ void
 MessageImpl::init() {
     flags_ = 0;
     qid_ = 0;
-    rcode_ = NULL;
-    opcode_ = NULL;
+    rcode_ = 0;
+    opcode_ = 0;
     edns_ = EDNSPtr();
     tsig_rr_ = ConstTSIGRecordPtr();
 
@@ -200,8 +198,9 @@ template <typename T>
 struct RenderSection {
     RenderSection(AbstractMessageRenderer& renderer, const bool partial_ok) :
         counter_(0), renderer_(renderer), partial_ok_(partial_ok),
-        truncated_(false)
-    {}
+        truncated_(false) {
+    }
+
     void operator()(const T& entry) {
         // If it's already truncated, ignore the rest of the section.
         if (truncated_) {
@@ -217,10 +216,17 @@ struct RenderSection {
             }
         }
     }
-    unsigned int getTotalCount() { return (counter_); }
+
+    unsigned int getTotalCount() {
+        return (counter_);
+    }
+
     unsigned int counter_;
+
     AbstractMessageRenderer& renderer_;
+
     const bool partial_ok_;
+
     bool truncated_;
 };
 }
@@ -231,11 +237,11 @@ MessageImpl::toWire(AbstractMessageRenderer& renderer, TSIGContext* tsig_ctx) {
         isc_throw(InvalidMessageOperation,
                   "Message rendering attempted in non render mode");
     }
-    if (rcode_ == NULL) {
+    if (!rcode_) {
         isc_throw(InvalidMessageOperation,
                   "Message rendering attempted without Rcode set");
     }
-    if (opcode_ == NULL) {
+    if (!opcode_) {
         isc_throw(InvalidMessageOperation,
                   "Message rendering attempted without Opcode set");
     }
@@ -244,7 +250,7 @@ MessageImpl::toWire(AbstractMessageRenderer& renderer, TSIGContext* tsig_ctx) {
     // case correctly later when that happens.  orig_xxx variables remember
     // some configured parameters of renderer in case they are needed in
     // truncation processing below.
-    const size_t tsig_len = (tsig_ctx != NULL) ? tsig_ctx->getTSIGLength() : 0;
+    const size_t tsig_len = (tsig_ctx ? tsig_ctx->getTSIGLength() : 0);
     const size_t orig_msg_len_limit = renderer.getLengthLimit();
     const AbstractMessageRenderer::CompressMode orig_compress_mode =
         renderer.getCompressMode();
@@ -318,7 +324,7 @@ MessageImpl::toWire(AbstractMessageRenderer& renderer, TSIGContext* tsig_ctx) {
     // If we're adding a TSIG to a truncated message, clear all RRsets
     // from the message except for the question before adding the TSIG.
     // If even (some of) the question doesn't fit, don't include it.
-    if (tsig_ctx != NULL && renderer.isTruncated()) {
+    if (tsig_ctx && renderer.isTruncated()) {
         renderer.clear();
         renderer.setLengthLimit(orig_msg_len_limit - tsig_len);
         renderer.setCompressMode(orig_compress_mode);
@@ -362,7 +368,7 @@ MessageImpl::toWire(AbstractMessageRenderer& renderer, TSIGContext* tsig_ctx) {
     renderer.writeUint16At(arcount, header_pos);
 
     // Add TSIG, if necessary, at the end of the message.
-    if (tsig_ctx != NULL) {
+    if (tsig_ctx) {
         // Release the reserved space in the renderer.
         renderer.setLengthLimit(orig_msg_len_limit);
 
@@ -380,11 +386,7 @@ MessageImpl::toWire(AbstractMessageRenderer& renderer, TSIGContext* tsig_ctx) {
 }
 
 Message::Message(Mode mode) :
-    impl_(new MessageImpl(mode))
-{}
-
-Message::~Message() {
-    delete impl_;
+    impl_(new MessageImpl(mode)) {
 }
 
 bool
@@ -406,7 +408,7 @@ Message::setHeaderFlag(const HeaderFlag flag, const bool on) {
     if (flag == 0 || (flag & ~HEADERFLAG_MASK) != 0) {
         isc_throw(InvalidParameter,
                   "Message::getHeaderFlag:: Invalid flag is specified: " <<
-                  "0x" << std::hex << flag);
+                  "0x" << std::hex << static_cast<int>(flag));
     }
     if (on) {
         impl_->flags_ |= flag;
@@ -431,7 +433,7 @@ Message::setQid(qid_t qid) {
 
 const Rcode&
 Message::getRcode() const {
-    if (impl_->rcode_ == NULL) {
+    if (!impl_->rcode_) {
         isc_throw(InvalidMessageOperation, "getRcode attempted before set");
     }
     return (*impl_->rcode_);
@@ -448,7 +450,7 @@ Message::setRcode(const Rcode& rcode) {
 
 const Opcode&
 Message::getOpcode() const {
-    if (impl_->opcode_ == NULL) {
+    if (!impl_->opcode_) {
         isc_throw(InvalidMessageOperation, "getOpcode attempted before set");
     }
     return (*impl_->opcode_);
@@ -490,7 +492,7 @@ Message::getTSIGRecord() const {
 unsigned int
 Message::getRRCount(const Section section) const {
     if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
-        isc_throw(OutOfRange, "Invalid message section: " << section);
+        isc_throw(OutOfRange, "Invalid message section: " << static_cast<int>(section));
     }
     return (impl_->counts_[section]);
 }
@@ -499,14 +501,14 @@ void
 Message::addRRset(const Section section, RRsetPtr rrset) {
     if (!rrset) {
         isc_throw(InvalidParameter,
-                  "NULL RRset is given to Message::addRRset");
+                  "null RRset is given to Message::addRRset");
     }
     if (impl_->mode_ != Message::RENDER) {
         isc_throw(InvalidMessageOperation,
                   "addRRset performed in non-render mode");
     }
     if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
-        isc_throw(OutOfRange, "Invalid message section: " << section);
+        isc_throw(OutOfRange, "Invalid message section: " << static_cast<int>(section));
     }
 
     impl_->rrsets_[section].push_back(rrset);
@@ -516,13 +518,12 @@ Message::addRRset(const Section section, RRsetPtr rrset) {
 
 bool
 Message::hasRRset(const Section section, const Name& name,
-                  const RRClass& rrclass, const RRType& rrtype) const
-{
+                  const RRClass& rrclass, const RRType& rrtype) const {
     if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
-        isc_throw(OutOfRange, "Invalid message section: " << section);
+        isc_throw(OutOfRange, "Invalid message section: " << static_cast<int>(section));
     }
 
-    BOOST_FOREACH(ConstRRsetPtr r, impl_->rrsets_[section]) {
+    for (auto const& r : impl_->rrsets_[section]) {
         if (r->getClass() == rrclass &&
             r->getType() == rrtype &&
             r->getName() == name) {
@@ -542,12 +543,11 @@ Message::hasRRset(const Section section, const RRsetPtr& rrset) const {
 bool
 Message::removeRRset(const Section section, RRsetIterator& iterator) {
     if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
-        isc_throw(OutOfRange, "Invalid message section: " << section);
+        isc_throw(OutOfRange, "Invalid message section: " << static_cast<int>(section));
     }
 
     bool removed = false;
-    for (vector<RRsetPtr>::iterator i = impl_->rrsets_[section].begin();
-            i != impl_->rrsets_[section].end(); ++i) {
+    for (auto i = impl_->rrsets_[section].begin(); i != impl_->rrsets_[section].end(); ++i) {
         if (((*i)->getName() == (*iterator)->getName()) &&
             ((*i)->getClass() == (*iterator)->getClass()) &&
             ((*i)->getType() == (*iterator)->getType())) {
@@ -571,7 +571,7 @@ Message::clearSection(const Section section) {
                   "clearSection performed in non-render mode");
     }
     if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
-        isc_throw(OutOfRange, "Invalid message section: " << section);
+        isc_throw(OutOfRange, "Invalid message section: " << static_cast<int>(section));
     }
     if (section == Message::SECTION_QUESTION) {
         impl_->questions_.clear();
@@ -682,16 +682,21 @@ MessageImpl::parseQuestion(InputBuffer& buffer) {
 }
 
 namespace {
-struct MatchRR : public unary_function<RRsetPtr, bool> {
+struct MatchRR {
     MatchRR(const Name& name, const RRType& rrtype, const RRClass& rrclass) :
-        name_(name), rrtype_(rrtype), rrclass_(rrclass) {}
+        name_(name), rrtype_(rrtype), rrclass_(rrclass) {
+    }
+
     bool operator()(const RRsetPtr& rrset) const {
         return (rrset->getType() == rrtype_ &&
                 rrset->getClass() == rrclass_ &&
                 rrset->getName() == name_);
     }
+
     const Name& name_;
+
     const RRType& rrtype_;
+
     const RRClass& rrclass_;
 };
 }
@@ -726,9 +731,10 @@ struct MatchRR : public unary_function<RRsetPtr, bool> {
 // is hardcoded here.
 int
 MessageImpl::parseSection(const Message::Section section,
-                          InputBuffer& buffer, Message::ParseOptions options)
-{
-    assert(static_cast<int>(section) < MessageImpl::NUM_SECTIONS);
+                          InputBuffer& buffer, Message::ParseOptions options) {
+    if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
+        isc_throw(OutOfRange, "Invalid message section: " << static_cast<int>(section));
+    }
 
     unsigned int added = 0;
 
@@ -781,8 +787,7 @@ void
 MessageImpl::addRR(Message::Section section, const Name& name,
                    const RRClass& rrclass, const RRType& rrtype,
                    const RRTTL& ttl, ConstRdataPtr rdata,
-                   Message::ParseOptions options)
-{
+                   Message::ParseOptions options) {
     if ((options & Message::PRESERVE_ORDER) == 0) {
         vector<RRsetPtr>::iterator it =
             find_if(rrsets_[section].begin(), rrsets_[section].end(),
@@ -801,8 +806,7 @@ MessageImpl::addRR(Message::Section section, const Name& name,
 void
 MessageImpl::addRR(Message::Section section, const Name& name,
                    const RRClass& rrclass, const RRType& rrtype,
-                   const RRTTL& ttl, Message::ParseOptions options)
-{
+                   const RRTTL& ttl, Message::ParseOptions options) {
     if ((options & Message::PRESERVE_ORDER) == 0) {
         vector<RRsetPtr>::iterator it =
             find_if(rrsets_[section].begin(), rrsets_[section].end(),
@@ -819,8 +823,7 @@ MessageImpl::addRR(Message::Section section, const Name& name,
 void
 MessageImpl::addEDNS(Message::Section section,  const Name& name,
                      const RRClass& rrclass, const RRType& rrtype,
-                     const RRTTL& ttl, const Rdata& rdata)
-{
+                     const RRTTL& ttl, const Rdata& rdata) {
     if (section != Message::SECTION_ADDITIONAL) {
         isc_throw(DNSMessageFORMERR,
                   "EDNS OPT RR found in an invalid section");
@@ -839,8 +842,7 @@ void
 MessageImpl::addTSIG(Message::Section section, unsigned int count,
                      const InputBuffer& buffer, size_t start_position,
                      const Name& name, const RRClass& rrclass,
-                     const RRTTL& ttl, const Rdata& rdata)
-{
+                     const RRTTL& ttl, const Rdata& rdata) {
     if (section != Message::SECTION_ADDITIONAL) {
         isc_throw(DNSMessageFORMERR,
                   "TSIG RR found in an invalid section");
@@ -863,7 +865,9 @@ namespace {
 template <typename T>
 struct SectionFormatter {
     SectionFormatter(const Message::Section section, string& output) :
-        section_(section), output_(output) {}
+        section_(section), output_(output) {
+    }
+
     void operator()(const T& entry) {
         if (section_ == Message::SECTION_QUESTION) {
             output_ += ";";
@@ -873,18 +877,20 @@ struct SectionFormatter {
             output_ += entry->toText();
         }
     }
+
     const Message::Section section_;
+
     string& output_;
 };
 }
 
 string
 Message::toText() const {
-    if (impl_->rcode_ == NULL) {
+    if (!impl_->rcode_) {
         isc_throw(InvalidMessageOperation,
                   "Message::toText() attempted without Rcode set");
     }
-    if (impl_->opcode_ == NULL) {
+    if (!impl_->opcode_) {
         isc_throw(InvalidMessageOperation,
                   "Message::toText() attempted without Opcode set");
     }
@@ -927,15 +933,15 @@ Message::toText() const {
         lexical_cast<string>(impl_->counts_[SECTION_AUTHORITY]);
 
     unsigned int arcount = impl_->counts_[SECTION_ADDITIONAL];
-    if (impl_->edns_ != NULL) {
+    if (impl_->edns_) {
         ++arcount;
     }
-    if (impl_->tsig_rr_ != NULL) {
+    if (impl_->tsig_rr_) {
         ++arcount;
     }
     s += ", ADDITIONAL: " + lexical_cast<string>(arcount) + "\n";
 
-    if (impl_->edns_ != NULL) {
+    if (impl_->edns_) {
         s += "\n;; OPT PSEUDOSECTION:\n";
         s += impl_->edns_->toText();
     }
@@ -969,7 +975,7 @@ Message::toText() const {
                  SectionFormatter<RRsetPtr>(SECTION_ADDITIONAL, s));
     }
 
-    if (impl_->tsig_rr_ != NULL) {
+    if (impl_->tsig_rr_) {
         s += "\n;; TSIG PSEUDOSECTION:\n";
         s += impl_->tsig_rr_->toText();
     }
@@ -986,19 +992,15 @@ Message::clear(Mode mode) {
 void
 Message::appendSection(const Section section, const Message& source) {
     if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
-        isc_throw(OutOfRange, "Invalid message section: " << section);
+        isc_throw(OutOfRange, "Invalid message section: " << static_cast<int>(section));
     }
 
     if (section == SECTION_QUESTION) {
-        for (QuestionIterator qi = source.beginQuestion();
-             qi != source.endQuestion();
-             ++qi) {
+        for (auto qi = source.beginQuestion(); qi != source.endQuestion(); ++qi) {
             addQuestion(*qi);
         }
     } else {
-        for (RRsetIterator rrsi = source.beginSection(section);
-             rrsi != source.endSection(section);
-             ++rrsi) {
+        for (auto rrsi = source.beginSection(section); rrsi != source.endSection(section); ++rrsi) {
             addRRset(section, *rrsi);
         }
     }
@@ -1031,7 +1033,9 @@ Message::makeResponse() {
 template <typename T>
 struct SectionIteratorImpl {
     SectionIteratorImpl(const typename vector<T>::const_iterator& it) :
-        it_(it) {}
+        it_(it) {
+    }
+
     typename vector<T>::const_iterator it_;
 };
 
@@ -1047,8 +1051,8 @@ SectionIterator<T>::~SectionIterator() {
 
 template <typename T>
 SectionIterator<T>::SectionIterator(const SectionIterator<T>& source) :
-    impl_(new SectionIteratorImpl<T>(source.impl_->it_))
-{}
+    impl_(new SectionIteratorImpl<T>(source.impl_->it_)) {
+}
 
 template <typename T>
 void
@@ -1132,7 +1136,7 @@ Message::endQuestion() const {
 const SectionIterator<RRsetPtr>
 Message::beginSection(const Section section) const {
     if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
-        isc_throw(OutOfRange, "Invalid message section: " << section);
+        isc_throw(OutOfRange, "Invalid message section: " << static_cast<int>(section));
     }
     if (section == SECTION_QUESTION) {
         isc_throw(InvalidMessageSection,
@@ -1145,7 +1149,7 @@ Message::beginSection(const Section section) const {
 const SectionIterator<RRsetPtr>
 Message::endSection(const Section section) const {
     if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
-        isc_throw(OutOfRange, "Invalid message section: " << section);
+        isc_throw(OutOfRange, "Invalid message section: " << static_cast<int>(section));
     }
     if (section == SECTION_QUESTION) {
         isc_throw(InvalidMessageSection,

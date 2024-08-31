@@ -1,7 +1,7 @@
 // This is an example configuration file for the DHCPv4 server in Kea.
 // It demonstrates how to enable Kea Configuration Backend using MySQL.
 // It requires that libdhcp_mysql_cb.so library is available and
-// optionally libdhcp_cb_cmds.so hooks library.
+// optionally libdhcp_cb_cmds.so hook library.
 
 { "Dhcp4":
 
@@ -11,9 +11,9 @@
     // either "all" or "server1" will be used by this instance.
     "server-tag": "server1",
 
-    // Kea is told to listen on ethX interface only.
+    // Kea is told to listen on eth0 interface only.
     "interfaces-config": {
-        "interfaces": [ "ethX" ]
+        "interfaces": [ "eth0" ]
     },
 
     // Use memfile lease database backend.
@@ -24,7 +24,7 @@
 
     // This parameter controls how the server accesses the configuration
     // database. Currently only one database type is available - "mysql".
-    // It requires that libdhcp_mysql_cb.so hooks library is loaded.
+    // It requires that the libdhcp_mysql_cb.so hook library is loaded.
     "config-control": {
         // A list of database backends to connect to. Currently, it is limited
         // to a single backend.
@@ -66,9 +66,9 @@
         // configuration in the database. If this library is not loaded,
         // the configuration can be managed directly using available
         // tools that work directly with the MySQL database.
-        //,{
-            // "library": "/usr/local/lib/kea/hooks/libdhcp_cb_cmds.so"
-        //}
+        // ,{
+        //     "library": "/usr/local/lib/kea/hooks/libdhcp_cb_cmds.so"
+        // }
     ],
 
     // The following configures logging. It assumes that messages with at
@@ -78,7 +78,7 @@
     "loggers": [
         {
             "name": "kea-dhcp4",
-            "output_options": [
+            "output-options": [
                 {
                     "output": "stdout"
                 }

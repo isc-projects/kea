@@ -1,33 +1,37 @@
+.. ischooklib:: libdhcp_cb_cmds.so
 .. _hooks-cb-cmds:
 
-``cb_cmds``: Configuration Backend Commands
-===========================================
+``libdhcp_cb_cmds.so``: Configuration Backend Commands
+======================================================
 
 This hook library is used to manage Kea
 servers' configurations in a configuration backend database. This library must
-be used in conjunction with the available CB hooks libraries implementing
+be used in conjunction with the available CB hook libraries implementing
 the common APIs to create, read, update, and delete (CRUD) the
 configuration information in the respective databases. For example:
-the ``mysql_cb`` hooks library implements this API for MySQL while the
-``pgsql_cg`` hooks library implements this API for PostgreSQL.
-To manage the configuration information in a MySQL database, both the
-``mysql_cb`` and ``cb_cmds`` libraries must be loaded by the server used for the
-configuration management.
-To manage the configuration information in a PostgreSQL database, both the
-``pgsql_cb`` and ``cb_cmds`` libraries must be loaded by the server used for the
-configuration management.
+:ischooklib:`libdhcp_mysql_cb.so` implements this API for MySQL while
+:ischooklib:`libdhcp_pgsql_cb.so` implements this API for PostgreSQL.
+To manage the configuration information in a MySQL database, both
+:ischooklib:`libdhcp_mysql_cb.so` and :ischooklib:`libdhcp_cb_cmds.so`
+must be loaded by the server used for configuration management.
+To manage the configuration information in a PostgreSQL database, both
+:ischooklib:`libdhcp_pgsql_cb.so` and :ischooklib:`libdhcp_cb_cmds.so`
+must be loaded by the server used for configuration management.
 
 More information on how to configure the Configuration Backend hook library for
 use with a MySQL or PostgreSQL database can be found in the :ref:`dhcp4-cb`
 and :ref:`dhcp6-cb` sections.
 
-The ``cb_cmds`` library is only available to ISC customers with a paid
-support contract.
+.. note::
+
+    :ischooklib:`libdhcp_cb_cmds.so` is available only to ISC customers with
+    a paid support contract. For more information on subscription options,
+    please complete the form at https://www.isc.org/contact.
 
 .. note::
 
-   This library may only be loaded by the ``kea-dhcp4`` or
-   ``kea-dhcp6`` process.
+   This library can only be loaded by the :iscman:`kea-dhcp4` or
+   :iscman:`kea-dhcp6` process.
 
 .. note::
 
@@ -40,20 +44,20 @@ Command Structure
 There are 5 types of commands supported by this library:
 
 -  ``del`` - delete the selected object from the database, e.g.
-   ``remote-global-parameter4-del``.
+   :isccmd:`remote-global-parameter4-del`.
 
 -  ``get`` - fetch the selected object from the database, e.g.
-   ``remote-subnet4-get``.
+   :isccmd:`remote-subnet4-get-by-id`.
 
 -  ``get-all`` - fetch all objects of the particular type from the
-   database, e.g. ``remote-option-def4-get-all``.
+   database, e.g. :isccmd:`remote-option-def4-get-all`.
 
 -  ``list`` - list all objects of the particular type in the database,
-   e.g. ``remote-network4-list``; this class of commands returns brief
+   e.g. :isccmd:`remote-network4-list`; this class of commands returns brief
    information about each object compared to the output of ``get-all``.
 
 -  ``set`` - creates or replaces an object of the given type in the
-   database, e.g. ``remote-option4-global-set``.
+   database, e.g. :isccmd:`remote-option4-global-set`.
 
 All types of commands accept an optional ``remote`` map which selects the
 database instance to which the command refers. For example:
@@ -79,26 +83,13 @@ be specified, the parameter should be omitted. In this case, the server
 will use the first backend listed in the ``config-control`` map within
 the configuration of the server receiving the command.
 
-The ``cb_cmds`` library is only available to ISC customers with a paid
-support contract.
-
-.. note::
-
-   This library can only be loaded by the ``kea-dhcp4`` or
-   ``kea-dhcp6`` process.
-
-.. note::
-
-   Please read about :ref:`cb-limitations` before using the commands
-   described in this section.
-
 .. note::
 
    In the current Kea release, it is only possible to configure the Kea server
    to use a single configuration backend. Strictly speaking, it is
    possible to point the Kea server to at most one database (either MySQL or
    PostgreSQL) using the ``config-control`` parameter. Therefore, the ``remote``
-   parameter may be omitted in the commands and the ``cb_cmds`` hook library
+   parameter may be omitted in the commands and :ischooklib:`libdhcp_cb_cmds.so`
    uses the sole backend by default.  The example commands below most often show a
    value of "mysql" for the ``type`` parameter; it should be assumed that the
    value is "postgresql" for installations using a PostgreSQL database.
@@ -109,7 +100,7 @@ Control Commands for DHCP Servers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This section describes and gives some examples of the control commands
-implemented by the ``cb_cmds`` hooks library, to manage the
+implemented by :ischooklib:`libdhcp_cb_cmds.so`, to manage the
 configuration information of the DHCPv4 and DHCPv6 servers. Many of the
 commands are almost identical between DHCPv4 and DHCPv6; they only
 differ by the command name. Other commands differ slightly by the
@@ -117,12 +108,6 @@ structure of the inserted data; for example, the structure of the IPv4 subnet
 information is different than that of the IPv6 subnet.
 Nevertheless, they still share the structure of their command arguments
 and thus it makes sense to describe them together.
-
-In the following sections, various commands are described and some usage
-examples are provided. In the sections jointly describing the DHCPv4 and
-DHCPv6 variants of the particular command, we sometimes use the following
-notation: the ``remote-subnet[46]-set`` is the wildcard name for the
-two commands: ``remote-subnet4-set`` and ``remote-subnet6-set``.
 
 In addition, whenever the text in the subsequent sections refers to a
 DHCP command or DHCP parameter, it refers to both DHCPv4 and DHCPv6
@@ -145,7 +130,7 @@ present Kea release, the metadata is limited to the ``server-tag``. It
 describes the association of the object with a particular server or
 all servers.
 
-The following is the example response to the ``remote-network4-list``
+The following is the example response to the :isccmd:`remote-network4-list`
 command, which includes the metadata:
 
 .. code-block:: json
@@ -172,7 +157,9 @@ the ``server-tags`` parameter. In future releases, it is expected that this
 map will be extended with additional information, e.g. object modification
 time, log message created during the last modification, etc.
 
+.. isccmd:: remote-server4-del
 .. _command-remote-server4-del:
+.. isccmd:: remote-server6-del
 .. _command-remote-server6-del:
 
 The ``remote-server4-del``, ``remote-server6-del`` Commands
@@ -208,21 +195,21 @@ subnets and shared networks associated with the deleted servers are
 preserved. If any of the shareable configuration elements was associated only
 with the deleted server, this object becomes unassigned (orphaned). For
 example: if a subnet has been created and associated with "server1" using
-the ``remote-subnet4-set`` command and "server1" is subsequently deleted, the
+the :isccmd:`remote-subnet4-set` command and "server1" is subsequently deleted, the
 subnet remains in the database but no servers can use this subnet. The
-subnet can be updated using the ``remote-subnet4-set`` command, and can be
+subnet can be updated using the :isccmd:`remote-subnet4-set` command, and can be
 associated with either another server or with all servers, using the special
 server tag "all". Such a subnet can be also deleted from the database
-using the ``remote-subnet4-del-by-id`` or
-``remote-subnet4-del-by-prefix`` command, if it is no longer needed.
+using the :isccmd:`remote-subnet4-del-by-id` or
+:isccmd:`remote-subnet4-del-by-prefix` command, if it is no longer needed.
 
-The following is the successful response to the ``remote-server4-del`` command:
+The following is the successful response to the :isccmd:`remote-server4-del` command:
 
 .. code-block:: json
 
     {
         "result": 0,
-        "text": "1 DHCPv4 server(s) deleted."
+        "text": "1 DHCPv4 server(s) deleted.",
         "arguments": {
             "count": 1
         }
@@ -231,14 +218,17 @@ The following is the successful response to the ``remote-server4-del`` command:
 
 .. warning::
 
-   The ``remote-server4-del`` and ``remote-server6-del`` commands must be used with
+   The :isccmd:`remote-server4-del` and
+   :isccmd:`remote-server6-del` commands must be used with
    care, because an accidental deletion of the server can cause some parts of the
    existing configurations to be lost permanently from the database. This
    operation is not reversible. Re-creation of the accidentally deleted server
    does not revert the lost configuration for that server and such configuration
    must be re-created manually by the user.
 
+.. isccmd:: remote-server4-get
 .. _command-remote-server4-get:
+.. isccmd:: remote-server6-get
 .. _command-remote-server6-get:
 
 The ``remote-server4-get``, ``remote-server6-get`` Commands
@@ -250,7 +240,7 @@ from the configuration database. For example:
 .. code-block:: json
 
     {
-        "command": "remote-server6-get"
+        "command": "remote-server6-get",
         "arguments": {
             "servers": [
                 {
@@ -285,7 +275,9 @@ description of the server:
         }
     }
 
+.. isccmd:: remote-server4-get-all
 .. _command-remote-server4-get-all:
+.. isccmd:: remote-server6-get-all
 .. _command-remote-server6-get-all:
 
 The ``remote-server4-get-all``, ``remote-server6-get-all`` Commands
@@ -297,7 +289,7 @@ database. The command structure is very simple:
 .. code-block:: json
 
     {
-        "command": "remote-server4-get-all"
+        "command": "remote-server4-get-all",
         "arguments": {
             "remote": {
                 "type": "mysql"
@@ -328,7 +320,9 @@ tag and description:
         }
     }
 
+.. isccmd:: remote-server4-set
 .. _command-remote-server4-set:
+.. isccmd:: remote-server6-set
 .. _command-remote-server6-set:
 
 The ``remote-server4-set``, ``remote-server6-set`` Commands
@@ -342,14 +336,15 @@ parameters, subnets, etc. may be explicitly associated with the selected servers
 (using server tags as identifiers), allowing only these servers to use the
 respective configuration elements. Using the particular server tag to make such
 associations is only possible when the server information has been stored in the
-database via the ``remote-server4-set`` or ``remote-server6-set`` commands. The
+database via the :isccmd:`remote-server4-set` or
+:isccmd:`remote-server6-set` commands. The
 following command creates a new (or updates an existing) DHCPv6 server in the
 database:
 
 .. code-block:: json
 
     {
-        "command": "remote-server6-set"
+        "command": "remote-server6-set",
         "arguments": {
             "servers": [
                 {
@@ -387,8 +382,10 @@ The following is the example response to the above command:
     }
 
 
+.. isccmd:: remote-global-parameter4-del
 .. _command-remote-global-parameter4-del:
 
+.. isccmd:: remote-global-parameter6-del
 .. _command-remote-global-parameter6-del:
 
 The ``remote-global-parameter4-del``, ``remote-global-parameter6-del`` Commands
@@ -420,8 +417,10 @@ If a server-specific parameter is to be deleted, the
 ``server-tags`` list must contain the tag of the appropriate
 server. There must be exactly one server tag specified in this list.
 
+.. isccmd:: remote-global-parameter4-get
 .. _command-remote-global-parameter4-get:
 
+.. isccmd:: remote-global-parameter6-get
 .. _command-remote-global-parameter6-get:
 
 The ``remote-global-parameter4-get``, ``remote-global-parameter6-get`` Commands
@@ -533,8 +532,10 @@ Finally, the boolean value:
    }
 
 
+.. isccmd:: remote-global-parameter4-get-all
 .. _command-remote-global-parameter4-get-all:
 
+.. isccmd:: remote-global-parameter6-get-all
 .. _command-remote-global-parameter6-get-all:
 
 The ``remote-global-parameter4-get-all``, ``remote-global-parameter6-get-all`` Commands
@@ -599,8 +600,10 @@ global parameters are non-shareable configuration elements.
    example above), the returned list combines parameters associated with
    this server and all servers, but the former take precedence.
 
+.. isccmd:: remote-global-parameter4-set
 .. _command-remote-global-parameter4-set:
 
+.. isccmd:: remote-global-parameter6-set
 .. _command-remote-global-parameter6-set:
 
 The ``remote-global-parameter4-set``, ``remote-global-parameter6-set`` Commands
@@ -615,7 +618,7 @@ integer, real, or boolean. For example:
 .. code-block:: json
 
    {
-       "command": "remote-global-parameter4-set"
+       "command": "remote-global-parameter4-set",
        "arguments": {
            "parameters": {
                "boot-file-name": "/dev/null",
@@ -635,15 +638,19 @@ server or its type does not match. Care should be taken when multiple parameters
 are specified in a single command, because it is possible that only some of the
 parameters will be stored successfully and some will fail. If an error occurs when
 processing this command, it is recommended to use
-``remote-global-parameter[46]-get-all`` to check which of the parameters have
+:isccmd:`remote-global-parameter4-get-all` or
+:isccmd:`remote-global-parameter6-get-all`
+to check which of the parameters have
 been stored/updated successfully and which have failed.
 
 The ``server-tags`` list is mandatory and must contain a single server tag or
 the keyword "all". In the example above, all specified parameters are associated
 with the "server1" server.
 
+.. isccmd:: remote-network4-del
 .. _command-remote-network4-del:
 
+.. isccmd:: remote-network6-del
 .. _command-remote-network6-del:
 
 The ``remote-network4-del``, ``remote-network6-del`` Commands
@@ -679,12 +686,15 @@ The following command:
 deletes the "level3" IPv6 shared network. The subnets are preserved, but
 they are disassociated from the deleted shared network and become
 global. This behavior corresponds to the behavior of the
-``network[46]-del`` commands with respect to the ``subnets-action`` parameter.
+:isccmd:`network4-del`, :isccmd:`network6-del` commands with respect to the
+``subnets-action`` parameter.
 
 Note that the ``server-tags`` parameter cannot be used for this command.
 
+.. isccmd:: remote-network4-get
 .. _command-remote-network4-get:
 
+.. isccmd:: remote-network6-get
 .. _command-remote-network6-get:
 
 The ``remote-network4-get``, ``remote-network6-get`` Commands
@@ -719,8 +729,10 @@ with the full information about the subnets belonging to it:
 
 Note that the ``server-tags`` parameter cannot be used for this command.
 
+.. isccmd:: remote-network4-list
 .. _command-remote-network4-list:
 
+.. isccmd:: remote-network6-list
 .. _command-remote-network6-list:
 
 The ``remote-network4-list``, ``remote-network6-list`` Commands
@@ -734,7 +746,7 @@ The following command retrieves all shared networks to be used by
 .. code-block:: json
 
     {
-        "command": "remote-network4-list"
+        "command": "remote-network4-list",
         "arguments": {
             "remote": {
                 "type": "mysql"
@@ -752,7 +764,7 @@ networks, i.e. the networks which are associated with no servers. For example:
 .. code-block:: json
 
     {
-        "command": "remote-network4-list"
+        "command": "remote-network4-list",
         "arguments": {
             "remote": {
                 "type": "mysql"
@@ -796,7 +808,8 @@ looks similar to this:
 
 The returned information about each shared network merely contains the shared
 network name and the metadata. To fetch detailed information about
-the selected shared network, use the ``remote-network[46]-get`` command.
+the selected shared network, use the :isccmd:`remote-network4-get` or
+:isccmd:`remote-network6-get` command.
 
 The example response above contains three shared networks. One of the
 shared networks is associated with all servers, so it is included in
@@ -829,8 +842,10 @@ to this:
 The ``null`` value in the metadata indicates that the
 returned shared network is unassigned.
 
+.. isccmd:: remote-network4-set
 .. _command-remote-network4-set:
 
+.. isccmd:: remote-network6-set
 .. _command-remote-network6-set:
 
 The ``remote-network4-set``, ``remote-network6-set`` Commands
@@ -847,7 +862,8 @@ within the shared network information results in an error.
 These commands are intended to be used for managing the shared
 network-specific information and DHCP options. To associate and
 disassociate the subnets with the shared networks, the
-``remote-subnet[46]-set`` commands should be used.
+:isccmd:`remote-subnet4-set`, :isccmd:`remote-subnet6-set`
+commands should be used.
 
 The following command adds the IPv6 shared network "level3" to the
 database:
@@ -864,7 +880,7 @@ database:
                    "option-data": [ {
                        "name": "sntp-servers",
                        "data": "2001:db8:1::1"
-                   } ],
+                   } ]
                }
            ],
            "remote": {
@@ -876,7 +892,7 @@ database:
 
 
 This command includes the ``interface`` parameter, which sets the shared
-network-level interface name. Any remaining shared network-level parameters,
+network-level interface name. Any remaining shared-network-level parameters,
 which are not specified with the command, will be marked as
 "unspecified" in the database. The DHCP server uses the global
 values for unspecified parameters or, if the global values are not
@@ -897,8 +913,10 @@ database when the keyword "all" is included.
    be marked unspecified in the database, even if its value was present
    prior to sending the command.
 
+.. isccmd:: remote-option-def4-del
 .. _command-remote-option-def4-del:
 
+.. isccmd:: remote-option-def6-del
 .. _command-remote-option-def6-del:
 
 The ``remote-option-def4-del``, ``remote-option-def6-del`` Commands
@@ -935,8 +953,10 @@ deleted. To delete an option belonging to "all" servers, the keyword
 "all" must be used as the server tag. The ``server-tags`` list must contain exactly
 one tag and cannot include the ``null`` value.
 
+.. isccmd:: remote-option-def4-get
 .. _command-remote-option-def4-get:
 
+.. isccmd:: remote-option-def6-get
 .. _command-remote-option-def6-get:
 
 The ``remote-option-def4-get``, ``remote-option-def6-get`` Commands
@@ -953,7 +973,7 @@ servers, having the code of 1 and belonging to the option space "isc":
 .. code-block:: json
 
    {
-       "command": "remote-option-def4-get"
+       "command": "remote-option-def4-get",
        "arguments": {
            "option-defs": [
                {
@@ -971,8 +991,10 @@ servers, having the code of 1 and belonging to the option space "isc":
 The ``server-tags`` list must include exactly one server tag or the keyword
 "all", and cannot contain the `null` value.
 
+.. isccmd:: remote-option-def4-get-all
 .. _command-remote-option-def4-get-all:
 
+.. isccmd:: remote-option-def6-get-all
 .. _command-remote-option-def6-get-all:
 
 The ``remote-option-def4-get-all``, ``remote-option-def6-get-all`` Commands
@@ -984,7 +1006,7 @@ for the given server or all servers. For example:
 .. code-block:: json
 
     {
-        "command": "remote-option-def6-get-all"
+        "command": "remote-option-def6-get-all",
         "arguments": {
             "remote": {
                 "type": "mysql"
@@ -1027,8 +1049,10 @@ The following is the example response to this command:
 The response contains an option definition associated with all servers, as
 indicated by the metadata.
 
+.. isccmd:: remote-option-def4-set
 .. _command-remote-option-def4-set:
 
+.. isccmd:: remote-option-def6-set
 .. _command-remote-option-def6-set:
 
 The ``remote-option-def4-set``, ``remote-option-def6-set`` Commands
@@ -1068,8 +1092,10 @@ The ``server-tags`` list must include exactly one
 server tag or the keyword "all", and cannot contain the
 ``null`` value.
 
+.. isccmd:: remote-option4-global-del
 .. _command-remote-option4-global-del:
 
+.. isccmd:: remote-option6-global-del
 .. _command-remote-option6-global-del:
 
 The ``remote-option4-global-del``, ``remote-option6-global-del`` Commands
@@ -1086,7 +1112,7 @@ For example:
        "arguments": {
            "options": [
                {
-                   "code": 5
+                   "code": 5,
                    "space": "dhcp4"
                }
            ],
@@ -1097,16 +1123,18 @@ For example:
        }
    }
 
-"dhcp4" is the top-level option space where the standard DHCPv4 options
-belong. The ``server-tags`` parameter is mandatory and must include a
+The "dhcp4" value represents the top-level option space where the standard DHCPv4
+options belong. The ``server-tags`` parameter is mandatory and must include a
 single option tag or the keyword "all". If the explicit server tag is specified,
 this command attempts to delete a global option associated with this
 server. If there is no such option associated with the given server, no option
 is deleted. To delete an option associated with all servers, the
 keyword "all" must be specified.
 
+.. isccmd:: remote-option4-global-get
 .. _command-remote-option4-global-get:
 
+.. isccmd:: remote-option6-global-get
 .. _command-remote-option6-global-get:
 
 The ``remote-option4-global-get``, ``remote-option6-global-get`` Commands
@@ -1142,8 +1170,10 @@ The ``server-tags`` parameter is mandatory and must include exactly one
 server tag or the keyword "all". It cannot contain the ``null``
 value.
 
+.. isccmd:: remote-option4-global-get-all
 .. _command-remote-option4-global-get-all:
 
+.. isccmd:: remote-option6-global-get-all
 .. _command-remote-option6-global-get-all:
 
 The ``remote-option4-global-get-all``, ``remote-option6-global-get-all`` Commands
@@ -1194,8 +1224,10 @@ command with a single option being associated with "server1" returned:
         }
     }
 
+.. isccmd:: remote-option4-global-set
 .. _command-remote-option4-global-set:
 
+.. isccmd:: remote-option6-global-set
 .. _command-remote-option6-global-set:
 
 The ``remote-option4-global-set``, ``remote-option6-global-set`` Commands
@@ -1250,8 +1282,10 @@ instead of the name. For example:
        }
    }
 
+.. isccmd:: remote-option4-network-del
 .. _command-remote-option4-network-del:
 
+.. isccmd:: remote-option6-network-del
 .. _command-remote-option6-network-del:
 
 The ``remote-option4-network-del``, ``remote-option6-network-del`` Commands
@@ -1267,8 +1301,8 @@ shared network, no option is deleted. In particular, the given
 option may be present for a subnet belonging to the shared network.
 Such an option instance is not affected by this command as this
 command merely deletes the shared-network-level option. To
-delete a subnet-level option, the ``remote-option[46]-subnet-del``
-command must be used instead.
+delete a subnet-level option, the :isccmd:`remote-option4-subnet-del`,
+:isccmd:`remote-option6-subnet-del` commands must be used instead.
 
 The following command attempts to delete an option having the
 option code 5 in the top-level option space from the shared
@@ -1296,11 +1330,13 @@ network "fancy".
        }
    }
 
-"dhcp4" is the top-level option space where the standard DHCPv4 options
-belong. The ``server-tags`` parameter cannot be specified for this command.
+The "dhcp4" value represents the top-level option space where the standard DHCPv4
+options belong. The ``server-tags`` parameter cannot be specified for this command.
 
+.. isccmd:: remote-option4-network-set
 .. _command-remote-option4-network-set:
 
+.. isccmd:: remote-option6-network-set
 .. _command-remote-option6-network-set:
 
 The ``remote-option4-network-set``, ``remote-option6-network-set`` Commands
@@ -1342,6 +1378,7 @@ Specifying an option name instead of the option code only works reliably
 for standard DHCP options. When specifying a value for a user-defined
 DHCP option, the option code should be indicated instead of the name.
 
+.. isccmd:: remote-option6-pd-pool-del
 .. _command-remote-option6-pd-pool-del:
 
 The ``remote-option6-pd-pool-del`` Command
@@ -1356,8 +1393,8 @@ option is not explicitly specified for this pool, no option is deleted.
 In particular, the given option may exist for a subnet containing
 the specified pool. Such an option instance is not affected by this
 command, as this command merely deletes a prefix delegation pool-level
-option. To delete a subnet level option, the
-``remote-option6-subnet-del`` command must be used instead.
+option. To delete a subnet-level option, the
+:isccmd:`remote-option6-subnet-del` command must be used instead.
 
 .. code-block:: json
 
@@ -1382,9 +1419,10 @@ option. To delete a subnet level option, the
        }
    }
 
-"dhcp6" is the top-level option space where the standard DHCPv6 options
-belong. The ``server-tags`` parameter cannot be specified for this command.
+The "dhcp6" value represents the top-level option space where the standard DHCPv6
+options belong. The ``server-tags`` parameter cannot be specified for this command.
 
+.. isccmd:: remote-option6-pd-pool-set
 .. _command-remote-option6-pd-pool-set:
 
 The ``remote-option6-pd-pool-set`` Command
@@ -1430,8 +1468,10 @@ Specifying an option name instead of the option code only works reliably
 for standard DHCP options. When specifying a value for a user-defined
 DHCP option, the option code should be indicated instead of the name.
 
+.. isccmd:: remote-option4-pool-del
 .. _command-remote-option4-pool-del:
 
+.. isccmd:: remote-option6-pool-del
 .. _command-remote-option6-pool-del:
 
 The ``remote-option4-pool-del``, ``remote-option6-pool-del`` Commands
@@ -1446,8 +1486,8 @@ is not explicitly specified for this pool, no option is deleted.
 In particular, the given option may exist for a subnet containing
 the specified pool. Such an option instance is not affected by this
 command, as this command merely deletes a pool-level option. To
-delete a subnet-level option, the ``remote-option[46]-subnet-del``
-command must be used instead.
+delete a subnet-level option, the :isccmd:`remote-option4-subnet-del`
+or :isccmd:`remote-option6-subnet-del` command must be used instead.
 
 The following command attempts to delete an option having the
 option code 5 in the top-level option space from an IPv4 address
@@ -1475,11 +1515,13 @@ pool:
        }
    }
 
-"dhcp4" is the top-level option space where the standard DHCPv4 options
-belong. The ``server-tags`` parameter cannot be specified for this command.
+The "dhcp4" value represents the top-level option space where the standard DHCPv4
+options belong. The ``server-tags`` parameter cannot be specified for this command.
 
+.. isccmd:: remote-option4-pool-set
 .. _command-remote-option4-pool-set:
 
+.. isccmd:: remote-option6-pool-set
 .. _command-remote-option6-pool-set:
 
 The ``remote-option4-pool-set``, ``remote-option6-pool-set`` Commands
@@ -1523,8 +1565,10 @@ Specifying an option name instead of the option code only works reliably
 for standard DHCP options. When specifying a value for a user-defined
 DHCP option, the option code should be indicated instead of the name.
 
+.. isccmd:: remote-option4-subnet-del
 .. _command-remote-option4-subnet-del:
 
+.. isccmd:: remote-option6-subnet-del
 .. _command-remote-option6-subnet-del:
 
 The ``remote-option4-subnet-del``, ``remote-option6-subnet-del`` Commands
@@ -1564,11 +1608,13 @@ having an identifier of 123.
        }
    }
 
-"dhcp4" is the top-level option space where the standard DHCPv4 options
-belong. The ``server-tags`` parameter cannot be specified for this command.
+The "dhcp4" value represents the top-level option space where the standard DHCPv4
+options belong. The ``server-tags`` parameter cannot be specified for this command.
 
+.. isccmd:: remote-option4-subnet-set
 .. _command-remote-option4-subnet-set:
 
+.. isccmd:: remote-option6-subnet-set
 .. _command-remote-option6-subnet-set:
 
 The ``remote-option4-subnet-set``, ``remote-option6-subnet-set`` Commands
@@ -1610,8 +1656,10 @@ Specifying an option name instead of the option code only works reliably
 for the standard DHCP options. When specifying a value for the user-defined
 DHCP option, the option code should be indicated instead of the name.
 
+.. isccmd:: remote-subnet4-del-by-id
 .. _command-remote-subnet4-del-by-id:
 
+.. isccmd:: remote-subnet6-del-by-id
 .. _command-remote-subnet6-del-by-id:
 
 The ``remote-subnet4-del-by-id``, ``remote-subnet6-del-by-id`` Commands
@@ -1639,8 +1687,10 @@ example, to delete the IPv4 subnet with an ID of 5:
 
 The ``server-tags`` parameter cannot be used with this command.
 
+.. isccmd:: remote-subnet4-del-by-prefix
 .. _command-remote-subnet4-del-by-prefix:
 
+.. isccmd:: remote-subnet6-del-by-prefix
 .. _command-remote-subnet6-del-by-prefix:
 
 The ``remote-subnet4-del-by-prefix``, ``remote-subnet6-del-by-prefix`` Commands
@@ -1668,8 +1718,10 @@ subnet. For example:
 
 The ``server-tags`` parameter cannot be used with this command.
 
+.. isccmd:: remote-subnet4-get-by-id
 .. _command-remote-subnet4-get-by-id:
 
+.. isccmd:: remote-subnet6-get-by-id
 .. _command-remote-subnet6-get-by-id:
 
 The ``remote-subnet4-get-by-id``, ``remote-subnet6-get-by-id`` Commands
@@ -1697,8 +1749,10 @@ For example:
 
 The ``server-tags`` parameter cannot be used with this command.
 
+.. isccmd:: remote-subnet4-get-by-prefix
 .. _command-remote-subnet4-get-by-prefix:
 
+.. isccmd:: remote-subnet6-get-by-prefix
 .. _command-remote-subnet6-get-by-prefix:
 
 The ``remote-subnet4-get-by-prefix``, ``remote-subnet6-get-by-prefix`` Commands
@@ -1726,8 +1780,10 @@ subnet. For example:
 
 The ``server-tags`` parameter cannot be used with this command.
 
+.. isccmd:: remote-subnet4-list
 .. _command-remote-subnet4-list:
 
+.. isccmd:: remote-subnet6-list
 .. _command-remote-subnet6-list:
 
 The ``remote-subnet4-list``, ``remote-subnet6-list`` Commands
@@ -1740,7 +1796,7 @@ be used by "server1" and "server2":
 .. code-block:: json
 
     {
-        "command": "remote-subnet4-list"
+        "command": "remote-subnet4-list",
         "arguments": {
             "remote": {
                 "type": "mysql"
@@ -1759,7 +1815,7 @@ For example:
 .. code-block:: json
 
     {
-        "command": "remote-subnet4-list"
+        "command": "remote-subnet4-list",
         "arguments": {
             "remote": {
                 "type": "mysql"
@@ -1802,8 +1858,8 @@ looks similar to this:
 The returned information about each subnet is limited to the subnet identifier,
 prefix, and associated shared network name. To retrieve full
 information about the selected subnet, use
-``remote-subnet[46]-get-by-id`` or
-``remote-subnet[46]-get-by-prefix``.
+the :isccmd:`remote-subnet4-get-by-id` / :isccmd:`remote-subnet6-get-by-id` command
+or the :isccmd:`remote-subnet4-get-by-prefix` / :isccmd:`remote-subnet6-get-by-prefix` command.
 
 The example response above contains two subnets. One of the subnets is
 associated with both servers: "server1" and "server2". The second subnet is
@@ -1835,8 +1891,10 @@ When listing unassigned subnets, the response will look similar to this:
 The ``null`` value in the metadata indicates that the
 returned subnet is unassigned.
 
+.. isccmd:: remote-subnet4-set
 .. _command-remote-subnet4-set:
 
+.. isccmd:: remote-subnet6-set
 .. _command-remote-subnet6-set:
 
 The ``remote-subnet4-set``, ``remote-subnet6-set`` Commands
@@ -1849,7 +1907,8 @@ or disassociates the subnet with a shared network.
 The structure of the subnet information is similar to the structure used
 in the configuration file (see :ref:`dhcp4-configuration` and
 :ref:`dhcp6-configuration`). The subnet information conveyed in the
-``remote-subnet[46]-set`` command must include the additional parameter
+:isccmd:`remote-subnet4-set` or :isccmd:`remote-subnet6-set` command
+must include the additional parameter
 ``shared-network-name``, which denotes whether the subnet belongs to a
 shared network.
 
@@ -1880,7 +1939,7 @@ Consider the following example:
    }
 
 It creates the subnet and associates it with the "level3" shared
-network. The "level3" shared network must be created with the ``remote-network4-set``
+network. The "level3" shared network must be created with the :isccmd:`remote-network4-set`
 command prior to creating the subnet.
 
 If the created subnet must be global - that is, not associated with any shared
@@ -1912,7 +1971,7 @@ The subnet created in the previous example is replaced with the new
 subnet having the same parameters, but it becomes global.
 
 The ``shared-network-name`` parameter is mandatory for the
-``remote-subnet4-set`` command. The ``server-tags`` list is mandatory and must
+:isccmd:`remote-subnet4-set` command. The ``server-tags`` list is mandatory and must
 include one or more server tags. As a result, the subnet is associated with all
 of the listed servers. It may also be associated with all servers connecting
 to the database when the keyword "all" is used as the server tag.
@@ -1927,8 +1986,10 @@ to the database when the keyword "all" is used as the server tag.
    will be marked as unspecified in the database, even if its value was
    present prior to sending the command.
 
+.. isccmd:: remote-class4-del
 .. _command-remote-class4-del:
 
+.. isccmd:: remote-class6-del
 .. _command-remote-class6-del:
 
 The ``remote-class4-del``, ``remote-class6-del`` Commands
@@ -1938,7 +1999,7 @@ These commands delete a DHCPv4 or DHCPv6 client class by name. If any client
 classes in the database depend on the deleted class, an error is returned in
 response to this command. In this case, to successfully delete the class,
 the dependent client classes must be deleted first. Use the
-``remote-class4-get-all`` command to fetch all client classes and find
+:isccmd:`remote-class4-get-all` command to fetch all client classes and find
 the dependent ones.
 
 .. code-block:: json
@@ -1960,8 +2021,10 @@ the dependent ones.
 The ``server-tags`` parameter cannot be used for this command because client
 classes are uniquely identified by name.
 
+.. isccmd:: remote-class4-get
 .. _command-remote-class4-get:
 
+.. isccmd:: remote-class6-get
 .. _command-remote-class6-get:
 
 The ``remote-class4-get``, ``remote-class6-get`` Commands
@@ -2009,8 +2072,10 @@ A response to the command looks similar to this:
         }
     }
 
+.. isccmd:: remote-class4-get-all
 .. _command-remote-class4-get-all:
 
+.. isccmd:: remote-class6-get-all
 .. _command-remote-class6-get-all:
 
 The ``remote-class4-get-all``, ``remote-class6-get-all`` Commands
@@ -2070,8 +2135,10 @@ A response to the command looks similar to this:
         }
     }
 
+.. isccmd:: remote-class4-set
 .. _command-remote-class4-set:
 
+.. isccmd:: remote-class6-set
 .. _command-remote-class6-set:
 
 The ``remote-class4-set``, ``remote-class6-set`` Commands

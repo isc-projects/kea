@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,8 +13,12 @@
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
 #include <process/testutils/d_test_stubs.h>
+#include <testutils/gtest_utils.h>
+
 #include <boost/pointer_cast.hpp>
+
 #include <sstream>
+
 #include <unistd.h>
 
 using namespace isc::asiolink::test;
@@ -184,7 +188,6 @@ TEST_F(CtrlAgentControllerTest, basicInstanceTesting) {
     EXPECT_FALSE(checkProcess());
 }
 
-
 // Tests basic command line processing.
 // Verifies that:
 // 1. Standard command line options are supported.
@@ -200,7 +203,7 @@ TEST_F(CtrlAgentControllerTest, commandLineArgs) {
     EXPECT_TRUE(checkVerbose(false));
 
     // Verify that standard options can be parsed without error.
-    EXPECT_NO_THROW(parseArgs(argc, argv));
+    EXPECT_NO_THROW_LOG(parseArgs(argc, argv));
 
     // Verify that verbose flag is true.
     EXPECT_TRUE(checkVerbose(true));
@@ -212,7 +215,7 @@ TEST_F(CtrlAgentControllerTest, commandLineArgs) {
     char* argv2[] = { const_cast<char*>("progName"),
                       const_cast<char*>("-x") };
     argc = 2;
-    EXPECT_THROW(parseArgs(argc, argv2), InvalidUsage);
+    EXPECT_THROW_MSG(parseArgs(argc, argv2), InvalidUsage, "unsupported option: -x");
 }
 
 // Tests application process creation and initialization.
@@ -238,7 +241,7 @@ TEST_F(CtrlAgentControllerTest, launchNormalShutdown) {
 // Tests that the SIGINT triggers a normal shutdown.
 TEST_F(CtrlAgentControllerTest, sigintShutdown) {
     // Setup to raise SIGHUP in 1 ms.
-    TimedSignal sighup(*getIOService(), SIGINT, 1);
+    TimedSignal sighup(getIOService(), SIGINT, 1);
 
     // Write valid_agent_config and then run launch() for a maximum
     // of 1000 ms.
@@ -254,7 +257,7 @@ TEST_F(CtrlAgentControllerTest, sigintShutdown) {
 // Tests that the SIGTERM triggers a normal shutdown.
 TEST_F(CtrlAgentControllerTest, sigtermShutdown) {
     // Setup to raise SIGTERM in 1 ms.
-    TimedSignal sighup(*getIOService(), SIGTERM, 1);
+    TimedSignal sighup(getIOService(), SIGTERM, 1);
 
     // Write valid_agent_config and then run launch() for a maximum of 1 s.
     time_duration elapsed_time;
@@ -303,7 +306,7 @@ TEST_F(CtrlAgentControllerTest, successfulConfigUpdate) {
     // Schedule reconfiguration.
     scheduleTimedWrite(second_config, 100);
     // Schedule SIGHUP signal to trigger reconfiguration.
-    TimedSignal sighup(*getIOService(), SIGHUP, 200);
+    TimedSignal sighup(getIOService(), SIGHUP, 200);
 
     // Start the server.
     time_duration elapsed_time;
@@ -368,7 +371,7 @@ TEST_F(CtrlAgentControllerTest, unsuccessfulConfigUpdate) {
     // Schedule reconfiguration.
     scheduleTimedWrite(second_config, 100);
     // Schedule SIGHUP signal to trigger reconfiguration.
-    TimedSignal sighup(*getIOService(), SIGHUP, 200);
+    TimedSignal sighup(getIOService(), SIGHUP, 200);
 
     // Start the server.
     time_duration elapsed_time;
@@ -434,7 +437,7 @@ TEST_F(CtrlAgentControllerTest, noListenerChange) {
     // Schedule reconfiguration.
     scheduleTimedWrite(second_config, 100);
     // Schedule SIGHUP signal to trigger reconfiguration.
-    TimedSignal sighup(*getIOService(), SIGHUP, 200);
+    TimedSignal sighup(getIOService(), SIGHUP, 200);
 
     // Start the server.
     time_duration elapsed_time;
@@ -480,6 +483,7 @@ TEST_F(CtrlAgentControllerTest, registeredCommands) {
     // Check that the following command are really available.
     checkCommandRegistered("build-report");
     checkCommandRegistered("config-get");
+    checkCommandRegistered("config-hash-get");
     checkCommandRegistered("config-reload");
     checkCommandRegistered("config-set");
     checkCommandRegistered("config-test");
@@ -675,7 +679,6 @@ TEST_F(CtrlAgentControllerTest, configReloadFileValid) {
     answer = CtrlAgentCommandMgr::instance().handleCommand("config-reload",
                                                            params, cmd);
 
-
     // Verify the reload was successful.
     string expected = "{ \"result\": 0, \"text\": "
         "\"Configuration applied successfully.\" }";
@@ -779,7 +782,6 @@ TEST_F(CtrlAgentControllerTest, shutdown) {
     // Now clean up after ourselves.
     ctrl->deregisterCommands();
 }
-
 
 TEST_F(CtrlAgentControllerTest, shutdownExitValue) {
     ASSERT_NO_THROW(initProcess());

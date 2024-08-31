@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -26,10 +26,10 @@ const int NameRemoveTransaction::REMOVING_REV_PTRS_ST;
 
 NameRemoveTransaction::
 NameRemoveTransaction(asiolink::IOServicePtr& io_service,
-                   dhcp_ddns::NameChangeRequestPtr& ncr,
-                   DdnsDomainPtr& forward_domain,
-                   DdnsDomainPtr& reverse_domain,
-                   D2CfgMgrPtr& cfg_mgr)
+                      dhcp_ddns::NameChangeRequestPtr& ncr,
+                      DdnsDomainPtr& forward_domain,
+                      DdnsDomainPtr& reverse_domain,
+                      D2CfgMgrPtr& cfg_mgr)
     : NameChangeTransaction(io_service, ncr, forward_domain, reverse_domain,
                             cfg_mgr) {
     if (ncr->getChangeType() != isc::dhcp_ddns::CHG_REMOVE) {
@@ -230,11 +230,19 @@ NameRemoveTransaction::removingFwdAddrsHandler() {
         }
 
         case DNSClient::TIMEOUT:
+            // No response from the server, log it and set up
+            // to select the next server for a retry.
+            LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_FORWARD_REMOVE_ADDRS_TIMEOUT)
+                      .arg(getRequestId())
+                      .arg(getNcr()->getFqdn())
+                      .arg(getCurrentServer()->toText());
+
+            retryTransition(SELECTING_FWD_SERVER_ST);
+            break;
+
         case DNSClient::OTHER:
             // We couldn't send to the current server, log it and set up
             // to select the next server for a retry.
-            // @note For now we treat OTHER as an IO error like TIMEOUT. It
-            // is not entirely clear if this is accurate.
             LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_FORWARD_REMOVE_ADDRS_IO_ERROR)
                       .arg(getRequestId())
                       .arg(getNcr()->getFqdn())
@@ -347,12 +355,9 @@ NameRemoveTransaction::removingFwdRRsHandler() {
         }
 
         case DNSClient::TIMEOUT:
-        case DNSClient::OTHER:
-            // We couldn't send to the current server, log it and set up
+            // No response from the server, log it and set up
             // to select the next server for a retry.
-            // @note For now we treat OTHER as an IO error like TIMEOUT. It
-            // is not entirely clear if this is accurate.
-            LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_FORWARD_REMOVE_RRS_IO_ERROR)
+            LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_FORWARD_REMOVE_RRS_TIMEOUT)
                       .arg(getRequestId())
                       .arg(getNcr()->getFqdn())
                       .arg(getCurrentServer()->toText());
@@ -365,6 +370,18 @@ NameRemoveTransaction::removingFwdRRsHandler() {
             // removal on a different server.  This is perhaps a point
             // for discussion.
             // @todo Should we go ahead with the reverse remove?
+            retryTransition(PROCESS_TRANS_FAILED_ST);
+            break;
+
+        case DNSClient::OTHER:
+            // We couldn't send to the current server, log it and set up
+            // to select the next server for a retry.
+            LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_FORWARD_REMOVE_RRS_IO_ERROR)
+                      .arg(getRequestId())
+                      .arg(getNcr()->getFqdn())
+                      .arg(getCurrentServer()->toText());
+
+            // @note same commentary as in TIMEOUT above case.
             retryTransition(PROCESS_TRANS_FAILED_ST);
             break;
 
@@ -494,11 +511,21 @@ NameRemoveTransaction::removingRevPtrsHandler() {
         }
 
         case DNSClient::TIMEOUT:
+            // No response from the server, log it and set up
+            // to select the next server for a retry.
+            LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_REVERSE_REMOVE_TIMEOUT)
+                      .arg(getRequestId())
+                      .arg(getNcr()->getFqdn())
+                      .arg(getCurrentServer()->toText());
+
+            // If we are out of retries on this server, we go back and start
+            // all over on a new server.
+            retryTransition(SELECTING_REV_SERVER_ST);
+            break;
+
         case DNSClient::OTHER:
             // We couldn't send to the current server, log it and set up
             // to select the next server for a retry.
-            // @note For now we treat OTHER as an IO error like TIMEOUT. It
-            // is not entirely clear if this is accurate.
             LOG_ERROR(d2_to_dns_logger, DHCP_DDNS_REVERSE_REMOVE_IO_ERROR)
                       .arg(getRequestId())
                       .arg(getNcr()->getFqdn())

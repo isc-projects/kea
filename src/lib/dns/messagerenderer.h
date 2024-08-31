@@ -1,18 +1,19 @@
-// Copyright (C) 2009-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef MESSAGERENDERER_H
-#define MESSAGERENDERER_H 1
+#define MESSAGERENDERER_H
 
 #include <util/buffer.h>
 
 #include <boost/noncopyable.hpp>
 
-namespace isc {
+#include <memory>
 
+namespace isc {
 namespace dns {
 // forward declarations
 class Name;
@@ -118,7 +119,7 @@ private:
 
     /// \brief Buffer to store data.
     ///
-    /// Note that the class interface ensures this pointer is never NULL;
+    /// Note that the class interface ensures this pointer is never null;
     /// it either refers to \c local_buffer_ or to an application-supplied
     /// buffer by \c setBuffer().
     ///
@@ -181,9 +182,9 @@ public:
     /// This method can be used for an application that manages an output
     /// buffer separately from the message renderer and wants to keep reusing
     /// the renderer.  When the renderer is associated with the default buffer
-    /// and the given pointer is non NULL, the given buffer will be
+    /// and the given pointer is non null, the given buffer will be
     /// (temporarily) used for subsequent message rendering; if the renderer
-    /// is associated with a temporary buffer and the given pointer is NULL,
+    /// is associated with a temporary buffer and the given pointer is null,
     /// the renderer will be reset with the default buffer.  In the latter
     /// case any additional resources (possibly specific to a derived renderer
     /// class) will be cleared, but the temporary buffer is kept as the latest
@@ -193,7 +194,7 @@ public:
     /// that could cause disruption such as dereferencing an invalid object.
     /// First, a temporary buffer must not be set when the associated buffer
     /// is in use, that is, any data are stored in the buffer.  Also, the
-    /// default buffer cannot be "reset"; when NULL is specified a temporary
+    /// default buffer cannot be "reset"; when null is specified a temporary
     /// buffer must have been set beforehand.  If these conditions aren't met
     /// an isc::InvalidParameter exception will be thrown.  This method is
     /// exception free otherwise.
@@ -201,7 +202,7 @@ public:
     /// \throw isc::InvalidParameter A restrictions of the method usage isn't
     /// met.
     ///
-    /// \param buffer A pointer to a temporary output buffer or NULL for reset
+    /// \param buffer A pointer to a temporary output buffer or null for reset
     /// it.
     void setBuffer(isc::util::OutputBuffer* buffer);
 
@@ -282,8 +283,7 @@ public:
     ///
     /// The buffer must have a sufficient room to store the given data at the
     /// given position, that is, <code>pos + 2 < getLength()</code>;
-    /// otherwise an exception of class \c isc::dns::InvalidBufferPosition will
-    /// be thrown.
+    /// otherwise an exception of class \c isc::OutOfRange will be thrown.
     /// Note also that this method never extends the internal buffer.
     ///
     /// \param data The 16-bit integer to be written into the internal buffer.
@@ -384,12 +384,8 @@ public:
 
 private:
     struct MessageRendererImpl;
-    MessageRendererImpl* impl_;
+    std::unique_ptr<MessageRendererImpl> impl_;
 };
 }
 }
 #endif // MESSAGERENDERER_H
-
-// Local Variables:
-// mode: c++
-// End:

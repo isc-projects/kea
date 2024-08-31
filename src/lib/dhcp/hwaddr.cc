@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,7 +9,7 @@
 #include <dhcp/hwaddr.h>
 #include <dhcp/dhcp4.h>
 #include <exceptions/exceptions.h>
-#include <util/strutil.h>
+#include <util/str.h>
 #include <iomanip>
 #include <sstream>
 #include <vector>
@@ -55,12 +55,11 @@ std::string HWAddr::toText(bool include_htype) const {
     }
     tmp << std::hex;
     bool delim = false;
-    for (std::vector<uint8_t>::const_iterator it = hwaddr_.begin();
-         it != hwaddr_.end(); ++it) {
+    for (auto const& it : hwaddr_) {
         if (delim) {
             tmp << ":";
         }
-        tmp << std::setw(2) << std::setfill('0') << static_cast<unsigned int>(*it);
+        tmp << std::setw(2) << std::setfill('0') << static_cast<unsigned int>(it);
         delim = true;
     }
     return (tmp.str());

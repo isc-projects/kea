@@ -6,7 +6,7 @@ AC_PREREQ([2.69])
 # For released versions, this is in x.y.z format.
 # For GIT versions, this is x.y.z-git, where x.y.z denotes the next development
 # version that is worked on and that is to be released.
-AC_INIT(kea,2.1.7-git, kea-dev@lists.isc.org)
+AC_INIT(kea, 2.7.3-git, kea-dev@lists.isc.org)
 AC_CONFIG_SRCDIR(README)
 
 # serial-tests is not available in automake version before 1.13, so
@@ -21,12 +21,20 @@ m4_define([serial_tests], [
 ])
 AM_INIT_AUTOMAKE(foreign serial_tests)
 
-m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])dnl be backward compatible
+AM_SILENT_RULES([yes])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4macros])
 
 AC_CANONICAL_HOST
 AC_CANONICAL_BUILD
+
+# Check if the user provided a CXXFLAGS. Must be done before AC_PROG_CXX which
+# sets it to a default.
+if test -n "${CXXFLAGS+x}"; then
+  custom_cxxflags=true
+else
+  custom_cxxflags=false
+fi
 
 # Check for compilers.
 AC_PROG_CXX
@@ -34,17 +42,30 @@ AC_PROG_CXX
 # Check for preprocessors.
 AC_PROG_CXXCPP
 
+# Check for ln -s.
+AC_PROG_LN_S
+
 # Check for exact Kea version.
-AC_MSG_CHECKING(whether this is a tarball or git source)
-if test -d "${srcdir}/.git"; then
+AC_MSG_CHECKING(whether this is a tarball or git source or package preparation)
+# KEA_PKG_VERSION_IN_CONFIGURE and KEA_PKG_TYPE_IN_CONFIGURE names may be weird
+# considering those are placed inside configure script, but those are designed
+# to be set in package sources (APKBUILD, rules or kea.spec) kea-packaging repo
+# KEA_PKG_VERSION_IN_CONFIGURE will be date and timestamp of the package
+#                              e.g. "isc20230921141113"
+# KEA_PKG_TYPE_IN_CONFIGURE will be type of the package "rpm", "deb" or "apk"
+if test -n "$KEA_PKG_VERSION_IN_CONFIGURE"; then
+        KEA_SRCID="$KEA_PKG_VERSION_IN_CONFIGURE $KEA_PKG_TYPE_IN_CONFIGURE"
+        AC_MSG_RESULT("$KEA_PKG_TYPE_IN_CONFIGURE")
+elif test -d "${srcdir}/.git"; then
         KEA_SRCID="git `(cd "${top_srcdir}";git rev-parse HEAD)`"
         AC_MSG_RESULT("git")
 else
         KEA_SRCID="tarball"
         AC_MSG_RESULT("tarball")
 fi
-# Export KEA_SRCID to config.h
-# This will be either "tarball" or "git abcd".
+
+# Export KEA_SRCID to a C++ header.
+# This will be either package version or "tarball" or "git abcd".
 # We do not want to put this in a config.h, because it messes up ccache
 # horribly. When building different branches, the commit-id is different
 # and since the config.h is included in most files *and* has a different
@@ -90,7 +111,7 @@ fi
 # by default.
 AC_ARG_ENABLE([debug],
   [AS_HELP_STRING([--enable-debug],
-    [enable debugging (default is no)])],
+    [enable debugging symbols, enable log4cplus's own logging, add more sanity checks in DNS code (default is no)])],
   [case "${enableval}" in
     yes) debug_enabled=yes ;;
     no)  debug_enabled=no ;;
@@ -98,10 +119,29 @@ AC_ARG_ENABLE([debug],
   esac],[debug_enabled=no])
 AM_CONDITIONAL([DEBUG_ENABLED], [test x$debug_enabled = xyes])
 AM_COND_IF([DEBUG_ENABLED], [AC_DEFINE([ENABLE_DEBUG], [1], [Enable low-performing debugging facilities?])])
+if test "${debug_enabled}" = 'yes'; then
+  # If the shell variable CXXFLAGS was not already set, based on compiler,
+  # AC_PROG_CXX can set it to -g, -O2, or both. Since they can conflict with
+  # what --enable-debug is setting, let's remove them, but only if the user has
+  # not explicitly set the variable. We don't inspect what the user set. If one
+  # of the conflicting flags was set, it might mean that the user wanted to
+  # override, which is fine.
+  if ! ${custom_cxxflags}; then
+    CXXFLAGS=''
+  fi
+
+  KEA_CXXFLAGS="${KEA_CXXFLAGS} -g3 -O0"
+
+  # g++ has some additional flags that can be useful.
+  if test "${GXX}" = 'yes'; then
+    KEA_CXXFLAGS="${KEA_CXXFLAGS} -ggdb3 -grecord-gcc-switches"
+  fi
+fi
 
 # Include premium configuration
 INCLUDED_HOOKS=
 
+PREMIUM=no
 PREMIUM_DIR=
 DISTCHECK_PREMIUM_CONFIGURE_FLAG=
 AC_DEFUN([AX_PREMIUM],[])
@@ -110,6 +150,9 @@ m4_sinclude(premium/config.m4)
 AC_SUBST(PREMIUM_DIR)
 AC_SUBST(DISTCHECK_PREMIUM_CONFIGURE_FLAG)
 AX_PREMIUM
+
+# Export PREMIUM to kea_version.h.
+AC_SUBST(PREMIUM)
 
 # Include contrib configuration
 # (currently only a provision copied from premium support)
@@ -158,8 +201,11 @@ AC_CHECK_DECL([__clang__], [CLANGPP="yes"], [CLANGPP="no"])
 # USE_CLANGPP is no longer used, keep it by symmetry with USE_GXX?
 AM_CONDITIONAL(USE_CLANGPP, test "X${CLANGPP}" = "Xyes")
 
-# Check for C++11 features support
-AX_ISC_CPP11
+# Check for C++14 features support
+AX_ISC_CPP14
+
+# Check for C++20 compiler support.
+AX_ISC_CPP20
 
 # Check for std::is_base_of support
 AC_MSG_CHECKING([for std::is_base_of])
@@ -246,7 +292,7 @@ AC_DEFUN([KEA_CXX_TRY_FLAG], [
 CXX_VERSION="unknown"
 
 # SunStudio compiler requires special compiler options for boost
-# (http://blogs.sun.com/sga/entry/boost_mini_howto)
+# (https://web.archive.org/web/20100103115135/http://blogs.sun.com/sga/entry/boost_mini_howto)
 if test "$SUNCXX" = "yes"; then
 CXX_VERSION=`$CXX -V 2> /dev/null | head -1`
 CXXFLAGS="$CXXFLAGS -library=stlport4 -features=tmplife -features=tmplrefstatic"
@@ -377,7 +423,7 @@ fi
 
 # Some versions of GCC warn about some versions of Boost regarding
 # missing initializer for members in its posix_time.
-# https://svn.boost.org/trac/boost/ticket/3477
+# https://web.archive.org/web/20150911093559/https://svn.boost.org/trac/boost/ticket/3477
 # But older GCC compilers don't have the flag.
 KEA_CXX_TRY_FLAG([-Wno-missing-field-initializers],
         [KEA_CXXFLAGS="$KEA_CXXFLAGS -Wno-missing-field-initializers"])
@@ -397,7 +443,7 @@ for extra in $werror_extras; do
                 [AC_MSG_ERROR([$CXX does not support $extra"])])
 done
 
-fi                              dnl GXX = yes
+fi  # if test "X$GXX" = "Xyes"
 
 # allow building programs with static link.  we need to make it selective
 # because loadable modules cannot be statically linked.
@@ -629,9 +675,14 @@ int main() {
 # When cross-compiling we don't have any way to check if regex is
 # usable or not.
 # Let's be optimistic and assume it is by testing only the negative case.
-if test "x$usable_regex" != "xno" ; then
-        AC_DEFINE(USE_REGEX, 1, [Define to 1 if C++11 regex is usable])
+if test "${usable_regex}" = 'no'; then
+  AC_MSG_ERROR([Need proper regex functionality.])]
 fi
+
+# Check for NETCONF support. If NETCONF was enabled in the build, and this check
+# passes, it will enforce the --std=c++20 flag. Let's do the check as early as
+# possible so that the rest of the checks include the flag as well.
+AX_NETCONF
 
 # Run the gtest detection routines. This supports --with-gtest and --with-gtest-source
 # parameters. If specified, those will set the HAVE_GTEST, HAVE_GTEST_SOURCE,
@@ -677,10 +728,13 @@ elif test "${mysql_config}" != "no" ; then
     MYSQL_CONFIG="${withval}"
 fi
 
+DISTCHECK_MYSQL_CONFIGURE_FLAG=
 if test "$MYSQL_CONFIG" != "" ; then
     if test -d "$MYSQL_CONFIG" -o ! -x "$MYSQL_CONFIG" ; then
         AC_MSG_ERROR([MySQL dependencies cannot be found. Please install MySQL libraries or point --with-mysql to mysql_config program if it is located in non-default directory, eg. --with-mysql=/opt/mysql/bin/mysql_config.])
     fi
+
+    DISTCHECK_MYSQL_CONFIGURE_FLAG="--with-mysql=$MYSQL_CONFIG"
 
     MYSQL_CPPFLAGS=`$MYSQL_CONFIG --cflags`
     MYSQL_LIBS=`$MYSQL_CONFIG --libs`
@@ -689,6 +743,7 @@ if test "$MYSQL_CONFIG" != "" ; then
 
     AC_SUBST(MYSQL_CPPFLAGS)
     AC_SUBST(MYSQL_LIBS)
+    AC_SUBST(DISTCHECK_MYSQL_CONFIGURE_FLAG)
 
     # Check that a simple program using MySQL functions can compile and link.
     CPPFLAGS_SAVED="$CPPFLAGS"
@@ -710,7 +765,7 @@ if test "$MYSQL_CONFIG" != "" ; then
     # Note that MYSQL is present in the config.h file
     AC_DEFINE([HAVE_MYSQL], [1], [MySQL is present])
 
-    # Check is my_bool is defined.
+    # Check if my_bool is defined.
     AC_COMPILE_IFELSE(
         [AC_LANG_PROGRAM([#include <mysql.h>
                           const my_bool MLM_FALSE = 0;]
@@ -719,9 +774,37 @@ if test "$MYSQL_CONFIG" != "" ; then
          AC_DEFINE([HAVE_MYSQL_MY_BOOL], [1], [MySQL uses my_bool])],
         [AC_MSG_RESULT([checking for MySQL my_bool... no])])
 
+    # Check if mysql_get_option is defined.
+    AC_MSG_CHECKING([for MySQL mysql_get_option])
+    AC_LINK_IFELSE(
+        [AC_LANG_PROGRAM(
+            [#include <mysql.h>],
+            [MYSQL handle;
+             unsigned int timeout;
+             mysql_get_option(&handle, MYSQL_OPT_CONNECT_TIMEOUT, &timeout);]
+        )],
+        [AC_MSG_RESULT([yes])
+         AC_DEFINE([HAVE_MYSQL_GET_OPTION], [true], [MySQL has mysql_get_option defined.])],
+        [AC_MSG_RESULT([no])
+         AC_MSG_WARN([mysql_get_option program failed to build:
+
+$(cat conftest.cpp)
+
+$(cat conftest.err)])]
+    )
+
+    # Beginning with MySQL 8.0.34 MYSQL_OPT_RECONNNECT is deprecated.
+    # Check if MYSQL_OPT_RECONNNECT is defined.
+    AC_COMPILE_IFELSE(
+        [AC_LANG_PROGRAM([#include <mysql.h>
+                          auto temp = MYSQL_OPT_RECONNECT;]
+                         [])],
+        [AC_MSG_RESULT([checking for MySQL MYSQL_OPT_RECONNNECT... yes])
+         AC_DEFINE([HAVE_MYSQL_OPT_RECONNECT], [1], [MySQL has MYSQL_OPT_RECONNNECT])],
+        [AC_MSG_RESULT([checking for MySQL MYSQL_OPT_RECONNECT... no])])
+
     CPPFLAGS=$CPPFLAGS_SAVED
     LIBS=$LIBS_SAVED
-
 fi
 
 # Solaris puts FIONREAD in filio.h
@@ -757,10 +840,13 @@ elif test "${pg_config}" != "no" ; then
     PG_CONFIG="${withval}"
 fi
 
+DISTCHECK_PGSQL_CONFIGURE_FLAG=
 if test "$PG_CONFIG" != "" ; then
     if test -d "$PG_CONFIG" -o ! -x "$PG_CONFIG" ; then
         AC_MSG_ERROR([PostgreSQL dependencies cannot be found. Please install PostgreSQL libraries or point --with-pgsql to pg_config program if it is located in non-default directory, eg. --with-pgsql=/opt/pgsql/bin/pg_config.])
     fi
+
+    DISTCHECK_PGSQL_CONFIGURE_FLAG="--with-pgsql=$PG_CONFIG"
 
     PGSQL_CPPFLAGS=`$PG_CONFIG --cppflags`
     PGSQL_INCLUDEDIR=`$PG_CONFIG --includedir`
@@ -769,9 +855,11 @@ if test "$PG_CONFIG" != "" ; then
     PGSQL_LIBS=`$PG_CONFIG --libdir`
     PGSQL_LIBS="-L$PGSQL_LIBS -lpq"
     PGSQL_VERSION=`$PG_CONFIG --version`
+    PGSQL_MAJOR_VERSION=`$PG_CONFIG --version | cut -f2 -d' ' | cut -f1 -d'.'`
 
     AC_SUBST(PGSQL_CPPFLAGS)
     AC_SUBST(PGSQL_LIBS)
+    AC_SUBST(DISTCHECK_PGSQL_CONFIGURE_FLAG)
 
     # Check that a simple program using PostgreSQL functions can compile and link.
     CPPFLAGS_SAVED="$CPPFLAGS"
@@ -797,6 +885,10 @@ if test "$PG_CONFIG" != "" ; then
 
     # Note that PostgreSQL is present in the config.h file
     AC_DEFINE([HAVE_PGSQL], [1], [PostgreSQL is present])
+
+if test $PGSQL_MAJOR_VERSION -ge 12; then
+   AC_DEFINE([HAVE_PGSQL_TCP_USER_TIMEOUT], [1], [PostgreSQL connection parameter tcp_user_timeout supported])
+fi
 fi
 
 # ... and at the shell level, so Makefile.am can take action depending on this.
@@ -810,19 +902,6 @@ AC_ARG_ENABLE([pgsql-ssl],
 if test "${pgsql_ssl}" = "yes"; then
     AC_DEFINE([HAVE_PGSQL_SSL], [1], [PostgreSQL was built with OpenSSL support])
 fi
-
-cql_config="no"
-AC_ARG_WITH([cql],
-  [AS_HELP_STRING([--with-cql[[=PATH]]],
-    [path to pkg-config or the Cassandra CQL 'cql_config' script (deprecated)])],
-  [cql_config="$withval"])
-
-if test "${cql_config}" != "no" ; then
-    AC_MSG_ERROR([$CQL_CONFIG Cassandra is no longer supported])
-fi
-
-# Check for sysrepo.
-AX_SYSREPO
 
 # Check for log4cplus
 DISTCHECK_LOG4CPLUS_CONFIGURE_FLAG=
@@ -945,7 +1024,7 @@ AC_CHECK_LIB(pthread, pthread_create,[ LDFLAGS="$LDFLAGS -lpthread" ], [])
 AX_TLS
 
 #
-# Some Googletest versions bug with C++11 compilers
+# Some Googletest versions bug with >= C++11 compilers
 #
 if test $enable_gtest != "no"; then
    AC_MSG_CHECKING([if Google Test is compatible with the compiler])
@@ -1099,15 +1178,13 @@ fi
 
 AM_CONDITIONAL([GENERATE_PARSER], [test x$enable_generate_parser != xno])
 
-# Kea-shell is written in python. It can work with python 2.7 or any 3.x.
-# It may likely work with earlier versions, but 2.7 was the oldest one we tested
-# it with. We require python only if kea-shell was enabled. It is disabled
-# by default to not introduce hard dependency on python.
+# Kea-shell is written in python. It can work with any python 3.x version.
+# We require python only if kea-shell was enabled. It is disabled by default to
+# not introduce hard dependency on python.
 AC_ARG_ENABLE(shell,
   [AS_HELP_STRING([--enable-shell],
     [enable kea-shell, a text management client for Control Agent [default=no]])],
   enable_shell=$enableval, enable_shell=no)
-
 
 AC_ARG_ENABLE(generate_docs,
   [AS_HELP_STRING([--enable-generate-docs],
@@ -1117,38 +1194,71 @@ AC_ARG_ENABLE(generate_docs,
 
 DISTCHECK_KEA_SHELL_CONFIGURE_FLAG=
 PKGPYTHONDIR=
+PYTHON_PREFIX=
+PYTHON_EXEC_PREFIX=
 shell_report=no
-m4_define_default([_AM_PYTHON_INTERPRETER_LIST],
- [python3 python3.9 python3.8 python3.7 python3.6 python3.5 python3.4 dnl
-  python3.3 python3.2 python3.1 python3.0 python python2 python2.7])
 if test "x$enable_shell" != xno -o "x$enable_generate_docs" != xno; then
-# If kea-shell is enabled, we really need python. 2.7 or anything newer will do.
-# We try to find 3.x first. If not found, we can do with 2.7.
-  AM_PATH_PYTHON([2.7])
 
-  AC_ARG_WITH(site-packages,
-           [AS_HELP_STRING([--with-site-packages],
-                          [place to install Kea Python module])],
-           [pythondir=$withval;
-            pkgpythondir=${pythondir}/$PACKAGE_NAME])
-  if test "$pythondir" = "yes"; then
-     AC_MSG_ERROR([If enabled, site-packages must be specified explicitly, e.g. --site-packages=/usr/lib/python3/dist-packages])
-  fi
-
-  # pkgpythondir needs to be expanded
+  # Temporarily replace NONE with the default prefix while --enable-shell is parsed.
   saved_prefix="$prefix"
   if test "$prefix" = "NONE"; then
     prefix=$ac_default_prefix
   fi
-  PKGPYTHONDIR="$pkgpythondir"
-  OLD=
-  while test "x$OLD" != "x$PKGPYTHONDIR"; do
-    OLD="$PKGPYTHONDIR"
-    eval PKGPYTHONDIR="\"$OLD\""
+
+  # If generate_docs is enabled, we really need python. 2.7 or anything newer will do.
+  # We try to find 3.x first. If not found, we can do with 2.7.
+  m4_define_default([_AM_PYTHON_INTERPRETER_LIST],
+                    [python3 python python2])
+  AM_PATH_PYTHON([2.7])
+
+  # If kea-shell is enabled, we really need python3
+  if test "x$enable_shell" != "xno"; then
+    major=`echo $PYTHON_VERSION | cut -d '.' -f 1`
+    if test "x$major" != "x3"; then
+      AC_MSG_ERROR("kea-shell does not support detected python version $PYTHON_VERSION")
+    fi
+  fi
+
+  # Determine if the --with-site-packages flag was provided.
+  AC_ARG_WITH(site-packages,
+              [AS_HELP_STRING([--with-site-packages],
+                              [place to install Kea Python module])],
+              [with_site_packages="${withval}"])
+
+  if test -z "${with_site_packages}"; then
+    # --with-site-packages not provided. Set a default location explicitly to
+    # make sure it doesn't change based on external factors. The path resembles
+    # what python set by default at the time of this writing.
+    pythondir="${prefix}/lib/python${PYTHON_VERSION}/site-packages"
+
+  elif test "${with_site_packages}" = 'yes'; then
+    # --with-site-packages provided, but without a value. It's not clear what is meant.
+    AC_MSG_ERROR([If enabled, site-packages must be specified explicitly, e.g. --with-site-packages=/usr/lib/python3/dist-packages])
+
+  else
+    # --with-site-packages provided with value. Override pythondir.
+    pythondir="${with_site_packages}"
+  fi
+
+  # pythondir needs to be expanded.
+  old=
+  while test "${old}" != "${pythondir}"; do
+    old="${pythondir}"
+    eval pythondir="\"${old}\""
   done
-  prefix="$saved_prefix"
+
+  # Set variables used in makefiles.
   DISTCHECK_KEA_SHELL_CONFIGURE_FLAG="--enable-shell"
-  shell_report="yes, install to $pythondir"
+  PKGPYTHONDIR="${pythondir}/${PACKAGE_NAME}"
+  PYTHON_PREFIX="${prefix}"
+  PYTHON_EXEC_PREFIX="${prefix}"
+
+  # Restore prefix.
+  prefix="$saved_prefix"
+
+  if test "x$enable_shell" != "xno"; then
+    shell_report='yes'
+  fi
 else
   PYTHON=no
 fi
@@ -1157,6 +1267,8 @@ fi
 AM_CONDITIONAL(KEA_SHELL, test x$enable_shell != xno)
 AC_SUBST(DISTCHECK_KEA_SHELL_CONFIGURE_FLAG)
 AC_SUBST(PKGPYTHONDIR)
+AC_SUBST(PYTHON_PREFIX)
+AC_SUBST(PYTHON_EXEC_PREFIX)
 
 # Decide if TLS is supported.
 tls_support=no
@@ -1168,15 +1280,9 @@ if test "x${CRYPTO_NAME}" = "xBotan" && test "x$BOTAN_BOOST" = "xyes"; then
 fi
 
 # Decide if the shell TLS test can work.
-### This will be simpler when Python 2 support will be dropped.
 ca_tls_test=no
 if test "x$enable_shell" != "xno"; then
-  major=`echo $PYTHON_VERSION | cut -d '.' -f 1`
-  if test "x$major" = "x3"; then
-    ca_tls_test="$tls_support"
-  else
-    AC_MSG_WARN("python2 kea-shell does not support HTTPS")
-  fi
+  ca_tls_test="$tls_support"
 fi
 AM_CONDITIONAL(CA_TLS_TEST, test x$ca_tls_test != xno)
 
@@ -1295,6 +1401,10 @@ AM_CONDITIONAL(HAVE_ASCIIDOC, test "x$ASCIIDOC" != "xno")
 AC_PATH_PROG(PLANTUML, plantuml, no)
 AM_CONDITIONAL(HAVE_PLANTUML, test "x$PLANTUML" != "xno")
 
+# Check for xmllint.
+AC_PATH_PROG(XMLLINT, xmllint, no)
+AM_CONDITIONAL(HAVE_XMLLINT, test "x$XMLLINT" != "xno")
+
 # Check for valgrind
 AC_PATH_PROG(VALGRIND, valgrind, no)
 AM_CONDITIONAL(HAVE_VALGRIND, test "x$VALGRIND" != "xno")
@@ -1361,9 +1471,9 @@ AX_GSS_API
 AC_DEFINE([CONFIG_H_WAS_INCLUDED], [1], [config.h inclusion marker])
 
 # Autoconf 2.70 has runstatedir.
-m4_version_prereq([2.70], [], [dnl
-    AC_ARG_VAR(runstatedir, [$localstatedir/run for autoconf < 2.70])dnl
-    AC_SUBST(runstatedir)dnl
+m4_version_prereq([2.70], [], [
+    AC_ARG_VAR(runstatedir, [$localstatedir/run for autoconf < 2.70])
+    AC_SUBST(runstatedir)
 ])
 if test "x$runstatedir" = "x"; then
     runstatedir="$localstatedir/run"
@@ -1386,6 +1496,7 @@ AC_CONFIG_FILES([m4macros/Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/bin/Makefile])
 AC_CONFIG_FILES([src/bin/admin/Makefile])
+AC_CONFIG_FILES([src/bin/admin/admin-utils.sh])
 AC_CONFIG_FILES([src/bin/admin/kea-admin],
                 [chmod +x src/bin/admin/kea-admin])
 AC_CONFIG_FILES([src/bin/admin/tests/Makefile])
@@ -1460,6 +1571,7 @@ AC_CONFIG_FILES([src/bin/shell/tests/tls_ca_process_tests.sh],
 AC_CONFIG_FILES([src/hooks/Makefile])
 AC_CONFIG_FILES([src/hooks/dhcp/Makefile])
 AC_CONFIG_FILES([src/hooks/dhcp/bootp/Makefile])
+AC_CONFIG_FILES([src/hooks/dhcp/bootp/libloadtests/Makefile])
 AC_CONFIG_FILES([src/hooks/dhcp/bootp/tests/Makefile])
 AC_CONFIG_FILES([src/hooks/dhcp/flex_option/Makefile])
 AC_CONFIG_FILES([src/hooks/dhcp/flex_option/libloadtests/Makefile])
@@ -1468,10 +1580,13 @@ AC_CONFIG_FILES([src/hooks/dhcp/high_availability/Makefile])
 AC_CONFIG_FILES([src/hooks/dhcp/high_availability/libloadtests/Makefile])
 AC_CONFIG_FILES([src/hooks/dhcp/high_availability/tests/Makefile])
 AC_CONFIG_FILES([src/hooks/dhcp/lease_cmds/Makefile])
+AC_CONFIG_FILES([src/hooks/dhcp/lease_cmds/libloadtests/Makefile])
 AC_CONFIG_FILES([src/hooks/dhcp/lease_cmds/tests/Makefile])
 AC_CONFIG_FILES([src/hooks/dhcp/mysql_cb/Makefile])
+AC_CONFIG_FILES([src/hooks/dhcp/mysql_cb/libloadtests/Makefile])
 AC_CONFIG_FILES([src/hooks/dhcp/mysql_cb/tests/Makefile])
 AC_CONFIG_FILES([src/hooks/dhcp/pgsql_cb/Makefile])
+AC_CONFIG_FILES([src/hooks/dhcp/pgsql_cb/libloadtests/Makefile])
 AC_CONFIG_FILES([src/hooks/dhcp/pgsql_cb/tests/Makefile])
 AC_CONFIG_FILES([src/hooks/dhcp/run_script/Makefile])
 AC_CONFIG_FILES([src/hooks/dhcp/run_script/libloadtests/Makefile])
@@ -1479,10 +1594,14 @@ AC_CONFIG_FILES([src/hooks/dhcp/run_script/tests/Makefile])
 AC_CONFIG_FILES([src/hooks/dhcp/run_script/tests/run_script_test.sh],
                 [chmod +x src/hooks/dhcp/run_script/tests/run_script_test.sh])
 AC_CONFIG_FILES([src/hooks/dhcp/stat_cmds/Makefile])
+AC_CONFIG_FILES([src/hooks/dhcp/stat_cmds/libloadtests/Makefile])
 AC_CONFIG_FILES([src/hooks/dhcp/stat_cmds/tests/Makefile])
 AC_CONFIG_FILES([src/hooks/dhcp/user_chk/Makefile])
 AC_CONFIG_FILES([src/hooks/dhcp/user_chk/tests/Makefile])
 AC_CONFIG_FILES([src/hooks/dhcp/user_chk/tests/test_data_files_config.h])
+AC_CONFIG_FILES([src/hooks/dhcp/perfmon/Makefile])
+AC_CONFIG_FILES([src/hooks/dhcp/perfmon/libloadtests/Makefile])
+AC_CONFIG_FILES([src/hooks/dhcp/perfmon/tests/Makefile])
 AC_CONFIG_FILES([src/lib/Makefile])
 AC_CONFIG_FILES([src/lib/asiodns/Makefile])
 AC_CONFIG_FILES([src/lib/asiodns/tests/Makefile])
@@ -1493,12 +1612,8 @@ AC_CONFIG_FILES([src/lib/asiolink/tests/process_spawn_app.sh],
                 [chmod +x src/lib/asiolink/tests/process_spawn_app.sh])
 AC_CONFIG_FILES([src/lib/cc/Makefile])
 AC_CONFIG_FILES([src/lib/cc/tests/Makefile])
-AC_CONFIG_FILES([src/lib/cfgrpt/Makefile])
-AC_CONFIG_FILES([src/lib/cfgrpt/tests/Makefile])
 AC_CONFIG_FILES([src/lib/config/Makefile])
 AC_CONFIG_FILES([src/lib/config/tests/Makefile])
-AC_CONFIG_FILES([src/lib/config/tests/data_def_unittests_config.h])
-AC_CONFIG_FILES([src/lib/config/tests/testdata/Makefile])
 AC_CONFIG_FILES([src/lib/config_backend/Makefile])
 AC_CONFIG_FILES([src/lib/config_backend/tests/Makefile])
 AC_CONFIG_FILES([src/lib/cryptolink/Makefile])
@@ -1510,16 +1625,17 @@ AC_CONFIG_FILES([src/lib/database/Makefile])
 AC_CONFIG_FILES([src/lib/database/tests/Makefile])
 AC_CONFIG_FILES([src/lib/database/testutils/Makefile])
 AC_CONFIG_FILES([src/lib/dhcp/Makefile])
+AC_CONFIG_FILES([src/lib/dhcp/testutils/Makefile])
 AC_CONFIG_FILES([src/lib/dhcp/tests/Makefile])
 AC_CONFIG_FILES([src/lib/dhcp_ddns/Makefile])
 AC_CONFIG_FILES([src/lib/dhcp_ddns/tests/Makefile])
 AC_CONFIG_FILES([src/lib/dhcpsrv/Makefile])
 AC_CONFIG_FILES([src/lib/dhcpsrv/tests/Makefile])
 AC_CONFIG_FILES([src/lib/dhcpsrv/tests/test_libraries.h])
+AC_CONFIG_FILES([src/lib/dhcpsrv/tests/test_kea_lfc_env.sh],
+                [chmod +x src/lib/dhcpsrv/tests/test_kea_lfc_env.sh])
 AC_CONFIG_FILES([src/lib/dhcpsrv/testutils/Makefile])
 AC_CONFIG_FILES([src/lib/dns/Makefile])
-AC_CONFIG_FILES([src/lib/dns/gen-rdatacode.py],
-                [chmod +x src/lib/dns/gen-rdatacode.py])
 AC_CONFIG_FILES([src/lib/dns/tests/Makefile])
 AC_CONFIG_FILES([src/lib/dns/tests/testdata/Makefile])
 AC_CONFIG_FILES([src/lib/eval/Makefile])
@@ -1532,6 +1648,7 @@ AC_CONFIG_FILES([src/lib/hooks/tests/marker_file.h])
 AC_CONFIG_FILES([src/lib/hooks/tests/test_libraries.h])
 AC_CONFIG_FILES([src/lib/http/Makefile])
 AC_CONFIG_FILES([src/lib/http/tests/Makefile])
+AC_CONFIG_FILES([src/lib/http/testutils/Makefile])
 AC_CONFIG_FILES([src/lib/log/Makefile])
 AC_CONFIG_FILES([src/lib/log/compiler/Makefile])
 AC_CONFIG_FILES([src/lib/log/interprocess/Makefile])
@@ -1559,11 +1676,15 @@ AC_CONFIG_FILES([src/lib/pgsql/Makefile])
 AC_CONFIG_FILES([src/lib/pgsql/tests/Makefile])
 AC_CONFIG_FILES([src/lib/pgsql/testutils/Makefile])
 AC_CONFIG_FILES([src/lib/process/Makefile])
+AC_CONFIG_FILES([src/lib/process/cfgrpt/Makefile])
+AC_CONFIG_FILES([src/lib/process/cfgrpt/tests/Makefile])
 AC_CONFIG_FILES([src/lib/process/tests/Makefile])
 AC_CONFIG_FILES([src/lib/process/testutils/Makefile])
 AC_CONFIG_FILES([src/lib/stats/Makefile])
 AC_CONFIG_FILES([src/lib/stats/tests/Makefile])
 AC_CONFIG_FILES([src/lib/stats/testutils/Makefile])
+AC_CONFIG_FILES([src/lib/tcp/Makefile])
+AC_CONFIG_FILES([src/lib/tcp/tests/Makefile])
 AC_CONFIG_FILES([src/lib/testutils/Makefile])
 AC_CONFIG_FILES([src/lib/testutils/dhcp_test_lib.sh],
                 [chmod +x src/lib/testutils/dhcp_test_lib.sh])
@@ -1633,6 +1754,26 @@ AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_012_to_013.sh],
                 [chmod +x src/share/database/scripts/mysql/upgrade_012_to_013.sh])
 AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_013_to_014.sh],
                 [chmod +x src/share/database/scripts/mysql/upgrade_013_to_014.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_014_to_015.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_014_to_015.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_015_to_016.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_015_to_016.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_016_to_017.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_016_to_017.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_017_to_018.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_017_to_018.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_018_to_019.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_018_to_019.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_019_to_020.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_019_to_020.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_020_to_021.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_020_to_021.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_021_to_022.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_021_to_022.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_022_to_023.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_022_to_023.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_023_to_024.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_023_to_024.sh])
 AC_CONFIG_FILES([src/share/database/scripts/mysql/wipe_data.sh],
                 [chmod +x src/share/database/scripts/mysql/wipe_data.sh])
 AC_CONFIG_FILES([src/share/database/scripts/pgsql/Makefile])
@@ -1670,11 +1811,39 @@ AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_010_to_011.sh],
                 [chmod +x src/share/database/scripts/pgsql/upgrade_010_to_011.sh])
 AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_011_to_012.sh],
                 [chmod +x src/share/database/scripts/pgsql/upgrade_011_to_012.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_012_to_013.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_012_to_013.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_013_to_014.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_013_to_014.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_014_to_015.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_014_to_015.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_015_to_016.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_015_to_016.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_016_to_017.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_016_to_017.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_017_to_018.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_017_to_018.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_018_to_019.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_018_to_019.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_019_to_020.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_019_to_020.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_020_to_021.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_020_to_021.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_021_to_022.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_021_to_022.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_022_to_023.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_022_to_023.sh])
+AC_CONFIG_FILES([src/share/database/scripts/pgsql/upgrade_023_to_024.sh],
+                [chmod +x src/share/database/scripts/pgsql/upgrade_023_to_024.sh])
 AC_CONFIG_FILES([src/share/database/scripts/pgsql/wipe_data.sh],
                 [chmod +x src/share/database/scripts/pgsql/wipe_data.sh])
 AC_CONFIG_FILES([src/share/yang/Makefile])
 AC_CONFIG_FILES([src/share/yang/modules/Makefile])
 AC_CONFIG_FILES([src/share/yang/modules/utils/Makefile])
+AC_CONFIG_FILES([src/share/yang/modules/utils/check-hashes.sh],
+                [chmod +x src/share/yang/modules/utils/check-hashes.sh])
+AC_CONFIG_FILES([src/share/yang/modules/utils/check-revisions.sh],
+                [chmod +x src/share/yang/modules/utils/check-revisions.sh])
 AC_CONFIG_FILES([src/share/yang/modules/utils/reinstall.sh],
                 [chmod +x src/share/yang/modules/utils/reinstall.sh])
 AC_CONFIG_FILES([tools/Makefile])
@@ -1683,16 +1852,13 @@ AC_CONFIG_FILES([tools/path_replacer.sh],
 AC_CONFIG_FILES([tools/extract_bnf.sh],
                 [chmod +x tools/extract_bnf.sh])
 
-
-AC_OUTPUT
-
-dnl Print the results
-dnl
-
 EXTENDED_VERSION=${PACKAGE_VERSION}
 if test "$KEA_SRCID" != ""; then
    EXTENDED_VERSION="${EXTENDED_VERSION} ($KEA_SRCID)"
 fi
+AC_SUBST(EXTENDED_VERSION)
+
+AC_OUTPUT
 
 # By default the following variables are defined:
 # - prefix = /usr/local
@@ -1710,6 +1876,7 @@ fi
 libdir_real="$(eval echo ${libdir})"
 libdir_real="$(eval echo ${libdir_real})"
 
+# Print the report.
 cat > config.report << END
 
        Kea source configure results:
@@ -1727,7 +1894,7 @@ Package:
 END
 if test "$PREMIUM" != ""; then
 cat >> config.report << END
-  Premium hooks:     yes
+  Premium hooks:     ${PREMIUM}
   Included Hooks:   ${INCLUDED_HOOKS}
 END
 else
@@ -1759,8 +1926,11 @@ if test "$PYTHON" != "no" ; then
 cat >> config.report << END
 
 Python:
-  PYTHON:          ${PYTHON}
-  PYTHON_VERSION:  ${PYTHON_VERSION}
+  PYTHON:               ${PYTHON}
+  PYTHON_VERSION:       ${PYTHON_VERSION}
+  PYTHON_PREFIX:        ${PYTHON_PREFIX}
+  PYTHON_EXEC_PREFIX:   ${PYTHON_EXEC_PREFIX}
+  PKGPYTHONDIR:         ${PKGPYTHONDIR}
 
 END
 else
@@ -1844,38 +2014,85 @@ PostgreSQL:
 END
 fi
 
-if "${HAVE_SYSREPO}"; then
+cat >> config.report << END
+
+NETCONF:
+  ${HAVE_NETCONF-no}
+END
+
+if test -n "${LIBYANG_VERSION}"; then
   cat >> config.report << END
 
-Sysrepo:
-  LIBYANG_VERSION:       ${LIBYANG_VERSION}
-  LIBYANG_SOVERSION:     ${LIBYANG_SOVERSION}
-  LIBYANG_INCLUDEDIR:    ${LIBYANG_INCLUDEDIR}
-  LIBYANG_CPPFLAGS:      ${LIBYANG_CPPFLAGS}
-  LIBYANG_LIBS           ${LIBYANG_LIBS}
-
-  LIBYANGCPP_VERSION:    ${LIBYANGCPP_VERSION}
-  LIBYANGCPP_INCLUDEDIR: ${LIBYANGCPP_INCLUDEDIR}
-  LIBYANGCPP_CPPFLAGS:   ${LIBYANGCPP_CPPFLAGS}
-  LIBYANGCPP_LIBS        ${LIBYANGCPP_LIBS}
-
-  SYSREPO_VERSION:       ${SYSREPO_VERSION}
-  SYSREPO_CPPFLAGS:      ${SYSREPO_CPPFLAGS}
-  SYSREPO_INCLUDEDIR:    ${SYSREPO_INCLUDEDIR}
-  SYSREPO_LIBS:          ${SYSREPO_LIBS}
-  SR_REPO_PATH:          ${SR_REPO_PATH}
-  SRPD_PLUGINS_PATH:     ${SRPD_PLUGINS_PATH}
-
-  SYSREPOCPP_VERSION:    ${SYSREPOCPP_VERSION}
-  SYSREPOCPP_CPPFLAGS:   ${SYSREPOCPP_CPPFLAGS}
-  SYSREPOCPP_INCLUDEDIR: ${SYSREPOCPP_INCLUDEDIR}
-  SYSREPOCPP_LIBS:       ${SYSREPOCPP_LIBS}
+  libyang:
+    LIBYANG_CPPFLAGS:      ${LIBYANG_CPPFLAGS}
+    LIBYANG_INCLUDEDIR:    ${LIBYANG_INCLUDEDIR}
+    LIBYANG_LIBS:          ${LIBYANG_LIBS}
+    LIBYANG_PREFIX:        ${LIBYANG_PREFIX}
+    LIBYANG_VERSION:       ${LIBYANG_VERSION}
 END
 else
   cat >> config.report << END
 
-Sysrepo:
-  no
+  libyang:
+    no
+END
+fi
+
+if test -n "${LIBYANGCPP_VERSION}"; then
+  cat >> config.report << END
+
+  libyang-cpp:
+    LIBYANGCPP_CPPFLAGS:   ${LIBYANGCPP_CPPFLAGS}
+    LIBYANGCPP_INCLUDEDIR: ${LIBYANGCPP_INCLUDEDIR}
+    LIBYANGCPP_LIBS:       ${LIBYANGCPP_LIBS}
+    LIBYANGCPP_PREFIX:     ${LIBYANGCPP_PREFIX}
+    LIBYANGCPP_VERSION:    ${LIBYANGCPP_VERSION}
+END
+else
+  cat >> config.report << END
+
+  libyang-cpp:
+    no
+END
+fi
+
+if test -n "${SYSREPO_VERSION}"; then
+  cat >> config.report << END
+
+  sysrepo:
+    SYSREPO_CPPFLAGS:      ${SYSREPO_CPPFLAGS}
+    SYSREPO_INCLUDEDIR:    ${SYSREPO_INCLUDEDIR}
+    SYSREPO_LIBS:          ${SYSREPO_LIBS}
+    SYSREPO_PREFIX:        ${SYSREPO_PREFIX}
+    SYSREPO_VERSION:       ${SYSREPO_VERSION}
+
+    SR_REPO_PATH:          ${SR_REPO_PATH}
+    SR_PLUGINS_PATH:       ${SR_PLUGINS_PATH}
+    SRPD_PLUGINS_PATH:     ${SRPD_PLUGINS_PATH}
+END
+else
+  cat >> config.report << END
+
+  sysrepo:
+    no
+END
+fi
+
+if test -n "${SYSREPOCPP_VERSION}"; then
+  cat >> config.report << END
+
+  sysrepo-cpp:
+    SYSREPOCPP_CPPFLAGS:   ${SYSREPOCPP_CPPFLAGS}
+    SYSREPOCPP_INCLUDEDIR: ${SYSREPOCPP_INCLUDEDIR}
+    SYSREPOCPP_LIBS:       ${SYSREPOCPP_LIBS}
+    SYSREPOCPP_PREFIX :    ${SYSREPOCPP_PREFIX}
+    SYSREPOCPP_VERSION:    ${SYSREPOCPP_VERSION}
+END
+else
+  cat >> config.report << END
+
+  sysrepo-cpp:
+    no
 END
 fi
 
@@ -1894,16 +2111,6 @@ cat >> config.report << END
 
 Google Test:
   no
-END
-fi
-
-if test "$FREERADIUS_INCLUDE" != ""; then
-cat >> config.report << END
-
-FreeRADIUS client:
-  FREERADIUS_INCLUDE:    ${FREERADIUS_INCLUDE}
-  FREERADIUS_LIB:        ${FREERADIUS_LIB}
-  FREERADIUS_DICTIONARY: ${FREERADIUS_DICTIONARY}
 END
 fi
 
@@ -1944,5 +2151,4 @@ cat <<EOF
   When running "make install" do not use any form of parallel or job
   server options (such as GNU make's -j option). Doing so may cause
   errors.
-
 EOF

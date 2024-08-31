@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,11 +17,17 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include <limits>
 #include <utility>
 
 namespace isc {
 
 namespace dhcp {
+
+/// @brief A value used to signal that the interface index was not set.
+/// That means that more than UNSET_IFINDEX interfaces are not supported.
+/// That's fine, since it would have overflowed with UNSET_IFINDEX + 1 anyway.
+constexpr unsigned int UNSET_IFINDEX = std::numeric_limits<unsigned int>::max();
 
 /// @brief RAII object enabling copying options retrieved from the
 /// packet.
@@ -76,6 +82,71 @@ private:
 
     /// @brief Holds a pair of pointers of the packets.
     std::pair<PktTypePtr, PktTypePtr> pkts_;
+};
+
+
+/// @brief Describes an event during the life cycle of a packet.
+class PktEvent {
+public:
+    /// @brief Event that marks when a packet is placed in the socket buffer
+    /// by the kernel.
+    static const std::string SOCKET_RECEIVED;
+
+    /// @brief Event that marks when a packet is read from the socket buffer
+    /// by application.
+    static const std::string BUFFER_READ;
+
+    /// @brief Event that marks when a packet is been written to the socket
+    /// by application.
+    static const std::string RESPONSE_SENT;
+
+    /// @brief Constructor.
+    ///
+    /// @param label string identifying the event.
+    /// @param timestamp time at which the event occurred.
+    PktEvent(const std::string& label, boost::posix_time::ptime timestamp)
+        : label_(label), timestamp_(timestamp) {
+    }
+
+    /// @brief Destructor.
+    ~PktEvent() = default;
+
+    /// @brief Fetch the current UTC system time, microsecond precision.
+    ///
+    /// @return ptime containing the microsecond system time.
+    static boost::posix_time::ptime now() {
+        return (boost::posix_time::microsec_clock::universal_time());
+    }
+
+    /// @brief Fetch an empty timestamp, used for logic comparisons
+    ///
+    /// @return an unset ptime.
+    static boost::posix_time::ptime& EMPTY_TIME() {
+        static boost::posix_time::ptime empty_time;
+        return (empty_time);
+    }
+
+    /// @brief Fetches the minimum timestamp
+    ///
+    /// @return the minimum timestamp
+    static boost::posix_time::ptime& MIN_TIME() {
+        static auto min_time = boost::posix_time::ptime(boost::posix_time::min_date_time);
+        return (min_time);
+    }
+
+    /// @brief Fetches the maximum timestamp
+    ///
+    /// @return the maximum timestamp
+    static boost::posix_time::ptime& MAX_TIME() {
+        static auto max_time = boost::posix_time::ptime(boost::posix_time::max_date_time);
+        return (max_time);
+    }
+
+    /// @brief Label identifying this event.
+    std::string label_;
+
+    /// @brief Timestamp at which the event occurred.
+    boost::posix_time::ptime timestamp_;
 };
 
 /// @brief Base class for classes representing DHCP messages.
@@ -171,7 +242,9 @@ public:
     /// @note This buffer is only valid till object that returned it exists.
     ///
     /// @return reference to output buffer
-    isc::util::OutputBuffer& getBuffer() { return (buffer_out_); };
+    isc::util::OutputBuffer& getBuffer() {
+        return (buffer_out_);
+    }
 
     /// @brief Adds an option to this packet.
     ///
@@ -258,12 +331,16 @@ public:
     /// @brief Sets transaction-id value.
     ///
     /// @param transid transaction-id to be set.
-    void setTransid(uint32_t transid) { transid_ = transid; }
+    void setTransid(uint32_t transid) {
+        transid_ = transid;
+    }
 
     /// @brief Returns value of transaction-id field.
     ///
     /// @return transaction-id
-    uint32_t getTransid() const { return (transid_); };
+    uint32_t getTransid() const {
+        return (transid_);
+    }
 
     /// @brief Checks whether a client belongs to a given class.
     ///
@@ -271,24 +348,27 @@ public:
     /// @return true if belongs
     bool inClass(const isc::dhcp::ClientClass& client_class);
 
-    /// @brief Adds packet to a specified class.
+    /// @brief Adds a specified class to the packet.
     ///
-    /// A packet can be added to the same class repeatedly. Any additional
-    /// attempts to add to a class the packet already belongs to, will be
+    /// A class can be added to the same packet repeatedly. Any additional
+    /// attempts to add to a packet the class already added, will be
     /// ignored silently.
-    ///
-    /// @note It is a matter of naming convention. Conceptually, the server
-    /// processes a stream of packets, with some packets belonging to given
-    /// classes. From that perspective, this method adds a packet to specified
-    /// class. Implementation wise, it looks the opposite - the class name
-    /// is added to the packet. Perhaps the most appropriate name for this
-    /// method would be associateWithClass()? But that seems overly long,
-    /// so I decided to stick with addClass().
     ///
     /// @param client_class name of the class to be added
     /// @param required the class is marked for required evaluation
     void addClass(const isc::dhcp::ClientClass& client_class,
                   bool required = false);
+
+    /// @brief Adds a specified subclass to the packet.
+    ///
+    /// A subclass can be added to the same packet repeatedly. Any additional
+    /// attempts to add to a packet the subclass already added, will be
+    /// ignored silently.
+    ///
+    /// @param class_def name of the class definition to be added
+    /// @param subclass name of the subclass to be added
+    void addSubClass(const isc::dhcp::ClientClass& class_def,
+                     const isc::dhcp::ClientClass& subclass);
 
     /// @brief Returns the class set
     ///
@@ -299,6 +379,18 @@ public:
     /// evaluated.
     const ClientClasses& getClasses(bool required = false) const {
         return (!required ? classes_ : required_classes_);
+    }
+
+    /// @brief Returns the class set including template classes associated with
+    /// subclasses
+    ///
+    /// @note This should be used only to iterate over the class set.
+    /// @note SubClasses are always last.
+    /// @return if required is false (the default) the classes the
+    /// packet belongs to else the classes which are required to be
+    /// evaluated.
+    const SubClassRelationContainer& getSubClassesRelations() const {
+        return (subclasses_);
     }
 
     /// @brief Unparsed data (in received packets).
@@ -326,13 +418,31 @@ protected:
     /// if such option is not present.
     OptionPtr getNonCopiedOption(const uint16_t type) const;
 
+    /// @brief Returns all option instances of specified type without
+    /// copying.
+    ///
+    /// This is a variant of @ref getOptions method, which returns a collection
+    /// of options without copying them. This method should be only used by
+    /// the @ref Pkt6 class and derived classes. Any external callers should
+    /// use @ref getOptions which copies option instances before returning them
+    /// when the @ref Pkt::copy_retrieved_options_ flag is set to true.
+    ///
+    /// @param opt_type Option code.
+    ///
+    /// @return Collection of options found.
+    OptionCollection getNonCopiedOptions(const uint16_t opt_type) const;
+
 public:
+
+    /// @brief Clones all options so that they can be safely modified.
+    ///
+    /// @return A container with option clones.
+    OptionCollection cloneOptions();
 
     /// @brief Returns the first option of specified type.
     ///
     /// Returns the first option of specified type. Note that in DHCPv6 several
     /// instances of the same option are allowed (and frequently used).
-    /// Also see @ref Pkt6::getOptions().
     ///
     /// The options will be only returned after unpack() is called.
     ///
@@ -340,6 +450,15 @@ public:
     ///
     /// @return pointer to found option (or NULL)
     OptionPtr getOption(const uint16_t type);
+
+    /// @brief Returns all instances of specified type.
+    ///
+    /// Returns all instances of options of the specified type. DHCPv6 protocol
+    /// allows (and uses frequently) multiple instances.
+    ///
+    /// @param type option type we are looking for
+    /// @return instance of option collection with requested options
+    isc::dhcp::OptionCollection getOptions(const uint16_t type);
 
     /// @brief Controls whether the option retrieved by the @ref Pkt::getOption
     /// should be copied before being returned.
@@ -357,7 +476,7 @@ public:
     /// Kea configuration. To prevent this, option copying should be
     /// enabled prior to passing the pointer to a packet to a hook library.
     ///
-    /// Note that only only does this method causes the server to copy
+    /// Not only does this method cause the server to copy
     /// an option, but the copied option also replaces the original
     /// option within the packet. The option can be then freely modified
     /// and the modifications will only affect the instance of this
@@ -396,13 +515,64 @@ public:
         return timestamp_;
     }
 
-    /// @brief Set packet timestamp.
+    /// @brief Set socket receive timestamp.
     ///
-    /// Sets packet timestamp to arbitrary value.
-    /// It is used by perfdhcp tool and should not be used elsewhere.
+    /// Sets the socket receive timestamp to an arbitrary value.
     void setTimestamp(boost::posix_time::ptime& timestamp) {
         timestamp_ = timestamp;
     }
+
+    /// @brief Adds an event to the end of the event stack.
+    ///
+    /// @param label string identifying the event
+    /// @param timestamp time at which the event occurred. It is expected
+    /// to be in UTC/microseconds.  Defaults to the current time.
+    void addPktEvent(const std::string& label,
+                     const boost::posix_time::ptime& timestamp = PktEvent::now());
+
+    /// @brief Adds an event to the end of the event stack with the timestamp
+    /// specified as a struct timeval.
+    ///
+    /// @param label string identifying the event
+    /// @param timestamp time at which the event occurred. It is expected
+    /// to be in UTC/microseconds.
+    void addPktEvent(const std::string& label, const struct timeval& timestamp);
+
+    /// @brief Updates (or adds) an event in the event stack.
+    ///
+    /// Updates the timestamp of the event described by label if it exists in
+    /// the stack, otherwise it adds the event to the end of the stack.  This
+    /// is intended to be used for testing.
+    ///
+    /// @param label string identifying the event
+    /// @param timestamp time at which the event occurred. It is expected
+    /// to be in UTC/microseconds.
+    void setPktEvent(const std::string& label,
+                     const boost::posix_time::ptime& timestamp = PktEvent::now());
+
+    /// @brief Discards contents of the packet event stack.
+    ///
+    /// This is provided primarily for test purposes.
+    void clearPktEvents();
+
+    /// @brief Fetches the timestamp for a given event in the stack.
+    ///
+    /// @param label string identifying the event
+    /// @return timestamp of the event (UTC/microseconds)
+    boost::posix_time::ptime getPktEventTime(const std::string& label) const;
+
+    /// @brief Fetches the current event stack contents.
+    ///
+    /// @return reference to the list of events.
+    const std::list<PktEvent>& getPktEvents() {
+        return (events_);
+    }
+
+    /// @brief Creates a dump of the stack contents to a string for logging.
+    ///
+    /// @param verbose when true the dump is more verbose, includes durations
+    /// between events and spans multiple lines.  Defaults to false.
+    std::string dumpPktEvents(bool verbose = false) const;
 
     /// @brief Copies content of input buffer to output buffer.
     ///
@@ -480,13 +650,13 @@ public:
     /// @brief Sets interface index.
     ///
     /// @param ifindex specifies interface index.
-    void setIndex(int ifindex) {
+    void setIndex(const unsigned int ifindex) {
         ifindex_ = ifindex;
-    };
+    }
 
     /// @brief Resets interface index to negative value.
     void resetIndex() {
-        ifindex_ = -1;
+        ifindex_ = UNSET_IFINDEX;
     }
 
     /// @brief Returns interface index.
@@ -494,13 +664,13 @@ public:
     /// @return interface index
     int getIndex() const {
         return (ifindex_);
-    };
+    }
 
     /// @brief Checks if interface index has been set.
     ///
     /// @return true if interface index set, false otherwise.
     bool indexSet() const {
-        return (ifindex_ >= 0);
+        return (ifindex_ != UNSET_IFINDEX);
     }
 
     /// @brief Returns interface name.
@@ -509,15 +679,19 @@ public:
     /// going to be transmitted.
     ///
     /// @return interface name
-    std::string getIface() const { return (iface_); };
+    std::string getIface() const {
+        return (iface_);
+    }
 
     /// @brief Sets interface name.
     ///
     /// Sets interface name over which packet was received or is
     /// going to be transmitted.
     ///
-    /// @return interface name
-    void setIface(const std::string& iface ) { iface_ = iface; };
+    /// @param iface The interface name
+    void setIface(const std::string& iface) {
+        iface_ = iface;
+    }
 
     /// @brief Sets remote hardware address.
     ///
@@ -592,7 +766,7 @@ public:
     /// This field is public, so the code outside of Pkt4 or Pkt6 class can
     /// iterate over existing classes. Having it public also solves the problem
     /// of returned reference lifetime. It is preferred to use @ref inClass and
-    /// @ref addClass should be used to operate on this field.
+    /// @ref addClass to operate on this field.
     ClientClasses classes_;
 
     /// @brief Classes which are required to be evaluated.
@@ -602,6 +776,14 @@ public:
     /// Before output option processing these classes will be evaluated
     /// and if evaluation status is true added to the previous collection.
     ClientClasses required_classes_;
+
+    /// @brief SubClasses this packet belongs to.
+    ///
+    /// This field is public, so the code outside of Pkt4 or Pkt6 class can
+    /// iterate over existing classes. Having it public also solves the problem
+    /// of returned reference lifetime. It is preferred to use @ref inClass and
+    /// @ref addSubClass to operate on this field.
+    SubClassRelationContainer subclasses_;
 
     /// @brief Collection of options present in this message.
     ///
@@ -733,7 +915,7 @@ protected:
     /// Each network interface has assigned an unique ifindex.
     /// It is a functional equivalent of a name, but sometimes more useful, e.g.
     /// when using odd systems that allow spaces in interface names.
-    int64_t ifindex_;
+    unsigned int ifindex_;
 
     /// @brief Local IP (v4 or v6) address.
     ///
@@ -791,6 +973,9 @@ private:
     virtual void setHWAddrMember(const uint8_t htype, const uint8_t hlen,
                                  const std::vector<uint8_t>& hw_addr,
                                  HWAddrPtr& storage);
+
+    /// @brief List of timestamped packet events.
+    std::list<PktEvent> events_;
 };
 
 /// @brief A pointer to either Pkt4 or Pkt6 packet
@@ -862,6 +1047,7 @@ public:
     ///
     /// @param pkt Pointer to the packet.
     ScopedPktOptionsCopy(PktType& pkt) : pkt_(pkt), options_(pkt.options_) {
+        pkt_.options_ = pkt_.cloneOptions();
     }
 
     /// @brief Destructor.

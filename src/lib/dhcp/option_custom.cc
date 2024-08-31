@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,9 +9,11 @@
 #include <dhcp/option_data_types.h>
 #include <dhcp/option_custom.h>
 #include <exceptions/isc_assert.h>
-#include <util/encode/hex.h>
+#include <util/str.h>
+#include <util/encode/encode.h>
 
 using namespace isc::asiolink;
+using namespace isc::util;
 
 namespace isc {
 namespace dhcp {
@@ -69,8 +71,7 @@ void
 OptionCustom::addArrayDataField(const std::string& value) {
     checkArrayType();
 
-    OpaqueDataTuple::LengthFieldType lft = getUniverse() == Option::V4 ?
-        OpaqueDataTuple::LENGTH_1_BYTE : OpaqueDataTuple::LENGTH_2_BYTES;
+    OpaqueDataTuple::LengthFieldType lft = OptionDataTypeUtil::getTupleLenFieldType(getUniverse());
     OptionBuffer buf;
     OptionDataTypeUtil::writeTuple(value, lft, buf);
     buffers_.push_back(buf);
@@ -181,10 +182,9 @@ OptionCustom::createBuffers() {
         const OptionDefinition::RecordFieldsCollection fields =
             definition_.getRecordFields();
 
-        for (OptionDefinition::RecordFieldsConstIter field = fields.begin();
-             field != fields.end(); ++field) {
+        for (auto const& field : fields) {
             OptionBuffer buf;
-            createBuffer(buf, *field);
+            createBuffer(buf, field);
             // We have the buffer with default value prepared so we
             // add it to the set of buffers.
             buffers.push_back(buf);
@@ -226,12 +226,22 @@ OptionCustom::bufferLength(const OptionDataType data_type, bool in_array,
         // to obtain the length of the data is to read the FQDN. The
         // utility function will return the size of the buffer on success.
         if (data_type == OPT_FQDN_TYPE) {
-            std::string fqdn =
-                OptionDataTypeUtil::readFqdn(OptionBuffer(begin, end));
-            // The size of the buffer holding an FQDN is always
-            // 1 byte larger than the size of the string
-            // representation of this FQDN.
-            data_size = fqdn.size() + 1;
+            try {
+                std::string fqdn =
+                    OptionDataTypeUtil::readFqdn(OptionBuffer(begin, end));
+                // The size of the buffer holding an FQDN is always
+                // 1 byte larger than the size of the string
+                // representation of this FQDN.
+                data_size = fqdn.size() + 1;
+            } catch (const std::exception& ex) {
+                if (Option::lenient_parsing_) {
+                    isc_throw(SkipThisOptionError, "failed to read "
+                              "domain-name from wire format: "
+                              << ex.what());
+                }
+
+                throw;
+            }
         } else if (!definition_.getArrayType() &&
                    ((data_type == OPT_BINARY_TYPE) ||
                     (data_type == OPT_STRING_TYPE))) {
@@ -256,9 +266,7 @@ OptionCustom::bufferLength(const OptionDataType data_type, bool in_array,
             data_size = sizeof(uint8_t) + (prefix.first.asUint8() + 7) / 8;
         } else if (data_type == OPT_TUPLE_TYPE) {
             OpaqueDataTuple::LengthFieldType lft =
-                getUniverse() == Option::V4 ?
-                OpaqueDataTuple::LENGTH_1_BYTE :
-                OpaqueDataTuple::LENGTH_2_BYTES;
+                OptionDataTypeUtil::getTupleLenFieldType(getUniverse());
             std::string value =
                 OptionDataTypeUtil::readTuple(OptionBuffer(begin, end), lft);
             data_size = value.size();
@@ -294,9 +302,8 @@ OptionCustom::createBuffers(const OptionBuffer& data_buf) {
             definition_.getRecordFields();
 
         // Go over all data fields within a record.
-        for (OptionDefinition::RecordFieldsConstIter field = fields.begin();
-             field != fields.end(); ++field) {
-            size_t data_size = bufferLength(*field, false,
+        for (auto const& field : fields) {
+            size_t data_size = bufferLength(field, false,
                                             data, data_buf.end());
 
             // Our data field requires that there is a certain chunk of
@@ -403,8 +410,19 @@ OptionCustom::dataFieldToText(const OptionDataType data_type,
     // Get the value of the data field.
     switch (data_type) {
     case OPT_BINARY_TYPE:
-        text << util::encode::encodeHex(readBinary(index));
+    {
+        auto data = readBinary(index);
+        if (data.empty()) {
+            text << "''";
+        } else {
+            text << util::encode::encodeHex(data);
+            if (str::isPrintable(data)) {
+                std::string printable(data.cbegin(), data.cend());
+                text << " '" << printable << "'";
+            }
+        }
         break;
+    }
     case OPT_BOOLEAN_TYPE:
         text << (readBoolean(index) ? "true" : "false");
         break;
@@ -443,9 +461,10 @@ OptionCustom::dataFieldToText(const OptionDataType data_type,
     {
         PSIDTuple t = readPsid(index);
         text << "len=" << t.first.asUnsigned() << ",psid=" << t.second.asUint16();
+        break;
     }
     default:
-        ;
+        break;
     }
 
     // Append data field type in brackets.
@@ -461,13 +480,12 @@ OptionCustom::pack(isc::util::OutputBuffer& buf, bool check) const {
     packHeader(buf, check);
 
     // Write data from buffers.
-    for (std::vector<OptionBuffer>::const_iterator it = buffers_.begin();
-         it != buffers_.end(); ++it) {
+    for (auto const& it : buffers_) {
         // In theory the createBuffers function should have taken
         // care that there are no empty buffers added to the
         // collection but it is almost always good to make sure.
-        if (!it->empty()) {
-            buf.writeData(&(*it)[0], it->size());
+        if (!it.empty()) {
+            buf.writeData(&it[0], it.size());
         }
     }
 
@@ -528,8 +546,7 @@ OptionCustom::writeBinary(const OptionBuffer& buf,
 std::string
 OptionCustom::readTuple(const uint32_t index) const {
     checkIndex(index);
-    OpaqueDataTuple::LengthFieldType lft = getUniverse() == Option::V4 ?
-        OpaqueDataTuple::LENGTH_1_BYTE : OpaqueDataTuple::LENGTH_2_BYTES;
+    OpaqueDataTuple::LengthFieldType lft = OptionDataTypeUtil::getTupleLenFieldType(getUniverse());
     return (OptionDataTypeUtil::readTuple(buffers_[index], lft));
 }
 
@@ -545,8 +562,7 @@ OptionCustom::writeTuple(const std::string& value, const uint32_t index) {
     checkIndex(index);
 
     buffers_[index].clear();
-    OpaqueDataTuple::LengthFieldType lft = getUniverse() == Option::V4 ?
-        OpaqueDataTuple::LENGTH_1_BYTE : OpaqueDataTuple::LENGTH_2_BYTES;
+    OpaqueDataTuple::LengthFieldType lft = OptionDataTypeUtil::getTupleLenFieldType(getUniverse());
     OptionDataTypeUtil::writeTuple(value, lft, buffers_[index]);
 }
 
@@ -667,16 +683,13 @@ OptionCustom::len() const {
     size_t length = getHeaderLen();
 
     // ... lengths of all buffers that hold option data ...
-    for (std::vector<OptionBuffer>::const_iterator buf = buffers_.begin();
-         buf != buffers_.end(); ++buf) {
-        length += buf->size();
+    for (auto const& buf : buffers_) {
+        length += buf.size();
     }
 
     // ... and lengths of all suboptions
-    for (OptionCollection::const_iterator it = options_.begin();
-         it != options_.end();
-         ++it) {
-        length += (*it).second->len();
+    for (auto const& it : options_) {
+        length += it.second->len();
     }
 
     return (static_cast<uint16_t>(length));
@@ -704,10 +717,10 @@ std::string OptionCustom::toText(int indent) const {
         // For record types we iterate over fields defined in
         // option definition and match the appropriate buffer
         // with them.
-        for (OptionDefinition::RecordFieldsConstIter field = fields.begin();
-             field != fields.end(); ++field) {
-            output << " " << dataFieldToText(*field, std::distance(fields.begin(),
-                                                                   field));
+        size_t j = 0;
+        for (auto const& field : fields) {
+            output << " " << dataFieldToText(field, j);
+            j++;
         }
 
         // If the last record field is an array iterate on extra buffers

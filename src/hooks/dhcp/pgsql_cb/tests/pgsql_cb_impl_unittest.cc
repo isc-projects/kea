@@ -35,7 +35,7 @@ public:
         params["name"] = "keatest";
         params["password"] = "keatest";
         params["user"] = "keatest";
-        ASSERT_NO_THROW_LOG(cbptr_.reset(new PgSqlConfigBackendImpl(params, 0, 0)));
+        ASSERT_NO_THROW_LOG(cbptr_.reset(new PgSqlConfigBackendImpl("", params, 0, 0)));
     }
 
     /// @brief Cleans up after each test.

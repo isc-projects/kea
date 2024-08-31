@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -36,6 +36,9 @@ static const std::string BUILD_REPORT_COMMAND("build-report");
 /// @brief String value for the config-get command.
 static const std::string CONFIG_GET_COMMAND("config-get");
 
+/// @brief String value for the config-hash-get command.
+static const std::string CONFIG_HASH_GET_COMMAND("config-hash-get");
+
 /// @brief String value for the config-write command.
 static const std::string CONFIG_WRITE_COMMAND("config-write");
 
@@ -56,15 +59,6 @@ static const std::string SHUT_DOWN_COMMAND("shutdown");
 
 /// @brief String value for the status-get command.
 static const std::string STATUS_GET_COMMAND("status-get");
-
-/// @brief Returned by the process to indicate a command was successful.
-static const int COMMAND_SUCCESS = 0;
-
-/// @brief Returned by the process to indicates a command failed.
-static const int COMMAND_ERROR = 1;
-
-/// @brief Returned by the process to indicates a command is not valid.
-static const int COMMAND_INVALID = 2;
 
 /// @brief Application Process Interface
 ///
@@ -151,7 +145,9 @@ public:
               bool check_only = false) = 0;
 
     /// @brief Destructor
-    virtual ~DProcessBase(){};
+    virtual ~DProcessBase() {
+        io_service_->stopAndPoll();
+    }
 
     /// @brief Checks if the process has been instructed to shut down.
     ///
@@ -177,7 +173,7 @@ public:
     /// @brief Fetches the controller's IOService.
     ///
     /// @return a reference to the controller's IOService.
-    asiolink::IOServicePtr& getIoService() {
+    asiolink::IOServicePtr& getIOService() {
         return (io_service_);
     }
 
@@ -214,7 +210,7 @@ private:
 /// @brief Defines a shared pointer to DProcessBase.
 typedef boost::shared_ptr<DProcessBase> DProcessBasePtr;
 
-}; // namespace isc::process
-}; // namespace isc
+}  // namespace process
+}  // namespace isc
 
 #endif

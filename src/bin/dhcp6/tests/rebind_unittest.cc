@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,7 +10,7 @@
 #include <dhcp/docsis3_option_defs.h>
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/tests/dhcp6_message_test.h>
 #include <dhcpsrv/utils.h>
@@ -87,12 +87,14 @@ const char* REBIND_CONFIGS[] = {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ { "
+        "    \"id\": 1, "
         "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"interface-id\": \"\","
         "    \"interface\": \"eth0\""
         " },"
         " {"
+        "    \"id\": 2, "
         "    \"pools\": [ { \"pool\": \"2001:db8:2::/64\" } ],"
         "    \"subnet\": \"2001:db8:2::/48\", "
         "    \"interface-id\": \"\","
@@ -108,12 +110,14 @@ const char* REBIND_CONFIGS[] = {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ { "
+        "    \"id\": 1, "
         "    \"pools\": [ { \"pool\": \"2001:db8:3::/64\" } ],"
         "    \"subnet\": \"2001:db8:3::/48\", "
         "    \"interface-id\": \"\","
         "    \"interface\": \"eth1\""
         " },"
         " {"
+        "    \"id\": 2, "
         "    \"pools\": [ { \"pool\": \"2001:db8:4::/64\" } ],"
         "    \"subnet\": \"2001:db8:4::/48\", "
         "    \"interface-id\": \"\","
@@ -129,12 +133,14 @@ const char* REBIND_CONFIGS[] = {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ { "
+        "    \"id\": 1, "
         "    \"pools\": [ { \"pool\": \"3000:1::/64\" } ],"
         "    \"subnet\": \"3000:1::/48\", "
         "    \"interface-id\": \"\","
         "    \"interface\": \"eth0\""
         " },"
         " {"
+        "    \"id\": 2, "
         "    \"pools\": [ { \"pool\": \"3000:2::/64\" } ],"
         "    \"subnet\": \"3000:2::/48\", "
         "    \"interface-id\": \"\","
@@ -150,12 +156,14 @@ const char* REBIND_CONFIGS[] = {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ { "
+        "    \"id\": 1, "
         "    \"pools\": [ { \"pool\": \"3000:3::/64\" } ],"
         "    \"subnet\": \"3000:3::/48\", "
         "    \"interface-id\": \"\","
         "    \"interface\": \"eth1\""
         " },"
         " {"
+        "    \"id\": 2, "
         "    \"pools\": [ { \"pool\": \"3000:4::/64\" } ],"
         "    \"subnet\": \"3000:4::/48\", "
         "    \"interface-id\": \"\","
@@ -171,6 +179,7 @@ const char* REBIND_CONFIGS[] = {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ { "
+        "    \"id\": 1, "
         "    \"pd-pools\": ["
         "        { \"prefix\": \"3000::\", "
         "          \"prefix-len\": 72, "
@@ -181,6 +190,7 @@ const char* REBIND_CONFIGS[] = {
         "    \"interface\": \"eth0\""
         " },"
         " {"
+        "    \"id\": 2, "
         "    \"pd-pools\": ["
         "        { \"prefix\": \"2001:db8:2::\", "
         "          \"prefix-len\": 72, "
@@ -200,6 +210,7 @@ const char* REBIND_CONFIGS[] = {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ { "
+        "    \"id\": 1, "
         "    \"pd-pools\": ["
         "        { \"prefix\": \"2001:db8:3:01::\", "
         "          \"prefix-len\": 72, "
@@ -210,6 +221,7 @@ const char* REBIND_CONFIGS[] = {
         "    \"interface\": \"eth1\""
         " },"
         " {"
+        "    \"id\": 2, "
         "    \"pd-pools\": ["
         "        { \"prefix\": \"2001:db8:4:01::\", "
         "          \"prefix-len\": 72, "
@@ -229,6 +241,7 @@ const char* REBIND_CONFIGS[] = {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ { "
+        "    \"id\": 1, "
         "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
         "    \"pd-pools\": ["
         "        { \"prefix\": \"3000::\", "
@@ -254,12 +267,14 @@ const char* REBIND_CONFIGS[] = {
         "    \"data\": \"normal_erouter_v6.cm\""
         "}],"
         "\"subnet6\": [ { "
+        "    \"id\": 1, "
         "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"interface-id\": \"\","
         "    \"interface\": \"eth0\""
         " },"
         " {"
+        "    \"id\": 2, "
         "    \"pools\": [ { \"pool\": \"2001:db8:2::/64\" } ],"
         "    \"subnet\": \"2001:db8:2::/48\", "
         "    \"interface-id\": \"\","
@@ -323,6 +338,7 @@ const char* REBIND_CONFIGS[] = {
         "            \"data\": \"3000:1::789\""
         "        } ]"
         "    } ],"
+        "    \"id\": 1, "
         "    \"subnet\": \"3000::/32\", "
         "    \"interface\": \"eth0\""
         " } ],"
@@ -1068,8 +1084,7 @@ TEST_F(RebindTest, docsisORO) {
     opt = client.config_.findOption(D6O_VENDOR_OPTS);
     ASSERT_TRUE(opt);
     // The vendor option must be a OptionVendor object.
-    boost::shared_ptr<OptionVendor> vendor =
-        boost::dynamic_pointer_cast<OptionVendor>(opt);
+    OptionVendorPtr vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
     ASSERT_TRUE(vendor);
     // The vendor-id should be DOCSIS.
     EXPECT_EQ(VENDOR_ID_CABLE_LABS, vendor->getVendorId());

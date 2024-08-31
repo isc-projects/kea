@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,10 +10,12 @@
 #include <asiolink/io_address.h>
 #include <asiolink/io_service.h>
 #include <cc/data.h>
+#include <database/database_connection.h>
 #include <database/db_exceptions.h>
 #include <dhcp/duid.h>
 #include <dhcp/option.h>
 #include <dhcp/hwaddr.h>
+#include <dhcpsrv/cfg_consistency.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/subnet.h>
 
@@ -62,7 +64,7 @@ public:
 struct LeaseStatsRow {
     /// @brief Default constructor
     LeaseStatsRow() :
-        subnet_id_(0), lease_type_(Lease::TYPE_NA),
+        subnet_id_(0), pool_id_(0), lease_type_(Lease::TYPE_NA),
         lease_state_(Lease::STATE_DEFAULT), state_count_(0) {
     }
 
@@ -73,9 +75,11 @@ struct LeaseStatsRow {
     /// @param subnet_id The subnet id to which this data applies
     /// @param lease_state The lease state counted
     /// @param state_count The count of leases in the lease state
+    /// @param pool_id The pool id to which this data applies or 0 if it is not
+    /// used
     LeaseStatsRow(const SubnetID& subnet_id, const uint32_t lease_state,
-                  const int64_t state_count)
-        : subnet_id_(subnet_id), lease_type_(Lease::TYPE_NA),
+                  const int64_t state_count, uint32_t pool_id = 0)
+        : subnet_id_(subnet_id), pool_id_(pool_id), lease_type_(Lease::TYPE_NA),
           lease_state_(lease_state), state_count_(state_count) {
     }
 
@@ -85,27 +89,37 @@ struct LeaseStatsRow {
     /// @param lease_type The lease type for this state count
     /// @param lease_state The lease state counted
     /// @param state_count The count of leases in the lease state
+    /// @param pool_id The pool id to which this data applies or 0 if it is not
+    /// used
     LeaseStatsRow(const SubnetID& subnet_id, const Lease::Type& lease_type,
-                  const uint32_t lease_state, const int64_t state_count)
-        : subnet_id_(subnet_id), lease_type_(lease_type),
+                  const uint32_t lease_state, const int64_t state_count,
+                  uint32_t pool_id = 0)
+        : subnet_id_(subnet_id), pool_id_(pool_id), lease_type_(lease_type),
           lease_state_(lease_state), state_count_(state_count) {
     }
 
     /// @brief Less-than operator
-    bool operator< (const LeaseStatsRow &rhs) const {
+    bool operator<(const LeaseStatsRow &rhs) const {
         if (subnet_id_ < rhs.subnet_id_) {
             return (true);
         }
 
         if (subnet_id_ == rhs.subnet_id_ &&
-            lease_type_ < rhs.lease_type_) {
-                return (true);
+            pool_id_ < rhs.pool_id_) {
+            return (true);
         }
 
         if (subnet_id_ == rhs.subnet_id_ &&
+            pool_id_ == rhs.pool_id_ &&
+            lease_type_ < rhs.lease_type_) {
+            return (true);
+        }
+
+        if (subnet_id_ == rhs.subnet_id_ &&
+            pool_id_ == rhs.pool_id_ &&
             lease_type_ == rhs.lease_type_ &&
             lease_state_ < rhs.lease_state_) {
-                return (true);
+            return (true);
         }
 
         return (false);
@@ -113,10 +127,16 @@ struct LeaseStatsRow {
 
     /// @brief The subnet ID to which this data applies
     SubnetID subnet_id_;
+
+    /// @brief The pool ID to which this data applies
+    uint32_t pool_id_;
+
     /// @brief The lease_type to which the count applies
     Lease::Type lease_type_;
+
     /// @brief The lease_state to which the count applies
     uint32_t lease_state_;
+
     /// @brief state_count The count of leases in the lease state
     int64_t state_count_;
 };
@@ -132,12 +152,17 @@ public:
     typedef enum {
         ALL_SUBNETS,
         SINGLE_SUBNET,
-        SUBNET_RANGE
+        SUBNET_RANGE,
+        ALL_SUBNET_POOLS
     } SelectMode;
 
-    /// @brief Default constructor
+    /// @brief Constructor to query statistics for all subnets
+    ///
     /// The query created will return statistics for all subnets
-    LeaseStatsQuery();
+    ///
+    /// @param select_mode The selection criteria which is either ALL_SUBNETS or
+    /// ALL_SUBNET_POOLS
+    LeaseStatsQuery(const SelectMode& select_mode = ALL_SUBNETS);
 
     /// @brief Constructor to query for a single subnet's stats
     ///
@@ -224,7 +249,7 @@ class LeaseMgr {
 public:
     /// @brief Constructor
     ///
-    LeaseMgr()
+    LeaseMgr() : extended_info_tables_enabled_(false)
     {}
 
     /// @brief Destructor
@@ -492,6 +517,19 @@ public:
     getLeases6(const asiolink::IOAddress& lower_bound_address,
                const LeasePageSize& page_size) const = 0;
 
+    /// @brief Returns a page of IPv6 leases for a  subnet identifier.
+    ///
+    /// @param subnet_id subnet identifier.
+    /// @param lower_bound_address IPv6 address used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    ///
+    /// @return collection of IPv6 leases
+    virtual Lease6Collection
+    getLeases6(SubnetID subnet_id,
+               const asiolink::IOAddress& lower_bound_address,
+               const LeasePageSize& page_size) const = 0;
+
     /// @brief Returns a collection of expired DHCPv4 leases.
     ///
     /// This method returns at most @c max_leases expired leases. The leases
@@ -598,6 +636,19 @@ public:
     /// @return A populated LeaseStatsQuery
     virtual LeaseStatsQueryPtr startLeaseStatsQuery4();
 
+    /// @brief Creates and runs the IPv4 lease stats query for all subnets and
+    /// pools
+    ///
+    /// LeaseMgr derivations implement this method such that it creates and
+    /// returns an instance of an LeaseStatsQuery whose result set has been
+    /// populated with up to date IPv4 lease statistical data for all subnets
+    /// and pools.
+    /// Each row of the result set is an LeaseStatRow which ordered ascending
+    /// by subnet ID and pool ID.
+    ///
+    /// @return A populated LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startPoolLeaseStatsQuery4();
+
     /// @brief Creates and runs the IPv4 lease stats query for a single subnet
     ///
     /// LeaseMgr derivations implement this method such that it creates and
@@ -654,6 +705,19 @@ public:
     ///
     /// @return A populated LeaseStatsQuery
     virtual LeaseStatsQueryPtr startLeaseStatsQuery6();
+
+    /// @brief Creates and runs the IPv6 lease stats query for all subnets and
+    /// pools
+    ///
+    /// LeaseMgr derivations implement this method such that it creates and
+    /// returns an instance of an LeaseStatsQuery whose result set has been
+    /// populated with up to date IPv6 lease statistical data for all subnets
+    /// and pools.
+    /// Each row of the result set is an LeaseStatRow which ordered ascending
+    /// by subnet ID and pool ID.
+    ///
+    /// @return A populated LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startPoolLeaseStatsQuery6();
 
     /// @brief Creates and runs the IPv6 lease stats query for a single subnet
     ///
@@ -754,6 +818,7 @@ public:
 
     /// @brief Returns backend version.
     ///
+    /// @param timer_name The DB reconnect timer name.
     /// @return Version number as a pair of unsigned integers.  "first" is the
     ///         major version number, "second" the minor number.
     ///
@@ -766,7 +831,7 @@ public:
     /// B>=A and B=C (it is ok to have newer backend, as it should be backward
     /// compatible)
     /// Also if B>C, some database upgrade procedure may be triggered
-    virtual VersionPair getVersion() const = 0;
+    virtual VersionPair getVersion(const std::string& timer_name = std::string()) const = 0;
 
     /// @brief Commit Transactions
     ///
@@ -780,21 +845,253 @@ public:
     /// support transactions, this is a no-op.
     virtual void rollback() = 0;
 
-    /// @brief Sets IO service to be used by the Lease Manager.
+    // -- The following are memfile only, but defined in the base LeaseMgr for convenience. --
+
+    /// @brief Returns the class lease count for a given class and lease type.
     ///
-    /// @param io_service IOService object, used for all ASIO operations.
-    static void setIOService(const isc::asiolink::IOServicePtr& io_service) {
-        io_service_ = io_service;
+    /// @param client_class client class for which the count is desired
+    /// @param ltype type of lease for which the count is desired. Defaults to
+    /// Lease::TYPE_V4.
+    ///
+    /// @return number of leases
+    virtual size_t getClassLeaseCount(const ClientClass& client_class,
+                                      const Lease::Type& ltype = Lease::TYPE_V4) const = 0;
+
+    /// @brief Recount the leases per class for V4 leases.
+    virtual void recountClassLeases4() = 0;
+
+    /// @brief Recount the leases per class for V6 leases.
+    virtual void recountClassLeases6() = 0;
+
+    /// @brief Clears the class-lease count map.
+    virtual void clearClassLeaseCounts() = 0;
+
+    /// The following queries are used to fulfill Bulk Lease Query
+    /// queries. They rely on relay data contained in lease's
+    /// user-context when the extended-store-info flag is enabled.
+
+    /// @brief Upgrade a V4 lease user context to the new extended info entry.
+    ///
+    /// In details:
+    ///  - perform sanity checks according to check level.
+    ///  - change the "ISC" / "relay-agent-info" to a map.
+    ///  - move the "relay-agent-info" string to the "sub-options" entry of
+    ///    the map.
+    ///  - decode remote-id and relay-id from the RAI option content and
+    ///    add the raw value in hexadecimal in "remote-id" and/or "relay-id"
+    ///    entries of the map.
+    ///
+    /// @param lease Pointer to the lease to be updated.
+    /// @param check Sanity/consistency check level.
+    /// @return True if the lease user context was updated, false otherwise.
+    static bool
+    upgradeLease4ExtendedInfo(const Lease4Ptr& lease,
+                              CfgConsistency::ExtendedInfoSanity check =
+                              CfgConsistency::EXTENDED_INFO_CHECK_FIX);
+
+    /// @brief Upgrade a V6 lease user context to the new extended info entry.
+    ///
+    /// In details:
+    ///  - perform sanity checks according to check level.
+    ///  - change the "ISC" / "relays" list entry to "relay-info".
+    ///  - decode remote-id and relay-id from each relay options and
+    ///    add the raw value in hexadecimal in "remote-id" and/or "relay-id"
+    ///    in the relay item of the list.
+    ///
+    /// @param lease Pointer to the lease to be updated.
+    /// @param check Sanity/consistency check level.
+    /// @return True if the lease user context was updated, false otherwise.
+    static bool
+    upgradeLease6ExtendedInfo(const Lease6Ptr& lease,
+                              CfgConsistency::ExtendedInfoSanity check =
+                              CfgConsistency::EXTENDED_INFO_CHECK_FIX);
+
+    /// @brief Extract relay and remote identifiers from the extended info.
+    ///
+    /// @param lease Pointer to the lease to be updated.
+    /// @param ignore_errors When true (the default) ignore errors,
+    /// when false throw an exception.
+    static void extractLease4ExtendedInfo(const Lease4Ptr& lease,
+                                          bool ignore_errors = true);
+
+    /// @brief Returns existing IPv4 leases with a given relay-id.
+    ///
+    /// @param relay_id RAI Relay-ID sub-option value for relay_id of interest
+    /// @param lower_bound_address IPv4 address used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    /// @param qry_start_time when not zero, only leases whose CLTT is greater than
+    /// or equal to this value will be included
+    /// @param qry_end_time when not zero, only leases whose CLTT is less than
+    /// or equal to this value will be included
+    ///
+    /// @return collection of IPv4 leases
+    virtual Lease4Collection
+    getLeases4ByRelayId(const OptionBuffer& relay_id,
+                        const asiolink::IOAddress& lower_bound_address,
+                        const LeasePageSize& page_size,
+                        const time_t& qry_start_time = 0,
+                        const time_t& qry_end_time = 0) = 0;
+
+    /// @brief Returns existing IPv4 leases with a given remote-id.
+    ///
+    /// @param remote_id RAI Remote-ID sub-option value for remote-id of interest
+    /// @param lower_bound_address IPv4 address used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    /// @param qry_start_time when not zero, only leases whose CLTT is greater than
+    /// or equal to this value will be included. Defaults to zero.
+    /// @param qry_end_time when not zero, only leases whose CLTT is less than
+    /// or equal to this value will be included. Defaults to zero.
+    ///
+    /// @return collection of IPv4 leases
+    virtual Lease4Collection
+    getLeases4ByRemoteId(const OptionBuffer& remote_id,
+                         const asiolink::IOAddress& lower_bound_address,
+                         const LeasePageSize& page_size,
+                         const time_t& qry_start_time = 0,
+                         const time_t& qry_end_time = 0) = 0;
+
+    /// @brief Returns existing IPv6 leases with a given relay-id.
+    ///
+    /// @param relay_id DUID for relay_id of interest.
+    /// @param lower_bound_address IPv6 address used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    ///
+    /// @return collection of IPv6 leases
+    virtual Lease6Collection
+    getLeases6ByRelayId(const DUID& relay_id,
+                        const asiolink::IOAddress& lower_bound_address,
+                        const LeasePageSize& page_size) = 0;
+
+    /// @brief Returns existing IPv6 leases with a given remote-id.
+    ///
+    /// @param remote_id remote-id option data of interest.
+    /// @param lower_bound_address IPv6 address used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    ///
+    /// @return collection of IPv6 leases
+    virtual Lease6Collection
+    getLeases6ByRemoteId(const OptionBuffer& remote_id,
+                         const asiolink::IOAddress& lower_bound_address,
+                         const LeasePageSize& page_size) = 0;
+
+    /// @brief Write V4 leases to a file.
+    ///
+    /// @param filename File name to write leases.
+    virtual void writeLeases4(const std::string& filename) = 0;
+
+    /// @brief Write V6 leases to a file.
+    ///
+    /// @param filename File name to write leases.
+    virtual void writeLeases6(const std::string& filename) = 0;
+
+    /// @brief Upgrade extended info (v4).
+    ///
+    /// On SQL backends for all leases with a not null user context.
+    ///  - sanitize the user context
+    ///  - update relay and remote ids
+    ///  - when the lease was modified update it in the database
+    /// On memfile backend a similar action is done when the database is
+    /// loaded from the file. This function implements the new BLQ hook
+    /// command named "extended-info4-upgrade".
+    ///
+    /// @param page_size The page size used for retrieval.
+    /// @return The number of updates in the database.
+    virtual size_t upgradeExtendedInfo4(const LeasePageSize& page_size) = 0;
+
+    /// @brief Returns the setting indicating if lease6 extended info tables
+    /// are enabled.
+    ///
+    /// @return true if lease6 extended info tables are enabled or false
+    /// if they are disabled.
+    bool getExtendedInfoTablesEnabled() const {
+        return (extended_info_tables_enabled_);
     }
 
-    /// @brief Returns pointer to the IO service.
-    static isc::asiolink::IOServicePtr& getIOService() {
-        return (io_service_);
+    /// @brief Modifies the setting whether the lease6 extended info tables
+    /// are enabled.
+    ///
+    /// @param enabled new setting.
+    void setExtendedInfoTablesEnabled(const bool enabled) {
+        extended_info_tables_enabled_ = enabled;
     }
+
+    /// @brief Upgrade extended info (v6).
+    ///
+    /// On SQL backends for all leases with a not null user context.
+    ///  - sanitize the user context
+    ///  - update relay and remote id tables
+    ///  - when the lease was modified update it in the database
+    /// On memfile backend a similar action is done when the database is
+    /// loaded from the file. This function implements the new BLQ hook
+    /// command named "extended-info6-upgrade".
+    ///
+    /// @param page_size The page size used for retrieval.
+    /// @return The number of updates in the database.
+    virtual size_t upgradeExtendedInfo6(const LeasePageSize& page_size) = 0;
+
+    /// @brief Wipe extended info table (v6).
+    virtual void wipeExtendedInfoTables6() = 0;
+
+    /// @brief Return the by-relay-id table size.
+    ///
+    /// Must be derived by backends implementing the table.
+    ///
+    /// @return Always 0.
+    virtual size_t byRelayId6size() const;
+
+    /// @brief Return the by-remote-id table size.
+    ///
+    /// Must be derived by backends implementing the table.
+    ///
+    /// @return Always 0.
+    virtual size_t byRemoteId6size() const;
+
+protected:
+
+    /// Extended information / Bulk Lease Query shared interface.
+
+    /// @brief Decode parameters to set whether the lease extended info tables
+    /// are enabled.
+    ///
+    /// @note: common code in constructors.
+    ///
+    /// @param parameters The parameter map.
+    void setExtendedInfoTablesEnabled(const db::DatabaseConnection::ParameterMap& parameters);
+
+    /// @brief Extract extended info from a lease6 and add it into tables.
+    ///
+    /// @param lease IPv6 lease to process.
+    /// @return true if something was added, false otherwise.
+    virtual bool addExtendedInfo6(const Lease6Ptr& lease);
+
+    /// @brief Delete lease6 extended info from tables.
+    ///
+    /// @param addr The address of the lease.
+    virtual void deleteExtendedInfo6(const isc::asiolink::IOAddress& addr) = 0;
+
+    /// @brief Add lease6 extended info into by-relay-id table.
+    ///
+    /// @param lease_addr The address of the lease.
+    /// @param relay_id The relay id from the relay header options.
+    virtual void addRelayId6(const isc::asiolink::IOAddress& lease_addr,
+                             const std::vector<uint8_t>& relay_id) = 0;
+
+    /// @brief Add lease6 extended info into by-remote-id table.
+    ///
+    /// @param lease_addr The address of the lease.
+    /// @param remote_id The remote id from the relay header options.
+    virtual void addRemoteId6(const isc::asiolink::IOAddress& lease_addr,
+                              const std::vector<uint8_t>& remote_id) = 0;
 
 private:
-    /// The IOService object, used for all ASIO operations.
-    static isc::asiolink::IOServicePtr io_service_;
+
+    /// @brief Holds the setting whether the lease extended info tables
+    /// are enabled or disabled. The default is disabled.
+    bool extended_info_tables_enabled_;
 };
 
 }  // namespace dhcp

@@ -15,7 +15,7 @@
         "            {",
         "                \"id\": <subnet identifier>,",
         "                \"subnet\": <subnet prefix>,",
-        "                \"shared-network-name\": <shared network name> | null,",
+        "                \"shared-network-name\": <shared network name or null>,",
         "                <the rest of the subnet specification here>",
         "            }",
         "        ],",

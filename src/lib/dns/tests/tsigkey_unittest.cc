@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -44,24 +44,24 @@ TEST_F(TSIGKeyTest, algorithmNames) {
 
     // Also check conversion to cryptolink definitions
     EXPECT_EQ(isc::cryptolink::MD5, TSIGKey(key_name, TSIGKey::HMACMD5_NAME(),
-                                            NULL, 0).getAlgorithm());
+                                            0, 0).getAlgorithm());
     EXPECT_EQ(isc::cryptolink::MD5,
               TSIGKey(key_name, TSIGKey::HMACMD5_SHORT_NAME(),
-                      NULL, 0).getAlgorithm());
+                      0, 0).getAlgorithm());
     EXPECT_EQ(isc::cryptolink::SHA1, TSIGKey(key_name, TSIGKey::HMACSHA1_NAME(),
-                                             NULL, 0).getAlgorithm());
+                                             0, 0).getAlgorithm());
     EXPECT_EQ(isc::cryptolink::SHA256, TSIGKey(key_name,
                                                TSIGKey::HMACSHA256_NAME(),
-                                               NULL, 0).getAlgorithm());
+                                               0, 0).getAlgorithm());
     EXPECT_EQ(isc::cryptolink::SHA224, TSIGKey(key_name,
                                                TSIGKey::HMACSHA224_NAME(),
-                                               NULL, 0).getAlgorithm());
+                                               0, 0).getAlgorithm());
     EXPECT_EQ(isc::cryptolink::SHA384, TSIGKey(key_name,
                                                TSIGKey::HMACSHA384_NAME(),
-                                               NULL, 0).getAlgorithm());
+                                               0, 0).getAlgorithm());
     EXPECT_EQ(isc::cryptolink::SHA512, TSIGKey(key_name,
                                                TSIGKey::HMACSHA512_NAME(),
-                                               NULL, 0).getAlgorithm());
+                                               0, 0).getAlgorithm());
 }
 
 TEST_F(TSIGKeyTest, construct) {
@@ -84,7 +84,7 @@ TEST_F(TSIGKeyTest, construct) {
     EXPECT_THROW(TSIGKey(key_name, Name("unknown-alg"),
                          secret.c_str(), secret.size()),
                  isc::InvalidParameter);
-    TSIGKey key2(key_name, Name("unknown-alg"), NULL, 0);
+    TSIGKey key2(key_name, Name("unknown-alg"), 0, 0);
     EXPECT_EQ(key_name, key2.getKeyName());
     EXPECT_EQ(Name("unknown-alg"), key2.getAlgorithmName());
 
@@ -109,11 +109,11 @@ TEST_F(TSIGKeyTest, construct) {
     // Invalid combinations of secret and secret_len:
     EXPECT_THROW(TSIGKey(key_name, TSIGKey::HMACSHA1_NAME(), secret.c_str(), 0),
                  isc::InvalidParameter);
-    EXPECT_THROW(TSIGKey(key_name, TSIGKey::HMACSHA256_NAME(), NULL, 16),
+    EXPECT_THROW(TSIGKey(key_name, TSIGKey::HMACSHA256_NAME(), 0, 16),
                  isc::InvalidParameter);
 
     // Empty secret
-    TSIGKey keye = TSIGKey(key_name, TSIGKey::HMACSHA256_NAME(), NULL, 0);
+    TSIGKey keye = TSIGKey(key_name, TSIGKey::HMACSHA256_NAME(), 0, 0);
     EXPECT_EQ(keye.getSecretLength(), 0);
     EXPECT_EQ(keye.getSecret(), (const void*)0);
 }
@@ -248,8 +248,7 @@ TEST_F(TSIGKeyRingTest, removeFromSome) {
 TEST_F(TSIGKeyRingTest, find) {
     // If the keyring is empty the search should fail.
     EXPECT_EQ(TSIGKeyRing::NOTFOUND, keyring.find(key_name, md5_name).code);
-    EXPECT_EQ(static_cast<const TSIGKey*>(NULL),
-              keyring.find(key_name, md5_name).key);
+    EXPECT_FALSE(keyring.find(key_name, md5_name).key);
 
     // Add a key and try to find it.  Should succeed.
     EXPECT_EQ(TSIGKeyRing::SUCCESS, keyring.add(TSIGKey(key_name, sha256_name,
@@ -265,11 +264,11 @@ TEST_F(TSIGKeyRingTest, find) {
     const TSIGKeyRing::FindResult result2 =
         keyring.find(Name("different-key.example"), sha256_name);
     EXPECT_EQ(TSIGKeyRing::NOTFOUND, result2.code);
-    EXPECT_EQ(static_cast<const TSIGKey*>(NULL), result2.key);
+    EXPECT_FALSE(result2.key);
 
     const TSIGKeyRing::FindResult result3 = keyring.find(key_name, md5_name);
     EXPECT_EQ(TSIGKeyRing::NOTFOUND, result3.code);
-    EXPECT_EQ(static_cast<const TSIGKey*>(NULL), result3.key);
+    EXPECT_FALSE(result3.key);
 
     // But with just the name it should work
     const TSIGKeyRing::FindResult result4(keyring.find(key_name));
@@ -300,13 +299,11 @@ TEST_F(TSIGKeyRingTest, findFromSome) {
 
     EXPECT_EQ(TSIGKeyRing::NOTFOUND,
               keyring.find(Name("noexist.example"), sha1_name).code);
-    EXPECT_EQ(static_cast<const TSIGKey*>(NULL),
-              keyring.find(Name("noexist.example"), sha256_name).key);
+    EXPECT_FALSE(keyring.find(Name("noexist.example"), sha256_name).key);
 
     EXPECT_EQ(TSIGKeyRing::NOTFOUND,
               keyring.find(Name("another.example"), sha1_name).code);
-    EXPECT_EQ(static_cast<const TSIGKey*>(NULL),
-              keyring.find(Name("another.example"), sha256_name).key);
+    EXPECT_FALSE(keyring.find(Name("another.example"), sha256_name).key);
 }
 
 TEST(TSIGStringTest, TSIGKeyFromToString) {
@@ -314,7 +311,7 @@ TEST(TSIGStringTest, TSIGKeyFromToString) {
     TSIGKey k2 = TSIGKey("test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.");
     TSIGKey k3 = TSIGKey("test.example:MSG6Ng==");
     TSIGKey k4 = TSIGKey("test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.:120");
-    TSIGKey k5 = TSIGKey(Name("test.example."), Name("hmac-sha1."), NULL, 0);
+    TSIGKey k5 = TSIGKey(Name("test.example."), Name("hmac-sha1."), 0, 0);
     // "Unknown" key with empty secret is okay
     TSIGKey k6 = TSIGKey("test.example.::unknown");
 

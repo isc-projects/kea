@@ -1,6 +1,6 @@
 #!@PYTHON@
 
-# Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,34 +11,26 @@ Text client for Control Agent process
 """
 
 # First, let's import the right kea_connector.
-# We have two versions: one for python 2.x and another for python 3.x.
+# Only the python 3.x is supported.
 # Sadly, there's no unified way to handle http connections. The recommended
 # way is to use Requests (http://docs.python-requests.org/en/master/), but
 # that's a stand alone package that requires separate installation. One of
 # the design requirements was to not require any additional packages, so
 # the code uses standard libraries available in python. Hence two versions.
-import sys
-import signal
 import argparse
+import signal
+import sys
 from base64 import b64encode
 
 sys.path.append('@PKGPYTHONDIR@')
 
-from kea_conn import CARequest # CAResponse
+import kea_connector3 as kea_connector
+from kea_conn import CARequest  # CAResponse
 
-if sys.version_info[0] == 2:
-    # This is Python 2.x
-    import kea_connector2 as kea_connector
-    def auth8(string):
-        """Convert str into unicode"""
-        return unicode(string, 'utf-8')
-elif sys.version_info[0] == 3:
-    # This is Python 3.x
-    import kea_connector3 as kea_connector
-    auth8 = str
-else:
-    # This is... have no idea what it is.
-    raise SystemExit("Unknown python version:" + str(sys.version_info[0]))
+
+VERSION = "@PACKAGE_VERSION@"
+EXTENDED_VERSION = "@EXTENDED_VERSION@"
+
 
 def timeout_handler(signum, frame):
     """Connection timeout handler"""
@@ -46,7 +38,6 @@ def timeout_handler(signum, frame):
     print("Connection timeout")
     sys.exit(1)
 
-VERSION = "@PACKAGE_VERSION@"
 
 def shell_body():
     """
@@ -82,19 +73,24 @@ def shell_body():
     parser.add_argument('--service', nargs="?", action="append",
                         help='target specified service. If not specified,'
                         'control agent will receive command.')
-    parser.add_argument('--auth-user', type=auth8, default='',
+    parser.add_argument('--auth-user', type=str, default='',
                         help='Basic HTTP authentication user')
-    parser.add_argument('--auth-password', type=auth8, default='',
+    parser.add_argument('--auth-password', type=str, default='',
                         help='Basic HTTP authentication password')
     parser.add_argument('command', type=str, nargs="?",
                         default='list-commands',
                         help='command to be executed. If not specified, '
                         '"list-commands" is used')
     parser.add_argument('-v', action="store_true", help="Prints version")
+    parser.add_argument('-V', action="store_true", help="Prints extended version")
     cmd_args = parser.parse_args()
 
     if cmd_args.v:
         print(VERSION)
+        sys.exit(0)
+
+    if cmd_args.V:
+        print(EXTENDED_VERSION)
         sys.exit(0)
 
     # Ok, now it's time to put the parameters parsed into the structure to be
@@ -124,10 +120,7 @@ def shell_body():
         user = cmd_args.auth_user
         password = cmd_args.auth_password
         secret = b':'.join((user.encode('utf-8'), password.encode('utf-8')))
-        if sys.version_info[0] == 3:
-            params.auth = b64encode(secret).strip().decode('ascii')
-        else:
-            params.auth = b64encode(secret).strip().encode('ascii')
+        params.auth = b64encode(secret).strip().decode('ascii')
     params.timeout = cmd_args.timeout
     params.version = VERSION
 
@@ -159,6 +152,7 @@ def shell_body():
     resp.print_response()
 
     sys.exit(0)
+
 
 if __name__ == "__main__":
     shell_body()

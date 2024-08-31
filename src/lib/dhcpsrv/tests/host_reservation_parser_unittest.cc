@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018,2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,8 +20,9 @@
 #include <dhcpsrv/parsers/host_reservation_parser.h>
 #include <dhcpsrv/testutils/config_result_check.h>
 #include <testutils/test_to_element.h>
-#include <boost/pointer_cast.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/foreach.hpp>
+#include <boost/pointer_cast.hpp>
 #include <gtest/gtest.h>
 #include <iterator>
 #include <sstream>
@@ -67,9 +68,8 @@ protected:
     /// in which the reservation will be searched.
     bool
     reservationExists(const IPv6Resrv& resrv, const IPv6ResrvRange& range) {
-        for (IPv6ResrvIterator it = range.first; it != range.second;
-             ++it) {
-            if (resrv == it->second) {
+        BOOST_FOREACH(auto const& it, range) {
+            if (resrv == it.second) {
                 return (true);
             }
         }
@@ -540,10 +540,16 @@ TEST_F(HostReservationParserTest, noIdentifier) {
 }
 
 // This test verifies  that the configuration parser for host reservations
-// throws an exception when neither ip address nor hostname is specified.
+// no longer throws when neither ip address nor hostname is specified.
 TEST_F(HostReservationParserTest, noResource) {
     std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\" }";
-    testInvalidConfig<HostReservationParser4>(config);
+    ElementPtr config_element = Element::fromJSON(config);
+    HostPtr host;
+    HostReservationParser4 parser;
+    EXPECT_NO_THROW({
+        host = parser.parse(SubnetID(10), config_element);
+        CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    });
 }
 
 // This test verifies that the parser can parse the reservation entry
@@ -589,12 +595,17 @@ TEST_F(HostReservationParserTest, noIPAddress) {
 }
 
 // This test verifies  that the configuration parser for host reservations
-// throws an exception when hostname is empty, and IP address is not
-// specified.
+// no longer throws when hostname is empty, and IP address is not specified.
 TEST_F(HostReservationParserTest, emptyHostname) {
     std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\","
         "\"hostname\": \"\" }";
-    testInvalidConfig<HostReservationParser4>(config);
+    ElementPtr config_element = Element::fromJSON(config);
+    HostPtr host;
+    HostReservationParser4 parser;
+    EXPECT_NO_THROW({
+        host = parser.parse(SubnetID(10), config_element);
+        CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    });
 }
 
 // This test verifies that the configuration parser for host reservations
@@ -630,11 +641,17 @@ TEST_F(HostReservationParserTest, malformedNextServer) {
 }
 
 // This test verifies that the configuration parser for host reservations
-// throws an exception when zero next server address is specified.
+// no longer throws when zero next server address is specified.
 TEST_F(HostReservationParserTest, zeroNextServer) {
     std::string config = "{ \"hw-address\": \"01:02:03:04:05:06\","
         "\"next-server\": \"0.0.0.0\" }";
-    testInvalidConfig<HostReservationParser4>(config);
+    ElementPtr config_element = Element::fromJSON(config);
+    HostPtr host;
+    HostReservationParser4 parser;
+    EXPECT_NO_THROW({
+        host = parser.parse(SubnetID(10), config_element);
+        CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    });
 }
 
 // This test verifies that the configuration parser for host reservations
@@ -930,10 +947,18 @@ TEST_F(HostReservationParserTest, dhcp6NullAddress) {
 }
 
 // This test verifies that the configuration parser throws an exception
+// when invalid prefix length type is specified.
+TEST_F(HostReservationParserTest, dhcp6InvalidPrefixLengthType) {
+    std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+        "\"prefixes\": [ \"2001:db8:1::/abc\" ] }";
+    testInvalidConfig<HostReservationParser6>(config);
+}
+
+// This test verifies that the configuration parser throws an exception
 // when invalid prefix length is specified.
 TEST_F(HostReservationParserTest, dhcp6InvalidPrefixLength) {
     std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
-        "\"prefixes\": [ \"2001:db8:1::/abc\" ] }";
+        "\"prefixes\": [ \"2001:db8:1::/32\" ] }";
     testInvalidConfig<HostReservationParser6>(config);
 }
 
@@ -1021,7 +1046,8 @@ TEST_F(HostReservationParserTest, options4) {
            "\"csv-format\": true,"
            "\"space\": \"dhcp4\","
            "\"data\": \"172.16.15.23\","
-           "\"always-send\": false"
+           "\"always-send\": false,"
+           "\"never-send\": false"
         "},"
         "{"
            "\"name\": \"default-ip-ttl\","
@@ -1074,12 +1100,14 @@ TEST_F(HostReservationParserTest, options4) {
     option->set("space", Element::create(std::string(DHCP4_OPTION_SPACE)));
     option->set("csv-format", Element::create(true));
     option->set("always-send", Element::create(false));
+    option->set("never-send", Element::create(false));
     option = config_element->get("option-data")->getNonConst(1);
     option = config_element->get("option-data")->getNonConst(2);
     option->set("code", Element::create(DHO_DEFAULT_IP_TTL));
     option->set("space", Element::create(std::string(DHCP4_OPTION_SPACE)));
     option->set("csv-format", Element::create(true));
     option->set("always-send", Element::create(false));
+    option->set("never-send", Element::create(false));
     ElementPtr expected = Element::createList();
     expected->add(config_element);
 
@@ -1113,7 +1141,8 @@ TEST_F(HostReservationParserTest, options6) {
            "\"csv-format\": true,"
            "\"space\": \"dhcp6\","
            "\"data\": \"2001:db8:1::1204\","
-           "\"always-send\": true"
+           "\"always-send\": true,"
+           "\"never-send\": true"
         "},"
         "{"
            "\"name\": \"preference\","
@@ -1167,12 +1196,14 @@ TEST_F(HostReservationParserTest, options6) {
     option->set("space", Element::create(std::string(DHCP6_OPTION_SPACE)));
     option->set("csv-format", Element::create(true));
     option->set("always-send", Element::create(false));
+    option->set("never-send", Element::create(false));
     option = config_element->get("option-data")->getNonConst(1);
     option = config_element->get("option-data")->getNonConst(2);
     option->set("code", Element::create(D6O_PREFERENCE));
     option->set("space", Element::create(std::string(DHCP6_OPTION_SPACE)));
     option->set("csv-format", Element::create(true));
     option->set("always-send", Element::create(false));
+    option->set("never-send", Element::create(false));
     config = prettyPrint(config_element);
     boost::algorithm::to_lower(config);
 

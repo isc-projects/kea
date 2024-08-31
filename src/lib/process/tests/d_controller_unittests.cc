@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <asiolink/testutils/timed_signal.h>
 #include <cc/command_interpreter.h>
 #include <process/testutils/d_test_stubs.h>
+#include <testutils/gtest_utils.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <gtest/gtest.h>
@@ -79,7 +80,7 @@ TEST_F(DStubControllerTest, commandLineArgs) {
                      const_cast<char*>("cfgName"),
                      const_cast<char*>("-d") };
     int argc = 4;
-    EXPECT_NO_THROW(parseArgs(argc, argv));
+    EXPECT_NO_THROW_LOG(parseArgs(argc, argv));
 
     // Verify that verbose is true.
     EXPECT_TRUE(checkVerbose(true));
@@ -92,20 +93,20 @@ TEST_F(DStubControllerTest, commandLineArgs) {
     xopt[1] =  *DStubController::stub_option_x_;
     char* argv1[] = { const_cast<char*>("progName"), xopt};
     argc = 2;
-    EXPECT_NO_THROW (parseArgs(argc, argv1));
+    EXPECT_NO_THROW_LOG(parseArgs(argc, argv1));
 
     // Verify that an unknown option is detected.
     char* argv2[] = { const_cast<char*>("progName"),
                       const_cast<char*>("-bs") };
     argc = 2;
-    EXPECT_THROW (parseArgs(argc, argv2), InvalidUsage);
+    EXPECT_THROW_MSG(parseArgs(argc, argv2), InvalidUsage, "unsupported option: -b");
 
     // Verify that extraneous information is detected.
     char* argv3[] = { const_cast<char*>("progName"),
                       const_cast<char*>("extra"),
                       const_cast<char*>("information") };
     argc = 3;
-    EXPECT_THROW (parseArgs(argc, argv3), InvalidUsage);
+    EXPECT_THROW_MSG(parseArgs(argc, argv3), InvalidUsage, "extraneous command line information");
 }
 
 /// @brief Tests application process creation and initialization.
@@ -248,7 +249,7 @@ TEST_F(DStubControllerTest, missingConfigFileArgument) {
 TEST_F(DStubControllerTest, launchRuntimeError) {
     // Use an asiolink IntervalTimer and callback to generate the
     // shutdown invocation. (Note IntervalTimer setup is in milliseconds).
-    isc::asiolink::IntervalTimer timer(*getIOService());
+    isc::asiolink::IntervalTimer timer(getIOService());
     timer.setup(genFatalErrorCallback, 2000);
 
     // Write the valid, empty, config and then run launch() for 5000 ms
@@ -336,9 +337,9 @@ TEST_F(DStubControllerTest, ioSignals) {
     controller_->recordSignalOnly(true);
 
     // Setup to raise SIGHUP in 10 ms.
-    TimedSignal sighup(*getIOService(), SIGHUP, 10);
-    TimedSignal sigint(*getIOService(), SIGINT, 100);
-    TimedSignal sigterm(*getIOService(), SIGTERM, 200);
+    TimedSignal sighup(getIOService(), SIGHUP, 10);
+    TimedSignal sigint(getIOService(), SIGINT, 100);
+    TimedSignal sigterm(getIOService(), SIGTERM, 200);
 
     // Write the valid, empty, config and then run launch() for 500 ms
     time_duration elapsed_time;
@@ -361,7 +362,7 @@ TEST_F(DStubControllerTest, invalidConfigReload) {
     scheduleTimedWrite("{ \"string_test\": BOGUS JSON }", 100);
 
     // Setup to raise SIGHUP in 200 ms.
-    TimedSignal sighup(*getIOService(), SIGHUP, 200);
+    TimedSignal sighup(getIOService(), SIGHUP, 200);
 
     // Write the config and then run launch() for 500 ms
     // After startup, which will load the initial configuration this enters
@@ -382,7 +383,7 @@ TEST_F(DStubControllerTest, alternateParsing) {
     controller_->useAlternateParser(true);
 
     // Setup to raise SIGHUP in 200 ms.
-    TimedSignal sighup(*getIOService(), SIGHUP, 200);
+    TimedSignal sighup(getIOService(), SIGHUP, 200);
 
     // Write the config and then run launch() for 500 ms
     // After startup, which will load the initial configuration this enters
@@ -405,8 +406,8 @@ TEST_F(DStubControllerTest, validConfigReload) {
     scheduleTimedWrite("{ \"string_test\": \"second value\" }", 100);
 
     // Setup to raise SIGHUP in 200 ms and another at 400 ms.
-    TimedSignal sighup(*getIOService(), SIGHUP, 200);
-    TimedSignal sighup2(*getIOService(), SIGHUP, 400);
+    TimedSignal sighup(getIOService(), SIGHUP, 200);
+    TimedSignal sighup2(getIOService(), SIGHUP, 400);
 
     // Write the config and then run launch() for 800 ms
     time_duration elapsed_time;
@@ -422,7 +423,7 @@ TEST_F(DStubControllerTest, validConfigReload) {
 // Tests that the SIGINT triggers a normal shutdown.
 TEST_F(DStubControllerTest, sigintShutdown) {
     // Setup to raise SIGHUP in 1 ms.
-    TimedSignal sighup(*getIOService(), SIGINT, 1);
+    TimedSignal sighup(getIOService(), SIGINT, 1);
 
     // Write the config and then run launch() for 1000 ms
     time_duration elapsed_time;
@@ -445,13 +446,12 @@ TEST_F(DStubControllerTest, getVersion) {
     text = controller_->getVersion(true);
     EXPECT_NE(std::string::npos, text.find(VERSION));
     EXPECT_NE(std::string::npos, text.find(EXTENDED_VERSION));
-    EXPECT_NE(std::string::npos, text.find(controller_->getVersionAddendum()));
 }
 
 // Tests that the SIGTERM triggers a normal shutdown.
 TEST_F(DStubControllerTest, sigtermShutdown) {
     // Setup to raise SIGHUP in 1 ms.
-    TimedSignal sighup(*getIOService(), SIGTERM, 1);
+    TimedSignal sighup(getIOService(), SIGTERM, 1);
 
     // Write the config and then run launch() for 1000 ms
     time_duration elapsed_time;

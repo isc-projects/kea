@@ -1,13 +1,10 @@
 #!/bin/sh
 
-# Copyright (C) 2020-2021 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2020-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-# shellcheck disable=SC2039
-# SC2039: In POSIX sh, 'local' is undefined.
 
 # Exit with error if commands exit with non-zero and if undefined variables are
 # used.
@@ -138,7 +135,7 @@ _add_failure_tag() {
     # * sed
     # * XML attribute values
     # * XML CDATA
-    failure_text=$(printf '%s\n%s' "${ERROR}" "${OUTPUT}" | \
+    failure_text=$(printf '%s\n%s' "${ERROR-}" "${OUTPUT-}" | \
         sed 's/"/ /g' | sed 's/\[/ /g' | sed 's/\]/ /g')
     linearized_failure_text=$(printf '%s' "${failure_text}" | tr '\n' ' ')
     failure_tag=$(printf '      <failure message="%s" type=""><![CDATA[%s]]></failure>' \

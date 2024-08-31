@@ -13,7 +13,7 @@
         "    \"arguments\": {",
         "        \"client-class\": [",
         "            {",
-        "                <client class specification>",
+        "                <client class specification>,",
         "                \"follow-class-name\": <existing class name>",
         "            }",
         "        ],",
@@ -29,13 +29,14 @@
     "resp-syntax": [
         "{",
         "    \"result\": 0,",
-        "    \"text\": \"DHCPv6 shared network successfully set.\"",
+        "    \"text\": \"DHCPv6 shared network successfully set.\",",
         "    \"arguments\": {",
         "        \"client-classes\": [",
         "            {",
         "                \"name\": <set client class name>",
         "            }",
-        "    ]",
+        "        ]",
+        "    }",
         "}"
     ],
     "support": [

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,10 +12,11 @@
 #include <dhcp/option.h>
 #include <dhcp/option4_addrlst.h>
 #include <dhcp/option6_addrlst.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/parsers/shared_network_parser.h>
 #include <testutils/gtest_utils.h>
+#include <testutils/log_utils.h>
 #include <gtest/gtest.h>
 #include <string>
 
@@ -26,7 +27,7 @@ using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 
 namespace {
-class SharedNetworkParserTest : public ::testing::Test {
+class SharedNetworkParserTest : public LogContentTest {
 public:
 
     /// @brief Structure for describing a single relay test scenario
@@ -38,11 +39,11 @@ public:
         /// @brief indicates if parsing should pass or fail
         bool should_parse_;
         /// @brief list of addresses expected after parsing
-        IOAddressList addresses_;
+        std::vector<IOAddress> addresses_;
     };
 
     /// @brief virtual destructor
-    virtual ~SharedNetworkParserTest(){};
+    virtual ~SharedNetworkParserTest() = default;
 
     /// @brief Fetch valid shared network configuration JSON text
     virtual std::string getWorkingConfig() const = 0;
@@ -91,10 +92,9 @@ public:
         ASSERT_EQ(test.addresses_.size(), network.getRelayAddresses().size());
 
         // Are the expected addresses in the list?
-        for (auto exp_address = test.addresses_.begin(); exp_address != test.addresses_.end();
-             ++exp_address) {
-            EXPECT_TRUE(network.hasRelayAddress(*exp_address))
-                        << " expected address: " << (*exp_address).toText() << " not found" ;
+        for (auto const& exp_address : test.addresses_) {
+            EXPECT_TRUE(network.hasRelayAddress(exp_address))
+                        << " expected address: " << exp_address.toText() << " not found" ;
         }
     }
 
@@ -118,6 +118,7 @@ public:
     /// @return Valid shared network configuration.
     virtual std::string getWorkingConfig() const {
             std::string config = "{"
+                "    \"allocator\": \"iterative\","
                 "    \"authoritative\": true,"
                 "    \"boot-file-name\": \"/dev/null\","
                 "    \"client-class\": \"srv1\","
@@ -151,6 +152,7 @@ public:
                 "    \"store-extended-info\": true,"
                 "    \"cache-threshold\": 0.123,"
                 "    \"cache-max-age\": 123,"
+                "    \"offer-lifetime\": 777,"
                 "    \"ddns-update-on-renew\": true,"
                 "    \"option-data\": ["
                 "        {"
@@ -186,7 +188,8 @@ public:
                 "            \"t2-percent\": .65,"
                 "            \"hostname-char-set\": \"\","
                 "            \"cache-threshold\": .20,"
-                "            \"cache-max-age\": 50"
+                "            \"cache-max-age\": 50,"
+                "            \"allocator\": \"random\""
                 "        },"
                 "        {"
                 "            \"id\": 2,"
@@ -254,9 +257,9 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     EXPECT_EQ("srv1", network->getClientClass().get());
     EXPECT_EQ("bird", network->getName());
     EXPECT_EQ("eth1961", network->getIface().get());
-    EXPECT_EQ(99, network->getT1());
-    EXPECT_EQ(199, network->getT2());
-    EXPECT_EQ(399, network->getValid());
+    EXPECT_EQ(99, network->getT1().get());
+    EXPECT_EQ(199, network->getT2().get());
+    EXPECT_EQ(399, network->getValid().get());
     EXPECT_EQ(299, network->getValid().getMin());
     EXPECT_EQ(499, network->getValid().getMax());
     EXPECT_TRUE(network->getCalculateTeeTimes());
@@ -278,8 +281,10 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     EXPECT_EQ("x", network->getHostnameCharReplacement().get());
     EXPECT_TRUE(network->getStoreExtendedInfo().get());
     EXPECT_EQ(0.123, network->getCacheThreshold());
-    EXPECT_EQ(123, network->getCacheMaxAge());
+    EXPECT_EQ(123, network->getCacheMaxAge().get());
+    EXPECT_EQ(777, network->getOfferLft().get());
     EXPECT_TRUE(network->getDdnsUpdateOnRenew().get());
+    EXPECT_EQ("iterative", network->getAllocatorType().get());
 
     // Relay information.
     auto relay_info = network->getRelayInfo();
@@ -300,21 +305,23 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     Subnet4Ptr subnet = network->getSubnet(SubnetID(1));
     ASSERT_TRUE(subnet);
     EXPECT_EQ("10.1.2.0", subnet->get().first.toText());
-    EXPECT_EQ(300, subnet->getValid());
+    EXPECT_EQ(300, subnet->getValid().get());
     EXPECT_EQ(200, subnet->getValid().getMin());
     EXPECT_EQ(400, subnet->getValid().getMax());
     EXPECT_FALSE(subnet->getHostnameCharSet().unspecified());
     EXPECT_EQ("", subnet->getHostnameCharSet().get());
+    EXPECT_EQ("random", subnet->getAllocatorType().get());
 
     // Subnet with id 2
     subnet = network->getSubnet(SubnetID(2));
     ASSERT_TRUE(subnet);
     EXPECT_EQ("192.0.2.0", subnet->get().first.toText());
-    EXPECT_EQ(30, subnet->getValid());
+    EXPECT_EQ(30, subnet->getValid().get());
     EXPECT_EQ(30, subnet->getValid().getMin());
     EXPECT_EQ(30, subnet->getValid().getMax());
     EXPECT_EQ("[^A-Z]", subnet->getHostnameCharSet().get());
     EXPECT_EQ("x", subnet->getHostnameCharReplacement().get());
+    EXPECT_EQ("iterative", subnet->getAllocatorType().get());
 
     // DHCP options
     ConstCfgOptionPtr cfg_option = network->getCfgOption();
@@ -377,24 +384,6 @@ TEST_F(SharedNetwork4ParserTest, relayInfoTests) {
     // Create the vector of test scenarios.
     std::vector<RelayTest> tests = {
         {
-            "valid ip-address #1",
-            "{ \"ip-address\": \"192.168.2.1\" }",
-            true,
-            { asiolink::IOAddress("192.168.2.1") }
-        },
-        {
-            "invalid ip-address #1",
-            "{ \"ip-address\": \"not an address\" }",
-            false,
-            { }
-        },
-        {
-            "invalid ip-address #2",
-            "{ \"ip-address\": \"2001:db8::1\" }",
-            false,
-            { }
-        },
-        {
             "valid ip-addresses #1",
             "{ \"ip-addresses\": [ ] }",
             true,
@@ -425,16 +414,7 @@ TEST_F(SharedNetwork4ParserTest, relayInfoTests) {
             { }
         },
         {
-            "invalid both ip-address and ip-addresses",
-            "{"
-            " \"ip-address\": \"192.168.2.1\", "
-            " \"ip-addresses\": [ \"192.168.2.1\", \"192.168.2.2\" ]"
-            " }",
-            false,
-            { }
-        },
-        {
-            "invalid neither ip-address nor ip-addresses",
+            "invalid no ip-addresses",
             "{}",
             false,
             { }
@@ -443,11 +423,9 @@ TEST_F(SharedNetwork4ParserTest, relayInfoTests) {
 
     // Iterate over the test scenarios, verifying each prescribed
     // outcome.
-    for (auto test = tests.begin(); test != tests.end(); ++test) {
-        {
-            SCOPED_TRACE((*test).description_);
-            relayTest(*test);
-        }
+    for (auto const& test : tests) {
+        SCOPED_TRACE(test.description_);
+        relayTest(test);
     }
 }
 
@@ -490,7 +468,8 @@ TEST_F(SharedNetwork4ParserTest, iface) {
 TEST_F(SharedNetwork4ParserTest, parseWithInvalidRenewRebind) {
     IfaceMgrTestConfig ifmgr(true);
 
-    // Basic configuration for shared network.
+    // Basic configuration for shared network but with a renew-timer value
+    // larger than rebind-timer.
     std::string config = getWorkingConfig();
     ElementPtr config_element = Element::fromJSON(config);
     ConstElementPtr valid_element = config_element->get("rebind-timer");
@@ -503,8 +482,15 @@ TEST_F(SharedNetwork4ParserTest, parseWithInvalidRenewRebind) {
     SharedNetwork4Parser parser;
     SharedNetwork4Ptr network;
 
-    ASSERT_THROW(network = parser.parse(config_element), DhcpConfigError);
-    ASSERT_FALSE(network);
+    // Parser should not throw.
+    ASSERT_NO_THROW(network = parser.parse(config_element));
+    ASSERT_TRUE(network);
+
+    // Veriy we emitted the proper log message.
+    addString("DHCPSRV_CFGMGR_RENEW_GTR_REBIND in shared-network bird,"
+              " the value of renew-timer 200 is greater than the value"
+              " of rebind-timer 199, ignoring renew-timer");
+    EXPECT_TRUE(checkFile());
 }
 
 // This test verifies that shared network parser for IPv4 works properly
@@ -528,6 +514,24 @@ TEST_F(SharedNetwork4ParserTest, parseValidWithEqualRenewRebind) {
     ASSERT_NO_THROW(network = parser.parse(config_element));
     ASSERT_TRUE(network);
 }
+
+// Test that FLQ allocator can be used for a shared network.
+TEST_F(SharedNetwork4ParserTest, parseFLQAllocator) {
+    IfaceMgrTestConfig ifmgr(true);
+
+    // Basic configuration for shared network.
+    std::string config = "{ \"name\": \"lion\", \"allocator\": \"flq\" }";
+    ElementPtr config_element = Element::fromJSON(config);
+
+    // Parse configuration specified above.
+    SharedNetwork4Parser parser;
+    SharedNetwork4Ptr network;
+
+    ASSERT_NO_THROW(network = parser.parse(config_element));
+    ASSERT_TRUE(network);
+    EXPECT_EQ("flq", network->getAllocatorType().get());
+}
+
 
 /// @brief Test fixture class for SharedNetwork6Parser class.
 class SharedNetwork6ParserTest : public SharedNetworkParserTest {
@@ -577,6 +581,8 @@ public:
                 "    \"cache-threshold\": 0.123,"
                 "    \"cache-max-age\": 123,"
                 "    \"ddns-update-on-renew\": true,"
+                "    \"allocator\": \"random\","
+                "    \"pd-allocator\": \"iterative\","
                 "    \"option-data\": ["
                 "        {"
                 "            \"name\": \"dns-servers\","
@@ -603,7 +609,9 @@ public:
                 "            \"reservations-in-subnet\": true,"
                 "            \"reservations-out-of-pool\": false,"
                 "            \"rapid-commit\": false,"
-                "            \"hostname-char-set\": \"\""
+                "            \"hostname-char-set\": \"\","
+                "            \"allocator\": \"iterative\","
+                "            \"pd-allocator\": \"random\""
                 "        },"
                 "        {"
                 "            \"id\": 2,"
@@ -664,13 +672,13 @@ TEST_F(SharedNetwork6ParserTest, parse) {
     EXPECT_EQ("srv1", network->getClientClass().get());
     EXPECT_EQ("bird", network->getName());
     EXPECT_EQ("eth1961", network->getIface().get());
-    EXPECT_EQ(211, network->getPreferred());
+    EXPECT_EQ(211, network->getPreferred().get());
     EXPECT_EQ(111, network->getPreferred().getMin());
     EXPECT_EQ(311, network->getPreferred().getMax());
     EXPECT_TRUE(network->getRapidCommit());
-    EXPECT_EQ(99, network->getT1());
-    EXPECT_EQ(199, network->getT2());
-    EXPECT_EQ(399, network->getValid());
+    EXPECT_EQ(99, network->getT1().get());
+    EXPECT_EQ(199, network->getT2().get());
+    EXPECT_EQ(399, network->getValid().get());
     EXPECT_EQ(299, network->getValid().getMin());
     EXPECT_EQ(499, network->getValid().getMax());
     EXPECT_TRUE(network->getCalculateTeeTimes());
@@ -686,8 +694,10 @@ TEST_F(SharedNetwork6ParserTest, parse) {
     EXPECT_EQ("x", network->getHostnameCharReplacement().get());
     EXPECT_TRUE(network->getStoreExtendedInfo().get());
     EXPECT_EQ(0.123, network->getCacheThreshold());
-    EXPECT_EQ(123, network->getCacheMaxAge());
+    EXPECT_EQ(123, network->getCacheMaxAge().get());
     EXPECT_TRUE(network->getDdnsUpdateOnRenew().get());
+    EXPECT_EQ("random", network->getAllocatorType().get());
+    EXPECT_EQ("iterative", network->getPdAllocatorType().get());
 
     // Relay information.
     auto relay_info = network->getRelayInfo();
@@ -708,27 +718,31 @@ TEST_F(SharedNetwork6ParserTest, parse) {
     Subnet6Ptr subnet = network->getSubnet(SubnetID(1));
     ASSERT_TRUE(subnet);
     EXPECT_EQ("3000::", subnet->get().first.toText());
-    EXPECT_EQ(300, subnet->getPreferred());
+    EXPECT_EQ(300, subnet->getPreferred().get());
     EXPECT_EQ(200, subnet->getPreferred().getMin());
     EXPECT_EQ(400, subnet->getPreferred().getMax());
-    EXPECT_EQ(400, subnet->getValid());
+    EXPECT_EQ(400, subnet->getValid().get());
     EXPECT_EQ(300, subnet->getValid().getMin());
     EXPECT_EQ(500, subnet->getValid().getMax());
     EXPECT_FALSE(subnet->getHostnameCharSet().unspecified());
     EXPECT_EQ("", subnet->getHostnameCharSet().get());
+    EXPECT_EQ("iterative", subnet->getAllocatorType().get());
+    EXPECT_EQ("random", subnet->getPdAllocatorType().get());
 
     // Subnet with id 2
     subnet = network->getSubnet(SubnetID(2));
     ASSERT_TRUE(subnet);
     EXPECT_EQ("2001:db8:1::", subnet->get().first.toText());
-    EXPECT_EQ(30, subnet->getPreferred());
+    EXPECT_EQ(30, subnet->getPreferred().get());
     EXPECT_EQ(30, subnet->getPreferred().getMin());
     EXPECT_EQ(30, subnet->getPreferred().getMax());
-    EXPECT_EQ(40, subnet->getValid());
+    EXPECT_EQ(40, subnet->getValid().get());
     EXPECT_EQ(40, subnet->getValid().getMin());
     EXPECT_EQ(40, subnet->getValid().getMax());
     EXPECT_EQ("[^A-Z]", subnet->getHostnameCharSet().get());
     EXPECT_EQ("x", subnet->getHostnameCharReplacement().get());
+    EXPECT_EQ("random", subnet->getAllocatorType().get());
+    EXPECT_EQ("iterative", subnet->getPdAllocatorType().get());
 
     // DHCP options
     ConstCfgOptionPtr cfg_option = network->getCfgOption();
@@ -770,7 +784,8 @@ TEST_F(SharedNetwork6ParserTest, parseWithInterfaceId) {
 TEST_F(SharedNetwork6ParserTest, parseWithInvalidRenewRebind) {
     IfaceMgrTestConfig ifmgr(true);
 
-    // Use the configuration with interface-id instead of interface parameter.
+    // Basic configuration for shared network but with a renew-timer value
+    // larger than rebind-timer.
     use_iface_id_ = true;
     std::string config = getWorkingConfig();
     ElementPtr config_element = Element::fromJSON(config);
@@ -784,8 +799,15 @@ TEST_F(SharedNetwork6ParserTest, parseWithInvalidRenewRebind) {
     SharedNetwork6Parser parser;
     SharedNetwork6Ptr network;
 
-    ASSERT_THROW(network = parser.parse(config_element), DhcpConfigError);
-    ASSERT_FALSE(network);
+    // Parser should not throw.
+    ASSERT_NO_THROW(network = parser.parse(config_element));
+    ASSERT_TRUE(network);
+
+    // Veriy we emitted the proper log message.
+    addString("DHCPSRV_CFGMGR_RENEW_GTR_REBIND in shared-network bird,"
+              " the value of renew-timer 200 is greater than the value"
+              " of rebind-timer 199, ignoring renew-timer");
+    EXPECT_TRUE(checkFile());
 }
 
 // This test verifies that shared network parser for IPv6 works properly
@@ -912,24 +934,6 @@ TEST_F(SharedNetwork6ParserTest, relayInfoTests) {
     // Create the vector of test scenarios.
     std::vector<RelayTest> tests = {
         {
-            "valid ip-address #1",
-            "{ \"ip-address\": \"2001:db8::1\" }",
-            true,
-            { asiolink::IOAddress("2001:db8::1") }
-        },
-        {
-            "invalid ip-address #1",
-            "{ \"ip-address\": \"not an address\" }",
-            false,
-            { }
-        },
-        {
-            "invalid ip-address #2",
-            "{ \"ip-address\": \"192.168.2.1\" }",
-            false,
-            { }
-        },
-        {
             "valid ip-addresses #1",
             "{ \"ip-addresses\": [ ] }",
             true,
@@ -960,16 +964,7 @@ TEST_F(SharedNetwork6ParserTest, relayInfoTests) {
             { }
         },
         {
-            "invalid both ip-address and ip-addresses",
-            "{"
-            " \"ip-address\": \"2001:db8::1\", "
-            " \"ip-addresses\": [ \"2001:db8::1\", \"2001:db8::2\" ]"
-            " }",
-            false,
-            { }
-        },
-        {
-            "invalid neither ip-address nor ip-addresses",
+            "invalid no ip-addresses",
             "{}",
             false,
             { }
@@ -978,11 +973,9 @@ TEST_F(SharedNetwork6ParserTest, relayInfoTests) {
 
     // Iterate over the test scenarios, verifying each prescribed
     // outcome.
-    for (auto test = tests.begin(); test != tests.end(); ++test) {
-        {
-            SCOPED_TRACE((*test).description_);
-            relayTest(*test);
-        }
+    for (auto const& test : tests) {
+        SCOPED_TRACE(test.description_);
+        relayTest(test);
     }
 }
 
@@ -1019,5 +1012,36 @@ TEST_F(SharedNetwork6ParserTest, iface) {
     EXPECT_FALSE(network->getIface().unspecified());
     EXPECT_EQ("eth1961", network->getIface().get());
 }
+
+// Test that the FLQ allocator can't be used for DHCPv6 address assignment.
+TEST_F(SharedNetwork6ParserTest, parseFLQAllocatorNA) {
+    IfaceMgrTestConfig ifmgr(true);
+
+    // Basic configuration for shared network.
+    std::string config = "{ \"name\": \"lion\", \"allocator\": \"flq\" }";
+    ElementPtr config_element = Element::fromJSON(config);
+
+    // Parse configuration specified above.
+    SharedNetwork6Parser parser;
+    EXPECT_THROW(parser.parse(config_element), DhcpConfigError);
+}
+
+// Test that FLQ allocator can be used for prefix delegation.
+TEST_F(SharedNetwork6ParserTest, parseFLQAllocatorPD) {
+    IfaceMgrTestConfig ifmgr(true);
+
+    // Basic configuration for shared network.
+    std::string config = "{ \"name\": \"lion\", \"pd-allocator\": \"flq\" }";
+    ElementPtr config_element = Element::fromJSON(config);
+
+    // Parse configuration specified above.
+    SharedNetwork6Parser parser;
+    SharedNetwork6Ptr network;
+
+    ASSERT_NO_THROW(network = parser.parse(config_element));
+    ASSERT_TRUE(network);
+    EXPECT_EQ("flq", network->getPdAllocatorType().get());
+}
+
 
 } // end of anonymous namespace

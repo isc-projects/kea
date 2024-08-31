@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -39,7 +39,7 @@ const uint8_t EDNS::SUPPORTED_VERSION;
 namespace {
 class EDNSTest : public ::testing::Test {
 protected:
-    EDNSTest() : rrtype(RRType::OPT()), buffer(NULL, 0), obuffer(0), rcode(0) {
+    EDNSTest() : rrtype(RRType::OPT()), buffer(0, 0), obuffer(0), rcode(0) {
         opt_rdata = ConstRdataPtr(new generic::OPT());
         edns_base.setUDPSize(4096);
     }
@@ -121,7 +121,7 @@ TEST_F(EDNSTest, BadWireData) {
     // OPT RR of a non root name
     EXPECT_THROW(EDNS(Name("example.com"), rrclass, rrtype,
                       rrttl_do_on, *opt_rdata), DNSMessageFORMERR);
-                 
+
     // Unsupported Version
     EXPECT_THROW(EDNS(Name::ROOT_NAME(), rrclass, rrtype,
                       rrttl_badver, *opt_rdata), DNSMessageBADVERS);

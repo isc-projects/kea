@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <config/http_command_config.h>
 #include <d2/parser_context.h>
 #include <d2/tests/parser_unittest.h>
 #include <d2/tests/test_callout_libraries.h>
@@ -15,9 +16,8 @@
 #include <dhcpsrv/testutils/config_result_check.h>
 #include <process/testutils/d_test_stubs.h>
 #include <test_data_files_config.h>
-#include <util/encode/base64.h>
+#include <util/encode/encode.h>
 
-#include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
@@ -404,17 +404,8 @@ TEST_F(D2CfgMgrTest, unsupportedTopLevelItems) {
 /// -# ncr_protocol must be valid
 /// -# ncr_format must be valid
 TEST_F(D2CfgMgrTest, invalidEntry) {
-    // Cannot use IPv4 ANY address
-    std::string config = makeParamsConfigString ("0.0.0.0", 777, 333,
-                                           "UDP", "JSON");
-    LOGIC_ERROR(config, "IP address cannot be \"0.0.0.0\" (<string>:1:17)");
-
-    // Cannot use IPv6 ANY address
-    config = makeParamsConfigString ("::", 777, 333, "UDP", "JSON");
-    LOGIC_ERROR(config, "IP address cannot be \"::\" (<string>:1:17)");
-
     // Cannot use port  0
-    config = makeParamsConfigString ("127.0.0.1", 0, 333, "UDP", "JSON");
+    std::string config = makeParamsConfigString ("127.0.0.1", 0, 333, "UDP", "JSON");
     SYNTAX_ERROR(config, "<string>:1.40: port must be greater than zero but less than 65536");
 
     // Cannot use dns server timeout of 0
@@ -592,8 +583,7 @@ TEST_F(D2CfgMgrTest, fullConfig) {
     // NOTE that since prior tests have validated server parsing, we are are
     // assuming that the servers did in fact parse correctly if the correct
     // number of them are there.
-    DdnsDomainMapPair domain_pair;
-    BOOST_FOREACH(domain_pair, (*domains)) {
+    for (auto const& domain_pair : *domains) {
         DdnsDomainPtr domain = domain_pair.second;
         DnsServerInfoStoragePtr servers = domain->getServers();
         count = servers->size();
@@ -615,7 +605,7 @@ TEST_F(D2CfgMgrTest, fullConfig) {
     // NOTE that since prior tests have validated server parsing, we are are
     // assuming that the servers did in fact parse correctly if the correct
     // number of them are there.
-    BOOST_FOREACH(domain_pair, (*domains)) {
+    for (auto const& domain_pair : *domains) {
         DdnsDomainPtr domain = domain_pair.second;
         DnsServerInfoStoragePtr servers = domain->getServers();
         count = servers->size();
@@ -940,9 +930,8 @@ TEST_F(D2CfgMgrTest, configPermutations) {
     //  3. data - configuration text to parse
     //  4. convert data into JSON text
     //  5. submit JSON for parsing
-    isc::data::ConstElementPtr test;
     ASSERT_TRUE(tests->get("test-list"));
-    BOOST_FOREACH(test, tests->get("test-list")->listValue()) {
+    for (auto const& test : tests->get("test-list")->listValue()) {
         // Grab the description.
         std::string description = "<no desc>";
         isc::data::ConstElementPtr elem = test->get("description");
@@ -983,11 +972,29 @@ TEST_F(D2CfgMgrTest, comments) {
                         "\"comment\": \"D2 config\" , "
                         "\"ip-address\" : \"192.168.1.33\" , "
                         "\"port\" : 88 , "
-                        "\"control-socket\": {"
-                        " \"comment\": \"Control channel\" , "
-                        " \"socket-type\": \"unix\" ,"
-                        " \"socket-name\": \"/tmp/d2-ctrl-channel\" "
+                        "\"control-sockets\": ["
+                        "{"
+                        " \"socket-type\": \"unix\","
+                        " \"socket-name\": \"/tmp/d2-ctrl-socket\","
+                        " \"user-context\": { \"comment\":"
+                        "  \"Indirect comment\" }"
                         "},"
+                        "{"
+                        " \"comment\": \"HTTP control socket\","
+                        " \"socket-type\": \"http\","
+                        " \"socket-address\": \"::1\","
+                        " \"socket-port\": 8053,"
+                        " \"authentication\": {"
+                        "  \"comment\": \"basic HTTP authentication\","
+                        "  \"type\": \"basic\","
+                        "  \"clients\": [ {"
+                        "   \"comment\": \"admin is authorized\","
+                        "   \"user\": \"admin\","
+                        "   \"password\": \"1234\""
+                        "  } ]"
+                        " }"
+                        "}"
+                        "],"
                         "\"tsig-keys\": ["
                         "{"
                         "  \"user-context\": { "
@@ -1023,12 +1030,49 @@ TEST_F(D2CfgMgrTest, comments) {
     ASSERT_TRUE(ctx->get("comment"));
     EXPECT_EQ("\"D2 config\"", ctx->get("comment")->str());
 
-    // Check control socket.
-    ConstElementPtr ctrl_sock = d2_context->getControlSocketInfo();
-    ASSERT_TRUE(ctrl_sock);
-    ASSERT_TRUE(ctrl_sock->get("user-context"));
-    EXPECT_EQ("{ \"comment\": \"Control channel\" }",
-              ctrl_sock->get("user-context")->str());
+    // There is a UNIX control socket.
+    ConstElementPtr socket = d2_context->getControlSocketInfo();
+    ASSERT_TRUE(socket);
+    ConstElementPtr ctx_socket = socket->get("user-context");
+    ASSERT_TRUE(ctx_socket);
+    ASSERT_EQ(1, ctx_socket->size());
+    ASSERT_TRUE(ctx_socket->get("comment"));
+    EXPECT_EQ("\"Indirect comment\"", ctx_socket->get("comment")->str());
+
+    // There is a HTTP control socket with authentication.
+    config::HttpCommandConfigPtr http_socket =
+        d2_context->getHttpControlSocketInfo();
+    ASSERT_TRUE(http_socket);
+    /// @todo use the configuration object.
+    socket = http_socket->toElement();
+    ASSERT_TRUE(socket);
+    ctx_socket = socket->get("user-context");
+    ASSERT_TRUE(ctx_socket);
+    ASSERT_EQ(1, ctx_socket->size());
+    ASSERT_TRUE(ctx_socket->get("comment"));
+    EXPECT_EQ("\"HTTP control socket\"", ctx_socket->get("comment")->str());
+
+    // HTTP authentication.
+    ConstElementPtr auth = socket->get("authentication");
+    ASSERT_TRUE(auth);
+    ConstElementPtr ctx_auth = auth->get("user-context");
+    ASSERT_TRUE(ctx_auth);
+    ASSERT_EQ(1, ctx_auth->size());
+    ASSERT_TRUE(ctx_auth->get("comment"));
+    EXPECT_EQ("\"basic HTTP authentication\"", ctx_auth->get("comment")->str());
+
+    // Authentication client.
+    ConstElementPtr clients = auth->get("clients");
+    ASSERT_TRUE(clients);
+    ASSERT_EQ(1, clients->size());
+    ConstElementPtr client;
+    ASSERT_NO_THROW(client = clients->get(0));
+    ASSERT_TRUE(client);
+    ConstElementPtr ctx_client = client->get("user-context");
+    ASSERT_TRUE(ctx_client);
+    ASSERT_EQ(1, ctx_client->size());
+    ASSERT_TRUE(ctx_client->get("comment"));
+    EXPECT_EQ("\"admin is authorized\"", ctx_client->get("comment")->str());
 
     // Check TSIG keys.
     TSIGKeyInfoMapPtr keys = d2_context->getKeys();
@@ -1075,6 +1119,38 @@ TEST_F(D2CfgMgrTest, comments) {
     ASSERT_EQ(1, srv_ctx->size());
     ASSERT_TRUE(srv_ctx->get("version"));
     EXPECT_EQ("1", srv_ctx->get("version")->str());
+}
+
+/// @brief Tests a basic valid configuration for D2Param.
+TEST_F(D2CfgMgrTest, listenOnANYAddresses) {
+    // Verify that ip_address 0.0.0.0 is valid.
+    std::string config = makeParamsConfigString ("0.0.0.0", 777, 333,
+                                           "UDP", "JSON");
+    RUN_CONFIG_OK(config);
+
+    EXPECT_EQ(isc::asiolink::IOAddress("0.0.0.0"),
+              d2_params_->getIpAddress());
+
+    // Verify the configuration summary.
+    EXPECT_EQ("listening on 0.0.0.0, port 777, using UDP",
+              d2_params_->getConfigSummary());
+
+    EXPECT_EQ(777, d2_params_->getPort());
+    EXPECT_EQ(333, d2_params_->getDnsServerTimeout());
+    EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_params_->getNcrProtocol());
+    EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_params_->getNcrFormat());
+
+    // Verify that ip_address :: valid.
+    config = makeParamsConfigString ("::", 777, 333, "UDP", "JSON");
+    RUN_CONFIG_OK(config);
+
+    // Verify that the global scalars have the proper values.
+    EXPECT_EQ(isc::asiolink::IOAddress("::"),
+              d2_params_->getIpAddress());
+
+    // Verify the configuration summary.
+    EXPECT_EQ("listening on ::, port 777, using UDP",
+              d2_params_->getConfigSummary());
 }
 
 } // end of anonymous namespace

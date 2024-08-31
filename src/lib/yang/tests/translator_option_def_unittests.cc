@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,12 +6,11 @@
 
 #include <config.h>
 
+#include <gtest/gtest.h>
+
+#include <yang/tests/sysrepo_setup.h>
 #include <yang/translator_option_def.h>
 #include <yang/yang_models.h>
-#include <yang/tests/sysrepo_setup.h>
-
-#include <gtest/gtest.h>
-#include <sstream>
 
 using namespace std;
 using namespace isc;
@@ -29,30 +28,27 @@ extern char const option_definition_list[] = "option definition list";
 class TranslatorOptionDefListTestKeaV4 :
     public GenericTranslatorTest<option_definition_list, TranslatorOptionDefList> {
 public:
-
-    /// Constructor.
+    /// @brief Constructor
     TranslatorOptionDefListTestKeaV4() {
         model_ = KEA_DHCP4_SERVER;
     }
-};
+};  // TranslatorOptionDefListTestKeaV4
 class TranslatorOptionDefListTestKeaV6 :
     public GenericTranslatorTest<option_definition_list, TranslatorOptionDefList> {
 public:
-
-    /// Constructor.
+    /// @brief Constructor
     TranslatorOptionDefListTestKeaV6() {
         model_ = KEA_DHCP6_SERVER;
     }
-};
+};  // TranslatorOptionDefListTestKeaV6
 class TranslatorOptionDefListTestIetfV6 :
     public GenericTranslatorTest<option_definition_list, TranslatorOptionDefList> {
 public:
-
-    /// Constructor.
+    /// @brief Constructor
     TranslatorOptionDefListTestIetfV6() {
         model_ = IETF_DHCPV6_SERVER;
     }
-};
+};  // TranslatorOptionDefListTestIetfV6
 
 // This test verifies that an empty option definition list can be properly
 // translated from YANG to JSON.
@@ -60,7 +56,7 @@ TEST_F(TranslatorOptionDefListTestKeaV4, getEmpty) {
     // Get the option definition list and check if it is empty.
     const string& xpath = "/kea-dhcp4-server:config";
     ConstElementPtr options;
-    EXPECT_NO_THROW(options = t_obj_->getOptionDefList(xpath));
+    EXPECT_NO_THROW_LOG(options = translator_->getOptionDefListFromAbsoluteXpath(xpath));
     ASSERT_FALSE(options);
 }
 
@@ -73,16 +69,17 @@ TEST_F(TranslatorOptionDefListTestKeaV6, get) {
     const string& xname = xdef + "/name";
     const string& xtype = xdef + "/type";
     const string& xarray = xdef + "/array";
-    S_Val s_name(new Val("foo"));
-    ASSERT_NO_THROW_LOG(sess_->set_item(xname.c_str(), s_name));
-    S_Val s_type(new Val("string"));
-    ASSERT_NO_THROW_LOG(sess_->set_item(xtype.c_str(), s_type));
-    S_Val s_array(new Val(false));
-    ASSERT_NO_THROW_LOG(sess_->set_item(xarray.c_str(), s_array));
+    string const s_name("foo");
+    ASSERT_NO_THROW_LOG(sess_->setItem(xname, s_name));
+    string const s_type("string");
+    ASSERT_NO_THROW_LOG(sess_->setItem(xtype, s_type));
+    string const s_array("false");
+    ASSERT_NO_THROW_LOG(sess_->setItem(xarray, s_array));
+    sess_->applyChanges();
 
     // Get the option def.
     ConstElementPtr def;
-    EXPECT_NO_THROW(def = t_obj_->getOptionDef(xdef));
+    EXPECT_NO_THROW_LOG(def = translator_->getOptionDefFromAbsoluteXpath(xdef));
     ASSERT_TRUE(def);
     EXPECT_EQ("{ "
               "\"array\": false, "
@@ -94,7 +91,7 @@ TEST_F(TranslatorOptionDefListTestKeaV6, get) {
 
     // Get the option definition list.
     ConstElementPtr defs;
-    EXPECT_NO_THROW(defs = t_obj_->getOptionDefList(xpath));
+    EXPECT_NO_THROW_LOG(defs = translator_->getOptionDefListFromAbsoluteXpath(xpath));
     ASSERT_TRUE(defs);
     ASSERT_EQ(Element::list, defs->getType());
     EXPECT_EQ(1, defs->size());
@@ -107,11 +104,11 @@ TEST_F(TranslatorOptionDefListTestKeaV4, setEmpty) {
     // Set empty list.
     const string& xpath = "/kea-dhcp4-server:config";
     ConstElementPtr defs = Element::createList();
-    EXPECT_NO_THROW(t_obj_->setOptionDefList(xpath, defs));
+    EXPECT_NO_THROW_LOG(translator_->setOptionDefList(xpath, defs));
 
     // Get it back.
     defs.reset();
-    EXPECT_NO_THROW(defs = t_obj_->getOptionDefList(xpath));
+    EXPECT_NO_THROW_LOG(defs = translator_->getOptionDefListFromAbsoluteXpath(xpath));
     ASSERT_FALSE(defs);
 }
 
@@ -123,22 +120,19 @@ TEST_F(TranslatorOptionDefListTestKeaV6, set) {
     ElementPtr defs = Element::createList();
     ElementPtr def = Element::createMap();
     def->set("code", Element::create(100));
-    def->set("name", Element::create(string("foo")));
-    def->set("space", Element::create(string("isc")));
-    def->set("type", Element::create(string("string")));
+    def->set("name", Element::create("foo"));
+    def->set("space", Element::create("isc"));
+    def->set("type", Element::create("string"));
     def->set("array", Element::create(false));
     defs->add(def);
-    EXPECT_NO_THROW(t_obj_->setOptionDefList(xpath, defs));
+    EXPECT_NO_THROW_LOG(translator_->setOptionDefList(xpath, defs));
 
     // Get it back.
     ConstElementPtr got;
-    EXPECT_NO_THROW(got = t_obj_->getOptionDefList(xpath));
+    EXPECT_NO_THROW_LOG(got = translator_->getOptionDefListFromAbsoluteXpath(xpath));
     ASSERT_TRUE(got);
     ASSERT_EQ(1, got->size());
     EXPECT_TRUE(def->equals(*got->get(0)));
-
-    // Check it validates.
-    EXPECT_NO_THROW(sess_->validate());
 }
 
-}; // end of anonymous namespace
+}  // anonymous namespace

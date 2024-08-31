@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,7 +10,7 @@
 #include <dhcpsrv/cfg_option.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/option_space.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/make_shared.hpp>
@@ -24,16 +24,17 @@ namespace isc {
 namespace dhcp {
 
 OptionDescriptorPtr
-OptionDescriptor::create(const OptionPtr& opt, bool persist,
+OptionDescriptor::create(const OptionPtr& opt, bool persist, bool cancel,
                          const std::string& formatted_value,
                          ConstElementPtr user_context) {
-    return (boost::make_shared<OptionDescriptor>(opt, persist, formatted_value,
+    return (boost::make_shared<OptionDescriptor>(opt, persist, cancel,
+                                                 formatted_value,
                                                  user_context));
 }
 
 OptionDescriptorPtr
-OptionDescriptor::create(bool persist) {
-    return (boost::make_shared<OptionDescriptor>(persist));
+OptionDescriptor::create(bool persist, bool cancel) {
+    return (boost::make_shared<OptionDescriptor>(persist, cancel));
 }
 
 OptionDescriptorPtr
@@ -44,12 +45,14 @@ OptionDescriptor::create(const OptionDescriptor& desc) {
 bool
 OptionDescriptor::equals(const OptionDescriptor& other) const {
     return ((persistent_ == other.persistent_) &&
+            (cancelled_ == other.cancelled_) &&
             (formatted_value_ == other.formatted_value_) &&
             (space_name_ == other.space_name_) &&
             option_->equals(other.option_));
 }
 
-CfgOption::CfgOption() {
+CfgOption::CfgOption()
+    : encapsulated_(false) {
 }
 
 bool
@@ -64,10 +67,12 @@ CfgOption::equals(const CfgOption& other) const {
 }
 
 void
-CfgOption::add(const OptionPtr& option, const bool persistent,
+CfgOption::add(const OptionPtr& option,
+               const bool persistent,
+               const bool cancelled,
                const std::string& option_space,
                const uint64_t id) {
-    OptionDescriptor desc(option, persistent);
+    OptionDescriptor desc(option, persistent, cancelled);
     if (id > 0) {
         desc.setId(id);
     }
@@ -96,7 +101,7 @@ void
 CfgOption::replace(const OptionDescriptor& desc, const std::string& option_space) {
     if (!desc.option_) {
         isc_throw(isc::BadValue, "option being replaced must not be NULL");
-    } 
+    }
 
     // Check for presence of options.
     OptionContainerPtr options = getAll(option_space);
@@ -109,10 +114,10 @@ CfgOption::replace(const OptionDescriptor& desc, const std::string& option_space
     OptionContainerTypeIndex& idx = options->get<1>();
     auto const& od_itr = idx.find(desc.option_->getType());
     if (od_itr == idx.end()) {
-        isc_throw(isc::BadValue, "cannot replace option: " 
+        isc_throw(isc::BadValue, "cannot replace option: "
                   << option_space << ":" << desc.option_->getType()
                   << ", it does not exist");
-    } 
+    }
 
     idx.replace(od_itr, desc);
 }
@@ -144,6 +149,12 @@ CfgOption::merge(CfgOptionDefPtr cfg_def,  CfgOption& other) {
 
     // Next we copy "other" on top of ourself.
     other.copyTo(*this);
+
+    // If we copied new options we may need to populate the
+    // sub-options into the upper level options. The server
+    // expects that the top-level options have suitable
+    // suboptions appended.
+    encapsulate();
 }
 
 void
@@ -151,11 +162,11 @@ CfgOption::createOptions(CfgOptionDefPtr cfg_def) {
     // Iterate over all the option descriptors in
     // all the spaces and instantiate the options
     // based on the given definitions.
-    for (auto space : getOptionSpaceNames()) {
+    for (auto const& space : getOptionSpaceNames()) {
         for (auto opt_desc : *(getAll(space))) {
             if (createDescriptorOption(cfg_def, space, opt_desc)) {
-                // Option was recreated, let's replace the descriptor. 
-                replace(opt_desc,space);
+                // Option was recreated, let's replace the descriptor.
+                replace(opt_desc, space);
             }
         }
     }
@@ -189,6 +200,11 @@ CfgOption::createDescriptorOption(CfgOptionDefPtr cfg_def, const std::string& sp
     // definition in the given set of configured definitions
     if (!def) {
         def = cfg_def->get(space, code);
+    }
+
+    // Finish with a last resort option definition.
+    if (!def) {
+        def = LibDHCP::getLastResortOptionDef(space, code);
     }
 
     std::string& formatted_value = opt_desc.formatted_value_;
@@ -240,6 +256,7 @@ CfgOption::copyTo(CfgOption& other) const {
     other.options_.clearItems();
     other.vendor_options_.clearItems();
     mergeTo(other);
+    other.encapsulated_ = isEncapsulated();
 }
 
 void
@@ -248,6 +265,7 @@ CfgOption::encapsulate() {
     encapsulateInternal(DHCP4_OPTION_SPACE);
     // Append sub-options to the top level "dhcp6" option space.
     encapsulateInternal(DHCP6_OPTION_SPACE);
+    encapsulated_ = true;
 }
 
 void
@@ -267,20 +285,22 @@ CfgOption::encapsulateInternal(const OptionPtr& option) {
     const std::string& encap_space = option->getEncapsulatedSpace();
     // Empty value means that no option space is encapsulated.
     if (!encap_space.empty()) {
+        if (encap_space == DHCP4_OPTION_SPACE || encap_space == DHCP6_OPTION_SPACE) {
+            return;
+        }
         // Retrieve all options from the encapsulated option space.
         OptionContainerPtr encap_options = getAll(encap_space);
         for (auto const& encap_opt : *encap_options) {
+            if (option.get() == encap_opt.option_.get()) {
+                // Avoid recursion by not adding options to themselves.
+                continue;
+            }
+
             // Add sub-option if there isn't one added already.
             if (!option->getOption(encap_opt.option_->getType())) {
                 option->addOption(encap_opt.option_);
             }
-            // This is a workaround for preventing infinite recursion when
-            // trying to encapsulate options created with default global option
-            // spaces.
-            if (encap_space != DHCP4_OPTION_SPACE &&
-                encap_space != DHCP6_OPTION_SPACE) {
-                encapsulateInternal(encap_opt.option_);
-            }
+            encapsulateInternal(encap_opt.option_);
         }
     }
 }
@@ -328,6 +348,15 @@ CfgOption::getAll(const uint32_t vendor_id) const {
     return (vendor_options_.getItems(vendor_id));
 }
 
+OptionContainerPtr
+CfgOption::getAllCombined(const std::string& option_space) const {
+    auto vendor_id = LibDHCP::optionSpaceToVendorId(option_space);
+    if (vendor_id > 0) {
+        return (getAll(vendor_id));
+    }
+    return (getAll(option_space));
+}
+
 size_t
 CfgOption::del(const std::string& option_space, const uint16_t option_code) {
     // Check for presence of options.
@@ -344,18 +373,16 @@ CfgOption::del(const std::string& option_space, const uint16_t option_code) {
         (option_space != DHCP6_OPTION_SPACE)) {
         // For each option space name iterate over the existing options.
         auto option_space_names = getOptionSpaceNames();
-        for (auto option_space_from_list : option_space_names) {
+        for (auto const& option_space_from_list : option_space_names) {
             // Get all options within the particular option space.
-            auto options_in_space = getAll(option_space_from_list);
-            for (auto option_it = options_in_space->begin();
-                 option_it != options_in_space->end();
-                 ++option_it) {
+            auto const& options_in_space = getAll(option_space_from_list);
+            for (auto const& option_it : *options_in_space) {
 
                 // Check if the option encapsulates our option space and
                 // it does, try to delete our option.
-                if (option_it->option_ &&
-                    (option_it->option_->getEncapsulatedSpace() == option_space)) {
-                    option_it->option_->delOption(option_code);
+                if (option_it.option_ &&
+                    (option_it.option_->getEncapsulatedSpace() == option_space)) {
+                    option_it.option_->delOption(option_code);
                 }
             }
         }
@@ -383,22 +410,20 @@ CfgOption::del(const uint64_t id) {
     // Hierarchical nature of the options configuration requires that
     // we go over all options and decapsulate them before removing
     // any of them. Let's walk over the existing option spaces.
-    for (auto space_name : getOptionSpaceNames()) {
+    for (auto const& space_name : getOptionSpaceNames()) {
         // Get all options for the option space.
-        auto options = getAll(space_name);
-        for (auto option_it = options->begin(); option_it != options->end();
-             ++option_it) {
-            if (!option_it->option_) {
+        auto const& options = getAll(space_name);
+        for (auto const& option_it : *options) {
+            if (!option_it.option_) {
                 continue;
             }
 
             // For each option within the option space we need to dereference
             // any existing sub options.
-            auto sub_options = option_it->option_->getOptions();
-            for (auto sub = sub_options.begin(); sub != sub_options.end();
-                 ++sub) {
+            auto sub_options = option_it.option_->getOptions();
+            for (auto const& sub : sub_options) {
                 // Dereference sub option.
-                option_it->option_->delOption(sub->second->getType());
+                option_it.option_->delOption(sub.second->getType());
             }
         }
     }
@@ -451,16 +476,27 @@ CfgOption::toElementWithMetadata(const bool include_metadata) const {
             // Set the data item
             if (!opt.formatted_value_.empty()) {
                 map->set("csv-format", Element::create(true));
-                map->set("data", Element::create(opt.formatted_value_));
+                if (def && def->getType() == OPT_EMPTY_TYPE) {
+                    map->set("data", Element::create(""));
+                } else {
+                    map->set("data", Element::create(opt.formatted_value_));
+                }
             } else {
-                map->set("csv-format", Element::create(false));
                 std::vector<uint8_t> bin = opt.option_->toBinary();
-                std::string repr = util::encode::encodeHex(bin);
-                map->set("data", Element::create(repr));
+                if (!opt.cancelled_ || !bin.empty()) {
+                    map->set("csv-format", Element::create(false));
+                    if (def && def->getType() == OPT_EMPTY_TYPE) {
+                        map->set("data", Element::create(""));
+                    } else {
+                        std::string repr = util::encode::encodeHex(bin);
+                        map->set("data", Element::create(repr));
+                    }
+                }
             }
             // Set the persistency flag
             map->set("always-send", Element::create(opt.persistent_));
-
+            // Set the cancelled flag.
+            map->set("never-send", Element::create(opt.cancelled_));
             // Include metadata if requested.
             if (include_metadata) {
                 map->set("metadata", opt.getMetadata());
@@ -500,15 +536,27 @@ CfgOption::toElementWithMetadata(const bool include_metadata) const {
             // Set the data item
             if (!opt.formatted_value_.empty()) {
                 map->set("csv-format", Element::create(true));
-                map->set("data", Element::create(opt.formatted_value_));
+                if (def && def->getType() == OPT_EMPTY_TYPE) {
+                    map->set("data", Element::create(""));
+                } else {
+                    map->set("data", Element::create(opt.formatted_value_));
+                }
             } else {
-                map->set("csv-format", Element::create(false));
                 std::vector<uint8_t> bin = opt.option_->toBinary();
-                std::string repr = util::encode::encodeHex(bin);
-                map->set("data", Element::create(repr));
+                if (!opt.cancelled_ || !bin.empty()) {
+                    map->set("csv-format", Element::create(false));
+                    if (def && def->getType() == OPT_EMPTY_TYPE) {
+                        map->set("data", Element::create(""));
+                    } else {
+                        std::string repr = util::encode::encodeHex(bin);
+                        map->set("data", Element::create(repr));
+                    }
+                }
             }
             // Set the persistency flag
             map->set("always-send", Element::create(opt.persistent_));
+            // Set the cancellation flag
+            map->set("never-send", Element::create(opt.cancelled_));
             // Push on the list
             result->add(map);
         }

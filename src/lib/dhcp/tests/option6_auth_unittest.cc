@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -74,7 +74,7 @@ TEST_F(Option6AuthTest, parseFields) {
     buff_[8] = 0xa9; //rdm value
     buff_[9] = 0xaa; //rdm value
     buff_[10] = 0xab; //rdm value
-    for ( uint8_t i = 11; i < 27; i++ ) {
+    for (uint8_t i = 11; i < 27; i++) {
         buff_[i] = 0xa8; //auth info 16 bytes
     }
 

@@ -11,7 +11,7 @@ CLEANFILES = *.gcno *.gcda
 
 lib_LTLIBRARIES = libkea-asiolink.la
 
-libkea_asiolink_la_LDFLAGS = -no-undefined -version-info 38:0:0
+libkea_asiolink_la_LDFLAGS = -no-undefined -version-info 81:0:0
 libkea_asiolink_la_LDFLAGS += $(CRYPTO_LDFLAGS)
 
 libkea_asiolink_la_SOURCES  = asiolink.h
@@ -29,7 +29,9 @@ libkea_asiolink_la_SOURCES += io_asio_socket.h
 libkea_asiolink_la_SOURCES += io_endpoint.cc io_endpoint.h
 libkea_asiolink_la_SOURCES += io_error.h
 libkea_asiolink_la_SOURCES += io_service.h io_service.cc
+libkea_asiolink_la_SOURCES += io_service_mgr.h io_service_mgr.cc
 libkea_asiolink_la_SOURCES += io_service_signal.cc io_service_signal.h
+libkea_asiolink_la_SOURCES += io_service_thread_pool.cc io_service_thread_pool.h
 libkea_asiolink_la_SOURCES += io_socket.h io_socket.cc
 libkea_asiolink_la_SOURCES += openssl_tls.h
 libkea_asiolink_la_SOURCES += process_spawn.h process_spawn.cc
@@ -55,11 +57,10 @@ if HAVE_OPENSSL
 libkea_asiolink_la_SOURCES += openssl_tls.cc
 endif
 
-# Note: the ordering matters: -Wno-... must follow -Wextra (defined in
-# KEA_CXXFLAGS)
+# Note: the ordering matters: -Wno-... must follow -Wextra (defined in KEA_CXXFLAGS)
 libkea_asiolink_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_asiolink_la_CPPFLAGS = $(AM_CPPFLAGS)
-libkea_asiolink_la_LIBADD = $(top_builddir)/src/lib/util/libkea-util.la
+libkea_asiolink_la_LIBADD  = $(top_builddir)/src/lib/util/libkea-util.la
 libkea_asiolink_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_asiolink_la_LIBADD += $(BOOST_LIBS) $(CRYPTO_LIBS)
 
@@ -82,7 +83,9 @@ libkea_asiolink_include_HEADERS = \
 	io_endpoint.h \
 	io_error.h \
 	io_service.h \
+	io_service_mgr.h \
 	io_service_signal.h \
+	io_service_thread_pool.h \
 	io_socket.h \
 	openssl_tls.h \
 	process_spawn.h \

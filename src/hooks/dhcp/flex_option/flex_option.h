@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,7 +17,7 @@
 #include <dhcp/std_option_defs.h>
 #include <eval/evaluate.h>
 #include <eval/token.h>
-#include <util/strutil.h>
+#include <util/str.h>
 
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
@@ -286,7 +286,7 @@ public:
     template <typename PktType>
     void process(isc::dhcp::Option::Universe universe,
                  PktType query, PktType response) {
-        for (auto pair : getOptionConfigMap()) {
+        for (auto const& pair : getOptionConfigMap()) {
             for (const OptionConfigPtr& opt_cfg : pair.second) {
                 const isc::dhcp::ClientClass& client_class =
                     opt_cfg->getClass();
@@ -374,8 +374,8 @@ public:
                 }
             }
         }
-        for (auto pair : getSubOptionConfigMap()) {
-            for (auto sub_pair : pair.second) {
+        for (auto const& pair : getSubOptionConfigMap()) {
+            for (auto const& sub_pair : pair.second) {
                 const SubOptionConfigPtr& sub_cfg = sub_pair.second;
                 uint16_t sub_code = sub_cfg->getCode();
                 uint16_t opt_code = sub_cfg->getContainerCode();

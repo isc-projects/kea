@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,9 +9,13 @@
 
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
+#include <util/bigints.h>
+
 #include <boost/shared_ptr.hpp>
+
 #include <chrono>
 #include <list>
+
 #include <stdint.h>
 
 namespace isc {
@@ -55,6 +59,9 @@ inline long toSeconds(const StatsDuration& dur) {
 /// @brief Integer (implemented as signed 64-bit integer)
 typedef std::pair<int64_t, SampleClock::time_point> IntegerSample;
 
+/// @brief BigInteger (implemented as signed 128-bit integer)
+typedef std::pair<isc::util::int128_t, SampleClock::time_point> BigIntegerSample;
+
 /// @brief Float (implemented as double precision)
 typedef std::pair<double, SampleClock::time_point> FloatSample;
 
@@ -93,10 +100,11 @@ public:
     /// int64_t and double. If convincing use cases appear to change them
     /// to something else, we may change the underlying type.
     enum Type {
-        STAT_INTEGER, ///< this statistic is unsigned 64-bit integer value
-        STAT_FLOAT,   ///< this statistic is a floating point value
-        STAT_DURATION,///< this statistic represents time duration
-        STAT_STRING   ///< this statistic represents a string
+        STAT_INTEGER,       ///< this statistic is signed 64-bit integer value
+        STAT_BIG_INTEGER,   ///< this statistic is signed 128-bit integer value
+        STAT_FLOAT,         ///< this statistic is a floating point value
+        STAT_DURATION,      ///< this statistic represents time duration
+        STAT_STRING         ///< this statistic represents a string
     };
 
     /// @brief Constructor for integer observations
@@ -104,6 +112,12 @@ public:
     /// @param name observation name
     /// @param value integer value observed.
     Observation(const std::string& name, const int64_t value);
+
+    /// @brief Constructor for big integer observations
+    ///
+    /// @param name observation name
+    /// @param value integer value observed.
+    Observation(const std::string& name, const isc::util::int128_t& value);
 
     /// @brief Constructor for floating point observations
     ///
@@ -184,6 +198,12 @@ public:
     /// @throw InvalidStatType if statistic is not integer
     void setValue(const int64_t value);
 
+    /// @brief Records big integer observation
+    ///
+    /// @param value integer value observed
+    /// @throw InvalidStatType if statistic is not integer
+    void setValue(const isc::util::int128_t& value);
+
     /// @brief Records absolute floating point observation
     ///
     /// @param value floating point value observed
@@ -207,6 +227,12 @@ public:
     /// @param value integer value observed
     /// @throw InvalidStatType if statistic is not integer
     void addValue(const int64_t value);
+
+    /// @brief Records incremental integer observation
+    ///
+    /// @param value integer value observed
+    /// @throw InvalidStatType if statistic is not integer
+    void addValue(const isc::util::int128_t& value);
 
     /// @brief Records incremental floating point observation
     ///
@@ -258,6 +284,11 @@ public:
     /// @throw InvalidStatType if statistic is not integer
     IntegerSample getInteger() const;
 
+    /// @brief Returns observed integer sample
+    /// @return observed sample (value + timestamp)
+    /// @throw InvalidStatType if statistic is not integer
+    BigIntegerSample getBigInteger() const;
+
     /// @brief Returns observed float sample
     /// @return observed sample (value + timestamp)
     /// @throw InvalidStatType if statistic is not fp
@@ -277,6 +308,11 @@ public:
     /// @return list of observed samples (value + timestamp)
     /// @throw InvalidStatType if statistic is not integer
     std::list<IntegerSample> getIntegers() const;
+
+    /// @brief Returns observed big-integer samples
+    /// @return list of observed samples (value + timestamp)
+    /// @throw InvalidStatType if statistic is not integer
+    std::list<BigIntegerSample> getBigIntegers() const;
 
     /// @brief Returns observed float samples
     /// @return list of observed samples (value + timestamp)
@@ -424,6 +460,9 @@ private:
 
     /// @brief Storage for integer samples
     std::list<IntegerSample> integer_samples_;
+
+    /// @brief Storage for big integer samples
+    std::list<BigIntegerSample> big_integer_samples_;
 
     /// @brief Storage for floating point samples
     std::list<FloatSample> float_samples_;

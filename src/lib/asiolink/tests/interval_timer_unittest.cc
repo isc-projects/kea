@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,12 +11,6 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <gtest/gtest.h>
 
-namespace {
-// TODO: Consider this margin
-const boost::posix_time::time_duration TIMER_MARGIN_MSEC =
-    boost::posix_time::milliseconds(50);
-}
-
 using namespace isc::asiolink;
 
 // This fixture is for testing IntervalTimer. Some callback functors are
@@ -25,43 +19,40 @@ using namespace isc::asiolink;
 class IntervalTimerTest : public ::testing::Test {
 protected:
     IntervalTimerTest() :
-        io_service_(), timer_called_(false), timer_cancel_success_(false)
-    {}
-    ~IntervalTimerTest() {}
-    class TimerCallBack : public std::unary_function<void, void> {
+        io_service_(new IOService()), timer_called_(false),
+        timer_cancel_success_(false) {
+    }
+    ~IntervalTimerTest() {
+        io_service_->stopAndPoll();
+    }
+    class TimerCallBack {
     public:
         TimerCallBack(IntervalTimerTest* test_obj) : test_obj_(test_obj) {}
         void operator()() const {
             test_obj_->timer_called_ = true;
-            test_obj_->io_service_.stop();
-            return;
+            test_obj_->io_service_->stop();
         }
     private:
         IntervalTimerTest* test_obj_;
     };
-    class TimerCallBackCounter : public std::unary_function<void, void> {
+    class TimerCallBackCounter {
     public:
-        TimerCallBackCounter(IntervalTimerTest* test_obj) :
-            test_obj_(test_obj)
-        {
+        TimerCallBackCounter(IntervalTimerTest* /* test_obj */) {
             counter_ = 0;
         }
         void operator()() {
             ++counter_;
-            return;
         }
         int counter_;
-    private:
-        IntervalTimerTest* test_obj_;
     };
-    class TimerCallBackCancelDeleter : public std::unary_function<void, void> {
+    class TimerCallBackCancelDeleter {
     public:
         TimerCallBackCancelDeleter(IntervalTimerTest* test_obj,
                                    IntervalTimer* timer,
                                    TimerCallBackCounter& counter)
             : test_obj_(test_obj), timer_(timer), counter_(counter), count_(0),
-              prev_counter_(-1)
-        {}
+              prev_counter_(-1) {
+        }
         void operator()() {
             ++count_;
             if (count_ == 1) {
@@ -72,7 +63,7 @@ protected:
             } else if (count_ == 2) {
                 // Second time of call back.
                 // Stop io_service to stop all timers.
-                test_obj_->io_service_.stop();
+                test_obj_->io_service_->stop();
                 // Compare the value of counter_.counter_ with stored one.
                 // If TimerCallBackCounter was not called (expected behavior),
                 // they are same.
@@ -80,7 +71,6 @@ protected:
                     test_obj_->timer_cancel_success_ = true;
                 }
             }
-            return;
         }
     private:
         IntervalTimerTest* test_obj_;
@@ -92,8 +82,8 @@ protected:
     class TimerCallBackCanceller {
     public:
         TimerCallBackCanceller(unsigned int& counter, IntervalTimer& itimer) :
-            counter_(counter), itimer_(itimer)
-        {}
+            counter_(counter), itimer_(itimer) {
+        }
         void operator()() {
             ++counter_;
             itimer_.cancel();
@@ -102,12 +92,12 @@ protected:
         unsigned int& counter_;
         IntervalTimer& itimer_;
     };
-    class TimerCallBackOverwriter : public std::unary_function<void, void> {
+    class TimerCallBackOverwriter {
     public:
         TimerCallBackOverwriter(IntervalTimerTest* test_obj,
                                 IntervalTimer& timer)
-            : test_obj_(test_obj), timer_(timer), count_(0)
-        {}
+            : test_obj_(test_obj), timer_(timer), count_(0) {
+        }
         void operator()() {
             ++count_;
             if (count_ == 1) {
@@ -119,31 +109,28 @@ protected:
                 // Second time of call back.
                 // If it reaches here, re-setup() is failed (unexpected).
                 // We should stop here.
-                test_obj_->io_service_.stop();
+                test_obj_->io_service_->stop();
             }
-            return;
         }
     private:
         IntervalTimerTest* test_obj_;
         IntervalTimer& timer_;
         int count_;
     };
-    class TimerCallBackAccumulator: public std::unary_function<void, void> {
+    class TimerCallBackAccumulator {
     public:
-        TimerCallBackAccumulator(IntervalTimerTest* test_obj, int &counter) :
-            test_obj_(test_obj), counter_(counter) {
+        TimerCallBackAccumulator(IntervalTimerTest* /* test_obj */, int &counter) :
+            counter_(counter) {
         }
         void operator()() {
             ++counter_;
-            return;
         }
     private:
-        IntervalTimerTest* test_obj_;
         // Reference to integer accumulator
         int& counter_;
     };
 protected:
-    IOService io_service_;
+    IOServicePtr io_service_;
     bool timer_called_;
     bool timer_cancel_success_;
 };
@@ -169,7 +156,7 @@ TEST_F(IntervalTimerTest, startIntervalTimer) {
     // setup timer
     itimer.setup(TimerCallBack(this), 100);
     EXPECT_EQ(100, itimer.getInterval());
-    io_service_.run();
+    io_service_->run();
     // Control reaches here after io_service_ was stopped by TimerCallBack.
 
     // delta: difference between elapsed time and 100 milliseconds.
@@ -226,7 +213,7 @@ TEST_F(IntervalTimerTest, destructIntervalTimer) {
     itimer_canceller.setup(
         TimerCallBackCancelDeleter(this, itimer_counter, callback_canceller),
         300);
-    io_service_.run();
+    io_service_->run();
     EXPECT_TRUE(timer_cancel_success_);
 }
 
@@ -238,7 +225,7 @@ TEST_F(IntervalTimerTest, cancel) {
     unsigned int counter = 0;
     itimer_counter.setup(TimerCallBackCanceller(counter, itimer_counter), 100);
     itimer_watcher.setup(TimerCallBack(this), 200);
-    io_service_.run();
+    io_service_->run();
     EXPECT_EQ(1, counter);
     EXPECT_EQ(0, itimer_counter.getInterval());
 
@@ -255,7 +242,7 @@ TEST_F(IntervalTimerTest, overwriteIntervalTimer) {
     //     - increments internal counter in callback function
     //       (TimerCallBackCounter)
     //       interval: 300 milliseconds
-    //     - io_service_.stop() (TimerCallBack)
+    //     - io_service_->stop() (TimerCallBack)
     //       interval: 100 milliseconds
     //  itimer_overwriter (B)
     //   (Calls TimerCallBackOverwriter)
@@ -281,7 +268,7 @@ TEST_F(IntervalTimerTest, overwriteIntervalTimer) {
     start = boost::posix_time::microsec_clock::universal_time();
     itimer.setup(TimerCallBackCounter(this), 300);
     itimer_overwriter.setup(TimerCallBackOverwriter(this, itimer), 400);
-    io_service_.run();
+    io_service_->run();
     // Control reaches here after io_service_ was stopped by
     // TimerCallBackCounter or TimerCallBackOverwriter.
 
@@ -314,8 +301,7 @@ TEST_F(IntervalTimerTest, intervalModeTest) {
     // we've hit our goals.  It won't return zero unless is out of
     // work or the service has been stopped by the test timer.
     int cnt = 0;
-    while (((cnt = io_service_.get_io_service().run_one()) > 0)
-           && (repeater_count < 5)) {
+    while (((cnt = io_service_->runOne()) > 0) && (repeater_count < 5)) {
         // deliberately empty
     };
 
@@ -342,7 +328,7 @@ TEST_F(IntervalTimerTest, timerReuseTest) {
 
     // Run until a single event handler executes.  This should be our
     // one-shot expiring.
-    io_service_.run_one();
+    io_service_->runOne();
 
     // Verify the timer expired once.
     ASSERT_EQ(one_shot_count, 1);
@@ -352,7 +338,7 @@ TEST_F(IntervalTimerTest, timerReuseTest) {
 
     // Run until a single event handler executes.  This should be our
     // one-shot expiring.
-    io_service_.run_one();
+    io_service_->runOne();
 
     // Verify the timer expired once.
     ASSERT_EQ(one_shot_count, 2);
@@ -364,8 +350,7 @@ TEST_F(IntervalTimerTest, timerReuseTest) {
     // we've hit our goals.  It won't return zero unless is out of
     // work or the service has been stopped by the test timer.
     int cnt = 0;
-    while ((cnt = io_service_.get_io_service().run_one())
-            && (one_shot_count < 4)) {
+    while ((cnt = io_service_->runOne()) && (one_shot_count < 4)) {
         // deliberately empty
     };
 

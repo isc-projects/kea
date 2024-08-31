@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -65,8 +65,9 @@ public:
     /// connect() to connect to the server.
     ///
     /// @param io_service IO service to be stopped on error.
-    explicit TLSClient(IOService& io_service)
-        : io_service_(io_service.get_io_service()), socket_(io_service_) {
+    explicit TLSClient(const IOServicePtr& io_service, bool& running)
+        : io_service_(io_service), socket_(io_service_->getInternalIOService()),
+          running_(running) {
     }
 
     /// @brief Destructor.
@@ -95,6 +96,9 @@ public:
     ///
     /// @param ec Error code.
     void connectHandler(const boost::system::error_code& ec) {
+        if (!running_) {
+            return;
+        }
         if (ec) {
             // One would expect that async_connect wouldn't return EINPROGRESS
             // error code, but simply wait for the connection to get
@@ -106,7 +110,7 @@ public:
             if (ec.value() != error::in_progress) {
                 ADD_FAILURE() << "error occurred while connecting: "
                               << ec.message();
-                io_service_.stop();
+                io_service_->stop();
             }
         }
     }
@@ -119,11 +123,13 @@ public:
 private:
 
     /// @brief Holds reference to the IO service.
-    io_service& io_service_;
+    IOServicePtr io_service_;
 
     /// @brief A socket used for the connection.
     ip::tcp::socket socket_;
 
+    /// @brief Flag which indicates if the test is still running.
+    bool& running_;
 };
 
 /// @brief Pointer to the TLSClient.
@@ -150,12 +156,12 @@ public:
     /// @param acceptor Reference to the TLS acceptor on which asyncAccept
     /// will be called.
     /// @param callback Callback function for the asyncAccept.
-    explicit Acceptor(IOService& io_service,
+    explicit Acceptor(const IOServicePtr& io_service,
                       TlsContextPtr context,
                       TestTLSAcceptor& acceptor,
                       const TLSAcceptorCallback& callback)
-        : socket_(io_service, context), acceptor_(acceptor),
-          callback_(callback) {
+        : io_service_(io_service), socket_(io_service_, context),
+          acceptor_(acceptor), callback_(callback) {
     }
 
     /// @brief Destructor.
@@ -177,6 +183,9 @@ public:
 
 private:
 
+    /// @brief IO service used by the tests.
+    IOServicePtr io_service_;
+
     /// @brief Socket into which connection is accepted.
     TLSSocket<SocketCallback> socket_;
 
@@ -185,7 +194,6 @@ private:
 
     /// @brief Instance of the callback used for asyncAccept.
     TLSAcceptorCallback callback_;
-
 };
 
 /// @brief Pointer to the Acceptor object.
@@ -206,18 +214,21 @@ public:
     /// against endlessly running IO service when TLS connections are
     /// unsuccessful.
     TLSAcceptorTest()
-        : io_service_(), acceptor_(io_service_),
+        : io_service_(new IOService()), acceptor_(io_service_),
           asio_endpoint_(ip::address::from_string(SERVER_ADDRESS),
                          SERVER_PORT),
           endpoint_(asio_endpoint_), test_timer_(io_service_), connections_(),
           clients_(), connections_num_(0), aborted_connections_num_(0),
-          max_connections_(1) {
+          max_connections_(1), running_(true) {
         test_timer_.setup(std::bind(&TLSAcceptorTest::timeoutHandler, this),
                                     TEST_TIMEOUT, IntervalTimer::ONE_SHOT);
     }
 
     /// @brief Destructor.
     virtual ~TLSAcceptorTest() {
+        running_ = false;
+        test_timer_.cancel();
+        io_service_->stopAndPoll();
     }
 
     /// @brief Specifies how many new connections are expected before the IO
@@ -270,7 +281,7 @@ public:
     /// This method creates TLSClient instance and retains it in the clients_
     /// list.
     void connect() {
-        TLSClientPtr client(new TLSClient(io_service_));
+        TLSClientPtr client(new TLSClient(io_service_, running_));
         clients_.push_back(client);
         clients_.back()->connect();
     }
@@ -290,12 +301,12 @@ public:
             } else {
                 ++aborted_connections_num_;
             }
-            io_service_.stop();
+            io_service_->stop();
         }
 
         // We have reached the maximum number of connections - end the test.
         if (++connections_num_ >= max_connections_) {
-            io_service_.stop();
+            io_service_->stop();
             return;
         }
 
@@ -307,11 +318,11 @@ public:
     /// It stops the IO service and reports test timeout.
     void timeoutHandler() {
         ADD_FAILURE() << "Timeout occurred while running the test!";
-        io_service_.stop();
+        io_service_->stop();
     }
 
     /// @brief IO service.
-    IOService io_service_;
+    IOServicePtr io_service_;
 
     /// @brief TLSAcceptor under test.
     TestTLSAcceptor acceptor_;
@@ -339,6 +350,9 @@ public:
 
     /// @brief Connections limit.
     unsigned int max_connections_;
+
+    /// @brief Flag which indicates if the test is still running.
+    bool running_;
 };
 
 // Test TLSAcceptor::asyncAccept.
@@ -361,7 +375,7 @@ TEST_F(TLSAcceptorTest, asyncAccept) {
 
     // Run the IO service until we have accepted 10 connections, an error
     // or test timeout occurred.
-    io_service_.run();
+    io_service_->run();
 
     // Make sure that all accepted connections have been recorded.
     EXPECT_EQ(10, connections_num_);
@@ -437,7 +451,7 @@ TEST_F(TLSAcceptorTest, close) {
     acceptor_.close();
 
     // Run the IO service.
-    io_service_.run();
+    io_service_->run();
 
     // The connections should have been aborted.
     EXPECT_EQ(1, connections_num_);

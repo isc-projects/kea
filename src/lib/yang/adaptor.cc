@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,7 +7,6 @@
 #include <config.h>
 
 #include <yang/adaptor.h>
-#include <boost/foreach.hpp>
 
 #include <iostream>
 
@@ -17,15 +16,8 @@ using namespace isc::data;
 namespace isc {
 namespace yang {
 
-Adaptor::Adaptor() {
-}
-
-Adaptor::~Adaptor() {
-}
-
 ConstElementPtr
-Adaptor::getContext(ConstElementPtr parent)
-{
+Adaptor::getContext(ConstElementPtr parent) {
     ConstElementPtr context = parent->get("user-context");
     ConstElementPtr comment = parent->get("comment");
     if (!comment) {
@@ -48,7 +40,7 @@ Adaptor::fromParent(const string& name, ConstElementPtr parent,
     if (!param) {
         return;
     }
-    BOOST_FOREACH(ElementPtr item, list->listValue()) {
+    for (ElementPtr const& item : list->listValue()) {
         // don't override. Skip this entry if it already has the parameter.
         if (item->contains(name)) {
             continue;
@@ -62,7 +54,7 @@ Adaptor::toParent(const string& name, ElementPtr parent,
                   ConstElementPtr list) {
     ConstElementPtr param;
     bool first = true;
-    BOOST_FOREACH(ElementPtr item, list->listValue()) {
+    for (ElementPtr const& item : list->listValue()) {
         if (first) {
             first = false;
             param = item->get(name);
@@ -76,7 +68,7 @@ Adaptor::toParent(const string& name, ElementPtr parent,
         }
     }
     if (!first && param) {
-        BOOST_FOREACH(ElementPtr item, list->listValue()) {
+        for (ElementPtr const& item : list->listValue()) {
             if (param) {
                 item->remove(name);
             }
@@ -175,7 +167,7 @@ void applyDelete(ConstElementPtr key, ElementPtr scope) {
                 return;
             }
             for (int i = 0; i < scope->size(); ++i) {
-                ConstElementPtr item = scope->get(i);
+                ElementPtr item = scope->getNonConst(i);
                 if (!item || (item->getType() != Element::map)) {
                     continue;
                 }
@@ -252,9 +244,11 @@ void applyDown(ConstElementPtr path, ConstElementPtr actions, ElementPtr scope,
         if (name.empty() || !scope->contains(name)) {
             return;
         }
-        ElementPtr down = boost::const_pointer_cast<Element>(scope->get(name));
+        ConstElementPtr down(scope->get(name));
         if (down) {
-            applyDown(path, actions, down, next);
+            ElementPtr mutable_down(copy(down, 0));
+            applyDown(path, actions, mutable_down, next);
+            scope->set(name, mutable_down);
         }
     } else if (scope->getType() == Element::list) {
         if (!step) {
@@ -271,7 +265,7 @@ void applyDown(ConstElementPtr path, ConstElementPtr actions, ElementPtr scope,
             if (name.empty()) {
                 return;
             }
-            for (ElementPtr down : downs) {
+            for (ElementPtr& down : downs) {
                 if (!down || (down->getType() != Element::map)) {
                     continue;
                 }
@@ -286,7 +280,7 @@ void applyDown(ConstElementPtr path, ConstElementPtr actions, ElementPtr scope,
         }
         int index = step->intValue();
         if (index == -1) {
-            for (ElementPtr down : downs) {
+            for (ElementPtr& down : downs) {
                 applyDown(path, actions, down, next);
             }
         } else if ((index >= 0) && (index < scope->size())) {
@@ -295,7 +289,7 @@ void applyDown(ConstElementPtr path, ConstElementPtr actions, ElementPtr scope,
     }
 }
 
-} // end of anonymous namespace
+}  //anonymous namespace
 
 /// Apply recursively starting at the beginning of the path.
 void
@@ -304,5 +298,5 @@ Adaptor::modify(ConstElementPtr path, ConstElementPtr actions,
     applyDown(path, actions, config, 0);
 }
 
-}; // end of namespace isc::yang
-}; // end of namespace isc
+}  // namespace yang
+}  // namespace isc

@@ -1,10 +1,16 @@
-// Copyright (C) 2009-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
+#include <exceptions/isc_assert.h>
+#include <dns/name.h>
+#include <dns/name_internal.h>
+#include <dns/messagerenderer.h>
+#include <dns/labelsequence.h>
 
 #include <cctype>
 #include <iterator>
@@ -13,18 +19,10 @@
 #include <iostream>
 #include <algorithm>
 
-#include <exceptions/isc_assert.h>
-#include <util/buffer.h>
-#include <dns/exceptions.h>
-#include <dns/name.h>
-#include <dns/name_internal.h>
-#include <dns/messagerenderer.h>
-#include <dns/labelsequence.h>
+using namespace isc::util;
+using namespace isc::dns::name::internal;
 
 using namespace std;
-using namespace isc::util;
-using isc::dns::NameComparisonResult;
-using namespace isc::dns::name::internal;
 
 namespace isc {
 namespace dns {
@@ -311,10 +309,9 @@ Name::Name(const std::string &namestring, bool downcase) {
 }
 
 Name::Name(const char* namedata, size_t data_len, const Name* origin,
-           bool downcase)
-{
+           bool downcase) {
     // Check validity of data
-    if (namedata == NULL || data_len == 0) {
+    if (!namedata || data_len == 0) {
         isc_throw(isc::InvalidParameter,
                   "No data provided to Name constructor");
     }
@@ -322,7 +319,7 @@ Name::Name(const char* namedata, size_t data_len, const Name* origin,
     // It is safe to check now, we know there's at least one character.
     const bool absolute = (namedata[data_len - 1] == '.');
     // If we are not absolute, we need the origin to complete the name.
-    if (!absolute && origin == NULL) {
+    if (!absolute && !origin) {
         isc_throw(MissingNameOrigin,
                   "No origin available and name is relative");
     }
@@ -359,8 +356,7 @@ Name::Name(const char* namedata, size_t data_len, const Name* origin,
         size_t offset_count = offsets_.size();
         offsets_.insert(offsets_.end(), origin->offsets_.begin(),
                         origin->offsets_.end());
-        for (NameOffsets::iterator it(offsets_.begin() + offset_count);
-             it != offsets_.end(); ++it) {
+        for (auto it(offsets_.begin() + offset_count); it != offsets_.end(); ++it) {
             *it += offset;
         }
 

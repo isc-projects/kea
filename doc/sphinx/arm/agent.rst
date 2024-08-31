@@ -37,6 +37,12 @@ The CA processes received commands according to the following algorithm:
 -  If the service is not specified or is an empty list, handle the
    command if the CA supports it.
 
+.. note::
+
+   The CA will be deprecated by a future Kea release: its function has
+   been moved to Kea servers since release 2.7.2, see the section about
+   migration from CA (:ref:`ctrl-channel-migration`).
+
 .. _agent-configuration:
 
 Configuration
@@ -44,7 +50,7 @@ Configuration
 
 The following example demonstrates the basic CA configuration.
 
-::
+.. code-block:: json
 
    {
        "Control-agent": {
@@ -78,12 +84,12 @@ The following example demonstrates the basic CA configuration.
                "d2": {
                    "socket-type": "unix",
                    "socket-name": "/path/to/the/unix/socket-d2"
-               },
+               }
            },
 
            "hooks-libraries": [
            {
-               "library": "/opt/local/control-agent-commands.so",
+               "library": "/opt/local/custom_hooks_example.so",
                "parameters": {
                    "param1": "foo"
                }
@@ -102,11 +108,11 @@ provided above, the RESTful service will be available at the URL
 ``https://10.20.30.40:8000/``. If these parameters are not specified, the
 default URL is ``http://127.0.0.1:8000/``.
 
-When using Kea's HA hook library with multi-threading, make sure
-that the address:port combination used for CA is
+When using Kea's HA hook library with multi-threading,
+the address:port combination used for CA must be
 different from the HA peer URLs, which are strictly
 for internal HA traffic between the peers. User commands should
-still be sent via CA.
+still be sent via the CA.
 
 The ``trust-anchor``, ``cert-file``, ``key-file``, and ``cert-required``
 parameters specify the TLS setup for HTTP, i.e. HTTPS. If these parameters
@@ -115,7 +121,7 @@ described in :ref:`tls`.
 
 As mentioned in :ref:`agent-overview`, the CA can forward
 received commands to the Kea servers for processing. For example,
-``config-get`` is sent to retrieve the configuration of one of the Kea
+:isccmd:`config-get` is sent to retrieve the configuration of one of the Kea
 services. When the CA receives this command, including a ``service``
 parameter indicating that the client wishes to retrieve the
 configuration of the DHCPv4 server, the CA forwards the command to that
@@ -131,8 +137,8 @@ configuration above, the CA connects to the DHCPv4 server via
 Obviously, the DHCPv4 server must be configured to listen to connections
 via this same socket. In other words, the command-socket configuration
 for the DHCPv4 server and the CA (for that server) must match. Consult
-:ref:`dhcp4-ctrl-channel`, :ref:`dhcp6-ctrl-channel`, and
-:ref:`d2-ctrl-channel` to learn how the socket configuration is
+:ref:`dhcp4-unix-ctrl-channel`, :ref:`dhcp6-unix-ctrl-channel`, and
+:ref:`d2-unix-ctrl-channel` to learn how the UNIX socket configuration is
 specified for the DHCPv4, DHCPv6, and D2 services.
 
 User contexts can store arbitrary data as long as they are in valid JSON
@@ -147,7 +153,7 @@ ability to store comments or descriptions; the parser translates a
 "comment" entry into a user context with the entry, which allows a
 comment to be attached within the configuration itself.
 
-Basic HTTP authentication was added in Kea 1.9.0; it protects
+Basic HTTP authentication protects
 against unauthorized uses of the control agent by local users. For
 protection against remote attackers, HTTPS and reverse proxy of
 :ref:`agent-secure-connection` provide stronger security.
@@ -163,7 +169,7 @@ authorized.
 When the ``clients`` authentication list is configured and not empty,
 basic HTTP authentication is required. Each element of the list
 specifies a user ID and a password. The user ID is mandatory, must
-be not empty, and must not contain the colon (:) character. The
+not be empty, and must not contain the colon (:) character. The
 password is optional; when it is not specified an empty password
 is used.
 
@@ -173,154 +179,45 @@ is used.
    in UTF-8, but the current Kea JSON syntax only supports the Latin-1
    (i.e. 0x00..0xff) Unicode subset.
 
-To avoid to expose the password or both the user ID and the associated
-password these values can be read from files. The syntax was extended by:
+To avoid exposing the user ID and/or the associated
+password, these values can be read from files. The syntax is extended by:
 
--  The ``directory`` authentication parameter which handles the common
-   part of file paths. By default the value is the empty string.
+-  The ``directory`` authentication parameter, which handles the common
+   part of file paths. The default value is the empty string.
 
--  The``password-file`` client parameter which with the ``directory``
-   parameter specifies the path of a file where the password or when no
-   user ID is given the whole basic HTTP authentication secret before
-   encoding can be read.
+-  The ``password-file`` client parameter, which, alongside the ``directory``
+   parameter, specifies the path of a file that can contain the password,
+   or when no user ID is given, the whole basic HTTP authentication secret.
 
--  The ``user-file`` client parameter which with the ``directory`` parameter
+-  The ``user-file`` client parameter, which, with the ``directory`` parameter,
    specifies the path of a file where the user ID can be read.
 
-When files are used they are read when the configuration is loaded in order
+When files are used, they are read when the configuration is loaded,
 to detect configuration errors as soon as possible.
 
-Hook libraries can be loaded by the Control Agent in the same way as
-they are loaded by the DHCPv4 and DHCPv6 servers. The CA currently
+Hook libraries can be loaded by :iscman:`kea-ctrl-agent` in the same way as
+they are loaded by :iscman:`kea-dhcp4` and :iscman:`kea-dhcp6`. The CA currently
 supports one hook point - ``control_command_receive`` - which makes it
-possible to delegate processing of some commands to the hook library.
+possible to delegate the processing of some commands to the hook library.
 The ``hooks-libraries`` list contains the list of hook libraries that
-should be loaded by the CA, along with their configuration information
+should be loaded by :iscman:`kea-ctrl-agent`, along with their configuration information
 specified with ``parameters``.
 
 Please consult :ref:`logging` for the details on how to configure
-logging. The CA's root logger's name is ``kea-ctrl-agent``, as given in
+logging. The CA's root logger's name is :iscman:`kea-ctrl-agent`, as given in
 the example above.
 
 .. _agent-secure-connection:
 
-Secure Connections (in Versions Prior to Kea 1.9.6)
-===================================================
+Secure Connections
+==================
 
-The Control Agent does not natively support secure HTTP connections, like
-SSL or TLS, before Kea 1.9.6.
-
-To set up a secure connection, please use one of the
-available third-party HTTP servers and configure it to run as a reverse
-proxy to the Control Agent. Kea has been tested with two major HTTP
-server implementations working as a reverse proxy: Apache2 and nginx.
-Example configurations, including extensive comments, are provided in
-the ``doc/examples/https/`` directory.
-
-The reverse proxy forwards HTTP requests received over a secure
-connection to the Control Agent using unsecured HTTP. Typically, the
-reverse proxy and the Control Agent are running on the same machine, but
-it is possible to configure them to run on separate machines as well. In
-this case, security depends on the protection of the communications
-between the reverse proxy and the Control Agent.
-
-Apart from providing the encryption layer for the control channel, a
-reverse proxy server is also often used for authentication of the
-controlling clients. In this case, the client must present a valid
-certificate when it connects via reverse proxy. The proxy server
-authenticates the client by checking whether the presented certificate
-is signed by the certificate authority used by the server.
-
-To illustrate this, the following is a sample configuration for the
-nginx server running as a reverse proxy to the Kea Control Agent. The
-server enables authentication of the clients using certificates.
-
-::
-
-   #   The server certificate and key can be generated as follows:
-   #
-   #   openssl genrsa -des3 -out kea-proxy.key 4096
-   #   openssl req -new -x509 -days 365 -key kea-proxy.key -out kea-proxy.crt
-   #
-   #   The CA certificate and key can be generated as follows:
-   #
-   #   openssl genrsa -des3 -out ca.key 4096
-   #   openssl req -new -x509 -days 365 -key ca.key -out ca.crt
-   #
-   #
-   #   The client certificate needs to be generated and signed:
-   #
-   #   openssl genrsa -des3 -out kea-client.key 4096
-   #   openssl req -new -key kea-client.key -out kea-client.csr
-   #   openssl x509 -req -days 365 -in kea-client.csr -CA ca.crt \
-   #           -CAkey ca.key -set_serial 01 -out kea-client.crt
-   #
-   #   Note that the "common name" value used when generating the client
-   #   and the server certificates must differ from the value used
-   #   for the CA certificate.
-   #
-   #   The client certificate must be deployed on the client system.
-   #   In order to test the proxy configuration with "curl", run a
-   #   command similar to the following:
-   #
-   #   curl -k --key kea-client.key --cert kea-client.crt -X POST \
-   #        -H Content-Type:application/json -d '{ "command": "list-commands" }' \
-   #         https://kea.example.org/kea
-   #
-   #   curl syntax for basic authentication is -u user:password
-   #
-   #
-   #   nginx configuration starts here.
-
-   events {
-   }
-
-   http {
-           #   HTTPS server
-       server {
-           #     Use default HTTPS port.
-           listen 443 ssl;
-           #     Set server name.
-           server_name kea.example.org;
-
-           #   Server certificate and key.
-           ssl_certificate /path/to/kea-proxy.crt;
-           ssl_certificate_key /path/to/kea-proxy.key;
-
-           #   Certificate Authority. Client certificates must be signed by the CA.
-           ssl_client_certificate /path/to/ca.crt;
-
-           # Enable verification of the client certificate.
-           ssl_verify_client on;
-
-           # For URLs such as https://kea.example.org/kea, forward the
-           # requests to http://127.0.0.1:8000.
-           location /kea {
-               proxy_pass http://127.0.0.1:8000;
-           }
-       }
-   }
-
-.. note::
-
-   The configuration snippet provided above is for testing
-   purposes only. It should be modified according to the security
-   policies and best practices of the administrator's organization.
-
-When using an HTTP client without TLS support, such as ``kea-shell``, it
-is possible to use an HTTP/HTTPS translator such as ``stunnel`` in client mode. A
-sample configuration is provided in the ``doc/examples/https/shell/``
-directory.
-
-Secure Connections (in Kea 1.9.6 and Newer)
-===========================================
-
-Since Kea 1.9.6, the Control Agent natively supports secure
+The Kea Control Agent natively supports secure
 HTTP connections using TLS. This allows protection against users from
 the node where the agent runs, something that a reverse proxy cannot
 provide. More about TLS/HTTPS support in Kea can be found in :ref:`tls`.
 
-TLS is configured using three string parameters, giving file names and
+TLS is configured using three string parameters with file names, and
 a boolean parameter:
 
 -  The ``trust-anchor`` specifies the Certification Authority file name or
@@ -353,12 +250,57 @@ Configuring only one or two string parameters results in an error.
    mutually authenticated, but there is no proof they are the same as
    for the HTTP authentication.
 
-Since Kea 1.9.6, the ``kea-shell`` tool supports TLS.
+The :iscman:`kea-shell` tool also supports TLS.
 
 .. _agent-launch:
 
-Starting the Control Agent
-==========================
+Starting and Stopping the Control Agent
+=======================================
+
+:iscman:`kea-ctrl-agent` accepts the following command-line switches:
+
+-  ``-c file`` - specifies the configuration file.
+
+-  ``-d`` - specifies whether the agent logging should be switched to
+   debug/verbose mode. In verbose mode, the logging severity and
+   debuglevel specified in the configuration file are ignored and
+   "debug" severity and the maximum debuglevel (99) are assumed. The
+   flag is convenient for temporarily switching the server into maximum
+   verbosity, e.g. when debugging.
+
+-  ``-t file`` - specifies the configuration file to be tested.
+   :iscman:`kea-netconf` attempts to load it and conducts sanity checks;
+   certain checks are possible only while running the actual server. The
+   actual status is reported with exit code (0 = configuration appears valid,
+   1 = error encountered). Kea prints out log messages to standard
+   output and error to standard error when testing the configuration.
+
+-  ``-v`` - displays the version of :iscman:`kea-ctrl-agent` and exits.
+
+-  ``-V`` - displays the extended version information for :iscman:`kea-ctrl-agent`
+   and exits. The listing includes the versions of the libraries
+   dynamically linked to Kea.
+
+-  ``-W`` - displays the Kea configuration report and exits. The report
+   is a copy of the ``config.report`` file produced by ``./configure``;
+   it is embedded in the executable binary.
+
+   The contents of the ``config.report`` file may also be accessed by examining
+   certain libraries in the installation tree or in the source tree.
+
+   .. code-block:: shell
+
+    # from installation using libkea-process.so
+    $ strings ${prefix}/lib/libkea-process.so | sed -n 's/;;;; //p'
+
+    # from sources using libkea-process.so
+    $ strings src/lib/process/.libs/libkea-process.so | sed -n 's/;;;; //p'
+
+    # from sources using libkea-process.a
+    $ strings src/lib/process/.libs/libkea-process.a | sed -n 's/;;;; //p'
+
+    # from sources using libcfgrpt.a
+    $ strings src/lib/process/cfgrpt/.libs/libcfgrpt.a | sed -n 's/;;;; //p'
 
 The CA is started by running its binary and specifying the configuration
 file it should use. For example:
@@ -367,7 +309,7 @@ file it should use. For example:
 
    $ ./kea-ctrl-agent -c /usr/local/etc/kea/kea-ctrl-agent.conf
 
-It can be started by ``keactrl`` as well (see :ref:`keactrl`).
+It can be started by :iscman:`keactrl` as well (see :ref:`keactrl`).
 
 .. _agent-clients:
 

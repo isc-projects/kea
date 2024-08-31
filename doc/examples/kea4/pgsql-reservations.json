@@ -5,16 +5,16 @@
 { "Dhcp4":
 
 {
-// Kea is told to listen on ethX interface only.
+// Kea is told to listen on eth0 interface only.
   "interfaces-config": {
-    "interfaces": [ "ethX" ]
+    "interfaces": [ "eth0" ]
   },
 
 
 // We need to specify the database used to store leases. As of
 // June 2022, three database backends are supported: MySQL,
 // PostgreSQL and the in-memory database, Memfile.
-// We'll use memfile  because it doesn't require any prior set up.
+// We'll use memfile because it doesn't require any prior set up.
   "lease-database": {
     "type": "memfile"
   },
@@ -61,9 +61,9 @@
        "type": "postgresql",
        "reconnect-wait-time": 3000, // expressed in ms
        "max-reconnect-tries": 3,
-       "name": "kea",
-       "user": "kea",
-       "password": "kea",
+       "name": "keatest",
+       "user": "keatest",
+       "password": "keatest",
        "host": "localhost"
     }
   ],
@@ -77,7 +77,7 @@
     {
        "pools": [ { "pool":  "192.0.2.10 - 192.0.2.200" } ],
        "subnet": "192.0.2.0/24",
-       "interface": "ethX",
+       "interface": "eth0",
        "id": 1
     }
   ],
@@ -88,7 +88,7 @@
     "loggers": [
         {
             "name": "kea-dhcp4",
-            "output_options": [
+            "output-options": [
                 {
                     "output": "stdout"
                 }

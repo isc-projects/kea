@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,8 +10,7 @@
 #include <dhcp/option4_client_fqdn.h>
 #include <dns/labelsequence.h>
 #include <util/buffer.h>
-#include <util/io_utilities.h>
-#include <util/strutil.h>
+#include <util/str.h>
 #include <sstream>
 
 namespace isc {
@@ -273,9 +272,14 @@ Option4ClientFqdnImpl::parseWireData(OptionBufferConstIter first,
 
         }
     } catch (const Exception& ex) {
-        isc_throw(InvalidOption4FqdnDomainName,
-                  "failed to parse the domain-name in DHCPv4 Client FQDN"
-                  << " Option: " << ex.what());
+        std::ostringstream errmsg;
+        errmsg << "failed to parse the domain-name in DHCPv4 Client FQDN "
+               << " Option: " << ex.what();
+        if (Option::lenient_parsing_) {
+            isc_throw(SkipThisOptionError, errmsg.str());
+        } else {
+            isc_throw(InvalidOption4FqdnDomainName, errmsg.str());
+        }
     }
 }
 

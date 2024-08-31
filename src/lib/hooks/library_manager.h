@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -103,10 +103,13 @@ public:
     /// returns the right number, and the multi-threading compatibility.
     ///
     /// @param name Name of the library to validate
+    /// @param multi_threading_enabled The flag which indicates if MT is enabled
+    ///        (used to check hook libraries compatibility with MT).
     ///
     /// @return true if the library validated, false if not.  If the library
     /// fails to validate, the reason for the failure is logged.
-    static bool validateLibrary(const std::string& name);
+    static bool validateLibrary(const std::string& name,
+                                bool multi_threading_enabled = false);
 
     /// @brief Loads a library
     ///
@@ -119,9 +122,12 @@ public:
     /// update the global logging dictionary with the log messages
     /// registered by the loaded library.
     ///
+    /// @param multi_threading_enabled The flag which indicates if MT is enabled
+    ///        (used to check hook libraries compatibility with MT).
+    ///
     /// @return true if the library loaded successfully, false otherwise.
     /// In the latter case, the library will be unloaded if possible.
-    bool loadLibrary();
+    bool loadLibrary(bool multi_threading_enabled = false);
 
     /// @brief Prepares library unloading
     ///
@@ -192,13 +198,16 @@ protected:
 
     /// @brief Check multi-threading compatibility
     ///
-    /// If the multi-threading mode is false returns true, else with
+    /// If the multi-threading mode is disabled returns true, else with
     /// the library open, accesses the "multi_threading_compatible()"
     /// function and returns false if not exists or has value 0, returns
     /// true otherwise.
     ///
+    /// @param multi_threading_enabled The flag which indicates if MT is enabled
+    ///        (used to check hook libraries compatibility with MT).
+    ///
     /// @return bool true if the check succeeded
-    bool checkMultiThreadingCompatible() const;
+    bool checkMultiThreadingCompatible(bool multi_threading_enabled) const;
 
     /// @brief Register standard callouts
     ///

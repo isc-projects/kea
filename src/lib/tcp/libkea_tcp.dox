@@ -1,0 +1,19 @@
+// Copyright (C) 2022 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+@page libkea_tcp libkea-kea_tcp - TCP Listener Library
+
+@section libkea_tcpIntro Introduction
+
+This is a library of classes (in the isc::kea_tcp namespace) that provide
+the ability to accept connections, listen for and respond to TCP messages.
+
+@section tcpMTConsiderations Multi-Threading Consideration for TCP Library
+
+This library is thread safe.
+
+*/

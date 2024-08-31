@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -216,8 +216,8 @@ TEST(PsqlBindArray, addOptionalBool) {
     // Verify contents are correct.
     std::string expected =
         "0 : empty\n"
-        "1 : \"0\"\n"
-        "2 : \"1\"\n";
+        "1 : \"FALSE\"\n"
+        "2 : \"TRUE\"\n";
 
     EXPECT_EQ(expected, b.toText());
 }
@@ -977,6 +977,11 @@ TEST_F(PgSqlBasicsTest, ptimeTimestamp) {
     // Create an empty array.
     PsqlBindArrayPtr bind_array(new PsqlBindArray());
 
+    // Make sure we catch values before the epoch.
+    ptime christmas1969(date(1969, Dec, 25));
+    ASSERT_THROW_MSG(bind_array->addTimestamp(christmas1969), BadValue,
+                     "Time value is before the epoch");
+
     // Make sure we catch values that are too big.
     time_duration duration = hours(10) + minutes(14) + seconds(15);
     ptime day_too_far(date(2038, Jan, 21), duration);
@@ -1357,7 +1362,7 @@ TEST_F(PgSqlBasicsTest, tripleTest) {
     // Insert a row for each reference value
     PsqlBindArrayPtr bind_array;
     PgSqlResultPtr r;
-    for (auto triplet : triplets) {
+    for (auto const& triplet : triplets) {
         bind_array.reset(new PsqlBindArray());
         bind_array->add(triplet);
         bind_array->addMin(triplet);
@@ -1370,7 +1375,7 @@ TEST_F(PgSqlBasicsTest, tripleTest) {
 
     // Iterate over the rows, verifying each value against its reference
     int row = 0;
-    for (auto expected : triplets) {
+    for (auto const& expected : triplets) {
         Triplet<uint32_t> fetched;
         // First we test making a triplet only with default value column.
         ASSERT_NO_THROW_LOG(fetched = PgSqlExchange::getTripletValue(*r, row, INT_COL));

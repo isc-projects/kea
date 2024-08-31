@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,8 @@
 #define RUN_SCRIPT_H
 
 #include <asiolink/process_spawn.h>
+#include <dhcp/dhcp4.h>
+#include <dhcp/dhcp6.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
 #include <dhcp/option6_ia.h>
@@ -29,20 +31,6 @@ public:
 
     /// @brief Destructor.
     ~RunScriptImpl() = default;
-
-    /// @brief Sets IO service to be used by the @ref ProcessSpawn instance.
-    ///
-    /// @param io_service The IOService object, used for all ASIO operations.
-    static void setIOService(const isc::asiolink::IOServicePtr& io_service) {
-        io_service_ = io_service;
-    }
-
-    /// @brief Gets IO service to be used by the @ref ProcessSpawn instance.
-    ///
-    /// @return The IOService object, used for all ASIO operations.
-    static isc::asiolink::IOServicePtr getIOService() {
-        return (io_service_);
-    }
 
     /// @brief Extract boolean data and append to environment.
     ///
@@ -83,6 +71,16 @@ public:
                               const isc::dhcp::HWAddrPtr& hwaddr,
                               const std::string& prefix = "",
                               const std::string& suffix = "");
+
+    /// @brief Extract ClientId data and append to environment.
+    ///
+    /// @param client_id The client id to be exported to target script environment.
+    /// @param prefix The prefix for the name of the environment variable.
+    /// @param suffix The suffix for the name of the environment variable.
+    static void extractClientId(isc::asiolink::ProcessEnvVars& vars,
+                                const isc::dhcp::ClientIdPtr client_id,
+                                const std::string& prefix = "",
+                                const std::string& suffix = "");
 
     /// @brief Extract DUID data and append to environment.
     ///
@@ -247,6 +245,10 @@ public:
     void configure(isc::hooks::LibraryHandle& handle);
 
 private:
+
+    /// @brief The IOService object, used for all ASIO operations.
+    isc::asiolink::IOServicePtr io_context_;
+
     /// @brief Script name.
     std::string name_;
 
@@ -256,9 +258,6 @@ private:
     /// exits, otherwise the call will return immediately after the script is
     /// started.
     bool sync_;
-
-    /// @brief The IOService object, used for all ASIO operations.
-    static isc::asiolink::IOServicePtr io_service_;
 };
 
 /// @brief The type of shared pointers to Run Script implementations.

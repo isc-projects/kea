@@ -8,9 +8,9 @@
 // initial proposal was not best and way to migrate to something else.
 {
     "Dhcp6": {
-        // Kea is told to listen on ethX interface only.
+        // Kea is told to listen on eth0 interface only.
         "interfaces-config": {
-            "interfaces": [ "ethX" ]
+            "interfaces": [ "eth0" ]
         },
 
         // You also need to tell where to store lease information.
@@ -23,13 +23,14 @@
         // It is likely that in your network you'll have a mix of regular,
         // "plain" subnets and shared networks. It is perfectly valid to mix
         // them in the same config file.
-        //
+
         // This is regular subnet. It's not part of any shared-network.
         "subnet6": [
             {
+                "id": 1,
                 "pools": [ { "pool": "2001:db8:2::/80" } ],
                 "subnet": "2001:db8:2::/64",
-                "interface": "ethX"
+                "interface": "eth0"
             }
         ],
 
@@ -56,7 +57,7 @@
             // values inserted by relays, which are only used for
             // remote traffic. A shared network cannot be both direct
             // and relayed.
-            //"interface-id": "content of the option",
+            // "interface-id": "content of the option",
 
             // Other parameters defined here will be inherited by the
             // subnets.
@@ -66,22 +67,17 @@
             "rapid-commit": true,
             "rebind-timer": 150,
             "relay": {
-                "ip-address": "2001:db8::1"
+                "ip-addresses": [ "2001:db8::1" ]
             },
             "renew-timer": 100,
 
-            // "reservation-mode": "all",
-            // It is replaced by the "reservations-global",
-            // "reservations-in-subnet" and "reservations-out-of-pool"
-            // parameters.
-
-            // Specify if server should lookup global reservations.
+            // Specify whether the server should look up global reservations.
             "reservations-global": false,
 
-            // Specify if server should lookup in-subnet reservations.
+            // Specify whether the server should look up in-subnet reservations.
             "reservations-in-subnet": true,
 
-            // Specify if server can assume that all reserved addresses
+            // Specify whether the server can assume that all reserved addresses
             // are out-of-pool.
             // Ignored when reservations-in-subnet is false.
             // If specified, it is inherited by "subnet6" levels.
@@ -98,23 +94,20 @@
                     "rebind-timer": 20,
                     // It is possible to override some values here.
                     "relay": {
-                        "ip-address": "2001:db8:1::123"
+                        "ip-addresses": [ "2001:db8:1::123" ]
                     },
                     "renew-timer": 10,
-                    // "reservation-mode": "all",
-                    // It is replaced by the "reservations-global",
-                    // "reservations-in-subnet" and "reservations-out-of-pool"
-                    // parameters.
-                    // Specify if server should lookup global reservations.
+                    // Specify whether the server should look up global reservations.
                     "reservations-global": false,
-                    // Specify if server should lookup in-subnet reservations.
+                    // Specify whether the server should look up in-subnet reservations.
                     "reservations-in-subnet": true,
-                    // Specify if server can assume that all reserved addresses
+                    // Specify whether the server can assume that all reserved addresses
                     // are out-of-pool.
                     // Ignored when reservations-in-subnet is false.
                     "reservations-out-of-pool": false,
+                    "id": 2,
                     "subnet": "2001:db8:1::/64",
-                    "pools": [ { "pool": "2001:db8:1:abcd::/64" } ],
+                    "pools": [ { "pool": "2001:db8:1:0:abcd::/80" } ],
                     "valid-lifetime": 40
                 },
 
@@ -125,21 +118,18 @@
                     "rapid-commit": false,
                     "rebind-timer": 20,
                     "relay": {
-                        "ip-address": "3000::1"
+                        "ip-addresses": [ "3000::1" ]
                     },
                     "renew-timer": 10,
-                    // "reservation-mode": "all",
-                    // It is replaced by the "reservations-global",
-                    // "reservations-in-subnet" and "reservations-out-of-pool"
-                    // parameters.
-                    // Specify if server should lookup global reservations.
+                    // Specify whether the server should look up global reservations.
                     "reservations-global": false,
-                    // Specify if server should lookup in-subnet reservations.
+                    // Specify whether the server should look up in-subnet reservations.
                     "reservations-in-subnet": true,
-                    // Specify if server can assume that all reserved addresses
+                    // Specify whether the server can assume that all reserved addresses
                     // are out-of-pool.
                     // Ignored when reservations-in-subnet is false.
                     "reservations-out-of-pool": false,
+                    "id": 3,
                     "subnet": "3000::/16",
                     "valid-lifetime": 40
                 }

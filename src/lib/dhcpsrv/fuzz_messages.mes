@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 $NAMESPACE isc::dhcp
 
 % FUZZ_DATA_READ read %1 byte(s) from AFL via stdin
+Logged at debug log level 50.
 A debug message output to indicate how much data has been received from
 the fuzzer via stdin
 
@@ -26,6 +27,7 @@ occurs, the thread will sleep for a short period before retrying the read.
 The message includes the reason for the failure.
 
 % FUZZ_SEND sent %1 byte(s) to the socket connected to the Kea interface
+Logged at debug log level 50.
 A debug message stating that the sendto() call in the main fuzzing function
 has successfully completed and reporting the number of bytes sent.  This
 call sends data received from AFL to the port on which Kea is listening.
@@ -36,7 +38,7 @@ sends data received from AFL to the socket on which Kea is listening) fails.
 The reason for the failure is given in the message.  The fuzzing code will
 attempt to continue from this, but it may cause the fuzzing process to fail.
 
-% FUZZ_SHORT_SEND expected to send %d bytes to Kea input socket but only sent %2
+% FUZZ_SHORT_SEND expected to send %1 bytes to Kea input socket but only sent %2
 A warning message that is output if the sendto() call (used to send data
 from the fuzzing thread to the main Kea processing) did not send as much
 data as that read from AFL.  This may indicate a problem in the underlying

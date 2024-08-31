@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -60,13 +60,23 @@ class that contains parsed elements.
 
 For details see documentation and code of the following handlers:
 - @ref isc::lease_cmds::LeaseCmdsImpl::leaseAddHandler (lease4-add, lease6-add)
+- @ref isc::lease_cmds::LeaseCmdsImpl::lease6BulkApplyHandler(lease6-bulk-apply)
 - @ref isc::lease_cmds::LeaseCmdsImpl::leaseGetHandler (lease4-get, lease6-get)
+- @ref isc::lease_cmds::LeaseCmdsImpl::leaseGetAllHandler(lease4-get-all, lease6-get-all)
+- @ref isc::lease_cmds::LeaseCmdsImpl::leaseGetPageHandler(lease4-get-page, lease6-get-page)
+- @ref isc::lease_cmds::LeaseCmdsImpl::leaseGetByHwAddressHandler(lease4-get-by-hw-address)
+- @ref isc::lease_cmds::LeaseCmdsImpl::leaseGetByClientIdHandler(lease4-get-by-client-id)
+- @ref isc::lease_cmds::LeaseCmdsImpl::leaseGetByDuidHandler(lease6-get-by-duid)
+- @ref isc::lease_cmds::LeaseCmdsImpl::leaseGetByHostnameHandler(lease4-get-by-hostname, lease6-get-by-hostname)
 - @ref isc::lease_cmds::LeaseCmdsImpl::lease4DelHandler (lease4-del)
 - @ref isc::lease_cmds::LeaseCmdsImpl::lease6DelHandler (lease6-del)
 - @ref isc::lease_cmds::LeaseCmdsImpl::lease4UpdateHandler (lease4-update)
 - @ref isc::lease_cmds::LeaseCmdsImpl::lease6UpdateHandler (lease6-update)
 - @ref isc::lease_cmds::LeaseCmdsImpl::lease4WipeHandler (lease4-wipe)
 - @ref isc::lease_cmds::LeaseCmdsImpl::lease6WipeHandler (lease6-wipe)
+- @ref isc::lease_cmds::LeaseCmdsImpl::lease4ResendDdnsHandler(lease4-resend-ddns)
+- @ref isc::lease_cmds::LeaseCmdsImpl::lease6ResendDdnsHandler(lease6-resend-ddns)
+- @ref isc::lease_cmds::LeaseCmdsImpl::leaseWriteHandler (lease4-write, lease6-write)
 
 @section lease_cmdsDesigns Lease Commands Design choices
 

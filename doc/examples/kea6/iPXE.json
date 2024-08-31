@@ -5,7 +5,7 @@
    // Mandatory part of the config that list interfaces on which
    // Kea will listen for incoming traffic.
       "interfaces-config": {
-         "interfaces": [ "ethX" ]
+         "interfaces": [ "eth0" ]
       },
 
 // Two classes are migrated form ISC-DHCP example:
@@ -16,7 +16,7 @@
 //          substring(option dhcp6.user-class, 2, 4) = "iPXE" {
 //    option dhcp6.bootfile-url "http://[2001:db8::1]/ubuntu.cfg";
 // }
-//
+
 // In example shown below incoming packet will receive value
 // http://[2001:db8::1]/ubuntu.cfg if incoming packet will include user
 // class option with "iPXE" in it and value http://[2001:db8::1]/ipxe.efi
@@ -60,6 +60,7 @@
       ],
       "subnet6": [
          {
+            "id": 1,
             "subnet": "2001:db8::/64"
          }
       ]

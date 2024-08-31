@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -52,10 +52,6 @@ public:
     /// @brief Deregister commands.
     /// @note Does not throw.
     void deregisterCommands();
-
-protected:
-    /// @brief Returns version info specific to D2
-    virtual std::string getVersionAddendum();
 
 private:
     /// @brief Creates an instance of the DHCP-DDNS specific application

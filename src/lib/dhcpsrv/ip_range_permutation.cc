@@ -1,4 +1,4 @@
-// Copyright (C) 2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,15 +17,17 @@ namespace dhcp {
 
 IPRangePermutation::IPRangePermutation(const AddressRange& range)
     : range_start_(range.start_), step_(1), cursor_(addrsInRange(range_start_, range.end_) - 1),
-      state_(), done_(false), generator_() {
+      initial_cursor_(cursor_), state_(), done_(false), generator_() {
     std::random_device rd;
     generator_.seed(rd());
 }
 
 IPRangePermutation::IPRangePermutation(const PrefixRange& range)
-    : range_start_(range.start_), step_(static_cast<uint64_t>(1) << (128 - range.delegated_length_)),
+    : range_start_(range.start_), step_(isc::util::uint128_t(1) << (128 - range.delegated_length_)),
       cursor_(prefixesInRange(range.prefix_length_, range.delegated_length_) - 1),
-      state_(), done_(false), generator_() {
+      initial_cursor_(cursor_), state_(), done_(false), generator_() {
+    std::random_device rd;
+    generator_.seed(rd());
 }
 
 IOAddress
@@ -50,7 +52,11 @@ IPRangePermutation::next(bool& done) {
     // addresses between the cursor and the end of the range have been already
     // returned by this function. Therefore we focus on the remaining cursor-1
     // addresses. Let's get random address from this sub-range.
-    std::uniform_int_distribution<int> dist(0, cursor_ - 1);
+    uint64_t max_limit = std::numeric_limits<uint64_t>::max();
+    if ((cursor_ - 1) < isc::util::int128_t(max_limit)) {
+        max_limit = static_cast<uint64_t>(cursor_ - 1);
+    }
+    std::uniform_int_distribution<uint64_t> dist(0, max_limit);
     auto next_loc = dist(generator_);
 
     IOAddress next_loc_address = IOAddress::IPV4_ZERO_ADDRESS();
@@ -95,6 +101,13 @@ IPRangePermutation::next(bool& done) {
 
     // Return the address from the random position.
     return (next_loc_address);
+}
+
+void
+IPRangePermutation::reset() {
+    state_.clear();
+    cursor_ = initial_cursor_;
+    done_ = false;
 }
 
 } // end of namespace isc::dhcp

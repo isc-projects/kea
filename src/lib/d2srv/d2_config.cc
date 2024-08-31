@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,21 +6,21 @@
 
 #include <config.h>
 
+#include <asiolink/io_error.h>
 #include <d2srv/d2_log.h>
 #include <d2srv/d2_cfg_mgr.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <exceptions/exceptions.h>
-#include <asiolink/io_error.h>
+#include <util/filesystem.h>
 
-#include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <sstream>
 #include <string>
 
-using namespace isc::process;
 using namespace isc::data;
+using namespace isc::process;
 
 namespace isc {
 namespace d2 {
@@ -42,7 +42,7 @@ D2Params::D2Params(const isc::asiolink::IOAddress& ip_address,
 
 D2Params::D2Params()
     : ip_address_(isc::asiolink::IOAddress("127.0.0.1")),
-     port_(53001), dns_server_timeout_(100),
+     port_(53001), dns_server_timeout_(500),
      ncr_protocol_(dhcp_ddns::NCR_UDP),
      ncr_format_(dhcp_ddns::FMT_JSON) {
     validateContents();
@@ -52,11 +52,6 @@ D2Params::~D2Params(){};
 
 void
 D2Params::validateContents() {
-    if ((ip_address_.toText() == "0.0.0.0") || (ip_address_.toText() == "::")) {
-        isc_throw(D2CfgError,
-                  "D2Params: IP address cannot be \"" << ip_address_ << "\"");
-    }
-
     if (port_ == 0) {
         isc_throw(D2CfgError, "D2Params: port cannot be 0");
     }
@@ -133,9 +128,10 @@ const char* TSIGKeyInfo::HMAC_SHA384_STR = "HMAC-SHA384";
 const char* TSIGKeyInfo::HMAC_SHA512_STR = "HMAC-SHA512";
 
 TSIGKeyInfo::TSIGKeyInfo(const std::string& name, const std::string& algorithm,
-                         const std::string& secret, uint32_t digestbits)
-    :name_(name), algorithm_(algorithm), secret_(secret),
-     digestbits_(digestbits), tsig_key_() {
+                         const std::string& secret, std::string secret_file,
+                         uint32_t digestbits)
+    : name_(name), algorithm_(algorithm), secret_(secret),
+      secret_file_(secret_file), digestbits_(digestbits), tsig_key_() {
     remakeKey();
 }
 
@@ -190,8 +186,12 @@ TSIGKeyInfo::toElement() const {
     result->set("name", Element::create(name_));
     // Set algorithm
     result->set("algorithm", Element::create(algorithm_));
-    // Set secret
-    result->set("secret", Element::create(secret_));
+    // Set secret[-file]
+    if (!secret_file_.empty()) {
+        result->set("secret-file", Element::create(secret_file_));
+    } else {
+        result->set("secret", Element::create(secret_));
+    }
     // Set digest-bits
     result->set("digest-bits",
                 Element::create(static_cast<int64_t>(digestbits_)));
@@ -275,9 +275,8 @@ DdnsDomain::toElement() const {
     result->set("name", Element::create(name_));
     // Set servers
     ElementPtr servers = Element::createList();
-    for (DnsServerInfoStorage::const_iterator server = servers_->begin();
-         server != servers_->end(); ++server) {
-        ElementPtr dns_server = (*server)->toElement();
+    for (auto const& server : *servers_) {
+        ElementPtr dns_server = server->toElement();
         servers->add(dns_server);
     }
     // the dns server list may not be empty
@@ -335,9 +334,8 @@ DdnsDomainListMgr::matchDomain(const std::string& fqdn, DdnsDomainPtr& domain) {
 
     size_t req_len = fqdn.size();
     size_t match_len = 0;
-    DdnsDomainMapPair map_pair;
     DdnsDomainPtr best_match;
-    BOOST_FOREACH (map_pair, *domains_) {
+    for (auto const& map_pair : *domains_) {
         std::string domain_name = map_pair.first;
         size_t dom_len = domain_name.size();
 
@@ -391,9 +389,8 @@ ElementPtr
 DdnsDomainListMgr::toElement() const {
     ElementPtr result = Element::createList();
     // Iterate on ddns domains
-    for (DdnsDomainMap::const_iterator domain = domains_->begin();
-         domain != domains_->end(); ++domain) {
-        ElementPtr ddns_domain = domain->second->toElement();
+    for (auto const& domain : *domains_) {
+        ElementPtr ddns_domain = domain.second->toElement();
         result->add(ddns_domain);
     }
 
@@ -409,7 +406,24 @@ TSIGKeyInfoParser::parse(ConstElementPtr key_config) {
     std::string name = getString(key_config, "name");
     std::string algorithm = getString(key_config, "algorithm");
     uint32_t digestbits = getInteger(key_config, "digest-bits");
-    std::string secret = getString(key_config, "secret");
+    std::string secret_file;
+    std::string secret;
+    if (key_config->contains("secret-file")) {
+        secret_file = getString(key_config, "secret-file");
+        try {
+            secret = util::file::getContent(secret_file);
+            if (secret.empty()) {
+                isc_throw(BadValue, "Expected '" << secret_file
+                          << "' to not be empty");
+            }
+        } catch (const std::exception& ex) {
+            isc_throw(D2CfgError, "tsig-key : " << ex.what()
+                      << " (" << getPosition("secret-file", key_config)
+                      << ")");
+        }
+    } else {
+        secret = getString(key_config, "secret");
+    }
     ConstElementPtr user_context = key_config->get("user-context");
 
     // Algorithm must be valid.
@@ -443,7 +457,8 @@ TSIGKeyInfoParser::parse(ConstElementPtr key_config) {
     // with an invalid secret content.
     TSIGKeyInfoPtr key_info;
     try {
-        key_info.reset(new TSIGKeyInfo(name, algorithm, secret, digestbits));
+        key_info.reset(new TSIGKeyInfo(name, algorithm, secret,
+                                       secret_file, digestbits));
     } catch (const std::exception& ex) {
         isc_throw(D2CfgError, ex.what() << " ("
                   << key_config->getPosition() << ")");
@@ -462,9 +477,8 @@ TSIGKeyInfoParser::parse(ConstElementPtr key_config) {
 TSIGKeyInfoMapPtr
 TSIGKeyInfoListParser::parse(ConstElementPtr key_list) {
     TSIGKeyInfoMapPtr keys(new TSIGKeyInfoMap());
-    ConstElementPtr key_config;
     TSIGKeyInfoParser key_parser;
-    BOOST_FOREACH(key_config, key_list->listValue()) {
+    for (auto const& key_config : key_list->listValue()) {
         TSIGKeyInfoPtr key = key_parser.parse(key_config);
 
         // Duplicates are not allowed and should be flagged as an error.
@@ -579,9 +593,8 @@ DnsServerInfoListParser::parse(ConstElementPtr server_list,
                                ConstElementPtr domain_config,
                                const TSIGKeyInfoMapPtr keys) {
     DnsServerInfoStoragePtr servers(new DnsServerInfoStorage());
-    ConstElementPtr server_config;
     DnsServerInfoParser parser;
-    BOOST_FOREACH(server_config, server_list->listValue()) {
+    for (auto const& server_config : server_list->listValue()) {
         DnsServerInfoPtr server =
             parser.parse(server_config, domain_config, keys);
         servers->push_back(server);
@@ -632,8 +645,7 @@ DdnsDomainMapPtr DdnsDomainListParser::parse(ConstElementPtr domain_list,
                                              const TSIGKeyInfoMapPtr keys) {
     DdnsDomainMapPtr domains(new DdnsDomainMap());
     DdnsDomainParser parser;
-    ConstElementPtr domain_config;
-    BOOST_FOREACH(domain_config, domain_list->listValue()) {
+    for (auto const& domain_config : domain_list->listValue()) {
         DdnsDomainPtr domain = parser.parse(domain_config, keys);
 
         // Duplicates are not allowed

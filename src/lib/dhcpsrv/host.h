@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -409,6 +409,13 @@ public:
          const std::string& boot_file_name = "",
          const AuthKey& auth_key = AuthKey(""));
 
+    /// @brief Get maximum identifier length.
+    ///
+    /// This method returns the maximum identifier length.
+    ///
+    /// @param type Identifier type.
+    static size_t getIdentifierMaxLength(const IdentifierType& type);
+
     /// @brief Replaces currently used identifier with a new identifier.
     ///
     /// This method sets a new identifier type and value for a host.
@@ -662,6 +669,12 @@ public:
         return (cfg_option6_);
     }
 
+    /// @brief Encapsulates host-specific options with their suboptions.
+    ///
+    /// This function must be called before the server returns host-specific
+    /// DHCP options to the client.
+    void encapsulateOptions() const;
+
     /// @brief Returns information about the host in the textual format.
     std::string toText() const;
 
@@ -715,6 +728,15 @@ public:
     AuthKey getKey() const {
         return(key_);
     }
+
+protected:
+
+    /// @brief Set the identifier type.
+    ///
+    /// @note for test only!
+    ///
+    /// @param type Identifier type.
+    void setIdentifierType(const IdentifierType& type);
 
 private:
 

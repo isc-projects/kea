@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -279,9 +279,8 @@ void Netlink::ipaddrs_get(Iface& iface, NetlinkMessages& addr_info) {
     uint8_t addr[V6ADDRESS_LEN];
     RTattribPtrs rta_tb;
 
-    for (NetlinkMessages::const_iterator msg = addr_info.begin();
-         msg != addr_info.end(); ++msg) {
-        ifaddrmsg* ifa = static_cast<ifaddrmsg*>(NLMSG_DATA(*msg));
+    for (auto const& msg : addr_info) {
+        ifaddrmsg* ifa = static_cast<ifaddrmsg*>(NLMSG_DATA(msg));
 
         // These are not the addresses you are looking for
         if (ifa->ifa_index != iface.getIndex()) {
@@ -290,7 +289,7 @@ void Netlink::ipaddrs_get(Iface& iface, NetlinkMessages& addr_info) {
 
         if ((ifa->ifa_family == AF_INET6) || (ifa->ifa_family == AF_INET)) {
             std::fill(rta_tb.begin(), rta_tb.end(), static_cast<rtattr*>(NULL));
-            parse_rtattr(rta_tb, IFA_RTA(ifa), (*msg)->nlmsg_len - NLMSG_LENGTH(sizeof(*ifa)));
+            parse_rtattr(rta_tb, IFA_RTA(ifa), msg->nlmsg_len - NLMSG_LENGTH(sizeof(*ifa)));
             if (!rta_tb[IFA_LOCAL]) {
                 rta_tb[IFA_LOCAL] = rta_tb[IFA_ADDRESS];
             }
@@ -396,8 +395,8 @@ void Netlink::rtnl_process_reply(NetlinkMessages& info) {
 /// @param messages Set of messages to be freed.
 void Netlink::release_list(NetlinkMessages& messages) {
     // let's free local copies of stored messages
-    for (NetlinkMessages::iterator msg = messages.begin(); msg != messages.end(); ++msg) {
-        delete[] (*msg);
+    for (auto const& msg : messages) {
+        delete[] msg;
     }
 
     // and get rid of the message pointers as well
@@ -414,8 +413,10 @@ namespace dhcp {
 /// Uses the socket-based netlink protocol to retrieve the list of interfaces
 /// from the Linux kernel.
 void IfaceMgr::detectIfaces(bool update_only) {
-    if (isTestMode() && update_only) {
-        return;
+    if (detect_callback_) {
+        if (!detect_callback_(update_only)) {
+            return;
+        }
     }
 
     // Copies of netlink messages about links will be stored here.
@@ -460,11 +461,10 @@ void IfaceMgr::detectIfaces(bool update_only) {
     nl.rtnl_process_reply(addr_info);
 
     // Now build list with interface names
-    for (Netlink::NetlinkMessages::iterator msg = link_info.begin();
-         msg != link_info.end(); ++msg) {
+    for (auto const& msg : link_info) {
         // Required to display information about interface
-        struct ifinfomsg* interface_info = static_cast<ifinfomsg*>(NLMSG_DATA(*msg));
-        int len = (*msg)->nlmsg_len;
+        struct ifinfomsg* interface_info = static_cast<ifinfomsg*>(NLMSG_DATA(msg));
+        int len = msg->nlmsg_len;
         len -= NLMSG_LENGTH(sizeof(*interface_info));
         nl.parse_rtattr(attribs_table, IFLA_RTA(interface_info), len);
 
@@ -563,7 +563,7 @@ IfaceMgr::openMulticastSocket(Iface& iface,
         sock = openSocket(iface.getName(), addr, port, iface.flag_multicast_);
 
     } catch (const Exception& ex) {
-        IFACEMGR_ERROR(SocketConfigError, error_handler,
+        IFACEMGR_ERROR(SocketConfigError, error_handler, IfacePtr(),
                        "Failed to open link-local socket on "
                        "interface " << iface.getName() << ": "
                        << ex.what());
@@ -591,7 +591,7 @@ IfaceMgr::openMulticastSocket(Iface& iface,
             // bound to link-local address - this is everything or
             // nothing strategy.
             iface.delSocket(sock);
-            IFACEMGR_ERROR(SocketConfigError, error_handler,
+            IFACEMGR_ERROR(SocketConfigError, error_handler, IfacePtr(),
                            "Failed to open multicast socket on"
                            " interface " << iface.getName()
                            << ", reason: " << ex.what());

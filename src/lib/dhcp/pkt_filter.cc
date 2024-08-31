@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -66,7 +66,6 @@ PktFilter::openFallbackSocket(const isc::asiolink::IOAddress& addr,
     // Successfully created and bound a fallback socket. Return a descriptor.
     return (sock);
 }
-
 
 } // end of isc::dhcp namespace
 } // end of isc namespace

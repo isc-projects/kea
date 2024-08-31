@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -94,8 +94,7 @@ UnitTestUtil::addDataPath(const string& directory) {
 
 void
 UnitTestUtil::readWireData(const string& datastr,
-                           vector<unsigned char>& data)
-{
+                           vector<unsigned char>& data) {
     istringstream iss(datastr);
 
     do {
@@ -126,8 +125,7 @@ UnitTestUtil::readWireData(const string& datastr,
 ::testing::AssertionResult
 UnitTestUtil::matchName(const char*, const char*,
                         const isc::dns::Name& name1,
-                        const isc::dns::Name& name2)
-{
+                        const isc::dns::Name& name2) {
     ::testing::Message msg;
 
     NameComparisonResult cmpresult = name1.compare(name2);
@@ -139,38 +137,4 @@ UnitTestUtil::matchName(const char*, const char*,
         return (::testing::AssertionFailure(msg));
     }
     return (::testing::AssertionSuccess());
-}
-
-void
-UnitTestUtil::createRequestMessage(Message& message,
-                                   const Opcode& opcode,
-                                   const uint16_t qid,
-                                   const Name& name,
-                                   const RRClass& rrclass,
-                                   const RRType& rrtype)
-{
-    message.clear(Message::RENDER);
-    message.setOpcode(opcode);
-    message.setRcode(Rcode::NOERROR());
-    message.setQid(qid);
-    message.addQuestion(Question(name, rrclass, rrtype));
-}
-
-void
-UnitTestUtil::createDNSSECRequestMessage(Message& message,
-                                         const Opcode& opcode,
-                                         const uint16_t qid,
-                                         const Name& name,
-                                         const RRClass& rrclass,
-                                         const RRType& rrtype)
-{
-    message.clear(Message::RENDER);
-    message.setOpcode(opcode);
-    message.setRcode(Rcode::NOERROR());
-    message.setQid(qid);
-    message.addQuestion(Question(name, rrclass, rrtype));
-    EDNSPtr edns(new EDNS());
-    edns->setUDPSize(4096);
-    edns->setDNSSECAwareness(true);
-    message.setEDNS(edns);
 }

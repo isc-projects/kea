@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -140,6 +140,42 @@ struct ThreadPool {
         return (queue_.wait(seconds));
     }
 
+    /// @brief pause threads
+    ///
+    /// Used to pause threads so that they stop processing tasks
+    ///
+    /// @param wait the flag indicating if should wait for threads to pause.
+    void pause(bool wait = true) {
+        queue_.pause(wait);
+    }
+
+    /// @brief resume threads
+    ///
+    /// Used to resume threads so that they start processing tasks
+    void resume() {
+        queue_.resume();
+    }
+
+    /// @brief return the enable state of the queue
+    ///
+    /// The 'enabled' state corresponds to true value
+    /// The 'disabled' state corresponds to false value
+    ///
+    /// @return the enable state of the queue
+    bool enabled() {
+        return (queue_.enabled());
+    }
+
+    /// @brief return the pause state of the queue
+    ///
+    /// The 'paused' state corresponds to true value
+    /// The 'resumed' state corresponds to false value
+    ///
+    /// @return the pause state of the queue
+    bool paused() {
+        return (queue_.paused());
+    }
+
     /// @brief set maximum number of work items in the queue
     ///
     /// @param max_queue_size the maximum size (0 means unlimited)
@@ -206,7 +242,7 @@ private:
             isc_throw(MultiThreadingInvalidOperation, "thread pool stop called by worker thread");
         }
         queue_.disable();
-        for (auto thread : threads_) {
+        for (auto const& thread : threads_) {
             thread->join();
         }
         threads_.clear();
@@ -216,7 +252,7 @@ private:
     ///
     /// @return true if thread is owned, false otherwise
     bool checkThreadId(std::thread::id id) {
-        for (auto thread : threads_) {
+        for (auto const& thread : threads_) {
             if (id == thread->get_id()) {
                 return (true);
             }
@@ -241,8 +277,8 @@ private:
         ///
         /// Creates the thread pool queue in 'disabled' state
         ThreadPoolQueue()
-            : enabled_(false), max_queue_size_(0), working_(0),
-              stat10(0.), stat100(0.), stat1000(0.) {
+            : enabled_(false), paused_(false), max_queue_size_(0), working_(0),
+              unavailable_(0), stat10(0.), stat100(0.), stat1000(0.) {
         }
 
         /// @brief Destructor
@@ -251,6 +287,20 @@ private:
         ~ThreadPoolQueue() {
             disable();
             clear();
+        }
+
+        /// @brief register thread so that it can be taken into account
+        void registerThread() {
+            std::lock_guard<std::mutex> lock(mutex_);
+            ++working_;
+            --unavailable_;
+        }
+
+        /// @brief unregister thread so that it can be ignored
+        void unregisterThread() {
+            std::lock_guard<std::mutex> lock(mutex_);
+            --working_;
+            ++unavailable_;
         }
 
         /// @brief set maximum number of work items in the queue
@@ -332,21 +382,28 @@ private:
         /// If the queue is 'enabled', this function returns the first element in
         /// the queue or blocks the calling thread if there are no work items
         /// available.
+        /// If the queue is 'paused', this function blocks the calling thread until
+        /// the queue is 'resumed'.
         /// Before a work item is returned statistics are updated.
         ///
         /// @return the first work item from the queue or an empty element.
         Item pop() {
             std::unique_lock<std::mutex> lock(mutex_);
             --working_;
-            // Wait for push or disable functions.
+            // Signal thread waiting for threads to pause.
+            if (paused_ && working_ == 0 && unavailable_ == 0) {
+                wait_threads_cv_.notify_all();
+            }
+            // Signal thread waiting for tasks to finish.
             if (working_ == 0 && queue_.empty()) {
                 wait_cv_.notify_all();
             }
-            cv_.wait(lock, [&]() {return (!enabled_ || !queue_.empty());});
+            // Wait for push or disable functions.
+            cv_.wait(lock, [&]() {return (!enabled_ || (!queue_.empty() && !paused_));});
+            ++working_;
             if (!enabled_) {
                 return (Item());
             }
-            ++working_;
             size_t length = queue_.size();
             stat10 = stat10 * CEXP10 + (1 - CEXP10) * length;
             stat100 = stat100 * CEXP100 + (1 - CEXP100) * length;
@@ -391,6 +448,29 @@ private:
             return (ret);
         }
 
+        /// @brief pause threads
+        ///
+        /// Used to pause threads so that they stop processing tasks
+        ///
+        /// @param wait the flag indicating if should wait for threads to pause.
+        void pause(bool wait) {
+            std::unique_lock<std::mutex> lock(mutex_);
+            paused_ = true;
+            if (wait) {
+                // Wait for working threads to finish.
+                wait_threads_cv_.wait(lock, [&]() {return (working_ == 0 && unavailable_ == 0);});
+            }
+        }
+
+        /// @brief resume threads
+        ///
+        /// Used to resume threads so that they start processing tasks
+        void resume() {
+            std::unique_lock<std::mutex> lock(mutex_);
+            paused_ = false;
+            cv_.notify_all();
+        }
+
         /// @brief get queue length statistic
         ///
         /// @param which select the statistic (10, 100 or 1000)
@@ -417,19 +497,17 @@ private:
         void clear() {
             std::lock_guard<std::mutex> lock(mutex_);
             queue_ = QueueContainer();
-            working_ = 0;
-            wait_cv_.notify_all();
         }
 
         /// @brief enable the queue
         ///
         /// Sets the queue state to 'enabled'
         ///
-        /// @param number of working threads
+        /// @param thread_count number of working threads
         void enable(uint32_t thread_count) {
             std::lock_guard<std::mutex> lock(mutex_);
             enabled_ = true;
-            working_ = thread_count;
+            unavailable_ = thread_count;
         }
 
         /// @brief disable the queue
@@ -438,19 +516,31 @@ private:
         void disable() {
             {
                 std::lock_guard<std::mutex> lock(mutex_);
+                paused_ = false;
                 enabled_ = false;
             }
             // Notify pop so that it can exit.
             cv_.notify_all();
         }
 
-        /// @brief return the state of the queue
+        /// @brief return the enable state of the queue
         ///
-        /// Returns the state of the queue
+        /// The 'enabled' state corresponds to true value
+        /// The 'disabled' state corresponds to false value
         ///
-        /// @return the state
+        /// @return the enable state of the queue
         bool enabled() {
             return (enabled_);
+        }
+
+        /// @brief return the pause state of the queue
+        ///
+        /// The 'paused' state corresponds to true value
+        /// The 'resumed' state corresponds to false value
+        ///
+        /// @return the pause state of the queue
+        bool paused() {
+            return (paused_);
         }
 
     private:
@@ -466,10 +556,18 @@ private:
         /// @brief condition variable used to wait for all items to be processed
         std::condition_variable wait_cv_;
 
-        /// @brief the sate of the queue
+        /// @brief condition variable used to wait for all threads to be paused
+        std::condition_variable wait_threads_cv_;
+
+        /// @brief the enable state of the queue
         /// The 'enabled' state corresponds to true value
         /// The 'disabled' state corresponds to false value
         std::atomic<bool> enabled_;
+
+        /// @brief the pause state of the queue
+        /// The 'paused' state corresponds to true value
+        /// The 'resumed' state corresponds to false value
+        std::atomic<bool> paused_;
 
         /// @brief maximum number of work items in the queue
         /// (0 means unlimited)
@@ -477,6 +575,9 @@ private:
 
         /// @brief number of threads currently doing work
         uint32_t working_;
+
+        /// @brief number of threads not running
+        uint32_t unavailable_;
 
         /// @brief queue length statistic for 10 packets
         double stat10;
@@ -490,7 +591,8 @@ private:
 
     /// @brief run function of each thread
     void run() {
-        while (queue_.enabled()) {
+        queue_.registerThread();
+        for (bool work = true; work; work = queue_.enabled()) {
             WorkItemPtr item = queue_.pop();
             if (item) {
                 try {
@@ -500,6 +602,7 @@ private:
                 }
             }
         }
+        queue_.unregisterThread();
     }
 
     /// @brief list of worker threads

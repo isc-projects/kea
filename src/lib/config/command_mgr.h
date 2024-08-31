@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -88,7 +88,6 @@ private:
     boost::shared_ptr<CommandMgrImpl> impl_;
 };
 
-}; // end of isc::config namespace
-}; // end of isc namespace
-
+} // end of isc::config namespace
+} // end of isc namespace
 #endif

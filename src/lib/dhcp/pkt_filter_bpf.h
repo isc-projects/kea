@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -62,6 +62,13 @@ public:
     ///
     /// @return true always.
     virtual bool isDirectResponseSupported() const {
+        return (true);
+    }
+
+    /// @brief Check if the socket received time is supported.
+    ///
+    /// @return true always.
+    virtual bool isSocketReceivedTimeSupported() const {
         return (true);
     }
 

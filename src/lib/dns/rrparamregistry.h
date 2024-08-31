@@ -1,11 +1,11 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef RRPARAMREGISTRY_H
-#define RRPARAMREGISTRY_H 1
+#define RRPARAMREGISTRY_H
 
 #include <string>
 
@@ -90,11 +90,12 @@ public:
     /// of specific class corresponding to the specific derived class of
     /// \c AbstractRdataFactory.
     ///
-    /// \param buffer A reference to an \c InputBuffer object storing the
+    /// \param buff A reference to an \c InputBuffer object storing the
     /// \c Rdata to parse.
     /// \param rdata_len The length in buffer of the \c Rdata.  In bytes.
     /// \return An \c RdataPtr object pointing to the created \c Rdata object.
-    virtual RdataPtr create(isc::util::InputBuffer& buffer, size_t rdata_len) const = 0;
+    virtual RdataPtr create(isc::util::InputBuffer& buff,
+                            size_t rdata_len) const = 0;
 
     /// \brief Create RDATA from another \c Rdata object of the same type.
     ///
@@ -482,13 +483,13 @@ public:
     ///
     /// \param rrtype An \c RRType object specifying the type/class pair.
     /// \param rrclass An \c RRClass object specifying the type/class pair.
-    /// \param buffer A reference to an \c InputBuffer object storing the
+    /// \param buff A reference to an \c InputBuffer object storing the
     /// \c Rdata to parse.
     /// \param len The length in buffer of the \c Rdata.  In bytes.
     /// \return An \c rdata::RdataPtr object pointing to the created \c Rdata
     /// object.
     rdata::RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
-                                isc::util::InputBuffer& buffer, size_t len);
+                                isc::util::InputBuffer& buff, size_t len);
     /// \brief Create RDATA of a given pair of RR type and class, copying
     /// of another RDATA of same kind.
     ///
@@ -522,7 +523,7 @@ public:
     /// the Rdata; it doesn't update the lexer to reach the end of line or
     /// file or doesn't care about whether there's an extra (garbage) token
     /// after the textual RDATA representation.  Another difference is that
-    /// this method can throw on error and never returns a NULL pointer.
+    /// this method can throw on error and never returns a null pointer.
     ///
     /// For other details and parameters, see the description of
     /// \c rdata::createRdata().
@@ -533,13 +534,9 @@ public:
     //@}
 
 private:
-    RRParamRegistryImpl* impl_;
+    boost::shared_ptr<RRParamRegistryImpl> impl_;
 };
 
 }
 }
 #endif  // RRPARAMREGISTRY_H
-
-// Local Variables:
-// mode: c++
-// End:

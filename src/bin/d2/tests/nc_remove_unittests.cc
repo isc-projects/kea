@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -275,7 +275,7 @@ TEST(NameRemoveTransaction, construction) {
         " \"dhcid\" : \"0102030405060708\" , "
         " \"lease-expires-on\" : \"20130121132405\" , "
         " \"lease-length\" : 1300, "
-        " \"use-conflict-resolution\" : true "
+        " \"conflict-resolution-mode\" : \"check-with-dhcid\""
         "}";
 
     dhcp_ddns::NameChangeRequestPtr ncr;
@@ -1159,7 +1159,7 @@ TEST_F(NameRemoveTransactionTest, selectingRevServerHandler) {
         // Post a server IO error event.  This simulates an IO error occurring
         // and a need to select the new server.
         ASSERT_NO_THROW(name_remove->postNextEvent(NameChangeTransaction::
-                                                SERVER_IO_ERROR_EVT))
+                                                   SERVER_IO_ERROR_EVT))
                         << " num_servers: " << num_servers
                         << " selections: " << i;
     }

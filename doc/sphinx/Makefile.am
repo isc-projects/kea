@@ -9,7 +9,6 @@ sphinxopts += -v
 sphinxopts += -E
 sphinxopts += -a
 sphinxopts += -W
-sphinxopts += -j 2
 sphinxopts += -c "${abs_srcdir}"
 
 static_sources  =
@@ -23,6 +22,9 @@ rst_arm_sources =
 rst_arm_sources += index.rst
 rst_arm_sources += manpages.rst
 rst_arm_sources += umls.rst
+rst_arm_sources += debug-messages.rst
+rst_arm_sources += kea-messages.rst
+
 include arm/rst_arm_sources.mk
 
 EXTRA_DIST += arm/rst_arm_sources.mk
@@ -62,31 +64,40 @@ api_files =
 include $(top_srcdir)/src/share/api/api_files.mk
 
 if HAVE_PDFLATEX
-all: html mans pdf text
+all: debug-messages.rst kea-messages.rst html mans pdf singlehtml text
 else
-all: html mans text
+all: debug-messages.rst kea-messages.rst html mans singlehtml text
 endif
 
 # build the list of message files
-mes-files.txt: mes_files.mk
-	@sed 's;mes_files .*)/;;' $< > $@
+mes_files.mk: mes-files.txt
+	@sed 's;^;mes_files += $$(top_srcdir)/;g' $< > $@
 
-# this rule is only used for development purposes and is not used in official
-# build process as kea-messages.rst is always generated via sphinx's conf.py
-$(srcdir)/kea-messages.rst: $(mes_files) mes2doc.py
-	$(PYTHON) $(srcdir)/mes2doc.py -o $@ $(mes_files)
+mes-files.txt:
+	@find ../.. -type f -name '*.mes' | sort -V | sed 's#^../../##g' > $@
+
+# Used in official build process. debug-messages.rst is generated via ./tools/check-messages.py -g.
+$(srcdir)/debug-messages.rst: $(srcdir)/../../tools/check-messages.py
+	$(PYTHON) $< --generate-debug-messages-page
+
+# Used in official build process. kea-messages.rst is generated via mes2doc.py.
+$(srcdir)/kea-messages.rst: mes2doc.py
+	$(PYTHON) $(srcdir)/mes2doc.py -o $@
 
 # build the list of api files
 api-files.txt: $(top_srcdir)/src/share/api/api_files.mk
 	@sed 's;api_files .*)/;;' $< > $@
+
+EXTRA_DIST += debug-messages.rst
+EXTRA_DIST += kea-messages.rst
 
 # some tools do not use this makefile but still need generate files.
 EXTRA_DIST += mes-files.txt api-files.txt
 
 # this rule is only used for development purposes and is not used in official
 # build process as api.rst is always generated via sphinx's conf.py
-$(srcdir)/api.rst: $(api_files) api-files.txt api2doc.py
-	$(PYTHON) $(srcdir)/api2doc.py -o $@ $(api_files)
+$(srcdir)/api.rst: api2doc.py
+	$(PYTHON) $(srcdir)/api2doc.py -o $@
 
 $(srcdir)/arm/platforms.rst:
 	rm -f $(srcdir)/arm/platforms.rst
@@ -94,72 +105,103 @@ $(srcdir)/arm/platforms.rst:
 
 # UML files
 
-if HAVE_PLANTUML
-.uml.png:
-	@PLANTUML@ $<
+umls  =
+umls += uml/appendRequestedOptions.uml
+umls += uml/appendRequestedVendorOptions.uml
+umls += uml/assign-lease4.uml
+umls += uml/buildCfgOptionList.uml
+umls += uml/currentHost4.uml
+umls += uml/lease-states.uml
+umls += uml/main-loop.uml
+umls += uml/packet4.uml
+umls += uml/radius.uml
+umls += uml/recognizing-same-client.uml
+umls += uml/request4-lease.uml
+umls += uml/request4.uml
+umls += uml/requestLease4.uml
+umls += uml/select4.uml
+umls += uml/tkey.uml
+umls += uml/update.uml
 
-.uml.svg:
-	@PLANTUML@ -svg $<
+pngs  =
+pngs += uml/appendRequestedOptions.png
+pngs += uml/appendRequestedVendorOptions.png
+pngs += uml/assign-lease4.png
+pngs += uml/buildCfgOptionList.png
+pngs += uml/currentHost4.png
+pngs += uml/lease-states.png
+pngs += uml/main-loop.png
+pngs += uml/packet4.png
+pngs += uml/radius.png
+pngs += uml/recognizing-same-client.png
+pngs += uml/request4-lease.png
+pngs += uml/request4.png
+pngs += uml/requestLease4.png
+pngs += uml/select4.png
+pngs += uml/tkey.png
+pngs += uml/update.png
+
+svgs  =
+svgs += uml/appendRequestedOptions.svg
+svgs += uml/appendRequestedVendorOptions.svg
+svgs += uml/assign-lease4.svg
+svgs += uml/buildCfgOptionList.svg
+svgs += uml/currentHost4.svg
+svgs += uml/lease-states.svg
+svgs += uml/main-loop.svg
+svgs += uml/packet4.svg
+svgs += uml/radius.svg
+svgs += uml/recognizing-same-client.svg
+svgs += uml/request4-lease.svg
+svgs += uml/request4.svg
+svgs += uml/requestLease4.svg
+svgs += uml/select4.svg
+svgs += uml/tkey.svg
+svgs += uml/update.svg
+
+txts  =
+txts += uml/option-data-priority.atxt
+txts += uml/priority-of-lease-lifetimes-and-dhcpv4-fields.atxt
+txts += uml/tkey.atxt
+txts += uml/update.atxt
+
+if HAVE_PLANTUML
+uml: uml-to-png uml-to-svg format-svgs uml-to-txt
+
+uml-to-png: $(umls)
+	@ @PLANTUML@ -tpng $^
+
+uml-to-svg: $(umls)
+	@ @PLANTUML@ -tsvg $^
+
+# Formatting puts every tag on a separate line, which makes it easier for diffing.
+format-svgs: $(svgs)
+if HAVE_XMLLINT
+	@ for svg in $(svgs); do xmllint --format $$svg > tmp; mv tmp $$svg; done
+else
+	@ printf 'WARNING: xmllint not found. SVGs not formatted.\n'
 endif
 
-EXTRA_DIST += uml/appendRequestedOptions.png
-EXTRA_DIST += uml/appendRequestedOptions.svg
-EXTRA_DIST += uml/appendRequestedOptions.uml
-EXTRA_DIST += uml/appendRequestedVendorOptions.png
-EXTRA_DIST += uml/appendRequestedVendorOptions.svg
-EXTRA_DIST += uml/appendRequestedVendorOptions.uml
-EXTRA_DIST += uml/assign-lease4.png
-EXTRA_DIST += uml/assign-lease4.svg
-EXTRA_DIST += uml/assign-lease4.uml
-EXTRA_DIST += uml/buildCfgOptionList.png
-EXTRA_DIST += uml/buildCfgOptionList.svg
-EXTRA_DIST += uml/buildCfgOptionList.uml
-EXTRA_DIST += uml/currentHost4.png
-EXTRA_DIST += uml/currentHost4.svg
-EXTRA_DIST += uml/currentHost4.uml
-EXTRA_DIST += uml/lease-states.png
-EXTRA_DIST += uml/lease-states.svg
-EXTRA_DIST += uml/lease-states.uml
-EXTRA_DIST += uml/main-loop.png
-EXTRA_DIST += uml/main-loop.svg
-EXTRA_DIST += uml/main-loop.uml
-EXTRA_DIST += uml/packet4.png
-EXTRA_DIST += uml/packet4.svg
-EXTRA_DIST += uml/packet4.uml
-EXTRA_DIST += uml/request4-lease.png
-EXTRA_DIST += uml/request4-lease.svg
-EXTRA_DIST += uml/request4-lease.uml
-EXTRA_DIST += uml/request4.png
-EXTRA_DIST += uml/request4.svg
-EXTRA_DIST += uml/request4.uml
-EXTRA_DIST += uml/requestLease4.png
-EXTRA_DIST += uml/requestLease4.svg
-EXTRA_DIST += uml/requestLease4.uml
-EXTRA_DIST += uml/select4.png
-EXTRA_DIST += uml/select4.svg
-EXTRA_DIST += uml/select4.uml
-EXTRA_DIST += uml/tkey.png
-EXTRA_DIST += uml/tkey.svg
-EXTRA_DIST += uml/tkey.uml
-EXTRA_DIST += uml/update.png
-EXTRA_DIST += uml/update.svg
-EXTRA_DIST += uml/update.uml
+# Only sequence diagrams support ASCII art.
+uml-to-txt: uml/tkey.uml uml/update.uml
+	@ @PLANTUML@ -ttxt $^
+	@ for txt in $(txts); do sed 's/ *$$//g' $$txt > tmp; mv tmp $$txt; done
+endif
+
+EXTRA_DIST += $(umls)
+EXTRA_DIST += $(pngs)
+EXTRA_DIST += $(svgs)
+EXTRA_DIST += $(txts)
 
 PDFLATEX_AND_OPTS=$(PDFLATEX) -interaction nonstopmode
 
 pdf: $(main_sources) api-files.txt mes-files.txt $(srcdir)/arm/platforms.rst
 	$(SPHINXBUILD) -M latex $(srcdir) $(sphinxbuilddir) $(sphinxopts)
-	-cd $(abs_sphinxbuilddir)/latex && $(PDFLATEX_AND_OPTS) kea-arm.tex
-	-cd $(abs_sphinxbuilddir)/latex && $(PDFLATEX_AND_OPTS) kea-arm.tex
-	-cd $(abs_sphinxbuilddir)/latex && $(PDFLATEX_AND_OPTS) kea-arm.tex
-	-cd $(abs_sphinxbuilddir)/latex && makeindex -s python.ist kea-arm.idx
-	-cd $(abs_sphinxbuilddir)/latex && $(PDFLATEX_AND_OPTS) kea-arm.tex
 	cd $(abs_sphinxbuilddir)/latex && $(PDFLATEX_AND_OPTS) kea-arm.tex
-	-cd $(abs_sphinxbuilddir)/latex && $(PDFLATEX_AND_OPTS) kea-messages.tex
-	-cd $(abs_sphinxbuilddir)/latex && $(PDFLATEX_AND_OPTS) kea-messages.tex
-	-cd $(abs_sphinxbuilddir)/latex && $(PDFLATEX_AND_OPTS) kea-messages.tex
-	-cd $(abs_sphinxbuilddir)/latex && makeindex -s python.ist kea-messages.idx
-	-cd $(abs_sphinxbuilddir)/latex && $(PDFLATEX_AND_OPTS) kea-messages.tex
+	cd $(abs_sphinxbuilddir)/latex && makeindex -s python.ist kea-arm.idx
+	cd $(abs_sphinxbuilddir)/latex && $(PDFLATEX_AND_OPTS) kea-arm.tex
+	cd $(abs_sphinxbuilddir)/latex && $(PDFLATEX_AND_OPTS) kea-messages.tex
+	cd $(abs_sphinxbuilddir)/latex && makeindex -s python.ist kea-messages.idx
 	cd $(abs_sphinxbuilddir)/latex && $(PDFLATEX_AND_OPTS) kea-messages.tex
 
 html: $(main_sources) api-files.txt mes-files.txt $(srcdir)/arm/platforms.rst
@@ -184,15 +226,16 @@ mans: $(man_sources) api-files.txt mes-files.txt
 #   pip install pip-tools
 # Run this when dependencies are added, changed or removed.
 update-python-dependencies: ./src/requirements.in
+	rm -f ./src/requirements.txt
 	pip-compile -r ./src/requirements.in
 
 clean-local:
 	rm -rf $(sphinxbuilddir)
 	rm -f $(srcdir)/mes-files.txt $(srcdir)/api-files.txt
-	rm -f $(srcdir)/kea-messages.rst $(srcdir)/api.rst
+	rm -f $(srcdir)/debug-messages.rst $(srcdir)/kea-messages.rst $(srcdir)/api.rst
 	rm -f $(srcdir)/arm/platforms.rst
 
-.PHONY: all pdf html mans
+.PHONY: all pdf html mans update-python-dependencies uml uml-to-png uml-to-svg format-svgs uml-to-txt
 
 endif
 

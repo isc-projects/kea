@@ -73,7 +73,7 @@ public:
 
     /// @brief Sets IO service to be used by the Timer Manager.
     ///
-    /// @param io_service Pointer to the new IO service.
+    /// @param io_service Pointer to the IO service.
     void setIOService(const asiolink::IOServicePtr& io_service);
 
     /// @name Registering, unregistering and scheduling the timers.

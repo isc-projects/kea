@@ -1,22 +1,17 @@
 #!/bin/sh
 
-# Copyright (C) 2016-2021 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-# shellcheck disable=SC1091
-# SC1091: Not following: ... was not specified as input (see shellcheck -x).
-
-# shellcheck disable=SC2039
-# SC2039: In POSIX sh, 'local' is undefined.
 
 # Exit with error if commands exit with non-zero and if undefined variables are
 # used.
 set -eu
 
 # Include common test library.
+# shellcheck source=src/lib/testutils/dhcp_test_lib.sh.in
 . "@abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh"
 
 # Path to the temporary configuration file.
@@ -37,7 +32,7 @@ CONFIG_NONE="{
         \"loggers\": [
         {
             \"name\": \"kea-ctrl-agent\",
-            \"output_options\": [
+            \"output-options\": [
                 {
                     \"output\": \"${LOG_FILE}\"
                 }
@@ -61,7 +56,7 @@ CONFIG_NOCR="{
         \"loggers\": [
         {
             \"name\": \"kea-ctrl-agent\",
-            \"output_options\": [
+            \"output-options\": [
                 {
                     \"output\": \"${LOG_FILE}\"
                 }
@@ -85,7 +80,7 @@ CONFIG="{
         \"loggers\": [
         {
             \"name\": \"kea-ctrl-agent\",
-            \"output_options\": [
+            \"output-options\": [
                 {
                     \"output\": \"${LOG_FILE}\"
                 }
@@ -106,9 +101,6 @@ shell_bin="kea-shell"
 shell_bin_path="@abs_top_builddir@/src/bin/shell"
 
 tmpfile_path="@abs_top_builddir@/src/bin/agent/tests"
-
-# Import common test library.
-. "@abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh"
 
 list_commands_test() {
     local test_name="${1}"
@@ -157,10 +149,17 @@ list_commands_test() {
     fi
 
     # Main test phase: send command, check response.
+
+    # shellcheck disable=SC2086
+    # SC2086: Double quote to prevent globbing and word splitting.
+    # Reason: we specifically want ${arguments} to split because there may be multiple words in it.
     tmp="echo | ${shell_bin_path}/${shell_bin} --port 8443 \
     ${arguments} > ${tmpfile_path}/shell-stdout.txt"
     echo "Executing kea-shell ($tmp)"
 
+    # shellcheck disable=SC2086
+    # SC2086: Double quote to prevent globbing and word splitting.
+    # Reason: we specifically want ${arguments} to split because there may be multiple words in it.
     echo | ${shell_bin_path}/${shell_bin} --port 8443 \
     ${arguments} > ${tmpfile_path}/shell-stdout.txt
     EXIT_CODE=$?
@@ -213,10 +212,10 @@ list_commands_test() {
 }
 
 list_commands_test "NoTLS" "${CONFIG_NONE}" "" \
-"[ { \"arguments\": [ \"build-report\", \"config-get\", \"config-reload\", \"config-set\", \"config-test\", \"config-write\", \"list-commands\", \"shutdown\", \"status-get\", \"version-get\" ], \"result\": 0 } ]"
+"[ { \"arguments\": [ \"build-report\", \"config-get\", \"config-hash-get\", \"config-reload\", \"config-set\", \"config-test\", \"config-write\", \"list-commands\", \"shutdown\", \"status-get\", \"version-get\" ], \"result\": 0 } ]"
 list_commands_test "Encrypted" "${CONFIG_NOCR}" \
 "--ca ${TEST_CA_DIR}/kea-ca.crt" \
-"[ { \"arguments\": [ \"build-report\", \"config-get\", \"config-reload\", \"config-set\", \"config-test\", \"config-write\", \"list-commands\", \"shutdown\", \"status-get\", \"version-get\" ], \"result\": 0 } ]"
+"[ { \"arguments\": [ \"build-report\", \"config-get\", \"config-hash-get\", \"config-reload\", \"config-set\", \"config-test\", \"config-write\", \"list-commands\", \"shutdown\", \"status-get\", \"version-get\" ], \"result\": 0 } ]"
 list_commands_test "Authenticated" "${CONFIG}" \
 "--ca ${TEST_CA_DIR}/kea-ca.crt --cert ${TEST_CA_DIR}/kea-client.crt --key ${TEST_CA_DIR}/kea-client.key" \
-"[ { \"arguments\": [ \"build-report\", \"config-get\", \"config-reload\", \"config-set\", \"config-test\", \"config-write\", \"list-commands\", \"shutdown\", \"status-get\", \"version-get\" ], \"result\": 0 } ]"
+"[ { \"arguments\": [ \"build-report\", \"config-get\", \"config-hash-get\", \"config-reload\", \"config-set\", \"config-test\", \"config-write\", \"list-commands\", \"shutdown\", \"status-get\", \"version-get\" ], \"result\": 0 } ]"

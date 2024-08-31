@@ -17,7 +17,8 @@ EXTRA_DIST =
 
 CLEANFILES = *.gcno *.gcda
 
-# TESTS_ENVIRONMENT = $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
+TESTS_ENVIRONMENT = $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
+
 LOG_COMPILER = $(LIBTOOL)
 AM_LOG_FLAGS = --mode=execute
 
@@ -48,7 +49,6 @@ lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
-
 lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la

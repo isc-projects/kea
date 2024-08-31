@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,7 +9,6 @@
 #include <dhcp_ddns/ncr_io.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
-#include <util/time_utilities.h>
 
 #include <testutils/gtest_utils.h>
 #include <gtest/gtest.h>
@@ -36,7 +35,7 @@ const char *valid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
-     " \"use-conflict-resolution\": true"
+     " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
     // Valid Remove.
      "{"
@@ -48,7 +47,7 @@ const char *valid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
-     " \"use-conflict-resolution\": true"
+     " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
      // Valid Add with IPv6 address
      "{"
@@ -60,9 +59,9 @@ const char *valid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
-     " \"use-conflict-resolution\": true"
+     " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
-    // Missing use-conflict-resolution
+     // Missing conflict-resolution-mode
      "{"
      " \"change-type\" : 0 , "
      " \"forward-change\" : true , "
@@ -72,6 +71,18 @@ const char *valid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300 "
+     "}",
+     // Has use-conflict-resolution instead of mode
+     "{"
+     " \"change-type\" : 0 , "
+     " \"forward-change\" : true , "
+     " \"reverse-change\" : false , "
+     " \"fqdn\" : \"walah.walah.com\" , "
+     " \"ip-address\" : \"192.168.2.1\" , "
+     " \"dhcid\" : \"010203040A7F8E3D\" , "
+     " \"lease-expires-on\" : \"20130121132405\" , "
+     " \"lease-length\" : 1300, "
+     " \"use-conflict-resolutione\": true"
      "}"
 };
 
@@ -89,7 +100,7 @@ const char *invalid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
-     " \"use-conflict-resolution\": true"
+     " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
     // Invalid forward change.
      "{"
@@ -101,7 +112,7 @@ const char *invalid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
-     " \"use-conflict-resolution\": true"
+     " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
     // Invalid reverse change.
      "{"
@@ -113,7 +124,7 @@ const char *invalid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
-     " \"use-conflict-resolution\": true"
+     " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
     // Forward and reverse change both false.
      "{"
@@ -125,7 +136,7 @@ const char *invalid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
-     " \"use-conflict-resolution\": true"
+     " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
     // Blank FQDN
      "{"
@@ -137,7 +148,7 @@ const char *invalid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
-     " \"use-conflict-resolution\": true"
+     " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
     // Malformed FQDN
      "{"
@@ -149,7 +160,7 @@ const char *invalid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
-     " \"use-conflict-resolution\": true"
+     " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
     // Bad IP address
      "{"
@@ -161,7 +172,7 @@ const char *invalid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300 "
-     " \"use-conflict-resolution\": true"
+     " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
     // Blank DHCID
      "{"
@@ -173,7 +184,7 @@ const char *invalid_msgs[] =
      " \"dhcid\" : \"\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
-     " \"use-conflict-resolution\": true"
+     " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
     // Odd number of digits in DHCID
      "{"
@@ -185,7 +196,7 @@ const char *invalid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
-     " \"use-conflict-resolution\": true"
+     " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
     // Text in DHCID
      "{"
@@ -197,7 +208,7 @@ const char *invalid_msgs[] =
      " \"dhcid\" : \"THIS IS BOGUS!!!\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
-     " \"use-conflict-resolution\": true"
+     " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
     // Invalid lease expiration string
      "{"
@@ -209,7 +220,7 @@ const char *invalid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"Wed Jun 26 13:46:46 EDT 2013\" , "
      " \"lease-length\" : 1300, "
-     " \"use-conflict-resolution\": true"
+     " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
     // Non-integer for lease length.
      "{"
@@ -221,8 +232,20 @@ const char *invalid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : \"BOGUS\", "
-     " \"use-conflict-resolution\": true"
+     " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
+    // Invalid conflict-resolution-mode
+     "{"
+     " \"change-type\" : 0 , "
+     " \"forward-change\" : true , "
+     " \"reverse-change\" : false , "
+     " \"fqdn\" : \"walah.walah.com\" , "
+     " \"ip-address\" : \"192.168.2.1\" , "
+     " \"dhcid\" : \"010203040A7F8E3D\" , "
+     " \"lease-expires-on\" : \"20130121132405\" , "
+     " \"lease-length\" : 1300, "
+     " \"conflict-resolution-mode\": \"bogus\""
+     "}"
     // Invalid use-conflict-resolution
      "{"
      " \"change-type\" : 0 , "
@@ -233,7 +256,7 @@ const char *invalid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
-     " \"use-conflict-resolution\": 777"
+     " \"use-conflict-resolution\": \"bogus\""
      "}"
 };
 
@@ -252,7 +275,7 @@ TEST(NameChangeRequestTest, constructionTests) {
     EXPECT_TRUE(ncr);
 
     // Verify that full constructor works.
-    uint64_t expiry = isc::util::detail::gettimeWrapper();
+    uint64_t expiry = isc::util::detail::getTimeWrapper();
     D2Dhcid dhcid("010203040A7F8E3D");
 
     EXPECT_NO_THROW(ncr.reset(new NameChangeRequest(
@@ -339,6 +362,7 @@ class DhcidTest : public ::testing::Test {
 public:
     /// @brief Constructor
     DhcidTest() {
+        // 0x000000066d79686f7374076578616d706c6503636f6d00
         const uint8_t fqdn_data[] = {
             6, 109, 121, 104, 111, 115, 116,     // myhost.
             7, 101, 120, 97, 109, 112, 108, 101, // example.
@@ -386,16 +410,16 @@ TEST_F(DhcidTest, fromMinDUID) {
     D2Dhcid dhcid;
 
     // Create DUID.
-    uint8_t duid_data[] = { 1 };
-    DUID duid(duid_data, sizeof(duid_data));
+    std::vector<uint8_t> duid_data(DUID::MIN_DUID_LEN, 1);
+    DUID duid(duid_data.data(), duid_data.size());
 
     // Create DHCID.
     ASSERT_NO_THROW(dhcid.fromDUID(duid, wire_fqdn_));
 
     // The reference DHCID (represented as string of hexadecimal digits)
     // has been calculated using one of the online calculators.
-    std::string dhcid_ref = "000201F89004F73E60CAEDFF514E11CB91D"
-        "1F45C8F0A55D4BC4C688484A819F8EA4074";
+    std::string dhcid_ref = "000201202F813E7D9C88BADA41250F2A662"
+        "97742BB9B3EB37C0981D4A905745A30BDD3";
 
     // Make sure that the DHCID is valid.
     EXPECT_EQ(dhcid_ref, dhcid.toStr());
@@ -406,7 +430,7 @@ TEST_F(DhcidTest, fromMaxDUID) {
     D2Dhcid dhcid;
 
     // Create DUID.
-    std::vector<uint8_t> duid_data(128, 1);
+    std::vector<uint8_t> duid_data(DUID::MAX_DUID_LEN, 1);
     DUID duid(&duid_data[0], duid_data.size());
 
     // Create DHCID.
@@ -414,8 +438,8 @@ TEST_F(DhcidTest, fromMaxDUID) {
 
     // The reference DHCID (represented as string of hexadecimal digits)
     // has been calculated using one of the online calculators.
-    std::string dhcid_ref = "00020137D8FBDC0585B44DFA03FAD2E36C6"
-        "159737D545A12EFB40B0D88D110A5748234";
+    std::string dhcid_ref = "0002015B9022851B4015AD78187BB9BDB98"
+        "7708C5EEA74140B28095ED36FE1EAFEE3F6";
 
     // Make sure that the DHCID is valid.
     EXPECT_EQ(dhcid_ref, dhcid.toStr());
@@ -552,7 +576,7 @@ TEST(NameChangeRequestTest, basicJsonTest) {
                             "\"dhcid\":\"010203040A7F8E3D\","
                             "\"lease-expires-on\":\"20130121132405\","
                             "\"lease-length\":1300,"
-                            "\"use-conflict-resolution\":true"
+                            "\"conflict-resolution-mode\":\"check-with-dhcid\""
                           "}";
 
     // Verify that a NameChangeRequests can be instantiated from the
@@ -638,7 +662,7 @@ TEST(NameChangeRequestTest, toFromBufferTest) {
                             "\"dhcid\":\"010203040A7F8E3D\","
                             "\"lease-expires-on\":\"20130121132405\","
                             "\"lease-length\":1300,"
-                            "\"use-conflict-resolution\":true"
+                            "\"conflict-resolution-mode\":\"check-with-dhcid\""
                           "}";
 
     // Create a request from JSON directly.
@@ -725,17 +749,56 @@ TEST(NameChangeRequestTest, useConflictResolutionParsing) {
     NameChangeRequestPtr ncr;
     ASSERT_NO_THROW_LOG(ncr = NameChangeRequest::fromJSON(its_true));
     ASSERT_TRUE(ncr);
-    EXPECT_TRUE(ncr->useConflictResolution());
+    EXPECT_EQ(CHECK_WITH_DHCID, ncr->getConflictResolutionMode());
 
     std::string its_false(base_json + ",\"use-conflict-resolution\": false}");
     ASSERT_NO_THROW_LOG(ncr = NameChangeRequest::fromJSON(its_false));
     ASSERT_TRUE(ncr);
-    EXPECT_FALSE(ncr->useConflictResolution());
+    EXPECT_EQ(NO_CHECK_WITH_DHCID, ncr->getConflictResolutionMode());
 
     std::string its_missing(base_json + "}");
     ASSERT_NO_THROW_LOG(ncr = NameChangeRequest::fromJSON(its_true));
     ASSERT_TRUE(ncr);
-    EXPECT_TRUE(ncr->useConflictResolution());
+    EXPECT_EQ(CHECK_WITH_DHCID, ncr->getConflictResolutionMode());
+}
+
+TEST(NameChangeRequestTest, ConflictResolutionModeParsing) {
+    std::string base_json =
+     "{"
+     " \"change-type\" : 0 , "
+     " \"forward-change\" : true , "
+     " \"reverse-change\" : false , "
+     " \"fqdn\" : \"walah.walah.com\" , "
+     " \"ip-address\" : \"192.168.2.1\" , "
+     " \"dhcid\" : \"010203040A7F8E3D\" , "
+     " \"lease-expires-on\" : \"20130121132405\" , "
+     " \"lease-length\" : 1300 ";
+
+    std::string its_check_with_dhcid(base_json + ",\"conflict-resolution-mode\": \"check-with-dhcid\"}");
+    NameChangeRequestPtr ncr;
+    ASSERT_NO_THROW_LOG(ncr = NameChangeRequest::fromJSON(its_check_with_dhcid));
+    ASSERT_TRUE(ncr);
+    EXPECT_EQ(ncr->getConflictResolutionMode(), CHECK_WITH_DHCID);
+
+    std::string its_no_check_with_dhcid(base_json + ",\"conflict-resolution-mode\": \"no-check-with-dhcid\"}");
+    ASSERT_NO_THROW_LOG(ncr = NameChangeRequest::fromJSON(its_no_check_with_dhcid));
+    ASSERT_TRUE(ncr);
+    EXPECT_EQ(ncr->getConflictResolutionMode(), NO_CHECK_WITH_DHCID);
+
+    std::string its_check_exists_with_dhcid(base_json + ",\"conflict-resolution-mode\": \"check-exists-with-dhcid\"}");
+    ASSERT_NO_THROW_LOG(ncr = NameChangeRequest::fromJSON(its_check_exists_with_dhcid));
+    ASSERT_TRUE(ncr);
+    EXPECT_EQ(ncr->getConflictResolutionMode(), CHECK_EXISTS_WITH_DHCID);
+
+    std::string its_no_check_without_dhcid(base_json + ",\"conflict-resolution-mode\": \"no-check-without-dhcid\"}");
+    ASSERT_NO_THROW_LOG(ncr = NameChangeRequest::fromJSON(its_no_check_without_dhcid));
+    ASSERT_TRUE(ncr);
+    EXPECT_EQ(ncr->getConflictResolutionMode(), NO_CHECK_WITHOUT_DHCID);
+
+    std::string its_missing(base_json + "}");
+    ASSERT_NO_THROW_LOG(ncr = NameChangeRequest::fromJSON(its_missing));
+    ASSERT_TRUE(ncr);
+    EXPECT_EQ(ncr->getConflictResolutionMode(), CHECK_WITH_DHCID);
 }
 
 } // end of anonymous namespace

@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -32,10 +32,19 @@ class CfgConsistency : public isc::data::UserContext, public isc::data::CfgToEle
         LEASE_CHECK_DEL       // Delete leases with invalid subnet-id.
     };
 
+    /// @brief Values for extended info sanity checks done for leases.
+    enum ExtendedInfoSanity {
+        EXTENDED_INFO_CHECK_NONE, // Skip sanity checks.
+        EXTENDED_INFO_CHECK_FIX, // Fix extended info common inconsistencies.
+        EXTENDED_INFO_CHECK_STRICT, // Fix extended info inconsistencies which
+                                    // have an impact for Bulk Lease Query.
+        EXTENDED_INFO_CHECK_PEDANTIC // Fix all extended info inconsistencies.
+    };
+
     /// @brief Constructor
     CfgConsistency()
-        : lease_sanity_check_(LEASE_CHECK_NONE) {
-
+        : lease_sanity_check_(LEASE_CHECK_NONE),
+          extended_info_sanity_check_(EXTENDED_INFO_CHECK_FIX) {
     }
 
     /// @brief Returns JSON representation
@@ -57,21 +66,46 @@ class CfgConsistency : public isc::data::UserContext, public isc::data::CfgToEle
         return (lease_sanity_check_);
     }
 
-    /// @brief Converts sanity check value to printable text
+    /// @brief Converts lease sanity check value to printable text.
     ///
     /// @param check_type sanity mode to be converted
     static std::string sanityCheckToText(LeaseSanity check_type);
 
+    /// @brief Sets specific sanity checks mode for extended info.
+    ///
+    /// @param l sanity checks mode
+    void setExtendedInfoSanityCheck(ExtendedInfoSanity l) {
+        extended_info_sanity_check_ = l;
+    }
+
+    /// @brief Returns specific sanity checks mode for extended info.
+    ///
+    /// @return sanity checks mode
+    ExtendedInfoSanity getExtendedInfoSanityCheck() const {
+        return (extended_info_sanity_check_);
+    }
+
+    /// @brief Converts extended info sanity check value to printable text.
+    ///
+    /// @param check_type sanity mode to be converted
+    static std::string sanityCheckToText(ExtendedInfoSanity check_type);
+
  private:
 
-    /// @brief sanity checks mode
+    /// @brief lease sanity checks mode.
     LeaseSanity lease_sanity_check_;
+
+    /// @brief extended info sanity checks mode.
+    ExtendedInfoSanity extended_info_sanity_check_;
 };
 
 /// @brief Type used to for pointing to CfgConsistency structure
 typedef boost::shared_ptr<CfgConsistency> CfgConsistencyPtr;
 
-}; // namespace isc::dhcp
-}; // namespace isc
+/// @brief Type used to for pointing to const CfgConsistency structure
+typedef boost::shared_ptr<const CfgConsistency> ConstCfgConsistencyPtr;
+
+} // namespace isc::dhcp
+} // namespace isc
 
 #endif /* CFG_CONSISTENCY_H */

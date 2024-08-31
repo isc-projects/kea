@@ -1,4 +1,4 @@
-// Copyright (C) 2019,2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,7 +8,7 @@
 #include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <dhcp/option_string.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/tests/dhcp6_message_test.h>
 #include <dhcpsrv/utils.h>
@@ -38,6 +38,7 @@ const char* TEE_CONFIGS[] = {
     "   \"subnet6\": [ { \n"
     "       \"interface\": \"eth0\", \n"
     "       \"subnet\": \"2001:db8:1::/48\", \n"
+    "       \"id\": 1, \n"
     "       \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], \n"
     "       \"pd-pools\": [ \n"
     "       { \n"
@@ -54,6 +55,7 @@ const char* TEE_CONFIGS[] = {
     "   \"subnet6\": [ { \n"
     "       \"interface\": \"eth0\", \n"
     "       \"subnet\": \"2001:db8:1::/48\", \n"
+    "       \"id\": 1, \n"
     "       \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], \n"
     "       \"pd-pools\": [ \n"
     "       { \n"
@@ -72,6 +74,7 @@ const char* TEE_CONFIGS[] = {
     "   \"subnet6\": [ { \n"
     "       \"interface\": \"eth0\", \n"
     "       \"subnet\": \"2001:db8:1::/48\", \n"
+    "       \"id\": 1, \n"
     "       \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], \n"
     "       \"pd-pools\": [ \n"
     "       { \n"

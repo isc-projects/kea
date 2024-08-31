@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,7 +9,7 @@
 #include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <dhcp/dhcp4.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
@@ -48,10 +48,52 @@ const char* DECLINE_CONFIGS[] = {
         "        \"data\": \"10.0.0.200,10.0.0.201\""
         "    } ]"
         " } ]"
-    "}"
+    "}",
+// Configuration 1 - only use when mysql is enabled
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"lease-database\": {"
+            "\"type\": \"mysql\","
+            "\"name\": \"keatest\","
+            "\"user\": \"keatest\","
+            "\"password\": \"keatest\""
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"10.0.0.0/24\", "
+        "    \"id\": 1,"
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
+        "    \"option-data\": [ {"
+        "        \"name\": \"routers\","
+        "        \"data\": \"10.0.0.200,10.0.0.201\""
+        "    } ]"
+        " } ]"
+    "}",
+// Configuration 2 - only use when pgsql is enabled
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"lease-database\": {"
+            "\"type\": \"postgresql\","
+            "\"name\": \"keatest\","
+            "\"user\": \"keatest\","
+            "\"password\": \"keatest\""
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"10.0.0.0/24\", "
+        "    \"id\": 1,"
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
+        "    \"option-data\": [ {"
+        "        \"name\": \"routers\","
+        "        \"data\": \"10.0.0.200,10.0.0.201\""
+        "    } ]"
+        " } ]"
+    "}",
 };
 
-};
+}
 
 namespace isc {
 namespace dhcp {
@@ -83,7 +125,8 @@ Dhcpv4SrvTest::acquireAndDecline(Dhcp4Client& client,
                                  const std::string& client_id_1,
                                  const std::string& hw_address_2,
                                  const std::string& client_id_2,
-                                 ExpectedResult expected_result) {
+                                 ExpectedResult expected_result,
+                                 uint8_t config_index) {
 
     // Set this global statistic explicitly to zero.
     isc::stats::StatsMgr::instance().setValue("declined-addresses",
@@ -93,7 +136,7 @@ Dhcpv4SrvTest::acquireAndDecline(Dhcp4Client& client,
     CfgMgr::instance().clear();
 
     // Configure DHCP server.
-    configure(DECLINE_CONFIGS[0], *client.getServer());
+    configure(DECLINE_CONFIGS[config_index], *client.getServer());
     // Explicitly set the client id.
     client.includeClientId(client_id_1);
     // Explicitly set the HW address.
@@ -147,27 +190,39 @@ Dhcpv4SrvTest::acquireAndDecline(Dhcp4Client& client,
     // We check if the decline process was successful by checking if the
     // lease is in the database and what is its state.
     if (expected_result == SHOULD_PASS) {
-        EXPECT_EQ(Lease::STATE_DECLINED, lease->state_);
+        ASSERT_EQ(Lease::STATE_DECLINED, lease->state_);
+
+        ASSERT_TRUE(lease->hwaddr_);
+        ASSERT_TRUE(lease->hwaddr_->hwaddr_.empty());
+        ASSERT_FALSE(lease->client_id_);
+        ASSERT_TRUE(lease->hostname_.empty());
+        ASSERT_FALSE(lease->fqdn_fwd_);
+        ASSERT_FALSE(lease->fqdn_rev_);
 
         // The decline succeeded, so the declined-addresses statistic should
         // be increased by one
-        EXPECT_EQ(after, before + 1);
-
-        EXPECT_EQ(after_global, before_global + 1);
+        ASSERT_EQ(after, before + 1);
+        ASSERT_EQ(after_global, before_global + 1);
     } else {
         // the decline was supposed, to be rejected.
-        EXPECT_EQ(Lease::STATE_DEFAULT, lease->state_);
+        ASSERT_EQ(Lease::STATE_DEFAULT, lease->state_);
+
+        ASSERT_TRUE(lease->hwaddr_);
+        ASSERT_FALSE(lease->hwaddr_->hwaddr_.empty());
+        ASSERT_TRUE(lease->client_id_);
+        ASSERT_FALSE(lease->fqdn_fwd_);
+        ASSERT_FALSE(lease->fqdn_rev_);
 
         // The decline failed, so the declined-addresses should be the same
         // as before
-        EXPECT_EQ(before, after);
-        EXPECT_EQ(before_global, after_global);
+        ASSERT_EQ(before, after);
+        ASSERT_EQ(before_global, after_global);
     }
 }
 
-}; // end of isc::dhcp::test namespace
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+} // end of isc::dhcp::test namespace
+} // end of isc::dhcp namespace
+} // end of isc namespace
 
 namespace {
 
@@ -192,12 +247,32 @@ public:
 };
 
 // This test checks that the client can acquire and decline the lease.
-TEST_F(DeclineTest, declineNoIdentifierChange) {
+TEST_F(DeclineTest, declineNoIdentifierChangeMemfile) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
     acquireAndDecline(client, "01:02:03:04:05:06", "12:14",
                       "01:02:03:04:05:06", "12:14",
                       SHOULD_PASS);
 }
+
+#ifdef HAVE_MYSQL
+// This test checks that the client can acquire and decline the lease.
+TEST_F(DeclineTest, declineNoIdentifierChangeMySQL) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    acquireAndDecline(client, "01:02:03:04:05:06", "12:14",
+                      "01:02:03:04:05:06", "12:14",
+                      SHOULD_PASS, 1);
+}
+#endif
+
+#ifdef HAVE_PGSQL
+// This test checks that the client can acquire and decline the lease.
+TEST_F(DeclineTest, declineNoIdentifierChangePgSQL) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    acquireAndDecline(client, "01:02:03:04:05:06", "12:14",
+                      "01:02:03:04:05:06", "12:14",
+                      SHOULD_PASS, 2);
+}
+#endif
 
 // This test verifies the decline correctness in the following case:
 // - Client acquires new lease using HW address only
@@ -289,4 +364,4 @@ TEST_F(DeclineTest, declineNonMatchingIPAddress) {
     EXPECT_EQ(Lease::STATE_DEFAULT, lease->state_);
 }
 
-}; // end of anonymous namespace
+} // end of anonymous namespace

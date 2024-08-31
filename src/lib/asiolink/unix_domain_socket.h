@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -41,7 +41,7 @@ public:
     ///
     /// @param io_service Reference to IOService to be used by this
     /// class.
-    explicit UnixDomainSocket(IOService& io_service);
+    explicit UnixDomainSocket(const IOServicePtr& io_service);
 
     /// @brief Returns native socket representation.
     virtual int getNative() const;

@@ -1,5 +1,5 @@
 ..
-   Copyright (C) 2019-2021 Internet Systems Consortium, Inc. ("ISC")
+   Copyright (C) 2019-2024 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
    See the COPYRIGHT file distributed with this work for additional
    information regarding copyright ownership.
 
+.. iscman:: kea-dhcp-ddns
 
 ``kea-dhcp-ddns`` - DHCP-DDNS process in Kea
 --------------------------------------------
@@ -30,10 +31,10 @@ Arguments
 The arguments are as follows:
 
 ``-v``
-   Displays the version.
+   Displays the Kea version.
 
 ``-V``
-   Displays the extended version.
+   Displays the extended Kea version.
 
 ``-W``
    Displays the configuration report.

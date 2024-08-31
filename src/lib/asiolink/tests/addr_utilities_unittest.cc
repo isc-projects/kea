@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,16 +8,18 @@
 
 #include <asiolink/addr_utilities.h>
 #include <exceptions/exceptions.h>
+#include <util/bigints.h>
 
 #include <gtest/gtest.h>
 
+#include <cstdint>
+#include <cstdlib>
+#include <limits>
 #include <vector>
-
-#include <stdint.h>
-#include <stdlib.h>
 
 using namespace std;
 using namespace isc::asiolink;
+using namespace isc::util;
 
 namespace {
 
@@ -246,7 +248,7 @@ TEST(AddrUtilitiesTest, addrsInRange6) {
 // Checks if IPv4 address ranges can be converted to prefix / prefix_len
 TEST(AddrUtilitiesTest, prefixLengthFromRange4) {
     // Use a shorter name
-    const auto& plfr = prefixLengthFromRange;
+    auto const& plfr = prefixLengthFromRange;
 
     // Let's start with something simple
     EXPECT_EQ(32, plfr(IOAddress("192.0.2.0"), IOAddress("192.0.2.0")));
@@ -277,7 +279,7 @@ TEST(AddrUtilitiesTest, prefixLengthFromRange4) {
 // Checks if IPv6 address ranges can be converted to prefix / prefix_len
 TEST(AddrUtilitiesTest, prefixLengthFromRange6) {
     // Use a shorter name
-    const auto& plfr = prefixLengthFromRange;
+    auto const& plfr = prefixLengthFromRange;
 
     // Let's start with something simple
     EXPECT_EQ(128, plfr(IOAddress("::"), IOAddress("::")));
@@ -344,27 +346,42 @@ TEST(AddrUtilitiesTest, prefixLengthFromRange6) {
 
 // Checks if prefixInRange returns valid number of prefixes in specified range.
 TEST(AddrUtilitiesTest, prefixesInRange) {
-
     // How many /64 prefixes are in /64 pool?
-    EXPECT_EQ(1, prefixesInRange(64, 64));
+    EXPECT_NO_THROW({
+        EXPECT_EQ(1, prefixesInRange(64, 64));
+    });
 
     // How many /63 prefixes are in /64 pool?
-    EXPECT_EQ(2, prefixesInRange(63, 64));
+    EXPECT_NO_THROW({
+        EXPECT_EQ(2, prefixesInRange(63, 64));
+    });
 
     // How many /64 prefixes are in /48 pool?
-    EXPECT_EQ(65536, prefixesInRange(48, 64));
+    EXPECT_NO_THROW({
+        EXPECT_EQ(65536, prefixesInRange(48, 64));
+    });
 
     // How many /127 prefixes are in /64 pool?
-    EXPECT_EQ(uint64_t(9223372036854775808ull), prefixesInRange(64, 127));
+    EXPECT_NO_THROW({
+        EXPECT_EQ(uint64_t(9223372036854775808ull), prefixesInRange(64, 127));
+    });
 
     // How many /128 prefixes are in /64 pool?
-    EXPECT_EQ(std::numeric_limits<uint64_t>::max(),
-              prefixesInRange(64, 128));
+    EXPECT_NO_THROW({
+        EXPECT_EQ(uint128_t(1) << 64, prefixesInRange(64, 128));
+    });
 
-    // Let's go overboard again. How many IPv6 addresses are there?
-    EXPECT_EQ(std::numeric_limits<uint64_t>::max(),
-              prefixesInRange(0, 128));
+    // Let's go overboard again. How many IPv6 addresses are there in a /1?
+    EXPECT_NO_THROW({
+        EXPECT_EQ(uint128_t(1) << 127, prefixesInRange(1, 128));
+    });
 
+    // Let's go overboard again. How many IPv6 addresses are there? The result is
+    // one off from the real value, but it's preferred rather than having an
+    // overflow_error thrown.
+    EXPECT_NO_THROW({
+        EXPECT_EQ(numeric_limits<uint128_t>::max(), prefixesInRange(0, 128));
+    });
 }
 
 // Checks the function which finds an IPv4 address from input address and offset.
@@ -383,4 +400,4 @@ TEST(AddrUtilitiesTest, offsetIPv6Address) {
     EXPECT_EQ("3000::1c", offsetAddress(IOAddress("3000::15"), 7).toText());
 }
 
-}; // end of anonymous namespace
+} // end of anonymous namespace

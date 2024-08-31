@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,12 +12,11 @@
 #include <dhcp/option.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/pkt_filter.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp/tests/pkt_filter6_test_utils.h>
 #include <dhcp/tests/packet_queue_testutils.h>
 #include <testutils/gtest_utils.h>
 
-#include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
@@ -145,6 +144,10 @@ public:
         return (false);
     }
 
+    virtual bool isSocketReceivedTimeSupported() const {
+        return (false);
+    }
+
     /// @brief Pretend to open a socket.
     ///
     /// This function doesn't open a real socket. It always returns the
@@ -167,11 +170,10 @@ public:
         // Check if there is any other socket bound to the specified address
         // and port on this interface.
         const Iface::SocketCollection& sockets = iface.getSockets();
-        for (Iface::SocketCollection::const_iterator socket = sockets.begin();
-             socket != sockets.end(); ++socket) {
-            if (((socket->addr_ == addr) ||
-                 ((socket->addr_ == IOAddress("::")) && join_multicast)) &&
-                socket->port_ == port) {
+        for (auto const& socket : sockets) {
+            if (((socket.addr_ == addr) ||
+                 ((socket.addr_ == IOAddress("::")) && join_multicast)) &&
+                socket.port_ == port) {
                 isc_throw(SocketConfigError, "test socket bind error");
             }
         }
@@ -271,7 +273,7 @@ public:
     /// @param ifindex An index of the interface to be created.
     ///
     /// @return An object representing interface.
-    static IfacePtr createIface(const std::string& name, const int ifindex) {
+    static IfacePtr createIface(const std::string& name, const unsigned int ifindex) {
         IfacePtr iface(new Iface(name, ifindex));
         if (name == "lo") {
             iface->flag_loopback_ = true;
@@ -308,14 +310,13 @@ public:
             return (false);
         }
         const Iface::SocketCollection& sockets = iface->getSockets();
-        for (Iface::SocketCollection::const_iterator sock = sockets.begin();
-             sock != sockets.end(); ++sock) {
-            if (sock->addr_ == IOAddress(addr)) {
+        for (auto const& sock : sockets) {
+            if (sock.addr_ == IOAddress(addr)) {
                 return (true);
 
-            } else if ((sock->addr_ == IOAddress("::")) &&
+            } else if ((sock.addr_ == IOAddress("::")) &&
                        (IOAddress(addr).isV6LinkLocal())) {
-                BOOST_FOREACH(Iface::Address a, iface->getAddresses()) {
+                for (auto const& a : iface->getAddresses()) {
                     if (a.get() == IOAddress(addr)) {
                         return (true);
                     }
@@ -336,7 +337,7 @@ public:
                        const bool up, const bool running,
                        const bool inactive4,
                        const bool inactive6) {
-        for (IfacePtr iface : ifaces_) {
+        for (auto const& iface : ifaces_) {
             if (iface->getName() == name) {
                 iface->flag_loopback_ = loopback;
                 iface->flag_up_ = up;
@@ -410,10 +411,9 @@ public:
         // Loop through sockets and try to find the ones which match the
         // specified type.
         int sockets_count = 0;
-        for (Iface::SocketCollection::const_iterator sock = sockets.begin();
-             sock != sockets.end(); ++sock) {
+        for (auto const& sock : sockets) {
             // Match found, increase the counter.
-            if (sock->family_ == family) {
+            if (sock.family_ == family) {
                 ++sockets_count;
             }
         }
@@ -432,10 +432,9 @@ public:
     const isc::dhcp::SocketInfo*
     getSocketByAddr(const isc::dhcp::Iface::SocketCollection& sockets,
                     const IOAddress& addr) {
-        for (isc::dhcp::Iface::SocketCollection::const_iterator s =
-                 sockets.begin(); s != sockets.end(); ++s) {
-            if (s->addr_ == addr) {
-                return (&(*s));
+        for (auto const& s : sockets) {
+            if (s.addr_ == addr) {
+                return (&s);
             }
         }
         return (NULL);
@@ -702,19 +701,22 @@ public:
         // Create first pipe and register it as extra socket
         int pipefd[2];
         EXPECT_TRUE(pipe(pipefd) == 0);
+        ASSERT_FALSE(ifacemgr->isExternalSocket(pipefd[0]));
         EXPECT_NO_THROW(ifacemgr->addExternalSocket(pipefd[0],
                         [&callback_ok, &pipefd](int fd) {
                             callback_ok = (pipefd[0] == fd);
                         }));
-
+        ASSERT_TRUE(ifacemgr->isExternalSocket(pipefd[0]));
 
         // Let's create a second pipe and register it as well
         int secondpipe[2];
         EXPECT_TRUE(pipe(secondpipe) == 0);
+        ASSERT_FALSE(ifacemgr->isExternalSocket(secondpipe[0]));
         EXPECT_NO_THROW(ifacemgr->addExternalSocket(secondpipe[0],
                         [&callback2_ok, &secondpipe](int fd) {
                             callback2_ok = (secondpipe[0] == fd);
                         }));
+        ASSERT_TRUE(ifacemgr->isExternalSocket(secondpipe[0]));
 
         // Verify a call with no data and normal external sockets works ok.
         Pkt4Ptr pkt4;
@@ -789,19 +791,22 @@ public:
         // Create first pipe and register it as extra socket
         int pipefd[2];
         EXPECT_TRUE(pipe(pipefd) == 0);
+        ASSERT_FALSE(ifacemgr->isExternalSocket(pipefd[0]));
         EXPECT_NO_THROW(ifacemgr->addExternalSocket(pipefd[0],
                         [&callback_ok, &pipefd](int fd) {
                             callback_ok = (pipefd[0] == fd);
                         }));
-
+        ASSERT_TRUE(ifacemgr->isExternalSocket(pipefd[0]));
 
         // Let's create a second pipe and register it as well
         int secondpipe[2];
         EXPECT_TRUE(pipe(secondpipe) == 0);
+        ASSERT_FALSE(ifacemgr->isExternalSocket(secondpipe[0]));
         EXPECT_NO_THROW(ifacemgr->addExternalSocket(secondpipe[0],
                         [&callback2_ok, &secondpipe](int fd) {
                             callback2_ok = (secondpipe[0] == fd);
                         }));
+        ASSERT_TRUE(ifacemgr->isExternalSocket(secondpipe[0]));
 
         // Verify a call with no data and normal external sockets works ok.
         Pkt6Ptr pkt6;
@@ -941,6 +946,46 @@ TEST_F(IfaceMgrTest, ifaceClass) {
     EXPECT_EQ(66666, iface->getIndex());
 }
 
+// This test checks the getIface by index method.
+TEST_F(IfaceMgrTest, getIfaceByIndex) {
+    NakedIfaceMgr ifacemgr;
+
+    // Create a set of fake interfaces. At the same time, remove the actual
+    // interfaces that have been detected by the IfaceMgr.
+    ifacemgr.createIfaces();
+
+    // Getting an unset index should throw.
+    EXPECT_THROW_MSG(ifacemgr.getIface(UNSET_IFINDEX), BadValue, "interface index was not set");
+
+    // Historically -1 was used as an unset value. Let's also check that it throws in case we didn't
+    // migrate all code to UNSET_IFINDEX and in case the values diverge.
+    EXPECT_THROW_MSG(ifacemgr.getIface(-1), BadValue, "interface index was not set");
+
+    // Get the first interface defined.
+    IfacePtr iface(ifacemgr.getIface(0));
+    ASSERT_TRUE(iface);
+    EXPECT_EQ("lo", iface->getName());
+
+    // Attemt to get an undefined interface.
+    iface = ifacemgr.getIface(3);
+    EXPECT_FALSE(iface);
+
+    // Check that we can go past INT_MAX.
+    unsigned int int_max(numeric_limits<int>::max());
+    iface = ifacemgr.getIface(int_max);
+    EXPECT_FALSE(iface);
+    iface = ifacemgr.createIface("wlan0", int_max);
+    ifacemgr.addInterface(iface);
+    iface = ifacemgr.getIface(int_max);
+    EXPECT_TRUE(iface);
+    iface = ifacemgr.getIface(int_max + 1);
+    EXPECT_FALSE(iface);
+    iface = ifacemgr.createIface("wlan1", int_max + 1);
+    ifacemgr.addInterface(iface);
+    iface = ifacemgr.getIface(int_max + 1);
+    EXPECT_TRUE(iface);
+}
+
 // This test checks the getIface by packet method.
 TEST_F(IfaceMgrTest, getIfaceByPkt) {
     NakedIfaceMgr ifacemgr;
@@ -991,9 +1036,9 @@ TEST_F(IfaceMgrTest, getIfaceByPkt) {
     EXPECT_FALSE(pkt6->indexSet());
 
     // Test that you can also reset the index via setIndex().
-    pkt4->setIndex(-1);
+    pkt4->setIndex(UNSET_IFINDEX);
     EXPECT_FALSE(pkt4->indexSet());
-    pkt6->setIndex(-1);
+    pkt6->setIndex(UNSET_IFINDEX);
     EXPECT_FALSE(pkt6->indexSet());
 }
 
@@ -1075,7 +1120,7 @@ TEST_F(IfaceMgrTest, getIface) {
 
     cout << "There are " << ifacemgr->getIfacesLst().size()
          << " interfaces." << endl;
-    for (IfacePtr iface : ifacemgr->getIfacesLst()) {
+    for (auto const& iface : ifacemgr->getIfacesLst()) {
         cout << "  " << iface->getFullName() << endl;
     }
 
@@ -2805,8 +2850,7 @@ checkIfAddrs(const Iface & iface, struct ifaddrs *& ifptr) {
             isc_throw(Unexpected, "Cannot set SIOCGIFHWADDR flag");
         }
 
-        const uint8_t * p =
-            reinterpret_cast<uint8_t *>(ifr.ifr_ifru.ifru_hwaddr.sa_data);
+        p = reinterpret_cast<uint8_t *>(ifr.ifr_ifru.ifru_hwaddr.sa_data);
 
         close(s);
 
@@ -2848,7 +2892,7 @@ checkIfAddrs(const Iface & iface, struct ifaddrs *& ifptr) {
 
             IOAddress addrv4 = IOAddress::fromBytes(AF_INET, p);
 
-            BOOST_FOREACH(Iface::Address a, iface.getAddresses()) {
+            for (auto const& a :iface.getAddresses()) {
                 if(a.get().isV4() && (a.get()) == addrv4) {
                     return (true);
                 }
@@ -2863,7 +2907,7 @@ checkIfAddrs(const Iface & iface, struct ifaddrs *& ifptr) {
 
             IOAddress addrv6 = IOAddress::fromBytes(AF_INET6, p);
 
-            BOOST_FOREACH(Iface::Address a, iface.getAddresses()) {
+            for (auto const&  a : iface.getAddresses()) {
                 if (a.get().isV6() && (a.get() == addrv6)) {
                     return (true);
                 }

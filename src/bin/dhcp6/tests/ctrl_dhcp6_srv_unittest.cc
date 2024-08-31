@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,8 +9,11 @@
 #include <asiolink/io_address.h>
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
+#include <config/timeouts.h>
 #include <dhcp/libdhcp++.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
@@ -30,6 +33,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
+#include <fstream>
 #include <iomanip>
 #include <sstream>
 #include <thread>
@@ -84,7 +88,7 @@ private:
 class NakedControlledDhcpv6Srv: public ControlledDhcpv6Srv {
     // "Naked" DHCPv6 server, exposes internal fields
 public:
-    NakedControlledDhcpv6Srv():ControlledDhcpv6Srv(DHCP6_SERVER_PORT + 10000) {
+    NakedControlledDhcpv6Srv() : ControlledDhcpv6Srv(DHCP6_SERVER_PORT + 10000) {
         CfgMgr::instance().setFamily(AF_INET6);
     }
 
@@ -110,8 +114,7 @@ public:
         CommandMgr::instance().setConnectionTimeout(DEFAULT_CONNECTION_TIMEOUT);
 
         reset();
-    };
-
+    }
 
     /// @brief Reset hooks data
     ///
@@ -137,13 +140,16 @@ public:
     /// @brief Path to the UNIX socket being used to communicate with the server
     std::string socket_path_;
 
+    /// @brief List of interfaces (defaults to "*").
+    std::string interfaces_;
+
     /// @brief Pointer to the tested server object
     boost::shared_ptr<NakedControlledDhcpv6Srv> server_;
 
     /// @brief Default constructor
     ///
     /// Sets socket path to its default value.
-    CtrlChannelDhcpv6SrvTest() {
+    CtrlChannelDhcpv6SrvTest() : interfaces_("\"*\"") {
         const char* env = getenv("KEA_SOCKET_TEST_DIR");
         if (env) {
             socket_path_ = string(env) + "/kea6.sock";
@@ -151,15 +157,29 @@ public:
             socket_path_ = sandbox.join("/kea6.sock");
         }
         reset();
-        MultiThreadingMgr::instance().setMode(false);
+        IfaceMgr::instance().setTestMode(false);
+        IfaceMgr::instance().setDetectCallback(std::bind(&IfaceMgr::checkDetectIfaces,
+                                               IfaceMgr::instancePtr().get(), ph::_1));
     }
 
     /// @brief Destructor
     ~CtrlChannelDhcpv6SrvTest() {
+        LeaseMgrFactory::destroy();
+        StatsMgr::instance().removeAll();
+
+        CommandMgr::instance().closeCommandSocket();
+        CommandMgr::instance().deregisterAll();
+        CommandMgr::instance().setConnectionTimeout(TIMEOUT_DHCP_SERVER_RECEIVE_COMMAND);
+
         server_.reset();
         reset();
-        MultiThreadingMgr::instance().setMode(false);
-    };
+        IfaceMgr::instance().setTestMode(false);
+        IfaceMgr::instance().setDetectCallback(std::bind(&IfaceMgr::checkDetectIfaces,
+                                               IfaceMgr::instancePtr().get(), ph::_1));
+        IfaceMgr::instance().clearIfaces();
+        IfaceMgr::instance().closeSockets();
+        IfaceMgr::instance().detectIfaces();
+    }
 
     /// @brief Returns pointer to the server's IO service.
     ///
@@ -177,7 +197,9 @@ public:
         std::string header =
             "{"
             "    \"interfaces-config\": {"
-            "        \"interfaces\": [ \"*\" ]"
+            "        \"interfaces\": [";
+
+        std::string body = "]"
             "    },"
             "    \"expired-leases-processing\": {"
             "         \"reclaim-timer-wait-time\": 60,"
@@ -205,8 +227,7 @@ public:
 
         // Fill in the socket-name value with socket_path_  to
         // make the actual configuration text.
-        std::string config_txt = header + socket_path_  + footer;
-
+        std::string config_txt = header + interfaces_ + body + socket_path_  + footer;
         ASSERT_NO_THROW(server_.reset(new NakedControlledDhcpv6Srv()));
 
         ConstElementPtr config;
@@ -241,7 +262,7 @@ public:
     }
 
     /// @brief Reset
-    void reset() {
+    void reset() override {
         CtrlDhcpv6SrvTest::reset();
 
         // Remove unix socket file
@@ -252,9 +273,9 @@ public:
     ///
     /// This method connects to the given server over the given socket path.
     /// If successful, it then sends the given command and retrieves the
-    /// server's response.  Note that it calls the server's receivePacket()
-    /// method where needed to cause the server to process IO events on
-    /// control channel the control channel sockets.
+    /// server's response.  Note that it polls the server's I/O service
+    /// where needed to cause the server to process IO events on
+    /// the control channel sockets.
     ///
     /// @param command the command text to execute in JSON form
     /// @param response variable into which the received response should be
@@ -316,12 +337,13 @@ public:
         EXPECT_EQ(1, cnt) << "Command " << command << " not found";
     }
 
-    /// @brief Check if the answer for write-config command is correct
+    /// @brief Check if the answer for config-write command is correct.
     ///
-    /// @param response_txt response in text form (as read from the control socket)
+    /// @param response_txt response in text form (as read from
+    /// the control socket)
     /// @param exp_status expected status (0 success, 1 failure)
     /// @param exp_txt for success cases this defines the expected filename,
-    ///                for failure cases this defines the expected error message
+    /// for failure cases this defines the expected error message.
     void checkConfigWrite(const std::string& response_txt, int exp_status,
                           const std::string& exp_txt = "") {
 
@@ -398,7 +420,7 @@ public:
         // both structures are built using the same order.
         EXPECT_EQ(Element::fromJSON(expected_command)->str(),
                   entire_command->str());
-        return (createAnswer(0, "long command received ok"));
+        return (createAnswer(CONTROL_RESULT_SUCCESS, "long command received ok"));
     }
 
     /// @brief Command handler which generates long response
@@ -414,7 +436,7 @@ public:
             s << std::setw(5) << i;
             arguments->add(Element::create(s.str()));
         }
-        return (createAnswer(0, arguments));
+        return (createAnswer(CONTROL_RESULT_SUCCESS, arguments));
     }
 };
 
@@ -430,12 +452,12 @@ TEST_F(CtrlDhcpv6SrvTest, commands) {
     int rcode = -1;
 
     // Case 1: send bogus command
-    ConstElementPtr result = ControlledDhcpv6Srv::processCommand("blah", params);
+    ConstElementPtr result = CommandMgr::instance().processCommand(createCommand("blah", params));
     ConstElementPtr comment = parseAnswer(rcode, result);
-    EXPECT_EQ(1, rcode); // expect failure (no such command as blah)
+    EXPECT_EQ(2, rcode); // expect failure (no such command as blah)
 
     // Case 2: send shutdown command without any parameters
-    result = ControlledDhcpv6Srv::processCommand("shutdown", params);
+    result = CommandMgr::instance().processCommand(createCommand("shutdown", params));
     comment = parseAnswer(rcode, result);
     EXPECT_EQ(0, rcode); // expect success
 
@@ -443,101 +465,12 @@ TEST_F(CtrlDhcpv6SrvTest, commands) {
     ConstElementPtr x(new isc::data::IntElement(77));
     params->set("exit-value", x);
 
-    result = ControlledDhcpv6Srv::processCommand("shutdown", params);
+    result = CommandMgr::instance().processCommand(createCommand("shutdown", params));
     comment = parseAnswer(rcode, result);
     EXPECT_EQ(0, rcode); // expect success
 
     // Exit value should match.
     EXPECT_EQ(77, srv->getExitValue());
-}
-
-// Check that the "libreload" command will reload libraries
-TEST_F(CtrlChannelDhcpv6SrvTest, libreload) {
-    createUnixChannelServer();
-
-    // Ensure no marker files to start with.
-    ASSERT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
-    ASSERT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
-
-    // Load two libraries
-    HookLibsCollection libraries;
-    libraries.push_back(make_pair(CALLOUT_LIBRARY_1, ConstElementPtr()));
-    libraries.push_back(make_pair(CALLOUT_LIBRARY_2, ConstElementPtr()));
-    HooksManager::loadLibraries(libraries);
-
-    // Check they are loaded.
-    HookLibsCollection loaded_libraries =
-        HooksManager::getLibraryInfo();
-    ASSERT_TRUE(libraries == loaded_libraries);
-
-    // ... which also included checking that the marker file created by the
-    // load functions exists and holds the correct value (of "12" - the
-    // first library appends "1" to the file, the second appends "2"). Also
-    // check that the unload marker file does not yet exist.
-    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "12"));
-    EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
-
-    // Now execute the "libreload" command.  This should cause the libraries
-    // to unload and to reload.
-    std::string response;
-    sendUnixCommand("{ \"command\": \"libreload\" }", response);
-    EXPECT_EQ("{ \"result\": 0, "
-              "\"text\": \"Hooks libraries successfully reloaded.\" }"
-              , response);
-
-    // Check that the libraries have unloaded and reloaded.  The libraries are
-    // unloaded in the reverse order to which they are loaded.  When they load,
-    // they should append information to the loading marker file.
-    EXPECT_TRUE(checkMarkerFile(UNLOAD_MARKER_FILE, "21"));
-    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "1212"));
-}
-
-// Check that the "libreload" command will fail to reload libraries which are
-// not compatible when multi-threading is enabled
-TEST_F(CtrlChannelDhcpv6SrvTest, libreloadFailMultiThreading) {
-    createUnixChannelServer();
-
-    // Ensure no marker files to start with.
-    ASSERT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
-    ASSERT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
-
-    // Load two libraries
-    HookLibsCollection libraries;
-    libraries.push_back(make_pair(CALLOUT_LIBRARY_1, ConstElementPtr()));
-    libraries.push_back(make_pair(CALLOUT_LIBRARY_2, ConstElementPtr()));
-    HooksManager::loadLibraries(libraries);
-
-    // Check they are loaded.
-    HookLibsCollection loaded_libraries =
-        HooksManager::getLibraryInfo();
-    ASSERT_TRUE(libraries == loaded_libraries);
-
-    // ... which also included checking that the marker file created by the
-    // load functions exists and holds the correct value (of "12" - the
-    // first library appends "1" to the file, the second appends "2"). Also
-    // check that the unload marker file does not yet exist.
-    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "12"));
-    EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
-
-    // Enable multi-threading before libreload command which should now fail
-    // as the second library is not multi-threading compatible.
-    MultiThreadingMgr::instance().setMode(true);
-
-    // Now execute the "libreload" command.  This should cause the libraries
-    // to unload and to reload.
-    std::string response;
-    sendUnixCommand("{ \"command\": \"libreload\" }", response);
-    EXPECT_EQ("{ \"result\": 1, "
-              "\"text\": \"Failed to reload hooks libraries.\" }"
-              , response);
-
-    // Check that the libraries have unloaded and failed to reload.  The
-    // libraries are unloaded in the reverse order to which they are loaded.
-    // When they load, they should append information to the loading marker
-    // file.  Failing to load the second library will also unload the first
-    // library.
-    EXPECT_TRUE(checkMarkerFile(UNLOAD_MARKER_FILE, "211"));
-    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "121"));
 }
 
 typedef std::map<std::string, isc::data::ConstElementPtr> ElementMap;
@@ -571,10 +504,10 @@ TEST_F(CtrlDhcpv6SrvTest, commandsRegistration) {
     EXPECT_TRUE(command_list.find("\"build-report\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"config-backend-pull\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"config-get\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"config-hash-get\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"config-set\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"config-write\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"leases-reclaim\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"libreload\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"server-tag-get\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"shutdown\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-get\"") != string::npos);
@@ -655,13 +588,13 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configSet) {
         "        },"
         "        \"subnet6\": [ \n";
     string subnet1 =
-        "               {\"subnet\": \"3002::/64\", \n"
+        "               {\"subnet\": \"3002::/64\", \"id\": 1, \n"
         "                \"pools\": [{ \"pool\": \"3002::100-3002::200\" }]}\n";
     string subnet2 =
-        "               {\"subnet\": \"3003::/64\", \n"
+        "               {\"subnet\": \"3003::/64\", \"id\": 2, \n"
         "                \"pools\": [{ \"pool\": \"3003::100-3003::200\" }]}\n";
     string bad_subnet =
-        "               {\"comment\": \"3005::/64\", \n"
+        "               {\"comment\": \"3005::/64\", \"id\": 10, \n"
         "                \"pools\": [{ \"pool\": \"3005::100-3005::200\" }]}\n";
     string subnet_footer =
         "          ] \n";
@@ -697,8 +630,9 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configSet) {
         "       ,\"loggers\": [ { \n"
         "            \"name\": \"kea\", \n"
         "            \"severity\": \"FATAL\", \n"
-        "            \"output_options\": [{ \n"
-        "                \"output\": \"/dev/null\" \n"
+        "            \"output-options\": [{ \n"
+        "                \"output\": \"/dev/null\", \n"
+        "                \"maxsize\": 0"
         "            }] \n"
         "        }] \n";
 
@@ -723,9 +657,13 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configSet) {
     std::string response;
     sendUnixCommand(os.str(), response);
 
-    // Verify the configuration was successful.
-    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration successful.\" }",
-              response);
+    // Verify the configuration was successful. The config contains random
+    // socket name (/tmp/kea-<value-changing-each-time>/kea6.sock), so the
+    // hash will be different each time. As such, we can do simplified checks:
+    // - verify the "result": 0 is there
+    // - verify the "text": "Configuration successful." is there
+    EXPECT_NE(response.find("\"result\": 0"), std::string::npos);
+    EXPECT_NE(response.find("\"text\": \"Configuration successful.\""), std::string::npos);
 
     // Check that the config was indeed applied.
     const Subnet6Collection* subnets =
@@ -788,8 +726,13 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configSet) {
     EXPECT_FALSE(fileExists(socket_path_));
 
     // With no command channel, should still receive the response.
-    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration successful.\" }",
-              response);
+    // The config contains random socket name
+    // (/tmp/kea-<value-changing-each-time>/kea6.sock), so the hash will
+    // be different each time. As such, we can do simplified checks:
+    // - verify the "result": 0 is there
+    // - verify the "text": "Configuration successful." is there
+    EXPECT_NE(response.find("\"result\": 0"), std::string::npos);
+    EXPECT_NE(response.find("\"text\": \"Configuration successful.\""), std::string::npos);
 
     // Check that the config was not lost
     subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
@@ -824,6 +767,37 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configGet) {
     EXPECT_TRUE(cfg->get("Dhcp6")->get("loggers"));
 }
 
+// Tests if the server returns the hash of its configuration using
+// config-hash-get.
+TEST_F(CtrlChannelDhcpv6SrvTest, configHashGet) {
+    createUnixChannelServer();
+    std::string response;
+
+    sendUnixCommand("{ \"command\": \"config-hash-get\" }", response);
+    ConstElementPtr rsp;
+
+    // The response should be a valid JSON.
+    EXPECT_NO_THROW(rsp = Element::fromJSON(response));
+    ASSERT_TRUE(rsp);
+
+    int status;
+    ConstElementPtr args = parseAnswer(status, rsp);
+    EXPECT_EQ(CONTROL_RESULT_SUCCESS, status);
+    // The parseAnswer is trying to be smart with ignoring hash.
+    // But this time we really want to see the hash, so we'll retrieve
+    // the arguments manually.
+    args = rsp->get(CONTROL_ARGUMENTS);
+
+    // Ok, now roughly check if the response seems legit.
+    ASSERT_TRUE(args);
+    ASSERT_EQ(Element::map, args->getType());
+    ConstElementPtr hash = args->get("hash");
+    ASSERT_TRUE(hash);
+    ASSERT_EQ(Element::string, hash->getType());
+    // SHA-256 -> 64 hex digits.
+    EXPECT_EQ(64, hash->stringValue().size());
+}
+
 // Verify that the "config-test" command will do what we expect.
 TEST_F(CtrlChannelDhcpv6SrvTest, configTest) {
     createUnixChannelServer();
@@ -854,13 +828,13 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configTest) {
         "        },"
         "        \"subnet6\": [ \n";
     string subnet1 =
-        "               {\"subnet\": \"3002::/64\", \n"
+        "               {\"subnet\": \"3002::/64\", \"id\": 1, \n"
         "                \"pools\": [{ \"pool\": \"3002::100-3002::200\" }]}\n";
     string subnet2 =
-        "               {\"subnet\": \"3003::/64\", \n"
+        "               {\"subnet\": \"3003::/64\", \"id\": 2, \n"
         "                \"pools\": [{ \"pool\": \"3003::100-3003::200\" }]}\n";
     string bad_subnet =
-        "               {\"comment\": \"3005::/64\", \n"
+        "               {\"comment\": \"3005::/64\", \"id\": 10, \n"
         "                \"pools\": [{ \"pool\": \"3005::100-3005::200\" }]}\n";
     string subnet_footer =
         "          ] \n";
@@ -874,8 +848,9 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configTest) {
         "       ,\"loggers\": [ { \n"
         "            \"name\": \"kea\", \n"
         "            \"severity\": \"FATAL\", \n"
-        "            \"output_options\": [{ \n"
-        "                \"output\": \"/dev/null\" \n"
+        "            \"output-options\": [{ \n"
+        "                \"output\": \"/dev/null\", \n"
+        "                \"maxsize\": 0"
         "            }] \n"
         "        }] \n";
 
@@ -898,9 +873,13 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configTest) {
     std::string response;
     sendUnixCommand(os.str(), response);
 
-    // Verify the configuration was successful.
-    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration successful.\" }",
-              response);
+    // Verify the configuration was successful. The config contains random
+    // socket name (/tmp/kea-<value-changing-each-time>/kea6.sock), so the
+    // hash will be different each time. As such, we can do simplified checks:
+    // - verify the "result": 0 is there
+    // - verify the "text": "Configuration successful." is there
+    EXPECT_NE(response.find("\"result\": 0"), std::string::npos);
+    EXPECT_NE(response.find("\"text\": \"Configuration successful.\""), std::string::npos);
 
     // Check that the config was indeed applied.
     const Subnet6Collection* subnets =
@@ -995,7 +974,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, statusGet) {
 
     std::string response_txt;
 
-    // Send the version-get command
+    // Send the status-get command.
     sendUnixCommand("{ \"command\": \"status-get\" }", response_txt);
     ConstElementPtr response;
     ASSERT_NO_THROW(response = Element::fromJSON(response_txt));
@@ -1029,16 +1008,25 @@ TEST_F(CtrlChannelDhcpv6SrvTest, statusGet) {
 
     auto found_multi_threading = arguments->get("multi-threading-enabled");
     ASSERT_TRUE(found_multi_threading);
-    EXPECT_FALSE(found_multi_threading->boolValue());
+    EXPECT_TRUE(found_multi_threading->boolValue());
 
     auto found_thread_count = arguments->get("thread-pool-size");
-    ASSERT_FALSE(found_thread_count);
+    ASSERT_TRUE(found_thread_count);
+    // The default value varies between systems.
+    // Let's just make sure it's a positive value.
+    EXPECT_LE(0, found_thread_count->intValue());
 
     auto found_queue_size = arguments->get("packet-queue-size");
-    ASSERT_FALSE(found_queue_size);
+    ASSERT_TRUE(found_queue_size);
+    EXPECT_EQ(64, found_queue_size->intValue());
 
     auto found_queue_stats = arguments->get("packet-queue-statistics");
-    ASSERT_FALSE(found_queue_stats);
+    ASSERT_TRUE(found_queue_stats);
+    EXPECT_FALSE(found_queue_stats->str().empty());
+
+    auto found_extended_info_tables = arguments->get("extended-info-tables");
+    ASSERT_TRUE(found_extended_info_tables);
+    EXPECT_FALSE(found_extended_info_tables->boolValue());
 
     MultiThreadingMgr::instance().setMode(true);
     MultiThreadingMgr::instance().setThreadPoolSize(4);
@@ -1089,6 +1077,106 @@ TEST_F(CtrlChannelDhcpv6SrvTest, statusGet) {
     ASSERT_TRUE(found_queue_stats);
     ASSERT_EQ(Element::list, found_queue_stats->getType());
     EXPECT_EQ(3, found_queue_stats->size());
+}
+
+// Check that status is returned even if LeaseMgr and HostMgr are not created.
+TEST_F(CtrlChannelDhcpv6SrvTest, noManagers) {
+    // Send the status-get command.
+    createUnixChannelServer();
+    LeaseMgrFactory::destroy();
+    HostMgr::create();
+    string response_text;
+    sendUnixCommand(R"({ "command": "status-get" })", response_text);
+    ConstElementPtr response;
+    ASSERT_NO_THROW(response = Element::fromJSON(response_text));
+    ASSERT_TRUE(response);
+    ASSERT_EQ(Element::map, response->getType());
+    ConstElementPtr result(response->get("result"));
+    ASSERT_TRUE(result);
+    ASSERT_EQ(Element::integer, result->getType());
+    EXPECT_EQ(0, result->intValue());
+    ConstElementPtr arguments(response->get("arguments"));
+    ASSERT_TRUE(arguments);
+    ASSERT_EQ(Element::map, arguments->getType());
+}
+
+// Checks that socket status exists in status-get responses.
+TEST_F(CtrlChannelDhcpv6SrvTest, statusGetSockets) {
+    // Create dummy interfaces to test socket status.
+    isc::dhcp::test::IfaceMgrTestConfig test_config(true);
+
+    // Send the status-get command.
+    createUnixChannelServer();
+    string response_text;
+    sendUnixCommand(R"({ "command": "status-get" })", response_text);
+    ConstElementPtr response;
+    ASSERT_NO_THROW(response = Element::fromJSON(response_text));
+    ASSERT_TRUE(response);
+    ASSERT_EQ(Element::map, response->getType());
+    ConstElementPtr result(response->get("result"));
+    ASSERT_TRUE(result);
+    ASSERT_EQ(Element::integer, result->getType());
+    EXPECT_EQ(0, result->intValue());
+    ConstElementPtr arguments(response->get("arguments"));
+    ASSERT_TRUE(arguments);
+    ASSERT_EQ(Element::map, arguments->getType());
+
+    ConstElementPtr sockets(arguments->get("sockets"));
+    ASSERT_TRUE(sockets);
+    ASSERT_EQ(Element::map, sockets->getType());
+
+    ConstElementPtr status(sockets->get("status"));
+    ASSERT_TRUE(status);
+    ASSERT_EQ(Element::string, status->getType());
+    EXPECT_EQ("ready", status->stringValue());
+
+    ConstElementPtr errors(sockets->get("errors"));
+    ASSERT_FALSE(errors);
+}
+
+// Checks that socket status includes errors in status-get responses.
+TEST_F(CtrlChannelDhcpv6SrvTest, statusGetSocketsErrors) {
+    // Create dummy interfaces to test socket status and add a custom down interface.
+    isc::dhcp::test::IfaceMgrTestConfig test_config(true);
+    test_config.addIface("down_interface", 4);
+    test_config.setIfaceFlags("down_interface", FlagLoopback(false), FlagUp(false),
+                              FlagRunning(true), FlagInactive4(false),
+                              FlagInactive6(false));
+
+    // Send the status-get command.
+    createUnixChannelServer();
+    string response_text;
+    sendUnixCommand(R"({ "command": "status-get" })", response_text);
+    ConstElementPtr response;
+    ASSERT_NO_THROW(response = Element::fromJSON(response_text));
+    ASSERT_TRUE(response);
+    ASSERT_EQ(Element::map, response->getType());
+    ConstElementPtr result(response->get("result"));
+    ASSERT_TRUE(result);
+    ASSERT_EQ(Element::integer, result->getType());
+    EXPECT_EQ(0, result->intValue());
+    ConstElementPtr arguments(response->get("arguments"));
+    ASSERT_TRUE(arguments);
+    ASSERT_EQ(Element::map, arguments->getType());
+
+    ConstElementPtr sockets(arguments->get("sockets"));
+    ASSERT_TRUE(sockets);
+    ASSERT_EQ(Element::map, sockets->getType());
+
+    ConstElementPtr status(sockets->get("status"));
+    ASSERT_TRUE(status);
+    ASSERT_EQ(Element::string, status->getType());
+    EXPECT_EQ("failed", status->stringValue());
+
+    ConstElementPtr errors(sockets->get("errors"));
+    ASSERT_TRUE(errors);
+    ASSERT_EQ(Element::list, errors->getType());
+    ASSERT_EQ(1, errors->size());
+
+    ConstElementPtr error(errors->get(0));
+    ASSERT_TRUE(error);
+    ASSERT_EQ(Element::string, error->getType());
+    ASSERT_EQ("the interface down_interface is down", error->stringValue());
 }
 
 // This test verifies that the DHCP server handles server-tag-get command
@@ -1271,18 +1359,23 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelStats) {
         "v6-allocation-fail-shared-network",
         "v6-allocation-fail-subnet",
         "v6-allocation-fail-no-pools",
-        "v6-allocation-fail-classes"
+        "v6-allocation-fail-classes",
+        "v6-ia-na-lease-reuses",
+        "v6-ia-pd-lease-reuses",
     };
 
     std::ostringstream s;
+    bool first = true;
     s << "{ \"arguments\": { ";
-    for (auto st = initial_stats.begin(); st != initial_stats.end();) {
-        s << "\"" << *st << "\": [ [ 0, \"";
-        s << isc::util::clockToText(StatsMgr::instance().getObservation(*st)->getInteger().second);
-        s << "\" ] ]";
-        if (++st != initial_stats.end()) {
+    for (auto const& st : initial_stats) {
+        if (!first) {
             s << ", ";
+        } else {
+            first = false;
         }
+        s << "\"" << st << "\": [ [ 0, \"";
+        s << isc::util::clockToText(StatsMgr::instance().getObservation(st)->getInteger().second);
+        s << "\" ] ]";
     }
     s << " }, \"result\": 0 }";
 
@@ -1341,7 +1434,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelStats) {
               response);
 }
 
-// Tests that the server properly responds to shutdown command sent
+// Tests that the server properly responds to list-commands command sent
 // via ControlChannel
 TEST_F(CtrlChannelDhcpv6SrvTest, listCommands) {
     createUnixChannelServer();
@@ -1356,13 +1449,13 @@ TEST_F(CtrlChannelDhcpv6SrvTest, listCommands) {
     checkListCommands(rsp, "build-report");
     checkListCommands(rsp, "config-backend-pull");
     checkListCommands(rsp, "config-get");
+    checkListCommands(rsp, "config-hash-get");
     checkListCommands(rsp, "config-reload");
     checkListCommands(rsp, "config-set");
     checkListCommands(rsp, "config-test");
     checkListCommands(rsp, "config-write");
     checkListCommands(rsp, "list-commands");
     checkListCommands(rsp, "leases-reclaim");
-    checkListCommands(rsp, "libreload");
     checkListCommands(rsp, "version-get");
     checkListCommands(rsp, "server-tag-get");
     checkListCommands(rsp, "shutdown");
@@ -1401,6 +1494,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configWriteFilename) {
 
     sendUnixCommand("{ \"command\": \"config-write\", "
                     "\"arguments\": { \"filename\": \"test2.json\" } }", response);
+
     checkConfigWrite(response, CONTROL_RESULT_SUCCESS, "test2.json");
     ::remove("test2.json");
 }
@@ -1471,8 +1565,8 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configReloadValid) {
         "        \"interfaces\": [ \"*\" ]"
         "    },"
         "    \"subnet6\": ["
-        "        { \"subnet\": \"2001:db8:1::/64\" },"
-        "        { \"subnet\": \"2001:db8:2::/64\" }"
+        "        { \"subnet\": \"2001:db8:1::/64\", \"id\": 1 },"
+        "        { \"subnet\": \"2001:db8:2::/64\", \"id\": 2 }"
         "     ],"
         "    \"lease-database\": {"
         "       \"type\": \"memfile\", \"persist\": false }"
@@ -1483,9 +1577,89 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configReloadValid) {
 
     // This command should reload test8.json config.
     sendUnixCommand("{ \"command\": \"config-reload\" }", response);
-    // Verify the configuration was successful.
-    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration successful.\" }",
-              response);
+
+    // Verify the configuration was successful. The config contains random
+    // socket name (/tmp/kea-<value-changing-each-time>/kea6.sock), so the
+    // hash will be different each time. As such, we can do simplified checks:
+    // - verify the "result": 0 is there
+    // - verify the "text": "Configuration successful." is there
+    EXPECT_NE(response.find("\"result\": 0"), std::string::npos);
+    EXPECT_NE(response.find("\"text\": \"Configuration successful.\""), std::string::npos);
+
+    // Check that the config was indeed applied.
+    const Subnet6Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
+    EXPECT_EQ(2, subnets->size());
+
+    ::remove("test8.json");
+}
+
+// Tests if config-reload attempts to reload a file and reports that the
+// file is loaded correctly.
+TEST_F(CtrlChannelDhcpv6SrvTest, configReloadDetectInterfaces) {
+    interfaces_ = "\"eth0\"";
+    IfacePtr eth0 = IfaceMgrTestConfig::createIface("eth0", ETH0_INDEX,
+                                                    "11:22:33:44:55:66");
+    auto detectIfaces = [&](bool update_only) {
+        if (!update_only) {
+            eth0->addAddress(IOAddress("10.0.0.1"));
+            eth0->addAddress(IOAddress("fe80::3a60:77ff:fed5:cdef"));
+            eth0->addAddress(IOAddress("2001:db8:1::1"));
+            IfaceMgr::instance().addInterface(eth0);
+        }
+        return (false);
+    };
+    IfaceMgr::instance().setDetectCallback(detectIfaces);
+    IfaceMgr::instance().clearIfaces();
+    IfaceMgr::instance().closeSockets();
+    IfaceMgr::instance().detectIfaces();
+    createUnixChannelServer();
+    std::string response;
+
+    // This is normally set to whatever value is passed to -c when the server is
+    // started, but we're not starting it that way, so need to set it by hand.
+    server_->setConfigFile("test8.json");
+
+    // Ok, enough fooling around. Let's create a valid config.
+    const std::string cfg_txt =
+        "{ \"Dhcp6\": {"
+        "    \"interfaces-config\": {"
+        "        \"interfaces\": [ \"eth1\" ]"
+        "    },"
+        "    \"subnet6\": ["
+        "        { \"subnet\": \"2001:db8:1::/64\", \"id\": 1 },"
+        "        { \"subnet\": \"2001:db8:2::/64\", \"id\": 2 }"
+        "     ],"
+        "    \"lease-database\": {"
+        "       \"type\": \"memfile\", \"persist\": false }"
+        "} }";
+    ofstream f("test8.json", ios::trunc);
+    f << cfg_txt;
+    f.close();
+
+    IfacePtr eth1 = IfaceMgrTestConfig::createIface("eth1", ETH1_INDEX,
+                                                    "AA:BB:CC:DD:EE:FF");
+    auto detectUpdateIfaces = [&](bool update_only) {
+        if (!update_only) {
+            eth1->addAddress(IOAddress("192.0.2.3"));
+            eth1->addAddress(IOAddress("fe80::3a60:77ff:fed5:abcd"));
+            eth1->addAddress(IOAddress("3001:db8:100::1"));
+            IfaceMgr::instance().addInterface(eth1);
+        }
+        return (false);
+    };
+    IfaceMgr::instance().setDetectCallback(detectUpdateIfaces);
+
+    // This command should reload test8.json config.
+    sendUnixCommand("{ \"command\": \"config-reload\" }", response);
+
+    // Verify the configuration was successful. The config contains random
+    // socket name (/tmp/kea-<value-changing-each-time>/kea6.sock), so the
+    // hash will be different each time. As such, we can do simplified checks:
+    // - verify the "result": 0 is there
+    // - verify the "text": "Configuration successful." is there
+    EXPECT_NE(response.find("\"result\": 0"), std::string::npos);
+    EXPECT_NE(response.find("\"text\": \"Configuration successful.\""), std::string::npos);
 
     // Check that the config was indeed applied.
     const Subnet6Collection* subnets =
@@ -1515,6 +1689,32 @@ TEST_F(CtrlChannelDhcpv6SrvTest, dhcpDisableBadParam) {
 
     EXPECT_EQ("{ \"result\": 1, \"text\": \"'max-period' must be positive "
               "integer\" }", response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"dhcp-disable\","
+                    "    \"arguments\": {"
+                    "        \"origin-id\": \"\""
+                    "    }"
+                    "}", response);
+
+    // The response should be a valid JSON.
+    EXPECT_NO_THROW(rsp = Element::fromJSON(response));
+    ASSERT_TRUE(rsp);
+
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"'origin-id' argument must be a number\" }", response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"dhcp-disable\","
+                    "    \"arguments\": {"
+                    "        \"origin-id\": \"foo\""
+                    "    }"
+                    "}", response);
+
+    // The response should be a valid JSON.
+    EXPECT_NO_THROW(rsp = Element::fromJSON(response));
+    ASSERT_TRUE(rsp);
+
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"'origin-id' argument must be a number\" }", response);
 
     sendUnixCommand("{"
                     "    \"command\": \"dhcp-disable\","
@@ -1563,7 +1763,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, dhcpDisable) {
 
     EXPECT_FALSE(server_->network_state_->isServiceEnabled());
 
-    server_->network_state_->enableService(NetworkState::Origin::USER_COMMAND);
+    server_->network_state_->enableService(NetworkState::USER_COMMAND);
 
     EXPECT_TRUE(server_->network_state_->isServiceEnabled());
 
@@ -1583,7 +1783,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, dhcpDisable) {
 
     EXPECT_FALSE(server_->network_state_->isServiceEnabled());
 
-    server_->network_state_->enableService(NetworkState::Origin::USER_COMMAND);
+    server_->network_state_->enableService(NetworkState::USER_COMMAND);
 
     EXPECT_TRUE(server_->network_state_->isServiceEnabled());
 
@@ -1603,7 +1803,60 @@ TEST_F(CtrlChannelDhcpv6SrvTest, dhcpDisable) {
 
     EXPECT_FALSE(server_->network_state_->isServiceEnabled());
 
-    server_->network_state_->enableService(NetworkState::Origin::HA_COMMAND);
+    server_->network_state_->enableService(NetworkState::HA_REMOTE_COMMAND);
+
+    EXPECT_TRUE(server_->network_state_->isServiceEnabled());
+
+    sendUnixCommand("{"
+                    "    \"command\": \"dhcp-disable\","
+                    "    \"arguments\": {"
+                    "        \"origin\": 2001"
+                    "    }"
+                    "}", response);
+
+    // The response should be a valid JSON.
+    EXPECT_NO_THROW(rsp = Element::fromJSON(response));
+    ASSERT_TRUE(rsp);
+
+    cfg = parseAnswer(status, rsp);
+    EXPECT_EQ(CONTROL_RESULT_SUCCESS, status);
+
+    EXPECT_FALSE(server_->network_state_->isServiceEnabled());
+
+    server_->network_state_->enableService(NetworkState::HA_REMOTE_COMMAND+1);
+
+    EXPECT_TRUE(server_->network_state_->isServiceEnabled());
+}
+
+// This test verifies if it is possible to disable DHCP service using
+// the origin-id.
+TEST_F(CtrlChannelDhcpv6SrvTest, dhcpDisableOriginId) {
+    createUnixChannelServer();
+    std::string response;
+
+    EXPECT_TRUE(server_->network_state_->isServiceEnabled());
+
+    sendUnixCommand("{"
+                    "    \"command\": \"dhcp-disable\","
+                    "    \"arguments\": {"
+                    "        \"origin-id\": 2002,"
+                    "        \"origin\": \"user\""
+                    "    }"
+                    "}", response);
+
+    ConstElementPtr rsp;
+
+    // The response should be a valid JSON.
+    EXPECT_NO_THROW(rsp = Element::fromJSON(response));
+    ASSERT_TRUE(rsp);
+
+    int status;
+    ConstElementPtr cfg = parseAnswer(status, rsp);
+    EXPECT_EQ(CONTROL_RESULT_SUCCESS, status);
+
+    EXPECT_FALSE(server_->network_state_->isServiceEnabled());
+
+    server_->network_state_->enableService(NetworkState::HA_REMOTE_COMMAND+2);
 
     EXPECT_TRUE(server_->network_state_->isServiceEnabled());
 }
@@ -1635,7 +1888,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, dhcpDisableTemporarily) {
     EXPECT_FALSE(server_->network_state_->isServiceEnabled());
     // And the timer should be scheduled which counts the time to automatic
     // enabling of the service.
-    EXPECT_TRUE(server_->network_state_->isDelayedEnableAll());
+    EXPECT_TRUE(server_->network_state_->isDelayedEnableService());
 }
 
 // This test verifies that enable DHCP service command performs sanity check on
@@ -1643,6 +1896,33 @@ TEST_F(CtrlChannelDhcpv6SrvTest, dhcpDisableTemporarily) {
 TEST_F(CtrlChannelDhcpv6SrvTest, dhcpEnableBadParam) {
     createUnixChannelServer();
     std::string response;
+    ConstElementPtr rsp;
+
+    sendUnixCommand("{"
+                    "    \"command\": \"dhcp-enable\","
+                    "    \"arguments\": {"
+                    "        \"origin-id\": \"\""
+                    "    }"
+                    "}", response);
+
+    // The response should be a valid JSON.
+    EXPECT_NO_THROW(rsp = Element::fromJSON(response));
+    ASSERT_TRUE(rsp);
+
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"'origin-id' argument must be a number\" }", response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"dhcp-enable\","
+                    "    \"arguments\": {"
+                    "        \"origin-id\": \"foo\""
+                    "    }"
+                    "}", response);
+
+    // The response should be a valid JSON.
+    EXPECT_NO_THROW(rsp = Element::fromJSON(response));
+    ASSERT_TRUE(rsp);
+
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"'origin-id' argument must be a number\" }", response);
 
     sendUnixCommand("{"
                     "    \"command\": \"dhcp-enable\","
@@ -1650,7 +1930,6 @@ TEST_F(CtrlChannelDhcpv6SrvTest, dhcpEnableBadParam) {
                     "        \"origin\": \"\""
                     "    }"
                     "}", response);
-    ConstElementPtr rsp;
 
     // The response should be a valid JSON.
     EXPECT_NO_THROW(rsp = Element::fromJSON(response));
@@ -1692,7 +1971,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, dhcpEnable) {
 
     EXPECT_TRUE(server_->network_state_->isServiceEnabled());
 
-    server_->network_state_->disableService(NetworkState::Origin::USER_COMMAND);
+    server_->network_state_->disableService(NetworkState::USER_COMMAND);
 
     EXPECT_FALSE(server_->network_state_->isServiceEnabled());
 
@@ -1712,7 +1991,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, dhcpEnable) {
 
     EXPECT_TRUE(server_->network_state_->isServiceEnabled());
 
-    server_->network_state_->disableService(NetworkState::Origin::HA_COMMAND);
+    server_->network_state_->disableService(NetworkState::HA_REMOTE_COMMAND);
 
     EXPECT_FALSE(server_->network_state_->isServiceEnabled());
 
@@ -1730,6 +2009,81 @@ TEST_F(CtrlChannelDhcpv6SrvTest, dhcpEnable) {
     cfg = parseAnswer(status, rsp);
     EXPECT_EQ(CONTROL_RESULT_SUCCESS, status);
 
+    EXPECT_TRUE(server_->network_state_->isServiceEnabled());
+
+    server_->network_state_->disableService(NetworkState::HA_REMOTE_COMMAND+2);
+
+    EXPECT_FALSE(server_->network_state_->isServiceEnabled());
+
+    sendUnixCommand("{"
+                    "    \"command\": \"dhcp-enable\","
+                    "    \"arguments\": {"
+                    "        \"origin\": 2002"
+                    "    }"
+                    "}", response);
+
+    // The response should be a valid JSON.
+    EXPECT_NO_THROW(rsp = Element::fromJSON(response));
+    ASSERT_TRUE(rsp);
+
+    cfg = parseAnswer(status, rsp);
+    EXPECT_EQ(CONTROL_RESULT_SUCCESS, status);
+
+    EXPECT_TRUE(server_->network_state_->isServiceEnabled());
+}
+
+// This test verifies if it is possible to enable DHCP service using
+// the origin-id.
+TEST_F(CtrlChannelDhcpv6SrvTest, dhcpEnableOriginId) {
+    createUnixChannelServer();
+    std::string response;
+
+    ConstElementPtr rsp;
+
+    int status;
+
+    // Disable the service using two distinct origins.
+    server_->network_state_->disableService(NetworkState::HA_REMOTE_COMMAND+1);
+    server_->network_state_->disableService(NetworkState::USER_COMMAND);
+
+    EXPECT_FALSE(server_->network_state_->isServiceEnabled());
+
+    // Enable the service for the 'origin-id' of 2001. The 'origin' should
+    // be ignored.
+    sendUnixCommand("{"
+                    "    \"command\": \"dhcp-enable\","
+                    "    \"arguments\": {"
+                    "        \"origin-id\": 2001,"
+                    "        \"origin\": \"user\""
+                    "    }"
+                    "}", response);
+
+    // The response should be a valid JSON.
+    EXPECT_NO_THROW(rsp = Element::fromJSON(response));
+    ASSERT_TRUE(rsp);
+
+    ConstElementPtr cfg = parseAnswer(status, rsp);
+    EXPECT_EQ(CONTROL_RESULT_SUCCESS, status);
+
+    // The service should still be disabled.
+    EXPECT_FALSE(server_->network_state_->isServiceEnabled());
+
+    // Enable the service for the user command.
+    sendUnixCommand("{"
+                    "    \"command\": \"dhcp-enable\","
+                    "    \"arguments\": {"
+                    "        \"origin-id\": 1"
+                    "    }"
+                    "}", response);
+
+    // The response should be a valid JSON.
+    EXPECT_NO_THROW(rsp = Element::fromJSON(response));
+    ASSERT_TRUE(rsp);
+
+    cfg = parseAnswer(status, rsp);
+    EXPECT_EQ(CONTROL_RESULT_SUCCESS, status);
+
+    // The service should be enabled.
     EXPECT_TRUE(server_->network_state_->isServiceEnabled());
 }
 
@@ -1779,7 +2133,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, longCommand) {
 
     // This is the desired size of the command sent to the server (1MB). The
     // actual size sent will be slightly greater than that.
-    const size_t command_size = 1024 * 1000;
+    const ssize_t command_size = 1024 * 1000;
 
     while (command.tellp() < command_size) {
 
@@ -1892,7 +2246,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, longResponse) {
 
         // Remember the response size so as we know when we should stop
         // receiving.
-        const size_t long_response_size = reference_response.size();
+        const ssize_t long_response_size = reference_response.size();
 
         // Create the client and connect it to the server.
         boost::scoped_ptr<UnixControlClient> client(new UnixControlClient());
@@ -1961,8 +2315,8 @@ TEST_F(CtrlChannelDhcpv6SrvTest, connectionTimeoutPartialCommand) {
         // Let's wait up to 15s for the server's response. The response
         // should arrive sooner assuming that the timeout mechanism for
         // the server is working properly.
-        const unsigned int timeout = 15;
-        ASSERT_TRUE(client->getResponse(response, timeout));
+        const unsigned int response_timeout = 15;
+        ASSERT_TRUE(client->getResponse(response, response_timeout));
 
         // Explicitly close the client's connection.
         client->disconnectFromServer();
@@ -2011,8 +2365,8 @@ TEST_F(CtrlChannelDhcpv6SrvTest, connectionTimeoutNoData) {
         // Let's wait up to 15s for the server's response. The response
         // should arrive sooner assuming that the timeout mechanism for
         // the server is working properly.
-        const unsigned int timeout = 15;
-        ASSERT_TRUE(client->getResponse(response, timeout));
+        const unsigned int response_timeout = 15;
+        ASSERT_TRUE(client->getResponse(response, response_timeout));
 
         // Explicitly close the client's connection.
         client->disconnectFromServer();

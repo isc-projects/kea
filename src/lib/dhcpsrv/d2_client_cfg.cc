@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -208,7 +208,6 @@ D2ClientConfig::toElement() const {
     result->set("ncr-protocol", Element::create(dhcp_ddns::ncrProtocolToString(ncr_protocol_)));
     // Set ncr-format
     result->set("ncr-format", Element::create(dhcp_ddns::ncrFormatToString(ncr_format_)));
-    // Set override-no-update
     return (result);
 }
 

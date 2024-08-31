@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,9 +9,13 @@
 #include <cc/command_interpreter.h>
 #include <config/base_command_mgr.h>
 #include <config/config_log.h>
+#include <cryptolink/crypto_hash.h>
 #include <hooks/callout_handle.h>
 #include <hooks/hooks_manager.h>
+#include <util/encode/encode.h>
+#include <util/buffer.h>
 #include <functional>
+#include <vector>
 
 using namespace isc::data;
 using namespace isc::hooks;
@@ -179,13 +183,39 @@ BaseCommandMgr::listCommandsHandler(const std::string& /* name */,
                                     const isc::data::ConstElementPtr& ) {
     using namespace isc::data;
     ElementPtr commands = Element::createList();
-    for (HandlerContainer::const_iterator it = handlers_.begin();
-         it != handlers_.end(); ++it) {
-        commands->add(Element::create(it->first));
+    for (auto const& it : handlers_) {
+        commands->add(Element::create(it.first));
     }
     return (createAnswer(CONTROL_RESULT_SUCCESS, commands));
 }
 
+std::string
+BaseCommandMgr::getHash(const isc::data::ConstElementPtr& config) {
+
+    // Sanity.
+    if (!config) {
+        isc_throw(Unexpected, "BaseCommandMgr::getHash called with null");
+    }
+
+    // First, get the string representation.
+    std::string config_txt = config->str();
+    isc::util::OutputBuffer hash_data(0);
+    isc::cryptolink::digest(config_txt.c_str(),
+                            config_txt.size(),
+                            isc::cryptolink::HashAlgorithm::SHA256,
+                            hash_data);
+
+    // Now we need to convert this to output buffer to vector, which can be accepted
+    // by encodeHex().
+    std::vector<uint8_t> hash;
+    hash.resize(hash_data.getLength());
+    if (hash.size() > 0) {
+        memmove(&hash[0], hash_data.getData(), hash.size());
+    }
+
+    // Now encode the value as base64 and we're done here.
+    return (isc::util::encode::encodeHex(hash));
+}
 
 } // namespace isc::config
 } // namespace isc

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -30,7 +30,9 @@
 #include <cc/data.h>
 #include <cc/user_context.h>
 #include <cc/simple_parser.h>
-#include <util/strutil.h>
+#include <config/http_command_config.h>
+#include <util/optional.h>
+#include <util/str.h>
 
 #include <boost/shared_ptr.hpp>
 #include <vector>
@@ -140,14 +142,20 @@ public:
     /// @return True if updates should always be performed.
     bool getUpdateOnRenew() const;
 
-    /// @brief Returns whether or not keah-dhcp-ddns should use conflict resolution
+    /// @brief Returns percent of lease lifetime to use for TTL
     ///
-    /// This value is communicated to D2 via the NCR.  When true, D2 should follow
-    /// follow conflict resolution steps described in RFC 4703.  If not, it should
-    /// simple add or remove entries.
+    /// This value, if greater than zero, is used to calculate the lease lifetime
+    /// passed to D2 in the NCR.  Otherwise the value is calculated per RFC 4702.
     ///
-    /// @return True if conflict resolution should be used.
-    bool getUseConflictResolution() const;
+    /// @return TTL percent as an Optional.
+    util::Optional<double> getTtlPercent() const;
+
+    /// @brief Returns the DDNS config resolution mode for kea-dhcp-ddns
+    ///
+    /// This value is communicated to D2 via the NCR.
+    ///
+    /// @return the DDNS conflict resolution mode
+    std::string getConflictResolutionMode() const;
 
     /// @brief Returns the subnet-id of the subnet associated with these parameters
     ///
@@ -491,10 +499,17 @@ public:
         return (cfg_host_operations6_);
     }
 
+    /// @brief Returns non-const pointer to object holding sanity checks flags
+    ///
+    /// @return Pointer to object holding sanity checks flags
+    CfgConsistencyPtr getConsistency() {
+        return (cfg_consist_);
+    }
+
     /// @brief Returns const pointer to object holding sanity checks flags
     ///
     /// @return Const pointer to object holding sanity checks flags
-    CfgConsistencyPtr getConsistency() {
+    ConstCfgConsistencyPtr getConsistency() const {
         return (cfg_consist_);
     }
 
@@ -516,18 +531,32 @@ public:
         return (cfg_mac_source_);
     }
 
-    /// @brief Returns information about control socket
+    /// @brief Returns information about UNIX control socket
     ///
-    /// @return pointer to the Element that holds control-socket map
+    /// @return pointer to the UNIX control socket config
     const isc::data::ConstElementPtr getControlSocketInfo() const {
-        return (control_socket_);
+        return (unix_control_socket_);
     }
 
-    /// @brief Sets information about the control socket
+    /// @brief Sets information about the UNIX control socket
     ///
-    /// @param control_socket Element that holds control-socket map
+    /// @param control_socket UNIX control socket config
     void setControlSocketInfo(const isc::data::ConstElementPtr& control_socket) {
-        control_socket_ = control_socket;
+        unix_control_socket_ = control_socket;
+    }
+
+    /// @brief Returns information about HTTP/HTTPS control socket
+    ///
+    /// @return pointer to the HTTP/HTTPS control socket config
+    isc::config::HttpCommandConfigPtr getHttpControlSocketInfo() const {
+        return (http_control_socket_);
+    }
+
+    /// @brief Sets information about the HTTP/HTTPS control socket
+    ///
+    /// @param control_socket HTTP/HTTPS control socket config
+    void setHttpControlSocketInfo(const isc::config::HttpCommandConfigPtr& control_socket) {
+        http_control_socket_ = control_socket;
     }
 
     /// @brief Returns DHCP queue control information
@@ -879,6 +908,18 @@ public:
     /// @c extractConfiguredGlobals should be called after.
     void clearConfiguredGlobals() {
         configured_globals_->clear();
+        lenient_option_parsing_ = false;
+        ignore_dhcp_server_identifier_ = false;
+        ignore_rai_link_selection_ = false;
+        exclude_first_last_24_ = false;
+        unix_control_socket_.reset();
+        http_control_socket_.reset();
+        d2_client_config_.reset(new D2ClientConfig());
+        cfg_expiration_.reset(new CfgExpiration());
+        dhcp_multi_threading_.reset();
+        cfg_consist_.reset(new CfgConsistency());
+        cfg_duid_.reset(new CfgDUID());
+        dhcp_queue_control_.reset();
     }
 
     /// @brief Applies defaults to global parameters.
@@ -909,31 +950,6 @@ public:
     /// @param name Base name of the lifetime parameter.
     void sanityChecksLifetime(const SrvConfig& target_config,
                               const std::string& name) const;
-
-    /// @brief Moves deprecated parameters from dhcp-ddns element to global element
-    ///
-    /// Given a server configuration element map, the following parameters are moved
-    /// from dhcp-ddns to top-level (i.e. global) element if they do not already
-    /// exist there:
-    ///
-    /// @code
-    /// From dhcp-ddns:            To (global):
-    /// ------------------------------------------------------
-    /// override-no-update         ddns-override-no-update
-    /// override-client-update     ddns-override-client-update
-    /// replace-client-name        ddns-replace-client-name
-    /// generated-prefix           ddns-generated-prefix
-    /// qualifying-suffix          ddns-qualifying-suffix
-    /// hostname-char-set          hostname-char-set
-    /// hostname-char-replacement  hostname-char-replacement
-    /// @endcode
-    ///
-    /// Note that the whether or not the deprecated parameters are added
-    /// to the global element, they are always removed from the dhcp-ddns
-    /// element.
-    ///
-    /// @param srv_elem server top level map to alter
-    static void moveDdnsParams(isc::data::ElementPtr srv_elem);
 
     /// @brief Configures the server to allow or disallow specifying multiple
     /// hosts with the same IP address/subnet.
@@ -982,6 +998,51 @@ public:
     /// @return the configured value for lenient option parsing
     bool getLenientOptionParsing() const {
         return lenient_option_parsing_;
+    }
+
+    /// @brief Set ignore DHCP Server Identifier compatibility flag.
+    ///
+    /// @param value the boolean value to be set when configuring DHCP
+    /// Server Identifier usage preferences.
+    void setIgnoreServerIdentifier(bool const value) {
+        ignore_dhcp_server_identifier_ = value;
+    }
+
+    /// @brief Get ignore DHCP Server Identifier compatibility flag.
+    ///
+    /// @return the configured value for DHCP Server Identifier usage preferences.
+    bool getIgnoreServerIdentifier() const {
+        return (ignore_dhcp_server_identifier_);
+    }
+
+    /// @brief Set ignore RAI Link Selection compatibility flag.
+    ///
+    /// @param value the boolean value to be set when configuring RAI Link
+    /// Selection usage preferences
+    void setIgnoreRAILinkSelection(bool const value) {
+        ignore_rai_link_selection_ = value;
+    }
+
+    /// @brief Get ignore RAI Link Selection compatibility flag.
+    ///
+    /// @return the configured value for RAI Link Selection usage preferences
+    bool getIgnoreRAILinkSelection() const {
+        return ignore_rai_link_selection_;
+    }
+
+    /// @brief Set exclude .0 and .255 addresses in subnets bigger than /24 flag.
+    ///
+    /// @param value the boolean value to be set when excluding .0 .255 from
+    /// subnets bigger than /24.
+    void setExcludeFirstLast24(bool const value) {
+        exclude_first_last_24_ = value;
+    }
+
+    /// @brief Get exclude .0 and .255 addresses in subnets bigger than /24 flag.
+    ///
+    /// @return the configured value for exclude .0 and .255 flag.
+    bool getExcludeFirstLast24() const {
+        return exclude_first_last_24_;
     }
 
     /// @brief Convenience method to propagate configuration parameters through
@@ -1038,6 +1099,30 @@ private:
     /// @param other An object holding the configuration to be merged
     /// into this configuration.
     void mergeGlobals(SrvConfig& other);
+
+    /// @brief Merges the global maps specified in the given configuration
+    /// into this configuration.
+    ///
+    /// Configurable global values may be specified either via JSON
+    /// configuration (e.g. "echo-client-id":true) or as global parameters
+    /// within a configuration back end.  Regardless of the source, these
+    /// values once provided, are stored in @c SrvConfig::configured_globals_.
+    /// Any such value that does not have an explicit specification should be
+    /// considered "unspecified" at the global scope.
+    ///
+    /// This function adds the configured globals from the "other" config
+    /// into this config's configured globals.  If a value already exists
+    /// in this config, it will be overwritten with the value from the
+    /// "other" config.
+    ///
+    /// It then iterates over this merged list of globals, setting
+    /// any of the corresponding SrvConfig members that map to a
+    /// a configurable parameter (e.g. c@ SrvConfig::echo_client_id_,
+    /// @c SrvConfig::server_tag_).
+    ///
+    /// @param other An object holding the configuration to be merged
+    /// into this configuration.
+    void mergeGlobalMaps(SrvConfig& other);
 
     /// @brief Sequence number identifying the configuration.
     uint32_t sequence_;
@@ -1106,8 +1191,11 @@ private:
     /// DHCPv6.
     CfgHostOperationsPtr cfg_host_operations6_;
 
-    /// @brief Pointer to the control-socket information
-    isc::data::ConstElementPtr control_socket_;
+    /// @brief Pointer to the UNIX control socket configuration
+    isc::data::ConstElementPtr unix_control_socket_;
+
+    /// @brief Pointer to the HTTP/HTTPS control socket configuration
+    isc::config::HttpCommandConfigPtr http_control_socket_;
 
     /// @brief Pointer to the dhcp-queue-control information
     isc::data::ConstElementPtr dhcp_queue_control_;
@@ -1145,10 +1233,18 @@ private:
     /// @brief Pointer to the configuration consistency settings
     CfgConsistencyPtr cfg_consist_;
 
-    /// @brief Compatibility flags
-    /// @{
+    /// @name Compatibility flags
+    ///
+    //@{
+    /// @brief Indicates whether lenient option parsing is enabled
     bool lenient_option_parsing_;
-    /// @}
+    /// @brief Indicates whether DHCP server identifier option will be ignored
+    bool ignore_dhcp_server_identifier_;
+    /// @brief Indicates whether RAI link-selection suboptions will be ignored
+    bool ignore_rai_link_selection_;
+    /// @brief Indicates whether exclude .0 .255 from subnets bigger than /24.
+    bool exclude_first_last_24_;
+    //@}
 
     /// @brief Flag which indicates if the server should do host reservations
     /// lookup before lease lookup. This parameter has effect only when

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,7 +6,8 @@
 
 #include <config.h>
 
-#include <database/database_connection.h>
+#include <asiolink/addr_utilities.h>
+#include <dhcpsrv/cfg_consistency.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_exceptions.h>
 #include <dhcpsrv/dhcpsrv_log.h>
@@ -14,8 +15,11 @@
 #include <dhcpsrv/memfile_lease_mgr.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <exceptions/exceptions.h>
+#include <stats/stats_mgr.h>
 #include <util/multi_threading_mgr.h>
 #include <util/pid_file.h>
+
+#include <boost/foreach.hpp>
 #include <cstdio>
 #include <cstring>
 #include <errno.h>
@@ -37,10 +41,10 @@ const char* KEA_LFC_EXECUTABLE_ENV_NAME = "KEA_LFC_EXECUTABLE";
 }  // namespace
 
 using namespace isc::asiolink;
+using namespace isc::data;
 using namespace isc::db;
 using namespace isc::util;
-
-using isc::data::ConstElementPtr;
+using namespace isc::stats;
 
 namespace isc {
 namespace dhcp {
@@ -81,9 +85,9 @@ public:
     /// @param lfc_interval An interval in seconds at which the cleanup should
     /// be performed.
     /// @param lease_file4 A pointer to the DHCPv4 lease file to be cleaned up
-    /// or NULL. If this is NULL, the @c lease_file6 must be non-null.
+    /// or null. If this is null, the @c lease_file6 must be non-null.
     /// @param lease_file6 A pointer to the DHCPv6 lease file to be cleaned up
-    /// or NULL. If this is NULL, the @c lease_file4 must be non-null.
+    /// or null. If this is null, the @c lease_file4 must be non-null.
     /// @param run_once_now A flag that causes LFC to be invoked immediately,
     /// regardless of the value of lfc_interval.  This is primarily used to
     /// cause lease file schema upgrades upon startup.
@@ -164,7 +168,7 @@ LFCSetup::setup(const uint32_t lfc_interval,
     // Start preparing the command line for kea-lfc.
     std::string executable;
     char* c_executable = getenv(KEA_LFC_EXECUTABLE_ENV_NAME);
-    if (c_executable == NULL) {
+    if (!c_executable) {
         executable = KEA_LFC_EXECUTABLE;
     } else {
         executable = c_executable;
@@ -205,7 +209,8 @@ LFCSetup::setup(const uint32_t lfc_interval,
     args.push_back("ignored-path");
 
     // Create the process (do not start it yet).
-    process_.reset(new ProcessSpawn(LeaseMgr::getIOService(), executable, args));
+    process_.reset(new ProcessSpawn(ProcessSpawn::ASYNC, executable, args,
+                                    ProcessEnvVars(), true));
 
     // If we've been told to run it once now, invoke the callback directly.
     if (run_once_now) {
@@ -247,7 +252,7 @@ int
 LFCSetup::getExitStatus() const {
     if (!process_) {
         isc_throw(InvalidOperation, "unable to obtain LFC process exit code: "
-                  " the process is NULL");
+                  " the process is null");
     }
     return (process_->getExitStatus(pid_));
 }
@@ -262,8 +267,10 @@ class MemfileLeaseStatsQuery : public LeaseStatsQuery {
 public:
     /// @brief Constructor for all subnets query
     ///
-    MemfileLeaseStatsQuery()
-        : rows_(0), next_pos_(rows_.end()) {
+    /// @param select_mode The selection criteria which is either ALL_SUBNETS or
+    /// ALL_SUBNET_POOLS
+    MemfileLeaseStatsQuery(const SelectMode& select_mode = ALL_SUBNETS)
+        : LeaseStatsQuery(select_mode), rows_(0), next_pos_(rows_.end()) {
     };
 
     /// @brief Constructor for single subnet query
@@ -331,8 +338,11 @@ public:
     /// @brief Constructor for an all subnets query
     ///
     /// @param storage4 A pointer to the v4 lease storage to be counted
-    MemfileLeaseStatsQuery4(Lease4Storage& storage4)
-        : MemfileLeaseStatsQuery(), storage4_(storage4) {
+    /// @param select_mode The selection criteria which is either ALL_SUBNETS or
+    /// ALL_SUBNET_POOLS
+    MemfileLeaseStatsQuery4(Lease4Storage& storage4,
+                            const SelectMode& select_mode = ALL_SUBNETS)
+        : MemfileLeaseStatsQuery(select_mode), storage4_(storage4) {
     };
 
     /// @brief Constructor for a single subnet query
@@ -359,7 +369,36 @@ public:
     /// @brief Creates the IPv4 lease statistical data result set
     ///
     /// The result set is populated by iterating over the IPv4 leases in
-    /// storage, in ascending order by address, accumulating the lease state
+    /// storage, in ascending order by subnet id or by subnet id and pool id,
+    /// accumulating the lease state counts per subnet or per subnet and pool.
+    /// At the completion of all entries for a given subnet or pool, the counts
+    /// are used to create LeaseStatsRow instances which are appended to an
+    /// internal vector.  The process results in a vector containing one entry
+    /// per state per subnet or per subnet and pool.
+    ///
+    /// Currently the states counted are:
+    ///
+    /// - Lease::STATE_DEFAULT (i.e. assigned)
+    /// - Lease::STATE_DECLINED
+    void start() {
+        switch (getSelectMode()) {
+        case ALL_SUBNETS:
+        case SINGLE_SUBNET:
+        case SUBNET_RANGE:
+            startSubnets();
+            break;
+
+        case ALL_SUBNET_POOLS:
+            startSubnetPools();
+            break;
+        }
+    }
+
+private:
+    /// @brief Creates the IPv4 lease statistical data result set
+    ///
+    /// The result set is populated by iterating over the IPv4 leases in
+    /// storage, in ascending order by subnet id, accumulating the lease state
     /// counts per subnet.
     /// At the completion of all entries for a given subnet, the counts are
     /// used to create LeaseStatsRow instances which are appended to an
@@ -370,13 +409,14 @@ public:
     ///
     /// - Lease::STATE_DEFAULT (i.e. assigned)
     /// - Lease::STATE_DECLINED
-    void start() {
+    void startSubnets() {
         const Lease4StorageSubnetIdIndex& idx
             = storage4_.get<SubnetIdIndexTag>();
 
         // Set lower and upper bounds based on select mode
         Lease4StorageSubnetIdIndex::const_iterator lower;
         Lease4StorageSubnetIdIndex::const_iterator upper;
+
         switch (getSelectMode()) {
         case ALL_SUBNETS:
             lower = idx.begin();
@@ -392,6 +432,9 @@ public:
             lower = idx.lower_bound(getFirstSubnetID());
             upper = idx.upper_bound(getLastSubnetID());
             break;
+
+        default:
+            return;
         }
 
         // Return an empty set if there are no rows.
@@ -453,7 +496,121 @@ public:
         next_pos_ = rows_.begin();
     }
 
-private:
+    /// @brief Creates the IPv4 lease statistical data result set
+    ///
+    /// The result set is populated by iterating over the IPv4 leases in
+    /// storage, in ascending order by subnet id and pool id, accumulating the
+    /// lease state counts per subnet and pool.
+    /// At the completion of all entries for a given subnet or pool, the counts
+    /// are used to create LeaseStatsRow instances which are appended to an
+    /// internal vector.  The process results in a vector containing one entry
+    /// per state per subnet and pool.
+    ///
+    /// Currently the states counted are:
+    ///
+    /// - Lease::STATE_DEFAULT (i.e. assigned)
+    /// - Lease::STATE_DECLINED
+    void startSubnetPools() {
+        const Lease4StorageSubnetIdPoolIdIndex& idx
+            = storage4_.get<SubnetIdPoolIdIndexTag>();
+
+        // Set lower and upper bounds based on select mode
+        Lease4StorageSubnetIdPoolIdIndex::const_iterator lower;
+        Lease4StorageSubnetIdPoolIdIndex::const_iterator upper;
+        switch (getSelectMode()) {
+        case ALL_SUBNET_POOLS:
+            lower = idx.begin();
+            upper = idx.end();
+            break;
+
+        default:
+            return;
+        }
+
+        // Return an empty set if there are no rows.
+        if (lower == upper) {
+            return;
+        }
+
+        // Iterate over the leases in order by subnet and pool, accumulating per
+        // subnet and pool counts for each state of interest.  As we finish each
+        // subnet or pool, add the appropriate rows to our result set.
+        SubnetID cur_id = 0;
+        uint32_t cur_pool_id = 0;
+        int64_t assigned = 0;
+        int64_t declined = 0;
+        for (Lease4StorageSubnetIdPoolIdIndex::const_iterator lease = lower;
+             lease != upper; ++lease) {
+            // If we've hit the next pool, add rows for the current subnet and
+            // pool and wipe the accumulators
+            if ((*lease)->pool_id_ != cur_pool_id) {
+                if (assigned > 0) {
+                    rows_.push_back(LeaseStatsRow(cur_id,
+                                                  Lease::STATE_DEFAULT,
+                                                  assigned, cur_pool_id));
+                    assigned = 0;
+                }
+
+                if (declined > 0) {
+                    rows_.push_back(LeaseStatsRow(cur_id,
+                                                  Lease::STATE_DECLINED,
+                                                  declined, cur_pool_id));
+                    declined = 0;
+                }
+
+                // Update current pool id
+                cur_pool_id = (*lease)->pool_id_;
+            }
+
+            // If we've hit the next subnet, add rows for the current subnet
+            // and wipe the accumulators
+            if ((*lease)->subnet_id_ != cur_id) {
+                if (cur_id > 0) {
+                    if (assigned > 0) {
+                        rows_.push_back(LeaseStatsRow(cur_id,
+                                                      Lease::STATE_DEFAULT,
+                                                      assigned, cur_pool_id));
+                        assigned = 0;
+                    }
+
+                    if (declined > 0) {
+                        rows_.push_back(LeaseStatsRow(cur_id,
+                                                      Lease::STATE_DECLINED,
+                                                      declined, cur_pool_id));
+                        declined = 0;
+                    }
+                }
+
+                // Update current subnet id
+                cur_id = (*lease)->subnet_id_;
+
+                // Reset pool id
+                cur_pool_id = 0;
+            }
+
+            // Bump the appropriate accumulator
+            if ((*lease)->state_ == Lease::STATE_DEFAULT) {
+                ++assigned;
+            } else if ((*lease)->state_ == Lease::STATE_DECLINED) {
+                ++declined;
+            }
+        }
+
+        // Make the rows for last subnet
+        if (assigned > 0) {
+            rows_.push_back(LeaseStatsRow(cur_id, Lease::STATE_DEFAULT,
+                                          assigned, cur_pool_id));
+        }
+
+        if (declined > 0) {
+            rows_.push_back(LeaseStatsRow(cur_id, Lease::STATE_DECLINED,
+                                          declined, cur_pool_id));
+        }
+
+        // Reset the next row position back to the beginning of the rows.
+        next_pos_ = rows_.begin();
+    }
+
     /// @brief The Memfile storage containing the IPv4 leases to analyze
     Lease4Storage& storage4_;
 };
@@ -473,8 +630,11 @@ public:
     /// @brief Constructor
     ///
     /// @param storage6 A pointer to the v6 lease storage to be counted
-    MemfileLeaseStatsQuery6(Lease6Storage& storage6)
-        : MemfileLeaseStatsQuery(), storage6_(storage6) {
+    /// @param select_mode The selection criteria which is either ALL_SUBNETS or
+    /// ALL_SUBNET_POOLS
+    MemfileLeaseStatsQuery6(Lease6Storage& storage6,
+                            const SelectMode& select_mode = ALL_SUBNETS)
+        : MemfileLeaseStatsQuery(select_mode), storage6_(storage6) {
     };
 
     /// @brief Constructor for a single subnet query
@@ -501,18 +661,47 @@ public:
     /// @brief Creates the IPv6 lease statistical data result set
     ///
     /// The result set is populated by iterating over the IPv6 leases in
-    /// storage, in ascending order by subnet id, accumulating the lease state
-    /// counts per subnet. At the completion of all entries for a given subnet,
-    /// the counts are used to create LeaseStatsRow instances which are appended
-    /// to an internal vector.  The process results in a vector containing one
-    /// entry per state per lease type per subnet.
+    /// storage, in ascending order by subnet id or by subnet id and pool id,
+    /// accumulating the lease state counts per subnet or per subnet and pool.
+    /// At the completion of all entries for a given subnet or pool, the counts
+    /// are used to create LeaseStatsRow instances which are appended to an
+    /// internal vector.  The process results in a vector containing one entry
+    /// per state per subnet or per subnet and pool.
     ///
     /// Currently the states counted are:
     ///
     /// - Lease::STATE_DEFAULT (i.e. assigned)
     /// - Lease::STATE_DECLINED
-    virtual void start() {
-        // Get the subnet_id index
+    void start() {
+        switch (getSelectMode()) {
+        case ALL_SUBNETS:
+        case SINGLE_SUBNET:
+        case SUBNET_RANGE:
+            startSubnets();
+            break;
+
+        case ALL_SUBNET_POOLS:
+            startSubnetPools();
+            break;
+        }
+    }
+
+private:
+    /// @brief Creates the IPv6 lease statistical data result set
+    ///
+    /// The result set is populated by iterating over the IPv6 leases in
+    /// storage, in ascending order by subnet id, accumulating the lease state
+    /// counts per subnet.
+    /// At the completion of all entries for a given subnet, the counts are
+    /// used to create LeaseStatsRow instances which are appended to an
+    /// internal vector.  The process results in a vector containing one entry
+    /// per state per subnet.
+    ///
+    /// Currently the states counted are:
+    ///
+    /// - Lease::STATE_DEFAULT (i.e. assigned)
+    /// - Lease::STATE_DECLINED
+    virtual void startSubnets() {
         const Lease6StorageSubnetIdIndex& idx
             = storage6_.get<SubnetIdIndexTag>();
 
@@ -534,6 +723,9 @@ public:
             lower = idx.lower_bound(getFirstSubnetID());
             upper = idx.upper_bound(getLastSubnetID());
             break;
+
+        default:
+            return;
         }
 
         // Return an empty set if there are no rows.
@@ -620,7 +812,156 @@ public:
         next_pos_ = rows_.begin();
     }
 
-private:
+    /// @brief Creates the IPv6 lease statistical data result set
+    ///
+    /// The result set is populated by iterating over the IPv6 leases in
+    /// storage, in ascending order by subnet id and pool id, accumulating the
+    /// lease state counts per subnet and pool.
+    /// At the completion of all entries for a given subnet or pool, the counts
+    /// are used to create LeaseStatsRow instances which are appended to an
+    /// internal vector.  The process results in a vector containing one entry
+    /// per state per subnet and pool.
+    ///
+    /// Currently the states counted are:
+    ///
+    /// - Lease::STATE_DEFAULT (i.e. assigned)
+    /// - Lease::STATE_DECLINED
+    virtual void startSubnetPools() {
+        const Lease6StorageSubnetIdPoolIdIndex& idx
+            = storage6_.get<SubnetIdPoolIdIndexTag>();
+
+        // Set lower and upper bounds based on select mode
+        Lease6StorageSubnetIdPoolIdIndex::const_iterator lower;
+        Lease6StorageSubnetIdPoolIdIndex::const_iterator upper;
+        switch (getSelectMode()) {
+        case ALL_SUBNET_POOLS:
+            lower = idx.begin();
+            upper = idx.end();
+            break;
+
+        default:
+            return;
+        }
+
+        // Return an empty set if there are no rows.
+        if (lower == upper) {
+            return;
+        }
+
+        // Iterate over the leases in order by subnet, accumulating per
+        // subnet counts for each state of interest.  As we finish each
+        // subnet, add the appropriate rows to our result set.
+        SubnetID cur_id = 0;
+        uint32_t cur_pool_id = 0;
+        int64_t assigned = 0;
+        int64_t declined = 0;
+        int64_t assigned_pds = 0;
+        for (Lease6StorageSubnetIdPoolIdIndex::const_iterator lease = lower;
+             lease != upper; ++lease) {
+            // If we've hit the next pool, add rows for the current subnet and
+            // pool and wipe the accumulators
+            if ((*lease)->pool_id_ != cur_pool_id) {
+                if (assigned > 0) {
+                    rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_NA,
+                                                  Lease::STATE_DEFAULT,
+                                                  assigned, cur_pool_id));
+                    assigned = 0;
+                }
+
+                if (declined > 0) {
+                    rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_NA,
+                                                  Lease::STATE_DECLINED,
+                                                  declined, cur_pool_id));
+                    declined = 0;
+                }
+
+                if (assigned_pds > 0) {
+                    rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_PD,
+                                                  Lease::STATE_DEFAULT,
+                                                  assigned_pds, cur_pool_id));
+                    assigned_pds = 0;
+                }
+
+                // Update current pool id
+                cur_pool_id = (*lease)->pool_id_;
+            }
+
+            // If we've hit the next subnet, add rows for the current subnet
+            // and wipe the accumulators
+            if ((*lease)->subnet_id_ != cur_id) {
+                if (cur_id > 0) {
+                    if (assigned > 0) {
+                        rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_NA,
+                                                      Lease::STATE_DEFAULT,
+                                                      assigned, cur_pool_id));
+                        assigned = 0;
+                    }
+
+                    if (declined > 0) {
+                        rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_NA,
+                                                      Lease::STATE_DECLINED,
+                                                      declined, cur_pool_id));
+                        declined = 0;
+                    }
+
+                    if (assigned_pds > 0) {
+                        rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_PD,
+                                                      Lease::STATE_DEFAULT,
+                                                      assigned_pds, cur_pool_id));
+                        assigned_pds = 0;
+                    }
+                }
+
+                // Update current subnet id
+                cur_id = (*lease)->subnet_id_;
+
+                // Reset pool id
+                cur_pool_id = 0;
+            }
+
+            // Bump the appropriate accumulator
+            if ((*lease)->state_ == Lease::STATE_DEFAULT) {
+                switch((*lease)->type_) {
+                case Lease::TYPE_NA:
+                    ++assigned;
+                    break;
+                case Lease::TYPE_PD:
+                    ++assigned_pds;
+                    break;
+                default:
+                    break;
+                }
+            } else if ((*lease)->state_ == Lease::STATE_DECLINED) {
+                // In theory only NAs can be declined
+                if (((*lease)->type_) == Lease::TYPE_NA) {
+                    ++declined;
+                }
+            }
+        }
+
+        // Make the rows for last subnet, unless there were no rows
+        if (assigned > 0) {
+            rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_NA,
+                                          Lease::STATE_DEFAULT, assigned,
+                                          cur_pool_id));
+        }
+
+        if (declined > 0) {
+            rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_NA,
+                                          Lease::STATE_DECLINED, declined,
+                                          cur_pool_id));
+        }
+
+        if (assigned_pds > 0) {
+            rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_PD,
+                                          Lease::STATE_DEFAULT, assigned_pds,
+                                          cur_pool_id));
+        }
+
+        // Set the next row position to the beginning of the rows.
+        next_pos_ = rows_.begin();
+    }
+
     /// @brief The Memfile storage containing the IPv6 leases to analyze
     Lease6Storage& storage6_;
 };
@@ -633,8 +974,11 @@ const int Memfile_LeaseMgr::MAJOR_VERSION_V6;
 const int Memfile_LeaseMgr::MINOR_VERSION_V6;
 
 Memfile_LeaseMgr::Memfile_LeaseMgr(const DatabaseConnection::ParameterMap& parameters)
-    : LeaseMgr(), lfc_setup_(), conn_(parameters), mutex_(new std::mutex) {
+    : TrackingLeaseMgr(), lfc_setup_(), conn_(parameters), mutex_(new std::mutex) {
     bool conversion_needed = false;
+
+    // Check if the extended info tables are enabled.
+    setExtendedInfoTablesEnabled(parameters);
 
     // Check the universe and use v4 file or v6 file.
     std::string universe = conn_.getParameter("universe");
@@ -645,6 +989,7 @@ Memfile_LeaseMgr::Memfile_LeaseMgr(const DatabaseConnection::ParameterMap& param
                                                  CSVLeaseFile4>(file4,
                                                                 lease_file4_,
                                                                 storage4_);
+            static_cast<void>(extractExtendedInfo4(false, false));
         }
     } else {
         std::string file6 = initLeaseFilePath(V6);
@@ -653,6 +998,7 @@ Memfile_LeaseMgr::Memfile_LeaseMgr(const DatabaseConnection::ParameterMap& param
                                                  CSVLeaseFile6>(file6,
                                                                 lease_file6_,
                                                                 storage6_);
+            buildExtendedInfoTables6();
         }
     }
 
@@ -662,7 +1008,7 @@ Memfile_LeaseMgr::Memfile_LeaseMgr(const DatabaseConnection::ParameterMap& param
     // operation.
     if (!persistLeases(V4) && !persistLeases(V6)) {
         LOG_WARN(dhcpsrv_logger, DHCPSRV_MEMFILE_NO_STORAGE);
-    } else  {
+    } else {
         if (conversion_needed) {
             auto const& version(getVersion());
             LOG_WARN(dhcpsrv_logger, DHCPSRV_MEMFILE_CONVERTING_LEASE_FILES)
@@ -715,6 +1061,14 @@ Memfile_LeaseMgr::addLeaseInternal(const Lease4Ptr& lease) {
     // of the Lease up to the point of insertion in the database).
     lease->updateCurrentExpirationTime();
 
+    // Increment class lease counters.
+    class_lease_counter_.addLease(lease);
+
+    // Run installed callbacks.
+    if (hasCallbacks()) {
+        trackAddLease(lease);
+    }
+
     return (true);
 }
 
@@ -745,11 +1099,24 @@ Memfile_LeaseMgr::addLeaseInternal(const Lease6Ptr& lease) {
         lease_file6_->append(*lease);
     }
 
+    lease->extended_info_action_ = Lease6::ACTION_IGNORE;
     storage6_.insert(lease);
 
     // Update lease current expiration time (allows update between the creation
     // of the Lease up to the point of insertion in the database).
     lease->updateCurrentExpirationTime();
+
+    // Increment class lease counters.
+    class_lease_counter_.addLease(lease);
+
+    if (getExtendedInfoTablesEnabled()) {
+        static_cast<void>(addExtendedInfo6(lease));
+    }
+
+    // Run installed callbacks.
+    if (hasCallbacks()) {
+        trackAddLease(lease);
+    }
 
     return (true);
 }
@@ -802,8 +1169,8 @@ Memfile_LeaseMgr::getLease4Internal(const HWAddr& hwaddr,
               Lease4StorageHWAddressSubnetIdIndex::const_iterator> l
         = idx.equal_range(boost::make_tuple(hwaddr.hwaddr_));
 
-    for (auto lease = l.first; lease != l.second; ++lease) {
-        collection.push_back(Lease4Ptr(new Lease4(**lease)));
+    BOOST_FOREACH(auto const& lease, l) {
+        collection.push_back(Lease4Ptr(new Lease4(*lease)));
     }
 }
 
@@ -867,8 +1234,8 @@ Memfile_LeaseMgr::getLease4Internal(const ClientId& client_id,
               Lease4StorageClientIdSubnetIdIndex::const_iterator> l
         = idx.equal_range(boost::make_tuple(client_id.getClientId()));
 
-    for (auto lease = l.first; lease != l.second; ++lease) {
-        collection.push_back(Lease4Ptr(new Lease4(**lease)));
+    BOOST_FOREACH(auto const& lease, l) {
+        collection.push_back(Lease4Ptr(new Lease4(*lease)));
     }
 }
 
@@ -928,8 +1295,8 @@ Memfile_LeaseMgr::getLeases4Internal(SubnetID subnet_id,
               Lease4StorageSubnetIdIndex::const_iterator> l =
         idx.equal_range(subnet_id);
 
-    for (auto lease = l.first; lease != l.second; ++lease) {
-        collection.push_back(Lease4Ptr(new Lease4(**lease)));
+    BOOST_FOREACH(auto const& lease, l) {
+        collection.push_back(Lease4Ptr(new Lease4(*lease)));
     }
 }
 
@@ -957,8 +1324,8 @@ Memfile_LeaseMgr::getLeases4Internal(const std::string& hostname,
               Lease4StorageHostnameIndex::const_iterator> l =
         idx.equal_range(hostname);
 
-    for (auto lease = l.first; lease != l.second; ++lease) {
-        collection.push_back(Lease4Ptr(new Lease4(**lease)));
+    BOOST_FOREACH(auto const& lease, l) {
+        collection.push_back(Lease4Ptr(new Lease4(*lease)));
     }
 }
 
@@ -980,8 +1347,8 @@ Memfile_LeaseMgr::getLeases4(const std::string& hostname) const {
 
 void
 Memfile_LeaseMgr::getLeases4Internal(Lease4Collection& collection) const {
-   for (auto lease = storage4_.begin(); lease != storage4_.end(); ++lease) {
-       collection.push_back(Lease4Ptr(new Lease4(**lease)));
+   for (auto const& lease : storage4_) {
+       collection.push_back(Lease4Ptr(new Lease4(*lease)));
    }
 }
 
@@ -1050,6 +1417,16 @@ Memfile_LeaseMgr::getLease6Internal(Lease::Type type,
                                     const isc::asiolink::IOAddress& addr) const {
     Lease6Storage::iterator l = storage6_.find(addr);
     if (l == storage6_.end() || !(*l) || ((*l)->type_ != type)) {
+        return (Lease6Ptr());
+    } else {
+        return (Lease6Ptr(new Lease6(**l)));
+    }
+}
+
+Lease6Ptr
+Memfile_LeaseMgr::getAnyLease6Internal(const isc::asiolink::IOAddress& addr) const {
+    Lease6Storage::iterator l = storage6_.find(addr);
+    if (l == storage6_.end() || !(*l)) {
         return (Lease6Ptr());
     } else {
         return (Lease6Ptr(new Lease6(**l)));
@@ -1164,8 +1541,8 @@ Memfile_LeaseMgr::getLeases6Internal(SubnetID subnet_id,
               Lease6StorageSubnetIdIndex::const_iterator> l =
         idx.equal_range(subnet_id);
 
-    for (auto lease = l.first; lease != l.second; ++lease) {
-        collection.push_back(Lease6Ptr(new Lease6(**lease)));
+    BOOST_FOREACH(auto const& lease, l) {
+        collection.push_back(Lease6Ptr(new Lease6(*lease)));
     }
 }
 
@@ -1193,8 +1570,8 @@ Memfile_LeaseMgr::getLeases6Internal(const std::string& hostname,
               Lease6StorageHostnameIndex::const_iterator> l =
         idx.equal_range(hostname);
 
-    for (auto lease = l.first; lease != l.second; ++lease) {
-        collection.push_back(Lease6Ptr(new Lease6(**lease)));
+    BOOST_FOREACH(auto const& lease, l) {
+        collection.push_back(Lease6Ptr(new Lease6(*lease)));
     }
 }
 
@@ -1216,8 +1593,8 @@ Memfile_LeaseMgr::getLeases6(const std::string& hostname) const {
 
 void
 Memfile_LeaseMgr::getLeases6Internal(Lease6Collection& collection) const {
-   for (auto lease = storage6_.begin(); lease != storage6_.end(); ++lease) {
-       collection.push_back(Lease6Ptr(new Lease6(**lease)));
+   for (auto const& lease : storage6_) {
+       collection.push_back(Lease6Ptr(new Lease6(*lease)));
    }
 }
 
@@ -1244,8 +1621,8 @@ Memfile_LeaseMgr::getLeases6Internal(const DUID& duid,
               Lease6StorageDuidIndex::const_iterator> l =
         idx.equal_range(duid.getDuid());
 
-    for (auto lease = l.first; lease != l.second; ++lease) {
-        collection.push_back(Lease6Ptr(new Lease6(**lease)));
+    BOOST_FOREACH(auto const& lease, l) {
+        collection.push_back(Lease6Ptr(new Lease6(*lease)));
     }
 }
 
@@ -1310,6 +1687,63 @@ Memfile_LeaseMgr::getLeases6(const asiolink::IOAddress& lower_bound_address,
     return (collection);
 }
 
+Lease6Collection
+Memfile_LeaseMgr::getLeases6Internal(SubnetID subnet_id,
+                                     const IOAddress& lower_bound_address,
+                                     const LeasePageSize& page_size) const {
+    Lease6Collection collection;
+    const Lease6StorageSubnetIdIndex& idx = storage6_.get<SubnetIdIndexTag>();
+    Lease6StorageSubnetIdIndex::const_iterator lb =
+        idx.lower_bound(boost::make_tuple(subnet_id, lower_bound_address));
+
+    // Exclude the lower bound address specified by the caller.
+    if ((lb != idx.end()) && ((*lb)->addr_ == lower_bound_address)) {
+        ++lb;
+    }
+
+    // Return all leases being within the page size.
+    for (auto it = lb; it != idx.end(); ++it) {
+        if ((*it)->subnet_id_ != subnet_id) {
+            // Gone after the subnet id index.
+            break;
+        }
+        collection.push_back(Lease6Ptr(new Lease6(**it)));
+        if (collection.size() >= page_size.page_size_) {
+            break;
+        }
+    }
+    return (collection);
+}
+
+Lease6Collection
+Memfile_LeaseMgr::getLeases6(SubnetID subnet_id,
+                             const IOAddress& lower_bound_address,
+                             const LeasePageSize& page_size) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MEMFILE_GET_SUBID_PAGE6)
+        .arg(page_size.page_size_)
+        .arg(lower_bound_address.toText())
+        .arg(subnet_id);
+
+    // Expecting IPv6 valid address.
+    if (!lower_bound_address.isV6()) {
+        isc_throw(InvalidAddressFamily, "expected IPv6 address while "
+                  "retrieving leases from the lease database, got "
+                  << lower_bound_address);
+    }
+
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        return (getLeases6Internal(subnet_id,
+                                   lower_bound_address,
+                                   page_size));
+    } else {
+        return (getLeases6Internal(subnet_id,
+                                   lower_bound_address,
+                                    page_size));
+    }
+}
+
 void
 Memfile_LeaseMgr::getExpiredLeases4Internal(Lease4Collection& expired_leases,
                                             const size_t max_leases) const {
@@ -1321,7 +1755,7 @@ Memfile_LeaseMgr::getExpiredLeases4Internal(Lease4Collection& expired_leases,
     // for the 'state' 'false' is less than 'true'. Also the leases with
     // expiration time lower than current time will be returned.
     Lease4StorageExpirationIndex::const_iterator ub =
-        index.upper_bound(boost::make_tuple(false, time(NULL)));
+        index.upper_bound(boost::make_tuple(false, time(0)));
 
     // Copy only the number of leases indicated by the max_leases parameter.
     for (Lease4StorageExpirationIndex::const_iterator lease = index.begin();
@@ -1357,7 +1791,7 @@ Memfile_LeaseMgr::getExpiredLeases6Internal(Lease6Collection& expired_leases,
     // for the 'state' 'false' is less than 'true'. Also the leases with
     // expiration time lower than current time will be returned.
     Lease6StorageExpirationIndex::const_iterator ub =
-        index.upper_bound(boost::make_tuple(false, time(NULL)));
+        index.upper_bound(boost::make_tuple(false, time(0)));
 
     // Copy only the number of leases indicated by the max_leases parameter.
     for (Lease6StorageExpirationIndex::const_iterator lease = index.begin();
@@ -1412,8 +1846,20 @@ Memfile_LeaseMgr::updateLease4Internal(const Lease4Ptr& lease) {
     // Update lease current expiration time.
     lease->updateCurrentExpirationTime();
 
+    // Save a copy of the old lease as lease_it will point to the new
+    // one after the replacement.
+    Lease4Ptr old_lease = *lease_it;
+
     // Use replace() to re-index leases.
     index.replace(lease_it, Lease4Ptr(new Lease4(*lease)));
+
+    // Adjust class lease counters.
+    class_lease_counter_.updateLease(lease, old_lease);
+
+    // Run installed callbacks.
+    if (hasCallbacks()) {
+        trackUpdateLease(lease);
+    }
 }
 
 void
@@ -1435,6 +1881,10 @@ Memfile_LeaseMgr::updateLease6Internal(const Lease6Ptr& lease) {
     Lease6StorageAddressIndex& index = storage6_.get<AddressIndexTag>();
 
     bool persist = persistLeases(V6);
+
+    // Get the recorded action and reset it.
+    Lease6::ExtendedInfoAction recorded_action = lease->extended_info_action_;
+    lease->extended_info_action_ = Lease6::ACTION_IGNORE;
 
     // Lease must exist if it is to be updated.
     Lease6StorageAddressIndex::const_iterator lease_it = index.find(lease->addr_);
@@ -1459,8 +1909,37 @@ Memfile_LeaseMgr::updateLease6Internal(const Lease6Ptr& lease) {
     // Update lease current expiration time.
     lease->updateCurrentExpirationTime();
 
+    // Save a copy of the old lease as lease_it will point to the new
+    // one after the replacement.
+    Lease6Ptr old_lease = *lease_it;
+
     // Use replace() to re-index leases.
     index.replace(lease_it, Lease6Ptr(new Lease6(*lease)));
+
+    // Adjust class lease counters.
+    class_lease_counter_.updateLease(lease, old_lease);
+
+    // Update extended info tables.
+    if (getExtendedInfoTablesEnabled()) {
+        switch (recorded_action) {
+        case Lease6::ACTION_IGNORE:
+            break;
+
+        case Lease6::ACTION_DELETE:
+            deleteExtendedInfo6(lease->addr_);
+            break;
+
+        case Lease6::ACTION_UPDATE:
+            deleteExtendedInfo6(lease->addr_);
+            static_cast<void>(addExtendedInfo6(lease));
+            break;
+        }
+    }
+
+    // Run installed callbacks.
+    if (hasCallbacks()) {
+        trackUpdateLease(lease);
+    }
 }
 
 void
@@ -1500,7 +1979,17 @@ Memfile_LeaseMgr::deleteLeaseInternal(const Lease4Ptr& lease) {
                 return false;
             }
         }
+
         storage4_.erase(l);
+
+        // Decrement class lease counters.
+        class_lease_counter_.removeLease(lease);
+
+        // Run installed callbacks.
+        if (hasCallbacks()) {
+            trackDeleteLease(lease);
+        }
+
         return (true);
     }
 }
@@ -1520,6 +2009,8 @@ Memfile_LeaseMgr::deleteLease(const Lease4Ptr& lease) {
 
 bool
 Memfile_LeaseMgr::deleteLeaseInternal(const Lease6Ptr& lease) {
+    lease->extended_info_action_ = Lease6::ACTION_IGNORE;
+
     const isc::asiolink::IOAddress& addr = lease->addr_;
     Lease6Storage::iterator l = storage6_.find(addr);
     if (l == storage6_.end()) {
@@ -1542,7 +2033,22 @@ Memfile_LeaseMgr::deleteLeaseInternal(const Lease6Ptr& lease) {
                 return false;
             }
         }
+
         storage6_.erase(l);
+
+        // Decrement class lease counters.
+        class_lease_counter_.removeLease(lease);
+
+        // Delete references from extended info tables.
+        if (getExtendedInfoTablesEnabled()) {
+            deleteExtendedInfo6(lease->addr_);
+        }
+
+        // Run installed callbacks.
+        if (hasCallbacks()) {
+            trackDeleteLease(lease);
+        }
+
         return (true);
     }
 }
@@ -1602,12 +2108,12 @@ uint64_t
 Memfile_LeaseMgr::deleteExpiredReclaimedLeases(const uint32_t secs,
                                                const Universe& universe,
                                                StorageType& storage,
-                                               LeaseFileType& lease_file) const {
+                                               LeaseFileType& lease_file) {
     // Obtain the index which segragates leases by state and time.
     IndexType& index = storage.template get<ExpirationIndexTag>();
 
     // This returns the first element which is greater than the specified
-    // tuple (true, time(NULL) - secs). However, the range between the
+    // tuple (true, time(0) - secs). However, the range between the
     // beginning of the index and returned element also includes all the
     // elements for which the first value is false (lease state is NOT
     // reclaimed), because false < true. All elements between the
@@ -1616,7 +2122,7 @@ Memfile_LeaseMgr::deleteExpiredReclaimedLeases(const uint32_t secs,
     // be deleted, because their expiration time + secs has occurred earlier
     // than current time.
     typename IndexType::const_iterator upper_limit =
-        index.upper_bound(boost::make_tuple(true, time(NULL) - secs));
+        index.upper_bound(boost::make_tuple(true, time(0) - secs));
 
     // Now, we have to exclude all elements of the index which represent
     // leases in the state other than reclaimed - with the first value
@@ -1653,11 +2159,11 @@ Memfile_LeaseMgr::deleteExpiredReclaimedLeases(const uint32_t secs,
 
         // Erase leases from memory.
         index.erase(lower_limit, upper_limit);
+
     }
     // Return number of leases deleted.
     return (num_leases);
 }
-
 
 std::string
 Memfile_LeaseMgr::getDescription() const {
@@ -1665,7 +2171,7 @@ Memfile_LeaseMgr::getDescription() const {
 }
 
 std::pair<uint32_t, uint32_t>
-Memfile_LeaseMgr::getVersion() const {
+Memfile_LeaseMgr::getVersion(const std::string& /* timer_name */) const {
     std::string const& universe(conn_.getParameter("universe"));
     if (universe == "4") {
         return std::make_pair(MAJOR_VERSION_V4, MINOR_VERSION_V4);
@@ -1799,13 +2305,19 @@ Memfile_LeaseMgr::loadLeasesFromFiles(const std::string& filename,
         // Ignore and default to 0.
     }
 
-    uint32_t max_row_errors = 0;
+    int64_t max_row_errors64;
     try {
-        max_row_errors = boost::lexical_cast<uint32_t>(max_row_errors_str);
+        max_row_errors64 = boost::lexical_cast<int64_t>(max_row_errors_str);
     } catch (const boost::bad_lexical_cast&) {
         isc_throw(isc::BadValue, "invalid value of the max-row-errors "
                   << max_row_errors_str << " specified");
     }
+    if ((max_row_errors64 < 0) ||
+        (max_row_errors64 > std::numeric_limits<uint32_t>::max())) {
+        isc_throw(isc::BadValue, "invalid value of the max-row-errors "
+                  << max_row_errors_str << " specified");
+    }
+    uint32_t max_row_errors = static_cast<uint32_t>(max_row_errors64);
 
     // Load the leasefile.completed, if exists.
     bool conversion_needed = false;
@@ -1821,14 +2333,14 @@ Memfile_LeaseMgr::loadLeasesFromFiles(const std::string& filename,
         if (lease_file->exists()) {
             LeaseFileLoader::load<LeaseObjectType>(*lease_file, storage,
                                                    max_row_errors);
-            conversion_needed =  conversion_needed || lease_file->needsConversion();
+            conversion_needed = conversion_needed || lease_file->needsConversion();
         }
 
         lease_file.reset(new LeaseFileType(appendSuffix(filename, FILE_INPUT)));
         if (lease_file->exists()) {
             LeaseFileLoader::load<LeaseObjectType>(*lease_file, storage,
                                                    max_row_errors);
-            conversion_needed =  conversion_needed || lease_file->needsConversion();
+            conversion_needed = conversion_needed || lease_file->needsConversion();
         }
     }
 
@@ -1841,7 +2353,7 @@ Memfile_LeaseMgr::loadLeasesFromFiles(const std::string& filename,
     lease_file.reset(new LeaseFileType(filename));
     LeaseFileLoader::load<LeaseObjectType>(*lease_file, storage,
                                            max_row_errors, false);
-    conversion_needed =  conversion_needed || lease_file->needsConversion();
+    conversion_needed = conversion_needed || lease_file->needsConversion();
 
     return (conversion_needed);
 }
@@ -1958,14 +2470,39 @@ Memfile_LeaseMgr::lfcExecute(boost::shared_ptr<LeaseFileType>& lease_file) {
 LeaseStatsQueryPtr
 Memfile_LeaseMgr::startLeaseStatsQuery4() {
     LeaseStatsQueryPtr query(new MemfileLeaseStatsQuery4(storage4_));
-    query->start();
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        query->start();
+    } else {
+        query->start();
+    }
+
+    return(query);
+}
+
+LeaseStatsQueryPtr
+Memfile_LeaseMgr::startPoolLeaseStatsQuery4() {
+    LeaseStatsQueryPtr query(new MemfileLeaseStatsQuery4(storage4_, LeaseStatsQuery::ALL_SUBNET_POOLS));
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        query->start();
+    } else {
+        query->start();
+    }
+
     return(query);
 }
 
 LeaseStatsQueryPtr
 Memfile_LeaseMgr::startSubnetLeaseStatsQuery4(const SubnetID& subnet_id) {
     LeaseStatsQueryPtr query(new MemfileLeaseStatsQuery4(storage4_, subnet_id));
-    query->start();
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        query->start();
+    } else {
+        query->start();
+    }
+
     return(query);
 }
 
@@ -1974,21 +2511,52 @@ Memfile_LeaseMgr::startSubnetRangeLeaseStatsQuery4(const SubnetID& first_subnet_
                                                    const SubnetID& last_subnet_id) {
     LeaseStatsQueryPtr query(new MemfileLeaseStatsQuery4(storage4_, first_subnet_id,
                                                          last_subnet_id));
-    query->start();
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        query->start();
+    } else {
+        query->start();
+    }
+
     return(query);
 }
 
 LeaseStatsQueryPtr
 Memfile_LeaseMgr::startLeaseStatsQuery6() {
     LeaseStatsQueryPtr query(new MemfileLeaseStatsQuery6(storage6_));
-    query->start();
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        query->start();
+    } else {
+        query->start();
+    }
+
+    return(query);
+}
+
+LeaseStatsQueryPtr
+Memfile_LeaseMgr::startPoolLeaseStatsQuery6() {
+    LeaseStatsQueryPtr query(new MemfileLeaseStatsQuery6(storage6_, LeaseStatsQuery::ALL_SUBNET_POOLS));
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        query->start();
+    } else {
+        query->start();
+    }
+
     return(query);
 }
 
 LeaseStatsQueryPtr
 Memfile_LeaseMgr::startSubnetLeaseStatsQuery6(const SubnetID& subnet_id) {
     LeaseStatsQueryPtr query(new MemfileLeaseStatsQuery6(storage6_, subnet_id));
-    query->start();
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        query->start();
+    } else {
+        query->start();
+    }
+
     return(query);
 }
 
@@ -1997,7 +2565,13 @@ Memfile_LeaseMgr::startSubnetRangeLeaseStatsQuery6(const SubnetID& first_subnet_
                                                    const SubnetID& last_subnet_id) {
     LeaseStatsQueryPtr query(new MemfileLeaseStatsQuery6(storage6_, first_subnet_id,
                                                          last_subnet_id));
-    query->start();
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        query->start();
+    } else {
+        query->start();
+    }
+
     return(query);
 }
 
@@ -2011,18 +2585,18 @@ Memfile_LeaseMgr::wipeLeases4(const SubnetID& subnet_id) {
 
     // Try to get the lease using the DUID, IAID and lease type.
     std::pair<Lease4StorageSubnetIdIndex::const_iterator,
-              Lease4StorageSubnetIdIndex::const_iterator> l =
+              Lease4StorageSubnetIdIndex::const_iterator> r =
         idx.equal_range(subnet_id);
 
     // Let's collect all leases.
     Lease4Collection leases;
-    for (auto lease = l.first; lease != l.second; ++lease) {
-        leases.push_back(*lease);
+    BOOST_FOREACH(auto const& lease, r) {
+        leases.push_back(lease);
     }
 
     size_t num = leases.size();
-    for (auto l = leases.begin(); l != leases.end(); ++l) {
-        deleteLease(*l);
+    for (auto const& l : leases) {
+        deleteLease(l);
     }
     LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_WIPE_LEASES4_FINISHED)
         .arg(subnet_id).arg(num);
@@ -2040,18 +2614,18 @@ Memfile_LeaseMgr::wipeLeases6(const SubnetID& subnet_id) {
 
     // Try to get the lease using the DUID, IAID and lease type.
     std::pair<Lease6StorageSubnetIdIndex::const_iterator,
-              Lease6StorageSubnetIdIndex::const_iterator> l =
+              Lease6StorageSubnetIdIndex::const_iterator> r =
         idx.equal_range(subnet_id);
 
     // Let's collect all leases.
     Lease6Collection leases;
-    for (auto lease = l.first; lease != l.second; ++lease) {
-        leases.push_back(*lease);
+    BOOST_FOREACH(auto const& lease, r) {
+        leases.push_back(lease);
     }
 
     size_t num = leases.size();
-    for (auto l = leases.begin(); l != leases.end(); ++l) {
-        deleteLease(*l);
+    for (auto const& l : leases) {
+        deleteLease(l);
     }
     LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_WIPE_LEASES6_FINISHED)
         .arg(subnet_id).arg(num);
@@ -2059,19 +2633,820 @@ Memfile_LeaseMgr::wipeLeases6(const SubnetID& subnet_id) {
     return (num);
 }
 
-std::string
-Memfile_LeaseMgr::checkLimits4(ConstElementPtr const& /* user_context */) const {
-    isc_throw(NotImplemented, "Memfile_LeaseMgr::checkLimits4() not implemented");
+void
+Memfile_LeaseMgr::recountClassLeases4() {
+    class_lease_counter_.clear();
+    for (auto const& lease : storage4_) {
+        // Bump the appropriate accumulator
+        if (lease->state_ == Lease::STATE_DEFAULT) {
+            class_lease_counter_.addLease(lease);
+        }
+    }
+}
+
+void
+Memfile_LeaseMgr::recountClassLeases6() {
+    class_lease_counter_.clear();
+    for (auto const& lease : storage6_) {
+        // Bump the appropriate accumulator
+        if (lease->state_ == Lease::STATE_DEFAULT) {
+            class_lease_counter_.addLease(lease);
+        }
+    }
+}
+
+size_t
+Memfile_LeaseMgr::getClassLeaseCount(const ClientClass& client_class,
+                                     const Lease::Type& ltype /* = Lease::TYPE_V4*/) const {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        return(class_lease_counter_.getClassCount(client_class, ltype));
+    } else {
+        return(class_lease_counter_.getClassCount(client_class, ltype));
+    }
+}
+
+void
+Memfile_LeaseMgr::clearClassLeaseCounts() {
+    return(class_lease_counter_.clear());
 }
 
 std::string
-Memfile_LeaseMgr::checkLimits6(ConstElementPtr const& /* user_context */) const {
-    isc_throw(NotImplemented, "Memfile_LeaseMgr::checkLimits6() not implemented");
+Memfile_LeaseMgr::checkLimits4(isc::data::ConstElementPtr const& user_context) const {
+    if (!user_context) {
+        return ("");
+    }
+
+    ConstElementPtr limits = user_context->find("ISC/limits");
+    if (!limits) {
+        return ("");
+    }
+
+    // Iterate of the 'client-classes' list in 'limits'. For each class that specifies
+    // an "address-limit", check its value against the class's lease count.
+    ConstElementPtr classes = limits->get("client-classes");
+    if (classes) {
+        for (int i = 0; i < classes->size(); ++i) {
+            ConstElementPtr class_elem = classes->get(i);
+            // Get class name.
+            ConstElementPtr name_elem = class_elem->get("name");
+            if (!name_elem) {
+                isc_throw(BadValue, "checkLimits4 - client-class.name is missing: "
+                          << prettyPrint(limits));
+            }
+
+            std::string name = name_elem->stringValue();
+
+            // Now look for an address-limit
+            size_t limit;
+            if (!getLeaseLimit(class_elem, Lease::TYPE_V4, limit)) {
+                // No limit, go to the next class.
+                continue;
+            }
+
+            // If the limit is > 0 look up the class lease count.  Limit of 0 always
+            // denies the lease.
+            size_t lease_count = 0;
+            if (limit) {
+                lease_count = getClassLeaseCount(name);
+            }
+
+            // If we're over the limit, return the error, no need to evaluate any others.
+            if (lease_count >= limit) {
+                std::ostringstream ss;
+                ss << "address limit " << limit << " for client class \""
+                   << name << "\", current lease count " << lease_count;
+                return (ss.str());
+            }
+        }
+    }
+
+    // If there were class limits we passed them, now look for a subnet limit.
+    ConstElementPtr subnet_elem = limits->get("subnet");
+    if (subnet_elem) {
+        // Get the subnet id.
+        ConstElementPtr id_elem = subnet_elem->get("id");
+        if (!id_elem) {
+            isc_throw(BadValue, "checkLimits4 - subnet.id is missing: "
+                      << prettyPrint(limits));
+        }
+
+        SubnetID subnet_id = id_elem->intValue();
+
+        // Now look for an address-limit.
+        size_t limit;
+        if (getLeaseLimit(subnet_elem, Lease::TYPE_V4, limit)) {
+            // If the limit is > 0 look up the subnet lease count. Limit of 0 always
+            // denies the lease.
+            int64_t lease_count = 0;
+            if (limit) {
+                lease_count = getSubnetStat(subnet_id, "assigned-addresses");
+            }
+
+            // If we're over the limit, return the error.
+            if (lease_count >= limit) {
+                std::ostringstream ss;
+                ss << "address limit " << limit << " for subnet ID " << subnet_id
+                   << ", current lease count " << lease_count;
+                return (ss.str());
+            }
+        }
+    }
+
+    // No limits exceeded!
+    return ("");
+}
+
+std::string
+Memfile_LeaseMgr::checkLimits6(isc::data::ConstElementPtr const& user_context) const {
+    if (!user_context) {
+        return ("");
+    }
+
+    ConstElementPtr limits = user_context->find("ISC/limits");
+    if (!limits) {
+        return ("");
+    }
+
+    // Iterate over the 'client-classes' list in 'limits'. For each class that specifies
+    // limit (either "address-limit" or "prefix-limit", check its value against the appropriate
+    // class lease count.
+    ConstElementPtr classes = limits->get("client-classes");
+    if (classes) {
+        for (int i = 0; i < classes->size(); ++i) {
+            ConstElementPtr class_elem = classes->get(i);
+            // Get class name.
+            ConstElementPtr name_elem = class_elem->get("name");
+            if (!name_elem) {
+                isc_throw(BadValue, "checkLimits6 - client-class.name is missing: "
+                          << prettyPrint(limits));
+            }
+
+            std::string name = name_elem->stringValue();
+
+            // Now look for either address-limit or a prefix=limit.
+            size_t limit = 0;
+            Lease::Type ltype = Lease::TYPE_NA;
+            if (!getLeaseLimit(class_elem, ltype, limit)) {
+                ltype = Lease::TYPE_PD;
+                if (!getLeaseLimit(class_elem, ltype, limit)) {
+                    // No limits for this class, skip to the next.
+                    continue;
+                }
+            }
+
+            // If the limit is > 0 look up the class lease count.  Limit of 0 always
+            // denies the lease.
+            size_t lease_count = 0;
+            if (limit) {
+                lease_count = getClassLeaseCount(name, ltype);
+            }
+
+            // If we're over the limit, return the error, no need to evaluate any others.
+            if (lease_count >= limit) {
+                std::ostringstream ss;
+                ss << (ltype == Lease::TYPE_NA ? "address" : "prefix")
+                   << " limit " << limit << " for client class \""
+                   << name << "\", current lease count " << lease_count;
+                return (ss.str());
+            }
+        }
+    }
+
+    // If there were class limits we passed them, now look for a subnet limit.
+    ConstElementPtr subnet_elem = limits->get("subnet");
+    if (subnet_elem) {
+        // Get the subnet id.
+        ConstElementPtr id_elem = subnet_elem->get("id");
+        if (!id_elem) {
+            isc_throw(BadValue, "checkLimits6 - subnet.id is missing: "
+                      << prettyPrint(limits));
+        }
+
+        SubnetID subnet_id = id_elem->intValue();
+
+        // Now look for either address-limit or a prefix=limit.
+        size_t limit = 0;
+        Lease::Type ltype = Lease::TYPE_NA;
+        if (!getLeaseLimit(subnet_elem, ltype, limit)) {
+            ltype = Lease::TYPE_PD;
+            if (!getLeaseLimit(subnet_elem, ltype, limit)) {
+                // No limits for the subnet so none exceeded!
+                return ("");
+            }
+        }
+
+        // If the limit is > 0 look up the class lease count.  Limit of 0 always
+        // denies the lease.
+        int64_t lease_count = 0;
+        if (limit) {
+            lease_count = getSubnetStat(subnet_id, (ltype == Lease::TYPE_NA ?
+                                                    "assigned-nas" : "assigned-pds"));
+        }
+
+        // If we're over the limit, return the error.
+        if (lease_count >= limit) {
+            std::ostringstream ss;
+            ss << (ltype == Lease::TYPE_NA ? "address" : "prefix")
+               << " limit " << limit << " for subnet ID " << subnet_id
+               << ", current lease count " << lease_count;
+            return (ss.str());
+        }
+    }
+
+    // No limits exceeded!
+    return ("");
 }
 
 bool
 Memfile_LeaseMgr::isJsonSupported() const {
     return true;
+}
+
+int64_t
+Memfile_LeaseMgr::getSubnetStat(const SubnetID& subnet_id, const std::string& stat_label) const {
+    /// @todo This could be simplified if StatsMgr provided a mechanism to
+    /// return the most recent sample as an InterSample.
+    std::string stat_name = StatsMgr::generateName("subnet", subnet_id, stat_label);
+    ConstElementPtr stat = StatsMgr::instance().get(stat_name);
+    ConstElementPtr samples = stat->get(stat_name);
+    if (samples && samples->size()) {
+        auto sample = samples->get(0);
+        if (sample->size()) {
+            auto count_elem = sample->get(0);
+            return (count_elem->intValue());
+        }
+    }
+
+    return (0);
+}
+
+bool
+Memfile_LeaseMgr::getLeaseLimit(ConstElementPtr parent, Lease::Type ltype, size_t& limit) const {
+    ConstElementPtr limit_elem = parent->get(ltype == Lease::TYPE_PD ?
+                                             "prefix-limit" : "address-limit");
+    if (limit_elem) {
+        limit = limit_elem->intValue();
+        return (true);
+    }
+
+    return (false);
+}
+
+namespace {
+
+std::string
+idToText(const OptionBuffer& id) {
+    std::stringstream tmp;
+    tmp << std::hex;
+    bool delim = false;
+    for (auto const& it : id) {
+        if (delim) {
+            tmp << ":";
+        }
+        tmp << std::setw(2) << std::setfill('0')
+            << static_cast<unsigned int>(it);
+        delim = true;
+    }
+    return (tmp.str());
+}
+
+} // anonymous namespace
+
+Lease4Collection
+Memfile_LeaseMgr::getLeases4ByRelayId(const OptionBuffer& relay_id,
+                                      const IOAddress& lower_bound_address,
+                                      const LeasePageSize& page_size,
+                                      const time_t& qry_start_time /* = 0 */,
+                                      const time_t& qry_end_time /* = 0 */) {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MEMFILE_GET_RELAYID4)
+        .arg(page_size.page_size_)
+        .arg(lower_bound_address.toText())
+        .arg(idToText(relay_id))
+        .arg(qry_start_time)
+        .arg(qry_end_time);
+
+    // Expecting IPv4 address.
+    if (!lower_bound_address.isV4()) {
+        isc_throw(InvalidAddressFamily, "expected IPv4 address while "
+                  "retrieving leases from the lease database, got "
+                  << lower_bound_address);
+    }
+
+    // Catch 2038 bug with 32 bit time_t.
+    if ((qry_start_time < 0) || (qry_end_time < 0)) {
+        isc_throw(BadValue, "negative time value");
+    }
+
+    // Start time must be before end time.
+    if ((qry_start_time > 0) && (qry_end_time > 0) &&
+        (qry_start_time > qry_end_time)) {
+        isc_throw(BadValue, "start time must be before end time");
+    }
+
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        return (getLeases4ByRelayIdInternal(relay_id,
+                                            lower_bound_address,
+                                            page_size,
+                                            qry_start_time,
+                                            qry_end_time));
+    } else {
+        return (getLeases4ByRelayIdInternal(relay_id,
+                                            lower_bound_address,
+                                            page_size,
+                                            qry_start_time,
+                                            qry_end_time));
+    }
+}
+
+Lease4Collection
+Memfile_LeaseMgr::getLeases4ByRelayIdInternal(const OptionBuffer& relay_id,
+                                              const IOAddress& lower_bound_address,
+                                              const LeasePageSize& page_size,
+                                              const time_t& qry_start_time,
+                                              const time_t& qry_end_time) {
+    Lease4Collection collection;
+    const Lease4StorageRelayIdIndex& idx = storage4_.get<RelayIdIndexTag>();
+    Lease4StorageRelayIdIndex::const_iterator lb =
+        idx.lower_bound(boost::make_tuple(relay_id, lower_bound_address));
+    // Return all convenient leases being within the page size.
+    IOAddress last_addr = lower_bound_address;
+    for (; lb != idx.end(); ++lb) {
+        if ((*lb)->addr_ == last_addr) {
+            // Already seen: skip it.
+            continue;
+        }
+        if ((*lb)->relay_id_ != relay_id) {
+            // Gone after the relay id index.
+            break;
+        }
+        last_addr = (*lb)->addr_;
+        if ((qry_start_time > 0) && ((*lb)->cltt_ < qry_start_time)) {
+            // Too old.
+            continue;
+        }
+        if ((qry_end_time > 0) && ((*lb)->cltt_ > qry_end_time)) {
+            // Too young.
+            continue;
+        }
+        collection.push_back(Lease4Ptr(new Lease4(**lb)));
+        if (collection.size() >= page_size.page_size_) {
+            break;
+        }
+    }
+    return (collection);
+}
+
+Lease4Collection
+Memfile_LeaseMgr::getLeases4ByRemoteId(const OptionBuffer& remote_id,
+                                       const IOAddress& lower_bound_address,
+                                       const LeasePageSize& page_size,
+                                       const time_t& qry_start_time /* = 0 */,
+                                       const time_t& qry_end_time /* = 0 */) {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MEMFILE_GET_REMOTEID4)
+        .arg(page_size.page_size_)
+        .arg(lower_bound_address.toText())
+        .arg(idToText(remote_id))
+        .arg(qry_start_time)
+        .arg(qry_end_time);
+
+    // Expecting IPv4 address.
+    if (!lower_bound_address.isV4()) {
+        isc_throw(InvalidAddressFamily, "expected IPv4 address while "
+                  "retrieving leases from the lease database, got "
+                  << lower_bound_address);
+    }
+
+    // Catch 2038 bug with 32 bit time_t.
+    if ((qry_start_time < 0) || (qry_end_time < 0)) {
+        isc_throw(BadValue, "negative time value");
+    }
+
+    // Start time must be before end time.
+    if ((qry_start_time > 0) && (qry_end_time > 0) &&
+        (qry_start_time > qry_end_time)) {
+        isc_throw(BadValue, "start time must be before end time");
+    }
+
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        return (getLeases4ByRemoteIdInternal(remote_id,
+                                             lower_bound_address,
+                                             page_size,
+                                             qry_start_time,
+                                             qry_end_time));
+    } else {
+        return (getLeases4ByRemoteIdInternal(remote_id,
+                                             lower_bound_address,
+                                             page_size,
+                                             qry_start_time,
+                                             qry_end_time));
+    }
+}
+
+Lease4Collection
+Memfile_LeaseMgr::getLeases4ByRemoteIdInternal(const OptionBuffer& remote_id,
+                                               const IOAddress& lower_bound_address,
+                                               const LeasePageSize& page_size,
+                                               const time_t& qry_start_time,
+                                               const time_t& qry_end_time) {
+    Lease4Collection collection;
+    std::map<IOAddress, Lease4Ptr> sorted;
+    const Lease4StorageRemoteIdIndex& idx = storage4_.get<RemoteIdIndexTag>();
+    Lease4StorageRemoteIdRange er = idx.equal_range(remote_id);
+    // Store all convenient leases being within the page size.
+    BOOST_FOREACH(auto const& it, er) {
+        const IOAddress& addr = it->addr_;
+        if (addr <= lower_bound_address) {
+            // Not greater than lower_bound_address.
+            continue;
+        }
+        if ((qry_start_time > 0) && (it->cltt_ < qry_start_time)) {
+            // Too old.
+            continue;
+        }
+        if ((qry_end_time > 0) && (it->cltt_ > qry_end_time)) {
+            // Too young.
+            continue;
+        }
+        sorted[addr] = it;
+    }
+
+    // Return all leases being within the page size.
+    for (auto const& it : sorted) {
+        collection.push_back(Lease4Ptr(new Lease4(*it.second)));
+        if (collection.size() >= page_size.page_size_) {
+            break;
+        }
+    }
+    return (collection);
+}
+
+void
+Memfile_LeaseMgr::wipeExtendedInfoTables6() {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        relay_id6_.clear();
+        remote_id6_.clear();
+    } else {
+        relay_id6_.clear();
+        remote_id6_.clear();
+    }
+}
+
+size_t
+Memfile_LeaseMgr::byRelayId6size() const {
+    return (relay_id6_.size());
+}
+
+size_t
+Memfile_LeaseMgr::byRemoteId6size() const {
+    return (remote_id6_.size());
+}
+
+Lease6Collection
+Memfile_LeaseMgr::getLeases6ByRelayId(const DUID& relay_id,
+                                      const IOAddress& lower_bound_address,
+                                      const LeasePageSize& page_size) {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MEMFILE_GET_RELAYID6)
+        .arg(page_size.page_size_)
+        .arg(lower_bound_address.toText())
+        .arg(relay_id.toText());
+
+    // Expecting IPv6 valid address.
+    if (!lower_bound_address.isV6()) {
+        isc_throw(InvalidAddressFamily, "expected IPv6 address while "
+                  "retrieving leases from the lease database, got "
+                  << lower_bound_address);
+    }
+
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        return (getLeases6ByRelayIdInternal(relay_id,
+                                            lower_bound_address,
+                                            page_size));
+    } else {
+        return (getLeases6ByRelayIdInternal(relay_id,
+                                            lower_bound_address,
+                                            page_size));
+    }
+}
+
+Lease6Collection
+Memfile_LeaseMgr::getLeases6ByRelayIdInternal(const DUID& relay_id,
+                                              const IOAddress& lower_bound_address,
+                                              const LeasePageSize& page_size) {
+    const std::vector<uint8_t>& relay_id_data = relay_id.getDuid();
+    Lease6Collection collection;
+    const RelayIdIndex& idx = relay_id6_.get<RelayIdIndexTag>();
+    RelayIdIndex::const_iterator lb =
+        idx.lower_bound(boost::make_tuple(relay_id_data, lower_bound_address));
+
+    // Return all leases being within the page size.
+    IOAddress last_addr = lower_bound_address;
+    for (; lb != idx.end(); ++lb) {
+        if ((*lb)->lease_addr_ == last_addr) {
+            // Already seen: skip it.
+            continue;
+        }
+        if ((*lb)->id_ != relay_id_data) {
+            // Gone after the relay id index.
+            break;
+        }
+        last_addr = (*lb)->lease_addr_;
+        Lease6Ptr lease = getAnyLease6Internal(last_addr);
+        if (lease) {
+            collection.push_back(lease);
+            if (collection.size() >= page_size.page_size_) {
+                break;
+            }
+        }
+    }
+    return (collection);
+}
+
+Lease6Collection
+Memfile_LeaseMgr::getLeases6ByRemoteId(const OptionBuffer& remote_id,
+                                       const IOAddress& lower_bound_address,
+                                       const LeasePageSize& page_size) {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MEMFILE_GET_REMOTEID6)
+        .arg(page_size.page_size_)
+        .arg(lower_bound_address.toText())
+        .arg(idToText(remote_id));
+
+    // Expecting IPv6 valid address.
+    if (!lower_bound_address.isV6()) {
+        isc_throw(InvalidAddressFamily, "expected IPv6 address while "
+                  "retrieving leases from the lease database, got "
+                  << lower_bound_address);
+    }
+
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        return (getLeases6ByRemoteIdInternal(remote_id,
+                                             lower_bound_address,
+                                             page_size));
+    } else {
+        return (getLeases6ByRemoteIdInternal(remote_id,
+                                             lower_bound_address,
+                                             page_size));
+    }
+}
+
+Lease6Collection
+Memfile_LeaseMgr::getLeases6ByRemoteIdInternal(const OptionBuffer& remote_id,
+                                               const IOAddress& lower_bound_address,
+                                               const LeasePageSize& page_size) {
+    Lease6Collection collection;
+    std::set<IOAddress> sorted;
+    const RemoteIdIndex& idx = remote_id6_.get<RemoteIdIndexTag>();
+    RemoteIdIndexRange er = idx.equal_range(remote_id);
+    // Store all addresses greater than lower_bound_address.
+    BOOST_FOREACH(auto const& it, er) {
+        const IOAddress& addr = it->lease_addr_;
+        if (addr <= lower_bound_address) {
+            continue;
+        }
+        static_cast<void>(sorted.insert(addr));
+    }
+
+    // Return all leases being within the page size.
+    for (const IOAddress& addr : sorted) {
+        Lease6Ptr lease = getAnyLease6Internal(addr);
+        if (lease) {
+            collection.push_back(lease);
+            if (collection.size() >= page_size.page_size_) {
+                break;
+            }
+        }
+    }
+    return (collection);
+}
+
+size_t
+Memfile_LeaseMgr::extractExtendedInfo4(bool update, bool current) {
+    CfgConsistencyPtr cfg;
+    if (current) {
+        cfg = CfgMgr::instance().getCurrentCfg()->getConsistency();
+    } else {
+        cfg = CfgMgr::instance().getStagingCfg()->getConsistency();
+    }
+    if (!cfg) {
+        isc_throw(Unexpected, "the " << (current ? "current" : "staging")
+                  << " consistency configuration is null");
+    }
+    auto check = cfg->getExtendedInfoSanityCheck();
+
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+              DHCPSRV_MEMFILE_BEGIN_EXTRACT_EXTENDED_INFO4)
+        .arg(CfgConsistency::sanityCheckToText(check))
+        .arg(update ? " updating in file" : "");
+
+    size_t leases = 0;
+    size_t modified = 0;
+    size_t updated = 0;
+    size_t processed = 0;
+    auto& index = storage4_.get<AddressIndexTag>();
+    auto lease_it = index.begin();
+    auto next_it = index.end();
+
+    for (; lease_it != index.end(); lease_it = next_it) {
+        next_it = std::next(lease_it);
+        Lease4Ptr lease = *lease_it;
+        ++leases;
+        try {
+            if (upgradeLease4ExtendedInfo(lease, check)) {
+                ++modified;
+                if (update && persistLeases(V4)) {
+                    lease_file4_->append(*lease);
+                    ++updated;
+                }
+            }
+            // Work on a copy as the multi-index requires fields used
+            // as indexes to be read-only.
+            Lease4Ptr copy(new Lease4(*lease));
+            extractLease4ExtendedInfo(copy, false);
+            if (!copy->relay_id_.empty() || !copy->remote_id_.empty()) {
+                index.replace(lease_it, copy);
+                ++processed;
+            }
+        } catch (const std::exception& ex) {
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+                      DHCPSRV_MEMFILE_EXTRACT_EXTENDED_INFO4_ERROR)
+                .arg(lease->addr_.toText())
+                .arg(ex.what());
+        }
+    }
+
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_EXTRACT_EXTENDED_INFO4)
+        .arg(leases)
+        .arg(modified)
+        .arg(updated)
+        .arg(processed);
+
+    return (updated);
+}
+
+size_t
+Memfile_LeaseMgr::upgradeExtendedInfo4(const LeasePageSize& /* page_size */) {
+    return (0);
+}
+
+void
+Memfile_LeaseMgr::buildExtendedInfoTables6() {
+    CfgConsistencyPtr cfg = CfgMgr::instance().getStagingCfg()->getConsistency();
+    if (!cfg) {
+        isc_throw(Unexpected, "the staging consistency configuration is null");
+    }
+    auto check = cfg->getExtendedInfoSanityCheck();
+    bool enabled = getExtendedInfoTablesEnabled();
+
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+              DHCPSRV_MEMFILE_BEGIN_BUILD_EXTENDED_INFO_TABLES6)
+        .arg(CfgConsistency::sanityCheckToText(check))
+        .arg(enabled ? "enabled" : "disabled");
+
+    // Clear tables when enabled.
+    if (enabled) {
+        relay_id6_.clear();
+        remote_id6_.clear();
+    }
+
+    size_t leases = 0;
+    size_t modified = 0;
+    size_t processed = 0;
+
+    for (auto const& lease : storage6_) {
+        ++leases;
+        try {
+            if (upgradeLease6ExtendedInfo(lease, check)) {
+                ++modified;
+            }
+            if (enabled && addExtendedInfo6(lease)) {
+                ++processed;
+            }
+        } catch (const std::exception& ex) {
+            LOG_ERROR(dhcpsrv_logger,
+                      DHCPSRV_MEMFILE_BUILD_EXTENDED_INFO_TABLES6_ERROR)
+                .arg(lease->addr_.toText())
+                .arg(ex.what());
+        }
+    }
+
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_BUILD_EXTENDED_INFO_TABLES6)
+        .arg(leases)
+        .arg(modified)
+        .arg(processed);
+}
+
+size_t
+Memfile_LeaseMgr::upgradeExtendedInfo6(const LeasePageSize& /* page_size */) {
+    return (0);
+}
+
+void
+Memfile_LeaseMgr::deleteExtendedInfo6(const IOAddress& addr) {
+    LeaseAddressRelayIdIndex& relay_id_idx =
+        relay_id6_.get<LeaseAddressIndexTag>();
+    static_cast<void>(relay_id_idx.erase(addr));
+    LeaseAddressRemoteIdIndex& remote_id_idx =
+        remote_id6_.get<LeaseAddressIndexTag>();
+    static_cast<void>(remote_id_idx.erase(addr));
+}
+
+void
+Memfile_LeaseMgr::addRelayId6(const IOAddress& lease_addr,
+                              const std::vector<uint8_t>& relay_id) {
+    Lease6ExtendedInfoPtr ex_info;
+    ex_info.reset(new Lease6ExtendedInfo(lease_addr, relay_id));
+    relay_id6_.insert(ex_info);
+}
+
+void
+Memfile_LeaseMgr::addRemoteId6(const IOAddress& lease_addr,
+                               const std::vector<uint8_t>& remote_id) {
+    Lease6ExtendedInfoPtr ex_info;
+    ex_info.reset(new Lease6ExtendedInfo(lease_addr, remote_id));
+    remote_id6_.insert(ex_info);
+}
+
+void
+Memfile_LeaseMgr::writeLeases4(const std::string& filename) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        writeLeases4Internal(filename);
+    } else {
+        writeLeases4Internal(filename);
+    }
+}
+
+void
+Memfile_LeaseMgr::writeLeases4Internal(const std::string& filename) {
+    bool overwrite = (lease_file4_ && lease_file4_->getFilename() == filename);
+    try {
+        if (overwrite) {
+            lease_file4_->close();
+        }
+        std::ostringstream old;
+        old << filename << ".bak" << getpid();
+        ::rename(filename.c_str(), old.str().c_str());
+        CSVLeaseFile4 backup(filename);
+        backup.open();
+        for (auto const& lease : storage4_) {
+            backup.append(*lease);
+        }
+        backup.close();
+        if (overwrite) {
+            lease_file4_->open(true);
+        }
+    } catch (const std::exception&) {
+        if (overwrite) {
+            lease_file4_->open(true);
+        }
+        throw;
+    }
+}
+
+void
+Memfile_LeaseMgr::writeLeases6(const std::string& filename) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        writeLeases6Internal(filename);
+    } else {
+        writeLeases6Internal(filename);
+    }
+}
+
+void
+Memfile_LeaseMgr::writeLeases6Internal(const std::string& filename) {
+    bool overwrite = (lease_file6_ && lease_file6_->getFilename() == filename);
+    try {
+        if (overwrite) {
+            lease_file6_->close();
+        }
+        std::ostringstream old;
+        old << filename << ".bak" << getpid();
+        ::rename(filename.c_str(), old.str().c_str());
+        CSVLeaseFile6 backup(filename);
+        backup.open();
+        for (auto const& lease : storage6_) {
+            backup.append(*lease);
+        }
+        backup.close();
+        if (overwrite) {
+            lease_file6_->open(true);
+        }
+    } catch (const std::exception&) {
+        if (overwrite) {
+            lease_file6_->open(true);
+        }
+        throw;
+    }
 }
 
 }  // namespace dhcp

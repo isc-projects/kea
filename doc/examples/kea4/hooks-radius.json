@@ -1,5 +1,5 @@
 // This is an example configuration file for the DHCPv4 server in Kea
-// illustrating the configuration of the RADIUS and Host Cache hooks libraries.
+// illustrating the configuration of the RADIUS and Host Cache hook libraries.
 //
 // It is not intended to be used as is. It tries to showcase some of the
 // parameters available.
@@ -69,8 +69,8 @@
 {
   // Kea is told to listen on specific interfaces only.
   "interfaces-config": {
-    // You should probably list your network interfaces here (e.g. "en0")
-    "interfaces": [ "en0" ]
+    // You should probably list your network interfaces here (e.g. "eth1961")
+    "interfaces": [ "eth1961" ]
   },
 
   // Set up the storage for leases.
@@ -101,7 +101,7 @@
       // Set the subnet ID (aka RADIUS NAS port).
       "id": 14,
       "subnet": "192.0.2.0/24",
-      "interface": "en0",
+      "interface": "eth1961",
       "pools": [
          {
             // Red pool (10-19 are for reservations)
@@ -121,7 +121,7 @@
       ]
     } ],
 
-  // Set up the hooks libraries.
+  // Set up the hook libraries.
   "hooks-libraries": [
      {
         // Load the flex-id hook library.

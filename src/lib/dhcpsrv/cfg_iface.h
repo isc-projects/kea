@@ -182,7 +182,7 @@ public:
     /// traffic should be received through the socket. This parameter is
     /// ignored for IPv6.
     void openSockets(const uint16_t family, const uint16_t port,
-                     const bool use_bcast = true) const;
+                     const bool use_bcast = true);
 
     /// @brief Puts the interface configuration into default state.
     ///
@@ -345,6 +345,13 @@ public:
         return (service_sockets_max_retries_);
     }
 
+    /// @brief Get the reconnect controller.
+    ///
+    /// @return the reconnect controller
+    util::ReconnectCtlPtr getReconnectCtl() const {
+        return (reconnect_ctl_);
+    }
+
     /// @brief Represents a callback invoked if all retries of the
     /// opening sockets fail.
     typedef std::function<void(util::ReconnectCtlPtr)> OpenSocketsFailedCallback;
@@ -437,12 +444,14 @@ private:
     /// Calls the @c CfgIface::openSocketsForFamily function and retry it if
     /// socket opening fails.
     ///
+    /// @param reconnect_ctl Used to manage socket reconnection.
     /// @param family Address family (AF_INET or AF_INET6).
     /// @param port Port number to be used to bind sockets to.
     /// @param can_use_bcast A boolean flag which indicates if the broadcast
     /// traffic should be received through the socket and the raw sockets are
     /// used. For the UDP sockets, we only handle the relayed (unicast)
     /// traffic. This parameter is ignored for IPv6.
+    ///
     /// @return True if at least one socket opened successfully.
     static bool openSocketsWithRetry(util::ReconnectCtlPtr reconnect_ctl,
                                      const uint16_t family, const uint16_t port,
@@ -483,6 +492,9 @@ private:
 
     /// @brief Indicates how outbound interface is selected for relayed traffic.
     OutboundIface outbound_iface_;
+
+    /// @brief Used to manage socket reconnection.
+    util::ReconnectCtlPtr reconnect_ctl_;
 };
 
 /// @brief A pointer to the @c CfgIface .

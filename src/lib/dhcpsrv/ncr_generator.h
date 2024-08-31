@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 
 #include <dhcp_ddns/ncr_msg.h>
 #include <dhcpsrv/lease.h>
+#include <util/optional.h>
 
 namespace isc {
 namespace dhcp {
@@ -43,16 +44,22 @@ void queueNCR(const dhcp_ddns::NameChangeType& chg_type, const Lease6Ptr& lease)
 
 /// @brief Calculates TTL for a DNS resource record based on lease life time.
 ///
-/// Per RFC 4702 Section 5, the RR TTL should be calculated as:
+/// If the parameter, ddns_ttl_percent is greater than zero, it is used to calculate
+/// the TTL directly:
+///
+/// TTL = (lease life time * ddns-ttl-percent)
+///
+/// Otherwise it is calculated as per RFC 4702 Section 5:
+///
 /// TTL = ((lease life time / 3)  < 10 minutes) ? 10 minutes : (lease life time / 3)
 ///
-/// This function may be expanded in the future to support configurable
-/// parameters.
-///
 /// @param lease_life_time valid life time of the lease
+/// @param ddns_ttl_percent optional percentage to use in calculation
 ///
 /// @return the calculated TTL.
-uint32_t calculateDdnsTtl(uint32_t lease_life_time);
+uint32_t calculateDdnsTtl(uint32_t lease_life_time,
+                          const util::Optional<double>& ddns_ttl_percent
+                          = util::Optional<double>());
 
 } // end of isc::dhcp namespace
 } // end of isc namespace

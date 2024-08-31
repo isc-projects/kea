@@ -15,6 +15,13 @@ DISTCHECK_PERFDHCP_CONFIGURE_FLAG=@DISTCHECK_PERFDHCP_CONFIGURE_FLAG@
 DISTCHECK_KEA_SHELL_CONFIGURE_FLAG=@DISTCHECK_KEA_SHELL_CONFIGURE_FLAG@
 DISTCHECK_PREMIUM_CONFIGURE_FLAG=@DISTCHECK_PREMIUM_CONFIGURE_FLAG@
 DISTCHECK_CONTRIB_CONFIGURE_FLAG=@DISTCHECK_CONTRIB_CONFIGURE_FLAG@
+DISTCHECK_MYSQL_CONFIGURE_FLAG=@DISTCHECK_MYSQL_CONFIGURE_FLAG@
+DISTCHECK_PGSQL_CONFIGURE_FLAG=@DISTCHECK_PGSQL_CONFIGURE_FLAG@
+DISTCHECK_GSSAPI_CONFIGURE_FLAG=@DISTCHECK_GSSAPI_CONFIGURE_FLAG@
+DISTCHECK_LIBYANG_CONFIGURE_FLAG=@DISTCHECK_LIBYANG_CONFIGURE_FLAG@
+DISTCHECK_LIBYANGCPP_CONFIGURE_FLAG=@DISTCHECK_LIBYANGCPP_CONFIGURE_FLAG@
+DISTCHECK_SYSREPO_CONFIGURE_FLAG=@DISTCHECK_SYSREPO_CONFIGURE_FLAG@
+DISTCHECK_SYSREPOCPP_CONFIGURE_FLAG=@DISTCHECK_SYSREPOCPP_CONFIGURE_FLAG@
 
 OVERALL_COVERAGE_DIR=$(abs_top_builddir)/coverage-cpp-html
 
@@ -47,7 +54,28 @@ DISTCHECK_CONFIGURE_FLAGS += $(DISTCHECK_PREMIUM_CONFIGURE_FLAG)
 # Keep the contrib config
 DISTCHECK_CONFIGURE_FLAGS += $(DISTCHECK_CONTRIB_CONFIGURE_FLAG)
 
-dist_doc_DATA = AUTHORS COPYING ChangeLog README CONTRIBUTING.md platforms.rst code_of_conduct.md
+# Keep the mysql config
+DISTCHECK_CONFIGURE_FLAGS += $(DISTCHECK_MYSQL_CONFIGURE_FLAG)
+
+# Keep the pgsql config
+DISTCHECK_CONFIGURE_FLAGS += $(DISTCHECK_PGSQL_CONFIGURE_FLAG)
+
+# Keep the gssapi config
+DISTCHECK_CONFIGURE_FLAGS += $(DISTCHECK_GSSAPI_CONFIGURE_FLAG)
+
+# Keep the libyang config
+DISTCHECK_CONFIGURE_FLAGS += $(DISTCHECK_LIBYANG_CONFIGURE_FLAG)
+
+# Keep the libyang-cpp config
+DISTCHECK_CONFIGURE_FLAGS += $(DISTCHECK_LIBYANGCPP_CONFIGURE_FLAG)
+
+# Keep the sysrepo config
+DISTCHECK_CONFIGURE_FLAGS += $(DISTCHECK_SYSREPO_CONFIGURE_FLAG)
+
+# Keep the sysrepo-cpp config
+DISTCHECK_CONFIGURE_FLAGS += $(DISTCHECK_SYSREPOCPP_CONFIGURE_FLAG)
+
+dist_doc_DATA = AUTHORS COPYING ChangeLog README CONTRIBUTING.md SECURITY.md platforms.rst code_of_conduct.md
 
 .PHONY: check-valgrind check-valgrind-suppress
 
@@ -114,9 +142,10 @@ endif
 			--ignore-errors gcov,source,graph \
 			--output report.info; \
 		sed --in-place --expression "s|$(abs_top_srcdir)|$(abs_top_builddir)|g" report.info; \
-		"$(GENHTML)" --frames --show-details --title 'Kea code coverage report' --legend \
-                --function-coverage --ignore-errors source --demangle-cpp \
-                --output "$(OVERALL_COVERAGE_DIR)" report.info; \
+		"$(GENHTML)" \
+		--frames --show-details --title 'Kea code coverage report' --legend \
+		--function-coverage --ignore-errors source --demangle-cpp \
+		--output "$(OVERALL_COVERAGE_DIR)" report.info; \
 		printf "Generated C++ code coverage report in HTML at %s.\n" "$(OVERALL_COVERAGE_DIR)"; \
 	else \
 		echo "C++ code coverage not enabled at configuration time." ; \
@@ -151,11 +180,8 @@ install-exec-hook:
 	mkdir -p $(DESTDIR)${localstatedir}/lib/${PACKAGE_NAME}
 	mkdir -p $(DESTDIR)${runstatedir}/${PACKAGE_NAME}
 
-EXTRA_DIST  = tools/path_replacer.sh
-EXTRA_DIST += tools/mk_cfgrpt.sh
-
 #### include external sources in the distributed tarball:
-EXTRA_DIST += ext/coroutine/coroutine.hpp
+EXTRA_DIST = ext/coroutine/coroutine.hpp
 
 CLEANFILES = $(abs_top_builddir)/logger_lockfile
 

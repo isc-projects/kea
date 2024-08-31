@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -36,14 +36,8 @@ Network::RelayInfo::hasAddresses() const {
 
 bool
 Network::RelayInfo::containsAddress(const asiolink::IOAddress& addr) const {
-    for (auto address = addresses_.begin(); address != addresses_.end();
-         ++address) {
-        if ((*address) == addr) {
-            return (true);
-        }
-    }
-
-    return (false);
+    auto const& index = addresses_.get<IOAddressListSetTag>();
+    return (index.find(addr) != index.end());
 }
 
 const IOAddressList&
@@ -133,9 +127,9 @@ Network::toElement() const {
 
     ElementPtr relay_map = Element::createMap();
     ElementPtr address_list = Element::createList();
-    const IOAddressList addresses =  getRelayAddresses();
-    for (auto address = addresses.begin(); address != addresses.end(); ++address) {
-        address_list->add(Element::create((*address).toText()));
+    const IOAddressList addresses = getRelayAddresses();
+    for (auto const& address : addresses) {
+        address_list->add(Element::create(address.toText()));
     }
 
     relay_map->set("ip-addresses", address_list);
@@ -150,9 +144,8 @@ Network::toElement() const {
     const ClientClasses& classes = getRequiredClasses();
     if (!classes.empty()) {
         ElementPtr class_list = Element::createList();
-        for (ClientClasses::const_iterator it = classes.cbegin();
-             it != classes.cend(); ++it) {
-            class_list->add(Element::create(*it));
+        for (auto const& it : classes) {
+            class_list->add(Element::create(it));
         }
         map->set("require-client-classes", class_list);
     }
@@ -242,6 +235,10 @@ Network::toElement() const {
         map->set("ddns-qualifying-suffix", Element::create(ddns_qualifying_suffix_));
     }
 
+    if (!ddns_ttl_percent_.unspecified()) {
+        map->set("ddns-ttl-percent", Element::create(ddns_ttl_percent_));
+    }
+
     if (!hostname_char_set_.unspecified()) {
         map->set("hostname-char-set", Element::create(hostname_char_set_));
     }
@@ -267,8 +264,12 @@ Network::toElement() const {
         map->set("ddns-update-on-renew", Element::create(ddns_update_on_renew_));
     }
 
-    if (!ddns_use_conflict_resolution_.unspecified()) {
-        map->set("ddns-use-conflict-resolution", Element::create(ddns_use_conflict_resolution_));
+    if (!ddns_conflict_resolution_mode_.unspecified()) {
+        map->set("ddns-conflict-resolution-mode", Element::create(ddns_conflict_resolution_mode_));
+    }
+
+    if (!allocator_type_.unspecified()) {
+        map->set("allocator", Element::create(allocator_type_));
     }
 
     return (map);
@@ -322,6 +323,11 @@ Network4::toElement() const {
         map->set("boot-file-name",Element::create(filename_.get()));
     }
 
+    // Set offer-lifetime
+    if (!offer_lft_.unspecified()) {
+        map->set("offer-lifetime",Element::create(offer_lft_.get()));
+    }
+
     return (map);
 }
 
@@ -368,6 +374,11 @@ Network6::toElement() const {
     // Set rapid-commit
     if (!rapid_commit_.unspecified()) {
         map->set("rapid-commit", Element::create(rapid_commit_.get()));
+    }
+
+    // Set pd-allocator
+    if (!pd_allocator_type_.unspecified()) {
+        map->set("pd-allocator", Element::create(pd_allocator_type_));
     }
 
     return (map);

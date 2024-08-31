@@ -8,7 +8,7 @@ yang_list += check-revisions.sh
 
 EXTRA_DIST = ${yang_list}
 
-if HAVE_SYSREPO
+if HAVE_NETCONF
 
 yang_SCRIPTS = reinstall.sh
 
@@ -17,11 +17,15 @@ SHTESTS  =
 SHTESTS += check-hashes.sh
 SHTESTS += check-revisions.sh
 
+if HAVE_GTEST
+
 # Run shell tests on "make check".
 check_SCRIPTS = $(SHTESTS)
 TESTS = $(SHTESTS)
 
-# Don't install tests.
+endif
+
+# Don't install shell tests.
 noinst_SCRIPTS = $(SHTESTS)
 
 endif

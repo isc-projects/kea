@@ -24,10 +24,19 @@ be run manually.
 
 Kea 1.9.0 introduced basic HTTP authentication support.
 
+.. note::
+
+   Kea version 2.7.2 introduces direct support of HTTP/HTTPS control channel
+   by Kea servers (:iscman:`kea-dhcp4`, :iscman:`kea-dhcp6` and
+   :iscman:`kea-dhcp-ddns`). The :iscman:`kea-shell` can be used with
+   these servers, the only difference is the ``--service`` argument becomes
+   useless and is ignored by Kea servers. Note the result is encapsulated
+   in a list for :iscman:`kea-ctrl-agent` compatibility.
+
 Shell Usage
 ===========
 
-``kea-shell`` is run as follows:
+:iscman:`kea-shell` is run as follows:
 
 .. code-block:: console
 
@@ -60,13 +69,15 @@ where:
    to specify multiple targets.
 
 -  ``command`` specifies the command to be sent. If not specified, the
-   ``list-commands`` command is used.
+   :isccmd:`list-commands` command is used.
 
 Other switches are:
 
 -  ``-h`` - prints a help message.
 
--  ``-v`` - prints the software version.
+-  ``-v`` - displays the Kea version.
+
+-  ``-V`` - displays the extended Kea version.
 
 See :ref:`shell-tls` for new command-line arguments associated with TLS/HTTPS support.
 
@@ -78,7 +89,7 @@ on standard output.
 
 For a list of available commands, see :ref:`ctrl-channel`;
 additional commands may be provided by hook libraries. For a list of
-all supported commands from the CA, use the ``list-commands`` command.
+all supported commands from the CA, use the :isccmd:`list-commands` command.
 
 The following shows a simple example of usage:
 
@@ -88,7 +99,7 @@ The following shows a simple example of usage:
    ^D
 
 After the command line is entered, the program waits for command
-parameters to be entered. Since ``list-commands`` does not take any
+parameters to be entered. Since :isccmd:`list-commands` does not take any
 arguments, Ctrl-D (represented in the above example by "^D")
 indicates end-of-file and terminates the parameter input. The shell
 then contacts the CA and prints out the list of available commands
@@ -96,7 +107,7 @@ returned for the service named ``dhcp4``.
 
 The Kea shell will likely be most frequently used in
 scripts; the next example shows a simple scripted execution. It sends
-the command ``config-write`` to the CA (the ``--service`` parameter has not
+the command :isccmd:`config-write` to the CA (the ``--service`` parameter has not
 been used), along with the parameters specified in param.json. The
 result will be stored in result.json.
 
@@ -116,12 +127,16 @@ servers, the default empty path in the URL is not enough, so the
    $ kea-shell --host 192.0.2.1 --port 8001 --path kea ...
 
 The Kea shell requires Python to be installed on the system. It has been
-tested with Python 2.7 and various versions of Python 3, up to 3.5.
+tested with various versions of Python 3, up to 3.5.
 Since not every Kea deployment uses this feature and there are
 deployments that do not have Python, the Kea shell is not enabled by
 default. To use it, specify ``--enable-shell`` when running ``configure``
 during the installation of Kea. When building on Debian systems,
 ``--with-site-packages=...`` may also be useful.
+
+.. note::
+
+   Beginning with Kea 2.4.0, :iscman:`kea-shell` no longer supports Python 2.7.
 
 The Kea shell is intended to serve more as a demonstration of the
 RESTful interface's capabilities (and, perhaps, an illustration for
@@ -140,7 +155,7 @@ tool.
 TLS Support
 ===========
 
-Since Kea 1.9.6, ``kea-shell`` supports HTTPS connections. The TLS/HTTPS
+:iscman:`kea-shell` supports HTTPS connections; the TLS/HTTPS
 support requires Python 3. The additional command-line arguments are:
 
 -  ``--ca`` specifies the file or directory name of the Certification

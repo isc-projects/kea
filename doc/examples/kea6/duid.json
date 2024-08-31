@@ -25,15 +25,15 @@
     "htype": 1
   },
 
-// Kea is told to listen on ethX interface only.
+// Kea is told to listen on eth0 interface only.
   "interfaces-config": {
-    "interfaces": [ "ethX" ]
+    "interfaces": [ "eth0" ]
   },
 
 // We need to specify the database used to store leases. As of
 // June 2022, three database backends are supported: MySQL,
 // PostgreSQL and the in-memory database, Memfile.
-// We'll use memfile  because it doesn't require any prior set up.
+// We'll use memfile because it doesn't require any prior set up.
   "lease-database": {
       "type": "memfile",
       "lfc-interval": 3600
@@ -54,9 +54,10 @@
 // least subnet and pool entries.
   "subnet6": [
     {
+      "id": 1,
       "pools": [ { "pool": "2001:db8:1::/80" } ],
       "subnet": "2001:db8:1::/64",
-      "interface": "ethX"
+      "interface": "eth0"
     }
   ],
 
@@ -65,7 +66,7 @@
     "loggers": [
         {
             "name": "kea-dhcp6",
-            "output_options": [
+            "output-options": [
                 {
                     "output": "stdout"
                 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -34,7 +34,7 @@ isc::util::durationToText(boost::posix_time::time_duration dur, size_t fsecs_pre
         size_t fsecs = dur.fractional_seconds();
         size_t width = MAX_FSECS_PRECISION;
         if (fsecs_precision < width) {
-            for (auto i = 0; i < width - fsecs_precision; ++i) {
+            for (size_t i = 0; i < width - fsecs_precision; ++i) {
                 fsecs /= 10;
             }
 

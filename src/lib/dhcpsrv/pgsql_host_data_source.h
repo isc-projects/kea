@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -451,6 +451,36 @@ public:
     getAll6(const SubnetID& subnet_id,
             const asiolink::IOAddress& address) const;
 
+    /// @brief Returns all hosts having a reservation for a specified
+    /// address or delegated prefix (lease) in all subnets.
+    ///
+    /// In most cases it is desired that there is at most one reservation
+    /// for a given IPv6 lease within a subnet. In a default configuration,
+    /// the backend does not allow for inserting more than one host with
+    /// the same IPv6 address or prefix.
+    ///
+    /// If the backend is configured to allow multiple hosts with reservations
+    /// for the same IPv6 lease in the given subnet, this method can return
+    /// more than one host per subnet.
+    ///
+    /// The typical use case when a single IPv6 lease is reserved for multiple
+    /// hosts is when these hosts represent different interfaces of the same
+    /// machine and each interface comes with a different MAC address. In that
+    /// case, the same IPv6 lease is assigned regardless of which interface is
+    /// used by the DHCP client to communicate with the server.
+    ///
+    /// @param address reserved IPv6 address/prefix.
+    ///
+    /// @return Collection of const @c Host objects.
+    virtual ConstHostCollection getAll6(const asiolink::IOAddress& address) const;
+
+    /// @brief Implements @ref BaseHostDataSource::update() for PostgreSQL.
+    ///
+    /// Attempts to update an existing host entry.
+    ///
+    /// @param host the host up to date with the requested changes
+    void update(HostPtr const& host);
+
     /// @brief Return backend type
     ///
     /// Returns the type of database as the string "postgresql".  This is
@@ -480,13 +510,14 @@ public:
     /// is correct. Thus it must not rely on a pre-prepared statement or
     /// formal statement execution error checking.
     ///
+    /// @param timer_name The DB reconnect timer name.
     /// @return Version number stored in the database, as a pair of unsigned
     ///         integers. "first" is the major version number, "second" the
     ///         minor number.
     ///
     /// @throw isc::db::DbOperationError An operation on the open database
     ///        has failed.
-    virtual std::pair<uint32_t, uint32_t> getVersion() const;
+    virtual std::pair<uint32_t, uint32_t> getVersion(const std::string& timer_name = std::string()) const;
 
     /// @brief Commit Transactions
     ///
@@ -552,7 +583,7 @@ private:
     PgSqlHostDataSourceImplPtr impl_;
 };
 
-}
-}
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // PGSQL_HOST_DATA_SOURCE_H

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -66,6 +66,12 @@ public:
     /// @brief TSIG key name for stats.
     std::string tsig_key_name_;
 
+    /// @brief Flag which indicates that the client has been stopped.
+    bool stopped_;
+
+    /// @brief The list of IOFetch objects.
+    std::list<IOFetchPtr> io_fetch_list_;
+
     /// @brief Constructor.
     ///
     /// @param response_placeholder Message object pointer which will be updated
@@ -100,7 +106,7 @@ public:
     /// @param tsig_key A pointer to an @c D2TsigKeyPtr object that will
     /// (if not null) be used to sign the DNS Update message and verify the
     /// response.
-    void doUpdate(asiolink::IOService& io_service,
+    void doUpdate(const asiolink::IOServicePtr& io_service,
                   const asiolink::IOAddress& ns_addr,
                   const uint16_t ns_port,
                   D2UpdateMessage& update,
@@ -119,13 +125,17 @@ public:
     /// @param update_key The flag indicating if the key statistics should also
     /// be updated.
     void incrStats(const std::string& stat, bool update_key = true);
+
+    /// @brief This function stops the IOFetch objects.
+    void stop();
 };
 
 DNSClientImpl::DNSClientImpl(D2UpdateMessagePtr& response_placeholder,
                              DNSClient::Callback* callback,
                              const DNSClient::Protocol proto)
     : in_buf_(new OutputBuffer(DEFAULT_BUFFER_SIZE)),
-      response_(response_placeholder), callback_(callback), proto_(proto) {
+      response_(response_placeholder), callback_(callback), proto_(proto),
+      stopped_(false) {
 
     // Response should be an empty pointer. It gets populated by the
     // operator() method.
@@ -158,11 +168,21 @@ DNSClientImpl::DNSClientImpl(D2UpdateMessagePtr& response_placeholder,
     }
 }
 
+void DNSClientImpl::stop() {
+    stopped_ = true;
+    for (auto const& io_fetch : io_fetch_list_) {
+        io_fetch->stop();
+    }
+}
+
 DNSClientImpl::~DNSClientImpl() {
 }
 
 void
 DNSClientImpl::operator()(asiodns::IOFetch::Result result) {
+    if (stopped_) {
+        return;
+    }
     // Get the status from IO. If no success, we just call user's callback
     // and pass the status code.
     DNSClient::Status status = getStatus(result);
@@ -222,12 +242,15 @@ DNSClientImpl::getStatus(const asiodns::IOFetch::Result result) {
 }
 
 void
-DNSClientImpl::doUpdate(asiolink::IOService& io_service,
+DNSClientImpl::doUpdate(const asiolink::IOServicePtr& io_service,
                         const IOAddress& ns_addr,
                         const uint16_t ns_port,
                         D2UpdateMessage& update,
                         const unsigned int wait,
                         const D2TsigKeyPtr& tsig_key) {
+    if (stopped_) {
+        return;
+    }
     // The underlying implementation which we use to send DNS Updates uses
     // signed integers for timeout. If we want to avoid overflows we need to
     // respect this limitation here.
@@ -270,12 +293,13 @@ DNSClientImpl::doUpdate(asiolink::IOService& io_service,
     // Timeout value is explicitly cast to the int type to avoid warnings about
     // overflows when doing implicit cast. It should have been checked by the
     // caller that the unsigned timeout value will fit into int.
-    IOFetch io_fetch(IOFetch::UDP, io_service, msg_buf, ns_addr, ns_port,
-                     in_buf_, this, static_cast<int>(wait));
+    IOFetchPtr io_fetch(new IOFetch(IOFetch::UDP, io_service, msg_buf, ns_addr, ns_port,
+                                    in_buf_, this, static_cast<int>(wait)));
+    io_fetch_list_.push_back(io_fetch);
 
     // Post the task to the task queue in the IO service. Caller will actually
     // run these tasks by executing IOService::run.
-    io_service.post(io_fetch);
+    io_service->post(*io_fetch);
 
     // Update sent statistics.
     incrStats("update-sent");
@@ -302,6 +326,12 @@ DNSClient::DNSClient(D2UpdateMessagePtr& response_placeholder,
 }
 
 DNSClient::~DNSClient() {
+    stop();
+}
+
+void
+DNSClient::stop() {
+    impl_->stop();
 }
 
 unsigned int
@@ -311,7 +341,7 @@ DNSClient::getMaxTimeout() {
 }
 
 void
-DNSClient::doUpdate(asiolink::IOService& io_service,
+DNSClient::doUpdate(const asiolink::IOServicePtr& io_service,
                     const IOAddress& ns_addr,
                     const uint16_t ns_port,
                     D2UpdateMessage& update,

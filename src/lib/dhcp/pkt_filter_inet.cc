@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,8 +17,16 @@ using namespace isc::asiolink;
 namespace isc {
 namespace dhcp {
 
-const size_t
-PktFilterInet::CONTROL_BUF_LEN = CMSG_SPACE(sizeof(struct in6_pktinfo));
+const size_t PktFilterInet::CONTROL_BUF_LEN = 512;
+
+bool
+PktFilterInet::isSocketReceivedTimeSupported() const {
+#ifdef SO_TIMESTAMP
+    return (true);
+#else
+    return (false);
+#endif
+}
 
 SocketInfo
 PktFilterInet::openSocket(Iface& iface,
@@ -50,6 +58,15 @@ PktFilterInet::openSocket(Iface& iface,
         isc_throw(SocketConfigError, "Failed to set close-on-exec flag"
                   << " on socket " << sock);
     }
+
+#ifdef SO_TIMESTAMP
+    int enable = 1;
+    if (setsockopt(sock, SOL_SOCKET, SO_TIMESTAMP, &enable, sizeof(enable))) {
+        const char* errmsg = strerror(errno);
+        isc_throw(SocketConfigError, "Could not enable SO_TIMESTAMP for " << addr.toText()
+                  << ", error: " << errmsg);
+    }
+#endif
 
 #ifdef SO_BINDTODEVICE
     if (receive_bcast && iface.flag_broadcast_) {
@@ -173,7 +190,6 @@ PktFilterInet::receive(Iface& iface, const SocketInfo& socket_info) {
 
             pkt->setIndex(pktinfo->ipi_ifindex);
             pkt->setLocalAddr(IOAddress(htonl(pktinfo->ipi_addr.s_addr)));
-            break;
 
             // This field is useful, when we are bound to unicast
             // address e.g. 192.0.2.1 and the packet was sent to
@@ -182,7 +198,19 @@ PktFilterInet::receive(Iface& iface, const SocketInfo& socket_info) {
 
             // XXX: Perhaps we should uncomment this:
             // to_addr = pktinfo->ipi_spec_dst;
+#ifndef SO_TIMESTAMP
+            break;
         }
+#else
+        } else if ((cmsg->cmsg_level == SOL_SOCKET) &&
+                   (cmsg->cmsg_type  == SCM_TIMESTAMP)) {
+
+            struct timeval cmsg_time;
+            memcpy(&cmsg_time, CMSG_DATA(cmsg), sizeof(cmsg_time));
+            pkt->addPktEvent(PktEvent::SOCKET_RECEIVED, cmsg_time);
+        }
+#endif
+
         cmsg = CMSG_NXTHDR(&m, cmsg);
     }
 
@@ -195,12 +223,23 @@ PktFilterInet::receive(Iface& iface, const SocketInfo& socket_info) {
             (cmsg->cmsg_type == IP_RECVDSTADDR)) {
             to_addr = reinterpret_cast<struct in_addr*>(CMSG_DATA(cmsg));
             pkt->setLocalAddr(IOAddress(htonl(to_addr->s_addr)));
+#ifndef SO_TIMESTAMP
             break;
         }
+#else
+        } else if ((cmsg->cmsg_level == SOL_SOCKET) &&
+                   (cmsg->cmsg_type  == SCM_TIMESTAMP)) {
+
+            struct timeval cmsg_time;
+            memcpy(&cmsg_time, CMSG_DATA(cmsg), sizeof(cmsg_time));
+            pkt->addPktEvent(PktEvent::SOCKET_RECEIVED, cmsg_time);
+        }
+#endif
         cmsg = CMSG_NXTHDR(&m, cmsg);
     }
 
 #endif
+    pkt->addPktEvent(PktEvent::BUFFER_READ);
 
     return (pkt);
 }
@@ -230,7 +269,7 @@ PktFilterInet::send(const Iface&, uint16_t sockfd, const Pkt4Ptr& pkt) {
     memset(&v, 0, sizeof(v));
     // iov_base field is of void * type. We use it for packet
     // transmission, so this buffer will not be modified.
-    v.iov_base = const_cast<void *>(pkt->getBuffer().getData());
+    v.iov_base = const_cast<void *>(pkt->getBuffer().getDataAsVoidPtr());
     v.iov_len = pkt->getBuffer().getLength();
     m.msg_iov = &v;
     m.msg_iovlen = 1;
@@ -271,6 +310,8 @@ PktFilterInet::send(const Iface&, uint16_t sockfd, const Pkt4Ptr& pkt) {
 #endif
 
     pkt->updateTimestamp();
+
+    pkt->addPktEvent(PktEvent::RESPONSE_SENT);
 
     int result = sendmsg(sockfd, &m, 0);
     if (result < 0) {

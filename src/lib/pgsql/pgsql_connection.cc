@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,9 +6,16 @@
 
 #include <config.h>
 
+#include <asiolink/io_service.h>
+#include <asiolink/process_spawn.h>
+#include <database/database_connection.h>
 #include <database/db_exceptions.h>
 #include <database/db_log.h>
 #include <pgsql/pgsql_connection.h>
+#include <util/filesystem.h>
+
+#include <exception>
+#include <unordered_map>
 
 // PostgreSQL errors should be tested based on the SQL state code.  Each state
 // code is 5 decimal, ASCII, digits, the first two define the category of
@@ -28,10 +35,13 @@
 
 #include <sstream>
 
+using namespace isc::asiolink;
 using namespace std;
 
 namespace isc {
 namespace db {
+
+std::string PgSqlConnection::KEA_ADMIN_ = KEA_ADMIN;
 
 // Default connection timeout
 
@@ -134,14 +144,21 @@ PgSqlConnection::~PgSqlConnection() {
 }
 
 std::pair<uint32_t, uint32_t>
-PgSqlConnection::getVersion(const ParameterMap& parameters) {
+PgSqlConnection::getVersion(const ParameterMap& parameters,
+                            const IOServiceAccessorPtr& ac,
+                            const DbCallback& cb,
+                            const string& timer_name) {
     // Get a connection.
-    PgSqlConnection conn(parameters);
+    PgSqlConnection conn(parameters, ac, cb);
+
+    if (!timer_name.empty()) {
+        conn.makeReconnectCtl(timer_name);
+    }
 
     // Open the database.
-    conn.openDatabase();
+    conn.openDatabaseInternal(false);
 
-    const char* version_sql =  "SELECT version, minor FROM schema_version;";
+    const char* version_sql = "SELECT version, minor FROM schema_version;";
     PgSqlResult r(PQexec(conn.conn_, version_sql));
     if (PQresultStatus(r) != PGRES_TUPLES_OK) {
         isc_throw(DbOperationError, "unable to execute PostgreSQL statement <"
@@ -155,6 +172,115 @@ PgSqlConnection::getVersion(const ParameterMap& parameters) {
     PgSqlExchange::getColumnValue(r, 0, 1, minor);
 
     return (make_pair(version, minor));
+}
+
+void
+PgSqlConnection::ensureSchemaVersion(const ParameterMap& parameters,
+                                     const DbCallback& cb,
+                                     const string& timer_name) {
+    // retry-on-startup?
+    bool const retry(parameters.count("retry-on-startup") &&
+                     parameters.at("retry-on-startup") == "true");
+
+    IOServiceAccessorPtr ac(new IOServiceAccessor(&DatabaseConnection::getIOService));
+    pair<uint32_t, uint32_t> schema_version;
+    try {
+        schema_version = getVersion(parameters, ac, cb, retry ? timer_name : string());
+    } catch (DbOpenError const& exception) {
+        throw;
+    } catch (DbOpenErrorWithRetry const& exception) {
+        throw;
+    } catch (exception const& exception) {
+        // This failure may occur for a variety of reasons. We are looking at
+        // initializing schema as the only potential mitigation. We could narrow
+        // down on the error that would suggest an uninitialized schema
+        // which would sound something along the lines of
+        // "table schema_version does not exist", but we do not necessarily have
+        // to. If the error had another cause, it will fail again during
+        // initialization or during the subsequent version retrieval and that is
+        // fine, and the error should still be relevant.
+        initializeSchema(parameters);
+
+        // Retrieve again because the initial retrieval failed.
+        schema_version = getVersion(parameters, ac, cb, retry ? timer_name : string());
+    }
+
+    // Check that the versions match.
+    pair<uint32_t, uint32_t> const expected_version(PGSQL_SCHEMA_VERSION_MAJOR,
+                                                    PGSQL_SCHEMA_VERSION_MINOR);
+    if (schema_version != expected_version) {
+        isc_throw(DbOpenError, "PostgreSQL schema version mismatch: expected version: "
+                                   << expected_version.first << "." << expected_version.second
+                                   << ", found version: " << schema_version.first << "."
+                                   << schema_version.second);
+    }
+}
+
+void
+PgSqlConnection::initializeSchema(const ParameterMap& parameters) {
+    if (parameters.count("readonly") && parameters.at("readonly") == "true") {
+        // The readonly flag is historically used for host backends. Still, if
+        // enabled, it is a strong indication that we should not meDDLe with it.
+        return;
+    }
+
+    if (!isc::util::file::isFile(KEA_ADMIN_)) {
+        // It can happen for kea-admin to not exist, especially with
+        // packages that install it in a separate package.
+        return;
+    }
+
+    // Convert parameters.
+    auto const tupl(toKeaAdminParameters(parameters));
+    vector<string> kea_admin_parameters(get<0>(tupl));
+    ProcessEnvVars const vars(get<1>(tupl));
+    kea_admin_parameters.insert(kea_admin_parameters.begin(), "db-init");
+
+    // Run.
+    ProcessSpawn kea_admin(ProcessSpawn::SYNC, KEA_ADMIN_, kea_admin_parameters, vars,
+                           /* inherit_env = */ true);
+    DB_LOG_INFO(PGSQL_INITIALIZE_SCHEMA).arg(kea_admin.getCommandLine());
+    pid_t const pid(kea_admin.spawn());
+    if (kea_admin.isRunning(pid)) {
+        isc_throw(SchemaInitializationFailed, "kea-admin still running");
+    }
+    int const exit_code(kea_admin.getExitStatus(pid));
+    if (exit_code != 0) {
+        isc_throw(SchemaInitializationFailed, "Expected exit code 0 for kea-admin. Got " << exit_code);
+    }
+}
+
+tuple<vector<string>, vector<string>>
+PgSqlConnection::toKeaAdminParameters(ParameterMap const& params) {
+    vector<string> result{"pgsql"};
+    ProcessEnvVars vars;
+    for (auto const& p : params) {
+        string const& keyword(p.first);
+        string const& value(p.second);
+
+        // These Kea parameters are the same as the kea-admin parameters.
+        if (keyword == "user" ||
+            keyword == "password" ||
+            keyword == "host" ||
+            keyword == "port" ||
+            keyword == "name") {
+            result.push_back("--" + keyword);
+            result.push_back(value);
+            continue;
+        }
+
+        // These Kea parameters do not have a direct kea-admin equivalent.
+        // But they do have a psql client environment variable equivalent.
+        // We pass them to kea-admin.
+        static unordered_map<string, string> conversions{
+            {"connect-timeout", "PGCONNECT_TIMEOUT"},
+            // {"tcp-user-timeout", "N/A"},
+        };
+        if (conversions.count(keyword)) {
+            vars.push_back(conversions.at(keyword) + "=" + value);
+        }
+    }
+    return make_tuple(result, vars);
 }
 
 void
@@ -180,8 +306,13 @@ PgSqlConnection::prepareStatements(const PgSqlTaggedStatement* start_statement,
     }
 }
 
-void
-PgSqlConnection::openDatabase() {
+std::string
+PgSqlConnection::getConnParameters() {
+    return (getConnParametersInternal(false));
+}
+
+std::string
+PgSqlConnection::getConnParametersInternal(bool logging) {
     string dbconnparameters;
     string shost = "localhost";
     try {
@@ -192,38 +323,19 @@ PgSqlConnection::openDatabase() {
 
     dbconnparameters += "host = '" + shost + "'" ;
 
-    string sport;
+    unsigned int port = 0;
     try {
-        sport = getParameter("port");
-    } catch (...) {
-        // No port parameter, we are going to use the default port.
-        sport = "";
+        setIntParameterValue("port", 0, numeric_limits<uint16_t>::max(), port);
+
+    } catch (const std::exception& ex) {
+        isc_throw(DbInvalidPort, ex.what());
     }
 
-    if (sport.size() > 0) {
-        unsigned int port = 0;
-
-        // Port was given, so try to convert it to an integer.
-        try {
-            port = boost::lexical_cast<unsigned int>(sport);
-        } catch (...) {
-            // Port given but could not be converted to an unsigned int.
-            // Just fall back to the default value.
-            port = 0;
-        }
-
-        // The port is only valid when it is in the 0..65535 range.
-        // Again fall back to the default when the given value is invalid.
-        if (port > numeric_limits<uint16_t>::max()) {
-            port = 0;
-        }
-
-        // Add it to connection parameters when not default.
-        if (port > 0) {
-            std::ostringstream oss;
-            oss << port;
-            dbconnparameters += " port = " + oss.str();
-        }
+    // Add port to connection parameters when not default.
+    if (port > 0) {
+        std::ostringstream oss;
+        oss << port;
+        dbconnparameters += " port = " + oss.str();
     }
 
     string suser;
@@ -252,46 +364,50 @@ PgSqlConnection::openDatabase() {
     }
 
     unsigned int connect_timeout = PGSQL_DEFAULT_CONNECTION_TIMEOUT;
-    string stimeout;
+    unsigned int tcp_user_timeout = 0;
     try {
-        stimeout = getParameter("connect-timeout");
-    } catch (...) {
-        // No timeout parameter, we are going to use the default timeout.
-        stimeout = "";
-    }
-
-    if (stimeout.size() > 0) {
-        // Timeout was given, so try to convert it to an integer.
-
-        try {
-            connect_timeout = boost::lexical_cast<unsigned int>(stimeout);
-        } catch (...) {
-            // Timeout given but could not be converted to an unsigned int. Set
-            // the connection timeout to an invalid value to trigger throwing
-            // of an exception.
-            connect_timeout = 0;
-        }
-
         // The timeout is only valid if greater than zero, as depending on the
         // database, a zero timeout might signify something like "wait
         // indefinitely".
-        //
-        // The check below also rejects a value greater than the maximum
-        // integer value.  The lexical_cast operation used to obtain a numeric
-        // value from a string can get confused if trying to convert a negative
-        // integer to an unsigned int: instead of throwing an exception, it may
-        // produce a large positive value.
-        if ((connect_timeout == 0) ||
-            (connect_timeout > numeric_limits<int>::max())) {
-            isc_throw(DbInvalidTimeout, "database connection timeout (" <<
-                      stimeout << ") must be an integer greater than 0");
-        }
+        setIntParameterValue("connect-timeout", 1, numeric_limits<int>::max(), connect_timeout);
+        // This timeout value can be 0, meaning that the database client will
+        // follow a default behavior. Earlier Postgres versions didn't have
+        // this parameter, so we allow 0 to skip setting them for these
+        // earlier versions.
+        setIntParameterValue("tcp-user-timeout", 0, numeric_limits<int>::max(), tcp_user_timeout);
+
+    } catch (const std::exception& ex) {
+        isc_throw(DbInvalidTimeout, ex.what());
     }
 
+    // Append connection timeout.
     std::ostringstream oss;
-    oss << connect_timeout;
-    dbconnparameters += " connect_timeout = " + oss.str();
+    oss << " connect_timeout = " << connect_timeout;
 
+    if (tcp_user_timeout > 0) {
+// tcp_user_timeout parameter is a PostgreSQL 12+ feature.
+#ifdef HAVE_PGSQL_TCP_USER_TIMEOUT
+        oss << " tcp_user_timeout = " << tcp_user_timeout * 1000;
+        static_cast<void>(logging);
+#else
+        if (logging) {
+            DB_LOG_WARN(PGSQL_TCP_USER_TIMEOUT_UNSUPPORTED).arg();
+        }
+#endif
+    }
+    dbconnparameters += oss.str();
+
+    return (dbconnparameters);
+}
+
+void
+PgSqlConnection::openDatabase() {
+    openDatabaseInternal(true);
+}
+
+void
+PgSqlConnection::openDatabaseInternal(bool logging) {
+    std::string dbconnparameters = getConnParametersInternal(logging);
     // Connect to Postgres, saving the low level connection pointer
     // in the holder object
     PGconn* new_conn = PQconnectdb(dbconnparameters.c_str());
@@ -304,6 +420,21 @@ PgSqlConnection::openDatabase() {
         // to release it, but grab the error message first.
         std::string error_message = PQerrorMessage(new_conn);
         PQfinish(new_conn);
+
+        auto const& rec = reconnectCtl();
+        if (rec && DatabaseConnection::retry_) {
+            // Start the connection recovery.
+            startRecoverDbConnection();
+
+            std::ostringstream s;
+
+            s << " (scheduling retry " << rec->retryIndex() + 1 << " of " << rec->maxRetries() << " in " << rec->retryInterval() << " milliseconds)";
+
+            error_message += s.str();
+
+            isc_throw(DbOpenErrorWithRetry, error_message);
+        }
+
         isc_throw(DbOpenError, error_message);
     }
 
@@ -532,6 +663,39 @@ PgSqlConnection::updateDeleteQuery(PgSqlTaggedStatement& statement,
 
     return (boost::lexical_cast<int>(PQcmdTuples(*result_set)));
 }
+
+template<typename T>
+void
+PgSqlConnection::setIntParameterValue(const std::string& name, int64_t min, int64_t max, T& value) {
+    string svalue;
+    try {
+        svalue = getParameter(name);
+    } catch (...) {
+        // Do nothing if the parameter is not present.
+    }
+    if (svalue.empty()) {
+        return;
+    }
+    try {
+        // Try to convert the value.
+        auto parsed_value = boost::lexical_cast<T>(svalue);
+        // Check if the value is within the specified range.
+        if ((parsed_value < min) || (parsed_value > max)) {
+            isc_throw(BadValue, "bad " << svalue << " value");
+        }
+        // Everything is fine. Return the parsed value.
+        value = parsed_value;
+
+    } catch (...) {
+        // We may end up here when lexical_cast fails or when the
+        // parsed value is not within the desired range. In both
+        // cases let's throw the same general error.
+        isc_throw(BadValue, name << " parameter (" <<
+                  svalue << ") must be an integer between "
+                  << min << " and " << max);
+    }
+}
+
 
 } // end of isc::db namespace
 } // end of isc namespace

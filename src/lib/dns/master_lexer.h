@@ -1,11 +1,11 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef MASTER_LEXER_H
-#define MASTER_LEXER_H 1
+#define MASTER_LEXER_H
 
 #include <dns/exceptions.h>
 
@@ -15,6 +15,7 @@
 #include <stdint.h>
 
 #include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace dns {
@@ -91,7 +92,7 @@ public:
     /// beg[len] is \0.  This means the application can use the bytes as a
     /// validly nul-terminated C string if there is no intermediate nul
     /// character.  Note also that due to this property beg is always non
-    /// NULL; for an empty string len will be set to 0 and beg[0] is \0.
+    /// null; for an empty string len will be set to 0 and beg[0] is \0.
     struct StringRegion {
         const char* beg;        ///< The start address of the string
         size_t len;             ///< The length of the string in bytes
@@ -125,8 +126,7 @@ public:
     /// \param str_len The size of the string in bytes
     /// \param quoted true if it's a quoted string; false otherwise.
     MasterToken(const char* str_beg, size_t str_len, bool quoted = false) :
-        type_(quoted ? QSTRING : STRING)
-    {
+        type_(quoted ? QSTRING : STRING) {
         val_.str_region_.beg = str_beg;
         val_.str_region_.len = str_len;
     }
@@ -154,7 +154,9 @@ public:
     /// \brief Return the token type.
     ///
     /// \throw none
-    Type getType() const { return (type_); }
+    Type getType() const {
+        return (type_);
+    }
 
     /// \brief Return the value of a string-variant token.
     ///
@@ -366,7 +368,7 @@ public:
     ///
     /// In the case possible system errors in opening the file (most likely
     /// because of specifying a non-existent or unreadable file), it returns
-    /// false, and if the optional \c error parameter is non NULL, it will be
+    /// false, and if the optional \c error parameter is non null, it will be
     /// set to a description of the error (any existing content of the string
     /// will be discarded).  If opening the file succeeds, the given
     /// \c error parameter will be intact.
@@ -376,13 +378,13 @@ public:
     /// by throwing an exception.  See the note for the class description
     /// about the distinction.
     ///
-    /// \throw InvalidParameter filename is NULL
-    /// \param filename A non NULL string specifying a master file
+    /// \throw InvalidParameter filename is null
+    /// \param filename A non null string specifying a master file
     /// \param error If non null, a placeholder to set error description in
     /// case of failure.
     ///
     /// \return true if pushing the file succeeds; false otherwise.
-    bool pushSource(const char* filename, std::string* error = NULL);
+    bool pushSource(const char* filename, std::string* error = 0);
 
     /// \brief Make the given stream the current input source of MasterLexer.
     ///
@@ -656,7 +658,7 @@ public:
 
 private:
     struct MasterLexerImpl;
-    MasterLexerImpl* impl_;
+    boost::shared_ptr<MasterLexerImpl> impl_;
 };
 
 /// \brief Operator to combine \c MasterLexer options
@@ -672,7 +674,3 @@ operator|(MasterLexer::Options o1, MasterLexer::Options o2) {
 } // namespace dns
 } // namespace isc
 #endif  // MASTER_LEXER_H
-
-// Local Variables:
-// mode: c++
-// End:

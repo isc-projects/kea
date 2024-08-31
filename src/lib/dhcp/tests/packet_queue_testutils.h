@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,7 +18,8 @@ namespace isc {
 namespace dhcp {
 namespace test {
 
-template<typename PacketQueuePtrType> void checkInfo(PacketQueuePtrType queue, const std::string& exp_json) {
+template<typename PacketQueuePtrType>
+void checkInfo(PacketQueuePtrType queue, const std::string& exp_json) {
     ASSERT_TRUE(queue) << "packet queue ptr is null";
     // Fetch the queue info and verify it has all the expected values.
     data::ElementPtr info;
@@ -38,8 +39,8 @@ template<typename PacketQueuePtrType> void checkInfo(PacketQueuePtrType queue, c
     }
 
 
-template<typename PacketQueuePtrType> void checkIntStat(PacketQueuePtrType queue, 
-                                                     const std::string& name, size_t exp_value) {
+template<typename PacketQueuePtrType>
+void checkIntStat(PacketQueuePtrType queue, const std::string& name, size_t exp_value) {
     ASSERT_TRUE(queue) << "packet queue ptr is null";
     data::ElementPtr info;
     ASSERT_NO_THROW(info  = queue->getInfo());
@@ -49,15 +50,15 @@ template<typename PacketQueuePtrType> void checkIntStat(PacketQueuePtrType queue
     ASSERT_NO_THROW(elem = info->get(name)) << "stat: " << name << " not in info" << std::endl;
     ASSERT_TRUE(elem);
 
-    int64_t value;
+    int64_t value = 0;
     ASSERT_NO_THROW(value = elem->intValue());
     EXPECT_EQ(exp_value, value) << "stat: " << name << " is wrong" << std::endl;;
 }
 
 extern data::ElementPtr makeQueueConfig(const std::string& queue_type, size_t capacity, bool enable_queue=true);
 
-}; // end of namespace isc::dhcp::test
-}; // end of namespace isc::dhcp
-}; // end of namespace isc
+}  // namespace test
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // PACKET_QUEUE_TESTUTILS_H

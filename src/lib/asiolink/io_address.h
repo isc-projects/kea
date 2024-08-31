@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -44,6 +44,17 @@ namespace asiolink {
 /// This class is a wrapper for the ASIO \c ip::address class.
 class IOAddress {
 public:
+
+    /// \brief An \c IOAddress hash enabling the use in the unordered
+    /// STL containers.
+    struct Hash {
+        /// \brief A hashing operator.
+        ///
+        /// \param io_address an address to be hashed.
+        /// \return a hashing result.
+        size_t operator()(const IOAddress &io_address) const;
+    };
+
     ///
     /// \name Constructors and Destructor
     ///
@@ -78,7 +89,7 @@ public:
     ///
     /// This constructor is intended to be used when constructing
     /// IPv4 address out of uint32_t type. Passed value must be in
-    /// network byte order
+    /// host byte order.
     ///
     /// @param v4address IPv4 address represented by uint32_t
     IOAddress(uint32_t v4address);
@@ -313,6 +324,7 @@ operator<<(std::ostream& os, const IOAddress& address);
 /// \return The hash of the IOAddress.
 size_t hash_value(const IOAddress& address);
 
-} // namespace asiolink
-} // namespace isc
+}  // namespace asiolink
+}  // namespace isc
+
 #endif // IO_ADDRESS_H

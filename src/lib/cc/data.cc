@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <cc/data.h>
+#include <util/bigints.h>
 
 #include <cstring>
 #include <cassert>
@@ -26,6 +27,8 @@
 #include <cmath>
 
 using namespace std;
+
+using isc::util::int128_t;
 
 namespace {
 const char* const WHITESPACE = " \b\f\n\r\t";
@@ -98,6 +101,11 @@ Element::getValue(std::map<std::string, ConstElementPtr>&) const {
 
 bool
 Element::setValue(const long long int) {
+    return (false);
+}
+
+bool
+Element::setValue(isc::util::int128_t const&) {
     return (false);
 }
 
@@ -229,9 +237,9 @@ operator<(Element const& a, Element const& b) {
         return b.boolValue() || !a.boolValue();
     case Element::string:
         return std::strcmp(a.stringValue().c_str(), b.stringValue().c_str()) < 0;
+    default:
+        isc_throw(BadValue, "cannot compare Elements of type " << to_string(a.getType()));
     }
-    isc_throw(BadValue, "cannot compare Elements of type " <<
-                            std::to_string(a.getType()));
 }
 
 //
@@ -248,12 +256,22 @@ Element::create(const long long int i, const Position& pos) {
 }
 
 ElementPtr
+Element::create(const isc::util::int128_t& i, const Position& pos) {
+    return (ElementPtr(new BigIntElement(i, pos)));
+}
+
+ElementPtr
 Element::create(const int i, const Position& pos) {
     return (create(static_cast<long long int>(i), pos));
 }
 
 ElementPtr
 Element::create(const long int i, const Position& pos) {
+    return (create(static_cast<long long int>(i), pos));
+}
+
+ElementPtr
+Element::create(const uint32_t i, const Position& pos) {
     return (create(static_cast<long long int>(i), pos));
 }
 
@@ -483,6 +501,12 @@ numberFromStringstream(std::istream& in, int& pos) {
 // that can also hold an e value? (and have specific getters if the
 // value is larger than an int can handle)
 //
+// At the moment of writing, the only way that the code flow can reach the
+// int128_t cast, and not throw, is by retrieving one of the few bigint
+// statistics through kea-ctrl-agent. If kea-ctrl-agent ever gets removed, and
+// its HTTP listener embedded in Kea, then the cast to int128_t can be removed as
+// well, as there is no deserialization of bigints required, although the only
+// benefit would be better performance for error cases, so it's arguable.
 ElementPtr
 fromStringstreamNumber(std::istream& in, const std::string& file,
                        const int line, int& pos) {
@@ -492,21 +516,32 @@ fromStringstreamNumber(std::istream& in, const std::string& file,
     // This will move the pos to the end of the value.
     const std::string number = numberFromStringstream(in, pos);
 
+    // Is it a double?
     if (number.find_first_of(".eE") < number.size()) {
         try {
             return (Element::create(boost::lexical_cast<double>(number),
                                     Element::Position(file, line, start_pos)));
-        } catch (const boost::bad_lexical_cast&) {
-            throwJSONError(std::string("Number overflow: ") + number,
+        } catch (const boost::bad_lexical_cast& exception) {
+            throwJSONError("Number overflow while trying to cast '" + number +
+                           "' to double: " + exception.what(),
                            file, line, start_pos);
         }
-    } else {
+    }
+
+    // Is it an integer?
+    try {
+        return (Element::create(boost::lexical_cast<int64_t>(number),
+                                Element::Position(file, line, start_pos)));
+    } catch (const boost::bad_lexical_cast& exception64) {
+        // Is it a big integer?
         try {
-            return (Element::create(boost::lexical_cast<int64_t>(number),
+            return (Element::create(int128_t(number),
                                     Element::Position(file, line, start_pos)));
-        } catch (const boost::bad_lexical_cast&) {
-            throwJSONError(std::string("Number overflow: ") + number, file,
-                           line, start_pos);
+        } catch (overflow_error const& exception128) {
+            throwJSONError("Number overflow while trying to cast '" + number +
+                           "' to int64 and subsequently to int128: " +
+                           exception64.what() + ", " + exception128.what(),
+                           file, line, start_pos);
         }
     }
     return (ElementPtr());
@@ -617,6 +652,8 @@ Element::typeToName(Element::types type) {
     switch (type) {
     case Element::integer:
         return (std::string("integer"));
+    case Element::bigint:
+        return (std::string("bigint"));
     case Element::real:
         return (std::string("real"));
     case Element::boolean:
@@ -640,6 +677,8 @@ Element::types
 Element::nameToType(const std::string& type_name) {
     if (type_name == "integer") {
         return (Element::integer);
+    } else if (type_name == "bigint") {
+        return (Element::bigint);
     } else if (type_name == "real") {
         return (Element::real);
     } else if (type_name == "boolean") {
@@ -797,6 +836,11 @@ IntElement::toJSON(std::ostream& ss) const {
 }
 
 void
+BigIntElement::toJSON(std::ostream& ss) const {
+    ss << bigIntValue();
+}
+
+void
 DoubleElement::toJSON(std::ostream& ss) const {
     // The default output for doubles nicely drops off trailing
     // zeros, however this produces strings without decimal points
@@ -831,7 +875,7 @@ StringElement::toJSON(std::ostream& ss) const {
     ss << "\"";
     const std::string& str = stringValue();
     for (size_t i = 0; i < str.size(); ++i) {
-        const char c = str[i];
+        const signed char c = str[i];
         // Escape characters as defined in JSON spec
         // Note that we do not escape forward slash; this
         // is allowed, but not mandatory.
@@ -858,7 +902,7 @@ StringElement::toJSON(std::ostream& ss) const {
             ss << '\\' << 't';
             break;
         default:
-            if (((c >= 0) && (c < 0x20)) || (c < 0) || (c >= 0x7f)) {
+            if (c < 0x20 || c == 0x7f) {
                 std::ostringstream esc;
                 esc << "\\u"
                     << hex
@@ -879,11 +923,14 @@ ListElement::toJSON(std::ostream& ss) const {
     ss << "[ ";
 
     const std::vector<ElementPtr>& v = listValue();
-    for (auto it = v.begin(); it != v.end(); ++it) {
-        if (it != v.begin()) {
+    bool first = true;
+    for (auto const& it : v) {
+        if (!first) {
             ss << ", ";
+        } else {
+            first = false;
         }
-        (*it)->toJSON(ss);
+        it->toJSON(ss);
     }
     ss << " ]";
 }
@@ -892,14 +939,16 @@ void
 MapElement::toJSON(std::ostream& ss) const {
     ss << "{ ";
 
-    const std::map<std::string, ConstElementPtr>& m = mapValue();
-    for (auto it = m.begin(); it != m.end(); ++it) {
-        if (it != m.begin()) {
+    bool first = true;
+    for (auto const& it : m) {
+        if (!first) {
             ss << ", ";
+        } else {
+            first = false;
         }
-        ss << "\"" << (*it).first << "\": ";
-        if ((*it).second) {
-            (*it).second->toJSON(ss);
+        ss << "\"" << it.first << "\": ";
+        if (it.second) {
+            it.second->toJSON(ss);
         } else {
             ss << "None";
         }
@@ -976,8 +1025,24 @@ MapElement::find(const std::string& id, ConstElementPtr& t) const {
 
 bool
 IntElement::equals(const Element& other) const {
-    return (other.getType() == Element::integer) &&
-           (i == other.intValue());
+    // Let's not be very picky with constraining the integer types to be the
+    // same. Equality is sometimes checked from high-up in the Element hierarcy.
+    // That is a context which, most of the time, does not have information on
+    // the type of integers stored on Elements lower in the hierarchy. So it
+    // would be difficult to differentiate between the integer types.
+    return (other.getType() == Element::integer && i == other.intValue()) ||
+           (other.getType() == Element::bigint && i == other.bigIntValue());
+}
+
+bool
+BigIntElement::equals(const Element& other) const {
+    // Let's not be very picky with constraining the integer types to be the
+    // same. Equality is sometimes checked from high-up in the Element hierarcy.
+    // That is a context which, most of the time, does not have information on
+    // the type of integers stored on Elements lower in the hierarchy. So it
+    // would be difficult to differentiate between the integer types.
+    return (other.getType() == Element::bigint && i_ == other.bigIntValue()) ||
+           (other.getType() == Element::integer && i_ == other.intValue());
 }
 
 bool
@@ -1063,7 +1128,7 @@ MapElement::equals(const Element& other) const {
         if (size() != other.size()) {
             return (false);
         }
-        for (auto kv : mapValue()) {
+        for (auto const& kv : mapValue()) {
             auto key = kv.first;
             if (other.contains(key)) {
                 if (!get(key)->equals(*other.get(key))) {
@@ -1097,7 +1162,7 @@ removeIdentical(ElementPtr a, ConstElementPtr b) {
     // over a checking for identical entries in b or vice-versa.  As elements
     // are removed from a if a match is found, we choose to iterate over b to
     // avoid problems with element removal affecting the iterator.
-    for (auto kv : b->mapValue()) {
+    for (auto const& kv : b->mapValue()) {
         auto key = kv.first;
         if (a->contains(key)) {
             if (a->get(key)->equals(*b->get(key))) {
@@ -1119,7 +1184,7 @@ removeIdentical(ConstElementPtr a, ConstElementPtr b) {
         isc_throw(TypeError, "Non-map Elements passed to removeIdentical");
     }
 
-    for (auto kv : a->mapValue()) {
+    for (auto const& kv : a->mapValue()) {
         auto key = kv.first;
         if (!b->contains(key) ||
             !a->get(key)->equals(*b->get(key))) {
@@ -1137,7 +1202,7 @@ merge(ElementPtr element, ConstElementPtr other) {
         isc_throw(TypeError, "merge arguments not MapElements");
     }
 
-    for (auto kv : other->mapValue()) {
+    for (auto const& kv : other->mapValue()) {
         auto key = kv.first;
         auto value = kv.second;
         if (value && value->getType() != Element::null) {
@@ -1145,6 +1210,209 @@ merge(ElementPtr element, ConstElementPtr other) {
         } else if (element->contains(key)) {
             element->remove(key);
         }
+    }
+}
+
+void
+mergeDiffAdd(ElementPtr& element, ElementPtr& other,
+             HierarchyDescriptor& hierarchy, std::string key, size_t idx) {
+    if (element->getType() != other->getType()) {
+        isc_throw(TypeError, "mergeDiffAdd arguments not same type");
+    }
+
+    if (element->getType() == Element::list) {
+        // Store new elements in a separate container so we don't overwrite
+        // options as we add them (if there are duplicates).
+        ElementPtr new_elements = Element::createList();
+        for (auto const& right : other->listValue()) {
+            // Check if we have any description of the key in the configuration
+            // hierarchy.
+            auto f = hierarchy[idx].find(key);
+            if (f != hierarchy[idx].end()) {
+                bool found = false;
+                ElementPtr mutable_right = boost::const_pointer_cast<Element>(right);
+                for (auto const& left : element->listValue()) {
+                    ElementPtr mutable_left = boost::const_pointer_cast<Element>(left);
+                    // Check if the elements refer to the same configuration
+                    // entity.
+                    if (f->second.match_(mutable_left, mutable_right)) {
+                        found = true;
+                        mergeDiffAdd(mutable_left, mutable_right, hierarchy, key, idx);
+                    }
+                }
+                if (!found) {
+                    new_elements->add(right);
+                }
+            } else {
+                new_elements->add(right);
+            }
+        }
+        // Finally add the new elements.
+        for (auto const& right : new_elements->listValue()) {
+            element->add(right);
+        }
+        return;
+    }
+
+    if (element->getType() == Element::map) {
+        for (auto const& kv : other->mapValue()) {
+            auto current_key = kv.first;
+            auto value = boost::const_pointer_cast<Element>(kv.second);
+            if (value && value->getType() != Element::null) {
+                if (element->contains(current_key) &&
+                    (value->getType() == Element::map ||
+                     value->getType() == Element::list)) {
+                    ElementPtr mutable_element = boost::const_pointer_cast<Element>(element->get(current_key));
+                    mergeDiffAdd(mutable_element, value, hierarchy, current_key, idx + 1);
+                } else {
+                    element->set(current_key, value);
+                }
+            }
+        }
+        return;
+    }
+    element = other;
+}
+
+void
+mergeDiffDel(ElementPtr& element, ElementPtr& other,
+             HierarchyDescriptor& hierarchy, std::string key, size_t idx) {
+    if (element->getType() != other->getType()) {
+        isc_throw(TypeError, "mergeDiffDel arguments not same type");
+    }
+
+    if (element->getType() == Element::list) {
+        for (auto const& value : other->listValue()) {
+            ElementPtr mutable_right = boost::const_pointer_cast<Element>(value);
+            for (uint32_t iter = 0; iter < element->listValue().size();) {
+                bool removed = false;
+                // Check if we have any description of the key in the
+                // configuration hierarchy.
+                auto f = hierarchy[idx].find(key);
+                if (f != hierarchy[idx].end()) {
+                    ElementPtr mutable_left = boost::const_pointer_cast<Element>(element->listValue().at(iter));
+                    // Check if the elements refer to the same configuration
+                    // entity.
+                    if (f->second.match_(mutable_left, mutable_right)) {
+                        // Check if the user supplied data only contains
+                        // identification information, so the intent is to
+                        // delete the element, not just element data.
+                        if (f->second.no_data_(mutable_right)) {
+                            element->remove(iter);
+                            removed = true;
+                        } else {
+                            mergeDiffDel(mutable_left, mutable_right, hierarchy, key, idx);
+                            if (mutable_left->empty()) {
+                                element->remove(iter);
+                                removed = true;
+                            }
+                        }
+                    }
+                } else if (element->listValue().at(iter)->equals(*value)) {
+                    element->remove(iter);
+                    removed = true;
+                }
+                if (!removed) {
+                    ++iter;
+                }
+            }
+        }
+        return;
+    }
+
+    if (element->getType() == Element::map) {
+        // If the resulting element still contains data, we need to restore the
+        // key parameters, so we store them here.
+        ElementPtr new_elements = Element::createMap();
+        for (auto const& kv : other->mapValue()) {
+            auto current_key = kv.first;
+            auto value = boost::const_pointer_cast<Element>(kv.second);
+            if (value && value->getType() != Element::null) {
+                if (element->contains(current_key)) {
+                    ElementPtr mutable_element = boost::const_pointer_cast<Element>(element->get(current_key));
+                    if (mutable_element->getType() == Element::map ||
+                        mutable_element->getType() == Element::list) {
+                        mergeDiffDel(mutable_element, value, hierarchy, current_key, idx + 1);
+                        if (mutable_element->empty()) {
+                            element->remove(current_key);
+                        }
+                    } else {
+                        // Check if we have any description of the key in the
+                        // configuration hierarchy.
+                        auto f = hierarchy[idx].find(key);
+                        if (f != hierarchy[idx].end()) {
+                            // Check if the key is used for element
+                            // identification.
+                            if (f->second.is_key_(current_key)) {
+                                // Store the key parameter.
+                                new_elements->set(current_key, mutable_element);
+                            }
+                        }
+                        element->remove(current_key);
+                    }
+                }
+            }
+        }
+        // If the element still contains data, restore the key elements.
+        if (element->size()) {
+            for (auto const& kv : new_elements->mapValue()) {
+                element->set(kv.first, kv.second);
+            }
+        }
+        return;
+    }
+    element = ElementPtr(new NullElement());
+}
+
+void
+extend(const std::string& container, const std::string& extension,
+       ElementPtr& element, ElementPtr& other, HierarchyDescriptor& hierarchy,
+       std::string key, size_t idx, bool alter) {
+    if (element->getType() != other->getType()) {
+        isc_throw(TypeError, "extend arguments not same type");
+    }
+
+    if (element->getType() == Element::list) {
+        for (auto const& right : other->listValue()) {
+            // Check if we have any description of the key in the configuration
+            // hierarchy.
+            auto f = hierarchy[idx].find(key);
+            if (f != hierarchy[idx].end()) {
+                ElementPtr mutable_right = boost::const_pointer_cast<Element>(right);
+                for (auto const& left : element->listValue()) {
+                    ElementPtr mutable_left = boost::const_pointer_cast<Element>(left);
+                    if (container == key) {
+                        alter = true;
+                    }
+                    if (f->second.match_(mutable_left, mutable_right)) {
+                        extend(container, extension, mutable_left, mutable_right,
+                               hierarchy, key, idx, alter);
+                    }
+                }
+            }
+        }
+        return;
+    }
+
+    if (element->getType() == Element::map) {
+        for (auto const& kv : other->mapValue()) {
+            auto current_key = kv.first;
+            auto value = boost::const_pointer_cast<Element>(kv.second);
+            if (value && value->getType() != Element::null) {
+                if (element->contains(current_key) &&
+                    (value->getType() == Element::map ||
+                     value->getType() == Element::list)) {
+                    ElementPtr mutable_element = boost::const_pointer_cast<Element>(element->get(current_key));
+                    if (container == key) {
+                        alter = true;
+                    }
+                    extend(container, extension, mutable_element, value, hierarchy, current_key, idx + 1, alter);
+                } else if (alter && current_key == extension) {
+                    element->set(current_key, value);
+                }
+            }
+        }
+        return;
     }
 }
 
@@ -1166,7 +1434,7 @@ copy(ConstElementPtr from, int level) {
         return (ElementPtr(new StringElement(from->stringValue())));
     } else if (from_type == Element::list) {
         ElementPtr result = ElementPtr(new ListElement());
-        for (auto elem : from->listValue()) {
+        for (auto const& elem : from->listValue()) {
             if (level == 0) {
                 result->add(elem);
             } else {
@@ -1176,7 +1444,7 @@ copy(ConstElementPtr from, int level) {
         return (result);
     } else if (from_type == Element::map) {
         ElementPtr result = ElementPtr(new MapElement());
-        for (auto kv : from->mapValue()) {
+        for (auto const& kv : from->mapValue()) {
             auto key = kv.first;
             auto value = kv.second;
             if (level == 0) {
@@ -1255,7 +1523,7 @@ isEquivalent0(ConstElementPtr a, ConstElementPtr b, unsigned level) {
             return (false);
         }
         // iterate on the first map
-        for (auto kv : a->mapValue()) {
+        for (auto const& kv : a->mapValue()) {
             // get the b value for the given keyword and recurse
             ConstElementPtr item = b->get(kv.first);
             if (!item || !isEquivalent0(kv.second, item, level - 1)) {
@@ -1303,18 +1571,21 @@ prettyPrint(ConstElementPtr element, std::ostream& out,
         out << "[" << (complex ? "\n" : " ");
 
         // iterate on items
-        const auto& l = element->listValue();
-        for (auto it = l.begin(); it != l.end(); ++it) {
+        auto const& l = element->listValue();
+        bool first = true;
+        for (auto const& it : l) {
             // add the separator if not the first item
-            if (it != l.begin()) {
+            if (!first) {
                 out << separator;
+            } else {
+                first = false;
             }
             // add indentation
             if (complex) {
                 out << std::string(indent + step, ' ');
             }
             // recursive call
-            prettyPrint(*it, out, indent + step, step);
+            prettyPrint(it, out, indent + step, step);
         }
 
         // close the list
@@ -1335,9 +1606,9 @@ prettyPrint(ConstElementPtr element, std::ostream& out,
         out << "{\n";
 
         // iterate on keyword: value
-        const auto& m = element->mapValue();
+        auto const& m = element->mapValue();
         bool first = true;
-        for (auto it = m.begin(); it != m.end(); ++it) {
+        for (auto const& it : m) {
             // add the separator if not the first item
             if (first) {
                 first = false;
@@ -1347,9 +1618,9 @@ prettyPrint(ConstElementPtr element, std::ostream& out,
             // add indentation
             out << std::string(indent + step, ' ');
             // add keyword:
-            out << "\"" << it->first << "\": ";
+            out << "\"" << it.first << "\": ";
             // recursive call
-            prettyPrint(it->second, out, indent + step, step);
+            prettyPrint(it.second, out, indent + step, step);
         }
 
         // close the map

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,12 +13,16 @@
 #include <ha_impl.h>
 #include <ha_log.h>
 #include <asiolink/io_service.h>
+#include <asiolink/io_service_mgr.h>
 #include <cc/command_interpreter.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/network_state.h>
 #include <exceptions/exceptions.h>
 #include <hooks/hooks.h>
 #include <process/daemon.h>
+
+#include <sstream>
+#include <string>
 
 namespace isc {
 namespace ha {
@@ -28,12 +32,14 @@ HAImplPtr impl;
 } // end of namespace isc::ha
 } // end of namespace isc
 
+using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::ha;
 using namespace isc::hooks;
 using namespace isc::process;
+using namespace std;
 
 extern "C" {
 
@@ -42,15 +48,19 @@ extern "C" {
 /// @param handle callout handle.
 int dhcp4_srv_configured(CalloutHandle& handle) {
     try {
-        isc::asiolink::IOServicePtr io_service;
-        handle.getArgument("io_context", io_service);
         isc::dhcp::NetworkStatePtr network_state;
         handle.getArgument("network_state", network_state);
-        impl->startService(io_service, network_state, HAServerType::DHCPv4);
+        impl->startServices(network_state, HAServerType::DHCPv4);
+        IOServiceMgr::instance().registerIOService(impl->getIOService());
 
     } catch (const std::exception& ex) {
         LOG_ERROR(ha_logger, HA_DHCP4_START_SERVICE_FAILED)
             .arg(ex.what());
+        handle.setStatus(isc::hooks::CalloutHandle::NEXT_STEP_DROP);
+        ostringstream os;
+        os << "Error: " << ex.what();
+        string error(os.str());
+        handle.setArgument("error", error);
         return (1);
     }
     return (0);
@@ -77,6 +87,28 @@ int buffer4_receive(CalloutHandle& handle) {
     return (0);
 }
 
+/// @brief subnet4_select callout implementation.
+///
+/// @param handle callout handle.
+int subnet4_select(CalloutHandle& handle) {
+    CalloutHandle::CalloutNextStep status = handle.getStatus();
+    if (status == CalloutHandle::NEXT_STEP_DROP) {
+        return (0);
+    }
+
+    try {
+        impl->subnet4Select(handle);
+
+    } catch (const std::exception& ex) {
+        LOG_ERROR(ha_logger, HA_SUBNET4_SELECT_FAILED)
+            .arg(ex.what());
+        return (1);
+    }
+
+    return (0);
+}
+
+
 /// @brief leases4_committed callout implementation.
 ///
 /// @param handle callout handle.
@@ -99,20 +131,46 @@ int leases4_committed(CalloutHandle& handle) {
     return (0);
 }
 
+/// @brief lease4_server_decline callout implementation.
+///
+/// @param handle callout handle.
+int lease4_server_decline(CalloutHandle& handle) {
+    CalloutHandle::CalloutNextStep status = handle.getStatus();
+    if (status == CalloutHandle::NEXT_STEP_DROP ||
+        status == CalloutHandle::NEXT_STEP_SKIP) {
+        return (0);
+    }
+
+    try {
+        impl->lease4ServerDecline(handle);
+    } catch (const std::exception& ex) {
+        LOG_ERROR(ha_logger, HA_LEASE4_SERVER_DECLINE_FAILED)
+            .arg(ex.what());
+        return (1);
+    }
+
+    return (0);
+}
+
+
 /// @brief dhcp6_srv_configured callout implementation.
 ///
 /// @param handle callout handle.
 int dhcp6_srv_configured(CalloutHandle& handle) {
     try {
-        isc::asiolink::IOServicePtr io_service;
-        handle.getArgument("io_context", io_service);
         isc::dhcp::NetworkStatePtr network_state;
         handle.getArgument("network_state", network_state);
-        impl->startService(io_service, network_state, HAServerType::DHCPv6);
+        impl->startServices(network_state, HAServerType::DHCPv6);
+        IOServiceMgr::instance().registerIOService(impl->getIOService());
 
     } catch (const std::exception& ex) {
         LOG_ERROR(ha_logger, HA_DHCP6_START_SERVICE_FAILED)
             .arg(ex.what());
+        handle.setStatus(isc::hooks::CalloutHandle::NEXT_STEP_DROP);
+        ostringstream os;
+        os << "Error: " << ex.what();
+        string error(os.str());
+        handle.setArgument("error", error);
         return (1);
     }
     return (0);
@@ -133,6 +191,27 @@ int buffer6_receive(CalloutHandle& handle) {
 
     } catch (const std::exception& ex) {
         LOG_ERROR(ha_logger, HA_BUFFER6_RECEIVE_FAILED)
+            .arg(ex.what());
+        return (1);
+    }
+
+    return (0);
+}
+
+/// @brief subnet6_select callout implementation.
+///
+/// @param handle callout handle.
+int subnet6_select(CalloutHandle& handle) {
+    CalloutHandle::CalloutNextStep status = handle.getStatus();
+    if (status == CalloutHandle::NEXT_STEP_DROP) {
+        return (0);
+    }
+
+    try {
+        impl->subnet6Select(handle);
+
+    } catch (const std::exception& ex) {
+        LOG_ERROR(ha_logger, HA_SUBNET6_SELECT_FAILED)
             .arg(ex.what());
         return (1);
     }
@@ -349,7 +428,10 @@ int load(LibraryHandle& handle) {
 ///
 /// @return 0 if deregistration was successful, 1 otherwise
 int unload() {
-    impl.reset();
+    if (impl) {
+        IOServiceMgr::instance().unregisterIOService(impl->getIOService());
+        impl.reset();
+    }
     LOG_INFO(ha_logger, HA_DEINIT_OK);
     return (0);
 }

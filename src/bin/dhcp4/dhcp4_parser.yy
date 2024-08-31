@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2022 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -33,6 +33,11 @@ using namespace std;
 %code
 {
 #include <dhcp4/parser_context.h>
+
+// Avoid warnings with the error counter.
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#endif
 }
 
 
@@ -70,6 +75,7 @@ using namespace std;
 
   SANITY_CHECKS "sanity-checks"
   LEASE_CHECKS "lease-checks"
+  EXTENDED_INFO_CHECKS "extended-info-checks"
 
   ECHO_CLIENT_ID "echo-client-id"
   MATCH_CLIENT_ID "match-client-id"
@@ -77,6 +83,8 @@ using namespace std;
   NEXT_SERVER "next-server"
   SERVER_HOSTNAME "server-hostname"
   BOOT_FILE_NAME "boot-file-name"
+  OFFER_LFT "offer-lifetime"
+  STASH_AGENT_OPTIONS "stash-agent-options"
 
   LEASE_DATABASE "lease-database"
   HOSTS_DATABASE "hosts-database"
@@ -93,12 +101,16 @@ using namespace std;
   LFC_INTERVAL "lfc-interval"
   READONLY "readonly"
   CONNECT_TIMEOUT "connect-timeout"
+  READ_TIMEOUT "read-timeout"
+  WRITE_TIMEOUT "write-timeout"
+  TCP_USER_TIMEOUT "tcp-user-timeout"
   MAX_RECONNECT_TRIES "max-reconnect-tries"
   RECONNECT_WAIT_TIME "reconnect-wait-time"
   ON_FAIL "on-fail"
   STOP_RETRY_EXIT "stop-retry-exit"
   SERVE_RETRY_EXIT "serve-retry-exit"
   SERVE_RETRY_CONTINUE "serve-retry-continue"
+  RETRY_ON_STARTUP "retry-on-startup"
   MAX_ROW_ERRORS "max-row-errors"
   TRUST_ANCHOR "trust-anchor"
   CERT_FILE "cert-file"
@@ -127,6 +139,7 @@ using namespace std;
   DDNS_QUALIFYING_SUFFIX "ddns-qualifying-suffix"
   DDNS_UPDATE_ON_RENEW "ddns-update-on-renew"
   DDNS_USE_CONFLICT_RESOLUTION "ddns-use-conflict-resolution"
+  DDNS_TTL_PERCENT "ddns-ttl-percent"
   STORE_EXTENDED_INFO "store-extended-info"
   SUBNET4 "subnet4"
   SUBNET_4O6_INTERFACE "4o6-interface"
@@ -140,10 +153,17 @@ using namespace std;
   SPACE "space"
   CSV_FORMAT "csv-format"
   ALWAYS_SEND "always-send"
+  NEVER_SEND "never-send"
   RECORD_TYPES "record-types"
   ENCAPSULATE "encapsulate"
   ARRAY "array"
   PARKED_PACKET_LIMIT "parked-packet-limit"
+  ALLOCATOR "allocator"
+  DDNS_CONFLICT_RESOLUTION_MODE "ddns-conflict-resolution-mode"
+  CHECK_WITH_DHCID "check-with-dhcid"
+  NO_CHECK_WITH_DHCID "no-check-with-dhcid"
+  CHECK_EXISTS_WITH_DHCID "check-exists-with-dhcid"
+  NO_CHECK_WITHOUT_DHCID "no-check-without-dhcid"
 
   SHARED_NETWORKS "shared-networks"
 
@@ -155,11 +175,6 @@ using namespace std;
   SUBNET "subnet"
   INTERFACE "interface"
   ID "id"
-  RESERVATION_MODE "reservation-mode"
-  DISABLED "disabled"
-  OUT_OF_POOL "out-of-pool"
-  GLOBAL "global"
-  ALL "all"
   RESERVATIONS_GLOBAL "reservations-global"
   RESERVATIONS_IN_SUBNET "reservations-in-subnet"
   RESERVATIONS_OUT_OF_POOL "reservations-out-of-pool"
@@ -169,10 +184,13 @@ using namespace std;
   CLIENT_CLASSES "client-classes"
   REQUIRE_CLIENT_CLASSES "require-client-classes"
   TEST "test"
+  TEMPLATE_TEST "template-test"
   ONLY_IF_REQUIRED "only-if-required"
   CLIENT_CLASS "client-class"
+  POOL_ID "pool-id"
 
   RESERVATIONS "reservations"
+  IP_ADDRESS "ip-address"
   DUID "duid"
   HW_ADDRESS "hw-address"
   CIRCUIT_ID "circuit-id"
@@ -181,7 +199,6 @@ using namespace std;
   FLEX_ID "flex-id"
 
   RELAY "relay"
-  IP_ADDRESS "ip-address"
   IP_ADDRESSES "ip-addresses"
 
   HOOKS_LIBRARIES "hooks-libraries"
@@ -204,8 +221,22 @@ using namespace std;
   PACKET_QUEUE_SIZE "packet-queue-size"
 
   CONTROL_SOCKET "control-socket"
+  CONTROL_SOCKETS "control-sockets"
   SOCKET_TYPE "socket-type"
+  UNIX "unix"
+  HTTP "http"
+  HTTPS "https"
   SOCKET_NAME "socket-name"
+  SOCKET_ADDRESS "socket-address"
+  SOCKET_PORT "socket-port"
+  AUTHENTICATION "authentication"
+  BASIC "basic"
+  REALM "realm"
+  DIRECTORY "directory"
+  CLIENTS "clients"
+  USER_FILE "user-file"
+  PASSWORD_FILE "password-file"
+  CERT_REQUIRED "cert-required"
 
   DHCP_QUEUE_CONTROL "dhcp-queue-control"
   ENABLE_QUEUE "enable-queue"
@@ -214,7 +245,6 @@ using namespace std;
 
   DHCP_DDNS "dhcp-ddns"
   ENABLE_UPDATES "enable-updates"
-  QUALIFYING_SUFFIX "qualifying-suffix"
   SERVER_IP "server-ip"
   SERVER_PORT "server-port"
   SENDER_IP "sender-ip"
@@ -222,10 +252,6 @@ using namespace std;
   MAX_QUEUE_SIZE "max-queue-size"
   NCR_PROTOCOL "ncr-protocol"
   NCR_FORMAT "ncr-format"
-  OVERRIDE_NO_UPDATE "override-no-update"
-  OVERRIDE_CLIENT_UPDATE "override-client-update"
-  REPLACE_CLIENT_NAME "replace-client-name"
-  GENERATED_PREFIX "generated-prefix"
   TCP "tcp"
   JSON "JSON"
   WHEN_PRESENT "when-present"
@@ -239,7 +265,7 @@ using namespace std;
   RESERVATIONS_LOOKUP_FIRST "reservations-lookup-first"
 
   LOGGERS "loggers"
-  OUTPUT_OPTIONS "output_options"
+  OUTPUT_OPTIONS "output-options"
   OUTPUT "output"
   DEBUGLEVEL "debuglevel"
   SEVERITY "severity"
@@ -250,6 +276,9 @@ using namespace std;
 
   COMPATIBILITY "compatibility"
   LENIENT_OPTION_PARSING "lenient-option-parsing"
+  IGNORE_DHCP_SERVER_ID "ignore-dhcp-server-identifier"
+  IGNORE_RAI_LINK_SEL "ignore-rai-link-selection"
+  EXCLUDE_FIRST_LAST_24 "exclude-first-last-24"
 
  // Not real tokens, just a way to signal what the parser is expected to
  // parse.
@@ -279,9 +308,11 @@ using namespace std;
 %type <ElementPtr> outbound_interface_value
 %type <ElementPtr> db_type
 %type <ElementPtr> on_fail_mode
-%type <ElementPtr> hr_mode
 %type <ElementPtr> ncr_protocol_value
 %type <ElementPtr> ddns_replace_client_name_value
+%type <ElementPtr> ddns_conflict_resolution_mode_value
+%type <ElementPtr> control_socket_type_value
+%type <ElementPtr> auth_type_value
 
 %printer { yyoutput << $$; } <*>;
 
@@ -499,6 +530,7 @@ global_param: valid_lifetime
             | expired_leases_processing
             | dhcp4o6_port
             | control_socket
+            | control_sockets
             | dhcp_queue_control
             | dhcp_ddns
             | echo_client_id
@@ -513,7 +545,6 @@ global_param: valid_lifetime
             | reservations
             | config_control
             | server_tag
-            | reservation_mode
             | reservations_global
             | reservations_in_subnet
             | reservations_out_of_pool
@@ -533,6 +564,8 @@ global_param: valid_lifetime
             | ddns_qualifying_suffix
             | ddns_update_on_renew
             | ddns_use_conflict_resolution
+            | ddns_conflict_resolution_mode
+            | ddns_ttl_percent
             | store_extended_info
             | statistic_default_sample_count
             | statistic_default_sample_age
@@ -542,6 +575,9 @@ global_param: valid_lifetime
             | reservations_lookup_first
             | compatibility
             | parked_packet_limit
+            | allocator
+            | offer_lifetime
+            | stash_agent_options
             | unknown_map_entry
             ;
 
@@ -626,6 +662,15 @@ parked_packet_limit: PARKED_PACKET_LIMIT COLON INTEGER {
     ctx.stack_.back()->set("parked-packet-limit", ppl);
 };
 
+allocator: ALLOCATOR {
+    ctx.unique("allocator", ctx.loc2pos(@1));
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr al(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("allocator", al);
+    ctx.leave();
+};
+
 echo_client_id: ECHO_CLIENT_ID COLON BOOLEAN {
     ctx.unique("echo-client-id", ctx.loc2pos(@1));
     ElementPtr echo(new BoolElement($3, ctx.loc2pos(@3)));
@@ -684,7 +729,7 @@ ddns_replace_client_name_value:
       $$ = ElementPtr(new StringElement("when-not-present", ctx.loc2pos(@1)));
       }
   | BOOLEAN {
-      error(@1, "boolean values for the replace-client-name are "
+      error(@1, "boolean values for the ddns-replace-client-name are "
                 "no longer supported");
       }
   ;
@@ -713,10 +758,46 @@ ddns_update_on_renew: DDNS_UPDATE_ON_RENEW COLON BOOLEAN {
     ctx.stack_.back()->set("ddns-update-on-renew", b);
 };
 
+// ddns-use-conflict-resolutions is deprecated. We translate it
+// to ddns-conflict-resolution-mode.  If they happen to specify
+// both the server parsing should detect it.
 ddns_use_conflict_resolution: DDNS_USE_CONFLICT_RESOLUTION COLON BOOLEAN {
     ctx.unique("ddns-use-conflict-resolution", ctx.loc2pos(@1));
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("ddns-use-conflict-resolution", b);
+    ctx.warning(@2, "ddns-use-conflict-resolution is deprecated. "
+             "Substituting ddns-conflict-resolution-mode");
+    ElementPtr mode(new StringElement(b->boolValue() ? "check-with-dhcid"
+                                      : "no-check-with-dhcid"));
+    ctx.stack_.back()->set("ddns-conflict-resolution-mode", mode);
+};
+
+ddns_conflict_resolution_mode: DDNS_CONFLICT_RESOLUTION_MODE {
+    ctx.unique("ddns-conflict-resolution-mode", ctx.loc2pos(@1));
+    ctx.enter(ctx.DDNS_CONFLICT_RESOLUTION_MODE);
+} COLON ddns_conflict_resolution_mode_value {
+    ctx.stack_.back()->set("ddns-conflict-resolution-mode", $4);
+    ctx.leave();
+};
+
+ddns_conflict_resolution_mode_value:
+    CHECK_WITH_DHCID {
+      $$ = ElementPtr(new StringElement("check-with-dhcid", ctx.loc2pos(@1)));
+      }
+  | NO_CHECK_WITH_DHCID {
+      $$ = ElementPtr(new StringElement("no-check-with-dhcid", ctx.loc2pos(@1)));
+      }
+  | CHECK_EXISTS_WITH_DHCID {
+      $$ = ElementPtr(new StringElement("check-exists-with-dhcid", ctx.loc2pos(@1)));
+      }
+  | NO_CHECK_WITHOUT_DHCID {
+      $$ = ElementPtr(new StringElement("no-check-without-dhcid", ctx.loc2pos(@1)));
+      }
+  ;
+
+ddns_ttl_percent: DDNS_TTL_PERCENT COLON FLOAT {
+    ctx.unique("ddns-ttl-percent", ctx.loc2pos(@1));
+    ElementPtr ttl(new DoubleElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("ddns-ttl-percent", ttl);
 };
 
 hostname_char_set: HOSTNAME_CHAR_SET {
@@ -771,6 +852,18 @@ reservations_lookup_first: RESERVATIONS_LOOKUP_FIRST COLON BOOLEAN {
     ctx.unique("reservations-lookup-first", ctx.loc2pos(@1));
     ElementPtr first(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("reservations-lookup-first", first);
+};
+
+offer_lifetime: OFFER_LFT COLON INTEGER {
+    ctx.unique("offer-lifetime", ctx.loc2pos(@1));
+    ElementPtr offer_lifetime(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("offer-lifetime", offer_lifetime);
+};
+
+stash_agent_options: STASH_AGENT_OPTIONS COLON BOOLEAN {
+    ctx.unique("stash-agent-options", ctx.loc2pos(@1));
+    ElementPtr stash(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("stash-agent-options", stash);
 };
 
 interfaces_config: INTERFACES_CONFIG {
@@ -905,7 +998,9 @@ sanity_checks_params: sanity_checks_param
                         }
                     ;
 
-sanity_checks_param: lease_checks;
+sanity_checks_param: lease_checks
+                   | extended_info_checks
+                   ;
 
 lease_checks: LEASE_CHECKS {
     ctx.unique("lease-checks", ctx.loc2pos(@1));
@@ -923,6 +1018,24 @@ lease_checks: LEASE_CHECKS {
     } else {
         error(@4, "Unsupported 'lease-checks value: " + string($4) +
               ", supported values are: none, warn, fix, fix-del, del");
+    }
+}
+
+extended_info_checks: EXTENDED_INFO_CHECKS {
+    ctx.unique("extended-info-checks", ctx.loc2pos(@1));
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+
+    if ( (string($4) == "none") ||
+         (string($4) == "fix") ||
+         (string($4) == "strict") ||
+         (string($4) == "pedantic")) {
+        ElementPtr user(new StringElement($4, ctx.loc2pos(@4)));
+        ctx.stack_.back()->set("extended-info-checks", user);
+        ctx.leave();
+    } else {
+        error(@4, "Unsupported 'extended-info-checks value: " + string($4) +
+              ", supported values are: none, fix, strict, pedantic");
     }
 }
 
@@ -988,9 +1101,13 @@ database_map_param: database_type
                   | lfc_interval
                   | readonly
                   | connect_timeout
+                  | read_timeout
+                  | write_timeout
+                  | tcp_user_timeout
                   | max_reconnect_tries
                   | reconnect_wait_time
                   | on_fail
+                  | retry_on_startup
                   | max_row_errors
                   | trust_anchor
                   | cert_file
@@ -1078,6 +1195,24 @@ connect_timeout: CONNECT_TIMEOUT COLON INTEGER {
     ctx.stack_.back()->set("connect-timeout", n);
 };
 
+read_timeout: READ_TIMEOUT COLON INTEGER {
+    ctx.unique("read-timeout", ctx.loc2pos(@1));
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("read-timeout", n);
+};
+
+write_timeout: WRITE_TIMEOUT COLON INTEGER {
+    ctx.unique("write-timeout", ctx.loc2pos(@1));
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("write-timeout", n);
+};
+
+tcp_user_timeout: TCP_USER_TIMEOUT COLON INTEGER {
+    ctx.unique("tcp-user-timeout", ctx.loc2pos(@1));
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("tcp-user-timeout", n);
+};
+
 max_reconnect_tries: MAX_RECONNECT_TRIES COLON INTEGER {
     ctx.unique("max-reconnect-tries", ctx.loc2pos(@1));
     ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
@@ -1102,6 +1237,12 @@ on_fail_mode: STOP_RETRY_EXIT { $$ = ElementPtr(new StringElement("stop-retry-ex
             | SERVE_RETRY_EXIT { $$ = ElementPtr(new StringElement("serve-retry-exit", ctx.loc2pos(@1))); }
             | SERVE_RETRY_CONTINUE { $$ = ElementPtr(new StringElement("serve-retry-continue", ctx.loc2pos(@1))); }
             ;
+
+retry_on_startup: RETRY_ON_STARTUP COLON BOOLEAN {
+    ctx.unique("retry-on-startup", ctx.loc2pos(@1));
+    ElementPtr n(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("retry-on-startup", n);
+};
 
 max_row_errors: MAX_ROW_ERRORS COLON INTEGER {
     ctx.unique("max-row-errors", ctx.loc2pos(@1));
@@ -1468,7 +1609,6 @@ subnet4_param: valid_lifetime
              | client_class
              | require_client_classes
              | reservations
-             | reservation_mode
              | reservations_global
              | reservations_in_subnet
              | reservations_out_of_pool
@@ -1496,9 +1636,13 @@ subnet4_param: valid_lifetime
              | ddns_qualifying_suffix
              | ddns_update_on_renew
              | ddns_use_conflict_resolution
+             | ddns_conflict_resolution_mode
+             | ddns_ttl_percent
              | hostname_char_set
              | hostname_char_replacement
              | store_extended_info
+             | allocator
+             | offer_lifetime
              | unknown_map_entry
              ;
 
@@ -1585,20 +1729,6 @@ reservations_out_of_pool: RESERVATIONS_OUT_OF_POOL COLON BOOLEAN {
     ctx.stack_.back()->set("reservations-out-of-pool", b);
 };
 
-reservation_mode: RESERVATION_MODE {
-    ctx.unique("reservation-mode", ctx.loc2pos(@1));
-    ctx.enter(ctx.RESERVATION_MODE);
-} COLON hr_mode {
-    ctx.stack_.back()->set("reservation-mode", $4);
-    ctx.leave();
-};
-
-hr_mode: DISABLED { $$ = ElementPtr(new StringElement("disabled", ctx.loc2pos(@1))); }
-       | OUT_OF_POOL { $$ = ElementPtr(new StringElement("out-of-pool", ctx.loc2pos(@1))); }
-       | GLOBAL { $$ = ElementPtr(new StringElement("global", ctx.loc2pos(@1))); }
-       | ALL { $$ = ElementPtr(new StringElement("all", ctx.loc2pos(@1))); }
-       ;
-
 id: ID COLON INTEGER {
     ctx.unique("id", ctx.loc2pos(@1));
     ElementPtr id(new IntElement($3, ctx.loc2pos(@3)));
@@ -1658,7 +1788,6 @@ shared_network_param: name
                     | server_hostname
                     | boot_file_name
                     | relay
-                    | reservation_mode
                     | reservations_global
                     | reservations_in_subnet
                     | reservations_out_of_pool
@@ -1682,9 +1811,13 @@ shared_network_param: name
                     | ddns_qualifying_suffix
                     | ddns_update_on_renew
                     | ddns_use_conflict_resolution
+                    | ddns_conflict_resolution_mode
+                    | ddns_ttl_percent
                     | hostname_char_set
                     | hostname_char_replacement
                     | store_extended_info
+                    | allocator
+                    | offer_lifetime
                     | unknown_map_entry
                     ;
 
@@ -1911,6 +2044,7 @@ option_data_param: option_data_name
                  | option_data_space
                  | option_data_csv_format
                  | option_data_always_send
+                 | option_data_never_send
                  | user_context
                  | comment
                  | unknown_map_entry
@@ -1933,14 +2067,20 @@ option_data_space: space;
 
 option_data_csv_format: CSV_FORMAT COLON BOOLEAN {
     ctx.unique("csv-format", ctx.loc2pos(@1));
-    ElementPtr space(new BoolElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("csv-format", space);
+    ElementPtr csv(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("csv-format", csv);
 };
 
 option_data_always_send: ALWAYS_SEND COLON BOOLEAN {
     ctx.unique("always-send", ctx.loc2pos(@1));
     ElementPtr persist(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("always-send", persist);
+};
+
+option_data_never_send: NEVER_SEND COLON BOOLEAN {
+    ctx.unique("never-send", ctx.loc2pos(@1));
+    ElementPtr cancel(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("never-send", cancel);
 };
 
 // ---- pools ------------------------------------
@@ -1998,6 +2138,7 @@ pool_params: pool_param
            ;
 
 pool_param: pool_entry
+          | pool_id
           | option_data_list
           | client_class
           | require_client_classes
@@ -2013,6 +2154,12 @@ pool_entry: POOL {
     ElementPtr pool(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("pool", pool);
     ctx.leave();
+};
+
+pool_id: POOL_ID COLON INTEGER {
+    ctx.unique("pool-id", ctx.loc2pos(@1));
+    ElementPtr id(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("pool-id", id);
 };
 
 user_context: USER_CONTEXT {
@@ -2175,17 +2322,6 @@ ip_address: IP_ADDRESS {
     ctx.leave();
 };
 
-ip_addresses: IP_ADDRESSES {
-    ctx.unique("ip-addresses", ctx.loc2pos(@1));
-    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
-    ctx.stack_.back()->set("ip-addresses", l);
-    ctx.stack_.push_back(l);
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON list_strings {
-    ctx.stack_.pop_back();
-    ctx.leave();
-};
-
 duid: DUID {
     ctx.unique("duid", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
@@ -2265,9 +2401,19 @@ relay: RELAY {
     ctx.leave();
 };
 
-relay_map: ip_address
-         | ip_addresses
+relay_map: ip_addresses
          ;
+
+ip_addresses: IP_ADDRESSES {
+    ctx.unique("ip-addresses", ctx.loc2pos(@1));
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("ip-addresses", l);
+    ctx.stack_.push_back(l);
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON list_strings {
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
 
 // --- end of relay definitions ------------------------------
 
@@ -2313,6 +2459,7 @@ not_empty_client_class_params: client_class_param
 
 client_class_param: client_class_name
                   | client_class_test
+                  | client_class_template_test
                   | only_if_required
                   | option_def_list
                   | option_data_list
@@ -2325,6 +2472,7 @@ client_class_param: client_class_name
                   | valid_lifetime
                   | min_valid_lifetime
                   | max_valid_lifetime
+                  | offer_lifetime
                   ;
 
 client_class_name: name;
@@ -2335,6 +2483,15 @@ client_class_test: TEST {
 } COLON STRING {
     ElementPtr test(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("test", test);
+    ctx.leave();
+};
+
+client_class_template_test: TEMPLATE_TEST {
+    ctx.unique("template-test", ctx.loc2pos(@1));
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr template_test(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("template-test", template_test);
     ctx.leave();
 };
 
@@ -2356,6 +2513,7 @@ dhcp4o6_port: DHCP4O6_PORT COLON INTEGER {
 
 control_socket: CONTROL_SOCKET {
     ctx.unique("control-socket", ctx.loc2pos(@1));
+    ctx.unique("control-sockets", ctx.loc2pos(@1));
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("control-socket", m);
     ctx.stack_.push_back(m);
@@ -2363,6 +2521,37 @@ control_socket: CONTROL_SOCKET {
 } COLON LCURLY_BRACKET control_socket_params RCURLY_BRACKET {
     ctx.stack_.pop_back();
     ctx.leave();
+};
+
+control_sockets: CONTROL_SOCKETS {
+    ctx.unique("control-sockets", ctx.loc2pos(@1));
+    ctx.unique("control-socket", ctx.loc2pos(@1));
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("control-sockets", l);
+    ctx.stack_.push_back(l);
+    ctx.enter(ctx.CONTROL_SOCKET);
+} COLON LSQUARE_BRACKET control_socket_list RSQUARE_BRACKET {
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+control_socket_list: %empty
+                   | not_empty_control_socket_list
+                   ;
+
+not_empty_control_socket_list: control_socket_entry
+                             | not_empty_control_socket_list COMMA control_socket_entry
+                             | not_empty_control_socket_list COMMA {
+                                 ctx.warnAboutExtraCommas(@2);
+                                 }
+                             ;
+
+control_socket_entry: LCURLY_BRACKET {
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->add(m);
+    ctx.stack_.push_back(m);
+} control_socket_params RCURLY_BRACKET {
+    ctx.stack_.pop_back();
 };
 
 control_socket_params: control_socket_param
@@ -2374,6 +2563,13 @@ control_socket_params: control_socket_param
 
 control_socket_param: control_socket_type
                     | control_socket_name
+                    | control_socket_address
+                    | control_socket_port
+                    | authentication
+                    | trust_anchor
+                    | cert_file
+                    | key_file
+                    | cert_required
                     | user_context
                     | comment
                     | unknown_map_entry
@@ -2381,15 +2577,21 @@ control_socket_param: control_socket_type
 
 control_socket_type: SOCKET_TYPE {
     ctx.unique("socket-type", ctx.loc2pos(@1));
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr stype(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("socket-type", stype);
+    ctx.enter(ctx.CONTROL_SOCKET_TYPE);
+} COLON control_socket_type_value {
+    ctx.stack_.back()->set("socket-type", $4);
     ctx.leave();
 };
 
+control_socket_type_value:
+    UNIX { $$ = ElementPtr(new StringElement("unix", ctx.loc2pos(@1))); }
+  | HTTP { $$ = ElementPtr(new StringElement("http", ctx.loc2pos(@1))); }
+  | HTTPS { $$ = ElementPtr(new StringElement("https", ctx.loc2pos(@1))); }
+  ;
+
 control_socket_name: SOCKET_NAME {
     ctx.unique("socket-name", ctx.loc2pos(@1));
+    ctx.unique("socket-address", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr name(new StringElement($4, ctx.loc2pos(@4)));
@@ -2397,6 +2599,151 @@ control_socket_name: SOCKET_NAME {
     ctx.leave();
 };
 
+control_socket_address: SOCKET_ADDRESS {
+    ctx.unique("socket-address", ctx.loc2pos(@1));
+    ctx.unique("socket-name", ctx.loc2pos(@1));
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr address(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("socket-address", address);
+    ctx.leave();
+};
+
+control_socket_port: SOCKET_PORT COLON INTEGER {
+    ctx.unique("socket-port", ctx.loc2pos(@1));
+    ElementPtr port(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("socket-port", port);
+};
+
+cert_required: CERT_REQUIRED COLON BOOLEAN {
+    ctx.unique("cert-required", ctx.loc2pos(@1));
+    ElementPtr req(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("cert-required", req);
+};
+
+// --- authentication ---------------------------------------------
+
+authentication: AUTHENTICATION {
+    ctx.unique("authentication", ctx.loc2pos(@1));
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("authentication", m);
+    ctx.stack_.push_back(m);
+    ctx.enter(ctx.AUTHENTICATION);
+} COLON LCURLY_BRACKET auth_params RCURLY_BRACKET {
+    // The type parameter is required
+    ctx.require("type", ctx.loc2pos(@4), ctx.loc2pos(@6));
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+auth_params: auth_param
+           | auth_params COMMA auth_param
+           | auth_params COMMA {
+               ctx.warnAboutExtraCommas(@2);
+               }
+           ;
+
+auth_param: auth_type
+          | realm
+          | directory
+          | clients
+          | comment
+          | user_context
+          | unknown_map_entry
+          ;
+
+auth_type: TYPE {
+    ctx.unique("type", ctx.loc2pos(@1));
+    ctx.enter(ctx.AUTH_TYPE);
+} COLON auth_type_value {
+    ctx.stack_.back()->set("type", $4);
+    ctx.leave();
+};
+
+auth_type_value: BASIC { $$ = ElementPtr(new StringElement("basic", ctx.loc2pos(@1))); }
+               ;
+
+realm: REALM {
+    ctx.unique("realm", ctx.loc2pos(@1));
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr realm(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("realm", realm);
+    ctx.leave();
+};
+
+directory: DIRECTORY {
+    ctx.unique("directory", ctx.loc2pos(@1));
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr directory(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("directory", directory);
+    ctx.leave();
+};
+
+clients: CLIENTS {
+    ctx.unique("clients", ctx.loc2pos(@1));
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("clients", l);
+    ctx.stack_.push_back(l);
+    ctx.enter(ctx.CLIENTS);
+} COLON LSQUARE_BRACKET clients_list RSQUARE_BRACKET {
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+clients_list: %empty
+            | not_empty_clients_list
+            ;
+
+not_empty_clients_list: basic_auth
+                      | not_empty_clients_list COMMA basic_auth
+                      | not_empty_clients_list COMMA {
+                          ctx.warnAboutExtraCommas(@2);
+                          }
+                      ;
+
+basic_auth: LCURLY_BRACKET {
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->add(m);
+    ctx.stack_.push_back(m);
+} clients_params RCURLY_BRACKET {
+    ctx.stack_.pop_back();
+};
+
+clients_params: clients_param
+              | clients_params COMMA clients_param
+              | clients_params COMMA {
+                  ctx.warnAboutExtraCommas(@2);
+                  }
+              ;
+
+clients_param: user
+             | user_file
+             | password
+             | password_file
+             | user_context
+             | comment
+             | unknown_map_entry
+             ;
+
+user_file: USER_FILE {
+    ctx.unique("user-file", ctx.loc2pos(@1));
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr user(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("user-file", user);
+    ctx.leave();
+};
+
+password_file: PASSWORD_FILE {
+    ctx.unique("password-file", ctx.loc2pos(@1));
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr password(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("password-file", password);
+    ctx.leave();
+};
 
 // --- dhcp-queue-control ---------------------------------------------
 
@@ -2497,13 +2844,6 @@ dhcp_ddns_param: enable_updates
                | max_queue_size
                | ncr_protocol
                | ncr_format
-               | dep_override_no_update
-               | dep_override_client_update
-               | dep_replace_client_name
-               | dep_generated_prefix
-               | dep_qualifying_suffix
-               | dep_hostname_char_set
-               | dep_hostname_char_replacement
                | user_context
                | comment
                | unknown_map_entry
@@ -2572,70 +2912,6 @@ ncr_format: NCR_FORMAT {
     ctx.stack_.back()->set("ncr-format", json);
     ctx.leave();
 };
-
-// Deprecated, moved to global/network scopes. Eventually it should be removed.
-dep_qualifying_suffix: QUALIFYING_SUFFIX {
-    ctx.unique("qualifying-suffix", ctx.loc2pos(@1));
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("qualifying-suffix", s);
-    ctx.leave();
-};
-
-// Deprecated, moved to global/network scopes. Eventually it should be removed.
-dep_override_no_update: OVERRIDE_NO_UPDATE COLON BOOLEAN {
-    ctx.unique("override-no-update", ctx.loc2pos(@1));
-    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("override-no-update", b);
-};
-
-// Deprecated, moved to global/network scopes. Eventually it should be removed.
-dep_override_client_update: OVERRIDE_CLIENT_UPDATE COLON BOOLEAN {
-    ctx.unique("override-client-update", ctx.loc2pos(@1));
-    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("override-client-update", b);
-};
-
-// Deprecated, moved to global/network scopes. Eventually it should be removed.
-dep_replace_client_name: REPLACE_CLIENT_NAME {
-    ctx.unique("replace-client-name", ctx.loc2pos(@1));
-    ctx.enter(ctx.REPLACE_CLIENT_NAME);
-} COLON ddns_replace_client_name_value {
-    ctx.stack_.back()->set("replace-client-name", $4);
-    ctx.leave();
-};
-
-// Deprecated, moved to global/network scopes. Eventually it should be removed.
-dep_generated_prefix: GENERATED_PREFIX {
-    ctx.unique("generated-prefix", ctx.loc2pos(@1));
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("generated-prefix", s);
-    ctx.leave();
-};
-
-// Deprecated, moved to global/network scopes. Eventually it should be removed.
-dep_hostname_char_set: HOSTNAME_CHAR_SET {
-    ctx.unique("hostname-char-set", ctx.loc2pos(@1));
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("hostname-char-set", s);
-    ctx.leave();
-};
-
-// Deprecated, moved to global/network scopes. Eventually it should be removed.
-dep_hostname_char_replacement: HOSTNAME_CHAR_REPLACEMENT {
-    ctx.unique("hostname-char-replacement", ctx.loc2pos(@1));
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("hostname-char-replacement", s);
-    ctx.leave();
-};
-
 
 // Config control information element
 
@@ -2753,9 +3029,9 @@ severity: SEVERITY {
 };
 
 output_options_list: OUTPUT_OPTIONS {
-    ctx.unique("output_options", ctx.loc2pos(@1));
+    ctx.unique("output-options", ctx.loc2pos(@1));
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
-    ctx.stack_.back()->set("output_options", l);
+    ctx.stack_.back()->set("output-options", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.OUTPUT_OPTIONS);
 } COLON LSQUARE_BRACKET output_options_list_content RSQUARE_BRACKET {
@@ -2847,6 +3123,9 @@ compatibility_params: compatibility_param
                     ;
 
 compatibility_param: lenient_option_parsing
+                   | ignore_dhcp_server_identifier
+                   | ignore_rai_link_selection
+                   | exclude_first_last_24
                    | unknown_map_entry
                    ;
 
@@ -2854,6 +3133,24 @@ lenient_option_parsing: LENIENT_OPTION_PARSING COLON BOOLEAN {
     ctx.unique("lenient-option-parsing", ctx.loc2pos(@1));
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("lenient-option-parsing", b);
+};
+
+ignore_dhcp_server_identifier: IGNORE_DHCP_SERVER_ID COLON BOOLEAN {
+    ctx.unique("ignore-dhcp-server-identifier", ctx.loc2pos(@1));
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("ignore-dhcp-server-identifier", b);
+}
+
+ignore_rai_link_selection: IGNORE_RAI_LINK_SEL COLON BOOLEAN {
+    ctx.unique("ignore-rai-link-selection", ctx.loc2pos(@1));
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("ignore-rai-link-selection", b);
+}
+
+exclude_first_last_24: EXCLUDE_FIRST_LAST_24 COLON BOOLEAN {
+    ctx.unique("exclude-first-last-24", ctx.loc2pos(@1));
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("exclude-first-last-24", b);
 };
 
 %%

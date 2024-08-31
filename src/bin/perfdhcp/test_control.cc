@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -72,7 +72,7 @@ TestControl::haveAllPacketsBeenReceived() const {
     const size_t& num_request_size = num_request.size();
 
     if (num_request_size == 0) {
-        return false;
+        return (false);
     }
 
     uint32_t responses = 0;
@@ -113,7 +113,7 @@ TestControl::cleanCachedPackets() {
         // since we want to randomize leases to be renewed so leave 5
         // times more packets to randomize from.
         /// @todo The cache size might be controlled from the command line.
-        if (reply_storage_.size() > 5 * options_.getRenewRate()) {
+        if (reply_storage_.size() > 5 * size_t(options_.getRenewRate())) {
             reply_storage_.clear(reply_storage_.size() -
                                  5 * options_.getRenewRate());
         }
@@ -361,11 +361,11 @@ TestControl::generateMacAddress(uint8_t& randomized) {
     const CommandOptions::MacAddrsVector& macs = options_.getMacsFromFile();
     // if we are using the -M option return a random one from the list...
     if (macs.size() > 0) {
-      uint16_t r = number_generator_();
+      uint16_t r = random_generator_->generate();
       if (r >= macs.size()) {
         r = 0;
       }
-      return macs[r];
+      return (macs[r]);
 
     } else {
       // ... otherwise use the standard behavior
@@ -404,9 +404,11 @@ TestControl::generateMacAddress(uint8_t& randomized) {
 
 OptionPtr
 TestControl::generateClientId(const dhcp::HWAddrPtr& hwaddr) const {
-    std::vector<uint8_t> client_id(1, static_cast<uint8_t>(hwaddr->htype_));
-    client_id.insert(client_id.end(), hwaddr->hwaddr_.begin(),
-                     hwaddr->hwaddr_.end());
+    vector<uint8_t> client_id;
+    client_id.push_back(static_cast<uint8_t>(hwaddr->htype_));
+    for (uint8_t const& byte : hwaddr->hwaddr_) {
+        client_id.push_back(byte);
+    }
     return (OptionPtr(new Option(Option::V4, DHO_DHCP_CLIENT_IDENTIFIER,
                                  client_id)));
 }
@@ -417,7 +419,7 @@ TestControl::generateDuid(uint8_t& randomized) {
     const CommandOptions::MacAddrsVector& macs = options_.getMacsFromFile();
     // pick a random mac address if we are using option -M..
     if (macs.size() > 0) {
-      uint16_t r = number_generator_();
+      uint16_t r = random_generator_->generate();
       if (r >= macs.size()) {
         r = 0;
       }
@@ -486,7 +488,7 @@ int
 TestControl::getRandomOffset(const int arg_idx) const {
     int rand_offset = options_.getIpVersion() == 4 ?
         DHCPV4_RANDOMIZATION_OFFSET : DHCPV6_RANDOMIZATION_OFFSET;
-    if (options_.getRandomOffset().size() > arg_idx) {
+    if (options_.getRandomOffset().size() > size_t(arg_idx)) {
         rand_offset = options_.getRandomOffset()[arg_idx];
     }
     return (rand_offset);
@@ -524,7 +526,7 @@ int
 TestControl::getTransactionIdOffset(const int arg_idx) const {
     int xid_offset = options_.getIpVersion() == 4 ?
         DHCPV4_TRANSID_OFFSET : DHCPV6_TRANSID_OFFSET;
-    if (options_.getTransactionIdOffset().size() > arg_idx) {
+    if (options_.getTransactionIdOffset().size() > size_t(arg_idx)) {
         xid_offset = options_.getTransactionIdOffset()[arg_idx];
     }
     return (xid_offset);
@@ -549,9 +551,8 @@ TestControl::initPacketTemplates() {
     template_packets_v6_.clear();
     template_buffers_.clear();
     std::vector<std::string> template_files = options_.getTemplateFiles();
-    for (std::vector<std::string>::const_iterator it = template_files.begin();
-         it != template_files.end(); ++it) {
-        readPacketTemplate(*it);
+    for (auto const& it : template_files) {
+        readPacketTemplate(it);
     }
 }
 
@@ -631,11 +632,7 @@ TestControl::printTemplate(const uint8_t packet_type) const {
             template_packets_v4_.find(packet_type);
         if ((pkt_it != template_packets_v4_.end()) &&
             pkt_it->second) {
-            const util::OutputBuffer& out_buf(pkt_it->second->getBuffer());
-            const char* out_buf_data =
-                static_cast<const char*>(out_buf.getData());
-            std::vector<uint8_t> buf(out_buf_data, out_buf_data + out_buf.getLength());
-            hex_buf = vector2Hex(buf);
+            hex_buf = vector2Hex(pkt_it->second->getBuffer().getVector());
         }
     } else if (options_.getIpVersion() == 6) {
         if (packet_type == DHCPV6_REQUEST) {
@@ -645,11 +642,7 @@ TestControl::printTemplate(const uint8_t packet_type) const {
             template_packets_v6_.find(packet_type);
         if (pkt_it != template_packets_v6_.end() &&
             pkt_it->second) {
-            const util::OutputBuffer& out_buf(pkt_it->second->getBuffer());
-            const char* out_buf_data =
-                static_cast<const char*>(out_buf.getData());
-            std::vector<uint8_t> buf(out_buf_data, out_buf_data + out_buf.getLength());
-            hex_buf = vector2Hex(buf);
+            hex_buf = vector2Hex(pkt_it->second->getBuffer().getVector());
         }
     }
     std::cout << "xid-offset=" << getTransactionIdOffset(arg_idx) << std::endl;
@@ -750,13 +743,13 @@ std::string
 TestControl::vector2Hex(const std::vector<uint8_t>& vec,
                         const std::string& separator /* = "" */) {
     std::ostringstream stream;
-    for (std::vector<uint8_t>::const_iterator it = vec.begin();
-         it != vec.end();
-         ++it) {
-        if (it == vec.begin()) {
-            stream << byte2Hex(*it);
+    bool first = true;
+    for (auto const& it : vec) {
+        if (first) {
+            stream << byte2Hex(it);
+            first = false;
         } else {
-            stream << separator << byte2Hex(*it);
+            stream << separator << byte2Hex(it);
         }
     }
     return (stream.str());
@@ -861,7 +854,7 @@ TestControl::address6Uniqueness(const Pkt6Ptr& pkt6, ExchangeType xchg_type) {
         std::set<std::string> current;
         // addresses were already checked in validateIA
         // we can safely assume that those are correct
-        for (const auto& opt : pkt6->options_) {
+        for (auto const& opt : pkt6->options_) {
             switch (opt.second->getType()) {
             case D6O_IA_PD: {
                 // add address and check if it has not been already assigned
@@ -933,9 +926,9 @@ TestControl::validateIA(const Pkt6Ptr& pkt6) {
     if ((address_and_prefix && iapref && iaaddr) ||
         (prefix_only && iapref && !address_and_prefix) ||
         (address_only && iaaddr && !address_and_prefix)) {
-        return true;
+        return (true);
     } else {
-        return false;
+        return (false);
     }
 }
 
@@ -1107,12 +1100,11 @@ TestControl::reset() {
 
 TestControl::TestControl(CommandOptions& options, BasePerfSocket &socket) :
     exit_time_(not_a_date_time),
-    number_generator_(0, options.getMacsFromFile().size()),
     socket_(socket),
     receiver_(socket, options.isSingleThreaded(), options.getIpVersion()),
     stats_mgr_(options),
-    options_(options)
-{
+    random_generator_(new RandomGenerator(0, options.getMacsFromFile().size())),
+    options_(options) {
     // Reset singleton state before test starts.
     reset();
 
@@ -1641,15 +1633,14 @@ TestControl::sendRequest6(const std::vector<uint8_t>& template_buf,
         }
     }
     // Set IA_NA
-    boost::shared_ptr<Option6IA> opt_ia_na_advertise =
-        boost::static_pointer_cast<Option6IA>(advertise_pkt6->getOption(D6O_IA_NA));
+    OptionPtr opt_ia_na_advertise = advertise_pkt6->getOption(D6O_IA_NA);
     if (!opt_ia_na_advertise) {
         isc_throw(Unexpected, "DHCPv6 IA_NA option not found in received "
                   "packet");
     }
     size_t addr_offset = getRequestedIpOffset();
     boost::shared_ptr<LocalizedOption>
-        opt_ia_na(new LocalizedOption(opt_ia_na_advertise, addr_offset));
+        opt_ia_na(new LocalizedOption(Option::V6, D6O_IA_NA, opt_ia_na_advertise->getData(), addr_offset));
     if (!opt_ia_na->valid()) {
         isc_throw(BadValue, "Option IA_NA in advertise packet is invalid");
     }
@@ -1832,11 +1823,11 @@ TestControl::setDefaults4(const Pkt4Ptr& pkt) {
     // The remote server's name or IP.
     pkt->setRemoteAddr(IOAddress(options_.getServerName()));
     // Set local address.
-    pkt->setLocalAddr(IOAddress(socket_.addr_));
+    pkt->setLocalAddr(socket_.addr_);
     // Set relay (GIADDR) address to local address if multiple
     // subnet mode is not enabled
     if (!options_.checkMultiSubnet()) {
-        pkt->setGiaddr(IOAddress(socket_.addr_));
+        pkt->setGiaddr(socket_.addr_);
     } else {
         pkt->setGiaddr(IOAddress(options_.getRandRelayAddr()));
     }
@@ -1877,9 +1868,10 @@ TestControl::setDefaults6(const Pkt6Ptr& pkt) {
       if (options_.checkMultiSubnet()) {
           relay_info.linkaddr_ = IOAddress(options_.getRandRelayAddr());
       } else {
-          relay_info.linkaddr_ = IOAddress(socket_.addr_);
+          relay_info.linkaddr_ = socket_.addr_;
       }
-      relay_info.peeraddr_ = IOAddress(socket_.addr_);
+      relay_info.peeraddr_ = socket_.addr_;
+      relay_info.options_.insert(options_.getRelayOpts().begin(), options_.getRelayOpts().end());
       pkt->addRelayInfo(relay_info);
     }
 }
@@ -1891,7 +1883,7 @@ static OptionBuffer const concatenateBuffers(OptionBuffer const& a,
     OptionBuffer result;
     result.insert(result.end(), a.begin(), a.end());
     result.insert(result.end(), b.begin(), b.end());
-    return result;
+    return (result);
 }
 
 static void mergeOptionIntoPacket(Pkt4Ptr const& packet,
@@ -1924,7 +1916,7 @@ void
 TestControl::addExtraOpts(const Pkt4Ptr& pkt) {
     // Add all extra options that the user may have specified.
     const dhcp::OptionCollection& extra_opts = options_.getExtraOpts();
-    for (auto entry : extra_opts) {
+    for (auto const& entry : extra_opts) {
         mergeOptionIntoPacket(pkt, entry.second);
     }
 }
@@ -1933,7 +1925,7 @@ void
 TestControl::addExtraOpts(const Pkt6Ptr& pkt) {
     // Add all extra options that the user may have specified.
     const dhcp::OptionCollection& extra_opts = options_.getExtraOpts();
-    for (auto entry : extra_opts) {
+    for (auto const& entry : extra_opts) {
         pkt->addOption(entry.second);
     }
 }

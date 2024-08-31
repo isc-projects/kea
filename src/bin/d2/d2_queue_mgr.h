@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015,2017,2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -40,7 +40,6 @@ public:
         isc::Exception(file, line, what) { };
 };
 
-
 /// @brief Thrown if the request queue is full when an enqueue is attempted.
 /// @todo use or remove it.
 class D2QueueMgrQueueFull : public isc::Exception {
@@ -62,7 +61,6 @@ public:
     D2QueueMgrInvalidIndex(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
-
 
 /// @brief D2QueueMgr creates and manages a queue of DNS update requests.
 ///
@@ -217,8 +215,8 @@ public:
     /// @param ncr is a pointer to the newly received NameChangeRequest if
     /// result is NameChangeListener::SUCCESS.  It is indeterminate other
     /// wise.
-    virtual void operator ()(const dhcp_ddns::NameChangeListener::Result result,
-                             dhcp_ddns::NameChangeRequestPtr& ncr);
+    virtual void operator()(const dhcp_ddns::NameChangeListener::Result result,
+                            dhcp_ddns::NameChangeRequestPtr& ncr);
 
     /// @brief Stops listening for requests.
     ///
@@ -233,7 +231,6 @@ public:
     ///
     /// @throw D2QueueMgrError if stop_state is a valid stop state.
     void stopListening(const State target_stop_state = STOPPED);
-
 
     /// @brief Deletes the current listener
     ///

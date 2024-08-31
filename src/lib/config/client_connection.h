@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -63,7 +63,7 @@ class ClientConnectionImpl;
 ///            }
 /// );
 /// while (!cb_invoked) {
-///     io_service.run_one();
+///     io_service.runOne();
 /// }
 /// @endcode
 ///
@@ -108,7 +108,7 @@ public:
     /// @brief Constructor.
     ///
     /// @param io_service Reference to the IO service.
-    explicit ClientConnection(asiolink::IOService& io_service);
+    explicit ClientConnection(const asiolink::IOServicePtr& io_service);
 
     /// @brief Starts asynchronous transaction with a remote endpoint.
     ///

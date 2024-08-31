@@ -1,11 +1,11 @@
-// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef MASTER_LEXER_STATE_H
-#define MASTER_LEXER_STATE_H 1
+#define MASTER_LEXER_STATE_H
 
 #include <dns/master_lexer.h>
 
@@ -34,7 +34,7 @@ namespace master_lexer_internal {
 /// from the initial state.
 ///
 /// If the whole lexer transition is completed within start(), it sets the
-/// identified token and returns NULL; otherwise it returns a pointer to
+/// identified token and returns null; otherwise it returns a pointer to
 /// an object of a specific state class that completes the session
 /// on the call of handle().
 ///
@@ -64,7 +64,7 @@ public:
     ///
     /// \param lexer The lexer object that holds the main context.
     /// \param options The options passed to getNextToken().
-    /// \return A pointer to the next state object or NULL if the transition
+    /// \return A pointer to the next state object or null if the transition
     /// is completed.
     static const State* start(MasterLexer& lexer,
                               MasterLexer::Options options);
@@ -75,7 +75,7 @@ public:
     /// start(). In the usual state transition design pattern, it would
     /// return the next state. But as we noticed, we never have another
     /// state, so we simplify it by not returning anything instead of
-    /// returning NULL every time.
+    /// returning null every time.
     ///
     /// \throw MasterLexer::ReadError Unexpected I/O error
     /// \throw std::bad_alloc Internal resource allocation failure
@@ -122,9 +122,9 @@ protected:
     ///
     /// \param lexer The lexer object that holds the main context.
     /// \return A pointer to the implementation class object of the given
-    /// lexer.  This is never NULL.
+    /// lexer.  This is never null.
     MasterLexer::MasterLexerImpl* getLexerImpl(MasterLexer& lexer) const {
-        return (lexer.impl_);
+        return (lexer.impl_.get());
     }
 };
 
@@ -132,7 +132,3 @@ protected:
 } // namespace dns
 } // namespace isc
 #endif  // MASTER_LEXER_STATE_H
-
-// Local Variables:
-// mode: c++
-// End:

@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -54,7 +54,9 @@ public:
         return (controller_ptr);
     }
 
-    virtual ~NakedD2Controller() { deregisterCommands(); }
+    virtual ~NakedD2Controller() {
+        deregisterCommands();
+    }
 
     using DControllerBase::getIOService;
     using DControllerBase::initProcess;
@@ -67,8 +69,8 @@ private:
     NakedD2Controller() { }
 };
 
-}; // namespace isc::d2
-}; // namespace isc
+} // namespace isc::d2
+} // namespace isc
 
 namespace {
 
@@ -148,7 +150,7 @@ public:
     /// @brief Returns pointer to the server's IO service.
     ///
     /// @return Pointer to the server's IO service or null pointer if the
-    /// hasn't been created server.
+    /// server hasn't been created.
     IOServicePtr getIOService() {
         return (server_ ? d2Controller()->getIOService() : IOServicePtr());
     }
@@ -223,11 +225,11 @@ public:
     /// If successful, it then sends the given command and retrieves the
     /// server's response.  Note that it polls the server's I/O service
     /// where needed to cause the server to process IO events on
-    /// the control channel sockets
+    /// the control channel sockets.
     ///
     /// @param command the command text to execute in JSON form
     /// @param response variable into which the received response should be
-    ///        placed.
+    /// placed.
     void sendUnixCommand(const string& command, string& response) {
         response = "";
         boost::scoped_ptr<UnixControlClient> client;
@@ -288,12 +290,11 @@ public:
 
     /// @brief Check if the answer for config-write command is correct.
     ///
-    /// @param response_txt response in text form.
-    ///        (as read from the control socket)
-    /// @param exp_status expected status.
-    ///        (0 success, 1 failure)
+    /// @param response_txt response in text form (as read from
+    /// the control socket).
+    /// @param exp_status expected status (0 success, 1 failure).
     /// @param exp_txt for success cases this defines the expected filename,
-    ///        for failure cases this defines the expected error message.
+    /// for failure cases this defines the expected error message.
     void checkConfigWrite(const string& response_txt, int exp_status,
                           const string& exp_txt = "") {
 
@@ -370,7 +371,7 @@ public:
         // both structures are built using the same order.
         EXPECT_EQ(Element::fromJSON(expected_command)->str(),
                  entire_command->str());
-        return (createAnswer(0, "long command received ok"));
+        return (createAnswer(CONTROL_RESULT_SUCCESS, "long command received ok"));
     }
 
     /// @brief Command handler which generates long response.
@@ -386,7 +387,7 @@ public:
             s << std::setw(5) << i;
             arguments->add(Element::create(s.str()));
         }
-        return (createAnswer(0, arguments));
+        return (createAnswer(CONTROL_RESULT_SUCCESS, arguments));
     }
 };
 
@@ -453,33 +454,7 @@ TEST_F(CtrlChannelD2Test, configure) {
     EXPECT_EQ(1, status);
     ASSERT_TRUE(txt);
     ASSERT_EQ(Element::string, txt->getType());
-    EXPECT_EQ("Mandatory 'socket-type' parameter missing", txt->stringValue());
-    EXPECT_EQ(-1, CommandMgr::instance().getControlSocketFD());
-
-    // bad type.
-    string bad2 =
-        "{"
-        "    \"ip-address\": \"192.168.77.1\","
-        "    \"port\": 777,"
-        "    \"control-socket\": {"
-        "        \"socket-type\": \"bogus\","
-        "        \"socket-name\": \"/tmp/d2.sock\""
-        "    },"
-        "    \"tsig-keys\": [],"
-        "    \"forward-ddns\" : {},"
-        "    \"reverse-ddns\" : {}"
-        "}";
-    ASSERT_NO_THROW(config = parseDHCPDDNS(bad2, true));
-
-    answer = proc->configure(config, false);
-    ASSERT_TRUE(answer);
-
-    status = 0;
-    txt = parseAnswer(status, answer);
-    EXPECT_EQ(1, status);
-    ASSERT_TRUE(txt);
-    ASSERT_EQ(Element::string, txt->getType());
-    EXPECT_EQ("Invalid 'socket-type' parameter value bogus",
+    EXPECT_EQ("'socket-type' parameter is mandatory in control-sockets items",
               txt->stringValue());
     EXPECT_EQ(-1, CommandMgr::instance().getControlSocketFD());
 
@@ -534,6 +509,7 @@ TEST_F(CtrlChannelD2Test, commandsRegistration) {
     EXPECT_TRUE(command_list.find("\"list-commands\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"build-report\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"config-get\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"config-hash-get\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"config-reload\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"config-set\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"config-test\"") != string::npos);
@@ -597,7 +573,7 @@ TEST_F(CtrlChannelD2Test, shutdownExitValue) {
     EXPECT_EQ(77, server_->getExitValue());
 }
 
-// This test verifies that the DHCP server handles version-get commands.
+// This test verifies that the D2 server handles version-get commands.
 TEST_F(CtrlChannelD2Test, getversion) {
     EXPECT_NO_THROW(createUnixChannelServer());
     string response;
@@ -627,6 +603,7 @@ TEST_F(CtrlChannelD2Test, listCommands) {
     // We expect the server to report at least the following commands:
     checkListCommands(rsp, "build-report");
     checkListCommands(rsp, "config-get");
+    checkListCommands(rsp, "config-hash-get");
     checkListCommands(rsp, "config-reload");
     checkListCommands(rsp, "config-set");
     checkListCommands(rsp, "config-test");
@@ -641,13 +618,13 @@ TEST_F(CtrlChannelD2Test, listCommands) {
     checkListCommands(rsp, "version-get");
 }
 
-// This test verifies that the D2 server handles status-get commands
+// This test verifies that the D2 server handles status-get commands.
 TEST_F(CtrlChannelD2Test, statusGet) {
     EXPECT_NO_THROW(createUnixChannelServer());
 
     std::string response_txt;
 
-    // Send the version-get command
+    // Send the status-get command.
     sendUnixCommand("{ \"command\": \"status-get\" }", response_txt);
     ConstElementPtr response;
     ASSERT_NO_THROW(response = Element::fromJSON(response_txt));
@@ -702,6 +679,37 @@ TEST_F(CtrlChannelD2Test, configGet) {
     ASSERT_TRUE(cfg);
     ASSERT_EQ(Element::map, cfg->getType());
     EXPECT_TRUE(cfg->get("DhcpDdns"));
+}
+
+// Tests if the server returns the hash of its configuration using
+// config-hash-get.
+TEST_F(CtrlChannelD2Test, configHashGet) {
+    EXPECT_NO_THROW(createUnixChannelServer());
+    string response;
+
+    sendUnixCommand("{ \"command\": \"config-hash-get\" }", response);
+    ConstElementPtr rsp;
+
+    // The response should be a valid JSON.
+    EXPECT_NO_THROW(rsp = Element::fromJSON(response));
+    ASSERT_TRUE(rsp);
+
+    int status;
+    ConstElementPtr args = parseAnswer(status, rsp);
+    EXPECT_EQ(CONTROL_RESULT_SUCCESS, status);
+    // the parseAnswer is trying to be smart with ignoring hash.
+    // But this time we really want to see the hash, so we'll retrieve
+    // the arguments manually.
+    args = rsp->get(CONTROL_ARGUMENTS);
+
+    // Ok, now roughly check if the response seems legit.
+    ASSERT_TRUE(args);
+    ASSERT_EQ(Element::map, args->getType());
+    ConstElementPtr hash = args->get("hash");
+    ASSERT_TRUE(hash);
+    ASSERT_EQ(Element::string, hash->getType());
+    // SHA-256 -> 64 hex digits.
+    EXPECT_EQ(64, hash->stringValue().size());
 }
 
 // Verify that the "config-test" command will do what we expect.
@@ -761,8 +769,13 @@ TEST_F(CtrlChannelD2Test, configTest) {
     ASSERT_TRUE(proc);
     ConstElementPtr answer = proc->configure(config, false);
     ASSERT_TRUE(answer);
-    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration applied successfully.\" }",
-              answer->str());
+    // The config contains random
+    // socket name (/tmp/kea-<value-changing-each-time>/kea6.sock), so the
+    // hash will be different each time. As such, we can do simplified checks:
+    // - verify the "result": 0 is there
+    // - verify the "text": "Configuration successful." is there
+    EXPECT_NE(answer->str().find("\"result\": 0"), std::string::npos);
+    EXPECT_NE(answer->str().find("\"text\": \"Configuration applied successfully.\""), std::string::npos);
     ASSERT_NO_THROW(d2Controller()->registerCommands());
 
     // Check that the config was indeed applied.
@@ -776,7 +789,7 @@ TEST_F(CtrlChannelD2Test, configTest) {
 
     ASSERT_GT(CommandMgr::instance().getControlSocketFD(), -1);
 
-    // Create a config with malformed subnet that should fail to parse.
+    // Create a config with invalid content that should fail to parse.
     os.str("");
     os << config_test_txt << ","
        << args_txt
@@ -894,8 +907,14 @@ TEST_F(CtrlChannelD2Test, configSet) {
     ASSERT_TRUE(proc);
     ConstElementPtr answer = proc->configure(config, false);
     ASSERT_TRUE(answer);
-    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration applied successfully.\" }",
-              answer->str());
+    // The config contains random
+    // socket name (/tmp/kea-<value-changing-each-time>/kea6.sock), so the
+    // hash will be different each time. As such, we can do simplified checks:
+    // - verify the "result": 0 is there
+    // - verify the "text": "Configuration successful." is there
+    EXPECT_NE(answer->str().find("\"result\": 0"), std::string::npos);
+    EXPECT_NE(answer->str().find("\"text\": \"Configuration applied successfully.\""),
+              std::string::npos);
     ASSERT_NO_THROW(d2Controller()->registerCommands());
 
     // Check that the config was indeed applied.
@@ -909,7 +928,7 @@ TEST_F(CtrlChannelD2Test, configSet) {
 
     ASSERT_GT(CommandMgr::instance().getControlSocketFD(), -1);
 
-    // Create a config with malformed subnet that should fail to parse.
+    // Create a config with invalid content that should fail to parse.
     os.str("");
     os << config_set_txt << ","
        << args_txt
@@ -960,7 +979,8 @@ TEST_F(CtrlChannelD2Test, configSet) {
     EXPECT_FALSE(test::fileExists(socket_path_));
 
     // Verify the configuration was successful.
-    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration applied successfully.\" }",
+    EXPECT_EQ("{ \"arguments\": { \"hash\": \"5206A1BEC7E3C6ADD5E97C5983861F97739EA05CFEAD823CBBC4"
+              "524095AAA10A\" }, \"result\": 0, \"text\": \"Configuration applied successfully.\" }",
               response);
 
     // Check that the config was applied.
@@ -994,6 +1014,7 @@ TEST_F(CtrlChannelD2Test, writeConfigFilename) {
     sendUnixCommand("{ \"command\": \"config-write\", "
                     "\"arguments\": { \"filename\": \"test2.json\" } }",
                     response);
+
     checkConfigWrite(response, CONTROL_RESULT_SUCCESS, "test2.json");
     ::remove("test2.json");
 }
@@ -1037,7 +1058,6 @@ TEST_F(CtrlChannelD2Test, configReloadBrokenFile) {
 
     // Tell the server to reload its configuration. It should attempt to load
     // testbad.json (and fail, because the file is not valid JSON).
-    // does-not-exist.json (and fail, because the file is not there).
     sendUnixCommand("{ \"command\": \"config-reload\" }", response);
 
     // Verify the reload was rejected.
@@ -1051,7 +1071,7 @@ TEST_F(CtrlChannelD2Test, configReloadBrokenFile) {
 }
 
 // Tests if config-reload attempts to reload a file and reports that the
-// file is missing.
+// file is loaded correctly.
 TEST_F(CtrlChannelD2Test, configReloadFileValid) {
     EXPECT_NO_THROW(createUnixChannelServer());
     string response;
@@ -1078,8 +1098,9 @@ TEST_F(CtrlChannelD2Test, configReloadFileValid) {
     sendUnixCommand("{ \"command\": \"config-reload\" }", response);
 
     // Verify the reload was successful.
-    string expected = "{ \"result\": 0, \"text\": "
-        "\"Configuration applied successfully.\" }";
+    string expected = "{ \"arguments\": { \"hash\": \"DC1235F1948D68E06F1425FC28BE326EF01DC4856C3"
+                      "833673B9CC8732409B04D\" }, \"result\": 0, \"text\": "
+                      "\"Configuration applied successfully.\" }";
     EXPECT_EQ(expected, response);
 
     // Check that the config was indeed applied.

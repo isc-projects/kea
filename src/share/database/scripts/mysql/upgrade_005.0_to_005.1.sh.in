@@ -1,13 +1,10 @@
 #!/bin/sh
 
-# Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-# shellcheck disable=SC1091
-# SC1091: Not following: ... was not specified as input (see shellcheck -x).
 
 # Exit with error if commands exit with non-zero and if undefined variables are
 # used.
@@ -17,12 +14,16 @@ set -eu
 # SC2034: ... appears unused. Verify use (or export if used externally).
 prefix="@prefix@"
 
-# Include utilities. Use installed version if available and
-# use build version if it isn't.
-if [ -e @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
-    . "@datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh"
-else
+# Include utilities based on location of this script. Check for sources first,
+# so that the unexpected situations with weird paths fall on the default
+# case of installed.
+script_path=$(cd "$(dirname "${0}")" && pwd)
+if test "${script_path}" = "@abs_top_builddir@/src/share/database/scripts/mysql"; then
+    # shellcheck source=./src/bin/admin/admin-utils.sh.in
     . "@abs_top_builddir@/src/bin/admin/admin-utils.sh"
+else
+    # shellcheck source=./src/bin/admin/admin-utils.sh.in
+    . "@datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh"
 fi
 
 VERSION=$(mysql_version "$@")
@@ -34,6 +35,7 @@ if [ "$VERSION" != "5.0" ]; then
 fi
 
 mysql "$@" <<EOF
+-- This line starts the schema upgrade to version 5.1.
 
 # Add missing 'client-id' and new 'flex-id' host identifier types.
 INSERT INTO host_identifier_type VALUES (3, 'client-id');
@@ -53,9 +55,10 @@ END
 $$
 DELIMITER ;
 
-# Update the schema version number
+# Update the schema version number.
 UPDATE schema_version
-SET version = '5', minor = '1';
-# This line concludes database upgrade to version 5.1.
+    SET version = '5', minor = '1';
+
+# This line concludes the schema upgrade to version 5.1.
 
 EOF

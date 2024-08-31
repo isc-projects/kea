@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,7 +9,6 @@
 
 #include <dhcp/option.h>
 #include <util/buffer.h>
-#include <util/io_utilities.h>
 
 #include <iostream>
 #include <iterator>
@@ -55,6 +54,7 @@ public:
     /// in the DHCPv6 options have 2 byte long length fields, the tuples carried
     /// in DHCPv4 options have 1 byte long length fields.
     enum LengthFieldType {
+        LENGTH_EMPTY = -1,
         LENGTH_1_BYTE,
         LENGTH_2_BYTES
     };
@@ -101,6 +101,9 @@ public:
     /// @tparam InputIterator Type of the iterator pointing to the beginning of
     /// the source buffer.
     void append(const char* data, const size_t len) {
+        data_.insert(data_.end(), data, data + len);
+    }
+    void append(const uint8_t* data, const size_t len) {
         data_.insert(data_.end(), data, data + len);
     }
     void append(InputIterator data, const size_t len) {

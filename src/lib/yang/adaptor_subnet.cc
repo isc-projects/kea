@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <dhcpsrv/subnet_id.h>
 #include <yang/adaptor_subnet.h>
 
 using namespace std;
@@ -14,12 +15,6 @@ using namespace isc::dhcp;
 
 namespace isc {
 namespace yang {
-
-AdaptorSubnet::AdaptorSubnet() {
-}
-
-AdaptorSubnet::~AdaptorSubnet() {
-}
 
 bool
 AdaptorSubnet::collectID(ConstElementPtr subnet, SubnetIDSet& set) {
@@ -52,22 +47,10 @@ AdaptorSubnet::updateRelay(ElementPtr subnet) {
         return;
     }
     ConstElementPtr addresses = relay->get("ip-addresses");
-    if (!addresses) {
-        ConstElementPtr address = relay->get("ip-address");
-        if (!address) {
-            subnet->remove("relay");
-            return;
-        }
-        ElementPtr addr = Element::create(address->stringValue());
-        ElementPtr addrs = Element::createList();
-        addrs->add(addr);
-        ElementPtr updated = Element::createMap();
-        updated->set("ip-addresses", addrs);
-        subnet->set("relay", updated);
-    } else if (addresses->size() == 0) {
+    if (!addresses || addresses->size() == 0) {
         subnet->remove("relay");
     }
 }
 
-}; // end of namespace isc::yang
-}; // end of namespace isc
+}  // namespace yang
+}  // namespace isc

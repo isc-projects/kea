@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -48,17 +48,14 @@ std::string ncrProtocolToString(NameChangeProtocol protocol) {
     return (stream.str());
 }
 
-
 //************************** NameChangeListener ***************************
 
-NameChangeListener::NameChangeListener(RequestReceiveHandler&
-                                       recv_handler)
+NameChangeListener::NameChangeListener(RequestReceiveHandlerPtr recv_handler)
     : listening_(false), io_pending_(false), recv_handler_(recv_handler) {
 };
 
-
 void
-NameChangeListener::startListening(isc::asiolink::IOService& io_service) {
+NameChangeListener::startListening(const isc::asiolink::IOServicePtr& io_service) {
     if (amListening()) {
         // This amounts to a programmatic error.
         isc_throw(NcrListenerError, "NameChangeListener is already listening");
@@ -116,7 +113,7 @@ NameChangeListener::invokeRecvHandler(const Result result,
     // report it.
     try {
         io_pending_ = false;
-        recv_handler_(result, ncr);
+        (*recv_handler_)(result, ncr);
     } catch (const std::exception& ex) {
         LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_UNCAUGHT_NCR_RECV_HANDLER_ERROR)
                   .arg(ex.what());
@@ -145,7 +142,7 @@ NameChangeListener::invokeRecvHandler(const Result result,
             NameChangeRequestPtr empty;
             try {
                 io_pending_ = false;
-                recv_handler_(ERROR, empty);
+                (*recv_handler_)(ERROR, empty);
             } catch (const std::exception& ex) {
                 LOG_ERROR(dhcp_ddns_logger,
                           DHCP_DDNS_UNCAUGHT_NCR_RECV_HANDLER_ERROR)
@@ -157,17 +154,17 @@ NameChangeListener::invokeRecvHandler(const Result result,
 
 //************************* NameChangeSender ******************************
 
-NameChangeSender::NameChangeSender(RequestSendHandler& send_handler,
+NameChangeSender::NameChangeSender(RequestSendHandlerPtr send_handler,
                                    size_t send_queue_max)
     : sending_(false), send_handler_(send_handler),
-      send_queue_max_(send_queue_max), io_service_(NULL), mutex_(new mutex) {
+      send_queue_max_(send_queue_max), mutex_(new mutex()) {
 
     // Queue size must be big enough to hold at least 1 entry.
     setQueueMaxSize(send_queue_max);
 }
 
 void
-NameChangeSender::startSending(isc::asiolink::IOService& io_service) {
+NameChangeSender::startSending(const isc::asiolink::IOServicePtr& io_service) {
     if (amSending()) {
         // This amounts to a programmatic error.
         isc_throw(NcrSenderError, "NameChangeSender is already sending");
@@ -188,12 +185,12 @@ NameChangeSender::startSending(isc::asiolink::IOService& io_service) {
 }
 
 void
-NameChangeSender::startSendingInternal(isc::asiolink::IOService& io_service) {
+NameChangeSender::startSendingInternal(const isc::asiolink::IOServicePtr& io_service) {
     // Clear send marker.
     ncr_to_send_.reset();
 
     // Remember io service we're given.
-    io_service_ = &io_service;
+    io_service_ = io_service;
     open(io_service);
 
     // Set our status to sending.
@@ -211,7 +208,7 @@ NameChangeSender::stopSending() {
     setSending(false);
 
     // If there is an outstanding IO to complete, attempt to process it.
-    if (ioReady() && io_service_ != NULL) {
+    if (ioReady() && io_service_) {
         try {
             runReadyIO();
         } catch (const std::exception& ex) {
@@ -232,7 +229,18 @@ NameChangeSender::stopSending() {
                   DHCP_DDNS_NCR_SEND_CLOSE_ERROR).arg(ex.what());
     }
 
-    io_service_ = NULL;
+    if (io_service_) {
+        try {
+            io_service_->stopAndPoll(false);
+        } catch (const std::exception& ex) {
+            // Swallow exceptions. If we have some sort of error we'll log
+            // it but we won't propagate the throw.
+            LOG_ERROR(dhcp_ddns_logger,
+                      DHCP_DDNS_NCR_FLUSH_IO_ERROR).arg(ex.what());
+        }
+    }
+
+    io_service_.reset();
 }
 
 void
@@ -315,7 +323,7 @@ NameChangeSender::invokeSendHandlerInternal(const NameChangeSender::Result resul
     // not supposed to throw, but in the event it does we will at least
     // report it.
     try {
-        send_handler_(result, ncr_to_send_);
+        (*send_handler_)(result, ncr_to_send_);
     } catch (const std::exception& ex) {
         LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_UNCAUGHT_NCR_SEND_HANDLER_ERROR)
                   .arg(ex.what());
@@ -344,7 +352,7 @@ NameChangeSender::invokeSendHandlerInternal(const NameChangeSender::Result resul
         // not supposed to throw, but in the event it does we will at least
         // report it.
         try {
-            send_handler_(ERROR, ncr_to_send_);
+            (*send_handler_)(ERROR, ncr_to_send_);
         } catch (const std::exception& ex) {
             LOG_ERROR(dhcp_ddns_logger,
                       DHCP_DDNS_UNCAUGHT_NCR_SEND_HANDLER_ERROR).arg(ex.what());
@@ -490,9 +498,7 @@ NameChangeSender::runReadyIO() {
 
     // We shouldn't be here if IO isn't ready to execute.
     // By running poll we're guaranteed not to hang.
-    /// @todo Trac# 3325 requests that asiolink::IOService provide a
-    /// wrapper for poll().
-    io_service_->get_io_service().poll_one();
+    io_service_->pollOne();
 }
 
 }  // namespace dhcp_ddns

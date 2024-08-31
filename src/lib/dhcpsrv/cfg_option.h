@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,6 +14,7 @@
 #include <cc/user_context.h>
 #include <dhcpsrv/cfg_option_def.h>
 #include <dhcpsrv/key_from_key.h>
+#include <boost/foreach.hpp>
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/ordered_index.hpp>
@@ -22,8 +23,9 @@
 #include <boost/multi_index/member.hpp>
 #include <boost/shared_ptr.hpp>
 #include <stdint.h>
-#include <string>
 #include <list>
+#include <string>
+#include <vector>
 
 namespace isc {
 namespace dhcp {
@@ -33,12 +35,15 @@ class OptionDescriptor;
 /// A pointer to option descriptor.
 typedef boost::shared_ptr<OptionDescriptor> OptionDescriptorPtr;
 
+/// A list of option descriptors.
+typedef std::vector<OptionDescriptor> OptionDescriptorList;
+
 /// @brief Option descriptor.
 ///
 /// Option descriptor holds instance of an option and additional information
 /// for this option. This information comprises whether this option is sent
 /// to DHCP client only on request (persistent = false) or always
-/// (persistent = true).
+/// (persistent = true), or must never send (cancelled = true).
 class OptionDescriptor : public data::StampedElement, public data::UserContext {
 public:
     /// @brief Option instance.
@@ -49,6 +54,14 @@ public:
     /// If true, option is always sent to the client. If false, option is
     /// sent to the client when requested using ORO or PRL option.
     bool persistent_;
+
+    /// @brief Cancelled flag.
+    ///
+    /// If true, option is never sent to the client. If false, option is
+    /// sent when it should.
+    /// @note: When true the action of this flag is final i.e. it can't be
+    /// overridden at a more specific level and has precedence over persist.
+    bool cancelled_;
 
     /// @brief Option value in textual (CSV) format.
     ///
@@ -80,13 +93,14 @@ public:
     ///
     /// @param opt option instance.
     /// @param persist if true, option is always sent.
+    /// @param cancel if true, option is never sent.
     /// @param formatted_value option value in the textual format (optional).
     /// @param user_context user context (optional).
-    OptionDescriptor(const OptionPtr& opt, bool persist,
+    OptionDescriptor(const OptionPtr& opt, bool persist, bool cancel,
                      const std::string& formatted_value = "",
                      data::ConstElementPtr user_context = data::ConstElementPtr())
         : data::StampedElement(), option_(opt), persistent_(persist),
-          formatted_value_(formatted_value),
+          cancelled_(cancel), formatted_value_(formatted_value),
           space_name_() {
         setContext(user_context);
     };
@@ -94,9 +108,10 @@ public:
     /// @brief Constructor.
     ///
     /// @param persist if true option is always sent.
-    OptionDescriptor(bool persist)
+    /// @param cancel if true, option is never sent.
+    OptionDescriptor(bool persist, bool cancel)
         : data::StampedElement(), option_(OptionPtr()), persistent_(persist),
-          formatted_value_(), space_name_() {};
+          cancelled_(cancel), formatted_value_(), space_name_() {};
 
     /// @brief Copy constructor.
     ///
@@ -105,6 +120,7 @@ public:
         : data::StampedElement(desc),
           option_(desc.option_),
           persistent_(desc.persistent_),
+          cancelled_(desc.cancelled_),
           formatted_value_(desc.formatted_value_),
           space_name_(desc.space_name_) {
         setContext(desc.getContext());
@@ -119,6 +135,7 @@ public:
             data::StampedElement::operator=(other);
             option_ = other.option_;
             persistent_ = other.persistent_;
+            cancelled_ = other.cancelled_;
             formatted_value_ = other.formatted_value_;
             space_name_ = other.space_name_;
             setContext(other.getContext());
@@ -130,12 +147,14 @@ public:
     ///
     /// @param opt option instance.
     /// @param persist if true, option is always sent.
+    /// @param cancel if true, option is never sent.
     /// @param formatted_value option value in the textual format (optional).
     /// @param user_context user context (optional).
     ///
     /// @return Pointer to the @c OptionDescriptor instance.
     static OptionDescriptorPtr create(const OptionPtr& opt,
                                       bool persist,
+                                      bool cancel,
                                       const std::string& formatted_value = "",
                                       data::ConstElementPtr user_context =
                                       data::ConstElementPtr());
@@ -143,9 +162,10 @@ public:
     /// @brief Factory function creating an instance of the @c OptionDescriptor.
     ///
     /// @param persist if true option is always sent.
+    /// @param cancel if true, option is never sent.
     ///
     /// @return Pointer to the @c OptionDescriptor instance.
-    static OptionDescriptorPtr create(bool persist);
+    static OptionDescriptorPtr create(bool persist, bool cancel);
 
     /// @brief Factory function creating an instance of the @c OptionDescriptor.
     ///
@@ -191,12 +211,14 @@ public:
 /// - persistency flag index: used to search option descriptors with
 /// 'persistent' flag set to true.
 ///
-/// This container is the equivalent of three separate STL containers:
+/// This container is the equivalent of four separate STL containers:
 /// - std::list of all options,
 /// - std::multimap of options with option code used as a multimap key,
 /// - std::multimap of option descriptors with option persistency flag
 /// used as a multimap key.
-/// The major advantage of this container over 3 separate STL containers
+/// - std::multimap of option descriptors with option cancellation flag
+/// used as a multimap key.
+/// The major advantage of this container over 4 separate STL containers
 /// is automatic synchronization of all indexes when elements are added,
 /// removed or modified in the container. With separate containers,
 /// the synchronization would have to be guaranteed by the Subnet class
@@ -264,6 +286,15 @@ typedef boost::multi_index_container<
             boost::multi_index::tag<OptionIdIndexTag>,
             boost::multi_index::const_mem_fun<data::BaseStampedElement, uint64_t,
                                               &data::BaseStampedElement::getId>
+        >,
+        // Start definition of index #5.
+        // Use 'cancelled' struct member as a key.
+        boost::multi_index::hashed_non_unique<
+            boost::multi_index::member<
+                OptionDescriptor,
+                bool,
+                &OptionDescriptor::cancelled_
+            >
         >
     >
 > OptionContainer;
@@ -284,6 +315,13 @@ typedef OptionContainer::nth_index<2>::type OptionContainerPersistIndex;
 /// the beginning of the range, the second element represents the end.
 typedef std::pair<OptionContainerPersistIndex::const_iterator,
                   OptionContainerPersistIndex::const_iterator> OptionContainerPersistRange;
+/// Type of the index #5 - option cancellation flag.
+typedef OptionContainer::nth_index<5>::type OptionContainerCancelIndex;
+/// Pair of iterators to represent the range of options having the
+/// same cancellation flag. The first element in this pair represents
+/// the beginning of the range, the second element represents the end.
+typedef std::pair<OptionContainerCancelIndex::const_iterator,
+                  OptionContainerCancelIndex::const_iterator> OptionContainerCancelRange;
 
 /// @brief Represents option data configuration for the DHCP server.
 ///
@@ -371,12 +409,14 @@ public:
     /// @param option Pointer to the option being added.
     /// @param persistent Boolean value which specifies if the option should
     /// be sent to the client regardless if requested (true), or nor (false)
+    /// @param cancelled Boolean value which specifies if the option must
+    /// never be sent to the client.
     /// @param option_space Option space name.
     /// @param id Optional database id to be associated with the option.
     ///
     /// @throw isc::BadValue if the option space is invalid.
     void add(const OptionPtr& option, const bool persistent,
-             const std::string& option_space,
+             const bool cancelled, const std::string& option_space,
              const uint64_t id = 0);
 
     /// @brief A variant of the @ref CfgOption::add method which takes option
@@ -477,7 +517,7 @@ public:
     /// there is no definition matching the option code in the given space, or
     /// if the definition factory invocation fails.
     static bool createDescriptorOption(CfgOptionDefPtr cfg_def, const std::string& space,
-                             OptionDescriptor& opt_desc);
+                                       OptionDescriptor& opt_desc);
 
     /// @brief Merges this configuration to another configuration.
     ///
@@ -504,6 +544,13 @@ public:
     /// options from this option space are appended to top-level options.
     void encapsulate();
 
+    /// @brief Checks if options have been encapsulated.
+    ///
+    /// @return true if options have been encapsulated, false otherwise.
+    bool isEncapsulated() const {
+        return (encapsulated_);
+    }
+
     /// @brief Returns all options for the specified option space.
     ///
     /// This method will not return vendor options, i.e. having option space
@@ -524,6 +571,19 @@ public:
     /// container is empty if no options have been found.
     OptionContainerPtr getAll(const uint32_t vendor_id) const;
 
+    /// @brief Returns all non-vendor or vendor options for the specified
+    /// option space.
+    ///
+    /// It combines the output of the @c getAll function variants. When
+    /// option space has the format of "vendor-X", it retrieves the vendor
+    /// options by vendor id, where X must be a 32-bit unsigned integer.
+    /// Otherwise, it fetches non-vendor options.
+    ///
+    /// @param option_space Name of the option space.
+    /// @return Pointer to the container holding returned options. This
+    /// container is empty if no options have been found.
+    OptionContainerPtr getAllCombined(const std::string& option_space) const;
+
     /// @brief Returns option for the specified key and option code.
     ///
     /// The key should be a string, in which case it specifies an option space
@@ -532,14 +592,15 @@ public:
     ///
     /// @note If there are multiple options with the same key, only one will
     /// be returned.  No indication will be given of the presence of others,
-    /// and the instance returned is not determinable.
+    /// and the instance returned is not determinable. So please use
+    /// the next method when multiple instances of the option are expected.
     ///
     /// @param key Option space name or vendor identifier.
     /// @param option_code Code of the option to be returned.
     /// @tparam Selector one of: @c std::string or @c uint32_t
     ///
     /// @return Descriptor of the option. If option hasn't been found, the
-    /// descriptor holds NULL option.
+    /// descriptor holds null option.
     template<typename Selector>
     OptionDescriptor get(const Selector& key,
                          const uint16_t option_code) const {
@@ -547,17 +608,50 @@ public:
         // Check for presence of options.
         OptionContainerPtr options = getAll(key);
         if (!options || options->empty()) {
-            return (OptionDescriptor(false));
+            return (OptionDescriptor(false, false));
         }
 
         // Some options present, locate the one we are interested in.
         const OptionContainerTypeIndex& idx = options->get<1>();
         OptionContainerTypeIndex::const_iterator od_itr = idx.find(option_code);
         if (od_itr == idx.end()) {
-            return (OptionDescriptor(false));
+            return (OptionDescriptor(false, false));
         }
 
         return (*od_itr);
+    }
+
+    /// @brief Returns options for the specified key and option code.
+    ///
+    /// The key should be a string, in which case it specifies an option space
+    /// name, or an uint32_t value, in which case it specifies a vendor
+    /// identifier.
+    ///
+    /// @param key Option space name or vendor identifier.
+    /// @param option_code Code of the option to be returned.
+    /// @tparam Selector one of: @c std::string or @c uint32_t
+    ///
+    /// @return List of Descriptors of the option.
+    template<typename Selector>
+    OptionDescriptorList getList(const Selector& key,
+                                 const uint16_t option_code) const {
+
+        OptionDescriptorList list;
+        // Check for presence of options.
+        OptionContainerPtr options = getAll(key);
+        if (!options || options->empty()) {
+            return (list);
+        }
+
+        // Some options present, locate the one we are interested in.
+        const OptionContainerTypeIndex& idx = options->get<1>();
+        OptionContainerTypeRange range = idx.equal_range(option_code);
+        // This code copies descriptors and can be optimized not doing this.
+        BOOST_FOREACH(auto const& od_itr, range) {
+            list.push_back(od_itr);
+        }
+
+        return (list);
     }
 
     /// @brief Deletes option for the specified option space and option code.
@@ -686,6 +780,9 @@ private:
                        OptionDescriptor, Selector>& src_container,
                        OptionSpaceContainer<OptionContainer,
                        OptionDescriptor, Selector>& dest_container) const;
+
+    /// @brief A flag indicating if options have been encapsulated.
+    bool encapsulated_;
 
     /// @brief Type of the container holding options grouped by option space.
     typedef OptionSpaceContainer<OptionContainer, OptionDescriptor,

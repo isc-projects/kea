@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -171,7 +171,7 @@ protected:
         // If no particular backend is selected, call each backend and return
         // the first non-null (non zero) value.
         if (backend_selector.amUnspecified()) {
-            for (auto backend : backends_) {
+            for (auto const& backend : backends_) {
                 property = ((*backend).*MethodPointer)(server_selector, input...);
                 if (property) {
                     break;
@@ -182,7 +182,7 @@ protected:
             // Backend selected, find the one that matches selection.
             auto backends = selectBackends(backend_selector);
             if (!backends.empty()) {
-                for (auto backend : backends) {
+                for (auto const& backend : backends) {
                     property = ((*backend).*MethodPointer)(server_selector, input...);
                     if (property) {
                         break;
@@ -312,7 +312,7 @@ protected:
                                     PropertyCollectionType& properties,
                                     Args... input) const {
         if (backend_selector.amUnspecified()) {
-            for (auto backend : backends_) {
+            for (auto const& backend : backends_) {
                 properties = ((*backend).*MethodPointer)(server_selector, input...);
                 if (!properties.empty()) {
                     break;
@@ -322,7 +322,7 @@ protected:
         } else {
             auto backends = selectBackends(backend_selector);
             if (!backends.empty()) {
-                for (auto backend : backends) {
+                for (auto const& backend : backends) {
                     properties = ((*backend).*MethodPointer)(server_selector, input...);
                     if (!properties.empty()) {
                         break;
@@ -382,7 +382,7 @@ protected:
                                const db::ServerSelector& server_selector,
                                PropertyCollectionType& properties) const {
         if (backend_selector.amUnspecified()) {
-            for (auto backend : backends_) {
+            for (auto const& backend : backends_) {
                 properties = ((*backend).*MethodPointer)(server_selector);
                 if (!properties.empty()) {
                     break;
@@ -392,7 +392,7 @@ protected:
         } else {
             auto backends = selectBackends(backend_selector);
             if (!backends.empty()) {
-                for (auto backend : backends) {
+                for (auto const& backend : backends) {
                     properties = ((*backend).*MethodPointer)(server_selector);
                     if (!properties.empty()) {
                         break;
@@ -609,7 +609,7 @@ protected:
         }
 
         // Go over all backends.
-        for (auto backend : backends_) {
+        for (auto const& backend : backends_) {
             // If backend type is specified and it is not matching,
             // do not select this backend.
             if ((backend_selector.getBackendType() != db::BackendSelector::Type::UNSPEC) &&

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,9 +15,8 @@
 #include <dhcpsrv/parsers/option_data_parser.h>
 #include <dhcpsrv/parsers/simple_parser4.h>
 #include <dhcpsrv/parsers/simple_parser6.h>
-#include <util/encode/hex.h>
-#include <util/strutil.h>
-#include <boost/foreach.hpp>
+#include <util/encode/encode.h>
+#include <util/str.h>
 #include <boost/make_shared.hpp>
 #include <limits>
 #include <vector>
@@ -110,7 +109,7 @@ OptionDataParser::extractName(ConstElementPtr parent) const {
     return (Optional<std::string>(name));
 }
 
-std::string
+Optional<std::string>
 OptionDataParser::extractData(ConstElementPtr parent) const {
     std::string data;
     try {
@@ -118,10 +117,10 @@ OptionDataParser::extractData(ConstElementPtr parent) const {
 
     } catch (...) {
         // The "data" parameter was not found. Return an empty value.
-        return (data);
+        return (Optional<std::string>());
     }
 
-    return (data);
+    return (Optional<std::string>(data));
 }
 
 Optional<bool>
@@ -184,6 +183,19 @@ OptionDataParser::extractPersistent(ConstElementPtr parent) const {
     }
 
     return (Optional<bool>(persist));
+}
+
+Optional<bool>
+OptionDataParser::extractCancelled(ConstElementPtr parent) const {
+    bool cancel = false;
+    try {
+        cancel = getBoolean(parent, "never-send");
+
+    } catch (...) {
+        return (Optional<bool>());
+    }
+
+    return (Optional<bool>(cancel));
 }
 
 OptionDefinitionPtr
@@ -258,11 +270,12 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
     const Option::Universe universe = address_family_ == AF_INET ?
         Option::V4 : Option::V6;
 
-    Optional<uint32_t> code_param =  extractCode(option_data);
+    Optional<uint32_t> code_param = extractCode(option_data);
     Optional<std::string> name_param = extractName(option_data);
     Optional<bool> csv_format_param = extractCSVFormat(option_data);
     Optional<bool> persist_param = extractPersistent(option_data);
-    std::string data_param = extractData(option_data);
+    Optional<bool> cancel_param = extractCancelled(option_data);
+    Optional<std::string> data_param = extractData(option_data);
     std::string space_param = extractSpace(option_data);
     ConstElementPtr user_context = option_data->get("user-context");
 
@@ -299,6 +312,31 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
                       << getPosition("name", option_data)
                       << ")");
         }
+    } else {
+        // Option name is specified it should match the name in the definition.
+        if (!name_param.unspecified() && (def->getName() != name_param.get())) {
+            isc_throw(DhcpConfigError, "specified option name '"
+                      << name_param << "' does not match the "
+                      << "option definition: '" << space_param
+                      << "." << def->getName() << "' ("
+                      << getPosition("name", option_data)
+                      << ")");
+        }
+    }
+
+    // No data and cancelled is a supported special case.
+    if (!cancel_param.unspecified() && cancel_param &&
+        data_param.unspecified()) {
+        uint16_t code;
+        if (def) {
+            code = def->getCode();
+        } else {
+            code = static_cast<uint16_t>(code_param);
+        }
+        OptionPtr option(new Option(universe, code));
+        bool persistent = !persist_param.unspecified() && persist_param;
+        OptionDescriptor desc(option, persistent, true, "", user_context);
+        return (make_pair(desc, space_param));
     }
 
     // Transform string of hexadecimal digits into binary format.
@@ -336,7 +374,7 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
         }
     }
 
-    OptionDescriptor desc(false);
+    OptionDescriptor desc(false, false);
 
     if (!def) {
         // @todo We have a limited set of option definitions initialized at
@@ -349,18 +387,8 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
 
         desc.option_ = option;
         desc.persistent_ = !persist_param.unspecified() && persist_param;
+        desc.cancelled_ = !cancel_param.unspecified() && cancel_param;
     } else {
-
-        // Option name is specified it should match the name in the definition.
-        if (!name_param.unspecified() && (def->getName() != name_param.get())) {
-            isc_throw(DhcpConfigError, "specified option name '"
-                      << name_param << "' does not match the "
-                      << "option definition: '" << space_param
-                      << "." << def->getName() << "' ("
-                      << getPosition("name", option_data)
-                      << ")");
-        }
-
         // Option definition has been found so let's use it to create
         // an instance of our option.
         try {
@@ -370,6 +398,7 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
                 def->optionFactory(universe, def->getCode(), binary);
             desc.option_ = option;
             desc.persistent_ = !persist_param.unspecified() && persist_param;
+            desc.cancelled_ = !cancel_param.unspecified() && cancel_param;
             if (use_csv) {
                 desc.formatted_value_ = data_param;
             }
@@ -412,7 +441,7 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
     }
 
     // All went good, so we can set the option space name.
-    return make_pair(desc, space_param);
+    return (make_pair(desc, space_param));
 }
 
 // **************************** OptionDataListParser *************************
@@ -425,14 +454,17 @@ OptionDataListParser::OptionDataListParser(//const std::string&,
 
 
 void OptionDataListParser::parse(const CfgOptionPtr& cfg,
-                                 isc::data::ConstElementPtr option_data_list) {
+                                 isc::data::ConstElementPtr option_data_list,
+                                 bool encapsulate) {
     auto option_parser = createOptionDataParser();
-    BOOST_FOREACH(ConstElementPtr data, option_data_list->listValue()) {
+    for (auto const& data : option_data_list->listValue()) {
         std::pair<OptionDescriptor, std::string> option =
             option_parser->parse(data);
         // Use the option description to keep the formatted value
         cfg->add(option.first, option.second);
-        cfg->encapsulate();
+        if (encapsulate) {
+            cfg->encapsulate();
+        }
     }
 }
 

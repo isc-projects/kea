@@ -1,6 +1,8 @@
 SUBDIRS = .
 
-AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
+AM_CPPFLAGS  =
+AM_CPPFLAGS += -DKEA_ADMIN=\"${abs_top_builddir}/src/bin/admin/kea-admin\"
+AM_CPPFLAGS += -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(PGSQL_CPPFLAGS)
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
@@ -11,8 +13,7 @@ endif
 
 CLEANFILES = *.gcno *.gcda
 
-TESTS_ENVIRONMENT = \
-	$(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
+TESTS_ENVIRONMENT = $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 
 TESTS =
 if HAVE_GTEST
@@ -26,14 +27,15 @@ libpgsql_unittests_SOURCES += run_unittests.cc
 libpgsql_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 libpgsql_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS) $(PGSQL_LIBS)
 
-libpgsql_unittests_LDADD  = $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
+libpgsql_unittests_LDADD  = $(top_builddir)/src/lib/pgsql/testutils/libpgsqltest.la
+libpgsql_unittests_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
 libpgsql_unittests_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 libpgsql_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libpgsql_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libpgsql_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
+libpgsql_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 libpgsql_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 libpgsql_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-libpgsql_unittests_LDADD += $(top_builddir)/src/lib/pgsql/testutils/libpgsqltest.la
 libpgsql_unittests_LDADD += $(LOG4CPLUS_LIBS) $(BOOST_LIBS) $(GTEST_LDADD)
 
 endif

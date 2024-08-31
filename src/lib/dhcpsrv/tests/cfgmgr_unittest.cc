@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,7 +8,8 @@
 
 #include <exceptions/exceptions.h>
 #include <dhcp/dhcp6.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/libdhcp++.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/subnet_id.h>
@@ -16,8 +17,6 @@
 #include <process/logging_info.h>
 #include <stats/stats_mgr.h>
 #include <util/chrono_time_utils.h>
-
-#include <boost/scoped_ptr.hpp>
 
 #include <gtest/gtest.h>
 
@@ -35,10 +34,6 @@ using namespace isc::util;
 using namespace isc::stats;
 using namespace isc::process;
 using namespace isc;
-
-// don't import the entire boost namespace.  It will unexpectedly hide uint8_t
-// for some systems.
-using boost::scoped_ptr;
 
 namespace {
 
@@ -303,6 +298,7 @@ public:
                 " lease database backend: " << ex.what() << std::endl;
             throw;
         }
+        CfgMgr::instance().setFamily(family);
     }
 
     /// used in client classification (or just empty container for other tests)
@@ -593,7 +589,7 @@ TEST_F(CfgMgrTest, commitStats4) {
     CfgSubnets4Ptr subnets = cfg_mgr.getStagingCfg()->getCfgSubnets4();
     subnets->add(subnet1);
     cfg_mgr.commit();
-    stats_mgr.addValue("subnet[123].total-addresses", static_cast<int64_t>(256));
+    stats_mgr.addValue("subnet[123].total-addresses", int64_t(256));
     stats_mgr.setValue("subnet[123].assigned-addresses", static_cast<int64_t>(150));
 
     // Now, let's change the configuration to something new.
@@ -601,9 +597,11 @@ TEST_F(CfgMgrTest, commitStats4) {
     // There's a subnet 192.1.2.0/24 with ID=42
     Subnet4Ptr subnet2(new Subnet4(IOAddress("192.1.2.0"), 24, 1, 2, 3, 42));
 
-    // Let's make a pool with 128 addresses available.
-    PoolPtr pool(new Pool4(IOAddress("192.1.2.0"), 25)); // 128 addrs
-    subnet2->addPool(pool);
+    // Let's make pools with 128 addresses available in total.
+    PoolPtr pool1(new Pool4(IOAddress("192.1.2.0"), 26)); // 64 addrs
+    PoolPtr pool2(new Pool4(IOAddress("192.1.2.64"), 26)); // 64 addrs
+    subnet2->addPool(pool1);
+    subnet2->addPool(pool2);
 
     subnets = cfg_mgr.getStagingCfg()->getCfgSubnets4();
     subnets->add(subnet2);
@@ -622,6 +620,8 @@ TEST_F(CfgMgrTest, commitStats4) {
 
     EXPECT_FALSE(stats_mgr.getObservation("subnet[123].total-addresses"));
     EXPECT_FALSE(stats_mgr.getObservation("subnet[123].assigned-addresses"));
+    EXPECT_FALSE(stats_mgr.getObservation("subnet[123].pool[0].total-addresses"));
+    EXPECT_FALSE(stats_mgr.getObservation("subnet[123].pool[0].assigned-addresses"));
 
     ObservationPtr total_addrs;
     EXPECT_NO_THROW(total_addrs = stats_mgr.getObservation("subnet[42].total-addresses"));
@@ -631,6 +631,15 @@ TEST_F(CfgMgrTest, commitStats4) {
     EXPECT_EQ(15, total_addrs->getMaxSampleCount().second);
     EXPECT_FALSE(total_addrs->getMaxSampleAge().first);
     EXPECT_EQ("00:00:02", durationToText(total_addrs->getMaxSampleAge().second, 0));
+    EXPECT_NO_THROW(total_addrs = stats_mgr.getObservation("subnet[42].pool[0].total-addresses"));
+    ASSERT_TRUE(total_addrs);
+    EXPECT_EQ(128, total_addrs->getInteger().first);
+    EXPECT_NO_THROW(total_addrs = stats_mgr.getObservation("subnet[42].assigned-addresses"));
+    ASSERT_TRUE(total_addrs);
+    EXPECT_EQ(0, total_addrs->getInteger().first);
+    EXPECT_NO_THROW(total_addrs = stats_mgr.getObservation("subnet[42].pool[0].assigned-addresses"));
+    ASSERT_TRUE(total_addrs);
+    EXPECT_EQ(0, total_addrs->getInteger().first);
 }
 
 // This test verifies that once the configuration is merged into the current
@@ -646,7 +655,7 @@ TEST_F(CfgMgrTest, mergeIntoCurrentStats4) {
     CfgSubnets4Ptr subnets = cfg_mgr.getStagingCfg()->getCfgSubnets4();
     subnets->add(subnet1);
     cfg_mgr.commit();
-    stats_mgr.addValue("subnet[123].total-addresses", static_cast<int64_t>(256));
+    stats_mgr.addValue("subnet[123].total-addresses", int64_t(256));
     stats_mgr.setValue("subnet[123].assigned-addresses", static_cast<int64_t>(150));
 
     // There should be no stats for subnet 42 at this point.
@@ -702,15 +711,22 @@ TEST_F(CfgMgrTest, clearStats4) {
     // Let's prepare the "old" configuration: a subnet with id 123
     // and pretend there were addresses assigned, so statistics are non-zero.
     Subnet4Ptr subnet1(new Subnet4(IOAddress("192.1.2.0"), 24, 1, 2, 3, 123));
+
+    // Let's make pools with 128 addresses available in total.
+    PoolPtr pool1(new Pool4(IOAddress("192.1.2.0"), 26)); // 64 addrs
+    PoolPtr pool2(new Pool4(IOAddress("192.1.2.64"), 26)); // 64 addrs
+    subnet1->addPool(pool1);
+    subnet1->addPool(pool2);
+
     CfgSubnets4Ptr subnets = cfg_mgr.getStagingCfg()->getCfgSubnets4();
     subnets->add(subnet1);
     cfg_mgr.commit();
-    stats_mgr.addValue("subnet[123].total-addresses", static_cast<int64_t>(256));
     stats_mgr.setValue("subnet[123].assigned-addresses", static_cast<int64_t>(150));
+    stats_mgr.setValue("subnet[123].pool[0].assigned-addresses", static_cast<int64_t>(150));
 
     // The stats should be there.
-    EXPECT_TRUE(stats_mgr.getObservation("subnet[123].total-addresses"));
     EXPECT_TRUE(stats_mgr.getObservation("subnet[123].assigned-addresses"));
+    EXPECT_TRUE(stats_mgr.getObservation("subnet[123].pool[0].assigned-addresses"));
 
     // Let's remove all configurations
     cfg_mgr.clear();
@@ -718,6 +734,8 @@ TEST_F(CfgMgrTest, clearStats4) {
     // The stats should not be there anymore.
     EXPECT_FALSE(stats_mgr.getObservation("subnet[123].total-addresses"));
     EXPECT_FALSE(stats_mgr.getObservation("subnet[123].assigned-addresses"));
+    EXPECT_FALSE(stats_mgr.getObservation("subnet[123].pool[0].total-addresses"));
+    EXPECT_FALSE(stats_mgr.getObservation("subnet[123].pool[0].assigned-addresses"));
 }
 
 // This test verifies that once the configuration is committed, statistics
@@ -733,10 +751,10 @@ TEST_F(CfgMgrTest, commitStats6) {
     CfgSubnets6Ptr subnets = cfg_mgr.getStagingCfg()->getCfgSubnets6();
     subnets->add(subnet1);
     cfg_mgr.commit();
-    stats_mgr.addValue("subnet[123].total-nas", static_cast<int64_t>(256));
+    stats_mgr.addValue("subnet[123].total-nas", int128_t(256));
     stats_mgr.setValue("subnet[123].assigned-nas", static_cast<int64_t>(150));
 
-    stats_mgr.addValue("subnet[123].total-pds", static_cast<int64_t>(256));
+    stats_mgr.addValue("subnet[123].total-pds", int128_t(256));
     stats_mgr.setValue("subnet[123].assigned-pds", static_cast<int64_t>(150));
 
     // Now, let's change the configuration to something new.
@@ -744,11 +762,15 @@ TEST_F(CfgMgrTest, commitStats6) {
     // There's a subnet 2001:db8:2::/48 with ID=42
     Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"), 48, 1, 2, 3, 4, 42));
 
-    // Let's make pools with 128 addresses and 65536 prefixes available.
-    PoolPtr pool1(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:2::"), 121)); // 128 addrs
-    PoolPtr pool2(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:3::"), 96, 112)); // 65536 prefixes
+    // Let's make pools with 128 addresses in total and 65536 prefixes available in total.
+    PoolPtr pool1(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:2::"), 122)); // 64 addrs
+    PoolPtr pool2(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:2::1:0"), 122)); // 64 addrs
+    PoolPtr pool3(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:3::"), 97, 112)); // 32768 prefixes
+    PoolPtr pool4(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:3::8000:0"), 97, 112)); // 32768 prefixes
     subnet2->addPool(pool1);
     subnet2->addPool(pool2);
+    subnet2->addPool(pool3);
+    subnet2->addPool(pool4);
 
     subnets = cfg_mgr.getStagingCfg()->getCfgSubnets6();
     subnets->add(subnet2);
@@ -767,33 +789,54 @@ TEST_F(CfgMgrTest, commitStats6) {
 
     EXPECT_FALSE(stats_mgr.getObservation("subnet[123].total-nas"));
     EXPECT_FALSE(stats_mgr.getObservation("subnet[123].assigned-nas"));
+    EXPECT_FALSE(stats_mgr.getObservation("subnet[123].pool[0].total-nas"));
+    EXPECT_FALSE(stats_mgr.getObservation("subnet[123].pool[0].assigned-nas"));
 
     EXPECT_FALSE(stats_mgr.getObservation("subnet[123].total-pds"));
     EXPECT_FALSE(stats_mgr.getObservation("subnet[123].assigned-pds"));
+    EXPECT_FALSE(stats_mgr.getObservation("subnet[123].pd-pool[0].total-pds"));
+    EXPECT_FALSE(stats_mgr.getObservation("subnet[123].pd-pool[0].assigned-pds"));
 
     ObservationPtr total_addrs;
     EXPECT_NO_THROW(total_addrs = stats_mgr.getObservation("subnet[42].total-nas"));
     ASSERT_TRUE(total_addrs);
-    EXPECT_EQ(128, total_addrs->getInteger().first);
+    EXPECT_EQ(128, total_addrs->getBigInteger().first);
     EXPECT_TRUE(total_addrs->getMaxSampleCount().first);
     EXPECT_EQ(14, total_addrs->getMaxSampleCount().second);
     EXPECT_FALSE(total_addrs->getMaxSampleAge().first);
     EXPECT_EQ("00:00:10", durationToText(total_addrs->getMaxSampleAge().second, 0));
+    EXPECT_NO_THROW(total_addrs = stats_mgr.getObservation("subnet[42].pool[0].total-nas"));
+    ASSERT_TRUE(total_addrs);
+    EXPECT_EQ(128, total_addrs->getBigInteger().first);
+    EXPECT_NO_THROW(total_addrs = stats_mgr.getObservation("subnet[42].assigned-nas"));
+    ASSERT_TRUE(total_addrs);
+    EXPECT_EQ(0, total_addrs->getInteger().first);
+    EXPECT_NO_THROW(total_addrs = stats_mgr.getObservation("subnet[42].pool[0].assigned-nas"));
+    ASSERT_TRUE(total_addrs);
+    EXPECT_EQ(0, total_addrs->getInteger().first);
 
     ObservationPtr total_prfx;
     EXPECT_NO_THROW(total_prfx = stats_mgr.getObservation("subnet[42].total-pds"));
     ASSERT_TRUE(total_prfx);
-    EXPECT_EQ(65536, total_prfx->getInteger().first);
+    EXPECT_EQ(65536, total_prfx->getBigInteger().first);
     EXPECT_TRUE(total_prfx->getMaxSampleCount().first);
     EXPECT_EQ(14, total_prfx->getMaxSampleCount().second);
     EXPECT_FALSE(total_prfx->getMaxSampleAge().first);
     EXPECT_EQ("00:00:10", durationToText(total_prfx->getMaxSampleAge().second, 0));
+    EXPECT_NO_THROW(total_prfx = stats_mgr.getObservation("subnet[42].pd-pool[0].total-pds"));
+    ASSERT_TRUE(total_prfx);
+    EXPECT_EQ(65536, total_prfx->getBigInteger().first);
+    EXPECT_NO_THROW(total_prfx = stats_mgr.getObservation("subnet[42].assigned-pds"));
+    ASSERT_TRUE(total_prfx);
+    EXPECT_EQ(0, total_prfx->getInteger().first);
+    EXPECT_NO_THROW(total_prfx = stats_mgr.getObservation("subnet[42].pd-pool[0].assigned-pds"));
+    ASSERT_TRUE(total_prfx);
+    EXPECT_EQ(0, total_prfx->getInteger().first);
 }
 
 // This test verifies that once the configuration is merged into the current
 // configuration, statistics are updated appropriately.
-/// @todo Enable this test once merging v6 configuration is enabled.
-TEST_F(CfgMgrTest, DISABLED_mergeIntoCurrentStats6) {
+TEST_F(CfgMgrTest, mergeIntoCurrentStats6) {
     CfgMgr& cfg_mgr = CfgMgr::instance();
     StatsMgr& stats_mgr = StatsMgr::instance();
     startBackend(AF_INET6);
@@ -804,10 +847,10 @@ TEST_F(CfgMgrTest, DISABLED_mergeIntoCurrentStats6) {
     CfgSubnets6Ptr subnets = cfg_mgr.getStagingCfg()->getCfgSubnets6();
     subnets->add(subnet1);
     cfg_mgr.commit();
-    stats_mgr.addValue("subnet[123].total-nas", static_cast<int64_t>(256));
+    stats_mgr.addValue("subnet[123].total-nas", static_cast<int128_t>(256));
     stats_mgr.setValue("subnet[123].assigned-nas", static_cast<int64_t>(150));
 
-    stats_mgr.addValue("subnet[123].total-pds", static_cast<int64_t>(256));
+    stats_mgr.addValue("subnet[123].total-pds", static_cast<int128_t>(256));
     stats_mgr.setValue("subnet[123].assigned-pds", static_cast<int64_t>(150));
 
     // There should be no stats for subnet 42 at this point.
@@ -840,6 +883,8 @@ TEST_F(CfgMgrTest, DISABLED_mergeIntoCurrentStats6) {
     // Let's merge it.
     cfg_mgr.mergeIntoCurrentCfg(external_cfg->getSequence());
 
+    // The stats should have been updated and so we should be able to get
+    // observations for subnet 42.
     EXPECT_EQ(17, stats_mgr.getMaxSampleCountDefault());
     EXPECT_EQ("00:00:04", durationToText(stats_mgr.getMaxSampleAgeDefault(), 0));
 
@@ -848,6 +893,7 @@ TEST_F(CfgMgrTest, DISABLED_mergeIntoCurrentStats6) {
     EXPECT_TRUE(stats_mgr.getObservation("subnet[42].total-pds"));
     EXPECT_TRUE(stats_mgr.getObservation("subnet[42].assigned-pds"));
 
+    // And also for 123
     EXPECT_TRUE(stats_mgr.getObservation("subnet[123].total-nas"));
     EXPECT_TRUE(stats_mgr.getObservation("subnet[123].assigned-nas"));
     EXPECT_TRUE(stats_mgr.getObservation("subnet[123].total-pds"));
@@ -856,11 +902,11 @@ TEST_F(CfgMgrTest, DISABLED_mergeIntoCurrentStats6) {
     ObservationPtr total_addrs;
     EXPECT_NO_THROW(total_addrs = stats_mgr.getObservation("subnet[42].total-nas"));
     ASSERT_TRUE(total_addrs);
-    EXPECT_EQ(128, total_addrs->getInteger().first);
+    EXPECT_EQ(128, total_addrs->getBigInteger().first);
 
     EXPECT_NO_THROW(total_addrs = stats_mgr.getObservation("subnet[42].total-pds"));
     ASSERT_TRUE(total_addrs);
-    EXPECT_EQ(65536, total_addrs->getInteger().first);
+    EXPECT_EQ(65536, total_addrs->getBigInteger().first);
 }
 
 // This test verifies that once the configuration is cleared, the v6 statistics
@@ -871,22 +917,31 @@ TEST_F(CfgMgrTest, clearStats6) {
 
     // Let's prepare the "old" configuration: a subnet with id 123
     // and pretend there were addresses assigned, so statistics are non-zero.
-    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 48, 1, 2, 3, 4, 123));
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:2::"), 48, 1, 2, 3, 4, 123));
+
+    // Let's make pools with 128 addresses in total and 65536 prefixes available in total.
+    PoolPtr pool1(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:2::"), 122)); // 64 addrs
+    PoolPtr pool2(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:2:0:0:0:1:0"), 122)); // 64 addrs
+    PoolPtr pool3(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:3::"), 97, 112)); // 32768 prefixes
+    PoolPtr pool4(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:3::8000:0"), 97, 112)); // 32768 prefixes
+    subnet1->addPool(pool1);
+    subnet1->addPool(pool2);
+    subnet1->addPool(pool3);
+    subnet1->addPool(pool4);
+
     CfgSubnets6Ptr subnets = cfg_mgr.getStagingCfg()->getCfgSubnets6();
     subnets->add(subnet1);
     cfg_mgr.commit();
-    stats_mgr.addValue("subnet[123].total-nas", static_cast<int64_t>(256));
     stats_mgr.setValue("subnet[123].assigned-nas", static_cast<int64_t>(150));
-
-    stats_mgr.addValue("subnet[123].total-pds", static_cast<int64_t>(256));
+    stats_mgr.setValue("subnet[123].pool[0].assigned-nas", static_cast<int64_t>(150));
     stats_mgr.setValue("subnet[123].assigned-pds", static_cast<int64_t>(150));
+    stats_mgr.setValue("subnet[123].pd-pool[0].assigned-pds", static_cast<int64_t>(150));
 
     // The stats should be there.
-    EXPECT_TRUE(stats_mgr.getObservation("subnet[123].total-nas"));
     EXPECT_TRUE(stats_mgr.getObservation("subnet[123].assigned-nas"));
-
-    EXPECT_TRUE(stats_mgr.getObservation("subnet[123].total-pds"));
+    EXPECT_TRUE(stats_mgr.getObservation("subnet[123].pool[0].assigned-nas"));
     EXPECT_TRUE(stats_mgr.getObservation("subnet[123].assigned-pds"));
+    EXPECT_TRUE(stats_mgr.getObservation("subnet[123].pd-pool[0].assigned-pds"));
 
     // Let's remove all configurations
     cfg_mgr.clear();
@@ -894,9 +949,13 @@ TEST_F(CfgMgrTest, clearStats6) {
     // The stats should not be there anymore.
     EXPECT_FALSE(stats_mgr.getObservation("subnet[123].total-nas"));
     EXPECT_FALSE(stats_mgr.getObservation("subnet[123].assigned-nas"));
+    EXPECT_FALSE(stats_mgr.getObservation("subnet[123].pool[0].total-nas"));
+    EXPECT_FALSE(stats_mgr.getObservation("subnet[123].pool[0].assigned-nas"));
 
     EXPECT_FALSE(stats_mgr.getObservation("subnet[123].total-pds"));
     EXPECT_FALSE(stats_mgr.getObservation("subnet[123].assigned-pds"));
+    EXPECT_FALSE(stats_mgr.getObservation("subnet[123].pd-pool[0].total-pds"));
+    EXPECT_FALSE(stats_mgr.getObservation("subnet[123].pd-pool[0].assigned-pds"));
 }
 
 // This test verifies that the external configuration can be merged into
@@ -996,6 +1055,13 @@ TEST_F(CfgMgrTest, mergeIntoCurrentCfg) {
     // Those must be two separate instances.
     ASSERT_FALSE(ext_cfg1 == ext_cfg2);
 
+    // Add an option definition.
+    ext_cfg1->getCfgOptionDef()->add(OptionDefinition::create("option-foo",
+                                                              1,
+                                                              "isc",
+                                                              OPT_EMPTY_TYPE,
+                                                              ""));
+
     // Add a subnet which will be merged from first configuration.
     Subnet4Ptr subnet1(new Subnet4(IOAddress("192.1.2.0"), 24, 1, 2, 3, 123));
     ext_cfg1->getCfgSubnets4()->add(subnet1);
@@ -1014,6 +1080,10 @@ TEST_F(CfgMgrTest, mergeIntoCurrentCfg) {
     // from the second configuration.
     ASSERT_TRUE(cfg_mgr.getCurrentCfg()->getCfgSubnets4()->getBySubnetId(123));
     ASSERT_FALSE(cfg_mgr.getCurrentCfg()->getCfgSubnets4()->getBySubnetId(124));
+
+    // Ensure that the runtime option definitions have been updated.
+    auto runtime_def = LibDHCP::getRuntimeOptionDef("isc", "option-foo");
+    ASSERT_TRUE(runtime_def);
 
     // Create another configuration instance to check what sequence it would
     // pick. It should pick the first available one.

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,8 +10,10 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/option4_addrlst.h>
 #include <dhcp/option4_client_fqdn.h>
+#include <dhcp/option4_dnr.h>
 #include <dhcp/option6_addrlst.h>
 #include <dhcp/option6_client_fqdn.h>
+#include <dhcp/option6_dnr.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_iaprefix.h>
@@ -22,15 +24,17 @@
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_opaque_data_tuples.h>
+#include <dhcp/option_classless_static_route.h>
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
 #include <dhcp/option_vendor_class.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 #include <dns/labelsequence.h>
 #include <dns/name.h>
-#include <util/strutil.h>
+#include <util/str.h>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/replace.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/make_shared.hpp>
 #include <sstream>
@@ -179,9 +183,11 @@ OptionDefinition::addRecordField(const OptionDataType data_type) {
 }
 
 OptionPtr
-OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
+OptionDefinition::optionFactory(Option::Universe u,
+                                uint16_t type,
                                 OptionBufferConstIter begin,
-                                OptionBufferConstIter end) const {
+                                OptionBufferConstIter end,
+                                bool convenient_notation) const {
 
     try {
         // Some of the options are represented by the specialized classes derived
@@ -190,7 +196,7 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
         // type to be returned. Therefore, we first check that if we are dealing
         // with such an option. If the instance is returned we just exit at this
         // point. If not, we will search for a generic option type to return.
-        OptionPtr option = factorySpecialFormatOption(u, begin, end);
+        OptionPtr option = factorySpecialFormatOption(u, begin, end, convenient_notation);
         if (option) {
             return (option);
         }
@@ -204,6 +210,9 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
             }
 
         case OPT_BINARY_TYPE:
+        // If this is Internal type, and it wasn't handled by factorySpecialFormatOption() before,
+        // let's treat it like normal Binary type.
+        case OPT_INTERNAL_TYPE:
             return (factoryGeneric(u, type, begin, end));
 
         case OPT_UINT8_TYPE:
@@ -303,6 +312,32 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
             if (type_ != OPT_EMPTY_TYPE) {
                 isc_throw(InvalidOptionValue, "no option value specified");
             }
+        } else if (type_ == OPT_INTERNAL_TYPE) {
+            // If an Option of type Internal is configured using csv-format=true, it means it is
+            // convenient notation option config that needs special parsing. Let's treat it like
+            // String type. optionFactory() will be called with convenient_notation flag set to
+            // true, so that the factory will have a chance to handle it in a special way.
+
+            // At this stage any escape backslash chars were lost during last call of
+            // isc::util::str::tokens() inside of
+            // OptionDataParser::createOption(ConstElementPtr option_data), so we must
+            // restore them. Some INTERNAL options may use escaped delimiters, e.g. DNR options.
+            // Values are concatenated back to comma separated format and will be written to
+            // the OptionBuffer as one String type option.
+            std::ostringstream stream;
+            bool first = true;
+            for (auto val : values) {
+                boost::algorithm::replace_all(val, ",", "\\,");
+                if (first) {
+                    first = false;
+                } else {
+                    stream << ",";
+                }
+
+                stream << val;
+            }
+
+            writeToBuffer(u, stream.str(), OPT_STRING_TYPE, buf);
         } else {
             writeToBuffer(u, util::str::trim(values[0]), type_, buf);
         }
@@ -327,7 +362,7 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
             }
         }
     }
-    return (optionFactory(u, type, buf.begin(), buf.end()));
+    return (optionFactory(u, type, buf.begin(), buf.end(), (type_ == OPT_INTERNAL_TYPE)));
 }
 
 void
@@ -399,6 +434,12 @@ OptionDefinition::validate() const {
                             << " an option record.";
                     break;
                 }
+                // Internal type is not allowed within a record.
+                if (*it == OPT_INTERNAL_TYPE) {
+                    err_str << "internal data type can't be stored as a field in"
+                            << " an option record.";
+                    break;
+                }
             }
             // If the array flag is set the last field is an array.
             if (err_str.str().empty() && array_type_) {
@@ -426,6 +467,10 @@ OptionDefinition::validate() const {
 
         } else if (type_ == OPT_EMPTY_TYPE) {
             err_str << "array of empty value is not"
+                    << " a valid option definition.";
+
+        } else if (type_ == OPT_INTERNAL_TYPE) {
+            err_str << "array of internal type value is not"
                     << " a valid option definition.";
 
         }
@@ -458,7 +503,7 @@ OptionDefinition::convertToBool(const std::string& value_str) const {
     // if it is not an integer wrapped in a string.
     int result;
     try {
-       result = boost::lexical_cast<int>(value_str);
+        result = boost::lexical_cast<int>(value_str);
 
     } catch (const boost::bad_lexical_cast&) {
         isc_throw(BadDataTypeCast, "unable to covert the value '"
@@ -669,8 +714,12 @@ OptionDefinition::writeToBuffer(Option::Universe u,
         return;
     case OPT_TUPLE_TYPE:
     {
-        OpaqueDataTuple::LengthFieldType lft = u == Option::V4 ?
-            OpaqueDataTuple::LENGTH_1_BYTE : OpaqueDataTuple::LENGTH_2_BYTES;
+        // In case of V4_SZTP_REDIRECT option #143, bootstrap-server-list is formatted
+        // as a list of tuples "uri-length;URI" where uri-length is coded on 2 octets,
+        // which is not typical for V4 Universe.
+        OpaqueDataTuple::LengthFieldType lft = getCode() == DHO_V4_SZTP_REDIRECT
+                                                   ? OpaqueDataTuple::LENGTH_2_BYTES
+                                                   : OptionDataTypeUtil::getTupleLenFieldType(u);
         OptionDataTypeUtil::writeTuple(value, lft, buf);
         return;
     }
@@ -772,6 +821,18 @@ OptionDefinition::factoryOpaqueDataTuples(Option::Universe u,
 }
 
 OptionPtr
+OptionDefinition::factoryOpaqueDataTuples(Option::Universe u,
+                                          uint16_t type,
+                                          OptionBufferConstIter begin,
+                                          OptionBufferConstIter end,
+                                          OpaqueDataTuple::LengthFieldType length_field_type) {
+    boost::shared_ptr<OptionOpaqueDataTuples>
+        option(new OptionOpaqueDataTuples(u, type, begin, end, length_field_type));
+
+    return (option);
+}
+
+OptionPtr
 OptionDefinition::factoryFqdnList(Option::Universe u,
                                   OptionBufferConstIter begin,
                                   OptionBufferConstIter end) const {
@@ -795,6 +856,11 @@ OptionDefinition::factoryFqdnList(Option::Universe u,
                 out_buf.insert(out_buf.end(), label, label + read_len);
             }
         } catch (const isc::Exception& ex) {
+            if (Option::lenient_parsing_) {
+                    isc_throw(SkipThisOptionError,
+                              "invalid FQDN list content: " << ex.what());
+            }
+
             isc_throw(InvalidOptionValue, ex.what());
         }
     }
@@ -805,7 +871,8 @@ OptionDefinition::factoryFqdnList(Option::Universe u,
 OptionPtr
 OptionDefinition::factorySpecialFormatOption(Option::Universe u,
                                              OptionBufferConstIter begin,
-                                             OptionBufferConstIter end) const {
+                                             OptionBufferConstIter end,
+                                             bool convenient_notation) const {
     if ((u == Option::V6) && haveSpace(DHCP6_OPTION_SPACE)) {
         switch (getCode()) {
         case D6O_IA_NA:
@@ -850,6 +917,9 @@ OptionDefinition::factorySpecialFormatOption(Option::Universe u,
             // Prefix Exclude (option code 67),
             return (OptionPtr(new Option6PDExclude(begin, end)));
 
+        case D6O_V6_DNR:
+            return (OptionPtr(new Option6Dnr(begin, end, convenient_notation)));
+
         default:
             break;
         }
@@ -863,6 +933,9 @@ OptionDefinition::factorySpecialFormatOption(Option::Universe u,
             // Record of 3 uint8 and a FQDN, no array.
             return (OptionPtr(new Option4ClientFqdn(begin, end)));
 
+        case DHO_CLASSLESS_STATIC_ROUTE:
+            return (OptionPtr(new OptionClasslessStaticRoute(begin, end, convenient_notation)));
+
         case DHO_VIVCO_SUBOPTIONS:
             // Record of uint32 followed by binary.
             // V-I Vendor Class (option code 124).
@@ -872,6 +945,14 @@ OptionDefinition::factorySpecialFormatOption(Option::Universe u,
             // Type uint32.
             // Vendor-Specific Information (option code 125).
             return (OptionPtr(new OptionVendor(Option::V4, begin, end)));
+
+        case DHO_V4_SZTP_REDIRECT:
+            // Array of tuples.
+            // DHCPv4 SZTP Redirect Option (option code 143).
+            return (factoryOpaqueDataTuples(Option::V4, getCode(), begin, end, OpaqueDataTuple::LENGTH_2_BYTES));
+
+        case DHO_V4_DNR:
+            return (OptionPtr(new Option4Dnr(begin, end, convenient_notation)));
 
         default:
             break;

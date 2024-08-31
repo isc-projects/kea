@@ -3,7 +3,7 @@ SUBDIRS = . tests
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
 AM_CPPFLAGS += -I$(top_srcdir)/src -I$(top_builddir)/src
-AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
 if HAVE_MYSQL
 AM_CPPFLAGS += $(MYSQL_CPPFLAGS)
 endif
@@ -21,7 +21,6 @@ CLEANFILES  = *.gcno *.gcda
 
 EXTRA_DIST = dhcp4.dox dhcp4_hooks.dox dhcp4o6.dox
 EXTRA_DIST += dhcp4_parser.yy
-
 
 # convenience archive
 
@@ -45,29 +44,29 @@ sbin_PROGRAMS = kea-dhcp4
 kea_dhcp4_SOURCES  = main.cc
 
 kea_dhcp4_LDADD  = libdhcp4.la
-kea_dhcp4_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
+kea_dhcp4_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+kea_dhcp4_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 
-if HAVE_MYSQL
-kea_dhcp4_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
-endif
 if HAVE_PGSQL
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
 endif
 
+if HAVE_MYSQL
+kea_dhcp4_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
+endif
+
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
-kea_dhcp4_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+kea_dhcp4_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
-kea_dhcp4_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
-kea_dhcp4_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la

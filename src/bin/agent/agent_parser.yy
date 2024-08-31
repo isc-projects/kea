@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -32,6 +32,11 @@ using namespace std;
 %code
 {
 #include <agent/parser_context.h>
+
+// Avoid warnings with the error counter.
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#endif
 }
 
 
@@ -85,7 +90,7 @@ using namespace std;
 
   LOGGERS "loggers"
   NAME "name"
-  OUTPUT_OPTIONS "output_options"
+  OUTPUT_OPTIONS "output-options"
   OUTPUT "output"
   DEBUGLEVEL "debuglevel"
   SEVERITY "severity"
@@ -784,9 +789,9 @@ severity: SEVERITY {
 };
 
 output_options_list: OUTPUT_OPTIONS {
-    ctx.unique("output_options", ctx.loc2pos(@1));
+    ctx.unique("output-options", ctx.loc2pos(@1));
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
-    ctx.stack_.back()->set("output_options", l);
+    ctx.stack_.back()->set("output-options", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.OUTPUT_OPTIONS);
 } COLON LSQUARE_BRACKET output_options_list_content RSQUARE_BRACKET {

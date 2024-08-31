@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,13 +22,14 @@
 #include <hooks/hooks_manager.h>
 #include <util/range_utilities.h>
 #include <functional>
-#include <utility>
 #include <vector>
 
 using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::hooks;
+
+using namespace std;
 
 namespace {
 
@@ -52,17 +53,20 @@ namespace test {
 
 HATest::HATest()
     : io_service_(new IOService()),
-      network_state_(new NetworkState(NetworkState::DHCPv4)) {
+      network_state_(new NetworkState()) {
 }
 
 HATest::~HATest() {
+    if (timer_) {
+        timer_->cancel();
+    }
+    io_service_->stopAndPoll();
 }
 
 void
 HATest::startHAService() {
     if (HooksManager::calloutsPresent(Hooks.hooks_index_dhcp4_srv_configured_)) {
         CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
-        callout_handle->setArgument("io_context", io_service_);
         callout_handle->setArgument("network_state", network_state_);
         HooksManager::callCallouts(Hooks.hooks_index_dhcp4_srv_configured_,
                                    *callout_handle);
@@ -71,32 +75,39 @@ HATest::startHAService() {
 
 void
 HATest::runIOService(long ms) {
-    io_service_->get_io_service().reset();
-    IntervalTimer timer(*io_service_);
-    timer.setup(std::bind(&IOService::stop, io_service_), ms,
-                IntervalTimer::ONE_SHOT);
+    io_service_->stop();
+    io_service_->restart();
+    timer_.reset(new IntervalTimer(io_service_));
+    timer_->setup(std::bind(&IOService::stop, io_service_), ms,
+                  IntervalTimer::ONE_SHOT);
+
     io_service_->run();
-    timer.cancel();
+
+    timer_->cancel();
 }
 
 void
 HATest::runIOService(long ms, std::function<bool()> stop_condition) {
-    io_service_->get_io_service().reset();
-    IntervalTimer timer(*io_service_);
+    io_service_->stop();
+    io_service_->restart();
+    timer_.reset(new IntervalTimer(io_service_));
     bool timeout = false;
-    timer.setup(std::bind(&HATest::stopIOServiceHandler, this, std::ref(timeout)),
-                ms, IntervalTimer::ONE_SHOT);
+    timer_->setup(std::bind(&HATest::stopIOServiceHandler, this, std::ref(timeout)),
+                  ms, IntervalTimer::ONE_SHOT);
 
     while (!stop_condition() && !timeout) {
-        io_service_->run_one();
+        io_service_->runOne();
     }
 
-    timer.cancel();
+    timer_->cancel();
+
+    io_service_->stopAndPoll();
 }
 
 boost::shared_ptr<std::thread>
 HATest::runIOServiceInThread() {
-    io_service_->get_io_service().reset();
+    io_service_->stop();
+    io_service_->restart();
 
     bool running = false;
     std::mutex mutex;
@@ -136,6 +147,37 @@ HATest::signalServiceRunning(bool& running, std::mutex& mutex,
     condvar.notify_one();
 }
 
+
+void
+HATest::checkThatTimeIsParsable(ElementPtr const& node, bool const null_expected) {
+    ConstElementPtr system_time(node->get("system-time"));
+    EXPECT_TRUE(system_time);
+
+    // Is freed automatically by std::locale. See [localization.locales.locale#6] and
+    // [localization.locales.locale.facet#2] in the C++ standard.
+    boost::posix_time::time_input_facet* facet(
+        new boost::posix_time::time_input_facet("%Y-%m-%d %H:%M:%S"));
+
+    stringstream ss;
+    ss.imbue(std::locale(std::locale(), facet));
+    if (null_expected) {
+        EXPECT_EQ(system_time->getType(), Element::null);
+    } else {
+        EXPECT_EQ(system_time->getType(), Element::string);
+        ss << system_time->stringValue();
+        boost::posix_time::ptime t;
+        ss >> t;
+
+        // Reset stringstream.
+        ss = stringstream();
+
+        ss << t;
+        EXPECT_NE(ss.str(), "not-a-date-time");
+    }
+
+    node->remove("system-time");
+}
+
 void
 HATest::stopIOServiceHandler(bool& stop_flag) {
     stop_flag = true;
@@ -155,6 +197,10 @@ HATest::createValidJsonConfiguration(const HAConfig::HAMode& ha_mode) const {
         "         \"max-response-delay\": 1000,"
         "         \"max-ack-delay\": 10000,"
         "         \"max-unacked-clients\": 10,"
+        "         \"max-rejected-clients\": 10,"
+        "         \"multi-threading\": {"
+        "             \"enable-multi-threading\": false"
+        "         },"
         "         \"wait-backup-ack\": false,"
         "         \"peers\": ["
         "             {"
@@ -191,6 +237,10 @@ HATest::createValidPassiveBackupJsonConfiguration() const {
         "     {"
         "         \"this-server-name\": \"server1\","
         "         \"mode\": \"passive-backup\","
+        "         \"sync-page-limit\": 3,"
+        "         \"multi-threading\": {"
+        "             \"enable-multi-threading\": false"
+        "         },"
         "         \"wait-backup-ack\": false,"
         "         \"peers\": ["
         "             {"
@@ -215,23 +265,83 @@ HATest::createValidPassiveBackupJsonConfiguration() const {
     return (Element::fromJSON(config_text.str()));
 }
 
+ConstElementPtr
+HATest::createValidHubJsonConfiguration() const {
+    std::ostringstream config_text;
+    config_text <<
+        "["
+        "     {"
+        "         \"this-server-name\": \"server2\","
+        "         \"mode\": \"hot-standby\","
+        "         \"sync-page-limit\": 3,"
+        "         \"multi-threading\": {"
+        "             \"enable-multi-threading\": false"
+        "         },"
+        "         \"wait-backup-ack\": false,"
+        "         \"peers\": ["
+        "             {"
+        "                 \"name\": \"server1\","
+        "                 \"url\": \"http://127.0.0.1:18123/\","
+        "                 \"role\": \"primary\""
+        "             },"
+        "             {"
+        "                 \"name\": \"server2\","
+        "                 \"url\": \"http://127.0.0.1:18124/\","
+        "                 \"role\": \"standby\""
+        "             },"
+        "             {"
+        "                 \"name\": \"server5\","
+        "                 \"url\": \"http://127.0.0.1:18125/\","
+        "                 \"role\": \"backup\""
+        "             }"
+        "         ]"
+        "     },"
+        "     {"
+        "         \"this-server-name\": \"server4\","
+        "         \"mode\": \"hot-standby\","
+        "         \"multi-threading\": {"
+        "             \"enable-multi-threading\": false"
+        "         },"
+        "         \"wait-backup-ack\": false,"
+        "         \"peers\": ["
+        "             {"
+        "                 \"name\": \"server3\","
+        "                 \"url\": \"http://127.0.0.1:18123/\","
+        "                 \"role\": \"primary\""
+        "             },"
+        "             {"
+        "                 \"name\": \"server4\","
+        "                 \"url\": \"http://127.0.0.1:18124/\","
+        "                 \"role\": \"standby\""
+        "             },"
+        "             {"
+        "                 \"name\": \"server6\","
+        "                 \"url\": \"http://127.0.0.1:18125/\","
+        "                 \"role\": \"backup\""
+        "             }"
+        "         ]"
+        "     }"
+        "]";
+    return (Element::fromJSON(config_text.str()));
+}
+
 
 HAConfigPtr
 HATest::createValidConfiguration(const HAConfig::HAMode& ha_mode) const {
-    HAConfigPtr config_storage(new HAConfig());
-    HAConfigParser parser;
-
-    parser.parse(config_storage, createValidJsonConfiguration(ha_mode));
-    return (config_storage);
+    auto config_storage = HAConfigParser::parse(createValidJsonConfiguration(ha_mode));
+    return (config_storage->get());
 }
 
 HAConfigPtr
 HATest::createValidPassiveBackupConfiguration() const {
-    HAConfigPtr config_storage(new HAConfig());
-    HAConfigParser parser;
+    auto config_storage = HAConfigParser::parse(createValidPassiveBackupJsonConfiguration());
+    return (config_storage->get());
+}
 
-    parser.parse(config_storage, createValidPassiveBackupJsonConfiguration());
-    return (config_storage);
+HAConfigPtr
+HATest::createValidHubConfiguration() const {
+    auto config_storage = HAConfigParser::parse(createValidHubJsonConfiguration());
+    return (config_storage->get());
 }
 
 void
@@ -366,6 +476,6 @@ HATest::makeHAMtJson(bool enable_multi_threading, bool http_dedicated_listener,
     return (ss.str());
 }
 
-} // end of namespace isc::ha::test
-} // end of namespace isc::ha
-} // end of namespace isc
+}  // namespace test
+}  // namespace ha
+}  // namespace isc

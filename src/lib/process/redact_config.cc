@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -46,7 +46,7 @@ redact(ElementPtrType const& element, list<string> json_path) {
         if (next_key == "*" || json_path.empty()) {
             // Then iterate through all the children.
             result = Element::createMap();
-            for (auto kv : element->mapValue()) {
+            for (auto const& kv : element->mapValue()) {
                 std::string const& key(kv.first);
                 ConstElementPtr const& value(kv.second);
 

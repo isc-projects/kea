@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -53,6 +53,7 @@
 #include <exceptions/exceptions.h>
 
 #include <boost/scoped_ptr.hpp>
+#include <boost/enable_shared_from_this.hpp>
 
 #include <deque>
 #include <mutex>
@@ -109,7 +110,6 @@ public:
     NcrListenerReceiveError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
-
 
 /// @brief Abstract interface for receiving NameChangeRequests.
 ///
@@ -180,7 +180,7 @@ public:
     /// Applications which will receive NameChangeRequests must provide a
     /// derivation of this class to the listener constructor in order to
     /// receive NameChangeRequests.
-    class RequestReceiveHandler {
+    class RequestReceiveHandler : public boost::enable_shared_from_this<RequestReceiveHandler> {
     public:
 
         /// @brief Function operator implementing a NCR receive callback.
@@ -195,18 +195,21 @@ public:
         /// wise.
         ///
         /// @throw This method MUST NOT throw.
-        virtual void operator ()(const Result result,
-                                 NameChangeRequestPtr& ncr) = 0;
+        virtual void operator()(const Result result,
+                                NameChangeRequestPtr& ncr) = 0;
 
         virtual ~RequestReceiveHandler() {
         }
     };
 
+    /// @brief Defines a smart pointer to an instance of a request receive handler.
+    typedef boost::shared_ptr<RequestReceiveHandler> RequestReceiveHandlerPtr;
+
     /// @brief Constructor
     ///
     /// @param recv_handler is a pointer the application layer handler to be
     /// invoked each time a NCR is received or a receive error occurs.
-    NameChangeListener(RequestReceiveHandler& recv_handler);
+    NameChangeListener(RequestReceiveHandlerPtr recv_handler);
 
     /// @brief Destructor
     virtual ~NameChangeListener() {
@@ -222,7 +225,7 @@ public:
     ///
     /// @throw NcrListenError if the listener is already "listening" or
     /// in the event the open or doReceive methods fail.
-    void startListening(isc::asiolink::IOService& io_service);
+    void startListening(const isc::asiolink::IOServicePtr& io_service);
 
     /// @brief Closes the IO source and stops listen logic.
     ///
@@ -231,6 +234,7 @@ public:
     void stopListening();
 
 protected:
+
     /// @brief Initiates an asynchronous receive
     ///
     /// Sets context information to indicate that IO is in progress and invokes
@@ -278,7 +282,7 @@ protected:
     ///
     /// @throw If the implementation encounters an error it MUST
     /// throw it as an isc::Exception or derivative.
-    virtual void open(isc::asiolink::IOService& io_service) = 0;
+    virtual void open(const isc::asiolink::IOServicePtr& io_service) = 0;
 
     /// @brief Abstract method which closes the IO source.
     ///
@@ -346,12 +350,11 @@ private:
     bool io_pending_;
 
     /// @brief Application level NCR receive completion handler.
-    RequestReceiveHandler& recv_handler_;
+    RequestReceiveHandlerPtr recv_handler_;
 };
 
 /// @brief Defines a smart pointer to an instance of a listener.
 typedef boost::shared_ptr<NameChangeListener> NameChangeListenerPtr;
-
 
 /// @brief Thrown when a NameChangeSender encounters an error.
 class NcrSenderError : public isc::Exception {
@@ -380,7 +383,6 @@ public:
     NcrSenderSendError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
-
 
 /// @brief Abstract interface for sending NameChangeRequests.
 ///
@@ -485,7 +487,7 @@ public:
     /// Applications which will send NameChangeRequests must provide a
     /// derivation of this class to the sender constructor in order to
     /// receive send outcome notifications.
-    class RequestSendHandler {
+    class RequestSendHandler : public boost::enable_shared_from_this<RequestSendHandler> {
     public:
 
         /// @brief Function operator implementing a NCR send callback.
@@ -506,6 +508,9 @@ public:
         }
     };
 
+    /// @brief Defines a smart pointer to an instance of a request send handler.
+    typedef boost::shared_ptr<RequestSendHandler> RequestSendHandlerPtr;
+
     /// @brief Constructor
     ///
     /// @param send_handler is a pointer the application layer handler to be
@@ -513,7 +518,7 @@ public:
     /// @param send_queue_max is the maximum number of entries allowed in the
     /// send queue.  Once the maximum number is reached, all calls to
     /// sendRequest will fail with an exception.
-    NameChangeSender(RequestSendHandler& send_handler,
+    NameChangeSender(RequestSendHandlerPtr send_handler,
                      size_t send_queue_max = MAX_QUEUE_DEFAULT);
 
     /// @brief Destructor
@@ -529,7 +534,7 @@ public:
     ///
     /// @throw NcrSenderError if the sender is already "sending" or
     /// NcrSenderOpenError if the open fails.
-    void startSending(isc::asiolink::IOService & io_service);
+    void startSending(const isc::asiolink::IOServicePtr& io_service);
 
     /// @brief Closes the IO sink and stops send logic.
     ///
@@ -588,7 +593,7 @@ private:
     /// @brief Prepares the IO for transmission in a thread safe context.
     ///
     /// @param io_service is the IOService that will handle IO event processing.
-    void startSendingInternal(isc::asiolink::IOService & io_service);
+    void startSendingInternal(const isc::asiolink::IOServicePtr& io_service);
 
     /// @brief Queues the given request to be sent in a thread safe context.
     ///
@@ -677,7 +682,7 @@ protected:
     ///
     /// @throw If the implementation encounters an error it MUST
     /// throw it as an isc::Exception or derivative.
-    virtual void open(isc::asiolink::IOService& io_service) = 0;
+    virtual void open(const isc::asiolink::IOServicePtr& io_service) = 0;
 
     /// @brief Abstract method which closes the IO sink.
     ///
@@ -819,11 +824,21 @@ private:
         sending_ = value;
     }
 
+protected:
+
+    /// @brief Pointer to the IOService currently being used by the sender.
+    /// @note We need to remember the io_service but we receive it by
+    /// reference.  Use a raw pointer to store it.  This value should never be
+    /// exposed and is only valid while in send mode.
+    asiolink::IOServicePtr io_service_;
+
+private:
+
     /// @brief Boolean indicator which tracks sending status.
     bool sending_;
 
     /// @brief A pointer to registered send completion handler.
-    RequestSendHandler& send_handler_;
+    RequestSendHandlerPtr send_handler_;
 
     /// @brief Maximum number of entries permitted in the send queue.
     size_t send_queue_max_;
@@ -833,12 +848,6 @@ private:
 
     /// @brief Pointer to the request which is in the process of being sent.
     NameChangeRequestPtr ncr_to_send_;
-
-    /// @brief Pointer to the IOService currently being used by the sender.
-    /// @note We need to remember the io_service but we receive it by
-    /// reference.  Use a raw pointer to store it.  This value should never be
-    /// exposed and is only valid while in send mode.
-    asiolink::IOService* io_service_;
 
     /// @brief The mutex used to protect internal state.
     const boost::scoped_ptr<std::mutex> mutex_;

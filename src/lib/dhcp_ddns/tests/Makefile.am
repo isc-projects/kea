@@ -13,8 +13,7 @@ endif
 
 CLEANFILES = *.gcno *.gcda
 
-TESTS_ENVIRONMENT = \
-	$(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
+TESTS_ENVIRONMENT = $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 
 TESTS =
 if HAVE_GTEST
@@ -31,15 +30,16 @@ libdhcp_ddns_unittests_CXXFLAGS = $(AM_CXXFLAGS)
 
 libdhcp_ddns_unittests_LDFLAGS  = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS)
 
-libdhcp_ddns_unittests_LDADD = $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
+libdhcp_ddns_unittests_LDADD  = $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
-libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
+libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
-libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
+libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libdhcp_ddns_unittests_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS)

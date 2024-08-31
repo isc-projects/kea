@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,8 +20,16 @@ using namespace isc::asiolink;
 namespace isc {
 namespace dhcp {
 
-const size_t
-PktFilterInet6::CONTROL_BUF_LEN = CMSG_SPACE(sizeof(struct in6_pktinfo));
+const size_t PktFilterInet6::CONTROL_BUF_LEN = 512;
+
+bool
+PktFilterInet6::isSocketReceivedTimeSupported() const {
+#ifdef SO_TIMESTAMP
+    return (true);
+#else
+    return (false);
+#endif
+}
 
 SocketInfo
 PktFilterInet6::openSocket(const Iface& iface,
@@ -91,6 +99,15 @@ PktFilterInet6::openSocket(const Iface& iface,
     }
 #endif
 
+#ifdef SO_TIMESTAMP
+    int enable = 1;
+    if (setsockopt(sock, SOL_SOCKET, SO_TIMESTAMP, &enable, sizeof(enable))) {
+        const char* errmsg = strerror(errno);
+        isc_throw(SocketConfigError, "Could not enable SO_TIMESTAMP for " << addr.toText()
+                  << ", error: " << errmsg);
+    }
+#endif
+
 #ifdef IPV6_V6ONLY
     // Set IPV6_V6ONLY to get only IPv6 packets.
     if (setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY,
@@ -150,6 +167,11 @@ PktFilterInet6::receive(const SocketInfo& socket_info) {
     struct sockaddr_in6 from;
     memset(&from, 0, sizeof(from));
 
+#ifdef SO_TIMESTAMP
+    struct timeval so_rcv_timestamp;
+    memset(&so_rcv_timestamp, 0, sizeof(so_rcv_timestamp));
+#endif
+
     // Initialize our message header structure.
     struct msghdr m;
     memset(&m, 0, sizeof(m));
@@ -182,7 +204,7 @@ PktFilterInet6::receive(const SocketInfo& socket_info) {
     struct in6_addr to_addr;
     memset(&to_addr, 0, sizeof(to_addr));
 
-    int ifindex = -1;
+    unsigned int ifindex = UNSET_IFINDEX;
     if (result >= 0) {
         struct in6_pktinfo* pktinfo = NULL;
 
@@ -202,8 +224,15 @@ PktFilterInet6::receive(const SocketInfo& socket_info) {
                 to_addr = pktinfo->ipi6_addr;
                 ifindex = pktinfo->ipi6_ifindex;
                 found_pktinfo = true;
+#ifndef SO_TIMESTAMP
                 break;
             }
+#else
+            } else if ((cmsg->cmsg_level == SOL_SOCKET) &&
+                       (cmsg->cmsg_type  == SCM_TIMESTAMP)) {
+                memcpy(&so_rcv_timestamp, CMSG_DATA(cmsg), sizeof(so_rcv_timestamp));
+            }
+#endif
             cmsg = CMSG_NXTHDR(&m, cmsg);
         }
         if (!found_pktinfo) {
@@ -233,6 +262,12 @@ PktFilterInet6::receive(const SocketInfo& socket_info) {
     }
 
     pkt->updateTimestamp();
+
+#ifdef SO_TIMESTAMP
+    pkt->addPktEvent(PktEvent::SOCKET_RECEIVED, so_rcv_timestamp);
+#endif
+
+    pkt->addPktEvent(PktEvent::BUFFER_READ);
 
     pkt->setLocalAddr(IOAddress::fromBytes(AF_INET6,
                       reinterpret_cast<const uint8_t*>(&to_addr)));
@@ -287,7 +322,7 @@ PktFilterInet6::send(const Iface&, uint16_t sockfd, const Pkt6Ptr& pkt) {
     // to assign const void* to void*.
     struct iovec v;
     memset(&v, 0, sizeof(v));
-    v.iov_base = const_cast<void *>(pkt->getBuffer().getData());
+    v.iov_base = const_cast<void *>(pkt->getBuffer().getDataAsVoidPtr());
     v.iov_len = pkt->getBuffer().getLength();
     m.msg_iov = &v;
     m.msg_iovlen = 1;
@@ -319,13 +354,14 @@ PktFilterInet6::send(const Iface&, uint16_t sockfd, const Pkt6Ptr& pkt) {
     // may be set using CMSG_SPACE (which includes padding) or
     // using CMSG_LEN. Both forms appear to work fine on Linux, FreeBSD,
     // NetBSD, but OpenBSD appears to have a bug, discussed here:
-    // http://www.archivum.info/mailing.openbsd.bugs/2009-02/00017/
-    // kernel-6080-msg_controllen-of-IPV6_PKTINFO.html
+    // https://marc.info/?l=openbsd-bugs&m=123485913417684&w=2
     // which causes sendmsg to return EINVAL if the CMSG_LEN is
     // used to set the msg_controllen value.
     m.msg_controllen = CMSG_SPACE(sizeof(struct in6_pktinfo));
 
     pkt->updateTimestamp();
+
+    pkt->addPktEvent(PktEvent::RESPONSE_SENT);
 
     int result = sendmsg(sockfd, &m, 0);
     if (result < 0) {

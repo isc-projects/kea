@@ -1,147 +1,301 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="2163px" preserveAspectRatio="none" style="width:969px;height:2163px;" version="1.1" viewBox="0 0 969 2163" width="969px" zoomAndPan="magnify"><defs><filter height="300%" id="fgxgo3z1vpo2" width="300%" x="-1" y="-1"><feGaussianBlur result="blurOut" stdDeviation="2.0"/><feColorMatrix in="blurOut" result="blurOut2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .4 0"/><feOffset dx="4.0" dy="4.0" in="blurOut2" result="blurOut3"/><feBlend in="SourceGraphic" in2="blurOut3" mode="normal"/></filter></defs><g><text fill="#000000" font-family="sans-serif" font-size="18" lengthAdjust="spacingAndGlyphs" textLength="277" x="337.25" y="17.4023">currentHost DHCPv4 (Kea 1.8.0)</text><!--MD5=[e3476fda087b0512b1cf4e3a66ca5e59]
-entity entry--><rect fill="#FEFECE" filter="url(#fgxgo3z1vpo2)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="134" x="314.5" y="28.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="114" x="324.5" y="51.7344">Subnet Selection</text><!--MD5=[f65ad2d20ed779f8ee7fa3e9ca8ab4c3]
-entity setSelected--><rect fill="#FEFECE" filter="url(#fgxgo3z1vpo2)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="247" x="258" y="125.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="227" x="268" y="148.7344">Set subnet to the selected subnet</text><!--MD5=[c0678c1aaf89874ea821e39d7ef5404f]
-entity clientid_lookup--><rect fill="#FEFECE" filter="url(#fgxgo3z1vpo2)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="245" x="259" y="222.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="225" x="269" y="245.7344">Has client a lease for its client id?</text><!--MD5=[a51c27fcfb0c2b9388b266a7e30efdf3]
-entity clientid_iterate--><rect fill="#FEFECE" filter="url(#fgxgo3z1vpo2)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="283" x="7" y="319.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="263" x="17" y="342.7344">Iterate on allowed subnets for client id</text><!--MD5=[96d14c76c72fae1f84c71c464af0f0e6]
-entity found_clientid--><rect fill="#FEFECE" filter="url(#fgxgo3z1vpo2)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="253" x="22" y="498.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="233" x="32" y="521.7344">Set subnet to the by client id lease</text><!--MD5=[9f5518b92d1482f0724c659635bb4f8f]
-entity hwaddr_lookup--><rect fill="#FEFECE" filter="url(#fgxgo3z1vpo2)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="211" x="449" y="432.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="191" x="459" y="455.7344">Has client a matching lease?</text><!--MD5=[7366630e5488cbc20c26d829a87e86ca]
-entity hwaddr_iterate--><rect fill="#FEFECE" filter="url(#fgxgo3z1vpo2)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="352" x="201.5" y="564.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="332" x="211.5" y="587.7344">Iterate on allowed subnets for hardware address</text><!--MD5=[096d593c9a7e1a0b5ae2681804d4217f]
-entity found_hwaddr--><rect fill="#FEFECE" filter="url(#fgxgo3z1vpo2)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="243" x="229" y="677.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="223" x="239" y="700.7344">Set subnet to the matching lease</text><!--MD5=[f1bd864ca92b3a59ad91e15b6c278a16]
-entity hasAddressReservation--><rect fill="#FEFECE" filter="url(#fgxgo3z1vpo2)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="211" x="375" y="930.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="191" x="385" y="953.7344">Has an address reservation?</text><!--MD5=[0af8b8cc29117b7db26a4bf8fde82b62]
-entity setAddressReservation--><rect fill="#FEFECE" filter="url(#fgxgo3z1vpo2)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="300" x="220.5" y="1043.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="280" x="230.5" y="1066.7344">Set subnet to address reservation subnet</text><!--MD5=[42a0a2711e18aa980e3ea9f910af1c90]
-entity pool--><rect fill="#FEFECE" filter="url(#fgxgo3z1vpo2)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="251" x="355" y="1140.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="231" x="365" y="1163.7344">Is the address in an allowed pool?</text><!--MD5=[ec337e6f6831b541235537d1c5125816]
-entity pool_iterate--><rect fill="#FEFECE" filter="url(#fgxgo3z1vpo2)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="269" x="141" y="1237.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="249" x="151" y="1260.7344">Iterate on allowed subnets with pool</text><!--MD5=[8426a0f58e3c900bd89aafdc516c0a64]
-entity inAllowedPool--><rect fill="#FEFECE" filter="url(#fgxgo3z1vpo2)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="254" x="148.5" y="1350.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="234" x="158.5" y="1373.7344">Set subnet to address pool subnet</text><!--MD5=[c7571992746652353b375880ae850124]
-entity allocate--><rect fill="#FEFECE" filter="url(#fgxgo3z1vpo2)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="158" x="393.5" y="1447.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="138" x="403.5" y="1470.7344">Allocate a new lease</text><!--MD5=[539657d7008b7b9e186112fa27fe2a64]
-entity allocate_iterate--><rect fill="#FEFECE" filter="url(#fgxgo3z1vpo2)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="201" x="232" y="1560.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="181" x="242" y="1583.7344">Iterate on allowed subnets</text><!--MD5=[98bd7f0fd78ffed8e2b0c08f2369be38]
-entity allocated--><rect fill="#FEFECE" filter="url(#fgxgo3z1vpo2)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="266" x="270.5" y="1673.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="246" x="280.5" y="1696.7344">Set subnet to allocated lease subnet</text><!--MD5=[a2ab21a8d09e419da8ba4e22e422b87f]
-entity getHRmode--><rect fill="#FEFECE" filter="url(#fgxgo3z1vpo2)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="252" x="394.5" y="1770.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="232" x="404.5" y="1793.7344">Get subnet host reservation mode</text><!--MD5=[9e66760393f24350dd53d10577644815]
-entity checkHRmode--><rect fill="#FEFECE" filter="url(#fgxgo3z1vpo2)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="293" x="374" y="1867.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="273" x="384" y="1890.7344">Is subnet host reservation mode global?</text><!--MD5=[9225881c05e5dcc29801826dc3c4a44b]
-entity global--><rect fill="#FEFECE" filter="url(#fgxgo3z1vpo2)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="205" x="298" y="1980.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="185" x="308" y="2003.7344">Get global host reservation</text><!--MD5=[fb2193611fca68211907294b61bd1772]
-entity bySubnet--><rect fill="#FEFECE" filter="url(#fgxgo3z1vpo2)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="209" x="538" y="1980.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="189" x="548" y="2003.7344">Get subnet host reservation</text><!--MD5=[c13398c59c328d6fcc544c8c17f5b117]
-entity return--><rect fill="#FEFECE" filter="url(#fgxgo3z1vpo2)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="235" x="403" y="2093.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="215" x="413" y="2116.7344">Return current host reservation</text><!--MD5=[4190d3dcd511d21b11bd238065bcb30b]
-link entry to setSelected--><path d="M381.5,64.6192 C381.5,80.1592 381.5,102.9792 381.5,119.8592 " fill="none" id="entry-&gt;setSelected" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="381.5,124.8892,385.5,115.8892,381.5,119.8892,377.5,115.8892,381.5,124.8892" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[e08d915304835ed62ca4e0728c34eef1]
-link setSelected to clientid_lookup--><path d="M381.5,161.6192 C381.5,177.1592 381.5,199.9792 381.5,216.8592 " fill="none" id="setSelected-&gt;clientid_lookup" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="381.5,221.8892,385.5,212.8892,381.5,216.8892,377.5,212.8892,381.5,221.8892" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[6be1f2e9e03fb1c5265b47f0fe05d4fb]
-link clientid_lookup to hwaddr_lookup--><path d="M450.66,258.2792 C487.31,270.2592 530.95,289.5492 561.5,319.1992 C589.76,346.6192 605.63,365.0792 592.5,402.1992 C589.19,411.5492 583.15,420.3992 576.84,427.8492 " fill="none" id="clientid_lookup-&gt;hwaddr_lookup" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="573.32,431.8292,582.2724,427.7238,576.6267,428.0788,576.2717,422.4331,573.32,431.8292" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="116" x="591.5" y="342.2676">no client id option</text><!--MD5=[e88e8ce2e61ddfe0f17d6f35f9f4b567]
-link clientid_lookup to clientid_iterate--><path d="M339.58,258.2892 C298.95,274.8592 237.46,299.9292 195.27,317.1292 " fill="none" id="clientid_lookup-&gt;clientid_iterate" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="190.48,319.0792,200.324,319.3879,195.1105,317.1927,197.3056,311.9792,190.48,319.0792" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[574cfa9865ae5a8c4342d01c24825c76]
-link clientid_iterate to clientid_iterate--><path d="M290.1,329.0592 C310.94,330.3392 325,333.0492 325,337.1992 C325,340.9892 313.25,343.5892 295.32,344.9792 " fill="none" id="clientid_iterate-&gt;clientid_iterate" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="290.1,345.3392,299.3532,348.7123,295.0882,344.9962,298.8044,340.7312,290.1,345.3392" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="224" x="331" y="342.2676">match-client-id is false or no lease</text><!--MD5=[6bcef6072872efd8a87246b817e1d22e]
-link clientid_iterate to found_clientid--><path d="M148.5,355.4892 C148.5,387.8292 148.5,457.3892 148.5,493.0792 " fill="none" id="clientid_iterate-&gt;found_clientid" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="148.5,498.0992,152.5,489.0992,148.5,493.0992,144.5,489.0992,148.5,498.0992" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="84" x="149.5" y="398.7676">found a lease</text><!--MD5=[7615618d548cc7387965d08a49484701]
-link found_clientid to hasAddressReservation--><path d="M148.5,534.3592 C148.5,557.7292 148.5,600.8792 148.5,637.6992 C148.5,637.6992 148.5,637.6992 148.5,869.1992 C148.5,915.6592 273.28,934.4692 369.84,942.0692 " fill="none" id="found_clientid-&gt;hasAddressReservation" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="375,942.4692,366.3353,937.7869,370.0149,942.0836,365.7183,945.7631,375,942.4692" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[a2c6bf2befd5a55c13fb7d14d9b0c240]
-link clientid_iterate to hwaddr_lookup--><path d="M180.8,355.2592 C209.44,369.7192 252.75,389.9992 292.5,402.1992 C341.2,417.1492 396.54,427.9392 443.77,435.3792 " fill="none" id="clientid_iterate-&gt;hwaddr_lookup" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="448.9,436.1792,440.6245,430.8392,443.9598,435.4082,439.3908,438.7436,448.9,436.1792" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="294" x="293.5" y="398.7676">not found by client id, try by hardware address</text><!--MD5=[5a497db9eec20d36442cfd8ff0bb8196]
-link hwaddr_lookup to hasAddressReservation--><path d="M660.05,459.9192 C736.51,472.7092 826.5,504.1292 826.5,581.1992 C826.5,581.1992 826.5,581.1992 826.5,869.1992 C826.5,918.2492 692.51,936.4592 591.29,943.2192 " fill="none" id="hwaddr_lookup-&gt;hasAddressReservation" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="586.19,943.5492,595.4238,946.9751,591.1801,943.2347,594.9205,938.9909,586.19,943.5492" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="130" x="827.5" y="756.7676">no hardware address</text><!--MD5=[3e65bd8831bbfab836115278d54dbd54]
-link hwaddr_lookup to hwaddr_iterate--><path d="M531,468.4592 C498.37,492.4192 439.49,535.6692 404.91,561.0692 " fill="none" id="hwaddr_lookup-&gt;hwaddr_iterate" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="400.82,564.0692,410.4373,561.946,404.8438,561.1013,405.6886,555.5078,400.82,564.0692" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[8827ae6ff5ddcc22e7f77fe98cdf1a45]
-link hwaddr_iterate to hwaddr_iterate--><path d="M553.73,573.1792 C574.76,574.8192 588.5,577.8192 588.5,582.1992 C588.5,586.1992 577.02,589.0592 558.99,590.7692 " fill="none" id="hwaddr_iterate-&gt;hwaddr_iterate" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="553.73,591.2192,563.0395,594.4337,558.7116,590.791,562.3544,586.4631,553.73,591.2192" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="190" x="594.5" y="587.2676">no lease or client id mismatch</text><!--MD5=[c5ee7e899f7e78ebb49c392f0cd68ce0]
-link hwaddr_iterate to found_hwaddr--><path d="M373.28,600.5392 C368.61,619.7692 361.05,650.8292 355.93,671.8592 " fill="none" id="hwaddr_iterate-&gt;found_hwaddr" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="354.69,676.9792,360.6886,669.1679,355.8623,672.1186,352.9116,667.2923,354.69,676.9792" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="84" x="367.5" y="643.7676">found a lease</text><!--MD5=[49806d919f2e8f347acf33d16af6c958]
-link found_hwaddr to hasAddressReservation--><path d="M359.44,713.4492 C382.5,757.9792 443.99,876.6992 469.34,925.6492 " fill="none" id="found_hwaddr-&gt;hasAddressReservation" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="471.67,930.1592,471.0846,920.3278,469.3713,925.7189,463.9802,924.0056,471.67,930.1592" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[419c32f3c11394d82c4ebd3db00104c7]
-link hwaddr_iterate to hasAddressReservation--><path d="M433.87,600.2492 C475.7,616.7892 525.5,646.4992 525.5,694.1992 C525.5,694.1992 525.5,694.1992 525.5,869.1992 C525.5,890.4892 512.76,911.2092 500.84,925.9292 " fill="none" id="hwaddr_iterate-&gt;hasAddressReservation" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="497.51,929.9192,506.343,925.5627,500.7095,926.0769,500.1953,920.4435,497.51,929.9192" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="62" x="526.5" y="803.7676">not found</text><!--MD5=[1a9e971bc87c9d378000ad9b2e367c91]
-link hasAddressReservation to setAddressReservation--><path d="M463.31,966.5392 C443.86,986.1792 412.17,1018.1492 391.33,1039.1792 " fill="none" id="hasAddressReservation-&gt;setAddressReservation" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="387.57,1042.9792,396.7481,1039.4066,391.0912,1039.4295,391.0684,1033.7726,387.57,1042.9792" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="21" x="432.5" y="1009.7676">yes</text><!--MD5=[d42a4bd24fb375c431deb7abe8a74e17]
-link hasAddressReservation to pool--><path d="M497.22,966.4192 C518.88,990.8992 552.33,1037.4392 538.5,1079.1992 C531.33,1100.8692 515.54,1121.4192 502.24,1135.9792 " fill="none" id="hasAddressReservation-&gt;pool" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="498.57,1139.9292,507.6356,1136.0803,501.9821,1136.2744,501.7879,1130.6209,498.57,1139.9292" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="225" x="542.5" y="1066.2676">no or not check in the taken branch</text><!--MD5=[791581dff43cc3b6477c496805383c47]
-link setAddressReservation to pool--><path d="M390.42,1079.3992 C409.11,1095.5392 437.07,1119.6992 456.88,1136.7992 " fill="none" id="setAddressReservation-&gt;pool" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="460.73,1140.1192,456.5357,1131.2081,456.9468,1136.85,451.305,1137.2612,460.73,1140.1192" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[7a1241998e61cc09e6a084344a13ee40]
-link pool to pool_iterate--><path d="M443.38,1176.3992 C407.82,1192.8792 354.25,1217.7092 317.23,1234.8592 " fill="none" id="pool-&gt;pool_iterate" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="312.35,1237.1192,322.1978,1236.9736,316.8885,1235.0212,318.841,1229.712,312.35,1237.1192" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[1c40abd319323f0f8c3e812984d047be]
-link pool to allocate--><path d="M562.27,1176.2592 C595.56,1187.6592 630.78,1206.4492 650.5,1237.1992 C659.14,1250.6692 654.47,1257.6992 650.5,1273.1992 C636.28,1328.6892 627.14,1343.9092 588.5,1386.1992 C566.39,1410.3992 535.31,1430.7792 510.89,1444.6292 " fill="none" id="pool-&gt;allocate" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="506.41,1447.1392,516.2178,1446.2406,510.7747,1444.7001,512.3152,1439.2571,506.41,1447.1392" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="205" x="642.5" y="1316.7676">pool check is not in all branches</text><!--MD5=[f92712dd8e32c9acdf8619de922fc5cb]
-link pool_iterate to pool_iterate--><path d="M410.12,1246.9692 C430.88,1248.2192 445,1250.9592 445,1255.1992 C445,1259.0792 433.2,1261.6992 415.32,1263.0692 " fill="none" id="pool_iterate-&gt;pool_iterate" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="410.12,1263.4292,419.3732,1266.8023,415.1082,1263.0862,418.8244,1258.8212,410.12,1263.4292" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="193" x="451" y="1260.2676">address not in an allowed pool</text><!--MD5=[89f40702130c31205e20b7afecbe9ed1]
-link pool_iterate to inAllowedPool--><path d="M275.5,1273.5392 C275.5,1292.7692 275.5,1323.8292 275.5,1344.8592 " fill="none" id="pool_iterate-&gt;inAllowedPool" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="275.5,1349.9792,279.5,1340.9792,275.5,1344.9792,271.5,1340.9792,275.5,1349.9792" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="168" x="276.5" y="1316.7676">address in an allowed pool</text><!--MD5=[03b0dcad835fe04723134b797eb9a319]
-link pool_iterate to allocate--><path d="M375.89,1273.2492 C408.78,1280.8692 439.69,1290.9192 450.5,1303.1992 C484.66,1341.9792 481.2,1407.7092 476.46,1441.9492 " fill="none" id="pool_iterate-&gt;allocate" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="475.7,1447.1692,480.9697,1438.8487,476.4291,1442.2227,473.0552,1437.6821,475.7,1447.1692" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="100" x="479.5" y="1373.2676">no allowed pool</text><!--MD5=[27c03cbbcf5b4bbc0f83ff469240ee91]
-link inAllowedPool to allocate--><path d="M311.18,1386.3992 C345.34,1402.8792 396.82,1427.7092 432.4,1444.8592 " fill="none" id="inAllowedPool-&gt;allocate" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="437.09,1447.1192,430.7227,1439.6054,432.5869,1444.9463,427.246,1446.8104,437.09,1447.1192" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[c7ed7f8e85efd784aa0446a03842ecad]
-link allocate to allocate_iterate--><path d="M393.3,1481.6592 C375.37,1488.5992 357.97,1498.6492 345.5,1513.1992 C335.73,1524.5992 332.59,1541.3292 331.83,1554.8292 " fill="none" id="allocate-&gt;allocate_iterate" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="331.65,1560.0092,335.9813,1551.1639,331.8356,1555.0127,327.9868,1550.867,331.65,1560.0092" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="240" x="346.5" y="1526.7676">start from preferred (last used) subnet</text><!--MD5=[b4b32474e67014a0ea8b9d2dcb8b921b]
-link allocate to getHRmode--><path d="M551.57,1482.2592 C567.28,1489.1692 581.88,1499.0592 591.5,1513.1992 C647.03,1594.8392 571.65,1717.1292 536.65,1765.9492 " fill="none" id="allocate-&gt;getHRmode" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="533.6,1770.1692,542.1109,1765.2129,536.5264,1766.1151,535.6242,1760.5306,533.6,1770.1692" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="198" x="605.5" y="1639.7676">allocation is not in all branches</text><!--MD5=[5d722979ddb74375b031e6d5bd55f242]
-link allocate_iterate to allocate_iterate--><path d="M433.25,1568.1192 C453.52,1569.2292 468,1572.5892 468,1578.1992 C468,1583.3192 455.9,1586.5692 438.34,1587.9492 " fill="none" id="allocate_iterate-&gt;allocate_iterate" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="433.25,1588.2792,442.4936,1591.6787,438.2392,1587.9504,441.9675,1583.696,433.25,1588.2792" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="97" x="474" y="1583.2676">no free address</text><!--MD5=[0a74e69bd975a88dffe2300213585d86]
-link allocate_iterate to allocated--><path d="M343.59,1596.5392 C356.05,1616.0092 376.26,1647.6192 389.72,1668.6592 " fill="none" id="allocate_iterate-&gt;allocated" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="392.48,1672.9792,390.9779,1663.2456,389.7762,1668.7733,384.2485,1667.5716,392.48,1672.9792" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="129" x="373.5" y="1639.7676">found a free address</text><!--MD5=[1be0f2f74e199399aa4e09476dce36f7]
-link allocated to getHRmode--><path d="M424.69,1709.3992 C444.57,1725.5392 474.31,1749.6992 495.38,1766.7992 " fill="none" id="allocated-&gt;getHRmode" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="499.47,1770.1192,494.9879,1761.3494,495.5824,1766.9749,489.9569,1767.5694,499.47,1770.1192" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[9e14dd0054774aedb71cf602d40d12b7]
-link getHRmode to checkHRmode--><path d="M520.5,1806.6192 C520.5,1822.1592 520.5,1844.9792 520.5,1861.8592 " fill="none" id="getHRmode-&gt;checkHRmode" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="520.5,1866.8892,524.5,1857.8892,520.5,1861.8892,516.5,1857.8892,520.5,1866.8892" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[a84b25cfb30efcca4b707749deb6e97a]
-link checkHRmode to global--><path d="M502.01,1903.2992 C480.76,1922.9592 445.87,1955.2292 423.04,1976.3492 " fill="none" id="checkHRmode-&gt;global" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="419.21,1979.8992,428.5379,1976.7384,422.8857,1976.5096,423.1145,1970.8574,419.21,1979.8992" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="21" x="468.5" y="1946.7676">yes</text><!--MD5=[a6bc61640de244f08df3cca17a4f2365]
-link checkHRmode to bySubnet--><path d="M539.3,1903.2992 C560.9,1922.9592 596.37,1955.2292 619.58,1976.3492 " fill="none" id="checkHRmode-&gt;bySubnet" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="623.48,1979.8992,619.5026,1970.8892,619.7771,1976.5394,614.1269,1976.8139,623.48,1979.8992" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="16" x="589.5" y="1946.7676">no</text><!--MD5=[b516e9f33f07fd0923019528919312cb]
-link global to return--><path d="M397.59,2016.3892 C396.2,2030.3392 396.61,2049.8292 406.5,2063.1992 C415.42,2075.2592 428,2084.2392 441.56,2090.9292 " fill="none" id="global-&gt;return" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="446.2,2093.1092,439.7564,2085.6607,441.6749,2090.9823,436.3533,2092.9008,446.2,2093.1092" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="187" x="407.5" y="2059.7676">return global host reservation</text><!--MD5=[31ce4acb5044d12c75fb908f2994650f]
-link bySubnet to return--><path d="M633.84,2016.2092 C626.18,2030.0592 613.99,2049.4892 599.5,2063.1992 C588.25,2073.8392 574.18,2083.1692 561.05,2090.6492 " fill="none" id="bySubnet-&gt;return" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="556.63,2093.1192,566.4378,2092.2206,560.9947,2090.6801,562.5352,2085.2371,556.63,2093.1192" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="191" x="614.5" y="2059.7676">return subnet host reservation</text><text fill="#888888" font-family="sans-serif" font-size="10" lengthAdjust="spacingAndGlyphs" textLength="622" x="164.75" y="2150.3555">Only the initial lookup is always performed: other occasions to change the subnet so the current host are only in some branches</text><!--MD5=[84940467d5c8b64b9d1a8ec6eb53bf6f]
-@startuml
-
-title currentHost DHCPv4 (Kea 1.8.0)
-
-agent "Subnet Selection" as entry
-
-agent "Set subnet to the selected subnet" as setSelected
-
-agent "Has client a lease for its client id?" as clientid_lookup
-
-agent "Iterate on allowed subnets for client id" as clientid_iterate
-
-agent "Set subnet to the by client id lease" as found_clientid
-
-agent "Has client a matching lease?" as hwaddr_lookup
-
-agent "Iterate on allowed subnets for hardware address" as hwaddr_iterate
-
-agent "Set subnet to the matching lease" as found_hwaddr
-
-agent "Has an address reservation?" as hasAddressReservation
-
-agent "Set subnet to address reservation subnet" as setAddressReservation
-
-agent "Is the address in an allowed pool?" as pool
-
-agent "Iterate on allowed subnets with pool" as pool_iterate
-
-agent "Set subnet to address pool subnet" as inAllowedPool
-
-agent "Allocate a new lease" as allocate
-
-agent "Iterate on allowed subnets" as allocate_iterate
-
-agent "Set subnet to allocated lease subnet" as allocated
-
-agent "Get subnet host reservation mode" as getHRmode
-
-agent "Is subnet host reservation mode global?" as checkHRmode
-
-agent "Get global host reservation" as global
-
-agent "Get subnet host reservation" as bySubnet
-
-agent "Return current host reservation" as return
-
-entry - -> setSelected
-setSelected - -> clientid_lookup
-clientid_lookup - - -> hwaddr_lookup : no client id option
-clientid_lookup - -> clientid_iterate
-clientid_iterate -> clientid_iterate : match-client-id is false or no lease
-clientid_iterate - -> found_clientid : found a lease
-found_clientid - - - -> hasAddressReservation
-clientid_iterate - -> hwaddr_lookup : not found by client id, try by hardware address
-hwaddr_lookup - - -> hasAddressReservation : no hardware address
-hwaddr_lookup - -> hwaddr_iterate
-hwaddr_iterate -> hwaddr_iterate : no lease or client id mismatch
-hwaddr_iterate - -> found_hwaddr : found a lease
-found_hwaddr - - - -> hasAddressReservation
-hwaddr_iterate - -> hasAddressReservation : not found
-hasAddressReservation - -> setAddressReservation : yes
-hasAddressReservation - -> pool : no or not check in the taken branch
-setAddressReservation - -> pool
-pool - -> pool_iterate
-pool - - -> allocate : pool check is not in all branches
-pool_iterate -> pool_iterate : address not in an allowed pool
-pool_iterate - -> inAllowedPool : address in an allowed pool
-pool_iterate - - -> allocate : no allowed pool
-inAllowedPool - -> allocate
-allocate - -> allocate_iterate : start from preferred (last used) subnet
-allocate - - -> getHRmode : allocation is not in all branches
-allocate_iterate -> allocate_iterate : no free address
-allocate_iterate - -> allocated : found a free address
-allocated - -> getHRmode
-getHRmode - -> checkHRmode
-checkHRmode - -> global : yes
-checkHRmode - -> bySubnet : no
-global - -> return : return global host reservation
-bySubnet - -> return : return subnet host reservation
-
-footer Only the initial lookup is always performed: other occasions to change the subnet so the current host are only in some branches
-
-@enduml
-
-PlantUML version 1.2020.15(Sun Jun 28 13:39:45 CEST 2020)
-(GPL source distribution)
-Java Runtime: OpenJDK Runtime Environment
-JVM: OpenJDK 64-Bit Server VM
-Default Encoding: UTF-8
-Language: en
-Country: US
---></g></svg>
+<?xml version="1.0" encoding="us-ascii" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentStyleType="text/css" height="2256px" preserveAspectRatio="none" style="width:944px;height:2256px;background:#FFFFFF;" version="1.1" viewBox="0 0 944 2256" width="944px" zoomAndPan="magnify">
+  <defs/>
+  <g>
+    <text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="218" x="356.25" y="24.9659">currentHost DHCPv4 (Kea 1.8.0)</text>
+    <!--entity entry-->
+    <g id="elem_entry">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="133" x="301" y="47.0679"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="113" x="311" y="72.0339">Subnet Selection</text>
+    </g>
+    <!--entity setSelected-->
+    <g id="elem_setSelected">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="246" x="244.5" y="147.1379"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="226" x="254.5" y="172.1039">Set subnet to the selected subnet</text>
+    </g>
+    <!--entity clientid_lookup-->
+    <g id="elem_clientid_lookup">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="244" x="245.5" y="247.2079"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="224" x="255.5" y="272.1739">Has client a lease for its client id?</text>
+    </g>
+    <!--entity clientid_iterate-->
+    <g id="elem_clientid_iterate">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="281" x="7" y="347.2779"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="261" x="17" y="372.2439">Iterate on allowed subnets for client id</text>
+    </g>
+    <!--entity found_clientid-->
+    <g id="elem_found_clientid">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="252" x="21.5" y="534.4079"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="232" x="31.5" y="559.3739">Set subnet to the by client id lease</text>
+    </g>
+    <!--entity hwaddr_lookup-->
+    <g id="elem_hwaddr_lookup">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="211" x="429" y="465.3379"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="191" x="439" y="490.3039">Has client a matching lease?</text>
+    </g>
+    <!--entity hwaddr_iterate-->
+    <g id="elem_hwaddr_iterate">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="350" x="200.5" y="603.4779"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="330" x="210.5" y="628.4439">Iterate on allowed subnets for hardware address</text>
+    </g>
+    <!--entity found_hwaddr-->
+    <g id="elem_found_hwaddr">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="242" x="227.5" y="721.5479"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="222" x="237.5" y="746.5139">Set subnet to the matching lease</text>
+    </g>
+    <!--entity hasAddressReservation-->
+    <g id="elem_hasAddressReservation">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="210" x="373.5" y="981.6079"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="190" x="383.5" y="1006.5739">Has an address reservation?</text>
+    </g>
+    <!--entity setAddressReservation-->
+    <g id="elem_setAddressReservation">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="298" x="220.5" y="1099.6779"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="278" x="230.5" y="1124.6439">Set subnet to address reservation subnet</text>
+    </g>
+    <!--entity pool-->
+    <g id="elem_pool">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="249" x="354" y="1199.7479"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="229" x="364" y="1224.7139">Is the address in an allowed pool?</text>
+    </g>
+    <!--entity pool_iterate-->
+    <g id="elem_pool_iterate">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="266" x="146.5" y="1299.8179"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="246" x="156.5" y="1324.7839">Iterate on allowed subnets with pool</text>
+    </g>
+    <!--entity inAllowedPool-->
+    <g id="elem_inAllowedPool">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="251" x="154" y="1417.8879"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="231" x="164" y="1442.8539">Set subnet to address pool subnet</text>
+    </g>
+    <!--entity allocate-->
+    <g id="elem_allocate">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="156" x="396.5" y="1517.9479"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="136" x="406.5" y="1542.9139">Allocate a new lease</text>
+    </g>
+    <!--entity allocate_iterate-->
+    <g id="elem_allocate_iterate">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="200" x="237.5" y="1636.0179"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="180" x="247.5" y="1660.9839">Iterate on allowed subnets</text>
+    </g>
+    <!--entity allocated-->
+    <g id="elem_allocated">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="264" x="273.5" y="1754.0879"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="244" x="283.5" y="1779.0539">Set subnet to allocated lease subnet</text>
+    </g>
+    <!--entity getHRmode-->
+    <g id="elem_getHRmode">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="249" x="395" y="1854.1579"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="229" x="405" y="1879.1239">Get subnet host reservation mode</text>
+    </g>
+    <!--entity checkHRmode-->
+    <g id="elem_checkHRmode">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="290" x="374.5" y="1954.2279"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="270" x="384.5" y="1979.1939">Is subnet host reservation mode global?</text>
+    </g>
+    <!--entity global-->
+    <g id="elem_global">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="202" x="298.5" y="2072.2879"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="182" x="308.5" y="2097.2539">Get global host reservation</text>
+    </g>
+    <!--entity bySubnet-->
+    <g id="elem_bySubnet">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="207" x="536" y="2072.2879"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="187" x="546" y="2097.2539">Get subnet host reservation</text>
+    </g>
+    <!--entity return-->
+    <g id="elem_return">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="233" x="402" y="2190.3579"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="213" x="412" y="2215.3239">Return current host reservation</text>
+    </g>
+    <!--link entry to setSelected-->
+    <g id="link_entry_setSelected">
+      <path d="M367.5,86.5079 C367.5,101.8379 367.5,123.5879 367.5,140.4079 " fill="none" id="entry-to-setSelected" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="367.5,145.3079,371.5,136.3079,367.5,140.3079,363.5,136.3079,367.5,145.3079" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link setSelected to clientid_lookup-->
+    <g id="link_setSelected_clientid_lookup">
+      <path d="M367.5,186.5779 C367.5,201.9079 367.5,223.6579 367.5,240.4779 " fill="none" id="setSelected-to-clientid_lookup" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="367.5,245.3779,371.5,236.3779,367.5,240.3779,363.5,236.3779,367.5,245.3779" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link clientid_lookup to hwaddr_lookup-->
+    <g id="link_clientid_lookup_hwaddr_lookup">
+      <path d="M432.71,286.6579 C466.61,299.2479 506.66,318.7979 534.5,347.2779 C563.51,376.9479 577.14,395.5079 565.5,435.3379 C562.95,444.0779 558.29,452.7279 553.35,460.2679 " fill="none" id="clientid_lookup-to-hwaddr_lookup" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="550.77,464.0379,559.1444,458.8543,553.5862,459.9065,552.5341,454.3483,550.77,464.0379" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="108" x="564.5" y="372.2049">no client id option</text>
+    </g>
+    <!--link clientid_lookup to clientid_iterate-->
+    <g id="link_clientid_lookup_clientid_iterate">
+      <path d="M324.82,286.7679 C287.78,303.2779 234.2,327.1579 195.64,344.3479 " fill="none" id="clientid_lookup-to-clientid_iterate" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="191.44,346.2179,201.2889,346.2122,196.0079,344.1846,198.0355,338.9036,191.44,346.2179" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link clientid_iterate to clientid_iterate-->
+    <g id="link_clientid_iterate_clientid_iterate">
+      <path d="M288.3,358.3179 C309.02,359.6579 323,362.4879 323,366.8079 C323,370.6879 311.71,373.3679 294.4,374.8379 " fill="none" id="clientid_iterate-to-clientid_iterate" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="289.81,375.1879,299.0823,378.5082,294.7962,374.8165,298.488,370.5303,289.81,375.1879" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="199" x="329" y="372.2049">match-client-id is false or no lease</text>
+    </g>
+    <!--link clientid_iterate to found_clientid-->
+    <g id="link_clientid_iterate_found_clientid">
+      <path d="M147.5,386.5779 C147.5,420.1179 147.5,490.3479 147.5,527.9379 " fill="none" id="clientid_iterate-to-found_clientid" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="147.5,532.6079,151.5,523.6079,147.5,527.6079,143.5,523.6079,147.5,532.6079" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="79" x="148.5" y="431.2349">found a lease</text>
+    </g>
+    <!--link found_clientid to hasAddressReservation-->
+    <g id="link_found_clientid_hasAddressReservation">
+      <path d="M147.5,573.7479 C147.5,598.3879 147.5,642.9479 147.5,681.0479 C147.5,681.0479 147.5,681.0479 147.5,920.6079 C147.5,966.8079 270.91,986.2379 367.03,994.3679 " fill="none" id="found_clientid-to-hasAddressReservation" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="371.81,994.7679,363.1721,990.0364,366.8272,994.3539,362.5097,998.0089,371.81,994.7679" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link clientid_iterate to hwaddr_lookup-->
+    <g id="link_clientid_iterate_hwaddr_lookup">
+      <path d="M182.5,386.8379 C215.25,404.3879 261.96,428.6879 281.5,435.3379 C326.59,450.6879 377.94,461.6679 422.55,469.2579 " fill="none" id="clientid_iterate-to-hwaddr_lookup" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="427.3,470.0579,419.0851,464.625,422.3688,469.2313,417.7626,472.515,427.3,470.0579" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="278" x="282.5" y="431.2349">not found by client id, try by hardware address</text>
+    </g>
+    <!--link hwaddr_lookup to hasAddressReservation-->
+    <g id="link_hwaddr_lookup_hasAddressReservation">
+      <path d="M640.43,496.0879 C717.9,510.0979 809.5,543.2979 809.5,622.0079 C809.5,622.0079 809.5,622.0079 809.5,920.6079 C809.5,966.8079 686.09,986.2379 589.97,994.3679 " fill="none" id="hwaddr_lookup-to-hasAddressReservation" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="585.19,994.7679,594.4903,998.0089,590.1728,994.3539,593.8279,990.0364,585.19,994.7679" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="126" x="810.5" y="805.5049">no hardware address</text>
+    </g>
+    <!--link hwaddr_lookup to hwaddr_iterate-->
+    <g id="link_hwaddr_lookup_hwaddr_iterate">
+      <path d="M512.39,504.8079 C483.64,529.4279 433.44,572.4079 402.47,598.9179 " fill="none" id="hwaddr_lookup-to-hwaddr_iterate" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="398.83,602.0379,408.2726,599.2383,402.6333,598.7922,403.0794,593.153,398.83,602.0379" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link hwaddr_iterate to hwaddr_iterate-->
+    <g id="link_hwaddr_iterate_hwaddr_iterate">
+      <path d="M550.89,613.4979 C571.83,615.2279 585.5,618.3979 585.5,623.0079 C585.5,627.1579 574.46,630.1379 557.04,631.9479 " fill="none" id="hwaddr_iterate-to-hwaddr_iterate" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="552.4,632.3879,561.7285,635.547,557.379,631.9301,560.9959,627.5806,552.4,632.3879" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="176" x="591.5" y="628.4049">no lease or client id mismatch</text>
+    </g>
+    <!--link hwaddr_iterate to found_hwaddr-->
+    <g id="link_hwaddr_iterate_found_hwaddr">
+      <path d="M371.1,642.9179 C366.53,662.5579 359.36,693.3979 354.32,715.0579 " fill="none" id="hwaddr_iterate-to-found_hwaddr" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="353.24,719.7079,359.168,711.8429,354.3685,714.8369,351.3745,710.0374,353.24,719.7079" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="79" x="365.5" y="687.4449">found a lease</text>
+    </g>
+    <!--link found_hwaddr to hasAddressReservation-->
+    <g id="link_found_hwaddr_hasAddressReservation">
+      <path d="M358.06,761.0579 C381.21,807.0079 440.27,924.2479 466.09,975.5179 " fill="none" id="found_hwaddr-to-hasAddressReservation" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="468.25,979.7879,467.7902,969.9498,466.0082,975.3186,460.6394,973.5366,468.25,979.7879" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link hwaddr_iterate to hasAddressReservation-->
+    <g id="link_hwaddr_iterate_hasAddressReservation">
+      <path d="M432.33,643.0379 C473.7,660.8879 522.5,692.1179 522.5,740.0779 C522.5,740.0779 522.5,740.0779 522.5,920.6079 C522.5,941.1679 511.11,961.3979 499.91,976.3179 " fill="none" id="hwaddr_iterate-to-hasAddressReservation" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="497.07,979.9679,505.7564,975.326,500.1427,976.0235,499.4452,970.4098,497.07,979.9679" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="60" x="523.5" y="854.5049">not found</text>
+    </g>
+    <!--link hasAddressReservation to setAddressReservation-->
+    <g id="link_hasAddressReservation_setAddressReservation">
+      <path d="M460.74,1021.0579 C441.9,1041.1179 412.09,1072.8679 391.7,1094.5779 " fill="none" id="hasAddressReservation-to-setAddressReservation" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="388.28,1098.2079,397.3611,1094.3956,391.7068,1094.5669,391.5355,1088.9127,388.28,1098.2079" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="20" x="431.5" y="1065.5749">yes</text>
+    </g>
+    <!--link hasAddressReservation to pool-->
+    <g id="link_hasAddressReservation_pool">
+      <path d="M495.7,1020.7579 C517.49,1046.6879 550.63,1095.3879 536.5,1138.7479 C529.65,1159.7679 514.91,1179.8579 502,1194.5879 " fill="none" id="hasAddressReservation-to-pool" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="498.72,1198.2379,507.7062,1194.207,502.0577,1194.5151,501.7496,1188.8666,498.72,1198.2379" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="212" x="540.5" y="1124.6149">no or not check in the taken branch</text>
+    </g>
+    <!--link setAddressReservation to pool-->
+    <g id="link_setAddressReservation_pool">
+      <path d="M390.52,1139.1279 C408.31,1155.1279 433.88,1178.1379 452.87,1195.2279 " fill="none" id="setAddressReservation-to-pool" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="456.42,1198.4179,452.4062,1189.4241,452.7035,1195.0731,447.0545,1195.3704,456.42,1198.4179" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link pool to pool_iterate-->
+    <g id="link_pool_pool_iterate">
+      <path d="M440.13,1239.1879 C406.79,1255.6179 358.5,1279.4179 323.58,1296.6279 " fill="none" id="pool-to-pool_iterate" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="319.45,1298.6679,329.2909,1298.271,323.9335,1296.4547,325.7497,1291.0974,319.45,1298.6679" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link pool to allocate-->
+    <g id="link_pool_allocate">
+      <path d="M557.89,1239.2379 C589.58,1251.1179 622.9,1270.0379 641.5,1299.8179 C650.7,1314.5379 645.43,1321.9679 641.5,1338.8879 C628.27,1395.8279 621.1,1412.1779 583.5,1456.9479 C564.11,1480.0379 536.68,1500.0079 514.18,1514.1679 " fill="none" id="pool-to-allocate" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="510.16,1516.6579,519.9161,1515.3094,514.408,1514.0207,515.6966,1508.5126,510.16,1516.6579" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="188" x="634.5" y="1383.7849">pool check is not in all branches</text>
+    </g>
+    <!--link pool_iterate to pool_iterate-->
+    <g id="link_pool_iterate_pool_iterate">
+      <path d="M412.93,1310.7779 C433.5,1312.0679 447.5,1314.9279 447.5,1319.3479 C447.5,1323.3279 436.2,1326.0379 418.99,1327.4879 " fill="none" id="pool_iterate-to-pool_iterate" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="414.44,1327.8179,423.7123,1331.1382,419.4262,1327.4465,423.118,1323.1603,414.44,1327.8179" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="182" x="453.5" y="1324.7449">address not in an allowed pool</text>
+    </g>
+    <!--link pool_iterate to inAllowedPool-->
+    <g id="link_pool_iterate_inAllowedPool">
+      <path d="M279.5,1339.2579 C279.5,1358.8179 279.5,1389.4779 279.5,1411.1179 " fill="none" id="pool_iterate-to-inAllowedPool" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="279.5,1416.0079,283.5,1407.0079,279.5,1411.0079,275.5,1407.0079,279.5,1416.0079" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="158" x="280.5" y="1383.7849">address in an allowed pool</text>
+    </g>
+    <!--link pool_iterate to allocate-->
+    <g id="link_pool_iterate_allocate">
+      <path d="M405.43,1339.2479 C421.34,1346.3379 436.03,1355.9279 447.5,1368.8879 C482.63,1408.5679 481.73,1475.1879 478.08,1511.3279 " fill="none" id="pool_iterate-to-allocate" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="477.55,1516.2079,482.5033,1507.6953,478.0928,1511.2375,474.5506,1506.8269,477.55,1516.2079" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="95" x="479.5" y="1442.8149">no allowed pool</text>
+    </g>
+    <!--link inAllowedPool to allocate-->
+    <g id="link_inAllowedPool_allocate">
+      <path d="M317.1,1457.3279 C349.64,1473.6879 396.7,1497.3579 430.89,1514.5579 " fill="none" id="inAllowedPool-to-allocate" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="435.33,1516.7879,429.0787,1509.1773,430.8607,1514.5461,425.4919,1516.3281,435.33,1516.7879" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link allocate to allocate_iterate-->
+    <g id="link_allocate_allocate_iterate">
+      <path d="M399.66,1557.3979 C383.63,1564.4479 368.06,1574.0279 356.5,1587.0179 C346.18,1598.6179 341.42,1615.4079 339.25,1629.3479 " fill="none" id="allocate-to-allocate_iterate" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="338.63,1634.0279,343.778,1625.6316,339.2871,1629.0713,335.8474,1624.5803,338.63,1634.0279" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="228" x="357.5" y="1601.9149">start from preferred (last used) subnet</text>
+    </g>
+    <!--link allocate to getHRmode-->
+    <g id="link_allocate_getHRmode">
+      <path d="M552.86,1556.5279 C567.72,1563.5779 581.43,1573.3879 590.5,1587.0179 C646.76,1671.5379 572.93,1796.9279 537.05,1848.8479 " fill="none" id="allocate-to-getHRmode" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="534.36,1852.6879,542.7993,1847.6107,537.2283,1848.5924,536.2465,1843.0214,534.36,1852.6879" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="182" x="605.5" y="1719.9849">allocation is not in all branches</text>
+    </g>
+    <!--link allocate_iterate to allocate_iterate-->
+    <g id="link_allocate_iterate_allocate_iterate">
+      <path d="M437.88,1644.9279 C458.07,1646.0979 472.5,1649.6479 472.5,1655.5579 C472.5,1660.8179 461.06,1664.2079 444.29,1665.7079 " fill="none" id="allocate_iterate-to-allocate_iterate" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="439.39,1666.0679,448.6623,1669.3882,444.3762,1665.6965,448.068,1661.4103,439.39,1666.0679" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="92" x="478.5" y="1660.9549">no free address</text>
+    </g>
+    <!--link allocate_iterate to allocated-->
+    <g id="link_allocate_iterate_allocated">
+      <path d="M348.58,1675.4579 C360.18,1695.2779 378.46,1726.4779 391.17,1748.1579 " fill="none" id="allocate_iterate-to-allocated" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="393.66,1752.4179,392.5601,1742.6307,391.1318,1748.1042,385.6582,1746.6758,393.66,1752.4179" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="122" x="377.5" y="1719.9849">found a free address</text>
+    </g>
+    <!--link allocated to getHRmode-->
+    <g id="link_allocated_getHRmode">
+      <path d="M427.48,1793.5279 C446.09,1809.5379 472.83,1832.5479 492.69,1849.6279 " fill="none" id="allocated-to-getHRmode" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="496.44,1852.8479,492.2264,1843.9459,492.6498,1849.5869,487.0088,1850.0103,496.44,1852.8479" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link getHRmode to checkHRmode-->
+    <g id="link_getHRmode_checkHRmode">
+      <path d="M519.5,1893.5979 C519.5,1908.9279 519.5,1930.6779 519.5,1947.4979 " fill="none" id="getHRmode-to-checkHRmode" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="519.5,1952.3979,523.5,1943.3979,519.5,1947.3979,515.5,1943.3979,519.5,1952.3979" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link checkHRmode to global-->
+    <g id="link_checkHRmode_global">
+      <path d="M499.95,1993.6679 C479.12,2013.8179 446.11,2045.7479 423.66,2067.4579 " fill="none" id="checkHRmode-to-global" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="420.13,2070.8779,429.3782,2067.4911,423.7221,2067.3999,423.8133,2061.7437,420.13,2070.8779" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="20" x="467.5" y="2038.1849">yes</text>
+    </g>
+    <!--link checkHRmode to bySubnet-->
+    <g id="link_checkHRmode_bySubnet">
+      <path d="M539.05,1993.6679 C559.88,2013.8179 592.89,2045.7479 615.34,2067.4579 " fill="none" id="checkHRmode-to-bySubnet" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="618.87,2070.8779,615.1867,2061.7437,615.2779,2067.3999,609.6218,2067.4911,618.87,2070.8779" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="16" x="587.5" y="2038.1849">no</text>
+    </g>
+    <!--link global to return-->
+    <g id="link_global_return">
+      <path d="M398,2111.5979 C397.82,2126.2979 399.86,2146.5079 410.5,2160.3579 C419.21,2171.6979 431.16,2180.4579 443.95,2187.2079 " fill="none" id="global-to-return" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="448.12,2189.2979,441.859,2181.6953,443.6479,2187.0618,438.2813,2188.8507,448.12,2189.2979" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="179" x="411.5" y="2156.2549">return global host reservation</text>
+    </g>
+    <!--link bySubnet to return-->
+    <g id="link_bySubnet_return">
+      <path d="M630.17,2111.5779 C622.32,2126.0679 610.05,2146.0179 595.5,2160.3579 C585.35,2170.3579 572.79,2179.3379 560.79,2186.7779 " fill="none" id="bySubnet-to-return" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="556.61,2189.2979,566.3825,2188.0735,560.8912,2186.715,562.2497,2181.2237,556.61,2189.2979" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="184" x="611.5" y="2156.2549">return subnet host reservation</text>
+    </g>
+    <text fill="#888888" font-family="sans-serif" font-size="10" lengthAdjust="spacing" textLength="620" x="155.25" y="2245.1158">Only the initial lookup is always performed: other occasions to change the subnet so the current host are only in some branches</text>
+    <!--SRC=[bLR1Rjim3BtxAuYUMc0fDc27eOSEnGOinGuhsWye59k9XJfI82aDylUZH5cMR2TfBuP4yZrIbFHa9rs7KE-DGUMMsZhulVprzFuThl-YW6-tFsw_tbILs90NhbxsAuKENh33sacjha1O88yv3Y7ajnpcDBWMmOPeRA8vO2owbsXEo2NPwqxwiO0EXKLOQmFI9RDiVWOqJsNpscdzjjybXaU7HZW4hK1qdJwad3Om9PQIH3Bgp0fMnm7BbGM6jTwhvhNdcL_7LhYwbMh3C2w_FOYcCPyilXMcEGY3uB5eRSvqUGLb6Ldrp53KBbIV0-Y3vbtuhOwb2_l0lkV1TIBl3Cde29oXUhIXxfv3gb1MxCjEwuxhyQEFTF0WNHk24-f2q_h4FZIlMge7fdxACtjRxLCBK7Z8cYoYumCr5l6NgejXyJJc1IPNWluPeAs_t_b-R7N3XMxGBP_zBD-1SoZOT7ebuZRKBTPl8xnFop4J0iuOV1-fCeIlZYm-2V2CRczKhrpp81DYgYf852mMzuNmPEFW6ylAQ4un55HSNhW3fJDjqBjmYAV0-wdSZ0qm4qJyuUOksB6W599khkXepqaJA7VO_nak8YlbYQY2eTVMQkHUyEfcx_Si_RGHBcR8vV8B-CwJPQnVLOa_dPrxV15-FnR3SWgJ0ERb-vC_3h2LDZHzmf1woeuJ7OtES_sS8JwzzDZLQZuYdkbPx17j6LHGjj23S98SNsAlj5vudNX31IiZ53LYFa5FKWMcVfRw7wraxYM9iWLZJ6H3LXc4C6QYWdCE674IGQ_BFRHy54PeWXTwdU4lOyl2bIw3Izuyk4get9ejmJfXQ5EDtiBEu1f9lnguxWJfrzvYSnDbCESXeYJGVX7iyPjmeekJjFEbqAhM1eTBDOLbk5n2Pb6ieiDBCfGS131x8x8nO_YTu2CxTlRA7-gjOgXtiBgJEGvEl3PL8fW3dNXpAhhDcfe0_rHt33T2AkaaqKV5aVwfFOWZ_IAWeH-qBJPte2dGWAvhOOd3-gUwReNQ8Fy8SohBlsJ5m-MLJVjCj95MRt7OoVy0]-->
+  </g>
+</svg>

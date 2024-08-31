@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -38,10 +38,13 @@ unordered_set<string> CommandCreator::ha_commands6_ = {
 };
 
 ConstElementPtr
-CommandCreator::createDHCPDisable(const unsigned int max_period,
+CommandCreator::createDHCPDisable(const unsigned int origin_id,
+                                  const unsigned int max_period,
                                   const HAServerType& server_type) {
     ElementPtr args;
     args = Element::createMap();
+    args->set("origin-id", Element::create(origin_id));
+    // Add for backward compatibility with Kea 2.4.0 and earlier.
     args->set("origin", Element::create("ha-partner"));
     // max-period is optional. A value of 0 means that it is not specified.
     if (max_period > 0) {
@@ -53,9 +56,12 @@ CommandCreator::createDHCPDisable(const unsigned int max_period,
 }
 
 ConstElementPtr
-CommandCreator::createDHCPEnable(const HAServerType& server_type) {
+CommandCreator::createDHCPEnable(const unsigned int origin_id,
+                                 const HAServerType& server_type) {
     ElementPtr args;
     args = Element::createMap();
+    args->set("origin-id", Element::create(origin_id));
+    // Add for backward compatibility with Kea 2.4.0 and earlier.
     args->set("origin", Element::create("ha-partner"));
     ConstElementPtr command = config::createCommand("dhcp-enable", args);
     insertService(command, server_type);
@@ -63,15 +69,21 @@ CommandCreator::createDHCPEnable(const HAServerType& server_type) {
 }
 
 ConstElementPtr
-CommandCreator::createHAReset(const HAServerType& server_type) {
-    ConstElementPtr command = config::createCommand("ha-reset");
+CommandCreator::createHAReset(const std::string& server_name,
+                              const HAServerType& server_type) {
+    auto args = Element::createMap();
+    args->set("server-name", Element::create(server_name));
+    ConstElementPtr command = config::createCommand("ha-reset", args);
     insertService(command, server_type);
     return (command);
 }
 
 ConstElementPtr
-CommandCreator::createHeartbeat(const HAServerType& server_type) {
-    ConstElementPtr command = config::createCommand("ha-heartbeat");
+CommandCreator::createHeartbeat(const std::string& server_name,
+                                const HAServerType& server_type) {
+    auto args = Element::createMap();
+    args->set("server-name", Element::create(server_name));
+    ConstElementPtr command = config::createCommand("ha-heartbeat", args);
     insertService(command, server_type);
     return (command);
 }
@@ -81,6 +93,7 @@ CommandCreator::createLease4Update(const Lease4& lease4) {
     ElementPtr lease_as_json = lease4.toElement();
     insertLeaseExpireTime(lease_as_json);
     lease_as_json->set("force-create", Element::create(true));
+    lease_as_json->set("origin", Element::create("ha-partner"));
     ConstElementPtr command = config::createCommand("lease4-update", lease_as_json);
     insertService(command, HAServerType::DHCPv4);
     return (command);
@@ -90,6 +103,7 @@ ConstElementPtr
 CommandCreator::createLease4Delete(const Lease4& lease4) {
     ElementPtr lease_as_json = lease4.toElement();
     insertLeaseExpireTime(lease_as_json);
+    lease_as_json->set("origin", Element::create("ha-partner"));
     ConstElementPtr command = config::createCommand("lease4-del", lease_as_json);
     insertService(command, HAServerType::DHCPv4);
     return (command);
@@ -130,18 +144,24 @@ CommandCreator::createLease4GetPage(const Lease4Ptr& last_lease4,
 ConstElementPtr
 CommandCreator::createLease6BulkApply(const Lease6CollectionPtr& leases,
                                       const Lease6CollectionPtr& deleted_leases) {
+    ElementPtr leases_list = Element::createList();
     ElementPtr deleted_leases_list = Element::createList();
-    for (auto lease = deleted_leases->begin(); lease != deleted_leases->end();
-         ++lease) {
-        ElementPtr lease_as_json = (*lease)->toElement();
+    for (auto const& lease : *deleted_leases) {
+        ElementPtr lease_as_json = lease->toElement();
         insertLeaseExpireTime(lease_as_json);
-        deleted_leases_list->add(lease_as_json);
+        // If the deleted lease is in the released state it means that it
+        // should be preserved in the database. It is treated as released
+        // but can be re-allocated to the same client later (lease affinity).
+        // Such a lease should be updated by the partner rather than deleted.
+        if (lease->state_ == Lease6::STATE_RELEASED) {
+            leases_list->add(lease_as_json);
+        } else {
+            deleted_leases_list->add(lease_as_json);
+        }
     }
 
-    ElementPtr leases_list = Element::createList();
-    for (auto lease = leases->begin(); lease != leases->end();
-         ++lease) {
-        ElementPtr lease_as_json = (*lease)->toElement();
+    for (auto const& lease : *leases) {
+        ElementPtr lease_as_json = lease->toElement();
         insertLeaseExpireTime(lease_as_json);
         leases_list->add(lease_as_json);
     }
@@ -149,6 +169,7 @@ CommandCreator::createLease6BulkApply(const Lease6CollectionPtr& leases,
     ElementPtr args = Element::createMap();
     args->set("deleted-leases", deleted_leases_list);
     args->set("leases", leases_list);
+    args->set("origin", Element::create("ha-partner"));
 
     ConstElementPtr command = config::createCommand("lease6-bulk-apply", args);
     insertService(command, HAServerType::DHCPv6);
@@ -175,6 +196,7 @@ CommandCreator::createLease6BulkApply(LeaseUpdateBacklog& leases) {
     ElementPtr args = Element::createMap();
     args->set("deleted-leases", deleted_leases_list);
     args->set("leases", leases_list);
+    args->set("origin", Element::create("ha-partner"));
 
     ConstElementPtr command = config::createCommand("lease6-bulk-apply", args);
     insertService(command, HAServerType::DHCPv6);
@@ -186,6 +208,7 @@ CommandCreator::createLease6Update(const Lease6& lease6) {
     ElementPtr lease_as_json = lease6.toElement();
     insertLeaseExpireTime(lease_as_json);
     lease_as_json->set("force-create", Element::create(true));
+    lease_as_json->set("origin", Element::create("ha-partner"));
     ConstElementPtr command = config::createCommand("lease6-update", lease_as_json);
     insertService(command, HAServerType::DHCPv6);
     return (command);
@@ -195,6 +218,7 @@ ConstElementPtr
 CommandCreator::createLease6Delete(const Lease6& lease6) {
     ElementPtr lease_as_json = lease6.toElement();
     insertLeaseExpireTime(lease_as_json);
+    lease_as_json->set("origin", Element::create("ha-partner"));
     ConstElementPtr command = config::createCommand("lease6-del", lease_as_json);
     insertService(command, HAServerType::DHCPv6);
     return (command);
@@ -233,8 +257,11 @@ CommandCreator::createLease6GetPage(const Lease6Ptr& last_lease6,
 }
 
 ConstElementPtr
-CommandCreator::createMaintenanceNotify(const bool cancel, const HAServerType& server_type) {
+CommandCreator::createMaintenanceNotify(const std::string& server_name,
+                                        const bool cancel,
+                                        const HAServerType& server_type) {
     auto args = Element::createMap();
+    args->set("server-name", Element::create(server_name));
     args->set("cancel", Element::create(cancel));
     auto command = config::createCommand("ha-maintenance-notify", args);
     insertService(command, server_type);
@@ -242,8 +269,18 @@ CommandCreator::createMaintenanceNotify(const bool cancel, const HAServerType& s
 }
 
 ConstElementPtr
-CommandCreator::createSyncCompleteNotify(const HAServerType& server_type) {
-    auto command = config::createCommand("ha-sync-complete-notify");
+CommandCreator::createSyncCompleteNotify(const unsigned int origin_id,
+                                         const std::string& server_name,
+                                         const HAServerType& server_type) {
+    auto args = Element::createMap();
+    args->set("server-name", Element::create(server_name));
+    args->set("origin-id", Element::create(origin_id));
+    // Add for backward compatibility with Kea 2.5.5 to Kea 2.5.7.
+    // The origin parameter was introduced for this command in Kea 2.5.5 but
+    // renamed to origin-id to be consistent with the origin-id used in
+    // dhcp-enable and dhcp-disable commands starting from Kea 2.5.8.
+    args->set("origin", Element::create(origin_id));
+    auto command = config::createCommand("ha-sync-complete-notify", args);
     insertService(command, server_type);
     return (command);
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,7 +13,6 @@
 #include <exceptions/exceptions.h>
 
 #include <util/buffer.h>
-#include <util/time_utilities.h>
 
 #include <util/unittests/testdata.h>
 #include <util/unittests/textdata.h>
@@ -62,7 +61,7 @@ const uint16_t Message::DEFAULT_MAX_UDPSIZE;
 namespace isc {
 namespace util {
 namespace detail {
-extern int64_t (*gettimeFunction)();
+extern int64_t (*getTimeFunction)();
 }
 }
 }
@@ -80,8 +79,7 @@ protected:
                     bogus_section(static_cast<Message::Section>(
                                       Message::SECTION_ADDITIONAL + 1)),
                     tsig_ctx(TSIGKey("www.example.com:"
-                                     "SFuWd/q99SzF8Yzd1QbB9g=="))
-    {
+                                     "SFuWd/q99SzF8Yzd1QbB9g==")) {
         rrset_a = RRsetPtr(new RRset(test_name, RRClass::IN(),
                                      RRType::A(), RRTTL(3600)));
         rrset_a->addRdata(in::A("192.0.2.1"));
@@ -196,7 +194,7 @@ TEST_F(MessageTest, setEDNS) {
 
 TEST_F(MessageTest, fromWireWithTSIG) {
     // Initially there should be no TSIG
-    EXPECT_EQ(static_cast<void*>(NULL), message_parse.getTSIGRecord());
+    EXPECT_FALSE(message_parse.getTSIGRecord());
 
     // getTSIGRecord() is only valid in the parse mode.
     EXPECT_THROW(message_render.getTSIGRecord(), InvalidMessageOperation);
@@ -207,7 +205,7 @@ TEST_F(MessageTest, fromWireWithTSIG) {
         0x21, 0xce, 0x6c, 0x6f, 0xff, 0x1e, 0x9e, 0xf3
     };
     const TSIGRecord* tsig_rr = message_parse.getTSIGRecord();
-    ASSERT_NE(static_cast<void*>(NULL), tsig_rr);
+    ASSERT_TRUE(tsig_rr);
     EXPECT_EQ(Name("www.example.com"), tsig_rr->getName());
     EXPECT_EQ(85, tsig_rr->getLength()); // see TSIGRecordTest.getLength
     EXPECT_EQ(TSIGKey::HMACMD5_NAME(), tsig_rr->getRdata().getAlgorithm());
@@ -218,18 +216,18 @@ TEST_F(MessageTest, fromWireWithTSIG) {
                   tsig_rr->getRdata().getMACSize());
     EXPECT_EQ(0, tsig_rr->getRdata().getError());
     EXPECT_EQ(0, tsig_rr->getRdata().getOtherLen());
-    EXPECT_EQ(static_cast<void*>(NULL), tsig_rr->getRdata().getOtherData());
+    EXPECT_FALSE(tsig_rr->getRdata().getOtherData());
 
     // If we clear the message for reuse, the recorded TSIG will be cleared.
     message_parse.clear(Message::PARSE);
-    EXPECT_EQ(static_cast<void*>(NULL), message_parse.getTSIGRecord());
+    EXPECT_FALSE(message_parse.getTSIGRecord());
 }
 
 TEST_F(MessageTest, fromWireWithTSIGCompressed) {
     // Mostly same as fromWireWithTSIG, but the TSIG owner name is compressed.
     factoryFromFile(message_parse, "message_fromWire12.wire");
     const TSIGRecord* tsig_rr = message_parse.getTSIGRecord();
-    ASSERT_NE(static_cast<void*>(NULL), tsig_rr);
+    ASSERT_TRUE(tsig_rr);
     EXPECT_EQ(Name("www.example.com"), tsig_rr->getName());
     // len(www.example.com) = 17, but when fully compressed, the length is
     // 2 bytes.  So the length of the record should be 15 bytes shorter.
@@ -280,7 +278,7 @@ TEST_F(MessageTest, getRRCount) {
     EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_ADDITIONAL));
 
     // out-of-band section ID
-    EXPECT_THROW(message_parse.getRRCount(bogus_section), OutOfRange);
+    EXPECT_THROW(message_parse.getRRCount(bogus_section), isc::OutOfRange);
 }
 
 TEST_F(MessageTest, addRRset) {
@@ -307,7 +305,7 @@ TEST_F(MessageTest, badAddRRset) {
     EXPECT_THROW(message_parse.addRRset(Message::SECTION_ANSWER,
                                         rrset_a), InvalidMessageOperation);
     // out-of-band section ID
-    EXPECT_THROW(message_render.addRRset(bogus_section, rrset_a), OutOfRange);
+    EXPECT_THROW(message_render.addRRset(bogus_section, rrset_a), isc::OutOfRange);
 
     // NULL RRset
     EXPECT_THROW(message_render.addRRset(Message::SECTION_ANSWER, RRsetPtr()),
@@ -327,15 +325,15 @@ TEST_F(MessageTest, hasRRset) {
                                          RRClass::IN(), RRType::A()));
     // RR class doesn't match
     EXPECT_FALSE(message_render.hasRRset(Message::SECTION_ANSWER, test_name,
-                                        RRClass::CH(), RRType::A()));
+                                         RRClass::CH(), RRType::A()));
     // RR type doesn't match
     EXPECT_FALSE(message_render.hasRRset(Message::SECTION_ANSWER, test_name,
-                                        RRClass::IN(), RRType::AAAA()));
+                                         RRClass::IN(), RRType::AAAA()));
 
     // out-of-band section ID
     EXPECT_THROW(message_render.hasRRset(bogus_section, test_name,
                                          RRClass::IN(), RRType::A()),
-                 OutOfRange);
+                 isc::OutOfRange);
 
     // Repeat the checks having created an RRset of the appropriate type.
 
@@ -356,16 +354,16 @@ TEST_F(MessageTest, hasRRset) {
     RRsetPtr rrs5(new RRset(test_name, RRClass::IN(), RRType::AAAA(), RRTTL(5)));
     EXPECT_FALSE(message_render.hasRRset(Message::SECTION_ANSWER, rrs4));
 
-    EXPECT_THROW(message_render.hasRRset(bogus_section, rrs1), OutOfRange);
+    EXPECT_THROW(message_render.hasRRset(bogus_section, rrs1), isc::OutOfRange);
 }
 
 TEST_F(MessageTest, removeRRset) {
     message_render.addRRset(Message::SECTION_ANSWER, rrset_a);
     message_render.addRRset(Message::SECTION_ANSWER, rrset_aaaa);
     EXPECT_TRUE(message_render.hasRRset(Message::SECTION_ANSWER, test_name,
-        RRClass::IN(), RRType::A()));
+                                        RRClass::IN(), RRType::A()));
     EXPECT_TRUE(message_render.hasRRset(Message::SECTION_ANSWER, test_name,
-        RRClass::IN(), RRType::AAAA()));
+                                        RRClass::IN(), RRType::AAAA()));
     EXPECT_EQ(4, message_render.getRRCount(Message::SECTION_ANSWER));
 
     // Locate the AAAA RRset and remove it and any associated RRSIGs
@@ -377,9 +375,9 @@ TEST_F(MessageTest, removeRRset) {
     message_render.removeRRset(Message::SECTION_ANSWER, i);
 
     EXPECT_TRUE(message_render.hasRRset(Message::SECTION_ANSWER, test_name,
-        RRClass::IN(), RRType::A()));
+                                        RRClass::IN(), RRType::A()));
     EXPECT_FALSE(message_render.hasRRset(Message::SECTION_ANSWER, test_name,
-        RRClass::IN(), RRType::AAAA()));
+                                         RRClass::IN(), RRType::AAAA()));
     EXPECT_EQ(2, message_render.getRRCount(Message::SECTION_ANSWER));
 }
 
@@ -402,16 +400,16 @@ TEST_F(MessageTest, clearAnswerSection) {
     message_render.addRRset(Message::SECTION_ANSWER, rrset_a);
     message_render.addRRset(Message::SECTION_ANSWER, rrset_aaaa);
     ASSERT_TRUE(message_render.hasRRset(Message::SECTION_ANSWER, test_name,
-        RRClass::IN(), RRType::A()));
+                                        RRClass::IN(), RRType::A()));
     ASSERT_TRUE(message_render.hasRRset(Message::SECTION_ANSWER, test_name,
-        RRClass::IN(), RRType::AAAA()));
+                                        RRClass::IN(), RRType::AAAA()));
     ASSERT_EQ(4, message_render.getRRCount(Message::SECTION_ANSWER));
 
     message_render.clearSection(Message::SECTION_ANSWER);
     EXPECT_FALSE(message_render.hasRRset(Message::SECTION_ANSWER, test_name,
-        RRClass::IN(), RRType::A()));
+                                         RRClass::IN(), RRType::A()));
     EXPECT_FALSE(message_render.hasRRset(Message::SECTION_ANSWER, test_name,
-        RRClass::IN(), RRType::AAAA()));
+                                         RRClass::IN(), RRType::AAAA()));
     EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_ANSWER));
 }
 
@@ -421,16 +419,16 @@ TEST_F(MessageTest, clearAuthoritySection) {
     message_render.addRRset(Message::SECTION_AUTHORITY, rrset_a);
     message_render.addRRset(Message::SECTION_AUTHORITY, rrset_aaaa);
     ASSERT_TRUE(message_render.hasRRset(Message::SECTION_AUTHORITY, test_name,
-        RRClass::IN(), RRType::A()));
+                                        RRClass::IN(), RRType::A()));
     ASSERT_TRUE(message_render.hasRRset(Message::SECTION_AUTHORITY, test_name,
-        RRClass::IN(), RRType::AAAA()));
+                                        RRClass::IN(), RRType::AAAA()));
     ASSERT_EQ(4, message_render.getRRCount(Message::SECTION_AUTHORITY));
 
     message_render.clearSection(Message::SECTION_AUTHORITY);
     EXPECT_FALSE(message_render.hasRRset(Message::SECTION_AUTHORITY, test_name,
-        RRClass::IN(), RRType::A()));
+                                         RRClass::IN(), RRType::A()));
     EXPECT_FALSE(message_render.hasRRset(Message::SECTION_AUTHORITY, test_name,
-        RRClass::IN(), RRType::AAAA()));
+                                         RRClass::IN(), RRType::AAAA()));
     EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_AUTHORITY));
 }
 
@@ -440,16 +438,16 @@ TEST_F(MessageTest, clearAdditionalSection) {
     message_render.addRRset(Message::SECTION_ADDITIONAL, rrset_a);
     message_render.addRRset(Message::SECTION_ADDITIONAL, rrset_aaaa);
     ASSERT_TRUE(message_render.hasRRset(Message::SECTION_ADDITIONAL, test_name,
-        RRClass::IN(), RRType::A()));
+                                        RRClass::IN(), RRType::A()));
     ASSERT_TRUE(message_render.hasRRset(Message::SECTION_ADDITIONAL, test_name,
-        RRClass::IN(), RRType::AAAA()));
+                                        RRClass::IN(), RRType::AAAA()));
     ASSERT_EQ(4, message_render.getRRCount(Message::SECTION_ADDITIONAL));
 
     message_render.clearSection(Message::SECTION_ADDITIONAL);
     EXPECT_FALSE(message_render.hasRRset(Message::SECTION_ADDITIONAL, test_name,
-        RRClass::IN(), RRType::A()));
+                                         RRClass::IN(), RRType::A()));
     EXPECT_FALSE(message_render.hasRRset(Message::SECTION_ADDITIONAL, test_name,
-        RRClass::IN(), RRType::AAAA()));
+                                         RRClass::IN(), RRType::AAAA()));
     EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_ADDITIONAL));
 }
 
@@ -458,21 +456,21 @@ TEST_F(MessageTest, badClearSection) {
     EXPECT_THROW(message_parse.clearSection(Message::SECTION_QUESTION),
                  InvalidMessageOperation);
     // attempt of clearing out-of-range section
-    EXPECT_THROW(message_render.clearSection(bogus_section), OutOfRange);
+    EXPECT_THROW(message_render.clearSection(bogus_section), isc::OutOfRange);
 }
 
 TEST_F(MessageTest, badBeginSection) {
     // valid cases are tested via other tests
     EXPECT_THROW(message_render.beginSection(Message::SECTION_QUESTION),
                  InvalidMessageSection);
-    EXPECT_THROW(message_render.beginSection(bogus_section), OutOfRange);
+    EXPECT_THROW(message_render.beginSection(bogus_section), isc::OutOfRange);
 }
 
 TEST_F(MessageTest, badEndSection) {
     // valid cases are tested via other tests
     EXPECT_THROW(message_render.endSection(Message::SECTION_QUESTION),
                  InvalidMessageSection);
-    EXPECT_THROW(message_render.endSection(bogus_section), OutOfRange);
+    EXPECT_THROW(message_render.endSection(bogus_section), isc::OutOfRange);
 }
 
 TEST_F(MessageTest, appendSection) {
@@ -480,7 +478,7 @@ TEST_F(MessageTest, appendSection) {
 
     // Section check
     EXPECT_THROW(target.appendSection(bogus_section, message_render),
-                 OutOfRange);
+                 isc::OutOfRange);
 
     // Make sure nothing is copied if there is nothing to copy
     target.appendSection(Message::SECTION_QUESTION, message_render);
@@ -506,19 +504,19 @@ TEST_F(MessageTest, appendSection) {
     target.appendSection(Message::SECTION_ANSWER, message_render);
     EXPECT_EQ(2, target.getRRCount(Message::SECTION_ANSWER));
     EXPECT_TRUE(target.hasRRset(Message::SECTION_ANSWER, test_name,
-        RRClass::IN(), RRType::A()));
+                                RRClass::IN(), RRType::A()));
 
     target.appendSection(Message::SECTION_AUTHORITY, message_render);
     EXPECT_EQ(2, target.getRRCount(Message::SECTION_AUTHORITY));
     EXPECT_TRUE(target.hasRRset(Message::SECTION_AUTHORITY, test_name,
-        RRClass::IN(), RRType::A()));
+                                RRClass::IN(), RRType::A()));
 
     target.appendSection(Message::SECTION_ADDITIONAL, message_render);
     EXPECT_EQ(4, target.getRRCount(Message::SECTION_ADDITIONAL));
     EXPECT_TRUE(target.hasRRset(Message::SECTION_ADDITIONAL, test_name,
-        RRClass::IN(), RRType::A()));
+                                RRClass::IN(), RRType::A()));
     EXPECT_TRUE(target.hasRRset(Message::SECTION_ADDITIONAL, test_name,
-        RRClass::IN(), RRType::AAAA()));
+                                RRClass::IN(), RRType::AAAA()));
 
     // One more test, test to see if the section gets added, not replaced
     Message source2(Message::RENDER);
@@ -526,10 +524,9 @@ TEST_F(MessageTest, appendSection) {
     target.appendSection(Message::SECTION_ANSWER, source2);
     EXPECT_EQ(4, target.getRRCount(Message::SECTION_ANSWER));
     EXPECT_TRUE(target.hasRRset(Message::SECTION_ANSWER, test_name,
-        RRClass::IN(), RRType::A()));
+                                RRClass::IN(), RRType::A()));
     EXPECT_TRUE(target.hasRRset(Message::SECTION_ANSWER, test_name,
-        RRClass::IN(), RRType::AAAA()));
-
+                                RRClass::IN(), RRType::AAAA()));
 }
 
 TEST_F(MessageTest, parseHeader) {
@@ -637,7 +634,7 @@ TEST_F(MessageTest, fromWireShortBuffer) {
     // fromWire() should throw an exception while parsing the trimmed RR.
     UnitTestUtil::readWireData("message_fromWire22.wire", received_data);
     InputBuffer buffer(&received_data[0], received_data.size() - 1);
-    EXPECT_THROW(message_parse.fromWire(buffer), InvalidBufferPosition);
+    EXPECT_THROW(message_parse.fromWire(buffer), isc::OutOfRange);
 }
 
 TEST_F(MessageTest, fromWireCombineRRs) {
@@ -861,8 +858,7 @@ commonTSIGToWireCheck(Message& message, MessageRenderer& renderer,
                       TSIGContext& tsig_ctx, const char* const expected_file,
                       unsigned int message_flags = RD_FLAG,
                       RRType qtype = RRType::A(),
-                      const vector<const char*>* answer_data = NULL)
-{
+                      const vector<const char*>* answer_data = 0) {
     message.setOpcode(Opcode::QUERY());
     message.setRcode(Rcode::NOERROR());
     if ((message_flags & QR_FLAG) != 0) {
@@ -877,13 +873,11 @@ commonTSIGToWireCheck(Message& message, MessageRenderer& renderer,
     message.addQuestion(Question(Name("www.example.com"), RRClass::IN(),
                                  qtype));
 
-    if (answer_data != NULL) {
+    if (answer_data) {
         RRsetPtr ans_rrset(new RRset(Name("www.example.com"), RRClass::IN(),
                                      qtype, RRTTL(86400)));
-        for (vector<const char*>::const_iterator it = answer_data->begin();
-             it != answer_data->end();
-             ++it) {
-            ans_rrset->addRdata(createRdata(qtype, RRClass::IN(), *it));
+        for (auto const& it : *answer_data) {
+            ans_rrset->addRdata(createRdata(qtype, RRClass::IN(), it));
         }
         message.addRRset(Message::SECTION_ANSWER, ans_rrset);
     }
@@ -900,7 +894,7 @@ TEST_F(MessageTest, toWireWithTSIG) {
     // TSIG are tested in the tsig tests.  We only check the message contains
     // a TSIG at the end and the ARCOUNT of the header is updated.
 
-    isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4da8877a>;
 
     message_render.setQid(0x2d65);
 
@@ -914,7 +908,7 @@ TEST_F(MessageTest, toWireWithTSIG) {
 TEST_F(MessageTest, toWireWithEDNSAndTSIG) {
     // Similar to the previous test, but with an EDNS before TSIG.
     // The wire data check will confirm the ordering.
-    isc::util::detail::gettimeFunction = testGetTime<0x4db60d1f>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4db60d1f>;
 
     message_render.setQid(0x6cd);
 
@@ -957,7 +951,7 @@ const char* const long_txt4 = "0123456789abcdef0123456789abcdef0123456789abcdef0
 // QID: 0x22c2
 // Time Signed: 0x00004e179212
 TEST_F(MessageTest, toWireTSIGTruncation) {
-    isc::util::detail::gettimeFunction = testGetTime<0x4e179212>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4e179212>;
 
     // Verify a validly signed query so that we can use the TSIG context
 
@@ -982,7 +976,7 @@ TEST_F(MessageTest, toWireTSIGTruncation) {
 TEST_F(MessageTest, toWireTSIGTruncation2) {
     // Similar to the previous test, but without TSIG it wouldn't cause
     // truncation.
-    isc::util::detail::gettimeFunction = testGetTime<0x4e179212>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4e179212>;
     factoryFromFile(message_parse, "message_fromWire17.wire");
     EXPECT_EQ(TSIGError::NOERROR(),
               tsig_ctx.verify(message_parse.getTSIGRecord(),
@@ -1031,13 +1025,13 @@ TEST_F(MessageTest, toWireTSIGTruncation3) {
     EXPECT_TRUE(message_parse.getHeaderFlag(Message::HEADERFLAG_TC));
     // Note that the number of questions are 66, not 67 as we tried to add.
     EXPECT_EQ(66, message_parse.getRRCount(Message::SECTION_QUESTION));
-    EXPECT_TRUE(message_parse.getTSIGRecord() != NULL);
+    EXPECT_TRUE(message_parse.getTSIGRecord());
 }
 
 TEST_F(MessageTest, toWireTSIGNoTruncation) {
     // A boundary case that shouldn't cause truncation: the resulting
     // response message with a TSIG will be 512 bytes long.
-    isc::util::detail::gettimeFunction = testGetTime<0x4e17b38d>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4e17b38d>;
     factoryFromFile(message_parse, "message_fromWire18.wire");
     EXPECT_EQ(TSIGError::NOERROR(),
               tsig_ctx.verify(message_parse.getTSIGRecord(),

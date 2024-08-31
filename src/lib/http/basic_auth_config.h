@@ -145,10 +145,10 @@ public:
     /// @brief Clear configuration.
     virtual void clear();
 
-    /// @brief Get the content of <directory>/<file-name> regular file.
+    /// @brief Get the content of {directory}/{file-name} regular file.
     ///
     /// @param file_name The file name.
-    /// @return The content of the <directory>/<file-name> regular file.
+    /// @return The content of the {directory}/{file-name} regular file.
     std::string getFileContent(const std::string& file_name) const;
 
     /// @brief Returns the list of client configuration.

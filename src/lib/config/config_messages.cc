@@ -34,6 +34,9 @@ extern const isc::log::MessageID COMMAND_SOCKET_WRITE_FAIL = "COMMAND_SOCKET_WRI
 extern const isc::log::MessageID COMMAND_WATCH_SOCKET_CLEAR_ERROR = "COMMAND_WATCH_SOCKET_CLEAR_ERROR";
 extern const isc::log::MessageID COMMAND_WATCH_SOCKET_CLOSE_ERROR = "COMMAND_WATCH_SOCKET_CLOSE_ERROR";
 extern const isc::log::MessageID COMMAND_WATCH_SOCKET_MARK_READY_ERROR = "COMMAND_WATCH_SOCKET_MARK_READY_ERROR";
+extern const isc::log::MessageID HTTP_COMMAND_MGR_IGNORED_TLS_SETUP_CHANGES = "HTTP_COMMAND_MGR_IGNORED_TLS_SETUP_CHANGES";
+extern const isc::log::MessageID HTTP_COMMAND_MGR_SERVICE_STARTED = "HTTP_COMMAND_MGR_SERVICE_STARTED";
+extern const isc::log::MessageID HTTP_COMMAND_MGR_SERVICE_STOPPING = "HTTP_COMMAND_MGR_SERVICE_STOPPING";
 
 } // namespace config
 } // namespace isc
@@ -68,6 +71,9 @@ const char* values[] = {
     "COMMAND_WATCH_SOCKET_CLEAR_ERROR", "watch socket failed to clear: %1",
     "COMMAND_WATCH_SOCKET_CLOSE_ERROR", "watch socket failed to close: %1",
     "COMMAND_WATCH_SOCKET_MARK_READY_ERROR", "watch socket failed to mark ready: %1",
+    "HTTP_COMMAND_MGR_IGNORED_TLS_SETUP_CHANGES", "ignore a change in TLS setup of the http control socket",
+    "HTTP_COMMAND_MGR_SERVICE_STARTED", "started %1 service bound to address %2 port %3",
+    "HTTP_COMMAND_MGR_SERVICE_STOPPING", "stopping %1 service %2",
     NULL
 };
 

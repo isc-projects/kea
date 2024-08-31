@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -257,10 +257,22 @@ public:
         ///< Used while parsing content of a control-socket
         CONTROL_SOCKET,
 
+        ///< Used while parsing content of a socket-type
+        CONTROL_SOCKET_TYPE,
+
+        ///< Used while parsing content of an authentication
+        AUTHENTICATION,
+
+        ///< Used while parsing content of an authentication type
+        AUTH_TYPE,
+
+        ///< Used while parsing content of a client
+        CLIENTS,
+
         /// Used while parsing DhcpDdns/loggers structures.
         LOGGERS,
 
-        /// Used while parsing DhcpDdns/loggers/output_options structures.
+        /// Used while parsing DhcpDdns/loggers/output-options structures.
         OUTPUT_OPTIONS,
 
         /// Used while parsing DhcpDdns/ncr-protocol

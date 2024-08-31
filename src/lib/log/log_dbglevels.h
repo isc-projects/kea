@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,7 +7,7 @@
 #ifndef LOG_DBGLVLS_H
 #define LOG_DBGLVLS_H
 
-/// \file
+/// @file
 ///
 /// When a message is logged with DEBUG severity, the debug level associated
 /// with the message is also specified.  This debug level is a number
@@ -41,7 +41,7 @@
 namespace isc {
 namespace log {
 
-/// Process startup/shutdown debug messages.  Note that these are _debug_
+/// @brief Process startup/shutdown debug messages.  Note that these are _debug_
 /// messages, as other messages related to startup and shutdown may be output
 /// with another severity.  For example, when the authoritative server starts
 /// up, the "server started" message could be output at a severity of INFO.
@@ -49,15 +49,15 @@ namespace log {
 /// debug messages output at this severity.
 extern const int DBGLVL_START_SHUT;
 
-/// This debug level is reserved for logging the exchange of messages/commands
+/// @brief This debug level is reserved for logging the exchange of messages/commands
 /// between processes, including configuration messages.
 extern const int DBGLVL_COMMAND;
 
-/// This debug level is reserved for logging the details of packet handling, such
+/// @brief This debug level is reserved for logging the details of packet handling, such
 /// as dropping the packet for various reasons.
 extern const int DBGLVL_PKT_HANDLING;
 
-/// If the commands have associated data, this level is when they are printed.
+/// @brief If the commands have associated data, this level is when they are printed.
 /// This includes configuration messages.
 extern const int DBGLVL_COMMAND_DATA;
 
@@ -65,19 +65,28 @@ extern const int DBGLVL_COMMAND_DATA;
 // Depending on the exact nature of the code, modules may or may not use these
 // levels.
 
-/// Trace basic operations.
+/// @brief Trace basic operations.
 extern const int DBGLVL_TRACE_BASIC;
 
-/// Trace data associated with the basic operations.
+/// @brief Trace data associated with the basic operations.
 extern const int DBGLVL_TRACE_BASIC_DATA;
 
-/// Trace detailed operations.
+/// @brief Trace detailed operations.
 extern const int DBGLVL_TRACE_DETAIL;
 
-/// Trace data associated with detailed operations.
+/// @brief Trace data associated with detailed operations.
 extern const int DBGLVL_TRACE_DETAIL_DATA;
 
-}   // log namespace
-}   // isc namespace
+/// @brief Trace technical operations.
+extern const int DBGLVL_TRACE_TECHNICAL;
+
+/// @brief Trace data associated with technical operations.
+extern const int DBGLVL_TRACE_TECHNICAL_DATA;
+
+/// @brief The highest level of debug logging.
+extern const int DBGLVL_TRACE_MAX;
+
+}  // log namespace
+}  // isc namespace
 
 #endif // LOG_DBGLVLS_H

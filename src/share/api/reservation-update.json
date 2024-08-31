@@ -1,0 +1,50 @@
+{
+    "access": "write",
+    "avail": "2.3.7",
+    "brief": [
+        "This command updates an existing host reservation. The reservation has to include host identifiers and a subnet identifier and may include IPv4 addresses, IPv6 addresses, IPv6 prefixes, various identifiers, a class the client will be assigned to, DHCPv4 and DHCPv6 options, and more."
+    ],
+    "cmd-comment": [
+        "Note that boot-file-name, circuit-id, client-id, ip-address, next-server, and server-hostname are IPv4-specific. ip-addresses, and prefixes are IPv6-specific. Operation-target is optional; default is 'alternate'."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"reservation-update\",",
+        "    \"arguments\": {",
+        "        \"reservation\": {",
+        "            \"boot-file-name\": <string>,",
+        "            \"client-id\": <string>,",
+        "            \"circuit-id\": <string>,",
+        "            \"duid\": <string>,",
+        "            \"flex-id\": <string>,",
+        "            \"ip-address\": <string (IPv4 address)>,",
+        "            \"ip-addresses\": [ <comma-separated strings> ],",
+        "            \"hw-address\": <string>,",
+        "            \"hostname\": <string>,",
+        "            \"next-server\": <string (IPv4 address)>,",
+        "            \"option-data\": [ <comma-separated structures defining options> ],",
+        "            \"prefixes\": [ <comma-separated IPv6 prefixes> ],",
+        "            \"client-classes\": [ <comma-separated strings> ],",
+        "            \"server-hostname\": <string>,",
+        "            \"subnet-id\": <integer>,",
+        "            \"user-context\": <any valid JSON>",
+        "        },",
+        "        \"operation-target\": <string (memory, database, all, default)>",
+        "    }",
+        "}"
+    ],
+    "description": "See <xref linkend=\"cmd-reservation-update\"/>",
+    "hook": "host_cmds",
+    "name": "reservation-update",
+    "resp-syntax": [
+        "",
+        "{",
+        "    \"result\": <integer>,",
+        "    \"text\": <string>",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6"
+    ]
+}

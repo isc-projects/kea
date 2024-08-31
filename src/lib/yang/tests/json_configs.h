@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -77,7 +77,8 @@ const std::string subnetOptionsJson4 =
     "            \"space\": \"dns\",\n"
     "            \"csv-format\": false,\n"
     "            \"data\": \"12121212\",\n"
-    "            \"always-send\": false\n"
+    "            \"always-send\": false,\n"
+    "            \"never-send\": false\n"
     "          }\n"
     "        ],\n"
     "        \"pools\": [\n"
@@ -113,7 +114,8 @@ const std::string subnetOptionsJson6 =
     "                \"space\": \"dns\",\n"
     "                \"csv-format\": false,\n"
     "                \"data\": \"12121212\",\n"
-    "                \"always-send\": false\n"
+    "                \"always-send\": false,\n"
+    "                \"never-send\": false\n"
     "              }\n"
     "            ],\n"
     "            \"pool\": \"2001:db8::1:0/112\"\n"
@@ -171,4 +173,4 @@ const std::string designExampleJson =
 }  // namespace yang
 }  // namespace isc
 
-#endif // ISC_JSON_CONFIGS_H
+#endif  // ISC_JSON_CONFIGS_H

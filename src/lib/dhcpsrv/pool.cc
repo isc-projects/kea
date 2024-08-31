@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,10 +20,8 @@ namespace dhcp {
 
 Pool::Pool(Lease::Type type, const isc::asiolink::IOAddress& first,
            const isc::asiolink::IOAddress& last)
-    :id_(getNextID()), first_(first), last_(last), type_(type),
-     capacity_(0), cfg_option_(new CfgOption()), client_class_(""),
-     last_allocated_(first), last_allocated_valid_(false),
-     permutation_() {
+    : id_(0), first_(first), last_(last), type_(type), capacity_(0),
+      cfg_option_(new CfgOption()), client_class_("") {
 }
 
 bool Pool::inRange(const isc::asiolink::IOAddress& addr) const {
@@ -48,7 +46,7 @@ Pool::toText() const {
 
 Pool4::Pool4(const isc::asiolink::IOAddress& first,
              const isc::asiolink::IOAddress& last)
-:Pool(Lease::TYPE_V4, first, last) {
+    : Pool(Lease::TYPE_V4, first, last) {
     // check if specified address boundaries are sane
     if (!first.isV4() || !last.isV4()) {
         isc_throw(BadValue, "Invalid Pool4 address boundaries: not IPv4");
@@ -65,8 +63,8 @@ Pool4::Pool4(const isc::asiolink::IOAddress& first,
     capacity_ = addrsInRange(first, last);
 }
 
-Pool4::Pool4( const isc::asiolink::IOAddress& prefix, uint8_t prefix_len)
-:Pool(Lease::TYPE_V4, prefix, IOAddress("0.0.0.0")) {
+Pool4::Pool4(const isc::asiolink::IOAddress& prefix, uint8_t prefix_len)
+    : Pool(Lease::TYPE_V4, prefix, IOAddress("0.0.0.0")) {
 
     // check if the prefix is sane
     if (!prefix.isV4()) {
@@ -76,6 +74,13 @@ Pool4::Pool4( const isc::asiolink::IOAddress& prefix, uint8_t prefix_len)
     // check if the prefix length is sane
     if (prefix_len == 0 || prefix_len > 32) {
         isc_throw(BadValue, "Invalid prefix length");
+    }
+
+    IOAddress first_address = firstAddrInPrefix(prefix, prefix_len);
+    if (first_address != prefix) {
+        isc_throw(BadValue, "Invalid Pool4 address boundaries: " << prefix
+                  << " is not the first address in prefix: " << first_address
+                  << "/" << static_cast<uint32_t>(prefix_len));
     }
 
     // Let's now calculate the last address in defined pool
@@ -119,12 +124,15 @@ Pool::toElement() const {
     // Set require-client-classes
     const ClientClasses& classes = getRequiredClasses();
     if (!classes.empty()) {
-        ElementPtr class_list =Element::createList();
-        for (ClientClasses::const_iterator it = classes.cbegin();
-             it != classes.cend(); ++it) {
-            class_list->add(Element::create(*it));
+        ElementPtr class_list = Element::createList();
+        for (auto const& it : classes) {
+            class_list->add(Element::create(it));
         }
         map->set("require-client-classes", class_list);
+    }
+
+    if (id_) {
+        map->set("pool-id", Element::create(static_cast<long long>(id_)));
     }
 
     return (map);
@@ -152,7 +160,6 @@ Pool4::toElement() const {
     return (map);
 }
 
-
 Pool6::Pool6(Lease::Type type, const isc::asiolink::IOAddress& first,
              const isc::asiolink::IOAddress& last)
     : Pool(type, first, last), prefix_len_(128), pd_exclude_option_() {
@@ -162,8 +169,8 @@ Pool6::Pool6(Lease::Type type, const isc::asiolink::IOAddress& first,
         isc_throw(BadValue, "Invalid Pool6 address boundaries: not IPv6");
     }
 
-    if ( (type != Lease::TYPE_NA) && (type != Lease::TYPE_TA) &&
-         (type != Lease::TYPE_PD)) {
+    if ((type != Lease::TYPE_NA) && (type != Lease::TYPE_TA) &&
+        (type != Lease::TYPE_PD)) {
         isc_throw(BadValue, "Invalid Pool6 type: " << static_cast<int>(type)
                   << ", must be TYPE_IA, TYPE_TA or TYPE_PD");
     }
@@ -231,7 +238,6 @@ Pool6::Pool6(const asiolink::IOAddress& prefix, const uint8_t prefix_len,
 
     // If excluded prefix has been specified.
     if (!excluded_prefix.isV6Zero() && (excluded_prefix_len != 0)) {
-
         // Excluded prefix length must not be greater than 128.
         if (excluded_prefix_len > 128) {
             isc_throw(BadValue, "excluded prefix length "
@@ -244,7 +250,7 @@ Pool6::Pool6(const asiolink::IOAddress& prefix, const uint8_t prefix_len,
         if (excluded_prefix_len <= prefix_len_) {
             isc_throw(BadValue, "excluded prefix length "
                       << static_cast<unsigned>(excluded_prefix_len)
-                      << " must be lower than the delegated prefix length "
+                      << " must be longer than the delegated prefix length "
                       << static_cast<unsigned>(prefix_len_));
         }
 
@@ -301,18 +307,26 @@ Pool6::init(const Lease::Type& type,
                   << static_cast<int>(prefix_len) << ")");
     }
 
-    if ( ( (type == Lease::TYPE_NA) || (type == Lease::TYPE_TA)) &&
-         (delegated_len != 128)) {
-        isc_throw(BadValue, "For IA or TA pools, delegated prefix length must"
+    if ((type != Lease::TYPE_PD) && (delegated_len != 128)) {
+        isc_throw(BadValue, "For NA or TA pools, delegated prefix length must"
                   << " be 128.");
     }
 
     // excluded_prefix_len == 0 means there's no excluded prefix at all.
-    if (excluded_prefix_len && (excluded_prefix_len < delegated_len)) {
+    if (excluded_prefix_len && (excluded_prefix_len <= delegated_len)) {
         isc_throw(BadValue, "Excluded prefix ("
-                                << static_cast<int>(excluded_prefix_len)
-                                << ") must be longer than or equal to the delegated prefix length ("
-                                << static_cast<int>(delegated_len) << ")");
+                  << static_cast<int>(excluded_prefix_len)
+                  << ") must be longer than the delegated prefix length ("
+                  << static_cast<int>(delegated_len) << ")");
+    }
+
+    if (prefix_len != 128) {
+        IOAddress first_address = firstAddrInPrefix(prefix, prefix_len);
+        if (first_address != prefix) {
+            isc_throw(BadValue, "Invalid Pool6 address boundaries: " << prefix
+                      << " is not the first address in prefix: " << first_address
+                      << "/" << static_cast<uint32_t>(prefix_len));
+        }
     }
 
     /// @todo: We should probably implement checks against weird addresses
@@ -405,7 +419,6 @@ Pool6::toElement() const {
     return (map);
 }
 
-
 std::string
 Pool6::toText() const {
     std::ostringstream s;
@@ -420,5 +433,5 @@ Pool6::toText() const {
     return (s.str());
 }
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // namespace dhcp
+}  // namespace isc

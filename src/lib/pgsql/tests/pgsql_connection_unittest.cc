@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,6 +24,8 @@ using namespace isc;
 using namespace isc::db;
 using namespace isc::db::test;
 using namespace isc::util;
+
+using namespace std;
 
 namespace {
 
@@ -142,7 +144,9 @@ public:
     typedef std::vector<TestRow> TestRowSet;
 
     /// @brief Constructor.
-    PgSqlConnectionTest() : PgSqlBasicsTest() {};
+    PgSqlConnectionTest() : PgSqlBasicsTest() {
+        PgSqlConnection::KEA_ADMIN_ = KEA_ADMIN;
+    };
 
     /// @brief Destructor.
     virtual ~PgSqlConnectionTest() {
@@ -162,7 +166,7 @@ public:
     /// @param insert_rows Collection of rows of data to insert. Note that
     /// each row is inserted as a separate statement execution.
     void testInsert(const TestRowSet& insert_rows) {
-        for (auto row : insert_rows ) {
+        for (auto const& row : insert_rows) {
             // Set the insert parameters based on the current insert row.
             PsqlBindArray in_bindings;
             in_bindings.add(row.int_col);
@@ -193,9 +197,9 @@ public:
         TestRowSet fetched_rows;
 
         // Run the select.  The row consumption lambda should populate
-        // fetched_rows based on the the result set returned by the select.
+        // fetched_rows based on the result set returned by the select.
         conn_->selectQuery(tagged_statements[GET_BY_INT_RANGE], in_bindings,
-                           [&](PgSqlResult& r, int row) {
+                           [&](PgSqlResult& r, size_t row) {
             TestRow fetched_row;
             if (row >= expected_rows.size()) {
                 // We have too many rows.
@@ -232,13 +236,13 @@ public:
     /// In this test, the input data is a set of rows that describe
     /// which rows in the database to update and how. For each row
     /// in the set we find the record in the database with matching
-    /// int_col value and replace its text_col value with the the
+    /// int_col value and replace its text_col value with the
     /// text value from the input the row.
     ///
     /// @param update_rows Collection of rows of data to update.
     void testUpdate(const TestRowSet& update_rows) {
         size_t update_count = 0;
-        for (auto row : update_rows ) {
+        for (auto const& row : update_rows) {
             // Set the text value and where clause parameters based on the
             // this row's values.
             PsqlBindArray in_bindings;
@@ -562,4 +566,191 @@ TEST_F(PgSqlConnectionTest, savepoints) {
     TestRowSet three_rows{{1, "one"}, {2, "two"}, {3, "three"}};
     ASSERT_NO_THROW_LOG(testSelect(three_rows, 0, 10));
 }
-}; // namespace
+
+// Tests that invalid port value causes an error.
+TEST_F(PgSqlConnectionTest, portInvalid) {
+    std::string conn_str = connectionString(PGSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_USER, VALID_PASSWORD,
+                                            INVALID_PORT_1);
+    PgSqlConnection conn(DatabaseConnection::parse(conn_str));
+    EXPECT_THROW(conn.getConnParameters(), DbInvalidPort);
+}
+
+// Tests that valid connection timeout is accepted.
+TEST_F(PgSqlConnectionTest, connectionTimeout) {
+    std::string conn_str = connectionString(PGSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_USER, VALID_PASSWORD,
+                                            VALID_TIMEOUT);
+    PgSqlConnection conn(DatabaseConnection::parse(conn_str));
+    std::string parameters;
+    ASSERT_NO_THROW_LOG(parameters = conn.getConnParameters());
+    EXPECT_TRUE(parameters.find("connect_timeout = 10") != std::string::npos)
+        << "parameter not found in " << parameters;
+}
+
+// Tests that invalid timeout value type causes an error.
+TEST_F(PgSqlConnectionTest, connectionTimeoutInvalid) {
+    std::string conn_str = connectionString(PGSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_USER, VALID_PASSWORD,
+                                            INVALID_TIMEOUT_1);
+    PgSqlConnection conn(DatabaseConnection::parse(conn_str));
+    EXPECT_THROW(conn.getConnParameters(), DbInvalidTimeout);
+}
+
+// Tests that a negative connection timeout value causes an error.
+TEST_F(PgSqlConnectionTest, connectionTimeoutInvalid2) {
+    std::string conn_str = connectionString(PGSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_USER, VALID_PASSWORD,
+                                            INVALID_TIMEOUT_2);
+    PgSqlConnection conn(DatabaseConnection::parse(conn_str));
+    EXPECT_THROW(conn.getConnParameters(), DbInvalidTimeout);
+}
+
+// Tests that a zero connection timeout value causes an error.
+TEST_F(PgSqlConnectionTest, connectionTimeoutInvalid3) {
+    std::string conn_str = connectionString(PGSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_USER, VALID_PASSWORD,
+                                            INVALID_TIMEOUT_3);
+    PgSqlConnection conn(DatabaseConnection::parse(conn_str));
+    EXPECT_THROW(conn.getConnParameters(), DbInvalidTimeout);
+}
+
+// Tests that valid tcp user timeout is accepted. This parameter is
+// supported by PostgreSQL 12 and later.
+#ifdef HAVE_PGSQL_TCP_USER_TIMEOUT
+TEST_F(PgSqlConnectionTest, tcpUserTimeout) {
+    std::string conn_str = connectionString(PGSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_USER, VALID_PASSWORD,
+                                            VALID_TCP_USER_TIMEOUT);
+    PgSqlConnection conn(DatabaseConnection::parse(conn_str));
+    std::string parameters;
+    ASSERT_NO_THROW_LOG(parameters = conn.getConnParameters());
+    EXPECT_TRUE(parameters.find("tcp_user_timeout = 8000") != std::string::npos)
+        << "parameter not found in " << parameters;
+}
+#endif
+
+// Tests that a zero tcp user timeout is accepted.
+TEST_F(PgSqlConnectionTest, tcpUserTimeoutZero) {
+    std::string conn_str = connectionString(PGSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_USER, VALID_PASSWORD,
+                                            VALID_TCP_USER_TIMEOUT_ZERO);
+    PgSqlConnection conn(DatabaseConnection::parse(conn_str));
+    std::string parameters;
+    ASSERT_NO_THROW_LOG(parameters = conn.getConnParameters());
+    EXPECT_FALSE(parameters.find("tcp_user_timeout") != std::string::npos)
+        << "parameter found in " << parameters << " but expected to be gone";
+}
+
+// Tests that an invalid tcp user timeout causes an error.
+TEST_F(PgSqlConnectionTest, tcpUserTimeoutInvalid) {
+    std::string conn_str = connectionString(PGSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_USER, VALID_PASSWORD,
+                                            INVALID_TIMEOUT_1);
+    PgSqlConnection conn(DatabaseConnection::parse(conn_str));
+    EXPECT_THROW(conn.getConnParameters(), DbInvalidTimeout);
+}
+
+/// @brief Check ensureSchemaVersion when schema is not created.
+TEST_F(PgSqlConnectionTest, ensureSchemaVersionNoSchema) {
+    std::pair<uint32_t, uint32_t> version;
+    auto const parameters(DatabaseConnection::parse(validPgSQLConnectionString()));
+
+    // Make sure schema is not created.
+    destroyPgSQLSchema(/* show_err = */ false, /* force = */ true);
+    destroySchema();
+    EXPECT_THROW_MSG(version = PgSqlConnection::getVersion(parameters), DbOperationError,
+                     "unable to execute PostgreSQL statement <SELECT version, minor FROM "
+                     "schema_version;, reason: ERROR:  relation \"schema_version\" does not "
+                     "exist\nLINE 1: SELECT version, minor FROM schema_version;\n                  "
+                     "                 ^\n");
+
+    EXPECT_NO_THROW_LOG(PgSqlConnection::ensureSchemaVersion(parameters));
+
+    EXPECT_NO_THROW_LOG(version = PgSqlConnection::getVersion(parameters));
+    EXPECT_EQ(PGSQL_SCHEMA_VERSION_MAJOR, version.first);
+    EXPECT_EQ(PGSQL_SCHEMA_VERSION_MINOR, version.second);
+}
+
+/// @brief Check ensureSchemaVersion when schema is created.
+TEST_F(PgSqlConnectionTest, ensureSchemaVersion) {
+    std::pair<uint32_t, uint32_t> version;
+    auto const parameters(DatabaseConnection::parse(validPgSQLConnectionString()));
+
+    // Make sure schema is created.
+    EXPECT_NO_THROW_LOG(version = PgSqlConnection::getVersion(parameters));
+    EXPECT_EQ(PGSQL_SCHEMA_VERSION_MAJOR, version.first);
+    EXPECT_EQ(PGSQL_SCHEMA_VERSION_MINOR, version.second);
+
+    EXPECT_NO_THROW_LOG(PgSqlConnection::ensureSchemaVersion(parameters));
+
+    EXPECT_NO_THROW_LOG(version = PgSqlConnection::getVersion(parameters));
+    EXPECT_EQ(PGSQL_SCHEMA_VERSION_MAJOR, version.first);
+    EXPECT_EQ(PGSQL_SCHEMA_VERSION_MINOR, version.second);
+}
+
+/// @brief Check initializeSchema when schema is not created.
+TEST_F(PgSqlConnectionTest, initializeSchemaNoSchema) {
+    pair<uint32_t, uint32_t> version;
+    auto const parameters(DatabaseConnection::parse(validPgSQLConnectionString()));
+
+    // Make sure schema is not created.
+    destroyPgSQLSchema(/* show_err = */ false, /* force = */ true);
+    destroySchema();
+    EXPECT_THROW_MSG(version = PgSqlConnection::getVersion(parameters), DbOperationError,
+                     "unable to execute PostgreSQL statement <SELECT version, minor FROM "
+                     "schema_version;, reason: ERROR:  relation \"schema_version\" does not "
+                     "exist\nLINE 1: SELECT version, minor FROM schema_version;\n                  "
+                     "                 ^\n");
+
+    EXPECT_NO_THROW_LOG(PgSqlConnection::initializeSchema(parameters));
+
+    EXPECT_NO_THROW_LOG(version = PgSqlConnection::getVersion(parameters));
+    EXPECT_EQ(PGSQL_SCHEMA_VERSION_MAJOR, version.first);
+    EXPECT_EQ(PGSQL_SCHEMA_VERSION_MINOR, version.second);
+}
+
+/// @brief Check initializeSchema when schema is created.
+TEST_F(PgSqlConnectionTest, initializeSchema) {
+    pair<uint32_t, uint32_t> version;
+    auto const parameters(DatabaseConnection::parse(validPgSQLConnectionString()));
+
+    // Make sure schema is created.
+    EXPECT_NO_THROW_LOG(version = PgSqlConnection::getVersion(parameters));
+    EXPECT_EQ(PGSQL_SCHEMA_VERSION_MAJOR, version.first);
+    EXPECT_EQ(PGSQL_SCHEMA_VERSION_MINOR, version.second);
+
+    EXPECT_THROW_MSG(PgSqlConnection::initializeSchema(parameters), SchemaInitializationFailed,
+                     "Expected exit code 0 for kea-admin. Got 2");
+
+    EXPECT_NO_THROW_LOG(version = PgSqlConnection::getVersion(parameters));
+    EXPECT_EQ(PGSQL_SCHEMA_VERSION_MAJOR, version.first);
+    EXPECT_EQ(PGSQL_SCHEMA_VERSION_MINOR, version.second);
+}
+
+/// @brief Check toKeaAdminParameters.
+TEST_F(PgSqlConnectionTest, toKeaAdminParameters) {
+    auto parameters(DatabaseConnection::parse(validPgSQLConnectionString()));
+    auto tupl(PgSqlConnection::toKeaAdminParameters(parameters));
+    vector<string> kea_admin_parameters(get<0>(tupl));
+    vector<string> kea_admin_env_vars(get<1>(tupl));
+    EXPECT_EQ(kea_admin_parameters,
+              vector<string>({"pgsql", "--host", "localhost", "--name", "keatest", "--password",
+                              "keatest", "--user", "keatest"}));
+    EXPECT_EQ(kea_admin_env_vars, vector<string>({}));
+
+    string const full_pgsql_connection_string(
+        connectionString(PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST_TCP, VALID_SECURE_USER,
+                         VALID_PASSWORD, VALID_TIMEOUT, VALID_READONLY_DB, VALID_CERT, VALID_KEY,
+                         VALID_CA, VALID_CIPHER));
+    parameters = DatabaseConnection::parse(full_pgsql_connection_string);
+    tupl = PgSqlConnection::toKeaAdminParameters(parameters);
+    kea_admin_parameters = get<0>(tupl);
+    kea_admin_env_vars = get<1>(tupl);
+    EXPECT_EQ(kea_admin_parameters,
+              vector<string>({"pgsql", "--host", "127.0.0.1", "--name", "keatest", "--password",
+                              "keatest", "--user", "keatest_secure"}));
+    EXPECT_EQ(kea_admin_env_vars, vector<string>({ "PGCONNECT_TIMEOUT=10" }));
+}
+
+}  // namespace

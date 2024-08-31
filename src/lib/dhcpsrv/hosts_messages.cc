@@ -13,6 +13,9 @@ extern const isc::log::MessageID HOSTS_BACKEND_REGISTER = "HOSTS_BACKEND_REGISTE
 extern const isc::log::MessageID HOSTS_CFG_ADD_HOST = "HOSTS_CFG_ADD_HOST";
 extern const isc::log::MessageID HOSTS_CFG_CACHE_HOST_DATA_SOURCE = "HOSTS_CFG_CACHE_HOST_DATA_SOURCE";
 extern const isc::log::MessageID HOSTS_CFG_CLOSE_HOST_DATA_SOURCE = "HOSTS_CFG_CLOSE_HOST_DATA_SOURCE";
+extern const isc::log::MessageID HOSTS_CFG_DEL = "HOSTS_CFG_DEL";
+extern const isc::log::MessageID HOSTS_CFG_DEL4 = "HOSTS_CFG_DEL4";
+extern const isc::log::MessageID HOSTS_CFG_DEL6 = "HOSTS_CFG_DEL6";
 extern const isc::log::MessageID HOSTS_CFG_DEL_ALL_SUBNET4 = "HOSTS_CFG_DEL_ALL_SUBNET4";
 extern const isc::log::MessageID HOSTS_CFG_DEL_ALL_SUBNET6 = "HOSTS_CFG_DEL_ALL_SUBNET6";
 extern const isc::log::MessageID HOSTS_CFG_GET_ALL = "HOSTS_CFG_GET_ALL";
@@ -60,6 +63,9 @@ extern const isc::log::MessageID HOSTS_CFG_GET_ONE_SUBNET_ID_ADDRESS6_NULL = "HO
 extern const isc::log::MessageID HOSTS_CFG_GET_ONE_SUBNET_ID_IDENTIFIER = "HOSTS_CFG_GET_ONE_SUBNET_ID_IDENTIFIER";
 extern const isc::log::MessageID HOSTS_CFG_GET_ONE_SUBNET_ID_IDENTIFIER_HOST = "HOSTS_CFG_GET_ONE_SUBNET_ID_IDENTIFIER_HOST";
 extern const isc::log::MessageID HOSTS_CFG_GET_ONE_SUBNET_ID_IDENTIFIER_NULL = "HOSTS_CFG_GET_ONE_SUBNET_ID_IDENTIFIER_NULL";
+extern const isc::log::MessageID HOSTS_CFG_UPDATE_ADD = "HOSTS_CFG_UPDATE_ADD";
+extern const isc::log::MessageID HOSTS_CFG_UPDATE_DEL4 = "HOSTS_CFG_UPDATE_DEL4";
+extern const isc::log::MessageID HOSTS_CFG_UPDATE_DEL6 = "HOSTS_CFG_UPDATE_DEL6";
 extern const isc::log::MessageID HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_ADDRESS4 = "HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_ADDRESS4";
 extern const isc::log::MessageID HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_IDENTIFIER = "HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_IDENTIFIER";
 extern const isc::log::MessageID HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_IDENTIFIER_HOST = "HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_IDENTIFIER_HOST";
@@ -85,6 +91,9 @@ const char* values[] = {
     "HOSTS_CFG_ADD_HOST", "add the host for reservations: %1",
     "HOSTS_CFG_CACHE_HOST_DATA_SOURCE", "get host cache data source: %1",
     "HOSTS_CFG_CLOSE_HOST_DATA_SOURCE", "Closing host data source: %1",
+    "HOSTS_CFG_DEL", "deleted %1 host(s) having %2 IPv6 reservation(s) for subnet id %3 and address %4",
+    "HOSTS_CFG_DEL4", "deleted %1 host(s) for subnet id %2 and identifier %3",
+    "HOSTS_CFG_DEL6", "deleted %1 host(s) having %2 IPv6 reservation(s) for subnet id %3 and identifier %4",
     "HOSTS_CFG_DEL_ALL_SUBNET4", "deleted all %1 host(s) for subnet id %2",
     "HOSTS_CFG_DEL_ALL_SUBNET6", "deleted all %1 host(s) having %2 IPv6 reservation(s) for subnet id %3",
     "HOSTS_CFG_GET_ALL", "get all hosts with reservations",
@@ -132,6 +141,9 @@ const char* values[] = {
     "HOSTS_CFG_GET_ONE_SUBNET_ID_IDENTIFIER", "get one host with %1 reservation for subnet id %2, identified by %3",
     "HOSTS_CFG_GET_ONE_SUBNET_ID_IDENTIFIER_HOST", "using subnet id %1 and identifier %2, found host: %3",
     "HOSTS_CFG_GET_ONE_SUBNET_ID_IDENTIFIER_NULL", "host not found using subnet id %1 and identifier %2",
+    "HOSTS_CFG_UPDATE_ADD", "add the host for reservations: %1",
+    "HOSTS_CFG_UPDATE_DEL4", "deleted %1 host(s) for subnet id %2 and identifier %3",
+    "HOSTS_CFG_UPDATE_DEL6", "deleted %1 host(s) having %2 IPv6 reservation(s) for subnet id %3 and identifier %4",
     "HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_ADDRESS4", "trying alternate sources for host using subnet id %1 and address %2",
     "HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_IDENTIFIER", "get one host with IPv4 reservation for subnet id %1, identified by %2",
     "HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_IDENTIFIER_HOST", "using subnet id %1 and identifier %2, found in %3 host: %4",

@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,8 +8,9 @@
 
 #include <asiolink/io_address.h>
 #include <config_backend/constants.h>
-#include <dhcp/option_space.h>
 #include <database/db_exceptions.h>
+#include <dhcp/option_space.h>
+#include <dhcpsrv/timer_mgr.h>
 #include <pgsql/pgsql_exchange.h>
 #include <util/buffer.h>
 
@@ -27,7 +28,7 @@ using namespace isc::util;
 namespace isc {
 namespace dhcp {
 
-isc::asiolink::IOServicePtr PgSqlConfigBackendImpl::io_service_ = isc::asiolink::IOServicePtr();
+isc::asiolink::IOServicePtr PgSqlConfigBackendImpl::io_service_;
 
 PgSqlTaggedStatement&
 PgSqlConfigBackendImpl::getStatement(size_t /* index */) const {
@@ -70,14 +71,15 @@ PgSqlConfigBackendImpl::ScopedAuditRevision::~ScopedAuditRevision() {
     impl_->clearAuditRevision();
 }
 
-PgSqlConfigBackendImpl::PgSqlConfigBackendImpl(const DatabaseConnection::ParameterMap& parameters,
+PgSqlConfigBackendImpl::PgSqlConfigBackendImpl(const std::string& space,
+                                               const DatabaseConnection::ParameterMap& parameters,
                                                const DbCallback db_reconnect_callback,
                                                size_t last_insert_id_index)
     : conn_(parameters,
-            IOServiceAccessorPtr(new IOServiceAccessor(PgSqlConfigBackendImpl::getIOService)),
-            db_reconnect_callback), timer_name_(""),
-            audit_revision_ref_count_(0), parameters_(parameters),
-            last_insert_id_index_(last_insert_id_index) {
+            IOServiceAccessorPtr(new IOServiceAccessor(&PgSqlConfigBackendImpl::getIOService)),
+            db_reconnect_callback),
+      audit_revision_ref_count_(0), parameters_(parameters),
+      last_insert_id_index_(last_insert_id_index) {
 
     // Check TLS support.
     size_t tls(0);
@@ -101,15 +103,17 @@ PgSqlConfigBackendImpl::PgSqlConfigBackendImpl(const DatabaseConnection::Paramet
     }
 #endif
 
-    // Test schema version first.
-    std::pair<uint32_t, uint32_t> code_version(PGSQL_SCHEMA_VERSION_MAJOR, PGSQL_SCHEMA_VERSION_MINOR);
-    std::pair<uint32_t, uint32_t> db_version = PgSqlConnection::getVersion(parameters);
-    if (code_version != db_version) {
-        isc_throw(DbOpenError, "PostgreSQL schema version mismatch: need version: "
-                  << code_version.first << "." << code_version.second
-                  << " found version: " << db_version.first << "."
-                  << db_version.second);
-    }
+    // Create unique timer name per instance.
+    timer_name_ = "PgSqlConfigBackend";
+    timer_name_ += space;
+    timer_name_ += "[";
+    timer_name_ += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
+    timer_name_ += "]DbReconnectTimer";
+
+    PgSqlConnection::ensureSchemaVersion(parameters, db_reconnect_callback, timer_name_);
+
+    // Create ReconnectCtl for this connection.
+    conn_.makeReconnectCtl(timer_name_);
 
     // Open the database.
     conn_.openDatabase();
@@ -495,7 +499,7 @@ PgSqlConfigBackendImpl::createUpdateOptionDef(const db::ServerSelector& server_s
     in_bindings.addTempString(option_def->getEncapsulatedSpace());
 
     ElementPtr record_types = Element::createList();
-    for (auto field : option_def->getRecordFields()) {
+    for (auto const& field : option_def->getRecordFields()) {
         record_types->add(Element::create(static_cast<int>(field)));
     }
 
@@ -732,7 +736,7 @@ PgSqlConfigBackendImpl::getOptions(const int index,
             OptionDescriptorPtr desc = processOptionRow(universe, worker, 0);
             if (desc) {
                 // server_tag for the global option
-                ServerTag last_option_server_tag(worker.getString(12));
+                ServerTag last_option_server_tag(worker.getString(13));
                 desc->setServerTag(last_option_server_tag.get());
 
                 // If we're fetching options for a given server (explicit server
@@ -776,7 +780,8 @@ PgSqlConfigBackendImpl::getOptions(const int index,
 
 OptionDescriptorPtr
 PgSqlConfigBackendImpl::processOptionRow(const Option::Universe& universe,
-                                         PgSqlResultRowWorker& worker, size_t first_col) {
+                                         PgSqlResultRowWorker& worker,
+                                         size_t first_col) {
     // Some of the options have standard or custom definitions.
     // Depending whether the option has a definition or not a different
     // C++ class may be used to represent the option. Therefore, the
@@ -807,12 +812,21 @@ PgSqlConfigBackendImpl::processOptionRow(const Option::Universe& universe,
         persistent = worker.getBool(first_col + 5);
     }
 
+    // Check if the option is cancelled.
+    bool cancelled = false;
+    if (!worker.isColumnNull(first_col + 6)) {
+        cancelled = worker.getBool(first_col + 6);
+    }
+
     // Create option descriptor which encapsulates our option and adds
     // additional information, i.e. whether the option is persistent,
     // its option space and timestamp.
-    OptionDescriptorPtr desc = OptionDescriptor::create(option, persistent, formatted_value);
+    OptionDescriptorPtr desc = OptionDescriptor::create(option,
+                                                        persistent,
+                                                        cancelled,
+                                                        formatted_value);
     desc->space_name_ = space;
-    desc->setModificationTime(worker.getTimestamp(first_col + 11));
+    desc->setModificationTime(worker.getTimestamp(first_col + 12));
 
     // Set database id for the option.
     // @todo Can this actually ever be null and if it is, isn't that an error?
@@ -1061,9 +1075,9 @@ void
 PgSqlConfigBackendImpl::addRelayBinding(PsqlBindArray& bindings,
                                         const NetworkPtr& network) {
     ElementPtr relay_element = Element::createList();
-    const auto& addresses = network->getRelayAddresses();
+    auto const& addresses = network->getRelayAddresses();
     if (!addresses.empty()) {
-        for (const auto& address : addresses) {
+        for (auto const& address : addresses) {
             relay_element->add(Element::create(address.toText()));
         }
     }
@@ -1125,7 +1139,7 @@ PgSqlConfigBackendImpl::addOptionValueBinding(PsqlBindArray& bindings,
     if (option->formatted_value_.empty() && (opt->len() > opt->getHeaderLen())) {
         OutputBuffer buf(opt->len());
         opt->pack(buf);
-        const char* buf_ptr = static_cast<const char*>(buf.getData());
+        const uint8_t* buf_ptr = buf.getData();
         std::vector<uint8_t> blob(buf_ptr + opt->getHeaderLen(),
                                   buf_ptr + buf.getLength());
         bindings.addTempBinary(blob);

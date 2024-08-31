@@ -1,20 +1,26 @@
-// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
+#include <cc/data.h>
 #include <dhcp/classify.h>
-#include <util/strutil.h>
+#include <util/str.h>
+
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/constants.hpp>
 #include <boost/algorithm/string/split.hpp>
+
 #include <sstream>
 #include <vector>
 
 namespace isc {
 namespace dhcp {
+
+using namespace isc::data;
 
 ClientClasses::ClientClasses(const std::string& class_names)
     : container_() {
@@ -48,13 +54,25 @@ ClientClasses::contains(const ClientClass& x) const {
 std::string
 ClientClasses::toText(const std::string& separator) const {
     std::stringstream s;
-    for (const_iterator class_it = cbegin(); class_it != cend(); ++class_it) {
-        if (class_it != cbegin()) {
+    bool first = true;
+    for (auto const& class_it : *this) {
+        if (!first) {
             s << separator;
+        } else {
+            first = false;
         }
-        s << *class_it;
+        s << class_it;
     }
     return (s.str());
+}
+
+ElementPtr
+ClientClasses::toElement() const {
+    ElementPtr result(Element::createList());
+    for (auto const& c : container_) {
+        result->add(Element::create(c));
+    }
+    return (result);
 }
 
 } // end of namespace isc::dhcp

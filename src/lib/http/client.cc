@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
+#include <asiolink/io_service_thread_pool.h>
 #include <asiolink/tls_socket.h>
 #include <http/client.h>
 #include <http/http_log.h>
@@ -117,7 +118,7 @@ public:
     /// @param conn_pool Back pointer to the connection pool to which this
     /// connection belongs.
     /// @param url URL associated with this connection.
-    explicit Connection(IOService& io_service,
+    explicit Connection(const IOServicePtr& io_service,
                         const TlsContextPtr& tls_context,
                         const ConnectionPoolPtr& conn_pool,
                         const Url& url);
@@ -401,6 +402,9 @@ private:
     /// after invocation. Defaults to false.
     void closeCallback(const bool clear = false);
 
+    /// @brief A reference to the IOService that drives socket IO.
+    IOServicePtr io_service_;
+
     /// @brief Pointer to the connection pool owning this connection.
     ///
     /// This is a weak pointer to avoid circular dependency between the
@@ -414,13 +418,13 @@ private:
     TlsContextPtr tls_context_;
 
     /// @brief TCP socket to be used for this connection.
-    std::unique_ptr<TCPSocket<SocketCallback> > tcp_socket_;
+    std::shared_ptr<TCPSocket<SocketCallback>> tcp_socket_;
 
     /// @brief TLS socket to be used for this connection.
-    std::unique_ptr<TLSSocket<SocketCallback> > tls_socket_;
+    std::shared_ptr<TLSSocket<SocketCallback>> tls_socket_;
 
     /// @brief Interval timer used for detecting request timeouts.
-    IntervalTimer timer_;
+    IntervalTimerPtr timer_;
 
     /// @brief Holds currently sent request.
     HttpRequestPtr current_request_;
@@ -481,7 +485,7 @@ public:
     /// connections.
     /// @param max_url_connections maximum number of concurrent
     /// connections allowed per URL.
-    explicit ConnectionPool(IOService& io_service, size_t max_url_connections)
+    explicit ConnectionPool(const IOServicePtr& io_service, size_t max_url_connections)
         : io_service_(io_service), destinations_(), pool_mutex_(),
           max_url_connections_(max_url_connections) {
     }
@@ -514,8 +518,8 @@ public:
     /// should be processed.
     void postProcessNextRequest(const Url& url,
                                 const TlsContextPtr& tls_context) {
-        io_service_.post(std::bind(&ConnectionPool::processNextRequest,
-                                   shared_from_this(), url, tls_context));
+        io_service_->post(std::bind(&ConnectionPool::processNextRequest,
+                                    shared_from_this(), url, tls_context));
     }
 
     /// @brief Queue next request for sending to the server.
@@ -819,7 +823,7 @@ private:
         /// @param tls_context server TLS context of this destination
         /// @param max_connections maximum number of concurrent connections
         /// allowed for in the list URL
-        Destination(Url url, TlsContextPtr tls_context, size_t max_connections)
+        Destination(Url const& url, TlsContextPtr tls_context, size_t max_connections)
             : url_(url), tls_context_(tls_context),
               max_connections_(max_connections), connections_(), queue_(),
               last_queue_warn_time_(min_date_time), last_queue_size_(0) {
@@ -989,7 +993,7 @@ private:
         /// to be growing it will emit a warning log.
         ///
         /// @param desc RequestDescriptor to queue.
-        void pushRequest(RequestDescriptor desc) {
+        void pushRequest(RequestDescriptor const& desc) {
             queue_.push(desc);
             size_t size = queue_.size();
             // If the queue size is larger than the threshold and growing, issue a
@@ -1104,8 +1108,8 @@ private:
         }
     }
 
-    /// @brief A reference to the IOService that drives socket IO.
-    IOService& io_service_;
+    /// @brief A pointer to the IOService that drives socket IO.
+    IOServicePtr io_service_;
 
     /// @brief Map of Destinations by URL and TLS context.
     std::map<DestinationDescriptor, DestinationPtr> destinations_;
@@ -1117,16 +1121,16 @@ private:
     size_t max_url_connections_;
 };
 
-Connection::Connection(IOService& io_service,
+Connection::Connection(const IOServicePtr& io_service,
                        const TlsContextPtr& tls_context,
                        const ConnectionPoolPtr& conn_pool,
                        const Url& url)
-    : conn_pool_(conn_pool), url_(url), tls_context_(tls_context),
-      tcp_socket_(), tls_socket_(), timer_(io_service),
-      current_request_(), current_response_(), parser_(),
-      current_callback_(), buf_(), input_buf_(), current_transid_(0),
-      close_callback_(), started_(false), need_handshake_(false),
-      closed_(false) {
+    : io_service_(io_service), conn_pool_(conn_pool), url_(url),
+      tls_context_(tls_context), tcp_socket_(), tls_socket_(),
+      timer_(new IntervalTimer(io_service)), current_request_(),
+      current_response_(), parser_(), current_callback_(), buf_(), input_buf_(),
+      current_transid_(0), close_callback_(), started_(false),
+      need_handshake_(false), closed_(false) {
     if (!tls_context) {
         tcp_socket_.reset(new asiolink::TCPSocket<SocketCallback>(io_service));
     } else {
@@ -1315,7 +1319,7 @@ Connection::closeInternal() {
     closeCallback(true);
 
     closed_ = true;
-    timer_.cancel();
+    timer_->cancel();
     if (tcp_socket_) {
         tcp_socket_->close();
     }
@@ -1383,7 +1387,7 @@ Connection::terminateInternal(const boost::system::error_code& ec,
     HttpResponsePtr response;
     if (isTransactionOngoing()) {
 
-        timer_.cancel();
+        timer_->cancel();
         if (tcp_socket_) {
             tcp_socket_->cancel();
         }
@@ -1460,8 +1464,8 @@ Connection::terminateInternal(const boost::system::error_code& ec,
 void
 Connection::scheduleTimer(const long request_timeout) {
     if (request_timeout > 0) {
-        timer_.setup(std::bind(&Connection::timerCallback, this), request_timeout,
-                     IntervalTimer::ONE_SHOT);
+        timer_->setup(std::bind(&Connection::timerCallback, this), request_timeout,
+                      IntervalTimer::ONE_SHOT);
     }
 }
 
@@ -1648,7 +1652,7 @@ Connection::sendCallback(const uint64_t transid,
     }
 
     // Sending is in progress, so push back the timeout.
-    scheduleTimer(timer_.getInterval());
+    scheduleTimer(timer_->getInterval());
 
     // If any data have been sent, remove it from the buffer and only leave the
     // portion that still has to be sent.
@@ -1680,8 +1684,9 @@ Connection::receiveCallback(const uint64_t transid,
 
         // EAGAIN and EWOULDBLOCK don't indicate an error in this case. All
         // other errors should terminate the transaction.
-        } if ((ec.value() != boost::asio::error::try_again) &&
-              (ec.value() != boost::asio::error::would_block)) {
+        }
+        if ((ec.value() != boost::asio::error::try_again) &&
+            (ec.value() != boost::asio::error::would_block)) {
             terminate(ec);
             return;
 
@@ -1693,7 +1698,7 @@ Connection::receiveCallback(const uint64_t transid,
     }
 
     // Receiving is in progress, so push back the timeout.
-    scheduleTimer(timer_.getInterval());
+    scheduleTimer(timer_->getInterval());
 
     if (runParser(ec, length)) {
         doReceive(transid);
@@ -1781,20 +1786,20 @@ public:
     /// the thread pool threads will be created and started, with the
     /// operational state being RUNNING.  Applicable only when thread-pool size
     /// is greater than zero.
-    HttpClientImpl(IOService& io_service, size_t thread_pool_size = 0,
+    HttpClientImpl(const IOServicePtr& io_service, size_t thread_pool_size = 0,
                    bool defer_thread_start = false)
         : thread_pool_size_(thread_pool_size), thread_pool_() {
         if (thread_pool_size_ > 0) {
             // Create our own private IOService.
             thread_io_service_.reset(new IOService());
 
-            // Create the thread pool.
-            thread_pool_.reset(new HttpThreadPool(thread_io_service_, thread_pool_size_,
-                                                  defer_thread_start));
-
             // Create the connection pool. Note that we use the thread_pool_size
             // as the maximum connections per URL value.
-            conn_pool_.reset(new ConnectionPool(*thread_io_service_, thread_pool_size_));
+            conn_pool_.reset(new ConnectionPool(thread_io_service_, thread_pool_size_));
+
+            // Create the thread pool.
+            thread_pool_.reset(new IoServiceThreadPool(thread_io_service_, thread_pool_size_,
+                                                       defer_thread_start));
 
             LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC, HTTP_CLIENT_MT_STARTED)
                      .arg(thread_pool_size_);
@@ -1839,6 +1844,11 @@ public:
         // Stop the thread pool.
         if (thread_pool_) {
             thread_pool_->stop();
+        }
+
+        if (thread_io_service_) {
+            thread_io_service_->stopAndPoll();
+            thread_io_service_->stop();
         }
     }
 
@@ -1942,17 +1952,15 @@ private:
 
     /// @brief Pool of threads used to service connections in multi-threaded
     /// mode.
-    HttpThreadPoolPtr thread_pool_;
+    IoServiceThreadPoolPtr thread_pool_;
 };
 
-HttpClient::HttpClient(IOService& io_service, size_t thread_pool_size,
-                       bool defer_thread_start /* = false */) {
-    if (thread_pool_size > 0) {
-        if (!MultiThreadingMgr::instance().getMode()) {
-            isc_throw(InvalidOperation,
-                      "HttpClient thread_pool_size must be zero"
-                      "when Kea core multi-threading is disabled");
-        }
+HttpClient::HttpClient(const IOServicePtr& io_service, bool multi_threading_enabled,
+                       size_t thread_pool_size, bool defer_thread_start) {
+    if (!multi_threading_enabled && thread_pool_size) {
+        isc_throw(InvalidOperation,
+                  "HttpClient thread_pool_size must be zero "
+                  "when Kea core multi-threading is disabled");
     }
 
     impl_.reset(new HttpClientImpl(io_service, thread_pool_size,
@@ -1960,6 +1968,7 @@ HttpClient::HttpClient(IOService& io_service, size_t thread_pool_size,
 }
 
 HttpClient::~HttpClient() {
+    impl_->stop();
 }
 
 void

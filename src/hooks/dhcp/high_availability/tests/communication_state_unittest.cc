@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,6 +15,8 @@
 #include <dhcp/dhcp6.h>
 #include <exceptions/exceptions.h>
 #include <http/date_time.h>
+#include <testutils/gtest_utils.h>
+#include <testutils/test_to_element.h>
 #include <util/multi_threading_mgr.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -30,10 +32,13 @@ using namespace isc::dhcp;
 using namespace isc::ha;
 using namespace isc::ha::test;
 using namespace isc::http;
+using namespace isc::test;
 using namespace isc::util;
 
 using namespace boost::posix_time;
 using namespace boost::gregorian;
+
+using namespace std;
 
 
 namespace {
@@ -58,6 +63,20 @@ public:
 
     /// @brief Verifies that the partner state is set and retrieved correctly.
     void partnerStateTest();
+
+    /// @brief Verifies that the partner state is set to unavailable.
+    ///
+    /// Whether or not the function under test also resets the clock skew is
+    /// tested in a different test case.
+    void partnerStateUnavailableTest();
+
+    /// @brief Verifies that the duration since the partner state time is updated
+    /// correctly when the partner has certain state.
+    void partnerStateTimeExplicitStateTest();
+
+    /// @brief Verifies that the duration since the partner state time is updated
+    /// correctly when the partner is unavailable.
+    void partnerStateTimeUnavailableTest();
 
     /// @brief Verifies that the partner's scopes are set and retrieved correctly.
     void partnerScopesTest();
@@ -94,9 +113,17 @@ public:
     /// clockSkewShouldWarn and clockSkewShouldTerminate functions.
     void clockSkewTest();
 
+    /// @brief This test verifies that the clock skew calculations take into
+    /// account whether or not the partner is available.
+    void clockSkewPartnerUnavailableTest();
+
     /// @brief This test verifies that the clock skew value is formatted correctly
     /// for logging.
     void logFormatClockSkewTest();
+
+    /// @brief This test verifies that too many rejected lease updates cause
+    /// the service termination.
+    void rejectedLeaseUpdatesTerminateTest();
 
     /// @brief Tests that the communication state report is correct.
     void getReportTest();
@@ -104,12 +131,41 @@ public:
     /// @brief Tests unusual values used to create the report.
     void getReportDefaultValuesTest();
 
+    /// @brief Tests the report when clock is skewed.
+    void getReportWithClockSkewTest();
+
     /// @brief Tests that unsent updates count can be incremented and fetched.
     void getUnsentUpdateCountTest();
 
     /// @brief Tests that unsent updates count from partner can be set and
     /// a difference from previous value detected.
     void hasPartnerNewUnsentUpdatesTest();
+
+    /// @brief Test that gathering rejected leases works fine in DHCPv4 case.
+    void reportRejectedLeasesV4Test();
+
+    /// @brief Test that rejected leases are cleared after reporting respective
+    /// successful leases.
+    void reportSuccessfulLeasesV4Test();
+
+    /// @brief Test that invalid values are not accepted when reporting
+    /// rejected leases.
+    void reportRejectedLeasesV4InvalidValuesTest();
+
+    /// @brief Test that gathering rejected leases works fine in the DHCPv6 case.
+    void reportRejectedLeasesV6Test();
+
+    /// @brief Test that rejected leases are cleared after reporting respective
+    /// successful leases.
+    void reportSuccessfulLeasesV6Test();
+
+    /// @brief Test that invalid values are not accepted when reporting
+    /// rejected leases.
+    void reportRejectedLeasesV6InvalidValuesTest();
+
+    /// @brief Test that old rejected lease updates are discarded while
+    /// getting the rejected lease updates count.
+    void getRejectedLeaseUpdatesCountFromContainerTest();
 
     /// @brief Returns test heartbeat implementation.
     ///
@@ -166,6 +222,78 @@ CommunicationStateTest::partnerStateTest() {
 
     // An attempt to set unsupported value should result in exception.
     EXPECT_THROW(state_.setPartnerState("unsupported"), BadValue);
+}
+
+// Verifies that the duration since the partner state time is updated
+// correctly when the partner has certain state.
+void
+CommunicationStateTest::partnerStateTimeExplicitStateTest() {
+    // Initially the partner state time is not set.
+    time_duration duration_since_partner_time = state_.getDurationSincePartnerStateTime();
+    EXPECT_TRUE(duration_since_partner_time.is_not_a_date_time());
+
+    // Set new partner state. The state time should be set close
+    // to the current time.
+    state_.setPartnerState("waiting");
+
+    // Sleep for a short period of time to ensure that the returned
+    // duration is non-zero.
+    usleep(10);
+
+    // The duration must be set.
+    time_duration duration_since_waiting = state_.getDurationSincePartnerStateTime();
+    ASSERT_FALSE(duration_since_waiting.is_not_a_date_time());
+
+    // Check that the partner time is within 10 seconds range from
+    // the current time. 10 seconds difference may sound too high but
+    // this test is not about the precision. It is more important that
+    // it is stable. In the HA state machine the duration of 10 seconds
+    // is relatively low anyway.
+    EXPECT_GT(duration_since_waiting.fractional_seconds(), 0);
+    EXPECT_LT(duration_since_waiting.seconds(), 10);
+}
+
+// Verifies that the duration since the partner state time is updated
+// correctly when the partner is unavailable.
+void
+CommunicationStateTest::partnerStateTimeUnavailableTest() {
+    // Initially the partner state time is not set.
+    time_duration duration_since_partner_time = state_.getDurationSincePartnerStateTime();
+    EXPECT_TRUE(duration_since_partner_time.is_not_a_date_time());
+
+    // Set new partner state. The state time should be set close
+    // to the current time.
+    state_.setPartnerUnavailable();
+
+    // Sleep for a short period of time to ensure that the returned
+    // duration is non-zero.
+    usleep(10);
+
+    // The duration must be set.
+    time_duration duration_since_unavail = state_.getDurationSincePartnerStateTime();
+    ASSERT_FALSE(duration_since_unavail.is_not_a_date_time());
+
+    // Check that the partner time is within 10 seconds range from
+    // the current time. 10 seconds difference may sound too high but
+    // this test is not about the precision. It is more important that
+    // it is stable. In the HA state machine the duration of 10 seconds
+    // is relatively low anyway.
+    EXPECT_GT(duration_since_unavail.fractional_seconds(), 0);
+    EXPECT_LT(duration_since_unavail.seconds(), 10);
+}
+
+// Verifies that the partner state is set to unavailable.
+void
+CommunicationStateTest::partnerStateUnavailableTest() {
+    // Initially the state is unknown.
+    EXPECT_LT(state_.getPartnerState(), 0);
+
+    // Set a valid state initially.
+    state_.setPartnerState("hot-standby");
+    EXPECT_EQ(HA_HOT_STANDBY_ST, state_.getPartnerState());
+
+    state_.setPartnerUnavailable();
+    EXPECT_EQ(HA_UNAVAILABLE_ST, state_.getPartnerState());
 }
 
 // Verifies that the partner's scopes are set and retrieved correctly.
@@ -525,6 +653,28 @@ CommunicationStateTest::clockSkewTest() {
     EXPECT_TRUE(state_.clockSkewShouldTerminate());
 }
 
+// This test verifies that the clock skew calculations take into
+// account whether or not the partner is available.
+void
+CommunicationStateTest::clockSkewPartnerUnavailableTest() {
+    // Default clock skew is 0.
+    EXPECT_FALSE(state_.clockSkewShouldWarn());
+    EXPECT_FALSE(state_.clockSkewShouldTerminate());
+
+    // Move the clock skew beyond the 60s limit. The alarms about the
+    // too high clock skew should be activated.
+    state_.setPartnerTime(HttpDateTime().rfc1123Format());
+    state_.clock_skew_ += boost::posix_time::time_duration(0, 1, 5);
+    EXPECT_TRUE(state_.clockSkewShouldWarn());
+    EXPECT_TRUE(state_.clockSkewShouldTerminate());
+
+    // Mark the partner as unavailable. It should reset the clock skew
+    // because we don't know the actual partner's time at the moment.
+    state_.setPartnerUnavailable();
+    EXPECT_FALSE(state_.clockSkewShouldWarn());
+    EXPECT_FALSE(state_.clockSkewShouldTerminate());
+}
+
 // This test verifies that the clock skew value is formatted correctly
 // for logging.
 void
@@ -585,6 +735,19 @@ CommunicationStateTest::logFormatClockSkewTest() {
     EXPECT_EQ(expected, log);
 }
 
+void
+CommunicationStateTest::rejectedLeaseUpdatesTerminateTest() {
+    EXPECT_FALSE(state_.rejectedLeaseUpdatesShouldTerminate());
+    // Reject several lease updates but do not exceed the limit.
+    for (auto i = 0; i < 9; ++i) {
+        ASSERT_NO_THROW(state_.reportRejectedLeaseUpdate(createMessage4(DHCPDISCOVER, i, i, 0)));
+    }
+    EXPECT_FALSE(state_.rejectedLeaseUpdatesShouldTerminate());
+    // Add one more. It should exceed the limit.
+    ASSERT_NO_THROW(state_.reportRejectedLeaseUpdate(createMessage4(DHCPDISCOVER, 9, 9, 0)));
+    EXPECT_TRUE(state_.rejectedLeaseUpdatesShouldTerminate());
+}
+
 // Tests that the communication state report is correct.
 void
 CommunicationStateTest::getReportTest() {
@@ -605,8 +768,13 @@ CommunicationStateTest::getReportTest() {
     ASSERT_NO_THROW(state_.analyzeMessage(createMessage4(DHCPDISCOVER, 1, 0, 15)));
 
     // Get the report.
-    auto report = state_.getReport();
+    ElementPtr report;
+    ASSERT_NO_THROW_LOG(report = state_.getReport());
     ASSERT_TRUE(report);
+
+    // Check that system-time exists and that format is parsable by ptime.
+    // Do not check exact value because it can be time-sensitive.
+    checkThatTimeIsParsable(report, /* null_expected = */ true);
 
     // Compare with the expected output.
     std::string expected = "{"
@@ -618,16 +786,22 @@ CommunicationStateTest::getReportTest() {
         "    \"connecting-clients\": 2,"
         "    \"unacked-clients\": 1,"
         "    \"unacked-clients-left\": 10,"
-        "    \"analyzed-packets\": 2"
+        "    \"analyzed-packets\": 2,"
+        "    \"clock-skew\": null"
         "}";
-    EXPECT_TRUE(isEquivalent(Element::fromJSON(expected), report));
+    expectEqWithDiff(Element::fromJSON(expected), report);
 }
 
 // Tests unusual values used to create the report.
 void
 CommunicationStateTest::getReportDefaultValuesTest() {
-    auto report = state_.getReport();
+    ElementPtr report;
+    ASSERT_NO_THROW_LOG(report = state_.getReport());
     ASSERT_TRUE(report);
+
+    // Check that system-time exists and that format is parsable by ptime.
+    // Do not check exact value because it can be time-sensitive.
+    checkThatTimeIsParsable(report, /* null_expected = */ true);
 
     // Compare with the expected output.
     std::string expected = "{"
@@ -639,9 +813,46 @@ CommunicationStateTest::getReportDefaultValuesTest() {
         "    \"connecting-clients\": 0,"
         "    \"unacked-clients\": 0,"
         "    \"unacked-clients-left\": 0,"
-        "    \"analyzed-packets\": 0"
+        "    \"analyzed-packets\": 0,"
+        "    \"clock-skew\": null"
         "}";
-    EXPECT_TRUE(isEquivalent(Element::fromJSON(expected), report));
+    expectEqWithDiff(Element::fromJSON(expected), report);
+}
+
+// Tests that the communication state report is correct when clock is skewed.
+void
+CommunicationStateTest::getReportWithClockSkewTest() {
+    auto const now(microsec_clock::universal_time());
+    // RFC 1123 format
+    // Is freed automatically by std::locale. See [localization.locales.locale#6] and
+    // [localization.locales.locale.facet#2] in the C++ standard.
+    time_facet* facet(new time_facet("%a, %d %b %Y %H:%M:%S GMT"));
+    stringstream ss;
+    ss.imbue(std::locale(std::locale(), facet));
+    ss << now + seconds(2);
+    state_.setPartnerTime(ss.str());
+    ElementPtr report;
+    ASSERT_NO_THROW_LOG(report = state_.getReport());
+    ASSERT_TRUE(report);
+
+    // Check that system-time exists and that format is parsable by ptime.
+    // Do not check exact value because it can be time-sensitive.
+    checkThatTimeIsParsable(report, /* null_expected = */ false);
+
+    // Compare with the expected output.
+    std::string expected = R"({
+        "age": 0,
+        "in-touch": false,
+        "last-scopes": [ ],
+        "last-state": "",
+        "communication-interrupted": false,
+        "connecting-clients": 0,
+        "unacked-clients": 0,
+        "unacked-clients-left": 0,
+        "analyzed-packets": 0,
+        "clock-skew": 2
+    })";
+    expectEqWithDiff(Element::fromJSON(expected), report);
 }
 
 void
@@ -686,6 +897,200 @@ CommunicationStateTest::hasPartnerNewUnsentUpdatesTest() {
     EXPECT_FALSE(state_.hasPartnerNewUnsentUpdates());
 }
 
+void
+CommunicationStateTest::reportRejectedLeasesV4Test() {
+    // Initially, there should be no rejected leases.
+    EXPECT_EQ(0, state_.getRejectedLeaseUpdatesCount());
+
+    // Reject lease update.
+    auto msg = createMessage4(DHCPREQUEST, 1, 0, 0);
+    state_.reportRejectedLeaseUpdate(msg);
+    EXPECT_EQ(1, state_.getRejectedLeaseUpdatesCount());
+
+    // Reject another lease update.
+    msg = createMessage4(DHCPREQUEST, 2, 0, 0);
+    state_.reportRejectedLeaseUpdate(msg);
+    EXPECT_EQ(2, state_.getRejectedLeaseUpdatesCount());
+
+    // Reject a lease with a short (zero) lease lifetime.
+    // This lease should be discarded when we call the
+    // getRejectedLeaseUpdatesCount().
+    msg = createMessage4(DHCPREQUEST, 3, 0, 0);
+    state_.reportRejectedLeaseUpdate(msg, 0);
+    EXPECT_EQ(2, state_.getRejectedLeaseUpdatesCount());
+
+    // Reject lease update for a client using the same MAC
+    // address but different client identifier. It should
+    // be treated as a different lease.
+    msg = createMessage4(DHCPREQUEST, 2, 1, 0);
+    state_.reportRejectedLeaseUpdate(msg);
+    EXPECT_EQ(3, state_.getRejectedLeaseUpdatesCount());
+
+    // Clear rejected leases and make sure the counter
+    // is now 0.
+    state_.clearRejectedLeaseUpdates();
+    EXPECT_EQ(0, state_.getRejectedLeaseUpdatesCount());
+}
+
+void
+CommunicationStateTest::reportSuccessfulLeasesV4Test() {
+    // Initially, there should be no rejected leases.
+    EXPECT_EQ(0, state_.getRejectedLeaseUpdatesCount());
+    auto msg0 = createMessage4(DHCPREQUEST, 1, 0, 0);
+    // Reject lease update.
+    state_.reportRejectedLeaseUpdate(msg0);
+    EXPECT_EQ(1, state_.getRejectedLeaseUpdatesCount());
+    // Reject another lease update.
+    auto msg1 = createMessage4(DHCPREQUEST, 2, 0, 0);
+    state_.reportRejectedLeaseUpdate(msg1);
+    EXPECT_EQ(2, state_.getRejectedLeaseUpdatesCount());
+    // Report successful lease for the first message.
+    // It should reduce the number of rejected lease
+    // updates.
+    EXPECT_TRUE(state_.reportSuccessfulLeaseUpdate(msg0));
+    EXPECT_EQ(1, state_.getRejectedLeaseUpdatesCount());
+    // Report successful lease update for another message.
+    auto msg2 = createMessage4(DHCPREQUEST, 1, 1, 0);
+    EXPECT_FALSE(state_.reportSuccessfulLeaseUpdate(msg2));
+    EXPECT_EQ(1, state_.getRejectedLeaseUpdatesCount());
+    // There should be no rejected lease updates.
+    EXPECT_TRUE(state_.reportSuccessfulLeaseUpdate(msg1));
+    EXPECT_EQ(0, state_.getRejectedLeaseUpdatesCount());
+}
+
+void
+CommunicationStateTest::reportRejectedLeasesV4InvalidValuesTest() {
+    // Populate one valid update. Without it our functions under test
+    // would return early.
+    state_.reportRejectedLeaseUpdate(createMessage4(DHCPREQUEST, 1, 0, 0));
+    // Using DHCPv6 message in the DHCPv4 context is a programming
+    // error and deserves an exception.
+    auto msg = createMessage6(DHCPV6_REQUEST, 1, 0);
+    EXPECT_THROW(state_.reportRejectedLeaseUpdate(msg), BadValue);
+    EXPECT_THROW(state_.reportSuccessfulLeaseUpdate(msg), BadValue);
+}
+
+void
+CommunicationStateTest::reportRejectedLeasesV6Test() {
+    // Initially, there should be no rejected leases.
+    EXPECT_EQ(0, state6_.getRejectedLeaseUpdatesCount());
+
+    // Reject lease update.
+    auto msg = createMessage6(DHCPV6_REQUEST, 1, 0);
+    state6_.reportRejectedLeaseUpdate(msg);
+    EXPECT_EQ(1, state6_.getRejectedLeaseUpdatesCount());
+
+    // Reject another lease update.
+    msg = createMessage6(DHCPV6_REQUEST, 2, 0);
+    state6_.reportRejectedLeaseUpdate(msg);
+    EXPECT_EQ(2, state6_.getRejectedLeaseUpdatesCount());
+
+    // Reject a lease with a short (zero) lease lifetime.
+    // This lease should be discarded when we call the
+    // getRejectedLeaseUpdatesCount().
+    msg = createMessage6(DHCPV6_REQUEST, 3, 0);
+    state6_.reportRejectedLeaseUpdate(msg, 0);
+    EXPECT_EQ(2, state6_.getRejectedLeaseUpdatesCount());
+
+    // Reject it again. It should not affect the counter.
+    msg = createMessage6(DHCPV6_REQUEST, 2, 0);
+    state6_.reportRejectedLeaseUpdate(msg);
+    EXPECT_EQ(2, state6_.getRejectedLeaseUpdatesCount());
+
+    // Clear rejected lease updates and make sure they
+    // are now 0.
+    state6_.clearRejectedLeaseUpdates();
+    EXPECT_EQ(0, state6_.getRejectedLeaseUpdatesCount());
+}
+
+void
+CommunicationStateTest::reportSuccessfulLeasesV6Test() {
+    // Initially, there should be no rejected leases.
+    EXPECT_EQ(0, state6_.getRejectedLeaseUpdatesCount());
+    // Reject lease update.
+    auto msg0 = createMessage6(DHCPV6_SOLICIT, 1, 0);
+    EXPECT_TRUE(state6_.reportRejectedLeaseUpdate(msg0));
+    EXPECT_EQ(1, state6_.getRejectedLeaseUpdatesCount());
+    // Reject another lease update.
+    auto msg1 = createMessage6(DHCPV6_SOLICIT, 2, 0);
+    EXPECT_TRUE(state6_.reportRejectedLeaseUpdate(msg1));
+    EXPECT_EQ(2, state6_.getRejectedLeaseUpdatesCount());
+    // Report successful lease for the first message.
+    // It should reduce the number of rejected lease
+    // updates.
+    EXPECT_TRUE(state6_.reportSuccessfulLeaseUpdate(msg0));
+    EXPECT_EQ(1, state6_.getRejectedLeaseUpdatesCount());
+    // Report successful lease update for a lease that wasn't
+    // rejected. It should not affect the counter.
+    auto msg2 = createMessage6(DHCPV6_SOLICIT, 3, 0);
+    EXPECT_FALSE(state6_.reportSuccessfulLeaseUpdate(msg2));
+    EXPECT_EQ(1, state6_.getRejectedLeaseUpdatesCount());
+    // Report successful lease update for the last lease.
+    // The counter should now be 0.
+    EXPECT_TRUE(state6_.reportSuccessfulLeaseUpdate(msg1));
+    EXPECT_EQ(0, state6_.getRejectedLeaseUpdatesCount());
+}
+
+void
+CommunicationStateTest::reportRejectedLeasesV6InvalidValuesTest() {
+    // Populate one valid update. Without it our functions under test
+    // would return early.
+    state6_.reportRejectedLeaseUpdate(createMessage6(DHCPV6_REQUEST, 1, 0));
+    // Using DHCPv4 message in the DHCPv6 context is a programming
+    // error and deserves an exception.
+    auto msg0 = createMessage4(DHCPREQUEST, 1, 1, 0);
+    EXPECT_THROW(state6_.reportRejectedLeaseUpdate(msg0), BadValue);
+    EXPECT_THROW(state6_.reportSuccessfulLeaseUpdate(msg0), BadValue);
+
+    auto msg1 = createMessage6(DHCPV6_SOLICIT, 1, 0);
+    msg1->delOption(D6O_CLIENTID);
+    EXPECT_FALSE(state6_.reportRejectedLeaseUpdate(msg1));
+    EXPECT_FALSE(state6_.reportSuccessfulLeaseUpdate(msg1));
+}
+
+void
+CommunicationStateTest::getRejectedLeaseUpdatesCountFromContainerTest() {
+    // Create a simple multi index container with two indexes. The
+    // first index is on the ordinal number to distinguish between
+    // different entries. The second index is on the expire_ field
+    // that is identical to the expire_ field in the RejectedClients4
+    // and RejectedClients6 containers.
+    struct Entry {
+        int64_t ordinal_;
+        int64_t expire_;
+    };
+    typedef boost::multi_index_container<
+        Entry,
+        boost::multi_index::indexed_by<
+            boost::multi_index::ordered_unique<
+                boost::multi_index::member<Entry, int64_t,
+                                           &Entry::ordinal_>
+            >,
+            boost::multi_index::ordered_non_unique<
+                boost::multi_index::member<Entry, int64_t,
+                                           &Entry::expire_>
+            >
+        >
+    > Entries;
+    // Add many entries to the container. Odd entries have lifetime
+    // expiring in the future. Even entries have lifetimes expiring in
+    // the past.
+    Entries entries;
+    for (auto i = 0; i < 1000; ++i) {
+        entries.insert({i, time(NULL) + (i % 2 ? 100 + i : -1 - i)});
+    }
+    // Get the count of valid entries. It should remove the expiring
+    // entries.
+    auto valid_entries_count = state_.getRejectedLeaseUpdatesCountFromContainer(entries);
+    EXPECT_EQ(500, valid_entries_count);
+    EXPECT_EQ(500, entries.size());
+
+    // Validate that we removed expired entries, not the valid ones.
+    for (auto const& entry : entries) {
+        EXPECT_EQ(1, entry.ordinal_ % 2);
+    }
+}
+
 TEST_F(CommunicationStateTest, partnerStateTest) {
     partnerStateTest();
 }
@@ -693,6 +1098,33 @@ TEST_F(CommunicationStateTest, partnerStateTest) {
 TEST_F(CommunicationStateTest, partnerStateTestMultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
     partnerStateTest();
+}
+
+TEST_F(CommunicationStateTest, partnerStateUnavailableTest) {
+    partnerStateUnavailableTest();
+}
+
+TEST_F(CommunicationStateTest, partnerStateUnavailableTestMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    partnerStateUnavailableTest();
+}
+
+TEST_F(CommunicationStateTest, partnerStateTimeExplicitStateTest) {
+    partnerStateTimeExplicitStateTest();
+}
+
+TEST_F(CommunicationStateTest, partnerStateTimeExplcitStateTestMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    partnerStateTimeExplicitStateTest();
+}
+
+TEST_F(CommunicationStateTest, partnerStateTimeUnavailableTest) {
+    partnerStateTimeUnavailableTest();
+}
+
+TEST_F(CommunicationStateTest, partnerStateTimeUnavailableTestMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    partnerStateTimeUnavailableTest();
 }
 
 TEST_F(CommunicationStateTest, partnerScopesTest) {
@@ -785,6 +1217,24 @@ TEST_F(CommunicationStateTest, clockSkewTestMultiThreading) {
     clockSkewTest();
 }
 
+TEST_F(CommunicationStateTest, clockSkewPartnerUnavailableTest) {
+    clockSkewPartnerUnavailableTest();
+}
+
+TEST_F(CommunicationStateTest, clockSkewPartnerUnavailableTestMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    clockSkewPartnerUnavailableTest();
+}
+
+TEST_F(CommunicationStateTest, rejectedLeaseUpdatesTerminateTest) {
+    rejectedLeaseUpdatesTerminateTest();
+}
+
+TEST_F(CommunicationStateTest, rejectedLeaseUpdatesTerminateTestMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    rejectedLeaseUpdatesTerminateTest();
+}
+
 TEST_F(CommunicationStateTest, logFormatClockSkewTest) {
     logFormatClockSkewTest();
 }
@@ -812,6 +1262,15 @@ TEST_F(CommunicationStateTest, getReportDefaultValuesTestMultiThreading) {
     getReportDefaultValuesTest();
 }
 
+TEST_F(CommunicationStateTest, getReportWithClockSkewTest) {
+    getReportWithClockSkewTest();
+}
+
+TEST_F(CommunicationStateTest, getReportWithClockSkewTestMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    getReportWithClockSkewTest();
+}
+
 TEST_F(CommunicationStateTest, getUnsentUpdateCountTest) {
     getUnsentUpdateCountTest();
 }
@@ -828,6 +1287,64 @@ TEST_F(CommunicationStateTest, hasPartnerNewUnsentUpdatesTest) {
 TEST_F(CommunicationStateTest, hasPartnerNewUnsentUpdatesTestMultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
     hasPartnerNewUnsentUpdatesTest();
+}
+
+TEST_F(CommunicationStateTest, reportRejectedLeasesV4Test) {
+    reportRejectedLeasesV4Test();
+}
+
+TEST_F(CommunicationStateTest, reportRejectedLeasesV4TestMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    reportRejectedLeasesV4Test();
+}
+
+TEST_F(CommunicationStateTest, reportSuccessfulLeasesV4Test) {
+    reportSuccessfulLeasesV4Test();
+}
+
+TEST_F(CommunicationStateTest, reportSuccessfulLeasesV4TestMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    reportSuccessfulLeasesV4Test();
+}
+
+TEST_F(CommunicationStateTest, reportRejectedLeasesV4InvalidValuesTest) {
+    reportRejectedLeasesV4InvalidValuesTest();
+}
+
+TEST_F(CommunicationStateTest, reportRejectedLeasesV4InvalidValuesTestMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    reportRejectedLeasesV4InvalidValuesTest();
+}
+
+TEST_F(CommunicationStateTest, reportRejectedLeasesV6Test) {
+    reportRejectedLeasesV6Test();
+}
+
+TEST_F(CommunicationStateTest, reportRejectedLeasesV6TestMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    reportRejectedLeasesV6Test();
+}
+
+TEST_F(CommunicationStateTest, reportSuccessfulLeasesV6Test) {
+    reportSuccessfulLeasesV6Test();
+}
+
+TEST_F(CommunicationStateTest, reportSuccessfulLeasesV6TestMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    reportSuccessfulLeasesV6Test();
+}
+
+TEST_F(CommunicationStateTest, reportRejectedLeasesV6InvalidValuesTest) {
+    reportRejectedLeasesV6InvalidValuesTest();
+}
+
+TEST_F(CommunicationStateTest, reportRejectedLeasesV6InvalidValuesTestMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    reportRejectedLeasesV6InvalidValuesTest();
+}
+
+TEST_F(CommunicationStateTest, getRejectedLeaseUpdatesCountFromContainerTest) {
+    getRejectedLeaseUpdatesCountFromContainerTest();
 }
 
 }

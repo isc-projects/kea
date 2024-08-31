@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,7 +11,6 @@
 #include <d2/d2_queue_mgr.h>
 #include <d2srv/testutils/stats_test_utils.h>
 #include <dhcp_ddns/ncr_udp.h>
-#include <util/time_utilities.h>
 
 #include <gtest/gtest.h>
 #include <algorithm>
@@ -39,7 +38,7 @@ const char *valid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
-     " \"use-conflict-resolution\" : true "
+     " \"conflict-resolution-mode\" : \"check-with-dhcid\""
      "}",
     // Valid Remove.
      "{"
@@ -51,7 +50,7 @@ const char *valid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
-     " \"use-conflict-resolution\" : true "
+     " \"conflict-resolution-mode\" : \"check-with-dhcid\""
      "}",
      // Valid Add with IPv6 address
      "{"
@@ -63,7 +62,7 @@ const char *valid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
-     " \"use-conflict-resolution\" : true "
+     " \"conflict-resolution-mode\" : \"check-with-dhcid\""
      "}"
 };
 
@@ -156,7 +155,7 @@ TEST(D2QueueMgrBasicTest, basicQueue) {
 
         // Verify the peeked entry is the one it should be.
         ASSERT_TRUE(ncr);
-        EXPECT_TRUE (*(ref_msgs[i]) == *ncr);
+        EXPECT_EQ(*(ref_msgs[i]), *ncr);
 
         // Verify that peek did not alter the queue size.
         EXPECT_EQ(VALID_MSG_CNT - i, queue_mgr->getQueueSize());
@@ -181,13 +180,13 @@ TEST(D2QueueMgrBasicTest, basicQueue) {
 
     // Verify that peekAt returns the correct entry.
     EXPECT_NO_THROW(ncr = queue_mgr->peekAt(1));
-    EXPECT_TRUE (*(ref_msgs[1]) == *ncr);
+    EXPECT_EQ(*(ref_msgs[1]), *ncr);
 
     // Verify that dequeueAt removes the correct entry.
     // Removing it, this should shift the queued entries forward by one.
     EXPECT_NO_THROW(queue_mgr->dequeueAt(1));
     EXPECT_NO_THROW(ncr = queue_mgr->peekAt(1));
-    EXPECT_TRUE (*(ref_msgs[2]) == *ncr);
+    EXPECT_EQ(*(ref_msgs[2]), *ncr);
 
     // Verify the peekAt and dequeueAt throw when given indexes beyond the end.
     EXPECT_THROW(queue_mgr->peekAt(VALID_MSG_CNT + 1), D2QueueMgrInvalidIndex);
@@ -202,39 +201,10 @@ bool checkSendVsReceived(NameChangeRequestPtr sent_ncr,
         (*sent_ncr == *received_ncr));
 }
 
-/// @brief Text fixture that allows testing a listener and sender together
-/// It derives from both the receive and send handler classes and contains
-/// and instance of UDP listener and UDP sender.
-class QueueMgrUDPTest : public virtual ::testing::Test, public D2StatTest,
-                        NameChangeSender::RequestSendHandler {
+class QueueMgrUDPTestRequestHandler : public NameChangeSender::RequestSendHandler {
 public:
-    asiolink::IOServicePtr io_service_;
-    NameChangeSenderPtr   sender_;
-    isc::asiolink::IntervalTimer test_timer_;
-    D2QueueMgrPtr queue_mgr_;
-
-    NameChangeSender::Result send_result_;
-    std::vector<NameChangeRequestPtr> sent_ncrs_;
-    std::vector<NameChangeRequestPtr> received_ncrs_;
-
-    QueueMgrUDPTest() : io_service_(new isc::asiolink::IOService()),
-                        test_timer_(*io_service_),
-                        send_result_(NameChangeSender::SUCCESS) {
-        isc::asiolink::IOAddress addr(TEST_ADDRESS);
-        // Create our sender instance. Note that reuse_address is true.
-        sender_.reset(new NameChangeUDPSender(addr, SENDER_PORT,
-                                              addr, LISTENER_PORT,
-                                              FMT_JSON, *this, 100, true));
-
-        // Set the test timeout to break any running tasks if they hang.
-        test_timer_.setup(std::bind(&QueueMgrUDPTest::testTimeoutHandler,
-                                    this),
-                          TEST_TIMEOUT);
-    }
-
-    void reset_results() {
-        sent_ncrs_.clear();
-        received_ncrs_.clear();
+    /// @brief Constructor
+    QueueMgrUDPTestRequestHandler() : send_result_(NameChangeSender::SUCCESS) {
     }
 
     /// @brief Implements the send completion handler.
@@ -243,6 +213,50 @@ public:
         // save the result and the NCR sent.
         send_result_ = result;
         sent_ncrs_.push_back(ncr);
+    }
+
+    NameChangeSender::Result send_result_;
+    std::vector<NameChangeRequestPtr> sent_ncrs_;
+};
+
+/// @brief Text fixture that allows testing a listener and sender together
+/// It derives from both the receive and send handler classes and contains
+/// and instance of UDP listener and UDP sender.
+class QueueMgrUDPTest : public virtual ::testing::Test, public D2StatTest {
+public:
+    asiolink::IOServicePtr io_service_;
+    NameChangeSenderPtr sender_;
+    isc::asiolink::IntervalTimer test_timer_;
+    D2QueueMgrPtr queue_mgr_;
+    boost::shared_ptr<QueueMgrUDPTestRequestHandler> handle_;
+    std::vector<NameChangeRequestPtr> received_ncrs_;
+
+    QueueMgrUDPTest() : io_service_(new isc::asiolink::IOService()),
+                        test_timer_(io_service_),
+                        handle_(new QueueMgrUDPTestRequestHandler()) {
+        isc::asiolink::IOAddress addr(TEST_ADDRESS);
+        // Create our sender instance. Note that reuse_address is true.
+        sender_.reset(new NameChangeUDPSender(addr, SENDER_PORT,
+                                              addr, LISTENER_PORT,
+                                              FMT_JSON, handle_, 100, true));
+
+        // Set the test timeout to break any running tasks if they hang.
+        test_timer_.setup(std::bind(&QueueMgrUDPTest::testTimeoutHandler,
+                                    this),
+                          TEST_TIMEOUT);
+    }
+
+    virtual ~QueueMgrUDPTest() {
+        sender_->stopSending();
+        queue_mgr_->stopListening();
+        test_timer_.cancel();
+        io_service_->stopAndPoll();
+        queue_mgr_->removeListener();
+    }
+
+    void reset_results() {
+        handle_->sent_ncrs_.clear();
+        received_ncrs_.clear();
     }
 
     /// @brief Handler invoked when test timeout is hit.
@@ -279,13 +293,13 @@ TEST_F (QueueMgrUDPTest, stateModel) {
     // Verify that initializing the listener moves us to INITTED state.
     isc::asiolink::IOAddress addr(TEST_ADDRESS);
     EXPECT_NO_THROW(queue_mgr_->initUDPListener(addr, LISTENER_PORT,
-                                              FMT_JSON, true));
+                                                FMT_JSON, true));
     EXPECT_EQ(D2QueueMgr::INITTED, queue_mgr_->getMgrState());
 
     // Verify that attempting to initialize the listener, from INITTED
     // is not allowed.
     EXPECT_THROW(queue_mgr_->initUDPListener(addr, LISTENER_PORT,
-                                              FMT_JSON, true),
+                                             FMT_JSON, true),
                  D2QueueMgrError);
 
     // Verify that we can enter the RUNNING from INITTED by starting the
@@ -300,7 +314,7 @@ TEST_F (QueueMgrUDPTest, stateModel) {
 
     // Stopping requires IO cancel, which result in a callback.
     // So process one event and verify we are STOPPED.
-    io_service_->run_one();
+    io_service_->runOne();
     EXPECT_EQ(D2QueueMgr::STOPPED, queue_mgr_->getMgrState());
 
     // Verify that we can re-enter the RUNNING from STOPPED by starting the
@@ -317,7 +331,7 @@ TEST_F (QueueMgrUDPTest, stateModel) {
 
     // Stopping requires IO cancel, which result in a callback.
     // So process one event and verify we are STOPPED.
-    io_service_->run_one();
+    io_service_->runOne();
     EXPECT_EQ(D2QueueMgr::STOPPED, queue_mgr_->getMgrState());
 
     // Verify that we can remove the listener in the STOPPED state and
@@ -352,14 +366,14 @@ TEST_F (QueueMgrUDPTest, liveFeed) {
 
     isc::asiolink::IOAddress addr(TEST_ADDRESS);
     ASSERT_NO_THROW(queue_mgr_->initUDPListener(addr, LISTENER_PORT,
-                                              FMT_JSON, true));
+                                                FMT_JSON, true));
     ASSERT_EQ(D2QueueMgr::INITTED, queue_mgr_->getMgrState());
 
     ASSERT_NO_THROW(queue_mgr_->startListening());
     ASSERT_EQ(D2QueueMgr::RUNNING, queue_mgr_->getMgrState());
 
     // Place the sender into sending state.
-    ASSERT_NO_THROW(sender_->startSending(*io_service_));
+    ASSERT_NO_THROW(sender_->startSending(io_service_));
     ASSERT_TRUE(sender_->amSending());
 
     // Iterate over the list of requests sending and receiving
@@ -370,8 +384,8 @@ TEST_F (QueueMgrUDPTest, liveFeed) {
         ASSERT_NO_THROW(sender_->sendRequest(send_ncr));
 
         // running two should do the send then the receive
-        io_service_->run_one();
-        io_service_->run_one();
+        io_service_->runOne();
+        io_service_->runOne();
 
         // Verify that the request can be added to the queue and queue
         // size increments accordingly.
@@ -389,7 +403,8 @@ TEST_F (QueueMgrUDPTest, liveFeed) {
     StatMap stats_ncr = {
         { "ncr-received", 3},
         { "ncr-invalid", 0},
-        { "ncr-error", 0}
+        { "ncr-error", 0},
+        { "queue-mgr-queue-full", 0}
     };
     checkStats(stats_ncr);
 
@@ -401,15 +416,16 @@ TEST_F (QueueMgrUDPTest, liveFeed) {
         ASSERT_NO_THROW(sender_->sendRequest(send_ncr));
 
         // running two should do the send then the receive
-        EXPECT_NO_THROW(io_service_->run_one());
-        EXPECT_NO_THROW(io_service_->run_one());
+        EXPECT_NO_THROW(io_service_->runOne());
+        EXPECT_NO_THROW(io_service_->runOne());
         EXPECT_EQ(i+1, queue_mgr_->getQueueSize());
     }
 
     StatMap stats_ncr_new = {
         { "ncr-received", 6},
         { "ncr-invalid", 0},
-        { "ncr-error", 0}
+        { "ncr-error", 0},
+        { "queue-mgr-queue-full", 0}
     };
     checkStats(stats_ncr_new);
 
@@ -418,12 +434,20 @@ TEST_F (QueueMgrUDPTest, liveFeed) {
 
     // Send another. The send should succeed.
     ASSERT_NO_THROW(sender_->sendRequest(send_ncr));
-    EXPECT_NO_THROW(io_service_->run_one());
+    EXPECT_NO_THROW(io_service_->runOne());
 
     // Now execute the receive which should not throw but should move us
     // to STOPPED_QUEUE_FULL state.
-    EXPECT_NO_THROW(io_service_->run_one());
+    EXPECT_NO_THROW(io_service_->runOne());
     EXPECT_EQ(D2QueueMgr::STOPPED_QUEUE_FULL, queue_mgr_->getMgrState());
+
+    StatMap stats_ncr_full = {
+        { "ncr-received", 7},
+        { "ncr-invalid", 0},
+        { "ncr-error", 0},
+        { "queue-mgr-queue-full", 1}
+    };
+    checkStats(stats_ncr_full);
 
     // Verify queue size did not increase beyond max.
     EXPECT_EQ(VALID_MSG_CNT, queue_mgr_->getQueueSize());
@@ -447,10 +471,10 @@ TEST_F (QueueMgrUDPTest, liveFeed) {
     // Verify that we can again receive requests.
     // Send should be fine.
     ASSERT_NO_THROW(sender_->sendRequest(send_ncr));
-    EXPECT_NO_THROW(io_service_->run_one());
+    EXPECT_NO_THROW(io_service_->runOne());
 
     // Receive should succeed.
-    EXPECT_NO_THROW(io_service_->run_one());
+    EXPECT_NO_THROW(io_service_->runOne());
     EXPECT_EQ(1, queue_mgr_->getQueueSize());
 }
 

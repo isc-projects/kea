@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 #include <cc/dhcp_config_error.h>
 #include <testutils/io_utils.h>
 #include <testutils/log_utils.h>
+#include <testutils/test_to_element.h>
 #include <testutils/user_context_utils.h>
 
 #include <gtest/gtest.h>
@@ -35,9 +36,7 @@ namespace test {
 /// @param a first to be compared
 /// @param b second to be compared
 void compareJSON(ConstElementPtr a, ConstElementPtr b) {
-    ASSERT_TRUE(a);
-    ASSERT_TRUE(b);
-    EXPECT_EQ(a->str(), b->str());
+    expectEqWithDiff(a, b);
 }
 
 /// @brief Tests if the input string can be parsed with specific parser
@@ -100,31 +99,31 @@ TEST(ParserTest, nestedLists) {
 
 TEST(ParserTest, listsInMaps) {
     string txt = "{ \"constellations\": { \"orion\": [ \"rigel\", \"betelgeuse\" ], "
-                    "\"cygnus\": [ \"deneb\", \"albireo\"] } }";
+                 "\"cygnus\": [ \"deneb\", \"albireo\"] } }";
     testParser(txt, ParserContext::PARSER_JSON);
 }
 
 TEST(ParserTest, mapsInLists) {
-    string txt = "[ { \"body\": \"earth\", \"gravity\": 1.0 },"
-                 " { \"body\": \"mars\", \"gravity\": 0.376 } ]";
+    string txt = "[ { \"body\": \"earth\", \"gravity\": 1.0 }, "
+                 "{ \"body\": \"mars\", \"gravity\": 0.376 } ]";
     testParser(txt, ParserContext::PARSER_JSON);
 }
 
 TEST(ParserTest, types) {
-    string txt = "{ \"string\": \"foo\","
-                   "\"integer\": 42,"
-                   "\"boolean\": true,"
-                   "\"map\": { \"foo\": \"bar\" },"
-                   "\"list\": [ 1, 2, 3 ],"
-                   "\"null\": null }";
+    string txt = "{ \"string\": \"foo\", "
+                 "\"integer\": 42, "
+                 "\"boolean\": true, "
+                 "\"map\": { \"foo\": \"bar\" }, "
+                 "\"list\": [ 1, 2, 3 ], "
+                 "\"null\": null }";
     testParser(txt, ParserContext::PARSER_JSON);
 }
 
 TEST(ParserTest, keywordJSON) {
-    string txt = "{ \"name\": \"user\","
-                   "\"type\": \"password\","
-                   "\"user\": \"name\","
-                   "\"password\": \"type\" }";
+    string txt = "{ \"name\": \"user\", "
+                 "\"type\": \"password\", "
+                 "\"user\": \"name\", "
+                 "\"password\": \"type\" }";
     testParser(txt, ParserContext::PARSER_JSON);
 }
 
@@ -203,45 +202,44 @@ TEST(ParserTest, keywordSubAgent) {
 // Tests if bash (#) comments are supported. That's the only comment type that
 // was supported by the old parser.
 TEST(ParserTest, bashComments) {
-    string txt= "{ \"Control-agent\": {"
-                "  \"http-host\": \"localhost\","
-                "  \"http-port\": 9000,\n"
-                "  \"control-sockets\": {\n"
-                "    \"d2\": {\n"
-                "# this is a comment\n"
-                "\"socket-type\": \"unix\", \n"
-                "# This socket is mine. I can name it whatever\n"
-                "# I like, ok?\n"
-                "\"socket-name\": \"Hector\" \n"
-                "} } } }";
+    string txt = "{ \"Control-agent\": {\n"
+                 "  \"http-host\": \"localhost\",\n"
+                 "  \"http-port\": 9000,\n"
+                 "  \"control-sockets\": {\n"
+                 "    \"d2\": {\n"
+                 "# this is a comment\n"
+                 "        \"socket-type\": \"unix\", \n"
+                 "# This socket is mine. I can name it whatever\n"
+                 "# I like, ok?\n"
+                 "        \"socket-name\": \"Hector\" \n"
+                 "} } } }";
     testParser(txt, ParserContext::PARSER_AGENT);
 }
 
 // Tests if C++ (//) comments can start anywhere, not just in the first line.
 TEST(ParserTest, cppComments) {
-    string txt= "{ \"Control-agent\": {"
-                "  \"http-host\": \"localhost\","
-                "  \"http-port\": 9001, // the level is over 9000!\n"
-                "  \"control-sockets\": {\n"
-                "    // Let's try talking to D2. Sadly, it never talks"
-                "    // to us back :( Maybe he doesn't like his name?\n"
-                "    \"d2\": {"
-                "\"socket-type\": \"unix\", \n"
-                "\"socket-name\": \"Hector\" \n"
-                "} } } }";
-
+    string txt = "{ \"Control-agent\": {\n"
+                 "  \"http-host\": \"localhost\",\n"
+                 "  \"http-port\": 9001, // the level is over 9000!\n"
+                 "  \"control-sockets\": {\n"
+                 "    // Let's try talking to D2. Sadly, it never talks"
+                 "    // to us back :( Maybe he doesn't like his name?\n"
+                 "    \"d2\": {"
+                 "        \"socket-type\": \"unix\", \n"
+                 "        \"socket-name\": \"Hector\" \n"
+                 "} } } }";
     testParser(txt, ParserContext::PARSER_AGENT, false);
 }
 
 // Tests if bash (#) comments can start anywhere, not just in the first line.
 TEST(ParserTest, bashCommentsInline) {
-    string txt= "{ \"Control-agent\": {"
-                "  \"http-host\": \"localhost\","
+    string txt= "{ \"Control-agent\": {\n"
+                "  \"http-host\": \"localhost\",\n"
                 "  \"http-port\": 9000,\n"
                 "  \"control-sockets\": {\n"
                 "    \"d2\": {"
-                "\"socket-type\": \"unix\", # Maybe Hector is not really a \n"
-                "\"socket-name\": \"Hector\" # Unix process?\n"
+                "        \"socket-type\": \"unix\", # Maybe Hector is not really a \n"
+                "        \"socket-name\": \"Hector\" # Unix process?\n"
                 "# Oh no! He's a windows one and just pretending!\n"
                 "} } } }";
     testParser(txt, ParserContext::PARSER_AGENT, false);
@@ -249,35 +247,46 @@ TEST(ParserTest, bashCommentsInline) {
 
 // Tests if multi-line C style comments are handled correctly.
 TEST(ParserTest, multilineComments) {
-    string txt= "{ \"Control-agent\": {"
-                "  \"http-host\": \"localhost\","
-                "  \"http-port\": 9000,\n"
-                "  \"control-sockets\": {\n"
-                "    \"dhcp4\": {\n"
-                "        \"socket-type\": \"unix\"\n"
-                "    }\n"
-                "  /* Ok, forget about it. If Hector doesn't want to talk,\n"
-                "     we won't talk to him either. We now have quiet days. */\n"
-                "  /* \"d2\": {"
-                "  \"socket-type\": \"unix\",\n"
-                "\"socket-name\": \"Hector\"\n"
-                "}*/ } } }";
+    string txt = "{ \"Control-agent\": {\n"
+                 "  \"http-host\": \"localhost\",\n"
+                 "  \"http-port\": 9000,\n"
+                 "  \"control-sockets\": {\n"
+                 "    \"dhcp4\": {\n"
+                 "        \"socket-type\": \"unix\"\n"
+                 "    }\n"
+                 "  /* Ok, forget about it. If Hector doesn't want to talk,\n"
+                 "     we won't talk to him either. We now have quiet days. */\n"
+                 "  /* \"d2\": {"
+                 "         \"socket-type\": \"unix\",\n"
+                 "         \"socket-name\": \"Hector\"\n"
+                 "}*/ } } }";
     testParser(txt, ParserContext::PARSER_AGENT, false);
 }
 
 // Tests if embedded comments are handled correctly.
 TEST(ParserTest, embbededComments) {
-    string txt= "{ \"Control-agent\": {"
-                "  \"comment\": \"a comment\","
-                "  \"http-host\": \"localhost\","
-                "  \"http-port\": 9000,\n"
-                "  \"control-sockets\": {\n"
-                "    \"dhcp4\": {\n"
-                "        \"user-context\": { \"comment\": \"indirect\" },\n"
-                "        \"socket-type\": \"unix\"\n"
-                "    } },\n"
-                "  \"user-context\": { \"compatible\": true }\n"
-                "} }";
+    string txt = "{ \"Control-agent\": {\n"
+                 "  \"comment\": \"a comment\",\n"
+                 "  \"http-host\": \"localhost\",\n"
+                 "  \"http-port\": 9000,\n"
+                 "  \"control-sockets\": {\n"
+                 "    \"dhcp4\": {\n"
+                 "        \"user-context\": { \"comment\": \"indirect\" },\n"
+                 "        \"socket-type\": \"unix\"\n"
+                 "    } },\n"
+                 "  \"user-context\": { \"compatible\": true }\n"
+                 "} }";
+    testParser(txt, ParserContext::PARSER_AGENT, false);
+}
+
+// Test that output_options is an alias of output-options.
+TEST(ParserTest, outputDashOptions) {
+    string txt = "{ \"Control-agent\": {"
+                 " \"loggers\": [ { "
+                 "     \"name\": \"kea-ctrl-agent\","
+                 "     \"output_options\": [ { \"output\": \"stdout\" } ],"
+                 "     \"severity\": \"INFO\" } ]"
+                 "} }";
     testParser(txt, ParserContext::PARSER_AGENT, false);
 }
 
@@ -770,12 +779,12 @@ TEST(ParserTest, mapEntries) {
         [] (ConstElementPtr json, KeywordSet& set) {
             if (json->getType() == Element::list) {
                 // Handle lists.
-                for (auto elem : json->listValue()) {
+                for (auto const& elem : json->listValue()) {
                     extract(elem, set);
                 }
             } else if (json->getType() == Element::map) {
                 // Handle maps.
-                for (auto elem : json->mapValue()) {
+                for (auto const& elem : json->mapValue()) {
                     static_cast<void>(set.insert(elem.first));
                     // Skip entries with free content.
                     if ((elem.first != "user-context") &&
@@ -826,12 +835,12 @@ TEST(ParserTest, duplicateMapEntries) {
         [] (ElementPtr config, ElementPtr json, size_t& cnt) {
             if (json->getType() == Element::list) {
                 // Handle lists.
-                for (auto elem : json->listValue()) {
+                for (auto const& elem : json->listValue()) {
                     test(config, elem, cnt);
                 }
             } else if (json->getType() == Element::map) {
                 // Handle maps.
-                for (auto elem : json->mapValue()) {
+                for (auto const& elem : json->mapValue()) {
                     // Skip entries with free content.
                     if ((elem.first == "user-context") ||
                         (elem.first == "parameters")) {
@@ -897,7 +906,7 @@ TEST_F(TrailingCommasTest, tests) {
       {
         "debuglevel": 99,
         "name": "kea-ctrl-agent",
-        "output_options": [
+        "output-options": [
           {
             "output": "stdout",
           },

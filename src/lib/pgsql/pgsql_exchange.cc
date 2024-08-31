@@ -239,11 +239,17 @@ PsqlBindArray::addTimestamp(const boost::posix_time::ptime& timestamp) {
     // Sadly boost::posix_time::to_time_t() was not added until 1.58,
     // so do it ourselves.
     ptime epoch(boost::gregorian::date(1970, 1, 1));
+    if (timestamp < epoch) {
+        isc_throw(isc::BadValue, "Time value is before the epoch");
+    }
+    ptime max_db_time = boost::posix_time::from_time_t(DatabaseConnection::MAX_DB_TIME);
     time_duration::sec_type since_epoch = (timestamp - epoch).total_seconds();
     time_t input_time(since_epoch);
-
-    if (input_time > DatabaseConnection::MAX_DB_TIME) {
-        isc_throw(isc::BadValue, "Time value is too large: " << input_time);
+    if (timestamp > max_db_time) {
+        isc_throw(isc::BadValue, "Time value is too large: " <<
+                  (input_time < 0 ?
+                   static_cast<int64_t>(static_cast<uint32_t>(input_time)) :
+                   input_time));
     }
 
     // Converts to timestamp to local date/time string.

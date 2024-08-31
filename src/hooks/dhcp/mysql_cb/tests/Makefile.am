@@ -16,8 +16,7 @@ EXTRA_DIST =
 
 CLEANFILES = *.gcno *.gcda
 
-TESTS_ENVIRONMENT = \
-	$(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
+TESTS_ENVIRONMENT = $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 
 TESTS =
 if HAVE_GTEST
@@ -36,24 +35,24 @@ mysql_cb_unittests_LDFLAGS  = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS)
 
 mysql_cb_unittests_CXXFLAGS = $(AM_CXXFLAGS)
 
-mysql_cb_unittests_LDADD  = $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la
-mysql_cb_unittests_LDADD += $(top_builddir)/src/hooks/dhcp/mysql_cb/libmysqlcb.la
+mysql_cb_unittests_LDADD  = $(top_builddir)/src/hooks/dhcp/mysql_cb/libmysqlcb.la
+mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la
 mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
+mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
-mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
 mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/mysql/testutils/libmysqltest.la
 mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
 mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
-mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
-mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la

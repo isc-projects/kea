@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -90,9 +90,12 @@ public:
     /// to load, the loading is abandoned and all libraries loaded so far
     /// are unloaded.
     ///
+    /// @param multi_threading_enabled The flag which indicates if MT is enabled
+    ///        (used to check hook libraries compatibility with MT).
+    ///
     /// @return true if all libraries loaded, false if one or more failed t
     ////        load.
-    bool loadLibraries();
+    bool loadLibraries(bool multi_threading_enabled = false);
 
     /// @brief Get callout manager
     ///
@@ -137,12 +140,14 @@ public:
     /// exist, can be opened, that a "version" function is present in them, and
     /// that it returns the right number.  All errors are logged.
     ///
-    /// @param libraries List of libraries to validate
+    /// @param libraries List of libraries to validate.
+    /// @param multi_threading_enabled The flag which indicates if MT is enabled
+    ///        (used to check hook libraries compatibility with MT).
     ///
     /// @return Vector of libraries that failed to validate, or an empty vector
     ///         if all validated.
-    static std::vector<std::string>
-    validateLibraries(const std::vector<std::string>& libraries);
+    static std::vector<std::string> validateLibraries(const std::vector<std::string>& libraries,
+                                                      bool multi_threading_enabled = false);
 
     /// @brief Prepare libaries unloading
     ///

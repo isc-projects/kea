@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -60,6 +60,8 @@ public:
     using StateType::my_time_at_skew_;
     using StateType::partner_time_at_skew_;
     using StateType::unsent_update_count_;
+    using StateType::getRejectedLeaseUpdatesCountFromContainer;
+    using StateType::partner_state_time_;
 };
 
 /// @brief Type of the NakedCommunicationState for DHCPv4.
@@ -127,6 +129,17 @@ protected:
     void signalServiceRunning(bool& running, std::mutex& mutex,
                               std::condition_variable& condvar);
 
+    /// @brief Check that a map element pointer representing the reported status
+    /// of an HA node contains a string element pointer indexed by the
+    /// "system-time" key that can be parsed in a ptime object.
+    ///
+    /// Also removes the "system-time" element for the purpose of holistically
+    /// comparing the node without worrying about time-sensitive information.
+    ///
+    /// @param node the node element pointer
+    /// @param null_expected whether null is expected as the system-time value
+    void checkThatTimeIsParsable(isc::data::ElementPtr const& node, bool const null_expected);
+
 public:
 
     /// @brief Handler for timeout during runIOService invocation.
@@ -149,6 +162,13 @@ public:
     data::ConstElementPtr
     createValidPassiveBackupJsonConfiguration() const;
 
+    /// @brief Return HA configuration for a hub in a hub-and-spoke model
+    /// in a JSON format.
+    ///
+    /// @return Pointer to the unparsed configuration.
+    data::ConstElementPtr
+    createValidHubJsonConfiguration() const;
+
     /// @brief Return HA configuration with three servers.
     ///
     /// @param ha_mode HA operation mode (default is load balancing).
@@ -160,6 +180,11 @@ public:
     ///
     /// @return Pointer to the parsed configuration.
     HAConfigPtr createValidPassiveBackupConfiguration() const;
+
+    /// @brief Return HA configuration for a hub in a hub-and-spoke model.
+    ///
+    /// @return Pointer to the parsed configuration.
+    HAConfigPtr createValidHubConfiguration() const;
 
     /// @brief Checks the status code and message against expected values.
     ///
@@ -296,6 +321,9 @@ public:
 
     /// @brief Object holding a state of the DHCP service.
     dhcp::NetworkStatePtr network_state_;
+
+    /// @brief Test timer.
+    isc::asiolink::IntervalTimerPtr timer_;
 };
 
 } // end of namespace isc::ha::test

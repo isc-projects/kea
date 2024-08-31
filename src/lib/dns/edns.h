@@ -1,11 +1,13 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef EDNS_H
-#define EDNS_H 1
+#define EDNS_H
+
+#include <util/buffer.h>
 
 #include <stdint.h>
 
@@ -16,10 +18,6 @@
 #include <dns/rdata.h>
 
 namespace isc {
-namespace util {
-class OutputBuffer;
-}
-
 namespace dns {
 
 class EDNS;
@@ -306,8 +304,8 @@ public:
     /// \param extended_rcode Upper 8 bits of extended RCODE to be rendered as
     /// part of the EDNS OPT RR.
     /// \return 1 if the OPT RR fits in the message size limit; otherwise 0.
-    unsigned int toWire(AbstractMessageRenderer& renderer,
-                        const uint8_t extended_rcode) const;
+    uint32_t toWire(AbstractMessageRenderer& renderer,
+                    const uint8_t extended_rcode) const;
 
     /// \brief Render the \c EDNS in the wire format.
     ///
@@ -315,8 +313,8 @@ public:
     /// except it renders the OPT RR in an \c OutputBuffer and therefore
     /// does not care about message size limit.
     /// As a consequence it always returns 1.
-    unsigned int toWire(isc::util::OutputBuffer& buffer,
-                        const uint8_t extended_rcode) const;
+    uint32_t toWire(isc::util::OutputBuffer& buffer,
+                    const uint8_t extended_rcode) const;
 
     /// \brief Convert the EDNS to a string.
     ///
@@ -431,7 +429,3 @@ std::ostream& operator<<(std::ostream& os, const EDNS& edns);
 }
 }
 #endif  // EDNS_H
-
-// Local Variables: 
-// mode: c++
-// End: 

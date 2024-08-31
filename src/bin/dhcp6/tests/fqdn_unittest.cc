@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,7 +16,7 @@
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_status_code.h>
 #include <dhcp/option_int_array.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/ncr_generator.h>
@@ -80,8 +80,7 @@ public:
         // generateClientId assigns DUID to duid_.
         generateClientId();
         lease_.reset(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"),
-                                duid_, 1234, 501, 502,
-                                1, HWAddrPtr(), 0));
+                                duid_, 1234, 501, 502, 1, HWAddrPtr()));
         // Config DDNS to be enabled, all controls off
         enableD2();
     }
@@ -126,13 +125,16 @@ public:
         subnet_->setDdnsOverrideNoUpdate(mask & OVERRIDE_NO_UPDATE);
         subnet_->setDdnsOverrideClientUpdate(mask & OVERRIDE_CLIENT_UPDATE);
         subnet_->setDdnsReplaceClientNameMode((mask & REPLACE_CLIENT_NAME) ?
-                                              D2ClientConfig::RCM_WHEN_PRESENT
-                                              : D2ClientConfig::RCM_NEVER);
+                                              D2ClientConfig::RCM_WHEN_PRESENT :
+                                              D2ClientConfig::RCM_NEVER);
         subnet_->setDdnsGeneratedPrefix("myhost");
         subnet_->setDdnsQualifyingSuffix("example.com");
-        subnet_->setHostnameCharSet("[^A-Za-z0-9-]");
+        // In V6 the dot (".") can, and equally can not be specified in the
+        // "hostname-char-set" because the FQDN is split before any character
+        // is replaced and then is put back together.
+        subnet_->setHostnameCharSet("[^A-Za-z0-9.-]");
         subnet_->setHostnameCharReplacement("x");
-        subnet_->setDdnsUseConflictResolution(true);
+        subnet_->setDdnsConflictResolutionMode("check-with-dhcid");
 
         ASSERT_NO_THROW(srv_->startD2());
     }
@@ -261,7 +263,6 @@ public:
         pkt->addOption(opt_ia);
     }
 
-
     /// @brief Adds IA option to the message.
     ///
     /// Added option holds status code.
@@ -385,7 +386,7 @@ public:
             // Context flags are normally set during lease allocation. Since that
             // hasn't occurred we'll set them here to match the expected values.
             // Call createNameChangeRequests
-            ctx.fwd_dns_update_ =  exp_fwd.value_;
+            ctx.fwd_dns_update_ = exp_fwd.value_;
             ctx.rev_dns_update_ = exp_rev.value_;
             ASSERT_NO_THROW(srv_->createNameChangeRequests(answer, ctx));
             if (exp_fwd.value_ || exp_rev.value_) {
@@ -406,10 +407,10 @@ public:
     }
 
     // Test that the server processes the FQDN option (or lack thereof)
-    // in a client request correctly, according to the replace-client-name
+    // in a client request correctly, according to the ddns-replace-client-name
     // mode configuration parameter.
     //
-    // @param mode - value to use for replace-client-name mode
+    // @param mode - value to use for ddns-replace-client-name mode
     //
     // @param client_name_flag - specifies whether or not the client request
     // should contain a hostname option
@@ -423,24 +424,25 @@ public:
             "{ \"interfaces-config\": { \n"
             "  \"interfaces\": [ \"eth0\" ] \n"
             "}, \n"
-            "\"valid-lifetime\": 4000,  \n"
+            "\"valid-lifetime\": 4000, \n"
             "\"preferred-lifetime\": 3000, \n"
-            "\"rebind-timer\": 2000,  \n"
-            "\"renew-timer\": 1000,  \n"
-            "\"subnet6\": [ {  \n"
+            "\"rebind-timer\": 2000, \n"
+            "\"renew-timer\": 1000, \n"
+            "\"ddns-replace-client-name\": \"%s\", \n"
+            "\"ddns-qualifying-suffix\": \"fake-suffix.isc.org.\", \n"
+            "\"subnet6\": [ { \n"
+            "    \"id\": 1, \n"
             "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], \n"
-            "    \"subnet\": \"2001:db8:1::/48\",  \n"
+            "    \"subnet\": \"2001:db8:1::/48\", \n"
             "    \"interface\": \"eth0\" \n"
             " } ], \n"
             "\"dhcp-ddns\": { \n"
-            "\"enable-updates\": true, \n"
-            "\"qualifying-suffix\": \"fake-suffix.isc.org.\", \n"
-            "\"replace-client-name\": \"%s\" \n"
+            "\"enable-updates\": true \n"
             "}} \n";
 
         // Create the configuration and configure the server
         char config_buf[1024];
-        sprintf(config_buf, config_template, mode);
+        snprintf(config_buf, 1024, config_template, mode);
         configure(config_buf, *srv_);
 
         // Build our client packet
@@ -456,7 +458,9 @@ public:
         AllocEngine::ClientContext6 ctx;
         bool drop = !srv_->earlyGHRLookup(query, ctx);
         ASSERT_FALSE(drop);
-        srv_->initContext(query, ctx, drop);
+        ctx.subnet_ = srv_->selectSubnet(query, drop);
+        ASSERT_FALSE(drop);
+        srv_->initContext(ctx, drop);
 
         ASSERT_FALSE(drop);
         Pkt6Ptr answer = generateMessageWithIds(DHCPV6_ADVERTISE);
@@ -483,7 +487,6 @@ public:
             }
         }
     }
-
 
     /// @brief Tests that the client's message holding an FQDN is processed
     /// and that lease is acquired.
@@ -519,22 +522,24 @@ public:
         AllocEngine::ClientContext6 ctx;
         bool drop = !srv_->earlyGHRLookup(req, ctx);
         ASSERT_FALSE(drop);
-        srv_->initContext(req, ctx, drop);
+        ctx.subnet_ = srv_->selectSubnet(req, drop);
+        ASSERT_FALSE(drop);
+        srv_->initContext(ctx, drop);
 
         ASSERT_FALSE(drop);
         if (msg_type == DHCPV6_SOLICIT) {
-          ASSERT_NO_THROW(reply = srv_->processSolicit(ctx));
+            ASSERT_NO_THROW(reply = srv_->processSolicit(ctx));
 
         } else if (msg_type == DHCPV6_REQUEST) {
-          ASSERT_NO_THROW(reply = srv_->processRequest(ctx));
+            ASSERT_NO_THROW(reply = srv_->processRequest(ctx));
 
         } else if (msg_type == DHCPV6_RENEW) {
-          ASSERT_NO_THROW(reply = srv_->processRenew(ctx));
+            ASSERT_NO_THROW(reply = srv_->processRenew(ctx));
 
         } else if (msg_type == DHCPV6_RELEASE) {
             // For Release no lease will be acquired so we have to leave
             // function here.
-          ASSERT_NO_THROW(reply = srv_->processRelease(ctx));
+            ASSERT_NO_THROW(reply = srv_->processRelease(ctx));
             return;
         } else {
             // We are not interested in testing other message types.
@@ -599,7 +604,9 @@ public:
     /// NameChangeRequest.
     /// @param fqdn The expected string value of the FQDN, if blank the
     /// check is skipped
-    /// @param exp_use_cr expected value of NCR::conflict_resolution_
+    /// @param exp_cr_mode expected value of NCR::conflict_resolution_mode_
+    /// @param ddns_ttl_percent expected value of ddns_ttl_percent used for
+    /// the NCR
     void verifyNameChangeRequest(const isc::dhcp_ddns::NameChangeType type,
                                  const bool reverse, const bool forward,
                                  const std::string& addr,
@@ -607,7 +614,9 @@ public:
                                  const uint64_t expires,
                                  const uint16_t valid_lft,
                                  const std::string& fqdn = "",
-                                 const bool exp_use_cr = true) {
+                                 const ConflictResolutionMode exp_cr_mode = CHECK_WITH_DHCID,
+                                 util::Optional<double> exp_ddns_ttl_percent
+                                 = util::Optional<double>()) {
         NameChangeRequestPtr ncr;
         ASSERT_NO_THROW(ncr = d2_mgr_.peekAt(0));
         ASSERT_TRUE(ncr);
@@ -620,7 +629,7 @@ public:
             EXPECT_EQ(dhcid, ncr->getDhcid().toStr());
         }
 
-        uint32_t ttl = calculateDdnsTtl(valid_lft);
+        uint32_t ttl = calculateDdnsTtl(valid_lft, exp_ddns_ttl_percent);
         if (expires != 0) {
             EXPECT_EQ(expires + ttl, ncr->getLeaseExpiresOn());
         }
@@ -633,7 +642,7 @@ public:
            EXPECT_EQ(fqdn, ncr->getFqdn());
         }
 
-        EXPECT_EQ(exp_use_cr, ncr->useConflictResolution());
+        EXPECT_EQ(exp_cr_mode, ncr->getConflictResolutionMode());
 
         // Process the message off the queue
         ASSERT_NO_THROW(d2_mgr_.runReadyIO());
@@ -663,7 +672,7 @@ public:
 
         const PoolCollection& pool_col = subnet_->getPools(type);
         ASSERT_EQ(pool_idx + 1, pool_col.size());
-        PoolPtr pool  = (subnet_->getPools(type)).at(pool_idx);
+        PoolPtr pool = (subnet_->getPools(type)).at(pool_idx);
         ASSERT_TRUE(pool);
         pool_ = boost::dynamic_pointer_cast<Pool6>(pool);
         ASSERT_TRUE(pool);
@@ -717,7 +726,7 @@ TEST_F(FqdnDhcpv6SrvTest, noUpdate) {
 }
 
 // Test server's response when client requests no DNS update and
-// override-no-updates is true.
+// ddns-override-no-updates is true.
 TEST_F(FqdnDhcpv6SrvTest, overrideNoUpdate) {
     enableD2(OVERRIDE_NO_UPDATE);
     testFqdn(DHCPV6_SOLICIT, Option6ClientFqdn::FLAG_N,
@@ -756,7 +765,6 @@ TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequestsNoAnswer) {
     ctx.fwd_dns_update_ = ctx.rev_dns_update_ = true;
     EXPECT_THROW(srv_->createNameChangeRequests(answer, ctx),
                  isc::Unexpected);
-
 }
 
 // Test that exception is thrown if supplied answer from the server
@@ -772,7 +780,6 @@ TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequestsNoDUID) {
     ctx.subnet_ = subnet_;
     ctx.fwd_dns_update_ = ctx.rev_dns_update_ = true;
     EXPECT_THROW(srv_->createNameChangeRequests(answer, ctx), isc::Unexpected);
-
 }
 
 // Test no NameChangeRequests if Client FQDN is not added to the server's
@@ -863,7 +870,7 @@ TEST_F(FqdnDhcpv6SrvTest, noConflictResolution) {
 
     // Create NameChangeRequest for the first allocated address.
     AllocEngine::ClientContext6 ctx;
-    subnet_->setDdnsUseConflictResolution(false);
+    subnet_->setDdnsConflictResolutionMode("no-check-with-dhcid");
     ctx.subnet_ = subnet_;
     ctx.fwd_dns_update_ = ctx.rev_dns_update_ = true;
     ASSERT_NO_THROW(srv_->createNameChangeRequests(answer, ctx));
@@ -874,7 +881,7 @@ TEST_F(FqdnDhcpv6SrvTest, noConflictResolution) {
                             "2001:db8:1::1",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            0, 500, "", false);
+                            0, 500, "", NO_CHECK_WITH_DHCID);
 }
 
 // Checks that NameChangeRequests to add entries are not
@@ -944,7 +951,6 @@ TEST_F(FqdnDhcpv6SrvTest, noRemovalsWhenDisabled) {
     ASSERT_NO_THROW(queueNCR(CHG_REMOVE, lease_));
 }
 
-
 // Test creation of the NameChangeRequest to remove reverse mapping for the
 // given lease.
 TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestRev) {
@@ -961,7 +967,6 @@ TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestRev) {
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
                             lease_->cltt_, lease_->valid_lft_);
-
 }
 
 // Test that NameChangeRequest to remove DNS records is not generated when
@@ -973,7 +978,6 @@ TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestNoUpdate) {
     ASSERT_NO_THROW(queueNCR(CHG_REMOVE, lease_));
 
     ASSERT_EQ(0, d2_mgr_.getQueueSize());
-
 }
 
 // Test that NameChangeRequest is not generated if the hostname hasn't been
@@ -987,7 +991,6 @@ TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestNoHostname) {
     ASSERT_NO_THROW(queueNCR(CHG_REMOVE, lease_));
 
     ASSERT_EQ(0, d2_mgr_.getQueueSize());
-
 }
 
 // Test that NameChangeRequest is not generated if the invalid hostname has
@@ -1001,7 +1004,6 @@ TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestWrongHostname) {
     ASSERT_NO_THROW(queueNCR(CHG_REMOVE, lease_));
 
     ASSERT_EQ(0, d2_mgr_.getQueueSize());
-
 }
 
 // Test that Advertise message generated in a response to the Solicit will
@@ -1038,7 +1040,6 @@ TEST_F(FqdnDhcpv6SrvTest, processTwoRequestsDiffFqdn) {
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
                             0, 4000);
 
-
     // Client may send another request message with a new domain-name. In this
     // case the same lease will be returned. The existing DNS entry needs to
     // be replaced with a new one. Server should determine that the different
@@ -1059,7 +1060,6 @@ TEST_F(FqdnDhcpv6SrvTest, processTwoRequestsDiffFqdn) {
                             "000201D422AA463306223D269B6CB7AFE7AAD265FC"
                             "EA97F93623019B2E0D14E5323D5A",
                             0, lease_->valid_lft_);
-
 }
 
 // Test that client may send two requests, each carrying FQDN option with
@@ -1084,7 +1084,6 @@ TEST_F(FqdnDhcpv6SrvTest, processTwoRequestsSameFqdn) {
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
                             0, 4000);
-
 
     // Client may send another request message with a same domain-name. In this
     // case the same lease will be returned. The existing DNS entry should be
@@ -1120,9 +1119,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestSolicit) {
     testProcessMessage(DHCPV6_SOLICIT, "otherhost.example.com",
                        "otherhost.example.com.");
     ASSERT_EQ(0, d2_mgr_.getQueueSize());
-
 }
-
 
 // Test that client may send Request followed by the Renew, both holding
 // FQDN options, but each option holding different domain-name. The Renew
@@ -1169,7 +1166,6 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenewDiffFqdn) {
                             "000201D422AA463306223D269B6CB7AFE7AAD265FC"
                             "EA97F93623019B2E0D14E5323D5A",
                             0, lease_->valid_lft_);
-
 }
 
 // Test that client may send Request followed by the Renew, both holding
@@ -1236,7 +1232,6 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenewFqdnFlags) {
     // Queue should be empty.
     ASSERT_EQ(0, d2_mgr_.getQueueSize());
 
-
     // Renew with both N and S flags = 0. This tells the server to update
     // both directions, which should change forward flag to true. This should
     // generate a reverse only remove and a dual add.
@@ -1276,8 +1271,10 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenewFqdnFlags) {
                             lease_->cltt_, lease_->valid_lft_);
 }
 
-
 TEST_F(FqdnDhcpv6SrvTest, processRequestRelease) {
+    CfgMgr::instance().getCurrentCfg()->getCfgExpiration()->setFlushReclaimedTimerWaitTime(0);
+    CfgMgr::instance().getCurrentCfg()->getCfgExpiration()->setHoldReclaimedTime(0);
+
     // Create a Request message with FQDN option and generate server's
     // response using processRequest function. This will result in the
     // creation of a new lease and the appropriate NameChangeRequest
@@ -1311,6 +1308,33 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRelease) {
                             lease_->cltt_, lease_->valid_lft_);
 }
 
+TEST_F(FqdnDhcpv6SrvTest, processRequestReleaseNoDelete) {
+    // Create a Request message with FQDN option and generate server's
+    // response using processRequest function. This will result in the
+    // creation of a new lease and the appropriate NameChangeRequest
+    // to add both reverse and forward mapping to DNS.
+    testProcessMessage(DHCPV6_REQUEST, "myhost.example.com",
+                       "myhost.example.com.");
+
+    // The lease should have been recorded in the database.
+    lease_ = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                   IOAddress("2001:db8:1:1::dead:beef"));
+    ASSERT_TRUE(lease_);
+
+    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                            "2001:db8:1:1::dead:beef",
+                            "000201415AA33D1187D148275136FA30300478"
+                            "FAAAA3EBD29826B5C907B2C9268A6F52",
+                            0, lease_->valid_lft_);
+
+    // Client may send Release message. In this case the lease should be
+    // expired and no NameChangeRequest to remove DNS entries is generated.
+    testProcessMessage(DHCPV6_RELEASE, "otherhost.example.com",
+                       "otherhost.example.com.");
+    ASSERT_EQ(0, d2_mgr_.getQueueSize());
+}
+
 // Checks that the server include DHCPv6 Client FQDN option in its
 // response even when client doesn't request this option using ORO.
 TEST_F(FqdnDhcpv6SrvTest, processRequestWithoutFqdn) {
@@ -1341,7 +1365,6 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestEmptyFqdn) {
                             "000201C905E54BE12DE6AF92ADE72752B9F362"
                             "13B5A8BC9D217548CD739B4CF31AFB1B",
                             0, 4000);
-
 }
 
 // Checks that when the server reuses expired lease, the NameChangeRequest
@@ -1354,8 +1377,8 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestReuseExpiredLease) {
     // exactly one address. This address will be handed out to the
     // client, will get expired and then be reused.
     CfgMgr::instance().clear();
-    subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1:1::"), 56, 1, 2,
-                                     3, 4));
+    subnet_ = Subnet6::create(IOAddress("2001:db8:1:1::"),
+                              56, 1, 2, 3, 4, SubnetID(10));
     subnet_->setIface("eth0");
     subnet_->setDdnsSendUpdates(true);
 
@@ -1419,7 +1442,6 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestReuseExpiredLease) {
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52", 0, 4);
-
 }
 
 TEST_F(FqdnDhcpv6SrvTest, processClientDelegation) {
@@ -1448,9 +1470,10 @@ TEST_F(FqdnDhcpv6SrvTest, hostnameReservationSuffix) {
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ "
         " { "
+        "    \"id\": 1, \n"
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"pools\": [ { \"pool\": \"2001:db8:1:1::/64\" } ],"
-        "    \"interface\" : \"eth0\" , "
+        "    \"interface\": \"eth0\" , "
         "   \"reservations\": ["
         "    {"
         "        \"duid\": \"" + duid_->toText() + "\","
@@ -1459,9 +1482,9 @@ TEST_F(FqdnDhcpv6SrvTest, hostnameReservationSuffix) {
         "    }"
         "    ]"
         " } ],"
-        " \"dhcp-ddns\" : {"
-        "     \"enable-updates\" : true, "
-        "     \"qualifying-suffix\" : \"example.com\" }"
+        " \"ddns-qualifying-suffix\": \"example.com\", "
+        " \"dhcp-ddns\": {"
+        "     \"enable-updates\": true }"
         "}";
 
     configure(config_str);
@@ -1502,9 +1525,10 @@ TEST_F(FqdnDhcpv6SrvTest, hostnameReservationNoSuffix) {
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ "
         " { "
+        "    \"id\": 1, \n"
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"pools\": [ { \"pool\": \"2001:db8:1:1::/64\" } ],"
-        "    \"interface\" : \"eth0\" , "
+        "    \"interface\": \"eth0\" , "
         "   \"reservations\": ["
         "    {"
         "        \"duid\": \"" + duid_->toText() + "\","
@@ -1513,9 +1537,9 @@ TEST_F(FqdnDhcpv6SrvTest, hostnameReservationNoSuffix) {
         "    }"
         "    ]"
         " } ],"
-        " \"dhcp-ddns\" : {"
-        "     \"enable-updates\" : true, "
-        "     \"qualifying-suffix\" : \"\" }"
+        " \"ddns-qualifying-suffix\": \"\", "
+        " \"dhcp-ddns\": {"
+        "     \"enable-updates\": true }"
         "}";
 
     configure(config_str);
@@ -1536,7 +1560,6 @@ TEST_F(FqdnDhcpv6SrvTest, hostnameReservationNoSuffix) {
                             "000201E2EB74FB53A5778E74AFD43870ECA5"
                             "4150B1F52B0CFED434802DA1259D6D3CA4",
                             0, 4000, "alice.example.com.");
-
 }
 
 TEST_F(FqdnDhcpv6SrvTest, hostnameReservationDdnsDisabled) {
@@ -1552,9 +1575,10 @@ TEST_F(FqdnDhcpv6SrvTest, hostnameReservationDdnsDisabled) {
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ "
         " { "
+        "    \"id\": 1, \n"
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"pools\": [ { \"pool\": \"2001:db8:1:1::/64\" } ],"
-        "    \"interface\" : \"eth0\" , "
+        "    \"interface\": \"eth0\" , "
         "    \"reservations\": ["
         "    {"
         "        \"duid\": \"" + duid_->toText() + "\","
@@ -1563,9 +1587,9 @@ TEST_F(FqdnDhcpv6SrvTest, hostnameReservationDdnsDisabled) {
         "    }"
         "    ]"
         " } ],"
-        " \"dhcp-ddns\" : {"
-        "     \"enable-updates\" : false, "
-        "     \"qualifying-suffix\" : \"disabled.example.com\" }"
+        " \"ddns-qualifying-suffix\": \"disabled.example.com\", "
+        " \"dhcp-ddns\": {"
+        "     \"enable-updates\": false }"
         "}";
 
     configure(config_str);
@@ -1580,7 +1604,7 @@ TEST_F(FqdnDhcpv6SrvTest, hostnameReservationDdnsDisabled) {
                        IOAddress("2001:db8:1:1::babe"));
 }
 
-// Verifies that the replace-client-name behavior is correct for each of
+// Verifies that the ddns-replace-client-name behavior is correct for each of
 // the supported modes.
 TEST_F(FqdnDhcpv6SrvTest, replaceClientNameModeTest) {
     isc::dhcp::test::IfaceMgrTestConfig test_config(true);
@@ -1606,7 +1630,6 @@ TEST_F(FqdnDhcpv6SrvTest, replaceClientNameModeTest) {
     testReplaceClientNameMode("when-not-present",
                               CLIENT_NAME_PRESENT, NAME_NOT_REPLACED);
 }
-
 
 // Verifies that setting hostname-char-set sanitizes FQDN option
 // values received from clients.
@@ -1640,7 +1663,6 @@ TEST_F(FqdnDhcpv6SrvTest, sanitizeFqdn) {
              std::string("m\000yhost.exa\000mple.com", 20),
              Option6ClientFqdn::FULL, Option6ClientFqdn::FLAG_S,
              "mxyhost.exaxmple.com.", false);
-
 }
 
 // Verifies that scoped ddns-parameter handling.
@@ -1656,19 +1678,21 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsScopeTest) {
         "\"renew-timer\": 1000,\n"
         "\"ddns-send-updates\": false,\n"
         "\"subnet6\": [ {\n"
+        "    \"id\": 1, \n"
         "    \"subnet\": \"2001:db8:1::/48\",\n"
         "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - 2001:db8:1::10\" } ],\n"
         "    \"interface\": \"eth0\"\n"
         " },\n"
         " {\n"
+        "    \"id\": 2, \n"
         "    \"subnet\": \"2001:db8:2::/48\",\n"
         "    \"pools\": [ { \"pool\": \"2001:db8:2::1 - 2001:db8:2::10\" } ],\n"
         "    \"interface\": \"eth1\",\n"
         "    \"ddns-send-updates\": true\n"
         " } ],\n"
         "\"valid-lifetime\": 4000,\n"
-        " \"dhcp-ddns\" : {\n"
-        "     \"enable-updates\" : true\n"
+        " \"dhcp-ddns\": {\n"
+        "     \"enable-updates\": true\n"
         " }\n"
     "}";
 
@@ -1727,7 +1751,6 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsScopeTest) {
     ASSERT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true, "2001:db8:2::1",
                             "", 0, 4000);
-
 }
 
 // Verifies that the DDNS parameters used for a lease in subnet in
@@ -1754,12 +1777,14 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsSharedNetworkTest) {
             "\"name\": \"frog\", \n"
             "\"interface\": \"eth0\", \n"
             "\"subnet6\": [ { \n"
+                "\"id\": 1, \n"
                 "\"subnet\": \"2001:db8:1::/64\", \n"
                 "\"pools\": [ { \"pool\": \"2001:db8:1::1 - 2001:db8:1::1\" } ], \n"
                 "\"interface\": \"eth0\", \n"
                 "\"ddns-qualifying-suffix\": \"one.example.com.\" \n"
             " }, \n"
             " { \n"
+                "\"id\": 2, \n"
                 "\"subnet\": \"2001:db8:2::/64\", \n"
                 "\"pools\": [ { \"pool\": \"2001:db8:2::1 - 2001:db8:2::1\" } ], \n"
                 "\"interface\": \"eth0\", \n"
@@ -1767,8 +1792,8 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsSharedNetworkTest) {
             " } ] \n"
         "} ], \n"
         "\"ddns-send-updates\": true, \n"
-        "\"dhcp-ddns\" : { \n"
-        "     \"enable-updates\" : true \n"
+        "\"dhcp-ddns\": { \n"
+        "     \"enable-updates\": true \n"
         " } \n"
     "}";
 
@@ -1804,7 +1829,7 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsSharedNetworkTest) {
 
     // Make sure the lease hostname and fqdn flags are correct.
     Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
-                                                   IOAddress("2001:db8:1::1"));
+                                                            IOAddress("2001:db8:1::1"));
     ASSERT_TRUE(lease);
     EXPECT_EQ("client1.one.example.com.", lease->hostname_);
     EXPECT_TRUE(lease->fqdn_fwd_);
@@ -1908,6 +1933,7 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsSharedNetworkTest2) {
             "\"name\": \"frog\", \n"
             "\"interface\": \"eth0\", \n"
             "\"subnet6\": [ { \n"
+                "\"id\": 1, \n"
                 "\"subnet\": \"2001:db8:1::/64\", \n"
                 "\"pools\": [ { \"pool\": \"2001:db8:1::1 - 2001:db8:1::1\" } ], \n"
                 "\"interface\": \"eth0\", \n"
@@ -1915,6 +1941,7 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsSharedNetworkTest2) {
                 "\"ddns-send-updates\": true \n"
             " }, \n"
             " { \n"
+                "\"id\": 2, \n"
                 "\"subnet\": \"2001:db8:2::/64\", \n"
                 "\"pools\": [ { \"pool\": \"2001:db8:2::1 - 2001:db8:2::1\" } ], \n"
                 "\"interface\": \"eth0\", \n"
@@ -1922,8 +1949,8 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsSharedNetworkTest2) {
                 "\"ddns-send-updates\": false \n"
             " } ] \n"
         "} ], \n"
-        "\"dhcp-ddns\" : { \n"
-        "     \"enable-updates\" : true \n"
+        "\"dhcp-ddns\": { \n"
+        "     \"enable-updates\": true \n"
         " } \n"
     "}";
 
@@ -1959,7 +1986,7 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsSharedNetworkTest2) {
 
     // Make sure the lease hostname and fdqn flags are correct.
     Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
-                                                   IOAddress("2001:db8:1::1"));
+                                                            IOAddress("2001:db8:1::1"));
     ASSERT_TRUE(lease);
     EXPECT_EQ("client1.one.example.com.", lease->hostname_);
     EXPECT_TRUE(lease->fqdn_fwd_);
@@ -2051,11 +2078,11 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenew) {
     subnet_->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_NEVER);
 
     // Iterate over test scenarios.
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_); {
             // Make sure the lease does not exist.
             ASSERT_FALSE(LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
-                                          IOAddress("2001:db8:1:1::dead:beef")));
+                                                               IOAddress("2001:db8:1:1::dead:beef")));
             // Set and verify DDNS params flags
             subnet_->setDdnsSendUpdates(scenario.send_updates_);
             subnet_->setDdnsUpdateOnRenew(scenario.update_on_renew_);
@@ -2068,7 +2095,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenew) {
 
             // The lease should have been recorded in the database.
             Lease6Ptr old_lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
-                                                     IOAddress("2001:db8:1:1::dead:beef"));
+                                                                        IOAddress("2001:db8:1:1::dead:beef"));
             ASSERT_TRUE(old_lease);
 
             if (!scenario.send_updates_ || scenario.old_fqdn_.empty()) {
@@ -2088,7 +2115,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenew) {
 
             // The lease should have been recorded in the database.
             Lease6Ptr new_lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
-                                                   IOAddress("2001:db8:1:1::dead:beef"));
+                                                                        IOAddress("2001:db8:1:1::dead:beef"));
             ASSERT_TRUE(new_lease);
 
             // Verify queue count is correct.
@@ -2118,6 +2145,40 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenew) {
             ASSERT_TRUE(deleted);
         }
     }
+}
+
+// Verify that when specified ddns-ttl-percent is used to calculate
+// the lease length in an NCR.
+TEST_F(FqdnDhcpv6SrvTest, ddnsTtlPercent) {
+    // Create Reply message with Client Id and Server id.
+    Pkt6Ptr answer = generateMessageWithIds(DHCPV6_REPLY);
+
+    // Create an IA.
+    addIA(1234, IOAddress("2001:db8:1::1"), answer);
+
+    // Use domain name in upper case. It should be converted to lower-case
+    // before DHCID is calculated. So, we should get the same result as if
+    // we typed domain name in lower-case.
+    Option6ClientFqdnPtr fqdn = createClientFqdn(Option6ClientFqdn::FLAG_S,
+                                                 "MYHOST.EXAMPLE.COM",
+                                                 Option6ClientFqdn::FULL);
+    answer->addOption(fqdn);
+
+    // Create NameChangeRequest for the first allocated address.
+    AllocEngine::ClientContext6 ctx;
+    subnet_->setDdnsConflictResolutionMode("no-check-with-dhcid");
+    subnet_->setDdnsTtlPercent(Optional<double>(0.10));
+    ctx.subnet_ = subnet_;
+    ctx.fwd_dns_update_ = ctx.rev_dns_update_ = true;
+    ASSERT_NO_THROW(srv_->createNameChangeRequests(answer, ctx));
+    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+
+    // Verify that NameChangeRequest is correct.
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                            "2001:db8:1::1",
+                            "000201415AA33D1187D148275136FA30300478"
+                            "FAAAA3EBD29826B5C907B2C9268A6F52",
+                            0, 500, "", NO_CHECK_WITH_DHCID, subnet_->getDdnsTtlPercent());
 }
 
 } // end of anonymous namespace

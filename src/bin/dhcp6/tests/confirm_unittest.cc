@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,7 +7,7 @@
 #include <config.h>
 #include <asiolink/io_address.h>
 #include <cc/data.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/tests/dhcp6_message_test.h>
 #include <dhcpsrv/utils.h>
@@ -41,12 +41,14 @@ const char* CONFIRM_CONFIGS[] = {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ { "
+        "    \"id\": 1, "
         "    \"pools\": [  { \"pool\": \"2001:db8:1::/64\" } ],"
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"interface-id\": \"\","
         "    \"interface\": \"eth0\""
         " },"
         " {"
+        "    \"id\": 2, "
         "    \"pools\": [  { \"pool\": \"2001:db8:2::/64\" } ],"
         "    \"subnet\": \"2001:db8:2::/48\", "
         "    \"interface-id\": \"\","
@@ -62,12 +64,14 @@ const char* CONFIRM_CONFIGS[] = {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ { "
+        "    \"id\": 1, "
         "    \"pools\": [  { \"pool\": \"3000:1::/64\" } ],"
         "    \"subnet\": \"3000:1::/48\", "
         "    \"interface-id\": \"\","
         "    \"interface\": \"eth0\""
         " },"
         " {"
+        "    \"id\": 2, "
         "    \"pools\": [  { \"pool\": \"3000:2::/64\" } ],"
         "    \"subnet\": \"3000:2::/48\", "
         "    \"interface-id\": \"\","

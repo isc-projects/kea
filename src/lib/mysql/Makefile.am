@@ -1,6 +1,8 @@
 SUBDIRS = . testutils tests
 
-AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
+AM_CPPFLAGS  =
+AM_CPPFLAGS += -DKEA_ADMIN=\"@prefix@/sbin/kea-admin\"
+AM_CPPFLAGS += -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(MYSQL_CPPFLAGS)
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
@@ -20,7 +22,7 @@ libkea_mysql_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_mysql_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_mysql_la_LIBADD += $(LOG4CPLUS_LIBS) $(BOOST_LIBS)
 
-libkea_mysql_la_LDFLAGS = -no-undefined -version-info 37:0:0
+libkea_mysql_la_LDFLAGS = -no-undefined -version-info 81:0:0
 
 libkea_mysql_la_LDFLAGS += $(MYSQL_LIBS)
 

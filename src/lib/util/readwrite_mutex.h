@@ -1,4 +1,4 @@
-// Copyright (C) 2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -54,10 +54,10 @@ public:
     void writeLock() {
         std::unique_lock<std::mutex> lk(mutex_);
         // Wait until the write entered flag can be set.
-        gate1_.wait(lk, [=]() { return (!writeEntered()); });
+        gate1_.wait(lk, [&]() { return (!writeEntered()); });
         state_ |= WRITE_ENTERED;
         // Wait until there are no more readers.
-        gate2_.wait(lk, [=]() { return (readers() == 0); });
+        gate2_.wait(lk, [&]() { return (readers() == 0); });
     }
 
     /// @brief Unlock write.
@@ -74,7 +74,7 @@ public:
     void readLock() {
         std::unique_lock<std::mutex> lk(mutex_);
         // Wait if there is a writer or if readers overflow.
-        gate1_.wait(lk, [=]() { return (state_ < MAX_READERS); });
+        gate1_.wait(lk, [&]() { return (state_ < MAX_READERS); });
         ++state_;
     }
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,7 +11,6 @@
 #include <ha_test.h>
 #include <ha_config.h>
 #include <ha_service.h>
-#include <http/http_thread_pool.h>
 
 #include <util/multi_threading_mgr.h>
 #include <testutils/gtest_utils.h>
@@ -37,16 +36,18 @@ public:
 
     /// @brief Constructor.
     ///
+    /// @param id Unique service id.
     /// @param io_service Pointer to the IO service used by the DHCP server.
     /// @param network_state Object holding state of the DHCP service
     /// (enabled/disabled).
     /// @param config Parsed HA hook library configuration.
     /// @param server_type Server type, i.e. DHCPv4 or DHCPv6 server.
-    TestHAService(const IOServicePtr& io_service,
+    TestHAService(const unsigned int id,
+                  const IOServicePtr& io_service,
                   const NetworkStatePtr& network_state,
                   const HAConfigPtr& config,
                   const HAServerType& server_type = HAServerType::DHCPv4)
-        : HAService(io_service, network_state, config, server_type) {
+        : HAService(id, io_service, network_state, config, server_type) {
     }
 
     /// @brief Test version of the @c HAService::runModel.
@@ -70,16 +71,16 @@ public:
     ///
     /// This variant of the method uses default HTTP client for communication.
     ///
-    /// @param server_name name of the server to which the command should be
+    /// @param remote_config config of the server to which the command should be
     /// sent.
     /// @param max_period maximum number of seconds for which the DHCP service
     /// should be disabled.
     /// @param post_request_action pointer to the function to be executed when
     /// the request is completed.
-    void asyncDisableDHCPService(const std::string& server_name,
+    void asyncDisableDHCPService(const HAConfig::PeerConfigPtr& remote_config,
                                  const unsigned int max_period,
                                  const PostRequestCallback& post_request_action) {
-        HAService::asyncDisableDHCPService(*client_, server_name, max_period,
+        HAService::asyncDisableDHCPService(*client_, remote_config, max_period,
                                            post_request_action);
     }
 
@@ -88,13 +89,13 @@ public:
     ///
     /// This variant of the method uses default HTTP client for communication.
     ///
-    /// @param server_name name of the server to which the command should be
+    /// @param remote_config config of the server to which the command should be
     /// sent.
     /// @param post_request_action pointer to the function to be executed when
     /// the request is completed.
-    void asyncEnableDHCPService(const std::string& server_name,
+    void asyncEnableDHCPService(const HAConfig::PeerConfigPtr& remote_config,
                                 const PostRequestCallback& post_request_action) {
-        HAService::asyncEnableDHCPService(*client_, server_name, post_request_action);
+        HAService::asyncEnableDHCPService(*client_, remote_config, post_request_action);
     }
 
     using HAService::asyncSendHeartbeat;
@@ -133,8 +134,7 @@ public:
     ///
     /// Stops all test servers.
     ~HAMtServiceTest() {
-        io_service_->get_io_service().reset();
-        io_service_->poll();
+        io_service_->stopAndPoll();
         MultiThreadingMgr::instance().setMode(false);
         CmdResponseCreator::command_accept_list_.clear();
     }
@@ -188,16 +188,15 @@ TEST_F(HAMtServiceTest, multiThreadingBasics) {
     setDHCPMultiThreadingConfig(true, 3);
 
     // Create the HA configuration
-    HAConfigPtr ha_config(new HAConfig());
-    HAConfigParser parser;
-    ASSERT_NO_THROW_LOG(parser.parse(ha_config, config_json));
+    HAConfigMapperPtr ha_config;
+    ASSERT_NO_THROW_LOG(ha_config = HAConfigParser::parse(config_json));
 
     // Instantiate the service.
     TestHAServicePtr service;
-    ASSERT_NO_THROW_LOG(service.reset(new TestHAService(io_service_, network_state_,
-                                                        ha_config)));
+    ASSERT_NO_THROW_LOG(service.reset(new TestHAService(1, io_service_, network_state_,
+                                                        ha_config->get())));
     // Multi-threading should be enabled.
-    ASSERT_TRUE(ha_config->getEnableMultiThreading());
+    ASSERT_TRUE(ha_config->get()->getEnableMultiThreading());
 
     // Command filtering is enabled.
     EXPECT_FALSE(CmdResponseCreator::command_accept_list_.empty());
@@ -309,16 +308,15 @@ TEST_F(HAMtServiceTest, multiThreadingTls) {
     setDHCPMultiThreadingConfig(true, 3);
 
     // Create the HA configuration
-    HAConfigPtr ha_config(new HAConfig());
-    HAConfigParser parser;
-    ASSERT_NO_THROW_LOG(parser.parse(ha_config, config_json));
+    HAConfigMapperPtr ha_config;
+    ASSERT_NO_THROW_LOG(ha_config = HAConfigParser::parse(config_json));
 
     // Instantiate the service.
     TestHAServicePtr service;
-    ASSERT_NO_THROW_LOG(service.reset(new TestHAService(io_service_, network_state_,
-                                                        ha_config)));
+    ASSERT_NO_THROW_LOG(service.reset(new TestHAService(1, io_service_, network_state_,
+                                                        ha_config->get())));
     // Multi-threading should be enabled.
-    ASSERT_TRUE(ha_config->getEnableMultiThreading());
+    ASSERT_TRUE(ha_config->get()->getEnableMultiThreading());
 
     // Now we'll start, pause, resume and stop a few times.
     for (int i = 0; i < 3; ++i) {
@@ -410,10 +408,10 @@ TEST_F(HAMtServiceTest, multiThreadingConfigStartup) {
 
     std::vector<Scenario> scenarios {
         {
-            "1 no ha+mt/default",
+            "1 ha+mt by default",
             "",
             dhcp_mt, 4,
-            !ha_mt, !listener, 0, 0
+            ha_mt, listener, 4, 4
         },
         {
             "2 dhcp mt enabled, ha mt disabled",
@@ -503,14 +501,13 @@ TEST_F(HAMtServiceTest, multiThreadingConfigStartup) {
         MultiThreadingMgr::instance().setMode(scenario.dhcp_mt_enabled_);
 
         // Create the HA configuration
-        HAConfigPtr ha_config(new HAConfig());
-        HAConfigParser parser;
-        ASSERT_NO_THROW_LOG(parser.parse(ha_config, config_json));
+        HAConfigMapperPtr ha_config;
+        ASSERT_NO_THROW_LOG(ha_config = HAConfigParser::parse(config_json));
 
         // Instantiate the service.
         TestHAServicePtr service;
-        ASSERT_NO_THROW_LOG(service.reset(new TestHAService(io_service_, network_state_,
-                                                            ha_config)));
+        ASSERT_NO_THROW_LOG(service.reset(new TestHAService(1, io_service_, network_state_,
+                                                            ha_config->get())));
         ASSERT_NO_THROW_LOG(service->startClientAndListener());
 
         // Verify the configuration is as expected.
@@ -527,7 +524,7 @@ TEST_F(HAMtServiceTest, multiThreadingConfigStartup) {
         }
 
         // Multi-threading should be enabled.
-        ASSERT_TRUE(ha_config->getEnableMultiThreading());
+        ASSERT_TRUE(ha_config->get()->getEnableMultiThreading());
 
         // When HA+MT is enabled, client should be multi-threaded.
         ASSERT_TRUE(service->client_);
@@ -559,4 +556,4 @@ TEST_F(HAMtServiceTest, multiThreadingConfigStartup) {
     }
 }
 
-} // end of anonymous namespace
+}  // namespace

@@ -1,4 +1,4 @@
-// Copyright (C) 2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,8 +12,8 @@
 
 #include <config.h>
 
-#include <flex_option.h>
-#include <hooks/hooks_manager.h>
+#include <dhcpsrv/testutils/lib_load_test_fixture.h>
+#include <testutils/gtest_utils.h>
 
 #include <gtest/gtest.h>
 #include <errno.h>
@@ -23,58 +23,51 @@ using namespace isc;
 using namespace isc::hooks;
 using namespace isc::data;
 using namespace isc::dhcp;
+using namespace isc::process;
 
 namespace {
 
 /// @brief Test fixture for testing loading and unloading the flex-option library
-class LibLoadTest : public ::testing::Test {
+class FlexOptionLibLoadTest : public isc::test::LibLoadTest {
 public:
     /// @brief Constructor
-    LibLoadTest() {
-        reset();
+    FlexOptionLibLoadTest() : LibLoadTest(FLEX_OPTION_LIB_SO) {
     }
 
     /// @brief Destructor
-    /// Removes files that may be left over from previous tests
-    virtual ~LibLoadTest() {
-        reset();
+    virtual ~FlexOptionLibLoadTest() {
     }
 
-    /// @brief Removes files that may be left over from previous tests
-    virtual void reset() {
-        HooksManager::unloadLibraries();
+    /// @brief Creates a set configuration parameters valid for the library.
+    virtual ElementPtr validConfigParams() {
+        ElementPtr params = Element::createMap();
+        ElementPtr options = Element::createList();
+        params->set("options", options);
+        return (params);
     }
-
-    void addLib(const std::string& lib, ConstElementPtr params) {
-        libraries_.push_back(make_pair(lib, params));
-    }
-
-    void loadLibs() {
-        EXPECT_TRUE(HooksManager::loadLibraries(libraries_));
-    }
-
-    void unloadLibs() {
-        EXPECT_NO_THROW(HooksManager::unloadLibraries());
-    }
-
-    HookLibsCollection libraries_;
 };
 
-// Simple test that checks the library can be loaded and unloaded several times.
-TEST_F(LibLoadTest, validLoad) {
+// Simple V4 test that checks the library can be loaded and unloaded several times.
+TEST_F(FlexOptionLibLoadTest, validLoadDhcp4) {
+    validDaemonTest("kea-dhcp4", AF_INET, valid_params_);
+}
 
-    // Prepare parameters for the callout parameters library.
-    ElementPtr params = Element::createMap();
-    ElementPtr options = Element::createList();
-    params->set("options", options);
+// Simple test that checks the library can be loaded in a DHCPv6 server.
+TEST_F(FlexOptionLibLoadTest, validLoadDhcp6) {
+    validDaemonTest("kea-dhcp6", AF_INET6, valid_params_);
+}
 
-    addLib(FLEX_OPTION_LIB_SO, params);
+// Simple test that checks the library cannot by loaded by invalid daemons.
+TEST_F(FlexOptionLibLoadTest, invalidDaemonLoad) {
+    // V4 is invalid when family is AF_INET6
+    invalidDaemonTest("kea-dhcp4", AF_INET6, valid_params_);
 
-    loadLibs();
-    unloadLibs();
+    // V6 is invalid when family is AF_INET
+    invalidDaemonTest("kea-dhcp6", AF_INET, valid_params_);
 
-    loadLibs();
-    unloadLibs();
+    invalidDaemonTest("kea-ctrl-agent", AF_INET, valid_params_);
+    invalidDaemonTest("kea-dhcp-ddns", AF_INET, valid_params_);
+    invalidDaemonTest("bogus", AF_INET, valid_params_);
 }
 
 } // end of anonymous namespace

@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="us-ascii" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentStyleType="text/css" height="472px" preserveAspectRatio="none" style="width:1806px;height:472px;background:#FFFFFF;" version="1.1" viewBox="0 0 1806 472" width="1806px" zoomAndPan="magnify">
+  <defs/>
+  <g>
+    <text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="527" x="638.375" y="34.9659">How Kea Recognizes the Same Client In Different DHCP Messages (Kea 2.4.0)</text>
+    <ellipse cx="765.4688" cy="60.0679" fill="#222222" rx="10" ry="10" style="stroke:#222222;stroke-width:1.0;"/>
+    <polygon fill="#F1F1F1" points="699.4688,90.0679,831.4688,90.0679,843.4688,102.0679,831.4688,114.0679,699.4688,114.0679,687.4688,102.0679,699.4688,90.0679" style="stroke:#181818;stroke-width:0.5;"/>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="132" x="699.4688" y="106.3359">libdhcp_flex_id.so is used</text>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="17" x="670.4688" y="98.8449">yes</text>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="14" x="843.4688" y="98.8449">no</text>
+    <polygon fill="#F1F1F1" points="158.6875,124.0679,344.6875,124.0679,356.6875,136.0679,344.6875,148.0679,158.6875,148.0679,146.6875,136.0679,158.6875,124.0679" style="stroke:#181818;stroke-width:0.5;"/>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="186" x="158.6875" y="140.3359">replace-client-id is true (the default)</text>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="17" x="129.6875" y="132.8449">yes</text>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="14" x="356.6875" y="132.8449">no</text>
+    <rect fill="#98FB98" height="101.7206" rx="12.5" ry="12.5" style="stroke:#181818;stroke-width:0.5;" width="129" x="11" y="158.0679"/>
+    <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="109" x="21" y="180.896">Client is recognized</text>
+    <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="104" x="21" y="197.2401">by the result of the</text>
+    <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="50" x="21" y="213.5842">identifier</text>
+    <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="74" x="21" y="229.9283">expression in</text>
+    <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="99" x="21" y="246.2725">libdhcp_flex_id.so.</text>
+    <ellipse cx="75.5" cy="305.7885" fill="none" rx="11" ry="11" style="stroke:#222222;stroke-width:1.0;"/>
+    <ellipse cx="75.5" cy="305.7885" fill="#222222" rx="6" ry="6" style="stroke:#222222;stroke-width:1.0;"/>
+    <polygon fill="#F1F1F1" points="367.375,158.0679,488.375,158.0679,500.375,170.0679,488.375,182.0679,367.375,182.0679,355.375,170.0679,367.375,158.0679" style="stroke:#181818;stroke-width:0.5;"/>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="121" x="367.375" y="174.3359">client has a reservation</text>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="17" x="338.375" y="166.8449">yes</text>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="14" x="500.375" y="166.8449">no</text>
+    <polygon fill="#F1F1F1" points="318,242.9774,318,242.9774,330,254.9774,318,266.9774,318,266.9774,306,254.9774,318,242.9774" style="stroke:#181818;stroke-width:0.5;"/>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="83" x="170" y="236.7725">for the purpose</text>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="136" x="170" y="251.7544">of acquiring a reservation</text>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="83" x="330" y="191.8268">for the purpose</text>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="102" x="330" y="206.8087">of leasing outside a</text>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="128" x="330" y="221.7906">reservation or acquiring</text>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="124" x="330" y="236.7725">any other value outside</text>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="79" x="330" y="251.7544">of reservations</text>
+    <rect fill="#98FB98" height="101.7206" rx="12.5" ry="12.5" style="stroke:#181818;stroke-width:0.5;" width="129" x="181.75" y="276.9774"/>
+    <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="109" x="191.75" y="299.8054">Client is recognized</text>
+    <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="104" x="191.75" y="316.1496">by the result of the</text>
+    <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="50" x="191.75" y="332.4937">identifier</text>
+    <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="74" x="191.75" y="348.8378">expression in</text>
+    <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="99" x="191.75" y="365.1819">libdhcp_flex_id.so.</text>
+    <ellipse cx="246.25" cy="424.6979" fill="none" rx="11" ry="11" style="stroke:#222222;stroke-width:1.0;"/>
+    <ellipse cx="246.25" cy="424.6979" fill="#222222" rx="6" ry="6" style="stroke:#222222;stroke-width:1.0;"/>
+    <rect fill="#F1F1F1" height="101.7206" rx="12.5" ry="12.5" style="stroke:#181818;stroke-width:0.5;" width="118" x="330.75" y="276.9774"/>
+    <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="84" x="340.75" y="299.8054">Go through the</text>
+    <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="98" x="340.75" y="316.1496">diagram from the</text>
+    <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="81" x="340.75" y="332.4937">beginning as if</text>
+    <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="96" x="340.75" y="348.8378">libdhcp_flex_id.so</text>
+    <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="56" x="340.75" y="365.1819">is unused.</text>
+    <ellipse cx="389.75" cy="424.6979" fill="none" rx="11" ry="11" style="stroke:#222222;stroke-width:1.0;"/>
+    <ellipse cx="389.75" cy="424.6979" fill="#222222" rx="6" ry="6" style="stroke:#222222;stroke-width:1.0;"/>
+    <rect fill="#F1F1F1" height="101.7206" rx="12.5" ry="12.5" style="stroke:#181818;stroke-width:0.5;" width="118" x="478.75" y="192.0679"/>
+    <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="84" x="488.75" y="214.896">Go through the</text>
+    <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="98" x="488.75" y="231.2401">diagram from the</text>
+    <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="81" x="488.75" y="247.5842">beginning as if</text>
+    <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="96" x="488.75" y="263.9283">libdhcp_flex_id.so</text>
+    <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="56" x="488.75" y="280.2725">is unused.</text>
+    <ellipse cx="537.75" cy="339.7885" fill="none" rx="11" ry="11" style="stroke:#222222;stroke-width:1.0;"/>
+    <ellipse cx="537.75" cy="339.7885" fill="#222222" rx="6" ry="6" style="stroke:#222222;stroke-width:1.0;"/>
+    <polygon fill="#F1F1F1" points="1305.75,124.0679,1352.75,124.0679,1364.75,146.5407,1352.75,169.0136,1305.75,169.0136,1293.75,146.5407,1305.75,124.0679" style="stroke:#181818;stroke-width:0.5;"/>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="42" x="1305.75" y="135.8268">DHCPv4</text>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="12" x="1305.75" y="150.8087">or</text>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="47" x="1305.75" y="165.7906">DHCPv6?</text>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="42" x="1251.75" y="143.3178">DHCPv4</text>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="42" x="1364.75" y="143.3178">DHCPv6</text>
+    <polygon fill="#F1F1F1" points="1052.25,179.0136,1104.25,179.0136,1116.25,201.4864,1104.25,223.9592,1052.25,223.9592,1040.25,201.4864,1052.25,179.0136" style="stroke:#181818;stroke-width:0.5;"/>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="24" x="1052.25" y="190.7725">MAC</text>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="52" x="1052.25" y="205.7544">address is</text>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="40" x="1052.25" y="220.7363">present</text>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="17" x="1023.25" y="198.2634">yes</text>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="14" x="1116.25" y="198.2634">no</text>
+    <polygon fill="#F1F1F1" points="885.75,233.9592,963.75,233.9592,975.75,256.4321,963.75,278.9049,885.75,278.9049,873.75,256.4321,885.75,233.9592" style="stroke:#181818;stroke-width:0.5;"/>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="78" x="885.75" y="245.7182">match-client-id</text>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="33" x="885.75" y="260.7">is true</text>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="63" x="885.75" y="275.6819">(the default)</text>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="17" x="856.75" y="253.2091">yes</text>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="14" x="975.75" y="253.2091">no</text>
+    <polygon fill="#F1F1F1" points="693.25,288.9049,877.25,288.9049,889.25,300.9049,877.25,312.9049,693.25,312.9049,681.25,300.9049,693.25,288.9049" style="stroke:#181818;stroke-width:0.5;"/>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="184" x="693.25" y="305.1729">client ID option (code 61) is present</text>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="17" x="664.25" y="297.6819">yes</text>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="14" x="889.25" y="297.6819">no</text>
+    <rect fill="#98FB98" height="69.0323" rx="12.5" ry="12.5" style="stroke:#181818;stroke-width:0.5;" width="129" x="606.75" y="322.9049"/>
+    <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="109" x="616.75" y="345.733">Client is recognized</text>
+    <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="83" x="616.75" y="362.0771">by the client ID</text>
+    <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="93" x="616.75" y="378.4212">option (code 61).</text>
+    <ellipse cx="671.25" cy="437.9373" fill="none" rx="11" ry="11" style="stroke:#222222;stroke-width:1.0;"/>
+    <ellipse cx="671.25" cy="437.9373" fill="#222222" rx="6" ry="6" style="stroke:#222222;stroke-width:1.0;"/>
+    <rect fill="#98FB98" height="52.6882" rx="12.5" ry="12.5" style="stroke:#181818;stroke-width:0.5;" width="135" x="831.75" y="322.9049"/>
+    <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="109" x="841.75" y="345.733">Client is recognized</text>
+    <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="115" x="841.75" y="362.0771">by the MAC address.</text>
+    <ellipse cx="899.25" cy="421.5931" fill="none" rx="11" ry="11" style="stroke:#222222;stroke-width:1.0;"/>
+    <ellipse cx="899.25" cy="421.5931" fill="#222222" rx="6" ry="6" style="stroke:#222222;stroke-width:1.0;"/>
+    <rect fill="#98FB98" height="52.6882" rx="12.5" ry="12.5" style="stroke:#181818;stroke-width:0.5;" width="135" x="996.75" y="288.9049"/>
+    <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="109" x="1006.75" y="311.733">Client is recognized</text>
+    <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="115" x="1006.75" y="328.0771">by the MAC address.</text>
+    <ellipse cx="1064.25" cy="387.5931" fill="none" rx="11" ry="11" style="stroke:#222222;stroke-width:1.0;"/>
+    <ellipse cx="1064.25" cy="387.5931" fill="#222222" rx="6" ry="6" style="stroke:#222222;stroke-width:1.0;"/>
+    <rect fill="#FFC0CB" height="52.6882" rx="12.5" ry="12.5" style="stroke:#181818;stroke-width:0.5;" width="140" x="1141.75" y="233.9592"/>
+    <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="120" x="1151.75" y="256.7873">DHCP message is not</text>
+    <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="69" x="1151.75" y="273.1314">well formed.</text>
+    <ellipse cx="1211.75" cy="332.6475" fill="none" rx="11" ry="11" style="stroke:#222222;stroke-width:1.0;"/>
+    <ellipse cx="1211.75" cy="332.6475" fill="#222222" rx="6" ry="6" style="stroke:#222222;stroke-width:1.0;"/>
+    <polygon fill="#F1F1F1" points="1555.75,179.0136,1644.75,179.0136,1656.75,201.4864,1644.75,223.9592,1555.75,223.9592,1543.75,201.4864,1555.75,179.0136" style="stroke:#181818;stroke-width:0.5;"/>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="43" x="1555.75" y="190.7725">client ID</text>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="89" x="1555.75" y="205.7544">option (code 1) is</text>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="40" x="1555.75" y="220.7363">present</text>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="17" x="1526.75" y="198.2634">yes</text>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="14" x="1656.75" y="198.2634">no</text>
+    <polygon fill="#F1F1F1" points="1434.75,233.9592,1514.75,233.9592,1526.75,271.414,1514.75,308.8687,1434.75,308.8687,1422.75,271.414,1434.75,233.9592" style="stroke:#181818;stroke-width:0.5;"/>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="66" x="1434.75" y="245.7182">interested in</text>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="80" x="1434.75" y="260.7">identifying as a</text>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="69" x="1434.75" y="275.6819">single client -</text>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="68" x="1434.75" y="290.6638">the device or</text>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="46" x="1434.75" y="305.6457">the lease</text>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="33" x="1389.75" y="268.191">device</text>
+    <text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="26" x="1526.75" y="268.191">lease</text>
+    <rect fill="#98FB98" height="85.3765" rx="12.5" ry="12.5" style="stroke:#181818;stroke-width:0.5;" width="129" x="1331.75" y="318.8687"/>
+    <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="109" x="1341.75" y="341.6968">Client is recognized</text>
+    <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="83" x="1341.75" y="358.0409">by the client ID</text>
+    <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="106" x="1341.75" y="374.385">option (code 1) aka</text>
+    <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="34" x="1341.75" y="390.7291">DUID.</text>
+    <ellipse cx="1396.25" cy="450.2451" fill="none" rx="11" ry="11" style="stroke:#222222;stroke-width:1.0;"/>
+    <ellipse cx="1396.25" cy="450.2451" fill="#222222" rx="6" ry="6" style="stroke:#222222;stroke-width:1.0;"/>
+    <rect fill="#98FB98" height="69.0323" rx="12.5" ry="12.5" style="stroke:#181818;stroke-width:0.5;" width="145" x="1480.75" y="318.8687"/>
+    <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="109" x="1490.75" y="341.6968">Client is recognized</text>
+    <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="65" x="1490.75" y="358.0409">by the tuple</text>
+    <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="125" x="1490.75" y="374.385">&lt;DUID, IA-type, IAID&gt;.</text>
+    <ellipse cx="1553.25" cy="433.901" fill="none" rx="11" ry="11" style="stroke:#222222;stroke-width:1.0;"/>
+    <ellipse cx="1553.25" cy="433.901" fill="#222222" rx="6" ry="6" style="stroke:#222222;stroke-width:1.0;"/>
+    <rect fill="#FFC0CB" height="52.6882" rx="12.5" ry="12.5" style="stroke:#181818;stroke-width:0.5;" width="140" x="1655.75" y="233.9592"/>
+    <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="120" x="1665.75" y="256.7873">DHCP message is not</text>
+    <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="69" x="1665.75" y="273.1314">well formed.</text>
+    <ellipse cx="1725.75" cy="332.6475" fill="none" rx="11" ry="11" style="stroke:#222222;stroke-width:1.0;"/>
+    <ellipse cx="1725.75" cy="332.6475" fill="#222222" rx="6" ry="6" style="stroke:#222222;stroke-width:1.0;"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="75.5" x2="75.5" y1="259.7885" y2="294.7885"/>
+    <polygon fill="#181818" points="71.5,284.7885,75.5,294.7885,79.5,284.7885,75.5,288.7885" style="stroke:#181818;stroke-width:1.0;"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="246.25" x2="246.25" y1="378.6979" y2="413.6979"/>
+    <polygon fill="#181818" points="242.25,403.6979,246.25,413.6979,250.25,403.6979,246.25,407.6979" style="stroke:#181818;stroke-width:1.0;"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="389.75" x2="389.75" y1="378.6979" y2="413.6979"/>
+    <polygon fill="#181818" points="385.75,403.6979,389.75,413.6979,393.75,403.6979,389.75,407.6979" style="stroke:#181818;stroke-width:1.0;"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="306" x2="246.25" y1="254.9774" y2="254.9774"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="246.25" x2="246.25" y1="254.9774" y2="276.9774"/>
+    <polygon fill="#181818" points="242.25,266.9774,246.25,276.9774,250.25,266.9774,246.25,270.9774" style="stroke:#181818;stroke-width:1.0;"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="330" x2="389.75" y1="254.9774" y2="254.9774"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="389.75" x2="389.75" y1="254.9774" y2="276.9774"/>
+    <polygon fill="#181818" points="385.75,266.9774,389.75,276.9774,393.75,266.9774,389.75,270.9774" style="stroke:#181818;stroke-width:1.0;"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="537.75" x2="537.75" y1="293.7885" y2="328.7885"/>
+    <polygon fill="#181818" points="533.75,318.7885,537.75,328.7885,541.75,318.7885,537.75,322.7885" style="stroke:#181818;stroke-width:1.0;"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="355.375" x2="318" y1="170.0679" y2="170.0679"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="318" x2="318" y1="170.0679" y2="242.9774"/>
+    <polygon fill="#181818" points="314,232.9774,318,242.9774,322,232.9774,318,236.9774" style="stroke:#181818;stroke-width:1.0;"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="500.375" x2="537.75" y1="170.0679" y2="170.0679"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="537.75" x2="537.75" y1="170.0679" y2="192.0679"/>
+    <polygon fill="#181818" points="533.75,182.0679,537.75,192.0679,541.75,182.0679,537.75,186.0679" style="stroke:#181818;stroke-width:1.0;"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="146.6875" x2="75.5" y1="136.0679" y2="136.0679"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="75.5" x2="75.5" y1="136.0679" y2="158.0679"/>
+    <polygon fill="#181818" points="71.5,148.0679,75.5,158.0679,79.5,148.0679,75.5,152.0679" style="stroke:#181818;stroke-width:1.0;"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="356.6875" x2="427.875" y1="136.0679" y2="136.0679"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="427.875" x2="427.875" y1="136.0679" y2="158.0679"/>
+    <polygon fill="#181818" points="423.875,148.0679,427.875,158.0679,431.875,148.0679,427.875,152.0679" style="stroke:#181818;stroke-width:1.0;"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="671.25" x2="671.25" y1="391.9373" y2="426.9373"/>
+    <polygon fill="#181818" points="667.25,416.9373,671.25,426.9373,675.25,416.9373,671.25,420.9373" style="stroke:#181818;stroke-width:1.0;"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="899.25" x2="899.25" y1="375.5931" y2="410.5931"/>
+    <polygon fill="#181818" points="895.25,400.5931,899.25,410.5931,903.25,400.5931,899.25,404.5931" style="stroke:#181818;stroke-width:1.0;"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="681.25" x2="671.25" y1="300.9049" y2="300.9049"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="671.25" x2="671.25" y1="300.9049" y2="322.9049"/>
+    <polygon fill="#181818" points="667.25,312.9049,671.25,322.9049,675.25,312.9049,671.25,316.9049" style="stroke:#181818;stroke-width:1.0;"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="889.25" x2="899.25" y1="300.9049" y2="300.9049"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="899.25" x2="899.25" y1="300.9049" y2="322.9049"/>
+    <polygon fill="#181818" points="895.25,312.9049,899.25,322.9049,903.25,312.9049,899.25,316.9049" style="stroke:#181818;stroke-width:1.0;"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="1064.25" x2="1064.25" y1="341.5931" y2="376.5931"/>
+    <polygon fill="#181818" points="1060.25,366.5931,1064.25,376.5931,1068.25,366.5931,1064.25,370.5931" style="stroke:#181818;stroke-width:1.0;"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="873.75" x2="785.25" y1="256.4321" y2="256.4321"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="785.25" x2="785.25" y1="256.4321" y2="288.9049"/>
+    <polygon fill="#181818" points="781.25,278.9049,785.25,288.9049,789.25,278.9049,785.25,282.9049" style="stroke:#181818;stroke-width:1.0;"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="975.75" x2="1064.25" y1="256.4321" y2="256.4321"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="1064.25" x2="1064.25" y1="256.4321" y2="288.9049"/>
+    <polygon fill="#181818" points="1060.25,278.9049,1064.25,288.9049,1068.25,278.9049,1064.25,282.9049" style="stroke:#181818;stroke-width:1.0;"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="1211.75" x2="1211.75" y1="286.6475" y2="321.6475"/>
+    <polygon fill="#181818" points="1207.75,311.6475,1211.75,321.6475,1215.75,311.6475,1211.75,315.6475" style="stroke:#181818;stroke-width:1.0;"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="1040.25" x2="924.75" y1="201.4864" y2="201.4864"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="924.75" x2="924.75" y1="201.4864" y2="233.9592"/>
+    <polygon fill="#181818" points="920.75,223.9592,924.75,233.9592,928.75,223.9592,924.75,227.9592" style="stroke:#181818;stroke-width:1.0;"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="1116.25" x2="1211.75" y1="201.4864" y2="201.4864"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="1211.75" x2="1211.75" y1="201.4864" y2="233.9592"/>
+    <polygon fill="#181818" points="1207.75,223.9592,1211.75,233.9592,1215.75,223.9592,1211.75,227.9592" style="stroke:#181818;stroke-width:1.0;"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="1396.25" x2="1396.25" y1="404.2451" y2="439.2451"/>
+    <polygon fill="#181818" points="1392.25,429.2451,1396.25,439.2451,1400.25,429.2451,1396.25,433.2451" style="stroke:#181818;stroke-width:1.0;"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="1553.25" x2="1553.25" y1="387.901" y2="422.901"/>
+    <polygon fill="#181818" points="1549.25,412.901,1553.25,422.901,1557.25,412.901,1553.25,416.901" style="stroke:#181818;stroke-width:1.0;"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="1422.75" x2="1396.25" y1="271.414" y2="271.414"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="1396.25" x2="1396.25" y1="271.414" y2="318.8687"/>
+    <polygon fill="#181818" points="1392.25,308.8687,1396.25,318.8687,1400.25,308.8687,1396.25,312.8687" style="stroke:#181818;stroke-width:1.0;"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="1526.75" x2="1553.25" y1="271.414" y2="271.414"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="1553.25" x2="1553.25" y1="271.414" y2="318.8687"/>
+    <polygon fill="#181818" points="1549.25,308.8687,1553.25,318.8687,1557.25,308.8687,1553.25,312.8687" style="stroke:#181818;stroke-width:1.0;"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="1725.75" x2="1725.75" y1="286.6475" y2="321.6475"/>
+    <polygon fill="#181818" points="1721.75,311.6475,1725.75,321.6475,1729.75,311.6475,1725.75,315.6475" style="stroke:#181818;stroke-width:1.0;"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="1543.75" x2="1474.75" y1="201.4864" y2="201.4864"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="1474.75" x2="1474.75" y1="201.4864" y2="233.9592"/>
+    <polygon fill="#181818" points="1470.75,223.9592,1474.75,233.9592,1478.75,223.9592,1474.75,227.9592" style="stroke:#181818;stroke-width:1.0;"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="1656.75" x2="1725.75" y1="201.4864" y2="201.4864"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="1725.75" x2="1725.75" y1="201.4864" y2="233.9592"/>
+    <polygon fill="#181818" points="1721.75,223.9592,1725.75,233.9592,1729.75,223.9592,1725.75,227.9592" style="stroke:#181818;stroke-width:1.0;"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="1293.75" x2="1078.25" y1="146.5407" y2="146.5407"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="1078.25" x2="1078.25" y1="146.5407" y2="179.0136"/>
+    <polygon fill="#181818" points="1074.25,169.0136,1078.25,179.0136,1082.25,169.0136,1078.25,173.0136" style="stroke:#181818;stroke-width:1.0;"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="1364.75" x2="1600.25" y1="146.5407" y2="146.5407"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="1600.25" x2="1600.25" y1="146.5407" y2="179.0136"/>
+    <polygon fill="#181818" points="1596.25,169.0136,1600.25,179.0136,1604.25,169.0136,1600.25,173.0136" style="stroke:#181818;stroke-width:1.0;"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="687.4688" x2="251.6875" y1="102.0679" y2="102.0679"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="251.6875" x2="251.6875" y1="102.0679" y2="124.0679"/>
+    <polygon fill="#181818" points="247.6875,114.0679,251.6875,124.0679,255.6875,114.0679,251.6875,118.0679" style="stroke:#181818;stroke-width:1.0;"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="843.4688" x2="1329.25" y1="102.0679" y2="102.0679"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="1329.25" x2="1329.25" y1="102.0679" y2="124.0679"/>
+    <polygon fill="#181818" points="1325.25,114.0679,1329.25,124.0679,1333.25,114.0679,1329.25,118.0679" style="stroke:#181818;stroke-width:1.0;"/>
+    <line style="stroke:#181818;stroke-width:1.0;" x1="765.4688" x2="765.4688" y1="70.0679" y2="90.0679"/>
+    <polygon fill="#181818" points="761.4688,80.0679,765.4688,90.0679,769.4688,80.0679,765.4688,84.0679" style="stroke:#181818;stroke-width:1.0;"/>
+    <!--SRC=[nLLDRzim3BthLn3eeGcGfDjGzD0D6ue6M8CjmD2jvqAnQKUeB7cIdDJxzIDbEz_9sbvsIMnBudkFVAGkpiMlkVBmCFqEbKSFOOvWS0c-Da4-Wyr09a4jLAWXLJ9til2GELj0gQK9LQ57ui5areNAo82w7e0A8BMtuD1NEdXG1YGKrY4iLOhWIuSovS0CrMnI9XSBvIkfEv01K8IuFynbu9WpJ6n112l3v-LCKxmvKkmgs486bKYjQ-7f3rD8xT8mC4FSt4z744Kgts9ARmqGwVWgyvnOUBMWWDQbOkbaMH8ZGjHs2KC8blSc67Ut_FZZ345RawC3QLBG52Co7l2ha9vKD-eeH9JVyHw9ymiXV90k215K82Lt1FGD9ToJoDoeFsqXVie2uLOhD04c1iOgoz3no_ZkzWTC2L7cjBN7Hp-CBaVl-aAe37fQpT9vKZvc6fyVLJgYN99sgc_QvxW6UZNwlW3WpGwfb0aEauWpL6dCawiGUb4mPf94z7TE0foLb6fA7PhhbYATSvs0DEwPrHjLRciU5oXF9gXCeOkl-5p66bYkMlooBs7qCIxuO4jwGEs9eB4D5zRHy8Tvbtbq2xA5DNl4c-tTvyu6PULAwr54n_-kb6CBR0TgJxzC-adv1r9mE0qdKx6HZdWwfkI07as6PpMs2fvRIeeDLK3xLuA5D3LOEkvW8JLPe3t2KJRE-7KghhzQWdEsokTRwhe-YRDYSs66kJ8c9fSwCZkXSfqfxdfsxn7T9ctZR9lY6BaZr0uJEqfhdzIAKaUe-TyanSRZtbrS2kj4VBhwqZcnMLWRUdfpAsIQiYC8JR0ro357x4mZC9clUrYqFInEz_1Exqp6OCjeYbvYoIXNx_kiypZoQvfXrGuhi8sbNTYDIc_LUh_6Rw90gOKsjIUGLhuwXFhA6N0OyKKkFgFRwEawZloY6VaCPMnervUeDTzGnKalng2Du_Pc9fLYgm2nxFymd3A1xY8VwBQbMTKEixfj7obuuEXLhOUYiU52qJLApkStdahO1M-MtfpTVKljwf5FShKsVfYCJutGXjbRkOIgrEjnzud11Z2v6OQwH7wOZ3__7mSqqoZ-_WK0]-->
+  </g>
+</svg>

@@ -1,4 +1,4 @@
-# Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,7 +12,8 @@ import urllib.request
 import ssl
 import os
 
-from kea_conn import CAResponse # CARequest
+from kea_conn import CAResponse  # CARequest
+
 
 def send_to_control_agent(params):
     """ Sends a request to Control Agent, receives a response and returns it."""
@@ -20,6 +21,8 @@ def send_to_control_agent(params):
     # First, create the URL
     url = params.scheme + "://" + params.http_host + ":"
     url += str(params.http_port) + str(params.path)
+    if not url.lower().startswith('http'):
+        raise ValueError(f"url {url} is not an http link")
 
     # Now prepare the request (URL, headers and body)
     req = urllib.request.Request(url=url,
@@ -41,10 +44,13 @@ def send_to_control_agent(params):
             ssl_ctx.load_cert_chain(params.cert, params.key)
 
     # Establish connection, send the request.
-    resp = urllib.request.urlopen(req, context=ssl_ctx)
+    # Issue: [B310:blacklist] Audit url open for permitted schemes.
+    #        Allowing use of file:/ or custom schemes is often unexpected.
+    # Reason for nosec: url is checked to be http further above.
+    with urllib.request.urlopen(req, context=ssl_ctx) as resp:  # nosec B310
+        # Now get the response details, put it in CAResponse and return it
+        result = CAResponse(resp.getcode(), resp.reason,
+                            resp.read().decode("utf-8"))
 
-    # Now get the response details, put it in CAResponse and return it
-    result = CAResponse(resp.getcode(), resp.reason,
-                        resp.read().decode("utf-8"))
-
-    return result
+        return result
+    return None

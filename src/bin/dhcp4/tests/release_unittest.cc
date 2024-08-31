@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,7 +8,7 @@
 #include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <dhcp/dhcp4.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
@@ -61,7 +61,8 @@ class ReleaseTest : public Dhcpv4SrvTest {
 public:
 
     enum ExpectedResult {
-        SHOULD_PASS,
+        SHOULD_PASS_EXPIRED,
+        SHOULD_PASS_DELETED,
         SHOULD_FAIL
     };
 
@@ -69,8 +70,7 @@ public:
     ///
     /// Sets up fake interfaces.
     ReleaseTest()
-        : Dhcpv4SrvTest(),
-          iface_mgr_test_config_(true) {
+        : Dhcpv4SrvTest(), iface_mgr_test_config_(true) {
     }
 
     /// @brief Performs 4-way exchange to obtain new lease.
@@ -84,18 +84,21 @@ public:
     /// @param client_id_1 Client id to be used to acquire the lease.
     /// @param hw_address_2 HW Address to be used to release the lease.
     /// @param client_id_2 Client id to be used to release the lease.
-    /// @param expected_result SHOULD_PASS if the lease is expected to
-    /// be successfully released, or SHOULD_FAIL if the lease is expected
-    /// to not be released.
+    /// @param expected_result SHOULD_PASS_EXPIRED if the lease is expected to
+    /// be successfully released and expired, SHOULD_PASS_DELETED if the lease
+    /// is expected to be successfully released and deleted, or SHOULD_FAIL if
+    /// the lease is expected to not be released.
+    /// @param lease_affinity A flag which indicates if lease affinity should
+    /// be enabled or disabled.
     void acquireAndRelease(const std::string& hw_address_1,
                            const std::string& client_id_1,
                            const std::string& hw_address_2,
                            const std::string& client_id_2,
-                           ExpectedResult expected_result);
+                           ExpectedResult expected_result,
+                           const LeaseAffinity lease_affinity);
 
     /// @brief Interface Manager's fake configuration control.
     IfaceMgrTestConfig iface_mgr_test_config_;
-
 };
 
 void
@@ -123,11 +126,12 @@ ReleaseTest::acquireAndRelease(const std::string& hw_address_1,
                                const std::string& client_id_1,
                                const std::string& hw_address_2,
                                const std::string& client_id_2,
-                               ExpectedResult expected_result) {
+                               ExpectedResult expected_result,
+                               const LeaseAffinity lease_affinity) {
     CfgMgr::instance().clear();
     Dhcp4Client client(Dhcp4Client::SELECTING);
     // Configure DHCP server.
-    configure(RELEASE_CONFIGS[0], *client.getServer());
+    configure(RELEASE_CONFIGS[0], *client.getServer(), true, true, true, false, lease_affinity);
     // Explicitly set the client id.
     client.includeClientId(client_id_1);
     // Explicitly set the HW address.
@@ -165,9 +169,19 @@ ReleaseTest::acquireAndRelease(const std::string& hw_address_1,
     uint64_t after = assigned_cnt->getInteger().first;
 
     // We check if the release process was successful by checking if the
-    // lease is in the database. It is expected that it is not present,
-    // i.e. has been deleted with the release.
-    if (expected_result == SHOULD_PASS) {
+    // lease is in the database.
+    if (expected_result == SHOULD_PASS_EXPIRED) {
+        ASSERT_TRUE(lease);
+
+        // The update succeeded, so the assigned-address should be expired
+        EXPECT_EQ(lease->valid_lft_, 0);
+        EXPECT_EQ(Lease4::STATE_RELEASED, lease->state_);
+
+        // The release succeeded, so the assigned-addresses statistic should
+        // be decreased by one
+        EXPECT_EQ(before, after + 1);
+
+    } else if (expected_result == SHOULD_PASS_DELETED) {
         EXPECT_FALSE(lease);
 
         // The removal succeeded, so the assigned-addresses statistic should
@@ -175,6 +189,7 @@ ReleaseTest::acquireAndRelease(const std::string& hw_address_1,
         EXPECT_EQ(before, after + 1);
     } else {
         EXPECT_TRUE(lease);
+        EXPECT_EQ(Lease4::STATE_DEFAULT, lease->state_);
 
         // The removal failed, so the assigned-address should be the same
         // as before
@@ -186,7 +201,14 @@ ReleaseTest::acquireAndRelease(const std::string& hw_address_1,
 TEST_F(ReleaseTest, releaseNoIdentifierChange) {
     acquireAndRelease("01:02:03:04:05:06", "12:14",
                       "01:02:03:04:05:06", "12:14",
-                      SHOULD_PASS);
+                      SHOULD_PASS_DELETED, LEASE_AFFINITY_DISABLED);
+}
+
+// This test checks that the client can acquire and release the lease.
+TEST_F(ReleaseTest, releaseNoDeleteNoIdentifierChange) {
+    acquireAndRelease("01:02:03:04:05:06", "12:14",
+                      "01:02:03:04:05:06", "12:14",
+                      SHOULD_PASS_EXPIRED, LEASE_AFFINITY_ENABLED);
 }
 
 // This test verifies the release correctness in the following case:
@@ -197,7 +219,18 @@ TEST_F(ReleaseTest, releaseNoIdentifierChange) {
 TEST_F(ReleaseTest, releaseHWAddressOnly) {
     acquireAndRelease("01:02:03:04:05:06", "",
                       "01:02:03:04:05:06", "",
-                      SHOULD_PASS);
+                      SHOULD_PASS_DELETED, LEASE_AFFINITY_DISABLED);
+}
+
+// This test verifies the release correctness in the following case:
+// - Client acquires new lease using HW address only
+// - Client sends the DHCPRELEASE with valid HW address and without
+//   client identifier.
+// - The server successfully releases the lease.
+TEST_F(ReleaseTest, releaseNoDeleteHWAddressOnly) {
+    acquireAndRelease("01:02:03:04:05:06", "",
+                      "01:02:03:04:05:06", "",
+                      SHOULD_PASS_EXPIRED, LEASE_AFFINITY_ENABLED);
 }
 
 // This test verifies the release correctness in the following case:
@@ -208,7 +241,18 @@ TEST_F(ReleaseTest, releaseHWAddressOnly) {
 TEST_F(ReleaseTest, releaseNoClientId) {
     acquireAndRelease("01:02:03:04:05:06", "12:14",
                       "01:02:03:04:05:06", "",
-                      SHOULD_PASS);
+                      SHOULD_PASS_DELETED, LEASE_AFFINITY_DISABLED);
+}
+
+// This test verifies the release correctness in the following case:
+// - Client acquires new lease using the client identifier and HW address
+// - Client sends the DHCPRELEASE with valid HW address but with no
+//   client identifier.
+// - The server successfully releases the lease.
+TEST_F(ReleaseTest, releaseNoDeleteNoClientId) {
+    acquireAndRelease("01:02:03:04:05:06", "12:14",
+                      "01:02:03:04:05:06", "",
+                      SHOULD_PASS_EXPIRED, LEASE_AFFINITY_ENABLED);
 }
 
 // This test verifies the release correctness in the following case:
@@ -220,7 +264,19 @@ TEST_F(ReleaseTest, releaseNoClientId) {
 TEST_F(ReleaseTest, releaseNoClientId2) {
     acquireAndRelease("01:02:03:04:05:06", "",
                       "01:02:03:04:05:06", "12:14",
-                      SHOULD_PASS);
+                      SHOULD_PASS_DELETED, LEASE_AFFINITY_DISABLED);
+}
+
+// This test verifies the release correctness in the following case:
+// - Client acquires new lease using HW address
+// - Client sends the DHCPRELEASE with valid HW address and some
+//   client identifier.
+// - The server identifies the lease using HW address and releases
+//   this lease.
+TEST_F(ReleaseTest, releaseNoDeleteNoClientId2) {
+    acquireAndRelease("01:02:03:04:05:06", "",
+                      "01:02:03:04:05:06", "12:14",
+                      SHOULD_PASS_EXPIRED, LEASE_AFFINITY_ENABLED);
 }
 
 // This test checks the server's behavior in the following case:
@@ -231,7 +287,7 @@ TEST_F(ReleaseTest, releaseNoClientId2) {
 TEST_F(ReleaseTest, releaseNonMatchingClientId) {
     acquireAndRelease("01:02:03:04:05:06", "12:14",
                       "01:02:03:04:05:06", "12:15:16",
-                      SHOULD_FAIL);
+                      SHOULD_FAIL, LEASE_AFFINITY_DISABLED);
 }
 
 // This test checks the server's behavior in the following case:
@@ -243,7 +299,19 @@ TEST_F(ReleaseTest, releaseNonMatchingClientId) {
 TEST_F(ReleaseTest, releaseNonMatchingHWAddress) {
     acquireAndRelease("01:02:03:04:05:06", "12:14",
                       "06:06:06:06:06:06", "12:14",
-                      SHOULD_PASS);
+                      SHOULD_PASS_DELETED, LEASE_AFFINITY_DISABLED);
+}
+
+// This test checks the server's behavior in the following case:
+// - Client acquires new lease using client identifier and HW address
+// - Client sends the DHCPRELEASE with the same client identifier but
+//   different HW address.
+// - The server uses client identifier to find the client's lease and
+//   releases it.
+TEST_F(ReleaseTest, releaseNoDeleteNonMatchingHWAddress) {
+    acquireAndRelease("01:02:03:04:05:06", "12:14",
+                      "06:06:06:06:06:06", "12:14",
+                      SHOULD_PASS_EXPIRED, LEASE_AFFINITY_ENABLED);
 }
 
 // This test checks the server's behavior in the following case:
@@ -256,6 +324,33 @@ TEST_F(ReleaseTest, releaseNonMatchingIPAddress) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
     // Configure DHCP server.
     configure(RELEASE_CONFIGS[0], *client.getServer());
+    // Perform 4-way exchange to obtain a new lease.
+    acquireLease(client);
+
+    // Remember the acquired address.
+    IOAddress leased_address = client.config_.lease_.addr_;
+
+    // Modify the client's address to force it to release a different address
+    // than it has obtained from the server.
+    client.config_.lease_.addr_ = IOAddress(leased_address.toUint32() + 1);
+
+    // Send DHCPRELEASE and make sure it was unsuccessful, i.e. the lease
+    // remains in the database.
+    ASSERT_NO_THROW(client.doRelease());
+    Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(leased_address);
+    ASSERT_TRUE(lease);
+}
+
+// This test checks the server's behavior in the following case:
+// - Client acquires new lease.
+// - Client sends DHCPRELEASE with the ciaddr set to a different
+//   address than it has acquired from the server.
+// - Server determines that the client is trying to release a
+//   wrong address and will refuse to release.
+TEST_F(ReleaseTest, releaseNoDeleteNonMatchingIPAddress) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    // Configure DHCP server.
+    configure(RELEASE_CONFIGS[0], *client.getServer(), true, true, true, false, LEASE_AFFINITY_ENABLED);
     // Perform 4-way exchange to obtain a new lease.
     acquireLease(client);
 
@@ -294,6 +389,32 @@ TEST_F(ReleaseTest, releaseNoSubnet) {
     // Check that the lease was removed
     Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(leased_address);
     EXPECT_FALSE(lease);
+}
+
+// This test verifies that an incoming RELEASE for an address within
+// a subnet that has been removed can still be released.
+TEST_F(ReleaseTest, releaseNoDeleteNoSubnet) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    // Configure DHCP server.
+    configure(RELEASE_CONFIGS[0], *client.getServer(), true, true, true, false, LEASE_AFFINITY_ENABLED);
+    // Perform 4-way exchange to obtain a new lease.
+    acquireLease(client);
+
+    // Remember the acquired address.
+    IOAddress leased_address = client.config_.lease_.addr_;
+
+    // Release is as it was relayed
+    client.useRelay(true);
+
+    // Send the release
+    ASSERT_NO_THROW(client.doRelease());
+
+    // Check that the lease was not removed
+    Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(leased_address);
+    ASSERT_TRUE(lease);
+
+    // Check That the lease has been expired
+    EXPECT_EQ(lease->valid_lft_, 0);
 }
 
 } // end of anonymous namespace

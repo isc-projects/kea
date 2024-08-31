@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,7 +10,7 @@
 
 #include <dns/exceptions.h>
 #include <dns/rdata.h>
-#include <dns/rdata/generic/detail/char_string.h>
+#include <dns/char_string.h>
 #include <util/buffer.h>
 
 #include <gtest/gtest.h>
@@ -153,15 +153,15 @@ const struct TestData {
     {"Test\x1fTest", "Test\\031Test"},
     {"Test ~ Test", "Test ~ Test"},
     {"Test\x7fTest", "Test\\127Test"},
-    {NULL, NULL}
+    {0, 0}
 };
 
 TEST_F(CharStringTest, charStringToString) {
-    for (const TestData* cur = conversion_data; cur->data != NULL; ++cur) {
+    for (const TestData* cur = conversion_data; cur->data; ++cur) {
         uint8_t idata[32];
         size_t length = std::strlen(cur->data);
         // length (1 byte) + string (length bytes)
-        assert(sizeof(idata) > length);
+        ASSERT_TRUE(sizeof(idata) > length);
         idata[0] = static_cast<uint8_t>(length);
         std::memcpy(idata + 1, cur->data, length);
         const CharString test_data(idata, idata + length + 1);

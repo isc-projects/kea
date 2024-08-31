@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,7 +14,6 @@
 #include <d2/simple_add.h>
 #include <d2/simple_remove.h>
 #include <process/testutils/d_test_stubs.h>
-#include <util/time_utilities.h>
 
 #include <gtest/gtest.h>
 #include <algorithm>
@@ -71,6 +70,7 @@ public:
     D2UpdateMgrWrapperPtr update_mgr_;
     std::vector<NameChangeRequestPtr> canned_ncrs_;
     size_t canned_count_;
+    boost::shared_ptr<FauxServer> server_;
 
     D2UpdateMgrTest() {
         queue_mgr_.reset(new D2QueueMgr(io_service_));
@@ -82,6 +82,10 @@ public:
     }
 
     ~D2UpdateMgrTest() {
+        if (server_) {
+            server_->stop();
+        }
+        io_service_->stopAndPoll();
     }
 
     /// @brief Creates a list of valid NameChangeRequest.
@@ -99,7 +103,7 @@ public:
         " \"dhcid\" : \"0102030405060708\" , "
         " \"lease-expires-on\" : \"20130121132405\" , "
         " \"lease-length\" : 1300, "
-        " \"use-conflict-resolution\" : true "
+        " \"conflict-resolution-mode\" : \"check-with-dhcid\""
         "}";
 
         const char* dhcids[] = { "111111", "222222", "333333", "444444" };
@@ -125,7 +129,7 @@ public:
                   " \"ddns-domains\": [ "
                   "  { \"name\": \"example.com.\" , "
                   "   \"dns-servers\" : [ "
-                  "    { \"ip-address\": \"127.0.0.1\", \"port\" : 5301  } "
+                  "    { \"ip-address\": \"127.0.0.1\", \"port\" : 5301 } "
                   "   ] },"
                   "  { \"name\": \"org.\" , "
                   "   \"dns-servers\" : [ "
@@ -184,11 +188,11 @@ public:
         TransactionList::iterator it = update_mgr_->transactionListBegin();
         while (it != update_mgr_->transactionListEnd()) {
             if (((*it).second)->isModelWaiting()) {
-                return true;
+                return (true);
             }
         }
 
-        return false;
+        return (false);
     }
 
     /// @brief Process events until all requests have been completed.
@@ -233,7 +237,7 @@ public:
             // test (currently, multiTransactionTimeout).
             if (passes > max_passes) {
                 FAIL() << "processALL failed, too many passes: "
-                       << passes <<  ", total handlers executed: " << handlers;
+                       << passes << ", total handlers executed: " << handlers;
             }
         }
     }
@@ -285,7 +289,7 @@ TEST(D2UpdateMgr, construction) {
               update_mgr->getMaxTransactions());
 
 
-    // Verify that constructor permits custom  max transactions.
+    // Verify that constructor permits custom max transactions.
     ASSERT_NO_THROW(update_mgr.reset(new D2UpdateMgr(queue_mgr, cfg_mgr,
                                                      io_service, 100)));
 
@@ -522,7 +526,7 @@ TEST_F(D2UpdateMgrTest, pickNextJob) {
     // Verify that the queue has been drained.
     EXPECT_EQ(0, update_mgr_->getQueueCount());
 
-    // Now verify that a subsequent request for a DCHID  for which a
+    // Now verify that a subsequent request for a DCHID for which a
     // transaction is in progress, is not dequeued.
     // First add the "subsequent" request.
     dhcp_ddns::NameChangeRequestPtr
@@ -572,6 +576,60 @@ TEST_F(D2UpdateMgrTest, pickNextJob) {
     // 3. Does dequeue the entry
     EXPECT_NO_THROW(update_mgr_->pickNextJob());
     EXPECT_EQ(0, update_mgr_->getTransactionCount());
+    EXPECT_EQ(0, update_mgr_->getQueueCount());
+}
+
+/// @brief Tests D2UpdateManager's pickNextJob method.
+/// This test verifies that pickNextJob skips over requests
+/// for which makeTransation() fails.
+TEST_F(D2UpdateMgrTest, pickNextJobSkips) {
+    // Ensure we have at least 4 canned requests with which to work.
+    ASSERT_TRUE(canned_count_ >= 4);
+
+    // Enqueue a forward change NCR with an FQDN that has no forward match.
+    dhcp_ddns::NameChangeRequestPtr bogus_ncr;
+    bogus_ncr.reset(new dhcp_ddns::NameChangeRequest(*(canned_ncrs_[0])));
+    bogus_ncr->setForwardChange(true);
+    bogus_ncr->setReverseChange(false);
+    bogus_ncr->setFqdn("bogus.forward.domain.com");
+    ASSERT_NO_THROW(queue_mgr_->enqueue(bogus_ncr));
+
+    // Enqueue a reverse change NCR with an FQDN that has no reverse match.
+    bogus_ncr.reset(new dhcp_ddns::NameChangeRequest(*(canned_ncrs_[0])));
+    bogus_ncr->setForwardChange(false);
+    bogus_ncr->setReverseChange(true);
+    bogus_ncr->setIpAddress("77.77.77.77");
+    ASSERT_NO_THROW(queue_mgr_->enqueue(bogus_ncr));
+
+    // Put the valid transactions on the queue.
+    for (int i = 0; i < canned_count_; i++) {
+        ASSERT_NO_THROW(queue_mgr_->enqueue(canned_ncrs_[i]));
+    }
+
+    ASSERT_EQ(2 + canned_count_, update_mgr_->getQueueCount());
+    ASSERT_EQ(0, update_mgr_->getTransactionCount());
+
+    // Invoke pickNextJob once.
+    EXPECT_NO_THROW(update_mgr_->pickNextJob());
+    EXPECT_EQ(1, update_mgr_->getTransactionCount());
+    EXPECT_TRUE(update_mgr_->hasTransaction(canned_ncrs_[0]->getDhcid()));
+
+    // Verify that the queue has all but one of the canned requests still queued.
+    EXPECT_EQ(canned_count_ - 1, update_mgr_->getQueueCount());
+
+    // Empty the queue and transaction list.
+    queue_mgr_->clearQueue();
+    ASSERT_EQ(0, update_mgr_->getQueueCount());
+    update_mgr_->clearTransactionList();
+    EXPECT_EQ(0, update_mgr_->getTransactionCount());
+
+    // Add two no match requests.
+    ASSERT_NO_THROW(queue_mgr_->enqueue(bogus_ncr));
+    ASSERT_NO_THROW(queue_mgr_->enqueue(bogus_ncr));
+    ASSERT_EQ(2, update_mgr_->getQueueCount());
+
+    // Invoking pickNextJob() should empty the queue without adding transactions.
+    EXPECT_NO_THROW(update_mgr_->pickNextJob());
     EXPECT_EQ(0, update_mgr_->getQueueCount());
 }
 
@@ -692,8 +750,8 @@ TEST_F(D2UpdateMgrTest, addTransaction) {
 
     // Create a server based on the transaction's current server, and
     // start it listening.
-    FauxServer server(*io_service_, *(trans->getCurrentServer()));
-    server.receive(FauxServer::USE_RCODE, dns::Rcode::NOERROR());
+    server_.reset(new FauxServer(io_service_, *(trans->getCurrentServer())));
+    server_->receive(FauxServer::USE_RCODE, dns::Rcode::NOERROR());
 
     // Run sweep and IO until everything is done.
     processAll();
@@ -747,10 +805,10 @@ TEST_F(D2UpdateMgrTest, removeTransaction) {
     ASSERT_EQ(1, trans->getUpdateAttempts());
     ASSERT_EQ(StateModel::NOP_EVT, trans->getNextEvent());
 
-    // Create a server based on the transaction's current server,
-    // and start it listening.
-    FauxServer server(*io_service_, *(trans->getCurrentServer()));
-    server.receive(FauxServer::USE_RCODE, dns::Rcode::NOERROR());
+    // Create a server based on the transaction's current server, and
+    // start it listening.
+    server_.reset(new FauxServer(io_service_, *(trans->getCurrentServer())));
+    server_->receive(FauxServer::USE_RCODE, dns::Rcode::NOERROR());
 
     // Run sweep and IO until everything is done.
     processAll();
@@ -797,8 +855,8 @@ TEST_F(D2UpdateMgrTest, errorTransaction) {
     ASSERT_TRUE(trans->getCurrentServer());
 
     // Create a server and start it listening.
-    FauxServer server(*io_service_, *(trans->getCurrentServer()));
-    server.receive(FauxServer::CORRUPT_RESP);
+    server_.reset(new FauxServer(io_service_, *(trans->getCurrentServer())));
+    server_->receive(FauxServer::CORRUPT_RESP);
 
     // Run sweep and IO until everything is done.
     processAll();
@@ -836,8 +894,8 @@ TEST_F(D2UpdateMgrTest, multiTransaction) {
     // that all of configured servers have the same address.
     // and start it listening.
     asiolink::IOAddress server_ip("127.0.0.1");
-    FauxServer server(*io_service_, server_ip, 5301);
-    server.receive(FauxServer::USE_RCODE, dns::Rcode::NOERROR());
+    server_.reset(new FauxServer(io_service_, server_ip, 5301));
+    server_->receive(FauxServer::USE_RCODE, dns::Rcode::NOERROR());
 
     // Run sweep and IO until everything is done.
     processAll();
@@ -880,7 +938,7 @@ TEST_F(D2UpdateMgrTest, simpleAddTransaction) {
     // Put each transaction on the queue.
     canned_ncrs_[0]->setChangeType(dhcp_ddns::CHG_ADD);
     canned_ncrs_[0]->setReverseChange(true);
-    canned_ncrs_[0]->setConflictResolution(false);
+    canned_ncrs_[0]->setConflictResolutionMode(dhcp_ddns::NO_CHECK_WITH_DHCID);
     ASSERT_NO_THROW(queue_mgr_->enqueue(canned_ncrs_[0]));
 
     // Call sweep once, this should:
@@ -908,8 +966,8 @@ TEST_F(D2UpdateMgrTest, simpleAddTransaction) {
 
     // Create a server based on the transaction's current server, and
     // start it listening.
-    FauxServer server(*io_service_, *(trans->getCurrentServer()));
-    server.receive(FauxServer::USE_RCODE, dns::Rcode::NOERROR());
+    server_.reset(new FauxServer(io_service_, *(trans->getCurrentServer())));
+    server_->receive(FauxServer::USE_RCODE, dns::Rcode::NOERROR());
 
     // Run sweep and IO until everything is done.
     processAll();
@@ -938,7 +996,7 @@ TEST_F(D2UpdateMgrTest, simpleRemoveTransaction) {
     // Put each transaction on the queue.
     canned_ncrs_[0]->setChangeType(dhcp_ddns::CHG_REMOVE);
     canned_ncrs_[0]->setReverseChange(true);
-    canned_ncrs_[0]->setConflictResolution(false);
+    canned_ncrs_[0]->setConflictResolutionMode(dhcp_ddns::NO_CHECK_WITH_DHCID);
     ASSERT_NO_THROW(queue_mgr_->enqueue(canned_ncrs_[0]));
 
     // Call sweep once, this should:
@@ -964,10 +1022,10 @@ TEST_F(D2UpdateMgrTest, simpleRemoveTransaction) {
     ASSERT_EQ(1, trans->getUpdateAttempts());
     ASSERT_EQ(StateModel::NOP_EVT, trans->getNextEvent());
 
-    // Create a server based on the transaction's current server,
-    // and start it listening.
-    FauxServer server(*io_service_, *(trans->getCurrentServer()));
-    server.receive(FauxServer::USE_RCODE, dns::Rcode::NOERROR());
+    // Create a server based on the transaction's current server, and
+    // start it listening.
+    server_.reset(new FauxServer(io_service_, *(trans->getCurrentServer())));
+    server_->receive(FauxServer::USE_RCODE, dns::Rcode::NOERROR());
 
     // Run sweep and IO until everything is done.
     processAll();

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,8 +22,9 @@ namespace http {
 /// The most common errors are due to receiving malformed requests.
 class HttpParseError : public Exception {
 public:
-    HttpParseError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+    HttpParseError(const char* file, size_t line, const char* what)
+        : isc::Exception(file, line, what) {
+    }
 };
 
 /// @brief Base class for the HTTP message parsers.
@@ -171,13 +172,13 @@ private:
 protected:
 
     /// @brief Define events used by the parser.
-    virtual void defineEvents();
+    virtual void defineEvents() override ;
 
     /// @brief Verifies events used by the parser.
-    virtual void verifyEvents();
+    virtual void verifyEvents() override;
 
     /// @brief Defines states of the parser.
-    virtual void defineStates();
+    virtual void defineStates() override;
 
     /// @brief Generic parser handler which reads a single byte of data and
     /// parses it using specified callback function.
@@ -230,7 +231,7 @@ protected:
     ///
     /// @param explanation Error message explaining the reason for parsing
     /// failure.
-    virtual void onModelFailure(const std::string& explanation);
+    virtual void onModelFailure(const std::string& explanation) override;
 
     /// @brief Retrieves next bytes of data from the buffer.
     ///
@@ -285,17 +286,17 @@ protected:
     /// @brief Checks if specified value is a character.
     ///
     /// @return true, if specified value is a character.
-    bool isChar(const char c) const;
+    bool isChar(const signed char c) const;
 
     /// @brief Checks if specified value is a control value.
     ///
     /// @return true, if specified value is a control value.
-    bool isCtl(const char c) const;
+    bool isCtl(const signed char c) const;
 
     /// @brief Checks if specified value is a special character.
     ///
     /// @return true, if specified value is a special character.
-    bool isSpecial(const char c) const;
+    bool isSpecial(const signed char c) const;
 
     /// @brief Reference to the parsed HTTP message.
     HttpMessage& message_;

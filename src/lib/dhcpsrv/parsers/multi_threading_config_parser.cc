@@ -1,4 +1,4 @@
-// Copyright (C) 2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,8 @@
 #include <dhcpsrv/srv_config.h>
 #include <dhcpsrv/parsers/multi_threading_config_parser.h>
 #include <util/multi_threading_mgr.h>
+
+#include <limits>
 
 using namespace isc::data;
 using namespace isc::util;
@@ -28,7 +30,7 @@ MultiThreadingConfigParser::parse(SrvConfig& srv_cfg,
     }
 
     // enable-multi-threading is mandatory
-    auto enabled = getBoolean(value, "enable-multi-threading");
+    getBoolean(value, "enable-multi-threading");
 
     // thread-pool-size is not mandatory
     if (value->get("thread-pool-size")) {
@@ -65,7 +67,6 @@ MultiThreadingConfigParser::parse(SrvConfig& srv_cfg,
     }
 
     srv_cfg.setDHCPMultiThreading(value);
-    MultiThreadingMgr::instance().setMode(enabled);
 }
 
 }  // namespace dhcp

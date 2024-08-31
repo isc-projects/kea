@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -26,6 +26,7 @@
 #include <log/logger_level_impl.h>
 #include <log/message_types.h>
 #include <log/interprocess/interprocess_sync.h>
+#include <log/output_option.h>
 
 namespace isc {
 namespace log {
@@ -177,13 +178,20 @@ public:
     /// If NULL is passed, a BadInterprocessSync exception is thrown.
     void setInterprocessSync(isc::log::interprocess::InterprocessSync* sync);
 
+    /// @brief Check if this logger has an appender of the given type.
+    ///
+    /// @param destination the appender type to be checked: console, file or syslog
+    ///
+    /// @return true if an appender of the given type is found, false otherwise
+    bool hasAppender(OutputOption::Destination const destination);
+
     /// \brief Equality
     ///
     /// Check if two instances of this logger refer to the same stream.
     /// (This method is principally for testing.)
     ///
     /// \return true if the logger objects are instances of the same logger.
-    bool operator==(const LoggerImpl& other) {
+    bool operator==(const LoggerImpl& other) const {
         return (name_ == other.name_);
     }
 

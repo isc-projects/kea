@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -129,8 +129,7 @@ public:
     /// @return an Element that contains the results of argument processing,
     /// consisting of an integer status value (0 means successful,
     /// non-zero means failure), and a string explanation of the outcome.
-    virtual isc::data::ConstElementPtr
-        shutdown(isc::data::ConstElementPtr args);
+    virtual isc::data::ConstElementPtr shutdown(isc::data::ConstElementPtr args);
 
     /// @brief Processes the given configuration.
     ///
@@ -155,9 +154,8 @@ public:
     /// @return an Element that contains the results of configuration composed
     /// of an integer status value (0 means successful, non-zero means failure),
     /// and a string explanation of the outcome.
-    virtual isc::data::ConstElementPtr
-    configure(isc::data::ConstElementPtr config_set,
-              bool check_only = false);
+    virtual isc::data::ConstElementPtr configure(isc::data::ConstElementPtr config_set,
+                                                 bool check_only = false);
 
     /// @brief Destructor
     virtual ~D2Process();
@@ -318,7 +316,7 @@ private:
 /// @brief Defines a shared pointer to D2Process.
 typedef boost::shared_ptr<D2Process> D2ProcessPtr;
 
-}; // namespace isc::d2
-}; // namespace isc
+} // namespace isc::d2
+} // namespace isc
 
 #endif

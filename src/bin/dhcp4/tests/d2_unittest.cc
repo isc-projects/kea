@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -61,7 +61,7 @@ Dhcp4SrvD2Test::buildTestNcr(uint32_t dhcid_id_num) {
 
         " \"lease-expires-on\" : \"20140121132405\" , "
         " \"lease-length\" : 1300, "
-        " \"use-conflict-resolution\" : true "
+        " \"conflict-resolution-mode\" : \"check-with-dhcid\""
         "}";
 
     return (dhcp_ddns::NameChangeRequest::fromJSON(stream.str()));
@@ -99,7 +99,13 @@ Dhcp4SrvD2Test::configureD2(bool enable_d2, const bool exp_result,
         "},"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
+        "\"ddns-override-no-update\" : true, "
+        "\"ddns-override-client-update\" : true, "
+        "\"ddns-replace-client-name\" : \"when-present\", "
+        "\"ddns-generated-prefix\" : \"test.prefix\", "
+        "\"ddns-qualifying-suffix\" : \"test.suffix.\", "
         "\"subnet4\": [ { "
+        "    \"id\": 1,"
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         " \"dhcp-ddns\" : {"
@@ -110,12 +116,7 @@ Dhcp4SrvD2Test::configureD2(bool enable_d2, const bool exp_result,
         "     \"sender-port\" : " << sender_port << ", "
         "     \"max-queue-size\" : " << max_queue_size << ", "
         "     \"ncr-protocol\" : \"UDP\", "
-        "     \"ncr-format\" : \"JSON\", "
-        "     \"override-no-update\" : true, "
-        "     \"override-client-update\" : true, "
-        "     \"replace-client-name\" : \"when-present\", "
-        "     \"generated-prefix\" : \"test.prefix\", "
-        "     \"qualifying-suffix\" : \"test.suffix.\" },"
+        "     \"ncr-format\" : \"JSON\"},"
         "\"valid-lifetime\": 4000 }";
 
     configure(config.str(), exp_result);
@@ -369,6 +370,7 @@ TEST_F(Dhcp4SrvD2Test, DISABLED_forceUDPSendFailure) {
 
     // First message is off the queue.
     EXPECT_EQ(2, mgr.getQueueSize());
+    mgr.stop();
 }
 
 // Tests error handling of D2ClientMgr::sendRequest() failure
@@ -410,7 +412,13 @@ TEST_F(Dhcp4SrvD2Test, badTCP) {
         "},"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
+        "\"ddns-override-no-update\" : true, "
+        "\"ddns-override-client-update\" : true, "
+        "\"ddns-replace-client-name\" : \"when-present\", "
+        "\"ddns-generated-prefix\" : \"test.prefix\", "
+        "\"ddns-qualifying-suffix\" : \"test.suffix.\", "
         "\"subnet4\": [ { "
+        "    \"id\": 1,"
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         " \"dhcp-ddns\" : {"
@@ -421,12 +429,7 @@ TEST_F(Dhcp4SrvD2Test, badTCP) {
         "     \"sender-port\" : 0, "
         "     \"max-queue-size\" : 1024, "
         "     \"ncr-protocol\" : \"TCP\", "
-        "     \"ncr-format\" : \"JSON\", "
-        "     \"override-no-update\" : true, "
-        "     \"override-client-update\" : true, "
-        "     \"replace-client-name\" : \"when-present\", "
-        "     \"generated-prefix\" : \"test.prefix\", "
-        "     \"qualifying-suffix\" : \"test.suffix.\" },"
+        "     \"ncr-format\" : \"JSON\"},"
         "\"valid-lifetime\": 4000 }";
 
     ElementPtr json = Element::fromJSON(config);
@@ -449,7 +452,13 @@ TEST_F(Dhcp4SrvD2Test, badFamily) {
         "},"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
+        "\"ddns-override-no-update\" : true, "
+        "\"ddns-override-client-update\" : true, "
+        "\"ddns-replace-client-name\" : \"when-present\", "
+        "\"ddns-generated-prefix\" : \"test.prefix\", "
+        "\"ddns-qualifying-suffix\" : \"test.suffix.\", "
         "\"subnet4\": [ { "
+        "    \"id\": 1,"
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         " \"dhcp-ddns\" : {"
@@ -460,12 +469,7 @@ TEST_F(Dhcp4SrvD2Test, badFamily) {
         "     \"sender-port\" : 0, "
         "     \"max-queue-size\" : 1024, "
         "     \"ncr-protocol\" : \"UDP\", "
-        "     \"ncr-format\" : \"JSON\", "
-        "     \"override-no-update\" : true, "
-        "     \"override-client-update\" : true, "
-        "     \"replace-client-name\" : \"when-present\", "
-        "     \"generated-prefix\" : \"test.prefix\", "
-        "     \"qualifying-suffix\" : \"test.suffix.\" },"
+        "     \"ncr-format\" : \"JSON\"},"
         "\"valid-lifetime\": 4000 }";
 
     ElementPtr json = Element::fromJSON(config);
@@ -488,7 +492,13 @@ TEST_F(Dhcp4SrvD2Test, senderEqServer) {
         "},"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
+        "\"ddns-override-no-update\" : true, "
+        "\"ddns-override-client-update\" : true, "
+        "\"ddns-replace-client-name\" : \"when-present\", "
+        "\"ddns-generated-prefix\" : \"test.prefix\", "
+        "\"ddns-qualifying-suffix\" : \"test.suffix.\", "
         "\"subnet4\": [ { "
+        "    \"id\": 1,"
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         " \"dhcp-ddns\" : {"
@@ -499,12 +509,7 @@ TEST_F(Dhcp4SrvD2Test, senderEqServer) {
         "     \"sender-port\" : 53001, "
         "     \"max-queue-size\" : 1024, "
         "     \"ncr-protocol\" : \"UDP\", "
-        "     \"ncr-format\" : \"JSON\", "
-        "     \"override-no-update\" : true, "
-        "     \"override-client-update\" : true, "
-        "     \"replace-client-name\" : \"when-present\", "
-        "     \"generated-prefix\" : \"test.prefix\", "
-        "     \"qualifying-suffix\" : \"test.suffix.\" },"
+        "     \"ncr-format\" : \"JSON\"},"
         "\"valid-lifetime\": 4000 }";
 
     ElementPtr json = Element::fromJSON(config);

@@ -1,4 +1,4 @@
-// Copyright (C) 2015,2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -76,10 +76,6 @@ public:
 
     /// @brief Returns the duration in the textual format which can be
     /// directly used in log messages.
-    ///
-    /// @todo Currently this function returns the duration as fractional
-    /// milliseconds. We may come up with something more sophisticated
-    /// in the future.
     ///
     /// @param duration Duration to be converted to the textual format.
     ///

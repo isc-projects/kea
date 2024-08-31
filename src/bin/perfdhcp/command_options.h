@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -40,6 +40,9 @@ public:
 
     /// @brief A vector holding MAC addresses.
     typedef std::vector<std::vector<uint8_t> > MacAddrsVector;
+
+    /// @brief Maximum allowed level of encapsulation of added relay options.
+    const static uint8_t RELAY_OPTIONS_MAX_ENCAPSULATION = 1;
 
     /// \brief A class encapsulating the type of lease being requested from the
     /// server.
@@ -377,6 +380,16 @@ public:
     /// @return container with options.
     const isc::dhcp::OptionCollection& getExtraOpts() const { return extra_opts_; }
 
+    /// @brief Returns relay options to be inserted at given level of encapsulation.
+    ///
+    /// @param encapsulation_level level of encapsulation, by default 1
+    ///
+    /// @throws isc::OutOfRange When trying to access relay options at encapsulation
+    /// level that doesn't exist.
+    ///
+    /// @return container with options.
+    const isc::dhcp::OptionCollection& getRelayOpts(uint8_t encapsulation_level = 1) const;
+
     /// \brief Check if single-threaded mode is enabled.
     ///
     /// \return true if single-threaded mode is enabled.
@@ -432,9 +445,10 @@ public:
     static void usage();
 
     /// \brief Print program version.
-    ///
-    /// Prints perfdhcp version.
     void version() const;
+
+    /// @brief Print extended program version.
+    void extendedVersion() const;
 
 private:
     /// \brief Initializes class members based on the command line.
@@ -750,6 +764,9 @@ private:
 
     /// @brief Extra options to be sent in each packet.
     isc::dhcp::OptionCollection extra_opts_;
+
+    /// @brief Map of relay options to be sent per encapsulation level.
+    std::map<uint8_t, isc::dhcp::OptionCollection> relay_opts_;
 
     /// @brief Option to switch modes between single-threaded and multi-threaded.
     bool single_thread_mode_;

@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -196,7 +196,7 @@ public:
 
     /// @brief Constructor.
     MultiThreadingHttpClientTest()
-        : io_service_(), client_(), listener_(), factory_(), listeners_(), factories_(),
+        : io_service_(new IOService()), client_(), listener_(), factory_(), listeners_(), factories_(),
           test_timer_(io_service_), num_threads_(0), num_batches_(0), num_listeners_(0),
           expected_requests_(0), num_in_progress_(0), num_finished_(0), paused_(false),
           pause_cnt_(0) {
@@ -213,9 +213,12 @@ public:
         }
 
         // Stop all listeners.
-        for (const auto& listener : listeners_) {
+        for (auto const& listener : listeners_) {
             listener->stop();
         }
+
+        test_timer_.cancel();
+        io_service_->stopAndPoll();
 
         MultiThreadingMgr::instance().setMode(false);
     }
@@ -229,18 +232,18 @@ public:
         if (fail_on_timeout) {
             ADD_FAILURE() << "Timeout occurred while running the test!";
         }
-        io_service_.stop();
+        io_service_->stop();
     }
 
     /// @brief Runs the test's IOService until the desired number of requests
     /// have been carried out or the test fails.
     void runIOService(size_t request_limit) {
         while (getRRCount() < request_limit) {
-            // Always call reset() before we call run();
-            io_service_.restart();
+            io_service_->stop();
+            io_service_->restart();
 
             // Run until a client stops the service.
-            io_service_.run();
+            io_service_->run();
         }
     }
 
@@ -354,7 +357,7 @@ public:
                     num_in_progress_ = 0;
                     test_cv_.notify_all();
                     // Stop the test's IOService.
-                    io_service_.stop();
+                    io_service_->stop();
                 } else {
                     // I'm done but others aren't wait here.
                     bool ret = test_cv_.wait_for(lck, std::chrono::seconds(10),
@@ -410,8 +413,8 @@ public:
                 std::unique_lock<std::mutex> lck(test_mutex_);
                 clientRRs_.push_back(clientRR);
                 ++num_finished_;
-                if ((num_finished_ >= expected_requests_) && !io_service_.stopped()) {
-                    io_service_.stop();
+                if ((num_finished_ >= expected_requests_) && !io_service_->stopped()) {
+                    io_service_->stop();
                 }
             }
 
@@ -481,7 +484,9 @@ public:
         }
 
         // Create an MT client with num_threads
-        ASSERT_NO_THROW_LOG(client_.reset(new HttpClient(io_service_, num_threads)));
+        ASSERT_NO_THROW_LOG(client_.reset(new HttpClient(io_service_,
+                                                         num_threads ? true : false,
+                                                         num_threads, true)));
         ASSERT_TRUE(client_);
 
         if (num_threads_ == 0) {
@@ -492,20 +497,22 @@ public:
             ASSERT_TRUE(client_->getThreadIOService());
         }
 
-        // Verify the pool size and number of threads are as expected.
-        ASSERT_EQ(client_->getThreadPoolSize(), num_threads);
-        ASSERT_EQ(client_->getThreadCount(), num_threads);
-
         // Start the requisite number of requests:
         //   batch * listeners * threads.
-        int sequence = 0;
-        for (auto b = 0; b < num_batches; ++b) {
-            for (auto l = 0; l < num_listeners_; ++l) {
-                for (auto t = 0; t < effective_threads; ++t) {
-                    startRequest(++sequence, l);
+        int sequence_nr = 0;
+        for (size_t b = 0; b < num_batches; ++b) {
+            for (size_t l = 0; l < num_listeners_; ++l) {
+                for (size_t t = 0; t < effective_threads; ++t) {
+                    startRequest(++sequence_nr, l);
                 }
             }
         }
+
+        client_->start();
+
+        // Verify the pool size and number of threads are as expected.
+        ASSERT_EQ(client_->getThreadPoolSize(), num_threads);
+        ASSERT_EQ(client_->getThreadCount(), num_threads);
 
         // Loop until the clients are done, an error occurs, or the time runs out.
         runIOService(expected_requests_);
@@ -514,7 +521,7 @@ public:
         ASSERT_NO_THROW(client_->stop());
 
         // Listeners should stop without issue.
-        for (const auto& listener : listeners_) {
+        for (auto const& listener : listeners_) {
             ASSERT_NO_THROW(listener->stop());
         }
 
@@ -645,8 +652,21 @@ public:
         }
 
         // Create an instant start, MT client with num_threads
-        ASSERT_NO_THROW_LOG(client_.reset(new HttpClient(io_service_, num_threads)));
+        ASSERT_NO_THROW_LOG(client_.reset(new HttpClient(io_service_, true, num_threads, true)));
         ASSERT_TRUE(client_);
+
+        // Start the requisite number of requests:
+        //   batch * listeners * threads.
+        int sequence_nr = 0;
+        for (size_t b = 0; b < num_batches; ++b) {
+            for (size_t l = 0; l < num_listeners_; ++l) {
+                for (size_t t = 0; t < num_threads_; ++t) {
+                    startRequestSimple(++sequence_nr, l);
+                }
+            }
+        }
+
+        client_->start();
 
         // Client should be running. Check convenience functions.
         ASSERT_TRUE(client_->isRunning());
@@ -656,17 +676,6 @@ public:
         // Verify the pool size and number of threads are as expected.
         ASSERT_EQ(client_->getThreadPoolSize(), num_threads);
         ASSERT_EQ(client_->getThreadCount(), num_threads);
-
-        // Start the requisite number of requests:
-        //   batch * listeners * threads.
-        int sequence = 0;
-        for (auto b = 0; b < num_batches; ++b) {
-            for (auto l = 0; l < num_listeners_; ++l) {
-                for (auto t = 0; t < num_threads_; ++t) {
-                    startRequestSimple(++sequence, l);
-                }
-            }
-        }
 
         size_t rr_count = 0;
         while (rr_count < total_requests) {
@@ -707,7 +716,7 @@ public:
         ASSERT_NO_THROW(client_->stop());
 
         // Listeners should stop without issue.
-        for (const auto& listener : listeners_) {
+        for (auto const& listener : listeners_) {
             ASSERT_NO_THROW(listener->stop());
         }
 
@@ -767,7 +776,7 @@ public:
     }
 
     /// @brief IO service used in the tests.
-    IOService io_service_;
+    IOServicePtr io_service_;
 
     /// @brief Instance of the client used in the tests.
     HttpClientPtr client_;
@@ -826,11 +835,10 @@ public:
 // Verifies we can construct and destruct, in both single
 // and multi-threaded modes.
 TEST_F(MultiThreadingHttpClientTest, basics) {
-    MultiThreadingMgr::instance().setMode(false);
     HttpClientPtr client;
 
     // Value of 0 for thread_pool_size means single-threaded.
-    ASSERT_NO_THROW_LOG(client.reset(new HttpClient(io_service_, 0)));
+    ASSERT_NO_THROW_LOG(client.reset(new HttpClient(io_service_, false)));
     ASSERT_TRUE(client);
 
     ASSERT_FALSE(client->getThreadIOService());
@@ -841,16 +849,13 @@ TEST_F(MultiThreadingHttpClientTest, basics) {
     ASSERT_NO_THROW_LOG(client.reset());
 
     // Non-zero thread-pool-size means multi-threaded mode, should throw.
-    ASSERT_THROW_MSG(client.reset(new HttpClient(io_service_, 1)), InvalidOperation,
-                                  "HttpClient thread_pool_size must be zero"
+    ASSERT_THROW_MSG(client.reset(new HttpClient(io_service_, false, 1)), InvalidOperation,
+                                  "HttpClient thread_pool_size must be zero "
                                   "when Kea core multi-threading is disabled");
     ASSERT_FALSE(client);
 
-    // Enable Kea core multi-threading.
-    MultiThreadingMgr::instance().setMode(true);
-
     // Multi-threaded construction should work now.
-    ASSERT_NO_THROW_LOG(client.reset(new HttpClient(io_service_, 3)));
+    ASSERT_NO_THROW_LOG(client.reset(new HttpClient(io_service_, true, 3)));
     ASSERT_TRUE(client);
 
     // Verify that it has an internal IOService and that thread pool size
@@ -886,7 +891,7 @@ TEST_F(MultiThreadingHttpClientTest, basics) {
     ASSERT_NO_THROW_LOG(client.reset());
 
     // Create another multi-threaded instance.
-    ASSERT_NO_THROW_LOG(client.reset(new HttpClient(io_service_, 3)));
+    ASSERT_NO_THROW_LOG(client.reset(new HttpClient(io_service_, true, 3)));
 
     // Make sure destruction doesn't throw.
     ASSERT_NO_THROW_LOG(client.reset());
@@ -894,12 +899,11 @@ TEST_F(MultiThreadingHttpClientTest, basics) {
 
 // Verifies we can construct with deferred start.
 TEST_F(MultiThreadingHttpClientTest, deferredStart) {
-    MultiThreadingMgr::instance().setMode(true);
     HttpClientPtr client;
     size_t thread_pool_size = 3;
 
     // Create MT client with deferred start.
-    ASSERT_NO_THROW_LOG(client.reset(new HttpClient(io_service_, thread_pool_size, true)));
+    ASSERT_NO_THROW_LOG(client.reset(new HttpClient(io_service_, true, thread_pool_size, true)));
     ASSERT_TRUE(client);
 
     // Client should be STOPPED, with no threads.
@@ -938,12 +942,11 @@ TEST_F(MultiThreadingHttpClientTest, deferredStart) {
 
 // Verifies we can restart after stop.
 TEST_F(MultiThreadingHttpClientTest, restartAfterStop) {
-    MultiThreadingMgr::instance().setMode(true);
     HttpClientPtr client;
     size_t thread_pool_size = 3;
 
     // Create MT client with instant start.
-    ASSERT_NO_THROW_LOG(client.reset(new HttpClient(io_service_, thread_pool_size)));
+    ASSERT_NO_THROW_LOG(client.reset(new HttpClient(io_service_, true, thread_pool_size)));
     ASSERT_TRUE(client);
 
     // Verify we're started.

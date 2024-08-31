@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,17 +10,26 @@
 
 #include <config.h>
 
+#include <asiolink/io_service_mgr.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <hooks/hooks.h>
+#include <process/daemon.h>
 #include <pgsql_cb_impl.h>
 
 #include <pgsql_cb_dhcp4.h>
 #include <pgsql_cb_dhcp6.h>
 #include <pgsql_cb_log.h>
 
+#include <sstream>
+#include <string>
+
+using namespace isc::asiolink;
 using namespace isc::cb;
 using namespace isc::dhcp;
 using namespace isc::hooks;
 using namespace isc::log;
+using namespace isc::process;
+using namespace std;
 
 extern "C" {
 
@@ -30,6 +39,21 @@ extern "C" {
 /// @return 0 when initialization is successful, 1 otherwise
 
 int load(LibraryHandle& /* handle */) {
+    // Make the hook library not loadable by d2 or ca.
+    uint16_t family = CfgMgr::instance().getFamily();
+    const std::string& proc_name = Daemon::getProcName();
+    if (family == AF_INET) {
+        if (proc_name != "kea-dhcp4") {
+            isc_throw(isc::Unexpected, "Bad process name: " << proc_name
+                      << ", expected kea-dhcp4");
+        }
+    } else {
+        if (proc_name != "kea-dhcp6") {
+            isc_throw(isc::Unexpected, "Bad process name: " << proc_name
+                      << ", expected kea-dhcp6");
+        }
+    }
+
     LOG_INFO(pgsql_cb_logger, PGSQL_CB_INIT_OK);
     // Register PostgreSQL CB factories with CB Managers
     isc::dhcp::PgSqlConfigBackendDHCPv4::registerBackendType();
@@ -44,10 +68,9 @@ int load(LibraryHandle& /* handle */) {
 ///
 /// @param handle callout handle passed to the callout.
 /// @return 0 on success, 1 otherwise.
-int dhcp4_srv_configured(CalloutHandle& handle) {
-    isc::asiolink::IOServicePtr io_service;
-    handle.getArgument("io_context", io_service);
-    isc::dhcp::PgSqlConfigBackendImpl::setIOService(io_service);
+int dhcp4_srv_configured(CalloutHandle& /* handle */) {
+    isc::dhcp::PgSqlConfigBackendImpl::setIOService(IOServicePtr(new IOService()));
+    IOServiceMgr::instance().registerIOService(isc::dhcp::PgSqlConfigBackendImpl::getIOService());
     return (0);
 }
 
@@ -57,10 +80,9 @@ int dhcp4_srv_configured(CalloutHandle& handle) {
 ///
 /// @param handle callout handle passed to the callout.
 /// @return 0 on success, 1 otherwise.
-int dhcp6_srv_configured(CalloutHandle& handle) {
-    isc::asiolink::IOServicePtr io_service;
-    handle.getArgument("io_context", io_service);
-    isc::dhcp::PgSqlConfigBackendImpl::setIOService(io_service);
+int dhcp6_srv_configured(CalloutHandle& /* handle */) {
+    isc::dhcp::PgSqlConfigBackendImpl::setIOService(IOServicePtr(new IOService()));
+    IOServiceMgr::instance().registerIOService(isc::dhcp::PgSqlConfigBackendImpl::getIOService());
     return (0);
 }
 
@@ -72,6 +94,12 @@ int unload() {
     // Unregister the factories and remove PostgreSQL backends
     isc::dhcp::PgSqlConfigBackendDHCPv4::unregisterBackendType();
     isc::dhcp::PgSqlConfigBackendDHCPv6::unregisterBackendType();
+    IOServicePtr io_service = isc::dhcp::PgSqlConfigBackendImpl::getIOService();
+    if (io_service) {
+        IOServiceMgr::instance().unregisterIOService(io_service);
+        io_service->stopAndPoll();
+        isc::dhcp::PgSqlConfigBackendImpl::setIOService(IOServicePtr());
+    }
     return (0);
 }
 

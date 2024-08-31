@@ -2,7 +2,7 @@ SUBDIRS = . tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
-AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -40,13 +40,16 @@ libd2_la_SOURCES += d2_controller.cc d2_controller.h
 libd2_la_SOURCES += parser_context.cc parser_context.h parser_context_decl.h
 libd2_la_SOURCES += simple_add.cc simple_add.h
 libd2_la_SOURCES += simple_remove.cc simple_remove.h
+libd2_la_SOURCES += simple_add_without_dhcid.cc simple_add_without_dhcid.h
+libd2_la_SOURCES += simple_remove_without_dhcid.cc simple_remove_without_dhcid.h
+libd2_la_SOURCES += check_exists_add.cc check_exists_add.h
+libd2_la_SOURCES += check_exists_remove.cc check_exists_remove.h
 
 sbin_PROGRAMS = kea-dhcp-ddns
 
 kea_dhcp_ddns_SOURCES  = main.cc
 
 kea_dhcp_ddns_LDADD  = libd2.la
-kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/d2srv/libkea-d2srv.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
@@ -56,12 +59,12 @@ kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
-kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
-kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la

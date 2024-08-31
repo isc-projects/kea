@@ -5,7 +5,7 @@
         "This command deletes a global DHCPv6 parameter from the configuration database. The server uses the value specified in the configuration file, or a default value if the parameter is not specified in the configuration file, after deleting the parameter from the database."
     ],
     "cmd-comment": [
-        "This command carries the list including exactly one name of the parameter to be deleted. The ``server-tags`` list is mandatory and must contain exactly one server tag. Specifying an empty list, a value of ``null``, or multiple server tags will result in an error."
+        "This command carries the list including exactly one name of the parameter to be deleted. If deleting a map parameter, the ``map-name.parameter-name`` format must be used. The ``server-tags`` list is mandatory and must contain exactly one server tag. Specifying an empty list, a value of ``null``, or multiple server tags will result in an error."
     ],
     "cmd-syntax": [
         "{",

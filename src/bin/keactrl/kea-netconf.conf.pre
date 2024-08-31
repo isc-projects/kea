@@ -60,7 +60,7 @@
     {
         // This specifies the logging for Netconf daemon.
         "name": "kea-netconf",
-        "output_options": [
+        "output-options": [
             {
                 // Specifies the output file. There are several special values
                 // supported:

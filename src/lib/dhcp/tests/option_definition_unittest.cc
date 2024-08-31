@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,6 +13,9 @@
 #include <dhcp/option6_addrlst.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
+#include <dhcp/option4_dnr.h>
+#include <dhcp/option6_dnr.h>
+#include <dhcp/option_classless_static_route.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_definition.h>
 #include <dhcp/option_int.h>
@@ -548,9 +551,8 @@ TEST_F(OptionDefinitionTest, ipv6AddressArrayTokenized) {
 
     // Create a vector of strings representing addresses given above.
     std::vector<std::string> addrs_str;
-    for (std::vector<asiolink::IOAddress>::const_iterator it = addrs.begin();
-         it != addrs.end(); ++it) {
-        addrs_str.push_back(it->toText());
+    for (auto const& it : addrs) {
+        addrs_str.push_back(it.toText());
     }
 
     // Create DHCPv6 option using the list of IPv6 addresses given in the
@@ -647,9 +649,8 @@ TEST_F(OptionDefinitionTest, ipv4AddressArrayTokenized) {
 
     // Create a vector of strings representing addresses given above.
     std::vector<std::string> addrs_str;
-    for (std::vector<asiolink::IOAddress>::const_iterator it = addrs.begin();
-         it != addrs.end(); ++it) {
-        addrs_str.push_back(it->toText());
+    for (auto const& it : addrs) {
+        addrs_str.push_back(it.toText());
     }
 
     // Create DHCPv4 option using the list of IPv4 addresses given in the
@@ -1797,6 +1798,228 @@ TEST_F(OptionDefinitionTest, tuple4ArrayTokenized) {
 }
 
 // This test verifies that a definition of an option with an array
+// of DHCPv4 tuples can be created and that the instance of this option
+// can be created by specifying multiple DHCPv4 tuples in the textual format.
+// This test also verifies specific v4 Option #143 where tuple's string length
+// is coded on 2 octets instead of 1 as usual.
+TEST_F(OptionDefinitionTest, tuple4ArrayOption143) {
+    OptionDefinition opt_def("option-tuple", DHO_V4_SZTP_REDIRECT, DHCP4_OPTION_SPACE, "tuple", true);
+
+    OptionPtr option;
+
+    // Specify 3 tuples.
+    std::vector<std::string> values;
+    values.push_back("hello");
+    values.push_back("the");
+    values.push_back("world");
+
+    // Create an instance of this option using the definition.
+    ASSERT_NO_THROW(
+        option = opt_def.optionFactory(Option::V4, DHO_V4_SZTP_REDIRECT, values);
+    );
+
+    // Make sure that the returned option class is correct.
+    const Option* optptr = option.get();
+    ASSERT_TRUE(optptr);
+    ASSERT_TRUE(typeid(*optptr) == typeid(OptionOpaqueDataTuples));
+
+    // Validate the value.
+    OptionOpaqueDataTuplesPtr option_cast =
+        boost::dynamic_pointer_cast<OptionOpaqueDataTuples>(option);
+
+    // There should be 3 tuples in this option.
+    ASSERT_EQ(3, option_cast->getTuplesNum());
+
+    // Check their values.
+    OpaqueDataTuple tuple0 = option_cast->getTuple(0);
+    EXPECT_EQ("hello", tuple0.getText());
+
+    OpaqueDataTuple tuple1 = option_cast->getTuple(1);
+    EXPECT_EQ("the", tuple1.getText());
+
+    OpaqueDataTuple tuple2 = option_cast->getTuple(2);
+    EXPECT_EQ("world", tuple2.getText());
+}
+
+// The purpose of this test is to verify that definition can be created
+// for option of internal type with convenient config notation. In this particular test
+// the V4-DNR option is used (code 162) in ADN only mode, only one DNR instance.
+// Option's fields are specified as a vector of strings.
+TEST_F(OptionDefinitionTest, internalOption4DnrAdnOnly) {
+    OptionDefinition opt_def("option-dnr", DHO_V4_DNR, DHCP4_OPTION_SPACE, "internal", false);
+
+    OptionPtr option;
+
+    // Specify option's fields for ADN only mode.
+    std::vector<std::string> values;
+    values.push_back("1234");                    // service priority
+    values.push_back("Example.Some.Host.Org.");  // ADN FQDN
+
+    // Create an instance of this option using the definition.
+    ASSERT_NO_THROW(option = opt_def.optionFactory(Option::V4, DHO_V4_DNR, values););
+
+    // Make sure that the returned option class is correct.
+    const Option* optptr = option.get();
+    ASSERT_TRUE(optptr);
+    ASSERT_TRUE(typeid(*optptr) == typeid(Option4Dnr));
+
+    // Validate that option's fields were correctly parsed from strings.
+    Option4DnrPtr option_cast = boost::dynamic_pointer_cast<Option4Dnr>(option);
+
+    auto dnr_instances = option_cast->getDnrInstances();
+
+    // Only one DNR instance is expected.
+    ASSERT_EQ(1, dnr_instances.size());
+
+    DnrInstance& dnr = dnr_instances[0];
+    ASSERT_EQ(26, dnr.getDnrInstanceDataLength());
+    ASSERT_EQ(1234, dnr.getServicePriority());
+    ASSERT_EQ(true, dnr.isAdnOnlyMode());
+    ASSERT_EQ("example.some.host.org.", dnr.getAdnAsText());
+    ASSERT_EQ(23, dnr.getAdnLength());
+    ASSERT_EQ(0, dnr.getAddrLength());
+    ASSERT_EQ(0, dnr.getSvcParamsLength());
+}
+
+// The purpose of this test is to verify that definition can be created
+// for option of internal type with convenient config notation. In this particular test
+// the V4-DNR option is used (code 162) with ADN, IP addresses and Service
+// Parameters included. Option's fields are specified as a vector of strings.
+// Multiple DNR instances are configured in this test.
+TEST_F(OptionDefinitionTest, internalOption4Dnr) {
+    OptionDefinition opt_def("option-dnr", DHO_V4_DNR, DHCP4_OPTION_SPACE, "internal", false);
+
+    OptionPtr option;
+
+    // Specify option's fields - multiple DNR instances.
+    std::vector<std::string> values;
+    values.push_back("1234");                              // service priority
+    values.push_back("Example.Some.Host.Org.");            // ADN FQDN
+    values.push_back("192.168.0.1 192.168.0.2");           // Addresses
+    values.push_back("alpn=dot\\,doq port=2345 | 4321");   // SvcParams, DnrInstance separator
+                                                           // and DnrInstance#2 Service Priority
+    values.push_back("myhost1.example.com.");              // ADN FQDN
+    values.push_back("192.169.0.1 192.169.0.2");           // Addresses
+    values.push_back("alpn=h3 dohpath=/dns-query{?dns}");  // SvcParams
+
+    // Create an instance of this option using the definition.
+    ASSERT_NO_THROW(option = opt_def.optionFactory(Option::V4, DHO_V4_DNR, values););
+
+    // Make sure that the returned option class is correct.
+    const Option* optptr = option.get();
+    ASSERT_TRUE(optptr);
+    ASSERT_TRUE(typeid(*optptr) == typeid(Option4Dnr));
+
+    // Validate that option's fields were correctly parsed from strings.
+    Option4DnrPtr option_cast = boost::dynamic_pointer_cast<Option4Dnr>(option);
+
+    auto dnr_instances = option_cast->getDnrInstances();
+
+    // Two DNR instances are expected.
+    ASSERT_EQ(2, dnr_instances.size());
+
+    // Let's check 1st DNR instance.
+    DnrInstance& dnr_1 = dnr_instances[0];
+    ASSERT_EQ(53, dnr_1.getDnrInstanceDataLength());
+    ASSERT_EQ(1234, dnr_1.getServicePriority());
+    ASSERT_EQ(false, dnr_1.isAdnOnlyMode());
+    ASSERT_EQ(23, dnr_1.getAdnLength());
+    ASSERT_EQ("example.some.host.org.", dnr_1.getAdnAsText());
+    ASSERT_EQ(8, dnr_1.getAddrLength());
+    ASSERT_EQ(18, dnr_1.getSvcParamsLength());
+    auto addresses_1 = dnr_1.getAddresses();
+    ASSERT_EQ(2, addresses_1.size());
+    ASSERT_EQ("192.168.0.1", addresses_1[0].toText());
+    ASSERT_EQ("192.168.0.2", addresses_1[1].toText());
+
+    // Let's check 2nd DNR instance.
+    DnrInstance& dnr_2 = dnr_instances[1];
+    ASSERT_EQ(60, dnr_2.getDnrInstanceDataLength());
+    ASSERT_EQ(4321, dnr_2.getServicePriority());
+    ASSERT_EQ(false, dnr_2.isAdnOnlyMode());
+    ASSERT_EQ(21, dnr_2.getAdnLength());
+    ASSERT_EQ("myhost1.example.com.", dnr_2.getAdnAsText());
+    ASSERT_EQ(8, dnr_2.getAddrLength());
+    ASSERT_EQ(27, dnr_2.getSvcParamsLength());
+    auto addresses_2 = dnr_2.getAddresses();
+    ASSERT_EQ(2, addresses_2.size());
+    ASSERT_EQ("192.169.0.1", addresses_2[0].toText());
+    ASSERT_EQ("192.169.0.2", addresses_2[1].toText());
+}
+
+// The purpose of this test is to verify that definition can be created
+// for option of internal type with convenient config notation. In this particular test
+// the V6-DNR option is used (code 144) in ADN only mode.
+// Option's fields are specified as a vector of strings.
+TEST_F(OptionDefinitionTest, internalOption6DnrAdnOnly) {
+    OptionDefinition opt_def("option-dnr", D6O_V6_DNR, DHCP6_OPTION_SPACE, "internal", false);
+
+    OptionPtr option;
+
+    // Specify option's fields for ADN only mode.
+    std::vector<std::string> values;
+    values.push_back("1234");                    // service priority
+    values.push_back("Example.Some.Host.Org.");  // ADN FQDN
+
+    // Create an instance of this option using the definition.
+    ASSERT_NO_THROW(option = opt_def.optionFactory(Option::V6, D6O_V6_DNR, values););
+
+    // Make sure that the returned option class is correct.
+    const Option* optptr = option.get();
+    ASSERT_TRUE(optptr);
+    ASSERT_TRUE(typeid(*optptr) == typeid(Option6Dnr));
+
+    // Validate that option's fields were correctly parsed from strings.
+    Option6DnrPtr option_cast = boost::dynamic_pointer_cast<Option6Dnr>(option);
+
+    ASSERT_EQ(1234, option_cast->getServicePriority());
+    ASSERT_EQ(true, option_cast->isAdnOnlyMode());
+    ASSERT_EQ("example.some.host.org.", option_cast->getAdnAsText());
+    ASSERT_EQ(23, option_cast->getAdnLength());
+    ASSERT_EQ(0, option_cast->getAddrLength());
+    ASSERT_EQ(0, option_cast->getSvcParamsLength());
+}
+
+// The purpose of this test is to verify that definition can be created
+// for option of internal type with convenient config notation. In this particular test
+// the V6-DNR option is used (code 144) with ADN, IP addresses and Service
+// Parameters included. Option's fields are specified as a vector of strings.
+TEST_F(OptionDefinitionTest, internalOption6Dnr) {
+    OptionDefinition opt_def("option-dnr", D6O_V6_DNR, DHCP6_OPTION_SPACE, "internal", false);
+
+    OptionPtr option;
+
+    // Specify option's fields: service priority, ADN, IP addresses and SvcParams.
+    std::vector<std::string> values;
+    values.push_back("1234");                                   // service priority
+    values.push_back("Example.Some.Host.Org.");                 // ADN FQDN
+    values.push_back("2001:db8:1::dead:beef ff02::face:b00c");  // Addresses
+    values.push_back("alpn=h3 dohpath=/dns-query{?dns}");       // SvcParams
+
+    // Create an instance of this option using the definition.
+    ASSERT_NO_THROW(option = opt_def.optionFactory(Option::V6, D6O_V6_DNR, values););
+
+    // Make sure that the returned option class is correct.
+    const Option* optptr = option.get();
+    ASSERT_TRUE(optptr);
+    ASSERT_TRUE(typeid(*optptr) == typeid(Option6Dnr));
+
+    // Validate that option's fields were correctly parsed from strings.
+    Option6DnrPtr option_cast = boost::dynamic_pointer_cast<Option6Dnr>(option);
+
+    ASSERT_EQ(1234, option_cast->getServicePriority());
+    ASSERT_EQ(false, option_cast->isAdnOnlyMode());
+    ASSERT_EQ("example.some.host.org.", option_cast->getAdnAsText());
+    ASSERT_EQ(23, option_cast->getAdnLength());
+    ASSERT_EQ(32, option_cast->getAddrLength());
+    ASSERT_EQ(27, option_cast->getSvcParamsLength());
+    auto addresses = option_cast->getAddresses();
+    ASSERT_EQ(2, addresses.size());
+    ASSERT_EQ("2001:db8:1::dead:beef", addresses[0].toText());
+    ASSERT_EQ("ff02::face:b00c", addresses[1].toText());
+}
+
+// This test verifies that a definition of an option with an array
 // of DHCPv6 tuples can be created and that the instance of this option
 // can be created by specifying multiple DHCPv6 tuples in the textual format.
 TEST_F(OptionDefinitionTest, tuple6ArrayTokenized) {
@@ -1836,6 +2059,146 @@ TEST_F(OptionDefinitionTest, tuple6ArrayTokenized) {
 
     OpaqueDataTuple tuple2 = option_cast->getTuple(2);
     EXPECT_EQ("world", tuple2.getText());
+}
+
+// The purpose of this test is to verify creation of OPT_INTERNAL_TYPE option
+// definition. OptionFactory is used which takes vector of string values as
+// data for the option. This is special case for OPT_INTERNAL_TYPE because it means
+// that convenient notation option config is provided as string that needs special parsing.
+// Custom parsing is verified in this test.
+TEST_F(OptionDefinitionTest, internalOptionTypeString) {
+    OptionDefinition opt_def("classless-static-route", DHO_CLASSLESS_STATIC_ROUTE,
+                             DHCP4_OPTION_SPACE, "internal", false);
+
+    OptionPtr option;
+
+    // Specify option's static routes.
+    std::vector<std::string> values;
+    values.push_back("0.0.0.0/0-10.17.0.1");
+    values.push_back("10.229.0.128/25-10.229.0.1");
+    values.push_back("10.27.129.0/24-10.27.129.1");
+
+    // Create an instance of this option using the definition.
+    ASSERT_NO_THROW(option = opt_def.optionFactory(Option::V4, DHO_CLASSLESS_STATIC_ROUTE, values););
+
+    // Make sure that the returned option class is correct.
+    const Option* optptr = option.get();
+    ASSERT_TRUE(optptr);
+    ASSERT_TRUE(typeid(*optptr) == typeid(OptionClasslessStaticRoute));
+
+    // Validate that option's fields were correctly parsed from strings.
+    OptionClasslessStaticRoutePtr option_cast = boost::dynamic_pointer_cast<OptionClasslessStaticRoute>(option);
+
+    // Check that cast was successful.
+    ASSERT_TRUE(option_cast);
+
+    // Expected len: 2 (option code + option len headers) + 5 (1 dest descriptor + 4 router addr)
+    // + 9 (5 dest descriptor + 4 router addr) + 8 (4 dest descriptor + 4 router addr).
+    EXPECT_EQ(24, option_cast->len());
+
+    // Verify toText() is working fine.
+    EXPECT_EQ("type=121(CLASSLESS_STATIC_ROUTE), len=22, "
+              "Route 1 (subnet 0.0.0.0/0, router IP 10.17.0.1), "
+              "Route 2 (subnet 10.229.0.128/25, router IP 10.229.0.1), "
+              "Route 3 (subnet 10.27.129.0/24, router IP 10.27.129.1)",
+              option_cast->toText());
+}
+
+// The purpose of this test is to verify creation of OPT_INTERNAL_TYPE option
+// definition. OptionFactory is used which takes OptionBuffer as
+// data for the option. Binary data unpack is verified in this test.
+TEST_F(OptionDefinitionTest, internalOptionTypeBinary) {
+    OptionDefinition opt_def("classless-static-route", DHO_CLASSLESS_STATIC_ROUTE,
+                             DHCP4_OPTION_SPACE, "internal", false);
+
+    OptionPtr option;
+
+    // Create a buffer holding static routes on-wire data
+    const OptionBuffer buf = {
+        0,                  // mask width
+        10, 17,  0,   1,    // router IP address
+        25,                 // mask width
+        10, 229, 0,   128,  // significant subnet octets for 10.229.0.128/25
+        10, 229, 0,   1,    // router IP address
+        24,                 // mask width
+        10, 27,  129,       // significant subnet octets for 10.27.129.0/24
+        10, 27,  129, 1     // router IP address
+    };
+
+    // Create an instance of this option using the definition.
+    ASSERT_NO_THROW(option = opt_def.optionFactory(Option::V4, DHO_CLASSLESS_STATIC_ROUTE, buf););
+
+    // Make sure that the returned option class is correct.
+    const Option* optptr = option.get();
+    ASSERT_TRUE(optptr);
+    ASSERT_TRUE(typeid(*optptr) == typeid(OptionClasslessStaticRoute));
+
+    // Sanity check on universe and header length.
+    EXPECT_EQ(Option::V4, option->getUniverse());
+    EXPECT_EQ(2, option->getHeaderLen());
+
+    // Validate parsed values.
+    OptionClasslessStaticRoutePtr option_cast = boost::dynamic_pointer_cast<OptionClasslessStaticRoute>(option);
+
+    // Check that cast was successful.
+    ASSERT_TRUE(option_cast);
+
+    // Expected len: 2 (option code + option len headers) + 5 (1 dest descriptor + 4 router addr)
+    // + 9 (5 dest descriptor + 4 router addr) + 8 (4 dest descriptor + 4 router addr).
+    EXPECT_EQ(24, option_cast->len());
+
+    // Verify toText() is working fine.
+    EXPECT_EQ("type=121(CLASSLESS_STATIC_ROUTE), len=22, "
+              "Route 1 (subnet 0.0.0.0/0, router IP 10.17.0.1), "
+              "Route 2 (subnet 10.229.0.128/25, router IP 10.229.0.1), "
+              "Route 3 (subnet 10.27.129.0/24, router IP 10.27.129.1)",
+              option_cast->toText());
+}
+
+// Verify converstion of OptionDefintion type strings to type enums.
+TEST(OptionDataTypeUtil, typeToString) {
+    EXPECT_EQ(OPT_EMPTY_TYPE, OptionDataTypeUtil::getDataType("empty"));
+    EXPECT_EQ(OPT_BINARY_TYPE, OptionDataTypeUtil::getDataType("binary"));
+    EXPECT_EQ(OPT_BOOLEAN_TYPE, OptionDataTypeUtil::getDataType("boolean"));
+    EXPECT_EQ(OPT_INT8_TYPE, OptionDataTypeUtil::getDataType("int8"));
+    EXPECT_EQ(OPT_INT16_TYPE, OptionDataTypeUtil::getDataType("int16"));
+    EXPECT_EQ(OPT_INT32_TYPE, OptionDataTypeUtil::getDataType("int32"));
+    EXPECT_EQ(OPT_UINT8_TYPE, OptionDataTypeUtil::getDataType("uint8"));
+    EXPECT_EQ(OPT_UINT16_TYPE, OptionDataTypeUtil::getDataType("uint16"));
+    EXPECT_EQ(OPT_UINT32_TYPE, OptionDataTypeUtil::getDataType("uint32"));
+    EXPECT_EQ(OPT_IPV4_ADDRESS_TYPE, OptionDataTypeUtil::getDataType("ipv4-address"));
+    EXPECT_EQ(OPT_IPV6_ADDRESS_TYPE, OptionDataTypeUtil::getDataType("ipv6-address"));
+    EXPECT_EQ(OPT_IPV6_PREFIX_TYPE, OptionDataTypeUtil::getDataType("ipv6-prefix"));
+    EXPECT_EQ(OPT_PSID_TYPE, OptionDataTypeUtil::getDataType("psid"));
+    EXPECT_EQ(OPT_STRING_TYPE, OptionDataTypeUtil::getDataType("string"));
+    EXPECT_EQ(OPT_TUPLE_TYPE, OptionDataTypeUtil::getDataType("tuple"));
+    EXPECT_EQ(OPT_FQDN_TYPE, OptionDataTypeUtil::getDataType("fqdn"));
+    EXPECT_EQ(OPT_INTERNAL_TYPE, OptionDataTypeUtil::getDataType("internal"));
+    EXPECT_EQ(OPT_RECORD_TYPE, OptionDataTypeUtil::getDataType("record"));
+    EXPECT_EQ(OPT_UNKNOWN_TYPE, OptionDataTypeUtil::getDataType("bogus"));
+}
+
+// Verify converstion of OptionDefintion type enums to type strings.
+TEST(OptionDataTypeUtil, stringToType) {
+    EXPECT_EQ("empty", OptionDataTypeUtil::getDataTypeName(OPT_EMPTY_TYPE));
+    EXPECT_EQ("binary", OptionDataTypeUtil::getDataTypeName( OPT_BINARY_TYPE));
+    EXPECT_EQ("boolean", OptionDataTypeUtil::getDataTypeName(OPT_BOOLEAN_TYPE));
+    EXPECT_EQ("int8", OptionDataTypeUtil::getDataTypeName(OPT_INT8_TYPE));
+    EXPECT_EQ("int16", OptionDataTypeUtil::getDataTypeName(OPT_INT16_TYPE));
+    EXPECT_EQ("int32", OptionDataTypeUtil::getDataTypeName(OPT_INT32_TYPE));
+    EXPECT_EQ("uint8", OptionDataTypeUtil::getDataTypeName(OPT_UINT8_TYPE));
+    EXPECT_EQ("uint16", OptionDataTypeUtil::getDataTypeName(OPT_UINT16_TYPE));
+    EXPECT_EQ("uint32", OptionDataTypeUtil::getDataTypeName(OPT_UINT32_TYPE));
+    EXPECT_EQ("ipv4-address", OptionDataTypeUtil::getDataTypeName(OPT_IPV4_ADDRESS_TYPE));
+    EXPECT_EQ("ipv6-address", OptionDataTypeUtil::getDataTypeName(OPT_IPV6_ADDRESS_TYPE));
+    EXPECT_EQ("ipv6-prefix", OptionDataTypeUtil::getDataTypeName(OPT_IPV6_PREFIX_TYPE));
+    EXPECT_EQ("psid", OptionDataTypeUtil::getDataTypeName(OPT_PSID_TYPE));
+    EXPECT_EQ("string", OptionDataTypeUtil::getDataTypeName(OPT_STRING_TYPE));
+    EXPECT_EQ("tuple", OptionDataTypeUtil::getDataTypeName(OPT_TUPLE_TYPE));
+    EXPECT_EQ("fqdn", OptionDataTypeUtil::getDataTypeName(OPT_FQDN_TYPE));
+    EXPECT_EQ("internal", OptionDataTypeUtil::getDataTypeName(OPT_INTERNAL_TYPE));
+    EXPECT_EQ("record", OptionDataTypeUtil::getDataTypeName(OPT_RECORD_TYPE));
+    EXPECT_EQ("unknown", OptionDataTypeUtil::getDataTypeName(OPT_UNKNOWN_TYPE));
 }
 
 } // anonymous namespace

@@ -14,8 +14,7 @@ if USE_STATIC_LINK
 AM_LDFLAGS = -static
 endif
 
-TESTS_ENVIRONMENT = \
-        $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
+TESTS_ENVIRONMENT = $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 
 TESTS =
 if HAVE_GTEST
@@ -35,30 +34,30 @@ lfc_unittests_LDFLAGS += $(PGSQL_LIBS)
 endif
 lfc_unittests_LDFLAGS += $(GTEST_LDFLAGS)
 
-lfc_unittests_LDADD = $(top_builddir)/src/bin/lfc/liblfc.la
-lfc_unittests_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
+lfc_unittests_LDADD  = $(top_builddir)/src/bin/lfc/liblfc.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
+lfc_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
-lfc_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+lfc_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 
-if HAVE_MYSQL
-lfc_unittests_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
-endif
 if HAVE_PGSQL
 lfc_unittests_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
 endif
 
+if HAVE_MYSQL
+lfc_unittests_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
+endif
+
 lfc_unittests_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
-lfc_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+lfc_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
-lfc_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la

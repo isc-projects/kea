@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,7 +16,7 @@
 #include <cryptolink/cryptolink.h>
 
 #include <dns/name.h>
-#include <util/encode/base64.h>
+#include <util/encode/encode.h>
 #include <dns/tsigkey.h>
 
 #include <boost/lexical_cast.hpp>
@@ -26,45 +26,14 @@ using namespace isc::cryptolink;
 
 namespace isc {
 namespace dns {
-namespace {
-    HashAlgorithm
-    convertAlgorithmName(const isc::dns::Name& name) {
-        if (name == TSIGKey::HMACMD5_NAME()) {
-            return (isc::cryptolink::MD5);
-        }
-        if (name == TSIGKey::HMACMD5_SHORT_NAME()) {
-            return (isc::cryptolink::MD5);
-        }
-        if (name == TSIGKey::HMACSHA1_NAME()) {
-            return (isc::cryptolink::SHA1);
-        }
-        if (name == TSIGKey::HMACSHA256_NAME()) {
-            return (isc::cryptolink::SHA256);
-        }
-        if (name == TSIGKey::HMACSHA224_NAME()) {
-            return (isc::cryptolink::SHA224);
-        }
-        if (name == TSIGKey::HMACSHA384_NAME()) {
-            return (isc::cryptolink::SHA384);
-        }
-        if (name == TSIGKey::HMACSHA512_NAME()) {
-            return (isc::cryptolink::SHA512);
-        }
-
-        return (isc::cryptolink::UNKNOWN_HASH);
-    }
-}
-
 struct
 TSIGKey::TSIGKeyImpl {
     TSIGKeyImpl(const Name& key_name, const Name& algorithm_name,
                 isc::cryptolink::HashAlgorithm algorithm,
                 size_t digestbits) :
-
         key_name_(key_name), algorithm_name_(algorithm_name),
         algorithm_(algorithm), digestbits_(digestbits),
-        secret_()
-    {
+        secret_() {
         // Convert the key and algorithm names to the canonical form.
         key_name_.downcase();
         if (algorithm == isc::cryptolink::MD5) {
@@ -76,12 +45,10 @@ TSIGKey::TSIGKeyImpl {
                 isc::cryptolink::HashAlgorithm algorithm,
                 size_t digestbits,
                 const void* secret, size_t secret_len) :
-
         key_name_(key_name), algorithm_name_(algorithm_name),
         algorithm_(algorithm), digestbits_(digestbits),
         secret_(static_cast<const uint8_t*>(secret),
-                static_cast<const uint8_t*>(secret) + secret_len)
-    {
+                static_cast<const uint8_t*>(secret) + secret_len) {
         // Convert the key and algorithm names to the canonical form.
         key_name_.downcase();
         if (algorithm == isc::cryptolink::MD5) {
@@ -96,12 +63,41 @@ TSIGKey::TSIGKeyImpl {
     const vector<uint8_t> secret_;
 };
 
+namespace {
+    HashAlgorithm
+    convertAlgorithmName(const isc::dns::Name& name) {
+        if (name == TSIGKey::HMACMD5_NAME()) {
+            return (isc::cryptolink::MD5);
+        }
+        if (name == TSIGKey::HMACMD5_SHORT_NAME()) {
+            return (isc::cryptolink::MD5);
+        }
+        if (name == TSIGKey::HMACSHA1_NAME()) {
+            return (isc::cryptolink::SHA1);
+        }
+        if (name == TSIGKey::HMACSHA224_NAME()) {
+            return (isc::cryptolink::SHA224);
+        }
+        if (name == TSIGKey::HMACSHA256_NAME()) {
+            return (isc::cryptolink::SHA256);
+        }
+        if (name == TSIGKey::HMACSHA384_NAME()) {
+            return (isc::cryptolink::SHA384);
+        }
+        if (name == TSIGKey::HMACSHA512_NAME()) {
+            return (isc::cryptolink::SHA512);
+        }
+
+        return (isc::cryptolink::UNKNOWN_HASH);
+    }
+}
+
 TSIGKey::TSIGKey(const Name& key_name, const Name& algorithm_name,
                  const void* secret, size_t secret_len,
-                 size_t digestbits /*= 0*/) : impl_(NULL) {
+                 size_t digestbits /*= 0*/) : impl_(0) {
     const HashAlgorithm algorithm = convertAlgorithmName(algorithm_name);
-    if ((secret != NULL && secret_len == 0) ||
-        (secret == NULL && secret_len != 0)) {
+    if ((secret && secret_len == 0) ||
+        (!secret && secret_len != 0)) {
         isc_throw(InvalidParameter,
                   "TSIGKey secret and its length are inconsistent: " <<
                   key_name << ":" << algorithm_name);
@@ -111,16 +107,16 @@ TSIGKey::TSIGKey(const Name& key_name, const Name& algorithm_name,
                   "TSIGKey with unknown algorithm has non empty secret: " <<
                   key_name << ":" << algorithm_name);
     }
-    if (secret == NULL) {
-        impl_ = new TSIGKeyImpl(key_name, algorithm_name, algorithm,
-                                digestbits);
+    if (!secret) {
+        impl_.reset(new TSIGKey::TSIGKeyImpl(key_name, algorithm_name, algorithm,
+                                             digestbits));
     } else {
-        impl_ = new TSIGKeyImpl(key_name, algorithm_name, algorithm,
-                                digestbits, secret, secret_len);
+        impl_.reset(new TSIGKey::TSIGKeyImpl(key_name, algorithm_name, algorithm,
+                                             digestbits, secret, secret_len));
     }
 }
 
-TSIGKey::TSIGKey(const std::string& str) : impl_(NULL) {
+TSIGKey::TSIGKey(const std::string& str) : impl_(0) {
     try {
         istringstream iss(str);
 
@@ -175,11 +171,11 @@ TSIGKey::TSIGKey(const std::string& str) : impl_(NULL) {
         }
 
         if (secret.empty()) {
-            impl_ = new TSIGKeyImpl(Name(keyname_str), algo_name, algorithm,
-                                    digestbits);
+            impl_.reset(new TSIGKey::TSIGKeyImpl(Name(keyname_str), algo_name, algorithm,
+                                               digestbits));
         } else {
-            impl_ = new TSIGKeyImpl(Name(keyname_str), algo_name, algorithm,
-                                    digestbits, &secret[0], secret.size());
+            impl_.reset(new TSIGKey::TSIGKeyImpl(Name(keyname_str), algo_name, algorithm,
+                                                 digestbits, &secret[0], secret.size()));
         }
     } catch (const isc::Exception& e) {
         // 'reduce' the several types of exceptions name parsing and
@@ -187,7 +183,6 @@ TSIGKey::TSIGKey(const std::string& str) : impl_(NULL) {
         isc_throw(InvalidParameter, e.what());
     }
 }
-
 
 TSIGKey::TSIGKey(const TSIGKey& source) : impl_(new TSIGKeyImpl(*source.impl_)) {
 }
@@ -198,15 +193,11 @@ TSIGKey::operator=(const TSIGKey& source) {
         return (*this);
     }
 
-    TSIGKeyImpl* newimpl = new TSIGKeyImpl(*source.impl_);
-    delete impl_;
-    impl_ = newimpl;
-
+    impl_.reset(new TSIGKey::TSIGKeyImpl(*source.impl_));
     return (*this);
 }
 
 TSIGKey::~TSIGKey() {
-    delete impl_;
 }
 
 const Name&
@@ -231,7 +222,7 @@ TSIGKey::getDigestbits() const {
 
 const void*
 TSIGKey::getSecret() const {
-    return ((impl_->secret_.size() > 0) ? &impl_->secret_[0] : NULL);
+    return ((impl_->secret_.size() > 0) ? &impl_->secret_[0] : 0);
 }
 
 size_t
@@ -257,6 +248,58 @@ TSIGKey::toText() const {
     }
 }
 
+struct TSIGKeyRing::TSIGKeyRingImpl {
+    typedef map<Name, TSIGKey> TSIGKeyMap;
+    typedef pair<Name, TSIGKey> NameAndKey;
+    TSIGKeyMap keys;
+};
+
+TSIGKeyRing::TSIGKeyRing() : impl_(new TSIGKeyRingImpl()) {
+}
+
+TSIGKeyRing::~TSIGKeyRing() {
+}
+
+unsigned int
+TSIGKeyRing::size() const {
+    return (impl_->keys.size());
+}
+
+TSIGKeyRing::Result
+TSIGKeyRing::add(const TSIGKey& key) {
+    if (impl_->keys.insert(TSIGKeyRingImpl::NameAndKey(key.getKeyName(), key)).second) {
+        return (SUCCESS);
+    } else {
+        return (EXIST);
+    }
+}
+
+TSIGKeyRing::Result
+TSIGKeyRing::remove(const Name& key_name) {
+    return (impl_->keys.erase(key_name) == 1 ? SUCCESS : NOTFOUND);
+}
+
+TSIGKeyRing::FindResult
+TSIGKeyRing::find(const Name& key_name) const {
+    TSIGKeyRingImpl::TSIGKeyMap::const_iterator found =
+        impl_->keys.find(key_name);
+    if (found == impl_->keys.end()) {
+        return (FindResult(NOTFOUND, 0));
+    }
+    return (FindResult(SUCCESS, &((*found).second)));
+}
+
+TSIGKeyRing::FindResult
+TSIGKeyRing::find(const Name& key_name, const Name& algorithm_name) const {
+    TSIGKeyRingImpl::TSIGKeyMap::const_iterator found =
+        impl_->keys.find(key_name);
+    if (found == impl_->keys.end() ||
+        (*found).second.getAlgorithmName() != algorithm_name) {
+        return (FindResult(NOTFOUND, 0));
+    }
+    return (FindResult(SUCCESS, &((*found).second)));
+}
+
 const
 Name& TSIGKey::HMACMD5_NAME() {
     static Name alg_name("hmac-md5.sig-alg.reg.int");
@@ -276,14 +319,14 @@ Name& TSIGKey::HMACSHA1_NAME() {
 }
 
 const
-Name& TSIGKey::HMACSHA256_NAME() {
-    static Name alg_name("hmac-sha256");
+Name& TSIGKey::HMACSHA224_NAME() {
+    static Name alg_name("hmac-sha224");
     return (alg_name);
 }
 
 const
-Name& TSIGKey::HMACSHA224_NAME() {
-    static Name alg_name("hmac-sha224");
+Name& TSIGKey::HMACSHA256_NAME() {
+    static Name alg_name("hmac-sha256");
     return (alg_name);
 }
 
@@ -303,61 +346,6 @@ const
 Name& TSIGKey::GSSTSIG_NAME() {
     static Name alg_name("gss-tsig");
     return (alg_name);
-}
-
-struct TSIGKeyRing::TSIGKeyRingImpl {
-    typedef map<Name, TSIGKey> TSIGKeyMap;
-    typedef pair<Name, TSIGKey> NameAndKey;
-    TSIGKeyMap keys;
-};
-
-TSIGKeyRing::TSIGKeyRing() : impl_(new TSIGKeyRingImpl) {
-}
-
-TSIGKeyRing::~TSIGKeyRing() {
-    delete impl_;
-}
-
-unsigned int
-TSIGKeyRing::size() const {
-    return (impl_->keys.size());
-}
-
-TSIGKeyRing::Result
-TSIGKeyRing::add(const TSIGKey& key) {
-    if (impl_->keys.insert(
-                TSIGKeyRingImpl::NameAndKey(key.getKeyName(), key)).second
-        == true) {
-        return (SUCCESS);
-    } else {
-        return (EXIST);
-    }
-}
-
-TSIGKeyRing::Result
-TSIGKeyRing::remove(const Name& key_name) {
-    return (impl_->keys.erase(key_name) == 1 ? SUCCESS : NOTFOUND);
-}
-
-TSIGKeyRing::FindResult
-TSIGKeyRing::find(const Name& key_name) const {
-    TSIGKeyRingImpl::TSIGKeyMap::const_iterator found =
-        impl_->keys.find(key_name);
-    if (found == impl_->keys.end()) {
-        return (FindResult(NOTFOUND, NULL));
-    }
-    return (FindResult(SUCCESS, &((*found).second)));
-}
-
-TSIGKeyRing::FindResult
-TSIGKeyRing::find(const Name& key_name, const Name& algorithm_name) const {
-    TSIGKeyRingImpl::TSIGKeyMap::const_iterator found =
-        impl_->keys.find(key_name);
-    if (found == impl_->keys.end() ||
-        (*found).second.getAlgorithmName() != algorithm_name) {
-        return (FindResult(NOTFOUND, NULL));
-    }
-    return (FindResult(SUCCESS, &((*found).second)));
 }
 
 } // namespace dns

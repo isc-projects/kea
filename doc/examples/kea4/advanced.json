@@ -18,9 +18,9 @@
 { "Dhcp4":
 
 {
-    // Kea is told to listen on ethX interface only.
+    // Kea is told to listen on eth0 interface only.
     "interfaces-config": {
-        "interfaces": [ "ethX" ],
+        "interfaces": [ "eth0" ],
 
         // This specifies what type of socket Kea uses. Currently supported
         // are 'raw' (which is the default) and 'udp'. Raw has the benefit
@@ -35,7 +35,7 @@
         // interface the query came in. This is the default ("same-as-inbound").
         // However, sometimes it is useful to have the ability to send the
         // packet as plain UDP packet and let the kernel and the routing tables
-        // determine the right interface ("use-routing"). This option  only works
+        // determine the right interface ("use-routing"). This option only works
         // for "dhcp-socket-type" set to "udp" and is ignored otherwise.
         "outbound-interface": "use-routing",
 
@@ -75,7 +75,7 @@
     // We need to specify the database used to store leases. As of
     // June 2022, three database backends are supported: MySQL,
     // PostgreSQL and the in-memory database, Memfile.
-    // We'll use memfile  because it doesn't require any prior set up.
+    // We'll use memfile because it doesn't require any prior set up.
     // For memfile, it's important to always specify lfc-interval, so
     // the lease file would not grow without bounds and be sanitized
     // once per hour.
@@ -137,6 +137,7 @@
                 "pool":  "192.0.2.1 - 192.0.2.200",
                 "user-context": { "info": "what a large pool" }
             } ],
+            "id": 1,
             "subnet": "192.0.2.0/24",
             "user-context": {
                 "comment": "Our first subnet!"
@@ -149,11 +150,13 @@
             // This causes Kea to ignore client-id values in this subnet
             // and rely exclusively on MAC addresses.
             "pools": [ { "pool": "192.0.3.100 - 192.0.3.200" } ],
+            "id": 2,
             "subnet": "192.0.3.0/24",
             "match-client-id": false
         },
         {
             "pools": [ { "pool": "192.0.4.1 - 192.0.4.254" } ],
+            "id": 3,
             "subnet": "192.0.4.0/24",
 
             // Sometimes the relay may use an IPv4 address that does
@@ -161,7 +164,7 @@
             // valid cases when it makes sense. One case is when there
             // is a shared subnet.
             "relay": {
-                "ip-address": "192.168.1.1"
+                "ip-addresses": [ "192.168.1.1" ]
             }
         },
         {
@@ -169,6 +172,7 @@
             // This causes Kea to reply to requests for unknown IP addresses
             // with a DHCPNAK message.
             "pools": [ { "pool": "192.0.5.100 - 192.0.5.200" } ],
+            "id": 4,
             "subnet": "192.0.5.0/24",
             "authoritative": true
         }
@@ -180,13 +184,13 @@
     "loggers": [
           {
             "name": "kea-dhcp4",
-              "output_options": [
+              "output-options": [
                   {
                       "output": "stdout",
                       // Several additional parameters are possible in addition
                       // to the typical output. Flush determines whether logger
                       // flushes output to a file. Maxsize determines maximum
-                      // filesize before the file is being rotated. maxver
+                      // filesize before the file is rotated. maxver
                       // specifies the maximum number of rotated files being
                       // kept.
                       "flush": true,

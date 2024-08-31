@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,7 +8,7 @@
 
 #include <gtest/gtest.h>
 
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 
 #include <cryptolink/cryptolink.h>
 #include <cryptolink/crypto_rng.h>

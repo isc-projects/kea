@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,12 +9,14 @@
 #include <stats/observation.h>
 #include <util/chrono_time_utils.h>
 #include <cc/data.h>
+
 #include <chrono>
 #include <utility>
 
 using namespace std;
 using namespace std::chrono;
 using namespace isc::data;
+using namespace isc::util;
 
 namespace isc {
 namespace stats {
@@ -28,6 +30,13 @@ Observation::default_max_sample_age_ =
 
 Observation::Observation(const std::string& name, const int64_t value) :
     name_(name), type_(STAT_INTEGER),
+    max_sample_count_(default_max_sample_count_),
+    max_sample_age_(default_max_sample_age_) {
+    setValue(value);
+}
+
+Observation::Observation(const std::string& name, const int128_t& value) :
+    name_(name), type_(STAT_BIG_INTEGER),
     max_sample_count_(default_max_sample_count_),
     max_sample_age_(default_max_sample_age_) {
     setValue(value);
@@ -60,6 +69,10 @@ void Observation::setMaxSampleAge(const StatsDuration& duration) {
         setMaxSampleAgeInternal(integer_samples_, duration, STAT_INTEGER);
         return;
     }
+    case STAT_BIG_INTEGER: {
+        setMaxSampleAgeInternal(big_integer_samples_, duration, STAT_BIG_INTEGER);
+        return;
+    }
     case STAT_FLOAT: {
         setMaxSampleAgeInternal(float_samples_, duration, STAT_FLOAT);
         return;
@@ -82,6 +95,10 @@ void Observation::setMaxSampleCount(uint32_t max_samples) {
     switch(type_) {
     case STAT_INTEGER: {
         setMaxSampleCountInternal(integer_samples_, max_samples, STAT_INTEGER);
+        return;
+    }
+    case STAT_BIG_INTEGER: {
+        setMaxSampleCountInternal(big_integer_samples_, max_samples, STAT_BIG_INTEGER);
         return;
     }
     case STAT_FLOAT: {
@@ -107,6 +124,11 @@ void Observation::addValue(const int64_t value) {
     setValue(current.first + value);
 }
 
+void Observation::addValue(const int128_t& value) {
+    BigIntegerSample current = getBigInteger();
+    setValue(current.first + value);
+}
+
 void Observation::addValue(const double value) {
     FloatSample current = getFloat();
     setValue(current.first + value);
@@ -126,6 +148,10 @@ void Observation::setValue(const int64_t value) {
     setValueInternal(value, integer_samples_, STAT_INTEGER);
 }
 
+void Observation::setValue(const int128_t& value) {
+    setValueInternal(value, big_integer_samples_, STAT_BIG_INTEGER);
+}
+
 void Observation::setValue(const double value) {
     setValueInternal(value, float_samples_, STAT_FLOAT);
 }
@@ -143,6 +169,10 @@ size_t Observation::getSize() const {
     switch(type_) {
     case STAT_INTEGER: {
         size = getSizeInternal(integer_samples_, STAT_INTEGER);
+        return (size);
+    }
+    case STAT_BIG_INTEGER: {
+        size = getSizeInternal(big_integer_samples_, STAT_BIG_INTEGER);
         return (size);
     }
     case STAT_FLOAT: {
@@ -223,6 +253,10 @@ IntegerSample Observation::getInteger() const {
     return (getValueInternal<IntegerSample>(integer_samples_, STAT_INTEGER));
 }
 
+BigIntegerSample Observation::getBigInteger() const {
+    return (getValueInternal<BigIntegerSample>(big_integer_samples_, STAT_BIG_INTEGER));
+}
+
 FloatSample Observation::getFloat() const {
     return (getValueInternal<FloatSample>(float_samples_, STAT_FLOAT));
 }
@@ -254,6 +288,10 @@ SampleType Observation::getValueInternal(Storage& storage, Type exp_type) const 
 
 std::list<IntegerSample> Observation::getIntegers() const {
     return (getValuesInternal<IntegerSample>(integer_samples_, STAT_INTEGER));
+}
+
+std::list<BigIntegerSample> Observation::getBigIntegers() const {
+    return (getValuesInternal<BigIntegerSample>(big_integer_samples_, STAT_BIG_INTEGER));
 }
 
 std::list<FloatSample> Observation::getFloats() const {
@@ -370,6 +408,9 @@ std::string Observation::typeToText(Type type) {
     case STAT_INTEGER:
         tmp << "integer";
         break;
+    case STAT_BIG_INTEGER:
+        tmp << "big integer";
+        break;
     case STAT_FLOAT:
         tmp << "float";
         break;
@@ -389,7 +430,6 @@ std::string Observation::typeToText(Type type) {
 
 isc::data::ConstElementPtr
 Observation::getJSON() const {
-
     ElementPtr list = isc::data::Element::createList(); // multiple observations
     ElementPtr entry;
     ElementPtr value;
@@ -403,10 +443,27 @@ Observation::getJSON() const {
 
         // Iteration over all elements in the list
         // and adding alternately value and timestamp to the entry
-        for (std::list<IntegerSample>::iterator it = s.begin(); it != s.end(); ++it) {
+        for (auto const& it : s) {
             entry = isc::data::Element::createList();
-            value = isc::data::Element::create(static_cast<int64_t>((*it).first));
-            timestamp = isc::data::Element::create(isc::util::clockToText((*it).second));
+            value = isc::data::Element::create(static_cast<int64_t>(it.first));
+            timestamp = isc::data::Element::create(isc::util::clockToText(it.second));
+
+            entry->add(value);
+            entry->add(timestamp);
+
+            list->add(entry);
+        }
+        break;
+    }
+    case STAT_BIG_INTEGER: {
+        std::list<BigIntegerSample> const& samples(getBigIntegers());
+
+        // Iterate over all elements in the list and alternately add
+        // value and timestamp to the entry.
+        for (BigIntegerSample const& i : samples) {
+            entry = isc::data::Element::createList();
+            value = isc::data::Element::create(i.first);
+            timestamp = isc::data::Element::create(isc::util::clockToText(i.second));
 
             entry->add(value);
             entry->add(timestamp);
@@ -420,10 +477,10 @@ Observation::getJSON() const {
 
         // Iteration over all elements in the list
         // and adding alternately value and timestamp to the entry
-        for (std::list<FloatSample>::iterator it = s.begin(); it != s.end(); ++it) {
+        for (auto const& it : s) {
             entry = isc::data::Element::createList();
-            value = isc::data::Element::create((*it).first);
-            timestamp = isc::data::Element::create(isc::util::clockToText((*it).second));
+            value = isc::data::Element::create(it.first);
+            timestamp = isc::data::Element::create(isc::util::clockToText(it.second));
 
             entry->add(value);
             entry->add(timestamp);
@@ -437,10 +494,10 @@ Observation::getJSON() const {
 
         // Iteration over all elements in the list
         // and adding alternately value and timestamp to the entry
-        for (std::list<DurationSample>::iterator it = s.begin(); it != s.end(); ++it) {
+        for (auto const& it : s) {
             entry = isc::data::Element::createList();
-            value = isc::data::Element::create(isc::util::durationToText((*it).first));
-            timestamp = isc::data::Element::create(isc::util::clockToText((*it).second));
+            value = isc::data::Element::create(isc::util::durationToText(it.first));
+            timestamp = isc::data::Element::create(isc::util::clockToText(it.second));
 
             entry->add(value);
             entry->add(timestamp);
@@ -454,10 +511,10 @@ Observation::getJSON() const {
 
         // Iteration over all elements in the list
         // and adding alternately value and timestamp to the entry
-        for (std::list<StringSample>::iterator it = s.begin(); it != s.end(); ++it) {
+        for (auto const& it : s) {
             entry = isc::data::Element::createList();
-            value = isc::data::Element::create((*it).first);
-            timestamp = isc::data::Element::create(isc::util::clockToText((*it).second));
+            value = isc::data::Element::create(it.first);
+            timestamp = isc::data::Element::create(isc::util::clockToText(it.second));
 
             entry->add(value);
             entry->add(timestamp);
@@ -479,6 +536,11 @@ void Observation::reset() {
     case STAT_INTEGER: {
         integer_samples_.clear();
         setValue(static_cast<int64_t>(0));
+        return;
+    }
+    case STAT_BIG_INTEGER: {
+        big_integer_samples_.clear();
+        setValue(int128_t(0));
         return;
     }
     case STAT_FLOAT: {

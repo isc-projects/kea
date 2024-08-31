@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,12 +12,12 @@
 #include <database/db_log.h>
 #include <database/db_messages.h>
 #include <exceptions/exceptions.h>
-#include <util/strutil.h>
+#include <util/str.h>
 
 #include <boost/algorithm/string.hpp>
-#include <boost/foreach.hpp>
 #include <vector>
 
+using namespace isc::asiolink;
 using namespace isc::util;
 using namespace std;
 
@@ -79,7 +79,7 @@ DatabaseConnection::parse(const std::string& dbaccess) {
             // /usr/include/c++/4.4/bits/stl_algo.h:2178 "array subscript is above
             // array bounds"
             boost::split(tokens, dba, boost::is_any_of(string("\t ")));
-            BOOST_FOREACH(std::string token, tokens) {
+            for (auto const& token : tokens) {
                 size_t pos = token.find("=");
                 if (pos != string::npos) {
                     string name = token.substr(0, pos);
@@ -105,8 +105,7 @@ DatabaseConnection::redactedAccessString(const ParameterMap& parameters) {
     // Reconstruct the access string: start of with an empty string, then
     // work through all the parameters in the original string and add them.
     std::string access;
-    for (DatabaseConnection::ParameterMap::const_iterator i = parameters.begin();
-         i != parameters.end(); ++i) {
+    for (auto const& i : parameters) {
 
         // Separate second and subsequent tokens are preceded by a space.
         if (!access.empty()) {
@@ -114,15 +113,15 @@ DatabaseConnection::redactedAccessString(const ParameterMap& parameters) {
         }
 
         // Append name of parameter...
-        access += i->first;
+        access += i.first;
         access += "=";
 
         // ... and the value, except in the case of the password, where a
         // redacted value is appended.
-        if (i->first == std::string("password")) {
+        if (i.first == std::string("password")) {
             access += "*****";
         } else {
-            access += i->second;
+            access += i.second;
         }
     }
 
@@ -219,12 +218,15 @@ isc::data::ElementPtr
 DatabaseConnection::toElement(const ParameterMap& params) {
     isc::data::ElementPtr result = isc::data::Element::createMap();
 
-    for (auto param: params) {
+    for (auto const& param : params) {
         std::string keyword = param.first;
         std::string value = param.second;
 
         if ((keyword == "lfc-interval") ||
             (keyword == "connect-timeout") ||
+            (keyword == "read-timeout") ||
+            (keyword == "write-timeout") ||
+            (keyword == "tcp-user-timeout") ||
             (keyword == "reconnect-wait-time") ||
             (keyword == "max-reconnect-tries") ||
             (keyword == "port") ||
@@ -235,8 +237,8 @@ DatabaseConnection::toElement(const ParameterMap& params) {
                 int_value = boost::lexical_cast<int64_t>(value);
                 result->set(keyword, isc::data::Element::create(int_value));
             } catch (...) {
-                LOG_ERROR(database_logger, DATABASE_TO_JSON_ERROR)
-                    .arg("integer").arg(keyword).arg(value);
+                LOG_ERROR(database_logger, DATABASE_TO_JSON_INTEGER_ERROR)
+                    .arg(keyword).arg(value);
             }
         } else if ((keyword == "persist") ||
                    (keyword == "readonly")) {
@@ -245,8 +247,8 @@ DatabaseConnection::toElement(const ParameterMap& params) {
             } else if (value == "false") {
                 result->set(keyword, isc::data::Element::create(false));
             } else {
-                LOG_ERROR(database_logger, DATABASE_TO_JSON_ERROR)
-                    .arg("boolean").arg(keyword).arg(value);
+                LOG_ERROR(database_logger, DATABASE_TO_JSON_BOOLEAN_ERROR)
+                    .arg(keyword).arg(value);
             }
         } else if ((keyword == "type") ||
                    (keyword == "user") ||
@@ -254,14 +256,15 @@ DatabaseConnection::toElement(const ParameterMap& params) {
                    (keyword == "host") ||
                    (keyword == "name") ||
                    (keyword == "on-fail") ||
+                   (keyword == "retry-on-startup") ||
                    (keyword == "trust-anchor") ||
                    (keyword == "cert-file") ||
                    (keyword == "key-file") ||
                    (keyword == "cipher-list")) {
             result->set(keyword, isc::data::Element::create(value));
         } else {
-            LOG_ERROR(database_logger, DATABASE_TO_JSON_ERROR)
-                    .arg("unknown").arg(keyword).arg(value);
+            LOG_ERROR(database_logger, DATABASE_TO_JSON_UNKNOWN_TYPE_ERROR)
+                    .arg(keyword).arg(value);
         }
     }
 
@@ -277,6 +280,8 @@ DatabaseConnection::toElementDbAccessString(const std::string& dbaccess) {
 DbCallback DatabaseConnection::db_lost_callback_ = 0;
 DbCallback DatabaseConnection::db_recovered_callback_ = 0;
 DbCallback DatabaseConnection::db_failed_callback_ = 0;
+bool DatabaseConnection::retry_ = false;
+IOServicePtr DatabaseConnection::io_service_ = IOServicePtr();
 
 }  // namespace db
 }  // namespace isc

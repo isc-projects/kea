@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -139,10 +139,10 @@ LibraryManager::checkVersion() const {
 // Check the multi-threading compatibility of the library
 
 bool
-LibraryManager::checkMultiThreadingCompatible() const {
+LibraryManager::checkMultiThreadingCompatible(bool multi_threading_enabled) const {
 
     // Compatible with single-threaded.
-    if (!util::MultiThreadingMgr::instance().getMode()) {
+    if (!multi_threading_enabled) {
         return (true);
     }
 
@@ -314,7 +314,7 @@ LibraryManager::prepareUnloadLibrary() {
 // The main library loading function.
 
 bool
-LibraryManager::loadLibrary() {
+LibraryManager::loadLibrary(bool multi_threading_enabled) {
     LOG_DEBUG(hooks_logger, HOOKS_DBG_TRACE, HOOKS_LIBRARY_LOADING)
         .arg(library_name_);
 
@@ -340,7 +340,7 @@ LibraryManager::loadLibrary() {
 
         // Library opened OK, see if a version function is present and if so,
         // check what value it returns. Check multi-threading compatibility.
-        if (checkVersion() && checkMultiThreadingCompatible()) {
+        if (checkVersion() && checkMultiThreadingCompatible(multi_threading_enabled)) {
             // Version OK, so now register the standard callouts and call the
             // library's load() function if present.
             registerStandardCallouts();
@@ -407,14 +407,14 @@ LibraryManager::unloadLibrary() {
 // method.
 
 bool
-LibraryManager::validateLibrary(const std::string& name) {
+LibraryManager::validateLibrary(const std::string& name, bool multi_threading_enabled) {
     // Instantiate a library manager for the validation.  We use the private
     // constructor as we don't supply a CalloutManager.
     LibraryManager manager(name);
 
     // Try to open it and, if we succeed, check the version.
     bool validated = manager.openLibrary() && manager.checkVersion() &&
-        manager.checkMultiThreadingCompatible();
+        manager.checkMultiThreadingCompatible(multi_threading_enabled);
 
     // Regardless of whether the version checked out, close the library. (This
     // is a no-op if the library failed to open.)

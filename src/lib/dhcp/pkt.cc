@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,15 +9,22 @@
 #include <dhcp/pkt.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/hwaddr.h>
+#include <boost/foreach.hpp>
 #include <vector>
+
+using namespace boost::posix_time;
 
 namespace isc {
 namespace dhcp {
 
+const std::string PktEvent::SOCKET_RECEIVED("socket_received");
+const std::string PktEvent::BUFFER_READ("buffer_read");
+const std::string PktEvent::RESPONSE_SENT("response_sent");
+
 Pkt::Pkt(uint32_t transid, const isc::asiolink::IOAddress& local_addr,
          const isc::asiolink::IOAddress& remote_addr, uint16_t local_port,
          uint16_t remote_port)
-    : transid_(transid), iface_(""), ifindex_(-1), local_addr_(local_addr),
+    : transid_(transid), iface_(""), ifindex_(UNSET_IFINDEX), local_addr_(local_addr),
       remote_addr_(remote_addr), local_port_(local_port),
       remote_port_(remote_port), buffer_out_(0), copy_retrieved_options_(false) {
 }
@@ -25,7 +32,7 @@ Pkt::Pkt(uint32_t transid, const isc::asiolink::IOAddress& local_addr,
 Pkt::Pkt(const uint8_t* buf, uint32_t len, const isc::asiolink::IOAddress& local_addr,
          const isc::asiolink::IOAddress& remote_addr, uint16_t local_port,
          uint16_t remote_port)
-    : transid_(0), iface_(""), ifindex_(-1), local_addr_(local_addr),
+    : transid_(0), iface_(""), ifindex_(UNSET_IFINDEX), local_addr_(local_addr),
       remote_addr_(remote_addr), local_port_(local_port),
       remote_port_(remote_port), buffer_out_(0), copy_retrieved_options_(false) {
     if (len != 0) {
@@ -37,6 +44,15 @@ Pkt::Pkt(const uint8_t* buf, uint32_t len, const isc::asiolink::IOAddress& local
     }
 }
 
+OptionCollection
+Pkt::cloneOptions() {
+    OptionCollection options;
+    for (auto const& option : options_) {
+        options.emplace(std::make_pair(option.second->getType(), option.second->clone()));
+    }
+    return (options);
+}
+
 void
 Pkt::addOption(const OptionPtr& opt) {
     options_.insert(std::pair<int, OptionPtr>(opt->getType(), opt));
@@ -44,7 +60,7 @@ Pkt::addOption(const OptionPtr& opt) {
 
 OptionPtr
 Pkt::getNonCopiedOption(const uint16_t type) const {
-    const auto& x = options_.find(type);
+    auto const& x = options_.find(type);
     if (x != options_.end()) {
         return (x->second);
     }
@@ -53,7 +69,7 @@ Pkt::getNonCopiedOption(const uint16_t type) const {
 
 OptionPtr
 Pkt::getOption(const uint16_t type) {
-    const auto& x = options_.find(type);
+    auto const& x = options_.find(type);
     if (x != options_.end()) {
         if (copy_retrieved_options_) {
             OptionPtr option_copy = x->second->clone();
@@ -64,9 +80,35 @@ Pkt::getOption(const uint16_t type) {
     return (OptionPtr()); // NULL
 }
 
+OptionCollection
+Pkt::getNonCopiedOptions(const uint16_t opt_type) const {
+    std::pair<OptionCollection::const_iterator,
+              OptionCollection::const_iterator> range = options_.equal_range(opt_type);
+    return (OptionCollection(range.first, range.second));
+}
+
+OptionCollection
+Pkt::getOptions(const uint16_t opt_type) {
+    OptionCollection options_copy;
+
+    std::pair<OptionCollection::iterator,
+              OptionCollection::iterator> range = options_.equal_range(opt_type);
+    // If options should be copied on retrieval, we should now iterate over
+    // matching options, copy them and replace the original ones with new
+    // instances.
+    if (copy_retrieved_options_) {
+        BOOST_FOREACH(auto& opt_it, range) {
+            OptionPtr option_copy = opt_it.second->clone();
+            opt_it.second = option_copy;
+        }
+    }
+    // Finally, return updated options. This can also be empty in some cases.
+    return (OptionCollection(range.first, range.second));
+}
+
 bool
 Pkt::delOption(uint16_t type) {
-    const auto& x = options_.find(type);
+    auto const& x = options_.find(type);
     if (x != options_.end()) {
         options_.erase(x);
         return (true); // delete successful
@@ -76,19 +118,28 @@ Pkt::delOption(uint16_t type) {
 }
 
 bool
-Pkt::inClass(const std::string& client_class) {
+Pkt::inClass(const ClientClass& client_class) {
     return (classes_.contains(client_class));
 }
 
 void
-Pkt::addClass(const std::string& client_class, bool required) {
-    // Always have ALL first.
-    if (classes_.empty()) {
-        classes_.insert("ALL");
-    }
+Pkt::addClass(const ClientClass& client_class, bool required) {
     ClientClasses& classes = !required ? classes_ : required_classes_;
     if (!classes.contains(client_class)) {
         classes.insert(client_class);
+        static_cast<void>(subclasses_.push_back(SubClassRelation(client_class, client_class)));
+    }
+}
+
+void
+Pkt::addSubClass(const ClientClass& class_def, const ClientClass& subclass) {
+    if (!classes_.contains(class_def)) {
+        classes_.insert(class_def);
+        static_cast<void>(subclasses_.push_back(SubClassRelation(class_def, subclass)));
+    }
+    if (!classes_.contains(subclass)) {
+        classes_.insert(subclass);
+        static_cast<void>(subclasses_.push_back(SubClassRelation(subclass, subclass)));
     }
 }
 
@@ -263,6 +314,84 @@ Pkt::getMACFromIPv6(const isc::asiolink::IOAddress& addr) {
     }
 
     return (mac);
+}
+
+
+void
+Pkt::addPktEvent(const std::string& label, const boost::posix_time::ptime& timestamp) {
+    events_.push_back(PktEvent(label, timestamp));
+}
+
+void
+Pkt::setPktEvent(const std::string& label, const ptime& timestamp) {
+    for (auto& event : events_) {
+        if (event.label_ == label) {
+            event.timestamp_ = timestamp;
+            return;
+        }
+    }
+
+    events_.push_back(PktEvent(label, timestamp));
+}
+
+void
+Pkt::addPktEvent(const std::string& label, const struct timeval& tv) {
+    time_t time_t_secs = tv.tv_sec;
+    ptime timestamp = from_time_t(time_t_secs);
+    time_duration usecs(0, 0, 0, tv.tv_usec);
+    timestamp += usecs;
+    addPktEvent(label, timestamp);
+}
+
+ptime
+Pkt::getPktEventTime(const std::string& label) const {
+    for (auto const& event : events_) {
+        if (event.label_ == label) {
+            return (event.timestamp_);
+        }
+    }
+
+    return (PktEvent::EMPTY_TIME());
+}
+
+void
+Pkt::clearPktEvents() {
+    events_.clear();
+}
+
+std::string
+Pkt::dumpPktEvents(bool verbose /* = false */) const {
+    std::stringstream oss;
+    if (verbose) {
+        oss << "Event log: " << std::endl;
+    }
+
+    bool first_pass = true;
+    boost::posix_time::ptime beg_time;
+    boost::posix_time::ptime prev_time;
+    for (auto const& event : events_) {
+        if (!verbose) {
+            oss << (first_pass ? "" : ", ") <<  event.timestamp_ << " : " << event.label_;
+        } else {
+            oss << event.timestamp_ << " : " << event.label_;
+            if (first_pass) {
+                oss << std::endl;
+                beg_time = event.timestamp_;
+            } else {
+                oss << " elapsed: " << event.timestamp_ - prev_time << std::endl;
+            }
+
+            prev_time = event.timestamp_;
+        }
+
+        first_pass = false;
+    }
+
+    if (verbose) {
+        oss << "total elapsed: " << prev_time - beg_time;
+    }
+
+    return (oss.str());
 }
 
 } // end of namespace isc::dhcp

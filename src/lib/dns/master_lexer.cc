@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015,2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,17 +7,14 @@
 #include <config.h>
 
 #include <exceptions/exceptions.h>
-
+#include <exceptions/isc_assert.h>
 #include <dns/master_lexer.h>
 #include <dns/master_lexer_inputsource.h>
 #include <dns/master_lexer_state.h>
 
-#include <boost/foreach.hpp>
-#include <boost/shared_ptr.hpp>
 #include <boost/lexical_cast.hpp>
 
 #include <bitset>
-#include <cassert>
 #include <limits>
 #include <string>
 #include <vector>
@@ -39,15 +36,13 @@ typedef boost::shared_ptr<master_lexer_internal::InputSource> InputSourcePtr;
 } // end unnamed namespace
 using namespace master_lexer_internal;
 
-
 struct MasterLexer::MasterLexerImpl {
-    MasterLexerImpl() : source_(NULL), token_(MasterToken::NOT_STARTED),
+    MasterLexerImpl() : source_(0), token_(MasterToken::NOT_STARTED),
                         total_size_(0), popped_size_(0),
                         paren_count_(0), last_was_eol_(true),
                         has_previous_(false),
                         previous_paren_count_(0),
-                        previous_was_eol_(false)
-    {
+                        previous_was_eol_(false) {
         separators_.set('\r');
         separators_.set('\n');
         separators_.set(' ');
@@ -88,7 +83,7 @@ struct MasterLexer::MasterLexerImpl {
     }
 
     void setTotalSize() {
-        assert(source_ != NULL);
+        isc_throw_assert(source_);
         if (total_size_ != SOURCE_SIZE_UNKNOWN) {
             const size_t current_size = source_->getSize();
             if (current_size != SOURCE_SIZE_UNKNOWN) {
@@ -100,7 +95,7 @@ struct MasterLexer::MasterLexerImpl {
     }
 
     std::vector<InputSourcePtr> sources_;
-    InputSource* source_;       // current source (NULL if sources_ is empty)
+    InputSource* source_;       // current source (null if sources_ is empty)
     MasterToken token_;         // currently recognized token (set by a state)
     std::vector<char> data_;    // placeholder for string data
 
@@ -127,23 +122,22 @@ struct MasterLexer::MasterLexerImpl {
     bool previous_was_eol_;
 };
 
-MasterLexer::MasterLexer() : impl_(new MasterLexerImpl) {
+MasterLexer::MasterLexer() : impl_(new MasterLexerImpl()) {
 }
 
 MasterLexer::~MasterLexer() {
-    delete impl_;
 }
 
 bool
 MasterLexer::pushSource(const char* filename, std::string* error) {
-    if (filename == NULL) {
+    if (!filename) {
         isc_throw(InvalidParameter,
-                  "NULL filename for MasterLexer::pushSource");
+                  "null filename for MasterLexer::pushSource");
     }
     try {
         impl_->sources_.push_back(InputSourcePtr(new InputSource(filename)));
     } catch (const InputSource::OpenError& ex) {
-        if (error != NULL) {
+        if (error) {
             *error = ex.what();
         }
         return (false);
@@ -179,7 +173,7 @@ MasterLexer::popSource() {
     }
     impl_->popped_size_ += impl_->source_->getPosition();
     impl_->sources_.pop_back();
-    impl_->source_ = impl_->sources_.empty() ? NULL :
+    impl_->source_ = impl_->sources_.empty() ? 0 :
         impl_->sources_.back().get();
     impl_->has_previous_ = false;
 }
@@ -213,7 +207,7 @@ MasterLexer::getTotalSourceSize() const {
 size_t
 MasterLexer::getPosition() const {
     size_t position = impl_->popped_size_;
-    BOOST_FOREACH(InputSourcePtr& src, impl_->sources_) {
+    for (auto const& src : impl_->sources_) {
         position += src->getPosition();
     }
     return (position);
@@ -221,7 +215,7 @@ MasterLexer::getPosition() const {
 
 const MasterToken&
 MasterLexer::getNextToken(Options options) {
-    if (impl_->source_ == NULL) {
+    if (!impl_->source_) {
         isc_throw(isc::InvalidOperation, "No source to read tokens from");
     }
     // Store the current state so we can restore it in ungetToken
@@ -236,13 +230,13 @@ MasterLexer::getNextToken(Options options) {
 
     // This actually handles EOF internally too.
     const State* state = State::start(*this, options);
-    if (state != NULL) {
+    if (state) {
         state->handle(*this);
     }
     // Make sure a token was produced. Since this Can Not Happen, we assert
     // here instead of throwing.
-    assert(impl_->token_.getType() != MasterToken::ERROR ||
-           impl_->token_.getErrorCode() != MasterToken::NO_TOKEN_PRODUCED);
+    isc_throw_assert(impl_->token_.getType() != MasterToken::ERROR ||
+                     impl_->token_.getErrorCode() != MasterToken::NO_TOKEN_PRODUCED);
     return (impl_->token_);
 }
 
@@ -292,7 +286,7 @@ MasterLexer::getNextToken(MasterToken::Type expect, bool eol_ok) {
             throw LexerError(__FILE__, __LINE__,
                              MasterToken(MasterToken::UNEXPECTED_END));
         }
-        assert(expect == MasterToken::NUMBER);
+        isc_throw_assert(expect == MasterToken::NUMBER);
         throw LexerError(__FILE__, __LINE__,
                          MasterToken(MasterToken::BAD_NUMBER));
     }
@@ -334,7 +328,7 @@ MasterToken::getErrorText() const {
     }
 
     // The class integrity ensures the following:
-    assert(val_.error_code_ < error_text_max_count);
+    isc_throw_assert(val_.error_code_ < error_text_max_count);
     return (error_text[val_.error_code_]);
 }
 
@@ -431,7 +425,7 @@ State::getInstance(ID state_id) {
     // This is a bug of the caller, and this method is only expected to be
     // used by tests, so we just forcefully make it fail by asserting the
     // condition.
-    assert(false);
+    isc_throw_assert(false);
     return (STRING_STATE); // a dummy return, to silence some compilers.
 }
 
@@ -451,23 +445,23 @@ State::start(MasterLexer& lexer, MasterLexer::Options options) {
             if (paren_count != 0) {
                 lexerimpl.token_ = MasterToken(MasterToken::UNBALANCED_PAREN);
                 paren_count = 0; // reset to 0; this helps in lenient mode.
-                return (NULL);
+                return (0);
             }
             lexerimpl.token_ = MasterToken(MasterToken::END_OF_FILE);
-            return (NULL);
+            return (0);
         } else if (c == ' ' || c == '\t') {
             // If requested and we are not in (), recognize the initial space.
             if (lexerimpl.last_was_eol_ && paren_count == 0 &&
                 (options & MasterLexer::INITIAL_WS) != 0) {
                 lexerimpl.last_was_eol_ = false;
                 lexerimpl.token_ = MasterToken(MasterToken::INITIAL_WS);
-                return (NULL);
+                return (0);
             }
         } else if (c == '\n') {
             lexerimpl.last_was_eol_ = true;
             if (paren_count == 0) { // we don't recognize EOL if we are in ()
                 lexerimpl.token_ = MasterToken(MasterToken::END_OF_LINE);
-                return (NULL);
+                return (0);
             }
         } else if (c == '\r') {
             if (paren_count == 0) { // check if we are in () (see above)
@@ -479,7 +473,7 @@ State::start(MasterLexer& lexer, MasterLexer::Options options) {
                 return (&QSTRING_STATE);
             } else {
                 lexerimpl.token_ = MasterToken(MasterToken::UNEXPECTED_QUOTES);
-                return (NULL);
+                return (0);
             }
         } else if (c == '(') {
             lexerimpl.last_was_eol_ = false;
@@ -488,7 +482,7 @@ State::start(MasterLexer& lexer, MasterLexer::Options options) {
             lexerimpl.last_was_eol_ = false;
             if (paren_count == 0) {
                 lexerimpl.token_ = MasterToken(MasterToken::UNBALANCED_PAREN);
-                return (NULL);
+                return (0);
             }
             --paren_count;
         } else if ((options & MasterLexer::NUMBER) != 0 &&isdigit(c)) {
@@ -545,7 +539,7 @@ QString::handle(MasterLexer& lexer) const {
         } else if (c == '"') {
             if (escaped) {
                 // found escaped '"'. overwrite the preceding backslash.
-                assert(!data.empty());
+                isc_throw_assert(!data.empty());
                 escaped = false;
                 data.back() = '"';
             } else {

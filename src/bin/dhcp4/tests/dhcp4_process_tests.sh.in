@@ -1,16 +1,10 @@
 #!/bin/sh
 
-# Copyright (C) 2014-2021 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-# shellcheck disable=SC1091
-# SC1091: Not following: ... was not specified as input (see shellcheck -x).
-
-# shellcheck disable=SC2039
-# SC2039: In POSIX sh, 'local' is undefined.
 
 # Exit with error if commands exit with non-zero and if undefined variables are
 # used.
@@ -24,6 +18,10 @@ LOG_FILE="@abs_top_builddir@/src/bin/dhcp4/tests/test.log"
 LEASE_FILE="@abs_top_builddir@/src/bin/dhcp4/tests/test_leases.csv"
 # Path to the Kea LFC application
 export KEA_LFC_EXECUTABLE="@abs_top_builddir@/src/bin/lfc/kea-lfc"
+# Path to test hooks library
+HOOK_FAIL_LOAD_PATH="@abs_top_builddir@/src/bin/dhcp4/tests/.libs/libco3.so"
+# Path to test hooks library
+HOOK_FAIL_POLL_PATH="@abs_top_builddir@/src/bin/dhcp4/tests/.libs/libco4.so"
 # Kea configuration to be stored in the configuration file.
 CONFIG="{
     \"Dhcp4\":
@@ -43,17 +41,18 @@ CONFIG="{
         },
         \"subnet4\": [
         {
+            \"id\": 1,
             \"subnet\": \"10.0.0.0/8\",
             \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ]
         } ],
-       \"dhcp-ddns\": {
-            \"enable-updates\": true,
-            \"qualifying-suffix\": \"\"
+        \"ddns-qualifying-suffix\": \"\",
+        \"dhcp-ddns\": {
+            \"enable-updates\": true
         },
         \"loggers\": [
         {
             \"name\": \"kea-dhcp4\",
-            \"output_options\": [
+            \"output-options\": [
                 {
                     \"output\": \"$LOG_FILE\"
                 }
@@ -63,6 +62,7 @@ CONFIG="{
         ]
     }
 }"
+
 # Invalid configuration (syntax error) to check that Kea can check syntax.
 # This config has following errors:
 # - it should be interfaces-config/interfaces, not interfaces
@@ -81,13 +81,14 @@ CONFIG_BAD_SYNTAX="{
         },
         \"subnet4\": [
         {
+            \"id\": 1,
             \"subnet\": \"10.0.0.0/8\",
             \"pool\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ]
         } ],
         \"loggers\": [
         {
             \"name\": \"kea-dhcp4\",
-            \"output_options\": [
+            \"output-options\": [
                 {
                     \"output\": \"$LOG_FILE\"
                 }
@@ -116,13 +117,14 @@ CONFIG_BAD_VALUES="{
         },
         \"subnet4\": [
         {
+            \"id\": 1,
             \"subnet\": \"10.0.0.0/8\",
             \"pools\": [ { \"pool\": \"192.168.0.10-192.168.0.100\" } ]
         } ],
         \"loggers\": [
         {
             \"name\": \"kea-dhcp4\",
-            \"output_options\": [
+            \"output-options\": [
                 {
                     \"output\": \"$LOG_FILE\"
                 }
@@ -151,13 +153,170 @@ CONFIG_INVALID="{
         },
         \"subnet4\": [
         {
+            \"id\": 1,
             \"subnet\": \"10.0.0.0/8\",
             \"pool\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ]
         } ],
         \"loggers\": [
         {
             \"name\": \"kea-dhcp4\",
-            \"output_options\": [
+            \"output-options\": [
+                {
+                    \"output\": \"$LOG_FILE\"
+                }
+            ],
+            \"severity\": \"INFO\"
+        }
+        ]
+    }
+}"
+
+# Invalid configuration (hook explicitly fails to load) to check that performing
+# extra configuration checks detects the error.
+INVALID_CONFIG_HOOKS_LOAD="{
+    \"Dhcp4\":
+    {
+        \"interfaces-config\": {
+            \"interfaces\": [ ]
+        },
+        \"multi-threading\": {
+          \"enable-multi-threading\": false
+        },
+        \"valid-lifetime\": 4000,
+        \"renew-timer\": 1000,
+        \"rebind-timer\": 2000,
+        \"lease-database\":
+        {
+            \"type\": \"memfile\",
+            \"name\": \"$LEASE_FILE\",
+            \"persist\": false,
+            \"lfc-interval\": 0
+        },
+        \"subnet4\": [
+        {
+            \"id\": 1,
+            \"subnet\": \"10.0.0.0/8\",
+            \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ]
+        } ],
+        \"ddns-qualifying-suffix\": \"\",
+        \"dhcp-ddns\": {
+            \"enable-updates\": true
+        },
+        \"hooks-libraries\": [
+        {
+            \"library\": \"$HOOK_FAIL_LOAD_PATH\",
+                \"parameters\": {
+                    \"mode\": \"fail-on-load\"
+            }
+        } ],
+        \"loggers\": [
+        {
+            \"name\": \"kea-dhcp4\",
+            \"output-options\": [
+                {
+                    \"output\": \"$LOG_FILE\"
+                }
+            ],
+            \"severity\": \"INFO\"
+        }
+        ]
+    }
+}"
+
+# Invalid configuration (hook point returns error) to check that performing
+# extra configuration checks detects the error.
+INVALID_CONFIG_HOOKS_CALLOUT_FAIL_ON_LOAD="{
+    \"Dhcp4\":
+    {
+        \"interfaces-config\": {
+            \"interfaces\": [ ]
+        },
+        \"multi-threading\": {
+            \"enable-multi-threading\": false
+        },
+        \"valid-lifetime\": 4000,
+        \"renew-timer\": 1000,
+        \"rebind-timer\": 2000,
+        \"lease-database\":
+        {
+            \"type\": \"memfile\",
+            \"name\": \"$LEASE_FILE\",
+            \"persist\": false,
+            \"lfc-interval\": 0
+        },
+        \"subnet4\": [
+        {
+            \"id\": 1,
+            \"subnet\": \"10.0.0.0/8\",
+            \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ]
+        } ],
+        \"ddns-qualifying-suffix\": \"\",
+        \"dhcp-ddns\": {
+            \"enable-updates\": true
+        },
+        \"hooks-libraries\": [
+        {
+            \"library\": \"$HOOK_FAIL_LOAD_PATH\",
+                \"parameters\": {
+                    \"mode\": \"fail-without-error\"
+            }
+        } ],
+        \"loggers\": [
+        {
+            \"name\": \"kea-dhcp4\",
+            \"output-options\": [
+                {
+                    \"output\": \"$LOG_FILE\"
+                }
+            ],
+            \"severity\": \"INFO\"
+        }
+        ]
+    }
+}"
+
+# Invalid configuration (poll after load throws exception) to check that performing
+# extra configuration checks detects the error.
+INVALID_CONFIG_HOOKS_CALLOUT_FAIL_ON_POLL="{
+    \"Dhcp4\":
+    {
+        \"interfaces-config\": {
+            \"interfaces\": [ ]
+        },
+        \"multi-threading\": {
+            \"enable-multi-threading\": false
+        },
+        \"valid-lifetime\": 4000,
+        \"renew-timer\": 1000,
+        \"rebind-timer\": 2000,
+        \"lease-database\":
+        {
+            \"type\": \"memfile\",
+            \"name\": \"$LEASE_FILE\",
+            \"persist\": false,
+            \"lfc-interval\": 0
+        },
+        \"subnet4\": [
+        {
+            \"id\": 1,
+            \"subnet\": \"10.0.0.0/8\",
+            \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ]
+        } ],
+        \"ddns-qualifying-suffix\": \"\",
+        \"dhcp-ddns\": {
+            \"enable-updates\": true
+        },
+        \"hooks-libraries\": [
+        {
+            \"library\": \"$HOOK_FAIL_POLL_PATH\",
+                \"parameters\": {
+                    \"mode\": \"fail-without-error\"
+            }
+        } ],
+        \"loggers\": [
+        {
+            \"name\": \"kea-dhcp4\",
+            \"output-options\": [
                 {
                     \"output\": \"$LOG_FILE\"
                 }
@@ -173,6 +332,7 @@ bin="kea-dhcp4"
 bin_path="@abs_top_builddir@/src/bin/dhcp4"
 
 # Import common test library.
+# shellcheck source=src/lib/testutils/dhcp_test_lib.sh.in
 . "@abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh"
 
 # This test verifies that syntax checking works properly. This function
@@ -184,15 +344,16 @@ syntax_check_test() {
     local test_name="${1}"
     local config="${2}"
     local expected_code="${3}"
+    local check_type="${4}"
 
     # Log the start of the test and print test name.
     test_start "${test_name}"
     # Create correct configuration file.
     create_config "${config}"
     # Check it
-    printf "Running command %s.\n" "\"${bin_path}/${bin} -t ${CFG_FILE}\""
+    printf "Running command %s.\n" "\"${bin_path}/${bin} ${check_type} ${CFG_FILE}\""
     run_command \
-        "${bin_path}/${bin}" -t "${CFG_FILE}"
+        "${bin_path}/${bin}" "${check_type}" "${CFG_FILE}"
     if [ "${EXIT_CODE}" -ne "${expected_code}" ]; then
         printf 'ERROR: expected exit code %s, got %s\n' "${expected_code}" "${EXIT_CODE}"
         clean_exit 1
@@ -209,7 +370,7 @@ dynamic_reconfiguration_test() {
     # Instruct Kea to log to the specific file.
     set_logger
     # Start Kea.
-    start_kea ${bin_path}/${bin}
+    start_kea "${bin_path}/${bin}"
     # Wait up to 20s for Kea to start.
     wait_for_kea 20
     if [ "${_WAIT_FOR_KEA}" -eq 0 ]; then
@@ -219,7 +380,7 @@ dynamic_reconfiguration_test() {
 
     # Check if it is still running. It could have terminated (e.g. as a result
     # of configuration failure).
-    get_pid ${bin}
+    get_pid "${bin}"
     if [ "${_GET_PIDS_NUM}" -ne 1 ]; then
         printf "ERROR: expected one Kea process to be started. Found %d processes\
  started.\n" "${_GET_PIDS_NUM}"
@@ -240,7 +401,7 @@ dynamic_reconfiguration_test() {
     create_config "${CONFIG_INVALID}"
 
     # Try to reconfigure by sending SIGHUP
-    send_signal 1 ${bin}
+    send_signal 1 "${bin}"
 
     # The configuration should fail and the error message should be there.
     wait_for_message 10 "DHCP4_CONFIG_LOAD_FAIL" 1
@@ -259,7 +420,7 @@ dynamic_reconfiguration_test() {
     fi
 
     # Make sure the server is still operational.
-    get_pid ${bin}
+    get_pid "${bin}"
     if [ "${_GET_PIDS_NUM}" -ne 1 ]; then
         printf "ERROR: Kea process was killed when attempting reconfiguration.\n"
         clean_exit 1
@@ -269,7 +430,7 @@ dynamic_reconfiguration_test() {
     create_config "${CONFIG}"
 
     # Reconfigure the server with SIGHUP.
-    send_signal 1 ${bin}
+    send_signal 1 "${bin}"
 
     # There should be two occurrences of the DHCP4_CONFIG_COMPLETE messages.
     # Wait for it up to 10s.
@@ -286,7 +447,7 @@ dynamic_reconfiguration_test() {
     fi
 
     # Make sure the server is still operational.
-    get_pid ${bin}
+    get_pid "${bin}"
     if [ "${_GET_PIDS_NUM}" -ne 1 ]; then
         printf "ERROR: Kea process was killed when attempting reconfiguration.\n"
         clean_exit 1
@@ -315,7 +476,7 @@ shutdown_test() {
     # Instruct Kea to log to the specific file.
     set_logger
     # Start Kea.
-    start_kea ${bin_path}/${bin}
+    start_kea "${bin_path}/${bin}"
     # Wait up to 20s for Kea to start.
     wait_for_kea 20
     if [ "${_WAIT_FOR_KEA}" -eq 0 ]; then
@@ -325,7 +486,7 @@ shutdown_test() {
 
     # Check if it is still running. It could have terminated (e.g. as a result
     # of configuration failure).
-    get_pid ${bin}
+    get_pid "${bin}"
     if [ "${_GET_PIDS_NUM}" -ne 1 ]; then
         printf "ERROR: expected one Kea process to be started. Found %d processes\
  started.\n" "${_GET_PIDS_NUM}"
@@ -354,7 +515,7 @@ shutdown_test() {
     fi
 
     # Make sure the server is down.
-    wait_for_server_down 5 ${bin}
+    wait_for_server_down 5 "${bin}"
     assert_eq 1 "${_WAIT_FOR_SERVER_DOWN}" \
         "Expected wait_for_server_down return %d, returned %d"
 
@@ -381,7 +542,7 @@ lfc_timer_test() {
     # Instruct Kea to log to the specific file.
     set_logger
     # Start Kea.
-    start_kea ${bin_path}/${bin}
+    start_kea "${bin_path}/${bin}"
     # Wait up to 20s for Kea to start.
     wait_for_kea 20
     if [ "${_WAIT_FOR_KEA}" -eq 0 ]; then
@@ -391,7 +552,7 @@ lfc_timer_test() {
 
     # Check if it is still running. It could have terminated (e.g. as a result
     # of configuration failure).
-    get_pid ${bin}
+    get_pid "${bin}"
     if [ "${_GET_PIDS_NUM}" -ne 1 ]; then
         printf "ERROR: expected one Kea process to be started. Found %d processes\
  started.\n" "${_GET_PIDS_NUM}"
@@ -414,7 +575,7 @@ lfc_timer_test() {
     create_config "${LFC_CONFIG}"
 
     # Reconfigure the server with SIGHUP.
-    send_signal 1 ${bin}
+    send_signal 1 "${bin}"
 
     # There should be two occurrences of the DHCP4_CONFIG_COMPLETE messages.
     # Wait for it up to 10s.
@@ -431,7 +592,7 @@ lfc_timer_test() {
     fi
 
     # Make sure the server is still operational.
-    get_pid ${bin}
+    get_pid "${bin}"
     if [ "${_GET_PIDS_NUM}" -ne 1 ]; then
         printf "ERROR: Kea process was killed when attempting reconfiguration.\n"
         clean_exit 1
@@ -445,7 +606,7 @@ lfc_timer_test() {
     fi
 
     # Send signal to Kea SIGTERM
-    send_signal 15 ${bin}
+    send_signal 15 "${bin}"
 
     # Wait up to 10s for the server's graceful shutdown. The graceful shut down
     # should be recorded in the log file with the appropriate message.
@@ -456,7 +617,7 @@ lfc_timer_test() {
     fi
 
     # Make sure the server is down.
-    wait_for_server_down 5 ${bin}
+    wait_for_server_down 5 "${bin}"
     assert_eq 1 "${_WAIT_FOR_SERVER_DOWN}" \
         "Expected wait_for_server_down return %d, returned %d"
 
@@ -471,7 +632,10 @@ shutdown_test "dhcpv4.sigint_test" 2
 version_test "dhcpv4.version"
 logger_vars_test "dhcpv4.variables"
 lfc_timer_test
-syntax_check_test "dhcpv4.syntax_check_success" "${CONFIG}" 0
-syntax_check_test "dhcpv4.syntax_check_bad_syntax" "${CONFIG_BAD_SYNTAX}" 1
-syntax_check_test "dhcpv4.syntax_check_bad_values" "${CONFIG_BAD_VALUES}" 1
+syntax_check_test "dhcpv4.syntax_check_success" "${CONFIG}" 0 -t
+syntax_check_test "dhcpv4.syntax_check_bad_syntax" "${CONFIG_BAD_SYNTAX}" 1 -t
+syntax_check_test "dhcpv4.syntax_check_bad_values" "${CONFIG_BAD_VALUES}" 1 -t
+syntax_check_test "dhcpv4.syntax_check_hooks_load_fail" "${INVALID_CONFIG_HOOKS_LOAD}" 1 -T
+syntax_check_test "dhcpv4.syntax_check_hooks_callout_fail_on_load" "${INVALID_CONFIG_HOOKS_CALLOUT_FAIL_ON_LOAD}" 1 -T
+syntax_check_test "dhcpv4.syntax_check_hooks_callout_fail_on_poll" "${INVALID_CONFIG_HOOKS_CALLOUT_FAIL_ON_POLL}" 1 -T
 password_redact_test "dhcpv4.password_redact_test" "$(kea_dhcp_config 4)" 0

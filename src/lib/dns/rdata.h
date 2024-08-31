@@ -1,27 +1,24 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef RDATA_H
-#define RDATA_H 1
+#define RDATA_H
 
 #include <dns/master_lexer.h>
 #include <dns/master_loader.h>
 #include <dns/master_loader_callbacks.h>
-
 #include <dns/exceptions.h>
+#include <util/buffer.h>
 
 #include <boost/shared_ptr.hpp>
 
+#include <memory>
 #include <stdint.h>
 
 namespace isc {
-namespace util {
-class InputBuffer;
-class OutputBuffer;
-}
 namespace dns {
 class AbstractMessageRenderer;
 class RRType;
@@ -166,8 +163,8 @@ public:
     /// conversion is specific to each derived concrete class and
     /// should be explicitly defined in the derived class.
     ///
-    /// \param buffer An output buffer to store the wire data.
-    virtual void toWire(isc::util::OutputBuffer& buffer) const = 0;
+    /// \param buff An output buffer to store the wire data.
+    virtual void toWire(isc::util::OutputBuffer& buff) const = 0;
 
     /// \brief Render the \c Rdata in the wire format into a
     /// \c MessageRenderer object.
@@ -280,15 +277,15 @@ public:
     ///
     /// \c rdata_len must not exceed \c MAX_RDLENGTH; otherwise, an exception
     /// of class \c InvalidRdataLength will be thrown.
-    /// If resource allocation to hold the data fails, a corresponding standard
-    /// exception will be thrown; if the \c buffer doesn't contain \c rdata_len
-    /// bytes of unread data, an exception of class \c InvalidBufferPosition
-    /// will be thrown.
+    /// If resource allocation to hold the data fails, a corresponding
+    /// standard exception will be thrown; if the \c buffer doesn't
+    /// contain \c rdata_len bytes of unread data, an exception of
+    /// class \c isc::OutOfRange will be thrown.
     ///
-    /// \param buffer A reference to an \c InputBuffer object storing the
+    /// \param buff A reference to an \c InputBuffer object storing the
     /// \c Rdata to parse.
     /// \param rdata_len The length in buffer of the \c Rdata.  In bytes.
-    Generic(isc::util::InputBuffer& buffer, size_t rdata_len);
+    Generic(isc::util::InputBuffer& buff, size_t rdata_len);
 
     /// \brief Constructor from master lexer.
     ///
@@ -340,8 +337,8 @@ public:
     /// necessary memory space fails, a corresponding standard exception will
     /// be thrown.
     ///
-    /// \param buffer An output buffer to store the wire data.
-    virtual void toWire(isc::util::OutputBuffer& buffer) const;
+    /// \param buff An output buffer to store the wire data.
+    virtual void toWire(isc::util::OutputBuffer& buff) const;
 
     /// \brief Render the \c generic::Generic in the wire format into a
     /// \c MessageRenderer object.
@@ -385,9 +382,9 @@ public:
     //@}
 
 private:
-    GenericImpl* constructFromLexer(MasterLexer& lexer);
+    std::unique_ptr<GenericImpl> constructFromLexer(MasterLexer& lexer);
 
-    GenericImpl* impl_;
+    std::unique_ptr<GenericImpl> impl_;
 };
 
 ///
@@ -468,13 +465,13 @@ RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
 ///
 /// \param rrtype An \c RRType object specifying the type/class pair.
 /// \param rrclass An \c RRClass object specifying the type/class pair.
-/// \param buffer A reference to an \c InputBuffer object storing the
+/// \param buff A reference to an \c InputBuffer object storing the
 /// \c Rdata to parse.
 /// \param len The length in buffer of the \c Rdata.  In bytes.
 /// \return An \c RdataPtr object pointing to the created \c Rdata
 /// object.
 RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
-                     isc::util::InputBuffer& buffer, size_t len);
+                     isc::util::InputBuffer& buff, size_t len);
 
 /// \brief Create RDATA of a given pair of RR type and class, copying
 /// of another RDATA of same kind.
@@ -508,7 +505,7 @@ RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
 /// cases quite differently from other versions.  It internally catches
 /// most of syntax and semantics errors of the input (reported as exceptions),
 /// calls the corresponding callback specified by the \c callbacks parameters,
-/// and returns a NULL smart pointer.  If the caller rather wants to get
+/// and returns a null smart pointer.  If the caller rather wants to get
 /// an exception in these cases, it can pass a callback that internally
 /// throws on error.  Some critical exceptions such as \c std::bad_alloc are
 /// still propagated to the upper layer as it doesn't make sense to try
@@ -525,14 +522,14 @@ RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
 /// \param rrclass An \c RRClass object specifying the type/class pair.
 /// \param lexer A \c MasterLexer object parsing a master file for the
 /// RDATA to be created
-/// \param origin If non NULL, specifies the origin of any domain name fields
+/// \param origin If non null, specifies the origin of any domain name fields
 /// of the RDATA that are non absolute.
 /// \param options Master loader options controlling how to deal with errors
 /// or non critical issues in the parsed RDATA.
 /// \param callbacks Callback to be called when an error or non critical issue
 /// is found.
 /// \return An \c RdataPtr object pointing to the created
-/// \c Rdata object.  Will be NULL if parsing fails.
+/// \c Rdata object.  Will be null if parsing fails.
 RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
                      MasterLexer& lexer, const Name* origin,
                      MasterLoader::Options options,
@@ -576,7 +573,3 @@ int compareNames(const Name& n1, const Name& n2);
 }
 }
 #endif  // RDATA_H
-
-// Local Variables:
-// mode: c++
-// End:

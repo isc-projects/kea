@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -88,7 +88,7 @@ LoggingInfo::equals(const LoggingInfo& other) const {
     // that they are at the same index of the vectors.
     for (auto const& dest : destinations_) {
         bool match = false;
-        for (auto const &dest_other : other.destinations_) {
+        for (auto const& dest_other : other.destinations_) {
             if (dest.equals(dest_other)) {
                 match = true;
                 break;
@@ -168,13 +168,13 @@ LoggingInfo::toElement() const {
     contextToElement(result);
     // Set name
     result->set("name", Element::create(name_));
-    // Set output_options if not empty
+    // Set output-options if not empty
     if (!destinations_.empty()) {
         ElementPtr options = Element::createList();
         for (auto const& dest : destinations_) {
             options->add(dest.toElement());
         }
-        result->set("output_options", options);
+        result->set("output-options", options);
     }
     // Set severity
     std::string severity;

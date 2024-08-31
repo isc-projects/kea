@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -138,6 +138,9 @@ public:
     /// @todo: Add SocketCollectionConstIter type
     typedef std::list<SocketInfo> SocketCollection;
 
+    /// @brief Type definition for a list of error messages
+    using ErrorBuffer = std::vector<std::string>;
+
     /// @brief Iface constructor.
     ///
     /// Creates Iface object that represents network interface.
@@ -213,7 +216,7 @@ public:
     /// @brief Returns interface index.
     ///
     /// @return interface index
-    int getIndex() const { return ifindex_; }
+    unsigned int getIndex() const { return ifindex_; }
 
     /// @brief Returns interface name.
     ///
@@ -309,7 +312,7 @@ public:
     /// @param addr address to be removed.
     ///
     /// @return true if removal was successful (address was in collection),
-    ///         false otherwise
+    /// false otherwise
     bool delAddress(const isc::asiolink::IOAddress& addr);
 
     /// @brief Adds socket descriptor to an interface.
@@ -392,6 +395,19 @@ public:
         read_buffer_.resize(new_size);
     }
 
+    /// @brief Add an error to the list of messages.
+    ///
+    /// @param message the error message
+    void addError(std::string const& message);
+
+    /// @brief Clears all errors.
+    void clearErrors();
+
+    /// @brief Get the consistent list of error messages.
+    ///
+    /// @return the list of messages
+    ErrorBuffer const& getErrors() const;
+
 protected:
     /// Socket used to send data.
     SocketCollection sockets_;
@@ -400,7 +416,7 @@ protected:
     std::string name_;
 
     /// Interface index (a value that uniquely identifies an interface).
-    int ifindex_;
+    unsigned int ifindex_;
 
     /// List of assigned addresses.
     AddressCollection addrs_;
@@ -457,6 +473,14 @@ private:
     ///
     /// See @c Iface manager description for details.
     std::vector<uint8_t> read_buffer_;
+
+    /// @brief List of errors that occurred since the last attempt to open sockets
+    ///
+    /// This list needs to always have a consistent view of the errors. They should all belong to
+    /// the same session of socket opening i.e. the same call to openSockets[46]. This is currently
+    /// ensured by openSockets[46] and all the places where these errors are being used i.e. the
+    /// status-get handler, being sequential.
+    ErrorBuffer errors_;
 };
 
 /// @brief Type definition for the pointer to an @c Iface object.
@@ -487,7 +511,7 @@ public:
             boost::multi_index::hashed_unique<
                 // Use the interface index as the key.
                 boost::multi_index::const_mem_fun<
-                    Iface, int, &Iface::getIndex
+                    Iface, unsigned int, &Iface::getIndex
                 >
             >,
             // Start definition of index #2.
@@ -547,7 +571,7 @@ public:
     ///
     /// @param ifindex The index of the interface to find.
     /// @return The interface with the index or null.
-    IfacePtr getIface(uint32_t ifindex);
+    IfacePtr getIface(const unsigned int ifindex);
 
     /// @brief Lookup by interface name.
     ///
@@ -561,7 +585,7 @@ private:
     /// @param ifindex The index of the interface to find.
     /// @param need_lock True when the cache operation needs to hold the mutex.
     /// @return The interface with the index or null.
-    IfacePtr getIfaceInternal(uint32_t ifindex, bool need_lock);
+    IfacePtr getIfaceInternal(const unsigned int ifindex, const bool need_lock);
 
     /// @brief Lookup by interface name.
     ///
@@ -570,7 +594,7 @@ private:
     /// @param ifname The name of the interface to find.
     /// @param need_lock True when the cache operation needs to hold the mutex.
     /// @return The interface with the name or null.
-    IfacePtr getIfaceInternal(const std::string& ifname, bool need_lock);
+    IfacePtr getIfaceInternal(const std::string& ifname, const bool need_lock);
 
     /// @brief The mutex for protecting the cache from concurrent
     /// access from packet processing threads.
@@ -631,9 +655,19 @@ std::function<void(const std::string& errmsg)> IfaceMgrErrorMsgCallback;
 ///
 class IfaceMgr : public boost::noncopyable {
 public:
-    /// Defines callback used when data is received over external sockets.
+    /// @brief Defines callback used when data is received over external sockets.
+    ///
     /// @param fd socket descriptor of the ready socket
     typedef std::function<void (int fd)> SocketCallback;
+
+    /// @brief Defines callback used when detecting interfaces.
+    ///
+    /// @param update_only Only add interfaces that do not exist and update
+    /// existing interfaces.
+    ///
+    /// @return true if callback exited with no issue and @ref detectIfaces
+    /// should continue with specific system calls, false otherwise.
+    typedef std::function<bool (bool)> DetectCallback;
 
     /// Keeps callback information for external sockets.
     struct SocketCallbackInfo {
@@ -718,6 +752,14 @@ public:
     /// @return true if direct response is supported.
     bool isDirectResponseSupported() const;
 
+    /// @brief Check if the socket received time is supported.
+    ///
+    /// If true, then received packets will include a SOCKET_RECEIVED
+    /// event in their event stack.
+    ///
+    /// @return True if it is supported.
+    virtual bool isSocketReceivedTimeSupported() const;
+
     /// @brief Returns interface specified interface index
     ///
     /// @param ifindex index of searched interface
@@ -725,7 +767,7 @@ public:
     /// @return interface with requested index (or null if no such
     ///         interface is present)
     ///
-    IfacePtr getIface(int ifindex);
+    IfacePtr getIface(const unsigned int ifindex);
 
     /// @brief Returns interface with specified interface name
     ///
@@ -764,11 +806,28 @@ public:
     /// @c PktFilter class to mimic socket operation on these interfaces.
     void clearIfaces();
 
+    /// @brief Set a callback to perform operations before executing specific
+    /// system calls.
+    ///
+    /// @param cb The callback used before executing specific system calls.
+    void setDetectCallback(const DetectCallback& cb) {
+        detect_callback_ = cb;
+    }
+
+    /// @brief Check if the specific system calls used to detect interfaces
+    /// should be executed.
+    ///
+    /// @param update_only Only add interfaces that do not exist and update
+    /// existing interfaces.
+    ///
+    /// @return true if the specific system calls should be executed, false
+    /// otherwise causing the @ref detectIfaces to return immediately.
+    bool checkDetectIfaces(bool update_only);
+
     /// @brief Detects network interfaces.
     ///
-    /// This method will eventually detect available interfaces. For now
-    /// it offers stub implementation. First interface name and link-local
-    /// IPv6 address is read from interfaces.txt file.
+    /// If the detect callback returns true, the specific system calls are
+    /// executed, otherwise the @ref detectIfaces will return immediately.
     ///
     /// @param update_only Only add interfaces that do not exist and update
     /// existing interfaces.
@@ -949,7 +1008,6 @@ public:
     int openSocketFromRemoteAddress(const isc::asiolink::IOAddress& remote_addr,
                                     const uint16_t port);
 
-
     /// @brief Opens IPv6 sockets on detected interfaces.
     ///
     /// This method opens sockets only on interfaces which have the
@@ -1095,6 +1153,11 @@ public:
     /// @param socketfd socket descriptor
     /// @param callback callback function
     void addExternalSocket(int socketfd, SocketCallback callback);
+
+    /// @brief Checks if socket's file description is registered.
+    ///
+    /// @return True if the fd is in the list of registered sockets.
+    bool isExternalSocket(int fd);
 
     /// @brief Deletes external socket
     ///
@@ -1420,15 +1483,6 @@ protected:
     /// @return Pkt6 object representing received packet (or null)
     Pkt6Ptr receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec = 0);
 
-
-    /// @brief Stub implementation of network interface detection.
-    ///
-    /// This implementations reads a single line from interfaces.txt file
-    /// and pretends to detect such interface. First interface name and
-    /// link-local IPv6 address or IPv4 address is read from the
-    /// interfaces.txt file.
-    void stubDetectIfaces();
-
     /// @brief List of available interfaces
     IfaceCollection ifaces_;
 
@@ -1463,7 +1517,6 @@ private:
     isc::asiolink::IOAddress
     getLocalAddress(const isc::asiolink::IOAddress& remote_addr,
                     const uint16_t port);
-
 
     /// @brief Open an IPv6 socket with multicast support.
     ///
@@ -1562,6 +1615,13 @@ private:
     /// @brief Indicates if the IfaceMgr is in the test mode.
     bool test_mode_;
 
+    /// @brief Detect callback used to perform actions before system dependent
+    /// function calls.
+    ///
+    /// If this call back returns true, the specific system calls are
+    /// executed, otherwise the @ref detectIfaces will return immediately.
+    DetectCallback detect_callback_;
+
     /// @brief Allows to use loopback
     bool allow_loopback_;
 
@@ -1571,11 +1631,11 @@ private:
     /// @brief Manager for DHCPv6 packet implementations and queues
     PacketQueueMgr6Ptr packet_queue_mgr6_;
 
-    /// DHCP packet receiver.
+    /// @brief DHCP packet receiver.
     isc::util::WatchedThreadPtr dhcp_receiver_;
 };
 
-}; // namespace isc::dhcp
-}; // namespace isc
+}  // namespace isc::dhcp
+}  // namespace isc
 
 #endif // IFACE_MGR_H

@@ -1,10 +1,11 @@
-// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -12,8 +13,10 @@
 #include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/testutils/generic_host_data_source_unittest.h>
+#include <testutils/gtest_utils.h>
 
 #include <gtest/gtest.h>
+
 #include <vector>
 
 using namespace isc;
@@ -21,7 +24,6 @@ using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::asiolink;
-
 namespace {
 
 // The tests in this file only address the in memory hosts.
@@ -52,6 +54,20 @@ TEST_F(HostMgrTest, getAll4BySubnetIP) {
 // server's configuration.
 TEST_F(HostMgrTest, getAll6BySubnetIP) {
     testGetAll6BySubnetIP(*getCfgHosts(), *getCfgHosts());
+}
+
+// This test verifies that HostMgr returns all reservations for the
+// IPv6 reserved address. The reservations are specified in the
+// server's configuration.
+TEST_F(HostMgrTest, getAll6ByIP) {
+    testGetAll6ByIP(*getCfgHosts(), *getCfgHosts());
+}
+
+// This test verifies that HostMgr returns all reservations for the
+// IPv6 reserved prefix. The reservations are specified in the
+// server's configuration.
+TEST_F(HostMgrTest, getAll6ByIpPrefix) {
+    testGetAll6ByIpPrefix(*getCfgHosts(), *getCfgHosts());
 }
 
 // This test verifies that HostMgr returns all reservations for the
@@ -151,8 +167,31 @@ TEST_F(HostMgrTest, get6ByPrefix) {
     testGet6ByPrefix(*getCfgHosts(), *getCfgHosts());
 }
 
+// This test verifies that the reservations can be added using HostMgr.
+TEST_F(HostMgrTest, add) {
+    testAdd(*getCfgHosts(), *getCfgHosts());
+}
+
+// This test verifies that the reservations can be deleted by subnet ID and
+// address using HostMgr..
+TEST_F(HostMgrTest, del) {
+    testDeleteByIDAndAddress(*getCfgHosts(), *getCfgHosts());
+}
+
+// This test verifies that the IPv4 reservations can be deleted by subnet ID
+// and identifier using HostMgr.
+TEST_F(HostMgrTest, del4) {
+    testDelete4ByIDAndIdentifier(*getCfgHosts(), *getCfgHosts());
+}
+
+// This test verifies that the IPv6 reservations can be deleted by subnet ID
+// and identifier using HostMgr..
+TEST_F(HostMgrTest, del6) {
+    testDelete6ByIDAndIdentifier(*getCfgHosts(), *getCfgHosts());
+}
+
 // This test verifies that without a host data source an exception is thrown.
-TEST_F(HostMgrTest, addNoDataSource) {
+TEST_F(HostMgrTest, noDataSource) {
     // Remove all configuration.
     CfgMgr::instance().clear();
     // Recreate HostMgr instance.
@@ -160,7 +199,11 @@ TEST_F(HostMgrTest, addNoDataSource) {
 
     HostPtr host(new Host(hwaddrs_[0]->toText(false), "hw-address",
                           SubnetID(1), SUBNET_ID_UNUSED, IOAddress("192.0.2.5")));
-    EXPECT_THROW(HostMgr::instance().add(host), NoHostDataSourceManager);
+    EXPECT_THROW_MSG(HostMgr::instance().add(host), NoHostDataSourceManager,
+                     "Unable to add new host because there is no hosts-database configured.");
+    EXPECT_THROW_MSG(HostMgr::instance().update(host), NoHostDataSourceManager,
+                     "Unable to update existing host because there is no hosts-database "
+                     "configured.");
 }
 
 }  // namespace

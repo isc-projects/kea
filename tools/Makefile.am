@@ -6,9 +6,10 @@ if USE_STATIC_LINK
 AM_LDFLAGS = -static
 endif
 
+EXTRA_DIST  =
+EXTRA_DIST += check-messages.py
+EXTRA_DIST += mk_cfgrpt.sh
+EXTRA_DIST += path_replacer.sh
+
 CLEANFILES = *.gcno *.gcda
 DISTCLEANFILES = path_replacer.sh
-
-if GENERATE_DOCS
-
-endif

@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -23,6 +23,10 @@ has been lost.  If automatic recovery has been enabled,  then the server will
 attempt to recover connectivity.  If not, then the server will exit with a
 non-zero exit code.  The cause of such an error is most likely a network issue
 or the MySQL server has gone down.
+
+% DATABASE_MYSQL_INITIALIZE_SCHEMA Initializing the MySQL schema with command: %1.
+This is logged before running the kea-admin command to automatically initialize the schema from Kea
+after getting the schema version initially failed. The full kea-admin command is shown.
 
 % DATABASE_MYSQL_ROLLBACK rolling back MySQL database
 The code has issued a rollback call.  All outstanding transaction will
@@ -62,6 +66,10 @@ attempt to recover the connectivity.  If not, then the server will exit with a
 non-zero exit code.  The cause of such an error is most likely a network issue
 or the PostgreSQL server has gone down.
 
+% DATABASE_PGSQL_INITIALIZE_SCHEMA Initializing the PostgreSQL schema with command: %1.
+This is logged before running the kea-admin command to automatically initialize the schema from Kea
+after getting the schema version initially failed. The full kea-admin command is shown.
+
 % DATABASE_PGSQL_ROLLBACK rolling back PostgreSQL database
 The code has issued a rollback call.  All outstanding transaction will
 be rolled back and not committed to the database.
@@ -80,8 +88,26 @@ inserted into multiple tables with multiple INSERT statements
 and there may be a need to rollback the whole transaction if
 any of these INSERT statements fail.
 
-% DATABASE_TO_JSON_ERROR Internal logic error: unknown %1 element found in state: %2
+% DATABASE_PGSQL_TCP_USER_TIMEOUT_UNSUPPORTED tcp_user_timeout is not supported in this PostgreSQL version
+This warning message is issued when a user has configured the tcp_user_timeout
+parameter in the connection to the PostgreSQL database but the installed database
+does not support this parameter. It is supported by the PostgreSQL version 12 or later.
+The parameter setting will be ignored.
+
+% DATABASE_TO_JSON_BOOLEAN_ERROR Internal logic error: invalid boolean value found in database connection parameters: %1=%2
 This error message is printed when conversion to JSON of the internal state is requested,
-but the connection string contains unrecognized parameter. This is a programming error.
+but the connection string contains a boolean parameter with invalid value. It is a programming
+error. The software will continue operation, but the returned JSON data will be syntactically
+valid, but incomplete. The culprit parameter will not be converted.
+
+% DATABASE_TO_JSON_INTEGER_ERROR Internal logic error: invalid integer value found in database connection parameters: %1=%2
+This error message is printed when conversion to JSON of the internal state is requested,
+but the connection string contains the integer parameter with a wrong value. It is a programming
+error. The software will continue operation, but the returned JSON data will be syntactically
+valid, but incomplete. The culprit parameter will not be converted.
+
+% DATABASE_TO_JSON_UNKNOWN_TYPE_ERROR Internal logic error: unknown element found in database connection parameters: %1=%2
+This error message is printed when conversion to JSON of the internal state is requested,
+but the connection string contains unrecognized parameter. It is a programming error.
 The software will continue operation, but the returned JSON data will be syntactically
 valid, but incomplete. The unknown parameter will not be converted.

@@ -8,8 +8,10 @@ import difflib
 import glob
 import os
 import re
-import subprocess
 import sys
+
+# [B404:blacklist] Consider possible security implications associated with subprocess module.
+import subprocess  # nosec B404
 
 
 def usage():
@@ -52,18 +54,21 @@ def filter_the_noise(file, text, is_upgrade_script):
     '''
 
     # Determine the schema's latest version.
-    version = 0
+    version = None
+    pattern = re.compile(r"SET version = '(\d+)', minor = '(\d+)';")
     for i in text:
-        m = re.findall(r"SET version = '(\d+)', minor = '\d+';", i)
+        m = pattern.search(i)
         if m is not None:
-            version = max(version, int(m[0]) if len(m) else 0)
-    if version == 0:
-        print(f"ERROR: expected schema version upgrade statement of format \"SET version = '\\d+', minor = '\\d+';\" in file \"{file}\", but not found.", file=sys.stderr)
+            version = f'{m[1]}.{m[2]}'
+    if version is None:
+        print("ERROR: expected schema version upgrade statement of format "
+              f"\"SET version = '\\d+', minor = '\\d+';\" in file \"{file}\", but not found.", file=sys.stderr)
         sys.exit(2)
 
     append = False
     result = []
-    first_delimiter = r'<<EOF$' if is_upgrade_script else fr'^-- This line starts the schema upgrade to version {version}'
+    first_delimiter = (r'<<EOF$' if is_upgrade_script else
+                       fr'^-- This line starts the schema upgrade to version {version}')
     second_delimiter = r'^EOF$' if is_upgrade_script else r' Notes:$'
     first_delimiter_found = False
     second_delimiter_found = False
@@ -86,12 +91,10 @@ def filter_the_noise(file, text, is_upgrade_script):
             result.append(i)
 
     if not first_delimiter_found:
-        print(f'ERROR: Expected delimiter "{first_delimiter}" in file {file}, but not found.', file=sys.stderr)
-        sys.exit(3)
+        result.append(f'WARNING: Expected delimiter "{first_delimiter}" in file {file}, but not found.')
 
     if not second_delimiter_found:
-        print(f'ERROR: Expected delimiter "{second_delimiter}" in file {file}, but not found.', file=sys.stderr)
-        sys.exit(4)
+        result.append(f'WARNING: Expected delimiter "{second_delimiter}" in file {file}, but not found.')
 
     return result
 
@@ -104,8 +107,11 @@ def diff(dhcpdb_create_script, upgrade_script):
     :param upgrade_script: the path to the upgrade script
     :type upgrade_script: str
 
-    :return: True if there is a difference, False otherwise
-    :type: bool
+    :return: tuple containing the diffed output and a boolean which indicates
+    whether the diffed output is on the latest upgrade script. Only that diff
+    output results in an error due to the unreliability of this script to output
+    a relevant diff on the other scripts.
+    :type: (string, bool)
     '''
     with open(dhcpdb_create_script, encoding='utf-8') as create_file:
         create_text = create_file.readlines()
@@ -113,17 +119,19 @@ def diff(dhcpdb_create_script, upgrade_script):
     with open(upgrade_script, encoding='utf-8') as upgrade_file:
         upgrade_text = upgrade_file.readlines()
 
-    # PostgreSQL upgrade scripts need the $ delimiters escaped as opposed to
-    # create scripts. So escape them in the create script for the duration of
-    # this diff so that they don't come up in the diff (or so that they do
-    # come up if they are not correctly escaped in the upgrade script).
+    # As opposed to PostgreSQL create scripts, upgrade scripts need the
+    # backslashes and the $ delimiters escaped. So escape them in the create
+    # script for the duration of this diff so that they don't come up in the
+    # diff (or so that they do come up if they are not correctly escaped in the
+    # upgrade script).
     if dhcpdb_create_script.endswith('.pgsql'):
+        create_text = [i.replace(r'\\', r'\\\\') for i in create_text]
         create_text = [i.replace('$', r'\$') for i in create_text]
 
     latest_upgrade_script = find_last_file_in_same_directory_starting_with(upgrade_script, 'upgrade_')
     if latest_upgrade_script is None:
-        print('Warning: could not find latest upgrade script.', file=sys.stderr)
-        return 0
+        print('ERROR: could not find latest upgrade script.', file=sys.stderr)
+        sys.exit(3)
 
     # Removes portions of the script which are always different: the beginning
     # and the end.
@@ -168,14 +176,7 @@ def diff(dhcpdb_create_script, upgrade_script):
             output = output + 'WARNING: There is a small chance of false errors on this pair of scripts.\n'
         output = output + ''.join(sanitized_diff)
 
-    # Only print if we have something to print to avoid a newline.
-    if len(output) > 0:
-        print(output)
-
-    # Only report errors on the latest upgrade script. For all other upgrade
-    # scripts, there is a chance of false errors caused by incorrect matching of
-    # lines. Assume no diff so that CI doesn't complain.
-    return len(output) > 0 and upgrade_script == latest_upgrade_script
+    return output, upgrade_script == latest_upgrade_script
 
 
 def execute(command):
@@ -189,12 +190,14 @@ def execute(command):
     '''
     if 'DEBUG' in os.environ:
         print(f'> {command}')
-    with subprocess.Popen(command, encoding='utf-8', shell=True,
+    # Issue: [B602:subprocess_popen_with_shell_equals_true] subprocess call with shell=True identified, security
+    #        issue.
+    with subprocess.Popen(command, encoding='utf-8', shell=True,  # nosec B602
                           stdout=subprocess.PIPE, stderr=subprocess.PIPE) as p:
         output, error = p.communicate()
     if error:
         print('ERROR:', error, file=sys.stderr)
-        sys.exit(1)
+        sys.exit(2)
     return output.strip()
 
 
@@ -278,26 +281,40 @@ def main(parameters):
             # Get the latest upgrade script.
             latest_upgrade_script = find_last_file_in_same_directory_starting_with(i, 'upgrade_')
             if latest_upgrade_script is None:
-                print('Warning: could not find latest upgrade script.', file=sys.stderr)
+                print('WARNING: could not find latest upgrade script.', file=sys.stderr)
                 continue
             pairs.add((i, latest_upgrade_script))
         elif basename.startswith('upgrade_'):
             # Get the dhcpdb_create script.
             dhcpdb_create = find_last_file_in_same_directory_starting_with(i, 'dhcpdb_create')
             if dhcpdb_create is None:
-                print('Warning: could not find dhcpdb_create script.', file=sys.stderr)
+                print('WARNING: could not find dhcpdb_create script.', file=sys.stderr)
                 continue
             pairs.add((dhcpdb_create, i))
     pairs = sorted(pairs)
 
     # Do the diff.
-    diff_found = False
+    output_for_latest = ''
+    output_for_other_than_latest = ''
     for create, update in pairs:
-        diff_found |= diff(create, update)
+        output, is_latest = diff(create, update)
+        if is_latest:
+            output_for_latest += output
+        else:
+            output_for_other_than_latest += output
 
-    # For any diff, return 1 so that CI complains.
-    # For no diff, return 0 to appease CI.
-    return int(diff_found)
+    # Only print if we have something to print to avoid a newline.
+    # Also don't clutter output with lines that doesn't cause CI failure if
+    # there are lines that cause CI failure.
+    if len(output_for_latest) > 0:
+        print(output_for_latest)
+    elif len(output_for_other_than_latest) > 0:
+        print(output_for_other_than_latest)
+
+    # Only report errors on the latest upgrade script. For all other upgrade
+    # scripts, there is a chance of false errors caused by incorrect matching of
+    # lines. Assume no diff in that case so that CI doesn't complain.
+    return len(output_for_latest) != 0
 
 
 if __name__ == '__main__':

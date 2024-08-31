@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,13 +9,13 @@
 
 #include <config.h>
 
-#include <netconf/unix_control_socket.h>
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/io_service.h>
 #include <cc/command_interpreter.h>
 #include <cc/json_feed.h>
 #include <config/client_connection.h>
 #include <config/timeouts.h>
+#include <netconf/unix_control_socket.h>
 
 using namespace std;
 using namespace isc::asiolink;
@@ -40,13 +40,13 @@ UnixControlSocket::configGet(const string& /*service*/) {
 }
 
 ConstElementPtr
-UnixControlSocket::configTest(ConstElementPtr config,
+UnixControlSocket::configTest(ElementPtr config,
                               const string& /*service*/) {
     return (sendCommand(createCommand("config-test", config)));
 }
 
 ConstElementPtr
-UnixControlSocket::configSet(ConstElementPtr config,
+UnixControlSocket::configSet(ElementPtr config,
                              const string& /*service*/) {
     return (sendCommand(createCommand("config-set", config)));
 }
@@ -55,7 +55,7 @@ ConstElementPtr
 UnixControlSocket::sendCommand(ConstElementPtr command) {
     // We are using our own IO service because this method is synchronous.
     IOServicePtr io_service(new IOService());
-    ClientConnection conn(*io_service);
+    ClientConnection conn(io_service);
     boost::system::error_code received_ec;
     ConstJSONFeedPtr received_feed;
 
@@ -88,10 +88,10 @@ UnixControlSocket::sendCommand(ConstElementPtr command) {
 
     try {
         return (received_feed->toElement());
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         isc_throw(ControlSocketError, "unparsable response: " << ex.what());
     }
 }
 
-} // namespace netconf
-} // namespace isc
+}  // namespace netconf
+}  // namespace isc

@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,15 +9,15 @@
 
 #include <config.h>
 
-#include <netconf/http_control_socket.h>
-#include <cc/command_interpreter.h>
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/io_service.h>
 #include <asiolink/tls_socket.h>
+#include <cc/command_interpreter.h>
+#include <config/timeouts.h>
 #include <http/client.h>
 #include <http/post_request_json.h>
 #include <http/response_json.h>
-#include <config/timeouts.h>
+#include <netconf/http_control_socket.h>
 
 using namespace std;
 using namespace isc::asiolink;
@@ -47,7 +47,7 @@ HttpControlSocket::configGet(const string& service) {
 }
 
 ConstElementPtr
-HttpControlSocket::configTest(ConstElementPtr config, const string& service) {
+HttpControlSocket::configTest(ElementPtr config, const string& service) {
     if (service == "ca") {
         return (sendCommand(createCommand("config-test", config)));
     } else {
@@ -56,7 +56,7 @@ HttpControlSocket::configTest(ConstElementPtr config, const string& service) {
 }
 
 ConstElementPtr
-HttpControlSocket::configSet(ConstElementPtr config, const string& service) {
+HttpControlSocket::configSet(ElementPtr config, const string& service) {
     if (service == "ca") {
         return (sendCommand(createCommand("config-set", config)));
     } else {
@@ -73,13 +73,13 @@ HttpControlSocket::sendCommand(ConstElementPtr command) {
     request->setBodyAsJson(command);
     try {
         request->finalize();
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         isc_throw(ControlSocketError, "failed to create request: "
                   << ex.what());
     }
 
     IOServicePtr io_service(new IOService());
-    HttpClient client(*io_service);
+    HttpClient client(io_service, false);
     boost::system::error_code received_ec;
     string receive_errmsg;
     HttpResponseJsonPtr response(new HttpResponseJson());
@@ -101,6 +101,9 @@ HttpControlSocket::sendCommand(ConstElementPtr command) {
     // Perform this synchronously.
     io_service->run();
 
+    client.stop();
+    io_service->stopAndPoll();
+
     if (received_ec) {
         // Got an error code.
         isc_throw(ControlSocketError, "communication error (code): "
@@ -120,11 +123,10 @@ HttpControlSocket::sendCommand(ConstElementPtr command) {
 
     try {
         return (response->getBodyAsJson());
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         isc_throw(ControlSocketError, "unparsable response: " << ex.what());
     }
 }
 
-} // namespace netconf
-} // namespace isc
-
+}  // namespace netconf
+}  // namespace isc

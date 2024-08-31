@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,13 +20,13 @@
 #include <dns/tests/rdata_unittest.h>
 #include <util/unittests/wiredata.h>
 
-using namespace std;
 using namespace isc::dns;
-using namespace isc::util;
 using namespace isc::dns::rdata;
+using namespace isc::util;
 using isc::UnitTestUtil;
 using isc::util::unittests::matchWireData;
 
+using namespace std;
 //
 // This test currently simply copies the NS RDATA tests.
 //
@@ -34,13 +34,13 @@ using isc::util::unittests::matchWireData;
 namespace {
 class Rdata_PTR_Test : public RdataTest {
 public:
-     Rdata_PTR_Test() :
-         rdata_ptr("ns.example.com."),
-         rdata_ptr2("ns2.example.com.")
-     {}
+    Rdata_PTR_Test() :
+        rdata_ptr("ns.example.com."),
+        rdata_ptr2("ns2.example.com.") {
+    }
 
-     const generic::PTR rdata_ptr;
-     const generic::PTR rdata_ptr2;
+    const generic::PTR rdata_ptr;
+    const generic::PTR rdata_ptr2;
 };
 
 const uint8_t wiredata_ptr[] = {

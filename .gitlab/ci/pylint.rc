@@ -1,0 +1,17 @@
+[MASTER]
+disable=,
+    consider-using-f-string,  # TODO: This one is decent. There are too many to fix. Enable later.
+    fixme,
+    invalid-name,
+    missing-class-docstring,
+    missing-function-docstring,
+    missing-module-docstring,
+    too-few-public-methods,
+    too-many-arguments,
+    too-many-boolean-expressions,
+    too-many-branches,
+    too-many-instance-attributes,
+    too-many-lines,
+    too-many-locals,
+    too-many-statements,
+max-line-length=120

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,37 +12,32 @@
 #include <util/multi_threading_mgr.h>
 #include <boost/enable_shared_from_this.hpp>
 #include <functional>
+#include <sstream>
 #include <string>
+#include <unordered_set>
 
+using namespace isc::data;
 using namespace isc::util;
-
-namespace {
-
-/// @brief Name of the timer used by the @c NetworkState class.
-const std::string NETWORK_STATE_TIMER_NAME_USER_CMD = "network-state-timer-user-cmd";
-const std::string NETWORK_STATE_TIMER_NAME_HA_CMD = "network-state-timer-ha-cmd";
-
-} // end of anonymous namespace
 
 namespace isc {
 namespace dhcp {
 
 /// @brief Implementation of the @c NetworkState class.
-class NetworkStateImpl : public boost::enable_shared_from_this<NetworkStateImpl> {
+class NetworkStateImpl : public boost::enable_shared_from_this<NetworkStateImpl>,
+                         public CfgToElement {
 public:
 
     /// @brief Constructor.
-    NetworkStateImpl(const NetworkState::ServerType& server_type)
-        : server_type_(server_type), globally_disabled_(false),
-          disabled_subnets_(), disabled_networks_(),
-          timer_mgr_(TimerMgr::instance()), disabled_by_user_command_(false),
-          disabled_by_ha_command_(false), disabled_by_db_connection_(0) {
+    NetworkStateImpl() : globally_disabled_(false), disabled_subnets_(),
+          disabled_networks_(), timer_mgr_(TimerMgr::instance()),
+          disabled_by_origin_(), disabled_by_db_connection_(0) {
     }
 
     /// @brief Destructor.
     ~NetworkStateImpl() {
-        destroyTimer(NetworkState::Origin::USER_COMMAND);
-        destroyTimer(NetworkState::Origin::HA_COMMAND);
+        for (auto const& origin : disabled_by_origin_) {
+            destroyTimer(origin);
+        }
     }
 
     /// @brief Sets appropriate disabled or enabled DHCP service state for the
@@ -57,125 +52,101 @@ public:
     ///
     /// @param disable The value of the flag used to perform the transition.
     /// @param origin The origin of the state transition.
-    void setDisableService(const bool disable,
-                           const NetworkState::Origin& origin) {
+    void setDisableService(const bool disable, unsigned int origin) {
         if (disable) {
             // Disable the service for any flag.
             globally_disabled_ = true;
-            switch (origin) {
-            case NetworkState::Origin::USER_COMMAND:
-                disabled_by_user_command_ = true;
-                break;
-            case NetworkState::Origin::HA_COMMAND:
-                disabled_by_ha_command_ = true;
-                break;
-            case NetworkState::Origin::DB_CONNECTION:
+            if (origin == NetworkState::DB_CONNECTION) {
                 ++disabled_by_db_connection_;
-                break;
-            default:
-                isc_throw(NotImplemented, "origin value not handled when "
-                          "disabling the network state");
-                break;
+            } else {
+                disabled_by_origin_.insert(origin);
             }
         } else {
-            switch (origin) {
-            case NetworkState::Origin::USER_COMMAND:
-                disabled_by_user_command_ = false;
-                break;
-            case NetworkState::Origin::HA_COMMAND:
-                disabled_by_ha_command_ = false;
-                break;
-            case NetworkState::Origin::DB_CONNECTION:
+            if (origin == NetworkState::DB_CONNECTION) {
                 // Never go below 0 (using unsigned type).
                 // This should never happen anyway.
                 if (disabled_by_db_connection_) {
                     --disabled_by_db_connection_;
                 }
-                break;
-            default:
-                isc_throw(NotImplemented, "origin value not handled when "
-                          "enabling the network state");
-                break;
+            } else {
+                disabled_by_origin_.erase(origin);
             }
             // Enable the service only if all flags have been cleared.
-            if (!disabled_by_user_command_ && !disabled_by_ha_command_ &&
-                disabled_by_db_connection_ == 0) {
+            if (disabled_by_origin_.empty() && disabled_by_db_connection_ == 0) {
                 globally_disabled_ = false;
             }
         }
     }
 
-    /// @brief Reset internal counters for a specific origin.
+    /// @brief Reset internal counters for a database connection origin.
     ///
     /// @note The dhcp service will remain disabled until all flags are cleared.
-    ///
-    /// @param origin The origin of the state transition.
-    void reset(const NetworkState::Origin& origin) {
-        switch (origin) {
-        case NetworkState::Origin::USER_COMMAND:
-            disabled_by_user_command_ = false;
-            break;
-        case NetworkState::Origin::HA_COMMAND:
-            disabled_by_ha_command_ = false;
-            break;
-        case NetworkState::Origin::DB_CONNECTION:
-            disabled_by_db_connection_ = 0;
-            break;
-        default:
-            isc_throw(NotImplemented, "origin value not handled when "
-                      "resetting the network state");
-            break;
-        }
-        // Enable the service only if all flags have been cleared.
-        if (!disabled_by_user_command_ && !disabled_by_ha_command_ &&
-            disabled_by_db_connection_ == 0) {
+    void resetForDbConnection() {
+        disabled_by_db_connection_ = 0;
+        if (disabled_by_origin_.empty()) {
             globally_disabled_ = false;
         }
     }
 
-    /// @brief Enables DHCP service globally and per scopes.
+    /// @brief Reset origin for local commands.
+    ///
+    /// @note The dhcp service will remain disabled until all flags are cleared.
+    void resetForLocalCommands() {
+        auto disabled_by_origin = disabled_by_origin_;
+        for (auto const& origin : disabled_by_origin) {
+            if (origin >= NetworkState::HA_LOCAL_COMMAND &&
+                origin < NetworkState::HA_REMOTE_COMMAND) {
+                disabled_by_origin_.erase(origin);
+            }
+        }
+        if (disabled_by_origin_.empty() && disabled_by_db_connection_ == 0) {
+            globally_disabled_ = false;
+        }
+    }
+
+    /// @brief Reset origin for remote commands.
+    ///
+    /// @note The dhcp service will remain disabled until all flags are cleared.
+    void resetForRemoteCommands() {
+        auto disabled_by_origin = disabled_by_origin_;
+        for (auto const& origin : disabled_by_origin) {
+            if (origin >= NetworkState::HA_REMOTE_COMMAND &&
+                origin < NetworkState::DB_CONNECTION) {
+                disabled_by_origin_.erase(origin);
+            }
+        }
+        if (disabled_by_origin_.empty() && disabled_by_db_connection_ == 0) {
+            globally_disabled_ = false;
+        }
+    }
+
+    /// @brief Enables DHCP service for an origin.
     ///
     /// If delayed enabling DHCP service has been scheduled, it cancels it.
     ///
     /// @param origin The origin of the state transition.
-    void enableAll(const NetworkState::Origin& origin) {
+    void delayedEnable(unsigned int origin) {
         setDisableService(false, origin);
-
-        /// @todo Enable service for all subnets and networks here.
-
         destroyTimer(origin);
     }
 
-    /// @brief Creates a timer counting the time when @c enableAll should be
+    /// @brief Creates a timer counting the time when @c delayedEnable should be
     /// automatically called.
     ///
     /// If the timer has been already scheduled, it is destroyed and replaced
     /// with a new timer.
     ///
-    /// @param seconds Number of seconds to elapse before the @c enableAll is
+    /// @param seconds Number of seconds to elapse before the @c delayedEnable is
     /// called.
     /// @param origin The origin of the state transition.
-    void createTimer(const unsigned int seconds,
-                     const NetworkState::Origin& origin) {
+    void createTimer(const unsigned int seconds, unsigned int origin) {
         destroyTimer(origin);
-        std::string timer_name = NETWORK_STATE_TIMER_NAME_USER_CMD;
-        switch (origin) {
-        case NetworkState::Origin::USER_COMMAND:
-            timer_name = NETWORK_STATE_TIMER_NAME_USER_CMD;
-            break;
-        case NetworkState::Origin::HA_COMMAND:
-            timer_name = NETWORK_STATE_TIMER_NAME_HA_CMD;
-            break;
-        case NetworkState::Origin::DB_CONNECTION:
+        if (origin == NetworkState::DB_CONNECTION) {
             isc_throw(BadValue, "DB connection does not support delayed enable");
-            break;
-        default:
-            isc_throw(NotImplemented, "origin value not handled when creating "
-                      "a timer for delayed enable");
-            break;
         }
+        auto timer_name = getTimerName(origin);
         timer_mgr_->registerTimer(timer_name,
-                                  std::bind(&NetworkStateImpl::enableAll,
+                                  std::bind(&NetworkStateImpl::delayedEnable,
                                             shared_from_this(), origin),
                                   seconds * 1000,
                                   asiolink::IntervalTimer::ONE_SHOT);
@@ -185,29 +156,54 @@ public:
     /// @brief Destroys a timer if present.
     ///
     /// @param origin The origin of the state transition.
-    void destroyTimer(const NetworkState::Origin& origin) {
-        std::string timer_name = NETWORK_STATE_TIMER_NAME_USER_CMD;
-        switch (origin) {
-        case NetworkState::Origin::USER_COMMAND:
-            timer_name = NETWORK_STATE_TIMER_NAME_USER_CMD;
-            break;
-        case NetworkState::Origin::HA_COMMAND:
-            timer_name = NETWORK_STATE_TIMER_NAME_HA_CMD;
-            break;
-        case NetworkState::Origin::DB_CONNECTION:
+    void destroyTimer(unsigned int origin) {
+        if (origin == NetworkState::DB_CONNECTION) {
             return;
-        default:
-            isc_throw(NotImplemented, "origin value not handled when creating "
-                      "a timer for delayed enable");
-            break;
         }
+        auto timer_name = getTimerName(origin);
         if (timer_mgr_->isTimerRegistered(timer_name)) {
             timer_mgr_->unregisterTimer(timer_name);
         }
     }
 
-    /// @brief Server type.
-    NetworkState::ServerType server_type_;
+    /// @brief Creates a unique timer name from the origin.
+    ///
+    /// @param origin The origin of the state transition.
+    /// @return Unique timer name for the origin.
+    std::string getTimerName(unsigned int origin) const {
+        std::ostringstream timer_name;
+        timer_name << "network-state-timer-" << origin;
+        return (timer_name.str());
+    }
+
+    /// @brief The network state as Element.
+    ///
+    /// @return The network state as Element.
+    virtual ElementPtr toElement() const {
+        ElementPtr result = Element::createMap();
+        result->set("globally-disabled", Element::create(globally_disabled_));
+        result->set("disabled-by-db-connection", Element::create(disabled_by_db_connection_ != 0));
+        bool disabled_by_user = false;
+        ElementPtr local_origin = Element::createList();
+        ElementPtr remote_origin = Element::createList();
+        std::set<unsigned int> ordered(disabled_by_origin_.begin(), disabled_by_origin_.end());
+        for (auto const& origin : ordered) {
+            if (origin == NetworkState::USER_COMMAND) {
+                disabled_by_user = true;
+            }
+            if (origin >= NetworkState::HA_LOCAL_COMMAND && origin < NetworkState::HA_REMOTE_COMMAND) {
+                local_origin->add(Element::create(origin));
+            }
+            if (origin >= NetworkState::HA_REMOTE_COMMAND && origin < NetworkState::DB_CONNECTION) {
+                remote_origin->add(Element::create(origin));
+            }
+        }
+        result->set("disabled-by-user", Element::create(disabled_by_user));
+        result->set("disabled-by-local-command", local_origin);
+        result->set("disabled-by-remote-command", remote_origin);
+
+        return (result);
+    }
 
     /// @brief A flag indicating if DHCP service is globally disabled.
     bool globally_disabled_;
@@ -224,88 +220,68 @@ public:
     /// destroyed before an instance of this class is destroyed.
     TimerMgrPtr timer_mgr_;
 
-    /// @brief Flag which indicates the state has been disabled by an user
-    /// command.
-    bool disabled_by_user_command_;
-
-    /// @brief Flag which indicates the state has been disabled by the HA
-    /// command.
-    bool disabled_by_ha_command_;
+    /// @brief A set of requests to disable the service by origin.
+    std::unordered_set<unsigned int> disabled_by_origin_;
 
     /// @brief Flag which indicates the state has been disabled by a DB
     /// connection loss.
     uint32_t disabled_by_db_connection_;
 };
 
-NetworkState::NetworkState(const NetworkState::ServerType& server_type)
-    : impl_(new NetworkStateImpl(server_type)), mutex_(new std::mutex()) {
+NetworkState::NetworkState()
+    : impl_(new NetworkStateImpl()), mutex_(new std::mutex()) {
 }
 
 void
-NetworkState::disableService(const Origin& origin) {
-    if (MultiThreadingMgr::instance().getMode()) {
-        std::lock_guard<std::mutex> lk(*mutex_);
-        impl_->setDisableService(true, origin);
-    } else {
-        impl_->setDisableService(true, origin);
-    }
+NetworkState::disableService(unsigned int origin) {
+    MultiThreadingLock lock(*mutex_);
+    impl_->setDisableService(true, origin);
 }
 
 void
-NetworkState::enableService(const Origin& origin) {
-    if (MultiThreadingMgr::instance().getMode()) {
-        std::lock_guard<std::mutex> lk(*mutex_);
-        impl_->setDisableService(false, origin);
-    } else {
-        impl_->setDisableService(false, origin);
-    }
+NetworkState::enableService(unsigned int origin) {
+    MultiThreadingLock lock(*mutex_);
+    impl_->delayedEnable(origin);
 }
 
 void
-NetworkState::reset(const NetworkState::Origin& origin) {
-    if (MultiThreadingMgr::instance().getMode()) {
-        std::lock_guard<std::mutex> lk(*mutex_);
-        impl_->reset(origin);
-    } else {
-        impl_->reset(origin);
-    }
+NetworkState::resetForDbConnection() {
+    MultiThreadingLock lock(*mutex_);
+    impl_->resetForDbConnection();
 }
 
 void
-NetworkState::enableAll(const NetworkState::Origin& origin) {
-    if (MultiThreadingMgr::instance().getMode()) {
-        std::lock_guard<std::mutex> lk(*mutex_);
-        impl_->enableAll(origin);
-    } else {
-        impl_->enableAll(origin);
-    }
+NetworkState::resetForLocalCommands() {
+    MultiThreadingLock lock(*mutex_);
+    impl_->resetForLocalCommands();
 }
 
 void
-NetworkState::delayedEnableAll(const unsigned int seconds,
-                               const NetworkState::Origin& origin) {
-    if (MultiThreadingMgr::instance().getMode()) {
-        std::lock_guard<std::mutex> lk(*mutex_);
-        impl_->createTimer(seconds, origin);
-    } else {
-        impl_->createTimer(seconds, origin);
-    }
+NetworkState::resetForRemoteCommands() {
+    MultiThreadingLock lock(*mutex_);
+    impl_->resetForRemoteCommands();
+}
+
+void
+NetworkState::delayedEnableService(const unsigned int seconds, unsigned int origin) {
+    MultiThreadingLock lock(*mutex_);
+    impl_->createTimer(seconds, origin);
 }
 
 bool
 NetworkState::isServiceEnabled() const {
-    if (MultiThreadingMgr::instance().getMode()) {
-        std::lock_guard<std::mutex> lk(*mutex_);
-        return (!impl_->globally_disabled_);
-    } else {
-        return (!impl_->globally_disabled_);
-    }
+    MultiThreadingLock lock(*mutex_);
+    return (!impl_->globally_disabled_);
 }
 
 bool
-NetworkState::isDelayedEnableAll() const {
-    return (TimerMgr::instance()->isTimerRegistered(NETWORK_STATE_TIMER_NAME_USER_CMD) ||
-            TimerMgr::instance()->isTimerRegistered(NETWORK_STATE_TIMER_NAME_HA_CMD));
+NetworkState::isDelayedEnableService() const {
+    for (auto const& origin : impl_->disabled_by_origin_) {
+        if (TimerMgr::instance()->isTimerRegistered(impl_->getTimerName(origin))) {
+            return (true);
+        }
+    }
+    return (false);
 }
 
 void
@@ -326,6 +302,11 @@ NetworkState::selectiveEnable(const NetworkState::Subnets&) {
 void
 NetworkState::selectiveEnable(const NetworkState::Networks&) {
     isc_throw(NotImplemented, "selectiveEnableService is not implemented");
+}
+
+ElementPtr NetworkState::toElement() const {
+    MultiThreadingLock lock(*mutex_);
+    return (impl_->toElement());
 }
 
 } // end of namespace isc::dhcp

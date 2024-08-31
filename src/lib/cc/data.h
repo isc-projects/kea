@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,6 +6,8 @@
 
 #ifndef ISC_DATA_H
 #define ISC_DATA_H 1
+
+#include <util/bigints.h>
 
 #include <iostream>
 #include <map>
@@ -126,11 +128,31 @@ public:
         return (position);
     }
 
+    /// @brief The types that an Element can hold
+    ///
+    /// Some of these types need to match their associated integer from the
+    /// parameter_data_type database table, so let the enums be explicitly
+    /// mapped to integers, to reduce the chance of messing up.
+    ///
+    /// any is a special type used in list specifications, specifying that the
+    /// elements can be of any type.
+    enum types : int {
+        integer = 0,
+        real = 1,
+        boolean = 2,
+        null = 3,
+        string = 4,
+        bigint = 5,
+        list = 6,
+        map = 7,
+        any = 8,
+    };
+
 private:
     // technically the type could be omitted; is it useful?
     // should we remove it or replace it with a pure virtual
     // function getType?
-    int type_;
+    types type_;
 
     /// @brief Position of the element in the configuration string.
     Position position_;
@@ -143,21 +165,17 @@ protected:
     /// @param pos Structure holding position of the value of the data element.
     /// It comprises the line number and the position within this line. The values
     /// held in this structure are used for error logging purposes.
-    Element(int t, const Position& pos = ZERO_POSITION())
+    Element(types t, const Position& pos = ZERO_POSITION())
         : type_(t), position_(pos) {
     }
 
 
 public:
-
-    // any is a special type used in list specifications, specifying
-    // that the elements can be of any type
-    enum types { integer, real, boolean, null, string, list, map, any };
     // base class; make dtor virtual
     virtual ~Element() {};
 
     /// @return the type of this element
-    int getType() const { return (type_); }
+    types getType() const { return (type_); }
 
     /// @brief Returns position where the data element's value starts in a
     /// configuration string.
@@ -197,7 +215,8 @@ public:
 
     /// @name pure virtuals, every derived class must implement these
 
-    /// @return true if the other ElementPtr has the same type and value
+    /// @return true if the other ElementPtr has the same value and the same
+    /// type (or a different and compatible type), false otherwise.
     virtual bool equals(const Element& other) const = 0;
 
     /// Converts the Element to JSON format and appends it to
@@ -214,6 +233,9 @@ public:
     //@{
     virtual int64_t intValue() const
     { throwTypeError("intValue() called on non-integer Element"); };
+    virtual isc::util::int128_t bigIntValue() const {
+        throwTypeError("bigIntValue() called on non-big-integer Element");
+    }
     virtual double doubleValue() const
     { throwTypeError("doubleValue() called on non-double Element"); };
     virtual bool boolValue() const
@@ -258,6 +280,7 @@ public:
     ///        long long int, long int and int.
     //@{
     virtual bool setValue(const long long int v);
+    virtual bool setValue(const isc::util::int128_t& v);
     bool setValue(const long int i) { return (setValue(static_cast<long long int>(i))); };
     bool setValue(const int i) { return (setValue(static_cast<long long int>(i))); };
     virtual bool setValue(const double v);
@@ -376,9 +399,13 @@ public:
     static ElementPtr create(const Position& pos = ZERO_POSITION());
     static ElementPtr create(const long long int i,
                              const Position& pos = ZERO_POSITION());
+    static ElementPtr create(const isc::util::int128_t& i,
+                             const Position& pos = ZERO_POSITION());
     static ElementPtr create(const int i,
                              const Position& pos = ZERO_POSITION());
     static ElementPtr create(const long int i,
+                             const Position& pos = ZERO_POSITION());
+    static ElementPtr create(const uint32_t i,
                              const Position& pos = ZERO_POSITION());
     static ElementPtr create(const double d,
                              const Position& pos = ZERO_POSITION());
@@ -599,6 +626,48 @@ public:
     bool equals(const Element& other) const;
 };
 
+/// @brief Wrapper over int128_t
+class BigIntElement : public Element {
+    using int128_t = isc::util::int128_t;
+    using Element::getValue;
+    using Element::setValue;
+
+public:
+    /// @brief Constructor
+    BigIntElement(const int128_t& v, const Position& pos = ZERO_POSITION())
+        : Element(bigint, pos), i_(v) {
+    }
+
+    /// @brief Retrieve the underlying big integer value.
+    ///
+    /// @return the underlying value
+    int128_t bigIntValue() const override {
+        return (i_);
+    }
+
+    /// @brief Sets the underlying big integer value.
+    ///
+    /// @return true for no reason
+    bool setValue(const int128_t& v) override {
+        i_ = v;
+        return (true);
+    }
+
+    /// @brief Converts the Element to JSON format and appends it to the given
+    /// stringstream.
+    void toJSON(std::ostream& ss) const override;
+
+    /// @brief Checks whether the other Element is equal.
+    ///
+    /// @return true if the other ElementPtr has the same value and the same
+    /// type (or a different and compatible type), false otherwise.
+    bool equals(const Element& other) const override;
+
+private:
+    /// @brief the underlying stored value
+    int128_t i_;
+};
+
 class DoubleElement : public Element {
     double d;
 
@@ -799,19 +868,124 @@ void removeIdentical(ElementPtr a, ConstElementPtr b);
 /// Raises a TypeError if a or b are not MapElements
 ConstElementPtr removeIdentical(ConstElementPtr a, ConstElementPtr b);
 
-/// @brief Merges the data from other into element.
-/// (on the first level). Both elements must be
-/// MapElements.
-/// Every string,value pair in other is copied into element
-/// (the ElementPtr of value is copied, this is not a new object)
-/// Unless the value is a NullElement, in which case the
-/// key is removed from element, rather than setting the value to
-/// the given NullElement.
-/// This way, we can remove values from for instance maps with
-/// configuration data (which would then result in reverting back
-/// to the default).
+/// @brief Merges the data from other into element. (on the first level). Both
+/// elements must be MapElements. Every string, value pair in other is copied
+/// into element (the ElementPtr of value is copied, this is not a new object)
+/// Unless the value is a NullElement, in which case the key is removed from
+/// element, rather than setting the value to the given NullElement.
+/// This way, we can remove values from for instance maps with configuration
+/// data (which would then result in reverting back to the default).
 /// Raises a TypeError if either ElementPtr is not a MapElement
 void merge(ElementPtr element, ConstElementPtr other);
+
+/// @brief Function used to check if two MapElements refer to the same
+/// configuration data. It can check if the two MapElements have the same or
+/// have equivalent value for some members.
+/// e.g.
+/// (
+///  left->get("prefix")->stringValue() == right->get("prefix")->stringValue() &&
+///  left->get("prefix-len")->intValue() == right->get("prefix-len")->intValue() &&
+///  left->get("delegated-len")->intValue() == right->get("delegated-len")->intValue()
+/// )
+typedef std::function<bool (ElementPtr&, ElementPtr&)> MatchTestFunc;
+
+/// @brief Function used to check if the data provided for the element contains
+/// only information used for identification, or it contains extra useful data.
+typedef std::function<bool (ElementPtr&)> NoDataTestFunc;
+
+/// @brief Function used to check if the key is used for identification
+typedef std::function<bool (const std::string&)> IsKeyTestFunc;
+
+/// @brief Structure holding the test functions used to traverse the element
+/// hierarchy.
+struct HierarchyTraversalTest {
+    MatchTestFunc match_;
+    NoDataTestFunc no_data_;
+    IsKeyTestFunc is_key_;
+};
+
+/// @brief Mapping between a container name and functions used to match elements
+/// inside the container.
+typedef std::map<std::string, HierarchyTraversalTest> FunctionMap;
+
+/// @brief Hierarchy descriptor of the containers in a specific Element
+/// hierarchy tree. The position inside the vector indicates the level at which
+/// the respective containers are located.
+///
+/// e.g.
+/// {
+///   { { "pools", { ... , ... } }, { "pd-pools", { ... , ... } }, { "option-data", { ... , ... } } },
+///   { { "option-data", { ... , ... } } }
+/// }
+/// At first subnet level the 'pools', 'pd-pools' and 'option-data' containers
+/// can be found.
+/// At second subnet level the 'option-data' container can be found
+/// (obviously only inside 'pools' and 'pd-pools' containers).
+typedef std::vector<FunctionMap> HierarchyDescriptor;
+
+/// @brief Merges the diff data by adding the missing elements from 'other'
+/// to 'element' (recursively). Both elements must be the same Element type.
+/// Raises a TypeError if elements are not the same Element type.
+/// @note
+/// for non map and list elements the values are updated with the new values
+/// for maps:
+///     - non map and list elements are added/updated with the new values
+///     - list and map elements are processed recursively
+/// for lists:
+///     - regardless of the element type, all elements from 'other' are added to
+///       'element'
+///
+/// @param element The element to which new data is added.
+/// @param other The element containing the data which needs to be added.
+/// @param hierarchy The hierarchy describing the elements relations and
+/// identification keys.
+/// @param key The container holding the current element.
+/// @param idx The level inside the hierarchy the current element is located.
+void mergeDiffAdd(ElementPtr& element, ElementPtr& other,
+                  HierarchyDescriptor& hierarchy, std::string key,
+                  size_t idx = 0);
+
+/// @brief Merges the diff data by removing the data present in 'other' from
+/// 'element' (recursively). Both elements must be the same Element type.
+/// Raises a TypeError if elements are not the same Element type.
+/// for non map and list elements the values are set to NullElement
+/// for maps:
+///     - non map and list elements are removed from the map
+///     - list and map elements are processed recursively
+/// for lists:
+///     - regardless of the element type, all elements from 'other' matching
+///       elements in 'element' are removed
+///
+/// @param element The element from which new data is removed.
+/// @param other The element containing the data which needs to be removed.
+/// @param hierarchy The hierarchy describing the elements relations and
+/// identification keys.
+/// @param key The container holding the current element.
+/// @param idx The level inside the hierarchy the current element is located.
+void mergeDiffDel(ElementPtr& element, ElementPtr& other,
+                  HierarchyDescriptor& hierarchy, std::string key,
+                  size_t idx = 0);
+
+/// @brief Extends data by adding the specified 'extension' elements from
+/// 'other' inside the 'container' element (recursively). Both elements must be
+/// the same Element type.
+/// Raises a TypeError if elements are not the same Element type.
+///
+/// @param container The container holding the data that must be extended.
+/// @param extension The name of the element that contains the data that must be
+/// added (if not already present) in order to extend the initial data.
+/// @param element The element from which new data is added.
+/// @param other The element containing the data which needs to be added.
+/// @param hierarchy The hierarchy describing the elements relations and
+/// identification keys.
+/// @param key The container holding the current element.
+/// @param idx The level inside the hierarchy the current element is located.
+/// @param alter The flag which indicates if the current element should be
+/// updated.
+void extend(const std::string& container, const std::string& extension,
+            ElementPtr& element, ElementPtr& other,
+            HierarchyDescriptor& hierarchy, std::string key, size_t idx = 0,
+            bool alter = false);
 
 /// @brief Copy the data up to a nesting level.
 ///
@@ -895,7 +1069,3 @@ bool operator<(const Element& a, const Element& b);
 }  // namespace isc
 
 #endif // ISC_DATA_H
-
-// Local Variables:
-// mode: c++
-// End:

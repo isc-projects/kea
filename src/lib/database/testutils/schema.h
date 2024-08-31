@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,6 +21,7 @@ extern const char* INVALID_NAME;
 extern const char* VALID_HOST;
 extern const char* VALID_HOST_TCP;
 extern const char* INVALID_HOST;
+extern const char* INVALID_PORT_1;
 extern const char* VALID_USER;
 extern const char* VALID_READONLY_USER;
 extern const char* VALID_SECURE_USER;
@@ -30,6 +31,16 @@ extern const char* INVALID_PASSWORD;
 extern const char* VALID_TIMEOUT;
 extern const char* INVALID_TIMEOUT_1;
 extern const char* INVALID_TIMEOUT_2;
+extern const char* INVALID_TIMEOUT_3;
+extern const char* VALID_READ_TIMEOUT;
+extern const char* VALID_READ_TIMEOUT_ZERO;
+extern const char* INVALID_READ_TIMEOUT_1;
+extern const char* VALID_WRITE_TIMEOUT;
+extern const char* VALID_WRITE_TIMEOUT_ZERO;
+extern const char* INVALID_WRITE_TIMEOUT_1;
+extern const char* VALID_TCP_USER_TIMEOUT;
+extern const char* VALID_TCP_USER_TIMEOUT_ZERO;
+extern const char* INVALID_TCP_USER_TIMEOUT_1;
 extern const char* VALID_READONLY_DB;
 extern const char* INVALID_READONLY_DB;
 extern const char* VALID_CERT;

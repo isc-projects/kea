@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -222,7 +222,7 @@ public:
         ///< Used while parsing Netconf/loggers structures.
         LOGGERS,
 
-        ///< Used while parsing Netconf/loggers/output_options structures.
+        ///< Used while parsing Netconf/loggers/output-options structures.
         OUTPUT_OPTIONS
 
     } LexerContext;
@@ -305,9 +305,9 @@ public:
     ///
     /// @return Element structure representing parsed text.
     isc::data::ElementPtr parseCommon();
-};
+};  // ParserContext
 
-} // end of isc::netconf namespace
-} // end of isc namespace
+}  // namespace netconf
+}  // namespace isc
 
 #endif

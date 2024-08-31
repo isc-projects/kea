@@ -1,0 +1,39 @@
+{
+    "access": "write",
+    "avail": "2.1.7",
+    "brief": [
+        "This command updates (removes) parts of a single subnet in the existing server configuration. This operation has no impact on other subnets."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"subnet4-delta-del\",",
+        "    \"arguments\": {",
+        "        \"subnet4\": [ {",
+        "            \"id\": 123,",
+        "            \"subnet\": \"10.20.30.0/24\",",
+        "            ...",
+        "        } ]",
+        "    }",
+        "}"
+    ],
+    "description": "See <xref linkend=\"idp69\"/>",
+    "hook": "subnet_cmds",
+    "name": "subnet4-delta-del",
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"IPv4 subnet updated\",",
+        "    \"arguments\": {",
+        "        \"subnets\": [",
+        "            {",
+        "                \"id\": 123,",
+        "                \"subnet\": \"10.20.30.0/24\"",
+        "            }",
+        "        ]",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp4"
+    ]
+}

@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -77,6 +77,7 @@ namespace {
     "  x.formatted_value," \
     "  x.space," \
     "  x.persistent," \
+    "  x.cancelled," \
     "  x.dhcp4_subnet_id," \
     "  x.scope_id," \
     "  x.user_context," \
@@ -89,6 +90,7 @@ namespace {
     "  o.formatted_value," \
     "  o.space," \
     "  o.persistent," \
+    "  o.cancelled," \
     "  o.dhcp4_subnet_id," \
     "  o.scope_id," \
     "  o.user_context," \
@@ -114,6 +116,8 @@ namespace {
     "  s.reservations_out_of_pool," \
     "  s.cache_threshold," \
     "  s.cache_max_age," \
+    "  s.offer_lifetime," \
+    "  s.allocator," \
     "  srv.tag " \
     "FROM dhcp4_subnet AS s " \
     server_join \
@@ -183,6 +187,7 @@ namespace {
     "  x.formatted_value," \
     "  x.space," \
     "  x.persistent," \
+    "  x.cancelled," \
     "  x.dhcp6_subnet_id," \
     "  x.scope_id," \
     "  x.user_context," \
@@ -196,6 +201,7 @@ namespace {
     "  y.formatted_value," \
     "  y.space," \
     "  y.persistent," \
+    "  y.cancelled," \
     "  y.dhcp6_subnet_id," \
     "  y.scope_id," \
     "  y.user_context," \
@@ -209,6 +215,7 @@ namespace {
     "  o.formatted_value," \
     "  o.space," \
     "  o.persistent," \
+    "  o.cancelled," \
     "  o.dhcp6_subnet_id," \
     "  o.scope_id," \
     "  o.user_context," \
@@ -242,6 +249,8 @@ namespace {
     "  s.reservations_out_of_pool," \
     "  s.cache_threshold," \
     "  s.cache_max_age," \
+    "  s.allocator," \
+    "  s.pd_allocator," \
     "  srv.tag " \
     "FROM dhcp6_subnet AS s " \
     server_join \
@@ -295,6 +304,7 @@ namespace {
       "  x.formatted_value," \
       "  x.space," \
       "  x.persistent," \
+      "  x.cancelled," \
       "  x.dhcp4_subnet_id," \
       "  x.scope_id," \
       "  x.user_context," \
@@ -335,6 +345,7 @@ namespace {
     "  x.formatted_value," \
     "  x.space," \
     "  x.persistent," \
+    "  x.cancelled," \
     "  x.dhcp6_subnet_id," \
     "  x.scope_id," \
     "  x.user_context," \
@@ -379,6 +390,7 @@ namespace {
     "  x.formatted_value," \
     "  x.space," \
     "  x.persistent," \
+    "  x.cancelled," \
     "  x.dhcp6_subnet_id," \
     "  x.scope_id," \
     "  x.user_context," \
@@ -425,6 +437,7 @@ namespace {
     "  o.formatted_value," \
     "  o.space," \
     "  o.persistent," \
+    "  o.cancelled," \
     "  o.dhcp4_subnet_id," \
     "  o.scope_id," \
     "  o.user_context," \
@@ -450,6 +463,8 @@ namespace {
     "  n.reservations_out_of_pool," \
     "  n.cache_threshold," \
     "  n.cache_max_age," \
+    "  n.offer_lifetime," \
+    "  n.allocator," \
     "  s.tag " \
     "FROM dhcp4_shared_network AS n " \
     server_join \
@@ -505,6 +520,7 @@ namespace {
     "  o.formatted_value," \
     "  o.space," \
     "  o.persistent," \
+    "  o.cancelled," \
     "  o.dhcp6_subnet_id," \
     "  o.scope_id," \
     "  o.user_context," \
@@ -530,6 +546,8 @@ namespace {
     "  n.reservations_out_of_pool," \
     "  n.cache_threshold," \
     "  n.cache_max_age," \
+    "  n.allocator," \
+    "  n.pd_allocator," \
     "  s.tag " \
     "FROM dhcp6_shared_network AS n " \
     server_join \
@@ -594,6 +612,7 @@ namespace {
     "  o.formatted_value," \
     "  o.space," \
     "  o.persistent," \
+    "  o.cancelled," \
     "  o." #table_prefix "_subnet_id," \
     "  o.scope_id," \
     "  o.user_context," \
@@ -672,6 +691,7 @@ namespace {
     "  o.depend_on_known_indirectly, " \
     "  gmt_epoch(c.modification_ts) as modification_ts, " \
     "  c.user_context," \
+    "  c.offer_lifetime," \
     "  d.id," \
     "  d.code," \
     "  d.name," \
@@ -688,6 +708,7 @@ namespace {
     "  x.formatted_value," \
     "  x.space," \
     "  x.persistent," \
+    "  x.cancelled," \
     "  x.dhcp4_subnet_id," \
     "  x.scope_id," \
     "  x.user_context," \
@@ -751,6 +772,7 @@ namespace {
     "  x.formatted_value," \
     "  x.space," \
     "  x.persistent," \
+    "  x.cancelled," \
     "  x.dhcp6_subnet_id," \
     "  x.scope_id," \
     "  x.user_context," \
@@ -906,6 +928,7 @@ namespace {
     "  formatted_value," \
     "  space," \
     "  persistent," \
+    "  cancelled," \
     "  dhcp_client_class," \
     " " #table_prefix "_subnet_id," \
     "  scope_id," \
@@ -914,13 +937,13 @@ namespace {
     "  pool_id," \
     "  modification_ts" \
     pd_pool_id \
-    ") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, cast($9 as json), $10, $11, $12" last ")"
+    ") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, cast($10 as json), $11, $12, $13" last ")"
 
 #define PGSQL_INSERT_OPTION4() \
     PGSQL_INSERT_OPTION_COMMON(dhcp4, "", "")
 
 #define PGSQL_INSERT_OPTION6() \
-    PGSQL_INSERT_OPTION_COMMON(dhcp6, ", pd_pool_id ", ", $13")
+    PGSQL_INSERT_OPTION_COMMON(dhcp6, ", pd_pool_id ", ", $14")
 #endif
 
 #ifndef PGSQL_INSERT_OPTION_SERVER
@@ -1013,7 +1036,7 @@ namespace {
     "     " #table_prefix "_server as s " \
     "WHERE d.id = a.option_def_id AND " \
     "      a.server_id = s.id AND " \
-    "      d.class_id = (SELECT id FROM dhcp4_client_class WHERE name = $10) " \
+    "      d.class_id = (SELECT id FROM " #table_prefix "_client_class WHERE name = $10) " \
     "      AND s.tag = $11 AND d.code = $12 AND d.space = $13"
 #endif
 
@@ -1026,13 +1049,14 @@ namespace {
     "  formatted_value = $3," \
     "  space = $4," \
     "  persistent = $5," \
-    "  dhcp_client_class = $6," \
-    "  " #table_prefix "_subnet_id = $7," \
-    "  scope_id = $8," \
-    "  user_context = cast($9 as json)," \
-    "  shared_network_name = $10," \
-    "  pool_id = $11," \
-    "  modification_ts = $12 " \
+    "  cancelled = $6," \
+    "  dhcp_client_class = $7," \
+    "  " #table_prefix "_subnet_id = $8," \
+    "  scope_id = $9," \
+    "  user_context = cast($10 as json)," \
+    "  shared_network_name = $11," \
+    "  pool_id = $12," \
+    "  modification_ts = $13 " \
     pd_pool_id \
     "WHERE " #__VA_ARGS__
 
@@ -1040,7 +1064,7 @@ namespace {
     PGSQL_UPDATE_OPTION_NO_TAG(dhcp4, "", __VA_ARGS__)
 
 #define PGSQL_UPDATE_OPTION6_NO_TAG(...) \
-    PGSQL_UPDATE_OPTION_NO_TAG(dhcp6, ", pd_pool_id = $13 ", __VA_ARGS__)
+    PGSQL_UPDATE_OPTION_NO_TAG(dhcp6, ", pd_pool_id = $14 ", __VA_ARGS__)
 #endif
 
 #ifndef PGSQL_UPDATE_OPTION_WITH_TAG
@@ -1052,13 +1076,14 @@ namespace {
     "  formatted_value = $3," \
     "  space = $4," \
     "  persistent = $5," \
-    "  dhcp_client_class = $6," \
-    "  " #table_prefix "_subnet_id = $7," \
-    "  scope_id = $8," \
-    "  user_context = cast($9 as json)," \
-    "  shared_network_name = $10," \
-    "  pool_id = $11," \
-    "  modification_ts = $12 " \
+    "  cancelled = $6," \
+    "  dhcp_client_class = $7," \
+    "  " #table_prefix "_subnet_id = $8," \
+    "  scope_id = $9," \
+    "  user_context = cast($10 as json)," \
+    "  shared_network_name = $11," \
+    "  pool_id = $12," \
+    "  modification_ts = $13 " \
     pd_pool_id \
     "FROM " #table_prefix "_options_server as a, " \
     "     " #table_prefix "_server as s " \
@@ -1067,11 +1092,11 @@ namespace {
     #__VA_ARGS__
 
 #define PGSQL_UPDATE_OPTION4_WITH_TAG(...) \
-    PGSQL_UPDATE_OPTION_WITH_TAG(dhcp4, "", AND s.tag = $13 __VA_ARGS__)
+    PGSQL_UPDATE_OPTION_WITH_TAG(dhcp4, "", AND s.tag = $14 __VA_ARGS__)
 
 #define PGSQL_UPDATE_OPTION6_WITH_TAG(...) \
     PGSQL_UPDATE_OPTION_WITH_TAG(dhcp6, \
-    ", pd_pool_id = $13 ", AND s.tag = $14 __VA_ARGS__)
+    ", pd_pool_id = $14 ", AND s.tag = $15 __VA_ARGS__)
 #endif
 
 #ifndef PGSQL_UPDATE_CLIENT_CLASS4
@@ -1089,8 +1114,9 @@ namespace {
     "  depend_on_known_directly = $10," \
     follow_class_name_set \
     "  modification_ts = $12, " \
-    "  user_context = cast($13 as json)" \
-    "WHERE name = $14"
+    "  user_context = cast($13 as json), " \
+    "  offer_lifetime = $14 " \
+    "WHERE name = $15"
 #endif
 
 #ifndef PGSQL_UPDATE_CLIENT_CLASS6

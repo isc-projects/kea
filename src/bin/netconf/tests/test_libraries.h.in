@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,6 +19,6 @@ namespace {
 // Basic library with context_create and three "standard" callouts.
 static const char* BASIC_CALLOUT_LIBRARY = "@abs_builddir@/.libs/libbasic.so";
 
-} // anonymous namespace
+}  // anonymous namespace
 
-#endif // TEST_LIBRARIES_H
+#endif  // TEST_LIBRARIES_H

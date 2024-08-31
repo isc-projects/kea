@@ -9,6 +9,8 @@ if USE_STATIC_LINK
 AM_LDFLAGS = -static
 endif
 
+TESTS_ENVIRONMENT = $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
+
 if HAVE_GTEST
 
 TESTS = libstats_unittests
@@ -26,6 +28,7 @@ libstats_unittests_LDADD  = $(top_builddir)/src/lib/stats/libkea-stats.la
 libstats_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libstats_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libstats_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
+libstats_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 libstats_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 libstats_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libstats_unittests_LDADD += $(LOG4CPLUS_LIBS) $(GTEST_LDADD) $(BOOST_LIBS)

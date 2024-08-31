@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,7 +10,7 @@
 #include <dhcpsrv/d2_client_mgr.h>
 #include <testutils/test_to_element.h>
 #include <exceptions/exceptions.h>
-#include <util/strutil.h>
+#include <util/str.h>
 
 #include <boost/algorithm/string.hpp>
 #include <gtest/gtest.h>
@@ -300,6 +300,7 @@ TEST(D2ClientMgr, validConfig) {
     // and not the original configuration.
     EXPECT_EQ(*new_cfg, *updated_config);
     EXPECT_NE(*original_config, *updated_config);
+    d2_client_mgr->stop();
 }
 
 /// @brief Checks passing the D2ClientMgr a valid D2 client configuration
@@ -335,6 +336,7 @@ TEST(D2ClientMgr, ipv6Config) {
     // and not the original configuration.
     EXPECT_EQ(*new_cfg, *updated_config);
     EXPECT_NE(*original_config, *updated_config);
+    d2_client_mgr->stop();
 }
 
 /// @brief Test class for execerising manager functions that are
@@ -423,13 +425,13 @@ TEST_F(D2ClientMgrParamsTest, analyzeFqdnEnabledNoOverrides) {
 }
 
 /// @brief Tests that analyzeFqdn generates correct server S and N flags when
-/// updates are enabled and override-no-update is on.
+/// updates are enabled and ddns-override-no-update is on.
 TEST_F(D2ClientMgrParamsTest, analyzeFqdnEnabledOverrideNoUpdate) {
     D2ClientMgr mgr;
     bool server_s = false;
     bool server_n = false;
 
-    // Create enabled configuration with override-no-update true.
+    // Create enabled configuration with ddns-override-no-update true.
     subnet_->setDdnsSendUpdates(true);
     subnet_->setDdnsOverrideNoUpdate(true);
     subnet_->setDdnsOverrideClientUpdate(false);
@@ -462,13 +464,13 @@ TEST_F(D2ClientMgrParamsTest, analyzeFqdnEnabledOverrideNoUpdate) {
 }
 
 /// @brief Tests that analyzeFqdn generates correct server S and N flags when
-/// updates are enabled and override-client-update is on.
+/// updates are enabled and ddns-override-client-update is on.
 TEST_F(D2ClientMgrParamsTest, analyzeFqdnEnabledOverrideClientUpdate) {
     D2ClientMgr mgr;
     bool server_s = false;
     bool server_n = false;
 
-    // Create enabled configuration with override-client-update true.
+    // Create enabled configuration with ddns-override-client-update true.
     subnet_->setDdnsSendUpdates(true);
     subnet_->setDdnsOverrideNoUpdate(false);
     subnet_->setDdnsOverrideClientUpdate(true);
@@ -851,7 +853,7 @@ TEST_F(D2ClientMgrParamsTest, adjustDomainNameV4) {
         }
     };
 
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
         {
             subnet_->setDdnsReplaceClientNameMode(scenario.mode_);
@@ -966,7 +968,7 @@ TEST_F(D2ClientMgrParamsTest, adjustDomainNameV6) {
         }
     };
 
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
         {
             subnet_->setDdnsReplaceClientNameMode(scenario.mode_);
@@ -1086,7 +1088,12 @@ TEST_F(D2ClientMgrParamsTest, sanitizeFqdnV4) {
     subnet_->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_NEVER);
     subnet_->setDdnsGeneratedPrefix("prefix");
     subnet_->setDdnsQualifyingSuffix("suffix.com");
-    subnet_->setHostnameCharSet("[^A-Za-z0-9-]");
+    // In V4 the dot (".") can, and equally can not be specified in the
+    // "hostname-char-set" because the FQDN is split before any character
+    // is replaced and then is put back together. However it does have an
+    // effect on the hostname option 12 (DHO_HOST_NAME), but this test is
+    // only checking the FQDN option.
+    subnet_->setHostnameCharSet("[^A-Za-z0-9.-]");
     subnet_->setHostnameCharReplacement("x");
 
     // Get the sanitizer.
@@ -1140,7 +1147,7 @@ TEST_F(D2ClientMgrParamsTest, sanitizeFqdnV4) {
         }
     };
 
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
         {
             Option4ClientFqdn request(0, Option4ClientFqdn::RCODE_CLIENT(),
@@ -1169,7 +1176,10 @@ TEST_F(D2ClientMgrParamsTest, sanitizeFqdnV6) {
     subnet_->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_NEVER);
     subnet_->setDdnsGeneratedPrefix("prefix");
     subnet_->setDdnsQualifyingSuffix("suffix.com");
-    subnet_->setHostnameCharSet("[^A-Za-z0-9-]");
+    // In V6 the dot (".") can, and equally can not be specified in the
+    // "hostname-char-set" because the FQDN is split before any character
+    // is replaced and then is put back together.
+    subnet_->setHostnameCharSet("[^A-Za-z0-9.-]");
     subnet_->setHostnameCharReplacement("x");
 
     // Get the sanitizer.
@@ -1223,8 +1233,7 @@ TEST_F(D2ClientMgrParamsTest, sanitizeFqdnV6) {
         }
     };
 
-    Option6ClientFqdnPtr response;
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
         {
             Option6ClientFqdn request(0, scenario.client_name_, scenario.name_type_);

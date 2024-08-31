@@ -1,0 +1,52 @@
+// Copyright (C) 2023 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+@page qaIntro Quality Assurance in Kea
+
+This is only a brief excerpt about some QA systems used at ISC. For more
+information, please refer to the DHCP QA department.
+
+@section ciGithub Running CI pipeline on Github
+
+While our primary environment for running CI pipeline is Jenkins hosted on AWS,
+there are some tools that are only available on github. One of such tools is
+CodeQL. CodeQL is a static analysis tool that can be used to find security
+vulnerabilities in the code. It is a part of Github Advanced Security suite.
+Github Advanced Security suite is available for free for open source projects.
+
+The job is defined in `.github/workflows/codeql.yml` file. It is configured
+to run once per week on `master` and `ci` branches. Sadly, it requires Kea
+compilation. With the runners provided on github having only 2 CPUs, it's
+a slow process. But we don't care that much - we get the results once per
+week. The results are available in the `Security` tab of the repository
+(see https://github.com/isc-projects/kea/security). This tab is only visible to
+logged in members of the isc-projects organization.
+
+@section ciGitlab Running CI pipeline on Gitlab
+
+There are several jobs configure on gitlab CI:
+
+- shellcheck
+- danger
+- dhcpdb_create-upgrade-consistency
+- duplicate-includes
+- missing-api-commands
+- missing-config-h-include
+- missing-git-attribute
+- sast-analyzer
+- flawfinder-sast
+
+The pipeline can be inspected and configure here:
+https://gitlab.isc.org/isc-projects/kea/-/ci/editor
+
+@section ciJenkins Running CI pipeline on Jenkins
+
+Jenkins is the primary CI environment. It is hosted on AWS. For details,
+see internal QA-DHCP wiki, ask on QA channel on mattermost or take a look at the
+internal `qa-dhcp` repository.
+
+*/

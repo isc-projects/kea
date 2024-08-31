@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -37,9 +37,9 @@ public:
     /// @brief Constructor.
     ///
     /// @param io_service Reference to the IO service.
-    explicit IOAcceptor(IOService& io_service)
-        : IOSocket(),
-          acceptor_(new typename ProtocolType::acceptor(io_service.get_io_service())) {
+    explicit IOAcceptor(const IOServicePtr& io_service)
+        : IOSocket(), io_service_(io_service),
+          acceptor_(new typename ProtocolType::acceptor(io_service_->getInternalIOService())) {
     }
 
     /// @brief Destructor.
@@ -123,12 +123,13 @@ protected:
         acceptor_->async_accept(socket.getASIOSocket(), callback);
     }
 
+    /// @brief The IO service used to handle events.
+    IOServicePtr io_service_;
 
     /// @brief Underlying ASIO acceptor implementation.
     boost::shared_ptr<typename ProtocolType::acceptor> acceptor_;
 
 };
-
 
 } // end of namespace asiolink
 } // end of isc

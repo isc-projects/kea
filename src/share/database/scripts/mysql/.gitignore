@@ -22,4 +22,14 @@
 /upgrade_011_to_012.sh
 /upgrade_012_to_013.sh
 /upgrade_013_to_014.sh
+/upgrade_014_to_015.sh
+/upgrade_015_to_016.sh
+/upgrade_016_to_017.sh
+/upgrade_017_to_018.sh
+/upgrade_018_to_019.sh
+/upgrade_019_to_020.sh
+/upgrade_020_to_021.sh
+/upgrade_021_to_022.sh
+/upgrade_022_to_023.sh
+/upgrade_023_to_024.sh
 /wipe_data.sh

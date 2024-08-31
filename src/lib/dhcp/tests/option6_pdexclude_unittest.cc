@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // Author: Andrei Pavel <andrei.pavel@qualitance.com>
 //
@@ -11,9 +11,8 @@
 #include <asiolink/io_address.h>
 #include <exceptions/exceptions.h>
 #include <dhcp/option6_pdexclude.h>
-#include <dhcpsrv/pool.h>
 #include <util/buffer.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 #include <gtest/gtest.h>
 
 using namespace isc;
@@ -77,9 +76,8 @@ TEST(Option6PDExcludeTest, pack) {
     ASSERT_EQ(expected_vec.size(), buf.getLength());
 
     // Check that the generated wire format is correct.
-    const uint8_t* data = static_cast<const uint8_t*>(buf.getData());
-    std::vector<uint8_t> vec(data, data + buf.getLength());
-    ASSERT_TRUE(std::equal(vec.begin(), vec.end(), expected_vec.begin()));
+    const std::vector<uint8_t>& vec = buf.getVector();
+    ASSERT_TRUE(std::equal(vec.cbegin(), vec.cend(), expected_vec.cbegin()));
 }
 
 // This test verifies parsing option wire format with subnet id of

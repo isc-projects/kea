@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -30,7 +30,7 @@ namespace ha {
 /// load balancing of the DHCP queries, when configured to do so.
 ///
 /// The query filter uses a term "scope" to identify group of DHCP queries
-/// processed by a given server. Currently, we support load balanacing
+/// processed by a given server. Currently, we support load balancing
 /// between two servers. Therefore, in this mode of operation, there are two
 /// scopes named after servers responsible for processing packets belonging
 /// to those scopes, e.g. "server1" and "server2".
@@ -138,9 +138,17 @@ public:
 
     /// @brief Checks if this server should process the DHCPv4 query.
     ///
-    /// This method takes into account enabled scopes for this server and
-    /// HA mode to determine whether this query should be processed. It
-    /// triggers load balancing when load balancing mode is enabled.
+    /// This method uses a table of DHCPv4 message types to determine whether or
+    /// not a query needs further analysis to determine which HA server
+    /// should handle it or if it should simply be processed by this server.
+    ///
+    /// For message types that qualify (e.g. DHCPDISCOVER, DHCPREQUEST, etc),
+    /// it then takes into account enabled scopes for this server and HA mode
+    /// to determine whether this query should be processed. It triggers load
+    /// balancing when load balancing mode is enabled.
+    ///
+    /// Non-qualifying message types (e.g. DHCPLEASEQUERY) are passed
+    /// through for handling by this server.
     ///
     /// @param query4 pointer to the DHCPv4 query instance.
     /// @param [out] scope_class name of the class which corresponds to the
@@ -154,9 +162,17 @@ public:
 
     /// @brief Checks if this server should process the DHCPv6 query.
     ///
-    /// This method takes into account enabled scopes for this server and
-    /// HA mode to determine whether this query should be processed. It
-    /// triggers load balancing when load balancing mode is enabled.
+    /// This method uses a table of DHCPv6 message types to determine whether or
+    /// not a query needs further analysis to determine which HA server
+    /// should handle it or if it should simply be processed by this server.
+    ///
+    /// For message types that qualify (e.g. DHCPV6_SOLICIT, DHCPV6_REQUEST, etc),
+    /// it then takes into account enabled scopes for this server and HA mode
+    /// to determine whether this query should be processed. It triggers load
+    /// balancing when load balancing mode is enabled.
+    ///
+    /// Non-qualifying message types (e.g. DHCPV6_LEASEQUERY) are passed through
+    /// for handling by this server.
     ///
     /// @param query6 pointer to the DHCPv6 query instance.
     /// @param [out] scope_class name of the class which corresponds to the
@@ -167,6 +183,20 @@ public:
     /// @return true if the specified query should be processed by this
     /// server, false otherwise.
     bool inScope(const dhcp::Pkt6Ptr& query6, std::string& scope_class) const;
+
+    /// @brief Determines if a DHCPv4 query is a message type HA should process.
+    ///
+    /// @param query4 DHCPv4 packet to test. Must not be null.
+    ///
+    /// @return
+    static bool isHaType(const dhcp::Pkt4Ptr& query4);
+
+    /// @brief Determines if a DHCPv6 query is a message type HA should process.
+    ///
+    /// @param query6 DHCPv6 packet to test. Must not be null.
+    ///
+    /// @return
+    static bool isHaType(const dhcp::Pkt6Ptr& query6);
 
 private:
     /// @brief Enable scope.

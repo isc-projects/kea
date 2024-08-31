@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -367,6 +367,7 @@ TEST_F(JSONFeedTest, bashComment4) {
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"id\": 1, "
         "    \"interface\": \"eth0\""
         " } ],"
         "\"valid-lifetime\": 4000 } }";
@@ -389,6 +390,7 @@ TEST_F(JSONFeedTest, bashCommentsInline4) {
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"id\": 1, "
         "    \"interface\": \"eth0\""
         " } ],"
         "\"valid-lifetime\": 4000 } }";
@@ -412,6 +414,7 @@ TEST_F(JSONFeedTest, cppComments6) {
         "\"subnet6\": [ { "
         "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
         "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"id\": 1, "
         "    \"interface\": \"eth0\""
         " } ],"
         "\"valid-lifetime\": 4000 } }";
@@ -436,6 +439,7 @@ TEST_F(JSONFeedTest, multilineComments6) {
         "\"subnet6\": [ { "
         "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
         "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"id\": 1, "
         "    \"interface\": \"eth0\""
         " } ],"
         "\"valid-lifetime\": 4000 } }";

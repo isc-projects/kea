@@ -1,11 +1,11 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef RDATA_UNITTEST_H
-#define RDATA_UNITTEST_H 1
+#define RDATA_UNITTEST_H
 
 #include <util/buffer.h>
 #include <dns/messagerenderer.h>
@@ -38,15 +38,14 @@ protected:
     // ExForString for the string version, and ExForLexer for the lexer
     // version.  throw_str_version and throw_lexer_version are set to true
     // iff the string/lexer version is expected to throw, respectively.
-    // Parameter origin can be set to non NULL for the origin parameter of
+    // Parameter origin can be set to non null for the origin parameter of
     // the lexer version of Rdata constructor.
     template <typename RdataType, typename ExForString, typename ExForLexer>
     void checkFromText(const std::string& rdata_txt,
                        const RdataType& rdata_expected,
                        bool throw_str_version = true,
                        bool throw_lexer_version = true,
-                       const Name* origin = NULL)
-    {
+                       const Name* origin = 0) {
         SCOPED_TRACE(rdata_txt);
 
         if (throw_str_version) {
@@ -56,13 +55,13 @@ protected:
         }
 
         std::stringstream ss(rdata_txt);
-        MasterLexer lexer;
-        lexer.pushSource(ss);
+        MasterLexer llexer;
+        llexer.pushSource(ss);
         if (throw_lexer_version) {
-            EXPECT_THROW(RdataType rdata(lexer, origin, MasterLoader::DEFAULT,
+            EXPECT_THROW(RdataType rdata(llexer, origin, MasterLoader::DEFAULT,
                                          loader_cb), ExForLexer);
         } else {
-            EXPECT_EQ(0, RdataType(lexer, origin, MasterLoader::DEFAULT,
+            EXPECT_EQ(0, RdataType(llexer, origin, MasterLoader::DEFAULT,
                                    loader_cb).compare(rdata_expected));
         }
     }
@@ -86,7 +85,3 @@ createRdataUsingLexer(const RRType& rrtype, const RRClass& rrclass,
 }
 }
 #endif // RDATA_UNITTEST_H
-
-// Local Variables:
-// mode: c++
-// End:

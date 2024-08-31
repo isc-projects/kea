@@ -29,7 +29,7 @@
         "        \"tkey-lifetime\": 3600,",
         "        \"tkey-protocol\": \"TCP\",",
         "        \"keys\": [",
-        "            \"{",
+        "            {",
         "                \"name\": \"1234.sig-foo.com.\",",
         "                \"server-id\": \"foo\",",
         "                \"inception-date\": \"2021-09-05 12:23:36.281176\",",

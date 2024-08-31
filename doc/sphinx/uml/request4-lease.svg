@@ -1,203 +1,437 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="2399px" preserveAspectRatio="none" style="width:2294px;height:2399px;" version="1.1" viewBox="0 0 2294 2399" width="2294px" zoomAndPan="magnify"><defs><filter height="300%" id="f5oag86dlpmno" width="300%" x="-1" y="-1"><feGaussianBlur result="blurOut" stdDeviation="2.0"/><feColorMatrix in="blurOut" result="blurOut2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .4 0"/><feOffset dx="4.0" dy="4.0" in="blurOut2" result="blurOut3"/><feBlend in="SourceGraphic" in2="blurOut3" mode="normal"/></filter></defs><g><text fill="#000000" font-family="sans-serif" font-size="18" lengthAdjust="spacingAndGlyphs" textLength="399" x="938.5" y="17.4023">Allocate a lease for DHCPREQUEST (Kea 1.8.0)</text><!--MD5=[eaee9025590d004dcfc2daa117adb8bb]
-cluster check_hint--><rect fill="#FFFFFF" filter="url(#f5oag86dlpmno)" height="378.72" style="stroke: #000000; stroke-width: 1.5;" width="939" x="950" y="248.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="180" x="1329.5" y="263.7344">Check requested address</text><!--MD5=[c6fdc214782d2c6b530af6f84e869950]
-cluster get_existing--><rect fill="#FFFFFF" filter="url(#f5oag86dlpmno)" height="164.86" style="stroke: #000000; stroke-width: 1.5;" width="245" x="1604" y="347.0592"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="229" x="1612" y="362.5944">Get lease for requested address</text><!--MD5=[57e960cb4db100c9a2ccd6f4d6705f05]
-cluster check_done--><rect fill="#FFFFFF" filter="url(#f5oag86dlpmno)" height="164.86" style="stroke: #000000; stroke-width: 1.5;" width="161" x="470" y="691.9192"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="130" x="485.5" y="707.4544">Check client lease</text><!--MD5=[a6e23b86b5ec2c7080f88f7cf966373c]
-cluster new_lease--><rect fill="#FFFFFF" filter="url(#f5oag86dlpmno)" height="1385.08" style="stroke: #000000; stroke-width: 1.5;" width="1138" x="7" y="905.7792"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="147" x="502.5" y="921.3144">Allocate a new lease</text><!--MD5=[c0a0058b985d9500e1903c17b16df914]
-cluster allocateOrReuseLease4--><rect fill="#FFFFFF" filter="url(#f5oag86dlpmno)" height="685.36" style="stroke: #000000; stroke-width: 1.5;" width="300" x="71" y="1466.4992"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="164" x="139" y="1482.0344">Allocate or reuse lease</text><!--MD5=[23478a531f37cd80899cad04cd2b7f18]
-cluster allocateUnreservedLease4--><rect fill="#FFFFFF" filter="url(#f5oag86dlpmno)" height="588.22" style="stroke: #000000; stroke-width: 1.5;" width="514" x="411" y="1044.6392"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="184" x="576" y="1060.1744">Allocate unreserved lease</text><!--MD5=[f07ece90dffecaa599052c39e01a94c5]
-entity getReservedLease--><rect fill="#FEFECE" filter="url(#f5oag86dlpmno)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="246" x="1136" y="451.9192"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="226" x="1146" y="475.4544">Check lease for reserved address</text><!--MD5=[8636dd2beae72b933abf12250cfd1025]
-entity out_of_pool--><rect fill="#FEFECE" filter="url(#f5oag86dlpmno)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="208" x="1020" y="566.9192"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="188" x="1030" y="590.4544">Check out-of-pool address</text><!--MD5=[ec14e8cae259e632e03b8f7e5f2fa627]
-entity existing--><rect fill="#FEFECE" filter="url(#f5oag86dlpmno)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="174" x="1651" y="451.9192"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="154" x="1661" y="475.4544">Check requested lease</text><!--MD5=[0edbe06a49914a247f1c11b045d92815]
-entity client_lease--><rect fill="#FEFECE" filter="url(#f5oag86dlpmno)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="108" x="494" y="796.7792"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="88" x="504" y="820.3144">Check renew</text><!--MD5=[66e1e431ca0dbea91ea05cb758558585]
-entity create--><rect fill="#FEFECE" filter="url(#f5oag86dlpmno)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="148" x="973" y="1703.8592"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="128" x="983" y="1727.3944">Create a new lease</text><!--MD5=[a85809bef6165a661ce702016b2b24bf]
-entity old_lease--><rect fill="#FEFECE" filter="url(#f5oag86dlpmno)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="128" x="747" y="2230.8592"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="108" x="757" y="2254.3944">Delete old lease</text><!--MD5=[3e4eb9e968ddf7eb79447dabaa827d00]
-entity candidate--><rect fill="#FEFECE" filter="url(#f5oag86dlpmno)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="153" x="188.5" y="1572.8592"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="133" x="198.5" y="1596.3944">Get candidate lease</text><!--MD5=[3dd4b79f11e480f9e62df46d2d0a412b]
-entity reuseExpiredLease4--><rect fill="#FEFECE" filter="url(#f5oag86dlpmno)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="157" x="118.5" y="1703.8592"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="137" x="128.5" y="1727.3944">Reuse expired lease</text><!--MD5=[7989e4485f5064553517c02d5ce8346d]
-entity reclaimExpiredLease--><rect fill="#FEFECE" filter="url(#f5oag86dlpmno)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="169" x="111.5" y="1800.8592"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="149" x="121.5" y="1824.3944">Reclaim expired lease</text><!--MD5=[8b161cca1eea0fa2f14429822e5193fc]
-entity updateLease4Information--><rect fill="#FEFECE" filter="url(#f5oag86dlpmno)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="192" x="96" y="1897.8592"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="172" x="106" y="1921.3944">update lease information</text><!--MD5=[20b997f41be7d019adfd03f05289a85b]
-entity lease4_select--><rect fill="#FEFECE" filter="url(#f5oag86dlpmno)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="163" x="95.5" y="1994.8592"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="143" x="105.5" y="2018.3944">Callout lease4_select</text><path d="M293.5,2000.3592 L293.5,2008.8592 L258.55,2012.8592 L293.5,2016.8592 L293.5,2025.6698 A0,0 0 0 0 293.5,2025.6698 L346.5,2025.6698 A0,0 0 0 0 346.5,2025.6698 L346.5,2010.3592 L336.5,2000.3592 L293.5,2000.3592 A0,0 0 0 0 293.5,2000.3592 " fill="#FBFB77" filter="url(#f5oag86dlpmno)" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M336.5,2000.3592 L336.5,2010.3592 L346.5,2010.3592 L336.5,2000.3592 " fill="#FBFB77" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="32" x="299.5" y="2017.9276">hook</text><!--MD5=[d0c6f6a5b1ca3e5ac503933fbe44aaa9]
-entity updateLease4--><rect fill="#FEFECE" filter="url(#f5oag86dlpmno)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="108" x="210" y="2091.8592"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="88" x="220" y="2115.3944">Update lease</text><!--MD5=[8ae068fcc4f60e406016be9ba14134ac]
-entity iterate--><rect fill="#FEFECE" filter="url(#f5oag86dlpmno)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="194" x="450" y="1133.4992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="174" x="460" y="1157.0344">Iterate pools and subnets</text><!--MD5=[cb628e8ea2f367fa2f488bc44b336c46]
-entity pick--><rect fill="#FEFECE" filter="url(#f5oag86dlpmno)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="105" x="509.5" y="1246.4992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="85" x="519.5" y="1270.0344">Pick address</text><!--MD5=[3307242102673314e57f67fe596f1a7c]
-entity pick_reserved--><rect fill="#FEFECE" filter="url(#f5oag86dlpmno)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="200" x="640" y="1359.4992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="180" x="650" y="1383.0344">Check reserved addressed</text><!--MD5=[ac311a8dd9b9ea9d39416a955479a4fe]
-entity mt_in_use--><rect fill="#FEFECE" filter="url(#f5oag86dlpmno)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="288" x="506" y="1475.8592"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="268" x="516" y="1499.3944">Check already in use by another thread</text><!--MD5=[3fa202f6559a381d70247672876b819e]
-entity pick_lease--><rect fill="#FEFECE" filter="url(#f5oag86dlpmno)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="101" x="476.5" y="1572.8592"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="81" x="486.5" y="1596.3944">Check lease</text><!--MD5=[1213eaa42773f0ba0384c538d3efa224]
-entity findClientLease--><rect fill="#FEFECE" filter="url(#f5oag86dlpmno)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="130" x="1383" y="28.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="110" x="1393" y="51.7344">Find client lease</text><path d="M1548,33.6992 L1548,42.1992 L1513.14,46.1992 L1548,50.1992 L1548,59.0098 A0,0 0 0 0 1548,59.0098 L1638,59.0098 A0,0 0 0 0 1638,59.0098 L1638,43.6992 L1628,33.6992 L1548,33.6992 A0,0 0 0 0 1548,33.6992 " fill="#FBFB77" filter="url(#f5oag86dlpmno)" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M1628,33.6992 L1628,43.6992 L1638,43.6992 L1628,33.6992 " fill="#FBFB77" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="69" x="1554" y="51.2676">entry point</text><!--MD5=[0f69bb3143e68c3e4ebf8b928e2a1af4]
-entity addressReserved--><rect fill="#FEFECE" filter="url(#f5oag86dlpmno)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="216" x="1615" y="141.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="196" x="1625" y="164.7344">Check requested reservation</text><!--MD5=[f1bd864ca92b3a59ad91e15b6c278a16]
-entity hasAddressReservation--><rect fill="#FEFECE" filter="url(#f5oag86dlpmno)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="124" x="1112" y="141.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="104" x="1122" y="164.7344">Get reservation</text><!--MD5=[29cbf9a69668994ea4ff4bb0b8dea6d6]
-entity update_hint--><rect fill="#FEFECE" filter="url(#f5oag86dlpmno)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="200" x="1380" y="141.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="180" x="1390" y="164.7344">Update requested address</text><!--MD5=[999fe650e2a9819ebed27de3d290658a]
-entity no_lease--><rect fill="#FEFECE" filter="url(#f5oag86dlpmno)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="127" x="1444.5" y="2230.8592"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="107" x="1454.5" y="2254.3944">Return no lease</text><path d="M1607,2236.3592 L1607,2244.8592 L1571.71,2248.8592 L1607,2252.8592 L1607,2261.6698 A0,0 0 0 0 1607,2261.6698 L1689,2261.6698 A0,0 0 0 0 1689,2261.6698 L1689,2246.3592 L1679,2236.3592 L1607,2236.3592 A0,0 0 0 0 1607,2236.3592 " fill="#FBFB77" filter="url(#f5oag86dlpmno)" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M1679,2236.3592 L1679,2246.3592 L1689,2246.3592 L1679,2236.3592 " fill="#FBFB77" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="61" x="1613" y="2253.9276">exit point</text><!--MD5=[45b45980895812fee5a3bd80c1953e7a]
-entity renew--><rect fill="#FEFECE" filter="url(#f5oag86dlpmno)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="168" x="971" y="796.7792"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="148" x="981" y="820.3144">Return renewed lease</text><path d="M1174,802.2792 L1174,810.7792 L1139.06,814.7792 L1174,818.7792 L1174,827.5898 A0,0 0 0 0 1174,827.5898 L1256,827.5898 A0,0 0 0 0 1256,827.5898 L1256,812.2792 L1246,802.2792 L1174,802.2792 A0,0 0 0 0 1174,802.2792 " fill="#FBFB77" filter="url(#f5oag86dlpmno)" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M1246,802.2792 L1246,812.2792 L1256,812.2792 L1246,802.2792 " fill="#FBFB77" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="61" x="1180" y="819.8476">exit point</text><!--MD5=[c13398c59c328d6fcc544c8c17f5b117]
-entity return--><rect fill="#FEFECE" filter="url(#f5oag86dlpmno)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="105" x="758.5" y="2345.8592"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="85" x="768.5" y="2369.3944">Return lease</text><path d="M899,2351.3592 L899,2359.8592 L863.66,2363.8592 L899,2367.8592 L899,2376.6698 A0,0 0 0 0 899,2376.6698 L981,2376.6698 A0,0 0 0 0 981,2376.6698 L981,2361.3592 L971,2351.3592 L899,2351.3592 A0,0 0 0 0 899,2351.3592 " fill="#FBFB77" filter="url(#f5oag86dlpmno)" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M971,2351.3592 L971,2361.3592 L981,2361.3592 L971,2351.3592 " fill="#FBFB77" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="61" x="905" y="2368.9276">exit point</text><!--MD5=[58c45ac03f61bca16a2604d1f9090edc]
-link findClientLease to addressReserved--><path d="M1490.37,64.2992 C1540.43,84.5092 1623.49,118.0392 1675.64,139.0792 " fill="none" id="findClientLease-&gt;addressReserved" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="1680.59,141.0792,1673.7456,133.9973,1675.9546,139.205,1670.7468,141.414,1680.59,141.0792" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="178" x="1602" y="107.7676">has requested address (hint)</text><!--MD5=[3ed98210a29f20764b03cb44cfd671eb]
-link findClientLease to hasAddressReservation--><path d="M1405.79,64.2992 C1355.91,84.5092 1273.15,118.0392 1221.19,139.0792 " fill="none" id="findClientLease-&gt;hasAddressReservation" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="1216.26,141.0792,1226.1032,141.414,1220.8954,139.205,1223.1044,133.9973,1216.26,141.0792" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="172" x="1328" y="107.7676">no requested address (hint)</text><!--MD5=[0f8169b991248aaf1e86d3e126ee7fc7]
-link addressReserved to check_hint--><path d="M1706.14,177.5692 C1690.855,193.3142 1667.81,217.0567 1648.3475,237.1092 C1645.9147,239.6158 1643.5379,242.0647 1641.2391,244.4331 C1640.0898,245.6173 1638.96,246.7814 1637.8525,247.9225 " fill="none" id="addressReserved-&gt;check_hint" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="1637.8525,247.9225,1646.991,244.2501,1641.3348,244.3346,1641.2503,238.6783,1637.8525,247.9225" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="162" x="1675" y="220.7676">no conflicting reservation</text><!--MD5=[afeb447a9f6636bece5d73dd5d09cefa]
-link addressReserved to no_lease--><path d="M1831.12,176.2492 C1928.35,193.8192 2056,226.1192 2056,274.5592 C2056,274.5592 2056,274.5592 2056,2110.8592 C2056,2245.5392 1894.72,2159.4592 1764,2191.8592 C1729.14,2200.4992 1639.9,2219.7792 1576.62,2233.2992 " fill="none" id="addressReserved-&gt;no_lease" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="1571.73,2234.3392,1581.3655,2236.3781,1576.6205,2233.2984,1579.7002,2228.5534,1571.73,2234.3392" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="225" x="2057" y="1213.0676">reservation owned by another client</text><!--MD5=[961d5a31619e7d456669487d013a1899]
-link hasAddressReservation to update_hint--><path d="M1236.29,159.1992 C1276.08,159.1992 1328.68,159.1992 1374.83,159.1992 " fill="none" id="hasAddressReservation-&gt;update_hint" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="1379.85,159.1992,1370.85,155.1992,1374.85,159.1992,1370.85,163.1992,1379.85,159.1992" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="107" x="1254.5" y="152.7676">has a reservation</text><!--MD5=[05586e2e35799af932c772159165fde5]
-link update_hint to check_hint--><path d="M1480.56,177.2992 C1481.87,191.3892 1485.77,211.1092 1497,224.1992 C1501.4688,229.4105 1506.5789,234.1017 1512.105,238.322 C1514.868,240.4322 1517.735,242.4246 1520.6778,244.3054 C1522.1492,245.2458 1523.6395,246.1583 1525.1453,247.0437 C1525.5217,247.2651 1525.8991,247.4847 1526.2774,247.7027 C1526.4666,247.8117 1526.656,247.9202 1526.8456,248.0284 " fill="none" id="update_hint-&gt;check_hint" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="1526.8456,248.0284,1521.0095,240.0949,1522.5024,245.5512,1517.046,247.044,1526.8456,248.0284" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="157" x="1498" y="220.7676">request reserved address</text><!--MD5=[f5740591afdec92972eb12364704fbda]
-link hasAddressReservation to check_done--><path d="M1111.78,160.2292 C968.42,161.9792 627,176.4492 627,274.5592 C627,274.5592 627,274.5592 627,585.9192 C627,614.8842 626.03,647.4017 625.045,672.958 C624.7987,679.347 624.5516,685.301 624.3184,690.6556 C624.3038,690.9903 624.2893,691.3226 624.2748,691.6526 " fill="none" id="hasAddressReservation-&gt;check_done" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="624.2748,691.6526,628.6651,682.8364,624.4938,686.6574,620.6728,682.486,624.2748,691.6526" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="90" x="628" y="418.4876">no reservation</text><!--MD5=[05b1cca34cf1798b13fb9b06f5ca5f3a]
-link check_hint to get_existing--><path d="M1612,276.1292 C1612,277.5792 1612,301.1692 1612,324.7542 C1612,330.6505 1612,336.5464 1612,342.096 C1612,343.4834 1612,344.8492 1612,346.1879 C1612,346.3552 1612,346.5221 1612,346.6886 " fill="none" id="check_hint-&gt;get_existing" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="1612,346.6886,1616,337.6886,1612,341.6886,1608,337.6886,1612,346.6886" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[a6e7bc949cef76964a3dcada3d94e736]
-link get_existing to existing--><path d="M1612.09,374.9892 C1614.74,376.9592 1674.43,421.4892 1710.66,448.5192 " fill="none" id="get_existing-&gt;existing" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="1714.95,451.7292,1710.1157,443.1485,1710.938,448.7452,1705.3413,449.5676,1714.95,451.7292" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="124" x="1676" y="418.4876">has requested lease</text><!--MD5=[86bae6c5db5c6e2b2f64eec8702a172a]
-link existing to no_lease--><path d="M1738,488.1492 C1738,510.3092 1738,549.9792 1738,583.9192 C1738,583.9192 1738,583.9192 1738,2110.8592 C1738,2169.0192 1692.68,2170.6192 1643,2200.8592 C1622.7,2213.2092 1598.7,2222.8992 1576.6,2230.1892 " fill="none" id="existing-&gt;no_lease" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="1571.62,2231.7992,1581.415,2232.8276,1576.3761,2230.2567,1578.947,2225.2178,1571.62,2231.7992" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="263" x="1739" y="1382.5676">not expired lease owned by another client</text><!--MD5=[d1913c1ad5468c4f26e27e58c8f67311]
-link get_existing to out_of_pool--><path d="M1603.5702,375.107 C1603.282,375.1139 1602.9868,375.1209 1602.6847,375.1282 C1602.0805,375.1427 1601.4485,375.158 1600.7892,375.1741 C1599.4706,375.2063 1598.043,375.2417 1596.5101,375.2804 C1593.4444,375.3579 1589.9579,375.4487 1586.0818,375.5535 C1570.5772,375.973 1548.8378,376.6183 1522.855,377.543 C1470.8894,379.3923 1401.95,382.3592 1331.9675,386.8717 C1192.0025,395.8967 1047.865,411.1042 1027,435.9192 C1000.68,467.2192 1006.56,492.5092 1027,527.9192 C1036.33,544.0792 1052.3,555.9992 1068.62,564.5792 " fill="none" id="get_existing-&gt;out_of_pool" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="1073.22,566.9092,1066.998,559.2747,1068.7594,564.6503,1063.3837,566.4117,1073.22,566.9092" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="90" x="1028" y="474.9876">no reservation</text><!--MD5=[d1913c1ad5468c4f26e27e58c8f67311]
-link get_existing to out_of_pool--><path d="M1603.8377,376.8955 C1603.4057,377.006 1602.9584,377.1212 1602.4962,377.2411 C1600.6472,377.7206 1598.5597,378.2751 1596.2617,378.9056 C1587.0697,381.4277 1574.5094,385.1648 1560.3738,390.173 C1532.1025,400.1892 1497.53,415.2892 1471,435.9192 C1430.23,467.6192 1443.85,500.6192 1400,527.9192 C1350.34,558.8392 1286.82,573.0892 1233.23,579.4992 " fill="none" id="get_existing-&gt;out_of_pool-1" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="1228.08,580.0892,1237.4862,583.0087,1233.0457,579.5042,1236.5502,575.0636,1228.08,580.0892" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="162" x="1472" y="474.9876">has requested reservation</text><!--MD5=[a80af0ff9802cb26b63fe0e5cdeeb896]
-link get_existing to getReservedLease--><path d="M1603.7999,374.8934 C1603.5697,374.893 1603.3349,374.8927 1603.0956,374.8923 C1602.6171,374.8916 1602.1205,374.891 1601.6064,374.8904 C1599.5497,374.8882 1597.2106,374.8875 1594.61,374.8892 C1584.2075,374.8962 1569.6199,374.9436 1552.1798,375.1011 C1517.2997,375.4161 1471.0094,376.1717 1423.9688,377.9267 C1329.8875,381.4367 1232.805,388.9442 1218,404.9192 C1205.95,417.9192 1217.84,434.9092 1231.87,448.1092 " fill="none" id="get_existing-&gt;getReservedLease" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="1235.86,451.7292,1231.8826,442.7192,1232.1571,448.3694,1226.5069,448.6439,1235.86,451.7292" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="223" x="1219" y="418.4876">has reservation for another address</text><!--MD5=[460f9433d097e6134b488e2edc059749]
-link getReservedLease to no_lease--><path d="M1298.31,487.9392 C1370.31,519.1292 1516,582.4492 1516,583.9192 C1516,583.9192 1516,583.9192 1516,1321.9992 C1516,1356.7992 1520.59,1368.8792 1543,1395.4992 C1560.18,1415.9092 1578.19,1404.7792 1595,1425.4992 C1614.84,1449.9592 1617,1461.3692 1617,1492.8592 C1617,1492.8592 1617,1492.8592 1617,2110.8592 C1617,2161.3292 1571.14,2203.9592 1538.92,2227.6992 " fill="none" id="getReservedLease-&gt;no_lease" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="1534.66,2230.7792,1544.2952,2228.7389,1538.7092,2227.846,1539.6021,2222.2601,1534.66,2230.7792" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="150" x="1544" y="1382.5676">no active reserved lease</text><!--MD5=[e9bc3bd5a379396c200e43b0baf79c85]
-link getReservedLease to out_of_pool--><path d="M1238.5,488.0792 C1214.41,508.2392 1174.48,541.6692 1148.71,563.2392 " fill="none" id="getReservedLease-&gt;out_of_pool" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="1144.7,566.5992,1154.1757,563.9139,1148.5423,563.3997,1149.0565,557.7663,1144.7,566.5992" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[e17e653abfe61c21e03d310137f9f5d3]
-link out_of_pool to check_done--><path d="M1094.93,603.0392 C1061.57,621.9092 1004.65,651.7292 952,667.9192 C882.41,689.3242 801.6225,701.8592 737.5188,709.0692 C705.4669,712.6742 677.5859,714.948 657.3611,716.3336 C647.2487,717.0264 639.0503,717.4972 633.2015,717.8013 C632.4705,717.8393 631.7761,717.8748 631.1193,717.9077 " fill="none" id="out_of_pool-&gt;check_done" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="631.1193,717.9077,640.3082,721.4522,636.113,717.6574,639.9078,713.4622,631.1193,717.9077" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="280" x="997" y="664.4876">owned reservation for the requested address</text><!--MD5=[e17e653abfe61c21e03d310137f9f5d3]
-link out_of_pool to check_done--><path d="M1019.57,594.3492 C910.87,604.4092 748.83,623.3992 693,650.9192 C674.24,660.1642 657.23,676.2567 644.6763,690.3942 C641.5378,693.9286 638.6779,697.3408 636.1388,700.4932 C634.8692,702.0695 633.6798,703.5808 632.576,705.0099 C632.3,705.3672 632.0294,705.7194 631.7642,706.0662 C631.6316,706.2395 631.5003,706.4116 631.3705,706.5822 C631.3055,706.6675 631.2409,706.7525 631.1767,706.8371 " fill="none" id="out_of_pool-&gt;check_done-1" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="631.1767,706.8371,639.8049,702.088,634.2002,702.8549,633.4333,697.2503,631.1767,706.8371" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="249" x="694" y="664.4876">requested address is in allowed an pool</text><!--MD5=[7bd3c3d867479d62123546af0a0eba34]
-link out_of_pool to no_lease--><path d="M1203.74,602.9892 C1232.91,612.7492 1264.1,627.8392 1286,650.9192 C1307.77,673.8692 1309,686.6492 1309,718.2792 C1309,718.2792 1309,718.2792 1306,1434.9992 C1306,1673.5792 1398,1725.2792 1398,1963.8592 C1398,1963.8592 1398,1963.8592 1398,2110.8592 C1398,2161.5092 1444.28,2204.0892 1476.8,2227.7592 " fill="none" id="out_of_pool-&gt;no_lease" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="1481.09,2230.8292,1476.0801,2222.3498,1477.0175,2227.9284,1471.4388,2228.8658,1481.09,2230.8292" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="283" x="1310" y="1439.0676">address not reserved and not in allowed pool</text><!--MD5=[285a75cccafb8a8e1e8a8d054b6bd861]
-link check_done to client_lease--><path d="M622.95,719.8492 C621.39,721.7992 586.7,765.2692 565.07,792.3792 " fill="none" id="check_done-&gt;client_lease" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="561.72,796.5892,570.4617,792.0524,564.84,792.6821,564.2103,787.0604,561.72,796.5892" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="108" x="600" y="763.3476">has a client lease</text><!--MD5=[69a418bc3ca1e1b953129b8feacd7c7c]
-link client_lease to renew--><path d="M602.26,814.7792 C689.18,814.7792 860.52,814.7792 965.69,814.7792 " fill="none" id="client_lease-&gt;renew" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="970.96,814.7792,961.96,810.7792,965.96,814.7792,961.96,818.7792,970.96,814.7792" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="332" x="620.5" y="808.3476">requested address was already assigned to the client</text><!--MD5=[82bd19346130f27c4982b22ea05f0ccb]
-link client_lease to new_lease--><path d="M547.85,832.9492 C547.715,848.8792 547.5075,873.1567 547.3313,893.7055 C547.3092,896.2741 547.2877,898.7844 547.2668,901.2129 C547.2564,902.4271 547.2461,903.6209 547.2361,904.7913 C547.2336,905.0839 547.2311,905.375 547.2286,905.6646 " fill="none" id="client_lease-&gt;new_lease" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="547.2286,905.6646,551.3058,896.6993,547.2715,900.6648,543.3061,896.6306,547.2286,905.6646" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[f19fad7ef643a710f1fa744c146e27e1]
-link new_lease to allocateOrReuseLease4--><path d="M546.94,933.6392 C542.11,933.4192 233,919.8692 233,1070.9992 C233,1070.9992 233,1070.9992 233,1378.4992 C233,1403.8242 237.36,1431.9242 241.7888,1453.9317 C242.3423,1456.6827 242.897,1459.3384 243.4444,1461.8816 C243.7181,1463.1532 243.9899,1464.3967 244.2589,1465.6099 C244.2925,1465.7616 244.3261,1465.9127 244.3596,1466.0634 " fill="none" id="new_lease-&gt;allocateOrReuseLease4" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="244.3596,1466.0634,246.3094,1456.4095,243.2737,1461.1828,238.5004,1458.147,244.3596,1466.0634" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="152" x="234" y="1213.0676">has a requested address</text><!--MD5=[1e19bcf55215d199025544543592d337]
-link new_lease to allocateUnreservedLease4--><path d="M547,933.7392 C547,935.7842 547,969.0667 547,1002.3417 C547,1010.6605 547,1018.9788 547,1026.8084 C547,1030.7232 547,1034.5158 547,1038.1252 C547,1039.93 547,1041.6889 547,1043.3944 C547,1043.6076 547,1043.8199 547,1044.0314 " fill="none" id="new_lease-&gt;allocateUnreservedLease4" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="547,1044.0314,551,1035.0314,547,1039.0314,543,1035.0314,547,1044.0314" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="135" x="548" y="977.2076">no requested address</text><!--MD5=[2c84e3b0a8d19577f3d2d8902e61dda6]
-link allocateOrReuseLease4 to candidate--><path d="M251.01,1494.9292 C251.3,1496.8792 257.62,1539.7592 261.66,1567.2092 " fill="none" id="allocateOrReuseLease4-&gt;candidate" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="262.44,1572.4792,265.0848,1562.9921,261.7109,1567.5327,257.1703,1564.1587,262.44,1572.4792" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[a5e8e7e456414e548f2004cb6dbe84b6]
-link candidate to reuseExpiredLease4--><path d="M255.97,1608.9892 C243.73,1632.2192 221.85,1673.7092 208.46,1699.1092 " fill="none" id="candidate-&gt;reuseExpiredLease4" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="206.07,1703.6592,213.799,1697.5549,208.397,1699.2337,206.7181,1693.8317,206.07,1703.6592" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="148" x="230" y="1670.4276">expired candidate lease</text><!--MD5=[d2a65277aca220a8b88ff33e161a522b]
-link candidate to no_lease--><path d="M300.41,1608.9492 C331,1622.7292 376.81,1641.0592 419,1648.8592 C438.61,1652.4892 1119.78,1646.7992 1137,1656.8592 C1165.37,1673.4392 1174,1687.9992 1174,1720.8592 C1174,1720.8592 1174,1720.8592 1174,2110.8592 C1174,2167.7192 1341.77,2212.7992 1439.5,2234.2292 " fill="none" id="candidate-&gt;no_lease" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="1444.39,2235.2992,1436.4557,2229.4642,1439.5061,2234.2282,1434.7421,2237.2785,1444.39,2235.2992" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="169" x="1175" y="1920.9276">conflicting candidate lease</text><!--MD5=[7d0ea550df801bc4f2e5d77c4007fd73]
-link candidate to create--><path d="M302.78,1608.8892 C333.47,1621.9592 378.19,1639.3492 419,1648.8592 C452.51,1656.6692 461.8,1653.0992 496,1656.8592 C663.96,1675.3392 860.53,1698.5492 967.59,1711.3292 " fill="none" id="candidate-&gt;create" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="972.62,1711.9292,964.1641,1706.8797,967.656,1711.3301,963.2056,1714.822,972.62,1711.9292" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="117" x="634" y="1670.4276">no candidate lease</text><!--MD5=[41d477ba3ffb73c8ff7e1f8771a2bc5c]
-link reuseExpiredLease4 to reclaimExpiredLease--><path d="M196.82,1740.2792 C196.65,1755.8192 196.41,1778.6392 196.24,1795.5192 " fill="none" id="reuseExpiredLease4-&gt;reclaimExpiredLease" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="196.18,1800.5492,200.2572,1791.5839,196.223,1795.5494,192.2575,1791.5152,196.18,1800.5492" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[6426546e78ac0ba7440fd3d40f44ede2]
-link reclaimExpiredLease to updateLease4Information--><path d="M195.27,1837.2792 C194.61,1852.8192 193.65,1875.6392 192.94,1892.5192 " fill="none" id="reclaimExpiredLease-&gt;updateLease4Information" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="192.73,1897.5492,197.0865,1888.7163,192.9298,1892.5532,189.0929,1888.3965,192.73,1897.5492" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[a62828ac2ba9e6deab1d38c41c6a28c7]
-link updateLease4Information to lease4_select--><path d="M189.25,1934.2792 C186.8,1949.8192 183.19,1972.6392 180.53,1989.5192 " fill="none" id="updateLease4Information-&gt;lease4_select" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="179.73,1994.5492,185.097,1986.2912,180.5172,1989.6116,177.1968,1985.0317,179.73,1994.5492" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[8451cb76573000a7f0f17878defd5d68]
-link lease4_select to no_lease--><path d="M256.64,2030.8892 C422.11,2065.8992 815.39,2147.1692 1148,2200.8592 C1249.02,2217.1692 1366.7,2231.6892 1439.28,2240.1392 " fill="none" id="lease4_select-&gt;no_lease" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="1444.43,2240.7392,1435.9456,2235.7377,1439.4627,2240.1683,1435.0321,2243.6853,1444.43,2240.7392" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="26" x="1090" y="2114.9276">SKIP</text><!--MD5=[6d30d4fb129fbbb4308e51704d598b83]
-link lease4_select to updateLease4--><path d="M187.75,2031.0092 C194.04,2040.4992 202.41,2052.2792 211,2061.8592 C219.4,2071.2392 229.56,2080.6292 238.73,2088.5292 " fill="none" id="lease4_select-&gt;updateLease4" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="242.59,2091.8092,238.3406,2082.9243,238.7867,2088.5635,233.1474,2089.0096,242.59,2091.8092" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[f38e7914af006d3091e34eae716cf611]
-link updateLease4 to old_lease--><path d="M271.13,2128.1092 C280.01,2147.2092 297.1,2177.2192 322,2191.8592 C391.49,2232.7292 624.21,2243.7792 741.78,2246.7592 " fill="none" id="updateLease4-&gt;old_lease" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="746.95,2246.8892,738.0438,2242.6846,741.9513,2246.775,737.8609,2250.6825,746.95,2246.8892" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[9b569e4e69bfc07b8f4591db492d7934]
-link allocateUnreservedLease4 to iterate--><path d="M547,1072.5592 C547,1074.0692 547,1105.5792 547,1128.0692 " fill="none" id="allocateUnreservedLease4-&gt;iterate" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="547,1133.2792,551,1124.2792,547,1128.2792,543,1124.2792,547,1133.2792" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[913c99c1aa5de4d885de0fade3210176]
-link iterate to pick--><path d="M549.34,1169.8392 C551.94,1189.0692 556.14,1220.1292 558.98,1241.1592 " fill="none" id="iterate-&gt;pick" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="559.67,1246.2792,562.4258,1236.8238,558.9989,1241.3245,554.4982,1237.8975,559.67,1246.2792" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[98fd2d33f60f8d171595f3ad38490357]
-link pick to pick_reserved--><path d="M614.74,1276.6292 C662.69,1287.2492 727.13,1302.9992 735,1312.4992 C744.41,1323.8692 745.43,1340.5992 744.21,1354.0992 " fill="none" id="pick-&gt;pick_reserved" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="743.62,1359.2892,748.6002,1350.7923,744.1784,1354.3205,740.6502,1349.8988,743.62,1359.2892" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[40bbb0c51a3c4e170e8c88288f4abbc7]
-reverse link iterate to pick_reserved--><path d="M587.85,1171.9592 C635.04,1196.9992 710.25,1245.3892 742,1312.4992 C748.94,1327.1692 747.31,1345.9192 744.63,1359.3292 " fill="none" id="iterate&lt;-pick_reserved" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="583.37,1169.6092,589.4641,1177.3463,587.7924,1171.9421,593.1966,1170.2704,583.37,1169.6092" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="214" x="723" y="1269.5676">address reserved to another client</text><!--MD5=[d452465c31c3e200782285fc87364de7]
-link pick_reserved to mt_in_use--><path d="M726.33,1395.8692 C710.31,1416.2192 683.78,1449.9292 666.6,1471.7692 " fill="none" id="pick_reserved-&gt;mt_in_use" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="663.5,1475.6992,672.2152,1471.1118,666.5973,1471.7741,665.935,1466.1561,663.5,1475.6992" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[0d2cb4b21f131724b772926f54d8c5a6]
-reverse link iterate to mt_in_use--><path d="M525.22,1173.1292 C491.49,1207.6292 434.06,1278.2892 470,1329.4992 C492.53,1361.6092 521.64,1335.9392 553,1359.4992 C595.57,1391.4892 627.49,1447.3892 641.76,1475.5692 " fill="none" id="iterate&lt;-mt_in_use" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="528.81,1169.5092,519.6392,1173.1004,525.296,1173.0661,525.3302,1178.7229,528.81,1169.5092" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="255" x="471" y="1326.0676">address already in use by another thread</text><!--MD5=[bc2a6c320076cde845cfe5f7d4f3068f]
-link mt_in_use to pick_lease--><path d="M627.73,1512.0592 C606.74,1528.2692 575.3,1552.5592 553.13,1569.6792 " fill="none" id="mt_in_use-&gt;pick_lease" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="549.11,1572.7792,558.6776,1570.4423,553.0667,1569.7224,553.7867,1564.1115,549.11,1572.7792" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[2a521ba838ca3ea39c3c98b97230fab1]
-reverse link iterate to pick_lease--><path d="M513.37,1172.6092 C502.3,1180.1892 490.42,1189.4392 481,1199.4992 C464.23,1217.4192 458.7,1222.8892 452,1246.4992 C435.76,1303.7492 469.06,1455.4492 488,1511.8592 C495.37,1533.8192 507.86,1557.3892 516.72,1572.7992 " fill="none" id="iterate&lt;-pick_lease" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="517.73,1169.6792,508.0294,1171.3818,513.5808,1172.4692,512.4934,1178.0206,517.73,1169.6792" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="73" x="461" y="1382.5676">active lease</text><!--MD5=[63357d070723cd23e47a694c7dc5adee]
-link pick_lease to reuseExpiredLease4--><path d="M486.46,1608.9192 C461.21,1620.5292 428.75,1637.3192 403,1656.8592 C394.74,1663.1292 395.96,1668.6192 387,1673.8592 C377.25,1679.5592 326.42,1692.0092 279.78,1702.6592 " fill="none" id="pick_lease-&gt;reuseExpiredLease4" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="274.7,1703.8192,284.3588,1705.7447,279.5779,1702.721,282.6016,1697.9401,274.7,1703.8192" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="83" x="404" y="1670.4276">expired lease</text><!--MD5=[cf9da26e069a0df2c62fe2799950086c]
-link pick_lease to create--><path d="M577.81,1604.4592 C670.26,1627.3992 866.3,1676.0292 973.39,1702.5992 " fill="none" id="pick_lease-&gt;create" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="978.42,1703.8492,970.6421,1697.8074,973.5659,1702.65,968.7233,1705.5738,978.42,1703.8492" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="52" x="849" y="1670.4276">no lease</text><!--MD5=[64e111b9225aa9d21cd5edaf123c77e3]
-link create to old_lease--><path d="M1027.36,1740.0192 C1009.53,1757.5992 986,1786.6992 986,1817.8592 C986,1817.8592 986,1817.8592 986,2110.8592 C986,2170.8492 921.44,2208.5092 870.75,2228.8292 " fill="none" id="create-&gt;old_lease" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="865.89,2230.7392,875.7293,2231.1732,870.5441,2228.9118,872.8055,2223.7267,865.89,2230.7392" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[f504166a5b4bb527b5be2231a925b659]
-link old_lease to return--><path d="M811,2267.0192 C811,2286.5992 811,2318.6892 811,2340.2892 " fill="none" id="old_lease-&gt;return" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="811,2345.5392,815,2336.5392,811,2340.5392,807,2336.5392,811,2345.5392" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[1b4d46ef90f054326099bee1d7a95d46]
-@startuml
-
-title Allocate a lease for DHCPREQUEST (Kea 1.8.0)
-
-agent "Find client lease" as findClientLease
-note right : entry point
-
-agent "Check requested reservation" as addressReserved
-
-agent "Get reservation" as hasAddressReservation
-
-agent "Update requested address" as update_hint
-
-rectangle "Check requested address" as check_hint {
- rectangle "Get lease for requested address" as get_existing {
-  agent "Check requested lease" as existing
- }
-
- agent "Check lease for reserved address" as getReservedLease
-
- agent "Check out-of-pool address" as out_of_pool
-}
-
-rectangle "Check client lease" as check_done {
- agent "Check renew" as client_lease
-}
-
-rectangle "Allocate a new lease" as new_lease {
- together {
-  rectangle "Allocate or reuse lease" as allocateOrReuseLease4 {
-   agent "Get candidate lease" as candidate
-
-   agent "Reuse expired lease" as reuseExpiredLease4
-
-   agent "Reclaim expired lease" as reclaimExpiredLease
-
-   agent "update lease information" as updateLease4Information
-
-   agent "Callout lease4_select" as lease4_select
-   note right : hook
-
-   agent "Update lease" as updateLease4
-  }
-
-  rectangle "Allocate unreserved lease" as allocateUnreservedLease4 {
-   agent "Iterate pools and subnets" as iterate
-
-   agent "Pick address" as pick
-
-   agent "Check reserved addressed" as pick_reserved
-
-   agent "Check already in use by another thread" as mt_in_use
-
-   agent "Check lease" as pick_lease
-  }
- }
-
- agent "Create a new lease" as create
-
- agent "Delete old lease" as old_lease
-}
-
-agent "Return no lease" as no_lease
-note right : exit point
-
-agent "Return renewed lease" as renew
-note right : exit point
-
-agent "Return lease" as return
-note right : exit point
-
-findClientLease - -> addressReserved : has requested address (hint)
-findClientLease - -> hasAddressReservation : no requested address (hint)
-addressReserved - -> check_hint : no conflicting reservation
-addressReserved - -> no_lease : reservation owned by another client
-hasAddressReservation -> update_hint : has a reservation
-update_hint - -> check_hint : request reserved address
-hasAddressReservation - -> check_done : no reservation
-check_hint - -> get_existing
-get_existing - -> existing : has requested lease
-existing - - -> no_lease : not expired lease owned by another client
-get_existing - -> out_of_pool : no reservation
-get_existing - -> out_of_pool : has requested reservation
-get_existing - -> getReservedLease : has reservation for another address
-getReservedLease - - -> no_lease : no active reserved lease
-getReservedLease - -> out_of_pool
-out_of_pool - -> check_done : owned reservation for the requested address
-out_of_pool - -> check_done : requested address is in allowed an pool
-out_of_pool - -> no_lease : address not reserved and not in allowed pool
-check_done - -> client_lease : has a client lease
-client_lease -> renew : requested address was already assigned to the client
-client_lease - -> new_lease
-new_lease - -> allocateOrReuseLease4 : has a requested address
-new_lease - -> allocateUnreservedLease4 : no requested address
-allocateOrReuseLease4 - -> candidate
-candidate - -> reuseExpiredLease4 : expired candidate lease
-candidate - -> no_lease : conflicting candidate lease
-candidate - -> create : no candidate lease
-reuseExpiredLease4 - -> reclaimExpiredLease
-reclaimExpiredLease - -> updateLease4Information
-updateLease4Information - -> lease4_select
-lease4_select - - -> no_lease : SKIP
-lease4_select - -> updateLease4
-updateLease4 - -> old_lease
-allocateUnreservedLease4 - -> iterate
-iterate - -> pick
-pick - -> pick_reserved
-pick_reserved -up-> iterate : address reserved to another client
-pick_reserved - -> mt_in_use
-mt_in_use -up-> iterate : address already in use by another thread
-mt_in_use - -> pick_lease
-pick_lease -up-> iterate : active lease
-pick_lease - -> reuseExpiredLease4 : expired lease
-pick_lease - -> create : no lease
-create - -> old_lease
-old_lease - -> return
-
-@enduml
-
-PlantUML version 1.2020.15(Sun Jun 28 13:39:45 CEST 2020)
-(GPL source distribution)
-Java Runtime: OpenJDK Runtime Environment
-JVM: OpenJDK 64-Bit Server VM
-Default Encoding: UTF-8
-Language: en
-Country: US
---></g></svg>
+<?xml version="1.0" encoding="us-ascii" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentStyleType="text/css" height="2463px" preserveAspectRatio="none" style="width:2209px;height:2463px;background:#FFFFFF;" version="1.1" viewBox="0 0 2209 2463" width="2209px" zoomAndPan="magnify">
+  <defs/>
+  <g>
+    <text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="312" x="941.5" y="24.9659">Allocate a lease for DHCPREQUEST (Kea 1.8.0)</text>
+    <!--cluster check_hint-->
+    <g id="cluster_check_hint">
+      <rect fill="none" height="392.85" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:1.0;" width="926" x="903" y="277.2079"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="174" x="1279" y="294.1739">Check requested address</text>
+    </g>
+    <!--cluster get_existing-->
+    <g id="cluster_get_existing">
+      <rect fill="none" height="172.92" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:1.0;" width="235" x="1554" y="379.0679"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="219" x="1562" y="396.0339">Get lease for requested address</text>
+    </g>
+    <!--cluster check_done-->
+    <g id="cluster_check_done">
+      <rect fill="none" height="172.93" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:1.0;" width="154" x="447" y="737.0579"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="123" x="462.5" y="754.0239">Check client lease</text>
+    </g>
+    <!--cluster new_lease-->
+    <g id="cluster_new_lease">
+      <rect fill="none" height="1404.29" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:1.0;" width="1087" x="7" y="958.9879"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="140" x="480.5" y="975.9539">Allocate a new lease</text>
+    </g>
+    <!--cluster allocateOrReuseLease4-->
+    <g id="cluster_allocateOrReuseLease4">
+      <rect fill="none" height="710.3" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:1.0;" width="293" x="55" y="1526.9079"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="156" x="123.5" y="1543.8739">Allocate or reuse lease</text>
+    </g>
+    <!--cluster allocateUnreservedLease4-->
+    <g id="cluster_allocateUnreservedLease4">
+      <rect fill="none" height="614.02" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:1.0;" width="502" x="388" y="1086.8479"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="177" x="550.5" y="1103.8139">Allocate unreserved lease</text>
+    </g>
+    <!--entity getReservedLease-->
+    <g id="elem_getReservedLease">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="243" x="1086.5" y="488.9279"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="223" x="1096.5" y="513.8939">Check lease for reserved address</text>
+    </g>
+    <!--entity out_of_pool-->
+    <g id="elem_out_of_pool">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="196" x="973" y="606.9879"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="176" x="983" y="631.9539">Check out-of-pool address</text>
+    </g>
+    <!--entity existing-->
+    <g id="elem_existing">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="172" x="1593" y="488.9279"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="152" x="1603" y="513.8939">Check requested lease</text>
+    </g>
+    <!--entity client_lease-->
+    <g id="elem_client_lease">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="106" x="471" y="846.9179"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="86" x="481" y="871.8839">Check renew</text>
+    </g>
+    <!--entity create-->
+    <g id="elem_create">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="147" x="922.5" y="1773.8679"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="127" x="932.5" y="1798.8339">Create a new lease</text>
+    </g>
+    <!--entity old_lease-->
+    <g id="elem_old_lease">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="127" x="703.5" y="2300.2079"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="107" x="713.5" y="2325.1739">Delete old lease</text>
+    </g>
+    <!--entity candidate-->
+    <g id="elem_candidate">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="153" x="166.5" y="1637.8079"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="133" x="176.5" y="1662.7739">Get candidate lease</text>
+    </g>
+    <!--entity reuseExpiredLease4-->
+    <g id="elem_reuseExpiredLease4">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="155" x="104.5" y="1773.8679"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="135" x="114.5" y="1798.8339">Reuse expired lease</text>
+    </g>
+    <!--entity reclaimExpiredLease-->
+    <g id="elem_reclaimExpiredLease">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="167" x="97.5" y="1873.9379"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="147" x="107.5" y="1898.9039">Reclaim expired lease</text>
+    </g>
+    <!--entity updateLease4Information-->
+    <g id="elem_updateLease4Information">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="190" x="81" y="1974.0079"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="170" x="91" y="1998.9739">update lease information</text>
+    </g>
+    <!--entity lease4_select-->
+    <g id="elem_lease4_select">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="159" x="78.5" y="2074.0779"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="139" x="88.5" y="2099.0439">Callout lease4_select</text>
+    </g>
+    <g id="elem_GMN23">
+      <path d="M272,2079.7579 L272,2089.6079 L237.84,2093.6079 L272,2097.6079 L272,2107.4639 A0,0 0 0 0 272,2107.4639 L324,2107.4639 A0,0 0 0 0 324,2107.4639 L324,2089.7579 L314,2079.7579 L272,2079.7579 A0,0 0 0 0 272,2079.7579 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/>
+      <path d="M314,2079.7579 L314,2089.7579 L324,2089.7579 L314,2079.7579 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="31" x="278" y="2098.6549">hook</text>
+    </g>
+    <!--entity updateLease4-->
+    <g id="elem_updateLease4">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="108" x="188" y="2174.1479"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="88" x="198" y="2199.1139">Update lease</text>
+    </g>
+    <!--entity iterate-->
+    <g id="elem_iterate">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="193" x="426.5" y="1178.7079"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="173" x="436.5" y="1203.6739">Iterate pools and subnets</text>
+    </g>
+    <!--entity pick-->
+    <g id="elem_pick">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="104" x="486" y="1296.7779"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="84" x="496" y="1321.7439">Pick address</text>
+    </g>
+    <!--entity pick_reserved-->
+    <g id="elem_pick_reserved">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="198" x="607" y="1414.8379"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="178" x="617" y="1439.8039">Check reserved addressed</text>
+    </g>
+    <!--entity mt_in_use-->
+    <g id="elem_mt_in_use">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="285" x="482.5" y="1537.7379"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="265" x="492.5" y="1562.7039">Check already in use by another thread</text>
+    </g>
+    <!--entity pick_lease-->
+    <g id="elem_pick_lease">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="99" x="451.5" y="1637.8079"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="79" x="461.5" y="1662.7739">Check lease</text>
+    </g>
+    <!--entity findClientLease-->
+    <g id="elem_findClientLease">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="129" x="1335.5" y="47.0679"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="109" x="1345.5" y="72.0339">Find client lease</text>
+    </g>
+    <g id="elem_GMN3">
+      <path d="M1500,52.7479 L1500,62.5979 L1464.97,66.5979 L1500,70.5979 L1500,80.4539 A0,0 0 0 0 1500,80.4539 L1588,80.4539 A0,0 0 0 0 1588,80.4539 L1588,62.7479 L1578,52.7479 L1500,52.7479 A0,0 0 0 0 1500,52.7479 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/>
+      <path d="M1578,52.7479 L1578,62.7479 L1588,62.7479 L1578,52.7479 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="67" x="1506" y="71.6449">entry point</text>
+    </g>
+    <!--entity addressReserved-->
+    <g id="elem_addressReserved">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="213" x="1564.5" y="165.1379"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="193" x="1574.5" y="190.1039">Check requested reservation</text>
+    </g>
+    <!--entity hasAddressReservation-->
+    <g id="elem_hasAddressReservation">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="123" x="1068.5" y="165.1379"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="103" x="1078.5" y="190.1039">Get reservation</text>
+    </g>
+    <!--entity update_hint-->
+    <g id="elem_update_hint">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="200" x="1330" y="165.1379"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="180" x="1340" y="190.1039">Update requested address</text>
+    </g>
+    <!--entity no_lease-->
+    <g id="elem_no_lease">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="126" x="1382" y="2300.2079"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="106" x="1392" y="2325.1739">Return no lease</text>
+    </g>
+    <g id="elem_GMN36">
+      <path d="M1543,2305.8979 L1543,2315.7479 L1508.42,2319.7479 L1543,2323.7479 L1543,2333.6039 A0,0 0 0 0 1543,2333.6039 L1621,2333.6039 A0,0 0 0 0 1621,2333.6039 L1621,2315.8979 L1611,2305.8979 L1543,2305.8979 A0,0 0 0 0 1543,2305.8979 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/>
+      <path d="M1611,2305.8979 L1611,2315.8979 L1621,2315.8979 L1611,2305.8979 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="57" x="1549" y="2324.7949">exit point</text>
+    </g>
+    <!--entity renew-->
+    <g id="elem_renew">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="168" x="927" y="846.9179"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="148" x="937" y="871.8839">Return renewed lease</text>
+    </g>
+    <g id="elem_GMN40">
+      <path d="M1130,852.5979 L1130,862.4479 L1095.25,866.4479 L1130,870.4479 L1130,880.3039 A0,0 0 0 0 1130,880.3039 L1208,880.3039 A0,0 0 0 0 1208,880.3039 L1208,862.5979 L1198,852.5979 L1130,852.5979 A0,0 0 0 0 1130,852.5979 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/>
+      <path d="M1198,852.5979 L1198,862.5979 L1208,862.5979 L1198,852.5979 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="57" x="1136" y="871.4949">exit point</text>
+    </g>
+    <!--entity return-->
+    <g id="elem_return">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="105" x="714.5" y="2418.2779"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="85" x="724.5" y="2443.2439">Return lease</text>
+    </g>
+    <g id="elem_GMN44">
+      <path d="M854,2423.9579 L854,2433.8179 L819.66,2437.8179 L854,2441.8179 L854,2451.6639 A0,0 0 0 0 854,2451.6639 L932,2451.6639 A0,0 0 0 0 932,2451.6639 L932,2433.9579 L922,2423.9579 L854,2423.9579 A0,0 0 0 0 854,2423.9579 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/>
+      <path d="M922,2423.9579 L922,2433.9579 L932,2433.9579 L922,2423.9579 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="57" x="860" y="2442.8549">exit point</text>
+    </g>
+    <!--link findClientLease to addressReserved-->
+    <g id="link_findClientLease_addressReserved">
+      <path d="M1444.14,86.5079 C1492.67,107.2879 1570.45,140.6079 1621.14,162.3179 " fill="none" id="findClientLease-to-addressReserved" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="1625.48,164.1779,1618.7834,156.9561,1620.8843,162.2083,1615.632,164.3092,1625.48,164.1779" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="170" x="1552" y="131.0349">has requested address (hint)</text>
+    </g>
+    <!--link findClientLease to hasAddressReservation-->
+    <g id="link_findClientLease_hasAddressReservation">
+      <path d="M1356.02,86.5079 C1307.67,107.2879 1230.18,140.6079 1179.68,162.3179 " fill="none" id="findClientLease-to-hasAddressReservation" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="1175.35,164.1679,1185.198,164.2992,1179.9457,162.1983,1182.0466,156.9461,1175.35,164.1679" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="165" x="1282" y="131.0349">no requested address (hint)</text>
+    </g>
+    <!--link addressReserved to check_hint-->
+    <g id="link_addressReserved_check_hint">
+      <path d="M1653.97,204.5579 C1638.88,221.2929 1616.365,246.2654 1597.3888,267.3129 C1595.0167,269.9439 1592.7,272.5135 1590.4599,274.998 C1589.8999,275.6191 1589.3447,276.2349 1588.7946,276.8451 " fill="none" id="addressReserved-to-check_hint" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="1588.7946,276.8451,1597.792,272.8392,1592.1427,273.1315,1591.8504,267.4822,1588.7946,276.8451" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="152" x="1627" y="249.1049">no conflicting reservation</text>
+    </g>
+    <!--link addressReserved to no_lease-->
+    <g id="link_addressReserved_no_lease">
+      <path d="M1771.76,204.6379 C1863.26,224.8279 1984,260.2479 1984,306.5679 C1984,306.5679 1984,306.5679 1984,2194.6779 C1984,2299.1179 1627.93,2277.4479 1526,2300.2079 C1522.21,2301.0579 1518.33,2301.9279 1514.4,2302.8179 " fill="none" id="addressReserved-to-no_lease" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="1509.69,2303.8779,1519.3488,2305.8034,1514.5679,2302.7797,1517.5916,2297.9988,1509.69,2303.8779" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="216" x="1985" y="1262.6749">reservation owned by another client</text>
+    </g>
+    <!--link hasAddressReservation to update_hint-->
+    <g id="link_hasAddressReservation_update_hint">
+      <path d="M1191.8,184.6679 C1229.64,184.6679 1279.11,184.6679 1323.15,184.6679 " fill="none" id="hasAddressReservation-to-update_hint" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="1328.09,184.6679,1319.09,180.6679,1323.09,184.6679,1319.09,188.6679,1328.09,184.6679" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="102" x="1209.75" y="177.5649">has a reservation</text>
+    </g>
+    <!--link update_hint to check_hint-->
+    <g id="link_update_hint_check_hint">
+      <path d="M1432.09,204.5379 C1434.6,219.2979 1440.09,239.5379 1452,253.2079 C1456.3938,258.2467 1461.3717,262.8532 1466.7236,267.0577 C1469.3996,269.1599 1472.169,271.1616 1475.0056,273.0665 C1476.4239,274.019 1477.859,274.9473 1479.3077,275.8518 C1480.032,276.3041 1480.7597,276.7505 1481.4903,277.1909 " fill="none" id="update_hint-to-check_hint" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="1481.4903,277.1909,1475.8477,269.1187,1477.2082,274.6095,1471.7174,275.97,1481.4903,277.1909" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="151" x="1453" y="249.1049">request reserved address</text>
+    </g>
+    <!--link hasAddressReservation to check_done-->
+    <g id="link_hasAddressReservation_check_done">
+      <path d="M1068.19,186.7879 C928,191.0079 598,211.0779 598,306.5679 C598,306.5679 598,306.5679 598,627.5279 C598,657.9279 596.79,692.0479 595.56,718.8617 C595.4063,722.2134 595.2522,725.4509 595.1001,728.5528 C595.0241,730.1037 594.9486,731.6207 594.8739,733.1011 C594.8365,733.8413 594.7993,734.5724 594.7624,735.2939 C594.7439,735.6547 594.7255,736.0131 594.7072,736.3691 C594.698,736.5471 594.6889,736.7245 594.6797,736.9013 " fill="none" id="hasAddressReservation-to-check_done" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="594.6797,736.9013,599.1391,728.1198,594.9379,731.9079,591.1497,727.7067,594.6797,736.9013" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="87" x="599" y="454.8249">no reservation</text>
+    </g>
+    <!--link check_hint to get_existing-->
+    <g id="link_check_hint_get_existing">
+      <path d="M1562,308.3479 C1562,311.2479 1562,335.5354 1562,359.4554 C1562,365.4354 1562,371.3924 1562,376.9866 C1562,377.6859 1562,378.3795 1562,379.0667 " fill="none" id="check_hint-to-get_existing" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="1562,379.0667,1566,370.0667,1562,374.0667,1558,370.0667,1562,379.0667" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link get_existing to existing-->
+    <g id="link_get_existing_existing">
+      <path d="M1562.34,410.1979 C1566.97,414.0679 1618.62,457.1179 1651.62,484.6279 " fill="none" id="get_existing-to-existing" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="1655.18,487.5979,1650.8235,478.765,1651.3377,484.3984,1645.7043,484.9126,1655.18,487.5979" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="118" x="1621" y="454.8249">has requested lease</text>
+    </g>
+    <!--link existing to no_lease-->
+    <g id="link_existing_no_lease">
+      <path d="M1679,528.3579 C1679,551.3279 1679,591.2679 1679,625.5279 C1679,625.5279 1679,625.5279 1679,2194.6779 C1679,2232.9179 1580.23,2273.8379 1511.02,2297.8179 " fill="none" id="existing-to-no_lease" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="1506.69,2299.3079,1516.502,2300.1591,1511.4175,2297.6797,1513.8969,2292.5952,1506.69,2299.3079" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="250" x="1680" y="1439.7749">not expired lease owned by another client</text>
+    </g>
+    <!--link get_existing to out_of_pool-->
+    <g id="link_get_existing_out_of_pool">
+      <path d="M1553.7013,410.1388 C1553.4182,410.1466 1553.1282,410.1547 1552.8314,410.163 C1548.0828,410.296 1541.5925,410.4854 1533.6022,410.7367 C1517.6218,411.2395 1495.6421,411.9901 1469.5986,413.0329 C1417.5116,415.1185 1349.1694,418.3729 1280.0562,423.1504 C1141.83,432.7054 1000.52,448.3529 980,472.9279 C952.92,505.3579 959.61,530.9779 980,567.9879 C988.27,583.0079 1002.3,594.6479 1016.9,603.4079 " fill="none" id="get_existing-to-out_of_pool" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="1020.98,605.7579,1015.187,597.7929,1016.6503,603.2572,1011.1859,604.7205,1020.98,605.7579" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="87" x="981" y="513.8549">no reservation</text>
+    </g>
+    <!--link get_existing to out_of_pool-->
+    <g id="link_get_existing_out_of_pool">
+      <path d="M1553.7208,411.9855 C1553.6146,412.0133 1553.5076,412.0414 1553.3996,412.0698 C1553.1837,412.1266 1552.9642,412.1845 1552.7411,412.2435 C1551.8486,412.4797 1550.8989,412.7341 1549.8951,413.0069 C1547.8877,413.5524 1545.6642,414.1711 1543.2506,414.8639 C1533.5963,417.6348 1520.9,421.5892 1506.82,426.7704 C1478.66,437.1329 1444.965,452.4029 1419,472.9279 C1377.42,505.7879 1391.79,539.6579 1347,567.9879 C1296.02,600.2479 1230.15,614.7779 1175.55,621.1779 " fill="none" id="get_existing-to-out_of_pool-1" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="1170.79,621.7079,1180.1795,624.6807,1175.7589,621.1511,1179.2885,616.7305,1170.79,621.7079" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="156" x="1420" y="513.8549">has requested reservation</text>
+    </g>
+    <!--link get_existing to getReservedLease-->
+    <g id="link_get_existing_getReservedLease">
+      <path d="M1553.4552,409.9078 C1552.9981,409.9078 1552.5239,409.908 1552.0329,409.9083 C1551.0509,409.9088 1550.0018,409.9097 1548.8879,409.9113 C1546.6601,409.9143 1544.1733,409.9196 1541.4469,409.9281 C1530.5414,409.9623 1515.8032,410.0482 1498.477,410.249 C1463.8247,410.6507 1418.8206,411.5123 1373.4238,413.3392 C1282.63,416.9929 1190.265,424.5079 1176,439.9279 C1164.54,452.3079 1172.98,469.5379 1184.06,483.4879 " fill="none" id="get_existing-to-getReservedLease" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="1187.26,487.3079,1184.5539,477.8381,1184.0521,483.4727,1178.4175,482.9708,1187.26,487.3079" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="213" x="1177" y="454.8249">has reservation for another address</text>
+    </g>
+    <!--link getReservedLease to no_lease-->
+    <g id="link_getReservedLease_no_lease">
+      <path d="M1250.44,528.4779 C1323.43,561.2179 1465,624.7979 1465,625.5279 C1465,625.5279 1465,625.5279 1465,1376.3379 C1465,1412.8479 1470.29,1424.5679 1492,1453.9079 C1505.43,1472.0579 1519.93,1465.4979 1533,1483.9079 C1552.45,1511.3279 1555,1522.6579 1555,1556.2679 C1555,1556.2679 1555,1556.2679 1555,2194.6779 C1555,2238.8979 1515.39,2274.7179 1483.71,2296.3079 " fill="none" id="getReservedLease-to-no_lease" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="1479.56,2299.0679,1489.2673,2297.4038,1483.7203,2296.2944,1484.8297,2290.7474,1479.56,2299.0679" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="142" x="1493" y="1439.7749">no active reserved lease</text>
+    </g>
+    <!--link getReservedLease to out_of_pool-->
+    <g id="link_getReservedLease_out_of_pool">
+      <path d="M1185.68,528.3679 C1161.8,548.5979 1123.9,580.7079 1098.26,602.4279 " fill="none" id="getReservedLease-to-out_of_pool" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="1094.46,605.6479,1103.9138,602.8864,1098.2764,602.4176,1098.7452,596.7802,1094.46,605.6479" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link out_of_pool to check_done-->
+    <g id="link_out_of_pool_check_done">
+      <path d="M1042.32,646.4379 C1011.08,666.1379 959,696.4079 910,713.0579 C843.42,735.6829 765.5875,748.9629 703.7075,756.6167 C672.7675,760.4435 645.8156,762.8639 626.2525,764.3424 C616.4709,765.0817 608.5366,765.5856 602.8745,765.9122 C602.5206,765.9326 602.1756,765.9523 601.8395,765.9713 C601.6715,765.9808 601.5058,765.9902 601.3422,765.9994 " fill="none" id="out_of_pool-to-check_done" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="601.3422,765.9994,610.5523,769.4885,606.3344,765.719,610.1038,761.5011,601.3422,765.9994" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="269" x="957" y="708.9549">owned reservation for the requested address</text>
+    </g>
+    <!--link out_of_pool to check_done-->
+    <g id="link_out_of_pool_check_done">
+      <path d="M972.77,636.7379 C870.54,647.5379 718.2,667.4179 666,694.0579 C646.29,704.1179 628.5475,721.4104 615.49,736.5679 C612.2256,740.3573 609.2541,744.0132 606.6178,747.3894 C605.2996,749.0774 604.0653,750.6955 602.9201,752.2254 C602.3475,752.9903 601.7972,753.7332 601.2698,754.4517 C601.2039,754.5416 601.1383,754.631 601.0731,754.72 " fill="none" id="out_of_pool-to-check_done-1" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="601.0731,754.72,609.6174,749.8216,604.027,750.6859,603.1627,745.0954,601.0731,754.72" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="234" x="667" y="708.9549">requested address is in allowed an pool</text>
+    </g>
+    <!--link out_of_pool to no_lease-->
+    <g id="link_out_of_pool_no_lease">
+      <path d="M1154.92,646.5479 C1183.44,656.5979 1213.5,671.6779 1235,694.0579 C1258.67,718.7079 1261,732.2479 1261,766.4179 C1261,766.4179 1261,766.4179 1258,1494.4079 C1258,1740.6479 1335,1796.8379 1335,2043.0779 C1335,2043.0779 1335,2043.0779 1335,2194.6779 C1335,2238.8979 1374.61,2274.7179 1406.29,2296.3079 " fill="none" id="out_of_pool-to-no_lease" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="1410.44,2299.0679,1405.1703,2290.7474,1406.2797,2296.2944,1400.7327,2297.4038,1410.44,2299.0679" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="269" x="1262" y="1498.8049">address not reserved and not in allowed pool</text>
+    </g>
+    <!--link check_done to client_lease-->
+    <g id="link_check_done_client_lease">
+      <path d="M592.8,768.1979 C590.1,772.0079 560.44,813.9479 540.95,841.4879 " fill="none" id="check_done-to-client_lease" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="538.08,845.5579,546.5477,840.5282,540.9713,841.4786,540.0209,835.9022,538.08,845.5579" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="99" x="572" y="812.8149">has a client lease</text>
+    </g>
+    <!--link client_lease to renew-->
+    <g id="link_client_lease_renew">
+      <path d="M577.04,866.4479 C659.51,866.4479 819.44,866.4479 920.42,866.4479 " fill="none" id="client_lease-to-renew" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="925.18,866.4479,916.18,862.4479,920.18,866.4479,916.18,870.4479,925.18,866.4479" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="314" x="595" y="859.3449">requested address was already assigned to the client</text>
+    </g>
+    <!--link client_lease to new_lease-->
+    <g id="link_client_lease_new_lease">
+      <path d="M523.84,886.3379 C523.705,903.0729 523.5,928.0454 523.3263,949.0929 C523.3045,951.7239 523.2833,954.2935 523.2628,956.778 C523.2576,957.3991 523.2525,958.0149 523.2475,958.6251 " fill="none" id="client_lease-to-new_lease" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="523.2475,958.6251,527.3218,949.6585,523.2888,953.6252,519.3221,949.5923,523.2475,958.6251" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link new_lease to allocateOrReuseLease4-->
+    <g id="link_new_lease_allocateOrReuseLease4">
+      <path d="M522.5,989.9379 C508.82,992.3279 217,1044.3579 217,1116.2079 C217,1116.2079 217,1116.2079 217,1435.3779 C217,1462.0279 220.6325,1491.7304 224.3225,1515.0242 C224.7838,1517.9359 225.2459,1520.7475 225.702,1523.4404 C225.816,1524.1137 225.9296,1524.7795 226.0428,1525.4376 C226.0993,1525.7667 226.1558,1526.0938 226.2121,1526.419 C226.2403,1526.5816 226.2684,1526.7437 226.2965,1526.9053 " fill="none" id="new_lease-to-allocateOrReuseLease4" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="226.2965,1526.9053,228.6962,1517.3533,225.4403,1521.9791,220.8144,1518.7232,226.2965,1526.9053" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="145" x="218" y="1262.6749">has a requested address</text>
+    </g>
+    <!--link new_lease to allocateUnreservedLease4-->
+    <g id="link_new_lease_allocateUnreservedLease4">
+      <path d="M523,989.9379 C523,991.8229 523,1022.4404 523,1053.0504 C523,1060.7029 523,1068.3549 523,1075.5574 C523,1079.1587 523,1082.6476 523,1085.9679 C523,1086.1754 523,1086.3823 523,1086.5885 " fill="none" id="new_lease-to-allocateUnreservedLease4" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="523,1086.5885,527,1077.5885,523,1081.5885,519,1077.5885,523,1086.5885" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="130" x="524" y="1034.7449">no requested address</text>
+    </g>
+    <!--link allocateOrReuseLease4 to candidate-->
+    <g id="link_allocateOrReuseLease4_candidate">
+      <path d="M232.01,1558.3379 C232.23,1560.3179 237.01,1602.9479 240.19,1631.3279 " fill="none" id="allocateOrReuseLease4-to-candidate" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="240.72,1635.9879,243.6928,1626.5984,240.1631,1631.019,235.7425,1627.4894,240.72,1635.9879" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link candidate to reuseExpiredLease4-->
+    <g id="link_candidate_reuseExpiredLease4">
+      <path d="M234.39,1677.2579 C223.58,1701.0179 205.02,1741.8079 193.14,1767.9179 " fill="none" id="candidate-to-reuseExpiredLease4" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="191.19,1772.1979,198.5557,1765.6598,193.259,1767.6461,191.2728,1762.3494,191.19,1772.1979" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="140" x="214" y="1739.7649">expired candidate lease</text>
+    </g>
+    <!--link candidate to no_lease-->
+    <g id="link_candidate_no_lease">
+      <path d="M281.19,1677.3079 C311.49,1691.2679 355.35,1709.1179 396,1716.8679 C414.83,1720.4679 1069.57,1715.0079 1086,1724.8679 C1115.34,1742.4879 1123,1758.1779 1123,1792.4079 C1123,1792.4079 1123,1792.4079 1123,2194.6779 C1123,2248.3879 1280.98,2287.7279 1375.63,2306.4779 " fill="none" id="candidate-to-no_lease" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="1380.28,2307.3879,1372.2107,2301.7411,1375.3722,2306.432,1370.6813,2309.5936,1380.28,2307.3879" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="157" x="1124" y="1998.9349">conflicting candidate lease</text>
+    </g>
+    <!--link candidate to create-->
+    <g id="link_candidate_create">
+      <path d="M283.96,1677.3279 C314.26,1690.5579 356.88,1707.4379 396,1716.8679 C428.16,1724.6279 437.15,1720.9879 470,1724.8679 C628.07,1743.5579 812.53,1767.8079 915.65,1781.5779 " fill="none" id="candidate-to-create" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="920.51,1782.2279,912.1137,1777.0799,915.5534,1781.5708,911.0624,1785.0105,920.51,1782.2279" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="111" x="616" y="1739.7649">no candidate lease</text>
+    </g>
+    <!--link reuseExpiredLease4 to reclaimExpiredLease-->
+    <g id="link_reuseExpiredLease4_reclaimExpiredLease">
+      <path d="M181.81,1813.3179 C181.65,1828.6479 181.43,1850.3879 181.26,1867.2079 " fill="none" id="reuseExpiredLease4-to-reclaimExpiredLease" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="181.21,1872.1079,185.3126,1863.1542,181.2671,1867.1082,177.3131,1863.0628,181.21,1872.1079" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link reclaimExpiredLease to updateLease4Information-->
+    <g id="link_reclaimExpiredLease_updateLease4Information">
+      <path d="M180.04,1913.3779 C179.25,1928.7179 178.15,1950.4579 177.29,1967.2779 " fill="none" id="reclaimExpiredLease-to-updateLease4Information" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="177.04,1972.1779,181.4983,1963.3959,177.2975,1967.1846,173.5089,1962.9838,177.04,1972.1779" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link updateLease4Information to lease4_select-->
+    <g id="link_updateLease4Information_lease4_select">
+      <path d="M172.53,2013.4479 C169.69,2028.9179 165.65,2050.9079 162.56,2067.7979 " fill="none" id="updateLease4Information-to-lease4_select" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="161.73,2072.2679,167.2817,2064.1329,162.6282,2067.3493,159.4118,2062.6958,161.73,2072.2679" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link lease4_select to no_lease-->
+    <g id="link_lease4_select_no_lease">
+      <path d="M237.86,2110.8479 C399.58,2143.4479 777.6,2218.1779 1097,2270.2079 C1193.29,2285.8979 1305.08,2300.9279 1375.43,2309.9979 " fill="none" id="lease4_select-to-no_lease" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="1380.18,2310.6079,1371.7692,2305.4837,1375.2215,2309.9649,1370.7403,2313.4172,1380.18,2310.6079" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="27" x="1041" y="2199.0749">SKIP</text>
+    </g>
+    <!--link lease4_select to updateLease4-->
+    <g id="link_lease4_select_updateLease4">
+      <path d="M168.99,2113.1879 C175.01,2122.7879 182.89,2134.4979 191,2144.1479 C198.43,2152.9879 207.33,2161.9179 215.59,2169.6579 " fill="none" id="lease4_select-to-updateLease4" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="218.99,2172.8079,215.1045,2163.7579,215.3215,2169.4106,209.6688,2169.6276,218.99,2172.8079" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link updateLease4 to old_lease-->
+    <g id="link_updateLease4_old_lease">
+      <path d="M252.95,2213.5979 C263.06,2229.1579 279.56,2250.3579 300,2261.2079 C367.18,2296.8879 583.75,2311.1079 696.81,2316.2079 " fill="none" id="updateLease4-to-old_lease" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="701.6,2316.4179,692.7795,2312.0362,696.6046,2316.2038,692.437,2320.0289,701.6,2316.4179" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link allocateUnreservedLease4 to iterate-->
+    <g id="link_allocateUnreservedLease4_iterate">
+      <path d="M523,1117.9379 C523,1120.7879 523,1149.8079 523,1171.9279 " fill="none" id="allocateUnreservedLease4-to-iterate" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="523,1176.7279,527,1167.7279,523,1171.7279,519,1167.7279,523,1176.7279" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link iterate to pick-->
+    <g id="link_iterate_pick">
+      <path d="M525.44,1218.1479 C527.97,1237.7079 531.93,1268.3679 534.73,1290.0079 " fill="none" id="iterate-to-pick" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="535.36,1294.9079,538.1693,1285.4682,534.717,1289.9494,530.2358,1286.4971,535.36,1294.9079" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link pick to pick_reserved-->
+    <g id="link_pick_pick_reserved">
+      <path d="M590.31,1329.7379 C635.21,1340.9179 693.8,1356.8979 701,1365.8379 C710.4,1377.5179 711.67,1394.3079 710.59,1408.2279 " fill="none" id="pick-to-pick_reserved" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="710.1,1412.8879,715.0049,1404.3473,710.6145,1407.9145,707.0473,1403.5241,710.1,1412.8879" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--reverse link iterate to pick_reserved-->
+    <g id="link_iterate_pick_reserved">
+      <path d="M563.34,1221.4079 C608.29,1248.6779 678.52,1299.6279 708,1365.8379 C714.82,1381.1679 713.4,1400.4479 710.81,1414.4779 " fill="none" id="iterate-backto-pick_reserved" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="559.28,1218.9779,564.9395,1227.0384,563.5675,1221.5504,569.0554,1220.1784,559.28,1218.9779" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="204" x="691" y="1321.7049">address reserved to another client</text>
+    </g>
+    <!--link pick_reserved to mt_in_use-->
+    <g id="link_pick_reserved_mt_in_use">
+      <path d="M693.34,1454.2679 C679.26,1475.2879 656.46,1509.3179 641.11,1532.2279 " fill="none" id="pick_reserved-to-mt_in_use" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="638.41,1536.2579,646.743,1531.008,641.1934,1532.1043,640.0972,1526.5546,638.41,1536.2579" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--reverse link iterate to mt_in_use-->
+    <g id="link_iterate_mt_in_use">
+      <path d="M499.34,1222.9279 C465.42,1259.8279 410.87,1332.2379 447,1384.8379 C468.03,1415.4579 495.69,1392.0379 525,1414.8379 C568.91,1449.0079 601.58,1507.6479 616.32,1537.5479 " fill="none" id="iterate-backto-mt_in_use" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="502.74,1219.2879,493.6669,1223.1192,499.3208,1222.936,499.5039,1228.5899,502.74,1219.2879" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="244" x="448" y="1380.7349">address already in use by another thread</text>
+    </g>
+    <!--link mt_in_use to pick_lease-->
+    <g id="link_mt_in_use_pick_lease">
+      <path d="M601.09,1577.1779 C580.76,1593.2579 551.52,1616.3879 529.88,1633.4979 " fill="none" id="mt_in_use-to-pick_lease" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="526.02,1636.5479,535.5588,1634.096,529.9396,1633.4437,530.592,1627.8246,526.02,1636.5479" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--reverse link iterate to pick_lease-->
+    <g id="link_iterate_pick_lease">
+      <path d="M486.95,1221.7579 C476.56,1229.2579 465.69,1238.1679 457,1247.7779 C440.02,1266.5379 434.68,1272.3679 428,1296.7779 C411.43,1357.3179 446.44,1516.8379 465,1576.8079 C471.68,1598.3779 482.78,1621.7779 490.89,1637.5779 " fill="none" id="iterate-backto-pick_lease" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="490.76,1219.0579,481.1011,1220.9828,486.676,1221.9425,485.7163,1227.5173,490.76,1219.0579" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="68" x="437" y="1439.7749">active lease</text>
+    </g>
+    <!--link pick_lease to reuseExpiredLease4-->
+    <g id="link_pick_lease_reuseExpiredLease4">
+      <path d="M460.73,1677.3379 C436.84,1689.4379 406.54,1706.3079 382,1724.8679 C372.48,1732.0779 373.34,1737.8979 363,1743.8679 C354.02,1749.0579 309.1,1761.1179 266.26,1771.9079 " fill="none" id="pick_lease-to-reuseExpiredLease4" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="261.43,1773.1279,271.1314,1774.8257,266.2807,1771.9152,269.1911,1767.0645,261.43,1773.1279" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="78" x="383" y="1739.7649">expired lease</text>
+    </g>
+    <!--link pick_lease to create-->
+    <g id="link_pick_lease_create">
+      <path d="M550.73,1671.8079 C637.51,1695.3079 817.1,1743.9479 919.71,1771.7479 " fill="none" id="pick_lease-to-create" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="924.29,1772.9879,916.6394,1766.7857,919.4619,1771.688,914.5596,1774.5106,924.29,1772.9879" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="49" x="808" y="1739.7649">no lease</text>
+    </g>
+    <!--link create to old_lease-->
+    <g id="link_create_old_lease">
+      <path d="M975.35,1813.2879 C957.65,1831.6179 935,1861.1979 935,1892.4779 C935,1892.4779 935,1892.4779 935,2194.6779 C935,2246.3179 883.01,2278.8979 836.88,2297.6379 " fill="none" id="create-to-old_lease" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="832.4,2299.4179,842.2408,2299.8154,837.0473,2297.5733,839.2894,2292.3798,832.4,2299.4179" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link old_lease to return-->
+    <g id="link_old_lease_return">
+      <path d="M767,2339.6479 C767,2359.2079 767,2389.8779 767,2411.5079 " fill="none" id="old_lease-to-return" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="767,2416.3979,771,2407.3979,767,2411.3979,763,2407.3979,767,2416.3979" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--SRC=[ZLPBRzGm4BxdLrYSuB0890w80n8g1IgGA8MU8vDuTorIUqaSIeNuxyoC4tlyICkbtOpdcnb_y_0uxGObtWo3xQHJGef1oKc9lHt5smzdbrVdNwxFltuJZpygAPu_VVdqsPEcaGTbd7ZqJfjUT8F63q8z4d8IUv2UaV0JoXfZmUoe3qSdNWcGZdVYPBLnmSpPKNK_nAX-pcfogeTVanf_IQUj8OEoxq4qNP5OzG7tNhb2zoYdDroTJWBY-jJZ7QEhnJH1PpfiZnJQg3edpG6OASBZc0xF22B-D8A1CBP8P1ryKAvLl_Naj3aWN6pm4QbTjHlnjsbITUxCyvJxMldpMSdWTdOxkz-Th1qI7CXRkszHtlojq59atpFIMwFmIjcDZBhrIeHg2PMPPOK8simmV7a0sdKMBdHK8z5MGnCFCoX70t8v-pnUuGdHy88C25PGdJIzfYfXTrfb3LCc8v2HanwJ797RSo_sFb9KDqXzKyNH2KToeA_E9StQGA9lOjNxG-_j8fvn_1bUVruozQATr02i4JYH829fsAErFxYTwrD63lSDUbYOrOpC9XHccPFhS5X9ouLJ8rh08WG8p9nf_cwKynMg_IcFyL93jV4gFe4W8MEfnxHHL1-Ksp4CcnmbXr79_Wvo8B00ljz1H9PgqHtnX6pSk5QRTavJo1erEl8zWBmbFGsMAZtGaJYglOMSOR4Fd5FuYfqLoixDeu7CyeQoYrewe7zhbytd1KpjcvKiIFuNpc4esCPb3uZOxLxdRm0M9bdAvgfuZBFuITL4zMa0Gq3AfftSBTfXCv_0dJNxGNSqnTbpLCMkd0EIgGfxQq21bP8Va4qzPB33tgg52fduvkT5pCjjY_hVSXVmDDKNmg8lPXjL-QlM94ySdeQFF86-59bkoXRmaixCJSuAb-m9AuD_G3kDyLvW_i86T6GIN-SrsfNp0bRUN4WehbzAfFEpXap2R_XLYYHw-lBe8BIo6UutLFQEdd0uucZ7SI6Dg4R3hhW2CScnA67Eeu2P8ZlCESN2LedG2dmhQH8DGD3KgWP-Io-I7-zoclG1ANAMM5cgApM6rrZNaYOkA3Imgjj6xDMSupgwU1VhuwgfUoD-mkuIDviTiP2lAJI5VOTbIr06PPdZi-z-a7-wbecPQLPYyI6M6r55HhfR6z26d33fufDy5LtuzUF5PQ6Ikary-MOCB_5cFb5jtM2M_oIZZGN_XA-uaYHVOZUVeWtMJ4412ZWRaPa1WCTz9VpQDFpG0iHDhB5x5kBFqhWVSQNUGwLQHV1YMuhHIzAiX5-B6rfB_W40]-->
+  </g>
+</svg>

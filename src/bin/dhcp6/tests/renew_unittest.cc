@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,7 +11,7 @@
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
 #include <dhcp/option6_pdexclude.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/tests/dhcp6_message_test.h>
 #include <boost/pointer_cast.hpp>
@@ -70,6 +70,7 @@ const char* RENEW_CONFIGS[] = {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ { "
+        "    \"id\": 1, "
         "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"interface-id\": \"\","
@@ -85,6 +86,7 @@ const char* RENEW_CONFIGS[] = {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ { "
+        "    \"id\": 1, "
         "    \"pd-pools\": ["
         "        { \"prefix\": \"3000::\", "
         "          \"prefix-len\": 72, "
@@ -104,6 +106,7 @@ const char* RENEW_CONFIGS[] = {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ { "
+        "    \"id\": 1, "
         "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
         "    \"pd-pools\": ["
         "        { \"prefix\": \"3000::\", "
@@ -129,6 +132,7 @@ const char* RENEW_CONFIGS[] = {
         "    \"data\": \"normal_erouter_v6.cm\""
         "}],"
         "\"subnet6\": [ { "
+        "    \"id\": 1, "
         "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"interface-id\": \"\","
@@ -152,6 +156,7 @@ const char* RENEW_CONFIGS[] = {
         "    \"data\": \"3000:2::1\""
         "} ],"
         "\"subnet6\": [ { "
+        "    \"id\": 1, "
         "    \"option-data\": [ {"
         "        \"name\": \"dns-servers\","
         "        \"data\": \"3000:1::567\""
@@ -206,6 +211,7 @@ const char* RENEW_CONFIGS[] = {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ { "
+        "    \"id\": 1, "
         "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
         "    \"pd-pools\": ["
         "        { \"prefix\": \"3000::\", "
@@ -649,8 +655,7 @@ TEST_F(RenewTest, docsisORO) {
     ASSERT_TRUE(opt);
 
     // The vendor option must be a OptionVendor object.
-    boost::shared_ptr<OptionVendor> vendor =
-        boost::dynamic_pointer_cast<OptionVendor>(opt);
+    OptionVendorPtr vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
     ASSERT_TRUE(vendor);
 
     // The vendor-id should be DOCSIS.

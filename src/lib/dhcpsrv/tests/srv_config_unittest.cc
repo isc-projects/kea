@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,7 +6,7 @@
 
 #include <config.h>
 
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/client_class_def.h>
 #include <dhcpsrv/srv_config.h>
@@ -14,10 +14,12 @@
 #include <process/logging_info.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/test_to_element.h>
+#include <util/str.h>
 
 #include <gtest/gtest.h>
 
 using namespace isc::asiolink;
+using namespace isc::dhcp_ddns;
 using namespace isc::dhcp;
 using namespace isc::data;
 using namespace isc::process;
@@ -61,7 +63,7 @@ public:
             // 0, 1, 2 etc.
             Subnet4Ptr subnet(new Subnet4(IOAddress(0xC0000000 | (i << 2)),
                                           24, def_triplet, def_triplet,
-                                          4000));
+                                          4000, SubnetID(100 + i)));
             test_subnets4_.insert(subnet);
         }
         // Create IPv6 subnets.
@@ -74,7 +76,8 @@ public:
             // 2001:db8:2::0 etc.
             ++prefix_bytes[5];
             prefix = IOAddress::fromBytes(prefix.getFamily(), &prefix_bytes[0]);
-            Subnet6Ptr subnet(new Subnet6(prefix, 64, 1000, 2000, 3000, 4000));
+            Subnet6Ptr subnet(new Subnet6(prefix, 64, 1000, 2000, 3000, 4000,
+                                          SubnetID(200 + i)));
             test_subnets6_.insert(subnet);
         }
 
@@ -309,6 +312,44 @@ TEST_F(SrvConfigTest, echoClientId) {
     EXPECT_TRUE(conf1.getEchoClientId());
 }
 
+// This test verifies that compatibility flags are correctly managed.
+TEST_F(SrvConfigTest, compatibility) {
+    SrvConfig conf;
+
+    // Check that defaults are false.
+    EXPECT_FALSE(conf.getLenientOptionParsing());
+    EXPECT_FALSE(conf.getIgnoreServerIdentifier());
+    EXPECT_FALSE(conf.getIgnoreRAILinkSelection());
+    EXPECT_FALSE(conf.getExcludeFirstLast24());
+
+    // Check that they can be modified to true.
+    conf.setLenientOptionParsing(true);
+    conf.setIgnoreServerIdentifier(true);
+    conf.setIgnoreRAILinkSelection(true);
+    conf.setExcludeFirstLast24(true);
+    EXPECT_TRUE(conf.getLenientOptionParsing());
+    EXPECT_TRUE(conf.getIgnoreServerIdentifier());
+    EXPECT_TRUE(conf.getIgnoreRAILinkSelection());
+    EXPECT_TRUE(conf.getExcludeFirstLast24());
+
+    // Check that default values can be restored.
+    conf.setLenientOptionParsing(false);
+    conf.setIgnoreServerIdentifier(false);
+    conf.setIgnoreRAILinkSelection(false);
+    conf.setExcludeFirstLast24(false);
+    EXPECT_FALSE(conf.getLenientOptionParsing());
+    EXPECT_FALSE(conf.getIgnoreServerIdentifier());
+    EXPECT_FALSE(conf.getIgnoreRAILinkSelection());
+    EXPECT_FALSE(conf.getExcludeFirstLast24());
+
+    // Check the other constructor has the same default.
+    SrvConfig conf1(1);
+    EXPECT_FALSE(conf1.getLenientOptionParsing());
+    EXPECT_FALSE(conf.getIgnoreServerIdentifier());
+    EXPECT_FALSE(conf1.getIgnoreRAILinkSelection());
+    EXPECT_FALSE(conf1.getExcludeFirstLast24());
+}
+
 // This test verifies that host reservations lookup first flag can be configured.
 TEST_F(SrvConfigTest, reservationsLookupFirst) {
     SrvConfig conf;
@@ -353,7 +394,7 @@ TEST_F(SrvConfigTest, copy) {
 
     // Add an option.
     OptionPtr option(new Option(Option::V6, 1000, OptionBuffer(10, 0xFF)));
-    conf1.getCfgOption()->add(option, true, DHCP6_OPTION_SPACE);
+    conf1.getCfgOption()->add(option, true, false, DHCP6_OPTION_SPACE);
 
     // Add a class dictionary
     conf1.setClientClassDictionary(ref_dictionary_);
@@ -426,12 +467,12 @@ TEST_F(SrvConfigTest, equality) {
 
     // Differ by option data.
     OptionPtr option(new Option(Option::V6, 1000, OptionBuffer(1, 0xFF)));
-    conf1.getCfgOption()->add(option, false, "isc");
+    conf1.getCfgOption()->add(option, false, false, "isc");
 
     EXPECT_FALSE(conf1 == conf2);
     EXPECT_TRUE(conf1 != conf2);
 
-    conf2.getCfgOption()->add(option, false, "isc");
+    conf2.getCfgOption()->add(option, false, false, "isc");
 
     EXPECT_TRUE(conf1 == conf2);
     EXPECT_FALSE(conf1 != conf2);
@@ -511,21 +552,21 @@ TEST_F(SrvConfigTest, configuredGlobals) {
 
     // Maps and lists should be excluded.
     auto globals = srv_globals->valuesMap();
-    for (auto global = globals.begin(); global != globals.end(); ++global) {
-        if (global->first == "comment") {
-            ASSERT_EQ(Element::string, global->second->getType());
-            EXPECT_EQ("okay", global->second->stringValue());
-        } else if (global->first == "valid-lifetime") {
-            ASSERT_EQ(Element::integer, global->second->getType());
-            EXPECT_EQ(444, global->second->intValue());
-        } else if (global->first == "store-extended-info") {
-            ASSERT_EQ(Element::boolean, global->second->getType());
-            EXPECT_TRUE(global->second->boolValue());
-        } else if (global->first == "t1-percent") {
-            ASSERT_EQ(Element::real, global->second->getType());
-            EXPECT_EQ(1.234, global->second->doubleValue());
+    for (auto const& global : globals) {
+        if (global.first == "comment") {
+            ASSERT_EQ(Element::string, global.second->getType());
+            EXPECT_EQ("okay", global.second->stringValue());
+        } else if (global.first == "valid-lifetime") {
+            ASSERT_EQ(Element::integer, global.second->getType());
+            EXPECT_EQ(444, global.second->intValue());
+        } else if (global.first == "store-extended-info") {
+            ASSERT_EQ(Element::boolean, global.second->getType());
+            EXPECT_TRUE(global.second->boolValue());
+        } else if (global.first == "t1-percent") {
+            ASSERT_EQ(Element::real, global.second->getType());
+            EXPECT_EQ(1.234, global.second->doubleValue());
         } else {
-            ADD_FAILURE() << "unexpected element found:" << global->first;
+            ADD_FAILURE() << "unexpected element found:" << global.first;
         }
     }
 
@@ -560,7 +601,8 @@ TEST_F(SrvConfigTest, unparse) {
     defaults += "\"lease-database\": { \"type\": \"memfile\" },\n";
     defaults += "\"hooks-libraries\": [ ],\n";
     defaults += "\"sanity-checks\": {\n";
-    defaults += "    \"lease-checks\": \"none\"\n";
+    defaults += "    \"lease-checks\": \"none\",\n";
+    defaults += "    \"extended-info-checks\": \"fix\"\n";
     defaults += "    },\n";
     defaults += "\"dhcp-ddns\": \n";
 
@@ -599,10 +641,19 @@ TEST_F(SrvConfigTest, unparse) {
     CfgMgr::instance().setFamily(AF_INET);
     conf.setEchoClientId(false);
     conf.setDhcp4o6Port(6767);
+    // Add compatibility flags.
+    conf.setLenientOptionParsing(true);
+    conf.setIgnoreRAILinkSelection(true);
+    conf.setExcludeFirstLast24(true);
+    params  = "\"compatibility\": {\n";
+    params += " \"lenient-option-parsing\": true,\n";
+    params += " \"ignore-rai-link-selection\": true,\n";
+    params += " \"exclude-first-last-24\": true\n";
+    params += "},\n";
     // Add "configured globals"
     conf.addConfiguredGlobal("renew-timer", Element::create(777));
     conf.addConfiguredGlobal("comment", Element::create("bar"));
-    params = "\"echo-client-id\": false,\n";
+    params += "\"echo-client-id\": false,\n";
     params += "\"dhcp4o6-port\": 6767,\n";
     params += "\"renew-timer\": 777,\n";
     params += "\"comment\": \"bar\"\n";
@@ -611,7 +662,14 @@ TEST_F(SrvConfigTest, unparse) {
 
     // Verify direct non-default parameters and configured globals
     CfgMgr::instance().setFamily(AF_INET6);
-    params = ",\"dhcp4o6-port\": 6767,\n";
+    // Add compatibility flag.
+    conf.setIgnoreRAILinkSelection(false);
+    conf.setExcludeFirstLast24(false);
+    params  = ",\"compatibility\": {\n";
+    params += " \"lenient-option-parsing\": true\n";
+    params += "},\n";
+    // Add "configured globals"
+    params += "\"dhcp4o6-port\": 6767,\n";
     params += "\"renew-timer\": 777,\n";
     params += "\"comment\": \"bar\"\n";
     isc::test::runToElementTest<SrvConfig>
@@ -1056,9 +1114,13 @@ TEST_F(SrvConfigTest, mergeGlobals4) {
     cfg_from.addConfiguredGlobal("ip-reservations-unique", Element::create(false));
 
     // Add some configured globals:
-    cfg_to.addConfiguredGlobal("dhcp4o6-port", Element::create(999));
-    cfg_to.addConfiguredGlobal("server-tag", Element::create("use_this_server"));
-    cfg_to.addConfiguredGlobal("reservations-lookup-first", Element::create(true));
+    cfg_from.addConfiguredGlobal("dhcp4o6-port", Element::create(999));
+    cfg_from.addConfiguredGlobal("server-tag", Element::create("use_this_server"));
+    cfg_from.addConfiguredGlobal("reservations-lookup-first", Element::create(true));
+    ElementPtr mt = Element::createMap();
+    cfg_from.addConfiguredGlobal("multi-threading", mt);
+    mt->set("enable-multi-threading", Element::create(false));
+    mt->set("thread-pool-size", Element::create(256));
 
     // Now let's merge.
     ASSERT_NO_THROW(cfg_to.merge(cfg_from));
@@ -1083,16 +1145,23 @@ TEST_F(SrvConfigTest, mergeGlobals4) {
     // ip-reservations-unique
     EXPECT_FALSE(cfg_to.getCfgDbAccess()->getIPReservationsUnique());
 
+    // multi-threading
+    EXPECT_TRUE(cfg_to.getDHCPMultiThreading());
+
     // Next we check the explicitly "configured" globals.
     // The list should be all of the "to" + "from", with the
     // latter overwriting the former.
     std::string exp_globals =
         "{ \n"
-        "   \"decline-probation-period\": 300,  \n"
-        "   \"dhcp4o6-port\": 999,  \n"
-        "   \"ip-reservations-unique\": false,  \n"
-        "   \"server-tag\": \"use_this_server\",  \n"
-        "   \"reservations-lookup-first\": true"
+        "   \"decline-probation-period\": 300, \n"
+        "   \"dhcp4o6-port\": 999, \n"
+        "   \"ip-reservations-unique\": false, \n"
+        "   \"server-tag\": \"use_this_server\", \n"
+        "   \"reservations-lookup-first\": true,"
+        "   \"multi-threading\": { \"enable-multi-threading\": false, \n"
+        "                          \"packet-queue-size\": 64, \n"
+        "                          \"thread-pool-size\": 256 \n"
+        "    } \n"
         "} \n";
 
     ConstElementPtr expected_globals;
@@ -1138,9 +1207,13 @@ TEST_F(SrvConfigTest, mergeGlobals6) {
     cfg_from.addConfiguredGlobal("ip-reservations-unique", Element::create(false));
 
     // Add some configured globals:
-    cfg_to.addConfiguredGlobal("dhcp4o6-port", Element::create(999));
-    cfg_to.addConfiguredGlobal("server-tag", Element::create("use_this_server"));
-    cfg_to.addConfiguredGlobal("reservations-lookup-first", Element::create(true));
+    cfg_from.addConfiguredGlobal("dhcp4o6-port", Element::create(999));
+    cfg_from.addConfiguredGlobal("server-tag", Element::create("use_this_server"));
+    cfg_from.addConfiguredGlobal("reservations-lookup-first", Element::create(true));
+    ElementPtr mt = Element::createMap();
+    cfg_from.addConfiguredGlobal("multi-threading", mt);
+    mt->set("enable-multi-threading", Element::create(false));
+    mt->set("thread-pool-size", Element::create(256));
 
     // Now let's merge.
     ASSERT_NO_THROW(cfg_to.merge(cfg_from));
@@ -1162,16 +1235,23 @@ TEST_F(SrvConfigTest, mergeGlobals6) {
     // ip-reservations-unique
     EXPECT_FALSE(cfg_to.getCfgDbAccess()->getIPReservationsUnique());
 
+    // multi-threading
+    EXPECT_TRUE(cfg_to.getDHCPMultiThreading());
+
     // Next we check the explicitly "configured" globals.
     // The list should be all of the "to" + "from", with the
     // latter overwriting the former.
     std::string exp_globals =
         "{ \n"
-        "   \"decline-probation-period\": 300,  \n"
-        "   \"dhcp4o6-port\": 999,  \n"
-        "   \"ip-reservations-unique\": false,  \n"
-        "   \"server-tag\": \"use_this_server\",  \n"
-        "   \"reservations-lookup-first\": true"
+        "   \"decline-probation-period\": 300, \n"
+        "   \"dhcp4o6-port\": 999, \n"
+        "   \"ip-reservations-unique\": false, \n"
+        "   \"server-tag\": \"use_this_server\", \n"
+        "   \"reservations-lookup-first\": true, \n"
+        "   \"multi-threading\": { \"enable-multi-threading\": false, \n"
+        "                          \"packet-queue-size\": 64, \n"
+        "                          \"thread-pool-size\": 256 \n"
+        "    } \n"
         "} \n";
 
     ConstElementPtr expected_globals;
@@ -1235,150 +1315,6 @@ TEST_F(SrvConfigTest, mergeEmptyClientClasses) {
     EXPECT_TRUE(cfg_to.getClientClassDictionary()->findClass("bar"));
 }
 
-// Validates SrvConfig::moveDdnsParams by ensuring that deprecated dhcp-ddns
-// parameters are:
-// 1. Translated to their global counterparts if they do not exist globally
-// 2. Removed from the dhcp-ddns element
-TEST_F(SrvConfigTest, moveDdnsParamsTest) {
-    DdnsParamsPtr params;
-
-    CfgMgr::instance().setFamily(AF_INET);
-
-    struct Scenario {
-        std::string description;
-        std::string input_cfg;
-        std::string exp_cfg;
-    };
-
-    std::vector<Scenario> scenarios {
-        {
-            "scenario 1, move with no global conflicts",
-            // input_cfg
-            "{\n"
-            "   \"dhcp-ddns\": {\n"
-            "       \"enable-updates\": true, \n"
-            "       \"server-ip\" : \"192.0.2.0\",\n"
-            "       \"server-port\" : 3432,\n"
-            "       \"sender-ip\" : \"192.0.2.1\",\n"
-            "       \"sender-port\" : 3433,\n"
-            "       \"max-queue-size\" : 2048,\n"
-            "       \"ncr-protocol\" : \"UDP\",\n"
-            "       \"ncr-format\" : \"JSON\",\n"
-            "       \"user-context\": { \"foo\": \"bar\" },\n"
-            "       \"override-no-update\": true,\n"
-            "       \"override-client-update\": false,\n"
-            "       \"replace-client-name\": \"always\",\n"
-            "       \"generated-prefix\": \"prefix\",\n"
-            "       \"qualifying-suffix\": \"suffix.com.\",\n"
-            "       \"hostname-char-set\": \"[^A-Z]\",\n"
-            "       \"hostname-char-replacement\": \"x\"\n"
-            "   }\n"
-            "}\n",
-            // exp_cfg
-            "{\n"
-            "   \"dhcp-ddns\": {\n"
-            "       \"enable-updates\": true, \n"
-            "       \"server-ip\" : \"192.0.2.0\",\n"
-            "       \"server-port\" : 3432,\n"
-            "       \"sender-ip\" : \"192.0.2.1\",\n"
-            "       \"sender-port\" : 3433,\n"
-            "       \"max-queue-size\" : 2048,\n"
-            "       \"ncr-protocol\" : \"UDP\",\n"
-            "       \"ncr-format\" : \"JSON\",\n"
-            "       \"user-context\": { \"foo\": \"bar\" }\n"
-            "   },\n"
-            "   \"ddns-override-no-update\": true,\n"
-            "   \"ddns-override-client-update\": false,\n"
-            "   \"ddns-replace-client-name\": \"always\",\n"
-            "   \"ddns-generated-prefix\": \"prefix\",\n"
-            "   \"ddns-qualifying-suffix\": \"suffix.com.\",\n"
-            "   \"hostname-char-set\": \"[^A-Z]\",\n"
-            "   \"hostname-char-replacement\": \"x\"\n"
-            "}\n"
-        },
-        {
-            "scenario 2, globals already exist for all movable params",
-            // input_cfg
-            "{\n"
-            "   \"dhcp-ddns\" : {\n"
-            "       \"enable-updates\": true, \n"
-            "       \"override-no-update\": true,\n"
-            "       \"override-client-update\": true,\n"
-            "       \"replace-client-name\": \"always\",\n"
-            "       \"generated-prefix\": \"prefix\",\n"
-            "       \"qualifying-suffix\": \"suffix.com.\",\n"
-            "       \"hostname-char-set\": \"[^A-Z]\",\n"
-            "       \"hostname-char-replacement\": \"x\"\n"
-            "   },\n"
-            "   \"ddns-override-no-update\": false,\n"
-            "   \"ddns-override-client-update\": false,\n"
-            "   \"ddns-replace-client-name\": \"when-present\",\n"
-            "   \"ddns-generated-prefix\": \"org_prefix\",\n"
-            "   \"ddns-qualifying-suffix\": \"org_suffix.com.\",\n"
-            "   \"hostname-char-set\": \"[^a-z]\",\n"
-            "   \"hostname-char-replacement\": \"y\"\n"
-            "}\n",
-            // exp_cfg
-            "{\n"
-            "   \"dhcp-ddns\" : {\n"
-            "       \"enable-updates\": true\n"
-            "   },\n"
-            "   \"ddns-override-no-update\": false,\n"
-            "   \"ddns-override-client-update\": false,\n"
-            "   \"ddns-replace-client-name\": \"when-present\",\n"
-            "   \"ddns-generated-prefix\": \"org_prefix\",\n"
-            "   \"ddns-qualifying-suffix\": \"org_suffix.com.\",\n"
-            "   \"hostname-char-set\": \"[^a-z]\",\n"
-            "   \"hostname-char-replacement\": \"y\"\n"
-            "}\n"
-        },
-        {
-            "scenario 3, nothing to move",
-            // input_cfg
-            "{\n"
-            "   \"dhcp-ddns\" : {\n"
-            "       \"enable-updates\": true, \n"
-            "       \"server-ip\" : \"192.0.2.0\",\n"
-            "       \"server-port\" : 3432,\n"
-            "       \"sender-ip\" : \"192.0.2.1\"\n"
-            "   }\n"
-            "}\n",
-            // exp_output
-            "{\n"
-            "   \"dhcp-ddns\" : {\n"
-            "       \"enable-updates\": true, \n"
-            "       \"server-ip\" : \"192.0.2.0\",\n"
-            "       \"server-port\" : 3432,\n"
-            "       \"sender-ip\" : \"192.0.2.1\"\n"
-            "   }\n"
-            "}\n"
-        }
-    };
-
-    for (auto scenario : scenarios) {
-        SrvConfig conf(32);
-        ElementPtr input_cfg;
-        ConstElementPtr exp_cfg;
-        {
-            SCOPED_TRACE(scenario.description);
-            // Parse the input cfg into a mutable Element map.
-            ASSERT_NO_THROW(input_cfg = boost::const_pointer_cast<Element>
-                            (Element::fromJSON(scenario.input_cfg)))
-                            << "input_cfg didn't parse, test is broken";
-
-            // Parse the expected cfg into an Element map.
-            ASSERT_NO_THROW(exp_cfg = Element::fromJSON(scenario.exp_cfg))
-                            << "exp_cfg didn't parse, test is broken";
-
-            // Now call moveDdnsParams.
-            ASSERT_NO_THROW(SrvConfig::moveDdnsParams(input_cfg));
-
-            // Make sure the resultant configuration is as expected.
-            EXPECT_TRUE(input_cfg->equals(*exp_cfg));
-        }
-    }
-}
-
 // Verifies that the scoped values for DDNS parameters can be fetched
 // for a given Subnet4.
 TEST_F(SrvConfigTest, getDdnsParamsTest4) {
@@ -1396,8 +1332,10 @@ TEST_F(SrvConfigTest, getDdnsParamsTest4) {
     // Configure global host sanitizing.
     conf.addConfiguredGlobal("hostname-char-set", Element::create("[^A-Z]"));
     conf.addConfiguredGlobal("hostname-char-replacement", Element::create("x"));
-    // Enable conflict resolution globally.
-    conf.addConfiguredGlobal("ddns-use-conflict-resolution", Element::create(true));
+    // Specify conflict resolution mode globally.
+    conf.addConfiguredGlobal("ddns-conflict-resolution-mode", Element::create("check-with-dhcid"));
+    // Configure TTL percent globally.
+    conf.addConfiguredGlobal("ddns-ttl-percent", Element::create(20.0));
 
     // Add a plain subnet
     Triplet<uint32_t> def_triplet;
@@ -1436,7 +1374,8 @@ TEST_F(SrvConfigTest, getDdnsParamsTest4) {
     subnet2->setDdnsQualifyingSuffix("example.com.");
     subnet2->setHostnameCharSet("");
     subnet2->setDdnsUpdateOnRenew(true);
-    subnet2->setDdnsUseConflictResolution(false);
+    subnet2->setDdnsConflictResolutionMode("no-check-with-dhcid");
+    subnet2->setDdnsTtlPercent(Optional<double>(40.0));
 
     // Get DDNS params for subnet1.
     ASSERT_NO_THROW(params = conf_.getDdnsParams(subnet1));
@@ -1451,7 +1390,9 @@ TEST_F(SrvConfigTest, getDdnsParamsTest4) {
     EXPECT_EQ("[^A-Z]", params->getHostnameCharSet());
     EXPECT_EQ("x", params->getHostnameCharReplacement());
     EXPECT_FALSE(params->getUpdateOnRenew());
-    EXPECT_TRUE(params->getUseConflictResolution());
+    EXPECT_EQ("check-with-dhcid", params->getConflictResolutionMode());
+    EXPECT_FALSE(params->getTtlPercent().unspecified());
+    EXPECT_EQ(20.0, params->getTtlPercent().get());
 
     // We inherited a non-blank hostname_char_set so we
     // should get a sanitizer instance.
@@ -1473,7 +1414,9 @@ TEST_F(SrvConfigTest, getDdnsParamsTest4) {
     EXPECT_EQ("", params->getHostnameCharSet());
     EXPECT_EQ("x", params->getHostnameCharReplacement());
     EXPECT_TRUE(params->getUpdateOnRenew());
-    EXPECT_FALSE(params->getUseConflictResolution());
+    EXPECT_EQ("no-check-with-dhcid", params->getConflictResolutionMode());
+    EXPECT_FALSE(params->getTtlPercent().unspecified());
+    EXPECT_EQ(40.0, params->getTtlPercent().get());
 
     // We have a blank hostname-char-set so we should not get a sanitizer instance.
     ASSERT_NO_THROW(sanitizer = params->getHostnameSanitizer());
@@ -1496,6 +1439,14 @@ TEST_F(SrvConfigTest, getDdnsParamsTest4) {
     // Make sure subnet1 updates are now enabled.
     ASSERT_NO_THROW(params = conf_.getDdnsParams(subnet1));
     EXPECT_TRUE(params->getEnableUpdates());
+
+    subnet1->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
+        return (ConstCfgGlobalsPtr());
+    });
+
+    subnet2->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
+        return (ConstCfgGlobalsPtr());
+    });
 }
 
 // Verifies that the fallback values for DDNS parameters when
@@ -1520,7 +1471,9 @@ TEST_F(SrvConfigTest, getDdnsParamsNoSubnetTest4) {
     conf.addConfiguredGlobal("hostname-char-set", Element::create("[^A-Z]"));
     conf.addConfiguredGlobal("hostname-char-replacement", Element::create("x"));
     conf.addConfiguredGlobal("ddns-update-on-renew", Element::create(true));
-    conf.addConfiguredGlobal("ddns-use-conflict-resolution", Element::create(false));
+    conf.addConfiguredGlobal("ddns-conflict-resolution-mode",
+                             Element::create("no-check-with-dhcid"));
+    conf.addConfiguredGlobal("ddns-ttl-percent", Element::create(77.0));
 
     // Get DDNS params for no subnet.
     Subnet4Ptr subnet4;
@@ -1536,7 +1489,8 @@ TEST_F(SrvConfigTest, getDdnsParamsNoSubnetTest4) {
     EXPECT_TRUE(params->getHostnameCharSet().empty());
     EXPECT_TRUE(params->getHostnameCharReplacement().empty());
     EXPECT_FALSE(params->getUpdateOnRenew());
-    EXPECT_TRUE(params->getUseConflictResolution());
+    EXPECT_EQ("check-with-dhcid", params->getConflictResolutionMode());
+    EXPECT_TRUE(params->getTtlPercent().unspecified());
 }
 
 // Verifies that the scoped values for DDNS parameters can be fetched
@@ -1556,8 +1510,12 @@ TEST_F(SrvConfigTest, getDdnsParamsTest6) {
     // Configure global host sanitizing.
     conf.addConfiguredGlobal("hostname-char-set", Element::create("[^A-Z]"));
     conf.addConfiguredGlobal("hostname-char-replacement", Element::create("x"));
-    // Enable conflict resolution globally.
-    conf.addConfiguredGlobal("ddns-use-conflict-resolution", Element::create(true));
+    // Specify conflict resolution mode globally.
+    conf.addConfiguredGlobal("ddns-conflict-resolution-mode",
+                             Element::create("check-with-dhcid"));
+
+    // Configure TTL percent globally.
+    conf.addConfiguredGlobal("ddns-ttl-percent", Element::create(25.0));
 
     // Add a plain subnet
     Triplet<uint32_t> def_triplet;
@@ -1596,7 +1554,8 @@ TEST_F(SrvConfigTest, getDdnsParamsTest6) {
     subnet2->setDdnsQualifyingSuffix("example.com.");
     subnet2->setHostnameCharSet("");
     subnet2->setDdnsUpdateOnRenew(true);
-    subnet2->setDdnsUseConflictResolution(false);
+    subnet2->setDdnsConflictResolutionMode("no-check-with-dhcid");
+    subnet2->setDdnsTtlPercent(Optional<double>(45.0));
 
     // Get DDNS params for subnet1.
     ASSERT_NO_THROW(params = conf_.getDdnsParams(subnet1));
@@ -1611,7 +1570,9 @@ TEST_F(SrvConfigTest, getDdnsParamsTest6) {
     EXPECT_EQ("[^A-Z]", params->getHostnameCharSet());
     EXPECT_EQ("x", params->getHostnameCharReplacement());
     EXPECT_FALSE(params->getUpdateOnRenew());
-    EXPECT_TRUE(params->getUseConflictResolution());
+    EXPECT_EQ("check-with-dhcid", params->getConflictResolutionMode());
+    EXPECT_FALSE(params->getTtlPercent().unspecified());
+    EXPECT_EQ(25.0, params->getTtlPercent().get());
 
     // We inherited a non-blank hostname_char_set so we
     // should get a sanitizer instance.
@@ -1633,7 +1594,9 @@ TEST_F(SrvConfigTest, getDdnsParamsTest6) {
     EXPECT_EQ("", params->getHostnameCharSet());
     EXPECT_EQ("x", params->getHostnameCharReplacement());
     EXPECT_TRUE(params->getUpdateOnRenew());
-    EXPECT_FALSE(params->getUseConflictResolution());
+    EXPECT_EQ("no-check-with-dhcid", params->getConflictResolutionMode());
+    EXPECT_FALSE(params->getTtlPercent().unspecified());
+    EXPECT_EQ(45.0, params->getTtlPercent().get());
 
     // We have a blank hostname-char-set so we should not get a sanitizer instance.
     ASSERT_NO_THROW(sanitizer = params->getHostnameSanitizer());
@@ -1656,6 +1619,14 @@ TEST_F(SrvConfigTest, getDdnsParamsTest6) {
     // Make sure subnet1 updates are now enabled.
     ASSERT_NO_THROW(params = conf_.getDdnsParams(subnet1));
     EXPECT_TRUE(params->getEnableUpdates());
+
+    subnet1->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
+        return (ConstCfgGlobalsPtr());
+    });
+
+    subnet2->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
+        return (ConstCfgGlobalsPtr());
+    });
 }
 
 // Verifies that the fallback values for DDNS parameters when
@@ -1680,7 +1651,9 @@ TEST_F(SrvConfigTest, getDdnsParamsNoSubnetTest6) {
     conf.addConfiguredGlobal("hostname-char-set", Element::create("[^A-Z]"));
     conf.addConfiguredGlobal("hostname-char-replacement", Element::create("x"));
     conf.addConfiguredGlobal("ddns-update-on-renew", Element::create(true));
-    conf.addConfiguredGlobal("ddns-use-conflict-resolution", Element::create(false));
+    conf.addConfiguredGlobal("ddns-conflict-resolution-mode",
+                             Element::create("no-check-with-dhcid"));
+    conf.addConfiguredGlobal("ddns-ttl-percent", Element::create(77.0));
 
     // Get DDNS params for no subnet.
     Subnet6Ptr subnet6;
@@ -1695,6 +1668,9 @@ TEST_F(SrvConfigTest, getDdnsParamsNoSubnetTest6) {
     EXPECT_TRUE(params->getQualifyingSuffix().empty());
     EXPECT_TRUE(params->getHostnameCharSet().empty());
     EXPECT_TRUE(params->getHostnameCharReplacement().empty());
+    EXPECT_FALSE(params->getUpdateOnRenew());
+    EXPECT_EQ("check-with-dhcid", params->getConflictResolutionMode());
+    EXPECT_TRUE(params->getTtlPercent().unspecified());
 }
 
 // Verifies that adding multi threading settings works

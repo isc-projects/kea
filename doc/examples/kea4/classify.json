@@ -1,11 +1,13 @@
 // This is an example configuration file for the DHCPv4 server in Kea.
 // The purpose of this example is to showcase how clients can be classified.
 
-{ "Dhcp4": {
+{ "Dhcp4":
 
-// Kea is told to listen on ethX interface only.
+{
+
+// Kea is told to listen on eth0 interface only.
   "interfaces-config": {
-      "interfaces": [ "ethX" ]
+      "interfaces": [ "eth0" ]
   },
 
 // Let's use the simplest backend: memfile and use some reasonable values
@@ -79,9 +81,10 @@
     // This one is for VoIP devices only.
     {
         "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
+        "id": 1,
         "subnet": "192.0.2.0/24",
         "client-class": "VoIP",
-        "interface": "ethX"
+        "interface": "eth0"
     },
 
     // This one doesn't have any client-class specified, so everyone
@@ -91,13 +94,14 @@
     // be assigned to this class.
     {
         "pools": [ { "pool":  "192.0.3.1 - 192.0.3.200" } ],
+        "id": 2,
         "subnet": "192.0.3.0/24",
         "reservations": [
         {
             "hw-address": "1a:1b:1c:1d:1e:1f",
             "client-classes": [ "VoIP" ]
         } ],
-        "interface": "ethX"
+        "interface": "eth0"
     },
 
     // The following list defines a subnet with pools. For some pools
@@ -119,7 +123,8 @@
            } ],
 
         "subnet": "192.0.4.0/23",
-        "interface": "ethY"
+        "id": 3,
+        "interface": "eth1"
     }
   ],
 
@@ -129,7 +134,7 @@
     "loggers": [
         {
             "name": "kea-dhcp4",
-            "output_options": [
+            "output-options": [
                 {
                     "output": "stdout"
                 }

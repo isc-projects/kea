@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -36,7 +36,7 @@ clockToText(std::chrono::system_clock::time_point t, size_t fsecs_precision) {
         auto fsecs = frac.count();
         size_t width = MAX_FSECS_PRECISION;
         if (fsecs_precision < width) {
-            for (auto i = 0; i < width - fsecs_precision; ++i) {
+            for (size_t i = 0; i < width - fsecs_precision; ++i) {
                 fsecs /= 10;
             }
 
@@ -72,7 +72,7 @@ durationToText(Duration dur, size_t fsecs_precision) {
         auto fsecs = frac.count();
         size_t width = MAX_FSECS_PRECISION;
         if (fsecs_precision < width) {
-            for (auto i = 0; i < width - fsecs_precision; ++i) {
+            for (size_t i = 0; i < width - fsecs_precision; ++i) {
                 fsecs /= 10;
             }
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,6 +15,18 @@ namespace {
 
 using namespace isc;
 using namespace isc::dhcp;
+
+// RAII device to make sure that lenient parsing flag is reset to false on exit.
+class LenientOptionParsing {
+public:
+    LenientOptionParsing(bool value) {
+        Option::lenient_parsing_ = value;
+    }
+
+    ~LenientOptionParsing() {
+        Option::lenient_parsing_ = false;
+    }
+};
 
 // This test verifies that constructor accepts empty partial domain-name but
 // does not accept empty fully qualified domain name.
@@ -173,10 +185,14 @@ TEST(Option6ClientFqdnTest, constructFromWireTooLongLabel) {
     OptionBuffer in_buf(Option6ClientFqdn::FLAG_S);
     in_buf.push_back(70);
     in_buf.insert(in_buf.end(), 70, 109);
-    in_buf.push_back(0);
+    // Don't add a 0 i.e. use a partial name (vs fully qualified).
 
+    LenientOptionParsing lop(false);
     EXPECT_THROW(Option6ClientFqdn(in_buf.begin(), in_buf.end()),
                  InvalidOption6FqdnDomainName);
+    Option::lenient_parsing_ = true;
+    EXPECT_THROW(Option6ClientFqdn(in_buf.begin(), in_buf.end()),
+                 SkipThisOptionError);
 }
 
 // Verify that exception is thrown if the overall length of the domain-name
@@ -193,8 +209,12 @@ TEST(Option6ClientFqdnTest, constructFromWireTooLongDomainName) {
     // Terminate FQDN with a dot.
     in_buf.push_back(0);
 
+    LenientOptionParsing lop(false);
     EXPECT_THROW(Option6ClientFqdn(in_buf.begin(), in_buf.end()),
                  InvalidOption6FqdnDomainName);
+    Option::lenient_parsing_ = true;
+    EXPECT_THROW(Option6ClientFqdn(in_buf.begin(), in_buf.end()),
+                 SkipThisOptionError);
 }
 
 // This test verifies that truncated option is rejected.
@@ -403,6 +423,8 @@ TEST(Option6ClientFqdnTest, constructInvalidName) {
     ASSERT_NO_THROW(Option6ClientFqdn(0, "myhost.example.com"));
 
     // Specify invalid domain name and expect that exception is thrown.
+    // Note in v6 the domain name is always encoded so this is not
+    // covered by lenient-option-parsing.
     EXPECT_THROW(Option6ClientFqdn(0, "my...host.example.com"),
                  InvalidOption6FqdnDomainName);
 }

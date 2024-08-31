@@ -1,4 +1,4 @@
-SUBDIRS = . tests
+SUBDIRS = . tests libloadtests
 
 AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
@@ -29,7 +29,8 @@ lib_hooks_LTLIBRARIES = libdhcp_bootp.la
 libdhcp_bootp_la_SOURCES  =
 libdhcp_bootp_la_LDFLAGS  = $(AM_LDFLAGS)
 libdhcp_bootp_la_LDFLAGS  += -avoid-version -export-dynamic -module
-libdhcp_bootp_la_LIBADD = libbootp.la
+libdhcp_bootp_la_LIBADD  = libbootp.la
+libdhcp_bootp_la_LIBADD += $(top_builddir)/src/lib/process/libkea-process.la
 libdhcp_bootp_la_LIBADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 libdhcp_bootp_la_LIBADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 libdhcp_bootp_la_LIBADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la

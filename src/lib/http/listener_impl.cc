@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,17 +6,19 @@
 
 #include <config.h>
 #include <asiolink/asio_wrapper.h>
+#include <dhcp/iface_mgr.h>
 #include <http/connection_pool.h>
 #include <http/listener.h>
 #include <http/listener_impl.h>
 
 using namespace isc::asiolink;
+using namespace isc::dhcp;
 namespace ph = std::placeholders;
 
 namespace isc {
 namespace http {
 
-HttpListenerImpl::HttpListenerImpl(IOService& io_service,
+HttpListenerImpl::HttpListenerImpl(const IOServicePtr& io_service,
                                    const asiolink::IOAddress& server_address,
                                    const unsigned short server_port,
                                    const TlsContextPtr& tls_context,
@@ -26,7 +28,8 @@ HttpListenerImpl::HttpListenerImpl(IOService& io_service,
     : io_service_(io_service), tls_context_(tls_context), acceptor_(),
       endpoint_(), connections_(),
       creator_factory_(creator_factory),
-      request_timeout_(request_timeout), idle_timeout_(idle_timeout) {
+      request_timeout_(request_timeout), idle_timeout_(idle_timeout),
+      use_external_(false) {
     // Create the TCP or TLS acceptor.
     if (!tls_context) {
         acceptor_.reset(new HttpAcceptor(io_service));
@@ -67,10 +70,23 @@ HttpListenerImpl::getEndpoint() const {
     return (*endpoint_);
 }
 
+int
+HttpListenerImpl::getNative() const {
+    return (acceptor_ ? acceptor_->getNative() : -1);
+}
+
+void
+HttpListenerImpl::addExternalSockets(bool use_external) {
+    use_external_ = use_external;
+}
+
 void
 HttpListenerImpl::start() {
     try {
         acceptor_->open(*endpoint_);
+        if (use_external_) {
+            IfaceMgr::instance().addExternalSocket(acceptor_->getNative(), 0);
+        }
         acceptor_->setOption(HttpAcceptor::ReuseAddress(true));
         acceptor_->bind(*endpoint_);
         acceptor_->listen();
@@ -87,6 +103,9 @@ HttpListenerImpl::start() {
 void
 HttpListenerImpl::stop() {
     connections_.stopAll();
+    if (use_external_) {
+        IfaceMgr::instance().deleteExternalSocket(acceptor_->getNative());
+    }
     acceptor_->close();
 }
 
@@ -100,6 +119,10 @@ HttpListenerImpl::accept() {
         std::bind(&HttpListenerImpl::acceptHandler, this, ph::_1);
     HttpConnectionPtr conn = createConnection(response_creator,
                                               acceptor_callback);
+    // Transmit the use external sockets flag.
+    if (use_external_) {
+        conn->addExternalSockets(true);
+    }
     // Add this new connection to the pool.
     connections_.start(conn);
 }

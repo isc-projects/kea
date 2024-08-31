@@ -1,4 +1,4 @@
-/* Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,10 +15,13 @@
 %define parse.assert
 %code requires
 {
-#include <string>
 #include <cc/data.h>
-#include <boost/lexical_cast.hpp>
 #include <netconf/parser_context_decl.h>
+
+#include <boost/lexical_cast.hpp>
+
+#include <sstream>
+#include <string>
 
 using namespace isc::netconf;
 using namespace isc::data;
@@ -32,6 +35,11 @@ using namespace std;
 %code
 {
 #include <netconf/parser_context.h>
+
+// Avoid warnings with the error counter.
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#endif
 }
 
 
@@ -77,7 +85,7 @@ using namespace std;
 
   LOGGERS "loggers"
   NAME "name"
-  OUTPUT_OPTIONS "output_options"
+  OUTPUT_OPTIONS "output-options"
   OUTPUT "output"
   DEBUGLEVEL "debuglevel"
   SEVERITY "severity"
@@ -95,7 +103,7 @@ using namespace std;
   START_SUB_NETCONF
 ;
 
-%token <std::string> STRING "constant string"
+%token <string> STRING "constant string"
 %token <int64_t> INTEGER "integer"
 %token <double> FLOAT "floating point"
 %token <bool> BOOLEAN "boolean"
@@ -224,8 +232,8 @@ not_empty_list: value {
 // if you want to have a nice expression printed when unknown (mistyped?)
 // parameter is found.
 unknown_map_entry: STRING COLON {
-    const std::string& where = ctx.contextName();
-    const std::string& keyword = $1;
+    const string& where = ctx.contextName();
+    const string& keyword = $1;
     error(@1,
           "got unexpected keyword \"" + keyword + "\" in " + where + " map.");
 };
@@ -322,7 +330,7 @@ user_context: USER_CONTEXT {
     if (old) {
         // Check if it was a comment or a duplicate
         if ((old->size() != 1) || !old->contains("comment")) {
-            std::stringstream msg;
+            stringstream msg;
             msg << "duplicate user-context entries (previous at "
                 << old->getPosition().str() << ")";
             error(@1, msg.str());
@@ -349,7 +357,7 @@ comment: COMMENT {
     if (old) {
         // Check for duplicate comment
         if (old->contains("comment")) {
-            std::stringstream msg;
+            stringstream msg;
             msg << "duplicate user-context/comment entries (previous at "
                 << old->getPosition().str() << ")";
             error(@1, msg.str());
@@ -670,9 +678,9 @@ severity: SEVERITY {
 };
 
 output_options_list: OUTPUT_OPTIONS {
-    ctx.unique("output_options", ctx.loc2pos(@1));
+    ctx.unique("output-options", ctx.loc2pos(@1));
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
-    ctx.stack_.back()->set("output_options", l);
+    ctx.stack_.back()->set("output-options", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.OUTPUT_OPTIONS);
 } COLON LSQUARE_BRACKET output_options_list_content RSQUARE_BRACKET {
@@ -749,7 +757,6 @@ pattern: PATTERN {
 
 void
 isc::netconf::NetconfParser::error(const location_type& loc,
-                               const std::string& what)
-{
+                                   const string& what) {
     ctx.error(loc, what);
 }

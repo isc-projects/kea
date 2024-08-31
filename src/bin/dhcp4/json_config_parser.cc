@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,17 +6,21 @@
 
 #include <config.h>
 
+#include <asiolink/io_service_mgr.h>
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
+#include <config/http_command_mgr.h>
 #include <database/dbaccess_parser.h>
 #include <database/backend_selector.h>
 #include <database/server_selector.h>
+#include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/dhcp4_srv.h>
 #include <dhcp4/json_config_parser.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option_definition.h>
 #include <dhcpsrv/cb_ctl_dhcp4.h>
+#include <dhcpsrv/cfg_multi_threading.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/config_backend_dhcp4_mgr.h>
@@ -38,12 +42,10 @@
 #include <hooks/hooks_manager.h>
 #include <hooks/hooks_parser.h>
 #include <process/config_ctl_parser.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 #include <util/multi_threading_mgr.h>
-#include <util/strutil.h>
 
 #include <boost/algorithm/string.hpp>
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 
 #include <iomanip>
@@ -53,15 +55,15 @@
 #include <netinet/in.h>
 #include <vector>
 
-using namespace std;
-using namespace isc;
+using namespace isc::asiolink;
+using namespace isc::config;
 using namespace isc::data;
 using namespace isc::dhcp;
-using namespace isc::asiolink;
 using namespace isc::hooks;
 using namespace isc::process;
-using namespace isc::config;
 using namespace isc::util;
+using namespace isc;
+using namespace std;
 
 namespace {
 
@@ -155,10 +157,10 @@ public:
         }
 
         // Let's go through all the networks one by one
-        for (auto net = networks->begin(); net != networks->end(); ++net) {
+        for (auto const& net : *networks) {
 
             // For each network go through all the subnets in it.
-            const Subnet4SimpleCollection* subnets = (*net)->getAllSubnets();
+            const Subnet4SimpleCollection* subnets = net->getAllSubnets();
             if (!subnets) {
                 // Shared network without subnets it weird, but we decided to
                 // accept such configurations.
@@ -166,8 +168,8 @@ public:
             }
 
             // For each subnet, add it to a list of regular subnets.
-            for (auto subnet = subnets->begin(); subnet != subnets->end(); ++subnet) {
-                dest->add(*subnet);
+            for (auto const& subnet : *subnets) {
+                dest->add(subnet);
             }
         }
     }
@@ -214,61 +216,61 @@ public:
         std::set<string> names;
 
         // Let's go through all the networks one by one
-        for (auto net = networks.begin(); net != networks.end(); ++net) {
+        for (auto const& net : networks) {
             string txt;
 
             // Let's check if all subnets have either the same interface
             // or don't have the interface specified at all.
-            bool authoritative = (*net)->getAuthoritative();
-            string iface = (*net)->getIface();
+            bool authoritative = net->getAuthoritative();
+            string iface = net->getIface();
 
-            const Subnet4SimpleCollection* subnets = (*net)->getAllSubnets();
+            const Subnet4SimpleCollection* subnets = net->getAllSubnets();
             if (subnets) {
                 // For each subnet, add it to a list of regular subnets.
-                for (auto subnet = subnets->begin(); subnet != subnets->end(); ++subnet) {
-                    if ((*subnet)->getAuthoritative() != authoritative) {
+                for (auto const& subnet : *subnets) {
+                    if (subnet->getAuthoritative() != authoritative) {
                         isc_throw(DhcpConfigError, "Subnet " << boolalpha
-                                  << (*subnet)->toText()
+                                  << subnet->toText()
                                   << " has different authoritative setting "
-                                  << (*subnet)->getAuthoritative()
+                                  << subnet->getAuthoritative()
                                   << " than the shared-network itself: "
                                   << authoritative);
                     }
 
                     if (iface.empty()) {
-                        iface = (*subnet)->getIface();
+                        iface = subnet->getIface();
                         continue;
                     }
 
-                    if ((*subnet)->getIface().empty()) {
+                    if (subnet->getIface().empty()) {
                         continue;
                     }
 
-                    if ((*subnet)->getIface() != iface) {
-                        isc_throw(DhcpConfigError, "Subnet " << (*subnet)->toText()
-                                  << " has specified interface " << (*subnet)->getIface()
+                    if (subnet->getIface() != iface) {
+                        isc_throw(DhcpConfigError, "Subnet " << subnet->toText()
+                                  << " has specified interface " << subnet->getIface()
                                   << ", but earlier subnet in the same shared-network"
                                   << " or the shared-network itself used " << iface);
                     }
 
                     // Let's collect the subnets in case we later find out the
                     // subnet doesn't have a mandatory name.
-                    txt += (*subnet)->toText() + " ";
+                    txt += subnet->toText() + " ";
                 }
             }
 
             // Next, let's check name of the shared network.
-            if ((*net)->getName().empty()) {
+            if (net->getName().empty()) {
                 isc_throw(DhcpConfigError, "Shared-network with subnets "
                           << txt << " is missing mandatory 'name' parameter");
             }
 
             // Is it unique?
-            if (names.find((*net)->getName()) != names.end()) {
+            if (names.find(net->getName()) != names.end()) {
                 isc_throw(DhcpConfigError, "A shared-network with "
-                          "name " << (*net)->getName() << " defined twice.");
+                          "name " << net->getName() << " defined twice.");
             }
-            names.insert((*net)->getName());
+            names.insert(net->getName());
 
         }
     }
@@ -308,42 +310,31 @@ void configureCommandChannel() {
     // receive the configuration result.
     if (!sock_cfg || !current_sock_cfg || sock_changed) {
         // Close the existing socket (if any).
-        isc::config::CommandMgr::instance().closeCommandSocket();
+        CommandMgr::instance().closeCommandSocket();
 
         if (sock_cfg) {
             // This will create a control socket and install the external
             // socket in IfaceMgr. That socket will be monitored when
             // Dhcp4Srv::receivePacket() calls IfaceMgr::receive4() and
             // callback in CommandMgr will be called, if necessary.
-            isc::config::CommandMgr::instance().openCommandSocket(sock_cfg);
+            CommandMgr::instance().openCommandSocket(sock_cfg);
         }
     }
+
+    // HTTP control socket is simpler: just (re)configure it.
+
+    // Get new config.
+    HttpCommandConfigPtr http_config =
+        CfgMgr::instance().getStagingCfg()->getHttpControlSocketInfo();
+    HttpCommandMgr::instance().configure(http_config);
 }
 
+/// @brief Process a DHCPv4 confguration and return an answer stating if the
+/// configuration is valid, or specifying details about the error otherwise.
+///
+/// @param config_set the configuration being processed
 isc::data::ConstElementPtr
-configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
-                     bool check_only) {
-    if (!config_set) {
-        ConstElementPtr answer = isc::config::createAnswer(CONTROL_RESULT_ERROR,
-                                 string("Can't parse NULL config"));
-        return (answer);
-    }
-
-    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_COMMAND, DHCP4_CONFIG_START)
-        .arg(server.redactConfig(config_set)->str());
-
-    // Before starting any subnet operations, let's reset the subnet-id counter,
-    // so newly recreated configuration starts with first subnet-id equal 1.
-    Subnet::resetSubnetID();
-
-    // Close DHCP sockets and remove any existing timers.
-    if (!check_only) {
-        IfaceMgr::instance().closeSockets();
-        TimerMgr::instance()->unregisterTimers();
-        server.discardPackets();
-        server.getCBControl()->reset();
-    }
-
+processDhcp4Config(isc::data::ConstElementPtr config_set) {
     // Revert any runtime option definitions configured so far and not committed.
     LibDHCP::revertRuntimeOptionDefs();
     // Let's set empty container in case a user hasn't specified any configuration
@@ -355,9 +346,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
 
     // Answer will hold the result.
     ConstElementPtr answer;
-    // Rollback informs whether error occurred and original data
-    // have to be restored to global storages.
-    bool rollback = false;
+
     // Global parameter name in case of an error.
     string parameter_name;
     ElementPtr mutable_cfg;
@@ -370,16 +359,6 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         // We need a config that can be edited, because we will insert
         // default values and will insert derived values as well.
         mutable_cfg = boost::const_pointer_cast<Element>(config_set);
-
-        // Relocate dhcp-ddns parameters that have moved to global scope.
-        // Rule is that a global value overrides the dhcp-ddns value, so
-        // we need to do this before we apply global defaults.
-        // Note this is done for backward compatibility.
-        srv_config->moveDdnsParams(mutable_cfg);
-
-        // Move from reservation mode to new reservations flags.
-        // @todo add warning
-        BaseNetworkParser::moveReservationMode(mutable_cfg);
 
         // Set all default values if not specified by the user.
         SimpleParser4::setAllDefaults(mutable_cfg);
@@ -418,9 +397,17 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
 
         ConstElementPtr control_socket = mutable_cfg->get("control-socket");
         if (control_socket) {
-            parameter_name = "control-socket";
-            ControlSocketParser parser;
-            parser.parse(*srv_config, control_socket);
+            mutable_cfg->remove("control-socket");
+            ElementPtr l = Element::createList();
+            l->add(UserContext::toElement(control_socket));
+            mutable_cfg->set("control-sockets", l);
+        }
+
+        ConstElementPtr control_sockets = mutable_cfg->get("control-sockets");
+        if (control_sockets) {
+            parameter_name = "control-sockets";
+            ControlSocketsParser parser;
+            parser.parse(*srv_config, control_sockets);
         }
 
         ConstElementPtr multi_threading = mutable_cfg->get("multi-threading");
@@ -430,19 +417,25 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             parser.parse(*srv_config, multi_threading);
         }
 
+        bool multi_threading_enabled = true;
+        uint32_t thread_count = 0;
+        uint32_t queue_size = 0;
+        CfgMultiThreading::extract(CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading(),
+                                   multi_threading_enabled, thread_count, queue_size);
+
         /// depends on "multi-threading" being enabled, so it must come after.
         ConstElementPtr queue_control = mutable_cfg->get("dhcp-queue-control");
         if (queue_control) {
             parameter_name = "dhcp-queue-control";
             DHCPQueueControlParser parser;
-            srv_config->setDHCPQueueControl(parser.parse(queue_control));
+            srv_config->setDHCPQueueControl(parser.parse(queue_control, multi_threading_enabled));
         }
 
         /// depends on "multi-threading" being enabled, so it must come after.
         ConstElementPtr reservations_lookup_first = mutable_cfg->get("reservations-lookup-first");
         if (reservations_lookup_first) {
             parameter_name = "reservations-lookup-first";
-            if (MultiThreadingMgr::instance().getMode()) {
+            if (multi_threading_enabled) {
                 LOG_WARN(dhcp4_logger, DHCP4_RESERVATIONS_LOOKUP_FIRST_ENABLED);
             }
             srv_config->setReservationsLookupFirst(reservations_lookup_first->boolValue());
@@ -454,14 +447,6 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             parameter_name = "host-reservation-identifiers";
             HostReservationIdsParser4 parser;
             parser.parse(hr_identifiers);
-        }
-
-        ConstElementPtr ifaces_config = mutable_cfg->get("interfaces-config");
-        if (ifaces_config) {
-            parameter_name = "interfaces-config";
-            IfacesConfigParser parser(AF_INET, check_only);
-            CfgIfacePtr cfg_iface = srv_config->getCfgIface();
-            parser.parse(cfg_iface, ifaces_config);
         }
 
         ConstElementPtr sanity_checks = mutable_cfg->get("sanity-checks");
@@ -476,7 +461,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         if (expiration_cfg) {
             parameter_name = "expired-leases-processing";
             ExpirationConfigParser parser;
-            parser.parse(expiration_cfg);
+            parser.parse(expiration_cfg, CfgMgr::instance().getStagingCfg()->getCfgExpiration());
         }
 
         // The hooks-libraries configuration must be parsed after parsing
@@ -488,7 +473,8 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             HooksLibrariesParser hooks_parser;
             HooksConfig& libraries = srv_config->getHooksConfig();
             hooks_parser.parse(libraries, hooks_libraries);
-            libraries.verifyLibraries(hooks_libraries->getPosition());
+            libraries.verifyLibraries(hooks_libraries->getPosition(),
+                                      multi_threading_enabled);
         }
 
         // D2 client configuration.
@@ -538,8 +524,8 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         if (hosts_databases) {
             parameter_name = "hosts-databases";
             CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();
-            db::DbAccessParser parser;
-            for (auto it : hosts_databases->listValue()) {
+            for (auto const& it : hosts_databases->listValue()) {
+                db::DbAccessParser parser;
                 std::string access_string;
                 parser.parse(access_string, it);
                 cfg_db_access->setHostDbAccessString(access_string);
@@ -578,8 +564,8 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             HostCollection hosts;
             HostReservationsListParser<HostReservationParser4> parser;
             parser.parse(SUBNET_ID_GLOBAL, reservations, hosts);
-            for (auto h = hosts.begin(); h != hosts.end(); ++h) {
-                srv_config->getCfgHosts()->add(*h);
+            for (auto const& h : hosts) {
+                srv_config->getCfgHosts()->add(h);
             }
         }
 
@@ -593,27 +579,22 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
 
         ConstElementPtr compatibility = mutable_cfg->get("compatibility");
         if (compatibility) {
-            for (auto kv : compatibility->mapValue()) {
-                if (kv.first == "lenient-option-parsing") {
-                    CfgMgr::instance().getStagingCfg()->setLenientOptionParsing(
-                        kv.second->boolValue());
-                }
-            }
+            CompatibilityParser parser;
+            parser.parse(compatibility, *CfgMgr::instance().getStagingCfg());
         }
 
         // Make parsers grouping.
-        ConfigPair config_pair;
         const std::map<std::string, ConstElementPtr>& values_map =
             mutable_cfg->mapValue();
 
-        BOOST_FOREACH(config_pair, values_map) {
-
+        for (auto const& config_pair : values_map) {
             parameter_name = config_pair.first;
 
             // These are converted to SimpleParser and are handled already above.
             if ((config_pair.first == "option-def") ||
                 (config_pair.first == "option-data") ||
                 (config_pair.first == "control-socket") ||
+                (config_pair.first == "control-sockets") ||
                 (config_pair.first == "multi-threading") ||
                 (config_pair.first == "dhcp-queue-control") ||
                 (config_pair.first == "host-reservation-identifiers") ||
@@ -659,7 +640,6 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                  (config_pair.first == "server-hostname") ||
                  (config_pair.first == "boot-file-name") ||
                  (config_pair.first == "server-tag") ||
-                 (config_pair.first == "reservation-mode") ||
                  (config_pair.first == "reservations-global") ||
                  (config_pair.first == "reservations-in-subnet") ||
                  (config_pair.first == "reservations-out-of-pool") ||
@@ -678,13 +658,18 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                  (config_pair.first == "ddns-qualifying-suffix") ||
                  (config_pair.first == "ddns-update-on-renew") ||
                  (config_pair.first == "ddns-use-conflict-resolution") ||
+                 (config_pair.first == "ddns-conflict-resolution-mode") ||
+                 (config_pair.first == "ddns-ttl-percent") ||
                  (config_pair.first == "store-extended-info") ||
                  (config_pair.first == "statistic-default-sample-count") ||
                  (config_pair.first == "statistic-default-sample-age") ||
                  (config_pair.first == "early-global-reservations-lookup") ||
                  (config_pair.first == "ip-reservations-unique") ||
                  (config_pair.first == "reservations-lookup-first") ||
-                 (config_pair.first == "parked-packet-limit")) {
+                 (config_pair.first == "parked-packet-limit") ||
+                 (config_pair.first == "allocator") ||
+                 (config_pair.first == "offer-lifetime") ||
+                 (config_pair.first == "stash-agent-options") ) {
                 CfgMgr::instance().getStagingCfg()->addConfiguredGlobal(config_pair.first,
                                                                         config_pair.second);
                 continue;
@@ -722,25 +707,125 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         LOG_ERROR(dhcp4_logger, DHCP4_PARSER_FAIL)
                   .arg(parameter_name).arg(ex.what());
         answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, ex.what());
-
-        // An error occurred, so make sure that we restore original data.
-        rollback = true;
     } catch (...) {
         // For things like bad_cast in boost::lexical_cast
         LOG_ERROR(dhcp4_logger, DHCP4_PARSER_EXCEPTION).arg(parameter_name);
-        answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, "undefined configuration"
-                                           " processing error");
-
-        // An error occurred, so make sure that we restore original data.
-        rollback = true;
+        answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, "undefined configuration "
+                                           "processing error");
     }
 
-    if (check_only) {
-        rollback = true;
-        if (!answer) {
-            answer = isc::config::createAnswer(CONTROL_RESULT_SUCCESS,
-            "Configuration seems sane. Control-socket, hook-libraries, and D2 "
-            "configuration were sanity checked, but not applied.");
+    if (!answer) {
+        answer = isc::config::createAnswer(CONTROL_RESULT_SUCCESS, "Configuration seems sane. "
+                                           "Control-socket, hook-libraries, and D2 configuration "
+                                           "were sanity checked, but not applied.");
+    }
+
+    return (answer);
+}
+
+isc::data::ConstElementPtr
+configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
+                     bool check_only, bool extra_checks) {
+    if (!config_set) {
+        ConstElementPtr answer = isc::config::createAnswer(CONTROL_RESULT_ERROR,
+                                                           "Can't parse NULL config");
+        return (answer);
+    }
+
+    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_COMMAND, DHCP4_CONFIG_START)
+        .arg(server.redactConfig(config_set)->str());
+
+    auto answer = processDhcp4Config(config_set);
+
+    int status_code = CONTROL_RESULT_SUCCESS;
+    isc::config::parseAnswer(status_code, answer);
+
+    SrvConfigPtr srv_config;
+
+    if (status_code == CONTROL_RESULT_SUCCESS) {
+        if (check_only) {
+            if (extra_checks) {
+                // Re-open lease and host database with new parameters.
+                try {
+                    // Get the staging configuration.
+                    srv_config = CfgMgr::instance().getStagingCfg();
+
+                    CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
+                    string params = "universe=4 persist=false";
+                    cfg_db->setAppendedParameters(params);
+                    cfg_db->createManagers();
+                } catch (const std::exception& ex) {
+                    answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, ex.what());
+                    status_code = CONTROL_RESULT_ERROR;
+                }
+
+                if (status_code == CONTROL_RESULT_SUCCESS) {
+                    std::ostringstream err;
+                    // Configure DHCP packet queueing
+                    try {
+                        data::ConstElementPtr qc;
+                        qc = CfgMgr::instance().getStagingCfg()->getDHCPQueueControl();
+                        if (IfaceMgr::instance().configureDHCPPacketQueue(AF_INET, qc)) {
+                            LOG_INFO(dhcp4_logger, DHCP4_CONFIG_PACKET_QUEUE)
+                                     .arg(IfaceMgr::instance().getPacketQueue4()->getInfoStr());
+                        }
+
+                    } catch (const std::exception& ex) {
+                        err << "Error setting packet queue controls after server reconfiguration: "
+                            << ex.what();
+                        answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str());
+                        status_code = CONTROL_RESULT_ERROR;
+                    }
+                }
+            }
+        } else {
+            // disable multi-threading (it will be applied by new configuration)
+            // this must be done in order to properly handle MT to ST transition
+            // when 'multi-threading' structure is missing from new config and
+            // to properly drop any task items stored in the thread pool which
+            // might reference some handles to loaded hooks, preventing them
+            // from being unloaded.
+            MultiThreadingMgr::instance().apply(false, 0, 0);
+
+            // Close DHCP sockets and remove any existing timers.
+            IfaceMgr::instance().closeSockets();
+            TimerMgr::instance()->unregisterTimers();
+            server.discardPackets();
+            server.getCBControl()->reset();
+        }
+
+        if (status_code == CONTROL_RESULT_SUCCESS) {
+            string parameter_name;
+            ElementPtr mutable_cfg;
+            try {
+                // Get the staging configuration.
+                srv_config = CfgMgr::instance().getStagingCfg();
+
+                // This is a way to convert ConstElementPtr to ElementPtr.
+                // We need a config that can be edited, because we will insert
+                // default values and will insert derived values as well.
+                mutable_cfg = boost::const_pointer_cast<Element>(config_set);
+
+                ConstElementPtr ifaces_config = mutable_cfg->get("interfaces-config");
+                if (ifaces_config) {
+                    parameter_name = "interfaces-config";
+                    IfacesConfigParser parser(AF_INET, check_only);
+                    CfgIfacePtr cfg_iface = srv_config->getCfgIface();
+                    cfg_iface->reset();
+                    parser.parse(cfg_iface, ifaces_config);
+                }
+            } catch (const isc::Exception& ex) {
+                LOG_ERROR(dhcp4_logger, DHCP4_PARSER_FAIL)
+                          .arg(parameter_name).arg(ex.what());
+                answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, ex.what());
+                status_code = CONTROL_RESULT_ERROR;
+            } catch (...) {
+                // For things like bad_cast in boost::lexical_cast
+                LOG_ERROR(dhcp4_logger, DHCP4_PARSER_EXCEPTION).arg(parameter_name);
+                answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, "undefined configuration"
+                                                   " processing error");
+                status_code = CONTROL_RESULT_ERROR;
+            }
         }
     }
 
@@ -748,12 +833,26 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
     // configuration. This will add created subnets and option values into
     // the server's configuration.
     // This operation should be exception safe but let's make sure.
-    if (!rollback) {
+    if (status_code == CONTROL_RESULT_SUCCESS && !check_only) {
         try {
 
             // Setup the command channel.
             configureCommandChannel();
+        } catch (const isc::Exception& ex) {
+            LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_FAIL).arg(ex.what());
+            answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, ex.what());
+            status_code = CONTROL_RESULT_ERROR;
+        } catch (...) {
+            // For things like bad_cast in boost::lexical_cast
+            LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_EXCEPTION);
+            answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, "undefined configuration"
+                                               " parsing error");
+            status_code = CONTROL_RESULT_ERROR;
+        }
+    }
 
+    if (status_code == CONTROL_RESULT_SUCCESS && (!check_only || extra_checks)) {
+        try {
             // No need to commit interface names as this is handled by the
             // CfgMgr::commit() function.
 
@@ -761,36 +860,51 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             D2ClientConfigPtr cfg;
             cfg = CfgMgr::instance().getStagingCfg()->getD2ClientConfig();
             CfgMgr::instance().setD2ClientConfig(cfg);
-
-            // This occurs last as if it succeeds, there is no easy way to
-            // revert it.  As a result, the failure to commit a subsequent
-            // change causes problems when trying to roll back.
-            HooksManager::prepareUnloadLibraries();
-            static_cast<void>(HooksManager::unloadLibraries());
-            const HooksConfig& libraries =
-                CfgMgr::instance().getStagingCfg()->getHooksConfig();
-            libraries.loadLibraries();
         } catch (const isc::Exception& ex) {
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_FAIL).arg(ex.what());
             answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, ex.what());
-
-            // An error occurred, so make sure to restore the original data.
-            rollback = true;
+            status_code = CONTROL_RESULT_ERROR;
         } catch (...) {
             // For things like bad_cast in boost::lexical_cast
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_EXCEPTION);
             answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, "undefined configuration"
                                                " parsing error");
+            status_code = CONTROL_RESULT_ERROR;
+        }
+    }
 
-            // An error occurred, so make sure to restore the original data.
-            rollback = true;
+    if (status_code == CONTROL_RESULT_SUCCESS && (!check_only || extra_checks)) {
+        try {
+            // This occurs last as if it succeeds, there is no easy way to
+            // revert it.  As a result, the failure to commit a subsequent
+            // change causes problems when trying to roll back.
+            HooksManager::prepareUnloadLibraries();
+            static_cast<void>(HooksManager::unloadLibraries());
+            IOServiceMgr::instance().clearIOServices();
+            const HooksConfig& libraries =
+                CfgMgr::instance().getStagingCfg()->getHooksConfig();
+            bool multi_threading_enabled = true;
+            uint32_t thread_count = 0;
+            uint32_t queue_size = 0;
+            CfgMultiThreading::extract(CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading(),
+                                       multi_threading_enabled, thread_count, queue_size);
+            libraries.loadLibraries(multi_threading_enabled);
+        } catch (const isc::Exception& ex) {
+            LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_FAIL).arg(ex.what());
+            answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, ex.what());
+            status_code = CONTROL_RESULT_ERROR;
+        } catch (...) {
+            // For things like bad_cast in boost::lexical_cast
+            LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_EXCEPTION);
+            answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, "undefined configuration"
+                                               " parsing error");
+            status_code = CONTROL_RESULT_ERROR;
         }
     }
 
     // Moved from the commit block to add the config backend indication.
-    if (!rollback) {
+    if (status_code == CONTROL_RESULT_SUCCESS && (!check_only || extra_checks)) {
         try {
-
             // If there are config backends, fetch and merge into staging config
             server.getCBControl()->databaseConfigFetch(srv_config,
                                                        CBControlDHCPv4::FetchMode::FETCH_ALL);
@@ -799,9 +913,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             err << "during update from config backend database: " << ex.what();
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_FAIL).arg(err.str());
             answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str());
-
-            // An error occurred, so make sure to restore the original data.
-            rollback = true;
+            status_code = CONTROL_RESULT_ERROR;
         } catch (...) {
             // For things like bad_cast in boost::lexical_cast
             std::ostringstream err;
@@ -809,17 +921,34 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                 << "undefined configuration parsing error";
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_FAIL).arg(err.str());
             answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str());
-
-            // An error occurred, so make sure to restore the original data.
-            rollback = true;
+            status_code = CONTROL_RESULT_ERROR;
         }
     }
 
     // Rollback changes as the configuration parsing failed.
-    if (rollback) {
+    if (check_only || status_code != CONTROL_RESULT_SUCCESS) {
         // Revert to original configuration of runtime option definitions
         // in the libdhcp++.
         LibDHCP::revertRuntimeOptionDefs();
+
+        if (status_code == CONTROL_RESULT_SUCCESS && extra_checks) {
+            auto notify_libraries = ControlledDhcpv4Srv::finishConfigHookLibraries(config_set);
+            if (notify_libraries) {
+                return (notify_libraries);
+            }
+
+            /// Let postponed hook initializations run.
+            try {
+                // Handle events registered by hooks using external IOService objects.
+                IOServiceMgr::instance().pollIOServices();
+            } catch (const std::exception& ex) {
+                std::ostringstream err;
+                err << "Error initializing hooks: "
+                    << ex.what();
+                return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
+            }
+        }
+
         return (answer);
     }
 
@@ -827,8 +956,15 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         .arg(CfgMgr::instance().getStagingCfg()->
              getConfigSummary(SrvConfig::CFGSEL_ALL4));
 
+    // Also calculate SHA256 hash of the config that was just set and
+    // append it to the response.
+    ConstElementPtr config = CfgMgr::instance().getStagingCfg()->toElement();
+    string hash = BaseCommandMgr::getHash(config);
+    ElementPtr hash_map = Element::createMap();
+    hash_map->set("hash", Element::create(hash));
+
     // Everything was fine. Configuration is successful.
-    answer = isc::config::createAnswer(CONTROL_RESULT_SUCCESS, "Configuration successful.");
+    answer = isc::config::createAnswer(CONTROL_RESULT_SUCCESS, "Configuration successful.", hash_map);
     return (answer);
 }
 

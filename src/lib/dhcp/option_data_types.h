@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,7 +11,7 @@
 #include <dhcp/opaque_data_tuple.h>
 #include <dhcp/option.h>
 #include <exceptions/exceptions.h>
-#include <util/io_utilities.h>
+#include <util/io.h>
 
 #include <stdint.h>
 #include <utility>
@@ -35,32 +35,35 @@ public:
 
 /// @brief Data types of DHCP option fields.
 ///
-/// @warning The order of data types matters: OPT_UNKNOWN_TYPE
-/// must always be the last position. Also, OPT_RECORD_TYPE
-/// must be at last but one position. This is because some
-/// functions perform sanity checks on data type values using
-/// '>' operators, assuming that all values beyond the
-/// OPT_RECORD_TYPE are invalid.
-enum OptionDataType {
-    OPT_EMPTY_TYPE,
-    OPT_BINARY_TYPE,
-    OPT_BOOLEAN_TYPE,
-    OPT_INT8_TYPE,
-    OPT_INT16_TYPE,
-    OPT_INT32_TYPE,
-    OPT_UINT8_TYPE,
-    OPT_UINT16_TYPE,
-    OPT_UINT32_TYPE,
-    OPT_ANY_ADDRESS_TYPE,
-    OPT_IPV4_ADDRESS_TYPE,
-    OPT_IPV6_ADDRESS_TYPE,
-    OPT_IPV6_PREFIX_TYPE,
-    OPT_PSID_TYPE,
-    OPT_STRING_TYPE,
-    OPT_TUPLE_TYPE,
-    OPT_FQDN_TYPE,
-    OPT_RECORD_TYPE,
-    OPT_UNKNOWN_TYPE
+/// @warning Do NOT alter existing values to add (or remove) new types.
+/// These values are stored by config backend.  Altering any existing
+/// values will produce code that is incompatiable with pre-existing data.
+/// Futhermore, the order of data types matters: OPT_UNKNOWN_TYPE
+/// must always be and OPT_RECORD_TYPE must be at second to last.
+/// This is because some functions perform sanity checks on data type
+/// values using '>' operators, assuming that all values beyond the
+enum OptionDataType : int {
+    OPT_EMPTY_TYPE          = 0,
+    OPT_BINARY_TYPE         = 1,
+    OPT_BOOLEAN_TYPE        = 2,
+    OPT_INT8_TYPE           = 3,
+    OPT_INT16_TYPE          = 4,
+    OPT_INT32_TYPE          = 5,
+    OPT_UINT8_TYPE          = 6,
+    OPT_UINT16_TYPE         = 7,
+    OPT_UINT32_TYPE         = 8,
+    OPT_ANY_ADDRESS_TYPE    = 9,
+    OPT_IPV4_ADDRESS_TYPE   = 10,
+    OPT_IPV6_ADDRESS_TYPE   = 11,
+    OPT_IPV6_PREFIX_TYPE    = 12,
+    OPT_PSID_TYPE           = 13,
+    OPT_STRING_TYPE         = 14,
+    OPT_TUPLE_TYPE          = 15,
+    OPT_FQDN_TYPE           = 16,
+    // Type to be used only internally. Allows convenient notation of the option config.
+    OPT_INTERNAL_TYPE       = 17,
+    OPT_RECORD_TYPE         = 254,
+    OPT_UNKNOWN_TYPE        = 255
 };
 
 /// @brief Parameters being used to make up an option definition.
@@ -400,7 +403,6 @@ public:
     /// @param tuple reference of the tuple to read into
     /// @throw isc::dhcp::BadDataTypeCast when the data being read
     /// is truncated.
-    /// @return tuple being read.
     static void readTuple(const std::vector<uint8_t>& buf,
                           OpaqueDataTuple& tuple);
 
@@ -419,6 +421,16 @@ public:
     /// @param [out] buf output buffer.
     static void writeTuple(const OpaqueDataTuple& tuple,
                            std::vector<uint8_t>& buf);
+
+    /// @brief Returns Length Field Type for a tuple.
+    ///
+    /// Returns Length Field Type for a tuple basing on the given
+    /// Option v4/v6 Universe.
+    ///
+    /// @param u specifies universe (V4 or V6)
+    /// @return By default 1 octet Length Field Type for V4 option
+    /// or 2 octets Length Field Type for V6 option
+    static OpaqueDataTuple::LengthFieldType getTupleLenFieldType(Option::Universe u);
 
     /// @brief Read boolean value from a buffer.
     ///

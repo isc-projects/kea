@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -56,7 +56,7 @@ public:
     /// socket.  In this case, the open() and close() methods are used.
     ///
     /// \param service I/O Service object used to manage the socket.
-    UDPSocket(IOService& service);
+    UDPSocket(const IOServicePtr& service);
 
     /// \brief Destructor
     virtual ~UDPSocket();
@@ -79,7 +79,7 @@ public:
     ///
     /// Indicates that the opening of a UDP socket is synchronous.
     virtual bool isOpenSynchronous() const {
-        return true;
+        return (true);
     }
 
     /// \brief Open Socket
@@ -130,14 +130,14 @@ public:
     ///        processed.
     /// \param offset Unused.
     /// \param expected unused.
-    /// \param outbuff Output buffer.  Data in the staging buffer is be copied
+    /// \param buff Output buffer.  Data in the staging buffer is be copied
     ///        to this output buffer in the call.
     ///
     /// \return Always true
     virtual bool processReceivedData(const void* staging, size_t length,
                                      size_t& cumulative, size_t& offset,
                                      size_t& expected,
-                                     isc::util::OutputBufferPtr& outbuff);
+                                     isc::util::OutputBufferPtr& buff);
 
     /// \brief Cancel I/O On Socket
     virtual void cancel();
@@ -147,6 +147,9 @@ public:
 
 
 private:
+    /// @brief The IO service used to handle events.
+    IOServicePtr io_service_;
+
     // Two variables to hold the socket - a socket and a pointer to it.  This
     // handles the case where a socket is passed to the UDPSocket on
     // construction, or where it is asked to manage its own socket.
@@ -165,24 +168,22 @@ private:
 
 template <typename C>
 UDPSocket<C>::UDPSocket(boost::asio::ip::udp::socket& socket) :
-    socket_ptr_(), socket_(socket), isopen_(true)
-{
+    socket_ptr_(), socket_(socket), isopen_(true) {
 }
 
 // Constructor - create socket on the fly
 
 template <typename C>
-UDPSocket<C>::UDPSocket(IOService& service) :
-    socket_ptr_(new boost::asio::ip::udp::socket(service.get_io_service())),
-    socket_(*socket_ptr_), isopen_(false)
-{
+UDPSocket<C>::UDPSocket(const IOServicePtr& io_service) : io_service_(io_service),
+    socket_ptr_(new boost::asio::ip::udp::socket(io_service_->getInternalIOService())),
+    socket_(*socket_ptr_), isopen_(false) {
 }
 
 // Destructor.
 
 template <typename C>
-UDPSocket<C>::~UDPSocket()
-{
+UDPSocket<C>::~UDPSocket() {
+    close();
 }
 
 // Open the socket.
@@ -225,8 +226,7 @@ UDPSocket<C>::open(const IOEndpoint* endpoint, C&) {
 
 template <typename C> void
 UDPSocket<C>::asyncSend(const void* data, size_t length,
-                        const IOEndpoint* endpoint, C& callback)
-{
+                        const IOEndpoint* endpoint, C& callback) {
     if (isopen_) {
 
         // Upconvert to a UDPEndpoint.  We need to do this because although
@@ -252,8 +252,7 @@ UDPSocket<C>::asyncSend(const void* data, size_t length,
 
 template <typename C> void
 UDPSocket<C>::asyncReceive(void* data, size_t length, size_t offset,
-                           IOEndpoint* endpoint, C& callback)
-{
+                           IOEndpoint* endpoint, C& callback) {
     if (isopen_) {
 
         // Upconvert the endpoint again.
@@ -283,8 +282,7 @@ template <typename C> bool
 UDPSocket<C>::processReceivedData(const void* staging, size_t length,
                                   size_t& cumulative, size_t& offset,
                                   size_t& expected,
-                                  isc::util::OutputBufferPtr& outbuff)
-{
+                                  isc::util::OutputBufferPtr& outbuff) {
     // Set return values to what we should expect.
     cumulative = length;
     expected = length;
@@ -317,7 +315,7 @@ UDPSocket<C>::close() {
     }
 }
 
-} // namespace asiolink
-} // namespace isc
+}  // namespace asiolink
+}  // namespace isc
 
 #endif // UDP_SOCKET_H

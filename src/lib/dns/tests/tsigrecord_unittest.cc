@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -29,6 +29,7 @@ using namespace std;
 using namespace isc::util;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
+using namespace isc::dns::rdata::any;
 using isc::UnitTestUtil;
 using isc::util::unittests::matchWireData;
 
@@ -37,19 +38,24 @@ class TSIGRecordTest : public ::testing::Test {
 protected:
     TSIGRecordTest() :
         test_name("www.example.com"), test_mac(16, 0xda),
-        test_rdata(any::TSIG(TSIGKey::HMACMD5_NAME(), 0x4da8877a,
-                             TSIGContext::DEFAULT_FUDGE,
-                             test_mac.size(), &test_mac[0],
-                             0x2d65, 0, 0, NULL)),
+        test_rdata(TSIG(TSIGKey::HMACMD5_NAME(), 0x4da8877a, TSIGContext::DEFAULT_FUDGE,
+                        test_mac.size(), &test_mac[0], 0x2d65, 0, 0, 0)),
         test_record(test_name, test_rdata),
-        buffer(0)
-    {}
+        buffer(0) {
+    }
+
     const Name test_name;
+
     vector<unsigned char> test_mac;
-    const any::TSIG test_rdata;
+
+    const TSIG test_rdata;
+
     const TSIGRecord test_record;
+
     OutputBuffer buffer;
+
     MessageRenderer renderer;
+
     vector<unsigned char> data;
 };
 

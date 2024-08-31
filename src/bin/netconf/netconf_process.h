@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -42,12 +42,12 @@ public:
     /// as a place to perform any derivation-specific initialization steps
     /// that are inappropriate for the constructor but necessary prior to
     /// launch.
-    virtual void init();
+    void init() override final;
 
     /// @brief Implements the process's event loop.
     ///
     /// @throw DProcessBaseError if an operational error is encountered.
-    virtual void run();
+    void run() override final;
 
     /// @brief Initiates the process's shutdown process.
     ///
@@ -62,8 +62,8 @@ public:
     /// non-zero means failure), and a string explanation of the outcome.
     ///
     /// @throw DProcessBaseError if an operational error is encountered.
-    virtual isc::data::ConstElementPtr
-    shutdown(isc::data::ConstElementPtr args);
+    isc::data::ConstElementPtr
+    shutdown(isc::data::ConstElementPtr args) override final;
 
     /// @brief Processes the given configuration.
     ///
@@ -78,15 +78,13 @@ public:
     /// @return an Element that contains the results of configuration composed
     /// of an integer status value (0 means successful, non-zero means failure),
     /// and a string explanation of the outcome.
-    virtual isc::data::ConstElementPtr
-    configure(isc::data::ConstElementPtr config_set,
-              bool check_only = false);
+    isc::data::ConstElementPtr
+    configure(isc::data::ConstElementPtr config_set, bool check_only = false) override final;
 
     /// @brief Returns a pointer to the configuration manager.
     NetconfCfgMgrPtr getNetconfCfgMgr();
 
 private:
-
     /// @brief Polls all ready handlers and then runs one handler if none
     /// handlers have been executed as a result of polling.
     ///
@@ -95,12 +93,12 @@ private:
 
     /// @brief Netconf agent.
     NetconfAgent agent_;
-};
+};  // NetconfProcess
 
 /// @brief Defines a shared pointer to NetconfProcess.
-typedef boost::shared_ptr<NetconfProcess> NetconfProcessPtr;
+using NetconfProcessPtr = boost::shared_ptr<NetconfProcess>;
 
-}; // namespace isc::netconf
-}; // namespace isc
+}  // namespace netconf
+}  // namespace isc
 
-#endif // NETCONF_PROCESS_H
+#endif  // NETCONF_PROCESS_H

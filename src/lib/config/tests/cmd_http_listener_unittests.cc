@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,7 +14,7 @@
 #include <config/command_mgr.h>
 #include <http/response.h>
 #include <http/response_parser.h>
-#include <http/tests/test_http_client.h>
+#include <http/testutils/test_http_client.h>
 #include <util/multi_threading_mgr.h>
 #include <testutils/gtest_utils.h>
 
@@ -54,7 +54,7 @@ public:
     /// Starts test timer which detects timeouts, deregisters all commands
     /// from CommandMgr, and enables multi-threading mode.
     CmdHttpListenerTest()
-        : listener_(), io_service_(), test_timer_(io_service_),
+        : listener_(), io_service_(new IOService()), test_timer_(io_service_),
           run_io_service_timer_(io_service_), clients_(), num_threads_(),
           num_clients_(), num_in_progress_(0), num_finished_(0), chunk_size_(0),
           pause_cnt_(0) {
@@ -79,6 +79,9 @@ public:
         for (auto const& client : clients_) {
             client->close();
         }
+
+        test_timer_.cancel();
+        io_service_->stopAndPoll();
 
         // Deregisters commands.
         config::CommandMgr::instance().deregisterAll();
@@ -171,7 +174,7 @@ public:
         if (fail_on_timeout) {
             ADD_FAILURE() << "Timeout occurred while running the test!";
         }
-        io_service_.stop();
+        io_service_->stop();
     }
 
     /// @brief Runs IO service with optional timeout.
@@ -191,11 +194,11 @@ public:
         // Loop until the clients are done, an error occurs, or the time runs out.
         size_t num_done = 0;
         while (num_done != request_limit) {
-            // Always call restart() before we call run();
-            io_service_.restart();
+            io_service_->stop();
+            io_service_->restart();
 
             // Run until a client stops the service.
-            io_service_.run();
+            io_service_->run();
 
             // If all the clients are done receiving, the test is done.
             num_done = 0;
@@ -212,8 +215,7 @@ public:
     /// @param response_str a string containing the whole HTTP
     /// response received.
     ///
-    /// @return An HttpResponse constructed from by parsing the
-    /// response string.
+    /// @return An HttpResponse constructed by parsing the response string.
     HttpResponsePtr parseResponse(const std::string response_str) {
         HttpResponsePtr hr(new HttpResponse());
         HttpResponseParser parser(*hr);
@@ -401,7 +403,7 @@ public:
 
         // Initiate the prescribed number of command requests.
         num_in_progress_ = 0;
-        for (auto i = 0; clients_.size() < num_clients; ++i) {
+        while (clients_.size() < num_clients) {
             ASSERT_NO_THROW_LOG(startThreadCommand());
         }
 
@@ -550,7 +552,7 @@ public:
 
         // Initiate the prescribed number of command requests.
         num_in_progress_ = 0;
-        for (auto i = 0; clients_.size() < num_clients; ++i) {
+        while (clients_.size() < num_clients) {
             ASSERT_NO_THROW_LOG(startThreadCommand());
         }
 
@@ -687,7 +689,7 @@ public:
     CmdHttpListenerPtr listener_;
 
     /// @brief IO service used in drive the test and test clients.
-    IOService io_service_;
+    IOServicePtr io_service_;
 
     /// @brief Asynchronous timer service to detect timeouts.
     IntervalTimer test_timer_;

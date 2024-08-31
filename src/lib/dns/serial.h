@@ -1,11 +1,11 @@
-// Copyright (C) 2011-2015,2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef SERIAL_H
-#define SERIAL_H 1
+#define SERIAL_H
 
 #include <stdint.h>
 #include <iostream>

@@ -1,18 +1,23 @@
+.. ischooklib:: libdhcp_legal_log.so
 .. _hooks-legal-log:
 
-``legal_log``: Forensic Logging
-===============================
+``libdhcp_legal_log.so``: Forensic Logging
+==========================================
 
 The Forensic Logging hook library provides
 hooks that record a detailed log of assignments, renewals, releases, and other
 lease events into a set of log files.
 
-Currently this library is only available to ISC customers with a paid support
-contract.
+.. note::
+
+    :ischooklib:`libdhcp_legal_log.so` is available as a premium
+    hook library from ISC. Please visit https://www.isc.org/shop/ to purchase
+    the premium hook libraries, or contact us at https://www.isc.org/contact for
+    more information.
 
 .. note::
 
-   This library may only be loaded by the ``kea-dhcp4`` or ``kea-dhcp6``
+   This library can only be loaded by the :iscman:`kea-dhcp4` or :iscman:`kea-dhcp6`
    process.
 
 In many legal jurisdictions, companies - especially ISPs - must record
@@ -76,14 +81,14 @@ Configuring the Forensic Logging Hooks
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To use this functionality, the hook library must be included in the
-configuration of the desired DHCP server modules. The ``legal_log`` library
+configuration of the desired DHCP server modules. :ischooklib:`libdhcp_legal_log.so`
 can save logs to a text file or to a database (created using
-``kea-admin``; see :ref:`mysql-database-create` and :ref:`pgsql-database-create`).
+:iscman:`kea-admin`; see :ref:`mysql-database-create` and :ref:`pgsql-database-create`).
 The library is installed alongside the Kea libraries in
 ``[kea-install-dir]/var/lib/kea``, where ``kea-install-dir`` is determined
 by the ``--prefix`` option of the configure script; it defaults to
-``/usr/local``. Assuming the default value, ``kea-dhcp4`` can be configured to load
-the ``legal_log`` library like this:
+``/usr/local``. Assuming the default value, :iscman:`kea-dhcp4` can be configured to load
+:ischooklib:`libdhcp_legal_log.so` like this:
 
 .. code-block:: json
 
@@ -101,7 +106,7 @@ the ``legal_log`` library like this:
         }
     }
 
-For ``kea-dhcp6``, the configuration is:
+For :iscman:`kea-dhcp6`, the configuration is:
 
 .. code-block:: json
 
@@ -257,6 +262,7 @@ of these subnets. For example:
         "Dhcp4": {
             "subnet4": [
                 {
+                    "id": 1,
                     "subnet": "192.0.2.0/24",
                     "pools": [
                         {
@@ -284,6 +290,7 @@ logging for an IPv6 subnet:
         "Dhcp6": {
             "subnet6": [
                 {
+                    "id": 1,
                     "subnet": "2001:db8:1::/64",
                     "pools": [
                         {
@@ -366,7 +373,7 @@ or for a release:
 
 In addition to logging lease activity driven by DHCPv4 client traffic,
 the hook library also logs entries for the following lease management control
-channel commands: ``lease4-add``, ``lease4-update``, and ``lease4-del``. These cannot have
+channel commands: :isccmd:`lease4-add`, :isccmd:`lease4-update`, and :isccmd:`lease4-del`. These cannot have
 custom formatting. Each entry is a single string with no embedded end-of-line
 markers, and it will typically have the following form:
 
@@ -425,6 +432,26 @@ Examples:
 
    2018-01-06 01:02:12 CET Administrator deleted a lease for a device identified by: hw-address of 1a:1b:1c:1d:1e:1f
 
+If the High Availability hook library is enabled, the partner periodically sends lease
+commands in a similar format; the only difference is that the issuer of
+the command is "HA partner" instead of "Administrator."
+
+::
+
+   *timestamp* HA partner added ...
+
+or
+
+::
+
+   *timestamp* HA partner updated ...
+
+or
+
+::
+
+   *timestamp* HA partner deleted ...
+
 The ``request-parser-format`` and ``response-parser-format`` options can be used to
 extract and log data from the incoming packet and server response packet,
 respectively. The configured value is an evaluated parsed expression returning a
@@ -473,6 +500,8 @@ Examples:
         "request-parser-format": "ifelse(pkt4.msgtype == 4 or pkt4.msgtype == 7, 'Address: ' + ifelse(option[50].exists, addrtotext(option[50].hex), addrtotext(pkt4.ciaddr)) + ' has been released from a device with hardware address: hwtype=' + substring(hexstring(pkt4.htype, ''), 7, 1) + ' ' + hexstring(pkt4.mac, ':') + ifelse(option[61].exists, ', client-id: ' + hexstring(option[61].hex, ':'), '') + ifelse(pkt4.giaddr == 0.0.0.0, '', ' connected via relay at address: ' + addrtotext(pkt4.giaddr) + ifelse(option[82].option[1].exists, ', circuit-id: ' + hexstring(option[82].option[1].hex, ':'), '') + ifelse(option[82].option[2].exists, ', remote-id: ' + hexstring(option[82].option[2].hex, ':'), '') + ifelse(option[82].option[6].exists, ', subscriber-id: ' + hexstring(option[82].option[6].hex, ':'), '')), '')",
         "response-parser-format": "ifelse(pkt4.msgtype == 5, 'Address: ' + addrtotext(pkt4.yiaddr) + ' has been assigned for ' + uint32totext(option[51].hex) + ' seconds to a device with hardware address: hwtype=' + substring(hexstring(pkt4.htype, ''), 7, 1) + ' ' + hexstring(pkt4.mac, ':') + ifelse(option[61].exists, ', client-id: ' + hexstring(option[61].hex, ':'), '') + ifelse(pkt4.giaddr == 0.0.0.0, '', ' connected via relay at address: ' + addrtotext(pkt4.giaddr) + ifelse(option[82].option[1].exists, ', circuit-id: ' + hexstring(option[82].option[1].hex, ':'), '') + ifelse(option[82].option[2].exists, ', remote-id: ' + hexstring(option[82].option[2].hex, ':'), '') + ifelse(option[82].option[6].exists, ', subscriber-id: ' + hexstring(option[82].option[6].hex, ':'), '')), '')"
     }
+
+Details:
 
 .. raw:: html
 
@@ -544,6 +573,8 @@ Examples:
     {
         "request-parser-format": "ifelse(pkt4.msgtype == 3, 'Address: ' + ifelse(option[50].exists, addrtotext(option[50].hex), addrtotext(pkt4.ciaddr)) + ' has been assigned' + ifelse(option[51].exists, ' for ' + uint32totext(option[51].hex) + ' seconds', '') + ' to a device with hardware address: hwtype=' + substring(hexstring(pkt4.htype, ''), 7, 1) + ' ' + hexstring(pkt4.mac, ':') + ifelse(option[61].exists, ', client-id: ' + hexstring(option[61].hex, ':'), '') + ifelse(pkt4.giaddr == 0.0.0.0, '', ' connected via relay at address: ' + addrtotext(pkt4.giaddr) + ifelse(option[82].option[1].exists, ', circuit-id: ' + hexstring(option[82].option[1].hex, ':'), '') + ifelse(option[82].option[2].exists, ', remote-id: ' + hexstring(option[82].option[2].hex, ':'), '') + ifelse(option[82].option[6].exists, ', subscriber-id: ' + hexstring(option[82].option[6].hex, ':'), '')), ifelse(pkt4.msgtype == 4 or pkt4.msgtype == 7, 'Address: ' + ifelse(option[50].exists, addrtotext(option[50].hex), addrtotext(pkt4.ciaddr)) + ' has been released from a device with hardware address: hwtype=' + substring(hexstring(pkt4.htype, ''), 7, 1) + ' ' + hexstring(pkt4.mac, ':') + ifelse(option[61].exists, ', client-id: ' + hexstring(option[61].hex, ':'), '') + ifelse(pkt4.giaddr == 0.0.0.0, '', ' connected via relay at address: ' + addrtotext(pkt4.giaddr) + ifelse(option[82].option[1].exists, ', circuit-id: ' + hexstring(option[82].option[1].hex, ':'), '') + ifelse(option[82].option[2].exists, ', remote-id: ' + hexstring(option[82].option[2].hex, ':'), '') + ifelse(option[82].option[6].exists, ', subscriber-id: ' + hexstring(option[82].option[6].hex, ':'), '')), ''))"
     }
+
+Details:
 
 .. raw:: html
 
@@ -667,7 +698,7 @@ or for a release:
 
 In addition to logging lease activity driven by DHCPv6 client traffic,
 the hook library also logs entries for the following lease management control channel
-commands: ``lease6-add``, ``lease6-update``, and ``lease6-del``. Each entry is a
+commands: :isccmd:`lease6-add`, :isccmd:`lease6-update`, and :isccmd:`lease6-del`. Each entry is a
 single string with no embedded end-of-line markers, and it will
 typically have the following form:
 
@@ -725,6 +756,26 @@ Examples:
    2018-01-06 01:02:03 PST Administrator deleted the lease for address: 2001:db8::3
 
    2018-01-06 01:02:11 PST Administrator deleted a lease for a device identified by: duid of 1a:1b:1c:1d:1e:1f:20:21:22:23:24
+
+If the High Availability hook library is enabled, the partner periodically sends lease
+commands in a similar format; the only difference is that the issuer of
+the command is "HA partner" instead of "Administrator."
+
+::
+
+   *timestamp* HA partner added ...
+
+or
+
+::
+
+   *timestamp* HA partner updated ...
+
+or
+
+::
+
+   *timestamp* HA partner deleted ...
 
 The ``request-parser-format`` and ``response-parser-format`` options can be used to
 extract and log data from the incoming packet and server response packet,
@@ -803,6 +854,8 @@ Examples:
         "request-parser-format": "ifelse(pkt6.msgtype == 8 or pkt6.msgtype == 9, ifelse(option[3].option[5].exists, 'Address: ' + addrtotext(substring(option[3].option[5].hex, 0, 16)) + ' has been released from a device with DUID: ' + hexstring(option[1].hex, ':') + ifelse(relay6[0].peeraddr == '', '', ' connected via relay at address: ' + addrtotext(relay6[0].peeraddr) + ' for client on link address: ' + addrtotext(relay6[0].linkaddr) + ifelse(relay6[0].option[37].exists, ', remote-id: ' + hexstring(relay6[0].option[37].hex, ':'), '') + ifelse(relay6[0].option[38].exists, ', subscriber-id: ' + hexstring(relay6[0].option[38].hex, ':'), '') + ifelse(relay6[0].option[18].exists, ', connected at location interface-id: ' + hexstring(relay6[0].option[18].hex, ':'), '')), '') + ifelse(option[25].option[26].exists, 'Prefix: ' + addrtotext(substring(option[25].option[26].hex, 9, 16)) + '/' + uint8totext(substring(option[25].option[26].hex, 8, 1)) + ' has been released from a device with DUID: ' + hexstring(option[1].hex, ':') + ifelse(relay6[0].peeraddr == '', '', ' connected via relay at address: ' + addrtotext(relay6[0].peeraddr) + ' for client on link address: ' + addrtotext(relay6[0].linkaddr) + ifelse(relay6[0].option[37].exists, ', remote-id: ' + hexstring(relay6[0].option[37].hex, ':'), '') + ifelse(relay6[0].option[38].exists, ', subscriber-id: ' + hexstring(relay6[0].option[38].hex, ':'), '') + ifelse(relay6[0].option[18].exists, ', connected at location interface-id: ' + hexstring(relay6[0].option[18].hex, ':'), '')), ''), '')",
         "response-parser-format": "ifelse(pkt6.msgtype == 7, ifelse(option[3].option[5].exists and not (substring(option[3].option[5].hex, 20, 4) == 0), 'Address: ' + addrtotext(substring(option[3].option[5].hex, 0, 16)) + ' has been assigned for ' + uint32totext(substring(option[3].option[5].hex, 20, 4)) + ' seconds to a device with DUID: ' + hexstring(option[1].hex, ':') + ifelse(relay6[0].peeraddr == '', '', ' connected via relay at address: ' + addrtotext(relay6[0].peeraddr) + ' for client on link address: ' + addrtotext(relay6[0].linkaddr) + ifelse(relay6[0].option[37].exists, ', remote-id: ' + hexstring(relay6[0].option[37].hex, ':'), '') + ifelse(relay6[0].option[38].exists, ', subscriber-id: ' + hexstring(relay6[0].option[38].hex, ':'), '') + ifelse(relay6[0].option[18].exists, ', connected at location interface-id: ' + hexstring(relay6[0].option[18].hex, ':'), '')), '') + ifelse(option[25].option[26].exists and not (substring(option[25].option[26].hex, 4, 4) == 0), 'Prefix: ' + addrtotext(substring(option[25].option[26].hex, 9, 16)) + '/' + uint8totext(substring(option[25].option[26].hex, 8, 1)) + ' has been assigned for ' + uint32totext(substring(option[25].option[26].hex, 4, 4)) + ' seconds to a device with DUID: ' + hexstring(option[1].hex, ':') + ifelse(relay6[0].peeraddr == '', '', ' connected via relay at address: ' + addrtotext(relay6[0].peeraddr) + ' for client on link address: ' + addrtotext(relay6[0].linkaddr) + ifelse(relay6[0].option[37].exists, ', remote-id: ' + hexstring(relay6[0].option[37].hex, ':'), '') + ifelse(relay6[0].option[38].exists, ', subscriber-id: ' + hexstring(relay6[0].option[38].hex, ':'), '') + ifelse(relay6[0].option[18].exists, ', connected at location interface-id: ' + hexstring(relay6[0].option[18].hex, ':'), '')), ''), '')"
     }
+
+Details:
 
 .. raw:: html
 
@@ -910,6 +963,8 @@ Examples:
     {
         "request-parser-format": "ifelse(pkt6.msgtype == 3 or pkt6.msgtype == 5 or pkt6.msgtype == 6, ifelse(option[3].option[5].exists, 'Address: ' + addrtotext(substring(option[3].option[5].hex, 0, 16)) + ' has been assigned for ' + uint32totext(substring(option[3].option[5].hex, 20, 4)) + ' seconds to a device with DUID: ' + hexstring(option[1].hex, ':') + ifelse(relay6[0].peeraddr == '', '', ' connected via relay at address: ' + addrtotext(relay6[0].peeraddr) + ' for client on link address: ' + addrtotext(relay6[0].linkaddr) + ifelse(relay6[0].option[37].exists, ', remote-id: ' + hexstring(relay6[0].option[37].hex, ':'), '') + ifelse(relay6[0].option[38].exists, ', subscriber-id: ' + hexstring(relay6[0].option[38].hex, ':'), '') + ifelse(relay6[0].option[18].exists, ', connected at location interface-id: ' + hexstring(relay6[0].option[18].hex, ':'), '')), '') + ifelse(option[25].option[26].exists, 'Prefix: ' + addrtotext(substring(option[25].option[26].hex, 9, 16)) + '/' + uint8totext(substring(option[25].option[26].hex, 8, 1)) + ' has been assigned for ' + uint32totext(substring(option[25].option[26].hex, 4, 4)) + ' seconds to a device with DUID: ' + hexstring(option[1].hex, ':') + ifelse(relay6[0].peeraddr == '', '', ' connected via relay at address: ' + addrtotext(relay6[0].peeraddr) + ' for client on link address: ' + addrtotext(relay6[0].linkaddr) + ifelse(relay6[0].option[37].exists, ', remote-id: ' + hexstring(relay6[0].option[37].hex, ':'), '') + ifelse(relay6[0].option[38].exists, ', subscriber-id: ' + hexstring(relay6[0].option[38].hex, ':'), '') + ifelse(relay6[0].option[18].exists, ', connected at location interface-id: ' + hexstring(relay6[0].option[18].hex, ':'), '')), ''), ifelse(pkt6.msgtype == 8 or pkt6.msgtype == 9, ifelse(option[3].option[5].exists, 'Address: ' + addrtotext(substring(option[3].option[5].hex, 0, 16)) + ' has been released from a device with DUID: ' + hexstring(option[1].hex, ':') + ifelse(relay6[0].peeraddr == '', '', ' connected via relay at address: ' + addrtotext(relay6[0].peeraddr) + ' for client on link address: ' + addrtotext(relay6[0].linkaddr) + ifelse(relay6[0].option[37].exists, ', remote-id: ' + hexstring(relay6[0].option[37].hex, ':'), '') + ifelse(relay6[0].option[38].exists, ', subscriber-id: ' + hexstring(relay6[0].option[38].hex, ':'), '') + ifelse(relay6[0].option[18].exists, ', connected at location interface-id: ' + hexstring(relay6[0].option[18].hex, ':'), '')), '') + ifelse(option[25].option[26].exists, 'Prefix: ' + addrtotext(substring(option[25].option[26].hex, 9, 16)) + '/' + uint8totext(substring(option[25].option[26].hex, 8, 1)) + ' has been released from a device with DUID: ' + hexstring(option[1].hex, ':') + ifelse(relay6[0].peeraddr == '', '', ' connected via relay at address: ' + addrtotext(relay6[0].peeraddr) + ' for client on link address: ' + addrtotext(relay6[0].linkaddr) + ifelse(relay6[0].option[37].exists, ', remote-id: ' + hexstring(relay6[0].option[37].hex, ':'), '') + ifelse(relay6[0].option[38].exists, ', subscriber-id: ' + hexstring(relay6[0].option[38].hex, ':'), '') + ifelse(relay6[0].option[18].exists, ', connected at location interface-id: ' + hexstring(relay6[0].option[18].hex, ':'), '')), ''), ''))"
     }
+
+Details:
 
 .. raw:: html
 
@@ -1019,12 +1074,21 @@ to dump the logs table from a MYSQL database:
 Like all the other database-centric features, forensic logging supports database
 connection recovery, which can be enabled by setting the ``on-fail`` parameter.
 If not specified, the ``on-fail`` parameter in forensic logging defaults to
-``serve-retry-continue``;
-this is a change from its behavior in the Lease Commands, Host Commands, and
-Configuration Backend hook libraries, where
+``serve-retry-continue``. This is different than for
+:ischooklib:`libdhcp_lease_cmds.so`, :ischooklib:`libdhcp_host_cmds.so`, and
+:ischooklib:`libdhcp_cb_cmds.so`, where
 ``on-fail`` defaults to ``stop-retry-exit``. In this case, the server continues
 serving clients and does not shut down even if the recovery mechanism fails.
 If ``on-fail`` is set to ``serve-retry-exit``, the server will shut down if
 the connection to the database backend is not restored according to the
 ``max-reconnect-tries`` and ``reconnect-wait-time`` parameters, but it
 continues serving clients while this mechanism is activated.
+
+During server startup, the inability to connect to any of the configured
+backends is considered fatal only if ``retry-on-startup`` is set to ``false``
+(the default). A fatal error is logged and the server exits, based on the idea
+that the configuration should be valid at startup. Exiting to the operating
+system allows nanny scripts to detect the problem.
+If ``retry-on-startup`` is set to ``true``, the server starts reconnection
+attempts even at server startup or on reconfigure events, and honors the
+action specified in the ``on-fail`` parameter.

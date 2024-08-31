@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,8 +16,6 @@
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <exceptions/exceptions.h>
 #include <process/d_cfg_mgr.h>
-
-#include <boost/foreach.hpp>
 
 #include <stdint.h>
 #include <string>
@@ -77,11 +75,13 @@ namespace d2 {
 ///  "interface" : "eth1" ,
 ///  "ip-address" : "192.168.1.33" ,
 ///  "port" : 88 ,
-///  "control-socket":
-///  {
-///    "socket-type": "unix" ,
-///    "socket-name": "/tmp/kea-ddns-ctrl-socket"
-//// },
+///  "control-sockets":
+///  [
+///    {
+///     "socket-type": "unix" ,
+///     "socket-name": "/tmp/kea-ddns-ctrl-socket"
+///    }
+///  ],
 ///  "tsig-keys":
 //// [
 ///    {
@@ -158,10 +158,10 @@ public:
     /// -# ncr_protocol is invalid, currently only NCR_UDP is supported
     /// -# ncr_format is invalid, currently only FMT_JSON is supported
     D2Params(const isc::asiolink::IOAddress& ip_address,
-                   const size_t port,
-                   const size_t dns_server_timeout,
-                   const dhcp_ddns::NameChangeProtocol& ncr_protocol,
-                   const dhcp_ddns::NameChangeFormat& ncr_format);
+             const size_t port,
+             const size_t dns_server_timeout,
+             const dhcp_ddns::NameChangeProtocol& ncr_protocol,
+             const dhcp_ddns::NameChangeFormat& ncr_format);
 
     /// @brief Default constructor
     /// The default constructor creates an instance that has updates disabled.
@@ -172,27 +172,27 @@ public:
 
     /// @brief Return the IP address D2 listens on.
     const isc::asiolink::IOAddress& getIpAddress() const {
-        return(ip_address_);
+        return (ip_address_);
     }
 
     /// @brief Return the TCP/UPD port D2 listens on.
     size_t getPort() const {
-        return(port_);
+        return (port_);
     }
 
     /// @brief Return the DNS server timeout value.
     size_t getDnsServerTimeout() const {
-        return(dns_server_timeout_);
+        return (dns_server_timeout_);
     }
 
     /// @brief Return the socket protocol in use.
     const dhcp_ddns::NameChangeProtocol& getNcrProtocol() const {
-         return(ncr_protocol_);
+         return (ncr_protocol_);
     }
 
     /// @brief Return the expected format of inbound requests (NCRs).
     const dhcp_ddns::NameChangeFormat& getNcrFormat() const {
-        return(ncr_format_);
+        return (ncr_format_);
     }
 
     /// @brief Return summary of the configuration used by D2.
@@ -266,14 +266,14 @@ typedef boost::shared_ptr<D2Params> D2ParamsPtr;
 class TSIGKeyInfo : public isc::data::UserContext, public isc::data::CfgToElement {
 public:
     /// @brief Defines string values for the supported TSIG algorithms
-    //@{
+    /// @{
     static const char* HMAC_MD5_STR;
     static const char* HMAC_SHA1_STR;
     static const char* HMAC_SHA256_STR;
     static const char* HMAC_SHA224_STR;
     static const char* HMAC_SHA384_STR;
     static const char* HMAC_SHA512_STR;
-    //}@
+    /// @}
 
     /// @brief Constructor
     ///
@@ -287,7 +287,7 @@ public:
     /// -# "HMAC-SHA384"
     /// -# "HMAC-SHA512"
     ///
-    /// @param secret  The base-64 encoded secret component for this key.
+    /// @param secret The base-64 encoded secret component for this key.
     /// (A suitable string for use here could be obtained by running the
     /// BIND 9 dnssec-keygen program; the contents of resulting key file
     /// will look similar to:
@@ -301,13 +301,15 @@ public:
     ///   Activate: 20140515143700
     /// @endcode
     /// where the value the "Key:" entry is the secret component of the key.)
+    /// @param secret_file The file name where the secret can be found.
     /// @param digestbits the minimum truncated length in bits
     ///
     /// @throw D2CfgError if values supplied are invalid:
     /// name cannot be blank, algorithm must be a supported value,
     /// secret must be a non-blank, base64 encoded string.
     TSIGKeyInfo(const std::string& name, const std::string& algorithm,
-                const std::string& secret, uint32_t digestbits = 0);
+                const std::string& secret, std::string secret_file = "",
+                uint32_t digestbits = 0);
 
     /// @brief Destructor
     virtual ~TSIGKeyInfo();
@@ -338,6 +340,13 @@ public:
     /// @return returns the secret as a std::string.
     const std::string getSecret() const {
         return (secret_);
+    }
+
+    /// @brief Getter which returns the secret file name.
+    ///
+    /// @return returns the secret file name.
+    const std::string getSecretFile() const {
+        return (secret_file_);
     }
 
     /// @brief Getter which returns the TSIG key used to sign and verify
@@ -391,6 +400,9 @@ private:
 
     /// @brief The base64 encoded string secret value component of this key.
     std::string secret_;
+
+    /// @brief The secret file name (usually empty).
+    std::string secret_file_;
 
     /// @brief The minimum truncated length in bits
     /// (0 means no truncation is allowed and is the default)

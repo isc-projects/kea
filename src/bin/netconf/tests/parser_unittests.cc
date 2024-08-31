@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,14 +12,16 @@
 #include <testutils/gtest_utils.h>
 #include <testutils/io_utils.h>
 #include <testutils/log_utils.h>
+#include <testutils/test_to_element.h>
 #include <testutils/user_context_utils.h>
 
-#include <gtest/gtest.h>
-
 #include <fstream>
-#include <set>
+#include <iostream>
+#include <vector>
 
 #include <boost/algorithm/string.hpp>
+
+#include <gtest/gtest.h>
 
 using namespace isc::data;
 using namespace isc::test;
@@ -36,9 +38,7 @@ namespace test {
 /// @param a first to be compared
 /// @param b second to be compared
 void compareJSON(ConstElementPtr a, ConstElementPtr b) {
-    ASSERT_TRUE(a);
-    ASSERT_TRUE(b);
-    EXPECT_EQ(a->str(), b->str());
+    expectEqWithDiff(a, b);
 }
 
 /// @brief Tests if the input string can be parsed with specific parser
@@ -52,16 +52,16 @@ void compareJSON(ConstElementPtr a, ConstElementPtr b) {
 /// @param txt text to be compared
 /// @param parser_type bison parser type to be instantiated
 /// @param compare whether to compare the output with legacy JSON parser
-void testParser(const std::string& txt, ParserContext::ParserType parser_type,
+void testParser(const string& txt, ParserContext::ParserType parser_type,
     bool compare = true) {
-    SCOPED_TRACE("\n=== tested config ===\n" + txt + "=====================");
+    SCOPED_TRACE("\n* Tested config: \n---\n" + txt + "\n---");
 
     ConstElementPtr test_json;
     ASSERT_NO_THROW_LOG({
             try {
                 ParserContext ctx;
                 test_json = ctx.parseString(txt, parser_type);
-            } catch (const std::exception &e) {
+            } catch (exception const &e) {
                 cout << "EXCEPTION: " << e.what() << endl;
                 throw;
             }
@@ -101,31 +101,31 @@ TEST(ParserTest, nestedLists) {
 
 TEST(ParserTest, listsInMaps) {
     string txt = "{ \"constellations\": { \"orion\": [ \"rigel\", \"betelgeuse\" ], "
-                    "\"cygnus\": [ \"deneb\", \"albireo\"] } }";
+                 "\"cygnus\": [ \"deneb\", \"albireo\"] } }";
     testParser(txt, ParserContext::PARSER_JSON);
 }
 
 TEST(ParserTest, mapsInLists) {
-    string txt = "[ { \"body\": \"earth\", \"gravity\": 1.0 },"
-                 " { \"body\": \"mars\", \"gravity\": 0.376 } ]";
+    string txt = "[ { \"body\": \"earth\", \"gravity\": 1.0 }, "
+                 "{ \"body\": \"mars\", \"gravity\": 0.376 } ]";
     testParser(txt, ParserContext::PARSER_JSON);
 }
 
 TEST(ParserTest, types) {
-    string txt = "{ \"string\": \"foo\","
-                   "\"integer\": 42,"
-                   "\"boolean\": true,"
-                   "\"map\": { \"foo\": \"bar\" },"
-                   "\"list\": [ 1, 2, 3 ],"
-                   "\"null\": null }";
+    string txt = "{ \"string\": \"foo\", "
+                 "\"integer\": 42, "
+                 "\"boolean\": true, "
+                 "\"map\": { \"foo\": \"bar\" }, "
+                 "\"list\": [ 1, 2, 3 ], "
+                 "\"null\": null }";
     testParser(txt, ParserContext::PARSER_JSON);
 }
 
 TEST(ParserTest, keywordJSON) {
-    string txt = "{ \"name\": \"user\","
-                   "\"type\": \"password\","
-                   "\"user\": \"name\","
-                   "\"password\": \"type\" }";
+    string txt = "{ \"name\": \"user\", "
+                 "\"type\": \"password\", "
+                 "\"user\": \"name\", "
+                 "\"password\": \"type\" }";
     testParser(txt, ParserContext::PARSER_JSON);
 }
 
@@ -251,7 +251,6 @@ TEST(ParserTest, keywordSubNetconf) {
         "    }"
         "   ]"
         "}";
-
     // This is only a subset of full config, so we'll parse with PARSER_SUB_NETCONF.
     testParser(txt, ParserContext::PARSER_SUB_NETCONF);
     testParser(txt, ParserContext::PARSER_JSON);
@@ -263,13 +262,13 @@ TEST(ParserTest, bashComments) {
     string txt= "{ \"Netconf\": {"
                 "  \"managed-servers\": {\n"
                 "    \"d2\": {\n"
-                "      \"model\": \"foo\",\n"
-                "      \"control-socket\": {\n"
+                "        \"model\": \"foo\",\n"
+                "        \"control-socket\": {\n"
                 "# this is a comment\n"
-                "\"socket-type\": \"unix\", \n"
+                "            \"socket-type\": \"unix\", \n"
                 "# This socket is mine. I can name it whatever\n"
                 "# I like, ok?\n"
-                "\"socket-name\": \"Hector\" \n"
+                "            \"socket-name\": \"Hector\" \n"
                 "} } } } }";
     testParser(txt, ParserContext::PARSER_NETCONF);
 }
@@ -281,12 +280,11 @@ TEST(ParserTest, cppComments) {
                 "    // Let's try talking to D2. Sadly, it never talks"
                 "    // to us back :( Maybe he doesn't like his name?\n"
                 "    \"d2\": {\n"
-                "      \"model\": \"foo\",\n"
-                "      \"control-socket\": {\n"
-                "\"socket-type\": \"unix\", \n"
-                "\"socket-name\": \"Hector\" \n"
+                "        \"model\": \"foo\",\n"
+                "        \"control-socket\": {\n"
+                "            \"socket-type\": \"unix\", \n"
+                "            \"socket-name\": \"Hector\" \n"
                 "} } } } }";
-
     testParser(txt, ParserContext::PARSER_NETCONF, false);
 }
 
@@ -295,10 +293,10 @@ TEST(ParserTest, bashCommentsInline) {
     string txt= "{ \"Netconf\": {"
                 "  \"managed-servers\": {\n"
                 "    \"d2\": {\n"
-                "      \"model\": \"foo\",\n"
-                "      \"control-socket\": {\n"
-                "\"socket-type\": \"unix\", # Maybe Hector is not really a \n"
-                "\"socket-name\": \"Hector\" # Unix process?\n"
+                "        \"model\": \"foo\",\n"
+                "        \"control-socket\": {\n"
+                "            \"socket-type\": \"unix\", # Maybe Hector is not really a \n"
+                "            \"socket-name\": \"Hector\" # Unix process?\n"
                 "# Oh no! He's a windows one and just pretending!\n"
                 "} } } } }";
     testParser(txt, ParserContext::PARSER_NETCONF, false);
@@ -317,10 +315,10 @@ TEST(ParserTest, multilineComments) {
                 "  /* Ok, forget about it. If Hector doesn't want to talk,\n"
                 "     we won't talk to him either. We now have quiet days. */\n"
                 "  /* \"d2\": {"
-                "  \"model\": \"bar\",\n"
-                "  \"control-socket\": {\n"
-                "  \"socket-type\": \"unix\",\n"
-                "\"socket-name\": \"Hector\"\n"
+                "         \"model\": \"bar\",\n"
+                "         \"control-socket\": {\n"
+                "             \"socket-type\": \"unix\",\n"
+                "             \"socket-name\": \"Hector\"\n"
                 "} }*/ } } }";
     testParser(txt, ParserContext::PARSER_NETCONF, false);
 }
@@ -331,11 +329,22 @@ TEST(ParserTest, embbededComments) {
                 "  \"comment\": \"a comment\","
                 "  \"managed-servers\": {\n"
                 "    \"dhcp4\": {\n"
-                "      \"control-socket\": {\n"
-                "        \"user-context\": { \"comment\": \"indirect\" },\n"
-                "        \"socket-type\": \"stdout\"\n"
+                "        \"control-socket\": {\n"
+                "            \"user-context\": { \"comment\": \"indirect\" },\n"
+                "            \"socket-type\": \"stdout\"\n"
                 "    } } },\n"
                 "  \"user-context\": { \"compatible\": true }\n"
+                "} }";
+    testParser(txt, ParserContext::PARSER_NETCONF, false);
+}
+
+// Test that output_options is an alias of output-options.
+TEST(ParserTest, outputDashOptions) {
+    string txt= "{ \"Netconf\": {"
+                " \"loggers\": [ { "
+                "     \"name\": \"kea-netconf\","
+                "     \"output_options\": [ { \"output\": \"stdout\" } ],"
+                "     \"severity\": \"INFO\" } ]"
                 "} }";
     testParser(txt, ParserContext::PARSER_NETCONF, false);
 }
@@ -348,7 +357,7 @@ TEST(ParserTest, embbededComments) {
 /// to legacy parser (as legacy support for comments is very limited).
 ///
 /// @param fname name of the file to be loaded
-void testFile(const std::string& fname) {
+void testFile(const string& fname) {
     ElementPtr json;
     ElementPtr reference_json;
     ConstElementPtr test_json;
@@ -357,17 +366,17 @@ void testFile(const std::string& fname) {
 
     cout << "Parsing file " << fname << "(" << decommented << ")" << endl;
 
-    EXPECT_NO_THROW(json = Element::fromJSONFile(decommented, true));
+    EXPECT_NO_THROW_LOG(json = Element::fromJSONFile(decommented, true));
     reference_json = moveComments(json);
 
     // remove the temporary file
-    EXPECT_NO_THROW(::remove(decommented.c_str()));
+    EXPECT_NO_THROW_LOG(::remove(decommented.c_str()));
 
-    EXPECT_NO_THROW(
+    EXPECT_NO_THROW_LOG(
     try {
         ParserContext ctx;
         test_json = ctx.parseFile(fname, ParserContext::PARSER_NETCONF);
-    } catch (const std::exception &x) {
+    } catch (exception const &x) {
         cout << "EXCEPTION: " << x.what() << endl;
         throw;
     });
@@ -398,23 +407,13 @@ TEST(ParserTest, file) {
 /// @param txt text to be parsed
 /// @param parser_type type of the parser to be used in the test
 /// @param msg expected content of the exception
-void testError(const std::string& txt,
+void testError(const string& txt,
                ParserContext::ParserType parser_type,
-               const std::string& msg) {
-    SCOPED_TRACE("\n=== tested config ===\n" + txt + "=====================");
+               const string& msg) {
+    SCOPED_TRACE("\n* Tested config: \n---\n" + txt + "\n---");
 
-    try {
-        ParserContext ctx;
-        ConstElementPtr parsed = ctx.parseString(txt, parser_type);
-        FAIL() << "Expected ParseError but nothing was raised (expected: "
-               << msg << ")";
-    }
-    catch (const ParseError& ex) {
-        EXPECT_EQ(msg, ex.what());
-    }
-    catch (...) {
-        FAIL() << "Expected ParseError but something else was raised";
-    }
+    ParserContext ctx;
+    EXPECT_THROW_MSG(ctx.parseString(txt, parser_type), ParseError, msg);
 }
 
 // Verify that error conditions are handled correctly.
@@ -740,7 +739,7 @@ TEST(ParserTest, unicodeEscapes) {
         try {
             ParserContext ctx;
             result = ctx.parseString(json, ParserContext::PARSER_JSON);
-        } catch (const std::exception &x) {
+        } catch (exception const &x) {
             cout << "EXCEPTION: " << x.what() << endl;
             throw;
         });
@@ -758,7 +757,7 @@ TEST(ParserTest, unicodeSlash) {
     try {
         ParserContext ctx;
         result = ctx.parseString(json, ParserContext::PARSER_JSON);
-    } catch (const std::exception &x) {
+    } catch (exception const &x) {
         cout << "EXCEPTION: " << x.what() << endl;
         throw;
     });
@@ -773,7 +772,7 @@ TEST(ParserTest, unicodeSlash) {
 void loadFile(const string& fname, ElementPtr list) {
     ParserContext ctx;
     ElementPtr json;
-    EXPECT_NO_THROW(json = ctx.parseFile(fname, ParserContext::PARSER_NETCONF));
+    EXPECT_NO_THROW_LOG(json = ctx.parseFile(fname, ParserContext::PARSER_NETCONF));
     ASSERT_TRUE(json);
     list->add(json);
 }
@@ -781,7 +780,7 @@ void loadFile(const string& fname, ElementPtr list) {
 // This test checks that all map entries are in the sample file.
 TEST(ParserTest, mapEntries) {
     // Type of keyword set.
-    typedef set<string> KeywordSet;
+    using KeywordSet = set<string>;
 
     // Get keywords from the syntax file (netconf_parser.yy).
     ifstream syntax_file(SYNTAX_FILE);
@@ -830,12 +829,12 @@ TEST(ParserTest, mapEntries) {
         [] (ConstElementPtr json, KeywordSet& set) {
             if (json->getType() == Element::list) {
                 // Handle lists.
-                for (auto elem : json->listValue()) {
+                for (auto const& elem : json->listValue()) {
                     extract(elem, set);
                 }
             } else if (json->getType() == Element::map) {
                 // Handle maps.
-                for (auto elem : json->mapValue()) {
+                for (auto const& elem : json->mapValue()) {
                     static_cast<void>(set.insert(elem.first));
                     // Skip entries with free content.
                     if ((elem.first != "user-context") &&
@@ -860,14 +859,14 @@ TEST(ParserTest, mapEntries) {
 /// @param json the JSON configuration with the duplicate entry.
 void testDuplicate(ConstElementPtr json) {
     string config = json->str();
+    SCOPED_TRACE("\n* Tested config: \n---\n" + json->str() + "\n---");
+
     size_t where = config.find("DDDD");
     ASSERT_NE(string::npos, where);
     string before = config.substr(0, where);
     string after = config.substr(where + 4, string::npos);
     ParserContext ctx;
-    EXPECT_THROW(ctx.parseString(before + after,
-                                 ParserContext::PARSER_NETCONF),
-                 ParseError) << "config: " << config;
+    EXPECT_THROW(ctx.parseString(before + after, ParserContext::PARSER_NETCONF), ParseError);
 }
 
 // This test checks that duplicate entries make parsing to fail.
@@ -877,7 +876,7 @@ TEST(ParserTest, duplicateMapEntries) {
     sample_fname += "/simple-dhcp6.json";
     ParserContext ctx;
     ElementPtr sample_json;
-    EXPECT_NO_THROW(sample_json =
+    EXPECT_NO_THROW_LOG(sample_json =
         ctx.parseFile(sample_fname, ParserContext::PARSER_NETCONF));
     ASSERT_TRUE(sample_json);
 
@@ -886,17 +885,19 @@ TEST(ParserTest, duplicateMapEntries) {
         [] (ElementPtr config, ElementPtr json, size_t& cnt) {
             if (json->getType() == Element::list) {
                 // Handle lists.
-                for (auto elem : json->listValue()) {
+                for (auto const& elem : json->listValue()) {
                     test(config, elem, cnt);
                 }
             } else if (json->getType() == Element::map) {
                 // Handle maps.
-                for (auto elem : json->mapValue()) {
+                for (auto const& elem : json->mapValue()) {
                     // Skip entries with free content.
                     if ((elem.first == "user-context") ||
                         (elem.first == "parameters")) {
                         continue;
                     }
+
+                    SCOPED_TRACE("\n* Tested duplicate element: " + elem.first);
 
                     // Perform tests.
                     string dup = elem.first + "DDDD";
@@ -906,8 +907,8 @@ TEST(ParserTest, duplicateMapEntries) {
                     ++cnt;
 
                     // Recursive call.
-                    ElementPtr mutable_json =
-                        boost::const_pointer_cast<Element>(elem.second);
+                    ElementPtr mutable_json(copy(elem.second, 0));
+                    json->set(elem.first, mutable_json);
                     ASSERT_TRUE(mutable_json);
                     test(config, mutable_json, cnt);
                 }
@@ -915,7 +916,7 @@ TEST(ParserTest, duplicateMapEntries) {
         };
     size_t cnt = 0;
     test(sample_json, sample_json, cnt);
-    cout << "checked " << cnt << " duplicated map entries\n";
+    cout << "Checked " << cnt << " duplicated map entries.\n";
 }
 
 /// @brief Test fixture for trailing commas.
@@ -925,13 +926,13 @@ public:
     ///
     /// @param loc Location of the trailing comma.
     void addLog(const string& loc) {
-        string log = "NETCONF_CONFIG_SYNTAX_WARNING Netconf ";
+        string log = "NETCONF_CONFIG_SYNTAX_WARNING NETCONF ";
         log += "configuration syntax warning: " + loc;
         log += ": Extraneous comma. ";
         log += "A piece of configuration may have been omitted.";
         addString(log);
     }
-};
+};  // TrailingCommasTest
 
 // Test that trailing commas are allowed.
 TEST_F(TrailingCommasTest, tests) {

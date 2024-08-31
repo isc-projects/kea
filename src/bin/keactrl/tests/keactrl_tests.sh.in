@@ -1,13 +1,10 @@
 #!/bin/sh
 
-# Copyright (C) 2014-2021 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-# shellcheck disable=SC1091
-# SC1091: Not following: ... was not specified as input (see shellcheck -x).
 
 # Exit with error if commands exit with non-zero and if undefined variables are
 # used.
@@ -21,13 +18,14 @@ set -eu
 # run_command would be used.
 
 # Include common test library.
+# shellcheck source=src/lib/testutils/dhcp_test_lib.sh.in
 . "@abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh"
 
 # Set location of the keactrl.
 keactrl="@abs_top_builddir@/src/bin/keactrl/keactrl"
 
 # Set the have_netconf flag to know if netconf is available.
-if test -z '@HAVE_SYSREPO_TRUE@'; then
+if test '@HAVE_NETCONF@' = 'yes'; then
     have_netconf=true
 else
     have_netconf=false
@@ -86,13 +84,14 @@ dhcp4_config="{
         },
         \"subnet4\": [
         {
+            \"id\": 1,
             \"subnet\": \"10.0.0.0/24\",
             \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ]
         } ],
         \"loggers\": [
         {
             \"name\": \"kea-dhcp4\",
-            \"output_options\": [
+            \"output-options\": [
                 {
                     \"output\": \"$LOG_FILE\"
                 }
@@ -125,13 +124,14 @@ dhcp6_config="{
         },
         \"subnet6\": [
         {
+            \"id\": 1,
             \"subnet\": \"2001:db8:1::/64\",
             \"pools\": [ { \"pool\": \"2001:db8:1::10-2001:db8:1::100\" } ]
         } ],
         \"loggers\": [
         {
             \"name\": \"kea-dhcp6\",
-            \"output_options\": [
+            \"output-options\": [
                 {
                     \"output\": \"$LOG_FILE\"
                 }
@@ -154,7 +154,7 @@ dhcp_ddns_config="{
         \"loggers\": [
         {
             \"name\": \"kea-dhcp-ddns\",
-            \"output_options\": [
+            \"output-options\": [
                 {
                     \"output\": \"$LOG_FILE\"
                 }
@@ -173,7 +173,7 @@ control_agent_config="{
         \"loggers\": [
         {
             \"name\": \"kea-ctrl-agent\",
-            \"output_options\": [
+            \"output-options\": [
                 {
                     \"output\": \"$LOG_FILE\"
                 }
@@ -190,7 +190,7 @@ netconf_config="{
         \"loggers\": [
         {
             \"name\": \"kea-netconf\",
-            \"output_options\": [
+            \"output-options\": [
                 {
                     \"output\": \"$LOG_FILE\"
                 }

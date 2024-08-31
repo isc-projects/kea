@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -479,26 +479,26 @@ TEST_F(MySqlHostDataSourceTest, globalSubnetId6MultiThreading) {
 }
 
 /// @brief Verifies that IPv4 host reservation with options can have a max value
-/// for  dhcp4_subnet id
+/// for dhcp4_subnet id
 TEST_F(MySqlHostDataSourceTest, maxSubnetId4) {
     testMaxSubnetId4();
 }
 
 /// @brief Verifies that IPv4 host reservation with options can have a max value
-/// for  dhcp4_subnet id
+/// for dhcp4_subnet id
 TEST_F(MySqlHostDataSourceTest, maxSubnetId4MultiThreading) {
     MultiThreadingTest mt(true);
     testMaxSubnetId4();
 }
 
 /// @brief Verifies that IPv6 host reservation with options can have a max value
-/// for  dhcp6_subnet id
+/// for dhcp6_subnet id
 TEST_F(MySqlHostDataSourceTest, maxSubnetId6) {
     testMaxSubnetId6();
 }
 
 /// @brief Verifies that IPv6 host reservation with options can have a max value
-/// for  dhcp6_subnet id
+/// for dhcp6_subnet id
 TEST_F(MySqlHostDataSourceTest, maxSubnetId6MultiThreading) {
     MultiThreadingTest mt(true);
     testMaxSubnetId6();
@@ -1443,6 +1443,32 @@ TEST_F(MySqlHostDataSourceTest, deleteById6OptionsMultiThreading) {
     testDeleteById6Options();
 }
 
+// This test verifies that all reservations can be deleted from database
+// by providing subnet ID and one address.
+TEST_F(MySqlHostDataSourceTest, del2) {
+    testDelete2ForIPv6();
+}
+
+// This test verifies that all reservations can be deleted from database
+// by providing subnet ID and one address.
+TEST_F(MySqlHostDataSourceTest, del2MultiThreading) {
+    MultiThreadingTest mt(true);
+    testDelete2ForIPv6();
+}
+
+// This test verifies that address and PD reservations can be deleted from database
+// by providing subnet ID and the address.
+TEST_F(MySqlHostDataSourceTest, delBoth) {
+    testDelete2ForIPv6();
+}
+
+// This test verifies that address and PD reservations can be deleted from database
+// by providing subnet ID and the address.
+TEST_F(MySqlHostDataSourceTest, delBothMultiThreading) {
+    MultiThreadingTest mt(true);
+    testDelete2ForIPv6();
+}
+
 /// @brief Tests that multiple reservations without IPv4 addresses can be
 /// specified within a subnet.
 TEST_F(MySqlHostDataSourceTest, testMultipleHostsNoAddress4) {
@@ -1465,6 +1491,17 @@ TEST_F(MySqlHostDataSourceTest, testMultipleHosts6) {
 TEST_F(MySqlHostDataSourceTest, testMultipleHosts6MultiThreading) {
     MultiThreadingTest mt(true);
     testMultipleHosts6();
+}
+
+/// @brief Tests that hosts can be updated.
+TEST_F(MySqlHostDataSourceTest, update) {
+    testUpdate();
+}
+
+/// @brief Tests that hosts can be updated.
+TEST_F(MySqlHostDataSourceTest, updateMultiThreading) {
+    MultiThreadingTest mt(true);
+    testUpdate();
 }
 
 /// @brief Test fixture class for validating @c HostMgr using
@@ -1566,6 +1603,18 @@ TEST_F(MySQLHostMgrTest, getAll6BySubnetIP) {
     testGetAll6BySubnetIP(*getCfgHosts(), *getCfgHosts());
 }
 
+// This test verifies that HostMgr returns all reservations for the
+// IPv6 reserved address.
+TEST_F(MySQLHostMgrTest, getAll6ByIP) {
+    testGetAll6ByIP(*getCfgHosts(), *getCfgHosts());
+}
+
+// This test verifies that HostMgr returns all reservations for the
+// IPv6 reserved prefix.
+TEST_F(MySQLHostMgrTest, getAll6ByIpPrefix) {
+    testGetAll6ByIpPrefix(*getCfgHosts(), *getCfgHosts());
+}
+
 // This test verifies that reservations for a particular hostname can be
 // retrieved from the configuration file and a database simultaneously.
 TEST_F(MySQLHostMgrTest, getAllbyHostname) {
@@ -1636,11 +1685,90 @@ TEST_F(MySQLHostMgrTest, get6ByPrefix) {
     testGet6ByPrefix(*getCfgHosts(), HostMgr::instance());
 }
 
+// This test verifies that the reservations can be added to a configuration
+// file and a database.
+TEST_F(MySQLHostMgrTest, add) {
+    testAdd(*getCfgHosts(), HostMgr::instance());
+}
+
+// This test verifies that the reservations can be deleted from a configuration
+// file and a database by subnet ID and address.
+TEST_F(MySQLHostMgrTest, del) {
+    testDeleteByIDAndAddress(*getCfgHosts(), HostMgr::instance());
+}
+
+// This test verifies that the reservation can be deleted from database
+// by providing subnet ID and address, and other reservations in the subnet
+// remain undeleted.
+TEST_F(MySQLHostMgrTest, delOneHost) {
+    testDeleteOneHostByIDAndAddress(HostMgr::instance());
+}
+
+// This test verifies that the IPv4 reservations can be deleted from a
+// configuration file and a database by subnet ID and identifier.
+TEST_F(MySQLHostMgrTest, del4) {
+    testDelete4ByIDAndIdentifier(*getCfgHosts(), HostMgr::instance());
+}
+
+// This test verifies that the IPv6 reservations can be deleted from a
+// configuration file and a database by subnet ID and identifier.
+TEST_F(MySQLHostMgrTest, del6) {
+    testDelete6ByIDAndIdentifier(*getCfgHosts(), HostMgr::instance());
+}
+
 // This test verifies that it is possible to control whether the reserved
 // IP addresses are unique or non unique via the HostMgr.
 TEST_F(MySQLHostMgrTest, setIPReservationsUnique) {
     EXPECT_TRUE(HostMgr::instance().setIPReservationsUnique(true));
     EXPECT_TRUE(HostMgr::instance().setIPReservationsUnique(false));
+}
+
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySQLHostMgrDbLostCallbackTest, testRetryOpenDbLostAndRecoveredCallback) {
+    MultiThreadingTest mt(false);
+    testRetryOpenDbLostAndRecoveredCallback();
+}
+
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySQLHostMgrDbLostCallbackTest, testRetryOpenDbLostAndRecoveredCallbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testRetryOpenDbLostAndRecoveredCallback();
+}
+
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySQLHostMgrDbLostCallbackTest, testRetryOpenDbLostAndFailedCallback) {
+    MultiThreadingTest mt(false);
+    testRetryOpenDbLostAndFailedCallback();
+}
+
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySQLHostMgrDbLostCallbackTest, testRetryOpenDbLostAndFailedCallbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testRetryOpenDbLostAndFailedCallback();
+}
+
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySQLHostMgrDbLostCallbackTest, testRetryOpenDbLostAndRecoveredAfterTimeoutCallback) {
+    MultiThreadingTest mt(false);
+    testRetryOpenDbLostAndRecoveredAfterTimeoutCallback();
+}
+
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySQLHostMgrDbLostCallbackTest, testRetryOpenDbLostAndRecoveredAfterTimeoutCallbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testRetryOpenDbLostAndRecoveredAfterTimeoutCallback();
+}
+
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySQLHostMgrDbLostCallbackTest, testRetryOpenDbLostAndFailedAfterTimeoutCallback) {
+    MultiThreadingTest mt(false);
+    testRetryOpenDbLostAndFailedAfterTimeoutCallback();
+}
+
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySQLHostMgrDbLostCallbackTest, testRetryOpenDbLostAndFailedAfterTimeoutCallbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testRetryOpenDbLostAndFailedAfterTimeoutCallback();
 }
 
 /// @brief Verifies that db lost callback is not invoked on an open failure

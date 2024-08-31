@@ -1,7 +1,8 @@
+.. ischooklib:: libdhcp_lease_cmds.so
 .. _hooks-lease-cmds:
 
-``lease_cmds``: Lease Commands for Easier Lease Management
-==========================================================
+``libdhcp_lease_cmds.so``: Lease Commands for Easier Lease Management
+=====================================================================
 
 Kea allows users to store lease information in several
 backends (memfile, MySQL, and PostgreSQL), and the Lease Commands library provides an
@@ -16,13 +17,15 @@ of the subnet to which it is supposed to belong. The library also
 provides a non-programmatic way to manage user contexts associated with
 leases.
 
-The Lease Commands library is part of the open source code and is
-available to every Kea user.
+.. note::
+
+    :ischooklib:`libdhcp_lease_cmds.so` is part of the open source code and is
+    available to every Kea user.
 
 .. note::
 
-   This library can only be loaded by the ``kea-dhcp4`` or the
-   ``kea-dhcp6`` process.
+   This library can only be loaded by the :iscman:`kea-dhcp4` or the
+   :iscman:`kea-dhcp6` process.
 
 There are many situations where an administrative command may be useful;
 for example, during migration between servers or different vendors, when
@@ -34,66 +37,72 @@ updates and removals.
 
 This library provides the following commands:
 
--  ``lease4-add`` - adds a new IPv4 lease.
+-  :isccmd:`lease4-add` - adds a new IPv4 lease.
 
--  ``lease6-add`` - adds a new IPv6 lease.
+-  :isccmd:`lease6-add` - adds a new IPv6 lease.
 
--  ``lease6-bulk-apply`` - creates, updates, and/or deletes multiple
+-  :isccmd:`lease6-bulk-apply` - creates, updates, and/or deletes multiple
    IPv6 leases in a single transaction.
 
--  ``lease4-get`` - checks whether an IPv4 lease with the specified
+-  :isccmd:`lease4-get` - checks whether an IPv4 lease with the specified
    parameters exists and returns it if it does.
 
--  ``lease6-get`` - checks whether an IPv6 lease with the specified
+-  :isccmd:`lease6-get` - checks whether an IPv6 lease with the specified
    parameters exists and returns it if it does.
 
--  ``lease4-get-all`` - returns all IPv4 leases or all IPv4 leases for
+-  :isccmd:`lease4-get-all` - returns all IPv4 leases or all IPv4 leases for
    the specified subnets.
 
--  ``lease6-get-all`` - returns all IPv6 leases or all IPv6 leases for
+-  :isccmd:`lease6-get-all` - returns all IPv6 leases or all IPv6 leases for
    the specified subnets.
 
--  ``lease4-get-page`` - returns a set ("page") of leases from the list
+-  :isccmd:`lease4-get-page` - returns a set ("page") of leases from the list
    of all IPv4 leases in the database. By iterating through the pages it
    is possible to retrieve all the leases.
 
--  ``lease6-get-page`` - returns a set ("page") of leases from the list
+-  :isccmd:`lease6-get-page` - returns a set ("page") of leases from the list
    of all IPv6 leases in the database. By iterating through the pages it
    is possible to retrieve all the leases.
 
--  ``lease4-get-by-hw-address`` - returns all IPv4 leases with the specified
+-  :isccmd:`lease4-get-by-hw-address` - returns all IPv4 leases with the specified
    hardware address.
 
--  ``lease4-get-by-client-id`` - returns all IPv4 leases with the specified
+-  :isccmd:`lease4-get-by-client-id` - returns all IPv4 leases with the specified
    ``client-id``.
 
--  ``lease6-get-by-duid`` - returns all IPv6 leases with the specified DUID.
+-  :isccmd:`lease6-get-by-duid` - returns all IPv6 leases with the specified DUID.
 
--  ``lease4-get-by-hostname`` - returns all IPv4 leases with the specified
+-  :isccmd:`lease4-get-by-hostname` - returns all IPv4 leases with the specified
    hostname.
 
--  ``lease6-get-by-hostname`` - returns all IPv6 leases with the specified
+-  :isccmd:`lease6-get-by-hostname` - returns all IPv6 leases with the specified
    hostname.
 
--  ``lease4-del`` - deletes an IPv4 lease with the specified parameters.
+-  :isccmd:`lease4-del` - deletes an IPv4 lease with the specified parameters.
 
--  ``lease6-del`` - deletes an IPv6 lease with the specified parameters.
+-  :isccmd:`lease6-del` - deletes an IPv6 lease with the specified parameters.
 
--  ``lease4-update`` - updates an IPv4 lease.
+-  :isccmd:`lease4-update` - updates (replaces) an existing IPv4 lease.
 
--  ``lease6-update`` - updates an IPv6 lease.
+-  :isccmd:`lease6-update` - updates (replaces) an existing IPv6 lease.
 
--  ``lease4-wipe`` - removes all leases from a specific IPv4 subnet or
-   from all subnets.
+-  :isccmd:`lease4-wipe` - removes all leases from a specific IPv4 subnet or
+   from all subnets. This command is deprecated and it will be removed
+   in the future.
 
--  ``lease6-wipe`` - removes all leases from a specific IPv6 subnet or
-   from all subnets.
+-  :isccmd:`lease6-wipe` - removes all leases from a specific IPv6 subnet or
+   from all subnets. This command is deprecated and it will be removed
+   in the future.
 
--  ``lease4-resend-ddns`` - resends a request to update DNS entries for
+-  :isccmd:`lease4-resend-ddns` - resends a request to update DNS entries for
    an existing lease.
 
--  ``lease6-resend-ddns`` - resends a request to update DNS entries for
+-  :isccmd:`lease6-resend-ddns` - resends a request to update DNS entries for
    an existing lease.
+
+-  :isccmd:`lease4-write` - writes the IPv4 memfile lease database into a file.
+
+-  :isccmd:`lease6-write` - writes the IPv6 memfile lease database into a file.
 
 All commands use JSON syntax and can be issued either using the control
 channel (see :ref:`ctrl-channel`) or Control Agent (see
@@ -109,22 +118,25 @@ servers.
        "hooks-libraries": [
            {
                "library": "/path/libdhcp_lease_cmds.so"
-           }
+           },
            ...
        ]
    }
 
+.. isccmd:: lease4-add
 .. _command-lease4-add:
 
+.. isccmd:: lease6-add
 .. _command-lease6-add:
 
 The ``lease4-add``, ``lease6-add`` Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The ``lease4-add`` and ``lease6-add`` commands allow a new lease
+The :isccmd:`lease4-add` and
+:isccmd:`lease6-add` commands allow a new lease
 to be created. Typically Kea creates a lease when it first sees a new
 device; however, sometimes it may be convenient to create the lease
-manually. The ``lease4-add`` command requires at least two parameters:
+manually. The :isccmd:`lease4-add` command requires at least two parameters:
 an IPv4 address and an identifier, i.e. hardware (MAC) address. A third
 parameter, ``subnet-id``, is optional. If the ``subnet-id`` is not specified or
 the specified value is 0, Kea tries to determine the value by running
@@ -142,9 +154,9 @@ follows:
        }
    }
 
-The ``lease6-add`` command requires three parameters: an IPv6 address,
+The :isccmd:`lease6-add` command requires three parameters: an IPv6 address,
 an IAID value (identity association identifier, a value sent by
-clients), and a DUID. As with ``lease4-add``, the ``subnet-id`` parameter is
+clients), and a DUID. As with :isccmd:`lease4-add`, the ``subnet-id`` parameter is
 optional. If the ``subnet-id`` is not specified or the provided value is 0,
 Kea tries to determine the value by running a subnet-selection
 procedure. If specified, however, its value must match the existing
@@ -162,8 +174,8 @@ subnet. For example:
        }
    }
 
-``lease6-add`` can also be used to add leases for IPv6 prefixes. In this
-case there are three additional parameters that must be specified:
+The :isccmd:`lease6-add` command can also be used to add leases for IPv6 prefixes.
+In this case there are three additional parameters that must be specified:
 ``subnet-id``, ``type`` (set to "IA_PD"), and prefix length. The actual
 prefix is set using the ``ip-address`` field. Note that Kea cannot guess
 ``subnet-id`` values for prefixes; they must be specified explicitly. For
@@ -228,8 +240,8 @@ The commands can take several additional optional parameters:
    not used when adding an IPv4 lease.
 
 -  ``state`` - specifies the state of an added lease, which can be 0 for ``default``,
-   1 for ``declined``, and 2 for the ``expired-reclaimed`` state. Any other
-   value causes an error. Using 1 for a ``"IA_PD"`` lease type is
+   1 for ``declined``, 2 for ``expired-reclaimed``, and 3 for the ``released`` state.
+   Any other value causes an error. Using 1 for a ``"IA_PD"`` lease type is
    illegal and will be rejected.
 
 -  ``user-context`` - specifies the user context to be associated with
@@ -273,12 +285,13 @@ Example failure:
    { "result": 1, "text": "missing parameter 'ip-address' (<string>:3:19)" }
 
 
+.. isccmd:: lease6-bulk-apply
 .. _command-lease6-bulk-apply:
 
 The ``lease6-bulk-apply`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The ``lease6-bulk-apply`` was implemented to address
+The :isccmd:`lease6-bulk-apply` was implemented to address
 the performance penalty in High-Availability mode when a single DHCPv6
 transaction resulted in multiple lease updates sent to the partner, if
 multiple address and/or prefix leases were allocated. Consider the case
@@ -287,11 +300,11 @@ prefixes: it may result in the allocation of four leases. In addition,
 DHCPv6 may assign a different address than the one requested by the client during
 the renew or rebind stage, and delete the leases previously used by this client.
 There are six lease changes sent between the HA partners in this case.
-Sending these updates as individual commands, e.g. via ``lease6-update``,
+Sending these updates as individual commands, e.g. via :isccmd:`lease6-update`,
 is highly inefficient and produces unnecessary delays in communication,
 both between the HA partners and in sending the response to the DHCPv6 client.
 
-The ``lease6-bulk-apply`` command deals with this
+The :isccmd:`lease6-bulk-apply` command deals with this
 problem by aggregating all lease changes - both deleted leases and
 new or updated leases - in a single command.
 The receiving server iterates over the deleted leases and deletes them
@@ -351,7 +364,7 @@ listed in the response. For example:
 
     {
         "result": 0,
-        "text": "Bulk apply of 2 IPv6 leases completed".
+        "text": "Bulk apply of 2 IPv6 leases completed",
         "arguments": {
             "failed-deleted-leases": [
                 {
@@ -384,18 +397,20 @@ lease, e.g. a communication error with the database. The result of 3
 indicates that an attempt to delete the lease was unsuccessful because
 such a lease doesn't exist (an empty result).
 
+.. isccmd:: lease4-get
 .. _command-lease4-get:
 
+.. isccmd:: lease6-get
 .. _command-lease6-get:
 
 The ``lease4-get``, ``lease6-get`` Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``lease4-get`` and ``lease6-get`` can be used to query the lease database
+:isccmd:`lease4-get` and :isccmd:`lease6-get` can be used to query the lease database
 and retrieve existing leases. There are two types of parameters the
-``lease4-get`` command supports: (``address``) or (``subnet-id``,
+:isccmd:`lease4-get` command supports: (``address``) or (``subnet-id``,
 ``identifier-type``, ``identifier``). There are also two types for
-``lease6-get``: (``address``, ``type``) or (``subnet-id``, ``identifier-type``,
+:isccmd:`lease6-get`: (``address``, ``type``) or (``subnet-id``, ``identifier-type``,
 ``identifier``, ``IAID``, ``type``). The first type of query is used when the
 address (either IPv4 or IPv6) is known, but the details of the lease are
 not; one common use case of this type of query is to find out whether a
@@ -403,7 +418,7 @@ given address is being used. The second query uses identifiers;
 currently supported identifiers for leases are: ``"hw-address"`` (IPv4
 only), ``"client-id"`` (IPv4 only), and ``"duid"`` (IPv6 only).
 
-An example ``lease4-get`` command for getting a lease using an IPv4
+An example :isccmd:`lease4-get` command for getting a lease using an IPv4
 address is:
 
 ::
@@ -415,7 +430,7 @@ address is:
        }
    }
 
-An example of the ``lease6-get`` query is:
+An example of the :isccmd:`lease6-get` query is:
 
 ::
 
@@ -459,7 +474,7 @@ for an IPv6 lease is:
 ::
 
    {
-       "command": "lease4-get",
+       "command": "lease6-get",
        "arguments": {
            "identifier-type": "duid",
            "identifier": "08:08:08:08:08:08",
@@ -473,12 +488,13 @@ The ``type`` is an optional parameter. Supported values are: ``IA_NA``
 (non-temporary address) and ``IA_PD`` (IPv6 prefix). If not specified, ``IA_NA``
 is assumed.
 
-``lease4-get`` and ``lease6-get`` return an indication of the result of the operation
+:isccmd:`lease4-get` and :isccmd:`lease6-get` return an indication of the result of the operation
 and lease details, if found. The result has one of the following values: 0
 (success), 1 (error), or 3 (empty). An empty result means that a query
 has been completed properly, but the object (a lease in this case) has
-not been found. The lease parameters, if found, are returned as
-arguments.
+not been found.
+The lease parameters, if found, are returned as arguments.
+``client-id`` is not returned if empty.
 
 An example result returned when the host was found:
 
@@ -516,14 +532,16 @@ An example result returned when the host was found:
    :math:`cltt = expire` when :math:`valid\_lft = 4294967295` and the
    lease backend is MySQL or PostgreSQL.
 
+.. isccmd:: lease4-get-all
 .. _command-lease4-get-all:
 
+.. isccmd:: lease6-get-all
 .. _command-lease6-get-all:
 
 The ``lease4-get-all``, ``lease6-get-all`` Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``lease4-get-all`` and ``lease6-get-all`` are used to retrieve all IPv4
+:isccmd:`lease4-get-all` and :isccmd:`lease6-get-all` are used to retrieve all IPv4
 or IPv6 leases, or all leases for the specified set of subnets. All
 leases are returned when there are no arguments specified with the
 command, as in the following example:
@@ -594,26 +612,30 @@ following format:
 
 .. warning::
 
-   The ``lease4-get-all`` and ``lease6-get-all`` commands may result in
+   The :isccmd:`lease4-get-all` and
+   :isccmd:`lease6-get-all` commands may result in
    very large responses. This may have a negative impact on the DHCP
    server's responsiveness while the response is generated and
    transmitted over the control channel, as the server imposes no
    restriction on the number of leases returned as a result of this
    command.
 
+.. isccmd:: lease4-get-page
 .. _command-lease4-get-page:
 
+.. isccmd:: lease6-get-page
 .. _command-lease6-get-page:
 
 The ``lease4-get-page``, ``lease6-get-page`` Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The ``lease4-get-all`` and ``lease6-get-all`` commands may result in
+The :isccmd:`lease4-get-all` and
+:isccmd:`lease6-get-all` commands may result in
 very large responses; generating such a response may consume CPU
 bandwidth as well as memory. It may even cause the server to become
 unresponsive. In the case of large lease databases it is usually better to
 retrieve leases in chunks, using the paging mechanism.
-``lease4-get-page`` and ``lease6-get-page`` implement a paging mechanism
+:isccmd:`lease4-get-page` and :isccmd:`lease6-get-page` implement a paging mechanism
 for DHCPv4 and DHCPv6 servers, respectively. The following command
 retrieves the first 1024 IPv4 leases:
 
@@ -642,7 +664,7 @@ retrieve the first page:
    }
 
 Similarly, the IPv6 zero address can be specified in the
-``lease6-get-page`` command:
+:isccmd:`lease6-get-page` command:
 
 ::
 
@@ -676,7 +698,7 @@ The response has the following structure:
                {
                    "ip-address": "2001:db8:5::3",
                    ...
-               }
+               },
                {
                    "ip-address": "2001:db8:4::1",
                    ...
@@ -684,8 +706,8 @@ The response has the following structure:
                {
                    "ip-address": "2001:db8:2::7",
                    ...
-               }
-
+               },
+               ...
            ],
            "count": 6
        },
@@ -704,8 +726,8 @@ The ``count`` parameter contains the number of returned leases on the
 page.
 
 To fetch the next page, the client must use the last address of the
-current page as an input to the next ``lease4-get-page`` or
-``lease6-get-page`` command call. In this example it is:
+current page as an input to the next :isccmd:`lease4-get-page` or
+:isccmd:`lease6-get-page` command call. In this example it is:
 
 ::
 
@@ -724,14 +746,19 @@ The client may assume that it has reached the last page when the
 includes the case when the ``count`` is equal to 0, meaning that no
 leases were found.
 
+.. isccmd:: lease4-get-by-hw-address
 .. _command-lease4-get-by-hw-address:
 
+.. isccmd:: lease4-get-by-client-id
 .. _command-lease4-get-by-client-id:
 
+.. isccmd:: lease6-get-by-duid
 .. _command-lease6-get-by-duid:
 
+.. isccmd:: lease4-get-by-hostname
 .. _command-lease4-get-by-hostname:
 
+.. isccmd:: lease6-get-by-hostname
 .. _command-lease6-get-by-hostname:
 
 The ``lease4-get-by-*``, ``lease6-get-by-*`` Commands
@@ -742,7 +769,7 @@ retrieve all existing leases matching a given feature (denoted by the ``*``). Th
 can include a specified hardware address (IPv4
 only), ``client-id`` IPv4 only), ``duid`` (IPv6 only) identifiers, or hostname.
 
-An example ``lease4-get-by-hw-address`` command for getting IPv4 leases
+An example :isccmd:`lease4-get-by-hw-address` command for getting IPv4 leases
 with a given hardware address is:
 
 ::
@@ -754,7 +781,7 @@ with a given hardware address is:
         }
     }
 
-An example of the ``lease6-get-by-hostname`` is:
+An example of the :isccmd:`lease6-get-by-hostname` is:
 
 ::
 
@@ -766,19 +793,21 @@ An example of the ``lease6-get-by-hostname`` is:
     }
 
 The ``by`` key is the only parameter. The returned response contains a detailed
-list of leases in the same format as ``lease4-get-all`` or ``lease6-get-all``. This list can be
+list of leases in the same format as :isccmd:`lease4-get-all` or :isccmd:`lease6-get-all`. This list can be
 empty and is usually not large.
 
+.. isccmd:: lease4-del
 .. _command-lease4-del:
 
+.. isccmd:: lease6-del
 .. _command-lease6-del:
 
 The ``lease4-del``, ``lease6-del`` Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``lease4-del`` and ``lease6-del`` can be used to delete a lease from the lease database.
+:isccmd:`lease4-del` and :isccmd:`lease6-del` can be used to delete a lease from the lease database.
 There are two types of parameters these commands support, similar to the
-``lease4-get``and ``lease6-get`` commands: (``address``) for both v4 and v6, (``subnet-id``,
+:isccmd:`lease4-get` and :isccmd:`lease6-get` commands: (``address``) for both v4 and v6, (``subnet-id``,
 ``identifier-type``, ``identifier``) for v4, and (``subnet-id``, ``identifier-type``,
 ``identifier``, ``type``, ``IAID``) for v6. The first type of query is used when the
 address (either IPv4 or IPv6) is known, but the details of the lease are
@@ -789,7 +818,7 @@ a pair of values: the type and the actual identifier. The currently
 supported identifiers are ``"hw-address"`` (IPv4 only), ``"client-id"`` (IPv4
 only), and ``"duid"`` (IPv6 only).
 
-An example command for deleting a lease by address is:
+An example command for deleting an IPv4 lease by address is:
 
 ::
 
@@ -813,9 +842,25 @@ An example IPv4 lease deletion by ``"hw-address"`` is:
      }
    }
 
+The IPv6 address leases are deleted the same way, but using :isccmd:`lease6-del`. The
+IPv6 prefix leases are also deleted using :isccmd:`lease6-del`, but with some extra
+steps. The prefix should be referenced by its address and prefix length should be ignored.
+For example, to delete 2001:db8:1::/48, the following command can be used. The
+``subnet-id`` parameter is optional.
+
+::
+
+    {
+        "command": "lease6-del",
+        "arguments": {
+            "ip-address": "2001:db8:1::",
+            "type": "IA_PD",
+            "subnet-id": 1
+        }
+    }
 
 Another parameter called ``update-ddns``, when ``true``, instructs the server to
-queue a request to ``kea-dhcp-ddns`` to remove DNS entries after the lease is
+queue a request to :iscman:`kea-dhcp-ddns` to remove DNS entries after the lease is
 successfully deleted if:
 
 - DDNS updating is enabled (i.e. ``"dhcp-ddns":{ "enable-updates": true }``).
@@ -835,23 +880,26 @@ This parameter defaults to ``false``. An example of its use is shown below:
    }
 
 
-``lease4-del`` and ``lease6-del`` return a result that indicates the outcome of the
-operation. It has one of the following values: 0 (success), 1 (error),
-or 3 (empty). The empty result means that a query has been completed
-properly, but the object (a lease, in this case) has not been found.
+Commands :isccmd:`lease4-del` and :isccmd:`lease6-del` return a result that indicates the outcome
+of the operation. It has one of the following values: 0 (success), 1 (error),
+or 3 (empty). The empty result means that a query has been completed properly,
+but the object (a lease, in this case) has not been found.
 
+.. isccmd:: lease4-update
 .. _command-lease4-update:
 
+.. isccmd:: lease6-update
 .. _command-lease6-update:
 
 The ``lease4-update``, ``lease6-update`` Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The ``lease4-update`` and ``lease6-update`` commands can be used to
+The :isccmd:`lease4-update` and
+:isccmd:`lease6-update` commands can be used to
 update existing leases. Since all lease database backends are indexed by
 IP addresses, it is not possible to update an address, but all other
 fields may be altered. If an address needs to be changed, please use
-``lease4-del``/``lease6-del`` followed by ``lease4-add``/``lease6-add``.
+:isccmd:`lease4-del` / :isccmd:`lease6-del` followed by :isccmd:`lease4-add` / :isccmd:`lease6-add`.
 
 The ``subnet-id`` parameter is optional. If not specified, or if the
 specified value is 0, Kea tries to determine its value by running a
@@ -864,7 +912,7 @@ to ``false``, which indicates that the lease is not created if it does not
 exist. In such a case, an error is returned when trying to
 update a non-existing lease. If the ``"force-create"`` parameter is set to
 ``true`` and the updated lease does not exist, the new lease is created as a
-result of receiving the ``lease4-update``/``lease6-update`` command.
+result of receiving the :isccmd:`lease4-update` / :isccmd:`lease6-update` command.
 
 An example of a command to update an IPv4 lease is:
 
@@ -897,21 +945,37 @@ An example of a command to update an IPv6 lease is:
      }
    }
 
+As with other update commands, this command overwrites all the contents of the
+entry. If the lease previously had a resource assigned to it, and the
+:isccmd:`lease4-update` / :isccmd:`lease6-update` command is missing the resource, it is
+deleted from the lease database. If an incremental update of the lease is
+desired, then this can be achieved by issuing a :isccmd:`lease4-get` / :isccmd:`lease6-get`
+command to get the current state of the lease, selecting the lease from the
+response, modifying it to the required outcome, and then issuing the
+:isccmd:`lease4-update` / :isccmd:`lease6-update` command with the resulting lease attached.
+
+.. isccmd:: lease4-wipe
 .. _command-lease4-wipe:
 
+.. isccmd:: lease6-wipe
 .. _command-lease6-wipe:
 
 The ``lease4-wipe``, ``lease6-wipe`` Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``lease4-wipe`` and ``lease6-wipe`` are designed to remove all leases
+.. warning::
+
+   The :isccmd:`lease4-wipe` and :isccmd:`lease6-wipe` commands are deprecated
+   and they will be removed in the future.
+
+:isccmd:`lease4-wipe` and :isccmd:`lease6-wipe` are designed to remove all leases
 associated with a given subnet. This administrative task is expected to
 be used when an existing subnet is being retired. The leases
 are not properly expired; no DNS updates are carried out, no log
 messages are created, and hooks are not called for the leases being
 removed.
 
-An example of ``lease4-wipe`` is:
+An example of :isccmd:`lease4-wipe` is:
 
 ::
 
@@ -922,7 +986,7 @@ An example of ``lease4-wipe`` is:
      }
    }
 
-An example of ``lease6-wipe`` is:
+An example of :isccmd:`lease6-wipe` is:
 
 ::
 
@@ -944,15 +1008,17 @@ not specified, leases from all subnets are wiped.
 
 Note: currently only memfile lease storage supports this command.
 
+.. isccmd:: lease4-resend-ddns
 .. _command-lease4-resend-ddns:
 
+.. isccmd:: lease6-resend-ddns
 .. _command-lease6-resend-ddns:
 
 The ``lease4-resend-ddns``, ``lease6-resend-ddns`` Commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``lease4-resend-ddns`` and ``lease6-resend-ddns`` can be used to generate
-a request to ``kea-dhcp-ddns`` to update the DNS entries for an existing
+:isccmd:`lease4-resend-ddns` and :isccmd:`lease6-resend-ddns` can be used to generate
+a request to :iscman:`kea-dhcp-ddns` to update the DNS entries for an existing
 lease.  The desired lease is selected by a single parameter, ``"ip-address"``.
 For an update request to be generated, DDNS updating must be enabled
 and DNS entries must have already been made (or attempted) for the lease.
@@ -962,7 +1028,7 @@ In other words, all of the following must be true:
 - The lease's hostname must not be empty.
 - At least one of the lease's DNS direction flags (``fqdn_fwd`` or ``fqdn_rev``) must be true.
 
-An example ``lease4-resend-ddns`` command for getting a lease using an IPv4
+An example :isccmd:`lease4-resend-ddns` command for getting a lease using an IPv4
 address is:
 
 ::
@@ -974,7 +1040,7 @@ address is:
        }
    }
 
-An example of the ``lease6-resend-ddns`` query is:
+An example of the :isccmd:`lease6-resend-ddns` query is:
 
 ::
 
@@ -985,14 +1051,14 @@ An example of the ``lease6-resend-ddns`` query is:
      }
    }
 
-``lease4-resend-ddns`` and ``lease6-resend-ddns`` return an indication of the result of the operation.
-It has one of the following values: 0 (success), 1 (error), or 3 (empty). An empty
-result means that a query has been completed properly, but the object (a lease in
-this case) has not been found.
+Commands :isccmd:`lease4-resend-ddns` and :isccmd:`lease6-resend-ddns` return an indication of the
+result of the operation. It has one of the following values: 0 (success), 1 (error),
+or 3 (empty). An empty result means that a query has been completed properly, but the
+object (a lease in this case) has not been found.
 
 A successful result does not mean that DNS has been successfully updated; it
 indicates that a request to update DNS has been successfully created and
-queued for transmission to ``kea-dhcp-ddns``.
+queued for transmission to :iscman:`kea-dhcp-ddns`.
 
 Here's an example of a result returned when the lease was found:
 
@@ -1002,3 +1068,29 @@ Here's an example of a result returned when the lease was found:
      "result": 0,
      "text": "NCR generated for: 2001:db8:1::1, hostname: example.com."
    }
+
+.. isccmd:: lease4-write
+.. _command-lease4-write:
+
+.. isccmd:: lease6-write
+.. _command-lease6-write:
+
+The ``lease4-write``, ``lease6-write`` Commands
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:isccmd:`lease4-write` and :isccmd:`lease6-write` can be used for recovery in emergency
+situations where the memfile lease file is damaged, e.g. removed by
+accident or truncated by a full file system, but the in-memory database
+is still valid. These commands are supported only by the memfile database
+backend and write the lease database into a CSV file. They take the path
+of the file as the ``filename`` argument. If the specified output file
+is the same as the configured memfile one, the backend closes and reopens
+the file in an attempt to synchronize both the files and the in-memory images
+of the lease database. The extension ``.bak`` and the server PID number are added
+to the previous filename: for example, ``.bak14326``.
+
+.. note::
+
+   These commands do not replace the LFC mechanism; they should be used
+   only in exceptional circumstances, such as when recovering after
+   running out of disk space.

@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,12 +6,14 @@
 
 #include <config.h>
 
+#include <gtest/gtest.h>
+
 #include <testutils/gtest_utils.h>
 #include <testutils/io_utils.h>
 #include <testutils/user_context_utils.h>
 #include <yang/adaptor_config.h>
 
-#include <gtest/gtest.h>
+#include <vector>
 
 using namespace std;
 using namespace isc;
@@ -20,7 +22,6 @@ using namespace isc::test;
 using namespace isc::yang;
 
 namespace {
-
 
 /// @brief Fixture class that helps testing AdaptorConfig
 class AdaptorConfigTest : public ::testing::Test {
@@ -31,17 +32,17 @@ public:
 /// @param fname name of the file (expected to be a valid JSON config)
 /// @param v6 - false=v4, true=v6
 /// @param result - JSON converted by a AdaptorConfig::preprocess[4/6]
-void testFile(const std::string& fname, bool v6, ElementPtr& result) {
+void testFile(const string& fname, bool v6, ElementPtr& result) {
     ElementPtr json;
     ElementPtr reference_json;
 
     string decommented = decommentJSONfile(fname);
 
-    EXPECT_NO_THROW(json = Element::fromJSONFile(decommented, true));
+    EXPECT_NO_THROW_LOG(json = Element::fromJSONFile(decommented, true));
     reference_json = moveComments(json);
 
     // remove the temporary file
-    EXPECT_NO_THROW(::remove(decommented.c_str()));
+    EXPECT_NO_THROW_LOG(::remove(decommented.c_str()));
 
     string before = json->str();
     if (v6) {
@@ -57,12 +58,13 @@ void testFile(const std::string& fname, bool v6, ElementPtr& result) {
     result = json;
 }
 
-};
+};  // AdaptorConfigTest
 
 TEST_F(AdaptorConfigTest, loadExamples4) {
     vector<string> configs = {
         "advanced.json",
         "all-keys-netconf.json",
+        "all-options.json",
         "backends.json",
         "classify.json",
         "classify2.json",
@@ -70,23 +72,26 @@ TEST_F(AdaptorConfigTest, loadExamples4) {
         "config-backend.json",
         "dhcpv4-over-dhcpv6.json",
         "global-reservations.json",
-        "ha-load-balancing-primary.json",
+        "ha-load-balancing-server1-mt-with-tls.json",
+        "ha-load-balancing-server2-mt.json",
         "hooks.json",
         "hooks-radius.json",
         "leases-expiration.json",
         "multiple-options.json",
-        //"mysql-reservations.json", commented for new TLS parameters
+        "mysql-reservations.json",
         "pgsql-reservations.json",
         "reservations.json",
         "several-subnets.json",
         "shared-network.json",
         "single-subnet.json",
+        "vendor-specific.json",
+        "vivso.json",
         "with-ddns.json",
     };
 
     ElementPtr x;
 
-    for (int i = 0; i<configs.size(); i++) {
+    for (int i = 0; i < configs.size(); i++) {
         x.reset();
         testFile(string(CFG_EXAMPLES) + "/kea4/" + configs[i], false, x);
         ASSERT_TRUE(x);
@@ -97,6 +102,7 @@ TEST_F(AdaptorConfigTest, loadExamples6) {
     vector<string> configs = {
         "advanced.json",
         "all-keys-netconf.json",
+        "all-options.json",
         "backends.json",
         "classify.json",
         "classify2.json",
@@ -105,12 +111,13 @@ TEST_F(AdaptorConfigTest, loadExamples6) {
         "dhcpv4-over-dhcpv6.json",
         "duid.json",
         "global-reservations.json",
-        "ha-hot-standby.json",
+        "ha-hot-standby-server1-with-tls.json",
+        "ha-hot-standby-server2.json",
         "hooks.json",
         "iPXE.json",
         "leases-expiration.json",
         "multiple-options.json",
-        //"mysql-reservations.json", commented for new TLS parameters
+        "mysql-reservations.json",
         "pgsql-reservations.json",
         "reservations.json",
         "several-subnets.json",
@@ -142,4 +149,4 @@ TEST_F(AdaptorConfigTest, loadExamples6) {
 /// @todo: Check option data using kea6/with-ddns.json
 /// @todo: Check option defs using kea6/dhcpv4-over-dhcpv6.json
 
-}; // end of anonymous namespace
+}  // anonymous namespace

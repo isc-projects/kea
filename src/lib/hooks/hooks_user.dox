@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -875,7 +875,7 @@ configuration derived from the root logger.
 @subsection hooksdgBuild Building the Library
 
 Building the code requires building a sharable library.  This requires
-the the code be compiled as position-independent code (using the
+the code be compiled as position-independent code (using the
 compiler's "-fpic" switch) and linked as a shared library (with the
 linker's "-shared" switch).  The build command also needs to point to
 the Kea include directory and link in the appropriate libraries.
@@ -1620,7 +1620,7 @@ cb4_updated and cb6_updated have no thread safety requirements.
 
 Other hook library entry points are called by the main thread:
  - io service (io context is recent boost versions) is polled by the main
-  thread
+   thread
  - external socket callbacks are executed by the main thread
  - commands including command_process
 

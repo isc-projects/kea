@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,24 +6,24 @@
 
 #include <config.h>
 
-#include <iostream>
-#include <string>
-
-#include <util/buffer.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
 #include <dns/question.h>
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
+#include <util/buffer.h>
+
+#include <iostream>
+#include <string>
+
+using namespace isc::util;
 
 using namespace std;
-using namespace isc::util;
 
 namespace isc {
 namespace dns {
 Question::Question(InputBuffer& buffer) :
-    name_(buffer), rrtype_(0), rrclass_(0)
-{
+    name_(buffer), rrtype_(0), rrclass_(0) {
     // In theory, we could perform this in the member initialization list,
     // and it would be a little bit more efficient.  We don't do this, however,
     // because the initialization ordering is crucial (type must be first)
@@ -45,7 +45,7 @@ Question::toText(bool newline) const {
     return (r);
 }
 
-unsigned int
+uint32_t
 Question::toWire(OutputBuffer& buffer) const {
     name_.toWire(buffer);
     rrtype_.toWire(buffer);
@@ -54,7 +54,7 @@ Question::toWire(OutputBuffer& buffer) const {
     return (1);
 }
 
-unsigned int
+uint32_t
 Question::toWire(AbstractMessageRenderer& renderer) const {
     const size_t pos0 = renderer.getLength();
 

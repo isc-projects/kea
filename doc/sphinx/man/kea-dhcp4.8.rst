@@ -1,5 +1,5 @@
 ..
-   Copyright (C) 2019-2021 Internet Systems Consortium, Inc. ("ISC")
+   Copyright (C) 2019-2024 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
    See the COPYRIGHT file distributed with this work for additional
    information regarding copyright ownership.
 
+.. iscman:: kea-dhcp4
 
 ``kea-dhcp4`` - DHCPv4 server in Kea
 ------------------------------------
@@ -28,10 +29,10 @@ Arguments
 The arguments are as follows:
 
 ``-v``
-   Displays the version.
+   Displays the Kea version.
 
 ``-V``
-   Displays the extended version.
+   Displays the extended Kea version.
 
 ``-W``
    Displays the configuration report.
@@ -48,6 +49,15 @@ The arguments are as follows:
    that not all parameters are completely checked; in particular,
    service and control channel sockets are not opened, and hook
    libraries are not loaded.
+
+``-T config-file``
+   Checks the configuration file and reports the first error, if any.
+   It performs extra checks beyond what -t offers, such as establishing
+   database connections (for the lease backend, host reservations backend,
+   configuration backend, and forensic logging backend), loading hook libraries,
+   parsing hook-library configurations, etc. It does not open UNIX or TCP/UDP sockets,
+   nor does it open or rotate files, as any of these actions could interfere
+   with a running process on the same machine.
 
 ``-p server-port-number``
    Specifies the server port number (1-65535) on which the server listens. This is

@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -61,9 +61,8 @@ CfgHostOperations::clearIdentifierTypes() {
 ElementPtr
 CfgHostOperations::toElement() const {
     ElementPtr result = Element::createList();
-    for (IdentifierTypes::const_iterator id = identifier_types_.begin();
-         id != identifier_types_.end(); ++id) {
-        const std::string& name = Host::getIdentifierName(*id);
+    for (auto const& id : identifier_types_) {
+        const std::string& name = Host::getIdentifierName(id);
         result->add(Element::create(name));
     }
     return (result);

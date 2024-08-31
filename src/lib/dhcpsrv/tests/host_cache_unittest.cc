@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -611,6 +611,10 @@ public:
         return (getCollection());
     }
 
+    ConstHostCollection getAll6(const IOAddress&) const {
+        return (getCollection());
+    }
+
     ConstHostCollection getAllbyHostname(const std::string&) const {
         return (getCollection());
     }
@@ -993,4 +997,4 @@ TEST_F(NegativeCacheTest, get6withNegativeCaching) {
     testGet6();
 }
 
-}; // end of anonymous namespace
+}  // namespace

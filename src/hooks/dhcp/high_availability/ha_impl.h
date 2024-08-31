@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -40,28 +40,42 @@ public:
     /// @throw ConfigError when configuration fails.
     void configure(const data::ConstElementPtr& input_config);
 
-    /// @brief Creates high availability service using current configuration.
+    /// @brief Creates high availability services using current configuration.
     ///
     /// The caller must ensure that the HA configuration is valid before
     /// calling this function.
     ///
-    /// @param io_service IO service object provided by the DHCP server.
     /// @param network_state pointer to the object holding a state of the
     /// DHCP service (enabled/disabled).
     /// @param server_type DHCP server type for which the HA service should
     /// be created.
-    void startService(const asiolink::IOServicePtr& io_service,
-                      const dhcp::NetworkStatePtr& network_state,
-                      const HAServerType& server_type);
+    void startServices(const dhcp::NetworkStatePtr& network_state,
+                       const HAServerType& server_type);
 
     /// @brief Destructor.
     ~HAImpl();
 
-public:
-
-    /// @brief Returns parsed configuration.
+    /// @brief Returns a configuration for the first relationship.
+    ///
+    /// This function is held here for historical reasons and it is currently
+    /// only used in the unit tests for a single-relationship test cases. The
+    /// production code should use the other variant of this function that
+    /// includes a partner name as a parameter. It coveres both the cases when
+    /// there is only one relationship and the hub-and-spoke case.
+    ///
+    /// @return Configuration for the relationship to which the partner belongs.
+    /// @throw InvalidOperation when there are no relationships.
     HAConfigPtr getConfig() const {
-        return (config_);
+        return (config_->get());
+    }
+
+    /// @brief Returns parsed configuration by partner name.
+    ///
+    /// @param partner_name name of a partner belonging to the relationship for
+    /// which the configuration should be retrieved.
+    /// @return Configuration for the relationship to which the partner belongs.
+    HAConfigPtr getConfig(const std::string& partner_name) const {
+        return (config_->get(partner_name));
     }
 
     /// @brief Implementation of the "buffer4_receive" callout.
@@ -85,10 +99,24 @@ public:
     /// @param callout_handle Callout handle provided to the callout.
     void buffer4Receive(hooks::CalloutHandle& callout_handle);
 
+    /// @brief Implementation of the "subnet4_select" callout.
+    ///
+    /// This callout decides whether the received packet should be processed
+    /// by the server when the server has multiple HA relationships. The
+    /// relationship selection is based on the selected subnet.
+    ///
+    /// @param callout_handle Callout handle provided to the callout.
+    void subnet4Select(hooks::CalloutHandle& callout_handle);
+
     /// @brief Implementation of the "leases4_committed" callout.
     ///
     /// @param callout_handle Callout handle provided to the callout.
     void leases4Committed(hooks::CalloutHandle& callout_handle);
+
+    /// @brief Implementation of the "lease4_server_decline" callout.
+    ///
+    /// @param callout_handle Callout handle provided to the callout.
+    void lease4ServerDecline(hooks::CalloutHandle& callout_handle);
 
     /// @brief Implementation of the "buffer6_receive" callout.
     ///
@@ -110,6 +138,16 @@ public:
     ///
     /// @param callout_handle Callout handle provided to the callout.
     void buffer6Receive(hooks::CalloutHandle& callout_handle);
+
+
+    /// @brief Implementation of the "subnet6_select" callout.
+    ///
+    /// This callout decides whether the received packet should be processed
+    /// by the server when the server has multiple HA relationships. The
+    /// relationship selection is based on the selected subnet.
+    ///
+    /// @param callout_handle Callout handle provided to the callout.
+    void subnet6Select(hooks::CalloutHandle& callout_handle);
 
     /// @brief Implementation of the "leases6_committed" callout.
     ///
@@ -169,14 +207,44 @@ public:
     /// @param callout_handle Callout handle provided to the callout.
     void syncCompleteNotifyHandler(hooks::CalloutHandle& callout_handle);
 
+    /// @brief Attempts to get an @c HAService by server name.
+    ///
+    /// The function expects that the arguments contain the "server-name"
+    /// parameter. If the parameter is not specified, a default @c HAService
+    /// name is returned.
+    ///
+    /// @param command_name command name (used for logging purposes only).
+    /// @param args command arguments or null.
+    /// @return Pointer to an @c HAService instance.
+    /// @throw BadValue if the specified server-name doesn't exist or if the
+    /// server-name wasn't specified and more than one @c HAService exists.
+    HAServicePtr getHAServiceByServerName(const std::string& command_name,
+                                          data::ConstElementPtr args) const;
+
+    /// @brief Get the hook I/O service.
+    ///
+    /// @return the hook I/O service.
+    isc::asiolink::IOServicePtr getIOService() {
+        return (io_service_);
+    }
+
+    /// @brief Set the hook I/O service.
+    ///
+    /// @param io_service the hook I/O service.
+    void setIOService(isc::asiolink::IOServicePtr io_service) {
+        io_service_ = io_service;
+    }
+
 protected:
 
+    /// @brief The hook I/O service.
+    isc::asiolink::IOServicePtr io_service_;
+
     /// @brief Holds parsed configuration.
-    HAConfigPtr config_;
+    HAConfigMapperPtr config_;
 
-    /// @brief Pointer to the high availability service (state machine).
-    HAServicePtr service_;
-
+    /// @brief Pointer to the high availability services (state machines).
+    HAServiceMapperPtr services_;
 };
 
 /// @brief Pointer to the High Availability hooks library implementation.

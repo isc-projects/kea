@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <hooks/hooks_manager.h>
 #include <hooks/library_manager.h>
 #include <hooks/library_manager_collection.h>
+#include <boost/range/adaptor/reversed.hpp>
 
 namespace isc {
 namespace hooks {
@@ -41,16 +42,15 @@ LibraryManagerCollection::LibraryManagerCollection(const HookLibsCollection& lib
     : library_info_(libraries) {
 
     // We need to split hook libs into library names and library parameters.
-    for (HookLibsCollection::const_iterator it = libraries.begin();
-         it != libraries.end(); ++it) {
-        library_names_.push_back(it->first);
+    for (auto const& it : libraries) {
+        library_names_.push_back(it.first);
     }
 }
 
 // Load a set of libraries
 
 bool
-LibraryManagerCollection::loadLibraries() {
+LibraryManagerCollection::loadLibraries(bool multi_threading_enabled) {
 
     // There must be no libraries still in memory.
     if (!lib_managers_.empty()) {
@@ -90,7 +90,7 @@ LibraryManagerCollection::loadLibraries() {
         // libraries.  On failure, unload all currently loaded libraries,
         // leaving the object in the state it was in before loadLibraries was
         // called.
-        if (manager->loadLibrary()) {
+        if (manager->loadLibrary(multi_threading_enabled)) {
             lib_managers_.push_back(manager);
         } else {
             static_cast<void>(unloadLibraries());
@@ -122,8 +122,8 @@ bool
 LibraryManagerCollection::prepareUnloadLibraries() {
     bool result = true;
     // Iterate on library managers in reverse order.
-    for (auto lm = lib_managers_.rbegin(); lm != lib_managers_.rend(); ++lm) {
-        result = (*lm)->prepareUnloadLibrary() && result;
+    for (auto const& lm : boost::adaptors::reverse(lib_managers_)) {
+        result = lm->prepareUnloadLibrary() && result;
     }
     return (result);
 }
@@ -136,12 +136,12 @@ LibraryManagerCollection::getLoadedLibraryCount() const {
 
 // Validate the libraries.
 std::vector<std::string>
-LibraryManagerCollection::validateLibraries(
-                          const std::vector<std::string>& libraries) {
+LibraryManagerCollection::validateLibraries(const std::vector<std::string>& libraries,
+                                            bool multi_threading_enabled) {
 
     std::vector<std::string> failures;
     for (size_t i = 0; i < libraries.size(); ++i) {
-        if (!LibraryManager::validateLibrary(libraries[i])) {
+        if (!LibraryManager::validateLibrary(libraries[i], multi_threading_enabled)) {
             failures.push_back(libraries[i]);
         }
     }

@@ -2,7 +2,7 @@
 // It attempts to showcase some of the more advanced features.
 // Topology wise, it's a basic scenario with one IPv6 subnet configured.
 // It is assumed that one subnet (2001:db8:1::/64) is available directly
-// over ethX interface.
+// over eth0 interface.
 //
 // The following features are currently showcased here:
 // 1. Configuration of MAC/hardware address sources in DHCPv6
@@ -14,9 +14,9 @@
 { "Dhcp6":
 
 {
-    // Kea is told to listen on ethX network interface only.
+    // Kea is told to listen on eth0 network interface only.
     "interfaces-config": {
-        "interfaces": [ "ethX" ],
+        "interfaces": [ "eth0" ],
 
         // This makes interfaces to be re-detected at each (re-)configuration.
         // By default it is true.
@@ -26,7 +26,7 @@
     // We need to specify the database used to store leases. As of
     // June 2022, three database backends are supported: MySQL,
     // PostgreSQL and the in-memory database, Memfile.
-    // We will use memfile  because it doesn't require any prior set up.
+    // We will use memfile because it doesn't require any prior set up.
     "lease-database": {
         "type": "memfile",
         "lfc-interval": 3600
@@ -56,12 +56,12 @@
     // is an alias for client-link-addr-option), remote-id, rfc4649 (which is an
     // alias for remote-id, subscriber-id, rfc4580 (which is an alias for
     // subscriber-id) and docsis.
-    //
+
     // Note that the order matters. Methods are attempted one by one in the
     // order specified until hardware address is obtained. If you don't care
     // which method is used, using 'any' is marginally faster than enumerating
     // them all.
-    //
+
     // If mac-sources are not specified, a default value of 'any' is used.
     "mac-sources": [ "client-link-addr-option", "duid", "ipv6-link-local" ],
 
@@ -132,8 +132,8 @@
             "prefix": "2001:db8:abcd::",
             "prefix-len": 48,
             "delegated-len": 64,
-            "excluded-prefix": "2001:db8:abcd:1234::",
-            "excluded-prefix-len": 72,
+            "excluded-prefix": "2001:db8:abcd:0:1234::",
+            "excluded-prefix-len": 80,
 
             // Another user-context for this PD pool. Again, you can put
             // anything you want in there as long as it's valid JSON and
@@ -144,15 +144,16 @@
         }
         ], // end of pools
 
+        "id": 1,
         "subnet": "2001:db8:1::/64",
-        "interface": "ethX",
+        "interface": "eth0",
 
         // Sometimes the relay may use an odd IPv6 address that's not matching
         // the subnet. This is discouraged, but there are valid cases when it
         // makes sense. One case is when the relay has only link-local address
         // and another is when there is a shared subnet scenario.
         "relay": {
-            "ip-address": "3000::1"
+            "ip-addresses": [ "3000::1" ]
         }
     }
     ],
@@ -163,13 +164,13 @@
     "loggers": [
         {
             "name": "kea-dhcp6",
-            "output_options": [
+            "output-options": [
                 {
                     "output": "stdout",
                     // Several additional parameters are possible in addition
                     // to the typical output. Flush determines whether logger
                     // flushes output to a file. Maxsize determines maximum
-                    // filesize before the file is being rotated. maxver
+                    // filesize before the file is rotated. maxver
                     // specifies the maximum number of rotated files being
                     // kept.
                     "flush": true,

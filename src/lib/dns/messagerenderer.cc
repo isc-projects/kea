@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,22 +7,23 @@
 #include <config.h>
 
 #include <exceptions/exceptions.h>
-#include <util/buffer.h>
+#include <exceptions/isc_assert.h>
 #include <dns/name.h>
 #include <dns/name_internal.h>
 #include <dns/labelsequence.h>
 #include <dns/messagerenderer.h>
+#include <util/buffer.h>
 
 #include <boost/array.hpp>
 #include <boost/static_assert.hpp>
-
 #include <limits>
 #include <cassert>
 #include <vector>
 
-using namespace std;
 using namespace isc::util;
 using isc::dns::name::internal::maptolower;
+
+using namespace std;
 
 namespace isc {
 namespace dns {
@@ -38,8 +39,8 @@ namespace {     // hide internal-only names from the public namespaces
 /// the buffer.
 struct OffsetItem {
     OffsetItem(size_t hash, size_t pos, size_t len) :
-        hash_(hash), pos_(pos), len_(len)
-    {}
+        hash_(hash), pos_(pos), len_(len) {
+    }
 
     /// The hash value for the stored name calculated by LabelSequence.getHash.
     /// This will help make name comparison in \c NameCompare more efficient.
@@ -71,8 +72,8 @@ struct NameCompare {
     /// \param hash The hash value for the name.
     NameCompare(const OutputBuffer& buffer, InputBuffer& name_buf,
                 size_t hash) :
-        buffer_(&buffer), name_buf_(&name_buf), hash_(hash)
-    {}
+        buffer_(&buffer), name_buf_(&name_buf), hash_(hash) {
+    }
 
     bool operator()(const OffsetItem& item) const {
         // Trivial inequality check.  If either the hash or the total length
@@ -112,8 +113,7 @@ struct NameCompare {
 
 private:
     static uint16_t nextPosition(const OutputBuffer& buffer,
-                                 uint16_t pos, uint16_t& llen)
-    {
+                                 uint16_t pos, uint16_t& llen) {
         if (llen == 0) {
             size_t i = 0;
 
@@ -127,7 +127,7 @@ private:
                 // on a valid name, which is an assumption for this class.
                 // But we'll abort if a bug could cause an infinite loop.
                 i += 2;
-                assert(i < Name::MAX_WIRE);
+                isc_throw_assert(i < Name::MAX_WIRE);
             }
             llen = buffer[pos];
         } else {
@@ -164,8 +164,7 @@ struct MessageRenderer::MessageRendererImpl {
     /// \brief Constructor
     MessageRendererImpl() :
         msglength_limit_(512), truncated_(false),
-        compress_mode_(MessageRenderer::CASE_INSENSITIVE)
-    {
+        compress_mode_(MessageRenderer::CASE_INSENSITIVE) {
         // Reserve some spaces for hash table items.
         for (size_t i = 0; i < BUCKETS; ++i) {
             table_[i].reserve(RESERVED_ITEMS);
@@ -173,8 +172,7 @@ struct MessageRenderer::MessageRendererImpl {
     }
 
     uint16_t findOffset(const OutputBuffer& buffer, InputBuffer& name_buf,
-                        size_t hash, bool case_sensitive) const
-    {
+                        size_t hash, bool case_sensitive) const {
         // Find a matching entry, if any.  We use some heuristics here: often
         // the same name appears consecutively (like repeating the same owner
         // name for a single RRset), so in case there's a collision in the
@@ -220,11 +218,10 @@ struct MessageRenderer::MessageRendererImpl {
 
 MessageRenderer::MessageRenderer() :
     AbstractMessageRenderer(),
-    impl_(new MessageRendererImpl)
-{}
+    impl_(new MessageRendererImpl()) {
+}
 
 MessageRenderer::~MessageRenderer() {
-    delete impl_;
 }
 
 void
@@ -363,22 +360,21 @@ MessageRenderer::writeName(const Name& name, const bool compress) {
 }
 
 AbstractMessageRenderer::AbstractMessageRenderer() :
-    local_buffer_(0), buffer_(&local_buffer_)
-{
+    local_buffer_(0), buffer_(&local_buffer_) {
 }
 
 void
 AbstractMessageRenderer::setBuffer(OutputBuffer* buffer) {
-    if (buffer != NULL && buffer_->getLength() != 0) {
+    if (buffer && buffer_->getLength() != 0) {
         isc_throw(isc::InvalidParameter,
                   "MessageRenderer buffer cannot be set when in use");
     }
-    if (buffer == NULL && buffer_ == &local_buffer_) {
+    if (!buffer && buffer_ == &local_buffer_) {
         isc_throw(isc::InvalidParameter,
                   "Default MessageRenderer buffer cannot be reset");
     }
 
-    if (buffer == NULL) {
+    if (!buffer) {
         // Reset to the default buffer, then clear other internal resources.
         // The order is important; we need to keep the used buffer intact.
         buffer_ = &local_buffer_;

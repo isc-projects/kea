@@ -7,16 +7,105 @@ Installation
 Packages
 ========
 
-ISC publishes native RPM, deb, and APK packages, along with the tarballs
-with the source code. The packages are available on
-`Cloudsmith <https://cloudsmith.io/~isc/repos/>`_ at
-https://cloudsmith.io/~isc/repos. The native packages can be downloaded
+ISC publishes native RPM, deb, and APK packages, as well as tarballs
+with the source code. The packages are available in
+`ISC's Cloudsmith repositories <https://cloudsmith.io/~isc/repos>`_.
+The native packages can be downloaded
 and installed using the system available in a specific distribution (such
 as dpkg or rpm). The Kea repository can also be added to the system,
 making it easier to install updates. For details, please
-go to https://cloudsmith.io/~isc/repos, choose the repository of
-interest, and then click the ``Set Me Up`` button for detailed
-instructions.
+go to https://cloudsmith.io/~isc/repos, choose the desired Kea version,
+and then click the "Set Me Up" button. For detailed
+instructions, please refer to this `Knowledgebase article <https://kb.isc.org/docs/isc-kea-packages>`_.
+
+ISC maintains two types of repositories: stable and development.
+The stable repositories contain a single stable release (e.g.,
+kea-2-4 or kea-2-6) along with all its maintenance updates.
+Separate repositories were introduced to minimize the risk of
+unintentionally upgrading from one stable release to another.
+
+The development repository, kea-dev, includes current and
+future development releases, which ISC does not recommend
+for production use. Packages in the kea-dev repository are
+subject to cleanup, and older versions may be removed.
+
+Installation From Cloudsmith Packages
+-------------------------------------
+ISC provides Kea packages for Alpine, Debian, Fedora, RHEL, and Ubuntu.
+The recommended method for installing Kea on any of these systems is to
+install the ``isc-kea`` metapackage from the Cloudsmith repository.
+This metapackage is included on all supported distros and
+installs all of the services offered by the Kea software suite.
+
+Specific Kea components
+can be installed individually, with any of the following packages:
+
+- ``isc-kea-dhcp4`` — Kea DHCPv4 server package
+
+- ``isc-kea-dhcp6`` — Kea DHCPv6 server package
+
+- ``isc-kea-dhcp-ddns`` — Kea DHCP DDNS server
+
+- ``isc-kea-ctrl-agent`` — Kea Control Agent for remote configuration
+
+- ``isc-kea-admin`` — Kea database administration tools
+
+- ``isc-kea-hooks`` — Kea open source DHCP hooks
+
+Kea premium hook packages are not included in the ``isc-kea-hooks`` package.
+For ISC customers with access to the premium hooks, those packages have the
+``isc-kea-premium-`` prefix. Users wishing to purchase the premium hooks
+can find them on ISC's website, at https://www.isc.org/shop/.
+
+Once installed, the services can be managed through the distribution's
+service manager. The services are named: :iscman:`kea-dhcp4`, :iscman:`kea-dhcp6`,
+:iscman:`kea-dhcp-ddns`, and :iscman:`kea-ctrl-agent`.
+
+.. note::
+   The real service names on Debian and Ubuntu use slightly different
+   package names, to maintain compatibility with some older scripts. A
+   systemd service alias is used to allow users to refer to them with shorter
+   names. Calling ``systemctl enable`` on these services requires
+   the real service names, which are: ``isc-kea-dhcp4-server``,
+   ``isc-kea-dhcp6-server``, ``isc-kea-dhcp-ddns-server``, and
+   ``isc-kea-ctrl-agent``.
+
+Caveats When Upgrading Kea Packages
+-----------------------------------
+
+To upgrade to a current version of Kea from version 2.3.2 or earlier on Debian
+and Ubuntu systems, run ``apt dist-upgrade`` instead of the usual ``apt upgrade``.
+Once this upgrade has been completed, it is possible to upgrade to later versions
+normally using  ``apt upgrade`` on Debian and Ubuntu systems.
+
+Users may notice differences in the packages distributed in Kea versions prior to
+2.3.2 and those distributed with 2.3.2 and later. As a result of an overhaul of our
+package design with that release, some packages were renamed or removed.
+To ensure that upgrades go as smoothly as possible, pay attention to
+which packages are being removed and installed by the upgrade transaction,
+and ensure that all required packages are reinstalled.
+
+Specifically, there is a possibility for the following packages to be removed
+during the upgrade, depending on which packages were originally installed:
+
+- ``isc-kea-dhcp4``
+
+- ``isc-kea-dhcp6``
+
+- ``isc-kea-dhcp-ddns``
+
+- ``isc-kea-hooks``
+
+To install the entire Kea software suite, simply run
+``apt install isc-kea`` after upgrading, which
+will install all of the relevant subpackages that make up Kea.
+
+This upgrade path issue does not apply to RPM and Alpine systems.
+
+Customers with ISC support contracts who experience difficulties with upgrading
+are invited to open a ticket in their support queue. Other users
+are encouraged to describe their situation on the `kea-users mailing list <https://lists.isc.org/mailman/listinfo/kea-users>`_
+for best-effort support from other list members.
 
 .. _install-hierarchy:
 
@@ -32,7 +121,7 @@ The following is the directory layout of the complete Kea installation.
 
 -  ``lib/`` — libraries.
 
--  ``lib/kea/hooks`` — additional hooks libraries.
+-  ``lib/kea/hooks`` — additional hook libraries.
 
 -  ``sbin/`` — server software and commands used by the system administrator.
 
@@ -77,9 +166,7 @@ the system:
 
 -  log4cplus (at least version 1.0.3) development include headers.
 
--  A C++ compiler (with C++11 support) and standard development headers.
-   The Kea build has been checked with GCC g++ 4.8.5 and some later versions,
-   and Clang 800.0.38 and some later versions.
+-  A C++ compiler (with C++14 support) and standard development headers.
 
 -  The development tools automake, libtool, and pkg-config.
 
@@ -95,10 +182,7 @@ the system:
    or on a machine reachable over a network is required. Note that running
    the unit tests requires a local PostgreSQL server.
 
--  The FreeRADIUS client library is required to connect to a RADIUS server.
-   This is specified using the ``--with-freeradius`` configuration switch.
-
--  Sysrepo v1.4.140 and libyang v1.0.240 are needed to connect to a Sysrepo
+-  Sysrepo v1.4.140 and libyang v1.0.240, needed to connect to a Sysrepo
    datastore. Earlier versions are no longer supported. When compiling from
    sources, the configure switches that can be used are ``--with-libyang`` and
    ``--with-sysrepo`` without any parameters. If these dependencies were
@@ -106,19 +190,21 @@ the system:
 
 -  The MIT Kerberos 5 or Heimdal libraries are needed by Kea DDNS server to sign
    and verify DNS updates using GSS-TSIG. The configuration switch which enables
-   this functionality is ``--with-gssapi`` without any parameters. If these
+   this functionality is ``--with-gssapi``, without any parameters. If these
    dependencies were installed in custom paths, point the switch to them.
 
 -  googletest (version 1.8 or later) is required when using the ``--with-gtest``
    configuration option to build the unit tests.
 
 -  The documentation generation tools `Sphinx <https://www.sphinx-doc.org/>`_,
-   texlive with its extensions, and Doxygen, if using the ``--enable-generate-docs``
-   configuration option to create the documentation. Specifically,
-   with Fedora, python3-sphinx, texlive, and texlive-collection-latexextra are necessary;
-   with Ubuntu, python3-sphinx, python3-sphinx-rtd-theme, and texlive-binaries
-   are needed. If LaTeX packages are missing, Kea skips PDF generation and produces
-   only HTML documents.
+   texlive with its extensions, and Doxygen, if using the
+   ``--enable-generate-docs`` configuration option to create the documentation.
+   Specifically, with Fedora, ``python3-sphinx``, ``python3-sphinx_rtd_theme``,
+   ``texlive``, and ``texlive-collection-latexextra`` are necessary.
+   With Ubuntu, ``python3-sphinx``, ``python3-sphinx-rtd-theme``,
+   ``texlive``, and ``texlive-latex-extra`` are needed.
+   If LaTeX packages are missing, Kea skips PDF generation and produces only
+   HTML documents.
 
 Visit ISC's Knowledgebase at https://kb.isc.org/docs/installing-kea for
 system-specific installation tips.
@@ -140,6 +226,31 @@ Download Tar File
 
 The Kea release tarballs may be downloaded from:
 https://downloads.isc.org/isc/kea/.
+
+Verify The Tar File Signature
+-----------------------------
+
+The tar file with the source code is distributed together with its
+GPG signature. The signature is a file with the same name as the tar
+file appended by the ``.asc`` extension. You can find the signature
+file on our download page, FTP, or CloudSmith.
+
+The signature is created using the ISC code-signing key. The current
+set of ISC code-signing keys is available from the ISC website at
+https://www.isc.org/pgpkey (the `Current Set of ISC Code-Signing Keys
+<https://www.isc.org/docs/isc-keyblock.asc>`_ link).
+
+The signature can be verified using the GnuPGP ``gpg`` tool. The
+following commands import the code-signing keys
+(``isc-keyblock.asc``) and verify the signature:
+
+.. code-block:: console
+
+   $ gpg --import isc-keyblock.asc
+   $ gpg --verify kea-X.Y.Z.tar.gz.asc kea-X.Y.Z.tar.gz
+
+The verification allows users to confirm that the tar file has not
+been tampered with and that it was created by ISC.
 
 Retrieve From Git
 -----------------
@@ -167,8 +278,8 @@ The code can be checked out from
 
 The code checked out from the git repository does not include the
 generated configure script or the Makefile.in files, nor their related build
-files. They can be created by running ``autoreconf`` with the
-``--install`` switch. This will run ``autoconf``, ``aclocal``,
+files. Those can be created by running ``autoreconf`` with the
+``--install`` switch, which will run ``autoconf``, ``aclocal``,
 ``libtoolize``, ``autoheader``, ``automake``, and related commands.
 
 Write access to the Kea repository is only granted to ISC staff.
@@ -224,34 +335,21 @@ options. Some commonly used options are:
    found, Kea searches for OpenSSL. Normally this is not necessary.
 
  - ``--enable-shell``
-   Build the optional ``kea-shell`` tool (more in :ref:`kea-shell`).
+   Build the optional :iscman:`kea-shell` tool (see :ref:`kea-shell`).
    The default is to not build it.
 
  - ``--with-site-packages``
-   Only useful when ``kea-shell`` is enabled, this switch causes the kea-shell
-   Python packages to be installed in the specified directory. This is
-   mostly useful for Debian-related distributions. While most systems store
+   Install the kea-shell Python packages in the specified directory; this 
+   is only useful when :iscman:`kea-shell` is enabled, and is
+   mostly helpful for Debian-related distributions. While most systems store
    Python packages in ``${prefix}/usr/lib/pythonX/site-packages``, Debian
    introduced a separate directory for packages installed from DEB. Such
    Python packages are expected to be installed in
    ``/usr/lib/python3/dist-packages``.
 
  - ``--enable-perfdhcp``
-   Build the optional ``perfdhcp`` DHCP benchmarking tool. The default
+   Build the optional :iscman:`perfdhcp` DHCP benchmarking tool. The default
    is to not build it.
-
- - ``--with-freeradius``
-   Build the optional ``RADIUS`` hook. This option specifies the path to the
-   patched version of the FreeRADIUS client. This feature is available in
-   the subscriber-only version of Kea, and requires the subscription-only RADIUS hook.
-
- - ``--with-freeradius-dictionary``
-   Specify a non-standard location for a FreeRADIUS dictionary file, which
-   contains a list of supported RADIUS attributes. This feature is available in
-   the subscriber-only version of Kea, and requires the subscription-only RADIUS hook.
-
-If the RADIUS options are not available, ensure that the RADIUS hook sources are in
-the ``premium`` directory and rerun ``autoreconf -i``.
 
 .. note::
 
@@ -319,7 +417,7 @@ If ``configure`` fails, it may be due to missing or old dependencies.
 
 When ``configure`` succeeds, it displays a report with the parameters used
 to build the code. This report is saved into the file ``config.report``
-and is also embedded into the executable binaries, e.g., ``kea-dhcp4``.
+and is also embedded into the executable binaries, e.g. :iscman:`kea-dhcp4`.
 
 Build
 -----
@@ -378,7 +476,7 @@ system (the ``build`` system) from the one where Kea runs
 It is outside of the scope of common administrator operations and requires
 some developer skills, but the Developer Guide explains how to do that
 using an x86_64 Linux system to build Kea for a Raspberry Pi box running
-Raspbian: `Kea Cross-Compiling Example
+Raspbian: see this `Kea Cross-Compiling Example
 <https://reports.kea.isc.org/dev_guide/de/d9a/crossCompile.html>`__.
 
 .. _dhcp-install-configure:
@@ -389,7 +487,7 @@ DHCP Database Installation and Configuration
 Kea stores its leases in a lease database. The software has been written
 in a way that makes it possible to choose which database product should
 be used to store the lease information. Kea supports three
-database backends: MySQL, PostgreSQL and memfile. To limit external
+database backends: MySQL, PostgreSQL, and memfile. To limit external
 dependencies, MySQL and PostgreSQL support are disabled by default and only
 memfile is available. Support for the optional external database backend must
 be explicitly included when Kea is built.
@@ -498,8 +596,8 @@ If using systemd, modify its service file
    User=admin
    Group=admin
 
-The most important step is to set the capabilities of the binaries. Refer to `man capabilities` to get
-more information.
+The most important step is to set the capabilities of the binaries. Refer to the operating system man page
+for `capabilities` for more information.
 
 .. code-block:: console
 
@@ -554,13 +652,12 @@ Deprecated Features
 ===================
 
 This section lists significant features that have been or will be removed. We try to
-deprecate features before removing them to signal
+deprecate features before removing them, to signal
 to current users to plan a migration. New users should not rely on deprecated features.
 
-Sysrepo 0.x
------------
+Sysrepo 0.x or 1.x
+------------------
 
-Kea versions 1.9.9 and earlier required Sysrepo 0.7.x to run, when optional support for NETCONF was
-enabled. Kea versions 1.9.10 and later now require Sysrepo 1.4.x and the related libyang 1.x library to
-run. The earlier Sysrepo versions are no longer supported. The latest Sysrepo 2.x version does not
-provide C++ bindings, and as such, is not usable for Kea.
+Kea 2.3.2 introduced support for Sysrepo 2.x. Unfortunately,
+Sysrepo continues to undergo major changes that are backward-incompatible,
+and current Kea versions do not support Sysrepo earlier than versions 2.x.

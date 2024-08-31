@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,10 +7,12 @@
 #include <config.h>
 
 #include <eval/dependency.h>
+#include <eval/evaluate.h>
+#include <eval/eval_log.h>
 #include <dhcpsrv/client_class_def.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
-#include <boost/foreach.hpp>
 
 #include <queue>
 
@@ -47,11 +49,12 @@ ClientClassDef::ClientClassDef(const ClientClassDef& rhs)
       match_expr_(ExpressionPtr()), test_(rhs.test_), required_(rhs.required_),
       depend_on_known_(rhs.depend_on_known_), cfg_option_(new CfgOption()),
       next_server_(rhs.next_server_), sname_(rhs.sname_),
-      filename_(rhs.filename_), valid_(rhs.valid_), preferred_(rhs.preferred_) {
+      filename_(rhs.filename_), valid_(rhs.valid_), preferred_(rhs.preferred_),
+      offer_lft_(rhs.offer_lft_) {
 
     if (rhs.match_expr_) {
         match_expr_.reset(new Expression());
-        *match_expr_ = *(rhs.match_expr_);
+        *match_expr_ = *rhs.match_expr_;
     }
 
     if (rhs.cfg_option_def_) {
@@ -137,6 +140,62 @@ ClientClassDef::setCfgOption(const CfgOptionPtr& cfg_option) {
     cfg_option_ = cfg_option;
 }
 
+void
+ClientClassDef::test(PktPtr pkt, const ExpressionPtr& expr_ptr) {
+    // Evaluate the expression which can return false (no match),
+    // true (match) or raise an exception (error)
+    try {
+        bool status = evaluateBool(*expr_ptr, *pkt);
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_EVAL_RESULT)
+            .arg(pkt->getLabel())
+            .arg(getName())
+            .arg(status ? "true" : "false");
+        if (status) {
+            // Matching: add the class
+            pkt->addClass(getName());
+        }
+    } catch (const Exception& ex) {
+        LOG_ERROR(dhcpsrv_logger, DHCPSRV_EVAL_ERROR)
+            .arg(pkt->getLabel())
+            .arg(getName())
+            .arg(ex.what());
+    }
+}
+
+const std::string TemplateClientClassDef::SPAWN_CLASS_PREFIX("SPAWN_");
+
+TemplateClientClassDef::TemplateClientClassDef(const std::string& name,
+                                               const ExpressionPtr& match_expr,
+                                               const CfgOptionPtr& options) :
+        ClientClassDef(name, match_expr, options) {
+}
+
+void
+TemplateClientClassDef::test(PktPtr pkt, const ExpressionPtr& expr_ptr) {
+    // Evaluate the expression which can return false (no match),
+    // true (match) or raise an exception (error)
+    try {
+        std::string subclass = evaluateString(*expr_ptr, *pkt);
+        if (!subclass.empty()) {
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_TEMPLATE_EVAL_RESULT)
+                .arg(pkt->getLabel())
+                .arg(getName())
+                .arg(subclass);
+            // Matching: add the subclass
+            std::string value(TemplateClientClassDef::SPAWN_CLASS_PREFIX);
+            value += getName();
+            value += "_";
+            value += subclass;
+            pkt->addSubClass(getName(), value);
+        }
+    } catch (const Exception& ex) {
+        LOG_ERROR(dhcpsrv_logger, DHCPSRV_TEMPLATE_EVAL_ERROR)
+            .arg(pkt->getLabel())
+            .arg(getName())
+            .arg(ex.what());
+    }
+}
+
 bool
 ClientClassDef::dependOnClass(const std::string& name) const {
     return (isc::dhcp::dependOnClass(match_expr_, name));
@@ -147,7 +206,7 @@ ClientClassDef::equals(const ClientClassDef& other) const {
     return ((name_ == other.name_) &&
         ((!match_expr_ && !other.match_expr_) ||
         (match_expr_ && other.match_expr_ &&
-         (*match_expr_ == *(other.match_expr_)))) &&
+         (*match_expr_ == *other.match_expr_))) &&
         ((!cfg_option_ && !other.cfg_option_) ||
         (cfg_option_ && other.cfg_option_ &&
          (*cfg_option_ == *other.cfg_option_))) &&
@@ -162,7 +221,7 @@ ClientClassDef::equals(const ClientClassDef& other) const {
 }
 
 ElementPtr
-ClientClassDef:: toElement() const {
+ClientClassDef::toElement() const {
     uint16_t family = CfgMgr::instance().getFamily();
     ElementPtr result = Element::createMap();
     // Set user-context
@@ -192,6 +251,12 @@ ClientClassDef:: toElement() const {
         result->set("server-hostname", Element::create(sname_));
         // Set boot-file-name
         result->set("boot-file-name", Element::create(filename_));
+
+        // Set offer-lifetime
+        if (!offer_lft_.unspecified()) {
+            result->set("offer-lifetime",
+                    Element::create(static_cast<long long>(offer_lft_.get())));
+        }
     } else {
         // V6 only
         // Set preferred-lifetime
@@ -230,6 +295,19 @@ ClientClassDef:: toElement() const {
     return (result);
 }
 
+ElementPtr
+TemplateClientClassDef::toElement() const {
+    auto const& result = ClientClassDef::toElement();
+    auto const& test = result->get("test");
+    if (test) {
+        result->set("template-test", test);
+        result->remove("test");
+    } else {
+        result->set("template-test", Element::create(""));
+    }
+    return (result);
+}
+
 std::ostream& operator<<(std::ostream& os, const ClientClassDef& x) {
     os << "ClientClassDef:" << x.getName();
     return (os);
@@ -243,7 +321,7 @@ ClientClassDictionary::ClientClassDictionary()
 
 ClientClassDictionary::ClientClassDictionary(const ClientClassDictionary& rhs)
     : map_(new ClientClassDefMap()), list_(new ClientClassDefList()) {
-    BOOST_FOREACH(ClientClassDefPtr cclass, *(rhs.list_)) {
+    for (auto const& cclass : *rhs.list_) {
         ClientClassDefPtr copy(new ClientClassDef(*cclass));
         addClass(copy);
     }
@@ -265,8 +343,15 @@ ClientClassDictionary::addClass(const std::string& name,
                                 const std::string& sname,
                                 const std::string& filename,
                                 const util::Triplet<uint32_t>& valid,
-                                const util::Triplet<uint32_t>& preferred) {
-    ClientClassDefPtr cclass(new ClientClassDef(name, match_expr, cfg_option));
+                                const util::Triplet<uint32_t>& preferred,
+                                bool is_template,
+                                const util::Optional<uint32_t>& offer_lft) {
+    ClientClassDefPtr cclass;
+    if (is_template) {
+        cclass.reset(new TemplateClientClassDef(name, match_expr, cfg_option));
+    } else {
+        cclass.reset(new ClientClassDef(name, match_expr, cfg_option));
+    }
     cclass->setTest(test);
     cclass->setRequired(required);
     cclass->setDependOnKnown(depend_on_known);
@@ -277,11 +362,12 @@ ClientClassDictionary::addClass(const std::string& name,
     cclass->setFilename(filename);
     cclass->setValid(valid);
     cclass->setPreferred(preferred);
+    cclass->setOfferLft(offer_lft);
     addClass(cclass);
 }
 
 void
-ClientClassDictionary::addClass(ClientClassDefPtr& class_def) {
+ClientClassDictionary::addClass(const ClientClassDefPtr& class_def) {
     if (!class_def) {
         isc_throw(BadValue, "ClientClassDictionary::addClass "
                             " - class definition cannot be null");
@@ -349,15 +435,14 @@ ClientClassDictionary::dependOnClass(const std::string& name,
                                      std::string& dependent_class) const {
     // Skip previous classes as they should not depend on name.
     bool found = false;
-    for (ClientClassDefList::iterator this_class = list_->begin();
-         this_class != list_->end(); ++this_class) {
+    for (auto const& this_class : *list_) {
         if (found) {
-            if ((*this_class)->dependOnClass(name)) {
-                dependent_class = (*this_class)->getName();
+            if (this_class->dependOnClass(name)) {
+                dependent_class = this_class->getName();
                 return (true);
             }
         } else {
-            if ((*this_class)->getName() == name) {
+            if (this_class->getName() == name) {
                 found = true;
             }
         }
@@ -390,17 +475,22 @@ ClientClassDictionary::equals(const ClientClassDictionary& other) const {
 void
 ClientClassDictionary::initMatchExpr(uint16_t family) {
     std::queue<ExpressionPtr> expressions;
-    for (auto c : *list_) {
+    for (auto const& c : *list_) {
         if (!c->getTest().empty()) {
             ExpressionPtr match_expr = boost::make_shared<Expression>();
             ExpressionParser parser;
-            parser.parse(match_expr, Element::create(c->getTest()), family);
+            EvalContext::ParserType parser_type = EvalContext::PARSER_BOOL;
+            if (dynamic_cast<TemplateClientClassDef*>(c.get())) {
+                parser_type = EvalContext::PARSER_STRING;
+            }
+            parser.parse(match_expr, Element::create(c->getTest()), family,
+                         EvalContext::acceptAll, parser_type);
             expressions.push(match_expr);
         }
     }
     // All expressions successfully initialized. Let's set them for the
     // client classes in the dictionary.
-    for (auto c : *list_) {
+    for (auto const& c : *list_) {
         if (!c->getTest().empty()) {
             c->setMatchExpr(expressions.front());
             expressions.pop();
@@ -410,7 +500,7 @@ ClientClassDictionary::initMatchExpr(uint16_t family) {
 
 void
 ClientClassDictionary::createOptions(const CfgOptionDefPtr& external_defs) {
-    for (auto c : *list_) {
+    for (auto const& c : *list_) {
         // If the class has no options, skip it.
         CfgOptionPtr class_options = c->getCfgOption();
         if (!class_options || class_options->empty()) {
@@ -448,13 +538,22 @@ ClientClassDictionary::createOptions(const CfgOptionDefPtr& external_defs) {
     }
 }
 
+void
+ClientClassDictionary::encapsulateOptions() const {
+    for (auto const& c : *list_) {
+        CfgOptionPtr class_options = c->getCfgOption();
+        if (class_options) {
+            class_options->encapsulate();
+        }
+    }
+}
+
 ElementPtr
 ClientClassDictionary::toElement() const {
     ElementPtr result = Element::createList();
     // Iterate on the map
-    for (ClientClassDefList::const_iterator this_class = list_->begin();
-         this_class != list_->cend(); ++this_class) {
-        result->add((*this_class)->toElement());
+    for (auto const& this_class : *list_) {
+        result->add(this_class->toElement());
     }
     return (result);
 }
@@ -464,7 +563,7 @@ ClientClassDictionary::operator=(const ClientClassDictionary& rhs) {
     if (this != &rhs) {
         list_->clear();
         map_->clear();
-        for (auto cclass : *(rhs.list_)) {
+        for (auto const& cclass : *rhs.list_) {
             ClientClassDefPtr copy(new ClientClassDef(*cclass));
             addClass(copy);
         }
@@ -484,6 +583,12 @@ builtinNames = {
     "ALL", "KNOWN", "UNKNOWN", "BOOTP"
 };
 
+/// @brief The prefixes used to check if a class is BuiltIn class.
+///
+/// The 'SPAWN_' prefix is not added to this list to permit other template
+/// classes to associate the packet to regular classes which use this prefix in
+/// their name. This guarantees that regular classes are never treated as
+/// built-in classes.
 std::list<std::string>
 builtinPrefixes = {
     "VENDOR_CLASS_", "HA_", "AFTER_", "EXTERNAL_"
@@ -491,20 +596,18 @@ builtinPrefixes = {
 
 bool
 isClientClassBuiltIn(const ClientClass& client_class) {
-    for (std::list<std::string>::const_iterator bn = builtinNames.cbegin();
-         bn != builtinNames.cend(); ++bn) {
-        if (client_class == *bn) {
+    for (auto const& bn : builtinNames) {
+        if (client_class == bn) {
             return true;
         }
     }
 
-    for (std::list<std::string>::const_iterator bt = builtinPrefixes.cbegin();
-         bt != builtinPrefixes.cend(); ++bt) {
-        if (client_class.size() <= bt->size()) {
+    for (auto const& bt : builtinPrefixes) {
+        if (client_class.size() <= bt.size()) {
             continue;
         }
-        auto mis = std::mismatch(bt->cbegin(), bt->cend(), client_class.cbegin());
-        if (mis.first == bt->cend()) {
+        auto mis = std::mismatch(bt.cbegin(), bt.cend(), client_class.cbegin());
+        if (mis.first == bt.cend()) {
             return true;
         }
     }

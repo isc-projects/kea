@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -116,6 +116,12 @@ void LogContentTest::remFile() {
 
 void LogContentTest::addString(const string& new_string) {
     exp_strings_.push_back(new_string);
+}
+
+void LogContentTest::addString(const string& logger_msg, const string& new_string, const string& label) {
+    std::ostringstream stream;
+    stream << logger_msg << " " << label << ": " << new_string;
+    exp_strings_.push_back(stream.str());
 }
 
 // Set up the name of the LOG_FILE for use in checking

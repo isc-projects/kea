@@ -1,7 +1,8 @@
+.. ischooklib:: libdhcp_host_cmds.so
 .. _hooks-host-cmds:
 
-``host_cmds``: Host Commands
-============================
+``libdhcp_host_cmds.so``: Host Commands
+=======================================
 
 Kea can store host reservations in a database; in many larger deployments,
 it is useful to be able to manage that information while the server is
@@ -13,42 +14,58 @@ same subnet - is rejected. Those commands are exposed via the command
 channel (JSON over UNIX sockets) and the Control Agent (JSON over a RESTful
 interface).
 
-This library is only available to ISC customers with a paid support
-contract.
+.. note::
+
+    :ischooklib:`libdhcp_host_cmds.so` is available as a premium
+    hook library from ISC. Please visit https://www.isc.org/shop/ to purchase
+    the premium hook libraries, or contact us at https://www.isc.org/contact for
+    more information.
 
 .. note::
 
-   This library can only be loaded by the ``kea-dhcp4`` or ``kea-dhcp6``
+   This library can only be loaded by the :iscman:`kea-dhcp4` or :iscman:`kea-dhcp6`
    process.
 
 Currently, the following commands are supported:
 
-- ``reservation-add``, which adds a new host reservation.
+- :isccmd:`reservation-add`, which adds a new host reservation.
 
-- ``reservation-get``, which returns an existing reservation if specified
+- :isccmd:`reservation-get`, which returns an existing reservation if specified
   criteria are matched.
 
-- ``reservation-get-all``, which returns all reservations in a specified subnet.
+- :isccmd:`reservation-get-all`, which returns all reservations in a specified subnet.
 
-- ``reservation-get-page``, a variant of ``reservation-get-all`` that returns
+- :isccmd:`reservation-get-page`, a variant of :isccmd:`reservation-get-all` that returns
   reservations by pages, either all or in a specified subnet.
 
-- ``reservation-get-by-hostname``, which returns all reservations with a
+- :isccmd:`reservation-get-by-address`, which returns all reservations with a
+  specified IP address or a delegated prefix (without a prefix length), and optionally a subnet id.
+
+- :isccmd:`reservation-get-by-hostname`, which returns all reservations with a
   specified hostname and optionally in a subnet.
 
-- ``reservation-get-by-id``, which returns all reservations with a specified
+- :isccmd:`reservation-get-by-id`, which returns all reservations with a specified
   identifier (since Kea version 1.9.0).
 
-- ``reservation-del``, which attempts to delete a reservation matching specified
+- :isccmd:`reservation-del`, which attempts to delete a reservation matching specified
   criteria.
 
+- :isccmd:`reservation-update`, which updates (replaces) an existing reservation
+  matching the given identifiers in a subnet.
+
 To use the commands that change reservation information
-(i.e. ``reservation-add`` and ``reservation-del``), the hosts database must be
-specified and it must not operate in read-only mode (for details, see
-the ``hosts-databases`` descriptions in :ref:`hosts-databases-configuration4`
-and :ref:`hosts-databases-configuration6`). If the ``hosts-databases`` are not specified or are
-running in read-only mode, the ``host_cmds`` library will load, but any
-attempts to use ``reservation-add`` or ``reservation-del`` will fail.
+(i.e. :isccmd:`reservation-add`, :isccmd:`reservation-del`, and :isccmd:`reservation-update`) to
+modify data stored in the host database, the hosts database must be specified
+and it must not operate in read-only mode (for details, see the
+``hosts-databases`` descriptions in :ref:`hosts-databases-configuration4` and
+:ref:`hosts-databases-configuration6`). If the ``hosts-databases`` are not
+specified or are running in read-only mode, :ischooklib:`libdhcp_host_cmds.so` will
+load, but any attempts to use :isccmd:`reservation-add`, :isccmd:`reservation-del`, and
+:isccmd:`reservation-update` to modify data in that database will fail.
+
+These commands can also modify hosts from the JSON configuration independently
+from the hosts database. The changes provided in the JSON configuration are
+volatile and can be made permanent by sending the :isccmd:`config-write` command.
 
 For a description of proposed future commands, see the `Control API
 Requirements <https://gitlab.isc.org/isc-projects/kea/wikis/designs/commands>`__
@@ -68,7 +85,7 @@ servers.
        "hooks-libraries": [
            {
                "library": "/path/libdhcp_host_cmds.so"
-           }
+           },
            ...
        ]
    }
@@ -77,11 +94,12 @@ The ``subnet-id`` Parameter
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Before examining the individual commands, it is worth discussing the
-parameter ``subnet-id``. Currently this parameter is mandatory for all of the
+parameter ``subnet-id``. Currently, this parameter is mandatory for all of the
 commands supplied by this library, with the exception of
-``reservation-get-by-hostname``, where it is optional. Since Kea 1.9.0,
-``subnet-id`` is also optional in ``reservation-get-page``, and
-it is forbidden in ``reservation-get-by-id``.
+:isccmd:`reservation-get-by-hostname` and :isccmd:`reservation-get-by-address`,
+where it is optional. ``subnet-id`` is also optional in
+:isccmd:`reservation-get-page`, and it is forbidden
+in :isccmd:`reservation-get-by-id`.
 
 Reservations can be specified globally, and are not necessarily specific to any
 subnet. When reservations are supplied via the configuration file, the
@@ -90,28 +108,65 @@ configuration structure. However, when managing reservations using
 host commands, it is necessary to explicitly identify the scope to which
 the reservation belongs. This is done via the ``subnet-id`` parameter.
 For global reservations, use a value of zero (0). For reservations
-scoped to a specific subnet, use that subnet's ID.
+scoped to a specific subnet, use that subnet's ID. See also the note
+in :ref:`command-reservation-add` about the :isccmd:`reservation-add`
+command for an empty (i.e. with no reserved address or prefix) reservation.
 
 On the other hand, when the ``subnet-id`` is not specified in the command
 parameters, it is added to each host in responses. If the ``subnet-id``
 has the unused special value, this means the host entry belongs only
-to the other IP version (i.e. IPv6 in DHCPv4 server or IPv4 in DHCPv6
+to the other IP version (i.e. IPv6 in the DHCPv4 server or IPv4 in the DHCPv6
 server) and this entry is ignored.
 
+The ``operation-target`` Parameter
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Most host commands accept the ``operation-target`` parameter, which selects
+the host data source. The commands may process data from the server
+configuration (i.e., memory operation target), a database (database target),
+or both (all sources). The operation-target parameter is optional.
+By default, the commands that only read the data use all data sources
+(memory and database); the commands that modify the state (i.e. :isccmd:`reservation-add`,
+:isccmd:`reservation-del`, and :isccmd:`reservation-update`) only use the
+database target.
+
+The ``operation-target`` parameter accepts the following values:
+
+- ``memory`` - query or update the runtime server configuration
+- ``database`` - query or update host database(s)
+- ``all`` - query or update both runtime configuration and host database(s)
+- ``default`` - query or update a default host data source - it is command-specific
+
+.. isccmd:: reservation-add
 .. _command-reservation-add:
 
 The ``reservation-add`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``reservation-add`` allows for the insertion of a new host. It takes a
+:isccmd:`reservation-add` allows for the insertion of a new host. It takes a
 set of arguments that vary depending on the nature of the host
 reservation. Any parameters allowed in the configuration file that
 pertain to host reservation are permitted here. For details regarding
 IPv4 reservations, see :ref:`host-reservation-v4`; for IPv6 reservations, see
 :ref:`host-reservation-v6`. The ``subnet-id`` is mandatory. Use a
 value of zero (0) to add a global reservation, or the ID of the subnet
-to which the reservation should be added. An example command can be as
-simple as:
+to which the reservation should be added. The command can be as simple as having
+only the two mandatory entries:
+
+.. code-block:: json
+
+   {
+       "command": "reservation-add",
+       "arguments": {
+           "reservation": {
+               "subnet-id": 1,
+               "hw-address": "1a:1b:1c:1d:1e:1f"
+           }
+       }
+   }
+
+In that case, however, it does not assign any resources to the host. An IPv4
+address can be assigned as in this example:
 
 .. code-block:: json
 
@@ -126,7 +181,7 @@ simple as:
        }
    }
 
-but it can also take many more parameters, for example:
+It can also take many more parameters, such as:
 
 .. code-block:: json
 
@@ -179,31 +234,60 @@ Here is an example of a complex IPv6 reservation:
        }
    }
 
+The command accepts the ``operation-target`` argument. By default, it adds the
+reservation to the hosts database only.
+
+.. code-block:: json
+
+   {
+       "command": "reservation-add",
+       "arguments": {
+           "reservation": {},
+           "operation-target": "all"
+       }
+   }
+
 The command returns a status that indicates either success (result 0)
 or failure (result 1). A failed command always includes a text parameter
 that explains the cause of the failure. Here's an example of a successful
 addition:
 
-::
+.. code-block:: json
 
-   { "result": 0, "text": "Host added." }
+   {
+       "result": 0,
+       "text": "Host added."
+   }
 
 And here's an example of a failure:
 
-::
+.. code-block:: json
 
-   { "result": 1, "text": "Mandatory 'subnet-id' parameter missing." }
+   {
+       "result": 1,
+       "text": "Mandatory 'subnet-id' parameter missing."
+   }
 
-As ``reservation-add`` is expected to store the host, the ``hosts-databases``
+
+As :isccmd:`reservation-add` is expected to store the host, the ``hosts-databases``
 parameter must be specified in the configuration, and databases must not
 run in read-only mode.
 
+.. note::
+
+   Since kea version 2.7.0 an empty reservation is implicitly global, i.e.
+   if no ``subnet-id`` entry is present and for DHCPv4 ``ip-address`` or
+   for DHCPv6 ``ip-addresses`` and ``prefixes`` do not specify a reserved
+   address or prefix the command is valid and adds a global (subnet-id 0)
+   host reservation.
+
+.. isccmd:: reservation-get
 .. _command-reservation-get:
 
 The ``reservation-get`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``reservation-get`` can be used to query the host database and retrieve
+:isccmd:`reservation-get` can be used to query the host database and retrieve
 existing reservations. This command supports two types of parameters:
 (``subnet-id``, ``address``) or (``subnet-id``, ``identifier-type``,
 ``identifier``). The first type of query is used when the address (either
@@ -244,7 +328,21 @@ follows:
        }
    }
 
-``reservation-get`` typically returns the result 0 when a query was
+The command accepts the ``operation-target`` argument. By default, it gets the
+reservation from both the JSON configuration and the hosts database.
+
+.. code-block:: json
+
+   {
+       "command": "reservation-get",
+       "arguments": {
+           "subnet-id": 1,
+           "ip-address": "192.0.2.202",
+           "operation-target": "alternate"
+       }
+   }
+
+Command :isccmd:`reservation-get` typically returns the result 0 when a query was
 conducted properly. In particular, 0 is returned when the host was not
 found. If the query was successful, the host parameters are
 returned. An example of a query that did not find the host looks as
@@ -271,7 +369,8 @@ Here's an example of a result returned when the host was found successfully:
        "option-data": [
 
        ],
-       "server-hostname": "server-hostname.example.org"
+       "server-hostname": "server-hostname.example.org",
+       "subnet-id": 4
      },
      "result": 0,
      "text": "Host found."
@@ -281,15 +380,15 @@ An example result returned when the query was malformed might look like this:
 
 ::
 
-   { "result": 1, "text": "No 'ip-address' provided and 'identifier-type'
-                           is either missing or not a string." }
+   { "result": 1, "text": "No 'ip-address' provided and 'identifier-type' is either missing or not a string." }
 
+.. isccmd:: reservation-get-all
 .. _command-reservation-get-all:
 
 The ``reservation-get-all`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``reservation-get-all`` can be used to query the host database and
+:isccmd:`reservation-get-all` can be used to query the host database and
 retrieve all reservations in a specified subnet. This command uses
 parameters providing the mandatory ``subnet-id``. Global host reservations
 can be retrieved by using a ``subnet-id`` value of zero (0).
@@ -320,9 +419,9 @@ returns some IPv4 hosts:
                    "ip-address": "192.0.2.100",
                    "next-server": "192.0.0.2",
                    "option-data": [ ],
-                   "server-hostname": "server-hostname.example.org"
+                   "server-hostname": "server-hostname.example.org",
+                   "subnet-id": 1
                },
-               ...
                {
                    "boot-file-name": "bootfile.efi",
                    "client-classes": [ ],
@@ -331,29 +430,44 @@ returns some IPv4 hosts:
                    "ip-address": "192.0.2.200",
                    "next-server": "192.0.0.2",
                    "option-data": [ ],
-                   "server-hostname": "server-hostname.example.org"
-               }
+                   "server-hostname": "server-hostname.example.org",
+                   "subnet-id": 1
+               },
+               ...
            ]
        },
        "result": 0,
        "text": "72 IPv4 host(s) found."
    }
 
-The response returned by ``reservation-get-all`` can be very long. The
+The response returned by :isccmd:`reservation-get-all` can be very long. The
 DHCP server does not handle DHCP traffic while preparing a response to
-``reservation-get-all``, so if there are many reservations in a subnet, this
+:isccmd:`reservation-get-all`, so if there are many reservations in a subnet, this
 may be disruptive; use with caution. For larger deployments, please
-consider using ``reservation-get-page`` instead (see
-:ref:`command-reservation-get-page`).
+consider using :isccmd:`reservation-get-page` instead.
+
+The command accepts the ``operation-target`` argument. By default, it gets the
+reservation from both the JSON configuration and the hosts database.
+
+.. code-block:: json
+
+   {
+       "command": "reservation-get-all",
+       "arguments": {
+           "subnet-id": 1,
+           "operation-target": "alternate"
+       }
+   }
 
 For more information, see :ref:`command-reservation-get-all`.
 
+.. isccmd:: reservation-get-page
 .. _command-reservation-get-page:
 
-The ``reservation-get-page`` command
+The ``reservation-get-page`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``reservation-get-page`` can be used to query the host database and
+:isccmd:`reservation-get-page` can be used to query the host database and
 retrieve all reservations in a specified subnet, by pages. This command
 uses parameters providing the mandatory ``subnet-id``. Use a value of zero
 (0) to fetch global reservations. The second mandatory parameter is the
@@ -418,7 +532,6 @@ Some hosts are returned with information to get the next page:
                    "option-data": [ ],
                    "server-hostname": "server-hostname.example.org"
                },
-               ...
                {
                    "boot-file-name": "bootfile.efi",
                    "client-classes": [ ],
@@ -428,7 +541,8 @@ Some hosts are returned with information to get the next page:
                    "next-server": "192.0.0.2",
                    "option-data": [ ],
                    "server-hostname": "server-hostname.example.org"
-               }
+               },
+               ...
            ],
            "next": {
                "from": 1234567,
@@ -460,28 +574,257 @@ The response will contain a list of hosts with updated ``source-index``
 and ``from`` fields. Continue calling the command until the last
 page is received. Its response will look like this:
 
-::
+.. code-block:: json
 
    {
        "arguments": {
            "count": 0,
-           "hosts": [ ],
+           "hosts": [ ]
        },
        "result": 3,
-       "0 IPv4 host(s) found."
+       "text": "0 IPv4 host(s) found."
    }
 
-This command is more complex than ``reservation-get-all``, but lets
+The command does not accept the ``operation-target`` argument.
+
+This command is more complex than :isccmd:`reservation-get-all`, but it lets
 users retrieve larger host reservations lists in smaller chunks. For
 small deployments with few reservations, it is easier to use
-``reservation-get-all`` (see :ref:`command-reservation-get-all`).
+:isccmd:`reservation-get-all`.
 
+.. isccmd:: reservation-get-by-address
+.. _command-reservation-get-by-address:
+
+The ``reservation-get-by-address`` Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:isccmd:`reservation-get-by-address` can be used to query the host database and
+retrieve all reservations for a given IP address or a delegated prefix (without
+a prefix length), in a specified subnet or in all subnets. This command uses
+parameters providing the mandatory ``ip-address`` and the optional ``subnet-id``
+and ``operation-target``.
+
+For instance, retrieving host reservations for the IPv4 address "192.0.200.181"
+in the subnet 1:
+
+::
+
+   {
+       "command": "reservation-get-by-address",
+       "arguments": {
+           "ip-address": "192.0.200.181",
+           "subnet-id": 1
+       },
+       "service": [
+           "dhcp4"
+       ]
+   }
+
+can return two IPv4 hosts:
+
+::
+
+   {
+       "arguments": {
+           "hosts": [
+               {
+                   "boot-file-name": "",
+                   "client-classes": [],
+                   "hostname": "",
+                   "hw-address": "99:99:99:99:99:01",
+                   "ip-address": "192.0.200.181",
+                   "next-server": "0.0.0.0",
+                   "option-data": [],
+                   "server-hostname": "",
+                   "subnet-id": 1
+               },
+               {
+                   "boot-file-name": "",
+                   "circuit-id": "1234",
+                   "client-classes": [],
+                   "hostname": "",
+                   "ip-address": "192.0.200.181",
+                   "next-server": "0.0.0.0",
+                   "option-data": [],
+                   "server-hostname": "",
+                   "subnet-id": 1
+               }
+           ]
+       },
+       "result": 0,
+       "text": "2 IPv4 host(s) found."
+   }
+
+To search for all reservations in all subnets, simply skip the ``subnet-id`` parameter:
+
+::
+
+   {
+       "command": "reservation-get-by-address",
+       "arguments": {
+           "ip-address": "192.0.200.181"
+       },
+       "service": [
+           "dhcp4"
+       ]
+   }
+
+An example response could be:
+
+::
+
+   {
+       "arguments": {
+           "hosts": [
+               {
+                   "boot-file-name": "",
+                   "client-classes": [],
+                   "hostname": "",
+                   "hw-address": "99:99:99:99:99:01",
+                   "ip-address": "192.0.200.181",
+                   "next-server": "0.0.0.0",
+                   "option-data": [],
+                   "server-hostname": "",
+                   "subnet-id": 1
+               },
+               {
+                   "boot-file-name": "",
+                   "circuit-id": "1234",
+                   "client-classes": [],
+                   "hostname": "",
+                   "ip-address": "192.0.200.181",
+                   "next-server": "0.0.0.0",
+                   "option-data": [],
+                   "server-hostname": "",
+                   "subnet-id": 1
+               },
+               {
+                   "boot-file-name": "",
+                   "client-classes": [],
+                   "hostname": "",
+                   "hw-address": "99:99:99:99:99:02",
+                   "ip-address": "192.0.200.181",
+                   "next-server": "0.0.0.0",
+                   "option-data": [],
+                   "server-hostname": "",
+                   "subnet-id": 0
+               },
+               {
+                   "boot-file-name": "",
+                   "client-classes": [],
+                   "hostname": "",
+                   "hw-address": "99:99:99:99:99:03",
+                   "ip-address": "192.0.200.181",
+                   "next-server": "0.0.0.0",
+                   "option-data": [],
+                   "server-hostname": "",
+                   "subnet-id": 2
+               }
+           ]
+       },
+       "result": 0,
+       "text": "4 IPv4 host(s) found."
+   }
+
+When using the command for retrieving DHCP6 host reservations, one can provide
+either an IPv6 address or a delegated prefix as the ``ip-address`` parameter.
+Please notice that this command does not take prefix length as a parameter in the
+current implementation. Thus, searching by an IP address ``2001:db8:2:cafe::``
+can return host reservations with delegated prefixes of different lengths matching
+this search. For example: ``2001:db8:2:cafe::/63``, ``2001:db8:2:cafe::/64``, etc.
+Please consider the example below:
+
+::
+
+   {
+       "command": "reservation-get-by-address",
+       "arguments": {
+           "ip-address": "2001:db8:2:cafa::"
+       },
+       "service": [
+           "dhcp6"
+       ]
+   }
+
+Response:
+
+::
+
+   {
+       "arguments": {
+           "hosts": [
+               {
+                   "client-classes": [],
+                   "duid": "01:02:03:04:05:06:07:88:98:fa",
+                   "hostname": "foo.example.com",
+                   "ip-addresses": [
+                       "2001:db8:1:cafe::2"
+                   ],
+                   "option-data": [],
+                   "prefixes": [
+                       "2001:db8:2:abcd::/64",
+                       "2001:db8:2:cafa::/63"
+                   ],
+                   "subnet-id": 8
+               },
+               {
+                   "client-classes": [],
+                   "duid": "01:02:03:04:05:06:07:88:98:fb",
+                   "hostname": "foo.example.com",
+                   "ip-addresses": [
+                       "2001:db8:1:cafe::2"
+                   ],
+                   "option-data": [],
+                   "prefixes": [
+                       "2001:db8:2:abcd::/64",
+                       "2001:db8:2:cafa::/64"
+                   ],
+                   "subnet-id": 8
+               }
+           ]
+       },
+       "result": 0,
+       "text": "2 IPv6 host(s) found."
+   }
+
+The command accepts the ``operation-target`` argument. By default, it gets the
+reservation from both the JSON configuration and the hosts database.
+
+.. code-block:: json
+
+   {
+       "command": "reservation-get-by-address",
+       "arguments": {
+           "ip-address": "192.0.200.181",
+           "subnet-id": 1,
+           "operation-target": "alternate"
+       },
+       "service": [
+           "dhcp4"
+       ]
+   }
+
+.. note::
+
+   This command is useful in specific cases. By default, having more than
+   one host reservation for the same IP address in a given subnet is not allowed,
+   as explained in
+   :ref:`Multiple Reservations for the Same IPv4 <multiple-reservations-same-ip4>`
+   or
+   :ref:`Multiple Reservations for the Same IPv6 <multiple-reservations-same-ip6>`.
+   That's why this command comes in handy
+   when the ``ip-reservations-unique`` boolean parameter is set to ``false``.
+   Another use case of this command is having overlapping subnets with
+   the same IP address reservations (but with different identifiers) in different
+   subnets.
+
+.. isccmd:: reservation-get-by-hostname
 .. _command-reservation-get-by-hostname:
 
 The ``reservation-get-by-hostname`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``reservation-get-by-hostname`` can be used to query the host database and
+:isccmd:`reservation-get-by-hostname` can be used to query the host database and
 retrieve all reservations with a specified hostname or in
 a specified subnet. This command uses parameters providing the mandatory
 ``hostname`` and the optional ``subnet-id``. Global host reservations
@@ -517,7 +860,6 @@ returns some IPv4 hosts:
                    "option-data": [ ],
                    "server-hostname": "server-hostname.example.org"
                },
-               ...
                {
                    "boot-file-name": "bootfile.efi",
                    "client-classes": [ ],
@@ -527,15 +869,30 @@ returns some IPv4 hosts:
                    "next-server": "192.0.0.2",
                    "option-data": [ ],
                    "server-hostname": "server-hostname.example.org"
-               }
+               },
+               ...
            ]
        },
        "result": 0,
        "text": "5 IPv4 host(s) found."
    }
 
-The response returned by ``reservation-get-by-hostname`` can be long,
+The response returned by :isccmd:`reservation-get-by-hostname` can be long,
 particularly when responses are not limited to a subnet.
+
+The command accepts the ``operation-target`` argument. By default, it gets the
+reservation from both the JSON configuration and the hosts database.
+
+.. code-block:: json
+
+   {
+       "command": "reservation-get-by-hostname",
+       "arguments": {
+           "hostname": "foobar.example.org",
+           "subnet-id": 1,
+           "operation-target": "alternate"
+       }
+   }
 
 For more information, see :ref:`command-reservation-get-by-hostname`.
 
@@ -546,15 +903,16 @@ For more information, see :ref:`command-reservation-get-by-hostname`.
    collation, as explained in the :ref:`mysql-database` section of
    :ref:`admin`.
 
+.. isccmd:: reservation-get-by-id
 .. _command-reservation-get-by-id:
 
 The ``reservation-get-by-id`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``reservation-get-by-id`` can be used to query the host database and
+:isccmd:`reservation-get-by-id` can be used to query the host database and
 retrieve all reservations with a specified identifier (``identifier-type``
 and ``identifier`` parameters), independently of subnets. The syntax for
-parameters is the same as for ref:`command-reservation-get`.
+parameters is the same as for :isccmd:`reservation-get`.
 The ``subnet-id`` parameter cannot be used, to avoid confusion.
 This command is available since Kea version 1.9.0.
 
@@ -589,7 +947,6 @@ returns some IPv4 hosts:
                    "server-hostname": "server-hostname.example.org",
                    "subnet-id": 123
                },
-               ...
                {
                    "boot-file-name": "bootfile.efi",
                    "client-classes": [ ],
@@ -600,25 +957,41 @@ returns some IPv4 hosts:
                    "option-data": [ ],
                    "server-hostname": "server-hostname.example.org",
                    "subnet-id": 345
-               }
+               },
+               ...
            ]
        },
        "result": 0,
        "text": "5 IPv4 host(s) found."
    }
 
-The response returned by ``reservation-get-by-id`` can be long,
+The response returned by :isccmd:`reservation-get-by-id` can be long,
 particularly when responses are not limited to a subnet.
+
+The command accepts the ``operation-target`` argument. By default, it gets the
+reservation from both the JSON configuration and the hosts database.
+
+.. code-block:: json
+
+   {
+       "command": "reservation-get-by-id",
+       "arguments": {
+           "identifier-type": "hw-address",
+           "identifier": "01:02:03:04:05:06",
+           "operation-target": "alternate"
+       }
+   }
 
 For more information, see :ref:`command-reservation-get-by-id`.
 
+.. isccmd:: reservation-del
 .. _command-reservation-del:
 
 The ``reservation-del`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``reservation-del`` can be used to delete a reservation from the host
-database. This command supports two types of parameters:
+:isccmd:`reservation-del` can be used to delete a reservation from the host
+database and/or JSON configuration. This command supports two types of parameters:
 (``subnet-id``, ``address``) or (``subnet-id``, ``identifier-type``, ``identifier``). The
 first type of query is used when the address (either IPv4 or IPv6) is
 known, but the details of the reservation are not. One common use for
@@ -651,14 +1024,14 @@ follows:
 
    {
        "command": "reservation-del",
-       "arguments":
+       "arguments": {
            "subnet-id": 4,
            "identifier-type": "hw-address",
            "identifier": "01:02:03:04:05:06"
        }
    }
 
-``reservation-del`` returns a result of 0 when the host deletion was
+Command :isccmd:`reservation-del` returns a result of 0 when the host deletion was
 successful, or 1 if it failed. Descriptive text is provided in the event of
 an error. Here are some examples of possible results:
 
@@ -669,6 +1042,8 @@ an error. Here are some examples of possible results:
        "text": "Host not deleted (not found)."
    }
 
+or
+
 ::
 
    {
@@ -676,10 +1051,172 @@ an error. Here are some examples of possible results:
        "text": "Host deleted."
    }
 
+or
+
 ::
 
    {
        "result": 1,
-       "text": "Unable to delete a host because there is no hosts-database
-                configured."
+       "text": "Unable to delete a host because there is no hosts-database configured."
    }
+
+The command accepts the ``operation-target`` argument. By default, it removes
+the reservation from the hosts database only.
+
+.. code-block:: json
+
+   {
+       "command": "reservation-del",
+       "arguments": {
+           "subnet-id": 4,
+           "identifier-type": "hw-address",
+           "identifier": "01:02:03:04:05:06",
+           "operation-target": "primary"
+       }
+   }
+
+.. isccmd:: reservation-update
+.. _command-reservation-update:
+
+The ``reservation-update`` Command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:isccmd:`reservation-update` allows for the update of an existing host. It takes the
+same set of arguments as :isccmd:`reservation-add`, and also
+requires a host identifier and a subnet ID to identify the host that is being
+updated. The command can be as simple as having only the two mandatory entries:
+
+.. code-block:: json
+
+   {
+       "command": "reservation-update",
+       "arguments": {
+           "reservation": {
+               "subnet-id": 1,
+               "hw-address": "1a:1b:1c:1d:1e:1f"
+           }
+       }
+   }
+
+In that case, however, it does not assign any resources to the host. An IPv4
+address can be assigned as in this example:
+
+.. code-block:: json
+
+    {
+        "command": "reservation-update",
+        "arguments": {
+            "reservation": {
+                "subnet-id": 1,
+                "hw-address": "1a:1b:1c:1d:1e:1f",
+                "ip-address": "192.0.2.202"
+            }
+        }
+    }
+
+It can also take many more parameters, such as:
+
+.. code-block:: json
+
+    {
+        "command": "reservation-update",
+        "arguments": {
+            "reservation": {
+                "subnet-id": 1,
+                "client-id": "01:0a:0b:0c:0d:0e:0f",
+                "ip-address": "192.0.2.205",
+                "next-server": "192.0.2.1",
+                "server-hostname": "hal9000",
+                "boot-file-name": "/dev/null",
+                "option-data": [
+                    {
+                        "name": "domain-name-servers",
+                        "data": "10.1.1.202,10.1.1.203"
+                    }
+                ],
+                "client-classes": [
+                    "office",
+                    "special_snowflake"
+                ]
+            }
+        }
+    }
+
+Here is an example of a complex IPv6 reservation update:
+
+.. code-block:: json
+
+    {
+        "command": "reservation-update",
+        "arguments": {
+            "reservation": {
+                "subnet-id": 1,
+                "duid": "01:02:03:04:05:06:07:08:09:0A",
+                "ip-addresses": [
+                    "2001:db8:1:cafe::1"
+                ],
+                "prefixes": [
+                    "2001:db8:2:abcd::/64"
+                ],
+                "hostname": "foo.example.com",
+                "option-data": [
+                    {
+                        "name": "vendor-opts",
+                        "data": "4491"
+                    },
+                    {
+                        "name": "tftp-servers",
+                        "space": "vendor-4491",
+                        "data": "3000:1::234"
+                    }
+                ]
+            }
+        }
+    }
+
+The command returns a status that indicates either success (result ``0``) or
+failure (result ``1``), and a text parameter that confirms success or explains
+the cause of the failure. Here's an example of a successful update:
+
+.. code-block:: json
+
+   {
+       "result": 0,
+       "text": "Host updated."
+   }
+
+And here's an example of a failure:
+
+.. code-block:: json
+
+   {
+       "result": 1,
+       "text": "Mandatory 'subnet-id' parameter missing."
+   }
+
+The command accepts the ``operation-target`` argument. By default, it adds the
+reservation to the hosts database only. As :isccmd:`reservation-update` is expected
+to store the host, the ``hosts-databases`` parameter must be specified in the
+configuration, and databases must not run in read-only mode if the operation
+target is not the JSON configuration.
+
+As with other update and set commands, this command overwrites all the contents
+of the entry. If the host previously had a resource assigned to it, and the
+:isccmd:`reservation-update` command is missing the resource, it is deleted from the
+database. If an incremental update of the host is desired, this can be
+achieved by issuing a :isccmd:`reservation-get-by-id` to get the current state of the
+host, selecting the host from the response, modifying it to the required
+outcome, and then issuing the :isccmd:`reservation-update` command with the resulting
+host attached.
+
+.. _hooks-host-cmds-general-mentions:
+
+General Mentions
+~~~~~~~~~~~~~~~~
+
+.. note::
+
+   The host backends for the host cache and RADIUS hook libraries do not
+   respond to commands that return a collection of host reservations, such as
+   :isccmd:`reservation-get-all`. Commands returning one host entry or dedicated host
+   cache commands should be used instead.

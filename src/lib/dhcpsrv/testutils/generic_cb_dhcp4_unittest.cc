@@ -1,4 +1,4 @@
-// Copyright (C) 2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2022-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,6 +18,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/client_class_def.h>
 #include <dhcpsrv/config_backend_dhcp4_mgr.h>
+#include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/testutils/generic_cb_dhcp4_unittest.h>
@@ -125,6 +126,10 @@ GenericConfigBackendDHCPv4Test::initTestSubnets() {
     subnet->setT1Percent(0.345);
     subnet->setT2Percent(0.444);
     subnet->setDdnsSendUpdates(false);
+    subnet->setCacheThreshold(0.25);
+    subnet->setCacheMaxAge(20);
+    subnet->setOfferLft(77);
+    subnet->setAllocatorType("random");
 
     Pool4Ptr pool1(new Pool4(IOAddress("192.0.2.10"),
                              IOAddress("192.0.2.20")));
@@ -137,14 +142,17 @@ GenericConfigBackendDHCPv4Test::initTestSubnets() {
     // Add several options to the subnet.
     subnet->getCfgOption()->add(test_options_[0]->option_,
                                 test_options_[0]->persistent_,
+                                test_options_[0]->cancelled_,
                                 test_options_[0]->space_name_);
 
     subnet->getCfgOption()->add(test_options_[1]->option_,
                                 test_options_[1]->persistent_,
+                                test_options_[1]->cancelled_,
                                 test_options_[1]->space_name_);
 
     subnet->getCfgOption()->add(test_options_[2]->option_,
                                 test_options_[2]->persistent_,
+                                test_options_[2]->cancelled_,
                                 test_options_[2]->space_name_);
 
     test_subnets_.push_back(subnet);
@@ -161,10 +169,12 @@ GenericConfigBackendDHCPv4Test::initTestSubnets() {
 
     pool1->getCfgOption()->add(test_options_[3]->option_,
                                test_options_[3]->persistent_,
+                               test_options_[3]->cancelled_,
                                test_options_[3]->space_name_);
 
     pool1->getCfgOption()->add(test_options_[4]->option_,
                                test_options_[4]->persistent_,
+                               test_options_[4]->cancelled_,
                                test_options_[4]->space_name_);
 
     pool2.reset(new Pool4(IOAddress("10.0.0.50"),
@@ -195,6 +205,7 @@ GenericConfigBackendDHCPv4Test::initTestSubnets() {
 
     subnet->getCfgOption()->add(test_options_[0]->option_,
                                 test_options_[0]->persistent_,
+                                test_options_[0]->cancelled_,
                                 test_options_[0]->space_name_);
 
     test_subnets_.push_back(subnet);
@@ -233,18 +244,25 @@ GenericConfigBackendDHCPv4Test::initTestSharedNetworks() {
     shared_network->setFilename("/dev/null");
     shared_network->setAuthoritative(true);
     shared_network->setDdnsSendUpdates(false);
+    shared_network->setCacheThreshold(0.26);
+    shared_network->setCacheMaxAge(21);
+    shared_network->setOfferLft(78);
+    shared_network->setAllocatorType("iterative");
 
     // Add several options to the shared network.
     shared_network->getCfgOption()->add(test_options_[2]->option_,
                                         test_options_[2]->persistent_,
+                                        test_options_[2]->cancelled_,
                                         test_options_[2]->space_name_);
 
     shared_network->getCfgOption()->add(test_options_[3]->option_,
                                         test_options_[3]->persistent_,
+                                        test_options_[3]->cancelled_,
                                         test_options_[3]->space_name_);
 
     shared_network->getCfgOption()->add(test_options_[4]->option_,
                                         test_options_[4]->persistent_,
+                                        test_options_[4]->cancelled_,
                                         test_options_[4]->space_name_);
 
     test_networks_.push_back(shared_network);
@@ -270,6 +288,7 @@ GenericConfigBackendDHCPv4Test::initTestSharedNetworks() {
 
     shared_network->getCfgOption()->add(test_options_[0]->option_,
                                         test_options_[0]->persistent_,
+                                        test_options_[0]->cancelled_,
                                         test_options_[0]->space_name_);
     test_networks_.push_back(shared_network);
 
@@ -302,7 +321,7 @@ GenericConfigBackendDHCPv4Test::initTestOptionDefs() {
     test_option_defs_.push_back(option_def);
 
     option_def.reset(new OptionDefinition("foobar", 234, DHCP4_OPTION_SPACE,
-                                          "uint64", true));
+                                          "uint16", true));
     test_option_defs_.push_back(option_def);
 }
 
@@ -315,30 +334,30 @@ GenericConfigBackendDHCPv4Test::initTestOptions() {
 
     OptionDescriptor desc =
         createOption<OptionString>(Option::V4, DHO_BOOT_FILE_NAME,
-                                   true, false, "my-boot-file");
+                                   true, false, false, "my-boot-file");
     desc.space_name_ = DHCP4_OPTION_SPACE;
     desc.setContext(user_context);
     test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
 
     desc = createOption<OptionUint8>(Option::V4, DHO_DEFAULT_IP_TTL,
-                                     false, true, 64);
+                                     false, true, true, 64);
     desc.space_name_ = DHCP4_OPTION_SPACE;
     test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
 
-    desc = createOption<OptionUint32>(Option::V4, 1, false, false, 312131),
+    desc = createOption<OptionUint32>(Option::V4, 1, false, false, false, 312131),
     desc.space_name_ = "vendor-encapsulated-options";
     test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
 
-    desc = createAddressOption<Option4AddrLst>(254, true, true,
+    desc = createAddressOption<Option4AddrLst>(254, true, true, true,
                                                "192.0.2.3");
     desc.space_name_ = DHCP4_OPTION_SPACE;
     test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
 
-    desc = createEmptyOption(Option::V4, 1, true);
+    desc = createEmptyOption(Option::V4, 1, true, true);
     desc.space_name_ = "isc";
     test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
 
-    desc = createAddressOption<Option4AddrLst>(2, false, true,
+    desc = createAddressOption<Option4AddrLst>(2, false, false, true,
                                                "10.0.0.5",
                                                "10.0.0.3",
                                                "10.0.3.4");
@@ -346,13 +365,13 @@ GenericConfigBackendDHCPv4Test::initTestOptions() {
     test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
 
     desc = createOption<OptionString>(Option::V4, DHO_BOOT_FILE_NAME,
-                                      true, false, "my-boot-file-2");
+                                      true, false, false, "my-boot-file-2");
     desc.space_name_ = DHCP4_OPTION_SPACE;
     desc.setContext(user_context);
     test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
 
     desc = createOption<OptionString>(Option::V4, DHO_BOOT_FILE_NAME,
-                                      true, false, "my-boot-file-3");
+                                      true, true, false, "my-boot-file-3");
     desc.space_name_ = DHCP4_OPTION_SPACE;
     desc.setContext(user_context);
     test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
@@ -389,6 +408,7 @@ GenericConfigBackendDHCPv4Test::initTestClientClasses() {
     ElementPtr user_context = Element::createMap();
     user_context->set("melon", Element::create("water"));
     class1->setContext(user_context);
+    class1->setOfferLft(20);
     test_client_classes_.push_back(class1);
 
     auto class2 = boost::make_shared<ClientClassDef>("bar", match_expr, cfg_option);
@@ -757,9 +777,9 @@ GenericConfigBackendDHCPv4Test::globalParameters4WithServerTagsTest() {
     // Capture the returned values into the map so as we can check the
     // values against the servers.
     std::map<std::string, std::string> values;
-    for (auto g = returned_globals.begin(); g != returned_globals.end(); ++g) {
-        ASSERT_EQ(1, (*g)->getServerTags().size());
-        values[(*g)->getServerTags().begin()->get()] = ((*g)->getValue());
+    for (auto const& g : returned_globals) {
+        ASSERT_EQ(1, g->getServerTags().size());
+        values[g->getServerTags().begin()->get()] = g->getValue();
     }
 
     ASSERT_EQ(3, values.size());
@@ -867,7 +887,7 @@ GenericConfigBackendDHCPv4Test::getAllGlobalParameters4Test() {
     auto parameters = cbptr_->getAllGlobalParameters4(ServerSelector::ALL());
     ASSERT_EQ(5, parameters.size());
 
-    const auto& parameters_index = parameters.get<StampedValueNameIndexTag>();
+    auto const& parameters_index = parameters.get<StampedValueNameIndexTag>();
 
     // Verify their values.
     EXPECT_EQ("value1", (*parameters_index.find("name1"))->getValue());
@@ -876,10 +896,9 @@ GenericConfigBackendDHCPv4Test::getAllGlobalParameters4Test() {
     EXPECT_TRUE((*parameters_index.find("name4"))->getBoolValue());
     EXPECT_EQ(1.65, (*parameters_index.find("name5"))->getDoubleValue());
 
-    for (auto param = parameters_index.begin(); param != parameters_index.end();
-         ++param) {
-        ASSERT_EQ(1, (*param)->getServerTags().size());
-        EXPECT_EQ("all", (*param)->getServerTags().begin()->get());
+    for (auto const& param : parameters_index) {
+        ASSERT_EQ(1, param->getServerTags().size());
+        EXPECT_EQ("all", param->getServerTags().begin()->get());
     }
 
     // Should be able to fetch these parameters when explicitly providing
@@ -920,7 +939,7 @@ GenericConfigBackendDHCPv4Test::getModifiedGlobalParameters4Test() {
     auto parameters = cbptr_->getModifiedGlobalParameters4(ServerSelector::ALL(),
                                                            timestamps_["after today"]);
 
-    const auto& parameters_index = parameters.get<StampedValueNameIndexTag>();
+    auto const& parameters_index = parameters.get<StampedValueNameIndexTag>();
 
     // It should be the one modified "tomorrow".
     ASSERT_EQ(1, parameters_index.size());
@@ -1307,7 +1326,7 @@ void
 GenericConfigBackendDHCPv4Test::getAllSubnets4Test() {
     // Insert test subnets into the database. Note that the second subnet will
     // overwrite the first subnet as they use the same ID.
-    for (auto subnet : test_subnets_) {
+    for (auto const& subnet : test_subnets_) {
         cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet);
 
         // That subnet overrides the first subnet so the audit entry should
@@ -1834,12 +1853,12 @@ GenericConfigBackendDHCPv4Test::getSharedNetworkSubnets4Test() {
     test_subnets_[3]->setSharedNetworkName("level2");
 
     // Store shared networks in the database.
-    for (auto network : test_networks_) {
+    for (auto const& network : test_networks_) {
         cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(), network);
     }
 
     // Store subnets in the database.
-    for (auto subnet : test_subnets_) {
+    for (auto const& subnet : test_subnets_) {
         cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet);
     }
 
@@ -2247,7 +2266,7 @@ void
 GenericConfigBackendDHCPv4Test::getAllSharedNetworks4Test() {
     // Insert test shared networks into the database. Note that the second shared
     // network will overwrite the first shared network as they use the same name.
-    for (auto network : test_networks_) {
+    for (auto const& network : test_networks_) {
         cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(), network);
 
         // That shared network overrides the first one so the audit entry should
@@ -3046,12 +3065,121 @@ GenericConfigBackendDHCPv4Test::optionDefs4WithServerTagsTest() {
 }
 
 void
+GenericConfigBackendDHCPv4Test::invalidOptionDefDataType4Test() {
+    OptionDefinitionPtr test_def;
+    ASSERT_NO_THROW_LOG(test_def.reset(new OptionDefinition("foobar", 234, DHCP4_OPTION_SPACE,
+                                                            "unknown", true)));
+    ASSERT_TRUE(test_def);
+    ASSERT_THROW(cbptr_->createUpdateOptionDef4(ServerSelector::ALL(), test_def),
+                 DbOperationError);
+}
+
+void
+GenericConfigBackendDHCPv4Test::allOptionDefDataTypes4Test() {
+
+    OptionDefListParser parser(AF_INET);
+    std::string defs_str = R"([
+    {
+        "name": "my-empty", "code": 221, "type": "empty", "array": false,
+        "record-types": "", "space": "dhcp4", "encapsulate": ""
+    },
+    {
+        "name": "my-binary", "code": 222, "type": "binary", "array": false,
+        "record-types": "", "space": "dhcp4", "encapsulate": ""
+    },
+    {
+        "name": "my-boolean", "code": 223, "type": "boolean", "array": false,
+        "record-types": "", "space": "dhcp4", "encapsulate": ""
+    },
+    {
+        "name": "my-int8", "code": 224, "type": "int8", "array": false,
+        "record-types": "", "space": "dhcp4", "encapsulate": ""
+    },
+    {
+        "name": "my-int16", "code": 225, "type": "int16", "array": false,
+        "record-types": "", "space": "dhcp4", "encapsulate": ""
+    },
+    {
+        "name": "my-int32", "code": 226, "type": "int32", "array": false,
+        "record-types": "", "space": "dhcp4", "encapsulate": ""
+    },
+    {
+        "name": "my-uint8", "code": 227, "type": "uint8", "array": false,
+        "record-types": "", "space": "dhcp4", "encapsulate": ""
+    },
+    {
+        "name": "my-uint16", "code": 228, "type": "uint16", "array": false,
+        "record-types": "", "space": "dhcp4", "encapsulate": ""
+    },
+    {
+        "name": "my-uint32", "code": 229, "type": "uint32", "array": false,
+        "record-types": "", "space": "dhcp4", "encapsulate": ""
+    },
+    {
+        "name": "my-ipv4-address", "code": 230, "type": "ipv4-address", "array": false,
+        "record-types": "", "space": "dhcp4", "encapsulate": ""
+    },
+    {
+        "name": "my-ipv6-address", "code": 231, "type": "ipv6-address", "array": false,
+        "record-types": "", "space": "dhcp4", "encapsulate": ""
+    },
+    {
+        "name": "my-ipv6-prefix", "code": 232, "type": "ipv6-prefix", "array": false,
+        "record-types": "", "space": "dhcp4", "encapsulate": ""
+    },
+    {
+        "name": "my-psid", "code": 233, "type": "psid", "array": false,
+        "record-types": "", "space": "dhcp4", "encapsulate": ""
+    },
+    {
+        "name": "my-string", "code": 234, "type": "string", "array": false,
+        "record-types": "", "space": "dhcp4", "encapsulate": ""
+    },
+    {
+        "name": "my-tuple", "code": 235, "type": "tuple", "array": false,
+        "record-types": "", "space": "dhcp4", "encapsulate": ""
+    },
+    {
+        "name": "my-fqdn", "code": 236, "type": "fqdn", "array": false,
+        "record-types": "", "space": "dhcp4", "encapsulate": ""
+    },
+    {
+        "name": "my-internal", "code": 237, "type": "internal", "array": false,
+        "record-types": "", "space": "dhcp4", "encapsulate": ""
+    },
+    {
+        "name": "my-record", "code": 238, "type": "record", "array": false,
+        "record-types": "uint8, uint8", "space": "dhcp4", "encapsulate": ""
+    }
+    ])";
+
+    ConstElementPtr defs_elem;
+    ASSERT_NO_THROW_LOG(defs_elem = Element::fromJSON(defs_str));
+
+    CfgOptionDefPtr storage(new CfgOptionDef());
+    ASSERT_NO_THROW_LOG(parser.parse(storage, defs_elem));
+
+    auto test_defs = storage->getAll("dhcp4");
+    ASSERT_EQ(test_defs->size(), 18);
+
+    // Insert each option definition into the database.
+    for (auto const& test_def : *test_defs) {
+        ASSERT_NO_THROW_LOG(cbptr_->createUpdateOptionDef4(ServerSelector::ALL(), test_def));
+        auto found_def = cbptr_->getOptionDef4(ServerSelector::ALL(),
+                                               test_def->getCode(), "dhcp4");
+
+        ASSERT_TRUE(found_def) << "no option found for " << test_def->getName();
+        ASSERT_EQ(*found_def, *test_def);
+    }
+}
+
+void
 GenericConfigBackendDHCPv4Test::getAllOptionDefs4Test() {
     // Insert test option definitions into the database. Note that the second
     // option definition will overwrite the first option definition as they use
     // the same code and space.
     size_t updates_num = 0;
-    for (auto option_def : test_option_defs_) {
+    for (auto const& option_def : test_option_defs_) {
         cbptr_->createUpdateOptionDef4(ServerSelector::ALL(), option_def);
 
         // That option definition overrides the first one so the audit entry should
@@ -3082,17 +3210,17 @@ GenericConfigBackendDHCPv4Test::getAllOptionDefs4Test() {
     ASSERT_EQ(test_option_defs_.size() - updates_num, option_defs.size());
 
     // See if option definitions are returned ok.
-    for (auto def = option_defs.begin(); def != option_defs.end(); ++def) {
-        ASSERT_EQ(1, (*def)->getServerTags().size());
-        EXPECT_EQ("all", (*def)->getServerTags().begin()->get());
+    for (auto const& def : option_defs) {
+        ASSERT_EQ(1, def->getServerTags().size());
+        EXPECT_EQ("all", def->getServerTags().begin()->get());
         bool success = false;
         for (auto i = 1; i < test_option_defs_.size(); ++i) {
-            if ((*def)->equals(*test_option_defs_[i])) {
+            if (def->equals(*test_option_defs_[i])) {
                 success = true;
             }
         }
-        ASSERT_TRUE(success) << "failed for option definition " << (*def)->getCode()
-            << ", option space " << (*def)->getOptionSpaceName();
+        ASSERT_TRUE(success) << "failed for option definition " << def->getCode()
+            << ", option space " << def->getOptionSpaceName();
     }
 
     // Deleting non-existing option definition should return 0.
@@ -3207,6 +3335,7 @@ GenericConfigBackendDHCPv4Test::createUpdateDeleteOption4Test() {
 
     // Modify option and update it in the database.
     opt_boot_file_name->persistent_ = !opt_boot_file_name->persistent_;
+    opt_boot_file_name->cancelled_ = !opt_boot_file_name->cancelled_;
     cbptr_->createUpdateOption4(ServerSelector::ALL(),
                                 opt_boot_file_name);
 
@@ -3584,6 +3713,7 @@ GenericConfigBackendDHCPv4Test::createUpdateDeleteSubnetOption4Test() {
     ASSERT_EQ(3, countRows("dhcp4_options"));
 
     opt_boot_file_name->persistent_ = !opt_boot_file_name->persistent_;
+    opt_boot_file_name->cancelled_ = !opt_boot_file_name->cancelled_;
     cbptr_->createUpdateOption4(ServerSelector::ANY(), subnet->getID(),
                                 opt_boot_file_name);
 
@@ -3692,6 +3822,7 @@ GenericConfigBackendDHCPv4Test::createUpdateDeletePoolOption4Test() {
 
     // Modify the option and update it in the database.
     opt_boot_file_name->persistent_ = !opt_boot_file_name->persistent_;
+    opt_boot_file_name->cancelled_ = !opt_boot_file_name->cancelled_;
     cbptr_->createUpdateOption4(ServerSelector::ANY(),
                                 pool->getFirstAddress(),
                                 pool->getLastAddress(),
@@ -3817,6 +3948,7 @@ GenericConfigBackendDHCPv4Test::createUpdateDeleteSharedNetworkOption4Test() {
     ASSERT_EQ(1, countRows("dhcp4_options"));
 
     opt_boot_file_name->persistent_ = !opt_boot_file_name->persistent_;
+    opt_boot_file_name->cancelled_ = !opt_boot_file_name->cancelled_;
     cbptr_->createUpdateOption4(ServerSelector::ANY(),
                                 shared_network->getName(),
                                 opt_boot_file_name);
@@ -3892,7 +4024,7 @@ GenericConfigBackendDHCPv4Test::subnetOptionIdOrderTest() {
     ASSERT_EQ(2, subnets.size());
 
     // Verify that the subnets returned are as expected.
-    for (auto subnet : subnets) {
+    for (auto const& subnet : subnets) {
         ASSERT_EQ(1, subnet->getServerTags().size());
         EXPECT_EQ("all", subnet->getServerTags().begin()->get());
         if (subnet->getID() == 1024) {
@@ -3980,6 +4112,7 @@ GenericConfigBackendDHCPv4Test::setAndGetAllClientClasses4Test() {
                           "client class set",
                           ServerSelector::ONE("server1"));
     }
+
     // Create second class.
     auto class2 = test_client_classes_[1];
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateClientClass4(ServerSelector::ONE("server1"), class2, ""));
@@ -4010,9 +4143,11 @@ GenericConfigBackendDHCPv4Test::setAndGetAllClientClasses4Test() {
                           "client class set",
                           ServerSelector::ONE("server1"));
     }
+
     // Only the first class should be returned for the server selector ALL.
     auto client_classes = cbptr_->getAllClientClasses4(ServerSelector::ALL());
     ASSERT_EQ(1, client_classes.getClasses()->size());
+
     // All three classes should be returned for the server1.
     client_classes = cbptr_->getAllClientClasses4(ServerSelector::ONE("server1"));
     auto classes_list = client_classes.getClasses();
@@ -4071,9 +4206,11 @@ GenericConfigBackendDHCPv4Test::getClientClass4Test() {
     auto class1 = test_client_classes_[0];
     ASSERT_NO_THROW_LOG(class1->getCfgOption()->add(test_options_[0]->option_,
                                                     test_options_[0]->persistent_,
+                                                    test_options_[0]->cancelled_,
                                                     test_options_[0]->space_name_));
     ASSERT_NO_THROW_LOG(class1->getCfgOption()->add(test_options_[1]->option_,
                                                     test_options_[1]->persistent_,
+                                                    test_options_[1]->cancelled_,
                                                     test_options_[1]->space_name_));
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateClientClass4(ServerSelector::ALL(), class1, ""));
 
@@ -4142,9 +4279,11 @@ GenericConfigBackendDHCPv4Test::createUpdateClientClass4OptionsTest() {
     auto class1 = test_client_classes_[0];
     ASSERT_NO_THROW_LOG(class1->getCfgOption()->add(test_options_[0]->option_,
                                                     test_options_[0]->persistent_,
+                                                    test_options_[0]->cancelled_,
                                                     test_options_[0]->space_name_));
     ASSERT_NO_THROW_LOG(class1->getCfgOption()->add(test_options_[1]->option_,
                                                     test_options_[1]->persistent_,
+                                                    test_options_[1]->cancelled_,
                                                     test_options_[1]->space_name_));
     auto cfg_option_def = boost::make_shared<CfgOptionDef>();
     class1->setCfgOptionDef(cfg_option_def);
@@ -4580,12 +4719,13 @@ GenericConfigBackendDHCPv4Test::multipleAuditEntriesTest() {
 
     // Check that partial retrieves return the right count.
     auto& mod_time_idx = audit_entries.get<AuditEntryModificationTimeIdTag>();
-    for (auto it = mod_time_idx.begin(); it != mod_time_idx.end(); ++it) {
+    size_t distance = mod_time_idx.size();
+    for (auto const& it : mod_time_idx) {
         size_t partial_size =
             cbptr_->getRecentAuditEntries(server_selector,
-                                          (*it)->getModificationTime(),
-                                          (*it)->getRevisionId()).size();
-        EXPECT_EQ(partial_size + 1,
-                  std::distance(it, mod_time_idx.end()));
+                                          it->getModificationTime(),
+                                          it->getRevisionId()).size();
+        EXPECT_EQ(partial_size + 1, distance);
+        distance--;
     }
 }

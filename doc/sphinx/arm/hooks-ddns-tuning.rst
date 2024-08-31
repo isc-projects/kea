@@ -1,33 +1,37 @@
+.. ischooklib:: libdhcp_ddns_tuning.so
 .. _hooks-ddns-tuning:
 
-``ddns_tuning``: DDNS Tuning
-============================
+``libdhcp_ddns_tuning.so``: DDNS Tuning
+=======================================
 
 This hook library adds support for fine-tuning various DNS update aspects.
 It currently supports procedural host-name generation and the ability to skip
 performing DDNS updates for select clients.
 
-The DDNS Tuning hook library is only available to ISC customers with a paid
-support contract.
+.. note::
 
-The library, which was added in Kea 2.1.5, can be loaded by the ``kea-dhcp4``
-and ``kea-dhcp6`` daemons by adding it to the ``hooks-libraries`` element of the
+    :ischooklib:`libdhcp_ddns_tuning.so` is available as a premium
+    hook library from ISC. Please visit https://www.isc.org/shop/ to purchase
+    the premium hook libraries, or contact us at https://www.isc.org/contact for
+    more information.
+
+The library, which was added in Kea 2.1.5, can be loaded by the :iscman:`kea-dhcp4`
+and :iscman:`kea-dhcp6` daemons by adding it to the ``hooks-libraries`` element of the
 server's configuration:
 
 .. code-block:: javascript
 
     {
         "hooks-libraries": [
-            :
-            ,
             {
                 "library": "/usr/local/lib/libdhcp_ddns_tuning.so",
                 "parameters": {
-                    :
+                    ...
                 }
             },
-            :
-        ]
+            ...
+        ],
+        ...
     }
 
 Procedural Host-Name Generation
@@ -43,17 +47,16 @@ expression is shown below:
 
     {
         "hooks-libraries": [
-            :
-            ,
             {
                 "library": "/usr/local/lib/libdhcp_ddns_tuning.so",
                 "parameters": {
-                    :
-                    "hostname-expr": "'host-'+hexstring(pkt4.mac,'-')"
+                    "hostname-expr": "'host-'+hexstring(pkt4.mac,'-')",
+                    ...
                 }
             },
-            :
-        ]
+            ...
+        ],
+        ...
     }
 
 It is also possible to define this parameter in a subnet, using the user-context mechanism.
@@ -63,19 +66,20 @@ global expression for that subnet. An example subnet expression is shown below:
 
 .. code-block:: javascript
 
+   {
     "subnet4": [{
         "subnet": "192.0.2.0/24",
         "pools": [{
-            "pool": "192.0.2.10 - 192.0.2.20",
+            "pool": "192.0.2.10 - 192.0.2.20"
         } ],
 
         // This is a subnet-specific user context.
         "user-context": {
-            "ddns-tuning:" {
-                "hostname-expr": "'guest-'+Int8ToText(substring(pkt4.yiaddr, 0,1))+'-' \
-                                          +Int8ToText(substring(pkt4.yiaddr, 1,2))+'-' \
-                                          +Int8ToText(substring(pkt4.yiaddr, 2,3))+'-' \
-                                          +Int8ToText(substring(pkt4.yiaddr, 3,4))",
+            "ddns-tuning": {
+                "hostname-expr": "'guest-'+int8totext(substring(pkt4.yiaddr, 0,1))+'-' \
+                                          +int8totext(substring(pkt4.yiaddr, 1,2))+'-' \
+                                          +int8totext(substring(pkt4.yiaddr, 2,3))+'-' \
+                                          +int8totext(substring(pkt4.yiaddr, 3,4))"
             },
             "last-modified": "2017-09-04 13:32",
             "description": "you can put anything you like here",
@@ -83,11 +87,13 @@ global expression for that subnet. An example subnet expression is shown below:
             "devices-registered": 42,
             "billing": false
         }
-    }]
+    }],
+    ...
+   }
 
 .. note::
 
-   The expression value above uses a slash, '\', to show line continuation. This is for
+   The expression value above uses a backslash, ``\``, to show line continuation. This is for
    clarity only and is not valid JSON supported by Kea parsing. The actual value must
    be expressed on a single line.
 
@@ -101,7 +107,7 @@ global expression for that subnet. An example subnet expression is shown below:
 DHCPv4 Host-Name Generation
 ---------------------------
 
-With this library installed, the behavior for ``kea-dhcp4`` when forming host names in
+With this library installed, the behavior for :iscman:`kea-dhcp4` when forming host names in
 response to a client query (e.g. DISCOVER, REQUEST) is as follows:
 
   1. If a host name is supplied via a host reservation, use it with the DDNS
@@ -125,7 +131,7 @@ response to a client query (e.g. DISCOVER, REQUEST) is as follows:
 DHCPv6 Host-Name Generation
 ---------------------------
 
-With this library installed, the behavior for ``kea-dhcp6`` when forming host names in
+With this library installed, the behavior for :iscman:`kea-dhcp6` when forming host names in
 response to a client query (e.g. SOLICIT, REQUEST, RENEW, REBIND) is as follows:
 
   1. If the client supplied an FQDN option (option 39), use the domain name value
@@ -156,10 +162,10 @@ response to a client query (e.g. SOLICIT, REQUEST, RENEW, REBIND) is as follows:
 Skipping DDNS Updates
 ~~~~~~~~~~~~~~~~~~~~~
 
-The ``ddns-tuning`` library also provides the ability to skip DDNS updates on a
+:ischooklib:`libdhcp_ddns_tuning.so` also provides the ability to skip DDNS updates on a
 per-client basis. The library recognizes a special client class, "SKIP_DDNS"; when a
-client is matched to this class, the Kea servers (``kea-dhcp4`` and ``kea-dhcp6``) do not
-send DDNS update requests (NCRs) to ``kea-dhcp-ddns``. A common use case would be
+client is matched to this class, the Kea servers (:iscman:`kea-dhcp4` and :iscman:`kea-dhcp6`) do not
+send DDNS update requests (NCRs) to :iscman:`kea-dhcp-ddns`. A common use case would be
 to skip DDNS updates for fixed-address host reservations. This is done easily by
 simply assigning the class to the host reservation as shown below:
 
@@ -174,10 +180,11 @@ simply assigning the class to the host reservation as shown below:
         }]
     }
 
-The ``ddns-tuning`` library notes the presence of the "SKIP_DDNS" class in the
+The :ischooklib:`libdhcp_ddns_tuning.so` hook library notes the
+presence of the ``"SKIP_DDNS"`` class in the
 client's class list each time the client requests, renews, or releases its lease,
-and instructs ``kea-dhcp4`` to bypass sending DDNS updates. A similar workflow is
-supported for ``kea-dhcp6``:
+and instructs :iscman:`kea-dhcp4` to bypass sending DDNS updates. A similar workflow is
+supported for :iscman:`kea-dhcp6`:
 
 .. code-block:: javascript
 
@@ -206,5 +213,5 @@ clients:
 
 .. note::
 
-    The ``ddns-tuning`` hook library must be loaded for the "SKIP_DDNS" class
-    to have an effect.
+    The :ischooklib:`libdhcp_ddns_tuning.so` hook library must be
+    loaded for the ``"SKIP_DDNS"`` class to have an effect.

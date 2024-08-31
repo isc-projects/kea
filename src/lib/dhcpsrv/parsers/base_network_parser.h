@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,24 +18,6 @@ namespace dhcp {
 /// @brief Common configuration parser for shared networks
 /// and subnets.
 class BaseNetworkParser : public data::SimpleParser {
-public:
-
-    /// @brief Moves deprecated reservation-mode parameter to
-    /// new reservations flags.
-    ///
-    /// @param config [in/out] configuration to alter.
-    /// @throw DhcpConfigError on error e.g. when both reservation-mode
-    /// and a flag are specified.
-    static void moveReservationMode(isc::data::ElementPtr config);
-
-    /// @brief Moves deprecated reservation-mode parameter to
-    /// new reservations flags.
-    ///
-    /// @param config [in/out] global parameters to alter.
-    /// @throw DhcpConfigError on error e.g. when both reservation-mode
-    /// and a flag are specified.
-    static void moveReservationMode(CfgGlobalsPtr config);
-
 protected:
 
     /// @brief Parses common parameters
@@ -87,7 +69,7 @@ protected:
     /// @throw DhcpConfigError if configuration of these parameters is
     /// invalid.
     void parseCacheParams(const data::ConstElementPtr& network_data,
-                     NetworkPtr& network);
+                          NetworkPtr& network);
 
     /// @brief Parses parameters pertaining to DDNS behavior.
     ///
@@ -98,6 +80,10 @@ protected:
     /// - ddns-replace-client-name
     /// - ddns-generated-prefix
     /// - ddns-qualifying-suffix
+    /// - ddns-use-conflict-resolution (retained for backward compatibility)
+    /// - ddns-update-on-renew
+    /// - ddns-ttl-percent
+    /// - ddns-conflict-resolution-mode
     ///
     /// @param network_data Data element holding shared network
     /// configuration to be parsed.
@@ -105,6 +91,41 @@ protected:
     /// to be stored.
     void parseDdnsParams(const data::ConstElementPtr& network_data,
                          NetworkPtr& network);
+
+    /// @brief Parses parameters pertaining to allocator selection.
+    ///
+    /// The parsed parameters are:
+    /// - allocator
+    ///
+    /// @param network_data Data element holding shared network
+    /// configuration to be parsed.
+    /// @param [out] network Pointer to a network in which parsed data is
+    /// to be stored.
+    void parseAllocatorParams(const data::ConstElementPtr& network_data,
+                              NetworkPtr& network);
+
+    /// @brief Parses parameters pertaining to prefix delegation allocator
+    /// selection.
+    ///
+    /// The parsed parameters are:
+    /// - pd-allocator
+    ///
+    /// @param network_data Data element holding shared network
+    /// configuration to be parsed.
+    /// @param [out] network Pointer to a network in which parsed data is
+    /// to be stored.
+    void parsePdAllocatorParams(const data::ConstElementPtr& network_data,
+                                Network6Ptr& network);
+
+    /// @brief Parses offer-lifetime parameter (v4 only)
+    ///
+    /// @param network_data Data element holding shared network
+    /// configuration to be parsed.
+    /// @param [out] network Pointer to the v4 network in which parsed data is
+    /// to be stored.
+    /// @throw DhcpConfigError if the value is less than 0.
+    void parseOfferLft(const data::ConstElementPtr& network_data,
+                       Network4Ptr& network);
 };
 
 } // end of namespace isc::dhcp

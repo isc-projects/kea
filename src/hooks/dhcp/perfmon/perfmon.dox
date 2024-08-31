@@ -1,0 +1,43 @@
+// Copyright (C) 2024 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+
+@page libdhcp_perfmon Kea PerfMon Hooks Library
+
+@section libdhcp_perfmonIntro Introduction
+
+Welcome to Kea PerfMon Hooks Library. This documentation is addressed to
+developers who are interested in the internal operation of the PerfMon
+library. This file provides information needed to understand and perhaps extend
+this library.
+
+This documentation is stand-alone: you should have read and understood the <a
+href="https://reports.kea.isc.org/dev_guide/">Kea Developer's Guide</a> and in
+particular its section about hooks.
+
+@section perfmon PerfMon Overview
+
+PerfMon (or perfmon) is a Hook library that can be loaded by
+either kea-dhcp4 and kea-dhcp6 servers to extend them with the
+ability to track and report performance related data.
+
+The initial purpose of this library is to provide supplemental data and
+commands for monitoring the performance of kea-dhcp4 and kea-dhcp6
+servers in real time.
+
+
+
+     THIS LIBRARY IS CURRENTLY UNDER DEVELOPMENT
+
+
+
+
+@section perfmonMTCompatibility Multi-Threading Compatibility
+
+The PerfMon Hook library is compatible with multi-threading.
+
+*/

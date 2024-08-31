@@ -1,16 +1,18 @@
-// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include "test_utils.h"
+
 #include <asiolink/io_address.h>
+#include <dhcpsrv/testutils/test_utils.h>
+#include <testutils/gtest_utils.h>
+
 #include <gtest/gtest.h>
-#include <sstream>
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 using namespace std;
@@ -50,9 +52,14 @@ detailCompareLease(const Lease4Ptr& first, const Lease4Ptr& second) {
         // else here would mean that both leases do not have client_id_
         // which makes them equal in that regard. It is ok.
     }
-    EXPECT_EQ(first->valid_lft_, second->valid_lft_);
-    EXPECT_EQ(first->cltt_, second->cltt_);
+
+    // Since the initial time values were set, one second could have ticked,
+    // so allow one second of margin error.
+    EXPECT_NEAR(first->valid_lft_, second->valid_lft_, 1);
+    EXPECT_NEAR(first->cltt_, second->cltt_, 1);
+
     EXPECT_EQ(first->subnet_id_, second->subnet_id_);
+    EXPECT_EQ(first->pool_id_, second->pool_id_);
     EXPECT_EQ(first->fqdn_fwd_, second->fqdn_fwd_);
     EXPECT_EQ(first->fqdn_rev_, second->fqdn_rev_);
     EXPECT_EQ(first->hostname_, second->hostname_);
@@ -82,10 +89,15 @@ detailCompareLease(const Lease6Ptr& first, const Lease6Ptr& second) {
     ASSERT_TRUE(first->duid_);
     ASSERT_TRUE(second->duid_);
     EXPECT_TRUE(*first->duid_ == *second->duid_);
-    EXPECT_EQ(first->preferred_lft_, second->preferred_lft_);
-    EXPECT_EQ(first->valid_lft_, second->valid_lft_);
-    EXPECT_EQ(first->cltt_, second->cltt_);
+
+    // Since the initial time values were set, one second could have ticked,
+    // so allow one second of margin error.
+    EXPECT_NEAR(first->preferred_lft_, second->preferred_lft_, 1);
+    EXPECT_NEAR(first->valid_lft_, second->valid_lft_, 1);
+    EXPECT_NEAR(first->cltt_, second->cltt_, 1);
+
     EXPECT_EQ(first->subnet_id_, second->subnet_id_);
+    EXPECT_EQ(first->pool_id_, second->pool_id_);
     EXPECT_EQ(first->fqdn_fwd_, second->fqdn_fwd_);
     EXPECT_EQ(first->fqdn_rev_, second->fqdn_rev_);
     EXPECT_EQ(first->hostname_, second->hostname_);

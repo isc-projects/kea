@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <asiolink/asio_wrapper.h>
+#include <dhcp/iface_mgr.h>
 #include <http/connection.h>
 #include <http/connection_pool.h>
 #include <http/http_log.h>
@@ -15,6 +16,8 @@
 #include <functional>
 
 using namespace isc::asiolink;
+using namespace isc::dhcp;
+using namespace isc::util;
 namespace ph = std::placeholders;
 
 namespace {
@@ -62,7 +65,7 @@ SocketCallback::operator()(boost::system::error_code ec, size_t length) {
     callback_(ec, length);
 }
 
-HttpConnection::HttpConnection(asiolink::IOService& io_service,
+HttpConnection::HttpConnection(const asiolink::IOServicePtr& io_service,
                                const HttpAcceptorPtr& acceptor,
                                const TlsContextPtr& tls_context,
                                HttpConnectionPool& connection_pool,
@@ -79,7 +82,9 @@ HttpConnection::HttpConnection(asiolink::IOService& io_service,
       acceptor_(acceptor),
       connection_pool_(connection_pool),
       response_creator_(response_creator),
-      acceptor_callback_(callback) {
+      acceptor_callback_(callback),
+      use_external_(false),
+      watch_socket_() {
     if (!tls_context) {
         tcp_socket_.reset(new asiolink::TCPSocket<SocketCallback>(io_service));
     } else {
@@ -90,6 +95,11 @@ HttpConnection::HttpConnection(asiolink::IOService& io_service,
 
 HttpConnection::~HttpConnection() {
     close();
+}
+
+void
+HttpConnection::addExternalSockets(bool use_external) {
+    use_external_ = use_external;
 }
 
 void
@@ -125,6 +135,11 @@ HttpConnection::recordParameters(const HttpRequestPtr& request) const {
 
 void
 HttpConnection::shutdownCallback(const boost::system::error_code&) {
+    if (use_external_) {
+        IfaceMgr::instance().deleteExternalSocket(tls_socket_->getNative());
+        closeWatchSocket();
+    }
+
     tls_socket_->close();
 }
 
@@ -132,6 +147,10 @@ void
 HttpConnection::shutdown() {
     request_timer_.cancel();
     if (tcp_socket_) {
+        if (use_external_) {
+            IfaceMgr::instance().deleteExternalSocket(tcp_socket_->getNative());
+            closeWatchSocket();
+        }
         tcp_socket_->close();
         return;
     }
@@ -148,13 +167,64 @@ HttpConnection::shutdown() {
 }
 
 void
+HttpConnection::markWatchSocketReady() {
+    if (!watch_socket_) {
+        /// Should not happen...
+        return;
+    }
+    try {
+        watch_socket_->markReady();
+    } catch (const std::exception& ex) {
+        LOG_ERROR(http_logger, HTTP_CONNECTION_WATCH_SOCKET_MARK_READY_ERROR)
+            .arg(ex.what());
+    }
+}
+
+void
+HttpConnection::clearWatchSocket() {
+    if (!watch_socket_) {
+        /// Should not happen...
+        return;
+    }
+    try {
+        watch_socket_->clearReady();
+    } catch (const std::exception& ex) {
+        LOG_ERROR(http_logger, HTTP_CONNECTION_WATCH_SOCKET_CLEAR_ERROR)
+            .arg(ex.what());
+    }
+}
+
+void
+HttpConnection::closeWatchSocket() {
+    if (!watch_socket_) {
+        /// Should not happen...
+        return;
+    }
+    IfaceMgr::instance().deleteExternalSocket(watch_socket_->getSelectFd());
+    // Close watch socket and log errors if occur.
+    std::string watch_error;
+    if (!watch_socket_->closeSocket(watch_error)) {
+        LOG_ERROR(http_logger, HTTP_CONNECTION_WATCH_SOCKET_CLOSE_ERROR)
+            .arg(watch_error);
+    }
+}
+
+void
 HttpConnection::close() {
     request_timer_.cancel();
     if (tcp_socket_) {
+        if (use_external_) {
+            IfaceMgr::instance().deleteExternalSocket(tcp_socket_->getNative());
+            closeWatchSocket();
+        }
         tcp_socket_->close();
         return;
     }
     if (tls_socket_) {
+        if (use_external_) {
+            IfaceMgr::instance().deleteExternalSocket(tls_socket_->getNative());
+            closeWatchSocket();
+        }
         tls_socket_->close();
         return;
     }
@@ -230,7 +300,9 @@ HttpConnection::doHandshake() {
                                 ph::_1)); // error
     try {
         tls_socket_->handshake(cb);
-
+        if (use_external_) {
+            markWatchSocketReady();
+        }
     } catch (const std::exception& ex) {
         isc_throw(HttpConnectionError, "unable to perform TLS handshake: "
                   << ex.what());
@@ -290,12 +362,18 @@ HttpConnection::doWrite(HttpConnection::TransactionPtr transaction) {
                 tcp_socket_->asyncSend(transaction->getOutputBufData(),
                                        transaction->getOutputBufSize(),
                                        cb);
+                if (use_external_) {
+                    markWatchSocketReady();
+                }
                 return;
             }
             if (tls_socket_) {
                 tls_socket_->asyncSend(transaction->getOutputBufData(),
                                        transaction->getOutputBufSize(),
                                        cb);
+                if (use_external_) {
+                    markWatchSocketReady();
+                }
                 return;
             }
         } else {
@@ -353,6 +431,18 @@ HttpConnection::acceptorCallback(const boost::system::error_code& ec) {
                 .arg(static_cast<unsigned>(request_timeout_/1000));
         }
 
+        if (use_external_) {
+            auto& iface_mgr = IfaceMgr::instance();
+            if (tcp_socket_) {
+                iface_mgr.addExternalSocket(tcp_socket_->getNative(), 0);
+            }
+            if (tls_socket_) {
+                iface_mgr.addExternalSocket(tls_socket_->getNative(), 0);
+            }
+            watch_socket_.reset(new WatchSocket());
+            iface_mgr.addExternalSocket(watch_socket_->getSelectFd(), 0);
+        }
+
         setupRequestTimer();
         doHandshake();
     }
@@ -360,6 +450,9 @@ HttpConnection::acceptorCallback(const boost::system::error_code& ec) {
 
 void
 HttpConnection::handshakeCallback(const boost::system::error_code& ec) {
+    if (use_external_) {
+        clearWatchSocket();
+    }
     if (ec) {
         LOG_INFO(http_logger, HTTP_CONNECTION_HANDSHAKE_FAILED)
             .arg(getRemoteEndpointAddressAsText())
@@ -471,6 +564,9 @@ HttpConnection::socketReadCallback(HttpConnection::TransactionPtr transaction,
 void
 HttpConnection::socketWriteCallback(HttpConnection::TransactionPtr transaction,
                                     boost::system::error_code ec, size_t length) {
+    if (use_external_) {
+        clearWatchSocket();
+    }
     if (ec) {
         // IO service has been stopped and the connection is probably
         // going to be shutting down.

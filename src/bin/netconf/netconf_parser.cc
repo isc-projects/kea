@@ -44,11 +44,16 @@
 
 
 // Unqualified %code blocks.
-#line 33 "netconf_parser.yy"
+#line 36 "netconf_parser.yy"
 
 #include <netconf/parser_context.h>
 
-#line 52 "netconf_parser.cc"
+// Avoid warnings with the error counter.
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#endif
+
+#line 57 "netconf_parser.cc"
 
 
 #ifndef YY_
@@ -141,7 +146,7 @@
 
 #line 14 "netconf_parser.yy"
 namespace isc { namespace netconf {
-#line 145 "netconf_parser.cc"
+#line 150 "netconf_parser.cc"
 
   /// Build a parser object.
   NetconfParser::NetconfParser (isc::netconf::ParserContext& ctx_yyarg)
@@ -228,7 +233,7 @@ namespace isc { namespace netconf {
         break;
 
       case symbol_kind::S_STRING: // "constant string"
-        value.YY_MOVE_OR_COPY< std::string > (YY_MOVE (that.value));
+        value.YY_MOVE_OR_COPY< string > (YY_MOVE (that.value));
         break;
 
       default:
@@ -265,7 +270,7 @@ namespace isc { namespace netconf {
         break;
 
       case symbol_kind::S_STRING: // "constant string"
-        value.move< std::string > (YY_MOVE (that.value));
+        value.move< string > (YY_MOVE (that.value));
         break;
 
       default:
@@ -302,7 +307,7 @@ namespace isc { namespace netconf {
         break;
 
       case symbol_kind::S_STRING: // "constant string"
-        value.copy< std::string > (that.value);
+        value.copy< string > (that.value);
         break;
 
       default:
@@ -338,7 +343,7 @@ namespace isc { namespace netconf {
         break;
 
       case symbol_kind::S_STRING: // "constant string"
-        value.move< std::string > (that.value);
+        value.move< string > (that.value);
         break;
 
       default:
@@ -378,45 +383,45 @@ namespace isc { namespace netconf {
         switch (yykind)
     {
       case symbol_kind::S_STRING: // "constant string"
-#line 107 "netconf_parser.yy"
-                 { yyoutput << yysym.value.template as < std::string > (); }
-#line 384 "netconf_parser.cc"
+#line 115 "netconf_parser.yy"
+                 { yyoutput << yysym.value.template as < string > (); }
+#line 389 "netconf_parser.cc"
         break;
 
       case symbol_kind::S_INTEGER: // "integer"
-#line 107 "netconf_parser.yy"
+#line 115 "netconf_parser.yy"
                  { yyoutput << yysym.value.template as < int64_t > (); }
-#line 390 "netconf_parser.cc"
+#line 395 "netconf_parser.cc"
         break;
 
       case symbol_kind::S_FLOAT: // "floating point"
-#line 107 "netconf_parser.yy"
+#line 115 "netconf_parser.yy"
                  { yyoutput << yysym.value.template as < double > (); }
-#line 396 "netconf_parser.cc"
+#line 401 "netconf_parser.cc"
         break;
 
       case symbol_kind::S_BOOLEAN: // "boolean"
-#line 107 "netconf_parser.yy"
+#line 115 "netconf_parser.yy"
                  { yyoutput << yysym.value.template as < bool > (); }
-#line 402 "netconf_parser.cc"
+#line 407 "netconf_parser.cc"
         break;
 
       case symbol_kind::S_value: // value
-#line 107 "netconf_parser.yy"
+#line 115 "netconf_parser.yy"
                  { yyoutput << yysym.value.template as < ElementPtr > (); }
-#line 408 "netconf_parser.cc"
+#line 413 "netconf_parser.cc"
         break;
 
       case symbol_kind::S_map_value: // map_value
-#line 107 "netconf_parser.yy"
+#line 115 "netconf_parser.yy"
                  { yyoutput << yysym.value.template as < ElementPtr > (); }
-#line 414 "netconf_parser.cc"
+#line 419 "netconf_parser.cc"
         break;
 
       case symbol_kind::S_socket_type_value: // socket_type_value
-#line 107 "netconf_parser.yy"
+#line 115 "netconf_parser.yy"
                  { yyoutput << yysym.value.template as < ElementPtr > (); }
-#line 420 "netconf_parser.cc"
+#line 425 "netconf_parser.cc"
         break;
 
       default:
@@ -665,7 +670,7 @@ namespace isc { namespace netconf {
         break;
 
       case symbol_kind::S_STRING: // "constant string"
-        yylhs.value.emplace< std::string > ();
+        yylhs.value.emplace< string > ();
         break;
 
       default:
@@ -689,224 +694,224 @@ namespace isc { namespace netconf {
           switch (yyn)
             {
   case 2: // $@1: %empty
-#line 118 "netconf_parser.yy"
+#line 126 "netconf_parser.yy"
                        { ctx.ctx_ = ctx.NO_KEYWORDS; }
-#line 695 "netconf_parser.cc"
+#line 700 "netconf_parser.cc"
     break;
 
   case 4: // $@2: %empty
-#line 119 "netconf_parser.yy"
+#line 127 "netconf_parser.yy"
                          { ctx.ctx_ = ctx.CONFIG; }
-#line 701 "netconf_parser.cc"
+#line 706 "netconf_parser.cc"
     break;
 
   case 6: // $@3: %empty
-#line 120 "netconf_parser.yy"
+#line 128 "netconf_parser.yy"
                          { ctx.ctx_ = ctx.NETCONF; }
-#line 707 "netconf_parser.cc"
+#line 712 "netconf_parser.cc"
     break;
 
   case 8: // $@4: %empty
-#line 128 "netconf_parser.yy"
+#line 136 "netconf_parser.yy"
                             {
     // Parse the Netconf map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 717 "netconf_parser.cc"
+#line 722 "netconf_parser.cc"
     break;
 
   case 9: // sub_netconf: "{" $@4 global_params "}"
-#line 132 "netconf_parser.yy"
+#line 140 "netconf_parser.yy"
                                {
     // parsing completed
 }
-#line 725 "netconf_parser.cc"
+#line 730 "netconf_parser.cc"
     break;
 
   case 10: // json: value
-#line 139 "netconf_parser.yy"
+#line 147 "netconf_parser.yy"
             {
     // Push back the JSON value on the stack
     ctx.stack_.push_back(yystack_[0].value.as < ElementPtr > ());
 }
-#line 734 "netconf_parser.cc"
+#line 739 "netconf_parser.cc"
     break;
 
   case 11: // value: "integer"
-#line 145 "netconf_parser.yy"
+#line 153 "netconf_parser.yy"
                { yylhs.value.as < ElementPtr > () = ElementPtr(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location))); }
-#line 740 "netconf_parser.cc"
+#line 745 "netconf_parser.cc"
     break;
 
   case 12: // value: "floating point"
-#line 146 "netconf_parser.yy"
+#line 154 "netconf_parser.yy"
              { yylhs.value.as < ElementPtr > () = ElementPtr(new DoubleElement(yystack_[0].value.as < double > (), ctx.loc2pos(yystack_[0].location))); }
-#line 746 "netconf_parser.cc"
+#line 751 "netconf_parser.cc"
     break;
 
   case 13: // value: "boolean"
-#line 147 "netconf_parser.yy"
+#line 155 "netconf_parser.yy"
                { yylhs.value.as < ElementPtr > () = ElementPtr(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location))); }
-#line 752 "netconf_parser.cc"
+#line 757 "netconf_parser.cc"
     break;
 
   case 14: // value: "constant string"
-#line 148 "netconf_parser.yy"
-              { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location))); }
-#line 758 "netconf_parser.cc"
+#line 156 "netconf_parser.yy"
+              { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement(yystack_[0].value.as < string > (), ctx.loc2pos(yystack_[0].location))); }
+#line 763 "netconf_parser.cc"
     break;
 
   case 15: // value: "null"
-#line 149 "netconf_parser.yy"
+#line 157 "netconf_parser.yy"
                  { yylhs.value.as < ElementPtr > () = ElementPtr(new NullElement(ctx.loc2pos(yystack_[0].location))); }
-#line 764 "netconf_parser.cc"
+#line 769 "netconf_parser.cc"
     break;
 
   case 16: // value: map
-#line 150 "netconf_parser.yy"
+#line 158 "netconf_parser.yy"
            { yylhs.value.as < ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
-#line 770 "netconf_parser.cc"
+#line 775 "netconf_parser.cc"
     break;
 
   case 17: // value: list_generic
-#line 151 "netconf_parser.yy"
+#line 159 "netconf_parser.yy"
                     { yylhs.value.as < ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
-#line 776 "netconf_parser.cc"
+#line 781 "netconf_parser.cc"
     break;
 
   case 18: // $@5: %empty
-#line 155 "netconf_parser.yy"
+#line 163 "netconf_parser.yy"
                     {
     // This code is executed when we're about to start parsing
     // the content of the map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 787 "netconf_parser.cc"
+#line 792 "netconf_parser.cc"
     break;
 
   case 19: // map: "{" $@5 map_content "}"
-#line 160 "netconf_parser.yy"
+#line 168 "netconf_parser.yy"
                              {
     // map parsing completed. If we ever want to do any wrap up
     // (maybe some sanity checking), this would be the best place
     // for it.
 }
-#line 797 "netconf_parser.cc"
+#line 802 "netconf_parser.cc"
     break;
 
   case 20: // map_value: map
-#line 166 "netconf_parser.yy"
+#line 174 "netconf_parser.yy"
                { yylhs.value.as < ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
-#line 803 "netconf_parser.cc"
+#line 808 "netconf_parser.cc"
     break;
 
   case 23: // not_empty_map: "constant string" ":" value
-#line 180 "netconf_parser.yy"
+#line 188 "netconf_parser.yy"
                                   {
                   // map containing a single entry
-                  ctx.unique(yystack_[2].value.as < std::string > (), ctx.loc2pos(yystack_[2].location));
-                  ctx.stack_.back()->set(yystack_[2].value.as < std::string > (), yystack_[0].value.as < ElementPtr > ());
+                  ctx.unique(yystack_[2].value.as < string > (), ctx.loc2pos(yystack_[2].location));
+                  ctx.stack_.back()->set(yystack_[2].value.as < string > (), yystack_[0].value.as < ElementPtr > ());
                   }
-#line 813 "netconf_parser.cc"
+#line 818 "netconf_parser.cc"
     break;
 
   case 24: // not_empty_map: not_empty_map "," "constant string" ":" value
-#line 185 "netconf_parser.yy"
+#line 193 "netconf_parser.yy"
                                                       {
                   // map consisting of a shorter map followed by
                   // comma and string:value
-                  ctx.unique(yystack_[2].value.as < std::string > (), ctx.loc2pos(yystack_[2].location));
-                  ctx.stack_.back()->set(yystack_[2].value.as < std::string > (), yystack_[0].value.as < ElementPtr > ());
+                  ctx.unique(yystack_[2].value.as < string > (), ctx.loc2pos(yystack_[2].location));
+                  ctx.stack_.back()->set(yystack_[2].value.as < string > (), yystack_[0].value.as < ElementPtr > ());
                   }
-#line 824 "netconf_parser.cc"
+#line 829 "netconf_parser.cc"
     break;
 
   case 25: // not_empty_map: not_empty_map ","
-#line 191 "netconf_parser.yy"
+#line 199 "netconf_parser.yy"
                                    {
                  ctx.warnAboutExtraCommas(yystack_[0].location);
                  }
-#line 832 "netconf_parser.cc"
+#line 837 "netconf_parser.cc"
     break;
 
   case 26: // $@6: %empty
-#line 196 "netconf_parser.yy"
+#line 204 "netconf_parser.yy"
                               {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(l);
 }
-#line 841 "netconf_parser.cc"
+#line 846 "netconf_parser.cc"
     break;
 
   case 27: // list_generic: "[" $@6 list_content "]"
-#line 199 "netconf_parser.yy"
+#line 207 "netconf_parser.yy"
                                {
 }
-#line 848 "netconf_parser.cc"
+#line 853 "netconf_parser.cc"
     break;
 
   case 30: // not_empty_list: value
-#line 206 "netconf_parser.yy"
+#line 214 "netconf_parser.yy"
                       {
                   // List consisting of a single element.
                   ctx.stack_.back()->add(yystack_[0].value.as < ElementPtr > ());
                   }
-#line 857 "netconf_parser.cc"
+#line 862 "netconf_parser.cc"
     break;
 
   case 31: // not_empty_list: not_empty_list "," value
-#line 210 "netconf_parser.yy"
+#line 218 "netconf_parser.yy"
                                            {
                   // List ending with , and a value.
                   ctx.stack_.back()->add(yystack_[0].value.as < ElementPtr > ());
                   }
-#line 866 "netconf_parser.cc"
+#line 871 "netconf_parser.cc"
     break;
 
   case 32: // not_empty_list: not_empty_list ","
-#line 214 "netconf_parser.yy"
+#line 222 "netconf_parser.yy"
                                      {
                   ctx.warnAboutExtraCommas(yystack_[0].location);
                   }
-#line 874 "netconf_parser.cc"
+#line 879 "netconf_parser.cc"
     break;
 
   case 33: // unknown_map_entry: "constant string" ":"
-#line 226 "netconf_parser.yy"
+#line 234 "netconf_parser.yy"
                                 {
-    const std::string& where = ctx.contextName();
-    const std::string& keyword = yystack_[1].value.as < std::string > ();
+    const string& where = ctx.contextName();
+    const string& keyword = yystack_[1].value.as < string > ();
     error(yystack_[1].location,
           "got unexpected keyword \"" + keyword + "\" in " + where + " map.");
 }
-#line 885 "netconf_parser.cc"
+#line 890 "netconf_parser.cc"
     break;
 
   case 34: // $@7: %empty
-#line 234 "netconf_parser.yy"
+#line 242 "netconf_parser.yy"
                                    {
     // This code is executed when we're about to start parsing
     // the content of the map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 896 "netconf_parser.cc"
+#line 901 "netconf_parser.cc"
     break;
 
   case 35: // netconf_syntax_map: "{" $@7 global_object "}"
-#line 239 "netconf_parser.yy"
+#line 247 "netconf_parser.yy"
                                {
     // map parsing completed. If we ever want to do any wrap up
     // (maybe some sanity checking), this would be the best place
     // for it.
 }
-#line 906 "netconf_parser.cc"
+#line 911 "netconf_parser.cc"
     break;
 
   case 36: // $@8: %empty
-#line 246 "netconf_parser.yy"
+#line 254 "netconf_parser.yy"
                        {
     // Let's create a MapElement that will represent it, add it to the
     // top level map (that's already on the stack) and put the new map
@@ -920,76 +925,76 @@ namespace isc { namespace netconf {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.NETCONF);
 }
-#line 924 "netconf_parser.cc"
+#line 929 "netconf_parser.cc"
     break;
 
   case 37: // global_object: "Netconf" $@8 ":" "{" global_params "}"
-#line 258 "netconf_parser.yy"
+#line 266 "netconf_parser.yy"
                                                     {
     // Ok, we're done with parsing Netconf. Let's take the map
     // off the stack.
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 935 "netconf_parser.cc"
+#line 940 "netconf_parser.cc"
     break;
 
   case 39: // global_object_comma: global_object ","
-#line 267 "netconf_parser.yy"
+#line 275 "netconf_parser.yy"
                                          {
     ctx.warnAboutExtraCommas(yystack_[0].location);
 }
-#line 943 "netconf_parser.cc"
+#line 948 "netconf_parser.cc"
     break;
 
   case 44: // not_empty_global_params: not_empty_global_params ","
-#line 278 "netconf_parser.yy"
+#line 286 "netconf_parser.yy"
                                                        {
                            ctx.warnAboutExtraCommas(yystack_[0].location);
                            }
-#line 951 "netconf_parser.cc"
+#line 956 "netconf_parser.cc"
     break;
 
   case 54: // boot_update: "boot-update" ":" "boolean"
-#line 296 "netconf_parser.yy"
+#line 304 "netconf_parser.yy"
                                        {
     ctx.unique("boot-update", ctx.loc2pos(yystack_[2].location));
     ElementPtr flag(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("boot-update", flag);
 }
-#line 961 "netconf_parser.cc"
+#line 966 "netconf_parser.cc"
     break;
 
   case 55: // subscribe_changes: "subscribe-changes" ":" "boolean"
-#line 302 "netconf_parser.yy"
+#line 310 "netconf_parser.yy"
                                                    {
     ctx.unique("subscribe-changes", ctx.loc2pos(yystack_[2].location));
     ElementPtr flag(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("subscribe-changes", flag);
 }
-#line 971 "netconf_parser.cc"
+#line 976 "netconf_parser.cc"
     break;
 
   case 56: // validate_changes: "validate-changes" ":" "boolean"
-#line 308 "netconf_parser.yy"
+#line 316 "netconf_parser.yy"
                                                  {
     ctx.unique("validate-changes", ctx.loc2pos(yystack_[2].location));
     ElementPtr flag(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("validate-changes", flag);
 }
-#line 981 "netconf_parser.cc"
+#line 986 "netconf_parser.cc"
     break;
 
   case 57: // $@9: %empty
-#line 314 "netconf_parser.yy"
+#line 322 "netconf_parser.yy"
                            {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 989 "netconf_parser.cc"
+#line 994 "netconf_parser.cc"
     break;
 
   case 58: // user_context: "user-context" $@9 ":" map_value
-#line 316 "netconf_parser.yy"
+#line 324 "netconf_parser.yy"
                   {
     ElementPtr parent = ctx.stack_.back();
     ElementPtr user_context = yystack_[0].value.as < ElementPtr > ();
@@ -999,7 +1004,7 @@ namespace isc { namespace netconf {
     if (old) {
         // Check if it was a comment or a duplicate
         if ((old->size() != 1) || !old->contains("comment")) {
-            std::stringstream msg;
+            stringstream msg;
             msg << "duplicate user-context entries (previous at "
                 << old->getPosition().str() << ")";
             error(yystack_[3].location, msg.str());
@@ -1012,23 +1017,23 @@ namespace isc { namespace netconf {
     parent->set("user-context", user_context);
     ctx.leave();
 }
-#line 1016 "netconf_parser.cc"
+#line 1021 "netconf_parser.cc"
     break;
 
   case 59: // $@10: %empty
-#line 339 "netconf_parser.yy"
+#line 347 "netconf_parser.yy"
                  {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1024 "netconf_parser.cc"
+#line 1029 "netconf_parser.cc"
     break;
 
   case 60: // comment: "comment" $@10 ":" "constant string"
-#line 341 "netconf_parser.yy"
+#line 349 "netconf_parser.yy"
                {
     ElementPtr parent = ctx.stack_.back();
     ElementPtr user_context(new MapElement(ctx.loc2pos(yystack_[3].location)));
-    ElementPtr comment(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr comment(new StringElement(yystack_[0].value.as < string > (), ctx.loc2pos(yystack_[0].location)));
     user_context->set("comment", comment);
 
     // Handle already existing user context
@@ -1036,7 +1041,7 @@ namespace isc { namespace netconf {
     if (old) {
         // Check for duplicate comment
         if (old->contains("comment")) {
-            std::stringstream msg;
+            stringstream msg;
             msg << "duplicate user-context/comment entries (previous at "
                 << old->getPosition().str() << ")";
             error(yystack_[3].location, msg.str());
@@ -1049,11 +1054,11 @@ namespace isc { namespace netconf {
     parent->set("user-context", user_context);
     ctx.leave();
 }
-#line 1053 "netconf_parser.cc"
+#line 1058 "netconf_parser.cc"
     break;
 
   case 61: // $@11: %empty
-#line 367 "netconf_parser.yy"
+#line 375 "netconf_parser.yy"
                                  {
     ctx.unique("hooks-libraries", ctx.loc2pos(yystack_[0].location));
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
@@ -1061,91 +1066,91 @@ namespace isc { namespace netconf {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.HOOKS_LIBRARIES);
 }
-#line 1065 "netconf_parser.cc"
+#line 1070 "netconf_parser.cc"
     break;
 
   case 62: // hooks_libraries: "hooks-libraries" $@11 ":" "[" hooks_libraries_list "]"
-#line 373 "netconf_parser.yy"
+#line 381 "netconf_parser.yy"
                                                              {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1074 "netconf_parser.cc"
+#line 1079 "netconf_parser.cc"
     break;
 
   case 67: // not_empty_hooks_libraries_list: not_empty_hooks_libraries_list ","
-#line 384 "netconf_parser.yy"
+#line 392 "netconf_parser.yy"
                                            {
         ctx.warnAboutExtraCommas(yystack_[0].location);
         }
-#line 1082 "netconf_parser.cc"
+#line 1087 "netconf_parser.cc"
     break;
 
   case 68: // $@12: %empty
-#line 389 "netconf_parser.yy"
+#line 397 "netconf_parser.yy"
                               {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 1092 "netconf_parser.cc"
+#line 1097 "netconf_parser.cc"
     break;
 
   case 69: // hooks_library: "{" $@12 hooks_params "}"
-#line 393 "netconf_parser.yy"
+#line 401 "netconf_parser.yy"
                               {
     ctx.stack_.pop_back();
 }
-#line 1100 "netconf_parser.cc"
+#line 1105 "netconf_parser.cc"
     break;
 
   case 72: // hooks_params: hooks_params ","
-#line 399 "netconf_parser.yy"
+#line 407 "netconf_parser.yy"
                                  {
               ctx.warnAboutExtraCommas(yystack_[0].location);
               }
-#line 1108 "netconf_parser.cc"
+#line 1113 "netconf_parser.cc"
     break;
 
   case 76: // $@13: %empty
-#line 409 "netconf_parser.yy"
+#line 417 "netconf_parser.yy"
                  {
     ctx.unique("library", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1117 "netconf_parser.cc"
+#line 1122 "netconf_parser.cc"
     break;
 
   case 77: // library: "library" $@13 ":" "constant string"
-#line 412 "netconf_parser.yy"
+#line 420 "netconf_parser.yy"
                {
-    ElementPtr lib(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr lib(new StringElement(yystack_[0].value.as < string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("library", lib);
     ctx.leave();
 }
-#line 1127 "netconf_parser.cc"
+#line 1132 "netconf_parser.cc"
     break;
 
   case 78: // $@14: %empty
-#line 418 "netconf_parser.yy"
+#line 426 "netconf_parser.yy"
                        {
     ctx.unique("parameters", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1136 "netconf_parser.cc"
+#line 1141 "netconf_parser.cc"
     break;
 
   case 79: // parameters: "parameters" $@14 ":" map_value
-#line 421 "netconf_parser.yy"
+#line 429 "netconf_parser.yy"
                   {
     ctx.stack_.back()->set("parameters", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 1145 "netconf_parser.cc"
+#line 1150 "netconf_parser.cc"
     break;
 
   case 80: // $@15: %empty
-#line 429 "netconf_parser.yy"
+#line 437 "netconf_parser.yy"
                                                       {
     ctx.unique("managed-servers", ctx.loc2pos(yystack_[2].location));
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[2].location)));
@@ -1153,28 +1158,28 @@ namespace isc { namespace netconf {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.MANAGED_SERVERS);
 }
-#line 1157 "netconf_parser.cc"
+#line 1162 "netconf_parser.cc"
     break;
 
   case 81: // managed_servers: "managed-servers" ":" "{" $@15 servers_entries "}"
-#line 435 "netconf_parser.yy"
+#line 443 "netconf_parser.yy"
                                  {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1166 "netconf_parser.cc"
+#line 1171 "netconf_parser.cc"
     break;
 
   case 86: // not_empty_servers_entries: not_empty_servers_entries ","
-#line 446 "netconf_parser.yy"
+#line 454 "netconf_parser.yy"
                                                            {
                              ctx.warnAboutExtraCommas(yystack_[0].location);
                              }
-#line 1174 "netconf_parser.cc"
+#line 1179 "netconf_parser.cc"
     break;
 
   case 92: // $@16: %empty
-#line 462 "netconf_parser.yy"
+#line 470 "netconf_parser.yy"
                            {
     ctx.unique("dhcp4", ctx.loc2pos(yystack_[0].location));
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
@@ -1182,20 +1187,20 @@ namespace isc { namespace netconf {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.SERVER);
 }
-#line 1186 "netconf_parser.cc"
+#line 1191 "netconf_parser.cc"
     break;
 
   case 93: // dhcp4_server: "dhcp4" $@16 ":" "{" managed_server_params "}"
-#line 468 "netconf_parser.yy"
+#line 476 "netconf_parser.yy"
                                                             {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1195 "netconf_parser.cc"
+#line 1200 "netconf_parser.cc"
     break;
 
   case 94: // $@17: %empty
-#line 474 "netconf_parser.yy"
+#line 482 "netconf_parser.yy"
                            {
     ctx.unique("dhcp6", ctx.loc2pos(yystack_[0].location));
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
@@ -1203,20 +1208,20 @@ namespace isc { namespace netconf {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.SERVER);
 }
-#line 1207 "netconf_parser.cc"
+#line 1212 "netconf_parser.cc"
     break;
 
   case 95: // dhcp6_server: "dhcp6" $@17 ":" "{" managed_server_params "}"
-#line 480 "netconf_parser.yy"
+#line 488 "netconf_parser.yy"
                                                             {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1216 "netconf_parser.cc"
+#line 1221 "netconf_parser.cc"
     break;
 
   case 96: // $@18: %empty
-#line 486 "netconf_parser.yy"
+#line 494 "netconf_parser.yy"
                      {
     ctx.unique("d2", ctx.loc2pos(yystack_[0].location));
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
@@ -1224,20 +1229,20 @@ namespace isc { namespace netconf {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.SERVER);
 }
-#line 1228 "netconf_parser.cc"
+#line 1233 "netconf_parser.cc"
     break;
 
   case 97: // d2_server: "d2" $@18 ":" "{" managed_server_params "}"
-#line 492 "netconf_parser.yy"
+#line 500 "netconf_parser.yy"
                                                             {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1237 "netconf_parser.cc"
+#line 1242 "netconf_parser.cc"
     break;
 
   case 98: // $@19: %empty
-#line 498 "netconf_parser.yy"
+#line 506 "netconf_parser.yy"
                      {
     ctx.unique("ca", ctx.loc2pos(yystack_[0].location));
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
@@ -1245,47 +1250,47 @@ namespace isc { namespace netconf {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.SERVER);
 }
-#line 1249 "netconf_parser.cc"
+#line 1254 "netconf_parser.cc"
     break;
 
   case 99: // ca_server: "ca" $@19 ":" "{" managed_server_params "}"
-#line 504 "netconf_parser.yy"
+#line 512 "netconf_parser.yy"
                                                             {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1258 "netconf_parser.cc"
+#line 1263 "netconf_parser.cc"
     break;
 
   case 102: // managed_server_params: managed_server_params ","
-#line 512 "netconf_parser.yy"
+#line 520 "netconf_parser.yy"
                                                    {
                          ctx.warnAboutExtraCommas(yystack_[0].location);
                          }
-#line 1266 "netconf_parser.cc"
+#line 1271 "netconf_parser.cc"
     break;
 
   case 111: // $@20: %empty
-#line 529 "netconf_parser.yy"
+#line 537 "netconf_parser.yy"
              {
     ctx.unique("model", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1275 "netconf_parser.cc"
+#line 1280 "netconf_parser.cc"
     break;
 
   case 112: // model: "model" $@20 ":" "constant string"
-#line 532 "netconf_parser.yy"
+#line 540 "netconf_parser.yy"
                {
-    ElementPtr model(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr model(new StringElement(yystack_[0].value.as < string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("model", model);
     ctx.leave();
 }
-#line 1285 "netconf_parser.cc"
+#line 1290 "netconf_parser.cc"
     break;
 
   case 113: // $@21: %empty
-#line 539 "netconf_parser.yy"
+#line 547 "netconf_parser.yy"
                                {
     ctx.unique("control-socket", ctx.loc2pos(yystack_[0].location));
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
@@ -1293,102 +1298,102 @@ namespace isc { namespace netconf {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.CONTROL_SOCKET);
 }
-#line 1297 "netconf_parser.cc"
+#line 1302 "netconf_parser.cc"
     break;
 
   case 114: // control_socket: "control-socket" $@21 ":" "{" control_socket_params "}"
-#line 545 "netconf_parser.yy"
+#line 553 "netconf_parser.yy"
                                                             {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1306 "netconf_parser.cc"
+#line 1311 "netconf_parser.cc"
     break;
 
   case 117: // control_socket_params: control_socket_params ","
-#line 553 "netconf_parser.yy"
+#line 561 "netconf_parser.yy"
                                                    {
                          ctx.warnAboutExtraCommas(yystack_[0].location);
                          }
-#line 1314 "netconf_parser.cc"
+#line 1319 "netconf_parser.cc"
     break;
 
   case 124: // $@22: %empty
-#line 566 "netconf_parser.yy"
+#line 574 "netconf_parser.yy"
                          {
     ctx.unique("socket-type", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.SOCKET_TYPE);
 }
-#line 1323 "netconf_parser.cc"
+#line 1328 "netconf_parser.cc"
     break;
 
   case 125: // socket_type: "socket-type" $@22 ":" socket_type_value
-#line 569 "netconf_parser.yy"
+#line 577 "netconf_parser.yy"
                           {
     ctx.stack_.back()->set("socket-type", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 1332 "netconf_parser.cc"
+#line 1337 "netconf_parser.cc"
     break;
 
   case 126: // socket_type_value: "unix"
-#line 575 "netconf_parser.yy"
+#line 583 "netconf_parser.yy"
                          { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("unix", ctx.loc2pos(yystack_[0].location))); }
-#line 1338 "netconf_parser.cc"
+#line 1343 "netconf_parser.cc"
     break;
 
   case 127: // socket_type_value: "http"
-#line 576 "netconf_parser.yy"
+#line 584 "netconf_parser.yy"
                          { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("http", ctx.loc2pos(yystack_[0].location))); }
-#line 1344 "netconf_parser.cc"
+#line 1349 "netconf_parser.cc"
     break;
 
   case 128: // socket_type_value: "stdout"
-#line 577 "netconf_parser.yy"
+#line 585 "netconf_parser.yy"
                            { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("stdout", ctx.loc2pos(yystack_[0].location))); }
-#line 1350 "netconf_parser.cc"
+#line 1355 "netconf_parser.cc"
     break;
 
   case 129: // $@23: %empty
-#line 580 "netconf_parser.yy"
+#line 588 "netconf_parser.yy"
                          {
     ctx.unique("socket-name", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1359 "netconf_parser.cc"
+#line 1364 "netconf_parser.cc"
     break;
 
   case 130: // socket_name: "socket-name" $@23 ":" "constant string"
-#line 583 "netconf_parser.yy"
+#line 591 "netconf_parser.yy"
                {
-    ElementPtr name(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr name(new StringElement(yystack_[0].value.as < string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("socket-name", name);
     ctx.leave();
 }
-#line 1369 "netconf_parser.cc"
+#line 1374 "netconf_parser.cc"
     break;
 
   case 131: // $@24: %empty
-#line 590 "netconf_parser.yy"
+#line 598 "netconf_parser.yy"
                        {
     ctx.unique("socket-url", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1378 "netconf_parser.cc"
+#line 1383 "netconf_parser.cc"
     break;
 
   case 132: // socket_url: "socket-url" $@24 ":" "constant string"
-#line 593 "netconf_parser.yy"
+#line 601 "netconf_parser.yy"
                {
-    ElementPtr url(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr url(new StringElement(yystack_[0].value.as < string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("socket-url", url);
     ctx.leave();
 }
-#line 1388 "netconf_parser.cc"
+#line 1393 "netconf_parser.cc"
     break;
 
   case 133: // $@25: %empty
-#line 603 "netconf_parser.yy"
+#line 611 "netconf_parser.yy"
                  {
     ctx.unique("loggers", ctx.loc2pos(yystack_[0].location));
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
@@ -1396,225 +1401,225 @@ namespace isc { namespace netconf {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.LOGGERS);
 }
-#line 1400 "netconf_parser.cc"
+#line 1405 "netconf_parser.cc"
     break;
 
   case 134: // loggers: "loggers" $@25 ":" "[" loggers_entries "]"
-#line 609 "netconf_parser.yy"
+#line 617 "netconf_parser.yy"
                                                          {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1409 "netconf_parser.cc"
+#line 1414 "netconf_parser.cc"
     break;
 
   case 137: // loggers_entries: loggers_entries ","
-#line 618 "netconf_parser.yy"
+#line 626 "netconf_parser.yy"
                                        {
                    ctx.warnAboutExtraCommas(yystack_[0].location);
                    }
-#line 1417 "netconf_parser.cc"
+#line 1422 "netconf_parser.cc"
     break;
 
   case 138: // $@26: %empty
-#line 624 "netconf_parser.yy"
+#line 632 "netconf_parser.yy"
                              {
     ElementPtr l(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(l);
     ctx.stack_.push_back(l);
 }
-#line 1427 "netconf_parser.cc"
+#line 1432 "netconf_parser.cc"
     break;
 
   case 139: // logger_entry: "{" $@26 logger_params "}"
-#line 628 "netconf_parser.yy"
+#line 636 "netconf_parser.yy"
                                {
     ctx.stack_.pop_back();
 }
-#line 1435 "netconf_parser.cc"
+#line 1440 "netconf_parser.cc"
     break;
 
   case 142: // logger_params: logger_params ","
-#line 634 "netconf_parser.yy"
+#line 642 "netconf_parser.yy"
                                    {
                  ctx.warnAboutExtraCommas(yystack_[0].location);
                  }
-#line 1443 "netconf_parser.cc"
+#line 1448 "netconf_parser.cc"
     break;
 
   case 150: // $@27: %empty
-#line 648 "netconf_parser.yy"
+#line 656 "netconf_parser.yy"
            {
     ctx.unique("name", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1452 "netconf_parser.cc"
+#line 1457 "netconf_parser.cc"
     break;
 
   case 151: // name: "name" $@27 ":" "constant string"
-#line 651 "netconf_parser.yy"
+#line 659 "netconf_parser.yy"
                {
-    ElementPtr name(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr name(new StringElement(yystack_[0].value.as < string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("name", name);
     ctx.leave();
 }
-#line 1462 "netconf_parser.cc"
+#line 1467 "netconf_parser.cc"
     break;
 
   case 152: // debuglevel: "debuglevel" ":" "integer"
-#line 657 "netconf_parser.yy"
+#line 665 "netconf_parser.yy"
                                      {
     ctx.unique("debuglevel", ctx.loc2pos(yystack_[2].location));
     ElementPtr dl(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("debuglevel", dl);
 }
-#line 1472 "netconf_parser.cc"
+#line 1477 "netconf_parser.cc"
     break;
 
   case 153: // $@28: %empty
-#line 663 "netconf_parser.yy"
+#line 671 "netconf_parser.yy"
                    {
     ctx.unique("severity", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1481 "netconf_parser.cc"
+#line 1486 "netconf_parser.cc"
     break;
 
   case 154: // severity: "severity" $@28 ":" "constant string"
-#line 666 "netconf_parser.yy"
+#line 674 "netconf_parser.yy"
                {
-    ElementPtr sev(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr sev(new StringElement(yystack_[0].value.as < string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("severity", sev);
     ctx.leave();
 }
-#line 1491 "netconf_parser.cc"
+#line 1496 "netconf_parser.cc"
     break;
 
   case 155: // $@29: %empty
-#line 672 "netconf_parser.yy"
+#line 680 "netconf_parser.yy"
                                     {
-    ctx.unique("output_options", ctx.loc2pos(yystack_[0].location));
+    ctx.unique("output-options", ctx.loc2pos(yystack_[0].location));
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
-    ctx.stack_.back()->set("output_options", l);
+    ctx.stack_.back()->set("output-options", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.OUTPUT_OPTIONS);
 }
-#line 1503 "netconf_parser.cc"
+#line 1508 "netconf_parser.cc"
     break;
 
-  case 156: // output_options_list: "output_options" $@29 ":" "[" output_options_list_content "]"
-#line 678 "netconf_parser.yy"
+  case 156: // output_options_list: "output-options" $@29 ":" "[" output_options_list_content "]"
+#line 686 "netconf_parser.yy"
                                                                     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1512 "netconf_parser.cc"
+#line 1517 "netconf_parser.cc"
     break;
 
   case 159: // output_options_list_content: output_options_list_content ","
-#line 685 "netconf_parser.yy"
+#line 693 "netconf_parser.yy"
                                                                {
                                ctx.warnAboutExtraCommas(yystack_[0].location);
                                }
-#line 1520 "netconf_parser.cc"
+#line 1525 "netconf_parser.cc"
     break;
 
   case 160: // $@30: %empty
-#line 690 "netconf_parser.yy"
+#line 698 "netconf_parser.yy"
                              {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 1530 "netconf_parser.cc"
+#line 1535 "netconf_parser.cc"
     break;
 
   case 161: // output_entry: "{" $@30 output_params_list "}"
-#line 694 "netconf_parser.yy"
+#line 702 "netconf_parser.yy"
                                     {
     ctx.stack_.pop_back();
 }
-#line 1538 "netconf_parser.cc"
+#line 1543 "netconf_parser.cc"
     break;
 
   case 164: // output_params_list: output_params_list ","
-#line 700 "netconf_parser.yy"
+#line 708 "netconf_parser.yy"
                                         {
                  ctx.warnAboutExtraCommas(yystack_[0].location);
                  }
-#line 1546 "netconf_parser.cc"
+#line 1551 "netconf_parser.cc"
     break;
 
   case 170: // $@31: %empty
-#line 712 "netconf_parser.yy"
+#line 720 "netconf_parser.yy"
                {
     ctx.unique("output", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1555 "netconf_parser.cc"
+#line 1560 "netconf_parser.cc"
     break;
 
   case 171: // output: "output" $@31 ":" "constant string"
-#line 715 "netconf_parser.yy"
+#line 723 "netconf_parser.yy"
                {
-    ElementPtr sev(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr sev(new StringElement(yystack_[0].value.as < string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("output", sev);
     ctx.leave();
 }
-#line 1565 "netconf_parser.cc"
+#line 1570 "netconf_parser.cc"
     break;
 
   case 172: // flush: "flush" ":" "boolean"
-#line 721 "netconf_parser.yy"
+#line 729 "netconf_parser.yy"
                            {
     ctx.unique("flush", ctx.loc2pos(yystack_[2].location));
     ElementPtr flush(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("flush", flush);
 }
-#line 1575 "netconf_parser.cc"
+#line 1580 "netconf_parser.cc"
     break;
 
   case 173: // maxsize: "maxsize" ":" "integer"
-#line 727 "netconf_parser.yy"
+#line 735 "netconf_parser.yy"
                                {
     ctx.unique("maxsize", ctx.loc2pos(yystack_[2].location));
     ElementPtr maxsize(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("maxsize", maxsize);
 }
-#line 1585 "netconf_parser.cc"
+#line 1590 "netconf_parser.cc"
     break;
 
   case 174: // maxver: "maxver" ":" "integer"
-#line 733 "netconf_parser.yy"
+#line 741 "netconf_parser.yy"
                              {
     ctx.unique("maxver", ctx.loc2pos(yystack_[2].location));
     ElementPtr maxver(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("maxver", maxver);
 }
-#line 1595 "netconf_parser.cc"
+#line 1600 "netconf_parser.cc"
     break;
 
   case 175: // $@32: %empty
-#line 739 "netconf_parser.yy"
+#line 747 "netconf_parser.yy"
                  {
     ctx.unique("pattern", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1604 "netconf_parser.cc"
+#line 1609 "netconf_parser.cc"
     break;
 
   case 176: // pattern: "pattern" $@32 ":" "constant string"
-#line 742 "netconf_parser.yy"
+#line 750 "netconf_parser.yy"
                {
-    ElementPtr sev(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr sev(new StringElement(yystack_[0].value.as < string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("pattern", sev);
     ctx.leave();
 }
-#line 1614 "netconf_parser.cc"
+#line 1619 "netconf_parser.cc"
     break;
 
 
-#line 1618 "netconf_parser.cc"
+#line 1623 "netconf_parser.cc"
 
             default:
               break;
@@ -2216,7 +2221,7 @@ namespace isc { namespace netconf {
   "\"control-socket\"", "\"socket-type\"", "\"unix\"", "\"http\"",
   "\"stdout\"", "\"socket-name\"", "\"socket-url\"", "\"hooks-libraries\"",
   "\"library\"", "\"parameters\"", "\"loggers\"", "\"name\"",
-  "\"output_options\"", "\"output\"", "\"debuglevel\"", "\"severity\"",
+  "\"output-options\"", "\"output\"", "\"debuglevel\"", "\"severity\"",
   "\"flush\"", "\"maxsize\"", "\"maxver\"", "\"pattern\"", "START_JSON",
   "START_NETCONF", "START_SUB_NETCONF", "\"constant string\"",
   "\"integer\"", "\"floating point\"", "\"boolean\"", "$accept", "start",
@@ -2249,24 +2254,24 @@ namespace isc { namespace netconf {
   const short
   NetconfParser::yyrline_[] =
   {
-       0,   118,   118,   118,   119,   119,   120,   120,   128,   128,
-     139,   145,   146,   147,   148,   149,   150,   151,   155,   155,
-     166,   171,   172,   180,   185,   191,   196,   196,   202,   203,
-     206,   210,   214,   226,   234,   234,   246,   246,   264,   267,
-     272,   273,   276,   277,   278,   285,   286,   287,   288,   289,
-     290,   291,   292,   293,   296,   302,   308,   314,   314,   339,
-     339,   367,   367,   378,   379,   382,   383,   384,   389,   389,
-     397,   398,   399,   402,   405,   406,   409,   409,   418,   418,
-     429,   429,   440,   441,   444,   445,   446,   454,   455,   456,
-     457,   458,   462,   462,   474,   474,   486,   486,   498,   498,
-     510,   511,   512,   518,   519,   520,   521,   522,   523,   524,
-     525,   529,   529,   539,   539,   551,   552,   553,   558,   559,
-     560,   561,   562,   563,   566,   566,   575,   576,   577,   580,
-     580,   590,   590,   603,   603,   616,   617,   618,   624,   624,
-     632,   633,   634,   639,   640,   641,   642,   643,   644,   645,
-     648,   648,   657,   663,   663,   672,   672,   683,   684,   685,
-     690,   690,   698,   699,   700,   705,   706,   707,   708,   709,
-     712,   712,   721,   727,   733,   739,   739
+       0,   126,   126,   126,   127,   127,   128,   128,   136,   136,
+     147,   153,   154,   155,   156,   157,   158,   159,   163,   163,
+     174,   179,   180,   188,   193,   199,   204,   204,   210,   211,
+     214,   218,   222,   234,   242,   242,   254,   254,   272,   275,
+     280,   281,   284,   285,   286,   293,   294,   295,   296,   297,
+     298,   299,   300,   301,   304,   310,   316,   322,   322,   347,
+     347,   375,   375,   386,   387,   390,   391,   392,   397,   397,
+     405,   406,   407,   410,   413,   414,   417,   417,   426,   426,
+     437,   437,   448,   449,   452,   453,   454,   462,   463,   464,
+     465,   466,   470,   470,   482,   482,   494,   494,   506,   506,
+     518,   519,   520,   526,   527,   528,   529,   530,   531,   532,
+     533,   537,   537,   547,   547,   559,   560,   561,   566,   567,
+     568,   569,   570,   571,   574,   574,   583,   584,   585,   588,
+     588,   598,   598,   611,   611,   624,   625,   626,   632,   632,
+     640,   641,   642,   647,   648,   649,   650,   651,   652,   653,
+     656,   656,   665,   671,   671,   680,   680,   691,   692,   693,
+     698,   698,   706,   707,   708,   713,   714,   715,   716,   717,
+     720,   720,   729,   735,   741,   747,   747
   };
 
   void
@@ -2299,14 +2304,13 @@ namespace isc { namespace netconf {
 
 #line 14 "netconf_parser.yy"
 } } // isc::netconf
-#line 2303 "netconf_parser.cc"
+#line 2308 "netconf_parser.cc"
 
-#line 748 "netconf_parser.yy"
+#line 756 "netconf_parser.yy"
 
 
 void
 isc::netconf::NetconfParser::error(const location_type& loc,
-                               const std::string& what)
-{
+                                   const string& what) {
     ctx.error(loc, what);
 }

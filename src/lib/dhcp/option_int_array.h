@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,7 +10,7 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
 #include <dhcp/option_data_types.h>
-#include <util/io_utilities.h>
+#include <util/io.h>
 #include <boost/shared_ptr.hpp>
 #include <sstream>
 #include <stdint.h>
@@ -137,6 +137,7 @@ public:
     /// byte after stored option.
     ///
     /// @param [out] buf buffer (option will be stored here)
+    /// @param check if set to false, allows options larger than 255 for v4
     ///
     /// @throw isc::dhcp::InvalidDataType if size of a data fields type is not
     /// equal to 1, 2 or 4 bytes. The data type is not checked in this function
@@ -243,10 +244,8 @@ public:
         uint16_t length = (getUniverse() == Option::V4) ? OPTION4_HDR_LEN : OPTION6_HDR_LEN;
         length += values_.size() * sizeof(T);
         // length of all suboptions
-        for (OptionCollection::const_iterator it = options_.begin();
-             it != options_.end();
-             ++it) {
-            length += (*it).second->len();
+        for (auto const& it : options_) {
+            length += it.second->len();
         }
         return (length);
     }
@@ -262,18 +261,17 @@ public:
         output << headerToText(indent) << ":";
 
         std::string data_type = OptionDataTypeUtil::getDataTypeName(OptionDataTypeTraits<T>::type);
-        for (typename std::vector<T>::const_iterator value = values_.begin();
-             value != values_.end(); ++value) {
+        for (auto const& value : values_) {
             output << " ";
 
             // For 1 byte long data types we need to cast to the integer
             // because they are usually implemented as "char" types, in
             // which case the character rather than number would be printed.
             if (OptionDataTypeTraits<T>::len == 1) {
-                output << static_cast<int>(*value);
+                output << static_cast<int>(value);
 
             } else {
-                output << *value;
+                output << value;
             }
 
             // Append data type.

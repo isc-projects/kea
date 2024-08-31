@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,23 +9,19 @@
 #include <yang/adaptor_pool.h>
 #include <yang/yang_models.h>
 
+#include <vector>
+
 using namespace std;
 using namespace isc::data;
 
 namespace isc {
 namespace yang {
 
-AdaptorPool::AdaptorPool() {
-}
-
-AdaptorPool::~AdaptorPool() {
-}
-
 void
 AdaptorPool::canonizePool(ElementPtr pool) {
     const string& orig = pool->get("pool")->stringValue();
     vector<char> v;
-    for (char ch : orig) {
+    for (auto ch : orig) {
         if ((ch == ' ') || (ch == '\t') || (ch == '\n')) {
             continue;
         } else if (ch == '-') {
@@ -83,5 +79,5 @@ AdaptorPool::toSubnetIetf6(ElementPtr subnet, ConstElementPtr pools) {
     Adaptor::toParent("rebind-timer", subnet, pools);
 }
 
-}; // end of namespace isc::yang
-}; // end of namespace isc
+}  // namespace yang
+}  // namespace isc

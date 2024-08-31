@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -142,7 +142,7 @@ public:
     /// @brief Constructor.
     ///
     /// @param io_service Reference to the IO service.
-    ConnectionPool(IOService& io_service)
+    ConnectionPool(IOServicePtr& io_service)
         : io_service_(io_service), connections_(), next_socket_(),
           response_num_(0) {
     }
@@ -160,7 +160,7 @@ public:
     /// @return Pointer to the socket.
     UnixSocketPtr getSocket() {
         if (!next_socket_) {
-            next_socket_.reset(new UnixSocket(io_service_.get_io_service()));
+            next_socket_.reset(new UnixSocket(io_service_->getInternalIOService()));
         }
         return (next_socket_);
     }
@@ -193,9 +193,8 @@ public:
 
     /// @brief Stops all connections.
     void stopAll() {
-        for (auto conn = connections_.begin(); conn != connections_.end();
-             ++conn) {
-            (*conn)->stop();
+        for (auto const& conn : connections_) {
+            conn->stop();
         }
         connections_.clear();
     }
@@ -207,8 +206,8 @@ public:
 
 private:
 
-    /// @brief Reference to the IO service.
-    IOService& io_service_;
+    /// @brief Pointer to the IO service.
+    IOServicePtr io_service_;
 
     /// @brief Container holding established connections.
     std::set<ConnectionPtr> connections_;
@@ -223,20 +222,21 @@ private:
 };
 
 
-TestServerUnixSocket::TestServerUnixSocket(IOService& io_service,
+TestServerUnixSocket::TestServerUnixSocket(const IOServicePtr& io_service,
                                            const std::string& socket_file_path,
                                            const std::string& custom_response)
     : io_service_(io_service),
       server_endpoint_(socket_file_path),
-      server_acceptor_(io_service_.get_io_service()),
+      server_acceptor_(io_service_->getInternalIOService()),
       test_timer_(io_service_),
       custom_response_(custom_response),
-      connection_pool_(new ConnectionPool(io_service)),
+      connection_pool_(new ConnectionPool(io_service_)),
       stopped_(false),
       running_(false) {
 }
 
 TestServerUnixSocket::~TestServerUnixSocket() {
+    test_timer_.cancel();
     server_acceptor_.close();
 }
 
@@ -275,8 +275,7 @@ TestServerUnixSocket::bindServerSocket(const bool use_thread) {
     // when the thread has already started and the IO service is running. The
     // main thread can move forward when it receives this signal from the handler.
     if (use_thread) {
-        io_service_.post(std::bind(&TestServerUnixSocket::signalRunning,
-                                   this));
+        io_service_->post(std::bind(&TestServerUnixSocket::signalRunning, this));
     }
 }
 
@@ -293,8 +292,7 @@ TestServerUnixSocket::acceptHandler(const boost::system::error_code& ec) {
 void
 TestServerUnixSocket::accept() {
     server_acceptor_.async_accept(*(connection_pool_->getSocket()),
-        std::bind(&TestServerUnixSocket::acceptHandler, this,
-                  ph::_1)); // error
+        std::bind(&TestServerUnixSocket::acceptHandler, this, ph::_1)); // error
 }
 
 void
@@ -317,7 +315,7 @@ TestServerUnixSocket::waitForRunning() {
 void
 TestServerUnixSocket::timeoutHandler() {
     ADD_FAILURE() << "Timeout occurred while running the test!";
-    io_service_.stop();
+    io_service_->stop();
     stopped_ = true;
 }
 

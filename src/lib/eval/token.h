@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 
 #include <exceptions/exceptions.h>
 #include <dhcp/pkt.h>
+#include <regex>
 #include <stack>
 
 namespace isc {
@@ -48,6 +49,12 @@ public:
         isc::Exception(file, line, what) { };
 };
 
+/// @brief EvalBadLabel is thrown when a label can't be found.
+class EvalBadLabel : public Exception {
+public:
+    EvalBadLabel(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
 
 /// @brief Base class for all tokens
 ///
@@ -75,10 +82,18 @@ public:
     ///
     /// @param pkt - packet being classified
     /// @param values - stack of values with previously evaluated tokens
-    virtual void evaluate(Pkt& pkt, ValueStack& values) = 0;
+    /// @return next label or 0 when means evaluate next token if any.
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values) = 0;
 
     /// @brief Virtual destructor
     virtual ~Token() {}
+
+    /// @brief Return the label of this token.
+    ///
+    /// @return the label for a TokenLabel, 0 otherwise.
+    virtual unsigned getLabel() const {
+        return (0U);
+    }
 
     /// @brief Coverts a (string) value to a boolean
     ///
@@ -116,15 +131,14 @@ public:
     /// Value is set during token construction.
     ///
     /// @param str constant string to be represented.
-    TokenString(const std::string& str)
-        :value_(str){
-    }
+    TokenString(const std::string& str) : value_(str) {}
 
     /// @brief Token evaluation (puts value of the constant string on the stack)
     ///
     /// @param pkt (ignored)
     /// @param values (represented string will be pushed here)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    /// @return 0 which means evaluate next token if any.
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
 protected:
     std::string value_; ///< Constant value
@@ -149,10 +163,47 @@ public:
     ///
     /// @param pkt (ignored)
     /// @param values (represented string will be pushed here)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    /// @return 0 which means evaluate next token if any.
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
 protected:
     std::string value_; ///< Constant value
+};
+
+/// @brief Token representing a constant lower case string
+///
+/// This token converts a string expression value of the corresponding lower
+/// case string value e.g. it evaluates to "lower" in expression lcase('lOwEr')
+class TokenLowerCase : public Token {
+public:
+    /// @brief Constructor (does nothing)
+    TokenLowerCase() {}
+
+    /// @brief Token evaluation (puts value of the evaluated string expression
+    /// converted to lower case on the stack)
+    ///
+    /// @param pkt (ignored)
+    /// @param values (represented string will be pushed here)
+    /// @return 0 which means evaluate next token if any.
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
+};
+
+/// @brief Token representing a constant upper case string
+///
+/// This token converts a string expression value of the corresponding upper
+/// case string value e.g. it evaluates to "UPPER" in expression lcase('UpPeR')
+class TokenUpperCase : public Token {
+public:
+    /// @brief Constructor (does nothing)
+    TokenUpperCase() {}
+
+    /// @brief Token evaluation (puts value of the evaluated string expression
+    /// converted to upper case on the stack)
+    ///
+    /// @param pkt (ignored)
+    /// @param values (represented string will be pushed here)
+    /// @return 0 which means evaluate next token if any.
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token representing an unsigned 32 bit integer
@@ -200,7 +251,8 @@ public:
     ///
     /// @param pkt (ignored)
     /// @param values (represented IP address will be pushed here)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    /// @return 0 which means evaluate next token if any.
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
 protected:
     ///< Constant value (empty string if the IP address cannot be converted)
@@ -221,7 +273,8 @@ public:
     ///
     /// @param pkt (ignored)
     /// @param values (represented IP address as a string will be pushed here)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    /// @return 0 which means evaluate next token if any.
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token representing an 8 bit integer as a string
@@ -239,7 +292,8 @@ public:
     /// @param pkt (ignored)
     /// @param values (represented 8 bit integer as a string will be pushed
     /// here)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    /// @return 0 which means evaluate next token if any.
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token representing a 16 bit integer as a string
@@ -257,7 +311,8 @@ public:
     /// @param pkt (ignored)
     /// @param values (represented 16 bit integer as a string will be pushed
     /// here)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    /// @return 0 which means evaluate next token if any.
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token representing a 32 bit integer as a string
@@ -275,7 +330,8 @@ public:
     /// @param pkt (ignored)
     /// @param values (represented 32 bit integer as a string will be pushed
     /// here)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    /// @return 0 which means evaluate next token if any.
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token representing an 8 bit unsigned integer as a string
@@ -293,7 +349,8 @@ public:
     /// @param pkt (ignored)
     /// @param values (represented 8 bit unsigned integer as a string will be
     /// pushed here)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    /// @return 0 which means evaluate next token if any.
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token representing a 16 bit unsigned integer as a string
@@ -311,7 +368,8 @@ public:
     /// @param pkt (ignored)
     /// @param values (represented 16 bit unsigned integer as a string will be
     /// pushed here)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    /// @return 0 which means evaluate next token if any.
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token representing a 32 bit unsigned integer as a string
@@ -329,7 +387,8 @@ public:
     /// @param pkt (ignored)
     /// @param values (represented 32 bit unsigned integer as a string will be
     /// pushed here)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    /// @return 0 which means evaluate next token if any.
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token that represents a value of an option
@@ -375,7 +434,8 @@ public:
     ///
     /// @param pkt specified option will be extracted from this packet (if present)
     /// @param values value of the option will be pushed here (or "")
-    void evaluate(Pkt& pkt, ValueStack& values);
+    /// @return 0 which means evaluate next token if any.
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
     /// @brief Returns option-code
     ///
@@ -474,7 +534,7 @@ public:
     /// @param rep_type Token representation type.
     TokenRelay6Option(const int8_t nest_level, const uint16_t option_code,
                       const RepresentationType& rep_type)
-        :TokenOption(option_code, rep_type), nest_level_(nest_level) {}
+        : TokenOption(option_code, rep_type), nest_level_(nest_level) {}
 
     /// @brief Returns nest-level
     ///
@@ -510,7 +570,7 @@ class TokenPkt : public Token {
 public:
 
     /// @brief enum value that determines the field.
-    enum MetadataType {
+    enum MetadataType : int {
         IFACE, ///< interface name (string)
         SRC,   ///< source (IP address)
         DST,   ///< destination (IP address)
@@ -518,8 +578,7 @@ public:
     };
 
     /// @brief Constructor (does nothing)
-    TokenPkt(const MetadataType type)
-        : type_(type) {}
+    TokenPkt(const MetadataType type) : type_(type) {}
 
     /// @brief Gets a value from the specified packet.
     ///
@@ -528,7 +587,8 @@ public:
     ///
     /// @param pkt - metadata will be extracted from here
     /// @param values - stack of values (1 result will be pushed)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    /// @return 0 which means evaluate next token if any.
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
     /// @brief Returns metadata type
     ///
@@ -560,7 +620,7 @@ class TokenPkt4 : public Token {
 public:
 
     /// @brief enum value that determines the field.
-    enum FieldType {
+    enum FieldType : int {
         CHADDR, ///< chaddr field (up to 16 bytes link-layer address)
         GIADDR, ///< giaddr (IPv4 address)
         CIADDR, ///< ciaddr (IPv4 address)
@@ -585,7 +645,8 @@ public:
     ///
     /// @param pkt - fields will be extracted from here
     /// @param values - stack of values (1 result will be pushed)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    /// @return 0 which means evaluate next token if any.
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
     /// @brief Returns field type
     ///
@@ -613,7 +674,7 @@ private:
 class TokenPkt6 : public Token {
 public:
     /// @brief enum value that determines the field.
-    enum FieldType {
+    enum FieldType : int {
         MSGTYPE, ///< msg type
         TRANSID  ///< transaction id (integer but manipulated as a string)
     };
@@ -631,14 +692,15 @@ public:
     ///
     /// @param pkt - packet from which to extract the fields
     /// @param values - stack of values, 1 result will be pushed
-    void evaluate(Pkt& pkt, ValueStack& values);
+    /// @return 0 which means evaluate next token if any.
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
     /// @brief Returns field type
     ///
     /// This method is used only in tests.
     /// @return type of the field.
     FieldType getType() {
-        return(type_);
+        return (type_);
     }
 
 private:
@@ -665,7 +727,7 @@ class TokenRelay6Field : public Token {
 public:
 
     /// @brief enum value that determines the field.
-    enum FieldType {
+    enum FieldType : int {
         PEERADDR, ///< Peer address field (IPv6 address)
         LINKADDR  ///< Link address field (IPv6 address)
     };
@@ -676,7 +738,7 @@ public:
     /// @param nest_level the nesting level for which relay to examine.
     /// @param type which field to extract.
     TokenRelay6Field(const int8_t nest_level, const FieldType type)
-      : nest_level_(nest_level), type_(type) {}
+        : nest_level_(nest_level), type_(type) {}
 
     /// @brief Extracts the specified field from the requested relay
     ///
@@ -685,7 +747,8 @@ public:
     ///
     /// @param pkt fields will be extracted from here
     /// @param values - stack of values (1 result will be pushed)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    /// @return 0 which means evaluate next token if any.
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
     /// @brief Returns nest-level
     ///
@@ -735,7 +798,8 @@ public:
     /// @param pkt (unused)
     /// @param values - stack of values (2 arguments will be popped, 1 result
     ///        will be pushed)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    /// @return 0 which means evaluate next token if any.
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token that represents the substring operator (returns a portion
@@ -792,7 +856,8 @@ public:
     /// @param pkt (unused)
     /// @param values - stack of values (3 arguments will be popped, 1 result
     ///        will be pushed)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    /// @return 0 which means evaluate next token if any.
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
 class TokenSplit : public Token {
@@ -836,7 +901,8 @@ public:
     /// @param pkt (unused)
     /// @param values - stack of values (3 arguments will be popped, 1 result
     ///        will be pushed)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    /// @return 0 which means evaluate next token if any.
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token that represents concat operator (concatenates two other tokens)
@@ -860,7 +926,8 @@ public:
     /// @param pkt (unused)
     /// @param values - stack of values (2 arguments will be popped, 1 result
     ///        will be pushed)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    /// @return 0 which means evaluate next token if any.
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token that represents an alternative
@@ -875,7 +942,7 @@ public:
 class TokenIfElse : public Token {
 public:
     /// @brief Constructor (does nothing)
-    TokenIfElse() { }
+    TokenIfElse() {}
 
     /// @brief Alternative.
     ///
@@ -891,7 +958,8 @@ public:
     ///
     /// @param pkt (unused)
     /// @param values - stack of values (two items are removed)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    /// @return 0 which means evaluate next token if any.
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token that converts to hexadecimal string
@@ -905,7 +973,7 @@ public:
 class TokenToHexString : public Token {
 public:
     /// @brief Constructor (does nothing)
-    TokenToHexString() { }
+    TokenToHexString() {}
 
     /// @brief Convert a binary value to its hexadecimal string representation
     ///
@@ -930,7 +998,8 @@ public:
     /// @param pkt (unused)
     /// @param values - stack of values (2 arguments will be popped, 1 result
     ///        will be pushed)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    /// @return 0 which means evaluate next token if any.
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token that represents logical negation operator
@@ -955,10 +1024,13 @@ public:
     ///
     /// @param pkt (unused)
     /// @param values - stack of values (logical top value negated)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    /// @return 0 which means evaluate next token if any.
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token that represents logical and operator
+///
+/// @note Strict version i.e. evaluating right branch even left is false
 ///
 /// For example "option[10].exists and option[11].exists"
 class TokenAnd : public Token {
@@ -980,10 +1052,13 @@ public:
     /// @param pkt (unused)
     /// @param values - stack of values (2 arguments will be popped, 1 result
     ///        will be pushed)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    /// @return 0 which means evaluate next token if any.
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token that represents logical or operator
+///
+/// @note Strict version i.e. evaluating right branch even left is right
 ///
 /// For example "option[10].exists or option[11].exists"
 class TokenOr : public Token {
@@ -1005,7 +1080,8 @@ public:
     /// @param pkt (unused)
     /// @param values - stack of values (2 arguments will be popped, 1 result
     ///        will be pushed)
-    void evaluate(Pkt& pkt, ValueStack& values);
+    /// @return 0 which means evaluate next token if any.
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 };
 
 /// @brief Token that represents client class membership
@@ -1017,7 +1093,7 @@ public:
     ///
     /// @param client_class client class name
     TokenMember(const std::string& client_class)
-        :client_class_(client_class){
+        : client_class_(client_class) {
     }
 
     /// @brief Token evaluation (check if client_class_ was added to
@@ -1025,7 +1101,8 @@ public:
     ///
     /// @param pkt the class name will be check from this packet's client classes
     /// @param values true (if found) or false (if not found) will be pushed here
-    void evaluate(Pkt& pkt, ValueStack& values);
+    /// @return 0 which means evaluate next token if any.
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
     /// @brief Returns client class name
     ///
@@ -1060,7 +1137,7 @@ class TokenVendor : public TokenOption {
 public:
 
     /// @brief Specifies a field of the vendor option
-    enum FieldType {
+    enum FieldType : int {
         SUBOPTION,     ///< If this token fetches a suboption, not a field.
         ENTERPRISE_ID, ///< enterprise-id field (vendor-info, vendor-class)
         EXISTS,        ///< vendor[123].exists
@@ -1073,7 +1150,6 @@ public:
     /// @param vendor_id specifies enterprise-id (0 means any)
     /// @param field specifies which field should be returned
     TokenVendor(Option::Universe u, uint32_t vendor_id, FieldType field);
-
 
     /// @brief Constructor used for accessing an option
     ///
@@ -1125,7 +1201,8 @@ public:
     ///
     /// @param pkt - vendor options will be searched for here.
     /// @param values - the evaluated value will be pushed here.
-    virtual void evaluate(Pkt& pkt, ValueStack& values);
+    /// @return 0 which means evaluate next token if any.
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
 protected:
     /// @brief Attempts to get a suboption.
@@ -1221,7 +1298,8 @@ protected:
     ///
     /// @param pkt - vendor options will be searched for here.
     /// @param values - the evaluated value will be pushed here.
-    void evaluate(Pkt& pkt, ValueStack& values);
+    /// @return 0 which means evaluate next token if any.
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
     /// @brief Data chunk index.
     uint16_t index_;
@@ -1272,7 +1350,8 @@ public:
     ///
     /// @param pkt specified parent option will be extracted from this packet
     /// @param values value of the sub-option will be pushed here (or "")
-    virtual void evaluate(Pkt& pkt, ValueStack& values);
+    /// @return 0 which means evaluate next token if any.
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
 
     /// @brief Returns sub-option-code
     ///
@@ -1294,7 +1373,181 @@ protected:
     uint16_t sub_option_code_; ///< Code of the sub-option to be extracted
 };
 
+/// @brief Token that represents regular expression (regex) matching
+///
+/// For example "match('foo', '_foobar_')" is true
+class TokenMatch : public Token {
+public:
+    /// @brief Constructor
+    ///
+    /// @param reg_exp regular expression string
+    /// @throw EvalParseError when the regular expression is not valid
+    TokenMatch(const std::string& reg_exp);
+
+    /// @brief Match regular expression
+    ///
+    /// Evaluation uses only the last parameter (top of stack) which is popped.
+    /// Pushes "true" when the regular expression evaluates to true,
+    /// pushes "false" otherwise.
+    ///
+    /// @param pkt (unused)
+    /// @param values - stack of values (1 popped, 1 pushed)
+    /// @throw EvalBadStack if there is no value on the stack
+    /// @return 0 which means evaluate next token if any.
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
+
+    /// @brief Returns regular expression.
+    ///
+    /// This method is used in testing to determine if the parser had
+    /// instantiated TokenMatch with correct parameters.
+    ///
+    /// @return regular expression as a string.
+    const std::string& getRegExp() const {
+        return (reg_exp_str_);
+    }
+
+private:
+    /// @brief The regular expression as a string.
+    std::string reg_exp_str_;
+
+    /// @brief The regular expression
+    std::regex reg_exp_;
+};
+
+/// @brief Token label i.e. target of branches.
+///
+/// For instance label(123): at evaluation when a branch returns 123
+/// remaining expression is scanned until label(123) is reached.
+class TokenLabel : public Token {
+public:
+    /// @brief Constructor
+    ///
+    /// @param label the label (unsigned > 0)
+    /// @throw EvalParseError when label is 0
+    TokenLabel(const unsigned label);
+
+    /// @brief Returns label.
+    ///
+    /// @return the label
+    virtual unsigned getLabel() const {
+        return (label_);
+    }
+
+    /// @brief Does nothing.
+    ///
+    /// @param pkt (unused)
+    /// @param values - stack of values (unused)
+    /// @return 0 which means evaluate next token if any.
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
+
+protected:
+    unsigned label_;
+};
+
+/// @brief Token that represents unconditional branch.
+///
+/// Unconditionally branch to a forward target.
+/// Also the base class of branch tokens.
+class TokenBranch : public Token {
+public:
+    /// @brief Constructor
+    ///
+    /// @param target the label to branch to
+    /// @throw EvalParseError when target is 0
+    TokenBranch(const unsigned target);
+
+    /// @brief Returns branchtarget
+    ///
+    /// @return the label of the branch target
+    unsigned getTarget() const {
+        return (target_);
+    }
+
+    /// @brief Only return the target
+    ///
+    /// @param pkt (unused)
+    /// @param values - stack of values (unused)
+    /// @return next label.
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
+
+protected:
+    unsigned target_;
+};
+
+/// @brief Token that represents pop or branch if true.
+///
+/// Branch to a forward target when the top value is true else pop it.
+/// Can be used to implement the left "or" boolean operator.
+class TokenPopOrBranchTrue : public TokenBranch {
+public:
+    /// @brief Constructor
+    ///
+    /// @param target the label to branch to
+    /// @throw EvalParseError when target is 0
+    TokenPopOrBranchTrue(const unsigned target);
+
+    /// @brief Looks at the top of stack which must be "false" or "true".
+    /// On "false" pops it and returns 0, on "true" return the branch target.
+    ///
+    /// @param pkt (unused)
+    /// @param values - stack of values (use/pop boolean top of stack)
+    /// @throw EvalBadStack if there are less than 1 value on stack
+    /// @throw EvalTypeError if the top value on the stack is not either
+    ///        "true" or "false"
+    /// @return next label or 0 when means evaluate next token if any.
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
+};
+
+/// @brief Token that represents pop or branch if false.
+///
+/// Branch to a forward target when the top value is false else pop it.
+/// Can be used to implement the left "and" boolean operator.
+class TokenPopOrBranchFalse : public TokenBranch {
+public:
+    /// @brief Constructor
+    ///
+    /// @param target the label to branch to
+    /// @throw EvalParseError when target is 0
+    TokenPopOrBranchFalse(const unsigned target);
+
+    /// @brief Looks at the top of stack which must be "false" or "true".
+    /// On "true" pops it and returns 0, on "false" return the branch target.
+    ///
+    /// @param pkt (unused)
+    /// @param values - stack of values (use/pop boolean top of stack)
+    /// @throw EvalBadStack if there are less than 1 value on stack
+    /// @throw EvalTypeError if the top value on the stack is not either
+    ///        "true" or "false"
+    /// @return next label or 0 when means evaluate next token if any.
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
+};
+
+/// @brief Token that represents pop and branch if false.
+///
+/// Pop the op value, branch to a forward target when false.
+/// Can be used to implement the lazy "if" boolean operator i.e.
+/// evaluating either "then" or "else" branches (vs. strict the version
+/// which evaluates both).
+class TokenPopAndBranchFalse : public TokenBranch {
+public:
+    /// @brief Constructor
+    ///
+    /// @param target the label to branch to
+    /// @throw EvalParseError when target is 0
+    TokenPopAndBranchFalse(const unsigned target);
+
+    /// @brief Pops the top of stack which must be "false" or "true".
+    /// On "true" returns 0, on "false" return the branch target.
+    ///
+    /// @param pkt (unused)
+    /// @param values - stack of values (pop the boolean top value)
+    /// @throw EvalBadStack if there are less than 1 value on stack
+    /// @throw EvalTypeError if the top value on the stack is not either
+    ///        "true" or "false"
+    /// @return next label or 0 when means evaluate next token if any.
+    virtual unsigned evaluate(Pkt& pkt, ValueStack& values);
+};
+
 } // end of isc::dhcp namespace
 } // end of isc namespace
-
 #endif

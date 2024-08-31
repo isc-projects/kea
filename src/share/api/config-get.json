@@ -21,6 +21,11 @@
         "    }",
         "}"
     ],
+    "resp-comment": [
+        "Starting with Kea 2.4.0, the successful response contains an SHA256 digest of the configuration that was ",
+        "just retrieved. It might be used to determine if a configuration has been modified or not, possibly with the ",
+        "use of config-hash-get."
+    ],
     "support": [
         "kea-dhcp4",
         "kea-dhcp6",

@@ -81,6 +81,7 @@ This grammar is generated from ``d2_parser.yy``. See :ref:`dhcp-ddns-server` for
                    | reverse_ddns
                    | tsig_keys
                    | control_socket
+                   | control_sockets
                    | hooks_libraries
                    | loggers
                    | user_context
@@ -201,6 +202,7 @@ This grammar is generated from ``d2_parser.yy``. See :ref:`dhcp-ddns-server` for
                    | tsig_key_algorithm
                    | tsig_key_digest_bits
                    | tsig_key_secret
+                   | tsig_key_secret_file
                    | user_context
                    | comment
                    | unknown_map_entry
@@ -213,7 +215,20 @@ This grammar is generated from ``d2_parser.yy``. See :ref:`dhcp-ddns-server` for
 
      tsig_key_secret ::= "secret" ":" STRING
 
+     tsig_key_secret_file ::= "secret-file" ":" STRING
+
      control_socket ::= "control-socket" ":" "{" control_socket_params "}"
+
+     control_sockets ::= "control-sockets" ":" "[" control_socket_list "]"
+
+     control_socket_list ::= 
+                        | not_empty_control_socket_list
+
+     not_empty_control_socket_list ::= control_socket_entry
+                                  | not_empty_control_socket_list "," control_socket_entry
+                                  | not_empty_control_socket_list ","
+
+     control_socket_entry ::= "{" control_socket_params "}"
 
      control_socket_params ::= control_socket_param
                           | control_socket_params "," control_socket_param
@@ -221,13 +236,89 @@ This grammar is generated from ``d2_parser.yy``. See :ref:`dhcp-ddns-server` for
 
      control_socket_param ::= control_socket_type
                          | control_socket_name
+                         | control_socket_address
+                         | control_socket_port
+                         | authentication
+                         | trust_anchor
+                         | cert_file
+                         | key_file
+                         | cert_required
                          | user_context
                          | comment
                          | unknown_map_entry
 
-     control_socket_type ::= "socket-type" ":" STRING
+     control_socket_type ::= "socket-type" ":" control_socket_type_value
+
+     control_socket_type_value ::= "unix"
+                              | "http"
+                              | "https"
 
      control_socket_name ::= "socket-name" ":" STRING
+
+     control_socket_address ::= "socket-address" ":" STRING
+
+     control_socket_port ::= "socket-port" ":" INTEGER
+
+     trust_anchor ::= "trust-anchor" ":" STRING
+
+     cert_file ::= "cert-file" ":" STRING
+
+     key_file ::= "key-file" ":" STRING
+
+     cert_required ::= "cert-required" ":" BOOLEAN
+
+     authentication ::= "authentication" ":" "{" auth_params "}"
+
+     auth_params ::= auth_param
+                | auth_params "," auth_param
+                | auth_params ","
+
+     auth_param ::= auth_type
+               | realm
+               | directory
+               | clients
+               | comment
+               | user_context
+               | unknown_map_entry
+
+     auth_type ::= "type" ":" auth_type_value
+
+     auth_type_value ::= "basic"
+
+     realm ::= "realm" ":" STRING
+
+     directory ::= "directory" ":" STRING
+
+     clients ::= "clients" ":" "[" clients_list "]"
+
+     clients_list ::= 
+                 | not_empty_clients_list
+
+     not_empty_clients_list ::= basic_auth
+                           | not_empty_clients_list "," basic_auth
+                           | not_empty_clients_list ","
+
+     basic_auth ::= "{" clients_params "}"
+
+     clients_params ::= clients_param
+                   | clients_params "," clients_param
+                   | clients_params ","
+
+     clients_param ::= user
+                  | user_file
+                  | password
+                  | password_file
+                  | user_context
+                  | comment
+                  | unknown_map_entry
+
+     user ::= "user" ":" STRING
+
+     user_file ::= "user-file" ":" STRING
+
+     password ::= "password" ":" STRING
+
+     password_file ::= "password-file" ":" STRING
 
      hooks_libraries ::= "hooks-libraries" ":" "[" hooks_libraries_list "]"
 
@@ -280,7 +371,7 @@ This grammar is generated from ``d2_parser.yy``. See :ref:`dhcp-ddns-server` for
 
      severity ::= "severity" ":" STRING
 
-     output_options_list ::= "output_options" ":" "[" output_options_list_content "]"
+     output_options_list ::= "output-options" ":" "[" output_options_list_content "]"
 
      output_options_list_content ::= output_entry
                                 | output_options_list_content "," output_entry

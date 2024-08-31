@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -179,9 +179,14 @@ struct HostResrv6Tuple {
     /// @brief Value of the IPv6 Subnet-id
     const SubnetID subnet_id_;
 
-    /// @brief Key extractor (used in the second composite key)
-    const asiolink::IOAddress& getKey() const {
+    /// @brief Key extractor used in the second composite key
+    const asiolink::IOAddress& getPrefix() const {
         return (resrv_.getPrefix());
+    }
+
+    /// @brief Key extractor used in the fourth composite key
+    HostID getHostId() const {
+        return (host_->getHostId());
     }
 };
 
@@ -204,7 +209,7 @@ typedef boost::multi_index_container<
             // Address is extracted by calling IPv6Resrv::getPrefix()
             // and it will return an IOAddress object.
             boost::multi_index::const_mem_fun<
-                HostResrv6Tuple, const asiolink::IOAddress&, &HostResrv6Tuple::getKey>
+                HostResrv6Tuple, const asiolink::IOAddress&, &HostResrv6Tuple::getPrefix>
         >,
 
         // Second index is used to search by (subnet_id, address) pair.
@@ -227,7 +232,7 @@ typedef boost::multi_index_container<
                 // IPv6Resrv::getPrefix() and it will return an IOAddress object.
                 boost::multi_index::const_mem_fun<
                     HostResrv6Tuple, const asiolink::IOAddress&,
-                    &HostResrv6Tuple::getKey
+                    &HostResrv6Tuple::getPrefix
                 >
            >
         >,
@@ -237,6 +242,21 @@ typedef boost::multi_index_container<
             // Index using values returned by the @c Host::getIPv6SubnetID
             boost::multi_index::member<HostResrv6Tuple, const SubnetID,
                                        &HostResrv6Tuple::subnet_id_>
+        >,
+
+        // Fourth index is used to search by increasing host id
+        boost::multi_index::ordered_non_unique<
+            // Index using values returned by the @c Host::getHostId
+            boost::multi_index::const_mem_fun<HostResrv6Tuple, uint64_t,
+                                              &HostResrv6Tuple::getHostId>
+        >,
+
+        // Fifth index is used to search by the reserved address.
+        boost::multi_index::ordered_non_unique<
+            boost::multi_index::const_mem_fun<
+                HostResrv6Tuple, const asiolink::IOAddress&,
+                &HostResrv6Tuple::getPrefix
+            >
         >
     >
 > HostContainer6;
@@ -270,6 +290,24 @@ typedef HostContainer6::nth_index<2>::type HostContainer6Index2;
 /// @brief Results range returned using the @c HostContainer6Index2.
 typedef std::pair<HostContainer6Index2::iterator,
                   HostContainer6Index2::iterator> HostContainer6Index2Range;
+
+/// @brief Fourth index type in the @c HostContainer6.
+///
+/// This index allows for searching for @c Host objects using a host id.
+typedef HostContainer6::nth_index<3>::type HostContainer6Index3;
+
+/// @brief Results range returned using the @c HostContainer6Index3.
+typedef std::pair<HostContainer6Index3::iterator,
+                  HostContainer6Index3::iterator> HostContainer6Index3Range;
+
+/// @brief Fifth index type in the @c HostContainer6.
+///
+/// This index allows for searching for @c Host objects using an IP address.
+typedef HostContainer6::nth_index<4>::type HostContainer6Index4;
+
+/// @brief Results range returned using the @c HostContainer6Index4.
+typedef std::pair<HostContainer6Index4::iterator,
+                  HostContainer6Index4::iterator> HostContainer6Index4Range;
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace

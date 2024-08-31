@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -44,9 +44,10 @@ AvalancheScen::resendPackets(ExchangeType xchg_type) {
         auto start_time = pkt->getTimestamp();
         int current_pkt_resent_cnt = 0;
         auto r_it = retrans.find(trans_id);
-        if (r_it != retrans.end()) {
-            start_time = (*start_times.find(trans_id)).second;
-            current_pkt_resent_cnt = (*r_it).second;
+        auto s_it = start_times.find(trans_id);
+        if (r_it != retrans.end() && s_it != start_times.end()) {
+            start_time = s_it->second;
+            current_pkt_resent_cnt = r_it->second;
         } else {
             start_times[trans_id] = start_time;
         }

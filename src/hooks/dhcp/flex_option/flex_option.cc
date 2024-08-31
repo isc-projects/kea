@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,7 +8,7 @@
 
 #include <flex_option.h>
 #include <flex_option_log.h>
-#include <util/strutil.h>
+#include <util/str.h>
 #include <cc/simple_parser.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/libdhcp++.h>
@@ -60,7 +60,7 @@ parseAction(ConstElementPtr option,
         try {
             EvalContext eval_ctx(universe);
             eval_ctx.parseString(expr_text, parser_type);
-            ExpressionPtr expr(new Expression(eval_ctx.expression));
+            ExpressionPtr expr(new Expression(eval_ctx.expression_));
             opt_cfg->setExpr(expr);
         } catch (const std::exception& ex) {
             isc_throw(BadValue, "can't parse " << name << " expression ["
@@ -141,7 +141,7 @@ FlexOptionImpl::configure(ConstElementPtr options) {
     if (options->empty()) {
         return;
     }
-    for (auto option : options->listValue()) {
+    for (auto const& option : options->listValue()) {
         parseOptionConfig(option);
     }
 }
@@ -156,7 +156,7 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
         isc_throw(BadValue, "option element is not a map");
     }
     // See SimpleParser::checkKeywords
-    for (auto entry : option->mapValue()) {
+    for (auto const& entry : option->mapValue()) {
         if (OPTION_PARAMETERS.count(entry.first) == 0) {
             isc_throw(BadValue, "unknown parameter '" << entry.first << "'");
         }
@@ -194,7 +194,8 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
             isc_throw(BadValue, "'" << space << "' is not a valid space name");
         }
     }
-    uint16_t code;
+    // The code is always set below but some compilers can't see that...
+    uint16_t code = 0;
     if (code_elem) {
         int64_t value = code_elem->intValue();
         int64_t max_code;
@@ -315,7 +316,7 @@ void
 FlexOptionImpl::parseSubOptions(ConstElementPtr sub_options,
                                 OptionConfigPtr opt_cfg,
                                 Option::Universe universe) {
-    for (ConstElementPtr sub_option : sub_options->listValue()) {
+    for (auto const& sub_option : sub_options->listValue()) {
         parseSubOption(sub_option, opt_cfg, universe);
     }
 }
@@ -331,7 +332,7 @@ FlexOptionImpl::parseSubOption(ConstElementPtr sub_option,
         isc_throw(BadValue, "sub-option element is not a map");
     }
     // See SimpleParser::checkKeywords
-    for (auto entry : sub_option->mapValue()) {
+    for (auto const& entry : sub_option->mapValue()) {
         if (SUB_OPTION_PARAMETERS.count(entry.first) == 0) {
             isc_throw(BadValue, "unknown parameter '" << entry.first << "'");
         }

@@ -1,15 +1,17 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <mysql_cb_impl.h>
 #include <mysql_cb_log.h>
 #include <asiolink/io_address.h>
 #include <config_backend/constants.h>
 #include <dhcp/option_space.h>
+#include <dhcpsrv/timer_mgr.h>
 #include <util/buffer.h>
 
 #include <mysql.h>
@@ -27,7 +29,7 @@ using namespace isc::util;
 namespace isc {
 namespace dhcp {
 
-isc::asiolink::IOServicePtr MySqlConfigBackendImpl::io_service_ = isc::asiolink::IOServicePtr();
+isc::asiolink::IOServicePtr MySqlConfigBackendImpl::io_service_;
 
 MySqlConfigBackendImpl::
 ScopedAuditRevision::ScopedAuditRevision(MySqlConfigBackendImpl* impl,
@@ -48,23 +50,25 @@ ScopedAuditRevision::~ScopedAuditRevision() {
 }
 
 MySqlConfigBackendImpl::
-MySqlConfigBackendImpl(const DatabaseConnection::ParameterMap& parameters,
+MySqlConfigBackendImpl(const std::string& space,
+                       const DatabaseConnection::ParameterMap& parameters,
                        const DbCallback db_reconnect_callback)
     : conn_(parameters,
-            IOServiceAccessorPtr(new IOServiceAccessor(MySqlConfigBackendImpl::getIOService)),
-            db_reconnect_callback), timer_name_(""),
+            IOServiceAccessorPtr(new IOServiceAccessor(&MySqlConfigBackendImpl::getIOService)),
+            db_reconnect_callback),
       audit_revision_ref_count_(0), parameters_(parameters) {
-    // Test schema version first.
-    std::pair<uint32_t, uint32_t> code_version(MYSQL_SCHEMA_VERSION_MAJOR,
-                                               MYSQL_SCHEMA_VERSION_MINOR);
-    std::pair<uint32_t, uint32_t> db_version =
-        MySqlConnection::getVersion(parameters);
-    if (code_version != db_version) {
-        isc_throw(DbOpenError, "MySQL schema version mismatch: need version: "
-                  << code_version.first << "." << code_version.second
-                  << " found version: " << db_version.first << "."
-                  << db_version.second);
-    }
+
+    // Create unique timer name per instance.
+    timer_name_ = "MySqlConfigBackend";
+    timer_name_ += space;
+    timer_name_ += "[";
+    timer_name_ += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
+    timer_name_ += "]DbReconnectTimer";
+
+    MySqlConnection::ensureSchemaVersion(parameters, db_reconnect_callback, timer_name_);
+
+    // Create ReconnectCtl for this connection.
+    conn_.makeReconnectCtl(timer_name_);
 
     // Open the database.
     conn_.openDatabase();
@@ -83,15 +87,8 @@ MySqlConfigBackendImpl(const DatabaseConnection::ParameterMap& parameters,
 }
 
 MySqlConfigBackendImpl::~MySqlConfigBackendImpl() {
-    // Free up the prepared statements, ignoring errors. (What would we do
-    // about them? We're destroying this object and are not really concerned
-    // with errors on a database connection that is about to go away.)
-    for (int i = 0; i < conn_.statements_.size(); ++i) {
-        if (conn_.statements_[i] != NULL) {
-            (void) mysql_stmt_close(conn_.statements_[i]);
-            conn_.statements_[i] = NULL;
-        }
-    }
+    /// nothing to do there. The conn_ connection will be deleted and its dtor
+    /// will take care of releasing the compiled statements and similar.
 }
 
 MySqlBindingPtr
@@ -504,7 +501,7 @@ MySqlConfigBackendImpl::createUpdateOptionDef(const db::ServerSelector& server_s
     auto tag = getServerTag(server_selector, "creating or updating option definition");
 
     ElementPtr record_types = Element::createList();
-    for (auto field : option_def->getRecordFields()) {
+    for (auto const& field : option_def->getRecordFields()) {
         record_types->add(Element::create(static_cast<int>(field)));
     }
     MySqlBindingPtr record_types_binding = record_types->empty() ?
@@ -740,11 +737,13 @@ MySqlConfigBackendImpl::getOptions(const int index,
     }
     // value
     out_bindings.push_back(MySqlBinding::createBlob(OPTION_VALUE_BUF_LENGTH));
-    // forma\tted_value
+    // formatted_value
     out_bindings.push_back(MySqlBinding::createString(FORMATTED_OPTION_VALUE_BUF_LENGTH));
     // space
     out_bindings.push_back(MySqlBinding::createString(OPTION_SPACE_BUF_LENGTH));
     // persistent
+    out_bindings.push_back(MySqlBinding::createInteger<uint8_t>());
+    // cancelled
     out_bindings.push_back(MySqlBinding::createInteger<uint8_t>());
     // dhcp[46]_subnet_id
     out_bindings.push_back(MySqlBinding::createInteger<uint32_t>());
@@ -781,7 +780,7 @@ MySqlConfigBackendImpl::getOptions(const int index,
             OptionDescriptorPtr desc = processOptionRow(universe, out_bindings.begin());
             if (desc) {
                 // server_tag for the global option
-                ServerTag last_option_server_tag(out_bindings[12]->getString());
+                ServerTag last_option_server_tag(out_bindings[13]->getString());
                 desc->setServerTag(last_option_server_tag.get());
 
                 // If we're fetching options for a given server (explicit server
@@ -839,7 +838,6 @@ MySqlConfigBackendImpl::processOptionRow(const Option::Universe& universe,
         code = (*(first_binding + 1))->getInteger<uint16_t>();
     }
 
-
     // Get formatted value if available.
     std::string formatted_value = (*(first_binding + 3))->getStringOrDefault("");
 
@@ -858,12 +856,18 @@ MySqlConfigBackendImpl::processOptionRow(const Option::Universe& universe,
     // Check if the option is persistent.
     bool persistent = static_cast<bool>((*(first_binding + 5))->getIntegerOrDefault<uint8_t>(0));
 
+    // Check if the option is cancelled.
+    bool cancelled = static_cast<bool>((*(first_binding + 6))->getIntegerOrDefault<uint8_t>(0));
+
     // Create option descriptor which encapsulates our option and adds
     // additional information, i.e. whether the option is persistent,
     // its option space and timestamp.
-    OptionDescriptorPtr desc = OptionDescriptor::create(option, persistent, formatted_value);
+    OptionDescriptorPtr desc = OptionDescriptor::create(option,
+                                                        persistent,
+                                                        cancelled,
+                                                        formatted_value);
     desc->space_name_ = space;
-    desc->setModificationTime((*(first_binding + 11))->getTimestamp());
+    desc->setModificationTime((*(first_binding + 12))->getTimestamp());
 
     // Set database id for the option.
     if (!(*first_binding)->amNull()) {
@@ -951,9 +955,9 @@ MySqlConfigBackendImpl::attachElementToServers(const int index,
 MySqlBindingPtr
 MySqlConfigBackendImpl::createInputRelayBinding(const NetworkPtr& network) {
     ElementPtr relay_element = Element::createList();
-    const auto& addresses = network->getRelayAddresses();
+    auto const& addresses = network->getRelayAddresses();
     if (!addresses.empty()) {
-        for (const auto& address : addresses) {
+        for (auto const& address : addresses) {
             relay_element->add(Element::create(address.toText()));
         }
     }
@@ -968,7 +972,7 @@ MySqlConfigBackendImpl::createOptionValueBinding(const OptionDescriptorPtr& opti
     if (option->formatted_value_.empty() && (opt->len() > opt->getHeaderLen())) {
         OutputBuffer buf(opt->len());
         opt->pack(buf);
-        const char* buf_ptr = static_cast<const char*>(buf.getData());
+        const uint8_t* buf_ptr = buf.getData();
         std::vector<uint8_t> blob(buf_ptr + opt->getHeaderLen(),
                                   buf_ptr + buf.getLength());
         return (MySqlBinding::createBlob(blob.begin(), blob.end()));

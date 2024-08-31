@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,8 @@
 #include <exceptions/exceptions.h>
 #include <dhcp/opaque_data_tuple.h>
 #include <dhcp/option_vendor_class.h>
+#include <util/io.h>
+
 #include <sstream>
 
 namespace isc {
@@ -40,14 +42,15 @@ OptionVendorClass::pack(isc::util::OutputBuffer& buf, bool check) const {
 
     buf.writeUint32(getVendorId());
 
-    for (TuplesCollection::const_iterator it = tuples_.begin();
-         it != tuples_.end(); ++it) {
+    bool first = true;
+    for (auto const& it : tuples_) {
         // For DHCPv4 V-I Vendor Class option, there is enterprise id before
         // every tuple.
-        if ((getUniverse() == V4) && (it != tuples_.begin())) {
+        if ((getUniverse() == V4) && (!first)) {
             buf.writeUint32(getVendorId());
         }
-        it->pack(buf);
+        first = false;
+        it.pack(buf);
 
     }
     // That's it. We don't pack any sub-options here, because this option
@@ -70,7 +73,8 @@ OptionVendorClass::unpack(OptionBufferConstIter begin,
     size_t offset = 0;
     while (offset < std::distance(begin, end)) {
         // Parse a tuple.
-        OpaqueDataTuple tuple(getLengthFieldType(), begin + offset, end);
+        OpaqueDataTuple tuple(OptionDataTypeUtil::getTupleLenFieldType(getUniverse()),
+                              begin + offset, end);
         addTuple(tuple);
         // The tuple has been parsed correctly which implies that it is safe to
         // advance the offset by its total length.
@@ -79,6 +83,16 @@ OptionVendorClass::unpack(OptionBufferConstIter begin,
         // tuple. Let's read it, unless we have already reached the end of
         // buffer.
         if ((getUniverse() == V4) && (begin + offset != end)) {
+            // Get the other enterprise id.
+            uint32_t other_id = isc::util::readUint32(&(*(begin + offset)),
+                                                      distance(begin + offset,
+                                                               end));
+            // Throw if there are two different enterprise ids.
+            if (other_id != vendor_id_) {
+                isc_throw(isc::BadValue, "V-I Vendor Class option with two "
+                          "different enterprise ids: " << vendor_id_
+                          << " and " << other_id);
+            }
             // Advance the offset by the size of enterprise id.
             offset += sizeof(vendor_id_);
             // If the offset already ran over the buffer length or there is
@@ -95,7 +109,7 @@ OptionVendorClass::unpack(OptionBufferConstIter begin,
 
 void
 OptionVendorClass::addTuple(const OpaqueDataTuple& tuple) {
-    if (tuple.getLengthFieldType() != getLengthFieldType()) {
+    if (tuple.getLengthFieldType() != OptionDataTypeUtil::getTupleLenFieldType(getUniverse())) {
         isc_throw(isc::BadValue, "attempted to add opaque data tuple having"
                   " invalid size of the length field "
                   << tuple.getDataFieldSize() << " to Vendor Class option");
@@ -112,7 +126,7 @@ OptionVendorClass::setTuple(const size_t at, const OpaqueDataTuple& tuple) {
                   " vendor option at position " << at << " which is out of"
                   " range");
 
-    } else if (tuple.getLengthFieldType() != getLengthFieldType()) {
+    } else if (tuple.getLengthFieldType() != OptionDataTypeUtil::getTupleLenFieldType(getUniverse())) {
         isc_throw(isc::BadValue, "attempted to set opaque data tuple having"
                   " invalid size of the length field "
                   << tuple.getDataFieldSize() << " to Vendor Class option");
@@ -135,9 +149,8 @@ bool
 OptionVendorClass::hasTuple(const std::string& tuple_str) const {
     // Iterate over existing tuples (there shouldn't be many of them),
     // and try to match the searched one.
-    for (TuplesCollection::const_iterator it = tuples_.begin();
-         it != tuples_.end(); ++it) {
-        if (*it == tuple_str) {
+    for (auto const& it : tuples_) {
+        if (it == tuple_str) {
             return (true);
         }
     }
@@ -150,14 +163,15 @@ OptionVendorClass::len() const {
     // The option starts with the header and enterprise id.
     uint16_t length = getHeaderLen() + sizeof(uint32_t);
     // Now iterate over existing tuples and add their size.
-    for (TuplesCollection::const_iterator it = tuples_.begin();
-         it != tuples_.end(); ++it) {
+    bool first = true;
+    for (auto const& it : tuples_) {
         // For DHCPv4 V-I Vendor Class option, there is enterprise id before
         // every tuple.
-        if ((getUniverse() == V4) && (it != tuples_.begin())) {
+        if ((getUniverse() == V4) && (!first)) {
             length += sizeof(uint32_t);
         }
-        length += it->getTotalLength();
+        first = false;
+        length += it.getTotalLength();
 
     }
 

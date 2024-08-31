@@ -12,15 +12,15 @@ yangmodules_list += ietf-dhcpv6-types@2018-09-04.yang
 yangmodules_list += ietf-inet-types@2013-07-15.yang
 yangmodules_list += ietf-yang-types@2013-07-15.yang
 yangmodules_list += kea-ctrl-agent@2019-08-12.yang
-yangmodules_list += kea-dhcp-ddns@2019-08-12.yang
-yangmodules_list += kea-dhcp-types@2021-11-24.yang
-yangmodules_list += kea-dhcp4-server@2021-11-24.yang
-yangmodules_list += kea-dhcp6-server@2021-11-24.yang
+yangmodules_list += kea-dhcp-ddns@2022-07-27.yang
+yangmodules_list += kea-dhcp-types@2024-05-29.yang
+yangmodules_list += kea-dhcp4-server@2024-05-29.yang
+yangmodules_list += kea-dhcp6-server@2024-05-29.yang
 yangmodules_list += kea-types@2019-08-12.yang
-yangmodules_list += keatest-module@2018-11-20.yang
+yangmodules_list += keatest-module@2022-11-30.yang
 
 EXTRA_DIST = hashes ${yangmodules_list}
 
-if HAVE_SYSREPO
+if HAVE_NETCONF
 yangmodules_DATA = ${yangmodules_list}
 endif

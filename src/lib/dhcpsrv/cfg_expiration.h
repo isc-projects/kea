@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -62,7 +62,7 @@ class CfgExpiration : public isc::data::CfgToElement {
 public:
 
     /// @name Default values.
-    //@{
+    ///@{
     ///
     /// @brief Default value for reclaim-timer-wait-time.
     static const uint16_t DEFAULT_RECLAIM_TIMER_WAIT_TIME;
@@ -82,10 +82,10 @@ public:
     /// @brief Default value for unwarned-reclaim-cycles.
     static const uint16_t DEFAULT_UNWARNED_RECLAIM_CYCLES;
 
-    //@}
+    ///@}
 
     /// @name Upper limits for the parameters
-    //@{
+    ///@{
     ///
     /// @brief Maximum value for reclaim-timer-wait-time.
     static const uint16_t LIMIT_RECLAIM_TIMER_WAIT_TIME;
@@ -105,10 +105,10 @@ public:
     /// @brief Maximum value for unwarned-reclaim-cycles.
     static const uint16_t LIMIT_UNWARNED_RECLAIM_CYCLES;
 
-    //@}
+    ///@}
 
     /// @name Timers' names
-    //@{
+    ///@{
 
     /// @brief Name of the timer for reclaiming expired leases.
     static const std::string RECLAIM_EXPIRED_TIMER_NAME;
@@ -116,7 +116,7 @@ public:
     /// @brief Name of the timer for flushing reclaimed leases.
     static const std::string FLUSH_RECLAIMED_TIMER_NAME;
 
-    //@}
+    ///@}
 
     /// @brief Constructor.
     ///
@@ -270,14 +270,14 @@ private:
 };
 
 /// @name Pointers to the @c CfgExpiration objects.
-//@{
+///@{
 /// @brief Pointer to the Non-const object.
 typedef boost::shared_ptr<CfgExpiration> CfgExpirationPtr;
 
 /// @brief Pointer to the const object.
 typedef boost::shared_ptr<const CfgExpiration> ConstCfgExpirationPtr;
 
-//@}
+///@}
 
 template<typename Instance>
 void

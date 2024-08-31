@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2020-2021 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2020-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,9 +15,6 @@
 # files and built sources (as called in Makefile.am files). While messages and
 # parser files are included with the source files, the built sources are only
 # created when building or some of them included in the Kea installation.
-
-# shellcheck disable=SC2039
-# SC2039: In POSIX sh, 'local' is undefined.
 
 # shellcheck disable=SC2013
 # SC2013: To read lines rather than words, pipe/redirect to a 'while read' loop.

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -152,6 +152,15 @@ public:
     /// The only unwipeable method is list-commands, which is internally
     /// handled at all times.
     void deregisterAll();
+
+    /// @brief returns a hash of a given Element structure
+    ///
+    /// The hash is currently implemented as SHA256 on the string
+    // representation of the structure.
+    ///
+    /// @param config typically full config, but hash can be calculated on any structure
+    /// @return hash of string representation
+    static std::string getHash(const isc::data::ConstElementPtr& config);
 
 protected:
 

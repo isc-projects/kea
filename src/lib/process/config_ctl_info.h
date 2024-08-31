@@ -50,7 +50,7 @@ public:
     ///
     /// @return database access string with password redacted.
     std::string redactedAccessString() const {
-        return(db::DatabaseConnection::redactedAccessString(access_params_));
+        return (db::DatabaseConnection::redactedAccessString(access_params_));
     }
 
     /// @brief Retrieve the map of parameter values.

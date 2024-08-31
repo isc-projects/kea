@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -319,6 +319,14 @@ TEST_F(MySqlConfigBackendDHCPv4Test, optionDefs4WithServerTagsTest) {
     optionDefs4WithServerTagsTest();
 }
 
+TEST_F(MySqlConfigBackendDHCPv4Test, invalidOptionDefDataType4Test) {
+    invalidOptionDefDataType4Test();
+}
+
+TEST_F(MySqlConfigBackendDHCPv4Test, allOptionDefDataTypes4Test) {
+    allOptionDefDataTypes4Test();
+}
+
 TEST_F(MySqlConfigBackendDHCPv4Test, getAllOptionDefs4Test) {
     getAllOptionDefs4Test();
 }
@@ -446,7 +454,7 @@ public:
         isc::dhcp::MySqlConfigBackendImpl::setIOService(io_service);
     }
 
-    /// @brief  Attempts to add a backend instance to the CB manager.
+    /// @brief Attempts to add a backend instance to the CB manager.
     ///
     /// @param access Connection access string containing the database
     /// connection parameters.
@@ -455,12 +463,52 @@ public:
     }
 
     /// @brief Fetches a collection of all the servers currently in
-    /// the CB database.  This function is used to check the operability
+    /// the CB database. This function is used to check the operability
     /// of the CB backend.
     ServerCollection getAllServers() {
         return (ConfigBackendDHCPv4Mgr::instance().getPool()->getAllServers4(BackendSelector()));
     }
 };
+
+TEST_F(MySqlConfigBackendDHCPv4DbLostCallbackTest, testRetryOpenDbLostAndRecoveredCallback) {
+    MultiThreadingTest mt(false);
+    testRetryOpenDbLostAndRecoveredCallback();
+}
+
+TEST_F(MySqlConfigBackendDHCPv4DbLostCallbackTest, testRetryOpenDbLostAndRecoveredCallbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testRetryOpenDbLostAndRecoveredCallback();
+}
+
+TEST_F(MySqlConfigBackendDHCPv4DbLostCallbackTest, testRetryOpenDbLostAndFailedCallback) {
+    MultiThreadingTest mt(false);
+    testRetryOpenDbLostAndFailedCallback();
+}
+
+TEST_F(MySqlConfigBackendDHCPv4DbLostCallbackTest, testRetryOpenDbLostAndFailedCallbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testRetryOpenDbLostAndFailedCallback();
+}
+
+TEST_F(MySqlConfigBackendDHCPv4DbLostCallbackTest, testRetryOpenDbLostAndRecoveredAfterTimeoutCallback) {
+    MultiThreadingTest mt(false);
+    testRetryOpenDbLostAndRecoveredAfterTimeoutCallback();
+}
+
+TEST_F(MySqlConfigBackendDHCPv4DbLostCallbackTest, testRetryOpenDbLostAndRecoveredAfterTimeoutCallbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testRetryOpenDbLostAndRecoveredAfterTimeoutCallback();
+}
+
+TEST_F(MySqlConfigBackendDHCPv4DbLostCallbackTest, testRetryOpenDbLostAndFailedAfterTimeoutCallback) {
+    MultiThreadingTest mt(false);
+    testRetryOpenDbLostAndFailedAfterTimeoutCallback();
+}
+
+TEST_F(MySqlConfigBackendDHCPv4DbLostCallbackTest, testRetryOpenDbLostAndFailedAfterTimeoutCallbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testRetryOpenDbLostAndFailedAfterTimeoutCallback();
+}
 
 TEST_F(MySqlConfigBackendDHCPv4DbLostCallbackTest, testNoCallbackOnOpenFailure) {
     MultiThreadingTest mt(false);

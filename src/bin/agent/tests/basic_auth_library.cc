@@ -1,4 +1,4 @@
-// Copyright (C) 2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -158,12 +158,12 @@ unload() {
 
 // Callout functions.
 
-/// @brief This callout is called at the "auth" hook.
+/// @brief This callout is called at the "http_auth" hook.
 ///
 /// @param handle CalloutHandle.
 /// @return 0 upon success, non-zero otherwise.
 int
-auth(CalloutHandle& handle) {
+http_auth(CalloutHandle& handle) {
     // Sanity.
     if (!impl) {
         std::cerr << "no implementation" << std::endl;
@@ -222,12 +222,12 @@ auth(CalloutHandle& handle) {
     return (0);
 }
 
-/// @brief This callout is called at the "response" hook.
+/// @brief This callout is called at the "http_response" hook.
 ///
 /// @param handle CalloutHandle.
 /// @return 0 upon success, non-zero otherwise.
 int
-response(CalloutHandle& handle) {
+http_response(CalloutHandle& handle) {
     // Sanity.
     if (!impl) {
         std::cerr << "no implementation" << std::endl;

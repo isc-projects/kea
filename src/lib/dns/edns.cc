@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,14 +6,7 @@
 
 #include <config.h>
 
-#include <stdint.h>
-
-#include <cassert>
-
-#include <boost/lexical_cast.hpp>
-
 #include <exceptions/exceptions.h>
-
 #include <dns/edns.h>
 #include <dns/exceptions.h>
 #include <dns/message.h>
@@ -25,10 +18,14 @@
 #include <dns/rrttl.h>
 #include <dns/rrtype.h>
 
+#include <stdint.h>
+#include <boost/lexical_cast.hpp>
+
+using namespace isc::util;
+using namespace isc::dns::rdata;
+
 using namespace std;
 using boost::lexical_cast;
-using namespace isc::dns::rdata;
-using namespace isc::util;
 
 namespace isc {
 namespace dns {
@@ -55,8 +52,7 @@ const uint32_t EXTFLAG_DO = 0x00008000;
 EDNS::EDNS(const uint8_t version) :
     version_(version),
     udp_size_(Message::DEFAULT_MAX_UDPSIZE),
-    dnssec_aware_(false)
-{
+    dnssec_aware_(false) {
     if (version_ > SUPPORTED_VERSION) {
         isc_throw(isc::InvalidParameter,
                   "failed to construct EDNS: unsupported version: " <<
@@ -66,14 +62,13 @@ EDNS::EDNS(const uint8_t version) :
 
 EDNS::EDNS(const Name& name, const RRClass& rrclass, const RRType& rrtype,
            const RRTTL& ttl, const Rdata&) :
-    version_((ttl.getValue() & VERSION_MASK) >> VERSION_SHIFT)
-{
+    version_((ttl.getValue() & VERSION_MASK) >> VERSION_SHIFT) {
     if (rrtype != RRType::OPT()) {
         isc_throw(isc::InvalidParameter,
                   "EDNS is being created with incompatible RR type: "
                   << rrtype);
     }
-    
+
     if (version_ > EDNS::SUPPORTED_VERSION) {
         isc_throw(DNSMessageBADVERS, "unsupported EDNS version: " <<
                   static_cast<unsigned int>(version_));
@@ -106,11 +101,10 @@ namespace {
 /// Helper function to define unified implementation for the public versions
 /// of toWire().
 template <typename Output>
-int
+uint32_t
 toWireCommon(Output& output, const uint8_t version,
              const uint16_t udp_size, const bool dnssec_aware,
-             const uint8_t extended_rcode)
-{
+             const uint8_t extended_rcode) {
     // Render EDNS OPT RR
     uint32_t extrcode_flags = extended_rcode << EXTRCODE_SHIFT;
     extrcode_flags |= (version << VERSION_SHIFT) & VERSION_MASK;
@@ -130,10 +124,9 @@ toWireCommon(Output& output, const uint8_t version,
 }
 }
 
-unsigned int
+uint32_t
 EDNS::toWire(AbstractMessageRenderer& renderer,
-             const uint8_t extended_rcode) const
-{
+             const uint8_t extended_rcode) const {
     // If adding the OPT RR would exceed the size limit, don't do it.
     // 11 = len(".") + type(2byte) + class(2byte) + TTL(4byte) + RDLEN(2byte)
     // (RDATA is empty in this simple implementation)
@@ -145,10 +138,9 @@ EDNS::toWire(AbstractMessageRenderer& renderer,
                          extended_rcode));
 }
 
-unsigned int
+uint32_t
 EDNS::toWire(isc::util::OutputBuffer& buffer,
-             const uint8_t extended_rcode) const
-{
+             const uint8_t extended_rcode) const {
     return (toWireCommon(buffer, version_, udp_size_, dnssec_aware_,
                          extended_rcode));
 }
@@ -157,8 +149,7 @@ EDNS*
 createEDNSFromRR(const Name& name, const RRClass& rrclass,
                  const RRType& rrtype, const RRTTL& ttl,
                  const Rdata& rdata,
-                 uint8_t& extended_rcode)
-{
+                 uint8_t& extended_rcode) {
     // Create a new EDNS object first for exception guarantee.
     EDNS* edns = new EDNS(name, rrclass, rrtype, ttl, rdata);
 

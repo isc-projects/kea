@@ -1,11 +1,11 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef QUESTION_H
-#define QUESTION_H 1
+#define QUESTION_H
 
 #include <iostream>
 #include <string>
@@ -17,14 +17,7 @@
 #include <dns/rrtype.h>
 
 namespace isc {
-namespace util {
-class InputBuffer;
-class OutputBuffer;
-}
-
 namespace dns {
-
-class AbstractMessageRenderer;
 class Question;
 
 /// \brief A pointer-like type pointing to an \c Question object.
@@ -113,8 +106,8 @@ public:
     /// It may throw an exception if the construction of these component
     /// classes fails.
     ///
-    /// \param buffer A buffer storing the wire format data.
-    Question(isc::util::InputBuffer& buffer);
+    /// \param buff A buffer storing the wire format data.
+    Question(isc::util::InputBuffer& buff);
 
     /// \brief Constructor from fixed parameters of the \c Question.
     ///
@@ -126,8 +119,8 @@ public:
     /// \param rrclass The RR class of the \c Question.
     /// \param rrtype The RR type of the \c Question.
     Question(const Name& name, const RRClass& rrclass, const RRType& rrtype) :
-        name_(name), rrtype_(rrtype), rrclass_(rrclass)
-    {}
+        name_(name), rrtype_(rrtype), rrclass_(rrclass) {
+    }
     //@}
 
     ///
@@ -140,7 +133,9 @@ public:
     ///
     /// \return A reference to a \c Name class object corresponding to the
     /// \c Question owner name.
-    const Name& getName() const { return (name_); }
+    const Name& getName() const {
+        return (name_);
+    }
 
     /// \brief Returns the RR Class of the \c Question.
     ///
@@ -148,7 +143,9 @@ public:
     ///
     /// \return A reference to a \c RRClass class object corresponding to the
     /// RR class of the \c Question.
-    const RRType& getType() const { return (rrtype_); }
+    const RRType& getType() const {
+        return (rrtype_);
+    }
 
     /// \brief Returns the RR Type of the \c Question.
     ///
@@ -156,7 +153,9 @@ public:
     ///
     /// \return A reference to a \c RRType class object corresponding to the
     /// RR type of the \c Question.
-    const RRClass& getClass() const { return (rrclass_); }
+    const RRClass& getClass() const {
+        return (rrclass_);
+    }
     //@}
 
     ///
@@ -214,7 +213,7 @@ public:
     /// output buffer and name compression information.
     ///
     /// \return 1 on success; 0 if it causes truncation
-    unsigned int toWire(AbstractMessageRenderer& renderer) const;
+    uint32_t toWire(AbstractMessageRenderer& renderer) const;
 
     /// \brief Render the Question in the wire format without name compression.
     ///
@@ -224,7 +223,7 @@ public:
     ///
     /// \param buffer An output buffer to store the wire data.
     /// \return 1
-    unsigned int toWire(isc::util::OutputBuffer& buffer) const;
+    uint32_t toWire(isc::util::OutputBuffer& buffer) const;
     //@}
 
     ///
@@ -285,7 +284,3 @@ std::ostream& operator<<(std::ostream& os, const Question& question);
 } // end of namespace dns
 } // end of namespace isc
 #endif  // QUESTION_H
-
-// Local Variables: 
-// mode: c++
-// End: 

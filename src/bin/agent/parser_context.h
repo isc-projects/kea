@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -227,7 +227,7 @@ public:
         ///< Used while parsing Control-agent/loggers structures.
         LOGGERS,
 
-        ///< Used while parsing Control-agent/loggers/output_options structures.
+        ///< Used while parsing Control-agent/loggers/output-options structures.
         OUTPUT_OPTIONS
     } LexerContext;
 

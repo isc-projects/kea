@@ -1,5 +1,5 @@
 ..
-   Copyright (C) 2019-2021 Internet Systems Consortium, Inc. ("ISC")
+   Copyright (C) 2019-2024 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
    See the COPYRIGHT file distributed with this work for additional
    information regarding copyright ownership.
 
+.. iscman:: kea-lfc
 
 ``kea-lfc`` - Lease File Cleanup process in Kea
 -----------------------------------------------
@@ -72,10 +73,10 @@ The arguments are as follows:
    if one of the processes was interrupted before completing its task.
 
 ``-v``
-   Causes the version stamp to be printed.
+   Displays the Kea version.
 
 ``-V``
-   Causes a longer form of the version stamp to be printed.
+   Displays the extended Kea version.
 
 ``-W``
    Displays the configuration report.

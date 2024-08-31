@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019,2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,7 +11,6 @@
 #include <yang/translator_pool.h>
 #include <yang/translator_pd_pool.h>
 #include <yang/translator_host.h>
-#include <list>
 
 namespace isc {
 namespace yang {
@@ -37,7 +36,6 @@ namespace yang {
 ///     "client-class": "<guard class name>",
 ///     "require-client-classes": [ <list of required class names> ],
 ///     "reservations": [ <list of host reservations> ],
-///     "reservation-mode": <host reservation mode>,
 ///     "relay": <relay ip address(es)>,
 ///     "match-client-id": <match client id flag>,
 ///     "next-server": "<next server>",
@@ -77,7 +75,6 @@ namespace yang {
 ///     "client-class": "<guard class name>",
 ///     "require-client-classes": [ <list of required class names> ],
 ///     "reservations": [ <list of host reservations> ],
-///     "reservation-mode": <host reservation mode>,
 ///     "relay": <relay ip address(es)>,
 ///     "user-context": { <json map> },
 ///     "comment": "<comment>"
@@ -115,7 +112,6 @@ namespace yang {
 ///     +--rw client-class?                   string
 ///     +--rw require-client-classes*         string
 ///     +--rw host* [identifier-type identifier]
-///     +--rw reservation-mode?               host-reservation-mode
 ///     +--rw relay
 ///     +--rw cache-max-age?                  uint32
 ///     +--rw cache-threshold?                decimal64
@@ -127,6 +123,7 @@ namespace yang {
 ///     +--rw ddns-send-updates?              boolean
 ///     +--rw ddns-update-on-renew?           boolean
 ///     +--rw ddns-use-conflict-resolution?   boolean
+///     +--rw ddns-conflict-resolution-mode?  conflict-resolution-mode
 ///     +--rw hostname-char-replacement?      string
 ///     +--rw hostname-char-set?              string
 ///     +--rw reservations-global?            boolean
@@ -273,23 +270,34 @@ namespace yang {
 class TranslatorSubnet : virtual public TranslatorPools,
     virtual public TranslatorPdPools, virtual public TranslatorHosts {
 public:
-
     /// @brief Constructor.
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-    TranslatorSubnet(sysrepo::S_Session session, const std::string& model);
+    TranslatorSubnet(sysrepo::Session session, const std::string& model);
 
     /// @brief Destructor.
-    virtual ~TranslatorSubnet();
+    virtual ~TranslatorSubnet() = default;
+
+    /// @brief Get and translate a subnet from YANG to JSON.
+    ///
+    /// @param data_node the YANG node representing the subnet configuration
+    ///
+    /// @return the JSON representation of the subnet
+    ///
+    /// @throw NetconfError when sysrepo raises an error.
+    /// @throw BadValue on a subnet without prefix or id.
+    isc::data::ElementPtr getSubnet(libyang::DataNode const& data_node);
 
     /// @brief Get and translate a subnet from YANG to JSON.
     ///
     /// @param xpath The xpath of the subnet.
+    ///
     /// @return JSON representation of the subnet.
-    /// @throw SysrepoError when sysrepo raises an error.
+    ///
+    /// @throw NetconfError when sysrepo raises an error.
     /// @throw BadValue on a subnet without prefix or id.
-    isc::data::ElementPtr getSubnet(const std::string& xpath);
+    isc::data::ElementPtr getSubnetFromAbsoluteXpath(std::string const& xpath);
 
     /// @brief Translate and set subnet from JSON to YANG.
     ///
@@ -301,9 +309,10 @@ public:
 protected:
     /// @brief getSubnet for ietf-dhcpv6-server.
     ///
-    /// @param xpath The xpath of the subnet.
+    /// @param data_node the YANG node representing the subnet configuration
+    ///
     /// @return JSON representation of the subnet.
-    isc::data::ElementPtr getSubnetIetf6(const std::string& xpath);
+    isc::data::ElementPtr getSubnetIetf6(libyang::DataNode const& data_node);
 
     /// @brief setSubnet for ietf-dhcpv6-server.
     ///
@@ -314,9 +323,10 @@ protected:
 
     /// @brief getSubnet for kea-dhcp[46]-server.
     ///
-    /// @param xpath The xpath of the subnet.
+    /// @param data_node the YANG node representing the subnet configuration
+    ///
     /// @return JSON representation of the subnet.
-    isc::data::ElementPtr getSubnetKea(const std::string& xpath);
+    isc::data::ElementPtr getSubnetKea(libyang::DataNode const& data_node);
 
     /// @brief setSubnet for kea-dhcp[46]-server.
     ///
@@ -324,7 +334,7 @@ protected:
     /// @param elem The JSON element.
     void setSubnetKea(const std::string& xpath,
                       isc::data::ConstElementPtr elem);
-};
+};  // TranslatorSubnets
 
 /// @brief A translator class for converting a subnet list between
 /// YANG and JSON.
@@ -332,21 +342,32 @@ protected:
 /// Currently supports on kea-dhcp[46]-server and partially ietf-dhcpv6-server.
 class TranslatorSubnets : virtual public TranslatorSubnet {
 public:
-
     /// @brief Constructor.
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-    TranslatorSubnets(sysrepo::S_Session session, const std::string& model);
+    TranslatorSubnets(sysrepo::Session session, const std::string& model);
 
     /// @brief Destructor.
-    virtual ~TranslatorSubnets();
+    virtual ~TranslatorSubnets() = default;
+
+    /// @brief Get and translate subnets from YANG to JSON.
+    ///
+    /// @param data_node the YANG node representing the list of subnets
+    ///
+    /// @return the JSON representation of the list of subnets
+    ///
+    /// @throw NetconfError when sysrepo raises an error.
+    isc::data::ElementPtr getSubnets(libyang::DataNode const& data_node);
 
     /// @brief Get and translate subnets from YANG to JSON.
     ///
     /// @param xpath The xpath of the subnet list.
-    /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ElementPtr getSubnets(const std::string& xpath);
+    ///
+    /// @return the JSON representation of the list of subnets
+    ///
+    /// @throw NetconfError when sysrepo raises an error.
+    isc::data::ElementPtr getSubnetsFromAbsoluteXpath(std::string const& xpath);
 
     /// @brief Translate and set subnets from JSON to YANG.
     ///
@@ -358,9 +379,11 @@ public:
 protected:
     /// @brief getSubnets common part.
     ///
-    /// @param xpath The xpath of the subnet list.
+    /// @param data_node the YANG node representing the list of subnets
     /// @param subsel The subnet list name.
-    isc::data::ElementPtr getSubnetsCommon(const std::string& xpath,
+    ///
+    /// @return the JSON representation of the list of subnets
+    isc::data::ElementPtr getSubnetsCommon(libyang::DataNode const& data_node,
                                            const std::string& subsel);
 
     /// @brief setSubnets for ietf-dhcpv6-server.
@@ -378,9 +401,9 @@ protected:
     void setSubnetsKea(const std::string& xpath,
                        isc::data::ConstElementPtr elem,
                        const std::string& subsel);
-};
+};  // TranslatorSubnets
 
 }  // namespace yang
 }  // namespace isc
 
-#endif // ISC_TRANSLATOR_SUBNET_H
+#endif  // ISC_TRANSLATOR_SUBNET_H

@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2021 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -702,7 +702,7 @@
 #-----
 ,{
 "description" : "D2.tsig-keys, invalid secret",
-"logic-error" : "Cannot make D2TsigKey: Incomplete input for base64: bogus (<string>:1:62)",
+"logic-error" : "Cannot make D2TsigKey: non-zero bits left over bogus (<string>:1:62)",
 "data" :
     {
     "forward-ddns" : {},

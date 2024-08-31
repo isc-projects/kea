@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -38,7 +38,7 @@ StampedElement::getMetadata() const {
     ElementPtr metadata = Element::createMap();
     ElementPtr tags = Element::createList();
 
-    for (auto server_tag : server_tags_) {
+    for (auto const& server_tag : server_tags_) {
         tags->add(Element::create(server_tag.get()));
     }
 

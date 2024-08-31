@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -188,8 +188,7 @@ public:
 
 class JSONFileBackendTest : public dhcp::test::BaseServerTest {
 public:
-    JSONFileBackendTest()
-        : BaseServerTest() {
+    JSONFileBackendTest() {
     }
 
     ~JSONFileBackendTest() {
@@ -216,19 +215,20 @@ public:
     /// stops the IO service and causes the function to return.
     void runTimersWithTimeout(const IOServicePtr& io_service, const long timeout_ms,
                               std::function<bool()> cond = std::function<bool()>()) {
-        IntervalTimer timer(*io_service);
-        bool stopped = false;
+        IntervalTimer timer(io_service);
+        std::atomic<bool> stopped(false);
         timer.setup([&io_service, &stopped]() {
-            io_service->stop();
             stopped = true;
+            io_service->stop();
         }, timeout_ms, IntervalTimer::ONE_SHOT);
 
         // Run as long as the timeout hasn't occurred and the interrupting
         // condition is not specified or not met.
         while (!stopped && (!cond || !cond())) {
-            io_service->run_one();
+            io_service->runOne();
         }
-        io_service->get_io_service().reset();
+        io_service->stop();
+        io_service->restart();
     }
 
     /// @brief This test verifies that the timer used to fetch the configuration
@@ -297,9 +297,8 @@ public:
             EXPECT_EQ(cb_control->getDatabaseCurrentConfigFetchCalls(), 0);
             EXPECT_EQ(cb_control->getDatabaseStagingConfigFetchCalls(), 1);
 
-            ConstElementPtr result =
-                ControlledDhcpv6Srv::processCommand("config-backend-pull",
-                                                    ConstElementPtr());
+            ConstElementPtr list_cmds = createCommand("config-backend-pull");
+            ConstElementPtr result = CommandMgr::instance().processCommand(list_cmds);
             EXPECT_EQ(cb_control->getDatabaseTotalConfigFetchCalls(), 2);
             std::string expected;
 
@@ -384,15 +383,17 @@ TEST_F(JSONFileBackendTest, jsonFile) {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ { "
+        "    \"id\": 1, "
         "    \"pools\": [ { \"pool\": \"2001:db8:1::/80\" } ],"
         "    \"subnet\": \"2001:db8:1::/64\" "
         " },"
         " {"
+        "    \"id\": 2, "
         "    \"pools\": [ { \"pool\": \"2001:db8:2::/80\" } ],"
         "    \"subnet\": \"2001:db8:2::/64\", "
-        "    \"id\": 0"
         " },"
         " {"
+        "    \"id\": 3, "
         "    \"pools\": [ { \"pool\": \"2001:db8:3::/80\" } ],"
         "    \"subnet\": \"2001:db8:3::/64\" "
         " } ],"
@@ -470,6 +471,7 @@ TEST_F(JSONFileBackendTest, hashComments) {
         "\"renew-timer\": 1000, \n"
         "# comments in the middle should be ignored, too\n"
         "\"subnet6\": [ { "
+        "    \"id\": 1, "
         "    \"pools\": [ { \"pool\": \"2001:db8:1::/80\" } ],"
         "    \"subnet\": \"2001:db8:1::/64\" "
         " } ],"
@@ -522,6 +524,7 @@ TEST_F(JSONFileBackendTest, cppLineComments) {
         "\"renew-timer\": 1000, \n"
         "// comments in the middle should be ignored, too\n"
         "\"subnet6\": [ { "
+        "    \"id\": 1, "
         "    \"pools\": [ { \"pool\": \"2001:db8:1::/80\" } ],"
         "    \"subnet\": \"2001:db8:1::/64\" "
         " } ],"
@@ -574,6 +577,7 @@ TEST_F(JSONFileBackendTest, cBlockComments) {
         "\"renew-timer\": 1000, \n"
         "/* comments in the middle should be ignored, too*/\n"
         "\"subnet6\": [ { "
+        "    \"id\": 1, "
         "    \"pools\": [ { \"pool\": \"2001:db8:1::/80\" } ],"
         "    \"subnet\": \"2001:db8:1::/64\" "
         " } ],"
@@ -627,6 +631,7 @@ TEST_F(JSONFileBackendTest, include) {
         "}";
     string include = "\n"
         "\"subnet6\": [ { "
+        "    \"id\": 1, "
         "    \"pools\": [ { \"pool\": \"2001:db8:1::/80\" } ],"
         "    \"subnet\": \"2001:db8:1::/64\" "
         " } ]\n";
@@ -674,6 +679,7 @@ TEST_F(JSONFileBackendTest, recursiveInclude) {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, \n"
         "\"subnet6\": [ { "
+        "    \"id\": 1, "
         "    \"pools\": [ { \"pool\": \"2001:db8:1::/80\" } ],"
         "    \"subnet\": \"2001:db8:1::/64\" "
         " } ],"

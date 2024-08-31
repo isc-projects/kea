@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,23 +12,48 @@
 #include <string>
 #include <vector>
 
+using namespace isc::data;
+using namespace std;
+
 namespace isc {
 namespace test {
 
+void expectEqWithDiff(ConstElementPtr const& a, ConstElementPtr const& b) {
+    ASSERT_TRUE(a);
+    ASSERT_TRUE(b);
+    string const pretty_print_a(prettyPrint(a));
+    string const pretty_print_b(prettyPrint(b));
+    EXPECT_EQ(pretty_print_a, pretty_print_b)
+        << endl
+        << "Diff:" << endl
+        << generateDiff(pretty_print_a, pretty_print_b) << endl;
+}
+
+void expectEqWithDiff(ElementPtr const& a, ElementPtr const& b) {
+    ASSERT_TRUE(a);
+    ASSERT_TRUE(b);
+    string const pretty_print_a(prettyPrint(a));
+    string const pretty_print_b(prettyPrint(b));
+    EXPECT_EQ(pretty_print_a, pretty_print_b)
+        << endl
+        << "Diff:" << endl
+        << generateDiff(pretty_print_a, pretty_print_b) << endl;
+}
+
 #ifdef HAVE_CREATE_UNIFIED_DIFF
-std::string generateDiff(std::string left, std::string right) {
-    std::vector<std::string> left_lines;
+string generateDiff(string left, string right) {
+    vector<string> left_lines;
     boost::split(left_lines, left, boost::is_any_of("\n"));
-    std::vector<std::string> right_lines;
+    vector<string> right_lines;
     boost::split(right_lines, right, boost::is_any_of("\n"));
     using namespace testing::internal;
     return (edit_distance::CreateUnifiedDiff(left_lines, right_lines));
 }
 #else
 std::string generateDiff(std::string, std::string) {
-    return ("");
+    return ("N/A: !HAVE_CREATE_UNIFIED_DIFF");
 }
 #endif
 
-}; // end of isc::test namespace
-}; // end of isc namespace
+}  // namespace test
+}  // namespace isc

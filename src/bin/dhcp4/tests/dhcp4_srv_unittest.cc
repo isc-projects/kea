@@ -1,18 +1,21 @@
-// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <sstream>
 
 #include <asiolink/io_address.h>
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
+#include <config_backend/base_config_backend.h>
+#include <dhcp4/dhcp4_log.h>
+#include <dhcp4/dhcp4_srv.h>
+#include <dhcp4/json_config_parser.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp4/tests/dhcp4_client.h>
-#include <dhcp/tests/pkt_captures.h>
+#include <dhcp/testutils/pkt_captures.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/libdhcp++.h>
@@ -23,10 +26,7 @@
 #include <dhcp/option_int_array.h>
 #include <dhcp/pkt_filter.h>
 #include <dhcp/pkt_filter_inet.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
-#include <dhcp4/dhcp4_srv.h>
-#include <dhcp4/dhcp4_log.h>
-#include <dhcp4/json_config_parser.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
@@ -34,22 +34,34 @@
 #include <dhcpsrv/host_mgr.h>
 #include <stats/stats_mgr.h>
 #include <testutils/gtest_utils.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
+
+#ifdef HAVE_MYSQL
+#include <mysql/testutils/mysql_schema.h>
+#endif
+
+#ifdef HAVE_PGSQL
+#include <pgsql/testutils/pgsql_schema.h>
+#endif
+
 #include <boost/scoped_ptr.hpp>
 
 #include <iostream>
 #include <cstdlib>
 
 #include <arpa/inet.h>
+#include <dirent.h>
 
-using namespace std;
 using namespace isc;
-using namespace isc::dhcp;
-using namespace isc::data;
 using namespace isc::asiolink;
+using namespace isc::cb;
 using namespace isc::config;
+using namespace isc::data;
+using namespace isc::db;
+using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::util;
+using namespace std;
 
 namespace {
 
@@ -63,6 +75,7 @@ const char* CONFIGS[] = {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
+        "    \"id\": 1,"
         "    \"pools\": [ { \"pool\": \"10.254.226.0/25\" } ],"
         "    \"subnet\": \"10.254.226.0/24\", "
         "    \"rebind-timer\": 2000, "
@@ -87,6 +100,7 @@ const char* CONFIGS[] = {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
+        "    \"id\": 1,"
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\", "
         "    \"rebind-timer\": 2000, "
@@ -105,6 +119,7 @@ const char* CONFIGS[] = {
     "    \"renew-timer\": 1000, "
     "    \"valid-lifetime\": 4000, "
     "    \"subnet4\": [ {"
+    "        \"id\": 1,"
     "        \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
     "        \"subnet\": \"192.0.2.0/24\""
     "    } ], "
@@ -123,10 +138,45 @@ const char* CONFIGS[] = {
     "}",
 
     // Configuration 3:
+    // - 1 subnet with never-send option
+    // - 2 global options (one forced with always-send)
+    "{"
+    "    \"interfaces-config\": {"
+    "    \"interfaces\": [ \"*\" ] }, "
+    "    \"rebind-timer\": 2000, "
+    "    \"renew-timer\": 1000, "
+    "    \"valid-lifetime\": 4000, "
+    "    \"subnet4\": [ {"
+    "        \"id\": 1,"
+    "        \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
+    "        \"subnet\": \"192.0.2.0/24\","
+    "        \"option-data\": ["
+    "            {"
+    "                \"name\": \"ip-forwarding\", "
+    "                \"never-send\": true"
+    "            }"
+    "        ]"
+    "    } ], "
+    "    \"option-data\": ["
+    "        {"
+    "            \"name\": \"default-ip-ttl\", "
+    "            \"data\": \"FF\", "
+    "            \"csv-format\": false"
+    "        }, "
+    "        {"
+    "            \"name\": \"ip-forwarding\", "
+    "            \"data\": \"false\", "
+    "            \"always-send\": true"
+    "        }"
+    "    ]"
+    "}",
+
+    // Configuration 4:
     // - one subnet, with one pool
     // - user-contexts defined in both subnet and pool
     "{"
         "    \"subnet4\": [ { "
+        "    \"id\": 1,"
         "    \"pools\": [ { \"pool\": \"10.254.226.0/25\","
         "                   \"user-context\": { \"value\": 42 } } ],"
         "    \"subnet\": \"10.254.226.0/24\", "
@@ -144,7 +194,6 @@ void checkStringInBuffer( const std::string& exp_string, const OptionBuffer& buf
     std::string buffer_string(buffer.begin(), buffer.end());
     EXPECT_EQ(exp_string, std::string(buffer_string.c_str()));
 }
-
 
 // This test verifies that the destination address of the response
 // message is set to giaddr, when giaddr is set to non-zero address
@@ -255,10 +304,8 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRelayPort) {
     req->setRemotePort(1234);
 
     // Add a RAI relay-port sub-option (the only difference with the previous test).
-    OptionDefinitionPtr rai_def =
-        LibDHCP::getOptionDef(DHCP4_OPTION_SPACE, DHO_DHCP_AGENT_OPTIONS);
-    ASSERT_TRUE(rai_def);
-    OptionCustomPtr rai(new OptionCustom(*rai_def, Option::V4));
+    const OptionDefinition& rai_def = LibDHCP::DHO_DHCP_AGENT_OPTIONS_DEF();
+    OptionCustomPtr rai(new OptionCustom(rai_def, Option::V4));
     ASSERT_TRUE(rai);
     req->addOption(rai);
     OptionPtr relay_port(new Option(Option::V4, RAI_OPTION_RELAY_PORT));
@@ -313,7 +360,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataUseRouting) {
     cfg_iface->use(AF_INET, "eth0");
     cfg_iface->use(AF_INET, "eth1");
     cfg_iface->setOutboundIface(CfgIface::USE_ROUTING);
-    CfgMgr::instance().commit();;
+    CfgMgr::instance().commit();
 
     // Create the instance of the incoming packet.
     boost::shared_ptr<Pkt4> req(new Pkt4(DHCPDISCOVER, 1234));
@@ -353,7 +400,6 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataUseRouting) {
 
     // The local port is always DHCPv4 server port 67.
     EXPECT_EQ(DHCP4_SERVER_PORT, resp->getLocalPort());
-
 
     // No specific interface is selected as outbound interface and no specific
     // local address is provided. The IfaceMgr will figure out which interface to use.
@@ -759,7 +805,6 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataBroadcast) {
     // query has been received.
     EXPECT_EQ("eth1", resp->getIface());
     EXPECT_EQ(ETH1_INDEX, resp->getIndex());
-
 }
 
 // This test verifies that the destination address of the response message
@@ -833,10 +878,8 @@ TEST_F(Dhcpv4SrvTest, initResponse) {
     // client-id echo is optional
     // rai echo is done in relayAgentInfoEcho
     // Do subnet selection option
-    OptionDefinitionPtr sbnsel_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                           DHO_SUBNET_SELECTION);
-    ASSERT_TRUE(sbnsel_def);
-    OptionCustomPtr sbnsel(new OptionCustom(*sbnsel_def, Option::V4));
+    const OptionDefinition& sbnsel_def = LibDHCP::DHO_SUBNET_SELECTION_DEF();
+    OptionCustomPtr sbnsel(new OptionCustom(sbnsel_def, Option::V4));
     ASSERT_TRUE(sbnsel);
     sbnsel->writeAddress(IOAddress("192.0.2.3"));
     query->addOption(sbnsel);
@@ -867,6 +910,52 @@ TEST_F(Dhcpv4SrvTest, initResponse) {
     IOAddress subnet_addr("0.0.0.0");
     ASSERT_NO_THROW(subnet_addr = resp_custom->readAddress());
     EXPECT_EQ(IOAddress("192.0.2.3"), subnet_addr);
+}
+
+// This test verifies that recovered stashed agent options are not copied
+// into responses.
+TEST_F(Dhcpv4SrvTest, stashAgentOption) {
+    // Get a DISCOVER with a RAI.
+    Pkt4Ptr query = PktCaptures::captureRelayedDiscover();
+    ASSERT_NO_THROW(query->unpack());
+
+    // Get Relay Agent Info from query...
+    OptionPtr rai_query = query->getOption(DHO_DHCP_AGENT_OPTIONS);
+    ASSERT_TRUE(rai_query);
+
+    // Create exchange and get Response.
+    Dhcpv4Exchange ex = createExchange(query);
+    Pkt4Ptr response = ex.getResponse();
+    ASSERT_TRUE(response);
+
+    // Get Relay Agent Info from response...
+    OptionPtr rai_response = response->getOption(DHO_DHCP_AGENT_OPTIONS);
+    ASSERT_TRUE(rai_response);
+    EXPECT_TRUE(rai_response->equals(rai_query));
+
+    // Set the stash-agent-options.
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->
+        addConfiguredGlobal("stash-agent-options", Element::create(true));
+    CfgMgr::instance().commit();
+
+    // Create exchange and get Response.
+    ex = createExchange(query);
+    response = ex.getResponse();
+    ASSERT_TRUE(response);
+    rai_response = response->getOption(DHO_DHCP_AGENT_OPTIONS);
+    ASSERT_TRUE(rai_response);
+    EXPECT_TRUE(rai_response->equals(rai_query));
+
+    // Put the query in the STASH_AGENT_OPTIONS class.
+    query->addClass("STASH_AGENT_OPTIONS");
+
+    // Retry: this time the RAI is not copied.
+    ex = createExchange(query);
+    response = ex.getResponse();
+    ASSERT_TRUE(response);
+    rai_response = response->getOption(DHO_DHCP_AGENT_OPTIONS);
+    EXPECT_FALSE(rai_response);
 }
 
 // This test verifies that the server identifier option is appended to
@@ -988,11 +1077,9 @@ TEST_F(Dhcpv4SrvTest, sanityCheckDiscover) {
     ASSERT_NO_THROW(srv.processDiscover(pkt));
 
     // Now let's add a server-id. This should throw.
-    OptionDefinitionPtr server_id_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                              DHO_DHCP_SERVER_IDENTIFIER);
-    ASSERT_TRUE(server_id_def);
+    const OptionDefinition& server_id_def = LibDHCP::DHO_DHCP_SERVER_IDENTIFIER_DEF();
 
-    OptionCustomPtr server_id(new OptionCustom(*server_id_def, Option::V4));
+    OptionCustomPtr server_id(new OptionCustom(server_id_def, Option::V4));
     server_id->writeAddress(IOAddress("192.0.2.3"));
     pkt->addOption(server_id);
     EXPECT_THROW_MSG(srv.processDiscover(pkt), RFCViolation,
@@ -1020,10 +1107,8 @@ TEST_F(Dhcpv4SrvTest, sanityCheckRequest) {
     EXPECT_NO_THROW(srv.processRequest(pkt));
 
     // Now let's add a requested address. This should not throw.
-    OptionDefinitionPtr req_addr_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                             DHO_DHCP_REQUESTED_ADDRESS);
-    ASSERT_TRUE(req_addr_def);
-    OptionCustomPtr req_addr(new OptionCustom(*req_addr_def, Option::V4));
+    const OptionDefinition& req_addr_def = LibDHCP::DHO_DHCP_REQUESTED_ADDRESS_DEF();
+    OptionCustomPtr req_addr(new OptionCustom(req_addr_def, Option::V4));
     req_addr->writeAddress(IOAddress("192.0.2.3"));
     pkt->addOption(req_addr);
     ASSERT_NO_THROW(srv.processRequest(pkt));
@@ -1035,11 +1120,9 @@ TEST_F(Dhcpv4SrvTest, sanityCheckRequest) {
     ASSERT_NO_THROW(srv.processRequest(pkt));
 
     // Now let's add a server-id. This should not throw.
-    OptionDefinitionPtr server_id_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                              DHO_DHCP_SERVER_IDENTIFIER);
-    ASSERT_TRUE(server_id_def);
+    const OptionDefinition& server_id_def = LibDHCP::DHO_DHCP_SERVER_IDENTIFIER_DEF();
 
-    OptionCustomPtr server_id(new OptionCustom(*server_id_def, Option::V4));
+    OptionCustomPtr server_id(new OptionCustom(server_id_def, Option::V4));
     server_id->writeAddress(IOAddress("192.0.2.3"));
     pkt->addOption(server_id);
     EXPECT_NO_THROW(srv.processRequest(pkt));
@@ -1066,12 +1149,9 @@ TEST_F(Dhcpv4SrvTest, sanityCheckDecline) {
                     "Mandatory 'Requested IP address' option missing in DHCPDECLINE"
                     " sent from [hwtype=1 00:fe:fe:fe:fe:fe], cid=[no info], tid=0x4d2");
 
-
     // Now let's add a requested address. This should not throw.
-    OptionDefinitionPtr req_addr_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                             DHO_DHCP_REQUESTED_ADDRESS);
-    ASSERT_TRUE(req_addr_def);
-    OptionCustomPtr req_addr(new OptionCustom(*req_addr_def, Option::V4));
+    const OptionDefinition& req_addr_def = LibDHCP::DHO_DHCP_REQUESTED_ADDRESS_DEF();
+    OptionCustomPtr req_addr(new OptionCustom(req_addr_def, Option::V4));
     req_addr->writeAddress(IOAddress("192.0.2.3"));
     pkt->addOption(req_addr);
     ASSERT_NO_THROW(srv.processDecline(pkt));
@@ -1083,11 +1163,9 @@ TEST_F(Dhcpv4SrvTest, sanityCheckDecline) {
     ASSERT_NO_THROW(srv.processDecline(pkt));
 
     // Now let's add a server-id. This should not throw.
-    OptionDefinitionPtr server_id_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                              DHO_DHCP_SERVER_IDENTIFIER);
-    ASSERT_TRUE(server_id_def);
+    const OptionDefinition& server_id_def = LibDHCP::DHO_DHCP_SERVER_IDENTIFIER_DEF();
 
-    OptionCustomPtr server_id(new OptionCustom(*server_id_def, Option::V4));
+    OptionCustomPtr server_id(new OptionCustom(server_id_def, Option::V4));
     server_id->writeAddress(IOAddress("192.0.2.3"));
     pkt->addOption(server_id);
     EXPECT_NO_THROW(srv.processDecline(pkt));
@@ -1117,11 +1195,9 @@ TEST_F(Dhcpv4SrvTest, sanityCheckRelease) {
     ASSERT_NO_THROW(srv.processRelease(pkt));
 
     // Now let's add a server-id. This should not throw.
-    OptionDefinitionPtr server_id_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                              DHO_DHCP_SERVER_IDENTIFIER);
-    ASSERT_TRUE(server_id_def);
+    const OptionDefinition& server_id_def = LibDHCP::DHO_DHCP_SERVER_IDENTIFIER_DEF();
 
-    OptionCustomPtr server_id(new OptionCustom(*server_id_def, Option::V4));
+    OptionCustomPtr server_id(new OptionCustom(server_id_def, Option::V4));
     server_id->writeAddress(IOAddress("192.0.2.3"));
     pkt->addOption(server_id);
     EXPECT_NO_THROW(srv.processRelease(pkt));
@@ -1147,10 +1223,8 @@ TEST_F(Dhcpv4SrvTest, sanityCheckInform) {
     ASSERT_NO_THROW(srv.processInform(pkt));
 
     // Now let's add a requested address. This should not throw.
-    OptionDefinitionPtr req_addr_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                             DHO_DHCP_REQUESTED_ADDRESS);
-    ASSERT_TRUE(req_addr_def);
-    OptionCustomPtr req_addr(new OptionCustom(*req_addr_def, Option::V4));
+    const OptionDefinition& req_addr_def = LibDHCP::DHO_DHCP_REQUESTED_ADDRESS_DEF();
+    OptionCustomPtr req_addr(new OptionCustom(req_addr_def, Option::V4));
     req_addr->writeAddress(IOAddress("192.0.2.3"));
     pkt->addOption(req_addr);
     ASSERT_NO_THROW(srv.processInform(pkt));
@@ -1162,11 +1236,9 @@ TEST_F(Dhcpv4SrvTest, sanityCheckInform) {
     ASSERT_NO_THROW(srv.processInform(pkt));
 
     // Now let's add a server-id. This should not throw.
-    OptionDefinitionPtr server_id_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                              DHO_DHCP_SERVER_IDENTIFIER);
-    ASSERT_TRUE(server_id_def);
+    const OptionDefinition& server_id_def = LibDHCP::DHO_DHCP_SERVER_IDENTIFIER_DEF();
 
-    OptionCustomPtr server_id(new OptionCustom(*server_id_def, Option::V4));
+    OptionCustomPtr server_id(new OptionCustom(server_id_def, Option::V4));
     server_id->writeAddress(IOAddress("192.0.2.3"));
     pkt->addOption(server_id);
     EXPECT_NO_THROW(srv.processInform(pkt));
@@ -1223,10 +1295,11 @@ TEST_F(Dhcpv4SrvTest, DiscoverValidLifetime) {
     // Recreate subnet
     Triplet<uint32_t> unspecified;
     Triplet<uint32_t> valid_lft(500, 1000, 1500);
-    subnet_.reset(new Subnet4(IOAddress("192.0.2.0"), 24,
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
                               unspecified,
                               unspecified,
-                              valid_lft));
+                              valid_lft,
+                              subnet_->getID());
 
     pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"),
                                IOAddress("192.0.2.110")));
@@ -1254,7 +1327,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverValidLifetime) {
     };
 
     // Iterate over the test scenarios.
-    for (auto test : tests) {
+    for (auto const& test : tests) {
         SCOPED_TRACE(test.description_);
 
         // Create a discover packet to use
@@ -1303,10 +1376,11 @@ TEST_F(Dhcpv4SrvTest, DiscoverTimers) {
     // Recreate subnet
     Triplet<uint32_t> unspecified;
     Triplet<uint32_t> valid_lft(1000);
-    subnet_.reset(new Subnet4(IOAddress("192.0.2.0"), 24,
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
                               unspecified,
                               unspecified,
-                              valid_lft));
+                              valid_lft,
+                              subnet_->getID());
 
     pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"),
                                IOAddress("192.0.2.110")));
@@ -1419,12 +1493,12 @@ TEST_F(Dhcpv4SrvTest, DiscoverTimers) {
     dis->setIndex(ETH1_INDEX);
 
     // Iterate over the test scenarios.
-    for (auto test = tests.begin(); test != tests.end(); ++test) {
+    for (auto const& test : tests) {
         {
-            SCOPED_TRACE((*test).description_);
+            SCOPED_TRACE(test.description_);
             // Configure subnet's timer values
-            subnet_->setT1((*test).cfg_t1_);
-            subnet_->setT2((*test).cfg_t2_);
+            subnet_->setT1(test.cfg_t1_);
+            subnet_->setT2(test.cfg_t2_);
 
             // Discover/Offer exchange with the server
             Pkt4Ptr offer = srv->processDiscover(dis);
@@ -1434,10 +1508,9 @@ TEST_F(Dhcpv4SrvTest, DiscoverTimers) {
 
             // Verify the timers are as expected.
             checkAddressParams(offer, subnet_,
-                               (*test).exp_t1_, (*test).exp_t2_);
+                               test.exp_t1_, test.exp_t2_);
         }
     }
-
 }
 
 // Check that option 58 and 59 are included when calculate-tee-times
@@ -1455,10 +1528,11 @@ TEST_F(Dhcpv4SrvTest, calculateTeeTimers) {
     // Recreate subnet
     Triplet<uint32_t> unspecified;
     Triplet<uint32_t> valid_lft(1000);
-    subnet_.reset(new Subnet4(IOAddress("192.0.2.0"), 24,
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
                               unspecified,
                               unspecified,
-                              valid_lft));
+                              valid_lft,
+                              subnet_->getID());
 
     pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"),
                                IOAddress("192.0.2.110")));
@@ -1536,15 +1610,15 @@ TEST_F(Dhcpv4SrvTest, calculateTeeTimers) {
     dis->setIndex(ETH1_INDEX);
 
     // Iterate over the test scenarios.
-    for (auto test = tests.begin(); test != tests.end(); ++test) {
+    for (auto const& test : tests) {
         {
-            SCOPED_TRACE((*test).description_);
+            SCOPED_TRACE(test.description_);
             // Configure subnet's timer values
-            subnet_->setT1((*test).cfg_t1_);
-            subnet_->setT2((*test).cfg_t2_);
+            subnet_->setT1(test.cfg_t1_);
+            subnet_->setT2(test.cfg_t2_);
 
-            subnet_->setT1Percent((*test).t1_percent_);
-            subnet_->setT2Percent((*test).t2_percent_);
+            subnet_->setT1Percent(test.t1_percent_);
+            subnet_->setT2Percent(test.t2_percent_);
 
             // Discover/Offer exchange with the server
             Pkt4Ptr offer = srv->processDiscover(dis);
@@ -1556,29 +1630,28 @@ TEST_F(Dhcpv4SrvTest, calculateTeeTimers) {
             OptionUint32Ptr opt = boost::dynamic_pointer_cast
                                   <OptionUint32> (offer->getOption(DHO_DHCP_RENEWAL_TIME));
 
-            if ((*test).t1_exp_value_ == not_expected) {
+            if (test.t1_exp_value_ == not_expected) {
                 EXPECT_FALSE(opt) << "T1 present and shouldn't be";
             } else {
                 ASSERT_TRUE(opt) << "Required T1 option missing or it has"
                                     " an unexpected type";
-                EXPECT_EQ(opt->getValue(), (*test).t1_exp_value_);
+                EXPECT_EQ(opt->getValue(), test.t1_exp_value_);
             }
 
             // Check T2 timer
              opt = boost::dynamic_pointer_cast
                    <OptionUint32>(offer->getOption(DHO_DHCP_REBINDING_TIME));
 
-            if ((*test).t2_exp_value_ == not_expected) {
+            if (test.t2_exp_value_ == not_expected) {
                 EXPECT_FALSE(opt) << "T2 present and shouldn't be";
             } else {
                 ASSERT_TRUE(opt) << "Required T2 option missing or it has"
                                     " an unexpected type";
-                EXPECT_EQ(opt->getValue(), (*test).t2_exp_value_);
+                EXPECT_EQ(opt->getValue(), test.t2_exp_value_);
             }
         }
     }
 }
-
 
 // This test verifies that incoming DISCOVER can be handled properly, that an
 // OFFER is generated, that the response has an address and that address
@@ -1767,7 +1840,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverCache) {
     uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
     HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
     Lease4Ptr used(new Lease4(IOAddress("192.0.2.106"), hwaddr2,
-                              &client_id_->getDuid()[0], client_id_->getDuid().size(),
+                              &client_id_->getClientId()[0], client_id_->getClientId().size(),
                               temp_valid, temp_timestamp, subnet_->getID()));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
 
@@ -1798,8 +1871,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverCache) {
     OptionUint32Ptr opt = boost::dynamic_pointer_cast<
         OptionUint32>(offer->getOption(DHO_DHCP_LEASE_TIME));
     ASSERT_TRUE(opt);
-    EXPECT_GE(subnet_->getValid() - delta, opt->getValue());
-    EXPECT_LE(subnet_->getValid() - delta - 10, opt->getValue());
+    EXPECT_NEAR(subnet_->getValid() - delta, opt->getValue(), 1);
 
     // Check address
     EXPECT_EQ(addr, offer->getYiaddr());
@@ -1837,10 +1909,11 @@ TEST_F(Dhcpv4SrvTest, RequestNoTimers) {
     req->setIndex(ETH1_INDEX);
 
     // Recreate a subnet but set T1 and T2 to "unspecified".
-    subnet_.reset(new Subnet4(IOAddress("192.0.2.0"), 24,
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
                               Triplet<uint32_t>(),
                               Triplet<uint32_t>(),
-                              3000));
+                              3000,
+                              subnet_->getID());
     pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"),
                                IOAddress("192.0.2.110")));
     subnet_->addPool(pool_);
@@ -1898,7 +1971,6 @@ TEST_F(Dhcpv4SrvTest, requestEchoClientId) {
     checkClientId(ack, clientid);
 }
 
-
 // This test verifies that incoming (positive) REQUEST/Renewing can be handled properly, that a
 // REPLY is generated, that the response has an address and that address
 // really belongs to the configured pool and that lease is actually renewed.
@@ -1929,7 +2001,7 @@ TEST_F(Dhcpv4SrvTest, RenewBasic) {
     uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
     HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
     Lease4Ptr used(new Lease4(IOAddress("192.0.2.106"), hwaddr2,
-                              &client_id_->getDuid()[0], client_id_->getDuid().size(),
+                              &client_id_->getClientId()[0], client_id_->getClientId().size(),
                               temp_valid, temp_timestamp, subnet_->getID()));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
 
@@ -1980,7 +2052,7 @@ TEST_F(Dhcpv4SrvTest, RenewBasic) {
     int32_t cltt = static_cast<int32_t>(l->cltt_);
     int32_t expected = static_cast<int32_t>(time(NULL));
     // Equality or difference by 1 between cltt and expected is ok.
-    EXPECT_GE(1, abs(cltt - expected));
+    EXPECT_NEAR(cltt, expected, 1);
 
     Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(addr);
     EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
@@ -2016,8 +2088,8 @@ void prepare(struct ctx& c) {
     c.hwaddr.reset(new HWAddr(hwaddr_data, sizeof(hwaddr_data), HTYPE_ETHER));
 
     c.used.reset(new Lease4(c.addr, c.hwaddr,
-                            &c.test->client_id_->getDuid()[0],
-                            c.test->client_id_->getDuid().size(),
+                            &c.test->client_id_->getClientId()[0],
+                            c.test->client_id_->getClientId().size(),
                             c.temp_valid, c.temp_timestamp,
                             c.test->subnet_->getID()));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(c.used));
@@ -2103,7 +2175,7 @@ TEST_F(Dhcpv4SrvTest, RenewDefaultLifetime) {
     int32_t cltt = static_cast<int32_t>(c.l->cltt_);
     int32_t expected = static_cast<int32_t>(time(NULL));
     // Equality or difference by 1 between cltt and expected is ok.
-    EXPECT_GE(1, abs(cltt - expected));
+    EXPECT_NEAR(cltt, expected, 1);
 
     Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(c.addr);
     EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
@@ -2149,7 +2221,7 @@ TEST_F(Dhcpv4SrvTest, RenewHintLifetime) {
     int32_t cltt = static_cast<int32_t>(c.l->cltt_);
     int32_t expected = static_cast<int32_t>(time(NULL));
     // Equality or difference by 1 between cltt and expected is ok.
-    EXPECT_GE(1, abs(cltt - expected));
+    EXPECT_NEAR(cltt, expected, 1);
 
     Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(c.addr);
     EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
@@ -2195,7 +2267,7 @@ TEST_F(Dhcpv4SrvTest, RenewMinLifetime) {
     int32_t cltt = static_cast<int32_t>(c.l->cltt_);
     int32_t expected = static_cast<int32_t>(time(NULL));
     // Equality or difference by 1 between cltt and expected is ok.
-    EXPECT_GE(1, abs(cltt - expected));
+    EXPECT_NEAR(cltt, expected, 1);
 
     Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(c.addr);
     EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
@@ -2240,7 +2312,7 @@ TEST_F(Dhcpv4SrvTest, RenewMaxLifetime) {
     int32_t cltt = static_cast<int32_t>(c.l->cltt_);
     int32_t expected = static_cast<int32_t>(time(NULL));
     // Equality or difference by 1 between cltt and expected is ok.
-    EXPECT_GE(1, abs(cltt - expected));
+    EXPECT_NEAR(cltt, expected, 1);
 
     Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(c.addr);
     EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
@@ -2274,7 +2346,7 @@ TEST_F(Dhcpv4SrvTest, RenewCache) {
     uint8_t hwaddr2_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
     HWAddrPtr hwaddr2(new HWAddr(hwaddr2_data, sizeof(hwaddr2_data), HTYPE_ETHER));
     Lease4Ptr used(new Lease4(IOAddress("192.0.2.106"), hwaddr2,
-                              &client_id_->getDuid()[0], client_id_->getDuid().size(),
+                              &client_id_->getClientId()[0], client_id_->getClientId().size(),
                               temp_valid, temp_timestamp, subnet_->getID()));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
 
@@ -2308,8 +2380,7 @@ TEST_F(Dhcpv4SrvTest, RenewCache) {
     OptionUint32Ptr opt = boost::dynamic_pointer_cast<
         OptionUint32>(ack->getOption(DHO_DHCP_LEASE_TIME));
     ASSERT_TRUE(opt);
-    EXPECT_GE(subnet_->getValid() - delta, opt->getValue());
-    EXPECT_LE(subnet_->getValid() - delta - 10, opt->getValue());
+    EXPECT_NEAR(subnet_->getValid() - delta, opt->getValue(), 1);
 
     // Check address
     EXPECT_EQ(addr, ack->getYiaddr());
@@ -2428,6 +2499,9 @@ TEST_F(Dhcpv4SrvTest, buildCfgOptionsList) {
 // identifiers used by a server is accepted,
 // - a message with a server identifier which doesn't match any server
 // identifier used by a server, is not accepted.
+// - a message with a server identifier which doesn't match any server
+// identifier used by a server is accepted when the DHCP Server Identifier
+// option is configured to be ignored.
 TEST_F(Dhcpv4SrvTest, acceptServerId) {
     configureServerIdentifier();
     IfaceMgrTestConfig test_config(true);
@@ -2451,6 +2525,15 @@ TEST_F(Dhcpv4SrvTest, acceptServerId) {
     OptionCustomPtr other_serverid(new OptionCustom(def, Option::V4));
     other_serverid->writeAddress(IOAddress("10.1.2.3"));
     pkt->addOption(other_serverid);
+    EXPECT_FALSE(srv.acceptServerId(pkt));
+
+    // Configure the DHCP Server Identifier to be ignored.
+    ASSERT_FALSE(CfgMgr::instance().getCurrentCfg()->getIgnoreServerIdentifier());
+    CfgMgr::instance().getCurrentCfg()->setIgnoreServerIdentifier(true);
+    EXPECT_TRUE(srv.acceptServerId(pkt));
+
+    // Restore the ignore-dhcp-server-identifier compatibility flag.
+    CfgMgr::instance().getCurrentCfg()->setIgnoreServerIdentifier(false);
     EXPECT_FALSE(srv.acceptServerId(pkt));
 
     // Remove the server identifier.
@@ -2540,13 +2623,11 @@ TEST_F(Dhcpv4SrvTest, acceptServerId) {
     // Remove the server identifier.
     ASSERT_NO_THROW(pkt->delOption(DHO_DHCP_SERVER_IDENTIFIER));
 
-    OptionDefinitionPtr rai_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                        DHO_DHCP_AGENT_OPTIONS);
-
+    const OptionDefinition& rai_def = LibDHCP::DHO_DHCP_AGENT_OPTIONS_DEF();
     OptionBuffer override_server_id_buf(IOAddress("10.0.0.128").toBytes());
 
     // Create RAI option.
-    OptionCustomPtr rai(new OptionCustom(*rai_def, Option::V4));
+    OptionCustomPtr rai(new OptionCustom(rai_def, Option::V4));
     OptionPtr rai_override_server_id(new Option(Option::V4,
                                                 RAI_OPTION_SERVER_ID_OVERRIDE,
                                                 override_server_id_buf));
@@ -2664,7 +2745,7 @@ Dhcpv4SrvTest::badRelayAgentInfoEcho() {
     // Let's create a relayed DISCOVER. This particular relayed DISCOVER has
     // added option 82 (relay agent info) with a sub-option which does not
     // fit in the option. Unpacking it gave an empty option which is
-    // supposed to not be  echoed back in its response.
+    // supposed to not be echoed back in its response.
     Pkt4Ptr dis;
     ASSERT_NO_THROW(dis = PktCaptures::captureBadRelayedDiscover());
 
@@ -2776,6 +2857,209 @@ Dhcpv4SrvTest::portsServerPort() {
     EXPECT_EQ(srv.server_port_, offer->getLocalPort());
 }
 
+/// @brief Remove TLS parameters from configuration element.
+void removeTlsParameters(ConstElementPtr elem) {
+    if (elem) {
+        ElementPtr mutable_elem = boost::const_pointer_cast<Element>(elem);
+        std::vector<std::string> tls_parameters= {
+            "trust-anchor",
+            "cert-file",
+            "key-file",
+            "cipher-list"
+        };
+        for (auto const& parameter : tls_parameters) {
+            mutable_elem->remove(parameter);
+        }
+    }
+}
+
+/// @brief Remove authentication filess
+void removeAuthFiles(ConstElementPtr elem) {
+    if (!elem) {
+        return;
+    }
+    ConstElementPtr auth = elem->get("authentication");
+    if (!auth) {
+        return;
+    }
+    ConstElementPtr clients = auth->get("clients");
+    if (!clients || clients->empty()) {
+        return;
+    }
+    ElementPtr mutable_clients = boost::const_pointer_cast<Element>(clients);
+    for (;;) {
+        bool found = false;
+        for (int i = 0; i < clients->size(); ++i) {
+            ConstElementPtr client = clients->get(i);
+            if (client->contains("user-file") ||
+                client->contains("password-file")) {
+                mutable_clients->remove(i);
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            return;
+        }
+    }
+}
+
+void
+Dhcpv4SrvTest::loadConfigFile(const string& path) {
+    CfgMgr::instance().clear();
+
+    LibDHCP::clearRuntimeOptionDefs();
+
+    IfaceMgrTestConfig test_config(true);
+
+    // Do not use DHCP4_SERVER_PORT here as 0 means don't open sockets.
+    NakedDhcpv4Srv srv(0);
+    EXPECT_EQ(0, srv.server_port_);
+
+    ConfigBackendDHCPv4Mgr::instance().registerBackendFactory("mysql",
+            [](const db::DatabaseConnection::ParameterMap&) -> ConfigBackendDHCPv4Ptr {
+                return (ConfigBackendDHCPv4Ptr());
+            });
+
+    ConfigBackendDHCPv4Mgr::instance().registerBackendFactory("postgresql",
+            [](const db::DatabaseConnection::ParameterMap&) -> ConfigBackendDHCPv4Ptr {
+                return (ConfigBackendDHCPv4Ptr());
+            });
+
+    Parser4Context parser;
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parser.parseFile(path, Parser4Context::PARSER_DHCP4));
+    ASSERT_TRUE(json);
+
+    // Check the logic next.
+    ConstElementPtr dhcp4 = json->get("Dhcp4");
+    ASSERT_TRUE(dhcp4);
+    ElementPtr mutable_config = boost::const_pointer_cast<Element>(dhcp4);
+    mutable_config->set(string("hooks-libraries"), Element::createList());
+    // Remove TLS parameters
+    ConstElementPtr hosts = dhcp4->get("hosts-database");
+    removeTlsParameters(hosts);
+    hosts = dhcp4->get("hosts-databases");
+    if (hosts) {
+        for (auto const& host : hosts->listValue()) {
+            removeTlsParameters(host);
+        }
+    }
+    // Remove authentication clients using files.
+    ConstElementPtr control_sockets = dhcp4->get("control-socket");
+    if (control_sockets) {
+        removeAuthFiles(control_sockets);
+    }
+    control_sockets = dhcp4->get("control-sockets");
+    if (control_sockets) {
+        for (int i = 0; i < control_sockets->size(); ++i) {
+            removeAuthFiles(control_sockets->get(i));
+        }
+    }
+
+    ASSERT_NO_THROW(Dhcpv4SrvTest::configure(dhcp4->str(), true, true, true, true));
+
+    LeaseMgrFactory::destroy();
+    HostMgr::create();
+
+    TimerMgr::instance()->unregisterTimers();
+
+    // Close the command socket (if it exists).
+    CommandMgr::instance().closeCommandSocket();
+
+    // Reset CommandMgr IO service.
+    CommandMgr::instance().setIOService(IOServicePtr());
+
+    // Reset DatabaseConnection IO service.
+    DatabaseConnection::setIOService(IOServicePtr());
+
+    // Reset ProcessSpawn IO service.
+    ProcessSpawn::setIOService(IOServicePtr());
+}
+
+/// @brief Class which handles initialization of database
+/// backend for testing configurations.
+class DBInitializer {
+    public:
+        /// @brief Constructor.
+        ///
+        /// Created database schema.
+        DBInitializer() {
+#if defined (HAVE_MYSQL)
+            db::test::createMySQLSchema();
+#endif
+#if defined (HAVE_PGSQL)
+            db::test::createPgSQLSchema();
+#endif
+        }
+
+        /// @brief Destructor.
+        ///
+        /// Destroys database schema.
+        ~DBInitializer() {
+#if defined (HAVE_MYSQL)
+            db::test::destroyMySQLSchema();
+#endif
+#if defined (HAVE_PGSQL)
+            db::test::destroyPgSQLSchema();
+#endif
+        }
+};
+
+void
+Dhcpv4SrvTest::checkConfigFiles() {
+    DBInitializer dbi;
+    IfaceMgrTestConfig test_config(true);
+    string path = CFG_EXAMPLES;
+    vector<string> examples = {
+        "advanced.json",
+#if defined (HAVE_MYSQL) && defined (HAVE_PGSQL)
+        "all-keys.json",
+        "all-keys-netconf.json",
+        "all-options.json",
+#endif
+        "backends.json",
+        "classify.json",
+        "classify2.json",
+        "comments.json",
+#if defined (HAVE_MYSQL)
+        "config-backend.json",
+#endif
+        "dhcpv4-over-dhcpv6.json",
+        "global-reservations.json",
+        "ha-load-balancing-server1-mt-with-tls.json",
+        "ha-load-balancing-server2-mt.json",
+        "hooks.json",
+        "hooks-radius.json",
+        "leases-expiration.json",
+        "multiple-options.json",
+#if defined (HAVE_MYSQL)
+        "mysql-reservations.json",
+#endif
+#if defined (HAVE_PGSQL)
+        "pgsql-reservations.json",
+#endif
+        "reservations.json",
+        "several-subnets.json",
+        "shared-network.json",
+        "single-subnet.json",
+        "vendor-specific.json",
+        "vivso.json",
+        "with-ddns.json",
+    };
+    vector<string> files;
+    for (auto const& example : examples) {
+        string file = path + "/" + example;
+        files.push_back(file);
+    }
+    for (auto const& file : files) {
+        string label("Checking configuration from file: ");
+        label += file;
+        SCOPED_TRACE(label);
+        loadConfigFile(file);
+    }
+}
+
 } // end of isc::dhcp::test namespace
 } // end of isc::dhcp namespace
 } // end of isc namespace
@@ -2817,9 +3101,15 @@ TEST_F(Dhcpv4SrvTest, portsServerPort) {
     portsServerPort();
 }
 
-TEST_F(Dhcpv4SrvTest, portsServerPortMultiTHreading) {
+TEST_F(Dhcpv4SrvTest, portsServerPortMultiThreading) {
     Dhcpv4SrvMTTestGuard guard(*this, true);
     portsServerPort();
+}
+
+/// @brief Check that example files from documentation are valid (can be parsed
+/// and loaded).
+TEST_F(Dhcpv4SrvTest, checkConfigFiles) {
+    checkConfigFiles();
 }
 
 /// @todo Implement tests for subnetSelect See tests in dhcp6_srv_unittest.cc:
@@ -2827,7 +3117,6 @@ TEST_F(Dhcpv4SrvTest, portsServerPortMultiTHreading) {
 /// selectSubnetRelayInterfaceId. Note that the concept of interface-id is not
 /// present in the DHCPv4, so not everything is applicable directly.
 /// See ticket #3057
-
 
 // Checks whether the server uses default (0.0.0.0) siaddr value, unless
 // explicitly specified
@@ -2906,6 +3195,7 @@ TEST_F(Dhcpv4SrvTest, nextServerOverride) {
         "\"server-hostname\": \"nohost\", "
         "\"boot-file-name\": \"nofile\", "
         "\"subnet4\": [ { "
+        "    \"id\": 1,"
         "    \"pools\": [ { \"pool\":  \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"next-server\": \"1.2.3.4\", "
         "    \"server-hostname\": \"some-name.example.org\", "
@@ -2916,7 +3206,7 @@ TEST_F(Dhcpv4SrvTest, nextServerOverride) {
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config, true));
 
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
 
     CfgMgr::instance().commit();
 
@@ -2971,6 +3261,7 @@ TEST_F(Dhcpv4SrvTest, nextServerGlobal) {
         "\"server-hostname\": \"some-name.example.org\", "
         "\"boot-file-name\": \"bootfile.efi\", "
         "\"subnet4\": [ { "
+        "    \"id\": 1,"
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
@@ -2978,7 +3269,7 @@ TEST_F(Dhcpv4SrvTest, nextServerGlobal) {
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config, true));
 
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
 
     CfgMgr::instance().commit();
 
@@ -3028,20 +3319,26 @@ TEST_F(Dhcpv4SrvTest, matchClassification) {
         "\"valid-lifetime\": 4000, "
         "\"subnet4\": [ "
         "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
+        "    \"id\": 1, "
         "    \"subnet\": \"192.0.2.0/24\" } ], "
         "\"client-classes\": [ "
         "{   \"name\": \"router\", "
         "    \"option-data\": ["
         "        {    \"name\": \"ip-forwarding\", "
         "             \"data\": \"true\" } ], "
-        "    \"test\": \"option[12].text == 'foo'\" } ] }";
+        "    \"test\": \"option[12].text == 'foo'\" },"
+        "{   \"name\": \"template-client-id\","
+        "    \"template-test\": \"substring(option[61].hex,0,3)\" },"
+        "{   \"name\": \"SPAWN_template-hostname_foo\" },"
+        "{   \"name\": \"template-hostname\","
+        "    \"template-test\": \"option[12].text\"} ] }";
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
     ASSERT_TRUE(status);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -3085,10 +3382,34 @@ TEST_F(Dhcpv4SrvTest, matchClassification) {
     srv.classifyPacket(query2);
     srv.classifyPacket(query3);
 
+    EXPECT_EQ(query1->classes_.size(), 6);
+    EXPECT_EQ(query2->classes_.size(), 3);
+    EXPECT_EQ(query3->classes_.size(), 6);
+
+    EXPECT_TRUE(query1->inClass("ALL"));
+    EXPECT_TRUE(query2->inClass("ALL"));
+    EXPECT_TRUE(query3->inClass("ALL"));
+
     // Packets with the exception of the second should be in the router class
     EXPECT_TRUE(query1->inClass("router"));
     EXPECT_FALSE(query2->inClass("router"));
     EXPECT_TRUE(query3->inClass("router"));
+
+    EXPECT_TRUE(query1->inClass("template-hostname"));
+    EXPECT_FALSE(query2->inClass("template-hostname"));
+    EXPECT_TRUE(query3->inClass("template-hostname"));
+
+    EXPECT_TRUE(query1->inClass("SPAWN_template-hostname_foo"));
+    EXPECT_FALSE(query2->inClass("SPAWN_template-hostname_foo"));
+    EXPECT_TRUE(query3->inClass("SPAWN_template-hostname_foo"));
+
+    EXPECT_TRUE(query1->inClass("template-client-id"));
+    EXPECT_TRUE(query2->inClass("template-client-id"));
+    EXPECT_TRUE(query3->inClass("template-client-id"));
+
+    EXPECT_TRUE(query1->inClass("SPAWN_template-client-id_def"));
+    EXPECT_TRUE(query2->inClass("SPAWN_template-client-id_def"));
+    EXPECT_TRUE(query3->inClass("SPAWN_template-client-id_def"));
 
     // Process queries
     Pkt4Ptr response1 = srv.processDiscover(query1);
@@ -3121,6 +3442,7 @@ TEST_F(Dhcpv4SrvTest, matchClassificationOptionName) {
         "\"valid-lifetime\": 4000, "
         "\"subnet4\": [ "
         "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
+        "    \"id\": 1, "
         "    \"subnet\": \"192.0.2.0/24\" } ], "
         "\"client-classes\": [ "
         "{   \"name\": \"router\", "
@@ -3131,7 +3453,7 @@ TEST_F(Dhcpv4SrvTest, matchClassificationOptionName) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
     ASSERT_TRUE(status);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -3168,6 +3490,7 @@ TEST_F(Dhcpv4SrvTest, matchClassificationOptionDef) {
         "\"valid-lifetime\": 4000, "
         "\"subnet4\": [ "
         "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
+        "    \"id\": 1, "
         "    \"subnet\": \"192.0.2.0/24\" } ], "
         "\"client-classes\": [ "
         "{   \"name\": \"router\", "
@@ -3182,7 +3505,7 @@ TEST_F(Dhcpv4SrvTest, matchClassificationOptionDef) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
     ASSERT_TRUE(status);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -3222,6 +3545,7 @@ TEST_F(Dhcpv4SrvTest, subnetClassPriority) {
         "\"valid-lifetime\": 4000, "
         "\"subnet4\": [ "
         "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
+        "    \"id\": 1, "
         "    \"subnet\": \"192.0.2.0/24\", "
         "    \"option-data\": ["
         "        {    \"name\": \"ip-forwarding\", "
@@ -3238,7 +3562,7 @@ TEST_F(Dhcpv4SrvTest, subnetClassPriority) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
     ASSERT_TRUE(status);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -3299,6 +3623,7 @@ TEST_F(Dhcpv4SrvTest, subnetGlobalPriority) {
         "\"valid-lifetime\": 4000, "
         "\"subnet4\": [ "
         "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
+        "    \"id\": 1, "
         "    \"subnet\": \"192.0.2.0/24\", "
         "    \"option-data\": ["
         "        {    \"name\": \"ip-forwarding\", "
@@ -3312,7 +3637,7 @@ TEST_F(Dhcpv4SrvTest, subnetGlobalPriority) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
     ASSERT_TRUE(status);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -3369,6 +3694,7 @@ TEST_F(Dhcpv4SrvTest, classGlobalPriority) {
         "\"valid-lifetime\": 4000, "
         "\"subnet4\": [ "
         "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
+        "    \"id\": 1, "
         "    \"subnet\": \"192.0.2.0/24\" } ], "
         "\"option-data\": ["
         "    {    \"name\": \"ip-forwarding\", "
@@ -3385,7 +3711,7 @@ TEST_F(Dhcpv4SrvTest, classGlobalPriority) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
     ASSERT_TRUE(status);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -3450,6 +3776,7 @@ TEST_F(Dhcpv4SrvTest, classGlobalPersistency) {
         "\"valid-lifetime\": 4000, "
         "\"subnet4\": [ "
         "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
+        "    \"id\": 1, "
         "    \"subnet\": \"192.0.2.0/24\" } ], "
         "\"option-data\": ["
         "    {    \"name\": \"ip-forwarding\", "
@@ -3468,7 +3795,7 @@ TEST_F(Dhcpv4SrvTest, classGlobalPersistency) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
     ASSERT_TRUE(status);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -3533,9 +3860,11 @@ TEST_F(Dhcpv4SrvTest, clientClassify) {
         "\"subnet4\": [ "
         "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"client-class\": \"foo\", "
+        "    \"id\": 1, "
         "    \"subnet\": \"192.0.2.0/24\" }, "
         "{   \"pools\": [ { \"pool\": \"192.0.3.1 - 192.0.3.100\" } ],"
         "    \"client-class\": \"xyzzy\", "
+        "    \"id\": 2, "
         "    \"subnet\": \"192.0.3.0/24\" } "
         "],"
         "\"valid-lifetime\": 4000 }";
@@ -3594,6 +3923,7 @@ TEST_F(Dhcpv4SrvTest, clientPoolClassify) {
         "      \"client-class\": \"foo\" }, "
         "    { \"pool\": \"192.0.3.1 - 192.0.3.100\", "
         "      \"client-class\": \"xyzzy\" } ], "
+        "    \"id\": 1, "
         "    \"subnet\": \"192.0.0.0/16\" } "
         "],"
         "\"valid-lifetime\": 4000 }";
@@ -3602,7 +3932,7 @@ TEST_F(Dhcpv4SrvTest, clientPoolClassify) {
     ASSERT_NO_THROW(json = parseDHCP4(config, true));
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
 
     CfgMgr::instance().commit();
 
@@ -3662,6 +3992,7 @@ TEST_F(Dhcpv4SrvTest, clientPoolClassifyKnown) {
         "      \"client-class\": \"KNOWN\" }, "
         "    { \"pool\": \"192.0.3.1 - 192.0.3.100\", "
         "      \"client-class\": \"UNKNOWN\" } ], "
+        "    \"id\": 1, "
         "    \"subnet\": \"192.0.0.0/16\" } "
         "],"
         "\"valid-lifetime\": 4000 }";
@@ -3670,7 +4001,7 @@ TEST_F(Dhcpv4SrvTest, clientPoolClassifyKnown) {
     ASSERT_NO_THROW(json = parseDHCP4(config, true));
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
 
     CfgMgr::instance().commit();
 
@@ -3715,6 +4046,7 @@ TEST_F(Dhcpv4SrvTest, clientPoolClassifyUnknown) {
         "      \"client-class\": \"UNKNOWN\" }, "
         "    { \"pool\": \"192.0.3.1 - 192.0.3.100\", "
         "      \"client-class\": \"KNOWN\" } ], "
+        "    \"id\": 1, "
         "    \"subnet\": \"192.0.0.0/16\", "
         "    \"reservations\": [ { "
         "       \"hw-address\": \"00:00:00:11:22:33\", "
@@ -3726,7 +4058,7 @@ TEST_F(Dhcpv4SrvTest, clientPoolClassifyUnknown) {
     ASSERT_NO_THROW(json = parseDHCP4(config, true));
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
 
     CfgMgr::instance().commit();
 
@@ -3771,6 +4103,7 @@ TEST_F(Dhcpv4SrvTest, privateOption) {
         "\"valid-lifetime\": 4000, "
         "\"subnet4\": [ "
         "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
+        "    \"id\": 1, "
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"client-classes\": [ "
         "{   \"name\": \"private\", "
@@ -3790,7 +4123,7 @@ TEST_F(Dhcpv4SrvTest, privateOption) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
     ASSERT_TRUE(status);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -3822,7 +4155,6 @@ TEST_F(Dhcpv4SrvTest, privateOption) {
     OptionPtr opt2(new Option(Option::V4, 245, buf));
     query->addOption(opt2);
     query->getDeferredOptions().push_back(245);
-
 
     // Create and add a PRL option to the query
     OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
@@ -3859,8 +4191,7 @@ TEST_F(Dhcpv4SrvTest, privateOption) {
     EXPECT_EQ(12345678, opt32->getValue());
 }
 
-
-// Checks effect of persistency (aka always-true) flag on the PRL
+// Checks effect of persistency (aka always-send) flag on the PRL.
 TEST_F(Dhcpv4SrvTest, prlPersistency) {
     IfaceMgrTestConfig test_config(true);
 
@@ -3913,6 +4244,59 @@ TEST_F(Dhcpv4SrvTest, prlPersistency) {
     ASSERT_FALSE(response->getOption(DHO_ARP_CACHE_TIMEOUT));
 }
 
+// Checks effect of cancellation (aka never-send) flag.
+TEST_F(Dhcpv4SrvTest, neverSend) {
+    IfaceMgrTestConfig test_config(true);
+
+    ASSERT_NO_THROW(configure(CONFIGS[3]));
+
+    // Create a packet with enough to select the subnet and go through
+    // the DISCOVER processing
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 1234));
+    query->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    query->addOption(clientid);
+    query->setIface("eth1");
+    query->setIndex(ETH1_INDEX);
+
+    // Create and add a PRL option for another option
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_ARP_CACHE_TIMEOUT);
+    query->addOption(prl);
+
+    // Create and add a host-name option to the query
+    OptionStringPtr hostname(new OptionString(Option::V4, 12, "foo"));
+    ASSERT_TRUE(hostname);
+    query->addOption(hostname);
+
+    // Let the server process it.
+    Pkt4Ptr response = srv_.processDiscover(query);
+
+    // Processing should not add an ip-forwarding option
+    ASSERT_FALSE(response->getOption(DHO_IP_FORWARDING));
+    // And no default-ip-ttl
+    ASSERT_FALSE(response->getOption(DHO_DEFAULT_IP_TTL));
+    // Nor an arp-cache-timeout
+    ASSERT_FALSE(response->getOption(DHO_ARP_CACHE_TIMEOUT));
+
+    // Reset PRL adding default-ip-ttl
+    query->delOption(DHO_DHCP_PARAMETER_REQUEST_LIST);
+    prl->addValue(DHO_DEFAULT_IP_TTL);
+    query->addOption(prl);
+
+    // Let the server process it again.
+    response = srv_.processDiscover(query);
+
+    // Processing should not add an ip-forwarding option
+    ASSERT_FALSE(response->getOption(DHO_IP_FORWARDING));
+    // And now a default-ip-ttl
+    ASSERT_TRUE(response->getOption(DHO_DEFAULT_IP_TTL));
+    // And still no arp-cache-timeout
+    ASSERT_FALSE(response->getOption(DHO_ARP_CACHE_TIMEOUT));
+}
+
 // Checks if relay IP address specified in the relay-info structure in
 // subnet4 is being used properly.
 TEST_F(Dhcpv4SrvTest, relayOverride) {
@@ -3929,13 +4313,15 @@ TEST_F(Dhcpv4SrvTest, relayOverride) {
         "\"subnet4\": [ "
         "{   \"pools\": [ { \"pool\": \"192.0.2.2 - 192.0.2.100\" } ],"
         "    \"relay\": { "
-        "        \"ip-address\": \"192.0.5.1\""
+        "        \"ip-addresses\": [ \"192.0.5.1\" ]"
         "    },"
+        "    \"id\": 1, "
         "    \"subnet\": \"192.0.2.0/24\" }, "
         "{   \"pools\": [ { \"pool\": \"192.0.3.1 - 192.0.3.100\" } ],"
         "    \"relay\": { "
-        "        \"ip-address\": \"192.0.5.2\""
+        "        \"ip-addresses\": [ \"192.0.5.2\" ]"
         "    },"
+        "    \"id\": 2, "
         "    \"subnet\": \"192.0.3.0/24\" } "
         "],"
         "\"valid-lifetime\": 4000 }";
@@ -3970,7 +4356,7 @@ TEST_F(Dhcpv4SrvTest, relayOverride) {
     EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
-    // Relay belongs to the second subnet, so it  should be selected.
+    // Relay belongs to the second subnet, so it should be selected.
     dis->setGiaddr(IOAddress("192.0.3.1"));
     EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
@@ -4016,13 +4402,15 @@ TEST_F(Dhcpv4SrvTest, relayOverrideAndClientClass) {
         "{   \"pools\": [ { \"pool\": \"192.0.2.2 - 192.0.2.100\" } ],"
         "    \"client-class\": \"foo\", "
         "    \"relay\": { "
-        "        \"ip-address\": \"192.0.5.1\""
+        "        \"ip-addresses\": [ \"192.0.5.1\" ]"
         "    },"
+        "    \"id\": 1, "
         "    \"subnet\": \"192.0.2.0/24\" }, "
         "{   \"pools\": [ { \"pool\": \"192.0.3.1 - 192.0.3.100\" } ],"
         "    \"relay\": { "
-        "        \"ip-address\": \"192.0.5.1\""
+        "        \"ip-addresses\": [ \"192.0.5.1\" ]"
         "    },"
+        "    \"id\": 2, "
         "    \"subnet\": \"192.0.3.0/24\" } "
         "],"
         "\"valid-lifetime\": 4000 }";
@@ -4077,13 +4465,16 @@ TEST_F(Dhcpv4SrvTest, relayLinkSelect) {
         "\"subnet4\": [ "
         "{   \"pools\": [ { \"pool\": \"192.0.2.2 - 192.0.2.100\" } ],"
         "    \"relay\": { "
-        "        \"ip-address\": \"192.0.5.1\""
+        "        \"ip-addresses\": [ \"192.0.5.1\" ]"
         "    },"
+        "    \"id\": 1, "
         "    \"subnet\": \"192.0.2.0/24\" }, "
         "{   \"pools\": [ { \"pool\": \"192.0.3.1 - 192.0.3.100\" } ],"
+        "    \"id\": 2, "
         "    \"subnet\": \"192.0.3.0/24\" }, "
         "{   \"pools\": [ { \"pool\": \"192.0.4.1 - 192.0.4.100\" } ],"
         "    \"client-class\": \"foo\", "
+        "    \"id\": 3, "
         "    \"subnet\": \"192.0.4.0/24\" } "
         "],"
         "\"valid-lifetime\": 4000 }";
@@ -4117,10 +4508,8 @@ TEST_F(Dhcpv4SrvTest, relayLinkSelect) {
     dis->addOption(clientid);
 
     // Let's create a Relay Agent Information option
-    OptionDefinitionPtr rai_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                        DHO_DHCP_AGENT_OPTIONS);
-    ASSERT_TRUE(rai_def);
-    OptionCustomPtr rai(new OptionCustom(*rai_def, Option::V4));
+    const OptionDefinition& rai_def = LibDHCP::DHO_DHCP_AGENT_OPTIONS_DEF();
+    OptionCustomPtr rai(new OptionCustom(rai_def, Option::V4));
     ASSERT_TRUE(rai);
     IOAddress addr("192.0.3.2");
     OptionPtr ols(new Option(Option::V4,
@@ -4148,10 +4537,8 @@ TEST_F(Dhcpv4SrvTest, relayLinkSelect) {
     EXPECT_FALSE(drop);
 
     // Subnet select option has a lower precedence
-    OptionDefinitionPtr sbnsel_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                           DHO_SUBNET_SELECTION);
-    ASSERT_TRUE(sbnsel_def);
-    OptionCustomPtr sbnsel(new OptionCustom(*sbnsel_def, Option::V4));
+    const OptionDefinition& sbnsel_def = LibDHCP::DHO_SUBNET_SELECTION_DEF();
+    OptionCustomPtr sbnsel(new OptionCustom(sbnsel_def, Option::V4));
     ASSERT_TRUE(sbnsel);
     sbnsel->writeAddress(IOAddress("192.0.2.3"));
     dis->addOption(sbnsel);
@@ -4196,6 +4583,139 @@ TEST_F(Dhcpv4SrvTest, relayLinkSelect) {
     EXPECT_FALSE(drop);
 }
 
+// Checks if a RAI link selection compatibility preferences work as expected
+TEST_F(Dhcpv4SrvTest, relayIgnoreLinkSelect) {
+
+    // We have 3 subnets defined.
+    string config = "{ \"interfaces-config\": {"
+                    "    \"interfaces\": [ \"*\" ]"
+                    "},"
+                    "\"rebind-timer\": 2000, "
+                    "\"renew-timer\": 1000, "
+                    "\"compatibility\": { \"ignore-rai-link-selection\": true },"
+                    "\"subnet4\": [ "
+                    "{   \"pools\": [ { \"pool\": \"192.0.2.2 - 192.0.2.100\" } ],"
+                    "    \"relay\": { "
+                    "        \"ip-addresses\": [ \"192.0.5.1\" ]"
+                    "    },"
+                    "    \"id\": 1, "
+                    "    \"subnet\": \"192.0.2.0/24\" }, "
+                    "{   \"pools\": [ { \"pool\": \"192.0.3.1 - 192.0.3.100\" } ],"
+                    "    \"id\": 2, "
+                    "    \"subnet\": \"192.0.3.0/24\" }, "
+                    "{   \"pools\": [ { \"pool\": \"192.0.4.1 - 192.0.4.100\" } ],"
+                    "    \"client-class\": \"foo\", "
+                    "    \"id\": 3, "
+                    "    \"subnet\": \"192.0.4.0/24\" } "
+                    "],"
+                    "\"valid-lifetime\": 4000 }";
+
+    // Use this config to set up the server
+    ASSERT_NO_THROW(configure(config, true, false));
+
+    // Let's get the subnet configuration objects
+    const Subnet4Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    ASSERT_EQ(3, subnets->size());
+
+    // Let's get them for easy reference
+    auto subnet_it = subnets->begin();
+    Subnet4Ptr subnet1 = *subnet_it;
+    ++subnet_it;
+    Subnet4Ptr subnet2 = *subnet_it;
+    ++subnet_it;
+    Subnet4Ptr subnet3 = *subnet_it;
+    ASSERT_TRUE(subnet1);
+    ASSERT_TRUE(subnet2);
+    ASSERT_TRUE(subnet3);
+
+    // Let's create a packet.
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    dis->setIface("eth0");
+    dis->setIndex(ETH0_INDEX);
+    dis->setHops(1);
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+
+    // Let's create a Relay Agent Information option
+    const OptionDefinition& rai_def = LibDHCP::DHO_DHCP_AGENT_OPTIONS_DEF();
+    OptionCustomPtr rai(new OptionCustom(rai_def, Option::V4));
+    ASSERT_TRUE(rai);
+    IOAddress addr("192.0.3.2");
+    OptionPtr ols(new Option(Option::V4,
+                             RAI_OPTION_LINK_SELECTION,
+                             addr.toBytes()));
+    ASSERT_TRUE(ols);
+    rai->addOption(ols);
+
+    // This is just a sanity check, we're using regular method: ciaddr 192.0.3.1
+    // belongs to the second subnet, so it is selected
+    dis->setGiaddr(IOAddress("192.0.3.1"));
+    bool drop = false;
+    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
+
+    // Setup a relay override for the first subnet as it has a high precedence
+    dis->setGiaddr(IOAddress("192.0.5.1"));
+    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
+
+    // Put a RAI to select back the second subnet as it has
+    // the highest precedence, but it should be ignored due
+    // to the ignore-rai-link-selection compatibility config
+    dis->addOption(rai);
+    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
+
+    // Subnet select option has a lower precedence, but will succeed
+    // because RAI link selection suboptions are being ignored
+    const OptionDefinition& sbnsel_def = LibDHCP::DHO_SUBNET_SELECTION_DEF();
+    OptionCustomPtr sbnsel(new OptionCustom(sbnsel_def, Option::V4));
+    ASSERT_TRUE(sbnsel);
+    sbnsel->writeAddress(IOAddress("192.0.2.3"));
+    dis->addOption(sbnsel);
+    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
+
+    // But, when RAI exists without the link selection option, we should
+    // fall back to the subnet selection option.
+    rai->delOption(RAI_OPTION_LINK_SELECTION);
+    dis->delOption(DHO_DHCP_AGENT_OPTIONS);
+    dis->addOption(rai);
+    dis->setGiaddr(IOAddress("192.0.4.1"));
+    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
+
+    // Check client-classification still applies
+    IOAddress addr_foo("192.0.4.2");
+    ols.reset(new Option(Option::V4, RAI_OPTION_LINK_SELECTION,
+                         addr_foo.toBytes()));
+    dis->delOption(DHO_SUBNET_SELECTION);
+    dis->delOption(DHO_DHCP_AGENT_OPTIONS);
+    rai->addOption(ols);
+    dis->addOption(rai);
+
+    // Note it shall fail (vs. try the next criterion).
+    EXPECT_FALSE(srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
+    // Add the packet to the class and check again: now it shall succeed
+    dis->addClass("foo");
+    EXPECT_TRUE(subnet3 == srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
+
+    // Check it succeeds even with a bad address in the sub-option
+    IOAddress addr_bad("10.0.0.1");
+    ols.reset(new Option(Option::V4, RAI_OPTION_LINK_SELECTION,
+                         addr_bad.toBytes()));
+    rai->delOption(RAI_OPTION_LINK_SELECTION);
+    dis->delOption(DHO_DHCP_AGENT_OPTIONS);
+    rai->addOption(ols);
+    dis->addOption(rai);
+    EXPECT_TRUE(srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(drop);
+}
+
 // Checks if a subnet selection option works as expected
 TEST_F(Dhcpv4SrvTest, subnetSelect) {
 
@@ -4208,13 +4728,16 @@ TEST_F(Dhcpv4SrvTest, subnetSelect) {
         "\"subnet4\": [ "
         "{   \"pools\": [ { \"pool\": \"192.0.2.2 - 192.0.2.100\" } ],"
         "    \"relay\": { "
-        "        \"ip-address\": \"192.0.5.1\""
+        "        \"ip-addresses\": [ \"192.0.5.1\" ]"
         "    },"
+        "    \"id\": 1, "
         "    \"subnet\": \"192.0.2.0/24\" }, "
         "{   \"pools\": [ { \"pool\": \"192.0.3.1 - 192.0.3.100\" } ],"
+        "    \"id\": 2, "
         "    \"subnet\": \"192.0.3.0/24\" }, "
         "{   \"pools\": [ { \"pool\": \"192.0.4.1 - 192.0.4.100\" } ],"
         "    \"client-class\": \"foo\", "
+        "    \"id\": 3, "
         "    \"subnet\": \"192.0.4.0/24\" } "
         "],"
         "\"valid-lifetime\": 4000 }";
@@ -4248,10 +4771,8 @@ TEST_F(Dhcpv4SrvTest, subnetSelect) {
     dis->addOption(clientid);
 
     // Let's create a Subnet Selection option
-    OptionDefinitionPtr sbnsel_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                           DHO_SUBNET_SELECTION);
-    ASSERT_TRUE(sbnsel_def);
-    OptionCustomPtr sbnsel(new OptionCustom(*sbnsel_def, Option::V4));
+    const OptionDefinition& sbnsel_def = LibDHCP::DHO_SUBNET_SELECTION_DEF();
+    OptionCustomPtr sbnsel(new OptionCustom(sbnsel_def, Option::V4));
     ASSERT_TRUE(sbnsel);
     sbnsel->writeAddress(IOAddress("192.0.3.2"));
 
@@ -4561,8 +5082,7 @@ TEST_F(Dhcpv4SrvTest, userContext) {
 
     // This config has one subnet with user-context with one
     // pool (also with context). Make sure the configuration could be accepted.
-    cout << CONFIGS[3] << endl;
-    EXPECT_NO_THROW(configure(CONFIGS[3]));
+    EXPECT_NO_THROW(configure(CONFIGS[4]));
 
     // Now make sure the data was not lost.
     ConstSrvConfigPtr cfg = CfgMgr::instance().getCurrentCfg();
@@ -4633,6 +5153,7 @@ TEST_F(Dhcpv4SrvTest, fixedFieldsInClassOrder) {
 
         "subnet4": [
         {
+            "id": 1,
             "subnet": "192.0.2.0/24",
             "pools": [ { "pool": "192.0.2.1 - 192.0.2.100" } ],
             "reservations": [
@@ -4657,7 +5178,7 @@ TEST_F(Dhcpv4SrvTest, fixedFieldsInClassOrder) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
     ASSERT_TRUE(status);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -4700,7 +5221,7 @@ TEST_F(Dhcpv4SrvTest, fixedFieldsInClassOrder) {
        }
     };
 
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.hw_str_); {
             // Build a DISCOVER
             Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 1234));
@@ -4709,6 +5230,8 @@ TEST_F(Dhcpv4SrvTest, fixedFieldsInClassOrder) {
 
             HWAddrPtr hw_addr(new HWAddr(HWAddr::fromText(scenario.hw_str_, 10)));
             query->setHWAddr(hw_addr);
+
+            srv.classifyPacket(query);
 
             // Process it.
             Pkt4Ptr response = srv.processDiscover(query);
@@ -4734,6 +5257,1598 @@ TEST_F(Dhcpv4SrvTest, fixedFieldsInClassOrder) {
         }
     }
 }
+
+// Verify that discover requesting v6-only-preferred 0.0.0.0 is offered
+// only when the option is configured.
+TEST_F(Dhcpv4SrvTest, noV6OnlyPreferredDiscover) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+    dis->setIface("eth1");
+    dis->setIndex(ETH1_INDEX);
+
+    // Add a PRL with v6-only-preferred.
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_V6_ONLY_PREFERRED);
+    dis->addOption(prl);
+
+    // Get the DHCPOFFER.
+    Pkt4Ptr offer = srv.processDiscover(dis);
+    ASSERT_TRUE(offer);
+    checkResponse(offer, DHCPOFFER, 1234);
+
+    // An address was offered.
+    EXPECT_FALSE(offer->getYiaddr().isV4Zero());
+
+    // No v6-only-preferred option.
+    EXPECT_FALSE(offer->getOption(DHO_V6_ONLY_PREFERRED));
+}
+
+// Verify that discover requesting v6-only-preferred 0.0.0.0 is offered
+// only when the option is configured.
+TEST_F(Dhcpv4SrvTest, noV6OnlyPreferredRequest) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
+    req->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    req->addOption(clientid);
+    req->setIface("eth1");
+    req->setIndex(ETH1_INDEX);
+
+    // Add a PRL with v6-only-preferred.
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_V6_ONLY_PREFERRED);
+    req->addOption(prl);
+
+    // Get the DHCPACK.
+    Pkt4Ptr ack = srv.processRequest(req);
+    ASSERT_TRUE(ack);
+    checkResponse(ack, DHCPACK, 1234);
+
+    // An address was offered.
+    EXPECT_FALSE(ack->getYiaddr().isV4Zero());
+
+    // No v6-only-preferred option.
+    EXPECT_FALSE(ack->getOption(DHO_V6_ONLY_PREFERRED));
+}
+
+// Verify that discover requesting v6-only-preferred 0.0.0.0 is offered
+// when the option is configured in the subnet.
+TEST_F(Dhcpv4SrvTest, v6OnlyPreferredDiscover) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Recreate subnet.
+    Triplet<uint32_t> unspecified;
+    Triplet<uint32_t> valid_lft(500, 1000, 1500);
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
+                              unspecified,
+                              unspecified,
+                              valid_lft,
+                              subnet_->getID());
+    // Add the v6-only-preferred option data.
+    const uint32_t v6only_wait(3600);
+    OptionUint32Ptr v6op_opt(new OptionUint32(Option::V4,
+                                              DHO_V6_ONLY_PREFERRED,
+                                              v6only_wait));
+    subnet_->getCfgOption()->add(v6op_opt, false, false, DHCP4_OPTION_SPACE);
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
+    CfgMgr::instance().commit();
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+    dis->setIface("eth1");
+    dis->setIndex(ETH1_INDEX);
+
+    // Add a PRL with v6-only-preferred.
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_V6_ONLY_PREFERRED);
+    dis->addOption(prl);
+
+    // Get the DHCPOFFER.
+    Pkt4Ptr offer = srv.processDiscover(dis);
+    ASSERT_TRUE(offer);
+    checkResponse(offer, DHCPOFFER, 1234);
+
+    // 0.0.0.0 was offered.
+    EXPECT_TRUE(offer->getYiaddr().isV4Zero());
+
+    // v6-only-preferred option was added.
+    OptionPtr got_opt = offer->getOption(DHO_V6_ONLY_PREFERRED);
+    ASSERT_TRUE(got_opt);
+    OptionUint32Ptr got_v6op_opt =
+        boost::dynamic_pointer_cast<OptionUint32>(got_opt);
+    ASSERT_TRUE(got_v6op_opt);
+    EXPECT_EQ(v6only_wait, got_v6op_opt->getValue());
+}
+
+// Verify that request requesting v6-only-preferred 0.0.0.0 is offered
+// when the option is configured in the subnet.
+TEST_F(Dhcpv4SrvTest, v6OnlyPreferredRequest) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Recreate subnet.
+    Triplet<uint32_t> unspecified;
+    Triplet<uint32_t> valid_lft(500, 1000, 1500);
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
+                              unspecified,
+                              unspecified,
+                              valid_lft,
+                              subnet_->getID());
+    // Add the v6-only-preferred option data.
+    const uint32_t v6only_wait(3600);
+    OptionUint32Ptr v6op_opt(new OptionUint32(Option::V4,
+                                              DHO_V6_ONLY_PREFERRED,
+                                              v6only_wait));
+    subnet_->getCfgOption()->add(v6op_opt, false, false, DHCP4_OPTION_SPACE);
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
+    CfgMgr::instance().commit();
+
+    Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
+    req->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    req->addOption(clientid);
+    req->setIface("eth1");
+    req->setIndex(ETH1_INDEX);
+
+    // Add a PRL with v6-only-preferred.
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_V6_ONLY_PREFERRED);
+    req->addOption(prl);
+
+    // Get the DHCPACK.
+    Pkt4Ptr ack = srv.processRequest(req);
+    ASSERT_TRUE(ack);
+    checkResponse(ack, DHCPACK, 1234);
+
+    // 0.0.0.0 was offered.
+    EXPECT_TRUE(ack->getYiaddr().isV4Zero());
+
+    // v6-only-preferred option was added.
+    OptionPtr got_opt = ack->getOption(DHO_V6_ONLY_PREFERRED);
+    ASSERT_TRUE(got_opt);
+    OptionUint32Ptr got_v6op_opt =
+        boost::dynamic_pointer_cast<OptionUint32>(got_opt);
+    ASSERT_TRUE(got_v6op_opt);
+    EXPECT_EQ(v6only_wait, got_v6op_opt->getValue());
+}
+
+// Verify that discover requesting v6-only-preferred 0.0.0.0 is offered
+// when the option is configured in another subnet of the shared network.
+TEST_F(Dhcpv4SrvTest, v6OnlyPreferredDiscoverAnother) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Recreate subnet.
+    Triplet<uint32_t> unspecified;
+    Triplet<uint32_t> valid_lft(500, 1000, 1500);
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
+                              unspecified,
+                              unspecified,
+                              valid_lft,
+                              subnet_->getID());
+    // Add the domain name "foo".
+    OptionStringPtr dn(new OptionString(Option::V4, DHO_DOMAIN_NAME, "foo"));
+    subnet_->getCfgOption()->add(dn, false, false, DHCP4_OPTION_SPACE);
+    // Add another subnet,
+    Subnet4Ptr subnet2 = Subnet4::create(IOAddress("192.0.3.0"), 24,
+                                         unspecified,
+                                         unspecified,
+                                         valid_lft,
+                                         subnet_->getID() + 1);
+    // Add the domain name "bar".
+    OptionStringPtr dn2(new OptionString(Option::V4, DHO_DOMAIN_NAME, "bar"));
+    subnet2->getCfgOption()->add(dn2, false, false, DHCP4_OPTION_SPACE);
+    // Add the v6-only-preferred option data.
+    const uint32_t v6only_wait(3600);
+    OptionUint32Ptr v6op_opt(new OptionUint32(Option::V4,
+                                              DHO_V6_ONLY_PREFERRED,
+                                              v6only_wait));
+    subnet2->getCfgOption()->add(v6op_opt, false, false, DHCP4_OPTION_SPACE);
+    // Create a shared network.
+    SharedNetwork4Ptr network(new SharedNetwork4("one"));
+    network->add(subnet_);
+    network->add(subnet2);
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet2);
+    CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks4()->add(network);
+    CfgMgr::instance().commit();
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+    dis->setIface("eth1");
+    dis->setIndex(ETH1_INDEX);
+
+    // Add a PRL with v6-only-preferred.
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_V6_ONLY_PREFERRED);
+    dis->addOption(prl);
+
+    // Get the DHCPOFFER.
+    Pkt4Ptr offer = srv.processDiscover(dis);
+    ASSERT_TRUE(offer);
+    checkResponse(offer, DHCPOFFER, 1234);
+
+    // 0.0.0.0 was offered.
+    EXPECT_TRUE(offer->getYiaddr().isV4Zero());
+
+    // v6-only-preferred option was added.
+    OptionPtr got_opt = offer->getOption(DHO_V6_ONLY_PREFERRED);
+    ASSERT_TRUE(got_opt);
+    OptionUint32Ptr got_v6op_opt =
+        boost::dynamic_pointer_cast<OptionUint32>(got_opt);
+    ASSERT_TRUE(got_v6op_opt);
+    EXPECT_EQ(v6only_wait, got_v6op_opt->getValue());
+
+    // domain-name option "bar" was added.
+    got_opt = offer->getOption(DHO_DOMAIN_NAME);
+    ASSERT_TRUE(got_opt);
+    OptionStringPtr got_dn_opt =
+        boost::dynamic_pointer_cast<OptionString>(got_opt);
+    ASSERT_TRUE(got_dn_opt);
+    EXPECT_EQ("bar", got_dn_opt->getValue());
+}
+
+// Verify that request requesting v6-only-preferred 0.0.0.0 is offered
+// when the option is configured in another subnet of the shared network.
+TEST_F(Dhcpv4SrvTest, v6OnlyPreferredRequestAnother) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Recreate subnet.
+    Triplet<uint32_t> unspecified;
+    Triplet<uint32_t> valid_lft(500, 1000, 1500);
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
+                              unspecified,
+                              unspecified,
+                              valid_lft,
+                              subnet_->getID());
+    // Add the domain name "foo".
+    OptionStringPtr dn(new OptionString(Option::V4, DHO_DOMAIN_NAME, "foo"));
+    subnet_->getCfgOption()->add(dn, false, false, DHCP4_OPTION_SPACE);
+    // Add another subnet,
+    Subnet4Ptr subnet2 = Subnet4::create(IOAddress("192.0.3.0"), 24,
+                                         unspecified,
+                                         unspecified,
+                                         valid_lft,
+                                         subnet_->getID() + 1);
+    // Add the domain name "bar".
+    OptionStringPtr dn2(new OptionString(Option::V4, DHO_DOMAIN_NAME, "bar"));
+    subnet2->getCfgOption()->add(dn2, false, false, DHCP4_OPTION_SPACE);
+    // Add the v6-only-preferred option data.
+    const uint32_t v6only_wait(3600);
+    OptionUint32Ptr v6op_opt(new OptionUint32(Option::V4,
+                                              DHO_V6_ONLY_PREFERRED,
+                                              v6only_wait));
+    subnet2->getCfgOption()->add(v6op_opt, false, false, DHCP4_OPTION_SPACE);
+    // Create a shared network.
+    SharedNetwork4Ptr network(new SharedNetwork4("one"));
+    network->add(subnet_);
+    network->add(subnet2);
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet2);
+    CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks4()->add(network);
+    CfgMgr::instance().commit();
+
+    Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
+    req->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    req->addOption(clientid);
+    req->setIface("eth1");
+    req->setIndex(ETH1_INDEX);
+
+    // Add a PRL with v6-only-preferred.
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_V6_ONLY_PREFERRED);
+    req->addOption(prl);
+
+    // Get the DHCPACK.
+    Pkt4Ptr ack = srv.processRequest(req);
+    ASSERT_TRUE(ack);
+    checkResponse(ack, DHCPACK, 1234);
+
+    // 0.0.0.0 was offered.
+    EXPECT_TRUE(ack->getYiaddr().isV4Zero());
+
+    // v6-only-preferred option was added.
+    OptionPtr got_opt = ack->getOption(DHO_V6_ONLY_PREFERRED);
+    ASSERT_TRUE(got_opt);
+    OptionUint32Ptr got_v6op_opt =
+        boost::dynamic_pointer_cast<OptionUint32>(got_opt);
+    ASSERT_TRUE(got_v6op_opt);
+    EXPECT_EQ(v6only_wait, got_v6op_opt->getValue());
+
+    // domain-name option "bar" was added.
+    got_opt = ack->getOption(DHO_DOMAIN_NAME);
+    ASSERT_TRUE(got_opt);
+    OptionStringPtr got_dn_opt =
+        boost::dynamic_pointer_cast<OptionString>(got_opt);
+    ASSERT_TRUE(got_dn_opt);
+    EXPECT_EQ("bar", got_dn_opt->getValue());
+}
+
+// Verify that discover requesting v6-only-preferred 0.0.0.0 is offered
+// when the option is configured in another subnet of the shared network
+// with a matching guard (another subnet is used when subnet selection
+// skips not matching guards).
+TEST_F(Dhcpv4SrvTest, v6OnlyPreferredDiscoverGuarded) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Recreate subnet.
+    Triplet<uint32_t> unspecified;
+    Triplet<uint32_t> valid_lft(500, 1000, 1500);
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
+                              unspecified,
+                              unspecified,
+                              valid_lft,
+                              subnet_->getID());
+    // Add the domain name "foo".
+    OptionStringPtr dn(new OptionString(Option::V4, DHO_DOMAIN_NAME, "foo"));
+    subnet_->getCfgOption()->add(dn, false, false, DHCP4_OPTION_SPACE);
+    // Add another subnet,
+    Subnet4Ptr subnet2 = Subnet4::create(IOAddress("192.0.3.0"), 24,
+                                         unspecified,
+                                         unspecified,
+                                         valid_lft,
+                                         subnet_->getID() + 1);
+    // Add the "guard" guard to subnet2.
+    subnet2->allowClientClass("guard");
+    // Add the domain name "bar".
+    OptionStringPtr dn2(new OptionString(Option::V4, DHO_DOMAIN_NAME, "bar"));
+    subnet2->getCfgOption()->add(dn2, false, false, DHCP4_OPTION_SPACE);
+    // Add the v6-only-preferred option data.
+    const uint32_t v6only_wait(3600);
+    OptionUint32Ptr v6op_opt(new OptionUint32(Option::V4,
+                                              DHO_V6_ONLY_PREFERRED,
+                                              v6only_wait));
+    subnet2->getCfgOption()->add(v6op_opt, false, false, DHCP4_OPTION_SPACE);
+    // Create a shared network.
+    SharedNetwork4Ptr network(new SharedNetwork4("one"));
+    network->add(subnet_);
+    network->add(subnet2);
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet2);
+    CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks4()->add(network);
+    CfgMgr::instance().commit();
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+    dis->setIface("eth1");
+    dis->setIndex(ETH1_INDEX);
+
+    // Add a PRL with v6-only-preferred.
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_V6_ONLY_PREFERRED);
+    dis->addOption(prl);
+
+    // Put into the "guard" class.
+    srv.classifyPacket(dis);
+    dis->addClass("guard");
+
+    // Get the DHCPOFFER.
+    Pkt4Ptr offer = srv.processDiscover(dis);
+    ASSERT_TRUE(offer);
+    checkResponse(offer, DHCPOFFER, 1234);
+
+    // 0.0.0.0 was offered.
+    EXPECT_TRUE(offer->getYiaddr().isV4Zero());
+
+    // v6-only-preferred option was added.
+    OptionPtr got_opt = offer->getOption(DHO_V6_ONLY_PREFERRED);
+    ASSERT_TRUE(got_opt);
+    OptionUint32Ptr got_v6op_opt =
+        boost::dynamic_pointer_cast<OptionUint32>(got_opt);
+    ASSERT_TRUE(got_v6op_opt);
+    EXPECT_EQ(v6only_wait, got_v6op_opt->getValue());
+
+    // domain-name option "bar" was added.
+    got_opt = offer->getOption(DHO_DOMAIN_NAME);
+    ASSERT_TRUE(got_opt);
+    OptionStringPtr got_dn_opt =
+        boost::dynamic_pointer_cast<OptionString>(got_opt);
+    ASSERT_TRUE(got_dn_opt);
+    EXPECT_EQ("bar", got_dn_opt->getValue());
+}
+
+// Verify that request requesting v6-only-preferred 0.0.0.0 is offered
+// when the option is configured in another subnet of the shared network
+// with a matching guard (another subnet is used when subnet selection
+// skips not matching guards).
+TEST_F(Dhcpv4SrvTest, v6OnlyPreferredRequestGuarded) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Recreate subnet.
+    Triplet<uint32_t> unspecified;
+    Triplet<uint32_t> valid_lft(500, 1000, 1500);
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
+                              unspecified,
+                              unspecified,
+                              valid_lft,
+                              subnet_->getID());
+    // Add the domain name "foo".
+    OptionStringPtr dn(new OptionString(Option::V4, DHO_DOMAIN_NAME, "foo"));
+    subnet_->getCfgOption()->add(dn, false, false, DHCP4_OPTION_SPACE);
+    // Add another subnet,
+    Subnet4Ptr subnet2 = Subnet4::create(IOAddress("192.0.3.0"), 24,
+                                         unspecified,
+                                         unspecified,
+                                         valid_lft,
+                                         subnet_->getID() + 1);
+    // Add the "guard" guard to subnet2.
+    subnet2->allowClientClass("guard");
+    // Add the domain name "bar".
+    OptionStringPtr dn2(new OptionString(Option::V4, DHO_DOMAIN_NAME, "bar"));
+    subnet2->getCfgOption()->add(dn2, false, false, DHCP4_OPTION_SPACE);
+    // Add the v6-only-preferred option data.
+    const uint32_t v6only_wait(3600);
+    OptionUint32Ptr v6op_opt(new OptionUint32(Option::V4,
+                                              DHO_V6_ONLY_PREFERRED,
+                                              v6only_wait));
+    subnet2->getCfgOption()->add(v6op_opt, false, false, DHCP4_OPTION_SPACE);
+    // Create a shared network.
+    SharedNetwork4Ptr network(new SharedNetwork4("one"));
+    network->add(subnet_);
+    network->add(subnet2);
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet2);
+    CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks4()->add(network);
+    CfgMgr::instance().commit();
+
+    Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
+    req->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    req->addOption(clientid);
+    req->setIface("eth1");
+    req->setIndex(ETH1_INDEX);
+
+    // Add a PRL with v6-only-preferred.
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_V6_ONLY_PREFERRED);
+    req->addOption(prl);
+
+    // Put into the "guard" class.
+    srv.classifyPacket(req);
+    req->addClass("guard");
+
+    // Get the DHCPACK.
+    Pkt4Ptr ack = srv.processRequest(req);
+    ASSERT_TRUE(ack);
+    checkResponse(ack, DHCPACK, 1234);
+
+    // 0.0.0.0 was offered.
+    EXPECT_TRUE(ack->getYiaddr().isV4Zero());
+
+    // v6-only-preferred option was added.
+    OptionPtr got_opt = ack->getOption(DHO_V6_ONLY_PREFERRED);
+    ASSERT_TRUE(got_opt);
+    OptionUint32Ptr got_v6op_opt =
+        boost::dynamic_pointer_cast<OptionUint32>(got_opt);
+    ASSERT_TRUE(got_v6op_opt);
+    EXPECT_EQ(v6only_wait, got_v6op_opt->getValue());
+
+    // domain-name option "bar" was added.
+    got_opt = ack->getOption(DHO_DOMAIN_NAME);
+    ASSERT_TRUE(got_opt);
+    OptionStringPtr got_dn_opt =
+        boost::dynamic_pointer_cast<OptionString>(got_opt);
+    ASSERT_TRUE(got_dn_opt);
+    EXPECT_EQ("bar", got_dn_opt->getValue());
+}
+
+// Verify that discover requesting v6-only-preferred 0.0.0.0 is not offered
+// when the option is configured in another subnet of the shared network
+// with a not matching guard.
+TEST_F(Dhcpv4SrvTest, noV6OnlyPreferredDiscoverGuarded) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Recreate subnet with a pool.
+    Triplet<uint32_t> unspecified;
+    Triplet<uint32_t> valid_lft(500, 1000, 1500);
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
+                              unspecified,
+                              unspecified,
+                              valid_lft,
+                              subnet_->getID());
+
+    pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"),
+                               IOAddress("192.0.2.110")));
+    subnet_->addPool(pool_);
+
+    // Add another subnet,
+    Subnet4Ptr subnet2 = Subnet4::create(IOAddress("192.0.3.0"), 24,
+                                         unspecified,
+                                         unspecified,
+                                         valid_lft,
+                                         subnet_->getID() + 1);
+    // Add the "guard" guard to subnet2.
+    subnet2->allowClientClass("guard");
+    // Add the v6-only-preferred option data.
+    const uint32_t v6only_wait(3600);
+    OptionUint32Ptr v6op_opt(new OptionUint32(Option::V4,
+                                              DHO_V6_ONLY_PREFERRED,
+                                              v6only_wait));
+    subnet2->getCfgOption()->add(v6op_opt, false, false, DHCP4_OPTION_SPACE);
+    // Create a shared network.
+    SharedNetwork4Ptr network(new SharedNetwork4("one"));
+    network->add(subnet_);
+    network->add(subnet2);
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet2);
+    CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks4()->add(network);
+    CfgMgr::instance().commit();
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+    dis->setIface("eth1");
+    dis->setIndex(ETH1_INDEX);
+
+    // Add a PRL with v6-only-preferred.
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_V6_ONLY_PREFERRED);
+    dis->addOption(prl);
+
+    // Not in the "guard" class.
+    srv.classifyPacket(dis);
+    EXPECT_FALSE(dis->inClass("guard"));
+
+    // Get the DHCPOFFER.
+    Pkt4Ptr offer = srv.processDiscover(dis);
+    ASSERT_TRUE(offer);
+    checkResponse(offer, DHCPOFFER, 1234);
+
+    // An address was offered.
+    EXPECT_FALSE(offer->getYiaddr().isV4Zero());
+
+    // No v6-only-preferred option.
+    EXPECT_FALSE(offer->getOption(DHO_V6_ONLY_PREFERRED));
+}
+
+// Verify that request requesting v6-only-preferred 0.0.0.0 is not offered
+// when the option is configured in another subnet of the shared network
+// with a not matching guard.
+TEST_F(Dhcpv4SrvTest, noV6OnlyPreferredRequestGuarded) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Recreate subnet with a pool.
+    Triplet<uint32_t> unspecified;
+    Triplet<uint32_t> valid_lft(500, 1000, 1500);
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
+                              unspecified,
+                              unspecified,
+                              valid_lft,
+                              subnet_->getID());
+
+    pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"),
+                               IOAddress("192.0.2.110")));
+    subnet_->addPool(pool_);
+
+    // Add another subnet,
+    Subnet4Ptr subnet2 = Subnet4::create(IOAddress("192.0.3.0"), 24,
+                                         unspecified,
+                                         unspecified,
+                                         valid_lft,
+                                         subnet_->getID() + 1);
+    // Add the "guard" guard to subnet2.
+    subnet2->allowClientClass("guard");
+    // Add the v6-only-preferred option data.
+    const uint32_t v6only_wait(3600);
+    OptionUint32Ptr v6op_opt(new OptionUint32(Option::V4,
+                                              DHO_V6_ONLY_PREFERRED,
+                                              v6only_wait));
+    subnet2->getCfgOption()->add(v6op_opt, false, false, DHCP4_OPTION_SPACE);
+    // Create a shared network.
+    SharedNetwork4Ptr network(new SharedNetwork4("one"));
+    network->add(subnet_);
+    network->add(subnet2);
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet2);
+    CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks4()->add(network);
+    CfgMgr::instance().commit();
+
+    Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
+    req->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    req->addOption(clientid);
+    req->setIface("eth1");
+    req->setIndex(ETH1_INDEX);
+
+    // Add a PRL with v6-only-preferred.
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_V6_ONLY_PREFERRED);
+    req->addOption(prl);
+
+    // Not in the "guard" class.
+    srv.classifyPacket(req);
+    EXPECT_FALSE(req->inClass("guard"));
+
+    // Get the DHCPACK.
+    Pkt4Ptr ack = srv.processRequest(req);
+    ASSERT_TRUE(ack);
+    checkResponse(ack, DHCPACK, 1234);
+
+    // An address was offered.
+    EXPECT_FALSE(ack->getYiaddr().isV4Zero());
+
+    // No v6-only-preferred option.
+    EXPECT_FALSE(ack->getOption(DHO_V6_ONLY_PREFERRED));
+}
+
+// Verify that discover requesting v6-only-preferred 0.0.0.0 is offered
+// when the option is configured in the shared network.
+TEST_F(Dhcpv4SrvTest, v6OnlyPreferredDiscoverSharedNetwork) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Recreate subnet.
+    Triplet<uint32_t> unspecified;
+    Triplet<uint32_t> valid_lft(500, 1000, 1500);
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
+                              unspecified,
+                              unspecified,
+                              valid_lft,
+                              subnet_->getID());
+    // Create a shared network.
+    SharedNetwork4Ptr network(new SharedNetwork4("one"));
+    network->add(subnet_);
+    // Add the v6-only-preferred option data.
+    const uint32_t v6only_wait(3600);
+    OptionUint32Ptr v6op_opt(new OptionUint32(Option::V4,
+                                              DHO_V6_ONLY_PREFERRED,
+                                              v6only_wait));
+    network->getCfgOption()->add(v6op_opt, false, false, DHCP4_OPTION_SPACE);
+
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
+    CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks4()->add(network);
+    CfgMgr::instance().commit();
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+    dis->setIface("eth1");
+    dis->setIndex(ETH1_INDEX);
+
+    // Add a PRL with v6-only-preferred.
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_V6_ONLY_PREFERRED);
+    dis->addOption(prl);
+
+    // Get the DHCPOFFER.
+    Pkt4Ptr offer = srv.processDiscover(dis);
+    ASSERT_TRUE(offer);
+    checkResponse(offer, DHCPOFFER, 1234);
+
+    // 0.0.0.0 was offered.
+    EXPECT_TRUE(offer->getYiaddr().isV4Zero());
+
+    // v6-only-preferred option was added.
+    OptionPtr got_opt = offer->getOption(DHO_V6_ONLY_PREFERRED);
+    ASSERT_TRUE(got_opt);
+    OptionUint32Ptr got_v6op_opt =
+        boost::dynamic_pointer_cast<OptionUint32>(got_opt);
+    ASSERT_TRUE(got_v6op_opt);
+    EXPECT_EQ(v6only_wait, got_v6op_opt->getValue());
+}
+
+// Verify that request requesting v6-only-preferred 0.0.0.0 is offered
+// when the option is configured in the shared network.
+TEST_F(Dhcpv4SrvTest, v6OnlyPreferredRequestSharedNetwork) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Recreate subnet.
+    Triplet<uint32_t> unspecified;
+    Triplet<uint32_t> valid_lft(500, 1000, 1500);
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
+                              unspecified,
+                              unspecified,
+                              valid_lft,
+                              subnet_->getID());
+    // Create a shared network.
+    SharedNetwork4Ptr network(new SharedNetwork4("one"));
+    network->add(subnet_);
+    // Add the v6-only-preferred option data.
+    const uint32_t v6only_wait(3600);
+    OptionUint32Ptr v6op_opt(new OptionUint32(Option::V4,
+                                              DHO_V6_ONLY_PREFERRED,
+                                              v6only_wait));
+    network->getCfgOption()->add(v6op_opt, false, false, DHCP4_OPTION_SPACE);
+
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
+    CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks4()->add(network);
+    CfgMgr::instance().commit();
+
+    Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
+    req->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    req->addOption(clientid);
+    req->setIface("eth1");
+    req->setIndex(ETH1_INDEX);
+
+    // Add a PRL with v6-only-preferred.
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_V6_ONLY_PREFERRED);
+    req->addOption(prl);
+
+    // Get the DHCPACK.
+    Pkt4Ptr ack = srv.processRequest(req);
+    ASSERT_TRUE(ack);
+    checkResponse(ack, DHCPACK, 1234);
+
+    // 0.0.0.0 was offered.
+    EXPECT_TRUE(ack->getYiaddr().isV4Zero());
+
+    // v6-only-preferred option was added.
+    OptionPtr got_opt = ack->getOption(DHO_V6_ONLY_PREFERRED);
+    ASSERT_TRUE(got_opt);
+    OptionUint32Ptr got_v6op_opt =
+        boost::dynamic_pointer_cast<OptionUint32>(got_opt);
+    ASSERT_TRUE(got_v6op_opt);
+    EXPECT_EQ(v6only_wait, got_v6op_opt->getValue());
+}
+
+// Verify that discover requesting v6-only-preferred 0.0.0.0 is not offered
+// when the option is configured in a pool (i.e. either the pool is used
+// to assign the address or the pool is not used to add options).
+TEST_F(Dhcpv4SrvTest, noV6OnlyPreferredDiscoverPool) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Recreate subnet with a pool.
+    Triplet<uint32_t> unspecified;
+    Triplet<uint32_t> valid_lft(500, 1000, 1500);
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
+                              unspecified,
+                              unspecified,
+                              valid_lft,
+                              subnet_->getID());
+
+    pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"),
+                               IOAddress("192.0.2.110")));
+    subnet_->addPool(pool_);
+
+    // Add the v6-only-preferred option data.
+    const uint32_t v6only_wait(3600);
+    OptionUint32Ptr v6op_opt(new OptionUint32(Option::V4,
+                                              DHO_V6_ONLY_PREFERRED,
+                                              v6only_wait));
+    pool_->getCfgOption()->add(v6op_opt, false, false, DHCP4_OPTION_SPACE);
+
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
+    CfgMgr::instance().commit();
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+    dis->setIface("eth1");
+    dis->setIndex(ETH1_INDEX);
+
+    // Add a PRL with v6-only-preferred.
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_V6_ONLY_PREFERRED);
+    dis->addOption(prl);
+
+    // Get the DHCPOFFER.
+    Pkt4Ptr offer = srv.processDiscover(dis);
+    ASSERT_TRUE(offer);
+    checkResponse(offer, DHCPOFFER, 1234);
+
+    // Address 192.0.2.100 was offered.
+    EXPECT_EQ("192.0.2.100", offer->getYiaddr().toText());
+
+    // v6-only-preferred option was added because the address is from the pool.
+    OptionPtr got_opt = offer->getOption(DHO_V6_ONLY_PREFERRED);
+    ASSERT_TRUE(got_opt);
+    OptionUint32Ptr got_v6op_opt =
+        boost::dynamic_pointer_cast<OptionUint32>(got_opt);
+    ASSERT_TRUE(got_v6op_opt);
+    EXPECT_EQ(v6only_wait, got_v6op_opt->getValue());
+}
+
+// Verify that request requesting v6-only-preferred 0.0.0.0 is not offered
+// when the option is configured in a pool (i.e. either the pool is used
+// to assign the address or the pool is not used to add options).
+TEST_F(Dhcpv4SrvTest, noV6OnlyPreferredRequestPool) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Recreate subnet with a pool.
+    Triplet<uint32_t> unspecified;
+    Triplet<uint32_t> valid_lft(500, 1000, 1500);
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
+                              unspecified,
+                              unspecified,
+                              valid_lft,
+                              subnet_->getID());
+
+    pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"),
+                               IOAddress("192.0.2.110")));
+    subnet_->addPool(pool_);
+
+    // Add the v6-only-preferred option data.
+    const uint32_t v6only_wait(3600);
+    OptionUint32Ptr v6op_opt(new OptionUint32(Option::V4,
+                                              DHO_V6_ONLY_PREFERRED,
+                                              v6only_wait));
+    pool_->getCfgOption()->add(v6op_opt, false, false, DHCP4_OPTION_SPACE);
+
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
+    CfgMgr::instance().commit();
+
+    Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
+    req->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    req->addOption(clientid);
+    req->setIface("eth1");
+    req->setIndex(ETH1_INDEX);
+
+    // Add a PRL with v6-only-preferred.
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_V6_ONLY_PREFERRED);
+    req->addOption(prl);
+
+    // Get the DHCPACK.
+    Pkt4Ptr ack = srv.processRequest(req);
+    ASSERT_TRUE(ack);
+    checkResponse(ack, DHCPACK, 1234);
+
+    // Address 192.0.2.100 was offered.
+    EXPECT_EQ("192.0.2.100", ack->getYiaddr().toText());
+
+    // v6-only-preferred option was added because the address is from the pool.
+    OptionPtr got_opt = ack->getOption(DHO_V6_ONLY_PREFERRED);
+    ASSERT_TRUE(got_opt);
+    OptionUint32Ptr got_v6op_opt =
+        boost::dynamic_pointer_cast<OptionUint32>(got_opt);
+    ASSERT_TRUE(got_v6op_opt);
+    EXPECT_EQ(v6only_wait, got_v6op_opt->getValue());
+}
+
+// Verify that discover requesting v6-only-preferred 0.0.0.0 is not offered
+// when the option is configured at the global level.
+TEST_F(Dhcpv4SrvTest, noV6OnlyPreferredDiscoverGlobal) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Add the v6-only-preferred option data.
+    const uint32_t v6only_wait(3600);
+    OptionUint32Ptr v6op_opt(new OptionUint32(Option::V4,
+                                              DHO_V6_ONLY_PREFERRED,
+                                              v6only_wait));
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
+    CfgMgr::instance().getStagingCfg()->getCfgOption()->
+        add(v6op_opt, false, false, DHCP4_OPTION_SPACE);
+    CfgMgr::instance().commit();
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+    dis->setIface("eth1");
+    dis->setIndex(ETH1_INDEX);
+
+    // Add a PRL with v6-only-preferred.
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_V6_ONLY_PREFERRED);
+    dis->addOption(prl);
+
+    // Get the DHCPOFFER.
+    Pkt4Ptr offer = srv.processDiscover(dis);
+    ASSERT_TRUE(offer);
+    checkResponse(offer, DHCPOFFER, 1234);
+
+    // An address was offered.
+    EXPECT_FALSE(offer->getYiaddr().isV4Zero());
+
+    // v6-only-preferred option was added.
+    OptionPtr got_opt = offer->getOption(DHO_V6_ONLY_PREFERRED);
+    ASSERT_TRUE(got_opt);
+    OptionUint32Ptr got_v6op_opt =
+        boost::dynamic_pointer_cast<OptionUint32>(got_opt);
+    ASSERT_TRUE(got_v6op_opt);
+    EXPECT_EQ(v6only_wait, got_v6op_opt->getValue());
+}
+
+// Verify that request requesting v6-only-preferred 0.0.0.0 is not offered
+// when the option is configured at the global level.
+TEST_F(Dhcpv4SrvTest, noV6OnlyPreferredRequestGlobal) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Add the v6-only-preferred option data.
+    const uint32_t v6only_wait(3600);
+    OptionUint32Ptr v6op_opt(new OptionUint32(Option::V4,
+                                              DHO_V6_ONLY_PREFERRED,
+                                              v6only_wait));
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
+    CfgMgr::instance().getStagingCfg()->getCfgOption()->
+        add(v6op_opt, false, false, DHCP4_OPTION_SPACE);
+    CfgMgr::instance().commit();
+
+    Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
+    req->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    req->addOption(clientid);
+    req->setIface("eth1");
+    req->setIndex(ETH1_INDEX);
+
+    // Add a PRL with v6-only-preferred.
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_V6_ONLY_PREFERRED);
+    req->addOption(prl);
+
+    // Get the DHCPACK.
+    Pkt4Ptr ack = srv.processRequest(req);
+    ASSERT_TRUE(ack);
+    checkResponse(ack, DHCPACK, 1234);
+
+    // An address was offered.
+    EXPECT_FALSE(ack->getYiaddr().isV4Zero());
+
+    // v6-only-preferred option was added.
+    OptionPtr got_opt = ack->getOption(DHO_V6_ONLY_PREFERRED);
+    ASSERT_TRUE(got_opt);
+    OptionUint32Ptr got_v6op_opt =
+        boost::dynamic_pointer_cast<OptionUint32>(got_opt);
+    ASSERT_TRUE(got_v6op_opt);
+    EXPECT_EQ(v6only_wait, got_v6op_opt->getValue());
+}
+
+// Verify that when discover requesting v6-only-preferred 0.0.0.0 is offered
+// but the option is not added to the response is an error case.
+TEST_F(Dhcpv4SrvTest, v6OnlyPreferredDiscoverError) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Recreate subnet.
+    Triplet<uint32_t> unspecified;
+    Triplet<uint32_t> valid_lft(500, 1000, 1500);
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
+                              unspecified,
+                              unspecified,
+                              valid_lft,
+                              subnet_->getID());
+    // Add the v6-only-preferred option data.
+    const uint32_t v6only_wait(3600);
+    OptionUint32Ptr v6op_opt(new OptionUint32(Option::V4,
+                                              DHO_V6_ONLY_PREFERRED,
+                                              v6only_wait));
+    subnet_->getCfgOption()->add(v6op_opt, false, false, DHCP4_OPTION_SPACE);
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
+    // Cancel the v6-only-preferred option at the global level.
+    CfgMgr::instance().getStagingCfg()->getCfgOption()->
+        add(v6op_opt, false, true, DHCP4_OPTION_SPACE);
+    CfgMgr::instance().commit();
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+    dis->setIface("eth1");
+    dis->setIndex(ETH1_INDEX);
+
+    // Add a PRL with v6-only-preferred.
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_V6_ONLY_PREFERRED);
+    dis->addOption(prl);
+
+    // No DHCPOFFER is returned.
+    EXPECT_FALSE(srv.processDiscover(dis));
+}
+
+// Verify that when request requesting v6-only-preferred 0.0.0.0 is offered
+// but the option is not added to the response is an error case.
+TEST_F(Dhcpv4SrvTest, v6OnlyPreferredRequestError) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Recreate subnet.
+    Triplet<uint32_t> unspecified;
+    Triplet<uint32_t> valid_lft(500, 1000, 1500);
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24,
+                              unspecified,
+                              unspecified,
+                              valid_lft,
+                              subnet_->getID());
+    // Add the v6-only-preferred option data.
+    const uint32_t v6only_wait(3600);
+    OptionUint32Ptr v6op_opt(new OptionUint32(Option::V4,
+                                              DHO_V6_ONLY_PREFERRED,
+                                              v6only_wait));
+    subnet_->getCfgOption()->add(v6op_opt, false, false, DHCP4_OPTION_SPACE);
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
+    // Cancel the v6-only-preferred option at the global level.
+    CfgMgr::instance().getStagingCfg()->getCfgOption()->
+        add(v6op_opt, false, true, DHCP4_OPTION_SPACE);
+    CfgMgr::instance().commit();
+
+    Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
+    req->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    req->addOption(clientid);
+    req->setIface("eth1");
+    req->setIndex(ETH1_INDEX);
+
+    // Add a PRL with v6-only-preferred.
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_V6_ONLY_PREFERRED);
+    req->addOption(prl);
+
+    // No DHCPACK is returned.
+    EXPECT_FALSE(srv.processRequest(req));
+}
+
+/// @brief Test fixture for recoverStashedAgentOption.
+class StashAgentOptionTest : public Dhcpv4SrvTest {
+public:
+    /// @brief Constructor.
+    StashAgentOptionTest() : addr_("192.0.1.2") {
+        query_.reset(new Pkt4(DHCPREQUEST, 1234));
+        query_->addOption(generateClientId());
+        hwaddr_ = generateHWAddr();
+        query_->setHWAddr(hwaddr_);
+        query_->setCiaddr(addr_);
+
+        rai_.reset(new OptionCustom(LibDHCP::DHO_DHCP_AGENT_OPTIONS_DEF(),
+                                    Option::V4));
+        rai_sub_.reset(new Option(Option::V4, RAI_OPTION_LINK_SELECTION,
+                                  addr_.toBytes()));
+        rai_->addOption(rai_sub_);
+
+        lease_.reset(new Lease4(addr_, hwaddr_, client_id_, 100, time(0), 1));
+        user_context_ = Element::createMap();
+        lease_->setContext(user_context_);
+        isc_ = Element::createMap();
+        user_context_->set("ISC", isc_);
+        relay_agent_info_ = Element::createMap();
+        isc_->set("relay-agent-info", relay_agent_info_);
+        sub_options_ = Element::create(rai_->toHexString());
+        relay_agent_info_->set("sub-options", sub_options_);
+
+        LeaseMgrFactory::destroy();
+        LeaseMgrFactory::create("type=memfile persist=false universe=4");
+
+        CfgMgr::instance().clear();
+        CfgMgr::instance().getStagingCfg()->
+            addConfiguredGlobal("stash-agent-options", Element::create(true));
+    }
+
+    /// @brief Destructor.
+    virtual ~StashAgentOptionTest() {
+        CfgMgr::instance().clear();
+        LeaseMgrFactory::destroy();
+    }
+
+    /// @brief Client address.
+    IOAddress addr_;
+
+    /// @brief Query.
+    Pkt4Ptr query_;
+
+    /// @brief Hardware address.
+    HWAddrPtr hwaddr_;
+
+    /// @brief RAI option.
+    OptionPtr rai_;
+
+    /// @brief RAI suboption.
+    OptionPtr rai_sub_;
+
+    /// @brief Lease.
+    Lease4Ptr lease_;
+
+    /// @brief Lease user context.
+    ElementPtr user_context_;
+
+    /// @brief ISC map.
+    ElementPtr isc_;
+
+    /// @brief Relay agent info (map or string).
+    ElementPtr relay_agent_info_;
+
+    /// @brief Sub-options i.e. RAI content (hexstring).
+    ElementPtr sub_options_;
+};
+
+// Verify the basic positive case.
+TEST_F(StashAgentOptionTest, basic) {
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    ASSERT_TRUE(rai_query);
+    EXPECT_EQ(rai_query->toHexString(true), rai_->toHexString(true));
+    EXPECT_TRUE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that the client id has priority i.e. when the client id
+// is present the hardware address is ignored.
+TEST_F(StashAgentOptionTest, clientId) {
+    // Change the hardware address.
+    auto hwaddr2 = generateHWAddr(8);
+    ASSERT_NE(hwaddr_, hwaddr2);
+    query_->setHWAddr(hwaddr2);
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    ASSERT_TRUE(rai_query);
+    EXPECT_EQ(rai_query->toHexString(true), rai_->toHexString(true));
+    EXPECT_TRUE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that the hardware address is used when there is no client id.
+TEST_F(StashAgentOptionTest, hardwareAddress) {
+    // No longer use the client id.
+    query_->delOption(DHO_DHCP_CLIENT_IDENTIFIER);
+    lease_.reset(new Lease4(addr_, hwaddr_, ClientIdPtr(), 100, time(0), 1));
+    lease_->setContext(user_context_);
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    ASSERT_TRUE(rai_query);
+    EXPECT_EQ(rai_query->toHexString(true), rai_->toHexString(true));
+    EXPECT_TRUE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that old extended info format is supported.
+TEST_F(StashAgentOptionTest, oldExtendedInfo) {
+    // Use the old extended info format.
+    isc_->set("relay-agent-info", sub_options_);
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    ASSERT_TRUE(rai_query);
+    EXPECT_EQ(rai_query->toHexString(true), rai_->toHexString(true));
+    EXPECT_TRUE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that empty RAI is supported.
+TEST_F(StashAgentOptionTest, emptyRelayAgentInfo) {
+    // Add an empty RAI.
+    OptionPtr empty_rai(new OptionCustom(LibDHCP::DHO_DHCP_AGENT_OPTIONS_DEF(),
+                                         Option::V4));
+    query_->addOption(empty_rai);
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    ASSERT_TRUE(rai_query);
+    EXPECT_FALSE(rai_query->getOptions().empty());
+    EXPECT_EQ(rai_query->toHexString(true), rai_->toHexString(true));
+    EXPECT_TRUE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that the client address must be not zero.
+TEST_F(StashAgentOptionTest, clientAddress) {
+    // Set the client address to 0.0.0.0.
+    query_->setCiaddr(IOAddress::IPV4_ZERO_ADDRESS());
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    EXPECT_FALSE(rai_query);
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that the gateway address must be zero.
+TEST_F(StashAgentOptionTest, gatewayAddress) {
+    // Set the gateway address to not zero.
+    query_->setGiaddr(IOAddress("192.0.2.1"));
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    EXPECT_FALSE(rai_query);
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+
+    // Even broadcast is not accepted.
+    query_->setGiaddr(IOAddress::IPV4_BCAST_ADDRESS());
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    EXPECT_FALSE(rai_query);
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that the stash-agent-options is required.
+TEST_F(StashAgentOptionTest, stashAgentOption) {
+    // Not commit the config.
+
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    EXPECT_FALSE(rai_query);
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that the message type must be DHCPREQUEST.
+TEST_F(StashAgentOptionTest, request) {
+    // Build a DISCOVER query.
+    query_.reset(new Pkt4(DHCPDISCOVER, 1234));
+    query_->addOption(generateClientId());
+    hwaddr_ = generateHWAddr();
+    query_->setHWAddr(hwaddr_);
+    query_->setCiaddr(addr_);
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    EXPECT_FALSE(rai_query);
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that if there is a not empty RAI it will fail.
+TEST_F(StashAgentOptionTest, notEmptyRelayAgentInfo) {
+    // Add a not empty RAI.
+    query_->addOption(rai_);
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that if the query is already in STASH_AGENT_OPTIONS it will fail.
+TEST_F(StashAgentOptionTest, inClass) {
+    // Add the STASH_AGENT_OPTIONS class.
+    query_->addClass("STASH_AGENT_OPTIONS");
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    EXPECT_FALSE(rai_query);
+    EXPECT_TRUE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that the lease is required.
+TEST_F(StashAgentOptionTest, lease) {
+    CfgMgr::instance().commit();
+    // Not add the lease.
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    EXPECT_FALSE(rai_query);
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that if the lease is expired it will fail.
+TEST_F(StashAgentOptionTest, expired) {
+    // Expired the lease.
+    lease_.reset(new Lease4(addr_, hwaddr_, client_id_, 100,
+                            time(0) - 1000, 1));
+    lease_->setContext(user_context_);
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    EXPECT_FALSE(rai_query);
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that the lease user context is required.
+TEST_F(StashAgentOptionTest, userContext) {
+    // Remove lease user context.
+    lease_->setContext(ElementPtr());
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    EXPECT_FALSE(rai_query);
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that the lease user context must be a map.
+// getLeaseClientClasses throws BadValue on addLease.
+
+// Verify that the ISC entry in the lease user context is required.
+TEST_F(StashAgentOptionTest, iscEntry) {
+    // Remove the isc entry.
+    user_context_ = Element::createMap();
+    user_context_->set("foo", Element::create("bar"));
+    lease_->setContext(user_context_);
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    EXPECT_FALSE(rai_query);
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that the ISC entry in the lease user context must be a map.
+// getLeaseClientClasses throws BadValue on addLease.
+
+// Verify that the relay-agent-info entry is required.
+TEST_F(StashAgentOptionTest, relayAgentInfoEntry) {
+    // Remove the relay-agent-info entry.
+    isc_ = Element::createMap();
+    isc_->set("foo", Element::create("bar"));
+    user_context_->set("ISC", isc_);
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    EXPECT_FALSE(rai_query);
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that the relay-agent-info entry must be a map or a string.
+TEST_F(StashAgentOptionTest, badRelayAgentInfoEntry) {
+    // Set the relay-agent-info entry to a boolean.
+    relay_agent_info_ = Element::create(true);
+    isc_->set("relay-agent-info", relay_agent_info_);
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    EXPECT_FALSE(rai_query);
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that the sub-options entry is required in new extended info format.
+TEST_F(StashAgentOptionTest, subOptionsEntry) {
+    // Remove the sub-options entry.
+    relay_agent_info_ = Element::createMap();
+    relay_agent_info_->set("foo", Element::create("bar"));
+    isc_->set("relay-agent-info", relay_agent_info_);
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    EXPECT_FALSE(rai_query);
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that the sub-options entry must be a string.
+TEST_F(StashAgentOptionTest, badSubOptionsEntry) {
+    // Set the sub-options entry to a boolean.
+    sub_options_ = Element::create(true);
+    relay_agent_info_->set("sub-options", sub_options_);
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    EXPECT_FALSE(rai_query);
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that the sub-options entry must be not empty.
+TEST_F(StashAgentOptionTest, emptySubOptionsEntry) {
+    // Set the sub-options entry to empty.
+    sub_options_ = Element::create("");
+    relay_agent_info_->set("sub-options", sub_options_);
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    EXPECT_FALSE(rai_query);
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that the sub-options entry must be a valid hexstring.
+TEST_F(StashAgentOptionTest, hexString) {
+    // Set the sub-options entry to invalid hexstring.
+    sub_options_ = Element::create("foobar");
+    relay_agent_info_->set("sub-options", sub_options_);
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_THROW(srv_.recoverStashedAgentOption(query_), BadValue);
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that the sub-options entry must be a valid RAI content.
+TEST_F(StashAgentOptionTest, badRelayAgentInfo) {
+    // Set the sub-options entry to truncated RAI content.
+    string content = sub_options_->stringValue();
+    ASSERT_LT(2, content.size());
+    content.resize(content.size() - 2);
+    sub_options_ = Element::create(content);
+    relay_agent_info_->set("sub-options", sub_options_);
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    EXPECT_FALSE(rai_query);
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+
+    // Set the sub-options entry to invalid RAI content.
+    content = rai_->toHexString();
+    // length is in the second octet so patch the third hexdigit.
+    ASSERT_LE(5, content.size());
+    ASSERT_EQ('4', content[5]);
+    content[5] = '3';
+    sub_options_ = Element::create(content);
+    relay_agent_info_->set("sub-options", sub_options_);
+
+    EXPECT_THROW(srv_.recoverStashedAgentOption(query_), OptionParseError);
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that the client id when set must match.
+TEST_F(StashAgentOptionTest, badClientId) {
+    // Use another the client id.
+    query_->delOption(DHO_DHCP_CLIENT_IDENTIFIER);
+    query_->addOption(generateClientId(8));
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    EXPECT_FALSE(rai_query);
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+// Verify that when the client id is not used the hardware address must match.
+TEST_F(StashAgentOptionTest, badHwareAddress) {
+    // No longer use the client id.
+    query_->delOption(DHO_DHCP_CLIENT_IDENTIFIER);
+    lease_.reset(new Lease4(addr_, hwaddr_, ClientIdPtr(), 100, time(0), 1));
+    lease_->setContext(user_context_);
+
+    // Change the hardware address.
+    auto hwaddr2 = generateHWAddr(8);
+    ASSERT_NE(hwaddr_, hwaddr2);
+    query_->setHWAddr(hwaddr2);
+
+    CfgMgr::instance().commit();
+    EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
+
+    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
+    EXPECT_FALSE(rai_query);
+    EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
+}
+
+/// @todo: lease ownership
 
 /// @todo: Implement proper tests for MySQL lease/host database,
 ///        see ticket #4214.

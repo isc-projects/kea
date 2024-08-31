@@ -1,0 +1,38 @@
+              Precedence of Lease Lifetimes and DHCPv4 Fields
+
+                |    _                     _                   _
+                |   / \                   / \                 / \
+Globals         |  |   |                 |   |               |   |
+                |   \_/                   \_/                 \_/
+                |                                              |
+                |    _      _                    _             |
+                |   / \    / \                  / \            |
+Network         |  |   |  |   |                |   |           |
+                |   \_/    \_/                  \_/            |
+                |           |                    |             |
+                |    _      |             _      |             |
+                |   / \     |            / \     |             |
+Subnet          |  |   |    |           |   |    |             |
+                |   \_/     |            \_/     |             |
+                |           |             |      |             |
+                |    _      |      _      |      |      _      |
+                |   / \     |     / \     |      |     / \     |
+Class-N         |  |   |    |    |   |    |      |    |   |    |
+                |   \_/     |     \_/     |      |     \_/     |
+[More classes   |    |      |             |      |      |      |
+in reverse      |    |      |             |      |      |      |
+order of        |    |      |             |      |      |      |
+definition]     |    |      |      _      |      |      |      |
+                |    |      |     / \     |      |      |      |
+Class-1         |    |      |    |   |    |      |      |      |
+                |    |      |     \_/     |      |      |      |
+                |    |      |      |      |      |      |      |
+----------------+----+------+------+------+------+------+------+
+                |    |      |      |      |      |      |      |
+                |    V      V      V      V      V      V      V
+                |    _      _      _      _      _      _      _
+                |   / \    / \    / \    / \    / \    / \    / \
+DHCP Response   |  |   |  |   |  |   |  |   |  |   |  |   |  |   |
+                |   \_/    \_/    \_/    \_/    \_/    \_/    \_/
+
+* This diagram was manually created and does not have a UML source.

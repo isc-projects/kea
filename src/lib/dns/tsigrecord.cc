@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,16 +6,15 @@
 
 #include <config.h>
 
-#include <ostream>
-#include <string>
-
-#include <util/buffer.h>
-
 #include <dns/exceptions.h>
 #include <dns/messagerenderer.h>
 #include <dns/rrclass.h>
 #include <dns/rrttl.h>
 #include <dns/tsigrecord.h>
+#include <util/buffer.h>
+
+#include <ostream>
+#include <string>
 
 using namespace isc::util;
 using namespace isc::dns::rdata;
@@ -43,8 +42,8 @@ TSIGRecord::TSIGRecord(const Name& key_name,
     key_name_(key_name), rdata_(tsig_rdata),
     length_(RR_COMMON_LEN + RDATA_COMMON_LEN + key_name_.getLength() +
             rdata_.getAlgorithm().getLength() +
-            rdata_.getMACSize() + rdata_.getOtherLen())
-{}
+            rdata_.getMACSize() + rdata_.getOtherLen()) {
+}
 
 namespace {
 // This is a straightforward wrapper of dynamic_cast<const any::TSIG&>.
@@ -67,8 +66,7 @@ castToTSIGRdata(const rdata::Rdata& rdata) {
 TSIGRecord::TSIGRecord(const Name& name, const RRClass& rrclass,
                        const RRTTL& ttl, const rdata::Rdata& rdata,
                        size_t length) :
-    key_name_(name), rdata_(castToTSIGRdata(rdata)), length_(length)
-{
+    key_name_(name), rdata_(castToTSIGRdata(rdata)), length_(length) {
     if (rrclass != getClass()) {
         isc_throw(DNSMessageFORMERR, "Unexpected TSIG RR class: " << rrclass);
     }
@@ -106,7 +104,7 @@ toWireCommon(OUTPUT& output, const rdata::any::TSIG& rdata) {
 }
 }
 
-int
+uint32_t
 TSIGRecord::toWire(AbstractMessageRenderer& renderer) const {
     // If adding the TSIG would exceed the size limit, don't do it.
     if (renderer.getLength() + length_ > renderer.getLengthLimit()) {
@@ -120,7 +118,7 @@ TSIGRecord::toWire(AbstractMessageRenderer& renderer) const {
     return (1);
 }
 
-int
+uint32_t
 TSIGRecord::toWire(OutputBuffer& buffer) const {
     key_name_.toWire(buffer);
     toWireCommon(buffer, rdata_);

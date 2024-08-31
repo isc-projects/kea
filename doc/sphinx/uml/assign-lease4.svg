@@ -1,113 +1,238 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="1372px" preserveAspectRatio="none" style="width:1375px;height:1372px;" version="1.1" viewBox="0 0 1375 1372" width="1375px" zoomAndPan="magnify"><defs><filter height="300%" id="f1hqawhmrx3191" width="300%" x="-1" y="-1"><feGaussianBlur result="blurOut" stdDeviation="2.0"/><feColorMatrix in="blurOut" result="blurOut2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .4 0"/><feOffset dx="4.0" dy="4.0" in="blurOut2" result="blurOut3"/><feBlend in="SourceGraphic" in2="blurOut3" mode="normal"/></filter></defs><g><text fill="#000000" font-family="sans-serif" font-size="18" lengthAdjust="spacingAndGlyphs" textLength="287" x="535" y="17.4023">DHCPv4 Assign Lease (Kea 1.8.0)</text><!--MD5=[96a966798826de6e056b38ba6b9482ca]
-cluster init_reboot--><rect fill="#FFFFFF" filter="url(#f1hqawhmrx3191)" height="374.86" style="stroke: #000000; stroke-width: 1.5;" width="445" x="493" y="442.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="142" x="644.5" y="457.7344">INIT-REBOOT state</text><!--MD5=[71835f3367ed481a89f53801b2fdf617]
-cluster allocated--><rect fill="#FFFFFF" filter="url(#f1hqawhmrx3191)" height="263.36" style="stroke: #000000; stroke-width: 1.5;" width="158" x="7" y="1092.0592"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="110" x="31" y="1107.5944">Lease allocated</text><!--MD5=[b13a83736ea85c18a1991bca4dbe863b]
-entity by_client_id--><rect fill="#FEFECE" filter="url(#f1hqawhmrx3191)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="219" x="517.5" y="547.0592"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="199" x="527.5" y="570.5944">Get existing lease by client id</text><!--MD5=[6b610307314e3774f091112845a2df2b]
-entity by_hw_addr--><rect fill="#FEFECE" filter="url(#f1hqawhmrx3191)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="288" x="626" y="660.0592"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="268" x="636" y="683.5944">Get existing lease by hardware address</text><!--MD5=[ef5397f1455a008291e257fb65cb453b]
-entity authoritative--><rect fill="#FEFECE" filter="url(#f1hqawhmrx3191)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="134" x="528" y="757.0592"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="114" x="538" y="780.5944">Get authoritative</text><!--MD5=[a54398e3d2c0f7657eea7ade058e1e7f]
-entity ddns--><rect fill="#FEFECE" filter="url(#f1hqawhmrx3191)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="110" x="31" y="1198.4192"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="90" x="41" y="1221.9544">update DDNS</text><!--MD5=[8edf83f1bb568d804760d31cec2ffb3b]
-entity ack--><rect fill="#FEFECE" filter="url(#f1hqawhmrx3191)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="87" x="42.5" y="1295.4192"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="67" x="52.5" y="1318.9544">Send ACK</text><!--MD5=[7f6071cca9390999bbf4a53289faea1c]
-entity subnet--><rect fill="#FEFECE" filter="url(#f1hqawhmrx3191)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="114" x="1205" y="28.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="94" x="1215" y="51.7344">Check Subnet</text><path d="M1080,33.6992 L1080,59.0098 A0,0 0 0 0 1080,59.0098 L1170,59.0098 A0,0 0 0 0 1170,59.0098 L1170,51.6992 L1205,46.1992 L1170,43.6992 L1170,43.6992 L1160,33.6992 L1080,33.6992 A0,0 0 0 0 1080,33.6992 " fill="#FBFB77" filter="url(#f1hqawhmrx3191)" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M1160,33.6992 L1160,43.6992 L1170,43.6992 L1160,33.6992 " fill="#FBFB77" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="69" x="1086" y="51.2676">entry point</text><!--MD5=[d9ce3005481b6be8203f0e568049ebfd]
-entity server_id--><rect fill="#FEFECE" filter="url(#f1hqawhmrx3191)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="106" x="1046" y="125.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="86" x="1056" y="148.7344">Get server id</text><!--MD5=[ee598753b08e093ad1dc6a89dd6a274b]
-entity hint--><rect fill="#FEFECE" filter="url(#f1hqawhmrx3191)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="74" x="849" y="222.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="54" x="859" y="245.7344">Get hint</text><!--MD5=[fdc0ebc2726a1e25611a217b1a9cdddd]
-entity ident--><rect fill="#FEFECE" filter="url(#f1hqawhmrx3191)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="258" x="565" y="335.1992"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="238" x="575" y="358.7344">Get hardware address and client id</text><!--MD5=[9b403e692b0a4a2d394ce21b0c8a8b18]
-entity hostname--><rect fill="#FEFECE" filter="url(#f1hqawhmrx3191)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="144" x="276" y="888.0592"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="124" x="286" y="911.5944">Process hostname</text><!--MD5=[c7571992746652353b375880ae850124]
-entity allocate--><rect fill="#FEFECE" filter="url(#f1hqawhmrx3191)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="114" x="204" y="985.0592"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="94" x="214" y="1008.5944">Request lease</text><!--MD5=[18d4eff7c560e0870d2f30d7f8649cf3]
-entity failed--><rect fill="#FEFECE" filter="url(#f1hqawhmrx3191)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="144" x="189" y="1101.4192"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="124" x="199" y="1124.9544">No lease allocated</text><path d="M368,1106.9192 L368,1115.4192 L333.27,1119.4192 L368,1123.4192 L368,1132.2298 A0,0 0 0 0 368,1132.2298 L450,1132.2298 A0,0 0 0 0 450,1132.2298 L450,1116.9192 L440,1106.9192 L368,1106.9192 A0,0 0 0 0 368,1106.9192 " fill="#FBFB77" filter="url(#f1hqawhmrx3191)" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M440,1106.9192 L440,1116.9192 L450,1116.9192 L440,1106.9192 " fill="#FBFB77" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="61" x="374" y="1124.4876">exit point</text><!--MD5=[6dac4c34c80be6dabf811d62e9db4883]
-entity nak--><rect fill="#FEFECE" filter="url(#f1hqawhmrx3191)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="87" x="599.5" y="1198.4192"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="67" x="609.5" y="1221.9544">Send NAK</text><path d="M722,1203.9192 L722,1212.4192 L686.59,1216.4192 L722,1220.4192 L722,1229.2298 A0,0 0 0 0 722,1229.2298 L804,1229.2298 A0,0 0 0 0 804,1229.2298 L804,1213.9192 L794,1203.9192 L722,1203.9192 A0,0 0 0 0 722,1203.9192 " fill="#FBFB77" filter="url(#f1hqawhmrx3191)" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M794,1203.9192 L794,1213.9192 L804,1213.9192 L794,1203.9192 " fill="#FBFB77" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="61" x="728" y="1221.4876">exit point</text><!--MD5=[be0cad0b32609f2a377600c2fd818d08]
-entity no_response--><rect fill="#FEFECE" filter="url(#f1hqawhmrx3191)" height="36.4883" style="stroke: #A80036; stroke-width: 1.5;" width="106" x="1023" y="985.0592"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="86" x="1033" y="1008.5944">No response</text><path d="M1164,990.5592 L1164,999.0592 L1129.16,1003.0592 L1164,1007.0592 L1164,1015.8698 A0,0 0 0 0 1164,1015.8698 L1246,1015.8698 A0,0 0 0 0 1246,1015.8698 L1246,1000.5592 L1236,990.5592 L1164,990.5592 A0,0 0 0 0 1164,990.5592 " fill="#FBFB77" filter="url(#f1hqawhmrx3191)" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M1236,990.5592 L1236,1000.5592 L1246,1000.5592 L1236,990.5592 " fill="#FBFB77" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="61" x="1170" y="1008.1276">exit point</text><!--MD5=[359b6ca0b36d81a4e33a25f71e3b7c61]
-link subnet to server_id--><path d="M1232.48,64.3992 C1204.44,80.7492 1162.31,105.2992 1132.9,122.4392 " fill="none" id="subnet-&gt;server_id" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="1128.3,125.1192,1138.0915,124.0576,1132.6235,122.6079,1134.0733,117.1399,1128.3,125.1192" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[7db9f4f0423b43d622896ef15525c632]
-link subnet to nak--><path d="M1273.1,64.2792 C1284,82.7192 1299,113.3492 1299,142.1992 C1299,142.1992 1299,142.1992 1299,1120.4192 C1299,1186.7792 768.46,1163.0292 705,1182.4192 C694.58,1185.5992 683.88,1190.5892 674.36,1195.7292 " fill="none" id="subnet-&gt;nak" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="669.79,1198.2492,679.6021,1197.3996,674.1668,1195.8319,675.7345,1190.3966,669.79,1198.2492" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="63" x="1300" y="626.6276">no subnet</text><!--MD5=[a38dfb09b1bcb8b95a969df0005f111d]
-link server_id to hint--><path d="M1060.43,161.3992 C1022.99,178.0992 966.32,203.3692 927.82,220.5492 " fill="none" id="server_id-&gt;hint" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="923.21,222.5992,933.0589,222.5935,927.7779,220.5659,929.8055,215.2849,923.21,222.5992" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[34fbc802059013c2537c0989625530bb]
-link hint to ident--><path d="M848.75,241.0892 C774.38,241.7392 611.66,247.8692 577,288.1992 C559.81,308.1992 581.08,323.0792 609.99,333.4192 " fill="none" id="hint-&gt;ident" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="615.08,335.1692,607.8731,328.4565,610.3525,333.541,605.268,336.0204,615.08,335.1692" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="186" x="578" y="301.7676">use requested address option</text><!--MD5=[34fbc802059013c2537c0989625530bb]
-link hint to ident--><path d="M856.42,258.2992 C821.75,278.3392 764.41,311.4992 727.95,332.5692 " fill="none" id="hint-&gt;ident-1" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="723.61,335.0792,733.4041,334.0418,727.9397,332.5785,729.403,327.1142,723.61,335.0792" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="114" x="802" y="301.7676">use client address</text><!--MD5=[34fbc802059013c2537c0989625530bb]
-link hint to ident--><path d="M908.07,258.3492 C922.64,271.7392 937.02,290.4892 925,305.1992 C911.63,321.5592 871.46,332.3692 828.28,339.4492 " fill="none" id="hint-&gt;ident-2" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="823.28,340.2492,832.7964,342.7867,828.218,339.4643,831.5404,334.8859,823.28,340.2492" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="45" x="930" y="301.7676">no hint</text><!--MD5=[65f067d78ef63afdf91771d9a656ad03]
-link ident to init_reboot--><path d="M694,371.5692 C694,387.3142 694,411.0567 694,431.1092 C694,433.6158 694,436.0647 694,438.4331 C694,439.6173 694,440.7814 694,441.9225 " fill="none" id="ident-&gt;init_reboot" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="694,441.9225,698,432.9225,694,436.9225,690,432.9225,694,441.9225" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="220" x="695" y="414.7676">requested address and no server id</text><!--MD5=[14830c65b2a034d88d53d1ea466689d7]
-link ident to hostname--><path d="M571.53,371.2492 C471.99,388.6592 348,420.0792 348,468.5592 C348,468.5592 348,468.5592 348,776.0592 C348,813.4892 348,857.0192 348,882.7392 " fill="none" id="ident-&gt;hostname" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="348,887.9492,352,878.9492,348,882.9492,344,878.9492,348,887.9492" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[f67bf50fbab8c942c3b4d7a43dc78f8a]
-link init_reboot to by_client_id--><path d="M693.95,470.1292 C692.56,472.0792 661.57,515.5492 642.25,542.6592 " fill="none" id="init_reboot-&gt;by_client_id" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="639.25,546.8692,647.7294,541.8593,642.1508,542.7967,641.2134,537.218,639.25,546.8692" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="88" x="673" y="513.6276">has a client id</text><!--MD5=[e73d6babdacfd6f192eca91886274ed0]
-link init_reboot to by_hw_addr--><path d="M694.16,470.0592 C697.44,470.0892 750.21,470.9692 770,500.0592 C802.04,547.1592 787.68,618.8592 777.31,654.8392 " fill="none" id="init_reboot-&gt;by_hw_addr" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="775.82,659.8792,782.2006,652.3767,777.2331,655.0831,774.5268,650.1156,775.82,659.8792" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="71" x="790" y="570.1276">no client id</text><!--MD5=[0bee13a6f2540e80d374adb5c9fde696]
-link by_client_id to authoritative--><path d="M612.69,583.0592 C598.68,600.9192 578.27,630.4692 570,660.0592 C561.14,691.7592 573.59,729.1292 583.87,752.2092 " fill="none" id="by_client_id-&gt;authoritative" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="586.03,756.9092,585.9217,747.061,583.9492,752.3628,578.6474,750.3903,586.03,756.9092" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="37" x="571" y="683.1276">found</text><!--MD5=[81a28d33e53a361ab0f9b1ac80511604]
-link by_client_id to by_hw_addr--><path d="M622.24,583.2592 C619.47,597.2192 618.2,616.7092 628,630.0592 C636.84,642.0992 648.87,651.0992 662.21,657.8192 " fill="none" id="by_client_id-&gt;by_hw_addr" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="666.79,660.0092,660.4134,652.5033,662.2842,657.8419,656.9456,659.7126,666.79,660.0092" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="62" x="629" y="626.6276">not found</text><!--MD5=[996213fdf844dcf095df5ccc9b89cdbf]
-link by_hw_addr to authoritative--><path d="M738.31,696.2592 C708.08,712.6692 662.6,737.3592 631.01,754.5092 " fill="none" id="by_hw_addr-&gt;authoritative" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="626.46,756.9792,636.2784,756.2057,630.8555,754.596,632.4652,749.173,626.46,756.9792" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[cc7ba6fbd1fdcf375abf61565bb8cbda]
-link authoritative to no_response--><path d="M662.09,791.8592 C705.06,803.0892 761.47,819.8992 809,841.0592 C901.17,882.0792 1000.65,948.7092 1047.95,981.9092 " fill="none" id="authoritative-&gt;no_response" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="1052.08,984.8292,1047.0166,976.3816,1047.9892,981.9542,1042.4166,982.9269,1052.08,984.8292" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="233" x="960" y="911.1276">not authoritative and no owned lease</text><!--MD5=[f287a43fa002547e84e3e2517c1b3af8]
-link authoritative to nak--><path d="M662.08,792.5792 C716.07,810.3592 783,844.5992 783,905.0592 C783,905.0592 783,905.0592 783,1120.4192 C783,1133.0992 719.28,1171.9092 677.82,1195.8192 " fill="none" id="authoritative-&gt;nak" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="673.38,1198.3692,683.178,1197.37,677.7195,1195.8855,679.204,1190.4269,673.38,1198.3692" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="203" x="784" y="1008.1276">owned lease with hint mismatch</text><!--MD5=[f287a43fa002547e84e3e2517c1b3af8]
-link authoritative to nak--><path d="M571.78,793.3292 C544.53,815.7792 503,857.7492 503,905.0592 C503,905.0592 503,905.0592 503,1120.4192 C503,1165.8592 554.13,1191.0792 594.59,1203.9092 " fill="none" id="authoritative-&gt;nak-1" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="599.47,1205.4192,592.043,1198.9509,594.6908,1203.9498,589.6919,1206.5976,599.47,1205.4192" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="208" x="504" y="1008.1276">authoritative and no owned lease</text><!--MD5=[b7c0267f2f455dcd84cdca29c5404c83]
-link authoritative to hostname--><path d="M527.91,789.4292 C489.09,799.3592 440.63,815.6592 403,841.0592 C386.38,852.2692 371.81,869.7892 361.85,883.6592 " fill="none" id="authoritative-&gt;hostname" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="358.91,887.8392,367.3694,882.7956,361.7945,883.7552,360.8349,878.1803,358.91,887.8392" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="72" x="404" y="854.6276">other cases</text><!--MD5=[986a8f86ec6d7417d34c7fd351c484dc]
-link hostname to allocate--><path d="M332.04,924.4792 C317.45,940.4192 295.83,964.0292 280.28,981.0092 " fill="none" id="hostname-&gt;allocate" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="276.86,984.7492,285.886,980.8082,280.2347,981.0599,279.9831,975.4086,276.86,984.7492" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[c34dad786bb94ff8f8cc439f61a5c35f]
-link allocate to allocated--><path d="M212.16,1021.1492 C194.16,1028.7392 174.22,1038.7792 158,1051.0592 C150.43,1056.7942 143.1831,1063.7023 136.5469,1070.8789 C133.2288,1074.4672 130.0633,1078.1226 127.0864,1081.732 C125.598,1083.5367 124.1567,1085.3299 122.767,1087.0975 C122.0722,1087.9813 121.3903,1088.8587 120.7219,1089.7279 C120.3876,1090.1625 120.0568,1090.595 119.7294,1091.0253 C119.5657,1091.2405 119.4028,1091.4551 119.2408,1091.6691 C119.1598,1091.7761 119.0791,1091.8829 118.9985,1091.9896 " fill="none" id="allocate-&gt;allocated" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="118.9985,1091.9896,127.6138,1087.2171,122.0113,1087.9992,121.2292,1082.3967,118.9985,1091.9896" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="93" x="159" y="1064.6276">lease allocated</text><!--MD5=[539a3348c1089415ce435c139bd22f41]
-link allocated to ddns--><path d="M100.99,1120.4892 C100.68,1122.4392 93.91,1165.3192 89.58,1192.7692 " fill="none" id="allocated-&gt;ddns" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="88.74,1198.0392,94.1033,1189.7788,89.5249,1193.1012,86.2025,1188.5229,88.74,1198.0392" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[6d51d97a60fea492264b409c209ca1ef]
-link ddns to ack--><path d="M86,1234.8392 C86,1250.3792 86,1273.1992 86,1290.0792 " fill="none" id="ddns-&gt;ack" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="86,1295.1092,90,1286.1092,86,1290.1092,82,1286.1092,86,1295.1092" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[dd12c52c80378d18331ab530a0ed76ab]
-link allocate to failed--><path d="M261,1021.4292 C261,1041.4392 261,1074.3792 261,1096.2292 " fill="none" id="allocate-&gt;failed" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="261,1101.2592,265,1092.2592,261,1096.2592,257,1092.2592,261,1101.2592" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="113" x="262" y="1064.6276">no lease allocated</text><!--MD5=[e8032f725f00abe81d7341b4b6fe8340]
-link failed to nak--><path d="M329.74,1137.5092 C406.04,1156.4892 527.27,1186.6392 594.35,1203.3192 " fill="none" id="failed-&gt;nak" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="599.48,1204.5992,591.7189,1198.5358,594.6293,1203.3865,589.7786,1206.297,599.48,1204.5992" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[0f73f9f94dec6643990f2b1b148176bd]
-@startuml
-
-title DHCPv4 Assign Lease (Kea 1.8.0)
-
-agent "Check Subnet" as subnet
-note left : entry point
-
-agent "Get server id" as server_id
-
-agent "Get hint" as hint
-
-agent "Get hardware address and client id" as ident
-
-rectangle "INIT-REBOOT state" as init_reboot {
- agent "Get existing lease by client id" as by_client_id
-
- agent "Get existing lease by hardware address" as by_hw_addr
-
- agent "Get authoritative" as authoritative
-}
-
-agent "Process hostname" as hostname
-
-agent "Request lease" as allocate
-
-rectangle "Lease allocated" as allocated {
- agent "update DDNS" as ddns
- agent "Send ACK" as ack
-}
-
-agent "No lease allocated" as failed
-note right : exit point
-
-agent "Send NAK" as nak
-note right : exit point
-
-agent "No response" as no_response
-note right : exit point
-
-subnet - -> server_id
-subnet - - -> nak : no subnet
-server_id - -> hint
-hint - -> ident : use requested address option
-hint - -> ident : use client address
-hint - -> ident : no hint
-ident - -> init_reboot : requested address and no server id
-ident - - -> hostname
-init_reboot - -> by_client_id : has a client id
-init_reboot - -> by_hw_addr : no client id
-by_client_id - - -> authoritative : found
-by_client_id - -> by_hw_addr : not found
-by_hw_addr - -> authoritative
-authoritative - - -> no_response : not authoritative and no owned lease
-authoritative - -> nak : owned lease with hint mismatch
-authoritative - -> nak : authoritative and no owned lease
-authoritative - -> hostname : other cases
-hostname - -> allocate
-allocate - -> allocated : lease allocated
-allocated - -> ddns
-ddns - -> ack
-allocate - -> failed : no lease allocated
-failed - -> nak
-
-@enduml
-
-PlantUML version 1.2020.15(Sun Jun 28 13:39:45 CEST 2020)
-(GPL source distribution)
-Java Runtime: OpenJDK Runtime Environment
-JVM: OpenJDK 64-Bit Server VM
-Default Encoding: UTF-8
-Language: en
-Country: US
---></g></svg>
+<?xml version="1.0" encoding="us-ascii" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentStyleType="text/css" height="1433px" preserveAspectRatio="none" style="width:1340px;height:1433px;background:#FFFFFF;" version="1.1" viewBox="0 0 1340 1433" width="1340px" zoomAndPan="magnify">
+  <defs/>
+  <g>
+    <text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="223" x="551.5" y="24.9659">DHCPv4 Assign Lease (Kea 1.8.0)</text>
+    <!--cluster init_reboot-->
+    <g id="cluster_init_reboot">
+      <rect fill="none" height="391.06" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:1.0;" width="442" x="487" y="477.3379"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="129" x="643.5" y="494.3039">INIT-REBOOT state</text>
+    </g>
+    <!--cluster allocated-->
+    <g id="cluster_allocated">
+      <rect fill="none" height="274.03" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:1.0;" width="160" x="7" y="1153.5379"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="106" x="34" y="1170.5039">Lease allocated</text>
+    </g>
+    <!--entity by_client_id-->
+    <g id="elem_by_client_id">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="217" x="511.5" y="587.1979"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="197" x="521.5" y="612.1639">Get existing lease by client id</text>
+    </g>
+    <!--entity by_hw_addr-->
+    <g id="elem_by_hw_addr">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="286" x="619" y="705.2679"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="266" x="629" y="730.2339">Get existing lease by hardware address</text>
+    </g>
+    <!--entity authoritative-->
+    <g id="elem_authoritative">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="133" x="519.5" y="805.3379"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="113" x="529.5" y="830.3039">Get authoritative</text>
+    </g>
+    <!--entity ddns-->
+    <g id="elem_ddns">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="111" x="31.5" y="1264.4279"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="91" x="41.5" y="1289.3939">update DDNS</text>
+    </g>
+    <!--entity ack-->
+    <g id="elem_ack">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="85" x="44.5" y="1364.4979"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="65" x="54.5" y="1389.4639">Send ACK</text>
+    </g>
+    <!--entity subnet-->
+    <g id="elem_subnet">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="112" x="1177" y="47.0679"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="92" x="1187" y="72.0339">Check Subnet</text>
+    </g>
+    <g id="elem_GMN3">
+      <path d="M1054,52.7479 L1054,80.4539 A0,0 0 0 0 1054,80.4539 L1142,80.4539 A0,0 0 0 0 1142,80.4539 L1142,70.7479 L1176.66,66.5979 L1142,62.7479 L1142,62.7479 L1132,52.7479 L1054,52.7479 A0,0 0 0 0 1054,52.7479 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/>
+      <path d="M1132,52.7479 L1132,62.7479 L1142,62.7479 L1132,52.7479 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="67" x="1060" y="71.6449">entry point</text>
+    </g>
+    <!--entity server_id-->
+    <g id="elem_server_id">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="106" x="1020" y="147.1379"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="86" x="1030" y="172.1039">Get server id</text>
+    </g>
+    <!--entity hint-->
+    <g id="elem_hint">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="74" x="832" y="247.1979"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="54" x="842" y="272.1639">Get hint</text>
+    </g>
+    <!--entity ident-->
+    <g id="elem_ident">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="258" x="556" y="365.2679"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="238" x="566" y="390.2339">Get hardware address and client id</text>
+    </g>
+    <!--entity hostname-->
+    <g id="elem_hostname">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="142" x="277" y="941.3979"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="122" x="287" y="966.3639">Process hostname</text>
+    </g>
+    <!--entity allocate-->
+    <g id="elem_allocate">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="114" x="205" y="1041.4679"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="94" x="215" y="1066.4339">Request lease</text>
+    </g>
+    <!--entity failed-->
+    <g id="elem_failed">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="143" x="190.5" y="1164.3679"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="123" x="200.5" y="1189.3339">No lease allocated</text>
+    </g>
+    <g id="elem_GMN19">
+      <path d="M368,1170.0479 L368,1179.8979 L333.93,1183.8979 L368,1187.8979 L368,1197.7539 A0,0 0 0 0 368,1197.7539 L446,1197.7539 A0,0 0 0 0 446,1197.7539 L446,1180.0479 L436,1170.0479 L368,1170.0479 A0,0 0 0 0 368,1170.0479 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/>
+      <path d="M436,1170.0479 L436,1180.0479 L446,1180.0479 L436,1170.0479 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="57" x="374" y="1188.9449">exit point</text>
+    </g>
+    <!--entity nak-->
+    <g id="elem_nak">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="87" x="591.5" y="1264.4279"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="67" x="601.5" y="1289.3939">Send NAK</text>
+    </g>
+    <g id="elem_GMN23">
+      <path d="M713,1270.1179 L713,1279.9679 L678.88,1283.9679 L713,1287.9679 L713,1297.8239 A0,0 0 0 0 713,1297.8239 L791,1297.8239 A0,0 0 0 0 791,1297.8239 L791,1280.1179 L781,1270.1179 L713,1270.1179 A0,0 0 0 0 713,1270.1179 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/>
+      <path d="M781,1270.1179 L781,1280.1179 L791,1280.1179 L781,1270.1179 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="57" x="719" y="1289.0149">exit point</text>
+    </g>
+    <!--entity no_response-->
+    <g id="elem_no_response">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="105" x="999.5" y="1041.4679"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="85" x="1009.5" y="1066.4339">No response</text>
+    </g>
+    <g id="elem_GMN27">
+      <path d="M1139,1047.1479 L1139,1057.0079 L1104.66,1061.0079 L1139,1065.0079 L1139,1074.8539 A0,0 0 0 0 1139,1074.8539 L1217,1074.8539 A0,0 0 0 0 1217,1074.8539 L1217,1057.1479 L1207,1047.1479 L1139,1047.1479 A0,0 0 0 0 1139,1047.1479 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/>
+      <path d="M1207,1047.1479 L1207,1057.1479 L1217,1057.1479 L1207,1047.1479 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="57" x="1145" y="1066.0449">exit point</text>
+    </g>
+    <!--link subnet to server_id-->
+    <g id="link_subnet_server_id">
+      <path d="M1202.15,86.5079 C1175.67,102.7379 1137.47,126.1579 1109.48,143.3079 " fill="none" id="subnet-to-server_id" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="1105.32,145.8579,1115.0825,144.5568,1109.5807,143.2414,1110.8961,137.7396,1105.32,145.8579" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link subnet to nak-->
+    <g id="link_subnet_nak">
+      <path d="M1244.71,86.3479 C1255.55,105.5279 1270,136.5579 1270,165.6679 C1270,165.6679 1270,165.6679 1270,1184.8979 C1270,1249.0679 757.06,1228.6979 696,1248.4279 C686.6,1251.4679 677.03,1256.0479 668.34,1260.8979 " fill="none" id="subnet-to-nak" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="664.37,1263.1779,674.1655,1262.1545,668.7033,1260.6834,670.1743,1255.2212,664.37,1263.1779" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="61" x="1271" y="671.1649">no subnet</text>
+    </g>
+    <!--link server_id to hint-->
+    <g id="link_server_id_hint">
+      <path d="M1033.67,186.5779 C998.83,203.3279 948.06,227.7279 912.13,245.0079 " fill="none" id="server_id-to-hint" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="907.86,247.0579,917.704,246.7491,912.3631,244.885,914.2273,239.5441,907.86,247.0579" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link hint to ident-->
+    <g id="link_hint_ident">
+      <path d="M831.51,268.0879 C759.25,269.6479 604.9,277.5579 572,316.2679 C555.28,335.9479 575.32,351.4079 602.93,362.5379 " fill="none" id="hint-to-ident" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="607.52,364.3079,600.5673,357.3323,602.8562,362.5054,597.6832,364.7943,607.52,364.3079" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="178" x="573" y="331.1649">use requested address option</text>
+    </g>
+    <!--link hint to ident-->
+    <g id="link_hint_ident">
+      <path d="M839.01,286.6279 C824.77,295.6079 807.5,306.4879 792,316.2679 C768.12,331.3279 741.25,348.2879 720.41,361.4479 " fill="none" id="hint-to-ident-1" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="716.26,364.0679,726.0052,362.6427,720.4871,361.3974,721.7324,355.8793,716.26,364.0679" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="106" x="793" y="331.1649">use client address</text>
+    </g>
+    <!--link hint to ident-->
+    <g id="link_hint_ident">
+      <path d="M890.07,286.6879 C903.34,300.9279 915.9,320.4379 904,335.2679 C892.23,349.9379 858.17,360.4479 820.31,367.8479 " fill="none" id="hint-to-ident-2" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="815.69,368.7279,825.2762,370.9874,820.6031,367.7996,823.7908,363.1265,815.69,368.7279" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="43" x="909" y="331.1649">no hint</text>
+    </g>
+    <!--link ident to init_reboot-->
+    <g id="link_ident_init_reboot">
+      <path d="M685,404.6979 C685,421.4329 685,446.4029 685,467.4479 C685,470.0785 685,472.6478 685,475.1321 C685,475.7531 685,476.3688 685,476.9789 " fill="none" id="ident-to-init_reboot" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="685,476.9789,689,467.9789,685,471.9789,681,467.9789,685,476.9789" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="210" x="686" y="449.2349">requested address and no server id</text>
+    </g>
+    <!--link ident to hostname-->
+    <g id="link_ident_hostname">
+      <path d="M569.5,404.8179 C471.94,424.2579 348,458.4479 348,506.6979 C348,506.6979 348,506.6979 348,825.8679 C348,863.8479 348,907.8779 348,934.8179 " fill="none" id="ident-to-hostname" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="348,939.7679,352,930.7679,348,934.7679,344,930.7679,348,939.7679" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link init_reboot to by_client_id-->
+    <g id="link_init_reboot_by_client_id">
+      <path d="M684.81,508.4779 C682.27,512.2879 654.33,554.2279 635.97,581.7679 " fill="none" id="init_reboot-to-by_client_id" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="633.28,585.8079,641.5922,580.5251,636.0469,581.6433,634.9287,576.098,633.28,585.8079" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="80" x="664" y="553.0949">has a client id</text>
+    </g>
+    <!--link init_reboot to by_hw_addr-->
+    <g id="link_init_reboot_by_hw_addr">
+      <path d="M685.56,508.2379 C691.04,508.6379 735.47,512.6679 753,538.1979 C786.32,586.7179 776.72,660.3479 768.45,698.6579 " fill="none" id="init_reboot-to-by_hw_addr" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="767.37,703.4579,773.2491,695.5563,768.4682,698.58,765.4445,693.7991,767.37,703.4579" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="65" x="777" y="612.1249">no client id</text>
+    </g>
+    <!--link by_client_id to authoritative-->
+    <g id="link_by_client_id_authoritative">
+      <path d="M605.16,626.5679 C591.42,645.2879 571.95,675.4579 564,705.2679 C555.44,737.3479 565.93,775.1879 575.15,799.3479 " fill="none" id="by_client_id-to-authoritative" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="576.89,803.7779,577.2979,793.9375,575.0503,799.1287,569.8591,796.8811,576.89,803.7779" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="36" x="565" y="730.1949">found</text>
+    </g>
+    <!--link by_client_id to by_hw_addr-->
+    <g id="link_by_client_id_by_hw_addr">
+      <path d="M615.57,626.5079 C613.24,641.2079 612.7,661.4279 623,675.2679 C631.4,686.5579 642.62,695.2379 655.06,701.9079 " fill="none" id="by_client_id-to-by_hw_addr" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="659.5,704.1479,653.2585,696.5293,655.0336,701.9004,649.6625,703.6755,659.5,704.1479" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="60" x="624" y="671.1649">not found</text>
+    </g>
+    <!--link by_hw_addr to authoritative-->
+    <g id="link_by_hw_addr_authoritative">
+      <path d="M728.07,744.7079 C698.82,761.0079 656.57,784.5479 625.75,801.7179 " fill="none" id="by_hw_addr-to-authoritative" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="621.45,804.1179,631.26,803.2438,625.8208,801.6897,627.3748,796.2505,621.45,804.1179" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link authoritative to no_response-->
+    <g id="link_authoritative_no_response">
+      <path d="M652.89,841.8779 C695.29,853.2479 750.68,870.3979 797,892.3979 C884.78,934.0979 977.68,1002.0879 1023.3,1037.2879 " fill="none" id="authoritative-to-no_response" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="1027.17,1040.2779,1022.5281,1031.5915,1023.2255,1037.2052,1017.6119,1037.9027,1027.17,1040.2779" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="224" x="944" y="966.3349">not authoritative and no owned lease</text>
+    </g>
+    <!--link authoritative to nak-->
+    <g id="link_authoritative_nak">
+      <path d="M652.79,844.4179 C705.78,863.6879 771,899.6479 771,959.9379 C771,959.9379 771,959.9379 771,1184.8979 C771,1197.1579 712.12,1235.7379 671.85,1260.6979 " fill="none" id="authoritative-to-nak" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="667.83,1263.1779,677.5925,1261.8768,672.0907,1260.5614,673.4061,1255.0596,667.83,1263.1779" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="192" x="772" y="1066.4049">owned lease with hint mismatch</text>
+    </g>
+    <!--link authoritative to nak-->
+    <g id="link_authoritative_nak">
+      <path d="M563.6,844.6979 C537.82,868.6079 499,912.4879 499,959.9379 C499,959.9379 499,959.9379 499,1184.8979 C499,1229.0079 546.66,1255.2679 585.55,1269.3379 " fill="none" id="authoritative-to-nak-1" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="589.79,1270.8279,582.6258,1264.0697,585.0729,1269.1698,579.9728,1271.617,589.79,1270.8279" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="200" x="500" y="1066.4049">authoritative and no owned lease</text>
+    </g>
+    <!--link authoritative to hostname-->
+    <g id="link_authoritative_hostname">
+      <path d="M519.21,840.8179 C482.59,851.2179 437.72,867.7179 403,892.3979 C386.76,903.9479 372.66,921.5079 362.8,935.8279 " fill="none" id="authoritative-to-hostname" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="360.21,939.6879,368.5513,934.4513,363,935.5387,361.9126,929.9873,360.21,939.6879" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="68" x="404" y="907.2949">other cases</text>
+    </g>
+    <!--link hostname to allocate-->
+    <g id="link_hostname_allocate">
+      <path d="M331.42,980.8479 C317.5,996.7179 297.55,1019.4679 282.6,1036.5079 " fill="none" id="hostname-to-allocate" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="279.53,1040.0179,288.4746,1035.8956,282.8296,1036.2612,282.4639,1030.6162,279.53,1040.0179" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link allocate to allocated-->
+    <g id="link_allocate_allocated">
+      <path d="M214.81,1080.8979 C198.19,1088.7379 179.94,1098.7679 165,1110.5379 C156.9975,1116.8404 149.2931,1124.3342 142.2119,1132.0726 C138.6713,1135.9418 135.2864,1139.8722 132.098,1143.7455 C130.5038,1145.6821 128.9586,1147.6044 127.4677,1149.4977 C126.7222,1150.4443 125.9903,1151.3837 125.2726,1152.3139 C125.0931,1152.5465 124.9146,1152.7784 124.7369,1153.0098 C124.6481,1153.1255 124.5595,1153.2411 124.4711,1153.3565 " fill="none" id="allocate-to-allocated" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="124.4711,1153.3565,133.1191,1148.6435,127.5113,1149.3869,126.7678,1143.7792,124.4711,1153.3565" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="87" x="166" y="1125.4349">lease allocated</text>
+    </g>
+    <!--link allocated to ddns-->
+    <g id="link_allocated_ddns">
+      <path d="M103.99,1184.9679 C103.65,1186.9379 96.26,1229.5779 91.34,1257.9479 " fill="none" id="allocated-to-ddns" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="90.52,1262.6279,96.0029,1254.4464,91.3767,1257.7019,88.1212,1253.0756,90.52,1262.6279" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link ddns to ack-->
+    <g id="link_ddns_ack">
+      <path d="M87,1303.8779 C87,1319.2079 87,1340.9479 87,1357.7679 " fill="none" id="ddns-to-ack" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="87,1362.6679,91,1353.6679,87,1357.6679,83,1353.6679,87,1362.6679" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link allocate to failed-->
+    <g id="link_allocate_failed">
+      <path d="M262,1080.8979 C262,1101.5679 262,1134.8079 262,1157.6879 " fill="none" id="allocate-to-failed" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="262,1162.6279,266,1153.6279,262,1157.6279,258,1153.6279,262,1162.6279" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="106" x="263" y="1125.4349">no lease allocated</text>
+    </g>
+    <!--link failed to nak-->
+    <g id="link_failed_nak">
+      <path d="M333.92,1203.8079 C407.65,1223.1879 520.38,1252.8279 584.94,1269.8079 " fill="none" id="failed-to-nak" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="589.57,1271.0179,581.8807,1264.8636,584.7339,1269.7483,579.8493,1272.6014,589.57,1271.0179" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--SRC=[dLF1Rjim3BtxAuYSjaEA3jXXw650bWnRqI4jcju3nM8Y8OwKMNJIODY_Zv8intBI3TZ5iAZt7YdoaJHL2BFlqwV3HvWufpS6Vg1m2EyUKC27cqytj- -BGcpG48oc2iijB9gLGHg1SE32Rs4i8LIu9hW31jOds5jjgEDzGmA7zG5hq38ImscfPOPHJ0hNQiXMefP7KIC8AMjq3eIHK5RQ0rf9BT6JQYn9c0s_QdG_ltyPFt_zylZu0eu4OSGPJSiQLzOI_2gWbmHVjIDjDlmKtu7LQP1XTLh6GAZxxynXmKb07PS-ajD5GyhMcalKXrXa5Yb-Txrugctfdw-i8oDs4PmE7UePVpReA5OJzQhAbjo1h3znqEbAPa3Pwqspbno1sMo-21WfZUik5yYJc4mV8hlSzegTsxOVUOgrq1NAQ9fQRrHmpQkcWMc2y7mIXOtO_fF0wRZJUslQDnkxJEUtkT71C1v_xdco2tAKCpF5sEJr3XKumQZ-4qx1Wenk-Crrd04tCbdMxabRSntT6gs5Nc8uVqWLp-6cP-ExAzdyWlYgqzfrL5zrCanVn5_q7Swgoe_ql0JNuAsVOubdP2OKScQEPlZQDkO2To59PrmANuWLkNISsddshKuEQhjZZuPR5anweP96tyF0KPCAWu2TTZj1fNgJzX_vqbXyKb8yjP9nR8OK3YzFYvn-igWVsc3bYlETHuRTzP_8uttDXE9kncaEXTgxzed57m00]-->
+  </g>
+</svg>

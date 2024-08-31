@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,7 +13,6 @@
 #include <http/url.h>
 #include <http/request.h>
 #include <http/response.h>
-#include <http/http_thread_pool.h>
 #include <boost/shared_ptr.hpp>
 #include <functional>
 #include <string>
@@ -135,6 +134,7 @@ public:
     /// @brief Constructor.
     ///
     /// @param io_service IO service to be used by the HTTP client.
+    /// @param multi_threading_enabled The flag which indicates if MT is enabled.
     /// @param thread_pool_size maximum number of threads in the thread pool.
     /// A value greater than zero enables multi-threaded mode and sets the
     /// maximum number of concurrent connections per URL.  A value of zero
@@ -145,7 +145,9 @@ public:
     /// the thread pool threads will be created and started, with the
     /// operational state being RUNNING.  Applicable only when thread-pool size
     /// is greater than zero.
-    explicit HttpClient(asiolink::IOService& io_service, size_t thread_pool_size = 0,
+    explicit HttpClient(const asiolink::IOServicePtr& io_service,
+                        bool multi_threading_enabled,
+                        size_t thread_pool_size = 0,
                         bool defer_thread_start = false);
 
     /// @brief Destructor.

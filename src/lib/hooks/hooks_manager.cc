@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -31,7 +31,7 @@ HooksManager::HooksManager() : test_mode_(false) {
     // libraries, and get the CalloutManager.
     HookLibsCollection libraries;
     lm_collection_.reset(new LibraryManagerCollection(libraries));
-    lm_collection_->loadLibraries();
+    lm_collection_->loadLibraries(false);
     callout_manager_ = lm_collection_->getCalloutManager();
 }
 
@@ -94,7 +94,8 @@ HooksManager::callCommandHandlers(const std::string& command_name,
 // empty list.
 
 bool
-HooksManager::loadLibrariesInternal(const HookLibsCollection& libraries) {
+HooksManager::loadLibrariesInternal(const HookLibsCollection& libraries,
+                                    bool multi_threading_enabled) {
     if (test_mode_) {
         return (true);
     }
@@ -114,7 +115,7 @@ HooksManager::loadLibrariesInternal(const HookLibsCollection& libraries) {
     }
 
     // Load the libraries.
-    bool status = lm_collection_->loadLibraries();
+    bool status = lm_collection_->loadLibraries(multi_threading_enabled);
 
     if (status) {
         // ... and obtain the callout manager for them if successful.
@@ -129,8 +130,10 @@ HooksManager::loadLibrariesInternal(const HookLibsCollection& libraries) {
 }
 
 bool
-HooksManager::loadLibraries(const HookLibsCollection& libraries) {
-    return (getHooksManager().loadLibrariesInternal(libraries));
+HooksManager::loadLibraries(const HookLibsCollection& libraries,
+                            bool multi_threading_enabled) {
+    return (getHooksManager().loadLibrariesInternal(libraries,
+                                                    multi_threading_enabled));
 }
 
 // Unload the libraries.  This just deletes all internal objects (which will
@@ -162,7 +165,7 @@ HooksManager::unloadLibrariesInternal() {
     }
 
     // Load the empty set of libraries.
-    lm_collection_->loadLibraries();
+    lm_collection_->loadLibraries(false);
 
     // Get the CalloutManager.
     callout_manager_ = lm_collection_->getCalloutManager();
@@ -255,8 +258,10 @@ HooksManager::postCalloutsLibraryHandle() {
 // Validate libraries
 
 std::vector<std::string>
-HooksManager::validateLibraries(const std::vector<std::string>& libraries) {
-    return (LibraryManagerCollection::validateLibraries(libraries));
+HooksManager::validateLibraries(const std::vector<std::string>& libraries,
+                                bool multi_threading_enabled) {
+    return (LibraryManagerCollection::validateLibraries(libraries,
+                                                        multi_threading_enabled));
 }
 
 // Test mode

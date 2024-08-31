@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -39,12 +39,17 @@ using namespace isc::test;
 
 namespace {
 
-/// @brief Class dedicated to testing v4 part of lease_cmds library.
+/// @brief Class dedicated to testing v6 part of lease_cmds library.
 ///
 /// Provides convenience methods for loading, testing all commands and
 /// unloading the lease_cmds library.
 class Lease6CmdsTest : public LeaseCmdsTest {
 public:
+    /// @brief Constructor.
+    Lease6CmdsTest() {
+        setFamily(AF_INET6);
+    }
+
     /// @brief Checks if specified response contains IPv6 lease
     ///
     /// @param lease Element tree that represents a lease
@@ -53,20 +58,20 @@ public:
     /// @param subnet_id expected subnet-id
     /// @param duid expected value of DUID
     /// @param hwaddr_required true if hwaddr is expected
+    /// @param pool_id expected pool-id (if value is 0 the parameter pool-id should not be present)
     void checkLease6(isc::data::ConstElementPtr l, std::string ip,
-                     uint8_t prefixlen,
-                     uint32_t subnet_id, std::string duid,
-                     bool hwaddr_required) {
+                     uint8_t prefixlen, uint32_t subnet_id, std::string duid,
+                     bool hwaddr_required, uint32_t pool_id = 0) {
         ASSERT_TRUE(l);
 
         // If the element is a list we need to retrieve the lease that
         // we're interested in.
         if (l->getType() == isc::data::Element::list) {
             std::vector<isc::data::ElementPtr> e = l->listValue();
-            for (auto it = e.begin(); it != e.end(); ++it) {
-                isc::data::ConstElementPtr ip_address = (*it)->get("ip-address");
+            for (auto const& it : e) {
+                isc::data::ConstElementPtr ip_address = it->get("ip-address");
                 if (ip_address && ip_address->stringValue() == ip) {
-                    l = (*it);
+                    l = it;
                     break;
                 }
             }
@@ -74,17 +79,17 @@ public:
             ASSERT_TRUE(l);
         }
 
-        ASSERT_TRUE(l->contains("ip-address"));
+        ASSERT_TRUE(l->get("ip-address"));
         EXPECT_EQ(ip, l->get("ip-address")->stringValue());
         if (prefixlen != 0) {
             ASSERT_TRUE(l->get("prefix-len"));
             EXPECT_EQ(prefixlen, l->get("prefix-len")->intValue());
         }
 
-        ASSERT_TRUE(l->contains("subnet-id"));
+        ASSERT_TRUE(l->get("subnet-id"));
         EXPECT_EQ(subnet_id, l->get("subnet-id")->intValue());
 
-        ASSERT_TRUE(l->contains("duid"));
+        ASSERT_TRUE(l->get("duid"));
         EXPECT_EQ(duid, l->get("duid")->stringValue());
 
         // hwaddr may or may not appear
@@ -92,7 +97,14 @@ public:
             EXPECT_TRUE(l->get("hwaddr"));
         }
 
-        // Check that there are expected fields
+        if (pool_id) {
+            ASSERT_TRUE(l->get("pool-id"));
+            EXPECT_EQ(pool_id, l->get("pool-id")->intValue());
+        } else {
+            EXPECT_FALSE(l->get("pool-id"));
+        }
+
+        // Check that all expected fields are there.
         ASSERT_TRUE(l->contains("preferred-lft"));
         ASSERT_TRUE(l->contains("valid-lft"));
         ASSERT_TRUE(l->contains("cltt"));
@@ -113,7 +125,7 @@ public:
         EXPECT_EQ(DEC_2030_TIME, l->get("cltt")->intValue());
     }
 
-    /// @brief Check lease4 statistics.
+    /// @brief Check lease6 statistics.
     ///
     /// @param id Subnet id of the stats to check.
     /// @assigned_nas The expected value of assigned nas addresses in subnet.
@@ -147,6 +159,9 @@ public:
     /// @brief Check that a simple, well formed lease6 can be added.
     void testLease6AddDeclinedLeases();
 
+    /// @brief Check that a simple, well formed released lease6 can be added.
+    void testLease6AddReleasedLeases();
+
     /// @brief Check that a lease6 is not added when it already exists.
     void testLease6AddExisting();
 
@@ -179,6 +194,10 @@ public:
     /// @brief Check that a well formed lease6 with a comment can be added.
     void testLease6AddComment();
 
+    /// @brief Check that a well formed lease6 with relay and remote ids
+    /// can be added.
+    void testLease6AddExtendedInfo();
+
     /// @brief Check that lease6-get can handle a situation when the query is
     /// broken (some required parameters are missing).
     void testLease6GetMissingParams();
@@ -196,14 +215,14 @@ public:
     /// @brief Check that lease6-get can return a lease by prefix.
     void testLease6GetByAddrPrefix();
 
-    /// @bfief Check that lease6-get rejects queries by client-id.
+    /// @brief Check that lease6-get rejects queries by client-id.
     void testLease6GetByClientIdInvalidType();
 
     /// @brief Check that lease6-get can handle a situation when the query is
     /// correctly formed, but the lease is not there.
     void testLease6GetByDuidNotFound();
 
-    /// @bfief Check that lease6-get can find a lease by duid.
+    /// @brief Check that lease6-get can find a lease by duid.
     void testLease6GetByDuid();
 
     /// @brief Check that lease6-get-all returns all leases.
@@ -319,6 +338,10 @@ public:
     /// user context.
     void testLease6UpdateComment();
 
+    /// @brief Check that a lease6 can be updated. We're changing hw-address,
+    /// hostname and extended info.
+    void testLease6UpdateExtendedInfo();
+
     /// @brief Check that lease6-del can handle a situation when the query is
     /// broken (some required parameters are missing).
     void testLease6DelMissingParams();
@@ -393,6 +416,10 @@ public:
     /// lease6-bulk-apply.
     void testLease6BulkApplyUpdatesOnly();
 
+    /// @brief This test verifies that it is possible to update leases with
+    /// extended info with the lease6-bulk-apply.
+    void testLease6BulkApplyUpdatesOnlyExtendedInfo();
+
     /// @brief This test verifies that it is possible to only delete leases with
     /// the lease6-bulk-apply.
     void testLease6BulkApplyDeletesOnly();
@@ -447,6 +474,9 @@ public:
 
     /// @brief Verify that v6 lease bulk update handles conflict as expected.
     void testLease6ConflictingBulkApplyAdd();
+
+    /// @brief Check that lease6-write works as expected.
+    void testLease6Write();
 };
 
 void Lease6CmdsTest::testLease6AddMissingParams() {
@@ -463,8 +493,8 @@ void Lease6CmdsTest::testLease6AddMissingParams() {
     string exp_rsp = "missing parameter 'ip-address' (<string>:3:19)";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
-    // Just ip is not enough (subnet-id and duid missing, but subnet-id
-    // can now be figured out by kea)
+    // Just ip is not enough (subnet-id and duid missing, although
+    // subnet-id can now be figured out by Kea code)
     txt =
         "{\n"
         "    \"command\": \"lease6-add\",\n"
@@ -543,7 +573,7 @@ void Lease6CmdsTest::testLease6AddBadParams() {
         "    }\n"
         "}";
     string exp_rsp = "Invalid subnet-id: No IPv6 subnet with subnet-id=123 currently configured.";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     // This time the IP address does not belong to the subnet.
     txt =
@@ -557,7 +587,7 @@ void Lease6CmdsTest::testLease6AddBadParams() {
         "    }\n"
         "}";
     exp_rsp = "The address 3000::3 does not belong to subnet 2001:db8:1::/48, subnet-id=66";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     // v4? You're a time traveler from early 80s or what?
     txt =
@@ -582,11 +612,11 @@ void Lease6CmdsTest::testLease6AddBadParams() {
         "        \"ip-address\": \"2001:db8:1::1\",\n"
         "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
         "        \"iaid\": 1234\n,"
-        "        \"state\": 123\n"
+        "        \"state\": 4\n"
         "    }\n"
         "}";
-    exp_rsp = "Invalid state value: 123, supported values are: 0 (default), 1 "
-        "(declined) and 2 (expired-reclaimed)";
+    exp_rsp = "Invalid state value: 4, supported values are: 0 (default), 1 "
+        "(declined), 2 (expired-reclaimed) and 3 (released)";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
     // Bad user context: not a map.
@@ -661,7 +691,7 @@ void Lease6CmdsTest::testLease6AddBadParams() {
         "    \"command\": \"lease6-add\",\n"
         "    \"arguments\": {"
         "        \"subnet-id\": 66,\n"
-        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"ip-address\": \"2001:db8:1::\",\n"
         "        \"prefix-len\": 48,\n"
         "        \"type\": \"IA_PD\",\n"
         "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
@@ -670,6 +700,22 @@ void Lease6CmdsTest::testLease6AddBadParams() {
         "    }\n"
         "}";
     exp_rsp = "Invalid declined state for PD prefix.";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Invalid prefix len for PD prefix.
+    txt =
+        "{\n"
+        "    \"command\": \"lease6-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"prefix-len\": 48,\n"
+        "        \"type\": \"IA_PD\",\n"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"iaid\": 1234\n"
+        "    }\n"
+        "}";
+    exp_rsp = "Prefix address: 2001:db8:1::1 exceeds prefix/prefix-len pair: 2001:db8:1::/48";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
@@ -702,6 +748,13 @@ void Lease6CmdsTest::testLease6Add() {
     // Now check that the lease is really there.
     Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::3"));
     ASSERT_TRUE(l);
+
+    // Make sure the lease has proper value set.
+    ASSERT_TRUE(l->duid_);
+    EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->duid_->toText());
+    EXPECT_EQ(4, l->valid_lft_); // taken from subnet configuration
+    EXPECT_FALSE(l->fqdn_fwd_);
+    EXPECT_FALSE(l->fqdn_rev_);
     EXPECT_EQ("", l->hostname_);
     EXPECT_FALSE(l->getContext());
 
@@ -742,6 +795,13 @@ void Lease6CmdsTest::testLease6AddDeclinedLeases() {
     // Now check that the lease is really there.
     Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::3"));
     ASSERT_TRUE(l);
+
+    // Make sure the lease has proper value set.
+    ASSERT_TRUE(l->duid_);
+    EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->duid_->toText());
+    EXPECT_EQ(4, l->valid_lft_); // taken from subnet configuration
+    EXPECT_FALSE(l->fqdn_fwd_);
+    EXPECT_FALSE(l->fqdn_rev_);
     EXPECT_EQ("", l->hostname_);
     EXPECT_FALSE(l->getContext());
 
@@ -750,6 +810,53 @@ void Lease6CmdsTest::testLease6AddDeclinedLeases() {
     // by one is ok.
     EXPECT_LE(abs(l->cltt_ - time(NULL)), 1);
     EXPECT_EQ(1, l->state_);
+}
+
+void Lease6CmdsTest::testLease6AddReleasedLeases() {
+    // Initialize lease manager (true = v6, false = don't add leases)
+    initLeaseMgr(true, false);
+
+    checkLease6Stats(66, 0, 0, 0);
+
+    checkLease6Stats(99, 0, 0, 0);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::3\",\n"
+        "        \"state\": 3,\n"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"iaid\": 1234\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "Lease for address 2001:db8:1::3, subnet-id 66 added.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    checkLease6Stats(66, 1, 0, 0);
+
+    checkLease6Stats(99, 0, 0, 0);
+
+    // Now check that the lease is really there.
+    Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::3"));
+    ASSERT_TRUE(l);
+
+    // Make sure the lease has proper value set.
+    ASSERT_TRUE(l->duid_);
+    EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->duid_->toText());
+    EXPECT_EQ(4, l->valid_lft_); // taken from subnet configuration
+    EXPECT_FALSE(l->fqdn_fwd_);
+    EXPECT_FALSE(l->fqdn_rev_);
+    EXPECT_EQ("", l->hostname_);
+    EXPECT_FALSE(l->getContext());
+
+    // Test execution is fast. The cltt should be set to now. In some rare
+    // cases we could have the seconds counter to tick, so having a value off
+    // by one is ok.
+    EXPECT_LE(abs(l->cltt_ - time(NULL)), 1);
+    EXPECT_EQ(3, l->state_);
 }
 
 void Lease6CmdsTest::testLease6AddExisting() {
@@ -772,7 +879,7 @@ void Lease6CmdsTest::testLease6AddExisting() {
         "    }\n"
         "}";
     string exp_rsp = "IPv6 lease already exists.";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     checkLease6Stats(66, 2, 0, 0);
 
@@ -787,7 +894,8 @@ void Lease6CmdsTest::testLease6AddSubnetIdMissing() {
 
     checkLease6Stats(99, 0, 0, 0);
 
-    // Now send the command (without subnet-id)
+    // Now send the command without subnet-id. Kea should select
+    // the subnet id on its own.
     string txt =
         "{\n"
         "    \"command\": \"lease6-add\",\n"
@@ -818,7 +926,8 @@ void Lease6CmdsTest::testLease6AddSubnetIdMissingDeclinedLeases() {
 
     checkLease6Stats(99, 0, 0, 0);
 
-    // Now send the command (without subnet-id)
+    // Now send the command without subnet-id. Kea should select
+    // the subnet id on its own.
     string txt =
         "{\n"
         "    \"command\": \"lease6-add\",\n"
@@ -850,7 +959,8 @@ void Lease6CmdsTest::testLease6AddSubnetIdMissingBadAddr() {
 
     checkLease6Stats(99, 0, 0, 0);
 
-    // Now send the command (without subnet-id)
+    // Now send the command without subnet-id. Kea should select
+    // the subnet id on its own.
     string txt =
         "{\n"
         "    \"command\": \"lease6-add\",\n"
@@ -862,7 +972,7 @@ void Lease6CmdsTest::testLease6AddSubnetIdMissingBadAddr() {
         "}";
     string exp_rsp = "subnet-id not specified and failed to find a subnet for "
                      "address 2001:ffff::1";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     checkLease6Stats(66, 0, 0, 0);
 
@@ -1000,6 +1110,7 @@ void Lease6CmdsTest::testLease6AddFullAddr() {
         "        \"fqdn-fwd\": true,\n"
         "        \"fqdn-rev\": true,\n"
         "        \"hostname\": \"urania.example.org\",\n"
+        "        \"pool-id\": 5,\n"
         "        \"user-context\": { \"foobar\": true }\n"
         "    }\n"
         "}";
@@ -1024,6 +1135,7 @@ void Lease6CmdsTest::testLease6AddFullAddr() {
     EXPECT_EQ(true, l->fqdn_fwd_);
     EXPECT_EQ(true, l->fqdn_rev_);
     EXPECT_EQ("urania.example.org", l->hostname_);
+    EXPECT_EQ(5, l->pool_id_);
     ASSERT_TRUE(l->getContext());
     EXPECT_EQ("{ \"foobar\": true }", l->getContext()->str());
 }
@@ -1059,93 +1171,94 @@ void Lease6CmdsTest::testLease6AddComment() {
     Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::3"));
     ASSERT_TRUE(l);
 
-    // Make sure the lease have proper value set.
+    // Make sure the lease has proper value set.
+    ASSERT_TRUE(l->duid_);
+    EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->duid_->toText());
     ASSERT_TRUE(l->getContext());
     EXPECT_EQ("{ \"comment\": \"a comment\" }", l->getContext()->str());
 }
 
-void Lease6CmdsTest::testLease6GetByAddrNotFound() {
-    // Initialize lease manager (true = v6, true = add leases)
-    initLeaseMgr(true, true);
+void Lease6CmdsTest::testLease6AddExtendedInfo() {
+    // Initialize lease manager (true = v6, false = don't add leases)
+    initLeaseMgr(true, false);
+
+    checkLease6Stats(66, 0, 0, 0);
+
+    checkLease6Stats(99, 0, 0, 0);
+
+    Lease6Collection leases;
+    vector<uint8_t> remote_id = { 1, 2, 3, 4, 5, 6 };
+    leases = lmptr_->getLeases6ByRemoteId(remote_id,
+                                          IOAddress::IPV6_ZERO_ADDRESS(),
+                                          LeasePageSize(10));
+    EXPECT_TRUE(leases.empty());
+    vector<uint8_t> relay_bin(8, 0x64);
+    DuidPtr relay_id(new DUID(relay_bin));
+    leases = lmptr_->getLeases6ByRelayId(*relay_id,
+                                         IOAddress::IPV6_ZERO_ADDRESS(),
+                                         LeasePageSize(10));
+    EXPECT_TRUE(leases.empty());
 
     // Now send the command.
-    string cmd =
+    string txt =
         "{\n"
-        "    \"command\": \"lease6-get\",\n"
+        "    \"command\": \"lease6-add\",\n"
         "    \"arguments\": {"
-        "        \"subnet-id\": 1,\n"
-        "        \"ip-address\": \"2001:db8:1::10\"\n"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"iaid\": 7654321,\n"
+        "        \"duid\": \"88:88:88:88:88:88:88:88\",\n"
+        "        \"hostname\": \"newhostname.example.org\",\n"
+        "        \"user-context\": { \"ISC\": { \"relay-info\": [ {\n"
+        "          \"remote-id\": \"010203040506\",\n"
+        "          \"relay-id\": \"6464646464646464\" } ] } }\n"
         "    }\n"
         "}";
-    string exp_rsp = "Lease not found.";
+    string exp_rsp = "Lease for address 2001:db8:1::1, subnet-id 66 added.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
 
-    // Note the status expected is empty. The query completed correctly,
-    // just didn't found the lease.
-    testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
-}
+    checkLease6Stats(66, 1, 0, 0);
 
-void Lease6CmdsTest::testLease6GetByClientIdInvalidType() {
-    // Initialize lease manager (true = v6, true = add leases)
-    initLeaseMgr(true, true);
+    checkLease6Stats(99, 0, 0, 0);
 
-    // client-id query is allowed in v4 only.
-    string cmd =
-        "{\n"
-        "    \"command\": \"lease6-get\",\n"
-        "    \"arguments\": {"
-        "        \"identifier-type\": \"client-id\","
-        "        \"identifier\": \"01:02:03:04\","
-        "        \"subnet-id\": 44"
-        "    }\n"
-        "}";
-    string exp_rsp = "Query by client-id is not allowed in v6.";
-    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
-}
+    // Now check that the lease is really there.
+    Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"));
+    ASSERT_TRUE(l);
 
-void Lease6CmdsTest::testLease6GetByDuidNotFound() {
-    // Initialize lease manager (true = v6, true = add leases)
-    initLeaseMgr(true, true);
+    // Make sure the lease has proper value set.
+    ASSERT_TRUE(l->duid_);
+    EXPECT_EQ("88:88:88:88:88:88:88:88", l->duid_->toText());
+    EXPECT_EQ("newhostname.example.org", l->hostname_);
+    EXPECT_EQ(7654321, l->iaid_);
 
-    // Now send the command.
-    string cmd =
-        "{\n"
-        "    \"command\": \"lease6-get\",\n"
-        "    \"arguments\": {"
-        "        \"subnet-id\": 1,\n"
-        "        \"identifier-type\": \"duid\","
-        "        \"identifier\": \"00:01:02:03:04:05:06:07\"\n"
-        "    }\n"
-        "}";
-    string exp_rsp = "Lease not found.";
+    // Check the user context / extended info too.
+    ConstElementPtr ctx = l->getContext();
+    ASSERT_TRUE(ctx);
+    string expected = "{ \"ISC\": { \"relay-info\": ";
+    expected += "[ { \"relay-id\": \"6464646464646464\", ";
+    expected += "\"remote-id\": \"010203040506\" } ] } }";
+    EXPECT_EQ(expected, ctx->str());
 
-    // Note the status expected is empty. The query completed correctly,
-    // just didn't found the lease.
-    testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
-}
+    // Check that BLQ tables were updated.
+    leases = lmptr_->getLeases6ByRemoteId(remote_id,
+                                          IOAddress::IPV6_ZERO_ADDRESS(),
+                                          LeasePageSize(10));
+    // The lease must be retrieved from the remote id table.
+    ASSERT_EQ(1, leases.size());
+    Lease6Ptr lx = leases[0];
+    ASSERT_TRUE(lx);
+    EXPECT_EQ(IOAddress("2001:db8:1::1"), lx->addr_);
+    EXPECT_EQ(*l, *lx);
 
-void Lease6CmdsTest::testLease6GetByAddr() {
-    // Initialize lease manager (true = v6, true = add leases)
-    initLeaseMgr(true, true);
-
-    // Now send the command.
-    string cmd =
-        "{\n"
-        "    \"command\": \"lease6-get\",\n"
-        "    \"arguments\": {\n"
-        "        \"ip-address\": \"2001:db8:1::1\"\n"
-        "    }\n"
-        "}";
-    string exp_rsp = "IPv6 lease found.";
-
-    // The status expected is success. The lease should be returned.
-    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
-    ASSERT_TRUE(rsp);
-
-    ConstElementPtr lease = rsp->get("arguments");
-    ASSERT_TRUE(lease);
-
-    // Now check that the lease was indeed returned.
-    checkLease6(lease, "2001:db8:1::1", 0, 66, "42:42:42:42:42:42:42:42", false);
+    // The lease must be retrieved from the relay id table.
+    leases = lmptr_->getLeases6ByRelayId(*relay_id,
+                                         IOAddress::IPV6_ZERO_ADDRESS(),
+                                         LeasePageSize(10));
+    ASSERT_EQ(1, leases.size());
+    lx = leases[0];
+    ASSERT_TRUE(lx);
+    EXPECT_EQ(IOAddress("2001:db8:1::1"), lx->addr_);
+    EXPECT_EQ(*l, *lx);
 }
 
 void Lease6CmdsTest::testLease6GetMissingParams() {
@@ -1249,6 +1362,91 @@ void Lease6CmdsTest::testLease6GetByAddrBadParam() {
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
+void Lease6CmdsTest::testLease6GetByAddrNotFound() {
+    // Initialize lease manager (true = v6, true = add leases)
+    initLeaseMgr(true, true);
+
+    // Invalid
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 1,\n"
+        "        \"ip-address\": \"2001:db8:1::10\"\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "Lease not found.";
+
+    // Note the status expected is empty. The query completed correctly,
+    // just didn't found the lease.
+    testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+}
+
+void Lease6CmdsTest::testLease6GetByClientIdInvalidType() {
+    // Initialize lease manager (true = v6, true = add leases)
+    initLeaseMgr(true, true);
+
+    // client-id query is allowed in v4 only.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get\",\n"
+        "    \"arguments\": {"
+        "        \"identifier-type\": \"client-id\","
+        "        \"identifier\": \"01:02:03:04\","
+        "        \"subnet-id\": 44"
+        "    }\n"
+        "}";
+    string exp_rsp = "Query by client-id is not allowed in v6.";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+void Lease6CmdsTest::testLease6GetByDuidNotFound() {
+    // Initialize lease manager (true = v6, true = add leases)
+    initLeaseMgr(true, true);
+
+    // Now send the command.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 1,\n"
+        "        \"identifier-type\": \"duid\","
+        "        \"identifier\": \"00:01:02:03:04:05:06:07\"\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "Lease not found.";
+
+    // Note the status expected is empty. The query completed correctly,
+    // just didn't found the lease.
+    testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+}
+
+void Lease6CmdsTest::testLease6GetByAddr() {
+    // Initialize lease manager (true = v6, true = add leases)
+    initLeaseMgr(true, true);
+
+    // Now send the command.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get\",\n"
+        "    \"arguments\": {\n"
+        "        \"ip-address\": \"2001:db8:1::1\"\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv6 lease found.";
+
+    // The status expected is success. The lease should be returned.
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease parameters were indeed returned.
+    ASSERT_TRUE(rsp);
+
+    ConstElementPtr lease = rsp->get("arguments");
+    ASSERT_TRUE(lease);
+
+    // Now check that the lease was indeed returned.
+    checkLease6(lease, "2001:db8:1::1", 0, 66, "42:42:42:42:42:42:42:42", false);
+}
 void Lease6CmdsTest::testLease6GetByAddrPrefix() {
     // Initialize lease manager (true = v6, false = don't add leases)
     initLeaseMgr(true, false);
@@ -1274,6 +1472,8 @@ void Lease6CmdsTest::testLease6GetByAddrPrefix() {
 
     // The status expected is success. The lease should be returned.
     ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease parameters were indeed returned.
     ASSERT_TRUE(rsp);
 
     ConstElementPtr lease = rsp->get("arguments");
@@ -1302,6 +1502,8 @@ void Lease6CmdsTest::testLease6GetByDuid() {
 
     // The status expected is success. The lease should be returned.
     ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease parameters were indeed returned.
     ASSERT_TRUE(rsp);
 
     ConstElementPtr lease = rsp->get("arguments");
@@ -1336,7 +1538,7 @@ void Lease6CmdsTest::testLease6GetAll() {
 
     // Let's check if the response contains desired leases.
     checkLease6(leases, "2001:db8:1::1", 0, 66, "42:42:42:42:42:42:42:42", false);
-    checkLease6(leases, "2001:db8:1::2", 0, 66, "56:56:56:56:56:56:56:56", false);
+    checkLease6(leases, "2001:db8:1::2", 0, 66, "56:56:56:56:56:56:56:56", false, 5);
     checkLease6(leases, "2001:db8:2::1", 0, 99, "42:42:42:42:42:42:42:42", false);
     checkLease6(leases, "2001:db8:2::2", 0, 99, "56:56:56:56:56:56:56:56", false);
 }
@@ -1396,7 +1598,7 @@ void Lease6CmdsTest::testLease6GetAllBySubnetId() {
 
     // Let's check if the response contains desired leases.
     checkLease6(leases, "2001:db8:1::1", 0, 66, "42:42:42:42:42:42:42:42", false);
-    checkLease6(leases, "2001:db8:1::2", 0, 66, "56:56:56:56:56:56:56:56", false);
+    checkLease6(leases, "2001:db8:1::2", 0, 66, "56:56:56:56:56:56:56:56", false, 5);
 }
 
 void Lease6CmdsTest::testLease6GetAllBySubnetIdNoLeases() {
@@ -1457,7 +1659,7 @@ void Lease6CmdsTest::testLease6GetAllByMultipleSubnetIds() {
 
     // Let's check if the response contains desired leases.
     checkLease6(leases, "2001:db8:1::1", 0, 66, "42:42:42:42:42:42:42:42", false);
-    checkLease6(leases, "2001:db8:1::2", 0, 66, "56:56:56:56:56:56:56:56", false);
+    checkLease6(leases, "2001:db8:1::2", 0, 66, "56:56:56:56:56:56:56:56", false, 5);
     checkLease6(leases, "2001:db8:2::1", 0, 99, "42:42:42:42:42:42:42:42", false);
     checkLease6(leases, "2001:db8:2::2", 0, 99, "56:56:56:56:56:56:56:56", false);
 }
@@ -1560,7 +1762,7 @@ void Lease6CmdsTest::testLease6GetPaged() {
             EXPECT_EQ(2, page_count->intValue());
 
             // Go over each lease and verify its correctness.
-            for (ConstElementPtr lease : leases->listValue()) {
+            for (auto const& lease : leases->listValue()) {
                 ASSERT_EQ(Element::map, lease->getType());
                 ASSERT_TRUE(lease->contains("ip-address"));
                 ConstElementPtr ip_address = lease->get("ip-address");
@@ -1574,8 +1776,12 @@ void Lease6CmdsTest::testLease6GetPaged() {
                 Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
                                                                            IOAddress(last_address));
                 ASSERT_TRUE(from_mgr);
+                uint32_t pool_id = 0;
+                if (last_address == "2001:db8:1::2") {
+                    pool_id = 5;
+                }
                 checkLease6(leases, last_address, 0, from_mgr->subnet_id_,
-                            from_mgr->duid_->toText(), false);
+                            from_mgr->duid_->toText(), false, pool_id);
             }
 
         } else {
@@ -1872,7 +2078,7 @@ void Lease6CmdsTest::testLease6UpdateMissingParams() {
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
 
-    // Everything missing. What sort of crap is that?
+    // Everything missing. What sort of nonsense is that?
     string txt =
         "{\n"
         "    \"command\": \"lease6-update\",\n"
@@ -1883,7 +2089,7 @@ void Lease6CmdsTest::testLease6UpdateMissingParams() {
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
     // Just ip is not enough (subnet-id and duid missing, although
-    // kea should be able to figure out the subnet-id on its own.
+    // Kea should be able to figure out the subnet-id on its own.
     txt =
         "{\n"
         "    \"command\": \"lease6-update\",\n"
@@ -1961,7 +2167,7 @@ void Lease6CmdsTest::testLease6UpdateBadParams() {
         "    }\n"
         "}";
     string exp_rsp = "Invalid subnet-id: No IPv6 subnet with subnet-id=123 currently configured.";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     // This time the new IP address does not belong to the subnet.
     txt =
@@ -1974,9 +2180,9 @@ void Lease6CmdsTest::testLease6UpdateBadParams() {
         "    }\n"
         "}";
     exp_rsp = "The address 3000::1 does not belong to subnet 2001:db8:1::/48, subnet-id=66";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
-    // Nope, can't do v4 address in v6 lease.
+    // v4? You're a time traveler from early 80s or what?
     txt =
         "{\n"
         "    \"command\": \"lease6-update\",\n"
@@ -2027,7 +2233,7 @@ void Lease6CmdsTest::testLease6UpdateBadParams() {
         "    \"command\": \"lease6-update\",\n"
         "    \"arguments\": {"
         "        \"subnet-id\": 66,\n"
-        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"ip-address\": \"2001:db8:1::\",\n"
         "        \"prefix-len\": 48,\n"
         "        \"type\": \"IA_PD\",\n"
         "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
@@ -2037,6 +2243,52 @@ void Lease6CmdsTest::testLease6UpdateBadParams() {
         "}";
     exp_rsp = "Invalid declined state for PD prefix.";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Invalid prefix len for PD prefix.
+    txt =
+        "{\n"
+        "    \"command\": \"lease6-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"prefix-len\": 48,\n"
+        "        \"type\": \"IA_PD\",\n"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"iaid\": 1234\n"
+        "    }\n"
+        "}";
+    exp_rsp = "Prefix address: 2001:db8:1::1 exceeds prefix/prefix-len pair: 2001:db8:1::/48";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+void Lease6CmdsTest::testLease6UpdateNoLease() {
+    // Initialize lease manager (true = v6, false = don't add leases)
+    initLeaseMgr(true, false);
+
+    checkLease6Stats(66, 0, 0, 0);
+
+    checkLease6Stats(99, 0, 0, 0);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"iaid\": 7654321,\n"
+        "        \"duid\": \"88:88:88:88:88:88:88:88\",\n"
+        "        \"hostname\": \"newhostname.example.org\""
+        "    }\n"
+        "}";
+    string exp_rsp = "failed to update the lease with address 2001:db8:1::1 "
+        "either because the lease has been deleted or it has changed in the "
+        "database, in both cases a retry might succeed";
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
+
+    checkLease6Stats(66, 0, 0, 0);
+
+    checkLease6Stats(99, 0, 0, 0);
 }
 
 void Lease6CmdsTest::testLease6Update() {
@@ -2056,6 +2308,7 @@ void Lease6CmdsTest::testLease6Update() {
         "        \"ip-address\": \"2001:db8:1::1\",\n"
         "        \"iaid\": 7654321,\n"
         "        \"duid\": \"88:88:88:88:88:88:88:88\",\n"
+        "        \"pool-id\": 3,\n"
         "        \"hostname\": \"newhostname.example.org\""
         "    }\n"
         "}";
@@ -2073,6 +2326,7 @@ void Lease6CmdsTest::testLease6Update() {
     // Make sure the lease has been updated.
     ASSERT_TRUE(l->duid_);
     EXPECT_EQ("88:88:88:88:88:88:88:88", l->duid_->toText());
+    EXPECT_EQ(3, l->pool_id_);
     EXPECT_EQ("newhostname.example.org", l->hostname_);
     EXPECT_EQ(7654321, l->iaid_);
     EXPECT_FALSE(l->getContext());
@@ -2095,6 +2349,7 @@ void Lease6CmdsTest::testLease6UpdateDeclinedLeases() {
         "        \"ip-address\": \"2001:db8:1::1\",\n"
         "        \"iaid\": 7654321,\n"
         "        \"duid\": \"88:88:88:88:88:88:88:88\",\n"
+        "        \"pool-id\": 3,\n"
         "        \"hostname\": \"newhostname.example.org\""
         "    }\n"
         "}";
@@ -2105,13 +2360,14 @@ void Lease6CmdsTest::testLease6UpdateDeclinedLeases() {
 
     checkLease6Stats(99, 2, 2, 0);
 
-    // Now check that the lease is really there.
+    // Now check that the lease is still there.
     Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"));
     ASSERT_TRUE(l);
 
     // Make sure the lease has been updated.
     ASSERT_TRUE(l->duid_);
     EXPECT_EQ("88:88:88:88:88:88:88:88", l->duid_->toText());
+    EXPECT_EQ(3, l->pool_id_);
     EXPECT_EQ("newhostname.example.org", l->hostname_);
     EXPECT_EQ(7654321, l->iaid_);
     EXPECT_FALSE(l->getContext());
@@ -2143,7 +2399,7 @@ void Lease6CmdsTest::testLease6UpdateNoSubnetId() {
 
     checkLease6Stats(99, 2, 0, 0);
 
-    // Now check that the lease is really there.
+    // Now check that the lease is still there.
     Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"));
     ASSERT_TRUE(l);
 
@@ -2197,81 +2453,6 @@ void Lease6CmdsTest::testLease6UpdateNoSubnetIdDeclinedLeases() {
     EXPECT_EQ("newhostname.example.org", l->hostname_);
     EXPECT_EQ(7654321, l->iaid_);
     EXPECT_FALSE(l->getContext());
-}
-
-void Lease6CmdsTest::testLease6UpdateComment() {
-    // Initialize lease manager (true = v6, true = add leases)
-    initLeaseMgr(true, true);
-
-    checkLease6Stats(66, 2, 0, 0);
-
-    checkLease6Stats(99, 2, 0, 0);
-
-    // Now send the command.
-    string txt =
-        "{\n"
-        "    \"command\": \"lease6-update\",\n"
-        "    \"arguments\": {"
-        "        \"subnet-id\": 66,\n"
-        "        \"ip-address\": \"2001:db8:1::1\",\n"
-        "        \"iaid\": 42,\n"
-        "        \"duid\": \"42:42:42:42:42:42:42:42\",\n"
-        "        \"comment\": \"a comment\",\n"
-        "        \"user-context\": { \"foobar\": true }\n"
-        "    }\n"
-        "}";
-    string exp_rsp = "IPv6 lease updated.";
-    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
-
-    checkLease6Stats(66, 2, 0, 0);
-
-    checkLease6Stats(99, 2, 0, 0);
-
-    // Now check that the lease is really there.
-    Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"));
-    ASSERT_TRUE(l);
-
-    // Make sure the lease has been updated.
-    ASSERT_TRUE(l->duid_);
-
-    // Check user context.
-    ConstElementPtr ctx = l->getContext();
-    ASSERT_TRUE(ctx);
-    EXPECT_EQ(2, ctx->size());
-    ASSERT_TRUE(ctx->contains("comment"));
-    EXPECT_EQ("\"a comment\"", ctx->get("comment")->str());
-    ASSERT_TRUE(ctx->contains("foobar"));
-    EXPECT_EQ("true", ctx->get("foobar")->str());
-}
-
-void Lease6CmdsTest::testLease6UpdateNoLease() {
-    // Initialize lease manager (true = v6, false = don't add leases)
-    initLeaseMgr(true, false);
-
-    checkLease6Stats(66, 0, 0, 0);
-
-    checkLease6Stats(99, 0, 0, 0);
-
-    // Now send the command.
-    string txt =
-        "{\n"
-        "    \"command\": \"lease6-update\",\n"
-        "    \"arguments\": {"
-        "        \"subnet-id\": 66,\n"
-        "        \"ip-address\": \"2001:db8:1::1\",\n"
-        "        \"iaid\": 7654321,\n"
-        "        \"duid\": \"88:88:88:88:88:88:88:88\",\n"
-        "        \"hostname\": \"newhostname.example.org\""
-        "    }\n"
-        "}";
-    string exp_rsp = "failed to update the lease with address 2001:db8:1::1 "
-        "either because the lease has been deleted or it has changed in the "
-        "database, in both cases a retry might succeed";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
-
-    checkLease6Stats(66, 0, 0, 0);
-
-    checkLease6Stats(99, 0, 0, 0);
 }
 
 void Lease6CmdsTest::testLease6UpdateForceCreate() {
@@ -2380,11 +2561,140 @@ void Lease6CmdsTest::testLease6UpdateDoNotForceCreate() {
     string exp_rsp = "failed to update the lease with address 2001:db8:1::1 "
         "either because the lease has been deleted or it has changed in the "
         "database, in both cases a retry might succeed";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     checkLease6Stats(66, 0, 0, 0);
 
     checkLease6Stats(99, 0, 0, 0);
+}
+
+void Lease6CmdsTest::testLease6UpdateComment() {
+    // Initialize lease manager (true = v6, true = add leases)
+    initLeaseMgr(true, true);
+
+    checkLease6Stats(66, 2, 0, 0);
+
+    checkLease6Stats(99, 2, 0, 0);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"iaid\": 42,\n"
+        "        \"duid\": \"42:42:42:42:42:42:42:42\",\n"
+        "        \"comment\": \"a comment\",\n"
+        "        \"user-context\": { \"foobar\": true }\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv6 lease updated.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    checkLease6Stats(66, 2, 0, 0);
+
+    checkLease6Stats(99, 2, 0, 0);
+
+    // Now check that the lease is really there.
+    Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"));
+    ASSERT_TRUE(l);
+
+    // Make sure the lease has been updated.
+    ASSERT_TRUE(l->duid_);
+    EXPECT_EQ("42:42:42:42:42:42:42:42", l->duid_->toText());
+
+    // Check user context.
+    ConstElementPtr ctx = l->getContext();
+    ASSERT_TRUE(ctx);
+    EXPECT_EQ(2, ctx->size());
+    ASSERT_TRUE(ctx->contains("comment"));
+    EXPECT_EQ("\"a comment\"", ctx->get("comment")->str());
+    ASSERT_TRUE(ctx->contains("foobar"));
+    EXPECT_EQ("true", ctx->get("foobar")->str());
+}
+
+void Lease6CmdsTest::testLease6UpdateExtendedInfo() {
+    // Initialize lease manager (true = v6, true = add leases)
+    initLeaseMgr(true, true);
+
+    checkLease6Stats(66, 2, 0, 0);
+
+    checkLease6Stats(99, 2, 0, 0);
+
+    Lease6Collection leases;
+    vector<uint8_t> remote_id = { 1, 2, 3, 4, 5, 6 };
+    leases = lmptr_->getLeases6ByRemoteId(remote_id,
+                                          IOAddress::IPV6_ZERO_ADDRESS(),
+                                          LeasePageSize(10));
+    EXPECT_TRUE(leases.empty());
+    vector<uint8_t> relay_bin(8, 0x64);
+    DuidPtr relay_id(new DUID(relay_bin));
+    leases = lmptr_->getLeases6ByRelayId(*relay_id,
+                                         IOAddress::IPV6_ZERO_ADDRESS(),
+                                         LeasePageSize(10));
+    EXPECT_TRUE(leases.empty());
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"iaid\": 7654321,\n"
+        "        \"duid\": \"88:88:88:88:88:88:88:88\",\n"
+        "        \"hostname\": \"newhostname.example.org\",\n"
+        "        \"user-context\": { \"ISC\": { \"relay-info\": [ {\n"
+        "          \"remote-id\": \"010203040506\",\n"
+        "          \"relay-id\": \"6464646464646464\" } ] } }\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv6 lease updated.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    checkLease6Stats(66, 2, 0, 0);
+
+    checkLease6Stats(99, 2, 0, 0);
+
+    // Now check that the lease is really there.
+    Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"));
+    ASSERT_TRUE(l);
+
+    // Make sure the lease has been updated.
+    ASSERT_TRUE(l->duid_);
+    EXPECT_EQ("88:88:88:88:88:88:88:88", l->duid_->toText());
+    EXPECT_EQ("newhostname.example.org", l->hostname_);
+    EXPECT_EQ(7654321, l->iaid_);
+
+    // Check the user context / extended info too.
+    ConstElementPtr ctx = l->getContext();
+    ASSERT_TRUE(ctx);
+    string expected = "{ \"ISC\": { \"relay-info\": ";
+    expected += "[ { \"relay-id\": \"6464646464646464\", ";
+    expected += "\"remote-id\": \"010203040506\" } ] } }";
+    EXPECT_EQ(expected, ctx->str());
+
+    // Check that BLQ tables were updated.
+    leases = lmptr_->getLeases6ByRemoteId(remote_id,
+                                          IOAddress::IPV6_ZERO_ADDRESS(),
+                                          LeasePageSize(10));
+    // The lease must be retrieved from the remote id table.
+    ASSERT_EQ(1, leases.size());
+    Lease6Ptr lx = leases[0];
+    ASSERT_TRUE(lx);
+    EXPECT_EQ(IOAddress("2001:db8:1::1"), lx->addr_);
+    EXPECT_EQ(*l, *lx);
+
+    // The lease must be retrieved from the relay id table.
+    leases = lmptr_->getLeases6ByRelayId(*relay_id,
+                                         IOAddress::IPV6_ZERO_ADDRESS(),
+                                         LeasePageSize(10));
+    ASSERT_EQ(1, leases.size());
+    lx = leases[0];
+    ASSERT_TRUE(lx);
+    EXPECT_EQ(IOAddress("2001:db8:1::1"), lx->addr_);
+    EXPECT_EQ(*l, *lx);
 }
 
 void Lease6CmdsTest::testLease6DelMissingParams() {
@@ -2585,6 +2895,10 @@ void Lease6CmdsTest::testLease6DelByAddrBadParam() {
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
 
+    checkLease6Stats(66, 2, 0, 0);
+
+    checkLease6Stats(99, 2, 0, 0);
+
     // Invalid family
     string cmd =
         "{\n"
@@ -2595,6 +2909,10 @@ void Lease6CmdsTest::testLease6DelByAddrBadParam() {
         "}";
     string exp_rsp = "Invalid IPv6 address specified: 192.0.2.1";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    checkLease6Stats(66, 2, 0, 0);
+
+    checkLease6Stats(99, 2, 0, 0);
 
     // This is way off
     cmd =
@@ -2701,7 +3019,8 @@ void Lease6CmdsTest::testLease6Wipe() {
         "        \"subnet-id\": 66\n"
         "    }\n"
         "}";
-    string exp_rsp = "Deleted 2 IPv6 lease(s) from subnet(s) 66";
+    string exp_rsp = "Deleted 2 IPv6 lease(s) from subnet(s) 66"
+                     " WARNING: lease6-wipe is deprecated!";
 
     // The status expected is success. The lease should be deleted.
     testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
@@ -2735,7 +3054,8 @@ void Lease6CmdsTest::testLease6WipeAll() {
         "        \"subnet-id\": 0\n"
         "    }\n"
         "}";
-    string exp_rsp = "Deleted 4 IPv6 lease(s) from subnet(s) 66 99";
+    string exp_rsp = "Deleted 4 IPv6 lease(s) from subnet(s) 66 99"
+                     " WARNING: lease6-wipe is deprecated!";
 
     // The status expected is success. The lease should be deleted.
     testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
@@ -2766,7 +3086,8 @@ void Lease6CmdsTest::testLease6WipeAllNoArgs() {
         "{\n"
         "    \"command\": \"lease6-wipe\"\n"
         "}";
-    string exp_rsp = "Deleted 4 IPv6 lease(s) from subnet(s) 66 99";
+    string exp_rsp = "Deleted 4 IPv6 lease(s) from subnet(s) 66 99"
+                     " WARNING: lease6-wipe is deprecated!";
 
     // The status expected is success. The lease should be deleted.
     testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
@@ -2800,7 +3121,8 @@ void Lease6CmdsTest::testLease6WipeNoLeases() {
         "        \"subnet-id\": 66"
         "    }\n"
         "}";
-    string exp_rsp = "Deleted 0 IPv6 lease(s) from subnet(s) 66";
+    string exp_rsp = "Deleted 0 IPv6 lease(s) from subnet(s) 66"
+                     " WARNING: lease6-wipe is deprecated!";
     testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 
     checkLease6Stats(66, 0, 0, 0);
@@ -2824,7 +3146,8 @@ void Lease6CmdsTest::testLease6WipeNoLeasesAll() {
         "        \"subnet-id\": 0"
         "    }\n"
         "}";
-    string exp_rsp = "Deleted 0 IPv6 lease(s) from subnet(s) 66 99";
+    string exp_rsp = "Deleted 0 IPv6 lease(s) from subnet(s) 66 99"
+                     " WARNING: lease6-wipe is deprecated!";
     testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 
     checkLease6Stats(66, 0, 0, 0);
@@ -2853,7 +3176,7 @@ void Lease6CmdsTest::testLease6BrokenUpdate() {
         "}";
     string exp_rsp = "Invalid subnet-id: No IPv6 subnet with "
                      "subnet-id=444 currently configured.";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 }
 
 void Lease6CmdsTest::testLease6BulkApply() {
@@ -2926,7 +3249,7 @@ void Lease6CmdsTest::testLease6BulkApplyAddsOnlyBadParam() {
         "        \"leases\": ["
         "            {"
         "                \"subnet-id\": 66,\n"
-        "                \"ip-address\": \"2001:db8:1::123\",\n"
+        "                \"ip-address\": \"2001:db8:1::\",\n"
         "                \"prefix-len\": 48,\n"
         "                \"type\": \"IA_PD\",\n"
         "                \"duid\": \"11:11:11:11:11:11\",\n"
@@ -2937,6 +3260,26 @@ void Lease6CmdsTest::testLease6BulkApplyAddsOnlyBadParam() {
         "    }"
         "}";
     string exp_rsp = "Invalid declined state for PD prefix.";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Invalid prefix len for PD prefix.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease6-bulk-apply\",\n"
+        "    \"arguments\": {"
+        "        \"leases\": ["
+        "            {"
+        "                \"subnet-id\": 66,\n"
+        "                \"ip-address\": \"2001:db8:1::123\",\n"
+        "                \"prefix-len\": 48,\n"
+        "                \"type\": \"IA_PD\",\n"
+        "                \"duid\": \"11:11:11:11:11:11\",\n"
+        "                \"iaid\": 1234\n"
+        "            }"
+        "        ]"
+        "    }"
+        "}";
+    exp_rsp = "Prefix address: 2001:db8:1::123 exceeds prefix/prefix-len pair: 2001:db8:1::/48";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 
     // Check that the lease was not inserted.
@@ -3007,7 +3350,7 @@ void Lease6CmdsTest::testLease6BulkApplyUpdatesOnlyBadParam() {
         "            {"
         "                \"subnet-id\": 66,\n"
         "                \"ip-address\": \"2001:db8:1234:ab::\",\n"
-        "                \"prefix-len\": 56,\n"
+        "                \"prefix-len\": 64,\n"
         "                \"type\": \"IA_PD\",\n"
         "                \"duid\": \"77:77:77:77:77:77\",\n"
         "                \"iaid\": 1234,\n"
@@ -3017,6 +3360,26 @@ void Lease6CmdsTest::testLease6BulkApplyUpdatesOnlyBadParam() {
         "    }"
         "}";
     string exp_rsp = "Invalid declined state for PD prefix.";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Invalid prefix len for PD prefix.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease6-bulk-apply\",\n"
+        "    \"arguments\": {"
+        "        \"leases\": ["
+        "            {"
+        "                \"subnet-id\": 66,\n"
+        "                \"ip-address\": \"2001:db8:1234:ab::\",\n"
+        "                \"prefix-len\": 56,\n"
+        "                \"type\": \"IA_PD\",\n"
+        "                \"duid\": \"77:77:77:77:77:77\",\n"
+        "                \"iaid\": 1234\n"
+        "            }"
+        "        ]"
+        "    }"
+        "}";
+    exp_rsp = "Prefix address: 2001:db8:1234:ab:: exceeds prefix/prefix-len pair: 2001:db8:1234::/56";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 
     // Check that the lease we inserted is stored.
@@ -3074,6 +3437,98 @@ void Lease6CmdsTest::testLease6BulkApplyUpdatesOnly() {
     // The IAIDs should have been updated for the existing leases.
     EXPECT_EQ(1234, lease1->iaid_);
     EXPECT_EQ(1234, lease2->iaid_);
+}
+
+void Lease6CmdsTest::testLease6BulkApplyUpdatesOnlyExtendedInfo() {
+    // Initialize lease manager (true = v6, true = add leases)
+    initLeaseMgr(true, true);
+
+    checkLease6Stats(66, 2, 0, 0);
+
+    checkLease6Stats(99, 2, 0, 0);
+
+    Lease6Collection leases;
+    vector<uint8_t> remote_id = { 1, 2, 3, 4, 5, 6 };
+    leases = lmptr_->getLeases6ByRemoteId(remote_id,
+                                         IOAddress::IPV6_ZERO_ADDRESS(),
+                                         LeasePageSize(10));
+    EXPECT_TRUE(leases.empty());
+    vector<uint8_t> relay_bin(8, 0x64);
+    DuidPtr relay_id(new DUID(relay_bin));
+    leases = lmptr_->getLeases6ByRelayId(*relay_id,
+                                         IOAddress::IPV6_ZERO_ADDRESS(),
+                                         LeasePageSize(10));
+    EXPECT_TRUE(leases.empty());
+
+    // Now send the command.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-bulk-apply\",\n"
+        "    \"arguments\": {"
+        "        \"leases\": ["
+        "            {"
+        "                \"subnet-id\": 66,\n"
+        "                \"ip-address\": \"2001:db8:1::1\",\n"
+        "                \"duid\": \"11:11:11:11:11:11\",\n"
+        "                \"iaid\": 1234\n"
+        "            },"
+        "            {"
+        "                \"subnet-id\": 66,\n"
+        "                \"ip-address\": \"2001:db8:1::2\",\n"
+        "                \"duid\": \"22:22:22:22:22:22\",\n"
+        "                \"iaid\": 1234\n,"
+        "                \"user-context\": { \"ISC\": { \"relay-info\": [ {\n"
+        "                  \"remote-id\": \"010203040506\",\n"
+        "                  \"relay-id\": \"6464646464646464\" } ] } }\n"
+        "            }"
+        "        ]"
+        "    }"
+        "}";
+    string exp_rsp = "Bulk apply of 2 IPv6 leases completed.";
+
+    // The status expected is success.
+    testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    checkLease6Stats(66, 2, 0, 0);
+
+    checkLease6Stats(99, 2, 0, 0);
+
+    //  Check that the leases we inserted are stored.
+    Lease6Ptr lease1 = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"));
+    Lease6Ptr lease2 = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::2"));
+    ASSERT_TRUE(lease1);
+    ASSERT_TRUE(lease2);
+
+    // The IAIDs should have been updated for the existing leases.
+    EXPECT_EQ(1234, lease1->iaid_);
+    EXPECT_EQ(1234, lease2->iaid_);
+
+    // The user context have been updated too.
+    EXPECT_FALSE(lease1->getContext());
+    ConstElementPtr ctx = lease2->getContext();
+    ASSERT_TRUE(ctx);
+    string expected = "{ \"ISC\": { \"relay-info\": ";
+    expected += "[ { \"relay-id\": \"6464646464646464\", ";
+    expected += "\"remote-id\": \"010203040506\" } ] } }";
+    EXPECT_EQ(expected, ctx->str());
+
+    // Check that BLQ tables were updated.
+    leases = lmptr_->getLeases6ByRemoteId(remote_id,
+                                          IOAddress::IPV6_ZERO_ADDRESS(),
+                                          LeasePageSize(10));
+    ASSERT_EQ(1, leases.size());
+    Lease6Ptr lx = leases[0];
+    ASSERT_TRUE(lx);
+    EXPECT_EQ(IOAddress("2001:db8:1::2"), lx->addr_);
+    EXPECT_EQ(*lease2, *lx);
+    leases = lmptr_->getLeases6ByRelayId(*relay_id,
+                                         IOAddress::IPV6_ZERO_ADDRESS(),
+                                         LeasePageSize(10));
+    ASSERT_EQ(1, leases.size());
+    lx = leases[0];
+    ASSERT_TRUE(lx);
+    EXPECT_EQ(IOAddress("2001:db8:1::2"), lx->addr_);
+    EXPECT_EQ(*lease2, *lx);
 }
 
 void Lease6CmdsTest::testLease6BulkApplyDeletesOnly() {
@@ -3285,7 +3740,7 @@ void Lease6CmdsTest::testLease6ResendDdnsDisabled() {
         "}";
 
     string exp_rsp = "DDNS updating is not enabled";
-    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_CONFLICT, exp_rsp);
     // With D2 disabled there is no queue, size should come back as -1.
     EXPECT_EQ(ncrQueueSize(), -1);
 }
@@ -3303,7 +3758,7 @@ void Lease6CmdsTest::testLease6ResendDdnsNoLease() {
         "    }\n"
         "}\n";
     string exp_rsp = "No lease found for: 2001::dead:beef";
-    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+    testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 }
 
 void Lease6CmdsTest::testLease6ResendNoHostname() {
@@ -3329,7 +3784,7 @@ void Lease6CmdsTest::testLease6ResendNoHostname() {
         "}";
 
     string exp_rsp = "Lease for: 2001:db8:1::1, has no hostname, nothing to update";
-    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     // There should not any NCRs queued.
     EXPECT_EQ(ncrQueueSize(), 0);
@@ -3359,7 +3814,7 @@ void Lease6CmdsTest::testLease6ResendNoDirectionsEnabled() {
         "}";
 
     string exp_rsp = "Neither forward nor reverse updates enabled for lease for: 2001:db8:1::1";
-    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     // There should not any NCRs queued.
     EXPECT_EQ(ncrQueueSize(), 0);
@@ -3395,7 +3850,7 @@ void Lease6CmdsTest::testLease6ResendDdnsEnabled() {
     // Expected response string.
     string exp_rsp = "NCR generated for: 2001:db8:1::1, hostname: myhost.example.com.";
 
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
 
         // Fetch the lease so we can update the DDNS direction flags.
@@ -3487,7 +3942,7 @@ void Lease6CmdsTest::testLease6DnsRemoveD2Enabled() {
         },
     };
 
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
 
         // Let's create a lease with scenario attributes.
@@ -3570,6 +4025,7 @@ void Lease6CmdsTest::testLease6DnsRemoveD2Disabled() {
     ASSERT_FALSE(lease);
 }
 
+// Verify that v4 lease add handles conflict as expected.
 void Lease6CmdsTest::testLease6ConflictingAdd() {
     MultiThreadingTest mt(true);
 
@@ -3602,7 +4058,7 @@ void Lease6CmdsTest::testLease6ConflictingAdd() {
         "}";
 
     string exp_rsp = "ResourceBusy: IP address:2001:db8:1::1 could not be added.";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     // Lease should not have been added.
     lease = lmptr_->getLease6(Lease::TYPE_NA, addr);
@@ -3618,7 +4074,7 @@ void Lease6CmdsTest::testLease6ConflictingUpdate() {
     // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
 
-    // Verify lease stats show leases.
+    // Verify stats show no leases.
     checkLease6Stats(66, 2, 0, 0);
 
     // Make sure the lease exists.
@@ -3646,7 +4102,7 @@ void Lease6CmdsTest::testLease6ConflictingUpdate() {
         "}";
 
     string exp_rsp = "ResourceBusy: IP address:2001:db8:1::1 could not be updated.";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     // Fetch the lease again.
     lease = lmptr_->getLease6(Lease::TYPE_NA, addr);
@@ -3718,8 +4174,48 @@ void Lease6CmdsTest::testLease6ConflictingBulkApplyAdd() {
     ASSERT_EQ(Element::list, failed_leases->getType());
     ASSERT_EQ(1, failed_leases->size());
     checkFailedLease(failed_leases, "IA_NA", locked_addr.toText(),
-                     CONTROL_RESULT_ERROR,
+                     CONTROL_RESULT_CONFLICT,
                      "ResourceBusy: IP address:2001:db8:2::77 could not be updated.");
+}
+
+void Lease6CmdsTest::testLease6Write() {
+    // lease4-write negative tests. Positive tests are in the
+    // memfile_lease_mgr_unittest.cc file.
+
+    // Initialize lease manager (true = v6, false = don't add leases)
+    initLeaseMgr(true, false);
+
+    // Parameter is missing.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-write\",\n"
+        "    \"arguments\": {"
+        "    }\n"
+        "}";
+    string exp_rsp = "'filename' parameter not specified";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Filename must be a string.
+    txt =
+        "{\n"
+        "    \"command\": \"lease6-write\",\n"
+        "    \"arguments\": {"
+        "        \"filename\": 0\n"
+        "    }\n"
+        "}";
+    exp_rsp = "'filename' parameter must be a string";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Filename must be not empty.
+    txt =
+        "{\n"
+        "    \"command\": \"lease6-write\",\n"
+        "    \"arguments\": {"
+        "        \"filename\": \"\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "'filename' parameter is empty";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
 TEST_F(Lease6CmdsTest, lease6AddMissingParams) {
@@ -3756,6 +4252,15 @@ TEST_F(Lease6CmdsTest, lease6AddDeclinedLeases) {
 TEST_F(Lease6CmdsTest, lease6AddDeclinedLeasesMultiThreading) {
     MultiThreadingTest mt(true);
     testLease6AddDeclinedLeases();
+}
+
+TEST_F(Lease6CmdsTest, lease6AddReleasedLeases) {
+    testLease6AddReleasedLeases();
+}
+
+TEST_F(Lease6CmdsTest, lease6AddReleasedLeasesMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6AddReleasedLeases();
 }
 
 TEST_F(Lease6CmdsTest, lease6AddExisting) {
@@ -3839,6 +4344,33 @@ TEST_F(Lease6CmdsTest, lease6AddCommentMultiThreading) {
     testLease6AddComment();
 }
 
+TEST_F(Lease6CmdsTest, lease6AddExtendedInfo) {
+    testLease6AddExtendedInfo();
+}
+
+TEST_F(Lease6CmdsTest, lease6AddExtendedInfoMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6AddExtendedInfo();
+}
+
+TEST_F(Lease6CmdsTest, lease6GetMissingParams) {
+    testLease6GetMissingParams();
+}
+
+TEST_F(Lease6CmdsTest, lease6GetMissingParamsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6GetMissingParams();
+}
+
+TEST_F(Lease6CmdsTest, lease6GetByAddrBadParam) {
+    testLease6GetByAddrBadParam();
+}
+
+TEST_F(Lease6CmdsTest, lease6GetByAddrBadParamMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6GetByAddrBadParam();
+}
+
 TEST_F(Lease6CmdsTest, lease6GetByAddrNotFound) {
     testLease6GetByAddrNotFound();
 }
@@ -3873,24 +4405,6 @@ TEST_F(Lease6CmdsTest, lease6GetByAddr) {
 TEST_F(Lease6CmdsTest, lease6GetByAddrMultiThreading) {
     MultiThreadingTest mt(true);
     testLease6GetByAddr();
-}
-
-TEST_F(Lease6CmdsTest, lease6GetMissingParams) {
-    testLease6GetMissingParams();
-}
-
-TEST_F(Lease6CmdsTest, lease6GetMissingParamsMultiThreading) {
-    MultiThreadingTest mt(true);
-    testLease6GetMissingParams();
-}
-
-TEST_F(Lease6CmdsTest, lease6GetByAddrBadParam) {
-    testLease6GetByAddrBadParam();
-}
-
-TEST_F(Lease6CmdsTest, lease6GetByAddrBadParamMultiThreading) {
-    MultiThreadingTest mt(true);
-    testLease6GetByAddrBadParam();
 }
 
 TEST_F(Lease6CmdsTest, lease6GetByAddrPrefix) {
@@ -4100,6 +4614,15 @@ TEST_F(Lease6CmdsTest, lease6UpdateBadParamsMultiThreading) {
     testLease6UpdateBadParams();
 }
 
+TEST_F(Lease6CmdsTest, lease6UpdateNoLease) {
+    testLease6UpdateNoLease();
+}
+
+TEST_F(Lease6CmdsTest, lease6UpdateNoLeaseMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6UpdateNoLease();
+}
+
 TEST_F(Lease6CmdsTest, lease6Update) {
     testLease6Update();
 }
@@ -4145,13 +4668,13 @@ TEST_F(Lease6CmdsTest, lease6UpdateCommentMultiThreading) {
     testLease6UpdateComment();
 }
 
-TEST_F(Lease6CmdsTest, lease6UpdateNoLease) {
-    testLease6UpdateNoLease();
+TEST_F(Lease6CmdsTest, lease6UpdateExtendedInfo) {
+    testLease6UpdateExtendedInfo();
 }
 
-TEST_F(Lease6CmdsTest, lease6UpdateNoLeaseMultiThreading) {
+TEST_F(Lease6CmdsTest, lease6UpdateExtendedInfoMultiThreading) {
     MultiThreadingTest mt(true);
-    testLease6UpdateNoLease();
+    testLease6UpdateExtendedInfo();
 }
 
 TEST_F(Lease6CmdsTest, lease6UpdateForceCreate) {
@@ -4347,6 +4870,10 @@ TEST_F(Lease6CmdsTest, lease6BulkApplyUpdatesOnly) {
     testLease6BulkApplyUpdatesOnly();
 }
 
+TEST_F(Lease6CmdsTest, lease6BulkApplyUpdatesOnlyExtendedInfo) {
+    testLease6BulkApplyUpdatesOnlyExtendedInfo();
+}
+
 TEST_F(Lease6CmdsTest, lease6BulkApplyUpdatesOnlyMultiThreading) {
     MultiThreadingTest mt(true);
     testLease6BulkApplyUpdatesOnly();
@@ -4461,6 +4988,15 @@ TEST_F(Lease6CmdsTest, lease6ConflictingUpdateMultiThreading) {
 
 TEST_F(Lease6CmdsTest, lease6ConflictingBulkApplyAddMultiThreading) {
     testLease6ConflictingBulkApplyAdd();
+}
+
+TEST_F(Lease6CmdsTest, lease6Write) {
+    testLease6Write();
+}
+
+TEST_F(Lease6CmdsTest, lease6WriteMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6Write();
 }
 
 } // end of anonymous namespace

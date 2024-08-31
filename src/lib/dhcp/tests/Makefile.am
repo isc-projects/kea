@@ -13,30 +13,10 @@ endif
 
 CLEANFILES = *.gcno *.gcda
 
-TESTS_ENVIRONMENT = \
-	$(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
+TESTS_ENVIRONMENT = $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 
 TESTS =
 if HAVE_GTEST
-
-# Creates a library which is shared by various unit tests which require
-# configuration of fake interfaces.
-# The libdhcp++ does not link with this library because this would cause
-# build failures being a result of concurrency between build of this
-# library and the unit tests when make -j option was used, as they
-# are built out of the same makefile. Instead, the libdhcp++ tests link to
-# files belonging to this library, directly.
-noinst_LTLIBRARIES = libdhcptest.la
-
-libdhcptest_la_SOURCES  = iface_mgr_test_config.cc iface_mgr_test_config.h
-libdhcptest_la_SOURCES  += pkt_filter_test_stub.cc pkt_filter_test_stub.h
-libdhcptest_la_SOURCES  += pkt_filter6_test_stub.cc pkt_filter6_test_stub.h
-libdhcptest_la_SOURCES  += pkt_captures4.cc pkt_captures6.cc pkt_captures.h
-libdhcptest_la_SOURCES  += packet_queue_testutils.h
-libdhcptest_la_CXXFLAGS  = $(AM_CXXFLAGS)
-libdhcptest_la_CPPFLAGS  = $(AM_CPPFLAGS)
-libdhcptest_la_LDFLAGS   = $(AM_LDFLAGS)
-libdhcptest_la_LIBADD    = $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 
 TESTS += libdhcp++_unittests
 
@@ -45,14 +25,15 @@ libdhcp___unittests_SOURCES += classify_unittest.cc
 libdhcp___unittests_SOURCES += duid_factory_unittest.cc
 libdhcp___unittests_SOURCES += hwaddr_unittest.cc
 libdhcp___unittests_SOURCES += iface_mgr_unittest.cc
-libdhcp___unittests_SOURCES += iface_mgr_test_config.cc iface_mgr_test_config.h
 libdhcp___unittests_SOURCES += libdhcp++_unittest.cc
 libdhcp___unittests_SOURCES += opaque_data_tuple_unittest.cc
 libdhcp___unittests_SOURCES += option4_addrlst_unittest.cc
 libdhcp___unittests_SOURCES += option4_client_fqdn_unittest.cc
+libdhcp___unittests_SOURCES += option4_dnr_unittest.cc
 libdhcp___unittests_SOURCES += option6_addrlst_unittest.cc
 libdhcp___unittests_SOURCES += option6_client_fqdn_unittest.cc
 libdhcp___unittests_SOURCES += option6_auth_unittest.cc
+libdhcp___unittests_SOURCES += option6_dnr_unittest.cc
 libdhcp___unittests_SOURCES += option6_ia_unittest.cc
 libdhcp___unittests_SOURCES += option6_iaaddr_unittest.cc
 libdhcp___unittests_SOURCES += option6_iaprefix_unittest.cc
@@ -62,6 +43,7 @@ libdhcp___unittests_SOURCES += option_int_unittest.cc
 libdhcp___unittests_SOURCES += option_int_array_unittest.cc
 libdhcp___unittests_SOURCES += option_data_types_unittest.cc
 libdhcp___unittests_SOURCES += option_definition_unittest.cc
+libdhcp___unittests_SOURCES += option_classless_static_route_unittest.cc
 libdhcp___unittests_SOURCES += option_copy_unittest.cc
 libdhcp___unittests_SOURCES += option_custom_unittest.cc
 libdhcp___unittests_SOURCES += option_opaque_data_tuples_unittest.cc
@@ -70,7 +52,6 @@ libdhcp___unittests_SOURCES += option_space_unittest.cc
 libdhcp___unittests_SOURCES += option_string_unittest.cc
 libdhcp___unittests_SOURCES += option_vendor_unittest.cc
 libdhcp___unittests_SOURCES += option_vendor_class_unittest.cc
-libdhcp___unittests_SOURCES  += pkt_captures4.cc pkt_captures6.cc pkt_captures.h
 libdhcp___unittests_SOURCES += packet_queue4_unittest.cc
 libdhcp___unittests_SOURCES += packet_queue6_unittest.cc
 libdhcp___unittests_SOURCES += packet_queue_mgr4_unittest.cc
@@ -82,8 +63,6 @@ libdhcp___unittests_SOURCES += pkt4o6_unittest.cc
 libdhcp___unittests_SOURCES += pkt_filter_unittest.cc
 libdhcp___unittests_SOURCES += pkt_filter_inet_unittest.cc
 libdhcp___unittests_SOURCES += pkt_filter_inet6_unittest.cc
-libdhcp___unittests_SOURCES += pkt_filter_test_stub.cc pkt_filter_test_stub.h
-libdhcp___unittests_SOURCES += pkt_filter6_test_stub.cc pkt_filter_test_stub.h
 libdhcp___unittests_SOURCES += pkt_filter_test_utils.h pkt_filter_test_utils.cc
 libdhcp___unittests_SOURCES += pkt_filter6_test_utils.h pkt_filter6_test_utils.cc
 
@@ -106,16 +85,18 @@ libdhcp___unittests_LDFLAGS  = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS)
 
 libdhcp___unittests_CXXFLAGS = $(AM_CXXFLAGS)
 
-libdhcp___unittests_LDADD  = $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+libdhcp___unittests_LDADD  = $(top_builddir)/src/lib/dhcp/testutils/libdhcptest.la
+libdhcp___unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+libdhcp___unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
+libdhcp___unittests_LDADD += $(top_builddir)/src/lib/testutils/libkea-testutils.la
+libdhcp___unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
-libdhcp___unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
+libdhcp___unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
-libdhcp___unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-libdhcp___unittests_LDADD += $(top_builddir)/src/lib/testutils/libkea-testutils.la
 libdhcp___unittests_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS)
 libdhcp___unittests_LDADD += $(BOOST_LIBS) $(GTEST_LDADD)
 endif

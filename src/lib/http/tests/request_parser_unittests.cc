@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -91,7 +91,7 @@ TEST_F(HttpRequestParserTest, postHttpRequestWithJson) {
     // Simulate receiving HTTP request in chunks.
     for (size_t i = 0; i < http_req.size(); i += http_req.size() / 10) {
         bool done = false;
-        // Get the size of the data chunk. 
+        // Get the size of the data chunk.
         size_t chunk = http_req.size() / 10;
         // When we're near the end of the data stream, the chunk length may
         // vary.

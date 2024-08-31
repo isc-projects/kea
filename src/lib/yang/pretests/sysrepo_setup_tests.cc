@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,22 +6,23 @@
 
 #include <config.h>
 
-#define KEATEST_MODULE
 #include <yang/yang_revisions.h>
 
+#include <sysrepo-cpp/Connection.hpp>
 #include <sysrepo-cpp/Session.hpp>
 
+#include <iostream>
 #include <unordered_map>
 #include <sstream>
+#include <vector>
 
 using namespace std;
+using namespace libyang;
 using namespace sysrepo;
 using namespace isc::yang;
 
-using libyang::S_Context;
-using libyang::S_Module;
-
-const string REPOSITORY = SYSREPO_REPO;
+using libyang::Context;
+using libyang::Module;
 
 /// @brief Returns nicely formed error message if module is missing
 ///
@@ -34,6 +35,8 @@ string missingModuleText(const string& name, const string& revision) {
         << "The environment is not suitable for running unit tests." << endl
         << "Please install the module " << name << ":" << endl
         << "$ sysrepoctl -i ./src/share/yang/modules/" << name << "@" << revision << ".yang" << endl
+        << "Or reinstall all modules:" << endl
+        << "$ ./src/share/yang/modules/utils/reinstall.sh -u" << endl
         << endl;
     return (tmp.str());
 }
@@ -53,6 +56,8 @@ string badRevisionModuleText(const string& name, const string& expected,
         << "Please remove the module " << name << " and reinstall it: " << endl
         << "$ sysrepoctl -u " << name << endl
         << "$ sysrepoctl -i ./src/share/yang/modules/" << name << "@" << expected << ".yang" << endl
+        << "Or reinstall all modules:" << endl
+        << "$ ./src/share/yang/modules/utils/reinstall.sh -u" << endl
         << endl;
     return (tmp.str());
 }
@@ -66,45 +71,33 @@ string badRevisionModuleText(const string& name, const string& expected,
 ///  - Kea modules.
 ///  - daemon required
 int main() {
-    S_Connection conn;
+    optional<Session> sess;
     try {
-        conn = std::make_shared<Connection>();
-    } catch (const sysrepo_exception& ex) {
-        cerr << "ERROR: Can't initialize sysrepo: " << ex.what() << endl;
-        cerr << "ERROR: Make sure you have the right permissions to the sysrepo repository." << endl;
-        return (1);
-    }
-
-    S_Session sess;
-    try {
-        sess.reset(new Session(conn, SR_DS_CANDIDATE));
-    } catch (const sysrepo_exception& ex) {
+        sess = Connection{}.sessionStart();
+        sess->switchDatastore(sysrepo::Datastore::Candidate);
+    } catch (Error const& ex) {
         cerr << "ERROR: Can't establish a sysrepo session: "
              << ex.what() << endl;
         return (2);
     }
 
-    vector<S_Module> modules;
+    vector<Module> modules;
     try {
-        S_Context context(sess->get_context());
-        modules = context->get_module_iter();
-    } catch (const sysrepo_exception& ex) {
+        Context const& context(sess->getContext());
+        modules = context.modules();
+    } catch (Error const& ex) {
         cerr << "ERROR: Can't retrieve available modules: " << ex.what() << endl;
         return (3);
     }
 
     std::unordered_map<std::string, std::string> installed_modules;
-    for (S_Module const& module : modules) {
-        if (!module->name()) {
-            cerr << "ERROR: module name is mangled" << endl;
-            return (4);
-        }
-        string const name(module->name());
-        if (!module->rev() || !module->rev()->date()) {
-            cerr << "ERROR: module revision is mangled" << endl;
+    for (Module const& module : modules) {
+        string const name(module.name());
+        if (!module.revision()) {
+            cerr << "ERROR: module " << name << " has no revision." << endl;
             return (5);
         }
-        string const revision(module->rev()->date());
+        string const revision(*module.revision());
         installed_modules.emplace(name, revision);
     }
 

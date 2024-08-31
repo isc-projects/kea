@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -268,11 +268,11 @@ TEST_F(CSVLeaseFile4Test, recreate) {
     lf.close();
     // Check that the contents of the csv file are correct.
     EXPECT_EQ("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-              "fqdn_fwd,fqdn_rev,hostname,state,user_context\n"
+              "fqdn_fwd,fqdn_rev,hostname,state,user_context,pool_id\n"
               "192.0.3.2,00:01:02:03:04:05,,200,200,8,1,1,host.example.com,"
-              "2,\n"
+              "2,,0\n"
               "192.0.3.10,0d:0e:0a:0d:0b:0e:0e:0f,01:02:03:04,100,100,7,0,"
-              "0,,0,{ \"foobar\": true }\n",
+              "0,,0,{ \"foobar\": true },0\n",
               io_.readFile());
 }
 
@@ -365,7 +365,6 @@ TEST_F(CSVLeaseFile4Test, mixedSchemaload) {
     }
 }
 
-
 // Verifies that a lease file with fewer header columns than the
 // minimum allowed will not open.
 TEST_F(CSVLeaseFile4Test, tooFewHeaderColumns) {
@@ -393,12 +392,12 @@ TEST_F(CSVLeaseFile4Test, invalidHeaderColumn) {
 // Verifies that a lease file with more header columns than defined
 // columns will downgrade.
 TEST_F(CSVLeaseFile4Test, downGrade) {
-    // Create 2.0 PLUS a column file
+    // Create 3.0 PLUS a column file
     io_.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-                  "fqdn_fwd,fqdn_rev,hostname,state,user_context,FUTURE_COL\n"
+                  "fqdn_fwd,fqdn_rev,hostname,state,user_context,pool_id,FUTURE_COL\n"
 
                   "192.0.2.3,06:07:08:09:3a:bc,,200,200,8,1,1,"
-                  "three.example.com,2,,BOGUS\n");
+                  "three.example.com,2,,0,FUTURE_VALUE\n");
 
     // Lease file should open and report as needing downgrade.
     CSVLeaseFile4 lf(filename_);
@@ -433,9 +432,9 @@ TEST_F(CSVLeaseFile4Test, downGrade) {
 // if they are in the declined state.
 TEST_F(CSVLeaseFile4Test, declinedLeaseTest) {
     io_.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-                  "fqdn_fwd,fqdn_rev,hostname,state,user_context\n"
-                  "192.0.2.1,,,200,200,8,1,1,host.example.com,0,\n"
-                  "192.0.2.1,,,200,200,8,1,1,host.example.com,1,\n");
+                  "fqdn_fwd,fqdn_rev,hostname,state,user_context,pool_id\n"
+                  "192.0.2.1,,,200,200,8,1,1,host.example.com,0,,0\n"
+                  "192.0.2.1,,,200,200,8,1,1,host.example.com,1,,0\n");
 
     CSVLeaseFile4 lf(filename_);
     ASSERT_NO_THROW(lf.open());
@@ -645,6 +644,6 @@ TEST_F(CSVLeaseFile4Test, embeddedEscapes) {
 /// lease type, invalid preferred lifetime vs valid lifetime etc. The Lease6
 /// should be extended with the function that validates lease attributes. Once
 /// this is implemented we should provide more tests for malformed leases
-/// in the CSV file. See http://oldkea.isc.org/ticket/2405.
+/// in the CSV file.
 
 } // end of anonymous namespace

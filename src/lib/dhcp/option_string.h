@@ -87,6 +87,7 @@ public:
     /// is moved to the end of stored data.
     ///
     /// @param [out] buf output buffer where the option will be stored.
+    /// @param check if set to false, allows options larger than 255 for v4
     virtual void pack(isc::util::OutputBuffer& buf, bool check = true) const;
 
     /// @brief Decodes option data from the provided buffer.

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -70,7 +70,7 @@ CSVLeaseFile4::append(const Lease4& lease) {
     if (lease.getContext()) {
         row.writeAtEscaped(getColumnIndex("user_context"), lease.getContext()->str());
     }
-
+    row.writeAt(getColumnIndex("pool_id"), lease.pool_id_);
     try {
         VersionedCSVFile::append(row);
     } catch (const std::exception&) {
@@ -140,12 +140,14 @@ CSVLeaseFile4::next(Lease4Ptr& lease) {
                                readFqdnFwd(row),
                                readFqdnRev(row),
                                readHostname(row)));
+
         lease->state_ = state;
 
         if (ctx) {
             lease->setContext(ctx);
         }
 
+        lease->pool_id_ = readPoolID(row);
     } catch (const std::exception& ex) {
         // bump the read error count
         ++read_errs_;
@@ -176,6 +178,8 @@ CSVLeaseFile4::initColumns() {
     addColumn("hostname", "1.0");
     addColumn("state", "2.0", "0");
     addColumn("user_context", "2.1");
+    addColumn("pool_id", "3.0", "0");
+
     // Any file with less than hostname is invalid
     setMinimumValidColumns("hostname");
 }
@@ -223,6 +227,13 @@ CSVLeaseFile4::readSubnetID(const CSVRow& row) {
     SubnetID subnet_id =
         row.readAndConvertAt<SubnetID>(getColumnIndex("subnet_id"));
     return (subnet_id);
+}
+
+uint32_t
+CSVLeaseFile4::readPoolID(const CSVRow& row) {
+    uint32_t pool_id =
+        row.readAndConvertAt<uint32_t>(getColumnIndex("pool_id"));
+    return (pool_id);
 }
 
 bool

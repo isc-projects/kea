@@ -6,45 +6,53 @@
 # full list see the documentation:
 # http://www.sphinx-doc.org/en/master/config
 
+import os
+import sys
+from shutil import copyfile
+
 # -- Path setup --------------------------------------------------------------
+
+# to avoid sphinx.errors.SphinxParallelError: RecursionError: maximum recursion depth exceeded while pickling an object
+sys.setrecursionlimit(5000)
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+SRC_DIR = os.path.abspath(os.path.dirname(__file__))
+sys.path.append(SRC_DIR)
 
-# to avoid "sphinx.errors.SphinxParallelError: RecursionError: maximum recursion depth exceeded while pickling an object"
-import sys
-sys.setrecursionlimit(5000)
+import api2doc  # noqa  # pylint: disable=wrong-import-position
 
 # -- Project information -----------------------------------------------------
 
 project = 'Kea'
-copyright = '2019-2020, Internet Systems Consortium'
+copyright = '2019-2024, Internet Systems Consortium'  # pylint: disable=redefined-builtin
 author = 'Internet Systems Consortium'
 
 # get current kea version
 config_ac_path = '../../configure.ac'
 changelog_path = '../../ChangeLog'
 release = 'UNRELEASED'
-with open(config_ac_path) as f:
+with open(config_ac_path, encoding='utf-8') as f:
     for line in f.readlines():
         if line.startswith('AC_INIT(kea'):
             parts = line.split(',')
-            release = parts[1]
+            release = parts[1].strip()
             # If the first line of the ChangeLog announces release, it means
             # that this is the final release.
             dash_parts = release.split('-')
             candidate_release = dash_parts[0]
-            with open(changelog_path) as changelog_file:
+            with open(changelog_path, encoding='utf-8') as changelog_file:
                 first_line = changelog_file.readline()
                 if candidate_release in first_line and "released" in first_line:
                     release = candidate_release
             break
 version = release
+dashed_version_series = '-'.join(version.split('.')[0:2])
+
+# now let's replace versions with odd minor number with dev
+if int(dashed_version_series[-1]) % 2 != 0:
+    dashed_version_series = 'dev'
 
 # -- General configuration ---------------------------------------------------
 
@@ -77,7 +85,7 @@ messages_doc = 'kea-messages'
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = "en"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -95,6 +103,8 @@ exclude_patterns = [
     'arm/hooks-lease-cmds.rst',
     'arm/hooks-lease-query.rst',
     'arm/hooks-limits.rst',
+    'arm/hooks-perfmon.rst',
+    'arm/hooks-ping-check.rst',
     'arm/hooks-radius.rst',
     'arm/hooks-rbac.rst',
     'arm/hooks-run-script.rst',
@@ -103,6 +113,7 @@ exclude_patterns = [
     'arm/hammer.rst',
     'arm/ext-netconf.rst',
     'arm/ext-gss-tsig.rst',
+    'arm/ext-radius.rst',
     'grammar/grammar-ca-parser.rst',
     'grammar/grammar-d2-parser.rst',
     'grammar/grammar-dhcp4-parser.rst',
@@ -122,6 +133,13 @@ exclude_patterns = [
     'arm/hooks-user-chk.rst',
 ]
 
+# Report broken references.
+nitpicky = True
+
+# Leave quotes and dashes unchanged and don't convert them to typographically
+# correct entities.
+smartquotes = False
+
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = None
 
@@ -131,7 +149,7 @@ pygments_style = None
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-#html_theme = 'alabaster'
+# html_theme = 'alabaster'
 html_theme = 'sphinx_rtd_theme'
 html_logo = 'static/kea-imageonly-100bw.png'
 
@@ -139,9 +157,9 @@ html_logo = 'static/kea-imageonly-100bw.png'
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-#html_theme_options = {
-#    "logo": "kea-logo-100x70.png",
-#}
+# html_theme_options = {
+#     "logo": "kea-logo-100x70.png",
+# }
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -162,7 +180,7 @@ html_static_path = ['static']
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-#htmlhelp_basename = 'KeaAdministratorReferenceManualdoc'
+# htmlhelp_basename = 'KeaAdministratorReferenceManualdoc'
 
 
 # -- Options for LaTeX output ------------------------------------------------
@@ -224,28 +242,22 @@ man_pages = [
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
 
+# -- Substitutions -----------------------------------------------------------
 
+rst_prolog = """
+.. |cloudsmith_repo| replace:: kea-{dashed_version_series}
+""".format(dashed_version_series=dashed_version_series)
+
+
+# -- Functions ---------------------------------------------------------------
 
 # Do generation of api.rst and kea-messages.rst here in conf.py instead of Makefile.am
 # so they are available on ReadTheDocs as there makefiles are not used for building docs.
 def run_generate_docs(_):
-    import os
-    import sys
-    src_dir = os.path.abspath(os.path.dirname(__file__))
-    print(src_dir)
-    sys.path.append(src_dir)
-
-    import api2doc
-    with open(os.path.join(src_dir, 'api-files.txt')) as af:
+    with open(os.path.join(SRC_DIR, 'api-files.txt'), encoding='utf-8') as af:
         api_files = af.read().split()
-    api_files = [os.path.abspath(os.path.join(src_dir, '../..', af)) for af in api_files]
-    api2doc.generate(api_files, os.path.join(src_dir, 'api.rst'))
-
-    import mes2doc
-    with open(os.path.join(src_dir, 'mes-files.txt')) as mf:
-        mes_files = mf.read().split()
-    mes_files = [os.path.abspath(os.path.join(src_dir, '../..', mf)) for mf in mes_files]
-    mes2doc.generate(mes_files, os.path.join(src_dir, 'kea-messages.rst'))
+    api_files = [os.path.abspath(os.path.join(SRC_DIR, '../..', af)) for af in api_files]
+    api2doc.generate(api_files, os.path.join(SRC_DIR, 'api.rst'))
 
     # Sphinx has some limitations. It can't import files from outside its directory, which
     # in our case is src/sphinx. On the other hand, we need to have platforms.rst file
@@ -257,23 +269,31 @@ def run_generate_docs(_):
     # The first entry on this list is the actual file to copy, the second is a unique name
     # that will be used when copied over to arm/ directory.
     FILES_TO_COPY = [
-        [ '../../platforms.rst', 'platforms.rst' ],
-        [ '../examples/template-power-user-home/info.md', 'template-power-user-home.md' ],
-        [ '../examples/template-power-user-home/kea-ca-1.conf', 'template-power-user-home-ca-1.conf' ],
-        [ '../examples/template-power-user-home/kea-ca-2.conf', 'template-power-user-home-ca-2.conf' ],
-        [ '../examples/template-power-user-home/kea-dhcp4-1.conf', 'template-power-user-home-dhcp4-1.conf' ],
-        [ '../examples/template-power-user-home/kea-dhcp4-2.conf', 'template-power-user-home-dhcp4-2.conf' ]
+        ['../../platforms.rst', 'platforms.rst'],
+        ['../examples/template-power-user-home/info.md', 'template-power-user-home.md'],
+        ['../examples/template-power-user-home/kea-ca-1.conf', 'template-power-user-home-ca-1.conf'],
+        ['../examples/template-power-user-home/kea-ca-2.conf', 'template-power-user-home-ca-2.conf'],
+        ['../examples/template-power-user-home/kea-dhcp4-1.conf', 'template-power-user-home-dhcp4-1.conf'],
+        ['../examples/template-power-user-home/kea-dhcp4-2.conf', 'template-power-user-home-dhcp4-2.conf'],
+        ['../examples/template-ha-mt-tls/info.md', 'template-ha-mt-tls.md'],
+        ['../examples/template-ha-mt-tls/kea-ca-1.conf', 'template-ha-mt-tls-ca-1.conf'],
+        ['../examples/template-ha-mt-tls/kea-ca-2.conf', 'template-ha-mt-tls-ca-2.conf'],
+        ['../examples/template-ha-mt-tls/kea-dhcp4-1.conf', 'template-ha-mt-tls-dhcp4-1.conf'],
+        ['../examples/template-ha-mt-tls/kea-dhcp4-2.conf', 'template-ha-mt-tls-dhcp4-2.conf']
     ]
 
-    from shutil import copyfile
     for [a, b] in FILES_TO_COPY:
-        src = os.path.join(src_dir, a)
-        dst = os.path.join(src_dir, 'arm', b)
+        src = os.path.join(SRC_DIR, a)
+        dst = os.path.join(SRC_DIR, 'arm', b)
         print("Copying %s to %s" % (src, dst))
         copyfile(src, dst)
 
+
 # custom setup hook
 def setup(app):
+    app.add_crossref_type('isccmd', 'isccmd')
+    app.add_crossref_type('ischooklib', 'ischooklib')
+    app.add_crossref_type('iscman', 'iscman')
     if hasattr(app, 'add_css_file'):
         app.add_css_file('kea.css')
     else:

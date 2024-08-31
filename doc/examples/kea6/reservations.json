@@ -1,21 +1,21 @@
 // This is an example configuration file for DHCPv6 server in Kea
 // that showcases how to do host reservations. It is
 // assumed that one subnet (2001:db8:1::/64) is available directly
-// over ethX interface. A number of hosts have various combinations
+// over eth0 interface. A number of hosts have various combinations
 // of addresses and prefixes reserved for them.
 
 { "Dhcp6":
 
 {
-// Kea is told to listen on ethX interface only.
+// Kea is told to listen on eth0 interface only.
   "interfaces-config": {
-    "interfaces": [ "ethX" ]
+    "interfaces": [ "eth0" ]
   },
 
 // We need to specify the database used to store leases. As of
 // June 2022, three database backends are supported: MySQL,
 // PostgreSQL and the in-memory database, Memfile.
-// We'll use memfile  because it doesn't require any prior set up.
+// We'll use memfile because it doesn't require any prior set up.
   "lease-database": {
       "type": "memfile",
       "lfc-interval": 3600
@@ -41,25 +41,26 @@
 // least subnet and pool entries.
   "subnet6": [
     {
+        "id": 1,
+
         "subnet": "2001:db8:1::/48",
 
         // This directive tells Kea that reservations may be made both in-pool
         // and out-of-pool. For improved performance, you may move all reservations
-        // out of the dynamic pool and change reservation-mode to "out-of-pool".
+        // out of the dynamic pool and set "reservations-out-of-pool" to true.
         // Kea will then be able to skip querying for host reservations when
         // assigning leases from dynamic pool.
-        // "reservation-mode": "all",
-        // It is replaced by the "reservations-global", "reservations-in-subnet"
-        // and "reservations-out-of-pool" parameters.
 
-        // Specify if server should lookup global reservations.
+        // Specify whether the server should look up global reservations.
+        // Defaults to false.
         "reservations-global": false,
 
-        // Specify if server should lookup in-subnet reservations.
+        // Specify whether the server should look up in-subnet reservations.
+        // Defaults to true.
         "reservations-in-subnet": true,
 
-        // Specify if server can assume that all reserved addresses
-        // are out-of-pool.
+        // Specify whether the server can assume that all reserved addresses
+        // are out-of-pool. Defaults to false.
         // Ignored when reservations-in-subnet is false.
         // If specified, it is inherited by "shared-networks" and
         // "subnet6" levels.
@@ -74,7 +75,7 @@
               "delegated-len": 64
           }
         ],
-        "interface": "ethX",
+        "interface": "eth0",
 
 // Host reservations. Define several reservations, note that
 // they are all within the range of the pool of the dynamically
@@ -139,7 +140,7 @@
 // Expression can be specified either as hex or plain text using single
 // quotes.
 // Note: flexible identifier requires flex_id hook library to be
-//loaded to work.
+// loaded to work.
          {
              "flex-id": "'somevalue'",
              "ip-addresses": [ "2001:db8:1:cafe::2" ]
@@ -155,7 +156,7 @@
     "loggers": [
         {
             "name": "kea-dhcp6",
-            "output_options": [
+            "output-options": [
                 {
                     "output": "stdout"
                 }

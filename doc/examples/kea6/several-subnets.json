@@ -5,15 +5,15 @@
 { "Dhcp6":
 
 {
-// Kea is told to listen on ethX interface only.
+// Kea is told to listen on eth0 interface only.
   "interfaces-config": {
-    "interfaces": [ "ethX" ]
+    "interfaces": [ "eth0" ]
   },
 
 // We need to specify the database used to store leases. As of
 // June 2022, three database backends are supported: MySQL,
 // PostgreSQL and the in-memory database, Memfile.
-// We'll use memfile  because it doesn't require any prior set up.
+// We'll use memfile because it doesn't require any prior set up.
   "lease-database": {
     "type": "memfile"
   },
@@ -33,13 +33,13 @@
 // least subnet and pool entries.
   "subnet6": [
   {    "pools": [ { "pool": "2001:db8:1::/80" } ],
-       "subnet": "2001:db8:1::/64"  },
+       "id": 1, "subnet": "2001:db8:1::/64"  },
   {    "pools": [ { "pool": "2001:db8:2::/80" } ],
-       "subnet": "2001:db8:2::/64"  },
+       "id": 2, "subnet": "2001:db8:2::/64"  },
   {    "pools": [ { "pool": "2001:db8:3::/80" } ],
-       "subnet": "2001:db8:3::/64"  },
+       "id": 3, "subnet": "2001:db8:3::/64"  },
   {    "pools": [ { "pool": "2001:db8:4::/80" } ],
-       "subnet": "2001:db8:4::/64"  } ],
+       "id": 4, "subnet": "2001:db8:4::/64"  } ],
 
 // The following configures logging. It assumes that messages with at
 // least informational level (info, warn, error and fatal) should be
@@ -47,7 +47,7 @@
   "loggers": [
         {
             "name": "kea-dhcp6",
-            "output_options": [
+            "output-options": [
                 {
                     "output": "stdout"
                 }

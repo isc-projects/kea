@@ -1,13 +1,10 @@
 #!/bin/sh
 
-# Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-# shellcheck disable=SC1091
-# SC1091: Not following: ... was not specified as input (see shellcheck -x).
 
 # shellcheck disable=SC2154
 # SC2154: ... is referenced but not assigned.
@@ -18,10 +15,12 @@
 set -eu
 
 # Include common test library.
+# shellcheck source=src/lib/testutils/dhcp_test_lib.sh.in
 . "@abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh"
 
 # Include admin utilities
-. "@abs_top_srcdir@/src/bin/admin/admin-utils.sh"
+# shellcheck source=src/bin/admin/admin-utils.sh.in
+. "@abs_top_builddir@/src/bin/admin/admin-utils.sh"
 
 # Set path to the production schema scripts
 db_scripts_dir="@abs_top_srcdir@/src/share/database/scripts"
@@ -36,10 +35,10 @@ kea_admin="@abs_top_builddir@/src/bin/admin/kea-admin"
 # generates a single value, such as a SELECT which returns one column for one row.
 # Examples:
 #
-#   qry="insert into lease6 (address, lease_type, subnet_id, state) values ($addr,$ltype,1,0);"
+#   qry="insert into lease6 (address, lease_type, subnet_id, state) values ($addr,$ltype,1,0)"
 #   run_statement "#2" "$qry"
 #
-#   qry="select leases from lease6_stat where subnet_id = 1 and lease_type = $ltype and state = 0";
+#   qry="select leases from lease6_stat where subnet_id = 1 and lease_type = $ltype and state = 0"
 #   run_statement "#3" "$qry" 1
 run_statement() {
     hdr="$1";shift
@@ -64,14 +63,12 @@ run_statement() {
     fi
 }
 
-
 # Wipe all tables from the DB:
 mysql_wipe() {
     printf "Wiping whole database %s...\n" "${db_name}"
 
     run_command \
         mysql_execute_script "${db_scripts_dir}/mysql/dhcpdb_drop.mysql"
-
     assert_eq 0 "${EXIT_CODE}" "mysql-wipe: drop table sql failed, expected %d, returned %d"
 }
 
@@ -84,38 +81,37 @@ mysql_db_init_test() {
     # Ok, now let's initialize the database
     run_command \
         "${kea_admin}" db-init mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
-
     assert_eq 0 "${EXIT_CODE}" "kea-admin db-init mysql failed, expected %d, returned non-zero status code %d"
 
     # Ok, now let's check if the tables are indeed there.
     # First table: schema_version. Should have 2 columns: version and minor.
     run_command \
         mysql -u"${db_user}" -p"${db_password}" "${db_name}" -e \
-        'SELECT version, minor FROM schema_version;'
+        'SELECT version, minor FROM schema_version'
     assert_eq 0 "${EXIT_CODE}" "schema_version table is missing or broken. (expected status code %d, returned %d)"
 
     # Second table: lease4
     run_command \
         mysql -u"${db_user}" -p"${db_password}" "${db_name}" -e \
-        'SELECT address, hwaddr, client_id, valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname FROM lease4;'
+        'SELECT address, hwaddr, client_id, valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname FROM lease4'
     assert_eq 0 "${EXIT_CODE}" "lease4 table is missing or broken. (expected status code %d, returned %d)"
 
     # Third table: lease6
     run_command \
         mysql -u"${db_user}" -p"${db_password}" "${db_name}" -e \
-        'SELECT address, duid, valid_lifetime, expire, subnet_id, pref_lifetime, lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, hwaddr, hwtype, hwaddr_source FROM lease6;'
+        'SELECT address, duid, valid_lifetime, expire, subnet_id, pref_lifetime, lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, hwaddr, hwtype, hwaddr_source FROM lease6'
     assert_eq 0 "${EXIT_CODE}" "lease6 table is missing or broken. (expected status code %d, returned %d)"
 
     # Fourth table: lease6_types
     run_command \
         mysql -u"${db_user}" -p"${db_password}" "${db_name}" -e \
-        'SELECT lease_type, name FROM lease6_types;'
+        'SELECT lease_type, name FROM lease6_types'
     assert_eq 0 "${EXIT_CODE}" "lease6_types table is missing or broken. (expected status code %d, returned %d)"
 
     # Fifth table: lease_hwaddr_source
     run_command \
         mysql -u"${db_user}" -p"${db_password}" "${db_name}" -e \
-        'SELECT hwaddr_source, name FROM lease_hwaddr_source;'
+        'SELECT hwaddr_source, name FROM lease_hwaddr_source'
     assert_eq 0 "${EXIT_CODE}" "lease_hwaddr_source table is missing or broken. (expected status code %d, returned %d)"
 
     # Let's wipe the whole database
@@ -143,7 +139,7 @@ mysql_db_version_test() {
     version INT PRIMARY KEY NOT NULL,
     minor INT
 );
-INSERT INTO schema_version VALUES (1, 7);'
+INSERT INTO schema_version VALUES (1, 7)'
     assert_eq 0 "${EXIT_CODE}" "schema_version table cannot be created. (expected %d, exit code %d)"
 
     run_command \
@@ -158,7 +154,7 @@ INSERT INTO schema_version VALUES (1, 7);'
 }
 
 mysql_db_version_with_extra_test() {
-    test_start "mysql.db-version-with-extra"
+    test_start "mysql.db-version_with_extra"
 
     # Let's wipe the whole database
     mysql_wipe
@@ -176,7 +172,7 @@ mysql_db_version_with_extra_test() {
     version INT PRIMARY KEY NOT NULL,
     minor INT
 );
-INSERT INTO schema_version VALUES (1, 7);'
+INSERT INTO schema_version VALUES (1, 7)'
     assert_eq 0 "${EXIT_CODE}" "schema_version table cannot be created. (expected %d, exit code %d)"
 
     # Single -x.
@@ -189,13 +185,13 @@ INSERT INTO schema_version VALUES (1, 7);'
     # Multiple -x.
     run_command \
         "${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" \
-        -x --protocol=TCP -x --hello 2> "@abs_top_srcdir@/src/bin/admin/test-data"
+        -x --protocol=TCP -x --hello 2> "@abs_top_builddir@/src/bin/admin/test-data"
     assert_eq 2 "${EXIT_CODE}" "kea-admin -x -x succeeded. (expected %d, exit code %d)"
-    if ! grep -F "unknown option '--hello'" "@abs_top_srcdir@/src/bin/admin/test-data"; then
+    if ! grep -F "unknown option '--hello'" "@abs_top_builddir@/src/bin/admin/test-data"; then
         printf 'second parameter --hello was not passed to mysql with -x\n'
         test_finish 1
     fi
-    rm -f "@abs_top_srcdir@/src/bin/admin/test-data"
+    rm -f "@abs_top_builddir@/src/bin/admin/test-data"
 
     # Let's wipe the whole database
     mysql_wipe
@@ -218,43 +214,43 @@ mysql_host_reservation_init_test() {
     # First table: schema_version. Should have 2 columns: version and minor.
     run_command \
         mysql -u"${db_user}" -p"${db_password}" "${db_name}" -e \
-        'SELECT version, minor FROM schema_version;'
+        'SELECT version, minor FROM schema_version'
     assert_eq 0 "${EXIT_CODE}" "schema_version table is missing or broken. (expected status code %d, returned %d)"
 
     # Second table: hosts
     run_command \
         mysql -u"${db_user}" -p"${db_password}" "${db_name}" -e \
-        'SELECT host_id, dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, dhcp4_client_classes, dhcp6_client_classes, dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name, auth_key FROM hosts;'
+        'SELECT host_id, dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, dhcp4_client_classes, dhcp6_client_classes, dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name, auth_key FROM hosts'
     assert_eq 0 "${EXIT_CODE}" "hosts table is missing or broken. (expected status code %d, returned %d)"
 
     # Third table: ipv6_reservations
     run_command \
         mysql -u"${db_user}" -p"${db_password}" "${db_name}" -e \
-        'SELECT reservation_id, address, prefix_len, type, dhcp6_iaid, host_id FROM ipv6_reservations;'
+        'SELECT reservation_id, address, prefix_len, type, dhcp6_iaid, host_id FROM ipv6_reservations'
     assert_eq 0 "${EXIT_CODE}" "ipv6_reservations table is missing or broken. (expected status code %d, returned %d)"
 
     # Fourth table: dhcp4_options
     run_command \
         mysql -u"${db_user}" -p"${db_password}" "${db_name}" -e \
-        'SELECT option_id, code, value, formatted_value, space, persistent, dhcp_client_class, dhcp4_subnet_id, host_id, scope_id FROM dhcp4_options;'
+        'SELECT option_id, code, value, formatted_value, space, persistent, dhcp_client_class, dhcp4_subnet_id, host_id, scope_id FROM dhcp4_options'
     assert_eq 0 "${EXIT_CODE}" "dhcp4_options table is missing or broken. (expected status code %d, returned %d)"
 
     # Fifth table: dhcp6_options
     run_command \
         mysql -u"${db_user}" -p"${db_password}" "${db_name}" -e \
-        'SELECT option_id, code, value, formatted_value, space, persistent, dhcp_client_class, dhcp6_subnet_id, host_id, scope_id FROM dhcp6_options;'
+        'SELECT option_id, code, value, formatted_value, space, persistent, dhcp_client_class, dhcp6_subnet_id, host_id, scope_id FROM dhcp6_options'
     assert_eq 0 "${EXIT_CODE}" "dhcp6_options table is missing or broken. (expected status code %d, returned %d)"
 
     # Sixth table: host_identifier_type
     run_command \
         mysql -u"${db_user}" -p"${db_password}" "${db_name}" -e \
-        'SELECT type, name FROM host_identifier_type;'
+        'SELECT type, name FROM host_identifier_type'
     assert_eq 0 "${EXIT_CODE}" "host_identifier_type table is missing or broken. (expected status code %d, returned %d)"
 
     # Seventh table: dhcp_option_scope
     run_command \
         mysql -u"${db_user}" -p"${db_password}" "${db_name}" -e \
-        'SELECT scope_id, scope_name FROM dhcp_option_scope;'
+        'SELECT scope_id, scope_name FROM dhcp_option_scope'
     assert_eq 0 "${EXIT_CODE}" "dhcp_option_scope table is missing or broken. (expected status code %d, returned %d)"
 
     # Let's wipe the whole database
@@ -268,20 +264,35 @@ mysql_host_reservation_init_test() {
 mysql_upgrade_schema_to_version() {
     target_version=$1
 
+    upgrade_scripts_dir=${db_scripts_dir}/mysql
+
     # Check if the scripts directory exists at all.
-    if [ ! -d ${db_scripts_dir}/mysql ]; then
-        log_error "Invalid scripts directory: ${db_scripts_dir}/mysql"
+    if [ ! -d ${upgrade_scripts_dir} ]; then
+        log_error "Invalid scripts directory: ${upgrade_scripts_dir}"
         exit 1
     fi
 
     # Check if there are any files in it
-    num_files=$(find ${db_scripts_dir}/mysql/upgrade*.sh -type f | wc -l)
+    num_files=$(find ${upgrade_scripts_dir} -name 'upgrade*.sh' -type f | wc -l)
     if [ "${num_files}" -eq 0 ]; then
-        log_error "No scripts in ${db_scripts_dir}/mysql?"
+        upgrade_scripts_dir=@abs_top_builddir@/src/share/database/scripts/mysql
+
+        # Check if the scripts directory exists at all.
+        if [ ! -d ${upgrade_scripts_dir} ]; then
+            log_error "Invalid scripts directory: ${upgrade_scripts_dir}"
+            exit 1
+        fi
+
+        # Check if there are any files in it
+        num_files=$(find "${upgrade_scripts_dir}" -name 'upgrade*.sh' -type f | wc -l)
+    fi
+
+    if [ "${num_files}" -eq 0 ]; then
+        log_error "No scripts in ${upgrade_scripts_dir}?"
         exit 1
     fi
 
-    for script in "${db_scripts_dir}"/mysql/upgrade*.sh
+    for script in "${upgrade_scripts_dir}"/upgrade*.sh
     do
         version=$(mysql_version)
         if [ "${version}" = "${target_version}" ]
@@ -299,109 +310,107 @@ mysql_upgrade_schema_to_version() {
 mysql_upgrade_12_to_13_test() {
     # Check the output of colonSeparatedHex().
     run_command \
-        mysql_execute 'SELECT colonSeparatedHex(HEX(0xF123456789));'
+        mysql_execute 'SELECT colonSeparatedHex(HEX(0xF123456789))'
     assert_eq 0 "${EXIT_CODE}" 'colonSeparatedHex() failed, expected exit code %d, actual %d'
     assert_str_eq 'f1:23:45:67:89' "${OUTPUT}"
 
     run_command \
-        mysql_execute 'SELECT colonSeparatedHex("");'
+        mysql_execute 'SELECT colonSeparatedHex("")'
     assert_eq 0 "${EXIT_CODE}" 'colonSeparatedHex() failed, expected exit code %d, actual %d'
     assert_str_eq '' "${OUTPUT}"
 
     run_command \
-        mysql_execute 'SELECT colonSeparatedHex(HEX(0xF));'
+        mysql_execute 'SELECT colonSeparatedHex(HEX(0xF))'
     assert_eq 0 "${EXIT_CODE}" 'colonSeparatedHex() failed, expected exit code %d, actual %d'
     assert_str_eq '0f' "${OUTPUT}"
 
     run_command \
-        mysql_execute 'SELECT colonSeparatedHex(HEX(0xF1));'
+        mysql_execute 'SELECT colonSeparatedHex(HEX(0xF1))'
     assert_eq 0 "${EXIT_CODE}" 'colonSeparatedHex() failed, expected exit code %d, actual %d'
     assert_str_eq 'f1' "${OUTPUT}"
 
     run_command \
-        mysql_execute 'SELECT colonSeparatedHex(HEX(0xF12));'
+        mysql_execute 'SELECT colonSeparatedHex(HEX(0xF12))'
     assert_eq 0 "${EXIT_CODE}" 'colonSeparatedHex() failed, expected exit code %d, actual %d'
     assert_str_eq '0f:12' "${OUTPUT}"
 
     run_command \
-        mysql_execute 'SELECT colonSeparatedHex(HEX(458753));'
+        mysql_execute 'SELECT colonSeparatedHex(HEX(458753))'
     assert_eq 0 "${EXIT_CODE}" 'colonSeparatedHex() failed, expected exit code %d, actual %d'
     assert_str_eq '07:00:01' "${OUTPUT}"
 
     # Check lease4Dump*().
     run_command \
-        mysql_execute "INSERT INTO lease4 VALUES(10,20,30,40,(SELECT FROM_UNIXTIME(1678900000)),50,1,1,'one,example,com',0,'{ \"a\": 1, \"b\": 2 }');"
+        mysql_execute "INSERT INTO lease4 VALUES(10,20,30,40,(SELECT FROM_UNIXTIME(1678900000)),50,1,1,'one,example,com',0,'{ \"a\": 1, \"b\": 2 }',NULL,NULL,0)"
     assert_eq 0 "${EXIT_CODE}" 'INSERT INTO lease4 failed, expected exit code %d, actual %d'
     assert_str_eq '' "${OUTPUT}"
 
     run_command \
-        mysql_execute "CALL lease4DumpHeader();"
+        mysql_execute "CALL lease4DumpHeader()"
     assert_eq 0 "${EXIT_CODE}" 'lease4DumpHeader() failed, expected exit code %d, actual %d'
-    assert_str_eq 'address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context' "${OUTPUT}"
+    assert_str_eq 'address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context,pool_id' "${OUTPUT}"
 
     run_command \
-        mysql_execute "CALL lease4DumpData();"
+        mysql_execute "CALL lease4DumpData()"
     assert_eq 0 "${EXIT_CODE}" 'lease4DumpData() failed, expected exit code %d, actual %d'
     output=$(printf '%s' "${OUTPUT}" | sed 's/\t/,/g')  # turn tabs into commas
-    assert_str_eq '0.0.0.10,32:30,33:30,40,1678900000,50,1,1,one&#x2cexample&#x2ccom,0,{ "a": 1&#x2c "b": 2 }' "${output}"
+    assert_str_eq '0.0.0.10,32:30,33:30,40,1678900000,50,1,1,one&#x2cexample&#x2ccom,0,{ "a": 1&#x2c "b": 2 },0' "${output}"
 
     # Check lease6Dump*().
     run_command \
-        mysql_execute "INSERT INTO lease6 VALUES('::10',20,30,(SELECT FROM_UNIXTIME(1678900000)),40,50,1,60,70,1,1,'one,example,com',80,90,16,0,'{ \"a\": 1, \"b\": 2 }');"
+        mysql_execute "INSERT INTO lease6 VALUES(inet6_aton('::10'),20,30,(SELECT FROM_UNIXTIME(1678900000)),40,50,1,60,70,1,1,'one,example,com',80,90,16,0,'{ \"a\": 1, \"b\": 2 }',0)"
     assert_eq 0 "${EXIT_CODE}" 'INSERT INTO lease6 failed, expected exit code %d, actual %d'
     assert_str_eq '' "${OUTPUT}"
 
     run_command \
-        mysql_execute "CALL lease6DumpHeader();"
+        mysql_execute "CALL lease6DumpHeader()"
     assert_eq 0 "${EXIT_CODE}" 'lease6DumpHeader() failed, expected exit code %d, actual %d'
-    assert_str_eq 'address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,state,user_context,hwtype,hwaddr_source' "${OUTPUT}"
+    assert_str_eq 'address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,state,user_context,hwtype,hwaddr_source,pool_id' "${OUTPUT}"
 
     run_command \
-        mysql_execute "CALL lease6DumpData();"
+        mysql_execute "CALL lease6DumpData()"
     assert_eq 0 "${EXIT_CODE}" 'lease6DumpData() failed, expected exit code %d, actual %d'
     output=$(printf '%s' "${OUTPUT}" | sed 's/\t/,/g')  # turn tabs into commas
-    assert_str_eq '::10,32:30,30,1678900000,40,50,1,60,70,1,1,one&#x2cexample&#x2ccom,38:30,0,{ "a": 1&#x2c "b": 2 },90,16' "${output}"
+    assert_str_eq '::10,32:30,30,1678900000,40,50,1,60,70,1,1,one&#x2cexample&#x2ccom,38:30,0,{ "a": 1&#x2c "b": 2 },90,16,0' "${output}"
 
     # Check lease4Upload().
     run_command \
-        mysql_execute "CALL lease4Upload('192.0.0.0','ff0102030405','01ff0102030405',7200,1234567890,1,0,0,'',0,'');"
+        mysql_execute "CALL lease4Upload('192.0.0.0','ff0102030405','01ff0102030405',7200,1234567890,1,0,0,'',0,'',0)"
     assert_eq 0 "${EXIT_CODE}" 'lease4Upload() failed, expected exit code %d, actual %d'
     assert_str_eq '' "${OUTPUT}"
 
     # Check lease6Upload().
     run_command \
-        mysql_execute "CALL lease6Upload('2001:db8::','000100012955cb80ff0102030407',7200,1234567890,1,3600,0,1,128,0,0,'','ff0102030407',0,'',90,16);"
+        mysql_execute "CALL lease6Upload('2001:db8::','000100012955cb80ff0102030407',7200,1234567890,1,3600,0,1,128,0,0,'','ff0102030407',0,'',90,16,0)"
     assert_eq 0 "${EXIT_CODE}" 'lease6Upload() failed, expected exit code %d, actual %d'
     assert_str_eq '' "${OUTPUT}"
 }
 
 mysql_upgrade_13_to_14_test() {
-   # Check function source code
+    # Check function source code
     run_command \
-         mysql_execute "select action_statement from information_schema.TRIGGERS where trigger_schema = '${db_name}' and trigger_name = 'dhcp4_shared_network_BDEL'";
-
+         mysql_execute "select action_statement from information_schema.TRIGGERS where trigger_schema = '${db_name}' and trigger_name = 'dhcp4_shared_network_BDEL'"
     assert_eq 0 "${EXIT_CODE}" "function func_dhcp4_shared_network_BDEL() broken or missing. (expected status code %d, returned %d)"
 
     count=$(echo "${OUTPUT}" | grep -Eci 'UPDATE dhcp4_subnet SET shared_network_name = NULL') || true
     assert_eq 1 "${count}" "function func_dhcp4_shared_network_BDEL() is missing changed line. (expected count %d, returned %d)"
 
-   # Check function source code
+    # Check function source code
     run_command \
-         mysql_execute "select action_statement from information_schema.TRIGGERS where trigger_schema = '${db_name}' and trigger_name = 'dhcp6_shared_network_BDEL'";
-
+         mysql_execute "select action_statement from information_schema.TRIGGERS where trigger_schema = '${db_name}' and trigger_name = 'dhcp6_shared_network_BDEL'"
     assert_eq 0 "${EXIT_CODE}" "function func_dhcp6_shared_network_BDEL() broken or missing. (expected status code %d, returned %d)"
 
     count=$(echo "${OUTPUT}" | grep -Eci 'UPDATE dhcp6_subnet SET shared_network_name = NULL') || true
     assert_eq 1 "${count}" "function func_dhcp6_shared_network_BDEL() is missing changed line. (expected count %d, returned %d)"
 
     # user_context should have been added to dhcp4_client_class
-    qry="select user_context from dhcp4_client_class limit 1;"
+    qry="select user_context from dhcp4_client_class limit 1"
     run_command \
         mysql_execute "${qry}"
     assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
 
     # user_context should have been added to dhcp6_client_class
-    qry="select user_context from dhcp6_client_class limit 1;"
+    qry="select user_context from dhcp6_client_class limit 1"
     run_command \
         mysql_execute "${qry}"
     assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
@@ -409,14 +418,14 @@ mysql_upgrade_13_to_14_test() {
     # -- lease counting tests --
 
     # Check that @json_supported is NULL by default.
-    query='SELECT @json_supported'
+    query="SELECT @json_supported"
     run_command \
         mysql_execute "${query}"
     assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
     assert_str_eq "NULL" "${OUTPUT}" "${query}: expected output %s, returned %s"
 
     # Clean up.
-    query='DELETE FROM lease4; DELETE FROM lease6;'
+    query="DELETE FROM lease4; DELETE FROM lease6"
     run_command \
         mysql_execute "${query}"
     assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
@@ -470,7 +479,7 @@ mysql_upgrade_13_to_14_test() {
 
     for v in 4 6; do
         # Check that client classes were counted correctly.
-        query="SELECT leases FROM lease${v}_stat_by_client_class WHERE client_class = 'foo' LIMIT 1;"
+        query="SELECT leases FROM lease${v}_stat_by_client_class WHERE client_class = 'foo' LIMIT 1"
         run_command \
             mysql_execute "${query}"
         assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
@@ -482,14 +491,14 @@ mysql_upgrade_13_to_14_test() {
 
         # -- Verify some calls to checkLeaseXLimits(). --
 
-        query="SELECT checkLease${v}Limits('');"
+        query="SELECT checkLease${v}Limits('')"
         run_command \
             mysql_execute "${query}"
         # Should fail with ERROR 4037 (HY000): Unexpected end of JSON text in argument 1 to function 'json_extract'
         assert_eq 1 "${EXIT_CODE}" "${query}: expected %d, returned %d"
         assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-        query="SELECT checkLease${v}Limits('{}');"
+        query="SELECT checkLease${v}Limits('{}')"
         run_command \
             mysql_execute "${query}"
         if test "${json_supported}" = 1; then
@@ -500,7 +509,7 @@ mysql_upgrade_13_to_14_test() {
         fi
         assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"client-classes\": [ { \"name\": \"foo\", \"address-limit\": 1 } ] } } }');"
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"client-classes\": [ { \"name\": \"foo\", \"address-limit\": 1 } ] } } }')"
         run_command \
             mysql_execute "${query}"
         if test "${json_supported}" = 1; then
@@ -512,7 +521,7 @@ mysql_upgrade_13_to_14_test() {
             assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
         fi
 
-        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"subnet\": { \"id\": 1, \"address-limit\": 1 } } } }');"
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"subnet\": { \"id\": 1, \"address-limit\": 1 } } } }')"
         run_command \
             mysql_execute "${query}"
         if test "${json_supported}" = 1; then
@@ -524,7 +533,7 @@ mysql_upgrade_13_to_14_test() {
             assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
         fi
 
-        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"client-classes\": [ { \"name\": \"foo\", \"address-limit\": 2 } ] } } }');"
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"client-classes\": [ { \"name\": \"foo\", \"address-limit\": 2 } ] } } }')"
         run_command \
             mysql_execute "${query}"
         if test "${json_supported}" = 1; then
@@ -536,7 +545,7 @@ mysql_upgrade_13_to_14_test() {
             assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
         fi
 
-        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"subnet\": { \"id\": 1, \"address-limit\": 2 } } } }');"
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"subnet\": { \"id\": 1, \"address-limit\": 2 } } } }')"
         run_command \
             mysql_execute "${query}"
         if test "${json_supported}" = 1; then
@@ -548,7 +557,7 @@ mysql_upgrade_13_to_14_test() {
             assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
         fi
 
-        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"client-classes\": [ { \"name\": \"foo\", \"address-limit\": 4 } ] } } }');"
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"client-classes\": [ { \"name\": \"foo\", \"address-limit\": 4 } ] } } }')"
         run_command \
             mysql_execute "${query}"
         if test "${json_supported}" = 1; then
@@ -559,7 +568,7 @@ mysql_upgrade_13_to_14_test() {
         fi
         assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"subnet\": { \"id\": 1, \"address-limit\": 4 } } } }');"
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"subnet\": { \"id\": 1, \"address-limit\": 4 } } } }')"
         run_command \
             mysql_execute "${query}"
         if test "${json_supported}" = 1; then
@@ -570,7 +579,7 @@ mysql_upgrade_13_to_14_test() {
         fi
         assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"client-classes\": [ { \"name\": \"foo\", \"address-limit\": 1 }, { \"name\": \"bar\", \"address-limit\": 1 } ], \"subnet\": { \"id\": 1, \"address-limit\": 1 } } } }');"
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"client-classes\": [ { \"name\": \"foo\", \"address-limit\": 1 }, { \"name\": \"bar\", \"address-limit\": 1 } ], \"subnet\": { \"id\": 1, \"address-limit\": 1 } } } }')"
         run_command \
             mysql_execute "${query}"
         if test "${json_supported}" = 1; then
@@ -582,7 +591,7 @@ mysql_upgrade_13_to_14_test() {
             assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
         fi
 
-        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"client-classes\": [ { \"name\": \"foo\", \"address-limit\": 2 }, { \"name\": \"bar\", \"address-limit\": 4 } ], \"subnet\": { \"id\": 1, \"address-limit\": 4 } } } }');"
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"client-classes\": [ { \"name\": \"foo\", \"address-limit\": 2 }, { \"name\": \"bar\", \"address-limit\": 4 } ], \"subnet\": { \"id\": 1, \"address-limit\": 4 } } } }')"
         run_command \
             mysql_execute "${query}"
         if test "${json_supported}" = 1; then
@@ -594,7 +603,7 @@ mysql_upgrade_13_to_14_test() {
             assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
         fi
 
-        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"client-classes\": [ { \"name\": \"foo\", \"address-limit\": 4 }, { \"name\": \"bar\", \"address-limit\": 4 } ], \"subnet\": { \"id\": 1, \"address-limit\": 2 } } } }');"
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"client-classes\": [ { \"name\": \"foo\", \"address-limit\": 4 }, { \"name\": \"bar\", \"address-limit\": 4 } ], \"subnet\": { \"id\": 1, \"address-limit\": 2 } } } }')"
         run_command \
             mysql_execute "${query}"
         if test "${json_supported}" = 1; then
@@ -606,7 +615,7 @@ mysql_upgrade_13_to_14_test() {
             assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
         fi
 
-        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"client-classes\": [ { \"name\": \"foo\", \"address-limit\": 4 }, { \"name\": \"bar\", \"address-limit\": 4 } ], \"subnet\": { \"id\": 1, \"address-limit\": 4 } } } }');"
+        query="SELECT checkLease${v}Limits('{ \"ISC\": { \"limits\": { \"client-classes\": [ { \"name\": \"foo\", \"address-limit\": 4 }, { \"name\": \"bar\", \"address-limit\": 4 } ], \"subnet\": { \"id\": 1, \"address-limit\": 4 } } } }')"
         run_command \
             mysql_execute "${query}"
         if test "${json_supported}" = 1; then
@@ -626,7 +635,7 @@ mysql_upgrade_13_to_14_test() {
         assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
         assert_str_eq '2' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-        # Artifically change the subnet counter from 2 down to 1.
+        # Artificially change the subnet counter from 2 down to 1.
         query="UPDATE lease${v}_stat SET leases = 1 WHERE subnet_id = 1 AND state = 0"
         run_command \
             mysql_execute "${query}"
@@ -640,7 +649,7 @@ mysql_upgrade_13_to_14_test() {
             assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
             assert_str_eq '2' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-            # Artifically change the client class counter from 2 down to 1.
+            # Artificially change the client class counter from 2 down to 1.
             query="UPDATE lease${v}_stat_by_client_class SET leases = 1 WHERE client_class = 'foo'"
             run_command \
                 mysql_execute "${query}"
@@ -655,7 +664,7 @@ mysql_upgrade_13_to_14_test() {
         assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
         assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-        # SELECT should finish succesfully and the subnet counter should be 0.
+        # SELECT should finish successfully and the subnet counter should be 0.
         query="SELECT leases FROM lease${v}_stat WHERE subnet_id = 1 AND state = 0 LIMIT 1"
         run_command \
             mysql_execute "${query}"
@@ -663,7 +672,7 @@ mysql_upgrade_13_to_14_test() {
         assert_str_eq '0' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
         if test "${json_supported}" = 1; then
-            # SELECT should finish succesfully and the client class counter should be 0.
+            # SELECT should finish successfully and the client class counter should be 0.
             query="SELECT leases FROM lease${v}_stat_by_client_class WHERE client_class = 'foo' LIMIT 1"
             run_command \
                 mysql_execute "${query}"
@@ -671,6 +680,153 @@ mysql_upgrade_13_to_14_test() {
             assert_str_eq '0' "${OUTPUT}" "${query}: expected output %s, returned %s"
         fi
     done
+}
+
+mysql_upgrade_14_to_15_test() {
+    # table: dhcp4_options new cancelled column.
+    qry="select cancelled from dhcp4_options"
+    run_statement "dhcp4_options" "$qry"
+
+    # table: dhcp6_options new cancelled column.
+    qry="select cancelled from dhcp6_options"
+    run_statement "dhcp6_options" "$qry"
+
+    # Check if offer_lifetime was added to dhcp4_shared_network table.
+    qry="SELECT offer_lifetime from dhcp4_shared_network limit 1"
+    run_command \
+        mysql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+
+    # Check if offer_lifetime was added to dhcp4_subnet table.
+    qry="SELECT offer_lifetime from dhcp4_subnet limit 1"
+    run_command \
+        mysql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+
+    # Check if offer_lifetime was added to dhcp4_client_class table.
+    qry="SELECT offer_lifetime from dhcp4_client_class limit 1"
+    run_command \
+        mysql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+}
+
+mysql_upgrade_16_to_17_test() {
+    # Check if allocator was added to dhcp4_shared_network table.
+    qry="SELECT allocator from dhcp4_shared_network limit 1"
+    run_command \
+        mysql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+
+    # Check if allocator was added to dhcp6_shared_network table.
+    qry="SELECT allocator from dhcp6_shared_network limit 1"
+    run_command \
+        mysql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+
+    # Check if pd_allocator was added to dhcp6_shared_network table.
+    qry="SELECT pd_allocator from dhcp6_shared_network limit 1"
+    run_command \
+        mysql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+
+    # Check if allocator was added to dhcp4_subnet table.
+    qry="SELECT allocator from dhcp4_subnet limit 1"
+    run_command \
+        mysql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+
+    # Check if allocator was added to dhcp6_subnet table.
+    qry="SELECT allocator from dhcp6_subnet limit 1"
+    run_command \
+        mysql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+
+    # Check if pd_allocator was added to dhcp6_subnet table.
+    qry="SELECT pd_allocator from dhcp6_subnet limit 1"
+    run_command \
+        mysql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+}
+
+mysql_upgrade_17_to_18_test() {
+    # lease4 client_id should support 255 long strings.
+    qry="insert into lease4 (address, client_id, subnet_id) values (1, '123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345', 1)"
+    run_statement "lease4_255_long_client_id" "$qry"
+
+    # lease4 relay_id should support 255 long strings.
+    qry="insert into lease4 (address, remote_id, subnet_id) values (2, '123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345', 1)"
+    run_statement "lease4_255_long_relay_id" "$qry"
+
+    # lease4 remote_id should support 255 long strings.
+    qry="insert into lease4 (address, remote_id, subnet_id) values (3, '123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345', 1)"
+    run_statement "lease4_255_long_remote_id" "$qry"
+
+    # hosts dhcp_identifier should support 255 long strings.
+    qry="insert into hosts (dhcp_identifier, dhcp_identifier_type) values ('123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345', 0)"
+    run_statement "hosts_255_long_dhcp_identifier" "$qry"
+
+    #lease6 duid should support 130 long strings.
+    qry="insert into lease6 values(inet6_aton('::10'),12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890,30,(SELECT FROM_UNIXTIME(1642000000)),40,50,1,60,70,1,1,'one.example.com',80,90,16,0,NULL,0)"
+    run_statement "lease6_130_long_duid" "$qry"
+
+    #lease4_pool_stat new table.
+    run_command \
+        mysql -u"${db_user}" -p"${db_password}" "${db_name}" -e \
+        'SELECT subnet_id, pool_id, state, leases FROM lease4_pool_stat'
+    assert_eq 0 "${EXIT_CODE}" "lease4_pool_stat table is missing or broken. (expected status code %d, returned %d)"
+
+    #lease6_pool_stat new table.
+    run_command \
+        mysql -u"${db_user}" -p"${db_password}" "${db_name}" -e \
+        'SELECT subnet_id, pool_id, lease_type, state, leases FROM lease6_pool_stat'
+    assert_eq 0 "${EXIT_CODE}" "lease6_pool_stat table is missing or broken. (expected status code %d, returned %d)"
+
+    #lease6_relay_id new table.
+    run_command \
+        mysql -u"${db_user}" -p"${db_password}" "${db_name}" -e \
+        'SELECT extended_info_id, relay_id, lease_addr FROM lease6_relay_id'
+    assert_eq 0 "${EXIT_CODE}" "lease6_relay_id table is missing or broken. (expected status code %d, returned %d)"
+
+    #lease6_remote_id new table.
+    run_command \
+        mysql -u"${db_user}" -p"${db_password}" "${db_name}" -e \
+        'SELECT extended_info_id, remote_id, lease_addr FROM lease6_remote_id'
+    assert_eq 0 "${EXIT_CODE}" "lease6_remote_id table is missing or broken. (expected status code %d, returned %d)"
+}
+
+mysql_upgrade_18_to_19_test() {
+    # Verify that lease6 address is binary.  This is sort of overkill as many of
+    # the prior upgrade tests manipulate lease6 records.
+    qry="insert into lease6 values(inet6_aton('3001::99'),'18219',30,(SELECT FROM_UNIXTIME(1642000000)),40,50,1,60,70,1,1,'one.example.com',80,90,16,0,NULL,0)"
+    run_statement "lease6_insert" "$qry"
+
+    qry="select inet6_ntoa(address) from lease6 where duid = '18219';"
+    run_statement "lease6_insert" "$qry" "3001::99"
+
+    # Verify that ipv6_reservations address is binary.
+    qry="\
+    insert into hosts(host_id, dhcp_identifier, dhcp_identifier_type) values (18219, '18219', 1); \
+    insert into ipv6_reservations (address, prefix_len, type, dhcp6_iaid, host_id) \
+        values (inet6_aton('3001::99'), 128, 1, 123, 18219); \
+    select inet6_ntoa(address) from ipv6_reservations where host_id = 18219;"
+
+    run_statement "ipv6_reservations_insert" "$qry" "3001::99"
+}
+
+mysql_upgrade_22_to_23_test() {
+    qry="SELECT name FROM lease_state WHERE state = 3"
+    run_command \
+        mysql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "${qry}: expected %d, returned %d"
+    assert_str_eq 'released' "${OUTPUT}" "${qry}: expected output %s, returned %s"
+}
+
+mysql_upgrade_23_to_24_test() {
+    query="SELECT COUNT(id) FROM option_def_data_type"
+    run_command \
+        mysql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+    assert_str_eq '18' "${OUTPUT}" "${query}: expected output %s, returned %s"
 }
 
 mysql_upgrade_test() {
@@ -687,79 +843,79 @@ mysql_upgrade_test() {
     version=$("${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
     assert_str_eq "1.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
-    # Ok, we have a 1.0 database. Let's upgrade it to the latest version.
+    # Let's upgrade it to the latest version.
     run_command \
         "${kea_admin}" db-upgrade mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
     assert_eq 0 "${EXIT_CODE}" "kea-admin db-upgrade mysql failed, expected %d, returned non-zero status code %d\n"
 
     # Verify that the upgraded schema reports the latest version.
     version=$("${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "14.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "24.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's check that the new tables are indeed there.
 
     #table: lease6 (upgrade 1.0 -> 2.0)
     run_command \
         mysql -u"${db_user}" -p"${db_password}" "${db_name}" -e \
-        'SELECT hwaddr, hwtype, hwaddr_source FROM lease6;'
+        'SELECT hwaddr, hwtype, hwaddr_source FROM lease6'
     assert_eq 0 "${EXIT_CODE}" "lease6 table not upgraded to 2.0 (expected status code %d, returned %d)"
 
     #table: lease_hwaddr_source (upgrade 1.0 -> 2.0)
     run_command \
         mysql -u"${db_user}" -p"${db_password}" "${db_name}" -e \
-        'SELECT hwaddr_source, name FROM lease_hwaddr_source;'
+        'SELECT hwaddr_source, name FROM lease_hwaddr_source'
     assert_eq 0 "${EXIT_CODE}" "lease_hwaddr_source table is missing or broken. (expected status code %d, returned %d)"
 
     #table: hosts (upgrade 2.0 -> 3.0)
     run_command \
         mysql -u"${db_user}" -p"${db_password}" "${db_name}" -e \
-        'SELECT host_id, dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, dhcp4_client_classes, dhcp6_client_classes FROM hosts;'
+        'SELECT host_id, dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, dhcp4_client_classes, dhcp6_client_classes FROM hosts'
     assert_eq 0 "${EXIT_CODE}" "hosts table is missing or broken. (expected status code %d, returned %d)"
 
     #table: ipv6_reservations (upgrade 2.0 -> 3.0)
     run_command \
         mysql -u"${db_user}" -p"${db_password}" "${db_name}" -e \
-        'SELECT reservation_id, address, prefix_len, type, dhcp6_iaid, host_id FROM ipv6_reservations;'
+        'SELECT reservation_id, address, prefix_len, type, dhcp6_iaid, host_id FROM ipv6_reservations'
     assert_eq 0 "${EXIT_CODE}" "ipv6_reservations table is missing or broken. (expected status code %d, returned %d)"
 
     #table: dhcp4_options (upgrade 2.0 -> 3.0)
     run_command \
         mysql -u"${db_user}" -p"${db_password}" "${db_name}" -e \
-        'SELECT option_id, code, value, formatted_value, space, persistent, dhcp_client_class, dhcp4_subnet_id, host_id FROM dhcp4_options;'
+        'SELECT option_id, code, value, formatted_value, space, persistent, dhcp_client_class, dhcp4_subnet_id, host_id FROM dhcp4_options'
     assert_eq 0 "${EXIT_CODE}" "dhcp4_options table is missing or broken. (expected status code %d, returned %d)"
 
     #table: dhcp6_options (upgrade 2.0 -> 3.0)
     run_command \
         mysql -u"${db_user}" -p"${db_password}" "${db_name}" -e \
-        'SELECT option_id, code, value, formatted_value, space, persistent, dhcp_client_class, dhcp6_subnet_id, host_id FROM dhcp6_options;'
+        'SELECT option_id, code, value, formatted_value, space, persistent, dhcp_client_class, dhcp6_subnet_id, host_id FROM dhcp6_options'
     assert_eq 0 "${EXIT_CODE}" "dhcp6_options table is missing or broken. (expected status code %d, returned %d)"
 
     #table: lease_state table added (upgrade 3.0 -> 4.0)
     run_command \
         mysql -u"${db_user}" -p"${db_password}" "${db_name}" -e \
-        'SELECT state,name from lease_state;'
+        'SELECT state,name from lease_state'
     assert_eq 0 "${EXIT_CODE}" "dhcp6_options table is missing or broken. (expected status code %d, returned %d)"
 
     #table: state column added to lease4 (upgrade 3.0 -> 4.0)
     run_command \
         mysql -u"${db_user}" -p"${db_password}" "${db_name}" -e \
-        'SELECT state from lease4;'
+        'SELECT state from lease4'
     assert_eq 0 "${EXIT_CODE}" "lease4 is missing state column. (expected status code %d, returned %d)"
 
     #table: state column added to lease6 (upgrade 3.0 -> 4.0)
     run_command \
         mysql -u"${db_user}" -p"${db_password}" "${db_name}" -e \
-        'SELECT state from lease6;'
+        'SELECT state from lease6'
     assert_eq 0 "${EXIT_CODE}" "lease6 is missing state column. (expected status code %d, returned %d)"
 
     #table: stored procedures for lease dumps added (upgrade 3.0 -> 4.0)
     run_command \
         mysql -u"${db_user}" -p"${db_password}" "${db_name}" -e \
-        'call lease4DumpHeader(); call lease4DumpData(); call lease6DumpHeader(); call lease6DumpHeader();'
+        'call lease4DumpHeader(); call lease4DumpData(); call lease6DumpHeader(); call lease6DumpHeader()'
     assert_eq 0 "${EXIT_CODE}" "lease dump stored procedures are missing or broken. (expected status code %d, returned %d)"
 
     #lease_hardware_source should have row for source = 0 (upgrade 4.0 -> 4.1)
-    qry="select count(hwaddr_source) from lease_hwaddr_source where hwaddr_source = 0 and name='HWADDR_SOURCE_UNKNOWN';"
+    qry="select count(hwaddr_source) from lease_hwaddr_source where hwaddr_source = 0 and name='HWADDR_SOURCE_UNKNOWN'"
     run_command \
         mysql_execute "${qry}"
     count="${OUTPUT}"
@@ -785,7 +941,7 @@ mysql_upgrade_test() {
 
     #table: host_identifier_type (upgrade 4.1 -> 5.0)
     # verify that host_identifier_type table exists.
-    qry="select count(*) from host_identifier_type";
+    qry="select count(*) from host_identifier_type"
     run_command \
         mysql_execute "${qry}"
     count="${OUTPUT}"
@@ -793,7 +949,7 @@ mysql_upgrade_test() {
     assert_eq 5 "${count}" "host_identifier_type does not contain correct number of entries. (expected count %d, returned %d)"
 
     # verify that foreign key fk_host_identifier_type exists
-    qry="show create table hosts";
+    qry="show create table hosts"
     run_command \
         mysql_execute "${qry}"
     count=$(echo "${OUTPUT}" | grep -Fci -m 1 'fk_host_identifier_type') || true
@@ -802,7 +958,7 @@ mysql_upgrade_test() {
 
     #table: dhcp_option_scope (upgrade 4.1 -> 5.0)
     # verify that dhcp_option_scope table exists.
-    qry="select count(*) from dhcp_option_scope";
+    qry="select count(*) from dhcp_option_scope"
     run_command \
         mysql_execute "${qry}"
     count="${OUTPUT}"
@@ -812,7 +968,7 @@ mysql_upgrade_test() {
 
     #table: scope_id columns to dhcp4_options (upgrade 4.1 -> 5.0)
     # verify that dhcp4_options table includes scope_id
-    qry="select scope_id from dhcp4_options";
+    qry="select scope_id from dhcp4_options"
     run_command \
         mysql_execute "${qry}"
     count="${OUTPUT}"
@@ -820,7 +976,7 @@ mysql_upgrade_test() {
 
     #table: scope_id columns to dhcp6_options (upgrade 4.1 -> 5.0)
     # verify that dhcp6_options table includes scope_id
-    qry="select scope_id from dhcp6_options";
+    qry="select scope_id from dhcp6_options"
     run_command \
         mysql_execute "${qry}"
     count="${OUTPUT}"
@@ -828,7 +984,7 @@ mysql_upgrade_test() {
 
     #table: DHCPv4 fixed field columns (upgrade 4.1 -> 5.0)
     # verify that hosts table has columns holding values for DHCPv4 fixed fields
-    qry="select dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name, auth_key from hosts";
+    qry="select dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name, auth_key from hosts"
     run_command \
         mysql_execute "${qry}"
     count="${OUTPUT}"
@@ -851,7 +1007,7 @@ mysql_upgrade_test() {
     assert_eq 1 "${count}" "dhcp6_subnet_id is not of unsigned type. (expected count %d, returned %d)"
 
     #host_identifier_type should have rows for types 3 and 4 (upgrade 5.0 -> 5.1)
-    qry="select count(*) from host_identifier_type";
+    qry="select count(*) from host_identifier_type"
     run_command \
         mysql_execute "${qry}"
     count="${OUTPUT}"
@@ -860,21 +1016,21 @@ mysql_upgrade_test() {
 
     #table: user_context columns to hosts, dhcp4_options and dhcp6_options (upgrade 5.2 -> 6.0)
     # verify that hosts table includes user_context
-    qry="select user_context from hosts";
+    qry="select user_context from hosts"
     run_command \
         mysql_execute "${qry}"
     count="${OUTPUT}"
     assert_eq 0 "${EXIT_CODE}" "select user_context from hosts failed. (expected status code %d, returned %d)"
 
     # verify that dhcp4_options table includes user_context
-    qry="select user_context from dhcp4_options";
+    qry="select user_context from dhcp4_options"
     run_command \
         mysql_execute "${qry}"
     count="${OUTPUT}"
     assert_eq 0 "${EXIT_CODE}" "select user_context from dhcp4_options failed. (expected status code %d, returned %d)"
 
     # verify that dhcp6_options table includes user_context
-    qry="select user_context from dhcp6_options";
+    qry="select user_context from dhcp6_options"
     run_command \
         mysql_execute "${qry}"
     count="${OUTPUT}"
@@ -884,14 +1040,14 @@ mysql_upgrade_test() {
 
     #table: user_context to lease4 and lease6 (upgrade 6.0 -> 7.0)
     # verify that lease4 table includes user_context
-    qry="select user_context from lease4";
+    qry="select user_context from lease4"
     run_command \
         mysql_execute "${qry}"
     count="${OUTPUT}"
     assert_eq 0 "${EXIT_CODE}" "select user_context from lease4 failed. (expected status code %d, returned %d)"
 
     # verify that lease6 table includes user_context
-    qry="select user_context from lease6";
+    qry="select user_context from lease6"
     run_command \
         mysql_execute "${qry}"
     count="${OUTPUT}"
@@ -900,7 +1056,7 @@ mysql_upgrade_test() {
     #table: logs (upgrade 6.0 -> 7.0)
     run_command \
         mysql -u"${db_user}" -p"${db_password}" "${db_name}" -e \
-        'SELECT timestamp, address, log FROM logs;'
+        'SELECT timestamp, address, log FROM logs'
     assert_eq 0 "${EXIT_CODE}" "logs table is missing or broken. (expected status code %d, returned %d)"
 
     # table: modification (upgrade 6.0 -> 7.0)
@@ -1061,7 +1217,7 @@ mysql_upgrade_test() {
     run_statement "createOptionAuditDHCP4 cascade update" "$qry"
 
     # The number of rows matching the audit entry should be 0.
-    qry="SELECT COUNT(*) FROM dhcp4_audit WHERE object_type = 'dhcp4_options' AND object_id = 1024";
+    qry="SELECT COUNT(*) FROM dhcp4_audit WHERE object_type = 'dhcp4_options' AND object_id = 1024"
     run_statement "createOptionAuditDHCP4 cascade update, entry not inserted" "$qry" 0;
 
     # This time set the cascade_update to 0 and expect that the
@@ -1069,7 +1225,7 @@ mysql_upgrade_test() {
     qry="SET @audit_revision_id = (SELECT id FROM dhcp4_audit_revision LIMIT 1); SET @cascade_transaction = 0; CALL createOptionAuditDHCP4('create', 0, 1024, NULL, NULL, NULL, NULL, now())"
     run_statement "createOptionAuditDHCP4 cascade update" "$qry"
 
-    qry="SELECT COUNT(*) FROM dhcp4_audit WHERE object_type = 'dhcp4_options' AND object_id = 1024";
+    qry="SELECT COUNT(*) FROM dhcp4_audit WHERE object_type = 'dhcp4_options' AND object_id = 1024"
     run_statement "createOptionAuditDHCP4 cascade update, entry not inserted" "$qry" 1;
 
     # Test that createAuditRevisionDHCP6 exists and creates entry in
@@ -1104,7 +1260,7 @@ mysql_upgrade_test() {
     run_statement "createOptionAuditDHCP6 cascade update" "$qry"
 
     # The number of rows matching the audit entry should be 0.
-    qry="SELECT COUNT(*) FROM dhcp6_audit WHERE object_type = 'dhcp6_options' AND object_id = 1024";
+    qry="SELECT COUNT(*) FROM dhcp6_audit WHERE object_type = 'dhcp6_options' AND object_id = 1024"
     run_statement "createOptionAuditDHCP6 cascade update, entry not inserted" "$qry" 0;
 
     # This time set the cascade_update to 0 and expect that the
@@ -1112,14 +1268,14 @@ mysql_upgrade_test() {
     qry="SET @audit_revision_id = (SELECT id FROM dhcp6_audit_revision LIMIT 1); SET @cascade_transaction = 0; CALL createOptionAuditDHCP6('create', 0, 1024, NULL, NULL, NULL, NULL, NULL,now())"
     run_statement "createOptionAuditDHCP6 cascade update" "$qry"
 
-    qry="SELECT COUNT(*) FROM dhcp6_audit WHERE object_type = 'dhcp6_options' AND object_id = 1024";
+    qry="SELECT COUNT(*) FROM dhcp6_audit WHERE object_type = 'dhcp6_options' AND object_id = 1024"
     run_statement "createOptionAuditDHCP6 cascade update, entry not inserted" "$qry" 1;
 
     # New triggers aren't tested here because the extensive tests are
     # provided with the backend implementations.
 
     # parameter_data_type must exist and must have 4 rows.
-    qry="SELECT COUNT(*) FROM parameter_data_type";
+    qry="SELECT COUNT(*) FROM parameter_data_type"
     run_statement "parameter_data_type count" "$qry" 4;
 
     # Schema upgrade from 8.0 to 8.2
@@ -1188,7 +1344,7 @@ mysql_upgrade_test() {
 
     insert_sql="\
 insert into hosts(dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, ipv4_address) values (hex('010101010101'), 0, 1, inet_aton('192.0.2.0'));\
-insert into hosts(dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, ipv4_address) values (hex('010101010102'), 0, 1, inet_aton('192.0.2.0'));"
+insert into hosts(dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, ipv4_address) values (hex('010101010102'), 0, 1, inet_aton('192.0.2.0'))"
     run_command \
         mysql_execute "$insert_sql"
     assert_eq 0 "${EXIT_CODE}" "insert into hosts failed, expected exit code %d, actual %d"
@@ -1199,7 +1355,7 @@ insert into hosts(dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, ipv4_a
     qry="select reservations_global, reservations_in_subnet, reservations_out_of_pool from dhcp4_shared_network"
     run_statement "dhcp4_shared_network" "$qry"
 
-    qry="show columns from dhcp4_shared_network like 'reservation_mode'";
+    qry="show columns from dhcp4_shared_network like 'reservation_mode'"
     run_command \
         mysql_execute "${qry}"
     assert_eq 0 "${EXIT_CODE}" "show columns from dhcp4_shared_network like 'reservation_mode' failed. (expected status code %d, returned %d)"
@@ -1210,7 +1366,7 @@ insert into hosts(dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, ipv4_a
     qry="select reservations_global, reservations_in_subnet, reservations_out_of_pool from dhcp4_subnet"
     run_statement "dhcp4_subnet" "$qry"
 
-    qry="show columns from dhcp4_subnet like 'reservation_mode'";
+    qry="show columns from dhcp4_subnet like 'reservation_mode'"
     run_command \
         mysql_execute "${qry}"
     assert_eq 0 "${EXIT_CODE}" "show columns from dhcp4_subnet like 'reservation_mode' failed. (expected status code %d, returned %d)"
@@ -1221,7 +1377,7 @@ insert into hosts(dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, ipv4_a
     qry="select reservations_global, reservations_in_subnet, reservations_out_of_pool from dhcp6_shared_network"
     run_statement "dhcp6_shared_network" "$qry"
 
-    qry="show columns from dhcp6_shared_network like 'reservation_mode'";
+    qry="show columns from dhcp6_shared_network like 'reservation_mode'"
     run_command \
         mysql_execute "${qry}"
     assert_eq 0 "${EXIT_CODE}" "show columns from dhcp6_shared_network like 'reservation_mode' failed. (expected status code %d, returned %d)"
@@ -1232,7 +1388,7 @@ insert into hosts(dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, ipv4_a
     qry="select reservations_global, reservations_in_subnet, reservations_out_of_pool from dhcp6_subnet"
     run_statement "dhcp6_subnet" "$qry"
 
-    qry="show columns from dhcp6_subnet like 'reservation_mode'";
+    qry="show columns from dhcp6_subnet like 'reservation_mode'"
     run_command \
         mysql_execute "${qry}"
     assert_eq 0 "${EXIT_CODE}" "show columns from dhcp6_subnet like 'reservation_mode' failed. (expected status code %d, returned %d)"
@@ -1257,20 +1413,20 @@ insert into hosts(dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, ipv4_a
     qry="select cache_threshold, cache_max_age from dhcp6_subnet"
     run_statement "dhcp6_shared_network" "$qry"
 
-    qry='SELECT id FROM logs';
+    qry='SELECT id FROM logs'
     run_command \
         mysql_execute "${qry}"
     assert_eq 0 "${EXIT_CODE}" "${qry} failed: expected status code %d, returned %d"
 
     # Check upgrade from 10.0 to 11.0.
-    qry="show indexes from lease4 where key_name = 'lease4_by_expire_state'";
+    qry="show indexes from lease4 where key_name = 'lease4_by_expire_state'"
     run_command \
         mysql_execute "${qry}"
     assert_eq 0 "${EXIT_CODE}" "show indexes from lease4 failed. (expected status code %d, returned %d)"
     count=$(echo "${OUTPUT}" | grep -Fci lease4_by_expire_state)
     assert_eq 2 "${count}" "lease4_by_expire_state wrong or missing. (expected count %d, actual %d)"
 
-    qry="show indexes from lease6 where key_name = 'lease6_by_expire_state'";
+    qry="show indexes from lease6 where key_name = 'lease6_by_expire_state'"
     run_command \
         mysql_execute "${qry}"
     assert_eq 0 "${EXIT_CODE}" "show indexes from lease6 failed. (expected status code %d, returned %d)"
@@ -1292,7 +1448,7 @@ INSERT INTO dhcp4_client_class(name, modification_ts) VALUES ('foo', now());\
 INSERT INTO dhcp4_options(code, scope_id, dhcp_client_class, modification_ts) VALUES (222, 2, 'foo', now());\
 INSERT INTO dhcp6_client_class(name, modification_ts) VALUES ('foo', now());\
 INSERT INTO dhcp6_options(code, scope_id, dhcp_client_class, modification_ts) VALUES (222, 2, 'foo', now());\
-SET @disable_audit = 0;"
+SET @disable_audit = 0"
     run_command \
         mysql_execute "$qry"
     assert_eq 0 "${EXIT_CODE}" "inserting classes and options failed, expected exit code %d, actual %d"
@@ -1302,7 +1458,7 @@ SET @disable_audit = 0;"
 SET @disable_audit = 1;\
 DELETE FROM dhcp4_client_class;\
 DELETE FROM dhcp6_client_class;\
-SET @disable_audit = 0;"
+SET @disable_audit = 0"
     run_command \
         mysql_execute "$qry"
     assert_eq 0 "${EXIT_CODE}" "deleting classes failed, expected exit code %d, actual %d"
@@ -1320,6 +1476,48 @@ SET @disable_audit = 0;"
 
     # Check upgrade from 13.0 to 14.0.
     mysql_upgrade_13_to_14_test
+
+    # Check upgrade from 14.0 to 15.0.
+    mysql_upgrade_14_to_15_test
+
+    # Check upgrade from 15.0 to 16.0.
+
+    # table: lease4 new relay_id remote_id column and index.
+    qry="select relay_id from lease4"
+    run_statement "lease4" "$qry"
+
+    qry="show indexes from lease4 where key_name = 'lease4_by_relay_id'"
+    run_command \
+        mysql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "show indexes from lease4 failed. (expected status code %d, returned %d)"
+    count=$(echo "${OUTPUT}" | grep -Fci lease4_by_relay_id)
+    assert_eq 1 "${count}" "lease4_by_relay_id  wrong or missing. (expected count %d, actual %d)"
+
+    # table: lease4 new remote_id column and index.
+    qry="select remote_id from lease4"
+    run_statement "lease4" "$qry"
+
+    qry="show indexes from lease4 where key_name = 'lease4_by_remote_id'"
+    run_command \
+        mysql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "show indexes from lease4 failed. (expected status code %d, returned %d)"
+    count=$(echo "${OUTPUT}" | grep -Fci lease4_by_remote_id)
+    assert_eq 1 "${count}" "lease4_by_remote_id  wrong or missing. (expected count %d, actual %d)"
+
+    # Check upgrade from 16.0 to 17.0.
+    mysql_upgrade_16_to_17_test
+
+    # Check upgrade from 17.0 to 18.0.
+    mysql_upgrade_17_to_18_test
+
+    # Check upgrade from 18.0 to 19.0.
+    mysql_upgrade_18_to_19_test
+
+    # Check upgrade from 22.0 to 23.0.
+    mysql_upgrade_22_to_23_test
+
+    # Check upgrade from 23.0 to 24.0.
+    mysql_upgrade_23_to_24_test
 
     # Let's wipe the whole database
     mysql_wipe
@@ -1344,7 +1542,7 @@ mysql_lease4_dump_test() {
              "${output_file}.tmp" \
              "/tmp/$(basename "${output_file}").tmp" \
     ; do
-        if printf '%s' "${@}" | grep 'y' > /dev/null; then
+        if printf '%s' "$@" | grep 'y' > /dev/null; then
             touch "${i}"
         else
             rm -f "${i}"
@@ -1362,9 +1560,9 @@ mysql_lease4_dump_test() {
 
     # Insert the reference record
     insert_sql="\
-insert into lease4 values(10,20,30,40,(SELECT FROM_UNIXTIME(1642000000)),50,1,1,'one.example.com',0,NULL);
-insert into lease4 values(11,NULL,123,40,(SELECT FROM_UNIXTIME(1643210000)),50,1,1,'',1,'{  }');\
-insert into lease4 values(12,22,NULL,40,(SELECT FROM_UNIXTIME(1643212345)),50,1,1,'three,example,com',2,'{ \"a\": 1, \"b\": \"c\" }');"
+insert into lease4 values(10,20,30,40,(SELECT FROM_UNIXTIME(1642000000)),50,1,1,'one.example.com',0,NULL,NULL,NULL,0);
+insert into lease4 values(11,NULL,123,40,(SELECT FROM_UNIXTIME(1643210000)),50,1,1,'',1,'{  }',NULL,NULL,0);\
+insert into lease4 values(12,22,NULL,40,(SELECT FROM_UNIXTIME(1643212345)),50,1,1,'three,example,com',2,'{ \"a\": 1, \"b\": \"c\" }',NULL,NULL,0)"
 
     run_command \
         mysql_execute "$insert_sql"
@@ -1373,7 +1571,7 @@ insert into lease4 values(12,22,NULL,40,(SELECT FROM_UNIXTIME(1643212345)),50,1,
     # Dump lease4 to output_file
     run_command \
         "${kea_admin}" lease-dump mysql -4 -u "${db_user}" -p "${db_password}" -n "${db_name}" \
-            -d "${db_scripts_dir}" -o "${output_file}" "${@}"
+            -d "${db_scripts_dir}" -o "${output_file}" "$@"
     assert_eq 0 "${EXIT_CODE}" "kea-admin lease-dump -4 failed, expected exit code %d, actual %d"
 
     # Compare the dump output to reference file, they should be identical
@@ -1381,8 +1579,9 @@ insert into lease4 values(12,22,NULL,40,(SELECT FROM_UNIXTIME(1643212345)),50,1,
         cmp -s "${output_file}" "${ref_file}"
     assert_eq 0 "${EXIT_CODE}" "dump file does not match reference file, expected exit code %d, actual %d, diff:\n$(diff ${ref_file} ${output_file})"
 
-    # Remove the output file.
+    # Remove the files.
     rm -f "${output_file}"
+    rm -f "${output_file}.tmp"
 
     # Let's wipe the whole database
     mysql_wipe
@@ -1407,7 +1606,7 @@ mysql_lease6_dump_test() {
              "${output_file}.tmp" \
              "/tmp/$(basename "${output_file}").tmp" \
     ; do
-        if printf '%s' "${@}" | grep 'y' > /dev/null; then
+        if printf '%s' "$@" | grep 'y' > /dev/null; then
             touch "${i}"
         else
             rm -f "${i}"
@@ -1424,9 +1623,9 @@ mysql_lease6_dump_test() {
 
     # Insert the reference record
     insert_sql="\
-insert into lease6 values('::10',20,30,(SELECT FROM_UNIXTIME(1642000000)),40,50,1,60,70,1,1,'one.example.com',80,90,16,0,NULL);\
-insert into lease6 values('::11',21,30,(SELECT FROM_UNIXTIME(1643210000)),40,50,1,60,70,1,1,'',80,90,1,1,'{  }');\
-insert into lease6 values('::12',22,30,(SELECT FROM_UNIXTIME(1643212345)),40,50,1,60,70,1,1,'three,example,com',80,90,4,2,'{ \"a\": 1, \"b\": \"c\" }');"
+insert into lease6 values(inet6_aton('::10'),203,30,(SELECT FROM_UNIXTIME(1642000000)),40,50,1,60,128,1,1,'one.example.com',80,90,16,0,NULL,0);\
+insert into lease6 values(inet6_aton('::11'),213,30,(SELECT FROM_UNIXTIME(1643210000)),40,50,1,60,128,1,1,'',80,90,1,1,'{  }',0);\
+insert into lease6 values(inet6_aton('::12'),223,30,(SELECT FROM_UNIXTIME(1643212345)),40,50,1,60,128,1,1,'three,example,com',80,90,4,2,'{ \"a\": 1, \"b\": \"c\" }',0)"
 
     run_command \
         mysql_execute "$insert_sql"
@@ -1435,7 +1634,7 @@ insert into lease6 values('::12',22,30,(SELECT FROM_UNIXTIME(1643212345)),40,50,
     # Dump lease4 to output_file
     run_command \
         "${kea_admin}" lease-dump mysql -6 -u "${db_user}" -p "${db_password}" -n "${db_name}" \
-            -d "${db_scripts_dir}" -o "${output_file}" "${@}"
+            -d "${db_scripts_dir}" -o "${output_file}" "$@"
     assert_eq 0 "${EXIT_CODE}" "kea-admin lease-dump -6 failed, expected exit code %d, actual %d"
 
     # Compare the dump output to reference file, they should be identical
@@ -1443,8 +1642,9 @@ insert into lease6 values('::12',22,30,(SELECT FROM_UNIXTIME(1643212345)),40,50,
         cmp -s "${output_file}" "${ref_file}"
     assert_eq 0 "${EXIT_CODE}" "dump file does not match reference file, expected exit code %d, actual %d, diff:\n$(diff ${ref_file} ${output_file})"
 
-    # Remove the output file.
+    # Remove the files.
     rm -f "${output_file}"
+    rm -f "${output_file}.tmp"
 
     # Let's wipe the whole database
     mysql_wipe
@@ -1457,7 +1657,14 @@ mysql_lease4_upload_test() {
     test_start "mysql.lease4_upload_test${1-}"
 
     input_file="@abs_top_srcdir@/src/bin/admin/tests/data/lease4_dump_test.reference.csv"
-    output_file="@abs_top_srcdir@/src/bin/admin/tests/data/lease4_dump_test.output.csv"
+    input_file_cp="@abs_top_builddir@/src/bin/admin/tests/data/lease4_dump_test.reference.csv"
+    output_file="@abs_top_builddir@/src/bin/admin/tests/data/lease4_dump_test.output.csv"
+
+    if [ "${input_file}" != "${input_file_cp}" ]; then
+        cp -f ${input_file} ${input_file_cp}
+        input_file=${input_file_cp}
+        input_file_cp=""
+    fi
 
     # Wipe the whole database.
     mysql_wipe
@@ -1470,7 +1677,7 @@ mysql_lease4_upload_test() {
              "${output_file}.tmp" \
              "/tmp/$(basename "${input_file}").tmp" \
     ; do
-        if printf '%s' "${@}" | grep 'y' > /dev/null; then
+        if printf '%s' "$@" | grep 'y' > /dev/null; then
             touch "${i}"
         else
             rm -f "${i}"
@@ -1487,14 +1694,14 @@ mysql_lease4_upload_test() {
     run_command \
         "${kea_admin}" lease-upload mysql -4 -u "${db_user}" \
             -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}" \
-            -i "${input_file}" "${@}"
+            -i "${input_file}" "$@"
     assert_eq 0 "${EXIT_CODE}" "kea-admin lease-upload -4 failed, expected exit code %d, actual %d"
 
     # Dump leases.
     run_command \
         "${kea_admin}" lease-dump mysql -4 -u "${db_user}" \
             -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}" \
-            -o "${output_file}" "${@}"
+            -o "${output_file}" "$@"
     assert_eq 0 "${EXIT_CODE}" "kea-admin lease-dump -4 failed, expected exit code %d, actual %d"
 
     # Compare the initial file used for upload to the file retrieved from dump, they should be identical.
@@ -1502,8 +1709,13 @@ mysql_lease4_upload_test() {
         cmp -s "${input_file}" "${output_file}"
     assert_eq 0 "${EXIT_CODE}" "file resulted from dump after upload does not match file used for upload, expected exit code %d, actual %d, diff:\n$(diff ${input_file} ${output_file})"
 
-    # Remove the output file.
+    # Remove the files.
+    if [ "${input_file}" != "${input_file_cp}" ]; then
+        rm -f "${input_file}"
+    fi
+    rm -f "${input_file}.tmp"
     rm -f "${output_file}"
+    rm -f "${output_file}.tmp"
 
     # Wipe the whole database.
     mysql_wipe
@@ -1516,7 +1728,14 @@ mysql_lease6_upload_test() {
     test_start "mysql.lease6_upload_test${1-}"
 
     input_file="@abs_top_srcdir@/src/bin/admin/tests/data/lease6_dump_test.reference.csv"
-    output_file="@abs_top_srcdir@/src/bin/admin/tests/data/lease6_dump_test.output.csv"
+    input_file_cp="@abs_top_builddir@/src/bin/admin/tests/data/lease6_dump_test.reference.csv"
+    output_file="@abs_top_builddir@/src/bin/admin/tests/data/lease6_dump_test.output.csv"
+
+    if [ "${input_file}" != "${input_file_cp}" ]; then
+        cp -f ${input_file} ${input_file_cp}
+        input_file=${input_file_cp}
+        input_file_cp=""
+    fi
 
     # Wipe the whole database.
     mysql_wipe
@@ -1529,7 +1748,7 @@ mysql_lease6_upload_test() {
              "${output_file}.tmp" \
              "/tmp/$(basename "${input_file}").tmp" \
     ; do
-        if printf '%s' "${@}" | grep 'y' > /dev/null; then
+        if printf '%s' "$@" | grep 'y' > /dev/null; then
             touch "${i}"
         else
             rm -f "${i}"
@@ -1546,14 +1765,14 @@ mysql_lease6_upload_test() {
     run_command \
         "${kea_admin}" lease-upload mysql -6 -u "${db_user}" \
             -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}" \
-            -i "${input_file}" "${@}"
+            -i "${input_file}" "$@"
     assert_eq 0 "${EXIT_CODE}" "kea-admin lease-upload -6 failed, expected exit code %d, actual %d"
 
     # Dump leases.
     run_command \
         "${kea_admin}" lease-dump mysql -6 -u "${db_user}" \
             -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}" \
-            -o "${output_file}" "${@}"
+            -o "${output_file}" "$@"
     assert_eq 0 "${EXIT_CODE}" "kea-admin lease-dump -6 failed, expected exit code %d, actual %d"
 
     # Compare the initial file used for upload to the file retrieved from dump, they should be identical.
@@ -1561,8 +1780,13 @@ mysql_lease6_upload_test() {
         cmp -s "${input_file}" "${output_file}"
     assert_eq 0 "${EXIT_CODE}" "file resulted from dump after upload does not match file used for upload, expected exit code %d, actual %d, diff:\n$(diff ${input_file} ${output_file})"
 
-    # Remove the output file.
+    # Remove the files.
+    if [ "${input_file}" != "${input_file_cp}" ]; then
+        rm -f "${input_file}"
+    fi
+    rm -f "${input_file}.tmp"
     rm -f "${output_file}"
+    rm -f "${output_file}.tmp"
 
     # Wipe the whole database.
     mysql_wipe
@@ -1586,36 +1810,80 @@ mysql_lease4_stat_test() {
     assert_eq 0 "${EXIT_CODE}" "kea-admin db-init mysql failed, expected %d, returned non-zero status code %d"
 
     # Verify lease4 stat table is present
-    qry="select count(subnet_id) from lease4_stat";
+    qry="select count(subnet_id) from lease4_stat"
     run_statement "#1" "$qry" 0
 
     # Insert lease4
-    qry="insert into lease4 (address, subnet_id, state) values (111,1,0);"
+    qry="insert into lease4 (address, subnet_id, state) values (111,1,0)"
     run_statement "#2" "$qry"
 
     # Assigned state count should be 1
-    qry="select leases from lease4_stat where subnet_id = 1 and state = 0";
+    qry="select leases from lease4_stat where subnet_id = 1 and state = 0"
     run_statement "#3" "$qry" 1
 
+    # Assigned state count should be 1
+    qry="select leases from lease4_pool_stat where subnet_id = 1 and pool_id = 0 and state = 0"
+    run_statement "#4" "$qry" 1
+
     # Set lease state to declined
-    qry="update lease4 set state = 1 where address = 111;"
-    run_statement "#4" "$qry"
+    qry="update lease4 set state = 1 where address = 111"
+    run_statement "#5" "$qry"
 
     # Leases state count for assigned should be 0
-    qry="select leases from lease4_stat where subnet_id = 1 and state = 0";
-    run_statement "#5" "$qry" 0
+    qry="select leases from lease4_stat where subnet_id = 1 and state = 0"
+    run_statement "#6" "$qry" 0
+
+    # Leases state count for assigned should be 0
+    qry="select leases from lease4_pool_stat where subnet_id = 1 and pool_id = 0 and state = 0"
+    run_statement "#7" "$qry" 0
 
     # Leases state count for declined should be 1
-    qry="select leases from lease4_stat where subnet_id = 1 and state = 1";
-    run_statement "#6" "$qry" 1
+    qry="select leases from lease4_stat where subnet_id = 1 and state = 1"
+    run_statement "#8" "$qry" 1
+
+    # Leases state count for declined should be 1
+    qry="select leases from lease4_pool_stat where subnet_id = 1 and pool_id = 0 and state = 1"
+    run_statement "#9" "$qry" 1
 
     # Delete the lease
-    qry="delete from lease4 where address = 111;"
-    run_statement "#7" "$qry"
+    qry="delete from lease4 where address = 111"
+    run_statement "#10" "$qry"
 
     # Leases state count for declined should be 0
-    qry="select leases from lease4_stat where subnet_id = 1 and state = 1";
-    run_statement "#8" "$qry" 0
+    qry="select leases from lease4_stat where subnet_id = 1 and state = 1"
+    run_statement "#11" "$qry" 0
+
+    # Leases state count for declined should be 0
+    qry="select leases from lease4_pool_stat where subnet_id = 1 and pool_id = 0 and state = 1"
+    run_statement "#12" "$qry" 0
+
+    # Insert lease4
+    qry="insert into lease4 (address, subnet_id, pool_id, state) values (112,1,1,0)"
+    run_statement "#13" "$qry"
+
+    # Assigned state count should be 1
+    qry="select leases from lease4_stat where subnet_id = 1 and state = 0"
+    run_statement "#14" "$qry" 1
+
+    # Assigned state count should be 1
+    qry="select leases from lease4_pool_stat where subnet_id = 1 and pool_id = 1 and state = 0"
+    run_statement "#15" "$qry" 1
+
+    # Insert lease4
+    qry="insert into lease4 (address, subnet_id, pool_id, state) values (113,1,2,0)"
+    run_statement "#16" "$qry"
+
+    # Assigned state count should be 2
+    qry="select leases from lease4_stat where subnet_id = 1 and state = 0"
+    run_statement "#17" "$qry" 2
+
+    # Assigned state count should be 1
+    qry="select leases from lease4_pool_stat where subnet_id = 1 and pool_id = 1 and state = 0"
+    run_statement "#18" "$qry" 1
+
+    # Assigned state count should be 1
+    qry="select leases from lease4_pool_stat where subnet_id = 1 and pool_id = 2 and state = 0"
+    run_statement "#19" "$qry" 1
 
     # Let's wipe the whole database
     mysql_wipe
@@ -1632,35 +1900,81 @@ mysql_lease4_stat_test() {
 # param ltype - type of lease to create
 mysql_lease6_stat_per_type() {
     addr=$1;shift
+    addr1=$1;shift
+    addr2=$1;shift
     ltype=$1
 
     # insert a lease6 for addr and ltype, state assigned
-    qry="insert into lease6 (address, lease_type, subnet_id, state) values ($addr,$ltype,1,0);"
+    qry="insert into lease6 (address, lease_type, subnet_id, state) values (inet6_aton('$addr'),$ltype,1,0)"
     run_statement "#2" "$qry"
 
     # assigned stat should be 1
-    qry="select leases from lease6_stat where subnet_id = 1 and lease_type = $ltype and state = 0";
+    qry="select leases from lease6_stat where subnet_id = 1 and lease_type = $ltype and state = 0"
     run_statement "#3" "$qry" 1
 
+    # assigned stat should be 1
+    qry="select leases from lease6_pool_stat where subnet_id = 1 and lease_type = $ltype and pool_id = 0 and state = 0"
+    run_statement "#4" "$qry" 1
+
     # update the lease, changing state to declined
-    qry="update lease6 set state = 1 where address = $addr;"
-    run_statement "#4" "$qry"
+    qry="update lease6 set state = 1 where address = inet6_aton('$addr')"
+    run_statement "#5" "$qry"
 
     # leases stat for assigned state should be 0
-    qry="select leases from lease6_stat where subnet_id = 1 and lease_type = $ltype and  state = 0";
-    run_statement "#5" "$qry" 0
+    qry="select leases from lease6_stat where subnet_id = 1 and lease_type = $ltype and state = 0"
+    run_statement "#6" "$qry" 0
+
+    # leases stat for assigned state should be 0
+    qry="select leases from lease6_pool_stat where subnet_id = 1 and lease_type = $ltype and pool_id = 0 and state = 0"
+    run_statement "#7" "$qry" 0
 
     # leases count for declined state should be 1
-    qry="select leases from lease6_stat where subnet_id = 1 and lease_type = $ltype and  state = 1";
-    run_statement "#6" "$qry" 1
+    qry="select leases from lease6_stat where subnet_id = 1 and lease_type = $ltype and state = 1"
+    run_statement "#8" "$qry" 1
+
+    # leases count for declined state should be 1
+    qry="select leases from lease6_pool_stat where subnet_id = 1 and lease_type = $ltype and pool_id = 0 and state = 1"
+    run_statement "#9" "$qry" 1
 
     # delete the lease
-    qry="delete from lease6 where address = $addr;"
-    run_statement "#7" "$qry"
+    qry="delete from lease6 where address = inet6_aton('$addr')"
+    run_statement "#10" "$qry"
 
     # leases count for declined state should be 0
-    qry="select leases from lease6_stat where subnet_id = 1 and lease_type = $ltype and  state = 0";
-    run_statement "#6" "$qry" 0
+    qry="select leases from lease6_stat where subnet_id = 1 and lease_type = $ltype and state = 0"
+    run_statement "#11" "$qry" 0
+
+    # leases count for declined state should be 0
+    qry="select leases from lease6_pool_stat where subnet_id = 1 and lease_type = $ltype and pool_id = 0 and state = 0"
+    run_statement "#12" "$qry" 0
+
+    # insert a lease6 for addr and ltype, state assigned
+    qry="insert into lease6 (address, lease_type, subnet_id, pool_id, state) values (inet6_aton('$addr1'),$ltype,1,1,0)"
+    run_statement "#13" "$qry"
+
+    # assigned stat should be 1
+    qry="select leases from lease6_stat where subnet_id = 1 and lease_type = $ltype and state = 0"
+    run_statement "#14" "$qry" 1
+
+    # assigned stat should be 1
+    qry="select leases from lease6_pool_stat where subnet_id = 1 and lease_type = $ltype and pool_id = 1 and state = 0"
+    run_statement "#15" "$qry" 1
+
+    # insert a lease6 for addr and ltype, state assigned
+    qry="insert into lease6 (address, lease_type, subnet_id, pool_id, state) values (inet6_aton('$addr2'),$ltype,1,2,0)"
+    run_statement "#16" "$qry"
+
+    # assigned stat should be 2
+    qry="select leases from lease6_stat where subnet_id = 1 and lease_type = $ltype and state = 0"
+    run_statement "#17" "$qry" 2
+
+    # assigned stat should be 1
+    qry="select leases from lease6_pool_stat where subnet_id = 1 and lease_type = $ltype and pool_id = 1 and state = 0"
+    run_statement "#18" "$qry" 1
+
+    # assigned stat should be 1
+    qry="select leases from lease6_pool_stat where subnet_id = 1 and lease_type = $ltype and pool_id = 2 and state = 0"
+    run_statement "#19" "$qry" 1
 }
 
 # Verifies that lease6_stat triggers operation correctly
@@ -1681,11 +1995,11 @@ mysql_lease6_stat_test() {
     qry="select count(subnet_id) from lease6_stat"
     run_statement "#1" "$qry"
 
-    # Test for address 111, NA lease type
-    mysql_lease6_stat_per_type "111" "0"
+    # Test for address ::11, NA lease type
+    mysql_lease6_stat_per_type "::11" "::12" "::13" "0"
 
-    # Test for address 222, PD lease type
-    mysql_lease6_stat_per_type "222" "1"
+    # Test for address ::22, PD lease type
+    mysql_lease6_stat_per_type "::22" "::23" "::24" "1"
 
     # Let's wipe the whole database
     mysql_wipe
@@ -1718,19 +2032,19 @@ mysql_lease_stat_upgrade_test() {
  insert into lease4 (address, subnet_id, state) values (222,10,0);\
  insert into lease4 (address, subnet_id, state) values (333,10,1);\
  insert into lease4 (address, subnet_id, state) values (444,10,2);\
- insert into lease4 (address, subnet_id, state) values (555,77,0);"
+ insert into lease4 (address, subnet_id, state) values (555,77,0)"
     run_statement "insert v4 leases" "$qry"
 
     qry=\
-"insert into lease6 (address, lease_type, subnet_id, state) values (111,0,40,0);\
- insert into lease6 (address, lease_type, subnet_id, state) values (222,0,40,1);\
- insert into lease6 (address, lease_type, subnet_id, state) values (333,1,40,0);\
- insert into lease6 (address, lease_type, subnet_id, state) values (444,1,50,0);\
- insert into lease6 (address, lease_type, subnet_id, state) values (555,1,50,0);\
- insert into lease6 (address, lease_type, subnet_id, state) values (666,1,40,2);"
+"insert into lease6 (address, lease_type, subnet_id, state) values (inet6_aton('::11'),0,40,0);\
+ insert into lease6 (address, lease_type, subnet_id, state) values (inet6_aton('::22'),0,40,1);\
+ insert into lease6 (address, lease_type, subnet_id, state) values (inet6_aton('::33'),1,40,0);\
+ insert into lease6 (address, lease_type, subnet_id, state) values (inet6_aton('::44'),1,50,0);\
+ insert into lease6 (address, lease_type, subnet_id, state) values (inet6_aton('::55'),1,50,0);\
+ insert into lease6 (address, lease_type, subnet_id, state) values (inet6_aton('::66'),1,40,2)"
     run_statement "insert v6 leases" "$qry"
 
-    # Ok, we have a 4.0 database with leases. Let's upgrade it to the latest version.
+    # Let's upgrade it to the latest version.
     run_command \
         "${kea_admin}" db-upgrade mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
 
@@ -1742,45 +2056,81 @@ mysql_lease_stat_upgrade_test() {
     qry="select leases from lease4_stat where subnet_id = 10 and state = 0"
     run_statement "#4.1" "$qry" 2
 
+    # Assigned leases for subnet 10 should be 2
+    qry="select leases from lease4_pool_stat where subnet_id = 10 and pool_id = 0 and state = 0"
+    run_statement "#4.2" "$qry" 2
+
     # Assigned leases for subnet 77 should be 1
     qry="select leases from lease4_stat where subnet_id = 77 and state = 0"
-    run_statement "#4.2" "$qry" 1
+    run_statement "#4.3" "$qry" 1
+
+    # Assigned leases for subnet 77 should be 1
+    qry="select leases from lease4_pool_stat where subnet_id = 77 and pool_id = 0 and state = 0"
+    run_statement "#4.4" "$qry" 1
 
     # Should be no records for EXPIRED
     qry="select count(subnet_id) from lease4_stat where state = 2"
-    run_statement "#4.3" "$qry" 0
+    run_statement "#4.5" "$qry" 0
+
+    # Should be no records for EXPIRED
+    qry="select count(subnet_id) from lease4_pool_stat where state = 2"
+    run_statement "#4.6" "$qry" 0
 
     #
-    # Now we'll verify v4 trigger operation for insert,update, and delete
+    # Now we'll verify v4 trigger operation for insert, update, and delete
     #
 
     # Insert a new lease subnet 77
-    qry="insert into lease4 (address, subnet_id, state) values (777,77,0);"
-    run_statement "#4.4" "$qry"
+    qry="insert into lease4 (address, subnet_id, pool_id, state) values (777,77,1,0)"
+    run_statement "#4.7" "$qry"
 
     # Assigned count for subnet 77 should be 2
     qry="select leases from lease4_stat where subnet_id = 77 and state = 0"
-    run_statement "#4.5" "$qry" 2
+    run_statement "#4.8" "$qry" 2
+
+    # Assigned count for subnet 77 should be 1
+    qry="select leases from lease4_pool_stat where subnet_id = 77 and pool_id = 0 and state = 0"
+    run_statement "#4.9" "$qry" 1
+
+    # Assigned count for subnet 77 should be 1
+    qry="select leases from lease4_pool_stat where subnet_id = 77 and pool_id = 1 and state = 0"
+    run_statement "#4.10" "$qry" 1
 
     # Update the state of the new lease to declined
-    qry="update lease4 set state = 1 where address = 777;"
-    run_statement "#4.6" "$qry"
+    qry="update lease4 set state = 1 where address = 777"
+    run_statement "#4.11" "$qry"
 
     # Assigned count for subnet 77 should be 1 again
     qry="select leases from lease4_stat where subnet_id = 77 and state = 0"
-    run_statement "#4.7" "$qry" 1
+    run_statement "#4.12" "$qry" 1
+
+    # Assigned count for subnet 77 should be 1 again
+    qry="select leases from lease4_pool_stat where subnet_id = 77 and pool_id = 0 and state = 0"
+    run_statement "#4.13" "$qry" 1
+
+    # Assigned count for subnet 77 should be 0 again
+    qry="select leases from lease4_pool_stat where subnet_id = 77 and pool_id = 1 and state = 0"
+    run_statement "#4.14" "$qry" 0
 
     # Declined count for subnet 77 should be 1
     qry="select leases from lease4_stat where subnet_id = 77 and state = 1"
-    run_statement "#4.8" "$qry" 1
+    run_statement "#4.15" "$qry" 1
+
+    # Declined count for subnet 77 should be 1
+    qry="select leases from lease4_pool_stat where subnet_id = 77 and pool_id = 1 and state = 1"
+    run_statement "#4.16" "$qry" 1
 
     # Delete the lease.
-    qry="delete from lease4 where address = 777;"
-    run_statement "#4.9" "$qry"
+    qry="delete from lease4 where address = 777"
+    run_statement "#4.17" "$qry"
 
     # Declined count for subnet 77 should be 0
     qry="select leases from lease4_stat where subnet_id = 77 and state = 1"
-    run_statement "#4.10" "$qry" 0
+    run_statement "#4.18" "$qry" 0
+
+    # Declined count for subnet 77 should be 0
+    qry="select leases from lease4_pool_stat where subnet_id = 77 and pool_id = 1 and state = 1"
+    run_statement "#4.19" "$qry" 0
 
     #
     # Next we'll verify lease6_stats are correct after migration.
@@ -1790,49 +2140,85 @@ mysql_lease_stat_upgrade_test() {
     qry="select leases from lease6_stat where subnet_id = 40 and lease_type = 0 and state = 0"
     run_statement "#6.1" "$qry" 1
 
+    # Assigned leases for subnet 40 should be 1
+    qry="select leases from lease6_pool_stat where subnet_id = 40 and lease_type = 0 and pool_id = 0 and state = 0"
+    run_statement "#6.2" "$qry" 1
+
     # Assigned (PD) leases for subnet 40 should be 1
     qry="select leases from lease6_stat where subnet_id = 40 and lease_type = 1 and state = 0"
-    run_statement "#6.2" "$qry" 1
+    run_statement "#6.3" "$qry" 1
+
+    # Assigned (PD) leases for subnet 40 should be 1
+    qry="select leases from lease6_pool_stat where subnet_id = 40 and lease_type = 1 and pool_id = 0 and state = 0"
+    run_statement "#6.4" "$qry" 1
 
     # Declined leases for subnet 40 should be 1
     qry="select leases from lease6_stat where subnet_id = 40 and lease_type = 0 and state = 1"
-    run_statement "#6.3" "$qry" 1
+    run_statement "#6.5" "$qry" 1
+
+    # Declined leases for subnet 40 should be 1
+    qry="select leases from lease6_pool_stat where subnet_id = 40 and lease_type = 0 and pool_id = 0 and state = 1"
+    run_statement "#6.6" "$qry" 1
 
     # Assigned (PD) leases for subnet 50 should be 2
     qry="select leases from lease6_stat where subnet_id = 50 and lease_type = 1 and state = 0"
-    run_statement "#6.4" "$qry" 2
+    run_statement "#6.7" "$qry" 2
+
+    # Assigned (PD) leases for subnet 50 should be 2
+    qry="select leases from lease6_pool_stat where subnet_id = 50 and lease_type = 1 and pool_id = 0 and state = 0"
+    run_statement "#6.8" "$qry" 2
 
     # Should be no records for EXPIRED
-    qry="select count(subnet_id) from lease4_stat where state = 2"
-    run_statement "#6.5" "$qry" 0
+    qry="select count(subnet_id) from lease6_stat where state = 2"
+    run_statement "#6.9" "$qry" 0
+
+    # Should be no records for EXPIRED
+    qry="select count(subnet_id) from lease6_pool_stat where state = 2"
+    run_statement "#6.10" "$qry" 0
 
     #
-    # Finally we'll verify v6 trigger operation for insert,update, and delete
+    # Finally we'll verify v6 trigger operation for insert, update, and delete
     #
 
     # Insert a new lease subnet 50
-    qry="insert into lease6 (address, subnet_id, lease_type, state) values (777,50,1,0);"
-    run_statement "#6.5" "$qry"
+    qry="insert into lease6 (address, subnet_id, pool_id, lease_type, state) values (inet6_aton('::77'),50,1,1,0)"
+    run_statement "#6.11" "$qry"
 
     # Assigned count for subnet 50 should be 3
     qry="select leases from lease6_stat where subnet_id = 50 and lease_type = 1 and state = 0"
-    run_statement "#6.6" "$qry" 3
+    run_statement "#6.12" "$qry" 3
+
+    # Assigned count for subnet 50 should be 2
+    qry="select leases from lease6_pool_stat where subnet_id = 50 and lease_type = 1 and pool_id = 0 and state = 0"
+    run_statement "#6.13" "$qry" 2
+
+    # Assigned count for subnet 50 should be 1
+    qry="select leases from lease6_pool_stat where subnet_id = 50 and lease_type = 1 and pool_id = 1 and state = 0"
+    run_statement "#6.14" "$qry" 1
 
     # Update the state of the new lease to expired
-    qry="update lease6 set state = 2 where address = 777;"
-    run_statement "#6.7" "$qry"
+    qry="update lease6 set state = 2 where address = inet6_aton('::77')"
+    run_statement "#6.15" "$qry"
 
     # Assigned count for subnet 50 should be 2 again
     qry="select leases from lease6_stat where subnet_id = 50 and lease_type = 1 and state = 0"
-    run_statement "#6.8" "$qry" 2
+    run_statement "#6.16" "$qry" 2
+
+    # Assigned count for subnet 50 should be 0 again
+    qry="select leases from lease6_pool_stat where subnet_id = 50 and lease_type = 1 and pool_id = 1 and state = 0"
+    run_statement "#6.17" "$qry" 0
 
     # Delete another PD lease.
-    qry="delete from lease6 where address = 555;"
-    run_statement "#6.9" "$qry"
+    qry="delete from lease6 where address = inet6_aton('::55')"
+    run_statement "#6.18" "$qry"
 
     # Assigned leases for subnet 50 should be 1
     qry="select leases from lease6_stat where subnet_id = 50 and lease_type = 1 and state = 0"
-    run_statement "#6.10" "$qry" 1
+    run_statement "#6.19" "$qry" 1
+
+    # Assigned leases for subnet 50 should be 1
+    qry="select leases from lease6_pool_stat where subnet_id = 50 and lease_type = 1 and pool_id = 0 and state = 0"
+    run_statement "#6.20" "$qry" 1
 
     # Let's wipe the whole database
     mysql_wipe
@@ -1854,32 +2240,44 @@ mysql_lease_stat_recount_test() {
     # Now we need insert some leases to "recount"
     qry=\
 "insert into lease4 (address, subnet_id, state) values (111,10,0);\
- insert into lease4 (address, subnet_id, state) values (222,10,0);\
+ insert into lease4 (address, subnet_id, pool_id, state) values (222,10,1,0);\
  insert into lease4 (address, subnet_id, state) values (333,10,1);\
  insert into lease4 (address, subnet_id, state) values (444,10,2);\
- insert into lease4 (address, subnet_id, state) values (555,77,0);"
+ insert into lease4 (address, subnet_id, pool_id, state) values (555,77,2,0)"
     run_statement "insert v4 leases" "$qry"
 
     qry=\
 "insert into lease6 (address, lease_type, subnet_id, state) values ('::111',0,40,0);\
- insert into lease6 (address, lease_type, subnet_id, state) values ('::222',0,40,1);\
+ insert into lease6 (address, lease_type, subnet_id, pool_id, state) values ('::222',0,40,1,1);\
  insert into lease6 (address, lease_type, subnet_id, state) values ('::333',1,40,0);\
  insert into lease6 (address, lease_type, subnet_id, state) values ('::444',1,50,0);\
- insert into lease6 (address, lease_type, subnet_id, state) values ('::555',1,50,0);\
- insert into lease6 (address, lease_type, subnet_id, state) values ('::666',1,40,2);"
+ insert into lease6 (address, lease_type, subnet_id, pool_id, state) values ('::555',1,50,2,0);\
+ insert into lease6 (address, lease_type, subnet_id, state) values ('::666',1,40,2)"
     run_statement "insert v6 leases" "$qry"
 
     # Now we change some counters.
     qry=\
 "insert into lease4_stat (subnet_id, state, leases) values (20,0,1);\
- update lease4_stat set leases = 5 where subnet_id = 10 and state = 0;
- delete from lease4_stat where subnet_id = 10 and state = 2;"
+ update lease4_stat set leases = 5 where subnet_id = 10 and state = 0;\
+ delete from lease4_stat where subnet_id = 10 and state = 2"
     run_statement "change v4 stats" "$qry"
 
     qry=\
-"insert into lease6_stat (subnet_id, lease_type, state, leases) values (20,1,0,1);
- update lease6_stat set leases = 5 where subnet_id = 40 and lease_type = 0 and state = 0;
- delete from lease6_stat where subnet_id = 40 and lease_type = 1 and state = 2;"
+"insert into lease4_pool_stat (subnet_id, pool_id, state, leases) values (20,3,0,1);\
+ update lease4_pool_stat set leases = 5 where subnet_id = 10 and pool_id = 0 and state = 0;\
+ delete from lease4_pool_stat where subnet_id = 10 and pool_id = 0 and state = 2"
+    run_statement "change v4 stats" "$qry"
+
+    qry=\
+"insert into lease6_stat (subnet_id, lease_type, state, leases) values (20,1,0,1);\
+ update lease6_stat set leases = 5 where subnet_id = 40 and lease_type = 0 and state = 0;\
+ delete from lease6_stat where subnet_id = 40 and lease_type = 1 and state = 2"
+    run_statement "change v6 stats" "$qry"
+
+    qry=\
+"insert into lease6_pool_stat (subnet_id, pool_id, lease_type, state, leases) values (20,3,1,0,1);\
+ update lease6_pool_stat set leases = 5 where subnet_id = 40 and lease_type = 0 and pool_id = 0 and state = 0;\
+ delete from lease6_pool_stat where subnet_id = 40 and lease_type = 1 and pool_id = 0 and state = 2"
     run_statement "change v6 stats" "$qry"
 
     # Recount all statistics from scratch.
@@ -1895,13 +2293,37 @@ mysql_lease_stat_recount_test() {
     qry="select leases from lease4_stat where subnet_id = 10 and state = 0"
     run_statement "#4.1" "$qry" 2
 
+    # Assigned leases for subnet 10 should be 1
+    qry="select leases from lease4_pool_stat where subnet_id = 10 and pool_id = 0 and state = 0"
+    run_statement "#4.2" "$qry" 1
+
+    # Assigned leases for subnet 10 should be 1
+    qry="select leases from lease4_pool_stat where subnet_id = 10 and pool_id = 1 and state = 0"
+    run_statement "#4.3" "$qry" 1
+
+    # Declined leases for subnet 10 should be 1
+    qry="select leases from lease4_stat where subnet_id = 10 and state = 1"
+    run_statement "#4.4" "$qry" 1
+
+    # Assigned leases for subnet 10 should be 1
+    qry="select leases from lease4_pool_stat where subnet_id = 10 and pool_id = 0 and state = 1"
+    run_statement "#4.5" "$qry" 1
+
     # Assigned leases for subnet 77 should be 1
     qry="select leases from lease4_stat where subnet_id = 77 and state = 0"
-    run_statement "#4.2" "$qry" 1
+    run_statement "#4.6" "$qry" 1
+
+    # Assigned leases for subnet 77 should be 1
+    qry="select leases from lease4_pool_stat where subnet_id = 77 and pool_id = 2 and state = 0"
+    run_statement "#4.7" "$qry" 1
 
     # Should be no records for EXPIRED
     qry="select count(subnet_id) from lease4_stat where state = 2"
-    run_statement "#4.3" "$qry" 0
+    run_statement "#4.8" "$qry" 0
+
+    # Should be no records for EXPIRED
+    qry="select count(subnet_id) from lease4_pool_stat where state = 2"
+    run_statement "#4.9" "$qry" 0
 
     #
     # Next we'll verify lease6_stats are correct after recount.
@@ -1911,21 +2333,45 @@ mysql_lease_stat_recount_test() {
     qry="select leases from lease6_stat where subnet_id = 40 and lease_type = 0 and state = 0"
     run_statement "#6.1" "$qry" 1
 
+    # Assigned leases for subnet 40 should be 1
+    qry="select leases from lease6_pool_stat where subnet_id = 40 and lease_type = 0 and pool_id = 0 and state = 0"
+    run_statement "#6.2" "$qry" 1
+
     # Assigned (PD) leases for subnet 40 should be 1
     qry="select leases from lease6_stat where subnet_id = 40 and lease_type = 1 and state = 0"
-    run_statement "#6.2" "$qry" 1
+    run_statement "#6.3" "$qry" 1
+
+    # Assigned (PD) leases for subnet 40 should be 1
+    qry="select leases from lease6_pool_stat where subnet_id = 40 and lease_type = 1 and pool_id = 0 and state = 0"
+    run_statement "#6.4" "$qry" 1
 
     # Declined leases for subnet 40 should be 1
     qry="select leases from lease6_stat where subnet_id = 40 and lease_type = 0 and state = 1"
-    run_statement "#6.3" "$qry" 1
+    run_statement "#6.5" "$qry" 1
+
+    # Declined leases for subnet 40 should be 1
+    qry="select leases from lease6_pool_stat where subnet_id = 40 and lease_type = 0 and pool_id = 1 and state = 1"
+    run_statement "#6.6" "$qry" 1
 
     # Assigned (PD) leases for subnet 50 should be 2
     qry="select leases from lease6_stat where subnet_id = 50 and lease_type = 1 and state = 0"
-    run_statement "#6.4" "$qry" 2
+    run_statement "#6.7" "$qry" 2
+
+    # Assigned (PD) leases for subnet 50 should be 1
+    qry="select leases from lease6_pool_stat where subnet_id = 50 and lease_type = 1 and pool_id = 0 and state = 0"
+    run_statement "#6.8" "$qry" 1
+
+    # Assigned (PD) leases for subnet 50 should be 1
+    qry="select leases from lease6_pool_stat where subnet_id = 50 and lease_type = 1 and pool_id = 2 and state = 0"
+    run_statement "#6.9" "$qry" 1
 
     # Should be no records for EXPIRED
-    qry="select count(subnet_id) from lease4_stat where state = 2"
-    run_statement "#6.5" "$qry" 0
+    qry="select count(subnet_id) from lease6_stat where state = 2"
+    run_statement "#6.10" "$qry" 0
+
+    # Should be no records for EXPIRED
+    qry="select count(subnet_id) from lease6_pool_stat where state = 2"
+    run_statement "#6.11" "$qry" 0
 
     # Let's wipe the whole database
     mysql_wipe
@@ -1960,7 +2406,7 @@ mysql_unused_subnet_id_test() {
  insert into hosts (dhcp_identifier_type, dhcp_identifier, dhcp4_subnet_id, dhcp6_subnet_id, hostname)\
    values (0, '2123456', 0, 6, 'v6only');\
  insert into hosts (dhcp_identifier_type, dhcp_identifier, dhcp4_subnet_id, dhcp6_subnet_id, hostname) \
-   values (0, '3123456', 4, 6, 'neither');"
+   values (0, '3123456', 4, 6, 'neither')"
 
     run_statement "insert hosts" "$qry"
 
@@ -1969,50 +2415,50 @@ mysql_unused_subnet_id_test() {
 "insert into dhcp4_options (code, dhcp4_subnet_id, scope_id) values (1, 4, 0);\
  insert into dhcp4_options (code, dhcp4_subnet_id, scope_id) values (2, 0, 0);\
  insert into dhcp6_options (code, dhcp6_subnet_id, scope_id) values (1, 6, 0);\
- insert into dhcp6_options (code, dhcp6_subnet_id, scope_id) values (2, 0, 0);"
+ insert into dhcp6_options (code, dhcp6_subnet_id, scope_id) values (2, 0, 0)"
 
     run_statement "insert options" "$qry"
 
-    # Ok, we have a 6.0 database with hosts and options. Let's upgrade it to 7.0
+    # Ok, we have a 6.0 schema with hosts and options. Let's upgrade it to 7.0
     # For versions higher than 7.0 some new constraints fail to be added
     # with the not empty tables, for instance the 9.1 -> 9.2 upgrade script
     # can raise a MySQL error 1452 for fk_dhcp4_options_subnet constraint.
     mysql_upgrade_schema_to_version 7.0
 
-    # Version should be new 7.0
+    # Version should now be 7.0.
     version=$("${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
     assert_str_eq "7.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Two hosts should have null v4 subnet ids
-    qry="select count(host_id) from hosts where dhcp4_subnet_id is null;"
+    qry="select count(host_id) from hosts where dhcp4_subnet_id is null"
     run_statement "#hosts.1" "$qry" 2
 
     # Two hosts should have v4 subnet ids = 4
-    qry="select count(host_id) from hosts where dhcp4_subnet_id = 4;"
+    qry="select count(host_id) from hosts where dhcp4_subnet_id = 4"
     run_statement "#hosts.2" "$qry" 2
 
     # Two hosts should have null v6 subnet ids
-    qry="select count(host_id) from hosts where dhcp6_subnet_id is null;"
+    qry="select count(host_id) from hosts where dhcp6_subnet_id is null"
     run_statement "#hosts.3" "$qry" 2
 
     # Two hosts should should have v6 subnet ids = 6
-    qry="select count(host_id) from hosts where dhcp6_subnet_id = 6;"
+    qry="select count(host_id) from hosts where dhcp6_subnet_id = 6"
     run_statement "#hosts.4" "$qry" 2
 
     # One option should have null v4 subnet id
-    qry="select count(option_id) from dhcp4_options where dhcp4_subnet_id is null;"
+    qry="select count(option_id) from dhcp4_options where dhcp4_subnet_id is null"
     run_statement "#options.1" "$qry" 1
 
     # One option should have v4 subnet id = 4
-    qry="select count(option_id) from dhcp4_options where dhcp4_subnet_id = 4;"
+    qry="select count(option_id) from dhcp4_options where dhcp4_subnet_id = 4"
     run_statement "#options.2" "$qry" 1
 
     # One option should have null v6 subnet id
-    qry="select count(option_id) from dhcp6_options where dhcp6_subnet_id is null;"
+    qry="select count(option_id) from dhcp6_options where dhcp6_subnet_id is null"
     run_statement "#options.3" "$qry" 1
 
     # One option should have v4 subnet id = 6
-    qry="select count(option_id) from dhcp6_options where dhcp6_subnet_id = 6;"
+    qry="select count(option_id) from dhcp6_options where dhcp6_subnet_id = 6"
     run_statement "#options.4" "$qry" 1
 
     # Let's wipe the whole database
@@ -2025,13 +2471,13 @@ mysql_unused_subnet_id_test() {
 # that reservation_mode values in subnet and shared network tables are
 # converted to new reservations flags.
 mysql_reservation_mode_upgrade_test() {
-    test_start "mysql_reservation_mode_upgrade_test"
+    test_start "mysql.reservation_mode_upgrade_test"
 
     # Let's wipe the whole database
     mysql_wipe
 
     # We need to create an older database with lease data so we can
-    # verify the upgrade mechanisms which convert subnet id values
+    # verify the upgrade mechanisms which convert reservation values
     #
     # Initialize database to schema 1.0.
     mysql -u"${db_user}" -p"${db_password}" "${db_name}" < "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql"
@@ -2074,39 +2520,39 @@ mysql_reservation_mode_upgrade_test() {
     values (3456, '2001:db8:2::/64', current_timestamp, 2);\
  insert into dhcp6_subnet (subnet_id, subnet_prefix, modification_ts, reservation_mode)\
     values (4567, '2001:db8:3::/64', current_timestamp, 3);\
- set @disable_audit = 0;"
+ set @disable_audit = 0"
 
     run_statement "insert reservation_mode" "$sql"
 
-    qry="select count(*) from dhcp4_shared_network;"
+    qry="select count(*) from dhcp4_shared_network"
     run_statement "#get 4_shared count before update" "$qry" 4
 
-    qry="select count(*) from dhcp4_subnet;"
+    qry="select count(*) from dhcp4_subnet"
     run_statement "#get 4_subnet count before update" "$qry" 4
 
-    qry="select count(*) from dhcp6_shared_network;"
+    qry="select count(*) from dhcp6_shared_network"
     run_statement "#get 6_shared count before update" "$qry" 4
 
-    qry="select count(*) from dhcp6_subnet;"
+    qry="select count(*) from dhcp6_subnet"
     run_statement "#get 6_subnet count before update" "$qry" 4
 
     # Upgrade to schema 9.5.
     mysql_upgrade_schema_to_version 9.5
 
     # Test DISABLED (0) -> false, false, null
-    qry="select count(id) from dhcp4_shared_network where reservations_global = false and reservations_in_subnet = false and reservations_out_of_pool is null and name = 'test0';"
+    qry="select count(id) from dhcp4_shared_network where reservations_global = false and reservations_in_subnet = false and reservations_out_of_pool is null and name = 'test0'"
     run_statement "#4_shared_disabled" "$qry" 1
 
     # Test OUT_OF_POOL (1) -> false, true, true
-    qry="select count(id) from dhcp4_shared_network where reservations_global = false and reservations_in_subnet = true and reservations_out_of_pool = true and name = 'test1';"
+    qry="select count(id) from dhcp4_shared_network where reservations_global = false and reservations_in_subnet = true and reservations_out_of_pool = true and name = 'test1'"
     run_statement "#4_shared_out_of_pool" "$qry" 1
 
     # Test GLOBAL (2) -> true, false, null
-    qry="select count(id) from dhcp4_shared_network where reservations_global = true and reservations_in_subnet = false and reservations_out_of_pool is null and name = 'test2';"
+    qry="select count(id) from dhcp4_shared_network where reservations_global = true and reservations_in_subnet = false and reservations_out_of_pool is null and name = 'test2'"
     run_statement "#4_shared_global" "$qry" 1
 
     # Test ALL (3) -> false, true, false
-    qry="select count(id) from dhcp4_shared_network where reservations_global = false and reservations_in_subnet = true and reservations_out_of_pool = false and name = 'test3';"
+    qry="select count(id) from dhcp4_shared_network where reservations_global = false and reservations_in_subnet = true and reservations_out_of_pool = false and name = 'test3'"
     run_statement "#4_shared_all" "$qry" 1
 
     # Test DISABLED (0) -> false, false, null
@@ -2126,19 +2572,19 @@ mysql_reservation_mode_upgrade_test() {
     run_statement "#4_subnet_all" "$qry" 1
 
     # Test DISABLED (0) -> false, false, null
-    qry="select count(id) from dhcp6_shared_network where reservations_global = false and reservations_in_subnet = false and reservations_out_of_pool is null and name = 'test0';"
+    qry="select count(id) from dhcp6_shared_network where reservations_global = false and reservations_in_subnet = false and reservations_out_of_pool is null and name = 'test0'"
     run_statement "#6_shared_disabled" "$qry" 1
 
     # Test OUT_OF_POOL (1) -> false, true, true
-    qry="select count(id) from dhcp6_shared_network where reservations_global = false and reservations_in_subnet = true and reservations_out_of_pool = true and name = 'test1';"
+    qry="select count(id) from dhcp6_shared_network where reservations_global = false and reservations_in_subnet = true and reservations_out_of_pool = true and name = 'test1'"
     run_statement "#6_shared_out_of_pool" "$qry" 1
 
     # Test GLOBAL (2) -> true, false, null
-    qry="select count(id) from dhcp6_shared_network where reservations_global = true and reservations_in_subnet = false and reservations_out_of_pool is null and name = 'test2';"
+    qry="select count(id) from dhcp6_shared_network where reservations_global = true and reservations_in_subnet = false and reservations_out_of_pool is null and name = 'test2'"
     run_statement "#6_shared_global" "$qry" 1
 
     # Test ALL (3) -> false, true, false
-    qry="select count(id) from dhcp6_shared_network where reservations_global = false and reservations_in_subnet = true and reservations_out_of_pool = false and name = 'test3';"
+    qry="select count(id) from dhcp6_shared_network where reservations_global = false and reservations_in_subnet = true and reservations_out_of_pool = false and name = 'test3'"
     run_statement "#6_shared_all" "$qry" 1
 
     # Test DISABLED (0) -> false, false, null
@@ -2157,16 +2603,16 @@ mysql_reservation_mode_upgrade_test() {
     qry="select count(subnet_id) from dhcp6_subnet where reservations_global = false and reservations_in_subnet = true and reservations_out_of_pool = false and subnet_prefix = '2001:db8:3::/64'"
     run_statement "#6_subnet_all" "$qry" 1
 
-    qry="select count(*) from dhcp4_shared_network;"
+    qry="select count(*) from dhcp4_shared_network"
     run_statement "#get 4_shared count before update" "$qry" 4
 
-    qry="select count(*) from dhcp4_subnet;"
+    qry="select count(*) from dhcp4_subnet"
     run_statement "#get 4_subnet count before update" "$qry" 4
 
-    qry="select count(*) from dhcp6_shared_network;"
+    qry="select count(*) from dhcp6_shared_network"
     run_statement "#get 6_shared count before update" "$qry" 4
 
-    qry="select count(*) from dhcp6_subnet;"
+    qry="select count(*) from dhcp6_subnet"
     run_statement "#get 6_subnet count before update" "$qry" 4
 
     # Let's wipe the whole database
@@ -2181,13 +2627,14 @@ mysql_reservation_mode_upgrade_test() {
 mysql_client_class_test() {
     table_prefix="$1"
 
-    test_start "mysql_client_classes_test.${table_prefix}"
+    test_start "mysql.client_classes_test.${table_prefix}"
 
     # Let's wipe the whole database
     mysql_wipe
 
     # We need to create an older database with lease data so we can
-    # verify the upgrade mechanisms which convert subnet id values
+    # verify the upgrade mechanisms which validates client classes and
+    # dependencies behave correctly
     #
     # Initialize database to schema 1.0.
     mysql -u"${db_user}" -p"${db_password}" "${db_name}" < "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql"
@@ -2199,7 +2646,7 @@ mysql_client_class_test() {
     sql=\
 "SET @disable_audit = 1; \
  INSERT INTO ${table_prefix}_server (tag, modification_ts) VALUES ('server1', NOW()); \
- SET @disable_audit = 0;"
+ SET @disable_audit = 0"
 
     run_statement "insert servers" "$sql"
 
@@ -2212,7 +2659,7 @@ mysql_client_class_test() {
  INSERT INTO ${table_prefix}_client_class_server (class_id, server_id) \
      VALUES (@last_id, (SELECT id FROM ${table_prefix}_server WHERE tag = 'all')); \
  SET @disable_audit = 0; \
- COMMIT;"
+ COMMIT"
     run_statement "insert client class foo" "$sql"
 
     # Insert client class foobar after the foo class.
@@ -2224,7 +2671,7 @@ mysql_client_class_test() {
  INSERT INTO ${table_prefix}_client_class_server (class_id, server_id) \
      VALUES (@last_id, (SELECT id FROM ${table_prefix}_server WHERE tag = 'server1')); \
  SET @disable_audit = 0; \
- COMMIT;"
+ COMMIT"
     run_statement "insert client class foobar" "$sql"
 
     # Insert the client class bar at the end. This class depends on the client
@@ -2239,23 +2686,23 @@ mysql_client_class_test() {
  INSERT INTO ${table_prefix}_client_class_dependency (class_id, dependency_id) \
      VALUES (@last_id, (SELECT id FROM ${table_prefix}_client_class WHERE name = 'foo')); \
  SET @disable_audit = 0; \
- COMMIT;"
+ COMMIT"
     run_statement "insert client class bar" "$sql"
 
     # Ensure that all three classes have been added in the expected order.
     sql="SELECT o.order_index FROM ${table_prefix}_client_class AS c \
          INNER JOIN ${table_prefix}_client_class_order AS o \
-             ON c.id = o.class_id WHERE c.name = 'foo'";
+             ON c.id = o.class_id WHERE c.name = 'foo'"
     run_statement "#get order index of class foo" "$sql" 1
 
     sql="SELECT o.order_index FROM ${table_prefix}_client_class AS c \
          INNER JOIN ${table_prefix}_client_class_order AS o \
-             ON c.id = o.class_id WHERE c.name = 'bar'";
+             ON c.id = o.class_id WHERE c.name = 'bar'"
     run_statement "#get order index of class bar" "$sql" 2
 
     sql="SELECT o.order_index FROM ${table_prefix}_client_class AS c \
          INNER JOIN ${table_prefix}_client_class_order AS o \
-             ON c.id = o.class_id WHERE c.name = 'foobar'";
+             ON c.id = o.class_id WHERE c.name = 'foobar'"
     run_statement "#get order index of class foobar" "$sql" 3
 
     # Update the class bar moving behind the foobar class.
@@ -2264,31 +2711,31 @@ mysql_client_class_test() {
  SET @disable_audit = 1; \
  UPDATE ${table_prefix}_client_class SET follow_class_name = 'foobar' WHERE name = 'bar'; \
  SET @disable_audit = 0; \
- COMMIT;"
+ COMMIT"
     run_statement "update client class bar with re-positioning" "$sql"
 
     # Check that the order of the last two classes was changed.
     sql="SELECT o.order_index FROM ${table_prefix}_client_class AS c \
          INNER JOIN ${table_prefix}_client_class_order AS o \
-             ON c.id = o.class_id WHERE c.name = 'bar'";
+             ON c.id = o.class_id WHERE c.name = 'bar'"
     run_statement "#get order index of class bar" "$sql" 4
 
     sql="SELECT o.order_index FROM ${table_prefix}_client_class AS c \
          INNER JOIN ${table_prefix}_client_class_order AS o \
-             ON c.id = o.class_id WHERE c.name = 'foobar'";
+             ON c.id = o.class_id WHERE c.name = 'foobar'"
     run_statement "#get order index of class foobar" "$sql" 3
 
     # Check that the first class is still at the first position.
     sql="SELECT o.order_index FROM ${table_prefix}_client_class AS c \
          INNER JOIN ${table_prefix}_client_class_order AS o \
-             ON c.id = o.class_id WHERE c.name = 'foo'";
+             ON c.id = o.class_id WHERE c.name = 'foo'"
     run_statement "#get order index of class foo" "$sql" 1
 
     sql=\
 "SET @disable_audit = 1; \
  INSERT INTO ${table_prefix}_options(code, scope_id, dhcp_client_class, modification_ts) \
      VALUES (222, 0, '', now()); \
- SET @disable_audit = 0;"
+ SET @disable_audit = 0"
     run_statement "add option with an empty dhcp_client class" "$sql"
 
     # Let's make sure that we can upgrade to version 12.0. This version
@@ -2306,7 +2753,7 @@ mysql_client_class_test() {
 # the tag column in the dhcp4_server and dhcp6_server tables.
 mysql_shrink_server_tag_test() {
 
-    test_start "mysql_shrink_server_tag_test"
+    test_start "mysql.shrink_server_tag_test"
 
     mysql_wipe
 
@@ -2318,11 +2765,11 @@ mysql_shrink_server_tag_test() {
     # long server tags. Let's extend it back, but not to 256 characters
     # because it is proven to cause errors in some configurations.
     sql=\
-"ALTER TABLE dhcp4_server MODIFY COLUMN tag VARCHAR(128) NOT NULL;"
+"ALTER TABLE dhcp4_server MODIFY COLUMN tag VARCHAR(128) NOT NULL"
     run_statement "extend server DHCPv4 server tag column", "$sql"
 
     sql=\
-"ALTER TABLE dhcp6_server MODIFY COLUMN tag VARCHAR(128) NOT NULL;"
+"ALTER TABLE dhcp6_server MODIFY COLUMN tag VARCHAR(128) NOT NULL"
     run_statement "extend server DHCPv6 server tag column", "$sql"
 
     mysql_upgrade_schema_to_version 10.0
@@ -2331,15 +2778,660 @@ mysql_shrink_server_tag_test() {
     sql=\
 "SELECT CHARACTER_MAXIMUM_LENGTH \
      FROM INFORMATION_SCHEMA.COLUMNS \
- WHERE TABLE_SCHEMA='${db_name}' AND TABLE_NAME='dhcp4_server' AND COLUMN_NAME='tag';"
+ WHERE TABLE_SCHEMA='${db_name}' AND TABLE_NAME='dhcp4_server' AND COLUMN_NAME='tag'"
     run_statement "get new tag column length" "$sql" 64
 
     sql=\
 "SELECT CHARACTER_MAXIMUM_LENGTH \
      FROM INFORMATION_SCHEMA.COLUMNS \
- WHERE TABLE_SCHEMA='${db_name}' AND TABLE_NAME='dhcp6_server' AND COLUMN_NAME='tag';"
+ WHERE TABLE_SCHEMA='${db_name}' AND TABLE_NAME='dhcp6_server' AND COLUMN_NAME='tag'"
     run_statement "get new tag column length" "$sql" 64
 
+    mysql_wipe
+
+    test_finish 0
+}
+
+# Verifies that you can upgrade from earlier version and that initial EMPTY DUID
+# (0x00) value in lease6 table is updated to proper value (0x000000).
+mysql_update_empty_duid_test() {
+    test_start "mysql.update_empty_duid_test"
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    # We need to create an older database with lease data so we can
+    # verify the upgrade mechanisms which convert empty duid values
+    #
+    # Initialize database to schema 1.0.
+    mysql -u"${db_user}" -p"${db_password}" "${db_name}" < "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql"
+
+    # Now upgrade to schema 16.0
+    mysql_upgrade_schema_to_version 16.0
+
+    sql=\
+"insert into lease6 values('::10',203,30,(SELECT FROM_UNIXTIME(1642000000)),40,50,1,60,70,1,1,'one.example.com',80,90,16,0,NULL);\
+ insert into lease6 values('::11',UNHEX('00'),30,(SELECT FROM_UNIXTIME(1643210000)),40,50,1,60,70,1,1,'',80,90,1,1,'{  }')"
+
+    run_statement "insert v6 leases" "$sql"
+
+    # Let's upgrade it to the latest version.
+    run_command \
+        "${kea_admin}" db-upgrade mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
+
+    # leases count for declined state should be 1 with DUID updated (0x000000)
+    qry="select count(*) from lease6 where address = inet6_aton('::11') and duid = 0x000000 and state = 1"
+    run_statement "#2" "$qry" 1
+
+    # leases count for non declined state should be 1 with DUID unchanged (0x323033)
+    qry="select count(*) from lease6 where address = inet6_aton('::10') and duid = 0x323033 and state = 0"
+    run_statement "#3" "$qry" 1
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    test_finish 0
+}
+
+# Verifies that converting from lease6.address to binary column works
+# while preserving data.
+mysql_update_v6_addresses_to_binary() {
+    test_start "mysql.update_lease6_address_to_binary"
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    # We need to create an older database with lease data so we can
+    # verify the upgrade mechanisms which convert empty duid values
+    #
+    # Initialize database to schema 1.0.
+    mysql -u"${db_user}" -p"${db_password}" "${db_name}" < "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql"
+
+    # Now upgrade to schema 18.0
+    mysql_upgrade_schema_to_version 18.0
+
+    sql=\
+"insert into lease6 (address, lease_type, subnet_id) values('2601:19e:8100:1e10:b1b:51a8:f616:cf14', 1, 1);
+insert into lease6 (address, lease_type, subnet_id) values('2601:19e:8100:1e10:b1b:51a8:f616:cf15', 1, 1);"
+
+    run_statement "insert v6 leases" "$sql"
+
+    # Insert ipv6_reservations address is binary.
+    sql=\
+"insert into hosts(host_id, dhcp_identifier, dhcp_identifier_type) values (18219, '18219', 1); \
+insert into ipv6_reservations (address, prefix_len, type, dhcp6_iaid, host_id) \
+        values ('2601:19e:8100:1e10:b1b:51a8:f616:cf16', 128, 1, 123, 18219);"
+
+    run_statement "insert an ipv6 reservation" "$sql"
+
+    # Let's upgrade it to the latest version.
+    run_command \
+        "${kea_admin}" db-upgrade mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
+
+    # leases count for declined state should be 1 with DUID updated (0x000000)
+    qry="select count(*) from lease6 where address = inet6_aton('2601:19e:8100:1e10:b1b:51a8:f616:cf14');"
+    run_statement "#2" "$qry" 1
+
+    # leases count for non declined state should be 1 with DUID unchanged (0x323033)
+    qry="select count(*) from lease6 where address = inet6_aton('2601:19e:8100:1e10:b1b:51a8:f616:cf15');"
+    run_statement "#3" "$qry" 1
+
+    # verify the reservation is intact
+    qry="select inet6_ntoa(address) from ipv6_reservations where host_id = 18219;"
+    run_statement "ipv6_reservations_insert" "$qry" "2601:19e:8100:1e10:b1b:51a8:f616:cf16"
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    test_finish 0
+}
+
+# Verifies that you can upgrade from an earlier version and
+# that CB global parameter entries for 'ddns-use-conflict-resolution'
+# will get translated to 'ddns-conflict-resolution-mode'.
+mysql_ddns_conflict_resolution_mode_update_test() {
+    test_start "mysql.ddns_conflict_resolution_mode_update_test"
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    # We need to create an older database.
+    # Initialize database to schema 1.0.
+    mysql -u"${db_user}" -p"${db_password}" "${db_name}" < "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql"
+
+    # Now upgrade to schema 19.0.
+    mysql_upgrade_schema_to_version 19.0
+
+    # Now insert global parameter instances of ddns-use-conflict-resolution.
+    sql=\
+"set @disable_audit = 1; \
+ insert into dhcp4_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('ddns-use-conflict-resolution','0',current_time(),2);
+ insert into dhcp4_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('ddns-use-conflict-resolution','1',current_time(),2);
+ insert into dhcp6_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('ddns-use-conflict-resolution','0',current_time(),2);
+ insert into dhcp6_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('ddns-use-conflict-resolution','1',current_time(),2);"
+
+    run_statement "insert ddns_conflict_resolution_mode" "$sql"
+
+    # Verify the inserted record counts.
+    qry="select count(*) from dhcp4_global_parameter where name='ddns-use-conflict-resolution';"
+    run_statement "#get 4_global parameter count before update" "$qry" 2
+
+    qry="select count(*) from dhcp6_global_parameter where name='ddns-use-conflict-resolution';"
+    run_statement "#get 6_global parameter count before update" "$qry" 2
+
+    # Upgrade to schema 21.0
+    mysql_upgrade_schema_to_version 21.0
+
+    # Verify we converted parameters correctly.
+    qry="select count(*) from dhcp4_global_parameter where name='ddns-conflict-resolution-mode' and\
+         value='check-with-dhcid'"
+    run_statement "#get 4_check-with-dhcid after update" "$qry" 1
+
+    qry="select count(*) from dhcp4_global_parameter where name='ddns-conflict-resolution-mode' and\
+         value='no-check-with-dhcid'"
+    run_statement "#get 4_no-check-with-dhcid after update" "$qry" 1
+
+    qry="select count(*) from dhcp6_global_parameter where name='ddns-conflict-resolution-mode' and\
+         value='check-with-dhcid'"
+    run_statement "#get 6_check-with-dhcid after update" "$qry" 1
+
+    qry="select count(*) from dhcp6_global_parameter where name='ddns-conflict-resolution-mode' and\
+         value='no-check-with-dhcid'"
+    run_statement "#get 6_no-check-with-dhcid after update" "$qry" 1
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    test_finish 0
+}
+
+# Verifies that deprecated dhcp-ddns global map parameters are removed.
+mysql_dhcp_ddns_global_parameters_test() {
+    test_start "mysql.dhcp_ddns_global_parameters_test"
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    # We need to create an older database.
+    # Initialize database to schema 1.0.
+    mysql -u"${db_user}" -p"${db_password}" "${db_name}" < "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql"
+
+    # Now upgrade to schema 21.0.
+    mysql_upgrade_schema_to_version 21.0
+
+    # Now insert global parameter instances of dhcp-ddns.
+    sql=\
+"set @disable_audit = 1; \
+ insert into dhcp4_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('dhcp-ddns.generated-prefix','my-host',current_time(),4);
+ insert into dhcp4_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('dhcp-ddns.qualifying-suffix','',current_time(),4);
+ insert into dhcp4_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('dhcp-ddns.override-no-update','1',current_time(),2);
+ insert into dhcp4_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('dhcp-ddns.override-client-update','1',current_time(),2);
+ insert into dhcp4_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('dhcp-ddns.replace-client-name','never',current_time(),4);
+ insert into dhcp4_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('dhcp-ddns.hostname-char-replacement','',current_time(),4);
+ insert into dhcp4_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('dhcp-ddns.hostname-char-set','[^A-Za-z0-9.-]',current_time(),4);
+ insert into dhcp6_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('dhcp-ddns.generated-prefix','my-host',current_time(),4);
+ insert into dhcp6_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('dhcp-ddns.qualifying-suffix','',current_time(),4);
+ insert into dhcp6_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('dhcp-ddns.override-no-update','1',current_time(),2);
+ insert into dhcp6_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('dhcp-ddns.override-client-update','1',current_time(),2);
+ insert into dhcp6_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('dhcp-ddns.replace-client-name','never',current_time(),4);
+ insert into dhcp6_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('dhcp-ddns.hostname-char-replacement','',current_time(),4);
+ insert into dhcp6_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('dhcp-ddns.hostname-char-set','[^A-Za-z0-9.-]',current_time(),4);"
+
+    run_statement "insert dhcp-ddns map parameters" "$sql"
+
+    # Verify the inserted record counts.
+    qry="select count(*) from dhcp4_global_parameter where name like '%dhcp-ddns%';"
+    run_statement "#get 4_global parameter count before update" "$qry" 7
+
+    qry="select count(*) from dhcp6_global_parameter where name like '%dhcp-ddns%';"
+    run_statement "#get 6_global parameter count before update" "$qry" 7
+
+    # Upgrade to schema 22.0
+    mysql_upgrade_schema_to_version 22.0
+
+    # Verify the record have been removed.
+    qry="select count(*) from dhcp4_global_parameter where name like '%dhcp-ddns%';"
+    run_statement "#get 4_global parameter count after update" "$qry" 0
+
+    qry="select count(*) from dhcp6_global_parameter where name like '%dhcp-ddns%';"
+    run_statement "#get 6_global parameter count after update" "$qry" 0
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    test_finish 0
+}
+
+# Verifies that deprecated reservation_mode "disabled" is migrated.
+mysql_reservation_mode_disabled_parameters_test() {
+    test_start "mysql.reservation_mode_disabled_parameters_test"
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    # We need to create an older database.
+    # Initialize database to schema 1.0.
+    mysql -u"${db_user}" -p"${db_password}" "${db_name}" < "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql"
+
+    # Now upgrade to schema 21.0.
+    mysql_upgrade_schema_to_version 21.0
+
+    # Now insert global parameter instances of reservation_mode.
+    sql=\
+"set @disable_audit = 1; \
+ insert into dhcp4_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('reservation-mode','disabled',current_time(),4);
+ insert into dhcp6_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('reservation-mode','disabled',current_time(),4);"
+
+    run_statement "insert reservation_mode parameters" "$sql"
+
+    # Verify the inserted record counts.
+    qry="select count(*) from dhcp4_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 4_global parameter count before update" "$qry" 1
+
+    qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 6_global parameter count before update" "$qry" 1
+
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-in-subnet' AND value='0' AND parameter_type=2;"
+    run_statement "#get exact 4_global parameter count before update" "$qry" 0
+
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-in-subnet' AND value='0' AND parameter_type=2;"
+    run_statement "#get exact 6_global parameter count before update" "$qry" 0
+
+    # Upgrade to schema 22.0
+    mysql_upgrade_schema_to_version 22.0
+
+    # Verify the record have been removed.
+    qry="select count(*) from dhcp4_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 4_global parameter count after update" "$qry" 0
+
+    qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 6_global parameter count after update" "$qry" 0
+
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-in-subnet' AND value='0' AND parameter_type=2;"
+    run_statement "#get exact 4_global parameter count after update" "$qry" 1
+
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-in-subnet' AND value='0' AND parameter_type=2;"
+    run_statement "#get exact 6_global parameter count after update" "$qry" 1
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    test_finish 0
+}
+
+# Verifies that deprecated reservation_mode "off" is migrated.
+mysql_reservation_mode_off_parameters_test() {
+    test_start "mysql.reservation_mode_off_parameters_test"
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    # We need to create an older database.
+    # Initialize database to schema 1.0.
+    mysql -u"${db_user}" -p"${db_password}" "${db_name}" < "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql"
+
+    # Now upgrade to schema 21.0.
+    mysql_upgrade_schema_to_version 21.0
+
+    # Now insert global parameter instances of reservation_mode.
+    sql=\
+"set @disable_audit = 1; \
+ insert into dhcp4_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('reservation-mode','off',current_time(),4);
+ insert into dhcp6_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('reservation-mode','off',current_time(),4);"
+
+    run_statement "insert reservation_mode parameters" "$sql"
+
+    # Verify the inserted record counts.
+    qry="select count(*) from dhcp4_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 4_global parameter count before update" "$qry" 1
+
+    qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 6_global parameter count before update" "$qry" 1
+
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-in-subnet' AND value='0' AND parameter_type=2;"
+    run_statement "#get exact 4_global parameter count before update" "$qry" 0
+
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-in-subnet' AND value='0' AND parameter_type=2;"
+    run_statement "#get exact 6_global parameter count before update" "$qry" 0
+
+    # Upgrade to schema 22.0
+    mysql_upgrade_schema_to_version 22.0
+
+    # Verify the record have been removed.
+    qry="select count(*) from dhcp4_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 4_global parameter count after update" "$qry" 0
+
+    qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 6_global parameter count after update" "$qry" 0
+
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-in-subnet' AND value='0' AND parameter_type=2;"
+    run_statement "#get exact 4_global parameter count after update" "$qry" 1
+
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-in-subnet' AND value='0' AND parameter_type=2;"
+    run_statement "#get exact 6_global parameter count after update" "$qry" 1
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    test_finish 0
+}
+
+# Verifies that deprecated reservation_mode "all" is migrated.
+mysql_reservation_mode_all_parameters_test() {
+    test_start "mysql.reservation_mode_all_parameters_test"
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    # We need to create an older database.
+    # Initialize database to schema 1.0.
+    mysql -u"${db_user}" -p"${db_password}" "${db_name}" < "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql"
+
+    # Now upgrade to schema 21.0.
+    mysql_upgrade_schema_to_version 21.0
+
+    # Now insert global parameter instances of reservation_mode.
+    sql=\
+"set @disable_audit = 1; \
+ insert into dhcp4_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('reservation-mode','all',current_time(),4);
+ insert into dhcp6_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('reservation-mode','all',current_time(),4);"
+
+    run_statement "insert reservation_mode parameters" "$sql"
+
+    # Verify the inserted record counts.
+    qry="select count(*) from dhcp4_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 4_global parameter count before update" "$qry" 1
+
+    qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 6_global parameter count before update" "$qry" 1
+
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-in-subnet' AND value='1' AND parameter_type=2;"
+    run_statement "#get exact 4_global parameter count before update" "$qry" 0
+
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-in-subnet' AND value='1' AND parameter_type=2;"
+    run_statement "#get exact 6_global parameter count before update" "$qry" 0
+
+    # Upgrade to schema 22.0
+    mysql_upgrade_schema_to_version 22.0
+
+    # Verify the record have been removed.
+    qry="select count(*) from dhcp4_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 4_global parameter count after update" "$qry" 0
+
+    qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 6_global parameter count after update" "$qry" 0
+
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-in-subnet' AND value='1' AND parameter_type=2;"
+    run_statement "#get exact 4_global parameter count after update" "$qry" 1
+
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-in-subnet' AND value='1' AND parameter_type=2;"
+    run_statement "#get exact 6_global parameter count after update" "$qry" 1
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    test_finish 0
+}
+
+# Verifies that deprecated reservation_mode "global" is migrated.
+mysql_reservation_mode_global_parameters_test() {
+    test_start "mysql.reservation_mode_global_parameters_test"
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    # We need to create an older database.
+    # Initialize database to schema 1.0.
+    mysql -u"${db_user}" -p"${db_password}" "${db_name}" < "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql"
+
+    # Now upgrade to schema 21.0.
+    mysql_upgrade_schema_to_version 21.0
+
+    # Now insert global parameter instances of reservation_mode.
+    sql=\
+"set @disable_audit = 1; \
+ insert into dhcp4_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('reservation-mode','global',current_time(),4);
+ insert into dhcp6_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('reservation-mode','global',current_time(),4);"
+
+    run_statement "insert reservation_mode parameters" "$sql"
+
+    # Verify the inserted record counts.
+    qry="select count(*) from dhcp4_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 4_global parameter count before update" "$qry" 1
+
+    qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 6_global parameter count before update" "$qry" 1
+
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-global' AND value='1' AND parameter_type=2;"
+    run_statement "#get exact 4_global parameter count before update" "$qry" 0
+
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-global' AND value='1' AND parameter_type=2;"
+    run_statement "#get exact 6_global parameter count before update" "$qry" 0
+
+    # Upgrade to schema 22.0
+    mysql_upgrade_schema_to_version 22.0
+
+    # Verify the record have been removed.
+    qry="select count(*) from dhcp4_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 4_global parameter count after update" "$qry" 0
+
+    qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 6_global parameter count after update" "$qry" 0
+
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-global' AND value='1' AND parameter_type=2;"
+    run_statement "#get exact 4_global parameter count after update" "$qry" 1
+
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-global' AND value='1' AND parameter_type=2;"
+    run_statement "#get exact 6_global parameter count after update" "$qry" 1
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    test_finish 0
+}
+
+# Verifies that deprecated reservation_mode "out-of-pool" is migrated.
+mysql_reservation_mode_out_of_pool_parameters_test() {
+    test_start "mysql.reservation_mode_out_of_pool_parameters_test"
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    # We need to create an older database.
+    # Initialize database to schema 1.0.
+    mysql -u"${db_user}" -p"${db_password}" "${db_name}" < "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql"
+
+    # Now upgrade to schema 21.0.
+    mysql_upgrade_schema_to_version 21.0
+
+    # Now insert global parameter instances of reservation_mode.
+    sql=\
+"set @disable_audit = 1; \
+ insert into dhcp4_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('reservation-mode','out-of-pool',current_time(),4);
+ insert into dhcp6_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('reservation-mode','out-of-pool',current_time(),4);"
+
+    run_statement "insert reservation_mode parameters" "$sql"
+
+    # Verify the inserted record counts.
+    qry="select count(*) from dhcp4_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 4_global parameter count before update" "$qry" 1
+
+    qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 6_global parameter count before update" "$qry" 1
+
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-out-of-pool' AND value='1' AND parameter_type=2;"
+    run_statement "#get exact 4_global parameter count before update" "$qry" 0
+
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-out-of-pool' AND value='1' AND parameter_type=2;"
+    run_statement "#get exact 6_global parameter count before update" "$qry" 0
+
+    # Upgrade to schema 22.0
+    mysql_upgrade_schema_to_version 22.0
+
+    # Verify the record have been removed.
+    qry="select count(*) from dhcp4_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 4_global parameter count after update" "$qry" 0
+
+    qry="select count(*) from dhcp6_global_parameter where name like '%reservation-mode%';"
+    run_statement "#get 6_global parameter count after update" "$qry" 0
+
+    qry="select count(*) from dhcp4_global_parameter where name='reservations-out-of-pool' AND value='1' AND parameter_type=2;"
+    run_statement "#get exact 4_global parameter count after update" "$qry" 1
+
+    qry="select count(*) from dhcp6_global_parameter where name='reservations-out-of-pool' AND value='1' AND parameter_type=2;"
+    run_statement "#get exact 6_global parameter count after update" "$qry" 1
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    test_finish 0
+}
+
+# Verifies that OPT_RECORD_TYPE values are updated
+mysql_migrate_opt_record_type() {
+    test_start "mysql.migrate_opt_record_type"
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    # We need to create an older database with lease data so we can
+    # verify the upgrade mechanisms which prepopulate the lease stat
+    # tables.
+    #
+    # Initialize database to schema 1.0.
+    mysql_execute_script "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql"
+    assert_eq 0 "${EXIT_CODE}" "cannot initialize 1.0 database, expected exit code: %d, actual: %d"
+
+    # Now upgrade to schema 23.0
+    mysql_upgrade_schema_to_version 23.0
+
+    # Now insert option definitions.
+    sql=\
+"set @disable_audit = 1; \
+ insert into dhcp4_option_def (code,name,space,type,modification_ts,record_types, is_array, encapsulate)\
+    values ('222','foo','dhcp4',17,current_timestamp,NULL, false, false);\
+ insert into dhcp4_option_def (code,name,space,type,modification_ts,record_types, is_array, encapsulate)\
+    values ('223','bar','dhcp4',17,current_timestamp,'10, 7, 2, 14', false, false);\
+ insert into dhcp4_option_def (code,name,space,type,modification_ts,record_types, is_array, encapsulate)\
+    values ('224','bar2','dhcp4',18,current_timestamp,'10, 7, 2, 14', false, false);
+ insert into dhcp6_option_def (code,name,space,type,modification_ts,record_types, is_array, encapsulate)\
+    values ('222','foo','dhcp6',17,current_timestamp,NULL, false, false);\
+ insert into dhcp6_option_def (code,name,space,type,modification_ts,record_types, is_array, encapsulate)\
+    values ('223','bar','dhcp6',17,current_timestamp,'10, 7, 2, 14', false, false);\
+ insert into dhcp6_option_def (code,name,space,type,modification_ts,record_types, is_array, encapsulate)\
+    values ('224','bar2','dhcp6',18,current_timestamp,'10, 7, 2, 14', false, false);
+"
+    run_statement "insert option definitions" "$sql"
+
+    # Verify the inserted record counts.
+    qry="select count(*) from dhcp4_option_def;"
+    run_statement "#get 4_option_def_count before update" "$qry" 3
+
+    qry="select count(*) from dhcp6_option_def;"
+    run_statement "#get 6_option_def_count before update" "$qry" 3
+
+    # Upgrade to schema 24.0
+    mysql_upgrade_schema_to_version 24.0
+
+    # Verify the migrated records.
+    qry="select type from dhcp4_option_def where name = 'foo';"
+    run_statement "#get 4_option_def_foo after update" "$qry" 17
+
+    qry="select type from dhcp4_option_def where name = 'bar';"
+    run_statement "#get 4_option_def_bar after update" "$qry" 254
+
+    qry="select type from dhcp4_option_def where name = 'bar2';"
+    run_statement "#get 4_option_def_bar2 after update" "$qry" 254
+
+    qry="select type from dhcp6_option_def where name = 'foo';"
+    run_statement "#get 6_option_def_foo after update" "$qry" 17
+
+    qry="select type from dhcp6_option_def where name = 'bar';"
+    run_statement "#get 6_option_def_bar after update" "$qry" 254
+
+    qry="select type from dhcp6_option_def where name = 'bar2';"
+    run_statement "#get 6_option_def_bar2 after update" "$qry" 254
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    test_finish 0
+}
+
+# Verifies that control-socket global map parameters are removed.
+mysql_remove_control_socket_parameters_test() {
+    test_start "mysql.mysql_remove_control_socket_parameters_test"
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    # We need to create an older database.
+    # Initialize database to schema 1.0.
+    mysql -u"${db_user}" -p"${db_password}" "${db_name}" < "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql"
+
+    # Now upgrade to schema 23.0.
+    mysql_upgrade_schema_to_version 23.0
+
+    # Now insert global parameter instances of control-socket.
+    sql=\
+"set @disable_audit = 1; \
+ insert into dhcp4_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('control-socket.socket-name','/tmp/socket',current_time(),4);
+ insert into dhcp4_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('control-socket.socket-type','unix',current_time(),4);
+ insert into dhcp6_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('control-socket.socket-name','/tmp/socket',current_time(),4);
+ insert into dhcp6_global_parameter (name,value,modification_ts,parameter_type)\
+    values ('control-socket.socket-type','unix',current_time(),4);"
+
+    run_statement "insert control-socket map parameters" "$sql"
+
+    # Verify the inserted record counts.
+    qry="select count(*) from dhcp4_global_parameter where name like '%control-socket%';"
+    run_statement "#get 4_global parameter count before update" "$qry" 2
+
+    qry="select count(*) from dhcp6_global_parameter where name like '%control-socket%';"
+    run_statement "#get 6_global parameter count before update" "$qry" 2
+
+    # Upgrade to schema 24.0
+    mysql_upgrade_schema_to_version 24.0
+
+    # Verify the record have been removed.
+    qry="select count(*) from dhcp4_global_parameter where name like '%control-socket%';"
+    run_statement "#get 4_global parameter count after update" "$qry" 0
+
+    qry="select count(*) from dhcp6_global_parameter where name like '%control-socket%';"
+    run_statement "#get 6_global parameter count after update" "$qry" 0
+
+    # Let's wipe the whole database
     mysql_wipe
 
     test_finish 0
@@ -2359,8 +3451,8 @@ mysql_lease4_upload_test
 mysql_lease4_upload_test -y
 mysql_lease6_upload_test
 mysql_lease6_upload_test -y
-mysql_lease6_stat_test
 mysql_lease4_stat_test
+mysql_lease6_stat_test
 mysql_lease_stat_upgrade_test
 mysql_lease_stat_recount_test
 mysql_unused_subnet_id_test
@@ -2368,3 +3460,14 @@ mysql_reservation_mode_upgrade_test
 mysql_client_class_test dhcp4
 mysql_client_class_test dhcp6
 mysql_shrink_server_tag_test
+mysql_update_empty_duid_test
+mysql_update_v6_addresses_to_binary
+mysql_ddns_conflict_resolution_mode_update_test
+mysql_dhcp_ddns_global_parameters_test
+mysql_reservation_mode_disabled_parameters_test
+mysql_reservation_mode_off_parameters_test
+mysql_reservation_mode_all_parameters_test
+mysql_reservation_mode_global_parameters_test
+mysql_reservation_mode_out_of_pool_parameters_test
+mysql_migrate_opt_record_type
+mysql_remove_control_socket_parameters_test

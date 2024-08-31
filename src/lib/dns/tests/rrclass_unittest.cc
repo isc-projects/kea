@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 #include <util/buffer.h>
 #include <dns/messagerenderer.h>
 #include <dns/rrclass.h>
+#include <dns/rrparamregistry.h>
 
 #include <dns/tests/unittest_util.h>
 #include <util/unittests/wiredata.h>
@@ -151,24 +152,53 @@ TEST_F(RRClassTest, LeftShiftOperator) {
 // are defined and have the correct parameter values.  Test data are generated
 // from the list available at:
 // http://www.iana.org/assignments/dns-parameters/dns-parameters.xml
-struct ClassParam {
+struct WellKnownClassParam {
     const char* const txt;      // "IN", "CH", etc
-    const uint16_t code;        // 1, 3,
-    const RRClass& (*obj)();     // RRClass::IN(), etc
-} known_classes[] = {
-    {"IN", 1, RRClass::IN}, {"CH", 3, RRClass::CH}, {"HS", 4, RRClass::HS},
-    {"NONE", 254, RRClass::NONE}, {"ANY", 255, RRClass::ANY},
-    {NULL, 0, NULL}
+    const uint16_t code;        // 1, 3, etc
+    const RRClass& (*obj)();    // RRClass::IN(), RRClass::CH(), etc
+} well_known_classes[] = {
+    {"IN", 1, RRClass::IN},
+    {"CH", 3, RRClass::CH},
+    {"NONE", 254, RRClass::NONE},
+    {"ANY", 255, RRClass::ANY},
+    {0, 0, 0}
 };
 
 TEST(RRClassConstTest, wellKnowns) {
-    for (int i = 0; known_classes[i].txt; ++i) {
+    for (size_t i = 0; well_known_classes[i].txt; ++i) {
         SCOPED_TRACE("Checking well known RRClass: " +
-                     string(known_classes[i].txt));
-        EXPECT_EQ(known_classes[i].code,
-                  RRClass(known_classes[i].txt).getCode());
-        EXPECT_EQ(known_classes[i].code,
-                  (*known_classes[i].obj)().getCode());
+                     string(well_known_classes[i].txt));
+        EXPECT_EQ(well_known_classes[i].code,
+                  RRClass(well_known_classes[i].txt).getCode());
+        EXPECT_EQ(well_known_classes[i].code,
+                  (*well_known_classes[i].obj)().getCode());
     }
 }
+
+// Below, we'll check definitions for all registered RR classes.
+struct RegisteredClassParam {
+    const char* const txt;      // "IN", "CH", etc
+    const uint16_t code;        // 1, 3, etc
+} registered_classes[] = {
+    {"IN", 1},
+    {"CH", 3},
+    {"HS", 4},
+    {"NONE", 254},
+    {"ANY", 255},
+    {0, 0}
+};
+
+TEST(RRClassConstTest, registered) {
+    for (size_t i = 0; registered_classes[i].txt; ++i) {
+        SCOPED_TRACE("Checking registered RRClass: " +
+                     string(registered_classes[i].txt));
+        uint16_t code = 0;
+        EXPECT_NO_THROW(RRParamRegistry::getRegistry().textToClassCode(registered_classes[i].txt, code));
+        EXPECT_EQ(code, registered_classes[i].code);
+        string txt;
+        EXPECT_NO_THROW(txt = RRParamRegistry::getRegistry().codeToClassText(registered_classes[i].code));
+        EXPECT_EQ(txt, registered_classes[i].txt);
+    }
+}
+
 }

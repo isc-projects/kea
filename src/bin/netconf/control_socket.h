@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,8 +10,8 @@
 #ifndef CONTROL_SOCKET_H
 #define CONTROL_SOCKET_H
 
-#include <netconf/netconf_config.h>
 #include <exceptions/exceptions.h>
+#include <netconf/netconf_config.h>
 
 namespace isc {
 namespace netconf {
@@ -19,9 +19,10 @@ namespace netconf {
 /// @brief Exception thrown when the error during communication.
 class ControlSocketError : public isc::Exception {
 public:
-    ControlSocketError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
-};
+    ControlSocketError(const char* file, size_t line, const char* what)
+        : isc::Exception(file, line, what) {
+    }
+};  // ControlSocketError
 
 /// @brief Base class for control socket communication.
 ///
@@ -31,7 +32,6 @@ public:
 /// communicate with other Kea daemons.
 class ControlSocketBase {
 public:
-
     /// @brief Constructor.
     ///
     /// @param ctrl_sock The control socket configuration.
@@ -39,13 +39,12 @@ public:
     ControlSocketBase(CfgControlSocketPtr ctrl_sock) : socket_cfg_(ctrl_sock) {
         if (!ctrl_sock) {
             isc_throw(ControlSocketError, "ControlSocket constructor called "
-                      "with a null configuration");
+                                          "with a null configuration");
         }
     }
 
     /// @brief Destructor (does nothing).
-    virtual ~ControlSocketBase() {
-    }
+    virtual ~ControlSocketBase() = default;
 
     /// @brief Getter which returns the socket type.
     ///
@@ -85,7 +84,7 @@ public:
     /// @param service The target service (used by http).
     /// @return The JSON element answer of config-test.
     /// @throw ControlSocketError when a communication error occurs.
-    virtual data::ConstElementPtr configTest(data::ConstElementPtr config,
+    virtual data::ConstElementPtr configTest(data::ElementPtr config,
                                              const std::string& service) = 0;
 
     /// @brief Set configuration.
@@ -96,15 +95,15 @@ public:
     /// @param service The target service (used by http).
     /// @return The JSON element answer of config-set.
     /// @throw ControlSocketError when a communication error occurs.
-    virtual data::ConstElementPtr configSet(data::ConstElementPtr config,
+    virtual data::ConstElementPtr configSet(data::ElementPtr config,
                                             const std::string& service) = 0;
 
     /// @brief The control socket configuration.
     CfgControlSocketPtr socket_cfg_;
-};
+};  // ControlSocketBase
 
 /// @brief Type definition for the pointer to the @c ControlSocketBase.
-typedef boost::shared_ptr<ControlSocketBase> ControlSocketBasePtr;
+using ControlSocketBasePtr = std::shared_ptr<ControlSocketBase>;
 
 /// @brief Factory template for control sockets.
 ///
@@ -112,7 +111,7 @@ typedef boost::shared_ptr<ControlSocketBase> ControlSocketBasePtr;
 /// @param ctrl_sock The control socket configuration.
 /// @return A pointer to a control socket communication object.
 /// @throw NotImplemented if no specialization was called.
-template <CfgControlSocket::Type TYPE>  ControlSocketBasePtr
+template <CfgControlSocket::Type TYPE> ControlSocketBasePtr
 createControlSocket(CfgControlSocketPtr ctrl_sock) {
     isc_throw(NotImplemented, "not specialized createControlSocket");
 }
@@ -123,9 +122,9 @@ createControlSocket(CfgControlSocketPtr ctrl_sock) {
 /// @return A pointer to a control socket communication object.
 /// @throw BadValue if called with null or an unknown type.
 ControlSocketBasePtr
-createControlSocket(CfgControlSocketPtr ctrl_sock);
+controlSocketFactory(CfgControlSocketPtr ctrl_sock);
 
-} // namespace netconf
-} // namespace isc
+}  // namespace netconf
+}  // namespace isc
 
-#endif // CONTROL_SOCKET_H
+#endif  // CONTROL_SOCKET_H

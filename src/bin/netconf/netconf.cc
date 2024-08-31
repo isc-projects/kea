@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,26 +9,23 @@
 
 #include <config.h>
 
+#include <cc/command_interpreter.h>
 #include <netconf/netconf.h>
 #include <netconf/netconf_controller.h>
 #include <netconf/netconf_log.h>
-#include <cc/command_interpreter.h>
 #include <yang/translator_config.h>
 #include <yang/yang_revisions.h>
 
-#include <boost/algorithm/string.hpp>
-
 #include <sstream>
+#include <vector>
 
 using namespace std;
 using namespace isc::config;
 using namespace isc::data;
 using namespace isc::netconf;
 using namespace isc::yang;
+using namespace libyang;
 using namespace sysrepo;
-
-using libyang::S_Context;
-using libyang::S_Module;
 
 namespace {
 
@@ -55,32 +52,33 @@ public:
     /// @param event The event.
     /// @param private_ctx The private context.
     /// @return the sysrepo return code.
-    sr_error_t module_change(S_Session sess,
-                             const char* module_name,
-                             const char* /* xpath */,
-                             sr_event_t event,
-                             void* /* private_ctx */) {
+    sysrepo::ErrorCode moduleChange(Session sess,
+                                    uint32_t /* subscription_id */,
+                                    string_view module_name,
+                                    optional<string_view> /* sub_xpath */,
+                                    Event event,
+                                    uint32_t /* request_id */) {
         ostringstream event_type;
         switch (event) {
-        case SR_EV_UPDATE:
+        case Event::Update:
             // This could potentially be a hook point for mid-flight
             // configuration changes.
-            event_type << "SR_EV_UPDATE";
+            event_type << "Event::Update";
             break;
-        case SR_EV_CHANGE:
-            event_type << "SR_EV_CHANGE";
+        case Event::Change:
+            event_type << "Event::Change";
             break;
-        case SR_EV_DONE:
-            event_type << "SR_EV_DONE";
+        case Event::Done:
+            event_type << "Event::Done";
             break;
-        case SR_EV_ABORT:
-            event_type << "SR_EV_ABORT";
+        case Event::Abort:
+            event_type << "Event::Abort";
             break;
-        case SR_EV_ENABLED:
-            event_type << "SR_EV_ENABLED";
+        case Event::Enabled:
+            event_type << "Event::Enabled";
             break;
-        case SR_EV_RPC:
-            event_type << "SR_EV_RPC";
+        case Event::RPC:
+            event_type << "Event::RPC";
             break;
         default:
             event_type << "UNKNOWN (" << event << ")";
@@ -90,59 +88,61 @@ public:
             .arg(event_type.str());
         NetconfAgent::logChanges(sess, module_name);
         switch (event) {
-        case SR_EV_CHANGE:
+        case Event::Change:
             return (NetconfAgent::change(sess, service_pair_));
-        case SR_EV_DONE:
+        case Event::Done:
             return (NetconfAgent::done(sess, service_pair_));
         default:
-            return (SR_ERR_OK);
+            return (sysrepo::ErrorCode::Ok);
         }
     }
 
-    void event_notif(sysrepo::S_Session /* session */,
-                     sr_ev_notif_type_t const notification_type,
-                     char const* /* path */,
-                     sysrepo::S_Vals const vals,
-                     time_t /* timestamp */,
-                     void* /* private_data */) {
+    void eventNotif(Session /* session */,
+                    uint32_t /* subscription_id */,
+                    NotificationType const notification_type,
+                    optional<DataNode> const notification_tree,
+                    NotificationTimeStamp const /* timestamp */) {
         string n;
         switch (notification_type) {
-        case SR_EV_NOTIF_REALTIME:
-            n = "SR_EV_NOTIF_REALTIME";
+        case NotificationType::Realtime:
+            n = "NotificationType::Realtime";
             break;
-        case SR_EV_NOTIF_REPLAY:
-            n = "SR_EV_NOTIF_REPLAY";
+        case NotificationType::Replay:
+            n = "NotificationType::Replay";
             break;
-        case SR_EV_NOTIF_REPLAY_COMPLETE:
-            n = "SR_EV_NOTIF_REPLAY_COMPLETE";
+        case NotificationType::ReplayComplete:
+            n = "NotificationType::ReplayComplete";
             break;
-        case SR_EV_NOTIF_STOP:
-            n = "SR_EV_NOTIF_STOP";
+        case NotificationType::Terminated:
+            n = "NotificationType::Terminated";
             break;
-        case SR_EV_NOTIF_SUSPENDED:
-            n = "SR_EV_NOTIF_SUSPENDED";
+        case NotificationType::Modified:
+            n = "NotificationType::Modified";
             break;
-        case SR_EV_NOTIF_RESUMED:
-            n = "SR_EV_NOTIF_RESUMED";
+        case NotificationType::Suspended:
+            n = "NotificationType::Suspended";
+            break;
+        case NotificationType::Resumed:
+            n = "NotificationType::Resumed";
             break;
         }
 
-        stringstream s;
-        for (size_t i(0); i < vals->val_cnt(); ++i) {
-            if (i != 0) {
-                s << ", ";
+        string tree;
+        if (notification_tree) {
+            optional<string> const str(
+                notification_tree->printStr(DataFormat::JSON, PrintFlags::WithDefaultsExplicit));
+            if (str) {
+                tree = *str;
             }
-            s << vals->val(i)->to_string();
         }
-
         LOG_INFO(netconf_logger, NETCONF_NOTIFICATION_RECEIVED)
             .arg(n)
             .arg(service_pair_.first)
-            .arg(s.str());
+            .arg(tree);
     }
-};
+};  // NetconfAgentCallback
 
-} // end of anonymous namespace
+}  // anonymous namespace
 
 namespace isc {
 namespace netconf {
@@ -174,40 +174,39 @@ NetconfAgent::init(NetconfCfgMgrPtr cfg_mgr) {
 
     for (auto const& pair : *servers) {
         yangConfig(pair);
-        subscribeConfig(pair);
+        subscribeToDataChanges(pair);
         subscribeToNotifications(pair);
     }
 }
 
 void
 NetconfAgent::clear() {
-    for (auto subs : subscriptions_) {
-        subs.second.reset();
-    }
     subscriptions_.clear();
     running_sess_.reset();
     startup_sess_.reset();
-    conn_.reset();
 }
 
 void
 NetconfAgent::keaConfig(const CfgServersMapPair& service_pair) {
+    string const& server(service_pair.first);
+    CfgServerPtr const& configuration(service_pair.second);
+
     // If the boot-update flag is not set.
-    if (!service_pair.second->getBootUpdate()) {
+    if (!configuration->getBootUpdate()) {
         return;
     }
-    CfgControlSocketPtr ctrl_sock = service_pair.second->getCfgControlSocket();
+    CfgControlSocketPtr ctrl_sock = configuration->getCfgControlSocket();
     if (!ctrl_sock) {
         return;
     }
     ControlSocketBasePtr comm;
     try {
-        comm = createControlSocket(ctrl_sock);
-    } catch (const std::exception& ex) {
+        comm = controlSocketFactory(ctrl_sock);
+    } catch (exception const& ex) {
         ostringstream msg;
         msg << "createControlSocket failed with " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_GET_CONFIG_FAILED)
-            .arg(service_pair.first)
+            .arg(server)
             .arg(msg.str());
         return;
     }
@@ -215,15 +214,15 @@ NetconfAgent::keaConfig(const CfgServersMapPair& service_pair) {
     int rcode;
     ConstElementPtr config;
     LOG_INFO(netconf_logger, NETCONF_GET_CONFIG_STARTED)
-        .arg(service_pair.first);
+        .arg(server);
     try {
-        answer = comm->configGet(service_pair.first);
+        answer = comm->configGet(server);
         config = parseAnswer(rcode, answer);
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         ostringstream msg;
         msg << "config-get command failed with " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_GET_CONFIG_FAILED)
-            .arg(service_pair.first)
+            .arg(server)
             .arg(msg.str());
         return;
     }
@@ -231,61 +230,53 @@ NetconfAgent::keaConfig(const CfgServersMapPair& service_pair) {
         ostringstream msg;
         msg << "config-get command returned " << answerToText(answer);
         LOG_ERROR(netconf_logger, NETCONF_GET_CONFIG_FAILED)
-            .arg(service_pair.first)
+            .arg(server)
             .arg(msg.str());
         return;
     }
     if (!config) {
         LOG_ERROR(netconf_logger, NETCONF_GET_CONFIG_FAILED)
-            .arg(service_pair.first)
+            .arg(server)
             .arg("config-get command returned an empty configuration");
         return;
     }
     LOG_DEBUG(netconf_logger, NETCONF_DBG_TRACE_DETAIL_DATA,
               NETCONF_GET_CONFIG)
-        .arg(service_pair.first)
+        .arg(server)
         .arg(prettyPrint(config));
 }
 
 void
 NetconfAgent::initSysrepo() {
     try {
-        conn_ = make_shared<Connection>();
-    } catch (const std::exception& ex) {
-        isc_throw(Unexpected, "Can't connect to sysrepo: " << ex.what());
-    }
-
-    try {
-        startup_sess_.reset(new Session(conn_, SR_DS_STARTUP));
-        running_sess_.reset(new Session(conn_, SR_DS_RUNNING));
-    } catch (const std::exception& ex) {
-        isc_throw(Unexpected, "Can't establish a sysrepo session: "
-                  << ex.what());
+        running_sess_ = Connection{}.sessionStart();
+        running_sess_->switchDatastore(Datastore::Running);
+        startup_sess_ = Connection{}.sessionStart();
+        startup_sess_->switchDatastore(Datastore::Startup);
+    } catch (exception const& ex) {
+        isc_throw(Unexpected, "Can't establish a sysrepo session: " << ex.what());
     }
 
     // Retrieve names and revisions of installed modules from sysrepo.
     getModules();
 }
 
-void NetconfAgent::getModules() {
-    vector<S_Module> modules;
+void
+NetconfAgent::getModules() {
+    vector<Module> modules;
     try {
-        S_Context context(running_sess_->get_context());
-        modules = context->get_module_iter();
-    } catch (const sysrepo_exception& ex) {
+        Context context(running_sess_->getContext());
+        modules = context.modules();
+    } catch (Error const& ex) {
         isc_throw(Unexpected, "can't retrieve available modules: " << ex.what());
     }
 
-    for (S_Module const& module : modules) {
-        if (!module->name()) {
-            isc_throw(Unexpected, "could not retrieve module name");
+    for (Module const& module : modules) {
+        string const name(module.name());
+        if (!module.revision()) {
+            isc_throw(Unexpected, "could not retrieve module revision for module " << name);
         }
-        string const name(module->name());
-        if (!module->rev() || !module->rev()->date()) {
-            isc_throw(Unexpected,
-                      "could not retrieve module revision for module " << name);
-        }
-        string const revision(module->rev()->date());
+        string const revision(*module.revision());
         modules_.emplace(name, revision);
     }
 }
@@ -319,7 +310,7 @@ void
 NetconfAgent::checkModules(CfgServersMapPtr const& servers /* = {} */) const {
     bool faulty_model(false);
     if (servers) {
-        for (auto pair : *servers) {
+        for (auto const& pair : *servers) {
             if (!checkModule(pair.second->getModel())) {
                 faulty_model = true;
             }
@@ -331,7 +322,7 @@ NetconfAgent::checkModules(CfgServersMapPtr const& servers /* = {} */) const {
                               "supported. Check logs for details.");
     }
 
-    for (auto modrev : YANG_REVISIONS) {
+    for (auto const& modrev : YANG_REVISIONS) {
         auto module = modules_.find(modrev.first);
         if (module == modules_.end()) {
             LOG_WARN(netconf_logger, NETCONF_MODULE_MISSING_WARN)
@@ -349,71 +340,74 @@ NetconfAgent::checkModules(CfgServersMapPtr const& servers /* = {} */) const {
 
 void
 NetconfAgent::yangConfig(const CfgServersMapPair& service_pair) {
+    string const& server(service_pair.first);
+    CfgServerPtr const& configuration(service_pair.second);
+
     // If we're shutting down, or the boot-update flag is not set or the model
     // associated with it is not specified.
-    if (!service_pair.second->getBootUpdate() ||
-        service_pair.second->getModel().empty()) {
+    if (!configuration->getBootUpdate() ||
+        configuration->getModel().empty()) {
         return;
     }
 
     // First we need a way to reach the actual servers.
-    CfgControlSocketPtr ctrl_sock = service_pair.second->getCfgControlSocket();
+    CfgControlSocketPtr ctrl_sock = configuration->getCfgControlSocket();
     if (!ctrl_sock) {
         return;
     }
 
     LOG_INFO(netconf_logger, NETCONF_SET_CONFIG_STARTED)
-        .arg(service_pair.first);
-    ConstElementPtr config;
+        .arg(server);
+    ElementPtr config;
     try {
         // Retrieve configuration from Sysrepo.
-        TranslatorConfig tc(startup_sess_, service_pair.second->getModel());
+        TranslatorConfig tc(*startup_sess_, configuration->getModel());
         config = tc.getConfig();
         if (!config) {
             ostringstream msg;
             msg << "YANG configuration for "
-                << service_pair.second->getModel()
+                << configuration->getModel()
                 << " is empty";
             LOG_ERROR(netconf_logger, NETCONF_SET_CONFIG_FAILED)
-                .arg(service_pair.first)
+                .arg(server)
                 .arg(msg.str());
             return;
         } else {
             LOG_DEBUG(netconf_logger, NETCONF_DBG_TRACE_DETAIL_DATA,
                       NETCONF_SET_CONFIG)
-                .arg(service_pair.first)
+                .arg(server)
                 .arg(prettyPrint(config));
         }
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         ostringstream msg;
-        msg << "get YANG configuration for " << service_pair.first
+        msg << "get YANG configuration for " << server
             << " failed with " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_SET_CONFIG_FAILED)
-            .arg(service_pair.first)
+            .arg(server)
             .arg(msg.str());
         return;
     }
     ControlSocketBasePtr comm;
     try {
-        comm = createControlSocket(ctrl_sock);
-    } catch (const std::exception& ex) {
+        comm = controlSocketFactory(ctrl_sock);
+    } catch (exception const& ex) {
         ostringstream msg;
         msg << "control socket creation failed with " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_SET_CONFIG_FAILED)
-            .arg(service_pair.first)
+            .arg(server)
             .arg(msg.str());
         return;
     }
     ConstElementPtr answer;
     int rcode;
     try {
-        answer = comm->configSet(config, service_pair.first);
+        answer = comm->configSet(config, server);
         parseAnswer(rcode, answer);
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         ostringstream msg;
         msg << "config-set command failed with " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_SET_CONFIG_FAILED)
-            .arg(service_pair.first)
+            .arg(server)
             .arg(msg.str());
         return;
     }
@@ -421,250 +415,270 @@ NetconfAgent::yangConfig(const CfgServersMapPair& service_pair) {
         ostringstream msg;
         msg << "config-set command returned " << answerToText(answer);
         LOG_ERROR(netconf_logger, NETCONF_SET_CONFIG_FAILED)
-            .arg(service_pair.first)
+            .arg(server)
             .arg(msg.str());
         return;
     }
     LOG_INFO(netconf_logger, NETCONF_BOOT_UPDATE_COMPLETED)
-        .arg(service_pair.first);
+        .arg(server);
 }
 
 void
-NetconfAgent::subscribeConfig(const CfgServersMapPair& service_pair) {
-    std::string const& model(service_pair.second->getModel());
+NetconfAgent::subscribeToDataChanges(const CfgServersMapPair& service_pair) {
+    string const& server(service_pair.first);
+    CfgServerPtr const& configuration(service_pair.second);
+    string const& model(configuration->getModel());
 
     // If we're shutting down, or the subscribe-changes flag is not set or
-    // the model associated with it is not specified.
-    if (!service_pair.second->getSubscribeChanges() ||
-        model.empty()) {
+    // the model is not specified, give up on subscribing.
+    if (!configuration->getSubscribeChanges() || model.empty()) {
         return;
     }
     LOG_INFO(netconf_logger, NETCONF_SUBSCRIBE_CONFIG)
-        .arg(service_pair.first)
+        .arg(server)
         .arg(model);
-    S_Subscribe subs(new Subscribe(running_sess_));
-    auto callback = [=](sysrepo::S_Session sess, const char* module_name,
-                        const char* xpath, sr_event_t event,
-                        uint32_t /* request_id */) {
+    auto callback = [=](Session session,
+                        uint32_t subscription_id,
+                        string_view module_name,
+                        optional<string_view> sub_xpath,
+                        Event event,
+                        uint32_t request_id) {
         NetconfAgentCallback agent(service_pair);
-        return agent.module_change(sess, module_name, xpath, event, nullptr);
+        return agent.moduleChange(session, subscription_id, module_name, sub_xpath, event,
+                                  request_id);
     };
     try {
-        sr_subscr_options_t options = SR_SUBSCR_DEFAULT;
-        if (!service_pair.second->getValidateChanges()) {
-            options |= SR_SUBSCR_DONE_ONLY;
+        SubscribeOptions options(SubscribeOptions::Default);
+        if (!configuration->getValidateChanges()) {
+            options = options | SubscribeOptions::DoneOnly;
         }
-        // Note the API stores the module name so do not put it
-        // in a short lifetime variable!
-        subs->module_change_subscribe(model.c_str(), callback, nullptr, 0,
-                                      options);
-    } catch (const std::exception& ex) {
+        auto exception_handler = [model](std::exception& ex) {
+            LOG_ERROR(netconf_logger, NETCONF_MODULE_CHANGE_INTERNAL_ERROR)
+                .arg(model)
+                .arg(ex.what());
+        };
+        Subscription subscription(
+            running_sess_->onModuleChange(model, callback, nullopt, 0, options, exception_handler));
+        subscriptions_.emplace(server, std::forward<Subscription>(subscription));
+    } catch (exception const& ex) {
         ostringstream msg;
         msg << "module change subscribe failed with " << ex.what();
-        msg << "change subscription for model " << model <<
-            " failed with: " << ex.what();
+        msg << "change subscription for model " << model << " failed with: " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_SUBSCRIBE_CONFIG_FAILED)
-            .arg(service_pair.first)
-            .arg(service_pair.second->getModel())
+            .arg(server)
+            .arg(configuration->getModel())
             .arg(msg.str());
         return;
     }
-    subscriptions_.insert(make_pair(service_pair.first, subs));
 }
-
 
 void
 NetconfAgent::subscribeToNotifications(const CfgServersMapPair& service_pair) {
-    std::string const& model(service_pair.second->getModel());
+    string const& server(service_pair.first);
+    CfgServerPtr const& configuration(service_pair.second);
+    string const& model(configuration->getModel());
+
     // If we're shutting down, or the subscribe-changes flag is not set or
-    // the model associated with it is not specified.
-    if (!service_pair.second->getSubscribeNotifications() ||
-        model.empty()) {
+    // the model is not specified, give up on subscribing.
+    if (!configuration->getSubscribeNotifications() || model.empty()) {
         return;
     }
     LOG_INFO(netconf_logger, NETCONF_SUBSCRIBE_NOTIFICATIONS)
-        .arg(service_pair.first)
+        .arg(server)
         .arg(model);
 
-    S_Subscribe subscription(std::make_shared<Subscribe>(running_sess_));
-    auto callback = [=](sysrepo::S_Session session,
-                        sr_ev_notif_type_t const notification_type,
-                        char const* path,
-                        sysrepo::S_Vals const vals,
-                        time_t timestamp) {
+    auto callback = [=](Session session,
+                        uint32_t subscription_id,
+                        NotificationType const notification_type,
+                        optional<DataNode> const notification_tree,
+                        NotificationTimeStamp const timestamp) {
         NetconfAgentCallback agent(service_pair);
-        return agent.event_notif(session, notification_type, path, vals, timestamp, nullptr);
+        return agent.eventNotif(session, subscription_id, notification_type, notification_tree,
+                                timestamp);
     };
     try {
-        subscription->event_notif_subscribe(model.c_str(), callback);
-    } catch (const std::exception& ex) {
+        auto exception_handler = [model](std::exception& ex) {
+            LOG_ERROR(netconf_logger, NETCONF_NOTIFICATION_INTERNAL_ERROR)
+                .arg(model)
+                .arg(ex.what());
+        };
+        Subscription subscription(running_sess_->onNotification(model, callback, nullopt, nullopt,
+                                                                nullopt, SubscribeOptions::Default,
+                                                                exception_handler));
+        subscriptions_.emplace(server, std::forward<Subscription>(subscription));
+    } catch (exception const& ex) {
         ostringstream msg;
         msg << "event notification subscription for model " << model <<
             " failed with: " << ex.what();
-        LOG_ERROR(netconf_logger, NETCONF_SUBSCRIBE_NOTIFICATIONS_FAILED)
-            .arg(service_pair.first)
-            .arg(service_pair.second->getModel())
+        LOG_WARN(netconf_logger, NETCONF_NOT_SUBSCRIBED_TO_NOTIFICATIONS)
+            .arg(server)
+            .arg(configuration->getModel())
             .arg(msg.str());
         return;
     }
-    subscriptions_.emplace(service_pair.first, subscription);
 }
 
-sr_error_t
-NetconfAgent::change(S_Session sess, const CfgServersMapPair& service_pair) {
+sysrepo::ErrorCode
+NetconfAgent::change(Session sess, const CfgServersMapPair& service_pair) {
+    string const& server(service_pair.first);
+    CfgServerPtr const& configuration(service_pair.second);
+
     // If we're shutting down, or the subscribe-changes or the
     // validate-changes flag is not set or the model associated with
     // it is not specified.
-    if (!service_pair.second->getSubscribeChanges() ||
-        !service_pair.second->getValidateChanges() ||
-        service_pair.second->getModel().empty()) {
-        return (SR_ERR_OK);
+    if (!configuration->getSubscribeChanges() ||
+        !configuration->getValidateChanges() ||
+        configuration->getModel().empty()) {
+        return (sysrepo::ErrorCode::Ok);
     }
-    CfgControlSocketPtr ctrl_sock = service_pair.second->getCfgControlSocket();
+    CfgControlSocketPtr ctrl_sock = configuration->getCfgControlSocket();
     if (!ctrl_sock) {
-        return (SR_ERR_OK);
+        return (sysrepo::ErrorCode::Ok);
     }
     LOG_INFO(netconf_logger, NETCONF_VALIDATE_CONFIG_STARTED)
-        .arg(service_pair.first);
-    ConstElementPtr config;
+        .arg(server);
+    ElementPtr config;
     try {
-        TranslatorConfig tc(sess, service_pair.second->getModel());
+        TranslatorConfig tc(sess, configuration->getModel());
         config = tc.getConfig();
         if (!config) {
             ostringstream msg;
             msg << "YANG configuration for "
-                << service_pair.second->getModel()
+                << configuration->getModel()
                 << " is empty";
             LOG_ERROR(netconf_logger, NETCONF_VALIDATE_CONFIG_FAILED)
-                .arg(service_pair.first)
+                .arg(server)
                 .arg(msg.str());
-            return (SR_ERR_OPERATION_FAILED);
+            return (sysrepo::ErrorCode::OperationFailed);
         } else {
             LOG_DEBUG(netconf_logger, NETCONF_DBG_TRACE_DETAIL_DATA,
                       NETCONF_VALIDATE_CONFIG)
-                .arg(service_pair.first)
+                .arg(server)
                 .arg(prettyPrint(config));
         }
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         ostringstream msg;
-        msg << "get YANG configuration for " << service_pair.first
+        msg << "get YANG configuration for " << server
             << " failed with " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_VALIDATE_CONFIG_FAILED)
-            .arg(service_pair.first)
+            .arg(server)
             .arg(msg.str());
-        return (SR_ERR_VALIDATION_FAILED);;
+        return (sysrepo::ErrorCode::ValidationFailed);
     }
     ControlSocketBasePtr comm;
     try {
-        comm = createControlSocket(ctrl_sock);
-    } catch (const std::exception& ex) {
+        comm = controlSocketFactory(ctrl_sock);
+    } catch (exception const& ex) {
         ostringstream msg;
         msg << "createControlSocket failed with " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_VALIDATE_CONFIG_FAILED)
-            .arg(service_pair.first)
+            .arg(server)
             .arg(msg.str());
-        return (SR_ERR_OK);
+        return (sysrepo::ErrorCode::Ok);
     }
     ConstElementPtr answer;
     int rcode;
     try {
-        answer = comm->configTest(config, service_pair.first);
+        answer = comm->configTest(config, server);
         parseAnswer(rcode, answer);
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         stringstream msg;
         msg << "configTest failed with " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_VALIDATE_CONFIG_FAILED)
-            .arg(service_pair.first)
+            .arg(server)
             .arg(msg.str());
-        return (SR_ERR_VALIDATION_FAILED);
+        return (sysrepo::ErrorCode::ValidationFailed);
     }
     if (rcode != CONTROL_RESULT_SUCCESS) {
         stringstream msg;
         msg << "configTest returned " << answerToText(answer);
         LOG_ERROR(netconf_logger, NETCONF_VALIDATE_CONFIG_REJECTED)
-            .arg(service_pair.first)
+            .arg(server)
             .arg(msg.str());
-        return (SR_ERR_VALIDATION_FAILED);
+        return (sysrepo::ErrorCode::ValidationFailed);
     }
     LOG_INFO(netconf_logger, NETCONF_VALIDATE_CONFIG_COMPLETED)
-        .arg(service_pair.first);
-    return (SR_ERR_OK);
+        .arg(server);
+    return (sysrepo::ErrorCode::Ok);
 }
 
-sr_error_t
-NetconfAgent::done(S_Session sess, const CfgServersMapPair& service_pair) {
+sysrepo::ErrorCode
+NetconfAgent::done(Session sess, const CfgServersMapPair& service_pair) {
+    string const& server(service_pair.first);
+    CfgServerPtr const& configuration(service_pair.second);
+
     // Check if we should and can process this update.
-    if (!service_pair.second->getSubscribeChanges() ||
-        service_pair.second->getModel().empty()) {
-        return (SR_ERR_OK);
+    if (!configuration->getSubscribeChanges() ||
+        configuration->getModel().empty()) {
+        return (sysrepo::ErrorCode::Ok);
     }
-    CfgControlSocketPtr ctrl_sock = service_pair.second->getCfgControlSocket();
+    CfgControlSocketPtr ctrl_sock = configuration->getCfgControlSocket();
     if (!ctrl_sock) {
-        return (SR_ERR_OK);
+        return (sysrepo::ErrorCode::Ok);
     }
 
     // All looks good, let's get started. Print an info that we're about
     // to update the configuration.
     LOG_INFO(netconf_logger, NETCONF_UPDATE_CONFIG_STARTED)
-        .arg(service_pair.first);
+        .arg(server);
 
     // Retrieve the configuration from SYSREPO first.
-    ConstElementPtr config;
+    ElementPtr config;
     try {
-        TranslatorConfig tc(sess, service_pair.second->getModel());
+        TranslatorConfig tc(sess, configuration->getModel());
         config = tc.getConfig();
         if (!config) {
             ostringstream msg;
             msg << "YANG configuration for "
-                << service_pair.second->getModel()
+                << configuration->getModel()
                 << " is empty";
             LOG_ERROR(netconf_logger, NETCONF_UPDATE_CONFIG_FAILED)
-                .arg(service_pair.first)
+                .arg(server)
                 .arg(msg.str());
-            return (SR_ERR_VALIDATION_FAILED);
+            return (sysrepo::ErrorCode::ValidationFailed);
         } else {
             LOG_DEBUG(netconf_logger, NETCONF_DBG_TRACE_DETAIL_DATA,
                       NETCONF_UPDATE_CONFIG)
-                .arg(service_pair.first)
+                .arg(server)
                 .arg(prettyPrint(config));
         }
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         ostringstream msg;
-        msg << "get YANG configuration for " << service_pair.first
+        msg << "get YANG configuration for " << server
             << " failed with " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_UPDATE_CONFIG_FAILED)
-            .arg(service_pair.first)
+            .arg(server)
             .arg(msg.str());
-        return (SR_ERR_VALIDATION_FAILED);
+        return (sysrepo::ErrorCode::ValidationFailed);
     }
 
     // Ok, now open the control socket. We need this to send the config to
     // the server.
     ControlSocketBasePtr comm;
     try {
-        comm = createControlSocket(ctrl_sock);
-    } catch (const std::exception& ex) {
+        comm = controlSocketFactory(ctrl_sock);
+    } catch (exception const& ex) {
         ostringstream msg;
         msg << "createControlSocket failed with " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_UPDATE_CONFIG_FAILED)
-            .arg(service_pair.first)
+            .arg(server)
             .arg(msg.str());
-        return (SR_ERR_OK);
+        return (sysrepo::ErrorCode::Ok);
     }
 
     // Now apply the config using config-set command.
     ConstElementPtr answer;
     int rcode;
     try {
-        answer = comm->configSet(config, service_pair.first);
+        answer = comm->configSet(config, server);
         parseAnswer(rcode, answer);
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         stringstream msg;
         msg << "configSet failed with " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_UPDATE_CONFIG_FAILED)
-            .arg(service_pair.first)
+            .arg(server)
             .arg(msg.str());
-        return (SR_ERR_VALIDATION_FAILED);
+        return (sysrepo::ErrorCode::ValidationFailed);
     }
 
     // rcode == CONTROL_RESULT_SUCCESS, unless the docs say otherwise :).
@@ -672,108 +686,59 @@ NetconfAgent::done(S_Session sess, const CfgServersMapPair& service_pair) {
         stringstream msg;
         msg << "configSet returned " << answerToText(answer);
         LOG_ERROR(netconf_logger, NETCONF_UPDATE_CONFIG_FAILED)
-            .arg(service_pair.first)
+            .arg(server)
             .arg(msg.str());
-        return (SR_ERR_VALIDATION_FAILED);
+        return (sysrepo::ErrorCode::ValidationFailed);
     }
     LOG_INFO(netconf_logger, NETCONF_UPDATE_CONFIG_COMPLETED)
-        .arg(service_pair.first);
-    return (SR_ERR_OK);
+        .arg(server);
+    return (sysrepo::ErrorCode::Ok);
 }
 
 void
-NetconfAgent::logChanges(S_Session sess, const string& model) {
+NetconfAgent::logChanges(Session sess, string_view const& model) {
     ostringstream stream;
     stream << "/" << model << ":*//.";
-    std::string const xpath(stream.str());
-    S_Iter_Change iter = sess->get_changes_iter(xpath.c_str());
-    if (!iter) {
-        LOG_WARN(netconf_logger, NETCONF_LOG_CHANGE_FAIL)
-            .arg("no iterator");
-        return;
-    }
-    for (;;) {
-        S_Change change;
+    string const xpath(stream.str());
+    ChangeCollection const changes(sess.getChanges(xpath));
+    for (Change const& change : changes) {
         ostringstream msg;
-        try {
-            change = sess->get_change_next(iter);
-        } catch (const sysrepo_exception& ex) {
-            msg << "get change iterator next failed: " << ex.what();
-            LOG_WARN(netconf_logger, NETCONF_LOG_CHANGE_FAIL)
-                .arg(msg.str());
-            return;
-        }
-        if (!change) {
-            // End of changes, not an error.
-            return;
-        }
-        S_Val new_val = change->new_val();
-        S_Val old_val = change->old_val();
-        string report;
-        switch (change->oper()) {
-        case SR_OP_CREATED:
-            if (!new_val) {
-                LOG_WARN(netconf_logger, NETCONF_LOG_CHANGE_FAIL)
-                    .arg("created but without a new value");
-                break;
-            }
-            msg << "created: " << new_val->to_string();
-            report = msg.str();
-            boost::erase_all(report, "\n");
-            LOG_DEBUG(netconf_logger, NETCONF_DBG_TRACE_DETAIL_DATA,
-                      NETCONF_CONFIG_CHANGED_DETAIL)
-                .arg(report);
+        switch (change.operation) {
+        case sysrepo::ChangeOperation::Created:
+            msg << "created: ";
             break;
-        case SR_OP_MODIFIED:
-            if (!old_val || !new_val) {
-                LOG_WARN(netconf_logger, NETCONF_LOG_CHANGE_FAIL)
-                    .arg("modified but without an old or new value");
-                break;
-            }
-            msg << "modified: " << old_val->to_string()
-                << " => " << new_val->to_string();
-            report = msg.str();
-            boost::erase_all(report, "\n");
-            LOG_DEBUG(netconf_logger, NETCONF_DBG_TRACE_DETAIL_DATA,
-                      NETCONF_CONFIG_CHANGED_DETAIL)
-                .arg(report);
+        case sysrepo::ChangeOperation::Deleted:
+            msg << "deleted: ";
             break;
-        case SR_OP_DELETED:
-            if (!old_val) {
-                LOG_WARN(netconf_logger, NETCONF_LOG_CHANGE_FAIL)
-                    .arg("deleted but without an old value");
-                break;
-            }
-            msg << "deleted: " << old_val->to_string();
-            report = msg.str();
-            boost::erase_all(report, "\n");
-            LOG_DEBUG(netconf_logger, NETCONF_DBG_TRACE_DETAIL_DATA,
-                      NETCONF_CONFIG_CHANGED_DETAIL)
-                .arg(report);
+        case sysrepo::ChangeOperation::Modified:
+            msg << "modified: ";
             break;
-        case SR_OP_MOVED:
-            if (!new_val) {
-                LOG_WARN(netconf_logger, NETCONF_LOG_CHANGE_FAIL)
-                    .arg("moved but without a new value");
-                break;
-            }
-            msg << "moved: " << new_val->xpath();
-            if (!old_val) {
-                msg << " first";
-            } else {
-                msg << " after " << old_val->xpath();
-            }
-            report = msg.str();
-            boost::erase_all(report, "\n");
-            LOG_DEBUG(netconf_logger, NETCONF_DBG_TRACE_DETAIL_DATA,
-                      NETCONF_CONFIG_CHANGED_DETAIL)
-                .arg(report);
+        case sysrepo::ChangeOperation::Moved:
+            msg << "moved: ";
             break;
         default:
-            msg << "unknown operation (" << change->oper() << ")";
-            LOG_WARN(netconf_logger, NETCONF_LOG_CHANGE_FAIL)
-                .arg(msg.str());
+            msg << "unknown operation (" << change.operation << "): ";
         }
+        string const path(change.node.path());
+        msg << path;
+        SchemaNode const& schema(change.node.schema());
+        NodeType const node_type(schema.nodeType());
+        if (node_type == NodeType::Container) {
+            msg << " (container)";
+        } else if (node_type == NodeType::List) {
+            msg << " (list)";
+        } else {
+            optional<string> const str(
+                Translator::translateToYang(Translator::translateFromYang(change.node),
+                                            LeafBaseType::Unknown));
+            if (str) {
+                msg << " = " << *str;
+            }
+        }
+
+        LOG_DEBUG(netconf_logger, NETCONF_DBG_TRACE_DETAIL_DATA,
+                  NETCONF_CONFIG_CHANGED_DETAIL)
+            .arg(msg.str());
     }
 }
 
@@ -787,11 +752,12 @@ NetconfAgent::announceShutdown() const {
     }
 }
 
-bool NetconfAgent::shouldShutdown() const {
+bool
+NetconfAgent::shouldShutdown() const {
     return boost::dynamic_pointer_cast<NetconfController>(NetconfController::instance())
         ->getNetconfProcess()
         ->shouldShutdown();
 }
 
-} // namespace netconf
-} // namespace isc
+}  // namespace netconf
+}  // namespace isc

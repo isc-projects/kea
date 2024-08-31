@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,11 +9,13 @@
 
 #include <config.h>
 
+#include <gtest/gtest.h>
+
 #include <testutils/gtest_utils.h>
 #include <yang/translator.h>
 #include <yang/yang_models.h>
 
-#include <gtest/gtest.h>
+#include <sysrepo-cpp/Connection.hpp>
 
 namespace isc {
 namespace yang {
@@ -46,7 +48,7 @@ private:
                       << std::endl;
         }
     }
-};
+};  // SysrepoSetup
 
 /// @brief Test Fixture template for translator tests.
 ///
@@ -59,17 +61,15 @@ public:
 
     void SetUp() override {
         SysrepoSetup::cleanSharedMemory();
-        conn_.reset(new sysrepo::Connection());
-        sess_.reset(new sysrepo::Session(conn_, SR_DS_CANDIDATE));
-        t_obj_.reset(new translator_t(sess_, model_));
+        sess_ = sysrepo::Connection{}.sessionStart();
+        sess_->switchDatastore(sysrepo::Datastore::Candidate);
+        translator_.reset(new translator_t(*sess_, model_));
         cleanModelData();
     }
 
     void TearDown() override {
         cleanModelData();
-        t_obj_.reset();
-        sess_.reset();
-        conn_.reset();
+        translator_.reset();
         SysrepoSetup::cleanSharedMemory();
     }
 
@@ -78,22 +78,19 @@ public:
         if (model_ == IETF_DHCPV6_SERVER) {
             toplevel_node = "server";
         }
-        t_obj_->delItem("/" + model_ + ":" + toplevel_node);
+        translator_->deleteItem("/" + model_ + ":" + toplevel_node);
     }
 
-    /// @brief Sysrepo connection.
-    sysrepo::S_Connection conn_;
-
     /// @brief Sysrepo session.
-    sysrepo::S_Session sess_;
+    std::optional<sysrepo::Session> sess_;
 
     /// @brief Shared pointer to the transaction object.
-    boost::shared_ptr<translator_t> t_obj_;
+    std::shared_ptr<translator_t> translator_;
     std::string model_;
-};
+};  // GenericTranslatorTest
 
-} // namespace test
-} // namespace yang
-} // namespace isc
+}  // namespace test
+}  // namespace yang
+}  // namespace isc
 
-#endif // SYSREPO_SETUP_H
+#endif  // SYSREPO_SETUP_H

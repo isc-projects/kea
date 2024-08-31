@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -89,7 +89,7 @@ TEST_F(LoggingInfoTest, defaults) {
     std::string header = "{\n";
     std::string begin =
         "\"name\": \"kea\",\n"
-        "\"output_options\": [ {\n"
+        "\"output-options\": [ {\n"
         " \"output\": \"stdout\", \"flush\": true, \"pattern\": \"\" } ],\n"
         "\"severity\": \"";
     std::string dbglvl = "\",\n\"debuglevel\": ";

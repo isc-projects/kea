@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,13 +8,13 @@
 #include <gtest/gtest.h>
 #include <cc/command_interpreter.h>
 #include <dhcp/option6_status_code.h>
+#include <dhcp/testutils/pkt_captures.h>
+#include <dhcpsrv/cfg_multi_threading.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/json_config_parser.h>
-#include <dhcp/tests/pkt_captures.h>
 #include <log/logger_support.h>
-#include <dhcpsrv/cfg_multi_threading.h>
-#include <util/pointer_util.h>
 #include <stats/stats_mgr.h>
+#include <util/pointer_util.h>
 #include <cstdio>
 #include <sstream>
 #include <string.h>
@@ -24,6 +24,7 @@ using namespace isc::dhcp;
 using namespace isc::asiolink;
 using namespace isc::stats;
 using namespace isc::util;
+using namespace boost::posix_time;
 
 namespace isc {
 namespace dhcp {
@@ -56,8 +57,8 @@ BaseServerTest::~BaseServerTest() {
 
 Dhcpv6SrvTest::Dhcpv6SrvTest()
     : NakedDhcpv6SrvTest(), srv_(0), multi_threading_(false) {
-    subnet_ = isc::dhcp::Subnet6Ptr(new isc::dhcp::Subnet6(isc::asiolink::IOAddress("2001:db8:1::"),
-                                                           48, 1000, 2000, 3000, 4000));
+    subnet_ = Subnet6::create(isc::asiolink::IOAddress("2001:db8:1::"),
+                              48, 1000, 2000, 3000, 4000, SubnetID(1));
     subnet_->setIface("eth0");
 
     pool_ = isc::dhcp::Pool6Ptr(new isc::dhcp::Pool6(isc::dhcp::Lease::TYPE_NA,
@@ -211,7 +212,6 @@ Dhcpv6SrvTest::checkPdLease(const DuidPtr& duid, const OptionPtr& ia_pd,
     return (lease);
 }
 
-
 Pkt6Ptr
 Dhcpv6SrvTest::createMessage(uint8_t message_type, Lease::Type lease_type,
                              const IOAddress& addr, const uint8_t prefix_len,
@@ -273,8 +273,8 @@ Dhcpv6SrvTest::testRenewBasic(Lease::Type type,
     // and then be reused.
     if (expire_before_renew) {
         CfgMgr::instance().clear();
-        subnet_.reset(new Subnet6(IOAddress("2001:db8:1:1::"),
-                                  48, 1000, 2000, 3000, 4000));
+        subnet_ = Subnet6::create(IOAddress("2001:db8:1:1::"), 48,
+                                  1000, 2000, 3000, 4000, subnet_->getID());
         subnet_->setIface("eth0");
         pool_.reset(new Pool6(Lease::TYPE_NA, existing, existing));
         subnet_->addPool(pool_);
@@ -458,7 +458,7 @@ Dhcpv6SrvTest::testRenewWrongIAID(Lease::Type type, const IOAddress& addr) {
     const uint32_t valid_iaid = 234;
     const uint32_t bogus_iaid = 456;
 
-    uint8_t prefix_len = (type == Lease::TYPE_PD) ? 128 : pd_pool_->getLength();
+    uint8_t prefix_len = (type != Lease::TYPE_PD) ? 128 : pd_pool_->getLength();
 
     // Quick sanity check that the address we're about to use is ok
     ASSERT_TRUE(subnet_->inPool(type, addr));
@@ -515,7 +515,7 @@ Dhcpv6SrvTest::testRenewSomeoneElsesLease(Lease::Type type, const IOAddress& add
     const uint32_t valid_iaid = 234;
     const uint32_t transid = 1234;
 
-    uint8_t prefix_len = (type == Lease::TYPE_PD) ? 128 : pd_pool_->getLength();
+    uint8_t prefix_len = (type != Lease::TYPE_PD) ? 128 : pd_pool_->getLength();
 
     // GenerateClientId() also sets duid_
     OptionPtr clientid = generateClientId();
@@ -559,7 +559,13 @@ Dhcpv6SrvTest::testRenewSomeoneElsesLease(Lease::Type type, const IOAddress& add
 
 void
 Dhcpv6SrvTest::testReleaseBasic(Lease::Type type, const IOAddress& existing,
-                                const IOAddress& release_addr) {
+                                const IOAddress& release_addr,
+                                const LeaseAffinity lease_affinity) {
+    if (lease_affinity == LEASE_AFFINITY_DISABLED) {
+        auto expiration_cfg = CfgMgr::instance().getCurrentCfg()->getCfgExpiration();
+        expiration_cfg->setFlushReclaimedTimerWaitTime(0);
+        expiration_cfg->setHoldReclaimedTime(0);
+    }
     NakedDhcpv6Srv srv(0);
 
     const uint32_t iaid = 234;
@@ -598,6 +604,10 @@ Dhcpv6SrvTest::testReleaseBasic(Lease::Type type, const IOAddress& existing,
                                               "assigned-pds");
     StatsMgr::instance().setValue(name, static_cast<int64_t>(1));
 
+    ObservationPtr stat = StatsMgr::instance().getObservation(name);
+    ASSERT_TRUE(stat);
+    uint64_t before = stat->getInteger().first;
+
     // Let's create a RELEASE
     Pkt6Ptr rel = createMessage(DHCPV6_RELEASE, type, release_addr, prefix_len,
                                 iaid);
@@ -627,20 +637,158 @@ Dhcpv6SrvTest::testReleaseBasic(Lease::Type type, const IOAddress& existing,
     checkServerId(reply, srv.getServerID());
     checkClientId(reply, clientid);
 
-    // Check that the lease is really gone in the database
-    // get lease by address
-    l = LeaseMgrFactory::instance().getLease6(type, release_addr);
-    ASSERT_FALSE(l);
+    if (lease_affinity == LEASE_AFFINITY_DISABLED) {
+        // Check that the lease is really gone in the database
+        // get lease by address
+        l = LeaseMgrFactory::instance().getLease6(type, release_addr);
+        ASSERT_FALSE(l);
 
-    // get lease by subnetid/duid/iaid combination
+        // get lease by subnetid/duid/iaid combination
+        l = LeaseMgrFactory::instance().getLease6(type, *duid_, iaid,
+                                                  subnet_->getID());
+        ASSERT_FALSE(l);
+
+        // We should have decremented the address counter
+        stat = StatsMgr::instance().getObservation(name);
+        ASSERT_TRUE(stat);
+        EXPECT_EQ(0, stat->getInteger().first);
+    } else {
+        l = LeaseMgrFactory::instance().getLease6(type, release_addr);
+        ASSERT_TRUE(l);
+
+        EXPECT_EQ(l->valid_lft_, 0);
+        EXPECT_EQ(l->preferred_lft_, 0);
+
+        EXPECT_EQ(Lease6::STATE_RELEASED, l->state_);
+
+        // get lease by subnetid/duid/iaid combination
+        l = LeaseMgrFactory::instance().getLease6(type, *duid_, iaid,
+                                                  subnet_->getID());
+        ASSERT_TRUE(l);
+
+        EXPECT_EQ(l->valid_lft_, 0);
+        EXPECT_EQ(l->preferred_lft_, 0);
+        EXPECT_EQ(Lease::STATE_DEFAULT, lease->state_);
+
+        // We should have decremented the address counter
+        stat = StatsMgr::instance().getObservation(name);
+        ASSERT_TRUE(stat);
+        EXPECT_EQ(0, stat->getInteger().first);
+    }
+}
+
+void
+Dhcpv6SrvTest::testReleaseNoDelete(Lease::Type type, const IOAddress& addr,
+                                   uint8_t qtype) {
+    NakedDhcpv6Srv srv(0);
+
+    const uint32_t iaid = 234;
+
+    uint8_t prefix_len = (type == Lease::TYPE_NA ? 128 : pd_pool_->getLength());
+
+    // Generate client-id also duid_
+    OptionPtr clientid = generateClientId();
+
+    // Check that the address we are about to use is indeed in pool
+    ASSERT_TRUE(subnet_->inPool(type, addr));
+
+    // Let's prepopulate the database
+    Lease6Ptr lease(new Lease6(type, addr, duid_, iaid,
+                               501, 502, subnet_->getID(),
+                               HWAddrPtr(), prefix_len));
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Check that the lease is really in the database
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(type, addr);
+    ASSERT_TRUE(l);
+
+    // Let's create a RELEASE
+    Pkt6Ptr rel = createMessage(DHCPV6_RELEASE, type, addr, prefix_len, iaid);
+    rel->addOption(clientid);
+    rel->addOption(srv.getServerID());
+
+    // Pass it to the server and hope for a REPLY
+    Pkt6Ptr reply = srv.processRelease(rel);
+
+    // Check if we get response at all
+    checkResponse(reply, DHCPV6_REPLY, 1234);
+    checkMsgStatusCode(reply, STATUS_Success);
+
+    // Check DUIDs
+    checkServerId(reply, srv.getServerID());
+    checkClientId(reply, clientid);
+
+    // Check lease
     l = LeaseMgrFactory::instance().getLease6(type, *duid_, iaid,
                                               subnet_->getID());
-    ASSERT_FALSE(l);
+    ASSERT_TRUE(l);
+    EXPECT_EQ(l->valid_lft_, 0);
+    EXPECT_EQ(l->preferred_lft_, 0);
 
-    // We should have decremented the address counter
-    ObservationPtr stat = StatsMgr::instance().getObservation(name);
-    ASSERT_TRUE(stat);
-    EXPECT_EQ(0, stat->getInteger().first);
+    // Create query
+    Pkt6Ptr query;
+    if (qtype != DHCPV6_SOLICIT) {
+        query = createMessage(qtype, type, addr, prefix_len, iaid);
+        query->addOption(srv.getServerID());
+    } else {
+        query = createMessage(qtype, type, IOAddress::IPV6_ZERO_ADDRESS(),
+                              prefix_len, iaid);
+    }
+    query->addOption(clientid);
+
+    // Process query
+    switch (qtype) {
+    case DHCPV6_SOLICIT:
+        reply = srv.processSolicit(query);
+        break;
+    case DHCPV6_REQUEST:
+        reply = srv.processRequest(query);
+        break;
+    case DHCPV6_RENEW:
+        reply = srv.processRenew(query);
+        break;
+    case DHCPV6_REBIND:
+        reply = srv.processRebind(query);
+        break;
+    default:
+        reply.reset();
+        break;
+    }
+
+    // Check reply
+    if (qtype == DHCPV6_SOLICIT) {
+        checkResponse(reply, DHCPV6_ADVERTISE, 1234);
+    } else {
+        checkResponse(reply, DHCPV6_REPLY, 1234);
+    }
+    checkServerId(reply, srv.getServerID());
+    checkClientId(reply, clientid);
+    checkMsgStatusCode(reply, STATUS_Success);
+    if (type == Lease::TYPE_NA) {
+        Option6IAAddrPtr iaaddr = checkIA_NA(reply, iaid, subnet_->getT1(),
+                                             subnet_->getT2());
+        ASSERT_TRUE(iaaddr);
+        checkIAAddr(iaaddr, addr, type, subnet_->getPreferred(),
+                    subnet_->getValid());
+    } else {
+        Option6IAPrefixPtr iapref = checkIA_PD(reply, iaid, subnet_->getT1(),
+                                             subnet_->getT2());
+        ASSERT_TRUE(iapref);
+        checkIAAddr(iapref, addr, type, subnet_->getPreferred(),
+                    subnet_->getValid());
+    }
+
+    // Check lease
+    l = LeaseMgrFactory::instance().getLease6(type, *duid_, iaid,
+                                              subnet_->getID());
+    ASSERT_TRUE(l);
+    if (qtype == DHCPV6_SOLICIT) {
+        EXPECT_EQ(l->valid_lft_, 0);
+        EXPECT_EQ(l->preferred_lft_, 0);
+    } else {
+        EXPECT_EQ(l->valid_lft_, subnet_->getValid());
+        EXPECT_EQ(l->preferred_lft_, subnet_->getPreferred());
+    }
 }
 
 void
@@ -811,13 +959,35 @@ Dhcpv6SrvTest::testReceiveStats(uint8_t pkt_type, const std::string& stat_name) 
     EXPECT_EQ(1, tested_stat->getInteger().first);
 }
 
-void
-Dhcpv6SrvTest::configure(const std::string& config) {
-    configure(config, srv_);
+ConstElementPtr
+Dhcpv6SrvTest::configure(Dhcpv6Srv& server, ConstElementPtr config) {
+    ConstElementPtr const status(configureDhcp6Server(server, config));
+
+    // Simulate the application of MT config such as in ControlledDhcpvXSrv::processConfig().
+    CfgMultiThreading::apply(CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading());
+
+    return status;
 }
 
 void
-Dhcpv6SrvTest::configure(const std::string& config, NakedDhcpv6Srv& srv) {
+Dhcpv6SrvTest::configure(const std::string& config,
+                         const bool commit,
+                         const bool open_sockets,
+                         const bool create_managers,
+                         const bool test,
+                         const LeaseAffinity lease_affinity) {
+    configure(config, srv_, commit, open_sockets, create_managers, test,
+              lease_affinity);
+}
+
+void
+Dhcpv6SrvTest::configure(const std::string& config,
+                         NakedDhcpv6Srv& srv,
+                         const bool commit,
+                         const bool open_sockets,
+                         const bool create_managers,
+                         const bool test,
+                         const LeaseAffinity lease_affinity) {
     setenv("KEA_LFC_EXECUTABLE", KEA_LFC_EXECUTABLE, 1);
     MultiThreadingCriticalSection cs;
     ConstElementPtr json;
@@ -825,7 +995,9 @@ Dhcpv6SrvTest::configure(const std::string& config, NakedDhcpv6Srv& srv) {
         json = parseJSON(config);
     } catch (const std::exception& ex) {
         // Fatal failure on parsing error
-        FAIL() << "config parsing failed, test is broken: " << ex.what();
+        FAIL() << "parsing failure:"
+               << "config:" << config << std::endl
+               << "error: " << ex.what();
     }
 
     ConstElementPtr status;
@@ -837,12 +1009,34 @@ Dhcpv6SrvTest::configure(const std::string& config, NakedDhcpv6Srv& srv) {
     configureMultiThreading(multi_threading_, json);
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv, json));
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv, json, test));
     ASSERT_TRUE(status);
     int rcode;
     ConstElementPtr comment = isc::config::parseAnswer(rcode, status);
     ASSERT_EQ(0, rcode) << "configuration failed, test is broken: "
         << comment->str();
+
+    // Use specified lease database backend.
+    if (create_managers) {
+        ASSERT_NO_THROW( {
+            CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
+            cfg_db->setAppendedParameters("universe=6");
+            cfg_db->createManagers();
+        } );
+    }
+
+    if (lease_affinity == LEASE_AFFINITY_DISABLED) {
+        auto expiration_cfg = CfgMgr::instance().getStagingCfg()->getCfgExpiration();
+        expiration_cfg->setFlushReclaimedTimerWaitTime(0);
+        expiration_cfg->setHoldReclaimedTime(0);
+    }
+
+    try {
+        CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->initAllocatorsAfterConfigure();
+    } catch (const std::exception& ex) {
+        ADD_FAILURE() << "Error initializing the allocators after configure: "
+            << ex.what();
+    }
 
     try {
         CfgMultiThreading::apply(CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading());
@@ -851,11 +1045,18 @@ Dhcpv6SrvTest::configure(const std::string& config, NakedDhcpv6Srv& srv) {
             << ex.what();
     }
 
-    CfgMgr::instance().commit();
+    if (commit) {
+        CfgMgr::instance().commit();
+    }
+
+    // Opening sockets.
+    if (open_sockets) {
+        IfaceMgr::instance().openSockets6();
+    }
 }
 
 NakedDhcpv6SrvTest::NakedDhcpv6SrvTest()
-    : rcode_(-1) {
+    : rcode_(-1), start_time_(PktEvent::now()) {
     // it's ok if that fails. There should not be such a file anyway
     static_cast<void>(remove(DUID_FILE));
 
@@ -907,6 +1108,22 @@ NakedDhcpv6SrvTest::generateIA(uint16_t type, uint32_t iaid, uint32_t t1,
     return (ia);
 }
 
+void
+NakedDhcpv6SrvTest::checkPktEvents(const PktPtr& msg,
+                             std::list<std::string> expected_events) {
+    ASSERT_NE(start_time_, PktEvent::EMPTY_TIME());
+    auto events = msg->getPktEvents();
+    ASSERT_EQ(events.size(), expected_events.size());
+    ptime prev_time = start_time_;
+    auto expected_event = expected_events.begin();
+    for (const auto& event : events) {
+        ASSERT_EQ(event.label_, *expected_event);
+        EXPECT_GE(event.timestamp_, prev_time);
+        prev_time = event.timestamp_;
+        ++expected_event;
+    }
+}
+
 bool
 Dhcpv6SrvTest::compareOptions(const isc::dhcp::OptionPtr& option1,
                               const isc::dhcp::OptionPtr& option2) {
@@ -947,14 +1164,13 @@ NakedDhcpv6SrvTest::checkIA_NAStatusCode(
     // it will return it with zeroed lifetimes.
     if (check_addr) {
         dhcp::OptionCollection options = ia->getOptions();
-        for (isc::dhcp::OptionCollection::iterator opt = options.begin();
-             opt != options.end(); ++opt) {
-            if (opt->second->getType() != D6O_IAADDR) {
+        for (auto const& opt : options) {
+            if (opt.second->getType() != D6O_IAADDR) {
                 continue;
             }
 
             dhcp::Option6IAAddrPtr addr =
-                boost::dynamic_pointer_cast<isc::dhcp::Option6IAAddr>(opt->second);
+                boost::dynamic_pointer_cast<isc::dhcp::Option6IAAddr>(opt.second);
             ASSERT_TRUE(addr);
 
             EXPECT_EQ(0, addr->getPreferred());

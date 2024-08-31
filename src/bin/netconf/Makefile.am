@@ -4,8 +4,14 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
 AM_CPPFLAGS += -I$(top_srcdir)/src -I$(top_builddir)/src
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
+AM_CPPFLAGS += $(LIBYANG_CPPFLAGS)
+AM_CPPFLAGS += $(LIBYANG_INCLUDEDIR)
+AM_CPPFLAGS += $(LIBYANGCPP_CPPFLAGS)
+AM_CPPFLAGS += $(LIBYANGCPP_INCLUDEDIR)
 AM_CPPFLAGS += $(SYSREPO_CPPFLAGS)
 AM_CPPFLAGS += $(SYSREPO_INCLUDEDIR)
+AM_CPPFLAGS += $(SYSREPOCPP_CPPFLAGS)
+AM_CPPFLAGS += $(SYSREPOCPP_INCLUDEDIR)
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -48,7 +54,6 @@ sbin_PROGRAMS = kea-netconf
 kea_netconf_SOURCES  = main.cc
 
 kea_netconf_LDADD  = libnetconf.la
-kea_netconf_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 kea_netconf_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 kea_netconf_LDADD += $(top_builddir)/src/lib/yang/libkea-yang.la
 kea_netconf_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
@@ -59,8 +64,11 @@ kea_netconf_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 kea_netconf_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 kea_netconf_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 kea_netconf_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-kea_netconf_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS) $(SYSREPO_LIBS)
-
+kea_netconf_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
+kea_netconf_LDADD += $(LIBYANG_LIBS)
+kea_netconf_LDADD += $(LIBYANGCPP_LIBS)
+kea_netconf_LDADD += $(SYSREPO_LIBS)
+kea_netconf_LDADD += $(SYSREPOCPP_LIBS)
 
 kea_netconfdir = $(pkgdatadir)
 

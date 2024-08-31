@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <database/database_connection.h>
 #include <exceptions/exceptions.h>
 #include <mysql/mysql_connection.h>
 #include <mysql/testutils/mysql_schema.h>
@@ -19,6 +20,8 @@
 
 using namespace isc::db;
 using namespace isc::db::test;
+
+using namespace std;
 
 namespace {
 
@@ -74,6 +77,8 @@ public:
     /// types.
     MySqlConnectionTest(bool const primary_key = false)
         : conn_(DatabaseConnection::parse(validMySQLConnectionString())) {
+
+        MySqlConnection::KEA_ADMIN_ = KEA_ADMIN;
 
         try {
             // Open new connection.
@@ -173,7 +178,6 @@ public:
         mysql_stmt_close(stmt);
     }
 
-
     /// @brief Tests inserting and retrieving data from the database.
     ///
     /// In this test data carried in the bindings is inserted into the database.
@@ -210,45 +214,45 @@ public:
         // returned row the lambda provided as 4th argument should be executed.
         ASSERT_NO_THROW_LOG(conn_.selectQuery(MySqlConnectionTest::GET_BY_INT_VALUE,
                                               bindings, out_bindings,
-                                              [&](MySqlBindingCollection& out_bindings) {
+                                              [&](MySqlBindingCollection& captured_out_bindings) {
 
             // Compare received data with input data assuming they are both non-null.
 
-            if (!out_bindings[0]->amNull() && !in_bindings[0]->amNull()) {
+            if (!captured_out_bindings[0]->amNull() && !in_bindings[0]->amNull()) {
                 EXPECT_EQ(static_cast<int>(in_bindings[0]->getInteger<uint8_t>()),
-                          static_cast<int>(out_bindings[0]->getInteger<uint8_t>()));
+                          static_cast<int>(captured_out_bindings[0]->getInteger<uint8_t>()));
             }
 
-            if (!out_bindings[1]->amNull() && !in_bindings[1]->amNull()) {
+            if (!captured_out_bindings[1]->amNull() && !in_bindings[1]->amNull()) {
                 EXPECT_EQ(in_bindings[1]->getInteger<uint32_t>(),
-                          out_bindings[1]->getInteger<uint32_t>());
+                          captured_out_bindings[1]->getInteger<uint32_t>());
             }
 
-            if (!out_bindings[2]->amNull() && !in_bindings[2]->amNull()) {
+            if (!captured_out_bindings[2]->amNull() && !in_bindings[2]->amNull()) {
                 EXPECT_EQ(in_bindings[2]->getInteger<int64_t>(),
-                          out_bindings[2]->getInteger<int64_t>());
+                          captured_out_bindings[2]->getInteger<int64_t>());
             }
 
-            if (!out_bindings[3]->amNull() && !in_bindings[3]->amNull()) {
+            if (!captured_out_bindings[3]->amNull() && !in_bindings[3]->amNull()) {
                 EXPECT_EQ(in_bindings[3]->getString(),
-                          out_bindings[3]->getString());
+                          captured_out_bindings[3]->getString());
             }
 
-            if (!out_bindings[4]->amNull() && !in_bindings[4]->amNull()) {
+            if (!captured_out_bindings[4]->amNull() && !in_bindings[4]->amNull()) {
                 EXPECT_EQ(in_bindings[4]->getBlob(),
-                          out_bindings[4]->getBlob());
+                          captured_out_bindings[4]->getBlob());
             }
 
-            if (!out_bindings[5]->amNull() && !in_bindings[5]->amNull()) {
+            if (!captured_out_bindings[5]->amNull() && !in_bindings[5]->amNull()) {
                 EXPECT_TRUE(in_bindings[5]->getTimestamp() ==
-                            out_bindings[5]->getTimestamp());
+                            captured_out_bindings[5]->getTimestamp());
             }
         }));
 
         // Make sure that null values were returned for columns for which null
         // was set.
         ASSERT_EQ(in_bindings.size(), out_bindings.size());
-        for (auto i = 0; i < in_bindings.size(); ++i) {
+        for (size_t i = 0; i < in_bindings.size(); ++i) {
             EXPECT_EQ(in_bindings[i]->amNull(), out_bindings[i]->amNull())
                 << "null value test failed for binding #" << i;
         }
@@ -605,8 +609,158 @@ TEST_F(MySqlConnectionTest, transactions) {
     EXPECT_EQ("4", result[0][0]);
 
     // Committing or rolling back a not started transaction is a coding error.
-    EXPECT_THROW(conn_.commit(), isc::Unexpected);
-    EXPECT_THROW(conn_.rollback(), isc::Unexpected);
+    EXPECT_THROW_MSG(conn_.commit(), isc::Unexpected,
+                     "commit called for not started transaction - coding error");
+    EXPECT_THROW_MSG(conn_.rollback(), isc::Unexpected,
+                     "rollback called for not started transaction - coding error");
+}
+
+// Tests that invalid port value causes an error.
+TEST_F(MySqlConnectionTest, portInvalid) {
+    std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_HOST_TCP, VALID_USER,
+                                            VALID_PASSWORD, INVALID_PORT_1);
+    MySqlConnection conn(DatabaseConnection::parse(conn_str));
+    EXPECT_THROW_MSG(conn.openDatabase(), DbInvalidPort,
+                     "port parameter (65536) must be an integer between 0 and 65535");
+}
+
+// Tests that invalid timeout value type causes an error.
+TEST_F(MySqlConnectionTest, connectionTimeoutInvalid) {
+    std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_HOST_TCP, VALID_USER,
+                                            VALID_PASSWORD, INVALID_TIMEOUT_1);
+    MySqlConnection conn(DatabaseConnection::parse(conn_str));
+    EXPECT_THROW_MSG(conn.openDatabase(), DbInvalidTimeout,
+                     "connect-timeout parameter (foo) must be an integer between 1 and 2147483647");
+}
+
+// Tests that a negative connection timeout value causes an error.
+TEST_F(MySqlConnectionTest, connectionTimeoutInvalid2) {
+    std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_HOST_TCP, VALID_USER,
+                                            VALID_PASSWORD, INVALID_TIMEOUT_2);
+    MySqlConnection conn(DatabaseConnection::parse(conn_str));
+    EXPECT_THROW_MSG(conn.openDatabase(), DbInvalidTimeout,
+                     "connect-timeout parameter (-17) must be an integer between 1 and 2147483647");
+}
+
+// Tests that a zero connection timeout value causes an error.
+TEST_F(MySqlConnectionTest, connectionTimeoutInvalid3) {
+    std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_HOST_TCP, VALID_USER,
+                                            VALID_PASSWORD, INVALID_TIMEOUT_3);
+    MySqlConnection conn(DatabaseConnection::parse(conn_str));
+    EXPECT_THROW_MSG(conn.openDatabase(), DbInvalidTimeout,
+                     "connect-timeout parameter (0) must be an integer between 1 and 2147483647");
+}
+
+// Tests that an invalid read timeout causes an error.
+TEST_F(MySqlConnectionTest, readTimeoutInvalid) {
+    std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_HOST_TCP, VALID_USER,
+                                            VALID_PASSWORD, INVALID_READ_TIMEOUT_1);
+    MySqlConnection conn(DatabaseConnection::parse(conn_str));
+    EXPECT_THROW_MSG(conn.openDatabase(), DbInvalidTimeout,
+                     "read-timeout parameter (bar) must be an integer between 0 and 2147483647");
+}
+
+// Tests that an invalid write timeout causes an error.
+TEST_F(MySqlConnectionTest, writeTimeoutInvalid) {
+    std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_HOST_TCP, VALID_USER,
+                                            VALID_PASSWORD, INVALID_WRITE_TIMEOUT_1);
+    MySqlConnection conn(DatabaseConnection::parse(conn_str));
+    EXPECT_THROW_MSG(conn.openDatabase(), DbInvalidTimeout,
+                     "write-timeout parameter (baz) must be an integer between 0 and 2147483647");
+}
+
+#ifdef HAVE_MYSQL_GET_OPTION
+
+// Tests that valid connection timeout is accepted.
+TEST_F(MySqlConnectionTest, connectionTimeout) {
+    std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_HOST_TCP, VALID_USER,
+                                            VALID_PASSWORD, VALID_TIMEOUT);
+    MySqlConnection conn(DatabaseConnection::parse(conn_str));
+    ASSERT_NO_THROW_LOG(conn.openDatabase());
+
+    auto mysql = static_cast<MYSQL*>(conn.mysql_);
+    ASSERT_TRUE(mysql);
+    unsigned int timeout = 123;
+    EXPECT_EQ(0, mysql_get_option(mysql, MYSQL_OPT_CONNECT_TIMEOUT, &timeout));
+    EXPECT_EQ(10, timeout);
+}
+
+// Tests that a valid read timeout is accepted.
+TEST_F(MySqlConnectionTest, readTimeout) {
+    std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_HOST_TCP, VALID_USER,
+                                            VALID_PASSWORD, VALID_READ_TIMEOUT);
+    MySqlConnection conn(DatabaseConnection::parse(conn_str));
+    ASSERT_NO_THROW_LOG(conn.openDatabase());
+
+    auto mysql = static_cast<MYSQL*>(conn.mysql_);
+    ASSERT_TRUE(mysql);
+    unsigned int timeout = 123;
+    EXPECT_EQ(0, mysql_get_option(mysql, MYSQL_OPT_READ_TIMEOUT, &timeout));
+    EXPECT_EQ(11, timeout);
+}
+
+// Tests that a zero read timeout is accepted.
+TEST_F(MySqlConnectionTest, readTimeoutZero) {
+    std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_HOST_TCP, VALID_USER,
+                                            VALID_PASSWORD, VALID_READ_TIMEOUT_ZERO);
+    MySqlConnection conn(DatabaseConnection::parse(conn_str));
+    ASSERT_NO_THROW_LOG(conn.openDatabase());
+
+    auto mysql = static_cast<MYSQL*>(conn.mysql_);
+    ASSERT_TRUE(mysql);
+    unsigned int timeout = 123;
+    EXPECT_EQ(0, mysql_get_option(mysql, MYSQL_OPT_READ_TIMEOUT, &timeout));
+    EXPECT_EQ(0, timeout);
+}
+
+// Tests that a valid write timeout is accepted.
+TEST_F(MySqlConnectionTest, writeTimeout) {
+    std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_HOST_TCP, VALID_USER,
+                                            VALID_PASSWORD, VALID_WRITE_TIMEOUT);
+    MySqlConnection conn(DatabaseConnection::parse(conn_str));
+    ASSERT_NO_THROW_LOG(conn.openDatabase());
+
+    auto mysql = static_cast<MYSQL*>(conn.mysql_);
+    ASSERT_TRUE(mysql);
+    unsigned int timeout = 123;
+    EXPECT_EQ(0, mysql_get_option(mysql, MYSQL_OPT_WRITE_TIMEOUT, &timeout));
+    EXPECT_EQ(12, timeout);
+}
+
+// Tests that a zero write timeout is accepted.
+TEST_F(MySqlConnectionTest, writeTimeoutZero) {
+    std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_HOST_TCP, VALID_USER,
+                                            VALID_PASSWORD, VALID_WRITE_TIMEOUT_ZERO);
+    MySqlConnection conn(DatabaseConnection::parse(conn_str));
+    ASSERT_NO_THROW_LOG(conn.openDatabase());
+
+    auto mysql = static_cast<MYSQL*>(conn.mysql_);
+    ASSERT_TRUE(mysql);
+    unsigned int timeout = 123;
+    EXPECT_EQ(0, mysql_get_option(mysql, MYSQL_OPT_WRITE_TIMEOUT, &timeout));
+    EXPECT_EQ(0, timeout);
+}
+
+#endif  // HAVE_MYSQL_GET_OPTION
+
+// Tests that the statement can be accessed by index.
+TEST_F(MySqlConnectionTest, getStatement) {
+    auto statement0 = conn_.getStatement(0);
+    ASSERT_TRUE(statement0);
+    auto statement1 = conn_.getStatement(1);
+    ASSERT_TRUE(statement1);
+    EXPECT_NE(statement0, statement1);
 }
 
 TEST_F(MySqlConnectionWithPrimaryKeyTest, select) {
@@ -706,11 +860,7 @@ TEST_F(MySqlSecureConnectionTest, Tcp) {
 
 /// @brief Check the SSL/TLS protected connection.
 TEST_F(MySqlSecureConnectionTest, Tls) {
-    if (!hasMySQLTls()) {
-        std::cout << "SSL/TLS support is not available or configured: "
-                  << "skipping this test\n";
-        return;
-    }
+    SKIP_IF(!hasMySQLTls());
     std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
                                             VALID_HOST_TCP, VALID_SECURE_USER,
                                             VALID_PASSWORD, 0, 0,
@@ -726,64 +876,226 @@ TEST_F(MySqlSecureConnectionTest, Tls) {
 
 /// @brief Check the SSL/TLS protected connection still requires the password.
 TEST_F(MySqlSecureConnectionTest, TlsInvalidPassword) {
-    if (!hasMySQLTls()) {
-        std::cout << "SSL/TLS support is not available or configured: "
-                  << "skipping this test\n";
-        return;
-    }
+    SKIP_IF(!hasMySQLTls());
     std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
                                             VALID_HOST_TCP, VALID_SECURE_USER,
                                             INVALID_PASSWORD, 0, 0,
                                             VALID_CERT, VALID_KEY, VALID_CA,
                                             VALID_CIPHER);
     MySqlConnection conn(DatabaseConnection::parse(conn_str));
-    EXPECT_THROW(conn.openDatabase(), DbOpenError);
+
+    try {
+        conn.openDatabase();
+    } catch (DbOpenError const& exception) {
+        string const message(exception.what());
+        vector<string> const expected{
+            "TLS/SSL error: No or insufficient priorities were set.",  // OpenSSL 1.1.1n
+            "Access denied for user 'keatest_secure'",
+        };
+        for (string const& i : expected) {
+            if (message.find(i) != string::npos) {
+                return;
+            }
+        }
+        ADD_FAILURE() << "Unexpected exception message '" << message << "'";
+    } catch (exception const& exception) {
+        ADD_FAILURE() << exception.what();
+    }
 }
 
 /// @brief Check the SSL/TLS protected connection requires crypto parameters.
 TEST_F(MySqlSecureConnectionTest, TlsNoCrypto) {
-    if (!hasMySQLTls()) {
-        std::cout << "SSL/TLS support is not available or configured: "
-                  << "skipping this test\n";
-        return;
-    }
+    SKIP_IF(!hasMySQLTls());
     std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
                                             VALID_HOST_TCP, VALID_SECURE_USER,
                                             VALID_PASSWORD);
     MySqlConnection conn(DatabaseConnection::parse(conn_str));
-    EXPECT_THROW(conn.openDatabase(), DbOpenError);
+
+    try {
+        conn.openDatabase();
+    } catch (DbOpenError const& exception) {
+        string const message(exception.what());
+        string const expected("Access denied for user 'keatest_secure'");
+        if (message.find(expected) == string::npos) {
+            ADD_FAILURE()
+                << "Expected exception message '" << expected << ".*', got '" << message << "'";
+        }
+    } catch (exception const& exception) {
+        ADD_FAILURE() << exception.what();
+    }
 }
 
 /// @brief Check the SSL/TLS protected connection requires valid key.
 TEST_F(MySqlSecureConnectionTest, TlsInvalidKey) {
-    if (!hasMySQLTls()) {
-        std::cout << "SSL/TLS support is not available or configured: "
-                  << "skipping this test\n";
-        return;
-    }
+    SKIP_IF(!hasMySQLTls());
     std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
                                             VALID_HOST_TCP, VALID_SECURE_USER,
                                             VALID_PASSWORD, 0, 0,
                                             VALID_CERT, INVALID_KEY, VALID_CA,
                                             VALID_CIPHER);
     MySqlConnection conn(DatabaseConnection::parse(conn_str));
-    EXPECT_THROW(conn.openDatabase(), DbOpenError);
+
+    try {
+        conn.openDatabase();
+    } catch (DbOpenError const& exception) {
+        string const message(exception.what());
+        vector<string> const expected{
+            "TLS/SSL error: The certificate and the given key do not match.",  // OpenSSL 1.1.1n
+            "SSL connection error: Unable to get private key",  // OpenSSL 3.0.2
+            "TLS/SSL error: key values mismatch",  // OpenSSL 3.3.0
+        };
+        if (!std::count(expected.begin(), expected.end(), message)) {
+            ADD_FAILURE() << "Unexpected exception message '" << message << "'";
+        }
+    } catch (exception const& exception) {
+        ADD_FAILURE() << exception.what();
+    }
 }
 
 /// @brief Check the SSL/TLS protected connection requires a key.
 TEST_F(MySqlSecureConnectionTest, TlsNoKey) {
-    if (!hasMySQLTls()) {
-        std::cout << "SSL/TLS support is not available or configured: "
-                  << "skipping this test\n";
-        return;
-    }
+    SKIP_IF(!hasMySQLTls());
     std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
                                             VALID_HOST_TCP, VALID_SECURE_USER,
                                             VALID_PASSWORD, 0, 0,
                                             VALID_CERT, 0, VALID_CA,
                                             VALID_CIPHER);
     MySqlConnection conn(DatabaseConnection::parse(conn_str));
-    EXPECT_THROW(conn.openDatabase(), DbOpenError);
+
+    try {
+        conn.openDatabase();
+    } catch (DbOpenError const& exception) {
+        string const message(exception.what());
+        vector<string> const expected{
+            "TLS/SSL error: The requested data were not available.",  // OpenSSL 1.1.1n
+            "TLS/SSL error: no start line",  // OpenSSL 1.1.1w
+            "SSL connection error: Unable to get private key",  // OpenSSL 3.0.2
+            "TLS/SSL error: no certificate assigned",  // OpenSSL 3.0.9
+            "TLS/SSL error: unsupported",  // OpenSSL 3.3.0
+        };
+        if (!std::count(expected.begin(), expected.end(), message)) {
+            ADD_FAILURE() << "Unexpected exception message '" << message << "'";
+        }
+    } catch (exception const& exception) {
+        ADD_FAILURE() << exception.what();
+    }
+}
+
+/// @brief Check ensureSchemaVersion when schema is not created.
+TEST_F(MySqlConnectionTest, ensureSchemaVersionNoSchema) {
+    std::pair<uint32_t, uint32_t> version;
+    auto const parameters(DatabaseConnection::parse(validMySQLConnectionString()));
+
+    // Make sure schema is not created.
+    destroyMySQLSchema(/* show_err = */ false, /* force = */ true);
+    dropTestTable();
+    EXPECT_THROW_MSG(version = MySqlConnection::getVersion(parameters), DbOperationError,
+                     "unable to prepare MySQL statement <SELECT version, minor FROM "
+                     "schema_version>, reason: Table 'keatest.schema_version' doesn't exist");
+
+    EXPECT_NO_THROW_LOG(MySqlConnection::ensureSchemaVersion(parameters));
+
+    EXPECT_NO_THROW_LOG(version = MySqlConnection::getVersion(parameters));
+    EXPECT_EQ(MYSQL_SCHEMA_VERSION_MAJOR, version.first);
+    EXPECT_EQ(MYSQL_SCHEMA_VERSION_MINOR, version.second);
+}
+
+/// @brief Check ensureSchemaVersion when schema is created.
+TEST_F(MySqlConnectionTest, ensureSchemaVersion) {
+    std::pair<uint32_t, uint32_t> version;
+    auto const parameters(DatabaseConnection::parse(validMySQLConnectionString()));
+
+    // Make sure schema is created.
+    EXPECT_NO_THROW_LOG(version = MySqlConnection::getVersion(parameters));
+    EXPECT_EQ(MYSQL_SCHEMA_VERSION_MAJOR, version.first);
+    EXPECT_EQ(MYSQL_SCHEMA_VERSION_MINOR, version.second);
+
+    EXPECT_NO_THROW_LOG(MySqlConnection::ensureSchemaVersion(parameters));
+
+    EXPECT_NO_THROW_LOG(version = MySqlConnection::getVersion(parameters));
+    EXPECT_EQ(MYSQL_SCHEMA_VERSION_MAJOR, version.first);
+    EXPECT_EQ(MYSQL_SCHEMA_VERSION_MINOR, version.second);
+}
+
+/// @brief Check initializeSchema when schema is not created.
+TEST_F(MySqlConnectionTest, initializeSchemaNoSchema) {
+    pair<uint32_t, uint32_t> version;
+    auto const parameters(DatabaseConnection::parse(validMySQLConnectionString()));
+
+    // Make sure schema is not created.
+    destroyMySQLSchema(/* show_err = */ false, /* force = */ true);
+    dropTestTable();
+    EXPECT_THROW_MSG(version = MySqlConnection::getVersion(parameters), DbOperationError,
+                     "unable to prepare MySQL statement <SELECT version, minor FROM "
+                     "schema_version>, reason: Table 'keatest.schema_version' doesn't exist");
+
+    EXPECT_NO_THROW_LOG(MySqlConnection::initializeSchema(parameters));
+
+    EXPECT_NO_THROW_LOG(version = MySqlConnection::getVersion(parameters));
+    EXPECT_EQ(MYSQL_SCHEMA_VERSION_MAJOR, version.first);
+    EXPECT_EQ(MYSQL_SCHEMA_VERSION_MINOR, version.second);
+}
+
+/// @brief Check initializeSchema when schema is created.
+TEST_F(MySqlConnectionTest, initializeSchema) {
+    pair<uint32_t, uint32_t> version;
+    auto const parameters(DatabaseConnection::parse(validMySQLConnectionString()));
+
+    // Make sure schema is created.
+    EXPECT_NO_THROW_LOG(version = MySqlConnection::getVersion(parameters));
+    EXPECT_EQ(MYSQL_SCHEMA_VERSION_MAJOR, version.first);
+    EXPECT_EQ(MYSQL_SCHEMA_VERSION_MINOR, version.second);
+
+    EXPECT_THROW_MSG(MySqlConnection::initializeSchema(parameters), SchemaInitializationFailed,
+                     "Expected exit code 0 for kea-admin. Got 1");
+
+    EXPECT_NO_THROW_LOG(version = MySqlConnection::getVersion(parameters));
+    EXPECT_EQ(MYSQL_SCHEMA_VERSION_MAJOR, version.first);
+    EXPECT_EQ(MYSQL_SCHEMA_VERSION_MINOR, version.second);
+}
+
+/// @brief Check toKeaAdminParameters.
+TEST_F(MySqlConnectionTest, toKeaAdminParameters) {
+    auto parameters(DatabaseConnection::parse(validMySQLConnectionString()));
+    vector<string> kea_admin_parameters(MySqlConnection::toKeaAdminParameters(parameters));
+    EXPECT_EQ(kea_admin_parameters,
+              vector<string>({"mysql", "--host", "localhost", "--name", "keatest", "--password",
+                              "keatest", "--user", "keatest"}));
+
+    string const full_mysql_connection_string(
+        connectionString(MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST_TCP, VALID_SECURE_USER,
+                         VALID_PASSWORD, VALID_TIMEOUT, VALID_READONLY_DB, VALID_CERT, VALID_KEY,
+                         VALID_CA, VALID_CIPHER));
+    parameters = DatabaseConnection::parse(full_mysql_connection_string);
+    kea_admin_parameters = MySqlConnection::toKeaAdminParameters(parameters);
+    EXPECT_EQ(kea_admin_parameters,
+              vector<string>({"mysql", "--extra", "--ssl-cert " TEST_CA_DIR "/kea-client.crt",
+                              "--extra", "--ssl-cipher AES", "--extra", "--connect_timeout 10",
+                              "--host", "127.0.0.1", "--extra",
+                              "--ssl-key " TEST_CA_DIR "/kea-client.key", "--name", "keatest",
+                              "--password", "keatest", "--extra",
+                              "--ssl-ca " TEST_CA_DIR "/kea-ca.crt", "--user", "keatest_secure"}));
+}
+
+/// @brief Checks that the mysql_options call does not crash when passed a null option value.
+///
+/// An unconventional test, but the MySQL docs are not clear:
+/// > Any unused SSL arguments may be given as NULL.
+/// > Because of that equivalence, applications can, instead of calling mysql_ssl_set(), call
+///   mysql_options() directly, omitting calls for those options for which the option value is NULL.
+TEST_F(MySqlConnectionTest, mysqlOptions) {
+    MySqlHolder mysql;
+    int result;
+    EXPECT_NO_THROW_LOG(result = mysql_options(mysql, MYSQL_OPT_SSL_KEY, nullptr));
+    EXPECT_EQ(0, result);
+    EXPECT_NO_THROW_LOG(result = mysql_options(mysql, MYSQL_OPT_SSL_CERT, nullptr));
+    EXPECT_EQ(0, result);
+    EXPECT_NO_THROW_LOG(result = mysql_options(mysql, MYSQL_OPT_SSL_CA, nullptr));
+    EXPECT_EQ(0, result);
+    EXPECT_NO_THROW_LOG(result = mysql_options(mysql, MYSQL_OPT_SSL_CAPATH, nullptr));
+    EXPECT_EQ(0, result);
+    EXPECT_NO_THROW_LOG(result = mysql_options(mysql, MYSQL_OPT_SSL_CIPHER, nullptr));
+    EXPECT_EQ(0, result);
 }
 
 }  // namespace

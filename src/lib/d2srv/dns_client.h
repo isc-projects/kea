@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -96,6 +96,9 @@ public:
     /// @brief Virtual destructor, does nothing.
     ~DNSClient();
 
+    /// @brief Stop the client.
+    void stop();
+
     ///
     /// @name Copy constructor and assignment operator
     ///
@@ -139,7 +142,7 @@ public:
     /// @param tsig_key A pointer to an @c D2TsigKeyPtr object that will
     /// (if not null) be used to sign the DNS Update message and verify the
     /// response.
-    void doUpdate(asiolink::IOService& io_service,
+    void doUpdate(const asiolink::IOServicePtr& io_service,
                   const asiolink::IOAddress& ns_addr,
                   const uint16_t ns_port,
                   D2UpdateMessage& update,

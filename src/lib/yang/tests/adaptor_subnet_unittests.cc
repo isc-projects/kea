@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,10 +6,11 @@
 
 #include <config.h>
 
+#include <gtest/gtest.h>
+
+#include <dhcpsrv/subnet_id.h>
 #include <testutils/gtest_utils.h>
 #include <yang/adaptor_subnet.h>
-
-#include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;
@@ -172,42 +173,4 @@ TEST(AdaptorSubnetTest, updateRelayEmptyAddresses) {
     EXPECT_FALSE(json->get("relay"));
 }
 
-// Verifies how updateRelay handles a subnet entry with relay which
-// has addresses: no change.
-TEST(AdaptorSubnetTest, updateRelayAddresses) {
-    string config = "{\n"
-        " \"subnet\": \"192.0.2.0/24\",\n"
-        " \"relay\": {\n"
-        "     \"ip-addresses\": [ \"192.168.1.1\" ]\n"
-        " }\n"
-        "}";
-    ElementPtr json;
-    ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
-    ConstElementPtr copied = copy(json);
-    ASSERT_NO_THROW_LOG(AdaptorSubnet::updateRelay(json));
-    EXPECT_TRUE(copied->equals(*json));
-}
-
-// Verifies how updateRelay handles a subnet entry with relay which
-// has only address: the address is moved to a new list.
-TEST(AdaptorSubnetTest, updateRelayAddress) {
-    string config = "{\n"
-        " \"subnet\": \"192.0.2.0/24\",\n"
-        " \"relay\": {\n"
-        "     \"ip-address\": \"192.168.1.1\"\n"
-        " }\n"
-        "}";
-    ElementPtr json;
-    ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
-    ConstElementPtr copied = copy(json);
-    ASSERT_NO_THROW_LOG(AdaptorSubnet::updateRelay(json));
-    EXPECT_FALSE(copied->equals(*json));
-    ConstElementPtr relay = json->get("relay");
-    ASSERT_TRUE(relay);
-    string expected = "{ \"ip-addresses\": [ \"192.168.1.1\" ] }";
-    EXPECT_EQ(expected, relay->str());
-}
-
-// It does not make sense to have both ip-address and ip-addresses...
-
-}; // end of anonymous namespace
+}  // anonymous namespace

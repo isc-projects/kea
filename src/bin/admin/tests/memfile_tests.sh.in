@@ -1,22 +1,17 @@
 #!/bin/sh
 
-# Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-# shellcheck disable=SC1091
-# SC1091: Not following: ... was not specified as input (see shellcheck -x).
-
-# shellcheck disable=SC2039
-# SC2039: In POSIX sh, 'local' is undefined.
 
 # Exit with error if commands exit with non-zero and if undefined variables are
 # used.
 set -eu
 
 # Include common test library.
+# shellcheck source=src/lib/testutils/dhcp_test_lib.sh.in
 . "@abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh"
 
 # Locations of memfile tools
@@ -57,21 +52,21 @@ incomplete_memfile_header_v6() {
 
 # Print the entire header for v4.
 memfile_header_v4() {
-    printf '%s,state,user_context' "$(incomplete_memfile_header_v4)"
+    printf '%s,state,user_context,pool_id' "$(incomplete_memfile_header_v4)"
 }
 
 # Print the entire header for v6.
 memfile_header_v6() {
-    printf '%s,hwaddr,state,user_context,hwtype,hwaddr_source' "$(incomplete_memfile_header_v6)"
+    printf '%s,hwaddr,state,user_context,hwtype,hwaddr_source,pool_id' "$(incomplete_memfile_header_v6)"
 }
 
 # Print data copied from mysql_upgrade_12_to_13_test and pgsql_upgrade_7_0_to_8_0.
 # @{
 memfile_data_v4() {
-    printf '0.0.0.10,32:30,33:30,40,1678900000,50,1,1,one&#x2cexample&#x2ccom,0,{"a":1&#x2c"b":2}'
+    printf '0.0.0.10,32:30,33:30,40,1678900000,50,1,1,one&#x2cexample&#x2ccom,0,{"a":1&#x2c"b":2},0'
 }
 memfile_data_v6() {
-    printf '::10,32:30,30,1678900000,40,50,1,60,70,1,1,one&#x2cexample&#x2ccom,38:30,0,{"a":1&#x2c"b":2},90,16'
+    printf '::10,32:30:33,30,1678900000,40,50,1,60,70,1,1,one&#x2cexample&#x2ccom,38:30,0,{"a":1&#x2c"b":2},90,16,0'
 }
 # @}
 
@@ -121,7 +116,7 @@ memfile_init_test() {
       {
         "debuglevel": 99,
         "name": "kea-dhcpx",
-        "output_options": [
+        "output-options": [
           {
             "output": "@abs_top_builddir@/src/bin/admin/tests/kea.log"
           }

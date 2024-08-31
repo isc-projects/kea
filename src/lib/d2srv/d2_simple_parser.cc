@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,13 +6,14 @@
 
 #include <config.h>
 
+#include <asiolink/io_service_mgr.h>
 #include <d2srv/d2_config.h>
 #include <d2srv/d2_simple_parser.h>
 #include <cc/data.h>
 #include <hooks/hooks_manager.h>
 #include <hooks/hooks_parser.h>
-#include <boost/foreach.hpp>
 
+using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::d2;
 using namespace isc;
@@ -82,7 +83,7 @@ namespace d2 {
 const SimpleDefaults D2SimpleParser::D2_GLOBAL_DEFAULTS = {
     { "ip-address",         Element::string, "127.0.0.1" },
     { "port",               Element::integer, "53001" },
-    { "dns-server-timeout", Element::integer, "100" }, // in milliseconds
+    { "dns-server-timeout", Element::integer, "500" }, // in milliseconds
     { "ncr-protocol",       Element::string, "UDP" },
     { "ncr-format",         Element::string, "JSON" }
 };
@@ -185,7 +186,7 @@ D2SimpleParser::setManagerDefaults(ElementPtr global,
         // manager is disabled.
         if (mgr->find("ddns-domains")) {
             ConstElementPtr domains = mgr->get("ddns-domains");
-            BOOST_FOREACH(ElementPtr domain, domains->listValue()) {
+            for (auto const& domain : domains->listValue()) {
                 // Set the domain's defaults.  We can't use setListDefaults()
                 // as this does not handle sub-lists or maps, like server list.
                 cnt += setDdnsDomainDefaults(domain, DDNS_DOMAIN_DEFAULTS);
@@ -237,16 +238,7 @@ void D2SimpleParser::parse(const D2CfgContextPtr& ctx,
     dhcp_ddns::NameChangeFormat ncr_format = dhcp_ddns::FMT_JSON;
 
     ip_address = SimpleParser::getAddress(config, "ip-address");
-
-    if ((ip_address.toText() == "0.0.0.0") ||
-        (ip_address.toText() == "::")) {
-        isc_throw(D2CfgError, "IP address cannot be \""
-                  << ip_address << "\""
-                  << " (" << config->get("ip-address")->getPosition() << ")");
-    }
-
     port = SimpleParser::getUint32(config, "port");
-
     dns_server_timeout = SimpleParser::getUint32(config, "dns-server-timeout");
 
     ncr_protocol = getProtocol(config, "ncr-protocol");
@@ -270,13 +262,63 @@ void D2SimpleParser::parse(const D2CfgContextPtr& ctx,
         ctx->setContext(user);
     }
 
-    ConstElementPtr socket = config->get("control-socket");
-    if (socket) {
-        if (socket->getType() != Element::map) {
-            isc_throw(D2CfgError, "Specified control-socket is expected to be a map"
-                      ", i.e. a structure defined within { }");
+    // Get control sockets.
+    ConstElementPtr control_sockets = config->get("control-sockets");
+    ConstElementPtr control_socket = config->get("control-socket");
+    if (control_socket) {
+        ElementPtr l = Element::createList();
+        l->add(UserContext::toElement(control_socket));
+        control_sockets = l;
+    }
+    if (control_sockets) {
+        if (control_sockets->getType() != Element::list) {
+            // Sanity check: not supposed to fail.
+            isc_throw(D2CfgError,
+                      "Specified control-sockets is expected to be a list");
         }
-        ctx->setControlSocketInfo(socket);
+        bool seen_unix(false);
+        bool seen_http(false);
+        for (ConstElementPtr socket : control_sockets->listValue()) {
+            if (socket->getType() != Element::map) {
+                // Sanity check: not supposed to fail.
+                isc_throw(D2CfgError,
+                          "Specified control-sockets is expected to be a list of maps");
+            }
+            ConstElementPtr socket_type = socket->get("socket-type");
+            if (!socket_type) {
+                isc_throw(D2CfgError,
+                          "'socket-type' parameter is mandatory in control-sockets items");
+            }
+            if (socket_type->getType() != Element::string) {
+                // Sanity check: not supposed to fail.
+                isc_throw(D2CfgError,
+                          "'socket-type' parameter is expected to be a string");
+            }
+            std::string type = socket_type->stringValue();
+            if (type == "unix") {
+                if (seen_unix) {
+                    isc_throw(D2CfgError,
+                              "control socket of type 'unix' already configured");
+                }
+                seen_unix = true;
+                ctx->setControlSocketInfo(socket);
+            } else if ((type == "http") || (type == "https")) {
+                if (seen_http) {
+                    isc_throw(D2CfgError,
+                              "control socket of type 'http' or 'https'"
+                              " already configured");
+                }
+                seen_http = true;
+                using namespace isc::config;
+                HttpCommandConfigPtr http_config(new HttpCommandConfig(socket));
+                ctx->setHttpControlSocketInfo(http_config);
+            } else {
+                // Sanity check: not supposed to fail.
+                isc_throw(D2CfgError,
+                          "unsupported 'socket-type': '" << type
+                          << "' not 'unix', 'http' or 'https'");
+            }
+        }
     }
 
     // Finally, let's get the hook libs!
@@ -286,7 +328,7 @@ void D2SimpleParser::parse(const D2CfgContextPtr& ctx,
     if (hooks) {
         HooksLibrariesParser hooks_parser;
         hooks_parser.parse(libraries, hooks);
-        libraries.verifyLibraries(hooks->getPosition());
+        libraries.verifyLibraries(hooks->getPosition(), false);
     }
 
     // Attempt to create the new client config. This ought to fly as
@@ -302,7 +344,8 @@ void D2SimpleParser::parse(const D2CfgContextPtr& ctx,
         // change causes problems when trying to roll back.
         HooksManager::prepareUnloadLibraries();
         static_cast<void>(HooksManager::unloadLibraries());
-        libraries.loadLibraries();
+        IOServiceMgr::instance().clearIOServices();
+        libraries.loadLibraries(false);
     }
 }
 

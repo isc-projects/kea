@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -26,7 +26,7 @@ namespace {
 
 /// @brief Check statistics names.
 TEST(D2StatsTest, names) {
-    ASSERT_EQ(3, D2Stats::ncr.size());
+    ASSERT_EQ(4, D2Stats::ncr.size());
     ASSERT_EQ(6, D2Stats::update.size());
     ASSERT_EQ(4, D2Stats::key.size());
 }

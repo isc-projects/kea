@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -70,7 +70,7 @@ The following are some details of the JSON backend framework.
    in src/bin/dhcp4 and src/bin/dhcp6 directories.<br/><br/>
 -# The current JSON parser in @ref
    isc::data::Element::fromJSON() has been extended to allow optional
-   preprocessing.  For now, that capability simply removes  whole-line
+   preprocessing.  For now, that capability simply removes whole-line
    comments starting with the hash character, but it is expected to grow over
    time (in-line comments and file inclusions are the obvious envisaged
    additions). This is implemented in @ref isc::data::Element::fromJSONFile.<br/><br/>

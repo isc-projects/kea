@@ -1,11 +1,11 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef TSIGRECORD_H
-#define TSIGRECORD_H 1
+#define TSIGRECORD_H
 
 #include <ostream>
 #include <string>
@@ -18,9 +18,6 @@
 #include <dns/rdataclass.h>
 
 namespace isc {
-namespace util {
-class OutputBuffer;
-}
 namespace dns {
 class AbstractMessageRenderer;
 
@@ -168,12 +165,16 @@ public:
     /// Return the owner name of the TSIG RR, which is the TSIG key name
     ///
     /// \exception None
-    const Name& getName() const { return (key_name_); }
+    const Name& getName() const {
+        return (key_name_);
+    }
 
     /// Return the RDATA of the TSIG RR
     ///
     /// \exception None
-    const rdata::any::TSIG& getRdata() const { return (rdata_); }
+    const rdata::any::TSIG& getRdata() const {
+        return (rdata_);
+    }
 
     /// \name Protocol constants and defaults
     ///
@@ -207,7 +208,9 @@ public:
     /// to verify the message once parse is completed.
     ///
     /// \exception None
-    size_t getLength() const { return (length_); }
+    size_t getLength() const {
+        return (length_);
+    }
 
     /// \brief Render the \c TSIG RR in the wire format.
     ///
@@ -241,7 +244,7 @@ public:
     /// \param renderer DNS message rendering context that encapsulates the
     /// output buffer and name compression information.
     /// \return 1 if the TSIG RR fits in the message size limit; otherwise 0.
-    int toWire(AbstractMessageRenderer& renderer) const;
+    uint32_t toWire(AbstractMessageRenderer& renderer) const;
 
     /// \brief Render the \c TSIG RR in the wire format.
     ///
@@ -249,7 +252,7 @@ public:
     /// except it renders the RR in an \c OutputBuffer and therefore
     /// does not care about message size limit.
     /// As a consequence it always returns 1.
-    int toWire(isc::util::OutputBuffer& buffer) const;
+    uint32_t toWire(isc::util::OutputBuffer& buffer) const;
 
     /// Convert the TSIG record to a string.
     ///
@@ -294,7 +297,3 @@ std::ostream& operator<<(std::ostream& os, const TSIGRecord& record);
 }
 
 #endif  // TSIGRECORD_H
-
-// Local Variables:
-// mode: c++
-// End:

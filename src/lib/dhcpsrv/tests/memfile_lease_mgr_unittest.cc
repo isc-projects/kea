@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,7 +20,7 @@
 #include <dhcpsrv/timer_mgr.h>
 #include <dhcpsrv/testutils/lease_file_io.h>
 #include <dhcpsrv/testutils/test_utils.h>
-#include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
+#include <dhcpsrv/testutils/generic_lease_mgr_unittest.h>
 #include <testutils/gtest_utils.h>
 #include <util/multi_threading_mgr.h>
 #include <util/pid_file.h>
@@ -40,6 +40,7 @@
 using namespace std;
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::data;
 using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
@@ -82,7 +83,6 @@ private:
 
     /// @brief Counter of callback function executions.
     int lfc_cnt_;
-
 };
 
 /// @brief A derivation of the lease manager exposing protected methods.
@@ -97,6 +97,9 @@ public:
     }
 
     using Memfile_LeaseMgr::lfcCallback;
+    using Memfile_LeaseMgr::relay_id6_;
+    using Memfile_LeaseMgr::remote_id6_;
+    using Memfile_LeaseMgr::buildExtendedInfoTables6;
 };
 
 /// @brief Test fixture class for @c Memfile_LeaseMgr
@@ -110,10 +113,12 @@ public:
         io4_(getLeaseFilePath("leasefile4_0.csv")),
         io6_(getLeaseFilePath("leasefile6_0.csv")),
         io_service_(getIOService()),
-        timer_mgr_(TimerMgr::instance()) {
+        timer_mgr_(TimerMgr::instance()),
+        extra_files_() {
 
         timer_mgr_->setIOService(io_service_);
-        LeaseMgr::setIOService(io_service_);
+        DatabaseConnection::setIOService(io_service_);
+        ProcessSpawn::setIOService(io_service_);
 
         std::ostringstream s;
         s << KEA_LFC_BUILD_DIR << "/kea-lfc";
@@ -122,6 +127,10 @@ public:
         // Remove lease files and products of Lease File Cleanup.
         removeFiles(getLeaseFilePath("leasefile4_0.csv"));
         removeFiles(getLeaseFilePath("leasefile6_0.csv"));
+
+        // Reset staging extended info sanitizer to its default.
+        CfgMgr::instance().getStagingCfg()->getConsistency()->
+            setExtendedInfoSanityCheck(CfgConsistency::EXTENDED_INFO_CHECK_FIX);
 
         MultiThreadingMgr::instance().setMode(false);
     }
@@ -149,8 +158,15 @@ public:
         // Remove lease files and products of Lease File Cleanup.
         removeFiles(getLeaseFilePath("leasefile4_0.csv"));
         removeFiles(getLeaseFilePath("leasefile6_0.csv"));
+        // Remove other files.
+        removeOtherFiles();
+        // Reset staging extended info sanitizer to its default.
+        CfgMgr::instance().getStagingCfg()->getConsistency()->
+            setExtendedInfoSanityCheck(CfgConsistency::EXTENDED_INFO_CHECK_FIX);
         // Disable multi-threading.
         MultiThreadingMgr::instance().setMode(false);
+
+        getIOService()->stopAndPoll();
     }
 
     /// @brief Remove files being products of Lease File Cleanup.
@@ -168,6 +184,14 @@ public:
             Memfile_LeaseMgr::LFCFileType type = static_cast<
                 Memfile_LeaseMgr::LFCFileType>(i);
             LeaseFileIO io(Memfile_LeaseMgr::appendSuffix(base_name, type));
+            io.removeFile();
+        }
+    }
+
+    /// @brief Remove other files.
+    void removeOtherFiles() const {
+        for (auto const& file : extra_files_) {
+            LeaseFileIO io(file);
             io.removeFile();
         }
     }
@@ -221,13 +245,14 @@ public:
     ///
     /// @param ms Duration in milliseconds.
     void setTestTime(const uint32_t ms) {
-        IntervalTimer timer(*io_service_);
+        IntervalTimer timer(io_service_);
         timer.setup([this]() {
             io_service_->stop();
         }, ms, IntervalTimer::ONE_SHOT);
 
         io_service_->run();
-        io_service_->get_io_service().reset();
+        io_service_->stop();
+        io_service_->restart();
     }
 
     /// @brief Waits for the specified process to finish.
@@ -239,8 +264,8 @@ public:
     bool waitForProcess(const Memfile_LeaseMgr& lease_mgr,
                         const uint8_t timeout) {
         const uint32_t iterations_max = timeout * 1000;
-        IntervalTimer fast_path_timer(*io_service_);
-        IntervalTimer timer(*io_service_);
+        IntervalTimer fast_path_timer(io_service_);
+        IntervalTimer timer(io_service_);
         bool elapsed = false;
         timer.setup([&]() {
             io_service_->stop();
@@ -254,7 +279,8 @@ public:
         }, 1, IntervalTimer::REPEATING);
 
         io_service_->run();
-        io_service_->get_io_service().reset();
+        io_service_->stop();
+        io_service_->restart();
         return (!elapsed);
     }
 
@@ -373,28 +399,34 @@ public:
 
     /// @brief Pointer to the instance of the @c TimerMgr.
     TimerMgrPtr timer_mgr_;
+
+    /// @brief List of names of other files to removed.
+    vector<string> extra_files_;
 };
 
 /// @brief This test checks if the LeaseMgr can be instantiated and that it
 /// parses parameters string properly.
 TEST_F(MemfileLeaseMgrTest, constructor) {
     DatabaseConnection::ParameterMap pmap;
-    pmap["universe"] = "4";
+    pmap["universe"] = "6";
     pmap["persist"] = "false";
     boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr;
 
     EXPECT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
 
-    pmap["lfc-interval"] = "10";
-    pmap["persist"] = "true";
-    pmap["name"] = getLeaseFilePath("leasefile4_1.csv");
-    pmap["max-row-errors"] = "5";
+    // Check the extended info enable flag.
+    EXPECT_FALSE(lease_mgr->getExtendedInfoTablesEnabled());
+    pmap["extended-info-tables"] = "true";
     EXPECT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
+    EXPECT_TRUE(lease_mgr->getExtendedInfoTablesEnabled());
 
     // Expecting that persist parameter is yes or no. Everything other than
     // that is wrong.
+    pmap["lfc-interval"] = "10";
+    pmap["name"] = getLeaseFilePath("leasefile6_1.csv");
+    pmap["max-row-errors"] = "5";
+    pmap["name"] = getLeaseFilePath("leasefile6_1.csv");
     pmap["persist"] = "bogus";
-    pmap["name"] = getLeaseFilePath("leasefile4_1.csv");
     EXPECT_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)), isc::BadValue);
 
     // The lfc-interval must be an integer.
@@ -403,14 +435,17 @@ TEST_F(MemfileLeaseMgrTest, constructor) {
     EXPECT_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)), isc::BadValue);
 
     // The max-row-errors must be an integer.
-    pmap["persist"] = "true";
+    pmap["lfc-interval"] = "10";
     pmap["max-row-errors"] = "bogus";
     EXPECT_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)), isc::BadValue);
 
     // The max-row-errors must be >= 0.
-    pmap["persist"] = "true";
     pmap["max-row-errors"] = "-1";
     EXPECT_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)), isc::BadValue);
+
+    // Moved to the end as it can leave the timer registered.
+    pmap["max-row-errors"] = "5";
+    EXPECT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
 }
 
 /// @brief Checks if there is no lease manager NoLeaseManager is thrown.
@@ -499,6 +534,32 @@ TEST_F(MemfileLeaseMgrTest, lfcTimer) {
     EXPECT_EQ(2, lease_mgr->getLFCCount());
 }
 
+/// @brief Check that the kea environment is accesible to the Lease
+/// File Cleanup process.
+TEST_F(MemfileLeaseMgrTest, lfcEnv) {
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "4";
+    pmap["name"] = getLeaseFilePath("leasefile4_0.csv");
+    pmap["lfc-interval"] = "1";
+
+    std::ostringstream s;
+    s << DHCP_DATA_DIR << "/test_kea_lfc_env.sh";
+    setenv("KEA_LFC_EXECUTABLE", s.str().c_str(), 1);
+
+    boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr(new NakedMemfileLeaseMgr(pmap));
+
+    // Try to run the lease file cleanup.
+    ASSERT_NO_THROW(lease_mgr->lfcCallback());
+
+    // Wait for the LFC process to complete.
+    ASSERT_TRUE(waitForProcess(*lease_mgr, 1));
+
+    // And make sure it has returned an exit status of 0.
+    EXPECT_EQ(0, lease_mgr->getLFCExitStatus())
+        << "environment not available to LFC";
+}
+
 /// @brief This test checks if the LFC timer is disabled (doesn't trigger)
 /// cleanups when the lfc-interval is set to 0.
 TEST_F(MemfileLeaseMgrTest, lfcTimerDisabled) {
@@ -527,20 +588,20 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup4) {
     // stored.
     std::string new_file_contents =
         "address,hwaddr,client_id,valid_lifetime,expire,"
-        "subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context\n";
+        "subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context,pool_id\n";
 
     // This string contains the contents of the lease file with exactly
     // one lease, but two entries. One of the entries should be removed
     // as a result of lease file cleanup.
     std::string current_file_contents = new_file_contents +
-        "192.0.2.2,02:02:02:02:02:02,,200,200,8,1,1,,1,{ \"foo\": true }\n"
-        "192.0.2.2,02:02:02:02:02:02,,200,800,8,1,1,,1,\n";
+        "192.0.2.2,02:02:02:02:02:02,,200,200,8,1,1,,1,{ \"foo\": true },0\n"
+        "192.0.2.2,02:02:02:02:02:02,,200,800,8,1,1,,1,,0\n";
     LeaseFileIO current_file(getLeaseFilePath("leasefile4_0.csv"));
     current_file.writeFile(current_file_contents);
 
     std::string previous_file_contents = new_file_contents +
-        "192.0.2.3,03:03:03:03:03:03,,200,200,8,1,1,,1,\n"
-        "192.0.2.3,03:03:03:03:03:03,,200,800,8,1,1,,1,{ \"bar\": true }\n";
+        "192.0.2.3,03:03:03:03:03:03,,200,200,8,1,1,,1,,0\n"
+        "192.0.2.3,03:03:03:03:03:03,,200,800,8,1,1,,1,{ \"bar\": true },0\n";
     LeaseFileIO previous_file(getLeaseFilePath("leasefile4_0.csv.2"));
     previous_file.writeFile(previous_file_contents);
 
@@ -577,15 +638,15 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup4) {
     ASSERT_NO_THROW(lease_mgr->addLease(new_lease));
 
     std::string updated_file_contents = new_file_contents +
-        "192.0.2.45,00:00:00:00:00:00,,100,100,1,0,0,,0,\n";
+        "192.0.2.45,00:00:00:00:00:00,,100,100,1,0,0,,0,,0\n";
     EXPECT_EQ(updated_file_contents, current_file.readFile());
 
     // This string contains the contents of the lease file we
     // expect after the LFC run.  It has two leases with one
     // entry each.
     std::string result_file_contents = new_file_contents +
-        "192.0.2.2,02:02:02:02:02:02,,200,800,8,1,1,,1,\n"
-        "192.0.2.3,03:03:03:03:03:03,,200,800,8,1,1,,1,{ \"bar\": true }\n";
+        "192.0.2.2,02:02:02:02:02:02,,200,800,8,1,1,,1,,0\n"
+        "192.0.2.3,03:03:03:03:03:03,,200,800,8,1,1,,1,{ \"bar\": true },0\n";
 
     // The LFC should have created a file with the two leases and moved it
     // to leasefile4_0.csv.2
@@ -605,24 +666,24 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup6) {
         "address,duid,valid_lifetime,expire,subnet_id,"
         "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
         "fqdn_rev,hostname,hwaddr,state,user_context,"
-        "hwtype,hwaddr_source\n";
+        "hwtype,hwaddr_source,pool_id\n";
 
     // This string contains the contents of the lease file with exactly
     // one lease, but two entries. One of the entries should be removed
     // as a result of lease file cleanup.
     std::string current_file_contents = new_file_contents +
         "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,200,"
-        "8,100,0,7,0,1,1,,,1,,,\n"
+        "8,100,0,7,0,1,1,,,1,,,,0\n"
         "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,800,"
-        "8,100,0,7,0,1,1,,,1,{ \"foo\": true },,\n";
+        "8,100,0,7,0,1,1,,,1,{ \"foo\": true },,,0\n";
     LeaseFileIO current_file(getLeaseFilePath("leasefile6_0.csv"));
     current_file.writeFile(current_file_contents);
 
     std::string previous_file_contents = new_file_contents +
         "2001:db8:1::2,01:01:01:01:01:01:01:01:01:01:01:01:01,200,200,"
-        "8,100,0,7,0,1,1,,,1,{ \"bar\": true },,\n"
+        "8,100,0,7,0,1,1,,,1,{ \"bar\": true },,,0\n"
         "2001:db8:1::2,01:01:01:01:01:01:01:01:01:01:01:01:01,200,800,"
-        "8,100,0,7,0,1,1,,,1,,\n";
+        "8,100,0,7,0,1,1,,,1,,,,0\n";
     LeaseFileIO previous_file(getLeaseFilePath("leasefile6_0.csv.2"));
     previous_file.writeFile(previous_file_contents);
 
@@ -660,7 +721,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup6) {
 
     std::string update_file_contents = new_file_contents +
         "3000::1,00:00:00:00:00:00:00:00:00:00:00:00:00,400,"
-        "400,2,300,0,123,128,0,0,,,0,,,\n";
+        "400,2,300,0,123,128,0,0,,,0,,,,0\n";
     EXPECT_EQ(update_file_contents, current_file.readFile());
 
     // This string contains the contents of the lease file we
@@ -668,9 +729,9 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup6) {
     // entry each.
     std::string result_file_contents = new_file_contents +
         "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,800,"
-        "8,100,0,7,0,1,1,,,1,{ \"foo\": true },,\n"
+        "8,100,0,7,128,1,1,,,1,{ \"foo\": true },,,0\n"
         "2001:db8:1::2,01:01:01:01:01:01:01:01:01:01:01:01:01,200,800,"
-        "8,100,0,7,0,1,1,,,1,,,\n";
+        "8,100,0,7,128,1,1,,,1,,,,0\n";
 
     // The LFC should have created a file with the two leases and moved it
     // to leasefile6_0.csv.2
@@ -688,11 +749,11 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanupStartFail) {
     // stored.
     std::string new_file_contents =
         "address,hwaddr,client_id,valid_lifetime,expire,"
-        "subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context\n";
+        "subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context,pool_id\n";
 
     // Create the lease file to be used by the backend.
     std::string current_file_contents = new_file_contents +
-        "192.0.2.2,02:02:02:02:02:02,,200,200,8,1,1,,1,\n";
+        "192.0.2.2,02:02:02:02:02:02,,200,200,8,1,1,,1,,0\n";
     LeaseFileIO current_file(getLeaseFilePath("leasefile4_0.csv"));
     current_file.writeFile(current_file_contents);
 
@@ -720,15 +781,15 @@ TEST_F(MemfileLeaseMgrTest, leaseFileFinish) {
         "address,duid,valid_lifetime,expire,subnet_id,"
         "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
         "fqdn_rev,hostname,hwaddr,state,user_context,"
-        "hwtype,hwaddr_source\n";
+        "hwtype,hwaddr_source,pool_id\n";
 
     // This string contains the contents of the current lease file.
     // It should not be moved.
     std::string current_file_contents = new_file_contents +
         "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,200,"
-        "8,100,0,7,0,1,1,,,1,,,\n"
+        "8,100,0,7,0,1,1,,,1,,,,0\n"
         "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,800,"
-        "8,100,0,7,0,1,1,,,1,,,\n";
+        "8,100,0,7,0,1,1,,,1,,,,0\n";
     LeaseFileIO current_file(getLeaseFilePath("leasefile6_0.csv"));
     current_file.writeFile(current_file_contents);
 
@@ -736,7 +797,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileFinish) {
     // be moved to the previous file.
     std::string finish_file_contents = new_file_contents +
         "2001:db8:1::2,01:01:01:01:01:01:01:01:01:01:01:01:01,200,800,"
-        "8,100,0,7,0,1,1,,,1,\n";
+        "8,100,0,7,0,1,1,,,1,,0\n";
     LeaseFileIO finish_file(getLeaseFilePath("leasefile6_0.csv.completed"));
     finish_file.writeFile(finish_file_contents);
 
@@ -784,15 +845,15 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCopy) {
         "address,duid,valid_lifetime,expire,subnet_id,"
         "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
         "fqdn_rev,hostname,hwaddr,state,user_context,"
-        "hwtype,hwaddr_source\n";
+        "hwtype,hwaddr_source,pool_id\n";
 
     // This string contains the contents of the current lease file.
     // It should not be moved.
     std::string current_file_contents = new_file_contents +
         "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,200,"
-        "8,100,0,7,0,1,1,,,1,,,\n"
+        "8,100,0,7,0,1,1,,,1,,,,0\n"
         "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,800,"
-        "8,100,0,7,0,1,1,,,1,{ \"foo\": true },,\n";
+        "8,100,0,7,0,1,1,,,1,{ \"foo\": true },,,0\n";
     LeaseFileIO current_file(getLeaseFilePath("leasefile6_0.csv"));
     current_file.writeFile(current_file_contents);
 
@@ -802,7 +863,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCopy) {
     // the same.
     std::string input_file_contents = new_file_contents +
         "2001:db8:1::2,01:01:01:01:01:01:01:01:01:01:01:01:01,200,800,"
-        "8,100,0,7,0,1,1,,,1,{ \"foo\": true },,\n";
+        "8,100,0,7,128,1,1,,,1,{ \"foo\": true },,,0\n";
     LeaseFileIO input_file(getLeaseFilePath("leasefile6_0.csv.1"));
     input_file.writeFile(input_file_contents);
 
@@ -1073,6 +1134,21 @@ TEST_F(MemfileLeaseMgrTest, getLeases6SubnetIdMultiThread) {
     testGetLeases6SubnetId();
 }
 
+/// @brief This test checks that all IPv6 leases for a specified subnet id
+/// with paging are returned.
+TEST_F(MemfileLeaseMgrTest, getLeases6SubnetIdPaged) {
+    startBackend(V6);
+    testGetLeases6SubnetIdPaged();
+}
+
+/// @brief This test checks that all IPv6 leases for a specified subnet id
+/// with paging are returned.
+TEST_F(MemfileLeaseMgrTest, getLeases6SubnetIdPagedMultiThread) {
+    startBackend(V6);
+    MultiThreadingMgr::instance().setMode(true);
+    testGetLeases6SubnetIdPaged();
+}
+
 /// @brief This test checks that all IPv6 leases with a specified hostname are returned.
 TEST_F(MemfileLeaseMgrTest, getLeases6Hostname) {
     startBackend(V6);
@@ -1086,14 +1162,14 @@ TEST_F(MemfileLeaseMgrTest, getLeases6HostnameMultiThread) {
     testGetLeases6Hostname();
 }
 
-/// @brief This test adds 3 leases  and verifies fetch by DUID.
+/// @brief This test adds 3 leases and verifies fetch by DUID.
 /// Verifies retrieval of non existant DUID fails
 TEST_F(MemfileLeaseMgrTest, getLeases6Duid) {
     startBackend(V6);
     testGetLeases6Duid();
 }
 
-/// @brief This test adds 3 leases  and verifies fetch by DUID.
+/// @brief This test adds 3 leases and verifies fetch by DUID.
 TEST_F(MemfileLeaseMgrTest, getLeases6DuidMultiThread) {
     startBackend(V6);
     MultiThreadingMgr::instance().setMode(true);
@@ -1444,22 +1520,22 @@ TEST_F(MemfileLeaseMgrTest, getDeclined6MultiThread) {
 TEST_F(MemfileLeaseMgrTest, load4MultipleLeaseFiles) {
     LeaseFileIO io2(getLeaseFilePath("leasefile4_0.csv.2"));
     io2.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-                  "fqdn_fwd,fqdn_rev,hostname,state,user_context\n"
-                  "192.0.2.2,02:02:02:02:02:02,,200,200,8,1,1,,1,\n"
-                  "192.0.2.11,bb:bb:bb:bb:bb:bb,,200,200,8,1,1,,1,\n");
+                  "fqdn_fwd,fqdn_rev,hostname,state,user_context,pool_id\n"
+                  "192.0.2.2,02:02:02:02:02:02,,200,200,8,1,1,,1,,0\n"
+                  "192.0.2.11,bb:bb:bb:bb:bb:bb,,200,200,8,1,1,,1,,0\n");
 
     LeaseFileIO io1(getLeaseFilePath("leasefile4_0.csv.1"));
     io1.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-                  "fqdn_fwd,fqdn_rev,hostname,state,user_context\n"
-                  "192.0.2.1,01:01:01:01:01:01,,200,200,8,1,1,,1,\n"
-                  "192.0.2.11,bb:bb:bb:bb:bb:bb,,200,400,8,1,1,,1,\n"
-                  "192.0.2.12,cc:cc:cc:cc:cc:cc,,200,200,8,1,1,,1,\n");
+                  "fqdn_fwd,fqdn_rev,hostname,state,user_context,pool_id\n"
+                  "192.0.2.1,01:01:01:01:01:01,,200,200,8,1,1,,1,,0\n"
+                  "192.0.2.11,bb:bb:bb:bb:bb:bb,,200,400,8,1,1,,1,,0\n"
+                  "192.0.2.12,cc:cc:cc:cc:cc:cc,,200,200,8,1,1,,1,,0\n");
 
     LeaseFileIO io(getLeaseFilePath("leasefile4_0.csv"));
     io.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-                 "fqdn_fwd,fqdn_rev,hostname,state,user_context\n"
-                 "192.0.2.10,0a:0a:0a:0a:0a:0a,,200,200,8,1,1,,1,\n"
-                 "192.0.2.12,cc:cc:cc:cc:cc:cc,,200,400,8,1,1,,1,\n");
+                 "fqdn_fwd,fqdn_rev,hostname,state,user_context,pool_id\n"
+                 "192.0.2.10,0a:0a:0a:0a:0a:0a,,200,200,8,1,1,,1,,0\n"
+                 "192.0.2.12,cc:cc:cc:cc:cc:cc,,200,400,8,1,1,,1,,0\n");
 
     startBackend(V4);
 
@@ -1502,27 +1578,27 @@ TEST_F(MemfileLeaseMgrTest, load4MultipleLeaseFiles) {
 TEST_F(MemfileLeaseMgrTest, load4CompletedFile) {
     LeaseFileIO io2(getLeaseFilePath("leasefile4_0.csv.2"));
     io2.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-                  "fqdn_fwd,fqdn_rev,hostname,state,user_context\n"
-                  "192.0.2.2,02:02:02:02:02:02,,200,200,8,1,1,,1,\n"
-                  "192.0.2.11,bb:bb:bb:bb:bb:bb,,200,200,8,1,1,,1,\n");
+                  "fqdn_fwd,fqdn_rev,hostname,state,user_context,pool_id\n"
+                  "192.0.2.2,02:02:02:02:02:02,,200,200,8,1,1,,1,,0\n"
+                  "192.0.2.11,bb:bb:bb:bb:bb:bb,,200,200,8,1,1,,1,,0\n");
 
     LeaseFileIO io1(getLeaseFilePath("leasefile4_0.csv.1"));
     io1.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-                  "fqdn_fwd,fqdn_rev,hostname,state,user_context\n"
-                  "192.0.2.1,01:01:01:01:01:01,,200,200,8,1,1,,1,\n"
-                  "192.0.2.11,bb:bb:bb:bb:bb:bb,,200,400,8,1,1,,1,\n"
-                  "192.0.2.12,cc:cc:cc:cc:cc:cc,,200,200,8,1,1,,1,\n");
+                  "fqdn_fwd,fqdn_rev,hostname,state,user_context,pool_id\n"
+                  "192.0.2.1,01:01:01:01:01:01,,200,200,8,1,1,,1,,0\n"
+                  "192.0.2.11,bb:bb:bb:bb:bb:bb,,200,400,8,1,1,,1,,0\n"
+                  "192.0.2.12,cc:cc:cc:cc:cc:cc,,200,200,8,1,1,,1,,0\n");
 
     LeaseFileIO io(getLeaseFilePath("leasefile4_0.csv"));
     io.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-                 "fqdn_fwd,fqdn_rev,hostname,state,user_context\n"
-                 "192.0.2.10,0a:0a:0a:0a:0a:0a,,200,200,8,1,1,,1,\n"
-                 "192.0.2.12,cc:cc:cc:cc:cc:cc,,200,400,8,1,1,,1,\n");
+                 "fqdn_fwd,fqdn_rev,hostname,state,user_context,pool_id\n"
+                 "192.0.2.10,0a:0a:0a:0a:0a:0a,,200,200,8,1,1,,1,,0\n"
+                 "192.0.2.12,cc:cc:cc:cc:cc:cc,,200,400,8,1,1,,1,,0\n");
 
     LeaseFileIO ioc(getLeaseFilePath("leasefile4_0.csv.completed"));
     ioc.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-                  "fqdn_fwd,fqdn_rev,hostname,state,user_context\n"
-                  "192.0.2.13,ff:ff:ff:ff:ff:ff,,200,200,8,1,1,,1,\n");
+                  "fqdn_fwd,fqdn_rev,hostname,state,user_context,pool_id\n"
+                  "192.0.2.13,ff:ff:ff:ff:ff:ff,,200,200,8,1,1,,1,,0\n");
 
     startBackend(V4);
 
@@ -1579,31 +1655,31 @@ TEST_F(MemfileLeaseMgrTest, load6MultipleLeaseFiles) {
     LeaseFileIO io2(getLeaseFilePath("leasefile6_0.csv.2"));
     io2.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
                   "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
-                  "hwaddr,state,user_context,hwtype,hwaddr_source\n"
+                  "hwaddr,state,user_context,hwtype,hwaddr_source,pool_id\n"
                   "2001:db8:1::1,01:01:01:01:01:01:01:01:01:01:01:01:01,"
-                  "200,200,8,100,0,7,0,1,1,,,1,,,\n"
+                  "200,200,8,100,0,7,0,1,1,,,1,,,,0\n"
                   "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
-                  "200,200,8,100,0,7,0,1,1,,,1,,,\n");
+                  "200,200,8,100,0,7,0,1,1,,,1,,,,0\n");
 
     LeaseFileIO io1(getLeaseFilePath("leasefile6_0.csv.1"));
     io1.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
                   "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
-                  "hwaddr,state,user_context,hwtype,hwaddr_source\n"
+                  "hwaddr,state,user_context,hwtype,hwaddr_source,pool_id\n"
                   "2001:db8:1::3,03:03:03:03:03:03:03:03:03:03:03:03:03,"
-                  "200,200,8,100,0,7,0,1,1,,,1,,,\n"
+                  "200,200,8,100,0,7,0,1,1,,,1,,,,0\n"
                   "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
-                  "300,800,8,100,0,7,0,1,1,,,1,,,\n"
+                  "300,800,8,100,0,7,0,1,1,,,1,,,,0\n"
                   "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
-                  "200,200,8,100,0,7,0,1,1,,,1,,,\n");
+                  "200,200,8,100,0,7,0,1,1,,,1,,,,0\n");
 
     LeaseFileIO io(getLeaseFilePath("leasefile6_0.csv"));
     io.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
                   "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
-                  "hwaddr,state,user_context,hwtype,hwaddr_source\n"
+                  "hwaddr,state,user_context,hwtype,hwaddr_source,pool_id\n"
                  "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
-                 "400,1000,8,100,0,7,0,1,1,,,1,,,\n"
+                 "400,1000,8,100,0,7,0,1,1,,,1,,,,0\n"
                  "2001:db8:1::5,05:05:05:05:05:05:05:05:05:05:05:05:05,"
-                 "200,200,8,100,0,7,0,1,1,,,1,,,\n");
+                 "200,200,8,100,0,7,0,1,1,,,1,,,,0\n");
 
     startBackend(V6);
 
@@ -1645,22 +1721,22 @@ TEST_F(MemfileLeaseMgrTest, load6MultipleNoSecondFile) {
     LeaseFileIO io1(getLeaseFilePath("leasefile6_0.csv.1"));
     io1.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
                   "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
-                  "hwaddr,state,user_context,hwtype,hwaddr_source\n"
+                  "hwaddr,state,user_context,hwtype,hwaddr_source,pool_id\n"
                   "2001:db8:1::3,03:03:03:03:03:03:03:03:03:03:03:03:03,"
-                  "200,200,8,100,0,7,0,1,1,,,1,,,\n"
+                  "200,200,8,100,0,7,0,1,1,,,1,,,,0\n"
                   "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
-                  "300,800,8,100,0,7,0,1,1,,,1,,,\n"
+                  "300,800,8,100,0,7,0,1,1,,,1,,,,0\n"
                   "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
-                  "200,200,8,100,0,7,0,1,1,,,1,,,\n");
+                  "200,200,8,100,0,7,0,1,1,,,1,,,,0\n");
 
     LeaseFileIO io(getLeaseFilePath("leasefile6_0.csv"));
     io.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
                   "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
-                  "hwaddr,state,user_context,hwtype,hwaddr_source\n"
+                  "hwaddr,state,user_context,hwtype,hwaddr_source,pool_id\n"
                  "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
-                 "400,1000,8,100,0,7,0,1,1,,,1,,,\n"
+                 "400,1000,8,100,0,7,0,1,1,,,1,,,,0\n"
                  "2001:db8:1::5,05:05:05:05:05:05:05:05:05:05:05:05:05,"
-                 "200,200,8,100,0,7,0,1,1,,,1,,,\n");
+                 "200,200,8,100,0,7,0,1,1,,,1,,,,0\n");
 
     startBackend(V6);
 
@@ -1693,20 +1769,20 @@ TEST_F(MemfileLeaseMgrTest, load6MultipleNoFirstFile) {
     LeaseFileIO io2(getLeaseFilePath("leasefile6_0.csv.2"));
     io2.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
                   "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
-                  "hwaddr,state,user_context,hwtype,hwaddr_source\n"
+                  "hwaddr,state,user_context,hwtype,hwaddr_source,pool_id\n"
                   "2001:db8:1::1,01:01:01:01:01:01:01:01:01:01:01:01:01,"
-                  "200,200,8,100,0,7,0,1,1,,,1,,,\n"
+                  "200,200,8,100,0,7,0,1,1,,,1,,,,0\n"
                   "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
-                  "200,200,8,100,0,7,0,1,1,,,1,,,\n");
+                  "200,200,8,100,0,7,0,1,1,,,1,,,,0\n");
 
     LeaseFileIO io(getLeaseFilePath("leasefile6_0.csv"));
     io.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
                   "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
-                  "hwaddr,state,user_context,hwtype,hwaddr_source\n"
+                  "hwaddr,state,user_context,hwtype,hwaddr_source,pool_id\n"
                  "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
-                 "400,1000,8,100,0,7,0,1,1,,,1,,,\n"
+                 "400,1000,8,100,0,7,0,1,1,,,1,,,,0\n"
                  "2001:db8:1::5,05:05:05:05:05:05:05:05:05:05:05:05:05,"
-                 "200,200,8,100,0,7,0,1,1,,,1,,,\n");
+                 "200,200,8,100,0,7,0,1,1,,,1,,,,0\n");
 
     startBackend(V6);
 
@@ -1740,38 +1816,38 @@ TEST_F(MemfileLeaseMgrTest, load6CompletedFile) {
     LeaseFileIO io2(getLeaseFilePath("leasefile6_0.csv.2"));
     io2.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
                   "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
-                  "hwaddr,state,user_context,hwtype,hwaddr_source\n"
+                  "hwaddr,state,user_context,hwtype,hwaddr_source,pool_id\n"
                   "2001:db8:1::1,01:01:01:01:01:01:01:01:01:01:01:01:01,"
-                  "200,200,8,100,0,7,0,1,1,,,1,,,\n"
+                  "200,200,8,100,0,7,0,1,1,,,1,,,,0\n"
                   "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
-                  "200,200,8,100,0,7,0,1,1,,,1,,,\n");
+                  "200,200,8,100,0,7,0,1,1,,,1,,,,0\n");
 
     LeaseFileIO io1(getLeaseFilePath("leasefile6_0.csv.1"));
     io1.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
                   "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
-                  "hwaddr,state,user_context,hwtype,hwaddr_source\n"
+                  "hwaddr,state,user_context,hwtype,hwaddr_source,pool_id\n"
                   "2001:db8:1::3,03:03:03:03:03:03:03:03:03:03:03:03:03,"
-                  "200,200,8,100,0,7,0,1,1,,,1,,,\n"
+                  "200,200,8,100,0,7,0,1,1,,,1,,,,0\n"
                   "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
-                  "300,800,8,100,0,7,0,1,1,,,1,,,\n"
+                  "300,800,8,100,0,7,0,1,1,,,1,,,,0\n"
                   "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
-                  "200,200,8,100,0,7,0,1,1,,,1,,,\n");
+                  "200,200,8,100,0,7,0,1,1,,,1,,,,0\n");
 
     LeaseFileIO io(getLeaseFilePath("leasefile6_0.csv"));
     io.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
                   "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
-                  "hwaddr,state,user_context,hwtype,hwaddr_source\n"
+                  "hwaddr,state,user_context,hwtype,hwaddr_source,pool_id\n"
                  "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
-                 "400,1000,8,100,0,7,0,1,1,,,1,,,\n"
+                 "400,1000,8,100,0,7,0,1,1,,,1,,,,0\n"
                  "2001:db8:1::5,05:05:05:05:05:05:05:05:05:05:05:05:05,"
-                 "200,200,8,100,0,7,0,1,1,,,1,,,\n");
+                 "200,200,8,100,0,7,0,1,1,,,1,,,,0\n");
 
     LeaseFileIO ioc(getLeaseFilePath("leasefile6_0.csv.completed"));
     ioc.writeFile("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
                   "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
-                  "hwaddr,state,user_context,hwtype,hwaddr_source\n"
+                  "hwaddr,state,user_context,hwtype,hwaddr_source,pool_id\n"
                   "2001:db8:1::125,ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff,"
-                  "400,1000,8,100,0,7,0,1,1,,,1,,,\n");
+                  "400,1000,8,100,0,7,0,1,1,,,1,,,,0\n");
 
     startBackend(V6);
 
@@ -1834,6 +1910,10 @@ TEST_F(MemfileLeaseMgrTest, leaseUpgrade4) {
         "address,hwaddr,client_id,valid_lifetime,expire,"
         "subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context\n";
 
+    std::string header_3_0 =
+        "address,hwaddr,client_id,valid_lifetime,expire,"
+        "subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context,pool_id\n";
+
     // Create 1.0 Schema current lease file with two entries for
     // the same lease
     std::string current_file_contents = header_1_0 +
@@ -1860,9 +1940,9 @@ TEST_F(MemfileLeaseMgrTest, leaseUpgrade4) {
 
     // Since lease files are loaded during lease manager
     // constructor, LFC should get launched automatically.
-    // The new lease file should be 2.0 schema and have no entries
+    // The new lease file should be 3.0 schema and have no entries
     ASSERT_TRUE(current_file.exists());
-    EXPECT_EQ(header_2_0, current_file.readFile());
+    EXPECT_EQ(header_3_0, current_file.readFile());
 
     // Wait for the LFC process to complete and
     // make sure it has returned an exit status of 0.
@@ -1872,15 +1952,15 @@ TEST_F(MemfileLeaseMgrTest, leaseUpgrade4) {
         << "Executing the LFC process failed: make sure that"
         " the kea-lfc program has been compiled.";
 
-    // The LFC should have created a 2.0 schema completion file with the
+    // The LFC should have created a 3.0 schema completion file with the
     // one entry for each lease and moved it to leasefile4_0.csv.2
     LeaseFileIO input_file(getLeaseFilePath("leasefile4_0.csv.2"), false);
     ASSERT_TRUE(input_file.exists());
 
     // Verify cleaned, converted contents
-    std::string result_file_contents = header_2_0 +
-        "192.0.2.2,02:02:02:02:02:02,,200,800,8,1,1,,0,\n"
-        "192.0.2.3,03:03:03:03:03:03,,200,800,8,1,1,,0,\n";
+    std::string result_file_contents = header_3_0 +
+        "192.0.2.2,02:02:02:02:02:02,,200,800,8,1,1,,0,,0\n"
+        "192.0.2.3,03:03:03:03:03:03,,200,800,8,1,1,,0,,0\n";
     EXPECT_EQ(result_file_contents, input_file.readFile());
 }
 
@@ -1908,6 +1988,12 @@ TEST_F(MemfileLeaseMgrTest, leaseUpgrade6) {
         "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
         "fqdn_rev,hostname,hwaddr,state,user_context,"
         "hwtype,hwaddr_source\n";
+
+    std::string header_5_0 =
+        "address,duid,valid_lifetime,expire,subnet_id,"
+        "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
+        "fqdn_rev,hostname,hwaddr,state,user_context,"
+        "hwtype,hwaddr_source,pool_id\n";
 
     // The current lease file is schema 1.0 and has two entries for
     // the same lease
@@ -1939,9 +2025,9 @@ TEST_F(MemfileLeaseMgrTest, leaseUpgrade6) {
 
     // Since lease files are loaded during lease manager
     // constructor, LFC should get launched automatically.
-    // The new lease file should been 4.0 and contain no leases.
+    // The new lease file should been 5.0 and contain no leases.
     ASSERT_TRUE(current_file.exists());
-    EXPECT_EQ(header_4_0, current_file.readFile());
+    EXPECT_EQ(header_5_0, current_file.readFile());
 
     // Wait for the LFC process to complete and
     // make sure it has returned an exit status of 0.
@@ -1951,17 +2037,17 @@ TEST_F(MemfileLeaseMgrTest, leaseUpgrade6) {
         << "Executing the LFC process failed: make sure that"
         " the kea-lfc program has been compiled.";
 
-    // The LFC should have created a 4.0 schema cleaned file with one entry
+    // The LFC should have created a 5.0 schema cleaned file with one entry
     // for each lease as leasefile6_0.csv.2
     LeaseFileIO input_file(getLeaseFilePath("leasefile6_0.csv.2"), false);
     ASSERT_TRUE(input_file.exists());
 
     // Verify cleaned, converted contents
-    std::string result_file_contents = header_4_0 +
+    std::string result_file_contents = header_5_0 +
         "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,800,"
-        "8,100,0,7,0,1,1,,,0,,,\n"
+        "8,100,0,7,128,1,1,,,0,,,,0\n"
         "2001:db8:1::2,01:01:01:01:01:01:01:01:01:01:01:01:01,200,800,"
-        "8,100,0,7,0,1,1,,11:22:33:44:55,0,,1,0\n";
+        "8,100,0,7,128,1,1,,11:22:33:44:55,0,,1,0,0\n";
     EXPECT_EQ(result_file_contents, input_file.readFile());
 }
 
@@ -1975,13 +2061,10 @@ TEST_F(MemfileLeaseMgrTest, lease4ContainerIndexUpdate) {
 
     const string leasefile(getLeaseFilePath("leasefile4_0.csv"));
 
-    // Parameters for the lease file. Make sure the leases are persistent, so they
-    // are written to disk.
-    DatabaseConnection::ParameterMap pmap;
-    pmap["universe"] = "4";
-    pmap["name"] = leasefile;
-    pmap["persist"] = "true";
-    pmap["lfc-interval"] = "0";
+    std::string dbaccess = "universe=4 type=memfile persist=true lfc-interval=0 name=";
+    dbaccess += leasefile;
+
+    LeaseMgrFactory::create(dbaccess);
 
     srand(seed);
 
@@ -1989,7 +2072,8 @@ TEST_F(MemfileLeaseMgrTest, lease4ContainerIndexUpdate) {
 
     // Recreate Memfile_LeaseMgr.
     LeaseMgrFactory::destroy();
-    ASSERT_NO_THROW(lmptr_ = new Memfile_LeaseMgr(pmap));
+    ASSERT_NO_THROW(LeaseMgrFactory::create(dbaccess));
+    lmptr_ = &(LeaseMgrFactory::instance());
 
     // We will store addresses here, so it will be easier to randomly
     // pick a lease.
@@ -2029,8 +2113,10 @@ TEST_F(MemfileLeaseMgrTest, lease4ContainerIndexUpdate) {
     // container is rebuilt correctly and the indexes are
     // consistent with lease information held.
     ASSERT_NO_THROW({
+        // Recreate Memfile_LeaseMgr.
         LeaseMgrFactory::destroy();
-        lmptr_ = new Memfile_LeaseMgr(pmap);
+        LeaseMgrFactory::create(dbaccess);
+        lmptr_ = &(LeaseMgrFactory::instance());
     });
 
     // Ok, let's check if the leases are really accessible.
@@ -2105,13 +2191,10 @@ TEST_F(MemfileLeaseMgrTest, lease6ContainerIndexUpdate) {
 
     const string leasefile(getLeaseFilePath("leasefile6_0.csv"));
 
-    // Parameters for the lease file. Make sure the leases are persistent, so they
-    // are written to disk.
-    DatabaseConnection::ParameterMap pmap;
-    pmap["universe"] = "6";
-    pmap["name"] = leasefile;
-    pmap["persist"] = "true";
-    pmap["lfc-interval"] = "0";
+    std::string dbaccess = "universe=6 type=memfile persist=true lfc-interval=0 name=";
+    dbaccess += leasefile;
+
+    LeaseMgrFactory::create(dbaccess);
 
     srand(seed);
 
@@ -2119,7 +2202,8 @@ TEST_F(MemfileLeaseMgrTest, lease6ContainerIndexUpdate) {
 
     // Recreate Memfile_LeaseMgr.
     LeaseMgrFactory::destroy();
-    ASSERT_NO_THROW(lmptr_ = new Memfile_LeaseMgr(pmap));
+    ASSERT_NO_THROW(LeaseMgrFactory::create(dbaccess));
+    lmptr_ = &(LeaseMgrFactory::instance());
 
     // We will store addresses here, so it will be easier to randomly
     // pick a lease.
@@ -2160,8 +2244,10 @@ TEST_F(MemfileLeaseMgrTest, lease6ContainerIndexUpdate) {
     // container is rebuilt correctly and the indexes are
     // consistent with lease information held.
     ASSERT_NO_THROW({
+        // Recreate Memfile_LeaseMgr.
         LeaseMgrFactory::destroy();
-        lmptr_ = new Memfile_LeaseMgr(pmap);
+        LeaseMgrFactory::create(dbaccess);
+        lmptr_ = &(LeaseMgrFactory::instance());
     });
 
     // Ok, let's check if the leases are really accessible.
@@ -2326,23 +2412,27 @@ TEST_F(MemfileLeaseMgrTest, v4UserContext) {
     LeaseFileIO io(getLeaseFilePath("leasefile4_0.csv"));
     io.writeFile(
         "address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-        "fqdn_fwd,fqdn_rev,hostname,state,user_context\n"
+        "fqdn_fwd,fqdn_rev,hostname,state,user_context,pool_id\n"
 
         "192.0.0.1,01:01:01:01:01:01,,100,100,1,1,1,,1,"
-        "{}\n"
+        "{},0\n"
 
         "192.0.0.2,02:02:02:02:02:02,,200,400,1,1,1,,0,"
-        "{ \"comment\": \"this lease is for the kitchen computer\"}\n"
+        "{ \"comment\": \"this lease is for the kitchen computer\"},0\n"
 
         // The next lines have escaped commas in user context.
 
         "192.0.0.4,04:04:04:04:04:04,,400,1600,1,1,1,,0,"
         "{ \"comment\": \"this lease is for the mainframe computer\"&#x2c"
-        "  \"comment2\": \"don't release it\" }\n"
+        "  \"comment2\": \"don't release it\" },0\n"
 
         "192.0.0.8,08:08:08:08:08:08,,800,6400,1,1,1,,0,"
-        "{ \"a\": \"b\"&#x2c \"c\": { \"d\": 1&#x2c\"e\": 2 } }\n"
+        "{ \"a\": \"b\"&#x2c \"c\": { \"d\": 1&#x2c\"e\": 2 } },0\n"
     );
+
+    // Not sanitize user contexts.
+    CfgMgr::instance().getStagingCfg()->getConsistency()->
+        setExtendedInfoSanityCheck(CfgConsistency::EXTENDED_INFO_CHECK_NONE);
 
     startBackend(V4);
 
@@ -2357,7 +2447,10 @@ TEST_F(MemfileLeaseMgrTest, v4UserContext) {
         "Hardware addr: 01:01:01:01:01:01\n"
         "Client id:     (none)\n"
         "Subnet ID:     1\n"
+        "Pool ID:       0\n"
         "State:         declined\n"
+        "Relay ID:      (none)\n"
+        "Remote ID:     (none)\n"
         "User context:  {  }\n"
     );
 
@@ -2372,7 +2465,10 @@ TEST_F(MemfileLeaseMgrTest, v4UserContext) {
         "Hardware addr: 02:02:02:02:02:02\n"
         "Client id:     (none)\n"
         "Subnet ID:     1\n"
+        "Pool ID:       0\n"
         "State:         default\n"
+        "Relay ID:      (none)\n"
+        "Remote ID:     (none)\n"
         "User context:  { \"comment\": \"this lease is for the kitchen computer\" }\n"
     );
 
@@ -2387,7 +2483,10 @@ TEST_F(MemfileLeaseMgrTest, v4UserContext) {
         "Hardware addr: 04:04:04:04:04:04\n"
         "Client id:     (none)\n"
         "Subnet ID:     1\n"
+        "Pool ID:       0\n"
         "State:         default\n"
+        "Relay ID:      (none)\n"
+        "Remote ID:     (none)\n"
         "User context:  "
         "{ \"comment\": \"this lease is for the mainframe computer\", "
         "\"comment2\": \"don't release it\" }\n"
@@ -2404,39 +2503,46 @@ TEST_F(MemfileLeaseMgrTest, v4UserContext) {
         "Hardware addr: 08:08:08:08:08:08\n"
         "Client id:     (none)\n"
         "Subnet ID:     1\n"
+        "Pool ID:       0\n"
         "State:         default\n"
+        "Relay ID:      (none)\n"
+        "Remote ID:     (none)\n"
         "User context:  { \"a\": \"b\", \"c\": { \"d\": 1, \"e\": 2 } }\n"
     );
 }
 
-/// @brief Checks that complex user context can be read in v4.
+/// @brief Checks that complex user context can be read in v6.
 TEST_F(MemfileLeaseMgrTest, v6UserContext) {
     // Add some leases to the CSV file.
     LeaseFileIO io(getLeaseFilePath("leasefile6_0.csv"));
     io.writeFile(
         "address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
         "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
-        "hwaddr,state,user_context,hwtype,hwaddr_source\n"
+        "hwaddr,state,user_context,hwtype,hwaddr_source,pool_id\n"
 
         "2001:db8:1::1,01:01:01:01:01:01:01:01:01:01:01:01:01,"
         "400,1000,8,100,0,7,0,1,1,,,1,"
-        "{},,\n"
+        "{},,,0\n"
 
         "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
         "200,200,8,100,0,7,0,1,1,,,1,"
-        "{ \"comment\": \"this lease is for the kitchen computer\"},,\n"
+        "{ \"comment\": \"this lease is for the kitchen computer\"},,,0\n"
 
         // The next lines have escaped commas in user context.
 
         "2001:db8:1::4,04:04:04:04:04:04:04:04:04:04:04:04:04,"
         "200,200,8,100,0,7,0,1,1,,,1,"
         "{ \"comment\": \"this lease is for the mainframe computer\"&#x2c"
-        "  \"comment2\": \"don't release it\" },,\n"
+        "  \"comment2\": \"don't release it\" },,,0\n"
 
         "2001:db8:1::8,08:08:08:08:08:08:08:08:08:08:08:08:08,"
         "200,200,8,100,0,7,0,1,1,,,1,"
-        "{ \"a\": \"b\"&#x2c \"c\": { \"d\": 1&#x2c\"e\": 2 } }\n"
+        "{ \"a\": \"b\"&#x2c \"c\": { \"d\": 1&#x2c\"e\": 2 } },,,0\n"
     );
+
+    // Not sanitize user contexts.
+    CfgMgr::instance().getStagingCfg()->getConsistency()->
+        setExtendedInfoSanityCheck(CfgConsistency::EXTENDED_INFO_CHECK_NONE);
 
     startBackend(V6);
 
@@ -2448,7 +2554,7 @@ TEST_F(MemfileLeaseMgrTest, v6UserContext) {
         lease->toText(),
         "Type:          IA_NA(0)\n"
         "Address:       2001:db8:1::1\n"
-        "Prefix length: 0\n"
+        "Prefix length: 128\n"
         "IAID:          7\n"
         "Pref life:     100\n"
         "Valid life:    400\n"
@@ -2456,6 +2562,7 @@ TEST_F(MemfileLeaseMgrTest, v6UserContext) {
         "DUID:          01:01:01:01:01:01:01:01:01:01:01:01:01\n"
         "Hardware addr: (none)\n"
         "Subnet ID:     8\n"
+        "Pool ID:       0\n"
         "State:         declined\n"
         "User context:  {  }\n"
     );
@@ -2467,7 +2574,7 @@ TEST_F(MemfileLeaseMgrTest, v6UserContext) {
         lease->toText(),
         "Type:          IA_NA(0)\n"
         "Address:       2001:db8:1::2\n"
-        "Prefix length: 0\n"
+        "Prefix length: 128\n"
         "IAID:          7\n"
         "Pref life:     100\n"
         "Valid life:    200\n"
@@ -2475,18 +2582,19 @@ TEST_F(MemfileLeaseMgrTest, v6UserContext) {
         "DUID:          02:02:02:02:02:02:02:02:02:02:02:02:02\n"
         "Hardware addr: (none)\n"
         "Subnet ID:     8\n"
+        "Pool ID:       0\n"
         "State:         declined\n"
         "User context:  { \"comment\": \"this lease is for the kitchen computer\" }\n"
     );
 
     // Check the lease with two key-value pairs in the user context.
     lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::4"));
-    EXPECT_TRUE(lease);
+    ASSERT_TRUE(lease);
     EXPECT_EQ(
         lease->toText(),
         "Type:          IA_NA(0)\n"
         "Address:       2001:db8:1::4\n"
-        "Prefix length: 0\n"
+        "Prefix length: 128\n"
         "IAID:          7\n"
         "Pref life:     100\n"
         "Valid life:    200\n"
@@ -2494,6 +2602,7 @@ TEST_F(MemfileLeaseMgrTest, v6UserContext) {
         "DUID:          04:04:04:04:04:04:04:04:04:04:04:04:04\n"
         "Hardware addr: (none)\n"
         "Subnet ID:     8\n"
+        "Pool ID:       0\n"
         "State:         declined\n"
         "User context:  { \"comment\": \"this lease is for the mainframe computer\","
         " \"comment2\": \"don't release it\" }\n"
@@ -2501,12 +2610,12 @@ TEST_F(MemfileLeaseMgrTest, v6UserContext) {
 
     // Check the lease with nested key-value pairs in the user context.
     lease = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::8"));
-    EXPECT_TRUE(lease);
+    ASSERT_TRUE(lease);
     EXPECT_EQ(
         lease->toText(),
         "Type:          IA_NA(0)\n"
         "Address:       2001:db8:1::8\n"
-        "Prefix length: 0\n"
+        "Prefix length: 128\n"
         "IAID:          7\n"
         "Pref life:     100\n"
         "Valid life:    200\n"
@@ -2514,6 +2623,7 @@ TEST_F(MemfileLeaseMgrTest, v6UserContext) {
         "DUID:          08:08:08:08:08:08:08:08:08:08:08:08:08\n"
         "Hardware addr: (none)\n"
         "Subnet ID:     8\n"
+        "Pool ID:       0\n"
         "State:         declined\n"
         "User context:  { \"a\": \"b\", \"c\": { \"d\": 1, \"e\": 2 } }\n"
     );
@@ -2527,7 +2637,7 @@ TEST_F(MemfileLeaseMgrTest, testHWAddr) {
     std::stringstream contents;
     contents << "address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
                 "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
-                "hwaddr,state,user_context,hwtype,hwaddr_source\n";
+                "hwaddr,state,user_context,hwtype,hwaddr_source,pool_id\n";
 
     // Create combinations with all valid values except for 255 which is an
     // unused value for both hwtype and hwaddr_source, but lease construction
@@ -2544,7 +2654,7 @@ TEST_F(MemfileLeaseMgrTest, testHWAddr) {
             contents << "2001:db8:1::" << hex.str()
                      << ",00:00:00:00:00:" << hex.str()
                      << std::dec << ",7200,8000,1,3600,0,1,128,0,0,,ff:ff:ff:ff:ff:"
-                     << hex.str() << ",1,," << hwtype << "," << hwsource << "\n";
+                     << hex.str() << ",1,," << hwtype << "," << hwsource << ",0\n";
             ++i;
         }
     }
@@ -2573,6 +2683,7 @@ TEST_F(MemfileLeaseMgrTest, testHWAddr) {
                     "DUID:          00:00:00:00:00:" + hex.str() + "\n"
                     "Hardware addr: ff:ff:ff:ff:ff:" + hex.str() + "\n"
                     "Subnet ID:     1\n"
+                    "Pool ID:       0\n"
                     "State:         declined\n");
             ASSERT_TRUE(lease->hwaddr_);
             EXPECT_EQ(lease->hwaddr_->htype_, hwtype);
@@ -2580,6 +2691,1751 @@ TEST_F(MemfileLeaseMgrTest, testHWAddr) {
             ++i;
         }
     }
+}
+
+// Verifies that isJsonSupported() returns true for Memfile.
+TEST_F(MemfileLeaseMgrTest, isJsonSupported4) {
+    startBackend(V4);
+    bool json_supported;
+    ASSERT_NO_THROW_LOG(json_supported = LeaseMgrFactory::instance().isJsonSupported());
+    ASSERT_TRUE(json_supported);
+}
+
+// Verifies that isJsonSupported() returns true for Memfile.
+TEST_F(MemfileLeaseMgrTest, isJsonSupported6) {
+    startBackend(V6);
+    bool json_supported;
+    ASSERT_NO_THROW_LOG(json_supported = LeaseMgrFactory::instance().isJsonSupported());
+    ASSERT_TRUE(json_supported);
+}
+
+// Verifies that v4 class lease counts are correctly adjusted
+// when leases have class lists.
+TEST_F(MemfileLeaseMgrTest, classLeaseCount4) {
+    startBackend(V4);
+    testClassLeaseCount4();
+}
+
+// Verifies that v6 IA_NA class lease counts are correctly adjusted
+// when leases have class lists.
+TEST_F(MemfileLeaseMgrTest, classLeaseCount6_NA) {
+    startBackend(V6);
+    testClassLeaseCount6(Lease::TYPE_NA);
+}
+
+// Verifies that v6 IA_PD class lease counts are correctly adjusted
+// when leases have class lists.
+TEST_F(MemfileLeaseMgrTest, classLeaseCount6_PD) {
+    startBackend(V6);
+    testClassLeaseCount6(Lease::TYPE_PD);
+}
+
+// brief Checks that a null user context allows allocation.
+TEST_F(MemfileLeaseMgrTest, checkLimitsNull4) {
+    startBackend(V4);
+    std::string text;
+    ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits4(nullptr));
+    EXPECT_TRUE(text.empty());
+}
+
+// brief Checks that a null user context allows allocation.
+TEST_F(MemfileLeaseMgrTest, checkLimitsNull6) {
+    startBackend(V6);
+    std::string text;
+    ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits6(nullptr));
+    EXPECT_TRUE(text.empty());
+}
+
+// Checks a few v4 lease limit checking scenarios.
+TEST_F(MemfileLeaseMgrTest, checkLimits4) {
+    startBackend(V4);
+    testLeaseLimits4();
+}
+
+// Checks a few v6 lease limit checking scenarios.
+TEST_F(MemfileLeaseMgrTest, checkLimits6) {
+    startBackend(V6);
+    testLeaseLimits6();
+}
+
+// Verifies that v4 class lease counts can be recounted.
+TEST_F(MemfileLeaseMgrTest, classLeaseRecount4) {
+    startBackend(V4);
+
+    // Create a subnet
+    CfgSubnets4Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
+    Subnet4Ptr subnet;
+    Pool4Ptr pool;
+
+    subnet.reset(new Subnet4(IOAddress("192.0.1.0"), 24, 1, 2, 3, 777));
+    pool.reset(new Pool4(IOAddress("192.0.1.0"), 24));
+    subnet->addPool(pool);
+    cfg->add(subnet);
+
+    // We need a Memfile_LeaseMgr pointer to access recount and clear functions.
+    Memfile_LeaseMgr* memfile_mgr = dynamic_cast<Memfile_LeaseMgr*>(lmptr_);
+    ASSERT_TRUE(memfile_mgr);
+
+    // Verify class lease counts are zero.
+    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("water"));
+    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("melon"));
+    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("slice"));
+
+    // Structure that describes a recipe for a lease.
+    struct Recipe {
+        std::string address_;
+        uint32_t state_;
+        std::list<ClientClass> classes_;
+    };
+
+    // List of lease recipes.
+    std::list<Recipe> recipes{
+        { "192.0.1.100", Lease::STATE_DEFAULT, {"water", "slice"} },
+        { "192.0.1.101", Lease::STATE_DEFAULT, {"melon"} },
+        { "192.0.1.102", Lease::STATE_DEFAULT, {"melon", "slice"} }
+    };
+
+    // Bake all the leases.
+    for (auto const& recipe : recipes) {
+        ElementPtr ctx = makeContextWithClasses(recipe.classes_);
+        ASSERT_TRUE(makeLease4(recipe.address_, 777, recipe.state_, ctx));
+    }
+
+    // Verify counts are as expected.
+    EXPECT_EQ(1, memfile_mgr->getClassLeaseCount("water"));
+    EXPECT_EQ(2, memfile_mgr->getClassLeaseCount("melon"));
+    EXPECT_EQ(2, memfile_mgr->getClassLeaseCount("slice"));
+
+    // Clear counts
+    ASSERT_NO_THROW_LOG(memfile_mgr->clearClassLeaseCounts());
+
+    // Verify counts are zero.
+    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("water"));
+    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("melon"));
+    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("slice"));
+
+    // Recount
+    ASSERT_NO_THROW_LOG(memfile_mgr->recountClassLeases4());
+
+    // Verify counts are recounted correctly.
+    EXPECT_EQ(1, memfile_mgr->getClassLeaseCount("water"));
+    EXPECT_EQ(2, memfile_mgr->getClassLeaseCount("melon"));
+    EXPECT_EQ(2, memfile_mgr->getClassLeaseCount("slice"));
+}
+
+// Verifies that v6 class lease counts can be recounted.
+TEST_F(MemfileLeaseMgrTest, classLeaseRecount6) {
+    startBackend(V6);
+
+    // Create a subnet
+    CfgSubnets6Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets6();
+    Subnet6Ptr subnet;
+    Pool6Ptr pool;
+
+    subnet.reset(new Subnet6(IOAddress("3001:1::"), 64, 1, 2, 3, 4, 777));
+    pool.reset(new Pool6(Lease::TYPE_NA, IOAddress("3001:1::"),
+                         IOAddress("3001:1::FF")));
+    subnet->addPool(pool);
+
+    pool.reset(new Pool6(Lease::TYPE_PD, IOAddress("3001:1:2::"), 96, 112));
+    subnet->addPool(pool);
+    cfg->add(subnet);
+
+    // We need a Memfile_LeaseMgr pointer to access recount and clear functions.
+    Memfile_LeaseMgr* memfile_mgr = dynamic_cast<Memfile_LeaseMgr*>(lmptr_);
+    ASSERT_TRUE(memfile_mgr);
+
+    // Verify class lease counts are zero.
+    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("water", Lease::TYPE_NA));
+    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("melon", Lease::TYPE_NA));
+    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("slice", Lease::TYPE_NA));
+
+    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("grapes", Lease::TYPE_PD));
+    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("wrath", Lease::TYPE_PD));
+    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("slice", Lease::TYPE_PD));
+
+    // Structure that describes a recipe for a lease.
+    struct Recipe {
+        Lease::Type ltype_;
+        std::string address_;
+        uint32_t prefix_len_;
+        uint32_t state_;
+        std::list<ClientClass> classes_;
+    };
+
+    // List of lease recipes.
+    std::list<Recipe> recipes{
+        { Lease::TYPE_NA, "3001::1", 128, Lease::STATE_DEFAULT, {"water", "slice"} },
+        { Lease::TYPE_NA, "3001::2", 128, Lease::STATE_DEFAULT, {"melon"} },
+        { Lease::TYPE_NA, "3001::3", 128, Lease::STATE_DEFAULT, {"melon", "slice"} },
+
+        { Lease::TYPE_PD, "3001:1:2:0100::", 112, Lease::STATE_DEFAULT, {"grapes", "slice"} },
+        { Lease::TYPE_PD, "3001:1:2:0200::", 112, Lease::STATE_DEFAULT, {"wrath"} },
+        { Lease::TYPE_PD, "3001:1:2:0300::", 112, Lease::STATE_DEFAULT, {"wrath", "slice"} },
+    };
+
+    // Bake all the leases.
+    for (auto const& recipe : recipes) {
+        ElementPtr ctx = makeContextWithClasses(recipe.classes_);
+        ASSERT_TRUE(makeLease6(recipe.ltype_, recipe.address_, recipe.prefix_len_, 777, recipe.state_, ctx));
+    }
+
+    // Verify counts are as expected.
+    EXPECT_EQ(1, memfile_mgr->getClassLeaseCount("water", Lease::TYPE_NA));
+    EXPECT_EQ(2, memfile_mgr->getClassLeaseCount("melon", Lease::TYPE_NA));
+    EXPECT_EQ(2, memfile_mgr->getClassLeaseCount("slice", Lease::TYPE_NA));
+
+    EXPECT_EQ(1, memfile_mgr->getClassLeaseCount("grapes", Lease::TYPE_PD));
+    EXPECT_EQ(2, memfile_mgr->getClassLeaseCount("wrath", Lease::TYPE_PD));
+    EXPECT_EQ(2, memfile_mgr->getClassLeaseCount("slice", Lease::TYPE_PD));
+
+    // Clear counts
+    ASSERT_NO_THROW_LOG(memfile_mgr->clearClassLeaseCounts());
+
+    // Verify counts are zero.
+    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("water", Lease::TYPE_NA));
+    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("melon", Lease::TYPE_NA));
+    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("slice", Lease::TYPE_NA));
+
+    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("grapes", Lease::TYPE_PD));
+    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("wrath", Lease::TYPE_PD));
+    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("slice", Lease::TYPE_PD));
+
+    // Recount
+    ASSERT_NO_THROW_LOG(memfile_mgr->recountClassLeases6());
+
+    // Verify counts are recounted correctly.
+    EXPECT_EQ(1, memfile_mgr->getClassLeaseCount("water", Lease::TYPE_NA));
+    EXPECT_EQ(2, memfile_mgr->getClassLeaseCount("melon", Lease::TYPE_NA));
+    EXPECT_EQ(2, memfile_mgr->getClassLeaseCount("slice", Lease::TYPE_NA));
+
+    EXPECT_EQ(1, memfile_mgr->getClassLeaseCount("grapes", Lease::TYPE_PD));
+    EXPECT_EQ(2, memfile_mgr->getClassLeaseCount("wrath", Lease::TYPE_PD));
+    EXPECT_EQ(2, memfile_mgr->getClassLeaseCount("slice", Lease::TYPE_PD));
+}
+
+/// @brief Class derived from @c Memfile_LeaseMgr to test write to file.
+class WFMemfileLeaseMgr : public Memfile_LeaseMgr {
+public:
+
+    /// @brief Constructor.
+    WFMemfileLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
+        : Memfile_LeaseMgr(parameters) {
+    }
+
+    using Memfile_LeaseMgr::lease_file4_;
+    using Memfile_LeaseMgr::lease_file6_;
+};
+
+/// @brief Check if writeLease fails on bad file name (v4).
+TEST_F(MemfileLeaseMgrTest, badWriteLease4) {
+    startBackend(V4);
+    string expected = "unable to open '/this/does/not/exist'";
+    EXPECT_THROW_MSG(lmptr_->writeLeases4("/this/does/not/exist"),
+                     CSVFileError, expected);
+}
+
+/// @brief Check if writeLease fails on bad file name (v4+MT).
+TEST_F(MemfileLeaseMgrTest, badWriteLease4MultiThread) {
+    startBackend(V4);
+    MultiThreadingMgr::instance().setMode(true);
+    string expected = "unable to open '/this/does/not/exist'";
+    EXPECT_THROW_MSG(lmptr_->writeLeases4("/this/does/not/exist"),
+                     CSVFileError, expected);
+}
+
+/// @brief Check if writeLease fails on bad file name (v6).
+TEST_F(MemfileLeaseMgrTest, badWriteLease6) {
+    startBackend(V6);
+    string expected = "unable to open '/this/does/not/exist'";
+    EXPECT_THROW_MSG(lmptr_->writeLeases6("/this/does/not/exist"),
+                     CSVFileError, expected);
+}
+
+/// @brief Check if writeLease fails on bad file name (v6+MT).
+TEST_F(MemfileLeaseMgrTest, badWriteLease6MultiThread) {
+    startBackend(V6);
+    MultiThreadingMgr::instance().setMode(true);
+    string expected = "unable to open '/this/does/not/exist'";
+    EXPECT_THROW_MSG(lmptr_->writeLeases6("/this/does/not/exist"),
+                     CSVFileError, expected);
+}
+
+/// @brief Check writeLease basic scenario (v4).
+TEST_F(MemfileLeaseMgrTest, basicWriteLease4) {
+    startBackend(V4);
+
+    // Empty database should give a header only file.
+    string header =
+        "address,hwaddr,client_id,valid_lifetime,expire,"
+        "subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context,pool_id\n";
+
+    string filename = getLeaseFilePath("backup.csv");
+    LeaseFileIO file(filename);
+    file.removeFile();
+    extra_files_.push_back(filename);
+    ostringstream b;
+    b << filename << ".bak" << getpid();
+    extra_files_.push_back(b.str());
+
+    EXPECT_NO_THROW(lmptr_->writeLeases4(filename));
+    ASSERT_TRUE(file.exists());
+    EXPECT_EQ(header, file.readFile());
+
+    // Get the leases to be used for the test.
+    vector<Lease4Ptr> leases = createLeases4();
+
+    // Add leases.
+    EXPECT_TRUE(lmptr_->addLease(leases[1]));
+    EXPECT_TRUE(lmptr_->addLease(leases[2]));
+    EXPECT_TRUE(lmptr_->addLease(leases[3]));
+
+    // Try again.
+    file.removeFile();
+    EXPECT_FALSE(file.exists());
+    EXPECT_NO_THROW(lmptr_->writeLeases4(filename));
+    ASSERT_TRUE(file.exists());
+    string content = file.readFile();
+    ASSERT_GT(content.size(), header.size());
+    EXPECT_EQ(header, content.substr(0, header.size()));
+
+    // Delete a lease so shrink the database.
+    file.removeFile();
+    EXPECT_FALSE(file.exists());
+    EXPECT_TRUE(lmptr_->deleteLease(leases[2]));
+    EXPECT_NO_THROW(lmptr_->writeLeases4(filename));
+    ASSERT_TRUE(file.exists());
+    string content1 = file.readFile();
+    EXPECT_GT(content.size(), content1.size());
+}
+
+/// @brief Check writeLease basic scenario (v4+MT).
+TEST_F(MemfileLeaseMgrTest, basicWriteLease4MultiThread) {
+    startBackend(V4);
+    MultiThreadingMgr::instance().setMode(true);
+
+    // Empty database should give a header only file.
+    string header =
+        "address,hwaddr,client_id,valid_lifetime,expire,"
+        "subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context,pool_id\n";
+
+    string filename = getLeaseFilePath("backup.csv");
+    LeaseFileIO file(filename);
+    file.removeFile();
+    extra_files_.push_back(filename);
+    ostringstream b;
+    b << filename << ".bak" << getpid();
+    extra_files_.push_back(b.str());
+
+    EXPECT_NO_THROW(lmptr_->writeLeases4(filename));
+    ASSERT_TRUE(file.exists());
+    EXPECT_EQ(header, file.readFile());
+
+    // Get the leases to be used for the test.
+    vector<Lease4Ptr> leases = createLeases4();
+
+    // Add leases.
+    EXPECT_TRUE(lmptr_->addLease(leases[1]));
+    EXPECT_TRUE(lmptr_->addLease(leases[2]));
+    EXPECT_TRUE(lmptr_->addLease(leases[3]));
+
+    // Try again.
+    file.removeFile();
+    EXPECT_FALSE(file.exists());
+    EXPECT_NO_THROW(lmptr_->writeLeases4(filename));
+    ASSERT_TRUE(file.exists());
+    string content = file.readFile();
+    ASSERT_GT(content.size(), header.size());
+    EXPECT_EQ(header, content.substr(0, header.size()));
+
+    // Delete a lease so shrink the database.
+    file.removeFile();
+    EXPECT_FALSE(file.exists());
+    EXPECT_TRUE(lmptr_->deleteLease(leases[2]));
+    EXPECT_NO_THROW(lmptr_->writeLeases4(filename));
+    ASSERT_TRUE(file.exists());
+    string content1 = file.readFile();
+    EXPECT_GT(content.size(), content1.size());
+}
+
+/// @brief Check writeLease basic scenario (v6).
+TEST_F(MemfileLeaseMgrTest, basicWriteLease6) {
+    startBackend(V6);
+
+    // empty database should give a header only file.
+    string header =
+        "address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+        "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
+        "hwaddr,state,user_context,hwtype,hwaddr_source,pool_id\n";
+
+    string filename = getLeaseFilePath("backup.csv");
+    LeaseFileIO file(filename);
+    file.removeFile();
+    extra_files_.push_back(filename);
+    ostringstream b;
+    b << filename << ".bak" << getpid();
+    extra_files_.push_back(b.str());
+
+    EXPECT_NO_THROW(lmptr_->writeLeases6(filename));
+    ASSERT_TRUE(file.exists());
+    EXPECT_EQ(header, file.readFile());
+
+    // Get the leases to be used for the test.
+    vector<Lease6Ptr> leases = createLeases6();
+
+    // Add leases.
+    EXPECT_TRUE(lmptr_->addLease(leases[1]));
+    EXPECT_TRUE(lmptr_->addLease(leases[2]));
+    EXPECT_TRUE(lmptr_->addLease(leases[3]));
+
+    // Try again.
+    file.removeFile();
+    EXPECT_FALSE(file.exists());
+    EXPECT_NO_THROW(lmptr_->writeLeases6(filename));
+    ASSERT_TRUE(file.exists());
+    string content = file.readFile();
+    ASSERT_GT(content.size(), header.size());
+    EXPECT_EQ(header, content.substr(0, header.size()));
+
+    // Delete a lease so shrink the database.
+    file.removeFile();
+    EXPECT_FALSE(file.exists());
+    EXPECT_TRUE(lmptr_->deleteLease(leases[2]));
+    EXPECT_NO_THROW(lmptr_->writeLeases6(filename));
+    ASSERT_TRUE(file.exists());
+    string content1 = file.readFile();
+    EXPECT_GT(content.size(), content1.size());
+}
+
+/// @brief Check writeLease basic scenario (v6+MT).
+TEST_F(MemfileLeaseMgrTest, basicWriteLease6MultiThread) {
+    startBackend(V6);
+    MultiThreadingMgr::instance().setMode(true);
+
+    // empty database should give a header only file.
+    string header =
+        "address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+        "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
+        "hwaddr,state,user_context,hwtype,hwaddr_source,pool_id\n";
+
+    string filename = getLeaseFilePath("backup.csv");
+    LeaseFileIO file(filename);
+    file.removeFile();
+    extra_files_.push_back(filename);
+    ostringstream b;
+    b << filename << ".bak" << getpid();
+    extra_files_.push_back(b.str());
+
+    EXPECT_NO_THROW(lmptr_->writeLeases6(filename));
+    ASSERT_TRUE(file.exists());
+    EXPECT_EQ(header, file.readFile());
+
+    // Get the leases to be used for the test.
+    vector<Lease6Ptr> leases = createLeases6();
+
+    // Add leases.
+    EXPECT_TRUE(lmptr_->addLease(leases[1]));
+    EXPECT_TRUE(lmptr_->addLease(leases[2]));
+    EXPECT_TRUE(lmptr_->addLease(leases[3]));
+
+    // Try again.
+    file.removeFile();
+    EXPECT_FALSE(file.exists());
+    EXPECT_NO_THROW(lmptr_->writeLeases6(filename));
+    ASSERT_TRUE(file.exists());
+    string content = file.readFile();
+    ASSERT_GT(content.size(), header.size());
+    EXPECT_EQ(header, content.substr(0, header.size()));
+
+    // Delete a lease so shrink the database.
+    file.removeFile();
+    EXPECT_FALSE(file.exists());
+    EXPECT_TRUE(lmptr_->deleteLease(leases[2]));
+    EXPECT_NO_THROW(lmptr_->writeLeases6(filename));
+    ASSERT_TRUE(file.exists());
+    string content1 = file.readFile();
+    EXPECT_GT(content.size(), content1.size());
+}
+
+/// @brief Check if writeLease can overwrite the lease file (v4).
+TEST_F(MemfileLeaseMgrTest, overWriteLease4) {
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "4";
+    pmap["lfc-interval"] = "0";
+    pmap["persist"] = "true";
+    pmap["name"] = getLeaseFilePath("leasefile4_0.csv");
+    boost::scoped_ptr<WFMemfileLeaseMgr> lease_mgr;
+    EXPECT_NO_THROW(lease_mgr.reset(new WFMemfileLeaseMgr(pmap)));
+
+    // Empty database should give a header only file.
+    string header =
+        "address,hwaddr,client_id,valid_lifetime,expire,"
+        "subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context,pool_id\n";
+
+    ASSERT_TRUE(lease_mgr->lease_file4_);
+    string filename = lease_mgr->lease_file4_->getFilename();
+    LeaseFileIO file(filename);
+    ostringstream b;
+    b << filename << ".bak" << getpid();
+    LeaseFileIO backup(b.str());
+    backup.removeFile();
+    extra_files_.push_back(b.str());
+
+    EXPECT_NO_THROW(lease_mgr->writeLeases4(filename));
+    ASSERT_TRUE(file.exists());
+    EXPECT_EQ(header, file.readFile());
+
+    // Get the leases to be used for the test.
+    vector<Lease4Ptr> leases = createLeases4();
+
+    // Add leases.
+    EXPECT_TRUE(lease_mgr->addLease(leases[1]));
+    EXPECT_TRUE(lease_mgr->addLease(leases[2]));
+    EXPECT_TRUE(lease_mgr->addLease(leases[3]));
+
+    // Try again.
+    EXPECT_NO_THROW(lease_mgr->writeLeases4(filename));
+    ASSERT_TRUE(file.exists());
+    string content = file.readFile();
+    ASSERT_GT(content.size(), header.size());
+    EXPECT_EQ(header, content.substr(0, header.size()));
+
+    // Delete a lease so shrink the database.
+    file.removeFile();
+    EXPECT_FALSE(file.exists());
+    EXPECT_TRUE(lease_mgr->deleteLease(leases[2]));
+    EXPECT_NO_THROW(lease_mgr->writeLeases4(filename));
+    ASSERT_TRUE(file.exists());
+    string content1 = file.readFile();
+    EXPECT_GT(content.size(), content1.size());
+
+    // Backup should have the previous database image.
+    ASSERT_TRUE(backup.exists());
+    EXPECT_EQ(content, backup.readFile());
+}
+
+/// @brief Check if writeLease can overwrite the lease file (v4+MT).
+TEST_F(MemfileLeaseMgrTest, overWriteLease4MultiThread) {
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "4";
+    pmap["lfc-interval"] = "0";
+    pmap["persist"] = "true";
+    pmap["name"] = getLeaseFilePath("leasefile4_0.csv");
+    boost::scoped_ptr<WFMemfileLeaseMgr> lease_mgr;
+    EXPECT_NO_THROW(lease_mgr.reset(new WFMemfileLeaseMgr(pmap)));
+
+    MultiThreadingMgr::instance().setMode(true);
+
+    // Empty database should give a header only file.
+    string header =
+        "address,hwaddr,client_id,valid_lifetime,expire,"
+        "subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context,pool_id\n";
+
+    ASSERT_TRUE(lease_mgr->lease_file4_);
+    string filename = lease_mgr->lease_file4_->getFilename();
+    LeaseFileIO file(filename);
+    ostringstream b;
+    b << filename << ".bak" << getpid();
+    LeaseFileIO backup(b.str());
+    backup.removeFile();
+    extra_files_.push_back(b.str());
+
+    EXPECT_NO_THROW(lease_mgr->writeLeases4(filename));
+    ASSERT_TRUE(file.exists());
+    EXPECT_EQ(header, file.readFile());
+
+    // Get the leases to be used for the test.
+    vector<Lease4Ptr> leases = createLeases4();
+
+    // Add leases.
+    EXPECT_TRUE(lease_mgr->addLease(leases[1]));
+    EXPECT_TRUE(lease_mgr->addLease(leases[2]));
+    EXPECT_TRUE(lease_mgr->addLease(leases[3]));
+
+    // Try again.
+    EXPECT_NO_THROW(lease_mgr->writeLeases4(filename));
+    ASSERT_TRUE(file.exists());
+    string content = file.readFile();
+    ASSERT_GT(content.size(), header.size());
+    EXPECT_EQ(header, content.substr(0, header.size()));
+
+    // Delete a lease so shrink the database.
+    file.removeFile();
+    EXPECT_FALSE(file.exists());
+    EXPECT_TRUE(lease_mgr->deleteLease(leases[2]));
+    EXPECT_NO_THROW(lease_mgr->writeLeases4(filename));
+    ASSERT_TRUE(file.exists());
+    string content1 = file.readFile();
+    EXPECT_GT(content.size(), content1.size());
+
+    // Backup should have the previous database image.
+    ASSERT_TRUE(backup.exists());
+    EXPECT_EQ(content, backup.readFile());
+}
+
+/// @brief Check if writeLease can overwrite the lease file (v6).
+TEST_F(MemfileLeaseMgrTest, overWriteLease6) {
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "6";
+    pmap["lfc-interval"] = "0";
+    pmap["persist"] = "true";
+    pmap["name"] = getLeaseFilePath("leasefile6_0.csv");
+    boost::scoped_ptr<WFMemfileLeaseMgr> lease_mgr;
+    EXPECT_NO_THROW(lease_mgr.reset(new WFMemfileLeaseMgr(pmap)));
+
+    // Empty database should give a header only file.
+    string header =
+        "address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+        "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
+        "hwaddr,state,user_context,hwtype,hwaddr_source,pool_id\n";
+
+    ASSERT_TRUE(lease_mgr->lease_file6_);
+    string filename = lease_mgr->lease_file6_->getFilename();
+    LeaseFileIO file(filename);
+    ostringstream b;
+    b << filename << ".bak" << getpid();
+    LeaseFileIO backup(b.str());
+    backup.removeFile();
+    extra_files_.push_back(b.str());
+
+    EXPECT_NO_THROW(lease_mgr->writeLeases6(filename));
+    ASSERT_TRUE(file.exists());
+    EXPECT_EQ(header, file.readFile());
+
+    // Get the leases to be used for the test.
+    vector<Lease6Ptr> leases = createLeases6();
+
+    // Add leases.
+    EXPECT_TRUE(lease_mgr->addLease(leases[1]));
+    EXPECT_TRUE(lease_mgr->addLease(leases[2]));
+    EXPECT_TRUE(lease_mgr->addLease(leases[3]));
+
+    // Try again.
+    EXPECT_NO_THROW(lease_mgr->writeLeases6(filename));
+    ASSERT_TRUE(file.exists());
+    string content = file.readFile();
+    ASSERT_GT(content.size(), header.size());
+    EXPECT_EQ(header, content.substr(0, header.size()));
+
+    // Delete a lease so shrink the database.
+    file.removeFile();
+    EXPECT_FALSE(file.exists());
+    EXPECT_TRUE(lease_mgr->deleteLease(leases[2]));
+    EXPECT_NO_THROW(lease_mgr->writeLeases6(filename));
+    ASSERT_TRUE(file.exists());
+    string content1 = file.readFile();
+    EXPECT_GT(content.size(), content1.size());
+
+    // Backup should have the previous database image.
+    ASSERT_TRUE(backup.exists());
+    EXPECT_EQ(content, backup.readFile());
+}
+
+/// @brief Check if writeLease can overwrite the lease file (v6+MT).
+TEST_F(MemfileLeaseMgrTest, overWriteLease6MultiThread) {
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "6";
+    pmap["lfc-interval"] = "0";
+    pmap["persist"] = "true";
+    pmap["name"] = getLeaseFilePath("leasefile6_0.csv");
+    boost::scoped_ptr<WFMemfileLeaseMgr> lease_mgr;
+    EXPECT_NO_THROW(lease_mgr.reset(new WFMemfileLeaseMgr(pmap)));
+
+    MultiThreadingMgr::instance().setMode(true);
+
+    // Empty database should give a header only file.
+    string header =
+        "address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+        "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
+        "hwaddr,state,user_context,hwtype,hwaddr_source,pool_id\n";
+
+    ASSERT_TRUE(lease_mgr->lease_file6_);
+    string filename = lease_mgr->lease_file6_->getFilename();
+    LeaseFileIO file(filename);
+    ostringstream b;
+    b << filename << ".bak" << getpid();
+    LeaseFileIO backup(b.str());
+    backup.removeFile();
+    extra_files_.push_back(b.str());
+
+    EXPECT_NO_THROW(lease_mgr->writeLeases6(filename));
+    ASSERT_TRUE(file.exists());
+    EXPECT_EQ(header, file.readFile());
+
+    // Get the leases to be used for the test.
+    vector<Lease6Ptr> leases = createLeases6();
+
+    // Add leases.
+    EXPECT_TRUE(lease_mgr->addLease(leases[1]));
+    EXPECT_TRUE(lease_mgr->addLease(leases[2]));
+    EXPECT_TRUE(lease_mgr->addLease(leases[3]));
+
+    // Try again.
+    EXPECT_NO_THROW(lease_mgr->writeLeases6(filename));
+    ASSERT_TRUE(file.exists());
+    string content = file.readFile();
+    ASSERT_GT(content.size(), header.size());
+    EXPECT_EQ(header, content.substr(0, header.size()));
+
+    // Delete a lease so shrink the database.
+    file.removeFile();
+    EXPECT_FALSE(file.exists());
+    EXPECT_TRUE(lease_mgr->deleteLease(leases[2]));
+    EXPECT_NO_THROW(lease_mgr->writeLeases6(filename));
+    ASSERT_TRUE(file.exists());
+    string content1 = file.readFile();
+    EXPECT_GT(content.size(), content1.size());
+
+    // Backup should have the previous database image.
+    ASSERT_TRUE(backup.exists());
+    EXPECT_EQ(content, backup.readFile());
+}
+
+/// @brief Check if writeLease works without a lease file (v4).
+TEST_F(MemfileLeaseMgrTest, notPersistWriteLease4) {
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "4";
+    pmap["lfc-interval"] = "0";
+    pmap["persist"] = "false";
+    pmap["name"] = getLeaseFilePath("leasefile4_0.csv");
+    boost::scoped_ptr<WFMemfileLeaseMgr> lease_mgr;
+    EXPECT_NO_THROW(lease_mgr.reset(new WFMemfileLeaseMgr(pmap)));
+
+    // Empty database should give a header only file.
+    string header =
+        "address,hwaddr,client_id,valid_lifetime,expire,"
+        "subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context,pool_id\n";
+
+    ASSERT_FALSE(lease_mgr->lease_file4_);
+    string filename = getLeaseFilePath("backup.csv");
+    LeaseFileIO file(filename);
+    file.removeFile();
+    ostringstream b;
+    b << filename << ".bak" << getpid();
+    LeaseFileIO backup(b.str());
+    backup.removeFile();
+    extra_files_.push_back(b.str());
+
+    EXPECT_NO_THROW(lease_mgr->writeLeases4(filename));
+    ASSERT_TRUE(file.exists());
+    EXPECT_EQ(header, file.readFile());
+
+    // Get the leases to be used for the test.
+    vector<Lease4Ptr> leases = createLeases4();
+
+    // Add leases.
+    EXPECT_TRUE(lease_mgr->addLease(leases[1]));
+    EXPECT_TRUE(lease_mgr->addLease(leases[2]));
+    EXPECT_TRUE(lease_mgr->addLease(leases[3]));
+
+    // Try again.
+    EXPECT_NO_THROW(lease_mgr->writeLeases4(filename));
+    ASSERT_TRUE(file.exists());
+    string content = file.readFile();
+    ASSERT_GT(content.size(), header.size());
+    EXPECT_EQ(header, content.substr(0, header.size()));
+
+    // Delete a lease so shrink the database.
+    file.removeFile();
+    EXPECT_FALSE(file.exists());
+    EXPECT_TRUE(lease_mgr->deleteLease(leases[2]));
+    EXPECT_NO_THROW(lease_mgr->writeLeases4(filename));
+    ASSERT_TRUE(file.exists());
+    string content1 = file.readFile();
+    EXPECT_GT(content.size(), content1.size());
+}
+
+/// @brief Check if writeLease works without a lease file (v4+MT).
+TEST_F(MemfileLeaseMgrTest, notPersistWriteLease4MultiThread) {
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "4";
+    pmap["lfc-interval"] = "0";
+    pmap["persist"] = "false";
+    pmap["name"] = getLeaseFilePath("leasefile4_0.csv");
+    boost::scoped_ptr<WFMemfileLeaseMgr> lease_mgr;
+    EXPECT_NO_THROW(lease_mgr.reset(new WFMemfileLeaseMgr(pmap)));
+
+    MultiThreadingMgr::instance().setMode(true);
+
+    // Empty database should give a header only file.
+    string header =
+        "address,hwaddr,client_id,valid_lifetime,expire,"
+        "subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context,pool_id\n";
+
+    ASSERT_FALSE(lease_mgr->lease_file4_);
+    string filename = getLeaseFilePath("backup.csv");
+    LeaseFileIO file(filename);
+    file.removeFile();
+    ostringstream b;
+    b << filename << ".bak" << getpid();
+    LeaseFileIO backup(b.str());
+    backup.removeFile();
+    extra_files_.push_back(b.str());
+
+    EXPECT_NO_THROW(lease_mgr->writeLeases4(filename));
+    ASSERT_TRUE(file.exists());
+    EXPECT_EQ(header, file.readFile());
+
+    // Get the leases to be used for the test.
+    vector<Lease4Ptr> leases = createLeases4();
+
+    // Add leases.
+    EXPECT_TRUE(lease_mgr->addLease(leases[1]));
+    EXPECT_TRUE(lease_mgr->addLease(leases[2]));
+    EXPECT_TRUE(lease_mgr->addLease(leases[3]));
+
+    // Try again.
+    EXPECT_NO_THROW(lease_mgr->writeLeases4(filename));
+    ASSERT_TRUE(file.exists());
+    string content = file.readFile();
+    ASSERT_GT(content.size(), header.size());
+    EXPECT_EQ(header, content.substr(0, header.size()));
+
+    // Delete a lease so shrink the database.
+    file.removeFile();
+    EXPECT_FALSE(file.exists());
+    EXPECT_TRUE(lease_mgr->deleteLease(leases[2]));
+    EXPECT_NO_THROW(lease_mgr->writeLeases4(filename));
+    ASSERT_TRUE(file.exists());
+    string content1 = file.readFile();
+    EXPECT_GT(content.size(), content1.size());
+}
+
+/// @brief Check if writeLease works without a lease file (v6).
+TEST_F(MemfileLeaseMgrTest, notPersistWriteLease6) {
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "6";
+    pmap["lfc-interval"] = "0";
+    pmap["persist"] = "false";
+    pmap["name"] = getLeaseFilePath("leasefile6_0.csv");
+    boost::scoped_ptr<WFMemfileLeaseMgr> lease_mgr;
+    EXPECT_NO_THROW(lease_mgr.reset(new WFMemfileLeaseMgr(pmap)));
+
+    // Empty database should give a header only file.
+    string header =
+        "address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+        "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
+        "hwaddr,state,user_context,hwtype,hwaddr_source,pool_id\n";
+
+    ASSERT_FALSE(lease_mgr->lease_file6_);
+    string filename = getLeaseFilePath("backup.csv");
+    LeaseFileIO file(filename);
+    file.removeFile();
+    ostringstream b;
+    b << filename << ".bak" << getpid();
+    LeaseFileIO backup(b.str());
+    backup.removeFile();
+    extra_files_.push_back(b.str());
+
+    EXPECT_NO_THROW(lease_mgr->writeLeases6(filename));
+    ASSERT_TRUE(file.exists());
+    EXPECT_EQ(header, file.readFile());
+
+    // Get the leases to be used for the test.
+    vector<Lease6Ptr> leases = createLeases6();
+
+    // Add leases.
+    EXPECT_TRUE(lease_mgr->addLease(leases[1]));
+    EXPECT_TRUE(lease_mgr->addLease(leases[2]));
+    EXPECT_TRUE(lease_mgr->addLease(leases[3]));
+
+    // Try again.
+    EXPECT_NO_THROW(lease_mgr->writeLeases6(filename));
+    ASSERT_TRUE(file.exists());
+    string content = file.readFile();
+    ASSERT_GT(content.size(), header.size());
+    EXPECT_EQ(header, content.substr(0, header.size()));
+
+    // Delete a lease so shrink the database.
+    file.removeFile();
+    EXPECT_FALSE(file.exists());
+    EXPECT_TRUE(lease_mgr->deleteLease(leases[2]));
+    EXPECT_NO_THROW(lease_mgr->writeLeases6(filename));
+    ASSERT_TRUE(file.exists());
+    string content1 = file.readFile();
+    EXPECT_GT(content.size(), content1.size());
+}
+
+/// @brief Check if writeLease works without a lease file (v6+MT).
+TEST_F(MemfileLeaseMgrTest, notPersistWriteLease6MultiThread) {
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "6";
+    pmap["lfc-interval"] = "0";
+    pmap["persist"] = "false";
+    pmap["name"] = getLeaseFilePath("leasefile6_0.csv");
+    boost::scoped_ptr<WFMemfileLeaseMgr> lease_mgr;
+    EXPECT_NO_THROW(lease_mgr.reset(new WFMemfileLeaseMgr(pmap)));
+
+    MultiThreadingMgr::instance().setMode(true);
+
+    // Empty database should give a header only file.
+    string header =
+        "address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+        "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
+        "hwaddr,state,user_context,hwtype,hwaddr_source,pool_id\n";
+
+    ASSERT_FALSE(lease_mgr->lease_file6_);
+    string filename = getLeaseFilePath("backup.csv");
+    LeaseFileIO file(filename);
+    file.removeFile();
+    ostringstream b;
+    b << filename << ".bak" << getpid();
+    LeaseFileIO backup(b.str());
+    backup.removeFile();
+    extra_files_.push_back(b.str());
+
+    EXPECT_NO_THROW(lease_mgr->writeLeases6(filename));
+    ASSERT_TRUE(file.exists());
+    EXPECT_EQ(header, file.readFile());
+
+    // Get the leases to be used for the test.
+    vector<Lease6Ptr> leases = createLeases6();
+
+    // Add leases.
+    EXPECT_TRUE(lease_mgr->addLease(leases[1]));
+    EXPECT_TRUE(lease_mgr->addLease(leases[2]));
+    EXPECT_TRUE(lease_mgr->addLease(leases[3]));
+
+    // Try again.
+    EXPECT_NO_THROW(lease_mgr->writeLeases6(filename));
+    ASSERT_TRUE(file.exists());
+    string content = file.readFile();
+    ASSERT_GT(content.size(), header.size());
+    EXPECT_EQ(header, content.substr(0, header.size()));
+
+    // Delete a lease so shrink the database.
+    file.removeFile();
+    EXPECT_FALSE(file.exists());
+    EXPECT_TRUE(lease_mgr->deleteLease(leases[2]));
+    EXPECT_NO_THROW(lease_mgr->writeLeases6(filename));
+    ASSERT_TRUE(file.exists());
+    string content1 = file.readFile();
+    EXPECT_GT(content.size(), content1.size());
+}
+
+/// @brief Checks that extractExtendedInfo4 both updates extended info
+/// and set id fields at startup.
+TEST_F(MemfileLeaseMgrTest, extractExtendedInfo4) {
+    // Add some leases to the CSV file: one empty map, one old extended
+    // info format.
+    string lease_file = getLeaseFilePath("leasefile4_0.csv");
+    LeaseFileIO io(lease_file);
+    io.writeFile(
+        "address,hwaddr,client_id,valid_lifetime,expire,"
+        "subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context,pool_id\n"
+
+        "192.0.2.2,02:02:02:02:02:02,,200,200,8,1,1,,1,{},0\n"
+
+        "192.0.2.3,03:03:03:03:03:03,,200,200,8,1,1,,1,"
+        "{ \"ISC\": { \"relay-agent-info\": \"0x02030102030C03AABBCC\" } },0\n"
+    );
+
+    // Start the lease manager.
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "4";
+    pmap["name"] = lease_file;
+    pmap["lfc-interval"] = "0";
+    boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr;
+    EXPECT_NO_THROW(lease_mgr.reset(new NakedMemfileLeaseMgr(pmap)));
+
+    // Check the lease with empty user context was updated.
+    Lease4Ptr lease = lease_mgr->getLease4(IOAddress("192.0.2.2"));
+    ASSERT_TRUE(lease);
+    EXPECT_FALSE(lease->getContext());
+    EXPECT_TRUE(lease->relay_id_.empty());
+    EXPECT_TRUE(lease->remote_id_.empty());
+
+    // Check the lease with extended info was upgraded.
+    lease = lease_mgr->getLease4(IOAddress("192.0.2.3"));
+    ASSERT_TRUE(lease);
+    ConstElementPtr user_context = lease->getContext();
+    ASSERT_TRUE(user_context);
+    ConstElementPtr isc = user_context->get("ISC");
+    ASSERT_TRUE(isc);
+    ConstElementPtr rai = isc->get("relay-agent-info");
+    ASSERT_TRUE(rai);
+    ASSERT_EQ(Element::map, rai->getType());
+    EXPECT_EQ(3, rai->size());
+    ConstElementPtr sub_options = rai->get("sub-options");
+    ASSERT_TRUE(sub_options);
+    EXPECT_EQ("\"0x02030102030C03AABBCC\"", sub_options->str());
+    ConstElementPtr relay_id = rai->get("relay-id");
+    ASSERT_TRUE(relay_id);
+    EXPECT_EQ("\"AABBCC\"", relay_id->str());
+    ConstElementPtr remote_id = rai->get("remote-id");
+    ASSERT_TRUE(remote_id);
+    EXPECT_EQ("\"010203\"", remote_id->str());
+
+    // Check the lease has the ids.
+    const vector<uint8_t> relay = { 0xaa, 0xbb, 0xcc };
+    EXPECT_EQ(relay, lease->relay_id_);
+    const vector<uint8_t> remote = { 1, 2, 3 };
+    EXPECT_EQ(remote, lease->remote_id_);
+
+    // Check the id indexes where updated.
+    IOAddress zero = IOAddress::IPV4_ZERO_ADDRESS();
+    Lease4Collection leases;
+    EXPECT_NO_THROW(leases = lease_mgr->getLeases4ByRelayId(relay,
+                                                            zero,
+                                                            LeasePageSize(100)));
+    ASSERT_EQ(1, leases.size());
+    EXPECT_EQ(*lease, *leases[0]);
+    EXPECT_NO_THROW(leases = lease_mgr->getLeases4ByRemoteId(remote,
+                                                             zero,
+                                                             LeasePageSize(100)));
+    ASSERT_EQ(1, leases.size());
+    EXPECT_EQ(*lease, *leases[0]);
+}
+
+/// @brief Checks that extractExtendedInfo4 does not update
+/// when extended info sanitizing is disabled.
+TEST_F(MemfileLeaseMgrTest, extractExtendedInfo4noSanitize) {
+    // Add some leases to the CSV file: one empty map, one old extended
+    // info format.
+    string lease_file = getLeaseFilePath("leasefile4_0.csv");
+    LeaseFileIO io(lease_file);
+    io.writeFile(
+        "address,hwaddr,client_id,valid_lifetime,expire,"
+        "subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context,pool_id\n"
+
+        "192.0.2.2,02:02:02:02:02:02,,200,200,8,1,1,,1,{},0\n"
+
+        "192.0.2.3,03:03:03:03:03:03,,200,200,8,1,1,,1,"
+        "{ \"ISC\": { \"relay-agent-info\": \"0x02030102030C03AABBCC\" } },0\n"
+    );
+
+    // Disable sanitizing.
+    CfgMgr::instance().getStagingCfg()->getConsistency()->
+        setExtendedInfoSanityCheck(CfgConsistency::EXTENDED_INFO_CHECK_NONE);
+
+    // Start the lease manager.
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "4";
+    pmap["name"] = lease_file;
+    pmap["lfc-interval"] = "0";
+    boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr;
+    EXPECT_NO_THROW(lease_mgr.reset(new NakedMemfileLeaseMgr(pmap)));
+
+    // Check the lease with empty user context was not updated.
+    Lease4Ptr lease = lease_mgr->getLease4(IOAddress("192.0.2.2"));
+    ASSERT_TRUE(lease);
+    ConstElementPtr user_context = lease->getContext();
+    ASSERT_TRUE(user_context);
+    ASSERT_EQ(Element::map, user_context->getType());
+    EXPECT_TRUE(user_context->empty());
+
+    // Check the lease with extended info was not upgraded.
+    lease = lease_mgr->getLease4(IOAddress("192.0.2.3"));
+    ASSERT_TRUE(lease);
+    user_context = lease->getContext();
+    ASSERT_TRUE(user_context);
+    ConstElementPtr isc = user_context->get("ISC");
+    ASSERT_TRUE(isc);
+    ConstElementPtr rai = isc->get("relay-agent-info");
+    ASSERT_TRUE(rai);
+    EXPECT_EQ(Element::string, rai->getType());
+    EXPECT_EQ("\"0x02030102030C03AABBCC\"", rai->str());
+
+    // Check the lease has no ids.
+    EXPECT_TRUE(lease->relay_id_.empty());
+    EXPECT_TRUE(lease->remote_id_.empty());
+}
+
+/// @brief Checks that extractExtendedInfo4 updates extended info
+/// when explicitly requested.
+TEST_F(MemfileLeaseMgrTest, extractExtendedInfo4ExplicitSanitize) {
+    // Add some leases to the CSV file: one empty map, one old extended
+    // info format.
+    string lease_file = getLeaseFilePath("leasefile4_0.csv");
+    LeaseFileIO io(lease_file);
+    string content =
+        "address,hwaddr,client_id,valid_lifetime,expire,"
+        "subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context,pool_id\n"
+
+        "192.0.2.2,02:02:02:02:02:02,,200,200,8,1,1,,1,{},0\n"
+
+        "192.0.2.3,03:03:03:03:03:03,,200,200,8,1,1,,1,"
+        "{ \"ISC\": { \"relay-agent-info\": \"0x02030102030C03AABBCC\" } },0\n";
+    io.writeFile(content);
+
+    // Disable sanitizing.
+    CfgMgr::instance().getStagingCfg()->getConsistency()->
+        setExtendedInfoSanityCheck(CfgConsistency::EXTENDED_INFO_CHECK_NONE);
+
+    // Start the lease manager.
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "4";
+    pmap["name"] = lease_file;
+    pmap["lfc-interval"] = "0";
+    boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr;
+    EXPECT_NO_THROW(lease_mgr.reset(new NakedMemfileLeaseMgr(pmap)));
+
+    // Check the lease with empty user context was not updated.
+    Lease4Ptr lease = lease_mgr->getLease4(IOAddress("192.0.2.2"));
+    ASSERT_TRUE(lease);
+    ConstElementPtr user_context = lease->getContext();
+    ASSERT_TRUE(user_context);
+    ASSERT_EQ(Element::map, user_context->getType());
+    EXPECT_TRUE(user_context->empty());
+
+    // Check the lease with extended info was not upgraded.
+    lease = lease_mgr->getLease4(IOAddress("192.0.2.3"));
+    ASSERT_TRUE(lease);
+    user_context = lease->getContext();
+    ASSERT_TRUE(user_context);
+    ConstElementPtr isc = user_context->get("ISC");
+    ASSERT_TRUE(isc);
+    ConstElementPtr rai = isc->get("relay-agent-info");
+    ASSERT_TRUE(rai);
+    EXPECT_EQ(Element::string, rai->getType());
+    EXPECT_EQ("\"0x02030102030C03AABBCC\"", rai->str());
+
+    // Check the lease has no ids.
+    EXPECT_TRUE(lease->relay_id_.empty());
+    EXPECT_TRUE(lease->remote_id_.empty());
+
+    // Enable sanitizing.
+    CfgMgr::instance().getCurrentCfg()->getConsistency()->
+        setExtendedInfoSanityCheck(CfgConsistency::EXTENDED_INFO_CHECK_FIX);
+
+    // Now run extractExtendedInfo4 with update set to true.
+    size_t updated = 0;
+    EXPECT_NO_THROW(updated = lease_mgr->extractExtendedInfo4(true, true));
+    EXPECT_EQ(2, updated);
+
+    // Check the lease with empty user context was updated.
+    lease = lease_mgr->getLease4(IOAddress("192.0.2.2"));
+    ASSERT_TRUE(lease);
+    EXPECT_FALSE(lease->getContext());
+    EXPECT_TRUE(lease->relay_id_.empty());
+    EXPECT_TRUE(lease->remote_id_.empty());
+
+    // Check the lease with extended info was upgraded.
+    lease = lease_mgr->getLease4(IOAddress("192.0.2.3"));
+    ASSERT_TRUE(lease);
+    user_context = lease->getContext();
+    ASSERT_TRUE(user_context);
+    isc = user_context->get("ISC");
+    ASSERT_TRUE(isc);
+    rai = isc->get("relay-agent-info");
+    ASSERT_TRUE(rai);
+    ASSERT_EQ(Element::map, rai->getType());
+    EXPECT_EQ(3, rai->size());
+    ConstElementPtr sub_options = rai->get("sub-options");
+    ASSERT_TRUE(sub_options);
+    EXPECT_EQ("\"0x02030102030C03AABBCC\"", sub_options->str());
+    ConstElementPtr relay_id = rai->get("relay-id");
+    ASSERT_TRUE(relay_id);
+    EXPECT_EQ("\"AABBCC\"", relay_id->str());
+    ConstElementPtr remote_id = rai->get("remote-id");
+    ASSERT_TRUE(remote_id);
+    EXPECT_EQ("\"010203\"", remote_id->str());
+
+    // Check the lease has the ids.
+    const vector<uint8_t> relay = { 0xaa, 0xbb, 0xcc };
+    EXPECT_EQ(relay, lease->relay_id_);
+    const vector<uint8_t> remote = { 1, 2, 3 };
+    EXPECT_EQ(remote, lease->remote_id_);
+
+
+    // Check the id indexes where updated.
+    IOAddress zero = IOAddress::IPV4_ZERO_ADDRESS();
+    Lease4Collection leases;
+    EXPECT_NO_THROW(leases = lease_mgr->getLeases4ByRelayId(relay,
+                                                            zero,
+                                                            LeasePageSize(100)));
+    ASSERT_EQ(1, leases.size());
+    EXPECT_EQ(*lease, *leases[0]);
+    EXPECT_NO_THROW(leases = lease_mgr->getLeases4ByRemoteId(remote,
+                                                             zero,
+                                                             LeasePageSize(100)));
+    ASSERT_EQ(1, leases.size());
+    EXPECT_EQ(*lease, *leases[0]);
+    // Check the lease file was updated.
+    string new_content =
+        "192.0.2.2,02:02:02:02:02:02,,200,200,8,1,1,,1,,0\n"
+
+        "192.0.2.3,03:03:03:03:03:03,,200,200,8,1,1,,1,"
+        "{ \"ISC\": { \"relay-agent-info\": { "
+        "\"relay-id\": \"AABBCC\"&#x2c "
+        "\"remote-id\": \"010203\"&#x2c "
+        "\"sub-options\": \"0x02030102030C03AABBCC\" } } },0\n";
+    string expected = content + new_content;
+    EXPECT_EQ(expected, io.readFile());
+}
+
+/// @brief Checks that buildExtendedInfoTables6 both updates extended info
+/// and add them into tables at startup.
+TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6) {
+    // Add some leases to the CSV file: one empty map, one old extended
+    // info format.
+    string lease_file = getLeaseFilePath("leasefile6_0.csv");
+    LeaseFileIO io(lease_file);
+    io.writeFile(
+        "address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+        "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
+        "hwaddr,state,user_context,hwtype,hwaddr_source,pool_id\n"
+
+        "2001:db8:1::1,01:01:01:01:01:01:01:01:01:01:01:01:01,"
+        "400,1000,8,100,0,7,0,1,1,,,1,"
+        "{},,,0\n"
+
+        "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
+        "200,200,8,100,0,7,0,1,1,,,1,"
+        "{ \"ISC\": { \"relays\": [ { \"hop\": 44&#x2c"
+        " \"link\": \"2001:db8::4\"&#x2c \"peer\": \"2001:db8::5\"&#x2c"
+        " \"options\": \"0x00250006010203040506003500086464646464646464\""
+        " } ] } },,,0\n"
+    );
+
+    // Start the lease manager.
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "6";
+    pmap["name"] = lease_file;
+    pmap["lfc-interval"] = "0";
+    pmap["extended-info-tables"] = "true";
+    boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr;
+    EXPECT_NO_THROW(lease_mgr.reset(new NakedMemfileLeaseMgr(pmap)));
+
+    // Check the lease with empty user context was updated.
+    Lease6Ptr lease = lease_mgr->getLease6(Lease::TYPE_NA,
+                                           IOAddress("2001:db8:1::1"));
+    ASSERT_TRUE(lease);
+    EXPECT_FALSE(lease->getContext());
+
+    // Check the lease with extended info was upgraded.
+    lease = lease_mgr->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::2"));
+    ASSERT_TRUE(lease);
+    ConstElementPtr user_context = lease->getContext();
+    ASSERT_TRUE(user_context);
+    ConstElementPtr isc = user_context->get("ISC");
+    ASSERT_TRUE(isc);
+    EXPECT_FALSE(isc->contains("relays"));
+    EXPECT_TRUE(isc->contains("relay-info"));
+
+    // Check that extended info tables were updated.
+    ASSERT_EQ(1, lease_mgr->relay_id6_.size());
+    auto relay_id_it = lease_mgr->relay_id6_.cbegin();
+    ASSERT_NE(relay_id_it, lease_mgr->relay_id6_.cend());
+    Lease6ExtendedInfoPtr ex_info = *relay_id_it;
+    ASSERT_TRUE(ex_info);
+    EXPECT_EQ("2001:db8:1::2", ex_info->lease_addr_.toText());
+    const vector<uint8_t>& exp_relay_id = vector<uint8_t>(8, 0x64);
+    EXPECT_EQ(exp_relay_id, ex_info->id_);
+
+    ASSERT_EQ(1, lease_mgr->remote_id6_.size());
+    auto remote_id_it = lease_mgr->remote_id6_.cbegin();
+    ASSERT_NE(remote_id_it, lease_mgr->remote_id6_.cend());
+    ex_info = *remote_id_it;
+    ASSERT_TRUE(ex_info);
+    EXPECT_EQ("2001:db8:1::2", ex_info->lease_addr_.toText());
+    const vector<uint8_t>& exp_remote_id = { 1, 2, 3, 4, 5, 6 };
+    EXPECT_EQ(exp_remote_id, ex_info->id_);
+}
+
+/// @brief Checks that buildExtendedInfoTables6 does not update
+/// when extended info sanitizing is disabled.
+TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6noSanitize) {
+    // Add some leases to the CSV file: one empty map, one old extended
+    // info format.
+    string lease_file = getLeaseFilePath("leasefile6_0.csv");
+    LeaseFileIO io(lease_file);
+    io.writeFile(
+        "address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+        "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
+        "hwaddr,state,user_context,hwtype,hwaddr_source,pool_id\n"
+
+        "2001:db8:1::1,01:01:01:01:01:01:01:01:01:01:01:01:01,"
+        "400,1000,8,100,0,7,0,1,1,,,1,"
+        "{},,,0\n"
+
+        "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
+        "200,200,8,100,0,7,0,1,1,,,1,"
+        "{ \"ISC\": { \"relays\": [ { \"hop\": 44&#x2c"
+        " \"link\": \"2001:db8::4\"&#x2c \"peer\": \"2001:db8::5\"&#x2c"
+        " \"options\": \"0x00250006010203040506003500086464646464646464\""
+        " } ] } },,,0\n"
+    );
+
+    // Disable sanitizing.
+    CfgMgr::instance().getStagingCfg()->getConsistency()->
+        setExtendedInfoSanityCheck(CfgConsistency::EXTENDED_INFO_CHECK_NONE);
+
+    // Start the lease manager.
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "6";
+    pmap["name"] = lease_file;
+    pmap["lfc-interval"] = "0";
+    pmap["extended-info-tables"] = "true";
+    boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr;
+    EXPECT_NO_THROW(lease_mgr.reset(new NakedMemfileLeaseMgr(pmap)));
+
+    // Check the lease with empty user context was not updated.
+    Lease6Ptr lease = lease_mgr->getLease6(Lease::TYPE_NA,
+                                           IOAddress("2001:db8:1::1"));
+    ASSERT_TRUE(lease);
+    ConstElementPtr user_context = lease->getContext();
+    ASSERT_TRUE(user_context);
+    ASSERT_EQ(Element::map, user_context->getType());
+    EXPECT_TRUE(user_context->empty());
+
+    // Check the lease with extended info was not upgraded.
+    lease = lease_mgr->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::2"));
+    ASSERT_TRUE(lease);
+    user_context = lease->getContext();
+    ASSERT_TRUE(user_context);
+    ConstElementPtr isc = user_context->get("ISC");
+    ASSERT_TRUE(isc);
+    EXPECT_TRUE(isc->contains("relays"));
+    EXPECT_FALSE(isc->contains("relay-info"));
+
+    // Check that extended info tables were not updated.
+    EXPECT_TRUE(lease_mgr->relay_id6_.empty());
+    EXPECT_TRUE(lease_mgr->remote_id6_.empty());
+}
+
+/// @brief Checks that buildExtendedInfoTables6 adds extended info to tables
+/// when enabled.
+TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6enabled) {
+    // Add some leases to the CSV file: one empty map, one new extended
+    // info format.
+    string lease_file = getLeaseFilePath("leasefile6_0.csv");
+    LeaseFileIO io(lease_file);
+    io.writeFile(
+        "address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+        "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
+        "hwaddr,state,user_context,hwtype,hwaddr_source,pool_id\n"
+
+        "2001:db8:1::1,01:01:01:01:01:01:01:01:01:01:01:01:01,"
+        "400,1000,8,100,0,7,0,1,1,,,1,"
+        "{},,,0\n"
+
+        "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
+        "200,200,8,100,0,7,0,1,1,,,1,"
+        "{ \"ISC\": { \"relay-info\": [ { \"hop\": 44&#x2c"
+        " \"link\": \"2001:db8::4\"&#x2c \"peer\": \"2001:db8::5\"&#x2c"
+        " \"remote-id\": \"010203040506\"&#x2c"
+        " \"relay-id\": \"6464646464646464\"&#x2c"
+        " \"options\": \"0x00250006010203040506003500086464646464646464\""
+        " } ] } },,,0\n"
+    );
+
+    // Disable sanitizing.
+    CfgMgr::instance().getStagingCfg()->getConsistency()->
+        setExtendedInfoSanityCheck(CfgConsistency::EXTENDED_INFO_CHECK_NONE);
+
+    // Start the lease manager.
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "6";
+    pmap["name"] = lease_file;
+    pmap["lfc-interval=0"] = "0";
+    pmap["extended-info-tables"] = "true";
+    boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr;
+    EXPECT_NO_THROW(lease_mgr.reset(new NakedMemfileLeaseMgr(pmap)));
+
+    // Check the lease with empty user context was updated.
+    Lease6Ptr lease = lease_mgr->getLease6(Lease::TYPE_NA,
+                                           IOAddress("2001:db8:1::1"));
+    ASSERT_TRUE(lease);
+    ConstElementPtr user_context = lease->getContext();
+    ASSERT_TRUE(user_context);
+    ASSERT_EQ(Element::map, user_context->getType());
+    EXPECT_TRUE(user_context->empty());
+
+    // Check that extended info tables were updated.
+    ASSERT_EQ(1, lease_mgr->relay_id6_.size());
+    auto relay_id_it = lease_mgr->relay_id6_.cbegin();
+    ASSERT_NE(relay_id_it, lease_mgr->relay_id6_.cend());
+    Lease6ExtendedInfoPtr ex_info = *relay_id_it;
+    ASSERT_TRUE(ex_info);
+    EXPECT_EQ("2001:db8:1::2", ex_info->lease_addr_.toText());
+    const vector<uint8_t>& exp_relay_id = vector<uint8_t>(8, 0x64);
+    EXPECT_EQ(exp_relay_id, ex_info->id_);
+
+    ASSERT_EQ(1, lease_mgr->remote_id6_.size());
+    auto remote_id_it = lease_mgr->remote_id6_.cbegin();
+    ASSERT_NE(remote_id_it, lease_mgr->remote_id6_.cend());
+    ex_info = *remote_id_it;
+    ASSERT_TRUE(ex_info);
+    EXPECT_EQ("2001:db8:1::2", ex_info->lease_addr_.toText());
+    const vector<uint8_t>& exp_remote_id = { 1, 2, 3, 4, 5, 6 };
+    EXPECT_EQ(exp_remote_id, ex_info->id_);
+}
+
+/// @brief Checks that buildExtendedInfoTables6 does not add extended info
+/// to tables when disabled.
+TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6disabled) {
+    // Add some leases to the CSV file: one empty map, one new extended
+    // info format.
+    string lease_file = getLeaseFilePath("leasefile6_0.csv");
+    LeaseFileIO io(lease_file);
+    io.writeFile(
+        "address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+        "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
+        "hwaddr,state,user_context,hwtype,hwaddr_source,pool_id\n"
+
+        "2001:db8:1::1,01:01:01:01:01:01:01:01:01:01:01:01:01,"
+        "400,1000,8,100,0,7,0,1,1,,,1,"
+        "{},,,0\n"
+
+        "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
+        "200,200,8,100,0,7,0,1,1,,,1,"
+        "{ \"ISC\": { \"relay-info\": [ { \"hop\": 44&#x2c"
+        " \"link\": \"2001:db8::4\"&#x2c \"peer\": \"2001:db8::5\"&#x2c"
+        " \"remote-id\": \"010203040506\"&#x2c"
+        " \"relay-id\": \"6464646464646464\"&#x2c"
+        " \"options\": \"0x00250006010203040506003500086464646464646464\""
+        " } ] } },,,0\n"
+    );
+
+    // Start the lease manager.
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "6";
+    pmap["name"] = lease_file;
+    pmap["lfc-interval"] = "0";
+    boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr;
+    EXPECT_NO_THROW(lease_mgr.reset(new NakedMemfileLeaseMgr(pmap)));
+
+    // Check the lease with empty user context was updated.
+    Lease6Ptr lease = lease_mgr->getLease6(Lease::TYPE_NA,
+                                           IOAddress("2001:db8:1::1"));
+    ASSERT_TRUE(lease);
+    EXPECT_FALSE(lease->getContext());
+
+    // Check that extended info tables were not updated.
+    EXPECT_TRUE(lease_mgr->relay_id6_.empty());
+    EXPECT_TRUE(lease_mgr->remote_id6_.empty());
+}
+
+/// @brief Checks that buildExtendedInfoTables6 updates when explicitly
+/// requested.
+TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6ExplicitSanitize) {
+    // Add some leases to the CSV file: one empty map, one old extended
+    // info format.
+    string lease_file = getLeaseFilePath("leasefile6_0.csv");
+    LeaseFileIO io(lease_file);
+    string content =
+        "address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+        "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
+        "hwaddr,state,user_context,hwtype,hwaddr_source,pool_id\n"
+
+        "2001:db8:1::1,01:01:01:01:01:01:01:01:01:01:01:01:01,"
+        "400,1000,8,100,0,7,0,1,1,,,1,"
+        "{},,,0\n"
+
+        "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
+        "200,200,8,100,0,7,0,1,1,,,1,"
+        "{ \"ISC\": { \"relays\": [ { \"hop\": 44&#x2c"
+        " \"link\": \"2001:db8::4\"&#x2c \"peer\": \"2001:db8::5\"&#x2c"
+        " \"options\": \"0x00250006010203040506003500086464646464646464\""
+        " } ] } },,,0\n";
+    io.writeFile(content);
+
+    // Disable sanitizing.
+    CfgMgr::instance().getStagingCfg()->getConsistency()->
+        setExtendedInfoSanityCheck(CfgConsistency::EXTENDED_INFO_CHECK_NONE);
+
+    // Start the lease manager.
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "6";
+    pmap["name"] = lease_file;
+    pmap["lfc-interval"] = "0";
+    boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr;
+    EXPECT_NO_THROW(lease_mgr.reset(new NakedMemfileLeaseMgr(pmap)));
+
+    // Check the lease with empty user context was not updated.
+    Lease6Ptr lease = lease_mgr->getLease6(Lease::TYPE_NA,
+                                           IOAddress("2001:db8:1::1"));
+    ASSERT_TRUE(lease);
+    ConstElementPtr user_context = lease->getContext();
+    ASSERT_TRUE(user_context);
+    ASSERT_EQ(Element::map, user_context->getType());
+    EXPECT_TRUE(user_context->empty());
+
+    // Check the lease with extended info was not upgraded.
+    lease = lease_mgr->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::2"));
+    ASSERT_TRUE(lease);
+    user_context = lease->getContext();
+    ASSERT_TRUE(user_context);
+    ConstElementPtr isc = user_context->get("ISC");
+    ASSERT_TRUE(isc);
+    EXPECT_TRUE(isc->contains("relays"));
+    EXPECT_FALSE(isc->contains("relay-info"));
+
+    // Enable sanitizing.
+    CfgMgr::instance().getStagingCfg()->getConsistency()->
+        setExtendedInfoSanityCheck(CfgConsistency::EXTENDED_INFO_CHECK_FIX);
+
+    // Now run buildExtendedInfoTables6.
+    EXPECT_NO_THROW(lease_mgr->buildExtendedInfoTables6());
+
+    // Check the lease with empty user context was updated.
+    lease = lease_mgr->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"));
+    ASSERT_TRUE(lease);
+    EXPECT_FALSE(lease->getContext());
+
+    // Check the lease with extended info was upgraded.
+    lease = lease_mgr->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::2"));
+    ASSERT_TRUE(lease);
+    user_context = lease->getContext();
+    ASSERT_TRUE(user_context);
+    isc = user_context->get("ISC");
+    ASSERT_TRUE(isc);
+    EXPECT_FALSE(isc->contains("relays"));
+    EXPECT_TRUE(isc->contains("relay-info"));
+
+    // The lease file is not more updated.
+}
+
+/// @brief Checks that buildExtendedInfoTables6 can rebuild tables.
+TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6rebuild) {
+    // Add some leases to the CSV file: one empty map, one new extended
+    // info format.
+    string lease_file = getLeaseFilePath("leasefile6_0.csv");
+    LeaseFileIO io(lease_file);
+    io.writeFile(
+        "address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
+        "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
+        "hwaddr,state,user_context,hwtype,hwaddr_source,pool_id\n"
+
+        "2001:db8:1::1,01:01:01:01:01:01:01:01:01:01:01:01:01,"
+        "400,1000,8,100,0,7,0,1,1,,,1,"
+        "{},,,0\n"
+
+        "2001:db8:1::2,02:02:02:02:02:02:02:02:02:02:02:02:02,"
+        "200,200,8,100,0,7,0,1,1,,,1,"
+        "{ \"ISC\": { \"relay-info\": [ { \"hop\": 44&#x2c"
+        " \"link\": \"2001:db8::4\"&#x2c \"peer\": \"2001:db8::5\"&#x2c"
+        " \"remote-id\": \"010203040506\"&#x2c"
+        " \"relay-id\": \"6464646464646464\"&#x2c"
+        " \"options\": \"0x00250006010203040506003500086464646464646464\""
+        " } ] } },,,0\n"
+    );
+
+    // Disable sanitizing.
+    CfgMgr::instance().getStagingCfg()->getConsistency()->
+        setExtendedInfoSanityCheck(CfgConsistency::EXTENDED_INFO_CHECK_NONE);
+
+    // Start the lease manager.
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "6";
+    pmap["name"] = lease_file;
+    pmap["lfc-interval=0"] = "0";
+    pmap["extended-info-tables"] = "true";
+    boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr;
+    EXPECT_NO_THROW(lease_mgr.reset(new NakedMemfileLeaseMgr(pmap)));
+
+    // Check that extended info tables were updated.
+    EXPECT_EQ(1, lease_mgr->relay_id6_.size());
+    EXPECT_EQ(1, lease_mgr->remote_id6_.size());
+
+    // Add a junk entry in each table.
+    IOAddress lease_addr("2001:db8:1::10");
+    const vector<uint8_t>& relay_id = vector<uint8_t>(10, 0x65);
+    Lease6ExtendedInfoPtr relay;
+    relay.reset(new Lease6ExtendedInfo(lease_addr, relay_id));
+    lease_mgr->relay_id6_.insert(relay);
+    const vector<uint8_t>& remote_id = { 10, 11, 12, 13, 14, 15, 16 };
+    Lease6ExtendedInfoPtr remote;
+    remote.reset(new Lease6ExtendedInfo(lease_addr, remote_id));
+    lease_mgr->remote_id6_.insert(remote);
+
+    // Check that tables grown.
+    EXPECT_EQ(2, lease_mgr->relay_id6_.size());
+    EXPECT_EQ(2, lease_mgr->remote_id6_.size());
+
+    // Rebuild the tables.
+    EXPECT_NO_THROW(lease_mgr->buildExtendedInfoTables6());
+
+    // Check tables.
+    ASSERT_EQ(1, lease_mgr->relay_id6_.size());
+    auto relay_id_it = lease_mgr->relay_id6_.cbegin();
+    ASSERT_NE(relay_id_it, lease_mgr->relay_id6_.cend());
+    Lease6ExtendedInfoPtr ex_info = *relay_id_it;
+    ASSERT_TRUE(ex_info);
+    EXPECT_EQ("2001:db8:1::2", ex_info->lease_addr_.toText());
+    const vector<uint8_t>& exp_relay_id = vector<uint8_t>(8, 0x64);
+    EXPECT_EQ(exp_relay_id, ex_info->id_);
+
+    ASSERT_EQ(1, lease_mgr->remote_id6_.size());
+    auto remote_id_it = lease_mgr->remote_id6_.cbegin();
+    ASSERT_NE(remote_id_it, lease_mgr->remote_id6_.cend());
+    ex_info = *remote_id_it;
+    ASSERT_TRUE(ex_info);
+    EXPECT_EQ("2001:db8:1::2", ex_info->lease_addr_.toText());
+    const vector<uint8_t>& exp_remote_id = { 1, 2, 3, 4, 5, 6 };
+    EXPECT_EQ(exp_remote_id, ex_info->id_);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv4 lease is added.
+TEST_F(MemfileLeaseMgrTest, trackAddLease4) {
+    startBackend(V4);
+    testTrackAddLease4(false);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv4 lease is added.
+TEST_F(MemfileLeaseMgrTest, trackAddLease4MultiThreading) {
+    startBackend(V4);
+    MultiThreadingMgr::instance().setMode(true);
+    testTrackAddLease4(false);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv6 address lease is added.
+TEST_F(MemfileLeaseMgrTest, trackAddLeaseNA) {
+    startBackend(V6);
+    testTrackAddLeaseNA(false);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv6 address lease is added.
+TEST_F(MemfileLeaseMgrTest, trackAddLeaseNAMultiThreading) {
+    startBackend(V6);
+    MultiThreadingMgr::instance().setMode(true);
+    testTrackAddLeaseNA(false);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv6 prefix lease is added.
+TEST_F(MemfileLeaseMgrTest, trackAddLeasePD) {
+    startBackend(V6);
+    testTrackAddLeasePD(false);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv6 prefix lease is added.
+TEST_F(MemfileLeaseMgrTest, trackAddLeasePDMultiThreading) {
+    startBackend(V6);
+    MultiThreadingMgr::instance().setMode(true);
+    testTrackAddLeasePD(false);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv4 lease is added.
+TEST_F(MemfileLeaseMgrTest, trackUpdateLease4) {
+    startBackend(V4);
+    testTrackUpdateLease4(false);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv4 lease is added.
+TEST_F(MemfileLeaseMgrTest, trackUpdateLease4MultiThreading) {
+    startBackend(V4);
+    MultiThreadingMgr::instance().setMode(true);
+    testTrackUpdateLease4(false);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv6 address lease is updated.
+TEST_F(MemfileLeaseMgrTest, trackUpdateLeaseNA) {
+    startBackend(V6);
+    testTrackUpdateLeaseNA(false);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv6 address lease is updated.
+TEST_F(MemfileLeaseMgrTest, trackUpdateLeaseNAMultiThreading) {
+    startBackend(V6);
+    MultiThreadingMgr::instance().setMode(true);
+    testTrackUpdateLeaseNA(false);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv6 prefix lease is updated.
+TEST_F(MemfileLeaseMgrTest, trackUpdateLeasePD) {
+    startBackend(V6);
+    testTrackUpdateLeasePD(false);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv6 prefix lease is updated.
+TEST_F(MemfileLeaseMgrTest, trackUpdateLeasePDMultiThreading) {
+    startBackend(V6);
+    MultiThreadingMgr::instance().setMode(true);
+    testTrackUpdateLeasePD(false);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv4 lease is added.
+TEST_F(MemfileLeaseMgrTest, trackDeleteLease4) {
+    startBackend(V4);
+    testTrackDeleteLease4(false);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv4 lease is added.
+TEST_F(MemfileLeaseMgrTest, trackDeleteLease4MultiThreading) {
+    startBackend(V4);
+    MultiThreadingMgr::instance().setMode(true);
+    testTrackDeleteLease4(false);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv6 address lease is deleted.
+TEST_F(MemfileLeaseMgrTest, trackDeleteLeaseNA) {
+    startBackend(V6);
+    testTrackDeleteLeaseNA(false);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv6 addres lease is deleted.
+TEST_F(MemfileLeaseMgrTest, trackDeleteLeaseNAMultiThreading) {
+    startBackend(V6);
+    MultiThreadingMgr::instance().setMode(true);
+    testTrackDeleteLeaseNA(false);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv6 prefix lease is deleted.
+TEST_F(MemfileLeaseMgrTest, trackDeleteLeasePD) {
+    startBackend(V6);
+    testTrackDeleteLeasePD(false);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv6 prefix lease is deleted.
+TEST_F(MemfileLeaseMgrTest, trackDeleteLeasePDMultiThreading) {
+    startBackend(V6);
+    MultiThreadingMgr::instance().setMode(true);
+    testTrackDeleteLeasePD(false);
+}
+
+/// @brief Checks that the lease manager can be recreated and its
+/// registered callbacks preserved, if desired.
+TEST_F(MemfileLeaseMgrTest, recreateWithCallbacks) {
+    startBackend(V4);
+    testRecreateWithCallbacks(getConfigString(V4));
+}
+
+/// @brief Checks that the lease manager can be recreated without the
+/// previously registered callbacks.
+TEST_F(MemfileLeaseMgrTest, recreateWithoutCallbacks) {
+    startBackend(V4);
+    testRecreateWithoutCallbacks(getConfigString(V4));
+}
+
+TEST_F(MemfileLeaseMgrTest, bigStats) {
+    startBackend(V4);
+    testBigStats();
 }
 
 }  // namespace

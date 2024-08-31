@@ -49,7 +49,7 @@
                 "option-data": [
                     {
 // vendor-encapsulated-options and defined option on global level should
-// be also configured  with proper "data" parameters in "option-data" list.
+// be also configured with proper "data" parameters in "option-data" list.
 // Because Kea will send only option that client ask for, and there is no way
 // to ask for suboptions, parameter "always-send" with value set
 // to true has also be included in all custom suboptions
@@ -70,9 +70,9 @@
                 ]
             }
         ],
-// Kea is told to listen on ethX interface only.
+// Kea is told to listen on eth0 interface only.
         "interfaces-config": {
-            "interfaces": ["ethX"]
+            "interfaces": ["eth0"]
         },
 // We need to specify the database used to store leases.
         "lease-database": {
@@ -82,13 +82,14 @@
 // here. We tell Kea that it is directly available over local interface.
         "subnet4": [
             {
-                "interface": "ethX",
+                "interface": "eth0",
                 "pools": [
                     {
                         "pool": "192.0.2.50-192.0.2.50"
                     }
                 ],
-                "subnet": "192.0.2.0/24"
+                "subnet": "192.0.2.0/24",
+                "id": 1
             }
         ]
     }

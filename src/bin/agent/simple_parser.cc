@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,14 +7,15 @@
 #include <config.h>
 
 #include <agent/simple_parser.h>
+#include <asiolink/io_service_mgr.h>
 #include <cc/data.h>
 #include <cc/dhcp_config_error.h>
 #include <hooks/hooks_manager.h>
 #include <hooks/hooks_parser.h>
 #include <http/basic_auth_config.h>
-#include <boost/foreach.hpp>
 
 using namespace isc::data;
+using namespace isc::asiolink;
 
 namespace isc {
 namespace agent {
@@ -146,9 +147,9 @@ AgentSimpleParser::parse(const CtrlAgentCfgContextPtr& ctx,
     // Control sockets are third.
     ConstElementPtr ctrl_sockets = config->get("control-sockets");
     if (ctrl_sockets) {
-        auto sockets_map = ctrl_sockets->mapValue();
-        for (auto cs = sockets_map.cbegin(); cs != sockets_map.cend(); ++cs) {
-            ctx->setControlSocketInfo(cs->second, cs->first);
+        auto const& sockets_map = ctrl_sockets->mapValue();
+        for (auto const& cs : sockets_map) {
+            ctx->setControlSocketInfo(cs.second, cs.first);
         }
     }
 
@@ -174,7 +175,7 @@ AgentSimpleParser::parse(const CtrlAgentCfgContextPtr& ctx,
     if (hooks) {
         HooksLibrariesParser hooks_parser;
         hooks_parser.parse(libraries, hooks);
-        libraries.verifyLibraries(hooks->getPosition());
+        libraries.verifyLibraries(hooks->getPosition(), false);
     }
 
     if (!check_only) {
@@ -183,7 +184,8 @@ AgentSimpleParser::parse(const CtrlAgentCfgContextPtr& ctx,
         // change causes problems when trying to roll back.
         HooksManager::prepareUnloadLibraries();
         static_cast<void>(HooksManager::unloadLibraries());
-        libraries.loadLibraries();
+        IOServiceMgr::instance().clearIOServices();
+        libraries.loadLibraries(false);
     }
 }
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,20 +7,18 @@
 #include <config.h>
 
 #include <exceptions/exceptions.h>
-
-#include <util/buffer.h>
-#include <util/encode/hex.h>
-
+#include <exceptions/isc_assert.h>
 #include <dns/name.h>
 #include <dns/messagerenderer.h>
 #include <dns/master_lexer.h>
 #include <dns/rdata.h>
 #include <dns/rrparamregistry.h>
 #include <dns/rrtype.h>
+#include <util/buffer.h>
+#include <util/encode/encode.h>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
-
 #include <algorithm>
 #include <cctype>
 #include <string>
@@ -29,13 +27,13 @@
 #include <ios>
 #include <ostream>
 #include <vector>
-
 #include <stdint.h>
 #include <string.h>
 
+using namespace isc::util;
+
 using namespace std;
 using boost::lexical_cast;
-using namespace isc::util;
 
 namespace isc {
 namespace dns {
@@ -54,16 +52,14 @@ Rdata::getLength() const {
 // function signature with that given in the header file.
 RdataPtr
 createRdata(const RRType& rrtype, const RRClass& rrclass,
-            const std::string& rdata_string)
-{
+            const std::string& rdata_string) {
     return (RRParamRegistry::getRegistry().createRdata(rrtype, rrclass,
                                                        rdata_string));
 }
 
 RdataPtr
 createRdata(const RRType& rrtype, const RRClass& rrclass,
-            isc::util::InputBuffer& buffer, size_t len)
-{
+            InputBuffer& buffer, size_t len) {
     if (len > MAX_RDLENGTH) {
         isc_throw(InvalidRdataLength, "RDLENGTH too large");
     }
@@ -83,8 +79,7 @@ createRdata(const RRType& rrtype, const RRClass& rrclass,
 }
 
 RdataPtr
-createRdata(const RRType& rrtype, const RRClass& rrclass, const Rdata& source)
-{
+createRdata(const RRType& rrtype, const RRClass& rrclass, const Rdata& source) {
     return (RRParamRegistry::getRegistry().createRdata(rrtype, rrclass,
                                                        source));
 }
@@ -93,15 +88,14 @@ namespace {
 void
 fromtextError(bool& error_issued, const MasterLexer& lexer,
               MasterLoaderCallbacks& callbacks,
-              const MasterToken* token, const char* reason)
-{
+              const MasterToken* token, const char* reason) {
     // Don't be too noisy if there are many issues for single RDATA
     if (error_issued) {
         return;
     }
     error_issued = true;
 
-    if (token == NULL) {
+    if (!token) {
         callbacks.error(lexer.getSourceName(), lexer.getSourceLine(),
                         "createRdata from text failed: " + string(reason));
         return;
@@ -133,8 +127,7 @@ RdataPtr
 createRdata(const RRType& rrtype, const RRClass& rrclass,
             MasterLexer& lexer, const Name* origin,
             MasterLoader::Options options,
-            MasterLoaderCallbacks& callbacks)
-{
+            MasterLoaderCallbacks& callbacks) {
     RdataPtr rdata;
 
     bool error_issued = false;
@@ -147,7 +140,7 @@ createRdata(const RRType& rrtype, const RRClass& rrclass,
         // Catching all isc::Exception is too broad, but right now we don't
         // have better granularity.  When we complete #2518 we can make this
         // finer.
-        fromtextError(error_issued, lexer, callbacks, NULL, ex.what());
+        fromtextError(error_issued, lexer, callbacks, 0, ex.what());
     }
     // Other exceptions mean a serious implementation bug or fatal system
     // error; it doesn't make sense to catch and try to recover from them
@@ -165,7 +158,7 @@ createRdata(const RRType& rrtype, const RRClass& rrclass,
                               "file does not end with newline");
             return (rdata);
         default:
-            rdata.reset();      // we'll return NULL
+            rdata.reset();      // we'll return null
             fromtextError(error_issued, lexer, callbacks, &token,
                           "extra input text");
             // Continue until we see EOL or EOF
@@ -173,7 +166,7 @@ createRdata(const RRType& rrtype, const RRClass& rrclass,
     } while (true);
 
     // We shouldn't reach here
-    assert(false);
+    isc_throw_assert(false);
     return (RdataPtr()); // add explicit return to silence some compilers
 }
 
@@ -202,7 +195,7 @@ struct GenericImpl {
     vector<uint8_t> data_;
 };
 
-Generic::Generic(isc::util::InputBuffer& buffer, size_t rdata_len) {
+Generic::Generic(InputBuffer& buffer, size_t rdata_len) {
     if (rdata_len > MAX_RDLENGTH) {
         isc_throw(InvalidRdataLength, "RDLENGTH too large");
     }
@@ -212,10 +205,10 @@ Generic::Generic(isc::util::InputBuffer& buffer, size_t rdata_len) {
         buffer.readData(&data[0], rdata_len);
     }
 
-    impl_ = new GenericImpl(data);
+    impl_.reset(new GenericImpl(data));
 }
 
-GenericImpl*
+std::unique_ptr<GenericImpl>
 Generic::constructFromLexer(MasterLexer& lexer) {
     const MasterToken& token = lexer.getNextToken(MasterToken::STRING);
     if (token.getString() != "\\#") {
@@ -246,22 +239,22 @@ Generic::constructFromLexer(MasterLexer& lexer) {
         string hex_part;
         // Whitespace is allowed within hex data, so read to the end of input.
         while (true) {
-            const MasterToken& token =
+            const MasterToken& rdtoken =
                 lexer.getNextToken(MasterToken::STRING, true);
-            if ((token.getType() == MasterToken::END_OF_FILE) ||
-                (token.getType() == MasterToken::END_OF_LINE)) {
+            if ((rdtoken.getType() == MasterToken::END_OF_FILE) ||
+                (rdtoken.getType() == MasterToken::END_OF_LINE)) {
                 // Unget the last read token as createRdata() expects us
                 // to leave it at the end-of-line or end-of-file when we
                 // return.
                 lexer.ungetToken();
                 break;
             }
-            token.getString(hex_part);
+            rdtoken.getString(hex_part);
             hex_txt.append(hex_part);
         }
 
         try {
-            isc::util::encode::decodeHex(hex_txt, data);
+            encode::decodeHex(hex_txt, data);
         } catch (const isc::BadValue& ex) {
             isc_throw(InvalidRdataText,
                       "Invalid hex encoding of generic RDATA: " << ex.what());
@@ -274,23 +267,16 @@ Generic::constructFromLexer(MasterLexer& lexer) {
                   << data.size() << " vs. " << rdlen);
     }
 
-    return (new GenericImpl(data));
+    return (std::unique_ptr<GenericImpl>(new GenericImpl(data)));
 }
 
-Generic::Generic(const std::string& rdata_string) :
-    impl_(NULL)
-{
-    // We use unique_ptr here because if there is an exception in this
-    // constructor, the destructor is not called and there could be a
-    // leak of the GenericImpl that constructFromLexer() returns.
-    std::unique_ptr<GenericImpl> impl_ptr;
-
+Generic::Generic(const std::string& rdata_string) {
     try {
         std::istringstream ss(rdata_string);
         MasterLexer lexer;
         lexer.pushSource(ss);
 
-        impl_ptr.reset(constructFromLexer(lexer));
+        impl_ = constructFromLexer(lexer);
 
         if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
             isc_throw(InvalidRdataText, "extra input text for unknown RDATA: "
@@ -300,24 +286,20 @@ Generic::Generic(const std::string& rdata_string) :
         isc_throw(InvalidRdataText, "Failed to construct unknown RDATA "
                   "from '" << rdata_string << "': " << ex.what());
     }
-
-    impl_ = impl_ptr.release();
 }
 
 Generic::Generic(MasterLexer& lexer, const Name*,
                  MasterLoader::Options,
-                 MasterLoaderCallbacks&) :
-    impl_(constructFromLexer(lexer))
-{
+                 MasterLoaderCallbacks&) {
+    impl_ = constructFromLexer(lexer);
 }
 
 Generic::~Generic() {
-    delete impl_;
 }
 
 Generic::Generic(const Generic& source) :
-    Rdata(), impl_(new GenericImpl(*source.impl_))
-{}
+    Rdata(), impl_(new GenericImpl(*source.impl_)) {
+}
 
 Generic&
 // Our check is better than the usual if (this == &source),
@@ -328,9 +310,7 @@ Generic::operator=(const Generic& source) {
         return (*this);
     }
 
-    GenericImpl* newimpl = new GenericImpl(*source.impl_);
-    delete impl_;
-    impl_ = newimpl;
+    impl_.reset(new GenericImpl(*source.impl_));
 
     return (*this);
 }
@@ -361,7 +341,7 @@ Generic::toText() const {
 }
 
 void
-Generic::toWire(isc::util::OutputBuffer& buffer) const {
+Generic::toWire(OutputBuffer& buffer) const {
     buffer.writeData(&impl_->data_[0], impl_->data_.size());
 }
 

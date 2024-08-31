@@ -4,28 +4,29 @@
     "brief": [
         "This command deletes existing shared networks."
     ],
-    "cmd-comment": [
-        "The ``network6-del`` command uses exactly the same syntax as ``network4-del`` for",
-        "both the query and the response."
-    ],
     "cmd-syntax": [
         "{",
-        "    \"command\": \"network4-del\",",
+        "    \"command\": \"network6-del\",",
         "    \"arguments\": {",
         "        \"name\": \"floor13\"",
         "    }",
         "}"
     ],
-    "description": "See <xref linkend=\"command-network6-del\"/>",
+    "description": "See <xref linkend=\"idp76\"/>",
     "hook": "subnet_cmds",
     "name": "network6-del",
     "resp-syntax": [
         "{",
-        "    \"command\": \"network4-del\",",
+        "    \"command\": \"network6-del\",",
         "    \"arguments\": {",
-        "        \"name\": \"floor13\",",
-        "        \"subnets-action\": \"delete\"",
-        "    }",
+        "        \"shared-networks\": [",
+        "            {",
+        "                \"name\": \"floor13\"",
+        "            }",
+        "        ]",
+        "    },",
+        "    \"result\": 0,",
+        "    \"text\": \"IPv6 shared network 'floor13' deleted\"",
         "}"
     ],
     "support": [

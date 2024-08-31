@@ -54,7 +54,7 @@ that must be used:
 - OpenSSL versions 1.1.x and later have been tested and are supported. Many
   recent operating system versions include TLS 1.3 support.
 
-- OpenSSL 3.x is not yet released; it is unknown whether Kea will build with it.
+- OpenSSL 3.x has been released and Kea will build with it.
 
 - LibreSSL 3.2.4 has been tested. LibreSSL shares the OpenSSL 1.0.2 API, so
   it should work, but is not supported.
@@ -148,6 +148,63 @@ often do not help to pinpoint the source of the problem.
 Both OpenSSL and Botan provide a command-line tool with a ``verify`` command
 which can be used to understand and fix handshake issues.
 
+OpenSSL Tuning
+--------------
+
+Kea accepts the default OpenSSL configuration parameters, but administrators can
+also fine-tune the OpenSSL settings. For example, it may be desirable to limit
+the TLS version.
+
+The default OpenSSL configuration file is named ``openssl.cnf``. It can
+be found in a system-dependent ``etc`` directory, and the location can be overridden
+using the ``OPENSSL_CONF`` environment variable. For OpenSSL versions greater than
+1.0.2, the minimum acceptable protocol can be set via the ``MinProtocol`` variable.
+
+For these examples, we assume that no variables are already set and no sections already
+exist; it is, of course, possible to reuse existing variables and sections.
+
+In the default application, ``openssl_conf``, the corresponding variable
+must be set to the name of the section that handles defaults: in this example,
+``default_conf``. If ``openssl_conf`` is not yet set, add this command
+at the beginning of the OpenSSL configuration file (before the first
+section):
+
+.. code-block:: ini
+
+   openssl_conf = default_conf
+
+In the ``default_conf`` section, the ``ssl_conf`` variable must be set
+to the name of the section that handles SSL/TLS defaults: in this
+example, ``ssl_sect``.
+
+.. code-block:: ini
+
+   [ default_conf ]
+   ssl_conf = ssl_sect
+
+In the ``ssl_sect`` section, the ``system_default`` variable must be
+set to the name of the section that handles system defaults: in
+this example, ``system_default_sect``.
+
+.. code-block:: ini
+
+   [ ssl_sect ]
+   system_default = system_default_sect
+
+In the ``system_default_sect`` section, the ``MinProtocol``  variable must be
+set to the desired minimal SSL/TLS version: in this example, ``TLSv1.2``.
+
+.. code-block:: ini
+
+   [ system_default_sect ]
+   MinProtocol = TLSv1.2
+
+The same steps can be used to enforce other crypto parameters if
+desired.
+
+It is highly recommended to read the ``openssl.cnf`` manual page,
+normally called ``config.5ssl`` and displayed using ``man config``.
+
 Securing a Kea Deployment
 =========================
 
@@ -164,8 +221,8 @@ file cleanup; MySQL and or PostgreSQL databases, run either locally on the appli
 servers or accessed over the internal network; and a Stork monitoring system.
 This modular architecture allows the administrator to minimize the attack surface
 by minimizing the code that is loaded and running.
-For example, ``kea-dhcp-ddns`` should not be run unless DNS updates are required.
-Similarly, ``kea-lfc`` is never triggered (and can be safely removed or never installed) if memfile is not used.
+For example, :iscman:`kea-dhcp-ddns` should not be run unless DNS updates are required.
+Similarly, :iscman:`kea-lfc` is never triggered (and can be safely removed or never installed) if memfile is not used.
 Potential Kea security issues can be minimized by running only those processes required in the local environment.
 
 Limiting Application Permissions
@@ -182,7 +239,7 @@ does not require privileged access.
 Securing Kea Administrative Access
 ----------------------------------
 
-The three primary Kea daemons (``kea-dhcp4``, ``kea-dhcp6`` and ``kea-dhcp-ddns``) all support a control
+The three primary Kea daemons (:iscman:`kea-dhcp4`, :iscman:`kea-dhcp6` and :iscman:`kea-dhcp-ddns`) all support a control
 channel, which is implemented as a UNIX socket. The control channel, which opens a UNIX socket, is disabled by default;
 however, many configuration examples have it enabled, as it is a very popular feature. To
 read from or write to this socket, root access is generally required, although if Kea is configured

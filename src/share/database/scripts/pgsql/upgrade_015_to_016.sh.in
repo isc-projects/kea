@@ -1,0 +1,63 @@
+#!/bin/sh
+
+# Copyright (C) 2023-2024 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# Exit with error if commands exit with non-zero and if undefined variables are
+# used.
+set -eu
+
+# shellcheck disable=SC2034
+# SC2034: ... appears unused. Verify use (or export if used externally).
+prefix="@prefix@"
+
+# Include utilities based on location of this script. Check for sources first,
+# so that the unexpected situations with weird paths fall on the default
+# case of installed.
+script_path=$(cd "$(dirname "${0}")" && pwd)
+if test "${script_path}" = "@abs_top_builddir@/src/share/database/scripts/pgsql"; then
+    # shellcheck source=./src/bin/admin/admin-utils.sh.in
+    . "@abs_top_builddir@/src/bin/admin/admin-utils.sh"
+else
+    # shellcheck source=./src/bin/admin/admin-utils.sh.in
+    . "@datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh"
+fi
+
+VERSION=$(pgsql_version "$@")
+
+if [ "$VERSION" != "15.0" ]; then
+    printf 'This script upgrades 15.0 to 16.0. '
+    printf 'Reported version is %s. Skipping upgrade.\n' "${VERSION}"
+    exit 0
+fi
+
+psql "$@" >/dev/null <<EOF
+START TRANSACTION;
+
+-- This line starts the schema upgrade to version 16.0.
+
+-- Add the allocator column to the DHCPv4 tables.
+ALTER TABLE dhcp4_subnet ADD COLUMN allocator TEXT DEFAULT NULL;
+ALTER TABLE dhcp4_shared_network ADD COLUMN allocator TEXT DEFAULT NULL;
+
+-- Add allocator and pd_allocator to the DHCPv6 subnet tables.
+ALTER TABLE dhcp6_subnet ADD COLUMN allocator TEXT DEFAULT NULL;
+ALTER TABLE dhcp6_subnet ADD COLUMN pd_allocator TEXT DEFAULT NULL;
+
+-- Add allocator and pd_allocator to the DHCPv6 shared network tables.
+ALTER TABLE dhcp6_shared_network ADD COLUMN allocator TEXT DEFAULT NULL;
+ALTER TABLE dhcp6_shared_network ADD COLUMN pd_allocator TEXT DEFAULT NULL;
+
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '16', minor = '0';
+
+-- This line concludes the schema upgrade to version 16.0.
+
+-- Commit the script transaction.
+COMMIT;
+
+EOF

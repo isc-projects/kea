@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,102 +7,84 @@
 #include <config.h>
 
 #include <yang/translator_host.h>
-#include <yang/adaptor.h>
 #include <yang/yang_models.h>
+
 #include <sstream>
 
 using namespace std;
 using namespace isc::data;
+using namespace libyang;
 using namespace sysrepo;
 
 namespace isc {
 namespace yang {
 
-TranslatorHost::TranslatorHost(S_Session session, const string& model)
-    : TranslatorBasic(session, model),
+TranslatorHost::TranslatorHost(Session session, const string& model)
+    : Translator(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model) {
 }
 
-TranslatorHost::~TranslatorHost() {
-}
-
 ElementPtr
-    TranslatorHost::getHost(const string& xpath) {
+TranslatorHost::getHost(DataNode const& data_node) {
     try {
         if ((model_ == KEA_DHCP4_SERVER) ||
             (model_ == KEA_DHCP6_SERVER)) {
-            return (getHostKea(xpath));
+            return (getHostKea(data_node));
         }
-    } catch (const sysrepo_exception& ex) {
-        isc_throw(SysrepoError,
-                  "sysrepo error getting host reservation at '" << xpath
-                  << "': " << ex.what());
+    } catch (Error const& ex) {
+        isc_throw(NetconfError,
+                  "getting host reservation:"
+                  << ex.what());
     }
     isc_throw(NotImplemented,
               "getHost not implemented for the model: " << model_);
 }
 
 ElementPtr
-TranslatorHost::getHostKea(const string& xpath) {
-    ConstElementPtr id_type = getItem(xpath + "/identifier-type");
-    ConstElementPtr id = getItem(xpath + "/identifier");
+TranslatorHost::getHostFromAbsoluteXpath(string const& xpath) {
+    try {
+        return getHost(findXPath(xpath));
+    } catch (NetconfError const&) {
+        return ElementPtr();
+    }
+}
+
+ElementPtr
+TranslatorHost::getHostKea(DataNode const& data_node) {
+    ConstElementPtr id_type = getItem(data_node, "identifier-type");
+    ConstElementPtr id = getItem(data_node, "identifier");
     if (!id_type || !id) {
-        isc_throw(Unexpected, "getHostKea requires both identifier and "
-                  "identifier-type");
+        isc_throw(MissingNode, "getHostKea requires both identifier and identifier-type");
     }
     ElementPtr result = Element::createMap();
     result->set(id_type->stringValue(), id);
-    ConstElementPtr hostname = getItem(xpath + "/hostname");
-    if (hostname) {
-        result->set("hostname", hostname);
-    }
-    if (model_ == KEA_DHCP4_SERVER) {
-        ConstElementPtr address = getItem(xpath + "/ip-address");
-        if (address) {
-            result->set("ip-address", address);
-        }
-    } else {
-        ConstElementPtr addresses = getItems(xpath + "/ip-addresses");
-        if (addresses && (addresses->size() > 0)) {
-            result->set("ip-addresses", addresses);
-        }
-        ConstElementPtr prefixes = getItems(xpath + "/prefixes");
-        if (prefixes && (prefixes->size() > 0)) {
-            result->set("prefixes", prefixes);
-        }
-    }
-    ConstElementPtr options = getOptionDataList(xpath);
-    if (options && (options->size() > 0)) {
+
+    checkAndGetLeaf(result, data_node, "client-classes");
+    checkAndGetLeaf(result, data_node, "hostname");
+
+    checkAndGetAndJsonifyLeaf(result, data_node, "user-context");
+
+    ConstElementPtr options = getOptionDataList(data_node);
+    if (options) {
         result->set("option-data", options);
     }
-    ConstElementPtr classes = getItems(xpath + "/client-classes");
-    if (classes) {
-        result->set("client-classes", classes);
-    }
+
     if (model_ == KEA_DHCP4_SERVER) {
-        ConstElementPtr next = getItem(xpath + "/next-server");
-        if (next) {
-            result->set("next-server", next);
-        }
-        ConstElementPtr hostname = getItem(xpath + "/server-hostname");
-        if (hostname) {
-            result->set("server-hostname", hostname);
-        }
-        ConstElementPtr boot = getItem(xpath + "/boot-file-name");
-        if (boot) {
-            result->set("boot-file-name", boot);
-        }
+        checkAndGetLeaf(result, data_node, "boot-file-name");
+        checkAndGetLeaf(result, data_node, "ip-address");
+        checkAndGetLeaf(result, data_node, "next-server");
+        checkAndGetLeaf(result, data_node, "server-hostname");
+    } else {
+        checkAndGetLeaf(result, data_node, "ip-addresses");
+        checkAndGetLeaf(result, data_node, "prefixes");
     }
-    ConstElementPtr context = getItem(xpath + "/user-context");
-    if (context) {
-        result->set("user-context", Element::fromJSON(context->stringValue()));
-    }
-    return (result);
+
+    return (result->empty() ? ElementPtr() : result);
 }
 
 void
-TranslatorHost::setHost(const string& xpath, ConstElementPtr elem) {
+TranslatorHost::setHost(string const& xpath, ConstElementPtr elem) {
     try {
         if ((model_ == KEA_DHCP4_SERVER) ||
             (model_ == KEA_DHCP6_SERVER)) {
@@ -111,92 +93,68 @@ TranslatorHost::setHost(const string& xpath, ConstElementPtr elem) {
             isc_throw(NotImplemented,
                       "setHost not implemented for the model: " << model_);
         }
-    } catch (const sysrepo_exception& ex) {
-        isc_throw(SysrepoError,
-                  "sysrepo error setting host reservation '" << elem->str()
-                  << "' at '" << xpath << "': " << ex.what());
+    } catch (Error const& ex) {
+        isc_throw(NetconfError,
+                  "setting host reservation '" << elem->str()
+                  << "' : " << ex.what());
     }
 }
 
 void
-TranslatorHost::setHostKea(const string& xpath, ConstElementPtr elem) {
-    ConstElementPtr hostname = elem->get("hostname");
-    // Skip identifier and identifier type as they are keys.
-    if (hostname) {
-        setItem(xpath + "/hostname", hostname, SR_STRING_T);
-    }
-    if (model_ == KEA_DHCP4_SERVER) {
-        ConstElementPtr address = elem->get("ip-address");
-        if (address) {
-            setItem(xpath + "/ip-address", address, SR_STRING_T);
-        }
-    } else {
-        ConstElementPtr addresses = elem->get("ip-addresses");
-        if (addresses && (addresses->size() > 0)) {
-            for (ConstElementPtr address : addresses->listValue()) {
-                setItem(xpath + "/ip-addresses", address, SR_STRING_T);
-            }
-        }
-        ConstElementPtr prefixes = elem->get("prefixes");
-        if (prefixes && (prefixes->size() > 0)) {
-            for (ConstElementPtr prefix : prefixes->listValue()) {
-                setItem(xpath + "/prefixes", prefix, SR_STRING_T);
-            }
-        }
-    }
+TranslatorHost::setHostKea(string const& xpath, ConstElementPtr elem) {
+    // Set the list element. This is important in case we have no other elements except the keys.
+    setItem(xpath, ElementPtr(), LeafBaseType::Unknown);
+
+    // Skip keys "identifier" and "identifier-type" since they were set with the
+    // list element in the call above with the LeafBaseType::Unknown parameter.
+
+    checkAndSetLeaf(elem, xpath, "hostname", LeafBaseType::String);
+
+    checkAndSetLeafList(elem, xpath, "client-classes", LeafBaseType::String);
+
     ConstElementPtr options = elem->get("option-data");
-    if (options && (options->size() > 0)) {
+    if (options && !options->empty()) {
         setOptionDataList(xpath, options);
     }
-    ConstElementPtr classes = elem->get("client-classes");
-    if (classes && (classes->size() > 0)) {
-        for (ConstElementPtr cclass : classes->listValue()) {
-            setItem(xpath + "/client-classes", cclass, SR_STRING_T);
-        }
-    }
 
-    // These are DHCPv4-specific parameters.
     if (model_ == KEA_DHCP4_SERVER) {
-        ConstElementPtr next = elem->get("next-server");
-        if (next) {
-            setItem(xpath + "/next-server", next, SR_STRING_T);
-        }
-        ConstElementPtr hostname = elem->get("server-hostname");
-        if (hostname) {
-            setItem(xpath + "/server-hostname", hostname, SR_STRING_T);
-        }
-        ConstElementPtr boot = elem->get("boot-file-name");
-        if (boot) {
-            setItem(xpath + "/boot-file-name", boot, SR_STRING_T);
-        }
+        checkAndSetLeaf(elem, xpath, "boot-file-name", LeafBaseType::String);
+        checkAndSetLeaf(elem, xpath, "ip-address", LeafBaseType::String);
+        checkAndSetLeaf(elem, xpath, "next-server", LeafBaseType::String);
+        checkAndSetLeaf(elem, xpath, "server-hostname", LeafBaseType::String);
+    } else {
+        checkAndSetLeafList(elem, xpath, "ip-addresses", LeafBaseType::String);
+        checkAndSetLeafList(elem, xpath, "prefixes", LeafBaseType::String);
     }
 
     // User context is supported in both kea-dhcp4-server and kea-dhcp6-server.
-    ConstElementPtr context = Adaptor::getContext(elem);
-    if (context) {
-        setItem(xpath + "/user-context", Element::create(context->str()),
-                SR_STRING_T);
-    }
+    checkAndSetUserContext(elem, xpath);
 }
 
-TranslatorHosts::TranslatorHosts(S_Session session, const string& model)
-    : TranslatorBasic(session, model),
+TranslatorHosts::TranslatorHosts(Session session, const string& model)
+    : Translator(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model),
       TranslatorHost(session, model) {
 }
 
-TranslatorHosts::~TranslatorHosts() {
-}
-
 ElementPtr
-TranslatorHosts::getHosts(const string& xpath) {
-    return getList<TranslatorHost>(xpath + "/host", *this,
+TranslatorHosts::getHosts(DataNode const& data_node) {
+    return getList<TranslatorHost>(data_node, "host", *this,
                                    &TranslatorHost::getHost);
 }
 
+ElementPtr
+TranslatorHosts::getHostsFromAbsoluteXpath(string const& xpath) {
+    try {
+        return getHosts(findXPath(xpath));
+    } catch (NetconfError const&) {
+        return ElementPtr();
+    }
+}
+
 void
-TranslatorHosts::setHosts(const string& xpath, ConstElementPtr elem) {
+TranslatorHosts::setHosts(string const& xpath, ConstElementPtr elem) {
     try {
         if ((model_ == KEA_DHCP4_SERVER) ||
             (model_ == KEA_DHCP6_SERVER)) {
@@ -205,18 +163,18 @@ TranslatorHosts::setHosts(const string& xpath, ConstElementPtr elem) {
             isc_throw(NotImplemented,
                       "setHosts not implemented for the model: " << model_);
         }
-    } catch (const sysrepo_exception& ex) {
-        isc_throw(SysrepoError,
-                  "sysrepo error setting host reservations '" << elem->str()
-                  << "' at '" << xpath << "': " << ex.what());
+    } catch (Error const& ex) {
+        isc_throw(NetconfError,
+                  "setting host reservations '" << elem->str()
+                  << "' : " << ex.what());
     }
 }
 
 void
-TranslatorHosts::setHostsKea(const string& xpath, ConstElementPtr elem) {
+TranslatorHosts::setHostsKea(string const& xpath, ConstElementPtr elem) {
     for (size_t i = 0; i < elem->size(); ++i) {
         string id_type = "unknown";
-        ConstElementPtr host = elem->get(i);
+        ElementPtr host = elem->getNonConst(i);
         ConstElementPtr id = host->get("hw-address");
         if (id) {
             id_type = "hw-address";

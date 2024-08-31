@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2006-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,37 +19,37 @@
 /* DHCPv6 Option codes: */
 enum DHCPv6OptionType {
    D6O_CLIENTID                            = 1, /* RFC8415 */
-   D6O_SERVERID                            = 2,
-   D6O_IA_NA                               = 3,
-   D6O_IA_TA                               = 4,
-   D6O_IAADDR                              = 5,
-   D6O_ORO                                 = 6,
-   D6O_PREFERENCE                          = 7,
-   D6O_ELAPSED_TIME                        = 8,
-   D6O_RELAY_MSG                           = 9,
+   D6O_SERVERID                            = 2, /* RFC8415 */
+   D6O_IA_NA                               = 3, /* RFC8415 */
+   D6O_IA_TA                               = 4, /* RFC8415 */
+   D6O_IAADDR                              = 5, /* RFC8415 */
+   D6O_ORO                                 = 6, /* RFC8415 */
+   D6O_PREFERENCE                          = 7, /* RFC8415 */
+   D6O_ELAPSED_TIME                        = 8, /* RFC8415 */
+   D6O_RELAY_MSG                           = 9, /* RFC8415 */
    // Option code 10 is unassigned.
-   D6O_AUTH                                = 11,
-   D6O_UNICAST                             = 12,
-   D6O_STATUS_CODE                         = 13,
-   D6O_RAPID_COMMIT                        = 14,
-   D6O_USER_CLASS                          = 15,
-   D6O_VENDOR_CLASS                        = 16,
-   D6O_VENDOR_OPTS                         = 17,
-   D6O_INTERFACE_ID                        = 18,
-   D6O_RECONF_MSG                          = 19,
-   D6O_RECONF_ACCEPT                       = 20,
+   D6O_AUTH                                = 11, /* RFC8415 */
+   D6O_UNICAST                             = 12, /* RFC8415 */
+   D6O_STATUS_CODE                         = 13, /* RFC8415 */
+   D6O_RAPID_COMMIT                        = 14, /* RFC8415 */
+   D6O_USER_CLASS                          = 15, /* RFC8415 */
+   D6O_VENDOR_CLASS                        = 16, /* RFC8415 */
+   D6O_VENDOR_OPTS                         = 17, /* RFC8415 */
+   D6O_INTERFACE_ID                        = 18, /* RFC8415 */
+   D6O_RECONF_MSG                          = 19, /* RFC8415 */
+   D6O_RECONF_ACCEPT                       = 20, /* RFC8415 */
    D6O_SIP_SERVERS_DNS                     = 21, /* RFC3319 */
    D6O_SIP_SERVERS_ADDR                    = 22, /* RFC3319 */
    D6O_NAME_SERVERS                        = 23, /* RFC3646 */
    D6O_DOMAIN_SEARCH                       = 24, /* RFC3646 */
-   D6O_IA_PD                               = 25, /* RFC8415 */
-   D6O_IAPREFIX                            = 26, /* RFC8415 */
+   D6O_IA_PD                               = 25, /* RFC8415, RFC3633 */
+   D6O_IAPREFIX                            = 26, /* RFC8415, RFC3633 */
    D6O_NIS_SERVERS                         = 27, /* RFC3898 */
    D6O_NISP_SERVERS                        = 28, /* RFC3898 */
    D6O_NIS_DOMAIN_NAME                     = 29, /* RFC3898 */
    D6O_NISP_DOMAIN_NAME                    = 30, /* RFC3898 */
    D6O_SNTP_SERVERS                        = 31, /* RFC4075 */
-   D6O_INFORMATION_REFRESH_TIME            = 32, /* RFC8415 */
+   D6O_INFORMATION_REFRESH_TIME            = 32, /* RFC8415, RFC4242 */
    D6O_BCMCS_SERVER_D                      = 33, /* RFC4280 */
    D6O_BCMCS_SERVER_A                      = 34, /* RFC4280 */
    // Option code 35 is unassigned.
@@ -99,15 +99,15 @@ enum DHCPv6OptionType {
    D6O_CLIENT_LINKLAYER_ADDR               = 79, /* RFC6939 */
    D6O_LINK_ADDRESS                        = 80, /* RFC6977 */
 // D6O_RADIUS                              = 81, /* RFC7037 */
-   D6O_SOL_MAX_RT                          = 82, /* RFC8415 */
-   D6O_INF_MAX_RT                          = 83, /* RFC8415 */
+   D6O_SOL_MAX_RT                          = 82, /* RFC8415, RFC7083 */
+   D6O_INF_MAX_RT                          = 83, /* RFC8415, RFC7083 */
 // D6O_ADDRSEL                             = 84, /* RFC7078 */
 // D6O_ADDRSEL_TABLE                       = 85, /* RFC7078 */
 // D6O_V6_PCP_SERVER                       = 86, /* RFC7291 */
    D6O_DHCPV4_MSG                          = 87, /* RFC7341 */
    D6O_DHCPV4_O_DHCPV6_SERVER              = 88, /* RFC7341 */
    D6O_S46_RULE                            = 89, /* RFC7598 */
-   D6O_S46_BR                              = 90, /* RFC7598 */
+   D6O_S46_BR                              = 90, /* RFC7598, RFC8539 */
    D6O_S46_DMR                             = 91, /* RFC7598 */
    D6O_S46_V4V6BIND                        = 92, /* RFC7598 */
    D6O_S46_PORTPARAMS                      = 93, /* RFC7598 */
@@ -120,7 +120,7 @@ enum DHCPv6OptionType {
 // D6O_LQ_BASE_TIME                       = 100, /* RFC7653 */
 // D6O_LQ_START_TIME                      = 101, /* RFC7653 */
 // D6O_LQ_END_TIME                        = 102, /* RFC7653 */
-   D6O_V6_CAPTIVE_PORTAL                  = 103, /* RFC7710 */
+   D6O_V6_CAPTIVE_PORTAL                  = 103, /* RFC8910 */
 // D6O_MPL_PARAMETERS                     = 104, /* RFC7774 */
 // D6O_ANI_ATT                            = 105, /* RFC7839 */
 // D6O_ANI_NETWORK_NAME                   = 106, /* RFC7839 */
@@ -153,8 +153,10 @@ enum DHCPv6OptionType {
 // D6O_F_START_TIME_OF_STATE              = 133, /* RFC8156 */
 // D6O_F_STATE_EXPIRATION_TIME            = 134, /* RFC8156 */
    D6O_RELAY_SOURCE_PORT                  = 135, /* RFC8357 */
-   // Option codes 136-142 are unassigned.
-   D6O_IPV6_ADDRESS_ANDSF                 = 143 /* RFC6153 */
+   D60_V6_SZTP_REDIRECT                   = 136, /* RFC8572 */
+   // Option codes 137-142 are unassigned.
+   D6O_IPV6_ADDRESS_ANDSF                 = 143, /* RFC6153 */
+   D6O_V6_DNR                             = 144 /* RFC9463 */
 };
 
 /*
@@ -172,7 +174,7 @@ enum DHCPv6StatusCode {
    STATUS_MalformedQuery             = 8,
    STATUS_NotConfigured              = 9,
    STATUS_NotAllowed                 = 10,
-// STATUS_QueryTerminated            = 11,
+   STATUS_QueryTerminated            = 11,
 /* RFC7653 */
 // STATUS_DataMissing                = 12,
 // STATUS_CatchUpComplete            = 13,
@@ -185,22 +187,14 @@ enum DHCPv6StatusCode {
 // STATUS_OutdatedBindingInformation = 19,
 // STATUS_ServerShuttingDown         = 20,
 // STATUS_DNSUpdateNotSupported      = 21,
-// STATUS_ExcessiveTimeSkew          = 22,
-
-// The following are EXPERIMENTAL and may change when IANA assigns official
-// values.
-/* secure DHCPv6 (draft-ietf-dhc-sedhcpv6-08) */
-/* temporary values for hackathon 93 */
-   STATUS_AlgorithmNotSupported     = 705,
-   STATUS_AuthenticationFail        = 706,
-   STATUS_TimestampFail             = 707,
-   STATUS_SignatureFail             = 708
+// STATUS_ExcessiveTimeSkew          = 22
 };
 
 /*
  * DHCPv6 message types, defined in section 7.3 of RFC 8415
  */
 enum DHCPv6MessageType {
+   DHCPV6_NOTYPE               = 0,
    DHCPV6_SOLICIT              = 1,
    DHCPV6_ADVERTISE            = 2,
    DHCPV6_REQUEST              = 3,
@@ -218,30 +212,31 @@ enum DHCPv6MessageType {
    DHCPV6_LEASEQUERY           = 14,
    DHCPV6_LEASEQUERY_REPLY     = 15,
    /* RFC 5460 */
-// DHCPV6_LEASEQUERY_DONE      = 16,
-// DHCPV6_LEASEQUERY_DATA      = 17,
+   DHCPV6_LEASEQUERY_DONE      = 16,
+   DHCPV6_LEASEQUERY_DATA      = 17,
    /* RFC 6977 */
-// DHCPV6_RECONFIGURE_REQUEST  = 18,
-// DHCPV6_RECONFIGURE_REPLY    = 19,
+   DHCPV6_RECONFIGURE_REQUEST  = 18,
+    DHCPV6_RECONFIGURE_REPLY   = 19,
    /* RFC 7341 */
    DHCPV6_DHCPV4_QUERY         = 20,
-   DHCPV6_DHCPV4_RESPONSE      = 21
+   DHCPV6_DHCPV4_RESPONSE      = 21,
    /* RFC 7653 */
-// DHCPV6_ACTIVELEASEQUERY     = 22,
-// DHCPV6_STARTTLS             = 23,
+   DHCPV6_ACTIVELEASEQUERY     = 22,
+   DHCPV6_STARTTLS             = 23,
    /* RFC 8156 */
-// DHCPV6_BNDUPD               = 24,
-// DHCPV6_BNDREPLY             = 25,
-// DHCPV6_POOLREQ              = 26,
-// DHCPV6_POOLRESP             = 27,
-// DHCPV6_UPDREQ               = 28,
-// DHCPV6_UPDREQALL            = 29,
-// DHCPV6_UPDDONE              = 30,
-// DHCPV6_CONNECT              = 31,
-// DHCPV6_CONNECTREPLY         = 32,
-// DHCPV6_DISCONNECT           = 33,
-// DHCPV6_STATE                = 34,
-// DHCPV6_CONTACT              = 35
+   DHCPV6_BNDUPD               = 24,
+   DHCPV6_BNDREPLY             = 25,
+   DHCPV6_POOLREQ              = 26,
+   DHCPV6_POOLRESP             = 27,
+   DHCPV6_UPDREQ               = 28,
+   DHCPV6_UPDREQALL            = 29,
+   DHCPV6_UPDDONE              = 30,
+   DHCPV6_CONNECT              = 31,
+   DHCPV6_CONNECTREPLY         = 32,
+   DHCPV6_DISCONNECT           = 33,
+   DHCPV6_STATE                = 34,
+   DHCPV6_CONTACT              = 35,
+   DHCPV6_TYPES_EOF
 };
 
 extern const char *dhcpv6_type_names[];
@@ -254,14 +249,6 @@ extern const int dhcpv6_type_name_max;
 // Taken from http://www.iana.org/assignments/arp-parameters/
 static const uint16_t HWTYPE_ETHERNET = 0x0001;
 static const uint16_t HWTYPE_INFINIBAND = 0x0020;
-
-// The following are EXPERIMENTAL and may change when IANA assigns official
-// values.
-// Secure DHCPv6 (draft-ietf-dhc-sedhcpv6-08.txt)
-// (can't use an enum because HashAlgorithm name is already taken)
-#define SHA_256                 1
-#define SHA_512                 2
-#define RSASSA_PKCS1v1_5        1
 
 // Taken from https://www.iana.org/assignments/enterprise-numbers/enterprise-numbers
 static const uint32_t ENTERPRISE_ID_ISC = 2495;
@@ -333,9 +320,9 @@ static const uint16_t DHCP6_SERVER_PORT = 547;
 
 #define LQ6QT_BY_ADDRESS        1
 #define LQ6QT_BY_CLIENTID       2
-//#define LQ6QT_BY_RELAY_ID       3
-//#define LQ6QT_BY_LINK_ADDRESS   4
-//#define LQ6QT_BY_REMOTE_ID      5
+#define LQ6QT_BY_RELAY_ID       3
+#define LQ6QT_BY_LINK_ADDRESS   4
+#define LQ6QT_BY_REMOTE_ID      5
 
 /*
  * DUID time starts 2000-01-01.

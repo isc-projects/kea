@@ -35,12 +35,32 @@ ways:
 -  Using a hook.
 
 Client classification can be used to change the behavior of almost any
-part of the DHCP message processing. There are currently six
-mechanisms that take advantage of client classification: dropping
-queries, subnet selection, pool selection, definition of DHCPv4
-private (codes 224-254) and code 43 options, assignment of different
-options, and, for DHCPv4 cable modems, the setting of specific options
-for use with the TFTP server address and the boot file field.
+part of the DHCP message processing. There are currently nine
+mechanisms that take advantage of client classification:
+
+- Dropping queries.
+
+- Subnet selection.
+
+- Pool selection.
+
+- Lease limiting.
+
+- Rate limiting.
+
+- DDNS tuning.
+
+- Defining DHCPv4 private (codes 224-254) and code 43 options.
+
+- Assigning different options.
+
+- Setting specific options for use with the TFTP server address
+  and the boot file field for DHCPv4 cable modems.
+
+.. _classify-classification-steps:
+
+Classification Steps
+--------------------
 
 The classification process is conducted in several steps:
 
@@ -63,10 +83,14 @@ The classification process is conducted in several steps:
     dropped and an informational message is logged with the packet
     information.
 
+.. note::
+
+    The ``pkt4_receive`` and ``pkt6_receive`` callouts are called here.
+
 6.  When the ``early-global-reservations-lookup`` global parameter is
-    configured to true global reservations are looked for and the 8, 9
-    and 10 steps are partially performed: the lookup is limited to
-    global reservations, if one is found the ``KNOWN`` class is set
+    configured to ``true``, the process looks up global reservations and
+    partially performs steps 8, 9, and 10. The lookup is limited to
+    global reservations; if one is found the ``KNOWN`` class is set,
     but if none is found the ``UNKNOWN`` class is **not** set.
 
 7.  A subnet is chosen, possibly based on the class information when
@@ -77,6 +101,10 @@ The classification process is conducted in several steps:
     class associated with it, or has a class which matches one of the
     packet's classes.
 
+.. note::
+
+    The ``subnet4_select`` and ``subnet6_select`` callouts are called here.
+
 8.  The server looks for host reservations. If an identifier from the
     incoming packet matches a host reservation in the subnet or shared
     network, the packet is associated with the ``KNOWN`` class and all
@@ -84,16 +112,16 @@ The classification process is conducted in several steps:
     packet is assigned to the ``UNKNOWN`` class.
 
 9.  Classes with matching expressions - directly, or indirectly using the
-    ``KNOWN``/``UNKNOWN`` built-in classes and not marked for later evaluation ("on
-    request") - are processed in the order they are defined
+    ``KNOWN``/``UNKNOWN`` built-in classes and not marked for later evaluation
+    ("on request") - are processed in the order they are defined
     in the configuration; the boolean expression is evaluated and, if it
     returns ``true`` (a match), the incoming packet is associated with the
     class. After a subnet is selected, the server determines whether
     there is a reservation for a given client. Therefore, it is not
     possible to use the ``UNKNOWN`` class to select a shared network or
-    a subnet. For the ``KNOWN`` class only global reservations only
-    global reservations are used and the ``early-global-reservations-lookup``
-    parameter must be configured to true
+    a subnet. For the ``KNOWN`` class, only global reservations are used and the
+    ``early-global-reservations-lookup`` parameter must be configured to
+    ``true``.
 
 10. When the incoming packet belongs to the special class ``DROP``, it is
     dropped and an informational message is logged with the packet
@@ -103,6 +131,11 @@ The classification process is conducted in several steps:
 11. If needed, addresses and prefixes from pools are assigned, possibly
     based on the class information when some pools are reserved for
     class members.
+
+.. note::
+
+    The ``lease4_select``, ``lease4_renew``, ``lease6_select``, ``lease6_renew``, and ``lease6_rebind``
+    callouts are called here.
 
 12. Classes marked as "required" are evaluated in the order in which
     they are listed: first the shared network, then the subnet, and
@@ -115,47 +148,31 @@ The classification process is conducted in several steps:
 
 .. note::
 
-   Client classes in Kea follow the order in which they are specified in
-   the configuration (vs. alphabetical order). Required classes follow
-   the order in which they are required.
-
-When determining which options to include in the response, the server
-examines the union of options from all of the assigned classes. If two
-or more classes include the same option, the value from the first class
-examined is used; classes are examined in the order they were
-associated, so ``ALL`` is always the first class and matching required
-classes are last.
-
-As an example, imagine that an incoming packet matches two classes.
-Class ``foo`` defines values for an NTP server (option 42 in DHCPv4) and
-an SMTP server (option 69 in DHCPv4), while class ``bar`` defines values
-for an NTP server and a POP3 server (option 70 in DHCPv4). The server
-examines the three options - NTP, SMTP, and POP3 - and returns any that
-the client requested. As the NTP server was defined twice, the server
-chooses only one of the values for the reply; the class from which the
-value is obtained is determined as explained in the previous paragraph.
-
-.. note::
-
    Care should be taken with client classification, as it is easy for
    clients that do not meet any class criteria to be denied service
    altogether.
 
-.. _classification-using-vendor:
+.. _built-in-client-classes:
 
 Built-in Client Classes
 =======================
 
-Some classes are built-in, so they do not need to be defined.
+Some classes are built-in, so they do not need to be explicitly defined. They
+can be defined if there is a need to associate lease lifetimes, option data,
+etc. with them.
+
 Vendor class information is the primary example: the server checks whether an
 incoming DHCPv4 packet includes the vendor class identifier option (60)
 or an incoming DHCPv6 packet includes the vendor class option (16). If
 it does, the content of that option is prepended with ``VENDOR_CLASS_``
-and the result is interpreted as a class. For example, modern cable
-modems send this option with value ``docsis3.0``, so the packet belongs to
+and the result is interpreted as a class for that packet. The content that is
+considered is the whole class identifier for DHCPv4, and the first vendor class
+data field for DHCPv6. The enterprise number and subsequent vendor class data
+fields are not used for the purpose of classification. For example, modern cable
+modems send such options with value ``docsis3.0``, so the packet belongs to
 class ``VENDOR_CLASS_docsis3.0``.
 
-The ``HA_`` prefix is used by the High Availability hook library to
+The ``HA_`` prefix is used by :ischooklib:`libdhcp_ha.so` to
 designate certain servers to process DHCP packets as a result of load
 balancing. The class name is constructed by prepending the ``HA_`` prefix
 to the name of the server which should process the DHCP packet. This
@@ -163,7 +180,13 @@ server uses an appropriate pool or subnet to allocate IP addresses
 (and/or prefixes), based on the assigned client classes. The details can
 be found in :ref:`hooks-high-availability`.
 
-The ``BOOTP`` class is used by the BOOTP hook library to classify and
+The ``SPAWN_`` prefix is used by template classes to generate spawned class
+names at runtime. The spawned class name is constructed by prepending the
+``SPAWN_`` prefix to the template class name and the evaluated value:
+``SPAWN_<template-class-name>_<evaluated-value>``.
+More details can be found in :ref:`classification-configuring`.
+
+The ``BOOTP`` class is used by :ischooklib:`libdhcp_bootp.so` to classify and
 respond to inbound BOOTP queries.
 
 The ``SKIP_DDNS`` class is used by the DDNS-tuning hook library to suppress
@@ -298,28 +321,28 @@ This does not apply to the ``KNOWN`` or ``UNKNOWN`` classes.
    | Transaction ID in     | pkt6.transid                  | 12345                 |
    | DHCPv6 packet         |                               |                       |
    +-----------------------+-------------------------------+-----------------------+
-   | Vendor option         | vendor[*].exists              | true                  |
+   | Vendor option         | vendor[*].exists              | 'true'                |
    | existence (any        |                               |                       |
    | vendor)               |                               |                       |
    +-----------------------+-------------------------------+-----------------------+
-   | Vendor option         | vendor[4491].exists           | true                  |
+   | Vendor option         | vendor[4491].exists           | 'true'                |
    | existence (specific   |                               |                       |
    | vendor)               |                               |                       |
    +-----------------------+-------------------------------+-----------------------+
    | Enterprise-id from    | vendor.enterprise             | 4491                  |
    | vendor option         |                               |                       |
    +-----------------------+-------------------------------+-----------------------+
-   | Vendor sub-option     | vendor[4491].option[1].exists | true                  |
+   | Vendor sub-option     | vendor[4491].option[1].exists | 'true'                |
    | existence             |                               |                       |
    +-----------------------+-------------------------------+-----------------------+
    | Vendor sub-option     | vendor[4491].option[1].hex    | docsis3.0             |
    | content               |                               |                       |
    +-----------------------+-------------------------------+-----------------------+
-   | Vendor class option   | vendor-class[*].exist         | true                  |
-   | existence (any        | s                             |                       |
+   | Vendor class option   | vendor-class[*].exists        | 'true'                |
+   | existence (any        |                               |                       |
    | vendor)               |                               |                       |
    +-----------------------+-------------------------------+-----------------------+
-   | Vendor class option   | vendor-class[4491].exists     | true                  |
+   | Vendor class option   | vendor-class[4491].exists     | 'true'                |
    | existence (specific   |                               |                       |
    | vendor)               |                               |                       |
    +-----------------------+-------------------------------+-----------------------+
@@ -337,7 +360,7 @@ This does not apply to the ``KNOWN`` or ``UNKNOWN`` classes.
 Notes:
 
 -  Hexadecimal strings are converted into a string as expected. The
-   starting "0X" or "0x" is removed, and if the string is an odd number
+   starting ``0X`` or ``0x`` is removed, and if the string is an odd number
    of characters a "0" is prepended to it.
 
 -  IP addresses are converted into strings of length 4 or 16. IPv4,
@@ -346,14 +369,14 @@ Notes:
 
 -  Integers in an expression are converted to 32-bit unsigned integers
    and are represented as four-byte strings; for example, 123 is
-   represented as 0x0000007b. All expressions that return numeric values
+   represented as ``0x0000007b``. All expressions that return numeric values
    use 32-bit unsigned integers, even if the field in the packet is
    smaller. In general, it is easier to use decimal notation to
    represent integers, but it is also possible to use hexadecimal
    notation. When writing an integer in hexadecimal, care should be
    taken to make sure the value is represented as 32 bits, e.g. use
-   0x00000001 instead of 0x1 or 0x01. Also, make sure the value is
-   specified in network order, e.g. 1 is represented as 0x00000001.
+   ``0x00000001`` instead of ``0x1`` or ``0x01``. Also, make sure the value is
+   specified in network order, e.g. 1 is represented as ``0x00000001``.
 
 -  ``option[code].hex`` extracts the value of the option with the code
    ``code`` from the incoming packet. If the packet does not contain the
@@ -449,7 +472,11 @@ Notes:
    +=======================+=========================+=======================+
    | Equal                 | 'foo' == 'bar'          | Compare the two       |
    |                       |                         | values and return     |
-   |                       |                         | `true` or `false`     |
+   |                       |                         | ``true`` or ``false`` |
+   +-----------------------+-------------------------+-----------------------+
+   | Match                 | match('foo.*', 'foobar')| Match a regular       |
+   |                       |                         | expression with a     |
+   |                       |                         | value.                |
    +-----------------------+-------------------------+-----------------------+
    | Not                   | not ('foo' == 'bar')    | Logical negation      |
    +-----------------------+-------------------------+-----------------------+
@@ -476,7 +503,17 @@ Notes:
    +-----------------------+-------------------------+-----------------------+
    | Hexstring             | hexstring('foo', '-')   | Converts the value to |
    |                       |                         | a hexadecimal string, |
-   |                       |                         | e.g. 0a:1b:2c:3e      |
+   |                       |                         | e.g. 66-6F-6F         |
+   +-----------------------+-------------------------+-----------------------+
+   | Lcase                 | lcase('LoWeR')          | Converts the value of |
+   |                       |                         | a string expression   |
+   |                       |                         | to lower case, e.g.   |
+   |                       |                         | 'lower'               |
+   +-----------------------+-------------------------+-----------------------+
+   | Ucase                 | ucase('uPpEr')          | Converts the value of |
+   |                       |                         | a string expression   |
+   |                       |                         | to upper case, e.g.   |
+   |                       |                         | 'UPPER'               |
    +-----------------------+-------------------------+-----------------------+
    | Split                 | split('foo.bar', '.', 2)| Return the second     |
    |                       |                         | field, splitting on   |
@@ -529,6 +566,31 @@ The ``AddressToText`` token expects 4 bytes for IPv4 addresses or 16 bytes for I
 addresses. The ``Int8ToText`` and ``UInt8ToText`` tokens expect 1 byte, the ``Int16ToText`` and
 ``UInt16ToText`` tokens expect 2 bytes, and ``Int32ToText`` and ``UInt32ToText`` expect 4 bytes.
 For all conversion tokens, if the data length is 0, the result string is empty.
+
+Predicates
+----------
+
+The two predicates are Equal and Match. They can be used to build other
+common predicates, for instance:
+::
+
+           not (substring('foobar', 3, 3) == 'bar')
+           match('foo.*', lcase('FooBar'))
+           match('.*foo.*', 'is it foo or bar')
+           match('^.*foo.*$', 'is it foo or bar')
+
+So inequality, case insensitive pattern matching or pattern search.
+
+.. note::
+
+   Detected invalid regular expressions are considered as syntax errors,
+   runtime exceptions during match are handled as no match.
+
+.. warning::
+
+   Be careful with the match operator as it can result in very poor
+   performance leading to regular expression denial of service (ReDoS).
+
 
 Logical Operators
 -----------------
@@ -597,7 +659,7 @@ or:
 Split
 ---------
 
-The Split operator ``split(value, delimiters, field-number)`` accepts a list
+The split operator ``split(value, delimiters, field-number)`` accepts a list
 of characters to use as delimiters and a positive field number of the
 desired field when the value is split into fields separated by the delimiters.
 Adjacent delimiters are not compressed out, rather they result in an empty
@@ -612,6 +674,12 @@ fields, the result will be an empty string. Some examples follow:
            split ('one.two..four', '.', 3) == ''
            split ('one.two..four', '.', 4) == 'four'
            split ('one.two..four', '.', 5) == ''
+
+.. note::
+
+   To use a hard-to-escape character as a delimiter, use its ASCII hex value.
+   For example, split by ``single quote`` using ``0x27``:
+   ``split(option[39].text, 0x27, 1)``
 
 Ifelse
 ------
@@ -648,43 +716,55 @@ digits separated by the separator, e.g ``':'``, ``'-'``, ``''`` (empty separator
 Configuring Classes
 ===================
 
-A class contains five items: a name, a test expression, option data,
-an option definition, and an ``only-if-required`` flag. The name must exist and
-must be unique among all classes. The test expression, option data and
-definition, and ``only-if-required`` flag are optional.
+A client class definition can contain the following properties:
+ - The ``name`` parameter is mandatory and must be unique among all classes.
+ - The ``test`` expression is not mandatory and represents a string containing the
+   logical expression used to determine membership in the class. The entire
+   expression is included in double quotes (``"``). The result should evaluate
+   to a boolean value (``true`` or ``false``).
+ - The ``template-test`` expression is not mandatory and represents a string
+   containing the logical expression used to generate a spawning class. The
+   entire expression is included in double quotes (``"``). The result should
+   evaluate to a string value representing the variable part of the spawned
+   class name. If the resulting string is empty, no spawning class is generated.
+   The resulting spawned class has the following generated name format:
+   ``SPAWN_<template-class-name>_<evaluated-value>``.
+   After classes are evaluated and a spawned class is generated, the corresponding
+   template class name is also associated with the packet.
+ - The ``option-data`` list is not mandatory and contains options that should be
+   assigned to members of this class. In the case of a template class, these
+   options are assigned to the generated spawned class.
+ - The ``option-def`` list is not mandatory and is used to define custom options.
+ - The ``only-if-required`` flag is not mandatory; when its value is set to
+   ``false`` (the default), membership is determined during classification and is
+   available for subnet selection, for instance. When the value is set to
+   ``true``, membership is evaluated only when required and is usable only for
+   option configuration.
+ - The ``user-context`` is not mandatory and represents a map with user-defined data
+   and possibly configuration options for hook libraries.
+ - The ``next-server`` parameter is not mandatory and configures the ``siaddr`` field in
+   packets associated with this class. It is used in DHCPv4 only.
+ - The ``server-hostname`` is not mandatory and configures the ``sname`` field in
+   packets associated with this class. It is used in DHCPv4 only.
+ - The ``boot-file-name`` is not mandatory and configures the ``file`` field in
+   packets associated with this class. It is used in DHCPv4 only.
+ - The ``valid-lifetime``, ``min-valid-lifetime``, and ``max-valid-lifetime`` are
+   not mandatory and configure the valid lifetime fields for this client class.
+ - The ``preferred-lifetime``, ``min-preferred-lifetime``, and
+   ``max-preferred-lifetime`` are not mandatory and configure the preferred
+   lifetime fields for this client class. It is used in DHCPv6 only.
 
-The test expression is a string containing the logical expression used
-to determine membership in the class. The entire expression is in double
-quotes (").
 
-The option data is a list which defines any options that should be
-assigned to members of this class.
+.. note::
 
-The option definition is for DHCPv4 option 43
-(:ref:`dhcp4-vendor-opts`) and DHCPv4 private options
-(:ref:`dhcp4-private-opts`).
+   ``test`` and ``template-test`` are mutually exclusive in a client class
+   definition. Use either one, or neither, but not both. If both are provided,
+   the configuration is rejected.
 
-Usually the test expression is evaluated before subnet selection, but in
-some cases it is useful to evaluate it later when the subnet,
-shared network, or pools are known but output-option processing has not yet
-been done. The ``only-if-required`` flag, which is ``false`` by default, allows the
-evaluation of the test expression only when it is required, i.e. in a
-``require-client-classes`` list of the selected subnet, shared network, or
-pool.
-
-The ``require-client-classes`` list, which is valid for shared-network,
-subnet, and pool scope, specifies the classes which are evaluated in the
-second pass before output-option processing. The list is built in the
-reversed precedence order of option data, i.e. an option data item in a
-subnet takes precedence over one in a shared network, but required class in
-a subnet is added after one in a shared network. The mechanism is
-related to the ``only-if-required`` flag but it is not mandatory that the
-flag be set to ``true``.
-
-In the following example, the class named "Client_foo" is defined. It is
-comprised of all clients whose client IDs (option 61) start with the
-string "foo". Members of this class will be given 192.0.2.1 and
-192.0.2.2 as their domain name servers.
+In the following example, the class named ``Client_foo`` is defined. It is
+comprised of all clients whose client IDs (option 61) start with the string
+``foo``. Members of this class will be given 192.0.2.1 and 192.0.2.2 as their
+domain name servers.
 
 ::
 
@@ -708,11 +788,11 @@ string "foo". Members of this class will be given 192.0.2.1 and
        ...
    }
 
-The next example shows a client class being defined for use by the DHCPv6
-server. In it the class named "Client_enterprise" is defined. It is
+The next example shows a client class named "Client_enterprise" being defined
+for use by the DHCPv6 server. It is
 comprised of all clients whose client identifiers start with the given
-hex string (which would indicate a DUID based on an enterprise ID of
-0xAABBCCDD). Members of this class will be given 2001:db8:0::1 and
+hex string, which would indicate a DUID based on an enterprise ID of
+``0x0002AABBCCDD``. Members of this class will be given 2001:db8:0::1 and
 2001:db8:2::1 as their domain name servers.
 
 ::
@@ -737,12 +817,168 @@ hex string (which would indicate a DUID based on an enterprise ID of
        ...
    }
 
+It is also possible to have both left and right operands of the evaluated
+expression processed at runtime. Expressions related to packets can appear in
+the expression as many times as needed; there is no limit. However, each token
+has a small impact on performance and excessively complex expressions may cause a
+bottleneck.
+
+::
+
+   "Dhcp4": {
+       "client-classes": [
+           {
+               "name": "Infrastructure",
+               "test": "option[82].option[2].hex == pkt4.mac",
+               ...
+           },
+           ...
+       ],
+       ...
+   }
+
+.. _template-classes:
+
+Template Classes
+----------------
+
+The ``template-test`` parameter indicates that the class is a template class.
+
+::
+
+   "Dhcp4": {
+       "client-classes": [
+           {
+               "name": "Client-ID",
+               "template-test": "substring(option[61].hex,0,3)",
+               ...
+           },
+           ...
+       ],
+       ...
+   }
+
+If the received DHCPv4 packet contains option 61, then the first three bytes represent
+the value ``foo`` in ASCII, and the spawned class uses the
+``SPAWN_Client-ID_foo`` name.
+Both the ``SPAWN_Client-ID_foo`` and ``Client-ID`` classes are associated with
+the packet.
+
+.. note ::
+
+   Template classes can also be used to spawn classes which match regular
+   classes, effectively associating the regular class to the packet.
+   To achieve this, the regular class must also contain the fixed part of the
+   spawned class name:
+
+   ``SPAWN_<template-class-name-used-to-activate-this-regular-class>_<evaluated-value-filtering-this-regular-class>``
+
+::
+
+   "Dhcp6": {
+       "client-classes": [
+           {
+               "name": "SPAWN_Client-ID_foobar",
+               "test": "substring(option[1].hex,0,6) == 0x0002AABBCCDD",
+               ...
+           },
+           {
+               "name": "Client-ID",
+               "template-test": "substring(option[1].hex,0,6)",
+               ...
+           },
+           ...
+       ],
+       ...
+   }
+
+If the received DHCPv6 packet contains option 1 (client identifier) with hex
+value ``0x0002AABBCCDD``, then the ``SPAWN_Client-ID_foobar`` is associated
+with the packet. Moreover, if the first six bytes represent value ``foobar`` in
+ASCII, then the spawned class uses the ``SPAWN_Client-ID_foobar`` name,
+effectively associating the regular class to the packet. In this second case,
+both the ``SPAWN_Client-ID_foobar`` and ``Client-ID`` classes are associated
+with the packet.
+The ``test`` expression on the regular class ``SPAWN_Client-ID_foobar`` is not
+mandatory and can be omitted, but it is used here with a different match
+expression for example purposes.
+
+Usually the ``test`` and ``template-test`` expressions are evaluated before
+subnet selection, but in some cases it is useful to evaluate it later when the
+subnet, shared network, or pools are known but output-option processing has not
+yet been done. For this purpose, the ``only-if-required`` flag, which is
+``false`` by default, allows the evaluation of the ``test`` expression or the
+``template-test`` expression only when it is required, i.e. in a
+``require-client-classes`` list of the selected subnet, shared network, or pool.
+
+The ``require-client-classes`` list, which is valid for shared-network, subnet,
+and pool scope, specifies the classes which are evaluated in the second pass
+before output-option processing. The list is built in reverse-precedence
+order of the option data, i.e. an option data item in a subnet takes precedence over
+one in a shared network, but a required class in a subnet is added after one in a
+shared network. The mechanism is related to the ``only-if-required`` flag but it
+is not mandatory that the flag be set to ``true``.
+
+.. note ::
+
+   The ``template-test`` expression can also be used to filter generated spawned
+   classes, so that they are created only when needed by using the ``ifelse``
+   instruction.
+
+::
+
+   "Dhcp4": {
+       "client-classes": [
+           {
+               "name": "Client-ID",
+               "template-test": "ifelse(substring(option[61].hex,4,3) == 'foo', substring(option[12].hex,0,12), '')",
+               ...
+           },
+           ...
+       ],
+       ...
+   }
+
+.. note ::
+
+   The template classes can be used to configure limits which, just like
+   options, are associated with the spawned class. This permits the configuration of
+   limits that apply to all packets associated with a class spawned at
+   runtime, according to the ``template-test`` expression in the parent template
+   class. For a more detailed description of how to configure limits using the
+   limits hook library, see :ref:`hooks-limits-configuration`.
+   For example, using the configuration below, ingress DHCPv6 packets that have
+   client ID values (in the format expressed by the Kea evaluator) ``foobar``
+   and ``foofoo`` both amount to the same limit of 60 packets per day, while
+   other packets that have the first three hextets different than ``foo`` are put
+   in separate rate-limiting buckets.
+
+::
+
+   "Dhcp6": {
+       "client-classes": [
+           {
+               "name": "Client-ID",
+               "template-test": "substring(option[1].hex,0,3)",
+               "user-context" : {
+                   "limits": {
+                       "rate-limit": "60 packets per day"
+                   }
+               },
+               ...
+           },
+           ...
+       ],
+       ...
+   }
+
+
 .. _classification-using-host-reservations:
 
 Using Static Host Reservations in Classification
 ================================================
 
-Classes can be statically assigned to the clients using techniques
+Classes can be statically assigned to clients using techniques
 described in :ref:`reservation4-client-classes` and
 :ref:`reservation6-client-classes`.
 
@@ -762,12 +998,11 @@ In certain cases it is beneficial to restrict access to certain subnets
 only to clients that belong to a given class, using the ``client-class``
 keyword when defining the subnet.
 
-Let's assume that the server is connected to a network segment that uses
-the 192.0.2.0/24 prefix. The administrator of that network has decided
-that addresses from the range 192.0.2.10 to 192.0.2.20 will be
-managed by the DHCP4 server. Only clients belonging to client class
-"Client_foo" are allowed to use this subnet. Such a configuration can be
-achieved in the following way:
+Let's assume that the server is connected to a network segment that uses the
+192.0.2.0/24 prefix. The administrator of that network has decided that
+addresses from the range 192.0.2.10 to 192.0.2.20 will be managed by the DHCPv4
+server. Only clients belonging to client class ``Client_foo`` are allowed to use
+this subnet. Such a configuration can be achieved in the following way:
 
 ::
 
@@ -790,12 +1025,13 @@ achieved in the following way:
        ],
        "subnet4": [
            {
+               "id": 1,
                "subnet": "192.0.2.0/24",
                "pools": [ { "pool": "192.0.2.10 - 192.0.2.20" } ],
                "client-class": "Client_foo"
            },
            ...
-       ],,
+       ],
        ...
    }
 
@@ -824,6 +1060,7 @@ configuration restricts use of the addresses in the range 2001:db8:1::1 to
        ],
        "subnet6": [
            {
+               "id": 1,
                "subnet": "2001:db8:1::/64",
                "pools": [ { "pool": "2001:db8:1::-2001:db8:1::ffff" } ],
                "client-class": "Client_enterprise"
@@ -841,12 +1078,11 @@ Similar to subnets, in certain cases access to certain address or prefix
 pools must be restricted to only clients that belong to a given class,
 using the ``client-class`` when defining the pool.
 
-Let's assume that the server is connected to a network segment that uses
-the 192.0.2.0/24 prefix. The administrator of that network has decided
-that addresses from the range 192.0.2.10 to 192.0.2.20 are going to be
-managed by the DHCP4 server. Only clients belonging to client class
-"Client_foo" are allowed to use this pool. Such a configuration can be
-achieved in the following way:
+Let's assume that the server is connected to a network segment that uses the
+192.0.2.0/24 prefix. The administrator of that network has decided that
+addresses from the range 192.0.2.10 to 192.0.2.20 are going to be managed by the
+DHCPv4 server. Only clients belonging to client class ``Client_foo`` are allowed
+to use this pool. Such a configuration can be achieved in the following way:
 
 ::
 
@@ -869,6 +1105,7 @@ achieved in the following way:
        ],
        "subnet4": [
            {
+               "id": 1,
                "subnet": "192.0.2.0/24",
                "pools": [
                    {
@@ -878,8 +1115,8 @@ achieved in the following way:
                ]
            },
            ...
-       ],,
-
+       ],
+       ...
    }
 
 The following example shows how to restrict access to an address pool. This
@@ -907,6 +1144,8 @@ configuration restricts use of the addresses in the range 2001:db8:1::1 to
        ],
        "subnet6": [
            {
+               "id": 1,
+
                "subnet": "2001:db8:1::/64",
 
                "pools": [
@@ -921,17 +1160,38 @@ configuration restricts use of the addresses in the range 2001:db8:1::1 to
        ...
    }
 
-Using Classes
-=============
+Class Priority
+==============
 
-Currently classes can be used for two functions: they can supply options
-to members of the class, and they can be used to choose a subnet from
-which an address will be assigned to a class member.
+Client classes in Kea follow the order in which they are specified in the
+configuration (vs. alphabetical order). Required classes follow the order in
+which they are required.
 
-When options are defined as part of the class definition
-they override any global options that may be defined, and
-in turn will be overridden by any options defined for an
-individual subnet.
+When determining which client-class information (comprised of
+options, lease lifetimes, or DHCPv4 field values) is part of the class
+definitions to be included in the response, the server examines the union of
+options from all of the assigned classes. If two or more classes include the
+same class information, the value from the first assigned class is used.
+``ALL`` is always the first class, i.e. the class with the highest
+priority, and matching required classes are last, so they have the
+lowest priority.
+
+Options defined in classes override any global options, and in turn are
+overridden by options defined for an individual subnet, shared network, pool, or
+reservation.
+
+On the other hand, lease lifetimes and DHCPv4 field values defined at class
+scope override any values defined globally, in a subnet scope, or in a
+shared-network scope.
+
+As an example, imagine that an incoming packet matches two classes.
+Class ``foo`` defines values for an NTP server (option 42 in DHCPv4) and
+an SMTP server (option 69 in DHCPv4), while class ``bar`` defines values
+for an NTP server and a POP3 server (option 70 in DHCPv4). The server
+examines the three options - NTP, SMTP, and POP3 - and returns any that
+the client requested. As the NTP server was defined twice, the server
+chooses only one of the values for the reply; the class from which the
+value is obtained is determined as explained in the previous paragraphs.
 
 Classes and Hooks
 =================
@@ -955,11 +1215,10 @@ To enable the debug statements in the classification system,
 the severity must be set to ``DEBUG`` and the debug level to at least 55.
 The specific loggers are ``kea-dhcp4.eval`` and ``kea-dhcp6.eval``.
 
-To understand the logging statements, it is essential to understand a bit
-about how expressions are evaluated; for a more complete description,
-refer to the design document at
-https://gitlab.isc.org/isc-projects/kea/wikis/designs/Design-documents. In
-brief, there are two structures used during the evaluation of an
+To understand the logging statements, it is essential to understand a bit about
+how expressions are evaluated; for a more complete description, refer to
+[the design document](https://gitlab.isc.org/isc-projects/kea/-/wikis/designs/client-classification-design).
+In brief, there are two structures used during the evaluation of an
 expression: a list of tokens which represent the expressions, and a value
 stack which represents the values being manipulated.
 

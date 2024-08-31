@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <d2/tests/parser_unittest.h>
 #include <testutils/io_utils.h>
 #include <testutils/log_utils.h>
+#include <testutils/test_to_element.h>
 #include <testutils/user_context_utils.h>
 
 #include <gtest/gtest.h>
@@ -36,9 +37,7 @@ namespace test {
 /// @param a first to be compared
 /// @param b second to be compared
 void compareJSON(ConstElementPtr a, ConstElementPtr b) {
-    ASSERT_TRUE(a);
-    ASSERT_TRUE(b);
-    EXPECT_EQ(a->str(), b->str());
+    expectEqWithDiff(a, b);
 }
 
 /// @brief Tests if the input string can be parsed with specific parser
@@ -102,31 +101,31 @@ TEST(ParserTest, nestedLists) {
 
 TEST(ParserTest, listsInMaps) {
     string txt = "{ \"constellations\": { \"orion\": [ \"rigel\", \"betelgeuse\" ], "
-                    "\"cygnus\": [ \"deneb\", \"albireo\"] } }";
+                 "\"cygnus\": [ \"deneb\", \"albireo\"] } }";
     testParser(txt, D2ParserContext::PARSER_JSON);
 }
 
 TEST(ParserTest, mapsInLists) {
-    string txt = "[ { \"body\": \"earth\", \"gravity\": 1.0 },"
-                 " { \"body\": \"mars\", \"gravity\": 0.376 } ]";
+    string txt = "[ { \"body\": \"earth\", \"gravity\": 1.0 }, "
+                 "{ \"body\": \"mars\", \"gravity\": 0.376 } ]";
     testParser(txt, D2ParserContext::PARSER_JSON);
 }
 
 TEST(ParserTest, types) {
-    string txt = "{ \"string\": \"foo\","
-                   "\"integer\": 42,"
-                   "\"boolean\": true,"
-                   "\"map\": { \"foo\": \"bar\" },"
-                   "\"list\": [ 1, 2, 3 ],"
-                   "\"null\": null }";
+    string txt = "{ \"string\": \"foo\", "
+                 "\"integer\": 42, "
+                 "\"boolean\": true, "
+                 "\"map\": { \"foo\": \"bar\" }, "
+                 "\"list\": [ 1, 2, 3 ], "
+                 "\"null\": null }";
     testParser(txt, D2ParserContext::PARSER_JSON);
 }
 
 TEST(ParserTest, keywordJSON) {
-    string txt = "{ \"name\": \"user\","
-                   "\"type\": \"password\","
-                   "\"user\": \"name\","
-                   "\"password\": \"type\" }";
+    string txt = "{ \"name\": \"user\", "
+                 "\"type\": \"password\", "
+                 "\"user\": \"name\", "
+                 "\"password\": \"type\" }";
     testParser(txt, D2ParserContext::PARSER_JSON);
 }
 
@@ -151,18 +150,18 @@ TEST(ParserTest, keywordDhcpDdns) {
 TEST(ParserTest, bashComments) {
     string txt =
         "{ \"DhcpDdns\" : \n"
-           "{ \n"
-            " \"ip-address\": \"192.168.77.1\", \n"
-            "# this is a comment\n"
-            " \"port\": 777, \n "
-            " \"ncr-protocol\": \"UDP\", \n"
-            "# lots of comments here\n"
-            "# and here\n"
-            "\"tsig-keys\": [], \n"
-            "\"forward-ddns\" : {}, \n"
-            "\"reverse-ddns\" : {} \n"
-            "} \n"
-         "} \n";
+        "{ \n"
+        " \"ip-address\": \"192.168.77.1\", \n"
+        "# this is a comment\n"
+        " \"port\": 777, \n "
+        " \"ncr-protocol\": \"UDP\", \n"
+        "# lots of comments here\n"
+        "# and here\n"
+        " \"tsig-keys\": [], \n"
+        " \"forward-ddns\" : {}, \n"
+        " \"reverse-ddns\" : {} \n"
+        " } \n"
+        "} \n";
     testParser(txt, D2ParserContext::PARSER_DHCPDDNS);
 }
 
@@ -170,15 +169,15 @@ TEST(ParserTest, bashComments) {
 TEST(ParserTest, cppComments) {
     string txt =
         "{ \"DhcpDdns\" : \n"
-           "{ \n"
-            " \"ip-address\": \"192.168.77.1\", \n"
-            " \"port\": 777, // this is a comment \n"
-            " \"ncr-protocol\": \"UDP\", // everything after // is ignored\n"
-            "\"tsig-keys\": [], // this will be ignored, too\n"
-            "\"forward-ddns\" : {}, \n"
-            "\"reverse-ddns\" : {} \n"
-            "} \n"
-         "} \n";
+        "{ \n"
+        " \"ip-address\": \"192.168.77.1\", \n"
+        " \"port\": 777, // this is a comment \n"
+        " \"ncr-protocol\": \"UDP\", // everything after // is ignored\n"
+        " \"tsig-keys\": [], // this will be ignored, too\n"
+        " \"forward-ddns\" : {}, \n"
+        " \"reverse-ddns\" : {} \n"
+        " } \n"
+        "} \n";
     testParser(txt, D2ParserContext::PARSER_DHCPDDNS, false);
 }
 
@@ -186,15 +185,15 @@ TEST(ParserTest, cppComments) {
 TEST(ParserTest, bashCommentsInline) {
     string txt =
         "{ \"DhcpDdns\" : \n"
-           "{ \n"
-            " \"ip-address\": \"192.168.77.1\", \n"
-            " \"port\": 777, # this is a comment \n"
-            " \"ncr-protocol\": \"UDP\", # everything after # is ignored\n"
-            "\"tsig-keys\": [], # this will be ignored, too\n"
-            "\"forward-ddns\" : {}, \n"
-            "\"reverse-ddns\" : {} \n"
-            "} \n"
-         "} \n";
+        "{ \n"
+        " \"ip-address\": \"192.168.77.1\", \n"
+        " \"port\": 777, # this is a comment \n"
+        " \"ncr-protocol\": \"UDP\", # everything after # is ignored\n"
+        " \"tsig-keys\": [], # this will be ignored, too\n"
+        " \"forward-ddns\" : {}, \n"
+        " \"reverse-ddns\" : {} \n"
+        " } \n"
+        "} \n";
     testParser(txt, D2ParserContext::PARSER_DHCPDDNS, false);
 }
 
@@ -202,16 +201,16 @@ TEST(ParserTest, bashCommentsInline) {
 TEST(ParserTest, multilineComments) {
     string txt =
         "{ \"DhcpDdns\" : \n"
-           "{ \n"
-            " \"ip-address\": \"192.168.77.1\", \n"
-            " \"port\": 777, /* this is a C style comment\n"
-            "that\n can \n span \n multiple \n lines */ \n"
-            " \"ncr-protocol\": \"UDP\", \n"
-            "\"tsig-keys\": [], \n"
-            "\"forward-ddns\" : {}, \n"
-            "\"reverse-ddns\" : {} \n"
-            "} \n"
-         "} \n";
+        "{ \n"
+        " \"ip-address\": \"192.168.77.1\", \n"
+        " \"port\": 777, /* this is a C style comment\n"
+        "that\n can \n span \n multiple \n lines */ \n"
+        " \"ncr-protocol\": \"UDP\", \n"
+        " \"tsig-keys\": [], \n"
+        " \"forward-ddns\" : {}, \n"
+        " \"reverse-ddns\" : {} \n"
+        " } \n"
+        "} \n";
     testParser(txt, D2ParserContext::PARSER_DHCPDDNS, false);
 }
 
@@ -219,19 +218,33 @@ TEST(ParserTest, multilineComments) {
 TEST(ParserTest, embbededComments) {
     string txt =
         "{ \"DhcpDdns\" : \n"
-           "{ \n"
-            "\"comment\": \"a comment\",\n"
-            " \"ip-address\": \"192.168.77.1\", \n"
-            " \"port\": 777, \n "
-            " \"ncr-protocol\": \"UDP\", \n"
-            "\"tsig-keys\" : [ { \n"
-            "    \"name\" : \"d2.md5.key\", \n"
-            "    \"user-context\" : { \"comment\" : \"indirect\" } } ], \n"
-            "\"forward-ddns\" : {}, \n"
-            "\"reverse-ddns\" : {}, \n"
-            "\"user-context\": { \"compatible\": true }"
-            "} \n"
-         "} \n";
+        "{ \n"
+        " \"comment\": \"a comment\",\n"
+        " \"ip-address\": \"192.168.77.1\", \n"
+        " \"port\": 777, \n "
+        " \"ncr-protocol\": \"UDP\", \n"
+        " \"tsig-keys\" : [ { \n"
+        "     \"name\" : \"d2.md5.key\", \n"
+        "     \"user-context\" : { \"comment\" : \"indirect\" } } ], \n"
+        " \"forward-ddns\" : {}, \n"
+        " \"reverse-ddns\" : {}, \n"
+        " \"user-context\": { \"compatible\": true }"
+        " } \n"
+        "} \n";
+    testParser(txt, D2ParserContext::PARSER_DHCPDDNS, false);
+}
+
+// Test that output_options is an alias of output-options.
+TEST(ParserTest, outputDashOptions) {
+    string txt =
+        "{ \"DhcpDdns\" : \n"
+        "{ \n"
+        " \"loggers\": [ {\n"
+        "     \"name\": \"kea-dhcp-ddns\",\n"
+        "     \"output_options\": [ { \"output\": \"stdout\" } ],\n"
+        "     \"severity\": \"INFO\" } ]\n"
+        " } \n"
+        "} \n";
     testParser(txt, D2ParserContext::PARSER_DHCPDDNS, false);
 }
 
@@ -285,7 +298,7 @@ TEST(ParserTest, file) {
     configs.push_back("sample1.json");
     configs.push_back("template.json");
 
-    for (int i = 0; i<configs.size(); i++) {
+    for (size_t i = 0; i < configs.size(); ++i) {
         testFile(string(CFG_EXAMPLES) + "/" + configs[i]);
     }
 }
@@ -720,12 +733,12 @@ TEST(ParserTest, mapEntries) {
         [] (ConstElementPtr json, KeywordSet& set) {
             if (json->getType() == Element::list) {
                 // Handle lists.
-                for (auto elem : json->listValue()) {
+                for (auto const& elem : json->listValue()) {
                     extract(elem, set);
                 }
             } else if (json->getType() == Element::map) {
                 // Handle maps.
-                for (auto elem : json->mapValue()) {
+                for (auto const& elem : json->mapValue()) {
                     static_cast<void>(set.insert(elem.first));
                     // Skip entries with free content.
                     if ((elem.first != "user-context") &&
@@ -776,12 +789,12 @@ TEST(ParserTest, duplicateMapEntries) {
         [] (ElementPtr config, ElementPtr json, size_t& cnt) {
             if (json->getType() == Element::list) {
                 // Handle lists.
-                for (auto elem : json->listValue()) {
+                for (auto const& elem : json->listValue()) {
                     test(config, elem, cnt);
                 }
             } else if (json->getType() == Element::map) {
                 // Handle maps.
-                for (auto elem : json->mapValue()) {
+                for (auto const& elem : json->mapValue()) {
                     // Skip entries with free content.
                     if ((elem.first == "user-context") ||
                         (elem.first == "parameters")) {
@@ -832,7 +845,7 @@ TEST_F(TrailingCommasTest, tests) {
     "loggers": [
       {
         "name": "kea-dhcp-ddns",
-        "output_options": [
+        "output-options": [
           {
             "output": "stdout"
           },
@@ -848,7 +861,22 @@ TEST_F(TrailingCommasTest, tests) {
         "name": "d2.md5.key",
         "secret": "sensitivejdPJI5QxlpnfQ==",
       },
-    ]
+    ],
+    "control-sockets": [
+      {
+        "socket-type": "http",
+        "socket-address": "::1",
+        "authentication": {
+          "clients": [
+            {
+              "password-file": "/tmp/pwd",
+            }
+          ],
+          "type": "basic",
+        },
+        "socket-port": 8053,
+      },
+    ],
   },
 })");
     testParser(txt, D2ParserContext::PARSER_DHCPDDNS, false);
@@ -858,12 +886,63 @@ TEST_F(TrailingCommasTest, tests) {
     addLog("<string>:14.8");
     addLog("<string>:22.45");
     addLog("<string>:23.8");
-    addLog("<string>:25.4");
+    addLog("<string>:32.42");
+    addLog("<string>:35.26");
+    addLog("<string>:37.28");
+    addLog("<string>:38.8");
+    addLog("<string>:39.6");
+    addLog("<string>:40.4");
     EXPECT_TRUE(checkFile());
 
     // Test with many consecutive commas.
     boost::replace_all(txt, ",", ",,,,");
     testParser(txt, D2ParserContext::PARSER_DHCPDDNS, false);
+}
+
+/// @brief Tests control socket config conflicts.
+TEST(ParserTest, duplicateControlSocket) {
+    // Valid configuration.
+    string txt(R"({
+    "DhcpDdns": {
+        "control-socket": {
+            "socket-type": "http",
+            "socket-address": "127.0.0.1"
+        }
+     }
+})");
+    testParser(txt, D2ParserContext::PARSER_DHCPDDNS, false);
+
+    // Invalid configuration: both map and list.
+    string bad1(R"({
+    "DhcpDdns": {
+        "control-socket": {
+            "socket-type": "http",
+            "socket-address": "127.0.0.1"
+        },
+        "control-sockets": [ ]
+     }
+})");
+
+    ASSERT_NO_THROW(Element::fromJSON(bad1, true));
+    D2ParserContext ctx1;
+    EXPECT_THROW(ctx1.parseString(bad1, D2ParserContext::PARSER_DHCPDDNS),
+                 D2ParseError);
+
+    // Invalid configuration: both name and address.
+    string bad2(R"({
+    "DhcpDdns": {
+        "control-socket": {
+            "socket-type": "http",
+            "socket-address": "127.0.0.1",
+            "socket-name": "::1"
+        }
+     }
+})");
+
+    ASSERT_NO_THROW(Element::fromJSON(bad1, true));
+    D2ParserContext ctx2;
+    EXPECT_THROW(ctx2.parseString(bad2, D2ParserContext::PARSER_DHCPDDNS),
+                 D2ParseError);
 }
 
 }  // namespace test

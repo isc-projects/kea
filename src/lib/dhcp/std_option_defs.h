@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -92,6 +92,9 @@ RECORD_DECL(UUID_GUID_RECORDS, OPT_UINT8_TYPE, OPT_BINARY_TYPE);
 // Flag, two addresses and domain list
 RECORD_DECL(V4_RDNSS_SELECT_RECORDS, OPT_UINT8_TYPE, OPT_IPV4_ADDRESS_TYPE,
             OPT_IPV4_ADDRESS_TYPE, OPT_FQDN_TYPE);
+
+// RFC6926 DHCPv4 Bulk Leasequery Status Code option.
+RECORD_DECL(V4_STATUS_CODE_RECORDS, OPT_UINT8_TYPE, OPT_STRING_TYPE);
 
 // RFC7618 DHCPv4 Port Parameter option.
 //
@@ -319,6 +322,8 @@ const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
       OPT_IPV4_ADDRESS_TYPE, false, NO_RECORD_DEF, "" },
     { "domain-search", DHO_DOMAIN_SEARCH, DHCP4_OPTION_SPACE, OPT_FQDN_TYPE,
       true, NO_RECORD_DEF, "" },
+    { "classless-static-route", DHO_CLASSLESS_STATIC_ROUTE, DHCP4_OPTION_SPACE, OPT_INTERNAL_TYPE,
+      false, NO_RECORD_DEF, "" },
     { "vivco-suboptions", DHO_VIVCO_SUBOPTIONS, DHCP4_OPTION_SPACE,
       OPT_RECORD_TYPE, false, RECORD_DEF(VIVCO_RECORDS), "" },
     // Vendor-Identifying Vendor Specific Information option payload begins with a
@@ -343,10 +348,28 @@ const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
       OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
     { "sip-ua-cs-domains", DHO_SIP_UA_CONF_SERVICE_DOMAINS, DHCP4_OPTION_SPACE,
       OPT_FQDN_TYPE, true, NO_RECORD_DEF, "" },
+    { "v4-sztp-redirect", DHO_V4_SZTP_REDIRECT, DHCP4_OPTION_SPACE, OPT_TUPLE_TYPE,
+     true, NO_RECORD_DEF, ""},
     { "rdnss-selection", DHO_RDNSS_SELECT, DHCP4_OPTION_SPACE, OPT_RECORD_TYPE,
       true, RECORD_DEF(V4_RDNSS_SELECT_RECORDS), "" },
+    { "status-code", DHO_STATUS_CODE, DHCP4_OPTION_SPACE,
+      OPT_RECORD_TYPE, false, RECORD_DEF(V4_STATUS_CODE_RECORDS), "" },
+    { "base-time", DHO_BASE_TIME, DHCP4_OPTION_SPACE,
+      OPT_UINT32_TYPE, false, NO_RECORD_DEF, "" },
+    { "start-time-of-state", DHO_START_TIME_OF_STATE, DHCP4_OPTION_SPACE,
+      OPT_UINT32_TYPE, false, NO_RECORD_DEF, "" },
+    { "query-start-time", DHO_QUERY_START_TIME, DHCP4_OPTION_SPACE,
+      OPT_UINT32_TYPE, false, NO_RECORD_DEF, "" },
+    { "query-end-time", DHO_QUERY_END_TIME, DHCP4_OPTION_SPACE,
+      OPT_UINT32_TYPE, false, NO_RECORD_DEF, "" },
+    { "dhcp-state", DHO_DHCP_STATE, DHCP4_OPTION_SPACE,
+      OPT_UINT8_TYPE, false, NO_RECORD_DEF, "" },
+    { "data-source", DHO_DATA_SOURCE, DHCP4_OPTION_SPACE,
+      OPT_UINT8_TYPE, false, NO_RECORD_DEF, "" },
     { "v4-portparams", DHO_V4_PORTPARAMS, DHCP4_OPTION_SPACE, OPT_RECORD_TYPE,
       false, RECORD_DEF(V4_PORTPARAMS_RECORDS), "" },
+    { "v4-dnr", DHO_V4_DNR, DHCP4_OPTION_SPACE, OPT_INTERNAL_TYPE,
+     false, NO_RECORD_DEF, "" },
     { "option-6rd", DHO_6RD, DHCP4_OPTION_SPACE, OPT_RECORD_TYPE, true,
       RECORD_DEF(OPT_6RD_RECORDS), "" },
     { "v4-access-domain", DHO_V4_ACCESS_DOMAIN, DHCP4_OPTION_SPACE,
@@ -359,6 +382,56 @@ const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
 const int STANDARD_V4_OPTION_DEFINITIONS_SIZE =
     sizeof(STANDARD_V4_OPTION_DEFINITIONS) /
     sizeof(STANDARD_V4_OPTION_DEFINITIONS[0]);
+
+/// Definitions of DHCPv4 agent options.
+const OptionDefParams DHCP_AGENT_OPTION_DEFINITIONS[] = {
+    { "circuit-id", RAI_OPTION_AGENT_CIRCUIT_ID,
+      DHCP_AGENT_OPTION_SPACE, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
+    { "remote-id", RAI_OPTION_REMOTE_ID,
+      DHCP_AGENT_OPTION_SPACE, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
+    { "docsis-device-class", RAI_OPTION_DOCSIS_DEVICE_CLASS,
+      DHCP_AGENT_OPTION_SPACE, OPT_UINT32_TYPE, false, NO_RECORD_DEF, "" },
+    { "link-selection", RAI_OPTION_LINK_SELECTION,
+      DHCP_AGENT_OPTION_SPACE, OPT_IPV4_ADDRESS_TYPE, false,
+      NO_RECORD_DEF, "" },
+    { "subscriber-id", RAI_OPTION_SUBSCRIBER_ID,
+      DHCP_AGENT_OPTION_SPACE, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "radius", RAI_OPTION_RADIUS,
+      DHCP_AGENT_OPTION_SPACE, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
+    { "auth", RAI_OPTION_AUTH,
+      DHCP_AGENT_OPTION_SPACE, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
+    { "vendor-specific-info", RAI_OPTION_VSI,
+      DHCP_AGENT_OPTION_SPACE, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
+    { "relay-flags", RAI_OPTION_RELAY_FLAGS,
+      DHCP_AGENT_OPTION_SPACE, OPT_UINT8_TYPE, false, NO_RECORD_DEF, "" },
+    { "server-id-override", RAI_OPTION_SERVER_ID_OVERRIDE,
+      DHCP_AGENT_OPTION_SPACE, OPT_IPV4_ADDRESS_TYPE, false,
+      NO_RECORD_DEF, "" },
+    { "relay-id", RAI_OPTION_RELAY_ID,
+      DHCP_AGENT_OPTION_SPACE, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
+    { "access-techno-type", RAI_OPTION_ACCESS_TECHNO_TYPE,
+      DHCP_AGENT_OPTION_SPACE, OPT_UINT16_TYPE, false, NO_RECORD_DEF, "" },
+    { "access-network-name", RAI_OPTION_ACCESS_NETWORK_NAME,
+      DHCP_AGENT_OPTION_SPACE, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "access-point-name", RAI_OPTION_ACCESS_POINT_NAME,
+      DHCP_AGENT_OPTION_SPACE, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "access-point-bssid", RAI_OPTION_ACCESS_POINT_BSSID,
+      DHCP_AGENT_OPTION_SPACE, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
+    { "operator-id", RAI_OPTION_OPERATOR_ID,
+      DHCP_AGENT_OPTION_SPACE, OPT_UINT32_TYPE, false, NO_RECORD_DEF, "" },
+    { "operator-realm", RAI_OPTION_OPERATOR_REALM,
+      DHCP_AGENT_OPTION_SPACE, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "relay-port", RAI_OPTION_RELAY_PORT,
+      DHCP_AGENT_OPTION_SPACE, OPT_UINT16_TYPE, false, NO_RECORD_DEF, "" },
+    { "virtual-subnet-select", RAI_OPTION_VIRTUAL_SUBNET_SELECT,
+      DHCP_AGENT_OPTION_SPACE, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
+    { "virtual-subnet-select-ctrl", RAI_OPTION_VIRTUAL_SUBNET_SELECT_CTRL,
+      DHCP_AGENT_OPTION_SPACE, OPT_EMPTY_TYPE, false, NO_RECORD_DEF, "" }
+};
+
+const int DHCP_AGENT_OPTION_DEFINITIONS_SIZE =
+    sizeof(DHCP_AGENT_OPTION_DEFINITIONS) /
+    sizeof(DHCP_AGENT_OPTION_DEFINITIONS[0]);
 
 /// Last resort definitions (only option 43 for now, these definitions
 /// are applied in deferred unpacking when none is found).
@@ -403,7 +476,7 @@ RECORD_DECL(S46_V4V6BIND, OPT_IPV4_ADDRESS_TYPE, OPT_IPV6_PREFIX_TYPE);
 // s46-portparams
 RECORD_DECL(S46_PORTPARAMS, OPT_UINT8_TYPE, OPT_PSID_TYPE);
 // status-code
-RECORD_DECL(STATUS_CODE_RECORDS, OPT_UINT16_TYPE, OPT_STRING_TYPE);
+RECORD_DECL(V6_STATUS_CODE_RECORDS, OPT_UINT16_TYPE, OPT_STRING_TYPE);
 // vendor-class
 RECORD_DECL(VENDOR_CLASS_RECORDS, OPT_UINT32_TYPE, OPT_BINARY_TYPE);
 // rdnss-selection
@@ -458,7 +531,7 @@ const OptionDefParams STANDARD_V6_OPTION_DEFINITIONS[] = {
     { "unicast", D6O_UNICAST, DHCP6_OPTION_SPACE, OPT_IPV6_ADDRESS_TYPE,
       false, NO_RECORD_DEF, "" },
     { "status-code", D6O_STATUS_CODE, DHCP6_OPTION_SPACE, OPT_RECORD_TYPE,
-      false, RECORD_DEF(STATUS_CODE_RECORDS), "" },
+      false, RECORD_DEF(V6_STATUS_CODE_RECORDS), "" },
     { "rapid-commit", D6O_RAPID_COMMIT, DHCP6_OPTION_SPACE, OPT_EMPTY_TYPE,
       false, NO_RECORD_DEF, "" },
     { "user-class", D6O_USER_CLASS, DHCP6_OPTION_SPACE, OPT_BINARY_TYPE,
@@ -571,6 +644,8 @@ const OptionDefParams STANDARD_V6_OPTION_DEFINITIONS[] = {
       OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
     { "relay-source-port", D6O_RELAY_SOURCE_PORT, DHCP6_OPTION_SPACE,
       OPT_UINT16_TYPE, false, NO_RECORD_DEF, "" },
+    { "v6-sztp-redirect", D60_V6_SZTP_REDIRECT, DHCP6_OPTION_SPACE,
+      OPT_TUPLE_TYPE, true, NO_RECORD_DEF, "" },
     { "ipv6-address-andsf", D6O_IPV6_ADDRESS_ANDSF, DHCP6_OPTION_SPACE,
       OPT_IPV6_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
     { "s46-cont-mape", D6O_S46_CONT_MAPE, DHCP6_OPTION_SPACE, OPT_EMPTY_TYPE,
@@ -578,7 +653,9 @@ const OptionDefParams STANDARD_V6_OPTION_DEFINITIONS[] = {
     { "s46-cont-mapt", D6O_S46_CONT_MAPT, DHCP6_OPTION_SPACE, OPT_EMPTY_TYPE,
       false, NO_RECORD_DEF, MAPT_V6_OPTION_SPACE },
     { "s46-cont-lw", D6O_S46_CONT_LW, DHCP6_OPTION_SPACE, OPT_EMPTY_TYPE,
-      false, NO_RECORD_DEF, LW_V6_OPTION_SPACE }
+      false, NO_RECORD_DEF, LW_V6_OPTION_SPACE },
+    { "v6-dnr", D6O_V6_DNR, DHCP6_OPTION_SPACE, OPT_INTERNAL_TYPE,
+     false, NO_RECORD_DEF, "" }
 
     // @todo There is still a bunch of options for which we have to provide
     // definitions but we don't do it because they are not really

@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,7 +9,6 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/parsers/ifaces_config_parser.h>
-#include <boost/foreach.hpp>
 #include <string>
 #include <sys/types.h>
 
@@ -21,7 +20,7 @@ namespace dhcp {
 void
 IfacesConfigParser::parseInterfacesList(const CfgIfacePtr& cfg_iface,
                                         ConstElementPtr ifaces_list) {
-    BOOST_FOREACH(ConstElementPtr iface, ifaces_list->listValue()) {
+    for (auto const& iface : ifaces_list->listValue()) {
         std::string iface_name = iface->stringValue();
         try {
             cfg_iface->use(protocol_, iface_name);
@@ -50,7 +49,7 @@ IfacesConfigParser::parse(const CfgIfacePtr& cfg,
     }
 
     bool socket_type_specified = false;
-    BOOST_FOREACH(ConfigPair element, ifaces_config->mapValue()) {
+    for (auto const& element : ifaces_config->mapValue()) {
         try {
             if (element.first == "re-detect") {
                 continue;
@@ -59,7 +58,6 @@ IfacesConfigParser::parse(const CfgIfacePtr& cfg,
             if (element.first == "interfaces") {
                 parseInterfacesList(cfg, element.second);
                 continue;
-
             }
 
             if (element.first == "dhcp-socket-type") {

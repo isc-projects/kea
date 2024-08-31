@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -37,13 +37,9 @@ public:
     SecBuf(const std::vector<T>& x) : vec_(x) {}
 
     ~SecBuf() {
-#if defined(__has_feature)
-#if __has_feature(address_sanitizer)
-        // Make the address sanitizer happy assuming this won't reallocate
+        // Resize to its largest capacity and fill the whole memory with zeros.
         vec_.resize(vec_.capacity());
-#endif
-#endif
-        std::memset(&vec_[0], 0, vec_.capacity() * sizeof(T));
+        std::fill(vec_.begin(), vec_.end(), 0);
     };
 
     iterator begin() {
@@ -71,13 +67,11 @@ public:
     };
 
     void clear() {
-#if defined(__has_feature)
-#if __has_feature(address_sanitizer)
-        // Make the address sanitizer happy assuming this won't reallocate
+        // Resize to its largest capacity and fill the whole memory with zeros.
         vec_.resize(vec_.capacity());
-#endif
-#endif
-        std::memset(&vec_[0], 0, vec_.capacity() * sizeof(T));
+        std::fill(vec_.begin(), vec_.end(), 0);
+
+        // Remove all elements.
         vec_.clear();
     }
 

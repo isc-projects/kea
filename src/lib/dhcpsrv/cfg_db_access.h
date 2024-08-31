@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -100,6 +100,23 @@ public:
         return (ip_reservations_unique_);
     }
 
+    /// @brief Modifies the setting whether the lease extended info tables
+    /// are enabled.
+    ///
+    /// @param enabled new setting to be used by @c LeaseMgr.
+    void setExtendedInfoTablesEnabled(const bool enabled) {
+        extended_info_tables_enabled_ = enabled;
+    }
+
+    /// @brief Returns the setting indicating if lease extended info tables
+    /// are enabled.
+    ///
+    /// @return true if lease extended info tables are enabled or false
+    /// if they are disabled.
+    bool getExtendedInfoTablesEnabled() const {
+        return (extended_info_tables_enabled_);
+    }
+
     /// @brief Creates instance of lease manager and host data sources
     /// according to the configuration specified.
     void createManagers() const;
@@ -124,6 +141,10 @@ protected:
     /// @brief Holds the setting whether IP reservations should be unique
     /// or can be non-unique.
     bool ip_reservations_unique_;
+
+    /// @brief Holds the setting whether the lease extended info tables
+    /// are enabled or disabled. The default is disabled.
+    bool extended_info_tables_enabled_;
 };
 
 /// @brief A pointer to the @c CfgDbAccess.

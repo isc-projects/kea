@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019,2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,7 +8,6 @@
 #define ISC_TRANSLATOR_LOGGER_H 1
 
 #include <yang/translator.h>
-#include <list>
 
 namespace isc {
 namespace yang {
@@ -19,7 +18,7 @@ namespace yang {
 /// @code
 /// {
 ///     "name": <name>,
-///     "output_options": [ <output options> ],
+///     "output-options": [ <output options> ],
 ///     "severity": <severity>,
 ///     "debuglevel": <debug level>,
 ///     "user-context": { <json map> },
@@ -59,7 +58,7 @@ namespace yang {
 ///     {
 ///         "name": "foo",
 ///         "severity": "WARN",
-///         "output_options":
+///         "output-options":
 ///             [
 ///                 {
 ///                     "output": "/bar",
@@ -91,24 +90,25 @@ namespace yang {
 /// - kea-dhcp6-server
 /// - kea-dhcp-ddns
 /// - kea-ctrl-agent
-class TranslatorLogger : virtual public TranslatorBasic {
+class TranslatorLogger : virtual public Translator {
 public:
-
     /// @brief Constructor.
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-    TranslatorLogger(sysrepo::S_Session session, const std::string& model);
+    TranslatorLogger(sysrepo::Session session, const std::string& model);
 
     /// @brief Destructor.
-    virtual ~TranslatorLogger();
+    virtual ~TranslatorLogger() = default;
 
-    /// @brief Get and translate a logger from YANG to JSON.
+    /// @brief Translate a logger from YANG to JSON.
     ///
-    /// @param xpath The xpath of the logger.
+    /// @param data_node the YANG node representing the logger configuration
+    ///
     /// @return JSON representation of the logger.
-    /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ElementPtr getLogger(const std::string& xpath);
+    ///
+    /// @throw NetconfError when sysrepo raises an error.
+    isc::data::ElementPtr getLogger(libyang::DataNode const& data_node);
 
     /// @brief Translate and set logger from JSON to YANG.
     ///
@@ -117,19 +117,23 @@ public:
     void setLogger(const std::string& xpath, isc::data::ConstElementPtr elem);
 
 protected:
-    /// @brief Get and translate an output option from YANG to JSON.
+    /// @brief Translate an output option from YANG to JSON.
     ///
-    /// @param xpath The xpath of the output option.
+    /// @param data_node the YANG node representing the output option
+    ///
     /// @return JSON representation of the output option.
-    /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ElementPtr getOutputOption(const std::string& xpath);
-
-    /// @brief Get and translate output options from YANG to JSON.
     ///
-    /// @param xpath The xpath of output options.
+    /// @throw NetconfError when sysrepo raises an error.
+    isc::data::ElementPtr getOutputOption(libyang::DataNode const& data_node);
+
+    /// @brief Translate output options from YANG to JSON.
+    ///
+    /// @param data_node the YANG node representing output options
+    ///
     /// @return JSON representation of output options.
-    /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ElementPtr getOutputOptions(const std::string& xpath);
+    ///
+    /// @throw NetconfError when sysrepo raises an error.
+    isc::data::ElementPtr getOutputOptions(libyang::DataNode const& data_node);
 
     /// @brief Translate and set an output option from JSON to YANG.
     ///
@@ -148,10 +152,12 @@ protected:
 
     /// @brief getLogger JSON for loggers.
     ///
-    /// @param xpath The xpath of the logger.
+    /// @param data_node the YANG node representing the logger configuration
+    ///
     /// @return JSON representation of the logger.
-    /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ElementPtr getLoggerKea(const std::string& xpath);
+    ///
+    /// @throw NetconfError when sysrepo raises an error.
+    isc::data::ElementPtr getLoggerKea(libyang::DataNode const& data_node);
 
     /// @brief setLogger for loggers.
     ///
@@ -159,7 +165,7 @@ protected:
     /// @param elem The JSON element.
     void setLoggerKea(const std::string& xpath,
                       isc::data::ConstElementPtr elem);
-};
+};  // TranslatorLogger
 
 /// @brief A translator class for converting a logger list between
 /// YANG and JSON.
@@ -167,37 +173,50 @@ protected:
 /// Currently supports all kea servers and agents. Specific to Kea.
 class TranslatorLoggers : virtual public TranslatorLogger {
 public:
-
     /// @brief Constructor.
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-    TranslatorLoggers(sysrepo::S_Session session, const std::string& model);
+    TranslatorLoggers(sysrepo::Session session, const std::string& model);
 
     /// @brief Destructor.
-    virtual ~TranslatorLoggers();
+    virtual ~TranslatorLoggers() = default;
 
-    /// @brief Get and translate loggeres from YANG to JSON.
+    /// @brief Translate loggers from YANG to JSON.
+    ///
+    /// @param data_node the YANG node representing the list of loggers
+    ///
+    /// @return the JSON representation of the list of loggers
+    ///
+    /// @throw NetconfError when sysrepo raises an error.
+    isc::data::ConstElementPtr getLoggers(libyang::DataNode const& data_node);
+
+    /// @brief Translate loggers from YANG to JSON.
     ///
     /// @param xpath The xpath of loggers.
+    ///
     /// @return JSON representation of loggers.
-    /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ConstElementPtr getLoggers(const std::string& xpath);
+    ///
+    /// @throw NetconfError when sysrepo raises an error.
+    isc::data::ConstElementPtr getLoggersFromAbsoluteXpath(std::string const& xpath);
 
-    /// @brief Translate and set loggeres from JSON to YANG.
+    /// @brief Translate and set loggers from JSON to YANG.
     ///
     /// @param xpath The xpath of loggers.
+    ///
     /// @param elem The JSON element.
     void setLoggers(const std::string& xpath,
-                      isc::data::ConstElementPtr elem);
+                    isc::data::ConstElementPtr elem);
 
 protected:
     /// @brief getLoggers JSON for loggers.
     ///
-    /// @param xpath The xpath of loggers.
-    /// @return JSON representation of  loggers.
-    /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ElementPtr getLoggersKea(const std::string& xpath);
+    /// @param data_node the YANG node representing loggers configuration
+    ///
+    /// @return JSON representation of loggers.
+    ///
+    /// @throw NetconfError when sysrepo raises an error.
+    isc::data::ElementPtr getLoggersKea(libyang::DataNode const& data_node);
 
     /// @brief setLoggers for loggers.
     ///
@@ -206,9 +225,9 @@ protected:
     /// @throw BadValue on a logger without name.
     void setLoggersKea(const std::string& xpath,
                        isc::data::ConstElementPtr elem);
-};
+};  // TranslatorLoggers
 
 }  // namespace yang
 }  // namespace isc
 
-#endif // ISC_TRANSLATOR_LOGGER_H
+#endif  // ISC_TRANSLATOR_LOGGER_H

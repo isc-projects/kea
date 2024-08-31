@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,8 +20,6 @@
 #endif
 
 #include <boost/algorithm/string.hpp>
-#include <boost/foreach.hpp>
-#include <boost/scoped_ptr.hpp>
 
 #include <algorithm>
 #include <iostream>
@@ -168,7 +166,7 @@ void
 HostDataSourceFactory::printRegistered() {
     std::stringstream txt;
 
-    for (auto x : map_) {
+    for (auto const& x : map_) {
         txt << x.first << " ";
     }
 

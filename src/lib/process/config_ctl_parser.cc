@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -32,10 +32,10 @@ ConfigControlParser::parse(const data::ConstElementPtr& config_control) {
             }
 
             const std::vector<data::ElementPtr>& db_list = elem->listValue();
-            for (auto db = db_list.cbegin(); db != db_list.end(); ++db) {
+            for (auto const& db : db_list) {
                 db::DbAccessParser parser;
                 std::string access_string;
-                parser.parse(access_string, *db);
+                parser.parse(access_string, db);
                 /// @todo do we still need access_string for this at all?
                 /// can't we just use params directly and get rid of the
                 /// string now that DatabaseConnection::toElement(map) exists?

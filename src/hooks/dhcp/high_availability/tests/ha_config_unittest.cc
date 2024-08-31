@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,18 +9,22 @@
 #include <ha_impl.h>
 #include <ha_service_states.h>
 #include <ha_test.h>
+#include <asiolink/io_address.h>
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
 #include <cc/dhcp_config_error.h>
 #include <config/command_mgr.h>
+#include <dhcpsrv/shared_network.h>
 #include <util/state_model.h>
 #include <util/multi_threading_mgr.h>
 #include <testutils/gtest_utils.h>
 #include <string>
 
 using namespace isc;
+using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::data;
+using namespace isc::dhcp;
 using namespace isc::ha;
 using namespace isc::hooks;
 using namespace isc::ha::test;
@@ -32,10 +36,8 @@ namespace {
 /// configuration.
 class HAConfigTest : public HATest {
 public:
-
     /// @brief Constructor.
-    HAConfigTest()
-        : HATest() {
+    HAConfigTest() : HATest(), hardware_threads_(MultiThreadingMgr::detectThreadCount()) {
     }
 
     /// @brief Verifies if an exception is thrown if provided HA
@@ -59,6 +61,9 @@ public:
                 " exception type";
         }
     }
+
+    /// @brief number of threads the system reports as supported
+    uint32_t hardware_threads_;
 };
 
 // Verifies that load balancing configuration is parsed correctly.
@@ -77,6 +82,7 @@ TEST_F(HAConfigTest, configureLoadBalancing) {
         "        \"max-response-delay\": 11,"
         "        \"max-ack-delay\": 5,"
         "        \"max-unacked-clients\": 20,"
+        "        \"max-rejected-lease-updates\": 9,"
         "        \"wait-backup-ack\": false,"
         "        \"peers\": ["
         "            {"
@@ -134,6 +140,7 @@ TEST_F(HAConfigTest, configureLoadBalancing) {
     EXPECT_EQ(11, impl->getConfig()->getMaxResponseDelay());
     EXPECT_EQ(5, impl->getConfig()->getMaxAckDelay());
     EXPECT_EQ(20, impl->getConfig()->getMaxUnackedClients());
+    EXPECT_EQ(9, impl->getConfig()->getMaxRejectedLeaseUpdates());
     EXPECT_FALSE(impl->getConfig()->amWaitingBackupAck());
 
     HAConfig::PeerConfigPtr cfg = impl->getConfig()->getThisServerConfig();
@@ -207,11 +214,12 @@ TEST_F(HAConfigTest, configureLoadBalancing) {
     ASSERT_TRUE(state_cfg);
     EXPECT_EQ(STATE_PAUSE_ONCE, state_cfg->getPausing());
 
-    // Verify multi-threading default values.
-    EXPECT_FALSE(impl->getConfig()->getEnableMultiThreading());
-    EXPECT_FALSE(impl->getConfig()->getHttpDedicatedListener());
-    EXPECT_EQ(0, impl->getConfig()->getHttpListenerThreads());
-    EXPECT_EQ(0, impl->getConfig()->getHttpClientThreads());
+    // Verify multi-threading default values. Default is 0 for the listener and client threads, but
+    // after MT is applied, HAImpl resolves them to the auto-detected values.
+    EXPECT_TRUE(impl->getConfig()->getEnableMultiThreading());
+    EXPECT_TRUE(impl->getConfig()->getHttpDedicatedListener());
+    EXPECT_EQ(hardware_threads_, impl->getConfig()->getHttpListenerThreads());
+    EXPECT_EQ(hardware_threads_, impl->getConfig()->getHttpClientThreads());
 }
 
 // Verifies that hot standby configuration is parsed correctly.
@@ -258,6 +266,7 @@ TEST_F(HAConfigTest, configureHotStandby) {
     EXPECT_EQ(10000, impl->getConfig()->getHeartbeatDelay());
     EXPECT_EQ(10000, impl->getConfig()->getMaxAckDelay());
     EXPECT_EQ(10, impl->getConfig()->getMaxUnackedClients());
+    EXPECT_EQ(10, impl->getConfig()->getMaxRejectedLeaseUpdates());
     EXPECT_FALSE(impl->getConfig()->amWaitingBackupAck());
 
     HAConfig::PeerConfigPtr cfg = impl->getConfig()->getThisServerConfig();
@@ -321,11 +330,12 @@ TEST_F(HAConfigTest, configureHotStandby) {
     ASSERT_TRUE(state_cfg);
     EXPECT_EQ(STATE_PAUSE_NEVER, state_cfg->getPausing());
 
-    // Verify multi-threading default values.
-    EXPECT_FALSE(impl->getConfig()->getEnableMultiThreading());
-    EXPECT_FALSE(impl->getConfig()->getHttpDedicatedListener());
-    EXPECT_EQ(0, impl->getConfig()->getHttpListenerThreads());
-    EXPECT_EQ(0, impl->getConfig()->getHttpClientThreads());
+    // Verify multi-threading default values. Default is 0 for the listener and client threads, but
+    // after MT is applied, HAImpl resolves them to the auto-detected values.
+    EXPECT_TRUE(impl->getConfig()->getEnableMultiThreading());
+    EXPECT_TRUE(impl->getConfig()->getHttpDedicatedListener());
+    EXPECT_EQ(hardware_threads_, impl->getConfig()->getHttpListenerThreads());
+    EXPECT_EQ(hardware_threads_, impl->getConfig()->getHttpClientThreads());
 }
 
 // Verifies that passive-backup configuration is parsed correctly.
@@ -388,11 +398,99 @@ TEST_F(HAConfigTest, configurePassiveBackup) {
     ASSERT_TRUE(cfg->getBasicAuth());
     EXPECT_EQ("a2VhdGVzdDpLZWFUZXN0", cfg->getBasicAuth()->getCredential());
 
-    // Verify multi-threading default values.
-    EXPECT_FALSE(impl->getConfig()->getEnableMultiThreading());
-    EXPECT_FALSE(impl->getConfig()->getHttpDedicatedListener());
-    EXPECT_EQ(0, impl->getConfig()->getHttpListenerThreads());
-    EXPECT_EQ(0, impl->getConfig()->getHttpClientThreads());
+    // Verify multi-threading default values. Default is 0 for the listener and client threads, but
+    // after MT is applied, HAImpl resolves them to the auto-detected values.
+    EXPECT_TRUE(impl->getConfig()->getEnableMultiThreading());
+    EXPECT_TRUE(impl->getConfig()->getHttpDedicatedListener());
+    EXPECT_EQ(hardware_threads_, impl->getConfig()->getHttpListenerThreads());
+    EXPECT_EQ(hardware_threads_, impl->getConfig()->getHttpClientThreads());
+}
+
+// Verifies that multiple relationships in hot-standby mode are parsed correctly
+// and accepted.
+TEST_F(HAConfigTest, configureMultipleHotStandby) {
+    const std::string ha_config =
+        "["
+        "    {"
+        "        \"this-server-name\": \"server2\","
+        "        \"mode\": \"hot-standby\","
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server1\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"primary\","
+        "                \"auto-failover\": false"
+        "            },"
+        "            {"
+        "                \"name\": \"server2\","
+        "                \"url\": \"http://127.0.0.1:8081/\","
+        "                \"role\": \"standby\","
+        "                \"auto-failover\": true"
+        "            }"
+        "        ]"
+        "    },"
+        "    {"
+        "        \"this-server-name\": \"server4\","
+        "        \"mode\": \"hot-standby\","
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server3\","
+        "                \"url\": \"http://127.0.0.1:8082/\","
+        "                \"role\": \"primary\","
+        "                \"auto-failover\": false"
+        "            },"
+        "            {"
+        "                \"name\": \"server4\","
+        "                \"url\": \"http://127.0.0.1:8083/\","
+        "                \"role\": \"standby\","
+        "                \"auto-failover\": true"
+        "            }"
+        "        ]"
+        "    }"
+        "]";
+
+    HAImplPtr impl(new HAImpl());
+    ASSERT_NO_THROW(impl->configure(Element::fromJSON(ha_config)));
+
+    auto config = impl->getConfig("server2");
+    ASSERT_TRUE(config);
+
+    EXPECT_EQ("server2", config->getThisServerName());
+    EXPECT_EQ(HAConfig::HOT_STANDBY, config->getHAMode());
+
+    HAConfig::PeerConfigPtr cfg = config->getThisServerConfig();
+    ASSERT_TRUE(cfg);
+    EXPECT_EQ("server2", cfg->getName());
+    EXPECT_EQ("http://127.0.0.1:8081/", cfg->getUrl().toText());
+    EXPECT_EQ(HAConfig::PeerConfig::STANDBY, cfg->getRole());
+    EXPECT_TRUE(cfg->isAutoFailover());
+
+    cfg = config->getPeerConfig("server1");
+    ASSERT_TRUE(cfg);
+    EXPECT_EQ("server1", cfg->getName());
+    EXPECT_EQ("http://127.0.0.1:8080/", cfg->getUrl().toText());
+    EXPECT_EQ(HAConfig::PeerConfig::PRIMARY, cfg->getRole());
+    EXPECT_FALSE(cfg->isAutoFailover());
+
+    config = impl->getConfig("server4");
+    ASSERT_TRUE(config);
+
+    EXPECT_EQ("server4", config->getThisServerName());
+    EXPECT_EQ(HAConfig::HOT_STANDBY, config->getHAMode());
+
+    cfg = config->getThisServerConfig();
+    ASSERT_TRUE(cfg);
+    EXPECT_EQ("server4", cfg->getName());
+    EXPECT_EQ("http://127.0.0.1:8083/", cfg->getUrl().toText());
+    EXPECT_EQ(HAConfig::PeerConfig::STANDBY, cfg->getRole());
+    EXPECT_TRUE(cfg->isAutoFailover());
+
+    cfg = config->getPeerConfig("server3");
+    ASSERT_TRUE(cfg);
+    EXPECT_EQ("server3", cfg->getName());
+    EXPECT_EQ("http://127.0.0.1:8082/", cfg->getUrl().toText());
+    EXPECT_EQ(HAConfig::PeerConfig::PRIMARY, cfg->getRole());
+    EXPECT_FALSE(cfg->isAutoFailover());
 }
 
 // This server name must not be empty.
@@ -1727,15 +1825,12 @@ TEST_F(HAConfigTest, multiThreadingPermutations) {
     bool ha_mt = true;
     bool listener = true;
 
-    // Number of threads the system reports as supported.
-    uint32_t sys_threads = MultiThreadingMgr::detectThreadCount();
-
     std::vector<Scenario> scenarios {
         {
-            "1 no ha+mt/default",
+            "1 ha+mt by default",
             "",
             dhcp_mt, 4,
-            !ha_mt, !listener, 0, 0
+            ha_mt, listener, 4, 4
         },
         {
             "2 dhcp mt enabled, ha mt disabled",
@@ -1781,7 +1876,7 @@ TEST_F(HAConfigTest, multiThreadingPermutations) {
             // reported value.
             makeHAMtJson(ha_mt, listener, 0, 0),
             dhcp_mt, 0,
-            (sys_threads > 0), listener, sys_threads, sys_threads
+            (hardware_threads_ > 0), listener, hardware_threads_, hardware_threads_
         }
     };
 
@@ -1872,4 +1967,146 @@ TEST_F(HAConfigTest, ipv6Url) {
     EXPECT_EQ(impl->getConfig()->getThisServerConfig()->getUrl().toText(), "http://[2001:db8::1]:8080/");
 }
 
-} // end of anonymous namespace
+// Check that hot-standby mode is required for multiple relationships.
+TEST_F(HAConfigTest, hubAndSpokeNotHotStandbyConfig) {
+    testInvalidConfig(
+        "["
+        "    {"
+        "        \"this-server-name\": \"server2\","
+        "        \"mode\": \"hot-standby\","
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server1\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"primary\""
+        "            },"
+        "            {"
+        "                \"name\": \"server2\","
+        "                \"url\": \"http://127.0.0.1:8081/\","
+        "                \"role\": \"standby\""
+        "            }"
+        "        ]"
+        "    },"
+        "    {"
+        "        \"this-server-name\": \"server4\","
+        "        \"mode\": \"load-balancing\","
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server3\","
+        "                \"url\": \"http://127.0.0.1:8082/\","
+        "                \"role\": \"primary\""
+        "            },"
+        "            {"
+        "                \"name\": \"server4\","
+        "                \"url\": \"http://127.0.0.1:8083/\","
+        "                \"role\": \"secondary\""
+        "            }"
+        "        ]"
+        "    }"
+        "]",
+        "multiple HA relationships are only supported for 'hot-standby' mode");
+}
+
+// Check that the server names must be unique between relationships.
+TEST_F(HAConfigTest, hubAndSpokeRepeatingThisServerName) {
+    testInvalidConfig(
+        "["
+        "    {"
+        "        \"this-server-name\": \"server2\","
+        "        \"mode\": \"hot-standby\","
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server1\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"primary\""
+        "            },"
+        "            {"
+        "                \"name\": \"server2\","
+        "                \"url\": \"http://127.0.0.1:8081/\","
+        "                \"role\": \"standby\""
+        "            }"
+        "        ]"
+        "    },"
+        "    {"
+        "        \"this-server-name\": \"server2\","
+        "        \"mode\": \"hot-standby\","
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server1\","
+        "                \"url\": \"http://127.0.0.1:8082/\","
+        "                \"role\": \"primary\""
+        "            },"
+        "            {"
+        "                \"name\": \"server2\","
+        "                \"url\": \"http://127.0.0.1:8083/\","
+        "                \"role\": \"standby\""
+        "            }"
+        "        ]"
+        "    }"
+        "]",
+        "server names must be unique for different relationships: a relationship 'server1' already exists");
+}
+
+// Test that server name can be fetched for a subnet at shared network level.
+TEST_F(HAConfigTest, getSubnetServerNameSharedNetworkLevel) {
+    auto context = Element::createMap();
+    context->set("ha-server-name", Element::create("server1"));
+    auto shared_network = SharedNetwork6::create("foo");
+    auto subnet6 = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, SubnetID(1));
+    shared_network->setContext(context);
+    shared_network->add(subnet6);
+    auto server_name = HAConfig::getSubnetServerName(subnet6);
+    EXPECT_EQ("server1", server_name);
+}
+
+// Test that server name can be fetched for a subnet at subnet level.
+TEST_F(HAConfigTest, getSubnetServerNameSubnetLevel) {
+    auto context = Element::createMap();
+    context->set("ha-server-name", Element::create("server2"));
+    auto shared_network = SharedNetwork6::create("foo");
+    auto subnet6 = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, SubnetID(1));
+    subnet6->setContext(context);
+    shared_network->add(subnet6);
+    auto server_name = HAConfig::getSubnetServerName(subnet6);
+    EXPECT_EQ("server2", server_name);
+}
+
+// Test that server name can be fetched for a subnet when there is no
+// shared network.
+TEST_F(HAConfigTest, getSubnetServerName) {
+    auto context = Element::createMap();
+    context->set("ha-server-name", Element::create("server3"));
+    auto subnet6 = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, SubnetID(1));
+    subnet6->setContext(context);
+    auto server_name = HAConfig::getSubnetServerName(subnet6);
+    EXPECT_EQ("server3", server_name);
+}
+
+// Test that empty server name is returned when it is not specified.
+TEST_F(HAConfigTest, getSubnetServerNameUnspecified) {
+    auto subnet6 = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, SubnetID(1));
+    auto server_name = HAConfig::getSubnetServerName(subnet6);
+    EXPECT_TRUE(server_name.empty());
+}
+
+// Test that an exception is thrown when server name is empty.
+TEST_F(HAConfigTest, getSubnetServerNameEmpty) {
+    auto context = Element::createMap();
+    context->set("ha-server-name", Element::create(""));
+    auto subnet6 = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, SubnetID(1));
+    subnet6->setContext(context);
+    EXPECT_THROW(HAConfig::getSubnetServerName(subnet6), BadValue);
+}
+
+// Test that an exception is thrown when server name is not a
+// valid string.
+TEST_F(HAConfigTest, getSubnetServerNameInvalid) {
+    auto context = Element::createMap();
+    context->set("ha-server-name", Element::createMap());
+    auto subnet6 = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, SubnetID(1));
+    subnet6->setContext(context);
+    EXPECT_THROW(HAConfig::getSubnetServerName(subnet6), BadValue);
+}
+
+
+}  // namespace

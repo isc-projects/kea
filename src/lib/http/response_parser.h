@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018,2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -171,7 +171,7 @@ private:
                             const std::string& number_name,
                             unsigned int* const storage);
 
-    /// @brief Handler for states in which pareser reads numeric values.
+    /// @brief Handler for states in which parser reads numeric values.
     ///
     /// This handler calculates version number using the following equation:
     /// @code

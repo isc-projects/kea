@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -30,6 +30,18 @@ public:
     PktFilterInet6Test() : PktFilter6Test(PORT) {
     }
 };
+
+// This test verifies that the PktFilterInet6 class reports its capability
+// to create SOCKET_RECEIVED events.
+TEST_F(PktFilterInet6Test, isSocketReceivedTimeSupported) {
+    // Create object under test.
+    PktFilterInet6 pkt_filter;
+#ifdef SO_TIMESTAMP
+    EXPECT_TRUE(pkt_filter.isSocketReceivedTimeSupported());
+#else
+    EXPECT_FALSE(pkt_filter.isSocketReceivedTimeSupported());
+#endif
+}
 
 // This test verifies that the INET6 datagram socket is correctly opened and
 // bound to the appropriate address and port.
@@ -70,6 +82,9 @@ TEST_F(PktFilterInet6Test, send) {
     ASSERT_NO_THROW(result = pkt_filter.send(iface, sock_info_.sockfd_, test_message_));
     ASSERT_EQ(0, result);
 
+    // Verify that we have only the RESPONSE_SENT event with a good timestamp.
+    testPktEvents(test_message_, start_time_, std::list<std::string>{PktEvent::RESPONSE_SENT});
+
     // Read the data from socket.
     fd_set readfds;
     FD_ZERO(&readfds);
@@ -96,7 +111,6 @@ TEST_F(PktFilterInet6Test, send) {
 
     // Check if the received message is correct.
     testRcvdMessage(rcvd_pkt);
-
 }
 
 // This test verifies that the DHCPv6 packet is correctly received via
@@ -129,6 +143,9 @@ TEST_F(PktFilterInet6Test, receive) {
 
     // Check if the received message is correct.
     testRcvdMessage(rcvd_pkt);
-    }
+
+    // Verify that the packet event stack is as expected.
+    testReceivedPktEvents(rcvd_pkt, pkt_filter.isSocketReceivedTimeSupported());
+}
 
 } // anonymous namespace

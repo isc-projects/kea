@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -118,12 +118,26 @@ public:
     TlsRole role_;
 };
 
+class StreamService {
+public:
+    /// @brief Constructor.
+    StreamService(const IOServicePtr& io_service, TlsContextPtr& tls_context) :
+        io_service_(io_service), tls_context_(tls_context) {
+    }
+private:
+    /// @brief The IO service used to handle events.
+    IOServicePtr io_service_;
+
+    /// @brief OpenSSL TLS context.
+    TlsContextPtr tls_context_;
+};
+
 /// @brief TLS stream base class.
 ///
 /// @tparam Callback The type of callbacks.
 /// @tparam TlsStreamImpl The type of underlying TLS streams.
 template <typename Callback, typename TlsStreamImpl>
-class TlsStreamBase : public TlsStreamImpl {
+class TlsStreamBase : public StreamService, public TlsStreamImpl {
 public:
 
     /// @brief Constructor.
@@ -131,7 +145,7 @@ public:
     /// @param service I/O Service object used to manage the stream.
     /// @param context Pointer to the TLS context.
     /// @note The caller must not provide a null pointer to the TLS context.
-    TlsStreamBase(IOService& service, TlsContextPtr context);
+    TlsStreamBase(const IOServicePtr& service, TlsContextPtr context);
 
     /// @brief Destructor.
     virtual ~TlsStreamBase() { }

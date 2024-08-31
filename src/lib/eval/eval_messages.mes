@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,14 +8,23 @@ $NAMESPACE isc::dhcp
 
 
 # For use with TokenAnd
-% EVAL_DEBUG_AND Popping %1 and %2 pushing %3
+% EVAL_DEBUG_AND %1: Popping %2 and %3 pushing %4
+Logged at debug log level 55.
 This debug message indicates that two values are popped from
 the value stack.  Then are then combined via logical and and
 the result is pushed onto the value stack.
 
+# For use with TokenBranch
+
+% EVAL_DEBUG_BRANCH Branching to %1
+Logged at debug log level 55.
+This debug message indicates that an unconditional branch is performed
+to the displayed target.
+
 # For use with TokenConcat
 
-% EVAL_DEBUG_CONCAT Popping %1 and %2 pushing %3
+% EVAL_DEBUG_CONCAT %1: Popping %2 and %3 pushing %4
+Logged at debug log level 55.
 This debug message indicates that the two strings are being popped off
 of the stack.  They are then concatenated and the resulting string is
 pushed onto the stack.  The strings are displayed in hex.
@@ -23,78 +32,107 @@ pushed onto the stack.  The strings are displayed in hex.
 # For use with TokenEqual
 # Start with binary for the inputs for now, we may add text in the future.
 
-% EVAL_DEBUG_EQUAL Popping %1 and %2 pushing result %3
+% EVAL_DEBUG_EQUAL %1: Popping %2 and %3 pushing result %4
+Logged at debug log level 55.
 This debug message indicates that the two strings are being popped off
 of the value stack and the result of comparing them is being pushed onto
 the value stack.  The strings are displayed in hex.
 
 # For use with TokenHexString
 
-% EVAL_DEBUG_HEXSTRING Pushing hex string %1
+% EVAL_DEBUG_HEXSTRING %1: Pushing hex string %2
+Logged at debug log level 55.
 This debug message indicates that the given binary string is being pushed
 onto the value stack.  The string is displayed in hex.
 
-# For use with TokenIfElse
+# For use with TokenLowerCase
 
-% EVAL_DEBUG_IFELSE_FALSE Popping %1 (false) and %2, leaving %3
+% EVAL_DEBUG_IFELSE_FALSE %1: Popping %2 (false) and %3, leaving %4
+Logged at debug log level 55.
 This debug message indicates that the condition is false so
 the iftrue branch value is removed and the ifelse branch value
 is left on the value stack.
 
-% EVAL_DEBUG_IFELSE_TRUE Popping %1 (true) and %2, leaving %3
+% EVAL_DEBUG_IFELSE_TRUE %1: Popping %2 (true) and %3, leaving %4
+Logged at debug log level 55.
 This debug message indicates that the condition is true so
 the ifelse branch value is removed and the iftrue branch value
 is left on the value stack.
 
 # For use with TokenIpAddress
 
-% EVAL_DEBUG_INT16TOTEXT Pushing Int16 %1
+% EVAL_DEBUG_INT16TOTEXT %1: Pushing Int16 %2
+Logged at debug log level 55.
 This debug message indicates that the given address string representation is
 being pushed onto the value stack.  This represents a 16 bit integer.
 
 # For use with TokenInt32ToText
 
-% EVAL_DEBUG_INT32TOTEXT Pushing Int32 %1
+% EVAL_DEBUG_INT32TOTEXT %1: Pushing Int32 %2
+Logged at debug log level 55.
 This debug message indicates that the given address string representation is
 being pushed onto the value stack.  This represents a 32 bit integer.
 
 # For use with TokenUInt8ToText
 
-% EVAL_DEBUG_INT8TOTEXT Pushing Int8 %1
+% EVAL_DEBUG_INT8TOTEXT %1: Pushing Int8 %2
+Logged at debug log level 55.
 This debug message indicates that the given address string representation is
 being pushed onto the value stack.  This represents an 8 bit integer.
 
 # For use with TokenInt16ToText
 
-% EVAL_DEBUG_IPADDRESS Pushing IPAddress %1
+% EVAL_DEBUG_IPADDRESS %1: Pushing IPAddress %2
+Logged at debug log level 55.
 This debug message indicates that the given binary string is being pushed
 onto the value stack.  This represents either an IPv4 or IPv6 address.
 The string is displayed in hex.
 
 # For use with TokenIpAddressToText
 
-% EVAL_DEBUG_IPADDRESSTOTEXT Pushing IPAddress %1
+% EVAL_DEBUG_IPADDRESSTOTEXT %1: Pushing IPAddress %2
+Logged at debug log level 55.
 This debug message indicates that the given address string representation is
 being pushed onto the value stack.  This represents either an IPv4 or IPv6
 address.
 
 # For use with TokenInt8ToText
 
-% EVAL_DEBUG_MEMBER Checking membership of '%1', pushing result %2
+% EVAL_DEBUG_LCASE %1: Popping string %2 and pushing converted value to lower case %3
+Logged at debug log level 55.
+This debug message indicates that the given string representation is being
+converted to lower case and pushed onto the value stack.
+
+# For use with TokenMatch
+
+% EVAL_DEBUG_MATCH Matching '%1' on %2, result %3
+Logged at debug log level 55.
+This debug message indicates that the given regular expression was matched
+with the popped value. The result was pushed onto the value stack.
+
+% EVAL_DEBUG_MATCH_ERROR Matching '%1' on %2 raised an error: %3
+This error message indicates that an error occurred while evaluating the given
+regular expression against the popped value.
+
+# For use with TokenMember
+
+% EVAL_DEBUG_MEMBER %1: Checking membership of '%2', pushing result %3
+Logged at debug log level 55.
 This debug message indicates that the membership of the packet for
 the client class was checked.
 
 # For use with TokenNot
 
-% EVAL_DEBUG_NOT Popping %1 pushing %2
+% EVAL_DEBUG_NOT %1: Popping %2 pushing %3
+Logged at debug log level 55.
 This debug message indicates that the first value is popped from
 the value stack, negated and then pushed onto the value stack.
 The string is displayed in text.
 
-# For use with TokenOption based classes.  These include TokenOption,
-# TokenRelay4Option and TokenRelay6Option.
+# For use with TokenPopAndBranchFalse
 
-% EVAL_DEBUG_OPTION Pushing option %1 with value %2
+% EVAL_DEBUG_OPTION %1: Pushing option %2 with value %3
+Logged at debug log level 55.
 This debug message indicates that the given string representing the
 value of the requested option is being pushed onto the value stack.
 The string may be the text or binary value of the string based on the
@@ -104,7 +142,8 @@ option or a sub-option as requested in the classification statement.
 
 # For use with TokenOr
 
-% EVAL_DEBUG_OR Popping %1 and %2 pushing %3
+% EVAL_DEBUG_OR %1: Popping %2 and %3 pushing %4
+Logged at debug log level 55.
 This debug message indicates that two values are popped from
 the value stack.  Then are then combined via logical or and
 the result is pushed onto the value stack. The string is displayed
@@ -112,80 +151,115 @@ in text.
 
 # For use with TokenPkt
 
-% EVAL_DEBUG_PKT Pushing PKT meta data %1 with value %2
+% EVAL_DEBUG_PKT %1: Pushing PKT meta data %2 with value %3
+Logged at debug log level 55.
 This debug message indicates that the given binary string representing
 the value of the requested meta data is being pushed onto the value stack.
 The string is displayed in hex at the exception of interface name.
 
 # For use with TokenPkt4
 
-% EVAL_DEBUG_PKT4 Pushing PKT4 field %1 with value %2
+% EVAL_DEBUG_PKT4 %1: Pushing PKT4 field %2 with value %3
+Logged at debug log level 55.
 This debug message indicates that the given binary string representing
 the value of the requested field is being pushed onto the value stack.
 The string is displayed in hex.
 
 # For use with TokenPkt6
 
-% EVAL_DEBUG_PKT6 Pushing PKT6 field %1 with value %2
+% EVAL_DEBUG_PKT6 %1: Pushing PKT6 field %2 with value %3
+Logged at debug log level 55.
 This debug message indicates that the given binary string representing
 the value of the requested field is being pushed onto the value stack.
 The string is displayed in hex.
 
 # For use with TokenRelay6Field
 
-% EVAL_DEBUG_RELAY6 Pushing PKT6 relay field %1 nest %2 with value %3
+% EVAL_DEBUG_POP_AND_BRANCH_FALSE Value is false: branching to %1
+Logged at debug log level 55.
+This debug message indicates that a branch on false condition is performed
+to the displayed target.
+
+# For use with TokenPopOrBranchFalse
+
+% EVAL_DEBUG_POP_OR_BRANCH_FALSE Value is false: keeping it and branching to %1
+Logged at debug log level 55.
+This debug message indicates that a branch on false condition is performed
+to the displayed target.
+
+# For use with TokenPopOrBranchTrue
+
+% EVAL_DEBUG_POP_OR_BRANCH_TRUE Value is true: keeping it and branching to %1
+Logged at debug log level 55.
+This debug message indicates that a branch on true condition is performed
+to the displayed target.
+
+# For use with TokenOption based classes.  These include TokenOption,
+# TokenRelay4Option and TokenRelay6Option.
+
+% EVAL_DEBUG_RELAY6 %1: Pushing PKT6 relay field %2 nest %3 with value %4
+Logged at debug log level 55.
 This debug message indicates that the given binary string representing
 the value of the requested field is being pushed onto the value stack.
 The string is displayed in hex.
 
-% EVAL_DEBUG_RELAY6_RANGE Pushing PKT6 relay field %1 nest %2 with value %3
+% EVAL_DEBUG_RELAY6_RANGE %1: Pushing PKT6 relay field %2 nest %3 with value %4
+Logged at debug log level 55.
 This debug message is generated if the nest field is out of range.  The
 empty string will always be the value pushed onto the stack.
 
 # For use with TokenString
 
-% EVAL_DEBUG_SPLIT Popping field %1, delimiters %2, string %3, pushing result %4
+% EVAL_DEBUG_SPLIT %1: Popping field %2, delimiters %3, string %4, pushing result %5
+Logged at debug log level 55.
 This debug message indicates that three values are being popped from the stack
 and a result is being pushed onto the stack. The values being popped are the
 field, delimiter and string. The result is the extracted field which is pushed
 onto the stack. The strings are displayed in hex.
 
-% EVAL_DEBUG_SPLIT_DELIM_EMPTY Popping field %1, delimiters %2, string %3, pushing result %4
+% EVAL_DEBUG_SPLIT_DELIM_EMPTY %1: Popping field %2, delimiters %3, string %4, pushing result %5
+Logged at debug log level 55.
 This debug message indicates that the delimiter popped from the stack was empty
 and so the result will be the entire string. The field, delimiter and string
 are still popped from the stack and the result is still pushed.
 
-% EVAL_DEBUG_SPLIT_EMPTY Popping field %1, delimiters %2, string %3, pushing result %4
+% EVAL_DEBUG_SPLIT_EMPTY %1: Popping field %2, delimiters %3, string %4, pushing result %5
+Logged at debug log level 55.
 This debug message indicates that the string popped from the stack was empty
 and so the result will also be empty. The field, delimiter and string are
 still popped from the stack and the result is still pushed.
 
-% EVAL_DEBUG_SPLIT_FIELD_OUT_OF_RANGE Popping field %1, delimiters %2, string %3, pushing result %4
+% EVAL_DEBUG_SPLIT_FIELD_OUT_OF_RANGE %1: Popping field %2, delimiters %3, string %4, pushing result %5
+Logged at debug log level 55.
 This debug message indicates that the field is either less than one or larger
 than the number of fields in the string popped from the stack. The result will
 be empty. The field, delimiter and string are still popped from the stack and
 the result is still pushed.
 
-% EVAL_DEBUG_STRING Pushing text string %1
+% EVAL_DEBUG_STRING %1: Pushing text string %2
+Logged at debug log level 55.
 This debug message indicates that the given text string is being pushed
 onto the value stack.  The string is displayed in text.
 
 # For use with TokenSubstring
 # Start with binary for the strings for now, we may add text in the future.
 
-% EVAL_DEBUG_SUBSTRING Popping length %1, start %2, string %3 pushing result %4
+% EVAL_DEBUG_SUBSTRING %1: Popping length %2, start %3, string %4 pushing result %5
+Logged at debug log level 55.
 This debug message indicates that three values are being popped from
 the value stack and a result is being pushed onto the value stack.  The
 values being popped are the starting point and length of a substring to
 extract from the given string.  The resulting string is pushed onto
 the stack.  The strings are displayed in hex.
 
-% EVAL_DEBUG_SUBSTRING_EMPTY Popping length %1, start %2, string %3 pushing result %4
+% EVAL_DEBUG_SUBSTRING_EMPTY %1: Popping length %2, start %3, string %4 pushing result %5
+Logged at debug log level 55.
 This debug message indicates that the string popped from the stack was empty
 and so the result will also be empty.  The start, length and string are
 still popped from the stack and the result is still pushed.
 
-% EVAL_DEBUG_SUBSTRING_RANGE Popping length %1, start %2, string %3 pushing result %4
+% EVAL_DEBUG_SUBSTRING_RANGE %1: Popping length %2, start %3, string %4 pushing result %5
+Logged at debug log level 55.
 This debug message indicates that the value of start is outside of the
 string and an empty result will be pushed onto the stack.  The start,
 length and string are still popped from the stack and the result is
@@ -193,7 +267,7 @@ still pushed.  The strings are displayed in hex.
 
 # For use with TokenSubOption
 
-% EVAL_DEBUG_SUB_OPTION Pushing option %1 sub-option %2 with value %3
+% EVAL_DEBUG_SUB_OPTION %1: Pushing option %2 sub-option %3 with value %4
 This debug message indicates that the given string representing the
 value of the requested sub-option of the requested parent option is
 being pushed onto the value stack. The string may be the text or
@@ -202,84 +276,100 @@ binary value of the string based on the representation type requested
 The codes are the parent option and the sub-option codes as requested
 in the classification statement.
 
-% EVAL_DEBUG_SUB_OPTION_NO_OPTION Requested option %1 sub-option %2, but the parent option is not present, pushing result %3
+% EVAL_DEBUG_SUB_OPTION_NO_OPTION %1: Requested option %2 sub-option %3, but the parent option is not present, pushing result %4
 This debug message indicates that the parent option was not found.
 The codes are the parent option and the sub-option codes as requested
 in the classification statement.
 
 # For use with TokenToHexString
 
-% EVAL_DEBUG_TOHEXSTRING Popping binary value %1 and separator %2, pushing result %3
+% EVAL_DEBUG_TOHEXSTRING %1: Popping binary value %2 and separator %3, pushing result %4
+Logged at debug log level 55.
 This debug message indicates that two values are being popped from
 the value stack and a result is being pushed onto the value stack.
 The values being popped are the binary value to convert and the separator.
 The binary value is converted to its hexadecimal string representation
 and pushed onto the stack. The binary value is displayed in hex.
 
-% EVAL_DEBUG_UINT16TOTEXT Pushing UInt16 %1
+% EVAL_DEBUG_UCASE %1: Popping string %2 and pushing converted value to upper case %3
+Logged at debug log level 55.
+This debug message indicates that the given string representation is being
+converted to upper case and pushed onto the value stack.
+
+# For use with TokenIfElse
+
+% EVAL_DEBUG_UINT16TOTEXT %1: Pushing UInt16 %2
+Logged at debug log level 55.
 This debug message indicates that the given address string representation is
 being pushed onto the value stack.  This represents a 16 bit unsigned integer.
 
 # For use with TokenUInt32ToText
 
-% EVAL_DEBUG_UINT32TOTEXT Pushing UInt32 %1
+% EVAL_DEBUG_UINT32TOTEXT %1: Pushing UInt32 %2
+Logged at debug log level 55.
 This debug message indicates that the given address string representation is
 being pushed onto the value stack.  This represents a 32 bit unsigned integer.
 
 # For use with TokenMember
 
-% EVAL_DEBUG_UINT8TOTEXT Pushing UInt8 %1
+% EVAL_DEBUG_UINT8TOTEXT %1: Pushing UInt8 %2
+Logged at debug log level 55.
 This debug message indicates that the given address string representation is
 being pushed onto the value stack.  This represents an 8 bit unsigned integer.
 
 # For use with TokenUInt16ToText
 
-% EVAL_DEBUG_VENDOR_CLASS_DATA Data %1 (out of %2 received) in vendor class found, pushing result '%3'
+% EVAL_DEBUG_VENDOR_CLASS_DATA %1: Data %2 (out of %3 received) in vendor class found, pushing result '%4'
+Logged at debug log level 55.
 This debug message indicates that vendor class option was found and passed
 enterprise-id checks and has sufficient number of data chunks. The total number
 of chunks and value pushed are reported as debugging aid.
 
-% EVAL_DEBUG_VENDOR_CLASS_DATA_NOT_FOUND Requested data index %1, but option with enterprise-id %2 has only %3 data tuple(s), pushing result '%4'
+% EVAL_DEBUG_VENDOR_CLASS_DATA_NOT_FOUND %1: Requested data index %2, but option with enterprise-id %3 has only %4 data tuple(s), pushing result '%5'
+Logged at debug log level 55.
 This debug message indicates that vendor class option was found and passed
 enterprise-id checks, but does not have sufficient number of data chunks.
 Note that the index starts at 0, so there has to be at least (index + 1)
 data chunks.
 
-% EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID Pushing enterprise-id %1 as result 0x%2
+% EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID %1: Pushing enterprise-id %2 as result 0x%3
+Logged at debug log level 55.
 This debug message indicates that the expression has been evaluated and vendor
 class option was found and its enterprise-id is being reported.
 
-% EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID_MISMATCH Was looking for %1, option had %2, pushing result '%3'
+% EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID_MISMATCH %1: Was looking for %2, option had %3, pushing result '%4'
+Logged at debug log level 55.
 This debug message indicates that the expression has been evaluated
 and vendor class option was found, but has different enterprise-id than specified
 in the expression.
 
-% EVAL_DEBUG_VENDOR_CLASS_EXISTS Option with enterprise-id %1 found, pushing result '%2'
+% EVAL_DEBUG_VENDOR_CLASS_EXISTS %1: Option with enterprise-id %2 found, pushing result '%3'
+Logged at debug log level 55.
 This debug message indicates that the expression has been evaluated and vendor
 class option was found.
 
-% EVAL_DEBUG_VENDOR_CLASS_NO_OPTION Option with code %1 missing, pushing result '%2'
+% EVAL_DEBUG_VENDOR_CLASS_NO_OPTION %1: Option with code %2 missing, pushing result '%3'
+Logged at debug log level 55.
 This debug message indicates that the expression has been evaluated
 and vendor class option was not found.
 
-% EVAL_DEBUG_VENDOR_ENTERPRISE_ID Pushing enterprise-id %1 as result 0x%2
+% EVAL_DEBUG_VENDOR_ENTERPRISE_ID %1: Pushing enterprise-id %2 as result 0x%3
+Logged at debug log level 55.
 This debug message indicates that the expression has been evaluated and vendor
 option was found and its enterprise-id is being reported.
 
-% EVAL_DEBUG_VENDOR_ENTERPRISE_ID_MISMATCH Was looking for %1, option had %2, pushing result '%3'
+% EVAL_DEBUG_VENDOR_ENTERPRISE_ID_MISMATCH %1: Was looking for %2, option had %3, pushing result '%4'
+Logged at debug log level 55.
 This debug message indicates that the expression has been evaluated
 and vendor option was found, but has different enterprise-id than specified
 in the expression.
 
-% EVAL_DEBUG_VENDOR_EXISTS Option with enterprise-id %1 found, pushing result '%2'
+% EVAL_DEBUG_VENDOR_EXISTS %1: Option with enterprise-id %2 found, pushing result '%3'
+Logged at debug log level 55.
 This debug message indicates that the expression has been evaluated and vendor
 option was found.
 
-% EVAL_DEBUG_VENDOR_NO_OPTION Option with code %1 missing, pushing result '%2'
+% EVAL_DEBUG_VENDOR_NO_OPTION %1: Option with code %2 missing, pushing result '%3'
+Logged at debug log level 55.
 This debug message indicates that the expression has been evaluated
 and vendor option was not found.
-
-% EVAL_RESULT Expression %1 evaluated to %2
-This debug message indicates that the expression has been evaluated
-to said value. This message is mostly useful during debugging of the
-client classification expressions.

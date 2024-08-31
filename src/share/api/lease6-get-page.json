@@ -12,7 +12,7 @@
         "    \"command\": \"lease6-get-page\",",
         "    \"arguments\": {",
         "        \"limit\": <integer>,",
-        "        \"from\": <IPv6 address or \"start\">",
+        "        \"from\": <IPv6 address or 'start'>",
         "    }",
         "}"
     ],
@@ -21,7 +21,6 @@
         "3 is returned if no leases are found."
     ],
     "resp-syntax": [
-        "[",
         "  {",
         "    \"arguments\": {",
         "      \"leases\": [",
@@ -39,7 +38,7 @@
         "          \"subnet-id\": 1,",
         "          \"type\": \"IA_NA\",",
         "          \"valid-lft\": 4000",
-        "        }",
+        "        },",
         "        {",
         "          \"cltt\": 1600439570,",
         "          \"duid\": \"00:01:00:01:26:f7:81:88:00:0c:01:02:03:05\",",
@@ -59,8 +58,7 @@
         "    },",
         "    \"result\": 0,",
         "    \"text\": \"1 IPv6 lease(s) found.\"",
-        "}",
-        "]"
+        "}"
     ],
     "hook": "lease_cmds",
     "name": "lease6-get-page",

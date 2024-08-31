@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,9 +7,12 @@
 #ifndef MASTER_LOADER_H
 #define MASTER_LOADER_H
 
+#include <dns/exceptions.h>
 #include <dns/master_loader_callbacks.h>
 
 #include <boost/noncopyable.hpp>
+
+#include <memory>
 
 namespace isc {
 namespace dns {
@@ -174,14 +177,10 @@ public:
 
 private:
     class MasterLoaderImpl;
-    MasterLoaderImpl* impl_;
+    std::unique_ptr<MasterLoaderImpl> impl_;
 };
 
 } // end namespace dns
 } // end namespace isc
 
 #endif // MASTER_LOADER_H
-
-// Local Variables:
-// mode: c++
-// End:

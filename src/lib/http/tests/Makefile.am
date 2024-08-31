@@ -21,8 +21,7 @@ endif
 
 CLEANFILES = *.gcno *.gcda
 
-TESTS_ENVIRONMENT = \
-	$(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
+TESTS_ENVIRONMENT = $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 
 TESTS =
 if HAVE_GTEST
@@ -44,31 +43,38 @@ libhttp_unittests_SOURCES += request_unittests.cc
 libhttp_unittests_SOURCES += response_unittests.cc
 libhttp_unittests_SOURCES += response_json_unittests.cc
 libhttp_unittests_SOURCES += run_unittests.cc
-libhttp_unittests_SOURCES += server_client_unittests.cc
+libhttp_unittests_SOURCES += http_tests.h
+libhttp_unittests_SOURCES += http_response_creator_test.h
+libhttp_unittests_SOURCES += http_client_test.h
+libhttp_unittests_SOURCES += http_client_unittests.cc
+libhttp_unittests_SOURCES += http_server_test.h
+libhttp_unittests_SOURCES += http_server_unittests.cc
 if HAVE_OPENSSL
+libhttp_unittests_SOURCES += tls_response_creator_test.h
 libhttp_unittests_SOURCES += tls_server_unittests.cc
 libhttp_unittests_SOURCES += tls_client_unittests.cc
 endif
 if HAVE_BOTAN_BOOST
+libhttp_unittests_SOURCES += tls_response_creator_test.h
 libhttp_unittests_SOURCES += tls_server_unittests.cc
 libhttp_unittests_SOURCES += tls_client_unittests.cc
 endif
 libhttp_unittests_SOURCES += url_unittests.cc
-libhttp_unittests_SOURCES += test_http_client.h
 libhttp_unittests_SOURCES += client_mt_unittests.cc
-libhttp_unittests_SOURCES += http_thread_pool_unittests.cc
 
 libhttp_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 libhttp_unittests_CXXFLAGS = $(AM_CXXFLAGS)
 libhttp_unittests_LDFLAGS  = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS)
 
 libhttp_unittests_LDADD  = $(top_builddir)/src/lib/http/libkea-http.la
+libhttp_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 libhttp_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libhttp_unittests_LDADD += $(top_builddir)/src/lib/testutils/libkea-testutils.la
 libhttp_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libhttp_unittests_LDADD += $(top_builddir)/src/lib/asiolink/testutils/libasiolinktest.la
 libhttp_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libhttp_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
+libhttp_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 libhttp_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 libhttp_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libhttp_unittests_LDADD += $(LOG4CPLUS_LIBS)

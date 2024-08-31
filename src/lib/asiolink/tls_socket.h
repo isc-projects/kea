@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,6 +13,7 @@
 
 #include <asiolink/crypto_tls.h>
 #include <asiolink/tcp_socket.h>
+#include <util/io.h>
 
 #include <boost/noncopyable.hpp>
 
@@ -42,10 +43,10 @@ public:
     ///
     /// @param service I/O Service object used to manage the socket.
     /// @param context Pointer to TLS context.
-    TLSSocket(IOService& service, TlsContextPtr context);
+    TLSSocket(const IOServicePtr& service, TlsContextPtr context);
 
     /// @brief Destructor.
-    virtual ~TLSSocket() { }
+    virtual ~TLSSocket();
 
     /// @brief Return file descriptor of underlying socket.
     virtual int getNative() const {
@@ -224,6 +225,9 @@ public:
     }
 
 private:
+    /// @brief The IO service used to handle events.
+    IOServicePtr io_service_;
+
     /// Two variables to hold the stream - a stream and a pointer to it.  This
     /// handles the case where a stream is passed to the TLSSocket on
     /// construction, or where it is asked to manage its own stream.
@@ -266,10 +270,17 @@ TLSSocket<C>::TLSSocket(TlsStream<C>& stream) :
 // Constructor - create socket on the fly.
 
 template <typename C>
-TLSSocket<C>::TLSSocket(IOService& service, TlsContextPtr context) :
-    stream_ptr_(new TlsStream<C>(service, context)),
-    stream_(*stream_ptr_), socket_(stream_.lowest_layer()), send_buffer_()
-{
+TLSSocket<C>::TLSSocket(const IOServicePtr& io_service, TlsContextPtr context)
+    : io_service_(io_service),
+      stream_ptr_(new TlsStream<C>(io_service, context)),
+      stream_(*stream_ptr_), socket_(stream_.lowest_layer()), send_buffer_() {
+}
+
+// Destructor.
+
+template <typename C>
+TLSSocket<C>::~TLSSocket() {
+    close();
 }
 
 // Open the socket.
@@ -322,8 +333,7 @@ TLSSocket<C>::handshake(C& callback) {
 // an exception if this is the case.
 
 template <typename C> void
-TLSSocket<C>::asyncSend(const void* data, size_t length, C& callback)
-{
+TLSSocket<C>::asyncSend(const void* data, size_t length, C& callback) {
     if (!socket_.is_open()) {
         isc_throw(SocketNotOpen,
                   "attempt to send on a TLS socket that is not open");
@@ -346,8 +356,7 @@ TLSSocket<C>::asyncSend(const void* data, size_t length, C& callback)
 
 template <typename C> void
 TLSSocket<C>::asyncSend(const void* data, size_t length,
-                        const IOEndpoint*, C& callback)
-{
+                        const IOEndpoint*, C& callback) {
     if (!socket_.is_open()) {
         isc_throw(SocketNotOpen,
                   "attempt to send on a TLS socket that is not open");
@@ -381,8 +390,7 @@ TLSSocket<C>::asyncSend(const void* data, size_t length,
 // caller to initialize the data to zero
 template <typename C> void
 TLSSocket<C>::asyncReceive(void* data, size_t length, size_t offset,
-                           IOEndpoint* endpoint, C& callback)
-{
+                           IOEndpoint* endpoint, C& callback) {
     if (!socket_.is_open()) {
         isc_throw(SocketNotOpen,
                   "attempt to receive from a TLS socket that is not open");
@@ -424,8 +432,7 @@ template <typename C> bool
 TLSSocket<C>::processReceivedData(const void* staging, size_t length,
                                   size_t& cumulative, size_t& offset,
                                   size_t& expected,
-                                  isc::util::OutputBufferPtr& outbuff)
-{
+                                  isc::util::OutputBufferPtr& outbuff) {
     // Point to the data in the staging buffer and note how much there is.
     const uint8_t* data = static_cast<const uint8_t*>(staging);
     size_t data_length = length;

@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,7 +9,6 @@
 #include <gtest/gtest.h>
 
 #include <cc/command_interpreter.h>
-#include <config/tests/data_def_unittests_config.h>
 #include <log/logger_name.h>
 
 #include <boost/scoped_ptr.hpp>
@@ -42,17 +41,17 @@ TEST(CommandInterpreterTest, createAnswer) {
     EXPECT_EQ("{ \"result\": 0 }", answer->str());
 
     // Let's check if we can generate an error.
-    answer = createAnswer(1, "error");
+    answer = createAnswer(CONTROL_RESULT_ERROR, "error");
     EXPECT_EQ("{ \"result\": 1, \"text\": \"error\" }", answer->str());
 
     // This is expected to throw. When status code is non-zero (indicating error),
     // textual explanation is mandatory.
-    EXPECT_THROW(createAnswer(1, ElementPtr()), CtrlChannelError);
-    EXPECT_THROW(createAnswer(1, Element::create(1)), CtrlChannelError);
+    EXPECT_THROW(createAnswer(CONTROL_RESULT_ERROR, ElementPtr()), CtrlChannelError);
+    EXPECT_THROW(createAnswer(CONTROL_RESULT_ERROR, Element::create(1)), CtrlChannelError);
 
     // Let's check if answer can be generate with some data in it.
     ConstElementPtr arg = el("[ \"just\", \"some\", \"data\" ]");
-    answer = createAnswer(0, arg);
+    answer = createAnswer(CONTROL_RESULT_SUCCESS, arg);
     EXPECT_EQ("{ \"arguments\": [ \"just\", \"some\", \"data\" ], \"result\": 0 }",
               answer->str());
 }
@@ -78,15 +77,24 @@ TEST(CommandInterpreterTest, parseAnswer) {
     EXPECT_EQ(0, rcode);
     EXPECT_TRUE(isNull(arg));
 
-    answer = el("{ \"result\": 1, \"text\": \"error\" }");
+    answer = el("{ \"result\": 3, \"text\": \"error\", \"arguments\": [ \"some\", \"data\" ] }");
     arg = parseAnswer(rcode, answer);
-    EXPECT_EQ(1, rcode);
-    EXPECT_EQ("error", arg->stringValue());
+    ASSERT_TRUE(arg);
+    EXPECT_EQ(3, rcode);
+    EXPECT_EQ("[ \"some\", \"data\" ]", arg->str());
+}
 
-    answer = el("{ \"result\": 0, \"arguments\": [ \"just\", \"some\", \"data\" ] }");
-    arg = parseAnswer(rcode, answer);
-    EXPECT_EQ(0, rcode);
-    EXPECT_EQ("[ \"just\", \"some\", \"data\" ]", arg->str());
+// Checks if parseAnswerText can return the text
+TEST(CommandInterpreterTest, parseAnswerText) {
+    ConstElementPtr answer;
+    ConstElementPtr arg;
+    int rcode;
+
+    answer = el("{ \"result\": 5, \"text\": \"error\", \"arguments\": [ \"some\", \"data\" ] }");
+    arg = parseAnswerText(rcode, answer);
+    ASSERT_TRUE(arg);
+    EXPECT_EQ(5, rcode);
+    EXPECT_EQ("error", arg->stringValue());
 }
 
 // This checks whether we can convert an answer to easily printable form.

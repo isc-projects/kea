@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,12 +6,12 @@
 
 #include <config.h>
 
+#include <exceptions/isc_assert.h>
 #include <dns/master_lexer_inputsource.h>
 #include <dns/master_lexer.h>
 
 #include <istream>
 #include <iostream>
-#include <cassert>
 #include <cerrno>
 #include <cstring>
 
@@ -72,7 +72,7 @@ getStreamSize(std::istream& is) {
         isc_throw(InputSource::OpenError,
                   "failed to seek beginning of input source");
     }
-    assert(len >= 0 || ret == MasterLexer::SOURCE_SIZE_UNKNOWN);
+    isc_throw_assert(len >= 0 || ret == MasterLexer::SOURCE_SIZE_UNKNOWN);
     return (ret);
 }
 
@@ -90,8 +90,8 @@ InputSource::InputSource(std::istream& input_stream) :
     total_pos_(0),
     name_(createStreamName(input_stream)),
     input_(input_stream),
-    input_size_(getStreamSize(input_))
-{}
+    input_size_(getStreamSize(input_)) {
+}
 
 namespace {
 // A helper to initialize InputSource::input_ in the member initialization
@@ -122,11 +122,10 @@ InputSource::InputSource(const char* filename) :
     total_pos_(0),
     name_(filename),
     input_(openFileStream(file_stream_, filename)),
-    input_size_(getStreamSize(input_))
-{}
+    input_size_(getStreamSize(input_)) {
+}
 
-InputSource::~InputSource()
-{
+InputSource::~InputSource() {
     if (file_stream_.is_open()) {
         file_stream_.close();
     }
@@ -187,7 +186,7 @@ InputSource::ungetChar() {
 
 void
 InputSource::ungetAll() {
-    assert(total_pos_ >= buffer_pos_);
+    isc_throw_assert(total_pos_ >= buffer_pos_);
     total_pos_ -= buffer_pos_;
     buffer_pos_ = 0;
     line_ = saved_line_;

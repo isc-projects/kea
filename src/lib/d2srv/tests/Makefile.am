@@ -11,8 +11,7 @@ endif
 
 CLEANFILES = *.gcno *.gcda
 
-TESTS_ENVIRONMENT = \
-	$(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
+TESTS_ENVIRONMENT = $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 
 TESTS =
 if HAVE_GTEST
@@ -28,8 +27,8 @@ libd2srv_unittests_SOURCES += nc_trans_unittests.cc
 libd2srv_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 libd2srv_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 
-libd2srv_unittests_LDADD  = $(top_builddir)/src/lib/d2srv/libkea-d2srv.la
-libd2srv_unittests_LDADD += $(top_builddir)/src/lib/d2srv/testutils/libd2srvtest.la
+libd2srv_unittests_LDADD  = $(top_builddir)/src/lib/d2srv/testutils/libd2srvtest.la
+libd2srv_unittests_LDADD += $(top_builddir)/src/lib/d2srv/libkea-d2srv.la
 libd2srv_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 libd2srv_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 libd2srv_unittests_LDADD += $(top_builddir)/src/lib/asiodns/libkea-asiodns.la
@@ -44,6 +43,7 @@ libd2srv_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libd2srv_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 libd2srv_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 libd2srv_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
+libd2srv_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 libd2srv_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 libd2srv_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libd2srv_unittests_LDADD += $(LOG4CPLUS_LIBS) $(BOOST_LIBS) $(GTEST_LDADD)

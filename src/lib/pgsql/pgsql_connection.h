@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,8 +17,8 @@
 namespace isc {
 namespace db {
 
-/// @brief Define PostgreSQL backend version: 12.0
-const uint32_t PGSQL_SCHEMA_VERSION_MAJOR = 12;
+/// @brief Define the PostgreSQL backend version.
+const uint32_t PGSQL_SCHEMA_VERSION_MAJOR = 24;
 const uint32_t PGSQL_SCHEMA_VERSION_MINOR = 0;
 
 // Maximum number of parameters that can be used a statement
@@ -226,10 +226,22 @@ public:
     /// @brief Destructor
     virtual ~PgSqlConnection();
 
+    /// @brief Convert PostgreSQL library parameters to kea-admin parameters.
+    ///
+    /// @param params input PostgreSQL parameters
+    ///
+    /// @return tuple of (vector of kea-admin parameters, vector of PostgreSQL
+    /// environment variables)
+    static std::tuple<std::vector<std::string>, std::vector<std::string>>
+    toKeaAdminParameters(ParameterMap const& params);
+
     /// @brief Get the schema version.
     ///
     /// @param parameters A data structure relating keywords and values
     ///        concerned with the database.
+    /// @param ac An IOServiceAccessor object.
+    /// @param cb The dbReconnect callback.
+    /// @param timer_name The DB reconnect timer name.
     ///
     /// @return Version number as a pair of unsigned integers.  "first" is the
     ///         major version number, "second" the minor number.
@@ -237,7 +249,36 @@ public:
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     static std::pair<uint32_t, uint32_t>
-    getVersion(const ParameterMap& parameters);
+    getVersion(const ParameterMap& parameters,
+               const IOServiceAccessorPtr& ac = IOServiceAccessorPtr(),
+               const DbCallback& cb = DbCallback(),
+               const std::string& timer_name = std::string());
+
+    /// @brief Retrieve schema version, validate it against the hardcoded
+    ///     version, and attempt to initialize the schema if there is an
+    ///     error during retrieval.
+    ///
+    /// Properly handles retrying of the database connection.
+    ///
+    /// @param parameters A data structure relating keywords and values
+    ///     concerned with the database.
+    /// @param cb The dbReconnect callback.
+    /// @param timer_name The DB reconnect timer name.
+    ///
+    /// @throw isc::db::ScehamInitializationFailed if the initialization fails
+    static void
+    ensureSchemaVersion(const ParameterMap& parameters,
+                        const DbCallback& cb = DbCallback(),
+                        const std::string& timer_name = std::string());
+
+    /// @brief Initialize schema.
+    ///
+    /// @param parameters A data structure relating keywords and values
+    ///     concerned with the database.
+    ///
+    /// @throw isc::db::ScehamInitializationFailed if the initialization fails
+    static void
+    initializeSchema(const ParameterMap& parameters);
 
     /// @brief Prepare Single Statement
     ///
@@ -265,14 +306,60 @@ public:
     void prepareStatements(const PgSqlTaggedStatement* start_statement,
                            const PgSqlTaggedStatement* end_statement);
 
-    /// @brief Open Database
+    /// @brief Creates connection string from specified parameters.
+    ///
+    /// This function is called from the unit tests.
+    ///
+    /// @return connection string for @c openDatabase.
+    /// @throw NoDatabaseName Mandatory database name not given
+    /// @throw DbInvalidTimeout when the database timeout is wrong.
+    std::string getConnParameters();
+
+private:
+
+    /// @brief Creates connection string from the specified parameters.
+    ///
+    /// This is an internal implementation of the @c getConnParameters that
+    /// allows for controlling logging. In some cases, a caller can disable
+    /// logging warnings to avoid duplication of the log messages emitted
+    /// when the invocation is a result of calling  @c getVersion before
+    /// opening the connection for the normal server operation.
+    ///
+    /// @param logging boolean parameter controlling if logging should be
+    /// enabled (when true) or disabled (when false).
+    ///
+    /// @return connection string for @c openDatabase.
+    /// @throw NoDatabaseName Mandatory database name not given
+    /// @throw DbInvalidTimeout when the database timeout is wrong.
+    std::string getConnParametersInternal(bool logging);
+
+public:
+
+    /// @brief Open database with logging.
     ///
     /// Opens the database using the information supplied in the parameters
-    /// passed to the constructor.
+    /// passed to the constructor. It logs warnings resulting from the
+    /// @c getConnParameters.
     ///
     /// @throw NoDatabaseName Mandatory database name not given
     /// @throw DbOpenError Error opening the database
     void openDatabase();
+
+private:
+
+    /// @brief Internal implementation of the database opening.
+    ///
+    /// It allows for controlling if the @c getConnParameterInternal function
+    /// should log the warnings.
+    ///
+    /// @param logging boolean parameter controlling if logging should be
+    /// enabled (when true) or disabled (when false).
+    ///
+    /// @throw NoDatabaseName Mandatory database name not given
+    /// @throw DbOpenError Error opening the database
+    void openDatabaseInternal(bool logging);
+
+public:
 
     /// @brief Starts new transaction
     ///
@@ -500,6 +587,27 @@ public:
         return (conn_);
     }
 
+private:
+
+    /// @brief Convenience function parsing and setting an integer parameter,
+    /// if it exists.
+    ///
+    /// If the parameter is not present, this function doesn't change the @c value.
+    /// Otherwise, it tries to convert the parameter to the type @c T. Finally,
+    /// it checks if the converted number is within the specified range.
+    ///
+    /// @param name Parameter name.
+    /// @param min Expected minimal value.
+    /// @param max Expected maximal value.
+    /// @param [out] value Reference to a value returning the parsed parameter.
+    /// @tparam T Parameter type.
+    /// @throw BadValue if the parameter is not a valid number or if it is out
+    /// of range.
+    template<typename T>
+    void setIntParameterValue(const std::string& name, int64_t min, int64_t max, T& value);
+
+public:
+
     /// @brief Accessor function which returns the IOService that can be used to
     /// recover the connection.
     ///
@@ -519,6 +627,10 @@ public:
     /// ongoing transaction. We do not want to start new transactions when one
     /// is already in progress.
     int transaction_ref_count_;
+
+    /// @brief Holds location to kea-admin. By default, it points to kea-admin
+    /// from installation. In tests, it points to kea-admin from sources.
+    static std::string KEA_ADMIN_;
 };
 
 /// @brief Defines a pointer to a PgSqlConnection

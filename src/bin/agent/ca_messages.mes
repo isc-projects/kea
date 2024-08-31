@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2022 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,10 +11,12 @@ This informational message is issued when the CA successfully forwards
 the control message to the specified Kea service and receives a response.
 
 % CTRL_AGENT_COMMAND_FORWARD_BEGIN begin forwarding command %1 to service %2
+Logged at debug log level 10.
 This debug message is issued when the Control Agent starts forwarding a
 received command to one of the Kea servers.
 
 % CTRL_AGENT_COMMAND_FORWARD_FAILED failed forwarding command %1: %2
+Logged at debug log level 10.
 This debug message is issued when the Control Agent failed forwarding a
 received command to one of the Kea servers. The second argument provides
 the details of the error.
@@ -52,6 +54,7 @@ on the specified address and port. All control commands should be sent to this
 address and port.
 
 % CTRL_AGENT_RUN_EXIT application is exiting the event loop
+Logged at debug log level 0.
 This is a debug message issued when the Control Agent exits its
 event loop.
 

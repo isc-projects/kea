@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,20 +6,17 @@
 
 #include <config.h>
 
-#include <netconf/netconf_cfg_mgr.h>
-#include <netconf/netconf_process.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
+#include <netconf/netconf_cfg_mgr.h>
+#include <netconf/netconf_process.h>
 #include <process/testutils/d_test_stubs.h>
 #include <testutils/gtest_utils.h>
 
-#include <boost/date_time/posix_time/posix_time.hpp>
+#include <functional>
 
 #include <gtest/gtest.h>
 
-#include <functional>
-
-using namespace boost::posix_time;
 using namespace isc;
 using namespace isc::netconf;
 using namespace isc::asiolink;
@@ -37,23 +34,19 @@ public:
         NetconfConfigPtr ctx = getNetconfCfgMgr()->getNetconfConfig();
     }
 
-    /// @brief Destructor
-    virtual ~NetconfProcessTest() {
-    }
-
     /// @brief Callback that will invoke shutdown method.
     void genShutdownCallback() {
-        shutdown(isc::data::ConstElementPtr());
+        shutdown(isc::data::ElementPtr());
     }
-};
+};  // NetconfProcessTest
 
 // Test construction of the NetconfProcess object.
 TEST(NetconfProcess, construction) {
     // Verify that the constructor will fail if given an empty
     // io service.
     IOServicePtr lcl_io_service;
-    EXPECT_THROW(NetconfProcess("TestProcess", lcl_io_service),
-                 DProcessBaseError);
+    EXPECT_THROW_MSG(NetconfProcess("TestProcess", lcl_io_service), DProcessBaseError,
+                     "IO Service cannot be null");
 
     // Verify that the constructor succeeds with a valid io_service
     lcl_io_service.reset(new IOService());
@@ -70,13 +63,13 @@ TEST(NetconfProcess, construction) {
 TEST_F(NetconfProcessTest, shutdown) {
     // Use an asiolink IntervalTimer and callback to generate the
     // shutdown invocation. (Note IntervalTimer setup is in milliseconds).
-    IntervalTimer timer(*getIoService());
+    IntervalTimer timer(getIOService());
     timer.setup(std::bind(&NetconfProcessTest::genShutdownCallback, this),
                 200);
 
     // Record start time, and invoke run().
     ptime start = microsec_clock::universal_time();
-    EXPECT_NO_THROW(run());
+    EXPECT_NO_THROW_LOG(run());
 
     // Record stop time.
     ptime stop = microsec_clock::universal_time();
@@ -87,6 +80,8 @@ TEST_F(NetconfProcessTest, shutdown) {
     time_duration elapsed = stop - start;
     EXPECT_TRUE(elapsed.total_milliseconds() >= 100 &&
                 elapsed.total_milliseconds() <= 400);
+    timer.cancel();
+    getIOService()->stopAndPoll();
 }
 
-}
+}  // namespace

@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -223,11 +223,9 @@ public:
         lease_file.open();
 
         // Iterate over the storage area writing out the leases
-        for (typename StorageType::const_iterator lease = storage.begin();
-             lease != storage.end();
-             ++lease) {
+        for (auto const& lease : storage) {
             try {
-                lease_file.append(**lease);
+                lease_file.append(*lease);
             } catch (const isc::Exception&) {
                 // Close the file
                 lease_file.close();

@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -70,11 +70,11 @@ TEST_F(Rdata_OPT_Test, createFromWire) {
     // short buffer case.
     EXPECT_THROW(rdataFactoryFromFile(RRType::OPT(), RRClass::IN(),
                                       "rdata_opt_fromWire1", 11),
-                 InvalidBufferPosition);
+                 isc::OutOfRange);
 }
 
 TEST_F(Rdata_OPT_Test, createFromLexer) {
-    // OPT RR cannot be created from text. Exceptions cause NULL to be
+    // OPT RR cannot be created from text. Exceptions cause null to be
     // returned.
     EXPECT_FALSE(test::createRdataUsingLexer(RRType::OPT(), RRClass::IN(),
                                              "this does not matter"));
@@ -133,7 +133,7 @@ TEST_F(Rdata_OPT_Test, appendPseudoRR) {
     generic::OPT rdata_opt;
 
     // Append empty option data
-    rdata_opt.appendPseudoRR(0x0042, NULL, 0);
+    rdata_opt.appendPseudoRR(0x0042, 0, 0);
 
     // Append simple option data
     const uint8_t option_data[] = {'H', 'e', 'l', 'l', 'o'};

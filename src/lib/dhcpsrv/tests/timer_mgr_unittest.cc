@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -147,6 +147,7 @@ void
 TimerMgrTest::TearDown() {
     // Remove all timers.
     timer_mgr_->unregisterTimers();
+    io_service_->stopAndPoll();
 }
 
 void
@@ -165,12 +166,13 @@ TimerMgrTest::registerTimer(const std::string& timer_name, const long timer_inte
 
 void
 TimerMgrTest::doWait(const long timeout, const bool /*call_receive*/) {
-    IntervalTimer timer(*io_service_);
+    IntervalTimer timer(io_service_);
     timer.setup([this]() {
         io_service_->stop();
     }, timeout, IntervalTimer::ONE_SHOT);
     io_service_->run();
-    io_service_->get_io_service().reset();
+    io_service_->stop();
+    io_service_->restart();
 }
 
 void
@@ -295,12 +297,12 @@ TimerMgrTest::testUnregisterTimers() {
     doWait(500);
 
     // Make sure that all timers have been executed at least once.
-    for (CallsCount::iterator it = calls_count_.begin();
-         it != calls_count_.end(); ++it) {
-        unsigned int calls_count = it->second;
+    size_t count = 0;
+    for (auto const& it : calls_count_) {
+        unsigned int calls_count = it.second;
         ASSERT_GT(calls_count, 0)
-            << "expected calls counter for timer"
-            << (std::distance(calls_count_.begin(), it) + 1)
+            << "expected calls counter for timer "
+            << ++count
             << " greater than 0";
     }
 

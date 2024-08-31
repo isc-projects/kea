@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,8 +7,9 @@
 #include <config.h>
 #include <asiolink/io_address.h>
 #include <dhcp/option4_client_fqdn.h>
+#include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp4/tests/dhcp4_client.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp_ddns/ncr_msg.h>
@@ -16,7 +17,9 @@
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/ncr_generator.h>
+#include <stats/stats_mgr.h>
 #include <testutils/gtest_utils.h>
+#include <util/optional.h>
 
 #include <gtest/gtest.h>
 #include <boost/scoped_ptr.hpp>
@@ -26,6 +29,8 @@ using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::dhcp_ddns;
+using namespace isc::stats;
+using namespace isc::util;
 
 namespace {
 
@@ -51,9 +56,9 @@ const char* CONFIGS[] = {
         "       }"
         "    ]"
         " }],"
+        "\"ddns-qualifying-suffix\": \"\","
         "\"dhcp-ddns\": {"
-            "\"enable-updates\": true,"
-            "\"qualifying-suffix\": \"\""
+            "\"enable-updates\": true"
         "}"
     "}",
     // 1
@@ -76,9 +81,9 @@ const char* CONFIGS[] = {
         "       }"
         "    ]"
         " }],"
+        "\"ddns-qualifying-suffix\": \"fake-suffix.isc.org.\","
         "\"dhcp-ddns\": {"
-            "\"enable-updates\": true,"
-            "\"qualifying-suffix\": \"fake-suffix.isc.org.\""
+            "\"enable-updates\": true"
         "}"
     "}",
     // 2
@@ -93,9 +98,9 @@ const char* CONFIGS[] = {
         "    \"id\": 1,"
         "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.10\" } ]"
         " }],"
+        "\"ddns-qualifying-suffix\": \"fake-suffix.isc.org.\","
         "\"dhcp-ddns\": {"
-            "\"enable-updates\": false,"
-            "\"qualifying-suffix\": \"fake-suffix.isc.org.\""
+            "\"enable-updates\": false"
         "}"
     "}",
     // 3
@@ -110,9 +115,9 @@ const char* CONFIGS[] = {
         "    \"id\": 1,"
         "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.10\" } ]"
         " }],"
+        "\"ddns-qualifying-suffix\": \"fake-suffix.isc.org.\","
         "\"dhcp-ddns\": {"
-            "\"enable-updates\": true,"
-            "\"qualifying-suffix\": \"fake-suffix.isc.org.\""
+            "\"enable-updates\": true"
         "}"
     "}",
     // 4
@@ -138,14 +143,14 @@ const char* CONFIGS[] = {
         "       }"
         "    ]"
         " }],"
+        "\"ddns-qualifying-suffix\": \"\","
         "\"dhcp-ddns\": {"
-            "\"enable-updates\": false,"
-            "\"qualifying-suffix\": \"\""
+            "\"enable-updates\": false"
         "}"
     "}",
     // 5
     // Configuration which disables DNS updates but contains a reservation
-    // for a hostname and the qualifying-suffix which should be appended to
+    // for a hostname and the ddns-qualifying-suffix which should be appended to
     // the reserved hostname in the Hostname option returned to a client.
     "{ \"interfaces-config\": {"
         "      \"interfaces\": [ \"*\" ]"
@@ -166,9 +171,9 @@ const char* CONFIGS[] = {
         "       }"
         "    ]"
         " }],"
+        "\"ddns-qualifying-suffix\": \"example.isc.org\","
         "\"dhcp-ddns\": {"
-            "\"enable-updates\": false,"
-            "\"qualifying-suffix\": \"example.isc.org\""
+            "\"enable-updates\": false"
         "}"
     "}",
     // 6
@@ -192,11 +197,11 @@ const char* CONFIGS[] = {
         "       }"
         "    ]"
         " }],"
+        "\"hostname-char-set\" : \"[^A-Za-z0-9.-]\","
+        "\"hostname-char-replacement\" : \"x\","
+        "\"ddns-qualifying-suffix\": \"example.com\","
         "\"dhcp-ddns\": {"
-            "\"enable-updates\": true,"
-            "\"hostname-char-set\" : \"[^A-Za-z0-9.-]\","
-            "\"hostname-char-replacement\" : \"x\","
-            "\"qualifying-suffix\": \"example.com\""
+            "\"enable-updates\": true"
         "}"
     "}",
     // 7
@@ -263,9 +268,9 @@ const char* CONFIGS[] = {
         "    \"id\": 1,"
         "    \"pools\": [ { \"pool\": \"192.0.2.10-192.0.2.10\" } ]"
         " }],"
+        "\"ddns-qualifying-suffix\": \"fake-suffix.isc.org.\","
         "\"dhcp-ddns\": {"
-            "\"enable-updates\": true,"
-            "\"qualifying-suffix\": \"fake-suffix.isc.org.\""
+            "\"enable-updates\": true"
         "}"
     "}",
     // 10
@@ -299,6 +304,43 @@ const char* CONFIGS[] = {
     "           \"ddns-qualifying-suffix\": \"two.example.com.\" \n"
     "       }] \n"
     "   }] \n"
+    "}",
+    // 11
+    // D2 enabled
+    // offer-lifetime > 0
+    "{ \"interfaces-config\": {\n"
+        "      \"interfaces\": [ \"*\" ]\n"
+        "},\n"
+        "\"valid-lifetime\": 3000,\n"
+        "\"subnet4\": [ { \n"
+        "    \"subnet\": \"10.0.0.0/24\", \n"
+        "    \"id\": 1,\n"
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.10\" } ],\n"
+        "    \"offer-lifetime\": 45,\n"
+        "} ],\n"
+        "\"ddns-qualifying-suffix\": \"example.com.\",\n"
+        "\"dhcp-ddns\": {\n"
+            "\"enable-updates\": true\n"
+        "}\n"
+    "}",
+    // 12
+    // D2 enabled
+    // ddns-ttl-percent specfied
+    "{ \"interfaces-config\": {\n"
+        "      \"interfaces\": [ \"*\" ]\n"
+        "},\n"
+        "\"valid-lifetime\": 3000,\n"
+        "\"subnet4\": [ { \n"
+        "    \"subnet\": \"10.0.0.0/24\", \n"
+        "    \"interface\": \"eth1\",\n"
+        "    \"id\": 1,\n"
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.10\" } ],\n"
+        "    \"ddns-ttl-percent\": .25\n"
+        "} ],\n"
+        "\"ddns-qualifying-suffix\": \"example.com.\",\n"
+        "\"dhcp-ddns\": {\n"
+            "\"enable-updates\": true\n"
+        "}\n"
     "}"
 };
 
@@ -341,6 +383,8 @@ public:
         IfaceMgr::instance().openSockets4();
         // Config DDNS to be enabled, all controls off
         enableD2();
+        // Let's wipe all existing statistics.
+        isc::stats::StatsMgr::instance().removeAll();
     }
 
     virtual ~NameDhcpv4SrvTest() {
@@ -385,7 +429,7 @@ public:
                                               : D2ClientConfig::RCM_NEVER);
         subnet_->setDdnsGeneratedPrefix("myhost");
         subnet_->setDdnsQualifyingSuffix("example.com");
-        subnet_->setDdnsUseConflictResolution(true);
+        subnet_->setDdnsConflictResolutionMode("check-with-dhcid");
 
         ASSERT_NO_THROW(srv_->startD2());
     }
@@ -525,7 +569,6 @@ public:
 
         pkt->addOption(generateClientId());
 
-
         // Create Client FQDN Option with the specified flags and
         // domain-name.
         pkt->addOption(createHostname(hostname));
@@ -601,11 +644,11 @@ public:
     }
 
     // Test that the server's processes the hostname (or lack thereof)
-    // in a client request correctly, according to the replace-client-name
+    // in a client request correctly, according to the ddns-replace-client-name
     // mode configuration parameter.  We include hostname sanitizer to ensure
     // it does not interfere with name replacement.
     //
-    // @param mode - value to use for replace-client-name
+    // @param mode - value to use for ddns-replace-client-name
     // @param client_name_flag - specifies whether or not the client request
     // should contain a hostname option
     // @param exp_replacement_flag - specifies whether or not the server is
@@ -624,17 +667,17 @@ public:
             "    \"id\": 1,"
             "    \"pools\": [ { \"pool\": \"192.0.2.10-192.0.2.10\" } ]"
             " }],"
+            "\"ddns-replace-client-name\": \"%s\","
+            "\"ddns-qualifying-suffix\": \"fake-suffix.isc.org.\","
+            "\"hostname-char-set\": \"[^A-Za-z0-9.-]\","
+            "\"hostname-char-replacement\": \"x\","
             "\"dhcp-ddns\": {"
-            "  \"enable-updates\": true,"
-            "  \"qualifying-suffix\": \"fake-suffix.isc.org.\","
-            "  \"hostname-char-set\": \"[^A-Za-z0-9.-]\","
-            "  \"hostname-char-replacement\": \"x\","
-            "  \"replace-client-name\": \"%s\""
+            "  \"enable-updates\": true"
             "}}";
 
         // Create the configuration and configure the server
         char config_buf[1024];
-        sprintf(config_buf, config_template, mode);
+        snprintf(config_buf, 1024, config_template, mode);
         ASSERT_NO_THROW(configure(config_buf, *srv_)) << "configuration failed";
 
         // Build our client packet
@@ -691,7 +734,6 @@ public:
         EXPECT_EQ(flag_o, fqdn->getFlag(Option4ClientFqdn::FLAG_O));
         EXPECT_EQ(flag_e, fqdn->getFlag(Option4ClientFqdn::FLAG_E));
     }
-
 
     /// @brief  Invokes Dhcpv4Srv::processHostname on the given packet
     ///
@@ -752,7 +794,7 @@ public:
     /// @param not_strict_expire_check - when true the comparison of the NCR
     /// lease expiration time is conducted as greater than or equal to rather
     /// equal to CLTT plus lease ttl .
-    /// @param exp_use_cr expected value of conflict resolution flag
+    /// @param exp_conflict_resolution_mode expected value of conflict resolution mode
     void verifyNameChangeRequest(const isc::dhcp_ddns::NameChangeType type,
                                  const bool reverse, const bool forward,
                                  const std::string& addr,
@@ -761,7 +803,9 @@ public:
                                  const time_t cltt,
                                  const uint16_t valid_lft,
                                  const bool not_strict_expire_check = false,
-                                 const bool exp_use_cr = true) {
+                                 const ConflictResolutionMode
+                                 exp_conflict_resolution_mode = CHECK_WITH_DHCID,
+                                 Optional<double> ttl_percent = Optional<double>()) {
         NameChangeRequestPtr ncr;
         ASSERT_NO_THROW(ncr = d2_mgr_.peekAt(0));
         ASSERT_TRUE(ncr);
@@ -782,7 +826,7 @@ public:
         // current time as cltt but the it may not check the lease expiration
         // time for equality but rather check that the lease expiration time
         // is not greater than the current time + lease lifetime.
-        uint32_t ttl = calculateDdnsTtl(valid_lft);
+        uint32_t ttl = calculateDdnsTtl(valid_lft, ttl_percent);
         if (not_strict_expire_check) {
             EXPECT_GE(cltt + ttl, ncr->getLeaseExpiresOn());
         } else {
@@ -791,12 +835,11 @@ public:
 
         EXPECT_EQ(ttl, ncr->getLeaseLength());
         EXPECT_EQ(isc::dhcp_ddns::ST_NEW, ncr->getStatus());
-        EXPECT_EQ(exp_use_cr, ncr->useConflictResolution());
+        EXPECT_EQ(exp_conflict_resolution_mode, ncr->getConflictResolutionMode());
 
         // Process the message off the queue
         ASSERT_NO_THROW(d2_mgr_.runReadyIO());
     }
-
 
     /// @brief Tests processing a request with the given client flags
     ///
@@ -846,6 +889,26 @@ public:
                                         subnet_->getValid(), true);
             }
         }
+    }
+
+
+    /// @brief Checks the value of an integer statistic for a given subnet.
+    ///
+    /// @param subnet_id identifier of a subnet for which the statistic should be checked
+    /// @param name statistic name (e.g. "assigned-addresses", "total-addresses", ...)
+    /// @param exp_value expected value of the statistic
+    ///
+    /// @return Number of assigned addresses for a subnet.
+    void checkSubnetStat(const SubnetID& subnet_id, const std::string& name, int64_t exp_value) const {
+        // Retrieve statistics name, e.g. subnet[1234].assigned-addresses.
+        std::string stats_name = StatsMgr::generateName("subnet", subnet_id, name);
+        ObservationPtr obs =  StatsMgr::instance().getObservation(stats_name);
+        ASSERT_TRUE(obs) << "cannot find: " << stats_name;
+        EXPECT_EQ(exp_value, obs->getInteger().first);
+        stats_name = StatsMgr::generateName("subnet", subnet_id, StatsMgr::generateName("pool", 0, name));
+        obs =  StatsMgr::instance().getObservation(stats_name);
+        ASSERT_TRUE(obs) << "cannot find: " << stats_name;
+        EXPECT_EQ(exp_value, obs->getInteger().first);
     }
 };
 
@@ -897,7 +960,7 @@ TEST_F(NameDhcpv4SrvTest, respectNoUpdate) {
 
 // Tests the following scenario:
 //  - Updates are enabled
-//  - override-no-update is on
+//  - ddns-override-no-update is on
 //  - Client requests no updates  (N = 1, S = 0)
 //
 // Server should override "no update" request and perform updates:
@@ -929,14 +992,14 @@ TEST_F(NameDhcpv4SrvTest, respectClientDelegation) {
 
 // Tests the following scenario:
 //  - Updates are enabled
-//  - override-client-update is on.
+//  - ddns-override-client-update is on.
 //  - Client requests delegation  (N = 0, S = 0)
 //
 // Server should override client's delegation request and do updates:
 // - Response flags should be  N = 0, S = 1, O = 1
 // - Should queue an NCR
 TEST_F(NameDhcpv4SrvTest, overrideClientDelegation) {
-    // Turn on override-client-update.
+    // Turn on ddns-override-client-update.
     enableD2(OVERRIDE_CLIENT_UPDATE);
 
     flagVsConfigScenario(Option4ClientFqdn::FLAG_E,
@@ -957,7 +1020,6 @@ TEST_F(NameDhcpv4SrvTest, serverUpdateHostname) {
 
     ASSERT_TRUE(hostname);
     EXPECT_EQ("myhost.example.com.", hostname->getValue());
-
 }
 
 // Test that the server skips processing of a mal-formed Hostname options.
@@ -1028,7 +1090,6 @@ TEST_F(NameDhcpv4SrvTest, serverUpdateForwardPartialNameFqdn) {
     testProcessFqdn(query,
                     Option4ClientFqdn::FLAG_E | Option4ClientFqdn::FLAG_S,
                     "myhost.example.com.");
-
 }
 
 // Test that server generates the fully qualified domain name for the client
@@ -1041,7 +1102,6 @@ TEST_F(NameDhcpv4SrvTest, serverUpdateUnqualifiedHostname) {
 
     ASSERT_TRUE(hostname);
     EXPECT_EQ("myhost.example.com", hostname->getValue());
-
 }
 
 // Test that server sets empty domain-name in the FQDN option when client
@@ -1059,7 +1119,6 @@ TEST_F(NameDhcpv4SrvTest, serverUpdateForwardNoNameFqdn) {
     testProcessFqdn(query,
                     Option4ClientFqdn::FLAG_E | Option4ClientFqdn::FLAG_S,
                     "", Option4ClientFqdn::PARTIAL);
-
 }
 
 // Test that exactly one NameChangeRequest is generated when the new lease
@@ -1089,7 +1148,7 @@ TEST_F(NameDhcpv4SrvTest, noConflictResolution) {
     Lease4Ptr old_lease;
 
     ASSERT_TRUE(getDdnsParams()->getEnableUpdates());
-    subnet_->setDdnsUseConflictResolution(false);
+    subnet_->setDdnsConflictResolutionMode("no-check-with-dhcid");
 
     ASSERT_NO_THROW(srv_->createNameChangeRequests(lease, old_lease, *getDdnsParams()));
     ASSERT_EQ(1, d2_mgr_.getQueueSize());
@@ -1098,7 +1157,7 @@ TEST_F(NameDhcpv4SrvTest, noConflictResolution) {
                             "192.0.2.3", "myhost.example.com.",
                             "00010132E91AA355CFBB753C0F0497A5A940436965"
                             "B68B6D438D98E680BF10B09F3BCF",
-                            lease->cltt_, 100, false, false);
+                            lease->cltt_, 100, false, NO_CHECK_WITH_DHCID);
 }
 
 
@@ -1168,7 +1227,7 @@ TEST_F(NameDhcpv4SrvTest, createNameChangeRequestsUpdateOnRenew) {
     };
 
     // Iterate over test scenarios.
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_); {
             // Set and verify DDNS params flags
             subnet_->setDdnsSendUpdates(scenario.send_updates_);
@@ -1519,11 +1578,14 @@ TEST_F(NameDhcpv4SrvTest, processRequestRenewHostname) {
 }
 
 // Test that when a release message is sent for a previously acquired lease,
-// DDNS updates are enabled that the server generates a NameChangeRequest
-// to remove entries corresponding to the released lease.
+// DDNS updates are enabled and the server generates a NameChangeRequest
+// to remove entries corresponding to the released (deleted) lease.
 TEST_F(NameDhcpv4SrvTest, processRequestRelease) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
+
+    CfgMgr::instance().getCurrentCfg()->getCfgExpiration()->setFlushReclaimedTimerWaitTime(0);
+    CfgMgr::instance().getCurrentCfg()->getCfgExpiration()->setHoldReclaimedTime(0);
 
     // Verify the updates are enabled.
     ASSERT_TRUE(CfgMgr::instance().ddnsEnabled());
@@ -1561,6 +1623,46 @@ TEST_F(NameDhcpv4SrvTest, processRequestRelease) {
                             "00010132E91AA355CFBB753C0F0497A5A940436"
                             "965B68B6D438D98E680BF10B09F3BCF",
                             time(NULL), subnet_->getValid(), true);
+}
+
+// Test that when a release message is sent for a previously acquired lease,
+// DDNS updates are enabled and the server does not generate a NameChangeRequest
+// to remove entries corresponding to the released (expired) lease.
+TEST_F(NameDhcpv4SrvTest, processRequestReleaseNoDelete) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    // Verify the updates are enabled.
+    ASSERT_TRUE(CfgMgr::instance().ddnsEnabled());
+
+    // Create and process a lease request so we have a lease to release.
+    Pkt4Ptr req = generatePktWithFqdn(DHCPREQUEST, Option4ClientFqdn::FLAG_S |
+                                      Option4ClientFqdn::FLAG_E,
+                                      "myhost.example.com.",
+                                      Option4ClientFqdn::FULL, true);
+    Pkt4Ptr reply;
+    ASSERT_NO_THROW(reply = srv_->processRequest(req));
+    checkResponse(reply, DHCPACK, 1234);
+
+    // Verify that there is one NameChangeRequest generated for lease.
+    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                            reply->getYiaddr().toText(), "myhost.example.com.",
+                            "00010132E91AA355CFBB753C0F0497A5A940436"
+                            "965B68B6D438D98E680BF10B09F3BCF",
+                            time(NULL), subnet_->getValid(), true);
+
+    // Create and process the Release message.
+    Pkt4Ptr rel = Pkt4Ptr(new Pkt4(DHCPRELEASE, 1234));
+    rel->setCiaddr(reply->getYiaddr());
+    rel->setRemoteAddr(IOAddress("192.0.2.3"));
+    rel->addOption(generateClientId());
+    rel->addOption(srv_->getServerID());
+    ASSERT_NO_THROW(srv_->processRelease(rel));
+
+    // The lease has been expired, so there should not be a NameChangeRequest to
+    // remove corresponding DNS entries.
+    ASSERT_EQ(0, d2_mgr_.getQueueSize());
 }
 
 // Test that when the Release message is sent for a previously acquired lease
@@ -1864,7 +1966,7 @@ TEST_F(NameDhcpv4SrvTest, hostnameReservationPRL) {
 }
 
 // This test verifies that the server sends the Hostname option to the client
-// with partial hostname reservation and with the global qualifying-suffix set.
+// with partial hostname reservation and with the global ddns-qualifying-suffix set.
 TEST_F(NameDhcpv4SrvTest, hostnameReservationNoDNSQualifyingSuffix) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
     // Use HW address that matches the reservation entry in the configuration.
@@ -1988,10 +2090,9 @@ TEST_F(NameDhcpv4SrvTest, emptyFqdn) {
     lease = LeaseMgrFactory::instance().getLease4(IOAddress(expected_address));
     ASSERT_TRUE(lease);
     EXPECT_EQ(expected_fqdn, lease->hostname_);
-
 }
 
-// Verifies that the replace-client-name behavior is correct for each of
+// Verifies that the ddns-replace-client-name behavior is correct for each of
 // the supported modes.
 TEST_F(NameDhcpv4SrvTest, replaceClientNameModeTest) {
 
@@ -2063,7 +2164,7 @@ TEST_F(NameDhcpv4SrvTest, sanitizeHostDefault) {
 
     Pkt4Ptr resp;
     OptionStringPtr hostname;
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE((scenario).description_);
         {
             // Set the hostname option.
@@ -2132,7 +2233,7 @@ TEST_F(NameDhcpv4SrvTest, sanitizeHost) {
 
     Pkt4Ptr resp;
     OptionStringPtr hostname;
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE((scenario).description_);
         {
             // Set the hostname option.
@@ -2194,7 +2295,7 @@ TEST_F(NameDhcpv4SrvTest, sanitizeHostGlobal) {
 
     Pkt4Ptr resp;
     OptionStringPtr hostname;
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE((scenario).description_);
         {
             // Set the hostname option.
@@ -2262,12 +2363,12 @@ TEST_F(NameDhcpv4SrvTest, sanitizeFqdn) {
 
     Pkt4Ptr resp;
     Option4ClientFqdnPtr fqdn;
-    for (auto scenario = scenarios.begin(); scenario != scenarios.end(); ++scenario) {
-        SCOPED_TRACE((*scenario).description_);
+    for (auto const& scenario : scenarios) {
+        SCOPED_TRACE(scenario.description_);
         {
         // Set the hostname option.
-        ASSERT_NO_THROW(client.includeHostname((*scenario).original_));
-        ASSERT_NO_THROW(client.includeFQDN(0, (*scenario).original_, (*scenario).name_type_));
+        ASSERT_NO_THROW(client.includeHostname(scenario.original_));
+        ASSERT_NO_THROW(client.includeFQDN(0, scenario.original_, scenario.name_type_));
 
         // Send the DHCPDISCOVER and make sure that the server responded.
         ASSERT_NO_THROW(client.doDiscover());
@@ -2278,7 +2379,7 @@ TEST_F(NameDhcpv4SrvTest, sanitizeFqdn) {
         // Make sure the response fqdn is what we expect.
         fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>(resp->getOption(DHO_FQDN));
         ASSERT_TRUE(fqdn);
-        EXPECT_EQ((*scenario).sanitized_, fqdn->getDomainName());
+        EXPECT_EQ(scenario.sanitized_, fqdn->getDomainName());
         }
     }
 }
@@ -2336,12 +2437,12 @@ TEST_F(NameDhcpv4SrvTest, sanitizeFqdnGlobal) {
 
     Pkt4Ptr resp;
     Option4ClientFqdnPtr fqdn;
-    for (auto scenario = scenarios.begin(); scenario != scenarios.end(); ++scenario) {
-        SCOPED_TRACE((*scenario).description_);
+    for (auto const& scenario : scenarios) {
+        SCOPED_TRACE(scenario.description_);
         {
         // Set the hostname option.
-        ASSERT_NO_THROW(client.includeHostname((*scenario).original_));
-        ASSERT_NO_THROW(client.includeFQDN(0, (*scenario).original_, (*scenario).name_type_));
+        ASSERT_NO_THROW(client.includeHostname(scenario.original_));
+        ASSERT_NO_THROW(client.includeFQDN(0, scenario.original_, scenario.name_type_));
 
         // Send the DHCPDISCOVER and make sure that the server responded.
         ASSERT_NO_THROW(client.doDiscover());
@@ -2352,7 +2453,7 @@ TEST_F(NameDhcpv4SrvTest, sanitizeFqdnGlobal) {
         // Make sure the response fqdn is what we expect.
         fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>(resp->getOption(DHO_FQDN));
         ASSERT_TRUE(fqdn);
-        EXPECT_EQ((*scenario).sanitized_, fqdn->getDomainName());
+        EXPECT_EQ(scenario.sanitized_, fqdn->getDomainName());
         }
     }
 }
@@ -2487,7 +2588,7 @@ TEST_F(NameDhcpv4SrvTest, processReuseExpired) {
         }
     };
 
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.label_);
         {
             // Create the original leasing client.
@@ -2639,6 +2740,227 @@ TEST_F(NameDhcpv4SrvTest, ddnsSharedNetworkTest) {
     lease = LeaseMgrFactory::instance().getLease4(IOAddress("10.0.0.10"));
     ASSERT_TRUE(lease);
     EXPECT_EQ("client2.two.example.com", lease->hostname_);
+}
+
+// Verifies the basic behavior for a DORA cycle when offer-lifetime is greater
+// than zero.
+TEST_F(NameDhcpv4SrvTest, withOfferLifetime) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    // Use HW address that matches the reservation entry in the configuration.
+    client.setHWAddress("aa:bb:cc:dd:ee:ff");
+    // Configure DHCP server.
+    configure(CONFIGS[11], *client.getServer());
+
+    // Fetch the subnet.
+    Subnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->
+                        selectSubnet(IOAddress("10.0.0.10"));
+    ASSERT_TRUE(subnet);
+
+    // Make sure that DDNS is enabled.
+    ASSERT_TRUE(CfgMgr::instance().ddnsEnabled());
+    ASSERT_NO_THROW(client.getServer()->startD2());
+    // Include the Client FQDN option.
+    ASSERT_NO_THROW(client.includeFQDN(Option4ClientFqdn::FLAG_S | Option4ClientFqdn::FLAG_E,
+                                       "client-name", Option4ClientFqdn::PARTIAL));
+
+    checkSubnetStat(subnet->getID(), "total-addresses", 1);
+    checkSubnetStat(subnet->getID(), "cumulative-assigned-addresses", 0);
+    checkSubnetStat(subnet->getID(), "assigned-addresses", 0);
+
+    // Send the DHCPDISCOVER.
+    ASSERT_NO_THROW(client.doDiscover());
+
+    // Make sure that the server responded.
+    Pkt4Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+    ASSERT_EQ(DHCPOFFER, static_cast<int>(resp->getType()));
+
+    // Lifetime in the OFFER should be valid lifetime.
+    OptionUint32Ptr opt = boost::dynamic_pointer_cast<
+        OptionUint32>(resp->getOption(DHO_DHCP_LEASE_TIME));
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(subnet->getValid(), opt->getValue());
+
+    // Obtain the FQDN option sent in the response and make sure that the server
+    // has used the client supplied hostname for this client.
+    Option4ClientFqdnPtr fqdn;
+    fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>(resp->getOption(DHO_FQDN));
+    ASSERT_TRUE(fqdn);
+    EXPECT_EQ("client-name.example.com.", fqdn->getDomainName());
+
+    // When receiving DHCPDISCOVER, no NCRs should be generated.
+    EXPECT_EQ(0, d2_mgr_.getQueueSize());
+
+    // Make sure the lease was created with offer-lifetime, fqdn flags = false,
+    // and the FQDN.
+    Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(IOAddress("10.0.0.10"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(subnet->getOfferLft(), lease->valid_lft_);
+    EXPECT_FALSE(lease->fqdn_fwd_);
+    EXPECT_FALSE(lease->fqdn_rev_);
+    EXPECT_EQ("client-name.example.com.", lease->hostname_);
+
+    // Verify assigned stats were incremented.
+    checkSubnetStat(subnet->getID(), "total-addresses", 1);
+    checkSubnetStat(subnet->getID(), "cumulative-assigned-addresses", 1);
+    checkSubnetStat(subnet->getID(), "assigned-addresses", 1);
+
+    // Now send the DHCPREQUEST with including the FQDN option.
+    ASSERT_NO_THROW(client.doRequest());
+    resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+
+    // Lifetime in the DHCPACK should be valid lifetime.
+    opt = boost::dynamic_pointer_cast<OptionUint32>(resp->getOption(DHO_DHCP_LEASE_TIME));
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(subnet->getValid(), opt->getValue());
+
+    // Once again check that the FQDN is as expected.
+    fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>(resp->getOption(DHO_FQDN));
+    ASSERT_TRUE(fqdn);
+    EXPECT_EQ("client-name.example.com.", fqdn->getDomainName());
+
+    // There should be one NCR which adds the new DNS entry.
+    ASSERT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                            resp->getYiaddr().toText(),
+                            "client-name.example.com.",
+                            "0000011E5D6FA61FCBAC969FF4EF0EBCA3FDE554E"
+                            "B020A13F44859F30A108793564A97",
+                            time(NULL), subnet->getValid(), true);
+
+    // And that this FQDN has been stored in the lease database.
+    lease = LeaseMgrFactory::instance().getLease4(client.config_.lease_.addr_);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(subnet->getValid(), lease->valid_lft_);
+    EXPECT_TRUE(lease->fqdn_fwd_);
+    EXPECT_TRUE(lease->fqdn_rev_);
+    EXPECT_EQ("client-name.example.com.", lease->hostname_);
+
+    // Verify assigned states did not incremented again.
+    checkSubnetStat(subnet->getID(), "total-addresses", 1);
+    checkSubnetStat(subnet->getID(), "cumulative-assigned-addresses", 1);
+    checkSubnetStat(subnet->getID(), "assigned-addresses", 1);
+}
+
+// Verifies the DNS TTL when ttl percent is specified
+// than zero.
+TEST_F(NameDhcpv4SrvTest, withDdnsTtlPercent) {
+    // Load a configuration with D2 enabled and ddns-ttl-percent
+    ASSERT_NO_FATAL_FAILURE(configure(CONFIGS[12], *srv_));
+    ASSERT_TRUE(CfgMgr::instance().ddnsEnabled());
+
+    // Create a client and get a lease.
+    Dhcp4Client client1(srv_, Dhcp4Client::SELECTING);
+    client1.setIfaceName("eth1");
+    client1.setIfaceIndex(ETH1_INDEX);
+    ASSERT_NO_THROW(client1.includeHostname("client1"));
+
+    // Do the DORA.
+    ASSERT_NO_THROW(client1.doDORA());
+    Pkt4Ptr resp = client1.getContext().response_;
+    ASSERT_TRUE(resp);
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+
+    // Obtain the Hostname option sent in the response and make sure that the server
+    // has used the hostname reserved for this client.
+    OptionStringPtr hostname;
+    hostname = boost::dynamic_pointer_cast<OptionString>(resp->getOption(DHO_HOST_NAME));
+    ASSERT_TRUE(hostname);
+    EXPECT_EQ("client1.example.com", hostname->getValue());
+
+    // Make sure the lease is in the database and hostname is correct.
+    Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(IOAddress("10.0.0.10"));
+    ASSERT_TRUE(lease);
+    EXPECT_EQ("client1.example.com", lease->hostname_);
+
+    // Verify that an NCR was generated correctly.
+    ASSERT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                            resp->getYiaddr().toText(),
+                            "client1.example.com.", "",
+                            time(NULL), lease->valid_lft_, true,
+                            CHECK_WITH_DHCID, Optional<double>(.25));
+}
+
+// Verify that conflict resolution mode is set to "check-with-dhcid" in the NCR
+// when it is configured for the lease's subnet
+TEST_F(NameDhcpv4SrvTest, checkWithDHCIDConflictResolutionMode) {
+    Lease4Ptr lease = createLease(IOAddress("192.0.2.3"), "myhost.example.com.",
+                                  true, true);
+    Lease4Ptr old_lease;
+    ASSERT_TRUE(getDdnsParams()->getEnableUpdates());
+    subnet_->setDdnsConflictResolutionMode("check-with-dhcid");
+
+    ASSERT_NO_THROW(srv_->createNameChangeRequests(lease, old_lease, *getDdnsParams()));
+    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                            "192.0.2.3", "myhost.example.com.",
+                            "00010132E91AA355CFBB753C0F0497A5A940436965"
+                            "B68B6D438D98E680BF10B09F3BCF",
+                            lease->cltt_, 100, false, CHECK_WITH_DHCID);
+}
+
+// Verify that conflict resolution mode is set to "no-check-with-dhcid" in the NCR
+// when it is configured for the lease's subnet
+TEST_F(NameDhcpv4SrvTest, noCheckWithDHCIDConflictResolutionMode) {
+    Lease4Ptr lease = createLease(IOAddress("192.0.2.3"), "myhost.example.com.",
+                                  true, true);
+    Lease4Ptr old_lease;
+
+    ASSERT_TRUE(getDdnsParams()->getEnableUpdates());
+    subnet_->setDdnsConflictResolutionMode("no-check-with-dhcid");
+
+    ASSERT_NO_THROW(srv_->createNameChangeRequests(lease, old_lease, *getDdnsParams()));
+    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                            "192.0.2.3", "myhost.example.com.",
+                            "00010132E91AA355CFBB753C0F0497A5A940436965"
+                            "B68B6D438D98E680BF10B09F3BCF",
+                            lease->cltt_, 100, false, NO_CHECK_WITH_DHCID);
+}
+
+// Verify that conflict resolution mode is set to "no-check-without-dhcid" in the NCR
+// when it is configured for the lease's subnet
+TEST_F(NameDhcpv4SrvTest, noCheckWithoutDHCIDConflictResolutionMode) {
+    Lease4Ptr lease = createLease(IOAddress("192.0.2.3"), "myhost.example.com.",
+                                  true, true);
+    Lease4Ptr old_lease;
+
+    ASSERT_TRUE(getDdnsParams()->getEnableUpdates());
+    subnet_->setDdnsConflictResolutionMode("no-check-without-dhcid");
+
+    ASSERT_NO_THROW(srv_->createNameChangeRequests(lease, old_lease, *getDdnsParams()));
+    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                            "192.0.2.3", "myhost.example.com.",
+                            "00010132E91AA355CFBB753C0F0497A5A940436965"
+                            "B68B6D438D98E680BF10B09F3BCF",
+                            lease->cltt_, 100, false, NO_CHECK_WITHOUT_DHCID);
+}
+
+// Verify that conflict resolution mode is set to "check-exists-with-dhcid" in the NCR
+// when it is configured for the lease's subnet
+TEST_F(NameDhcpv4SrvTest, checkExistsDHCIDConflictResolutionMode) {
+    Lease4Ptr lease = createLease(IOAddress("192.0.2.3"), "myhost.example.com.",
+                                  true, true);
+    Lease4Ptr old_lease;
+
+    ASSERT_TRUE(getDdnsParams()->getEnableUpdates());
+    subnet_->setDdnsConflictResolutionMode("check-exists-with-dhcid");
+
+    ASSERT_NO_THROW(srv_->createNameChangeRequests(lease, old_lease, *getDdnsParams()));
+    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                            "192.0.2.3", "myhost.example.com.",
+                            "00010132E91AA355CFBB753C0F0497A5A940436965"
+                            "B68B6D438D98E680BF10B09F3BCF",
+                            lease->cltt_, 100, false, CHECK_EXISTS_WITH_DHCID);
 }
 
 } // end of anonymous namespace

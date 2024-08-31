@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -67,7 +67,7 @@ TEST(CtrlAgentProcess, construction) {
 TEST_F(CtrlAgentProcessTest, shutdown) {
     // Use an asiolink IntervalTimer and callback to generate the
     // shutdown invocation. (Note IntervalTimer setup is in milliseconds).
-    IntervalTimer timer(*getIoService());
+    IntervalTimer timer(getIOService());
     timer.setup(std::bind(&CtrlAgentProcessTest::genShutdownCallback, this),
                 200);
 
@@ -84,7 +84,9 @@ TEST_F(CtrlAgentProcessTest, shutdown) {
     time_duration elapsed = stop - start;
     EXPECT_TRUE(elapsed.total_milliseconds() >= 100 &&
                 elapsed.total_milliseconds() <= 400);
-}
 
+    timer.cancel();
+    getIOService()->stopAndPoll();
+}
 
 }

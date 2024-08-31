@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -117,9 +117,10 @@ typedef boost::asio::ssl::stream<boost::asio::ip::tcp::socket> TlsStreamImpl;
 /// @note The caller must not provide a null pointer to the TLS context.
 template <typename Callback, typename TlsStreamImpl>
 TlsStreamBase<Callback, TlsStreamImpl>::
-TlsStreamBase(IOService& service, TlsContextPtr context)
-    : TlsStreamImpl(service.get_io_service(), context->getContext()),
-      role_(context->getRole()) {
+TlsStreamBase(const IOServicePtr& io_service, TlsContextPtr context)
+    : StreamService(io_service, context),
+      TlsStreamImpl(io_service->getInternalIOService(),
+      context->getContext()), role_(context->getRole()) {
 }
 
 /// @brief OpenSSL TLS stream.
@@ -137,12 +138,13 @@ public:
     /// @param service I/O Service object used to manage the stream.
     /// @param context Pointer to the TLS context.
     /// @note The caller must not provide a null pointer to the TLS context.
-    TlsStream(IOService& service, TlsContextPtr context)
+    TlsStream(const IOServicePtr& service, TlsContextPtr context)
         : Base(service, context) {
     }
 
     /// @brief Destructor.
-    virtual ~TlsStream() { }
+    virtual ~TlsStream() {
+    }
 
     /// @brief TLS Handshake.
     ///

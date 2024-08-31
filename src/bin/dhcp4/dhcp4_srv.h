@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -99,12 +99,12 @@ public:
 
     /// @brief Returns the pointer to the server's response.
     ///
-    /// The returned pointer is NULL if the query type is DHCPRELEASE or DHCPDECLINE.
+    /// The returned pointer is null if the query type is DHCPRELEASE or DHCPDECLINE.
     Pkt4Ptr getResponse() const {
         return (resp_);
     }
 
-    /// @brief Removes the response message by resetting the pointer to NULL.
+    /// @brief Removes the response message by resetting the pointer to null.
     void deleteResponse() {
         resp_.reset();
     }
@@ -122,6 +122,18 @@ public:
     /// @brief Returns the configured option list (const version)
     const CfgOptionList& getCfgOptionList() const {
         return (cfg_option_list_);
+    }
+
+    /// @brief Returns the IPv6-Only Preferred flag.
+    bool getIPv6OnlyPreferred() const {
+        return (ipv6_only_preferred_);
+    }
+
+    /// @brief Set the IPv6-Only Preferred flag.
+    ///
+    /// @param ipv6_only_preferred new flag value.
+    void setIPv6OnlyPreferred(bool ipv6_only_preferred) {
+        ipv6_only_preferred_ = ipv6_only_preferred;
     }
 
     /// @brief Sets reserved values of siaddr, sname and file in the
@@ -202,7 +214,7 @@ private:
     /// @warning This message is called internally by @c initResponse and
     /// thus it doesn't check if the resp_ value has been initialized. The
     /// calling method is responsible for making sure that @c resp_ is
-    /// not NULL.
+    /// not null.
     void copyDefaultFields();
 
     /// @brief Copies default options from client's to server's message
@@ -213,7 +225,7 @@ private:
     /// @warning This message is called internally by @c initResponse and
     /// thus it doesn't check if the resp_ value has been initialized. The
     /// calling method is responsible for making sure that @c resp_ is
-    /// not NULL.
+    /// not null.
     void copyDefaultOptions();
 
     /// @brief Pointer to the allocation engine used by the server.
@@ -232,6 +244,9 @@ private:
     /// @note The configured option list is an *ordered* list of
     /// @c CfgOption objects used to append options to the response.
     CfgOptionList cfg_option_list_;
+
+    /// @brief IPv6-Only Preferred flag (RFC 8925).
+    bool ipv6_only_preferred_;
 };
 
 /// @brief Type representing the pointer to the @c Dhcpv4Exchange.
@@ -336,7 +351,7 @@ public:
     /// Main server processing step. Receives one incoming packet, calls
     /// the processing packet routing and (if necessary) transmits
     /// a response.
-    void run_one();
+    void runOne();
 
     /// @brief Process a single incoming DHCPv4 packet and sends the response.
     ///
@@ -344,7 +359,7 @@ public:
     /// methods, generates appropriate answer, sends the answer to the client.
     ///
     /// @param query A pointer to the packet to be processed.
-    void processPacketAndSendResponse(Pkt4Ptr& query);
+    void processPacketAndSendResponse(Pkt4Ptr query);
 
     /// @brief Process a single incoming DHCPv4 packet and sends the response.
     ///
@@ -352,15 +367,16 @@ public:
     /// methods, generates appropriate answer, sends the answer to the client.
     ///
     /// @param query A pointer to the packet to be processed.
-    void processPacketAndSendResponseNoThrow(Pkt4Ptr& query);
+    void processPacketAndSendResponseNoThrow(Pkt4Ptr query);
 
     /// @brief Process an unparked DHCPv4 packet and sends the response.
     ///
     /// @param callout_handle pointer to the callout handle.
     /// @param query A pointer to the packet to be processed.
     /// @param rsp A pointer to the response.
+    /// @param subnet A pointer to selected subnet.
     void sendResponseNoThrow(hooks::CalloutHandlePtr& callout_handle,
-                             Pkt4Ptr& query, Pkt4Ptr& rsp);
+                             Pkt4Ptr& query, Pkt4Ptr& rsp, Subnet4Ptr& subnet);
 
     /// @brief Process a single incoming DHCPv4 packet.
     ///
@@ -368,31 +384,61 @@ public:
     /// methods, generates appropriate answer.
     ///
     /// @param query A pointer to the packet to be processed.
-    /// @param rsp A pointer to the response.
-    /// @param allow_packet_park Indicates if parking a packet is allowed.
-    void processPacket(Pkt4Ptr& query, Pkt4Ptr& rsp,
-                       bool allow_packet_park = true);
+    /// @param allow_answer_park Indicates if parking a packet is allowed.
+    /// @return A pointer to the response.
+    Pkt4Ptr processPacket(Pkt4Ptr query, bool allow_answer_park = true);
 
     /// @brief Process a single incoming DHCPv4 query.
+    ///
+    /// It localizes the query, calls per-type processXXX methods,
+    /// generates appropriate answer.
+    ///
+    /// @param query A pointer to the packet to be processed.
+    /// @param allow_answer_park Indicates if parking a packet is allowed.
+    /// @return A pointer to the response.
+    Pkt4Ptr processDhcp4Query(Pkt4Ptr query, bool allow_answer_park);
+
+    /// @brief Process a single incoming DHCPv4 query.
+    ///
+    /// It localizes the query, calls per-type processXXX methods,
+    /// generates appropriate answer, sends the answer to the client.
+    ///
+    /// @param query A pointer to the packet to be processed.
+    /// @param allow_answer_park Indicates if parking a packet is allowed.
+    void processDhcp4QueryAndSendResponse(Pkt4Ptr query,
+                                          bool allow_answer_park);
+
+    /// @brief Process a localized incoming DHCPv4 query.
     ///
     /// It calls per-type processXXX methods, generates appropriate answer.
     ///
-    /// @param query A pointer to the packet to be processed.
-    /// @param rsp A pointer to the response.
-    /// @param allow_packet_park Indicates if parking a packet is allowed.
-    void processDhcp4Query(Pkt4Ptr& query, Pkt4Ptr& rsp,
-                           bool allow_packet_park);
+    /// @param ctx Pointer to The client context.
+    /// @param allow_answer_park Indicates if parking a packet is allowed.
+    /// @return A pointer to the response.
+    Pkt4Ptr processLocalizedQuery4(AllocEngine::ClientContext4Ptr& ctx,
+                                   bool allow_answer_park);
 
-    /// @brief Process a single incoming DHCPv4 query.
+    /// @brief Process a localized incoming DHCPv4 query.
     ///
     /// It calls per-type processXXX methods, generates appropriate answer,
     /// sends the answer to the client.
     ///
-    /// @param query A pointer to the packet to be processed.
-    /// @param rsp A pointer to the response.
-    /// @param allow_packet_park Indicates if parking a packet is allowed.
-    void processDhcp4QueryAndSendResponse(Pkt4Ptr& query, Pkt4Ptr& rsp,
-                                          bool allow_packet_park);
+    /// @param query A pointer to the unparked packet.
+    /// @param ctx Pointer to The client context.
+    /// @param allow_answer_park Indicates if parking a packet is allowed.
+    void processLocalizedQuery4AndSendResponse(Pkt4Ptr query,
+                                               AllocEngine::ClientContext4Ptr& ctx,
+                                               bool allow_answer_park);
+
+    /// @brief Process a localized incoming DHCPv4 query.
+    ///
+    /// A variant of the precedent method used to resume processing
+    /// for packets parked in the subnet4_select callout.
+    ///
+    /// @param query A pointer to the unparked packet.
+    /// @param allow_answer_park Indicates if parking a packet is allowed.
+    void processLocalizedQuery4AndSendResponse(Pkt4Ptr query,
+                                               bool allow_answer_park);
 
     /// @brief Instructs the server to shut down.
     void shutdown() override;
@@ -465,6 +511,13 @@ public:
         return (test_send_responses_to_source_);
     }
 
+    /// @brief Initialize client context (first part).
+    ///
+    /// @param query The query message.
+    /// @param ctx Pointer to client context.
+    void initContext0(const Pkt4Ptr& query,
+                      AllocEngine::ClientContext4Ptr ctx);
+
     /// @brief Initialize client context and perform early global
     /// reservations lookup.
     ///
@@ -504,7 +557,7 @@ protected:
     ///
     /// @return true if the message should be further processed, or false if
     /// the message should be discarded.
-    bool accept(const Pkt4Ptr& query) const;
+    bool accept(const Pkt4Ptr& query);
 
     /// @brief Check if a message sent by directly connected client should be
     /// accepted or discarded.
@@ -533,7 +586,7 @@ protected:
     ///
     /// @return true if message is accepted for further processing, false
     /// otherwise.
-    bool acceptDirectRequest(const Pkt4Ptr& query) const;
+    bool acceptDirectRequest(const Pkt4Ptr& query);
 
     /// @brief Check if received message type is valid for the server to
     /// process.
@@ -575,6 +628,17 @@ protected:
     ///
     /// Checks if mandatory option is really there, that forbidden option
     /// is not there, and that client-id or server-id appears only once.
+    /// Calls the second method with the requirement level based on
+    /// message type.
+    ///
+    /// @param query Pointer to the client's message.
+    /// @throw RFCViolation if any issues are detected
+    static void sanityCheck(const Pkt4Ptr& query);
+
+    /// @brief Verifies if specified packet meets RFC requirements
+    ///
+    /// Checks if mandatory option is really there, that forbidden option
+    /// is not there, and that client-id or server-id appears only once.
     ///
     /// @param query Pointer to the client's message.
     /// @param serverid expectation regarding server-id option
@@ -590,7 +654,7 @@ protected:
     /// @param discover DISCOVER message received from client
     /// @param context pointer to the client context
     ///
-    /// @return OFFER message or NULL
+    /// @return OFFER message or null
     Pkt4Ptr processDiscover(Pkt4Ptr& discover, AllocEngine::ClientContext4Ptr& context);
 
     /// @brief Processes incoming REQUEST and returns REPLY response.
@@ -600,7 +664,7 @@ protected:
     /// is valid, not expired, not reserved, not used by other client and
     /// that requesting client is allowed to use it.
     ///
-    /// Returns ACK message, NAK message, or NULL
+    /// Returns ACK message, NAK message, or null
     ///
     /// @param request a message received from client
     /// @param context pointer to the client context where allocated and
@@ -666,6 +730,21 @@ protected:
     /// @param ex The exchange holding both the client's message and the
     /// server's response.
     void appendRequestedVendorOptions(Dhcpv4Exchange& ex);
+
+    /// @brief Assign the 0.0.0.0 address to an IPv6-Only client.
+    ///
+    /// @note In fact there is no difference between assigning no address
+    /// or assigning the zero address as the assigned address is the
+    /// Yiaddr field of the DHCPv4 message header...
+    ///
+    /// Check if there is a subnet or shared network defining an
+    /// IPv6-Only Preferred option which will be included by the response.
+    ///
+    /// @param subnet Reference to the selected subnet, can be modified if
+    /// the option is found in another subnet of the shared network.
+    /// @param client_classes Client classes.
+    /// @return true if an IPv6-Only Preferred option was found, false otherwise.
+    bool assignZero(Subnet4Ptr& subnet, const ClientClasses& client_classes);
 
     /// @brief Assigns a lease and appends corresponding options
     ///
@@ -811,6 +890,36 @@ protected:
         test_send_responses_to_source_ = value;
     }
 
+    /// @brief Renders a lease declined after the server has detected, via ping-check
+    /// or other means, that its address is already in-use.
+    ///
+    /// This function is invoked during the unpark callback for the lease4_offer
+    /// hook point, if a hook callout has set the handle status to NEXT_STEP_DROP.
+    /// It will create/update the lease to DECLINED state in the lease store,
+    /// update the appropriate stats, and @todo implement a new hook point,
+    /// lease4_server_declined_lease (name subject to change).
+    ///
+    /// @param callout_handle - current callout handle.
+    /// @param query - DHCPDISCOVER which instigated the declination.
+    /// @param lease - lease to decline (i.e lease that would have been offered).
+    /// @param lease_exists - true if the lease already exists in the lease store
+    /// (as is the case when offer-lifetime is > 0).
+    void serverDecline(hooks::CalloutHandlePtr& callout_handle, Pkt4Ptr& query,
+                       Lease4Ptr lease, bool lease_exists);
+
+    /// @brief Exception safe wrapper around serverDecline()
+    ///
+    /// In MT mode this wrapper is used to safely invoke serverDecline() as a
+    /// DHCP worker thread task.
+    ///
+    /// @param callout_handle - current callout handle.
+    /// @param query - DHCPDISCOVER which instigated the declination.
+    /// @param lease - lease to decline (i.e lease that would have been offered).
+    /// @param lease_exists - true if the lease already exists in the lease store
+    /// (as is the case when offer-lifetime is > 0).
+    void serverDeclineNoThrow(hooks::CalloutHandlePtr& callout_handle, Pkt4Ptr& query,
+                              Lease4Ptr lease, bool lease_exists);
+
 public:
 
     /// @brief this is a prefix added to the content of vendor-class option
@@ -849,15 +958,15 @@ private:
     /// configuration. A reserved hostname takes precedence over a hostname
     /// supplied by the client or auto generated hostname.
     ///
-    /// If the 'qualifying-suffix' parameter is specified, its value is used
+    /// If the 'ddns-qualifying-suffix' parameter is specified, its value is used
     /// to qualify a hostname. For example, if the host reservation contains
     /// a hostname 'marcin-laptop', and the qualifying suffix is
     /// 'example.isc.org', the hostname returned to the client will be
-    /// 'marcin-laptop.example.isc.org'. If the 'qualifying-suffix' is not
+    /// 'marcin-laptop.example.isc.org'. If the 'ddns-qualifying-suffix' is not
     /// specified (empty), the reserved hostname is returned to the client
     /// unqualified.
     ///
-    /// The 'qualifying-suffix' value is also used to qualify the hostname
+    /// The 'ddns-qualifying-suffix' value is also used to qualify the hostname
     /// supplied by the client, when this hostname is unqualified,
     /// e.g. 'laptop-x'. If the supplied hostname is qualified, e.g.
     /// 'laptop-x.example.org', the qualifying suffix will not be appended
@@ -897,7 +1006,7 @@ protected:
     /// @param lease A pointer to the new lease which has been acquired.
     /// @param old_lease A pointer to the instance of the old lease which has
     /// @param ddns_params DDNS configuration parameters
-    /// been replaced by the new lease passed in the first argument. The NULL
+    /// been replaced by the new lease passed in the first argument. The null
     /// value indicates that the new lease has been allocated, rather than
     /// lease being renewed.
     void createNameChangeRequests(const Lease4Ptr& lease,
@@ -1011,10 +1120,12 @@ protected:
     /// @param query client's message
     /// @param drop if it is true the packet will be dropped
     /// @param sanity_only if it is true the callout won't be called
-    /// @return selected subnet (or NULL if no suitable subnet was found)
+    /// @param allow_answer_park Indicates if parking a packet is allowed
+    /// @return selected subnet (or null if no suitable subnet was found)
     isc::dhcp::Subnet4Ptr selectSubnet(const Pkt4Ptr& query,
                                        bool& drop,
-                                       bool sanity_only = false) const;
+                                       bool sanity_only = false,
+                                       bool allow_answer_park = true);
 
     /// @brief Selects a subnet for a given client's DHCP4o6 packet.
     ///
@@ -1026,10 +1137,12 @@ protected:
     /// @param query client's message
     /// @param drop if it is true the packet will be dropped
     /// @param sanity_only if it is true the callout won't be called
-    /// @return selected subnet (or NULL if no suitable subnet was found)
+    /// @param allow_answer_park Indicates if parking a packet is allowed
+    /// @return selected subnet (or null if no suitable subnet was found)
     isc::dhcp::Subnet4Ptr selectSubnet4o6(const Pkt4Ptr& query,
                                           bool& drop,
-                                          bool sanity_only = false) const;
+                                          bool sanity_only = false,
+                                          bool allow_answer_park = true);
 
     /// @brief dummy wrapper around IfaceMgr::receive4
     ///
@@ -1047,13 +1160,32 @@ protected:
     ///
     /// @note This is done in two phases: first the content of the
     /// vendor-class-identifier option is used as a class, by
-    /// calling @ref classifyByVendor(). Second classification match
+    /// calling (private) classifyByVendor(). Second classification match
     /// expressions are evaluated. The resulting classes will be stored
     /// in the packet (see @ref isc::dhcp::Pkt4::classes_ and
     /// @ref isc::dhcp::Pkt4::inClass).
     ///
     /// @param pkt packet to be classified
     void classifyPacket(const Pkt4Ptr& pkt);
+
+    /// @brief Recover stashed agent options from client address lease.
+    ///
+    /// This method checks:
+    ///  - client address is not 0.0.0.0.
+    ///  - relay address is 0.0.0.0.
+    ///  - stash-agent-options is true (vs false, the default).
+    ///  - the query is a DHCPREQUEST.
+    ///  - there is no RAI or an empty RAI in the query.
+    ///  - the query is not member of the STASH_AGENT_OPTIONS client class.
+    ///  - there is a lease for the client address.
+    ///  - the lease is not expired.
+    ///  - the lease has a RAI in its extended info in its user context.
+    ///  - the lease belongs to the client.
+    ///  - a not empty RAI can be recovered from the lease.
+    /// when all checks pass:
+    ///  - add the recovered RAI to the query.
+    ///  - put the query in the STASH_AGENT_OPTIONS client class.
+    void recoverStashedAgentOption(const Pkt4Ptr& query);
 
 protected:
 
@@ -1085,8 +1217,9 @@ protected:
     /// @param callout_handle pointer to the callout handle.
     /// @param query Pointer to a query.
     /// @param rsp Pointer to a response.
+    /// @param subnet A pointer to selected subnet.
     void processPacketPktSend(hooks::CalloutHandlePtr& callout_handle,
-                              Pkt4Ptr& query, Pkt4Ptr& rsp);
+                              Pkt4Ptr& query, Pkt4Ptr& rsp, Subnet4Ptr& subnet);
 
     /// @brief Executes buffer4_send callout and sends the response.
     ///
@@ -1097,7 +1230,6 @@ protected:
 
 private:
 
-    /// @public
     /// @brief Assign class using vendor-class-identifier option
     ///
     /// @note This is the first part of @ref classifyPacket
@@ -1105,12 +1237,19 @@ private:
     /// @param pkt packet to be classified
     void classifyByVendor(const Pkt4Ptr& pkt);
 
-    /// @private
     /// @brief Constructs netmask option based on subnet4
     /// @param subnet subnet for which the netmask will be calculated
     ///
     /// @return Option that contains netmask information
     static OptionPtr getNetmaskOption(const Subnet4Ptr& subnet);
+
+    /// @brief Check if the parking limit has been exceeded for given hook label.
+    ///
+    /// @brief hook_label Hook point name.
+    ///
+    /// @return tuple with boolean value concluding whether the limit has been
+    /// exceeded, and the integer limit as a second value.
+    static std::tuple<bool, uint32_t> parkingLimitExceeded(std::string const& hook_label);
 
 protected:
 

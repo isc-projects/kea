@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,11 +10,12 @@
 #include <exceptions/exceptions.h>
 #include <hooks/hooks_manager.h>
 #include <config/command_mgr.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <dhcpsrv/cfgmgr.h>
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
+#include <process/daemon.h>
 #include <stats/stats_mgr.h>
 #include <testutils/gtest_utils.h>
 
@@ -24,11 +25,12 @@
 
 using namespace std;
 using namespace isc;
-using namespace isc::hooks;
+using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::data;
 using namespace isc::dhcp;
-using namespace isc::asiolink;
+using namespace isc::hooks;
+using namespace isc::process;
 using namespace isc::stats;
 using namespace boost::posix_time;
 
@@ -48,6 +50,16 @@ public:
     /// Removes files that may be left over from previous tests
     virtual ~LibLoadTest() {
         unloadLibs();
+    }
+
+    /// @brief Set family.
+    void setFamily(uint16_t family = AF_INET) {
+        CfgMgr::instance().setFamily(family);
+        if (family == AF_INET) {
+            Daemon::setProcName("kea-dhcp4");
+        } else {
+            Daemon::setProcName("kea-dhcp6");
+        }
     }
 
     /// @brief Adds library/parameters to list of libraries to be loaded
@@ -237,22 +249,22 @@ public:
     void testCommands(const std::vector<string> cmds) {
 
         // The commands should not be registered yet.
-        for (auto cmd = cmds.begin(); cmd != cmds.end(); ++cmd) {
-            checkCommandRegistered(*cmd, false);
+        for (auto const& cmd : cmds) {
+            checkCommandRegistered(cmd, false);
         }
 
         loadLib();
 
         // The commands should be available after library was loaded.
-        for (auto cmd = cmds.begin(); cmd != cmds.end(); ++cmd) {
-            checkCommandRegistered(*cmd, true);
+        for (auto const& cmd : cmds) {
+            checkCommandRegistered(cmd, true);
         }
 
         unloadLibs();
 
         // and the commands should be gone now.
-        for (auto cmd = cmds.begin(); cmd != cmds.end(); ++cmd) {
-            checkCommandRegistered(*cmd, false);
+        for (auto const& cmd : cmds) {
+            checkCommandRegistered(cmd, false);
         }
 
     }
@@ -604,11 +616,13 @@ TEST_F(StatCmdsTest, commands) {
 
     vector<string> cmds = { "stat-lease4-get",
                             "stat-lease6-get" };
+    setFamily();
     testCommands(cmds);
 }
 
 // Check that the library can be loaded and unloaded multiple times.
 TEST_F(StatCmdsTest, multipleLoads) {
+    setFamily();
     testMultipleLoads();
 }
 
@@ -616,11 +630,13 @@ struct TestScenario {
     std::string description_;
     std::string command_txt_;
     std::string exp_response_;
-    std::string exp_result_json;
+    std::string exp_result_json_;
 };
 
 // Verifies detection of invalid v4 input parameters.
 TEST_F(StatCmdsTest, StatLease4GetBadParams) {
+    setFamily(AF_INET);
+
     // Initialize lease manager
     initLeaseMgr4();
 
@@ -776,17 +792,16 @@ TEST_F(StatCmdsTest, StatLease4GetBadParams) {
         }
     };
 
-    for (auto test = tests.begin(); test != tests.end(); ++test) {
-        {
-        SCOPED_TRACE((*test).description_);
-        testCommand((*test).command_txt_, CONTROL_RESULT_ERROR,(*test).exp_response_);
-        }
+    for (auto const& test : tests) {
+        SCOPED_TRACE(test.description_);
+        testCommand(test.command_txt_, CONTROL_RESULT_ERROR, test.exp_response_);
     }
 }
 
 // Verifies result content for valid v4 statistic commands.
 // These test scenarios are all valid, and not expected to throw.
 TEST_F(StatCmdsTest, statLease4GetValid) {
+    setFamily(AF_INET);
 
     // Initialize lease manager.
     initLeaseMgr4();
@@ -973,19 +988,17 @@ TEST_F(StatCmdsTest, statLease4GetValid) {
         }
     };
 
-    for (auto test = tests.begin(); test != tests.end(); ++test) {
-        {
-        SCOPED_TRACE((*test).description_);
-        testCommand((*test).command_txt_, CONTROL_RESULT_SUCCESS,
-                    (*test).exp_response_, (*test).exp_result_json);
-        }
+    for (auto const& test : tests) {
+        SCOPED_TRACE(test.description_);
+        testCommand(test.command_txt_, CONTROL_RESULT_SUCCESS,
+                    test.exp_response_, test.exp_result_json_);
     }
-
 }
 
 // Verifies result content for valid v4 statistic commands that
 // result in no matching subnets.
 TEST_F(StatCmdsTest, statLease4GetSubnetsNotFound) {
+    setFamily(AF_INET);
 
     // Initialize lease manager.
     initLeaseMgr4();
@@ -1034,18 +1047,17 @@ TEST_F(StatCmdsTest, statLease4GetSubnetsNotFound) {
         }
     };
 
-    for (auto test = tests.begin(); test != tests.end(); ++test) {
-        {
-        SCOPED_TRACE((*test).description_);
-        testCommand((*test).command_txt_, CONTROL_RESULT_EMPTY,
-                    (*test).exp_response_, (*test).exp_result_json);
+    for (auto const& test : tests) {
+        SCOPED_TRACE(test.description_);
+        testCommand(test.command_txt_, CONTROL_RESULT_EMPTY,
+                    test.exp_response_, test.exp_result_json_);
         }
-    }
-
 }
 
 // Verifies detection of invalid v6 input parameters.
 TEST_F(StatCmdsTest, StatLease6GetBadParams) {
+    setFamily(AF_INET6);
+
     // Initialize lease manager
     initLeaseMgr6();
 
@@ -1201,17 +1213,16 @@ TEST_F(StatCmdsTest, StatLease6GetBadParams) {
         }
     };
 
-    for (auto test = tests.begin(); test != tests.end(); ++test) {
-        {
-        SCOPED_TRACE((*test).description_);
-        testCommand((*test).command_txt_, CONTROL_RESULT_ERROR,(*test).exp_response_);
-        }
+    for (auto const& test : tests) {
+        SCOPED_TRACE(test.description_);
+        testCommand(test.command_txt_, CONTROL_RESULT_ERROR, test.exp_response_);
     }
 }
 
 // Verifies result content for valid v6 statistic commands.
 // These test scenarios are all valid, and not expected to throw.
 TEST_F(StatCmdsTest, statLease6GetValid) {
+    setFamily(AF_INET6);
 
     // Initialize lease manager
     initLeaseMgr6();
@@ -1232,7 +1243,7 @@ TEST_F(StatCmdsTest, statLease6GetValid) {
         "   \"columns\": [\n"
         "        \"subnet-id\", \"total-nas\",\n"
         "        \"cumulative-assigned-nas\", \"assigned-nas\",\n"
-        "        \"declined-nas\", \"total-pds\",\n"
+        "        \"declined-addresses\", \"total-pds\",\n"
         "        \"cumulative-assigned-pds\", \"assigned-pds\"\n"
         "   ],\n"
         "   \"rows\": [\n"
@@ -1256,7 +1267,7 @@ TEST_F(StatCmdsTest, statLease6GetValid) {
         "   \"columns\": [\n"
         "        \"subnet-id\", \"total-nas\",\n"
         "        \"cumulative-assigned-nas\", \"assigned-nas\",\n"
-        "        \"declined-nas\", \"total-pds\",\n"
+        "        \"declined-addresses\", \"total-pds\",\n"
         "        \"cumulative-assigned-pds\", \"assigned-pds\"\n"
         "   ],\n"
         "   \"rows\": [\n"
@@ -1283,7 +1294,7 @@ TEST_F(StatCmdsTest, statLease6GetValid) {
         "   \"columns\": [\n"
         "        \"subnet-id\", \"total-nas\",\n"
         "        \"cumulative-assigned-nas\", \"assigned-nas\",\n"
-        "        \"declined-nas\", \"total-pds\",\n"
+        "        \"declined-addresses\", \"total-pds\",\n"
         "        \"cumulative-assigned-pds\", \"assigned-pds\"\n"
         "   ],\n"
         "   \"rows\": [\n"
@@ -1309,7 +1320,7 @@ TEST_F(StatCmdsTest, statLease6GetValid) {
         "   \"columns\": [\n"
         "        \"subnet-id\", \"total-nas\",\n"
         "        \"cumulative-assigned-nas\", \"assigned-nas\",\n"
-        "        \"declined-nas\", \"total-pds\",\n"
+        "        \"declined-addresses\", \"total-pds\",\n"
         "        \"cumulative-assigned-pds\", \"assigned-pds\"\n"
         "   ],\n"
         "   \"rows\": [\n"
@@ -1337,7 +1348,7 @@ TEST_F(StatCmdsTest, statLease6GetValid) {
         "   \"columns\": [\n"
         "        \"subnet-id\", \"total-nas\",\n"
         "        \"cumulative-assigned-nas\", \"assigned-nas\",\n"
-        "        \"declined-nas\", \"total-pds\",\n"
+        "        \"declined-addresses\", \"total-pds\",\n"
         "        \"cumulative-assigned-pds\", \"assigned-pds\"\n"
         "   ],\n"
         "   \"rows\": [\n"
@@ -1365,7 +1376,7 @@ TEST_F(StatCmdsTest, statLease6GetValid) {
         "   \"columns\": [\n"
         "        \"subnet-id\", \"total-nas\",\n"
         "        \"cumulative-assigned-nas\", \"assigned-nas\",\n"
-        "        \"declined-nas\", \"total-pds\",\n"
+        "        \"declined-addresses\", \"total-pds\",\n"
         "        \"cumulative-assigned-pds\", \"assigned-pds\"\n"
         "   ],\n"
         "   \"rows\": [\n"
@@ -1393,7 +1404,7 @@ TEST_F(StatCmdsTest, statLease6GetValid) {
         "   \"columns\": [\n"
         "        \"subnet-id\", \"total-nas\",\n"
         "        \"cumulative-assigned-nas\", \"assigned-nas\",\n"
-        "        \"declined-nas\", \"total-pds\",\n"
+        "        \"declined-addresses\", \"total-pds\",\n"
         "        \"cumulative-assigned-pds\", \"assigned-pds\"\n"
         "   ],\n"
         "   \"rows\": [\n"
@@ -1405,12 +1416,10 @@ TEST_F(StatCmdsTest, statLease6GetValid) {
         }
     };
 
-    for (auto test = tests.begin(); test != tests.end(); ++test) {
-        {
-        SCOPED_TRACE((*test).description_);
-        testCommand((*test).command_txt_, CONTROL_RESULT_SUCCESS,
-                    (*test).exp_response_, (*test).exp_result_json);
-        }
+    for (auto const& test : tests) {
+        SCOPED_TRACE(test.description_);
+        testCommand(test.command_txt_, CONTROL_RESULT_SUCCESS,
+                    test.exp_response_, test.exp_result_json_);
     }
 
 }
@@ -1418,6 +1427,7 @@ TEST_F(StatCmdsTest, statLease6GetValid) {
 // Verifies result content for valid v6 statistic commands that
 // result in no matching subnets.
 TEST_F(StatCmdsTest, statLease6GetSubnetsNotFound) {
+    setFamily(AF_INET6);
 
     // Initialize lease manager
     initLeaseMgr6();
@@ -1466,18 +1476,17 @@ TEST_F(StatCmdsTest, statLease6GetSubnetsNotFound) {
         }
     };
 
-    for (auto test = tests.begin(); test != tests.end(); ++test) {
-        {
-        SCOPED_TRACE((*test).description_);
-        testCommand((*test).command_txt_, CONTROL_RESULT_EMPTY,
-                    (*test).exp_response_, (*test).exp_result_json);
-        }
+    for (auto const& test : tests) {
+        SCOPED_TRACE(test.description_);
+        testCommand(test.command_txt_, CONTROL_RESULT_EMPTY,
+                    test.exp_response_, test.exp_result_json_);
     }
 }
 
 // Verifies that statistics for v4 subnets which no longer
 // exist are dropped from the result sets.
 TEST_F(StatCmdsTest, statLease4OrphanedStats) {
+    setFamily(AF_INET);
 
     // Initialize lease manager.
     initLeaseMgr4();
@@ -1517,18 +1526,17 @@ TEST_F(StatCmdsTest, statLease4OrphanedStats) {
         }
     };
 
-    for (auto test = tests.begin(); test != tests.end(); ++test) {
-        {
-        SCOPED_TRACE((*test).description_);
-        testCommand((*test).command_txt_, CONTROL_RESULT_SUCCESS,
-                    (*test).exp_response_, (*test).exp_result_json);
-        }
+    for (auto const& test : tests) {
+        SCOPED_TRACE(test.description_);
+        testCommand(test.command_txt_, CONTROL_RESULT_SUCCESS,
+                    test.exp_response_, test.exp_result_json_);
     }
 }
 
 // Verifies that statistics for v6 subnets which no longer
 // exist are dropped from the result sets.
 TEST_F(StatCmdsTest, statLease6OrphanedStats) {
+    setFamily(AF_INET6);
 
     // Initialize lease manager.
     initLeaseMgr6();
@@ -1557,7 +1565,7 @@ TEST_F(StatCmdsTest, statLease6OrphanedStats) {
         "   \"columns\": [\n"
         "        \"subnet-id\", \"total-nas\",\n"
         "        \"cumulative-assigned-nas\", \"assigned-nas\",\n"
-        "        \"declined-nas\", \"total-pds\",\n"
+        "        \"declined-addresses\", \"total-pds\",\n"
         "        \"cumulative-assigned-pds\", \"assigned-pds\"\n"
         "   ],\n"
         "   \"rows\": [\n"
@@ -1569,14 +1577,11 @@ TEST_F(StatCmdsTest, statLease6OrphanedStats) {
         }
     };
 
-    for (auto test = tests.begin(); test != tests.end(); ++test) {
-        {
-        SCOPED_TRACE((*test).description_);
-        testCommand((*test).command_txt_, CONTROL_RESULT_SUCCESS,
-                    (*test).exp_response_, (*test).exp_result_json);
-        }
+    for (auto const& test : tests) {
+        SCOPED_TRACE(test.description_);
+        testCommand(test.command_txt_, CONTROL_RESULT_SUCCESS,
+                    test.exp_response_, test.exp_result_json_);
     }
 }
 
 } // end of anonymous namespace
-

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +12,7 @@
 #include <http/http_acceptor.h>
 #include <http/request_parser.h>
 #include <http/response_creator_factory.h>
+#include <util/watch_socket.h>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/system/error_code.hpp>
 #include <boost/shared_ptr.hpp>
@@ -241,7 +242,7 @@ public:
     /// @param request_timeout Configured timeout for a HTTP request.
     /// @param idle_timeout Timeout after which persistent HTTP connection is
     /// closed by the server.
-    HttpConnection(asiolink::IOService& io_service,
+    HttpConnection(const asiolink::IOServicePtr& io_service,
                    const HttpAcceptorPtr& acceptor,
                    const asiolink::TlsContextPtr& tls_context,
                    HttpConnectionPool& connection_pool,
@@ -254,6 +255,14 @@ public:
     ///
     /// Closes current connection.
     virtual ~HttpConnection();
+
+    /// @brief Use external sockets flag.
+    ///
+    /// Add sockets as external sockets of the interface manager
+    /// so available I/O on them makes a waiting select to return.
+    ///
+    /// @param use_external True add external sockets (default false).
+    void addExternalSockets(bool use_external = false);
 
     /// @brief Asynchronously accepts new connection.
     ///
@@ -390,8 +399,24 @@ protected:
     /// @brief Stops current connection.
     void stopThisConnection();
 
-    /// @brief returns remote address in textual form
+    /// @brief Returns remote address in textual form
     std::string getRemoteEndpointAddressAsText() const;
+
+    /// @brief Mark the watch socket as ready.
+    ///
+    /// Asynchronous handshake or send has been scheduled and we need to
+    /// indicate this to break the synchronous select(). The handler
+    /// should clear this status when invoked.
+    void markWatchSocketReady();
+
+    /// @brief Clear the watch socket's ready marker.
+    ///
+    /// Clear the watch socket so as the future send operation can
+    /// mark it again to interrupt the synchronous select() call.
+    void clearWatchSocket();
+
+    /// @brief Close the watch socket.
+    void closeWatchSocket();
 
     /// @brief Timer used to detect Request Timeout.
     asiolink::IntervalTimer request_timer_;
@@ -424,6 +449,13 @@ protected:
 
     /// @brief External TCP acceptor callback.
     HttpAcceptorCallback acceptor_callback_;
+
+    /// @brief Use external sockets flag.
+    bool use_external_;
+
+    /// @brief Pointer to watch socket instance used to signal that the socket
+    /// is ready for read or write when use external sockets is true.
+    util::WatchSocketPtr watch_socket_;
 };
 
 } // end of namespace isc::http

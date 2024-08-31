@@ -66,27 +66,35 @@ if test "x$enable_gtest" = "xyes" ; then
 
     if test -n "$with_gtest_source" ; then
 
+        AC_MSG_CHECKING([for gtest source])
+
         if test "x$GTEST_SOURCE" = "xyes" ; then
 
-            AC_MSG_CHECKING([for gtest source])
             # If not specified, try some common paths.
             GTEST_SOURCE=
-            for d in /usr/src/gtest /usr/local /usr/pkg /opt /opt/local ; do
-                if test -f $d/src/gtest-all.cc -a $d/src/gtest_main.cc; then
-                    GTEST_SOURCE=$d
+            for d in /usr/src/googletest /usr/src/gtest /usr/local /usr/pkg /opt /opt/local ; do
+                cmakelists="$d/CMakeLists.txt"
+                if test ! -d "$d/src" -a -d "$d/googletest"; then
+                    d="$d/googletest"
+                fi
+                if test -f "$d/src/gtest-all.cc" -a -f "$d/src/gtest_main.cc"; then
+                    GTEST_SOURCE="$d"
                     AC_MSG_RESULT([$GTEST_SOURCE])
                     break
                 fi
             done
-            if test -z $GTEST_SOURCE ; then
-                AC_MSG_ERROR([no gtest source but it was selected])
+            if test -z "$GTEST_SOURCE" ; then
+                AC_MSG_ERROR([no gtest sources found])
             fi
         else
-            if test ! -d $GTEST_SOURCE/src -a -d $GTEST_SOURCE/googletest; then
-                GTEST_SOURCE=$GTEST_SOURCE/googletest
+            # Trim trailing slashes.
+            GTEST_SOURCE=$(echo "$GTEST_SOURCE" | ${SED} 's:/*$::')
+            cmakelists="$GTEST_SOURCE/CMakeLists.txt"
+            if test ! -d "$GTEST_SOURCE/src" -a -d "$GTEST_SOURCE/googletest"; then
+                GTEST_SOURCE="$GTEST_SOURCE/googletest"
             fi
-            if test -f $GTEST_SOURCE/src/gtest-all.cc -a $GTEST_SOURCE/src/gtest_main.cc; then
-                have_gtest_source=yes
+            if test -f "$GTEST_SOURCE/src/gtest-all.cc" -a -f "$GTEST_SOURCE/src/gtest_main.cc"; then
+                AC_MSG_RESULT([$GTEST_SOURCE])
             else
                 AC_MSG_ERROR([no gtest source at $GTEST_SOURCE])
             fi
@@ -96,24 +104,53 @@ if test "x$enable_gtest" = "xyes" ; then
         GTEST_LDADD="\$(top_builddir)/ext/gtest/libgtest.a"
         DISTCHECK_GTEST_CONFIGURE_FLAG="--with-gtest-source=$GTEST_SOURCE"
         GTEST_INCLUDES="-I$GTEST_SOURCE -I$GTEST_SOURCE/include"
-        GTEST_VERSION="`basename $GTEST_SOURCE`"
+        gtest_src_basename="$(basename $GTEST_SOURCE)"
 
-# Versions starting from 1.8.0 are put in the googletest directory. If the basename
-# returns googletest string, we need to cut it off and try baseline again.
-        if test "$GTEST_VERSION" = "googletest"; then
-            GTEST_VERSION=${GTEST_SOURCE%"/googletest"}
-            GTEST_VERSION=`basename $GTEST_VERSION`
+        # Versions starting from 1.8.0 are put in the googletest directory. If the basename
+        # returns googletest string, we need to cut it off and try basename again.
+        if test "$gtest_src_basename" = "googletest"; then
+            gtest_src_parent_dir=${GTEST_SOURCE%"/googletest"}
+            if test -f "$gtest_src_parent_dir/CMakeLists.txt" ; then
+                cmakelists="$gtest_src_parent_dir/CMakeLists.txt"
+            fi
+            gtest_src_basename=$(basename "$gtest_src_parent_dir")
         fi
-        GTEST_VERSION="${GTEST_VERSION#googletest-release-}"
-        GTEST_VERSION="${GTEST_VERSION#gtest-}"
+        gtest_src_basename="${gtest_src_basename#googletest-release-}"
+        gtest_src_basename="${gtest_src_basename#gtest-}"
+        gtest_src_basename="${gtest_src_basename#googletest-}"
+
+        gtest_version_candidate=$(echo "$gtest_src_basename" | grep -Eo '[[0-9]+\.[0-9]+\.[0-9]+]')
+
+        if test -z "$gtest_version_candidate" ; then
+            # If the GTEST_VERSION is still not correct semver, we need to determine googletest version in other way.
+            # Let's try to extract it from CMake build script used by Google Test starting from version 1.8.0.
+            if test -f "$cmakelists" ; then
+                gtest_version_candidate=$(grep -F 'set(GOOGLETEST_VERSION' "$cmakelists" | grep -Eo '[[0-9]+\.[0-9]+\.[0-9]+]')
+                if test -n "$gtest_version_candidate"; then
+                    GTEST_VERSION="$gtest_version_candidate"
+                fi
+            fi
+            if test "$GTEST_VERSION" = "unknown" ; then
+                # Try to get googletest version from debian/ubuntu package
+                AC_PATH_PROG(DPKG, dpkg)
+                AC_PATH_PROG(DPKGQUERY, dpkg-query)
+                if test -n "${DPKG}" -a -n "${DPKGQUERY}"; then
+                    # Let's check if there is a googletest package owning files under given GTEST_SOURCE path
+                    ${DPKG} -S "$GTEST_SOURCE" 2>/dev/null | grep googletest >/dev/null 2>&1
+                    if test $? -eq 0; then
+                        GTEST_VERSION="$(${DPKGQUERY} --showformat='${Version}' --show googletest | cut -d'-' -f1)"
+                    fi
+                fi
+            fi
+        else
+            GTEST_VERSION="$gtest_version_candidate"
+        fi
     fi
 
     if test "$gtest_path" != "no" ; then
         if test "$gtest_path" != "yes"; then
             GTEST_PATHS=$gtest_path
-            if test -x "${gtest_path}/bin/gtest-config" ; then
-                GTEST_CONFIG="${gtest_path}/bin/gtest-config"
-            fi
+            AC_PATH_PROG([GTEST_CONFIG], [gtest-config], [], [${gtest_path}/bin])
         else
             AC_PATH_PROG([GTEST_CONFIG], [gtest-config])
         fi
@@ -125,13 +162,13 @@ if test "x$enable_gtest" = "xyes" ; then
             GTEST_VERSION=`${GTEST_CONFIG} --version`
             GTEST_FOUND="true"
         else
-            AC_MSG_WARN([Unable to locate Google Test gtest-config.])
             if test -z "${GTEST_PATHS}" ; then
                 GTEST_PATHS="/usr /usr/local"
             fi
             GTEST_FOUND="false"
         fi
         if test "${GTEST_FOUND}" != "true"; then
+            AC_MSG_CHECKING([for gtest lib path])
             GTEST_FOUND="false"
             for dir in $GTEST_PATHS; do
                 if test -f "$dir/include/gtest/gtest.h"; then
@@ -141,6 +178,28 @@ if test "x$enable_gtest" = "xyes" ; then
                         GTEST_LDFLAGS="-L$dir/lib"
                         GTEST_LDADD="-lgtest"
                         GTEST_FOUND="true"
+                        AC_MSG_RESULT([$dir/lib])
+                        if test -f "$dir/lib/pkgconfig/gtest.pc" ; then
+                            AX_FIND_LIBRARY([gtest], ["$dir/lib/pkgconfig/gtest.pc"])
+                            if "${LIBRARY_FOUND}"; then
+                              GTEST_VERSION="${LIBRARY_VERSION}"
+                            fi
+                        fi
+                        break
+                    elif test -f "$dir/lib/$dumpmachine/libgtest.a" || \
+                         test -f "$dir/lib/$dumpmachine/libgtest.so"; then
+                        GTEST_INCLUDES="-I$dir/include"
+                        # check also multiarch dir in debian/ubuntu distributions
+                        GTEST_LDFLAGS="-L$dir/lib/$dumpmachine"
+                        GTEST_LDADD="-lgtest"
+                        GTEST_FOUND="true"
+                        AC_MSG_RESULT([$dir/lib/$dumpmachine])
+                        if test -f "$dir/lib/$dumpmachine/pkgconfig/gtest.pc" ; then
+                            AX_FIND_LIBRARY([gtest], ["$dir/lib/$dumpmachine/pkgconfig/gtest.pc"])
+                            if "${LIBRARY_FOUND}"; then
+                              GTEST_VERSION="${LIBRARY_VERSION}"
+                            fi
+                        fi
                         break
                     else
                         AC_MSG_WARN([Found Google Test include but not the library in $dir.])
@@ -162,4 +221,4 @@ AC_SUBST(GTEST_LDFLAGS)
 AC_SUBST(GTEST_LDADD)
 AC_SUBST(GTEST_SOURCE)
 
-])dnl AX_ISC_GTEST
+])

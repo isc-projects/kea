@@ -20,22 +20,22 @@ namespace dhcp {
 namespace {
 
 template <isc::util::DhcpSpace D>
-struct adapter_Pkt {};
+struct AdapterPkt {};
 
 template <>
-struct adapter_Pkt<isc::util::DHCPv4> {
+struct AdapterPkt<isc::util::DHCPv4> {
     using type = Pkt4;
 };
 
 template <>
-struct adapter_Pkt<isc::util::DHCPv6> {
+struct AdapterPkt<isc::util::DHCPv6> {
     using type = Pkt6;
 };
 
 }  // namespace
 
 template <isc::util::DhcpSpace D>
-using PktT = typename adapter_Pkt<D>::type;
+using PktT = typename AdapterPkt<D>::type;
 
 template <isc::util::DhcpSpace D>
 using PktTPtr = boost::shared_ptr<PktT<D>>;

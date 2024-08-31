@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,21 +13,25 @@
 # shellcheck disable=SC2034
 # SC2034: ... appears unused. Verify use (or export if used externally).
 
-# shellcheck disable=SC2039
-# SC2039: In POSIX sh, 'local' is undefined.
-
 # shellcheck disable=SC2154
 # SC2154: ... is referenced but not assigned.
 # Reason: some variables are taken from keactrl.conf
+#
+# shellcheck disable=SC2317
+# SC2317: Command appears to be unreachable. Check usage (or ignore if invoked indirectly).
+# Reason: shellcheck is deceived by the 'if test "${HAVE_NETCONF}" = 'yes'' condition which it
+# evaluates to always false and thinks the rest of the script is never executed.
 
 # Exit with error if commands exit with non-zero and if undefined variables are
 # used.
 set -eu
 
-VERSION="@PACKAGE_VERSION@"
+HAVE_NETCONF='@HAVE_NETCONF@'
+EXTENDED_VERSION="@EXTENDED_VERSION@"
+PACKAGE_VERSION="@PACKAGE_VERSION@"
 
 # Set the have_netconf flag to know if netconf is available.
-if test -z '@HAVE_SYSREPO_TRUE@'; then
+if test "${HAVE_NETCONF}" = 'yes'; then
     have_netconf=true
 else
     have_netconf=false
@@ -112,8 +116,7 @@ get_pid_from_file() {
         ;;
     esac
 
-    # Extract the name portion (from last slash to last dot) of the config file name
-    # File name and extension are documented in src/lib/util/filename.h
+    # Extract the name portion (from last slash to last dot) of the config file name.
     local conf_name
     conf_name=$(basename -- "${kea_config_file}" | rev | cut -f2- -d'.' | rev)
 
@@ -148,9 +151,9 @@ check_running() {
 
     # Get the PID from the PID file (if it exists)
     get_pid_from_file "${proc_name}"
-    if [ ${_pid} -gt 0 ]; then
+    if [ "${_pid}" -gt 0 ]; then
         # Use ps to check if PID is alive
-        if ps -p ${_pid} 1>/dev/null; then
+        if ps -p "${_pid}" 1>/dev/null; then
             # No error, so PID IS ALIVE
             _running=1
         fi
@@ -342,8 +345,13 @@ if [ -z "${command}" ]; then
 fi
 
 # Check if this is a simple question about version.
-if test "${command}" = "-v" || test "${command}" = "--version" ; then
-    echo "${VERSION}"
+if test "${command}" = "-v" || test "${command}" = "--version"; then
+    echo "${PACKAGE_VERSION}"
+    exit 0
+fi
+
+if test "${command}" = "-V"; then
+    echo "${EXTENDED_VERSION}"
     exit 0
 fi
 
@@ -414,8 +422,7 @@ if [ ! -f "${keactrl_conf}" ]; then
 fi
 
 # Include the configuration file.
-# Shellcheck complaints about not being to follow the source. Let's ingore it.
-# shellcheck disable=SC1090
+# shellcheck source=src/bin/keactrl/keactrl.conf.in
 . "${keactrl_conf}"
 
 # Get location of the DHCPv4 server binary.
@@ -581,7 +588,7 @@ ${args}" 1
         exit 0 ;;
 
     version)
-        echo "keactrl: ${VERSION}"
+        echo "keactrl: ${PACKAGE_VERSION}"
         run_conditional "dhcp4" "print_version kea-dhcp4 ${dhcp4_srv}" 0
         run_conditional "dhcp6" "print_version kea-dhcp6 ${dhcp6_srv}" 0
         run_conditional "dhcp_ddns" "print_version kea-dhcp-ddns ${dhcp_ddns_srv}" 0

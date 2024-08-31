@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,10 +8,13 @@
 
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option_vendor.h>
+#include <dhcpsrv/cb_ctl_dhcp.h>
 #include <dhcpsrv/testutils/generic_backend_unittest.h>
 #include <util/buffer.h>
 #include <typeinfo>
 #include <testutils/gtest_utils.h>
+
+#include <boost/range/adaptor/reversed.hpp>
 
 using namespace isc::data;
 using namespace isc::db;
@@ -33,15 +36,17 @@ GenericBackendTest::~GenericBackendTest() {
 OptionDescriptor
 GenericBackendTest::createEmptyOption(const Option::Universe& universe,
                                       const uint16_t option_type,
-                                      const bool persist) const {
+                                      const bool persist,
+                                      const bool cancel) const {
     OptionPtr option(new Option(universe, option_type));
-    OptionDescriptor desc(option, persist);
+    OptionDescriptor desc(option, persist, cancel);
     return (desc);
 }
 
 OptionDescriptor
 GenericBackendTest::createVendorOption(const Option::Universe& universe,
                                        const bool persist,
+                                       const bool cancel,
                                        const bool formatted,
                                        const uint32_t vendor_id) const {
     OptionVendorPtr option(new OptionVendor(universe, vendor_id));
@@ -53,7 +58,7 @@ GenericBackendTest::createVendorOption(const Option::Universe& universe,
         s << vendor_id;
     }
 
-    OptionDescriptor desc(option, persist, s.str());
+    OptionDescriptor desc(option, persist, cancel, s.str());
     return (desc);
 }
 
@@ -102,6 +107,7 @@ GenericBackendTest::testOptionsEquivalent(const OptionDescriptor& ref_option,
     // option when an option definition is available.
     EXPECT_EQ(ref_option.formatted_value_, tested_option.formatted_value_);
     EXPECT_EQ(ref_option.persistent_, tested_option.persistent_);
+    EXPECT_EQ(ref_option.cancelled_, tested_option.cancelled_);
     EXPECT_EQ(ref_option.space_name_, tested_option.space_name_);
 }
 
@@ -110,9 +116,21 @@ GenericBackendTest::checkConfiguredGlobal(const SrvConfigPtr& srv_cfg,
                                           const std::string &name,
                                           ConstElementPtr exp_value) {
     ConstCfgGlobalsPtr globals = srv_cfg->getConfiguredGlobals();
-    ConstElementPtr found_global = globals->get(name);
+    std::string param_name;
+    std::string sub_param_name;
+    bool translated = CBControlDHCP<bool>::translateName(name, param_name, sub_param_name);
+
+    ConstElementPtr found_global = globals->get(param_name);
     ASSERT_TRUE(found_global) << "expected global: "
-                              << name << " not found";
+                              << param_name << " not found";
+
+    if (translated) {
+        ASSERT_EQ(Element::map, found_global->getType())
+            << "expected global: " << param_name << " has wrong type";
+        found_global = found_global->get(sub_param_name);
+        ASSERT_TRUE(found_global) << "expected global: "
+                                  << name << " not found";
+    }
 
     ASSERT_EQ(exp_value->getType(), found_global->getType())
         << "expected global: " << name << " has wrong type";
@@ -127,7 +145,6 @@ GenericBackendTest::checkConfiguredGlobal(const SrvConfigPtr& srv_cfg,
     checkConfiguredGlobal(srv_cfg, exp_global->getName(), exp_global->getElementValue());
 }
 
-
 void
 GenericBackendTest::testNewAuditEntry(const std::string& exp_object_type,
                                       const AuditEntry::ModificationType& exp_modification_type,
@@ -141,7 +158,7 @@ GenericBackendTest::testNewAuditEntry(const std::string& exp_object_type,
         // Server tag is 'all'.
         tag = "all";
     } else {
-        const auto& tags = server_selector.getTags();
+        auto const& tags = server_selector.getTags();
         // This test is not meant to handle multiple server tags all at once.
         if (tags.size() > 1) {
             ADD_FAILURE() << "Test error: do not use multiple server tags";
@@ -165,11 +182,13 @@ GenericBackendTest::testNewAuditEntry(const std::string& exp_object_type,
 
     // Iterate over specified number of entries starting from the most recent
     // one and check they have correct values.
-    for (auto audit_entry_it = mod_time_idx.rbegin();
-         ((std::distance(mod_time_idx.rbegin(), audit_entry_it) < new_entries_num) &&
-         (std::distance(mod_time_idx.rbegin(), audit_entry_it) < max_tested_entries));
-         ++audit_entry_it) {
-        auto audit_entry = *audit_entry_it;
+    size_t count = 0;
+    for (auto const& audit_entry_it : boost::adaptors::reverse(mod_time_idx)) {
+        if (count >= new_entries_num || count >= max_tested_entries) {
+            break;
+        }
+        count++;
+        auto audit_entry = audit_entry_it;
         EXPECT_EQ(exp_object_type, audit_entry->getObjectType())
                   << logExistingAuditEntries(tag);
         EXPECT_EQ(exp_modification_type, audit_entry->getModificationType())
@@ -188,7 +207,7 @@ GenericBackendTest::testNewAuditEntry(const std::vector<ExpAuditEntry>& exp_entr
         // Server tag is 'all'.
         tag = "all";
     } else {
-        const auto& tags = server_selector.getTags();
+        auto const& tags = server_selector.getTags();
         // This test is not meant to handle multiple server tags all at once.
         if (tags.size() != 1) {
             ADD_FAILURE() << "Test error: tags.size(): " << tags.size()
@@ -216,11 +235,13 @@ GenericBackendTest::testNewAuditEntry(const std::vector<ExpAuditEntry>& exp_entr
     // Iterate over specified number of entries starting from the most recent
     // one and check they have correct values.
     auto exp_entry = exp_entries.rbegin();
-    for (auto audit_entry_it = mod_time_idx.rbegin();
-         ((std::distance(mod_time_idx.rbegin(), audit_entry_it) < new_entries_num));
-         ++audit_entry_it) {
-
-        auto audit_entry = *audit_entry_it;
+    size_t count = 0;
+    for (auto const& audit_entry_it : boost::adaptors::reverse(mod_time_idx)) {
+        if (count >= new_entries_num) {
+            break;
+        }
+        count++;
+        auto audit_entry = audit_entry_it;
         EXPECT_EQ((*exp_entry).object_type, audit_entry->getObjectType())
                   << logExistingAuditEntries(tag);
         EXPECT_EQ((*exp_entry).modification_type, audit_entry->getModificationType())
@@ -257,10 +278,8 @@ GenericBackendTest::logExistingAuditEntries(const std::string& server_tag) {
 
     auto& mod_time_idx = audit_entries_[server_tag].get<AuditEntryModificationTimeIdTag>();
 
-    for (auto audit_entry_it = mod_time_idx.begin();
-         audit_entry_it != mod_time_idx.end();
-         ++audit_entry_it) {
-        auto audit_entry = *audit_entry_it;
+    for (auto const& audit_entry_it : mod_time_idx) {
+        auto audit_entry = audit_entry_it;
         s << audit_entry->getObjectType() << ", "
           << audit_entry->getObjectId() << ", "
           << static_cast<int>(audit_entry->getModificationType()) << ", "

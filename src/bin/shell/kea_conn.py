@@ -1,4 +1,4 @@
-# Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 """
 This file contains classes used for communication with Control Agent.
 """
+
 
 class CARequest:
     """
@@ -54,7 +55,7 @@ class CARequest:
         if self.service is not None:
             self.service = [x for x in self.service if x]
             if len(self.service) > 0:
-                self.content += ', "service": ["' +  '","'.join(self.service) + '"]'
+                self.content += ', "service": ["' + '","'.join(self.service) + '"]'
         if len(self.args) > 1:
             self.content += ', "arguments": { ' + self.args + ' }'
         self.content += ' }'
@@ -65,12 +66,12 @@ class CARequest:
 
         In particular, this method generates Content-Length and its value.
         """
-        self.headers['User-Agent'] = "Kea-shell/%s"%(self.version)
+        self.headers['User-Agent'] = "Kea-shell/%s" % (self.version)
         self.headers['Accept'] = '*/*'
         if self.auth is not None:
-            self.headers['Authorization'] = "Basic %s"%(self.auth)
+            self.headers['Authorization'] = "Basic %s" % (self.auth)
         self.headers['Content-Type'] = 'application/json'
-        self.headers['Content-Length'] = "%d"%(len(self.content))
+        self.headers['Content-Length'] = "%d" % (len(self.content))
 
 
 class CAResponse:

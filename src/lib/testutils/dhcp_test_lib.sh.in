@@ -1,19 +1,13 @@
 #!/bin/sh
 
-# Copyright (C) 2014-2021 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-# shellcheck disable=SC1091
-# SC1091: Not following: ... was not specified as input (see shellcheck -x).
-
 # shellcheck disable=SC2034
 # SC2034: ... appears unused. Verify use (or export if used externally).
-
-# shellcheck disable=SC2039
-# SC2039: In POSIX sh, 'local' is undefined.
 
 # shellcheck disable=SC2153
 # SC2153: Possible misspelling: ... may not be assigned, but ... is.
@@ -21,14 +15,12 @@
 # shellcheck disable=SC2154
 # SC2154: bin_path is referenced but not assigned.
 
-# shellcheck disable=SC3043
-# SC3043: In POSIX sh, 'local' is undefined.
-
 # Exit with error if commands exit with non-zero and if undefined variables are
 # used.
 set -eu
 
 # Include XML reporting library.
+# shellcheck source=src/lib/testutils/xml_reporting_test_lib.sh.in
 . "@abs_top_builddir@/src/lib/testutils/xml_reporting_test_lib.sh"
 
 prefix="@prefix@"
@@ -41,6 +33,12 @@ EXPECTED_VERSION="@PACKAGE_VERSION@"
 export KEA_LFC_EXECUTABLE="@abs_top_builddir@/src/bin/lfc/kea-lfc"
 export KEA_LOCKFILE_DIR="@abs_top_builddir@/test_lockfile_dir"
 export KEA_PIDFILE_DIR="@abs_top_builddir@/test_pidfile_dir"
+KEA_DHCP4_LOAD_MARKER_FILE="@abs_top_builddir@/src/bin/dhcp4/tests/load_marker.txt"
+KEA_DHCP4_UNLOAD_MARKER_FILE="@abs_top_builddir@/src/bin/dhcp4/tests/unload_marker.txt"
+KEA_DHCP4_SRV_CONFIG_MARKER_FILE="@abs_top_builddir@/src/bin/dhcp4/tests/srv_config_marker_file.txt"
+KEA_DHCP6_LOAD_MARKER_FILE="@abs_top_builddir@/src/bin/dhcp6/tests/load_marker.txt"
+KEA_DHCP6_UNLOAD_MARKER_FILE="@abs_top_builddir@/src/bin/dhcp6/tests/unload_marker.txt"
+KEA_DHCP6_SRV_CONFIG_MARKER_FILE="@abs_top_builddir@/src/bin/dhcp6/tests/srv_config_marker_file.txt"
 
 # A list of Kea processes, mainly used by the cleanup functions.
 KEA_PROCS="kea-dhcp4 kea-dhcp6 kea-dhcp-ddns kea-ctrl-agent"
@@ -427,7 +425,7 @@ set_logger() {
         clean_exit 1
     fi
     printf 'Kea log will be stored in %s.\n' "${LOG_FILE}"
-    export KEA_LOGGER_DESTINATION=${LOG_FILE}
+    export KEA_LOGGER_DESTINATION="${LOG_FILE}"
 }
 
 # Checks if specified process is running.
@@ -656,7 +654,13 @@ cleanup() {
         "${CFG_FILE-}" \
         "${D2_CFG_FILE-}" \
         "${DHCP4_CFG_FILE-}" \
+        "${KEA_DHCP4_LOAD_MARKER_FILE-}" \
+        "${KEA_DHCP4_UNLOAD_MARKER_FILE-}" \
+        "${KEA_DHCP4_SRV_CONFIG_MARKER_FILE-}" \
         "${DHCP6_CFG_FILE-}" \
+        "${KEA_DHCP6_LOAD_MARKER_FILE-}" \
+        "${KEA_DHCP6_UNLOAD_MARKER_FILE-}" \
+        "${KEA_DHCP6_SRV_CONFIG_MARKER_FILE-}" \
         "${KEACTRL_CFG_FILE-}" \
         "${KEA_LOCKFILE_DIR-}" \
         "${KEA_PIDFILE_DIR-}" \

@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -447,26 +447,26 @@ TEST_F(PgSqlHostDataSourceTest, globalSubnetId6MultiThreading) {
 }
 
 /// @brief Verifies that IPv4 host reservation with options can have a max value
-/// for  dhcp4_subnet id
+/// for dhcp4_subnet id
 TEST_F(PgSqlHostDataSourceTest, maxSubnetId4) {
     testMaxSubnetId4();
 }
 
 /// @brief Verifies that IPv4 host reservation with options can have a max value
-/// for  dhcp4_subnet id
+/// for dhcp4_subnet id
 TEST_F(PgSqlHostDataSourceTest, maxSubnetId4MultiThreading) {
     MultiThreadingTest mt(true);
     testMaxSubnetId4();
 }
 
 /// @brief Verifies that IPv6 host reservation with options can have a max value
-/// for  dhcp6_subnet id
+/// for dhcp6_subnet id
 TEST_F(PgSqlHostDataSourceTest, maxSubnetId6) {
     testMaxSubnetId6();
 }
 
 /// @brief Verifies that IPv6 host reservation with options can have a max value
-/// for  dhcp6_subnet id
+/// for dhcp6_subnet id
 TEST_F(PgSqlHostDataSourceTest, maxSubnetId6MultiThreading) {
     MultiThreadingTest mt(true);
     testMaxSubnetId6();
@@ -1411,6 +1411,32 @@ TEST_F(PgSqlHostDataSourceTest, deleteById6OptionsMultiThreading) {
     testDeleteById6Options();
 }
 
+// This test verifies that all reservations can be deleted from database
+// by providing subnet ID and one address.
+TEST_F(PgSqlHostDataSourceTest, del2) {
+    testDelete2ForIPv6();
+}
+
+// This test verifies that all reservations can be deleted from database
+// by providing subnet ID and one address.
+TEST_F(PgSqlHostDataSourceTest, del2MultiThreading) {
+    MultiThreadingTest mt(true);
+    testDelete2ForIPv6();
+}
+
+// This test verifies that address and PD reservations can be deleted from database
+// by providing subnet ID and the address.
+TEST_F(PgSqlHostDataSourceTest, delBoth) {
+    testDelete2ForIPv6();
+}
+
+// This test verifies that address and PD reservations can be deleted from database
+// by providing subnet ID and the address.
+TEST_F(PgSqlHostDataSourceTest, delBothMultiThreading) {
+    MultiThreadingTest mt(true);
+    testDelete2ForIPv6();
+}
+
 /// @brief Tests that multiple reservations without IPv4 addresses can be
 /// specified within a subnet.
 TEST_F(PgSqlHostDataSourceTest, testMultipleHostsNoAddress4) {
@@ -1433,6 +1459,17 @@ TEST_F(PgSqlHostDataSourceTest, testMultipleHosts6) {
 TEST_F(PgSqlHostDataSourceTest, testMultipleHosts6MultiThreading) {
     MultiThreadingTest mt(true);
     testMultipleHosts6();
+}
+
+/// @brief Tests that hosts can be updated.
+TEST_F(PgSqlHostDataSourceTest, update) {
+    testUpdate();
+}
+
+/// @brief Tests that hosts can be updated.
+TEST_F(PgSqlHostDataSourceTest, updateMultiThreading) {
+    MultiThreadingTest mt(true);
+    testUpdate();
 }
 
 /// @brief Test fixture class for validating @c HostMgr using
@@ -1534,6 +1571,18 @@ TEST_F(PgSQLHostMgrTest, getAll6BySubnetIP) {
     testGetAll6BySubnetIP(*getCfgHosts(), *getCfgHosts());
 }
 
+// This test verifies that HostMgr returns all reservations for the specified
+// IPv6 reserved address.
+TEST_F(PgSQLHostMgrTest, getAll6ByIP) {
+    testGetAll6ByIP(*getCfgHosts(), *getCfgHosts());
+}
+
+// This test verifies that HostMgr returns all reservations for the
+// IPv6 reserved prefix.
+TEST_F(PgSQLHostMgrTest, getAll6ByIpPrefix) {
+    testGetAll6ByIpPrefix(*getCfgHosts(), *getCfgHosts());
+}
+
 // This test verifies that reservations for a particular hostname can be
 // retrieved from the configuration file and a database simultaneously.
 TEST_F(PgSQLHostMgrTest, getAllbyHostname) {
@@ -1604,11 +1653,90 @@ TEST_F(PgSQLHostMgrTest, get6ByPrefix) {
     testGet6ByPrefix(*getCfgHosts(), HostMgr::instance());
 }
 
+// This test verifies that the reservations can be added to a configuration
+// file and a database.
+TEST_F(PgSQLHostMgrTest, add) {
+    testAdd(*getCfgHosts(), HostMgr::instance());
+}
+
+// This test verifies that the reservations can be deleted from a configuration
+// file and a database by subnet ID and address.
+TEST_F(PgSQLHostMgrTest, del) {
+    testDeleteByIDAndAddress(*getCfgHosts(), HostMgr::instance());
+}
+
+// This test verifies that the reservation can be deleted from database
+// by providing subnet ID and address, and other reservations in the subnet
+// remain undeleted.
+TEST_F(PgSQLHostMgrTest, delOneHost) {
+    testDeleteOneHostByIDAndAddress(HostMgr::instance());
+}
+
+// This test verifies that the IPv4 reservations can be deleted from a
+// configuration file and a database by subnet ID and identifier.
+TEST_F(PgSQLHostMgrTest, del4) {
+    testDelete4ByIDAndIdentifier(*getCfgHosts(), HostMgr::instance());
+}
+
+// This test verifies that the IPv6 reservations can be deleted from a
+// configuration file and a database by subnet ID and identifier.
+TEST_F(PgSQLHostMgrTest, del6) {
+    testDelete6ByIDAndIdentifier(*getCfgHosts(), HostMgr::instance());
+}
+
 // This test verifies that it is possible to control whether the reserved
 // IP addresses are unique or non unique via the HostMgr.
 TEST_F(PgSQLHostMgrTest, setIPReservationsUnique) {
     EXPECT_TRUE(HostMgr::instance().setIPReservationsUnique(true));
     EXPECT_TRUE(HostMgr::instance().setIPReservationsUnique(false));
+}
+
+/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PgSQLHostMgrDbLostCallbackTest, testRetryOpenDbLostAndRecoveredCallback) {
+    MultiThreadingTest mt(false);
+    testRetryOpenDbLostAndRecoveredCallback();
+}
+
+/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PgSQLHostMgrDbLostCallbackTest, testRetryOpenDbLostAndRecoveredCallbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testRetryOpenDbLostAndRecoveredCallback();
+}
+
+/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PgSQLHostMgrDbLostCallbackTest, testRetryOpenDbLostAndFailedCallback) {
+    MultiThreadingTest mt(false);
+    testRetryOpenDbLostAndFailedCallback();
+}
+
+/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PgSQLHostMgrDbLostCallbackTest, testRetryOpenDbLostAndFailedCallbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testRetryOpenDbLostAndFailedCallback();
+}
+
+/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PgSQLHostMgrDbLostCallbackTest, testRetryOpenDbLostAndRecoveredAfterTimeoutCallback) {
+    MultiThreadingTest mt(false);
+    testRetryOpenDbLostAndRecoveredAfterTimeoutCallback();
+}
+
+/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PgSQLHostMgrDbLostCallbackTest, testRetryOpenDbLostAndRecoveredAfterTimeoutCallbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testRetryOpenDbLostAndRecoveredAfterTimeoutCallback();
+}
+
+/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PgSQLHostMgrDbLostCallbackTest, testRetryOpenDbLostAndFailedAfterTimeoutCallback) {
+    MultiThreadingTest mt(false);
+    testRetryOpenDbLostAndFailedAfterTimeoutCallback();
+}
+
+/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PgSQLHostMgrDbLostCallbackTest, testRetryOpenDbLostAndFailedAfterTimeoutCallbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testRetryOpenDbLostAndFailedAfterTimeoutCallback();
 }
 
 /// @brief Verifies that db lost callback is not invoked on an open failure

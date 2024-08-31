@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,7 +12,6 @@
 #include <dhcp_ddns/ncr_io.h>
 #include <dhcp_ddns/ncr_udp.h>
 #include <util/multi_threading_mgr.h>
-#include <util/time_utilities.h>
 #include <test_utils.h>
 
 #include <boost/asio/ip/udp.hpp>
@@ -24,6 +23,7 @@
 
 using namespace std;
 using namespace isc;
+using namespace isc::asiolink;
 using namespace isc::util;
 using namespace isc::dhcp_ddns;
 
@@ -42,7 +42,7 @@ const char *valid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
-     " \"use-conflict-resolution\": true"
+     " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
     // Valid Remove.
      "{"
@@ -54,7 +54,7 @@ const char *valid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
-     " \"use-conflict-resolution\": false"
+     " \"conflict-resolution-mode\": \"no-check-with-dhcid\""
      "}",
      // Valid Add with IPv6 address
      "{"
@@ -66,7 +66,7 @@ const char *valid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
-     " \"use-conflict-resolution\" : true"
+     " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}"
 };
 
@@ -83,15 +83,17 @@ public:
     }
 };
 
+/// @brief Defines a smart pointer to an instance of a listener handler.
+typedef boost::shared_ptr<SimpleListenHandler> SimpleListenHandlerPtr;
+
 /// @brief Tests the NameChangeUDPListener constructors.
 /// This test verifies that:
 /// 1. Given valid parameters, the listener constructor works
 TEST(NameChangeUDPListenerBasicTest, constructionTests) {
     // Verify the default constructor works.
-    isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
+    IOAddress ip_address(TEST_ADDRESS);
     uint32_t port = LISTENER_PORT;
-    isc::asiolink::IOService io_service;
-    SimpleListenHandler ncr_handler;
+    SimpleListenHandlerPtr ncr_handler(new SimpleListenHandler());
     // Verify that valid constructor works.
     EXPECT_NO_THROW(NameChangeUDPListener(ip_address, port, FMT_JSON,
                                           ncr_handler));
@@ -105,10 +107,10 @@ TEST(NameChangeUDPListenerBasicTest, constructionTests) {
 /// 4. Return to the listening state after stopping
 TEST(NameChangeUDPListenerBasicTest, basicListenTests) {
     // Verify the default constructor works.
-    isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
+    IOAddress ip_address(TEST_ADDRESS);
     uint32_t port = LISTENER_PORT;
-    isc::asiolink::IOService io_service;
-    SimpleListenHandler ncr_handler;
+    IOServicePtr io_service(new IOService());
+    SimpleListenHandlerPtr ncr_handler(new SimpleListenHandler());
 
     NameChangeListenerPtr listener;
     ASSERT_NO_THROW(listener.reset(
@@ -134,7 +136,7 @@ TEST(NameChangeUDPListenerBasicTest, basicListenTests) {
     EXPECT_TRUE(listener->isIoPending());
 
     // Verify that IO pending is false, after cancel event occurs.
-    EXPECT_NO_THROW(io_service.run_one());
+    EXPECT_NO_THROW(io_service->runOne());
     EXPECT_FALSE(listener->isIoPending());
 
     // Verify that attempting to stop listening when we are not is ok.
@@ -148,41 +150,60 @@ TEST(NameChangeUDPListenerBasicTest, basicListenTests) {
 /// @brief Compares two NameChangeRequests for equality.
 bool checkSendVsReceived(NameChangeRequestPtr sent_ncr,
                          NameChangeRequestPtr received_ncr) {
-    return ((sent_ncr && received_ncr) &&
-        (*sent_ncr == *received_ncr));
+    return ((sent_ncr && received_ncr) && (*sent_ncr == *received_ncr));
 }
 
-/// @brief Text fixture for testing NameChangeUDPListener
-class NameChangeUDPListenerTest : public virtual ::testing::Test,
-                                  NameChangeListener::RequestReceiveHandler {
+class NameChangeUDPListenerTestHandler : public virtual NameChangeListener::RequestReceiveHandler {
 public:
-    isc::asiolink::IOService io_service_;
     NameChangeListener::Result result_;
-    NameChangeRequestPtr sent_ncr_;
     NameChangeRequestPtr received_ncr_;
+
+    /// @brief Constructor
+    NameChangeUDPListenerTestHandler() : result_(NameChangeListener::SUCCESS) {
+    }
+
+    /// @brief RequestReceiveHandler operator implementation for receiving NCRs.
+    ///
+    /// The fixture acts as the "application" layer.  It derives from
+    /// RequestReceiveHandler and as such implements operator() in order to
+    /// receive NCRs.
+    virtual void operator ()(const NameChangeListener::Result result,
+                             NameChangeRequestPtr& ncr) {
+        // save the result and the NCR we received
+        result_ = result;
+        received_ncr_ = ncr;
+    }
+};
+
+/// @brief Text fixture for testing NameChangeUDPListener
+class NameChangeUDPListenerTest : public virtual ::testing::Test {
+public:
+    IOServicePtr io_service_;
+    boost::shared_ptr<NameChangeUDPListenerTestHandler> handle_;
+    NameChangeRequestPtr sent_ncr_;
     NameChangeListenerPtr listener_;
-    isc::asiolink::IntervalTimer test_timer_;
+    IntervalTimer test_timer_;
 
     /// @brief Constructor
     //
     // Instantiates the listener member and the test timer. The timer is used
     // to ensure a test doesn't go awry and hang forever.
     NameChangeUDPListenerTest()
-        : io_service_(), result_(NameChangeListener::SUCCESS),
+        : io_service_(new IOService()), handle_(new NameChangeUDPListenerTestHandler()),
           test_timer_(io_service_) {
-        isc::asiolink::IOAddress addr(TEST_ADDRESS);
+        IOAddress addr(TEST_ADDRESS);
         listener_.reset(new NameChangeUDPListener(addr, LISTENER_PORT,
-                                              FMT_JSON, *this, true));
-
+                                                  FMT_JSON, handle_, true));
         // Set the test timeout to break any running tasks if they hang.
         test_timer_.setup(std::bind(&NameChangeUDPListenerTest::
                                     testTimeoutHandler, this),
                           TEST_TIMEOUT);
     }
 
-    virtual ~NameChangeUDPListenerTest(){
+    virtual ~NameChangeUDPListenerTest() {
+        test_timer_.cancel();
+        io_service_->stopAndPoll();
     }
-
 
     /// @brief Converts JSON string into an NCR and sends it to the listener.
     ///
@@ -197,7 +218,7 @@ public:
 
         // Create a UDP socket through which our "sender" will send the NCR.
         boost::asio::ip::udp::socket
-            udp_socket(io_service_.get_io_service(), boost::asio::ip::udp::v4());
+            udp_socket(io_service_->getInternalIOService(), boost::asio::ip::udp::v4());
 
         // Create an endpoint pointed at the listener.
         boost::asio::ip::udp::endpoint
@@ -208,27 +229,16 @@ public:
         // Note this uses a synchronous send so it ships immediately.
         // If listener isn't in listening mode, it will get missed.
         udp_socket.send_to(boost::asio::buffer(ncr_buffer.getData(),
-                                     ncr_buffer.getLength()),
-                            listener_endpoint);
+                           ncr_buffer.getLength()), listener_endpoint);
     }
 
-    /// @brief RequestReceiveHandler operator implementation for receiving NCRs.
-    ///
-    /// The fixture acts as the "application" layer.  It derives from
-    /// RequestReceiveHandler and as such implements operator() in order to
-    /// receive NCRs.
-    virtual void operator ()(const NameChangeListener::Result result,
-                             NameChangeRequestPtr& ncr) {
-        // save the result and the NCR we received
-        result_ = result;
-        received_ncr_ = ncr;
-    }
+
 
     /// @brief Handler invoked when test timeout is hit
     ///
     /// This callback stops all running (hanging) tasks on IO service.
     void testTimeoutHandler() {
-        io_service_.stop();
+        io_service_->stop();
         FAIL() << "Test timeout hit.";
     }
 };
@@ -252,13 +262,15 @@ TEST_F(NameChangeUDPListenerTest, basicReceiveTests) {
         ASSERT_NO_THROW(sendNcr(valid_msgs[i]));
 
         // Execute no more then one event, which should be receive complete.
-        EXPECT_NO_THROW(io_service_.run_one());
+        EXPECT_NO_THROW(io_service_->runOne());
 
         // Verify the "application" status value for a successful complete.
-        EXPECT_EQ(NameChangeListener::SUCCESS, result_);
+        EXPECT_EQ(NameChangeListener::SUCCESS, handle_->result_);
 
         // Verify the received request matches the sent request.
-        EXPECT_TRUE(checkSendVsReceived(sent_ncr_, received_ncr_));
+        EXPECT_TRUE(checkSendVsReceived(sent_ncr_, handle_->received_ncr_))
+            << "sent_ncr_" << (sent_ncr_ ? sent_ncr_->toText() : "<null>")
+            << "recv_ncr_ " << (handle_->received_ncr_ ? handle_->received_ncr_->toText() : "<null>");
     }
 
     // Verify we can gracefully stop listening.
@@ -266,7 +278,7 @@ TEST_F(NameChangeUDPListenerTest, basicReceiveTests) {
     EXPECT_FALSE(listener_->amListening());
 
     // Verify that IO pending is false, after cancel event occurs.
-    EXPECT_NO_THROW(io_service_.run_one());
+    EXPECT_NO_THROW(io_service_->runOne());
     EXPECT_FALSE(listener_->isIoPending());
 }
 
@@ -289,6 +301,9 @@ public:
     int error_count_;
 };
 
+/// @brief Defines a smart pointer to an instance of a send handler.
+typedef boost::shared_ptr<SimpleSendHandler> SimpleSendHandlerPtr;
+
 /// @brief Text fixture for testing NameChangeUDPListener
 class NameChangeUDPSenderBasicTest : public virtual ::testing::Test {
 public:
@@ -310,10 +325,9 @@ public:
 /// 3. Default construction provides default max queue size
 /// 4. Construction with a custom max queue size works
 TEST_F(NameChangeUDPSenderBasicTest, constructionTests) {
-    isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
+    IOAddress ip_address(TEST_ADDRESS);
     uint32_t port = SENDER_PORT;
-    isc::asiolink::IOService io_service;
-    SimpleSendHandler ncr_handler;
+    SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Verify that constructing with an queue size of zero is not allowed.
     EXPECT_THROW(NameChangeUDPSender(ip_address, port,
@@ -347,10 +361,9 @@ TEST_F(NameChangeUDPSenderBasicTest, constructionTestsMultiThreading) {
     // Enable multi-threading
     MultiThreadingMgr::instance().setMode(true);
 
-    isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
+    IOAddress ip_address(TEST_ADDRESS);
     uint32_t port = SENDER_PORT;
-    isc::asiolink::IOService io_service;
-    SimpleSendHandler ncr_handler;
+    SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Verify that constructing with an queue size of zero is not allowed.
     EXPECT_THROW(NameChangeUDPSender(ip_address, port,
@@ -376,9 +389,9 @@ TEST_F(NameChangeUDPSenderBasicTest, constructionTestsMultiThreading) {
 
 /// @brief Tests NameChangeUDPSender basic send functionality
 TEST_F(NameChangeUDPSenderBasicTest, basicSendTests) {
-    isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
-    isc::asiolink::IOService io_service;
-    SimpleSendHandler ncr_handler;
+    IOAddress ip_address(TEST_ADDRESS);
+    IOServicePtr io_service(new IOService());
+    SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Tests are based on a list of messages, get the count now.
     int num_msgs = sizeof(valid_msgs)/sizeof(char*);
@@ -444,7 +457,7 @@ TEST_F(NameChangeUDPSenderBasicTest, basicSendTests) {
 
     // Loop for the number of valid messages. So long as there is at least
     // on NCR in the queue, select-fd indicate ready to read. Invoke
-    // IOService::run_one. This should complete the send of exactly one
+    // IOService::runOne. This should complete the send of exactly one
     // message and the queue count should decrement accordingly.
     for (int i = num_msgs; i > 0; i--) {
         // Make sure select_fd does evaluates to ready via select and
@@ -504,9 +517,9 @@ TEST_F(NameChangeUDPSenderBasicTest, basicSendTestsMultiThreading) {
     // Enable multi-threading
     MultiThreadingMgr::instance().setMode(true);
 
-    isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
-    isc::asiolink::IOService io_service;
-    SimpleSendHandler ncr_handler;
+    IOAddress ip_address(TEST_ADDRESS);
+    IOServicePtr io_service(new IOService());
+    SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Tests are based on a list of messages, get the count now.
     int num_msgs = sizeof(valid_msgs)/sizeof(char*);
@@ -572,7 +585,7 @@ TEST_F(NameChangeUDPSenderBasicTest, basicSendTestsMultiThreading) {
 
     // Loop for the number of valid messages. So long as there is at least
     // on NCR in the queue, select-fd indicate ready to read. Invoke
-    // IOService::run_one. This should complete the send of exactly one
+    // IOService::runOne. This should complete the send of exactly one
     // message and the queue count should decrement accordingly.
     for (int i = num_msgs; i > 0; i--) {
         // Make sure select_fd does evaluates to ready via select and
@@ -630,9 +643,9 @@ TEST_F(NameChangeUDPSenderBasicTest, basicSendTestsMultiThreading) {
 /// @brief Tests that sending gets kick-started if the queue isn't empty
 /// when startSending is called.
 TEST_F(NameChangeUDPSenderBasicTest, autoStart) {
-    isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
-    isc::asiolink::IOService io_service;
-    SimpleSendHandler ncr_handler;
+    IOAddress ip_address(TEST_ADDRESS);
+    IOServicePtr io_service(new IOService());
+    SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Tests are based on a list of messages, get the count now.
     int num_msgs = sizeof(valid_msgs)/sizeof(char*);
@@ -685,9 +698,9 @@ TEST_F(NameChangeUDPSenderBasicTest, autoStartMultiThreading) {
     // Enable multi-threading
     MultiThreadingMgr::instance().setMode(true);
 
-    isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
-    isc::asiolink::IOService io_service;
-    SimpleSendHandler ncr_handler;
+    IOAddress ip_address(TEST_ADDRESS);
+    IOServicePtr io_service(new IOService());
+    SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Tests are based on a list of messages, get the count now.
     int num_msgs = sizeof(valid_msgs)/sizeof(char*);
@@ -736,10 +749,10 @@ TEST_F(NameChangeUDPSenderBasicTest, autoStartMultiThreading) {
 
 /// @brief Tests NameChangeUDPSender basic send  with INADDR_ANY and port 0.
 TEST_F(NameChangeUDPSenderBasicTest, anyAddressSend) {
-    isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
-    isc::asiolink::IOAddress any_address("0.0.0.0");
-    isc::asiolink::IOService io_service;
-    SimpleSendHandler ncr_handler;
+    IOAddress ip_address(TEST_ADDRESS);
+    IOAddress any_address("0.0.0.0");
+    IOServicePtr io_service(new IOService());
+    SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Tests are based on a list of messages, get the count now.
     int num_msgs = sizeof(valid_msgs)/sizeof(char*);
@@ -774,10 +787,10 @@ TEST_F(NameChangeUDPSenderBasicTest, anyAddressSendMultiThreading) {
     // Enable multi-threading
     MultiThreadingMgr::instance().setMode(true);
 
-    isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
-    isc::asiolink::IOAddress any_address("0.0.0.0");
-    isc::asiolink::IOService io_service;
-    SimpleSendHandler ncr_handler;
+    IOAddress ip_address(TEST_ADDRESS);
+    IOAddress any_address("0.0.0.0");
+    IOServicePtr io_service(new IOService());
+    SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Tests are based on a list of messages, get the count now.
     int num_msgs = sizeof(valid_msgs)/sizeof(char*);
@@ -809,10 +822,10 @@ TEST_F(NameChangeUDPSenderBasicTest, anyAddressSendMultiThreading) {
 
 /// @brief Test the NameChangeSender::assumeQueue method.
 TEST_F(NameChangeUDPSenderBasicTest, assumeQueue) {
-    isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
+    IOAddress ip_address(TEST_ADDRESS);
     uint32_t port = SENDER_PORT;
-    isc::asiolink::IOService io_service;
-    SimpleSendHandler ncr_handler;
+    IOServicePtr io_service(new IOService());
+    SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
     NameChangeRequestPtr ncr;
 
     // Tests are based on a list of messages, get the count now.
@@ -881,10 +894,10 @@ TEST_F(NameChangeUDPSenderBasicTest, assumeQueueMultiThreading) {
     // Enable multi-threading
     MultiThreadingMgr::instance().setMode(true);
 
-    isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
+    IOAddress ip_address(TEST_ADDRESS);
     uint32_t port = SENDER_PORT;
-    isc::asiolink::IOService io_service;
-    SimpleSendHandler ncr_handler;
+    IOServicePtr io_service(new IOService());
+    SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
     NameChangeRequestPtr ncr;
 
     // Tests are based on a list of messages, get the count now.
@@ -948,53 +961,10 @@ TEST_F(NameChangeUDPSenderBasicTest, assumeQueueMultiThreading) {
     ASSERT_THROW(sender2.assumeQueue(sender1), NcrSenderError);
 }
 
-/// @brief Text fixture that allows testing a listener and sender together
-/// It derives from both the receive and send handler classes and contains
-/// and instance of UDP listener and UDP sender.
-class NameChangeUDPTest : public virtual ::testing::Test,
-                          NameChangeListener::RequestReceiveHandler,
-                          NameChangeSender::RequestSendHandler {
+class NameChangeUDPTestReceiveHandler : public virtual NameChangeListener::RequestReceiveHandler {
 public:
-    isc::asiolink::IOService io_service_;
-    NameChangeListener::Result recv_result_;
-    NameChangeSender::Result send_result_;
-    NameChangeListenerPtr listener_;
-    NameChangeSenderPtr   sender_;
-    isc::asiolink::IntervalTimer test_timer_;
-
-    std::vector<NameChangeRequestPtr> sent_ncrs_;
-    std::vector<NameChangeRequestPtr> received_ncrs_;
-
-    NameChangeUDPTest()
-        : io_service_(), recv_result_(NameChangeListener::SUCCESS),
-          send_result_(NameChangeSender::SUCCESS), test_timer_(io_service_) {
-        isc::asiolink::IOAddress addr(TEST_ADDRESS);
-        // Create our listener instance. Note that reuse_address is true.
-        listener_.reset(
-            new NameChangeUDPListener(addr, LISTENER_PORT, FMT_JSON,
-                                      *this, true));
-
-        // Create our sender instance. Note that reuse_address is true.
-         sender_.reset(
-             new NameChangeUDPSender(addr, SENDER_PORT, addr, LISTENER_PORT,
-                                     FMT_JSON, *this, 100, true));
-
-        // Set the test timeout to break any running tasks if they hang.
-        test_timer_.setup(std::bind(&NameChangeUDPTest::testTimeoutHandler,
-                                    this),
-                          TEST_TIMEOUT);
-        // Disable multi-threading
-        MultiThreadingMgr::instance().setMode(false);
-    }
-
-    ~NameChangeUDPTest() {
-        // Disable multi-threading
-        MultiThreadingMgr::instance().setMode(false);
-    }
-
-    void reset_results() {
-        sent_ncrs_.clear();
-        received_ncrs_.clear();
+    /// @brief Constructor
+    NameChangeUDPTestReceiveHandler() : recv_result_(NameChangeListener::SUCCESS) {
     }
 
     /// @brief Implements the receive completion handler.
@@ -1005,6 +975,16 @@ public:
         received_ncrs_.push_back(ncr);
     }
 
+    NameChangeListener::Result recv_result_;
+    std::vector<NameChangeRequestPtr> received_ncrs_;
+};
+
+class NameChangeUDPTestSendHandler : public virtual NameChangeSender::RequestSendHandler {
+    public:
+    /// @brief Constructor
+    NameChangeUDPTestSendHandler() : send_result_(NameChangeSender::SUCCESS) {
+    }
+
     /// @brief Implements the send completion handler.
     virtual void operator ()(const NameChangeSender::Result result,
                              NameChangeRequestPtr& ncr) {
@@ -1013,11 +993,61 @@ public:
         sent_ncrs_.push_back(ncr);
     }
 
+    NameChangeSender::Result send_result_;
+    std::vector<NameChangeRequestPtr> sent_ncrs_;
+};
+
+/// @brief Text fixture that allows testing a listener and sender together
+/// It derives from both the receive and send handler classes and contains
+/// and instance of UDP listener and UDP sender.
+class NameChangeUDPTest : public virtual ::testing::Test {
+public:
+    IOServicePtr io_service_;
+    boost::shared_ptr<NameChangeUDPTestReceiveHandler> r_handle_;
+    boost::shared_ptr<NameChangeUDPTestSendHandler> s_handle_;
+    NameChangeListenerPtr listener_;
+    NameChangeSenderPtr sender_;
+    IntervalTimer test_timer_;
+
+    NameChangeUDPTest()
+        : io_service_(new IOService()),
+          r_handle_(new NameChangeUDPTestReceiveHandler()),
+          s_handle_(new NameChangeUDPTestSendHandler()),
+          test_timer_(io_service_) {
+        IOAddress addr(TEST_ADDRESS);
+        // Create our listener instance. Note that reuse_address is true.
+        listener_.reset(
+            new NameChangeUDPListener(addr, LISTENER_PORT, FMT_JSON, r_handle_, true));
+
+        // Create our sender instance. Note that reuse_address is true.
+         sender_.reset(
+             new NameChangeUDPSender(addr, SENDER_PORT, addr, LISTENER_PORT,
+                                     FMT_JSON, s_handle_, 100, true));
+
+        // Set the test timeout to break any running tasks if they hang.
+        test_timer_.setup(std::bind(&NameChangeUDPTest::testTimeoutHandler, this),
+                          TEST_TIMEOUT);
+        // Disable multi-threading
+        MultiThreadingMgr::instance().setMode(false);
+    }
+
+    ~NameChangeUDPTest() {
+        test_timer_.cancel();
+        io_service_->stopAndPoll();
+        // Disable multi-threading
+        MultiThreadingMgr::instance().setMode(false);
+    }
+
+    void reset_results() {
+        s_handle_->sent_ncrs_.clear();
+        r_handle_->received_ncrs_.clear();
+    }
+
     /// @brief Handler invoked when test timeout is hit
     ///
     /// This callback stops all running (hanging) tasks on IO service.
     void testTimeoutHandler() {
-        io_service_.stop();
+        io_service_->stop();
         FAIL() << "Test timeout hit.";
     }
 
@@ -1095,26 +1125,26 @@ TEST_F(NameChangeUDPTest, roundTripTest) {
     }
 
     // Execute callbacks until we have sent and received all of messages.
-    while (sender_->getQueueSize() > 0 || (received_ncrs_.size() < num_msgs)) {
-        EXPECT_NO_THROW(io_service_.run_one());
+    while (sender_->getQueueSize() > 0 || (r_handle_->received_ncrs_.size() < num_msgs)) {
+        EXPECT_NO_THROW(io_service_->runOne());
     }
 
     // Send queue should be empty.
     EXPECT_EQ(0, sender_->getQueueSize());
 
     // We should have the same number of sends and receives as we do messages.
-    ASSERT_EQ(num_msgs, sent_ncrs_.size());
-    ASSERT_EQ(num_msgs, received_ncrs_.size());
+    ASSERT_EQ(num_msgs, s_handle_->sent_ncrs_.size());
+    ASSERT_EQ(num_msgs, r_handle_->received_ncrs_.size());
 
     // Check if the payload was received, ignoring the order if necessary.
-    checkUnordered(num_msgs, sent_ncrs_, received_ncrs_);
+    checkUnordered(num_msgs, s_handle_->sent_ncrs_, r_handle_->received_ncrs_);
 
     // Verify that we can gracefully stop listening.
     EXPECT_NO_THROW(listener_->stopListening());
     EXPECT_FALSE(listener_->amListening());
 
     // Verify that IO pending is false, after cancel event occurs.
-    EXPECT_NO_THROW(io_service_.run_one());
+    EXPECT_NO_THROW(io_service_->runOne());
     EXPECT_FALSE(listener_->isIoPending());
 
     // Verify that we can gracefully stop sending.
@@ -1149,27 +1179,27 @@ TEST_F(NameChangeUDPTest, roundTripTestMultiThreading) {
     }
 
     // Execute callbacks until we have sent and received all of messages.
-    while (sender_->getQueueSize() > 0 || (received_ncrs_.size() < num_msgs)) {
-        EXPECT_NO_THROW(io_service_.run_one());
+    while (sender_->getQueueSize() > 0 || (r_handle_->received_ncrs_.size() < num_msgs)) {
+        EXPECT_NO_THROW(io_service_->runOne());
     }
 
     // Send queue should be empty.
     EXPECT_EQ(0, sender_->getQueueSize());
 
     // We should have the same number of sends and receives as we do messages.
-    ASSERT_EQ(num_msgs, sent_ncrs_.size());
-    ASSERT_EQ(num_msgs, received_ncrs_.size());
+    ASSERT_EQ(num_msgs, s_handle_->sent_ncrs_.size());
+    ASSERT_EQ(num_msgs, r_handle_->received_ncrs_.size());
 
     // Verify that what we sent matches what we received. Ignore the order
     // if necessary.
-    checkUnordered(num_msgs, sent_ncrs_, received_ncrs_);
+    checkUnordered(num_msgs, s_handle_->sent_ncrs_, r_handle_->received_ncrs_);
 
     // Verify that we can gracefully stop listening.
     EXPECT_NO_THROW(listener_->stopListening());
     EXPECT_FALSE(listener_->amListening());
 
     // Verify that IO pending is false, after cancel event occurs.
-    EXPECT_NO_THROW(io_service_.run_one());
+    EXPECT_NO_THROW(io_service_->runOne());
     EXPECT_FALSE(listener_->isIoPending());
 
     // Verify that we can gracefully stop sending.
@@ -1180,9 +1210,9 @@ TEST_F(NameChangeUDPTest, roundTripTestMultiThreading) {
 // Tests error handling of a failure to mark the watch socket ready, when
 // sendRequest() is called.
 TEST_F(NameChangeUDPSenderBasicTest, watchClosedBeforeSendRequest) {
-    isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
-    isc::asiolink::IOService io_service;
-    SimpleSendHandler ncr_handler;
+    IOAddress ip_address(TEST_ADDRESS);
+    IOServicePtr io_service(new IOService());
+    SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Create the sender and put into send mode.
     NameChangeUDPSender sender(ip_address, 0, ip_address, LISTENER_PORT,
@@ -1201,8 +1231,8 @@ TEST_F(NameChangeUDPSenderBasicTest, watchClosedBeforeSendRequest) {
     ASSERT_THROW(sender.sendRequest(ncr), util::WatchSocketError);
 
     // Verify we didn't invoke the handler.
-    EXPECT_EQ(0, ncr_handler.pass_count_);
-    EXPECT_EQ(0, ncr_handler.error_count_);
+    EXPECT_EQ(0, ncr_handler->pass_count_);
+    EXPECT_EQ(0, ncr_handler->error_count_);
 
     // Request remains in the queue. Technically it was sent but its
     // completion handler won't get called.
@@ -1215,9 +1245,9 @@ TEST_F(NameChangeUDPSenderBasicTest, watchClosedBeforeSendRequestMultiThreading)
     // Enable multi-threading
     MultiThreadingMgr::instance().setMode(true);
 
-    isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
-    isc::asiolink::IOService io_service;
-    SimpleSendHandler ncr_handler;
+    IOAddress ip_address(TEST_ADDRESS);
+    IOServicePtr io_service(new IOService());
+    SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Create the sender and put into send mode.
     NameChangeUDPSender sender(ip_address, 0, ip_address, LISTENER_PORT,
@@ -1236,8 +1266,8 @@ TEST_F(NameChangeUDPSenderBasicTest, watchClosedBeforeSendRequestMultiThreading)
     ASSERT_THROW(sender.sendRequest(ncr), util::WatchSocketError);
 
     // Verify we didn't invoke the handler.
-    EXPECT_EQ(0, ncr_handler.pass_count_);
-    EXPECT_EQ(0, ncr_handler.error_count_);
+    EXPECT_EQ(0, ncr_handler->pass_count_);
+    EXPECT_EQ(0, ncr_handler->error_count_);
 
     // Request remains in the queue. Technically it was sent but its
     // completion handler won't get called.
@@ -1247,9 +1277,9 @@ TEST_F(NameChangeUDPSenderBasicTest, watchClosedBeforeSendRequestMultiThreading)
 // Tests error handling of a failure to mark the watch socket ready, when
 // sendNext() is called during completion handling.
 TEST_F(NameChangeUDPSenderBasicTest, watchClosedAfterSendRequest) {
-    isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
-    isc::asiolink::IOService io_service;
-    SimpleSendHandler ncr_handler;
+    IOAddress ip_address(TEST_ADDRESS);
+    IOServicePtr io_service(new IOService());
+    SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Create the sender and put into send mode.
     NameChangeUDPSender sender(ip_address, 0, ip_address, LISTENER_PORT,
@@ -1276,8 +1306,8 @@ TEST_F(NameChangeUDPSenderBasicTest, watchClosedAfterSendRequest) {
     // Verify handler got called twice. First request should have be sent
     // without error, second call should have failed to send due to watch
     // socket markReady failure.
-    EXPECT_EQ(1, ncr_handler.pass_count_);
-    EXPECT_EQ(1, ncr_handler.error_count_);
+    EXPECT_EQ(1, ncr_handler->pass_count_);
+    EXPECT_EQ(1, ncr_handler->error_count_);
 
     // The second request should still be in the queue.
     EXPECT_EQ(1, sender.getQueueSize());
@@ -1289,9 +1319,9 @@ TEST_F(NameChangeUDPSenderBasicTest, watchClosedAfterSendRequestMultiThreading) 
     // Enable multi-threading
     MultiThreadingMgr::instance().setMode(true);
 
-    isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
-    isc::asiolink::IOService io_service;
-    SimpleSendHandler ncr_handler;
+    IOAddress ip_address(TEST_ADDRESS);
+    IOServicePtr io_service(new IOService());
+    SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Create the sender and put into send mode.
     NameChangeUDPSender sender(ip_address, 0, ip_address, LISTENER_PORT,
@@ -1318,8 +1348,8 @@ TEST_F(NameChangeUDPSenderBasicTest, watchClosedAfterSendRequestMultiThreading) 
     // Verify handler got called twice. First request should have be sent
     // without error, second call should have failed to send due to watch
     // socket markReady failure.
-    EXPECT_EQ(1, ncr_handler.pass_count_);
-    EXPECT_EQ(1, ncr_handler.error_count_);
+    EXPECT_EQ(1, ncr_handler->pass_count_);
+    EXPECT_EQ(1, ncr_handler->error_count_);
 
     // The second request should still be in the queue.
     EXPECT_EQ(1, sender.getQueueSize());
@@ -1329,9 +1359,9 @@ TEST_F(NameChangeUDPSenderBasicTest, watchClosedAfterSendRequestMultiThreading) 
 // Tests error handling of a failure to clear the watch socket during
 // completion handling.
 TEST_F(NameChangeUDPSenderBasicTest, watchSocketBadRead) {
-    isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
-    isc::asiolink::IOService io_service;
-    SimpleSendHandler ncr_handler;
+    IOAddress ip_address(TEST_ADDRESS);
+    IOServicePtr io_service(new IOService());
+    SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Create the sender and put into send mode.
     NameChangeUDPSender sender(ip_address, 0, ip_address, LISTENER_PORT,
@@ -1367,8 +1397,8 @@ TEST_F(NameChangeUDPSenderBasicTest, watchSocketBadRead) {
     // Verify handler got called twice. First request should have be sent
     // without error, second call should have failed to send due to watch
     // socket markReady failure.
-    EXPECT_EQ(1, ncr_handler.pass_count_);
-    EXPECT_EQ(1, ncr_handler.error_count_);
+    EXPECT_EQ(1, ncr_handler->pass_count_);
+    EXPECT_EQ(1, ncr_handler->error_count_);
 
     // The second request should still be in the queue.
     EXPECT_EQ(1, sender.getQueueSize());
@@ -1380,9 +1410,9 @@ TEST_F(NameChangeUDPSenderBasicTest, watchSocketBadReadMultiThreading) {
     // Enable multi-threading
     MultiThreadingMgr::instance().setMode(true);
 
-    isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
-    isc::asiolink::IOService io_service;
-    SimpleSendHandler ncr_handler;
+    IOAddress ip_address(TEST_ADDRESS);
+    IOServicePtr io_service(new IOService());
+    SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Create the sender and put into send mode.
     NameChangeUDPSender sender(ip_address, 0, ip_address, LISTENER_PORT,
@@ -1418,8 +1448,8 @@ TEST_F(NameChangeUDPSenderBasicTest, watchSocketBadReadMultiThreading) {
     // Verify handler got called twice. First request should have be sent
     // without error, second call should have failed to send due to watch
     // socket markReady failure.
-    EXPECT_EQ(1, ncr_handler.pass_count_);
-    EXPECT_EQ(1, ncr_handler.error_count_);
+    EXPECT_EQ(1, ncr_handler->pass_count_);
+    EXPECT_EQ(1, ncr_handler->error_count_);
 
     // The second request should still be in the queue.
     EXPECT_EQ(1, sender.getQueueSize());

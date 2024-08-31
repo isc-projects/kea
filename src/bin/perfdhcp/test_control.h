@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,7 +13,6 @@
 #include <perfdhcp/receiver.h>
 #include <perfdhcp/command_options.h>
 #include <perfdhcp/perf_socket.h>
-#include <perfdhcp/random_number_generator.h>
 
 #include <dhcp/iface_mgr.h>
 #include <dhcp/dhcp4.h>
@@ -25,9 +24,9 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+#include <random>
 #include <string>
 #include <vector>
-#include <unordered_map>
 
 namespace isc {
 namespace perfdhcp {
@@ -181,6 +180,39 @@ public:
     private:
         uint32_t num_;   ///< Current number.
         uint32_t range_; ///< Number of unique numbers generated.
+    };
+
+    /// \brief Random numbers generator class. The generated numbers
+    /// are uniformly distributed in the range of [min, max].
+    class RandomGenerator : public NumberGenerator {
+    public:
+        /// \brief Constructor.
+        ///
+        /// \param min minimum number generated.
+        /// \param max maximum number generated.
+        RandomGenerator(uint32_t min, uint32_t max) :
+            NumberGenerator(),
+            distribution_(min, max) {
+            // Initialize the randomness source with the current time.
+            randomness_generator_.seed(time(0));
+        }
+
+        /// \brief Generate number in range of [min, max].
+        ///
+        /// \return generated number.
+        virtual uint32_t generate() {
+            return distribution_(randomness_generator_);
+        }
+
+    private:
+        /// \brief The random values will be uniformly distributed in
+        /// the range provided in the constructor.
+        std::uniform_int_distribution<> distribution_;
+
+        /// \brief It is a high quality general-purpose random
+        /// generator. It isn't suitable for cryptographic use but is
+        /// good enough for testing.
+        std::mt19937 randomness_generator_;
     };
 
     /// \brief Length of the Ethernet HW address (MAC) in bytes.
@@ -347,11 +379,9 @@ public:
     // solution is to make this class friend of test class but this is not
     // what's followed in other classes.
 protected:
-    /// Generate uniformly distributed integers in range of [min, max]
-    UniformRandomIntegerGenerator number_generator_;
-
     /// \brief Creates DHCPREQUEST from a DHCPACK message.
     ///
+    /// @param msg_type the message type to be created (DHCPREQUEST or DHCPRELEASE)
     /// \param ack An instance of the DHCPACK message to be used to
     /// create a new message.
     ///
@@ -614,10 +644,9 @@ protected:
     void addUniqeAddr(const std::set<std::string>& current, ExchangeType xchg_type) {
         switch(xchg_type) {
             case ExchangeType::SA: {
-                for (auto current_it = current.begin();
-                     current_it != current.end(); ++current_it) {
+                for (auto const& current_it : current) {
                     // addresses should be unique cross packets
-                    auto ret = unique_address_.emplace(*current_it);
+                    auto ret = unique_address_.emplace(current_it);
                     if (!ret.second) {
                         stats_mgr_.updateNonUniqueAddrNum(ExchangeType::SA);
                     }
@@ -625,10 +654,9 @@ protected:
                 break;
             }
             case ExchangeType::RR: {
-                for (auto current_it = current.begin();
-                     current_it != current.end(); ++current_it) {
+                for (auto const& current_it : current) {
                     // addresses should be unique cross packets
-                    auto ret = unique_reply_address_.emplace(*current_it);
+                    auto ret = unique_reply_address_.emplace(current_it);
                     if (!ret.second) {
                         stats_mgr_.updateNonUniqueAddrNum(ExchangeType::RR);
                     }
@@ -641,10 +669,9 @@ protected:
                 break;
             }
             case ExchangeType::DO: {
-                for (auto current_it = current.begin();
-                     current_it != current.end(); ++current_it) {
+                for (auto const& current_it : current) {
                     // addresses should be unique cross packets
-                    auto ret = unique_address_.emplace(*current_it);
+                    auto ret = unique_address_.emplace(current_it);
                     if (!ret.second) {
                         stats_mgr_.updateNonUniqueAddrNum(ExchangeType::DO);
                     }
@@ -652,10 +679,9 @@ protected:
                 break;
             }
             case ExchangeType::RA: {
-                for (auto current_it = current.begin();
-                     current_it != current.end(); ++current_it) {
+                for (auto const& current_it : current) {
                     // addresses should be unique cross packets
-                    auto ret = unique_reply_address_.emplace(*current_it);
+                    auto ret = unique_reply_address_.emplace(current_it);
                     if (!ret.second) {
                         stats_mgr_.updateNonUniqueAddrNum(ExchangeType::RA);
                     }
@@ -676,13 +702,13 @@ protected:
     ///
     /// \param addr holding value of unique address.
     void removeUniqueAddr(const std::set<std::string>& addr) {
-        for (auto addr_it = addr.begin(); addr_it != addr.end(); ++addr_it) {
-            auto it = unique_address_.find(*addr_it);
+        for (auto const& addr_it : addr) {
+            auto it = unique_address_.find(addr_it);
             if (it != unique_address_.end()) {
                 unique_address_.erase(it);
             }
 
-            auto it2 = unique_reply_address_.find(*addr_it);
+            auto it2 = unique_reply_address_.find(addr_it);
             if (it2 != unique_reply_address_.end()) {
                 unique_reply_address_.erase(it2);
             }
@@ -1080,6 +1106,10 @@ protected:
 
     /// \brief Storage for reply messages.
     PacketStorage<dhcp::Pkt6> reply_storage_;
+
+    /// \brief Generate uniformly distributed integers in range of
+    /// [min, max].
+    NumberGeneratorPtr random_generator_;
 
     /// \brief Transaction id generator.
     NumberGeneratorPtr transid_gen_;

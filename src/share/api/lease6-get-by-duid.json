@@ -2,7 +2,7 @@
     "access": "read",
     "avail": "1.7.1",
     "brief": [
-        "This command retrieves all IPv6 leases with the specified hardware address."
+        "This command retrieves all IPv6 leases with the specified DUID."
     ],
     "cmd-syntax": [
         "{",
@@ -17,7 +17,6 @@
         "3 is returned if no leases are found with specified parameter."
     ],
     "resp-syntax": [
-        "[",
         "  {",
         "    \"arguments\": {",
         "      \"leases\": [",
@@ -40,8 +39,7 @@
         "    },",
         "    \"result\": 0,",
         "    \"text\": \"1 IPv6 lease(s) found.\"",
-        "  }",
-        "]"
+        "  }"
     ],
     "description": "See <xref linkend=\"command-lease6-get-by-duid\"/>",
     "hook": "lease_cmds",

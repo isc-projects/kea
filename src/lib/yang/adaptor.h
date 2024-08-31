@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,19 +7,11 @@
 #ifndef ISC_ADAPTOR_H
 #define ISC_ADAPTOR_H 1
 
-#include <exceptions/exceptions.h>
 #include <cc/data.h>
+#include <exceptions/exceptions.h>
 
 namespace isc {
 namespace yang {
-
-/// @brief Missing key error.
-class MissingKey : public isc::Exception {
-public:
-    MissingKey(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what)
-    {}
-};
 
 /// @brief JSON adaptor between canonical Kea and YANG models.
 ///
@@ -29,12 +21,8 @@ public:
 /// The basic adaptor provides a set of tools.
 class Adaptor {
 public:
-
-    /// @brief Constructor.
-    Adaptor();
-
     /// @brief Destructor.
-    virtual ~Adaptor();
+    virtual ~Adaptor() = default;
 
     /// @brief Get user context.
     ///
@@ -78,7 +66,7 @@ public:
 
     /// @brief Modify a configuration in its JSON element format.
     ///
-    /// Smart merging tool, e.g. completing a from yang configuration.
+    /// Smart merging tool, e.g. completing an ElementPtr received from YANG.
     ///
     /// A modification is a path and actions:
     ///  - path item can be:
@@ -125,9 +113,9 @@ public:
                        isc::data::ConstElementPtr actions,
                        isc::data::ElementPtr config);
 
-};
+};  // Adaptor
 
-}; // end of namespace isc::yang
-}; // end of namespace isc
+}  // namespace yang
+}  // namespace isc
 
-#endif // ISC_ADAPTOR_H
+#endif  // ISC_ADAPTOR_H

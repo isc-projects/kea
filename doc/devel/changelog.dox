@@ -1,0 +1,56 @@
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+
+ @page changelog ChangeLog
+
+To avoid the merge conflict on the \c ChangeLog file, we introduced in Stork an
+experimental way to update this file.
+The ChangeLog entry related to a particular merge request is no longer added
+directly to the ChangeLog file. Instead of it, the changelog note should
+be saved in a new file in the \c changelog_unreleased/ directory. The name of
+the file should include the GitLab issue number to ensure the filename is
+unique for all merge requests.
+The content of the file should omit the entry number. The format is:
+
+@code{.unparsed}
+[{category}]{* if the changes are backward incompatible}		{author}
+	{multi-line description, indented}
+	{GL issue number, indented}
+{empty line}
+@endcode
+
+The category must be surrounded by square brackets. The list of categories is
+available in the ChangeLog file. The backward incompatible change is marked by
+an asterisk. The author may contain multiple names delimited by a comma
+followed by a space.
+
+The GitLab issue number must be constructed as follows:
+
+@code{.unparsed}
+(Gitlab #XXXX)
+@endcode
+
+where XXXX is the GitLab issue number.
+Example:
+
+@code{.unparsed}
+[build]		slawek
+	Changed the convention of preparing the ChangeLog file to avoid merge
+	request conflicts on this file.
+	(Gitlab #3522)
+
+@endcode
+
+The entries are merged on release by the kea/build/prepare_kea_release.sh
+script available in the QA repository that is usually used in the release
+process.
+The release engineer commits the updated ChangeLog file (with the merged
+unreleased entries) and deletes content of the changelog_unreleased
+directory.
+
+*/

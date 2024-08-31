@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,7 +15,7 @@ using namespace isc::asiolink;
 namespace isc {
 namespace http {
 
-HttpListener::HttpListener(IOService& io_service,
+HttpListener::HttpListener(const IOServicePtr& io_service,
                            const asiolink::IOAddress& server_address,
                            const unsigned short server_port,
                            const TlsContextPtr& tls_context,
@@ -40,6 +40,16 @@ HttpListener::getLocalAddress() const {
 uint16_t
 HttpListener::getLocalPort() const {
     return (impl_->getEndpoint().getPort());
+}
+
+int
+HttpListener::getNative() const {
+    return (impl_->getNative());
+}
+
+void
+HttpListener::addExternalSockets(bool use_external) {
+    impl_->addExternalSockets(use_external);
 }
 
 void

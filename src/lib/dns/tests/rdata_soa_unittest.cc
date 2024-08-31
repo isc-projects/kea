@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -36,7 +36,7 @@ protected:
     {}
 
     template <typename ExForString, typename ExForLexer>
-    void checkFromTextSOA(const string& soa_txt, const Name* origin = NULL,
+    void checkFromTextSOA(const string& soa_txt, const Name* origin = 0,
                           bool throw_str_version = true,
                           bool throw_lexer_version = true)
     {
@@ -56,22 +56,22 @@ TEST_F(Rdata_SOA_Test, createFromText) {
     // A simple case.
     checkFromTextSOA<isc::Exception, isc::Exception>(
         "ns.example.com. root.example.com. 2010012601 3600 300 3600000 1200",
-        NULL, false, false);
+        0, false, false);
 
     // Beginning and trailing space are ignored.
     checkFromTextSOA<isc::Exception, isc::Exception>(
         "  ns.example.com. root.example.com. "
-        "2010012601 3600 300 3600000 1200  ", NULL, false, false);
+        "2010012601 3600 300 3600000 1200  ", 0, false, false);
 
     // using extended TTL-like form for some parameters.
     checkFromTextSOA<isc::Exception, isc::Exception>(
         "ns.example.com. root.example.com. 2010012601 1H 5M 1000H 20M",
-        NULL, false, false);
+        0, false, false);
 
     // multi-line.
     checkFromTextSOA<isc::Exception, isc::Exception>(
         "ns.example.com. (root.example.com.\n"
-        "2010012601 1H 5M 1000H) 20M", NULL, false, false);
+        "2010012601 1H 5M 1000H) 20M", 0, false, false);
 
     // relative names for MNAME and RNAME with a separate origin (lexer
     // version only)
@@ -149,10 +149,10 @@ TEST_F(Rdata_SOA_Test, createFromText) {
     // the lexer expects a string excluding newline and EOF).
     checkFromTextSOA<InvalidRdataText, isc::Exception>(
         "ns.example.com. root.example.com. 2010012601 1H 5M 1000H 20M\n",
-        NULL, true, false);
+        0, true, false);
     checkFromTextSOA<InvalidRdataText, MasterLexer::LexerError>(
         "\nns.example.com. root.example.com. 2010012601 1H 5M 1000H 20M",
-        NULL, true, true);
+        0, true, true);
 }
 
 TEST_F(Rdata_SOA_Test, createFromWire) {

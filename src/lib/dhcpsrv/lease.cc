@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,14 +6,17 @@
 
 #include <config.h>
 
+#include <asiolink/io_address.h>
+#include <asiolink/addr_utilities.h>
 #include <dhcpsrv/lease.h>
 #include <util/pointer_util.h>
+#include <util/str.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <sstream>
 #include <iostream>
 
-
+using namespace isc::asiolink;
 using namespace isc::util;
 using namespace isc::data;
 using namespace std;
@@ -21,9 +24,10 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
-const uint32_t Lease::STATE_DEFAULT = 0x0;
-const uint32_t Lease::STATE_DECLINED = 0x1;
-const uint32_t Lease::STATE_EXPIRED_RECLAIMED = 0x2;
+const uint32_t Lease::STATE_DEFAULT = 0;
+const uint32_t Lease::STATE_DECLINED = 1;
+const uint32_t Lease::STATE_EXPIRED_RECLAIMED = 2;
+const uint32_t Lease::STATE_RELEASED = 3;
 
 std::string
 Lease::lifetimeToText(uint32_t lifetime) {
@@ -42,11 +46,10 @@ Lease::Lease(const isc::asiolink::IOAddress& addr,
              const std::string& hostname, const HWAddrPtr& hwaddr)
     : addr_(addr), valid_lft_(valid_lft), current_valid_lft_(valid_lft),
       reuseable_valid_lft_(0),
-      cltt_(cltt), current_cltt_(cltt), subnet_id_(subnet_id),
+      cltt_(cltt), current_cltt_(cltt), subnet_id_(subnet_id), pool_id_(0),
       hostname_(boost::algorithm::to_lower_copy(hostname)), fqdn_fwd_(fqdn_fwd),
       fqdn_rev_(fqdn_rev), hwaddr_(hwaddr), state_(STATE_DEFAULT) {
 }
-
 
 std::string
 Lease::typeToText(Lease::Type type) {
@@ -95,6 +98,8 @@ Lease::basicStatesToText(const uint32_t state) {
         return ("declined");
     case STATE_EXPIRED_RECLAIMED:
         return ("expired-reclaimed");
+    case STATE_RELEASED:
+        return ("released");
     default:
         // The default case will be handled further on
         ;
@@ -141,7 +146,6 @@ Lease::fromElementCommon(const LeasePtr& lease, const data::ConstElementPtr& ele
         isc_throw(BadValue, "parsed lease data is not a JSON map");
     }
 
-
     if (!lease) {
         isc_throw(Unexpected, "pointer to parsed lease is null");
     }
@@ -168,7 +172,7 @@ Lease::fromElementCommon(const LeasePtr& lease, const data::ConstElementPtr& ele
     ConstElementPtr subnet_id = element->get("subnet-id");
     if (!subnet_id || (subnet_id->getType() != Element::integer)) {
         isc_throw(BadValue, "subnet-id not present in the parsed lease"
-                  " or it is not a number");
+                  " or it is not an integer");
     }
 
     if (subnet_id->intValue() <= 0) {
@@ -180,6 +184,24 @@ Lease::fromElementCommon(const LeasePtr& lease, const data::ConstElementPtr& ele
     }
 
     lease->subnet_id_ = SubnetID(subnet_id->intValue());
+
+    // Pool identifier.
+    ConstElementPtr pool_id = element->get("pool-id");
+    if (pool_id) {
+        if (pool_id->getType() != Element::integer) {
+            isc_throw(BadValue, "pool-id is not an integer");
+        }
+
+        if (pool_id->intValue() <= 0) {
+            isc_throw(BadValue, "pool-id " << pool_id->intValue() << " is not"
+                      << " a positive integer");
+        } else if (pool_id->intValue() > numeric_limits<uint32_t>::max()) {
+            isc_throw(BadValue, "pool-id " << pool_id->intValue() << " is not"
+                      << " a 32 bit unsigned integer");
+        }
+
+        lease->pool_id_ = pool_id->intValue();
+    }
 
     // Hardware address.
     ConstElementPtr hw_address = element->get("hw-address");
@@ -203,7 +225,7 @@ Lease::fromElementCommon(const LeasePtr& lease, const data::ConstElementPtr& ele
     ConstElementPtr cltt = element->get("cltt");
     if (!cltt || (cltt->getType() != Element::integer)) {
         isc_throw(BadValue, "cltt is not present in the parsed lease"
-                  " or it is not a number");
+                  " or it is not an integer");
     }
 
     if (cltt->intValue() <= 0) {
@@ -217,7 +239,7 @@ Lease::fromElementCommon(const LeasePtr& lease, const data::ConstElementPtr& ele
     ConstElementPtr valid_lifetime = element->get("valid-lft");
     if (!valid_lifetime || (valid_lifetime->getType() != Element::integer)) {
         isc_throw(BadValue, "valid-lft is not present in the parsed lease"
-                  " or it is not a number");
+                  " or it is not an integer");
     }
 
     if (valid_lifetime->intValue() < 0) {
@@ -259,7 +281,7 @@ Lease::fromElementCommon(const LeasePtr& lease, const data::ConstElementPtr& ele
     ConstElementPtr state = element->get("state");
     if (!state || (state->getType() != Element::integer)) {
         isc_throw(BadValue, "state is not present in the parsed lease"
-                  " or it is not a number");
+                  " or it is not an integer");
     }
 
     if ((state->intValue() < 0) || (state->intValue() > Lease::STATE_EXPIRED_RECLAIMED)) {
@@ -293,34 +315,6 @@ Lease::syncCurrentExpirationTime(const Lease& from, Lease& to) {
     to.current_valid_lft_ = from.valid_lft_;
 }
 
-Lease4::Lease4(const Lease4& other)
-    : Lease(other.addr_, other.valid_lft_,
-            other.subnet_id_, other.cltt_, other.fqdn_fwd_,
-            other.fqdn_rev_, other.hostname_, other.hwaddr_) {
-
-    // Copy over fields derived from Lease.
-    state_ = other.state_;
-
-    // Copy the hardware address if it is defined.
-    if (other.hwaddr_) {
-        hwaddr_.reset(new HWAddr(*other.hwaddr_));
-    } else {
-        hwaddr_.reset();
-    }
-
-    if (other.client_id_) {
-        client_id_.reset(new ClientId(other.client_id_->getClientId()));
-
-    } else {
-        client_id_.reset();
-
-    }
-
-    if (other.getContext()) {
-        setContext(other.getContext());
-    }
-}
-
 Lease4::Lease4(const isc::asiolink::IOAddress& address,
                const HWAddrPtr& hw_address,
                const ClientIdPtr& client_id,
@@ -330,10 +324,12 @@ Lease4::Lease4(const isc::asiolink::IOAddress& address,
                const bool fqdn_fwd,
                const bool fqdn_rev,
                const std::string& hostname)
-
     : Lease(address, valid_lifetime, subnet_id, cltt, fqdn_fwd,
             fqdn_rev, hostname, hw_address),
-      client_id_(client_id) {
+      client_id_(client_id), remote_id_(), relay_id_() {
+}
+
+Lease4::Lease4() : Lease(0, 0, 0, 0, false, false, "", HWAddrPtr()) {
 }
 
 std::string
@@ -343,7 +339,7 @@ Lease4::statesToText(const uint32_t state) {
 
 const std::vector<uint8_t>&
 Lease4::getClientIdVector() const {
-    if(!client_id_) {
+    if (!client_id_) {
         static std::vector<uint8_t> empty_vec;
         return (empty_vec);
     }
@@ -389,41 +385,6 @@ Lease4::decline(uint32_t probation_period) {
     valid_lft_ = probation_period;
 }
 
-Lease4&
-Lease4::operator=(const Lease4& other) {
-    if (this != &other) {
-        addr_ = other.addr_;
-        valid_lft_ = other.valid_lft_;
-        current_valid_lft_ = other.current_valid_lft_;
-        reuseable_valid_lft_ = other.reuseable_valid_lft_;
-        cltt_ = other.cltt_;
-        current_cltt_ = other.current_cltt_;
-        subnet_id_ = other.subnet_id_;
-        hostname_ = other.hostname_;
-        fqdn_fwd_ = other.fqdn_fwd_;
-        fqdn_rev_ = other.fqdn_rev_;
-        state_ = other.state_;
-
-        // Copy the hardware address if it is defined.
-        if (other.hwaddr_) {
-            hwaddr_.reset(new HWAddr(*other.hwaddr_));
-        } else {
-            hwaddr_.reset();
-        }
-
-        if (other.client_id_) {
-            client_id_.reset(new ClientId(other.client_id_->getClientId()));
-        } else {
-            client_id_.reset();
-        }
-
-        if (other.getContext()) {
-            setContext(other.getContext());
-        }
-    }
-    return (*this);
-}
-
 isc::data::ElementPtr
 Lease4::toElement() const {
     // Prepare the map
@@ -431,6 +392,9 @@ Lease4::toElement() const {
     contextToElement(map);
     map->set("ip-address", Element::create(addr_.toText()));
     map->set("subnet-id", Element::create(static_cast<long int>(subnet_id_)));
+    if (pool_id_) {
+        map->set("pool-id", Element::create(static_cast<long int>(pool_id_)));
+    }
     map->set("hw-address", Element::create(hwaddr_->toText(false)));
 
     if (client_id_) {
@@ -466,7 +430,6 @@ Lease4::fromElement(const ConstElementPtr& element) {
         isc_throw(BadValue, "hw-address not present in the parsed lease");
     }
 
-
     // Client identifier is IPv4 specific.
     ConstElementPtr client_id = element->get("client-id");
     if (client_id) {
@@ -492,9 +455,16 @@ Lease6::Lease6(Lease::Type type, const isc::asiolink::IOAddress& addr,
                SubnetID subnet_id, const HWAddrPtr& hwaddr, uint8_t prefixlen)
     : Lease(addr, valid, subnet_id, 0/*cltt*/, false, false, "", hwaddr),
       type_(type), prefixlen_(prefixlen), iaid_(iaid), duid_(duid),
-      preferred_lft_(preferred), reuseable_preferred_lft_(0) {
+      preferred_lft_(preferred), reuseable_preferred_lft_(0),
+      extended_info_action_(ExtendedInfoAction::ACTION_IGNORE) {
     if (!duid) {
-        isc_throw(InvalidOperation, "DUID is mandatory for an IPv6 lease");
+        isc_throw(BadValue, "DUID is mandatory for an IPv6 lease");
+    }
+
+    if (prefixlen != 128) {
+        if (type != Lease::TYPE_PD) {
+            isc_throw(BadValue, "prefixlen must be 128 for non prefix type");
+        }
     }
 
     cltt_ = time(NULL);
@@ -509,9 +479,17 @@ Lease6::Lease6(Lease::Type type, const isc::asiolink::IOAddress& addr,
     : Lease(addr, valid, subnet_id, 0/*cltt*/,
             fqdn_fwd, fqdn_rev, hostname, hwaddr),
       type_(type), prefixlen_(prefixlen), iaid_(iaid), duid_(duid),
-      preferred_lft_(preferred), reuseable_preferred_lft_(0) {
+      preferred_lft_(preferred), reuseable_preferred_lft_(0),
+      extended_info_action_(ExtendedInfoAction::ACTION_IGNORE) {
+
     if (!duid) {
-        isc_throw(InvalidOperation, "DUID is mandatory for an IPv6 lease");
+        isc_throw(BadValue, "DUID is mandatory for an IPv6 lease");
+    }
+
+    if (prefixlen != 128) {
+        if (type != Lease::TYPE_PD) {
+            isc_throw(BadValue, "prefixlen must be 128 for non prefix type");
+        }
     }
 
     cltt_ = time(NULL);
@@ -521,7 +499,8 @@ Lease6::Lease6(Lease::Type type, const isc::asiolink::IOAddress& addr,
 Lease6::Lease6()
     : Lease(isc::asiolink::IOAddress("::"), 0, 0, 0, false, false, "",
             HWAddrPtr()), type_(TYPE_NA), prefixlen_(0), iaid_(0),
-            duid_(DuidPtr()), preferred_lft_(0), reuseable_preferred_lft_(0) {
+            duid_(DuidPtr()), preferred_lft_(0), reuseable_preferred_lft_(0),
+            extended_info_action_(ExtendedInfoAction::ACTION_IGNORE) {
 }
 
 std::string
@@ -549,7 +528,7 @@ Lease6::decline(uint32_t probation_period) {
     hostname_ = string("");
     fqdn_fwd_ = false;
     fqdn_rev_ = false;
-    state_ = Lease::STATE_DECLINED;
+    state_ = STATE_DECLINED;
 }
 
 std::string
@@ -568,6 +547,7 @@ Lease6::toText() const {
            << "DUID:          " << (duid_?duid_->toText():"(none)") << "\n"
            << "Hardware addr: " << (hwaddr_?hwaddr_->toText(false):"(none)") << "\n"
            << "Subnet ID:     " << subnet_id_ << "\n"
+           << "Pool ID:       " << pool_id_ << "\n"
            << "State:         " << statesToText(state_) << "\n";
 
     if (getContext()) {
@@ -587,7 +567,12 @@ Lease4::toText() const {
            << "Hardware addr: " << (hwaddr_ ? hwaddr_->toText(false) : "(none)") << "\n"
            << "Client id:     " << (client_id_ ? client_id_->toText() : "(none)") << "\n"
            << "Subnet ID:     " << subnet_id_ << "\n"
-           << "State:         " << statesToText(state_) << "\n";
+           << "Pool ID:       " << pool_id_ << "\n"
+           << "State:         " << statesToText(state_) << "\n"
+           << "Relay ID:      " << (relay_id_.empty() ? "(none)" :
+                                    str::dumpAsHex(&relay_id_[0], relay_id_.size())) << "\n"
+           << "Remote ID:     " << (remote_id_.empty() ? "(none)" :
+                                    str::dumpAsHex(&remote_id_[0], remote_id_.size())) << "\n";
 
     if (getContext()) {
         stream << "User context:  " << getContext()->str() << "\n";
@@ -596,13 +581,13 @@ Lease4::toText() const {
     return (stream.str());
 }
 
-
 bool
 Lease4::operator==(const Lease4& other) const {
     return (nullOrEqualValues(hwaddr_, other.hwaddr_) &&
             nullOrEqualValues(client_id_, other.client_id_) &&
             addr_ == other.addr_ &&
             subnet_id_ == other.subnet_id_ &&
+            pool_id_ == other.pool_id_ &&
             valid_lft_ == other.valid_lft_ &&
             current_valid_lft_ == other.current_valid_lft_ &&
             reuseable_valid_lft_ == other.reuseable_valid_lft_ &&
@@ -631,6 +616,7 @@ Lease6::operator==(const Lease6& other) const {
             cltt_ == other.cltt_ &&
             current_cltt_ == other.current_cltt_ &&
             subnet_id_ == other.subnet_id_ &&
+            pool_id_ == other.pool_id_ &&
             hostname_ == other.hostname_ &&
             fqdn_fwd_ == other.fqdn_fwd_ &&
             fqdn_rev_ == other.fqdn_rev_ &&
@@ -651,6 +637,9 @@ Lease6::toElement() const {
     map->set("iaid", Element::create(static_cast<long int>(iaid_)));
     map->set("duid", Element::create(duid_->toText()));
     map->set("subnet-id", Element::create(static_cast<long int>(subnet_id_)));
+    if (pool_id_) {
+        map->set("pool-id", Element::create(static_cast<long int>(pool_id_)));
+    }
 
     map->set("cltt", Element::create(cltt_));
     map->set("preferred-lft", Element::create(static_cast<long int>(preferred_lft_)));
@@ -691,11 +680,13 @@ Lease6::fromElement(const data::ConstElementPtr& element) {
     lease->type_ = textToType(lease_type->stringValue());
 
     // prefix length
-    ConstElementPtr prefix_len = element->get("prefix-len");
-    if (lease->type_ == Lease::TYPE_PD) {
+    if (lease->type_ != Lease::TYPE_PD) {
+        lease->prefixlen_ = 128;
+    } else {
+        ConstElementPtr prefix_len = element->get("prefix-len");
         if (!prefix_len || (prefix_len->getType() != Element::integer)) {
             isc_throw(BadValue, "prefix-len is not present in the parsed lease"
-                      " or it is not a number");
+                      " or it is not an integer");
         }
 
         if ((prefix_len->intValue() < 1) || (prefix_len->intValue() > 128)) {
@@ -710,7 +701,7 @@ Lease6::fromElement(const data::ConstElementPtr& element) {
     ConstElementPtr iaid = element->get("iaid");
     if (!iaid || (iaid->getType() != Element::integer)) {
         isc_throw(BadValue, "iaid is not present in the parsed lease"
-                  " or it is not a number");
+                  " or it is not an integer");
     }
 
     if (iaid->intValue() < 0) {
@@ -739,7 +730,7 @@ Lease6::fromElement(const data::ConstElementPtr& element) {
     ConstElementPtr preferred_lft = element->get("preferred-lft");
     if (!preferred_lft || (preferred_lft->getType() != Element::integer)) {
         isc_throw(BadValue, "preferred-lft is not present in the parsed lease"
-                  " or is not a number");
+                  " or is not an integer");
     }
 
     if (preferred_lft->intValue() < 0) {

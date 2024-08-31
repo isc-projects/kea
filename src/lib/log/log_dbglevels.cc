@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,6 +20,9 @@ extern const int DBGLVL_TRACE_BASIC = 40;
 extern const int DBGLVL_TRACE_BASIC_DATA = 45;
 extern const int DBGLVL_TRACE_DETAIL = 50;
 extern const int DBGLVL_TRACE_DETAIL_DATA = 55;
+extern const int DBGLVL_TRACE_TECHNICAL = 70;
+extern const int DBGLVL_TRACE_TECHNICAL_DATA = 90;
+extern const int DBGLVL_TRACE_MAX = 99;
 
-}
-}
+}  // namespace log
+}  // namespace isc

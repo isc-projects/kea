@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,15 +6,15 @@
 
 #include <config.h>
 
-#include <netconf/parser_context.h>
-#include <netconf/netconf_parser.h>
-#include <netconf/netconf_log.h>
-#include <exceptions/exceptions.h>
-//#include <cc/dhcp_config_error.h>
 #include <cc/data.h>
+#include <exceptions/exceptions.h>
+#include <netconf/netconf_log.h>
+#include <netconf/netconf_parser.h>
+#include <netconf/parser_context.h>
+
 #include <fstream>
-#include <sstream>
 #include <limits>
+#include <sstream>
 
 namespace isc {
 namespace netconf {
@@ -29,14 +29,14 @@ ParserContext::~ParserContext()
 }
 
 isc::data::ElementPtr
-ParserContext::parseString(const std::string& str, ParserType parser_type)
+ParserContext::parseString(string const& str, ParserType parser_type)
 {
     scanStringBegin(str, parser_type);
     return (parseCommon());
 }
 
 isc::data::ElementPtr
-ParserContext::parseFile(const std::string& filename, ParserType parser_type) {
+ParserContext::parseFile(string const& filename, ParserType parser_type) {
     FILE* f = fopen(filename.c_str(), "r");
     if (!f) {
         isc_throw(ParseError, "Unable to open file " << filename);
@@ -72,7 +72,7 @@ ParserContext::parseCommon() {
 
 void
 ParserContext::error(const isc::netconf::location& loc,
-                     const std::string& what,
+                     string const& what,
                      size_t pos)
 {
     if (pos == 0) {
@@ -83,13 +83,13 @@ ParserContext::error(const isc::netconf::location& loc,
 }
 
 void
-ParserContext::error(const std::string& what)
+ParserContext::error(string const& what)
 {
     isc_throw(ParseError, what);
 }
 
 void
-ParserContext::fatal(const std::string& what)
+ParserContext::fatal(string const& what)
 {
     isc_throw(ParseError, what);
 }
@@ -97,14 +97,14 @@ ParserContext::fatal(const std::string& what)
 isc::data::Element::Position
 ParserContext::loc2pos(isc::netconf::location& loc)
 {
-    const std::string& file = *loc.begin.filename;
+    string const& file = *loc.begin.filename;
     const uint32_t line = loc.begin.line;
     const uint32_t pos = loc.begin.column;
     return (isc::data::Element::Position(file, line, pos));
 }
 
 void
-ParserContext::require(const std::string& name,
+ParserContext::require(string const& name,
                        isc::data::Element::Position open_loc,
                        isc::data::Element::Position close_loc)
 {
@@ -119,7 +119,7 @@ ParserContext::require(const std::string& name,
 }
 
 void
-ParserContext::unique(const std::string& name,
+ParserContext::unique(string const& name,
                       isc::data::Element::Position loc)
 {
     ConstElementPtr value = stack_.back()->get(name);
@@ -153,7 +153,7 @@ ParserContext::leave()
     cstack_.pop_back();
 }
 
-const std::string
+string const
 ParserContext::contextName()
 {
     switch (ctx_) {
@@ -184,8 +184,8 @@ ParserContext::contextName()
 
 void
 ParserContext::warning(const isc::netconf::location& loc,
-                       const std::string& what) {
-    std::ostringstream msg;
+                       string const& what) {
+    ostringstream msg;
     msg << loc << ": " << what;
     LOG_WARN(netconf_logger, NETCONF_CONFIG_SYNTAX_WARNING)
         .arg(msg.str());

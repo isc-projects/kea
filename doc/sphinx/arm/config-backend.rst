@@ -12,21 +12,21 @@ Kea Configuration Backend (CB or config backend) gives Kea servers the ability
 to manage and fetch their configuration from one or more databases. In
 this documentation, the term "Configuration Backend" may also refer to
 the particular Kea module providing support to manage and fetch the
-configuration information from the particular database type.  For
-example, the MySQL Configuration Backend is the logic implemented within the
-``mysql_cb`` hook library, which provides a complete set of functions to
+configuration information from the particular database type. For
+example, the MySQL Configuration Backend is the logic implemented within
+:ischooklib:`libdhcp_mysql_cb.so`, which provides a complete set of functions to
 manage and fetch the configuration information from the MySQL database.
-The PostgreSQL Configuration Backend is the logic implemented within the
-``pgsql_cb`` hook library, which provides a complete set of functions to
+The PostgreSQL Configuration Backend is the logic implemented within
+:ischooklib:`libdhcp_pgsql_cb.so`, which provides a complete set of functions to
 manage and fetch the configuration information from the PostgreSQL database.
-From herein, the term "database" is used to refer to either a MySQL or
+From here on, the term "database" is used to refer to either a MySQL or
 PostgreSQL database.
 
 In small deployments, e.g. those comprising a single DHCP server
 instance with limited and infrequently changing number of subnets, it
 may be impractical to use the CB as a configuration repository because
 it requires additional third-party software to be installed and
-configured - in particular the database server, client and libraries.
+configured - in particular the database server, client, and libraries.
 Once the number of DHCP servers and/or the number of managed subnets in the
 network grows, the usefulness of the CB becomes obvious.
 
@@ -56,7 +56,7 @@ entire configuration to the new server when a common database is used.
 Using the database as a configuration repository for Kea servers also
 brings other benefits, such as:
 
--  the ability to use database specific tools to access the configuration
+-  the ability to use database-specific tools to access the configuration
    information;
 
 -  the ability to create customized statistics based on the information
@@ -85,7 +85,7 @@ Currently, the Kea CB has the following limitations:
 Kea CB stores data in a schema that is public. It is possible to
 insert configuration data into the tables manually or automatically
 using SQL scripts, but this requires SQL and schema knowledge.
-The supported method for managing the data is through the ``cb-cmds`` hook library,
+The supported method for managing the data is through :ischooklib:`libdhcp_cb_cmds.so`,
 which provides management commands for config backends. It simplifies many
 typical operations, such as listing, adding, retrieving, and deleting global
 parameters, shared networks, subnets, pools, options, option definitions, and
@@ -95,16 +95,17 @@ Appendix A of this manual for a complete list.
 
 .. note::
 
-   The ``cb_cmds`` hook library is available only to ISC support subscribers.
-   For more information on subscription options, please complete the form
-   at https://www.isc.org/contact.
+   :ischooklib:`libdhcp_cb_cmds.so` is available only to ISC customers with
+   a paid support contract. For more information on subscription options, please
+   complete the form at https://www.isc.org/contact.
 
-
-The schema creation scripts can be found at `dhcpdb_create.mysql <https://gitlab.isc.org/isc-projects/kea/blob/master/src/share/database/scripts/mysql/dhcpdb_create.mysql>`__ and
-;
-`dhcpdb_create.pgsql <https://gitlab.isc.org/isc-projects/kea/blob/master/src/share/database/scripts/pgsql/dhcpdb_create.pgsql>`__ and
-;
-other related design documents are stored in our GitLab: `CB Design <https://gitlab.isc.org/isc-projects/kea/wikis/designs/configuration-in-db-design>`__ and
+The schema creation scripts can be found at
+`dhcpdb_create.mysql <https://gitlab.isc.org/isc-projects/kea/blob/master/src/share/database/scripts/mysql/dhcpdb_create.mysql>`__
+and
+`dhcpdb_create.pgsql <https://gitlab.isc.org/isc-projects/kea/blob/master/src/share/database/scripts/pgsql/dhcpdb_create.pgsql>`__.
+Other related design documents are stored in our GitLab:
+`CB Design <https://gitlab.isc.org/isc-projects/kea/wikis/designs/configuration-in-db-design>`__
+and
 `Client Classes in CB Design <https://gitlab.isc.org/isc-projects/kea/wikis/designs/client-classes-in-cb>`__.
 
 We strongly recommend against duplication of configuration information
@@ -132,11 +133,11 @@ in two independent configuration sources.
 
 .. note::
 
-   It is recommended that the ``subnet_cmds`` hook library not be used to
+   It is recommended that :ischooklib:`libdhcp_subnet_cmds.so` not be used to
    manage subnets when the configuration backend is used as a source
-   of information about the subnets. The ``subnet_cmds`` hook library
+   of information about the subnets. :ischooklib:`libdhcp_subnet_cmds.so`
    modifies the local subnets configuration in the server's memory,
-   not in the database. Use the ``cb_cmds`` hook library to manage the
+   not in the database. Use :ischooklib:`libdhcp_cb_cmds.so` to manage the
    subnets information in the database instead.
 
 .. note::
@@ -162,33 +163,29 @@ in two independent configuration sources.
 CB Components
 -------------
 
-To use a MySQL configuration backend you must compile the ``mysql_cb`` open
-source hook library and configure the DHCP servers to load it.  It is compiled when
-the ``--with-mysql`` configuration switch is used during the Kea build. The MySQL
-C client libraries must be installed, as explained in :ref:`dhcp-install-configure`.
+To use a MySQL configuration backend, :ischooklib:`libdhcp_mysql_cb.so`
+must be compiled and the DHCP servers must be configured to load it.
+It is compiled when the ``--with-mysql`` configuration switch is used during the Kea build.
+The MySQL C client libraries must be installed, as explained in :ref:`dhcp-install-configure`.
 
-To use a PostgreSQL configuration backend you must compile the ``pgsql_cb`` open
-source hook library and configure the DHCP servers to load it.  It is compiled when
+To use a PostgreSQL configuration backend, :ischooklib:`libdhcp_pgsql_cb.so` must
+be compiled and the DHCP servers must be configured to load it. It is compiled when
 the ``--with-pgsql`` configuration switch is used during the Kea build. The PostgreSQL
 C client libraries must be installed, as explained in :ref:`dhcp-install-configure`.
 
 .. note::
 
    An existing database schema must be upgraded to the latest schema
-   required by the particular Kea version using the ``kea-admin`` tool,
+   required by the particular Kea version using the :iscman:`kea-admin` tool,
    as described in :ref:`kea-admin`.
 
-The ``cb_cmds`` premium hook library, which is available to ISC's paid support
-customers, provides a complete set of commands to manage the
+:ischooklib:`libdhcp_cb_cmds.so` provides a complete set of commands to manage the
 servers' configuration information within the database. This library can
 be attached to both DHCPv4 and DHCPv6 server instances. While it is
-possible to manage the configuration information without the ``cb_cmds``
-hook library with commonly available tools, such as MySQL Workbench or
-the command-line MySQL client, or by directly working with the database;
+possible to manage the configuration information without :ischooklib:`libdhcp_cb_cmds.so`
+using commonly available tools, such as MySQL Workbench or
+the command-line MySQL client, or by directly working with the database,
 these avenues are neither recommended nor supported.
-
-Refer to :ref:`hooks-cb-cmds` for the details regarding the
-``cb_cmds`` hook library.
 
 The DHCPv4 and DHCPv6 server-specific configurations of the CB, as well as
 the list of supported configuration parameters, can be found in
@@ -210,8 +207,8 @@ by "server tags." The server tag is an arbitrary string holding the name
 of the Kea server instance. The tags of the DHCPv4 and DHCPv6 servers are
 independent in the database, i.e. the same server tag can be created for
 both the DHCPv4 and the DHCPv6 server. The value is configured
-using the ``server-tag`` parameter in the Dhcp4 or Dhcp6 scope. The current
-server tag can be checked with the ``server-tag-get`` command.
+using the ``server-tag`` parameter in the ``Dhcp4`` or ``Dhcp6`` scope. The current
+server tag can be checked with the :isccmd:`server-tag-get` command.
 
 The server definition, which consists of the server tag and the server
 description, must be stored in the configuration database prior to creating
@@ -223,7 +220,7 @@ servers in the database.
 Commands which contain the logical server `all` are applied to all servers
 connecting to the database. The `all` server cannot be
 deleted or modified, and it is not returned among other servers
-as a result of the ``remote-server[46]-get-all`` command.
+as a result of the :isccmd:`remote-server4-get-all` and :isccmd:`remote-server6-get-all` commands.
 
 In most cases, there are no server tags defined in the configuration
 database; all connecting servers get the same configuration
@@ -245,9 +242,8 @@ servers.
 
 To differentiate between different Kea server configurations, a
 list of the server tags used by the servers must be stored in the
-database. For the DHCPv4 and DHCPv6 servers, it can be done using the
-commands described in :ref:`command-remote-server4-set` and
-:ref:`command-remote-server6-set`. The
+database. For the DHCPv4 and DHCPv6 servers, this can be done using the
+:isccmd:`remote-server4-set` and :isccmd:`remote-server6-set` commands. The
 server tags can then be used to associate the configuration information with
 the servers. However, it is important to note that some DHCP
 configuration elements may be associated with multiple server tags (known
@@ -266,8 +262,8 @@ that any particular subnet may have only one definition within this
 network. Each subnet has two unique identifiers: the subnet identifier and the
 subnet prefix. The subnet identifier is used in Kea to uniquely
 identify the subnet within the network and to connect it with other configuration elements,
-e.g. in host reservations. Some commands provided by the
-``cb_cmds`` hook library allow the subnet
+e.g. in host reservations. Some commands provided by
+:ischooklib:`libdhcp_cb_cmds.so` allow the subnet
 information to be accessed by either subnet identifier or prefix, and explicitly prohibit
 using the server tag to access the subnet. This is because, in
 general, the subnet definition is associated with multiple servers
@@ -293,8 +289,9 @@ set to the same or different values. The renew timer
 parameter has no unique identifier by which it could be
 accessed, modified, or otherwise used. Global parameters like
 the renew timer can be accessed by the parameter name and the
-tag of the server for which they are configured. For example:
-the commands described in :ref:`command-remote-global-parameter4-get` allow
+tag of the server for which they are configured. For example, the
+:isccmd:`remote-global-parameter4-get` and
+:isccmd:`remote-global-parameter6-get` commands allow
 the value of the global parameter to be fetched by the parameter name and
 the server name. Getting the global parameter only by its name (without
 specifying the server tag) is not possible, because there may be many

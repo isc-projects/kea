@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -36,16 +36,20 @@
  * a patch to ISC and what happens next. Please read it if you are considering
  * sending us any code.
  *
- * @section buildingKeaWithUnitTests Building Kea with Unit tests
+ * @section qa Quality Assurance
+ * - @subpage qaIntro
  * - @subpage unitTests
  *   - @subpage unitTestsEnvironmentVariables
  *   - @subpage unitTestsSanitizers
  *   - @subpage unitTestsDatabaseConfig
  *   - @subpage unitTestsSysrepo
  *   - @subpage writingShellScriptsAndTests
- *
- * @section performance Performance
- * - @subpage perfdhcpInternals
+ * - @subpage performance
+ * - @subpage fuzzer
+ * - @subpage qa
+ *   - @subpage ciGithub
+ *   - @subpage ciGitlab
+ *   - @subpage ciJenkins
  *
  * @section hooksFramework Hooks Framework
  * - @subpage hooksdgDevelopersGuide
@@ -121,6 +125,7 @@
  *   - @subpage libdhcpPktFilter6
  *   - @subpage libdhcpErrorLogging
  * - @subpage libstats
+ * - @subpage libasiodns
  * - @subpage libdhcp_ddns
  * - @subpage libdhcpsrv
  *   - @subpage leasemgr
@@ -141,16 +146,16 @@
  *
  * @section miscellaneousTopics Miscellaneous Topics
  * - @subpage terminology
+ * - @subpage changelog
  * - @subpage parser
  * - @subpage logKeaLogging
  *   - @subpage logBasicIdeas
  *   - @subpage logDeveloperUse
  *   - @subpage logNotes
  * - @subpage LoggingApi
- * - @subpage SocketSessionUtility
- * - @subpage fuzzer
  * - @subpage crossCompile
+ * - @subpage debug
  * - @subpage docs
- * - <a href="./doxygen-error.log">Documentation warnings and errors</a>
+ * - <a href="./doxygen-error.log"><b>Documentation Warnings and Errors</b></a>
  *
  */

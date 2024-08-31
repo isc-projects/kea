@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 
 #include <database/database_connection.h>
 #include <test_config_backend_dhcp4.h>
+#include <boost/foreach.hpp>
 #include <list>
 
 using namespace isc::data;
@@ -37,7 +38,7 @@ TestConfigBackendDHCPv4::unregisterBackendType(ConfigBackendDHCPv4Mgr& mgr,
 Subnet4Ptr
 TestConfigBackendDHCPv4::getSubnet4(const db::ServerSelector& server_selector,
                                     const std::string& subnet_prefix) const{
-    const auto& index = subnets_.get<SubnetPrefixIndexTag>();
+    auto const& index = subnets_.get<SubnetPrefixIndexTag>();
     auto subnet_it = index.find(subnet_prefix);
     if (subnet_it == index.cend()) {
         return (Subnet4Ptr());
@@ -50,7 +51,7 @@ TestConfigBackendDHCPv4::getSubnet4(const db::ServerSelector& server_selector,
         return (subnet->getServerTags().empty() ? subnet : Subnet4Ptr());
     }
     auto tags = server_selector.getTags();
-    for (auto tag : tags) {
+    for (auto const& tag : tags) {
         if (subnet->hasServerTag(ServerTag(tag))) {
             return (subnet);
         }
@@ -61,7 +62,7 @@ TestConfigBackendDHCPv4::getSubnet4(const db::ServerSelector& server_selector,
 Subnet4Ptr
 TestConfigBackendDHCPv4::getSubnet4(const db::ServerSelector& server_selector,
                                     const SubnetID& subnet_id) const {
-    const auto& index = subnets_.get<SubnetSubnetIdIndexTag>();
+    auto const& index = subnets_.get<SubnetSubnetIdIndexTag>();
     auto subnet_it = index.find(subnet_id);
     if (subnet_it == index.cend()) {
         return (Subnet4Ptr());
@@ -74,7 +75,7 @@ TestConfigBackendDHCPv4::getSubnet4(const db::ServerSelector& server_selector,
         return (subnet->getServerTags().empty() ? subnet : Subnet4Ptr());
     }
     auto tags = server_selector.getTags();
-    for (auto tag : tags) {
+    for (auto const& tag : tags) {
         if (subnet->hasServerTag(ServerTag(tag))) {
             return (subnet);
         }
@@ -85,7 +86,7 @@ TestConfigBackendDHCPv4::getSubnet4(const db::ServerSelector& server_selector,
 Subnet4Collection
 TestConfigBackendDHCPv4::getAllSubnets4(const db::ServerSelector& server_selector) const {
     Subnet4Collection subnets;
-    for (auto subnet : subnets_) {
+    for (auto const& subnet : subnets_) {
         if (server_selector.amAny()) {
             subnets.insert(subnet);
             continue;
@@ -98,7 +99,7 @@ TestConfigBackendDHCPv4::getAllSubnets4(const db::ServerSelector& server_selecto
         }
         bool got = false;
         auto tags = server_selector.getTags();
-        for (auto tag : tags) {
+        for (auto const& tag : tags) {
             if (subnet->hasServerTag(ServerTag(tag))) {
                 subnets.insert(subnet);
                 got = true;
@@ -118,7 +119,7 @@ TestConfigBackendDHCPv4::getAllSubnets4(const db::ServerSelector& server_selecto
 Subnet4Collection
 TestConfigBackendDHCPv4::getModifiedSubnets4(const db::ServerSelector& server_selector,
                                              const boost::posix_time::ptime& modification_time) const {
-    const auto& index = subnets_.get<SubnetModificationTimeIndexTag>();
+    auto const& index = subnets_.get<SubnetModificationTimeIndexTag>();
     Subnet4Collection subnets;
     auto lb = index.lower_bound(modification_time);
     for (auto subnet = lb; subnet != index.end(); ++subnet) {
@@ -134,7 +135,7 @@ TestConfigBackendDHCPv4::getModifiedSubnets4(const db::ServerSelector& server_se
         }
         bool got = false;
         auto tags = server_selector.getTags();
-        for (auto tag : tags) {
+        for (auto const& tag : tags) {
             if ((*subnet)->hasServerTag(ServerTag(tag))) {
                 subnets.insert(*subnet);
                 got = true;
@@ -159,7 +160,7 @@ TestConfigBackendDHCPv4::getSharedNetworkSubnets4(const db::ServerSelector& serv
     // Subnet collection does not include the index by shared network name.
     // We need to iterate over the subnets and pick those that are associated
     // with a shared network.
-    for (auto subnet : subnets_) {
+    for (auto const& subnet : subnets_) {
         // Skip subnets which do not match the server selector.
         if (server_selector.amUnassigned() &&
             !subnet->getServerTags().empty()) {
@@ -168,7 +169,7 @@ TestConfigBackendDHCPv4::getSharedNetworkSubnets4(const db::ServerSelector& serv
         if (!server_selector.amAny()) {
             bool got = false;
             auto tags = server_selector.getTags();
-            for (auto tag : tags) {
+            for (auto const& tag : tags) {
                 if (subnet->hasServerTag(ServerTag(tag))) {
                     got = true;
                     break;
@@ -197,7 +198,7 @@ TestConfigBackendDHCPv4::getSharedNetworkSubnets4(const db::ServerSelector& serv
 SharedNetwork4Ptr
 TestConfigBackendDHCPv4::getSharedNetwork4(const db::ServerSelector& server_selector,
                                            const std::string& name) const {
-    const auto& index = shared_networks_.get<SharedNetworkNameIndexTag>();
+    auto const& index = shared_networks_.get<SharedNetworkNameIndexTag>();
     auto network_it = index.find(name);
     if (network_it == index.cend()) {
         return (SharedNetwork4Ptr());
@@ -210,7 +211,7 @@ TestConfigBackendDHCPv4::getSharedNetwork4(const db::ServerSelector& server_sele
         return (network->getServerTags().empty() ? network : SharedNetwork4Ptr());
     }
     auto tags = server_selector.getTags();
-    for (auto tag : tags) {
+    for (auto const& tag : tags) {
         if (network->hasServerTag(ServerTag(tag))) {
             return (network);
         }
@@ -221,7 +222,7 @@ TestConfigBackendDHCPv4::getSharedNetwork4(const db::ServerSelector& server_sele
 SharedNetwork4Collection
 TestConfigBackendDHCPv4::getAllSharedNetworks4(const db::ServerSelector& server_selector) const{
     SharedNetwork4Collection shared_networks;
-    for (auto shared_network : shared_networks_) {
+    for (auto const& shared_network : shared_networks_) {
         if (server_selector.amAny()) {
             shared_networks.push_back(shared_network);
             continue;
@@ -234,7 +235,7 @@ TestConfigBackendDHCPv4::getAllSharedNetworks4(const db::ServerSelector& server_
         }
         bool got = false;
         auto tags = server_selector.getTags();
-        for (auto tag : tags) {
+        for (auto const& tag : tags) {
             if (shared_network->hasServerTag(ServerTag(tag))) {
                 shared_networks.push_back(shared_network);
                 got = true;
@@ -254,7 +255,7 @@ TestConfigBackendDHCPv4::getAllSharedNetworks4(const db::ServerSelector& server_
 SharedNetwork4Collection
 TestConfigBackendDHCPv4::getModifiedSharedNetworks4(const db::ServerSelector& server_selector,
                                                     const boost::posix_time::ptime& modification_time) const {
-    const auto& index = shared_networks_.get<SharedNetworkModificationTimeIndexTag>();
+    auto const& index = shared_networks_.get<SharedNetworkModificationTimeIndexTag>();
     SharedNetwork4Collection shared_networks;
     auto lb = index.lower_bound(modification_time);
     for (auto shared_network = lb; shared_network != index.end(); ++shared_network) {
@@ -270,7 +271,7 @@ TestConfigBackendDHCPv4::getModifiedSharedNetworks4(const db::ServerSelector& se
         }
         bool got = false;
         auto tags = server_selector.getTags();
-        for (auto tag : tags) {
+        for (auto const& tag : tags) {
             if ((*shared_network)->hasServerTag(ServerTag(tag))) {
                 shared_networks.push_back(*shared_network);
                 got = true;
@@ -293,20 +294,18 @@ TestConfigBackendDHCPv4::getOptionDef4(const db::ServerSelector& server_selector
                                        const std::string& space) const {
     auto tags = server_selector.getTags();
     auto candidate = OptionDefinitionPtr();
-    const auto& index = option_defs_.get<1>();
+    auto const& index = option_defs_.get<1>();
     auto option_def_it_pair = index.equal_range(code);
 
-    for (auto option_def_it = option_def_it_pair.first;
-         option_def_it != option_def_it_pair.second;
-         ++option_def_it) {
-        if ((*option_def_it)->getOptionSpaceName() == space) {
-            for (auto tag : tags) {
-                if ((*option_def_it)->hasServerTag(ServerTag(tag))) {
-                    return (*option_def_it);
+    BOOST_FOREACH(auto const& option_def_it, option_def_it_pair) {
+        if (option_def_it->getOptionSpaceName() == space) {
+            for (auto const& tag : tags) {
+                if (option_def_it->hasServerTag(ServerTag(tag))) {
+                    return (option_def_it);
                 }
             }
-            if ((*option_def_it)->hasAllServerTag()) {
-                candidate = *option_def_it;
+            if (option_def_it->hasAllServerTag()) {
+                candidate = option_def_it;
             }
         }
     }
@@ -317,7 +316,7 @@ OptionDefContainer
 TestConfigBackendDHCPv4::getAllOptionDefs4(const db::ServerSelector& server_selector) const {
     auto tags = server_selector.getTags();
     OptionDefContainer option_defs;
-    for (auto option_def : option_defs_) {
+    for (auto const& option_def : option_defs_) {
         bool got = false;
         if (server_selector.amUnassigned()) {
             if (option_def->getServerTags().empty()) {
@@ -325,7 +324,7 @@ TestConfigBackendDHCPv4::getAllOptionDefs4(const db::ServerSelector& server_sele
                 got = true;
             }
         } else {
-            for (auto tag : tags) {
+            for (auto const& tag : tags) {
                 if (option_def->hasServerTag(ServerTag(tag))) {
                     option_defs.push_back(option_def);
                     got = true;
@@ -348,11 +347,11 @@ TestConfigBackendDHCPv4::getModifiedOptionDefs4(const db::ServerSelector& server
                                                 const boost::posix_time::ptime& modification_time) const {
     auto tags = server_selector.getTags();
     OptionDefContainer option_defs;
-    const auto& index = option_defs_.get<3>();
+    auto const& index = option_defs_.get<3>();
     auto lb = index.lower_bound(modification_time);
     for (auto option_def = lb; option_def != index.end(); ++option_def) {
         bool got = false;
-        for (auto tag : tags) {
+        for (auto const& tag : tags) {
             if ((*option_def)->hasServerTag(ServerTag(tag))) {
                 option_defs.push_back(*option_def);
                 got = true;
@@ -375,19 +374,18 @@ TestConfigBackendDHCPv4::getOption4(const db::ServerSelector& server_selector,
                                     const std::string& space) const {
     auto tags = server_selector.getTags();
     auto candidate = OptionDescriptorPtr();
-    const auto& index = options_.get<1>();
+    auto const& index = options_.get<1>();
     auto option_it_pair = index.equal_range(code);
 
-    for (auto option_it = option_it_pair.first; option_it != option_it_pair.second;
-         ++option_it) {
-        if (option_it->space_name_ == space) {
-            for (auto tag : tags) {
-                if (option_it->hasServerTag(ServerTag(tag))) {
-                    return (OptionDescriptorPtr(new OptionDescriptor(*option_it)));
+    BOOST_FOREACH(auto const& option_it, option_it_pair) {
+        if (option_it.space_name_ == space) {
+            for (auto const& tag : tags) {
+                if (option_it.hasServerTag(ServerTag(tag))) {
+                    return (OptionDescriptorPtr(new OptionDescriptor(option_it)));
                 }
             }
-            if (option_it->hasAllServerTag()) {
-                candidate = OptionDescriptorPtr(new OptionDescriptor(*option_it));
+            if (option_it.hasAllServerTag()) {
+                candidate = OptionDescriptorPtr(new OptionDescriptor(option_it));
             }
         }
     }
@@ -399,9 +397,9 @@ OptionContainer
 TestConfigBackendDHCPv4::getAllOptions4(const db::ServerSelector& server_selector) const {
     auto tags = server_selector.getTags();
     OptionContainer options;
-    for (auto option : options_) {
+    for (auto const& option : options_) {
         bool got = false;
-        for (auto tag : tags) {
+        for (auto const& tag : tags) {
             if (option.hasServerTag(ServerTag(tag))) {
                 options.push_back(option);
                 got = true;
@@ -423,11 +421,11 @@ TestConfigBackendDHCPv4::getModifiedOptions4(const db::ServerSelector& server_se
                                              const boost::posix_time::ptime& modification_time) const {
     auto tags = server_selector.getTags();
     OptionContainer options;
-    const auto& index = options_.get<3>();
+    auto const& index = options_.get<3>();
     auto lb = index.lower_bound(modification_time);
     for (auto option = lb; option != index.end(); ++option) {
         bool got = false;
-        for (auto tag : tags) {
+        for (auto const& tag : tags) {
             if (option->hasServerTag(ServerTag(tag))) {
                 options.push_back(*option);
                 got = true;
@@ -449,17 +447,16 @@ TestConfigBackendDHCPv4::getGlobalParameter4(const db::ServerSelector& server_se
                                              const std::string& name) const {
     auto tags = server_selector.getTags();
     auto candidate = StampedValuePtr();
-    const auto& index = globals_.get<StampedValueNameIndexTag>();
+    auto const& index = globals_.get<StampedValueNameIndexTag>();
     auto global_range = index.equal_range(name);
-    for (auto global_it = global_range.first; global_it != global_range.second;
-         ++global_it) {
-        for (auto tag : tags) {
-            if ((*global_it)->hasServerTag(ServerTag(tag))) {
-                return (*global_it);
+    BOOST_FOREACH(auto const& global_it, global_range) {
+        for (auto const& tag : tags) {
+            if (global_it->hasServerTag(ServerTag(tag))) {
+                return (global_it);
             }
         }
-        if ((*global_it)->hasAllServerTag()) {
-            candidate = *global_it;
+        if (global_it->hasAllServerTag()) {
+            candidate = global_it;
         }
     }
 
@@ -471,9 +468,9 @@ StampedValueCollection
 TestConfigBackendDHCPv4::getAllGlobalParameters4(const db::ServerSelector& server_selector) const {
     auto tags = server_selector.getTags();
     StampedValueCollection globals;
-    for (auto global : globals_) {
+    for (auto const& global : globals_) {
         bool got = false;
-        for (auto tag : tags) {
+        for (auto const& tag : tags) {
             if (global->hasServerTag(ServerTag(tag))) {
                 globals.insert(global);
                 got = true;
@@ -495,11 +492,11 @@ TestConfigBackendDHCPv4::getModifiedGlobalParameters4(const db::ServerSelector& 
                                                       const boost::posix_time::ptime& modification_time) const {
     auto tags = server_selector.getTags();
     StampedValueCollection globals;
-    const auto& index = globals_.get<StampedValueModificationTimeIndexTag>();
+    auto const& index = globals_.get<StampedValueModificationTimeIndexTag>();
     auto lb = index.lower_bound(modification_time);
     for (auto global = lb; global != index.end(); ++global) {
         bool got = false;
-        for (auto tag : tags) {
+        for (auto const& tag : tags) {
             if ((*global)->hasServerTag(ServerTag(tag))) {
                 globals.insert(*global);
                 got = true;
@@ -520,7 +517,7 @@ ClientClassDefPtr
 TestConfigBackendDHCPv4::getClientClass4(const db::ServerSelector& server_selector,
                                          const std::string& name) const {
     ClientClassDefPtr client_class;
-    for (auto c : classes_) {
+    for (auto const& c : classes_) {
         if (c->getName() == name) {
             client_class = c;
             break;
@@ -533,7 +530,7 @@ TestConfigBackendDHCPv4::getClientClass4(const db::ServerSelector& server_select
         return (client_class->getServerTags().empty() ? client_class : ClientClassDefPtr());
     }
     auto tags = server_selector.getTags();
-    for (auto tag : tags) {
+    for (auto const& tag : tags) {
         if (client_class->hasServerTag(ServerTag(tag))) {
             return (client_class);
         }
@@ -545,7 +542,7 @@ ClientClassDictionary
 TestConfigBackendDHCPv4::getAllClientClasses4(const db::ServerSelector& server_selector) const {
     auto tags = server_selector.getTags();
     ClientClassDictionary all_classes;
-    for (auto client_class : classes_) {
+    for (auto const& client_class : classes_) {
         if (server_selector.amAny()) {
             all_classes.addClass(client_class);
             continue;
@@ -557,7 +554,7 @@ TestConfigBackendDHCPv4::getAllClientClasses4(const db::ServerSelector& server_s
             continue;
         }
         bool got = false;
-        for (auto tag : tags) {
+        for (auto const& tag : tags) {
             if (client_class->hasServerTag(ServerTag(tag))) {
                 all_classes.addClass(client_class);
                 got = true;
@@ -579,10 +576,10 @@ TestConfigBackendDHCPv4::getModifiedClientClasses4(const db::ServerSelector& ser
                                                    const boost::posix_time::ptime& modification_time) const {
     auto tags = server_selector.getTags();
     ClientClassDictionary modified_classes;
-    for (auto client_class : classes_) {
+    for (auto const& client_class : classes_) {
         if (client_class->getModificationTime() >= modification_time) {
             bool got = false;
-            for (auto tag : tags) {
+            for (auto const& tag : tags) {
                 if (client_class->hasServerTag(ServerTag(tag))) {
                     modified_classes.addClass(client_class);
                     got = true;
@@ -621,7 +618,7 @@ TestConfigBackendDHCPv4::createUpdateClientClass4(const db::ServerSelector& serv
     mergeServerTags(client_class, server_selector);
 
     int existing_class_index = -1;
-    for (auto i = 0; i < classes_.size(); ++i) {
+    for (size_t i = 0; i < classes_.size(); ++i) {
         if (classes_[i]->getName() == client_class->getName()) {
             existing_class_index = i;
             break;
@@ -658,7 +655,7 @@ TestConfigBackendDHCPv4::getAllServers4() const {
 
 ServerPtr
 TestConfigBackendDHCPv4::getServer4(const ServerTag& server_tag) const {
-    const auto& index = servers_.get<ServerTagIndexTag>();
+    auto const& index = servers_.get<ServerTagIndexTag>();
     auto server_it = index.find(server_tag.get());
     return ((server_it != index.cend()) ? (*server_it) : ServerPtr());
 }
@@ -778,7 +775,7 @@ TestConfigBackendDHCPv4::createUpdateOption4(const db::ServerSelector& server_se
         found = true;
     } else {
         auto tags = server_selector.getTags();
-        for (auto tag : tags) {
+        for (auto const& tag : tags) {
             if (shared_network->hasServerTag(ServerTag(tag))) {
                 found = true;
                 break;
@@ -819,7 +816,7 @@ TestConfigBackendDHCPv4::createUpdateOption4(const db::ServerSelector& server_se
         found = true;
     } else {
         auto tags = server_selector.getTags();
-        for (auto tag : tags) {
+        for (auto const& tag : tags) {
             if (subnet->hasServerTag(ServerTag(tag))) {
                 found = true;
                 break;
@@ -842,7 +839,7 @@ TestConfigBackendDHCPv4::createUpdateOption4(const db::ServerSelector& server_se
                                              const asiolink::IOAddress& pool_end_address,
                                              const OptionDescriptorPtr& option) {
     auto not_in_selected_servers = false;
-    for (auto subnet : subnets_) {
+    for (auto const& subnet : subnets_) {
         // Get the pool: if it is not here we can directly go to the next subnet.
         auto pool = subnet->getPool(Lease::TYPE_V4, pool_start_address);
         if (!pool) {
@@ -858,7 +855,7 @@ TestConfigBackendDHCPv4::createUpdateOption4(const db::ServerSelector& server_se
         } else if (!server_selector.amAny() && !subnet->hasAllServerTag()) {
             auto in_tags = false;
             auto tags = server_selector.getTags();
-            for (auto tag : tags) {
+            for (auto const& tag : tags) {
                 if (subnet->hasServerTag(ServerTag(tag))) {
                     in_tags = true;
                     break;
@@ -939,7 +936,7 @@ TestConfigBackendDHCPv4::deleteSubnet4(const db::ServerSelector& server_selector
     if (!server_selector.amAny()) {
         bool got = false;
         auto tags = server_selector.getTags();
-        for (auto tag : tags) {
+        for (auto const& tag : tags) {
             if ((*subnet_it)->hasServerTag(ServerTag(tag))) {
                 got = true;
                 break;
@@ -967,7 +964,7 @@ TestConfigBackendDHCPv4::deleteSubnet4(const db::ServerSelector& server_selector
     if (!server_selector.amAny()) {
         bool got = false;
         auto tags = server_selector.getTags();
-        for (auto tag : tags) {
+        for (auto const& tag : tags) {
             if ((*subnet_it)->hasServerTag(ServerTag(tag))) {
                 got = true;
                 break;
@@ -984,7 +981,7 @@ uint64_t
 TestConfigBackendDHCPv4::deleteAllSubnets4(const db::ServerSelector& server_selector) {
     // Collect subnet to remove by ID.
     std::list<SubnetID> ids;
-    for (auto subnet : subnets_) {
+    for (auto const& subnet : subnets_) {
         if (server_selector.amAny()) {
             ids.push_back(subnet->getID());
             continue;
@@ -997,7 +994,7 @@ TestConfigBackendDHCPv4::deleteAllSubnets4(const db::ServerSelector& server_sele
         }
         bool got = false;
         auto tags = server_selector.getTags();
-        for (auto tag : tags) {
+        for (auto const& tag : tags) {
             if (subnet->hasServerTag(ServerTag(tag))) {
                 ids.push_back(subnet->getID());
                 got = true;
@@ -1015,7 +1012,7 @@ TestConfigBackendDHCPv4::deleteAllSubnets4(const db::ServerSelector& server_sele
     // Erase subnets.
     uint64_t erased = 0;
     auto& index = subnets_.get<SubnetSubnetIdIndexTag>();
-    for (auto subnet_id : ids) {
+    for (auto const& subnet_id : ids) {
         erased += index.erase(subnet_id);
     }
     return (erased);
@@ -1035,7 +1032,7 @@ TestConfigBackendDHCPv4::deleteSharedNetworkSubnets4(const db::ServerSelector& s
         if (!server_selector.amAny()) {
             bool got = false;
             auto tags = server_selector.getTags();
-            for (auto tag : tags) {
+            for (auto const& tag : tags) {
                 if ((*subnet)->hasServerTag(ServerTag(tag))) {
                     got = true;
                     break;
@@ -1079,7 +1076,7 @@ TestConfigBackendDHCPv4::deleteSharedNetwork4(const db::ServerSelector& server_s
     if (!server_selector.amAny()) {
         bool got = false;
         auto tags = server_selector.getTags();
-        for (auto tag : tags) {
+        for (auto const& tag : tags) {
             if ((*network_it)->hasServerTag(ServerTag(tag))) {
                 got = true;
                 break;
@@ -1091,9 +1088,9 @@ TestConfigBackendDHCPv4::deleteSharedNetwork4(const db::ServerSelector& server_s
     }
 
     // Remove this shared network.
-    for (auto subnet = subnets_.begin(); subnet != subnets_.end(); ++subnet) {
-        if ((*subnet)->getSharedNetworkName() == name) {
-            (*subnet)->setSharedNetworkName("");
+    for (auto const& subnet : subnets_) {
+        if (subnet->getSharedNetworkName() == name) {
+            subnet->setSharedNetworkName("");
         }
     }
     (*network_it)->delAll();
@@ -1104,7 +1101,7 @@ uint64_t
 TestConfigBackendDHCPv4::deleteAllSharedNetworks4(const db::ServerSelector& server_selector) {
     // Collect shared network to remove.
     std::list<std::string> names;
-    for (auto shared_network : shared_networks_) {
+    for (auto const& shared_network : shared_networks_) {
         if (server_selector.amAny()) {
             names.push_back(shared_network->getName());
             continue;
@@ -1117,7 +1114,7 @@ TestConfigBackendDHCPv4::deleteAllSharedNetworks4(const db::ServerSelector& serv
         }
         bool got = false;
         auto tags = server_selector.getTags();
-        for (auto tag : tags) {
+        for (auto const& tag : tags) {
             if (shared_network->hasServerTag(ServerTag(tag))) {
                 names.push_back(shared_network->getName());
                 got = true;
@@ -1135,7 +1132,7 @@ TestConfigBackendDHCPv4::deleteAllSharedNetworks4(const db::ServerSelector& serv
     // Erase shared networks.
     uint64_t erased = 0;
     auto& index = shared_networks_.get<SharedNetworkNameIndexTag>();
-    for (auto name : names) {
+    for (auto const& name : names) {
         erased += index.erase(name);
     }
     return (erased);
@@ -1219,7 +1216,7 @@ TestConfigBackendDHCPv4::deleteOption4(const db::ServerSelector& server_selector
         found = true;
     } else {
         auto tags = server_selector.getTags();
-        for (auto tag : tags) {
+        for (auto const& tag : tags) {
             if (shared_network->hasServerTag(ServerTag(tag))) {
                 found = true;
                 break;
@@ -1260,7 +1257,7 @@ TestConfigBackendDHCPv4::deleteOption4(const db::ServerSelector& server_selector
         found = true;
     } else {
         auto tags = server_selector.getTags();
-        for (auto tag : tags) {
+        for (auto const& tag : tags) {
             if (subnet->hasServerTag(ServerTag(tag))) {
                 found = true;
                 break;
@@ -1283,7 +1280,7 @@ TestConfigBackendDHCPv4::deleteOption4(const db::ServerSelector& server_selector
                                        const uint16_t code,
                                        const std::string& space) {
     auto not_in_selected_servers = false;
-    for (auto subnet : subnets_) {
+    for (auto const& subnet : subnets_) {
         // Get the pool: if it is not here we can directly go to the next subnet.
 
         auto pool = subnet->getPool(Lease::TYPE_V4, pool_start_address);
@@ -1300,7 +1297,7 @@ TestConfigBackendDHCPv4::deleteOption4(const db::ServerSelector& server_selector
         } else if (!server_selector.amAny() && !subnet->hasAllServerTag()) {
             auto in_tags = false;
             auto tags = server_selector.getTags();
-            for (auto tag : tags) {
+            for (auto const& tag : tags) {
                 if (subnet->hasServerTag(ServerTag(tag))) {
                     in_tags = true;
                     break;
@@ -1381,7 +1378,7 @@ TestConfigBackendDHCPv4::deleteClientClass4(const db::ServerSelector& server_sel
     if (!server_selector.amAny()) {
         bool got = false;
         auto tags = server_selector.getTags();
-        for (auto tag : tags) {
+        for (auto const& tag : tags) {
             if (existing_class->hasServerTag(ServerTag(tag))) {
                 got = true;
                 break;
@@ -1414,7 +1411,7 @@ TestConfigBackendDHCPv4::deleteAllClientClasses4(const db::ServerSelector& serve
         }
         bool got = false;
         auto tags = server_selector.getTags();
-        for (auto tag : tags) {
+        for (auto const& tag : tags) {
             if (client_class->hasServerTag(ServerTag(tag))) {
                 c = classes_.erase(c);
                 ++count;

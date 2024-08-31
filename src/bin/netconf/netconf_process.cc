@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,16 +7,15 @@
 #include <config.h>
 
 #include <asiolink/asio_wrapper.h>
-#include <netconf/netconf.h>
-#include <netconf/netconf_process.h>
-#include <netconf/netconf_controller.h>
-#include <netconf/netconf_log.h>
 #include <asiolink/io_address.h>
 #include <asiolink/io_error.h>
+#include <asiolink/io_service_mgr.h>
 #include <cc/command_interpreter.h>
 #include <config/timeouts.h>
-
-#include <boost/pointer_cast.hpp>
+#include <netconf/netconf.h>
+#include <netconf/netconf_controller.h>
+#include <netconf/netconf_log.h>
+#include <netconf/netconf_process.h>
 
 using namespace isc::asiolink;
 using namespace isc::config;
@@ -58,8 +57,7 @@ NetconfProcess::run() {
         } catch (...) {
             // Ignore double errors
         }
-        isc_throw(DProcessBaseError,
-                  "Process run method failed: " << ex.what());
+        isc_throw(DProcessBaseError, "Process run method failed: " << ex.what());
     }
 
     LOG_DEBUG(netconf_logger, isc::log::DBGLVL_START_SHUT, NETCONF_RUN_EXIT);
@@ -67,9 +65,11 @@ NetconfProcess::run() {
 
 size_t
 NetconfProcess::runIO() {
-    size_t cnt = getIoService()->get_io_service().poll();
+    // Handle events registered by hooks using external IOService objects.
+    IOServiceMgr::instance().pollIOServices();
+    size_t cnt = getIOService()->poll();
     if (!cnt) {
-        cnt = getIoService()->get_io_service().run_one();
+        cnt = getIOService()->runOne();
     }
     return (cnt);
 }
@@ -77,7 +77,7 @@ NetconfProcess::runIO() {
 isc::data::ConstElementPtr
 NetconfProcess::shutdown(isc::data::ConstElementPtr /*args*/) {
     setShutdownFlag(true);
-    return (isc::config::createAnswer(0, "Netconf is shutting down"));
+    return (isc::config::createAnswer(CONTROL_RESULT_SUCCESS, "Netconf is shutting down"));
 }
 
 isc::data::ConstElementPtr
@@ -87,6 +87,17 @@ NetconfProcess::configure(isc::data::ConstElementPtr config_set,
         getCfgMgr()->simpleParseConfig(config_set, check_only);
     int rcode = 0;
     config::parseAnswer(rcode, answer);
+
+    /// Let postponed hook initializations run.
+    try {
+        // Handle events registered by hooks using external IOService objects.
+        IOServiceMgr::instance().pollIOServices();
+    } catch (const std::exception& ex) {
+        std::ostringstream err;
+        err << "Error initializing hooks: " << ex.what();
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
+    }
+
     return (answer);
 }
 
@@ -95,5 +106,5 @@ NetconfProcess::getNetconfCfgMgr() {
     return (boost::dynamic_pointer_cast<NetconfCfgMgr>(getCfgMgr()));
 }
 
-} // namespace isc::netconf
-} // namespace isc
+}  // namespace netconf
+}  // namespace isc

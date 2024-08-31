@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -169,25 +169,33 @@ D2ParserContext::contextName()
     case TSIG_KEYS:
         return ("tsig-keys");
     case ALGORITHM:
-        return("algorithm");
+        return ("algorithm");
     case DIGEST_BITS:
-        return("digest-bits");
+        return ("digest-bits");
     case SECRET:
-        return("secret");
+        return ("secret");
     case FORWARD_DDNS:
-        return("forward-ddns");
+        return ("forward-ddns");
     case REVERSE_DDNS:
-        return("reverse-ddns");
+        return ("reverse-ddns");
     case DDNS_DOMAIN:
-        return("ddns-domain");
+        return ("ddns-domain");
     case DDNS_DOMAINS:
-        return("ddns-domains");
+        return ("ddns-domains");
     case DNS_SERVER:
-        return("dns-server");
+        return ("dns-server");
     case DNS_SERVERS:
-        return("dns-servers");
+        return ("dns-servers");
     case CONTROL_SOCKET:
-        return("control-socket");
+        return ("control-socket");
+    case CONTROL_SOCKET_TYPE:
+        return ("control-socket-type");
+    case AUTHENTICATION:
+        return ("authentication");
+    case AUTH_TYPE:
+        return ("auth-type");
+    case CLIENTS:
+        return ("clients");
     case LOGGERS:
         return ("loggers");
     case OUTPUT_OPTIONS:

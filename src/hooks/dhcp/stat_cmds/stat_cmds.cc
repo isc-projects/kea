@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -78,6 +78,8 @@ public:
                 os << "[subnets " << first_subnet_id_
                    << " through " << last_subnet_id_ << "]";
                 break;
+            default:
+                os << "unsupported";
             }
 
             return (os.str());
@@ -205,13 +207,21 @@ public:
     void addValueRow6(ElementPtr value_rows, const SubnetID &subnet_id,
                       int64_t assigned, int64_t declined, int64_t assigned_pds);
 
-    /// @brief Fetches a single statistic for a subnet from StatsMgr
+    /// @brief Fetches a single integer statistic for a subnet from StatsMgr.
     ///
     /// Uses the given id and name to query the StatsMgr for the desired value.
     ///
-    /// @param subnet_id id of the desired subnet
-    /// @param name name of the desired statistic
+    /// @param subnet_id the subnet ID for the desired statistic
+    /// @param name the name of the desired statistic
     int64_t getSubnetStat(const SubnetID& subnet_id, const std::string& name);
+
+    /// @brief Fetches a single bigint statistic for a subnet from StatsMgr.
+    ///
+    /// Uses the given id and name to query the StatsMgr for the desired value.
+    ///
+    /// @param subnet_id the subnet ID for the desired statistic
+    /// @param name the name of the desired statistic
+    int128_t getBigSubnetStat(const SubnetID& subnet_id, const std::string& name);
 };
 
 int
@@ -396,7 +406,7 @@ LeaseStatCmdsImpl::makeResultSet4(const ElementPtr& result_wrapper,
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
 
     // Set the bounds on the selected subnet range
-    const auto& idx = subnets->get<SubnetSubnetIdIndexTag>();
+    auto const& idx = subnets->get<SubnetSubnetIdIndexTag>();
 
     // Init to ALL so we can use auto
     auto lower = idx.begin();
@@ -442,6 +452,8 @@ LeaseStatCmdsImpl::makeResultSet4(const ElementPtr& result_wrapper,
                 .startSubnetRangeLeaseStatsQuery4(params.first_subnet_id_,
                                                   params.last_subnet_id_);
         break;
+    default:
+        return (0);
     }
 
     // Create the result-set map.
@@ -525,7 +537,7 @@ LeaseStatCmdsImpl::makeResultSet6(const ElementPtr& result_wrapper,
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
 
     // Set the bounds on the selected subnet range
-    const auto& idx = subnets->get<SubnetSubnetIdIndexTag>();
+    auto const& idx = subnets->get<SubnetSubnetIdIndexTag>();
 
     // Init to ALL so we can use auto
     auto lower = idx.begin();
@@ -571,6 +583,8 @@ LeaseStatCmdsImpl::makeResultSet6(const ElementPtr& result_wrapper,
                 .startSubnetRangeLeaseStatsQuery6(params.first_subnet_id_,
                                                   params.last_subnet_id_);
         break;
+    default:
+        return (0);
     }
 
     // Create the result-set map.
@@ -578,7 +592,7 @@ LeaseStatCmdsImpl::makeResultSet6(const ElementPtr& result_wrapper,
     std::vector<std::string>column_labels = { "subnet-id", "total-nas",
                                               "cumulative-assigned-nas",
                                               "assigned-nas",
-                                              "declined-nas", "total-pds",
+                                              "declined-addresses", "total-pds",
                                               "cumulative-assigned-pds",
                                               "assigned-pds" };
     ElementPtr value_rows = createResultSet(result_wrapper, column_labels);
@@ -662,8 +676,8 @@ LeaseStatCmdsImpl::createResultSet(const ElementPtr &result_wrapper,
 
     // Create the list of column names and add it to the result set.
     ElementPtr columns = Element::createList();
-    for (auto label = column_labels.begin(); label != column_labels.end(); ++label) {
-        columns->add(Element::create(*label));
+    for (auto const& label : column_labels) {
+        columns->add(Element::create(label));
     }
     result_set->set("columns", columns);
 
@@ -676,7 +690,7 @@ LeaseStatCmdsImpl::createResultSet(const ElementPtr &result_wrapper,
 
 void
 LeaseStatCmdsImpl::addValueRow4(ElementPtr value_rows, const SubnetID &subnet_id,
-                          int64_t assigned, int64_t declined) {
+                                int64_t assigned, int64_t declined) {
     ElementPtr row = Element::createList();
     row->add(Element::create(static_cast<int64_t>(subnet_id)));
     row->add(Element::create(getSubnetStat(subnet_id, "total-addresses")));
@@ -688,14 +702,14 @@ LeaseStatCmdsImpl::addValueRow4(ElementPtr value_rows, const SubnetID &subnet_id
 
 void
 LeaseStatCmdsImpl::addValueRow6(ElementPtr value_rows, const SubnetID &subnet_id,
-                           int64_t assigned, int64_t declined, int64_t assigned_pds) {
+                                int64_t assigned, int64_t declined, int64_t assigned_pds) {
     ElementPtr row = Element::createList();
     row->add(Element::create(static_cast<int64_t>(subnet_id)));
-    row->add(Element::create(getSubnetStat(subnet_id, "total-nas")));
+    row->add(Element::create(getBigSubnetStat(subnet_id, "total-nas")));
     row->add(Element::create(getSubnetStat(subnet_id, "cumulative-assigned-nas")));
     row->add(Element::create(assigned));
     row->add(Element::create(declined));
-    row->add(Element::create(getSubnetStat(subnet_id, "total-pds")));
+    row->add(Element::create(getBigSubnetStat(subnet_id, "total-pds")));
     row->add(Element::create(getSubnetStat(subnet_id, "cumulative-assigned-pds")));
     row->add(Element::create(assigned_pds));
     value_rows->add(row);
@@ -712,13 +726,23 @@ LeaseStatCmdsImpl::getSubnetStat(const SubnetID& subnet_id, const std::string& n
     return (0);
 }
 
+int128_t
+LeaseStatCmdsImpl::getBigSubnetStat(const SubnetID& subnet_id, const std::string& name) {
+    ObservationPtr stat = StatsMgr::instance().
+                          getObservation(StatsMgr::generateName("subnet", subnet_id, name));
+    if (stat) {
+        return (stat->getBigInteger().first);
+    }
+
+    return (0);
+}
+
 // Using a critical section to avoid any changes in parallel.
 
 int
 StatCmds::statLease4GetHandler(CalloutHandle& handle) {
     try {
         LeaseStatCmdsImpl impl;
-        MultiThreadingCriticalSection cs;
         return (impl.statLease4GetHandler(handle));
     } catch (const std::exception& ex) {
 
@@ -732,7 +756,6 @@ int
 StatCmds::statLease6GetHandler(CalloutHandle& handle) {
     try {
         LeaseStatCmdsImpl impl;
-        MultiThreadingCriticalSection cs;
         return (impl.statLease6GetHandler(handle));
     } catch (const std::exception& ex) {
 

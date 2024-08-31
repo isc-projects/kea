@@ -7,30 +7,34 @@ Primary developers:
                     host reservation, MAC extraction in DHCPv6,
                     statistics manager, kea-shell, netconf, flex/bison
                     parsers, flex-id, documentation, config backend,
-                    ddns_tuning)
+                    ddns_tuning, CI, documentation)
  - Marcin Siodelski (DHCPv4, DHCPv6 components, options handling, perfdhcp,
                      host reservation, lease file cleanup, lease expiration,
                      control agent, shared networks, high availability,
-                     config backend)
+                     config backend, random allocator, free lease queue
+                     allocator)
  - Thomas Markwalder (DDNS, user_chk, global host reservations, stat commands,
                       congestion handling, config backend, multi-threading mode
                       of high availability, forensic logging, leasequery,
-                      ddns_tuning)
+                      ddns_tuning, bulk leasequery, ping-check, perfmon)
  - Wlodek Wencel (testing, release engineering, hammer, perfdhcp)
  - Francis Dupont (crypto, flex/bison parsers, perfdhcp, control agent,
                    radius, netconf, config backend, multi-threading,
-                   GSS-TSIG)
+                   GSS-TSIG, bulk leasequery)
  - Razvan Becheriu (cassandra, netconf, multi-threading, forensic logging,
                     run script hook, multi-threading mode of high availability,
-                    GSS-TSIG)
+                    GSS-TSIG, statistics)
  - Vicky Risk (documentation)
  - Suzanne Goldlust (documentation)
  - Andrei Pavel (build system, documentation, hammer, netconf, perfdhcp,
-                 release engineering, shell scripts, testing, limits)
+                 radius, release engineering, shell scripts, testing, limits,
+                 statistics)
  - Peter Davies (documentation)
- - Slawek Figiel (documentation)
- - Dan Theisen (documentation, option handling, shell scripts)
+ - Slawek Figiel (documentation, host reservations, perfdhcp)
  - Marcin Godzina (documentation, release engineering, testing)
+ - Piotrek Zadroga (documentation, options handling, perfdhcp, ping-check,
+                    host_cmds)
+ - Darren Ankney (documentation)
 
 Former developers who are no longer active:
  - Stephen Morris (Hooks, MySQL)
@@ -38,6 +42,7 @@ Former developers who are no longer active:
  - Brian Reid (logo design)
  - Shawn Routhier (lease file cleanup)
  - Michal Nowikowski (testing, hammer, release engineering)
+ - Dan Theisen (documentation, option handling, shell scripts)
 
 Main area of work mentioned in parentheses. The lists are in a roughly
 chronological order.
@@ -250,3 +255,13 @@ We have received the following contributions:
             hook library to be able to configure the timestamp format for log
             file. Also adds the '%Q' extra format which adds the microseconds
             subunits.
+
+ - rski
+   2022-09: Improved build compatibility in Kea between g++ and Boost libraries.
+
+ - Kyle Birkeland
+   2023-02: Contributed a patch that enforces address suitability for globally
+            reserved addresses for both kea-dhcp4 and kea-dhcp6.
+
+ - Kevin P. Fleming
+   2023-02: Fixed several examples in DHCPv6 section of the ARM.

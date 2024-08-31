@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -31,7 +31,8 @@ SharedNetwork4Parser::SharedNetwork4Parser(bool check_iface)
 }
 
 SharedNetwork4Ptr
-SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
+SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data,
+                            bool encapsulate_options) {
     SharedNetwork4Ptr shared_network;
     try {
 
@@ -44,10 +45,8 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
         std::string name = getString(shared_network_data, "name");
         shared_network.reset(new SharedNetwork4(name));
 
-        // Move from reservation mode to new reservations flags.
         ElementPtr mutable_params;
         mutable_params = boost::const_pointer_cast<Element>(shared_network_data);
-        BaseNetworkParser::moveReservationMode(mutable_params);
 
         // Parse parameters common to all Network derivations.
         NetworkPtr network = boost::dynamic_pointer_cast<Network>(shared_network);
@@ -75,7 +74,7 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
             // Create parser instance for option-data.
             CfgOptionPtr cfg_option = shared_network->getCfgOption();
             auto parser = createOptionDataListParser();
-            parser->parse(cfg_option, json);
+            parser->parse(cfg_option, json, encapsulate_options);
         }
 
         if (shared_network_data->contains("subnet4")) {
@@ -87,9 +86,8 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
             parser->parse(subnets, json);
 
             // Add all returned subnets into shared network.
-            for (auto subnet = subnets.cbegin(); subnet != subnets.cend();
-                 ++subnet) {
-                shared_network->add(*subnet);
+            for (auto const& subnet : subnets) {
+                shared_network->add(subnet);
             }
         }
 
@@ -169,14 +167,13 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
         if (shared_network_data->contains("require-client-classes")) {
             const std::vector<data::ElementPtr>& class_list =
                 shared_network_data->get("require-client-classes")->listValue();
-            for (auto cclass = class_list.cbegin();
-                 cclass != class_list.cend(); ++cclass) {
-                if (((*cclass)->getType() != Element::string) ||
-                    (*cclass)->stringValue().empty()) {
+            for (auto const& cclass : class_list) {
+                if ((cclass->getType() != Element::string) ||
+                    cclass->stringValue().empty()) {
                     isc_throw(DhcpConfigError, "invalid class name ("
-                              << (*cclass)->getPosition() << ")");
+                              << cclass->getPosition() << ")");
                 }
-                shared_network->requireClientClass((*cclass)->stringValue());
+                shared_network->requireClientClass(cclass->stringValue());
             }
         }
 
@@ -197,6 +194,14 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
 
         // Parse lease cache parameters
         parseCacheParams(shared_network_data, network);
+
+        // Parse allocator params.
+        parseAllocatorParams(shared_network_data, network);
+
+        // Parse offer-lifetime parameter.
+        Network4Ptr network4 = boost::dynamic_pointer_cast<Network4>(shared_network);
+        parseOfferLft(shared_network_data, network4);
+
     } catch (const DhcpConfigError&) {
         // Position was already added
         throw;
@@ -232,7 +237,8 @@ SharedNetwork6Parser::SharedNetwork6Parser(bool check_iface)
 }
 
 SharedNetwork6Ptr
-SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
+SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data,
+                            bool encapsulate_options) {
     SharedNetwork6Ptr shared_network;
     std::string name;
     try {
@@ -242,13 +248,11 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
 
         // Make sure that the network name has been specified. The name is required
         // to create a SharedNetwork6 object.
-        std::string name = getString(shared_network_data, "name");
+        name = getString(shared_network_data, "name");
         shared_network.reset(new SharedNetwork6(name));
 
-        // Move from reservation mode to new reservations flags.
         ElementPtr mutable_params;
         mutable_params = boost::const_pointer_cast<Element>(shared_network_data);
-        BaseNetworkParser::moveReservationMode(mutable_params);
 
         // Parse parameters common to all Network derivations.
         NetworkPtr network = boost::dynamic_pointer_cast<Network>(shared_network);
@@ -316,7 +320,7 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
             // Create parser instance for option-data.
             CfgOptionPtr cfg_option = shared_network->getCfgOption();
             auto parser = createOptionDataListParser();
-            parser->parse(cfg_option, json);
+            parser->parse(cfg_option, json, encapsulate_options);
         }
 
         if (shared_network_data->contains("client-class")) {
@@ -334,14 +338,13 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
         if (shared_network_data->contains("require-client-classes")) {
             const std::vector<data::ElementPtr>& class_list =
                 shared_network_data->get("require-client-classes")->listValue();
-            for (auto cclass = class_list.cbegin();
-                 cclass != class_list.cend(); ++cclass) {
-                if (((*cclass)->getType() != Element::string) ||
-                    (*cclass)->stringValue().empty()) {
+            for (auto const& cclass : class_list) {
+                if ((cclass->getType() != Element::string) ||
+                    cclass->stringValue().empty()) {
                     isc_throw(DhcpConfigError, "invalid class name ("
-                              << (*cclass)->getPosition() << ")");
+                              << cclass->getPosition() << ")");
                 }
-                shared_network->requireClientClass((*cclass)->stringValue());
+                shared_network->requireClientClass(cclass->stringValue());
             }
         }
 
@@ -354,9 +357,8 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
             parser->parse(subnets, json);
 
             // Add all returned subnets into shared network.
-            for (auto subnet = subnets.cbegin(); subnet != subnets.cend();
-                 ++subnet) {
-                shared_network->add(*subnet);
+            for (auto const& subnet : subnets) {
+                shared_network->add(subnet);
             }
         }
 
@@ -377,6 +379,17 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data) {
 
         // Parse lease cache parameters
         parseCacheParams(shared_network_data, network);
+
+        // Parse allocator params.
+        parseAllocatorParams(shared_network_data, network);
+        if (network->getAllocatorType() == "flq") {
+            isc_throw(BadValue, "Free Lease Queue allocator is not supported for IPv6 address pools");
+        }
+
+        // Parse prefix delegation allocator params.
+        auto network6 = boost::dynamic_pointer_cast<Network6>(shared_network);
+        parsePdAllocatorParams(shared_network_data, network6);
+
     } catch (const std::exception& ex) {
         isc_throw(DhcpConfigError, ex.what() << " ("
                   << shared_network_data->getPosition() << ")");

@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,7 +10,7 @@
 #include <dhcp/option6_addrlst.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_vendor.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/tests/dhcp6_client.h>
 #include <boost/algorithm/string/join.hpp>
@@ -70,6 +70,7 @@ const char* CONFIGS[] = {
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ "
         " { "
+        "    \"id\": 1, "
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"pools\": [ { \"pool\": \"2001:db8:1:1::/64\" } ],"
         "    \"interface\" : \"eth0\" , "
@@ -98,6 +99,7 @@ const char* CONFIGS[] = {
         "\"mac-sources\": [ \"ipv6-link-local\" ], "
         "\"subnet6\": [ "
         " { "
+        "    \"id\": 1, "
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
         "    \"interface\" : \"eth0\" , "
@@ -126,6 +128,7 @@ const char* CONFIGS[] = {
         "\"mac-sources\": [ \"ipv6-link-local\" ], "
         "\"subnet6\": [ "
         " { "
+        "    \"id\": 1, "
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
         "    \"interface\" : \"eth0\" , "
@@ -157,6 +160,7 @@ const char* CONFIGS[] = {
         "} ],"
         "\"subnet6\": [ "
         " { "
+        "    \"id\": 1, "
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"pools\": [ {"
         "        \"pool\": \"2001:db8:1::/64\","
@@ -206,6 +210,7 @@ const char* CONFIGS[] = {
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ "
         " { "
+        "    \"id\": 1, "
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
         "    \"interface\" : \"eth0\","
@@ -246,6 +251,7 @@ const char* CONFIGS[] = {
         "} ],"
         "\"subnet6\": [ "
         " { "
+        "    \"id\": 1, "
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
         "    \"interface\" : \"eth0\","
@@ -278,6 +284,7 @@ const char* CONFIGS[] = {
         "\"renew-timer\": 10, "
         "\"subnet6\": [ "
         " { "
+        "    \"id\": 1, "
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - 2001:db8:1::2\" } ],"
         "    \"pd-pools\": ["
@@ -303,6 +310,7 @@ const char* CONFIGS[] = {
         "\"renew-timer\": 10, "
         "\"subnet6\": [ "
         " { "
+        "    \"id\": 1, "
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - 2001:db8:1::2\" } ],"
         "    \"pd-pools\": ["
@@ -332,8 +340,13 @@ const char* CONFIGS[] = {
         "\"reservations\": [ \n"
         "{ \n"
         "   \"duid\": \"01:02:03:04\", \n"
-        "   \"hostname\": \"duid-host-fixed\", \n"
-        "   \"ip-addresses\": [ \"3001::1\" ] \n"
+        "   \"hostname\": \"duid-host-fixed-out-of-range\", \n"
+        "   \"ip-addresses\": [ \"2001:db8:1::1\" ] \n"
+        "}, \n"
+        "{ \n"
+        "   \"duid\": \"02:02:03:04\", \n"
+        "   \"hostname\": \"duid-host-fixed-in-range\", \n"
+        "   \"ip-addresses\": [ \"2001:db8:1::77\" ] \n"
         "}, \n"
         "{ \n"
         "   \"duid\": \"01:02:03:05\", \n"
@@ -1293,6 +1306,7 @@ HostTest::configString(const DUID& duid,
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ "
         " { "
+        "    \"id\": 1, "
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - 2001:db8:1::10\" } ],"
         "    \"pd-pools\": [ { \"prefix\": \"3001::\", \"prefix-len\": 32,"
@@ -1375,8 +1389,7 @@ HostTest::testOverrideVendorOptions(const uint16_t msg_type) {
     // Client needs to include Vendor Specific Information option
     // with ORO suboption, which the server will use to determine
     // which suboptions should be returned to the client.
-    OptionVendorPtr opt_vendor(new OptionVendor(Option::V6,
-                                                VENDOR_ID_CABLE_LABS));
+    OptionVendorPtr opt_vendor(new OptionVendor(Option::V6, VENDOR_ID_CABLE_LABS));
     // Include ORO with TFTP servers suboption code being requested.
     opt_vendor->addOption(OptionPtr(new OptionUint16(Option::V6, DOCSIS3_V6_ORO,
                                                      DOCSIS3_V6_TFTP_SERVERS)));
@@ -2365,11 +2378,19 @@ TEST_F(HostTest, globalReservationsNA) {
     ASSERT_EQ(2, subnets->size());
 
     {
-        SCOPED_TRACE("Global HR by DUID with reserved address");
+        SCOPED_TRACE("Global HR by DUID with in-range reserved address");
+        client.setDUID("02:02:03:04");
+        client.requestAddress(1234, IOAddress("::"));
+        // Should get global reserved address and reserved host name
+        ASSERT_NO_FATAL_FAILURE(sarrTest(client, "2001:db8:1::77", "duid-host-fixed-in-range"));
+    }
+
+    {
+        SCOPED_TRACE("Global HR by DUID with an out-of-range reserved address");
         client.setDUID("01:02:03:04");
         client.requestAddress(1234, IOAddress("::"));
         // Should get global reserved address and reserved host name
-        ASSERT_NO_FATAL_FAILURE(sarrTest(client, "3001::1", "duid-host-fixed"));
+        ASSERT_NO_FATAL_FAILURE(sarrTest(client, "2001:db8:1::1", "duid-host-fixed-out-of-range"));
     }
 
     {
@@ -2388,7 +2409,7 @@ TEST_F(HostTest, globalReservationsNA) {
         client.setLinkLocal(IOAddress("fe80::3a60:77ff:fed5:ffee"));
         client.requestAddress(1234, IOAddress("::"));
         // Should get dynamic address and hardware host name
-        ASSERT_NO_FATAL_FAILURE(sarrTest(client, "2001:db8:1::1", "hw-host"));
+        ASSERT_NO_FATAL_FAILURE(sarrTest(client, "2001:db8:1::2", "hw-host"));
     }
 
     {

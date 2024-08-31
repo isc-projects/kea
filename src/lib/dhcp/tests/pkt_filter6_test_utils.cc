@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,13 +10,12 @@
 #include <dhcp/pkt6.h>
 #include <dhcp/tests/pkt_filter6_test_utils.h>
 
-#include <boost/foreach.hpp>
-
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 
 using namespace isc::asiolink;
+using namespace boost::posix_time;
 
 namespace isc {
 namespace dhcp {
@@ -25,7 +24,8 @@ namespace test {
 PktFilter6Test::PktFilter6Test(const uint16_t port)
     : port_(port),
       sock_info_(isc::asiolink::IOAddress("::1"), port, -1, -1),
-      send_msg_sock_(-1) {
+      send_msg_sock_(-1),
+      start_time_(PktEvent::now()) {
     // Initialize ifname_ and ifindex_.
     loInit();
     // Initialize test_message_.
@@ -119,7 +119,7 @@ PktFilter6Test::sendMessage() {
     // The iovec structure holds the packet data.
     struct iovec v;
     memset(&v, 0, sizeof(v));
-    v.iov_base = const_cast<void *>(test_message_->getBuffer().getData());
+    v.iov_base = const_cast<void *>(test_message_->getBuffer().getDataAsVoidPtr());
     v.iov_len = test_message_->getBuffer().getLength();
     // Assign the iovec to msghdr structure.
     m.msg_iov = &v;
@@ -172,6 +172,34 @@ PktFilter6Test::testRcvdMessage(const Pkt6Ptr& rcvd_msg) const {
     EXPECT_EQ(test_message_->getTransid(), rcvd_msg->getTransid());
 }
 
+void
+PktFilter6Test::testReceivedPktEvents(const PktPtr& msg,
+                                      bool so_time_supported) const {
+    std::list<std::string> expected_events;
+    if (so_time_supported) {
+        expected_events.push_back(PktEvent::SOCKET_RECEIVED);
+    }
+
+    expected_events.push_back(PktEvent::BUFFER_READ);
+    testPktEvents(msg, start_time_, expected_events);
+}
+
+void
+PktFilter6Test::testPktEvents(const PktPtr& msg, ptime start_time,
+                              std::list<std::string> expected_events) const {
+    ASSERT_NE(start_time, PktEvent::EMPTY_TIME());
+    auto events = msg->getPktEvents();
+    ASSERT_EQ(events.size(), expected_events.size());
+    ptime prev_time = start_time;
+    auto expected_event = expected_events.begin();
+    for (auto const& event : events) {
+        ASSERT_EQ(event.label_, *expected_event);
+        EXPECT_GE(event.timestamp_, prev_time);
+        prev_time = event.timestamp_;
+        ++expected_event;
+    }
+}
+
 PktFilter6Stub::PktFilter6Stub()
     : open_socket_count_ (0) {
 }
@@ -181,7 +209,7 @@ PktFilter6Stub::openSocket(const Iface& iface, const isc::asiolink::IOAddress& a
                            const uint16_t port, const bool) {
     // Check if there is any other socket bound to the specified address
     // and port on this interface.
-    BOOST_FOREACH(SocketInfo socket, iface.getSockets()) {
+    for (auto const& socket : iface.getSockets()) {
         if ((socket.addr_ == addr) && (socket.port_ == port)) {
             isc_throw(SocketConfigError, "test socket bind error");
         }
@@ -199,7 +227,6 @@ int
 PktFilter6Stub::send(const Iface&, uint16_t, const Pkt6Ptr&) {
     return (0);
 }
-
 
 } // end of isc::dhcp::test namespace
 } // end of isc::dhcp namespace

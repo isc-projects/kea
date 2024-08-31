@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,8 +18,10 @@ namespace dhcp {
 /// This class is expected to be used as a simple interface sanity checker for
 /// various run-time and configuration elements. Currently is provides sanity
 /// checking and correction for subnet-id parameter in leases.
+///
+/// @note: the extended info checker for leases is in the lease manager.
 class SanityChecker {
- public:
+public:
 
     /// @brief Sanity checks and possibly corrects an IPv4 lease
     ///
@@ -78,9 +80,7 @@ class SanityChecker {
     SubnetID findSubnetId(const LeaseType& lease, const SubnetsType& subnets);
 };
 
-
-};
-};
-
+}
+}
 
 #endif /* SANITY_CHECKER_H */

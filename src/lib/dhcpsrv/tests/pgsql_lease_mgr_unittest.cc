@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,11 +10,12 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/pgsql_lease_mgr.h>
 #include <dhcpsrv/testutils/test_utils.h>
+#include <dhcpsrv/testutils/generic_lease_mgr_unittest.h>
 #include <dhcpsrv/testutils/pgsql_generic_backend_unittest.h>
-#include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
 #include <exceptions/exceptions.h>
 #include <pgsql/pgsql_connection.h>
 #include <pgsql/testutils/pgsql_schema.h>
+#include <testutils/gtest_utils.h>
 #include <testutils/multi_threading_utils.h>
 #include <util/multi_threading_mgr.h>
 
@@ -194,7 +195,7 @@ TEST(PgSqlOpenTest, OpenDatabase) {
 
     // Check for missing parameters
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
-        PGSQL_VALID_TYPE, NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
+        PGSQL_VALID_TYPE, NULL, VALID_HOST, VALID_USER, VALID_PASSWORD)),
         NoDatabaseName);
 
     // Check for SSL/TLS support.
@@ -207,6 +208,12 @@ TEST(PgSqlOpenTest, OpenDatabase) {
         PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD,
         0, 0, 0, 0, VALID_CA)), DbOpenError);
 #endif
+
+    // Check for extended info tables.
+    const char* EX_INFO = "extended-info-tables=true";
+    EXPECT_NO_THROW(LeaseMgrFactory::create(connectionString(
+        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, EX_INFO)));
+    LeaseMgrFactory::destroy();
 
     // Tidy up after the test
     destroyPgSQLSchema();
@@ -492,6 +499,19 @@ TEST_F(PgSqlLeaseMgrTest, getLeases6SubnetId) {
 TEST_F(PgSqlLeaseMgrTest, getLeases6SubnetIdMultiThreading) {
     MultiThreadingTest mt(true);
     testGetLeases6SubnetId();
+}
+
+/// @brief This test checks that all IPv6 leases for a specified subnet id
+/// with paging are returned.
+TEST_F(PgSqlLeaseMgrTest, getLeases6SubnetIdPaged) {
+    testGetLeases6SubnetIdPaged();
+}
+
+/// @brief This test checks that all IPv6 leases for a specified subnet id
+/// with paging are returned.
+TEST_F(PgSqlLeaseMgrTest, getLeases6SubnetIdPagedMultiThreading) {
+    MultiThreadingTest mt(true);
+    testGetLeases6SubnetIdPaged();
 }
 
 /// @brief This test checks that all IPv6 leases with a specified hostname are returned.
@@ -936,6 +956,54 @@ public:
     }
 };
 
+/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PgSqlLeaseMgrDbLostCallbackTest, testRetryOpenDbLostAndRecoveredCallback) {
+    MultiThreadingTest mt(false);
+    testRetryOpenDbLostAndRecoveredCallback();
+}
+
+/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PgSqlLeaseMgrDbLostCallbackTest, testRetryOpenDbLostAndRecoveredCallbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testRetryOpenDbLostAndRecoveredCallback();
+}
+
+/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PgSqlLeaseMgrDbLostCallbackTest, testRetryOpenDbLostAndFailedCallback) {
+    MultiThreadingTest mt(false);
+    testRetryOpenDbLostAndFailedCallback();
+}
+
+/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PgSqlLeaseMgrDbLostCallbackTest, testRetryOpenDbLostAndFailedCallbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testRetryOpenDbLostAndFailedCallback();
+}
+
+/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PgSqlLeaseMgrDbLostCallbackTest, testRetryOpenDbLostAndRecoveredAfterTimeoutCallback) {
+    MultiThreadingTest mt(false);
+    testRetryOpenDbLostAndRecoveredAfterTimeoutCallback();
+}
+
+/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PgSqlLeaseMgrDbLostCallbackTest, testRetryOpenDbLostAndRecoveredAfterTimeoutCallbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testRetryOpenDbLostAndRecoveredAfterTimeoutCallback();
+}
+
+/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PgSqlLeaseMgrDbLostCallbackTest, testRetryOpenDbLostAndFailedAfterTimeoutCallback) {
+    MultiThreadingTest mt(false);
+    testRetryOpenDbLostAndFailedAfterTimeoutCallback();
+}
+
+/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
+TEST_F(PgSqlLeaseMgrDbLostCallbackTest, testRetryOpenDbLostAndFailedAfterTimeoutCallbackMultiThreading) {
+    MultiThreadingTest mt(true);
+    testRetryOpenDbLostAndFailedAfterTimeoutCallback();
+}
+
 /// @brief Verifies that db lost callback is not invoked on an open failure
 TEST_F(PgSqlLeaseMgrDbLostCallbackTest, testNoCallbackOnOpenFailure) {
     MultiThreadingTest mt(false);
@@ -1057,6 +1125,224 @@ TEST_F(PgSqlGenericBackendTest, leaseCount) {
     // Check that the countRows is working. It's used extensively in other
     // tests, so basic check is enough here.
     EXPECT_EQ(0, countRows(conn, "lease4"));
+}
+
+// Verifies that v4 class lease counts are correctly adjusted
+// when leases have class lists.
+TEST_F(PgSqlLeaseMgrTest, classLeaseCount4) {
+    SKIP_IF(!LeaseMgrFactory::instance().isJsonSupported());
+    testClassLeaseCount4();
+}
+
+// Verifies that v6 IA_NA class lease counts are correctly adjusted
+// when leases have class lists.
+TEST_F(PgSqlLeaseMgrTest, classLeaseCount6_NA) {
+    SKIP_IF(!LeaseMgrFactory::instance().isJsonSupported());
+    testClassLeaseCount6(Lease::TYPE_NA);
+}
+
+// Verifies that v6 IA_PD class lease counts are correctly adjusted
+// when leases have class lists.
+TEST_F(PgSqlLeaseMgrTest, classLeaseCount6_PD) {
+    SKIP_IF(!LeaseMgrFactory::instance().isJsonSupported());
+    testClassLeaseCount6(Lease::TYPE_PD);
+}
+
+/// @brief Checks that no exceptions are thrown when inquiring about JSON
+/// support and prints an informative message.
+TEST_F(PgSqlLeaseMgrTest, isJsonSupported) {
+    bool json_supported;
+    ASSERT_NO_THROW_LOG(json_supported = LeaseMgrFactory::instance().isJsonSupported());
+    std::cout << "JSON support is " << (json_supported ? "" : "not ") <<
+                 "enabled in the database." << std::endl;
+}
+
+/// @brief Checks that a null user context allows allocation.
+TEST_F(PgSqlLeaseMgrTest, checkLimitsNull) {
+    std::string text;
+    ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits4(nullptr));
+    EXPECT_TRUE(text.empty());
+    ASSERT_NO_THROW_LOG(text = LeaseMgrFactory::instance().checkLimits6(nullptr));
+    EXPECT_TRUE(text.empty());
+}
+
+/// @brief Checks a few v4 limit checking scenarios.
+TEST_F(PgSqlLeaseMgrTest, checkLimits4) {
+    // Limit checking should be precluded at reconfiguration time on systems
+    // that don't have JSON support in the database. It's fine if it throws.
+    if (!LeaseMgrFactory::instance().isJsonSupported()) {
+        ASSERT_THROW_MSG(LeaseMgrFactory::instance().checkLimits4(
+            isc::data::Element::createMap()), isc::db::DbOperationError,
+            "Statement exec failed for: check_lease4_limits, status: 7sqlstate:[ 42883 ], "
+            "reason: ERROR:  operator does not exist: json -> unknown\n"
+            "LINE 1: ...* FROM JSON_ARRAY_ELEMENTS(json_cast(user_context)->'ISC'->'...\n"
+            "                                                             ^\n"
+            "HINT:  No operator matches the given name and argument type(s). "
+            "You might need to add explicit type casts.\n"
+            "QUERY:  SELECT * FROM JSON_ARRAY_ELEMENTS(json_cast(user_context)"
+            "->'ISC'->'limits'->'client-classes')\n"
+            "CONTEXT:  PL/pgSQL function checklease4limits(text) line 10 at FOR over SELECT rows\n");
+        return;
+    }
+
+    // The rest of the checks are only for databases with JSON support.
+    testLeaseLimits4();
+}
+
+/// @brief Checks a few v6 limit checking scenarios.
+TEST_F(PgSqlLeaseMgrTest, checkLimits6) {
+    // Limit checking should be precluded at reconfiguration time on systems
+    // that don't have JSON support in the database. It's fine if it throws.
+    if (!LeaseMgrFactory::instance().isJsonSupported()) {
+        ASSERT_THROW_MSG(LeaseMgrFactory::instance().checkLimits6(
+            isc::data::Element::createMap()), isc::db::DbOperationError,
+            "Statement exec failed for: check_lease6_limits, status: 7sqlstate:[ 42883 ], "
+            "reason: ERROR:  operator does not exist: json -> unknown\n"
+            "LINE 1: ...* FROM JSON_ARRAY_ELEMENTS(json_cast(user_context)->'ISC'->'...\n"
+            "                                                             ^\n"
+            "HINT:  No operator matches the given name and argument type(s). "
+            "You might need to add explicit type casts.\n"
+            "QUERY:  SELECT * FROM JSON_ARRAY_ELEMENTS(json_cast(user_context)"
+            "->'ISC'->'limits'->'client-classes')\n"
+            "CONTEXT:  PL/pgSQL function checklease6limits(text) line 10 at FOR over SELECT rows\n");
+        return;
+    }
+
+    // The rest of the checks are only for databases with JSON support.
+    testLeaseLimits6();
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv4 lease is added.
+TEST_F(PgSqlLeaseMgrTest, trackAddLease4) {
+    testTrackAddLease4(false);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv4 lease is added.
+TEST_F(PgSqlLeaseMgrTest, trackAddLease4MultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    testTrackAddLease4(true);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv6 address lease is added.
+TEST_F(PgSqlLeaseMgrTest, trackAddLeaseNA) {
+    testTrackAddLeaseNA(false);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv6 address lease is added.
+TEST_F(PgSqlLeaseMgrTest, trackAddLeaseNAMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    testTrackAddLeaseNA(true);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv6 prefix lease is added.
+TEST_F(PgSqlLeaseMgrTest, trackAddLeasePD) {
+    testTrackAddLeasePD(false);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv6 prefix lease is added.
+TEST_F(PgSqlLeaseMgrTest, trackAddLeasePDMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    testTrackAddLeasePD(true);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv4 lease is updated.
+TEST_F(PgSqlLeaseMgrTest, trackUpdateLease4) {
+    testTrackUpdateLease4(false);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv4 lease is updated.
+TEST_F(PgSqlLeaseMgrTest, trackUpdateLease4MultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    testTrackUpdateLease4(true);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv6 address lease is updated.
+TEST_F(PgSqlLeaseMgrTest, trackUpdateLeaseNA) {
+    testTrackUpdateLeaseNA(false);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv6 address lease is updated.
+TEST_F(PgSqlLeaseMgrTest, trackUpdateLeaseNAMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    testTrackUpdateLeaseNA(true);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv6 prefix lease is updated.
+TEST_F(PgSqlLeaseMgrTest, trackUpdateLeasePD) {
+    testTrackUpdateLeasePD(false);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv6 prefix lease is updated.
+TEST_F(PgSqlLeaseMgrTest, trackUpdateLeasePDMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    testTrackUpdateLeasePD(true);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv4 lease is deleted.
+TEST_F(PgSqlLeaseMgrTest, trackDeleteLease4) {
+    testTrackDeleteLease4(false);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv4 lease is deleted.
+TEST_F(PgSqlLeaseMgrTest, trackDeleteLease4MultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    testTrackDeleteLease4(true);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv6 address lease is deleted.
+TEST_F(PgSqlLeaseMgrTest, trackDeleteLeaseNA) {
+    testTrackDeleteLeaseNA(false);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv6 address lease is deleted.
+TEST_F(PgSqlLeaseMgrTest, trackDeleteLeaseNAMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    testTrackDeleteLeaseNA(true);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv6 prefix lease is deleted.
+TEST_F(PgSqlLeaseMgrTest, trackDeleteLeasePD) {
+    testTrackDeleteLeasePD(false);
+}
+
+/// @brief Checks if the backends call the callbacks when an
+/// IPv6 prefix lease is deleted.
+TEST_F(PgSqlLeaseMgrTest, trackDeleteLeasePDMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    testTrackDeleteLeasePD(true);
+}
+
+/// @brief Checks that the lease manager can be recreated and its
+/// registered callbacks preserved, if desired.
+TEST_F(PgSqlLeaseMgrTest, recreateWithCallbacks) {
+    testRecreateWithCallbacks(validPgSQLConnectionString());
+}
+
+/// @brief Checks that the lease manager can be recreated without the
+/// previously registered callbacks.
+TEST_F(PgSqlLeaseMgrTest, recreateWithoutCallbacks) {
+    testRecreateWithoutCallbacks(validPgSQLConnectionString());
+}
+
+TEST_F(PgSqlLeaseMgrTest, bigStats) {
+    testBigStats();
 }
 
 }  // namespace

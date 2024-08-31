@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 #define STDOUT_CONTROL_SOCKET_H
 
 #include <netconf/control_socket.h>
+
 #include <iostream>
 
 namespace isc {
@@ -23,7 +24,6 @@ namespace netconf {
 /// This class implements config-test (always OK) and config-set.
 class StdoutControlSocket : public ControlSocketBase {
 public:
-
     /// @brief Constructor.
     ///
     /// Use std::cout.
@@ -41,7 +41,7 @@ public:
     /// @param service The target service (ignored).
     /// @return The JSON element answer of config-get.
     /// @throw NotImplemented
-    virtual data::ConstElementPtr configGet(const std::string& service);
+    data::ConstElementPtr configGet(const std::string& service) override final;
 
     /// @brief Test configuration.
     ///
@@ -50,8 +50,8 @@ public:
     /// @param config The configuration to test (ignored).
     /// @param service The target service (ignored).
     /// @return The JSON element answer of config-test (fixed answer).
-    virtual data::ConstElementPtr configTest(data::ConstElementPtr config,
-                                             const std::string& service);
+    data::ConstElementPtr configTest(data::ElementPtr config,
+                                     const std::string& service) override final;
 
     /// @brief Set configuration.
     ///
@@ -60,8 +60,8 @@ public:
     /// @param config The configuration to set.
     /// @param service The target service.
     /// @return The JSON element answer of config-set (fixed answer).
-    virtual data::ConstElementPtr configSet(data::ConstElementPtr config,
-                                            const std::string& service);
+    data::ConstElementPtr configSet(data::ElementPtr config,
+                                    const std::string& service) override final;
 
 protected:
     /// @brief Alternative constructor for tests.
@@ -72,10 +72,10 @@ protected:
 
     /// @brief The output stream (std::cout outside tests).
     std::ostream& output_;
-};
+};  // StdoutControlSocket
 
 /// @brief Type definition for the pointer to the @c StdoutControlSocket.
-typedef boost::shared_ptr<StdoutControlSocket> StdoutControlSocketPtr;
+using StdoutControlSocketPtr = std::shared_ptr<StdoutControlSocket>;
 
 /// @brief Factory template specialization for stdout control sockets.
 ///
@@ -84,7 +84,7 @@ typedef boost::shared_ptr<StdoutControlSocket> StdoutControlSocketPtr;
 template <> ControlSocketBasePtr
 createControlSocket<CfgControlSocket::Type::STDOUT>(CfgControlSocketPtr ctrl_sock);
 
-} // namespace netconf
-} // namespace isc
+}  // namespace netconf
+}  // namespace isc
 
-#endif // STDOUT_CONTROL_SOCKET_H
+#endif  // STDOUT_CONTROL_SOCKET_H

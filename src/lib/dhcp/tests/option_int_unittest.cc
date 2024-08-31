@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -384,7 +384,7 @@ TEST_F(OptionIntTest, packSuboptions4) {
     opt->addOption(sub1);
     opt->addOption(sub2);
 
-    // Prepare reference data: option + suoptions in wire format.
+    // Prepare reference data: option + suboptions in wire format.
     uint8_t expected[] = {
         TEST_OPT_CODE, 15, // option header
         0x01, 0x02,        // data, uint16_t value = 0x0102

@@ -1,4 +1,4 @@
-// Copyright (C) 2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -45,14 +45,13 @@ PrefixRange::PrefixRange(const asiolink::IOAddress& prefix, const uint8_t length
                   << " must not be greater than 128");
     }
     // Now calculate the last prefix in the range.
-    auto prefixes_num = prefixesInRange(prefix_length_, delegated_length_);
-    uint64_t addrs_in_prefix = static_cast<uint64_t>(1) << (128 - delegated_length_);
-    end_ = offsetAddress(prefix, (prefixes_num - 1) * addrs_in_prefix);
+    end_ = lastAddrInPrefix(prefix, length);
 }
 
 PrefixRange::PrefixRange(const asiolink::IOAddress& start, const asiolink::IOAddress& end,
                          const uint8_t delegated)
-    : start_(start), end_(end), prefix_length_(0), delegated_length_(delegated) {
+    : start_(start), end_(end), prefix_length_(prefixLengthFromRange(start, end)),
+      delegated_length_(delegated) {
     if (!start_.isV6() || !end_.isV6()) {
         isc_throw(BadValue, "IPv6 prefix required for prefix delegation range but "
                   << start_ << ":" << end_ << " was specified");
@@ -60,6 +59,10 @@ PrefixRange::PrefixRange(const asiolink::IOAddress& start, const asiolink::IOAdd
     // The start must be lower or equal the end.
     if (end_ < start_) {
         isc_throw(BadValue, "invalid address range boundaries " << start_ << ":" << end_);
+    }
+    if (prefix_length_ > 128) {
+        isc_throw(BadValue, "the " << start_ << ":" << end_
+                  << " does not constitute a valid prefix delegation range");
     }
     if (delegated_length_ > 128) {
         isc_throw(BadValue, "delegated length " << static_cast<int>(delegated_length_)

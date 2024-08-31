@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 
 #include <log4cplus/appender.h>
 #include <log/logger_level.h>
+#include <log/logger_specification.h>
 
 // Forward declaration to avoid need to include log4cplus header file here.
 namespace log4cplus {
@@ -22,7 +23,6 @@ namespace isc {
 namespace log {
 
 // Forward declarations
-class LoggerSpecification;
 struct OutputOption;
 
 /// \brief Logger Manager Implementation
@@ -57,7 +57,7 @@ public:
     /// Processes the specification for a single logger.
     ///
     /// \param spec Logging specification for this logger
-    static void processSpecification(const LoggerSpecification& spec);
+    void processSpecification(const LoggerSpecification& spec);
 
     /// \brief End Processing
     ///
@@ -94,6 +94,16 @@ public:
                       int dbglevel = 0);
 
 private:
+    /// @brief Decides what appender to create.
+    ///
+    /// Delegates to the other functions that create appenders based on what's
+    /// in spec.
+    ///
+    /// @param logger log4cplus logger to which the appender must be attached
+    /// @param spec the configured specification consisting of output options
+    static void appenderFactory(log4cplus::Logger& logger,
+                                LoggerSpecification const& spec);
+
     /// \brief Create console appender
     ///
     /// Creates an object that, when attached to a logger, will log to one
@@ -171,10 +181,14 @@ private:
     /// \c storeBufferAppenders(), and clears it
     void flushBufferAppenders();
 
-    /// Only used between processInit() and processEnd(), to temporarily
+    /// @brief Only used between processInit() and processEnd(), to temporarily
     /// store the buffer appenders in order to flush them after
     /// processSpecification() calls have been completed
     std::vector<log4cplus::SharedAppenderPtr> buffer_appender_store_;
+
+    /// @brief A hard copy of the specification for the root logger used for
+    /// inheritance by child loggers.
+    LoggerSpecification root_spec_;
 };
 
 } // namespace log

@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <communication_state.h>
 #include <ha_config.h>
 #include <ha_server_type.h>
+#include <lease_sync_filter.h>
 #include <lease_update_backlog.h>
 #include <query_filter.h>
 #include <asiolink/asio_wrapper.h>
@@ -34,6 +35,14 @@
 
 namespace isc {
 namespace ha {
+
+class HAService;
+
+/// @brief Type of an object mapping @c HAService to relationships.
+typedef HARelationshipMapper<HAService> HAServiceMapper;
+
+/// @brief Pointer to an object mapping @c HAService to relationships.
+typedef boost::shared_ptr<HAServiceMapper> HAServiceMapperPtr;
 
 /// @brief High availability service.
 ///
@@ -71,6 +80,10 @@ public:
     /// Control result returned in response to ha-maintenance-notify.
     static const int HA_CONTROL_RESULT_MAINTENANCE_NOT_ALLOWED = 1001;
 
+    /// A delay in minutes to transition from the waiting to terminated state
+    /// when the partner remains in terminated state.
+    static const int HA_WAITING_TO_TERMINATED_ST_DELAY_MINUTES = 10;
+
 protected:
 
     /// @brief Callback invoked when request was sent and a response received
@@ -98,12 +111,14 @@ public:
     /// state model in waiting state.  Creates and starts the client and the
     /// listener (if one).
     ///
+    /// @param id Unique @c HAService id.
     /// @param io_service Pointer to the IO service used by the DHCP server.
     /// @param config Parsed HA hook library configuration.
     /// @param network_state Object holding state of the DHCP service
     /// (enabled/disabled).
     /// @param server_type Server type, i.e. DHCPv4 or DHCPv6 server.
-    HAService(const asiolink::IOServicePtr& io_service,
+    HAService(const unsigned int id,
+              const asiolink::IOServicePtr& io_service,
               const dhcp::NetworkStatePtr& network_state,
               const HAConfigPtr& config,
               const HAServerType& server_type = HAServerType::DHCPv4);
@@ -118,6 +133,33 @@ public:
     HAServerType getServerType() const {
         return (server_type_);
     }
+
+private:
+
+    /// @brief Returns the network state origin associated with this
+    /// @c HAService instance.
+    ///
+    /// @return The service's origin value.
+    unsigned int getLocalOrigin() const {
+        return (dhcp::NetworkState::HA_LOCAL_COMMAND + id_);
+    }
+
+    /// @brief Returns the network state origin associated with the
+    /// remote @c HAService instance.
+    ///
+    /// @return The remote service's origin value.
+    unsigned int getRemoteOrigin() const {
+        return (dhcp::NetworkState::HA_REMOTE_COMMAND + id_);
+    }
+
+    /// @brief Returns the name of the critical section callbacks set.
+    ///
+    /// This function is used internally during the registration and
+    /// deregistration of the critical section callbacks in the MT
+    /// manager.
+    ///
+    /// @return HA_MT_ plus service id.
+    std::string getCSCallbacksSetName() const;
 
     /// @brief Defines events used by the HA service.
     virtual void defineEvents();
@@ -396,6 +438,12 @@ public:
     /// enabled to test @c inScope methods invoked via @c HAImpl class.
     void serveDefaultScopes();
 
+    /// @brief Instructs the HA service to serve failover scopes.
+    ///
+    /// This method is mostly useful for unit testing. The scopes need to be
+    /// enabled to test @c inScope methods invoked via @c HAImpl class.
+    void serveFailoverScopes();
+
     /// @brief Checks if the DHCPv4 query should be processed by this server.
     ///
     /// It also associates the DHCPv4 query with required classes appropriate
@@ -470,13 +518,20 @@ protected:
     bool shouldPartnerDown() const;
 
     /// @brief Indicates if the server should transition to the terminated
-    /// state as a result of high clock skew.
+    /// state.
     ///
-    /// It indicates that the server should transition to the terminated
-    /// state because of the clock skew being too high. If the clock skew is
-    /// is higher than 30 seconds but lower than 60 seconds this method
-    /// only logs a warning. In case, the clock skew exceeds 60 seconds, this
-    /// method logs a warning and returns true.
+    /// There are two reasons for the server to transition to the terminated
+    /// state. First, when the clock skew being too high. Second, when the
+    /// server monitors rejected lease updates and the maximum configured
+    /// rejected updates have been exceeded.
+    ///
+    /// If the clock skew is is higher than 30 seconds but lower than 60
+    /// seconds this method only logs a warning. In case, the clock skew
+    /// exceeds 60 seconds, this method logs a warning and returns true.
+    ///
+    /// If the clock skew is acceptable the function can cause the transition
+    /// to the terminated state when the number of recorded rejected lease
+    /// updates exceeded the configured threshold.
     ///
     /// @return true if the server should transition to the terminated state,
     /// false otherwise.
@@ -532,7 +587,7 @@ public:
     /// @param leases Pointer to a collection of the newly allocated or
     /// updated leases.
     /// @param deleted_leases Pointer to a collection of the released leases.
-    /// @param [out] parking_lot Pointer to the parking lot handle available
+    /// @param parking_lot Pointer to the parking lot handle available
     /// for the "leases4_committed" hook point. This is where the DHCP client
     /// message is parked. This method calls @c unpark() on this object when
     /// the asynchronous updates are completed.
@@ -544,6 +599,26 @@ public:
                                  const dhcp::Lease4CollectionPtr& leases,
                                  const dhcp::Lease4CollectionPtr& deleted_leases,
                                  const hooks::ParkingLotHandlePtr& parking_lot);
+
+    /// @brief Schedules an asynchronous IPv4 lease update.
+    ///
+    /// This method is a convenience wrapper around asyncSendLeaseUpdates() for
+    /// propagating updates for a single lease. It is currently only used by
+    /// the "lease4_server_decline" callout.
+    ///
+    /// @param query Pointer to the processed DHCP client message.
+    /// @param lease Pointer to the updated lease
+    /// @param parking_lot Pointer to the parking lot handle available
+    /// for the hook point if one.  This is where the DHCP client message is
+    /// parked if it is parked. This method calls @c unpark() on this object
+    /// when the asynchronous updates are completed.
+    ///
+    /// @return Number of peers to whom the lease update has been scheduled
+    /// to be sent and from which we expect a response prior to unparking
+    /// the packet and sending a response to the DHCP client.
+    size_t asyncSendSingleLeaseUpdate(const dhcp::Pkt4Ptr& query,
+                                      const dhcp::Lease4Ptr& lease,
+                                      const hooks::ParkingLotHandlePtr& parking_lot);
 
     /// @brief Schedules asynchronous IPv6 lease updates.
     ///
@@ -693,14 +768,14 @@ protected:
     ///
     /// @param http_client reference to the client to be used to communicate
     /// with the other server.
-    /// @param server_name name of the server to which the command should be
-    /// sent.
+    /// @param remote_config config of the partner to which the command should
+    /// be sent.
     /// @param max_period maximum number of seconds for which the DHCP service
     /// should be disabled.
     /// @param post_request_action pointer to the function to be executed when
     /// the request is completed.
     void asyncDisableDHCPService(http::HttpClient& http_client,
-                                 const std::string& server_name,
+                                 const HAConfig::PeerConfigPtr& remote_config,
                                  const unsigned int max_period,
                                  PostRequestCallback post_request_action);
 
@@ -709,12 +784,12 @@ protected:
     ///
     /// @param http_client reference to the client to be used to communicate
     /// with the other server.
-    /// @param server_name name of the server to which the command should be
-    /// sent.
+    /// @param remote_config config of the partner to which the command should
+    /// be sent.
     /// @param post_request_action pointer to the function to be executed when
     /// the request is completed.
     void asyncEnableDHCPService(http::HttpClient& http_client,
-                                const std::string& server_name,
+                                const HAConfig::PeerConfigPtr& remote_config,
                                 PostRequestCallback post_request_action);
 
     /// @brief Disables local DHCP service.
@@ -776,7 +851,7 @@ protected:
     ///
     /// @param http_client reference to the client to be used to communicate
     /// with the other server.
-    /// @param server_name name of the server to fetch leases from.
+    /// @param remote_config config of the partner to fetch leases from.
     /// @param max_period maximum number of seconds to disable DHCP service
     /// @param last_lease Pointer to the last lease returned on the previous
     /// page of leases. This lease is used to set the value of the "from"
@@ -791,7 +866,7 @@ protected:
     /// @c post_sync_action to indicate whether the DHCP service has to
     /// be enabled after the leases synchronization.
     void asyncSyncLeases(http::HttpClient& http_client,
-                         const std::string& server_name,
+                         const HAConfig::PeerConfigPtr& remote_config,
                          const unsigned int max_period,
                          const dhcp::LeasePtr& last_lease,
                          PostSyncCallback post_sync_action,
@@ -809,7 +884,7 @@ protected:
     ///
     /// @param http_client reference to the client to be used to communicate
     /// with the other server.
-    /// @param server_name name of the server to fetch leases from.
+    /// @param remote_config config of the partner to fetch leases from.
     /// @param max_period maximum number of seconds to disable DHCP service
     /// @param last_lease Pointer to the last lease returned on the previous
     /// page of leases. This lease is used to set the value of the "from"
@@ -824,7 +899,7 @@ protected:
     /// @c post_sync_action to indicate whether the DHCP service has to
     /// be enabled after the leases synchronization.
     void asyncSyncLeasesInternal(http::HttpClient& http_client,
-                                 const std::string& server_name,
+                                 const HAConfig::PeerConfigPtr& remote_config,
                                  const unsigned int max_period,
                                  const dhcp::LeasePtr& last_lease,
                                  PostSyncCallback post_sync_action,
@@ -869,14 +944,15 @@ protected:
     /// invokes IOService::run().
     ///
     /// @param [out] status_message status message in textual form.
-    /// @param server_name name of the server to fetch leases from.
+    /// @param remote_config config of the server to fetch leases from.
     /// @param max_period maximum number of seconds to disable DHCP service
     /// of the peer. This value is used in dhcp-disable command issued to
     /// the peer before the lease4-get-page command.
     ///
     /// @return Synchronization result according to the status codes returned
     /// in responses to control commands.
-    int synchronize(std::string& status_message, const std::string& server_name,
+    int synchronize(std::string& status_message,
+                    const HAConfig::PeerConfigPtr& remote_config,
                     const unsigned int max_period);
 
     /// @brief Sends lease updates from backlog to partner asynchronously.
@@ -1025,12 +1101,12 @@ protected:
     ///
     /// @param http_client reference to the client to be used to communicate
     /// with the other server.
-    /// @param server_name name of the server to which the command should be
-    /// sent.
+    /// @param remote_config config of the partner to which the command should
+    /// be sent.
     /// @param post_request_action pointer to the function to be executed when
     /// the request is completed.
     void asyncSyncCompleteNotify(http::HttpClient& http_client,
-                                 const std::string& server_name,
+                                 const HAConfig::PeerConfigPtr& remote_config,
                                  PostRequestCallback post_request_action);
 
 public:
@@ -1045,8 +1121,10 @@ public:
     /// In this state, the server will first have to check connectivity with
     /// the partner and transition to a state in which it will send lease updates.
     ///
+    /// @param origin_id a numeric value of the origin created from the
+    /// @c HAService identifier to enable the DHCP service.
     /// @return Pointer to the response to the ha-sync-complete-notify command.
-    data::ConstElementPtr processSyncCompleteNotify();
+    data::ConstElementPtr processSyncCompleteNotify(const unsigned int origin_id);
 
     /// @brief Start the client and(or) listener instances.
     ///
@@ -1092,6 +1170,10 @@ protected:
     /// @return Pointer to the response arguments.
     /// @throw CtrlChannelError if response is invalid or contains an error.
     /// @throw CommandUnsupportedError if sent command is unsupported.
+    /// @throw ConflictError if the response comprises the conflict status
+    /// code or it contains an empty status code in response to the
+    /// lease6-bulk-apply and there are leases with the conflict status
+    /// codes listed in the response.
     data::ConstElementPtr verifyAsyncResponse(const http::HttpResponsePtr& response,
                                               int& rcode);
 
@@ -1142,6 +1224,9 @@ protected:
     /// @param tcp_native_fd socket descriptor to register
     void clientCloseHandler(int tcp_native_fd);
 
+    /// @brief Unique service id.
+    unsigned int id_;
+
     /// @brief Pointer to the IO service object shared between this hooks
     /// library and the DHCP server.
     asiolink::IOServicePtr io_service_;
@@ -1167,6 +1252,9 @@ protected:
 
     /// @brief Selects queries to be processed/dropped.
     QueryFilter query_filter_;
+
+    /// @brief Lease synchronization filter used in hub-and-spoke model.
+    LeaseSyncFilter lease_sync_filter_;
 
     /// @brief Handle last pending request for this query.
     ///

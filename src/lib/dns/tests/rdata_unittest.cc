@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <functional>
+#include <iomanip>
 #include <vector>
 #include <string>
 #include <sstream>
@@ -38,15 +39,21 @@ namespace ph = std::placeholders;
 namespace isc {
 namespace dns {
 namespace rdata {
+
+namespace {
+void
+nullCallback(const std::string&, size_t, const std::string&) {
+}
+}
+
 RdataTest::RdataTest() :
     obuffer(0), rdata_nomatch(createRdata(RRType(0), RRClass(1), "\\# 0")),
-    loader_cb(MasterLoaderCallbacks::getNullCallbacks())
-{}
+    loader_cb(MasterLoaderCallbacks(nullCallback, nullCallback)) {
+}
 
 RdataPtr
 RdataTest::rdataFactoryFromFile(const RRType& rrtype, const RRClass& rrclass,
-                                const char* datafile, size_t position)
-{
+                                const char* datafile, size_t position) {
     std::vector<unsigned char> data;
     UnitTestUtil::readWireData(datafile, data);
 
@@ -61,14 +68,12 @@ namespace test {
 
 RdataPtr
 createRdataUsingLexer(const RRType& rrtype, const RRClass& rrclass,
-                      const std::string& str)
-{
+                      const std::string& str) {
     std::stringstream ss(str);
     MasterLexer lexer;
     lexer.pushSource(ss);
 
-    MasterLoaderCallbacks callbacks =
-        MasterLoaderCallbacks::getNullCallbacks();
+    MasterLoaderCallbacks callbacks(nullCallback, nullCallback);
     const Name origin("example.org.");
 
     return (createRdata(rrtype, rrclass, lexer, &origin,
@@ -146,7 +151,7 @@ TEST_F(RdataTest, createRdataWithLexer) {
     // Valid case.
     ++line;
     ConstRdataPtr rdata = createRdata(RRType::AAAA(), RRClass::IN(), lexer,
-                                      NULL, MasterLoader::MANY_ERRORS,
+                                      0, MasterLoader::MANY_ERRORS,
                                       callbacks);
     EXPECT_EQ(0, aaaa_rdata.compare(*rdata));
     EXPECT_FALSE(callback.isCalled());
@@ -155,16 +160,16 @@ TEST_F(RdataTest, createRdataWithLexer) {
     // It should cause any confusion.
     ++line;
     callback.clear();
-    rdata = createRdata(RRType::AAAA(), RRClass::IN(), lexer, NULL,
+    rdata = createRdata(RRType::AAAA(), RRClass::IN(), lexer, 0,
                         MasterLoader::MANY_ERRORS, callbacks);
     EXPECT_EQ(0, aaaa_rdata.compare(*rdata));
     EXPECT_FALSE(callback.isCalled());
 
-    // Broken RDATA text: extra token.  createRdata() returns NULL, error
+    // Broken RDATA text: extra token.  createRdata() returns null, error
     // callback is called.
     ++line;
     callback.clear();
-    EXPECT_FALSE(createRdata(RRType::AAAA(), RRClass::IN(), lexer, NULL,
+    EXPECT_FALSE(createRdata(RRType::AAAA(), RRClass::IN(), lexer, 0,
                              MasterLoader::MANY_ERRORS, callbacks));
     callback.check(src_name, line, CreateRdataCallback::ERROR,
                    "createRdata from text failed near 'extra-token': "
@@ -174,7 +179,7 @@ TEST_F(RdataTest, createRdataWithLexer) {
     // callback.
     ++line;
     callback.clear();
-    EXPECT_FALSE(createRdata(RRType::AAAA(), RRClass::IN(), lexer, NULL,
+    EXPECT_FALSE(createRdata(RRType::AAAA(), RRClass::IN(), lexer, 0,
                              MasterLoader::MANY_ERRORS, callbacks));
     callback.check(src_name, line, CreateRdataCallback::ERROR,
                    "createRdata from text failed near 'extra': "
@@ -183,7 +188,7 @@ TEST_F(RdataTest, createRdataWithLexer) {
     // Lexer error will happen, corresponding error callback will be triggered.
     ++line;
     callback.clear();
-    EXPECT_FALSE(createRdata(RRType::AAAA(), RRClass::IN(), lexer, NULL,
+    EXPECT_FALSE(createRdata(RRType::AAAA(), RRClass::IN(), lexer, 0,
                              MasterLoader::MANY_ERRORS, callbacks));
     callback.check(src_name, line, CreateRdataCallback::ERROR,
                    "createRdata from text failed: unbalanced parentheses");
@@ -192,7 +197,7 @@ TEST_F(RdataTest, createRdataWithLexer) {
     // triggered.
     ++line;
     callback.clear();
-    EXPECT_FALSE(createRdata(RRType::AAAA(), RRClass::IN(), lexer, NULL,
+    EXPECT_FALSE(createRdata(RRType::AAAA(), RRClass::IN(), lexer, 0,
                              MasterLoader::MANY_ERRORS, callbacks));
     callback.check(src_name, line, CreateRdataCallback::ERROR,
                    "createRdata from text failed: Bad IN/AAAA RDATA text: "
@@ -202,7 +207,7 @@ TEST_F(RdataTest, createRdataWithLexer) {
     // file is not ended with a newline.
     ++line;
     callback.clear();
-    rdata = createRdata(RRType::AAAA(), RRClass::IN(), lexer, NULL,
+    rdata = createRdata(RRType::AAAA(), RRClass::IN(), lexer, 0,
                         MasterLoader::MANY_ERRORS, callbacks);
     EXPECT_EQ(0, aaaa_rdata.compare(*rdata));
     callback.check(src_name, line, CreateRdataCallback::WARN,
@@ -319,7 +324,7 @@ TEST_F(Rdata_Unknown_Test, createFromWire) {
     // buffer too short.  the error should be detected in buffer read
     EXPECT_THROW(rdataFactoryFromFile(unknown_rrtype, RRClass::IN(),
                                       "rdata_unknown_fromWire", 8),
-                 InvalidBufferPosition);
+                 isc::OutOfRange);
 
     // too large data
     vector<uint8_t> v;

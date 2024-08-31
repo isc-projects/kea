@@ -17,7 +17,8 @@ EXTRA_DIST =
 
 CLEANFILES = *.gcno *.gcda
 
-# TESTS_ENVIRONMENT = $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
+TESTS_ENVIRONMENT = $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
+
 LOG_COMPILER = $(LIBTOOL)
 AM_LOG_FLAGS = --mode=execute
 
@@ -35,6 +36,7 @@ bootp_unittests_LDFLAGS  = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS)
 bootp_unittests_CXXFLAGS = $(AM_CXXFLAGS)
 
 bootp_unittests_LDADD  = $(top_builddir)/src/hooks/dhcp/bootp/libbootp.la
+bootp_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 bootp_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 bootp_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 bootp_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la

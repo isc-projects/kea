@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,8 +8,8 @@
 
 #include <http/auth_log.h>
 #include <http/basic_auth_config.h>
-#include <util/file_utilities.h>
-#include <util/strutil.h>
+#include <util/filesystem.h>
+#include <util/str.h>
 
 using namespace isc;
 using namespace isc::data;
@@ -134,7 +134,7 @@ BasicHttpAuthConfig::toElement() const {
 
     // Set clients
     ElementPtr clients = Element::createList();
-    for (auto client : list_) {
+    for (auto const& client : list_) {
         clients->add(client.toElement());
     }
     result->set("clients", clients);
@@ -209,7 +209,7 @@ BasicHttpAuthConfig::parse(const ConstElementPtr& config) {
     }
 
     // Iterate on clients.
-    for (auto client : clients->listValue()) {
+    for (auto const& client : clients->listValue()) {
         if (client->getType() != Element::map) {
             isc_throw(DhcpConfigError, "clients items must be maps ("
                       << client->getPosition() << ")");
@@ -362,7 +362,7 @@ BasicHttpAuthConfig::checkAuth(const HttpResponseCreator& creator,
         value = value.substr(5);
         value = str::trim(value);
         // Verify the credential is in the list.
-        const auto it = credentials.find(value);
+        auto const it = credentials.find(value);
         if (it != credentials.end()) {
             LOG_INFO(auth_logger, HTTP_CLIENT_REQUEST_AUTHORIZED)
                 .arg(it->second);

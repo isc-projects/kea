@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -23,20 +23,9 @@ using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
 
-// don't import the entire boost namespace.  It will unexpectedly hide uint8_t
-// for some systems.
-using boost::scoped_ptr;
-
 namespace {
 
-// This is a workaround for strange linking problems with gtest:
-// libdhcp___unittests-duid_unittest.o: In function `Compare<long unsigned int, long unsigned int>':
-// ~/gtest-1.6.0/include/gtest/gtest.h:1353: undefined reference to `isc::dhcp::ClientId::MAX_CLIENT_ID_LEN'
-// collect2: ld returned 1 exit status
-
-const size_t MAX_DUID_LEN = DUID::MAX_DUID_LEN;
-const size_t MAX_CLIENT_ID_LEN = DUID::MAX_DUID_LEN;
-
+using namespace isc::dhcp;
 
 // This test verifies if the constructors are working as expected
 // and process passed parameters.
@@ -46,8 +35,8 @@ TEST(DuidTest, constructor) {
 
     vector<uint8_t> data2(data1, data1 + sizeof(data1));
 
-    scoped_ptr<DUID> duid1(new DUID(data1, sizeof(data1)));
-    scoped_ptr<DUID> duid2(new DUID(data2));
+    boost::scoped_ptr<DUID> duid1(new DUID(data1, sizeof(data1)));
+    boost::scoped_ptr<DUID> duid2(new DUID(data2));
 
     vector<uint8_t> vecdata = duid1->getDuid();
     EXPECT_TRUE(data2 == vecdata);
@@ -64,39 +53,40 @@ TEST(DuidTest, constructor) {
 TEST(DuidTest, size) {
 
     // Ensure that our size constant is RFC-compliant.
-    ASSERT_EQ(128, MAX_DUID_LEN);
+    ASSERT_EQ(130, DUID::MAX_DUID_LEN);
 
-    uint8_t data[MAX_DUID_LEN + 1];
+    uint8_t data[DUID::MAX_DUID_LEN + 1];
     vector<uint8_t> data2;
-    for (uint8_t i = 0; i < MAX_DUID_LEN + 1; ++i) {
+    for (uint8_t i = 0; i < DUID::MAX_DUID_LEN + 1; ++i) {
         data[i] = i;
-        if (i < MAX_DUID_LEN)
+        if (i < DUID::MAX_DUID_LEN) {
             data2.push_back(i);
+        }
     }
-    ASSERT_EQ(data2.size(), MAX_DUID_LEN);
+    ASSERT_EQ(data2.size(), DUID::MAX_DUID_LEN);
 
-    scoped_ptr<DUID> duidmaxsize1(new DUID(data, MAX_DUID_LEN));
-    scoped_ptr<DUID> duidmaxsize2(new DUID(data2));
+    boost::scoped_ptr<DUID> duidmaxsize1(new DUID(data, DUID::MAX_DUID_LEN));
+    boost::scoped_ptr<DUID> duidmaxsize2(new DUID(data2));
 
     EXPECT_THROW(
-        scoped_ptr<DUID> toolarge1(new DUID(data, MAX_DUID_LEN + 1)),
+        boost::scoped_ptr<DUID> toolarge1(new DUID(data, DUID::MAX_DUID_LEN + 1)),
         BadValue);
 
     // that's one too much
     data2.push_back(128);
 
     EXPECT_THROW(
-        scoped_ptr<DUID> toolarge2(new DUID(data2)),
+        boost::scoped_ptr<DUID> toolarge2(new DUID(data2)),
         BadValue);
 
     // empty duids are not allowed
     vector<uint8_t> empty;
     EXPECT_THROW(
-        scoped_ptr<DUID> emptyDuid(new DUID(empty)),
+        boost::scoped_ptr<DUID> emptyDuid(new DUID(empty)),
         BadValue);
 
     EXPECT_THROW(
-        scoped_ptr<DUID> emptyDuid2(new DUID(data, 0)),
+        boost::scoped_ptr<DUID> emptyDuid2(new DUID(data, 0)),
         BadValue);
 }
 
@@ -109,11 +99,11 @@ TEST(DuidTest, getType) {
     uint8_t uuid[] =    {0, 4, 2, 3, 4, 5, 6};
     uint8_t invalid[] = {0,55, 2, 3, 4, 5, 6};
 
-    scoped_ptr<DUID> duid_llt(new DUID(llt, sizeof(llt)));
-    scoped_ptr<DUID> duid_en(new DUID(en, sizeof(en)));
-    scoped_ptr<DUID> duid_ll(new DUID(ll, sizeof(ll)));
-    scoped_ptr<DUID> duid_uuid(new DUID(uuid, sizeof(uuid)));
-    scoped_ptr<DUID> duid_invalid(new DUID(invalid, sizeof(invalid)));
+    boost::scoped_ptr<DUID> duid_llt(new DUID(llt, sizeof(llt)));
+    boost::scoped_ptr<DUID> duid_en(new DUID(en, sizeof(en)));
+    boost::scoped_ptr<DUID> duid_ll(new DUID(ll, sizeof(ll)));
+    boost::scoped_ptr<DUID> duid_uuid(new DUID(uuid, sizeof(uuid)));
+    boost::scoped_ptr<DUID> duid_invalid(new DUID(invalid, sizeof(invalid)));
 
     EXPECT_EQ(DUID::DUID_LLT,     duid_llt->getType());
     EXPECT_EQ(DUID::DUID_EN,      duid_en->getType());
@@ -125,7 +115,7 @@ TEST(DuidTest, getType) {
 // This test checks that the DUID instance can be created from the textual
 // format and that error is reported if the textual format is invalid.
 TEST(DuidTest, fromText) {
-    scoped_ptr<DUID> duid;
+    boost::scoped_ptr<DUID> duid;
     // DUID with only decimal digits.
     ASSERT_NO_THROW(
         duid.reset(new DUID(DUID::fromText("00:01:02:03:04:05:06")))
@@ -169,9 +159,11 @@ TEST(DuidTest, empty) {
     // This method must return something
     ASSERT_TRUE(empty);
 
-    // Ok, technically empty is not really empty, it's just a single
-    // byte with value of 0.
-    EXPECT_EQ("00", empty->toText());
+    // Ok, technically empty is not really empty, it's just type 0 (DUID_UNKNOWN)
+    // followed by a single byte with value of 0.
+    EXPECT_EQ(empty->getDuid().size(), 3);
+    EXPECT_EQ(empty->getDuid(), std::vector<uint8_t>({0, 0, 0}));
+    EXPECT_EQ("00:00:00", empty->toText());
 
     EXPECT_TRUE(*empty == DUID::EMPTY());
 
@@ -188,10 +180,10 @@ TEST(DuidTest, operators) {
     uint8_t data3[] = {0, 1, 2, 3, 4, 5, 7}; // last digit different
     uint8_t data4[] = {0, 1, 2, 3, 4, 5, 6}; // the same as 1
 
-    scoped_ptr<DUID> duid1(new DUID(data1, sizeof(data1)));
-    scoped_ptr<DUID> duid2(new DUID(data2, sizeof(data2)));
-    scoped_ptr<DUID> duid3(new DUID(data3, sizeof(data3)));
-    scoped_ptr<DUID> duid4(new DUID(data4, sizeof(data4)));
+    boost::scoped_ptr<DUID> duid1(new DUID(data1, sizeof(data1)));
+    boost::scoped_ptr<DUID> duid2(new DUID(data2, sizeof(data2)));
+    boost::scoped_ptr<DUID> duid3(new DUID(data3, sizeof(data3)));
+    boost::scoped_ptr<DUID> duid4(new DUID(data4, sizeof(data4)));
 
     EXPECT_TRUE(*duid1 == *duid4);
     EXPECT_FALSE(*duid1 == *duid2);
@@ -212,12 +204,12 @@ TEST(ClientIdTest, constructor) {
     vector<uint8_t> data2(data1, data1 + sizeof(data1));
 
     // checks for C-style constructor (uint8_t * + len)
-    scoped_ptr<ClientId> id1(new ClientId(data1, sizeof(data1)));
+    boost::scoped_ptr<ClientId> id1(new ClientId(data1, sizeof(data1)));
     vector<uint8_t> vecdata = id1->getClientId();
     EXPECT_TRUE(data2 == vecdata);
 
     // checks for vector-based constructor
-    scoped_ptr<ClientId> id2(new ClientId(data2));
+    boost::scoped_ptr<ClientId> id2(new ClientId(data2));
     vecdata = id2->getClientId();
     EXPECT_TRUE(data2 == vecdata);
 }
@@ -225,48 +217,49 @@ TEST(ClientIdTest, constructor) {
 // Check that client-id sizes are reasonable
 TEST(ClientIdTest, size) {
     // Ensure that our size constant is RFC-compliant.
-    ASSERT_EQ(128, MAX_CLIENT_ID_LEN);
+    ASSERT_EQ(255, ClientId::MAX_CLIENT_ID_LEN);
 
-    uint8_t data[MAX_CLIENT_ID_LEN + 1];
+    uint8_t data[ClientId::MAX_CLIENT_ID_LEN + 1];
     vector<uint8_t> data2;
-    for (uint8_t i = 0; i < MAX_CLIENT_ID_LEN + 1; ++i) {
-        data[i] = i;
-        if (i < MAX_CLIENT_ID_LEN)
+    for (uint16_t i = 0; i < ClientId::MAX_CLIENT_ID_LEN + 1; ++i) {
+        data[i] = static_cast<uint8_t>(i);
+        if (i < ClientId::MAX_CLIENT_ID_LEN) {
             data2.push_back(i);
+        }
     }
-    ASSERT_EQ(data2.size(), MAX_CLIENT_ID_LEN);
+    ASSERT_EQ(data2.size(), ClientId::MAX_CLIENT_ID_LEN);
 
-    scoped_ptr<ClientId> duidmaxsize1(new ClientId(data, MAX_CLIENT_ID_LEN));
-    scoped_ptr<ClientId> duidmaxsize2(new ClientId(data2));
+    boost::scoped_ptr<ClientId> duidmaxsize1(new ClientId(data, ClientId::MAX_CLIENT_ID_LEN));
+    boost::scoped_ptr<ClientId> duidmaxsize2(new ClientId(data2));
 
     EXPECT_THROW(
-        scoped_ptr<ClientId> toolarge1(new ClientId(data, MAX_CLIENT_ID_LEN + 1)),
+        boost::scoped_ptr<ClientId> toolarge1(new ClientId(data, ClientId::MAX_CLIENT_ID_LEN + 1)),
         BadValue);
 
     // that's one too much
-    data2.push_back(128);
+    data2.push_back(0);
 
     EXPECT_THROW(
-        scoped_ptr<ClientId> toolarge2(new ClientId(data2)),
+        boost::scoped_ptr<ClientId> toolarge2(new ClientId(data2)),
         BadValue);
 
     // empty client-ids are not allowed
     vector<uint8_t> empty;
     EXPECT_THROW(
-        scoped_ptr<ClientId> empty_client_id1(new ClientId(empty)),
+        boost::scoped_ptr<ClientId> empty_client_id1(new ClientId(empty)),
         BadValue);
 
     EXPECT_THROW(
-        scoped_ptr<ClientId> empty_client_id2(new ClientId(data, 0)),
+        boost::scoped_ptr<ClientId> empty_client_id2(new ClientId(data, 0)),
         BadValue);
 
     // client-id must be at least 2 bytes long
     vector<uint8_t> shorty(1,17); // just a single byte with value 17
     EXPECT_THROW(
-        scoped_ptr<ClientId> too_short_client_id1(new ClientId(shorty)),
+        boost::scoped_ptr<ClientId> too_short_client_id1(new ClientId(shorty)),
         BadValue);
     EXPECT_THROW(
-        scoped_ptr<ClientId> too_short_client_id1(new ClientId(data, 1)),
+        boost::scoped_ptr<ClientId> too_short_client_id1(new ClientId(data, 1)),
         BadValue);
 }
 
@@ -277,10 +270,10 @@ TEST(ClientIdTest, operators) {
     uint8_t data3[] = {0, 1, 2, 3, 4, 5, 7}; // last digit different
     uint8_t data4[] = {0, 1, 2, 3, 4, 5, 6}; // the same as 1
 
-    scoped_ptr<ClientId> id1(new ClientId(data1, sizeof(data1)));
-    scoped_ptr<ClientId> id2(new ClientId(data2, sizeof(data2)));
-    scoped_ptr<ClientId> id3(new ClientId(data3, sizeof(data3)));
-    scoped_ptr<ClientId> id4(new ClientId(data4, sizeof(data4)));
+    boost::scoped_ptr<ClientId> id1(new ClientId(data1, sizeof(data1)));
+    boost::scoped_ptr<ClientId> id2(new ClientId(data2, sizeof(data2)));
+    boost::scoped_ptr<ClientId> id3(new ClientId(data3, sizeof(data3)));
+    boost::scoped_ptr<ClientId> id4(new ClientId(data4, sizeof(data4)));
 
     EXPECT_TRUE(*id1 == *id4);
     EXPECT_FALSE(*id1 == *id2);

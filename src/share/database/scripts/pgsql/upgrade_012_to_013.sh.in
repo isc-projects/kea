@@ -1,0 +1,682 @@
+#!/bin/sh
+
+# Copyright (C) 2022-2024 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# Exit with error if commands exit with non-zero and if undefined variables are
+# used.
+set -eu
+
+# shellcheck disable=SC2034
+# SC2034: ... appears unused. Verify use (or export if used externally).
+prefix="@prefix@"
+
+# Include utilities based on location of this script. Check for sources first,
+# so that the unexpected situations with weird paths fall on the default
+# case of installed.
+script_path=$(cd "$(dirname "${0}")" && pwd)
+if test "${script_path}" = "@abs_top_builddir@/src/share/database/scripts/pgsql"; then
+    # shellcheck source=./src/bin/admin/admin-utils.sh.in
+    . "@abs_top_builddir@/src/bin/admin/admin-utils.sh"
+else
+    # shellcheck source=./src/bin/admin/admin-utils.sh.in
+    . "@datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh"
+fi
+
+VERSION=$(pgsql_version "$@")
+
+if [ "$VERSION" != "12.0" ]; then
+    printf 'This script upgrades 12.0 to 12.0. '
+    printf 'Reported version is %s. Skipping upgrade.\n' "${VERSION}"
+    exit 0
+fi
+
+psql "$@" >/dev/null <<EOF
+START TRANSACTION;
+
+-- This line starts the schema upgrade to version 13.0.
+
+-- JSON functions --
+
+-- Helper function that avoids a casting error when the string
+-- presumed to be in JSON format, is empty.
+CREATE OR REPLACE FUNCTION json_cast(IN json_candidate TEXT)
+RETURNS JSON
+AS \$\$
+BEGIN
+    IF LENGTH(json_candidate) = 0 THEN
+        RETURN '{}'::json;
+    END IF;
+    RETURN json_candidate::json;
+END;
+\$\$ LANGUAGE plpgsql;
+
+-- Function that establishes whether JSON functions are supported.
+-- They should be provided with PostgreSQL >= 9.4.
+CREATE OR REPLACE FUNCTION isJsonSupported()
+RETURNS BOOLEAN
+AS \$\$
+BEGIN
+    IF get_session_value('json_supported') IS NULL THEN
+        IF (SELECT proname FROM pg_proc WHERE proname = 'json_extract_path') = 'json_extract_path' THEN
+            PERFORM set_session_value('kea.json_supported', true);
+        ELSE
+            PERFORM set_session_value('kea.json_supported', false);
+        END IF;
+    END IF;
+    RETURN get_session_value('kea.json_supported');
+END
+\$\$ LANGUAGE plpgsql;
+
+-- Schema changes related to lease limiting start here. --
+
+-- Recreate the triggers that update the leaseX_stat tables as stored procedures. --
+
+CREATE OR REPLACE FUNCTION lease4_AINS_lease4_stat(IN new_state BIGINT,
+                                                   IN new_subnet_id BIGINT)
+RETURNS VOID
+AS \$\$
+BEGIN
+    IF new_state = 0 OR new_state = 1 THEN
+        -- Update the state count if it exists.
+        UPDATE lease4_stat SET leases = leases + 1
+            WHERE subnet_id = new_subnet_id AND state = new_state;
+
+        -- Insert the state count record if it does not exist.
+        IF NOT FOUND THEN
+            INSERT INTO lease4_stat VALUES (new_subnet_id, new_state, 1);
+        END IF;
+    END IF;
+END;
+\$\$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION lease4_AUPD_lease4_stat(IN old_state BIGINT,
+                                                   IN old_subnet_id BIGINT,
+                                                   IN new_state BIGINT,
+                                                   IN new_subnet_id BIGINT)
+RETURNS VOID
+AS \$\$
+BEGIN
+    IF old_subnet_id != new_subnet_id OR old_state != new_state THEN
+        IF old_state = 0 OR old_state = 1 THEN
+            -- Decrement the old state count if record exists.
+            UPDATE lease4_stat
+                SET leases = GREATEST(leases - 1, 0)
+                WHERE subnet_id = old_subnet_id AND state = old_state;
+        END IF;
+
+        IF new_state = 0 OR new_state = 1 THEN
+            -- Increment the new state count if record exists.
+            UPDATE lease4_stat SET leases = leases + 1
+                WHERE subnet_id = new_subnet_id AND state = new_state;
+
+            -- Insert new state record if it does not exist.
+            IF NOT FOUND THEN
+                INSERT INTO lease4_stat VALUES (new_subnet_id, new_state, 1);
+            END IF;
+        END IF;
+    END IF;
+END;
+\$\$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION lease4_ADEL_lease4_stat(IN old_state BIGINT,
+                                                   IN old_subnet_id BIGINT)
+RETURNS VOID
+AS \$\$
+BEGIN
+    IF old_state = 0 OR old_state = 1 THEN
+        -- Decrement the state count if record exists.
+        UPDATE lease4_stat
+            SET leases = GREATEST(leases - 1, 0)
+            WHERE subnet_id = old_subnet_id AND old_state = state;
+    END IF;
+END;
+\$\$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION lease6_AINS_lease6_stat(IN new_state BIGINT,
+                                                   IN new_subnet_id BIGINT,
+                                                   IN new_lease_type SMALLINT)
+RETURNS VOID
+AS \$\$
+BEGIN
+    IF new_state = 0 OR new_state = 1 THEN
+        -- Update the state count if it exists.
+        UPDATE lease6_stat SET leases = leases + 1
+            WHERE subnet_id = new_subnet_id AND lease_type = new_lease_type
+            AND state = new_state;
+
+        -- Insert the state count record if it does not exist.
+        IF NOT FOUND THEN
+            INSERT INTO lease6_stat VALUES (new_subnet_id, new_lease_type, new_state, 1);
+        END IF;
+    END IF;
+END;
+\$\$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION lease6_AUPD_lease6_stat(IN old_state BIGINT,
+                                                   IN old_subnet_id BIGINT,
+                                                   IN old_lease_type SMALLINT,
+                                                   IN new_state BIGINT,
+                                                   IN new_subnet_id BIGINT,
+                                                   IN new_lease_type SMALLINT)
+RETURNS VOID
+AS \$\$
+BEGIN
+    IF old_subnet_id != new_subnet_id OR
+       old_lease_type != new_lease_type OR
+       old_state != new_state THEN
+        IF old_state = 0 OR old_state = 1 THEN
+            -- Decrement the old state count if record exists.
+            UPDATE lease6_stat
+                SET leases = GREATEST(leases - 1, 0)
+                WHERE subnet_id = old_subnet_id AND lease_type = old_lease_type
+                AND state = old_state;
+        END IF;
+
+        IF new_state = 0 OR new_state = 1 THEN
+            -- Increment the new state count if record exists
+            UPDATE lease6_stat SET leases = leases + 1
+                WHERE subnet_id = new_subnet_id AND lease_type = new_lease_type
+                AND state = new_state;
+
+            -- Insert new state record if it does not exist
+            IF NOT FOUND THEN
+                INSERT INTO lease6_stat
+                VALUES (new_subnet_id, new_lease_type, new_state, 1);
+            END IF;
+        END IF;
+    END IF;
+END;
+\$\$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION lease6_ADEL_lease6_stat(IN old_state BIGINT,
+                                                   IN old_subnet_id BIGINT,
+                                                   IN old_lease_type SMALLINT)
+RETURNS VOID
+AS \$\$
+BEGIN
+    IF old_state = 0 OR old_state = 1 THEN
+        -- Decrement the state count if record exists
+        UPDATE lease6_stat
+            SET leases = GREATEST(leases - 1, 0)
+            WHERE subnet_id = old_subnet_id AND lease_type = old_lease_type
+            AND state = old_state;
+    END IF;
+END;
+\$\$ LANGUAGE plpgsql;
+
+-- Create tables that contain the number of active leases. --
+
+CREATE TABLE lease4_stat_by_client_class (
+    client_class VARCHAR(128) NOT NULL PRIMARY KEY,
+    leases BIGINT NOT NULL
+);
+
+CREATE TABLE lease6_stat_by_client_class (
+    client_class VARCHAR(128) NOT NULL,
+    lease_type SMALLINT NOT NULL,
+    leases BIGINT NOT NULL,
+    PRIMARY KEY (client_class, lease_type),
+    CONSTRAINT fk_lease6_stat_by_client_class_lease_type FOREIGN KEY (lease_type)
+        REFERENCES lease6_types (lease_type)
+);
+
+-- Create procedures to be called for each row in after-event triggers for
+-- INSERT, UPDATE and DELETE on lease tables.
+
+CREATE OR REPLACE FUNCTION lease4_AINS_lease4_stat_by_client_class(IN new_state BIGINT,
+                                                                   IN new_user_context TEXT)
+RETURNS VOID
+AS \$\$
+DECLARE
+    class VARCHAR(128);
+BEGIN
+    -- Only state 0 is needed for lease limiting.
+    IF new_state = 0 THEN
+        -- Dive into client classes.
+        FOR class IN SELECT * FROM JSON_ARRAY_ELEMENTS(json_cast(new_user_context)->'ISC'->'client-classes') LOOP
+            SELECT TRIM('"' FROM class) INTO class;
+
+            -- Upsert to increment the lease count.
+            UPDATE lease4_stat_by_client_class SET leases = leases + 1
+                WHERE client_class = class;
+            IF NOT FOUND THEN
+                INSERT INTO lease4_stat_by_client_class VALUES (class, 1);
+            END IF;
+        END LOOP;
+    END IF;
+END;
+\$\$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION lease4_AUPD_lease4_stat_by_client_class(IN old_state BIGINT,
+                                                                   IN old_user_context TEXT,
+                                                                   IN new_state BIGINT,
+                                                                   IN new_user_context TEXT)
+RETURNS VOID
+AS \$\$
+DECLARE
+    old_client_classes TEXT;
+    new_client_classes TEXT;
+    class VARCHAR(128);
+    length INT;
+    i INT;
+BEGIN
+    SELECT json_cast(old_user_context)->'ISC'->'client-classes' INTO old_client_classes;
+    SELECT json_cast(new_user_context)->'ISC'->'client-classes' INTO new_client_classes;
+
+    IF old_state != new_state OR old_client_classes != new_client_classes THEN
+        -- Check if it's moving away from a counted state.
+        IF old_state = 0 THEN
+            -- Dive into client classes.
+            FOR class IN SELECT * FROM JSON_ARRAY_ELEMENTS(json_cast(old_client_classes)) LOOP
+                SELECT TRIM('"' FROM class) INTO class;
+
+                -- Decrement the lease count if the record exists.
+                UPDATE lease4_stat_by_client_class SET leases = GREATEST(leases - 1, 0)
+                    WHERE client_class = class;
+            END LOOP;
+        END IF;
+
+        -- Check if it's moving into a counted state.
+        IF new_state = 0 THEN
+            -- Dive into client classes.
+            FOR class IN SELECT * FROM JSON_ARRAY_ELEMENTS(json_cast(new_client_classes)) LOOP
+                SELECT TRIM('"' FROM class) INTO class;
+
+                -- Upsert to increment the lease count.
+                UPDATE lease4_stat_by_client_class SET leases = leases + 1
+                    WHERE client_class = class;
+                IF NOT FOUND THEN
+                    INSERT INTO lease4_stat_by_client_class VALUES (class, 1);
+                END IF;
+            END LOOP;
+        END IF;
+    END IF;
+END;
+\$\$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION lease4_ADEL_lease4_stat_by_client_class(IN old_state BIGINT,
+                                                                   IN old_user_context TEXT)
+RETURNS VOID
+AS \$\$
+DECLARE
+    class VARCHAR(128);
+BEGIN
+    -- Only state 0 is accounted for in lease limiting.
+    IF old_state = 0 THEN
+        -- Dive into client classes.
+        FOR class IN SELECT * FROM JSON_ARRAY_ELEMENTS(json_cast(old_user_context)->'ISC'->'client-classes') LOOP
+            SELECT TRIM('"' FROM class) INTO class;
+
+            -- Decrement the lease count if the record exists.
+            UPDATE lease4_stat_by_client_class SET leases = GREATEST(leases - 1, 0)
+                WHERE client_class = class;
+        END LOOP;
+    END IF;
+END;
+\$\$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION lease6_AINS_lease6_stat_by_client_class(IN new_state BIGINT,
+                                                                   IN new_user_context TEXT,
+                                                                   IN new_lease_type SMALLINT)
+RETURNS VOID
+AS \$\$
+DECLARE
+    client_classes TEXT;
+    class VARCHAR(128);
+    length INT;
+    i INT;
+BEGIN
+    -- Only state 0 is needed for lease limiting.
+    IF new_state = 0 THEN
+        -- Dive into client classes.
+        FOR class IN SELECT * FROM JSON_ARRAY_ELEMENTS(json_cast(new_user_context)->'ISC'->'client-classes') LOOP
+            SELECT TRIM('"' FROM class) INTO class;
+
+            -- Upsert to increment the lease count.
+            UPDATE lease6_stat_by_client_class SET leases = leases + 1
+                WHERE client_class = class AND lease_type = new_lease_type;
+            IF NOT FOUND THEN
+                INSERT INTO lease6_stat_by_client_class VALUES (class, new_lease_type, 1);
+            END IF;
+        END LOOP;
+    END IF;
+END;
+\$\$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION lease6_AUPD_lease6_stat_by_client_class(IN old_state BIGINT,
+                                                                   IN old_user_context TEXT,
+                                                                   IN old_lease_type SMALLINT,
+                                                                   IN new_state BIGINT,
+                                                                   IN new_user_context TEXT,
+                                                                   IN new_lease_type SMALLINT)
+RETURNS VOID
+AS \$\$
+DECLARE
+    old_client_classes TEXT;
+    new_client_classes TEXT;
+    class VARCHAR(128);
+    length INT;
+    i INT;
+BEGIN
+    SELECT json_cast(old_user_context)->'ISC'->'client-classes' INTO old_client_classes;
+    SELECT json_cast(new_user_context)->'ISC'->'client-classes' INTO new_client_classes;
+
+    IF old_state != new_state OR old_client_classes != new_client_classes OR old_lease_type != new_lease_type THEN
+        -- Check if it's moving away from a counted state.
+        IF old_state = 0 THEN
+            -- Dive into client classes.
+            FOR class IN SELECT * FROM JSON_ARRAY_ELEMENTS(json_cast(old_client_classes)) LOOP
+                SELECT TRIM('"' FROM class) INTO class;
+
+                -- Decrement the lease count if the record exists.
+                UPDATE lease6_stat_by_client_class SET leases = GREATEST(leases - 1, 0)
+                    WHERE client_class = class AND lease_type = old_lease_type;
+            END LOOP;
+        END IF;
+
+        -- Check if it's moving into a counted state.
+        IF new_state = 0 THEN
+            -- Dive into client classes.
+            FOR class IN SELECT * FROM JSON_ARRAY_ELEMENTS(json_cast(new_client_classes)) LOOP
+                SELECT TRIM('"' FROM class) INTO class;
+
+                -- Upsert to increment the lease count.
+                UPDATE lease6_stat_by_client_class SET leases = leases + 1
+                    WHERE client_class = class AND lease_type = new_lease_type;
+                IF NOT FOUND THEN
+                    INSERT INTO lease6_stat_by_client_class VALUES (class, new_lease_type, 1);
+                END IF;
+            END LOOP;
+        END IF;
+    END IF;
+END;
+\$\$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION lease6_ADEL_lease6_stat_by_client_class(IN old_state BIGINT,
+                                                                   IN old_user_context TEXT,
+                                                                   IN old_lease_type SMALLINT)
+RETURNS VOID
+AS \$\$
+DECLARE
+    client_classes VARCHAR(1024);
+    class VARCHAR(128);
+    length INT;
+    i INT;
+BEGIN
+    -- Only state 0 is accounted for in lease limiting. But check both states to be consistent with lease6_stat.
+    IF old_state = 0 THEN
+        -- Dive into client classes.
+        FOR class IN SELECT * FROM JSON_ARRAY_ELEMENTS(json_cast(old_user_context)->'ISC'->'client-classes') LOOP
+            SELECT TRIM('"' FROM class) INTO class;
+
+            -- Decrement the lease count if the record exists.
+            UPDATE lease6_stat_by_client_class SET leases = GREATEST(leases - 1, 0)
+                WHERE client_class = class AND lease_type = old_lease_type;
+        END LOOP;
+    END IF;
+END;
+\$\$ LANGUAGE plpgsql;
+
+-- Recreate the after-event triggers for INSERT, UPDATE and DELETE on lease tables to call the --
+-- stored procedures above in pairs of two: for client classes and for subnets. --
+
+DROP TRIGGER IF EXISTS stat_lease4_insert ON lease4;
+
+CREATE OR REPLACE FUNCTION func_lease4_AINS()
+RETURNS trigger AS \$lease4_AINS\$
+BEGIN
+    IF isJsonSupported() = true THEN
+        PERFORM lease4_AINS_lease4_stat_by_client_class(NEW.state, NEW.user_context);
+    END IF;
+    PERFORM lease4_AINS_lease4_stat(NEW.state, NEW.subnet_id);
+    RETURN NULL;
+END;
+\$lease4_AINS\$ LANGUAGE plpgsql;
+
+CREATE TRIGGER lease4_AINS AFTER INSERT ON lease4
+    FOR EACH ROW EXECUTE PROCEDURE func_lease4_AINS();
+
+DROP TRIGGER IF EXISTS stat_lease4_update ON lease4;
+
+CREATE OR REPLACE FUNCTION func_lease4_AUPD()
+RETURNS trigger AS \$lease4_AUPD\$
+BEGIN
+    IF isJsonSupported() = true THEN
+        PERFORM lease4_AUPD_lease4_stat_by_client_class(OLD.state, OLD.user_context, NEW.state, NEW.user_context);
+    END IF;
+    PERFORM lease4_AUPD_lease4_stat(OLD.state, OLD.subnet_id, NEW.state, NEW.subnet_id);
+    RETURN NULL;
+END;
+\$lease4_AUPD\$ LANGUAGE plpgsql;
+
+CREATE TRIGGER lease4_AUPD AFTER UPDATE ON lease4
+    FOR EACH ROW EXECUTE PROCEDURE func_lease4_AUPD();
+
+DROP TRIGGER IF EXISTS stat_lease4_delete ON lease4;
+
+CREATE OR REPLACE FUNCTION func_lease4_ADEL()
+RETURNS trigger AS \$lease4_ADEL\$
+BEGIN
+    IF isJsonSupported() = true THEN
+        PERFORM lease4_ADEL_lease4_stat_by_client_class(OLD.state, OLD.user_context);
+    END IF;
+    PERFORM lease4_ADEL_lease4_stat(OLD.state, OLD.subnet_id);
+    RETURN NULL;
+END;
+\$lease4_ADEL\$ LANGUAGE plpgsql;
+
+CREATE TRIGGER lease4_ADEL AFTER DELETE ON lease4
+    FOR EACH ROW EXECUTE PROCEDURE func_lease4_ADEL();
+
+DROP TRIGGER IF EXISTS stat_lease6_insert ON lease6;
+
+CREATE OR REPLACE FUNCTION func_lease6_AINS()
+RETURNS trigger AS \$lease6_AINS\$
+BEGIN
+    IF isJsonSupported() = true THEN
+        PERFORM lease6_AINS_lease6_stat_by_client_class(NEW.state, NEW.user_context, NEW.lease_type);
+    END IF;
+    PERFORM lease6_AINS_lease6_stat(NEW.state, NEW.subnet_id, NEW.lease_type);
+    RETURN NULL;
+END;
+\$lease6_AINS\$ LANGUAGE plpgsql;
+
+CREATE TRIGGER lease6_AINS AFTER INSERT ON lease6
+    FOR EACH ROW EXECUTE PROCEDURE func_lease6_AINS();
+
+DROP TRIGGER IF EXISTS stat_lease6_update ON lease6;
+
+CREATE OR REPLACE FUNCTION func_lease6_AUPD()
+RETURNS trigger AS \$lease6_AUPD\$
+BEGIN
+    IF isJsonSupported() = true THEN
+        PERFORM lease6_AUPD_lease6_stat_by_client_class(OLD.state, OLD.user_context, OLD.lease_type, NEW.state, NEW.user_context, NEW.lease_type);
+    END IF;
+    PERFORM lease6_AUPD_lease6_stat(OLD.state, OLD.subnet_id, OLD.lease_type, NEW.state, NEW.subnet_id, NEW.lease_type);
+    RETURN NULL;
+END;
+\$lease6_AUPD\$ LANGUAGE plpgsql;
+
+CREATE TRIGGER lease6_AUPD AFTER UPDATE ON lease6
+    FOR EACH ROW EXECUTE PROCEDURE func_lease6_AUPD();
+
+DROP TRIGGER IF EXISTS stat_lease6_delete ON lease6;
+
+CREATE OR REPLACE FUNCTION func_lease6_ADEL()
+RETURNS trigger AS \$lease6_ADEL\$
+BEGIN
+    IF isJsonSupported() = true THEN
+        PERFORM lease6_ADEL_lease6_stat_by_client_class(OLD.state, OLD.user_context, OLD.lease_type);
+    END IF;
+    PERFORM lease6_ADEL_lease6_stat(OLD.state, OLD.subnet_id, OLD.lease_type);
+    RETURN NULL;
+END;
+\$lease6_ADEL\$ LANGUAGE plpgsql;
+
+CREATE TRIGGER lease6_ADEL AFTER DELETE ON lease6
+    FOR EACH ROW EXECUTE PROCEDURE func_lease6_ADEL();
+
+-- Create functions that return an empty TEXT if all limits allow for more leases, or otherwise a
+-- TEXT in one of the following JSON formats detailing the limit that was reached:
+-- { "limit-type": "client-class", "name": foo, "lease-type": "address", "limit": 2, "count": 2 }
+-- { "limit-type": "subnet", "id": 1, "lease-type": "IA_PD", "limit": 2, "count": 2 }
+-- The following format for user_context is assumed:
+-- { "ISC": { "limits": { "client-classes": [ { "name": "foo", "address-limit": 2, "prefix-limit": 1 } ],
+--                        "subnet": { "id": 1, "address-limit": 2, "prefix-limit": 1 } } } }
+
+CREATE OR REPLACE FUNCTION checkLease4Limits(user_context TEXT)
+RETURNS TEXT
+AS \$\$
+DECLARE
+    class TEXT;
+    name VARCHAR(255);
+    sid INT;
+    lease_limit INT;
+    lease_count INT;
+BEGIN
+    -- Dive into client class limits.
+    FOR class IN SELECT * FROM JSON_ARRAY_ELEMENTS(json_cast(user_context)->'ISC'->'limits'->'client-classes') LOOP
+        SELECT TRIM('"' FROM (json_cast(class)->'name')::text) INTO name;
+        SELECT json_cast(class)->'address-limit' INTO lease_limit;
+
+        IF lease_limit IS NOT NULL THEN
+            -- Get the lease count for this client class.
+            SELECT leases FROM lease4_stat_by_client_class INTO lease_count WHERE client_class = name;
+            IF lease_count IS NULL THEN
+                lease_count := 0;
+            END IF;
+
+            -- Compare. Return immediately if the limit is surpassed.
+            IF lease_limit <= lease_count THEN
+                RETURN CONCAT('address limit ', lease_limit, ' for client class "', name, '", current lease count ', lease_count);
+            END IF;
+        END IF;
+    END LOOP;
+
+    -- Dive into subnet limits.
+    SELECT json_cast(user_context)->'ISC'->'limits'->'subnet'->'id' INTO sid;
+    SELECT json_cast(user_context)->'ISC'->'limits'->'subnet'->'address-limit' INTO lease_limit;
+
+    IF lease_limit IS NOT NULL THEN
+        -- Get the lease count for this client class.
+        SELECT leases FROM lease4_stat WHERE subnet_id = sid AND state = 0 INTO lease_count;
+        IF lease_count IS NULL THEN
+            lease_count := 0;
+        END IF;
+
+        -- Compare. Return immediately if the limit is surpassed.
+        IF lease_limit <= lease_count THEN
+            RETURN CONCAT('address limit ', lease_limit, ' for subnet ID ', sid, ', current lease count ', lease_count);
+        END IF;
+    END IF;
+
+    RETURN '';
+END;
+\$\$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION checkLease6Limits(user_context TEXT)
+RETURNS TEXT
+AS \$\$
+DECLARE
+    class TEXT;
+    name VARCHAR(255);
+    sid INT;
+    lease_limit INT;
+    lease_count INT;
+BEGIN
+    -- Dive into client class limits.
+    FOR class IN SELECT * FROM JSON_ARRAY_ELEMENTS(json_cast(user_context)->'ISC'->'limits'->'client-classes') LOOP
+        SELECT TRIM('"' FROM (json_cast(class)->'name')::text) INTO name;
+        SELECT json_cast(class)->'address-limit' INTO lease_limit;
+
+        IF lease_limit IS NOT NULL THEN
+            -- Get the address count for this client class.
+            SELECT leases FROM lease6_stat_by_client_class WHERE client_class = name AND lease_type = 0 INTO lease_count;
+            IF lease_count IS NULL THEN
+                lease_count := 0;
+            END IF;
+
+            -- Compare. Return immediately if the limit is surpassed.
+            IF lease_limit <= lease_count THEN
+                RETURN CONCAT('address limit ', lease_limit, ' for client class "', name, '", current lease count ', lease_count);
+            END IF;
+        END IF;
+
+        SELECT json_cast(class)->'prefix-limit' INTO lease_limit;
+        IF lease_limit IS NOT NULL THEN
+            -- Get the prefix count for this client class.
+            SELECT leases FROM lease6_stat_by_client_class WHERE client_class = name AND lease_type = 2 INTO lease_count;
+            IF lease_count IS NULL THEN
+                lease_count := 0;
+            END IF;
+
+            -- Compare. Return immediately if the limit is surpassed.
+            IF lease_limit <= lease_count THEN
+                RETURN CONCAT('prefix limit ', lease_limit, ' for client class "', name, '", current lease count ', lease_count);
+            END IF;
+        END IF;
+    END LOOP;
+
+    -- Dive into subnet limits.
+    SELECT json_cast(user_context)->'ISC'->'limits'->'subnet'->'id' INTO sid;
+    SELECT json_cast(user_context)->'ISC'->'limits'->'subnet'->'address-limit' INTO lease_limit;
+    IF lease_limit IS NOT NULL THEN
+        -- Get the lease count for this subnet.
+        SELECT leases FROM lease6_stat WHERE subnet_id = sid AND lease_type = 0 AND state = 0 INTO lease_count;
+        IF lease_count IS NULL THEN
+            lease_count := 0;
+        END IF;
+
+        -- Compare. Return immediately if the limit is surpassed.
+        IF lease_limit <= lease_count THEN
+            RETURN CONCAT('address limit ', lease_limit, ' for subnet ID ', sid, ', current lease count ', lease_count);
+        END IF;
+    END IF;
+    SELECT json_cast(user_context)->'ISC'->'limits'->'subnet'->'prefix-limit' INTO lease_limit;
+    IF lease_limit IS NOT NULL THEN
+        -- Get the lease count for this client class.
+        SELECT leases FROM lease6_stat WHERE subnet_id = sid AND lease_type = 2 AND state = 0 INTO lease_count;
+        IF lease_count IS NULL THEN
+            lease_count := 0;
+        END IF;
+
+        -- Compare. Return immediately if the limit is surpassed.
+        IF lease_limit <= lease_count THEN
+            RETURN CONCAT('prefix limit ', lease_limit, ' for subnet ID ', sid, ', current lease count ', lease_count);
+        END IF;
+    END IF;
+
+    RETURN '';
+END;
+\$\$ LANGUAGE plpgsql;
+
+-- Improve hosts indexes for better performance of global reservations
+-- Create new index that uses only dhcp_identifier.
+CREATE INDEX key_dhcp_identifier on hosts (dhcp_identifier, dhcp_identifier_type);
+
+-- Modify existing indexes to include subnet_id values of 0, so index is also used
+-- for global reservations.
+DROP INDEX IF EXISTS key_dhcp4_identifier_subnet_id;
+CREATE UNIQUE INDEX key_dhcp4_identifier_subnet_id ON hosts
+        (dhcp_identifier ASC, dhcp_identifier_type ASC, dhcp4_subnet_id ASC)
+    WHERE (dhcp4_subnet_id IS NOT NULL);
+
+DROP INDEX IF EXISTS key_dhcp6_identifier_subnet_id;
+CREATE UNIQUE INDEX key_dhcp6_identifier_subnet_id ON hosts
+        (dhcp_identifier ASC, dhcp_identifier_type ASC, dhcp6_subnet_id ASC)
+    WHERE (dhcp6_subnet_id IS NOT NULL);
+
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '13', minor = '0';
+
+-- This line concludes the schema upgrade to version 13.0.
+
+-- Commit the script transaction.
+COMMIT;
+
+EOF

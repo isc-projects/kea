@@ -46,6 +46,7 @@ public:
     /// byte after stored option.
     ///
     /// @param buf buffer (option will be stored here)
+    /// @param check if set to false, allows options larger than 255 for v4
     void pack(isc::util::OutputBuffer& buf, bool check = true) const;
 
     /// @brief Parses received buffer

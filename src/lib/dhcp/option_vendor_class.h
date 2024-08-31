@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,6 +13,7 @@
 #include <dhcp/option.h>
 #include <util/buffer.h>
 #include <boost/shared_ptr.hpp>
+#include <dhcp/option_data_types.h>
 #include <stdint.h>
 
 namespace isc {
@@ -35,9 +36,9 @@ namespace dhcp {
 /// Vendor Class option is controlled by the @c u (universe) parameter passed
 /// to the constructor.
 ///
-/// @todo Currently, the enterprise id field is set to a value of the first
-/// enterprise id occurrence in the parsed option. At some point we should
-/// be able to differentiate between enterprise ids.
+/// Currently, the enterprise id field is set to a value of the first
+/// enterprise id occurrence in the parsed option. This assumes that
+/// all tuples in the same option are for the same vendor.
 class OptionVendorClass : public Option {
 public:
 
@@ -75,6 +76,7 @@ public:
     /// @brief Renders option into the buffer in the wire format.
     ///
     /// @param [out] buf Buffer to which the option is rendered.
+    /// @param check if set to false, allows options larger than 255 for v4
     virtual void pack(isc::util::OutputBuffer& buf, bool check = true) const;
 
     /// @brief Parses buffer holding an option.
@@ -161,17 +163,6 @@ private:
         } else {
             return (D6O_VENDOR_CLASS);
         }
-    }
-
-    /// @brief Returns the tuple length field type for the given universe.
-    ///
-    /// This function returns the length field type which should be used
-    /// for the opaque data tuples being added to this option.
-    ///
-    /// @return Tuple length field type for the universe this option belongs to.
-    OpaqueDataTuple::LengthFieldType getLengthFieldType() const {
-        return (getUniverse() == V4 ? OpaqueDataTuple::LENGTH_1_BYTE :
-                OpaqueDataTuple::LENGTH_2_BYTES);
     }
 
     /// @brief Returns minimal length of the option for the given universe.

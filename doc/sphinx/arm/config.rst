@@ -19,7 +19,7 @@ commands over the Management API (see :ref:`ctrl-channel`) and for
 communicating between DHCP servers and the DDNS update daemon.
 
 Typical usage assumes that the servers are started from the command
-line, either directly or using a script, e.g. ``keactrl``. The
+line, either directly or using a script, e.g. :iscman:`keactrl`. The
 configuration file is specified upon startup using the ``-c`` parameter.
 
 .. _json-format:
@@ -85,7 +85,8 @@ A very simple configuration for DHCPv4 could look like this:
            "rebind-timer": 2000,
            "subnet4": [{
               "pools": [ { "pool": "192.0.2.1-192.0.2.200" } ],
-              "subnet": "192.0.2.0/24"
+              "subnet": "192.0.2.0/24",
+              "id": 1
            }],
 
           # Now loggers are inside the DHCPv4 object.
@@ -121,18 +122,19 @@ the configuration is kept statically using a local file. However, since comments
 are not part of JSON syntax, most JSON tools detect them as
 errors. Another problem with them is that once Kea loads its configuration, the
 shell, C, and C++ style comments are ignored. If commands such as
-``config-get`` or ``config-write`` are used, those comments are lost. An example of such
+:isccmd:`config-get` or :isccmd:`config-write` are used, those comments are lost. An example of such
 comments was presented in the previous section.
 
 Historically, to address the problem, Kea code allowed the use of `comment` strings
 as valid JSON entities. This had the benefit of being retained through various
-operations (such as ``config-get``), or allowing processing by JSON tools. An
+operations (such as :isccmd:`config-get`), or allowing processing by JSON tools. An
 example JSON comment looks like this:
 
 ::
 
    "Dhcp4": {
        "subnet4": [{
+           "id": 1,
            "subnet": "192.0.2.0/24",
            "pools": [{ "pool": "192.0.2.10 - 192.0.2.20" }],
            "comment": "second floor"
@@ -157,6 +159,7 @@ example user context looks like this:
 
    "Dhcp4": {
        "subnet4": [{
+           "id": 1,
            "subnet": "192.0.2.0/24",
            "pools": [{ "pool": "192.0.2.10 - 192.0.2.20" }],
            "user-context": {
@@ -171,17 +174,17 @@ syntax and its top-level element is a map (i.e. the data must be enclosed in
 curly brackets). However, some hook libraries may expect specific formatting;
 please consult the specific hook library documentation for details.
 
-In a sense the user-context mechanism has superseded the JSON comment
-capabilities; ISC encourages administrators to use user-context instead of
-the older mechanisms. To promote this way of storing comments, Kea compared
-converts JSON comments to user-context on the fly.
+The user-context mechanism has superseded the JSON comment
+capabilities; ISC encourages administrators to use user context instead of
+the older mechanisms. To promote this way of storing comments, Kea
+converts JSON comments to user context on the fly.
 
 However, if the configuration uses the old JSON
-comment, the ``config-get`` command returns a slightly modified
-configuration. It is not uncommon for a call for ``config-set`` followed by a
-``config-get`` to receive a slightly different structure.
+comment method, the :isccmd:`config-get` command returns a slightly modified
+configuration. It is not uncommon for a call for :isccmd:`config-set` followed by
+:isccmd:`config-get` to receive a slightly different structure.
 The best way to avoid this problem is simply to abandon JSON comments and
-use user-context.
+use user context.
 
 Kea supports user contexts at the following levels: global scope,
 interfaces configuration, shared networks,
@@ -195,26 +198,28 @@ User context can be added and edited in structures supported by commands.
 We encourage Kea users to utilize these functions to store information
 used by other systems and custom hooks.
 
-For example, the `subnet4-update` command can be used to add user context data
+For example, the :isccmd:`subnet4-update` command can be used to add user context data
 to an existing subnet.
 
 ::
 
+   {
    "subnet4": [ {
       "id": 1,
       "subnet": "10.20.30.0/24",
       "user-context": {
-         "building": "Main"
+         "building": "Main",
          "floor": 1
          }
     } ]
+    }
 
-The same can be done with many other commands like lease6-add etc.
+The same can be done with many other commands, like :isccmd:`lease6-add`, etc.
 
 Kea also uses user context to store non-standard data.
 Currently, only :ref:`dhcp4-store-extended-info` uses this feature.
 
-When enabled, it adds the ISC key in `user-context` to differentiate automatically
+When enabled, it adds the ISC key in ``user-context`` to differentiate automatically
 added content.
 
 Example of relay information stored in a lease:
@@ -232,7 +237,7 @@ Example of relay information stored in a lease:
       "ip-address": "192.0.2.1",
       "state": 0,
       "subnet-id": 44,
-      "valid-lft": 3600
+      "valid-lft": 3600,
       "user-context": {
          "ISC": {
          "relays": [
@@ -249,6 +254,7 @@ Example of relay information stored in a lease:
          }]
          }
       }
+   }
    }
 
 
@@ -314,6 +320,7 @@ where the content of "subnets.json" may be:
 
 ::
 
+   {
    "subnet4": [
       {
          "id": 123,
@@ -328,3 +335,5 @@ where the content of "subnets.json" may be:
          "subnet": "10.0.0.0/8"
       }
    ],
+   ...
+   }

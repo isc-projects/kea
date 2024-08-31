@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -48,8 +48,7 @@ protected:
                   rrset_ns(test_domain, RRClass::IN(), RRType::NS(),
                            RRTTL(86400)),
                   rrset_ch_txt(test_domain, RRClass::CH(), RRType::TXT(),
-                               RRTTL(0))
-    {
+                               RRTTL(0)) {
         rrset_a.addRdata(in::A("192.0.2.1"));
         rrset_a.addRdata(in::A("192.0.2.2"));
     }
@@ -340,15 +339,15 @@ protected:
 
 TEST_F(RRsetRRSIGTest, getRRsig) {
     RRsetPtr sp = rrset_a->getRRsig();
-    EXPECT_EQ(static_cast<void*>(NULL), sp.get());
+    EXPECT_FALSE(sp);
 
     sp = rrset_aaaa->getRRsig();
-    EXPECT_NE(static_cast<void*>(NULL), sp.get());
+    EXPECT_TRUE(sp);
 }
 
 TEST_F(RRsetRRSIGTest, addRRsig) {
     RRsetPtr sp = rrset_a->getRRsig();
-    EXPECT_EQ(static_cast<void*>(NULL), sp.get());
+    EXPECT_FALSE(sp);
 
     rrset_rrsig = RRsetPtr(new RRset(test_name, RRClass::IN(),
                                      RRType::RRSIG(), RRTTL(3600)));
@@ -363,7 +362,7 @@ TEST_F(RRsetRRSIGTest, addRRsig) {
     rrset_a->addRRsig(rrset_rrsig);
 
     sp = rrset_a->getRRsig();
-    EXPECT_NE(static_cast<void*>(NULL), sp.get());
+    EXPECT_TRUE(sp);
     EXPECT_EQ(2, sp->getRdataCount());
 
     // add to existing RRSIG

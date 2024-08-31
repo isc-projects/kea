@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,7 +8,6 @@
 #define ISC_ADAPTOR_POOL_H 1
 
 #include <yang/adaptor.h>
-#include <list>
 
 namespace isc {
 namespace yang {
@@ -27,12 +26,8 @@ namespace yang {
 /// removes timers from pools as they are not expected by Kea at this scope.
 class AdaptorPool {
 public:
-
-    /// @brief Constructor.
-    AdaptorPool();
-
     /// @brief Destructor.
-    virtual ~AdaptorPool();
+    virtual ~AdaptorPool() = default;
 
     /// @brief Canonize pool.
     ///
@@ -90,9 +85,9 @@ protected:
     /// @param pools The children pools.
     static void toSubnetIetf6(isc::data::ElementPtr subnet,
                               isc::data::ConstElementPtr pools);
-};
+};  // AdaptorPool
 
-}; // end of namespace isc::yang
-}; // end of namespace isc
+}  // namespace yang
+}  // namespace isc
 
-#endif // ISC_ADAPTOR_POOL_H
+#endif  // ISC_ADAPTOR_POOL_H

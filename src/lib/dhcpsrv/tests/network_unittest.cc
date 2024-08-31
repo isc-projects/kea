@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -179,7 +179,10 @@ TEST_F(NetworkTest, inheritanceSupport4) {
     globals_->set("cache-threshold", Element::create(.25));
     globals_->set("cache-max-age", Element::create(20));
     globals_->set("ddns-update-on-renew", Element::create(true));
-    globals_->set("ddns-use-conflict-resolution", Element::create(true));
+    globals_->set("ddns-conflict-resolution-mode", Element::create("check-with-dhcid"));
+    globals_->set("allocator", Element::create("random"));
+    globals_->set("offer-lifetime", Element::create(45));
+    globals_->set("ddns-ttl-percent", Element::create(0.75));
 
     // For each parameter for which inheritance is supported run
     // the test that checks if the values are inherited properly.
@@ -347,10 +350,34 @@ TEST_F(NetworkTest, inheritanceSupport4) {
                                              false, true);
     }
     {
-        SCOPED_TRACE("ddns-use-conflict-resolution");
-        testNetworkInheritance<TestNetwork4>(&Network4::getDdnsUseConflictResolution,
-                                             &Network4::setDdnsUseConflictResolution,
-                                             false, true);
+        SCOPED_TRACE("ddns-conflict-resolution-mode");
+        testNetworkInheritance<TestNetwork4>(&Network4::getDdnsConflictResolutionMode,
+                                             &Network4::setDdnsConflictResolutionMode,
+                                             "no-check-with-dhcid", "check-with-dhcid");
+    }
+    {
+        SCOPED_TRACE("allocator");
+        testNetworkInheritance<TestNetwork4>(&Network4::getAllocatorType,
+                                             &Network4::setAllocatorType,
+                                             "iterative", "random");
+    }
+    {
+        SCOPED_TRACE("default-allocator-type");
+        testNetworkInheritance<TestNetwork4>(&Network::getDefaultAllocatorType,
+                                             &Network::setDefaultAllocatorType,
+                                             "random", "flq", false);
+    }
+    {
+        SCOPED_TRACE("offer-lifetime");
+        testNetworkInheritance<TestNetwork4>(&Network4::getOfferLft,
+                                             &Network4::setOfferLft,
+                                             10, 45);
+    }
+    {
+        SCOPED_TRACE("ddns-ttl-percent");
+        testNetworkInheritance<TestNetwork4>(&Network::getDdnsTtlPercent,
+                                             &Network::setDdnsTtlPercent,
+                                             .33, .75);
     }
 }
 
@@ -370,7 +397,10 @@ TEST_F(NetworkTest, inheritanceSupport6) {
     globals_->set("hostname-char-replacement", Element::create("gr"));
     globals_->set("store-extended-info", Element::create(true));
     globals_->set("ddns-update-on-renew", Element::create(true));
-    globals_->set("ddns-use-conflict-resolution", Element::create(true));
+    globals_->set("allocator", Element::create("random"));
+    globals_->set("pd-allocator", Element::create("random"));
+    globals_->set("ddns-ttl-percent", Element::create(0.55));
+    globals_->set("ddns-conflict-resolution-mode", Element::create("check-with-dhcid"));
 
     // For each parameter for which inheritance is supported run
     // the test that checks if the values are inherited properly.
@@ -444,10 +474,40 @@ TEST_F(NetworkTest, inheritanceSupport6) {
                                              false, true);
     }
     {
-        SCOPED_TRACE("ddns-use-conflict-resolution");
-        testNetworkInheritance<TestNetwork6>(&Network6::getDdnsUseConflictResolution,
-                                             &Network6::setDdnsUseConflictResolution,
-                                             false, true);
+        SCOPED_TRACE("ddns-conflict-resolution-mode");
+        testNetworkInheritance<TestNetwork6>(&Network6::getDdnsConflictResolutionMode,
+                                             &Network6::setDdnsConflictResolutionMode,
+                                             "no-check-with-dhcid", "check-with-dhcid");
+    }
+    {
+        SCOPED_TRACE("allocator");
+        testNetworkInheritance<TestNetwork6>(&Network6::getAllocatorType,
+                                             &Network6::setAllocatorType,
+                                             "iterative", "random");
+    }
+    {
+        SCOPED_TRACE("pd-allocator");
+        testNetworkInheritance<TestNetwork6>(&Network6::getPdAllocatorType,
+                                             &Network6::setPdAllocatorType,
+                                             "iterative", "random");
+    }
+    {
+        SCOPED_TRACE("default-allocator-type");
+        testNetworkInheritance<TestNetwork6>(&Network::getDefaultAllocatorType,
+                                             &Network::setDefaultAllocatorType,
+                                             "random", "iterative", false);
+    }
+    {
+        SCOPED_TRACE("default-pd-allocator-type");
+        testNetworkInheritance<TestNetwork6>(&Network6::getDefaultPdAllocatorType,
+                                             &Network6::setDefaultPdAllocatorType,
+                                             "random", "iterative", false);
+    }
+    {
+        SCOPED_TRACE("ddns-ttl-percent");
+        testNetworkInheritance<TestNetwork6>(&Network::getDdnsTtlPercent,
+                                             &Network::setDdnsTtlPercent,
+                                             .22, .55);
     }
 
     // Interface-id requires special type of test.
@@ -582,155 +642,6 @@ TEST_F(NetworkTest, getSiaddrNeverFail) {
     // Get an IPv4 view of the test network.
     auto net4_child = boost::dynamic_pointer_cast<Network4>(net_child);
     EXPECT_NO_THROW(net4_child->getSiaddr());
-}
-
-/// @brief Test fixture class for testing @c moveReservationMode.
-class NetworkReservationTest : public ::testing::Test {
-public:
-
-    /// @brief Move test error case.
-    ///
-    /// Error cases of @ref BaseNetworkParser::moveReservationMode.
-    ///
-    /// @param config String with the config to test.
-    /// @param expected String with the expected error message.
-    void TestError(const std::string& config, const std::string& expected) {
-        ElementPtr cfg;
-        ASSERT_NO_THROW(cfg = Element::fromJSON(config))
-            << "bad config, test broken";
-
-        ElementPtr copy = isc::data::copy(cfg);
-
-        EXPECT_THROW_MSG(BaseNetworkParser::moveReservationMode(cfg),
-                         DhcpConfigError, expected);
-
-        ASSERT_TRUE(copy->equals(*cfg));
-    }
-
-    /// @brief Move test case.
-    ///
-    /// Test cases of @ref BaseNetworkParser::moveReservationMode.
-    ///
-    /// @param config String with the config to test.
-    /// @param expected String with the config after move.
-    void TestMove(const std::string& config, const std::string& expected) {
-        ElementPtr cfg;
-        ASSERT_NO_THROW(cfg = Element::fromJSON(config))
-            << "bad config, test broken";
-
-        EXPECT_NO_THROW(BaseNetworkParser::moveReservationMode(cfg));
-
-        EXPECT_EQ(expected, cfg->str());
-    }
-};
-
-/// @brief Test @ref BaseNetworkParser::moveReservationMode error cases.
-TEST_F(NetworkReservationTest, errors) {
-    // Conflicts.
-    std::string config = "{\n"
-        "\"reservation-mode\": \"all\",\n"
-        "\"reservations-global\": true\n"
-        "}";
-    std::string expected = "invalid use of both 'reservation-mode'"
-        " and one of 'reservations-global', 'reservations-in-subnet'"
-        " or 'reservations-out-of-pool' parameters";
-    TestError(config, expected);
-
-    config = "{\n"
-        "\"reservation-mode\": \"all\",\n"
-        "\"reservations-in-subnet\": true\n"
-        "}";
-    TestError(config, expected);
-
-    config = "{\n"
-        "\"reservation-mode\": \"all\",\n"
-        "\"reservations-out-of-pool\": false\n"
-        "}";
-    TestError(config, expected);
-
-    // Unknown mode.
-    config = "{\n"
-        "\"reservation-mode\": \"foo\"\n"
-        "}";
-    expected = "invalid reservation-mode parameter: 'foo' (<string>:2:21)";
-    TestError(config, expected);
-}
-
-/// @brief Test @ref BaseNetworkParser::moveReservationMode.
-TEST_F(NetworkReservationTest, move) {
-    // No-ops.
-    std::string config = "{\n"
-        "}";
-    std::string expected = "{ "
-        " }";
-    TestMove(config, expected);
-
-    config = "{\n"
-        "\"reservations-global\": true\n"
-        "}";
-    expected = "{"
-        " \"reservations-global\": true"
-        " }";
-    TestMove(config, expected);
-
-    // Disabled.
-    config = "{\n"
-        "\"reservation-mode\": \"disabled\"\n"
-        "}";
-    expected = "{"
-        " \"reservations-global\": false,"
-        " \"reservations-in-subnet\": false"
-        " }";
-    TestMove(config, expected);
-
-    config = "{\n"
-        "\"reservation-mode\": \"off\"\n"
-        "}";
-    TestMove(config, expected);
-
-    // Out-of-pool.
-    config = "{\n"
-        "\"reservation-mode\": \"out-of-pool\"\n"
-        "}";
-    expected = "{"
-        " \"reservations-global\": false,"
-        " \"reservations-in-subnet\": true,"
-        " \"reservations-out-of-pool\": true"
-        " }";
-    TestMove(config, expected);
-
-    // Global.
-    config = "{\n"
-        "\"reservation-mode\": \"global\"\n"
-        "}";
-    expected = "{"
-        " \"reservations-global\": true,"
-        " \"reservations-in-subnet\": false"
-        " }";
-    TestMove(config, expected);
-
-    // All.
-    config = "{\n"
-        "\"reservation-mode\": \"all\"\n"
-        "}";
-    expected = "{"
-        " \"reservations-global\": false,"
-        " \"reservations-in-subnet\": true,"
-        " \"reservations-out-of-pool\": false"
-        " }";
-    TestMove(config, expected);
-
-    config = "{\n"
-        "\"foobar\": 1234,\n"
-        "\"reservation-mode\": \"all\"\n"
-        "}";
-    expected = "{"
-        " \"foobar\": 1234,"
-        " \"reservations-global\": false,"
-        " \"reservations-in-subnet\": true,"
-        " \"reservations-out-of-pool\": false"
-        " }";
-    TestMove(config, expected);
 }
 
 // This test verifies that the inheritance is supported for triplets.

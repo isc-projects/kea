@@ -1,4 +1,4 @@
-SUBDIRS = . tests
+SUBDIRS = . tests libloadtests
 
 AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
@@ -27,30 +27,30 @@ libstat_cmds_la_CPPFLAGS = $(AM_CPPFLAGS)
 lib_hooksdir = $(libdir)/kea/hooks
 lib_hooks_LTLIBRARIES = libdhcp_stat_cmds.la
 
-libdhcp_stat_cmds_la_SOURCES  =
+libdhcp_stat_cmds_la_SOURCES =
 libdhcp_stat_cmds_la_LDFLAGS  = $(AM_LDFLAGS)
-libdhcp_stat_cmds_la_LDFLAGS  += -avoid-version -export-dynamic -module
+libdhcp_stat_cmds_la_LDFLAGS += -avoid-version -export-dynamic -module
 libdhcp_stat_cmds_la_LIBADD  = libstat_cmds.la
-libdhcp_stat_cmds_la_LIBADD  += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
-libdhcp_stat_cmds_la_LIBADD  += $(top_builddir)/src/lib/process/libkea-process.la
-libdhcp_stat_cmds_la_LIBADD  += $(top_builddir)/src/lib/eval/libkea-eval.la
-libdhcp_stat_cmds_la_LIBADD  += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
-libdhcp_stat_cmds_la_LIBADD  += $(top_builddir)/src/lib/stats/libkea-stats.la
-libdhcp_stat_cmds_la_LIBADD  += $(top_builddir)/src/lib/config/libkea-cfgclient.la
-libdhcp_stat_cmds_la_LIBADD  += $(top_builddir)/src/lib/http/libkea-http.la
-libdhcp_stat_cmds_la_LIBADD  += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
-libdhcp_stat_cmds_la_LIBADD  += $(top_builddir)/src/lib/hooks/libkea-hooks.la
-libdhcp_stat_cmds_la_LIBADD  += $(top_builddir)/src/lib/database/libkea-database.la
-libdhcp_stat_cmds_la_LIBADD  += $(top_builddir)/src/lib/cc/libkea-cc.la
-libdhcp_stat_cmds_la_LIBADD  += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
-libdhcp_stat_cmds_la_LIBADD  += $(top_builddir)/src/lib/dns/libkea-dns++.la
-libdhcp_stat_cmds_la_LIBADD  += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
-libdhcp_stat_cmds_la_LIBADD  += $(top_builddir)/src/lib/log/libkea-log.la
-libdhcp_stat_cmds_la_LIBADD  += $(top_builddir)/src/lib/util/libkea-util.la
-libdhcp_stat_cmds_la_LIBADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-libdhcp_stat_cmds_la_LIBADD  += $(LOG4CPLUS_LIBS)
-libdhcp_stat_cmds_la_LIBADD  += $(CRYPTO_LIBS)
-libdhcp_stat_cmds_la_LIBADD  += $(BOOST_LIBS)
+libdhcp_stat_cmds_la_LIBADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
+libdhcp_stat_cmds_la_LIBADD += $(top_builddir)/src/lib/process/libkea-process.la
+libdhcp_stat_cmds_la_LIBADD += $(top_builddir)/src/lib/eval/libkea-eval.la
+libdhcp_stat_cmds_la_LIBADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
+libdhcp_stat_cmds_la_LIBADD += $(top_builddir)/src/lib/stats/libkea-stats.la
+libdhcp_stat_cmds_la_LIBADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
+libdhcp_stat_cmds_la_LIBADD += $(top_builddir)/src/lib/http/libkea-http.la
+libdhcp_stat_cmds_la_LIBADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+libdhcp_stat_cmds_la_LIBADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
+libdhcp_stat_cmds_la_LIBADD += $(top_builddir)/src/lib/database/libkea-database.la
+libdhcp_stat_cmds_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+libdhcp_stat_cmds_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
+libdhcp_stat_cmds_la_LIBADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
+libdhcp_stat_cmds_la_LIBADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
+libdhcp_stat_cmds_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
+libdhcp_stat_cmds_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
+libdhcp_stat_cmds_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+libdhcp_stat_cmds_la_LIBADD += $(LOG4CPLUS_LIBS)
+libdhcp_stat_cmds_la_LIBADD += $(CRYPTO_LIBS)
+libdhcp_stat_cmds_la_LIBADD += $(BOOST_LIBS)
 
 # If we want to get rid of all generated messages files, we need to use
 # make maintainer-clean. The proper way to introduce custom commands for

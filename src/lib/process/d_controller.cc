@@ -1,16 +1,21 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
+#include <asiolink/io_service_mgr.h>
 #include <cc/command_interpreter.h>
-#include <cfgrpt/config_report.h>
+#include <process/cfgrpt/config_report.h>
+#include <cryptolink/crypto_hash.h>
 #include <exceptions/exceptions.h>
+#include <config/command_mgr.h>
 #include <hooks/hooks_manager.h>
 #include <log/logger.h>
 #include <log/logger_support.h>
+#include <util/encode/encode.h>
 #include <process/daemon.h>
 #include <process/d_log.h>
 #include <process/d_controller.h>
@@ -18,13 +23,15 @@
 #include <kea_version.h>
 #include <functional>
 #include <sstream>
+#include <string>
 #include <unistd.h>
 #include <signal.h>
 
 using namespace isc::asiolink;
-using namespace isc::data;
 using namespace isc::config;
+using namespace isc::data;
 using namespace isc::hooks;
+using namespace isc::util;
 namespace ph = std::placeholders;
 
 namespace isc {
@@ -45,8 +52,7 @@ DControllerBase::setController(const DControllerBasePtr& controller) {
     if (controller_) {
         // This shouldn't happen, but let's make sure it can't be done.
         // It represents a programmatic error.
-        isc_throw (DControllerBaseError,
-                "Multiple controller instances attempted.");
+        isc_throw(DControllerBaseError, "Multiple controller instances attempted.");
     }
 
     controller_ = controller;
@@ -99,7 +105,7 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
     } catch (const std::exception& ex) {
         LOG_FATAL(dctl_logger, DCTL_CONFIG_FILE_LOAD_FAIL)
             .arg(app_name_).arg(ex.what());
-        isc_throw (LaunchError, "Launch Failed: " << ex.what());
+        isc_throw(LaunchError, "Launch Failed: " << ex.what());
     }
 
     try {
@@ -107,11 +113,11 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
     } catch (const DaemonPIDExists& ex) {
         LOG_FATAL(dctl_logger, DCTL_ALREADY_RUNNING)
                   .arg(bin_name_).arg(ex.what());
-        isc_throw (LaunchError, "Launch Failed: " << ex.what());
+        isc_throw(LaunchError, "Launch Failed: " << ex.what());
     } catch (const std::exception& ex) {
         LOG_FATAL(dctl_logger, DCTL_PID_FILE_ERROR)
                   .arg(app_name_).arg(ex.what());
-        isc_throw (LaunchError, "Launch failed: " << ex.what());
+        isc_throw(LaunchError, "Launch failed: " << ex.what());
     }
 
     // Log the starting of the service.
@@ -130,8 +136,8 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
     } catch (const std::exception& ex) {
         LOG_FATAL(dctl_logger, DCTL_INIT_PROCESS_FAIL)
                   .arg(app_name_).arg(ex.what());
-        isc_throw (ProcessInitError,
-                   "Application Process initialization failed: " << ex.what());
+        isc_throw(ProcessInitError,
+                  "Application Process initialization failed: " << ex.what());
     }
 
     LOG_DEBUG(dctl_logger, isc::log::DBGLVL_START_SHUT, DCTL_STANDALONE)
@@ -143,8 +149,8 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
     if (rcode != 0) {
         LOG_FATAL(dctl_logger, DCTL_CONFIG_FILE_LOAD_FAIL)
                   .arg(app_name_).arg(comment->stringValue());
-        isc_throw (ProcessInitError, "Could Not load configuration file: "
-                   << comment->stringValue());
+        isc_throw(ProcessInitError, "Could Not load configuration file: "
+                  << comment->stringValue());
     }
 
     // Note that the controller was started.
@@ -159,8 +165,8 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
     } catch (const std::exception& ex) {
         LOG_FATAL(dctl_logger, DCTL_PROCESS_FAILED)
                   .arg(app_name_).arg(ex.what());
-        isc_throw (ProcessRunError,
-                   "Application process event loop failed: " << ex.what());
+        isc_throw(ProcessRunError,
+                  "Application process event loop failed: " << ex.what());
     }
 
     // All done, so bail out.
@@ -245,9 +251,14 @@ DControllerBase::parseArgs(int argc, char* argv[]) {
     // ("c" or "d") handle it here.  If its a valid custom option, then
     // invoke customOption.
     int ch;
+    optarg = 0;
     opterr = 0;
     optind = 1;
     std::string opts("dvVWc:t:" + getCustomOpts());
+
+    // Defer exhausting of arguments to the end.
+    ExhaustOptions e(argc, argv, opts);
+
     while ((ch = getopt(argc, argv, opts.c_str())) != -1) {
         switch (ch) {
         case 'd':
@@ -288,10 +299,12 @@ DControllerBase::parseArgs(int argc, char* argv[]) {
             break;
 
         case '?': {
+            char const saved_optopt(optopt);
+            std::string const saved_optarg(optarg ? optarg : std::string());
+
             // We hit an invalid option.
-            isc_throw(InvalidUsage, "unsupported option: ["
-                      << static_cast<char>(optopt) << "] "
-                      << (!optarg ? "" : optarg));
+            isc_throw(InvalidUsage, "unsupported option: -" << saved_optopt <<
+                      (saved_optarg.empty() ? std::string() : " " + saved_optarg));
 
             break;
             }
@@ -299,10 +312,12 @@ DControllerBase::parseArgs(int argc, char* argv[]) {
         default:
             // We hit a valid custom option
             if (!customOption(ch, optarg)) {
-                // This would be a programmatic error.
-                isc_throw(InvalidUsage, " Option listed but implemented?: ["
-                          << static_cast<char>(ch) << "] "
-                          << (!optarg ? "" : optarg));
+                char const saved_optopt(optopt);
+                std::string const saved_optarg(optarg ? optarg : std::string());
+
+                // We hit an invalid option.
+                isc_throw(InvalidUsage, "unsupported option: -" << saved_optopt <<
+                          (saved_optarg.empty() ? std::string() : " " + saved_optarg));
             }
             break;
         }
@@ -329,8 +344,8 @@ DControllerBase::initProcess() {
     try {
         process_.reset(createProcess());
     } catch (const std::exception& ex) {
-        isc_throw(DControllerBaseError, std::string("createProcess failed: ")
-                  + ex.what());
+        isc_throw(DControllerBaseError, std::string("createProcess failed: ") +
+                  ex.what());
     }
 
     // This is pretty unlikely, but will test for it just to be safe..
@@ -410,7 +425,7 @@ DControllerBase::configFromFile() {
         process_->getCfgMgr()->getContext()->applyLoggingCfg();
 
         // build an error result
-        ConstElementPtr error = createAnswer(COMMAND_ERROR,
+        ConstElementPtr error = createAnswer(CONTROL_RESULT_ERROR,
                  std::string("Configuration parsing failed: ") + ex.what());
         return (error);
     }
@@ -447,9 +462,21 @@ DControllerBase::checkConfig(ConstElementPtr new_config) {
 ConstElementPtr
 DControllerBase::configGetHandler(const std::string&,
                                   ConstElementPtr /*args*/) {
-    ConstElementPtr config = process_->getCfgMgr()->getContext()->toElement();
+    ElementPtr config = process_->getCfgMgr()->getContext()->toElement();
+    std::string hash = BaseCommandMgr::getHash(config);
+    config->set("hash", Element::create(hash));
 
-    return (createAnswer(COMMAND_SUCCESS, config));
+    return (createAnswer(CONTROL_RESULT_SUCCESS, config));
+}
+
+ConstElementPtr
+DControllerBase::configHashGetHandler(const std::string&,
+                                      ConstElementPtr /*args*/) {
+    ConstElementPtr config = process_->getCfgMgr()->getContext()->toElement();
+    std::string hash = BaseCommandMgr::getHash(config);
+    ElementPtr params = Element::createMap();
+    params->set("hash", Element::create(hash));
+    return (createAnswer(CONTROL_RESULT_SUCCESS, params));
 }
 
 ConstElementPtr
@@ -459,12 +486,12 @@ DControllerBase::configWriteHandler(const std::string&,
 
     if (args) {
         if (args->getType() != Element::map) {
-            return (createAnswer(COMMAND_ERROR, "Argument must be a map"));
+            return (createAnswer(CONTROL_RESULT_ERROR, "Argument must be a map"));
         }
         ConstElementPtr filename_param = args->get("filename");
         if (filename_param) {
             if (filename_param->getType() != Element::string) {
-                return (createAnswer(COMMAND_ERROR,
+                return (createAnswer(CONTROL_RESULT_ERROR,
                                      "passed parameter 'filename' "
                                      "is not a string"));
             }
@@ -477,12 +504,11 @@ DControllerBase::configWriteHandler(const std::string&,
         // whatever we remember
         filename = getConfigFile();
         if (filename.empty()) {
-            return (createAnswer(COMMAND_ERROR,
+            return (createAnswer(CONTROL_RESULT_ERROR,
                                  "Unable to determine filename."
                                  "Please specify filename explicitly."));
         }
     }
-
 
     // Ok, it's time to write the file.
     size_t size = 0;
@@ -491,12 +517,12 @@ DControllerBase::configWriteHandler(const std::string&,
     try {
         size = writeConfigFile(filename, cfg);
     } catch (const isc::Exception& ex) {
-        return (createAnswer(COMMAND_ERROR,
-                             std::string("Error during write-config:")
+        return (createAnswer(CONTROL_RESULT_ERROR,
+                             std::string("Error during config-write:")
                              + ex.what()));
     }
     if (size == 0) {
-        return (createAnswer(COMMAND_ERROR,
+        return (createAnswer(CONTROL_RESULT_ERROR,
                              "Error writing configuration to " + filename));
     }
 
@@ -514,7 +540,7 @@ DControllerBase::handleOtherObjects(ConstElementPtr args) {
     // Check obsolete or unknown (aka unsupported) objects.
     const std::string& app_name = getAppName();
     std::string errmsg;
-    for (auto obj : args->mapValue()) {
+    for (auto const& obj : args->mapValue()) {
         const std::string& obj_name = obj.first;
         if (obj_name == app_name) {
             continue;
@@ -533,7 +559,7 @@ DControllerBase::handleOtherObjects(ConstElementPtr args) {
 
 ConstElementPtr
 DControllerBase::configTestHandler(const std::string&, ConstElementPtr args) {
-    const int status_code = COMMAND_ERROR; // 1 indicates an error
+    const int status_code = CONTROL_RESULT_ERROR; // 1 indicates an error
     ConstElementPtr module_config;
     std::string app_name = getAppName();
     std::string message;
@@ -566,7 +592,6 @@ DControllerBase::configTestHandler(const std::string&, ConstElementPtr args) {
         return (result);
     }
 
-
     // We are starting the configuration process so we should remove any
     // staging configuration that has been created during previous
     // configuration attempts.
@@ -585,7 +610,7 @@ DControllerBase::configReloadHandler(const std::string&, ConstElementPtr) {
 
 ConstElementPtr
 DControllerBase::configSetHandler(const std::string&, ConstElementPtr args) {
-    const int status_code = COMMAND_ERROR; // 1 indicates an error
+    const int status_code = CONTROL_RESULT_ERROR; // 1 indicates an error
     ConstElementPtr module_config;
     std::string app_name = getAppName();
     std::string message;
@@ -643,7 +668,7 @@ DControllerBase::configSetHandler(const std::string&, ConstElementPtr args) {
         process_->getCfgMgr()->getContext()->applyLoggingCfg();
 
         // build an error result
-        ConstElementPtr error = createAnswer(COMMAND_ERROR,
+        ConstElementPtr error = createAnswer(CONTROL_RESULT_ERROR,
                  std::string("Configuration parsing failed: ") + ex.what());
         return (error);
     }
@@ -655,7 +680,7 @@ DControllerBase::serverTagGetHandler(const std::string&, ConstElementPtr) {
     ElementPtr response = Element::createMap();
     response->set("server-tag", Element::create(tag));
 
-    return (createAnswer(COMMAND_SUCCESS, response));
+    return (createAnswer(CONTROL_RESULT_SUCCESS, response));
 }
 
 ConstElementPtr
@@ -675,7 +700,7 @@ DControllerBase::statusGetHandler(const std::string&, ConstElementPtr) {
         status->set("reload", Element::create(reload.total_seconds()));
     }
 
-    return (createAnswer(COMMAND_SUCCESS, status));
+    return (createAnswer(CONTROL_RESULT_SUCCESS, status));
 }
 
 ConstElementPtr
@@ -686,13 +711,13 @@ DControllerBase::versionGetHandler(const std::string&, ConstElementPtr) {
     ElementPtr extended = Element::create(getVersion(true));
     ElementPtr arguments = Element::createMap();
     arguments->set("extended", extended);
-    answer = createAnswer(COMMAND_SUCCESS, getVersion(false), arguments);
+    answer = createAnswer(CONTROL_RESULT_SUCCESS, getVersion(false), arguments);
     return (answer);
 }
 
 ConstElementPtr
 DControllerBase::buildReportHandler(const std::string&, ConstElementPtr) {
-    return (createAnswer(COMMAND_SUCCESS, isc::detail::getConfigReport()));
+    return (createAnswer(CONTROL_RESULT_SUCCESS, isc::detail::getConfigReport()));
 }
 
 ConstElementPtr
@@ -710,7 +735,7 @@ DControllerBase::shutdownHandler(const std::string&, ConstElementPtr args) {
         }
 
         ConstElementPtr param = args->get("exit-value");
-        if (param)  {
+        if (param) {
             if (param->getType() != Element::integer) {
                 return (createAnswer(CONTROL_RESULT_ERROR,
                                      "parameter 'exit-value' is not an integer"));
@@ -733,7 +758,7 @@ DControllerBase::shutdownProcess(ConstElementPtr args) {
     // Not really a failure, but this condition is worth noting. In reality
     // it should be pretty hard to cause this.
     LOG_WARN(dctl_logger, DCTL_NOT_RUNNING).arg(app_name_);
-    return (createAnswer(COMMAND_SUCCESS, "Process has not been initialized"));
+    return (createAnswer(CONTROL_RESULT_SUCCESS, "Process has not been initialized"));
 }
 
 void
@@ -790,7 +815,7 @@ DControllerBase::usage(const std::string & text) {
         std::cerr << "Usage error: " << text << std::endl;
     }
 
-    std::cerr << "Usage: " << bin_name_ <<  std::endl
+    std::cerr << "Usage: " << bin_name_ << std::endl
               << "  -v: print version number and exit" << std::endl
               << "  -V: print extended version information and exit"
               << std::endl
@@ -820,10 +845,17 @@ DControllerBase::~DControllerBase() {
         }
         LOG_ERROR(dctl_logger, DCTL_UNLOAD_LIBRARIES_ERROR).arg(msg);
     }
-}
 
-// Refer to config_report so it will be embedded in the binary
-const char* const* d_config_report = isc::detail::config_report;
+    IOServiceMgr::instance().clearIOServices();
+
+    io_signal_set_.reset();
+    try {
+        getIOService()->poll();
+    } catch (...) {
+        // Don't want to throw exceptions from the destructor. The process
+        // is shutting down anyway.
+    }
+}
 
 std::string
 DControllerBase::getVersion(bool extended) {
@@ -831,10 +863,11 @@ DControllerBase::getVersion(bool extended) {
 
     tmp << VERSION;
     if (extended) {
-        tmp << std::endl << EXTENDED_VERSION << std::endl;
+        tmp << " (" << EXTENDED_VERSION << ")" << std::endl;
+        tmp << "premium: " << PREMIUM_EXTENDED_VERSION << std::endl;
         tmp << "linked with:" << std::endl;
-        tmp << isc::log::Logger::getVersion() << std::endl;
-        tmp << getVersionAddendum();
+        tmp << "- " << isc::log::Logger::getVersion() << std::endl;
+        tmp << "- " << isc::cryptolink::CryptoLink::getVersion();
     }
 
     return (tmp.str());

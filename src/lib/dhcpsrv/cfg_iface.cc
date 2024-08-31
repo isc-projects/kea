@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,7 +11,7 @@
 #include <dhcpsrv/timer_mgr.h>
 #include <util/reconnect_ctl.h>
 #include <util/multi_threading_mgr.h>
-#include <util/strutil.h>
+#include <util/str.h>
 #include <algorithm>
 #include <functional>
 
@@ -49,7 +49,7 @@ CfgIface::equals(const CfgIface& other) const {
 
 bool
 CfgIface::multipleAddressesPerInterfaceActive() {
-    for (IfacePtr iface : IfaceMgr::instance().getIfaces()) {
+    for (auto const& iface : IfaceMgr::instance().getIfaces()) {
         if (iface->countActive4() > 1) {
             return (true);
         }
@@ -59,7 +59,7 @@ CfgIface::multipleAddressesPerInterfaceActive() {
 
 void
 CfgIface::openSockets(const uint16_t family, const uint16_t port,
-                      const bool use_bcast) const {
+                      const bool use_bcast) {
     // Close any open sockets because we're going to modify some properties
     // of the IfaceMgr. Those modifications require that sockets are closed.
     closeSockets();
@@ -69,17 +69,15 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
     bool loopback_used_ = false;
     if ((family == AF_INET6) || (socket_type_ == SOCKET_UDP)) {
         // Check interface set
-        for (IfaceSet::const_iterator iface_name = iface_set_.begin();
-             iface_name != iface_set_.end(); ++iface_name) {
-            IfacePtr iface = IfaceMgr::instance().getIface(*iface_name);
+        for (auto const& iface_name : iface_set_) {
+            IfacePtr iface = IfaceMgr::instance().getIface(iface_name);
             if (iface && iface->flag_loopback_) {
                 loopback_used_ = true;
             }
         }
         // Check address map
-        for (ExplicitAddressMap::const_iterator unicast = address_map_.begin();
-             unicast != address_map_.end(); ++unicast) {
-            IfacePtr iface = IfaceMgr::instance().getIface(unicast->first);
+        for (auto const& unicast : address_map_) {
+            IfacePtr iface = IfaceMgr::instance().getIface(unicast.first);
             if (iface && iface->flag_loopback_) {
                 loopback_used_ = true;
             }
@@ -112,9 +110,8 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
     // If there is no wildcard interface specified, we will have to iterate
     // over the names specified by the caller and enable them.
     if (!wildcard_used_) {
-        for (IfaceSet::const_iterator iface_name = iface_set_.begin();
-             iface_name != iface_set_.end(); ++iface_name) {
-            IfacePtr iface = IfaceMgr::instance().getIface(*iface_name);
+        for (auto const& iface_name : iface_set_) {
+            IfacePtr iface = IfaceMgr::instance().getIface(iface_name);
             // This shouldn't really happen because we are checking the
             // names of interfaces when they are being added (use()
             // function). But, if someone has triggered detection of
@@ -122,7 +119,7 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
             if (iface == NULL) {
                 isc_throw(Unexpected,
                           "fail to open socket on interface '"
-                          << *iface_name << "' as this interface doesn't"
+                          << iface_name << "' as this interface doesn't"
                           " exist");
 
             } else if (family == AF_INET) {
@@ -137,21 +134,20 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
 
     // Select unicast sockets for DHCPv6 or activate specific IPv4 addresses
     // for DHCPv4.
-    for (ExplicitAddressMap::const_iterator unicast = address_map_.begin();
-         unicast != address_map_.end(); ++unicast) {
-        IfacePtr iface = IfaceMgr::instance().getIface(unicast->first);
+    for (auto const& unicast : address_map_) {
+        IfacePtr iface = IfaceMgr::instance().getIface(unicast.first);
         if (iface == NULL) {
             isc_throw(Unexpected,
                       "fail to open unicast socket on interface '"
-                      << unicast->first << "' as this interface doesn't"
+                      << unicast.first << "' as this interface doesn't"
                       " exist");
         }
         if (family == AF_INET6) {
-            iface->addUnicast(unicast->second);
+            iface->addUnicast(unicast.second);
             iface->inactive6_ = false;
 
         } else {
-            iface->setActive(unicast->second, true);
+            iface->setActive(unicast.second, true);
             iface->inactive4_ = false;
         }
     }
@@ -169,8 +165,8 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
         LOG_WARN(dhcpsrv_logger, DHCPSRV_MULTIPLE_RAW_SOCKETS_PER_IFACE);
     }
 
-    auto reconnect_ctl = makeReconnectCtl();
-    auto sopen = openSocketsWithRetry(reconnect_ctl, family, port, can_use_bcast);
+    reconnect_ctl_ = makeReconnectCtl();
+    auto sopen = openSocketsWithRetry(reconnect_ctl_, family, port, can_use_bcast);
 
     if (!sopen) {
         // If no socket were opened, log a warning because the server will
@@ -284,7 +280,7 @@ CfgIface::reset() {
 void
 CfgIface::setState(const uint16_t family, const bool inactive,
                    const bool loopback_inactive) const {
-    for (IfacePtr iface : IfaceMgr::instance().getIfaces()) {
+    for (auto const& iface : IfaceMgr::instance().getIfaces()) {
         bool iface_inactive = iface->flag_loopback_ ? loopback_inactive : inactive;
         if (family == AF_INET) {
             iface->inactive4_ = iface_inactive;
@@ -301,7 +297,7 @@ void
 CfgIface::setIfaceAddrsState(const uint16_t family, const bool active,
                              Iface& iface) const {
     // Activate/deactivate all addresses.
-    for (Iface::Address addr : iface.getAddresses()) {
+    for (auto const& addr : iface.getAddresses()) {
         if (addr.get().getFamily() == family) {
             iface.setActive(addr.get(), active);
         }
@@ -565,13 +561,11 @@ CfgIface::toElement() const {
     if (wildcard_used_) {
         ifaces->add(Element::create(std::string(ALL_IFACES_KEYWORD)));
     }
-    for (IfaceSet::const_iterator iface = iface_set_.cbegin();
-         iface != iface_set_.cend(); ++iface) {
-        ifaces->add(Element::create(*iface));
+    for (auto const& iface : iface_set_) {
+        ifaces->add(Element::create(iface));
     }
-    for (ExplicitAddressMap::const_iterator address = address_map_.cbegin();
-         address != address_map_.cend(); ++address) {
-        std::string spec = address->first + "/" + address->second.toText();
+    for (auto const& address : address_map_) {
+        std::string spec = address.first + "/" + address.second.toText();
         ifaces->add(Element::create(spec));
     }
     result->set("interfaces", ifaces);

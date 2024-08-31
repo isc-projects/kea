@@ -1,4 +1,4 @@
-// Copyright (C) 2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -418,7 +418,7 @@ TEST_F(ReadWriteMutexTest, readWriteRead) {
 
                 // Verify the reader thread is waiting for the read lock.
                 cout << "pausing for one second" << std::endl;
-                bool ret = syncr_.done_cv.wait_for(doner_lock, chrono::seconds(1), [this](){ return syncr_.done; });
+                ret = syncr_.done_cv.wait_for(doner_lock, chrono::seconds(1), [this](){ return syncr_.done; });
 
                 EXPECT_FALSE(syncr_.done);
                 EXPECT_FALSE(ret);

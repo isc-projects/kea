@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -345,7 +345,7 @@ public:
     /// @brief Return array type indicator.
     ///
     /// The method returns the bool value to indicate whether the option is a
-    /// a single value or an array of values.
+    /// single value or an array of values.
     ///
     /// @return true if option comprises an array of values.
     bool getArrayType() const { return (array_type_); }
@@ -433,12 +433,18 @@ public:
     /// @param type option type.
     /// @param begin beginning of the option buffer.
     /// @param end end of the option buffer.
+    /// @param convenient_notation flag which indicates that the buffer contains option data
+    ///                            as a string formatted in user-friendly, convenient way.
+    ///                            The flag is propagated to the option constructor, so that
+    ///                            the data could be parsed properly. Defaults to false.
     ///
     /// @return instance of the DHCP option.
     /// @throw InvalidOptionValue if data for the option is invalid.
-    OptionPtr optionFactory(Option::Universe u, uint16_t type,
+    OptionPtr optionFactory(Option::Universe u,
+                            uint16_t type,
                             OptionBufferConstIter begin,
-                            OptionBufferConstIter end) const;
+                            OptionBufferConstIter end,
+                            bool convenient_notation = false) const;
 
     /// @brief Option factory.
     ///
@@ -581,6 +587,24 @@ public:
                                              OptionBufferConstIter begin,
                                              OptionBufferConstIter end);
 
+    /// @brief Factory to create option with tuple list with explict
+    /// tuple's length field type.
+    ///
+    /// @param u option universe (V4 or V6).
+    /// @param type option type.
+    /// @param begin iterator pointing to the beginning of the buffer
+    /// with a list of tuples.
+    /// @param end iterator pointing to the end of the buffer with
+    /// a list of tuples.
+    /// @param length_field_type explicit tuple's length field type.
+    ///
+    /// @return instance of the DHCP option.
+    static OptionPtr factoryOpaqueDataTuples(Option::Universe u,
+                                             uint16_t type,
+                                             OptionBufferConstIter begin,
+                                             OptionBufferConstIter end,
+                                             OpaqueDataTuple::LengthFieldType length_field_type);
+
     /// @brief Factory function to create option with integer value.
     ///
     /// @param u universe (V4 or V6).
@@ -652,13 +676,18 @@ private:
     /// @param u A universe (V4 or V6).
     /// @param begin beginning of the option buffer.
     /// @param end end of the option buffer.
+    /// @param convenient_notation flag which indicates that the buffer contains option data
+    ///                            as a string formatted in user-friendly, convenient way.
+    ///                            The flag is propagated to the option constructor, so that
+    ///                            the data could be parsed properly. Defaults to false.
     ///
     /// @return An instance of the option having special format or NULL if
     /// such an option can't be created because an option with the given
     /// option code hasn't got the special format.
     OptionPtr factorySpecialFormatOption(Option::Universe u,
                                          OptionBufferConstIter begin,
-                                         OptionBufferConstIter end) const;
+                                         OptionBufferConstIter end,
+                                         bool convenient_notation = false) const;
 
     /// @brief Check if specified type matches option definition type.
     ///

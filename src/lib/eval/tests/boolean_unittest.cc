@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -27,14 +27,41 @@ public:
         ASSERT_TRUE(eval.parseString(expr));
         Pkt4Ptr pkt4(new Pkt4(DHCPDISCOVER, 12345));
         if (expected) {
-            EXPECT_TRUE(evaluateBool(eval.expression, *pkt4));
+            EXPECT_TRUE(evaluateBool(eval.expression_, *pkt4));
         } else {
-            EXPECT_FALSE(evaluateBool(eval.expression, *pkt4));
+            EXPECT_FALSE(evaluateBool(eval.expression_, *pkt4));
         }
     }
 };
 
-// A group of tests
+// A group of tests (strict version)
+TEST_F(BooleanTest, strict) {
+    // true and (false or false)
+    check("('a' == 'a') sand (('a' == 'b') sor ('b' == 'a'))", false);
+    // (true and false) or false
+    check("(('a' == 'a') sand ('a' == 'b')) sor ('b' == 'a')", false);
+    // not true
+    check("not ('a' == 'a')", false);
+    // not false
+    check("not ('a' == 'b')", true);
+    // true and true and true and false
+    check("('a' == 'a') sand ('b' == 'b') sand ('c' == 'c') sand ('a' == 'c')",
+          false);
+    // false or false or false or true
+    check("('a' == 'b') sor ('a' == 'c') sor ('b' == 'c') sor ('b' == 'b')",
+          true);
+    // true or false or false or false
+    check("('a' == 'a') sor ('a' == 'b') sor ('a' == 'c') sor ('b' == 'c')",
+          true);
+    // not (true or false)
+    check("not (('a' == 'a') sor ('a' == 'b'))", false);
+    // not (true and false)
+    check("not (('a' == 'a') sand ('a' == 'b'))", true);
+    // (not true) and false
+    check("(not ('a' == 'a')) sand ('a' == 'b')",false);
+}
+
+// A group of tests (strict version)
 TEST_F(BooleanTest, tests) {
     // true and (false or false)
     check("('a' == 'a') and (('a' == 'b') or ('b' == 'a'))", false);
@@ -61,4 +88,4 @@ TEST_F(BooleanTest, tests) {
     check("(not ('a' == 'a')) and ('a' == 'b')",false);
 }
 
-};
+}

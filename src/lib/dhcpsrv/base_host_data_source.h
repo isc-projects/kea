@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,6 +13,7 @@
 #include <exceptions/exceptions.h>
 #include <boost/shared_ptr.hpp>
 
+#include <limits>
 #include <vector>
 
 namespace isc {
@@ -22,6 +23,13 @@ namespace dhcp {
 class DuplicateHost : public Exception {
 public:
     DuplicateHost(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
+/// @brief Exception thrown when a @c Host object is expected, but none are found.
+class HostNotFound : public Exception {
+public:
+    HostNotFound(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
 
@@ -400,6 +408,30 @@ public:
     getAll6(const SubnetID& subnet_id,
             const asiolink::IOAddress& address) const = 0;
 
+    /// @brief Returns all hosts having a reservation for a specified
+    /// address or delegated prefix (lease) in all subnets.
+    ///
+    /// In most cases it is desired that there is at most one reservation
+    /// for a given IPv6 lease within a subnet. In a default configuration,
+    /// the backend does not allow for inserting more than one host with
+    /// the same IPv6 address or prefix.
+    ///
+    /// If the backend is configured to allow multiple hosts with reservations
+    /// for the same IPv6 lease in the given subnet, this method can return
+    /// more than one host per subnet.
+    ///
+    /// The typical use case when a single IPv6 lease is reserved for multiple
+    /// hosts is when these hosts represent different interfaces of the same
+    /// machine and each interface comes with a different MAC address. In that
+    /// case, the same IPv6 lease is assigned regardless of which interface is
+    /// used by the DHCP client to communicate with the server.
+    ///
+    /// @param address reserved IPv6 address/prefix.
+    ///
+    /// @return Collection of const @c Host objects.
+    virtual ConstHostCollection
+    getAll6(const asiolink::IOAddress& address) const = 0;
+
     /// @brief Adds a new host to the collection.
     ///
     /// The implementations of this method should guard against duplicate
@@ -452,6 +484,32 @@ public:
                       const Host::IdentifierType& identifier_type,
                       const uint8_t* identifier_begin, const size_t identifier_len) = 0;
 
+    /// @brief Attempts to update an existing host entry.
+    ///
+    /// The implementation is common to multiple host data sources, so let's
+    /// provide it in the base host data source. In some instances, it may
+    /// require synchronization e.g. with transactions in case of databases.
+    ///
+    /// @param host the host up to date with the requested changes
+    virtual void update(HostPtr const& host) {
+        bool deleted(false);
+        if (host->getIPv4SubnetID() != SUBNET_ID_UNUSED) {
+            std::vector<uint8_t> const& identifier(host->getIdentifier());
+            deleted = del4(host->getIPv4SubnetID(), host->getIdentifierType(), identifier.data(),
+                identifier.size());
+        } else if (host->getIPv6SubnetID() != SUBNET_ID_UNUSED) {
+            std::vector<uint8_t> const& identifier(host->getIdentifier());
+            deleted = del6(host->getIPv6SubnetID(), host->getIdentifierType(), identifier.data(),
+                identifier.size());
+        } else {
+            isc_throw(HostNotFound, "Mandatory 'subnet-id' parameter missing.");
+        }
+        if (!deleted) {
+            isc_throw(HostNotFound, "Host not updated (not found).");
+        }
+        add(host);
+    }
+
     /// @brief Return backend type
     ///
     /// Returns the type of the backend (e.g. "mysql", "memfile" etc.)
@@ -466,7 +524,7 @@ public:
     /// @return Parameters of the backend.
     virtual isc::db::DatabaseConnection::ParameterMap getParameters() const {
         return (isc::db::DatabaseConnection::ParameterMap());
-    };
+    }
 
     /// @brief Commit Transactions
     ///
@@ -516,7 +574,7 @@ typedef boost::shared_ptr<BaseHostDataSource> HostDataSourcePtr;
 /// @brief HostDataSource list
 typedef std::vector<HostDataSourcePtr> HostDataSourceList;
 
-}
-}
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // BASE_HOST_DATA_SOURCE_H

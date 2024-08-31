@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +12,7 @@
 #include <cctype>
 #include <cerrno>
 #include <climits>
+#include <cstdint>
 #include <cstdlib>
 #include <string>
 #include <agent/parser_context.h>
@@ -467,6 +468,15 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
         return AgentParser::make_OUTPUT_OPTIONS(driver.loc_);
     default:
         return AgentParser::make_STRING("output_options", driver.loc_);
+    }
+}
+
+\"output-options\" {
+    switch(driver.ctx_) {
+    case ParserContext::LOGGERS:
+        return AgentParser::make_OUTPUT_OPTIONS(driver.loc_);
+    default:
+        return AgentParser::make_STRING("output-options", driver.loc_);
     }
 }
 

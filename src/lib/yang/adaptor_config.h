@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,11 +7,11 @@
 #ifndef ISC_ADAPTOR_CONFIG_H
 #define ISC_ADAPTOR_CONFIG_H 1
 
+#include <dhcpsrv/subnet_id.h>
 #include <yang/adaptor_host.h>
 #include <yang/adaptor_option.h>
 #include <yang/adaptor_pool.h>
 #include <yang/adaptor_subnet.h>
-#include <list>
 
 namespace isc {
 namespace yang {
@@ -25,13 +25,6 @@ namespace yang {
 class AdaptorConfig : public AdaptorHost, public AdaptorOption,
     public AdaptorSubnet {
 public:
-
-    /// @brief Constructor.
-    AdaptorConfig();
-
-    /// @brief Destructor.
-    virtual ~AdaptorConfig();
-
     /// @brief Pre process a DHCPv4 configuration.
     ///
     /// Assign subnet IDs, check and set defaults in options, etc.
@@ -42,7 +35,7 @@ public:
     /// @throw MissingKey when a required key is missing.
     /// @throw BadValue when null or not a map or deprecated Logging present.
     /// @note Does nothing if "Dhcp4" is not present in the map.
-    static void preProcess4(isc::data::ConstElementPtr config);
+    static void preProcess4(isc::data::ElementPtr config);
 
     /// @brief Pre process a DHCPv6 configuration.
     ///
@@ -54,7 +47,7 @@ public:
     /// @throw MissingKey when a required key is missing.
     /// @throw BadValue when null or not a map or deprecated Logging present.
     /// @note Does nothing if "Dhcp6" is not present in the map.
-    static void preProcess6(isc::data::ConstElementPtr config);
+    static void preProcess6(isc::data::ElementPtr config);
 
 protected:
     /// @brief Collects subnet-ids on all subnets.
@@ -68,7 +61,7 @@ protected:
     /// @param set The reference to the set of assigned IDs.
     /// @return True if all subnets have an ID, false otherwise.
     static bool subnetsCollectID(isc::data::ConstElementPtr subnets,
-                                 SubnetIDSet& set);
+                                 isc::dhcp::SubnetIDSet& set);
 
     /// @brief Collects subnet-ids in all subnets in all shared network list.
     ///
@@ -82,7 +75,7 @@ protected:
     /// @param subsel The subnet list name.
     /// @return True if all subnets have an ID, false otherwise.
     static bool sharedNetworksCollectID(isc::data::ConstElementPtr networks,
-                                        SubnetIDSet& set,
+                                        isc::dhcp::SubnetIDSet& set,
                                         const std::string& subsel);
 
     /// @brief Assigns subnet-id to every subnet in a subnet list.
@@ -93,9 +86,9 @@ protected:
     /// @param subnets The subnet list.
     /// @param set The reference to the set of assigned IDs.
     /// @param next The next ID.
-    /// @return True if all subnets have an ID, false otherwise.
     static void subnetsAssignID(isc::data::ConstElementPtr subnets,
-                                SubnetIDSet& set, isc::dhcp::SubnetID& next);
+                                isc::dhcp::SubnetIDSet& set,
+                                isc::dhcp::SubnetID& next);
 
     /// @brief Assigns subnet-id to every subnet in a shared network list.
     ///
@@ -106,9 +99,8 @@ protected:
     /// @param set The reference to the set of assigned IDs.
     /// @param next The next ID.
     /// @param subsel The subnet list name.
-    /// @return True if all subnets have an ID, false otherwise.
     static void sharedNetworksAssignID(isc::data::ConstElementPtr networks,
-                                       SubnetIDSet& set,
+                                       isc::dhcp::SubnetIDSet& set,
                                        isc::dhcp::SubnetID& next,
                                        const std::string& subsel);
 
@@ -266,14 +258,14 @@ protected:
     /// Force the use of hosts-databases vs. hosts-database.
     ///
     /// @param dhcp The DHCP server.
-    static void sanitizeDatabase(isc::data::ConstElementPtr dhcp);
+    static void sanitizeDatabase(isc::data::ElementPtr dhcp);
 
     /// @brief Update relay supplied options.
     ///
     /// Remove empty relay supplied option list.
     ///
     /// @param dhcp The DHCPv6 server.
-    static void sanitizeRelaySuppliedOptions(isc::data::ConstElementPtr dhcp);
+    static void sanitizeRelaySuppliedOptions(isc::data::ElementPtr dhcp);
 
     /// @brief Pre process a configuration.
     ///
@@ -286,9 +278,9 @@ protected:
     static void preProcess(isc::data::ElementPtr dhcp,
                            const std::string& subsel,
                            const std::string& space);
-};
+};  // AdaptorConfig
 
-}; // end of namespace isc::yang
-}; // end of namespace isc
+}  // namespace yang
+}  // namespace isc
 
-#endif // ISC_ADAPTOR_CONFIG_H
+#endif  // ISC_ADAPTOR_CONFIG_H

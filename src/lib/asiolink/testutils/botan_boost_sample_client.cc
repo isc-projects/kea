@@ -14,8 +14,8 @@
 #include <cstring>
 #include <functional>
 #include <iostream>
-#include <boost/asio.hpp>
 
+#include <asiolink/asio_wrapper.h>
 #include <asiolink/botan_boost_wrapper.h>
 #include <botan/asio_stream.h>
 #include <botan/certstor_flatfile.h>

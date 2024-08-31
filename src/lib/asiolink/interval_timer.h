@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -79,8 +79,8 @@ public:
     /// memory allocation fails inside the method.
     /// This constructor may also throw \c boost::system::system_error.
     ///
-    /// \param io_service A reference to an instance of IOService
-    IntervalTimer(IOService& io_service);
+    /// \param io_service A smart pointer to an instance of IOService
+    IntervalTimer(const IOServicePtr& io_service);
 
     /// \brief The destructor.
     ///
@@ -111,7 +111,7 @@ public:
     /// \throw isc::BadValue interval is less than or equal to 0
     /// \throw isc::Unexpected internal runtime error
     void setup(const Callback& cbfunc, const long interval,
-                    const Mode& mode = REPEATING);
+               const Mode& mode = REPEATING);
 
     /// Cancel the timer.
     ///
@@ -137,6 +137,7 @@ private:
 
 typedef boost::shared_ptr<isc::asiolink::IntervalTimer> IntervalTimerPtr;
 
-} // namespace asiolink
-} // namespace isc
+}  // namespace asiolink
+}  // namespace isc
+
 #endif // ASIOLINK_INTERVAL_TIMER_H

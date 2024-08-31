@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,7 +17,7 @@
 #include <asiolink/tls_socket.h>
 #include <asiolink/testutils/test_tls.h>
 #include <util/buffer.h>
-#include <util/io_utilities.h>
+#include <util/io.h>
 
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
@@ -238,7 +238,7 @@ TEST(TLSSocket, processReceivedData) {
     const uint16_t PACKET_SIZE = 16382;
 
     // Used to instantiate socket
-    IOService service;
+    IOServicePtr service(new IOService());
     TlsContextPtr context(new TlsContext(CLIENT));
     // Socket under test
     TLSSocket<TLSCallback> test(service, context);
@@ -293,7 +293,7 @@ TEST(TLSSocket, processReceivedData) {
     EXPECT_EQ(PACKET_SIZE, expected);
     EXPECT_EQ(2, outbuff->getLength());
 
-    const uint8_t* dataptr = static_cast<const uint8_t*>(outbuff->getData());
+    const uint8_t* dataptr = outbuff->getData();
     EXPECT_TRUE(equal(inbuff + 2, inbuff + cumulative, dataptr));
 
     // And add the remaining data.  Remember that "inbuff" is "PACKET_SIZE + 2"
@@ -306,7 +306,7 @@ TEST(TLSSocket, processReceivedData) {
     EXPECT_EQ(0, offset);
     EXPECT_EQ(PACKET_SIZE, expected);
     EXPECT_EQ(PACKET_SIZE, outbuff->getLength());
-    dataptr = static_cast<const uint8_t*>(outbuff->getData());
+    dataptr = outbuff->getData();
     EXPECT_TRUE(equal(inbuff + 2, inbuff + cumulative, dataptr));
 }
 
@@ -319,7 +319,7 @@ TEST(TLSSocket, sequenceTest) {
 
     // Common objects.
     // Service object for async control
-    IOService service;
+    IOServicePtr service(new IOService());
 
     // The client - the TLSSocket being tested
     TlsContextPtr client_ctx;
@@ -344,7 +344,7 @@ TEST(TLSSocket, sequenceTest) {
     TlsContextPtr server_ctx;
     test::configServer(server_ctx);
     // Stream used for server.
-    TlsStreamImpl server(service.get_io_service(), server_ctx->getContext());
+    TlsStreamImpl server(service->getInternalIOService(), server_ctx->getContext());
 
     // Step 1.  Create the connection between the client and the server.  Set
     // up the server to accept incoming connections and have the client open
@@ -354,7 +354,7 @@ TEST(TLSSocket, sequenceTest) {
     server_cb.queued() = TLSCallback::ACCEPT;
     server_cb.called() = TLSCallback::NONE;
     server_cb.setCode(42);  // Some error
-    tcp::acceptor acceptor(service.get_io_service(),
+    tcp::acceptor acceptor(service->getInternalIOService(),
                            tcp::endpoint(tcp::v4(), SERVER_PORT));
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     acceptor.async_accept(server.lowest_layer(), server_cb);
@@ -369,7 +369,7 @@ TEST(TLSSocket, sequenceTest) {
     // Run the open and the accept callback and check that they ran.
     while ((server_cb.called() == TLSCallback::NONE) ||
            (client_cb.called() == TLSCallback::NONE)) {
-        service.run_one();
+        service->runOne();
     }
     EXPECT_EQ(TLSCallback::ACCEPT, server_cb.called());
     EXPECT_EQ(0, server_cb.getCode());
@@ -398,7 +398,7 @@ TEST(TLSSocket, sequenceTest) {
 
     while ((server_cb.called() == TLSCallback::NONE) ||
            (client_cb.called() == TLSCallback::NONE)) {
-        service.run_one();
+        service->runOne();
     }
     EXPECT_EQ(TLSCallback::HANDSHAKE, client_cb.called());
     EXPECT_EQ(0, client_cb.getCode());
@@ -419,7 +419,7 @@ TEST(TLSSocket, sequenceTest) {
     // Wait for the client callback to complete. (Must do this first on
     // Solaris: if we do the synchronous read first, the test hangs.)
     while (client_cb.called() == TLSCallback::NONE) {
-        service.run_one();
+        service->runOne();
     }
 
     // Synchronously read the data from the server.;
@@ -486,7 +486,7 @@ TEST(TLSSocket, sequenceTest) {
     bool server_complete = false;
     bool client_complete = false;
     while (!server_complete || !client_complete) {
-        service.run_one();
+        service->runOne();
 
         // Has the server run?
         if (!server_complete) {
@@ -550,7 +550,7 @@ TEST(TLSSocket, sequenceTest) {
     EXPECT_EQ(sizeof(INBOUND_DATA) + 2, server_cb.length());
 
     // ... and that what was sent is what was received.
-    const uint8_t* received = static_cast<const uint8_t*>(client_buffer->getData());
+    const uint8_t* received = client_buffer->getData();
     EXPECT_TRUE(equal(INBOUND_DATA, (INBOUND_DATA + (sizeof(INBOUND_DATA) - 1)),
                       received));
 

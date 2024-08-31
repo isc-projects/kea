@@ -2,8 +2,14 @@ SUBDIRS = . testutils pretests tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CPPFLAGS += $(LIBYANG_CPPFLAGS)
+AM_CPPFLAGS += $(LIBYANG_INCLUDEDIR)
+AM_CPPFLAGS += $(LIBYANGCPP_CPPFLAGS)
+AM_CPPFLAGS += $(LIBYANGCPP_INCLUDEDIR)
 AM_CPPFLAGS += $(SYSREPO_CPPFLAGS)
 AM_CPPFLAGS += $(SYSREPO_INCLUDEDIR)
+AM_CPPFLAGS += $(SYSREPOCPP_CPPFLAGS)
+AM_CPPFLAGS += $(SYSREPOCPP_INCLUDEDIR)
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
 lib_LTLIBRARIES = libkea-yang.la
@@ -13,7 +19,7 @@ libkea_yang_la_SOURCES += adaptor_pool.cc adaptor_pool.h
 libkea_yang_la_SOURCES += adaptor_option.cc adaptor_option.h
 libkea_yang_la_SOURCES += adaptor_subnet.cc adaptor_subnet.h
 libkea_yang_la_SOURCES += adaptor_config.cc adaptor_config.h
-libkea_yang_la_SOURCES += sysrepo_error.h
+libkea_yang_la_SOURCES += netconf_error.h
 libkea_yang_la_SOURCES += translator.cc translator.h
 libkea_yang_la_SOURCES += translator_control_socket.cc
 libkea_yang_la_SOURCES += translator_control_socket.h
@@ -33,14 +39,18 @@ libkea_yang_la_SOURCES += translator_shared_network.h
 libkea_yang_la_SOURCES += translator_config.cc translator_config.h
 libkea_yang_la_SOURCES += yang_models.h yang_revisions.h
 
-libkea_yang_la_LIBADD =  $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
-libkea_yang_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+libkea_yang_la_LIBADD  = $(top_builddir)/src/lib/cc/libkea-cc.la
+libkea_yang_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libkea_yang_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
 libkea_yang_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_yang_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-libkea_yang_la_LIBADD += $(LOG4CPLUS_LIBS) $(BOOST_LIBS) $(SYSREPO_LIBS)
+libkea_yang_la_LIBADD += $(LOG4CPLUS_LIBS) $(BOOST_LIBS)
+libkea_yang_la_LIBADD += $(LIBYANG_LIBS)
+libkea_yang_la_LIBADD += $(LIBYANGCPP_LIBS)
+libkea_yang_la_LIBADD += $(SYSREPO_LIBS)
+libkea_yang_la_LIBADD += $(SYSREPOCPP_LIBS)
 
-libkea_yang_la_LDFLAGS = -no-undefined -version-info 28:0:0
+libkea_yang_la_LDFLAGS = -no-undefined -version-info 71:0:0
 
 # Specify the headers for copying into the installation directory tree.
 libkea_yang_includedir = $(pkgincludedir)/yang
@@ -51,7 +61,7 @@ libkea_yang_include_HEADERS = \
 	adaptor_option.h \
 	adaptor_pool.h \
 	adaptor_subnet.h \
-	sysrepo_error.h \
+	netconf_error.h \
 	translator.h \
 	translator_class.h \
 	translator_config.h \

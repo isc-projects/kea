@@ -11,7 +11,7 @@
         "{",
         "    \"command\": \"lease6-del\",",
         "    \"arguments\": {",
-        "        \"ip-address\": \"192.0.2.202\"",
+        "        \"ip-address\": \"2001:db8::3\"",
         "    }",
         "}"
     ],

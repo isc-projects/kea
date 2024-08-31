@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,6 +22,7 @@
 
 #include <boost/pointer_cast.hpp>
 
+#include <ctime>
 #include <functional>
 #include <limits>
 #include <sstream>
@@ -57,8 +58,8 @@ CommunicationState::CommunicationState(const IOServicePtr& io_service,
                                        const HAConfigPtr& config)
     : io_service_(io_service), config_(config), timer_(), interval_(0),
       poke_time_(boost::posix_time::microsec_clock::universal_time()),
-      heartbeat_impl_(0), partner_state_(-1), partner_scopes_(),
-      clock_skew_(0, 0, 0, 0), last_clock_skew_warn_(),
+      heartbeat_impl_(0), partner_state_(-1), partner_state_time_(),
+      partner_scopes_(), clock_skew_(0, 0, 0, 0), last_clock_skew_warn_(),
       my_time_at_skew_(), partner_time_at_skew_(),
       analyzed_messages_count_(0), unsent_update_count_(0),
       partner_unsent_update_count_{0, 0}, mutex_(new mutex()) {
@@ -99,13 +100,45 @@ CommunicationState::setPartnerState(const std::string& state) {
 }
 
 void
+CommunicationState::setPartnerUnavailable() {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        setPartnerStateInternal("unavailable");
+        resetPartnerTimeInternal();
+    } else {
+        setPartnerStateInternal("unavailable");
+        resetPartnerTimeInternal();
+    }
+}
+
+void
 CommunicationState::setPartnerStateInternal(const std::string& state) {
     try {
-        partner_state_ = stringToState(state);
+        auto new_partner_state = stringToState(state);
+        if (new_partner_state != partner_state_) {
+            setCurrentPartnerStateTimeInternal();
+        }
+        partner_state_ = new_partner_state;
     } catch (...) {
         isc_throw(BadValue, "unsupported HA partner state returned "
                   << state);
     }
+}
+
+time_duration
+CommunicationState::getDurationSincePartnerStateTime() const {
+    ptime now = boost::posix_time::microsec_clock::universal_time();
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        return (now - partner_state_time_);
+    } else {
+        return (now - partner_state_time_);
+    }
+}
+
+void
+CommunicationState::setCurrentPartnerStateTimeInternal() {
+    partner_state_time_ = boost::posix_time::microsec_clock::universal_time();
 }
 
 std::set<std::string>
@@ -194,7 +227,7 @@ CommunicationState::startHeartbeatInternal(const long interval,
     }
 
     if (!timer_) {
-        timer_.reset(new IntervalTimer(*io_service_));
+        timer_.reset(new IntervalTimer(io_service_));
     }
 
     if (settings_modified) {
@@ -308,9 +341,61 @@ CommunicationState::isCommunicationInterrupted() const {
     return (getDurationInMillisecs() > config_->getMaxResponseDelay());
 }
 
+std::vector<uint8_t>
+CommunicationState::getClientId(const PktPtr& message,
+                                const uint16_t option_type) {
+    std::vector<uint8_t> client_id;
+    OptionPtr opt_client_id = message->getOption(option_type);
+    if (opt_client_id) {
+        client_id = opt_client_id->getData();
+    }
+    return (client_id);
+}
+
 size_t
 CommunicationState::getAnalyzedMessagesCount() const {
     return (analyzed_messages_count_);
+}
+
+size_t
+CommunicationState::getRejectedLeaseUpdatesCount() {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        return (getRejectedLeaseUpdatesCountInternal());
+    } else {
+        return (getRejectedLeaseUpdatesCountInternal());
+    }
+}
+
+bool
+CommunicationState::reportRejectedLeaseUpdate(const PktPtr& message,
+                                              const uint32_t lifetime) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        return (reportRejectedLeaseUpdateInternal(message, lifetime));
+    } else {
+        return (reportRejectedLeaseUpdateInternal(message, lifetime));
+    }
+}
+
+bool
+CommunicationState::reportSuccessfulLeaseUpdate(const PktPtr& message) {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        return (reportSuccessfulLeaseUpdateInternal(message));
+    } else {
+        return (reportSuccessfulLeaseUpdateInternal(message));
+    }
+}
+
+void
+CommunicationState::clearRejectedLeaseUpdates() {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        return (clearRejectedLeaseUpdatesInternal());
+    } else {
+        return (clearRejectedLeaseUpdatesInternal());
+    }
 }
 
 bool
@@ -343,7 +428,8 @@ CommunicationState::clockSkewShouldWarnInternal() {
             (since_warn_duration.total_seconds() > MIN_TIME_SINCE_CLOCK_SKEW_WARN)) {
             last_clock_skew_warn_ = now;
             LOG_WARN(ha_logger, HA_HIGH_CLOCK_SKEW)
-                     .arg(logFormatClockSkewInternal());
+                .arg(config_->getThisServerName())
+                .arg(logFormatClockSkewInternal());
             return (true);
         }
     }
@@ -353,7 +439,7 @@ CommunicationState::clockSkewShouldWarnInternal() {
 }
 
 bool
-CommunicationState::clockSkewShouldTerminate() const {
+CommunicationState::clockSkewShouldTerminate() {
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lk(*mutex_);
         // Issue a warning if the clock skew is greater than 60s.
@@ -364,13 +450,34 @@ CommunicationState::clockSkewShouldTerminate() const {
 }
 
 bool
-CommunicationState::clockSkewShouldTerminateInternal() const {
+CommunicationState::clockSkewShouldTerminateInternal() {
     if (isClockSkewGreater(TERM_CLOCK_SKEW)) {
-        LOG_ERROR(ha_logger, HA_HIGH_CLOCK_SKEW_CAUSES_TERMINATION)
-                  .arg(logFormatClockSkewInternal());
+        LOG_ERROR(ha_logger, HA_HIGH_CLOCK_SKEW_CAUSED_TERMINATION)
+            .arg(config_->getThisServerName())
+            .arg(logFormatClockSkewInternal());
         return (true);
     }
+    return (false);
+}
 
+bool
+CommunicationState::rejectedLeaseUpdatesShouldTerminate() {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lk(*mutex_);
+        return (rejectedLeaseUpdatesShouldTerminateInternal());
+    } else {
+        return (rejectedLeaseUpdatesShouldTerminateInternal());
+    }
+}
+
+bool
+CommunicationState::rejectedLeaseUpdatesShouldTerminateInternal() {
+    if (config_->getMaxRejectedLeaseUpdates() &&
+        (config_->getMaxRejectedLeaseUpdates() <= getRejectedLeaseUpdatesCountInternal())) {
+        LOG_ERROR(ha_logger, HA_LEASE_UPDATE_REJECTS_CAUSED_TERMINATION)
+            .arg(config_->getThisServerName());
+        return (true);
+    }
     return (false);
 }
 
@@ -397,6 +504,14 @@ CommunicationState::setPartnerTimeInternal(const std::string& time_text) {
     clock_skew_ = partner_time_at_skew_ - my_time_at_skew_;
 }
 
+void
+CommunicationState::resetPartnerTimeInternal() {
+    clock_skew_ = boost::posix_time::time_duration(0, 0, 0, 0);
+    last_clock_skew_warn_ = boost::posix_time::ptime();
+    my_time_at_skew_ = boost::posix_time::ptime();
+    partner_time_at_skew_ = boost::posix_time::ptime();
+}
+
 std::string
 CommunicationState::logFormatClockSkew() const {
     if (MultiThreadingMgr::instance().getMode()) {
@@ -420,12 +535,15 @@ CommunicationState::logFormatClockSkewInternal() const {
 
     // Note HttpTime resolution is only to seconds, so we use fractional
     // precision of zero when logging.
-    os << "my time: " << util::ptimeToText(my_time_at_skew_, 0)
-       << ", partner's time: " << util::ptimeToText(partner_time_at_skew_, 0)
+    os << "my time: " << ptimeToText(my_time_at_skew_, 0)
+       << ", partner's time: " << ptimeToText(partner_time_at_skew_, 0)
        << ", partner's clock is ";
 
-    // If negative clock skew, the partner's time is behind our time.
-    if (clock_skew_.is_negative()) {
+    if (clock_skew_.total_seconds() == 0) {
+        // Most common case.
+        os << "synchroninzed";
+    } else if (clock_skew_.is_negative()) {
+        // Partner's time is behind our time.
         os << clock_skew_.invert_sign().total_seconds() << "s behind";
     } else {
         // Partner's time is ahead of ours.
@@ -453,7 +571,7 @@ CommunicationState::getReport() const {
     }
 
     auto list = Element::createList();
-    for (auto scope : getPartnerScopes()) {
+    for (auto const& scope : getPartnerScopes()) {
         list->add(Element::create(scope));
     }
     report->set("last-scopes", list);
@@ -469,6 +587,13 @@ CommunicationState::getReport() const {
     }
     report->set("unacked-clients-left", Element::create(unacked_clients_left));
     report->set("analyzed-packets", Element::create(static_cast<long long>(getAnalyzedMessagesCount())));
+    if (partner_time_at_skew_.is_not_a_date_time()) {
+        report->set("system-time", Element::create());
+        report->set("clock-skew", Element::create());
+    } else {
+        report->set("system-time", Element::create(ptimeToText(partner_time_at_skew_, 0)));
+        report->set("clock-skew", Element::create(clock_skew_.total_seconds()));
+    }
 
     return (report);
 }
@@ -536,9 +661,20 @@ CommunicationState::setPartnerUnsentUpdateCountInternal(uint64_t unsent_update_c
     partner_unsent_update_count_.second = unsent_update_count;
 }
 
+boost::posix_time::ptime
+CommunicationState::getMyTimeAtSkew() const {
+    return my_time_at_skew_;
+}
+
+boost::posix_time::ptime
+CommunicationState::getPartnerTimeAtSkew() const {
+    return partner_time_at_skew_;
+}
+
 CommunicationState4::CommunicationState4(const IOServicePtr& io_service,
                                          const HAConfigPtr& config)
-    : CommunicationState(io_service, config), connecting_clients_() {
+    : CommunicationState(io_service, config), connecting_clients_(),
+      rejected_clients_() {
 }
 
 void
@@ -552,7 +688,7 @@ CommunicationState4::analyzeMessage(const boost::shared_ptr<dhcp::Pkt>& message)
 }
 
 void
-CommunicationState4::analyzeMessageInternal(const boost::shared_ptr<dhcp::Pkt>& message) {
+CommunicationState4::analyzeMessageInternal(const PktPtr& message) {
     // The DHCP message must successfully cast to a Pkt4 object.
     Pkt4Ptr msg = boost::dynamic_pointer_cast<Pkt4>(message);
     if (!msg) {
@@ -580,12 +716,7 @@ CommunicationState4::analyzeMessageInternal(const boost::shared_ptr<dhcp::Pkt>& 
 
     // Client identifier will be stored together with the hardware address. It
     // may remain empty if the client hasn't specified it.
-    std::vector<uint8_t> client_id;
-    OptionPtr opt_client_id = msg->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
-    if (opt_client_id) {
-        client_id = opt_client_id->getData();
-    }
-
+    auto client_id = getClientId(message, DHO_DHCP_CLIENT_IDENTIFIER);
     bool log_unacked = false;
 
     // Check if the given client was already recorded.
@@ -614,6 +745,7 @@ CommunicationState4::analyzeMessageInternal(const boost::shared_ptr<dhcp::Pkt>& 
             // communication interrupted state. But, this client hasn't been
             // yet trying log enough to be considered unacked.
             LOG_INFO(ha_logger, HA_COMMUNICATION_INTERRUPTED_CLIENT4)
+                .arg(config_->getThisServerName())
                 .arg(message->getLabel());
         }
     }
@@ -626,6 +758,7 @@ CommunicationState4::analyzeMessageInternal(const boost::shared_ptr<dhcp::Pkt>& 
             unacked_left = config_->getMaxUnackedClients() - unacked_total + 1;
         }
         LOG_INFO(ha_logger, HA_COMMUNICATION_INTERRUPTED_CLIENT4_UNACKED)
+            .arg(config_->getThisServerName())
             .arg(message->getLabel())
             .arg(unacked_total)
             .arg(unacked_left);
@@ -674,9 +807,56 @@ CommunicationState4::clearConnectingClients() {
     connecting_clients_.clear();
 }
 
+size_t
+CommunicationState4::getRejectedLeaseUpdatesCountInternal() {
+    return (getRejectedLeaseUpdatesCountFromContainer(rejected_clients_));
+}
+
+bool
+CommunicationState4::reportRejectedLeaseUpdateInternal(const PktPtr& message, const uint32_t lifetime) {
+    Pkt4Ptr msg = boost::dynamic_pointer_cast<Pkt4>(message);
+    if (!msg) {
+        isc_throw(BadValue, "DHCP message for which the lease update was rejected is not a DHCPv4 message");
+    }
+    auto client_id = getClientId(message, DHO_DHCP_CLIENT_IDENTIFIER);
+    RejectedClient4 client{ msg->getHWAddr()->hwaddr_, client_id, time(NULL) + lifetime };
+    auto existing_client = rejected_clients_.find(boost::make_tuple(msg->getHWAddr()->hwaddr_, client_id));
+    if (existing_client == rejected_clients_.end()) {
+        rejected_clients_.insert(client);
+        return (true);
+    }
+    rejected_clients_.replace(existing_client, client);
+    return (false);
+}
+
+bool
+CommunicationState4::reportSuccessfulLeaseUpdateInternal(const PktPtr& message) {
+    // Early check if there is anything to do.
+    if (getRejectedLeaseUpdatesCountInternal() == 0) {
+        return (false);
+    }
+    Pkt4Ptr msg = boost::dynamic_pointer_cast<Pkt4>(message);
+    if (!msg) {
+        isc_throw(BadValue, "DHCP message for which the lease update was successful is not a DHCPv4 message");
+    }
+    auto client_id = getClientId(msg, DHO_DHCP_CLIENT_IDENTIFIER);
+    auto existing_client = rejected_clients_.find(boost::make_tuple(msg->getHWAddr()->hwaddr_, client_id));
+    if (existing_client != rejected_clients_.end()) {
+        rejected_clients_.erase(existing_client);
+        return (true);
+    }
+    return (false);
+}
+
+void
+CommunicationState4::clearRejectedLeaseUpdatesInternal() {
+    rejected_clients_.clear();
+}
+
 CommunicationState6::CommunicationState6(const IOServicePtr& io_service,
                                          const HAConfigPtr& config)
-    : CommunicationState(io_service, config), connecting_clients_() {
+    : CommunicationState(io_service, config), connecting_clients_(),
+      rejected_clients_() {
 }
 
 void
@@ -707,8 +887,8 @@ CommunicationState6::analyzeMessageInternal(const boost::shared_ptr<dhcp::Pkt>& 
     auto unacked = (elapsed_time && elapsed_time->getValue() * 10 > config_->getMaxAckDelay());
 
     // Get the DUID of the client to see if it hasn't been recorded already.
-    OptionPtr duid = msg->getOption(D6O_CLIENTID);
-    if (!duid) {
+    auto duid = getClientId(msg, D6O_CLIENTID);
+    if (duid.empty()) {
         return;
     }
 
@@ -716,14 +896,14 @@ CommunicationState6::analyzeMessageInternal(const boost::shared_ptr<dhcp::Pkt>& 
 
     // Check if the given client was already recorded.
     auto& idx = connecting_clients_.get<0>();
-    auto existing_request = idx.find(duid->getData());
+    auto existing_request = idx.find(duid);
     if (existing_request != idx.end()) {
         // If the client was recorded and was not considered unacked
         // but it should be considered unacked as a result of processing
         // this packet, let's update the recorded request to mark the
         // client unacked.
         if (!existing_request->unacked_ && unacked) {
-            ConnectingClient6 connecting_client{ duid->getData(), unacked };
+            ConnectingClient6 connecting_client{ duid, unacked };
             idx.replace(existing_request, connecting_client);
             log_unacked = true;
         }
@@ -731,7 +911,7 @@ CommunicationState6::analyzeMessageInternal(const boost::shared_ptr<dhcp::Pkt>& 
     } else {
         // This is the first time we see the packet from this client. Let's
         // record it.
-        ConnectingClient6 connecting_client{ duid->getData(), unacked };
+        ConnectingClient6 connecting_client{ duid, unacked };
         idx.insert(connecting_client);
         log_unacked = unacked;
 
@@ -740,6 +920,7 @@ CommunicationState6::analyzeMessageInternal(const boost::shared_ptr<dhcp::Pkt>& 
             // communication interrupted state. But, this client hasn't been
             // yet trying log enough to be considered unacked.
             LOG_INFO(ha_logger, HA_COMMUNICATION_INTERRUPTED_CLIENT6)
+                .arg(config_->getThisServerName())
                 .arg(message->getLabel());
         }
     }
@@ -752,6 +933,7 @@ CommunicationState6::analyzeMessageInternal(const boost::shared_ptr<dhcp::Pkt>& 
             unacked_left = config_->getMaxUnackedClients() - unacked_total + 1;
         }
         LOG_INFO(ha_logger, HA_COMMUNICATION_INTERRUPTED_CLIENT6_UNACKED)
+            .arg(config_->getThisServerName())
             .arg(message->getLabel())
             .arg(unacked_total)
             .arg(unacked_left);
@@ -798,6 +980,58 @@ CommunicationState6::getUnackedClientsCount() const {
 void
 CommunicationState6::clearConnectingClients() {
     connecting_clients_.clear();
+}
+
+size_t
+CommunicationState6::getRejectedLeaseUpdatesCountInternal() {
+    return (getRejectedLeaseUpdatesCountFromContainer(rejected_clients_));
+}
+
+bool
+CommunicationState6::reportRejectedLeaseUpdateInternal(const PktPtr& message, const uint32_t lifetime) {
+    Pkt6Ptr msg = boost::dynamic_pointer_cast<Pkt6>(message);
+    if (!msg) {
+        isc_throw(BadValue, "DHCP message for which the lease update was rejected is not a DHCPv6 message");
+    }
+    auto duid = getClientId(msg, D6O_CLIENTID);
+    if (duid.empty()) {
+        return (false);
+    }
+    RejectedClient6 client{ duid, time(NULL) + lifetime };
+    auto existing_client = rejected_clients_.find(duid);
+    if (existing_client == rejected_clients_.end()) {
+        rejected_clients_.insert(client);
+        return (true);
+    }
+    rejected_clients_.replace(existing_client, client);
+    return (false);
+}
+
+bool
+CommunicationState6::reportSuccessfulLeaseUpdateInternal(const PktPtr& message) {
+    // Early check if there is anything to do.
+    if (getRejectedLeaseUpdatesCountInternal() == 0) {
+        return (false);
+    }
+    Pkt6Ptr msg = boost::dynamic_pointer_cast<Pkt6>(message);
+    if (!msg) {
+        isc_throw(BadValue, "DHCP message for which the lease update was successful is not a DHCPv6 message");
+    }
+    auto duid = getClientId(msg, D6O_CLIENTID);
+    if (duid.empty()) {
+        return (false);
+    }
+    auto existing_client = rejected_clients_.find(duid);
+    if (existing_client != rejected_clients_.end()) {
+        rejected_clients_.erase(existing_client);
+        return (true);
+    }
+    return (false);
+}
+
+void
+CommunicationState6::clearRejectedLeaseUpdatesInternal() {
+    rejected_clients_.clear();
 }
 
 } // end of namespace isc::ha

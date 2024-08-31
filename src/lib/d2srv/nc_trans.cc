@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,8 +8,9 @@
 
 #include <d2srv/d2_log.h>
 #include <d2srv/nc_trans.h>
-#include <dns/qid_gen.h>
+#include <cryptolink/crypto_rng.h>
 #include <dns/rdata.h>
+#include <dns/rdataclass.h>
 #include <hooks/hooks.h>
 #include <hooks/hooks_manager.h>
 
@@ -71,11 +72,11 @@ NameChangeTransaction(asiolink::IOServicePtr& io_service,
                       DdnsDomainPtr& reverse_domain,
                       D2CfgMgrPtr& cfg_mgr)
     : io_service_(io_service), ncr_(ncr), forward_domain_(forward_domain),
-     reverse_domain_(reverse_domain), dns_client_(), dns_update_request_(),
-     dns_update_status_(DNSClient::OTHER), dns_update_response_(),
-     forward_change_completed_(false), reverse_change_completed_(false),
-     current_server_list_(), current_server_(), next_server_pos_(0),
-     update_attempts_(0), cfg_mgr_(cfg_mgr), tsig_key_() {
+      reverse_domain_(reverse_domain), dns_client_(), dns_update_request_(),
+      dns_update_status_(DNSClient::OTHER), dns_update_response_(),
+      forward_change_completed_(false), reverse_change_completed_(false),
+      current_server_list_(), current_server_(), next_server_pos_(0),
+      update_attempts_(0), cfg_mgr_(cfg_mgr), tsig_key_() {
     /// @todo if io_service is NULL we are multi-threading and should
     /// instantiate our own
     if (!io_service_) {
@@ -103,7 +104,7 @@ NameChangeTransaction(asiolink::IOServicePtr& io_service,
     }
 }
 
-NameChangeTransaction::~NameChangeTransaction(){
+NameChangeTransaction::~NameChangeTransaction() {
 }
 
 void
@@ -197,7 +198,7 @@ NameChangeTransaction::sendUpdate(const std::string& comment) {
         // for the current server.  If not we would need to add that.
 
         D2ParamsPtr d2_params = cfg_mgr_->getD2Params();
-        dns_client_->doUpdate(*io_service_, current_server_->getIpAddress(),
+        dns_client_->doUpdate(io_service_, current_server_->getIpAddress(),
                               current_server_->getPort(), *dns_update_request_,
                               d2_params->getDnsServerTimeout(), tsig_key_);
         // Message is on its way, so the next event should be NOP_EVT.
@@ -287,7 +288,7 @@ NameChangeTransaction::retryTransition(const int fail_to_state) {
     if (update_attempts_ < MAX_UPDATE_TRIES_PER_SERVER) {
         // Re-enter the current state with same server selected.
         transition(getCurrState(), SERVER_SELECTED_EVT);
-    } else  {
+    } else {
         // Transition to given fail_to_state state if we are out
         // of retries.
         transition(fail_to_state, SERVER_IO_ERROR_EVT);
@@ -351,7 +352,7 @@ NameChangeTransaction::prepNewRequest(DdnsDomainPtr domain) {
         D2UpdateMessagePtr request(new D2UpdateMessage(D2UpdateMessage::
                                                        OUTBOUND));
         // Set the query id
-        request->setId(dns::QidGenerator::getInstance().generateQid());
+        request->setId(cryptolink::generateQid());
         // Construct the Zone Section.
         dns::Name zone_name(domain->getName());
         request->setZone(zone_name, dns::RRClass::IN());
@@ -571,7 +572,7 @@ NameChangeTransaction::getUpdateAttempts() const {
 
 const dns::RRType&
 NameChangeTransaction::getAddressRRType() const {
-    return (ncr_->isV4() ?  dns::RRType::A() : dns::RRType::AAAA());
+    return (ncr_->isV4() ? dns::RRType::A() : dns::RRType::AAAA());
 }
 
 } // namespace isc::d2

@@ -1,50 +1,71 @@
-# Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 
-% LEASE_CMDS_ADD4 lease4-add command successful (parameters: %1)
-The lease4-add command has been successful. Parameters of the host
-added are logged.
+% LEASE_CMDS_ADD4 lease4-add command successful (address: %1)
+Logged at debug log level 20.
+The lease4-add command has been successful. Lease IPv4 address
+is logged.
+
+% LEASE_CMDS_ADD4_CONFLICT lease4-add command failed due to conflict (parameters: %1, reason: %2)
+The received lease4-add is well-formed and contains valid parameters but the
+lease could not be created because it is in conflict with the server state
+or configuration. The reason for a conflict is logged in the message.
 
 % LEASE_CMDS_ADD4_FAILED lease4-add command failed (parameters: %1, reason: %2)
 The lease4-add command has failed. Both the reason as well as the
 parameters passed are logged.
 
-% LEASE_CMDS_ADD6 lease6-add command successful (parameters: %1)
-The lease6-add command has been successful. Parameters of the host
-added are logged.
+% LEASE_CMDS_ADD6 lease6-add command successful (address: %1)
+Logged at debug log level 20.
+The lease6-add command has been successful. Lease IPv6 address
+is logged.
 
-% LEASE_CMDS_ADD6_FAILED Lease6-add command failed (parameters: %1, reason: %2)
+% LEASE_CMDS_ADD6_CONFLICT lease6-add command failed due to conflict (parameters: %1, reason: %2)
+The received lease6-add is well-formed and contains valid parameters but the
+lease could not be created because it is in conflict with the server state
+or configuration. The reason for a conflict is logged in the message.
+
+% LEASE_CMDS_ADD6_FAILED lease6-add command failed (parameters: %1, reason: %2)
 The lease6-add command has failed. Both the reason as well as the
 parameters passed are logged.
 
-% LEASE_CMDS_DEINIT_FAILED unloading Lease Commands hooks library failed: %1
-This error message indicates an error during unloading the Lease Commands
-hooks library. The details of the error are provided as argument of
-the log message.
+% LEASE_CMDS_BULK_APPLY6 lease6-bulk-apply command successful (applied addresses count: %1)
+Logged at debug log level 20.
+The lease6-bulk-apply command has been successful. The number of applied
+addresses is logged.
+
+% LEASE_CMDS_BULK_APPLY6_FAILED lease6-bulk-apply command failed (parameters: %1, reason: %2)
+The lease6-bulk-apply command has failed. Both the reason as well
+as the parameters passed are logged.
 
 % LEASE_CMDS_DEINIT_OK unloading Lease Commands hooks library successful
 This info message indicates that the Lease Commands hooks library has been
 removed successfully.
 
-% LEASE_CMDS_DEL4 lease4-del command successful (parameters: %1)
+% LEASE_CMDS_DEL4 lease4-del command successful (address: %1)
+Logged at debug log level 20.
 The attempt to delete an IPv4 lease (lease4-del command) has been successful.
-Parameters of the host removed are logged.
+Lease IPv4 address is logged.
 
 % LEASE_CMDS_DEL4_FAILED lease4-del command failed (parameters: %1, reason: %2)
 The attempt to delete an IPv4 lease (lease4-del command) has failed. Both the
 reason as well as the parameters passed are logged.
 
-% LEASE_CMDS_DEL6 lease4-del command successful (parameters: %1)
+% LEASE_CMDS_DEL6 lease4-del command successful (address: %1)
+Logged at debug log level 20.
 The attempt to delete an IPv4 lease (lease4-del command) has been successful.
-Parameters of the host removed are logged.
+Lease IPv6 address is logged.
 
 % LEASE_CMDS_DEL6_FAILED lease6-del command failed (parameters: %1, reason: %2)
 The attempt to delete an IPv6 lease (lease4-del command) has failed. Both the
 reason as well as the parameters passed are logged.
 
-% LEASE_CMDS_INIT_FAILED loading Lease Commands hooks library failed: %1
-This error message indicates an error during loading the Lease Commands
-hooks library. The details of the error are provided as argument of
-the log message.
+% LEASE_CMDS_GET4_FAILED lease4-get command failed (parameters: %1, reason: %2)
+The lease4-get command has failed. Both the reason as well as the
+parameters passed are logged.
+
+% LEASE_CMDS_GET6_FAILED lease6-get command failed (parameters: %1, reason: %2)
+The lease4-get command has failed. Both the reason as well as the
+parameters passed are logged.
 
 % LEASE_CMDS_INIT_OK loading Lease Commands hooks library successful
 This info message indicates that the Lease Commands hooks library has been
@@ -65,3 +86,55 @@ successfully queued for transmission to kea-dhcp-ddns.
 % LEASE_CMDS_RESEND_DDNS6_FAILED lease6-resend-ddns command failed: %1
 A request to update DNS for the requested IPv6 lease has failed.  The
 reason for the failure is logged.
+
+% LEASE_CMDS_UPDATE4 lease4-update command successful (address: %1)
+Logged at debug log level 20.
+The lease4-update command has been successful. Lease IPv4 address
+is logged.
+
+% LEASE_CMDS_UPDATE4_CONFLICT lease4-update command failed due to conflict (parameters: %1, reason: %2)
+The received lease4-update is well-formed and contains valid parameters
+but the lease could not be created because it is in conflict with the
+server state or configuration. The reason for a conflict is logged in
+the message.
+
+% LEASE_CMDS_UPDATE4_FAILED lease4-update command failed (parameters: %1, reason: %2)
+The lease4-update command has failed. Both the reason as well as the
+parameters passed are logged.
+
+% LEASE_CMDS_UPDATE6 lease6-update command successful (address: %1)
+Logged at debug log level 20.
+The lease6-update command has been successful. Lease IPv6 address
+is logged.
+
+% LEASE_CMDS_UPDATE6_CONFLICT lease6-update command failed due to conflict (parameters: %1, reason: %2)
+The received lease6-update is well-formed and contains valid parameters
+but the lease could not be created because it is in conflict with the
+server state or configuration. The reason for a conflict is logged in
+the message.
+
+% LEASE_CMDS_UPDATE6_FAILED lease6-add command failed (parameters: %1, reason: %2)
+The lease6-update command has failed. Both the reason as well as the
+parameters passed are logged.
+
+% LEASE_CMDS_WIPE4 lease4-wipe command successful (parameters: %1)
+The lease4-wipe command has been successful. Parameters of the command
+are logged.
+
+% LEASE_CMDS_WIPE4_DEPRECATED lease4-wipe command is deprecated and it will be removed in the future.
+The lease4-wipe command is deprecated and it will be removed in the future.
+
+% LEASE_CMDS_WIPE4_FAILED lease4-wipe command failed (parameters: %1, reason: %2)
+The lease4-wipe command has failed. Both the reason as well as the
+parameters passed are logged.
+
+% LEASE_CMDS_WIPE6 lease6-wipe command successful (parameters: %1)
+The lease6-wipe command has been successful. Parameters of the command
+are logged.
+
+% LEASE_CMDS_WIPE6_DEPRECATED lease6-wipe command is deprecated and it will be removed in the future.
+The lease6-wipe command is deprecated and it will be removed in the future.
+
+% LEASE_CMDS_WIPE6_FAILED lease6-wipe command failed (parameters: %1, reason: %2)
+The lease6-wipe command has failed. Both the reason as well as the
+parameters passed are logged.

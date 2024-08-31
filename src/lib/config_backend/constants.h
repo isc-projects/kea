@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -79,6 +79,8 @@ constexpr unsigned long SERVER_TAG_BUF_LENGTH = 64;
 constexpr unsigned long SERVER_DESCRIPTION_BUF_LENGTH = 65536;
 
 constexpr unsigned long DNS_NAME_BUF_LENGTH = 255;
+
+constexpr unsigned long ALLOCATOR_TYPE_BUF_LENGTH = 64;
 
 //*}
 

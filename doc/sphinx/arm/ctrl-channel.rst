@@ -21,7 +21,8 @@ status.
 
 The DHCPv4, DHCPv6, and D2 servers receive commands over the UNIX domain
 sockets. For details on how to configure these sockets, see
-:ref:`dhcp4-ctrl-channel` and :ref:`dhcp6-ctrl-channel`. While
+:ref:`dhcp4-unix-ctrl-channel`, :ref:`dhcp6-unix-ctrl-channel` and
+:ref:`d2-unix-ctrl-channel`. While
 it is possible to control the servers directly using UNIX domain sockets,
 that requires that the controlling client be running on the same machine
 as the server. SSH is usually used to connect remotely to the controlled
@@ -69,7 +70,7 @@ send JSON commands structured as follows:
 
    {
        "command": "foo",
-       "service": [ "dhcp4" ]
+       "service": [ "dhcp4" ],
        "arguments": {
            "param1": "value1",
            "param2": "value2",
@@ -87,7 +88,7 @@ following structure:
        Content-Length: 147\r\n\r\n
        {
            "command": "foo",
-           "service": [ "dhcp4" ]
+           "service": [ "dhcp4" ],
            "arguments": {
                "param1": "value1",
                "param2": "value2",
@@ -95,11 +96,12 @@ following structure:
            }
        }
 
-``command`` is the name of the command to execute and is mandatory.
-``arguments`` is a map of the parameters required to carry out the given
-command. The exact content and format of the map are command-specific.
+The ``command`` parameter contains the name of the command to execute and it
+is mandatory.
+The ``arguments`` map contains the parameters required to carry out the
+given command. The exact content and format of the map are command-specific.
 
-``service`` is a list of the servers at which the control command is
+The ``service`` list contains the servers at which the control command is
 targeted. In the example above, the control command is targeted at the
 DHCPv4 server. In most cases, the CA simply forwards this command to
 the DHCPv4 server for processing via a UNIX domain socket. Sometimes,
@@ -120,20 +122,20 @@ by the receiving server. This parameter is only meaningful to the CA.
 
 If the command received by the CA does not include a ``service``
 parameter or this list is empty, the CA simply processes this message on
-its own. For example, a ``config-get`` command which includes no service
-parameter returns the Control Agent's own configuration. The
-``config-get`` command with a service value "dhcp4" is forwarded to the DHCPv4
-server and returns the DHCPv4 server's configuration.
+its own. For example, a :isccmd:`config-get` command which includes no service
+parameter returns the Control Agent's own configuration. The :isccmd:`config-get`
+command with a service value "dhcp4" is forwarded to the DHCPv4 server and
+returns the DHCPv4 server's configuration.
 
 The following list shows the mapping of the values carried within the
 ``service`` parameter to the servers to which the commands are
 forwarded:
 
--  ``dhcp4`` - the command is forwarded to the ``kea-dhcp4`` server.
+-  ``dhcp4`` - the command is forwarded to the :iscman:`kea-dhcp4` server.
 
--  ``dhcp6`` - the command is forwarded to the ``kea-dhcp6`` server.
+-  ``dhcp6`` - the command is forwarded to the :iscman:`kea-dhcp6` server.
 
--  ``d2`` - the command is forwarded to the ``kea-dhcp-ddns`` server.
+-  ``d2`` - the command is forwarded to the :iscman:`kea-dhcp-ddns` server.
 
 The server processing the incoming command sends a response of the
 form:
@@ -141,7 +143,7 @@ form:
 ::
 
    {
-       "result": 0|1|2|3,
+       "result": 0, // 0|1|2|3|4
        "text": "textual description",
        "arguments": {
            "argument1": "value1",
@@ -150,31 +152,38 @@ form:
        }
    }
 
-``result`` indicates the outcome of the command. A value of 0 means
-success, while any non-zero value designates an error or a failure to
-complete the requested action. Currently 1 indicates a generic error, 2
-means that a command is not supported, and 3 means that the requested
-operation was completed, but the requested object was not found. For
-example, a well-formed command that requests a subnet that exists in a
-server's configuration returns the result 0. If the server encounters an
-error condition, it returns 1. If the command asks for the IPv6 subnet,
+The ``result`` value is a status code indicating a result of the command. The
+following general status codes are currently supported:
+
+-  ``0`` - the command has been processed successfully.
+-  ``1`` - a general error or failure has occurred during the command processing.
+-  ``2`` - the specified command is unsupported by the server receiving it.
+-  ``3`` - the requested operation has been completed but the requested
+   resource was not found. This status code is returned when a command
+   returns no resources or affects no resources.
+-  ``4`` - the well-formed command has been processed but the requested
+   changes could not be applied, because they were in conflict with the
+   server state or its notion of the configuration.
+
+For example, a well-formed command that requests a subnet that exists
+in a server's configuration returns the result 0. If the server encounters
+an error condition, it returns 1. If the command asks for an IPv6 subnet,
 but was sent to a DHCPv4 server, it returns 2. If the query asks for a
-``subnet-id`` and there is no subnet with such an ID, the result is 3.
+subnet with ``subnet-id`` that has matches, the result is 3.
+If the command attempts to update a lease but the specified ``subnet-id``
+does not match the identifier in the server's configuration, the result
+is 4.
+
+Hook libraries can sometimes return additional status codes specific
+to their use cases.
 
 The ``text`` field typically appears when the result is non-zero and
 contains a description of the error encountered, but it often also
 appears for successful outcomes. The exact text is command-specific, but
 in general uses plain English to describe the outcome of the command.
-``arguments`` is a map of additional data values returned by the server
-which are specific to the command issued. The map may be present, but
-that depends on the specific command.
-
-.. note::
-
-   When sending commands via the Control Agent, it is possible to specify
-   multiple services at which the command is targeted. CA forwards this
-   command to each service individually. Thus, the CA response to the
-   controlling client contains an array of individual responses.
+The ``arguments`` map contains additional data values returned by the server
+which are specific to the command issued. The map may be present, but that
+depends on the specific command.
 
 .. note::
 
@@ -186,14 +195,86 @@ that depends on the specific command.
    {
        "command": "foo",
        // service is a list
-       "service": [ "dhcp4" ]
+       "service": [ "dhcp4" ],
        # command arguments are here.
        "arguments": {
-           "param1": "value1"/*,
+           "param1": "value1",
+           ...
+           /*
            "param2": "value2",
-           ...*/
+           ...
+           */
        }
    }
+
+.. _ctrl-channel-control-agent-command-response-format:
+
+Control Agent Command Response Format
+=====================================
+
+When sending commands via the Control Agent, it is possible to specify
+multiple services at which the command is targeted. CA forwards this
+command to each service individually. Thus, the CA response to the
+controlling client is always wrapped in an array (JSON list) of
+individual responses.  For example, the response for a command sent
+to one service would be structured as follows:
+
+::
+
+    [
+        {
+            "result": 0, // 0|1|2|3|4
+            "text": "textual description",
+            "arguments": {
+                "argument1": "value1",
+                "argument2": "value2",
+                ...
+            }
+        }
+    ]
+
+
+If the command is sent to more than one service, the array would
+contain responses from each service, in the order they were requested:
+
+::
+
+    [
+        {
+            "result": 0, // 0|1|2|3|4
+            "text": "textual description",
+            "arguments": {
+                "argument1": "value1",
+                "argument2": "value2",
+                ...
+            }
+        },
+        {
+            "result": 0, // 0|1|2|3|4
+            "text": "textual description",
+            "arguments": {
+                "argument1": "value1",
+                "argument2": "value2",
+                ...
+            }
+        },
+        ...
+    ]
+
+An exception to this are authentication or authorization errors which cause CA
+to reject the command entirely.  The response to such an error is formatted
+as a single entry (JSON map) as follows:
+
+::
+
+    {
+        "result": 403,
+        "text": "Forbidden"
+    }
+
+
+These types of errors are possible on systems configured for either basic
+authentication or agents that load :ischooklib:`libdhcp_rbac.so`.
 
 .. _ctrl-channel-client:
 
@@ -243,12 +324,13 @@ This assumes that the Control Agent is running on host
 Commands Supported by Both the DHCPv4 and DHCPv6 Servers
 ========================================================
 
+.. isccmd:: build-report
 .. _command-build-report:
 
 The ``build-report`` Command
 ----------------------------
 
-The ``build-report`` command returns on the control channel what the
+The :isccmd:`build-report` command returns on the control channel what the
 command line ``-W`` argument displays, i.e. the embedded content of the
 ``config.report`` file. This command does not take any parameters.
 
@@ -258,19 +340,22 @@ command line ``-W`` argument displays, i.e. the embedded content of the
        "command": "build-report"
    }
 
+.. isccmd:: config-get
 .. _command-config-get:
 
 The ``config-get`` Command
 --------------------------
 
-The ``config-get`` command retrieves the current configuration used by the
+The :isccmd:`config-get` command retrieves the current configuration used by the
 server. This command does not take any parameters. The configuration
 returned is roughly equal to the configuration that was loaded using the
 ``-c`` command-line option during server start-up, or was later set using the
-``config-set`` command. However, there may be certain differences, as
+:isccmd:`config-set` command. However, there may be certain differences, as
 comments are not retained. If the original configuration used file
-inclusion, the returned configuration will include all parameters from
-all included files.
+inclusion, the returned configuration includes all parameters from
+all included files. In Kea 2.4.0 and later, the successful response also
+contains a SHA-256 digest that can be used to easily determine whether a
+configuration has changed.
 
 .. warning::
 
@@ -287,25 +372,59 @@ An example command invocation looks like this:
        "command": "config-get"
    }
 
+.. isccmd:: config-hash-get
+.. _command-config-hash-get:
+
+The ``config-hash-get`` Command
+-------------------------------
+
+The ``config-hash-get`` command retrieves the SHA-256 hash of the current
+configuration used by the server. This command does not take any parameters.
+The returned hash can be used to detect configuration changes.
+
+An example command invocation looks like this:
+
+::
+
+   {
+       "command": "config-hash-get"
+   }
+
+And the server's response:
+
+::
+
+   {
+       "result": 0,
+       "arguments": {
+           "hash": "5C3C90EF7035249E2FF74D003C19F34EE0B83A3D329E741B52B2EF95A2C9CC5C"
+        }
+    }
+
+In Kea 2.4.0 and later, ``config-set`` and ``config-get`` also return the SHA-256 hash
+of the new or current configuration. This may be used to determine whether a configuration
+has changed.
+
+.. isccmd:: config-reload
 .. _command-config-reload:
 
 The ``config-reload`` Command
 -----------------------------
 
-The ``config-reload`` command instructs Kea to load again the
+The :isccmd:`config-reload` command instructs Kea to load again the
 configuration file that was used previously. This operation is useful if
 the configuration file has been changed by some external source; for
 example, a system administrator can tweak the configuration file and use this
-command to force Kea pick up the changes.
+command to force Kea to pick up the changes.
 
-Caution should be taken when mixing this with ``config-set`` commands. Kea
+Care should be taken when using this in conjunction with the :isccmd:`config-set` command. Kea
 remembers the location of the configuration file it was started with,
-and this configuration can be significantly changed using the ``config-set``
-command. When ``config-reload`` is issued after ``config-set``, Kea attempts
+and this configuration can be significantly changed using the :isccmd:`config-set`
+command. When :isccmd:`config-reload` is issued after :isccmd:`config-set`, Kea attempts
 to reload its original configuration from the file, possibly losing all
-changes introduced using ``config-set`` or other commands.
+changes introduced using :isccmd:`config-set` or other commands.
 
-``config-reload`` does not take any parameters. An example command
+The :isccmd:`config-reload` command does not take any parameters. An example command
 invocation looks like this:
 
 ::
@@ -318,18 +437,19 @@ If the configuration file is incorrect, reloading it can raise an error
 which leaves the server in an unusable state. See :ref:`command-config-set`
 to learn how to recover from a non-working server.
 
+.. isccmd:: config-test
 .. _command-config-test:
 
 The ``config-test`` Command
 ---------------------------
 
-The ``config-test`` command instructs the server to check whether the new
+The :isccmd:`config-test` command instructs the server to check whether the new
 configuration supplied in the command's arguments can be loaded. The
 supplied configuration is expected to be the full configuration for the
 target server, along with an optional logger configuration. The configuration
 is sanity-checked to the extent possible without the server actually
 attempting to load it; it is possible for a configuration which successfully
-passes this command to still fail in the ``config-set`` command or at launch
+passes this command to still fail in the :isccmd:`config-set` command or at launch
 time. The structure of the command is as follows:
 
 ::
@@ -339,7 +459,7 @@ time. The structure of the command is as follows:
        "arguments":  {
            "<server>": {
            }
-        }
+       }
    }
 
 where <server> is the configuration element name for a given server, such
@@ -351,9 +471,9 @@ as "Dhcp4" or "Dhcp6". For example:
        "command": "config-test",
        "arguments":  {
            "Dhcp6": {
-               :
+               ...
            }
-        }
+       }
    }
 
 The server's response contains a numeric code, ``result`` (0 for
@@ -368,12 +488,13 @@ outcome:
 
        {"result": 1, "text": "unsupported parameter: BOGUS (<string>:16:26)" }
 
+.. isccmd:: config-write
 .. _command-config-write:
 
 The ``config-write`` Command
 ----------------------------
 
-The ``config-write`` command instructs the Kea server to write its current
+The :isccmd:`config-write` command instructs the Kea server to write its current
 configuration to a file on disk. It takes one optional argument, called
 "filename", that specifies the name of the file to write the
 configuration to. If not specified, the name used when starting Kea
@@ -391,12 +512,13 @@ An example command invocation looks like this:
        }
    }
 
+.. isccmd:: leases-reclaim
 .. _command-leases-reclaim:
 
 The ``leases-reclaim`` Command
 ------------------------------
 
-The ``leases-reclaim`` command instructs the server to reclaim all expired
+The :isccmd:`leases-reclaim` command instructs the server to reclaim all expired
 leases immediately. The command has the following JSON syntax:
 
 ::
@@ -416,34 +538,13 @@ returning client that previously used that lease. See :ref:`lease-affinity`
 for details. Also, see :ref:`lease-reclamation` for general
 information about the processing of expired leases (lease reclamation).
 
-.. _command-libreload:
-
-The ``libreload`` Command
--------------------------
-
-The ``libreload`` command first unloads and then loads all currently
-loaded hook libraries. This is primarily intended to allow one or more
-hook libraries to be replaced with newer versions, without requiring Kea
-servers to be reconfigured or restarted. The hook libraries
-are passed the same parameter values (if any) that were passed when they
-originally loaded.
-
-::
-
-   {
-       "command": "libreload",
-       "arguments": { }
-   }
-
-The server responds with a result of either 0, indicating success,
-or 1, indicating failure.
-
+.. isccmd:: list-commands
 .. _command-list-commands:
 
 The ``list-commands`` Command
 -----------------------------
 
-The ``list-commands`` command retrieves a list of all commands supported
+The :isccmd:`list-commands` command retrieves a list of all commands supported
 by the server. It does not take any arguments. An example command may
 look like this:
 
@@ -458,12 +559,13 @@ The server responds with a list of all supported commands. The arguments
 element is a list of strings, each of which conveys one supported
 command.
 
+.. isccmd:: config-set
 .. _command-config-set:
 
 The ``config-set`` Command
 --------------------------
 
-The ``config-set`` command instructs the server to replace its current
+The :isccmd:`config-set` command instructs the server to replace its current
 configuration with the new configuration supplied in the command's
 arguments. The supplied configuration is expected to be the full
 configuration for the target server, along with an optional logger
@@ -478,7 +580,7 @@ configuration. The structure of the command is as follows:
        "arguments":  {
            "<server>": {
            }
-        }
+       }
    }
 
 where <server> is the configuration element name for a given server, such
@@ -490,14 +592,14 @@ as "Dhcp4" or "Dhcp6". For example:
        "command": "config-set",
        "arguments":  {
            "Dhcp6": {
-               :
+               ...
            }
-        }
+       }
    }
 
 If the new configuration proves to be invalid, the server retains its
 current configuration; however, in some cases a fatal error message is logged
-indicating that the server no longer provides any service: a working
+indicating that the server is no longer providing any service: a working
 configuration must be loaded as soon as possible. If the control channel
 is dead, the configuration file can still be reloaded using the ``SIGHUP``
 signal. If that is unsuccessful, restart the server.
@@ -517,20 +619,25 @@ string, ``text``, describing the outcome:
 
        {"result": 1, "text": "unsupported parameter: BOGUS (<string>:16:26)" }
 
+In Kea 2.4.0 and later, the successful response from a DHCPv4, DHCPv6, or DHCP-DDNS daemon
+also contains a SHA-256 digest of the newly set configuration. The digest can be used to easily
+determine whether a configuration has changed.
+
+.. isccmd:: shutdown
 .. _command-shutdown:
 
 The ``shutdown`` Command
 ------------------------
 
-The ``shutdown`` command instructs the server to initiate its shutdown
-procedure. It is the equivalent of sending a ``SIGTERM`` signal to the
+The :isccmd:`shutdown` command instructs the server to initiate its shutdown
+procedure; it is the equivalent of sending a ``SIGTERM`` signal to the
 process. This command does not take any arguments. An example command
 may look like this:
 
 ::
 
    {
-       "command": "shutdown"
+       "command": "shutdown",
        "arguments": {
            "exit-value": 3
        }
@@ -557,19 +664,20 @@ An example command may look like this:
 ::
 
    {
-       "command": "shutdown"
+       "command": "shutdown",
        "arguments": {
            "exit-value": 3,
            "type": "drain_first"
        }
    }
 
+.. isccmd:: dhcp-disable
 .. _command-dhcp-disable:
 
 The ``dhcp-disable`` Command
 ----------------------------
 
-The ``dhcp-disable`` command globally disables the DHCP service. The
+The :isccmd:`dhcp-disable` command globally disables the DHCP service. The
 server continues to operate, but it drops all received DHCP messages.
 This command is useful when the server's maintenance requires that the
 server temporarily stop allocating new leases and renew existing leases.
@@ -577,17 +685,33 @@ It is also useful in failover-like configurations during a
 synchronization of the lease databases at startup, or recovery after a
 failure. The optional parameter ``max-period`` specifies the time in
 seconds after which the DHCP service should be automatically re-enabled,
-if the ``dhcp-enable`` command is not sent before this time elapses.
+if the :isccmd:`dhcp-enable` command is not sent before this time elapses.
 
 Since Kea 1.9.4, there is an additional ``origin`` parameter that specifies the
 command source. A server administrator should typically omit this parameter
 because the default value "user" indicates that the administrator sent the
-command. This command can also be sent by the partner server running HA hooks
-library. In that case, the partner server sets the parameter to "ha-partner".
-This value is reserved for the communication between HA partners and should not
-be specified in the administrator's commands, as it may interfere with
-HA operation. The administrator should either omit this parameter or set it to
-"user".
+command. In Kea 2.5.5 through 2.5.7, this parameter was also used in communication
+between the HA partners to specify the identifier of an HA service sending the command
+in a numeric format. However, due to compatibility issues with older
+Kea versions that did not properly parse numeric values, it was necessary
+to introduce the new parameter, ``origin-id``, in Kea 2.5.8.
+
+It holds a numeric value representing the origin of the command. The same value
+can still be passed using the ``origin`` parameter, but it can cause the
+aforementioned compatibility issues between HA partners running different
+Kea versions; if both are used, ``origin-id`` takes precedence. New Kea versions
+favor using ``origin-id`` in communication between the HA partners, but
+overall, it is recommended that both parameters be
+omitted and the default value used.
+
+The following codes represent the supported origins in numeric format:
+
+ -  ``1`` - a user command; the same as specifying ``"origin": "user"``.
+ -  ``2000``, ``2001``, ``2002``, etc. - origins specified by HA partners where
+    the increments above ``2000`` are distinct HA service identifiers used when
+    the partners have many relationships.
+
+In the following example:
 
 ::
 
@@ -595,42 +719,70 @@ HA operation. The administrator should either omit this parameter or set it to
        "command": "dhcp-disable",
        "arguments": {
            "max-period": 20,
+           "origin-id": 2002,
            "origin": "user"
        }
    }
 
+the effective origin is ``2002``, which indicates it is an HA partner
+sending the command for the service with ID of ``2``. The ``origin``
+parameter will be ignored in this case.
+
+.. isccmd:: dhcp-enable
 .. _command-dhcp-enable:
 
 The ``dhcp-enable`` Command
 ---------------------------
 
-The ``dhcp-enable`` command globally enables the DHCP service.
+The :isccmd:`dhcp-enable` command globally enables the DHCP service.
 
 Since Kea 1.9.4, there is an additional ``origin`` parameter that specifies the
 command source. A server administrator should typically omit this parameter
 because the default value "user" indicates that the administrator sent the
-command. This command can also be sent by the partner server running the HA hook
-library. In that case, the partner server sets the parameter to "ha-partner".
-This value is reserved for the communication between HA partners and should not
-be specified in the administrator's commands, as it may interfere with
-HA operation. The administrator should either omit this parameter or set it to
-"user".
+command. In Kea 2.5.5 through 2.5.7, this parameter was also used in communication
+between the HA partners to specify the identifier of an HA service sending the command
+in a numeric format. However, due to compatibility issues with older
+Kea versions that did not properly parse numeric values, it was necessary
+to introduce the new parameter, ``origin-id``, in Kea 2.5.8.
+
+It holds a numeric value representing the origin of the command. The same value
+can still be passed using the ``origin`` parameter, but it can cause the
+aforementioned compatibility issues between HA partners running different
+Kea versions.; if both are used, ``origin-id`` takes precedence. New Kea versions
+favor using ``origin-id`` in communication between the HA partners, but
+overall, it is recommended that both
+
+The following codes represent the supported origins in numeric format:
+
+ -  ``1`` - a user command; the same as specifying ``"origin": "user"``.
+ -  ``2000``, ``2001``, ``2002``, etc. - origins specified by HA partners where
+    the increments above ``2000`` are distinct HA service identifiers used when
+    the partners have many relationships.
+
+In the following example:
 
 ::
 
    {
        "command": "dhcp-enable",
        "arguments": {
+           "origin-id": 2002,
            "origin": "user"
        }
    }
 
+the effective origin is ``2002``, which indicates it is an HA partner
+sending the command for the service with ID of ``2``. The ``origin``
+parameter will be ignored in this case.
+
+
+.. isccmd:: status-get
 .. _command-status-get:
 
 The ``status-get`` Command
 --------------------------
 
-The ``status-get`` command returns the server's runtime information:
+The :isccmd:`status-get` command returns the server's runtime information:
 
  - ``pid``: the process ID.
 
@@ -663,44 +815,47 @@ The ``status-get`` command returns the server's runtime information:
 
 The ``high-availability`` information is returned only when the command is
 sent to the DHCP servers in an HA setup. This parameter is
-never returned when the ``status-get`` command is sent to the
+never returned when the :isccmd:`status-get` command is sent to the
 Control Agent or DDNS daemon.
 
 The ``thread-pool-size``, ``packet-queue-size`` and
 ``packet-queue-statistics`` parameters are returned only when the
 command is sent to DHCP servers with multi-threading enabled. These
 three parameters and ``multi-threading-enabled`` are never returned when
-the ``status-get`` command is sent to the Control Agent or DDNS daemon.
+the :isccmd:`status-get` command is sent to the Control Agent or DDNS daemon.
 
 To learn more about the HA status information returned by the
-``status-get`` command, please refer to the :ref:`command-ha-status-get`
+:isccmd:`status-get` command, please refer to the :ref:`command-ha-status-get`
 section.
 
 
+.. isccmd:: server-tag-get
 .. _command-server-tag-get:
 
 The ``server-tag-get`` Command:
 -------------------------------
 
-The ``server-tag-get`` command returns the configured server tag of
+The :isccmd:`server-tag-get` command returns the configured server tag of
 the DHCPv4 or DHCPv6 server (:ref:`cb-sharing` explains the server tag concept).
 
+.. isccmd:: config-backend-pull
 .. _command-config-backend-pull:
 
 The ``config-backend-pull`` Command:
 ------------------------------------
 
-The ``config-backend-pull`` command triggers the polling of configuration backends
+The :isccmd:`config-backend-pull` command triggers the polling of configuration backends
 (which must be configured for this command to have an effect),
 explained in :ref:`dhcp4-cb-json`.
 
+.. isccmd:: version-get
 .. _command-version-get:
 
 The ``version-get`` Command
 ---------------------------
 
-The ``version-get`` command returns extended information about the Kea
-version. It is the same information available via the ``-V``
+The :isccmd:`version-get` command returns extended information about the Kea
+version; it is the same information available via the ``-V``
 command-line argument. This command does not take any parameters.
 
 ::
@@ -714,25 +869,27 @@ Commands Supported by the D2 Server
 
 The D2 server supports only a subset of the DHCPv4/DHCPv6 server commands:
 
--  ``build-report``
+-  :isccmd:`build-report`
 
--  ``config-get``
+-  :isccmd:`config-get`
 
--  ``config-reload``
+-  :isccmd:`config-hash-get`
 
--  ``config-set``
+-  :isccmd:`config-reload`
 
--  ``config-test``
+-  :isccmd:`config-set`
 
--  ``config-write``
+-  :isccmd:`config-test`
 
--  ``list-commands``
+-  :isccmd:`config-write`
 
--  ``shutdown``
+-  :isccmd:`list-commands`
 
--  ``status-get``
+-  :isccmd:`shutdown`
 
-- ``version-get``
+-  :isccmd:`status-get`
+
+- :isccmd:`version-get`
 
 .. _agent-commands:
 
@@ -743,22 +900,60 @@ The following commands, listed in :ref:`commands-common`, are also supported by 
 Control Agent; when the ``service`` parameter is blank, the
 commands are handled by the CA and they relate to the CA process itself:
 
--  ``build-report``
+-  :isccmd:`build-report`
 
--  ``config-get``
+-  :isccmd:`config-get`
 
--  ``config-reload``
+-  :isccmd:`config-hash-get`
 
--  ``config-set``
+-  :isccmd:`config-reload`
 
--  ``config-test``
+-  :isccmd:`config-set`
 
--  ``config-write``
+-  :isccmd:`config-test`
 
--  ``list-commands``
+-  :isccmd:`config-write`
 
--  ``shutdown``
+-  :isccmd:`list-commands`
 
--  ``status-get``
+-  :isccmd:`shutdown`
 
--  ``version-get``
+-  :isccmd:`status-get`
+
+-  :isccmd:`version-get`
+
+.. _ctrl-channel-migration:
+
+Migration from the Control Agent
+================================
+
+Since Kea version 2.7.2 DHCP servers support HTTP/HTTPS control channels
+so the Control Agent (CA) is no longer needed.
+
+The DHCPv4, DHCPv6, and D2 servers extend the ``control-socket`` entry
+to ``control-sockets`` list. To migrate a CA configuration add an element
+to this list with:
+
+-  ``socket-type`` set to ``http`` or ``https``
+
+-  ``socket-address`` with the content of CA ``http-host``
+
+-  ``socket-port`` with the content of CA ``http-port``
+
+-  ``trust-anchor`` (unchanged)
+
+-  ``cert-file`` (unchanged)
+
+-  ``key-file`` (unchanged)
+
+-  ``cert-required`` (unchanged)
+
+-  ``authentication`` (unchanged)
+
+User context is supported too. Please look at respective HTTP control socket
+sections for defaults and other details (beware that two servers must use
+different address / port pairs): :ref:`dhcp4-http-ctrl-channel`,
+:ref:`dhcp6-http-ctrl-channel` and :ref:`d2-http-ctrl-channel`
+
+For compatibility the JSON result of these HTTP/HTTPS control sockets is
+still encapsulated into a list.

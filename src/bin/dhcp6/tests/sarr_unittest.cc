@@ -1,11 +1,11 @@
-// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp/option6_client_fqdn.h>
 #include <dhcp/option6_pdexclude.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
@@ -14,11 +14,14 @@
 #include <dhcpsrv/d2_client_mgr.h>
 #include <asiolink/io_address.h>
 #include <stats/stats_mgr.h>
+#include <set>
+#include <vector>
 
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
+using namespace isc::stats;
 
 namespace {
 
@@ -60,6 +63,17 @@ namespace {
 ///   - The reservations-in-subnet and reservations-out-of-pool flags are set to
 ///     true to test that only out of pool reservations are honored.
 ///
+/// - Configuration 5:
+///   - Selects random allocator for addresses.
+///   - One subnet with three distinct pools.
+///   - Random allocator enabled globally for addresses.
+///   - Iterative allocator for prefix delegation.
+///
+/// - Configuration 6:
+///   - Selects random allocator for delegated prefixes.
+///   - One subnet with three distinct pools.
+///   - Random allocator enabled globally for delegated prefixes.
+///   - Iterative allocator for address allocation.
 const char* CONFIGS[] = {
     // Configuration 0
     "{ \"interfaces-config\": {"
@@ -69,6 +83,7 @@ const char* CONFIGS[] = {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ { "
+        "    \"id\": 1, "
         "    \"pd-pools\": ["
         "        { \"prefix\": \"2001:db8:3::\", "
         "          \"prefix-len\": 48, "
@@ -88,21 +103,23 @@ const char* CONFIGS[] = {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ { "
+        "    \"id\": 1, "
         "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - 2001:db8:1::10\" } ],"
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"interface\": \"eth0\","
         "    \"rapid-commit\": true"
         " },"
         " {"
+        "    \"id\": 2, "
         "    \"pools\": [ { \"pool\": \"2001:db8:2::1 - 2001:db8:2::10\" } ],"
         "    \"subnet\": \"2001:db8:2::/48\", "
         "    \"interface\": \"eth1\","
         "    \"rapid-commit\": false"
         " } ],"
         "\"valid-lifetime\": 4000,"
-        " \"dhcp-ddns\" : {"
-        "     \"enable-updates\" : true, "
-        "     \"qualifying-suffix\" : \"example.com\" }"
+        " \"ddns-qualifying-suffix\": \"example.com\", "
+        " \"dhcp-ddns\": {"
+        "     \"enable-updates\": true }"
     "}",
 
     // Configuration 2
@@ -121,6 +138,7 @@ const char* CONFIGS[] = {
         "    \"data\": \"3000:2::1\""
         "} ],"
         "\"subnet6\": [ { "
+        "    \"id\": 1, "
         "    \"option-data\": [ {"
         "        \"name\": \"dns-servers\","
         "        \"data\": \"3000:1::567\""
@@ -175,6 +193,7 @@ const char* CONFIGS[] = {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ { "
+        "    \"id\": 1, "
         "    \"pd-pools\": ["
         "        { \"prefix\": \"2001:db8:3::\", "
         "          \"prefix-len\": 48, "
@@ -197,6 +216,7 @@ const char* CONFIGS[] = {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ { "
+        "    \"id\": 1, "
         "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - 2001:db8:1::10\" } ],"
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"interface\": \"eth0\", "
@@ -214,7 +234,100 @@ const char* CONFIGS[] = {
         "       }"
         "    ]"
         "} ]"
-    "}"
+    "}",
+
+    // Configuration 5
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"allocator\": \"random\","
+        "\"pd-allocator\": \"iterative\","
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": ["
+        "    {"
+        "        \"pools\": ["
+        "            {"
+        "                \"pool\": \"3000::20 - 3000::60\""
+        "            }"
+        "        ],"
+        "        \"pd-pools\": ["
+        "            {"
+        "                \"prefix\": \"2001:db8:3::\", "
+        "                \"prefix-len\": 48, "
+        "                \"delegated-len\": 64"
+        "            }"
+        "        ],"
+        "        \"id\": 1, "
+        "        \"subnet\": \"3000::/32\", "
+        "        \"interface\": \"eth0\""
+        "    }"
+        "],"
+        "\"valid-lifetime\": 4000 }",
+
+    // Configuration 6
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"allocator\": \"iterative\","
+        "\"pd-allocator\": \"random\","
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": ["
+        "    {"
+        "        \"pools\": ["
+        "            {"
+        "                \"pool\": \"3000::20 - 3000::60\""
+        "            }"
+        "        ],"
+        "        \"pd-pools\": ["
+        "            {"
+        "                \"prefix\": \"2001:db8:3::\", "
+        "                \"prefix-len\": 48, "
+        "                \"delegated-len\": 64"
+        "            }"
+        "        ],"
+        "        \"id\": 1, "
+        "        \"subnet\": \"3000::/32\", "
+        "        \"interface\": \"eth0\""
+        "    }"
+        "],"
+        "\"valid-lifetime\": 4000 }",
+
+    // Configuration 7
+    R"({
+        "cache-max-age": 600,
+        "cache-threshold": .50,
+        "interfaces-config": {
+            "interfaces": [ "*" ]
+        },
+        "subnet6": [
+            {
+                "id": 1,
+                "interface": "eth0",
+                "pools": [
+                    {
+                        "pool": "2001:db8::10 - 2001:db8::20"
+                    },
+                ],
+                "pd-pools": [
+                    {
+                        "prefix": "2001:db8:1::",
+                        "prefix-len": 64,
+                        "delegated-len": 96
+                    },
+                ],
+                "subnet": "2001:db8::/32"
+            },
+            {
+                "id": 2,
+                "subnet": "3001:db8::/32"
+            }
+        ],
+        "valid-lifetime": 600
+    })",
 };
 
 /// @brief Test fixture class for testing 4-way exchange: Solicit-Advertise,
@@ -249,6 +362,15 @@ public:
     /// zero the non-significant bytes of the hint and allocate the prefix of
     /// the correct (configured) length.
     void directClientPrefixHint();
+
+    /// @brief Check that the server assigns a delegated prefix that is later
+    /// returned to the client for various prefix hints.
+    ///
+    /// When the client renews the lease, it sends a prefix hint with the same
+    /// prefix but with a different prefix length. In another case, the client
+    /// asks for the same prefix length but different prefix. In both cases,
+    /// the server should return an existing lease.
+    void directClientPrefixLengthHintRenewal();
 
     /// @brief This test verifies that the same options can be specified on the
     /// global level, subnet level and pool level. The options associated with
@@ -298,6 +420,26 @@ public:
     /// to a client not owning this reservation when the
     /// reservations-out-of-pool flag is set to true.
     void reservationIgnoredInOutOfPoolMode();
+
+    /// @brief This test verifies that random allocator is used according
+    /// to the configuration and it allocates random addresses.
+    void randomAddressAllocation();
+
+    /// @brief This test verifies that random allocator is used according
+    /// to the configuration and it allocates random prefixes.
+    void randomPrefixAllocation();
+
+    /// @brief Checks that features related to lease caching (such as lease reuse statistics) work.
+    void leaseCaching();
+
+    /// @brief Checks the value of a statistic.
+    ///
+    /// @param name name of statistic to check
+    /// @param expected_size expected number of statistic samples
+    /// @param expected_value expected value of the latest statistic sample
+    void checkStat(string const& name,
+                   size_t const expected_size,
+                   int64_t const expected_value);
 
     /// @brief Interface Manager's fake configuration control.
     IfaceMgrTestConfig iface_mgr_test_config_;
@@ -366,6 +508,64 @@ TEST_F(SARRTest, directClientPrefixHint) {
 TEST_F(SARRTest, directClientPrefixHintMultiThreading) {
     Dhcpv6SrvMTTestGuard guard(*this, true);
     directClientPrefixHint();
+}
+
+void
+SARRTest::directClientPrefixLengthHintRenewal() {
+    Dhcp6Client client;
+    // Configure client to request IA_PD.
+    client.requestPrefix();
+    configure(CONFIGS[0], *client.getServer());
+    // Make sure we ended-up having expected number of subnets configured.
+    const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets6()->getAll();
+    ASSERT_EQ(1, subnets->size());
+    // Append IAPREFIX option to the client's message.
+    ASSERT_NO_THROW(client.requestPrefix(5678, 64, asiolink::IOAddress("2001:db8:3:36::")));
+    // Perform 4-way exchange.
+    ASSERT_NO_THROW(client.doSARR());
+    // Server should have assigned a prefix.
+    ASSERT_EQ(1, client.getLeaseNum());
+    Lease6 lease_client = client.getLease(0);
+    // The server should respect the prefix hint.
+    EXPECT_EQ("2001:db8:3:36::", lease_client.addr_.toText());
+    // Server ignores other parts of the IAPREFIX option.
+    EXPECT_EQ(64, lease_client.prefixlen_);
+    EXPECT_EQ(3000, lease_client.preferred_lft_);
+    EXPECT_EQ(4000, lease_client.valid_lft_);
+    Lease6Ptr lease_server = checkLease(lease_client);
+    // Check that the server recorded the lease.
+    ASSERT_TRUE(lease_server);
+
+    // Request the same prefix with a different length. The server should
+    // return an existing lease.
+    client.clearRequestedIAs();
+    ASSERT_NO_THROW(client.requestPrefix(5678, 80, IOAddress("2001:db8:3:36::")));
+    ASSERT_NO_THROW(client.doSARR());
+    ASSERT_EQ(1, client.getLeaseNum());
+    lease_client = client.getLease(0);
+    EXPECT_EQ("2001:db8:3:36::", lease_client.addr_.toText());
+    EXPECT_EQ(64, lease_client.prefixlen_);
+
+    // Try to request another prefix. The client should still get the existing
+    // lease.
+    client.clearRequestedIAs();
+    ASSERT_NO_THROW(client.requestPrefix(5678, 64, IOAddress("2001:db8:3:37::")));
+    ASSERT_NO_THROW(client.doSARR());
+    ASSERT_EQ(1, client.getLeaseNum());
+    lease_client = client.getLease(0);
+    EXPECT_EQ("2001:db8:3:36::", lease_client.addr_.toText());
+    EXPECT_EQ(64, lease_client.prefixlen_);
+}
+
+TEST_F(SARRTest, directClientPrefixLengthHintRenewal) {
+    Dhcpv6SrvMTTestGuard guard(*this, false);
+    directClientPrefixLengthHintRenewal();
+}
+
+TEST_F(SARRTest, directClientPrefixLengthHintRenewalMultiThreading) {
+    Dhcpv6SrvMTTestGuard guard(*this, true);
+    directClientPrefixLengthHintRenewal();
 }
 
 void
@@ -871,6 +1071,265 @@ TEST_F(SARRTest, reservationIgnoredInOutOfPoolMode) {
 TEST_F(SARRTest, reservationIgnoredInOutOfPoolModeMultiThreading) {
     Dhcpv6SrvMTTestGuard guard(*this, true);
     reservationIgnoredInOutOfPoolMode();
+}
+
+void
+SARRTest::randomAddressAllocation() {
+    // Create the base client and server configuration.
+    Dhcp6Client client;
+    configure(CONFIGS[5], *client.getServer());
+
+    // Record what addresses have been allocated and in what order.
+    std::set<std::string> allocated_na_set;
+    std::vector<IOAddress> allocated_na_vector;
+    std::set<std::string> allocated_pd_set;
+    std::vector<IOAddress> allocated_pd_vector;
+    // Simulate allocations from different clients.
+    for (auto i = 0; i < 30; ++i) {
+        // Create a client from the base client.
+        Dhcp6Client next_client(client.getServer());
+        next_client.requestAddress();
+        next_client.requestPrefix();
+        // Run 4-way exchange.
+        ASSERT_NO_THROW(next_client.doSARR());
+        // We should have one IA_NA and one IA_PD.
+        auto leases_na = next_client.getLeasesByType(Lease::TYPE_NA);
+        ASSERT_EQ(1, leases_na.size());
+        auto leases_pd = next_client.getLeasesByType(Lease::TYPE_PD);
+        ASSERT_EQ(1, leases_pd.size());
+        // Remember allocated address and delegated prefix uniqueness
+        // and order.
+        allocated_na_set.insert(leases_na[0].toText());
+        allocated_na_vector.push_back(leases_na[0].addr_);
+        allocated_pd_set.insert(leases_pd[0].toText());
+        allocated_pd_vector.push_back(leases_pd[0].addr_);
+    }
+    // Make sure that we have 30 distinct allocations for each lease type.
+    ASSERT_EQ(30, allocated_na_set.size());
+    ASSERT_EQ(30, allocated_na_vector.size());
+    ASSERT_EQ(30, allocated_pd_set.size());
+    ASSERT_EQ(30, allocated_pd_vector.size());
+
+    // Make sure that the addresses are not allocated iteratively.
+    int consecutives = 0;
+    for (auto i = 1; i < allocated_na_vector.size(); ++i) {
+        // Record the cases when the previously allocated address is
+        // lower by 1 (iterative allocation). Some cases like this are
+        // possible even with the random allocation but they should be
+        // very rare.
+        if (IOAddress::increase(allocated_na_vector[i-1]) == allocated_na_vector[i]) {
+            ++consecutives;
+        }
+    }
+    EXPECT_LT(consecutives, 10);
+
+    // Make sure that delegated prefixes have been allocated iteratively.
+    consecutives = 0;
+    for (auto i = 1; i < allocated_pd_vector.size(); ++i) {
+        if (IOAddress::subtract(allocated_pd_vector[i], allocated_pd_vector[i-1]) == IOAddress("0:0:0:1::")) {
+            ++consecutives;
+        }
+    }
+    EXPECT_EQ(29, consecutives);
+}
+
+TEST_F(SARRTest, randomAddressAllocation) {
+    Dhcpv6SrvMTTestGuard guard(*this, false);
+    randomAddressAllocation();
+}
+
+TEST_F(SARRTest, randomAddressAllocationMultiThreading) {
+    Dhcpv6SrvMTTestGuard guard(*this, true);
+    randomAddressAllocation();
+}
+
+void
+SARRTest::randomPrefixAllocation() {
+    // Create the base client and server configuration.
+    Dhcp6Client client;
+    configure(CONFIGS[6], *client.getServer());
+
+    // Record what addresses have been allocated and in what order.
+    std::set<std::string> allocated_na_set;
+    std::vector<IOAddress> allocated_na_vector;
+    std::set<std::string> allocated_pd_set;
+    std::vector<IOAddress> allocated_pd_vector;
+    // Simulate allocations from different clients.
+    for (auto i = 0; i < 30; ++i) {
+        // Create a client from the base client.
+        Dhcp6Client next_client(client.getServer());
+        next_client.requestAddress();
+        next_client.requestPrefix();
+        // Run 4-way exchange.
+        ASSERT_NO_THROW(next_client.doSARR());
+        // We should have one IA_NA and one IA_PD.
+        auto leases_na = next_client.getLeasesByType(Lease::TYPE_NA);
+        ASSERT_EQ(1, leases_na.size());
+        auto leases_pd = next_client.getLeasesByType(Lease::TYPE_PD);
+        ASSERT_EQ(1, leases_pd.size());
+        // Remember allocated address and delegated prefix uniqueness
+        // and order.
+        allocated_na_set.insert(leases_na[0].toText());
+        allocated_na_vector.push_back(leases_na[0].addr_);
+        allocated_pd_set.insert(leases_pd[0].toText());
+        allocated_pd_vector.push_back(leases_pd[0].addr_);
+    }
+    // Make sure that we have 30 distinct allocations for each lease type.
+    ASSERT_EQ(30, allocated_na_set.size());
+    ASSERT_EQ(30, allocated_na_vector.size());
+    ASSERT_EQ(30, allocated_pd_set.size());
+    ASSERT_EQ(30, allocated_pd_vector.size());
+
+    // Make sure that the addresses have been allocated iteratively.
+    int consecutives = 0;
+    for (auto i = 1; i < allocated_na_vector.size(); ++i) {
+        // Record the cases when the previously allocated address is
+        // lower by 1 (iterative allocation).
+        if (IOAddress::increase(allocated_na_vector[i-1]) == allocated_na_vector[i]) {
+            ++consecutives;
+        }
+    }
+
+    // Make sure that addresses have been allocated iteratively.
+    EXPECT_EQ(29, consecutives);
+
+    // Make sure that delegated prefixes have been allocated randomly.
+    consecutives = 0;
+    for (auto i = 1; i < allocated_pd_vector.size(); ++i) {
+        if (IOAddress::subtract(allocated_pd_vector[i], allocated_pd_vector[i-1]) == IOAddress("0:0:0:1::")) {
+            ++consecutives;
+        }
+    }
+    EXPECT_LT(consecutives, 10);
+}
+
+TEST_F(SARRTest, randomPrefixAllocation) {
+    Dhcpv6SrvMTTestGuard guard(*this, false);
+    randomPrefixAllocation();
+}
+
+TEST_F(SARRTest, randomPrefixAllocationMultiThreading) {
+    Dhcpv6SrvMTTestGuard guard(*this, true);
+    randomPrefixAllocation();
+}
+
+void
+SARRTest::leaseCaching() {
+    // Configure a DHCP client.
+    Dhcp6Client client;
+
+    // Configure a DHCP server.
+    configure(CONFIGS[7], *client.getServer());
+
+    // Statistics should have default values.
+    checkStat("v6-ia-na-lease-reuses", 1, 0);
+    checkStat("subnet[1].v6-ia-na-lease-reuses", 1, 0);
+    checkStat("subnet[2].v6-ia-na-lease-reuses", 1, 0);
+    checkStat("v6-ia-pd-lease-reuses", 1, 0);
+    checkStat("subnet[1].v6-ia-pd-lease-reuses", 1, 0);
+    checkStat("subnet[2].v6-ia-pd-lease-reuses", 1, 0);
+
+    // Append IAADDR and IAPREFIX options to the client's message.
+    ASSERT_NO_THROW(client.requestAddress(1234, asiolink::IOAddress("2001:db8::10")));
+    ASSERT_NO_THROW(client.requestPrefix(5678, 32, asiolink::IOAddress("2001:db8:1::")));
+
+    // Perform 4-way exchange.
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Server should have assigned an address and a prefix.
+    ASSERT_EQ(2, client.getLeaseNum());
+
+    // The server should respect the hints.
+    Lease6 lease_client(client.getLease(0));
+    EXPECT_EQ("2001:db8::10", lease_client.addr_.toText());
+    EXPECT_EQ(128, lease_client.prefixlen_);
+    Lease6Ptr lease_server(checkLease(lease_client));
+    EXPECT_TRUE(lease_server);
+    lease_client = client.getLease(1);
+    EXPECT_EQ("2001:db8:1::", lease_client.addr_.toText());
+    EXPECT_EQ(96, lease_client.prefixlen_);
+    lease_server = checkLease(lease_client);
+    EXPECT_TRUE(lease_server);
+
+    // Check statistics.
+    checkStat("v6-ia-na-lease-reuses", 1, 0);
+    checkStat("subnet[1].v6-ia-na-lease-reuses", 1, 0);
+    checkStat("subnet[2].v6-ia-na-lease-reuses", 1, 0);
+    checkStat("v6-ia-pd-lease-reuses", 1, 0);
+    checkStat("subnet[1].v6-ia-pd-lease-reuses", 1, 0);
+    checkStat("subnet[2].v6-ia-pd-lease-reuses", 1, 0);
+
+    // Request the same prefix with a different length. The server should
+    // return an existing lease.
+    client.clearRequestedIAs();
+    ASSERT_NO_THROW(client.requestAddress(1234, asiolink::IOAddress("2001:db8::10")));
+    ASSERT_NO_THROW(client.requestPrefix(5678, 80, IOAddress("2001:db8:1::")));
+    ASSERT_NO_THROW(client.doSARR());
+    ASSERT_EQ(2, client.getLeaseNum());
+    lease_client = client.getLease(0);
+    EXPECT_EQ("2001:db8::10", lease_client.addr_.toText());
+    EXPECT_EQ(128, lease_client.prefixlen_);
+    lease_client = client.getLease(1);
+    EXPECT_EQ("2001:db8:1::", lease_client.addr_.toText());
+    EXPECT_EQ(96, lease_client.prefixlen_);
+
+    // Check statistics.
+    checkStat("v6-ia-na-lease-reuses", 2, 1);
+    checkStat("subnet[1].v6-ia-na-lease-reuses", 2, 1);
+    checkStat("subnet[2].v6-ia-na-lease-reuses", 1, 0);
+    checkStat("v6-ia-pd-lease-reuses", 2, 1);
+    checkStat("subnet[1].v6-ia-pd-lease-reuses", 2, 1);
+    checkStat("subnet[2].v6-ia-pd-lease-reuses", 1, 0);
+
+    // Try to request another prefix. The client should still get the existing
+    // lease.
+    client.clearRequestedIAs();
+    ASSERT_NO_THROW(client.requestAddress(1234, asiolink::IOAddress("2001:db8::10")));
+    ASSERT_NO_THROW(client.requestPrefix(5678, 64, IOAddress("2001:db8:2::")));
+    ASSERT_NO_THROW(client.doRequest());
+    ASSERT_EQ(2, client.getLeaseNum());
+    lease_client = client.getLease(0);
+    EXPECT_EQ("2001:db8::10", lease_client.addr_.toText());
+    EXPECT_EQ(128, lease_client.prefixlen_);
+    lease_client = client.getLease(1);
+    EXPECT_EQ("2001:db8:1::", lease_client.addr_.toText());
+    EXPECT_EQ(96, lease_client.prefixlen_);
+
+    // Check statistics.
+    checkStat("v6-ia-na-lease-reuses", 3, 2);
+    checkStat("subnet[1].v6-ia-na-lease-reuses", 3, 2);
+    checkStat("subnet[2].v6-ia-na-lease-reuses", 1, 0);
+    checkStat("v6-ia-pd-lease-reuses", 3, 2);
+    checkStat("subnet[1].v6-ia-pd-lease-reuses", 3, 2);
+    checkStat("subnet[2].v6-ia-pd-lease-reuses", 1, 0);
+}
+
+TEST_F(SARRTest, leaseCaching) {
+    Dhcpv6SrvMTTestGuard guard(*this, false);
+    leaseCaching();
+}
+
+TEST_F(SARRTest, leaseCachingMultiThreading) {
+    Dhcpv6SrvMTTestGuard guard(*this, true);
+    leaseCaching();
+}
+
+/// @brief Checks the value of a statistic.
+///
+/// @param name name of statistic to check
+/// @param expected_size expected number of statistic samples
+/// @param expected_value expected value of the latest statistic sample
+void SARRTest::checkStat(string const& name,
+                         size_t const expected_size,
+                         int64_t const expected_value) {
+    ObservationPtr const stats(StatsMgr::instance().getObservation(name));
+    ASSERT_TRUE(stats) << "no such stat: " << name;
+    EXPECT_EQ(expected_size, stats->getSize())
+        << name << " stat has wrong size: found " << stats->getSize() << ", expected "
+        << expected_size;
+    EXPECT_EQ(expected_value, stats->getInteger().first)
+        << name << " stat has wrong value: found " << stats->getInteger().first << ", expected "
+        << expected_value;
 }
 
 } // end of anonymous namespace

@@ -47,16 +47,19 @@
 // "%code requires" blocks.
 #line 17 "netconf_parser.yy"
 
-#include <string>
 #include <cc/data.h>
-#include <boost/lexical_cast.hpp>
 #include <netconf/parser_context_decl.h>
+
+#include <boost/lexical_cast.hpp>
+
+#include <sstream>
+#include <string>
 
 using namespace isc::netconf;
 using namespace isc::data;
 using namespace std;
 
-#line 60 "netconf_parser.h"
+#line 63 "netconf_parser.h"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -205,7 +208,7 @@ using namespace std;
 
 #line 14 "netconf_parser.yy"
 namespace isc { namespace netconf {
-#line 209 "netconf_parser.h"
+#line 212 "netconf_parser.h"
 
 
 
@@ -439,7 +442,7 @@ namespace isc { namespace netconf {
       char dummy4[sizeof (int64_t)];
 
       // "constant string"
-      char dummy5[sizeof (std::string)];
+      char dummy5[sizeof (string)];
     };
 
     /// The size of the largest semantic type.
@@ -523,7 +526,7 @@ namespace isc { namespace netconf {
     TOKEN_PARAMETERS = 286,        // "parameters"
     TOKEN_LOGGERS = 287,           // "loggers"
     TOKEN_NAME = 288,              // "name"
-    TOKEN_OUTPUT_OPTIONS = 289,    // "output_options"
+    TOKEN_OUTPUT_OPTIONS = 289,    // "output-options"
     TOKEN_OUTPUT = 290,            // "output"
     TOKEN_DEBUGLEVEL = 291,        // "debuglevel"
     TOKEN_SEVERITY = 292,          // "severity"
@@ -590,7 +593,7 @@ namespace isc { namespace netconf {
         S_PARAMETERS = 31,                       // "parameters"
         S_LOGGERS = 32,                          // "loggers"
         S_NAME = 33,                             // "name"
-        S_OUTPUT_OPTIONS = 34,                   // "output_options"
+        S_OUTPUT_OPTIONS = 34,                   // "output-options"
         S_OUTPUT = 35,                           // "output"
         S_DEBUGLEVEL = 36,                       // "debuglevel"
         S_SEVERITY = 37,                         // "severity"
@@ -760,7 +763,7 @@ namespace isc { namespace netconf {
         break;
 
       case symbol_kind::S_STRING: // "constant string"
-        value.move< std::string > (std::move (that.value));
+        value.move< string > (std::move (that.value));
         break;
 
       default:
@@ -843,13 +846,13 @@ namespace isc { namespace netconf {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, std::string&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, string&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const std::string& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const string& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -899,7 +902,7 @@ switch (yykind)
         break;
 
       case symbol_kind::S_STRING: // "constant string"
-        value.template destroy< std::string > ();
+        value.template destroy< string > ();
         break;
 
       default:
@@ -1040,10 +1043,10 @@ switch (yykind)
 #endif
       }
 #if 201103L <= YY_CPLUSPLUS
-      symbol_type (int tok, std::string v, location_type l)
+      symbol_type (int tok, string v, location_type l)
         : super_type (token_kind_type (tok), std::move (v), std::move (l))
 #else
-      symbol_type (int tok, const std::string& v, const location_type& l)
+      symbol_type (int tok, const string& v, const location_type& l)
         : super_type (token_kind_type (tok), v, l)
 #endif
       {
@@ -1777,14 +1780,14 @@ switch (yykind)
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
-      make_STRING (std::string v, location_type l)
+      make_STRING (string v, location_type l)
       {
         return symbol_type (token::TOKEN_STRING, std::move (v), std::move (l));
       }
 #else
       static
       symbol_type
-      make_STRING (const std::string& v, const location_type& l)
+      make_STRING (const string& v, const location_type& l)
       {
         return symbol_type (token::TOKEN_STRING, v, l);
       }
@@ -2256,7 +2259,7 @@ switch (yykind)
         break;
 
       case symbol_kind::S_STRING: // "constant string"
-        value.copy< std::string > (YY_MOVE (that.value));
+        value.copy< string > (YY_MOVE (that.value));
         break;
 
       default:
@@ -2309,7 +2312,7 @@ switch (yykind)
         break;
 
       case symbol_kind::S_STRING: // "constant string"
-        value.move< std::string > (YY_MOVE (s.value));
+        value.move< string > (YY_MOVE (s.value));
         break;
 
       default:
@@ -2379,7 +2382,7 @@ switch (yykind)
 
 #line 14 "netconf_parser.yy"
 } } // isc::netconf
-#line 2383 "netconf_parser.h"
+#line 2386 "netconf_parser.h"
 
 
 

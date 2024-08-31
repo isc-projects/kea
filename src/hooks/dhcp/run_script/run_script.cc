@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,9 +18,7 @@ using namespace std;
 namespace isc {
 namespace run_script {
 
-IOServicePtr RunScriptImpl::io_service_;
-
-RunScriptImpl::RunScriptImpl() : name_(), sync_(false) {
+RunScriptImpl::RunScriptImpl() : io_context_(new IOService()), name_(), sync_(false) {
 }
 
 void
@@ -33,7 +31,7 @@ RunScriptImpl::configure(LibraryHandle& handle) {
         isc_throw(InvalidParameter, "The 'name' parameter must be a string");
     }
     try {
-        ProcessSpawn process(IOServicePtr(), name->stringValue());
+        ProcessSpawn process(ProcessSpawn::ASYNC, name->stringValue());
     } catch (const isc::Exception& ex) {
         isc_throw(InvalidParameter, "Invalid 'name' parameter: " << ex.what());
     }
@@ -49,7 +47,7 @@ RunScriptImpl::configure(LibraryHandle& handle) {
 
 void
 RunScriptImpl::runScript(const ProcessArgs& args, const ProcessEnvVars& vars) {
-    ProcessSpawn process(getIOService(), name_, args, vars);
+    ProcessSpawn process(ProcessSpawn::ASYNC, name_, args, vars);
     process.spawn(true);
 }
 
@@ -97,6 +95,19 @@ RunScriptImpl::extractHWAddr(ProcessEnvVars& vars,
     } else {
         RunScriptImpl::extractString(vars, "", prefix, suffix);
         RunScriptImpl::extractString(vars, "", prefix + "_TYPE", suffix);
+    }
+}
+
+void
+RunScriptImpl::extractClientId(ProcessEnvVars& vars,
+                               const ClientIdPtr client_id,
+                               const string& prefix,
+                               const string& suffix) {
+    if (client_id) {
+        RunScriptImpl::extractString(vars, client_id->toText(),
+                                     prefix, suffix);
+    } else {
+        RunScriptImpl::extractString(vars, "", prefix, suffix);
     }
 }
 
@@ -228,8 +239,8 @@ RunScriptImpl::extractLease4(ProcessEnvVars& vars,
                                       prefix + "_SUBNET_ID", suffix);
         RunScriptImpl::extractInteger(vars, lease4->valid_lft_,
                                       prefix + "_VALID_LIFETIME", suffix);
-        RunScriptImpl::extractDUID(vars, lease4->client_id_,
-                                   prefix + "_CLIENT_ID", suffix);
+        RunScriptImpl::extractClientId(vars, lease4->client_id_,
+                                       prefix + "_CLIENT_ID", suffix);
     } else {
         RunScriptImpl::extractString(vars, "", prefix + "_ADDRESS", suffix);
         RunScriptImpl::extractString(vars, "", prefix + "_CLTT", suffix);
@@ -238,7 +249,7 @@ RunScriptImpl::extractLease4(ProcessEnvVars& vars,
         RunScriptImpl::extractString(vars, "", prefix + "_STATE", suffix);
         RunScriptImpl::extractString(vars, "", prefix + "_SUBNET_ID", suffix);
         RunScriptImpl::extractString(vars, "", prefix + "_VALID_LIFETIME", suffix);
-        RunScriptImpl::extractDUID(vars, DuidPtr(), prefix + "_CLIENT_ID", suffix);
+        RunScriptImpl::extractClientId(vars, ClientIdPtr(), prefix + "_CLIENT_ID", suffix);
     }
 }
 
@@ -436,6 +447,15 @@ RunScriptImpl::extractPkt6(ProcessEnvVars& vars,
                                      prefix + "_PROTO", suffix);
         RunScriptImpl::extractDUID(vars, pkt6->getClientId(),
                                    prefix + "_CLIENT_ID", suffix);
+        RunScriptImpl::extractOption(vars,
+                                     pkt6->getAnyRelayOption(D6O_INTERFACE_ID, Pkt6::RELAY_SEARCH_FROM_CLIENT),
+                                     prefix, suffix);
+        RunScriptImpl::extractOption(vars,
+                                     pkt6->getAnyRelayOption(D6O_REMOTE_ID, Pkt6::RELAY_SEARCH_FROM_CLIENT),
+                                     prefix, suffix);
+        RunScriptImpl::extractOption(vars,
+                                     pkt6->getAnyRelayOption(D6O_SUBSCRIBER_ID, Pkt6::RELAY_SEARCH_FROM_CLIENT),
+                                     prefix, suffix);
     } else {
         RunScriptImpl::extractString(vars, "", prefix + "_TYPE", suffix);
         RunScriptImpl::extractString(vars, "", prefix + "_TXID", suffix);

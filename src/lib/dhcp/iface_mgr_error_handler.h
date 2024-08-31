@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -29,15 +29,20 @@
 /// @param ex_type Exception to be thrown if error_handler is NULL.
 /// @param handler Error handler function to be called or NULL to indicate
 /// that exception should be thrown instead.
+/// @param iface Pointer to the interface for which the error is logged. Can be null.
 /// @param stream stream object holding an error string.
-#define IFACEMGR_ERROR(ex_type, handler, stream) \
+#define IFACEMGR_ERROR(ex_type, handler, iface, stream) \
 { \
     std::ostringstream ieoss__; \
     ieoss__ << stream; \
+    std::string const error(ieoss__.str()); \
+    if (iface) { \
+        iface->addError(error); \
+    } \
     if (handler) { \
-        handler(ieoss__.str()); \
+        handler(error); \
     } else { \
-        isc_throw(ex_type, ieoss__.str()); \
+        isc_throw(ex_type, error); \
     } \
 } \
 

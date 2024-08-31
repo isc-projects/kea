@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 #include <config.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/option_custom.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/lease_mgr_factory.h>
@@ -153,9 +154,14 @@ CfgSubnets4::merge(CfgOptionDefPtr cfg_def, CfgSharedNetworks4Ptr networks,
         // Create the subnet's options based on the given definitions.
         other_subnet->getCfgOption()->createOptions(cfg_def);
 
+        // Encapsulate options, so that the DHCP server can effectively return
+        // them to the clients without having to encapsulate them for each request.
+        other_subnet->getCfgOption()->encapsulate();
+
         // Create the options for pool based on the given definitions.
         for (auto const& pool : other_subnet->getPoolsWritable(Lease::TYPE_V4)) {
             pool->getCfgOption()->createOptions(cfg_def);
+            pool->getCfgOption()->encapsulate();
         }
 
         // Add the "other" subnet to the our collection of subnets.
@@ -177,26 +183,21 @@ CfgSubnets4::merge(CfgOptionDefPtr cfg_def, CfgSharedNetworks4Ptr networks,
                           << ", network does not exist");
             }
         }
+        // Instantiate the configured allocator and its state.
+        other_subnet->createAllocators();
     }
 }
 
 ConstSubnet4Ptr
-CfgSubnets4::getBySubnetId(const SubnetID& subnet_id) const {
-    const auto& index = subnets_.get<SubnetSubnetIdIndexTag>();
-    auto subnet_it = index.find(subnet_id);
-    return ((subnet_it != index.cend()) ? (*subnet_it) : ConstSubnet4Ptr());
-}
-
-ConstSubnet4Ptr
 CfgSubnets4::getByPrefix(const std::string& subnet_text) const {
-    const auto& index = subnets_.get<SubnetPrefixIndexTag>();
+    auto const& index = subnets_.get<SubnetPrefixIndexTag>();
     auto subnet_it = index.find(subnet_text);
     return ((subnet_it != index.cend()) ? (*subnet_it) : ConstSubnet4Ptr());
 }
 
 bool
 CfgSubnets4::hasSubnetWithServerId(const asiolink::IOAddress& server_id) const {
-    const auto& index = subnets_.get<SubnetServerIdIndexTag>();
+    auto const& index = subnets_.get<SubnetServerIdIndexTag>();
     auto subnet_it = index.find(server_id);
     return (subnet_it != index.cend());
 }
@@ -224,14 +225,21 @@ CfgSubnets4::initSelector(const Pkt4Ptr& query) {
         OptionCustomPtr rai_custom =
             boost::dynamic_pointer_cast<OptionCustom>(rai);
         if (rai_custom) {
-            OptionPtr link_select =
-                rai_custom->getOption(RAI_OPTION_LINK_SELECTION);
-            if (link_select) {
-                OptionBuffer link_select_buf = link_select->getData();
-                if (link_select_buf.size() == sizeof(uint32_t)) {
-                    selector.option_select_ =
-                        IOAddress::fromBytes(AF_INET, &link_select_buf[0]);
-                    return (selector);
+            // If Relay Agent Information Link Selection is ignored in the
+            // configuration, skip returning the related subnet selector here,
+            // and move on to normal subnet selection.
+            bool ignore_link_sel = CfgMgr::instance().getCurrentCfg()->
+                                   getIgnoreRAILinkSelection();
+            if (!ignore_link_sel) {
+                OptionPtr link_select =
+                    rai_custom->getOption(RAI_OPTION_LINK_SELECTION);
+                if (link_select) {
+                    OptionBuffer link_select_buf = link_select->getData();
+                    if (link_select_buf.size() == sizeof(uint32_t)) {
+                        selector.option_select_ =
+                            IOAddress::fromBytes(AF_INET, &link_select_buf[0]);
+                        return (selector);
+                    }
                 }
             }
         }
@@ -300,7 +308,7 @@ CfgSubnets4::selectSubnet(const SubnetSelector& selector) const {
                              selector.client_classes_));
     } else {
         LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
-                  DHCPSRV_SUBNET4_SELECT_FAILED_NO_RAI_OPTIONS_ADDRESS);
+                  DHCPSRV_SUBNET4_SELECT_NO_RAI_OPTIONS);
     }
 
     // If relayed message has been received, try to match the giaddr with the
@@ -337,11 +345,11 @@ CfgSubnets4::selectSubnet(const SubnetSelector& selector) const {
             }
         }
         LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
-                  DHCPSRV_SUBNET4_SELECT_BY_RELAY_ADDRESS_FAILED)
+                  DHCPSRV_SUBNET4_SELECT_BY_RELAY_ADDRESS_NO_MATCH)
             .arg(selector.giaddr_.toText());
     } else {
         LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
-                  DHCPSRV_SUBNET4_SELECT_FAILED_NO_RELAY_ADDRESS);
+                  DHCPSRV_SUBNET4_SELECT_NO_RELAY_ADDRESS);
     }
 
     // If we got to this point it means that we were not able to match the
@@ -394,7 +402,7 @@ CfgSubnets4::selectSubnet(const SubnetSelector& selector) const {
     // Unable to find a suitable address to use for subnet selection.
     if (address.isV4Zero()) {
         LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
-                  DHCPSRV_SUBNET4_SELECT_FAILED_NO_ADDRESS);
+                  DHCPSRV_SUBNET4_SELECT_NO_USABLE_ADDRESS);
 
         return (Subnet4Ptr());
     }
@@ -441,7 +449,7 @@ CfgSubnets4::selectSubnet(const std::string& iface,
     }
 
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
-              DHCPSRV_SUBNET4_SELECT_BY_INTERFACE_FAILED)
+              DHCPSRV_SUBNET4_SELECT_BY_INTERFACE_NO_MATCH)
         .arg(iface);
 
     // Failed to find a subnet.
@@ -449,15 +457,10 @@ CfgSubnets4::selectSubnet(const std::string& iface,
 }
 
 Subnet4Ptr
-CfgSubnets4::getSubnet(const SubnetID id) const {
-    /// @todo: Once this code is migrated to multi-index container, use
-    /// an index rather than full scan.
-    for (auto const& subnet : subnets_) {
-        if (subnet->getID() == id) {
-            return (subnet);
-        }
-    }
-    return (Subnet4Ptr());
+CfgSubnets4::getSubnet(const SubnetID subnet_id) const {
+    auto const& index = subnets_.get<SubnetSubnetIdIndexTag>();
+    auto subnet_it = index.find(subnet_id);
+    return ((subnet_it != index.cend()) ? (*subnet_it) : Subnet4Ptr());
 }
 
 Subnet4Ptr
@@ -480,11 +483,23 @@ CfgSubnets4::selectSubnet(const IOAddress& address,
     }
 
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
-              DHCPSRV_SUBNET4_SELECT_BY_ADDRESS_FAILED)
+              DHCPSRV_SUBNET4_SELECT_BY_ADDRESS_NO_MATCH)
         .arg(address.toText());
 
     // Failed to find a subnet.
     return (Subnet4Ptr());
+}
+
+SubnetIDSet
+CfgSubnets4::getLinks(const IOAddress& link_addr) const {
+    SubnetIDSet links;
+    for (auto const& subnet : subnets_) {
+        if (!subnet->inRange(link_addr)) {
+            continue;
+        }
+        links.insert(subnet->getID());
+    }
+    return (links);
 }
 
 void
@@ -512,6 +527,32 @@ CfgSubnets4::removeStatistics() {
 
         stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
                                              "reclaimed-leases"));
+
+        for (auto const& pool : subnet4->getPools(Lease::TYPE_V4)) {
+            stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
+                                                 StatsMgr::generateName("pool", pool->getID(),
+                                                                        "total-addresses")));
+
+            stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
+                                                 StatsMgr::generateName("pool", pool->getID(),
+                                                                        "assigned-addresses")));
+
+            stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
+                                                 StatsMgr::generateName("pool", pool->getID(),
+                                                                        "cumulative-assigned-addresses")));
+
+            stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
+                                                 StatsMgr::generateName("pool", pool->getID(),
+                                                                        "declined-addresses")));
+
+            stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
+                                                 StatsMgr::generateName("pool", pool->getID(),
+                                                                        "reclaimed-declined-addresses")));
+
+            stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
+                                                 StatsMgr::generateName("pool", pool->getID(),
+                                                                        "reclaimed-leases")));
+        }
     }
 }
 
@@ -525,12 +566,41 @@ CfgSubnets4::updateStatistics() {
 
         stats_mgr.setValue(StatsMgr::
                            generateName("subnet", subnet_id, "total-addresses"),
-                                        static_cast<int64_t>
-                                        (subnet4->getPoolCapacity(Lease::TYPE_V4)));
-        const std::string& name =
-            StatsMgr::generateName("subnet", subnet_id, "cumulative-assigned-addresses");
+                                        int64_t(subnet4->getPoolCapacity(Lease::TYPE_V4)));
+        const std::string& name(StatsMgr::generateName("subnet", subnet_id,
+                                                       "cumulative-assigned-addresses"));
         if (!stats_mgr.getObservation(name)) {
             stats_mgr.setValue(name, static_cast<int64_t>(0));
+        }
+
+        const std::string& name_reuses(StatsMgr::generateName("subnet", subnet_id,
+                                                              "v4-lease-reuses"));
+        if (!stats_mgr.getObservation(name_reuses)) {
+            stats_mgr.setValue(name_reuses, int64_t(0));
+        }
+
+        const std::string& name_conflicts(StatsMgr::generateName("subnet", subnet_id,
+                                                                 "v4-reservation-conflicts"));
+        if (!stats_mgr.getObservation(name_conflicts)) {
+            stats_mgr.setValue(name_conflicts, static_cast<int64_t>(0));
+        }
+
+        for (auto const& pool : subnet4->getPools(Lease::TYPE_V4)) {
+            const std::string& name_total(StatsMgr::generateName("subnet", subnet_id,
+                                                                 StatsMgr::generateName("pool", pool->getID(),
+                                                                                        "total-addresses")));
+            if (!stats_mgr.getObservation(name_total)) {
+                stats_mgr.setValue(name_total, static_cast<int64_t>(pool->getCapacity()));
+            } else {
+                stats_mgr.addValue(name_total, static_cast<int64_t>(pool->getCapacity()));
+            }
+
+            const std::string& name_ca(StatsMgr::generateName("subnet", subnet_id,
+                                                              StatsMgr::generateName("pool", pool->getID(),
+                                                                                     "cumulative-assigned-addresses")));
+            if (!stats_mgr.getObservation(name_ca)) {
+                stats_mgr.setValue(name_ca, static_cast<int64_t>(0));
+            }
         }
     }
 
@@ -538,6 +608,18 @@ CfgSubnets4::updateStatistics() {
     if (subnets_.begin() != subnets_.end()) {
         LeaseMgrFactory::instance().recountLeaseStats4();
     }
+}
+
+void
+CfgSubnets4::initAllocatorsAfterConfigure() {
+    for (auto const& subnet : subnets_) {
+        subnet->initAllocatorsAfterConfigure();
+    }
+}
+
+void
+CfgSubnets4::clear() {
+    subnets_.clear();
 }
 
 ElementPtr

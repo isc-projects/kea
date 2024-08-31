@@ -53,7 +53,7 @@ bool wipePgSQLData(bool show_err) {
     cmd << "export PGPASSWORD=keatest;";
 
     // Add in the wipe shell script invocation.
-    cmd << " sh " << DATABASE_SCRIPTS_DIR << "/pgsql/wipe_data.sh";
+    cmd << " sh " << DATABASE_WIPE_DIR << "/pgsql/wipe_data.sh";
 
     // Add expected schema version as the wipe script's first argument.
     cmd  << " " << PGSQL_SCHEMA_VERSION_MAJOR  << "." << PGSQL_SCHEMA_VERSION_MINOR;

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2019-2022 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2019-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -40,7 +40,7 @@ if [ -f "${base}.yy" ]; then
     # if you system is set to Polish, rather than "Terminals") and this will
     # confuse our script.
     LANG=en_US LANGUAGE=en_US @YACC@ -v "${base}.yy" -o output
-    rm -f output output.h *.hh
+    rm -f output output.h ./*.hh
     mv output.output /tmp/output
     output=/tmp/output
 else
@@ -57,7 +57,7 @@ fi
 #  - replace : by BNF ::=
 #  - squeeze multiple blank lines
 
-cat $output |\
+@AWK@ '{ print }' $output |\
 @AWK@ '/^Terminal/ { exit }; // { print }' |\
 @AWK@ '// { gsub("^ +[0-9]+ ", ""); print }' |\
 @AWK@ '/^\$@[0-9]+:/ { next }; // { print }' |\
@@ -83,7 +83,10 @@ $header
    :linenos:
 
 EOF
-    cat $output.2 | @AWK@ '/^.+$/ { print "    ",$0 }; /^$/ { print } ' >> $output.3
+    # shellcheck disable=SC2016
+    # SC2016: Expressions don't expand in single quotes, use double quotes for that.
+    # Reason: we specifically do not want $0 to expand.
+    @AWK@ '/^.+$/ { print "    ",$0 }; /^$/ { print } ' $output.2 >> $output.3
     cat $output.3
 else
     cat $output.2

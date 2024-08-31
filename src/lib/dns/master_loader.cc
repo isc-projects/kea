@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <exceptions/isc_assert.h>
 #include <dns/master_loader.h>
 #include <dns/master_lexer.h>
 #include <dns/name.h>
@@ -99,8 +100,8 @@ public:
         complete_(false),
         seen_error_(false),
         warn_rfc1035_ttl_(true),
-        rr_count_(0)
-    {}
+        rr_count_(0) {
+    }
 
     /// \brief Wrapper around \c MasterLexer::pushSource() (file version)
     ///
@@ -147,11 +148,15 @@ public:
 
     /// \brief Return the total size of the input sources pushed so
     /// far. See \c MasterLexer::getTotalSourceSize().
-    size_t getSize() const { return (lexer_.getTotalSourceSize()); }
+    size_t getSize() const {
+        return (lexer_.getTotalSourceSize());
+    }
 
     /// \brief Return the line number being parsed in the pushed input
     /// sources. See \c MasterLexer::getPosition().
-    size_t getPosition() const { return (lexer_.getPosition()); }
+    size_t getPosition() const {
+        return (lexer_.getPosition());
+    }
 
 private:
     /// \brief Report an error using the callbacks that were supplied
@@ -159,8 +164,7 @@ private:
     /// throws \c MasterLoaderError exception if necessary, so the
     /// caller need not throw it.
     void reportError(const std::string& filename, size_t line,
-                     const std::string& reason)
-    {
+                     const std::string& reason) {
         seen_error_ = true;
         callbacks_.error(filename, line, reason);
         if (!many_errors_) {
@@ -187,7 +191,7 @@ private:
 
         // We move in tandem, there's an extra item included during the
         // initialization, so we can never run out of them
-        assert(!include_info_.empty());
+        isc_throw_assert(!include_info_.empty());
         const IncludeInfo& info(include_info_.back());
         active_origin_ = info.first;
         last_name_ = info.second;
@@ -218,20 +222,6 @@ private:
     /// handled in \c loadIncremental().
     MasterToken handleInitialToken();
 
-    /// \brief Helper method for \c doGenerate().
-    ///
-    /// This is a helper method for \c doGenerate() that processes the
-    /// LHS or RHS for a single iteration in the range that is requested
-    /// by the $GENERATE directive and returns a generated string (that
-    /// is used to build a name (LHS) or RDATA (RHS) for an RR). See the
-    /// commented implementation for details.
-    std::string generateForIter(const std::string& str, const int it);
-
-    /// \brief Process the $GENERATE directive.
-    ///
-    /// See the commented implementation for details.
-    void doGenerate();
-
     /// \brief Process the $ORIGIN directive.
     void doOrigin(bool is_optional) {
         // Parse and create the new origin. It is relative to the previous
@@ -256,7 +246,7 @@ private:
         } else {
             // If it is not optional, we must not get anything but
             // a string token.
-            assert(is_optional);
+            isc_throw_assert(is_optional);
 
             // We return the newline there. This is because we want to
             // behave the same if there is or isn't the name, leaving the
@@ -440,7 +430,7 @@ private:
                                "last explicitly stated TTL");
             warn_rfc1035_ttl_ = false; // we only warn about this once
         }
-        assert(current_ttl_);
+        isc_throw_assert(current_ttl_);
         return (*current_ttl_);
     }
 
@@ -453,9 +443,6 @@ private:
             doInclude();
         } else if (iequals(directive, "ORIGIN")) {
             doOrigin(false);
-            eatUntilEOL(true);
-        } else if (iequals(directive, "GENERATE")) {
-            doGenerate();
             eatUntilEOL(true);
         } else if (iequals(directive, "TTL")) {
             setDefaultTTL(RRTTL(getString()), false);
@@ -517,7 +504,7 @@ private:
     MasterLoaderCallbacks callbacks_;
     const AddRRCallback add_callback_;
     boost::scoped_ptr<RRTTL> default_ttl_; // Default TTL of RRs used when
-                                           // unspecified.  If NULL no default
+                                           // unspecified.  If null no default
                                            // is known.
     boost::scoped_ptr<RRTTL> current_ttl_; // The TTL used most recently.
                                            // Initially unset. Once set
@@ -547,319 +534,6 @@ public:
     size_t rr_count_;    // number of RRs successfully loaded
 };
 
-namespace { // begin unnamed namespace
-
-/// \brief Generate a dotted nibble sequence.
-///
-/// This method generates a dotted nibble sequence and returns it as a
-/// string. The nibbles are appended from the least significant digit
-/// (in hex representation of \c num) to the most significant digit with
-/// dots ('.') to separate the digits. If \c width is non-zero and the
-/// dotted nibble sequence has not filled the requested width, the rest
-/// of the width is filled with a dotted nibble sequence of 0 nibbles.
-///
-/// Some sample representations:
-///
-/// num = 0x1234, width = 0
-/// "4.3.2.1"
-///
-/// num = 0x1234, width = 1
-/// "4.3.2.1"
-///
-/// num = 0x1234, width = 8
-/// "4.3.2.1"
-///
-/// num = 0x1234, width = 9
-/// "4.3.2.1."
-///
-/// num = 0x1234, width = 10
-/// "4.3.2.1.0"
-///
-/// num = 0x1234, width = 11
-/// "4.3.2.1.0."
-///
-/// num = 0xabcd, width = 0, uppercase = true
-/// "D.C.B.A"
-///
-/// num = 0, width = 0
-/// "0"
-///
-/// num = 0, width = 1
-/// "0"
-///
-/// num = 0, width = 2
-/// "0."
-///
-/// num = 0, width = 3
-/// "0.0"
-///
-/// \param num The number for which the dotted nibble sequence should be
-/// generated.
-/// \param width The width of the generated string. This is only
-/// meaningful when it is larger than the dotted nibble sequence
-/// representation of \c num.
-/// \param uppercase Whether to use uppercase characters in nibble
-/// sequence.
-/// \return A string containing the dotted nibble sequence.
-std::string
-genNibbles(int num, unsigned int width, bool uppercase) {
-    static const char *hex = "0123456789abcdef0123456789ABCDEF";
-    std::string rstr;
-
-    do {
-        char ch = hex[(num & 0x0f) + (uppercase ? 16 : 0)];
-        num >>= 4;
-        rstr.push_back(ch);
-
-        if (width > 0) {
-            --width;
-        }
-
-        // If width is non zero then we need to add a label separator.
-        // If value is non zero then we need to add another label and
-        // that requires a label separator.
-        if (width > 0 || num != 0) {
-            rstr.push_back('.');
-
-            if (width > 0) {
-                --width;
-            }
-        }
-    } while ((num != 0) || (width > 0));
-
-    return (rstr);
-}
-
-} // end unnamed namespace
-
-std::string
-MasterLoader::MasterLoaderImpl::generateForIter(const std::string& str,
-                                                const int num)
-{
-  std::string rstr;
-
-  for (std::string::const_iterator it = str.begin(); it != str.end();) {
-      switch (*it) {
-      case '$':
-          // This is the case when the '$' character is encountered in
-          // the LHS or RHS. A computed value is added in its place in
-          // the generated string.
-          ++it;
-          if ((it != str.end()) && (*it == '$')) {
-              rstr.push_back('$');
-              ++it;
-              continue;
-          }
-
-          // The str.end() check is required.
-          if ((it == str.end()) || (*it != '{')) {
-              // There is no modifier (between {}), so just copy the
-              // passed number into the generated string.
-              rstr += boost::str(boost::format("%d") % num);
-          } else {
-              // There is a modifier (between {}). Parse it and handle
-              // the various cases below.
-              const char* scan_str =
-                  str.c_str() + std::distance(str.begin(), it);
-              int offset = 0;
-              unsigned int width;
-              char base[2] = {'d', 0}; // char plus null byte
-              // cppcheck-suppress invalidscanf_libc
-              const int n = sscanf(scan_str, "{%d,%u,%1[doxXnN]}",
-                                   &offset, &width, base);
-              switch (n) {
-              case 1:
-                  // Only 1 item was matched (the offset). Copy (num +
-                  // offset) into the generated string.
-                  rstr += boost::str(boost::format("%d") % (num + offset));
-                  break;
-
-              case 2: {
-                  // 2 items were matched (the offset and width). Copy
-                  // (num + offset) and format it according to the width
-                  // into the generated string.
-                  const std::string fmt =
-                      boost::str(boost::format("%%0%ud") % width);
-                  rstr += boost::str(boost::format(fmt) % (num + offset));
-                  break;
-              }
-
-              case 3:
-                  // 3 items were matched (offset, width and base).
-                  if ((base[0] == 'n') || (base[0] == 'N')) {
-                      // The base is requesting nibbles. Format it
-                      // specially (see genNibbles() documentation).
-                      rstr += genNibbles(num + offset, width, (base[0] == 'N'));
-                  } else {
-                      // The base is not requesting nibbles. Copy (num +
-                      // offset) and format it according to the width
-                      // and base into the generated string.
-                      const std::string fmt =
-                          boost::str(boost::format("%%0%u%c") % width % base[0]);
-                      rstr += boost::str(boost::format(fmt) % (num + offset));
-                  }
-                  break;
-
-              default:
-                  // Any other case in the modifiers is an error.
-                  reportError(lexer_.getSourceName(), lexer_.getSourceLine(),
-                              "Invalid $GENERATE format modifiers");
-                  return ("");
-              }
-
-              // Find the closing brace. Careful that 'it' can be equal
-              // to str.end() here.
-              while ((it != str.end()) && (*it != '}')) {
-                  ++it;
-              }
-              // Skip past the closing brace (if there is one).
-              if (it != str.end()) {
-                  ++it;
-              }
-          }
-          break;
-
-      case '\\':
-          // This is the case when the '\' character is encountered in
-          // the LHS or RHS. The '\' and the following character are
-          // copied as-is into the generated string. This is usually
-          // used for escaping the $ character.
-          rstr.push_back(*it);
-          ++it;
-          if (it == str.end()) {
-              continue;
-          }
-          rstr.push_back(*it);
-          ++it;
-          break;
-
-      default:
-          // This is the default case that handles all other
-          // characters. They are copied as-is into the generated
-          // string.
-          rstr.push_back(*it);
-          ++it;
-          break;
-      }
-  }
-
-  return (rstr);
-}
-
-void
-MasterLoader::MasterLoaderImpl::doGenerate() {
-    // Parse the range token
-    const MasterToken& range_token = lexer_.getNextToken(MasterToken::STRING);
-    if (range_token.getType() != MasterToken::STRING) {
-        reportError(lexer_.getSourceName(), lexer_.getSourceLine(),
-                    "Invalid $GENERATE syntax");
-        return;
-    }
-    const std::string range = range_token.getString();
-
-    // Parse the LHS token
-    const MasterToken& lhs_token = lexer_.getNextToken(MasterToken::STRING);
-    if (lhs_token.getType() != MasterToken::STRING) {
-        reportError(lexer_.getSourceName(), lexer_.getSourceLine(),
-                    "Invalid $GENERATE syntax");
-        return;
-    }
-    const std::string lhs = lhs_token.getString();
-
-    // Parse the TTL, RR class and RR type tokens. Note that TTL and RR
-    // class may come in any order, or may be missing (either or
-    // both). If TTL is missing, we expect that it was either specified
-    // explicitly using $TTL, or is implicitly known from a previous RR,
-    // or that this is the SOA RR from which the MINIMUM field is
-    // used. It's unlikely that $GENERATE will be used with an SOA RR,
-    // but it's possible. The parsing happens within the parseRRParams()
-    // helper method which is called below.
-    const MasterToken& param_token = lexer_.getNextToken(MasterToken::STRING);
-    if (param_token.getType() != MasterToken::STRING) {
-        reportError(lexer_.getSourceName(), lexer_.getSourceLine(),
-                    "Invalid $GENERATE syntax");
-        return;
-    }
-
-    bool explicit_ttl = false;
-    const RRType rrtype = parseRRParams(explicit_ttl, param_token);
-
-    // Parse the RHS token. It can be a quoted string.
-    const MasterToken& rhs_token = lexer_.getNextToken(MasterToken::QSTRING);
-    if ((rhs_token.getType() != MasterToken::QSTRING) &&
-        (rhs_token.getType() != MasterToken::STRING))
-    {
-        reportError(lexer_.getSourceName(), lexer_.getSourceLine(),
-                    "Invalid $GENERATE syntax");
-        return;
-    }
-    const std::string rhs = rhs_token.getString();
-
-    // Range can be one of two forms: start-stop or start-stop/step. If
-    // the first form is used, then step is set to 1. All of start, stop
-    // and step must be positive.
-    unsigned int start;
-    unsigned int stop;
-    unsigned int step;
-    // cppcheck-suppress invalidscanf_libc
-    const int n = sscanf(range.c_str(), "%u-%u/%u", &start, &stop, &step);
-    if ((n < 2) || (stop < start)) {
-        reportError(lexer_.getSourceName(), lexer_.getSourceLine(),
-                    "$GENERATE: invalid range: " + range);
-        return;
-    }
-
-    if (n == 2) {
-        step = 1;
-    }
-
-    // Generate and add the records.
-    for (unsigned int i = start; i <= stop; i += step) {
-        // Get generated strings for LHS and RHS. LHS goes to form the
-        // name, RHS goes to form the RDATA of the RR.
-        const std::string generated_name = generateForIter(lhs, i);
-        const std::string generated_rdata = generateForIter(rhs, i);
-        if (generated_name.empty() || generated_rdata.empty()) {
-            // The error should have been sent to the callbacks already
-            // by generateForIter().
-            reportError(lexer_.getSourceName(), lexer_.getSourceLine(),
-                        "$GENERATE error");
-            return;
-        }
-
-        // generateForIter() can return a string with a trailing '.' in
-        // case of a nibble representation. So we cannot use the
-        // relative Name constructor. We use concatenate() which is
-        // expensive, but keeps the generated LHS-based Name within the
-        // active origin.
-        last_name_.reset
-            (new Name(Name(generated_name).concatenate(active_origin_)));
-        previous_name_ = true;
-
-        const rdata::RdataPtr rdata =
-            rdata::createRdata(rrtype, zone_class_, generated_rdata);
-        // In case we get NULL, it means there was error creating the
-        // Rdata. The errors should have been reported by callbacks_
-        // already. We need to decide if we want to continue or not.
-        if (rdata) {
-            add_callback_(*last_name_, zone_class_, rrtype,
-                          getCurrentTTL(explicit_ttl, rrtype, rdata),
-                          rdata);
-            // Good, we added another one
-            ++rr_count_;
-        } else {
-            seen_error_ = true;
-            if (!many_errors_) {
-                ok_ = false;
-                complete_ = true;
-                // We don't have the exact error here, but it was
-                // reported by the error callback.
-                isc_throw(MasterLoaderError, "Invalid RR data");
-            }
-        }
-    }
-}
-
 MasterToken
 MasterLoader::MasterLoaderImpl::handleInitialToken() {
     const MasterToken& initial_token =
@@ -878,7 +552,7 @@ MasterLoader::MasterLoaderImpl::handleInitialToken() {
         }
 
         // This means the same name as previous.
-        if (last_name_.get() == NULL) {
+        if (!last_name_) {
             isc_throw(InternalException, "No previous name to use in "
                       "place of initial whitespace");
         } else if (!previous_name_) {
@@ -959,7 +633,7 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
             }
             // We are going to parse an RR, have known the owner name,
             // and are now seeing the next string token in the rest of the RR.
-            assert(next_token.getType() == MasterToken::STRING);
+            isc_throw_assert(next_token.getType() == MasterToken::STRING);
 
             bool explicit_ttl = false;
             const RRType rrtype = parseRRParams(explicit_ttl, next_token);
@@ -969,7 +643,7 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
                 rdata::createRdata(rrtype, zone_class_, lexer_,
                                    &active_origin_, options_, callbacks_);
 
-            // In case we get NULL, it means there was error creating
+            // In case we get null, it means there was error creating
             // the Rdata. The errors should have been reported by
             // callbacks_ already. We need to decide if we want to continue
             // or not.
@@ -1017,13 +691,12 @@ MasterLoader::MasterLoader(const char* master_file,
                            const RRClass& zone_class,
                            const MasterLoaderCallbacks& callbacks,
                            const AddRRCallback& add_callback,
-                           Options options)
-{
+                           Options options) {
     if (!add_callback) {
         isc_throw(isc::InvalidParameter, "Empty add RR callback");
     }
-    impl_ = new MasterLoaderImpl(master_file, zone_origin,
-                                 zone_class, callbacks, add_callback, options);
+    impl_.reset(new MasterLoaderImpl(master_file, zone_origin,
+                                     zone_class, callbacks, add_callback, options));
 }
 
 MasterLoader::MasterLoader(std::istream& stream,
@@ -1031,20 +704,16 @@ MasterLoader::MasterLoader(std::istream& stream,
                            const RRClass& zone_class,
                            const MasterLoaderCallbacks& callbacks,
                            const AddRRCallback& add_callback,
-                           Options options)
-{
+                           Options options) {
     if (!add_callback) {
         isc_throw(isc::InvalidParameter, "Empty add RR callback");
     }
-    unique_ptr<MasterLoaderImpl>
-        impl(new MasterLoaderImpl("", zone_origin, zone_class,
-                                  callbacks, add_callback, options));
-    impl->pushStreamSource(stream);
-    impl_ = impl.release();
+    impl_.reset(new MasterLoaderImpl("", zone_origin, zone_class,
+                                     callbacks, add_callback, options));
+    impl_->pushStreamSource(stream);
 }
 
 MasterLoader::~MasterLoader() {
-    delete impl_;
 }
 
 bool

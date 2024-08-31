@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,9 +10,9 @@
 #include <d2srv/d2_cfg_mgr.h>
 #include <d2srv/d2_simple_parser.h>
 #include <cc/command_interpreter.h>
-#include <util/encode/hex.h>
-
-#include <boost/foreach.hpp>
+#include <config/base_command_mgr.h>
+#include <util/encode/encode.h>
+#include <boost/range/adaptor/reversed.hpp>
 
 using namespace isc::asiolink;
 using namespace isc::config;
@@ -35,7 +35,8 @@ D2CfgContext::D2CfgContext()
       forward_mgr_(new DdnsDomainListMgr("forward-ddns")),
       reverse_mgr_(new DdnsDomainListMgr("reverse-ddns")),
       keys_(new TSIGKeyInfoMap()),
-      control_socket_(ConstElementPtr()) {
+      unix_control_socket_(ConstElementPtr()),
+      http_control_socket_(HttpCommandConfigPtr()) {
 }
 
 D2CfgContext::D2CfgContext(const D2CfgContext& rhs) : ConfigBase(rhs) {
@@ -52,7 +53,9 @@ D2CfgContext::D2CfgContext(const D2CfgContext& rhs) : ConfigBase(rhs) {
 
     keys_ = rhs.keys_;
 
-    control_socket_ = rhs.control_socket_;
+    unix_control_socket_ = rhs.unix_control_socket_;
+
+    http_control_socket_ = rhs.http_control_socket_;
 
     hooks_config_ = rhs.hooks_config_;
 }
@@ -94,14 +97,20 @@ D2CfgContext::toElement() const {
     d2->set("reverse-ddns", reverse_ddns);
     // Set tsig-keys
     ElementPtr tsig_keys = Element::createList();
-    for (TSIGKeyInfoMap::const_iterator key = keys_->begin();
-         key != keys_->end(); ++key) {
-        tsig_keys->add(key->second->toElement());
+    for (auto const& key : *keys_) {
+        tsig_keys->add(key.second->toElement());
     }
     d2->set("tsig-keys", tsig_keys);
-    // Set control-socket (skip if null as empty is not legal)
-    if (!isNull(control_socket_)) {
-        d2->set("control-socket", UserContext::toElement(control_socket_));
+    // Set control-sockets.
+    ElementPtr control_sockets = Element::createList();
+    if (!isNull(unix_control_socket_)) {
+        control_sockets->add(UserContext::toElement(unix_control_socket_));
+    }
+    if (http_control_socket_) {
+        control_sockets->add(http_control_socket_->toElement());
+    }
+    if (!control_sockets->empty()) {
+        d2->set("control-sockets", control_sockets);
     }
     // Set hooks-libraries
     d2->set("hooks-libraries", hooks_config_.toElement());
@@ -197,16 +206,8 @@ D2CfgMgr::reverseV4Address(const isc::asiolink::IOAddress& ioaddr) {
     // Walk backwards through vector outputting each octet and a dot.
     std::ostringstream stream;
 
-    // We have to set the following variable to get
-    // const_reverse_iterator type of rend(), otherwise Solaris GCC
-    // complains on operator!= by trying to use the non-const variant.
-    const ByteAddress::const_reverse_iterator end = bytes.rend();
-
-    for (ByteAddress::const_reverse_iterator rit = bytes.rbegin();
-         rit != end;
-         ++rit)
-    {
-        stream << static_cast<unsigned int>(*rit) << ".";
+    for (auto const& rit : boost::adaptors::reverse(bytes)) {
+        stream << static_cast<unsigned int>(rit) << ".";
     }
 
     // Tack on the suffix and we're done.
@@ -227,16 +228,8 @@ D2CfgMgr::reverseV6Address(const isc::asiolink::IOAddress& ioaddr) {
     // Walk backwards through string outputting each digits and a dot.
     std::ostringstream stream;
 
-    // We have to set the following variable to get
-    // const_reverse_iterator type of rend(), otherwise Solaris GCC
-    // complains on operator!= by trying to use the non-const variant.
-    const std::string::const_reverse_iterator end = digits.rend();
-
-    for (std::string::const_reverse_iterator rit = digits.rbegin();
-         rit != end;
-         ++rit)
-    {
-        stream << static_cast<char>(*rit) << ".";
+    for (auto const& rit : boost::adaptors::reverse(digits)) {
+        stream << static_cast<char>(rit) << ".";
     }
 
     // Tack on the suffix and we're done.
@@ -252,6 +245,11 @@ D2CfgMgr::getD2Params() {
 const isc::data::ConstElementPtr
 D2CfgMgr::getControlSocketInfo() {
     return (getD2CfgContext()->getControlSocketInfo());
+}
+
+isc::config::HttpCommandConfigPtr
+D2CfgMgr::getHttpControlSocketInfo() {
+    return (getD2CfgContext()->getHttpControlSocketInfo());
 }
 
 std::string
@@ -306,8 +304,15 @@ D2CfgMgr::parse(isc::data::ConstElementPtr config_set, bool check_only) {
         answer = createAnswer(CONTROL_RESULT_SUCCESS,
                               "Configuration check successful");
     } else {
+
+        // Calculate hash of the configuration that was just set.
+        ConstElementPtr config = getContext()->toElement();
+        std::string hash = BaseCommandMgr::getHash(config);
+        ElementPtr params = Element::createMap();
+        params->set("hash", Element::create(hash));
+
         answer = createAnswer(CONTROL_RESULT_SUCCESS,
-                              "Configuration applied successfully.");
+                              "Configuration applied successfully.", params);
     }
 
     return (answer);

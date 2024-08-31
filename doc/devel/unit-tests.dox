@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -286,6 +286,10 @@ postgres=# CREATE DATABASE keatest;
 CREATE DATABASE
 postgres=# GRANT ALL PRIVILEGES ON DATABASE keatest TO keatest;
 GRANT
+postgres=# \c keatest
+You are now connected to database "keatest" as user "postgres".
+keatest=# GRANT ALL PRIVILEGES ON SCHEMA public TO keatest;
+GRANT
 postgres=# \q
 @endverbatim
 
@@ -295,6 +299,8 @@ postgres=# \q
   However, this only affects tables which exist when the privileges are granted.
   To ensure that the user has specific privileges to tables dynamically created
   by the unit tests, the default schema privileges must be altered.
+  In Postgres 15.0+, you need to explicitly grant privileges to access
+  the ``public`` schema.
 
   The following example demonstrates how to create the user <i>keatest_readonly</i>,
   which has SELECT privilege to the tables within the <i>keatest</i> database,
@@ -343,7 +349,7 @@ GRANT
 keatest=> \q
 @endverbatim
 
-  Now we  should be able to log into the newly created database using both user
+  Now we should be able to log into the newly created database using both user
   names:
 @verbatim
 $ psql -d keatest -U keatest

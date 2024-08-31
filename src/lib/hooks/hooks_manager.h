@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -66,12 +66,15 @@ public:
     /// @param libraries List of libraries to be loaded.  The order is
     ///        important, as it determines the order that callouts on the same
     ///        hook will be called.
+    /// @param multi_threading_enabled The flag which indicates if MT is enabled
+    ///        (used to check hook libraries compatibility with MT).
     ///
     /// @return true if all libraries loaded without a problem, false if one or
     ///        more libraries failed to load.  In the latter case, message will
     ///        be logged that give the reason.
     /// @throw LibrariesStillOpened when some libraries are already loaded.
-    static bool loadLibraries(const HookLibsCollection& libraries);
+    static bool loadLibraries(const HookLibsCollection& libraries,
+                              bool multi_threading_enabled = false);
 
     /// @brief Unload libraries
     ///
@@ -247,11 +250,13 @@ public:
     /// change is committed.
     ///
     /// @param libraries List of libraries to be validated.
+    /// @param multi_threading_enabled The flag which indicates if MT is enabled
+    ///        (used to check hook libraries compatibility with MT).
     ///
     /// @return An empty vector if all libraries validated.  Otherwise it
     ///         holds the names of the libraries that failed validation.
-    static std::vector<std::string> validateLibraries(
-                       const std::vector<std::string>& libraries);
+    static std::vector<std::string> validateLibraries(const std::vector<std::string>& libraries,
+                                                      bool multi_threading_enabled = false);
 
     /// Index numbers for pre-defined hooks.
     static const int CONTEXT_CREATE = ServerHooks::CONTEXT_CREATE;
@@ -379,27 +384,19 @@ private:
     /// but actually do the work on the singleton instance of the HooksManager.
     /// See the descriptions of the static methods for more details.
 
-    /// @brief Validate library list
-    ///
-    /// @param List of libraries to be validated.
-    ///
-    /// @return An empty string if all libraries validated.  Otherwise it is
-    ///         the name of the first library that failed validation.  The
-    ///         configuration code can return this to bindctl as an indication
-    ///         of the problem.
-    std::string validateLibrariesInternal(
-                       const std::vector<std::string>& libraries) const;
-
     /// @brief Load and reload libraries
     ///
     /// @param libraries List of libraries to be loaded.  The order is
     ///        important, as it determines the order that callouts on the same
     ///        hook will be called.
+    /// @param multi_threading_enabled The flag which indicates if MT is enabled
+    ///        (used to check hook libraries compatibility with MT).
     ///
     /// @return true if all libraries loaded without a problem, false if one or
     ///        more libraries failed to load.  In the latter case, message will
     ///        be logged that give the reason.
-    bool loadLibrariesInternal(const HookLibsCollection& libraries);
+    bool loadLibrariesInternal(const HookLibsCollection& libraries,
+                               bool multi_threading_enabled);
 
     /// @brief Unload libraries
     ///

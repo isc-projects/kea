@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,11 +6,13 @@
 
 #include <config.h>
 
-#include <util/encode/hex.h>
-#include <util/strutil.h>
+#include <util/encode/encode.h>
+#include <util/str.h>
 #include <yang/adaptor_host.h>
+
 #include <iomanip>
 #include <sstream>
+#include <vector>
 
 using namespace std;
 using namespace isc::data;
@@ -22,12 +24,6 @@ namespace yang {
 const string
 AdaptorHost::STD_CHARACTERS =
     "0123456789@ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-.@_";
-
-AdaptorHost::AdaptorHost() {
-}
-
-AdaptorHost::~AdaptorHost() {
-}
 
 void
 AdaptorHost::quoteIdentifier(ElementPtr host) {
@@ -53,16 +49,15 @@ AdaptorHost::quoteIdentifier(ElementPtr host) {
     stringstream tmp;
     tmp << hex;
     bool delim = false;
-    for (vector<uint8_t>::const_iterator it = binary.begin();
-         it != binary.end(); ++it) {
+    for (auto const& it : binary) {
         if (delim) {
             tmp << ":";
         }
-        tmp << setw(2) << setfill('0') << static_cast<unsigned int>(*it);
+        tmp << setw(2) << setfill('0') << static_cast<unsigned int>(it);
         delim = true;
     }
     host->set("flex-id", Element::create(tmp.str()));
 }
 
-}; // end of namespace isc::yang
-}; // end of namespace isc
+}  // namespace yang
+}  // namespace isc

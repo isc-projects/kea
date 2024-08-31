@@ -1,11 +1,11 @@
-// Copyright (C) 2009-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef MESSAGE_H
-#define MESSAGE_H 1
+#define MESSAGE_H
 
 #include <stdint.h>
 
@@ -14,16 +14,13 @@
 #include <ostream>
 
 #include <dns/exceptions.h>
+#include <util/buffer.h>
 
 #include <dns/edns.h>
 #include <dns/question.h>
 #include <dns/rrset.h>
 
 namespace isc {
-namespace util {
-class InputBuffer;
-}
-
 namespace dns {
 class TSIGContext;
 class TSIGRecord;
@@ -88,9 +85,17 @@ struct SectionIteratorImpl;
 /// The template parameter is either \c QuestionPtr (for the question section)
 /// or \c RRsetPtr (for the answer, authority, or additional section).
 template <typename T>
-class SectionIterator : public std::iterator<std::input_iterator_tag, T> {
+class SectionIterator {
 public:
-    SectionIterator() : impl_(NULL) {}
+    // Aliases used to enable iterator behavior on this class
+    using iterator_category = std::input_iterator_tag;
+    using value_type = T;
+    using difference_type = std::ptrdiff_t;
+    using pointer = T*;
+    using reference = T&;
+
+    SectionIterator() : impl_(0) {
+    }
     SectionIterator(const SectionIteratorImpl<T>& impl);
     ~SectionIterator();
     SectionIterator(const SectionIterator<T>& source);
@@ -107,6 +112,10 @@ private:
 
 typedef SectionIterator<QuestionPtr> QuestionIterator;
 typedef SectionIterator<RRsetPtr> RRsetIterator;
+
+class MessageImpl;
+/// @brief Pointer to the @ref MessageImpl object.
+typedef boost::shared_ptr<MessageImpl> MessageImplPtr;
 
 /// \brief The \c Message class encapsulates a standard DNS message.
 ///
@@ -144,8 +153,8 @@ class Message {
 public:
     /// Constants to specify the operation mode of the \c Message.
     enum Mode {
-        PARSE = 0,              ///< Parse mode (handling an incoming message)
-        RENDER = 1              ///< Render mode (building an outgoing message)
+        PARSE = 0,              // Parse mode (handling an incoming message)
+        RENDER = 1              // Render mode (building an outgoing message)
     };
 
     /// \brief Constants for flag bit fields of a DNS message header.
@@ -190,14 +199,14 @@ public:
     /// introducing a separately defined class considering the balance
     /// between the complexity and advantage, but hopefully the cast notation
     /// is sufficiently ugly to prevent proliferation of the usage.
-    enum HeaderFlag {
-        HEADERFLAG_QR = 0x8000, ///< Query (if cleared) or response (if set)
-        HEADERFLAG_AA = 0x0400, ///< Authoritative answer
-        HEADERFLAG_TC = 0x0200, ///< Truncation
-        HEADERFLAG_RD = 0x0100, ///< Recursion desired
-        HEADERFLAG_RA = 0x0080, ///< Recursion available
-        HEADERFLAG_AD = 0x0020, ///< Authentic %data (RFC4035)
-        HEADERFLAG_CD = 0x0010  ///< DNSSEC checking disabled (RFC4035)
+    enum HeaderFlag : int {
+        HEADERFLAG_QR = 0x8000, // Query (if cleared) or response (if set)
+        HEADERFLAG_AA = 0x0400, // Authoritative answer
+        HEADERFLAG_TC = 0x0200, // Truncation
+        HEADERFLAG_RD = 0x0100, // Recursion desired
+        HEADERFLAG_RA = 0x0080, // Recursion available
+        HEADERFLAG_AD = 0x0020, // Authentic %data (RFC4035)
+        HEADERFLAG_CD = 0x0010  // DNSSEC checking disabled (RFC4035)
     };
 
     /// \brief Constants to specify sections of a DNS message.
@@ -230,11 +239,11 @@ public:
     ///
     /// <b>Future Extension:</b> We'll probably also define constants for
     /// the section names used in dynamic updates in future versions.
-    enum Section {
-        SECTION_QUESTION = 0,   ///< %Question section
-        SECTION_ANSWER = 1,     ///< Answer section
-        SECTION_AUTHORITY = 2,  ///< Authority section
-        SECTION_ADDITIONAL = 3  ///< Additional section
+    enum Section : int {
+        SECTION_QUESTION = 0,   // Question section
+        SECTION_ANSWER = 1,     // Answer section
+        SECTION_AUTHORITY = 2,  // Authority section
+        SECTION_ADDITIONAL = 3  // Additional section
     };
 
     ///
@@ -251,7 +260,7 @@ public:
     /// The mode of the message is specified by the \c mode parameter.
     Message(Mode mode);
     /// \brief The destructor.
-    ~Message();
+    ~Message() = default;
 private:
     Message(const Message& source);
     Message& operator=(const Message& source);
@@ -378,7 +387,7 @@ public:
     ///
     /// \exception InvalidMessageOperation Message is not in the PARSE mode.
     ///
-    /// \return A pointer to the stored \c TSIGRecord or \c NULL.
+    /// \return A pointer to the stored \c TSIGRecord or null.
     const TSIGRecord* getTSIGRecord() const;
 
     /// \brief Returns the number of RRs contained in the given section.
@@ -455,13 +464,13 @@ public:
     /// data before inserting RRsets.  The caller is responsible for
     /// checking for these (see \c hasRRset() below).
     ///
-    /// \throw InvalidParameter rrset is NULL
+    /// \throw InvalidParameter rrset is null
     /// \throw InvalidMessageOperation The message is not in the \c RENDER
     /// mode.
     /// \throw OutOfRange \c section doesn't specify a valid \c Section value.
     ///
     /// \param section The message section to which the rrset is to be added
-    /// \param rrset The rrset to be added.  Must not be NULL.
+    /// \param rrset The rrset to be added.  Must not be null.
     void addRRset(const Section section, RRsetPtr rrset);
 
     /// \brief Determine whether the given section already has an RRset
@@ -548,7 +557,7 @@ public:
     /// \c Rcode must have been set beforehand; otherwise, an exception of
     /// class \c InvalidMessageOperation will be thrown.
     ///
-    /// If a non-NULL \c tsig_ctx is passed, it will also add a TSIG RR
+    /// If a non-null \c tsig_ctx is passed, it will also add a TSIG RR
     /// with (in many cases) the TSIG MAC for the message along with the
     /// given TSIG context (\c tsig_ctx).  The TSIG RR will be placed at
     /// the end of \c renderer. The \c TSIGContext at \c tsig_ctx will
@@ -575,7 +584,7 @@ public:
     /// \param tsig_ctx A TSIG context that is to be used for signing the
     /// message
     void toWire(AbstractMessageRenderer& renderer,
-                TSIGContext* tsig_ctx = NULL);
+                TSIGContext* tsig_ctx = 0);
 
     /// Parse options.
     ///
@@ -585,8 +594,8 @@ public:
     /// These are values of a bitmask type.  Bitwise operations can be
     /// performed on these values to express compound options.
     enum ParseOptions {
-        PARSE_DEFAULT = 0,       ///< The default options
-        PRESERVE_ORDER = 1       ///< Preserve RR order and don't combine them
+        PARSE_DEFAULT = 0,      // The default options
+        PRESERVE_ORDER = 1      // Preserve RR order and don't combine them
     };
 
     /// \brief Parse the header section of the \c Message.
@@ -632,8 +641,7 @@ public:
     /// \param buffer A input buffer object that stores the wire
     /// data. This method reads from position 0 in the passed buffer.
     /// \param options Parse options
-    void fromWire(isc::util::InputBuffer& buffer, ParseOptions options
-        = PARSE_DEFAULT);
+    void fromWire(isc::util::InputBuffer& buffer, ParseOptions options = PARSE_DEFAULT);
 
     ///
     /// \name Protocol constants
@@ -650,7 +658,7 @@ public:
     //@}
 
 private:
-    MessageImpl* impl_;
+    MessageImplPtr impl_;
 };
 
 /// \brief Pointer-like type pointing to a \c Message
@@ -673,10 +681,8 @@ typedef boost::shared_ptr<const Message> ConstMessagePtr;
 /// \return A reference to the same \c std::ostream object referenced by
 /// parameter \c os after the insertion operation.
 std::ostream& operator<<(std::ostream& os, const Message& message);
-}
-}
-#endif  // MESSAGE_H
 
-// Local Variables:
-// mode: c++
-// End:
+}  // namespace dns
+}  // namespace isc
+
+#endif  // MESSAGE_H

@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 
 #include <dhcpsrv/host_data_source_factory.h>
 #include <boost/shared_ptr.hpp>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -218,6 +219,16 @@ public:
     getAll6(const SubnetID& subnet_id,
             const asiolink::IOAddress& address) const;
 
+    // @brief Returns all hosts having a reservation for a specified
+    // address or delegated prefix (lease).
+    ///
+    /// @param address reserved IPv6 address/prefix.
+    ///
+    /// @return Collection of const @c Host objects.
+    virtual ConstHostCollection
+    getAll6(const asiolink::IOAddress& address) const;
+
+
     /// @brief Adds a new host to the collection.
     ///
     /// @param host Pointer to the new @c Host object being added.
@@ -323,6 +334,9 @@ protected:
 
     /// @brief Next host id
     uint64_t next_host_id_;
+
+    /// @brief Mutex to protect the store.
+    std::mutex mutable mutex_;
 };
 
 /// Pointer to the Mem host data source.

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -158,7 +158,7 @@ public:
     template<typename SubnetPtrType, typename SubnetCollectionType>
     static SubnetPtrType getSubnet(const SubnetCollectionType& subnets,
                                    const SubnetID& subnet_id) {
-        const auto& index = subnets.template get<SubnetSubnetIdIndexTag>();
+        auto const& index = subnets.template get<SubnetSubnetIdIndexTag>();
         auto subnet_it = index.find(subnet_id);
         if (subnet_it != index.cend()) {
             return (*subnet_it);
@@ -183,7 +183,7 @@ public:
     template<typename SubnetPtrType, typename SubnetCollectionType>
     static SubnetPtrType getSubnet(const SubnetCollectionType& subnets,
                                    const std::string& subnet_prefix) {
-        const auto& index = subnets.template get<SubnetPrefixIndexTag>();
+        auto const& index = subnets.template get<SubnetPrefixIndexTag>();
         auto subnet_it = index.find(subnet_prefix);
         if (subnet_it != index.cend()) {
             return (*subnet_it);
@@ -245,7 +245,7 @@ public:
         // Need to retrieve an iterator to the current subnet first. The
         // subnet must exist in this container, thus we throw if the iterator
         // is not found.
-        const auto& index = subnets.template get<SubnetSubnetIdIndexTag>();
+        auto const& index = subnets.template get<SubnetSubnetIdIndexTag>();
         auto subnet_it = index.find(current_subnet);
         if (subnet_it == index.cend()) {
             isc_throw(BadValue, "no such subnet " << current_subnet
@@ -303,14 +303,30 @@ public:
                                             const Lease::Type& lease_type) {
 
         auto preferred_subnet = selected_subnet;
-        for (auto s = subnets.begin(); s != subnets.end(); ++s) {
-            if (((*s)->getClientClass() == selected_subnet->getClientClass()) &&
-                ((*s)->getLastAllocatedTime(lease_type) >
-                 selected_subnet->getLastAllocatedTime(lease_type))) {
-                preferred_subnet = (*s);
+        for (auto const& s : subnets) {
+            // It doesn't make sense to check the subnet against itself.
+            if (preferred_subnet == s) {
+                continue;
+            }
+            if (s->getClientClass().get() != selected_subnet->getClientClass().get()) {
+                continue;
+            }
+            auto current_subnet_state = s->getAllocationState(lease_type);
+            if (!current_subnet_state) {
+                continue;
+            }
+            auto preferred_subnet_state = preferred_subnet->getAllocationState(lease_type);
+            if (!preferred_subnet_state) {
+                continue;
+            }
+            // The currently checked subnet has more recent time than the
+            // currently preferred subnet. Update the preferred subnet
+            // instance.
+            if (current_subnet_state->getLastAllocatedTime() >
+                preferred_subnet_state->getLastAllocatedTime()) {
+                preferred_subnet = s;
             }
         }
-
         return (preferred_subnet);
     }
 };
@@ -362,9 +378,9 @@ SharedNetwork4::del(const SubnetID& subnet_id) {
 
 void
 SharedNetwork4::delAll() {
-    for (auto subnet = subnets_.cbegin(); subnet != subnets_.cend(); ++subnet) {
-        (*subnet)->setSharedNetwork(NetworkPtr());
-        (*subnet)->setSharedNetworkName("");
+    for (auto const& subnet : subnets_) {
+        subnet->setSharedNetwork(NetworkPtr());
+        subnet->setSharedNetworkName("");
     }
     subnets_.clear();
 }
@@ -413,8 +429,8 @@ SharedNetwork4::toElement() const {
     }
 
     ElementPtr subnet4 = Element::createList();
-    for (auto subnet = subnets_.cbegin(); subnet != subnets_.cend(); ++subnet) {
-        subnet4->add((*subnet)->toElement());
+    for (auto const& subnet : subnets_) {
+        subnet4->add(subnet->toElement());
     }
 
     map->set("subnet4", subnet4);
@@ -464,8 +480,8 @@ SharedNetwork6::del(const SubnetID& subnet_id) {
 
 void
 SharedNetwork6::delAll() {
-    for (auto subnet = subnets_.cbegin(); subnet != subnets_.cend(); ++subnet) {
-        (*subnet)->setSharedNetwork(NetworkPtr());
+    for (auto const& subnet : subnets_) {
+        subnet->setSharedNetwork(NetworkPtr());
     }
     subnets_.clear();
 }
@@ -502,8 +518,8 @@ SharedNetwork6::toElement() const {
     }
 
     ElementPtr subnet6 = Element::createList();
-    for (auto subnet = subnets_.cbegin(); subnet != subnets_.cend(); ++subnet) {
-        subnet6->add((*subnet)->toElement());
+    for (auto const& subnet : subnets_) {
+        subnet6->add(subnet->toElement());
     }
 
     map->set("subnet6", subnet6);

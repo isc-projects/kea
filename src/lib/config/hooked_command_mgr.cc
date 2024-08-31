@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -99,13 +99,13 @@ HookedCommandMgr::handleCommand(const std::string& cmd_name,
         // Only update the response if there are any hooks present.
         if (!hooks.empty()) {
             ElementPtr hooks_commands = Element::createList();
-            for (auto h = hooks.cbegin(); h != hooks.end(); ++h) {
+            for (auto const& h : hooks) {
                 // Try to convert hook name to command name. If non-empty
                 // string is returned it means that the hook point may have
                 // command handlers associated with it. Otherwise, it means that
                 // existing hook points are not for command handlers but for
                 // regular callouts.
-                std::string command_name = ServerHooks::hookToCommandName(*h);
+                std::string command_name = ServerHooks::hookToCommandName(h);
                 if (!command_name.empty()) {
                     // Final check: are command handlers registered for this
                     // hook point? If there are no command handlers associated,
@@ -120,7 +120,7 @@ HookedCommandMgr::handleCommand(const std::string& cmd_name,
             // registered
             // for it, combine the lists of commands.
             if (!hooks_commands->empty()) {
-                response = combineCommandsLists(response, createAnswer(0, hooks_commands));
+                response = combineCommandsLists(response, createAnswer(CONTROL_RESULT_SUCCESS, hooks_commands));
             }
         }
     }

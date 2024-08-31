@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <asiolink/asio_wrapper.h>
+#include <asiolink/io_service_mgr.h>
 #include <agent/ca_process.h>
 #include <agent/ca_controller.h>
 #include <agent/ca_response_creator_factory.h>
@@ -33,6 +34,7 @@ CtrlAgentProcess::CtrlAgentProcess(const char* name,
 }
 
 CtrlAgentProcess::~CtrlAgentProcess() {
+    garbageCollectListeners(0);
 }
 
 void
@@ -88,9 +90,11 @@ CtrlAgentProcess::run() {
 
 size_t
 CtrlAgentProcess::runIO() {
-    size_t cnt = getIoService()->get_io_service().poll();
+    // Handle events registered by hooks using external IOService objects.
+    IOServiceMgr::instance().pollIOServices();
+    size_t cnt = getIOService()->poll();
     if (!cnt) {
-        cnt = getIoService()->get_io_service().run_one();
+        cnt = getIOService()->runOne();
     }
     return (cnt);
 }
@@ -98,7 +102,8 @@ CtrlAgentProcess::runIO() {
 isc::data::ConstElementPtr
 CtrlAgentProcess::shutdown(isc::data::ConstElementPtr /*args*/) {
     setShutdownFlag(true);
-    return (isc::config::createAnswer(0, "Control Agent is shutting down"));
+    return (isc::config::createAnswer(CONTROL_RESULT_SUCCESS,
+                                      "Control Agent is shutting down"));
 }
 
 isc::data::ConstElementPtr
@@ -163,7 +168,7 @@ CtrlAgentProcess::configure(isc::data::ConstElementPtr config_set,
             // Create http listener. It will open up a TCP socket and be
             // prepared to accept incoming connection.
             HttpListenerPtr http_listener
-                (new HttpListener(*getIoService(), server_address,
+                (new HttpListener(getIOService(), server_address,
                                   server_port, tls_context, rcf,
                                   HttpListener::RequestTimeout(TIMEOUT_AGENT_RECEIVE_COMMAND),
                                   HttpListener::IdleTimeout(TIMEOUT_AGENT_IDLE_CONNECTION_TIMEOUT)));
@@ -190,6 +195,18 @@ CtrlAgentProcess::configure(isc::data::ConstElementPtr config_set,
 
     int rcode = 0;
     config::parseAnswer(rcode, answer);
+
+    /// Let postponed hook initializations run.
+    try {
+        // Handle events registered by hooks using external IOService objects.
+        IOServiceMgr::instance().pollIOServices();
+    } catch (const std::exception& ex) {
+        std::ostringstream err;
+        err << "Error initializing hooks: "
+            << ex.what();
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
+    }
+
     return (answer);
 }
 
@@ -197,23 +214,23 @@ void
 CtrlAgentProcess::garbageCollectListeners(size_t leaving) {
     // We expect only one active listener. If there are more (most likely 2),
     // it means we have just reconfigured the server and need to shut down all
-    // listeners execept the most recently added.
+    // listeners except the most recently added.
     if (http_listeners_.size() > leaving) {
         // Stop no longer used listeners.
-        for (auto l = http_listeners_.begin();
-             l != http_listeners_.end() - leaving;
-             ++l) {
+        for (auto l = http_listeners_.begin(); l != http_listeners_.end() - leaving; ++l) {
             (*l)->stop();
         }
         // We have stopped listeners but there may be some pending handlers
         // related to these listeners. Need to invoke these handlers.
-        getIoService()->get_io_service().poll();
+        try {
+            getIOService()->poll();
+        } catch (...) {
+        }
         // Finally, we're ready to remove no longer used listeners.
         http_listeners_.erase(http_listeners_.begin(),
                               http_listeners_.end() - leaving);
     }
 }
-
 
 CtrlAgentCfgMgrPtr
 CtrlAgentProcess::getCtrlAgentCfgMgr() {

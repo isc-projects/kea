@@ -4,12 +4,9 @@
     "brief": [
         "This command adds existing subnets to existing shared networks."
     ],
-    "cmd-comment": [
-        "The ``network6-subnet-add`` command uses exactly the same syntax as ``network4-subnet-add`` for both the query and the response."
-    ],
     "cmd-syntax": [
         "{",
-        "    \"command\": \"network4-subnet-add\",",
+        "    \"command\": \"network6-subnet-add\",",
         "    \"arguments\": {",
         "        \"name\": \"floor13\",",
         "        \"id\": 5",
@@ -22,7 +19,7 @@
     "resp-syntax": [
         "{",
         "    \"result\": 0,",
-        "    \"text\": \"IPv4 subnet 10.0.0.0/8 (id 5) is now part of shared network 'floor1'\"",
+        "    \"text\": \"IPv6 subnet 2003:db8::/64 (id 5) is now part of shared network 'floor1'\"",
         "}"
     ],
     "support": [

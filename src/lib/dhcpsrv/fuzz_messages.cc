@@ -28,7 +28,7 @@ const char* values[] = {
     "FUZZ_READ_FAIL", "error reading input from fuzzer: %1",
     "FUZZ_SEND", "sent %1 byte(s) to the socket connected to the Kea interface",
     "FUZZ_SEND_ERROR", "failed to send data to Kea input socket: %1",
-    "FUZZ_SHORT_SEND", "expected to send %d bytes to Kea input socket but only sent %2",
+    "FUZZ_SHORT_SEND", "expected to send %1 bytes to Kea input socket but only sent %2",
     "FUZZ_SOCKET_CREATE_FAIL", "failed to crease socket for use by fuzzing thread: %1",
     NULL
 };

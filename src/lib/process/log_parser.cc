@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,7 +7,6 @@
 #include <config.h>
 #include <cc/data.h>
 #include <process/log_parser.h>
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <log/logger_specification.h>
 #include <log/logger_support.h>
@@ -33,7 +32,7 @@ void LogConfigParser::parseConfiguration(const isc::data::ConstElementPtr& logge
     verbose_ = verbose;
 
     // Iterate over all entries in "Server/loggers" list
-    BOOST_FOREACH(ConstElementPtr logger, loggers->listValue()) {
+    for (auto const& logger : loggers->listValue()) {
         parseConfigEntry(logger);
     }
 }
@@ -66,18 +65,13 @@ void LogConfigParser::parseConfigEntry(isc::data::ConstElementPtr entry) {
     }
     info.name_ = name_ptr->stringValue();
 
-    // Get severity
+    // Get the severity.
+    // If not configured, set it to DEFAULT to inherit it from the root logger later.
     isc::data::ConstElementPtr severity_ptr = entry->get("severity");
-    if (!severity_ptr) {
-        isc_throw(BadValue, "loggers entry does not have a mandatory "
-                  "'severity' element (" << entry->getPosition() << ")");
-    }
-    try {
-        info.severity_ = isc::log::getSeverity(severity_ptr->stringValue().c_str());
-    } catch (const std::exception&) {
-        isc_throw(BadValue, "Unsupported severity value '"
-                  << severity_ptr->stringValue() << "' ("
-                  << severity_ptr->getPosition() << ")");
+    if (severity_ptr) {
+        info.severity_ = getSeverity(severity_ptr->stringValue());
+    } else {
+        info.severity_ = DEFAULT;
     }
 
     // Get debug logging level
@@ -94,9 +88,9 @@ void LogConfigParser::parseConfigEntry(isc::data::ConstElementPtr entry) {
                 isc_throw(BadValue, "");
             }
         } catch (...) {
-            isc_throw(BadValue, "Unsupported debuglevel value '"
-                      << debuglevel_ptr->stringValue()
-                      << "', expected 0-99 ("
+            isc_throw(BadValue, "Unsupported debuglevel value "
+                      << debuglevel_ptr->intValue()
+                      << ", expected 0-99 ("
                       << debuglevel_ptr->getPosition() << ")");
         }
     }
@@ -109,7 +103,7 @@ void LogConfigParser::parseConfigEntry(isc::data::ConstElementPtr entry) {
         info.debuglevel_ = 99;
     }
 
-    isc::data::ConstElementPtr output_options = entry->get("output_options");
+    isc::data::ConstElementPtr output_options = entry->get("output-options");
 
     if (output_options) {
         parseOutputOptions(info.destinations_, output_options);
@@ -121,16 +115,16 @@ void LogConfigParser::parseConfigEntry(isc::data::ConstElementPtr entry) {
 void LogConfigParser::parseOutputOptions(std::vector<LoggingDestination>& destination,
                                          isc::data::ConstElementPtr output_options) {
     if (!output_options) {
-        isc_throw(BadValue, "Missing 'output_options' structure in 'loggers'");
+        isc_throw(BadValue, "Missing 'output-options' structure in 'loggers'");
     }
 
-    BOOST_FOREACH(ConstElementPtr output_option, output_options->listValue()) {
+    for (auto const& output_option : output_options->listValue()) {
 
         LoggingDestination dest;
 
         isc::data::ConstElementPtr output = output_option->get("output");
         if (!output) {
-            isc_throw(BadValue, "output_options entry does not have a mandatory 'output' "
+            isc_throw(BadValue, "output-options entry does not have a mandatory 'output' "
                       "element (" << output_option->getPosition() << ")");
         }
         dest.output_ = output->stringValue();

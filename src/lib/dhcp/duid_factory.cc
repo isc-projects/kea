@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,9 +9,9 @@
 #include <dhcp/duid_factory.h>
 #include <dhcp/iface_mgr.h>
 #include <exceptions/exceptions.h>
-#include <util/io_utilities.h>
+#include <util/io.h>
 #include <util/range_utilities.h>
-#include <util/strutil.h>
+#include <util/str.h>
 #include <ctime>
 #include <fstream>
 #include <stdlib.h>
@@ -151,7 +151,7 @@ DUIDFactory::createEN(const uint32_t enterprise_id,
 
     // Render DUID.
     std::vector<uint8_t> duid_out(DUID_TYPE_LEN + ENTERPRISE_ID_LEN);
-    writeUint16(DUID::DUID_EN, &duid_out[0], 2);
+    writeUint16(DUID::DUID_EN, &duid_out[0], DUID_TYPE_LEN);
     writeUint32(enterprise_id_out, &duid_out[2], ENTERPRISE_ID_LEN);
 
     // If no identifier specified, we'll have to use the one from the
@@ -244,7 +244,7 @@ void
 DUIDFactory::createLinkLayerId(std::vector<uint8_t>& identifier,
                                uint16_t& htype) const {
     // Let's find suitable interface.
-    for (IfacePtr iface : IfaceMgr::instance().getIfaces()) {
+    for (auto const& iface : IfaceMgr::instance().getIfaces()) {
         // All the following checks could be merged into one multi-condition
         // statement, but let's keep them separated as perhaps one day
         // we will grow knobs to selectively turn them on or off. Also,
@@ -296,7 +296,7 @@ DUIDFactory::createLinkLayerId(std::vector<uint8_t>& identifier,
     // used for generating DUID-LLT.
     if (identifier.empty()) {
         isc_throw(Unexpected, "unable to find suitable interface for "
-                  " generating a DUID-LLT");
+                  "generating a DUID-LLT");
     }
 }
 
@@ -379,7 +379,7 @@ DUIDFactory::readFromFile() {
     duid_.reset();
 
     std::ostringstream duid_str;
-   if (isStored()) {
+    if (isStored()) {
         std::ifstream ifs;
         ifs.open(storage_location_.c_str(), std::ifstream::in);
         if (ifs.good()) {
@@ -405,6 +405,5 @@ DUIDFactory::readFromFile() {
    }
 }
 
-
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+} // end of isc::dhcp namespace
+} // end of isc namespace

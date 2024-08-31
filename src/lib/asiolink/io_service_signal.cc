@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -27,10 +27,10 @@ public:
     ///
     /// @param io_service the process IO service.
     /// @param handler the signal handler.
-    IOSignalSetImpl(IOServicePtr io_service, IOSignalHandler handler);
+    IOSignalSetImpl(const IOServicePtr& io_service, IOSignalHandler handler);
 
     /// @brief Destructor.
-    ~IOSignalSetImpl() = default;
+    ~IOSignalSetImpl();
 
     /// @brief Install the callback on the IO service queue.
     void install();
@@ -44,6 +44,9 @@ public:
     ///
     /// @param signum the signal number.
     void remove(int signum);
+
+    /// @brief Cancel the remaining installed signal handler callbacks.
+    void cancel();
 
 private:
     /// @brief Extends the lifetime of IOService to avoid heap-use-after-free.
@@ -62,11 +65,20 @@ private:
     void callback(const boost::system::error_code& ec, int signum);
 };
 
-IOSignalSetImpl::IOSignalSetImpl(IOServicePtr io_service,
+IOSignalSetImpl::IOSignalSetImpl(const IOServicePtr& io_service,
                                  IOSignalHandler handler)
     : io_service_(io_service),
-      signal_set_(io_service_->get_io_service()),
+      signal_set_(io_service_->getInternalIOService()),
       handler_(handler) {
+}
+
+IOSignalSetImpl::~IOSignalSetImpl() {
+    handler_ = IOSignalHandler();
+}
+
+void
+IOSignalSetImpl::cancel() {
+    signal_set_.cancel();
 }
 
 void
@@ -86,7 +98,8 @@ IOSignalSetImpl::callback(const boost::system::error_code& ec, int signum) {
 void
 IOSignalSetImpl::install() {
     signal_set_.async_wait(std::bind(&IOSignalSetImpl::callback,
-                                     shared_from_this(), ph::_1, ph::_2));
+                                     shared_from_this(),
+                                     ph::_1, ph::_2));
 }
 
 void
@@ -109,10 +122,14 @@ IOSignalSetImpl::remove(int signum) {
     }
 }
 
-IOSignalSet::IOSignalSet(IOServicePtr io_service, IOSignalHandler handler) :
+IOSignalSet::IOSignalSet(const IOServicePtr& io_service, IOSignalHandler handler) :
     impl_(new IOSignalSetImpl(io_service, handler)) {
     // It can throw but the error is fatal...
     impl_->install();
+}
+
+IOSignalSet::~IOSignalSet() {
+    impl_->cancel();
 }
 
 void

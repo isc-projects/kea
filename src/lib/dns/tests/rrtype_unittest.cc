@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 
 #include <util/buffer.h>
 #include <dns/messagerenderer.h>
+#include <dns/rrparamregistry.h>
 #include <dns/rrtype.h>
 
 #include <dns/tests/unittest_util.h>
@@ -144,52 +145,146 @@ TEST_F(RRTypeTest, LeftShiftOperator) {
 // are defined and have the correct parameter values.  Test data are generated
 // from the list available at:
 // http://www.iana.org/assignments/dns-parameters/dns-parameters.xml
-struct TypeParam {
+struct WellKnownTypeParam {
     const char* const txt;      // "A", "AAAA", "NS", etc
     const uint16_t code;        // 1, 28, 2, etc
     const RRType& (*obj)();     // RRType::A(), etc
-} known_types[] = {
-    {"A", 1, RRType::A}, {"NS", 2, RRType::NS}, {"MD", 3, RRType::MD},
-    {"MF", 4, RRType::MF}, {"CNAME", 5, RRType::CNAME},
-    {"SOA", 6, RRType::SOA}, {"MB", 7, RRType::MB}, {"MG", 8, RRType::MG},
-    {"MR", 9, RRType::MR}, {"NULL", 10, RRType::Null},
-    {"WKS", 11, RRType::WKS}, {"PTR", 12, RRType::PTR},
-    {"HINFO", 13, RRType::HINFO}, {"MINFO", 14, RRType::MINFO},
-    {"MX", 15, RRType::MX}, {"TXT", 16, RRType::TXT}, {"RP", 17, RRType::RP},
-    {"AFSDB", 18, RRType::AFSDB}, {"X25", 19, RRType::X25},
-    {"ISDN", 20, RRType::ISDN}, {"RT", 21, RRType::RT},
-    {"NSAP", 22, RRType::NSAP}, {"NSAP-PTR", 23, RRType::NSAP_PTR},
-    {"SIG", 24, RRType::SIG}, {"KEY", 25, RRType::KEY},
-    {"PX", 26, RRType::PX}, {"GPOS", 27, RRType::GPOS},
-    {"AAAA", 28, RRType::AAAA}, {"LOC", 29, RRType::LOC},
-    {"NXT", 30, RRType::NXT}, {"SRV", 33, RRType::SRV},
-    {"NAPTR", 35, RRType::NAPTR}, {"KX", 36, RRType::KX},
-    {"CERT", 37, RRType::CERT}, {"A6", 38, RRType::A6},
-    {"DNAME", 39, RRType::DNAME}, {"OPT", 41, RRType::OPT},
-    {"APL", 42, RRType::APL}, {"DS", 43, RRType::DS},
-    {"SSHFP", 44, RRType::SSHFP}, {"IPSECKEY", 45, RRType::IPSECKEY},
-    {"RRSIG", 46, RRType::RRSIG}, {"NSEC", 47, RRType::NSEC},
-    {"DNSKEY", 48, RRType::DNSKEY}, {"DHCID", 49, RRType::DHCID},
-    {"NSEC3", 50, RRType::NSEC3}, {"NSEC3PARAM", 51, RRType::NSEC3PARAM},
-    {"TLSA", 52, RRType::TLSA}, {"HIP", 55, RRType::HIP},
-    {"SPF", 99, RRType::SPF}, {"UNSPEC", 103, RRType::UNSPEC},
-    {"NID", 104, RRType::NID}, {"L32", 105, RRType::L32},
-    {"L64", 106, RRType::L64}, {"LP", 107, RRType::LP},
-    {"TKEY", 249, RRType::TKEY}, {"TSIG", 250, RRType::TSIG},
-    {"IXFR", 251, RRType::IXFR}, {"AXFR", 252, RRType::AXFR},
-    {"MAILB", 253, RRType::MAILB}, {"MAILA", 254, RRType::MAILA},
-    {"ANY", 255, RRType::ANY}, {"URI", 256, RRType::URI},
-    {"CAA", 257, RRType::CAA}, {"DLV", 32769, RRType::DLV},
-    {NULL, 0, NULL}
+} well_known_types[] = {
+    {"A", 1, RRType::A},
+    {"NS", 2, RRType::NS},
+    {"SOA", 6, RRType::SOA},
+    {"PTR", 12, RRType::PTR},
+    {"TXT", 16, RRType::TXT},
+    {"AAAA", 28, RRType::AAAA},
+    {"OPT", 41, RRType::OPT},
+    {"RRSIG", 46, RRType::RRSIG},
+    {"DHCID", 49, RRType::DHCID},
+    {"TKEY", 249, RRType::TKEY},
+    {"TSIG", 250, RRType::TSIG},
+    {"ANY", 255, RRType::ANY},
+    {0, 0, 0}
 };
 
 TEST(RRTypeConstTest, wellKnowns) {
-    for (int i = 0; known_types[i].txt; ++i) {
+    for (size_t i = 0; well_known_types[i].txt; ++i) {
         SCOPED_TRACE("Checking well known RRType: " +
-                     string(known_types[i].txt));
-        EXPECT_EQ(known_types[i].code, RRType(known_types[i].txt).getCode());
-        EXPECT_EQ(known_types[i].code,
-                  (*known_types[i].obj)().getCode());
+                     string(well_known_types[i].txt));
+        EXPECT_EQ(well_known_types[i].code,
+                  RRType(well_known_types[i].txt).getCode());
+        EXPECT_EQ(well_known_types[i].code,
+                  (*well_known_types[i].obj)().getCode());
     }
 }
+
+// Below, we'll check definitions for all registered RR types.
+struct RegisteredTypeParam {
+    const char* const txt;      // "A", "AAAA", "NS", etc
+    const uint16_t code;        // 1, 28, 2, etc
+} registered_types[] = {
+    {"A", 1},
+    {"NS", 2},
+    {"MD", 3},
+    {"MF", 4},
+    {"CNAME", 5},
+    {"SOA", 6},
+    {"MB", 7},
+    {"MG", 8},
+    {"MR", 9},
+    {"NULL", 10},
+    {"WKS", 11},
+    {"PTR", 12},
+    {"HINFO", 13},
+    {"MINFO", 14},
+    {"MX", 15},
+    {"TXT", 16},
+    {"RP", 17},
+    {"AFSDB", 18},
+    {"X25", 19},
+    {"ISDN", 20},
+    {"RT", 21},
+    {"NSAP", 22},
+    {"NSAP-PTR", 23},
+    {"SIG", 24},
+    {"KEY", 25},
+    {"PX", 26},
+    {"GPOS", 27},
+    {"AAAA", 28},
+    {"LOC", 29},
+    {"NXT", 30},
+    {"EID", 31},
+    {"NIMLOC", 32},
+    {"SRV", 33},
+    {"ATMA", 34},
+    {"NAPTR", 35},
+    {"KX", 36},
+    {"CERT", 37},
+    {"A6", 38},
+    {"DNAME", 39},
+    {"SINK", 40},
+    {"OPT", 41},
+    {"APL", 42},
+    {"DS", 43},
+    {"SSHFP", 44},
+    {"IPSECKEY", 45},
+    {"RRSIG", 46},
+    {"NSEC", 47},
+    {"DNSKEY", 48},
+    {"DHCID", 49},
+    {"NSEC3", 50},
+    {"NSEC3PARAM", 51},
+    {"TLSA", 52},
+    {"SMIMEA", 53},
+    {"HIP", 55},
+    {"NINFO", 56},
+    {"RKEY", 57},
+    {"TALINK", 58},
+    {"CDS", 59},
+    {"CDNSKEY", 60},
+    {"OPENPGPKEY", 61},
+    {"CSYNC", 62},
+    {"ZONEMD", 63},
+    {"SVCB", 64},
+    {"HTTPS", 65},
+    {"SPF", 99},
+    {"UINFO", 100},
+    {"UID", 101},
+    {"GID", 102},
+    {"UNSPEC", 103},
+    {"NID", 104},
+    {"L32", 105},
+    {"L64", 106},
+    {"LP", 107},
+    {"EUI48", 108},
+    {"EUI64", 109},
+    {"TKEY", 249},
+    {"TSIG", 250},
+    {"IXFR", 251},
+    {"AXFR", 252},
+    {"MAILB", 253},
+    {"MAILA", 254},
+    {"ANY", 255},
+    {"URI", 256},
+    {"CAA", 257},
+    {"AVC", 258},
+    {"DOA", 259},
+    {"AMTRELAY", 260},
+    {"RESINFO", 261},
+    {"TA", 32768},
+    {"DLV", 32769},
+    {0, 0}
+};
+
+TEST(RRTypeConstTest, registered) {
+    for (size_t i = 0; registered_types[i].txt; ++i) {
+        SCOPED_TRACE("Checking registered RRType: " +
+                     string(registered_types[i].txt));
+        uint16_t code = 0;
+        EXPECT_NO_THROW(RRParamRegistry::getRegistry().textToTypeCode(registered_types[i].txt, code));
+        EXPECT_EQ(code, registered_types[i].code);
+        string txt;
+        EXPECT_NO_THROW(txt = RRParamRegistry::getRegistry().codeToTypeText(registered_types[i].code));
+        EXPECT_EQ(txt, registered_types[i].txt);
+    }
+}
+
 }

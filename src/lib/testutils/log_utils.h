@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -82,8 +82,14 @@ public:
     /// @brief Add a string to the vector of expected strings
     ///
     /// @param new_string the string to add to the end of the vector
-    /// @return void
     void addString(const string& new_string);
+
+    /// @brief Generates and adds a string to the vector of expected strings
+    ///
+    /// @param logger_msg logger message that will be prepended to the string
+    /// @param new_string the string used to generate the outcome
+    /// @param label packet's label
+    void addString(const string& logger_msg, const string& new_string, const string& label);
 
     vector<string> exp_strings_;
     static const char* LOG_FILE;

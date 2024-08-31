@@ -25,7 +25,6 @@
         "3 is returned if no leases are found with specified parameter."
     ],
     "resp-syntax": [
-        "[",
         "  {",
         "    \"arguments\": {",
         "      \"leases\": [",
@@ -57,8 +56,7 @@
         "    },",
         "    \"result\": 0,",
         "    \"text\": \"2 IPv4 lease(s) found.\"",
-        "  }",
-        "]"
+        "  }"
     ],
     "support": [
         "kea-dhcp4"

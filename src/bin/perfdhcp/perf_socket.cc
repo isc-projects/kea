@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -134,8 +134,8 @@ PerfSocket::~PerfSocket() {
 
 void
 PerfSocket::initSocketData() {
-    for (IfacePtr iface : IfaceMgr::instance().getIfaces()) {
-        for (SocketInfo s : iface->getSockets()) {
+    for (auto const& iface : IfaceMgr::instance().getIfaces()) {
+        for (auto const& s : iface->getSockets()) {
             if (s.sockfd_ == sockfd_) {
                 ifindex_ = iface->getIndex();
                 addr_ = s.addr_;

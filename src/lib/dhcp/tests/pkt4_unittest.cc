@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <asiolink/io_address.h>
+#include <dhcp/testutils/pkt_captures.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/docsis3_option_defs.h>
@@ -18,8 +19,7 @@
 #include <exceptions/exceptions.h>
 #include <testutils/gtest_utils.h>
 #include <util/buffer.h>
-#include <util/encode/hex.h>
-#include <pkt_captures.h>
+#include <util/encode/encode.h>
 
 #include <boost/shared_array.hpp>
 #include <boost/shared_ptr.hpp>
@@ -317,7 +317,7 @@ TEST_F(Pkt4Test, fixedFieldsPack) {
 
     // Redundant but MUCH easier for debug in gdb
     const uint8_t* exp = &expectedFormat[0];
-    const uint8_t* got = static_cast<const uint8_t*>(pkt->getBuffer().getData());
+    const uint8_t* got = pkt->getBuffer().getData();
 
     EXPECT_EQ(0, memcmp(exp, got, Pkt4::DHCPV4_PKT_HDR_LEN));
 }
@@ -405,8 +405,7 @@ TEST_F(Pkt4Test, hwAddr) {
         );
 
         // CHADDR starts at offset 28 in DHCP packet
-        const uint8_t* ptr =
-            static_cast<const uint8_t*>(pkt->getBuffer().getData()) + 28;
+        const uint8_t* ptr = pkt->getBuffer().getData() + 28;
 
         EXPECT_EQ(0, memcmp(ptr, expectedChaddr, Pkt4::MAX_CHADDR_LEN));
 
@@ -481,8 +480,7 @@ TEST_F(Pkt4Test, sname) {
         );
 
         // SNAME starts at offset 44 in DHCP packet
-        const uint8_t* ptr =
-            static_cast<const uint8_t*>(pkt->getBuffer().getData()) + 44;
+        const uint8_t* ptr = pkt->getBuffer().getData() + 44;
         EXPECT_EQ(0, memcmp(ptr, sname, Pkt4::MAX_SNAME_LEN));
 
         pkt.reset();
@@ -526,8 +524,7 @@ TEST_F(Pkt4Test, file) {
         );
 
         // FILE starts at offset 108 in DHCP packet.
-        const uint8_t* ptr =
-            static_cast<const uint8_t*>(pkt->getBuffer().getData()) + 108;
+        const uint8_t* ptr = pkt->getBuffer().getData() + 108;
         EXPECT_EQ(0, memcmp(ptr, file, Pkt4::MAX_FILE_LEN));
 
         pkt.reset();
@@ -592,7 +589,7 @@ TEST_F(Pkt4Test, options) {
               buf.getLength());
 
     // That that this extra data actually contain our options
-    const uint8_t* ptr = static_cast<const uint8_t*>(buf.getData());
+    const uint8_t* ptr = buf.getData();
 
     // Rewind to end of fixed part.
     ptr += Pkt4::DHCPV4_PKT_HDR_LEN + sizeof(DHCP_OPTIONS_COOKIE);
@@ -607,6 +604,92 @@ TEST_F(Pkt4Test, options) {
     EXPECT_FALSE(pkt->delOption(12)); // And removal should fail
 
     EXPECT_NO_THROW(pkt.reset());
+}
+
+// Check that multiple options of the same type may be retrieved by
+// using getOptions, Also check that retrieved options are copied when
+// setCopyRetrievedOptions is enabled.
+TEST_F(Pkt4Test, getOptions) {
+    scoped_ptr<Pkt4> pkt(new Pkt4(DHCPOFFER, 0));
+    OptionPtr opt1(new Option(Option::V4, 1));
+    OptionPtr opt2(new Option(Option::V4, 1));
+    OptionPtr opt3(new Option(Option::V4, 2));
+    OptionPtr opt4(new Option(Option::V4, 2));
+
+    pkt->addOption(opt1);
+    pkt->Pkt::addOption(opt2);
+    pkt->Pkt::addOption(opt3);
+    pkt->Pkt::addOption(opt4);
+
+    // Retrieve options with option code 1.
+    OptionCollection options = pkt->getOptions(1);
+    ASSERT_EQ(2, options.size());
+
+    OptionCollection::const_iterator opt_it;
+
+    // Make sure that the first option is returned. We're using the pointer
+    // to opt1 to find the option.
+    opt_it = std::find(options.begin(), options.end(),
+                       std::pair<const unsigned int, OptionPtr>(1, opt1));
+    EXPECT_TRUE(opt_it != options.end());
+
+    // Make sure that the second option is returned.
+    opt_it = std::find(options.begin(), options.end(),
+                       std::pair<const unsigned int, OptionPtr>(1, opt2));
+    EXPECT_TRUE(opt_it != options.end());
+
+    // Retrieve options with option code 2.
+    options = pkt->getOptions(2);
+    ASSERT_EQ(2, options.size());
+
+    // opt3 and opt4 should exist.
+    opt_it = std::find(options.begin(), options.end(),
+                       std::pair<const unsigned int, OptionPtr>(2, opt3));
+    EXPECT_TRUE(opt_it != options.end());
+
+    opt_it = std::find(options.begin(), options.end(),
+                       std::pair<const unsigned int, OptionPtr>(2, opt4));
+    EXPECT_TRUE(opt_it != options.end());
+
+    // Enable copying options when they are retrieved.
+    pkt->setCopyRetrievedOptions(true);
+
+    options = pkt->getOptions(1);
+    ASSERT_EQ(2, options.size());
+
+    // Both retrieved options should be copied so an attempt to find them
+    // using option pointer should fail. Original pointers should have
+    // been replaced with new instances.
+    opt_it = std::find(options.begin(), options.end(),
+                       std::pair<const unsigned int, OptionPtr>(1, opt1));
+    EXPECT_TRUE(opt_it == options.end());
+
+    opt_it = std::find(options.begin(), options.end(),
+                       std::pair<const unsigned int, OptionPtr>(1, opt2));
+    EXPECT_TRUE(opt_it == options.end());
+
+    // Return instances of options with the option code 1 and make sure
+    // that copies of the options were used to replace original options
+    // in the packet.
+    pkt->setCopyRetrievedOptions(false);
+    OptionCollection options_modified = pkt->getOptions(1);
+    for (auto const& opt_it_modified : options_modified) {
+        opt_it = std::find(options.begin(), options.end(), opt_it_modified);
+        ASSERT_TRUE(opt_it != options.end());
+    }
+
+    // Let's check that remaining two options haven't been affected by
+    // retrieving the options with option code 1.
+    options = pkt->getOptions(2);
+    ASSERT_EQ(2, options.size());
+
+    opt_it = std::find(options.begin(), options.end(),
+                       std::pair<const unsigned int, OptionPtr>(2, opt3));
+    EXPECT_TRUE(opt_it != options.end());
+
+    opt_it = std::find(options.begin(), options.end(),
+                       std::pair<const unsigned int, OptionPtr>(2, opt4));
+    EXPECT_TRUE(opt_it != options.end());
 }
 
 // This test verifies that it is possible to control whether a pointer
@@ -982,6 +1065,39 @@ TEST_F(Pkt4Test, deferredClientClasses) {
     EXPECT_TRUE(pkt.getClasses(true).contains("foo"));
 }
 
+// Tests whether a packet can be assigned to a subclass and later
+// checked if it belongs to a given subclass
+TEST_F(Pkt4Test, templateClasses) {
+    Pkt4 pkt(DHCPOFFER, 1234);
+
+    // Default values (do not belong to any subclass)
+    EXPECT_FALSE(pkt.inClass("SPAWN_template-interface-name_eth0"));
+    EXPECT_FALSE(pkt.inClass("SPAWN_template-interface-id_interface-id0"));
+    EXPECT_TRUE(pkt.getClasses().empty());
+
+    // Add to the first subclass
+    pkt.addSubClass("template-interface-name", "SPAWN_template-interface-name_eth0");
+    EXPECT_TRUE(pkt.inClass("SPAWN_template-interface-name_eth0"));
+    EXPECT_FALSE(pkt.inClass("SPAWN_template-interface-id_interface-id0"));
+    ASSERT_FALSE(pkt.getClasses().empty());
+
+    // Add to a second subclass
+    pkt.addSubClass("template-interface-id", "SPAWN_template-interface-id_interface-id0");
+    EXPECT_TRUE(pkt.inClass("SPAWN_template-interface-name_eth0"));
+    EXPECT_TRUE(pkt.inClass("SPAWN_template-interface-id_interface-id0"));
+
+    // Check that it's ok to add to the same subclass repeatedly
+    EXPECT_NO_THROW(pkt.addSubClass("template-foo", "SPAWN_template-foo_bar"));
+    EXPECT_NO_THROW(pkt.addSubClass("template-foo", "SPAWN_template-foo_bar"));
+    EXPECT_NO_THROW(pkt.addSubClass("template-bar", "SPAWN_template-bar_bar"));
+
+    // Check that the packet belongs to 'SPAWN_template-foo_bar'
+    EXPECT_TRUE(pkt.inClass("SPAWN_template-foo_bar"));
+
+    // Check that the packet belongs to 'SPAWN_template-bar_bar'
+    EXPECT_TRUE(pkt.inClass("SPAWN_template-bar_bar"));
+}
+
 // Tests whether MAC can be obtained and that MAC sources are not
 // confused.
 TEST_F(Pkt4Test, getMAC) {
@@ -1168,14 +1284,27 @@ TEST_F(Pkt4Test, toText) {
     pkt.addOption(OptionPtr(new Option4AddrLst(123, IOAddress("192.0.2.3"))));
     pkt.addOption(OptionPtr(new OptionUint32(Option::V4, 156, 123456)));
     pkt.addOption(OptionPtr(new OptionString(Option::V4, 87, "lorem ipsum")));
+    OptionBuffer data = { 0x61, 0x62, 0x63, 0x64, 0x65, 0x66 };
+    OptionPtr opt(new Option(Option::V4, 231, data));
+    pkt.addOption(opt);
+    OptionBuffer data_sub = { 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39 };
+    OptionPtr sub_opt(new Option(Option::V4, 1, data_sub));
+    opt->addOption(sub_opt);
+    data_sub.clear();
+    sub_opt.reset(new Option(Option::V4, 2, data_sub));
+    opt->addOption(sub_opt);
 
-    EXPECT_EQ("local_address=192.0.2.34:67, remote_address=192.10.33.4:68, "
-              "msg_type=DHCPDISCOVER (1), transid=0x9ef,\n"
+    EXPECT_EQ("local_address=192.0.2.34:67, remote_address=192.10.33.4:68,\n"
+              "msg_type=DHCPDISCOVER (1), trans_id=0x9ef,\n"
               "options:\n"
               "  type=053, len=001: 1 (uint8)\n"
               "  type=087, len=011: \"lorem ipsum\" (string)\n"
               "  type=123, len=004: 192.0.2.3\n"
-              "  type=156, len=004: 123456 (uint32)",
+              "  type=156, len=004: 123456 (uint32)\n"
+              "  type=231, len=020: 61:62:63:64:65:66 'abcdef',\n"
+              "options:\n"
+              "    type=001, len=010: 30:31:32:33:34:35:36:37:38:39 '0123456789'\n"
+              "    type=002, len=000: ''",
               pkt.toText());
 
     // Now remove all options, including Message Type and check if the
@@ -1184,9 +1313,10 @@ TEST_F(Pkt4Test, toText) {
     pkt.delOption(156);
     pkt.delOption(87);
     pkt.delOption(53);
+    pkt.delOption(231);
 
-    EXPECT_EQ("local_address=192.0.2.34:67, remote_address=192.10.33.4:68, "
-              "msg_type=(missing), transid=0x9ef, "
+    EXPECT_EQ("local_address=192.0.2.34:67, remote_address=192.10.33.4:68,\n"
+              "msg_type=(missing), trans_id=0x9ef,\n"
               "message contains no options",
               pkt.toText());
 
@@ -1321,7 +1451,7 @@ TEST_F(Pkt4Test, nullTerminatedOptions) {
           DHO_ROOT_PATH, 4, 'n', 'o', 'n', 'e',
         };
 
-    const uint8_t* packed = static_cast<const uint8_t*>(pkt->getBuffer().getData());
+    const uint8_t* packed = pkt->getBuffer().getData();
     int packed_len = pkt->getBuffer().getLength();
 
     // Packed message options should be 3 bytes smaller than original onwire data.
@@ -1384,6 +1514,92 @@ TEST_F(Pkt4Test, testSkipThisOptionError) {
     ASSERT_TRUE(opstr = boost::dynamic_pointer_cast<OptionString>(opt));
     EXPECT_EQ(3, opstr->getValue().length());
     EXPECT_EQ("def", opstr->getValue());
+}
+
+// Tests that getHWAddrLabel method produces the expected strings based on
+// packet content.
+TEST_F(Pkt4Test, getHWAddrLabel) {
+    Pkt4 pkt(DHCPOFFER, 1234);
+
+    // Verify getHWAddrLabel() handles empty values
+    EXPECT_EQ ("hwaddr=", pkt.getHWAddrLabel());
+
+    // Testing undefined hwaddr case is not possible
+    EXPECT_THROW(pkt.setHWAddr(nullptr), BadValue);
+
+    // Set that packet hardware address, then verify getLabel
+    const uint8_t hw[] = { 2, 4, 6, 8, 10, 12 }; // MAC
+    const uint8_t hw_type = 123; // hardware type
+    HWAddrPtr dummy_hwaddr(new HWAddr(hw, sizeof(hw), hw_type));
+    pkt.setHWAddr(dummy_hwaddr);
+
+    EXPECT_EQ ("hwaddr=02:04:06:08:0a:0c", pkt.getHWAddrLabel());
+}
+
+// Exercises packet event stack and helper functions.
+TEST_F(Pkt4Test, PktEvents) {
+    // Get current time.
+    auto start_time = PktEvent::now();
+
+    // Verify that a set time is not equal to an EMPTY_TIME.
+    ASSERT_NE(start_time, PktEvent::EMPTY_TIME());
+
+    // Create a test packet.
+    scoped_ptr<Pkt4> pkt(new Pkt4(DHCPOFFER, 1234));
+
+    // Upon creation, the events table should be empty.
+    ASSERT_TRUE(pkt->getPktEvents().empty());
+
+    // An non-existent event should return an empty time.
+    auto event_time = pkt->getPktEventTime(PktEvent::BUFFER_READ);
+    ASSERT_EQ(event_time, PktEvent::EMPTY_TIME());
+
+    // Sleep for 200 microseconds to put some distance between now and start_time.
+    usleep(200);
+
+    // Should be able to add an event, defaulting the event time to current time.
+    pkt->addPktEvent(PktEvent::BUFFER_READ);
+    event_time = pkt->getPktEventTime(PktEvent::BUFFER_READ);
+    ASSERT_GT(event_time, start_time);
+
+    // Should be able to overwrite an existing event's time.
+    pkt->setPktEvent(PktEvent::BUFFER_READ, start_time);
+    event_time = pkt->getPktEventTime(PktEvent::BUFFER_READ);
+    ASSERT_EQ(event_time, start_time);
+
+    // Should be able to add an event with an explicit time.
+    pkt->addPktEvent(PktEvent::RESPONSE_SENT, start_time);
+    event_time = pkt->getPktEventTime(PktEvent::RESPONSE_SENT);
+    ASSERT_EQ(event_time, start_time);
+
+    // Should be able to fetch the list of events.
+    auto const& events = pkt->getPktEvents();
+    ASSERT_FALSE(events.empty());
+    auto event = events.begin();
+    ASSERT_EQ((*event).label_, PktEvent::BUFFER_READ);
+    ++event;
+    ASSERT_EQ((*event).label_, PktEvent::RESPONSE_SENT);
+
+    // Discard the event stack contents.
+    pkt->clearPktEvents();
+    ASSERT_TRUE(pkt->getPktEvents().empty());
+
+    // Verify dumpPktEvent terse output. Also serves to
+    // verify adding events using struct timeval.
+    struct timeval log_time = {1706802676, 100};
+    struct timeval log_time_plus = {1706802676, 250};
+    pkt->addPktEvent("first-event", log_time);
+    pkt->addPktEvent("second-event", log_time_plus);
+    std::string log = pkt->dumpPktEvents();
+    EXPECT_EQ(log, "2024-Feb-01 15:51:16.000100 : first-event, 2024-Feb-01 15:51:16.000250 : second-event");
+
+    // Verify dumpPktEvent verbose output.
+    log = pkt->dumpPktEvents(true);
+    EXPECT_EQ(log,
+              "Event log: \n"
+              "2024-Feb-01 15:51:16.000100 : first-event\n"
+              "2024-Feb-01 15:51:16.000250 : second-event elapsed: 00:00:00.000150\n"
+              "total elapsed: 00:00:00.000150");
 }
 
 } // end of anonymous namespace

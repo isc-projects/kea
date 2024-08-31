@@ -1,13 +1,10 @@
 #!/bin/sh
 
-# Copyright (C) 2020-2021 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2020-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-# shellcheck disable=SC1091
-# SC1091: Not following: ... was not specified as input (see shellcheck -x).
 
 # Exit with error if commands exit with non-zero and if undefined variables are
 # used.
@@ -43,7 +40,7 @@ CONFIG="{
         \"loggers\": [
         {
             \"name\": \"kea-ctrl-agent\",
-            \"output_options\": [
+            \"output-options\": [
                 {
                     \"output\": \"$LOG_FILE\"
                 }
@@ -66,6 +63,7 @@ shell_bin_path="@abs_top_builddir@/src/bin/shell"
 tmpfile_path="@abs_top_builddir@/src/bin/shell/tests"
 
 # Import common test library.
+# shellcheck source=src/lib/testutils/dhcp_test_lib.sh.in
 . "@abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh"
 
 run_kea_shell() {
@@ -193,4 +191,4 @@ shell_command_test "shell.bad-auth" \
     "Failed to run: HTTP Error 401: Unauthorized"
 shell_command_test "shell.authorized" \
     "--auth-user pet --auth-password meow" "list-commands" "" \
-    "[ { \"arguments\": [ \"build-report\", \"config-get\", \"config-reload\", \"config-set\", \"config-test\", \"config-write\", \"list-commands\", \"shutdown\", \"status-get\", \"version-get\" ], \"result\": 0 } ]"
+    "[ { \"arguments\": [ \"build-report\", \"config-get\", \"config-hash-get\", \"config-reload\", \"config-set\", \"config-test\", \"config-write\", \"list-commands\", \"shutdown\", \"status-get\", \"version-get\" ], \"result\": 0 } ]"

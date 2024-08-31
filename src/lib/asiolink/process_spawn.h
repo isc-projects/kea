@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -61,16 +61,25 @@ typedef std::vector<std::string> ProcessEnvVars;
 class ProcessSpawn : boost::noncopyable {
 public:
 
+    /// @brief The spawn type.
+    enum SpawnMode {
+       ASYNC, // thread continues without waiting for the child to finish.
+       SYNC   // thread waits for the child to finish.
+    };
+
     /// @brief Constructor.
     ///
-    /// @param io_service The IOService which handles signal handlers.
+    /// @param mode specifies synchronous or asynchronous mode.
     /// @param executable A full path to the program to be executed.
     /// @param args Arguments for the program to be executed.
     /// @param vars Environment variables for the program to be executed.
-    ProcessSpawn(isc::asiolink::IOServicePtr io_service,
+    /// @param inherit_env whether the spawned process will inherit the
+    /// environment before adding 'vars' on top.
+    ProcessSpawn(const SpawnMode mode,
                  const std::string& executable,
                  const ProcessArgs& args = ProcessArgs(),
-                 const ProcessEnvVars& vars = ProcessEnvVars());
+                 const ProcessEnvVars& vars = ProcessEnvVars(),
+                 const bool inherit_env = false);
 
     /// @brief Destructor.
     ~ProcessSpawn() = default;
@@ -137,7 +146,24 @@ public:
     /// @param pid A process pid.
     void clearState(const pid_t pid);
 
+    /// @brief Get the I/O service.
+    ///
+    /// @return the I/O service.
+    static isc::asiolink::IOServicePtr getIOService() {
+        return (io_service_);
+    }
+
+    /// @brief Set the I/O service.
+    ///
+    /// @param io_service the I/O service.
+    static void setIOService(isc::asiolink::IOServicePtr io_service) {
+        io_service_ = io_service;
+    }
+
 private:
+
+    /// @brief The IOService object, used for all ASIO operations.
+    static isc::asiolink::IOServicePtr io_service_;
 
     /// @brief A smart pointer to the implementation of this class.
     ProcessSpawnImplPtr impl_;

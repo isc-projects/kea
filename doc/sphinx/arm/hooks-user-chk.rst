@@ -1,7 +1,8 @@
+.. ischooklib:: libdhcp_user_chk.so
 .. _hooks-user-chk:
 
-``user_chk``: User Check
-========================
+``libdhcp_user_chk.so``: User Check
+===================================
 
 This library serves several purposes:
 
@@ -17,7 +18,10 @@ This library serves several purposes:
 -  To serve as a demonstration of various capabilities possible using
    the hooks interface.
 
-This library is part of the Kea open source and is available to all users.
+.. note::
+
+    :ischooklib:`libdhcp_user_chk.so` is part of the open source code and is
+    available to every Kea user.
 
 Once loaded, the library allows the separation of incoming requests into known
 and unknown clients. For known clients, packets are processed

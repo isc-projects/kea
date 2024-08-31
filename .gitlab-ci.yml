@@ -4,12 +4,6 @@ variables:
 
   CI_REGISTRY_IMAGE: registry.gitlab.isc.org/isc-projects/kea
 
-  # Disabled shellcheck warnings:
-  # SC1117: Backslash is literal in "\/". Prefer explicit escaping: "\\/".
-  # SC2039: In POSIX sh, 'local' is undefined.
-  # SC3043: In POSIX sh, 'local' is undefined.
-  SHELLCHECK_OPTS: "--exclude=SC1117 --exclude=SC2039 --exclude=SC3043"
-
   # Setting this variable will affect all Security templates
   # (SAST, Dependency Scanning, ...)
   SECURE_ANALYZERS_PREFIX: "registry.gitlab.com/gitlab-org/security-products/analyzers"
@@ -17,133 +11,53 @@ variables:
   # Leave only bandit, flawfinder, semgrep.
   SAST_EXCLUDED_ANALYZERS: "eslint, spotbugs"
 
+image: "${CI_REGISTRY_IMAGE}:latest"
+
 stages:
   - test
 
-shellcheck:
+are-database-scripts-in-sync:
   stage: test
-  image: "${CI_REGISTRY_IMAGE}:latest"
-  tags:
-    - linux
-    - amd64
   script:
-    - SCRIPTS=
-    - SCRIPTS+="src/bin/admin/admin-utils.sh "
-    - SCRIPTS+="src/bin/admin/kea-admin.in "
-    - SCRIPTS+="src/bin/admin/tests/admin_tests.sh.in "
-    - SCRIPTS+="src/bin/admin/tests/memfile_tests.sh.in "
-    - SCRIPTS+="src/bin/admin/tests/mysql_tests.sh.in "
-    - SCRIPTS+="src/bin/admin/tests/pgsql_tests.sh.in "
-    - SCRIPTS+="src/bin/agent/tests/ca_process_tests.sh.in "
-    - SCRIPTS+="src/bin/d2/tests/d2_process_tests.sh.in "
-    - SCRIPTS+="src/bin/dhcp4/tests/dhcp4_process_tests.sh.in "
-    - SCRIPTS+="src/bin/dhcp6/tests/dhcp6_process_tests.sh.in "
-    - SCRIPTS+="src/bin/keactrl/keactrl.conf.in "
-    - SCRIPTS+="src/bin/keactrl/keactrl.in "
-    - SCRIPTS+="src/bin/keactrl/tests/keactrl_tests.sh.in "
-    - SCRIPTS+="src/bin/netconf/tests/shtests/netconf_tests.sh.in "
-    - SCRIPTS+="src/bin/shell/tests/basic_auth_tests.sh.in "
-    - SCRIPTS+="src/bin/shell/tests/shell_process_tests.sh.in "
-    - SCRIPTS+="src/lib/asiolink/tests/process_spawn_app.sh.in "
-    - SCRIPTS+="src/lib/log/tests/buffer_logger_test.sh.in "
-    - SCRIPTS+="src/lib/log/tests/console_test.sh.in "
-    - SCRIPTS+="src/lib/log/tests/destination_test.sh.in "
-    - SCRIPTS+="src/lib/log/tests/init_logger_test.sh.in "
-    - SCRIPTS+="src/lib/log/tests/local_file_test.sh.in "
-    - SCRIPTS+="src/lib/log/tests/logger_lock_test.sh.in "
-    - SCRIPTS+="src/lib/log/tests/severity_test.sh.in "
-    - SCRIPTS+="src/lib/testutils/dhcp_test_lib.sh.in "
-    - SCRIPTS+="src/lib/testutils/xml_reporting_test_lib.sh.in "
-    - SCRIPTS+="src/hooks/dhcp/run_script/tests/run_script_test.sh.in "
-    - SCRIPTS+="src/share/database/scripts/mysql/upgrade_001.0_to_002.0.sh.in "
-    - SCRIPTS+="src/share/database/scripts/mysql/upgrade_002.0_to_003.0.sh.in "
-    - SCRIPTS+="src/share/database/scripts/mysql/upgrade_003.0_to_004.0.sh.in "
-    - SCRIPTS+="src/share/database/scripts/mysql/upgrade_004.0_to_004.1.sh.in "
-    - SCRIPTS+="src/share/database/scripts/mysql/upgrade_004.1_to_005.0.sh.in "
-    - SCRIPTS+="src/share/database/scripts/mysql/upgrade_005.0_to_005.1.sh.in "
-    - SCRIPTS+="src/share/database/scripts/mysql/upgrade_005.1_to_005.2.sh.in "
-    - SCRIPTS+="src/share/database/scripts/mysql/upgrade_005.2_to_006.0.sh.in "
-    - SCRIPTS+="src/share/database/scripts/mysql/upgrade_006.0_to_007.0.sh.in "
-    - SCRIPTS+="src/share/database/scripts/mysql/upgrade_007.0_to_008.0.sh.in "
-    - SCRIPTS+="src/share/database/scripts/mysql/upgrade_008.0_to_008.1.sh.in "
-    - SCRIPTS+="src/share/database/scripts/mysql/upgrade_008.1_to_008.2.sh.in "
-    - SCRIPTS+="src/share/database/scripts/mysql/upgrade_008.2_to_009.0.sh.in "
-    - SCRIPTS+="src/share/database/scripts/mysql/upgrade_009.0_to_009.1.sh.in "
-    - SCRIPTS+="src/share/database/scripts/mysql/upgrade_009.1_to_009.2.sh.in "
-    - SCRIPTS+="src/share/database/scripts/mysql/upgrade_009.2_to_009.3.sh.in "
-    - SCRIPTS+="src/share/database/scripts/mysql/upgrade_009.3_to_009.4.sh.in "
-    - SCRIPTS+="src/share/database/scripts/mysql/upgrade_009.4_to_009.5.sh.in "
-    - SCRIPTS+="src/share/database/scripts/mysql/upgrade_009.5_to_009.6.sh.in "
-    - SCRIPTS+="src/share/database/scripts/mysql/upgrade_009.6_to_010.0.sh.in "
-    - SCRIPTS+="src/share/database/scripts/mysql/upgrade_010_to_011.sh.in "
-    - SCRIPTS+="src/share/database/scripts/mysql/wipe_data.sh.in "
-    - SCRIPTS+="src/share/database/scripts/pgsql/upgrade_001.0_to_002.0.sh.in "
-    - SCRIPTS+="src/share/database/scripts/pgsql/upgrade_002.0_to_003.0.sh.in "
-    - SCRIPTS+="src/share/database/scripts/pgsql/upgrade_003.0_to_003.1.sh.in "
-    - SCRIPTS+="src/share/database/scripts/pgsql/upgrade_003.1_to_003.2.sh.in "
-    - SCRIPTS+="src/share/database/scripts/pgsql/upgrade_003.2_to_003.3.sh.in "
-    - SCRIPTS+="src/share/database/scripts/pgsql/upgrade_003.3_to_004.0.sh.in "
-    - SCRIPTS+="src/share/database/scripts/pgsql/upgrade_004.0_to_005.0.sh.in "
-    - SCRIPTS+="src/share/database/scripts/pgsql/upgrade_005.0_to_005.1.sh.in "
-    - SCRIPTS+="src/share/database/scripts/pgsql/upgrade_005.1_to_006.0.sh.in "
-    - SCRIPTS+="src/share/database/scripts/pgsql/upgrade_006.0_to_006.1.sh.in "
-    - SCRIPTS+="src/share/database/scripts/pgsql/upgrade_006.1_to_006.2.sh.in "
-    - SCRIPTS+="src/share/database/scripts/pgsql/upgrade_006.2_to_007.0.sh.in "
-    - SCRIPTS+="src/share/database/scripts/pgsql/upgrade_007_to_008.sh.in "
-    - SCRIPTS+="src/share/database/scripts/pgsql/wipe_data.sh.in "
-    - SCRIPTS+="src/share/yang/modules/utils/check-hashes.sh "
-    - SCRIPTS+="src/share/yang/modules/utils/check-revisions.sh "
-    - SCRIPTS+="src/share/yang/modules/utils/gen-revisions.sh "
-    - SCRIPTS+="src/share/yang/modules/utils/reinstall.sh.in "
-    - SCRIPTS+="tools/add-config-h.sh "
-    - SCRIPTS+="tools/bump-lib-versions.sh "
-    - SCRIPTS+="tools/check-for-duplicate-includes.sh "
-    - SCRIPTS+="tools/mk_cfgrpt.sh "
-    - SCRIPTS+="tools/path_replacer.sh.in "
-    - SCRIPTS+="tools/print-generated-files.sh "
-    - SCRIPTS+="tools/shellcheck-all.sh "
-    - SCRIPTS+="tools/tests_in_valgrind.sh "
-    - shellcheck ${SCRIPTS} ${SHELLCHECK_OPTS}
+    - ./src/share/database/scripts/utils/are-scripts-in-sync.py
+
+check-for-json-errors-in-doc:
+  stage: test
+  script:
+    - ./tools/check-for-json-errors-in-doc.sh
 
 danger:
   stage: test
-  image: registry.gitlab.isc.org/isc-projects/stork/ci-danger
-  tags:
-    - linux
-    - amd64
   before_script:
     - export CI_MERGE_REQUEST_ID=$(git ls-remote -q origin merge-requests\*\head | grep $CI_COMMIT_SHA | sed 's/.*refs\/merge-requests\/\([0-9]*\)\/head/\1/g')
     - export CI_PROJECT_PATH=$CI_PROJECT_ID #some version of gitlab has problems with searching by project path
     - export DANGER_GITLAB_HOST=gitlab.isc.org
     - export DANGER_GITLAB_API_BASE_URL=https://gitlab.isc.org/api/v4
   script:
-    - sysctl -w net.ipv6.conf.all.disable_ipv6=1
-    - sysctl -w net.ipv6.conf.default.disable_ipv6=1
-    - gem install danger-commit_lint
     - danger --fail-on-errors=true --new-comment
-
-dhcpdb_create-upgrade-consistency:
-  allow_failure: false
-  stage: test
-  image: "${CI_REGISTRY_IMAGE}:latest"
-  script:
-    - ./src/share/database/scripts/utils/are-scripts-in-sync.py
 
 duplicate-includes:
   stage: test
-  image: "${CI_REGISTRY_IMAGE}:latest"
-  tags:
-    - linux
-    - amd64
   script:
     - ./tools/check-for-duplicate-includes.sh
 
+duplicate-log-messages:
+  stage: test
+  script:
+    - ./tools/check-messages.py
+
+uninstalled-headers:
+  stage: test
+  script:
+    - ./tools/find-uninstalled-headers.py
+
+missing-api-commands:
+  stage: test
+  script:
+    - ./tools/check-for-missing-api-commands.sh
+
 missing-config-h-include:
   stage: test
-  image: "${CI_REGISTRY_IMAGE}:latest"
-  tags:
-    - linux
-    - amd64
   script:
     - FILES=$(./tools/add-config-h.sh -n)
     - printf '%s\n' "${FILES}"
@@ -151,16 +65,48 @@ missing-config-h-include:
 
 missing-git-attribute:
   stage: test
-  image: "${CI_REGISTRY_IMAGE}:latest"
-  tags:
-    - linux
-    - amd64
   script:
     - git_diff=$(git diff)
     - if test -n "${git_diff}"; then printf '%s\n\ngit diff should be empty here under all circumstances. CI broken?\n' "${git_diff}"; exit 1; fi
     - ./tools/print-generated-files.sh -a
     - git_diff=$(git diff)
     - if test -n "${git_diff}"; then printf '%s\n\n.gitattributes are missing a generated file. Please run "./tools/print-generated-files.sh -a" and commit the resulting change to fix them.\n' "${git_diff}"; exit 1; fi
+
+shellcheck:
+  stage: test
+  script:
+    - ./tools/shellcheck-all.sh
+
+.base_get_list_of_modified_files: &get_modified_files
+  - MODIFIED_FILES=$(git diff --name-only $(git merge-base origin/master HEAD))
+  - echo "${MODIFIED_FILES}"
+
+.base_get_list_of_python_scripts: &get_python_scripts
+  - PYTHON_SCRIPTS=$(find ${INPUT-.} -type f -not -path './.git/*' -and \( -name '*.py' -or -name '*.py.in' \) | sort)
+  - echo "${PYTHON_SCRIPTS}"
+  - if test -z "${PYTHON_SCRIPTS}"; then echo "No python scripts to check. Exiting early."; exit 0; fi
+
+bandit:
+  script:
+    - bandit -r ./src -x ./.git
+
+pycodestyle:
+  stage: test
+  script:
+    # - *get_modified_files
+    # - INPUT="${MODIFIED_FILES}"
+    - *get_python_scripts
+    - pycodestyle --config=.gitlab/ci/pycodestyle.cfg ${PYTHON_SCRIPTS}
+
+pylint:
+  stage: test
+  script:
+    # - *get_modified_files
+    # - INPUT="${MODIFIED_FILES}"
+    - *get_python_scripts
+    - pylint --jobs "$(nproc || gnproc || echo 1)" --rcfile ./.gitlab/ci/pylint.rc ${PYTHON_SCRIPTS}
+    # If we reached this point, it means pylint passed. Run again with all warnings enabled, but ignore the return code to show a list of improvements that the developer could do, even when CI is passing.
+    - pylint --jobs "$(nproc || gnproc || echo 1)" --rcfile ./.gitlab/ci/pylint.rc --enable all ${PYTHON_SCRIPTS} || true
 
 ############################### SAST ################################
 # Read more about this feature here: https://docs.gitlab.com/ee/user/application_security/sast/

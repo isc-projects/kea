@@ -50,16 +50,16 @@ IncludeCategories:
   - Regex:           '^<config.h>$'
     Priority:        0
     # Kea's own files
-  - Regex:           '^<(asiodns|asiolink|cc|cfgrpt|config|config_backend|cryptolink|database|dhcp|dhcpsrv|dhcp_ddns|dns|eval|exceptions|hooks|http|log|mysql|pgsql|process|stats|testutils|util|yang|admin|agent|d2|dhcp4|dhcp6|keactrl|lfc|netconf|perfdhcp|shell)/'
+  - Regex:           '^<(asiodns|asiolink|cc|config|config_backend|cryptolink|database|dhcp|dhcpsrv|dhcp_ddns|dns|eval|exceptions|hooks|http|log|mysql|pgsql|process|stats|testutils|util|yang|admin|agent|d2|dhcp4|dhcp6|keactrl|lfc|netconf|perfdhcp|shell|limits)/'
     Priority:        1
     # C++ standard library headers
-  - Regex:           '^<[[:alnum:]]>$'
+  - Regex:           '^<[_[:alnum:]]+>$'
     Priority:        2
     # boost headers
   - Regex:           '^<boost/'
     Priority:        3
     # C headers
-  - Regex:           '^<[[:alnum:]].h>$'
+  - Regex:           '^<[/_[:alnum:]]+\.h>$'
     Priority:        4
     # everything else
   - Regex:           '.*'
@@ -69,7 +69,6 @@ IndentFunctionDeclarationAfterType: false
 IndentWidth: 4
 IndentWrappedFunctionNames: false
 KeepEmptyLinesAtTheStartOfBlocks: false
-KeepEmptyLinesAtTheStartOfBlocks: true
 Language: Cpp
 MaxEmptyLinesToKeep: 1
 NamespaceIndentation: None

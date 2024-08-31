@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,7 +8,6 @@
 #define ISC_TRANSLATOR_OPTION_DEF_H 1
 
 #include <yang/translator.h>
-#include <list>
 
 namespace isc {
 namespace yang {
@@ -76,24 +75,34 @@ namespace yang {
 ///
 /// Currently supports kea-dhcp[46]-server models.
 /// @todo: Support for ietf-dhcpv6-server model.
-class TranslatorOptionDef : virtual public TranslatorBasic {
+class TranslatorOptionDef : virtual public Translator {
 public:
-
     /// @brief Constructor.
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-    TranslatorOptionDef(sysrepo::S_Session session, const std::string& model);
+    TranslatorOptionDef(sysrepo::Session session, const std::string& model);
 
     /// @brief Destructor.
-    virtual ~TranslatorOptionDef();
+    virtual ~TranslatorOptionDef() = default;
 
-    /// @brief Get and translate an option definition from YANG to JSON.
+    /// @brief Translate an option definition from YANG to JSON.
+    ///
+    /// @param data_node the YANG node representing the option definition
+    ///
+    /// @return the JSON representation of the option definition
+    ///
+    /// @throw NetconfError when sysrepo raises an error.
+    isc::data::ElementPtr getOptionDef(libyang::DataNode const& data_node);
+
+    /// @brief Translate an option definition from YANG to JSON.
     ///
     /// @param xpath The xpath of the option definition.
+    ///
     /// @return JSON representation of the option definition.
-    /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ElementPtr getOptionDef(const std::string& xpath);
+    ///
+    /// @throw NetconfError when sysrepo raises an error.
+    isc::data::ElementPtr getOptionDefFromAbsoluteXpath(std::string const& xpath);
 
     /// @brief Translate and set option definition from JSON to YANG.
     ///
@@ -105,11 +114,13 @@ public:
 protected:
     /// @brief getOptionDef implementation specific to kea-dhcp[46]-server models.
     ///
-    /// @param xpath The xpath of the option definition.
+    /// @param data_node the YANG node representing the option definition
+    ///
     /// @return JSON representation of the option definition.
-    /// @throw SysrepoError when sysrepo raises an error.
+    ///
+    /// @throw NetconfError when sysrepo raises an error.
     /// @throw BadValue on option definition without name or type.
-    isc::data::ElementPtr getOptionDefKea(const std::string& xpath);
+    isc::data::ElementPtr getOptionDefKea(libyang::DataNode const& data_node);
 
     /// @brief setOptionDef implementation specific to kea-dhcp[46]-server models.
     ///
@@ -118,7 +129,7 @@ protected:
     /// @throw BadValue on option definition without name or type.
     void setOptionDefKea(const std::string& xpath,
                          isc::data::ConstElementPtr elem);
-};
+};  // TranslatorOptionDef
 
 // @brief A translator class for converting an option definition list
 // between YANG and JSON.
@@ -127,22 +138,33 @@ protected:
 /// @todo: Support for ietf-dhcpv6-server model.
 class TranslatorOptionDefList : virtual public TranslatorOptionDef {
 public:
-
     /// @brief Constructor.
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-    TranslatorOptionDefList(sysrepo::S_Session session,
+    TranslatorOptionDefList(sysrepo::Session session,
                             const std::string& model);
 
     /// @brief Destructor.
-    virtual ~TranslatorOptionDefList();
+    virtual ~TranslatorOptionDefList() = default;
 
-    /// @brief Get and translate option definition list from YANG to JSON.
+    /// @brief Translate option definition list from YANG to JSON.
+    ///
+    /// @param data_node the YANG node representing the list of option definitions
+    ///
+    /// @return the JSON representation of the list of option definitions
+    ///
+    /// @throw NetconfError when sysrepo raises an error.
+    isc::data::ConstElementPtr getOptionDefList(libyang::DataNode const& data_node);
+
+    /// @brief Translate option definition list from YANG to JSON.
     ///
     /// @param xpath The xpath of the option definition list.
-    /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ConstElementPtr getOptionDefList(const std::string& xpath);
+    ///
+    /// @return JSON representation of the list of option definitions
+    ///
+    /// @throw NetconfError when sysrepo raises an error.
+    isc::data::ConstElementPtr getOptionDefListFromAbsoluteXpath(std::string const& xpath);
 
     /// @brief Translate and set option definition list from JSON to YANG.
     ///
@@ -155,9 +177,10 @@ protected:
     /// @brief getOptionDefList implementation specific to kea-dhcp[46]-server
     ///        models.
     ///
-    /// @param xpath The xpath of the option definition list.
-    /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ConstElementPtr getOptionDefListKea(const std::string& xpath);
+    /// @param data_node the YANG node representing the list of option definitions
+    ///
+    /// @throw NetconfError when sysrepo raises an error.
+    isc::data::ConstElementPtr getOptionDefListKea(libyang::DataNode const& data_node);
 
     /// @brief setOptionDefList implementation specific to kea-dhcp[46]-server
     ///        models.
@@ -167,9 +190,9 @@ protected:
     /// @throw BadValue on option definition without code or space.
     void setOptionDefListKea(const std::string& xpath,
                              isc::data::ConstElementPtr elem);
-};
+};  // TranslatorOptionDefList
 
 }  // namespace yang
 }  // namespace isc
 
-#endif // ISC_TRANSLATOR_OPTION_DEF_H
+#endif  // ISC_TRANSLATOR_OPTION_DEF_H

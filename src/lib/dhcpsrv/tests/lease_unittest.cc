@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 #include <dhcp/duid.h>
 #include <dhcpsrv/lease.h>
 #include <util/pointer_util.h>
+#include <testutils/gtest_utils.h>
 #include <testutils/test_to_element.h>
 #include <cc/data.h>
 #include <gtest/gtest.h>
@@ -113,7 +114,7 @@ public:
 // This test checks if the Lease4 structure can be instantiated correctly.
 TEST_F(Lease4Test, constructor) {
      // Get current time for the use in Lease.
-    const time_t current_time = time(NULL);
+    const time_t current_time = time(0);
 
     // We want to check that various addresses work, so let's iterate over
     // these.
@@ -142,97 +143,6 @@ TEST_F(Lease4Test, constructor) {
     }
 }
 
-// This test verifies that copy constructor copies Lease4 fields correctly.
-TEST_F(Lease4Test, copyConstructor) {
-
-    // Get current time for the use in Lease4.
-    const time_t current_time = time(NULL);
-
-    // Create the lease
-    Lease4 lease(0xffffffff, hwaddr_, clientid_, VALID_LIFETIME, current_time,
-                 SUBNET_ID);
-
-    // Declined is a non-default state. We'll see if the state will be copied
-    // or the default state will be set for the copied lease.
-    lease.state_ = Lease::STATE_DECLINED;
-
-    // Set an user context.
-    lease.setContext(Element::fromJSON("{ \"foobar\": 1234 }"));
-
-    // Use copy constructor to copy the lease.
-    Lease4 copied_lease(lease);
-
-    // Both leases should be now equal. When doing this check we assume that
-    // the equality operator works correctly.
-    EXPECT_TRUE(lease == copied_lease);
-    // Client IDs are equal, but they should be in two distinct pointers.
-    EXPECT_FALSE(lease.client_id_ == copied_lease.client_id_);
-
-    // User context are equal and point to the same object.
-    ASSERT_TRUE(copied_lease.getContext());
-    EXPECT_TRUE(lease.getContext() == copied_lease.getContext());
-    EXPECT_TRUE(*lease.getContext() == *copied_lease.getContext());
-
-    // Hardware addresses are equal, but they should point to two objects,
-    // each holding the same data. The content should be equal...
-    EXPECT_TRUE(*lease.hwaddr_ == *copied_lease.hwaddr_);
-
-    // ... but it should point to different objects.
-    EXPECT_FALSE(lease.hwaddr_ == copied_lease.hwaddr_);
-
-    // Now let's check that the hwaddr pointer is copied even if it's NULL:
-    lease.hwaddr_.reset();
-    Lease4 copied_lease2(lease);
-    EXPECT_TRUE(lease == copied_lease2);
-}
-
-// This test verifies that the assignment operator copies all Lease4 fields
-// correctly.
-TEST_F(Lease4Test, operatorAssign) {
-
-    // Get the current time for the use in Lease4.
-    const time_t current_time = time(NULL);
-
-    // Create the lease
-    Lease4 lease(0xffffffff, hwaddr_, clientid_, VALID_LIFETIME, current_time,
-                 SUBNET_ID);
-
-    // Declined is a non-default state. We'll see if the state will be copied
-    // or the default state will be set for the copied lease.
-    lease.state_ = Lease::STATE_DECLINED;
-
-    // Set an user context.
-    lease.setContext(Element::fromJSON("{ \"foobar\": 1234 }"));
-
-    // Create a default lease.
-    Lease4 copied_lease;
-    // Use assignment operator to assign new lease.
-    copied_lease = lease;
-
-    // Both leases should be now equal. When doing this check we assume that
-    // the equality operator works correctly.
-    EXPECT_TRUE(lease == copied_lease);
-    // Client IDs are equal, but they should be in two distinct pointers.
-    EXPECT_FALSE(lease.client_id_ == copied_lease.client_id_);
-
-    // User context are equal and point to the same object.
-    ASSERT_TRUE(copied_lease.getContext());
-    EXPECT_TRUE(lease.getContext() == copied_lease.getContext());
-    EXPECT_TRUE(*lease.getContext() == *copied_lease.getContext());
-
-    // Hardware addresses are equal, but they should point to two objects,
-    // each holding the same data. The content should be equal...
-    EXPECT_TRUE(*lease.hwaddr_ == *copied_lease.hwaddr_);
-
-    // ... but it should point to different objects.
-    EXPECT_FALSE(lease.hwaddr_ == copied_lease.hwaddr_);
-
-    // Now let's check that the hwaddr pointer is copied even if it's NULL:
-    lease.hwaddr_.reset();
-    copied_lease = lease;
-    EXPECT_TRUE(lease == copied_lease);
-}
-
 // This test verifies that it is correctly determined when the lease
 // belongs to the particular client identified by the client identifier
 // and hw address.
@@ -255,7 +165,7 @@ TEST_F(Lease4Test, leaseBelongsToClient) {
 
     // Create the lease with MAC address and Client Identifier.
     Lease4 lease(IOAddress("192.0.2.1"), matching_hw, matching_client_id,
-                 60, time(NULL), 0, 0, 1);
+                 60, time(0), 0, 0, 1);
 
     // Verify cases for lease that has both hw address and client identifier.
     EXPECT_TRUE(lease.belongsToClient(matching_hw, matching_client_id));
@@ -267,7 +177,6 @@ TEST_F(Lease4Test, leaseBelongsToClient) {
     EXPECT_TRUE(lease.belongsToClient(null_hw, matching_client_id));
     EXPECT_FALSE(lease.belongsToClient(null_hw, diff_client_id));
     EXPECT_FALSE(lease.belongsToClient(null_hw, null_client_id));
-
 
     // Verify cases for lease that has only HW address.
     lease.client_id_ = null_client_id;
@@ -304,7 +213,7 @@ TEST_F(Lease4Test, operatorEquals) {
 
     // Random values for the tests
     const uint32_t ADDRESS = 0x01020304;
-    const time_t current_time = time(NULL);
+    const time_t current_time = time(0);
 
     // Check when the leases are equal.
     Lease4 lease1(ADDRESS, hwaddr_, clientid_, VALID_LIFETIME, current_time,
@@ -414,14 +323,14 @@ TEST_F(Lease4Test, operatorEquals) {
 }
 
 // Verify that the client id can be returned as a vector object and if client
-// id is NULL the empty vector is returned.
+// id is null the empty vector is returned.
 TEST_F(Lease4Test, getClientIdVector) {
     // Create a lease.
     Lease4 lease;
-    // By default, the lease should have client id set to NULL. If it doesn't,
+    // By default, the lease should have client id set to null. If it doesn't,
     // continuing the test makes no sense.
     ASSERT_FALSE(lease.client_id_);
-    // When client id is NULL the vector returned should be empty.
+    // When client id is null the vector returned should be empty.
     EXPECT_TRUE(lease.getClientIdVector().empty());
 
     // Initialize client identifier to non-null value.
@@ -467,7 +376,10 @@ TEST_F(Lease4Test, toText) {
              << "Hardware addr: " << hwaddr_->toText(false) << "\n"
              << "Client id:     " << clientid_->toText() << "\n"
              << "Subnet ID:     789\n"
+             << "Pool ID:       0\n"
              << "State:         default\n"
+             << "Relay ID:      (none)\n"
+             << "Remote ID:     (none)\n"
              << "User context:  { \"foobar\": 1234 }\n";
 
     EXPECT_EQ(expected.str(), lease.toText());
@@ -484,7 +396,11 @@ TEST_F(Lease4Test, toText) {
              << "Hardware addr: (none)\n"
              << "Client id:     (none)\n"
              << "Subnet ID:     789\n"
-             << "State:         default\n";
+             << "Pool ID:       0\n"
+             << "State:         default\n"
+             << "Relay ID:      (none)\n"
+             << "Remote ID:     (none)\n";
+
     EXPECT_EQ(expected.str(), lease.toText());
 }
 
@@ -515,6 +431,7 @@ TEST_F(Lease4Test, toElement) {
     // Now let's try with a lease without client-id and user context.
     lease.client_id_.reset();
     lease.setContext(ConstElementPtr());
+    lease.pool_id_ = 5;
 
     expected = "{"
         "\"cltt\": 12345678,"
@@ -525,6 +442,7 @@ TEST_F(Lease4Test, toElement) {
         "\"ip-address\": \"192.0.2.3\","
         "\"state\": 0,"
         "\"subnet-id\": 789,"
+        "\"pool-id\": 5,"
         "\"valid-lft\": 3600 "
         "}";
 
@@ -543,6 +461,7 @@ TEST_F(Lease4Test, toElement) {
         "\"ip-address\": \"192.0.2.3\","
         "\"state\": 0,"
         "\"subnet-id\": 789,"
+        "\"pool-id\": 5,"
         "\"valid-lft\": 3600 "
         "}";
 
@@ -561,6 +480,7 @@ TEST_F(Lease4Test, fromElement) {
         "\"ip-address\": \"192.0.2.3\","
         "\"state\": 0,"
         "\"subnet-id\": 789,"
+        "\"pool-id\": 5,"
         "\"user-context\": { \"foo\": \"bar\" },"
         "\"valid-lft\": 3600 "
         "}";
@@ -572,6 +492,7 @@ TEST_F(Lease4Test, fromElement) {
 
     EXPECT_EQ("192.0.2.3", lease->addr_.toText());
     EXPECT_EQ(789, static_cast<uint32_t>(lease->subnet_id_));
+    EXPECT_EQ(5, static_cast<uint32_t>(lease->pool_id_));
     ASSERT_TRUE(lease->hwaddr_);
     EXPECT_EQ("hwtype=1 08:00:2b:02:3f:4e", lease->hwaddr_->toText());
     ASSERT_TRUE(lease->client_id_);
@@ -623,6 +544,10 @@ TEST_F(Lease4Test, fromElementInvalidValues) {
     testInvalidElement<Lease4>(json, "subnet-id", std::string("xyz"));
     testInvalidElement<Lease4>(json, "subnet-id", -5, false);
     testInvalidElement<Lease4>(json, "subnet-id", 0x100000000, false);
+    testInvalidElement<Lease4>(json, "pool-id", std::string("xyz"), false);
+    testInvalidElement<Lease4>(json, "pool-id", -5, false);
+    testInvalidElement<Lease4>(json, "pool-id", 0, false);
+    testInvalidElement<Lease4>(json, "pool-id", 0x100000000, false);
     testInvalidElement<Lease4>(json, "valid-lft", std::string("xyz"));
     testInvalidElement<Lease4>(json, "valid-lft", -3, false);
     testInvalidElement<Lease4>(json, "user-context", "[ ]", false);
@@ -641,7 +566,7 @@ TEST_F(Lease4Test, decline) {
     lease.fqdn_fwd_ = true;
     lease.fqdn_rev_ = true;
 
-    time_t now = time(NULL);
+    time_t now = time(0);
 
     // Move lease to declined state and set its valid-lifetime to 123 seconds
     lease.decline(123);
@@ -664,6 +589,7 @@ TEST_F(Lease4Test, stateToText) {
     EXPECT_EQ("default", Lease4::statesToText(Lease::STATE_DEFAULT));
     EXPECT_EQ("declined", Lease4::statesToText(Lease::STATE_DECLINED));
     EXPECT_EQ("expired-reclaimed", Lease4::statesToText(Lease::STATE_EXPIRED_RECLAIMED));
+    EXPECT_EQ("released", Lease4::statesToText(Lease::STATE_RELEASED));
 }
 
 /// @brief Creates an instance of the lease with certain FQDN data.
@@ -684,7 +610,7 @@ Lease6 createLease6(const std::string& hostname, const bool fqdn_fwd,
 
 // Lease6 is also defined in lease_mgr.h, so is tested in this file as well.
 // This test checks if the Lease6 structure can be instantiated correctly
-TEST(Lease6Test, Lease6ConstructorDefault) {
+TEST(Lease6Test, constructorDefault) {
 
     // check a variety of addresses with different bits set.
     const char* ADDRESS[] = {
@@ -719,17 +645,46 @@ TEST(Lease6Test, Lease6ConstructorDefault) {
         EXPECT_FALSE(lease->getContext());
     }
 
-    // Lease6 must be instantiated with a DUID, not with NULL pointer
+    // Lease6 must be instantiated with a DUID, not with null pointer
     IOAddress addr(ADDRESS[0]);
     Lease6Ptr lease2;
-    EXPECT_THROW(lease2.reset(new Lease6(Lease::TYPE_NA, addr,
-                                         DuidPtr(), iaid, 100, 200,
-                                         subnet_id)), InvalidOperation);
+    EXPECT_THROW_MSG(lease2.reset(new Lease6(Lease::TYPE_NA, addr,
+                                             DuidPtr(), iaid, 100, 200,
+                                             subnet_id)),
+                     BadValue, "DUID is mandatory for an IPv6 lease");
+
+    EXPECT_THROW_MSG(lease2.reset(new Lease6(Lease::TYPE_NA, addr,
+                                             DuidPtr(), iaid, 100, 200,
+                                             subnet_id, true, true, "", HWAddrPtr())),
+                     BadValue, "DUID is mandatory for an IPv6 lease");
+
+    // Lease6 must have a prefixlen set to 128 for non prefix type.
+    addr = IOAddress(ADDRESS[4]);
+    EXPECT_THROW_MSG(lease2.reset(new Lease6(Lease::TYPE_NA, addr,
+                                             duid, iaid, 100, 200,
+                                             subnet_id, HWAddrPtr(), 96)),
+                     BadValue, "prefixlen must be 128 for non prefix type");
+
+    EXPECT_THROW_MSG(lease2.reset(new Lease6(Lease::TYPE_NA, addr,
+                                             duid, iaid, 100, 200,
+                                             subnet_id, true, true, "", HWAddrPtr(), 96)),
+                     BadValue, "prefixlen must be 128 for non prefix type");
+
+    addr = IOAddress(ADDRESS[4]);
+    EXPECT_THROW_MSG(lease2.reset(new Lease6(Lease::TYPE_TA, addr,
+                                             duid, iaid, 100, 200,
+                                             subnet_id, HWAddrPtr(), 96)),
+                     BadValue, "prefixlen must be 128 for non prefix type");
+
+    EXPECT_THROW_MSG(lease2.reset(new Lease6(Lease::TYPE_TA, addr,
+                                             duid, iaid, 100, 200,
+                                             subnet_id, true, true, "", HWAddrPtr(), 96)),
+                     BadValue, "prefixlen must be 128 for non prefix type");
 }
 
 // This test verifies that the Lease6 constructor which accepts FQDN data,
 // sets the data correctly for the lease.
-TEST(Lease6Test, Lease6ConstructorWithFQDN) {
+TEST(Lease6Test, constructorWithFQDN) {
 
     // check a variety of addresses with different bits set.
     const char* ADDRESS[] = {
@@ -763,12 +718,18 @@ TEST(Lease6Test, Lease6ConstructorWithFQDN) {
         EXPECT_EQ("host.example.com.", lease->hostname_);
     }
 
-    // Lease6 must be instantiated with a DUID, not with NULL pointer
+    // Lease6 must be instantiated with a DUID, not with null pointer
     IOAddress addr(ADDRESS[0]);
     Lease6Ptr lease2;
-    EXPECT_THROW(lease2.reset(new Lease6(Lease::TYPE_NA, addr,
-                                         DuidPtr(), iaid, 100, 200,
-                                         subnet_id)), InvalidOperation);
+    EXPECT_THROW_MSG(lease2.reset(new Lease6(Lease::TYPE_NA, addr,
+                                             DuidPtr(), iaid, 100, 200,
+                                             subnet_id)),
+                     BadValue, "DUID is mandatory for an IPv6 lease");
+
+    EXPECT_THROW_MSG(lease2.reset(new Lease6(Lease::TYPE_NA, addr,
+                                             DuidPtr(), iaid, 100, 200,
+                                             subnet_id, true, true, "", HWAddrPtr())),
+                     BadValue, "DUID is mandatory for an IPv6 lease");
 }
 
 /// @brief Lease6 Equality Test
@@ -792,7 +753,7 @@ TEST(Lease6Test, operatorEquals) {
     lease1.setContext(Element::fromJSON("{ \"foobar\": 1234 }"));
     lease2.setContext(Element::fromJSON("{ \"foobar\": 1234 }"));
 
-    // cltt_ constructs with time(NULL), make sure they are always equal
+    // cltt_ constructs with time(0), make sure they are always equal
     lease1.cltt_ = lease2.cltt_;
 
     EXPECT_TRUE(lease1 == lease2);
@@ -909,7 +870,7 @@ TEST(Lease6Test, operatorEquals) {
 }
 
 // Checks if lease expiration is calculated properly
-TEST(Lease6Test, Lease6Expired) {
+TEST(Lease6Test, lease6Expired) {
     const IOAddress addr("2001:db8:1::456");
     const uint8_t duid_array[] = {0, 1, 2, 3, 4, 5, 6, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf};
     const DuidPtr duid(new DUID(duid_array, sizeof(duid_array)));
@@ -918,16 +879,16 @@ TEST(Lease6Test, Lease6Expired) {
     Lease6 lease(Lease::TYPE_NA, addr, duid, iaid, 100, 200, subnet_id);
 
     // Case 1: a second before expiration
-    lease.cltt_ = time(NULL) - 100;
+    lease.cltt_ = time(0) - 100;
     lease.valid_lft_ = 101;
     EXPECT_FALSE(lease.expired());
 
     // Case 2: the lease will expire after this second is concluded
-    lease.cltt_ = time(NULL) - 101;
+    lease.cltt_ = time(0) - 101;
     EXPECT_FALSE(lease.expired());
 
     // Case 3: the lease is expired
-    lease.cltt_ = time(NULL) - 102;
+    lease.cltt_ = time(0) - 102;
     EXPECT_TRUE(lease.expired());
 
     // Case 4: the lease is static
@@ -936,17 +897,17 @@ TEST(Lease6Test, Lease6Expired) {
     EXPECT_FALSE(lease.expired());
 }
 
-// Verify that the DUID can be returned as a vector object and if DUID is NULL
+// Verify that the DUID can be returned as a vector object and if DUID is null
 // the empty vector is returned.
 TEST(Lease6Test, getDuidVector) {
     // Create a lease.
     Lease6 lease;
-    // By default, the lease should have client id set to NULL. If it doesn't,
+    // By default, the lease should have client id set to null. If it doesn't,
     // continuing the test makes no sense.
     ASSERT_FALSE(lease.duid_);
-    // When client id is NULL the vector returned should be empty.
+    // When client id is null the vector returned should be empty.
     EXPECT_TRUE(lease.getDuidVector().empty());
-    // Now, let's set the non NULL DUID. Fill it with the 8 bytes, each
+    // Now, let's set the non null DUID. Fill it with the 8 bytes, each
     // holding a value of 0x42.
     std::vector<uint8_t> duid_vec(8, 0x42);
     lease.duid_ = DuidPtr(new DUID(duid_vec));
@@ -973,13 +934,13 @@ TEST(Lease6Test, decline) {
     lease.fqdn_fwd_ = true;
     lease.fqdn_rev_ = true;
 
-    time_t now = time(NULL);
+    time_t now = time(0);
 
     // Move the lease to declined state and set probation-period to 123 seconds
     lease.decline(123);
 
     ASSERT_TRUE(lease.duid_);
-    ASSERT_EQ("00", lease.duid_->toText());
+    ASSERT_EQ("00:00:00", lease.duid_->toText());
     ASSERT_FALSE(lease.hwaddr_);
     EXPECT_EQ(0, lease.preferred_lft_);
 
@@ -1038,6 +999,7 @@ TEST(Lease6Test, toText) {
              << "DUID:          00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f\n"
              << "Hardware addr: " << hwaddr->toText(false) << "\n"
              << "Subnet ID:     5678\n"
+             << "Pool ID:       0\n"
              << "State:         declined\n"
              << "User context:  { \"foobar\": 1234 }\n";
 
@@ -1057,6 +1019,7 @@ TEST(Lease6Test, toText) {
              << "DUID:          00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f\n"
              << "Hardware addr: (none)\n"
              << "Subnet ID:     5678\n"
+             << "Pool ID:       0\n"
              << "State:         declined\n";
     EXPECT_EQ(expected.str(), lease.toText());
 }
@@ -1099,6 +1062,7 @@ TEST(Lease6Test, toElementAddress) {
     // Now let's try with a lease without hardware address and user context.
     lease.hwaddr_.reset();
     lease.setContext(ConstElementPtr());
+    lease.pool_id_ = 5;
 
     expected = "{"
         "\"cltt\": 12345678,"
@@ -1111,6 +1075,7 @@ TEST(Lease6Test, toElementAddress) {
         "\"preferred-lft\": 400,"
         "\"state\": 1,"
         "\"subnet-id\": 5678,"
+        "\"pool-id\": 5,"
         "\"type\": \"IA_NA\","
         "\"valid-lft\": 800"
         "}";
@@ -1132,6 +1097,7 @@ TEST(Lease6Test, toElementAddress) {
         "\"preferred-lft\": 400,"
         "\"state\": 1,"
         "\"subnet-id\": 5678,"
+        "\"pool-id\": 5,"
         "\"type\": \"IA_NA\","
         "\"valid-lft\": 800"
         "}";
@@ -1204,15 +1170,23 @@ TEST(Lease6Test, toElementPrefix) {
     ASSERT_TRUE(l->contains("user-context"));
     EXPECT_EQ("{ \"foobar\": 1234 }", l->get("user-context")->str());
 
+    ASSERT_FALSE(l->contains("pool-id"));
+
     // Now let's try with a lease without hardware address or user context.
     lease.hwaddr_.reset();
     lease.setContext(ConstElementPtr());
+    lease.pool_id_ = 5;
+
     l = lease.toElement();
     EXPECT_FALSE(l->contains("hw-address"));
     EXPECT_FALSE(l->contains("user-context"));
 
+    ASSERT_TRUE(l->contains("pool-id"));
+    EXPECT_EQ(5, l->get("pool-id")->intValue());
+
     // And to finish try with a comment.
     lease.setContext(Element::fromJSON("{ \"comment\": \"a comment\" }"));
+
     l = lease.toElement();
     EXPECT_FALSE(l->contains("hw-address"));
     ConstElementPtr ctx = l->get("user-context");
@@ -1221,6 +1195,9 @@ TEST(Lease6Test, toElementPrefix) {
     EXPECT_EQ(1, ctx->size());
     ASSERT_TRUE(ctx->contains("comment"));
     EXPECT_EQ("a comment", ctx->get("comment")->stringValue());
+
+    ASSERT_TRUE(l->contains("pool-id"));
+    EXPECT_EQ(5, l->get("pool-id")->intValue());
 }
 
 // Verify that the IA_NA can be created from JSON.
@@ -1237,6 +1214,7 @@ TEST(Lease6Test, fromElementNA) {
         "\"preferred-lft\": 400,"
         "\"state\": 1,"
         "\"subnet-id\": 5678,"
+        "\"pool-id\": 5,"
         "\"type\": \"IA_NA\","
         "\"user-context\": { \"foobar\": 1234 },"
         "\"valid-lft\": 800"
@@ -1249,6 +1227,7 @@ TEST(Lease6Test, fromElementNA) {
 
     EXPECT_EQ("2001:db8::1", lease->addr_.toText());
     EXPECT_EQ(5678, static_cast<uint32_t>(lease->subnet_id_));
+    EXPECT_EQ(5, static_cast<uint32_t>(lease->pool_id_));
     ASSERT_TRUE(lease->hwaddr_);
     EXPECT_EQ("hwtype=1 08:00:2b:02:3f:4e", lease->hwaddr_->toText());
     EXPECT_EQ(12345678, lease->cltt_);
@@ -1264,7 +1243,7 @@ TEST(Lease6Test, fromElementNA) {
 
     // IPv6 specific properties.
     EXPECT_EQ(Lease::TYPE_NA, lease->type_);
-    EXPECT_EQ(0, lease->prefixlen_);
+    EXPECT_EQ(128, lease->prefixlen_);
     EXPECT_EQ(123456, lease->iaid_);
     ASSERT_TRUE(lease->duid_);
     EXPECT_EQ("00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f", lease->duid_->toText());
@@ -1286,6 +1265,7 @@ TEST(Lease6Test, fromElementPD) {
         "\"prefix-len\": 32,"
         "\"state\": 0,"
         "\"subnet-id\": 1234,"
+        "\"pool-id\": 5,"
         "\"type\": \"IA_PD\","
         "\"valid-lft\": 600"
         "}";
@@ -1297,6 +1277,7 @@ TEST(Lease6Test, fromElementPD) {
 
     EXPECT_EQ("3000::", lease->addr_.toText());
     EXPECT_EQ(1234, static_cast<uint32_t>(lease->subnet_id_));
+    EXPECT_EQ(5, static_cast<uint32_t>(lease->pool_id_));
     ASSERT_TRUE(lease->hwaddr_);
     EXPECT_EQ("hwtype=1 08:00:2b:02:3f:4e", lease->hwaddr_->toText());
     EXPECT_EQ(12345678, lease->cltt_);
@@ -1364,6 +1345,10 @@ TEST(Lease6Test, fromElementInvalidValues) {
     testInvalidElement<Lease6>(json, "subnet-id", std::string("xyz"));
     testInvalidElement<Lease6>(json, "subnet-id", -5, false);
     testInvalidElement<Lease6>(json, "subnet-id", 0x100000000, false);
+    testInvalidElement<Lease6>(json, "pool-id", std::string("xyz"), false);
+    testInvalidElement<Lease6>(json, "pool-id", -5, false);
+    testInvalidElement<Lease6>(json, "pool-id", 0, false);
+    testInvalidElement<Lease6>(json, "pool-id", 0x100000000, false);
     testInvalidElement<Lease6>(json, "type", std::string("IA_XY"));
     testInvalidElement<Lease6>(json, "type", -3, false);
     testInvalidElement<Lease6>(json, "valid-lft", std::string("xyz"));
@@ -1379,7 +1364,7 @@ TEST(Lease6Test, stateToText) {
     EXPECT_EQ("default", Lease6::statesToText(Lease::STATE_DEFAULT));
     EXPECT_EQ("declined", Lease6::statesToText(Lease::STATE_DECLINED));
     EXPECT_EQ("expired-reclaimed", Lease6::statesToText(Lease::STATE_EXPIRED_RECLAIMED));
+    EXPECT_EQ("released", Lease6::statesToText(Lease::STATE_RELEASED));
 }
 
-
-}; // end of anonymous namespace
+} // end of anonymous namespace

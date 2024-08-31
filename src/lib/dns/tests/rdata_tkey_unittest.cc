@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,13 +11,13 @@
 #include <exceptions/exceptions.h>
 
 #include <util/buffer.h>
-#include <util/time_utilities.h>
 #include <dns/exceptions.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
+#include <dns/time_utils.h>
 #include <dns/tsigerror.h>
 
 #include <gtest/gtest.h>
@@ -102,7 +102,7 @@ protected:
     }
 
     template <typename Output>
-    void toWireCommonChecks(Output& output) const;
+    void toWireCommonChecks(Output& output);
 
     const string valid_text1;
     const string valid_text2;
@@ -124,9 +124,9 @@ TEST_F(Rdata_TKEY_Test, fromText) {
     EXPECT_EQ(3, rdata_tkey.getMode());
     EXPECT_EQ(0, rdata_tkey.getError());
     EXPECT_EQ(0, rdata_tkey.getKeyLen());
-    EXPECT_EQ(static_cast<void*>(0), rdata_tkey.getKey());
+    EXPECT_FALSE(rdata_tkey.getKey());
     EXPECT_EQ(0, rdata_tkey.getOtherLen());
-    EXPECT_EQ(static_cast<void*>(0), rdata_tkey.getOtherData());
+    EXPECT_FALSE(rdata_tkey.getOtherData());
 
     generic::TKEY tkey2(valid_text2);
     EXPECT_EQ(12, tkey2.getKeyLen());
@@ -220,7 +220,7 @@ fromWireCommonChecks(const generic::TKEY& tkey) {
                   tkey.getKey(), tkey.getKeyLen());
 
     EXPECT_EQ(0, tkey.getOtherLen());
-    EXPECT_EQ(static_cast<const void*>(0), tkey.getOtherData());
+    EXPECT_FALSE(tkey.getOtherData());
 }
 
 TEST_F(Rdata_TKEY_Test, createFromWire) {
@@ -248,7 +248,7 @@ TEST_F(Rdata_TKEY_Test, createFromWireWithoutKey) {
                                         "rdata_tkey_fromWire3.wire"));
     const generic::TKEY& tkey(dynamic_cast<generic::TKEY&>(*rdata));
     EXPECT_EQ(0, tkey.getKeyLen());
-    EXPECT_EQ(static_cast<const void*>(0), tkey.getKey());
+    EXPECT_FALSE(tkey.getKey());
 
     vector<uint8_t> expect_data = { 'a', 'b', 'c', 'd', '0', '1', '2', '3' };
     matchWireData(&expect_data[0], expect_data.size(),
@@ -279,11 +279,11 @@ TEST_F(Rdata_TKEY_Test, badFromWire) {
     // Key length is bogus:
     EXPECT_THROW(rdataFactoryFromFile(RRType::TKEY(), RRClass::ANY(),
                                       "rdata_tkey_fromWire8.wire"),
-                 InvalidBufferPosition);
+                 isc::OutOfRange);
     // Other-data length is bogus:
     EXPECT_THROW(rdataFactoryFromFile(RRType::TKEY(), RRClass::ANY(),
                                       "rdata_tkey_fromWire9.wire"),
-                 InvalidBufferPosition);
+                 isc::OutOfRange);
 }
 
 TEST_F(Rdata_TKEY_Test, copyConstruct) {
@@ -343,9 +343,7 @@ TEST_F(Rdata_TKEY_Test, assignment) {
 
 template <typename Output>
 void
-Rdata_TKEY_Test::toWireCommonChecks(Output& output) const {
-    vector<uint8_t> expect_data;
-
+Rdata_TKEY_Test::toWireCommonChecks(Output& output) {
     output.clear();
     expect_data.clear();
     rdata_tkey.toWire(output);

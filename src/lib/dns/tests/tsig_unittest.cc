@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,22 +6,7 @@
 
 #include <config.h>
 
-#include <time.h>
-#include <string>
-#include <stdexcept>
-#include <vector>
-
-#include <boost/scoped_ptr.hpp>
-
-#include <gtest/gtest.h>
-
 #include <exceptions/exceptions.h>
-
-#include <util/buffer.h>
-#include <util/encode/base64.h>
-#include <util/unittests/newhook.h>
-#include <util/time_utilities.h>
-
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
 #include <dns/question.h>
@@ -32,9 +17,20 @@
 #include <dns/tsig.h>
 #include <dns/tsigkey.h>
 #include <dns/tsigrecord.h>
-
 #include <dns/tests/unittest_util.h>
+#include <util/buffer.h>
+#include <util/encode/encode.h>
+#include <util/unittests/newhook.h>
 #include <util/unittests/wiredata.h>
+
+#include <time.h>
+#include <string>
+#include <stdexcept>
+#include <vector>
+
+#include <boost/scoped_ptr.hpp>
+
+#include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;
@@ -42,6 +38,7 @@ using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::util::encode;
 using namespace isc::dns::rdata;
+using namespace isc::dns::rdata::any;
 using isc::UnitTestUtil;
 using isc::util::unittests::matchWireData;
 
@@ -52,7 +49,7 @@ using isc::util::unittests::matchWireData;
 namespace isc {
 namespace util {
 namespace detail {
-extern int64_t (*gettimeFunction)();
+extern int64_t (*getTimeFunction)();
 }
 }
 }
@@ -70,12 +67,12 @@ testGetTime() {
 class TestTSIGContext : public TSIGContext {
 public:
     TestTSIGContext(const TSIGKey& key) :
-        TSIGContext(key)
-    {}
+        TSIGContext(key) {
+    }
     TestTSIGContext(const Name& key_name, const Name& algorithm_name,
                     const TSIGKeyRing& keyring) :
-        TSIGContext(key_name, algorithm_name, keyring)
-    {}
+        TSIGContext(key_name, algorithm_name, keyring) {
+    }
     void update(const void* const data, size_t len) {
         TSIGContext::update(data, len);
     }
@@ -84,18 +81,15 @@ public:
 class TSIGTest : public ::testing::Test {
 protected:
     TSIGTest() :
-        tsig_ctx(NULL), qid(0x2d65), test_name("www.example.com"),
+        tsig_ctx(0), qid(0x2d65), test_name("www.example.com"),
         badkey_name("badkey.example.com"), test_class(RRClass::IN()),
         test_ttl(86400), message(Message::RENDER),
         dummy_data(1024, 0xdd),  // should be sufficiently large for all tests
-        dummy_record(badkey_name, any::TSIG(TSIGKey::HMACMD5_NAME(),
-                                            0x4da8877a,
-                                            TSIGContext::DEFAULT_FUDGE,
-                                            0, NULL, qid, 0, 0, NULL))
-    {
+        dummy_record(badkey_name, TSIG(TSIGKey::HMACMD5_NAME(), 0x4da8877a,
+                                       TSIGContext::DEFAULT_FUDGE, 0, 0, qid, 0, 0, 0)) {
         // Make sure we use the system time by default so that we won't be
         // confused due to other tests that tweak the time.
-        isc::util::detail::gettimeFunction = NULL;
+        isc::util::detail::getTimeFunction = 0;
 
         decodeBase64("SFuWd/q99SzF8Yzd1QbB9g==", secret);
         tsig_ctx.reset(new TestTSIGContext(TSIGKey(test_name,
@@ -108,7 +102,7 @@ protected:
                                                       secret.size())));
     }
     ~TSIGTest() {
-        isc::util::detail::gettimeFunction = NULL;
+        isc::util::detail::getTimeFunction = 0;
     }
 
     // Many of the tests below create some DNS message and sign it under
@@ -119,8 +113,8 @@ protected:
                                             unsigned int message_flags =
                                             RD_FLAG,
                                             RRType qtype = RRType::A(),
-                                            const char* answer_data = NULL,
-                                            const RRType* answer_type = NULL,
+                                            const char* answer_data = 0,
+                                            const RRType* answer_type = 0,
                                             bool add_question = true,
                                             Rcode rcode = Rcode::NOERROR());
 
@@ -153,8 +147,7 @@ TSIGTest::createMessageAndSign(uint16_t id, const Name& qname,
                                TSIGContext* ctx, unsigned int message_flags,
                                RRType qtype, const char* answer_data,
                                const RRType* answer_type, bool add_question,
-                               Rcode rcode)
-{
+                               Rcode rcode) {
     message.clear(Message::RENDER);
     message.setQid(id);
     message.setOpcode(Opcode::QUERY());
@@ -171,8 +164,8 @@ TSIGTest::createMessageAndSign(uint16_t id, const Name& qname,
     if (add_question) {
         message.addQuestion(Question(qname, test_class, qtype));
     }
-    if (answer_data != NULL) {
-        if (answer_type == NULL) {
+    if (answer_data) {
+        if (!answer_type) {
             answer_type = &qtype;
         }
         RRsetPtr answer_rrset(new RRset(qname, test_class, *answer_type,
@@ -213,11 +206,10 @@ commonSignChecks(ConstTSIGRecordPtr tsig, uint16_t expected_qid,
                  const uint8_t* expected_mac, size_t expected_maclen,
                  uint16_t expected_error = 0,
                  uint16_t expected_otherlen = 0,
-                 const uint8_t* expected_otherdata = NULL,
-                 const Name& expected_algorithm = TSIGKey::HMACMD5_NAME())
-{
-    ASSERT_TRUE(tsig != NULL);
-    const any::TSIG& tsig_rdata = tsig->getRdata();
+                 const uint8_t* expected_otherdata = 0,
+                 const Name& expected_algorithm = TSIGKey::HMACMD5_NAME()) {
+    ASSERT_TRUE(tsig);
+    const TSIG& tsig_rdata = tsig->getRdata();
 
     EXPECT_EQ(expected_algorithm, tsig_rdata.getAlgorithm());
     EXPECT_EQ(expected_timesigned, tsig_rdata.getTimeSigned());
@@ -238,15 +230,14 @@ commonVerifyChecks(TSIGContext& ctx, const TSIGRecord* record,
                    const void* data, size_t data_len, TSIGError expected_error,
                    TSIGContext::State expected_new_state =
                    TSIGContext::VERIFIED_RESPONSE,
-                   bool last_should_throw = false)
-{
+                   bool last_should_throw = false) {
     EXPECT_EQ(expected_error, ctx.verify(record, data, data_len));
     EXPECT_EQ(expected_error, ctx.getError());
     EXPECT_EQ(expected_new_state, ctx.getState());
     if (last_should_throw) {
         EXPECT_THROW(ctx.lastHadSignature(), TSIGContextError);
     } else {
-        EXPECT_EQ(record != NULL, ctx.lastHadSignature());
+        EXPECT_EQ(record != 0, ctx.lastHadSignature());
     }
 }
 
@@ -271,7 +262,7 @@ TEST_F(TSIGTest, constructFromKeyRing) {
     // Add a matching key (we don't use the secret so leave it empty), and
     // construct it again.  This time it should be constructed with a valid
     // key.
-    keyring.add(TSIGKey(test_name, TSIGKey::HMACMD5_NAME(), NULL, 0));
+    keyring.add(TSIGKey(test_name, TSIGKey::HMACMD5_NAME(), 0, 0));
     TSIGContext ctx2(test_name, TSIGKey::HMACMD5_NAME(), keyring);
     EXPECT_EQ(TSIGContext::INIT, ctx2.getState());
     EXPECT_EQ(TSIGError::NOERROR(), ctx2.getError());
@@ -303,7 +294,7 @@ const uint8_t common_expected_mac[] = {
     0x21, 0xce, 0x6c, 0x6f, 0xff, 0x1e, 0x9e, 0xf3
 };
 TEST_F(TSIGTest, sign) {
-    isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4da8877a>;
 
     {
         SCOPED_TRACE("Sign test for query");
@@ -317,7 +308,7 @@ TEST_F(TSIGTest, sign) {
 // non canonical) characters.  The digest must be the same.  It should actually
 // be ensured at the level of TSIGKey, but we confirm that at this level, too.
 TEST_F(TSIGTest, signUsingUpperCasedKeyName) {
-    isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4da8877a>;
 
     TSIGContext cap_ctx(TSIGKey(Name("WWW.EXAMPLE.COM"),
                                 TSIGKey::HMACMD5_NAME(),
@@ -333,7 +324,7 @@ TEST_F(TSIGTest, signUsingUpperCasedKeyName) {
 
 // Same as the previous test, but for the algorithm name.
 TEST_F(TSIGTest, signUsingUpperCasedAlgorithmName) {
-    isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4da8877a>;
 
     TSIGContext cap_ctx(TSIGKey(test_name,
                                 Name("HMAC-md5.SIG-alg.REG.int"),
@@ -351,13 +342,13 @@ TEST_F(TSIGTest, signAtActualTime) {
     // Sign the message using the actual time, and check the accuracy of it.
     // We cannot reasonably predict the expected MAC, so don't bother to
     // check it.
-    const uint64_t now = static_cast<uint64_t>(time(NULL));
+    const uint64_t now = static_cast<uint64_t>(time(0));
 
     {
         SCOPED_TRACE("Sign test for query at actual time");
         ConstTSIGRecordPtr tsig = createMessageAndSign(qid, test_name,
                                                        tsig_ctx.get());
-        const any::TSIG& tsig_rdata = tsig->getRdata();
+        const TSIG& tsig_rdata = tsig->getRdata();
 
         // Check the resulted time signed is in the range of [now, now + 5]
         // (5 is an arbitrary choice).  Note that due to the order of the call
@@ -371,7 +362,7 @@ TEST_F(TSIGTest, signAtActualTime) {
 TEST_F(TSIGTest, signBadData) {
     // some specific bad data should be rejected proactively.
     const unsigned char dummy_data = 0;
-    EXPECT_THROW(tsig_ctx->sign(0, NULL, 10), InvalidParameter);
+    EXPECT_THROW(tsig_ctx->sign(0, 0, 10), InvalidParameter);
     EXPECT_THROW(tsig_ctx->sign(0, &dummy_data, 0), InvalidParameter);
 }
 
@@ -385,8 +376,8 @@ TEST_F(TSIGTest, verifyBadData) {
     // Still nothing verified
     EXPECT_THROW(tsig_ctx->lastHadSignature(), TSIGContextError);
 
-    // And the data must not be NULL.
-    EXPECT_THROW(tsig_ctx->verify(&dummy_record, NULL,
+    // And the data must not be null.
+    EXPECT_THROW(tsig_ctx->verify(&dummy_record, 0,
                                   12 + dummy_record.getLength()),
                  InvalidParameter);
 
@@ -438,7 +429,7 @@ TEST_F(TSIGTest, signExceptionSafety) {
 //   HMAC Size: 20
 //   HMAC: 415340c7daf824ed684ee586f7b5a67a2febc0d3
 TEST_F(TSIGTest, signUsingHMACSHA1) {
-    isc::util::detail::gettimeFunction = testGetTime<0x4dae7d5f>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4dae7d5f>;
 
     secret.clear();
     decodeBase64("MA+QDhXbyqUak+qnMFyTyEirzng=", secret);
@@ -454,13 +445,13 @@ TEST_F(TSIGTest, signUsingHMACSHA1) {
         SCOPED_TRACE("Sign test using HMAC-SHA1");
         commonSignChecks(createMessageAndSign(sha1_qid, test_name, &sha1_ctx),
                          sha1_qid, 0x4dae7d5f, expected_mac,
-                         sizeof(expected_mac), 0, 0, NULL,
+                         sizeof(expected_mac), 0, 0, 0,
                          TSIGKey::HMACSHA1_NAME());
     }
 }
 
 TEST_F(TSIGTest, signUsingHMACSHA224) {
-    isc::util::detail::gettimeFunction = testGetTime<0x4dae7d5f>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4dae7d5f>;
 
     secret.clear();
     decodeBase64("MA+QDhXbyqUak+qnMFyTyEirzng=", secret);
@@ -469,15 +460,15 @@ TEST_F(TSIGTest, signUsingHMACSHA224) {
 
     const uint16_t sha1_qid = 0x0967;
     const uint8_t expected_mac[] = {
-        0x3b, 0x93, 0xd3, 0xc5, 0xf9, 0x64, 0xb9, 0xc5, 0x00, 0x35, 
-        0x02, 0x69, 0x9f, 0xfc, 0x44, 0xd6, 0xe2, 0x66, 0xf4, 0x08, 
+        0x3b, 0x93, 0xd3, 0xc5, 0xf9, 0x64, 0xb9, 0xc5, 0x00, 0x35,
+        0x02, 0x69, 0x9f, 0xfc, 0x44, 0xd6, 0xe2, 0x66, 0xf4, 0x08,
         0xef, 0x33, 0xa2, 0xda, 0xa1, 0x48, 0x71, 0xd3
     };
     {
         SCOPED_TRACE("Sign test using HMAC-SHA224");
         commonSignChecks(createMessageAndSign(sha1_qid, test_name, &sha1_ctx),
                          sha1_qid, 0x4dae7d5f, expected_mac,
-                         sizeof(expected_mac), 0, 0, NULL,
+                         sizeof(expected_mac), 0, 0, 0,
                          TSIGKey::HMACSHA224_NAME());
     }
 }
@@ -489,7 +480,7 @@ TEST_F(TSIGTest, signUsingHMACSHA224) {
 // Answer: www.example.com. 86400 IN A 192.0.2.1
 // MAC: 8fcda66a7cd1a3b9948eb1869d384a9f
 TEST_F(TSIGTest, verifyThenSignResponse) {
-    isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4da8877a>;
 
     // This test data for the message test has the same wire format data
     // as the message used in the "sign" test.
@@ -519,7 +510,7 @@ TEST_F(TSIGTest, verifyThenSignResponse) {
 }
 
 TEST_F(TSIGTest, verifyUpperCaseNames) {
-    isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4da8877a>;
 
     // This test data for the message test has the same wire format data
     // as the message used in the "sign" test.
@@ -536,7 +527,7 @@ TEST_F(TSIGTest, verifyForwardedMessage) {
     // Similar to the first part of the previous test, but this test emulates
     // the "forward" case, where the ID of the Header and the original ID in
     // TSIG is different.
-    isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4da8877a>;
 
     createMessageFromFile("tsig_verify6.wire");
     {
@@ -564,7 +555,7 @@ TEST_F(TSIGTest, verifyForwardedMessage) {
 //   Answer: example.com. 86400 IN NS ns.example.com.
 //   MAC: 102458f7f62ddd7d638d746034130968
 TEST_F(TSIGTest, signContinuation) {
-    isc::util::detail::gettimeFunction = testGetTime<0x4da8e951>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4da8e951>;
 
     const uint16_t axfr_qid = 0x3410;
     const Name zone_name("example.com");
@@ -572,7 +563,7 @@ TEST_F(TSIGTest, signContinuation) {
     // Create and sign the AXFR request
     ConstTSIGRecordPtr tsig = createMessageAndSign(axfr_qid, zone_name,
                                                    tsig_ctx.get(), 0,
-                                                   RRType::AXFR());
+                                                   RRType("AXFR"));
     // Then verify it (the wire format test data should contain the same
     // message data, and verification should succeed).
     received_data.clear();
@@ -586,7 +577,7 @@ TEST_F(TSIGTest, signContinuation) {
 
     // Create and sign the first response message
     tsig = createMessageAndSign(axfr_qid, zone_name, tsig_verify_ctx.get(),
-                                AA_FLAG|QR_FLAG, RRType::AXFR(),
+                                AA_FLAG|QR_FLAG, RRType("AXFR"),
                                 "ns.example.com. root.example.com. "
                                 "2011041503 7200 3600 2592000 1200",
                                 &RRType::SOA());
@@ -608,7 +599,7 @@ TEST_F(TSIGTest, signContinuation) {
     {
         SCOPED_TRACE("Sign test for continued response in TCP stream");
         tsig = createMessageAndSign(axfr_qid, zone_name, tsig_verify_ctx.get(),
-                                    AA_FLAG|QR_FLAG, RRType::AXFR(),
+                                    AA_FLAG|QR_FLAG, RRType("AXFR"),
                                     "ns.example.com.", &RRType::NS(), false);
         commonSignChecks(tsig, axfr_qid, 0x4da8e951, expected_mac,
                          sizeof(expected_mac));
@@ -638,7 +629,7 @@ TEST_F(TSIGTest, signContinuation) {
 //   Error: 0x12 (BADTIME), Other Len: 6
 //   Other data: 00004da8be86
 TEST_F(TSIGTest, badtimeResponse) {
-    isc::util::detail::gettimeFunction = testGetTime<0x4da8b9d6>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4da8b9d6>;
 
     const uint16_t test_qid = 0x7fc4;
     ConstTSIGRecordPtr tsig = createMessageAndSign(test_qid, test_name,
@@ -646,7 +637,7 @@ TEST_F(TSIGTest, badtimeResponse) {
                                                    RRType::SOA());
 
     // "advance the clock" and try validating, which should fail due to BADTIME
-    isc::util::detail::gettimeFunction = testGetTime<0x4da8be86>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4da8be86>;
     {
         SCOPED_TRACE("Verify resulting in BADTIME due to expired SIG");
         commonVerifyChecks(*tsig_verify_ctx, tsig.get(), &dummy_data[0],
@@ -656,7 +647,7 @@ TEST_F(TSIGTest, badtimeResponse) {
 
     // make and sign a response in the context of TSIG error.
     tsig = createMessageAndSign(test_qid, test_name, tsig_verify_ctx.get(),
-                                QR_FLAG, RRType::SOA(), NULL, NULL,
+                                QR_FLAG, RRType::SOA(), 0, 0,
                                 true, Rcode::NOTAUTH());
     const uint8_t expected_otherdata[] = { 0, 0, 0x4d, 0xa8, 0xbe, 0x86 };
     const uint8_t expected_mac[] = {
@@ -674,14 +665,14 @@ TEST_F(TSIGTest, badtimeResponse) {
 }
 
 TEST_F(TSIGTest, badtimeResponse2) {
-    isc::util::detail::gettimeFunction = testGetTime<0x4da8b9d6>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4da8b9d6>;
 
     ConstTSIGRecordPtr tsig = createMessageAndSign(qid, test_name,
                                                    tsig_ctx.get(), 0,
                                                    RRType::SOA());
 
     // "rewind the clock" and try validating, which should fail due to BADTIME
-    isc::util::detail::gettimeFunction = testGetTime<0x4da8b9d6 - 600>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4da8b9d6 - 600>;
     {
         SCOPED_TRACE("Verify resulting in BADTIME due to too future SIG");
         commonVerifyChecks(*tsig_verify_ctx, tsig.get(), &dummy_data[0],
@@ -691,7 +682,7 @@ TEST_F(TSIGTest, badtimeResponse2) {
 }
 
 TEST_F(TSIGTest, badtimeBoundaries) {
-    isc::util::detail::gettimeFunction = testGetTime<0x4da8b9d6>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4da8b9d6>;
 
     // Test various boundary conditions.  We intentionally use the magic
     // number of 300 instead of the constant variable for testing.
@@ -700,26 +691,26 @@ TEST_F(TSIGTest, badtimeBoundaries) {
     ConstTSIGRecordPtr tsig = createMessageAndSign(qid, test_name,
                                                    tsig_ctx.get(), 0,
                                                    RRType::SOA());
-    isc::util::detail::gettimeFunction = testGetTime<0x4da8b9d6 + 301>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4da8b9d6 + 301>;
     EXPECT_EQ(TSIGError::BAD_TIME(),
               tsig_verify_ctx->verify(tsig.get(), &dummy_data[0],
                                       dummy_data.size()));
-    isc::util::detail::gettimeFunction = testGetTime<0x4da8b9d6 + 300>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4da8b9d6 + 300>;
     EXPECT_NE(TSIGError::BAD_TIME(),
               tsig_verify_ctx->verify(tsig.get(), &dummy_data[0],
                                       dummy_data.size()));
-    isc::util::detail::gettimeFunction = testGetTime<0x4da8b9d6 - 301>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4da8b9d6 - 301>;
     EXPECT_EQ(TSIGError::BAD_TIME(),
               tsig_verify_ctx->verify(tsig.get(), &dummy_data[0],
                                       dummy_data.size()));
-    isc::util::detail::gettimeFunction = testGetTime<0x4da8b9d6 - 300>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4da8b9d6 - 300>;
     EXPECT_NE(TSIGError::BAD_TIME(),
               tsig_verify_ctx->verify(tsig.get(), &dummy_data[0],
                                       dummy_data.size()));
 }
 
 TEST_F(TSIGTest, badtimeOverflow) {
-    isc::util::detail::gettimeFunction = testGetTime<200>;
+    isc::util::detail::getTimeFunction = testGetTime<200>;
     ConstTSIGRecordPtr tsig = createMessageAndSign(qid, test_name,
                                                    tsig_ctx.get(), 0,
                                                    RRType::SOA());
@@ -727,14 +718,14 @@ TEST_F(TSIGTest, badtimeOverflow) {
     // This should be in the okay range, but since "200 - fudge" overflows
     // and we compare them as 64-bit unsigned integers, it results in a false
     // positive (we intentionally accept that).
-    isc::util::detail::gettimeFunction = testGetTime<100>;
+    isc::util::detail::getTimeFunction = testGetTime<100>;
     EXPECT_EQ(TSIGError::BAD_TIME(),
               tsig_verify_ctx->verify(tsig.get(), &dummy_data[0],
                                       dummy_data.size()));
 }
 
 TEST_F(TSIGTest, badsigResponse) {
-    isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4da8877a>;
 
     // Try to sign a simple message with bogus secret.  It should fail
     // with BADSIG.
@@ -753,14 +744,14 @@ TEST_F(TSIGTest, badsigResponse) {
     {
         SCOPED_TRACE("Sign test for response with BADSIG error");
         commonSignChecks(createMessageAndSign(qid, test_name, &bad_ctx),
-                         message.getQid(), 0x4da8877a, NULL, 0,
+                         message.getQid(), 0x4da8877a, 0, 0,
                          16);   // 16: BADSIG
     }
 }
 
 TEST_F(TSIGTest, badkeyResponse) {
     // A similar test as badsigResponse but for BADKEY
-    isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4da8877a>;
     tsig_ctx.reset(new TestTSIGContext(badkey_name, TSIGKey::HMACMD5_NAME(),
                                        keyring));
     {
@@ -775,7 +766,7 @@ TEST_F(TSIGTest, badkeyResponse) {
         ConstTSIGRecordPtr sig = createMessageAndSign(qid, test_name,
                                                       tsig_ctx.get());
         EXPECT_EQ(badkey_name, sig->getName());
-        commonSignChecks(sig, qid, 0x4da8877a, NULL, 0, 17);   // 17: BADKEY
+        commonSignChecks(sig, qid, 0x4da8877a, 0, 0, 17);   // 17: BADKEY
     }
 }
 
@@ -790,11 +781,10 @@ TEST_F(TSIGTest, badkeyForResponse) {
     }
 
     // A similar case with a different algorithm
-    const TSIGRecord dummy_record2(test_name,
-                                  any::TSIG(TSIGKey::HMACSHA1_NAME(),
-                                            0x4da8877a,
-                                            TSIGContext::DEFAULT_FUDGE,
-                                            0, NULL, qid, 0, 0, NULL));
+    const TSIGRecord dummy_record2(test_name, TSIG(TSIGKey::HMACSHA1_NAME(),
+                                                   0x4da8877a,
+                                                   TSIGContext::DEFAULT_FUDGE,
+                                                   0, 0, qid, 0, 0, 0));
     {
         SCOPED_TRACE("Verify a response resulting in BADKEY due to bad alg");
         commonVerifyChecks(*tsig_ctx, &dummy_record2, &dummy_data[0],
@@ -808,7 +798,7 @@ TEST_F(TSIGTest, badsigThenValidate) {
     // should discard that message and wait for another signed response.
     // This test emulates that situation.
 
-    isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4da8877a>;
 
     createMessageAndSign(qid, test_name, tsig_ctx.get());
 
@@ -833,13 +823,13 @@ TEST_F(TSIGTest, badsigThenValidate) {
 TEST_F(TSIGTest, nosigThenValidate) {
     // Similar to the previous test, but the first response doesn't contain
     // TSIG.
-    isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4da8877a>;
 
     createMessageAndSign(qid, test_name, tsig_ctx.get());
 
     {
         SCOPED_TRACE("Verify a response without TSIG that should exist");
-        commonVerifyChecks(*tsig_ctx, NULL, &dummy_data[0],
+        commonVerifyChecks(*tsig_ctx, 0, &dummy_data[0],
                            dummy_data.size(), TSIGError::FORMERR(),
                            TSIGContext::SENT_REQUEST, true);
     }
@@ -856,13 +846,13 @@ TEST_F(TSIGTest, nosigThenValidate) {
 
 TEST_F(TSIGTest, badtimeThenValidate) {
     // Similar to the previous test, but the first response results in BADTIME.
-    isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4da8877a>;
 
     ConstTSIGRecordPtr tsig = createMessageAndSign(qid, test_name,
                                                    tsig_ctx.get());
 
     // "advance the clock" and try validating, which should fail due to BADTIME
-    isc::util::detail::gettimeFunction = testGetTime<0x4da8877a + 600>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4da8877a + 600>;
     {
         SCOPED_TRACE("Verify resulting in BADTIME due to expired SIG");
         commonVerifyChecks(*tsig_ctx, tsig.get(), &dummy_data[0],
@@ -871,7 +861,7 @@ TEST_F(TSIGTest, badtimeThenValidate) {
     }
 
     // revert the clock again.
-    isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4da8877a>;
     createMessageFromFile("tsig_verify5.wire");
     {
         SCOPED_TRACE("Verify a response after a BADTIME failure");
@@ -883,7 +873,7 @@ TEST_F(TSIGTest, badtimeThenValidate) {
 }
 
 TEST_F(TSIGTest, emptyMAC) {
-    isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4da8877a>;
 
     // We don't allow empty MAC unless the TSIG error is BADSIG or BADKEY.
     createMessageFromFile("tsig_verify7.wire");
@@ -911,7 +901,7 @@ TEST_F(TSIGTest, verifyAfterSendResponse) {
 
     // The following are essentially the same as what verifyThenSignResponse
     // does with simplification.
-    isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4da8877a>;
     createMessageFromFile("message_toWire2.wire");
     tsig_verify_ctx->verify(message.getTSIGRecord(), &received_data[0],
                             received_data.size());
@@ -934,7 +924,7 @@ TEST_F(TSIGTest, signAfterVerified) {
 
     // The following are borrowed from badsigThenValidate (without the
     // intermediate failure)
-    isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4da8877a>;
     createMessageAndSign(qid, test_name, tsig_ctx.get());
     createMessageFromFile("tsig_verify5.wire");
     tsig_ctx->verify(message.getTSIGRecord(), &received_data[0],
@@ -949,7 +939,7 @@ TEST_F(TSIGTest, signAfterVerified) {
 TEST_F(TSIGTest, tooShortMAC) {
     // Too short MAC should be rejected.
 
-    isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4da8877a>;
     createMessageFromFile("tsig_verify10.wire");
     {
         SCOPED_TRACE("Verify test for request");
@@ -961,7 +951,7 @@ TEST_F(TSIGTest, tooShortMAC) {
 
 TEST_F(TSIGTest, truncatedMAC) {
     // Check truncated MAC support with HMAC-SHA512-256
-    isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4da8877a>;
 
     secret.clear();
     decodeBase64("jI/Pa4qRu96t76Pns5Z/Ndxbn3QCkwcxLOgt9vgvnJw5wqTRvNyk3FtD6yIMd1dWVlqZ+Y4fe6Uasc0ckctEmg==", secret);
@@ -1044,7 +1034,7 @@ TEST_F(TSIGTest, getTSIGLength) {
     EXPECT_EQ(72, tsig_ctx->getTSIGLength());
 
     // bad sig case: n1=17, n2=26, x=0
-    isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4da8877a>;
     createMessageFromFile("message_toWire2.wire");
     tsig_ctx.reset(new TestTSIGContext(TSIGKey(test_name,
                                                TSIGKey::HMACMD5_NAME(),
@@ -1059,7 +1049,7 @@ TEST_F(TSIGTest, getTSIGLength) {
     EXPECT_EQ(69, tsig_ctx->getTSIGLength());
 
     // bad time case: n1=17, n2=26, x=16, y=6
-    isc::util::detail::gettimeFunction = testGetTime<0x4da8877a - 1000>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4da8877a - 1000>;
     tsig_ctx.reset(new TestTSIGContext(TSIGKey(test_name,
                                                TSIGKey::HMACMD5_NAME(),
                                                &dummy_data[0],
@@ -1078,7 +1068,7 @@ TEST_F(TSIGTest, getTSIGLength) {
 //
 // We have two contexts, one that signs, another that verifies.
 TEST_F(TSIGTest, verifyMulti) {
-    isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
+    isc::util::detail::getTimeFunction = testGetTime<0x4da8877a>;
 
     // First, send query from the verify one to the normal one, so
     // we initialize something like AXFR
@@ -1132,7 +1122,7 @@ TEST_F(TSIGTest, verifyMulti) {
         // internals here a little bit to generate correct test data
         tsig_ctx->update(renderer.getData(), renderer.getLength());
 
-        commonVerifyChecks(*tsig_verify_ctx, NULL,
+        commonVerifyChecks(*tsig_verify_ctx, 0,
                            renderer.getData(), renderer.getLength(),
                            TSIGError(Rcode::NOERROR()),
                            TSIGContext::VERIFIED_RESPONSE);
@@ -1173,7 +1163,7 @@ TEST_F(TSIGTest, verifyMulti) {
 
             // 99 unsigned messages is OK. But the 100th must be signed, according
             // to the RFC2845, section 4.4
-            commonVerifyChecks(*tsig_verify_ctx, NULL,
+            commonVerifyChecks(*tsig_verify_ctx, 0,
                                renderer.getData(), renderer.getLength(),
                                i == 99 ? TSIGError::FORMERR() :
                                    TSIGError(Rcode::NOERROR()),

@@ -18,7 +18,9 @@
 
 {
   "Dhcp6": {
-    /*                Data for all standard option definitions                */
+    /*
+                      Data for all standard option definitions
+    */
     // Option data defined globally
     "option-data": [
       /*
@@ -1705,7 +1707,39 @@
       // Option code 112 is unassigned.
       // Option codes 113-134 are not defined in Kea.
 
-      // Option codes 136-142 are unassigned.
+      /*
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |       option-code (136)       |          option-length        |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      .           bootstrap-server-list (variable length)             .
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      option-code: OPTION_V6_SZTP_REDIRECT (136)
+
+      option-length: The option length in octets.
+
+      bootstrap-server-list: A list of servers for the
+       client to attempt contacting, in order to obtain
+       further bootstrapping data. Each URI entry in the
+       bootstrap-server-list is structured as follows:
+
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-...-+-+-+-+-+-+-+
+      |       uri-length              |          URI                  |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-...-+-+-+-+-+-+-+
+
+      uri-length: 2 octets long; specifies the length of the URI data.
+      URI: URI of the SZTP bootstrap server.
+      */
+      // Type: array of {tuple}
+      {
+        "code": 136,
+        "data": "https://sztp1.example.com:8443, https://sztp2.example.com:8444",
+        "name": "v6-sztp-redirect"
+      },
+
+      // Option codes 137-142 are unassigned.
 
       /*
        0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -1734,9 +1768,73 @@
         "name": "ipv6-address-andsf"
       },
 
-      // Option codes 144-65535 are unassigned.
+      /*
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |       Option-code             |         Option-length         |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |       Service Priority        |         ADN Length            |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      ~                   authentication-domain-name                  ~
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |         Addr Length           |                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+                               |
+      ~                        ipv6-address(es)                       ~
+      |                               +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |                               |                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+                               |
+      ~                 Service Parameters (SvcParams)                ~
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
-      /*                         Custom option data                           */
+      Option-code:  OPTION_V6_DNR (144)
+
+      Option-length:  Length of the enclosed data in octets.  The option
+         length is ('ADN Length' + 4) when only an ADN is included in the
+         option.
+
+      Service Priority:  The priority of this OPTION_V6_DNR instance
+         compared to other instances.  This 16-bit unsigned integer is
+         interpreted following the rules specified in Section 2.4.1 of
+         [RFC9460].
+
+      ADN Length:  Length of the authentication-domain-name field in
+         octets.
+
+      authentication-domain-name (variable length):  A fully qualified
+         domain name of the encrypted DNS resolver.  This field is
+         formatted as specified in Section 10 of [RFC8415].
+
+      Addr Length:  Length of enclosed IPv6 addresses in octets.  When
+         present, it MUST be a multiple of 16.
+
+      ipv6-address(es) (variable length):  Indicates one or more IPv6
+         addresses to reach the encrypted DNS resolver.  An address can be
+         link-local, ULA, or GUA.
+
+      Service Parameters (SvcParams) (variable length):  Specifies a set of
+         service parameters that are encoded following the rules in
+         Section 2.2 of [RFC9460].
+      */
+      // Type: internal
+      {
+        // DNR option may be configured using convenient notation. Comma separated fields must be provided:
+        // - service priority (mandatory),
+        // - ADN (mandatory),
+        // - IP address(es) (optional - if more than one - they must be space-separated)
+        // - SvcParams (optional - if more than one - they must be space-separated;
+        //   to provide more than one alpn-id separate them with double-backslash escaped comma like in the
+        //   example below).
+        // Basing on the config, Kea will encode the option according to RFC9463.
+        "code": 144,
+        "name": "v6-dnr",
+        "data": "100, resolver.example., 2001:db8::1 2001:db8::2, alpn=dot\\,h2\\,h3 port=8530 dohpath=/dns-query{?dns}"
+      },
+
+      // Option codes 145-65535 are unassigned.
+
+      /*
+                                 Custom option data
+      */
       // See "option-def" below for the definitions.
       {
         "code": 111,
@@ -1767,7 +1865,9 @@
       }
     ],
 
-    /*                       Custom option definitions                        */
+    /*
+                             Custom option definitions
+    */
     // For kea-dhcp6, custom option definitions are always global. Even when
     // data for said options is then configured at subnet level.
     "option-def": [
@@ -1839,7 +1939,9 @@
     ],
 
     "subnet6": [
-      /*                         DOCSIS3 option data                          */
+      /*
+                                 DOCSIS3 option data
+      */
       // Headers are as defined in CL-SP-CANN-DHCP-Reg-I16-200715.
       // "space" is required to be explicitly defined as "docsis3-v6"
       {
@@ -2069,7 +2171,8 @@
             "space": "docsis3-v6"
           }
         ],
-        "subnet": "2001:db8:d0c5:15::/64"
+        "subnet": "2001:db8:d0c5:15::/64",
+        "id": 1
       }
     ]
   }

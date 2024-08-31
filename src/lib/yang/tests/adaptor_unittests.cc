@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,10 +6,10 @@
 
 #include <config.h>
 
+#include <gtest/gtest.h>
+
 #include <testutils/gtest_utils.h>
 #include <yang/adaptor.h>
-
-#include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;
@@ -24,7 +24,7 @@ TEST(AdaptorTest, getContext) {
     // Empty.
     string config = "{\n"
         "}\n";
-    ConstElementPtr json = Element::fromJSON(config);
+    ElementPtr json = Element::fromJSON(config);
     ConstElementPtr context;
     ASSERT_NO_THROW_LOG(context = Adaptor::getContext(json));
     EXPECT_FALSE(context);
@@ -98,10 +98,10 @@ TEST(AdaptorTest, fromParent) {
         " ]\n"
         "}\n";
 
-    ConstElementPtr json = Element::fromJSON(config);
-    EXPECT_NO_THROW(Adaptor::fromParent("param1", json, json->get("list")));
-    EXPECT_NO_THROW(Adaptor::fromParent("param2", json, json->get("list")));
-    EXPECT_NO_THROW(Adaptor::fromParent("param3", json, json->get("list")));
+    ElementPtr json = Element::fromJSON(config);
+    EXPECT_NO_THROW_LOG(Adaptor::fromParent("param1", json, json->get("list")));
+    EXPECT_NO_THROW_LOG(Adaptor::fromParent("param2", json, json->get("list")));
+    EXPECT_NO_THROW_LOG(Adaptor::fromParent("param3", json, json->get("list")));
 
     string expected = "{\n"
         " \"param1\": 123,\n"
@@ -139,7 +139,7 @@ TEST(AdaptorTest, toParent) {
         "}\n";
 
     ElementPtr json = Element::fromJSON(config);
-    EXPECT_NO_THROW(Adaptor::toParent("param1", json, json->get("list")));
+    EXPECT_NO_THROW_LOG(Adaptor::toParent("param1", json, json->get("list")));
     EXPECT_TRUE(json->equals(*Element::fromJSON(config)));
 
     string expected = "{\n"
@@ -156,16 +156,20 @@ TEST(AdaptorTest, toParent) {
         " ]\n"
         "}\n";
 
-    EXPECT_NO_THROW(Adaptor::toParent("param2",json, json->get("list")));
+    EXPECT_NO_THROW_LOG(Adaptor::toParent("param2",json, json->get("list")));
     EXPECT_TRUE(json->equals(*Element::fromJSON(expected)));
 
     // param[345] have different values so it should throw.
-    EXPECT_THROW(Adaptor::toParent("param3",json, json->get("list")),
-                 BadValue);
-    EXPECT_THROW(Adaptor::toParent("param4",json, json->get("list")),
-                 BadValue);
-    EXPECT_THROW(Adaptor::toParent("param5",json, json->get("list")),
-                 BadValue);
+    EXPECT_THROW_MSG(Adaptor::toParent("param3", json, json->get("list")), BadValue,
+                     "inconsistent value of param3 in [ { \"param3\": 234, \"param4\": true }, { "
+                     "\"another\": \"entry\", \"param3\": 123, \"param5\": false } ]");
+    EXPECT_THROW_MSG(Adaptor::toParent("param4", json, json->get("list")), BadValue,
+                     "inconsistent value of param4 in [ { \"param3\": 234, \"param4\": true }, { "
+                     "\"another\": \"entry\", \"param3\": 123, \"param5\": false } ]");
+    EXPECT_THROW_MSG(Adaptor::toParent("param5", json, json->get("list")), BadValue,
+                     "inconsistent value of param5 in [ { \"param3\": 234, \"param4\": true }, { "
+                     "\"another\": \"entry\", \"param3\": 123, \"param5\": false } ]");
+
     // And not modify the value.
     EXPECT_TRUE(json->equals(*Element::fromJSON(expected)));
 }
@@ -391,4 +395,4 @@ TEST(AdaptorTest, modifyListAllDelete) {
     EXPECT_TRUE(expected->equals(*json));
 }
 
-}; // end of anonymous namespace
+}  // anonymous namespace

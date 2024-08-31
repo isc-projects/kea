@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -53,11 +53,14 @@ public:
     /// @param option_type Option type.
     /// @param persist A boolean flag indicating if the option is always
     /// returned to the client or only when requested.
+    /// @param cancel A boolean flag indicating if the option must never
+    /// be returned to the client,
     ///
     /// @return Descriptor holding an empty option.
     OptionDescriptor createEmptyOption(const Option::Universe& universe,
                                        const uint16_t option_type,
-                                       const bool persist) const;
+                                       const bool persist,
+                                       const bool cancel) const;
 
     /// @brief Creates an instance of the option for which it is possible to
     /// specify universe, option type, persistence flag  and value in
@@ -71,6 +74,8 @@ public:
     /// @param option_type Option type.
     /// @param persist A boolean flag indicating if the option is always
     /// returned to the client or only when requested.
+    /// @param cancel A boolean flag indicating if the option must never
+    /// be returned to the client,
     /// @param formatted A boolean value selecting if the formatted option
     /// value should be used (if true), or binary value (if false).
     /// @param value Option value to be assigned to the option.
@@ -82,6 +87,7 @@ public:
     OptionDescriptor createOption(const Option::Universe& universe,
                                   const uint16_t option_type,
                                   const bool persist,
+                                  const bool cancel,
                                   const bool formatted,
                                   const DataType& value) const {
         boost::shared_ptr<OptionType> option(new OptionType(universe, option_type,
@@ -92,7 +98,7 @@ public:
             // textual format.
             s << value;
         }
-        OptionDescriptor desc(option, persist, s.str());
+        OptionDescriptor desc(option, persist, cancel, s.str());
         return (desc);
     }
 
@@ -106,6 +112,8 @@ public:
     /// @param option_type Option type.
     /// @param persist A boolean flag indicating if the option is always
     /// returned to the client or only when requested.
+    /// @param cancel A boolean flag indicating if the option must never
+    /// be returned to the client,
     /// @param formatted A boolean value selecting if the formatted option
     /// value should be used (if true), or binary value (if false).
     /// @param value Option value to be assigned to the option.
@@ -116,6 +124,7 @@ public:
     template<typename OptionType, typename DataType>
     OptionDescriptor createOption(const uint16_t option_type,
                                   const bool persist,
+                                  const bool cancel,
                                   const bool formatted,
                                   const DataType& value) const {
         boost::shared_ptr<OptionType> option(new OptionType(option_type, value));
@@ -127,7 +136,7 @@ public:
             s << value;
         }
 
-        OptionDescriptor desc(option, persist, s.str());
+        OptionDescriptor desc(option, persist, cancel, s.str());
         return (desc);
     }
 
@@ -136,6 +145,8 @@ public:
     /// @param option_type Option type.
     /// @param persist A boolean flag indicating if the option is always
     /// returned to the client or only when requested.
+    /// @param cancel A boolean flag indicating if the option must never
+    /// be returned to the client,
     /// @param formatted A boolean value selecting if the formatted option
     /// value should be used (if true), or binary value (if false).
     /// @param address1 First address to be included. If address is empty, it is
@@ -151,6 +162,7 @@ public:
     OptionDescriptor
     createAddressOption(const uint16_t option_type,
                         const bool persist,
+                        const bool cancel,
                         const bool formatted,
                         const std::string& address1 = "",
                         const std::string& address2 = "",
@@ -187,7 +199,7 @@ public:
 
         boost::shared_ptr<OptionType> option(new OptionType(option_type,
                                                             addresses));
-        OptionDescriptor desc(option, persist, s.str());
+        OptionDescriptor desc(option, persist, cancel, s.str());
         return (desc);
     }
 
@@ -196,6 +208,8 @@ public:
     /// @param universe V4 or V6.
     /// @param persist A boolean flag indicating if the option is always
     /// returned to the client or only when requested.
+    /// @param cancel A boolean flag indicating if the option must never
+    /// be returned to the client,
     /// @param formatted A boolean value selecting if the formatted option
     /// value should be used (if true), or binary value (if false).
     /// @param vendor_id Vendor identifier.
@@ -203,6 +217,7 @@ public:
     /// @return Descriptor holding an instance of the option created.
     OptionDescriptor createVendorOption(const Option::Universe& universe,
                                         const bool persist,
+                                        const bool cancel,
                                         const bool formatted,
                                         const uint32_t vendor_id) const;
 
@@ -349,4 +364,3 @@ public:
 } // end of namespace isc
 
 #endif
-

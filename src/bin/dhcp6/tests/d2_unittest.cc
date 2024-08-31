@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -25,9 +25,8 @@ namespace test {
 
 /// @todo
 void
-D2Dhcpv6Srv::d2ClientErrorHandler(const
-                                dhcp_ddns::NameChangeSender::Result result,
-                                dhcp_ddns::NameChangeRequestPtr& ncr) {
+D2Dhcpv6Srv::d2ClientErrorHandler(const dhcp_ddns::NameChangeSender::Result result,
+                                  dhcp_ddns::NameChangeRequestPtr& ncr) {
     ++error_count_;
     // call base class error handler
     Dhcpv6Srv::d2ClientErrorHandler(result, ncr);
@@ -63,7 +62,7 @@ Dhcp6SrvD2Test::buildTestNcr(uint32_t dhcid_id_num) {
 
         " \"lease-expires-on\" : \"20140121132405\" , "
         " \"lease-length\" : 1300, "
-        " \"use-conflict-resolution\" : true "
+        " \"conflict-resolution-mode\" : \"check-with-dhcid\" "
         "}";
 
     return (dhcp_ddns::NameChangeRequest::fromJSON(stream.str()));
@@ -104,7 +103,13 @@ Dhcp6SrvD2Test::configureD2(bool enable_d2, const bool exp_result,
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
+        "\"ddns-override-no-update\" : true, "
+        "\"ddns-override-client-update\" : true, "
+        "\"ddns-replace-client-name\" : \"when-present\", "
+        "\"ddns-generated-prefix\" : \"test.prefix\", "
+        "\"ddns-qualifying-suffix\" : \"test.suffix.\", "
         "\"subnet6\": [ { "
+        "    \"id\": 1, "
         "    \"pools\": [ { \"pool\": \"2001:db8:1::1 - 2001:db8:1::ffff\" } ],"
         "    \"subnet\": \"2001:db8:1::/64\" } ],"
         " \"dhcp-ddns\" : {"
@@ -115,12 +120,7 @@ Dhcp6SrvD2Test::configureD2(bool enable_d2, const bool exp_result,
         "     \"sender-port\" : " << sender_port << ", "
         "     \"max-queue-size\" : " << max_queue_size << ", "
         "     \"ncr-protocol\" : \"UDP\", "
-        "     \"ncr-format\" : \"JSON\", "
-        "     \"override-no-update\" : true, "
-        "     \"override-client-update\" : true, "
-        "     \"replace-client-name\" : \"when-present\", "
-        "     \"generated-prefix\" : \"test.prefix\", "
-        "     \"qualifying-suffix\" : \"test.suffix.\" },"
+        "     \"ncr-format\" : \"JSON\"},"
         "\"valid-lifetime\": 4000 }";
 
     configure(config.str(), exp_result);
@@ -374,6 +374,7 @@ TEST_F(Dhcp6SrvD2Test, DISABLED_forceUDPSendFailure) {
 
     // First message is off the queue.
     EXPECT_EQ(2, mgr.getQueueSize());
+    mgr.stop();
 }
 
 // Tests error handling of D2ClientMgr::sendRequest() failure

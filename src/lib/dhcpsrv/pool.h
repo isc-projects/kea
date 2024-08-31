@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,9 +12,11 @@
 #include <cc/user_context.h>
 #include <dhcp/classify.h>
 #include <dhcp/option6_pdexclude.h>
+#include <dhcpsrv/allocation_state.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/ip_range_permutation.h>
+#include <util/bigints.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -33,12 +35,24 @@ public:
     /// @note:
     /// PoolType enum was removed. Please use Lease::Type instead
 
-    /// @brief returns Pool-id
+    /// @brief Returns Pool-id
+    ///
+    /// Pool-id is an unique value that can be used to identify a pool within a
+    /// subnet or shared network.
     ///
     /// @return pool-id value
-    /// Pool-id is an unique value that can be used to identify a pool.
-    uint32_t getId() const {
+    uint64_t getID() const {
         return (id_);
+    }
+
+    /// @brief Sets Pool-id
+    ///
+    /// Pool-id is an unique value that can be used to identify a pool within a
+    /// subnet or shared network.
+    ///
+    /// @param id value to be set
+    void setID(const uint64_t id) {
+        id_ = id;
     }
 
     /// @brief Returns the first address in a pool.
@@ -75,15 +89,14 @@ public:
     /// We need Pool to be a polymorphic class, so we could dynamic cast
     /// from PoolPtr to Pool6Ptr if we need to. A class becomes polymorphic,
     /// when there is at least one virtual method.
-    virtual ~Pool() {
-    }
+    virtual ~Pool() = default;
 
     /// @brief Returns the number of all leases in this pool.
     ///
     /// Note that this is the upper bound, assuming that no leases are used
     /// and there are no host reservations. This is just a theoretical calculation.
     /// @return number of possible leases in this pool
-    uint64_t getCapacity() const {
+    isc::util::uint128_t getCapacity() const {
         return (capacity_);
     }
 
@@ -136,43 +149,26 @@ public:
         return (required_classes_);
     }
 
-    /// @brief returns the last address that was tried from this pool
+    /// @brief Returns pool-specific allocation state.
     ///
-    /// @return address/prefix that was last tried from this pool
-    isc::asiolink::IOAddress getLastAllocated() const {
-        return last_allocated_;
-    }
-
-    /// @brief checks if the last address is valid
-    /// @return true if the last address is valid
-    bool isLastAllocatedValid() const {
-        return last_allocated_valid_;
-    }
-
-    /// @brief sets the last address that was tried from this pool
+    /// The actual type of the state depends on the allocator type.
     ///
-    /// @param addr address/prefix to that was tried last
-    void setLastAllocated(const isc::asiolink::IOAddress& addr) {
-        last_allocated_ = addr;
-        last_allocated_valid_ = true;
+    /// @return allocation state.
+    AllocationStatePtr getAllocationState() const {
+        return (allocation_state_);
     }
 
-    /// @brief resets the last address to invalid
-    void resetLastAllocated() {
-        last_allocated_valid_ = false;
+    /// @brief Sets pool-specific allocation state.
+    ///
+    /// @param allocation_state allocation state instance.
+    void setAllocationState(const AllocationStatePtr& allocation_state) {
+        allocation_state_ = allocation_state;
     }
 
     /// @brief Unparse a pool object.
     ///
     /// @return A pointer to unparsed pool configuration.
     virtual data::ElementPtr toElement() const;
-
-    /// @brief Returns pointer to the permutation associated with the pool.
-    ///
-    /// @return Pointer to the address range permutation.
-    IPRangePermutationPtr getPermutation() const {
-        return (permutation_);
-    }
 
 protected:
 
@@ -189,18 +185,11 @@ protected:
          const isc::asiolink::IOAddress& first,
          const isc::asiolink::IOAddress& last);
 
-    /// @brief returns the next unique Pool-ID
-    ///
-    /// @return the next unique Pool-ID
-    static uint32_t getNextID() {
-        static uint32_t id = 0;
-        return (id++);
-    }
-
     /// @brief pool-id
     ///
-    /// This ID is used to identify this specific pool.
-    uint32_t id_;
+    /// This id is an unique value that can be used to identify a pool within a
+    /// subnet or shared network.
+    uint64_t id_;
 
     /// @brief The first address in a pool
     isc::asiolink::IOAddress first_;
@@ -217,7 +206,7 @@ protected:
     /// involved, so it is more efficient to calculate it once and just store
     /// the result. Note that for very large pools, the number is capped at
     /// max value of uint64_t.
-    uint64_t capacity_;
+    isc::util::uint128_t capacity_;
 
     /// @brief Pointer to the option data configuration for this pool.
     CfgOptionPtr cfg_option_;
@@ -235,19 +224,8 @@ protected:
     /// @brief Pointer to the user context (may be NULL)
     data::ConstElementPtr user_context_;
 
-    /// @brief Last allocated address
-    /// See @ref isc::dhcp::Subnet::last_allocated_ia_
-    /// Initialized and reset to first
-    isc::asiolink::IOAddress last_allocated_;
-
-    /// @brief Status of last allocated address
-    bool last_allocated_valid_;
-
-    /// @brief Pointer to the permutation object.
-    ///
-    /// It may be initialized for some pools to provide address
-    /// or delegated prefix randomization capabilities.
-    IPRangePermutationPtr permutation_;
+    /// @brief Holds pool-specific allocation state.
+    AllocationStatePtr allocation_state_;
 };
 
 class Pool4;
@@ -507,9 +485,7 @@ typedef boost::shared_ptr<Pool> PoolPtr;
 /// @brief a container for either IPv4 or IPv6 Pools
 typedef std::vector<PoolPtr> PoolCollection;
 
-
 } // end of isc::dhcp namespace
 } // end of isc namespace
-
 
 #endif // POOL_H

@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -243,7 +243,7 @@ public:
 
 // Checks that entries can be found by object type.
 TEST_F(AuditEntryCollectionTest, getByObjectType) {
-    const auto& object_type_idx = audit_entries_.get<AuditEntryObjectTypeTag>();
+    auto const& object_type_idx = audit_entries_.get<AuditEntryObjectTypeTag>();
 
     // Search for "dhcp4_subnet" objects.
     auto range = object_type_idx.equal_range("dhcp4_subnet");
@@ -266,7 +266,7 @@ TEST_F(AuditEntryCollectionTest, getByObjectType) {
 
 // Checks that entries can be found by modification time.
 TEST_F(AuditEntryCollectionTest, getByModificationTime) {
-    const auto& mod_time_idx = audit_entries_.get<AuditEntryModificationTimeIdTag>();
+    auto const& mod_time_idx = audit_entries_.get<AuditEntryModificationTimeIdTag>();
 
     // Search for objects later than fixed time - 10s.
     auto lb = mod_time_idx.lower_bound(diffTime(-10));
@@ -313,7 +313,7 @@ TEST_F(AuditEntryCollectionTest, getByModificationTime) {
 
 // Checks that entries can be found by modification time and id.
 TEST_F(AuditEntryCollectionTest, getByModificationTimeAndId) {
-    const auto& mod_time_idx = audit_entries_.get<AuditEntryModificationTimeIdTag>();
+    auto const& mod_time_idx = audit_entries_.get<AuditEntryModificationTimeIdTag>();
 
     // Search for objects later than added added subnet 10.
     auto mod = boost::make_tuple(diffTime(-5), 100 + 1);
@@ -337,7 +337,7 @@ TEST_F(AuditEntryCollectionTest, getByModificationTimeAndId) {
 
 // Checks that entries can be found by object id.
 TEST_F(AuditEntryCollectionTest, getByObjectId) {
-    const auto& object_id_idx = audit_entries_.get<AuditEntryObjectIdTag>();
+    auto const& object_id_idx = audit_entries_.get<AuditEntryObjectIdTag>();
 
     // Search for object id 10.
     auto range = object_id_idx.equal_range(10);

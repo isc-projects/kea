@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2015-2021 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -28,48 +28,45 @@
 # used.
 set -eu
 
-exit_code=
+exit_code=0
 
-while test "${#}" -gt 0
-do
+# The exit code of 32 is returned when no args specified.
+if test "${#}" = 0; then
+    exit_code=32
+fi
+
+while test "${#}" -gt 0; do
     option=${1}
+    shift
     case ${option} in
         -p)
             exit_code=${$}
             ;;
         -e)
-            shift
             exit_code=${1-}
+            shift
             ;;
         -s)
+            sleep "${1-0}"
+            exit_code=12
             shift
-            sleep "${1}"
             ;;
         -v)
-            shift
             VAR_NAME=${1}
             shift
             VAR_VALUE=${1}
-            EXPECTED=$(env | grep -E "^${VAR_NAME}=")
+            shift
+            EXPECTED=$(env | grep -E "^${VAR_NAME}=" || true)
             if ! test "${VAR_NAME}=${VAR_VALUE}" = "${EXPECTED}"; then
-                exit 123
+                exit_code=34
+            else
+                exit_code=56
             fi
             ;;
         *)
-            exit 123
+            exit_code=78
             ;;
     esac
-    # We've shifted in the loop so we may have run out of parameters in the
-    # meantime. Check again.
-    if test "${#}" -gt 0; then
-      shift
-    fi
 done
-
-# The exit code of 32 is returned when no args specified or
-# when only the -s arg has been specified.
-if [ -z "${exit_code}" ]; then
-    exit 32
-fi
 
 exit "${exit_code}"

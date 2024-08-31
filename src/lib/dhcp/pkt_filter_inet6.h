@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,6 +20,13 @@ namespace dhcp {
 /// class to be used by @c IfaceMgr to access IPv6 sockets.
 class PktFilterInet6 : public PktFilter6 {
 public:
+    /// @brief Check if the socket received time is supported.
+    ///
+    /// If true, then packets received through this filter will include
+    /// a SOCKET_RECEIVED event in its event stack.
+    ///
+    /// @return True if SO_TIMESTAMP is defined.
+    virtual bool isSocketReceivedTimeSupported() const;
 
     /// @brief Opens a socket.
     ///

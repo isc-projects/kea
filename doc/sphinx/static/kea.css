@@ -8,5 +8,19 @@
    are pretty wide so removing that
  */
 .wy-table-responsive table td, .wy-table-responsive table th {
-   white-space: normal;
+    white-space: normal;
+}
+
+/* Paint literal text black. */
+.rst-content code.literal {
+    color: black;
+}
+
+/* Have literal text that references other sections underlined.
+ * It helps the reader figure out that it's a clickable link.
+ * This type of referencing can be achieved using text roles.
+ * https://www.sphinx-doc.org/en/master/usage/restructuredtext/roles.html
+ */
+.rst-content code.xref {
+    text-decoration: underline dotted gray;
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -139,7 +139,6 @@ int callout_seven(CalloutHandle&) {
 }
 
 // The next functions are duplicates of some of the above, but return an error.
-
 int callout_one_error(CalloutHandle& handle) {
     (void) callout_one(handle);
     return (1);
@@ -160,14 +159,38 @@ int callout_four_error(CalloutHandle& handle) {
     return (1);
 }
 
-};  // extern "C"
+// The next functions are duplicates of some of the above, but throw exceptions.
+int callout_one_exception(CalloutHandle& handle) {
+    (void) callout_one(handle);
+    throw 0;
+    return (1);
+}
+
+int callout_two_exception(CalloutHandle& handle) {
+    (void) callout_two(handle);
+    throw 0;
+    return (1);
+}
+
+int callout_three_exception(CalloutHandle& handle) {
+    (void) callout_three(handle);
+    throw 0;
+    return (1);
+}
+
+int callout_four_exception(CalloutHandle& handle) {
+    (void) callout_four(handle);
+    throw 0;
+    return (1);
+}
+
+}  // extern "C"
 
 // *** Callout Tests ***
 //
 // The next set of tests check that callouts can be called.
 
 // Constructor - check that we trap bad parameters.
-
 TEST_F(CalloutManagerTest, BadConstructorParameters) {
     boost::scoped_ptr<CalloutManager> cm;
 
@@ -176,7 +199,6 @@ TEST_F(CalloutManagerTest, BadConstructorParameters) {
 }
 
 // Check the number of libraries is reported successfully.
-
 TEST_F(CalloutManagerTest, NumberOfLibraries) {
     boost::scoped_ptr<CalloutManager> cm;
 
@@ -196,7 +218,6 @@ TEST_F(CalloutManagerTest, NumberOfLibraries) {
 }
 
 // Check that we can only set the current library index to the correct values.
-
 TEST_F(CalloutManagerTest, CheckLibraryIndex) {
     // Check valid indexes.  As the callout manager is sized for 10 libraries,
     // we expect:
@@ -220,16 +241,13 @@ TEST_F(CalloutManagerTest, CheckLibraryIndex) {
 }
 
 // Check that we can only register callouts on valid hook names.
-
 TEST_F(CalloutManagerTest, ValidHookNames) {
     EXPECT_NO_THROW(getCalloutManager()->registerCallout("alpha", callout_one, 0));
     EXPECT_THROW(getCalloutManager()->registerCallout("unknown", callout_one, 0),
                                                       NoSuchHook);
 }
 
-
 // Check we can register callouts appropriately.
-
 TEST_F(CalloutManagerTest, RegisterCallout) {
     // Ensure that no callouts are attached to any of the hooks.
     EXPECT_FALSE(getCalloutManager()->calloutsPresent(alpha_index_));
@@ -288,7 +306,6 @@ TEST_F(CalloutManagerTest, RegisterCallout) {
 }
 
 // Check the "calloutsPresent()" method.
-
 TEST_F(CalloutManagerTest, CalloutsPresent) {
     // Ensure that no callouts are attached to any of the hooks.
     EXPECT_FALSE(getCalloutManager()->calloutsPresent(alpha_index_));
@@ -319,7 +336,6 @@ TEST_F(CalloutManagerTest, CalloutsPresent) {
 }
 
 // Test that calling a hook with no callouts on it returns success.
-
 TEST_F(CalloutManagerTest, CallNoCallouts) {
     // Ensure that no callouts are attached to any of the hooks.
     EXPECT_FALSE(getCalloutManager()->calloutsPresent(alpha_index_));
@@ -336,7 +352,6 @@ TEST_F(CalloutManagerTest, CallNoCallouts) {
 // Test that the callouts are called in the correct order (i.e. the callouts
 // from the first library in the order they were registered, then the callouts
 // from the second library in the order they were registered etc.)
-
 TEST_F(CalloutManagerTest, CallCalloutsSuccess) {
     // Ensure that no callouts are attached to any of the hooks.
     EXPECT_FALSE(getCalloutManager()->calloutsPresent(alpha_index_));
@@ -369,11 +384,10 @@ TEST_F(CalloutManagerTest, CallCalloutsSuccess) {
 }
 
 // Test that the callouts are called in order, but that callouts occurring
-// after a callout that returns an error are not called.
+// after a callout that returns an error are called.
 //
 // (Note: in this test, the callouts that return an error set the value of
 // callout_value_ before they return the error code.)
-
 TEST_F(CalloutManagerTest, CallCalloutsError) {
     // Ensure that no callouts are attached to any of the hooks.
     EXPECT_FALSE(getCalloutManager()->calloutsPresent(alpha_index_));
@@ -430,8 +444,72 @@ TEST_F(CalloutManagerTest, CallCalloutsError) {
     EXPECT_EQ(11223344, callout_value_);
 }
 
-// Now test that we can deregister a single callout on a hook.
+// Test that the callouts are called in order, but that callouts occurring
+// after a callout that throws exception are called.
+//
+// (Note: in this test, the callouts that return an error set the value of
+// callout_value_ before they throw exception.)
+TEST_F(CalloutManagerTest, CallCalloutsException) {
+    // Ensure that no callouts are attached to any of the hooks.
+    EXPECT_FALSE(getCalloutManager()->calloutsPresent(alpha_index_));
+    EXPECT_FALSE(getCalloutManager()->calloutsPresent(beta_index_));
+    EXPECT_FALSE(getCalloutManager()->calloutsPresent(gamma_index_));
+    EXPECT_FALSE(getCalloutManager()->calloutsPresent(delta_index_));
 
+    // Each library contributing one callout on hook "alpha". The first callout
+    // returns an error (after adding its value to the result).
+    callout_value_ = 0;
+    getCalloutManager()->registerCallout("alpha", callout_one_exception, 0);
+    getCalloutManager()->registerCallout("alpha", callout_two, 1);
+    getCalloutManager()->registerCallout("alpha", callout_three, 2);
+    getCalloutManager()->registerCallout("alpha", callout_four, 3);
+    getCalloutManager()->callCallouts(alpha_index_, getCalloutHandle());
+    EXPECT_EQ(1234, callout_value_);
+    EXPECT_EQ(getCalloutHandle().getStatus(), CalloutHandle::NEXT_STEP_DROP);
+
+    // Each library contributing multiple callouts on hook "beta". The last
+    // callout on the first library returns an error.
+    callout_value_ = 0;
+    getCalloutManager()->registerCallout("beta", callout_one, 0);
+    getCalloutManager()->registerCallout("beta", callout_one_exception, 0);
+    getCalloutManager()->registerCallout("beta", callout_two, 1);
+    getCalloutManager()->registerCallout("beta", callout_two, 1);
+    getCalloutManager()->registerCallout("beta", callout_three, 1);
+    getCalloutManager()->registerCallout("beta", callout_three, 1);
+    getCalloutManager()->registerCallout("beta", callout_four, 3);
+    getCalloutManager()->registerCallout("beta", callout_four, 3);
+    getCalloutManager()->callCallouts(beta_index_, getCalloutHandle());
+    EXPECT_EQ(11223344, callout_value_);
+    EXPECT_EQ(getCalloutHandle().getStatus(), CalloutHandle::NEXT_STEP_DROP);
+
+    // A callout in a random position in the callout list returns an error.
+    callout_value_ = 0;
+    getCalloutManager()->registerCallout("gamma", callout_one, 0);
+    getCalloutManager()->registerCallout("gamma", callout_one, 0);
+    getCalloutManager()->registerCallout("gamma", callout_two, 1);
+    getCalloutManager()->registerCallout("gamma", callout_two, 1);
+    getCalloutManager()->registerCallout("gamma", callout_four_exception, 3);
+    getCalloutManager()->registerCallout("gamma", callout_four, 3);
+    getCalloutManager()->callCallouts(gamma_index_, getCalloutHandle());
+    EXPECT_EQ(112244, callout_value_);
+    EXPECT_EQ(getCalloutHandle().getStatus(), CalloutHandle::NEXT_STEP_DROP);
+
+    // The last callout on a hook returns an error.
+    callout_value_ = 0;
+    getCalloutManager()->registerCallout("delta", callout_one, 0);
+    getCalloutManager()->registerCallout("delta", callout_one, 0);
+    getCalloutManager()->registerCallout("delta", callout_two, 1);
+    getCalloutManager()->registerCallout("delta", callout_two, 1);
+    getCalloutManager()->registerCallout("delta", callout_three, 2);
+    getCalloutManager()->registerCallout("delta", callout_three, 2);
+    getCalloutManager()->registerCallout("delta", callout_four, 3);
+    getCalloutManager()->registerCallout("delta", callout_four_exception, 3);
+    getCalloutManager()->callCallouts(delta_index_, getCalloutHandle());
+    EXPECT_EQ(11223344, callout_value_);
+    EXPECT_EQ(getCalloutHandle().getStatus(), CalloutHandle::NEXT_STEP_DROP);
+}
+
+// Now test that we can deregister a single callout on a hook.
 TEST_F(CalloutManagerTest, DeregisterSingleCallout) {
     // Ensure that no callouts are attached to any of the hooks.
     EXPECT_FALSE(getCalloutManager()->calloutsPresent(alpha_index_));
@@ -455,7 +533,6 @@ TEST_F(CalloutManagerTest, DeregisterSingleCallout) {
 
 // Now test that we can deregister a single callout on a hook that has multiple
 // callouts from the same library.
-
 TEST_F(CalloutManagerTest, DeregisterSingleCalloutSameLibrary) {
     // Ensure that no callouts are attached to any of the hooks.
     EXPECT_FALSE(getCalloutManager()->calloutsPresent(alpha_index_));
@@ -484,11 +561,9 @@ TEST_F(CalloutManagerTest, DeregisterSingleCalloutSameLibrary) {
     callout_value_ = 0;
     getCalloutManager()->callCallouts(alpha_index_, getCalloutHandle());
     EXPECT_EQ(134, callout_value_);
-
 }
 
 // Check we can deregister multiple callouts from the same library.
-
 TEST_F(CalloutManagerTest, DeregisterMultipleCalloutsSameLibrary) {
     // Ensure that no callouts are attached to any of the hooks.
     EXPECT_FALSE(getCalloutManager()->calloutsPresent(alpha_index_));
@@ -539,7 +614,6 @@ TEST_F(CalloutManagerTest, DeregisterMultipleCalloutsSameLibrary) {
 }
 
 // Check we can deregister multiple callouts from multiple libraries.
-
 TEST_F(CalloutManagerTest, DeregisterMultipleCalloutsMultipleLibraries) {
     // Ensure that no callouts are attached to any of the hooks.
     EXPECT_FALSE(getCalloutManager()->calloutsPresent(alpha_index_));
@@ -567,7 +641,6 @@ TEST_F(CalloutManagerTest, DeregisterMultipleCalloutsMultipleLibraries) {
 }
 
 // Check we can deregister all callouts from a single library.
-
 TEST_F(CalloutManagerTest, DeregisterAllCallouts) {
     // Ensure that no callouts are attached to hook one.
     EXPECT_FALSE(getCalloutManager()->calloutsPresent(alpha_index_));
@@ -599,7 +672,6 @@ TEST_F(CalloutManagerTest, DeregisterAllCallouts) {
 // Check that we can register/deregister callouts on different libraries
 // and different hooks, and that the callout instances are regarded as
 // unique and do not affect one another.
-
 TEST_F(CalloutManagerTest, MultipleCalloutsLibrariesHooks) {
     // Ensure that no callouts are attached to any of the hooks.
     EXPECT_FALSE(getCalloutManager()->calloutsPresent(alpha_index_));
@@ -653,7 +725,6 @@ TEST_F(CalloutManagerTest, MultipleCalloutsLibrariesHooks) {
 // only register and deregister callouts within its library) require that
 // the CalloutHandle object pass the appropriate LibraryHandle to the
 // callout.  These tests are done in the handles_unittest tests.
-
 TEST_F(CalloutManagerTest, LibraryHandleRegistration) {
     // Ensure that no callouts are attached to any of the hooks.
     EXPECT_FALSE(getCalloutManager()->calloutsPresent(alpha_index_));
@@ -747,7 +818,6 @@ TEST_F(CalloutManagerTest, LibraryHandleAlternateConstructor) {
 
 // Check that the pre- and post- user callout library handles work
 // appropriately with no user libraries.
-
 TEST_F(CalloutManagerTest, LibraryHandlePrePostNoLibraries) {
     // Create a local callout manager and callout handle to reflect no libraries
     // being loaded.
@@ -779,7 +849,6 @@ TEST_F(CalloutManagerTest, LibraryHandlePrePostNoLibraries) {
 }
 
 // Repeat the tests with one user library.
-
 TEST_F(CalloutManagerTest, LibraryHandlePrePostUserLibrary) {
 
     // Setup the pre-, library and post callouts.
@@ -805,7 +874,6 @@ TEST_F(CalloutManagerTest, LibraryHandlePrePostUserLibrary) {
 }
 
 // Test that control command handlers can be installed as callouts.
-
 TEST_F(CalloutManagerTest, LibraryHandleRegisterCommandHandler) {
     CalloutHandle handle(getCalloutManager());
 
@@ -869,9 +937,8 @@ TEST_F(CalloutManagerTest, VectorSize) {
     EXPECT_EQ(s + 1, getCalloutManager()->getHookLibsVectorSize());
 }
 
-
 // The setting of the hook index is checked in the handles_unittest
 // set of tests, as access restrictions mean it is not easily tested
 // on its own.
 
-} // Anonymous namespace
+} // namespace

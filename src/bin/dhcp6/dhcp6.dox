@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -60,9 +60,8 @@ src/bin/dhcp6/json_config_parser.cc.
 
 @section dhcpv6ConfigParserBison Configuration Parser for DHCPv6 (bison)
 
-During 1.2 milestone it has been decided to significantly refactor the
-parsers as their old implementation became unsustainable. For the brief overview
-of the problems, see ticket 5014 (http://oldkea.isc.org/ticket/5014). In
+During the 1.2 milestone it was decided to significantly refactor the
+parsers as their old implementation became unsustainable. In
 general, the following issues of the existing code were noted:
 
 -# parsers are overwhelmingly complex. Even though each parser is relatively
@@ -543,12 +542,10 @@ true, this packet is considered a member of said class. Class definitions are st
 in isc::dhcp::ClientClassDef objects that are kept in isc::dhcp::ClientClassDictionary
 and can be retrieved from CfgMgr using isc::dhcp::SrvConfig::getClientClassDictionary().
 This is convenient as there are often multiple classes associated with a given scope.
-As of Kea 1.0, the only supported scope is global, but there are plans to support
-class definitions that are subnet specific.
 
 Client classification is done in isc::dhcp::Dhcpv6Srv::classifyPacket. First, the old
-"built-in" (see @ref dhcpv6ClassifierSimple) classification is called (see @ref
-isc::dhcp::Dhcpv6Srv::classifyByVendor). Then the code iterates over all class definitions
+"built-in" (see @ref dhcpv6ClassifierSimple) classification is called (see private
+isc::dhcp::Dhcpv6Srv::classifyByVendor()). Then the code iterates over all class definitions
 and for each class definition it calls isc::dhcp::evaluate, which is implemented in libeval
 (see @ref libeval). If the evaluation is successful, the class name is added to the packet
 (by calling isc::dhcp::pkt::addClass).

@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,13 +14,13 @@
 /// - hookpt_one callout is supplied.
 
 #include <config.h>
+
 #include <hooks/hooks.h>
 
 using namespace isc::hooks;
 using namespace std;
 
 namespace {
-
 extern "C" {
 
 // Callouts.  All return their result through the "result" argument.
@@ -67,6 +67,5 @@ load(isc::hooks::LibraryHandle&) {
     return (0);
 }
 
-}
-}
-
+}  // extern "C"
+}  // namespace

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,11 +13,15 @@
 #include <lease_cmds.h>
 #include <lease_cmds_log.h>
 #include <cc/command_interpreter.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <hooks/hooks.h>
+#include <process/daemon.h>
 
 using namespace isc::config;
 using namespace isc::data;
+using namespace isc::dhcp;
 using namespace isc::hooks;
+using namespace isc::process;
 using namespace isc::lease_cmds;
 
 extern "C" {
@@ -264,11 +268,48 @@ int lease6_resend_ddns(CalloutHandle& handle) {
     return(lease_cmds.lease6ResendDdnsHandler(handle));
 }
 
+/// @brief This is a command callout for 'lease4-write' command.
+///
+/// @param handle Callout handle used to retrieve a command and
+/// provide a response.
+/// @return 0 if this callout has been invoked successfully,
+/// 1 otherwise.
+int lease4_write(CalloutHandle& handle) {
+    LeaseCmds lease_cmds;
+    return(lease_cmds.leaseWriteHandler(handle));
+}
+
+/// @brief This is a command callout for 'lease6-write' command.
+///
+/// @param handle Callout handle used to retrieve a command and
+/// provide a response.
+/// @return 0 if this callout has been invoked successfully,
+/// 1 otherwise.
+int lease6_write(CalloutHandle& handle) {
+    LeaseCmds lease_cmds;
+    return(lease_cmds.leaseWriteHandler(handle));
+}
+
 /// @brief This function is called when the library is loaded.
 ///
 /// @param handle library handle
 /// @return 0 when initialization is successful, 1 otherwise
 int load(LibraryHandle& handle) {
+    // Make the hook library not loadable by d2 or ca.
+    uint16_t family = CfgMgr::instance().getFamily();
+    const std::string& proc_name = Daemon::getProcName();
+    if (family == AF_INET) {
+        if (proc_name != "kea-dhcp4") {
+            isc_throw(isc::Unexpected, "Bad process name: " << proc_name
+                      << ", expected kea-dhcp4");
+        }
+    } else {
+        if (proc_name != "kea-dhcp6") {
+            isc_throw(isc::Unexpected, "Bad process name: " << proc_name
+                      << ", expected kea-dhcp6");
+        }
+    }
+
     handle.registerCommandCallout("lease4-add", lease4_add);
     handle.registerCommandCallout("lease6-add", lease6_add);
     handle.registerCommandCallout("lease6-bulk-apply", lease6_bulk_apply);
@@ -295,6 +336,8 @@ int load(LibraryHandle& handle) {
     handle.registerCommandCallout("lease6-wipe", lease6_wipe);
     handle.registerCommandCallout("lease4-resend-ddns", lease4_resend_ddns);
     handle.registerCommandCallout("lease6-resend-ddns", lease6_resend_ddns);
+    handle.registerCommandCallout("lease4-write", lease4_write);
+    handle.registerCommandCallout("lease6-write", lease6_write);
 
     LOG_INFO(lease_cmds_logger, LEASE_CMDS_INIT_OK);
     return (0);

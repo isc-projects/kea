@@ -14,8 +14,7 @@ endif
 
 CLEANFILES = *.gcno *.gcda
 
-TESTS_ENVIRONMENT = \
-	$(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
+TESTS_ENVIRONMENT = $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 
 TESTS =
 if HAVE_GTEST
@@ -40,14 +39,13 @@ libprocess_unittests_LDFLAGS  = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 
 libprocess_unittests_LDADD  = $(top_builddir)/src/lib/process/testutils/libprocesstest.la
 libprocess_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
-libprocess_unittests_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
-libprocess_unittests_LDADD += $(top_builddir)/src/lib/testutils/libkea-testutils.la
 libprocess_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 libprocess_unittests_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
 libprocess_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
-libprocess_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
-libprocess_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libprocess_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
+libprocess_unittests_LDADD += $(top_builddir)/src/lib/testutils/libkea-testutils.la
+libprocess_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+libprocess_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libprocess_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 libprocess_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 libprocess_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la

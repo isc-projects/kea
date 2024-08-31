@@ -1,0 +1,33 @@
+{
+    "access": "read",
+    "avail": "2.4.0",
+    "brief": [
+        "This command retrieves the hash of the current configuration used by the server. The ",
+        "configuration is essentially the same as the contents of the configuration file, but ",
+        "includes additional changes made by other commands and due to parameters' inheritance.",
+        "Currently it is SHA256, but the algorithm may change in the future."
+    ],
+    "cmd-comment": [
+        "This command takes no parameters."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"config-hash-get\"",
+        "}"
+    ],
+    "name": "config-hash-get",
+    "resp-syntax": [
+        "{",
+        "    \"result\": <integer>,",
+        "    \"arguments\": {",
+        "        \"hash\": <SHA256 hash of the config in hexa> ",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6",
+        "kea-dhcp-ddns",
+        "kea-ctrl-agent"
+    ]
+}

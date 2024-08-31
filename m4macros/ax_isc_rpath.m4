@@ -61,4 +61,4 @@ if test x$rpath != xno; then
     CCFLAGS=$CCFLAGS_SAVED
 fi
 
-])dnl AX_ISC_RPATH
+])

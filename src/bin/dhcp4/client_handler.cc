@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,7 +19,7 @@ using namespace isc::log;
 namespace isc {
 namespace dhcp {
 
-ClientHandler::Client::Client(Pkt4Ptr query, DuidPtr client_id,
+ClientHandler::Client::Client(Pkt4Ptr query, ClientIdPtr client_id,
                               HWAddrPtr hwaddr)
     : query_(query), htype_(HTYPE_ETHER), thread_(this_thread::get_id()) {
     // Sanity checks.
@@ -32,7 +32,7 @@ ClientHandler::Client::Client(Pkt4Ptr query, DuidPtr client_id,
     }
 
     if (client_id) {
-        duid_ = client_id->getDuid();
+        client_id_ = client_id->getClientId();
     }
     if (hwaddr && !hwaddr->hwaddr_.empty()) {
         htype_ = hwaddr->htype_;
@@ -47,13 +47,13 @@ ClientHandler::ClientByIdContainer ClientHandler::clients_client_id_;
 ClientHandler::ClientByHWAddrContainer ClientHandler::clients_hwaddr_;
 
 ClientHandler::ClientPtr
-ClientHandler::lookup(const DuidPtr& duid) {
+ClientHandler::lookup(const ClientIdPtr& client_id) {
     // Sanity check.
-    if (!duid) {
-        isc_throw(InvalidParameter, "null duid in ClientHandler::lookup");
+    if (!client_id) {
+        isc_throw(InvalidParameter, "null client-id in ClientHandler::lookup");
     }
 
-    auto it = clients_client_id_.find(duid->getDuid());
+    auto it = clients_client_id_.find(client_id->getClientId());
     if (it == clients_client_id_.end()) {
         return (ClientPtr());
     }
@@ -102,14 +102,14 @@ ClientHandler::addByHWAddr(const ClientPtr& client) {
 }
 
 void
-ClientHandler::del(const DuidPtr& duid) {
+ClientHandler::del(const ClientIdPtr& client_id) {
     // Sanity check.
-    if (!duid) {
+    if (!client_id) {
         isc_throw(InvalidParameter, "null duid in ClientHandler::del");
     }
 
     // Assume erase will never fail so not checking its result.
-    clients_client_id_.erase(duid->getDuid());
+    clients_client_id_.erase(client_id->getClientId());
 }
 
 void
@@ -177,15 +177,15 @@ ClientHandler::tryLock(Pkt4Ptr query, ContinuationPtr cont) {
 
     // Get identifiers.
     OptionPtr opt_client_id = query->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
-    DuidPtr duid;
+    ClientIdPtr client_id;
     if (opt_client_id) {
-        duid.reset(new ClientId(opt_client_id->getData()));
+        client_id.reset(new ClientId(opt_client_id->getData()));
     }
     HWAddrPtr hwaddr = query->getHWAddr();
     if (hwaddr && hwaddr->hwaddr_.empty()) {
         hwaddr.reset();
     }
-    if (!duid && !hwaddr) {
+    if (!client_id && !hwaddr) {
         // Can't do something useful: cross fingers.
         return (true);
     }
@@ -194,17 +194,17 @@ ClientHandler::tryLock(Pkt4Ptr query, ContinuationPtr cont) {
     ClientPtr holder_hw;
     Pkt4Ptr next_query_id;
     Pkt4Ptr next_query_hw;
-    client_.reset(new Client(query, duid, hwaddr));
+    client_.reset(new Client(query, client_id, hwaddr));
 
     {
         lock_guard<mutex> lk(mutex_);
         // Try first duid.
-        if (duid) {
+        if (client_id) {
             // Try to acquire the by-client-id lock and return the holder
             // when it failed.
-            holder_id = lookup(duid);
+            holder_id = lookup(client_id);
             if (!holder_id) {
-                locked_client_id_ = duid;
+                locked_client_id_ = client_id;
                 lockById();
             } else if (cont) {
                 next_query_id = holder_id->next_query_;
@@ -238,8 +238,10 @@ ClientHandler::tryLock(Pkt4Ptr query, ContinuationPtr cont) {
                 // Logging a warning as it is supposed to be a rare event
                 // with well behaving clients...
                 LOG_DEBUG(bad_packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0011)
+                    .arg(next_query_id->getHWAddrLabel())
                     .arg(next_query_id->toText())
                     .arg(this_thread::get_id())
+                    .arg(holder_id->query_->getHWAddrLabel())
                     .arg(holder_id->query_->toText())
                     .arg(holder_id->thread_);
                 stats::StatsMgr::instance().addValue("pkt4-receive-drop",
@@ -249,8 +251,10 @@ ClientHandler::tryLock(Pkt4Ptr query, ContinuationPtr cont) {
             // Logging a warning as it is supposed to be a rare event
             // with well behaving clients...
             LOG_DEBUG(bad_packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0011)
+                .arg(query->getHWAddrLabel())
                 .arg(query->toText())
                 .arg(this_thread::get_id())
+                .arg(holder_id->query_->getHWAddrLabel())
                 .arg(holder_id->query_->toText())
                 .arg(holder_id->thread_);
             stats::StatsMgr::instance().addValue("pkt4-receive-drop",
@@ -263,8 +267,10 @@ ClientHandler::tryLock(Pkt4Ptr query, ContinuationPtr cont) {
                 // Logging a warning as it is supposed to be a rare event
                 // with well behaving clients...
                 LOG_DEBUG(bad_packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0012)
+                    .arg(next_query_hw->getHWAddrLabel())
                     .arg(next_query_hw->toText())
                     .arg(this_thread::get_id())
+                    .arg(holder_hw->query_->getHWAddrLabel())
                     .arg(holder_hw->query_->toText())
                     .arg(holder_hw->thread_);
                 stats::StatsMgr::instance().addValue("pkt4-receive-drop",
@@ -274,8 +280,10 @@ ClientHandler::tryLock(Pkt4Ptr query, ContinuationPtr cont) {
             // Logging a warning as it is supposed to be a rare event
             // with well behaving clients...
             LOG_DEBUG(bad_packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0012)
+                .arg(query->getHWAddrLabel())
                 .arg(query->toText())
                 .arg(this_thread::get_id())
+                .arg(holder_hw->query_->getHWAddrLabel())
                 .arg(holder_hw->query_->toText())
                 .arg(holder_hw->thread_);
             stats::StatsMgr::instance().addValue("pkt4-receive-drop",

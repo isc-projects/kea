@@ -1,0 +1,19 @@
+{
+  "sql_table_mappings": {
+    "dhcp4_option_data": {
+      "actual_name": "dhcp4_options"
+    },
+    "dhcp4_subnet4": {
+      "actual_name": "dhcp4_subnet"
+    },
+    "dhcp6_option_data": {
+      "actual_name": "dhcp6_options"
+    },
+    "dhcp6_subnet6": {
+      "actual_name": "dhcp6_subnet"
+    }
+  },
+  "ignored_parameters": [
+    "reservations"
+  ]
+}

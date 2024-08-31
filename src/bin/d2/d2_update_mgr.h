@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -46,7 +46,7 @@ typedef std::map<TransactionKey, NameChangeTransactionPtr> TransactionList;
 /// transactions.
 ///
 /// As part of the process of forming transactions, D2UpdateMgr matches each
-/// request with the appropriate list of DNS servers.  This matching is  based
+/// request with the appropriate list of DNS servers.  This matching is based
 /// upon request attributes, primarily the FQDN and update direction (forward
 /// or reverse).  D2UpdateMgr uses the services of D2CfgMgr to match requests
 /// to DNS server lists.
@@ -54,7 +54,7 @@ typedef std::map<TransactionKey, NameChangeTransactionPtr> TransactionList;
 /// Once created, each transaction is responsible for carrying out the steps
 /// required to fulfill its specific request.  These steps typically consist of
 /// one or more DNS packet exchanges with the appropriate DNS server.  As
-/// transactions complete,  D2UpdateMgr removes them from the transaction list,
+/// transactions complete, D2UpdateMgr removes them from the transaction list,
 /// replacing them with new transactions.
 ///
 /// D2UpdateMgr carries out each of the above steps, with a method called
@@ -149,9 +149,11 @@ protected:
     ///
     /// @param ncr the NameChangeRequest for which to create a transaction.
     ///
+    /// @return True if a transaction was added, false otherwise.
+    ///
     /// @throw D2UpdateMgrError if a transaction for this DHCID already
     /// exists. Note this would be programmatic error.
-    void makeTransaction(isc::dhcp_ddns::NameChangeRequestPtr& ncr);
+    bool makeTransaction(isc::dhcp_ddns::NameChangeRequestPtr& ncr);
 
 public:
     /// @brief Gets the D2UpdateMgr's IOService.

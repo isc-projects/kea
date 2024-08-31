@@ -33,7 +33,7 @@
                 "socket-name": "/tmp/kea4-ctrl-socket",
                 "socket-type": "unix",
                 "user-context": {
-                    "comment": "socket to DHCP4 server"
+                    "comment": "socket to DHCPv4 server"
                 }
             },
             "dhcp6": {

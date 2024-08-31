@@ -47,7 +47,7 @@
                     "password": "1234"
                 },
 
-                // This specifies a hiddent client.
+                // This specifies a hidden client.
                 {
                     // The user id is the content of the file /tmp/kea-creds/hiddenu.
                     "user-file": "hiddenu",
@@ -84,7 +84,7 @@
             // This is how the Agent can communicate with the DHCPv4 server.
             "dhcp4":
             {
-                "comment": "socket to DHCP4 server",
+                "comment": "socket to DHCPv4 server",
                 "socket-type": "unix",
                 "socket-name": "/tmp/kea4-ctrl-socket"
             },
@@ -115,7 +115,7 @@
 
                 // Some libraries may support parameters. Make sure you
                 // type this section carefully, as the CA does not validate
-                // it (because the format is library specific).
+                // it (because the format is library-specific).
                 "parameters": {
                     "param1": "foo"
                 }
@@ -126,13 +126,13 @@
         "loggers": [
             {
                 "name": "kea-ctrl-agent",
-                "output_options": [
+                "output-options": [
                     {
                         "output": "/var/log/kea-ctrl-agent.log",
                         // Several additional parameters are possible in addition
                         // to the typical output. Flush determines whether logger
                         // flushes output to a file. Maxsize determines maximum
-                        // filesize before the file is being rotated. maxver
+                        // filesize before the file is rotated. maxver
                         // specifies the maximum number of rotated files being
                         // kept.
                         "flush": true,

@@ -12,6 +12,8 @@
 #include <hooks/hooks.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <process/daemon.h>
 
 namespace isc {
 namespace flex_option {
@@ -24,8 +26,9 @@ FlexOptionImplPtr impl;
 using namespace isc;
 using namespace isc::data;
 using namespace isc::dhcp;
-using namespace isc::hooks;
 using namespace isc::flex_option;
+using namespace isc::hooks;
+using namespace isc::process;
 
 // Functions accessed by the hooks framework use C linkage to avoid the name
 // mangling that accompanies use of the C++ compiler as well as to avoid
@@ -120,6 +123,21 @@ int pkt6_send(CalloutHandle& handle) {
 /// @return 0 when initialization is successful, 1 otherwise
 int load(LibraryHandle& handle) {
     try {
+        // Make the hook library not loadable by d2 or ca.
+        uint16_t family = CfgMgr::instance().getFamily();
+        const std::string& proc_name = Daemon::getProcName();
+        if (family == AF_INET) {
+            if (proc_name != "kea-dhcp4") {
+                isc_throw(isc::Unexpected, "Bad process name: " << proc_name
+                          << ", expected kea-dhcp4");
+            }
+        } else {
+            if (proc_name != "kea-dhcp6") {
+                isc_throw(isc::Unexpected, "Bad process name: " << proc_name
+                          << ", expected kea-dhcp6");
+            }
+        }
+
         impl.reset(new FlexOptionImpl());
         ConstElementPtr options = handle.getParameter("options");
         impl->configure(options);

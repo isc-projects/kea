@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +12,7 @@
 #include <testutils/test_to_element.h>
 
 #include <boost/lexical_cast.hpp>
+#include <fstream>
 
 using namespace isc;
 using namespace isc::data;
@@ -80,18 +81,21 @@ void checkStringValue(const ConstElementPtr& element,
 /// @param name is the value to compare against key's name_.
 /// @param algorithm is the string value to compare against key's algorithm.
 /// @param secret is the value to compare against key's secret.
+/// @param secret_file is the file name where the secret can be found.
+/// @param digestbits is the minimum truncated length in bits.
 ///
 /// @return returns true if there is a match across the board, otherwise it
 /// returns false.
 bool checkKey(TSIGKeyInfoPtr key, const std::string& name,
               const std::string& algorithm, const std::string& secret,
-              uint32_t digestbits = 0) {
+              std::string secret_file, uint32_t digestbits = 0) {
     // Return value, assume its a match.
     return (((key) &&
         (key->getName() == name) &&
-        (key->getAlgorithm() == algorithm)  &&
+        (key->getAlgorithm() == algorithm) &&
         (key->getDigestbits() == digestbits) &&
-        (key->getSecret() ==  secret)  &&
+        (key->getSecret() == secret) &&
+        (key->getSecretFile() == secret_file) &&
         (key->getTSIGKey())));
 }
 
@@ -232,7 +236,8 @@ protected:
     /// ensure any D2 object(s) that were created by a prior invocation are
     /// destroyed. This permits parsing to be conducted more than once
     /// in the same test.
-    virtual void reset(){};
+    virtual void reset() {
+    }
 
     /// @brief Adds default values to the given element tree
     ///
@@ -277,7 +282,7 @@ TEST_F(D2SimpleParserTest, globalD2Defaults) {
     EXPECT_EQ(num, 8);
 
     // Let's go over all parameters we have defaults for.
-    BOOST_FOREACH(SimpleDefault deflt, D2SimpleParser::D2_GLOBAL_DEFAULTS) {
+    for (auto const& deflt : D2SimpleParser::D2_GLOBAL_DEFAULTS) {
         ConstElementPtr x;
         ASSERT_NO_THROW(x = empty->get(deflt.name_));
 
@@ -303,7 +308,8 @@ class TSIGKeyInfoParserTest : public D2SimpleParserTest {
 public:
     /// @brief Constructor
     TSIGKeyInfoParserTest()
-        : D2SimpleParserTest(D2ParserContext::PARSER_TSIG_KEY) {
+        : D2SimpleParserTest(D2ParserContext::PARSER_TSIG_KEY),
+          test_file_name_(TEST_DATA_BUILDDIR "/sf-test") {
     }
 
     /// @brief Free up the keys created by parsing
@@ -313,6 +319,7 @@ public:
 
     /// @brief Destructor
     virtual ~TSIGKeyInfoParserTest() {
+        static_cast<void>(remove(test_file_name_.c_str()));
         reset();
     };
 
@@ -340,8 +347,10 @@ public:
 
     /// @brief Retains the TSIGKeyInfo created by a successful parsing
     TSIGKeyInfoPtr key_;
-};
 
+    /// @brief Secret file name.
+    std::string test_file_name_;
+};
 
 /// @brief Test fixture class for testing TSIGKeyInfo list parsing.
 class TSIGKeyInfoListParserTest : public D2SimpleParserTest {
@@ -369,7 +378,7 @@ public:
     /// @return the number of default items added to the tree
     size_t setDefaults(data::ElementPtr config) {
         return (SimpleParser::setListDefaults(config, D2SimpleParser::
-                                                      TSIG_KEY_DEFAULTS));
+                                              TSIG_KEY_DEFAULTS));
     }
 
     /// @brief Attempts to parse the given element into a list of TSIGKeyInfos
@@ -413,7 +422,7 @@ public:
     /// @return the number of default items added to the tree
     virtual size_t setDefaults(data::ElementPtr config) {
         return (SimpleParser::setDefaults(config, D2SimpleParser::
-                                                  DNS_SERVER_DEFAULTS));
+                                          DNS_SERVER_DEFAULTS));
     }
 
     /// @brief Attempts to parse the given element into a DnsServerInfo
@@ -459,7 +468,7 @@ public:
     /// @return the number of default items added to the tree
     virtual size_t setDefaults(data::ElementPtr config) {
         return (SimpleParser::setListDefaults(config, D2SimpleParser::
-                                                      DNS_SERVER_DEFAULTS));
+                                              DNS_SERVER_DEFAULTS));
     }
 
     /// @brief Attempts to parse the given element into a list of DnsServerInfos
@@ -508,7 +517,7 @@ public:
     void addKey(const std::string& name, const std::string& algorithm,
                 const std::string& secret) {
         TSIGKeyInfoPtr key_info(new TSIGKeyInfo(name, algorithm, secret));
-        (*keys_)[name]=key_info;
+        (*keys_)[name] = key_info;
     }
 
     /// @brief Adds DDNS Domain values to the given DDNS Domain element
@@ -569,10 +578,9 @@ public:
         size_t cnt = 0;
         // We don't use SimpleParser::setListDefaults() as this does
         // not handle sub-lists or sub-maps
-        BOOST_FOREACH(ElementPtr domain, config->listValue()) {
-            cnt += D2SimpleParser::
-                   setDdnsDomainDefaults(domain, D2SimpleParser::
-                                                 DDNS_DOMAIN_DEFAULTS);
+        for (auto const& domain : config->listValue()) {
+            cnt += D2SimpleParser::setDdnsDomainDefaults(domain, D2SimpleParser::
+                                                         DDNS_DOMAIN_DEFAULTS);
         }
 
         return (cnt);
@@ -599,6 +607,7 @@ public:
 /// 1. Name cannot be blank.
 /// 2. Algorithm cannot be blank.
 /// 3. Secret cannot be blank.
+/// 4. Secret file cannot be invalid when specified.
 TEST_F(TSIGKeyInfoParserTest, invalidEntry) {
 
     // Name cannot be blank.
@@ -641,10 +650,61 @@ TEST_F(TSIGKeyInfoParserTest, invalidEntry) {
               " \"digest-bits\": 120 , "
               " \"secret\": \"bogus\" "
               "}";
-    PARSE_FAIL(config, "Cannot make D2TsigKey: Incomplete input for base64:"
+    PARSE_FAIL(config, "Cannot make D2TsigKey: non-zero bits left over"
+                       " bogus (<string>:1:1)");
+
+    // Secret file must exist.
+    config = "{"
+              " \"name\": \"d2_key_one\" , "
+              " \"algorithm\": \"HMAC-MD5\" , "
+              " \"digest-bits\": 120 , "
+              " \"secret-file\": \"/does/not/exist\" "
+              "}";
+    PARSE_FAIL(config, "tsig-key : Expected a file at path "
+               "'/does/not/exist' (<string>:1:91)");
+
+    // Secret file must be a regular file.
+    config = "{"
+              " \"name\": \"d2_key_one\" , "
+              " \"algorithm\": \"HMAC-MD5\" , "
+              " \"digest-bits\": 120 , "
+              " \"secret-file\": \"/\" "
+              "}";
+    PARSE_FAIL(config, "tsig-key : Expected '/' to be a regular file "
+               "(<string>:1:91)");
+
+    // Secret file must not be empty.
+    std::ofstream fs(test_file_name_.c_str(),
+                     std::ofstream::out | std::ofstream::trunc);
+    ASSERT_TRUE(fs.is_open());
+    fs.close();
+
+    config = "{"
+              " \"name\": \"d2_key_one\" , "
+              " \"algorithm\": \"HMAC-MD5\" , "
+              " \"digest-bits\": 120 , "
+              " \"secret-file\": \"";
+    config += test_file_name_ + "\" }";
+    std::string expected = "tsig-key : Expected '";
+    expected += test_file_name_ + "' to not be empty (<string>:1:91)";
+    PARSE_FAIL(config, expected);
+
+    // Secret file content must be valid.
+    fs = std::ofstream(test_file_name_.c_str(),
+                       std::ofstream::out | std::ofstream::trunc);
+    ASSERT_TRUE(fs.is_open());
+    fs << "bogus";
+    fs.close();
+
+    config = "{"
+              " \"name\": \"d2_key_one\" , "
+              " \"algorithm\": \"HMAC-MD5\" , "
+              " \"digest-bits\": 120 , "
+              " \"secret-file\": \"";
+    config += test_file_name_ + "\" }";
+    PARSE_FAIL(config, "Cannot make D2TsigKey: non-zero bits left over"
                        " bogus (<string>:1:1)");
 }
-
 
 /// @brief Verifies that TSIGKeyInfo parsing creates a proper TSIGKeyInfo
 /// when given a valid combination of entries.
@@ -662,7 +722,36 @@ TEST_F(TSIGKeyInfoParserTest, validEntry) {
 
     // Verify the key contents.
     EXPECT_TRUE(checkKey(key_, "d2_key_one", "HMAC-MD5",
-                         "dGhpcyBrZXkgd2lsbCBtYXRjaA==", 120));
+                         "dGhpcyBrZXkgd2lsbCBtYXRjaA==", "", 120));
+
+    // Verify unparsing.
+    runToElementTest<TSIGKeyInfo>(config, *key_);
+}
+
+/// @brief Verifies that TSIGKeyInfo parsing creates a proper TSIGKeyInfo
+/// when given a valid secret file.
+TEST_F(TSIGKeyInfoParserTest, validSecretFile) {
+    // Valid entries for TSIG key, all items are required.
+    std::string config = "{"
+                         " \"name\": \"d2_key_one\" , "
+                         " \"algorithm\": \"HMAC-MD5\" , "
+                         " \"digest-bits\": 120 , "
+                         " \"secret-file\": \"";
+    config += test_file_name_ + "\" }";
+    // Create and fill the secret file.
+    std::ofstream fs(test_file_name_.c_str(),
+                     std::ofstream::out | std::ofstream::trunc);
+    ASSERT_TRUE(fs.is_open());
+    fs << "dGhpcyBrZXkgd2lsbCBtYXRjaA==";
+    fs.close();
+    // Verify that it parses.
+    PARSE_OK(config);
+    ASSERT_TRUE(key_);
+
+    // Verify the key contents.
+    EXPECT_TRUE(checkKey(key_, "d2_key_one", "HMAC-MD5",
+                         "dGhpcyBrZXkgd2lsbCBtYXRjaA==",
+                         test_file_name_, 120));
 
     // Verify unparsing.
     runToElementTest<TSIGKeyInfo>(config, *key_);
@@ -770,7 +859,7 @@ TEST_F(TSIGKeyInfoListParserTest, validTSIGKeyList) {
 
     // Verify the key contents.
     EXPECT_TRUE(checkKey(key, "key1", TSIGKeyInfo::HMAC_MD5_STR,
-                         ref_secret, 80));
+                         ref_secret, "", 80));
 
     // Find the 2nd key and retrieve it.
     gotit = keys_->find("key2");
@@ -779,7 +868,7 @@ TEST_F(TSIGKeyInfoListParserTest, validTSIGKeyList) {
 
     // Verify the key contents.
     EXPECT_TRUE(checkKey(key, "key2", TSIGKeyInfo::HMAC_SHA1_STR,
-                         ref_secret, 80));
+                         ref_secret, "", 80));
 
     // Find the 3rd key and retrieve it.
     gotit = keys_->find("key3");
@@ -788,7 +877,7 @@ TEST_F(TSIGKeyInfoListParserTest, validTSIGKeyList) {
 
     // Verify the key contents.
     EXPECT_TRUE(checkKey(key, "key3", TSIGKeyInfo::HMAC_SHA256_STR,
-                         ref_secret, 128));
+                         ref_secret, "", 128));
 
     // Find the 4th key and retrieve it.
     gotit = keys_->find("key4");
@@ -797,7 +886,7 @@ TEST_F(TSIGKeyInfoListParserTest, validTSIGKeyList) {
 
     // Verify the key contents.
     EXPECT_TRUE(checkKey(key, "key4", TSIGKeyInfo::HMAC_SHA224_STR,
-                         ref_secret, 112));
+                         ref_secret, "", 112));
 
     // Find the 5th key and retrieve it.
     gotit = keys_->find("key5");
@@ -806,7 +895,7 @@ TEST_F(TSIGKeyInfoListParserTest, validTSIGKeyList) {
 
     // Verify the key contents.
     EXPECT_TRUE(checkKey(key, "key5", TSIGKeyInfo::HMAC_SHA384_STR,
-                         ref_secret, 192));
+                         ref_secret, "", 192));
 
     // Find the 6th key and retrieve it.
     gotit = keys_->find("key6");
@@ -815,7 +904,7 @@ TEST_F(TSIGKeyInfoListParserTest, validTSIGKeyList) {
 
     // Verify the key contents.
     EXPECT_TRUE(checkKey(key, "key6", TSIGKeyInfo::HMAC_SHA512_STR,
-                         ref_secret, 256));
+                         ref_secret, "", 256));
 }
 
 /// @brief Tests the enforcement of data validation when parsing DnsServerInfos.

@@ -15,7 +15,7 @@ Windows servers, have chosen to adopt a more complex GSS-TSIG approach that offe
 additional capabilities, such as using negotiated dynamic keys.
 
 Kea supports GSS-TSIG to protect DNS updates sent by
-the Kea DHCP-DDNS (D2) server in a premium hook, called ``gss_tsig``.
+the Kea DHCP-DDNS (D2) server in a premium hook, called :ischooklib:`libddns_gss_tsig.so`.
 
 GSS-TSIG is defined in `RFC 3645 <https://tools.ietf.org/html/rfc3645>`__.
 The GSS-TSIG protocol itself is an implementation of generic GSS-API v2
@@ -116,11 +116,10 @@ detection, similar to this:
 6.  Compile ``make -jX``, where X is the number of CPU cores
     available.
 
-7.  After compilation, the ``gss_tsig`` hook is available in the
-    ``premium/src/hooks/d2/gss_tsig`` directory. It can be loaded by
-    the Kea DHCP-DDNS (D2) daemon.
+7.  After compilation, :ischooklib:`libddns_gss_tsig.so` is available in the
+    ``premium/src/hooks/d2/gss_tsig`` directory. It can be loaded by :iscman:`kea-dhcp-ddns`.
 
-The ``gss_tsig`` hook library was developed using the MIT Kerberos 5 implementation, but
+:ischooklib:`libddns_gss_tsig.so` was developed using the MIT Kerberos 5 implementation, but
 Heimdal is also supported. Note that Heimdal is picky about
 security-sensitive file permissions and is known to emit an unclear error message.
 It is a good idea to keep these files plain, with one link and no
@@ -451,6 +450,12 @@ zone similar to the one configured in Kea. To do that, open the "DNS Manager" an
 "DNS" from the list; from the dropdown list, choose "Reverse Lookup Zones"; then
 click "Action" and "New Zone"; finally, follow the New Zone Wizard to add a new zone.
 
+The standard requires both anti-replay and sequence services. Experiences with the BIND 9 nsupdate
+showed the sequence service led to problems so it is disabled by default in the hook. It seems
+the anti-replay service can also lead to problems with Microsoft DNS servers so it is now
+configurable. Note that these security services are useless for DNS dynamic update which was
+designed to run over UDP so with out of order and duplicated messages.
+
 .. _gss-tsig-using:
 
 Using GSS-TSIG
@@ -458,7 +463,7 @@ Using GSS-TSIG
 
 There are a number of steps required to enable the GSS-TSIG mechanism:
 
-1. The ``gss_tsig`` hook library must be loaded by the D2 server.
+1. :ischooklib:`libddns_gss_tsig.so` must be loaded by :iscman:`kea-dhcp-ddns`.
 2. The GSS-TSIG-capable DNS servers must be specified with their parameters.
 
 An excerpt from a D2 server configuration is provided below; more examples are available in the
@@ -466,7 +471,7 @@ An excerpt from a D2 server configuration is provided below; more examples are a
 
 .. code-block:: javascript
    :linenos:
-   :emphasize-lines: 57-113
+   :emphasize-lines: 57-117
 
 
     {
@@ -543,9 +548,10 @@ An excerpt from a D2 server configuration is provided below; more examples are a
                 // store client keys. As credentials cache is more flexible,
                 // it is recommended to use it. Typically, using both at the
                 // same time may cause problems.
-                //
                 // "client-keytab": "FILE:/etc/dhcp.keytab", // toplevel only
                 "credentials-cache": "FILE:/etc/ccache", // toplevel only
+                "gss-replay-flag": true, // GSS anti replay service
+                "gss-sequence-flag": false, // no GSS sequence service
                 "tkey-lifetime": 3600, // 1 hour
                 "rekey-interval": 2700, // 45 minutes
                 "retry-interval": 120, // 2 minutes
@@ -564,6 +570,8 @@ An excerpt from a D2 server configuration is provided below; more examples are a
                         "port": 53,
                         "server-principal": "DNS/server1.example.org@EXAMPLE.ORG",
                         "client-principal": "DHCP/admin1.example.org@EXAMPLE.ORG",
+                        "gss-replay-flag": false, // no GSS anti replay service
+                        "gss-sequence-flag": false, // no GSS sequence service
                         "tkey-lifetime": 7200, // 2 hours
                         "rekey-interval": 5400, // 90 minutes
                         "retry-interval": 240, // 4 minutes
@@ -597,7 +605,7 @@ specified, the default of 53 is assumed. This is similar to basic mode, with no
 authentication done using TSIG keys, with the
 exception that static TSIG keys are not referenced by name.
 
-Second, the ``libddns_gss_tsig.so`` library must be specified on the
+Second, :ischooklib:`libddns_gss_tsig.so` must be specified on the
 ``hooks-libraries`` list. This hook takes many parameters. The most important
 one is ``servers``, which is a list of GSS-TSIG-capable servers. If there are
 several servers and they share some characteristics, the values can be specified
@@ -624,6 +632,12 @@ defined, or if all servers have different values.
    +-------------------+----------+---------+---------------------+--------------------------------+
    | client-principal  | global / | string  | empty               | the Kerberos principal name of |
    |                   | server   |         |                     | the Kea D2 service             |
+   +-------------------+----------+---------+---------------------+--------------------------------+
+   | gss-replay-flag   | global / | true /  | true                | require the GSS anti replay    |
+   |                   | server   | false   |                     | service (GSS_C_REPLAY_FLAG)    |
+   +-------------------+----------+---------+---------------------+--------------------------------+
+   | gss-sequence-flag | global / | true /  | false               | require the GSS sequence       |
+   |                   | server   | false   |                     | service (GSS_C_SEQUENCE_FLAG)  |
    +-------------------+----------+---------+---------------------+--------------------------------+
    | tkey-protocol     | global / | string  | "TCP"               | the protocol used to establish |
    |                   | server   | "TCP" / |                     | the security context with the  |
@@ -699,6 +713,13 @@ The global parameters are described below:
   service. It is optional, and uses the typical Kerberos notation:
   ``<SERVICE-NAME>/<server-domain-name>@<REALM>``.
 
+- ``gss-replay-flag`` determines if the GSS anti replay service is
+  required. It is by default but this can be disabled.
+
+- ``gss-sequence-flag`` determines if the GSS sequence service is
+  required. It is not by default but is required by the standard
+  so it can be enabled.
+
 - ``tkey-protocol`` determines which protocol is used to establish the
   security context with the DNS servers. Currently, the only supported
   values are TCP (the default) and UDP.
@@ -763,6 +784,16 @@ The server map parameters are described below:
 - ``client-principal`` is the Kerberos principal name of the Kea D2
   service for this DNS server. The ``client-principal`` parameter set at the per-server
   level takes precedence over one set at the global level. It is an optional parameter.
+
+- ``gss-replay-flag`` determines if the GSS anti replay service is
+  required. The ``gss-replay-flag`` parameter set at the per-server
+  level takes precedence over one set at the global level. It is an optional parameter
+  which defaults to true.
+
+- ``gss-sequence-flag`` determines if the GSS sequence service is
+  required. The ``gss-sequence-flag`` parameter set at the per-server
+  level takes precedence over one set at the global level. It is an optional parameter
+  which defaults to false.
 
 - ``tkey-protocol`` determines which protocol is used to establish the
   security context with the DNS server. The ``tkey-protocol`` parameter set at the per-server
@@ -830,9 +861,8 @@ GSS-TSIG Automatic Key Removal
 
 The server periodically deletes keys after they have been expired more than three times the
 length of the maximum key lifetime (the ``tkey-lifetime`` parameter).
-The user has the option to purge keys on demand by using the ``gss-tsig-purge-all``
-command (see :ref:`command-gss-tsig-purge-all`) or the ``gss-tsig-purge`` command
-(see :ref:`command-gss-tsig-purge`).
+The user has the option to purge keys on demand by using the :isccmd:`gss-tsig-purge-all`
+command or the :isccmd:`gss-tsig-purge` command.
 
 
 GSS-TSIG Configuration for Deployment
@@ -925,6 +955,7 @@ GSS-TSIG Commands
 
 The GSS-TSIG hook library supports some commands, which are described below.
 
+.. isccmd:: gss-tsig-get-all
 .. _command-gss-tsig-get-all:
 
 The ``gss-tsig-get-all`` Command
@@ -982,6 +1013,7 @@ Here is an example of a response returning one GSS-TSIG server and one key:
         }
     }
 
+.. isccmd:: gss-tsig-get
 .. _command-gss-tsig-get:
 
 The ``gss-tsig-get`` Command
@@ -1028,6 +1060,7 @@ Here is an example of a response returning information about the server "foo":
         }
     }
 
+.. isccmd:: gss-tsig-list
 .. _command-gss-tsig-list:
 
 The ``gss-tsig-list`` Command
@@ -1063,6 +1096,7 @@ Here is an example of a response returning two GSS-TSIG servers and three keys:
         }
     }
 
+.. isccmd:: gss-tsig-key-get
 .. _command-gss-tsig-key-get:
 
 The ``gss-tsig-key-get`` Command
@@ -1098,6 +1132,7 @@ Here is an example of a response returning information about GSS-TSIG key "1234.
         }
     }
 
+.. isccmd:: gss-tsig-key-expire
 .. _command-gss-tsig-key-expire:
 
 The ``gss-tsig-key-expire`` Command
@@ -1125,6 +1160,7 @@ Here is an example of a response indicating that GSS-TSIG key "1234.sig-foo.com.
         "text": "GSS-TSIG key '1234.sig-foo.com.' expired"
     }
 
+.. isccmd:: gss-tsig-key-del
 .. _command-gss-tsig-key-del:
 
 The ``gss-tsig-key-del`` Command
@@ -1152,6 +1188,7 @@ Here is an example of a response indicating that GSS-TSIG key "1234.sig-foo.com.
         "text": "GSS-TSIG key '1234.sig-foo.com.' deleted"
     }
 
+.. isccmd:: gss-tsig-purge-all
 .. _command-gss-tsig-purge-all:
 
 The ``gss-tsig-purge-all`` Command
@@ -1176,6 +1213,7 @@ Here is an example of a response indicating that two GSS-TSIG keys have been pur
         "text": "2 purged GSS-TSIG keys"
     }
 
+.. isccmd:: gss-tsig-purge
 .. _command-gss-tsig-purge:
 
 The ``gss-tsig-purge`` Command
@@ -1203,6 +1241,7 @@ Here is an example of a response indicating that two GSS-TSIG keys for server "f
         "text": "2 purged keys for GSS-TSIG server[foo]"
     }
 
+.. isccmd:: gss-tsig-rekey-all
 .. _command-gss-tsig-rekey-all:
 
 The ``gss-tsig-rekey-all`` Command
@@ -1231,6 +1270,7 @@ Here is an example of a response indicating that a rekey was performed:
 This command is useful when, for instance, the DHCP-DDNS server is
 reconnected to the network.
 
+.. isccmd:: gss-tsig-rekey
 .. _command-gss-tsig-rekey:
 
 The ``gss-tsig-rekey`` Command

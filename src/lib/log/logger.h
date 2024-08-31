@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,6 +17,7 @@
 #include <log/logger_level.h>
 #include <log/message_types.h>
 #include <log/log_formatter.h>
+#include <log/output_option.h>
 
 namespace isc {
 namespace log {
@@ -293,6 +294,13 @@ public:
     /// the ownership is transferred to the logger. If null is passed,
     /// a BadInterprocessSync exception is thrown.
     void setInterprocessSync(isc::log::interprocess::InterprocessSync* sync);
+
+    /// @brief Check if this logger has an appender of the given type.
+    ///
+    /// @param destination the appender type to be checked: console, file or syslog
+    ///
+    /// @return true if an appender of the given type is found, false otherwise
+    bool hasAppender(OutputOption::Destination const destination);
 
     /// \brief Equality
     ///

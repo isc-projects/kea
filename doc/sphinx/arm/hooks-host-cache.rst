@@ -1,7 +1,8 @@
+.. ischooklib:: libdhcp_host_cache.so
 .. _hooks-host-cache:
 
-``host_cache``: Host Cache Reservations for Improved Performance
-================================================================
+``libdhcp_host_cache.so``: Host Cache Reservations for Improved Performance
+===========================================================================
 
 Some database backends, such as RADIUS, are slow and may take
 a long time to respond. Since Kea in general is synchronous, backend
@@ -13,8 +14,14 @@ information in the database.
 
 .. note::
 
-   This library can only be loaded by the ``kea-dhcp4`` or
-   ``kea-dhcp6`` process.
+    :ischooklib:`libdhcp_host_cache.so` is available only to ISC customers with
+    a paid support contract. For more information on subscription options,
+    please complete the form at https://www.isc.org/contact.
+
+.. note::
+
+   This library can only be loaded by the :iscman:`kea-dhcp4` or
+   :iscman:`kea-dhcp6` process.
 
 In principle, this hook library can be used with any backend that may
 introduce performance degradation (MySQL, PostgreSQL or RADIUS). Host Cache
@@ -34,14 +41,16 @@ any other hook library; for example, this configuration could be used:
 
      "hooks-libraries": [
      {
-         "library": "/usr/local/lib/kea/hooks/libdhc_host_cache.so",
+         "library": "/usr/local/lib/kea/hooks/libdhcp_host_cache.so",
          "parameters": {
 
              # Tells Kea to never cache more than 1000 hosts.
              "maximum": 1000
 
          }
-     } ]
+     } ],
+     ...
+     }
 
 Once loaded, the Host Cache hook library provides a number of new
 commands which can be used either over the control channel (see
@@ -50,6 +59,7 @@ commands which can be used either over the control channel (see
 :ref:`shell-overview`. The following sections describe the commands
 available.
 
+.. isccmd:: cache-flush
 .. _command-cache-flush:
 
 The ``cache-flush`` Command
@@ -67,9 +77,10 @@ removed. An example usage looks as follows:
    }
 
 This command removes 1000 hosts; to delete *all* cached
-hosts, use ``cache-clear`` instead. The hosts are stored in FIFO
+hosts, use :isccmd:`cache-clear` instead. The hosts are stored in FIFO
 (first-in, first-out) order, so the oldest entries are always removed.
 
+.. isccmd:: cache-clear
 .. _command-cache-clear:
 
 The ``cache-clear`` Command
@@ -85,8 +96,9 @@ looks as follows:
    }
 
 This command removes all hosts. To delete only a certain
-number of cached hosts, please use ``cache-flush`` instead.
+number of cached hosts, please use :isccmd:`cache-flush` instead.
 
+.. isccmd:: cache-size
 .. _command-cache-size:
 
 The ``cache-size`` Command
@@ -101,6 +113,7 @@ as follows:
        "command": "cache-size"
    }
 
+.. isccmd:: cache-write
 .. _command-cache-write:
 
 The ``cache-write`` Command
@@ -128,9 +141,10 @@ example usage looks as follows:
    }
 
 This causes the contents to be stored in the ``/tmp/kea-host-cache.json``
-file. That file can then be loaded with the ``cache-load`` command or
+file. That file can then be loaded with the :isccmd:`cache-load` command or
 processed by any other tool that is able to understand JSON format.
 
+.. isccmd:: cache-load
 .. _command-cache-load:
 
 The ``cache-load`` Command
@@ -151,15 +165,16 @@ example usage looks as follows:
    }
 
 This command stores the contents to the ``/tmp/kea-host-cache.json``
-file. That file can then be loaded with the ``cache-load`` command or
+file. That file can then be loaded with the :isccmd:`cache-load` command or
 processed by any other tool that is able to understand JSON format.
 
+.. isccmd:: cache-get
 .. _command-cache-get:
 
 The ``cache-get`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This command is similar to ``cache-write``, but instead of writing the cache
+This command is similar to :isccmd:`cache-write`, but instead of writing the cache
 contents to disk, it returns the contents to whoever sent the command.
 
 This command allows the contents of a file on disk to be loaded into an
@@ -175,12 +190,13 @@ example usage looks as follows:
 This command returns all the cached hosts; the response
 may be large.
 
+.. isccmd:: cache-get-by-id
 .. _command-cache-get-by-id:
 
 The ``cache-get-by-id`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This command is similar to ``cache-get``, but instead of returning the whole
+This command is similar to :isccmd:`cache-get`, but instead of returning the whole
 content it returns only the entries matching the given identifier.
 
 It takes one parameter, which defines the identifier of wanted cached
@@ -198,6 +214,7 @@ host reservations. An example usage looks as follows:
 This command returns all the cached hosts with the given hardware
 address.
 
+.. isccmd:: cache-insert
 .. _command-cache-insert:
 
 The ``cache-insert`` Command
@@ -259,6 +276,7 @@ looks as follows:
        }
    }
 
+.. isccmd:: cache-remove
 .. _command-cache-remove:
 
 The ``cache-remove`` Command
@@ -271,10 +289,10 @@ administrative action (e.g. the customer hasn't paid their bills or has
 been upgraded to better service), the information in the backend database
 (e.g. MySQL or RADIUS) is being updated. However, since the cache is in use,
 Kea does not notice the change as the cached values are used. The
-``cache-remove`` command can solve this problem by removing a cached entry
+:isccmd:`cache-remove` command can solve this problem by removing a cached entry
 after administrative changes.
 
-The ``cache-remove`` command works similarly to the ``reservation-get`` command.
+The :isccmd:`cache-remove` command works similarly to the :isccmd:`reservation-get` command.
 It allows querying by two parameters: either ``subnet-id4`` or ``subnet-id6``;
 or ``ip-address`` (may be an IPv4 or IPv6 address), ``hw-address`` (specifies
 a hardware/MAC address), ``duid``, ``circuit-id``, ``client-id``, or ``flex-id``.

@@ -9,15 +9,21 @@ The DHCP-DDNS Server
 Overview
 ========
 
-The DHCP-DDNS Server (``kea-dhcp-ddns``, known informally as D2) conducts
+The DHCP-DDNS Server (:iscman:`kea-dhcp-ddns`, known informally as D2) conducts
 the client side of the Dynamic DNS protocol (DDNS, defined in `RFC
 2136 <https://tools.ietf.org/html/rfc2136>`__) on behalf of the DHCPv4
-and DHCPv6 servers (``kea-dhcp4`` and ``kea-dhcp6`` respectively). The DHCP
-servers construct DDNS update requests, known as NameChangeRequests
+and DHCPv6 servers (:iscman:`kea-dhcp4` and :iscman:`kea-dhcp6`, respectively).
+The DHCP servers construct DDNS update requests, known as NameChangeRequests
 (NCRs), based on DHCP lease change events and then post them to D2. D2
 attempts to match each request to the appropriate DNS server(s) and
 carries out the necessary conversation with those servers to update the
 DNS data.
+
+The Kea hook library :ischooklib:`libdhcp_ddns_tuning.so` provides the ability
+for both :iscman:`kea-dhcp4` and :iscman:`kea-dhcp6` to generate host names
+procedurally based on an expression, to skip DDNS updates on a per-client basis,
+or to fine-tune various DNS update aspects. Please refer to the :ref:`hooks-ddns-tuning`
+documentation for the configuration options.
 
 .. _dhcp-ddns-dns-server-selection:
 
@@ -76,7 +82,7 @@ or at the behest of that client.
 
 Conflict resolution can be indirectly enabled or disabled via
 the configuration parameter ``ddns-use-conflict-resolution``, supported
-by both ``kea-dhcp4`` and ``kea-dhcp6``. These servers use this parameter to
+by both :iscman:`kea-dhcp4` and :iscman:`kea-dhcp6`. These servers use this parameter to
 set a flag within each NameChangeRequest they send that tells D2
 whether conflict resolution should be employed for that request.
 By default, conflict resolution is enabled. For more details, please refer
@@ -106,11 +112,11 @@ is supported by Kea beginning with release 2.1.2.
 Starting and Stopping the DHCP-DDNS Server
 ==========================================
 
-``kea-dhcp-ddns`` is the Kea DHCP-DDNS server and, due to the nature of
+:iscman:`kea-dhcp-ddns` is the Kea DHCP-DDNS server and, due to the nature of
 DDNS, it runs alongside either the DHCPv4 or DHCPv6 component (or both).
 Like other parts of Kea, it is a separate binary that can be run on its
-own or through ``keactrl`` (see :ref:`keactrl`). In normal
-operation, controlling ``kea-dhcp-ddns`` with ``keactrl`` is
+own or through :iscman:`keactrl` (see :ref:`keactrl`). In normal
+operation, controlling :iscman:`kea-dhcp-ddns` with :iscman:`keactrl` is
 recommended; however, it is also possible to run the DHCP-DDNS server
 directly. It accepts the following command-line switches:
 
@@ -126,26 +132,36 @@ directly. It accepts the following command-line switches:
 
 -  ``-v`` - displays the Kea version and exits.
 
+-  ``-V`` - displays the extended Kea version and exits.
+
 -  ``-W`` - displays the Kea configuration report and exits. The report
    is a copy of the ``config.report`` file produced by ``./configure``;
    it is embedded in the executable binary.
 
 -  ``-t file`` - specifies the configuration file to be tested.
-   ``kea-dhcp-ddns`` attempts to load it and conducts sanity checks.
+   :iscman:`kea-dhcp-ddns` attempts to load it and conducts sanity checks.
    Certain checks are possible only while running the actual
    server. The actual status is reported with an exit code (0 =
    configuration looks okay, 1 = error encountered). Kea prints out log
    messages to standard output and errors to standard error when testing
    the configuration.
 
-The ``config.report`` file may also be accessed directly, via the
-following command. The binary ``path`` may be found in the install
-directory or in the ``.libs`` subdirectory in the source tree. For
-example: ``kea/src/bin/d2/.libs/kea-dhcp-ddns``.
+   The contents of the ``config.report`` file may also be accessed by examining
+   certain libraries in the installation tree or in the source tree.
 
-::
+   .. code-block:: shell
 
-   strings path/kea-dhcp-ddns | sed -n 's/;;;; //p'
+    # from installation using libkea-process.so
+    $ strings ${prefix}/lib/libkea-process.so | sed -n 's/;;;; //p'
+
+    # from sources using libkea-process.so
+    $ strings src/lib/process/.libs/libkea-process.so | sed -n 's/;;;; //p'
+
+    # from sources using libkea-process.a
+    $ strings src/lib/process/.libs/libkea-process.a | sed -n 's/;;;; //p'
+
+    # from sources using libcfgrpt.a
+    $ strings src/lib/process/cfgrpt/.libs/libcfgrpt.a | sed -n 's/;;;; //p'
 
 Upon startup, the module loads its configuration and begins listening
 for NCRs based on that configuration.
@@ -174,7 +190,7 @@ such a case it is necessary to manually delete the PID file.
 Configuring the DHCP-DDNS Server
 ================================
 
-Before starting the ``kea-dhcp-ddns`` module for the first time, a
+Before starting the :iscman:`kea-dhcp-ddns` module for the first time, a
 configuration file must be created. The following default configuration
 is a template that can be customized to individual requirements.
 
@@ -183,7 +199,7 @@ is a template that can be customized to individual requirements.
    "DhcpDdns": {
        "ip-address": "127.0.0.1",
        "port": 53001,
-       "dns-server-timeout": 100,
+       "dns-server-timeout": 500,
        "ncr-protocol": "UDP",
        "ncr-format": "JSON",
        "tsig-keys": [ ],
@@ -201,7 +217,7 @@ which is described below:
 -  *Global Server Parameters* - define values which control connectivity and
    global server behavior.
 
--  *Control Socket* - defines the Control Socket type and name.
+-  *Control Sockets* - defines the Control Socket list.
 
 -  *TSIG Key Info* - defines the TSIG keys used for secure traffic with
    DNS servers.
@@ -224,7 +240,7 @@ Global Server Parameters
 
 -  ``dns-server-timeout`` - the maximum amount of time, in milliseconds,
    that D2 will wait for a response from a DNS server to a single DNS
-   update message.
+   update message.  The default is 500 ms.
 
 -  ``ncr-protocol`` - the socket protocol to use when sending requests to
    D2. Currently only UDP is supported.
@@ -243,7 +259,6 @@ illustrates how to change D2's global parameters so it will listen at
        "ip-address": "192.168.1.10",
        "port": 900,
        ...
-       }
    }
 
 .. warning::
@@ -259,27 +274,43 @@ illustrates how to change D2's global parameters so it will listen at
    If the ``ip-address`` and ``port`` are changed, the corresponding values in
    the DHCP servers' ``dhcp-ddns`` configuration section must be changed.
 
-.. _d2-ctrl-channel:
+.. _d2-ctrl-channels:
 
 Management API for the D2 Server
 --------------------------------
 
 The management API allows the issuing of specific management commands,
 such as configuration retrieval or shutdown. For more details, see
-:ref:`ctrl-channel`. Currently, the only supported communication
-channel type is the UNIX stream socket. By default there are no sockets
+:ref:`ctrl-channel`. By default there are no sockets
 open; to instruct Kea to open a socket, the following entry in the
 configuration file can be used:
 
 ::
 
    "DhcpDdns": {
-       "control-socket": {
-           "socket-type": "unix",
-           "socket-name": "/path/to/the/unix/socket"
-       },
+       "control-sockets": [
+           {
+               "socket-type": "unix",
+               "socket-name": "/path/to/the/unix/socket"
+           }
+       ],
        ...
    }
+
+.. note:
+
+   For backward compatibility the ``control-socket`` keyword is still
+   recognized by Kea version newer than 2.7.2: a ``control-socket`` entry
+   is put into a ``control-sockets`` list by the configuration parser.
+
+.. _d2-unix-ctrl-channel:
+
+UNIX Control Socket
+~~~~~~~~~~~~~~~~~~~
+
+Until Kea server 2.7.2 the only supported communication channel type was
+the UNIX stream socket with ``socket-type`` set to ``unix`` and
+``socket-name`` to the file path of the UNIX/LOCAL socket.
 
 The length of the path specified by the ``socket-name`` parameter is
 restricted by the maximum length for the UNIX socket name on the
@@ -295,26 +326,27 @@ for more details.
 
 The D2 server supports the following operational commands:
 
--  build-report
--  config-get
--  config-reload
--  config-set
--  config-test
--  config-write
--  list-commands
--  shutdown
--  status-get
--  version-get
+- :isccmd:`build-report`
+- :isccmd:`config-get`
+- :isccmd:`config-hash-get`
+- :isccmd:`config-reload`
+- :isccmd:`config-set`
+- :isccmd:`config-test`
+- :isccmd:`config-write`
+- :isccmd:`list-commands`
+- :isccmd:`shutdown`
+- :isccmd:`status-get`
+- :isccmd:`version-get`
 
 Since Kea version 2.0.0, the D2 server also supports the following
 operational commands for statistics:
 
--  statistic-get
--  statistic-get-all
--  statistic-reset
--  statistic-reset-all
+- :isccmd:`statistic-get`
+- :isccmd:`statistic-get`-all
+- :isccmd:`statistic-reset`
+- :isccmd:`statistic-reset`-all
 
-The ``shutdown`` command supports the extra ``type`` argument, which controls the
+The :isccmd:`shutdown` command supports the extra ``type`` argument, which controls the
 way the D2 server cleans up on exit.
 The supported shutdown types are:
 
@@ -331,11 +363,94 @@ An example command may look like this:
 ::
 
    {
-       "command": "shutdown"
+       "command": "shutdown",
        "arguments": {
            "exit-value": 3,
            "type": "drain_first"
        }
+   }
+
+.. _d2-http-ctrl-channel:
+
+HTTP/HTTPS Control Socket
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``socket-type`` must be ``http`` or ``https`` (when the type is ``https``
+TLS is required). The ``socket-address`` (default ``127.0.0.1``) and
+``socket-port`` (default 8000) specify an IP address and port to which
+the HTTP service will be bound.
+
+The ``trust-anchor``, ``cert-file``, ``key-file``, and ``cert-required``
+parameters specify the TLS setup for HTTP, i.e. HTTPS. If these parameters
+are not specified, HTTP is used. The TLS/HTTPS support in Kea is
+described in :ref:`tls`.
+
+Basic HTTP authentication protects
+against unauthorized uses of the control agent by local users. For
+protection against remote attackers, HTTPS and reverse proxy of
+:ref:`agent-secure-connection` provide stronger security.
+
+The authentication is described in the ``authentication`` block
+with the mandatory ``type`` parameter, which selects the authentication.
+Currently only the basic HTTP authentication (type basic) is supported.
+
+The ``realm`` authentication parameter (default ``kea-dhcp-ddns-server``
+is used for error messages when the basic HTTP authentication is required
+but the client is not authorized.
+
+When the ``clients`` authentication list is configured and not empty,
+basic HTTP authentication is required. Each element of the list
+specifies a user ID and a password. The user ID is mandatory, must
+not be empty, and must not contain the colon (:) character. The
+password is optional; when it is not specified an empty password
+is used.
+
+.. note::
+
+   The basic HTTP authentication user ID and password are encoded
+   in UTF-8, but the current Kea JSON syntax only supports the Latin-1
+   (i.e. 0x00..0xff) Unicode subset.
+
+To avoid exposing the user ID and/or the associated
+password, these values can be read from files. The syntax is extended by:
+
+-  The ``directory`` authentication parameter, which handles the common
+   part of file paths. The default value is the empty string.
+
+-  The ``password-file`` client parameter, which, alongside the ``directory``
+   parameter, specifies the path of a file that can contain the password,
+   or when no user ID is given, the whole basic HTTP authentication secret.
+
+-  The ``user-file`` client parameter, which, with the ``directory`` parameter,
+   specifies the path of a file where the user ID can be read.
+
+When files are used, they are read when the configuration is loaded,
+to detect configuration errors as soon as possible.
+
+::
+
+   "DhcpDdns": {
+       "control-sockets": [
+           {
+               "socket-type": "https",
+               "socket-address": "10.20.30.40",
+               "socket-port": 8005,
+               "trust-anchor": "/path/to/the/ca-cert.pem",
+               "cert-file": "/path/to/the/agent-cert.pem",
+               "key-file": "/path/to/the/agent-key.pem",
+               "cert-required": true,
+               "authentication": {
+                   "type": "basic",
+                   "realm": "kea-dhcp-ddns-server",
+                   "clients": [
+                   {
+                       "user": "admin",
+                       "password": "1234"
+                   } ]
+               }
+           }
+       ],
+       ...
    }
 
 .. _d2-tsig-key-list-config:
@@ -392,6 +507,10 @@ Every entry in the list has three parameters:
 -  ``secret`` - is used to specify the shared secret key code for this
    key. This value is case-sensitive and must exactly match the value
    specified on the DNS server(s). It is a base64-encoded text value.
+
+- ``secret-file`` - since Kea 2.5.8, this more secure alternative is supported.
+  This value specifies the file name where the secret can be found, i.e. the base64-encoded
+  secret is the content of the file.
 
 As an example, suppose that a domain D2 will be updating is maintained
 by a BIND 9 DNS server, which requires dynamic updates to be secured
@@ -575,7 +694,7 @@ domains, which is a list of structures.
    "DhcpDdns": {
        "reverse-ddns": {
            "ddns-domains": [ ]
-       }
+       },
        ...
    }
 
@@ -859,7 +978,7 @@ The following example configuration specifies the forward DDNS domains.
                    ],
                    "user-context": { "backup": false }
                },
-
+               ...
            ]
        }
    }
@@ -897,21 +1016,22 @@ These reverse DDNS domains are specified as follows:
                        { "ip-address": "172.16.1.5" },
                        { "ip-address": "172.16.2.5" }
                    ]
-               }
+               },
                {
                    "name": "1.0.0.0.8.B.D.0.1.0.0.2.ip6.arpa.",
                    "key-name": "",
                    "dns-servers": [
                        { "ip-address": "2001:db8::1" }
                    ]
-               }
+               },
                {
                    "name": "0.192.in-addr.arpa.",
                    "key-name": "",
                    "dns-servers": [
                        { "ip-address": "172.16.2.5" }
                    ]
-               }
+               },
+               ...
            ]
        }
    }
@@ -936,7 +1056,7 @@ Currently Kea's statistics management has the following limitations:
 
 .. note::
 
-    Hook libraries, such as the the ISC subscriber-only GSS-TSIG library,
+    Hook libraries, such as the ISC subscriber-only GSS-TSIG library,
     make new statistics available in Kea.
 
 More information about Kea statistics can be found at :ref:`stats`.
@@ -949,6 +1069,7 @@ The NameChangeRequest statistics are:
 -  ``ncr-received`` - the number of received valid NCRs
 -  ``ncr-invalid`` - the number of received invalid NCRs
 -  ``ncr-error`` - the number of errors in NCR receptions other than an I/O cancel on shutdown
+-  ``queue-mgr-queue-full`` - the number of times the NCR receive queue reached maxium capacity
 
 DNS Update Statistics
 ---------------------

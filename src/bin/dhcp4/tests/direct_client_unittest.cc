@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,7 +8,7 @@
 #include <dhcp/iface_mgr.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/classify.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/lease_mgr_factory.h>
@@ -83,7 +83,7 @@ public:
     /// @return Generated message.
     Pkt4Ptr createClientMessage(const uint16_t msg_type,
                                 const std::string& iface,
-                                const uint32_t ifindex);
+                                const unsigned int ifindex);
 
     /// @brief Creates simple message from a client.
     ///
@@ -102,7 +102,7 @@ public:
     /// @return Configured and parsed message.
     Pkt4Ptr createClientMessage(const Pkt4Ptr &msg,
                                 const std::string& iface,
-                                const uint32_t ifindex);
+                                const unsigned int ifindex);
 
     /// @brief This test checks that the message from directly connected client
     /// is processed and that client is offered IPv4 address from the subnet
@@ -153,6 +153,7 @@ DirectClientTest::configureSubnet(const std::string& prefix) {
         "\"renew-timer\": 1000, "
         "\"option-data\": [ ],"
         "\"subnet4\": [ { "
+        "    \"id\": 1, "
         "    \"pools\": [ { \"pool\": \"" << prefix << "/24\" } ],"
         "    \"subnet\": \"" << prefix << "/24\", "
         "    \"rebind-timer\": 2000, "
@@ -175,6 +176,7 @@ DirectClientTest::configureTwoSubnets(const std::string& prefix1,
         "\"renew-timer\": 1000, "
         "\"option-data\": [ ],"
         "\"subnet4\": [ { "
+        "    \"id\": 1, "
         "    \"pools\": [ { \"pool\": \"" << prefix1 << "/24\" } ],"
         "    \"subnet\": \"" << prefix1 << "/24\", "
         "    \"rebind-timer\": 2000, "
@@ -182,6 +184,7 @@ DirectClientTest::configureTwoSubnets(const std::string& prefix1,
         "    \"valid-lifetime\": 4000"
         " },"
         "{ "
+        "    \"id\": 2, "
         "    \"pools\": [ { \"pool\": \"" << prefix2 << "/24\" } ],"
         "    \"subnet\": \"" << prefix2 << "/24\", "
         "    \"rebind-timer\": 2000, "
@@ -196,7 +199,7 @@ DirectClientTest::configureTwoSubnets(const std::string& prefix1,
 Pkt4Ptr
 DirectClientTest::createClientMessage(const uint16_t msg_type,
                                       const std::string& iface,
-                                      const uint32_t ifindex) {
+                                      const unsigned int ifindex) {
     // Create a source packet.
     Pkt4Ptr msg = Pkt4Ptr(new Pkt4(msg_type, 1234));
     return (createClientMessage(msg, iface, ifindex));
@@ -206,7 +209,7 @@ DirectClientTest::createClientMessage(const uint16_t msg_type,
 Pkt4Ptr
 DirectClientTest::createClientMessage(const Pkt4Ptr& msg,
                                       const std::string& iface,
-                                      const uint32_t ifindex) {
+                                      const unsigned int ifindex) {
     msg->setRemoteAddr(IOAddress("255.255.255.255"));
     msg->addOption(generateClientId());
     msg->setIface(iface);

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -69,6 +69,7 @@ CSVLeaseFile6::append(const Lease6& lease) {
     if (lease.getContext()) {
         row.writeAtEscaped(getColumnIndex("user_context"), lease.getContext()->str());
     }
+    row.writeAt(getColumnIndex("pool_id"), lease.pool_id_);
     try {
         VersionedCSVFile::append(row);
     } catch (const std::exception&) {
@@ -100,26 +101,37 @@ CSVLeaseFile6::next(Lease6Ptr& lease) {
             return (true);
         }
 
-        lease.reset(new Lease6(readType(row), readAddress(row), readDUID(row),
+        Lease::Type type = readType(row);
+        uint8_t prefixlen = 128;
+        if (type == Lease::TYPE_PD) {
+            prefixlen = readPrefixLen(row);
+        }
+
+        lease.reset(new Lease6(type, readAddress(row), readDUID(row),
                                readIAID(row), readPreferred(row),
                                readValid(row),
                                readSubnetID(row),
                                readHWAddr(row),
-                               readPrefixLen(row)));
+                               prefixlen));
+
         lease->cltt_ = readCltt(row);
         lease->fqdn_fwd_ = readFqdnFwd(row);
         lease->fqdn_rev_ = readFqdnRev(row);
         lease->hostname_ = readHostname(row);
         lease->state_ = readState(row);
+
         if ((*lease->duid_ == DUID::EMPTY())
             && lease->state_ != Lease::STATE_DECLINED) {
             isc_throw(isc::BadValue,
                       "The Empty DUID is only valid for declined leases");
         }
+
         ConstElementPtr ctx = readContext(row);
         if (ctx) {
             lease->setContext(ctx);
         }
+
+        lease->pool_id_ = readPoolID(row);
     } catch (const std::exception& ex) {
         // bump the read error count
         ++read_errs_;
@@ -154,13 +166,13 @@ CSVLeaseFile6::initColumns() {
     addColumn("hwaddr", "2.0");
     addColumn("state", "3.0", "0" /* == STATE_DEFAULT */);
     addColumn("user_context", "3.1");
-
     // Default not added for hwtype and hwaddr_source, because they depend on
     // hwaddr having value. When a CSV lease having a hwaddr is upgraded to 4.0,
     // hwtype will have value "1" meaning HTYPE_ETHER and
     // hwaddr_source will have value "0" meaning HWADDR_SOURCE_UNKNOWN.
     addColumn("hwtype", "4.0");
     addColumn("hwaddr_source", "4.0");
+    addColumn("pool_id", "5.0", "0");
 
     // Any file with less than hostname is invalid
     setMinimumValidColumns("hostname");
@@ -209,7 +221,7 @@ CSVLeaseFile6::readCltt(const CSVRow& row) {
     time_t cltt =
         static_cast<time_t>(row.readAndConvertAt<uint64_t>(getColumnIndex("expire"))
                             - readValid(row));
-    return (cltt);
+    return (static_cast<uint32_t>(cltt));
 }
 
 SubnetID
@@ -217,6 +229,13 @@ CSVLeaseFile6::readSubnetID(const CSVRow& row) {
     SubnetID subnet_id =
         row.readAndConvertAt<SubnetID>(getColumnIndex("subnet_id"));
     return (subnet_id);
+}
+
+uint32_t
+CSVLeaseFile6::readPoolID(const CSVRow& row) {
+    uint32_t pool_id =
+        row.readAndConvertAt<uint32_t>(getColumnIndex("pool_id"));
+    return (pool_id);
 }
 
 uint8_t

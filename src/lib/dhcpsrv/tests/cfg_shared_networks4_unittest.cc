@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -31,10 +31,10 @@ void checkMergedNetwork(const CfgSharedNetworks4& networks, const std::string& n
                        const std::vector<SubnetID>& exp_subnets) {
     auto network = networks.getByName(name);
     ASSERT_TRUE(network) << "expected network: " << name << " not found";
-    ASSERT_EQ(exp_valid, network->getValid()) << " network valid lifetime wrong";
+    ASSERT_EQ(exp_valid, network->getValid().get()) << " network valid lifetime wrong";
     const Subnet4SimpleCollection* subnets = network->getAllSubnets();
     ASSERT_EQ(exp_subnets.size(), subnets->size()) << " wrong number of subnets";
-    for (auto exp_id : exp_subnets) {
+    for (auto const& exp_id : exp_subnets) {
         ASSERT_TRUE(network->getSubnet(exp_id))
                     << " did not find expected subnet: " << exp_id;
     }
@@ -209,6 +209,7 @@ TEST(CfgSharedNetworks4Test, unparse) {
     network1->setHostnameCharSet("[^A-Z]");
     network1->setHostnameCharReplacement("x");
     network1->setCacheThreshold(.20);
+    network1->setOfferLft(77);
 
     network2->setIface("eth1");
     network2->setT1(Triplet<uint32_t>(100));
@@ -270,7 +271,8 @@ TEST(CfgSharedNetworks4Test, unparse) {
         "    \"t2-percent\": .655,\n"
         "    \"hostname-char-replacement\": \"x\",\n"
         "    \"hostname-char-set\": \"[^A-Z]\",\n"
-        "    \"cache-threshold\": .20\n"
+        "    \"cache-threshold\": .20,\n"
+        "    \"offer-lifetime\": 77\n"
         "  }\n"
         "]\n";
 
@@ -337,7 +339,7 @@ TEST(CfgSharedNetworks4Test, mergeNetworks) {
     std::string value("Yay!");
     OptionPtr option(new Option(Option::V4, 1));
     option->setData(value.begin(), value.end());
-    ASSERT_NO_THROW(network1b->getCfgOption()->add(option, false, "isc"));
+    ASSERT_NO_THROW(network1b->getCfgOption()->add(option, false, false, "isc"));
     ASSERT_NO_THROW(network1b->add(subnet4));
 
     // Network2 we will not touch.
@@ -368,6 +370,7 @@ TEST(CfgSharedNetworks4Test, mergeNetworks) {
     OptionStringPtr opstr = boost::dynamic_pointer_cast<OptionString>(desc.option_);
     ASSERT_TRUE(opstr);
     EXPECT_EQ("Yay!", opstr->getValue());
+    EXPECT_TRUE(network->getCfgOption()->isEncapsulated());
 
     // No changes to network2.
     ASSERT_NO_FATAL_FAILURE(checkMergedNetwork(cfg_to, "network2", Triplet<uint32_t>(200),

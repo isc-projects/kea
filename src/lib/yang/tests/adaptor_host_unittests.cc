@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,10 +6,10 @@
 
 #include <config.h>
 
+#include <gtest/gtest.h>
+
 #include <testutils/gtest_utils.h>
 #include <yang/adaptor_host.h>
-
-#include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;
@@ -28,11 +28,11 @@ TEST(AdaptorHostTest, notFlexId) {
     ElementPtr json;
     ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     ConstElementPtr copied = copy(json);
-    EXPECT_NO_THROW(AdaptorHost::quoteIdentifier(json));
+    EXPECT_NO_THROW_LOG(AdaptorHost::quoteIdentifier(json));
     EXPECT_TRUE(copied->equals(*json));
 }
 
-// Verifies that quoteIdentifier does not touch a  flex-id identifier
+// Verifies that quoteIdentifier does not touch a flex-id identifier
 // without quotes.
 TEST(AdaptorHostTest, noQuote) {
     string config = "{\n"
@@ -42,7 +42,7 @@ TEST(AdaptorHostTest, noQuote) {
     ElementPtr json;
     ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     ConstElementPtr copied = copy(json);
-    EXPECT_NO_THROW(AdaptorHost::quoteIdentifier(json));
+    EXPECT_NO_THROW_LOG(AdaptorHost::quoteIdentifier(json));
     EXPECT_TRUE(copied->equals(*json));
 }
 
@@ -55,7 +55,7 @@ TEST(AdaptorHostTest, quotes) {
     ElementPtr json;
     ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     ConstElementPtr copied = copy(json);
-    EXPECT_NO_THROW(AdaptorHost::quoteIdentifier(json));
+    EXPECT_NO_THROW_LOG(AdaptorHost::quoteIdentifier(json));
     EXPECT_FALSE(copied->equals(*json));
     ConstElementPtr id = json->get("flex-id");
     ASSERT_TRUE(id);
@@ -73,7 +73,7 @@ TEST(AdaptorHostTest, extraQuote) {
     ElementPtr json;
     ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     ConstElementPtr copied = copy(json);
-    EXPECT_NO_THROW(AdaptorHost::quoteIdentifier(json));
+    EXPECT_NO_THROW_LOG(AdaptorHost::quoteIdentifier(json));
     EXPECT_FALSE(copied->equals(*json));
     ConstElementPtr id = json->get("flex-id");
     ASSERT_TRUE(id);
@@ -90,7 +90,7 @@ TEST(AdaptorHostTest, notStandard) {
     ElementPtr json;
     ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     ConstElementPtr copied = copy(json);
-    EXPECT_NO_THROW(AdaptorHost::quoteIdentifier(json));
+    EXPECT_NO_THROW_LOG(AdaptorHost::quoteIdentifier(json));
     EXPECT_FALSE(copied->equals(*json));
     ConstElementPtr id = json->get("flex-id");
     ASSERT_TRUE(id);
@@ -108,7 +108,7 @@ TEST(AdaptorHostTest, notQuoted) {
     ElementPtr json;
     ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     ConstElementPtr copied = copy(json);
-    EXPECT_NO_THROW(AdaptorHost::quoteIdentifier(json));
+    EXPECT_NO_THROW_LOG(AdaptorHost::quoteIdentifier(json));
     EXPECT_FALSE(copied->equals(*json));
     ConstElementPtr id = json->get("flex-id");
     ASSERT_TRUE(id);

@@ -1,4 +1,4 @@
-// Copyright (C) 2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -49,13 +49,13 @@ private:
         /// @param client_id The client ID.
         /// @param hwaddr The hardware address.
         /// @throw if the query is null or client_id and hwaddr are null.
-        Client(Pkt4Ptr query, DuidPtr client_id, HWAddrPtr hwaddr);
+        Client(Pkt4Ptr query, ClientIdPtr client_id, HWAddrPtr hwaddr);
 
         /// @brief The query being processed.
         Pkt4Ptr query_;
 
         /// @brief Cached binary client ID.
-        std::vector<uint8_t> duid_;
+        std::vector<uint8_t> client_id_;
 
         /// @brief Cached hardware type.
         uint16_t htype_;
@@ -96,7 +96,7 @@ private:
 
                 // Client ID binary content as a member of the Client object.
                 boost::multi_index::member<
-                    Client, std::vector<uint8_t>, &Client::duid_
+                    Client, std::vector<uint8_t>, &Client::client_id_
                 >
             >
         >
@@ -132,9 +132,9 @@ private:
     ///
     /// The mutex must be held by the caller.
     ///
-    /// @param duid The duid of the query from the client.
+    /// @param client_id The duid of the query from the client.
     /// @return The client found in the by client id container or null.
-    static ClientPtr lookup(const DuidPtr& duid);
+    static ClientPtr lookup(const ClientIdPtr& client_id);
 
     /// @brief Lookup a client by hwaddr.
     ///
@@ -162,8 +162,8 @@ private:
     ///
     /// The mutex must be held by the caller.
     ///
-    /// @param duid The duid to delete from the by id client container.
-    static void del(const DuidPtr& duid);
+    /// @param client_id The duid to delete from the by id client container.
+    static void del(const ClientIdPtr& client_id);
 
     /// @brief Delete a client by hwaddr.
     ///
@@ -236,7 +236,7 @@ private:
     ClientPtr client_;
 
     /// @brief Client ID locked by this handler.
-    DuidPtr locked_client_id_;
+    ClientIdPtr locked_client_id_;
 
     /// @brief Hardware address locked by this handler.
     HWAddrPtr locked_hwaddr_;

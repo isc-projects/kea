@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,13 +7,13 @@
 #include <config.h>
 
 #include <gtest/gtest.h>
+
 #include <util/unittests/run_all.h>
-#include <log/logger_manager.h>
+#include <log/logger_support.h>
 
 int
-main(int argc, char* argv[])
-{
-    ::testing::InitGoogleTest(&argc, argv);         // Initialize Google test
-    isc::log::LoggerManager::init("unittest");      // Set a root logger name
+main(int argc, char* argv[]) {
+    ::testing::InitGoogleTest(&argc, argv);
+    isc::log::initLogger();
     return (isc::util::unittests::run_all());
 }

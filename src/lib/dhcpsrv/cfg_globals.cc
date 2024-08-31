@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,7 +24,6 @@ CfgGlobals::nameToIndex = {
     { "dhcp4o6-port", DHCP4O6_PORT },
     { "comment", COMMENT },
     { "server-tag", SERVER_TAG },
-    { "reservation-mode", RESERVATION_MODE },
     { "reservations-global", RESERVATIONS_GLOBAL },
     { "reservations-in-subnet", RESERVATIONS_IN_SUBNET },
     { "reservations-out-of-pool", RESERVATIONS_OUT_OF_POOL },
@@ -48,8 +47,16 @@ CfgGlobals::nameToIndex = {
     { "ip-reservations-unique", IP_RESERVATIONS_UNIQUE },
     { "reservations-lookup-first", RESERVATIONS_LOOKUP_FIRST },
     { "ddns-update-on-renew", DDNS_UPDATE_ON_RENEW },
-    { "ddns-use-conflict-resolution", DDNS_USE_CONFLICT_RESOLUTION },
     { "parked-packet-limit", PARKED_PACKET_LIMIT },
+    { "allocator", ALLOCATOR },
+    { "ddns-ttl-percent", DDNS_TTL_PERCENT },
+    { "ddns-conflict-resolution-mode", DDNS_CONFLICT_RESOLUTION_MODE },
+    { "compatibility", COMPATIBILITY },
+    { "dhcp-ddns", DHCP_DDNS },
+    { "expired-leases-processing", EXPIRED_LEASES_PROCESSING },
+    { "multi-threading", MULTI_THREADING },
+    { "sanity-checks", SANITY_CHECKS },
+    { "dhcp-queue-control", DHCP_QUEUE_CONTROL },
 
     // DHCPv4 specific parameters.
     { "echo-client-id", ECHO_CLIENT_ID },
@@ -58,12 +65,16 @@ CfgGlobals::nameToIndex = {
     { "next-server", NEXT_SERVER },
     { "server-hostname", SERVER_HOSTNAME },
     { "boot-file-name", BOOT_FILE_NAME },
+    { "offer-lifetime", OFFER_LIFETIME },
+    { "stash-agent-options", STASH_AGENT_OPTIONS },
 
     // DHCPv6 specific parameters.
     { "data-directory", DATA_DIRECTORY },
     { "preferred-lifetime", PREFERRED_LIFETIME },
     { "min-preferred-lifetime", MIN_PREFERRED_LIFETIME },
-    { "max-preferred-lifetime", MAX_PREFERRED_LIFETIME }
+    { "max-preferred-lifetime", MAX_PREFERRED_LIFETIME },
+    { "pd-allocator", PD_ALLOCATOR },
+    { "server-id", SERVER_ID }
 };
 
 // Load time sanity check.
@@ -80,18 +91,17 @@ struct CfgGlobalsChecks {
         // Build the name vector.
         std::vector<std::string> names;
         names.resize(CfgGlobals::SIZE);
-        for (auto it = CfgGlobals::nameToIndex.cbegin();
-             it != CfgGlobals::nameToIndex.cend(); ++it) {
-            int idx = it->second;
+        for (auto const& it : CfgGlobals::nameToIndex) {
+            int idx = it.second;
             if ((idx < 0) || (idx >= CfgGlobals::SIZE)) {
                 isc_throw(Unexpected, "invalid index " << idx
-                          << " for name " << it->first);
+                          << " for name " << it.first);
             }
             if (!names[idx].empty()) {
                 isc_throw(Unexpected, "duplicated names for " << idx
                           << " got " << names[idx]);
             }
-            names[idx] = it->first;
+            names[idx] = it.first;
         }
 
         // No name should be empty.
@@ -132,6 +142,7 @@ CfgGlobals::set(const std::string& name, ConstElementPtr value) {
     if (it == nameToIndex.cend()) {
         isc_throw(NotFound, "invalid global parameter name '" << name << "'");
     }
+
     set(it->second, value);
 }
 
@@ -155,11 +166,11 @@ CfgGlobals::clear() {
 const CfgGlobals::MapType
 CfgGlobals::valuesMap() const {
     MapType map;
-    for (auto it = nameToIndex.cbegin(); it != nameToIndex.cend(); ++it) {
-        int idx = it->second;
+    for (auto const& it : nameToIndex) {
+        int idx = it.second;
         ConstElementPtr value = values_[idx];
         if (value) {
-            map.insert(make_pair(it->first, value));
+            map.insert(make_pair(it.first, value));
         }
     }
     return (map);
@@ -168,11 +179,11 @@ CfgGlobals::valuesMap() const {
 ElementPtr
 CfgGlobals::toElement() const {
     ElementPtr result = Element::createMap();
-    for (auto it = nameToIndex.cbegin(); it != nameToIndex.cend(); ++it) {
-        int idx = it->second;
+    for (auto const& it : nameToIndex) {
+        int idx = it.second;
         ConstElementPtr value = values_[idx];
         if (value) {
-            result->set(it->first, value);
+            result->set(it.first, value);
         }
     }
     return (result);

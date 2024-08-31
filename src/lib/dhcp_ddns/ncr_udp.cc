@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -61,12 +61,11 @@ UDPCallback::putData(const uint8_t* src, size_t len) {
     data_->put_len_ = len;
 }
 
-
 //*************************** NameChangeUDPListener ***********************
 NameChangeUDPListener::
 NameChangeUDPListener(const isc::asiolink::IOAddress& ip_address,
                       const uint32_t port, const NameChangeFormat format,
-                      RequestReceiveHandler& ncr_recv_handler,
+                      RequestReceiveHandlerPtr ncr_recv_handler,
                       const bool reuse_address)
     : NameChangeListener(ncr_recv_handler), ip_address_(ip_address),
       port_(port), format_(format), reuse_address_(reuse_address) {
@@ -86,14 +85,17 @@ NameChangeUDPListener::~NameChangeUDPListener() {
 }
 
 void
-NameChangeUDPListener::open(isc::asiolink::IOService& io_service) {
+NameChangeUDPListener::open(const isc::asiolink::IOServicePtr& io_service) {
+
     // create our endpoint and bind the low level socket to it.
     isc::asiolink::UDPEndpoint endpoint(ip_address_, port_);
+
+    io_service_ = io_service;
 
     // Create the low level socket.
     try {
         asio_socket_.reset(new boost::asio::ip::udp::
-                           socket(io_service.get_io_service(),
+                           socket(io_service_->getInternalIOService(),
                                   (ip_address_.isV4() ? boost::asio::ip::udp::v4() :
                                    boost::asio::ip::udp::v6())));
 
@@ -106,13 +108,13 @@ NameChangeUDPListener::open(isc::asiolink::IOService& io_service) {
         asio_socket_->bind(endpoint.getASIOEndpoint());
     } catch (const boost::system::system_error& ex) {
         asio_socket_.reset();
+        io_service_.reset();
         isc_throw (NcrUDPError, ex.code().message());
     }
 
     // Create the asiolink socket from the low level socket.
     socket_.reset(new NameChangeUDPSocket(*asio_socket_));
 }
-
 
 void
 NameChangeUDPListener::doReceive() {
@@ -146,7 +148,11 @@ NameChangeUDPListener::close() {
         asio_socket_.reset();
     }
 
+    if (socket_) {
+        socket_->close();
+    }
     socket_.reset();
+    io_service_.reset();
 }
 
 void
@@ -196,7 +202,6 @@ NameChangeUDPListener::receiveCompletionHandler(const bool successful,
     invokeRecvHandler(result, ncr);
 }
 
-
 //*************************** NameChangeUDPSender ***********************
 
 NameChangeUDPSender::
@@ -204,7 +209,7 @@ NameChangeUDPSender(const isc::asiolink::IOAddress& ip_address,
                     const uint32_t port,
                     const isc::asiolink::IOAddress& server_address,
                     const uint32_t server_port, const NameChangeFormat format,
-                    RequestSendHandler& ncr_send_handler,
+                    RequestSendHandlerPtr ncr_send_handler,
                     const size_t send_que_max, const bool reuse_address)
     : NameChangeSender(ncr_send_handler, send_que_max),
       ip_address_(ip_address), port_(port), server_address_(server_address),
@@ -226,14 +231,16 @@ NameChangeUDPSender::~NameChangeUDPSender() {
 }
 
 void
-NameChangeUDPSender::open(isc::asiolink::IOService& io_service) {
+NameChangeUDPSender::open(const isc::asiolink::IOServicePtr& io_service) {
     // create our endpoint and bind the low level socket to it.
     isc::asiolink::UDPEndpoint endpoint(ip_address_, port_);
+
+    io_service_ = io_service;
 
     // Create the low level socket.
     try {
         asio_socket_.reset(new boost::asio::ip::udp::
-                           socket(io_service.get_io_service(),
+                           socket(io_service_->getInternalIOService(),
                                   (ip_address_.isV4() ? boost::asio::ip::udp::v4() :
                                    boost::asio::ip::udp::v6())));
 
@@ -245,6 +252,8 @@ NameChangeUDPSender::open(isc::asiolink::IOService& io_service) {
         // Bind the low level socket to our endpoint.
         asio_socket_->bind(endpoint.getASIOEndpoint());
     } catch (const boost::system::system_error& ex) {
+        asio_socket_.reset();
+        io_service_.reset();
         isc_throw (NcrUDPError, ex.code().message());
     }
 
@@ -284,6 +293,9 @@ NameChangeUDPSender::close() {
         asio_socket_.reset();
     }
 
+    if (socket_) {
+        socket_->close();
+    }
     socket_.reset();
 
     closeWatchSocket();
@@ -298,8 +310,7 @@ NameChangeUDPSender::doSend(NameChangeRequestPtr& ncr) {
 
     // Copy the wire-ized request to callback.  This way we know after
     // send completes what we sent (or attempted to send).
-    send_callback_->putData(static_cast<const uint8_t*>(ncr_buffer.getData()),
-                            ncr_buffer.getLength());
+    send_callback_->putData(ncr_buffer.getData(), ncr_buffer.getLength());
 
     // Call the socket's asynchronous send, passing our callback
     socket_->asyncSend(send_callback_->getData(), send_callback_->getPutLen(),
@@ -316,6 +327,9 @@ NameChangeUDPSender::doSend(NameChangeRequestPtr& ncr) {
 void
 NameChangeUDPSender::sendCompletionHandler(const bool successful,
                                            const UDPCallback *send_callback) {
+    if (!watch_socket_) {
+        return;
+    }
     // Clear the IO ready marker.
     try {
         watch_socket_->clearReady();
@@ -358,7 +372,7 @@ NameChangeUDPSender::getSelectFd() {
                                   " not in send mode");
     }
 
-    return(watch_socket_->getSelectFd());
+    return (watch_socket_->getSelectFd());
 }
 
 bool

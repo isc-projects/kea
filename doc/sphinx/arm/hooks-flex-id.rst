@@ -1,7 +1,8 @@
+.. ischooklib:: libdhcp_flex_id.so
 .. _hooks-flex-id:
 
-``flex_id``: Flexible Identifier for Host Reservations
-======================================================
+``libdhcp_flex_id.so``: Flexible Identifier for Host Reservations
+=================================================================
 
 The Kea software provides a way to handle
 host reservations that include addresses, prefixes, options, client
@@ -13,15 +14,19 @@ above, use parts of specific options, or perhaps even use a combination of
 several options and fields to uniquely identify a client. Those
 scenarios are addressed by the Flexible Identifiers hook application.
 
-The Flexible Identifier library is only available to ISC customers with a paid support
-contract.
+.. note::
+
+    :ischooklib:`libdhcp_flex_id.so` is available as a premium
+    hook library from ISC. Please visit https://www.isc.org/shop/ to purchase
+    the premium hook libraries, or contact us at https://www.isc.org/contact for
+    more information.
 
 .. note::
 
-   This library can only be loaded by the ``kea-dhcp4`` or ``kea-dhcp6``
+   This library can only be loaded by the :iscman:`kea-dhcp4` or :iscman:`kea-dhcp6`
    process.
 
-The ``flex_id`` library allows the definition of an expression, using notation initially
+:ischooklib:`libdhcp_flex_id.so` allows the definition of an expression, using notation initially
 used only for client classification. (See
 :ref:`classification-using-expressions` for a detailed description of
 the syntax available.) One notable difference is that for client
@@ -36,8 +41,8 @@ be host reservations that are tied to specific values of the flexible
 identifier.
 
 The library can be loaded similarly to other hook libraries. It
-takes a mandatory parameter ``identifier-expression`` and an optional boolean
-parameter ``replace-client-id``:
+takes a mandatory parameter ``identifier-expression`` and some optional boolean
+parameters like ``replace-client-id`` and ``ignore-iaid``:
 
 ::
 
@@ -47,7 +52,8 @@ parameter ``replace-client-id``:
                "library": "/path/libdhcp_flex_id.so",
                "parameters": {
                    "identifier-expression": "expression",
-                   "replace-client-id": false
+                   "replace-client-id": false,
+                   "ignore-iaid": false
                }
            },
            ...
@@ -73,13 +79,22 @@ can be achieved by using the following configuration:
 ::
 
    "Dhcp6": {
-       "subnet6": [{ ..., # subnet definition starts here
-       "reservations": [
-           "flex-id": "'port1234'", # value of the first 8 bytes of the interface-id
+       "subnet6": [{
+       # subnet definition starts here
+       "reservations": [{
+           "flex-id": "'port1234'",
+           # value of the first 8 bytes of the interface-id
            "ip-addresses": [ "2001:db8::1" ]
+       },
+       ...
        ],
-       }], # end of subnet definitions
-       "host-reservation-identifiers": ["duid", "flex-id"], # add "flex-id" to reservation identifiers
+       ...
+       },
+       ...
+       ],
+       # end of subnet definitions
+       "host-reservation-identifiers": ["duid", "flex-id"],
+       # add "flex-id" to reservation identifiers
        "hooks-libraries": [
            {
                "library": "/path/libdhcp_flex_id.so",
@@ -88,7 +103,8 @@ can be achieved by using the following configuration:
                }
            },
            ...
-       ]
+       ],
+       ...
    }
 
 .. note::
@@ -112,13 +128,22 @@ for non-printable characters and do not require the use of the
 ::
 
    "Dhcp6": {
-       "subnet6": [{ ..., # subnet definition starts here
-       "reservations": [
-           "flex-id": "01:02:03:04:05:06", # value of the first 8 bytes of the interface-id
+       "subnet6": [{
+       # subnet definition starts here
+       "reservations": [{
+           "flex-id": "01:02:03:04:05:06",
+           # value of the first 8 bytes of the interface-id
            "ip-addresses": [ "2001:db8::1" ]
+       },
+       ...
        ],
-       }], # end of subnet definitions
-       "host-reservation-identifiers": ["duid", "flex-id"], # add "flex-id" to reservation identifiers
+       ...
+       },
+       ...
+       ],
+       # end of subnet definitions
+       "host-reservation-identifiers": ["duid", "flex-id"],
+       # add "flex-id" to reservation identifiers
        "hooks-libraries": [
            {
                "library": "/path/libdhcp_flex_id.so",
@@ -127,11 +152,21 @@ for non-printable characters and do not require the use of the
                }
            },
            ...
-       ]
+       ],
+       ...
    }
 
+.. note::
+
+    One less common scenario where the examples above may prove useful is for
+    DHCPv6 clients that change their DUIDs between exchanges. Certain PXE
+    clients are known to behave this way.
+
+The ``replace-client-id`` Flag
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 When ``replace-client-id`` is set to ``false`` (which is the default setting),
-the ``flex-id`` hook library uses the evaluated flexible identifier solely for
+:ischooklib:`libdhcp_flex_id.so` uses the evaluated flexible identifier solely for
 identifying host reservations, i.e. searching for reservations within a
 database. This is the functional equivalent of other identifiers, similar
 to hardware address or circuit-id. However, this mode of operation
@@ -148,7 +183,7 @@ and other parameters are used that identify where the device is connected
 (e.g. circuit-id), rather than the device identification itself (e.g.
 MAC address).
 
-The ``flex-id`` library offers a way to overcome the problem with lease
+:ischooklib:`libdhcp_flex_id.so` offers a way to overcome the problem with lease
 conflicts by dynamically replacing the client identifier (or DUID in DHCPv6)
 with a value derived from the flexible identifier. The server
 processes the client's query as if the flexible identifier were sent in the
@@ -191,7 +226,7 @@ client-id option) is ignored.
 
 The :ref:`hooks-lease-cmds` section describes commands used to retrieve,
 update, and delete leases using various identifiers, such as ``hw-address`` and
-``client-id``. The ``lease_cmds`` library does not natively support querying
+``client-id``. :ischooklib:`libdhcp_lease_cmds.so` does not natively support querying
 for leases by flexible identifier. However, when ``replace-client-id`` is
 set to ``true``, it makes it possible to query for leases using a value
 derived from the flexible identifier. In DHCPv4, the query
@@ -223,3 +258,29 @@ In DHCPv6, the corresponding query looks something like this:
            "subnet-id": 10
        }
    }
+
+The ``ignore-iaid`` Flag
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+When ``ignore-iaid`` is set to ``true`` (the default value is ``false``),
+:ischooklib:`libdhcp_flex_id.so` causes the Kea DHCPv6 server to ignore the IAID value
+from incoming IPv6 packets. This parameter is ignored by the Kea DHCPv4 server.
+
+If the packet contains only one IA_NA, the IAID value will be changed to ``0``
+and stored as such in the lease storage. Similarly, if the packet contains only
+one IA_PD, the IAID value will be changed to ``0`` and stored as such in the
+lease storage. The IAID is restored to its initial value in the response back
+to the client. The change is visible in the identifier expression if the IAID is
+part of the expression.
+
+.. note::
+
+   To avoid lease conflicts, if the incoming packet contains more than one
+   IA_NA, the IAID value is not changed on any of the IA_NAs. Similarly,
+   if the incoming packet contains more than one IA_PD, the IAID value is not
+   changed on any of the IA_PDs.
+
+.. warning::
+
+   This functionality breaks RFC compliance and should be enabled only if
+   required. When enabled, a warning message is issued at configure time.

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,8 +21,8 @@
 
 #include <exceptions/exceptions.h>
 
-#include <util/filename.h>
-#include <util/strutil.h>
+#include <util/filesystem.h>
+#include <util/str.h>
 
 #include <log/log_messages.h>
 #include <log/message_dictionary.h>
@@ -31,11 +31,10 @@
 
 #include <log/logger.h>
 
-#include <boost/foreach.hpp>
-
 using namespace std;
 using namespace isc::log;
 using namespace isc::util;
+using namespace isc::util::file;
 
 /// \file log/compiler/message.cc
 /// \brief Message Compiler
@@ -91,17 +90,16 @@ usage() {
 /// &lt;name&gt;_&lt;ext&gt;, where &lt;name&gt; is the name of the file, and &lt;ext&gt;
 /// is the extension less the leading period.  The sentinel will be upper-case.
 ///
-/// \param file Filename object representing the file.
+/// \param file path to the file.
 ///
 /// \return Sentinel name
 
 string
-sentinel(Filename& file) {
-
-    string name = file.name();
+sentinel(Path& file) {
+    string name = file.stem();
     string ext = file.extension();
     string sentinel_text = name + "_" + ext.substr(1);
-    isc::util::str::uppercase(sentinel_text);
+    str::uppercase(sentinel_text);
     return (sentinel_text);
 }
 
@@ -144,9 +142,8 @@ vector<string>
 sortedIdentifiers(MessageDictionary& dictionary) {
     vector<string> ident;
 
-    for (MessageDictionary::const_iterator i = dictionary.begin();
-         i != dictionary.end(); ++i) {
-        ident.push_back(i->first);
+    for (auto const& i : dictionary) {
+        ident.push_back(i.first);
     }
     sort(ident.begin(), ident.end());
 
@@ -179,7 +176,7 @@ splitNamespace(string ns) {
 
     // ... and return the vector of namespace components split on the single
     // colon.
-    return (isc::util::str::tokens(ns, ":"));
+    return (str::tokens(ns, ":"));
 }
 
 /// \brief Write Opening Namespace(s)
@@ -230,10 +227,10 @@ writeHeaderFile(const string& file,
                 const vector<string>& ns_components,
                 MessageDictionary& dictionary,
                 const char* output_directory) {
-    Filename message_file(file);
-    Filename header_file(Filename(message_file.name()).useAsDefault(".h"));
+    Path message_file(file);
+    Path header_file(Path(file).replaceExtension(".h"));
     if (output_directory != NULL) {
-        header_file.setDirectory(output_directory);
+        header_file.replaceParentPath(output_directory);
     }
 
     // Text to use as the sentinels.
@@ -243,11 +240,11 @@ writeHeaderFile(const string& file,
     errno = 0;
 
     // Open the output file for writing
-    ofstream hfile(header_file.fullName().c_str());
+    ofstream hfile(header_file.str());
 
     if (hfile.fail()) {
         isc_throw_4(MessageException, "Failed to open output file",
-                    LOG_OPEN_OUTPUT_FAIL, header_file.fullName(),
+                    LOG_OPEN_OUTPUT_FAIL, header_file.str(),
                     strerror(errno), 0);
     }
 
@@ -255,7 +252,7 @@ writeHeaderFile(const string& file,
     // after the last write.
 
     hfile <<
-        "// File created from " << message_file.fullName() << "\n" <<
+        "// File created from " << message_file.str() << "\n" <<
          "\n" <<
          "#ifndef " << sentinel_text << "\n" <<
          "#define "  << sentinel_text << "\n" <<
@@ -267,9 +264,8 @@ writeHeaderFile(const string& file,
     writeOpeningNamespace(hfile, ns_components);
 
     vector<string> idents = sortedIdentifiers(dictionary);
-    for (vector<string>::const_iterator j = idents.begin();
-        j != idents.end(); ++j) {
-        hfile << "extern const isc::log::MessageID " << *j << ";\n";
+    for (auto const& j : idents) {
+        hfile << "extern const isc::log::MessageID " << j << ";\n";
     }
     hfile << "\n";
 
@@ -281,7 +277,7 @@ writeHeaderFile(const string& file,
     // Report errors (if any) and exit
     if (hfile.fail()) {
         isc_throw_4(MessageException, "Error writing to output file",
-                    LOG_WRITE_ERROR, header_file.fullName(), strerror(errno),
+                    LOG_WRITE_ERROR, header_file.str(), strerror(errno),
                     0);
     }
 
@@ -334,21 +330,21 @@ writeProgramFile(const string& file,
                  const vector<string>& ns_components,
                  MessageDictionary& dictionary,
                  const char* output_directory) {
-    Filename message_file(file);
-    Filename program_file(Filename(message_file.name()).useAsDefault(".cc"));
+    Path message_file(file);
+    Path program_file(Path(file).replaceExtension(".cc"));
     if (output_directory) {
-        program_file.setDirectory(output_directory);
+        program_file.replaceParentPath(output_directory);
     }
 
     // zero out the errno to be safe
     errno = 0;
 
     // Open the output file for writing
-    ofstream ccfile(program_file.fullName().c_str());
+    ofstream ccfile(program_file.str());
 
     if (ccfile.fail()) {
         isc_throw_4(MessageException, "Error opening output file",
-                    LOG_OPEN_OUTPUT_FAIL, program_file.fullName(),
+                    LOG_OPEN_OUTPUT_FAIL, program_file.str(),
                     strerror(errno), 0);
     }
 
@@ -356,7 +352,7 @@ writeProgramFile(const string& file,
     // the last write.
 
     ccfile <<
-        "// File created from " << message_file.fullName() << "\n" <<
+        "// File created from " << message_file.str() << "\n" <<
          "\n" <<
          "#include <cstddef>\n" <<
          "#include <log/message_types.h>\n" <<
@@ -368,10 +364,9 @@ writeProgramFile(const string& file,
     writeOpeningNamespace(ccfile, ns_components);
 
     vector<string> idents = sortedIdentifiers(dictionary);
-    for (vector<string>::const_iterator j = idents.begin();
-        j != idents.end(); ++j) {
-        ccfile << "extern const isc::log::MessageID " << *j <<
-            " = \"" << *j << "\";\n";
+    for (auto const& j : idents) {
+        ccfile << "extern const isc::log::MessageID " << j <<
+            " = \"" << j << "\";\n";
     }
     ccfile << "\n";
 
@@ -386,10 +381,8 @@ writeProgramFile(const string& file,
 
     // Output the identifiers and the associated text.
     idents = sortedIdentifiers(dictionary);
-    for (vector<string>::const_iterator i = idents.begin();
-        i != idents.end(); ++i) {
-            ccfile << "    \"" << *i << "\", \"" <<
-                quoteString(dictionary.getText(*i)) << "\",\n";
+    for (auto const& i : idents) {
+        ccfile << "    \"" << i << "\", \"" << quoteString(dictionary.getText(i)) << "\",\n";
     }
 
     // ... and the postamble
@@ -405,7 +398,7 @@ writeProgramFile(const string& file,
     // Report errors (if any) and exit
     if (ccfile.fail()) {
         isc_throw_4(MessageException, "Error writing to output file",
-                    LOG_WRITE_ERROR, program_file.fullName(), strerror(errno),
+                    LOG_WRITE_ERROR, program_file.str(), strerror(errno),
                     0);
     }
 
@@ -431,9 +424,9 @@ errorDuplicates(MessageReader& reader) {
         sort(duplicates.begin(), duplicates.end());
         MessageReader::MessageIDCollection::iterator new_end =
             unique(duplicates.begin(), duplicates.end());
-        for (MessageReader::MessageIDCollection::iterator i = duplicates.begin();
-            i != new_end; ++i) {
-            cout << "    " << *i << "\n";
+        duplicates.erase(new_end, duplicates.end());
+        for (auto const& i : duplicates) {
+            cout << "    " << i << "\n";
         }
         exit(1);
     }

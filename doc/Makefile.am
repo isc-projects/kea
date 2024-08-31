@@ -26,7 +26,8 @@ nobase_dist_doc_DATA += examples/kea4/comments.json
 nobase_dist_doc_DATA += examples/kea4/config-backend.json
 nobase_dist_doc_DATA += examples/kea4/dhcpv4-over-dhcpv6.json
 nobase_dist_doc_DATA += examples/kea4/global-reservations.json
-nobase_dist_doc_DATA += examples/kea4/ha-load-balancing-primary.json
+nobase_dist_doc_DATA += examples/kea4/ha-load-balancing-server1-mt-with-tls.json
+nobase_dist_doc_DATA += examples/kea4/ha-load-balancing-server2-mt.json
 nobase_dist_doc_DATA += examples/kea4/hooks.json
 nobase_dist_doc_DATA += examples/kea4/hooks-radius.json
 nobase_dist_doc_DATA += examples/kea4/leases-expiration.json
@@ -52,7 +53,8 @@ nobase_dist_doc_DATA += examples/kea6/config-backend.json
 nobase_dist_doc_DATA += examples/kea6/dhcpv4-over-dhcpv6.json
 nobase_dist_doc_DATA += examples/kea6/duid.json
 nobase_dist_doc_DATA += examples/kea6/global-reservations.json
-nobase_dist_doc_DATA += examples/kea6/ha-hot-standby.json
+nobase_dist_doc_DATA += examples/kea6/ha-hot-standby-server1-with-tls.json
+nobase_dist_doc_DATA += examples/kea6/ha-hot-standby-server2.json
 nobase_dist_doc_DATA += examples/kea6/hooks.json
 nobase_dist_doc_DATA += examples/kea6/iPXE.json
 nobase_dist_doc_DATA += examples/kea6/leases-expiration.json
@@ -82,6 +84,12 @@ nobase_dist_doc_DATA += examples/template-power-user-home/kea-ca-1.conf
 nobase_dist_doc_DATA += examples/template-power-user-home/kea-ca-2.conf
 nobase_dist_doc_DATA += examples/template-power-user-home/kea-dhcp4-1.conf
 nobase_dist_doc_DATA += examples/template-power-user-home/kea-dhcp4-2.conf
+
+nobase_dist_doc_DATA += examples/template-ha-mt-tls/info.md
+nobase_dist_doc_DATA += examples/template-ha-mt-tls/kea-ca-1.conf
+nobase_dist_doc_DATA += examples/template-ha-mt-tls/kea-ca-2.conf
+nobase_dist_doc_DATA += examples/template-ha-mt-tls/kea-dhcp4-1.conf
+nobase_dist_doc_DATA += examples/template-ha-mt-tls/kea-dhcp4-2.conf
 
 # If there's any new parameter added for any grammar in one of the daemons, someone should go through
 # this procedure:

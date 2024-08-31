@@ -27,9 +27,7 @@ EXTRA_DIST += d2_messages.mes
 libkea_d2srv_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_d2srv_la_CPPFLAGS = $(AM_CPPFLAGS)
 
-libkea_d2srv_la_LIBADD  =
-libkea_d2srv_la_LIBADD += $(top_builddir)/src/lib/process/libkea-process.la
-libkea_d2srv_la_LIBADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
+libkea_d2srv_la_LIBADD  = $(top_builddir)/src/lib/process/libkea-process.la
 libkea_d2srv_la_LIBADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 libkea_d2srv_la_LIBADD += $(top_builddir)/src/lib/asiodns/libkea-asiodns.la
 libkea_d2srv_la_LIBADD += $(top_builddir)/src/lib/stats/libkea-stats.la
@@ -47,7 +45,7 @@ libkea_d2srv_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_d2srv_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_d2srv_la_LIBADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
 
-libkea_d2srv_la_LDFLAGS  = -no-undefined -version-info 16:0:0
+libkea_d2srv_la_LDFLAGS  = -no-undefined -version-info 59:0:0
 libkea_d2srv_la_LDFLAGS += $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
 
 # If we want to get rid of all generated messages files, we need to use
@@ -90,4 +88,10 @@ libkea_d2srv_include_HEADERS = \
 	d2_config.h \
 	d2_log.h \
 	d2_messages.h \
-	d2_simple_parser.h
+	d2_stats.h \
+	d2_tsig_key.h \
+	d2_update_message.h \
+	d2_zone.h \
+	d2_simple_parser.h \
+	dns_client.h \
+	nc_trans.h

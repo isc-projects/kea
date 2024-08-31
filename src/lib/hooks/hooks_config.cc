@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,13 +17,11 @@ namespace isc {
 namespace hooks {
 
 void
-HooksConfig::verifyLibraries(const Element::Position& position) const {
+HooksConfig::verifyLibraries(const Element::Position& position,
+                             bool multi_threading_enabled) const {
     // The code used to follow this logic:
     //
-    // Check if the list of libraries has changed.  If not, nothing is done
-    // - the command "DhcpN libreload" is required to reload the same
-    // libraries (this prevents needless reloads when anything else in the
-    // configuration is changed).
+    // Check if the list of libraries has changed.  If not, nothing is done.
     //
     // We no longer rely on this. Parameters can change. And even if the
     // parameters stay the same, they could point to files that could
@@ -36,7 +34,8 @@ HooksConfig::verifyLibraries(const Element::Position& position) const {
 
     // Library list has changed, validate each of the libraries specified.
     vector<string> lib_names = isc::hooks::extractNames(libraries_);
-    vector<string> error_libs = HooksManager::validateLibraries(lib_names);
+    vector<string> error_libs = HooksManager::validateLibraries(lib_names,
+                                                                multi_threading_enabled);
     if (!error_libs.empty()) {
 
         // Construct the list of libraries in error for the message.
@@ -52,12 +51,12 @@ HooksConfig::verifyLibraries(const Element::Position& position) const {
 }
 
 void
-HooksConfig::loadLibraries() const {
+HooksConfig::loadLibraries(bool multi_threading_enabled) const {
     /// Commits the list of libraries to the configuration manager storage if
     /// the list of libraries has changed.
     /// @todo: Delete any stored CalloutHandles before reloading the
     /// libraries
-    if (!HooksManager::loadLibraries(libraries_)) {
+    if (!HooksManager::loadLibraries(libraries_, multi_threading_enabled)) {
         isc_throw(InvalidHooksLibraries,
                   "One or more hook libraries failed to load");
     }
@@ -74,22 +73,20 @@ HooksConfig::equal(const HooksConfig& other) const {
     /// We don't have any libraries that are interacting (or would change their behavior
     /// depending on the order in which their callouts are executed), so the code is
     /// ok for now.
-    for (isc::hooks::HookLibsCollection::const_iterator this_it = libraries_.begin();
-         this_it != libraries_.end(); ++this_it) {
+    for (auto const& this_it : libraries_) {
         bool match = false;
-        for (isc::hooks::HookLibsCollection::const_iterator other_it =
-                 other.libraries_.begin(); other_it != other.libraries_.end(); ++other_it) {
-            if (this_it->first != other_it->first) {
+        for (auto const& other_it : other.libraries_) {
+            if (this_it.first != other_it.first) {
                 continue;
             }
-            if (isNull(this_it->second) && isNull(other_it->second)) {
+            if (isNull(this_it.second) && isNull(other_it.second)) {
                 match = true;
                 break;
             }
-            if (isNull(this_it->second) || isNull(other_it->second)) {
+            if (isNull(this_it.second) || isNull(other_it.second)) {
                 continue;
             }
-            if (this_it->second->equals(*other_it->second)) {
+            if (this_it.second->equals(*other_it.second)) {
                 match = true;
                 break;
             }
@@ -107,15 +104,14 @@ HooksConfig::toElement() const {
     // hooks-libraries is a list of maps
     ElementPtr result = Element::createList();
     // Iterate through libraries
-    for (HookLibsCollection::const_iterator hl = libraries_.begin();
-         hl != libraries_.end(); ++hl) {
+    for (auto const& hl : libraries_) {
         // Entries are maps
         ElementPtr map = Element::createMap();
         // Set the library name
-        map->set("library", Element::create(hl->first));
+        map->set("library", Element::create(hl.first));
         // Set parameters (not set vs set empty map)
-        if (!isNull(hl->second)) {
-            map->set("parameters", hl->second);
+        if (!isNull(hl.second)) {
+            map->set("parameters", hl.second);
         }
         // Push to the list
         result->add(map);
@@ -123,5 +119,5 @@ HooksConfig::toElement() const {
     return (result);
 }
 
-};
-};
+}
+}

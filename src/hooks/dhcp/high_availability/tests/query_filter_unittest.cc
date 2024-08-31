@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -101,6 +101,14 @@ public:
     /// @brief This test verifies that it is possible to explicitly enable and
     /// disable certain scopes.
     void explicitlyServeScopes();
+
+    /// @brief This test verifies that load balancing only affects the scope of
+    /// DHCPv4 message types that HA cares about.
+    void loadBalancingHaTypes4();
+
+    /// @brief This test verifies that load balancing only affects the scope of
+    /// DHCPv6 message types that HA cares about.
+    void loadBalancingHaTypes6();
 };
 
 void
@@ -721,6 +729,159 @@ QueryFilterTest::explicitlyServeScopes() {
     EXPECT_THROW(filter.serveScopes({ "server1", "unsupported" }), BadValue);
 }
 
+void
+QueryFilterTest::loadBalancingHaTypes4() {
+    HAConfigPtr config = createValidConfiguration();
+
+    QueryFilter filter(config);
+
+    // By default the server1 should serve its own scope only. The
+    // server2 should serve its scope.
+    EXPECT_TRUE(filter.amServingScope("server1"));
+    EXPECT_FALSE(filter.amServingScope("server2"));
+    EXPECT_FALSE(filter.amServingScope("server3"));
+
+    // Use DHCPDISCOVER to find MAC addresses in scope for server1 and server2.
+    Pkt4Ptr server1_pkt;
+    Pkt4Ptr server2_pkt;
+    const unsigned max_scope_tries = 100;
+    for (unsigned i = 0; i < max_scope_tries; ++i) {
+        // Create query with random HW address.
+        std::string scope_class;
+        Pkt4Ptr query4 = createQuery4(randomKey(HWAddr::ETHERNET_HWADDR_LEN));
+        // If the query is in scope then we're done.
+        if (filter.inScope(query4, scope_class)) {
+            ASSERT_EQ("HA_server1", scope_class);
+            server1_pkt = query4;
+            if (server2_pkt) {
+                break;
+            }
+        } else {
+            ASSERT_EQ("HA_server2", scope_class);
+            server2_pkt = query4;
+            if (server1_pkt) {
+                break;
+            }
+        }
+    }
+
+    ASSERT_TRUE(server1_pkt && server2_pkt) << "do not have both scopes in "
+                << max_scope_tries << ", load balance broken?";
+
+    // Iterate over message types.  While setting message type to zero is
+    // semantically invalid, it is useful for testing here. Similarly we exceed
+    // DHCP_TYPES_EOF just to be sure.
+    for (uint8_t msg_type = 0; msg_type < DHCP_TYPES_EOF + 2; ++msg_type) {
+        // All message types should be in scope for server1.
+        server1_pkt->setType(msg_type);
+
+        std::string scope_class;
+        bool is_in_scope = filter.inScope(server1_pkt, scope_class);
+        ASSERT_EQ("HA_server1", scope_class);
+        EXPECT_TRUE(is_in_scope);
+
+        server2_pkt->setType(msg_type);
+        scope_class.clear();
+        is_in_scope = filter.inScope(server2_pkt, scope_class);
+        switch (msg_type) {
+            case DHCPDISCOVER:
+            case DHCPREQUEST:
+            case DHCPDECLINE:
+            case DHCPRELEASE:
+            case DHCPINFORM:
+                // HA message types should be in scope for server2.
+                ASSERT_EQ("HA_server2", scope_class);
+                EXPECT_FALSE(is_in_scope);
+                break;
+            default:
+                // Non HA message types should be in scope for server1.
+                ASSERT_EQ("HA_server1", scope_class);
+                EXPECT_TRUE(is_in_scope);
+                break;
+        }
+    }
+}
+
+void
+QueryFilterTest::loadBalancingHaTypes6() {
+    HAConfigPtr config = createValidConfiguration();
+
+    QueryFilter filter(config);
+
+    // By default the server1 should serve its own scope only. The
+    // server2 should serve its scope.
+    EXPECT_TRUE(filter.amServingScope("server1"));
+    EXPECT_FALSE(filter.amServingScope("server2"));
+    EXPECT_FALSE(filter.amServingScope("server3"));
+
+    // Use DHCPV6_SOLICIT to find MAC addresses in scope for server1 and server2.
+    Pkt6Ptr server1_pkt;
+    Pkt6Ptr server2_pkt;
+    const unsigned max_scope_tries = 100;
+    for (unsigned i = 0; i < max_scope_tries; ++i) {
+        // Create query with random HW address.
+        std::string scope_class;
+
+        // Create query with random DUID.
+        Pkt6Ptr query6 = createQuery6(randomKey(10));
+        if (filter.inScope(query6, scope_class)) {
+            ASSERT_EQ("HA_server1", scope_class);
+            // In scope for server1, save it.
+            server1_pkt = query6;
+            if (server2_pkt) {
+                // Have both, we're done.
+                break;
+            }
+        } else {
+            ASSERT_EQ("HA_server2", scope_class);
+            // In scope for server2, save it.
+            server2_pkt = query6;
+            if (server1_pkt) {
+                // Have both, we're done.
+                break;
+            }
+        }
+    }
+
+    ASSERT_TRUE(server1_pkt && server2_pkt) << "do not have both scopes in "
+                << max_scope_tries << ", load balance broken?";
+
+    // Iterate over message types.  While setting message type to zero is
+    // semantically invalid, it is useful for testing here. Similarly we exceed
+    // DHCPV6_TYPES_EOF just to be sure.
+    for (uint8_t msg_type = 0; msg_type < DHCPV6_TYPES_EOF + 2; ++msg_type) {
+        // All message types should be in scope for server1.
+        server1_pkt->setType(msg_type);
+
+        std::string scope_class;
+        bool is_in_scope = filter.inScope(server1_pkt, scope_class);
+        ASSERT_EQ("HA_server1", scope_class);
+        EXPECT_TRUE(is_in_scope);
+
+        server2_pkt->setType(msg_type);
+        scope_class.clear();
+        is_in_scope = filter.inScope(server2_pkt, scope_class);
+        switch (msg_type) {
+            case DHCPV6_SOLICIT:
+            case DHCPV6_REQUEST:
+            case DHCPV6_CONFIRM:
+            case DHCPV6_RENEW:
+            case DHCPV6_REBIND:
+            case DHCPV6_RELEASE:
+            case DHCPV6_DECLINE:
+                // HA message types should be in scope for server2.
+                ASSERT_EQ("HA_server2", scope_class);
+                EXPECT_FALSE(is_in_scope);
+                break;
+            default:
+                // Non HA message types should be in scope for server1.
+                ASSERT_EQ("HA_server1", scope_class);
+                EXPECT_TRUE(is_in_scope);
+                break;
+        }
+    }
+}
+
 TEST_F(QueryFilterTest, loadBalancingClientIdThisPrimary) {
     loadBalancingClientIdThisPrimary();
 }
@@ -845,6 +1006,24 @@ TEST_F(QueryFilterTest, explicitlyServeScopes) {
 TEST_F(QueryFilterTest, explicitlyServeScopesMultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
     explicitlyServeScopes();
+}
+
+TEST_F(QueryFilterTest, loadBalancingHaTypes4) {
+    loadBalancingHaTypes4();
+}
+
+TEST_F(QueryFilterTest, loadBalancingHaTypes4MultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    loadBalancingHaTypes4();
+}
+
+TEST_F(QueryFilterTest, loadBalancingHaTypes6) {
+    loadBalancingHaTypes6();
+}
+
+TEST_F(QueryFilterTest, loadBalancingHaTypes6MultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    loadBalancingHaTypes6();
 }
 
 }

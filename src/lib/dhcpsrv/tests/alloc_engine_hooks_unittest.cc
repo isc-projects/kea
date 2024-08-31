@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -183,7 +183,7 @@ TEST_F(HookAllocEngine6Test, lease6_select) {
 
     // Create allocation engine (hook names are registered in its ctor)
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(100)));
     ASSERT_TRUE(engine);
 
     // Initialize Hooks Manager
@@ -260,7 +260,7 @@ TEST_F(HookAllocEngine6Test, change_lease6_select) {
 
     // Create allocation engine (hook names are registered in its ctor)
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(100)));
     ASSERT_TRUE(engine);
 
     // Initialize Hooks Manager
@@ -306,7 +306,7 @@ TEST_F(HookAllocEngine6Test, skip_lease6_select) {
 
     // Create allocation engine (hook names are registered in its ctor)
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(100)));
     ASSERT_TRUE(engine);
 
     // Initialize Hooks Manager
@@ -498,8 +498,7 @@ TEST_F(HookAllocEngine4Test, lease4_select) {
 
     // Create allocation engine (hook names are registered in its ctor)
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
-                                                 100, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(100)));
     ASSERT_TRUE(engine);
 
     // Initialize Hooks Manager
@@ -552,6 +551,7 @@ TEST_F(HookAllocEngine4Test, lease4_select) {
     vector<string> expected_argument_names;
     expected_argument_names.push_back("fake_allocation");
     expected_argument_names.push_back("lease4");
+    expected_argument_names.push_back("offer_lft");
     expected_argument_names.push_back("query4");
     expected_argument_names.push_back("subnet4");
     EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
@@ -573,8 +573,7 @@ TEST_F(HookAllocEngine4Test, change_lease4_select) {
 
     // Create allocation engine (hook names are registered in its ctor)
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
-                                                 100, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(100)));
     ASSERT_TRUE(engine);
 
     // Initialize Hooks Manager
@@ -623,8 +622,7 @@ TEST_F(HookAllocEngine4Test, skip_lease4_select) {
 
     // Create allocation engine (hook names are registered in its ctor)
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
-                                                 100, false)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(100)));
     ASSERT_TRUE(engine);
 
     // Initialize Hooks Manager

@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -36,9 +36,7 @@ Pkt4o6::Pkt4o6(const Pkt4Ptr& pkt4, const Pkt6Ptr& pkt6)
 void Pkt4o6::pack() {
     // Convert wire-format Pkt4 data in the form of OptionBuffer.
     Pkt4::pack();
-    OutputBuffer& buf = getBuffer();
-    const uint8_t* ptr = static_cast<const uint8_t*>(buf.getData());
-    OptionBuffer msg(ptr, ptr + buf.getLength());
+    const OptionBuffer& msg = getBuffer().getVector();
 
     // Build the DHCPv4 Message option for the DHCPv6 message, and pack the
     // entire stuff.

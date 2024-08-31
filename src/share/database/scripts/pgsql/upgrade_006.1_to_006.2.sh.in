@@ -1,13 +1,10 @@
 #!/bin/sh
 
-# Copyright (C) 2020-2022 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2020-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-# shellcheck disable=SC1091
-# SC1091: Not following: ... was not specified as input (see shellcheck -x).
 
 # Exit with error if commands exit with non-zero and if undefined variables are
 # used.
@@ -17,12 +14,16 @@ set -eu
 # SC2034: ... appears unused. Verify use (or export if used externally).
 prefix="@prefix@"
 
-# Include utilities. Use installed version if available and
-# use build version if it isn't.
-if [ -e @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
-    . "@datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh"
-else
+# Include utilities based on location of this script. Check for sources first,
+# so that the unexpected situations with weird paths fall on the default
+# case of installed.
+script_path=$(cd "$(dirname "${0}")" && pwd)
+if test "${script_path}" = "@abs_top_builddir@/src/share/database/scripts/pgsql"; then
+    # shellcheck source=./src/bin/admin/admin-utils.sh.in
     . "@abs_top_builddir@/src/bin/admin/admin-utils.sh"
+else
+    # shellcheck source=./src/bin/admin/admin-utils.sh.in
+    . "@datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh"
 fi
 
 VERSION=$(pgsql_version "$@")
@@ -34,6 +35,10 @@ if [ "$VERSION" != "6.1" ]; then
 fi
 
 psql "$@" >/dev/null <<EOF
+
+START TRANSACTION;
+
+-- This line starts the schema upgrade to version 6.2.
 
 -- Starting from this version we allow specifying multiple IP reservations
 -- for the same address in certain DHCP configurations. The server may check
@@ -59,13 +64,13 @@ ALTER TABLE ipv6_reservations DROP CONSTRAINT IF EXISTS key_dhcp6_address_prefix
 CREATE INDEX key_dhcp6_address_prefix_len
     ON ipv6_reservations (address ASC, prefix_len ASC);
 
--- Update the schema version number
+-- Update the schema version number.
 UPDATE schema_version
     SET version = '6', minor = '2';
 
--- Schema 6.2 specification ends here.
+-- This line concludes the schema upgrade to version 6.2.
 
--- Commit the script transaction
+-- Commit the script transaction.
 COMMIT;
 
 EOF

@@ -1,0 +1,113 @@
+@startuml
+
+/'
+This UML uses the new syntax of activity diagrams from plantuml.
+Unfortunately, it also results in a more wide spread of the resulting
+visual diagram, so wide that it becomes unreadable when automatically
+scaled down in the ARM. This is the reason for the aggressive word
+wrapping below - to force the diagram to be longer and less wide, and
+as a result - more readable.
+'/
+
+start
+
+title How Kea Recognizes the Same Client In Different DHCP Messages (Kea 2.4.0)
+
+if (libdhcp_flex_id.so is used) then (yes)
+  if (replace-client-id is true (the default)) then (yes)
+    #palegreen:Client is recognized
+    by the result of the
+    identifier
+    expression in
+    libdhcp_flex_id.so.;
+    stop
+  else (no)
+    if (client has a reservation) then (yes)
+      if () then (for the purpose
+of acquiring a reservation)
+        #palegreen:Client is recognized
+        by the result of the
+        identifier
+        expression in
+        libdhcp_flex_id.so.;
+        stop
+      else (for the purpose
+of leasing outside a
+reservation or acquiring
+any other value outside
+of reservations)
+        :Go through the
+        diagram from the
+        beginning as if
+        libdhcp_flex_id.so
+        is unused.;
+        stop
+      endif
+    else (no)
+      :Go through the
+      diagram from the
+      beginning as if
+      libdhcp_flex_id.so
+      is unused.;
+      stop
+    endif
+  endif
+else (no)
+  if (DHCPv4
+or
+DHCPv6?) then (DHCPv4)
+    if (MAC
+address is
+present) then (yes)
+      if (match-client-id
+is true
+(the default)) then (yes)
+        if (client ID option (code 61) is present) then (yes)
+          #palegreen:Client is recognized
+          by the client ID
+          option (code 61).;
+          stop
+        else (no)
+          #palegreen:Client is recognized
+          by the MAC address.;
+          stop
+        endif
+      else (no)
+        #palegreen:Client is recognized
+        by the MAC address.;
+        stop
+      endif
+    else (no)
+      #pink:DHCP message is not
+      well formed.;
+      stop
+    endif
+  else (DHCPv6)
+    if (client ID
+option (code 1) is
+present) then (yes)
+      if (interested in
+identifying as a
+single client -
+the device or
+the lease) then (device)
+        #palegreen:Client is recognized
+        by the client ID
+        option (code 1) aka
+        DUID.;
+        stop
+      else (lease)
+        #palegreen:Client is recognized
+        by the tuple
+        <DUID, IA-type, IAID>.;
+        stop
+      endif
+    else (no)
+      #pink:DHCP message is not
+      well formed.;
+      stop
+    endif
+  endif
+endif
+
+@enduml

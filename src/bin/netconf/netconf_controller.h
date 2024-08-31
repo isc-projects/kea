@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,7 +20,6 @@ namespace netconf {
 /// NetconfProcess.
 class NetconfController : public process::DControllerBase {
 public:
-
     /// @brief Static singleton instance method.
     ///
     /// This method returns the base class singleton instance member.
@@ -49,17 +48,16 @@ public:
     /// @param name name of the text file to be parsed
     /// @return Element tree structure representing parsed configuration
     isc::data::ConstElementPtr
-    parseFile(const std::string& name);
+    parseFile(const std::string& name) override final;
 
     /// @brief Redefined application-level signal processing method.
     ///
     /// This method ignores SIGHUP as configuration reloading is not yet
     /// supported.
     /// @param signum signal number to process.
-    virtual void processSignal(int signum);
+    void processSignal(int signum) override final;
 
 private:
-
     /// @brief Creates an instance of the Netconf application process.
     ///
     /// This method is invoked during the process initialization step of
@@ -69,17 +67,17 @@ private:
     /// Note the caller is responsible for destructing the process. This
     /// is handled by the base class, which wraps this pointer with a smart
     /// pointer.
-    virtual process::DProcessBase* createProcess();
+    process::DProcessBase* createProcess() override final;
 
     /// @brief Constructor is declared private to maintain the integrity of
     /// the singleton instance.
     NetconfController();
-};
+};  // NetconfController
 
 // @Defines a shared pointer to NetconfController
-typedef boost::shared_ptr<NetconfController> NetconfControllerPtr;
+using NetconfControllerPtr = std::shared_ptr<NetconfController>;
 
-} // namespace isc::netconf
-} // namespace isc
+}  // namespace netconf
+}  // namespace isc
 
-#endif // NETCONF_CONTROLLER_H
+#endif  // NETCONF_CONTROLLER_H

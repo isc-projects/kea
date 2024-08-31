@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 #include <asiodns/io_fetch.h>
 #include <asiodns/logger.h>
 #include <asiolink/interval_timer.h>
+#include <d2srv/d2_update_message.h>
 #include <d2srv/testutils/nc_test_utils.h>
 #include <d2srv/testutils/stats_test_utils.h>
 #include <dns/messagerenderer.h>
@@ -60,7 +61,7 @@ class DNSClientTest : public ::testing::Test, DNSClient::Callback,
                       public D2StatTest {
 public:
     /// @brief The IOService which handles IO operations.
-    IOService service_;
+    IOServicePtr service_;
 
     /// @brief The UDP socket.
     std::unique_ptr<udp::socket> socket_;
@@ -107,7 +108,7 @@ public:
     /// waiting for a response. Some of the tests are checking DNSClient behavior
     /// in case when response from the server is not received. Tests output would
     /// become messy if such errors were logged.
-    DNSClientTest() : service_(), socket_(), endpoint_(),
+    DNSClientTest() : service_(new IOService()), socket_(), endpoint_(),
                       status_(DNSClient::SUCCESS), corrupt_response_(false),
                       expect_response_(true), test_timer_(service_),
                       received_(0), expected_(0), go_on_(false) {
@@ -124,6 +125,9 @@ public:
     ///
     /// Sets the asiodns logging level back to DEBUG.
     virtual ~DNSClientTest() {
+        test_timer_.cancel();
+        dns_client_->stop();
+        service_->stopAndPoll();
         asiodns::logger.setSeverity(isc::log::DEBUG);
     };
 
@@ -136,7 +140,7 @@ public:
     virtual void operator()(DNSClient::Status status) {
         status_ = status;
         if (!expected_ || (expected_ == ++received_)) {
-            service_.stop();
+            service_->stop();
         }
 
         if (expect_response_) {
@@ -168,7 +172,7 @@ public:
     ///
     /// This callback stops all running (hanging) tasks on IO service.
     void testTimeoutHandler() {
-        service_.stop();
+        service_->stop();
         FAIL() << "Test timeout hit.";
     }
 
@@ -311,10 +315,9 @@ public:
     /// @brief This test verifies that it accepted timeout values belong to the
     /// range of <0, DNSClient::getMaxTimeout()>.
     void runInvalidTimeoutTest() {
-
         expect_response_ = false;
 
-        // Create outgoing message. Simply set the required message fields:
+        // Create outbound message. Simply set the required message fields:
         // error code and Zone section. This is enough to create on-wire format
         // of this message and send it.
         D2UpdateMessage message(D2UpdateMessage::OUTBOUND);
@@ -351,8 +354,7 @@ public:
         /// @todo The timeout value could be set to 0 to trigger timeout
         /// instantly. However, it may lead to situations that the message sent
         /// in one test will not be dropped by the kernel by the time, the next
-        /// test starts. This will lead to intermittent unit test errors as
-        /// described in the ticket http://oldkea.isc.org/ticket/3265.
+        /// test starts. This will lead to intermittent unit test errors.
         /// Increasing the timeout to a non-zero value mitigates this problem.
         /// The proper way to solve this problem is to receive the packet
         /// on our own and drop it. Such a fix will need to be applied not only
@@ -368,8 +370,7 @@ public:
 
         // This starts the execution of tasks posted to IOService. run() blocks
         // until stop() is called in the completion callback function.
-        service_.run();
-
+        service_->run();
     }
 
     /// @brief This test verifies that DNSClient can send DNS Update and receive
@@ -393,7 +394,7 @@ public:
         // responses. The reuse address option is set so as both sockets can
         // use the same address. This new socket is bound to the test address
         // and port, where requests will be sent.
-        socket_.reset(new udp::socket(service_.get_io_service(),
+        socket_.reset(new udp::socket(service_->getInternalIOService(),
                                       boost::asio::ip::udp::v4()));
         socket_->set_option(socket_base::reuse_address(true));
         socket_->bind(udp::endpoint(address::from_string(TEST_ADDRESS),
@@ -436,16 +437,16 @@ public:
 
         }
 
-        // Kick of the message exchange by actually running the scheduled
+        // Kick off the message exchange by actually running the scheduled
         // "send" and "receive" operations.
-        service_.run();
+        service_->run();
 
         socket_->close();
 
         // Since the callback, operator(), calls stop() on the io_service,
         // we must reset it in order for subsequent calls to run() or
-        // run_one() to work.
-        service_.get_io_service().reset();
+        // runOne() to work.
+        service_->stopAndPoll();
     }
 
     /// @brief Performs a single request-response exchange with or without TSIG.
@@ -466,7 +467,7 @@ public:
         ASSERT_NO_THROW(message.setZone(Name("example.com"), RRClass::IN()));
 
         // Setup our "loopback" server.
-        udp::socket udp_socket(service_.get_io_service(), boost::asio::ip::udp::v4());
+        udp::socket udp_socket(service_->getInternalIOService(), boost::asio::ip::udp::v4());
         udp_socket.set_option(socket_base::reuse_address(true));
         udp_socket.bind(udp::endpoint(address::from_string(TEST_ADDRESS),
                                       TEST_PORT));
@@ -490,14 +491,14 @@ public:
 
         // Kick of the message exchange by actually running the scheduled
         // "send" and "receive" operations.
-        service_.run();
+        service_->run();
 
         udp_socket.close();
 
         // Since the callback, operator(), calls stop() on the io_service,
         // we must reset it in order for subsequent calls to run() or
-        // run_one() to work.
-        service_.get_io_service().reset();
+        // runOne() to work.
+        service_->stopAndPoll();
     }
 };
 

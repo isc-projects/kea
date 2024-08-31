@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -32,6 +32,10 @@
 #include <fstream>
 
 extern "C" {
+
+extern int (*do_load)(isc::hooks::LibraryHandle& handle);
+
+extern int (*do_unload)();
 
 /// @brief Append digit to marker file
 ///
@@ -84,13 +88,23 @@ version() {
 }
 
 int
-load(isc::hooks::LibraryHandle&) {
-    return (appendDigit(LOAD_MARKER_FILE));
+load(isc::hooks::LibraryHandle& handle) {
+    int result = 0;
+    result = appendDigit(LOAD_MARKER_FILE);
+    if (result == 0 && do_load) {
+        result = do_load(handle);
+    }
+    return (result);
 }
 
 int
 unload() {
-    return (appendDigit(UNLOAD_MARKER_FILE));
+    int result = 0;
+    result = appendDigit(UNLOAD_MARKER_FILE);
+    if (result == 0 && do_unload) {
+        result = do_unload();
+    }
+    return (result);
 }
 
 };

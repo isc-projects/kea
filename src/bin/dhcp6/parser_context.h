@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -273,9 +273,6 @@ public:
         /// Used while parsing shared-networks structures.
         SHARED_NETWORK,
 
-        /// Used while parsing Dhcp6/reservation-mode.
-        RESERVATION_MODE,
-
         /// Used while parsing Dhcp6/option-def structures.
         OPTION_DEF,
 
@@ -299,6 +296,20 @@ public:
         /// Used while parsing Dhcp6/control-socket structures.
         CONTROL_SOCKET,
 
+        /// Used while parsing Dhcp6/control-socket/socket-type structures.
+        CONTROL_SOCKET_TYPE,
+
+        /// Used while parsing Dhcp6/control-socket/authentication structures.
+        AUTHENTICATION,
+
+        /// Used while parsing Dhcp6/control-socket/authentication/type
+        /// structures.
+        AUTH_TYPE,
+
+        /// Used while parsing Dhcp6/control-socket/authentication/clients
+        /// structures.
+        CLIENTS,
+
         /// Used while parsing Dhcp6/dhcp-queue-control structures.
         DHCP_QUEUE_CONTROL,
 
@@ -320,7 +331,7 @@ public:
         /// Used while parsing Dhcp6/loggers structures.
         LOGGERS,
 
-        /// Used while parsing Dhcp6/loggers/output_options structures.
+        /// Used while parsing Dhcp6/loggers/output-options structures.
         OUTPUT_OPTIONS,
 
         /// Used while parsing Dhcp6/dhcp-ddns.
@@ -344,6 +355,8 @@ public:
         /// Used while parsing compatibility parameters
         COMPATIBILITY,
 
+        /// Used while parsing Dhcp6/ddns-conflict-resolution-mode.
+        DDNS_CONFLICT_RESOLUTION_MODE,
     } ParserContext;
 
     /// @brief File name

@@ -17,7 +17,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <functional>
-#include <boost/asio.hpp>
+
+#include <asiolink/asio_wrapper.h>
 #include <boost/asio/ssl.hpp>
 
 using boost::asio::ip::tcp;

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,7 +16,7 @@
 #include <asiolink/tcp_endpoint.h>
 #include <asiolink/tcp_socket.h>
 #include <util/buffer.h>
-#include <util/io_utilities.h>
+#include <util/io.h>
 
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
@@ -32,11 +32,12 @@
 #include <string>
 #include <vector>
 
+using namespace isc::asiolink;
+using namespace isc::util;
+
+using namespace std;
 using namespace boost::asio;
 using namespace boost::asio::ip;
-using namespace isc::util;
-using namespace isc::asiolink;
-using namespace std;
 
 namespace {
 
@@ -234,7 +235,7 @@ serverRead(tcp::socket& socket, TCPCallback& server_cb) {
 TEST(TCPSocket, processReceivedData) {
     const uint16_t PACKET_SIZE = 16382;     // Amount of "real" data in the buffer
 
-    IOService               service;        // Used to instantiate socket
+    IOServicePtr            service(new IOService());  // Used to instantiate socket
     TCPSocket<TCPCallback>  test(service);  // Socket under test
     uint8_t                 inbuff[PACKET_SIZE + 2];   // Buffer to check
     OutputBufferPtr         outbuff(new OutputBuffer(16));
@@ -283,7 +284,7 @@ TEST(TCPSocket, processReceivedData) {
     EXPECT_EQ(PACKET_SIZE, expected);
     EXPECT_EQ(2, outbuff->getLength());
 
-    const uint8_t* dataptr = static_cast<const uint8_t*>(outbuff->getData());
+    const uint8_t* dataptr = outbuff->getData();
     EXPECT_TRUE(equal(inbuff + 2, inbuff + cumulative, dataptr));
 
     // And add the remaining data.  Remember that "inbuff" is "PACKET_SIZE + 2"
@@ -296,7 +297,7 @@ TEST(TCPSocket, processReceivedData) {
     EXPECT_EQ(0, offset);
     EXPECT_EQ(PACKET_SIZE, expected);
     EXPECT_EQ(PACKET_SIZE, outbuff->getLength());
-    dataptr = static_cast<const uint8_t*>(outbuff->getData());
+    dataptr = outbuff->getData();
     EXPECT_TRUE(equal(inbuff + 2, inbuff + cumulative, dataptr));
 }
 
@@ -308,10 +309,10 @@ TEST(TCPSocket, processReceivedData) {
 TEST(TCPSocket, sequenceTest) {
 
     // Common objects.
-    IOService   service;                    // Service object for async control
+    IOServicePtr service(new IOService());  // Service object for async control
 
     // The client - the TCPSocket being tested
-    TCPSocket<TCPCallback>  client(service);// Socket under test
+    TCPSocket<TCPCallback> client(service); // Socket under test
     TCPCallback client_cb("Client");        // Async I/O callback function
     TCPEndpoint client_remote_endpoint;     // Where client receives message from
     OutputBufferPtr client_buffer(new OutputBuffer(128));
@@ -324,7 +325,7 @@ TEST(TCPSocket, sequenceTest) {
     TCPEndpoint server_endpoint(server_address, SERVER_PORT);
                                             // Endpoint describing server
     TCPEndpoint server_remote_endpoint;     // Address where server received message from
-    tcp::socket server_socket(service.get_io_service());
+    tcp::socket server_socket(service->getInternalIOService());
                                             // Socket used for server
 
     // Step 1.  Create the connection between the client and the server.  Set
@@ -335,8 +336,8 @@ TEST(TCPSocket, sequenceTest) {
     server_cb.queued() = TCPCallback::ACCEPT;
     server_cb.called() = TCPCallback::NONE;
     server_cb.setCode(42);  // Some error
-    tcp::acceptor acceptor(service.get_io_service(),
-                            tcp::endpoint(tcp::v4(), SERVER_PORT));
+    tcp::acceptor acceptor(service->getInternalIOService(),
+                           tcp::endpoint(tcp::v4(), SERVER_PORT));
     acceptor.set_option(tcp::acceptor::reuse_address(true));
     acceptor.async_accept(server_socket, server_cb);
 
@@ -348,8 +349,8 @@ TEST(TCPSocket, sequenceTest) {
     client.open(&server_endpoint, client_cb);
 
     // Run the open and the accept callback and check that they ran.
-    service.run_one();
-    service.run_one();
+    service->runOne();
+    service->runOne();
 
     EXPECT_EQ(TCPCallback::ACCEPT, server_cb.called());
     EXPECT_EQ(0, server_cb.getCode());
@@ -377,7 +378,7 @@ TEST(TCPSocket, sequenceTest) {
 
     // Wait for the client callback to complete. (Must do this first on
     // Solaris: if we do the synchronous read first, the test hangs.)
-    service.run_one();
+    service->runOne();
 
     // Synchronously read the data from the server.;
     serverRead(server_socket, server_cb);
@@ -442,7 +443,7 @@ TEST(TCPSocket, sequenceTest) {
     bool server_complete = false;
     bool client_complete = false;
     while (!server_complete || !client_complete) {
-        service.run_one();
+        service->runOne();
 
         // Has the server run?
         if (!server_complete) {
@@ -505,7 +506,7 @@ TEST(TCPSocket, sequenceTest) {
     EXPECT_EQ(sizeof(INBOUND_DATA) + 2, server_cb.length());
 
     // ... and that what was sent is what was received.
-    const uint8_t* received = static_cast<const uint8_t*>(client_buffer->getData());
+    const uint8_t* received = client_buffer->getData();
     EXPECT_TRUE(equal(INBOUND_DATA, (INBOUND_DATA + (sizeof(INBOUND_DATA) - 1)),
                       received));
 

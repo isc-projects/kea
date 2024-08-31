@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -128,12 +128,20 @@ using namespace isc::util;
 namespace isc {
 namespace dhcp {
 
+bool
+PktFilterLPF::isSocketReceivedTimeSupported() const {
+#ifdef SO_TIMESTAMP
+    return (true);
+#else
+    return (false);
+#endif
+}
+
 SocketInfo
 PktFilterLPF::openSocket(Iface& iface,
                          const isc::asiolink::IOAddress& addr,
                          const uint16_t port, const bool,
                          const bool) {
-
     // Open fallback socket first. If it fails, it will give us an indication
     // that there is another service (perhaps DHCP server) running.
     // The function will throw an exception and effectively cease opening
@@ -179,6 +187,15 @@ PktFilterLPF::openSocket(Iface& iface,
         isc_throw(SocketConfigError, "Failed to install packet filtering program"
                   << " on the socket " << sock);
     }
+
+#ifdef SO_TIMESTAMP
+    int enable = 1;
+    if (setsockopt(sock, SOL_SOCKET, SO_TIMESTAMP, &enable, sizeof(enable))) {
+        const char* errmsg = strerror(errno);
+        isc_throw(SocketConfigError, "Could not enable SO_TIMESTAMP for " << addr.toText()
+                  << ", error: " << errmsg);
+    }
+#endif
 
     struct sockaddr_ll sa;
     memset(&sa, 0, sizeof(sockaddr_ll));
@@ -235,6 +252,7 @@ PktFilterLPF::receive(Iface& iface, const SocketInfo& socket_info) {
         datalen = recv(socket_info.fallbackfd_, raw_buf, sizeof(raw_buf), 0);
     } while (datalen > 0);
 
+#ifndef SO_TIMESTAMP
     // Now that we finished getting data from the fallback socket, we
     // have to get the data from the raw socket too.
     int data_len = read(socket_info.sockfd_, raw_buf, sizeof(raw_buf));
@@ -248,6 +266,39 @@ PktFilterLPF::receive(Iface& iface, const SocketInfo& socket_info) {
     }
 
     InputBuffer buf(raw_buf, data_len);
+#else
+    const size_t CONTROL_BUF_LEN = 512;
+    uint8_t msg_buf[IfaceMgr::RCVBUFSIZE];
+    uint8_t control_buf[CONTROL_BUF_LEN];
+
+    memset(&control_buf[0], 0, CONTROL_BUF_LEN);
+
+    // Initialize our message header structure.
+    struct msghdr m;
+    memset(&m, 0, sizeof(m));
+
+    struct iovec v;
+    v.iov_base = static_cast<void*>(msg_buf);
+    v.iov_len = IfaceMgr::RCVBUFSIZE;
+    m.msg_iov = &v;
+    m.msg_iovlen = 1;
+
+    // Getting the interface is a bit more involved.
+    //
+    // We set up some space for a "control message". We have
+    // previously asked the kernel to give us packet
+    // information (when we initialized the interface), so we
+    // should get the destination address from that.
+    m.msg_control = &control_buf[0];
+    m.msg_controllen = CONTROL_BUF_LEN;
+
+    int result = recvmsg(socket_info.sockfd_, &m, 0);
+    if (result < 0) {
+        isc_throw(SocketReadError, "Pkt4FilterLpf to receive UDP4 data");
+    }
+
+    InputBuffer buf(msg_buf, result);
+#endif
 
     // @todo: This is awkward way to solve the chicken and egg problem
     // whereby we don't know the offset where DHCP data start in the
@@ -284,6 +335,25 @@ PktFilterLPF::receive(Iface& iface, const SocketInfo& socket_info) {
     pkt->setRemotePort(dummy_pkt->getRemotePort());
     pkt->setLocalHWAddr(dummy_pkt->getLocalHWAddr());
     pkt->setRemoteHWAddr(dummy_pkt->getRemoteHWAddr());
+
+#ifdef SO_TIMESTAMP
+    struct cmsghdr* cmsg = CMSG_FIRSTHDR(&m);
+    while (cmsg != NULL) {
+        if ((cmsg->cmsg_level == SOL_SOCKET) &&
+            (cmsg->cmsg_type  == SCM_TIMESTAMP)) {
+
+            struct timeval cmsg_time;
+            memcpy(&cmsg_time, CMSG_DATA(cmsg), sizeof(cmsg_time));
+            pkt->addPktEvent(PktEvent::SOCKET_RECEIVED, cmsg_time);
+            break;
+        }
+
+        cmsg = CMSG_NXTHDR(&m, cmsg);
+    }
+#endif
+
+    // Set time packet was read from the buffer.
+    pkt->addPktEvent(PktEvent::BUFFER_READ);
 
     return (pkt);
 }
@@ -323,6 +393,7 @@ PktFilterLPF::send(const Iface& iface, uint16_t sockfd, const Pkt4Ptr& pkt) {
     sa.sll_protocol = htons(ETH_P_IP);
     sa.sll_halen = 6;
 
+    pkt->addPktEvent(PktEvent::RESPONSE_SENT);
     int result = sendto(sockfd, buf.getData(), buf.getLength(), 0,
                         reinterpret_cast<const struct sockaddr*>(&sa),
                         sizeof(sockaddr_ll));
@@ -334,7 +405,6 @@ PktFilterLPF::send(const Iface& iface, uint16_t sockfd, const Pkt4Ptr& pkt) {
     return (0);
 
 }
-
 
 } // end of isc::dhcp namespace
 } // end of isc namespace

@@ -40,11 +40,11 @@ libdhcp_user_chk_la_LDFLAGS  += -avoid-version -export-dynamic -module
 # convenience archive, resulting in shared modules
 libdhcp_user_chk_la_LDFLAGS  += -rpath /nowhere
 libdhcp_user_chk_la_LIBADD  = libduc.la
-libdhcp_user_chk_la_LIBADD  += $(top_builddir)/src/lib/hooks/libkea-hooks.la
-libdhcp_user_chk_la_LIBADD  += $(top_builddir)/src/lib/log/libkea-log.la
-libdhcp_user_chk_la_LIBADD  += $(top_builddir)/src/lib/util/libkea-util.la
-libdhcp_user_chk_la_LIBADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-libdhcp_user_chk_la_LIBADD  += $(LOG4CPLUS_LIBS)
+libdhcp_user_chk_la_LIBADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
+libdhcp_user_chk_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
+libdhcp_user_chk_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
+libdhcp_user_chk_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+libdhcp_user_chk_la_LIBADD += $(LOG4CPLUS_LIBS)
 
 # If we want to get rid of all generated messages files, we need to use
 # make maintainer-clean. The proper way to introduce custom commands for

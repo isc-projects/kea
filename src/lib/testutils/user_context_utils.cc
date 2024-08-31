@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -59,9 +59,8 @@ Value<EP> moveComments1(EP element) {
         ElementPtr result = ElementPtr(new ListElement());
         typedef std::vector<ElementPtr> ListType;
         const ListType& list = element->listValue();
-        for (ListType::const_iterator it = list.cbegin();
-             it != list.cend(); ++it) {
-            Value<ElementPtr> item = moveComments1(*it);
+        for (auto const& it : list) {
+            Value<ElementPtr> item = moveComments1(it);
             result->add(item.get());
             if (!item.isShared()) {
                 modified = true;
@@ -81,17 +80,17 @@ Value<EP> moveComments1(EP element) {
     bool has_comment = false;
     typedef std::map<std::string, ConstElementPtr> map_type;
     const map_type& map = element->mapValue();
-    for (map_type::const_iterator it = map.cbegin(); it != map.cend(); ++it) {
-        if (it->first == "comment") {
+    for (auto const& it : map) {
+        if (it.first == "comment") {
             // Note there is a comment entry to move
             has_comment = true;
-        } else if (it->first == "user-context") {
+        } else if (it.first == "user-context") {
             // Do not traverse user-context entries
-            result->set("user-context", it->second);
+            result->set("user-context", it.second);
         } else {
             // Not comment or user-context
-            Value<ConstElementPtr> item = moveComments1(it->second);
-            result->set(it->first, item.get());
+            Value<ConstElementPtr> item = moveComments1(it.second);
+            result->set(it.first, item.get());
             if (!item.isShared()) {
                 modified = true;
             }

@@ -1,4 +1,4 @@
-// Copyright (C) 2015,2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -46,11 +46,12 @@ public:
     /// of the expired leases.
     ///
     /// @param expiration_config pointer to the content of parsed values
+    /// @param expiration pointer to config parameters to be updated
     ///
     /// @throw DhcpConfigError if unknown parameter specified or the
-    /// parameter contains invalid value..
-    void parse(isc::data::ConstElementPtr expiration_config);
-
+    /// parameter contains invalid value.
+    void parse(isc::data::ConstElementPtr expiration_config,
+               isc::dhcp::CfgExpirationPtr expiration);
 };
 
 } // end of namespace isc::dhcp

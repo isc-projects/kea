@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -67,7 +67,7 @@ namespace {
 string
 join(const ProcessEnvVars& vars) {
     string result;
-    for (auto var : vars) {
+    for (auto const& var : vars) {
         result += var + "\n";
     }
     return (result);
@@ -81,12 +81,20 @@ generateHWAddr() {
     return (HWAddrPtr(new HWAddr({0, 1, 2 ,3}, HTYPE_ETHER)));
 }
 
+/// @brief Generate a valid ClientId.
+///
+/// @return The generated ClientId.
+ClientIdPtr
+generateClientId() {
+    return (ClientIdPtr(new ClientId({0, 1, 2, 3, 4, 5, 6})));
+}
+
 /// @brief Generate a valid DUID.
 ///
 /// @return The generated DUID.
-ClientIdPtr
+DuidPtr
 generateDUID() {
-    return (ClientIdPtr(new ClientId({0, 1, 2, 3, 4, 5, 6})));
+    return (DuidPtr(new DUID({0, 1, 2, 3, 4, 5, 6})));
 }
 
 /// @brief Generate a valid Option.
@@ -151,7 +159,7 @@ generateSubnet6() {
 Lease4Ptr
 generateLease4() {
     HWAddrPtr hwaddr = generateHWAddr();
-    ClientIdPtr clientid = generateDUID();
+    ClientIdPtr clientid = generateClientId();
 
     Lease4Ptr lease4(new Lease4(IOAddress("192.168.0.1"), hwaddr, clientid,
                                 2, 3, 4, false, false, "test.hostname"));
@@ -182,8 +190,8 @@ generateLease6() {
 Pkt4Ptr
 generatePkt4() {
     // A dummy MAC address, padded with 0s
-    const uint8_t dummyChaddr[16] = {0, 1, 2, 3, 4, 5, 0, 0,
-                                     0, 0, 0, 0, 0, 0, 0, 0 };
+    const uint8_t dummyChaddr[16] = { 0, 1, 2, 3, 4, 5, 0, 0,
+                                      0, 0, 0, 0, 0, 0, 0, 0 };
 
     // Let's use some creative test content here (128 chars + \0)
     const uint8_t dummyFile[] = "Lorem ipsum dolor sit amet, consectetur "
@@ -239,10 +247,8 @@ generatePkt4() {
     pkt4->setLocalHWAddr(generateHWAddr());
     pkt4->setRemoteHWAddr(generateHWAddr());
 
-    OptionDefinitionPtr rai_def = LibDHCP::getOptionDef(DHCP4_OPTION_SPACE,
-                                                        DHO_DHCP_AGENT_OPTIONS);
-
-    OptionCustomPtr rai(new OptionCustom(*rai_def, Option::V4));
+    const OptionDefinition& rai_def = LibDHCP::DHO_DHCP_AGENT_OPTIONS_DEF();
+    OptionCustomPtr rai(new OptionCustom(rai_def, Option::V4));
 
     uint8_t circuit_id[] = { 0x68, 0x6f, 0x77, 0x64, 0x79 };
     OptionPtr circuit_id_opt(new Option(Option::V4, RAI_OPTION_AGENT_CIRCUIT_ID,
@@ -315,6 +321,40 @@ generatePkt6() {
     pkt6->setRemoteHWAddr(generateHWAddr());
     pkt6->addOption(OptionPtr(new Option(Option::V6, D6O_CLIENTID,
                               generateDUID()->getDuid())));
+
+    Pkt6::RelayInfo relay;
+    relay.msg_type_ = DHCPV6_RELAY_FORW;
+    relay.hop_count_ = 1;
+    relay.linkaddr_ = isc::asiolink::IOAddress("3001::1");
+    relay.peeraddr_ = isc::asiolink::IOAddress("fe80::abcd");
+
+    const uint8_t rem_data[] = {
+        1, 2, 3, 4,  // enterprise-number
+        0xa, 0xb, 0xc, 0xd, 0xe, 0xf // MAC
+    };
+
+    OptionPtr relay_opt(new Option(Option::V6, D6O_REMOTE_ID,
+                        OptionBuffer(rem_data, rem_data + sizeof(rem_data))));
+
+    relay.options_.insert(make_pair(relay_opt->getType(), relay_opt));
+
+    const uint8_t sub_data[] = {
+        0x1a, 0x2b, 0x3c, 0x4d, 0x5e, 0x6f
+    };
+
+    relay_opt.reset(new Option(Option::V6, D6O_SUBSCRIBER_ID,
+                        OptionBuffer(sub_data, sub_data + sizeof(sub_data))));
+
+    relay.options_.insert(make_pair(relay_opt->getType(), relay_opt));
+
+    const string iface_id("relay1:eth0");
+
+    relay_opt.reset(new Option(Option::V6, D6O_INTERFACE_ID,
+                               OptionBuffer(iface_id.begin(), iface_id.end())));
+
+    relay.options_.insert(make_pair(relay_opt->getType(), relay_opt));
+
+    pkt6->addRelayInfo(relay);
 
     return (pkt6);
 }
@@ -758,7 +798,7 @@ TEST(RunScript, extractPkt6) {
     vars.clear();
     pkt6 = generatePkt6();
     RunScriptImpl::extractPkt6(vars, pkt6, "PKT6_PREFIX", "_PKT6_SUFFIX");
-    ASSERT_EQ(12, vars.size());
+    ASSERT_EQ(15, vars.size());
     expected = "PKT6_PREFIX_TYPE_PKT6_SUFFIX=UNKNOWN\n"
                "PKT6_PREFIX_TXID_PKT6_SUFFIX=0\n"
                "PKT6_PREFIX_LOCAL_ADDR_PKT6_SUFFIX=ff02::1:2\n"
@@ -770,7 +810,10 @@ TEST(RunScript, extractPkt6) {
                "PKT6_PREFIX_REMOTE_HWADDR_PKT6_SUFFIX=00:01:02:03\n"
                "PKT6_PREFIX_REMOTE_HWADDR_TYPE_PKT6_SUFFIX=1\n"
                "PKT6_PREFIX_PROTO_PKT6_SUFFIX=UDP\n"
-               "PKT6_PREFIX_CLIENT_ID_PKT6_SUFFIX=00:01:02:03:04:05:06\n";
+               "PKT6_PREFIX_CLIENT_ID_PKT6_SUFFIX=00:01:02:03:04:05:06\n"
+               "PKT6_PREFIX_OPTION_18_PKT6_SUFFIX=0x72656C6179313A65746830\n"
+               "PKT6_PREFIX_OPTION_37_PKT6_SUFFIX=0x010203040A0B0C0D0E0F\n"
+               "PKT6_PREFIX_OPTION_38_PKT6_SUFFIX=0x1A2B3C4D5E6F\n";
     EXPECT_EQ(expected, join(vars));
 }
 
@@ -780,13 +823,13 @@ public:
     /// @brief Constructor.
     RunScriptTest() :
         co_manager_(new CalloutManager(1)), io_service_(new IOService()) {
-        RunScriptImpl::setIOService(io_service_);
+        ProcessSpawn::setIOService(io_service_);
         clearLogFile();
     }
 
     /// @brief Destructor.
     ~RunScriptTest() {
-        RunScriptImpl::setIOService(IOServicePtr());
+        ProcessSpawn::setIOService(IOServicePtr());
         clearLogFile();
     }
 
@@ -836,7 +879,7 @@ TEST_F(RunScriptTest, lease4Renew) {
     handle.setArgument("query4", pkt4);
     Subnet4Ptr subnet4 = generateSubnet4();
     handle.setArgument("subnet4", subnet4);
-    ClientIdPtr clientid = generateDUID();
+    ClientIdPtr clientid = generateClientId();
     handle.setArgument("clientid", clientid);
     HWAddrPtr hwaddr = generateHWAddr();
     handle.setArgument("hwaddr", hwaddr);

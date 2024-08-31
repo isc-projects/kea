@@ -13,7 +13,7 @@
         "    \"arguments\": {",
         "        \"pd-pools\": [",
         "            {",
-        "                \"prefix\": <pool prefix (address part)>",
+        "                \"prefix\": <pool prefix (address part)>,",
         "                \"prefix-len\": <pool prefix (length part)>",
         "            }",
         "        ],",

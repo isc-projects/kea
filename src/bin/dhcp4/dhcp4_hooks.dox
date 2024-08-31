@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -55,16 +55,26 @@ to the end of this list.
 
  - @b Description: this callout is executed when the server has completed
    its (re)configuration. The server provides received and parsed configuration
-   structures to the hook library. It also provides a pointer to the IOService
-   object which is used by the server to run asynchronous operations. The hooks
-   libraries can use this IOService object to schedule asynchronous tasks which
-   are triggered by the DHCP server's main loop. The hook library should hold the
-   provided pointer until the library is unloaded. The NetworkState object
-   provides access to the DHCP service state of the server and allows for
-   enabling and disabling the DHCP service from the hooks libraries.
+   structures to the hook library.
+   If the library uses any IO operations, it should create a local IOService
+   object and register it with the IOServiceMgr. This way the local IOService is
+   used by the server to run asynchronous operations. The hooks library can use
+   the local IOService object to schedule asynchronous tasks which are triggered
+   by the DHCP server's main loop. The hook library can use the local IOService
+   until the library is unloaded at which stage it must unregister it.
+   The "io_context" parameter gives access to the main IOService, but it's use
+   has been deprecated in favor of a local IOService to avoid issues when
+   unloading the library. The parameter has been deprecated and will be removed
+   in future versions.
+   The NetworkState object provides access to the DHCP service state of the
+   server and allows for enabling and disabling the DHCP service from the hooks
+   libraries.
 
- - <b>Next step status</b>: Status codes returned by the callouts installed on
-   this hook point are ignored.
+ - <b>Next step status</b>: If any callout sets the status to DROP, the server
+   will interrupt the reconfiguration process. The hook callout is expected to
+   have completed the cause of the interruption under the "error" handle argument
+   with a std::string which is then logged. Finally, this leads to the
+   termination of kea-dhcp4.
 
  @subsection dhcpv4HooksCb4Update cb4_updated
  - @b Arguments:
@@ -257,9 +267,9 @@ called before "subnet4_select".
    - name: @b response4, type: isc::dhcp::Pkt4Ptr, direction: <b>in</b>
    - name: @b subnet4, type: isc::dhcp::Subnet4Ptr, direction: <b>in</b>
    - name: @b hostname, type: std::string, direction: <b>in/out</b>
-   - name: @b fwd_update, type: bool, direction: <b>in/out</b>
-   - name: @b rev_update, type: bool, direction: <b>in/out</b>
-   - name: @b ddns_params, type: isc::dhcp::DdnsParamsPtr, direction: <b>in</b>
+   - name: @b fwd-update, type: bool, direction: <b>in/out</b>
+   - name: @b rev-update, type: bool, direction: <b>in/out</b>
+   - name: @b ddns-params, type: isc::dhcp::DdnsParamsPtr, direction: <b>in</b>
 
  - @b Description: this callout is executed after the server has selected
    a lease and has formed a host name to associate with the lease and/or use
@@ -269,17 +279,17 @@ called before "subnet4_select".
    host name as well as whether or not forward and/or reverse updates are
    enabled.
 
-   Upon entry into the callout, the arguments <b>hostname</b>,<b>fwd_update</b>,
-   and <b>rev_update</b> have been set by the server based on the client packet,
+   Upon entry into the callout, the arguments <b>hostname</b>,<b>fwd-update</b>,
+   and <b>rev-update</b> have been set by the server based on the client packet,
    and various configuration values (e.g host reservations, DDNS behavioral
    parameters, etc).  Upon return from the callout, any changes to these
    values will be applied as follows:
    - If <b>hostname</b> has changed it will be used to update the outbound
    host name (option 12) if it exists, the output FQDN option (option 81)
    if it exists, and used as the FQDN sent in DNS updates
-   - Forward DNS update(s) will be done if <b>fwd_update</b> is true (and
+   - Forward DNS update(s) will be done if <b>fwd-update</b> is true (and
    <b>kea-dhcp-ddns</b> connectivity is enabled)
-   - Reverse DNS update(s) will be done if <b>rev_update</b> is true (and
+   - Reverse DNS update(s) will be done if <b>rev-update</b> is true (and
    <b>kea-dhcp-ddns</b> connectivity is enabled)
 
  - <b>Next step status</b>: Not applicable, its value will be ignored.
@@ -288,8 +298,8 @@ called before "subnet4_select".
 
  - @b Arguments:
    - name: @b query4, type: isc::dhcp::Pkt4Ptr, direction: <b>in</b>
-   - name: @b leases4, type: isc::dhcp::Leases4CollectionPtr, direction: <b>in</b>
-   - name: @b deleted_leases4, type: isc::dhcp::Leases4CollectionPtr, direction: <b>in</b>
+   - name: @b leases4, type: isc::dhcp::Lease4CollectionPtr, direction: <b>in</b>
+   - name: @b deleted_leases4, type: isc::dhcp::Lease4CollectionPtr, direction: <b>in</b>
 
  - @b Description: this callout is executed when the server has applied all
    lease changes as a result of DHCP message processing. This includes
@@ -314,15 +324,65 @@ called before "subnet4_select".
    packet (hold packet processing) until the hook libraries explicitly unpark
    the packet after they are done performing asynchronous operations.
 
+@subsection dhcpv4Lease4Offer lease4_offer
+
+ - @b Arguments:
+   - name: @b query4, type: isc::dhcp::Pkt4Ptr, direction: <b>in</b>
+   - name: @b leases4, type: isc::dhcp::Lease4CollectionPtr, direction: <b>in</b>
+   - name: @b offer_lifetime, type: uint32_t, direction: <b>in</b>
+   - name: @b old_lease, type: isc::dhcp::Lease4Ptr, direction: <b>in</b>
+
+ - @b Description: this callout is executed when the server has received
+   DHCPDISCOVER from the client and the DHCPOFFER has been constructed but not
+   yet sent back. The argument "query4" contains a pointer to an isc::dhcp::Pkt4
+   object that contains all information regarding incoming DHCPDISCOVER packet.
+   The "leases4" object will hold the pointer to the new candidate lease for this
+   client. The "offer_lifetime" argument comes from the context information for the
+   DHCPv4 lease allocation. If "offer_lifetime" is not zero,  it indicates that temporary
+   allocation on DHCPDISCOVER is enabled and the lease to be offered already exists in
+   the lease store. The "old_lease" argument also comes from the context information
+   for the DHCPv4 lease allocation. If not Null, it is a pointer to an old lease that
+   the client had before.
+
+ - <b>Next step status</b>: If any callout installed on the "lease4_offer" hook point
+   sets the next step action to DROP, the server will drop the processed query
+   and discard the prepared DHCPOFFER rather than sending it to the client.
+   If it sets the next step action to PARK, the server will park the processed
+   packet (hold packet processing) until the hook libraries explicitly unpark
+   the packet after they are done performing asynchronous operations.
+
+   Prior to unparking the packet, callouts are expected to set the argument,
+   "offer_address_in_use" to false if the address is available and the offer should
+   be sent to the client. If the address should be declined, callouts should set
+   the argument to true. This will cause the server to discard the DHCPOFFER, mark
+   the lease DECLINED in the lease store, update the relevant statitics, and then
+   invoke callouts installed for lease4_server_decline.
+
+@subsection dhcpv4Lease4ServerDecline lease4_server_decline
+
+ - @b Arguments:
+   - name: @b query4, type: isc::dhcp::Pkt4Ptr, direction: <b>in</b>
+   - name: @b lease4, type: isc::dhcp::Lease4Ptr, direction: <b>in</b>
+
+ - @b Description: this callout is executed after a lease4_offer callout has
+   determined that the lease to be offered is already in use by an unknown
+   client.  At this point in processing, the offer has been discarded, the lease
+   has been marked DECLINED in the lease store, and the relevant statistics have
+   been updated.  The argument "query4" contains a pointer to an isc::dhcp::Pkt4
+   object that contains all information regarding incoming DHCPDISCOVER packet.
+   The "leases4" object will hold the pointer to the declined lease.
+
+ - <b>Next step status</b>: Not applicable, its value will be ignored.
 
 @subsection dhcpv4HooksPkt4Send pkt4_send
 
  - @b Arguments:
-   - name: @b response4, type: isc::dhcp::Pkt4Ptr, direction: <b>in/out</b>
    - name: @b query4, type: isc::dhcp::Pkt4Ptr, direction: <b>in</b>
+   - name: @b response4, type: isc::dhcp::Pkt4Ptr, direction: <b>in/out</b>
+   - name: @b subnet4, type: isc::dhcp::Subnet4Ptr, direction: <b>in</b>
 
  - @b Description: this callout is executed when server's response
-   is about to be sent back to the client. The sole argument "response4"
+   is about to be sent back to the client. The argument "response4"
    contains a pointer to an isc::dhcp::Pkt4 object carrying the
    packet, with source and destination addresses set, interface over which
    it will be sent, and a list of all options and relay information.  All fields
@@ -333,6 +393,8 @@ called before "subnet4_select".
    The argument query4 contains a pointer to the corresponding query packet
    (allowing to perform correlation between response and query). This object
    cannot be modified.
+   The argument subnet4 contains a pointer to the selected subnet (if one).
+   This object cannot be modified.
 
  - <b>Next step action</b>: if any callout installed on the "pkt4_send" hook
    sets the next step action to SKIP, the server will not construct the raw

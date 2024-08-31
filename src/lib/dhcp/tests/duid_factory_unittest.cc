@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,9 +7,9 @@
 #include <config.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/duid_factory.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <testutils/io_utils.h>
-#include <util/encode/hex.h>
+#include <util/encode/encode.h>
 #include <util/range_utilities.h>
 #include <boost/algorithm/string.hpp>
 #include <gtest/gtest.h>

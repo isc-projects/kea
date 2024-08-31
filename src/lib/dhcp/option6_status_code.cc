@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,7 +10,6 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/option6_status_code.h>
 #include <dhcp/option_data_types.h>
-#include <util/io_utilities.h>
 #include <iterator>
 #include <sstream>
 

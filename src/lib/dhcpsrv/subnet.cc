@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,13 @@
 #include <asiolink/io_address.h>
 #include <asiolink/addr_utilities.h>
 #include <dhcp/option_space.h>
+#include <dhcpsrv/dhcpsrv_log.h>
+#include <dhcpsrv/flq_allocation_state.h>
+#include <dhcpsrv/flq_allocator.h>
+#include <dhcpsrv/iterative_allocation_state.h>
+#include <dhcpsrv/iterative_allocator.h>
+#include <dhcpsrv/random_allocation_state.h>
+#include <dhcpsrv/random_allocator.h>
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet.h>
 #include <util/multi_threading_mgr.h>
@@ -17,12 +24,15 @@
 #include <boost/make_shared.hpp>
 
 #include <algorithm>
+#include <limits>
 #include <sstream>
 
 using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::util;
+
+using namespace std;
 
 namespace {
 
@@ -31,7 +41,8 @@ namespace {
 ///
 /// @return true if prefix is lower than the first address in the pool.
 bool
-prefixLessThanFirstAddress(const IOAddress& prefix, const PoolPtr& pool) {
+prefixLessThanFirstAddress(const IOAddress& prefix,
+                           const PoolPtr& pool) {
     return (prefix < pool->getFirstAddress());
 }
 
@@ -44,39 +55,27 @@ prefixLessThanFirstAddress(const IOAddress& prefix, const PoolPtr& pool) {
 /// @return true if first prefix of the first pool is smaller than
 /// the first address of the second pool.
 bool
-comparePoolFirstAddress(const PoolPtr& pool1, const PoolPtr& pool2) {
+comparePoolFirstAddress(const PoolPtr& pool1,
+                        const PoolPtr& pool2) {
     return (pool1->getFirstAddress() < pool2->getFirstAddress());
-};
+}
 
 }
 
 namespace isc {
 namespace dhcp {
 
-// This is an initial value of subnet-id. See comments in subnet.h for details.
-SubnetID Subnet::static_id_ = 1;
-
 Subnet::Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
                const SubnetID id)
-    : id_(id == 0 ? generateNextID() : id), prefix_(prefix),
-      prefix_len_(len),
-      last_allocated_ia_(lastAddrInPrefix(prefix, len)),
-      last_allocated_ta_(lastAddrInPrefix(prefix, len)),
-      last_allocated_pd_(lastAddrInPrefix(prefix, len)),
-      last_allocated_time_(),
-      shared_network_name_(),
-      mutex_(new std::mutex) {
-    if ((prefix.isV6() && len > 128) ||
-        (prefix.isV4() && len > 32)) {
+    : id_(id), prefix_(prefix), prefix_len_(len), shared_network_name_() {
+    if ((id == SUBNET_ID_GLOBAL) || (id == SUBNET_ID_UNUSED)) {
+        isc_throw(BadValue,
+                  "Invalid id specified for subnet: " << id);
+    }
+    if ((prefix.isV6() && len > 128) || (prefix.isV4() && len > 32)) {
         isc_throw(BadValue,
                   "Invalid prefix length specified for subnet: " << len);
     }
-
-    // Initialize timestamps for each lease type to negative infinity.
-    last_allocated_time_[Lease::TYPE_V4] = boost::posix_time::neg_infin;
-    last_allocated_time_[Lease::TYPE_NA] = boost::posix_time::neg_infin;
-    last_allocated_time_[Lease::TYPE_TA] = boost::posix_time::neg_infin;
-    last_allocated_time_[Lease::TYPE_PD] = boost::posix_time::neg_infin;
 }
 
 bool
@@ -87,89 +86,6 @@ Subnet::inRange(const isc::asiolink::IOAddress& addr) const {
     return ((first <= addr) && (addr <= last));
 }
 
-isc::asiolink::IOAddress Subnet::getLastAllocated(Lease::Type type) const {
-    if (MultiThreadingMgr::instance().getMode()) {
-        std::lock_guard<std::mutex> lock(*mutex_);
-        return (getLastAllocatedInternal(type));
-    } else {
-        return (getLastAllocatedInternal(type));
-    }
-}
-
-isc::asiolink::IOAddress Subnet::getLastAllocatedInternal(Lease::Type type) const {
-    // check if the type is valid (and throw if it isn't)
-    checkType(type);
-
-    switch (type) {
-    case Lease::TYPE_V4:
-    case Lease::TYPE_NA:
-        return last_allocated_ia_;
-    case Lease::TYPE_TA:
-        return last_allocated_ta_;
-    case Lease::TYPE_PD:
-        return last_allocated_pd_;
-    default:
-        isc_throw(BadValue, "Pool type " << type << " not supported");
-    }
-}
-
-boost::posix_time::ptime
-Subnet::getLastAllocatedTime(const Lease::Type& lease_type) const {
-    if (MultiThreadingMgr::instance().getMode()) {
-        std::lock_guard<std::mutex> lock(*mutex_);
-        return (getLastAllocatedTimeInternal(lease_type));
-    } else {
-        return (getLastAllocatedTimeInternal(lease_type));
-    }
-}
-
-boost::posix_time::ptime
-Subnet::getLastAllocatedTimeInternal(const Lease::Type& lease_type) const {
-    auto t = last_allocated_time_.find(lease_type);
-    if (t != last_allocated_time_.end()) {
-        return (t->second);
-    }
-
-    // This shouldn't happen, because we have initialized the structure
-    // for all lease types.
-    return (boost::posix_time::neg_infin);
-}
-
-void Subnet::setLastAllocated(Lease::Type type,
-                              const isc::asiolink::IOAddress& addr) {
-    if (MultiThreadingMgr::instance().getMode()) {
-        std::lock_guard<std::mutex> lock(*mutex_);
-        setLastAllocatedInternal(type, addr);
-    } else {
-        setLastAllocatedInternal(type, addr);
-    }
-}
-
-void Subnet::setLastAllocatedInternal(Lease::Type type,
-                                      const isc::asiolink::IOAddress& addr) {
-
-    // check if the type is valid (and throw if it isn't)
-    checkType(type);
-
-    switch (type) {
-    case Lease::TYPE_V4:
-    case Lease::TYPE_NA:
-        last_allocated_ia_ = addr;
-        break;
-    case Lease::TYPE_TA:
-        last_allocated_ta_ = addr;
-        break;
-    case Lease::TYPE_PD:
-        last_allocated_pd_ = addr;
-        break;
-    default:
-        isc_throw(BadValue, "Pool type " << type << " not supported");
-    }
-
-    // Update the timestamp of last allocation.
-    last_allocated_time_[type] = boost::posix_time::microsec_clock::universal_time();
-}
-
 std::string
 Subnet::toText() const {
     std::stringstream tmp;
@@ -177,7 +93,7 @@ Subnet::toText() const {
     return (tmp.str());
 }
 
-uint64_t
+uint128_t
 Subnet::getPoolCapacity(Lease::Type type) const {
     switch (type) {
     case Lease::TYPE_V4:
@@ -193,7 +109,7 @@ Subnet::getPoolCapacity(Lease::Type type) const {
     }
 }
 
-uint64_t
+uint128_t
 Subnet::getPoolCapacity(Lease::Type type,
                         const ClientClasses& client_classes) const {
     switch (type) {
@@ -210,41 +126,92 @@ Subnet::getPoolCapacity(Lease::Type type,
     }
 }
 
-uint64_t
-Subnet::sumPoolCapacity(const PoolCollection& pools) const {
-    uint64_t sum = 0;
-    for (PoolCollection::const_iterator p = pools.begin(); p != pools.end(); ++p) {
-        uint64_t x = (*p)->getCapacity();
+uint128_t
+Subnet::getPoolCapacity(Lease::Type type,
+                        const ClientClasses& client_classes,
+                        Allocator::PrefixLenMatchType prefix_length_match,
+                        uint8_t hint_prefix_length) const {
+    switch (type) {
+    case Lease::TYPE_V4:
+    case Lease::TYPE_NA:
+        return sumPoolCapacity(pools_, client_classes);
+    case Lease::TYPE_TA:
+        return sumPoolCapacity(pools_ta_, client_classes);
+    case Lease::TYPE_PD:
+        return sumPoolCapacity(pools_pd_, client_classes, prefix_length_match,
+                               hint_prefix_length);
+    default:
+        isc_throw(BadValue, "Unsupported pool type: "
+                  << static_cast<int>(type));
+    }
+}
 
-        // Check if we can add it. If sum + x > uint64::max, then we would have
+uint128_t
+Subnet::sumPoolCapacity(const PoolCollection& pools) const {
+    uint128_t sum(0);
+    for (auto const& p : pools) {
+        uint128_t const c(p->getCapacity());
+
+        // Check if we can add it. If sum + c > UINT128_MAX, then we would have
         // overflown if we tried to add it.
-        if (x > std::numeric_limits<uint64_t>::max() - sum) {
-            return (std::numeric_limits<uint64_t>::max());
+        if (c > numeric_limits<uint128_t>::max() - sum) {
+            return (numeric_limits<uint128_t>::max());
         }
 
-        sum += x;
+        sum += c;
     }
 
     return (sum);
 }
 
-uint64_t
+uint128_t
 Subnet::sumPoolCapacity(const PoolCollection& pools,
                         const ClientClasses& client_classes) const {
-    uint64_t sum = 0;
-    for (PoolCollection::const_iterator p = pools.begin(); p != pools.end(); ++p) {
-        if (!(*p)->clientSupported(client_classes)) {
+    uint128_t sum(0);
+    for (auto const& p : pools) {
+        if (!p->clientSupported(client_classes)) {
             continue;
         }
-        uint64_t x = (*p)->getCapacity();
 
-        // Check if we can add it. If sum + x > uint64::max, then we would have
+        uint128_t const c(p->getCapacity());
+
+        // Check if we can add it. If sum + c > UINT128_MAX, then we would have
         // overflown if we tried to add it.
-        if (x > std::numeric_limits<uint64_t>::max() - sum) {
-            return (std::numeric_limits<uint64_t>::max());
+        if (c > numeric_limits<uint128_t>::max() - sum) {
+            return (numeric_limits<uint128_t>::max());
         }
 
-        sum += x;
+        sum += c;
+    }
+
+    return (sum);
+}
+
+uint128_t
+Subnet::sumPoolCapacity(const PoolCollection& pools,
+                        const ClientClasses& client_classes,
+                        Allocator::PrefixLenMatchType prefix_length_match,
+                        uint8_t hint_prefix_length) const {
+    uint128_t sum(0);
+    for (auto const& p : pools) {
+        if (!p->clientSupported(client_classes)) {
+            continue;
+        }
+
+        if (!Allocator::isValidPrefixPool(prefix_length_match, p,
+                                          hint_prefix_length)) {
+            continue;
+        }
+
+        uint128_t const c(p->getCapacity());
+
+        // Check if we can add it. If sum + c > UINT128_MAX, then we would have
+        // overflown if we tried to add it.
+        if (c > numeric_limits<uint128_t>::max() - sum) {
+            return (numeric_limits<uint128_t>::max());
+        }
+
+        sum += c;
     }
 
     return (sum);
@@ -286,7 +253,6 @@ Subnet4::Subnet4(const IOAddress& prefix, uint8_t length,
         isc_throw(BadValue, "Non IPv4 prefix " << prefix.toText()
                   << " specified in subnet4");
     }
-
     // Timers.
     setT1(t1);
     setT2(t2);
@@ -301,6 +267,12 @@ Subnet4::create(const IOAddress& prefix, uint8_t length,
                 const SubnetID id) {
     Subnet4Ptr subnet = boost::make_shared<Subnet4>
         (prefix, length, t1, t2, valid_lifetime, id);
+    subnet->setAllocator(Lease::TYPE_V4,
+                         boost::make_shared<IterativeAllocator>
+                         (Lease::TYPE_V4, subnet));
+    subnet->setAllocationState(Lease::TYPE_V4,
+                               SubnetIterativeAllocationState::create(subnet));
+
     return (subnet);
 }
 
@@ -390,12 +362,44 @@ PoolCollection& Subnet::getPoolsWritable(Lease::Type type) {
     }
 }
 
+AllocatorPtr
+Subnet::getAllocator(Lease::Type type) const {
+    auto alloc = allocators_.find(type);
+
+    if (alloc == allocators_.end()) {
+        isc_throw(BadValue, "no allocator initialized for pool type "
+                  << Lease::typeToText(type));
+    }
+    return (alloc->second);
+}
+
+void
+Subnet::setAllocator(Lease::Type type, const AllocatorPtr& allocator) {
+    allocators_[type] = allocator;
+}
+
+SubnetAllocationStatePtr
+Subnet::getAllocationState(Lease::Type type) const {
+    auto state = allocation_states_.find(type);
+
+    if (state == allocation_states_.end()) {
+        isc_throw(BadValue, "no allocation state initialized for pool type "
+                  << Lease::typeToText(type));
+    }
+    return (state->second);
+}
+
+void
+Subnet::setAllocationState(Lease::Type type, const SubnetAllocationStatePtr& allocation_state) {
+    allocation_states_[type] = allocation_state;
+}
+
 const PoolPtr Subnet::getPool(Lease::Type type, const isc::asiolink::IOAddress& hint,
                               bool anypool /* true */) const {
     // check if the type is valid (and throw if it isn't)
     checkType(type);
 
-    const PoolCollection& pools = getPools(type);
+    auto const& pools = getPools(type);
 
     PoolPtr candidate;
 
@@ -408,7 +412,7 @@ const PoolPtr Subnet::getPool(Lease::Type type, const isc::asiolink::IOAddress& 
         // matching prefix we use decrement operator to go back by one item.
         // If returned iterator points to begin it means that prefixes in all
         // pools are greater than out prefix, and thus there is no match.
-        PoolCollection::const_iterator ub =
+        auto ub =
             std::upper_bound(pools.begin(), pools.end(), hint,
                              prefixLessThanFirstAddress);
 
@@ -429,18 +433,25 @@ const PoolPtr Subnet::getPool(Lease::Type type, const isc::asiolink::IOAddress& 
     return (candidate);
 }
 
+void
+Subnet::initAllocatorsAfterConfigure() {
+    for (auto const& allocator : allocators_) {
+        allocator.second->initAfterConfigure();
+    }
+}
+
 const PoolPtr Subnet::getPool(Lease::Type type,
                               const ClientClasses& client_classes,
                               const isc::asiolink::IOAddress& hint) const {
     // check if the type is valid (and throw if it isn't)
     checkType(type);
 
-    const PoolCollection& pools = getPools(type);
+    auto const& pools = getPools(type);
 
     PoolPtr candidate;
 
     if (!pools.empty()) {
-        PoolCollection::const_iterator ub =
+        auto ub =
             std::upper_bound(pools.begin(), pools.end(), hint,
                              prefixLessThanFirstAddress);
 
@@ -525,11 +536,9 @@ Subnet::inPool(Lease::Type type, const isc::asiolink::IOAddress& addr) const {
         return (false);
     }
 
-    const PoolCollection& pools = getPools(type);
-
-    for (PoolCollection::const_iterator pool = pools.begin();
-         pool != pools.end(); ++pool) {
-        if ((*pool)->inRange(addr)) {
+    auto const& pools = getPools(type);
+    for (auto const& pool : pools) {
+        if (pool->inRange(addr)) {
             return (true);
         }
     }
@@ -547,14 +556,12 @@ Subnet::inPool(Lease::Type type,
         return (false);
     }
 
-    const PoolCollection& pools = getPools(type);
-
-    for (PoolCollection::const_iterator pool = pools.begin();
-         pool != pools.end(); ++pool) {
-        if (!(*pool)->clientSupported(client_classes)) {
+    auto const& pools = getPools(type);
+    for (auto const& pool : pools) {
+        if (!pool->clientSupported(client_classes)) {
             continue;
         }
-        if ((*pool)->inRange(addr)) {
+        if (pool->inRange(addr)) {
             return (true);
         }
     }
@@ -564,7 +571,7 @@ Subnet::inPool(Lease::Type type,
 
 bool
 Subnet::poolOverlaps(const Lease::Type& pool_type, const PoolPtr& pool) const {
-    const PoolCollection& pools = getPools(pool_type);
+    auto const& pools = getPools(pool_type);
 
     // If no pools, we don't overlap. Nothing to do.
     if (pools.empty()) {
@@ -585,20 +592,24 @@ Subnet::poolOverlaps(const Lease::Type& pool_type, const PoolPtr& pool) const {
     // greater than F2). prefixLessThanPoolAddress with the first argument
     // set to "true" is the custom comparison function for upper_bound, which
     // compares F2 with the first addresses of the existing pools.
-    PoolCollection::const_iterator pool3_it =
+    auto const pool3_it =
         std::upper_bound(pools.begin(), pools.end(), pool->getFirstAddress(),
                          prefixLessThanFirstAddress);
 
-    // upper_bound returns a first pool which first address is greater than the
-    // address F2. However, it is also possible that there is a pool which first
-    // address is equal to F2. Such pool is also in conflict with a new pool.
-    // If the returned value is pools.begin() it means that all pools have greater
-    // first address than F2, thus none of the pools can have first address equal
-    // to F2. Otherwise, we'd need to check them for equality.
+    // The upper_bound function returns a first pool which first address is
+    // greater than the address F2. However, it is also possible that there is a
+    // pool which first address is equal to F2. Such pool is also in conflict
+    // with a new pool. If the returned value is pools.begin() it means that all
+    // pools have greater first address than F2, thus none of the pools can have
+    // first address equal to F2. Otherwise, we'd need to check them for
+    // equality. However any pool has first address <= last address, so checking
+    // that the new pool first address is greater than the pool before pool3
+    // last address is enough. We now have to find the pool1. This pool should
+    // be right before the pool3 if there is any pool before pool3.
     if (pool3_it != pools.begin()) {
-        // Go back one pool and check if addresses are equal.
-        PoolPtr pool3 = *(pool3_it - 1);
-        if (pool3->getFirstAddress() == pool->getFirstAddress()) {
+        PoolPtr pool1 = *(pool3_it - 1);
+        // F2 must be greater than L1, otherwise pools will overlap.
+        if (pool->getFirstAddress() <= pool1->getLastAddress()) {
             return (true);
         }
     }
@@ -614,19 +625,8 @@ Subnet::poolOverlaps(const Lease::Type& pool_type, const PoolPtr& pool) const {
         }
     }
 
-    // If L2 is ok, we now have to find the pool1. This pool should be
-    // right before the pool3 if there is any pool before pool3.
-    if (pool3_it != pools.begin()) {
-        PoolPtr pool1 = *(pool3_it - 1);
-        // F2 must be greater than L1.
-        if (pool->getFirstAddress() <= pool1->getLastAddress()) {
-            return (true);
-        }
-    }
-
     return (false);
 }
-
 
 Subnet6::Subnet6(const IOAddress& prefix, uint8_t length,
                  const Triplet<uint32_t>& t1,
@@ -656,12 +656,29 @@ Subnet6::create(const IOAddress& prefix, uint8_t length,
                 const SubnetID id) {
     Subnet6Ptr subnet = boost::make_shared<Subnet6>
         (prefix, length, t1, t2, preferred_lifetime, valid_lifetime, id);
+    // IA_NA
+    subnet->setAllocator(Lease::TYPE_NA,
+                         boost::make_shared<IterativeAllocator>
+                         (Lease::TYPE_NA, subnet));
+    subnet->setAllocationState(Lease::TYPE_NA,
+                               SubnetIterativeAllocationState::create(subnet));
+    // IA_TA
+    subnet->setAllocator(Lease::TYPE_TA,
+                         boost::make_shared<IterativeAllocator>
+                         (Lease::TYPE_TA, subnet));
+    subnet->setAllocationState(Lease::TYPE_TA,
+                               SubnetIterativeAllocationState::create(subnet));
+    // IA_PD
+    subnet->setAllocator(Lease::TYPE_PD,
+                         boost::make_shared<IterativeAllocator>
+                         (Lease::TYPE_PD, subnet));
+    subnet->setAllocationState(Lease::TYPE_PD,
+                               SubnetIterativeAllocationState::create(subnet));
     return (subnet);
 }
 
 void Subnet6::checkType(Lease::Type type) const {
-    if ( (type != Lease::TYPE_NA) && (type != Lease::TYPE_TA) &&
-         (type != Lease::TYPE_PD)) {
+    if ((type != Lease::TYPE_NA) && (type != Lease::TYPE_TA) && (type != Lease::TYPE_PD)) {
         isc_throw(BadValue, "Invalid Pool type: " << Lease::typeToText(type)
                   << "(" << static_cast<int>(type)
                   << "), must be TYPE_NA, TYPE_TA or TYPE_PD for Subnet6");
@@ -734,6 +751,45 @@ Subnet::toElement() const {
     return (map);
 }
 
+void
+Subnet4::createAllocators() {
+    auto allocator_type = getAllocatorType();
+    if (allocator_type.empty()) {
+        allocator_type = getDefaultAllocatorType();
+    }
+    if (allocator_type == "random") {
+        setAllocator(Lease::TYPE_V4,
+                     boost::make_shared<RandomAllocator>
+                     (Lease::TYPE_V4, shared_from_this()));
+        setAllocationState(Lease::TYPE_V4, SubnetAllocationStatePtr());
+
+        for (auto const& pool : pools_) {
+            pool->setAllocationState(PoolRandomAllocationState::create(pool));
+        }
+
+    } else if (allocator_type == "flq") {
+        setAllocator(Lease::TYPE_V4,
+                     boost::make_shared<FreeLeaseQueueAllocator>
+                     (Lease::TYPE_V4, shared_from_this()));
+        setAllocationState(Lease::TYPE_V4, SubnetAllocationStatePtr());
+
+        for (auto const& pool : pools_) {
+            pool->setAllocationState(PoolFreeLeaseQueueAllocationState::create(pool));
+        }
+
+    } else {
+        setAllocator(Lease::TYPE_V4,
+                     boost::make_shared<IterativeAllocator>
+                     (Lease::TYPE_V4, shared_from_this()));
+        setAllocationState(Lease::TYPE_V4,
+                           SubnetIterativeAllocationState::create(shared_from_this()));
+
+        for (auto const& pool : pools_) {
+            pool->setAllocationState(PoolIterativeAllocationState::create(pool));
+        }
+    }
+}
+
 data::ElementPtr
 Subnet4::toElement() const {
     // Prepare the map
@@ -747,12 +803,11 @@ Subnet4::toElement() const {
     isc::data::merge(map, d4o6.toElement());
 
     // Set pools
-    const PoolCollection& pools = getPools(Lease::TYPE_V4);
+    auto const& pools = getPools(Lease::TYPE_V4);
     ElementPtr pool_list = Element::createList();
-    for (PoolCollection::const_iterator pool = pools.cbegin();
-         pool != pools.cend(); ++pool) {
-        // Add the elementized pool to the list
-        pool_list->add((*pool)->toElement());
+    for (auto const& pool : pools) {
+        // Add the formatted pool to the list
+        pool_list->add(pool->toElement());
     }
     map->set("pools", pool_list);
 
@@ -769,6 +824,84 @@ Subnet4::parsePrefix(const std::string& prefix) {
     return (parsed);
 }
 
+void
+Subnet6::createAllocators() {
+    auto allocator_type = getAllocatorType();
+    if (allocator_type.empty()) {
+        allocator_type = getDefaultAllocatorType();
+    }
+    if (allocator_type == "random") {
+        setAllocator(Lease::TYPE_NA,
+                     boost::make_shared<RandomAllocator>
+                     (Lease::TYPE_NA, shared_from_this()));
+        setAllocator(Lease::TYPE_TA,
+                     boost::make_shared<RandomAllocator>
+                     (Lease::TYPE_TA, shared_from_this()));
+        setAllocationState(Lease::TYPE_NA, SubnetAllocationStatePtr());
+        setAllocationState(Lease::TYPE_TA, SubnetAllocationStatePtr());
+
+    } else if (allocator_type == "flq") {
+        isc_throw(BadValue, "Free Lease Queue allocator is not supported for IPv6 address pools");
+
+    } else {
+        setAllocator(Lease::TYPE_NA,
+                     boost::make_shared<IterativeAllocator>
+                     (Lease::TYPE_NA, shared_from_this()));
+        setAllocationState(Lease::TYPE_NA, SubnetIterativeAllocationState::create(shared_from_this()));
+        setAllocationState(Lease::TYPE_TA, SubnetIterativeAllocationState::create(shared_from_this()));
+    }
+
+    auto pd_allocator_type = getPdAllocatorType();
+    if (pd_allocator_type.empty()) {
+        pd_allocator_type = getDefaultPdAllocatorType();
+    }
+    // Repeat the same for the delegated prefix allocator.
+    if (pd_allocator_type == "random") {
+        setAllocator(Lease::TYPE_PD,
+                     boost::make_shared<RandomAllocator>
+                     (Lease::TYPE_PD, shared_from_this()));
+        setAllocationState(Lease::TYPE_PD, SubnetAllocationStatePtr());
+
+    } else  if (pd_allocator_type == "flq") {
+        setAllocator(Lease::TYPE_PD,
+                     boost::make_shared<FreeLeaseQueueAllocator>
+                     (Lease::TYPE_PD, shared_from_this()));
+        setAllocationState(Lease::TYPE_PD, SubnetAllocationStatePtr());
+
+    } else {
+        setAllocator(Lease::TYPE_PD,
+                     boost::make_shared<IterativeAllocator>
+                     (Lease::TYPE_PD, shared_from_this()));
+        setAllocationState(Lease::TYPE_PD, SubnetIterativeAllocationState::create(shared_from_this()));
+    }
+    // Create allocation states for NA pools.
+    for (auto const& pool : pools_) {
+        if (allocator_type == "random") {
+            pool->setAllocationState(PoolRandomAllocationState::create(pool));
+        } else {
+            pool->setAllocationState(PoolIterativeAllocationState::create(pool));
+        }
+    }
+    // Create allocation states for TA pools.
+    for (auto const& pool : pools_ta_) {
+        if (allocator_type == "random") {
+            pool->setAllocationState(PoolRandomAllocationState::create(pool));
+        } else {
+            pool->setAllocationState(PoolIterativeAllocationState::create(pool));
+        }
+    }
+    // Create allocation states for PD pools.
+    for (auto const& pool : pools_pd_) {
+        if (pd_allocator_type == "random") {
+            pool->setAllocationState(PoolRandomAllocationState::create(pool));
+        } else if (pd_allocator_type == "flq") {
+            pool->setAllocationState(PoolFreeLeaseQueueAllocationState::create(pool));
+        } else {
+            pool->setAllocationState(PoolIterativeAllocationState::create(pool));
+        }
+    }
+}
+
 data::ElementPtr
 Subnet6::toElement() const {
     // Prepare the map
@@ -778,22 +911,20 @@ Subnet6::toElement() const {
     merge(map, network_map);
 
     // Set pools
-    const PoolCollection& pools = getPools(Lease::TYPE_NA);
+    auto const& pools = getPools(Lease::TYPE_NA);
     ElementPtr pool_list = Element::createList();
-    for (PoolCollection::const_iterator pool = pools.cbegin();
-         pool != pools.cend(); ++pool) {
-        // Add the elementized pool to the list
-        pool_list->add((*pool)->toElement());
+    for (auto const& pool : pools) {
+        // Add the formatted pool to the list
+        pool_list->add(pool->toElement());
     }
     map->set("pools", pool_list);
 
     // Set pd-pools
-    const PoolCollection& pdpools = getPools(Lease::TYPE_PD);
+    auto const& pdpools = getPools(Lease::TYPE_PD);
     ElementPtr pdpool_list = Element::createList();
-    for (PoolCollection::const_iterator pool = pdpools.cbegin();
-         pool != pdpools.cend(); ++pool) {
-        // Add the elementized pool to the list
-        pdpool_list->add((*pool)->toElement());
+    for (auto const& pool : pdpools) {
+        // Add the formatted pool to the list
+        pdpool_list->add(pool->toElement());
     }
     map->set("pd-pools", pdpool_list);
 
@@ -810,5 +941,5 @@ Subnet6::parsePrefix(const std::string& prefix) {
     return (parsed);
 }
 
-} // end of isc::dhcp namespace
-} // end of isc namespace
+}  // namespace dhcp
+}  // namespace isc

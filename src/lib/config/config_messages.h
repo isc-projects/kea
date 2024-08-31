@@ -35,6 +35,9 @@ extern const isc::log::MessageID COMMAND_SOCKET_WRITE_FAIL;
 extern const isc::log::MessageID COMMAND_WATCH_SOCKET_CLEAR_ERROR;
 extern const isc::log::MessageID COMMAND_WATCH_SOCKET_CLOSE_ERROR;
 extern const isc::log::MessageID COMMAND_WATCH_SOCKET_MARK_READY_ERROR;
+extern const isc::log::MessageID HTTP_COMMAND_MGR_IGNORED_TLS_SETUP_CHANGES;
+extern const isc::log::MessageID HTTP_COMMAND_MGR_SERVICE_STARTED;
+extern const isc::log::MessageID HTTP_COMMAND_MGR_SERVICE_STOPPING;
 
 } // namespace config
 } // namespace isc

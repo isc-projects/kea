@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -175,8 +175,6 @@ Parser4Context::contextName() {
         return ("hooks-libraries");
     case SUBNET4:
         return ("subnet4");
-    case RESERVATION_MODE:
-        return ("reservation-mode");
     case OPTION_DEF:
         return ("option-def");
     case OPTION_DATA:
@@ -189,6 +187,14 @@ Parser4Context::contextName() {
         return ("server-id");
     case CONTROL_SOCKET:
         return ("control-socket");
+    case CONTROL_SOCKET_TYPE:
+        return ("control-socket-type");
+    case AUTHENTICATION:
+        return ("authentication");
+    case AUTH_TYPE:
+        return ("auth-type");
+    case CLIENTS:
+        return ("clients");
     case DHCP_QUEUE_CONTROL:
         return ("dhcp-queue-control");
     case DHCP_MULTI_THREADING:
@@ -221,6 +227,8 @@ Parser4Context::contextName() {
         return ("config-database");
     case COMPATIBILITY:
         return ("compatibility");
+    case DDNS_CONFLICT_RESOLUTION_MODE:
+        return ("ddns-conflict-resolution-mode");
     default:
         return ("__unknown__");
     }

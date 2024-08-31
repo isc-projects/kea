@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,12 +24,13 @@ SanityChecksParser::parse(SrvConfig& cfg, const ConstElementPtr& sanity_checks) 
         isc_throw(DhcpConfigError, "sanity-checks is supposed to be a map");
     }
 
-    ConstElementPtr lease_checks = sanity_checks->get("lease-checks");
-    if (lease_checks) {
-        if (lease_checks->getType() != Element::string) {
+    // Subnet-id lease checker.
+    ConstElementPtr checks = sanity_checks->get("lease-checks");
+    if (checks) {
+        if (checks->getType() != Element::string) {
             isc_throw(DhcpConfigError, "lease-checks must be a string");
         }
-        std::string lc = lease_checks->stringValue();
+        std::string lc = checks->stringValue();
         CfgConsistency::LeaseSanity check;
         if (lc == "none") {
             check = CfgConsistency::LEASE_CHECK_NONE;
@@ -48,8 +49,32 @@ SanityChecksParser::parse(SrvConfig& cfg, const ConstElementPtr& sanity_checks) 
         cfg.getConsistency()->setLeaseSanityCheck(check);
     }
 
+    // Extended info lease checker.
+    checks = sanity_checks->get("extended-info-checks");
+    if (checks) {
+        if (checks->getType() != Element::string) {
+            isc_throw(DhcpConfigError, "extended-info-checks must be a string");
+        }
+        std::string exc = checks->stringValue();
+        CfgConsistency::ExtendedInfoSanity check;
+        if (exc == "none") {
+            check = CfgConsistency::EXTENDED_INFO_CHECK_NONE;
+        } else if (exc == "fix") {
+            check = CfgConsistency::EXTENDED_INFO_CHECK_FIX;
+        } else if (exc == "strict") {
+            check = CfgConsistency::EXTENDED_INFO_CHECK_STRICT;
+        } else if (exc == "pedantic") {
+            check = CfgConsistency::EXTENDED_INFO_CHECK_PEDANTIC;
+        } else {
+            isc_throw(DhcpConfigError,
+                      "Unsupported extended-info-checks value: " << exc
+                      << ", supported values are: none, fix, strict, pedantic");
+        }
+        cfg.getConsistency()->setExtendedInfoSanityCheck(check);
+    }
+
     // Additional sanity check fields will come in later here.
 }
 
-};
-};
+}
+}

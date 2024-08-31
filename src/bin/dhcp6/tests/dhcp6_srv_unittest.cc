@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,13 @@
 #include <config.h>
 
 #include <asiolink/io_address.h>
+#include <cc/command_interpreter.h>
+#include <config/command_mgr.h>
+#include <config_backend/base_config_backend.h>
+#include <dhcp6/json_config_parser.h>
+#include <dhcp6/tests/dhcp6_test_utils.h>
+#include <dhcp6/tests/dhcp6_client.h>
+#include <dhcp/testutils/pkt_captures.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/duid.h>
 #include <dhcp/option.h>
@@ -17,34 +24,41 @@
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_string.h>
 #include <dhcp/iface_mgr.h>
-#include <dhcp6/json_config_parser.h>
 #include <dhcp/docsis3_option_defs.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/utils.h>
+#include <stats/stats_mgr.h>
+#include <testutils/gtest_utils.h>
 #include <util/buffer.h>
 #include <util/range_utilities.h>
-#include <util/encode/hex.h>
-#include <stats/stats_mgr.h>
-#include <dhcp6/tests/dhcp6_test_utils.h>
-#include <dhcp6/tests/dhcp6_client.h>
-#include <dhcp/tests/pkt_captures.h>
-#include <cc/command_interpreter.h>
+#include <util/encode/encode.h>
+
+#ifdef HAVE_MYSQL
+#include <mysql/testutils/mysql_schema.h>
+#endif
+
+#ifdef HAVE_PGSQL
+#include <pgsql/testutils/pgsql_schema.h>
+#endif
 
 #include <boost/pointer_cast.hpp>
 #include <boost/scoped_ptr.hpp>
-#include <gtest/gtest.h>
-#include <unistd.h>
-#include <fstream>
+
 #include <iostream>
-#include <sstream>
+
+#include <dirent.h>
+#include <unistd.h>
 
 using namespace isc;
-using namespace isc::data;
 using namespace isc::asiolink;
+using namespace isc::cb;
+using namespace isc::config;
+using namespace isc::data;
+using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::util;
@@ -62,6 +76,7 @@ const char* CONFIGS[] = {
     "\"rebind-timer\": 2000, "
     "\"renew-timer\": 1000, "
     "\"subnet6\": [ { "
+    "    \"id\": 1, "
     "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
     "    \"subnet\": \"2001:db8:1::/48\", "
     "    \"interface\": \"eth0\", "
@@ -93,6 +108,7 @@ const char* CONFIGS[] = {
     "\"rebind-timer\": 2000, "
     "\"renew-timer\": 1000, "
     "\"subnet6\": [ { "
+    "    \"id\": 1, "
     "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
     "    \"subnet\": \"2001:db8:1::/48\" "
     " } ],"
@@ -108,6 +124,8 @@ const char* CONFIGS[] = {
     "    \"renew-timer\": 1000, "
     "    \"valid-lifetime\": 4000, "
     "    \"subnet6\": [ {"
+    "       \"id\": 1, "
+    "       \"interface\": \"eth0\", "
     "       \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
     "       \"subnet\": \"2001:db8:1::/48\""
     "    } ], "
@@ -125,10 +143,44 @@ const char* CONFIGS[] = {
     "}",
 
     // Configuration 3:
+    // - a single subnet with one option cancelled with never-send.
+    // - two global options (one enforced with always-send)
+    "{"
+    "    \"interfaces-config\": { \"interfaces\": [ \"*\" ] }, "
+    "    \"preferred-lifetime\": 3000, "
+    "    \"rebind-timer\": 2000, "
+    "    \"renew-timer\": 1000, "
+    "    \"valid-lifetime\": 4000, "
+    "    \"subnet6\": [ {"
+    "       \"id\": 1, "
+    "       \"interface\": \"eth0\", "
+    "       \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
+    "       \"subnet\": \"2001:db8:1::/48\", "
+    "       \"option-data\": ["
+    "       {"
+    "           \"name\": \"subscriber-id\", "
+    "           \"never-send\": true"
+    "       } ]"
+    "    } ], "
+    "    \"option-data\": ["
+    "    {"
+    "        \"name\": \"dns-servers\", "
+    "        \"data\": \"2001:db8:1234:FFFF::1\""
+    "    }, "
+    "    {"
+    "        \"name\": \"subscriber-id\", "
+    "         \"data\": \"1234\", "
+    "         \"always-send\": true"
+    "    }"
+    "    ]"
+    "}",
+
+    // Configuration 4:
     // - one subnet with one address pool and one prefix pool
     // - user-contexts defined in subnet and each pool
     "{"
     "    \"subnet6\": [ {"
+    "       \"id\": 1, "
     "       \"pools\": [ {"
     "           \"pool\": \"2001:db8:1::/64\","
     "           \"user-context\": { \"value\": 42 }"
@@ -142,8 +194,243 @@ const char* CONFIGS[] = {
     "       \"subnet\": \"2001:db8:1::/48\","
     "       \"user-context\": { \"secure\": false }"
     "    } ] "
-    "}"
+    "}",
+
+    // Configuration 5:
+    // - used in advertiseOptions
+    "{ \"interfaces-config\": { \n"
+    "  \"interfaces\": [ \"*\" ] \n"
+    "}, \n"
+    "\"preferred-lifetime\": 3000, \n"
+    "\"rebind-timer\": 2000,  \n"
+    "\"renew-timer\": 1000,  \n"
+    "\"ddns-replace-client-name\": \"always\", "
+    "\"ddns-qualifying-suffix\": \"example.com\", "
+    "\"subnet6\": [ {  \n"
+    "    \"id\": 1,  \n"
+    "    \"pools\": [ { \"pool\": \"2001:db8:1::1-2001:db8:1::1\" } ], \n"
+    "    \"subnet\": \"2001:db8:1::/64\",  \n"
+    "    \"interface\": \"eth0\"  \n"
+    "    } ], \n"
+    "\"valid-lifetime\": 4000 }",
 };
+
+} // namespace
+
+namespace isc {
+namespace dhcp {
+namespace test {
+
+/// @brief Remove TLS parameters from configuration element.
+void removeTlsParameters(ConstElementPtr elem) {
+    if (elem) {
+        ElementPtr mutable_elem = boost::const_pointer_cast<Element>(elem);
+        std::vector<std::string> tls_parameters= {
+            "trust-anchor",
+            "cert-file",
+            "key-file",
+            "cipher-list"
+        };
+        for (auto const& parameter : tls_parameters) {
+            mutable_elem->remove(parameter);
+        }
+    }
+}
+
+/// @brief Remove authentication filess
+void removeAuthFiles(ConstElementPtr elem) {
+    if (!elem) {
+        return;
+    }
+    ConstElementPtr auth = elem->get("authentication");
+    if (!auth) {
+        return;
+    }
+    ConstElementPtr clients = auth->get("clients");
+    if (!clients || clients->empty()) {
+        return;
+    }
+    ElementPtr mutable_clients = boost::const_pointer_cast<Element>(clients);
+    for (;;) {
+        bool found = false;
+        for (int i = 0; i < clients->size(); ++i) {
+            ConstElementPtr client = clients->get(i);
+            if (client->contains("user-file") ||
+                client->contains("password-file")) {
+                mutable_clients->remove(i);
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            return;
+        }
+    }
+}
+
+void
+Dhcpv6SrvTest::loadConfigFile(const string& path) {
+    CfgMgr::instance().clear();
+
+    LibDHCP::clearRuntimeOptionDefs();
+
+    IfaceMgrTestConfig test_config(true);
+
+    // Do not use DHCP6_SERVER_PORT here as 0 means don't open sockets.
+    NakedDhcpv6Srv srv(0);
+    EXPECT_EQ(0, srv.server_port_);
+
+    ConfigBackendDHCPv6Mgr::instance().registerBackendFactory("mysql",
+            [](const db::DatabaseConnection::ParameterMap&) -> ConfigBackendDHCPv6Ptr {
+                return (ConfigBackendDHCPv6Ptr());
+            });
+
+    ConfigBackendDHCPv6Mgr::instance().registerBackendFactory("postgresql",
+            [](const db::DatabaseConnection::ParameterMap&) -> ConfigBackendDHCPv6Ptr {
+                return (ConfigBackendDHCPv6Ptr());
+            });
+
+    Parser6Context parser;
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parser.parseFile(path, Parser6Context::PARSER_DHCP6));
+    ASSERT_TRUE(json);
+
+    // Check the logic next.
+    ConstElementPtr dhcp6 = json->get("Dhcp6");
+    ASSERT_TRUE(dhcp6);
+    ElementPtr mutable_config = boost::const_pointer_cast<Element>(dhcp6);
+    mutable_config->set(string("hooks-libraries"), Element::createList());
+    // Remove TLS parameters
+    ConstElementPtr hosts = dhcp6->get("hosts-database");
+    removeTlsParameters(hosts);
+    hosts = dhcp6->get("hosts-databases");
+    if (hosts) {
+        for (auto const& host : hosts->listValue()) {
+            removeTlsParameters(host);
+        }
+    }
+    // Remove authentication clients using files.
+    ConstElementPtr control_sockets = dhcp6->get("control-socket");
+    if (control_sockets) {
+        removeAuthFiles(control_sockets);
+    }
+    control_sockets = dhcp6->get("control-sockets");
+    if (control_sockets) {
+        for (int i = 0; i < control_sockets->size(); ++i) {
+            removeAuthFiles(control_sockets->get(i));
+        }
+    }
+
+    ASSERT_NO_THROW(Dhcpv6SrvTest::configure(dhcp6->str(), true, true, true, true));
+
+    LeaseMgrFactory::destroy();
+    HostMgr::create();
+
+    TimerMgr::instance()->unregisterTimers();
+
+    // Close the command socket (if it exists).
+    CommandMgr::instance().closeCommandSocket();
+
+    // Reset CommandMgr IO service.
+    CommandMgr::instance().setIOService(IOServicePtr());
+
+    // Reset DatabaseConnection IO service.
+    DatabaseConnection::setIOService(IOServicePtr());
+
+    // Reset ProcessSpawn IO service.
+    ProcessSpawn::setIOService(IOServicePtr());
+}
+
+/// @brief Class which handles initialization of database
+/// backend for testing configurations.
+class DBInitializer {
+    public:
+        /// @brief Constructor.
+        ///
+        /// Created database schema.
+        DBInitializer() {
+#if defined (HAVE_MYSQL)
+            db::test::createMySQLSchema();
+#endif
+#if defined (HAVE_PGSQL)
+            db::test::createPgSQLSchema();
+#endif
+        }
+
+        /// @brief Destructor.
+        ///
+        /// Destroys database schema.
+        ~DBInitializer() {
+#if defined (HAVE_MYSQL)
+            db::test::destroyMySQLSchema();
+#endif
+#if defined (HAVE_PGSQL)
+            db::test::destroyPgSQLSchema();
+#endif
+        }
+};
+
+void
+Dhcpv6SrvTest::checkConfigFiles() {
+    DBInitializer dbi;
+    IfaceMgrTestConfig test_config(true);
+    string path = CFG_EXAMPLES;
+    vector<string> examples = {
+        "advanced.json",
+#if defined (HAVE_MYSQL) && defined (HAVE_PGSQL)
+        "all-keys.json",
+        "all-keys-netconf.json",
+        "all-options.json",
+#endif
+        "backends.json",
+        "classify.json",
+        "classify2.json",
+        "comments.json",
+#if defined (HAVE_MYSQL)
+        "config-backend.json",
+#endif
+        "dhcpv4-over-dhcpv6.json",
+        "duid.json",
+        "global-reservations.json",
+        "ha-hot-standby-server1-with-tls.json",
+        "ha-hot-standby-server2.json",
+        "hooks.json",
+        "iPXE.json",
+        "leases-expiration.json",
+        "multiple-options.json",
+#if defined (HAVE_MYSQL)
+        "mysql-reservations.json",
+#endif
+#if defined (HAVE_PGSQL)
+        "pgsql-reservations.json",
+#endif
+        "reservations.json",
+        "several-subnets.json",
+        "shared-network.json",
+        "simple.json",
+        "softwire46.json",
+        "stateless.json",
+        "tee-times.json",
+        "with-ddns.json",
+    };
+    vector<string> files;
+    for (auto const& example : examples) {
+        string file = path + "/" + example;
+        files.push_back(file);
+    }
+    for (auto const& file : files) {
+        string label("Checking configuration from file: ");
+        label += file;
+        SCOPED_TRACE(label);
+        loadConfigFile(file);
+    }
+}
+
+} // end of isc::dhcp::test namespace
+} // end of isc::dhcp namespace
+} // end of isc namespace
+
+namespace {
 
 // This test verifies that incoming SOLICIT can be handled properly when
 // there are no subnets configured.
@@ -164,7 +451,9 @@ TEST_F(NakedDhcpv6SrvTest, SolicitNoSubnet) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    srv.initContext(sol, ctx, drop);
+    ctx.subnet_ = srv.selectSubnet(sol, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processSolicit(ctx);
 
@@ -391,7 +680,9 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv_.earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    srv_.initContext(sol, ctx, drop);
+    ctx.subnet_ = srv_.selectSubnet(sol, drop);
+    ASSERT_FALSE(drop);
+    srv_.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr adv = srv_.processSolicit(ctx);
 
@@ -420,7 +711,9 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
     AllocEngine::ClientContext6 ctx2;
     drop = !srv_.earlyGHRLookup(sol, ctx2);
     ASSERT_FALSE(drop);
-    srv_.initContext(sol, ctx2, drop);
+    ctx2.subnet_ = srv_.selectSubnet(sol, drop);
+    ASSERT_FALSE(drop);
+    srv_.initContext(ctx2, drop);
     ASSERT_FALSE(drop);
     adv = srv_.processSolicit(ctx2);
     ASSERT_TRUE(adv);
@@ -454,7 +747,6 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
     // more checks to be implemented
 }
 
-
 // There are no dedicated tests for Dhcpv6Srv::handleIA_NA and Dhcpv6Srv::assignLeases
 // as they are indirectly tested in Solicit and Request tests.
 
@@ -487,7 +779,9 @@ TEST_F(Dhcpv6SrvTest, SolicitBasic) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    srv.initContext(sol, ctx, drop);
+    ctx.subnet_ = srv.selectSubnet(sol, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processSolicit(ctx);
 
@@ -496,7 +790,7 @@ TEST_F(Dhcpv6SrvTest, SolicitBasic) {
 
     // check that IA_NA was returned and that there's an address included
     boost::shared_ptr<Option6IAAddr> addr = checkIA_NA(reply, 234, subnet_->getT1(),
-                                                subnet_->getT2());
+                                                       subnet_->getT2());
     ASSERT_TRUE(addr);
 
     // Check that the assigned address is indeed from the configured pool
@@ -522,7 +816,6 @@ TEST_F(Dhcpv6SrvTest, SolicitBasic) {
 // - server-id
 // - IA that includes IAPREFIX
 TEST_F(Dhcpv6SrvTest, pdSolicitBasic) {
-
     NakedDhcpv6Srv srv(0);
 
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
@@ -537,7 +830,9 @@ TEST_F(Dhcpv6SrvTest, pdSolicitBasic) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    srv.initContext(sol, ctx, drop);
+    ctx.subnet_ = srv.selectSubnet(sol, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processSolicit(ctx);
 
@@ -580,7 +875,9 @@ TEST_F(Dhcpv6SrvTest, defaultLifetimeSolicit) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    srv.initContext(sol, ctx, drop);
+    ctx.subnet_ = srv.selectSubnet(sol, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processSolicit(ctx);
 
@@ -628,7 +925,9 @@ TEST_F(Dhcpv6SrvTest, hintZeroLifetimeSolicit) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    srv.initContext(sol, ctx, drop);
+    ctx.subnet_ = srv.selectSubnet(sol, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processSolicit(ctx);
 
@@ -678,7 +977,9 @@ TEST_F(Dhcpv6SrvTest, hintLifetimeSolicit) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    srv.initContext(sol, ctx, drop);
+    ctx.subnet_ = srv.selectSubnet(sol, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processSolicit(ctx);
 
@@ -726,7 +1027,9 @@ TEST_F(Dhcpv6SrvTest, minLifetimeSolicit) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    srv.initContext(sol, ctx, drop);
+    ctx.subnet_ = srv.selectSubnet(sol, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processSolicit(ctx);
 
@@ -776,7 +1079,9 @@ TEST_F(Dhcpv6SrvTest, maxLifetimeSolicit) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    srv.initContext(sol, ctx, drop);
+    ctx.subnet_ = srv.selectSubnet(sol, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processSolicit(ctx);
 
@@ -836,7 +1141,9 @@ TEST_F(Dhcpv6SrvTest, SolicitHint) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    srv.initContext(sol, ctx, drop);
+    ctx.subnet_ = srv.selectSubnet(sol, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processSolicit(ctx);
 
@@ -895,7 +1202,9 @@ TEST_F(Dhcpv6SrvTest, SolicitInvalidHint) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    srv.initContext(sol, ctx, drop);
+    ctx.subnet_ = srv.selectSubnet(sol, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processSolicit(ctx);
 
@@ -961,19 +1270,25 @@ TEST_F(Dhcpv6SrvTest, ManySolicits) {
     AllocEngine::ClientContext6 ctx1;
     bool drop = !srv.earlyGHRLookup(sol1, ctx1);
     ASSERT_FALSE(drop);
-    srv.initContext(sol1, ctx1, drop);
+    ctx1.subnet_ = srv.selectSubnet(sol1, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx1, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply1 = srv.processSolicit(ctx1);
     AllocEngine::ClientContext6 ctx2;
     drop = !srv.earlyGHRLookup(sol2, ctx2);
     ASSERT_FALSE(drop);
-    srv.initContext(sol2, ctx2, drop);
+    ctx2.subnet_ = srv.selectSubnet(sol2, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx2, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply2 = srv.processSolicit(ctx2);
     AllocEngine::ClientContext6 ctx3;
     drop = !srv.earlyGHRLookup(sol3, ctx3);
     ASSERT_FALSE(drop);
-    srv.initContext(sol3, ctx3, drop);
+    ctx3.subnet_ = srv.selectSubnet(sol3, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx3, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply3 = srv.processSolicit(ctx3);
 
@@ -1063,7 +1378,9 @@ TEST_F(Dhcpv6SrvTest, SolicitCache) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    srv.initContext(sol, ctx, drop);
+    ctx.subnet_ = srv.selectSubnet(sol, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processSolicit(ctx);
 
@@ -1135,7 +1452,9 @@ TEST_F(Dhcpv6SrvTest, pdSolicitCache) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    srv.initContext(sol, ctx, drop);
+    ctx.subnet_ = srv.selectSubnet(sol, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processSolicit(ctx);
 
@@ -1241,7 +1560,6 @@ TEST_F(Dhcpv6SrvTest, RequestBasic) {
 // - server-id
 // - IA that includes IAPREFIX
 TEST_F(Dhcpv6SrvTest, pdRequestBasic) {
-
     NakedDhcpv6Srv srv(0);
 
     // Let's create a REQUEST
@@ -1431,7 +1749,9 @@ TEST_F(Dhcpv6SrvTest, RequestCache) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(req, ctx);
     ASSERT_FALSE(drop);
-    srv.initContext(req, ctx, drop);
+    ctx.subnet_ = srv.selectSubnet(req, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processRequest(ctx);
 
@@ -1445,8 +1765,11 @@ TEST_F(Dhcpv6SrvTest, RequestCache) {
 
     // Check the address.
     EXPECT_EQ(addr, iaaddr->getAddress());
-    EXPECT_EQ(pref - delta, iaaddr->getPreferred());
-    EXPECT_EQ(valid - delta, iaaddr->getValid());
+
+    // Since the initial time values were set, one second could have ticked,
+    // so allow one second of margin error.
+    EXPECT_NEAR(pref - delta, iaaddr->getPreferred(), 1);
+    EXPECT_NEAR(valid - delta, iaaddr->getValid(), 1);
 
     // check DUIDs
     checkServerId(reply, srv.getServerID());
@@ -1503,7 +1826,9 @@ TEST_F(Dhcpv6SrvTest, pdRequestCache) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(req, ctx);
     ASSERT_FALSE(drop);
-    srv.initContext(req, ctx, drop);
+    ctx.subnet_ = srv.selectSubnet(req, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processRequest(ctx);
 
@@ -1518,8 +1843,8 @@ TEST_F(Dhcpv6SrvTest, pdRequestCache) {
     // Check the prefix.
     EXPECT_EQ(prefix, iapref->getAddress());
     EXPECT_EQ(prefixlen, iapref->getLength());
-    EXPECT_EQ(pref - delta, iapref->getPreferred());
-    EXPECT_EQ(valid - delta, iapref->getValid());
+    EXPECT_NEAR(pref - delta, iapref->getPreferred(), 1);
+    EXPECT_NEAR(valid - delta, iapref->getValid(), 1);
 
     // check DUIDs
     checkServerId(reply, srv.getServerID());
@@ -1585,7 +1910,7 @@ TEST_F(Dhcpv6SrvTest, RenewWrongIAID) {
 // leased by client B. The server should detect that the lease belong to
 // someone else and assign a different lease. This is the third out of three
 // scenarios tests by old RenewReject test.
-TEST_F(Dhcpv6SrvTest, RenewSomeoneElesesLease) {
+TEST_F(Dhcpv6SrvTest, RenewSomeoneElsesLease) {
     testRenewSomeoneElsesLease(Lease::TYPE_NA, IOAddress("2001:db8::1"));
 }
 
@@ -1618,7 +1943,7 @@ TEST_F(Dhcpv6SrvTest, minLifetimeRenew) {
 // This test verifies that a renewal returns max ifetimes when
 // the client adds an IAPREFIX sub option with too large lifetime hints.
 TEST_F(Dhcpv6SrvTest, maxLifetimeRenew) {
-    // Max  values are 4000 and 5000.
+    // Max values are 4000 and 5000.
     testRenewBasic(Lease::TYPE_PD, "2001:db8:1:2::",
                    "2001:db8:1:2::", pd_pool_->getLength(),
                    true, false, 5000, 6000, 4000, 5000);
@@ -1663,7 +1988,7 @@ TEST_F(Dhcpv6SrvTest, minLifetimeReuseExpired) {
 // This test verifies that an expired reuse returns max lifetimes when
 // the client adds an IAADDR sub option with too large lifetime hints.
 TEST_F(Dhcpv6SrvTest, maxLifetimeReuseExpired) {
-    // Max  values are 4000 and 5000.
+    // Max values are 4000 and 5000.
     testRenewBasic(Lease::TYPE_NA, "2001:db8:1:1::cafe:babe",
                    "2001:db8:1:1::cafe:babe", 128,
                    true, true, 5000, 6000, 4000, 5000);
@@ -1717,7 +2042,9 @@ TEST_F(Dhcpv6SrvTest, RenewCache) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(req, ctx);
     ASSERT_FALSE(drop);
-    srv.initContext(req, ctx, drop);
+    ctx.subnet_ = srv.selectSubnet(req, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processRenew(ctx);
 
@@ -1731,8 +2058,8 @@ TEST_F(Dhcpv6SrvTest, RenewCache) {
 
     // Check the address.
     EXPECT_EQ(addr, iaaddr->getAddress());
-    EXPECT_EQ(pref - delta, iaaddr->getPreferred());
-    EXPECT_EQ(valid - delta, iaaddr->getValid());
+    EXPECT_NEAR(pref - delta, iaaddr->getPreferred(), 1);
+    EXPECT_NEAR(valid - delta, iaaddr->getValid(), 1);
 
     // check DUIDs
     checkServerId(reply, srv.getServerID());
@@ -1789,7 +2116,9 @@ TEST_F(Dhcpv6SrvTest, pdRenewCache) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(req, ctx);
     ASSERT_FALSE(drop);
-    srv.initContext(req, ctx, drop);
+    ctx.subnet_ = srv.selectSubnet(req, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr reply = srv.processRenew(ctx);
 
@@ -1804,8 +2133,8 @@ TEST_F(Dhcpv6SrvTest, pdRenewCache) {
     // Check the prefix.
     EXPECT_EQ(prefix, iapref->getAddress());
     EXPECT_EQ(prefixlen, iapref->getLength());
-    EXPECT_EQ(pref - delta, iapref->getPreferred());
-    EXPECT_EQ(valid - delta, iapref->getValid());
+    EXPECT_NEAR(pref - delta, iapref->getPreferred(), 1);
+    EXPECT_NEAR(valid - delta, iapref->getValid(), 1);
 
     // check DUIDs
     checkServerId(reply, srv.getServerID());
@@ -1824,7 +2153,50 @@ TEST_F(Dhcpv6SrvTest, pdRenewCache) {
 // - assigned-nas stats counter is properly decremented
 TEST_F(Dhcpv6SrvTest, ReleaseBasic) {
     testReleaseBasic(Lease::TYPE_NA, IOAddress("2001:db8:1:1::cafe:babe"),
-                     IOAddress("2001:db8:1:1::cafe:babe"));
+                     IOAddress("2001:db8:1:1::cafe:babe"), LEASE_AFFINITY_DISABLED);
+}
+
+// This test verifies that incoming (positive) RELEASE with address can be
+// handled properly, that a REPLY is generated, that the response has status
+// code and that the lease is expired and not removed from the database.
+//
+// expected:
+// - returned REPLY message has copy of client-id
+// - returned REPLY message has server-id
+// - returned REPLY message has IA_NA that does not include an IAADDR
+// - lease is actually expired instead of being removed from LeaseMgr
+// - assigned-nas stats counter is unchanged
+TEST_F(Dhcpv6SrvTest, ReleaseBasicNoDelete) {
+    testReleaseBasic(Lease::TYPE_NA, IOAddress("2001:db8:1:1::cafe:babe"),
+                     IOAddress("2001:db8:1:1::cafe:babe"), LEASE_AFFINITY_ENABLED);
+}
+
+// This test verifies that after a RELEASE which expired a lease the response
+// to a SOLICIT does not get zero lifetimes.
+TEST_F(Dhcpv6SrvTest, ReleaseBasicNoDeleteSolicit) {
+    testReleaseNoDelete(Lease::TYPE_NA, IOAddress("2001:db8:1:1::cafe:babe"),
+                        DHCPV6_SOLICIT);
+}
+
+// This test verifies that after a RELEASE which expired a lease the response
+// to a REQUEST does not get zero lifetimes.
+TEST_F(Dhcpv6SrvTest, ReleaseBasicNoDeleteRequest) {
+    testReleaseNoDelete(Lease::TYPE_NA, IOAddress("2001:db8:1:1::cafe:babe"),
+                        DHCPV6_REQUEST);
+}
+
+// This test verifies that after a RELEASE which expired a lease the response
+// to a RENEW does not get zero lifetimes.
+TEST_F(Dhcpv6SrvTest, ReleaseBasicNoDeleteRenew) {
+    testReleaseNoDelete(Lease::TYPE_NA, IOAddress("2001:db8:1:1::cafe:babe"),
+                        DHCPV6_REQUEST);
+}
+
+// This test verifies that after a RELEASE which expired a lease the response
+// to a REBIND does not get zero lifetimes.
+TEST_F(Dhcpv6SrvTest, ReleaseBasicNoDeleteRebind) {
+    testReleaseNoDelete(Lease::TYPE_NA, IOAddress("2001:db8:1:1::cafe:babe"),
+                        DHCPV6_REBIND);
 }
 
 // This test verifies that incoming (positive) RELEASE with prefix can be
@@ -1839,7 +2211,50 @@ TEST_F(Dhcpv6SrvTest, ReleaseBasic) {
 // - assigned-pds stats counter is properly decremented
 TEST_F(Dhcpv6SrvTest, pdReleaseBasic) {
     testReleaseBasic(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"),
-                     IOAddress("2001:db8:1:2::"));
+                     IOAddress("2001:db8:1:2::"), LEASE_AFFINITY_DISABLED);
+}
+
+// This test verifies that incoming (positive) RELEASE with prefix can be
+// handled properly, that a REPLY is generated, that the response has
+// status code and that the lease is expired and not removed from the database.
+//
+// expected:
+// - returned REPLY message has copy of client-id
+// - returned REPLY message has server-id
+// - returned REPLY message has IA_PD that does not include an IAPREFIX
+// - lease is actually expired instead of being removed from LeaseMgr
+// - assigned-pds stats counter is unchanged
+TEST_F(Dhcpv6SrvTest, pdReleaseBasicNoDelete) {
+    testReleaseBasic(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"),
+                     IOAddress("2001:db8:1:2::"), LEASE_AFFINITY_ENABLED);
+}
+
+// This test verifies that after a RELEASE which expired a lease the response
+// to a SOLICIT does not get zero lifetimes.
+TEST_F(Dhcpv6SrvTest, pdReleaseBasicNoDeleteSolicit) {
+    testReleaseNoDelete(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"),
+                        DHCPV6_REQUEST);
+}
+
+// This test verifies that after a RELEASE which expired a lease the response
+// to a REQUEST does not get zero lifetimes.
+TEST_F(Dhcpv6SrvTest, pdReleaseBasicNoDeleteRequest) {
+    testReleaseNoDelete(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"),
+                        DHCPV6_REQUEST);
+}
+
+// This test verifies that after a RELEASE which expired a lease the response
+// to a RENEW does not get zero lifetimes.
+TEST_F(Dhcpv6SrvTest, pdReleaseBasicNoDeleteRenew) {
+    testReleaseNoDelete(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"),
+                        DHCPV6_REQUEST);
+}
+
+// This test verifies that after a RELEASE which expired a lease the response
+// to a REBIND does not get zero lifetimes.
+TEST_F(Dhcpv6SrvTest, pdReleaseBasicNoDeleteRebind) {
+    testReleaseNoDelete(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"),
+                        DHCPV6_REBIND);
 }
 
 // This test verifies that incoming (invalid) RELEASE with an address
@@ -1860,8 +2275,8 @@ TEST_F(Dhcpv6SrvTest, ReleaseReject) {
     testReleaseReject(Lease::TYPE_NA, IOAddress("2001:db8:1:1::dead"));
 }
 
-// This test verifies that incoming (invalid) RELEASE with a prefix
-// can be handled properly.
+// This test verifies that incoming (invalid) RELEASE with a prefix can be
+// handled properly.
 //
 // This test checks 3 scenarios:
 // 1. there is no such lease at all
@@ -2017,9 +2432,9 @@ TEST_F(Dhcpv6SrvTest, sanityCheckServerId) {
 // Check that the server is testing if server identifier received in the
 // query, matches server identifier used by the server.
 TEST_F(Dhcpv6SrvTest, testServerID) {
-        NakedDhcpv6Srv srv(0);
+    NakedDhcpv6Srv srv(0);
 
-        Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234));
+    Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234));
     std::vector<uint8_t> bin;
 
     // duid_llt constructed with: time = 0, macaddress = 00:00:00:00:00:00
@@ -2064,7 +2479,7 @@ TEST_F(Dhcpv6SrvTest, testUnicast) {
         DHCPV6_INFORMATION_REQUEST
     };
     // Iterate over these messages and make sure they are discarded.
-    for (int i = 0; i < sizeof(not_allowed_unicast); ++i) {
+    for (size_t i = 0; i < sizeof(not_allowed_unicast); ++i) {
         Pkt6Ptr msg = Pkt6Ptr(new Pkt6(not_allowed_unicast[i], 1234));
         msg->setLocalAddr(IOAddress("2001:db8:1::1"));
         EXPECT_FALSE(srv.testUnicast(msg))
@@ -2084,7 +2499,7 @@ TEST_F(Dhcpv6SrvTest, testUnicast) {
     };
     // Iterate over these messages and check that they are accepted being
     // sent to unicast.
-    for (int i = 0; i < sizeof(allowed_unicast); ++i) {
+    for (size_t i = 0; i < sizeof(allowed_unicast); ++i) {
         Pkt6Ptr msg = Pkt6Ptr(new Pkt6(allowed_unicast[i], 1234));
         msg->setLocalAddr(IOAddress("2001:db8:1::1"));
         msg->addOption(srv.getServerID());
@@ -2093,8 +2508,6 @@ TEST_F(Dhcpv6SrvTest, testUnicast) {
             << static_cast<int>(allowed_unicast[i])
             << "being sent to unicast address";
     }
-
-
 }
 
 // This test verifies if selectSubnet() selects proper subnet for a given
@@ -2102,9 +2515,12 @@ TEST_F(Dhcpv6SrvTest, testUnicast) {
 TEST_F(Dhcpv6SrvTest, selectSubnetAddr) {
     NakedDhcpv6Srv srv(0);
 
-    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:3::"), 48, 1, 2, 3, 4));
+    auto subnet1 = Subnet6::create(IOAddress("2001:db8:1::"),
+                                   48, 1, 2, 3, 4, SubnetID(10));
+    auto subnet2 = Subnet6::create(IOAddress("2001:db8:2::"),
+                                   48, 1, 2, 3, 4, SubnetID(20));
+    auto subnet3 = Subnet6::create(IOAddress("2001:db8:3::"),
+                                   48, 1, 2, 3, 4, SubnetID(30));
 
     // CASE 1: We have only one subnet defined and we received local traffic.
     // The only available subnet used to be picked, but not anymore
@@ -2174,9 +2590,12 @@ TEST_F(Dhcpv6SrvTest, selectSubnetAddr) {
 TEST_F(Dhcpv6SrvTest, selectSubnetIface) {
     NakedDhcpv6Srv srv(0);
 
-    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:3::"), 48, 1, 2, 3, 4));
+    auto subnet1 = Subnet6::create(IOAddress("2001:db8:1::"),
+                                   48, 1, 2, 3, 4, SubnetID(10));
+    auto subnet2 = Subnet6::create(IOAddress("2001:db8:2::"),
+                                   48, 1, 2, 3, 4, SubnetID(20));
+    auto subnet3 = Subnet6::create(IOAddress("2001:db8:3::"),
+                                   48, 1, 2, 3, 4, SubnetID(30));
 
     subnet1->setIface("eth0");
     subnet3->setIface("wifi1");
@@ -2239,9 +2658,12 @@ TEST_F(Dhcpv6SrvTest, selectSubnetIface) {
 TEST_F(Dhcpv6SrvTest, selectSubnetRelayLinkaddr) {
     NakedDhcpv6Srv srv(0);
 
-    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:3::"), 48, 1, 2, 3, 4));
+    auto subnet1 = Subnet6::create(IOAddress("2001:db8:1::"),
+                                   48, 1, 2, 3, 4, SubnetID(10));
+    auto subnet2 = Subnet6::create(IOAddress("2001:db8:2::"),
+                                   48, 1, 2, 3, 4, SubnetID(20));
+    auto subnet3 = Subnet6::create(IOAddress("2001:db8:3::"),
+                                   48, 1, 2, 3, 4, SubnetID(30));
 
     Pkt6::RelayInfo relay;
     relay.linkaddr_ = IOAddress("2001:db8:2::1234");
@@ -2362,9 +2784,12 @@ TEST_F(Dhcpv6SrvTest, selectSubnetRelayLinkaddr) {
 TEST_F(Dhcpv6SrvTest, selectSubnetRelayInterfaceId) {
     NakedDhcpv6Srv srv(0);
 
-    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:3::"), 48, 1, 2, 3, 4));
+    auto subnet1 = Subnet6::create(IOAddress("2001:db8:1::"),
+                                   48, 1, 2, 3, 4, SubnetID(10));
+    auto subnet2 = Subnet6::create(IOAddress("2001:db8:2::"),
+                                   48, 1, 2, 3, 4, SubnetID(20));
+    auto subnet3 = Subnet6::create(IOAddress("2001:db8:3::"),
+                                   48, 1, 2, 3, 4, SubnetID(30));
 
     subnet1->setInterfaceId(generateInterfaceId("relay1"));
     subnet2->setInterfaceId(generateInterfaceId("relay2"));
@@ -2413,7 +2838,6 @@ TEST_F(Dhcpv6SrvTest, selectSubnetRelayInterfaceId) {
 
 // Checks if server responses are sent to the proper port.
 TEST_F(Dhcpv6SrvTest, portsClientPort) {
-
     NakedDhcpv6Srv srv(0);
 
     // Enforce a specific client port value.
@@ -2442,7 +2866,6 @@ TEST_F(Dhcpv6SrvTest, portsClientPort) {
 
 // Checks if server responses are sent to the proper port.
 TEST_F(Dhcpv6SrvTest, portsServerPort) {
-
     // Create the test server in test mode.
     NakedDhcpv6Srv srv(0);
 
@@ -2472,7 +2895,6 @@ TEST_F(Dhcpv6SrvTest, portsServerPort) {
 
 // Checks if server responses are sent to the proper port.
 TEST_F(Dhcpv6SrvTest, portsDirectTraffic) {
-
     NakedDhcpv6Srv srv(0);
 
     // Let's create a simple SOLICIT
@@ -2497,7 +2919,6 @@ TEST_F(Dhcpv6SrvTest, portsDirectTraffic) {
 
 // Checks if server responses are sent to the proper port.
 TEST_F(Dhcpv6SrvTest, portsRelayedTraffic) {
-
     NakedDhcpv6Srv srv(0);
 
     // Let's create a simple SOLICIT
@@ -2522,7 +2943,6 @@ TEST_F(Dhcpv6SrvTest, portsRelayedTraffic) {
 
 // Test that the server processes relay-source-port option correctly.
 TEST_F(Dhcpv6SrvTest, relaySourcePort) {
-
     NakedDhcpv6Srv srv(0);
 
     string config =
@@ -2531,6 +2951,7 @@ TEST_F(Dhcpv6SrvTest, relaySourcePort) {
         "    \"rebind-timer\": 2000, "
         "    \"renew-timer\": 1000, "
         "    \"subnet6\": [ { "
+        "        \"id\": 1, "
         "        \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
         "        \"subnet\": \"2001:db8::/48\" "
         "     } ],"
@@ -2570,8 +2991,7 @@ TEST_F(Dhcpv6SrvTest, relaySourcePort) {
     // Simulate that we have received that traffic
     sol->pack();
     EXPECT_EQ(DHCPV6_RELAY_FORW, sol->getBuffer()[0]);
-    Pkt6Ptr query(new Pkt6(static_cast<const uint8_t*>
-                           (sol->getBuffer().getData()),
+    Pkt6Ptr query(new Pkt6(sol->getBuffer().getData(),
                            sol->getBuffer().getLength()));
     query->setRemoteAddr(sol->getRemoteAddr());
     query->setRemotePort(sol->getRemotePort());
@@ -2602,8 +3022,7 @@ TEST_F(Dhcpv6SrvTest, relaySourcePort) {
     EXPECT_EQ(DHCPV6_RELAY_REPL, rsp->getBuffer()[0]);
 
     // Get Advertise
-    Pkt6Ptr adv(new Pkt6(static_cast<const uint8_t*>
-                         (rsp->getBuffer().getData()),
+    Pkt6Ptr adv(new Pkt6(rsp->getBuffer().getData(),
                          rsp->getBuffer().getLength()));
     adv->unpack();
 
@@ -2613,7 +3032,7 @@ TEST_F(Dhcpv6SrvTest, relaySourcePort) {
     EXPECT_TRUE(adv->getRelayOption(D6O_RELAY_SOURCE_PORT, 0));
 }
 
-// Checks effect of persistency (aka always-true) flag on the ORO
+// Checks effect of persistency (aka always-send) flag on the ORO
 TEST_F(Dhcpv6SrvTest, prlPersistency) {
     IfaceMgrTestConfig test_config(true);
 
@@ -2639,7 +3058,9 @@ TEST_F(Dhcpv6SrvTest, prlPersistency) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv_.earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    srv_.initContext(sol, ctx, drop);
+    ctx.subnet_ = srv_.selectSubnet(sol, drop);
+    ASSERT_FALSE(drop);
+    srv_.initContext(ctx, drop);
     ASSERT_FALSE(drop);
     Pkt6Ptr response = srv_.processSolicit(ctx);
 
@@ -2660,7 +3081,9 @@ TEST_F(Dhcpv6SrvTest, prlPersistency) {
     AllocEngine::ClientContext6 ctx2;
     drop = !srv_.earlyGHRLookup(sol, ctx2);
     ASSERT_FALSE(drop);
-    srv_.initContext(sol, ctx2, drop);
+    ctx2.subnet_ = srv_.selectSubnet(sol, drop);
+    ASSERT_FALSE(drop);
+    srv_.initContext(ctx2, drop);
     ASSERT_FALSE(drop);
     response = srv_.processSolicit(ctx2);
 
@@ -2682,7 +3105,9 @@ TEST_F(Dhcpv6SrvTest, prlPersistency) {
     AllocEngine::ClientContext6 ctx3;
     drop = !srv_.earlyGHRLookup(sol, ctx3);
     ASSERT_FALSE(drop);
-    srv_.initContext(sol, ctx3, drop);
+    ctx3.subnet_ = srv_.selectSubnet(sol, drop);
+    ASSERT_FALSE(drop);
+    srv_.initContext(ctx3, drop);
     ASSERT_FALSE(drop);
     response = srv_.processSolicit(ctx3);
 
@@ -2696,11 +3121,97 @@ TEST_F(Dhcpv6SrvTest, prlPersistency) {
     ASSERT_FALSE(response->getOption(D6O_SNTP_SERVERS));
 }
 
+// Checks effect of cancellation (aka never-send) flag.
+TEST_F(Dhcpv6SrvTest, neverSend) {
+    IfaceMgrTestConfig test_config(true);
+
+    ASSERT_NO_THROW(configure(CONFIGS[3]));
+
+    // Create a packet with enough to select the subnet and go through
+    // the SOLICIT processing
+    Pkt6Ptr sol(new Pkt6(DHCPV6_SOLICIT, 1234));
+    sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->setIface("eth0");
+    sol->setIndex(ETH0_INDEX);
+    sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
+    OptionPtr clientid = generateClientId();
+    sol->addOption(clientid);
+
+    // Create and add an ORO for another option
+    OptionUint16ArrayPtr oro(new OptionUint16Array(Option::V6, D6O_ORO));
+    ASSERT_TRUE(oro);
+    oro->addValue(D6O_SNTP_SERVERS);
+    sol->addOption(oro);
+
+    // Let the server process it and generate a response.
+    AllocEngine::ClientContext6 ctx;
+    bool drop = !srv_.earlyGHRLookup(sol, ctx);
+    ASSERT_FALSE(drop);
+    ctx.subnet_ = srv_.selectSubnet(sol, drop);
+    ASSERT_FALSE(drop);
+    srv_.initContext(ctx, drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr response = srv_.processSolicit(ctx);
+
+    // The server should not add a subscriber-id option
+    ASSERT_FALSE(response->getOption(D6O_SUBSCRIBER_ID));
+    // And no dns-servers
+    ASSERT_FALSE(response->getOption(D6O_NAME_SERVERS));
+    // Nor a sntp-servers
+    ASSERT_FALSE(response->getOption(D6O_SNTP_SERVERS));
+
+    // Reset ORO adding dns-servers
+    sol->delOption(D6O_ORO);
+    oro->addValue(D6O_NAME_SERVERS);
+    sol->addOption(oro);
+
+    // Let the server process it again. This time the name-servers
+    // option should be present.
+    AllocEngine::ClientContext6 ctx2;
+    drop = !srv_.earlyGHRLookup(sol, ctx2);
+    ASSERT_FALSE(drop);
+    ctx2.subnet_ = srv_.selectSubnet(sol, drop);
+    ASSERT_FALSE(drop);
+    srv_.initContext(ctx2, drop);
+    ASSERT_FALSE(drop);
+    response = srv_.processSolicit(ctx2);
+
+    // Processing should not add a subscriber-id option
+    ASSERT_FALSE(response->getOption(D6O_SUBSCRIBER_ID));
+    // But now a dns-servers
+    ASSERT_TRUE(response->getOption(D6O_NAME_SERVERS));
+    // And still no sntp-servers
+    ASSERT_FALSE(response->getOption(D6O_SNTP_SERVERS));
+
+    // Reset ORO adding subscriber-id
+    sol->delOption(D6O_ORO);
+    OptionUint16ArrayPtr oro2(new OptionUint16Array(Option::V6, D6O_ORO));
+    ASSERT_TRUE(oro2);
+    oro2->addValue(D6O_SUBSCRIBER_ID);
+    sol->addOption(oro2);
+
+    // Let the server process it again.
+    AllocEngine::ClientContext6 ctx3;
+    drop = !srv_.earlyGHRLookup(sol, ctx3);
+    ASSERT_FALSE(drop);
+    ctx3.subnet_ = srv_.selectSubnet(sol, drop);
+    ASSERT_FALSE(drop);
+    srv_.initContext(ctx3, drop);
+    ASSERT_FALSE(drop);
+    response = srv_.processSolicit(ctx3);
+
+    // The subscriber-id option should still not be present.
+    ASSERT_FALSE(response->getOption(D6O_SUBSCRIBER_ID));
+    // And no dns-servers
+    ASSERT_FALSE(response->getOption(D6O_NAME_SERVERS));
+    // Nor a sntp-servers
+    ASSERT_FALSE(response->getOption(D6O_SNTP_SERVERS));
+}
+
 // Checks if server is able to handle a relayed traffic from DOCSIS3.0 modems
 // @todo Uncomment this test as part of #3180 work.
 // Kea code currently fails to handle docsis traffic.
 TEST_F(Dhcpv6SrvTest, docsisTraffic) {
-
     NakedDhcpv6Srv srv(0);
 
     // Let's get a traffic capture from DOCSIS3.0 modem
@@ -2720,7 +3231,6 @@ TEST_F(Dhcpv6SrvTest, docsisTraffic) {
     ASSERT_TRUE(adv);
 }
 
-
 // Checks if relay IP address specified in the relay-info structure in
 // subnet6 is being used properly.
 TEST_F(Dhcpv6SrvTest, relayOverride) {
@@ -2737,15 +3247,17 @@ TEST_F(Dhcpv6SrvTest, relayOverride) {
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ "
         " {  \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"id\": 1, "
         "    \"subnet\": \"2001:db8:1::/48\", "
         "    \"relay\": { "
-        "        \"ip-address\": \"2001:db8:3::1\""
+        "        \"ip-addresses\": [ \"2001:db8:3::1\" ]"
         "    }"
         " }, "
         " {  \"pools\": [ { \"pool\": \"2001:db8:2::/64\" } ],"
+        "    \"id\": 2, "
         "    \"subnet\": \"2001:db8:2::/48\", "
         "    \"relay\": { "
-        "        \"ip-address\": \"2001:db8:3::2\""
+        "        \"ip-addresses\": [ \"2001:db8:3::2\" ]"
         "    }"
         " } "
         "],"
@@ -2819,11 +3331,8 @@ TEST_F(Dhcpv6SrvTest, relayOverride) {
 /// @param payload specified payload (0 = fill payload with repeating option code)
 /// @return RSOO with nested options
 OptionPtr createRSOO(const std::vector<uint16_t>& codes, uint8_t payload = 0) {
-    OptionDefinitionPtr def = LibDHCP::getOptionDef(DHCP6_OPTION_SPACE, D6O_RSOO);
-    if (!def) {
-        isc_throw(BadValue, "Can't find RSOO definition");
-    }
-    OptionPtr rsoo_container(new OptionCustom(*def, Option::V6));
+    const OptionDefinition& def = LibDHCP::D6O_RSOO_DEF();
+    OptionPtr rsoo_container(new OptionCustom(def, Option::V6));
 
     for (size_t i = 0; i < codes.size(); ++i) {
         OptionBuffer buf(10, payload ? payload : codes[i]); // let's make the option 10 bytes long
@@ -2847,6 +3356,7 @@ TEST_F(Dhcpv6SrvTest, rsoo) {
         "    \"rebind-timer\": 2000, "
         "    \"renew-timer\": 1000, "
         "    \"subnet6\": [ { "
+        "        \"id\": 1, "
         "        \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
         "        \"subnet\": \"2001:db8::/48\" "
         "     } ],"
@@ -2898,6 +3408,7 @@ TEST_F(Dhcpv6SrvTest, rsoo2relays) {
         "    \"rebind-timer\": 2000, "
         "    \"renew-timer\": 1000, "
         "    \"subnet6\": [ { "
+        "        \"id\": 1, "
         "        \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
         "        \"subnet\": \"2001:db8::/48\" "
         "     } ],"
@@ -2958,15 +3469,14 @@ TEST_F(Dhcpv6SrvTest, rsoo2relays) {
     int count120 = 0; // Let's count how many times option 120 was echoed back
     int count130 = 0; // Let's count how many times option 130 was echoed back
     OptionPtr opt120;
-    for (OptionCollection::const_iterator it = client.config_.options_.begin();
-         it != client.config_.options_.end(); ++it) {
-        switch (it->second->getType()) {
+    for (auto const& it : client.config_.options_) {
+        switch (it.second->getType()) {
         case 110:
             count110++;
             break;
         case 120:
             count120++;
-            opt120 = it->second;
+            opt120 = it.second;
             break;
         case 130:
             count130++;
@@ -3015,6 +3525,7 @@ TEST_F(Dhcpv6SrvTest, rsooOverride) {
         "    \"rebind-timer\": 2000, "
         "    \"renew-timer\": 1000, "
         "    \"subnet6\": [ { "
+        "        \"id\": 1, "
         "        \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
         "        \"subnet\": \"2001:db8::/48\" "
         "     } ],"
@@ -3169,6 +3680,7 @@ TEST_F(Dhcpv6SrvTest, emptyClientId) {
         "    \"rebind-timer\": 2000, "
         "    \"renew-timer\": 1000, "
         "    \"subnet6\": [ { "
+        "        \"id\": 1, "
         "        \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
         "        \"subnet\": \"2001:db8::/48\" "
         "     } ],"
@@ -3206,6 +3718,7 @@ TEST_F(Dhcpv6SrvTest, emptyServerId) {
         "    \"rebind-timer\": 2000, "
         "    \"renew-timer\": 1000, "
         "    \"subnet6\": [ { "
+        "        \"id\": 1, "
         "        \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
         "        \"subnet\": \"2001:db8::/48\" "
         "     } ],"
@@ -3239,6 +3752,7 @@ TEST_F(Dhcpv6SrvTest, tooLongServerId) {
         "    \"rebind-timer\": 2000, "
         "    \"renew-timer\": 1000, "
         "    \"subnet6\": [ { "
+        "        \"id\": 1, "
         "        \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
         "        \"subnet\": \"2001:db8::/48\" "
         "     } ],"
@@ -3261,14 +3775,13 @@ TEST_F(Dhcpv6SrvTest, tooLongServerId) {
 
 // Checks if user-contexts are parsed properly.
 TEST_F(Dhcpv6SrvTest, userContext) {
-
     IfaceMgrTestConfig test_config(true);
 
     NakedDhcpv6Srv srv(0);
 
     // This config has one subnet with user-context with one
     // pool (also with context). Make sure the configuration could be accepted.
-    EXPECT_NO_THROW(configure(CONFIGS[3]));
+    EXPECT_NO_THROW(configure(CONFIGS[4]));
 
     // Now make sure the data was not lost.
     ConstSrvConfigPtr cfg = CfgMgr::instance().getCurrentCfg();
@@ -3449,19 +3962,21 @@ TEST_F(Dhcpv6SrvTest, calculateTeeTimers) {
     sol->setIndex(ETH0_INDEX);
 
     // Iterate over the test scenarios.
-    for (auto test = tests.begin(); test != tests.end(); ++test) {
+    for (auto const& test : tests) {
         {
-            SCOPED_TRACE((*test).description_);
+            SCOPED_TRACE(test.description_);
             // Configure subnet for the scenario
-            subnet_->setT1((*test).cfg_t1_);
-            subnet_->setT2((*test).cfg_t2_);
-            subnet_->setCalculateTeeTimes((*test).calculate_tee_times);
-            subnet_->setT1Percent((*test).t1_percent_);
-            subnet_->setT2Percent((*test).t2_percent_);
+            subnet_->setT1(test.cfg_t1_);
+            subnet_->setT2(test.cfg_t2_);
+            subnet_->setCalculateTeeTimes(test.calculate_tee_times);
+            subnet_->setT1Percent(test.t1_percent_);
+            subnet_->setT2Percent(test.t2_percent_);
             AllocEngine::ClientContext6 ctx;
             bool drop = !srv.earlyGHRLookup(sol, ctx);
             ASSERT_FALSE(drop);
-            srv.initContext(sol, ctx, drop);
+            ctx.subnet_ = srv.selectSubnet(sol, drop);
+            ASSERT_FALSE(drop);
+            srv.initContext(ctx, drop);
             ASSERT_FALSE(drop);
             Pkt6Ptr reply = srv.processSolicit(ctx);
 
@@ -3469,9 +3984,146 @@ TEST_F(Dhcpv6SrvTest, calculateTeeTimers) {
             checkResponse(reply, DHCPV6_ADVERTISE, 1234);
 
             // check that IA_NA was returned and T1 and T2 are correct.
-            checkIA_NA(reply, 234, (*test).t1_exp_value_, (*test).t2_exp_value_);
+            checkIA_NA(reply, 234, test.t1_exp_value_, test.t2_exp_value_);
         }
     }
+}
+
+// This test verifies that generateFdqn() updates the lease's FQDN when
+// the lease is active.
+TEST_F(Dhcpv6SrvTest, generateFqdnUpdate) {
+    IfaceMgrTestConfig test_config(true);
+
+    NakedDhcpv6Srv srv(0);
+
+    // Configure with a pool of 1 and ddns-replace-client-name = "always"
+    ASSERT_NO_THROW(configure(CONFIGS[5], srv));
+
+    // Lease the only address in the pool to a client 1.
+    OptionPtr clientid = generateClientId();
+    const IOAddress addr("2001:db8:1::1");
+    const uint32_t iaid = 234;
+    Lease6Ptr used(new Lease6(Lease::TYPE_NA, addr, duid_, iaid, 3000, 4000, 1));
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
+
+    // Let's create a RENEW of the leased address for client 2.
+    Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_RENEW, 1234));
+    req->setRemoteAddr(IOAddress("fe80::abcd"));
+    req->setIface("eth0");
+    req->setIndex(ETH0_INDEX);
+    req->addOption(createIA(Lease::TYPE_NA, addr, 128, iaid));
+    req->addOption(
+        Option6ClientFqdnPtr(
+            new Option6ClientFqdn(Option6ClientFqdn::FLAG_S,
+                                  "replace_me.com",
+                                  Option6ClientFqdn::FULL))
+    );
+
+    req->addOption(clientid);
+    req->addOption(srv.getServerID());
+
+    // Pass it to the server and get a reply
+    AllocEngine::ClientContext6 ctx;
+    bool drop = !srv.earlyGHRLookup(req, ctx);
+    ASSERT_FALSE(drop);
+    ctx.subnet_ = srv.selectSubnet(req, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx, drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr reply = srv.processRenew(ctx);
+
+    // Check if we get response at all
+    checkResponse(reply, DHCPV6_REPLY, 1234);
+
+    // check that an IA_NA with an iaaddr was returned for the requested
+    // address with lifetimes > 0.
+    boost::shared_ptr<Option6IAAddr> iaaddr = checkIA_NA(reply, 234, 1000, 2000);
+    ASSERT_TRUE(iaaddr);
+    EXPECT_EQ(addr, iaaddr->getAddress());
+    EXPECT_EQ(3000, iaaddr->getPreferred());
+    EXPECT_EQ(4000, iaaddr->getValid());
+
+    // Fetch the lease in the database and verify hostname has been updated
+    // with generated FQDN.
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, addr);
+    ASSERT_TRUE(l);
+    EXPECT_EQ("myhost-2001-db8-1--1.example.com.", l->hostname_);
+
+    // Should see follow log message ids in the log file.
+    EXPECT_EQ(1, countFile("DHCP6_DDNS_FQDN_GENERATED")); 
+    EXPECT_EQ(0, countFile("DHCP6_DDNS_GENERATED_FQDN_UPDATE_FAIL"));
+}
+
+
+// This test verifies that generateFqdn() does not attempt to
+// update the lease's FQDN if lease lifetime is zero.
+TEST_F(Dhcpv6SrvTest, generateFqdnNoUpdate) {
+    IfaceMgrTestConfig test_config(true);
+
+    NakedDhcpv6Srv srv(0);
+
+    // Configure with a pool of 1 and ddns-replace-client-name = "always"
+    ASSERT_NO_THROW(configure(CONFIGS[5], srv));
+
+    // Lease the only address in the pool to client 1.
+    OptionPtr clientid = generateClientId();
+    const IOAddress addr("2001:db8:1::1");
+    const uint32_t iaid = 234;
+    Lease6Ptr used(new Lease6(Lease::TYPE_NA, addr, duid_, iaid, 3000, 4000, 1));
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
+
+    // Create a RENEW of the leased address for client 2.
+    Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_RENEW, 1234));
+    req->setRemoteAddr(IOAddress("fe80::abcd"));
+    req->setIface("eth0");
+    req->setIndex(ETH0_INDEX);
+    req->addOption(createIA(Lease::TYPE_NA, addr, 128, iaid));
+    req->addOption(
+        Option6ClientFqdnPtr(
+            new Option6ClientFqdn(Option6ClientFqdn::FLAG_S,
+                                  "replace_me.com",
+                                  Option6ClientFqdn::FULL))
+    );
+
+    OptionPtr clientid2 = generateClientId(40);
+    req->addOption(clientid2);
+    req->addOption(srv.getServerID());
+
+    // Pass it to the server and get a reply
+    AllocEngine::ClientContext6 ctx;
+    bool drop = !srv.earlyGHRLookup(req, ctx);
+    ASSERT_FALSE(drop);
+    ctx.subnet_ = srv.selectSubnet(req, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx, drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr reply = srv.processRenew(ctx);
+
+    // Check if we get response at all
+    checkResponse(reply, DHCPV6_REPLY, 1234);
+
+    // Check that an IA_NA with an iaaddr was returned for the requested
+    // address with lifetimes of 0.
+    boost::shared_ptr<Option6IAAddr> iaaddr = checkIA_NA(reply, 234, 0, 0); 
+    ASSERT_TRUE(iaaddr);
+    EXPECT_EQ(addr, iaaddr->getAddress());
+    EXPECT_EQ(0, iaaddr->getPreferred());
+    EXPECT_EQ(0, iaaddr->getValid());
+
+    // Should not see either of the follow log message ids in the log file.
+    EXPECT_EQ(0, countFile("DHCP6_DDNS_FQDN_GENERATED"));
+    EXPECT_EQ(0, countFile("DHCP6_DDNS_GENERATED_FQDN_UPDATE_FAIL"));
+
+    // Fetch the lease in the database and verify hostname has not been updated.
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, addr);
+    ASSERT_TRUE(l);
+    EXPECT_TRUE(l->hostname_.empty());
+}
+
+/// @brief Check that example files from documentation are valid (can be parsed
+/// and loaded).
+TEST_F(Dhcpv6SrvTest, checkConfigFiles) {
+    checkConfigFiles();
 }
 
 /// @todo: Add more negative tests for processX(), e.g. extend sanityCheck() test

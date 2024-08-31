@@ -116,6 +116,7 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                  | server_id
                  | dhcp4o6_port
                  | control_socket
+                 | control_sockets
                  | dhcp_queue_control
                  | dhcp_ddns
                  | user_context
@@ -124,7 +125,6 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                  | reservations
                  | config_control
                  | server_tag
-                 | reservation_mode
                  | reservations_global
                  | reservations_in_subnet
                  | reservations_out_of_pool
@@ -144,6 +144,8 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                  | ddns_qualifying_suffix
                  | ddns_update_on_renew
                  | ddns_use_conflict_resolution
+                 | ddns_conflict_resolution_mode
+                 | ddns_ttl_percent
                  | store_extended_info
                  | statistic_default_sample_count
                  | statistic_default_sample_age
@@ -153,6 +155,8 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                  | reservations_lookup_first
                  | compatibility
                  | parked_packet_limit
+                 | allocator
+                 | pd_allocator
                  | unknown_map_entry
 
      data_directory ::= "data-directory" ":" STRING
@@ -207,6 +211,15 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
 
      ddns_use_conflict_resolution ::= "ddns-use-conflict-resolution" ":" BOOLEAN
 
+     ddns_conflict_resolution_mode ::= "ddns-conflict-resolution-mode" ":" ddns_conflict_resolution_mode_value
+
+     ddns_conflict_resolution_mode_value ::= "check-with-dhcid"
+                                        | "no-check-with-dhcid"
+                                        | "check-exists-with-dhcid"
+                                        | "no-check-without-dhcid"
+
+     ddns_ttl_percent ::= "ddns-ttl-percent" ":" FLOAT
+
      hostname_char_set ::= "hostname-char-set" ":" STRING
 
      hostname_char_replacement ::= "hostname-char-replacement" ":" STRING
@@ -220,6 +233,10 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
      server_tag ::= "server-tag" ":" STRING
 
      parked_packet_limit ::= "parked-packet-limit" ":" INTEGER
+
+     allocator ::= "allocator" ":" STRING
+
+     pd_allocator ::= "pd-allocator" ":" STRING
 
      early_global_reservations_lookup ::= "early-global-reservations-lookup" ":" BOOLEAN
 
@@ -283,9 +300,13 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                        | lfc_interval
                        | readonly
                        | connect_timeout
+                       | read_timeout
+                       | write_timeout
+                       | tcp_user_timeout
                        | max_reconnect_tries
                        | reconnect_wait_time
                        | on_fail
+                       | retry_on_startup
                        | max_row_errors
                        | trust_anchor
                        | cert_file
@@ -317,6 +338,12 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
 
      connect_timeout ::= "connect-timeout" ":" INTEGER
 
+     read_timeout ::= "read-timeout" ":" INTEGER
+
+     write_timeout ::= "write-timeout" ":" INTEGER
+
+     tcp_user_timeout ::= "tcp-user-timeout" ":" INTEGER
+
      reconnect_wait_time ::= "reconnect-wait-time" ":" INTEGER
 
      on_fail ::= "on-fail" ":" on_fail_mode
@@ -324,6 +351,8 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
      on_fail_mode ::= "stop-retry-exit"
                  | "serve-retry-exit"
                  | "serve-retry-continue"
+
+     retry_on_startup ::= "retry-on-startup" ":" BOOLEAN
 
      max_row_errors ::= "max-row-errors" ":" INTEGER
 
@@ -344,8 +373,11 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                          | sanity_checks_params ","
 
      sanity_checks_param ::= lease_checks
+                        | extended_info_checks
 
      lease_checks ::= "lease-checks" ":" STRING
+
+     extended_info_checks ::= "extended-info-checks" ":" STRING
 
      mac_sources ::= "mac-sources" ":" "[" mac_sources_list "]"
 
@@ -481,7 +513,6 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                   | client_class
                   | require_client_classes
                   | reservations
-                  | reservation_mode
                   | reservations_global
                   | reservations_in_subnet
                   | reservations_out_of_pool
@@ -503,7 +534,11 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                   | ddns_qualifying_suffix
                   | ddns_update_on_renew
                   | ddns_use_conflict_resolution
+                  | ddns_conflict_resolution_mode
+                  | ddns_ttl_percent
                   | store_extended_info
+                  | allocator
+                  | pd_allocator
                   | unknown_map_entry
 
      subnet ::= "subnet" ":" STRING
@@ -521,13 +556,6 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
      reservations_in_subnet ::= "reservations-in-subnet" ":" BOOLEAN
 
      reservations_out_of_pool ::= "reservations-out-of-pool" ":" BOOLEAN
-
-     reservation_mode ::= "reservation-mode" ":" hr_mode
-
-     hr_mode ::= "disabled"
-            | "out-of-pool"
-            | "global"
-            | "all"
 
      id ::= "id" ":" INTEGER
 
@@ -556,7 +584,6 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                          | rebind_timer
                          | option_data_list
                          | relay
-                         | reservation_mode
                          | reservations_global
                          | reservations_in_subnet
                          | reservations_out_of_pool
@@ -586,7 +613,11 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                          | ddns_qualifying_suffix
                          | ddns_update_on_renew
                          | ddns_use_conflict_resolution
+                         | ddns_conflict_resolution_mode
+                         | ddns_ttl_percent
                          | store_extended_info
+                         | allocator
+                         | pd_allocator
                          | unknown_map_entry
 
      option_def_list ::= "option-def" ":" "[" option_def_list_content "]"
@@ -666,6 +697,7 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                       | option_data_space
                       | option_data_csv_format
                       | option_data_always_send
+                      | option_data_never_send
                       | user_context
                       | comment
                       | unknown_map_entry
@@ -681,6 +713,8 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
      option_data_csv_format ::= "csv-format" ":" BOOLEAN
 
      option_data_always_send ::= "always-send" ":" BOOLEAN
+
+     option_data_never_send ::= "never-send" ":" BOOLEAN
 
      pools_list ::= "pools" ":" "[" pools_list_content "]"
 
@@ -700,6 +734,7 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                 | pool_params ","
 
      pool_param ::= pool_entry
+               | pool_id
                | option_data_list
                | client_class
                | require_client_classes
@@ -708,6 +743,8 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                | unknown_map_entry
 
      pool_entry ::= "pool" ":" STRING
+
+     pool_id ::= "pool-id" ":" INTEGER
 
      user_context ::= "user-context" ":" map_value
 
@@ -733,6 +770,7 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
      pd_pool_param ::= pd_prefix
                   | pd_prefix_len
                   | pd_delegated_len
+                  | pool_id
                   | option_data_list
                   | client_class
                   | require_client_classes
@@ -800,10 +838,7 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
 
      relay ::= "relay" ":" "{" relay_map "}"
 
-     relay_map ::= ip_address
-              | ip_addresses
-
-     ip_address ::= "ip-address" ":" STRING
+     relay_map ::= ip_addresses
 
      client_classes ::= "client-classes" ":" "[" client_classes_list "]"
 
@@ -822,6 +857,7 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
 
      client_class_param ::= client_class_name
                        | client_class_test
+                       | client_class_template_test
                        | only_if_required
                        | option_data_list
                        | user_context
@@ -837,6 +873,8 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
      client_class_name ::= name
 
      client_class_test ::= "test" ":" STRING
+
+     client_class_template_test ::= "template-test" ":" STRING
 
      only_if_required ::= "only-if-required" ":" BOOLEAN
 
@@ -874,19 +912,96 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
 
      control_socket ::= "control-socket" ":" "{" control_socket_params "}"
 
+     control_sockets ::= "control-sockets" ":" "[" control_socket_list "]"
+
+     control_socket_list ::= 
+                        | not_empty_control_socket_list
+
+     not_empty_control_socket_list ::= control_socket_entry
+                                  | not_empty_control_socket_list "," control_socket_entry
+                                  | not_empty_control_socket_list ","
+
+     control_socket_entry ::= "{" control_socket_params "}"
+
      control_socket_params ::= control_socket_param
                           | control_socket_params "," control_socket_param
                           | control_socket_params ","
 
-     control_socket_param ::= socket_type
-                         | socket_name
+     control_socket_param ::= control_socket_type
+                         | control_socket_name
+                         | control_socket_address
+                         | control_socket_port
+                         | authentication
+                         | trust_anchor
+                         | cert_file
+                         | key_file
+                         | cert_required
                          | user_context
                          | comment
                          | unknown_map_entry
 
-     socket_type ::= "socket-type" ":" STRING
+     control_socket_type ::= "socket-type" ":" control_socket_type_value
 
-     socket_name ::= "socket-name" ":" STRING
+     control_socket_type_value ::= "unix"
+                              | "http"
+                              | "https"
+
+     control_socket_name ::= "socket-name" ":" STRING
+
+     control_socket_address ::= "socket-address" ":" STRING
+
+     control_socket_port ::= "socket-port" ":" INTEGER
+
+     cert_required ::= "cert-required" ":" BOOLEAN
+
+     authentication ::= "authentication" ":" "{" auth_params "}"
+
+     auth_params ::= auth_param
+                | auth_params "," auth_param
+                | auth_params ","
+
+     auth_param ::= auth_type
+               | realm
+               | directory
+               | clients
+               | comment
+               | user_context
+               | unknown_map_entry
+
+     auth_type ::= "type" ":" auth_type_value
+
+     auth_type_value ::= "basic"
+
+     realm ::= "realm" ":" STRING
+
+     directory ::= "directory" ":" STRING
+
+     clients ::= "clients" ":" "[" clients_list "]"
+
+     clients_list ::= 
+                 | not_empty_clients_list
+
+     not_empty_clients_list ::= basic_auth
+                           | not_empty_clients_list "," basic_auth
+                           | not_empty_clients_list ","
+
+     basic_auth ::= "{" clients_params "}"
+
+     clients_params ::= clients_param
+                   | clients_params "," clients_param
+                   | clients_params ","
+
+     clients_param ::= user
+                  | user_file
+                  | password
+                  | password_file
+                  | user_context
+                  | comment
+                  | unknown_map_entry
+
+     user_file ::= "user-file" ":" STRING
+
+     password_file ::= "password-file" ":" STRING
 
      dhcp_queue_control ::= "dhcp-queue-control" ":" "{" queue_control_params "}"
 
@@ -925,20 +1040,11 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                     | max_queue_size
                     | ncr_protocol
                     | ncr_format
-                    | dep_override_no_update
-                    | dep_override_client_update
-                    | dep_replace_client_name
-                    | dep_generated_prefix
-                    | dep_qualifying_suffix
-                    | dep_hostname_char_set
-                    | dep_hostname_char_replacement
                     | user_context
                     | comment
                     | unknown_map_entry
 
      enable_updates ::= "enable-updates" ":" BOOLEAN
-
-     dep_qualifying_suffix ::= "qualifying-suffix" ":" STRING
 
      server_ip ::= "server-ip" ":" STRING
 
@@ -956,18 +1062,6 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                        | "TCP"
 
      ncr_format ::= "ncr-format" ":" "JSON"
-
-     dep_override_no_update ::= "override-no-update" ":" BOOLEAN
-
-     dep_override_client_update ::= "override-client-update" ":" BOOLEAN
-
-     dep_replace_client_name ::= "replace-client-name" ":" ddns_replace_client_name_value
-
-     dep_generated_prefix ::= "generated-prefix" ":" STRING
-
-     dep_hostname_char_set ::= "hostname-char-set" ":" STRING
-
-     dep_hostname_char_replacement ::= "hostname-char-replacement" ":" STRING
 
      config_control ::= "config-control" ":" "{" config_control_params "}"
 
@@ -1008,7 +1102,7 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
 
      severity ::= "severity" ":" STRING
 
-     output_options_list ::= "output_options" ":" "[" output_options_list_content "]"
+     output_options_list ::= "output-options" ":" "[" output_options_list_content "]"
 
      output_options_list_content ::= output_entry
                                 | output_options_list_content "," output_entry

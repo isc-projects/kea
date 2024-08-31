@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,12 +9,13 @@
 #include <asiolink/addr_utilities.h>
 #include <exceptions/exceptions.h>
 
-#include <vector>
+#include <cstring>
 #include <limits>
-#include <string.h>
+#include <vector>
 
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::util;
 
 namespace {
 
@@ -36,7 +37,6 @@ const uint8_t bitMask6[]= { 0, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff };
 
 /// @brief mask used for IPv6 prefix calculation
 const uint8_t revMask6[]= { 0xff, 0x7f, 0x3f, 0x1f, 0xf, 0x7, 0x3, 0x1 };
-
 
 /// @brief calculates the first IPv6 address in a IPv6 prefix
 ///
@@ -164,7 +164,7 @@ IOAddress lastAddrInPrefix6(const IOAddress& prefix, uint8_t len) {
     return (IOAddress::fromBytes(AF_INET6, packed));
 }
 
-}; // end of anonymous namespace
+} // end of anonymous namespace
 
 namespace isc {
 namespace asiolink {
@@ -199,7 +199,7 @@ IOAddress getNetmask4(uint8_t len) {
     return (IOAddress(x));
 }
 
-uint64_t
+uint128_t
 addrsInRange(const IOAddress& min, const IOAddress& max) {
     if (min.getFamily() != max.getFamily()) {
         isc_throw(BadValue, "Both addresses have to be the same family");
@@ -349,31 +349,23 @@ prefixLengthFromRange(const IOAddress& min, const IOAddress& max) {
     }
 }
 
-uint64_t prefixesInRange(const uint8_t pool_len, const uint8_t delegated_len) {
+uint128_t prefixesInRange(const uint8_t pool_len, const uint8_t delegated_len) {
     if (delegated_len < pool_len) {
         return (0);
     }
 
-    uint64_t count = delegated_len - pool_len;
+    uint8_t const count(delegated_len - pool_len);
 
-    if (count == 0) {
-        // If we want to delegate /64 out of /64 pool, we have only
-        // one prefix.
-        return (1);
-    } else if (count >= 64) {
-        // If the difference is greater than or equal 64, e.g. we want to
-        // delegate /96 out of /16 pool, the number is bigger than we can
-        // express, so we'll stick with maximum value of uint64_t.
-        return (std::numeric_limits<uint64_t>::max());
-    } else {
-        // Now count specifies the exponent (e.g. if the difference between the
-        // delegated and pool length is 4, we have 16 prefixes), so we need
-        // to calculate 2^(count - 1)
-        return ((static_cast<uint64_t>(2)) << (count - 1));
+    if (count == 128) {
+        // UINT128_MAX is one off from the real value, but it is the best we
+        // can do, unless we promote to uint256_t.
+        return std::numeric_limits<uint128_t>::max();
     }
+
+    return (uint128_t(1) << count);
 }
 
-IOAddress offsetAddress(const IOAddress& addr, uint64_t offset) {
+IOAddress offsetAddress(const IOAddress& addr, uint128_t offset) {
     // There is nothing to do if the offset is 0.
     if (offset == 0) {
         return (addr);
@@ -392,9 +384,9 @@ IOAddress offsetAddress(const IOAddress& addr, uint64_t offset) {
 
     // This is IPv6 address. Let's first convert the offset value to network
     // byte order and store within the vector.
-    std::vector<uint8_t> offset_bytes(8);
+    std::vector<uint8_t> offset_bytes(16);
     for (int offset_idx = offset_bytes.size() - 1; offset_idx >= 0; --offset_idx) {
-        offset_bytes[offset_idx] = static_cast<uint8_t>(offset & 0x00000000000000ff);
+        offset_bytes[offset_idx] = static_cast<uint8_t>(offset & 0xff);
         offset = offset >> 8;
     }
 
@@ -402,20 +394,14 @@ IOAddress offsetAddress(const IOAddress& addr, uint64_t offset) {
     auto addr_bytes = addr.toBytes();
 
     // Sum up the bytes.
-
     uint16_t carry = 0;
-    for (int i = offset_bytes.size() - 1; (i >= 0) || (carry > 0); --i) {
+    for (int i = offset_bytes.size() - 1; (i >= 0); --i) {
         // Sum the bytes of the address, offset and the carry.
-        uint16_t sum = static_cast<uint16_t>(addr_bytes[i+8]) + carry;
-
-        // Protect against the case when we went beyond the offset vector and
-        // we have only carry to add.
-        if (i >= 0 ) {
-            sum += static_cast<uint16_t>(offset_bytes[i]);
-        }
+        uint16_t sum = static_cast<uint16_t>(addr_bytes[i]) + carry;
+        sum += static_cast<uint16_t>(offset_bytes[i]);
 
         // Update the address byte.
-        addr_bytes[i+8] = sum % 256;
+        addr_bytes[i] = sum % 256;
 
         // Calculate the carry value.
         carry = sum / 256;
@@ -425,6 +411,5 @@ IOAddress offsetAddress(const IOAddress& addr, uint64_t offset) {
     return (IOAddress::fromBytes(AF_INET6, &addr_bytes[0]));
 }
 
-
-};
-};
+}
+}

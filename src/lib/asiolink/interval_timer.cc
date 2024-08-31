@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -40,7 +40,7 @@ public:
     /// @brief Constructor.
     ///
     /// @param io_service The IO service used to handle events.
-    IntervalTimerImpl(IOService& io_service);
+    IntervalTimerImpl(const IOServicePtr& io_service);
 
     /// @brief Destructor.
     ~IntervalTimerImpl();
@@ -51,8 +51,7 @@ public:
     /// @param interval The interval used to start the timer.
     /// @param interval_mode The interval mode used by the timer.
     void setup(const IntervalTimer::Callback& cbfunc, const long interval,
-               const IntervalTimer::Mode& interval_mode
-               = IntervalTimer::REPEATING);
+               const IntervalTimer::Mode& interval_mode = IntervalTimer::REPEATING);
 
     /// @brief Callback function which calls the registerd callback.
     ///
@@ -64,6 +63,7 @@ public:
         lock_guard<mutex> lk (mutex_);
         timer_.cancel();
         interval_ = 0;
+        cbfunc_ = std::function<void()>();
     }
 
     /// @brief Get the timer interval.
@@ -84,6 +84,9 @@ private:
     /// @brief The interval in milliseconds.
     std::atomic<long> interval_;
 
+    /// @brief The IO service used to handle events.
+    IOServicePtr io_service_;
+
     /// @brief The asio timer.
     boost::asio::deadline_timer timer_;
 
@@ -100,8 +103,8 @@ private:
     static const long INVALIDATED_INTERVAL = -1;
 };
 
-IntervalTimerImpl::IntervalTimerImpl(IOService& io_service) :
-    interval_(0), timer_(io_service.get_io_service()),
+IntervalTimerImpl::IntervalTimerImpl(const IOServicePtr& io_service) :
+    interval_(0), io_service_(io_service), timer_(io_service_->getInternalIOService()),
     mode_(IntervalTimer::REPEATING) {
 }
 
@@ -172,7 +175,7 @@ IntervalTimerImpl::callback(const boost::system::error_code& ec) {
     }
 }
 
-IntervalTimer::IntervalTimer(IOService& io_service) :
+IntervalTimer::IntervalTimer(const IOServicePtr& io_service) :
     impl_(new IntervalTimerImpl(io_service)) {
 }
 
@@ -197,5 +200,5 @@ IntervalTimer::getInterval() const {
     return (impl_->getInterval());
 }
 
-} // namespace asiolink
-} // namespace isc
+}  // namespace asiolink
+}  // namespace isc

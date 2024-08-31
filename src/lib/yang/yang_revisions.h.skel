@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,21 +7,21 @@
 #ifndef ISC_YANG_REVISIONS_H
 #define ISC_YANG_REVISIONS_H 1
 
-#include <map>
 #include <string>
+#include <unordered_map>
 
 namespace isc {
 namespace yang {
 
 // Table of module name / revision.
-static const std::map<std::string, std::string> YANG_REVISIONS = {
+static const std::unordered_map<std::string, std::string> YANG_REVISIONS = {
 // Fill this by:
 // cd .../src/share/yang/modules
 // sh utils/gen-revisions.sh > r
 // insert the r file here
-};
+};  // YANG_REVISIONS
 
-}; // end of namespace isc::yang
-}; // end of namespace isc
+}  // namespace yang
+}  // namespace isc
 
-#endif // ISC_YANG_REVISIONS_H
+#endif  // ISC_YANG_REVISIONS_H

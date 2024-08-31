@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -58,7 +58,7 @@ struct TimerInfo {
     /// during the timer registration.
     /// @param interval Timer interval in milliseconds.
     /// @param mode Interval timer scheduling mode.
-    TimerInfo(asiolink::IOService& io_service,
+    TimerInfo(const asiolink::IOServicePtr& io_service,
               const asiolink::IntervalTimer::Callback& user_callback,
               const long interval,
               const asiolink::IntervalTimer::Mode& mode)
@@ -88,7 +88,7 @@ public:
 
     /// @brief Sets IO service to be used by the Timer Manager.
     ///
-    /// @param io_service Pointer to the new IO service.
+    /// @param io_service Pointer to the IO service.
     void setIOService(const IOServicePtr& io_service);
 
     /// @brief Registers new timer in the @c TimerMgr.
@@ -106,7 +106,6 @@ public:
                        const asiolink::IntervalTimer::Callback& callback,
                        const long interval,
                        const asiolink::IntervalTimer::Mode& scheduling_mode);
-
 
     /// @brief Unregisters specified timer.
     ///
@@ -175,7 +174,6 @@ private:
                                const asiolink::IntervalTimer::Callback& callback,
                                const long interval,
                                const asiolink::IntervalTimer::Mode& scheduling_mode);
-
 
     /// @brief Unregisters specified timer.
     ///
@@ -276,7 +274,7 @@ TimerMgrImpl::registerTimerInternal(const std::string& timer_name,
     // Create a structure holding the configuration for the timer. It will
     // create the instance if the IntervalTimer. It will also hold the
     // callback, interval and scheduling mode parameters.
-    TimerInfoPtr timer_info(new TimerInfo(*io_service_, callback,
+    TimerInfoPtr timer_info(new TimerInfo(io_service_, callback,
                                           interval, scheduling_mode));
 
     // Actually register the timer.
@@ -336,9 +334,8 @@ TimerMgrImpl::unregisterTimersInternal() {
     TimerInfoMap registered_timers_copy(registered_timers_);
 
     // Iterate over the existing timers and unregister them.
-    for (TimerInfoMap::iterator timer_info_it = registered_timers_copy.begin();
-         timer_info_it != registered_timers_copy.end(); ++timer_info_it) {
-        unregisterTimerInternal(timer_info_it->first);
+    for (auto const& timer_info_it : registered_timers_copy) {
+        unregisterTimerInternal(timer_info_it.first);
     }
 }
 

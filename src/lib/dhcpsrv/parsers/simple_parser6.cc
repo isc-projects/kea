@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,8 +8,6 @@
 
 #include <cc/data.h>
 #include <dhcpsrv/parsers/simple_parser6.h>
-
-#include <boost/foreach.hpp>
 
 using namespace isc::data;
 
@@ -62,7 +60,7 @@ const SimpleKeywords SimpleParser6::GLOBAL6_PARAMETERS = {
     { "expired-leases-processing",        Element::map },
     { "server-id",                        Element::map },
     { "dhcp4o6-port",                     Element::integer },
-    { "control-socket",                   Element::map },
+    { "control-sockets",                  Element::list },
     { "dhcp-queue-control",               Element::map },
     { "dhcp-ddns",                        Element::map },
     { "user-context",                     Element::map },
@@ -71,7 +69,6 @@ const SimpleKeywords SimpleParser6::GLOBAL6_PARAMETERS = {
     { "reservations",                     Element::list },
     { "config-control",                   Element::map },
     { "server-tag",                       Element::string },
-    { "reservation-mode",                 Element::string },
     { "reservations-global",              Element::boolean },
     { "reservations-in-subnet",           Element::boolean },
     { "reservations-out-of-pool",         Element::boolean },
@@ -97,9 +94,12 @@ const SimpleKeywords SimpleParser6::GLOBAL6_PARAMETERS = {
     { "ip-reservations-unique",           Element::boolean },
     { "reservations-lookup-first",        Element::boolean },
     { "ddns-update-on-renew",             Element::boolean },
-    { "ddns-use-conflict-resolution",     Element::boolean },
     { "compatibility",                    Element::map },
     { "parked-packet-limit",              Element::integer },
+    { "allocator",                        Element::string },
+    { "pd-allocator",                     Element::string },
+    { "ddns-ttl-percent",                 Element::real },
+    { "ddns-conflict-resolution-mode",    Element::string },
 };
 
 /// @brief This table defines default global values for DHCPv6
@@ -108,7 +108,7 @@ const SimpleKeywords SimpleParser6::GLOBAL6_PARAMETERS = {
 /// in Dhcp6) are optional. If not defined, the following values will be
 /// used.
 const SimpleDefaults SimpleParser6::GLOBAL6_DEFAULTS = {
-    { "preferred-lifetime",               Element::integer, "3600" },
+    // preferred-lifetime is unspecified and defaults to 0.625 of valid-lifetime.
     { "valid-lifetime",                   Element::integer, "7200" },
     { "decline-probation-period",         Element::integer, "86400" }, // 24h
     { "dhcp4o6-port",                     Element::integer, "0" },
@@ -134,8 +134,10 @@ const SimpleDefaults SimpleParser6::GLOBAL6_DEFAULTS = {
     { "ip-reservations-unique",           Element::boolean, "true" },
     { "reservations-lookup-first",        Element::boolean, "false" },
     { "ddns-update-on-renew",             Element::boolean, "false" },
-    { "ddns-use-conflict-resolution",     Element::boolean, "true" },
-    { "parked-packet-limit",              Element::integer, "256" }
+    { "parked-packet-limit",              Element::integer, "256" },
+    { "allocator",                        Element::string,  "iterative" },
+    { "pd-allocator",                     Element::string,  "iterative" },
+    { "ddns-conflict-resolution-mode",    Element::string,  "check-with-dhcid" },
 };
 
 /// @brief This table defines all option definition parameters.
@@ -179,6 +181,7 @@ const SimpleKeywords SimpleParser6::OPTION6_PARAMETERS = {
     { "space",        Element::string },
     { "csv-format",   Element::boolean },
     { "always-send",  Element::boolean },
+    { "never-send",   Element::boolean },
     { "user-context", Element::map },
     { "comment",      Element::string },
     { "metadata",     Element::map }
@@ -192,7 +195,8 @@ const SimpleKeywords SimpleParser6::OPTION6_PARAMETERS = {
 const SimpleDefaults SimpleParser6::OPTION6_DEFAULTS = {
     { "space",        Element::string,  "dhcp6"}, // DHCP6_OPTION_SPACE
     { "csv-format",   Element::boolean, "true"},
-    { "always-send",  Element::boolean, "false"}
+    { "always-send",  Element::boolean, "false"},
+    { "never-send",   Element::boolean, "false"}
 };
 
 /// @brief This table defines all subnet parameters for DHCPv6.
@@ -220,7 +224,6 @@ const SimpleKeywords SimpleParser6::SUBNET6_PARAMETERS = {
     { "client-class",                   Element::string },
     { "require-client-classes",         Element::list },
     { "reservations",                   Element::list },
-    { "reservation-mode",               Element::string },
     { "reservations-global",            Element::boolean },
     { "reservations-in-subnet",         Element::boolean },
     { "reservations-out-of-pool",       Element::boolean },
@@ -243,7 +246,10 @@ const SimpleKeywords SimpleParser6::SUBNET6_PARAMETERS = {
     { "cache-threshold",                Element::real },
     { "cache-max-age",                  Element::integer },
     { "ddns-update-on-renew",           Element::boolean },
-    { "ddns-use-conflict-resolution",   Element::boolean }
+    { "allocator",                      Element::string },
+    { "pd-allocator",                   Element::string },
+    { "ddns-ttl-percent",               Element::real },
+    { "ddns-conflict-resolution-mode",  Element::string },
 };
 
 /// @brief This table defines default values for each IPv6 subnet.
@@ -253,7 +259,6 @@ const SimpleKeywords SimpleParser6::SUBNET6_PARAMETERS = {
 /// where a parameter can be derived from shared-networks, but is not
 /// defined on global level.
 const SimpleDefaults SimpleParser6::SUBNET6_DEFAULTS = {
-    { "id",               Element::integer, "0" }, // 0 means autogenerate
     { "interface",        Element::string,  "" },
     { "client-class",     Element::string,  "" },
     { "rapid-commit",     Element::boolean, "false" }, // rapid-commit disabled by default
@@ -265,6 +270,10 @@ const SimpleDefaults SimpleParser6::SUBNET6_DEFAULTS = {
 ///
 /// This is mostly the same as @ref SUBNET6_DEFAULTS, except the parameters
 /// that can be derived from shared-network, but cannot from global scope.
+const SimpleDefaults SimpleParser6::SHARED_SUBNET6_DEFAULTS = {
+};
+
+/// @brief This table defines default values for each IPv6 shared network.
 const SimpleDefaults SimpleParser6::SHARED_NETWORK6_DEFAULTS = {
     { "client-class",     Element::string,  "" },
     { "interface",        Element::string,  "" },
@@ -296,7 +305,9 @@ const ParamsList SimpleParser6::INHERIT_TO_SUBNET6 = {
     "t2-percent",
     "store-extended-info",
     "cache-threshold",
-    "cache-max-age"
+    "cache-max-age",
+    "allocator",
+    "pd-allocator"
 };
 
 /// @brief This table defines all pool parameters.
@@ -306,6 +317,7 @@ const ParamsList SimpleParser6::INHERIT_TO_SUBNET6 = {
 /// Order follows pool_param rules in bison grammar.
 const SimpleKeywords SimpleParser6::POOL6_PARAMETERS = {
     { "pool",                   Element::string },
+    { "pool-id",                Element::integer },
     { "option-data",            Element::list },
     { "client-class",           Element::string },
     { "require-client-classes", Element::list },
@@ -323,6 +335,7 @@ const SimpleKeywords SimpleParser6::PD_POOL6_PARAMETERS = {
     { "prefix",                 Element::string },
     { "prefix-len",             Element::integer },
     { "delegated-len",          Element::integer },
+    { "pool-id",                Element::integer },
     { "option-data",            Element::list },
     { "client-class",           Element::string },
     { "require-client-classes", Element::list },
@@ -347,7 +360,6 @@ const SimpleKeywords SimpleParser6::SHARED_NETWORK6_PARAMETERS = {
     { "rebind-timer",                   Element::integer },
     { "option-data",                    Element::list },
     { "relay",                          Element::map },
-    { "reservation-mode",               Element::string },
     { "reservations-global",            Element::boolean },
     { "reservations-in-subnet",         Element::boolean },
     { "reservations-out-of-pool",       Element::boolean },
@@ -378,12 +390,10 @@ const SimpleKeywords SimpleParser6::SHARED_NETWORK6_PARAMETERS = {
     { "cache-threshold",                Element::real },
     { "cache-max-age",                  Element::integer },
     { "ddns-update-on-renew",           Element::boolean },
-    { "ddns-use-conflict-resolution",   Element::boolean }
-};
-
-/// @brief This table defines default values for each IPv6 subnet.
-const SimpleDefaults SimpleParser6::SHARED_SUBNET6_DEFAULTS = {
-    { "id",               Element::integer, "0" } // 0 means autogenerate
+    { "allocator",                      Element::string },
+    { "pd-allocator",                   Element::string },
+    { "ddns-ttl-percent",               Element::real },
+    { "ddns-conflict-resolution-mode",  Element::string },
 };
 
 /// @brief This table defines default values for interfaces for DHCPv6.
@@ -400,7 +410,7 @@ const SimpleDefaults SimpleParser6::DHCP_QUEUE_CONTROL6_DEFAULTS = {
 
 /// @brief This table defines default values for multi-threading in DHCPv6.
 const SimpleDefaults SimpleParser6::DHCP_MULTI_THREADING6_DEFAULTS = {
-    { "enable-multi-threading", Element::boolean, "false" },
+    { "enable-multi-threading", Element::boolean, "true" },
     { "thread-pool-size",       Element::integer, "0" },
     { "packet-queue-size",      Element::integer, "64" }
 };
@@ -425,7 +435,7 @@ size_t SimpleParser6::setAllDefaults(ElementPtr global) {
     // Now set the defaults for each specified option definition
     ConstElementPtr option_defs = global->get("option-def");
     if (option_defs) {
-        BOOST_FOREACH(ElementPtr option_def, option_defs->listValue()) {
+        for (auto const& option_def : option_defs->listValue()) {
             cnt += SimpleParser::setDefaults(option_def, OPTION6_DEF_DEFAULTS);
         }
     }
@@ -433,7 +443,7 @@ size_t SimpleParser6::setAllDefaults(ElementPtr global) {
     // Set the defaults for option data
     ConstElementPtr options = global->get("option-data");
     if (options) {
-        BOOST_FOREACH(ElementPtr single_option, options->listValue()) {
+        for (auto const& single_option : options->listValue()) {
             cnt += SimpleParser::setDefaults(single_option, OPTION6_DEFAULTS);
         }
     }
@@ -454,7 +464,7 @@ size_t SimpleParser6::setAllDefaults(ElementPtr global) {
     // Set defaults for shared networks
     ConstElementPtr shared = global->get("shared-networks");
     if (shared) {
-        BOOST_FOREACH(ElementPtr net, shared->listValue()) {
+        for (auto const& net : shared->listValue()) {
 
             cnt += setDefaults(net, SHARED_NETWORK6_DEFAULTS);
 
@@ -511,7 +521,7 @@ size_t SimpleParser6::deriveParameters(ElementPtr global) {
     // Now derive global parameters into subnets.
     ConstElementPtr subnets = global->get("subnet6");
     if (subnets) {
-        BOOST_FOREACH(ElementPtr single_subnet, subnets->listValue()) {
+        for (auto const& single_subnet : subnets->listValue()) {
             cnt += SimpleParser::deriveParams(global, single_subnet,
                                               INHERIT_TO_SUBNET6);
         }
@@ -522,7 +532,7 @@ size_t SimpleParser6::deriveParameters(ElementPtr global) {
     // subnets within derive from it.
     ConstElementPtr shared = global->get("shared-networks");
     if (shared) {
-        BOOST_FOREACH(ElementPtr net, shared->listValue()) {
+        for (auto const& net : shared->listValue()) {
             // First try to inherit the parameters from shared network,
             // if defined there.
             // Then try to inherit them from global.
@@ -532,7 +542,7 @@ size_t SimpleParser6::deriveParameters(ElementPtr global) {
             // Now we need to go thrugh all the subnets in this net.
             subnets = net->get("subnet6");
             if (subnets) {
-                BOOST_FOREACH(ElementPtr single_subnet, subnets->listValue()) {
+                for (auto const& single_subnet : subnets->listValue()) {
                     cnt += SimpleParser::deriveParams(net, single_subnet,
                                                       INHERIT_TO_SUBNET6);
                 }

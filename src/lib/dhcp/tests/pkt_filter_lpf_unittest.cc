@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +12,7 @@
 #include <dhcp/protocol_util.h>
 #include <dhcp/tests/pkt_filter_test_utils.h>
 #include <util/buffer.h>
+#include <testutils/gtest_utils.h>
 
 #include <gtest/gtest.h>
 
@@ -46,19 +47,26 @@ TEST_F(PktFilterLPFTest, isDirectResponseSupported) {
     EXPECT_TRUE(pkt_filter.isDirectResponseSupported());
 }
 
-// All tests below require root privileges to execute successfully. If
-// they are run as non-root user they will fail due to insufficient privileges
-// to open raw network sockets. Therefore, they should remain disabled by default
-// and "DISABLED_" tags should not be removed. If one is willing to run these
-// tests please run "make check" as root and enable execution of disabled tests
-// by setting GTEST_ALSO_RUN_DISABLED_TESTS to a value other than 0. In order
-// to run tests from this particular file, set the GTEST_FILTER environmental
-// variable to "PktFilterLPFTest.*" apart from GTEST_ALSO_RUN_DISABLED_TESTS
-// setting.
+// This test verifies that the PktFilterLPF class reports its capability
+// to create SOCKET_RECEIVED events.
+TEST_F(PktFilterLPFTest, isSocketReceivedTimeSupported) {
+    // Create object under test.
+    PktFilterLPF pkt_filter;
+#ifdef SO_TIMESTAMP
+    EXPECT_TRUE(pkt_filter.isSocketReceivedTimeSupported());
+#else
+    EXPECT_FALSE(pkt_filter.isSocketReceivedTimeSupported());
+#endif
+}
+
+// All tests below require root privileges to execute successfully. If they
+// are run as non-root they will be skipped via SKIP_IF(notRoot()).
 
 // This test verifies that the raw AF_PACKET family socket can
 // be opened and bound to the specific interface.
-TEST_F(PktFilterLPFTest, DISABLED_openSocket) {
+TEST_F(PktFilterLPFTest, openSocket) {
+    SKIP_IF(notRoot());
+
     // Create object representing loopback interface.
     Iface iface(ifname_, ifindex_);
     // Set loopback address.
@@ -94,7 +102,9 @@ TEST_F(PktFilterLPFTest, DISABLED_openSocket) {
 
 // This test verifies correctness of sending DHCP packet through the raw
 // socket, whereby all IP stack headers are hand-crafted.
-TEST_F(PktFilterLPFTest, DISABLED_send) {
+TEST_F(PktFilterLPFTest, send) {
+    SKIP_IF(notRoot());
+
     // Packet will be sent over loopback interface.
     Iface iface(ifname_, ifindex_);
     IOAddress addr("127.0.0.1");
@@ -111,6 +121,9 @@ TEST_F(PktFilterLPFTest, DISABLED_send) {
 
     // Send the packet over the socket.
     ASSERT_NO_THROW(pkt_filter.send(iface, sock_info_.sockfd_, test_message_));
+
+    // Verify that we have only the RESPONSE_SENT event with a good timestamp.
+    testPktEvents(test_message_, start_time_, std::list<std::string>{PktEvent::RESPONSE_SENT});
 
     // Read the data from socket.
     fd_set readfds;
@@ -152,7 +165,8 @@ TEST_F(PktFilterLPFTest, DISABLED_send) {
 
 // This test verifies correctness of reception of the DHCP packet over
 // raw socket, whereby all IP stack headers are hand-crafted.
-TEST_F(PktFilterLPFTest, DISABLED_receive) {
+TEST_F(PktFilterLPFTest, receive) {
+    SKIP_IF(notRoot());
 
     // Packet will be received over loopback interface.
     Iface iface(ifname_, ifindex_);
@@ -180,12 +194,16 @@ TEST_F(PktFilterLPFTest, DISABLED_receive) {
     // Check if the received message is correct.
     testRcvdMessage(rcvd_pkt);
     testRcvdMessageAddressPort(rcvd_pkt);
+
+    // Verify that the packet event stack is as expected.
+    testReceivedPktEvents(rcvd_pkt, pkt_filter.isSocketReceivedTimeSupported());
 }
 
 // This test verifies that if the packet is received over the raw
 // socket and its destination address doesn't match the address
 // to which the socket is "bound", the packet is dropped.
-TEST_F(PktFilterLPFTest, DISABLED_filterOutUnicast) {
+TEST_F(PktFilterLPFTest, filterOutUnicast) {
+    SKIP_IF(notRoot());
 
     // Packet will be received over loopback interface.
     Iface iface(ifname_, ifindex_);

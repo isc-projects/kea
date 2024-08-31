@@ -65,7 +65,7 @@ involves the following steps for each reclaimed lease:
 
 Please refer to :ref:`dhcp-ddns-server` to see how to configure DNS
 updates in Kea, and to :ref:`hooks-libraries` for information about
-using hooks libraries.
+using hook libraries.
 
 .. _lease-reclamation-defaults:
 
@@ -81,12 +81,16 @@ processing expired leases, with their default values:
 
 -  ``flush-reclaimed-timer-wait-time`` - this parameter controls how
    often the server initiates the lease reclamation procedure. Expressed in
-   seconds; the default value is 25.
+   seconds; the default value is 25. If both ``flush-reclaimed-timer-wait-time``
+   and ``hold-reclaimed-time`` are not 0, when the client sends a release
+   message the lease is expired instead of being deleted from lease storage.
 
 -  ``hold-reclaimed-time`` - this parameter governs how long the lease
    should be kept after it is reclaimed. This enables lease affinity
    when set to a non-zero value. Expressed in seconds; the default value
-   is 3600.
+   is 3600. If both ``flush-reclaimed-timer-wait-time`` and
+   ``hold-reclaimed-time`` are not 0, when the client sends a release message
+   the lease is expired instead of being deleted from lease storage.
 
 -  ``max-reclaim-leases`` - this parameter specifies the maximum number
    of reclaimed leases that can be processed at one time. Zero means
@@ -133,18 +137,16 @@ processed in a single reclamation cycle, and the maximum amount of time
 a single reclamation cycle is allowed to run before being interrupted.
 The following examples demonstrate how these parameters can be used:
 
-::
+.. code-block:: json
 
-   "Dhcp4": {
-       ...
-
+   {
+     "Dhcp4": {
        "expired-leases-processing": {
            "reclaim-timer-wait-time": 5,
            "max-reclaim-leases": 0,
-           "max-reclaim-time": 0,
-       },
-
-       ...
+           "max-reclaim-time": 0
+       }
+     }
    }
 
 The first parameter is expressed in seconds and specifies an interval
@@ -182,19 +184,17 @@ apply restrictions to the maximum duration of a reclamation cycle or the
 maximum number of leases reclaimed in a cycle. The following
 configuration demonstrates how this can be done:
 
-::
+.. code-block:: json
 
-   "Dhcp4": {
-       ...
-
+   {
+     "Dhcp4": {
        "expired-leases-processing": {
            "reclaim-timer-wait-time": 3,
            "max-reclaim-leases": 100,
            "max-reclaim-time": 50,
-           "unwarned-reclaim-cycles": 10,
-       },
-
-       ...
+           "unwarned-reclaim-cycles": 10
+       }
+     }
    }
 
 In this example, the ``max-reclaim-leases`` parameter limits the number of leases
@@ -260,35 +260,33 @@ leases and reassigns them if they have not been assigned to another
 client. The ability of the server to reassign the same lease to a
 returning client is referred to as "lease affinity."
 
-When lease affinity is enabled (i.e. when ``hold-reclaimed-time`` is
-configured to a value greater than zero), the server still reclaims
-leases according to the parameters described in :ref:`lease-reclaim-config`,
-but the reclaimed leases are
-held in the database for a specified amount of
-time rather than removed. When the client returns, the server first verifies whether
-there are any reclaimed leases associated with this client and then
-reassigns them if possible. However, it is important to note that any
-reclaimed lease may be assigned to another client if that client
-specifically asks for it. Therefore, lease affinity does not guarantee
-that the reclaimed lease will be available for the client who used it
-before; it merely increases the chances of the client being assigned
-the same lease. If the lease pool is small - namely, in
-DHCPv4, for which address space is limited - there is an increased
-likelihood that the expired lease will be assigned to another client.
+When lease affinity is enabled (i.e. when ``hold-reclaimed-time`` is configured
+to a value greater than zero), the server still reclaims leases according to the
+parameters described in :ref:`lease-reclaim-config`, but the reclaimed leases
+are held in the database for a specified amount of time rather than removed.
+If both ``flush-reclaimed-timer-wait-time`` and ``hold-reclaimed-time`` are
+greater than zero, the lease is expired immediately when the client sends a
+release message, instead of being deleted from lease storage. When the client
+returns, the server first verifies whether there are any reclaimed leases
+associated with this client and then reassigns them if possible. However, it is
+important to note that any reclaimed lease may be assigned to another client if
+that client specifically asks for it. Therefore, lease affinity does not
+guarantee that the reclaimed lease will be available for the client who used it
+before; it merely increases the chances of the client being assigned the same
+lease. If the lease pool is small - namely, in DHCPv4, for which address space
+is limited - there is an increased likelihood that the expired lease will be
+assigned to another client.
 
 Consider the following configuration:
 
 ::
 
    "Dhcp4": {
-       ...
-
        "expired-leases-processing": {
            "reclaim-timer-wait-time": 3,
            "hold-reclaimed-time": 1800,
            "flush-reclaimed-timer-wait-time": 5
        },
-
        ...
    }
 
@@ -325,6 +323,6 @@ should consider using host reservations or leases with very long lifetimes.
 Reclaiming Expired Leases via Command
 =====================================
 
-The ``leases-reclaim`` command can be used to trigger lease reclamation at
+The :isccmd:`leases-reclaim` command can be used to trigger lease reclamation at
 any time. Please consult the :ref:`command-leases-reclaim` section
 for details about using this command.

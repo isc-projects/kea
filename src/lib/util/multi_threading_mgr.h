@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -108,7 +108,8 @@ private:
 ///
 /// This singleton class holds the multi-threading mode.
 ///
-/// The standard way to use it is:
+/// See the @ref MultiThreadingLock class for a standard way of protecting code
+/// with a mutex. Or if you want to make it look like you're writing more code:
 /// @code
 /// if (MultiThreadingMgr::instance().getMode()) {
 ///     multi-threaded code
@@ -323,6 +324,20 @@ private:
 
     /// @brief List of CriticalSection entry and exit callback sets.
     CSCallbackSetList cs_callbacks_;
+};
+
+/// @brief RAII lock object to protect the code in the same scope with a mutex
+struct MultiThreadingLock {
+    /// @brief Constructor locks the mutex if multi-threading is enabled.
+    ///
+    /// The lock is automatically unlocked in the default destructor.
+    ///
+    /// @param mutex the mutex to be locked
+    MultiThreadingLock(std::mutex& mutex);
+
+private:
+    /// @brief object keeping the mutex locked for its entire lifetime
+    std::unique_lock<std::mutex> lock_;
 };
 
 /// @note: everything here MUST be used ONLY from the main thread.

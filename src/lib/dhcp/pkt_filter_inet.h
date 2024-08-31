@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -30,6 +30,14 @@ public:
     virtual bool isDirectResponseSupported() const {
         return (false);
     }
+
+    /// @brief Check if the socket received time is supported.
+    ///
+    /// If true, then packets received through this filter will include
+    /// a SOCKET_RECEIVED event in its event stack.
+    ///
+    /// @return True if SO_TIMESTAMP is defined.
+    virtual bool isSocketReceivedTimeSupported() const;
 
     /// @brief Open primary and fallback socket.
     ///

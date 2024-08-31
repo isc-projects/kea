@@ -33,7 +33,7 @@
         "        \"subnets\": [ {",
         "            \"id\": <subnet identifier>,",
         "            \"subnet\": <subnet prefix>,",
-        "            \"shared-network-name\": <shared network name> | null,",
+        "            \"shared-network-name\": <shared network name or null>,",
         "            \"metadata\": {",
         "                \"server-tags\": [ <first server tag>, <second server tag>, ... ]",
         "            },",

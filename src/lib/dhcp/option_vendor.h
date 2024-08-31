@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,7 +10,6 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
 #include <dhcp/option_data_types.h>
-#include <util/io_utilities.h>
 
 #include <stdint.h>
 
@@ -57,6 +56,7 @@ public:
     /// unused byte after stored option.
     ///
     /// @param [out] buf buffer (option will be stored here)
+    /// @param check if set to false, allows options larger than 255 for v4
     virtual void pack(isc::util::OutputBuffer& buf, bool check = true) const;
 
     /// @brief Parses received buffer
@@ -76,12 +76,16 @@ public:
     /// @brief Sets enterprise identifier
     ///
     /// @param vendor_id vendor identifier
-    void setVendorId(const uint32_t vendor_id) { vendor_id_ = vendor_id; }
+    void setVendorId(const uint32_t vendor_id) {
+        vendor_id_ = vendor_id;
+    }
 
     /// @brief Returns enterprise identifier
     ///
     /// @return enterprise identifier
-    uint32_t getVendorId() const { return (vendor_id_); }
+    uint32_t getVendorId() const {
+        return (vendor_id_);
+    }
 
     /// @brief returns complete length of option
     ///
@@ -99,17 +103,8 @@ public:
 
 private:
 
-    /// @brief Calculates the data-len value for DHCPv4.
-    ///
-    /// The data-len field is only present in DHCPv4 space. It follows
-    /// the vendor-id field. This method is called from the
-    /// @c OptionVendor::pack and @c OptionVendor::toText to calculate
-    /// this value.
-    ///
-    /// @return Returns calculated data-len value.
-    uint8_t dataLen() const;
-
-    uint32_t vendor_id_;  ///< Enterprise-id
+    /// @brief Enterprise-id
+    uint32_t vendor_id_;
 };
 
 /// Pointer to a vendor option

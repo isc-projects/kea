@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -31,7 +31,7 @@ public:
     /// raised.
     /// @param mode selects between a one-shot signal or a signal which repeats
     /// at "milliseconds" interval.
-    TimedSignal(asiolink::IOService& io_service, int signum, int milliseconds,
+    TimedSignal(asiolink::IOServicePtr& io_service, int signum, int milliseconds,
                 const asiolink::IntervalTimer::Mode& mode =
                 asiolink::IntervalTimer::ONE_SHOT)
         : timer_(new asiolink::IntervalTimer(io_service)) {
@@ -51,7 +51,7 @@ public:
     }
 
     /// @brief Callback for the TimeSignal's internal timer.
-    class SendSignalCallback: public std::unary_function<void, void> {
+    class SendSignalCallback {
     public:
 
         /// @brief Constructor

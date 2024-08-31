@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,6 +24,7 @@
 using namespace std;
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::dhcp_ddns;
@@ -187,8 +188,7 @@ public:
         LeaseMgrFactory::create(lease_mgr_params);
 
         // Create allocation engine instance.
-        engine_.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
-                                      100, true));
+        engine_.reset(new AllocEngine(100));
     }
 
     /// @brief Destructor
@@ -202,6 +202,7 @@ public:
         if (mgr.amSending()) {
             mgr.stopSender();
             mgr.clearQueue();
+            mgr.stop();
         }
 
         // Clear configuration.
@@ -426,7 +427,7 @@ public:
     static bool leaseReclaimed(const LeasePtrType& lease) {
         return (lease && lease->stateExpiredReclaimed() &&
                 lease->hostname_.empty() && !lease->fqdn_fwd_ &&
-                !lease->fqdn_rev_);
+                !lease->fqdn_rev_ && !lease->getContext());
     }
 
     /// @brief Lease algorithm checking if lease state is Declined.
@@ -1084,15 +1085,15 @@ public:
         // Addresses (DHCPDECLINE support) (v4) or Duplicate Addresses (DECLINE
         // support) sections in the User's Guide or a comment in
         // Dhcpv4Srv::declineLease or Dhcpv6Srv::declineLease.
-        testStatistics("subnet[1]." + stat_name, 1000 - subnet1_cnt);
-        testStatistics("subnet[2]." + stat_name, 2000 - subnet2_cnt);
+        testStatistics(stat_name, 1000 - subnet1_cnt, 1);
+        testStatistics(stat_name, 2000 - subnet2_cnt, 2);
 
-        testStatistics("subnet[1].declined-addresses", 100 - subnet1_cnt);
-        testStatistics("subnet[2].declined-addresses", 200 - subnet2_cnt);
+        testStatistics("declined-addresses", 100 - subnet1_cnt, 1);
+        testStatistics("declined-addresses", 200 - subnet2_cnt, 2);
 
         // subnet[X].reclaimed-declined-addresses should go up in each subnet
-        testStatistics("subnet[1].reclaimed-declined-addresses", 10000 + subnet1_cnt);
-        testStatistics("subnet[2].reclaimed-declined-addresses", 20000 + subnet1_cnt);
+        testStatistics("reclaimed-declined-addresses", 10000 + subnet1_cnt, 1);
+        testStatistics("reclaimed-declined-addresses", 20000 + subnet1_cnt, 2);
     }
 
     /// @brief Collection of leases created at construction time.
@@ -1279,6 +1280,9 @@ ExpirationAllocEngine6Test::createLeases() {
         Lease6Ptr lease(new Lease6(Lease::TYPE_NA, address, duid, 1, 50, 60,
                                    SubnetID(1), true, true,
                                    generateHostnameForLeaseIndex(i)));
+        ElementPtr user_context = Element::createMap();
+        user_context->set("index", Element::create(static_cast<int>(i)));
+        lease->setContext(user_context);
         leases_.push_back(lease);
         // Copy the lease before adding it to the lease manager. We want to
         // make sure that modifications to the leases held in the leases_
@@ -1379,13 +1383,13 @@ ExpirationAllocEngine6Test::testReclaimExpiredLeasesStats() {
         EXPECT_TRUE(testStatistics("reclaimed-leases", i));
         // Make sure that the number of reclaimed leases is also distributed
         // across two subnets.
-        EXPECT_TRUE(testStatistics("subnet[1].reclaimed-leases", i / 2));
-        EXPECT_TRUE(testStatistics("subnet[2].reclaimed-leases", i / 2));
+        EXPECT_TRUE(testStatistics("reclaimed-leases", i / 2, 1));
+        EXPECT_TRUE(testStatistics("reclaimed-leases", i / 2, 2));
         // Number of assigned leases should decrease as we reclaim them.
-        EXPECT_TRUE(testStatistics("subnet[1].assigned-nas",
-                                   (TEST_LEASES_NUM - i) / 2));
-        EXPECT_TRUE(testStatistics("subnet[2].assigned-pds",
-                                   (TEST_LEASES_NUM - i) / 2));
+        EXPECT_TRUE(testStatistics("assigned-nas",
+                                   (TEST_LEASES_NUM - i) / 2, 1));
+        EXPECT_TRUE(testStatistics("assigned-pds",
+                                   (TEST_LEASES_NUM - i) / 2, 2));
     }
 }
 
@@ -1841,6 +1845,9 @@ ExpirationAllocEngine4Test::createLeases() {
         Lease4Ptr lease(new Lease4(address, hwaddr, ClientIdPtr(), 60,
                                    time(NULL), SubnetID(1), true, true,
                                    generateHostnameForLeaseIndex(i)));
+        ElementPtr user_context = Element::createMap();
+        user_context->set("index", Element::create(static_cast<int>(i)));
+        lease->setContext(user_context);
         leases_.push_back(lease);
         // Copy the lease before adding it to the lease manager. We want to
         // make sure that modifications to the leases held in the leases_
@@ -2031,13 +2038,13 @@ ExpirationAllocEngine4Test::testReclaimExpiredLeasesStats() {
         EXPECT_TRUE(testStatistics("reclaimed-leases", i));
         // Make sure that the number of reclaimed leases is also distributed
         // across two subnets.
-        EXPECT_TRUE(testStatistics("subnet[1].reclaimed-leases", i / 2));
-        EXPECT_TRUE(testStatistics("subnet[2].reclaimed-leases", i / 2));
+        EXPECT_TRUE(testStatistics("reclaimed-leases", i / 2, 1));
+        EXPECT_TRUE(testStatistics("reclaimed-leases", i / 2, 2));
         // Number of assigned leases should decrease as we reclaim them.
-        EXPECT_TRUE(testStatistics("subnet[1].assigned-addresses",
-                                   (TEST_LEASES_NUM - i) / 2));
-        EXPECT_TRUE(testStatistics("subnet[2].assigned-addresses",
-                                   (TEST_LEASES_NUM - i) / 2));
+        EXPECT_TRUE(testStatistics("assigned-addresses",
+                                   (TEST_LEASES_NUM - i) / 2, 1));
+        EXPECT_TRUE(testStatistics("assigned-addresses",
+                                   (TEST_LEASES_NUM - i) / 2, 2));
     }
 }
 
@@ -2320,4 +2327,4 @@ TEST_F(ExpirationAllocEngine4Test, reclaimDeclinedHook2) {
     testReclaimDeclinedHook(true); // true = use skip callout
 }
 
-}; // end of anonymous namespace
+} // end of anonymous namespace

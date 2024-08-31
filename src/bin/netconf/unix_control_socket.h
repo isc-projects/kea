@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,7 +22,6 @@ namespace netconf {
 /// This class implements config-get, config-test and config-set.
 class UnixControlSocket : public ControlSocketBase {
 public:
-
     /// @brief Constructor.
     ///
     /// @param ctrl_sock The control socket configuration.
@@ -38,7 +37,7 @@ public:
     /// @param service The target service (ignored).
     /// @return The JSON element answer of config-get.
     /// @throw ControlSocketError when a communication error occurs.
-    virtual data::ConstElementPtr configGet(const std::string& service);
+    data::ConstElementPtr configGet(const std::string& service) override final;
 
     /// @brief Test configuration.
     ///
@@ -48,8 +47,8 @@ public:
     /// @param config The configuration to test.
     /// @return The JSON element answer of config-test.
     /// @throw ControlSocketError when a communication error occurs.
-    virtual data::ConstElementPtr configTest(data::ConstElementPtr config,
-                                             const std::string& service);
+    data::ConstElementPtr configTest(data::ElementPtr config,
+                                     const std::string& service) override final;
 
     /// @brief Set configuration.
     ///
@@ -59,8 +58,8 @@ public:
     /// @param service The target service (ignored).
     /// @return The JSON element answer of config-set.
     /// @throw ControlSocketError when a communication error occurs.
-    virtual data::ConstElementPtr configSet(data::ConstElementPtr config,
-                                            const std::string& service);
+    data::ConstElementPtr configSet(data::ElementPtr config,
+                                    const std::string& service) override final;
 
 private:
     /// @brief Perform the actual communication.
@@ -71,10 +70,10 @@ private:
     /// @param command The command to send.
     /// @return The answer.
     data::ConstElementPtr sendCommand(data::ConstElementPtr command);
-};
+};  // UnixControlSocket
 
 /// @brief Type definition for the pointer to the @c UnixControlSocket.
-typedef boost::shared_ptr<UnixControlSocket> UnixControlSocketPtr;
+using UnixControlSocketPtr = std::shared_ptr<UnixControlSocket>;
 
 /// @brief Factory template specialization for unix control sockets.
 ///
@@ -83,7 +82,7 @@ typedef boost::shared_ptr<UnixControlSocket> UnixControlSocketPtr;
 template <> ControlSocketBasePtr
 createControlSocket<CfgControlSocket::Type::UNIX>(CfgControlSocketPtr ctrl_sock);
 
-} // namespace netconf
-} // namespace isc
+}  // namespace netconf
+}  // namespace isc
 
-#endif // UNIX_CONTROL_SOCKET_H
+#endif  // UNIX_CONTROL_SOCKET_H

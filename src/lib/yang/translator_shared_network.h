@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,7 +9,6 @@
 
 #include <yang/translator.h>
 #include <yang/translator_subnet.h>
-#include <list>
 
 namespace isc {
 namespace yang {
@@ -33,7 +32,6 @@ namespace yang {
 ///     "interface": "<interface>",
 ///     "client-class": "<guard class name>",
 ///     "require-client-classes": [ <list of required class names> ],
-///     "reservation-mode": <host reservation mode>,
 ///     "relay": <relay ip address(es)>,
 ///     "match-client-id": <match client id flag>,
 ///     "next-server": "<next server>",
@@ -67,7 +65,6 @@ namespace yang {
 ///     "rapid-commit": <rapid commit flag>,
 ///     "client-class": "<guard class name>",
 ///     "require-client-classes": [ <list of required class names> ],
-///     "reservation-mode": <host reservation mode>,
 ///     "relay": <relay ip address(es)>,
 ///     "user-context": { <json map> },
 ///     "comment": "<comment>"
@@ -82,7 +79,6 @@ namespace yang {
 ///    +--rw renew-timer?                    uint32
 ///    +--rw rebind-timer?                   uint32
 ///    +--rw option-data* [code space]
-///    +--rw reservation-mode?               host-reservation-mode
 ///    +--rw client-class?                   string
 ///    +--rw require-client-classes*         string
 ///    +--rw valid-lifetime?                 uint32
@@ -101,6 +97,7 @@ namespace yang {
 ///    +--rw ddns-send-updates?              boolean
 ///    +--rw ddns-update-on-renew?           boolean
 ///    +--rw ddns-use-conflict-resolution?   boolean
+///    +--rw ddns-conflict-resolution-mode?  conflict-resolution-mode
 ///    +--rw store-extended-info?            boolean
 ///    +--rw hostname-char-replacement?      string
 ///    +--rw hostname-char-set?              string
@@ -165,23 +162,33 @@ namespace yang {
 /// - kea-dhcp6-server
 class TranslatorSharedNetwork : virtual public TranslatorSubnets {
 public:
-
     /// @brief Constructor.
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-    TranslatorSharedNetwork(sysrepo::S_Session session,
+    TranslatorSharedNetwork(sysrepo::Session session,
                             const std::string& model);
 
     /// @brief Destructor.
-    virtual ~TranslatorSharedNetwork();
+    virtual ~TranslatorSharedNetwork() = default;
 
-    /// @brief Get and translate a shared network from YANG to JSON.
+    /// @brief Translate a shared network from YANG to JSON.
+    ///
+    /// @param data_node the YANG node representing the shared network
+    ///
+    /// @return the JSON representation of the shared network
+    ///
+    /// @throw NetconfError when sysrepo raises an error.
+    isc::data::ElementPtr getSharedNetwork(libyang::DataNode const& data_node);
+
+    /// @brief Translate a shared network from YANG to JSON.
     ///
     /// @param xpath The xpath of the shared network.
+    ///
     /// @return JSON representation of the shared network.
-    /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ElementPtr getSharedNetwork(const std::string& xpath);
+    ///
+    /// @throw NetconfError when sysrepo raises an error.
+    isc::data::ElementPtr getSharedNetworkFromAbsoluteXpath(std::string const& xpath);
 
     /// @brief Translate and set shared network from JSON to YANG.
     ///
@@ -194,10 +201,11 @@ protected:
     /// @brief getSharedNetwork for kea-dhcp4-server and
     /// kea-dhcp6-server models
     ///
-    /// @param xpath The xpath of the shared network.
+    /// @param data_node the YANG node representing the shared nework
     /// @param subsel The subnet list name (either "subnet4" or "subnet6").
+    ///
     /// @return JSON representation of the shared network.
-    isc::data::ElementPtr getSharedNetworkKea(const std::string& xpath,
+    isc::data::ElementPtr getSharedNetworkKea(libyang::DataNode const& data_node,
                                               const std::string& subsel);
 
     /// @brief setSharedNetwork for kea-dhcp4-server and
@@ -209,7 +217,7 @@ protected:
     void setSharedNetworkKea(const std::string& xpath,
                              isc::data::ConstElementPtr elem,
                              const std::string& subsel);
-};
+};  // TranslatorSharedNetwork
 
 /// @brief A translator class for converting a shared network list between
 /// YANG and JSON.
@@ -219,22 +227,33 @@ protected:
 /// - kea-dhcp6-server
 class TranslatorSharedNetworks : virtual public TranslatorSharedNetwork {
 public:
-
     /// @brief Constructor.
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-    TranslatorSharedNetworks(sysrepo::S_Session session,
+    TranslatorSharedNetworks(sysrepo::Session session,
                              const std::string& model);
 
     /// @brief Destructor.
-    virtual ~TranslatorSharedNetworks();
+    virtual ~TranslatorSharedNetworks() = default;
 
-    /// @brief Get and translate shared networks from YANG to JSON.
+    /// @brief Translate shared networks from YANG to JSON.
+    ///
+    /// @param data_node the YANG node representing the list of shared networks
+    ///
+    /// @return the JSON representation of the list of shared networks
+    ///
+    /// @throw NetconfError when sysrepo raises an error.
+    isc::data::ElementPtr getSharedNetworks(libyang::DataNode const& data_node);
+
+    /// @brief Translate shared networks from YANG to JSON.
     ///
     /// @param xpath The xpath of the shared network list.
-    /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ElementPtr getSharedNetworks(const std::string& xpath);
+    ///
+    /// @return the JSON representation of the list of shared networks
+    ///
+    /// @throw NetconfError when sysrepo raises an error.
+    isc::data::ElementPtr getSharedNetworksFromAbsoluteXpath(std::string const& xpath);
 
     /// @brief Translate and set shared networks from JSON to YANG.
     ///
@@ -252,9 +271,9 @@ protected:
     /// @throw BadValue on a shared network without name.
     void setSharedNetworksKea(const std::string& xpath,
                               isc::data::ConstElementPtr elem);
-};
+};  // TranslatorSharedNetworks
 
 }  // namespace yang
 }  // namespace isc
 
-#endif // ISC_TRANSLATOR_SHARED_NETWORK_H
+#endif  // ISC_TRANSLATOR_SHARED_NETWORK_H

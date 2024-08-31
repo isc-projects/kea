@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,7 +8,7 @@
 #include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <dhcp/dhcp4.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/host_mgr.h>
@@ -23,6 +23,8 @@ using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
+using namespace isc::stats;
+
 
 namespace {
 
@@ -48,8 +50,13 @@ const char* CONFIGS[] = {
         "},\n"
         "{\n"
         "   \"hw-address\": \"01:02:03:04:05:06\",\n"
-        "   \"hostname\": \"hw-host-fixed\",\n"
+        "   \"hostname\": \"hw-host-fixed-out-of-range\",\n"
         "   \"ip-address\": \"192.0.1.77\"\n"
+        "},\n"
+        "{\n"
+        "   \"hw-address\": \"02:02:03:04:05:06\",\n"
+        "   \"hostname\": \"hw-host-fixed-in-range\",\n"
+        "   \"ip-address\": \"10.0.0.77\"\n"
         "},\n"
         "{\n"
         "   \"duid\": \"01:02:03:04:05\",\n"
@@ -67,6 +74,7 @@ const char* CONFIGS[] = {
         "\"valid-lifetime\": 600,\n"
         "\"subnet4\": [ { \n"
         "    \"subnet\": \"10.0.0.0/24\",\n"
+        "    \"id\": 10,\n"
         "    \"reservations-global\": true,\n"
         "    \"reservations-in-subnet\": false,\n"
         "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ]\n"
@@ -90,7 +98,7 @@ const char* CONFIGS[] = {
         "\"subnet4\": [\n"
         "    {\n"
         "        \"subnet\": \"10.0.0.0/24\", \n"
-        "        \"id\": 10,"
+        "        \"id\": 10, \n"
         "        \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],\n"
         "        \"interface\": \"eth0\",\n"
         "        \"reservations\": [ \n"
@@ -129,7 +137,7 @@ const char* CONFIGS[] = {
         "\"subnet4\": [\n"
         "    {\n"
         "        \"subnet\": \"10.0.0.0/24\", \n"
-        "        \"id\": 10,"
+        "        \"id\": 10, \n"
         "        \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],\n"
         "        \"interface\": \"eth0\",\n"
         "        \"reservations-global\": false,\n"
@@ -159,7 +167,7 @@ const char* CONFIGS[] = {
         "\"subnet4\": [\n"
         "    {\n"
         "        \"subnet\": \"10.0.0.0/24\", \n"
-        "        \"id\": 10,"
+        "        \"id\": 10, \n"
         "        \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],\n"
         "        \"interface\": \"eth0\",\n"
         "        \"reservations-global\": false,\n"
@@ -204,7 +212,7 @@ const char* CONFIGS[] = {
         "    \"subnet4\": [\n"
         "        {\n"
         "            \"subnet\": \"10.0.0.0/24\", \n"
-        "            \"id\": 10,"
+        "            \"id\": 10, \n"
         "            \"pools\": ["
         "                {"
         "                    \"pool\": \"10.0.0.10-10.0.0.11\","
@@ -256,7 +264,7 @@ const char* CONFIGS[] = {
         "    \"subnet4\": [\n"
         "        {\n"
         "            \"subnet\": \"10.0.0.0/24\", \n"
-        "            \"id\": 10,"
+        "            \"id\": 10, \n"
         "            \"client-class\": \"reserved_class\","
         "            \"pools\": ["
         "                {"
@@ -297,7 +305,7 @@ const char* CONFIGS[] = {
         "\"subnet4\": [\n"
         "    {\n"
         "        \"subnet\": \"10.0.0.0/24\", \n"
-        "        \"id\": 10,"
+        "        \"id\": 10, \n"
         "        \"reservations\": [{ \n"
         "            \"hw-address\": \"aa:bb:cc:dd:ee:fe\",\n"
         "            \"client-classes\": [ \"reserved_class\" ]\n"
@@ -365,7 +373,7 @@ const char* CONFIGS[] = {
         "\"subnet4\": [\n"
         "    {\n"
         "        \"subnet\": \"10.0.0.0/24\", \n"
-        "        \"id\": 10,"
+        "        \"id\": 10, \n"
         "        \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],\n"
         "        \"interface\": \"eth0\",\n"
         "        \"reservations\": [ \n"
@@ -585,15 +593,24 @@ TEST_F(HostTest, globalHardwareDynamicAddress) {
     runDoraTest(CONFIGS[0], client, "hw-host-dynamic", "10.0.0.10");
 }
 
-// Verifies that a client matched to a global address reservation
-// gets both the hostname and the reserved address
-// when the subnet reservations flags are global only.
-TEST_F(HostTest, globalHardwareFixedAddress) {
+// Verifies that a client matched to a global in-subnet address reservation
+// gets both the hostname and the reserved address when the subnet reservations
+// flags are global only.
+TEST_F(HostTest, globalHardwareFixedAddressInRange) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
 
-    //client.includeClientId(clientid_a);
+    client.setHWAddress("02:02:03:04:05:06");
+    runDoraTest(CONFIGS[0], client, "hw-host-fixed-in-range", "10.0.0.77");
+}
+
+// Verifies that a client matched to a global out-of-range address reservation
+// gets the hostname and a dynamic address when the subnet reservations
+// flags are global only.
+TEST_F(HostTest, globalHardwareFixedAddressOutOfRange) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+
     client.setHWAddress("01:02:03:04:05:06");
-    runDoraTest(CONFIGS[0], client, "hw-host-fixed", "192.0.1.77");
+    runDoraTest(CONFIGS[0], client, "hw-host-fixed-out-of-range", "10.0.0.10");
 }
 
 // Verifies that a client can be matched to a global reservation by DUID
@@ -768,6 +785,14 @@ TEST_F(HostTest, firstClientGetsReservedAddress) {
     // server should not assign this address because another client
     // has taken it already.
     EXPECT_NE("10.0.0.123", resp->getYiaddr().toText());
+    // Ensure stats are being recorded for HR conflicts
+    ObservationPtr subnet_conflicts = StatsMgr::instance().getObservation(
+        "subnet[10].v4-reservation-conflicts");
+    ASSERT_TRUE(subnet_conflicts);
+    ASSERT_EQ(1, subnet_conflicts->getInteger().first);
+    subnet_conflicts = StatsMgr::instance().getObservation("v4-reservation-conflicts");
+    ASSERT_TRUE(subnet_conflicts);
+    ASSERT_EQ(1, subnet_conflicts->getInteger().first);
 
     // If the client1 releases the reserved lease, the client2 should acquire it.
     ASSERT_NO_THROW(client1.doRelease());

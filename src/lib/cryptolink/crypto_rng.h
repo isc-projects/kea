@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -42,7 +42,7 @@ public:
     virtual std::vector<uint8_t> random(size_t len) = 0;
 
 private:
-    friend RNGPtr& CryptoLink::getRNG();
+    friend RNGPtr const& CryptoLink::getRNG() const;
 };
 
 /// \brief Generate random value. 
@@ -56,6 +56,11 @@ private:
 ///
 /// \param len The length of the data
 std::vector<uint8_t> random(size_t len);
+
+/// \brief Generate a Qid
+///
+/// \return A random Qid
+uint16_t generateQid();
 
 } // namespace cryptolink
 } // namespace isc

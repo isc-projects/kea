@@ -1,11 +1,11 @@
-// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef RRSET_H
-#define RRSET_H 1
+#define RRSET_H
 
 #include <iostream>
 #include <string>
@@ -16,12 +16,9 @@
 
 #include <dns/rdata.h>
 #include <dns/rrtype.h>
+#include <util/buffer.h>
 
 namespace isc {
-namespace util {
-class OututBuffer;
-}
-
 namespace dns {
 
 ///
@@ -196,7 +193,7 @@ public:
     /// this method may return 0.
     ///
     /// \return The number of \c Rdata objects contained.
-    virtual unsigned int getRdataCount() const = 0;
+    virtual uint32_t getRdataCount() const = 0;
 
     /// \brief Get the wire format length of the \c AbstractRRset.
     ///
@@ -316,7 +313,7 @@ public:
     /// \return The number of RRs rendered.  If the truncation is necessary
     /// this value may be different from the number of RDATA objects contained
     /// in the RRset.
-    virtual unsigned int toWire(AbstractMessageRenderer& renderer) const = 0;
+    virtual uint32_t toWire(AbstractMessageRenderer& renderer) const = 0;
 
     /// \brief Render the RRset in the wire format without any compression.
     ///
@@ -324,7 +321,7 @@ public:
     ///
     /// \param buffer An output buffer to store the wire data.
     /// \return The number of RRs rendered.
-    virtual unsigned int toWire(isc::util::OutputBuffer& buffer) const = 0;
+    virtual uint32_t toWire(isc::util::OutputBuffer& buffer) const = 0;
     //@}
 
     ///
@@ -450,7 +447,7 @@ public:
     /// method may return 0.
     ///
     /// \return The number of \c RRSIG records associated.
-    virtual unsigned int getRRsigDataCount() const = 0;
+    virtual uint32_t getRRsigDataCount() const = 0;
 
     /// \brief Adds RRSIG RRset RRs to the associated RRSIG RRset
     ///
@@ -664,7 +661,7 @@ public:
     /// This method never throws an exception.
     ///
     /// \return The number of \c Rdata objects contained.
-    virtual unsigned int getRdataCount() const;
+    virtual uint32_t getRdataCount() const;
 
     /// \brief Get the wire format length of the \c BasicRRset.
     ///
@@ -729,13 +726,13 @@ public:
     ///
     /// This method simply uses the default implementation.
     /// See \c AbstractRRset::toWire(MessageRenderer&)const.
-    virtual unsigned int toWire(AbstractMessageRenderer& renderer) const;
+    virtual uint32_t toWire(AbstractMessageRenderer& renderer) const;
 
     /// \brief Render the RRset in the wire format without any compression.
     ///
     /// This method simply uses the default implementation.
     /// See \c AbstractRRset::toWire(OutputBuffer&)const.
-    virtual unsigned int toWire(isc::util::OutputBuffer& buffer) const;
+    virtual uint32_t toWire(isc::util::OutputBuffer& buffer) const;
     //@}
 
     ///
@@ -801,7 +798,7 @@ public:
     ///
     /// \return Always returns 0. Associated RRSIG RRsets are not
     ///         supported in this class.
-    virtual unsigned int getRRsigDataCount() const {
+    virtual uint32_t getRRsigDataCount() const {
         return (0);
     }
 
@@ -836,7 +833,7 @@ public:
     }
     //@}
 private:
-    BasicRRsetImpl* impl_;
+    boost::shared_ptr<BasicRRsetImpl> impl_;
 };
 
 /// \brief The \c RRset class is a concrete derived class of
@@ -862,12 +859,12 @@ public:
     /// truncation handling.
     ///
     /// See \c AbstractRRset::toWire(MessageRenderer&)const.
-    virtual unsigned int toWire(AbstractMessageRenderer& renderer) const;
+    virtual uint32_t toWire(AbstractMessageRenderer& renderer) const;
 
     /// \brief Render the RRset in the wire format without any compression.
     ///
     /// See \c AbstractRRset::toWire(OutputBuffer&)const.
-    virtual unsigned int toWire(isc::util::OutputBuffer& buffer) const;
+    virtual uint32_t toWire(isc::util::OutputBuffer& buffer) const;
 
     /// \brief Updates the owner name of the \c RRset, including RRSIGs if any
     virtual void setTTL(const RRTTL& ttl) {
@@ -927,7 +924,7 @@ public:
     /// method may return 0.
     ///
     /// \return The number of \c RRSIG records associated.
-    virtual unsigned int getRRsigDataCount() const;
+    virtual uint32_t getRRsigDataCount() const;
 
 private:
     RRsetPtr rrsig_;
@@ -953,6 +950,3 @@ std::ostream& operator<<(std::ostream& os, const AbstractRRset& rrset);
 } // end of namespace isc
 #endif  // RRSET_H
 
-// Local Variables: 
-// mode: c++
-// End: 

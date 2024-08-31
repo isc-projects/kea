@@ -3,11 +3,11 @@
 // it may contain mutually exclusive configuration parameters.
 //
 // The primary purpose of the example file is to provide a comprehensive
-// list of parameters supported by Kea DHCP-DDNS server along with the
+// list of parameters supported by the Kea DHCP-DDNS server along with the
 // brief description of each parameter.
 //
 // This current version should be up to date, i.e. new keywords should be
-// added in this file at the same time than in the syntax.
+// added in this file at the same time as in the parser specification.
 {
     // Kea DHCP-DDNS server configuration begins here.
     "DhcpDdns": {
@@ -35,26 +35,108 @@
     "ncr-format": "JSON",
 
     // Command control socket configuration parameters for Kea DHCP-DDNS server.
-    "control-socket": {
+    "control-sockets": [
+        {
+            // Control socket type used by the Kea DHCP-DDNS server.
+            // Must be unix, http or https.
+            "socket-type": "unix",
 
-        // Location of the unix domain socket file the DHCP-DDNS server uses
-        // to receive control commands from the Kea Control Agent or the
-        // local server administrator.
-        "socket-name": "/tmp/kea-ddns-ctrl-socket",
+            // Location of the UNIX domain socket file the DHCP-DDNS
+            // server uses to receive control commands from the
+            // local server administrator.
+            "socket-name": "/tmp/kea-ddns-ctrl-socket"
+        },
+        {
+            // Control socket type used by the Kea DHCP-DDNS server.
+            // Must be unix, http or https.
+            "socket-type": "https",
 
-        // Control socket type used by the Kea DHCP-DDNS server.
-        // The 'unix' socket is currently the only supported type.
-        "socket-type": "unix"
-    },
+            // Address of the HTTPS socket the Kea DHCP-DDNS server should
+            // listen for incoming queries.
+            "socket-address": "127.0.0.1",
 
-    // List of hooks libraries and their specific configuration parameters
+            // Port of the HTTPS socket the Kea DHCP-DDNS server
+            // should listen for incoming queries.
+            "socket-port": 8053,
+
+            // TLS trust anchor (Certificate Authority). This is a
+            // file name or a directory path. Make sense with other
+            // TLS parameters only for the https control socket type.
+            "trust-anchor": "my-ca",
+
+            // TLS server certificate file name.
+            "cert-file": "my-cert",
+
+            // TLS server private key file name.
+            "key-file": "my-key",
+
+            // TLS require client certificates flag. Default is
+            // true and means require client certificates. False
+            // means they are optional.
+            "cert-required": true,
+
+            // Optional authentication.
+            "authentication": {
+                // Required authentication type. The only supported
+                // value is basic for the basic HTTP authentication.
+                "type": "basic",
+
+                // An optional parameter is the basic HTTP
+                // authentication realm.  Its default is
+                // "kea-dhcp-ddns-server"
+                "realm": "kea-dhcp-ddns-server",
+
+                // This optional parameter can be used to specify a common
+                // prefix for files handling client credentials.
+                "directory": "/tmp/kea-creds",
+
+                // This list specifies the user ids and passwords to
+                // use for basic HTTP authentication. If empty or not
+                // present any client is authorized.
+                "clients": [
+                    // This specifies an authorized client.
+                    {
+                        // The user id must not be empty or contain
+                        // the ':' character. It is a mandatory parameter.
+                        "user": "admin",
+
+                        // If password is not specified an empty
+                        // password is used.
+                        "password": "1234"
+                    },
+
+                    // This specifies a hidden client.
+                    {
+                        // The user id is the content of the
+                        // file /tmp/kea-creds/hiddenu.
+                        "user-file": "hiddenu",
+
+                        // The password is the content of the
+                        // file /tmp/kea-creds/hiddenp.
+                        "password-file": "hiddenp"
+                    },
+
+                    // This specifies a hidden client using a secret
+                    // in a file.
+                    {
+                        // The secret is the content of the file
+                        // /tmp/kea-creds/hiddens which must be in
+                        // the <user-id>:<password> format.
+                        "password-file": "hiddens"
+                    }
+                ]
+            }
+        }
+    ],
+
+    // List of hook libraries and their specific configuration parameters
     // to be loaded by Kea DHCP-DDNS server.
     "hooks-libraries": [
         {
-            // Location of the hooks library to be loaded.
+            // Location of the hook library to be loaded.
             "library": "/opt/local/ddns-server-commands.so",
 
-            // Hook library specific configuration parameters.
+            // Hook library-specific configuration parameters.
             "parameters": { }
         }
     ],
@@ -138,6 +220,14 @@
 
             // Secret of the TSIG key (required) in base-64.
             "secret": "LSWXnfkKZjdPJI5QxlpnfQ=="
+        },
+        {
+            "name": "d2.sha1.key",
+            "algorithm": "HMAC-SHA1",
+
+            // An alternative to secret: specify a file where the secret
+            // can be found. i.e. the secret is the content of the file.
+            "secret-file": "/tmp/d2-sha1-secret"
         }
     ],
 
@@ -145,25 +235,25 @@
     "loggers": [
         {
             // Debug level, a value between 0..99. The greater the value
-            // the more detailed debug log.
+            // the more detailed the debug log.
             "debuglevel": 99,
 
             // Name of the logger.
             "name": "kea-dhcp-ddns",
 
             // Configures how the log should be output.
-            "output_options": [
+            "output-options": [
                 {
-                    // Determines whether the log should flushed to a file.
+                    // Determines whether the log should be flushed to a file.
                     "flush": true,
 
-                    // Specifies maximum filesize before the file is being rotated.
+                    // Specifies maximum filesize before the file is rotated.
                     "maxsize": 10240000,
 
-                    // Specifies the maximum number of rotated files being kept.
+                    // Specifies the maximum number of rotated files to be kept.
                     "maxver": 1,
 
-                    // Specifies logging destination.
+                    // Specifies the logging destination.
                     "output": "stdout",
 
                     // Specifies log entry content

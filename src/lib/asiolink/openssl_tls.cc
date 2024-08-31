@@ -114,7 +114,6 @@ TlsContext::loadKeyFile(const std::string& key_file) {
 
 std::string
 TlsContext::getErrMsg(error_code ec) {
-    unsigned long err = static_cast<unsigned long>(ec.value());
     std::string msg = ec.message();
 #ifdef ERR_SYSTEM_ERROR
     // The SSL category message() method uses ERR_reason_error_string()
@@ -123,6 +122,7 @@ TlsContext::getErrMsg(error_code ec) {
     // This code recovers the user-friendly message from the error code
     // value i.e. the OpenSSL error. Layout of OpenSSL errors is detailed
     // in the OpenSSL err.h header.
+    unsigned long err = static_cast<unsigned long>(ec.value());
     if ((msg == "asio.ssl error") && (ERR_SYSTEM_ERROR(err))) {
         char buf[1024];
 #ifndef __USE_GNU

@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,7 +20,7 @@ namespace isc {
 namespace netconf {
 
 ControlSocketBasePtr
-createControlSocket(CfgControlSocketPtr ctrl_sock) {
+controlSocketFactory(CfgControlSocketPtr ctrl_sock) {
     if (!ctrl_sock) {
         isc_throw(BadValue, "null control socket configuration");
     }
@@ -37,5 +37,5 @@ createControlSocket(CfgControlSocketPtr ctrl_sock) {
     }
 }
 
-} // namespace netconf
-} // namespace isc
+}  // namespace netconf
+}  // namespace isc

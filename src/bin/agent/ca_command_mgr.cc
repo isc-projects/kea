@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -226,7 +226,7 @@ CtrlAgentCommandMgr::forwardCommand(const std::string& service,
 
     // Forward command and receive reply.
     IOServicePtr io_service(new IOService());;
-    ClientConnection conn(*io_service);
+    ClientConnection conn(io_service);
     boost::system::error_code received_ec;
     ConstJSONFeedPtr received_feed;
     conn.start(ClientConnection::SocketPath(socket_name),

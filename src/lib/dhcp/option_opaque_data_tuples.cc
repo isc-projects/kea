@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,15 +15,23 @@ namespace isc {
 namespace dhcp {
 
 OptionOpaqueDataTuples::OptionOpaqueDataTuples(Option::Universe u,
-                                               const uint16_t type)
-    : Option(u, type) {
+                                               const uint16_t type,
+                                               OpaqueDataTuple::LengthFieldType length_field_type)
+    : Option(u, type), length_field_type_(length_field_type) {
+    if (length_field_type_ == OpaqueDataTuple::LENGTH_EMPTY) {
+        length_field_type_ = OptionDataTypeUtil::getTupleLenFieldType(u);
+    }
 }
 
 OptionOpaqueDataTuples::OptionOpaqueDataTuples(Option::Universe u,
                                                const uint16_t type,
                                                OptionBufferConstIter begin,
-                                               OptionBufferConstIter end)
-    : Option(u, type) {
+                                               OptionBufferConstIter end,
+                                               OpaqueDataTuple::LengthFieldType length_field_type)
+    : Option(u, type), length_field_type_(length_field_type) {
+    if (length_field_type_ == OpaqueDataTuple::LENGTH_EMPTY) {
+        length_field_type_ = OptionDataTypeUtil::getTupleLenFieldType(u);
+    }
     unpack(begin, end);
 }
 
@@ -36,9 +44,8 @@ void
 OptionOpaqueDataTuples::pack(isc::util::OutputBuffer& buf, bool check) const {
     packHeader(buf, check);
 
-    for (TuplesCollection::const_iterator it = tuples_.begin();
-         it != tuples_.end(); ++it) {
-        it->pack(buf);
+    for (auto const& it : tuples_) {
+        it.pack(buf);
     }
     // That's it. We don't pack any sub-options here, because this option
     // must not contain sub-options.
@@ -47,16 +54,15 @@ OptionOpaqueDataTuples::pack(isc::util::OutputBuffer& buf, bool check) const {
 void
 OptionOpaqueDataTuples::unpack(OptionBufferConstIter begin,
                                OptionBufferConstIter end) {
-    if (std::distance(begin, end) < getMinimalLength() - getHeaderLen()) {
-        isc_throw(OutOfRange, "parsed data tuples option data truncated to"
-                  " size " << std::distance(begin, end));
-    }
+    // We are skipping typical OutOfRange check for Option#unpack(begin, end),
+    // since empty collection of tuples is also a valid case where
+    // std::distance(begin, end) = 0
 
     // Start reading opaque data.
     size_t offset = 0;
     while (offset < std::distance(begin, end)) {
         // Parse a tuple.
-        OpaqueDataTuple tuple(getLengthFieldType(), begin + offset, end);
+        OpaqueDataTuple tuple(length_field_type_, begin + offset, end);
         addTuple(tuple);
         // The tuple has been parsed correctly which implies that it is safe to
         // advance the offset by its total length.
@@ -66,7 +72,7 @@ OptionOpaqueDataTuples::unpack(OptionBufferConstIter begin,
 
 void
 OptionOpaqueDataTuples::addTuple(const OpaqueDataTuple& tuple) {
-    if (tuple.getLengthFieldType() != getLengthFieldType()) {
+    if (tuple.getLengthFieldType() != length_field_type_) {
         isc_throw(isc::BadValue, "attempted to add opaque data tuple having"
                   " invalid size of the length field "
                   << tuple.getDataFieldSize() << " to opaque data tuple option");
@@ -83,7 +89,7 @@ OptionOpaqueDataTuples::setTuple(const size_t at, const OpaqueDataTuple& tuple) 
                   " opaque data tuple option at position " << at << " which"
                   " is out of range");
 
-    } else if (tuple.getLengthFieldType() != getLengthFieldType()) {
+    } else if (tuple.getLengthFieldType() != length_field_type_) {
         isc_throw(isc::BadValue, "attempted to set opaque data tuple having"
                   " invalid size of the length field "
                   << tuple.getDataFieldSize() << " to opaque data tuple option");
@@ -106,9 +112,8 @@ bool
 OptionOpaqueDataTuples::hasTuple(const std::string& tuple_str) const {
     // Iterate over existing tuples (there shouldn't be many of them),
     // and try to match the searched one.
-    for (TuplesCollection::const_iterator it = tuples_.begin();
-         it != tuples_.end(); ++it) {
-        if (*it == tuple_str) {
+    for (auto const& it : tuples_) {
+        if (it == tuple_str) {
             return (true);
         }
     }
@@ -120,9 +125,8 @@ OptionOpaqueDataTuples::len() const {
     // The option starts with the header.
     uint16_t length = getHeaderLen();
     // Now iterate over existing tuples and add their size.
-    for (TuplesCollection::const_iterator it = tuples_.begin();
-         it != tuples_.end(); ++it) {
-        length += it->getTotalLength();
+    for (auto const& it : tuples_) {
+        length += it.getTotalLength();
     }
 
     return (length);

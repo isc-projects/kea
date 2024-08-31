@@ -1,4 +1,4 @@
--- Copyright (C) 2016-2022 Internet Systems Consortium.
+-- Copyright (C) 2016-2024 Internet Systems Consortium.
 
 -- This Source Code Form is subject to the terms of the Mozilla Public
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,14 +21,17 @@ DROP FUNCTION IF EXISTS lease4DumpData();
 DROP FUNCTION IF EXISTS lease6DumpHeader();
 DROP FUNCTION IF EXISTS lease6DumpData();
 DROP TABLE IF EXISTS lease4_stat CASCADE;
+DROP TABLE IF EXISTS lease4_pool_stat CASCADE;
 DROP FUNCTION IF EXISTS proc_stat_lease4_insert ();
 DROP FUNCTION IF EXISTS proc_stat_lease4_update ();
 DROP FUNCTION IF EXISTS proc_stat_lease4_delete ();
 DROP TABLE IF EXISTS lease6_stat CASCADE;
+DROP TABLE IF EXISTS lease6_pool_stat CASCADE;
 DROP FUNCTION IF EXISTS proc_stat_lease6_insert ();
 DROP FUNCTION IF EXISTS proc_stat_lease6_update ();
 DROP FUNCTION IF EXISTS proc_stat_lease6_delete ();
 DROP TABLE IF EXISTS logs CASCADE;
+DROP TABLE IF EXISTS option_def_data_type CASCADE;
 
 -- config backend procedures for DHCPv6
 DROP FUNCTION IF EXISTS createAuditRevisionDHCP6(audit_ts TIMESTAMP WITH TIME ZONE, server_tag VARCHAR(64),
@@ -173,7 +176,75 @@ DROP FUNCTION IF EXISTS set_session_value(name text, value TEXT);
 DROP FUNCTION IF EXISTS set_session_value(name text, value BIGINT);
 DROP FUNCTION IF EXISTS set_session_value(name text, value BOOLEAN);
 
-DROP FUNCTION IF EXISTS lease4Upload();
-DROP FUNCTION IF EXISTS lease6Upload();
+DROP FUNCTION IF EXISTS lease4Upload(address VARCHAR, hwaddr VARCHAR,
+    client_id VARCHAR, valid_lifetime BIGINT, expire BIGINT, subnet_id BIGINT,
+    fqdn_fwd INT, fqdn_rev INT, hostname VARCHAR, state INT8,
+    user_context VARCHAR);
+DROP FUNCTION IF EXISTS lease6Upload(address VARCHAR, duid VARCHAR,
+    valid_lifetime BIGINT, expire BIGINT, subnet_id BIGINT,
+    pref_lifetime BIGINT, lease_type INT, iaid INT, prefix_len INT,
+    fqdn_fwd INT, fqdn_rev INT, hostname VARCHAR, hwaddr VARCHAR,
+    state INT8, user_context VARCHAR, hwtype INT, hwaddr_source INT);
+DROP FUNCTION IF EXISTS colonSeparatedHex(TEXT);
 
 DROP FUNCTION IF EXISTS gmt_epoch(input_time TIMESTAMP WITH TIME ZONE);
+
+-- lease limiting tables and functions
+DROP TABLE IF EXISTS lease4_stat_by_client_class;
+DROP TABLE IF EXISTS lease6_stat_by_client_class;
+DROP FUNCTION IF EXISTS lease4_AINS_lease4_stat(new_state BIGINT,
+                                                new_subnet_id BIGINT);
+DROP FUNCTION IF EXISTS lease4_AUPD_lease4_stat(old_state BIGINT,
+        old_subnet_id BIGINT, new_state BIGINT, new_subnet_id BIGINT);
+DROP FUNCTION IF EXISTS lease4_ADEL_lease4_stat(old_state BIGINT,
+                                                old_subnet_id BIGINT);
+DROP FUNCTION IF EXISTS lease6_AINS_lease6_stat(new_state BIGINT,
+        new_subnet_id BIGINT, new_lease_type SMALLINT);
+DROP FUNCTION IF EXISTS lease6_AUPD_lease6_stat(old_state BIGINT,
+        old_subnet_id BIGINT, old_lease_type SMALLINT, new_state BIGINT,
+        new_subnet_id BIGINT, new_lease_type SMALLINT);
+DROP FUNCTION IF EXISTS lease6_ADEL_lease6_stat(old_state BIGINT,
+        old_subnet_id BIGINT, old_lease_type SMALLINT);
+DROP FUNCTION IF EXISTS lease4_AINS_lease4_pool_stat(new_state BIGINT,
+        new_subnet_id BIGINT, new_pool_id BIGINT);
+DROP FUNCTION IF EXISTS lease4_AUPD_lease4_pool_stat(old_state BIGINT,
+        old_subnet_id BIGINT, old_pool_id BIGINT, new_state BIGINT,
+        new_subnet_id BIGINT, new_pool_id BIGINT);
+DROP FUNCTION IF EXISTS lease4_ADEL_lease4_pool_stat(old_state BIGINT,
+        old_subnet_id BIGINT, old_pool_id BIGINT);
+DROP FUNCTION IF EXISTS lease6_AINS_lease6_pool_stat(new_state BIGINT,
+        new_subnet_id BIGINT, new_pool_id BIGINT, new_lease_type SMALLINT);
+DROP FUNCTION IF EXISTS lease6_AUPD_lease6_pool_stat(old_state BIGINT,
+        old_subnet_id BIGINT, old_pool_id BIGINT, old_lease_type SMALLINT,
+        new_state BIGINT, new_subnet_id BIGINT, new_pool_id BIGINT,
+        new_lease_type SMALLINT);
+DROP FUNCTION IF EXISTS lease6_ADEL_lease6_pool_stat(old_state BIGINT,
+        old_subnet_id BIGINT, old_pool_id BIGINT, old_lease_type SMALLINT);
+DROP FUNCTION IF EXISTS lease4_AINS_lease4_stat_by_client_class(
+        new_state BIGINT, new_user_context TEXT);
+DROP FUNCTION IF EXISTS lease4_AUPD_lease4_stat_by_client_class(
+        old_state BIGINT, old_user_context TEXT,
+        new_state BIGINT, new_user_context TEXT);
+DROP FUNCTION IF EXISTS lease4_ADEL_lease4_stat_by_client_class(
+        old_state BIGINT, old_user_context TEXT);
+DROP FUNCTION IF EXISTS lease6_AINS_lease6_stat_by_client_class(
+        new_state BIGINT, new_user_context TEXT, new_lease_type SMALLINT);
+DROP FUNCTION IF EXISTS lease6_AUPD_lease6_stat_by_client_class(
+        old_state BIGINT, old_user_context TEXT, old_lease_type SMALLINT,
+        new_state BIGINT, new_user_context TEXT, new_lease_type SMALLINT);
+DROP FUNCTION IF EXISTS lease6_ADEL_lease6_stat_by_client_class(
+        old_state BIGINT, old_user_context TEXT, old_lease_type SMALLINT);
+DROP FUNCTION IF EXISTS func_lease4_AINS();
+DROP FUNCTION IF EXISTS func_lease4_AUPD();
+DROP FUNCTION IF EXISTS func_lease4_ADEL();
+DROP FUNCTION IF EXISTS func_lease6_AINS();
+DROP FUNCTION IF EXISTS func_lease6_AUPD();
+DROP FUNCTION IF EXISTS func_lease6_ADEL();
+DROP FUNCTION IF EXISTS checkLease4Limits(user_context TEXT);
+DROP FUNCTION IF EXISTS checkLease6Limits(user_context TEXT);
+DROP FUNCTION IF EXISTS isJsonSupported();
+DROP FUNCTION IF EXISTS json_cast(json_candidate TEXT);
+
+-- v6 BLQ cross-tables
+DROP TABLE IF EXISTS lease6_relay_id;
+DROP TABLE IF EXISTS lease6_remote_id;

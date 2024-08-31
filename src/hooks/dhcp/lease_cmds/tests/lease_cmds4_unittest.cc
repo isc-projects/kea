@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -45,6 +45,11 @@ namespace {
 /// unloading the lease_cmds library.
 class Lease4CmdsTest : public LeaseCmdsTest {
 public:
+    /// @brief Constructor.
+    Lease4CmdsTest() {
+        setFamily(AF_INET);
+    }
+
     /// @brief Checks if specified response contains IPv4 lease
     ///
     /// @param lease Element tree that represents a lease
@@ -52,19 +57,20 @@ public:
     /// @param subnet_id expected subnet-id
     /// @param hwaddr expected value of hardware address
     /// @param client_id_required true if client-id is expected
+    /// @param pool_id expected pool-id (if value is 0 the parameter pool-id should not be present)
     void checkLease4(isc::data::ConstElementPtr l, std::string ip,
                      uint32_t subnet_id, std::string hwaddr,
-                     bool client_id_required) {
+                     bool client_id_required, uint32_t pool_id = 0) {
         ASSERT_TRUE(l);
 
         // If the element is a list we need to retrieve the lease that
         // we're interested in.
         if (l->getType() == isc::data::Element::list) {
             std::vector<isc::data::ElementPtr> e = l->listValue();
-            for (auto it = e.begin(); it != e.end(); ++it) {
-                isc::data::ConstElementPtr ip_address = (*it)->get("ip-address");
+            for (auto const& it : e) {
+                isc::data::ConstElementPtr ip_address = it->get("ip-address");
                 if (ip_address && ip_address->stringValue() == ip) {
-                    l = (*it);
+                    l = it;
                     break;
                 }
             }
@@ -86,7 +92,14 @@ public:
             EXPECT_TRUE(l->get("client-id"));
         }
 
-        // Check that other parameters are there.
+        if (pool_id) {
+            ASSERT_TRUE(l->get("pool-id"));
+            EXPECT_EQ(pool_id, l->get("pool-id")->intValue());
+        } else {
+            EXPECT_FALSE(l->get("pool-id"));
+        }
+
+        // Check that all expected fields are there.
         ASSERT_TRUE(l->contains("valid-lft"));
         ASSERT_TRUE(l->contains("cltt"));
         ASSERT_TRUE(l->contains("subnet-id"));
@@ -96,7 +109,7 @@ public:
         ASSERT_TRUE(l->contains("hostname"));
         ASSERT_TRUE(l->contains("state"));
 
-        // Check that there are no v6 specific fields
+        // Check that there are no v6 specific fields.
         ASSERT_FALSE(l->contains("prefix"));
         ASSERT_FALSE(l->contains("duid"));
         ASSERT_FALSE(l->contains("preferred-lft"));
@@ -137,6 +150,9 @@ public:
     /// @brief Check that a simple, well formed lease4 can be added.
     void testLease4AddDeclinedLeases();
 
+        /// @brief Check that a simple, well formed released lease4 can be added.
+    void testLease4AddReleasedLeases();
+
     /// @brief Check that a lease4 is not added when it already exists.
     void testLease4AddExisting();
 
@@ -165,6 +181,10 @@ public:
 
     /// @brief Check that a well formed lease4 with a comment can be added.
     void testLease4AddComment();
+
+    /// @brief Check that a well formed lease4 with relay and remote ids
+    /// can be added.
+    void testLease4AddExtendedInfo();
 
     /// @brief Check that lease4-get can handle a situation when the query is
     /// broken (some required parameters are missing).
@@ -234,6 +254,9 @@ public:
     /// @brief Verifies that the limit must be a number.
     void testLease4GetPagedLimitNotNumber();
 
+    /// @brief Verifies that the limit of 0 is rejected.
+    void testLease4GetPagedLimitIsZero();
+
     /// @brief Check that lease4-get-by-hw-address can handle a situation when
     /// the query is broken (required parameter is missing).
     void testLease4GetByHwAddressParams();
@@ -257,9 +280,6 @@ public:
     /// @brief Check that lease4-get-by-client-id works as expected (find two
     /// leases).
     void testLease4GetByClientIdFind2();
-
-    /// @brief Verifies that the limit of 0 is rejected.
-    void testLease4GetPagedLimitIsZero();
 
     /// @brief Check that lease4-get-by-hostname can handle a situation when
     /// the query is broken (required parameter is missing).
@@ -319,6 +339,10 @@ public:
     /// @brief Check that a lease4 can be updated. We're adding a comment and an
     /// user context.
     void testLease4UpdateComment();
+
+    /// @brief Check that a lease4 can be updated. We're adding relay and
+    /// remote ids.
+    void testLease4UpdateExtendedInfo();
 
     /// @brief Check that lease4-del can handle a situation when the query is
     /// broken (some required parameters are missing).
@@ -417,13 +441,16 @@ public:
 
     /// @brief Verify that v4 lease update handles conflict as expected.
     void testLease4ConflictingUpdate();
+
+    /// @brief Check that lease4-write works as expected.
+    void testLease4Write();
 };
 
 void Lease4CmdsTest::testLease4AddMissingParams() {
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
 
-    // Everything missing. What sort of crap is that?
+    // Everything missing. What sort of nonsense is that?
     string txt =
         "{\n"
         "    \"command\": \"lease4-add\",\n"
@@ -445,7 +472,7 @@ void Lease4CmdsTest::testLease4AddMissingParams() {
     exp_rsp = "missing parameter 'hw-address' (<string>:3:19)";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
-    // Better, but still no luck. (hwaddr missing).
+    // Just subnet-id and ip is not enough. (hwaddr missing).
     txt =
         "{\n"
         "    \"command\": \"lease4-add\",\n"
@@ -486,7 +513,7 @@ void Lease4CmdsTest::testLease4AddBadParams() {
         "    }\n"
         "}";
     string exp_rsp = "Invalid subnet-id: No IPv4 subnet with subnet-id=123 currently configured.";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     // This time the IP address does not belong to the subnet.
     txt =
@@ -499,7 +526,7 @@ void Lease4CmdsTest::testLease4AddBadParams() {
         "    }\n"
         "}";
     exp_rsp = "The address 10.0.0.1 does not belong to subnet 192.0.2.0/24, subnet-id=44";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     // We don't use any of that bleeding edge nonsense in this museum. v4 only.
     txt =
@@ -514,7 +541,7 @@ void Lease4CmdsTest::testLease4AddBadParams() {
     exp_rsp = "Non-IPv4 address specified: 2001:db8:1::1";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
-    // currently defined states are 0,1 and 2. 123 is junk.
+    // Invalid state: the only supported values are 0,1,2.
     txt =
         "{\n"
         "    \"command\": \"lease4-add\",\n"
@@ -522,11 +549,11 @@ void Lease4CmdsTest::testLease4AddBadParams() {
         "        \"subnet-id\": 44,\n"
         "        \"ip-address\": \"192.0.2.1\",\n"
         "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
-        "        \"state\": 123\n"
+        "        \"state\": 4\n"
         "    }\n"
         "}";
-    exp_rsp = "Invalid state value: 123, supported values are: 0 (default), 1 "
-        "(declined) and 2 (expired-reclaimed)";
+    exp_rsp = "Invalid state value: 4, supported values are: 0 (default), 1 "
+        "(declined), 2 (expired-reclaimed) and 3 (released)";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
     // Bad user context: not a map.
@@ -557,6 +584,38 @@ void Lease4CmdsTest::testLease4AddBadParams() {
         "}";
     exp_rsp = "Duplicated comment entry '\"direct\"' in user context "
         "'{ \"comment\": \"in user context\" }'";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Negative expiration time.
+    txt =
+        "{\n"
+        "    \"command\": \"lease4-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 44,\n"
+        "        \"ip-address\": \"192.0.2.1\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"user-context\": { \"comment\": \"in user context\" },\n"
+        "        \"expire\": -6218189367\n"
+        "    }\n"
+        "}";
+    exp_rsp = "expiration time must be positive for address 192.0.2.1";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Negative cltt
+    txt =
+        "{\n"
+        "    \"command\": \"lease4-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 44,\n"
+        "        \"ip-address\": \"192.0.2.1\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"user-context\": { \"comment\": \"in user context\" },\n"
+        "        \"expire\": 123456,\n"
+        "        \"valid-lft\": 123457"
+        "    }\n"
+        "}";
+    exp_rsp = "expiration time must be greater than valid lifetime for address "
+        "192.0.2.1";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
@@ -635,7 +694,7 @@ void Lease4CmdsTest::testLease4AddDeclinedLeases() {
     Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.202"));
     ASSERT_TRUE(l);
 
-    // Make sure the lease have proper value set.
+    // Make sure the lease has proper value set.
     ASSERT_TRUE(l->hwaddr_);
     EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
     EXPECT_EQ(3, l->valid_lft_); // taken from subnet configuration
@@ -649,6 +708,52 @@ void Lease4CmdsTest::testLease4AddDeclinedLeases() {
     // by one is ok.
     EXPECT_LE(abs(l->cltt_ - time(NULL)), 1);
     EXPECT_EQ(1, l->state_);
+}
+
+void Lease4CmdsTest::testLease4AddReleasedLeases() {
+    // Initialize lease manager (false = v4, false = don't add leases)
+    initLeaseMgr(false, false);
+
+    checkLease4Stats(44, 0, 0);
+
+    checkLease4Stats(88, 0, 0);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease4-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 44,\n"
+        "        \"ip-address\": \"192.0.2.202\",\n"
+        "        \"state\": 3,\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\"\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "Lease for address 192.0.2.202, subnet-id 44 added.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    checkLease4Stats(44, 1, 0);
+
+    checkLease4Stats(88, 0, 0);
+
+    // Now check that the lease is really there.
+    Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.202"));
+    ASSERT_TRUE(l);
+
+    // Make sure the lease has proper value set.
+    ASSERT_TRUE(l->hwaddr_);
+    EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
+    EXPECT_EQ(3, l->valid_lft_); // taken from subnet configuration
+    EXPECT_FALSE(l->fqdn_fwd_);
+    EXPECT_FALSE(l->fqdn_rev_);
+    EXPECT_EQ("", l->hostname_);
+    EXPECT_FALSE(l->getContext());
+
+    // Test execution is fast. The cltt should be set to now. In some rare
+    // cases we could have the seconds counter to tick, so having a value off
+    // by one is ok.
+    EXPECT_LE(abs(l->cltt_ - time(NULL)), 1);
+    EXPECT_EQ(3, l->state_);
 }
 
 void Lease4CmdsTest::testLease4AddExisting() {
@@ -670,7 +775,7 @@ void Lease4CmdsTest::testLease4AddExisting() {
         "    }\n"
         "}";
     string exp_rsp = "IPv4 lease already exists.";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     checkLease4Stats(44, 2, 0);
 
@@ -702,7 +807,7 @@ void Lease4CmdsTest::testLease4AddSubnetIdMissing() {
 
     checkLease4Stats(88, 0, 0);
 
-    // Now check that the lease is really there.
+    // Now check that the lease is really there and has correct subnet-id.
     Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.202"));
     ASSERT_TRUE(l);
     EXPECT_EQ(44, l->subnet_id_);
@@ -734,7 +839,7 @@ void Lease4CmdsTest::testLease4AddSubnetIdMissingDeclinedLeases() {
 
     checkLease4Stats(88, 0, 0);
 
-    // Now check that the lease is really there.
+    // Now check that the lease is really there and has correct subnet-id.
     Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.202"));
     ASSERT_TRUE(l);
     EXPECT_EQ(44, l->subnet_id_);
@@ -760,7 +865,7 @@ void Lease4CmdsTest::testLease4AddSubnetIdMissingBadAddr() {
         "}";
     string exp_rsp = "subnet-id not specified and failed to find a subnet for "
                      "address 192.0.55.1";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     checkLease4Stats(44, 0, 0);
 
@@ -855,6 +960,7 @@ void Lease4CmdsTest::testLease4AddFullAddr() {
         "        \"fqdn-fwd\": true,\n"
         "        \"fqdn-rev\": true,\n"
         "        \"hostname\": \"urania.example.org\",\n"
+        "        \"pool-id\": 5,\n"
         "        \"user-context\": { \"foobar\": true }\n"
         "    }\n"
         "}";
@@ -878,6 +984,7 @@ void Lease4CmdsTest::testLease4AddFullAddr() {
     EXPECT_EQ(true, l->fqdn_fwd_);
     EXPECT_EQ(true, l->fqdn_rev_);
     EXPECT_EQ("urania.example.org", l->hostname_);
+    EXPECT_EQ(5, l->pool_id_);
     ASSERT_TRUE(l->getContext());
     EXPECT_EQ("{ \"foobar\": true }", l->getContext()->str());
 }
@@ -900,7 +1007,7 @@ void Lease4CmdsTest::testLease4AddComment() {
         "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
         "        \"comment\": \"a comment\"\n"
         "    }\n"
-            "}";
+        "}";
     string exp_rsp = "Lease for address 192.0.2.202, subnet-id 44 added.";
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
 
@@ -912,11 +1019,85 @@ void Lease4CmdsTest::testLease4AddComment() {
     Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.202"));
     ASSERT_TRUE(l);
 
-    // Make sure the lease have proper value set.
+    // Make sure the lease has proper value set.
     ASSERT_TRUE(l->hwaddr_);
     EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
     ASSERT_TRUE(l->getContext());
     EXPECT_EQ("{ \"comment\": \"a comment\" }", l->getContext()->str());
+}
+
+void Lease4CmdsTest::testLease4AddExtendedInfo() {
+    // Initialize lease manager (false = v4, false = don't add leases)
+    initLeaseMgr(false, false);
+
+    checkLease4Stats(44, 0, 0);
+
+    checkLease4Stats(88, 0, 0);
+
+    Lease4Collection leases;
+    const vector<uint8_t> relay_id = { 0xaa, 0xbb, 0xcc };
+    leases = lmptr_->getLeases4ByRelayId(relay_id,
+                                         IOAddress::IPV4_ZERO_ADDRESS(),
+                                         LeasePageSize(10));
+    EXPECT_TRUE(leases.empty());
+    const vector<uint8_t> remote_id = { 1, 2, 3 };
+    leases = lmptr_->getLeases4ByRemoteId(remote_id,
+                                          IOAddress::IPV4_ZERO_ADDRESS(),
+                                          LeasePageSize(10));
+    EXPECT_TRUE(leases.empty());
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease4-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 44,\n"
+        "        \"ip-address\": \"192.0.2.202\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"user-context\": { \"ISC\": { \"relay-agent-info\": {\n"
+        "           \"sub-options\": \"0x02030102030C03AABBCC\",\n"
+        "           \"remote-id\": \"010203\",\n"
+        "           \"relay-id\": \"AABBCC\"\n"
+        "        } } }\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "Lease for address 192.0.2.202, subnet-id 44 added.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    checkLease4Stats(44, 1, 0);
+
+    checkLease4Stats(88, 0, 0);
+
+    // Now check that the lease is really there.
+    Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.202"));
+    ASSERT_TRUE(l);
+
+    // Make sure the lease has proper value set.
+    ASSERT_TRUE(l->hwaddr_);
+    EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
+
+    // Check the user context / extended info too.
+    ConstElementPtr ctx = l->getContext();
+    ASSERT_TRUE(ctx);
+    string expected = "{ \"ISC\": { \"relay-agent-info\": ";
+    expected += "{ \"relay-id\": \"AABBCC\", ";
+    expected += "\"remote-id\": \"010203\", ";
+    expected += "\"sub-options\": \"0x02030102030C03AABBCC\" } } }";
+    EXPECT_EQ(expected, ctx->str());
+    EXPECT_EQ(relay_id, l->relay_id_);
+    EXPECT_EQ(remote_id, l->remote_id_);
+
+    // Check the lease can be retrieved by its relay or remote id too.
+    leases = lmptr_->getLeases4ByRelayId(relay_id,
+                                         IOAddress::IPV4_ZERO_ADDRESS(),
+                                         LeasePageSize(10));
+    ASSERT_EQ(1, leases.size());
+    EXPECT_EQ(*l, *leases[0]);
+    leases = lmptr_->getLeases4ByRemoteId(remote_id,
+                                          IOAddress::IPV4_ZERO_ADDRESS(),
+                                          LeasePageSize(10));
+    ASSERT_EQ(1, leases.size());
+    EXPECT_EQ(*l, *leases[0]);
 }
 
 void Lease4CmdsTest::testLease4GetMissingParams() {
@@ -1034,14 +1215,17 @@ void Lease4CmdsTest::testLease4GetByAddrNotFound() {
         "    }\n"
         "}";
     string exp_rsp = "Lease not found.";
-    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+
+    // Note the status expected is empty. The query completed correctly,
+    // just didn't found the lease.
+    testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 }
 
 void Lease4CmdsTest::testLease4GetByAddr() {
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
 
-    // Query for valid, existing lease.
+    // Now send the command.
     string cmd =
         "{\n"
         "    \"command\": \"lease4-get\",\n"
@@ -1050,14 +1234,17 @@ void Lease4CmdsTest::testLease4GetByAddr() {
         "    }\n"
         "}";
     string exp_rsp = "IPv4 lease found.";
+
+    // The status expected is success. The lease should be returned.
     ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
 
     // Now check that the lease parameters were indeed returned.
     ASSERT_TRUE(rsp);
+
     ConstElementPtr lease = rsp->get("arguments");
     ASSERT_TRUE(lease);
 
-    // Let's check if the response makes any sense.
+    // Now check that the lease was indeed returned.
     checkLease4(lease, "192.0.2.1", 44, "08:08:08:08:08:08", true);
 }
 
@@ -1076,14 +1263,14 @@ void Lease4CmdsTest::testLease4GetByHWAddrNotFound() {
         "    }\n"
         "}";
     string exp_rsp = "Lease not found.";
-    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+    testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 }
 
 void Lease4CmdsTest::testLease4GetByHWAddr() {
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
 
-    // Invalid
+    // Now send the command.
     string cmd =
         "{\n"
         "    \"command\": \"lease4-get\",\n"
@@ -1094,14 +1281,17 @@ void Lease4CmdsTest::testLease4GetByHWAddr() {
         "    }\n"
         "}";
     string exp_rsp = "IPv4 lease found.";
+
+    // The status expected is success. The lease should be returned.
     ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
 
     // Now check that the lease parameters were indeed returned.
     ASSERT_TRUE(rsp);
+
     ConstElementPtr lease = rsp->get("arguments");
     ASSERT_TRUE(lease);
 
-    // Let's check if the response makes any sense.
+    // Now check that the lease was indeed returned.
     checkLease4(lease, "192.0.2.1", 44, "08:08:08:08:08:08", false);
 }
 
@@ -1120,7 +1310,7 @@ void Lease4CmdsTest::testLease4GetByClientIdNotFound() {
         "    }\n"
         "}";
     string exp_rsp = "Lease not found.";
-    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+    testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 }
 
 void Lease4CmdsTest::testLease4GetByClientId() {
@@ -1137,14 +1327,17 @@ void Lease4CmdsTest::testLease4GetByClientId() {
         "    }\n"
         "}";
     string exp_rsp = "IPv4 lease found.";
+
+    // The status expected is success. The lease should be returned.
     ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
 
     // Now check that the lease parameters were indeed returned.
     ASSERT_TRUE(rsp);
+
     ConstElementPtr lease = rsp->get("arguments");
     ASSERT_TRUE(lease);
 
-    // Let's check if the response makes any sense.
+    // Now check that the lease was indeed returned.
     checkLease4(lease, "192.0.2.1", 44, "08:08:08:08:08:08", false);
 }
 
@@ -1173,7 +1366,7 @@ void Lease4CmdsTest::testLease4GetAll() {
 
     // Let's check if the response contains desired leases.
     checkLease4(leases, "192.0.2.1", 44, "08:08:08:08:08:08", true);
-    checkLease4(leases, "192.0.2.2", 44, "09:09:09:09:09:09", true);
+    checkLease4(leases, "192.0.2.2", 44, "09:09:09:09:09:09", true, 5);
     checkLease4(leases, "192.0.3.1", 88, "08:08:08:08:08:08", true);
     checkLease4(leases, "192.0.3.2", 88, "09:09:09:09:09:09", true);
 }
@@ -1233,7 +1426,7 @@ void Lease4CmdsTest::testLease4GetAllBySubnetId() {
 
     // Let's check if the response contains desired leases.
     checkLease4(leases, "192.0.2.1", 44, "08:08:08:08:08:08", true);
-    checkLease4(leases, "192.0.2.2", 44, "09:09:09:09:09:09", true);
+    checkLease4(leases, "192.0.2.2", 44, "09:09:09:09:09:09", true, 5);
 }
 
 void Lease4CmdsTest::testLease4GetAllBySubnetIdNoLeases() {
@@ -1294,7 +1487,7 @@ void Lease4CmdsTest::testLease4GetAllByMultipleSubnetIds() {
 
     // Let's check if the response contains desired leases.
     checkLease4(leases, "192.0.2.1", 44, "08:08:08:08:08:08", true);
-    checkLease4(leases, "192.0.2.2", 44, "09:09:09:09:09:09", true);
+    checkLease4(leases, "192.0.2.2", 44, "09:09:09:09:09:09", true, 5);
     checkLease4(leases, "192.0.3.1", 88, "08:08:08:08:08:08", true);
     checkLease4(leases, "192.0.3.2", 88, "09:09:09:09:09:09", true);
 }
@@ -1397,7 +1590,7 @@ void Lease4CmdsTest::testLease4GetPaged() {
             EXPECT_EQ(2, page_count->intValue());
 
             // Go over each lease and verify its correctness.
-            for (ConstElementPtr lease : leases->listValue()) {
+            for (auto const& lease : leases->listValue()) {
                 ASSERT_EQ(Element::map, lease->getType());
                 ASSERT_TRUE(lease->contains("ip-address"));
                 ConstElementPtr ip_address = lease->get("ip-address");
@@ -1410,8 +1603,12 @@ void Lease4CmdsTest::testLease4GetPaged() {
                 // ask the Lease Manager.
                 Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(IOAddress(last_address));
                 ASSERT_TRUE(from_mgr);
+                uint32_t pool_id = 0;
+                if (last_address == "192.0.2.2") {
+                    pool_id = 5;
+                }
                 checkLease4(leases, last_address, from_mgr->subnet_id_,
-                            from_mgr->hwaddr_->toText(false), true);
+                            from_mgr->hwaddr_->toText(false), true, pool_id);
             }
 
         } else {
@@ -1793,7 +1990,7 @@ void Lease4CmdsTest::testLease4UpdateMissingParams() {
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
 
-    // Everything missing. What sort of crap is that?
+    // Everything missing. What sort of nonsense is that?
     string txt =
         "{\n"
         "    \"command\": \"lease4-update\",\n"
@@ -1804,7 +2001,7 @@ void Lease4CmdsTest::testLease4UpdateMissingParams() {
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
     // Just ip is not enough (subnet-id and hwaddr missing, although
-    // Kea can now figure out subnet-id on its own).
+    // Kea should be able to figure out the subnet-id on its own).
     txt =
         "{\n"
         "    \"command\": \"lease4-update\",\n"
@@ -1856,7 +2053,7 @@ void Lease4CmdsTest::testLease4UpdateBadParams() {
         "    }\n"
         "}";
     string exp_rsp = "Invalid subnet-id: No IPv4 subnet with subnet-id=123 currently configured.";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     // This time the new IP address does not belong to the subnet.
     txt =
@@ -1869,7 +2066,7 @@ void Lease4CmdsTest::testLease4UpdateBadParams() {
         "    }\n"
         "}";
     exp_rsp = "The address 10.0.0.1 does not belong to subnet 192.0.2.0/24, subnet-id=44";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     // We don't use any of that bleeding edge nonsense in this museum. v4 only.
     txt =
@@ -1919,6 +2116,10 @@ void Lease4CmdsTest::testLease4UpdateNoLease() {
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
 
+    checkLease4Stats(44, 0, 0);
+
+    checkLease4Stats(88, 0, 0);
+
     // Now send the command.
     string txt =
         "{\n"
@@ -1933,7 +2134,11 @@ void Lease4CmdsTest::testLease4UpdateNoLease() {
     string exp_rsp = "failed to update the lease with address 192.0.2.1 "
         "either because the lease has been deleted or it has changed in the "
         "database, in both cases a retry might succeed";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
+
+    checkLease4Stats(44, 0, 0);
+
+    checkLease4Stats(88, 0, 0);
 }
 
 void Lease4CmdsTest::testLease4Update() {
@@ -1952,6 +2157,7 @@ void Lease4CmdsTest::testLease4Update() {
         "        \"subnet-id\": 44,\n"
         "        \"ip-address\": \"192.0.2.1\",\n"
         "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"pool-id\": 3,\n"
         "        \"hostname\": \"newhostname.example.org\""
         "    }\n"
         "}";
@@ -1962,13 +2168,14 @@ void Lease4CmdsTest::testLease4Update() {
 
     checkLease4Stats(88, 2, 0);
 
-    // Now check that the lease is still there.
+    // Now check that the lease is really there.
     Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.1"));
     ASSERT_TRUE(l);
 
-    // Make sure it's been updated.
+    // Make sure the lease has been updated.
     ASSERT_TRUE(l->hwaddr_);
     EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
+    EXPECT_EQ(3, l->pool_id_);
     EXPECT_EQ("newhostname.example.org", l->hostname_);
     EXPECT_FALSE(l->getContext());
 }
@@ -1989,6 +2196,7 @@ void Lease4CmdsTest::testLease4UpdateDeclinedLeases() {
         "        \"subnet-id\": 44,\n"
         "        \"ip-address\": \"192.0.2.1\",\n"
         "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"pool-id\": 3,\n"
         "        \"hostname\": \"newhostname.example.org\""
         "    }\n"
         "}";
@@ -2003,9 +2211,10 @@ void Lease4CmdsTest::testLease4UpdateDeclinedLeases() {
     Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.1"));
     ASSERT_TRUE(l);
 
-    // Make sure it's been updated.
+    // Make sure the lease has been updated.
     ASSERT_TRUE(l->hwaddr_);
     EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
+    EXPECT_EQ(3, l->pool_id_);
     EXPECT_EQ("newhostname.example.org", l->hostname_);
     EXPECT_FALSE(l->getContext());
 }
@@ -2039,7 +2248,10 @@ void Lease4CmdsTest::testLease4UpdateNoSubnetId() {
     Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.1"));
     ASSERT_TRUE(l);
 
-    // Make sure it's been updated.
+    // Make sure the subnet-id is correct.
+    EXPECT_EQ(44, l->subnet_id_);
+
+    // Make sure the lease has been updated.
     ASSERT_TRUE(l->hwaddr_);
     EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
     EXPECT_EQ("newhostname.example.org", l->hostname_);
@@ -2071,11 +2283,14 @@ void Lease4CmdsTest::testLease4UpdateNoSubnetIdDeclinedLeases() {
 
     checkLease4Stats(88, 2, 2);
 
-    // Now check that the lease is still there.
+    // Now check that the lease is really there.
     Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.1"));
     ASSERT_TRUE(l);
 
-    // Make sure it's been updated.
+    // Make sure the subnet-id is correct.
+    EXPECT_EQ(44, l->subnet_id_);
+
+    // Make sure the lease has been updated.
     ASSERT_TRUE(l->hwaddr_);
     EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
     EXPECT_EQ("newhostname.example.org", l->hostname_);
@@ -2109,11 +2324,11 @@ void Lease4CmdsTest::testLease4UpdateForceCreate() {
 
     checkLease4Stats(88, 0, 0);
 
-    // Now check that the lease is still there.
+    // Now check that the lease is really there.
     Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.1"));
     ASSERT_TRUE(l);
 
-    // Make sure it contains expected values..
+    // Make sure the lease is correct.
     ASSERT_TRUE(l->hwaddr_);
     EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
     EXPECT_EQ("newhostname.example.org", l->hostname_);
@@ -2146,14 +2361,14 @@ void Lease4CmdsTest::testLease4UpdateForceCreateNoSubnetId() {
 
     checkLease4Stats(88, 0, 0);
 
-    // Now check that the lease is still there.
+    // Now check that the lease is really there.
     Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.1"));
     ASSERT_TRUE(l);
 
     // Make sure the subnet-id is figured out correctly.
     EXPECT_EQ(44, l->subnet_id_);
 
-    // Make sure it contains expected values..
+    // Make sure the lease is correct.
     ASSERT_TRUE(l->hwaddr_);
     EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
     EXPECT_EQ("newhostname.example.org", l->hostname_);
@@ -2183,7 +2398,7 @@ void Lease4CmdsTest::testLease4UpdateDoNotForceCreate() {
     string exp_rsp = "failed to update the lease with address 192.0.2.1 "
         "either because the lease has been deleted or it has changed in the "
         "database, in both cases a retry might succeed";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     checkLease4Stats(44, 0, 0);
 
@@ -2217,11 +2432,11 @@ void Lease4CmdsTest::testLease4UpdateComment() {
 
     checkLease4Stats(88, 2, 0);
 
-    // Now check that the lease is still there.
+    // Now check that the lease is really there.
     Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.1"));
     ASSERT_TRUE(l);
 
-    // Make sure it's been updated.
+    // Make sure the lease has been updated.
     ASSERT_TRUE(l->hwaddr_);
     EXPECT_EQ("42:42:42:42:42:42:42:42", l->hwaddr_->toText(false));
 
@@ -2233,6 +2448,80 @@ void Lease4CmdsTest::testLease4UpdateComment() {
     EXPECT_EQ("\"a comment\"", ctx->get("comment")->str());
     ASSERT_TRUE(ctx->contains("foobar"));
     EXPECT_EQ("true", ctx->get("foobar")->str());
+}
+
+void Lease4CmdsTest::testLease4UpdateExtendedInfo() {
+    // Initialize lease manager (false = v4, true = add leases)
+    initLeaseMgr(false, true);
+
+    checkLease4Stats(44, 2, 0);
+
+    checkLease4Stats(88, 2, 0);
+
+    Lease4Collection leases;
+    const vector<uint8_t> relay_id = { 0xaa, 0xbb, 0xcc };
+    leases = lmptr_->getLeases4ByRelayId(relay_id,
+                                         IOAddress::IPV4_ZERO_ADDRESS(),
+                                         LeasePageSize(10));
+    EXPECT_TRUE(leases.empty());
+    const vector<uint8_t> remote_id = { 1, 2, 3 };
+    leases = lmptr_->getLeases4ByRemoteId(remote_id,
+                                          IOAddress::IPV4_ZERO_ADDRESS(),
+                                          LeasePageSize(10));
+    EXPECT_TRUE(leases.empty());
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease4-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 44,\n"
+        "        \"ip-address\": \"192.0.2.1\",\n"
+        "        \"hw-address\": \"42:42:42:42:42:42:42:42\",\n"
+        "        \"user-context\": { \"ISC\": { \"relay-agent-info\": {\n"
+        "           \"sub-options\": \"0x02030102030C03AABBCC\",\n"
+        "           \"remote-id\": \"010203\",\n"
+        "           \"relay-id\": \"AABBCC\"\n"
+        "        } } }\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv4 lease updated.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    checkLease4Stats(44, 2, 0);
+
+    checkLease4Stats(88, 2, 0);
+
+    // Now check that the lease is really there.
+    Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.1"));
+    ASSERT_TRUE(l);
+
+    // Make sure the lease has been updated.
+    ASSERT_TRUE(l->hwaddr_);
+    EXPECT_EQ("42:42:42:42:42:42:42:42", l->hwaddr_->toText(false));
+
+    // Check the user context / extended info too.
+    ConstElementPtr ctx = l->getContext();
+    ASSERT_TRUE(ctx);
+    string expected = "{ \"ISC\": { \"relay-agent-info\": ";
+    expected += "{ \"relay-id\": \"AABBCC\", ";
+    expected += "\"remote-id\": \"010203\", ";
+    expected += "\"sub-options\": \"0x02030102030C03AABBCC\" } } }";
+    EXPECT_EQ(expected, ctx->str());
+    EXPECT_EQ(relay_id, l->relay_id_);
+    EXPECT_EQ(remote_id, l->remote_id_);
+
+    // Check the lease can be retrieved by its relay or remote id too.
+    leases = lmptr_->getLeases4ByRelayId(relay_id,
+                                         IOAddress::IPV4_ZERO_ADDRESS(),
+                                         LeasePageSize(10));
+    ASSERT_EQ(1, leases.size());
+    EXPECT_EQ(*l, *leases[0]);
+    leases = lmptr_->getLeases4ByRemoteId(remote_id,
+                                          IOAddress::IPV4_ZERO_ADDRESS(),
+                                          LeasePageSize(10));
+    ASSERT_EQ(1, leases.size());
+    EXPECT_EQ(*l, *leases[0]);
 }
 
 void Lease4CmdsTest::testLease4DelMissingParams() {
@@ -2317,7 +2606,7 @@ void Lease4CmdsTest::testLease4DelByAddrNotFound() {
 
     checkLease4Stats(88, 2, 0);
 
-    // Invalid
+    // Now send the command.
     string cmd =
         "{\n"
         "    \"command\": \"lease4-del\",\n"
@@ -2327,6 +2616,9 @@ void Lease4CmdsTest::testLease4DelByAddrNotFound() {
         "    }\n"
         "}";
     string exp_rsp = "IPv4 lease not found.";
+
+    // Note the status expected is empty. The query completed correctly,
+    // just didn't found the lease.
     ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 
     checkLease4Stats(44, 2, 0);
@@ -2342,7 +2634,7 @@ void Lease4CmdsTest::testLease4DelByAddr() {
 
     checkLease4Stats(88, 2, 0);
 
-    // Query for valid, existing lease.
+    // Now send the command.
     string cmd =
         "{\n"
         "    \"command\": \"lease4-del\",\n"
@@ -2351,6 +2643,8 @@ void Lease4CmdsTest::testLease4DelByAddr() {
         "    }\n"
         "}";
     string exp_rsp = "IPv4 lease deleted.";
+
+    // The status expected is success. The lease should be deleted.
     testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
 
     checkLease4Stats(44, 1, 0);
@@ -2369,7 +2663,7 @@ void Lease4CmdsTest::testLease4DelByAddrDeclinedLeases() {
 
     checkLease4Stats(88, 2, 2);
 
-    // Query for valid, existing lease.
+    // Now send the command.
     string cmd =
         "{\n"
         "    \"command\": \"lease4-del\",\n"
@@ -2378,6 +2672,8 @@ void Lease4CmdsTest::testLease4DelByAddrDeclinedLeases() {
         "    }\n"
         "}";
     string exp_rsp = "IPv4 lease deleted.";
+
+    // The status expected is success. The lease should be deleted.
     testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
 
     checkLease4Stats(44, 1, 1);
@@ -2460,7 +2756,7 @@ void Lease4CmdsTest::testLease4DelByHWAddr() {
 
     checkLease4Stats(88, 2, 0);
 
-    // Invalid
+    // Now send the command.
     string cmd =
         "{\n"
         "    \"command\": \"lease4-del\",\n"
@@ -2471,6 +2767,8 @@ void Lease4CmdsTest::testLease4DelByHWAddr() {
         "    }\n"
         "}";
     string exp_rsp = "IPv4 lease deleted.";
+
+    // The status expected is success. The lease should be deleted.
     ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
 
     checkLease4Stats(44, 1, 0);
@@ -2518,7 +2816,7 @@ void Lease4CmdsTest::testLease4DelByClientId() {
 
     checkLease4Stats(88, 2, 0);
 
-    // Invalid
+    // Now send the command.
     string cmd =
         "{\n"
         "    \"command\": \"lease4-del\",\n"
@@ -2529,6 +2827,8 @@ void Lease4CmdsTest::testLease4DelByClientId() {
         "    }\n"
         "}";
     string exp_rsp = "IPv4 lease deleted.";
+
+    // The status expected is success. The lease should be deleted.
     ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
 
     checkLease4Stats(44, 1, 0);
@@ -2547,7 +2847,7 @@ void Lease4CmdsTest::testLease4Wipe() {
 
     checkLease4Stats(88, 2, 0);
 
-    // Query for valid, existing lease.
+    // Now send the command.
     string cmd =
         "{\n"
         "    \"command\": \"lease4-wipe\",\n"
@@ -2555,7 +2855,10 @@ void Lease4CmdsTest::testLease4Wipe() {
         "        \"subnet-id\": 44"
         "    }\n"
         "}";
-    string exp_rsp = "Deleted 2 IPv4 lease(s) from subnet(s) 44";
+    string exp_rsp = "Deleted 2 IPv4 lease(s) from subnet(s) 44"
+                     " WARNING: lease4-wipe is deprecated!";
+
+    // The status expected is success. The lease should be deleted.
     testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
 
     checkLease4Stats(44, 0, 0);
@@ -2579,7 +2882,7 @@ void Lease4CmdsTest::testLease4WipeAll() {
 
     checkLease4Stats(88, 2, 0);
 
-    // Query for valid, existing lease.
+    // Now send the command.
     string cmd =
         "{\n"
         "    \"command\": \"lease4-wipe\",\n"
@@ -2587,7 +2890,10 @@ void Lease4CmdsTest::testLease4WipeAll() {
         "        \"subnet-id\": 0"
         "    }\n"
         "}";
-    string exp_rsp = "Deleted 4 IPv4 lease(s) from subnet(s) 44 88";
+    string exp_rsp = "Deleted 4 IPv4 lease(s) from subnet(s) 44 88"
+                     " WARNING: lease4-wipe is deprecated!";
+
+    // The status expected is success. The lease should be deleted.
     testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
 
     checkLease4Stats(44, 0, 0);
@@ -2611,12 +2917,15 @@ void Lease4CmdsTest::testLease4WipeAllNoArgs() {
 
     checkLease4Stats(88, 2, 0);
 
-    // Query for valid, existing lease.
+    // Now send the command.
     string cmd =
         "{\n"
         "    \"command\": \"lease4-wipe\"\n"
         "}";
-    string exp_rsp = "Deleted 4 IPv4 lease(s) from subnet(s) 44 88";
+    string exp_rsp = "Deleted 4 IPv4 lease(s) from subnet(s) 44 88"
+                     " WARNING: lease4-wipe is deprecated!";
+
+    // The status expected is success. The lease should be deleted.
     testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
 
     checkLease4Stats(44, 0, 0);
@@ -2648,7 +2957,8 @@ void Lease4CmdsTest::testLease4WipeNoLeases() {
         "        \"subnet-id\": 44"
         "    }\n"
         "}";
-    string exp_rsp = "Deleted 0 IPv4 lease(s) from subnet(s) 44";
+    string exp_rsp = "Deleted 0 IPv4 lease(s) from subnet(s) 44"
+                     " WARNING: lease4-wipe is deprecated!";
     testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 
     checkLease4Stats(44, 0, 0);
@@ -2672,7 +2982,8 @@ void Lease4CmdsTest::testLease4WipeNoLeasesAll() {
         "        \"subnet-id\": 0"
         "    }\n"
         "}";
-    string exp_rsp = "Deleted 0 IPv4 lease(s) from subnet(s) 44 88";
+    string exp_rsp = "Deleted 0 IPv4 lease(s) from subnet(s) 44 88"
+                     " WARNING: lease4-wipe is deprecated!";
     testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 
     checkLease4Stats(44, 0, 0);
@@ -2701,7 +3012,7 @@ void Lease4CmdsTest::testLease4BrokenUpdate() {
         "}";
     string exp_rsp = "Invalid subnet-id: No IPv4 subnet with "
                      "subnet-id=444 currently configured.";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 }
 
 void Lease4CmdsTest::testLease4ResendDdnsBadParam() {
@@ -2748,6 +3059,7 @@ void Lease4CmdsTest::testLease4ResendDdnsDisabled() {
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
 
+    // Disable DDNS updating.
     disableD2();
 
     // Query for valid, existing lease.
@@ -2760,7 +3072,7 @@ void Lease4CmdsTest::testLease4ResendDdnsDisabled() {
         "}";
 
     string exp_rsp = "DDNS updating is not enabled";
-    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_CONFLICT, exp_rsp);
     // With D2 disabled there is no queue, size should come back as -1.
     EXPECT_EQ(ncrQueueSize(), -1);
 }
@@ -2778,7 +3090,7 @@ void Lease4CmdsTest::testLease4ResendDdnsNoLease() {
         "    }\n"
         "}\n";
     string exp_rsp = "No lease found for: 192.0.2.5";
-    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+    testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 }
 
 void Lease4CmdsTest::testLease4ResendNoHostname() {
@@ -2804,7 +3116,7 @@ void Lease4CmdsTest::testLease4ResendNoHostname() {
         "}";
 
     string exp_rsp = "Lease for: 192.0.2.1, has no hostname, nothing to update";
-    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     // There should not any NCRs queued.
     EXPECT_EQ(ncrQueueSize(), 0);
@@ -2834,7 +3146,7 @@ void Lease4CmdsTest::testLease4ResendNoDirectionsEnabled() {
         "}";
 
     string exp_rsp = "Neither forward nor reverse updates enabled for lease for: 192.0.2.1";
-    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     // There should not any NCRs queued.
     EXPECT_EQ(ncrQueueSize(), 0);
@@ -2870,7 +3182,7 @@ void Lease4CmdsTest::testLease4ResendDdnsEnabled() {
     // Expected response string.
     string exp_rsp = "NCR generated for: 192.0.2.1, hostname: myhost.example.com.";
 
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
 
         // Fetch the lease so we can update the DDNS direction flags.
@@ -2962,7 +3274,7 @@ void Lease4CmdsTest::testLease4DnsRemoveD2Enabled() {
         },
     };
 
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
 
         // Let's create a lease with scenario attributes.
@@ -3077,7 +3389,7 @@ void Lease4CmdsTest::testLease4ConflictingAdd() {
         "}";
 
     string exp_rsp = "ResourceBusy: IP address:192.0.2.1 could not be added.";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     // Lease should not have been added.
     lease = lmptr_->getLease4(addr);
@@ -3120,7 +3432,7 @@ void Lease4CmdsTest::testLease4ConflictingUpdate() {
         "}";
 
     string exp_rsp = "ResourceBusy: IP address:192.0.2.1 could not be updated.";
-    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+    testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
     // Fetch the lease again.
     lease = lmptr_->getLease4(addr);
@@ -3128,6 +3440,46 @@ void Lease4CmdsTest::testLease4ConflictingUpdate() {
 
     // Lease should not have been changed.
     EXPECT_EQ(original_lease, *lease);
+}
+
+void Lease4CmdsTest::testLease4Write() {
+    // lease4-write negative tests. Positive tests are in the
+    // memfile_lease_mgr_unittest.cc file.
+
+    // Initialize lease manager (false = v4, false = don't add leases)
+    initLeaseMgr(false, false);
+
+    // Parameter is missing.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease4-write\",\n"
+        "    \"arguments\": {"
+        "    }\n"
+        "}";
+    string exp_rsp = "'filename' parameter not specified";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Filename must be a string.
+    txt =
+        "{\n"
+        "    \"command\": \"lease4-write\",\n"
+        "    \"arguments\": {"
+        "        \"filename\": 0\n"
+        "    }\n"
+        "}";
+    exp_rsp = "'filename' parameter must be a string";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Filename must be not empty.
+    txt =
+        "{\n"
+        "    \"command\": \"lease4-write\",\n"
+        "    \"arguments\": {"
+        "        \"filename\": \"\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "'filename' parameter is empty";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
 TEST_F(Lease4CmdsTest, lease4AddMissingParams) {
@@ -3162,6 +3514,15 @@ TEST_F(Lease4CmdsTest, lease4AddDeclinedLeases) {
 }
 
 TEST_F(Lease4CmdsTest, lease4AddDeclinedLeasesMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4AddDeclinedLeases();
+}
+
+TEST_F(Lease4CmdsTest, lease4AddReleasedLeases) {
+    testLease4AddDeclinedLeases();
+}
+
+TEST_F(Lease4CmdsTest, lease4AddReleasedLeasesMultiThreading) {
     MultiThreadingTest mt(true);
     testLease4AddDeclinedLeases();
 }
@@ -3236,6 +3597,15 @@ TEST_F(Lease4CmdsTest, lease4AddComment) {
 TEST_F(Lease4CmdsTest, lease4AddCommentMultiThreading) {
     MultiThreadingTest mt(true);
     testLease4AddComment();
+}
+
+TEST_F(Lease4CmdsTest, lease4AddExtendedInfo) {
+    testLease4AddExtendedInfo();
+}
+
+TEST_F(Lease4CmdsTest, lease4AddExtendedInfoMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4AddExtendedInfo();
 }
 
 TEST_F(Lease4CmdsTest, lease4GetMissingParams) {
@@ -3571,6 +3941,24 @@ TEST_F(Lease4CmdsTest, lease4UpdateNoSubnetIdDeclinedLeasesMultiThreading) {
     testLease4UpdateNoSubnetIdDeclinedLeases();
 }
 
+TEST_F(Lease4CmdsTest, lease4UpdateComment) {
+    testLease4UpdateComment();
+}
+
+TEST_F(Lease4CmdsTest, lease4UpdateCommentMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4UpdateComment();
+}
+
+TEST_F(Lease4CmdsTest, lease4UpdateExtendedInfo) {
+    testLease4UpdateExtendedInfo();
+}
+
+TEST_F(Lease4CmdsTest, lease4UpdateExtendedInfoMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4UpdateExtendedInfo();
+}
+
 TEST_F(Lease4CmdsTest, lease4UpdateForceCreate) {
     testLease4UpdateForceCreate();
 }
@@ -3596,15 +3984,6 @@ TEST_F(Lease4CmdsTest, lease4UpdateDoNotForceCreate) {
 TEST_F(Lease4CmdsTest, lease4UpdateDoNotForceCreateMultiThreading) {
     MultiThreadingTest mt(true);
     testLease4UpdateDoNotForceCreate();
-}
-
-TEST_F(Lease4CmdsTest, lease4UpdateComment) {
-    testLease4UpdateComment();
-}
-
-TEST_F(Lease4CmdsTest, lease4UpdateCommentMultiThreading) {
-    MultiThreadingTest mt(true);
-    testLease4UpdateComment();
 }
 
 TEST_F(Lease4CmdsTest, lease4DelMissingParams) {
@@ -3733,7 +4112,6 @@ TEST_F(Lease4CmdsTest, lease4WipeNoLeasesAllMultiThreading) {
     testLease4WipeNoLeasesAll();
 }
 
-
 TEST_F(Lease4CmdsTest, lease4BrokenUpdate) {
     testLease4BrokenUpdate();
 }
@@ -3821,6 +4199,15 @@ TEST_F(Lease4CmdsTest, lease4ConflictingAddMultiThreading) {
 
 TEST_F(Lease4CmdsTest, lease4ConflictingUpdateMultiThreading) {
     testLease4ConflictingUpdate();
+}
+
+TEST_F(Lease4CmdsTest, lease4Write) {
+    testLease4Write();
+}
+
+TEST_F(Lease4CmdsTest, lease4WriteMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4Write();
 }
 
 } // end of anonymous namespace

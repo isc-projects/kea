@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,14 +11,17 @@ This informational message lists all possible host backends that could
 be used in hosts-database[s].
 
 % HOSTS_BACKEND_DEREGISTER deregistered host backend type: %1
+Logged at debug log level 40.
 This debug message is issued when a backend factory was deregistered.
 It is no longer possible to use host backend of this type.
 
 % HOSTS_BACKEND_REGISTER registered host backend type: %1
+Logged at debug log level 40.
 This debug message is issued when a backend factory was successfully
 registered. It is now possible to use host backend of this type.
 
 % HOSTS_CFG_ADD_HOST add the host for reservations: %1
+Logged at debug log level 40.
 This debug message is issued when new host (with reservations) is added to
 the server's configuration. The argument describes the host and its
 reservations in detail.
@@ -28,153 +31,208 @@ This informational message is issued when a host cache data source is
 detected by the host manager.
 
 % HOSTS_CFG_CLOSE_HOST_DATA_SOURCE Closing host data source: %1
+Logged at debug log level 40.
 This is a normal message being printed when the server closes host data
 source connection.
 
+% HOSTS_CFG_DEL deleted %1 host(s) having %2 IPv6 reservation(s) for subnet id %3 and address %4
+Logged at debug log level 40.
+This debug message is issued when reservations are deleted for the specified
+subnet and address. The first argument specifies how many hosts have been
+deleted. The second argument specifies how many reservations have been deleted.
+The third argument is the subnet identifier. The fourth argument is the IP
+address.
+
+% HOSTS_CFG_DEL4 deleted %1 host(s) for subnet id %2 and identifier %3
+Logged at debug log level 40.
+This debug message is issued when IPv4 reservations are deleted for the specified
+subnet and identifier. The first argument specifies how many hosts have been
+deleted. The second argument is the subnet identifier. The third argument is
+the identifier.
+
+% HOSTS_CFG_DEL6 deleted %1 host(s) having %2 IPv6 reservation(s) for subnet id %3 and identifier %4
+Logged at debug log level 40.
+This debug message is issued when IPv6 reservations are deleted for the
+specified subnet and identifier. The first argument specifies how many hosts
+have been deleted. The second argument specifies how many reservations have
+been deleted. The third argument is the subnet identifier. The fourth argument
+is the identifier.
+
 % HOSTS_CFG_DEL_ALL_SUBNET4 deleted all %1 host(s) for subnet id %2
+Logged at debug log level 40.
 This debug message is issued when all IPv4 reservations are deleted for
 the specified subnet. The first argument specifies how many reservations
 have been deleted. The second argument is the subnet identifier.
 
 % HOSTS_CFG_DEL_ALL_SUBNET6 deleted all %1 host(s) having %2 IPv6 reservation(s) for subnet id %3
+Logged at debug log level 40.
 This debug message is issued when all IPv6 reservations are deleted for
 the specified subnet. The first argument specifies how many hosts
 have been deleted. The second argument specifies how many IPv6
-(addresses and prefixes) have been deleted. The third argument is the
-subnet identifier.
+(addresses and prefixes) reservations have been deleted. The third argument is
+the subnet identifier.
 
 % HOSTS_CFG_GET_ALL get all hosts with reservations
+Logged at debug log level 45.
 This debug message is issued when starting to retrieve all hosts.
 
 % HOSTS_CFG_GET_ALL_ADDRESS4 get all hosts with reservations for IPv4 address %1
+Logged at debug log level 45.
 This debug message is issued when starting to retrieve all hosts, holding the
 reservation for the specific IPv4 address, from the configuration. The
 argument specifies the IPv4 address used to search the hosts.
 
 % HOSTS_CFG_GET_ALL_ADDRESS4_COUNT using address %1, found %2 host(s)
+Logged at debug log level 45.
 This debug message logs the number of hosts found using the specified
 IPv4 address. The arguments specify the IPv4 address used and the number
 of hosts found respectively.
 
 % HOSTS_CFG_GET_ALL_ADDRESS4_HOST using address %1 found host: %2
+Logged at debug log level 55.
 This debug message is issued when found host with the reservation
 for the specified IPv4 address. The arguments specify the IPv4 address
 and the detailed description of the host found.
 
 % HOSTS_CFG_GET_ALL_ADDRESS6 get all hosts with reservations for IPv6 address %1
+Logged at debug log level 45.
 This debug message is issued when starting to retrieve all hosts, holding the
 reservation for the specific IPv6 address, from the configuration.
 The argument specifies the IPv6 address used to search the hosts.
 
 % HOSTS_CFG_GET_ALL_ADDRESS6_COUNT using address %1, found %2 host(s)
+Logged at debug log level 45.
 This debug message logs the number of hosts found using the specified
 IPv6 address. The arguments specify the IPv6 address used and the number
 of hosts found respectively.
 
 % HOSTS_CFG_GET_ALL_ADDRESS6_HOST using address %1 found host: %2
+Logged at debug log level 55.
 This debug message is issued when found host with the reservation
 for the specified IPv6 address. The arguments specify the IPv6 address
 and the detailed description of the host found.
 
 % HOSTS_CFG_GET_ALL_COUNT found %1 host(s)
+Logged at debug log level 45.
 This debug message include the details of the host found. The argument
 specifies the number of hosts found.
 
 % HOSTS_CFG_GET_ALL_HOST found host: %1
+Logged at debug log level 45.
 This debug message includes the details of the host found. The argument
 specifies found host details.
 
 % HOSTS_CFG_GET_ALL_HOSTNAME get all hosts with reservations for hostname %1
+Logged at debug log level 45.
 This debug message is issued when starting to retrieve all hosts with
 the specific hostname. The argument specifies hostname.
 
 % HOSTS_CFG_GET_ALL_HOSTNAME_COUNT using hostname %1, found %2 host(s)
+Logged at debug log level 45.
 This debug message include the details of the host found using the
 hostname. The arguments specify hostname and the number of hosts found
 respectively.
 
 % HOSTS_CFG_GET_ALL_HOSTNAME_HOST using hostname %1, found host: %2
+Logged at debug log level 55.
 This debug message includes the details of the host found using the hostname.
 The arguments specify hostname and found host details respectively.
 
 % HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID4 get all hosts with reservations for hostname %1 and IPv4 subnet %2
+Logged at debug log level 45.
 This debug message is issued when starting to retrieve all hosts with
 the specific hostname connected to the specific DHCPv4 subnet. The argument
 specifies hostname and subnet id.
 
 % HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID4_COUNT using hostname %1 and IPv4 subnet %2, found %3 host(s)
+Logged at debug log level 45.
 This debug message include the details of the host found using the
 hostname and the DHCPv4 subnet id. The arguments specify hostname,
 subnet id and the number of hosts found respectively.
 
 % HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID4_HOST using hostname %1 and IPv4 subnet %2, found host: %3
+Logged at debug log level 55.
 This debug message includes the details of the host found using the
 hostname and the DHCPv4 subnet id. The arguments specify hostname,
 subnet id and found host details respectively.
 
 % HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID6 get all hosts with reservations for hostname %1 and IPv6 subnet %2
+Logged at debug log level 45.
 This debug message is issued when starting to retrieve all hosts with
 the specific hostname connected to the specific DHCPv6 subnet. The argument
 specifies hostname and subnet id.
 
 % HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID6_COUNT using hostname %1 and IPv6 subnet %2, found %3 host(s)
+Logged at debug log level 45.
 This debug message include the details of the host found using the
 hostname and the DHCPv6 subnet id. The arguments specify hostname,
 subnet id and the number of hosts found respectively.
 
 % HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID6_HOST using hostname %1 and IPv6 subnet %2, found host: %3
+Logged at debug log level 55.
 This debug message includes the details of the host found using the
 hostname and the DHCPv6 subnet id. The arguments specify hostname,
 subnet id and found host details respectively.
 
 % HOSTS_CFG_GET_ALL_IDENTIFIER get all hosts with reservations using identifier: %1
+Logged at debug log level 45.
 This debug message is issued when starting to retrieve reservations for all hosts
 identified by HW address or DUID. The argument holds both the identifier
 type and the value.
 
 % HOSTS_CFG_GET_ALL_IDENTIFIER_COUNT using identifier %1, found %2 host(s)
+Logged at debug log level 45.
 This debug message logs the number of hosts found using the specified
 identifier. The arguments specify the identifier used and the number
 of hosts found respectively.
 
 % HOSTS_CFG_GET_ALL_IDENTIFIER_HOST using identifier: %1, found host: %2
+Logged at debug log level 55.
 This debug message is issued when found host identified by the specific
 identifier. The arguments specify the identifier and the detailed
 description of the host found.
 
 % HOSTS_CFG_GET_ALL_SUBNET_ID4 get all hosts with reservations for IPv4 subnet %1
+Logged at debug log level 45.
 This debug message is issued when starting to retrieve all hosts connected to
 the specific DHCPv4 subnet. The argument specifies subnet id.
 
 % HOSTS_CFG_GET_ALL_SUBNET_ID4_COUNT using IPv4 subnet %1, found %2 host(s)
+Logged at debug log level 45.
 This debug message include the details of the host found using the DHCPv4
 subnet id. The arguments specify subnet id and the number of hosts found
 respectively.
 
 % HOSTS_CFG_GET_ALL_SUBNET_ID4_HOST using IPv4 subnet %1, found host: %2
+Logged at debug log level 55.
 This debug message includes the details of the host found using the DHCPv4
 subnet id. The arguments specify subnet id and found host details respectively.
 
 % HOSTS_CFG_GET_ALL_SUBNET_ID6 get all hosts with reservations for IPv6 subnet %1
+Logged at debug log level 45.
 This debug message is issued when starting to retrieve all hosts connected to
 the specific DHCPv6 subnet. The argument specifies subnet id.
 
 % HOSTS_CFG_GET_ALL_SUBNET_ID6_COUNT using IPv6 subnet %1, found %2 host(s)
+Logged at debug log level 45.
 This debug message include the details of the host found using the DHCPv6
 subnet id. The arguments specify subnet id and the number of hosts found
 respectively.
 
 % HOSTS_CFG_GET_ALL_SUBNET_ID6_HOST using IPv6 subnet %1, found host: %2
+Logged at debug log level 55.
 This debug message includes the details of the host found using the DHCPv6
 subnet id. The arguments specify subnet id and found host details respectively.
 
 % HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS4 get all hosts with reservations for subnet id %1 and IPv4 address %2
+Logged at debug log level 45.
 This debug message is issued when starting to retrieve all hosts having
 the reservation for the given IPv4 address within the given subnet. The
 first argument specifies subnet identifier. The second argument specifies
 the IPv4 address for which the reservation is to be returned.
 
 % HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS4_COUNT using IPv4 subnet %1 and IPv4 address %2, found %3 host(s)
+Logged at debug log level 45.
 This debug message logs the number of hosts found having the reservation
 for the specified IPv4 address within the specified subnet. The first
 argument specifies the subnet identifier. The second argument specifies
@@ -182,132 +240,182 @@ the reserved IPv4 address. The third argument specifies the number of
 hosts found.
 
 % HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS4_HOST using IPv4 subnet %1 and IPv4 address %2, found host: %3
+Logged at debug log level 55.
 This debug message is issued when found host having the reservation for
 the specified IPv4 address in the specified subnet.  The first argument
 specifies the subnet identifier. The second argument specifies the reserved
 IPv4 address. The third argument specifies host details.
 
 % HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS6 get all hosts with reservations for subnet id %1 and IPv6 address %2
+Logged at debug log level 45.
 This debug message is issued when starting to retrieve all hosts connected to
 the specific subnet and having the specific IPv6 address reserved.
 The arguments specify subnet id and IPv6 address respectively.
 
 % HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS6_COUNT using subnet id %1 and address %2, found %3 host(s)
+Logged at debug log level 45.
 This debug message include the details of the host found using the
 subnet id and address. The arguments specify subnet id, address and
 the number of hosts found respectively.
 
 % HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS6_HOST using subnet id %1 and address %2, found host: %3
+Logged at debug log level 55.
 This debug message includes the details of the host found using the
 subnet id and address. The arguments specify subnet id, address and
 the number of hosts found respectively.
 found host details respectively.
 
 % HOSTS_CFG_GET_ONE_PREFIX get one host with reservation for prefix %1/%2
+Logged at debug log level 40.
 This debug message is issued when starting to retrieve a host having a
 reservation for a specified prefix. The arguments specify a prefix and
 prefix length.
 
 % HOSTS_CFG_GET_ONE_PREFIX_HOST using prefix %1/%2, found host: %3
+Logged at debug log level 55.
 This debug message includes the details of the host found using the
 specific prefix/prefix length. The arguments specify prefix, prefix
 length and host details respectively.
 
 % HOSTS_CFG_GET_ONE_PREFIX_NULL host not found using prefix %1/%2
+Logged at debug log level 55.
 This debug message is issued when no host was found for a specified
 prefix and prefix length.
 
 % HOSTS_CFG_GET_ONE_SUBNET_ID_ADDRESS4 get one host with reservation for subnet id %1 and IPv4 address %2
+Logged at debug log level 45.
 This debug message is issued when starting to retrieve a host connected to the
 specific subnet and having the specific IPv4 address reserved. The
 arguments specify subnet id and IPv4 address respectively.
 
 % HOSTS_CFG_GET_ONE_SUBNET_ID_ADDRESS4_HOST using subnet id %1 and address %2, found host: %3
+Logged at debug log level 45.
 This debug message logs the details of the host found using the
 subnet id and IPv4 address.
 
 % HOSTS_CFG_GET_ONE_SUBNET_ID_ADDRESS4_NULL host not found using subnet id %1 and address %2
+Logged at debug log level 45.
 This debug message is issued when no host was found for the specified
 subnet id and IPv4 address.
 
 % HOSTS_CFG_GET_ONE_SUBNET_ID_ADDRESS6 get one host with reservation for subnet id %1 and having IPv6 address %2
+Logged at debug log level 45.
 This debug message is issued when starting to retrieve a host connected to the
 specific subnet and having the specific IPv6 address reserved. The
 arguments specify subnet id and IPv6 address respectively.
 
 % HOSTS_CFG_GET_ONE_SUBNET_ID_ADDRESS6_HOST using subnet id %1 and address %2, found host: %3
+Logged at debug log level 45.
 This debug message logs the details of the host found using the
 subnet id and IPv6 address.
 
 % HOSTS_CFG_GET_ONE_SUBNET_ID_ADDRESS6_NULL host not found using subnet id %1 and address %2
+Logged at debug log level 45.
 This debug message is issued when no host was found using the specified
 subnet if and IPv6 address.
 
 % HOSTS_CFG_GET_ONE_SUBNET_ID_IDENTIFIER get one host with %1 reservation for subnet id %2, identified by %3
+Logged at debug log level 45.
 This debug message is issued when starting to retrieve a host holding
 IPv4 or IPv6 reservations, which is connected to a specific subnet and
 is identified by a specific unique identifier. The first argument
 identifies if the IPv4 or IPv6 reservation is desired.
 
 % HOSTS_CFG_GET_ONE_SUBNET_ID_IDENTIFIER_HOST using subnet id %1 and identifier %2, found host: %3
+Logged at debug log level 45.
 This debug message includes the details of a host found using a
 subnet id and specific host identifier.
 
 % HOSTS_CFG_GET_ONE_SUBNET_ID_IDENTIFIER_NULL host not found using subnet id %1 and identifier %2
+Logged at debug log level 45.
 This debug message is issued when no host was found using the specified
 subnet id and host identifier.
 
+% HOSTS_CFG_UPDATE_ADD add the host for reservations: %1
+Logged at debug log level 40.
+This debug message is issued when a new host (with reservations) is
+added to the server's configuration during an update. The argument
+describes the host and its reservations in detail.
+
+% HOSTS_CFG_UPDATE_DEL4 deleted %1 host(s) for subnet id %2 and identifier %3
+Logged at debug log level 40.
+This debug message is issued when IPv4 reservations are deleted for
+the specified subnet and identifier during an update. The first
+argument specifies how many hosts have been deleted. The second
+argument is the subnet identifier. The third argument is the
+identifier.
+
+% HOSTS_CFG_UPDATE_DEL6 deleted %1 host(s) having %2 IPv6 reservation(s) for subnet id %3 and identifier %4
+Logged at debug log level 40.
+This debug message is issued when IPv6 reservations are deleted for
+the specified subnet and identifier during an update. The first
+argument specifies how many hosts have been deleted. The second
+argument specifies how many reservations have been deleted. The third
+argument is the subnet identifier. The fourth argument is the
+identifier.
+
 % HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_ADDRESS4 trying alternate sources for host using subnet id %1 and address %2
+Logged at debug log level 40.
 This debug message is issued when the Host Manager doesn't find the
 host connected to the specific subnet and having the reservation for
 the specific IPv4 address, and it is starting to search for this host
 in alternate host data sources.
 
 % HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_IDENTIFIER get one host with IPv4 reservation for subnet id %1, identified by %2
+Logged at debug log level 45.
 This debug message is issued when starting to retrieve a host holding
 IPv4 reservation, which is connected to a specific subnet and
 is identified by a specific unique identifier.
 
 % HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_IDENTIFIER_HOST using subnet id %1 and identifier %2, found in %3 host: %4
+Logged at debug log level 45.
 This debug message includes the details of a host returned by an
 alternate hosts data source using a subnet id and specific host
 identifier.
 
 % HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_IDENTIFIER_NULL host not found using subnet id %1 and identifier %2
+Logged at debug log level 45.
 This debug message is issued when no host was found using the specified
 subnet id and host identifier.
 
 % HOSTS_MGR_ALTERNATE_GET6_PREFIX trying alternate sources for host using prefix %1/%2
+Logged at debug log level 40.
 This debug message is issued when the Host Manager doesn't find the
 host connected to the specific subnet and having the reservation for
 the specified prefix, and it is starting to search for this host in
 alternate host data sources.
 
 % HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_ADDRESS6 trying alternate sources for host using subnet id %1 and IPv6 address %2
+Logged at debug log level 40.
 This debug message is issued when the Host Manager doesn't find the
 host connected to the specific subnet and having the reservation for
 the specified IPv6 address, and it is starting to search for this
 host in alternate host data sources.
 
 % HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER get one host with IPv6 reservation for subnet id %1, identified by %2
+Logged at debug log level 45.
 This debug message is issued when starting to retrieve a host holding
 IPv4 reservation, which is connected to a specific subnet and
 is identified by a specific unique identifier.
 
 % HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER_HOST using subnet id %1 and identifier %2, found in %3 host: %4
+Logged at debug log level 45.
 This debug message includes the details of a host returned by an
 alternate host data source using a subnet id and specific host
 identifier.
 
 % HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER_NULL host not found using subnet id %1 and identifier %2
+Logged at debug log level 45.
 This debug message is issued when no host was found using the specified
 subnet id and host identifier.
 
 % HOSTS_MGR_ALTERNATE_GET_ALL_SUBNET_ID_ADDRESS4 trying alternate sources for hosts using subnet id %1 and address %2
+Logged at debug log level 40.
 This debug message is issued when the Host Manager is starting to search
 for hosts in alternate host data sources by subnet ID and IPv4 address.
 
 % HOSTS_MGR_ALTERNATE_GET_ALL_SUBNET_ID_ADDRESS6 trying alternate sources for hosts using subnet id %1 and address %2
+Logged at debug log level 40.
 This debug message is issued when the Host Manager is starting to search
 for hosts in alternate host data sources by subnet ID and IPv6 address.
 

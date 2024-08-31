@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -60,7 +60,7 @@ Pkt4::len() {
     size_t length = DHCPV4_PKT_HDR_LEN; // DHCPv4 header
 
     // ... and sum of lengths of all options
-    for (const auto& it : options_) {
+    for (auto const& it : options_) {
         length += it.second->len();
     }
 
@@ -69,10 +69,14 @@ Pkt4::len() {
 
 void
 Pkt4::pack() {
-    ScopedPkt4OptionsCopy scoped_options(*this);
     if (!hwaddr_) {
         isc_throw(InvalidOperation, "Can't build Pkt4 packet. HWAddr not set.");
     }
+
+    // This object is necessary to restore the packet options after performing
+    // splitOptions4 when function scope ends. It creates a container of option
+    // clones which are split and packed.
+    ScopedPkt4OptionsCopy scoped_options(*this);
 
     // Clear the output buffer to make sure that consecutive calls to pack()
     // will not result in concatenation of multiple packet copies.
@@ -93,7 +97,6 @@ Pkt4::pack() {
         buffer_out_.writeUint32(yiaddr_.toUint32());
         buffer_out_.writeUint32(siaddr_.toUint32());
         buffer_out_.writeUint32(giaddr_.toUint32());
-
 
         if ((hw_len > 0) && (hw_len <= MAX_CHADDR_LEN)) {
             // write up to 16 bytes of the hardware address (CHADDR field is 16
@@ -120,7 +123,7 @@ Pkt4::pack() {
 
         /// Create a ManagedScopedOptionsCopyContainer to handle storing and
         /// restoration of copied options.
-        ManagedScopedOptionsCopyContainer scoped_options;
+        ManagedScopedOptionsCopyContainer m_scoped_options;
 
         // The RFC3396 adds support for long options split over multiple options
         // using the same code.
@@ -129,7 +132,7 @@ Pkt4::pack() {
         // options will differ from the ones instantiated by the
         // @ref OptionDefinition::optionFactory. At this stage the server should
         // not do anything useful with the options beside packing.
-        LibDHCP::splitOptions4(options_, scoped_options.scoped_options_);
+        LibDHCP::splitOptions4(options_, m_scoped_options.scoped_options_);
 
         // Call packOptions4() with parameter,"top", true. This invokes
         // logic to emit the message type option first.
@@ -219,13 +222,9 @@ Pkt4::unpack() {
     // }
     (void)offset;
 
-    // The RFC3396 adds support for multiple options using the same code fused
-    // into long options.
-    // All instances of the same option are fused together, including merging
-    // the suboption lists and fusing suboptions. As a result, the options will
-    // store more than 255 bytes of data and the regex parsers can effectively
-    // access the entire data.
-    LibDHCP::fuseOptions4(options_);
+    // Kea supports multiple vendor options so it needs to split received and
+    // fused options in multiple OptionVendor instances.
+    LibDHCP::extendVendorOptions4(options_);
 
     // No need to call check() here. There are thorough tests for this
     // later (see Dhcp4Srv::accept()). We want to drop the packet later,
@@ -390,6 +389,7 @@ Pkt4::getLabel() const {
     }
 
     label << suffix;
+
     return (label.str());
 }
 
@@ -403,7 +403,7 @@ Pkt4::makeLabel(const HWAddrPtr& hwaddr, const ClientIdPtr& client_id,
     // Append transaction id.
     label << ", tid=0x" << hex << transid << dec;
 
-    return label.str();
+    return (label.str());
 }
 
 std::string
@@ -413,42 +413,45 @@ Pkt4::makeLabel(const HWAddrPtr& hwaddr, const ClientIdPtr& client_id) {
           << "], cid=[" << (client_id ? client_id->toText() : "no info")
           << "]";
 
-    return label.str();
+    return (label.str());
 }
 
 std::string
 Pkt4::toText() const {
-    stringstream output;
-    output << "local_address=" << local_addr_ << ":" << local_port_
-        << ", remote_address=" << remote_addr_
-        << ":" << remote_port_ << ", msg_type=";
+    stringstream tmp;
+
+    // First print the basics
+    tmp << "local_address=" << local_addr_ << ":" << local_port_
+        << ", remote_address=" << remote_addr_ << ":" << remote_port_ << "," << endl;
+
+    tmp << "msg_type=";
 
     // Try to obtain message type.
     uint8_t msg_type = getType();
     if (msg_type != DHCP_NOTYPE) {
-        output << getName(msg_type) << " (" << static_cast<int>(msg_type) << ")";
+        tmp << getName(msg_type) << " (" << static_cast<int>(msg_type) << ")";
     } else {
         // Message Type option is missing.
-        output << "(missing)";
+        tmp << "(missing)";
     }
 
-    output << ", transid=0x" << hex << transid_ << dec;
+    tmp << ", trans_id=0x" << hex << transid_ << dec;
 
     if (!options_.empty()) {
-        output << "," << std::endl << "options:";
-        for (const auto& opt : options_) {
+        tmp << "," << endl << "options:";
+        for (auto const& opt : options_) {
             try {
-                output << std::endl << opt.second->toText(2);
+                tmp << endl << opt.second->toText(2);
             } catch (...) {
-                output << "(unknown)" << std::endl;
+                tmp << "(unknown)" << endl;
             }
         }
 
     } else {
-        output << ", message contains no options";
+        tmp << "," << endl << "message contains no options";
     }
 
-    return (output.str());
+    return (tmp.str());
 }
 
 void
@@ -473,8 +476,8 @@ Pkt4::setHWAddrMember(const uint8_t htype, const uint8_t hlen,
     /// @todo Rewrite this once support for client-identifier option
     /// is implemented (ticket 1228?)
     if (hlen > MAX_CHADDR_LEN) {
-        isc_throw(OutOfRange, "Hardware address (len=" << hlen
-                  << " too long. Max " << MAX_CHADDR_LEN << " supported.");
+        isc_throw(OutOfRange, "Hardware address (len=" << static_cast<uint32_t>(hlen)
+                  << ") too long. Max " << MAX_CHADDR_LEN << " supported.");
 
     } else if (mac_addr.empty() && (hlen > 0) ) {
         isc_throw(OutOfRange, "Invalid HW Address specified");
@@ -596,6 +599,14 @@ Pkt4::addOption(const OptionPtr& opt) {
 bool
 Pkt4::isRelayed() const {
     return (!giaddr_.isV4Zero() && !giaddr_.isV4Bcast());
+}
+
+std::string
+Pkt4::getHWAddrLabel() const {
+    std::ostringstream label;
+    label << "hwaddr=";
+    hwaddr_ ? label << hwaddr_->toText(false) : label << "(undefined)";
+    return (label.str());
 }
 
 } // end of namespace isc::dhcp

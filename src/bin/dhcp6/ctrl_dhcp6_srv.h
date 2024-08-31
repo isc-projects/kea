@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -72,30 +72,6 @@ public:
     /// @param exit_value integer value to the process should exit with.
     virtual void shutdownServer(int exit_value);
 
-    /// @brief Command processor
-    ///
-    /// This method is uniform for all config backends. It processes received
-    /// command (as a string + JSON arguments). Internally, it's just a
-    /// wrapper that calls process*Command() methods and catches exceptions
-    /// in them.
-    ///
-    /// Currently supported commands are:
-    /// - config-reload
-    /// - config-test
-    /// - shutdown
-    /// - libreload
-    /// - leases-reclaim
-    /// ...
-    ///
-    /// @note It never throws.
-    ///
-    /// @param command Text representation of the command (e.g. "shutdown")
-    /// @param args Optional parameters
-    ///
-    /// @return status of the command
-    static isc::data::ConstElementPtr
-    processCommand(const std::string& command, isc::data::ConstElementPtr args);
-
     /// @brief Configuration processor
     ///
     /// This is a method for handling incoming configuration updates.
@@ -105,21 +81,32 @@ public:
     /// As pointer to this method is used a callback in ASIO used in
     /// ModuleCCSession, it has to be static.
     ///
-    /// @param new_config textual representation of the new configuration
+    /// @param config textual representation of the new configuration
     ///
     /// @return status of the config update
     static isc::data::ConstElementPtr
-    processConfig(isc::data::ConstElementPtr new_config);
+    processConfig(isc::data::ConstElementPtr config);
 
     /// @brief Configuration checker
     ///
     /// This is a method for checking incoming configuration.
     ///
-    /// @param new_config JSON representation of the new configuration
+    /// @param config JSON representation of the new configuration
     ///
     /// @return status of the config check
-    isc::data::ConstElementPtr
-    checkConfig(isc::data::ConstElementPtr new_config);
+    static isc::data::ConstElementPtr
+    checkConfig(isc::data::ConstElementPtr config);
+
+    /// @brief Configuration checker for hook libraries
+    ///
+    /// This is a method for checking incoming configuration in the hooks
+    /// libraries. It calls dhcp4_srv_configured hook point for all hooks.
+    ///
+    /// @param config JSON representation of the new configuration
+    ///
+    /// @return status of the config check
+    static isc::data::ConstElementPtr
+    finishConfigHookLibraries(isc::data::ConstElementPtr config);
 
     /// @brief Returns pointer to the sole instance of Dhcpv6Srv
     ///
@@ -129,7 +116,6 @@ public:
     }
 
 private:
-
     /// @brief Callback that will be called from iface_mgr when data
     /// is received over control socket.
     ///
@@ -150,19 +136,6 @@ private:
     commandShutdownHandler(const std::string& command,
                            isc::data::ConstElementPtr args);
 
-    /// @brief Handler for processing 'libreload' command
-    ///
-    /// This handler processes libreload command, which unloads all hook
-    /// libraries and reloads them.
-    ///
-    /// @param command (parameter ignored)
-    /// @param args (parameter ignored)
-    ///
-    /// @return status of the command
-    isc::data::ConstElementPtr
-    commandLibReloadHandler(const std::string& command,
-                            isc::data::ConstElementPtr args);
-
     /// @brief Handler for processing 'config-reload' command
     ///
     /// This handler processes config-reload command, which processes
@@ -176,9 +149,9 @@ private:
     commandConfigReloadHandler(const std::string& command,
                                isc::data::ConstElementPtr args);
 
-    /// @brief handler for processing 'get-config' command
+    /// @brief handler for processing 'config-get' command
     ///
-    /// This handler processes get-config command, which retrieves
+    /// This handler processes config-get command, which retrieves
     /// the current configuration and returns it in response.
     ///
     /// @param command (ignored)
@@ -188,9 +161,21 @@ private:
     commandConfigGetHandler(const std::string& command,
                             isc::data::ConstElementPtr args);
 
-    /// @brief handler for processing 'write-config' command
+    /// @brief handler for processing 'config-hash-get' command
     ///
-    /// This handle processes write-config command, which writes the
+    /// This handler processes config-hash-get command, which retrieves
+    /// the hash of the current configuration and returns it in response.
+    ///
+    /// @param command (ignored)
+    /// @param args (ignored)
+    /// @return hash of current configuration wrapped in a response
+    isc::data::ConstElementPtr
+    commandConfigHashGetHandler(const std::string& command,
+                                isc::data::ConstElementPtr args);
+
+    /// @brief handler for processing 'config-write' command
+    ///
+    /// This handle processes config-write command, which writes the
     /// current configuration to disk. This command takes one optional
     /// parameter called filename. If specified, the current configuration
     /// will be written to that file. If not specified, the file used during

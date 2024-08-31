@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,7 +8,6 @@
 
 #include <dhcpsrv/parsers/simple_parser4.h>
 #include <cc/data.h>
-#include <boost/foreach.hpp>
 #include <iostream>
 
 using namespace isc::data;
@@ -55,7 +54,7 @@ const SimpleKeywords SimpleParser4::GLOBAL4_PARAMETERS = {
     { "hooks-libraries",                  Element::list },
     { "expired-leases-processing",        Element::map },
     { "dhcp4o6-port",                     Element::integer },
-    { "control-socket",                   Element::map },
+    { "control-sockets",                  Element::list },
     { "dhcp-queue-control",               Element::map },
     { "dhcp-ddns",                        Element::map },
     { "echo-client-id",                   Element::boolean },
@@ -70,7 +69,6 @@ const SimpleKeywords SimpleParser4::GLOBAL4_PARAMETERS = {
     { "reservations",                     Element::list },
     { "config-control",                   Element::map },
     { "server-tag",                       Element::string },
-    { "reservation-mode",                 Element::string },
     { "reservations-global",              Element::boolean },
     { "reservations-in-subnet",           Element::boolean },
     { "reservations-out-of-pool",         Element::boolean },
@@ -96,9 +94,13 @@ const SimpleKeywords SimpleParser4::GLOBAL4_PARAMETERS = {
     { "ip-reservations-unique",           Element::boolean },
     { "reservations-lookup-first",        Element::boolean },
     { "ddns-update-on-renew",             Element::boolean },
-    { "ddns-use-conflict-resolution",     Element::boolean },
     { "compatibility",                    Element::map },
     { "parked-packet-limit",              Element::integer },
+    { "allocator",                        Element::string },
+    { "offer-lifetime",                   Element::integer },
+    { "ddns-ttl-percent",                 Element::real },
+    { "ddns-conflict-resolution-mode",    Element::string },
+    { "stash-agent-options",              Element::boolean },
 };
 
 /// @brief This table defines default global values for DHCPv4
@@ -138,8 +140,10 @@ const SimpleDefaults SimpleParser4::GLOBAL4_DEFAULTS = {
     { "ip-reservations-unique",           Element::boolean, "true" },
     { "reservations-lookup-first",        Element::boolean, "false" },
     { "ddns-update-on-renew",             Element::boolean, "false" },
-    { "ddns-use-conflict-resolution",     Element::boolean, "true" },
     { "parked-packet-limit",              Element::integer, "256" },
+    { "allocator",                        Element::string,  "iterative" },
+    { "ddns-conflict-resolution-mode",    Element::string,  "check-with-dhcid" },
+    { "stash-agent-options",              Element::boolean, "false" },
 };
 
 /// @brief This table defines all option definition parameters.
@@ -183,6 +187,7 @@ const SimpleKeywords SimpleParser4::OPTION4_PARAMETERS = {
     { "space",        Element::string },
     { "csv-format",   Element::boolean },
     { "always-send",  Element::boolean },
+    { "never-send",   Element::boolean },
     { "user-context", Element::map },
     { "comment",      Element::string },
     { "metadata",     Element::map }
@@ -196,7 +201,8 @@ const SimpleKeywords SimpleParser4::OPTION4_PARAMETERS = {
 const SimpleDefaults SimpleParser4::OPTION4_DEFAULTS = {
     { "space",        Element::string,  "dhcp4"}, // DHCP4_OPTION_SPACE
     { "csv-format",   Element::boolean, "true"},
-    { "always-send",  Element::boolean, "false"}
+    { "always-send",  Element::boolean, "false"},
+    { "never-send",   Element::boolean, "false"}
 };
 
 /// @brief This table defines all subnet parameters for DHCPv4.
@@ -218,7 +224,6 @@ const SimpleKeywords SimpleParser4::SUBNET4_PARAMETERS = {
     { "client-class",                   Element::string },
     { "require-client-classes",         Element::list },
     { "reservations",                   Element::list },
-    { "reservation-mode",               Element::string },
     { "reservations-global",            Element::boolean },
     { "reservations-in-subnet",         Element::boolean },
     { "reservations-out-of-pool",       Element::boolean },
@@ -249,7 +254,10 @@ const SimpleKeywords SimpleParser4::SUBNET4_PARAMETERS = {
     { "cache-threshold",                Element::real },
     { "cache-max-age",                  Element::integer },
     { "ddns-update-on-renew",           Element::boolean },
-    { "ddns-use-conflict-resolution",   Element::boolean }
+    { "allocator",                      Element::string },
+    { "offer-lifetime",                 Element::integer },
+    { "ddns-ttl-percent",               Element::real },
+    { "ddns-conflict-resolution-mode",  Element::string },
 };
 
 /// @brief This table defines default values for each IPv4 subnet.
@@ -257,10 +265,9 @@ const SimpleKeywords SimpleParser4::SUBNET4_PARAMETERS = {
 /// Note: When updating this array, please also update SHARED_SUBNET4_DEFAULTS
 /// below. In most cases, those two should be kept in sync, except cases
 /// where a parameter can be derived from shared-networks, but is not
-/// defined on global level. Currently there are two such parameters:
-/// interface and reservation-mode
+/// defined on global level. Currently there in only one such parameter:
+/// interface.
 const SimpleDefaults SimpleParser4::SUBNET4_DEFAULTS = {
-    { "id",               Element::integer, "0" }, // 0 means autogenerate
     { "interface",        Element::string,  "" },
     { "client-class",     Element::string,  "" },
     { "4o6-interface",    Element::string,  "" },
@@ -271,14 +278,19 @@ const SimpleDefaults SimpleParser4::SUBNET4_DEFAULTS = {
 /// @brief This table defines default values for each IPv4 subnet that is
 ///        part of a shared network
 ///
-/// This is mostly the same as @ref SUBNET4_DEFAULTS, except two parameters
+/// This is mostly the same as @ref SUBNET4_DEFAULTS, except one parameter
 /// that can be derived from shared-network, but cannot from global scope.
-/// Those are: interface and reservation-mode.
+/// This is: interface.
 const SimpleDefaults SimpleParser4::SHARED_SUBNET4_DEFAULTS = {
-    { "id",               Element::integer, "0" }, // 0 means autogenerate
     { "4o6-interface",    Element::string,  "" },
     { "4o6-interface-id", Element::string,  "" },
     { "4o6-subnet",       Element::string,  "" },
+};
+
+/// @brief This table defines default values for each IPv4 shared network.
+const SimpleDefaults SimpleParser4::SHARED_NETWORK4_DEFAULTS = {
+    { "client-class",     Element::string, "" },
+    { "interface",        Element::string, "" }
 };
 
 /// @brief List of parameters that can be inherited to subnet4 scope.
@@ -302,7 +314,9 @@ const ParamsList SimpleParser4::INHERIT_TO_SUBNET4 = {
     "t2-percent",
     "store-extended-info",
     "cache-threshold",
-    "cache-max-age"
+    "cache-max-age",
+    "allocator",
+    "offer-lifetime",
 };
 
 /// @brief This table defines all pool parameters.
@@ -312,6 +326,7 @@ const ParamsList SimpleParser4::INHERIT_TO_SUBNET4 = {
 /// Order follows pool_param rules in bison grammar.
 const SimpleKeywords SimpleParser4::POOL4_PARAMETERS = {
     { "pool",                   Element::string },
+    { "pool-id",                Element::integer },
     { "option-data",            Element::list },
     { "client-class",           Element::string },
     { "require-client-classes", Element::list },
@@ -338,7 +353,6 @@ const SimpleKeywords SimpleParser4::SHARED_NETWORK4_PARAMETERS = {
     { "server-hostname",                Element::string },
     { "boot-file-name",                 Element::string },
     { "relay",                          Element::map },
-    { "reservation-mode",               Element::string },
     { "reservations-global",            Element::boolean },
     { "reservations-in-subnet",         Element::boolean },
     { "reservations-out-of-pool",       Element::boolean },
@@ -365,13 +379,10 @@ const SimpleKeywords SimpleParser4::SHARED_NETWORK4_PARAMETERS = {
     { "cache-threshold",                Element::real },
     { "cache-max-age",                  Element::integer },
     { "ddns-update-on-renew",           Element::boolean },
-    { "ddns-use-conflict-resolution",   Element::boolean }
-};
-
-/// @brief This table defines default values for each IPv4 shared network.
-const SimpleDefaults SimpleParser4::SHARED_NETWORK4_DEFAULTS = {
-    { "client-class",     Element::string, "" },
-    { "interface",        Element::string, "" }
+    { "allocator",                      Element::string },
+    { "offer-lifetime",                 Element::integer },
+    { "ddns-ttl-percent",               Element::real },
+    { "ddns-conflict-resolution-mode",  Element::string },
 };
 
 /// @brief This table defines default values for interfaces for DHCPv4.
@@ -388,7 +399,7 @@ const SimpleDefaults SimpleParser4::DHCP_QUEUE_CONTROL4_DEFAULTS = {
 
 /// @brief This table defines default values for multi-threading in DHCPv4.
 const SimpleDefaults SimpleParser4::DHCP_MULTI_THREADING4_DEFAULTS = {
-    { "enable-multi-threading", Element::boolean, "false" },
+    { "enable-multi-threading", Element::boolean, "true" },
     { "thread-pool-size",       Element::integer, "0" },
     { "packet-queue-size",      Element::integer, "64" }
 };
@@ -413,7 +424,7 @@ size_t SimpleParser4::setAllDefaults(ElementPtr global) {
     // Now set option definition defaults for each specified option definition
     ConstElementPtr option_defs = global->get("option-def");
     if (option_defs) {
-        BOOST_FOREACH(ElementPtr option_def, option_defs->listValue()) {
+        for (auto const& option_def : option_defs->listValue()) {
             cnt += SimpleParser::setDefaults(option_def, OPTION4_DEF_DEFAULTS);
         }
     }
@@ -440,7 +451,7 @@ size_t SimpleParser4::setAllDefaults(ElementPtr global) {
     // Set defaults for shared networks
     ConstElementPtr shared = global->get("shared-networks");
     if (shared) {
-        BOOST_FOREACH(ElementPtr net, shared->listValue()) {
+        for (auto const& net : shared->listValue()) {
 
             cnt += setDefaults(net, SHARED_NETWORK4_DEFAULTS);
 
@@ -497,7 +508,7 @@ size_t SimpleParser4::deriveParameters(ElementPtr global) {
     // Now derive global parameters into subnets.
     ConstElementPtr subnets = global->get("subnet4");
     if (subnets) {
-        BOOST_FOREACH(ElementPtr single_subnet, subnets->listValue()) {
+        for (auto const& single_subnet : subnets->listValue()) {
             cnt += SimpleParser::deriveParams(global, single_subnet,
                                               INHERIT_TO_SUBNET4);
         }
@@ -508,7 +519,7 @@ size_t SimpleParser4::deriveParameters(ElementPtr global) {
     // subnets within derive from it.
     ConstElementPtr shared = global->get("shared-networks");
     if (shared) {
-        BOOST_FOREACH(ElementPtr net, shared->listValue()) {
+        for (auto const& net : shared->listValue()) {
             // First try to inherit the parameters from shared network,
             // if defined there.
             // Then try to inherit them from global.
@@ -518,7 +529,7 @@ size_t SimpleParser4::deriveParameters(ElementPtr global) {
             // Now we need to go thrugh all the subnets in this net.
             subnets = net->get("subnet4");
             if (subnets) {
-                BOOST_FOREACH(ElementPtr single_subnet, subnets->listValue()) {
+                for (auto const& single_subnet : subnets->listValue()) {
                     cnt += SimpleParser::deriveParams(net, single_subnet,
                                                       INHERIT_TO_SUBNET4);
                 }

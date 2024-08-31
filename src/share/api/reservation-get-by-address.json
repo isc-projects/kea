@@ -1,0 +1,29 @@
+{
+    "access": "read",
+    "avail": "2.4.0",
+    "brief": [
+        "This command retrieves all host reservations for given ip-address and optionally a specified subnet."
+    ],
+    "cmd-comment": [
+        "The host reservations can be identified by a pair of 'ip-address' and 'subnet-id'. 'subnet-id' is optional. 'operation-target' is optional; default is 'all'."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"reservation-get-by-address\",",
+        "    \"arguments\": {",
+        "        \"ip-address\": <string>,",
+        "        \"subnet-id\": <integer>,",
+        "        \"operation-target\": <string (memory, database, all, default)>",
+        "    }",
+        "}"
+    ],
+    "hook": "host_cmds",
+    "name": "reservation-get-by-address",
+    "resp-comment": [
+       "The reservation-get-by-address may return many reservations for the same ip-address. This command may be useful in case ip-reservations-unique configuration flag is set to false."
+    ],
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6"
+    ]
+}

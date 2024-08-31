@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -52,7 +52,7 @@ createAnswer(const int status_code, const std::string& text,
 
 ConstElementPtr
 createAnswer() {
-    return (createAnswer(0, string(""), ConstElementPtr()));
+    return (createAnswer(CONTROL_RESULT_SUCCESS, string(""), ConstElementPtr()));
 }
 
 ConstElementPtr
@@ -66,23 +66,51 @@ createAnswer(const int status_code, const ConstElementPtr& arg) {
 }
 
 ConstElementPtr
-parseAnswer(int &rcode, const ConstElementPtr& msg) {
+parseAnswerText(int &rcode, const ConstElementPtr& msg) {
     if (!msg) {
-        isc_throw(CtrlChannelError, "No answer specified");
+        isc_throw(CtrlChannelError, "invalid answer: no answer specified");
     }
     if (msg->getType() != Element::map) {
-        isc_throw(CtrlChannelError,
-                  "Invalid answer Element specified, expected map");
+        isc_throw(CtrlChannelError, "invalid answer: expected toplevel entry to be a map, got "
+                  << Element::typeToName(msg->getType()) << " instead");
     }
     if (!msg->contains(CONTROL_RESULT)) {
         isc_throw(CtrlChannelError,
-                  "Invalid answer specified, does not contain mandatory 'result'");
+                  "invalid answer: does not contain mandatory '" << CONTROL_RESULT << "'");
     }
 
     ConstElementPtr result = msg->get(CONTROL_RESULT);
     if (result->getType() != Element::integer) {
-            isc_throw(CtrlChannelError,
-                      "Result element in answer message is not a string");
+        isc_throw(CtrlChannelError, "invalid answer: expected '" << CONTROL_RESULT
+                  << "' to be an integer, got "
+                  << Element::typeToName(result->getType()) << " instead");
+    }
+
+    rcode = result->intValue();
+
+    // If there are arguments, return them.
+    return (msg->get(CONTROL_TEXT));
+}
+
+ConstElementPtr
+parseAnswer(int &rcode, const ConstElementPtr& msg) {
+    if (!msg) {
+        isc_throw(CtrlChannelError, "invalid answer: no answer specified");
+    }
+    if (msg->getType() != Element::map) {
+        isc_throw(CtrlChannelError, "invalid answer: expected toplevel entry to be a map, got "
+                  << Element::typeToName(msg->getType()) << " instead");
+    }
+    if (!msg->contains(CONTROL_RESULT)) {
+        isc_throw(CtrlChannelError,
+                  "invalid answer: does not contain mandatory '" << CONTROL_RESULT << "'");
+    }
+
+    ConstElementPtr result = msg->get(CONTROL_RESULT);
+    if (result->getType() != Element::integer) {
+        isc_throw(CtrlChannelError, "invalid answer: expected '" << CONTROL_RESULT
+                  << "' to be an integer, got "
+                  << Element::typeToName(result->getType()) << " instead");
     }
 
     rcode = result->intValue();
@@ -97,24 +125,26 @@ parseAnswer(int &rcode, const ConstElementPtr& msg) {
     return (msg->get(CONTROL_TEXT));
 }
 
+
 std::string
 answerToText(const ConstElementPtr& msg) {
     if (!msg) {
-        isc_throw(CtrlChannelError, "No answer specified");
+        isc_throw(CtrlChannelError, "invalid answer: no answer specified");
     }
     if (msg->getType() != Element::map) {
-        isc_throw(CtrlChannelError,
-                  "Invalid answer Element specified, expected map");
+        isc_throw(CtrlChannelError, "invalid answer: expected toplevel entry to be a map, got "
+                  << Element::typeToName(msg->getType()) << " instead");
     }
     if (!msg->contains(CONTROL_RESULT)) {
         isc_throw(CtrlChannelError,
-                  "Invalid answer specified, does not contain mandatory 'result'");
+                  "invalid answer: does not contain mandatory '" << CONTROL_RESULT << "'");
     }
 
     ConstElementPtr result = msg->get(CONTROL_RESULT);
     if (result->getType() != Element::integer) {
-            isc_throw(CtrlChannelError,
-                      "Result element in answer message is not a string");
+        isc_throw(CtrlChannelError, "invalid answer: expected '" << CONTROL_RESULT
+                  << "' to be an integer, got " << Element::typeToName(result->getType())
+                  << " instead");
     }
 
     stringstream txt;
@@ -170,32 +200,34 @@ createCommand(const std::string& command,
 std::string
 parseCommand(ConstElementPtr& arg, ConstElementPtr command) {
     if (!command) {
-        isc_throw(CtrlChannelError, "No command specified");
+        isc_throw(CtrlChannelError, "invalid command: no command specified");
     }
     if (command->getType() != Element::map) {
-        isc_throw(CtrlChannelError, "Invalid command Element specified, expected map");
+        isc_throw(CtrlChannelError, "invalid command: expected toplevel entry to be a map, got "
+                  << Element::typeToName(command->getType()) << " instead");
     }
     if (!command->contains(CONTROL_COMMAND)) {
         isc_throw(CtrlChannelError,
-                  "Invalid answer specified, does not contain mandatory 'command'");
+                  "invalid command: does not contain mandatory '" << CONTROL_COMMAND << "'");
     }
 
     // Make sure that all specified parameters are supported.
-    auto command_params = command->mapValue();
-    for (auto param : command_params) {
+    auto const& command_params = command->mapValue();
+    for (auto const& param : command_params) {
         if ((param.first != CONTROL_COMMAND) &&
             (param.first != CONTROL_ARGUMENTS) &&
             (param.first != CONTROL_SERVICE) &&
             (param.first != CONTROL_REMOTE_ADDRESS)) {
-            isc_throw(CtrlChannelError, "Received command contains unsupported "
-                      "parameter '" << param.first << "'");
+            isc_throw(CtrlChannelError,
+                      "invalid command: unsupported parameter '" << param.first << "'");
         }
     }
 
     ConstElementPtr cmd = command->get(CONTROL_COMMAND);
     if (cmd->getType() != Element::string) {
-        isc_throw(CtrlChannelError,
-                  "'command' element in command message is not a string");
+        isc_throw(CtrlChannelError, "invalid command: expected '"
+                  << CONTROL_COMMAND << "' to be a string, got "
+                  << Element::typeToName(command->getType()) << " instead");
     }
 
     arg = command->get(CONTROL_ARGUMENTS);
@@ -210,20 +242,22 @@ parseCommandWithArgs(ConstElementPtr& arg, ConstElementPtr command) {
     // This function requires arguments within the command.
     if (!arg) {
         isc_throw(CtrlChannelError,
-                  "no arguments specified for the '" << command_name
-                  << "' command");
+                  "invalid command '" << command_name << "': no arguments specified");
     }
 
     // Arguments must be a map.
     if (arg->getType() != Element::map) {
-        isc_throw(CtrlChannelError, "arguments specified for the '" << command_name
-                  << "' command are not a map");
+        isc_throw(CtrlChannelError,
+                  "invalid command '" << command_name << "': expected '"
+                  << CONTROL_ARGUMENTS << "' to be a map, got "
+                  << Element::typeToName(arg->getType()) << " instead");
     }
 
     // At least one argument is required.
     if (arg->size() == 0) {
-        isc_throw(CtrlChannelError, "arguments must not be empty for "
-                  "the '" << command_name << "' command");
+        isc_throw(CtrlChannelError,
+                  "invalid command '" << command_name << "': '"
+                  << CONTROL_ARGUMENTS << "' is empty");
     }
 
     return (command_name);
@@ -264,21 +298,21 @@ combineCommandsLists(const ConstElementPtr& response1,
         // Storing command names in a set guarantees that the non-unique
         // command names are aggregated.
         std::set<std::string> combined_set;
-        for (auto v = vec1.cbegin(); v != vec1.cend(); ++v) {
-            combined_set.insert((*v)->stringValue());
+        for (auto const& v : vec1) {
+            combined_set.insert(v->stringValue());
         }
-        for (auto v = vec2.cbegin(); v != vec2.cend(); ++v) {
-            combined_set.insert((*v)->stringValue());
+        for (auto const& v : vec2) {
+            combined_set.insert(v->stringValue());
         }
 
         // Create a combined list of commands.
         ElementPtr combined_list = Element::createList();
-        for (auto s = combined_set.cbegin(); s != combined_set.cend(); ++s) {
-            combined_list->add(Element::create(*s));
+        for (auto const& s : combined_set) {
+            combined_list->add(Element::create(s));
         }
         return (createAnswer(CONTROL_RESULT_SUCCESS, combined_list));
     }
 }
 
-}
-}
+}  // namespace config
+}  // namespace isc

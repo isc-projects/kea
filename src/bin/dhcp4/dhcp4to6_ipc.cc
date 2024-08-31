@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -61,7 +61,7 @@ void Dhcp4to6Ipc::handler(int /* fd */) {
         // Receive message from the IPC socket.
         pkt = ipc.receive();
 
-        // from Dhcpv4Srv::run_one() after receivePacket()
+        // From Dhcpv4Srv::runOne() after receivePacket()
         if (pkt) {
             LOG_DEBUG(packet4_logger, DBG_DHCP4_BASIC, DHCP4_DHCP4O6_PACKET_RECEIVED)
                 .arg(static_cast<int>(pkt->getType()))
@@ -82,10 +82,12 @@ void Dhcp4to6Ipc::handler(int /* fd */) {
     OptionCollection msgs = pkt->getOptions(D6O_DHCPV4_MSG);
     if (msgs.empty()) {
         LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_DHCP4O6_BAD_PACKET)
+            .arg(pkt->getLabel())
             .arg("DHCPv4 message option not present");
         return;
     } else if (msgs.size() > 1) {
         LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_DHCP4O6_BAD_PACKET)
+            .arg(pkt->getLabel())
             .arg("more than one DHCPv4 message option");
         return;
     }
@@ -94,6 +96,7 @@ void Dhcp4to6Ipc::handler(int /* fd */) {
     OptionPtr msg = msgs.begin()->second;
     if (!msg) {
         LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_DHCP4O6_BAD_PACKET)
+            .arg(pkt->getLabel())
             .arg("null DHCPv4 message option");
         return;
     }
@@ -101,10 +104,10 @@ void Dhcp4to6Ipc::handler(int /* fd */) {
     // Extract the DHCPv4 packet with DHCPv6 packet attached
     Pkt4Ptr query(new Pkt4o6(msg->getData(), pkt));
 
-    // From Dhcpv4Srv::run_one() processing and after
+    // From Dhcpv4Srv::runOne() processing and after
     Pkt4Ptr rsp;
 
-    ControlledDhcpv4Srv::getInstance()->processPacket(query, rsp, false);
+    rsp = ControlledDhcpv4Srv::getInstance()->processPacket(query, false);
 
     if (!rsp) {
         return;
@@ -138,7 +141,7 @@ void Dhcp4to6Ipc::handler(int /* fd */) {
                                        *callout_handle);
 
             // Callouts decided to skip the next processing step. The next
-            // processing step would to parse the packet, so skip at this
+            // processing step would be to parse the packet, so skip at this
             // stage means drop.
             if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) ||
                 (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP)) {

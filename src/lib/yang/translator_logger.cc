@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,106 +7,80 @@
 #include <config.h>
 
 #include <yang/translator_logger.h>
-#include <yang/adaptor.h>
 #include <yang/yang_models.h>
+
 #include <sstream>
 
 using namespace std;
 using namespace isc::data;
+using namespace libyang;
 using namespace sysrepo;
 
 namespace isc {
 namespace yang {
 
-TranslatorLogger::TranslatorLogger(S_Session session, const string& model)
-    : TranslatorBasic(session, model) {
-}
-
-TranslatorLogger::~TranslatorLogger() {
+TranslatorLogger::TranslatorLogger(Session session, const string& model)
+    : Translator(session, model) {
 }
 
 ElementPtr
-TranslatorLogger::getLogger(const string& xpath) {
+TranslatorLogger::getLogger(DataNode const& data_node) {
     try {
         if ((model_ == KEA_DHCP4_SERVER) ||
             (model_ == KEA_DHCP6_SERVER) ||
             (model_ == KEA_DHCP_DDNS) ||
             (model_ == KEA_CTRL_AGENT)) {
-            return (getLoggerKea(xpath));
+            return (getLoggerKea(data_node));
         }
-    } catch (const sysrepo_exception& ex) {
-        isc_throw(SysrepoError,
-                  "sysrepo error getting logger at '" << xpath
-                  << "': " << ex.what());
+    } catch (Error const& ex) {
+        isc_throw(NetconfError,
+                  "getting logger: " << ex.what());
     }
     isc_throw(NotImplemented,
               "getLogger not implemented for the model: " << model_);
 }
 
 ElementPtr
-TranslatorLogger::getLoggerKea(const string& xpath) {
-    ConstElementPtr name = getItem(xpath + "/name");
-    if (!name) {
-        // Can't happen as name is the key.
-        isc_throw(Unexpected, "getLoggerKea requires name: " << xpath);
-    }
+TranslatorLogger::getLoggerKea(DataNode const& data_node) {
     ElementPtr result = Element::createMap();
-    result->set("name", name);
-    ConstElementPtr options = getOutputOptions(xpath);
-    if (options && (options->size() > 0)) {
-        result->set("output_options", options);
+
+    getMandatoryLeaf(result, data_node, "name");
+
+    checkAndGetLeaf(result, data_node, "debuglevel");
+    checkAndGetLeaf(result, data_node, "severity");
+
+    checkAndGetAndJsonifyLeaf(result, data_node, "user-context");
+
+    ConstElementPtr options = getOutputOptions(data_node);
+    if (options) {
+        result->set("output-options", options);
     }
-    ConstElementPtr severity = getItem(xpath + "/severity");
-    if (severity) {
-        result->set("severity", severity);
-    }
-    ConstElementPtr debuglevel = getItem(xpath + "/debuglevel");
-    if (debuglevel) {
-        result->set("debuglevel", debuglevel);
-    }
-    ConstElementPtr context = getItem(xpath + "/user-context");
-    if (context) {
-        result->set("user-context", Element::fromJSON(context->stringValue()));
-    }
-    return (result);
+
+    return (result->empty() ? ElementPtr() : result);
 }
 
 ElementPtr
-TranslatorLogger::getOutputOption(const string& xpath) {
-    ConstElementPtr output = getItem(xpath + "/output");
-    if (!output) {
-        // Can't happen as output is the key.
-        isc_throw(Unexpected, "getOutputOption requires (!output): " << xpath);
-    }
+TranslatorLogger::getOutputOption(DataNode const& data_node) {
     ElementPtr result = Element::createMap();
-    result->set("output", output);
-    ConstElementPtr maxver = getItem(xpath + "/maxver");
-    if (maxver) {
-        result->set("maxver", maxver);
-    }
-    ConstElementPtr maxsize = getItem(xpath + "/maxsize");
-    if (maxsize) {
-        result->set("maxsize", maxsize);
-    }
-    ConstElementPtr flush = getItem(xpath + "/flush");
-    if (flush) {
-        result->set("flush", flush);
-    }
-    ConstElementPtr pattern = getItem(xpath + "/pattern");
-    if (pattern) {
-        result->set("pattern", pattern);
-    }
-    return (result);
+
+    getMandatoryLeaf(result, data_node, "output");
+
+    checkAndGetLeaf(result, data_node, "flush");
+    checkAndGetLeaf(result, data_node, "maxsize");
+    checkAndGetLeaf(result, data_node, "maxver");
+    checkAndGetLeaf(result, data_node, "pattern");
+
+    return (result->empty() ? ElementPtr() : result);
 }
 
 ElementPtr
-TranslatorLogger::getOutputOptions(const string& xpath) {
-    return getList(xpath + "/output-option", *this,
+TranslatorLogger::getOutputOptions(DataNode const& data_node) {
+    return getList(data_node, "output-option", *this,
                    &TranslatorLogger::getOutputOption);
 }
 
 void
-TranslatorLogger::setLogger(const string& xpath, ConstElementPtr elem) {
+TranslatorLogger::setLogger(string const& xpath, ConstElementPtr elem) {
     try {
         if ((model_ == KEA_DHCP4_SERVER) ||
             (model_ == KEA_DHCP6_SERVER) ||
@@ -117,70 +91,46 @@ TranslatorLogger::setLogger(const string& xpath, ConstElementPtr elem) {
             isc_throw(NotImplemented,
                       "setLogger not implemented for the model: " << model_);
         }
-    } catch (const sysrepo_exception& ex) {
-        isc_throw(SysrepoError,
-                  "sysrepo error setting logger '" << elem->str()
-                  << "' at '" << xpath << "': " << ex.what());
+    } catch (Error const& ex) {
+        isc_throw(NetconfError,
+                  "setting logger '" << elem->str()
+                  << "' : " << ex.what());
     }
 }
 
 void
-TranslatorLogger::setLoggerKea(const string& xpath, ConstElementPtr elem) {
-    // Skip name as it is the key.
-    ConstElementPtr options = elem->get("output_options");
-    if (options && (options->size() > 0)) {
+TranslatorLogger::setLoggerKea(string const& xpath, ConstElementPtr elem) {
+    // Set the list element. This is important in case we have no other elements except the key.
+    setItem(xpath, ElementPtr(), LeafBaseType::Unknown);
+
+    // Skip key "name" since it was set with the list element in the call above
+    // with the LeafBaseType::Unknown parameter.
+
+    checkAndSetLeaf(elem, xpath, "debuglevel", LeafBaseType::Uint8);
+    checkAndSetLeaf(elem, xpath, "severity", LeafBaseType::Enum);
+    checkAndSetUserContext(elem, xpath);
+
+    ConstElementPtr options = elem->get("output-options");
+    if (options && !options->empty()) {
         setOutputOptions(xpath, options);
     }
-    ConstElementPtr debuglevel = elem->get("debuglevel");
-    if (debuglevel) {
-        setItem(xpath + "/debuglevel", debuglevel, SR_UINT8_T);
-    }
-    ConstElementPtr severity = elem->get("severity");
-    if (severity) {
-        setItem(xpath + "/severity", severity, SR_ENUM_T);
-    }
-    ConstElementPtr context = Adaptor::getContext(elem);
-    if (context) {
-        setItem(xpath + "/user-context", Element::create(context->str()),
-                SR_STRING_T);
-    }
 }
 
 void
-TranslatorLogger::setOutputOption(const string& xpath, ConstElementPtr elem) {
-    bool created = false;
-    // Skip output as it is the key.
-    ConstElementPtr maxver = elem->get("maxver");
-    if (maxver) {
-        setItem(xpath + "/maxver", maxver, SR_UINT32_T);
-        created = true;
-    }
-    ConstElementPtr maxsize = elem->get("maxsize");
-    if (maxsize) {
-        setItem(xpath + "/maxsize", maxsize, SR_UINT32_T);
-        created = true;
-    }
-    ConstElementPtr flush = elem->get("flush");
-    if (flush) {
-        setItem(xpath + "/flush", flush, SR_BOOL_T);
-        created = true;
-    }
-    ConstElementPtr pattern = elem->get("pattern");
-    if (pattern) {
-        setItem(xpath + "/pattern", pattern, SR_STRING_T);
-        created = true;
-    }
-    // There is no mandatory fields outside the key so force creation.
-    if (!created) {
-        ConstElementPtr list = Element::createList();
-        setItem(xpath, list, SR_LIST_T);
-    }
+TranslatorLogger::setOutputOption(string const& xpath, ConstElementPtr elem) {
+    // Keys are set by setting the list itself.
+    setItem(xpath, ElementPtr(), LeafBaseType::Unknown);
+
+    checkAndSetLeaf(elem, xpath, "flush", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "maxsize", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "maxver", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "pattern", LeafBaseType::String);
 }
 
 void
-TranslatorLogger::setOutputOptions(const string& xpath, ConstElementPtr elem) {
+TranslatorLogger::setOutputOptions(string const& xpath, ConstElementPtr elem) {
     for (size_t i = 0; i < elem->size(); ++i) {
-        ConstElementPtr option = elem->get(i);
+        ElementPtr option = elem->getNonConst(i);
         if (!option->contains("output")) {
             isc_throw(BadValue, "output-option without output: "
                       << option->str());
@@ -192,40 +142,45 @@ TranslatorLogger::setOutputOptions(const string& xpath, ConstElementPtr elem) {
     }
 }
 
-TranslatorLoggers::TranslatorLoggers(S_Session session, const string& model)
-    : TranslatorBasic(session, model),
+TranslatorLoggers::TranslatorLoggers(Session session, const string& model)
+    : Translator(session, model),
       TranslatorLogger(session, model) {
 }
 
-TranslatorLoggers::~TranslatorLoggers() {
-}
-
 ConstElementPtr
-TranslatorLoggers::getLoggers(const string& xpath) {
+TranslatorLoggers::getLoggers(DataNode const& data_node) {
     try {
         if ((model_ == KEA_DHCP4_SERVER) ||
             (model_ == KEA_DHCP6_SERVER) ||
             (model_ == KEA_DHCP_DDNS) ||
             (model_ == KEA_CTRL_AGENT)) {
-            return (getLoggersKea(xpath));
+            return (getLoggersKea(data_node));
         }
-    } catch (const sysrepo_exception& ex) {
-        isc_throw(SysrepoError,
-                  "sysrepo error getting loggeres at '" << xpath
-                  << "': " << ex.what());
+    } catch (Error const& ex) {
+        isc_throw(NetconfError,
+                  "getting loggers: " << ex.what());
     }
     isc_throw(NotImplemented,
               "getLoggers not implemented for the model: " << model_);
 }
 
+ConstElementPtr
+TranslatorLoggers::getLoggersFromAbsoluteXpath(string const& xpath) {
+    try {
+        return getLoggers(findXPath(xpath));
+    } catch (NetconfError const&) {
+        return ElementPtr();
+    }
+}
+
 ElementPtr
-TranslatorLoggers::getLoggersKea(const string& xpath) {
-    return getList<TranslatorLogger>(xpath + "/logger", *this,
+TranslatorLoggers::getLoggersKea(DataNode const& data_node) {
+    return getList<TranslatorLogger>(data_node, "logger", *this,
                                      &TranslatorLogger::getLogger);
 }
 
 void
-TranslatorLoggers::setLoggers(const string& xpath, ConstElementPtr elem) {
+TranslatorLoggers::setLoggers(string const& xpath, ConstElementPtr elem) {
     try {
         if ((model_ == KEA_DHCP4_SERVER) ||
             (model_ == KEA_DHCP6_SERVER) ||
@@ -236,17 +191,17 @@ TranslatorLoggers::setLoggers(const string& xpath, ConstElementPtr elem) {
             isc_throw(NotImplemented,
                       "setLoggers not implemented for the model: " << model_);
         }
-    } catch (const sysrepo_exception& ex) {
-        isc_throw(SysrepoError,
-                  "sysrepo error setting loggeres '" << elem->str()
-                  << "' at '" << xpath << "': " << ex.what());
+    } catch (Error const& ex) {
+        isc_throw(NetconfError,
+                  "setting loggers '" << elem->str()
+                  << "' : " << ex.what());
     }
 }
 
 void
-TranslatorLoggers::setLoggersKea(const string& xpath, ConstElementPtr elem) {
+TranslatorLoggers::setLoggersKea(string const& xpath, ConstElementPtr elem) {
     for (size_t i = 0; i < elem->size(); ++i) {
-        ConstElementPtr logger = elem->get(i);
+        ElementPtr logger = elem->getNonConst(i);
         if (!logger->contains("name")) {
             isc_throw(BadValue, "logger without name: " << logger->str());
         }

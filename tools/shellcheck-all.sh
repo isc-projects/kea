@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2020-2021 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2020-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -55,7 +55,25 @@ done
 root_path=$(cd "$(dirname "${0}")/.." && pwd)
 cd "${root_path}"
 
-# shellcheck disable=SC2046
-# SC2046: Quote this to prevent word splitting.
+# Disable shellcheck warnings:
+# SC2119: Use "$@" if function's $1 should mean script's $1.
+# SC3043: In POSIX sh, 'local' is undefined.
+shellcheck_opts="--exclude=SC2119 --exclude=SC3043"
+
+files="$(find . -type f -name '*.sh' -or -name '*.sh.in' | sort)"
+
+# Add shell script files that don't end in .sh or .sh.in.
+for i in \
+  src/bin/admin/kea-admin.in \
+  src/bin/keactrl/keactrl.conf.in \
+  src/bin/keactrl/keactrl.in \
+; do
+  if test -f "${i}"; then
+    files="${files} ${i}"
+  fi
+done
+
+# shellcheck disable=SC2086
+# SC2086: Double quote to prevent globbing and word splitting.
 # Reason: We explicitly want the parameters split.
-shellcheck $(grep -F 'SHELLCHECK_OPTS:' ./.gitlab-ci.yml | cut -d '"' -f 2 | xargs | sort -uV) $(grep -F 'SCRIPTS+=' ./.gitlab-ci.yml | cut -d '"' -f 2 | xargs | sort -uV)
+shellcheck ${shellcheck_opts} ${files}

@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,7 +10,7 @@
 #include <agent/ca_process.h>
 #include <agent/ca_command_mgr.h>
 #include <agent/parser_context.h>
-#include <cfgrpt/config_report.h>
+#include <process/cfgrpt/config_report.h>
 #include <functional>
 
 using namespace isc::process;
@@ -59,6 +59,9 @@ CtrlAgentController::registerCommands() {
     CtrlAgentCommandMgr::instance().registerCommand(CONFIG_GET_COMMAND,
         std::bind(&DControllerBase::configGetHandler, this, ph::_1, ph::_2));
 
+    CtrlAgentCommandMgr::instance().registerCommand(CONFIG_HASH_GET_COMMAND,
+        std::bind(&DControllerBase::configHashGetHandler, this, ph::_1, ph::_2));
+
     CtrlAgentCommandMgr::instance().registerCommand(CONFIG_RELOAD_COMMAND,
         std::bind(&DControllerBase::configReloadHandler, this, ph::_1, ph::_2));
 
@@ -85,6 +88,7 @@ void
 CtrlAgentController::deregisterCommands() {
     CtrlAgentCommandMgr::instance().deregisterCommand(BUILD_REPORT_COMMAND);
     CtrlAgentCommandMgr::instance().deregisterCommand(CONFIG_GET_COMMAND);
+    CtrlAgentCommandMgr::instance().deregisterCommand(CONFIG_HASH_GET_COMMAND);
     CtrlAgentCommandMgr::instance().deregisterCommand(CONFIG_RELOAD_COMMAND);
     CtrlAgentCommandMgr::instance().deregisterCommand(CONFIG_SET_COMMAND);
     CtrlAgentCommandMgr::instance().deregisterCommand(CONFIG_TEST_COMMAND);
@@ -105,9 +109,6 @@ CtrlAgentProcessPtr
 CtrlAgentController::getCtrlAgentProcess() {
     return (boost::dynamic_pointer_cast<CtrlAgentProcess>(getProcess()));
 }
-
-// Refer to config_report so it will be embedded in the binary.
-const char* const* ca_config_report = isc::detail::config_report;
 
 } // namespace isc::agent
 } // namespace isc

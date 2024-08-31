@@ -1,0 +1,91 @@
+@startuml
+
+label _ [
+
+  {{
+    title RADIUS workflow for lease allocation in the DHCPv4 server
+    :Packet Received;
+    :Subnet Selection;
+    start
+    partition "**subnet4_select** callout" {
+      :Retrieve reservation from host cache for the current host and subnet.;
+      if (Reservation found?) then (yes)
+        if (Reservation for a different subnet?) then (yes)
+          :Reselect the subnet to the one from the reservation.;
+        else (no)
+        endif
+        :Retrieve reservation from host cache again in case the subnet was reselected.;
+        if (Reservation with cached attributes?) then (yes)
+          :Use cached attributes from the reservation.;
+          stop
+        else (no)
+        endif
+      else (no)
+      endif
+      :Send Access-Request.;
+      if (Response) then (Access-Accept)
+        if (Framed-IP-Address attribute present?) then (yes)
+          :Reselect subnet to match a subnet the contains the IP address.;
+        else (no)
+        endif
+        if (Framed-IP-Pool attribute present?) then (yes)
+          :Reselect subnet to match a subnet guarded by the client class.;
+          :Assign packet to client class represented by the value of Framed-IP-Pool.;
+        else (no)
+        endif
+        :Populate the host cache with the reselected subnet ID and the potential class guard or IP address returned from the RADIUS server.;
+      else (Access-Reject)
+        stop
+      endif
+      stop
+    }
+    partition "**lease4_select**, **lease4_renew**, **lease4_release**, **lease4_decline**, **lease4_expire** callouts"
+      :Send Accounting-Request asynchronously.;
+    }
+  }}
+
+  {{
+    title RADIUS workflow for lease allocation in the DHCPv6 server
+    :Packet Received;
+    :Subnet Selection;
+    start
+    partition "**subnet6_select** callout" {
+      :Retrieve reservation from host cache for the current host and subnet.;
+      if (Reservation found?) then (yes)
+        if (Reservation for a different subnet?) then (yes)
+          :Reselect the subnet to the one from the reservation.;
+        else (no)
+        endif
+        :Retrieve reservation from host cache again in case the subnet was reselected.;
+        if (Reservation with cached attributes?) then (yes)
+          :Use cached attributes from the reservation.;
+          stop
+        else (no)
+        endif
+      else (no)
+      endif
+      :Send Access-Request.;
+      if (Response) then (Access-Accept)
+        if (Framed-IPv6-Address attribute present?) then (yes)
+          :Reselect subnet to match a subnet the contains the IP address.;
+        else (no)
+        endif
+        if (Framed-IP-Pool attribute present?) then (yes)
+          :Reselect subnet to match a subnet guarded by the client class.;
+          :Assign packet to client class represented by the value of Framed-IP-Pool.;
+        else (no)
+        endif
+        :Populate the host cache with the reselected subnet ID and the potential class guard or IP address returned from the RADIUS server.;
+      else (Access-Reject)
+        stop
+      endif
+      stop
+    }
+    partition "**lease6_select**, **lease6_renew**, **lease6_rebind**, **lease6_release**, **lease6_decline**, **lease6_expire** callouts"
+      :Send Accounting-Request asynchronously.;
+    }
+  }}
+
+]
+
+@enduml

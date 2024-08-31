@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2022 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +12,7 @@
 #include <cctype>
 #include <cerrno>
 #include <climits>
+#include <cstdint>
 #include <cstdlib>
 #include <string>
 #include <dhcp4/parser_context.h>
@@ -222,6 +223,15 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"extended-info-checks\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::SANITY_CHECKS:
+        return isc::dhcp::Dhcp4Parser::make_EXTENDED_INFO_CHECKS(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("extended-info-checks", driver.loc_);
+    }
+}
+
 \"dhcp-socket-type\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::INTERFACES_CONFIG:
@@ -391,6 +401,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser4Context::HOSTS_DATABASE:
     case isc::dhcp::Parser4Context::OPTION_DEF:
     case isc::dhcp::Parser4Context::CONFIG_DATABASE:
+    case isc::dhcp::Parser4Context::AUTHENTICATION:
         return isc::dhcp::Dhcp4Parser::make_TYPE(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("type", driver.loc_);
@@ -429,6 +440,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
     case isc::dhcp::Parser4Context::HOSTS_DATABASE:
     case isc::dhcp::Parser4Context::CONFIG_DATABASE:
+    case isc::dhcp::Parser4Context::CLIENTS:
         return isc::dhcp::Dhcp4Parser::make_USER(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("user", driver.loc_);
@@ -440,6 +452,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
     case isc::dhcp::Parser4Context::HOSTS_DATABASE:
     case isc::dhcp::Parser4Context::CONFIG_DATABASE:
+    case isc::dhcp::Parser4Context::CLIENTS:
         return isc::dhcp::Dhcp4Parser::make_PASSWORD(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("password", driver.loc_);
@@ -501,6 +514,39 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"read-timeout\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::LEASE_DATABASE:
+    case isc::dhcp::Parser4Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser4Context::CONFIG_DATABASE:
+        return isc::dhcp::Dhcp4Parser::make_READ_TIMEOUT(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("read-timeout", driver.loc_);
+    }
+}
+
+\"write-timeout\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::LEASE_DATABASE:
+    case isc::dhcp::Parser4Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser4Context::CONFIG_DATABASE:
+        return isc::dhcp::Dhcp4Parser::make_WRITE_TIMEOUT(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("write-timeout", driver.loc_);
+    }
+}
+
+\"tcp-user-timeout\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::LEASE_DATABASE:
+    case isc::dhcp::Parser4Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser4Context::CONFIG_DATABASE:
+        return isc::dhcp::Dhcp4Parser::make_TCP_USER_TIMEOUT(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("tcp-user-timeout", driver.loc_);
+    }
+}
+
 \"reconnect-wait-time\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
@@ -550,6 +596,17 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"retry-on-startup\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::LEASE_DATABASE:
+    case isc::dhcp::Parser4Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser4Context::CONFIG_DATABASE:
+        return isc::dhcp::Dhcp4Parser::make_RETRY_ON_STARTUP(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("retry-on-startup", driver.loc_);
+    }
+}
+
 \"max-reconnect-tries\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
@@ -566,7 +623,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
         return isc::dhcp::Dhcp4Parser::make_MAX_ROW_ERRORS(driver.loc_);
     default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("max_row_errors", driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_STRING("max-row-errors", driver.loc_);
     }
 }
 
@@ -575,6 +632,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
     case isc::dhcp::Parser4Context::HOSTS_DATABASE:
     case isc::dhcp::Parser4Context::CONFIG_DATABASE:
+    case isc::dhcp::Parser4Context::CONTROL_SOCKET:
         return isc::dhcp::Dhcp4Parser::make_TRUST_ANCHOR(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("trust-anchor", driver.loc_);
@@ -586,6 +644,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
     case isc::dhcp::Parser4Context::HOSTS_DATABASE:
     case isc::dhcp::Parser4Context::CONFIG_DATABASE:
+    case isc::dhcp::Parser4Context::CONTROL_SOCKET:
         return isc::dhcp::Dhcp4Parser::make_CERT_FILE(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("cert-file", driver.loc_);
@@ -597,6 +656,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
     case isc::dhcp::Parser4Context::HOSTS_DATABASE:
     case isc::dhcp::Parser4Context::CONFIG_DATABASE:
+    case isc::dhcp::Parser4Context::CONTROL_SOCKET:
         return isc::dhcp::Dhcp4Parser::make_KEY_FILE(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("key-file", driver.loc_);
@@ -696,6 +756,17 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
         return isc::dhcp::Dhcp4Parser::make_PARKED_PACKET_LIMIT(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("parked-packet-limit", driver.loc_);
+    }
+}
+
+\"allocator\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp4Parser::make_ALLOCATOR(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("allocator", driver.loc_);
     }
 }
 
@@ -805,6 +876,65 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"ddns-conflict-resolution-mode\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp4Parser::make_DDNS_CONFLICT_RESOLUTION_MODE(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("ddns-conflict-resolution-mode", driver.loc_);
+    }
+}
+
+(?i:\"check-with-dhcid\") {
+    if (driver.ctx_ == isc::dhcp::Parser4Context::DDNS_CONFLICT_RESOLUTION_MODE) {
+        return isc::dhcp::Dhcp4Parser::make_CHECK_WITH_DHCID(driver.loc_);
+    }
+    std::string tmp(yytext+1);
+    tmp.resize(tmp.size() - 1);
+    return isc::dhcp::Dhcp4Parser::make_STRING(tmp, driver.loc_);
+}
+
+(?i:\"no-check-with-dhcid\") {
+    if (driver.ctx_ == isc::dhcp::Parser4Context::DDNS_CONFLICT_RESOLUTION_MODE) {
+        return isc::dhcp::Dhcp4Parser::make_NO_CHECK_WITH_DHCID(driver.loc_);
+    }
+    std::string tmp(yytext+1);
+    tmp.resize(tmp.size() - 1);
+    return isc::dhcp::Dhcp4Parser::make_STRING(tmp, driver.loc_);
+}
+
+(?i:\"check-exists-with-dhcid\") {
+    if (driver.ctx_ == isc::dhcp::Parser4Context::DDNS_CONFLICT_RESOLUTION_MODE) {
+        return isc::dhcp::Dhcp4Parser::make_CHECK_EXISTS_WITH_DHCID(driver.loc_);
+    }
+    std::string tmp(yytext+1);
+    tmp.resize(tmp.size() - 1);
+    return isc::dhcp::Dhcp4Parser::make_STRING(tmp, driver.loc_);
+}
+
+(?i:\"no-check-without-dhcid\") {
+    if (driver.ctx_ == isc::dhcp::Parser4Context::DDNS_CONFLICT_RESOLUTION_MODE) {
+        return isc::dhcp::Dhcp4Parser::make_NO_CHECK_WITHOUT_DHCID(driver.loc_);
+    }
+    std::string tmp(yytext+1);
+    tmp.resize(tmp.size() - 1);
+    return isc::dhcp::Dhcp4Parser::make_STRING(tmp, driver.loc_);
+}
+
+
+\"ddns-ttl-percent\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp4Parser::make_DDNS_TTL_PERCENT(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("ddns-ttl-percent", driver.loc_);
+    }
+}
+
 \"subnet4\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -893,6 +1023,15 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"never-send\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::OPTION_DATA:
+        return isc::dhcp::Dhcp4Parser::make_NEVER_SEND(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("never-send", driver.loc_);
+    }
+}
+
 \"pools\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
@@ -911,6 +1050,15 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"pool-id\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::POOLS:
+        return isc::dhcp::Dhcp4Parser::make_POOL_ID(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("pool-id", driver.loc_);
+    }
+}
+
 \"user-context\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -923,6 +1071,8 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser4Context::RESERVATIONS:
     case isc::dhcp::Parser4Context::CLIENT_CLASSES:
     case isc::dhcp::Parser4Context::CONTROL_SOCKET:
+    case isc::dhcp::Parser4Context::AUTHENTICATION:
+    case isc::dhcp::Parser4Context::CLIENTS:
     case isc::dhcp::Parser4Context::DHCP_QUEUE_CONTROL:
     case isc::dhcp::Parser4Context::DHCP_MULTI_THREADING:
     case isc::dhcp::Parser4Context::LOGGERS:
@@ -945,6 +1095,8 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser4Context::RESERVATIONS:
     case isc::dhcp::Parser4Context::CLIENT_CLASSES:
     case isc::dhcp::Parser4Context::CONTROL_SOCKET:
+    case isc::dhcp::Parser4Context::AUTHENTICATION:
+    case isc::dhcp::Parser4Context::CLIENTS:
     case isc::dhcp::Parser4Context::DHCP_QUEUE_CONTROL:
     case isc::dhcp::Parser4Context::DHCP_MULTI_THREADING:
     case isc::dhcp::Parser4Context::LOGGERS:
@@ -980,62 +1132,6 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
         return isc::dhcp::Dhcp4Parser::make_ID(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("id", driver.loc_);
-    }
-}
-
-\"reservation-mode\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::DHCP4:
-    case isc::dhcp::Parser4Context::SUBNET4:
-    case isc::dhcp::Parser4Context::SHARED_NETWORK:
-        return isc::dhcp::Dhcp4Parser::make_RESERVATION_MODE(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("reservation-mode", driver.loc_);
-    }
-}
-
-\"disabled\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::RESERVATION_MODE:
-        return isc::dhcp::Dhcp4Parser::make_DISABLED(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("disabled", driver.loc_);
-    }
-}
-
-\"off\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::RESERVATION_MODE:
-        return isc::dhcp::Dhcp4Parser::make_DISABLED(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("off", driver.loc_);
-    }
-}
-
-\"out-of-pool\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::RESERVATION_MODE:
-        return isc::dhcp::Dhcp4Parser::make_OUT_OF_POOL(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("out-of-pool", driver.loc_);
-    }
-}
-
-\"global\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::RESERVATION_MODE:
-        return isc::dhcp::Dhcp4Parser::make_GLOBAL(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("global", driver.loc_);
-    }
-}
-
-\"all\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::RESERVATION_MODE:
-        return isc::dhcp::Dhcp4Parser::make_ALL(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("all", driver.loc_);
     }
 }
 
@@ -1165,6 +1261,15 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"output-options\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::LOGGERS:
+        return isc::dhcp::Dhcp4Parser::make_OUTPUT_OPTIONS(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("output-options", driver.loc_);
+    }
+}
+
 \"output\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::OUTPUT_OPTIONS:
@@ -1267,6 +1372,15 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
         return isc::dhcp::Dhcp4Parser::make_TEST(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("test", driver.loc_);
+    }
+}
+
+\"template-test\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::CLIENT_CLASSES:
+        return isc::dhcp::Dhcp4Parser::make_TEMPLATE_TEST(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("template-test", driver.loc_);
     }
 }
 
@@ -1406,7 +1520,6 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 
 \"ip-address\" {
     switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::RELAY:
     case isc::dhcp::Parser4Context::RESERVATIONS:
     return isc::dhcp::Dhcp4Parser::make_IP_ADDRESS(driver.loc_);
     default:
@@ -1568,6 +1681,15 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"control-sockets\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+        return isc::dhcp::Dhcp4Parser::make_CONTROL_SOCKETS(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("control-sockets", driver.loc_);
+    }
+}
+
 \"socket-type\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::CONTROL_SOCKET:
@@ -1577,12 +1699,129 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"unix\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::CONTROL_SOCKET_TYPE:
+        return isc::dhcp::Dhcp4Parser::make_UNIX(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("unix", driver.loc_);
+    }
+}
+
+\"http\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::CONTROL_SOCKET_TYPE:
+        return isc::dhcp::Dhcp4Parser::make_HTTP(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("http", driver.loc_);
+    }
+}
+
+\"https\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::CONTROL_SOCKET_TYPE:
+        return isc::dhcp::Dhcp4Parser::make_HTTPS(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("https", driver.loc_);
+    }
+}
+
 \"socket-name\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::CONTROL_SOCKET:
         return isc::dhcp::Dhcp4Parser::make_SOCKET_NAME(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("socket-name", driver.loc_);
+    }
+}
+
+\"socket-address\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::CONTROL_SOCKET:
+        return isc::dhcp::Dhcp4Parser::make_SOCKET_ADDRESS(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("socket-address", driver.loc_);
+    }
+}
+
+\"socket-port\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::CONTROL_SOCKET:
+        return isc::dhcp::Dhcp4Parser::make_SOCKET_PORT(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("socket-port", driver.loc_);
+    }
+}
+
+\"authentication\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::CONTROL_SOCKET:
+        return isc::dhcp::Dhcp4Parser::make_AUTHENTICATION(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("authentication", driver.loc_);
+    }
+}
+
+\"basic\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::AUTH_TYPE:
+        return isc::dhcp::Dhcp4Parser::make_BASIC(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("basic", driver.loc_);
+    }
+}
+
+\"realm\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::AUTHENTICATION:
+        return isc::dhcp::Dhcp4Parser::make_REALM(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("realm", driver.loc_);
+    }
+}
+
+\"directory\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::AUTHENTICATION:
+        return isc::dhcp::Dhcp4Parser::make_DIRECTORY(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("directory", driver.loc_);
+    }
+}
+
+\"clients\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::AUTHENTICATION:
+        return isc::dhcp::Dhcp4Parser::make_CLIENTS(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("clients", driver.loc_);
+    }
+}
+
+\"user-file\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::CLIENTS:
+        return isc::dhcp::Dhcp4Parser::make_USER_FILE(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("user-file", driver.loc_);
+    }
+}
+
+\"password-file\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::CLIENTS:
+        return isc::dhcp::Dhcp4Parser::make_PASSWORD_FILE(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("password-file", driver.loc_);
+    }
+}
+
+\"cert-required\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::CONTROL_SOCKET:
+        return isc::dhcp::Dhcp4Parser::make_CERT_REQUIRED(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("cert-required", driver.loc_);
     }
 }
 
@@ -1637,15 +1876,6 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
         return isc::dhcp::Dhcp4Parser::make_ENABLE_UPDATES(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("enable-updates", driver.loc_);
-    }
-}
-
-\"qualifying-suffix\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::DHCP_DDNS:
-        return isc::dhcp::Dhcp4Parser::make_QUALIFYING_SUFFIX(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("qualifying-suffix", driver.loc_);
     }
 }
 
@@ -1712,46 +1942,9 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
-\"override-no-update\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::DHCP_DDNS:
-        return isc::dhcp::Dhcp4Parser::make_OVERRIDE_NO_UPDATE(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("override-no-update", driver.loc_);
-    }
-}
-
-\"override-client-update\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::DHCP_DDNS:
-        return isc::dhcp::Dhcp4Parser::make_OVERRIDE_CLIENT_UPDATE(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("override-client-update", driver.loc_);
-    }
-}
-
-\"replace-client-name\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::DHCP_DDNS:
-        return isc::dhcp::Dhcp4Parser::make_REPLACE_CLIENT_NAME(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("replace-client-name", driver.loc_);
-    }
-}
-
-\"generated-prefix\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::DHCP_DDNS:
-        return isc::dhcp::Dhcp4Parser::make_GENERATED_PREFIX(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("generated-prefix", driver.loc_);
-    }
-}
-
 \"hostname-char-set\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
-    case isc::dhcp::Parser4Context::DHCP_DDNS:
     case isc::dhcp::Parser4Context::SUBNET4:
     case isc::dhcp::Parser4Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp4Parser::make_HOSTNAME_CHAR_SET(driver.loc_);
@@ -1763,7 +1956,6 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 \"hostname-char-replacement\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
-    case isc::dhcp::Parser4Context::DHCP_DDNS:
     case isc::dhcp::Parser4Context::SUBNET4:
     case isc::dhcp::Parser4Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp4Parser::make_HOSTNAME_CHAR_REPLACEMENT(driver.loc_);
@@ -2001,6 +2193,54 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
         return isc::dhcp::Dhcp4Parser::make_LENIENT_OPTION_PARSING(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("lenient-option-parsing", driver.loc_);
+    }
+}
+
+\"ignore-dhcp-server-identifier\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::COMPATIBILITY:
+        return isc::dhcp::Dhcp4Parser::make_IGNORE_DHCP_SERVER_ID(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("ignore-dhcp-server-identifier", driver.loc_);
+    }
+}
+
+\"ignore-rai-link-selection\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::COMPATIBILITY:
+        return isc::dhcp::Dhcp4Parser::make_IGNORE_RAI_LINK_SEL(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("ignore-rai-link-selection", driver.loc_);
+    }
+}
+
+\"exclude-first-last-24\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::COMPATIBILITY:
+        return isc::dhcp::Dhcp4Parser::make_EXCLUDE_FIRST_LAST_24(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("exclude-first-last-24", driver.loc_);
+    }
+}
+
+\"offer-lifetime\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::CLIENT_CLASSES:
+        return isc::dhcp::Dhcp4Parser::make_OFFER_LFT(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("offer-lifetime", driver.loc_);
+    }
+}
+
+\"stash-agent-options\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+        return isc::dhcp::Dhcp4Parser::make_STASH_AGENT_OPTIONS(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("stash-agent-options", driver.loc_);
     }
 }
 

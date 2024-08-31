@@ -1,11 +1,11 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef NAME_INTERNAL_H
-#define NAME_INTERNAL_H 1
+#define NAME_INTERNAL_H
 
 // This is effectively a "private" namespace for the Name class implementation,
 // but exposed publicly so the definitions in it can be shared with other
@@ -29,7 +29,3 @@ extern const uint8_t maptolower[];
 } // end of dns
 } // end of isc
 #endif // NAME_INTERNAL_H
-
-// Local Variables:
-// mode: c++
-// End:

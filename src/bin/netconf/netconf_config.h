@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,17 +7,16 @@
 #ifndef NETCONF_CONFIG_H
 #define NETCONF_CONFIG_H
 
-#include <cc/data.h>
 #include <cc/cfg_to_element.h>
-#include <cc/user_context.h>
+#include <cc/data.h>
 #include <cc/simple_parser.h>
-#include <http/url.h>
+#include <cc/user_context.h>
 #include <exceptions/exceptions.h>
+#include <http/url.h>
 
-#include <boost/foreach.hpp>
-
-#include <stdint.h>
+#include <cstdint>
 #include <string>
+#include <unordered_map>
 
 namespace isc {
 namespace netconf {
@@ -75,7 +74,7 @@ public:
         UNIX,    //< Unix socket.
         HTTP,    //< HTTP socket.
         STDOUT   //< standard output.
-    };
+    };  // Type
 
     /// @brief Constructor.
     ///
@@ -127,7 +126,7 @@ public:
     /// @brief Unparse a configuration object
     ///
     /// @return a pointer to a configuration
-    virtual isc::data::ElementPtr toElement() const;
+    isc::data::ElementPtr toElement() const override final;
 
 private:
     /// @brief The socket type.
@@ -138,10 +137,10 @@ private:
 
     /// @brief The HTTP server URL.
     const isc::http::Url url_;
-};
+};  // CfgControlSocket
 
 /// @brief Defines a pointer for CfgControlSocket instances.
-typedef boost::shared_ptr<CfgControlSocket> CfgControlSocketPtr;
+using CfgControlSocketPtr = std::shared_ptr<CfgControlSocket>;
 
 /// @brief Represents a Managed CfgServer.
 ///
@@ -234,7 +233,7 @@ public:
     /// @brief Unparse a configuration object
     ///
     /// @return a pointer to a configuration
-    virtual isc::data::ElementPtr toElement() const;
+    isc::data::ElementPtr toElement() const override final;
 
 private:
     /// @brief The model name.
@@ -267,19 +266,19 @@ private:
 
     /// @brief The control socket.
     CfgControlSocketPtr control_socket_;
-};
+};  // CfgServer
 
 /// @brief Defines a pointer for CfgServer instances.
-typedef boost::shared_ptr<CfgServer> CfgServerPtr;
+using CfgServerPtr = std::shared_ptr<CfgServer>;
 
 /// @brief Defines a map of CfgServers, keyed by the name.
-typedef std::map<std::string, CfgServerPtr> CfgServersMap;
+using CfgServersMap = std::unordered_map<std::string, CfgServerPtr>;
 
 /// @brief Defines a iterator pairing of name and CfgServer
-typedef std::pair<std::string, CfgServerPtr> CfgServersMapPair;
+using CfgServersMapPair = std::pair<std::string, CfgServerPtr>;
 
 /// @brief Defines a pointer to map of CfgServers.
-typedef boost::shared_ptr<CfgServersMap> CfgServersMapPtr;
+using CfgServersMapPtr = std::shared_ptr<CfgServersMap>;
 
 /// @brief Dumps the contents of a CfgServer as text to a output stream.
 ///
@@ -303,7 +302,7 @@ public:
     ///
     /// @return pointer to the new CfgControlSocket instance.
     CfgControlSocketPtr parse(data::ConstElementPtr ctrl_sock_config);
-};
+};  // ControlSocketConfigParser
 
 /// @brief Parser for CfgServer.
 ///
@@ -320,9 +319,9 @@ public:
     /// @param server_config is the value from the "managed-servers" map to parse.
     /// @return pointer to the new CfgServer instance.
     CfgServerPtr parse(data::ConstElementPtr server_config);
-};
+};  // ServerConfigParser
 
 }  // namespace netconf
 }  // namespace isc
 
-#endif // NETCONF_CONFIG_H
+#endif  // NETCONF_CONFIG_H

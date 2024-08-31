@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -310,6 +310,7 @@ public:
     /// timers.
     virtual ~CfgExpirationTimersTest() {
         cleanupTimerMgr();
+        io_service_->stopAndPoll();
     }
 
     /// @brief Stop @c TimerMgr worker thread and remove the timers.
@@ -322,13 +323,14 @@ public:
     ///
     /// @param timeout_ms Amount of time after which the method returns.
     void runTimersWithTimeout(const long timeout_ms) {
-        IntervalTimer timer(*io_service_);
+        IntervalTimer timer(io_service_);
         timer.setup([this]() {
                 io_service_->stop();
         }, timeout_ms, IntervalTimer::ONE_SHOT);
 
         io_service_->run();
-        io_service_->get_io_service().reset();
+        io_service_->stop();
+        io_service_->restart();
     }
 
     /// @brief Setup timers according to the configuration and run them

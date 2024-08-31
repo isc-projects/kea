@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,11 +14,11 @@
 #include <dhcp/option_vendor.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/docsis3_option_defs.h>
-#include <util/io_utilities.h>
+#include <util/io.h>
 #include <exceptions/exceptions.h>
 #include <dhcp/duid.h>
 #include <dhcp/iface_mgr.h>
-
+#include <boost/foreach.hpp>
 #include <iterator>
 #include <iostream>
 #include <sstream>
@@ -44,7 +44,7 @@ std::string Pkt6::RelayInfo::toText() const {
         << "link-address=" << linkaddr_.toText()
         << ", peer-address=" << peeraddr_.toText() << ", "
         << options_.size() << " option(s)" << endl;
-    for (const auto& option : options_) {
+    for (auto const& option : options_) {
         tmp << option.second->toText() << endl;
     }
     return (tmp.str());
@@ -101,7 +101,6 @@ Pkt6::prepareGetAnyRelayOption(const RelaySearchOrder& order,
         direction = 1;
     }
 }
-
 
 OptionPtr
 Pkt6::getNonCopiedAnyRelayOption(const uint16_t option_code,
@@ -168,6 +167,76 @@ Pkt6::getAnyRelayOption(const uint16_t option_code,
     return (OptionPtr());
 }
 
+OptionCollection
+Pkt6::getNonCopiedAllRelayOptions(const uint16_t option_code,
+                                  const RelaySearchOrder& order) const {
+    if (relay_info_.empty()) {
+        // There's no relay info, this is a direct message
+        return (OptionCollection());
+    }
+
+    int start = 0; // First relay to check
+    int end = 0;   // Last relay to check
+    int direction = 0; // How we going to iterate: forward or backward?
+
+    prepareGetAnyRelayOption(order, start, end, direction);
+
+    // This is a tricky loop. It must go from start to end, but it must work in
+    // both directions (start > end; or start < end). We can't use regular
+    // exit condition, because we don't know whether to use i <= end or i >= end.
+    // That's why we check if in the next iteration we would go past the
+    // list (end + direction). It is similar to STL concept of end pointing
+    // to a place after the last element
+    OptionCollection opts;
+    for (int i = start; i != end + direction; i += direction) {
+        std::pair<OptionCollection::const_iterator,
+                  OptionCollection::const_iterator> range =
+            relay_info_[i].options_.equal_range(option_code);
+        opts.insert(range.first, range.second);
+    }
+    return (opts);
+}
+
+OptionCollection
+Pkt6::getAllRelayOptions(const uint16_t option_code,
+                         const RelaySearchOrder& order) {
+
+    if (relay_info_.empty()) {
+        // There's no relay info, this is a direct message
+        return (OptionCollection());
+    }
+
+    int start = 0; // First relay to check
+    int end = 0;   // Last relay to check
+    int direction = 0; // How we going to iterate: forward or backward?
+
+    prepareGetAnyRelayOption(order, start, end, direction);
+
+    // This is a tricky loop. It must go from start to end, but it must work in
+    // both directions (start > end; or start < end). We can't use regular
+    // exit condition, because we don't know whether to use i <= end or i >= end.
+    // That's why we check if in the next iteration we would go past the
+    // list (end + direction). It is similar to STL concept of end pointing
+    // to a place after the last element
+    OptionCollection opts;
+    for (int i = start; i != end + direction; i += direction) {
+        std::pair<OptionCollection::iterator,
+                  OptionCollection::iterator> range =
+            relay_info_[i].options_.equal_range(option_code);
+        // If options should be copied on retrieval, we should now iterate over
+        // matching options, copy them and replace the original ones with new
+        // instances.
+        if (copy_retrieved_options_) {
+            BOOST_FOREACH(auto& opt_it, range) {
+                OptionPtr option_copy = opt_it.second->clone();
+                opt_it.second = option_copy;
+            }
+        }
+        opts.insert(range.first, range.second);
+    }
+    return (opts);
+}
+
 OptionPtr
 Pkt6::getNonCopiedRelayOption(const uint16_t opt_type,
                               const uint8_t relay_level) const {
@@ -207,6 +276,50 @@ Pkt6::getRelayOption(const uint16_t opt_type, const uint8_t relay_level) {
     return (OptionPtr());
 }
 
+OptionCollection
+Pkt6::getNonCopiedRelayOptions(const uint16_t opt_type,
+                               const uint8_t relay_level) const {
+    if (relay_level >= relay_info_.size()) {
+        isc_throw(OutOfRange, "This message was relayed "
+                  << relay_info_.size() << " time(s)."
+                  << " There is no info about "
+                  << relay_level + 1 << " relay.");
+    }
+
+    std::pair<OptionCollection::const_iterator,
+              OptionCollection::const_iterator> range =
+        relay_info_[relay_level].options_.equal_range(opt_type);
+    return (OptionCollection(range.first, range.second));
+}
+
+OptionCollection
+Pkt6::getRelayOptions(const uint16_t opt_type,
+                      const uint8_t relay_level) {
+    if (relay_level >= relay_info_.size()) {
+        isc_throw(OutOfRange, "This message was relayed "
+                  << relay_info_.size() << " time(s)."
+                  << " There is no info about "
+                  << relay_level + 1 << " relay.");
+    }
+
+    OptionCollection options_copy;
+
+    std::pair<OptionCollection::iterator,
+              OptionCollection::iterator> range =
+        relay_info_[relay_level].options_.equal_range(opt_type);
+    // If options should be copied on retrieval, we should now iterate over
+    // matching options, copy them and replace the original ones with new
+    // instances.
+    if (copy_retrieved_options_) {
+        BOOST_FOREACH(auto& opt_it, range) {
+            OptionPtr option_copy = opt_it.second->clone();
+            opt_it.second = option_copy;
+        }
+    }
+    // Finally, return updated options. This can also be empty in some cases.
+    return (OptionCollection(range.first, range.second));
+}
+
 const isc::asiolink::IOAddress&
 Pkt6::getRelay6LinkAddress(uint8_t relay_level) const {
     if (relay_level >= relay_info_.size()) {
@@ -231,7 +344,7 @@ uint16_t Pkt6::getRelayOverhead(const RelayInfo& relay) const {
     uint16_t len = DHCPV6_RELAY_HDR_LEN // fixed header
         + Option::OPTION6_HDR_LEN; // header of the relay-msg option
 
-    for (const auto& opt : relay.options_) {
+    for (auto const& opt : relay.options_) {
         len += (opt.second)->len();
     }
 
@@ -253,13 +366,12 @@ uint16_t Pkt6::calculateRelaySizes() {
 uint16_t Pkt6::directLen() const {
     uint16_t length = DHCPV6_PKT_HDR_LEN; // DHCPv6 header
 
-    for (const auto& it : options_) {
+    for (auto const& it : options_) {
         length += it.second->len();
     }
 
     return (length);
 }
-
 
 void
 Pkt6::pack() {
@@ -292,15 +404,14 @@ Pkt6::packUDP() {
             calculateRelaySizes();
 
             // Now for each relay, we need to...
-            for (vector<RelayInfo>::iterator relay = relay_info_.begin();
-                 relay != relay_info_.end(); ++relay) {
+            for (auto const& relay : relay_info_) {
 
                 // build relay-forw/relay-repl header (see RFC 8415, section 9)
-                buffer_out_.writeUint8(relay->msg_type_);
-                buffer_out_.writeUint8(relay->hop_count_);
-                buffer_out_.writeData(&(relay->linkaddr_.toBytes()[0]),
+                buffer_out_.writeUint8(relay.msg_type_);
+                buffer_out_.writeUint8(relay.hop_count_);
+                buffer_out_.writeData(&(relay.linkaddr_.toBytes()[0]),
                                      isc::asiolink::V6ADDRESS_LEN);
-                buffer_out_.writeData(&relay->peeraddr_.toBytes()[0],
+                buffer_out_.writeData(&relay.peeraddr_.toBytes()[0],
                                      isc::asiolink::V6ADDRESS_LEN);
 
                 // store every option in this relay scope. Usually that will be
@@ -308,7 +419,7 @@ Pkt6::packUDP() {
                 // present here as well (vendor-opts for Cable modems,
                 // subscriber-id, remote-id, options echoed back from Echo
                 // Request Option, etc.)
-                for (const auto& opt : relay->options_) {
+                for (auto const& opt : relay.options_) {
                     (opt.second)->pack(buffer_out_);
                 }
 
@@ -317,7 +428,7 @@ Pkt6::packUDP() {
                 // or outside the loop (if there are no more relays and the
                 // payload is a direct message)
                 buffer_out_.writeUint16(D6O_RELAY_MSG);
-                buffer_out_.writeUint16(relay->relay_msg_len_);
+                buffer_out_.writeUint16(relay.relay_msg_len_);
             }
 
         }
@@ -594,15 +705,11 @@ Pkt6::makeLabel(const DuidPtr duid, const HWAddrPtr& hwaddr) {
     std::stringstream label;
     // DUID should be present at all times, so explicitly inform when
     // it is no present (no info).
-    label << "duid=[" << (duid ? duid->toText() : "no info")
-          << "]";
-
     // HW address is typically not carried in the DHCPv6 messages
     // and can be extracted using various, but not fully reliable,
-    // techniques. If it is not present, don't print anything.
-    if (hwaddr) {
-        label << ", [" << hwaddr->toText() << "]";
-    }
+    // techniques.
+    label << "duid=[" << (duid ? duid->toText() : "no info")
+          << "], [" << (hwaddr ? hwaddr->toText() : "no hwaddr info") << "]";
 
     return (label.str());
 }
@@ -620,28 +727,38 @@ Pkt6::toText() const {
     stringstream tmp;
 
     // First print the basics
-    tmp << "localAddr=[" << local_addr_ << "]:" << local_port_
-        << " remoteAddr=[" << remote_addr_ << "]:" << remote_port_ << endl;
-    tmp << "msgtype=" << static_cast<int>(msg_type_) << "(" << getName(msg_type_)
-        << "), transid=0x" <<
-        hex << transid_ << dec << endl;
+    tmp << "local_address=[" << local_addr_ << "]:" << local_port_
+        << ", remote_address=[" << remote_addr_ << "]:" << remote_port_ << "," << endl;
 
-    // Then print the options
-    for (const auto& opt : options_) {
-        tmp << opt.second->toText() << std::endl;
+    tmp << "msg_type=" << getName(msg_type_) << " (" << static_cast<int>(msg_type_) << ")";
+    tmp << ", trans_id=0x" << hex << transid_ << dec;
+
+    if (!options_.empty()) {
+        tmp << "," << endl << "options:";
+        for (auto const& opt : options_) {
+            try {
+                tmp << endl << opt.second->toText(2);
+            } catch (...) {
+                tmp << "(unknown)" << endl;
+            }
+        }
+
+    } else {
+        tmp << "," << endl << "message contains no options";
     }
 
     // Finally, print the relay information (if present)
     if (!relay_info_.empty()) {
-        tmp << relay_info_.size() << " relay(s):" << endl;
+        tmp << endl << relay_info_.size() << " relay(s):" << endl;
         int cnt = 0;
-        for (const auto& relay : relay_info_) {
+        for (auto const& relay : relay_info_) {
             tmp << "relay[" << cnt++ << "]: " << relay.toText();
         }
     } else {
-        tmp << "No relays traversed." << endl;
+        tmp << endl << "No relays traversed." << endl;
     }
-    return tmp.str();
+
+    return (tmp.str());
 }
 
 DuidPtr
@@ -661,33 +778,6 @@ Pkt6::getClientId() const {
     return (DuidPtr());
 }
 
-isc::dhcp::OptionCollection
-Pkt6::getNonCopiedOptions(const uint16_t opt_type) const {
-    std::pair<OptionCollection::const_iterator,
-              OptionCollection::const_iterator> range = options_.equal_range(opt_type);
-    return (OptionCollection(range.first, range.second));
-}
-
-isc::dhcp::OptionCollection
-Pkt6::getOptions(const uint16_t opt_type) {
-    OptionCollection options_copy;
-
-    std::pair<OptionCollection::iterator,
-              OptionCollection::iterator> range = options_.equal_range(opt_type);
-    // If options should be copied on retrieval, we should now iterate over
-    // matching options, copy them and replace the original ones with new
-    // instances.
-    if (copy_retrieved_options_) {
-        for (OptionCollection::iterator opt_it = range.first;
-             opt_it != range.second; ++opt_it) {
-            OptionPtr option_copy = opt_it->second->clone();
-            opt_it->second = option_copy;
-        }
-    }
-    // Finally, return updated options. This can also be empty in some cases.
-    return (OptionCollection(range.first, range.second));
-}
-
 const char*
 Pkt6::getName(const uint8_t type) {
     static const char* ADVERTISE = "ADVERTISE";
@@ -695,6 +785,8 @@ Pkt6::getName(const uint8_t type) {
     static const char* DECLINE = "DECLINE";
     static const char* INFORMATION_REQUEST = "INFORMATION_REQUEST";
     static const char* LEASEQUERY = "LEASEQUERY";
+    static const char* LEASEQUERY_DATA = "LEASEQUERY_DATA";
+    static const char* LEASEQUERY_DONE = "LEASEQUERY_DONE";
     static const char* LEASEQUERY_REPLY = "LEASEQUERY_REPLY";
     static const char* REBIND = "REBIND";
     static const char* RECONFIGURE = "RECONFIGURE";
@@ -724,6 +816,12 @@ Pkt6::getName(const uint8_t type) {
 
     case DHCPV6_LEASEQUERY:
         return (LEASEQUERY);
+
+    case DHCPV6_LEASEQUERY_DATA:
+        return (LEASEQUERY_DATA);
+
+    case DHCPV6_LEASEQUERY_DONE:
+        return (LEASEQUERY_DONE);
 
     case DHCPV6_LEASEQUERY_REPLY:
         return (LEASEQUERY_REPLY);
@@ -846,11 +944,16 @@ Pkt6::getMACFromIPv6RelayOpt() {
 HWAddrPtr
 Pkt6::getMACFromDocsisModem() {
     HWAddrPtr mac;
-    OptionVendorPtr vendor = boost::dynamic_pointer_cast<
-        OptionVendor>(getNonCopiedOption(D6O_VENDOR_OPTS));
-
-    // Check if this is indeed DOCSIS3 environment
-    if (vendor && vendor->getVendorId() == VENDOR_ID_CABLE_LABS) {
+    OptionVendorPtr vendor;
+    for (auto const& opt : getNonCopiedOptions(D6O_VENDOR_OPTS)) {
+        if (opt.first != D6O_VENDOR_OPTS) {
+            continue;
+        }
+        vendor = boost::dynamic_pointer_cast< OptionVendor>(opt.second);
+        // Check if this is indeed DOCSIS3 environment
+        if (!vendor || vendor->getVendorId() != VENDOR_ID_CABLE_LABS) {
+            continue;
+        }
         // If it is, try to get device-id option
         OptionPtr device_id = vendor->getOption(DOCSIS3_V6_DEVICE_ID);
         if (device_id) {
@@ -858,6 +961,7 @@ Pkt6::getMACFromDocsisModem() {
             if (!device_id->getData().empty()) {
                 mac.reset(new HWAddr(device_id->getData(), HTYPE_DOCSIS));
                 mac->source_ = HWAddr::HWADDR_SOURCE_DOCSIS_MODEM;
+                break;
             }
         }
     }
@@ -867,25 +971,32 @@ Pkt6::getMACFromDocsisModem() {
 
 HWAddrPtr
 Pkt6::getMACFromDocsisCMTS() {
-    HWAddrPtr mac;
+    if (relay_info_.empty()) {
+        return (HWAddrPtr());
+    }
 
     // If the message passed through a CMTS, there'll
     // CMTS-specific options in it.
-    if (!relay_info_.empty()) {
-        OptionVendorPtr vendor = boost::dynamic_pointer_cast<
-            OptionVendor>(getAnyRelayOption(D6O_VENDOR_OPTS,
-                                            RELAY_SEARCH_FROM_CLIENT));
-
+    HWAddrPtr mac;
+    OptionVendorPtr vendor;
+    for (auto const& opt : getAllRelayOptions(D6O_VENDOR_OPTS,
+                                              RELAY_SEARCH_FROM_CLIENT)) {
+        if (opt.first != D6O_VENDOR_OPTS) {
+            continue;
+        }
+        vendor = boost::dynamic_pointer_cast< OptionVendor>(opt.second);
         // Check if this is indeed DOCSIS3 environment
-        if (vendor && vendor->getVendorId() == VENDOR_ID_CABLE_LABS) {
-            // Try to get cable modem mac
-            OptionPtr cm_mac = vendor->getOption(DOCSIS3_V6_CMTS_CM_MAC);
+        if (!vendor || vendor->getVendorId() != VENDOR_ID_CABLE_LABS) {
+            continue;
+        }
+        // Try to get cable modem mac
+        OptionPtr cm_mac = vendor->getOption(DOCSIS3_V6_CMTS_CM_MAC);
 
-            // If the option contains any data, use it as MAC address
-            if (cm_mac && !cm_mac->getData().empty()) {
-                mac.reset(new HWAddr(cm_mac->getData(), HTYPE_DOCSIS));
-                mac->source_ = HWAddr::HWADDR_SOURCE_DOCSIS_CMTS;
-            }
+        // If the option contains any data, use it as MAC address
+        if (cm_mac && !cm_mac->getData().empty()) {
+            mac.reset(new HWAddr(cm_mac->getData(), HTYPE_DOCSIS));
+            mac->source_ = HWAddr::HWADDR_SOURCE_DOCSIS_CMTS;
+            break;
         }
     }
 

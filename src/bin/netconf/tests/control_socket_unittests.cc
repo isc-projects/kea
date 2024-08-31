@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,10 +6,6 @@
 
 #include <config.h>
 
-#include <netconf/netconf_config.h>
-#include <netconf/http_control_socket.h>
-#include <netconf/stdout_control_socket.h>
-#include <netconf/unix_control_socket.h>
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
@@ -19,14 +15,19 @@
 #include <http/response_creator_factory.h>
 #include <http/response_json.h>
 #include <http/tests/response_test.h>
-#include <testutils/threaded_test.h>
+#include <netconf/http_control_socket.h>
+#include <netconf/netconf_config.h>
+#include <netconf/stdout_control_socket.h>
+#include <netconf/unix_control_socket.h>
 #include <testutils/sandbox.h>
+#include <testutils/threaded_test.h>
 #include <yang/tests/sysrepo_setup.h>
 
-#include <gtest/gtest.h>
-
+#include <iostream>
 #include <sstream>
 #include <thread>
+
+#include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;
@@ -42,7 +43,7 @@ using isc::yang::test::SysrepoSetup;
 namespace {
 
 /// @brief Type definition for the pointer to Thread objects.
-typedef boost::shared_ptr<thread> ThreadPtr;
+using ThreadPtr = shared_ptr<thread>;
 
 //////////////////////////////// STDOUT ////////////////////////////////
 
@@ -58,14 +59,10 @@ public:
     TestStdoutControlSocket(CfgControlSocketPtr ctrl_sock, ostream& output)
         : StdoutControlSocket(ctrl_sock, output) {
     }
-
-    /// @brief Destructor.
-    virtual ~TestStdoutControlSocket() {
-    }
-};
+};  // TestStdoutControlSocket
 
 /// @brief Type definition for the pointer to the @c TestStdoutControlSocket.
-typedef boost::shared_ptr<TestStdoutControlSocket> TestStdoutControlSocketPtr;
+using TestStdoutControlSocketPtr = shared_ptr<TestStdoutControlSocket>;
 
 // Verifies that the createControlSocket template can create a stdout
 // control socket.
@@ -75,10 +72,10 @@ TEST(StdoutControlSocketTest, createControlSocket) {
                                      "",
                                      Url("http://127.0.0.1:8000/")));
     ASSERT_TRUE(cfg);
-    ControlSocketBasePtr cs = createControlSocket(cfg);
+    ControlSocketBasePtr cs = controlSocketFactory(cfg);
     ASSERT_TRUE(cs);
     StdoutControlSocketPtr scs =
-        boost::dynamic_pointer_cast<StdoutControlSocket>(cs);
+        dynamic_pointer_cast<StdoutControlSocket>(cs);
     EXPECT_TRUE(scs);
 }
 
@@ -91,7 +88,8 @@ TEST(StdoutControlSocketTest, configGet) {
     ASSERT_TRUE(cfg);
     StdoutControlSocketPtr scs(new StdoutControlSocket(cfg));
     ASSERT_TRUE(scs);
-    EXPECT_THROW(scs->configGet("foo"), NotImplemented);
+    EXPECT_THROW_MSG(scs->configGet("foo"), NotImplemented,
+                     "No config-get for stdout control socket");
 }
 
 // Verifies that a stdout control socket does not nothing for configTest.
@@ -104,7 +102,7 @@ TEST(StdoutControlSocketTest, configTest) {
     StdoutControlSocketPtr scs(new StdoutControlSocket(cfg));
     ASSERT_TRUE(scs);
     ConstElementPtr answer;
-    ASSERT_NO_THROW_LOG(answer = scs->configTest(ConstElementPtr(), "foo"));
+    ASSERT_NO_THROW_LOG(answer = scs->configTest(ElementPtr(), "foo"));
 
     // Check answer.
     ASSERT_TRUE(answer);
@@ -121,7 +119,7 @@ TEST(StdoutControlSocketTest, configSet) {
     ostringstream os;
     TestStdoutControlSocketPtr tscs(new TestStdoutControlSocket(cfg, os));
     ASSERT_TRUE(tscs);
-    ConstElementPtr json = Element::fromJSON("{ \"bar\": 1 }");
+    ElementPtr json = Element::fromJSON("{ \"bar\": 1 }");
     ConstElementPtr answer;
     ASSERT_NO_THROW_LOG(answer = tscs->configSet(json, "foo"));
 
@@ -137,7 +135,7 @@ TEST(StdoutControlSocketTest, configSet) {
 //////////////////////////////// UNIX ////////////////////////////////
 
 /// @brief Test timeout in ms.
-const long TEST_TIMEOUT = 10000;
+const long TEST_TIMEOUT = 1500;
 
 /// @brief Test fixture class for unix control sockets.
 class UnixControlSocketTest : public ThreadedTest {
@@ -146,9 +144,8 @@ public:
 
     /// @brief Constructor.
     UnixControlSocketTest()
-        : ThreadedTest(), io_service_() {
+        : ThreadedTest(), io_service_(new IOService()) {
     }
-
 
     void SetUp() override {
         SysrepoSetup::cleanSharedMemory();
@@ -160,11 +157,8 @@ public:
             thread_->join();
             thread_.reset();
         }
-        // io_service must be stopped after the thread returns,
-        // otherwise the thread may never return if it is
-        // waiting for the completion of some asynchronous tasks.
-        io_service_.stop();
         removeUnixSocketFile();
+        io_service_->stopAndPoll();
     }
 
     /// @brief Returns socket file path.
@@ -173,10 +167,10 @@ public:
     /// socket file is created in the location pointed to by this variable.
     /// Otherwise, it is created in the build directory.
     string unixSocketFilePath() {
-        std::string socket_path;
+        string socket_path;
         const char* env = getenv("KEA_SOCKET_TEST_DIR");
         if (env) {
-            socket_path = std::string(env) + "/test-socket";
+            socket_path = string(env) + "/test-socket";
         } else {
             socket_path = sandbox.join("test-socket");
         }
@@ -203,8 +197,8 @@ public:
     void reflectServer();
 
     /// @brief IOService object.
-    IOService io_service_;
-};
+    IOServicePtr io_service_;
+};  // UnixControlSocketTest
 
 /// @brief Server method running in a thread reflecting the command.
 ///
@@ -214,14 +208,14 @@ void
 UnixControlSocketTest::reflectServer() {
     // Acceptor.
     boost::asio::local::stream_protocol::acceptor
-        acceptor(io_service_.get_io_service());
-    EXPECT_NO_THROW(acceptor.open());
+        acceptor(io_service_->getInternalIOService());
+    EXPECT_NO_THROW_LOG(acceptor.open());
     boost::asio::local::stream_protocol::endpoint
         endpoint(unixSocketFilePath());
-    EXPECT_NO_THROW(acceptor.bind(endpoint));
-    EXPECT_NO_THROW(acceptor.listen());
+    EXPECT_NO_THROW_LOG(acceptor.bind(endpoint));
+    EXPECT_NO_THROW_LOG(acceptor.listen());
     boost::asio::local::stream_protocol::socket
-        socket(io_service_.get_io_service());
+        socket(io_service_->getInternalIOService());
 
     // Ready.
     signalReady();
@@ -232,7 +226,7 @@ UnixControlSocketTest::reflectServer() {
     timer.setup([&timeout]() {
             timeout = true;
             FAIL() << "timeout";
-        }, 1500, IntervalTimer::ONE_SHOT);
+        }, TEST_TIMEOUT, IntervalTimer::ONE_SHOT);
 
     // Accept.
     bool accepted = false;
@@ -244,7 +238,7 @@ UnixControlSocketTest::reflectServer() {
                               accepted = true;
                           });
     while (!accepted && !timeout) {
-        io_service_.run_one();
+        io_service_->runOne();
     }
     ASSERT_FALSE(ec);
 
@@ -258,7 +252,7 @@ UnixControlSocketTest::reflectServer() {
                              received = cnt;
                          });
     while (!received && !timeout) {
-        io_service_.run_one();
+        io_service_->runOne();
     }
     ASSERT_FALSE(ec);
     rbuf.resize(received);
@@ -277,7 +271,7 @@ UnixControlSocketTest::reflectServer() {
                           sent = cnt;
                       });
     while (!sent && !timeout) {
-        io_service_.run_one();
+        io_service_->runOne();
     }
     ASSERT_FALSE(ec);
 
@@ -286,7 +280,7 @@ UnixControlSocketTest::reflectServer() {
 
     // Close socket.
     if (socket.is_open()) {
-        EXPECT_NO_THROW(socket.close());
+        EXPECT_NO_THROW_LOG(socket.close());
     }
 
     EXPECT_FALSE(timeout);
@@ -301,10 +295,10 @@ UnixControlSocketTest::reflectServer() {
 TEST_F(UnixControlSocketTest, createControlSocket) {
     CfgControlSocketPtr cfg = createCfgControlSocket();
     ASSERT_TRUE(cfg);
-    ControlSocketBasePtr cs = createControlSocket(cfg);
+    ControlSocketBasePtr cs = controlSocketFactory(cfg);
     ASSERT_TRUE(cs);
     UnixControlSocketPtr ucs =
-        boost::dynamic_pointer_cast<UnixControlSocket>(cs);
+        dynamic_pointer_cast<UnixControlSocket>(cs);
     EXPECT_TRUE(ucs);
 }
 
@@ -322,7 +316,7 @@ TEST_F(UnixControlSocketTest, configGet) {
 
     // Try configGet.
     ConstElementPtr reflected;
-    EXPECT_NO_THROW(reflected = ucs->configGet("foo"));
+    EXPECT_NO_THROW_LOG(reflected = ucs->configGet("foo"));
     ASSERT_TRUE(reflected);
     ASSERT_EQ(Element::map, reflected->getType());
     ConstElementPtr command = reflected->get("received");
@@ -345,10 +339,10 @@ TEST_F(UnixControlSocketTest, configTest) {
     waitReady();
 
     // Prepare a config to test.
-    ConstElementPtr json = Element::fromJSON("{ \"bar\": 1 }");
+    ElementPtr json = Element::fromJSON("{ \"bar\": 1 }");
 
     ConstElementPtr reflected;
-    EXPECT_NO_THROW(reflected = ucs->configTest(json, "foo"));
+    EXPECT_NO_THROW_LOG(reflected = ucs->configTest(json, "foo"));
     ASSERT_TRUE(reflected);
     ASSERT_EQ(Element::map, reflected->getType());
     ConstElementPtr command = reflected->get("received");
@@ -372,10 +366,10 @@ TEST_F(UnixControlSocketTest, configSet) {
     waitReady();
 
     // Prepare a config to set.
-    ConstElementPtr json = Element::fromJSON("{ \"bar\": 1 }");
+    ElementPtr json = Element::fromJSON("{ \"bar\": 1 }");
 
     ConstElementPtr reflected;
-    EXPECT_NO_THROW(reflected = ucs->configSet(json, "foo"));
+    EXPECT_NO_THROW_LOG(reflected = ucs->configSet(json, "foo"));
     ASSERT_TRUE(reflected);
     ASSERT_EQ(Element::map, reflected->getType());
     ConstElementPtr command = reflected->get("received");
@@ -397,7 +391,8 @@ TEST_F(UnixControlSocketTest, timeout) {
     thread_.reset(new thread([this]() { waitReady(); }));
 
     // Try configGet: it should get a communication error,
-    EXPECT_THROW(ucs->configGet("foo"), ControlSocketError);
+    EXPECT_THROW_MSG(ucs->configGet("foo"), ControlSocketError,
+                     "communication error: No such file or directory");
     signalReady();
 }
 
@@ -410,16 +405,16 @@ const string SERVER_ADDRESS = "127.0.0.1";
 const uint16_t SERVER_PORT = 18123;
 
 /// @brief Test HTTP JSON response.
-typedef TestHttpResponseBase<HttpResponseJson> Response;
+using Response = TestHttpResponseBase<HttpResponseJson>;
 
 /// @brief Pointer to test HTTP JSON response.
-typedef boost::shared_ptr<Response> ResponsePtr;
+using ResponsePtr = boost::shared_ptr<Response>;
 
 /// @brief Generic test HTTP response.
-typedef TestHttpResponseBase<HttpResponse> GenericResponse;
+using GenericResponse = TestHttpResponseBase<HttpResponse>;
 
 /// @brief Pointer to generic test HTTP response.
-typedef boost::shared_ptr<GenericResponse> GenericResponsePtr;
+using GenericResponsePtr = boost::shared_ptr<GenericResponse>;
 
 /// @brief Implementation of the HttpResponseCreator.
 ///
@@ -429,8 +424,7 @@ public:
     /// @brief Create a new request.
     ///
     /// @return Pointer to the new instance of the HttpRequest.
-    virtual HttpRequestPtr
-        createNewHttpRequest() const {
+    HttpRequestPtr createNewHttpRequest() const override final {
         return (HttpRequestPtr(new PostHttpRequestJson()));
     }
 
@@ -439,9 +433,9 @@ protected:
     ///
     /// @param request Pointer to the HTTP request.
     /// @return Pointer to the generated HTTP response.
-    virtual HttpResponsePtr
+    HttpResponsePtr
     createStockHttpResponse(const HttpRequestPtr& request,
-                            const HttpStatusCode& status_code) const {
+                            const HttpStatusCode& status_code) const override final {
         // Data is in the request context.
         HttpVersion http_version(request->context()->http_version_major_,
                                  request->context()->http_version_minor_);
@@ -458,7 +452,7 @@ protected:
     /// @param request Pointer to the HTTP request.
     /// @return Pointer to an object representing HTTP response.
     virtual HttpResponsePtr
-    createDynamicHttpResponse(HttpRequestPtr request) {
+    createDynamicHttpResponse(HttpRequestPtr request) override {
         // Request must always be JSON.
         PostHttpRequestJsonPtr request_json =
             boost::dynamic_pointer_cast<PostHttpRequestJson>(request);
@@ -498,22 +492,26 @@ protected:
         response->finalize();
         return (response);
     }
-};
+};  // TestHttpResponseCreator
 
 /// @brief Implementation of the test HttpResponseCreatorFactory.
 class TestHttpResponseCreatorFactory : public HttpResponseCreatorFactory {
 public:
 
     /// @brief Creates @ref TestHttpResponseCreator instance.
-    virtual HttpResponseCreatorPtr create() const {
+    HttpResponseCreatorPtr create() const override final {
         HttpResponseCreatorPtr response_creator(new TestHttpResponseCreator());
         return (response_creator);
     }
-};
+};  // TestHttpResponseCreatorFactory
 
 /// @brief Test fixture class for http control sockets.
 class HttpControlSocketTest : public ThreadedTest {
 public:
+    /// @brief Constructor.
+    HttpControlSocketTest() : io_service_(new IOService()) {
+    }
+
     void SetUp() override {
         SysrepoSetup::cleanSharedMemory();
     }
@@ -524,10 +522,11 @@ public:
             thread_->join();
             thread_.reset();
         }
-        // io_service must be stopped after the thread returns,
-        // otherwise the thread may never return if it is
-        // waiting for the completion of some asynchronous tasks.
-        io_service_.stop();
+        if (listener_) {
+            listener_->stop();
+        }
+        io_service_->stopAndPoll();
+        listener_.reset();
     }
 
     /// @brief Returns socket URL.
@@ -554,18 +553,23 @@ public:
     ///
     /// Run IO in a thread.
     void start() {
+        // If the thread is ready to go, start the listener.
+        if (listener_) {
+            ASSERT_NO_THROW_LOG(listener_->start());
+        }
+
         thread_.reset(new thread([this]() {
             // The thread is ready to go. Signal it to the main
             // thread so it can start the actual test.
             signalReady();
             // Until stop() is called run IO service.
             while (!isStopping()) {
-                io_service_.run_one();
+                io_service_->runOne();
             }
-            // Main thread signalled that the thread should
+            // Main thread signaled that the thread should
             // terminate. Launch any outstanding IO service
             // handlers.
-            io_service_.poll();
+            io_service_->poll();
             // Nothing more to do. Signal that the thread is
             // done so as the main thread can close HTTP
             // listener and clean up after the test.
@@ -574,23 +578,18 @@ public:
 
         // Main thread waits here for the thread to start.
         waitReady();
-
-        // If the thread is ready to go, start the listener.
-        if (listener_) {
-            ASSERT_NO_THROW_LOG(listener_->start());
-        }
     }
 
     /// @brief Stop listener.
     ///
-    /// Post an empty action to finish current run_one.
+    /// Post an empty action to finish current runOne.
     void stop() {
         // Notify the thread that it should terminate.
         signalStopping();
         // If the thread is blocked on running the IO
         // service, post the empty handler to cause
-        // run_one to return.
-        io_service_.post([]() { return; });
+        // runOne to return.
+        io_service_->post([]() { return; });
         // We asked that the thread stops. Let's wait
         // for it to signal that it has stopped.
         waitStopped();
@@ -603,23 +602,22 @@ public:
     }
 
     /// @brief IOService object.
-    IOService io_service_;
+    IOServicePtr io_service_;
 
     /// @brief Pointer to listener.
     HttpListenerPtr listener_;
-};
+};  // HttpControlSocketTest
 
 /// @brief Create the reflecting listener.
 void
 HttpControlSocketTest::createReflectListener() {
     HttpResponseCreatorFactoryPtr
         factory(new TestHttpResponseCreatorFactory());
-    listener_.reset(new
-                HttpListener(io_service_,
-                             IOAddress(SERVER_ADDRESS), SERVER_PORT,
-                             TlsContextPtr(), factory,
-                             HttpListener::RequestTimeout(2000),
-                             HttpListener::IdleTimeout(2000)));
+    listener_.reset(new HttpListener(io_service_,
+                                     IOAddress(SERVER_ADDRESS), SERVER_PORT,
+                                     TlsContextPtr(), factory,
+                                     HttpListener::RequestTimeout(2000),
+                                     HttpListener::IdleTimeout(2000)));
 }
 
 // Verifies that the createControlSocket template can create a http
@@ -627,10 +625,10 @@ HttpControlSocketTest::createReflectListener() {
 TEST_F(HttpControlSocketTest, createControlSocket) {
     CfgControlSocketPtr cfg = createCfgControlSocket();
     ASSERT_TRUE(cfg);
-    ControlSocketBasePtr cs = createControlSocket(cfg);
+    ControlSocketBasePtr cs = controlSocketFactory(cfg);
     ASSERT_TRUE(cs);
     HttpControlSocketPtr hcs =
-        boost::dynamic_pointer_cast<HttpControlSocket>(cs);
+        dynamic_pointer_cast<HttpControlSocket>(cs);
     EXPECT_TRUE(hcs);
 }
 
@@ -647,7 +645,7 @@ TEST_F(HttpControlSocketTest, configGet) {
 
     // Try configGet.
     ConstElementPtr reflected;
-    EXPECT_NO_THROW(reflected = hcs->configGet("foo"));
+    EXPECT_NO_THROW_LOG(reflected = hcs->configGet("foo"));
     stop();
 
     // Check result.
@@ -675,7 +673,7 @@ TEST_F(HttpControlSocketTest, configGetCA) {
 
     // Try configGet.
     ConstElementPtr reflected;
-    EXPECT_NO_THROW(reflected = hcs->configGet("ca"));
+    EXPECT_NO_THROW_LOG(reflected = hcs->configGet("ca"));
     stop();
 
     // Check result.
@@ -700,11 +698,11 @@ TEST_F(HttpControlSocketTest, configTest) {
     start();
 
     // Prepare a config to test.
-    ConstElementPtr json = Element::fromJSON("{ \"bar\": 1 }");
+    ElementPtr json = Element::fromJSON("{ \"bar\": 1 }");
 
     // Try configTest.
     ConstElementPtr reflected;
-    EXPECT_NO_THROW(reflected = hcs->configTest(json, "foo"));
+    EXPECT_NO_THROW_LOG(reflected = hcs->configTest(json, "foo"));
     stop();
 
     // Check result.
@@ -732,11 +730,11 @@ TEST_F(HttpControlSocketTest, configTestCA) {
     start();
 
     // Prepare a config to test.
-    ConstElementPtr json = Element::fromJSON("{ \"bar\": 1 }");
+    ElementPtr json = Element::fromJSON("{ \"bar\": 1 }");
 
     // Try configTest.
     ConstElementPtr reflected;
-    EXPECT_NO_THROW(reflected = hcs->configTest(json, "ca"));
+    EXPECT_NO_THROW_LOG(reflected = hcs->configTest(json, "ca"));
     stop();
 
     // Check result.
@@ -762,11 +760,11 @@ TEST_F(HttpControlSocketTest, configSet) {
     start();
 
     // Prepare a config to set.
-    ConstElementPtr json = Element::fromJSON("{ \"bar\": 1 }");
+    ElementPtr json = Element::fromJSON("{ \"bar\": 1 }");
 
     // Try configSet.
     ConstElementPtr reflected;
-    EXPECT_NO_THROW(reflected = hcs->configSet(json, "foo"));
+    EXPECT_NO_THROW_LOG(reflected = hcs->configSet(json, "foo"));
     stop();
 
     // Check result.
@@ -794,11 +792,11 @@ TEST_F(HttpControlSocketTest, configSetCA) {
     start();
 
     // Prepare a config to set.
-    ConstElementPtr json = Element::fromJSON("{ \"bar\": 1 }");
+    ElementPtr json = Element::fromJSON("{ \"bar\": 1 }");
 
     // Try configSet.
     ConstElementPtr reflected;
-    EXPECT_NO_THROW(reflected = hcs->configSet(json, "ca"));
+    EXPECT_NO_THROW_LOG(reflected = hcs->configSet(json, "ca"));
     stop();
 
     // Check result.
@@ -825,7 +823,7 @@ TEST_F(HttpControlSocketTest, connectionRefused) {
     } catch (const ControlSocketError& ex) {
         EXPECT_EQ("communication error (code): Connection refused",
                   string(ex.what()));
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         FAIL() << "unexpected exception: " << ex.what();
     } catch (...) {
         FAIL() << "unexpected exception";
@@ -844,10 +842,10 @@ TEST_F(HttpControlSocketTest, partial) {
     start();
 
     // Prepare a special config to set.
-    ConstElementPtr json = Element::fromJSON("{ \"want-partial\": true }");
+    ElementPtr json = Element::fromJSON("{ \"want-partial\": true }");
 
     // Warn this makes time.
-    cout << "this test waits for 2 seconds" << endl;
+    cout << "Waiting 2s..." << endl;
 
     // Try configSet: it should get a communication error,
     try {
@@ -855,7 +853,7 @@ TEST_F(HttpControlSocketTest, partial) {
     } catch (const ControlSocketError& ex) {
         EXPECT_EQ("communication error (code): End of file",
                   string(ex.what()));
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         FAIL() << "unexpected exception: " << ex.what();
     } catch (...) {
         FAIL() << "unexpected exception";

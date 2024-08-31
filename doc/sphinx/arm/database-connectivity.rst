@@ -3,12 +3,13 @@
 *********************
 Database Connectivity
 *********************
-The Kea servers (``kea-dhcp4`` and ``kea-dhcp6``) can be configured to use a variety of
+
+The Kea servers (:iscman:`kea-dhcp4` and :iscman:`kea-dhcp6`) can be configured to use a variety of
 database backends for leases, hosts, and configuration. They can be
 configured to support automatic recovery when connectivity is lost, via
-the ``on-fail`` parameter. (The ``reconnect-wait-time`` and
-``max-reconnect-tries`` parameters are described
-in :ref:`database-configuration4` and :ref:`database-configuration6`.)
+the ``on-fail`` and ``retry-on-startup`` parameters.
+(The ``reconnect-wait-time`` and ``max-reconnect-tries`` parameters are
+described in :ref:`database-configuration4` and :ref:`database-configuration6`.)
 
 It is important to understand how and when automatic recovery comes into play.
 Automatic recovery, when configured, only operates after a successful startup
@@ -16,16 +17,19 @@ or reconfiguration during which connectivity to all backends has been
 successfully established.
 
 During server startup, the inability to connect to any of the configured
-backends is always considered fatal. A fatal error is logged and the server
-exits, based on the idea that the configuration should be valid
-at startup. Exiting to the operating system allows nanny scripts to detect
-the problem.
+backends is considered fatal only if ``retry-on-startup`` is set to ``false``
+(the default). A fatal error is logged and the server exits, based on the idea
+that the configuration should be valid at startup. Exiting to the operating
+system allows nanny scripts to detect the problem.
+If ``retry-on-startup`` is set to ``true``, the server will start reconnection
+attempts even at server startup or on reconfigure events, and will honor the
+action specified in the ``on-fail`` parameter.
 
 During dynamic reconfiguration, all backends are disconnected and then
 reconnected using the new configuration. If connectivity to any of the
 backends cannot be established, the server logs a fatal error but remains
 up. It is able to process commands but does not serve clients. This
-allows the configuration to be corrected via the ``config-set`` or
+allows the configuration to be corrected via the :isccmd:`config-set` or
 ``remote-*`` commands, if required.
 
 During normal operations, if connectivity to any of the backends is lost and
@@ -52,6 +56,18 @@ connection is lost. It can have one of the following values:
 If connectivity to all backends is restored, the server returns to normal
 operations. If the connection cannot be restored and the server is configured
 to exit, it issues a fatal error before shutdown.
+
+For Kea DHCP servers to work with database backends, the database schema must be
+created and must match the version of the Kea
+server. If the version check fails and the database backend is not configured
+as read-only, Kea attempts to initialize the schema.
+
+.. note::
+
+    Kea does not automatically attempt to upgrade an existing schema; doing so
+    might deprive users of the opportunity to take precautions, such as
+    backing up the database or temporarily shutting off running
+    Kea servers that are currently operating on the database.
 
 The connection to the database server can optionally be protected by TLS.
 Corresponding database configuration parameters for Kea servers are:

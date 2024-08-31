@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -64,9 +64,8 @@ CalloutHandle::~CalloutHandle() {
 vector<string>
 CalloutHandle::getArgumentNames() const {
     vector<string> names;
-    for (ElementCollection::const_iterator i = arguments_.begin();
-         i != arguments_.end(); ++i) {
-        names.push_back(i->first);
+    for (auto const& i : arguments_) {
+        names.push_back(i.first);
     }
 
     return (names);
@@ -111,9 +110,8 @@ vector<string>
 CalloutHandle::getContextNames() const {
     vector<string> names;
     const ElementCollection& elements = getContextForLibrary();
-    for (ElementCollection::const_iterator i = elements.begin();
-         i != elements.end(); ++i) {
-        names.push_back(i->first);
+    for (auto const& i : elements) {
+        names.push_back(i.first);
     }
 
     return (names);
@@ -149,6 +147,10 @@ ScopedCalloutHandleState(const CalloutHandlePtr& callout_handle)
 
 ScopedCalloutHandleState::~ScopedCalloutHandleState() {
     resetState();
+
+    if (on_completion_) {
+        on_completion_();
+    }
 }
 
 void

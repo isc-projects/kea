@@ -46,26 +46,22 @@ AC_DEFUN([AX_FIND_LIBRARY], [
     elif test -d "${with_library}"; then
       # User has pointed --with-library to a directory.
       # Let's try to find a library.pc first inside that directory.
-      library_pc="${with_library}/lib/pkgconfig/${library}.pc"
-
-      if test -f "${library_pc}"; then
-        if test -n "${PKG_CONFIG}"; then
-          AX_FIND_LIBRARY_WITH_PKG_CONFIG("${library_pc}", ["${list_of_variables}"], ["${pkg_config_paths}"])
+      for l in lib lib64; do
+        library_pc="${with_library}/${l}/pkgconfig/${library}.pc"
+        if test -f "${library_pc}"; then
+          if test -n "${PKG_CONFIG}"; then
+            AX_FIND_LIBRARY_WITH_PKG_CONFIG("${library_pc}", ["${list_of_variables}"], ["${pkg_config_paths}"])
+          else
+            AX_ADD_TO_LIBRARY_WARNINGS([pkg-config file found at ${library_pc}, but pkg-config is not available])
+          fi
         else
-          AX_ADD_TO_LIBRARY_WARNINGS([pkg-config file found at ${library_pc}, but pkg-config is not available])
+          AX_ADD_TO_LIBRARY_WARNINGS([pkg-config file not found at ${library_pc}])
         fi
-      else
-        AX_ADD_TO_LIBRARY_WARNINGS([pkg-config file not found at ${library_pc}])
-      fi
+      done
     else
       AC_MSG_RESULT(["no"])
       AX_DISPLAY_LIBRARY_WARNINGS()
-      # TODO: It can also point to a .pc file, but the current sysrepo
-      # implementation does not allow it because there are more .pc files than
-      # --with flags. After migration to sysrepo v2 has been done there will be
-      # four flags and four .pc files so change the error message to say that it
-      # can also point to a .pc file.
-      AC_MSG_ERROR(["${with_library}" needs to point to the installation directory])
+      AC_MSG_ERROR(["${with_library}" needs to point to the installation directory or to a .pc file])
     fi
 
   else
@@ -106,10 +102,13 @@ AC_DEFUN([AX_FIND_LIBRARY], [
         fi
 
         libraries_found=true
-        LIBRARY_LIBS="-L${p}/lib"
-        if test -n "${ISC_RPATH_FLAG}"; then
-          LIBRARY_LIBS="${LIBRARY_LIBS} ${ISC_RPATH_FLAG}${p}/lib"
-        fi
+
+        # Add -L.
+        for l in lib lib64; do
+          if test -d "${p}/${l}"; then
+            LIBRARY_LIBS="-L${p}/{l}"
+          fi
+        done
         for i in ${list_of_libraries}; do
           i_found=false
           for l in lib lib64; do
@@ -144,8 +143,8 @@ AC_DEFUN([AX_FIND_LIBRARY], [
     LIBRARY_LIBS="$(printf '%s' "${LIBRARY_LIBS}" | sed 's/^ *//g;s/ *$//g')"
 
     # Add to the runtime search path if the flag is not already added.
-    if test -n "${ISC_RPATH_FLAG}" && test "$(printf '%s\n' "${LIBRARY_LIBS}" | grep -Fc -e "${ISC_RPATH_FLAG}")" = 0; then
-      library_location=$(printf '%s\n' "${LIBRARY_LIBS}" | grep -Eo '\-L.*\b' | sed 's/-L//g')
+    if test -n "${ISC_RPATH_FLAG}" && test "$(printf '%s\n' "${LIBRARY_LIBS}" | grep -Fc -- "${ISC_RPATH_FLAG}")" = 0; then
+      library_location=$(printf '%s\n' "${LIBRARY_LIBS}" | grep -Eo -- '-L.*\b' | sed 's/-L//g')
       if test -n "${library_location}"; then
         LIBRARY_LIBS="${LIBRARY_LIBS} ${ISC_RPATH_FLAG}${library_location}"
       fi
@@ -170,8 +169,8 @@ AC_DEFUN([AX_DISPLAY_LIBRARY_WARNINGS], [
 # input:
 #   * value of --with-library
 #   * list of variables to retrieve with pkg-config
-#   * additional paths to pass to pkg-config, for when a .pc file has
-#       a dependency
+#   * additional colon-separated paths to pass to pkg-config,
+#       for when a .pc file has a dependency
 # output:
 #   * LIBRARY_FOUND
 #   * LIBRARY_CPPFLAGS
@@ -205,9 +204,15 @@ AC_DEFUN([AX_FIND_LIBRARY_WITH_PKG_CONFIG], [
       # Get the flags.
       LIBRARY_CPPFLAGS=$("${PKG_CONFIG}" --cflags-only-other "${library_pc_or_name}")
       LIBRARY_INCLUDEDIR=$("${PKG_CONFIG}" --cflags-only-I "${library_pc_or_name}")
+      LIBRARY_LIBDIR=$("${PKG_CONFIG}" --variable libdir "${library_pc_or_name}")
       LIBRARY_LIBS=$("${PKG_CONFIG}" --libs "${library_pc_or_name}")
       LIBRARY_VERSION=$("${PKG_CONFIG}" --modversion "${library_pc_or_name}")
       LIBRARY_PREFIX=$("${PKG_CONFIG}" --variable=prefix "${library_pc_or_name}")
+
+      # Sometimes pkg-config is stubborn in including -L, so let's include it ourselves.
+      if test -n "${LIBRARY_LIBDIR}" && test "$(printf '%s\n' "${LIBRARY_LIBS}" | grep -Fc -- -L)" = 0; then
+        LIBRARY_LIBS="-L${LIBRARY_LIBDIR} ${LIBRARY_LIBS}"
+      fi
 
       # Get the variables.
       for i in $(printf '%s' "${list_of_variables}" | sed 's/,/ /g'); do

@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,11 +6,11 @@
 
 #include <config.h>
 
+#include <gtest/gtest.h>
+
 #include <testutils/gtest_utils.h>
 #include <yang/adaptor_pool.h>
 #include <yang/yang_models.h>
-
-#include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;
@@ -27,7 +27,7 @@ TEST(AdaptorPoolTest, canonizePoolPrefixNoSpace) {
     ElementPtr json;
     ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     ConstElementPtr copied = copy(json);
-    EXPECT_NO_THROW(AdaptorPool::canonizePool(json));
+    EXPECT_NO_THROW_LOG(AdaptorPool::canonizePool(json));
     EXPECT_TRUE(copied->equals(*json));
 }
 
@@ -39,7 +39,7 @@ TEST(AdaptorPoolTest, canonizePoolRange) {
     ElementPtr json;
     ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     ConstElementPtr copied = copy(json);
-    EXPECT_NO_THROW(AdaptorPool::canonizePool(json));
+    EXPECT_NO_THROW_LOG(AdaptorPool::canonizePool(json));
     EXPECT_TRUE(copied->equals(*json));
 }
 
@@ -51,7 +51,7 @@ TEST(AdaptorPoolTest, canonizePoolPrefixSpaces) {
     ElementPtr json;
     ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     ConstElementPtr copied = copy(json);
-    EXPECT_NO_THROW(AdaptorPool::canonizePool(json));
+    EXPECT_NO_THROW_LOG(AdaptorPool::canonizePool(json));
     EXPECT_FALSE(copied->equals(*json));
     ConstElementPtr pool = json->get("pool");
     ASSERT_TRUE(pool);
@@ -67,7 +67,7 @@ TEST(AdaptorPoolTest, canonizePoolRangeNoSpace) {
     ElementPtr json;
     ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     ConstElementPtr copied = copy(json);
-    EXPECT_NO_THROW(AdaptorPool::canonizePool(json));
+    EXPECT_NO_THROW_LOG(AdaptorPool::canonizePool(json));
     EXPECT_FALSE(copied->equals(*json));
     ConstElementPtr pool = json->get("pool");
     ASSERT_TRUE(pool);
@@ -83,7 +83,7 @@ TEST(AdaptorPoolTest, canonizePoolRangeExtraSpaces) {
     ElementPtr json;
     ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     ConstElementPtr copied = copy(json);
-    EXPECT_NO_THROW(AdaptorPool::canonizePool(json));
+    EXPECT_NO_THROW_LOG(AdaptorPool::canonizePool(json));
     EXPECT_FALSE(copied->equals(*json));
     ConstElementPtr pool = json->get("pool");
     ASSERT_TRUE(pool);
@@ -111,15 +111,15 @@ TEST(AdaptorPoolTest, fromSubnetKea) {
     ConstElementPtr pools = json->get("pools");
 
     // This should be no-op for kea-dhcp4-server and kea-dhcp6-server models
-    EXPECT_NO_THROW(AdaptorPool::fromSubnet(KEA_DHCP4_SERVER, json, pools));
+    EXPECT_NO_THROW_LOG(AdaptorPool::fromSubnet(KEA_DHCP4_SERVER, json, pools));
     EXPECT_TRUE(copied->equals(*json));
     // The model is checked first.
-    EXPECT_NO_THROW(AdaptorPool::fromSubnet(KEA_DHCP6_SERVER, json, pools));
+    EXPECT_NO_THROW_LOG(AdaptorPool::fromSubnet(KEA_DHCP6_SERVER, json, pools));
     EXPECT_TRUE(copied->equals(*json));
 
     // Check that the model name is actually checked.
-    EXPECT_THROW(AdaptorPool::fromSubnet("non-existent-module", json, pools),
-                 NotImplemented);
+    EXPECT_THROW_MSG(AdaptorPool::fromSubnet("non-existent-module", json, pools), NotImplemented,
+                     "fromSubnet not implemented for the model: non-existent-module");
 }
 
 // Verifies that fromSubnet works as expected.
@@ -141,7 +141,7 @@ TEST(AdaptorPoolTest, fromSubnet) {
     ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     ConstElementPtr copied = copy(json);
     ConstElementPtr pools = json->get("pools");
-    EXPECT_NO_THROW(AdaptorPool::fromSubnet(IETF_DHCPV6_SERVER, json, pools));
+    EXPECT_NO_THROW_LOG(AdaptorPool::fromSubnet(IETF_DHCPV6_SERVER, json, pools));
     EXPECT_FALSE(copied->equals(*json));
     pools = json->get("pools");
     ASSERT_TRUE(pools);
@@ -184,14 +184,14 @@ TEST(AdaptorPoolTest, toSubnetKea) {
     ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     ConstElementPtr copied = copy(json);
     ConstElementPtr pools = json->get("pools");
-    EXPECT_NO_THROW(AdaptorPool::toSubnet(KEA_DHCP4_SERVER, json, pools));
+    EXPECT_NO_THROW_LOG(AdaptorPool::toSubnet(KEA_DHCP4_SERVER, json, pools));
     EXPECT_TRUE(copied->equals(*json));
     // The model is checked first.
-    EXPECT_NO_THROW(AdaptorPool::toSubnet(KEA_DHCP6_SERVER, json, pools));
+    EXPECT_NO_THROW_LOG(AdaptorPool::toSubnet(KEA_DHCP6_SERVER, json, pools));
     EXPECT_TRUE(copied->equals(*json));
     // Model name is not free: an error is raised if it is not expected.
-    EXPECT_THROW(AdaptorPool::toSubnet("keatest-module", json, pools),
-                 NotImplemented);
+    EXPECT_THROW_MSG(AdaptorPool::toSubnet("keatest-module", json, pools), NotImplemented,
+                     "toSubnet not implemented for the model: keatest-module");
 }
 
 // Verifies that toSubnet works as expected.
@@ -217,7 +217,7 @@ TEST(AdaptorPoolTest, toSubnet) {
     ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     ConstElementPtr copied = copy(json);
     ConstElementPtr pools = json->get("pools");
-    EXPECT_NO_THROW(AdaptorPool::toSubnet(IETF_DHCPV6_SERVER, json, pools));
+    EXPECT_NO_THROW_LOG(AdaptorPool::toSubnet(IETF_DHCPV6_SERVER, json, pools));
     EXPECT_FALSE(copied->equals(*json));
     // Check timers.
     ConstElementPtr timer = json->get("valid-lifetime");
@@ -267,8 +267,10 @@ TEST(AdaptorPoolTest, toSubnetBad) {
     ElementPtr json;
     ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     ConstElementPtr pools = json->get("pools");
-    EXPECT_THROW(AdaptorPool::toSubnet(IETF_DHCPV6_SERVER, json, pools),
-                 BadValue);
+    EXPECT_THROW_MSG(AdaptorPool::toSubnet(IETF_DHCPV6_SERVER, json, pools), BadValue,
+                     "inconsistent value of rebind-timer in [ { \"pool\": \"2001:db8:1::/80\", "
+                     "\"rebind-timer\": 2000 }, { \"pool\": \"2001:db8:1:0:1::/80\", "
+                     "\"rebind-timer\": 20 } ]");
 }
 
-}; // end of anonymous namespace
+}  // anonymous namespace

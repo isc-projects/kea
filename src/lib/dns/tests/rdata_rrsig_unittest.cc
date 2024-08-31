@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,12 +9,12 @@
 #include <exceptions/exceptions.h>
 
 #include <util/buffer.h>
-#include <util/time_utilities.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
+#include <dns/time_utils.h>
 
 #include <gtest/gtest.h>
 
@@ -328,7 +328,7 @@ TEST_F(Rdata_RRSIG_Test, createFromLexer) {
         *test::createRdataUsingLexer(RRType::RRSIG(), RRClass::IN(),
                                      rrsig_txt)));
 
-    // Exceptions cause NULL to be returned.
+    // Exceptions cause null to be returned.
     EXPECT_FALSE(test::createRdataUsingLexer(RRType::RRSIG(), RRClass::IN(),
                                              "INVALIDINPUT"));
 }

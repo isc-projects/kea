@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -33,7 +33,7 @@ public:
     ///
     /// Removes unix socket descriptor before the test.
     ClientConnectionTest() :
-        io_service_(),
+        io_service_(new IOService()), handler_invoked_(false),
         test_socket_(new test::TestServerUnixSocket(io_service_,
                                                     unixSocketFilePath())) {
         removeUnixSocketFile();
@@ -44,6 +44,9 @@ public:
     /// Removes unix socket descriptor after the test.
     virtual ~ClientConnectionTest() {
         removeUnixSocketFile();
+        conn_.reset();
+        test_socket_.reset();
+        io_service_->stopAndPoll();
     }
 
     /// @brief Returns socket file path.
@@ -76,10 +79,16 @@ public:
     }
 
     /// @brief IO service used by the tests.
-    IOService io_service_;
+    IOServicePtr io_service_;
+
+    /// @brief Flag which indicates if the callback has been called.
+    bool handler_invoked_;
 
     /// @brief Server side unix socket used in these tests.
     test::TestServerUnixSocketPtr test_socket_;
+
+    /// @brief Client connection.
+    ClientConnectionPtr conn_;
 };
 
 // Tests successful transaction: connect, send command and receive a
@@ -95,18 +104,18 @@ TEST_F(ClientConnectionTest, success) {
     // Create some valid command.
     std::string command = "{ \"command\": \"list-commands\" }";
 
-    ClientConnection conn(io_service_);
+    conn_.reset(new ClientConnection(io_service_));
 
-    // This boolean value will indicate when the callback function is invoked
-    // at the end of the transaction (whether it is successful or unsuccessful).
-    bool handler_invoked = false;
-    conn.start(ClientConnection::SocketPath(unixSocketFilePath()),
-               ClientConnection::ControlCommand(command),
-        [&handler_invoked](const boost::system::error_code& ec,
-                           const ConstJSONFeedPtr& feed) {
+    conn_->start(ClientConnection::SocketPath(unixSocketFilePath()),
+                 ClientConnection::ControlCommand(command),
+        [&](const boost::system::error_code& ec,
+            const ConstJSONFeedPtr& feed) {
+        if (handler_invoked_) {
+            return;
+        }
         // Indicate that the handler has been called to break from the
         // while loop below.
-        handler_invoked = true;
+        handler_invoked_ = true;
         // The ec should contain no error.
         ASSERT_FALSE(ec);
         // The JSONFeed should be present and it should contain a valid
@@ -115,8 +124,8 @@ TEST_F(ClientConnectionTest, success) {
         EXPECT_TRUE(feed->feedOk()) << feed->getErrorMessage();
     });
     // Run the connection.
-    while (!handler_invoked && !test_socket_->isStopped()) {
-        io_service_.run_one();
+    while (!handler_invoked_ && !test_socket_->isStopped()) {
+        io_service_->runOne();
     }
 }
 
@@ -137,24 +146,27 @@ TEST_F(ClientConnectionTest, timeout) {
     // Command to be sent to the server.
     std::string command = "{ \"command\": \"list-commands\" }";
 
-    ClientConnection conn(io_service_);
+    conn_.reset(new ClientConnection(io_service_));
 
-    // This boolean value will be set to true when the callback is invoked.
-    bool handler_invoked = false;
-    conn.start(ClientConnection::SocketPath(unixSocketFilePath()),
-              ClientConnection::ControlCommand(command),
-    [&handler_invoked](const boost::system::error_code& ec,
-                       const ConstJSONFeedPtr& /*feed*/) {
+    conn_->start(ClientConnection::SocketPath(unixSocketFilePath()),
+                 ClientConnection::ControlCommand(command),
+    [&](const boost::system::error_code& ec,
+        const ConstJSONFeedPtr& /*feed*/) {
+        if (handler_invoked_) {
+            return;
+        }
         // Indicate that the callback has been invoked to break the loop
         // below.
-        handler_invoked = true;
+        handler_invoked_ = true;
         ASSERT_TRUE(ec);
         EXPECT_TRUE(ec.value() == boost::asio::error::timed_out);
     }, ClientConnection::Timeout(1000));
 
-    while (!handler_invoked && !test_socket_->isStopped()) {
-        io_service_.run_one();
+    while (!handler_invoked_ && !test_socket_->isStopped()) {
+        io_service_->runOne();
     }
+
+    test_socket_->stopServer();
 }
 
 // This test checks that an error is returned when the client is unable
@@ -162,21 +174,23 @@ TEST_F(ClientConnectionTest, timeout) {
 TEST_F(ClientConnectionTest, connectionError) {
     // Create the new connection but do not bind the server socket.
     // The connection should be refused and an error returned.
-    ClientConnection conn(io_service_);
+    conn_.reset(new ClientConnection(io_service_));
 
     std::string command = "{ \"command\": \"list-commands\" }";
 
-    bool handler_invoked = false;
-    conn.start(ClientConnection::SocketPath(unixSocketFilePath()),
-               ClientConnection::ControlCommand(command),
-    [&handler_invoked](const boost::system::error_code& ec,
-                       const ConstJSONFeedPtr& /*feed*/) {
-        handler_invoked = true;
+    conn_->start(ClientConnection::SocketPath(unixSocketFilePath()),
+                 ClientConnection::ControlCommand(command),
+    [&](const boost::system::error_code& ec,
+        const ConstJSONFeedPtr& /*feed*/) {
+        if (handler_invoked_) {
+            return;
+        }
+        handler_invoked_ = true;
         ASSERT_TRUE(ec);
     });
 
-    while (!handler_invoked && !test_socket_->isStopped()) {
-        io_service_.run_one();
+    while (!handler_invoked_ && !test_socket_->isStopped()) {
+        io_service_->runOne();
     }
 }
 

@@ -1,34 +1,32 @@
-// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef TCP_SOCKET_H
-#define TCP_SOCKET_H 1
+#define TCP_SOCKET_H
 
 #ifndef BOOST_ASIO_HPP
 #error "asio.hpp must be included before including this, see asiolink.h as to why"
 #endif
 
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <unistd.h>             // for some IPC/network system calls
+#include <asiolink/io_asio_socket.h>
+#include <asiolink/io_endpoint.h>
+#include <asiolink/io_service.h>
+#include <asiolink/tcp_endpoint.h>
+#include <exceptions/isc_assert.h>
+#include <util/buffer.h>
+#include <util/io.h>
 
 #include <algorithm>
 #include <cstddef>
 
 #include <boost/numeric/conversion/cast.hpp>
 
-#include <util/buffer.h>
-#include <util/io_utilities.h>
-
-#include <asiolink/io_asio_socket.h>
-#include <asiolink/io_endpoint.h>
-#include <asiolink/io_service.h>
-#include <asiolink/tcp_endpoint.h>
-
-#include <exceptions/isc_assert.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <unistd.h>             // for some IPC/network system calls
 
 namespace isc {
 namespace asiolink {
@@ -68,7 +66,7 @@ public:
     /// socket.  In this case, the open() and close() methods are used.
     ///
     /// \param service I/O Service object used to manage the socket.
-    TCPSocket(IOService& service);
+    TCPSocket(const IOServicePtr& service);
 
     /// \brief Destructor
     virtual ~TCPSocket();
@@ -199,14 +197,14 @@ public:
     ///        processed.
     /// \param offset Unused.
     /// \param expected unused.
-    /// \param outbuff Output buffer.  Data in the staging buffer is be copied
+    /// \param buff Output buffer.  Data in the staging buffer is be copied
     ///        to this output buffer in the call.
     ///
     /// \return Always true
     virtual bool processReceivedData(const void* staging, size_t length,
                                      size_t& cumulative, size_t& offset,
                                      size_t& expected,
-                                     isc::util::OutputBufferPtr& outbuff);
+                                     isc::util::OutputBufferPtr& buff);
 
     /// \brief Cancel I/O On Socket
     virtual void cancel();
@@ -222,6 +220,10 @@ public:
     }
 
 private:
+
+    /// @brief The IO service used to handle events.
+    IOServicePtr io_service_;
+
     /// Two variables to hold the socket - a socket and a pointer to it.  This
     /// handles the case where a socket is passed to the TCPSocket on
     /// construction, or where it is asked to manage its own socket.
@@ -254,24 +256,22 @@ private:
 
 template <typename C>
 TCPSocket<C>::TCPSocket(boost::asio::ip::tcp::socket& socket) :
-    socket_ptr_(), socket_(socket), send_buffer_()
-{
+    socket_ptr_(), socket_(socket), send_buffer_() {
 }
 
 // Constructor - create socket on the fly
 
 template <typename C>
-TCPSocket<C>::TCPSocket(IOService& service) :
-    socket_ptr_(new boost::asio::ip::tcp::socket(service.get_io_service())),
-    socket_(*socket_ptr_)
-{
+TCPSocket<C>::TCPSocket(const IOServicePtr& io_service) : io_service_(io_service),
+    socket_ptr_(new boost::asio::ip::tcp::socket(io_service_->getInternalIOService())),
+    socket_(*socket_ptr_) {
 }
 
 // Destructor.
 
 template <typename C>
-TCPSocket<C>::~TCPSocket()
-{
+TCPSocket<C>::~TCPSocket() {
+    close();
 }
 
 // Open the socket.
@@ -318,8 +318,7 @@ TCPSocket<C>::open(const IOEndpoint* endpoint, C& callback) {
 // an exception if this is the case.
 
 template <typename C> void
-TCPSocket<C>::asyncSend(const void* data, size_t length, C& callback)
-{
+TCPSocket<C>::asyncSend(const void* data, size_t length, C& callback) {
     if (socket_.is_open()) {
 
         try {
@@ -343,8 +342,7 @@ TCPSocket<C>::asyncSend(const void* data, size_t length, C& callback)
 
 template <typename C> void
 TCPSocket<C>::asyncSend(const void* data, size_t length,
-    const IOEndpoint*, C& callback)
-{
+    const IOEndpoint*, C& callback) {
     if (socket_.is_open()) {
 
         /// Need to copy the data into a temporary buffer and precede it with
@@ -378,8 +376,7 @@ TCPSocket<C>::asyncSend(const void* data, size_t length,
 // caller to initialize the data to zero
 template <typename C> void
 TCPSocket<C>::asyncReceive(void* data, size_t length, size_t offset,
-    IOEndpoint* endpoint, C& callback)
-{
+    IOEndpoint* endpoint, C& callback) {
     if (socket_.is_open()) {
         // Upconvert to a TCPEndpoint.  We need to do this because although
         // IOEndpoint is the base class of UDPEndpoint and TCPEndpoint, it
@@ -420,8 +417,7 @@ template <typename C> bool
 TCPSocket<C>::processReceivedData(const void* staging, size_t length,
                                   size_t& cumulative, size_t& offset,
                                   size_t& expected,
-                                  isc::util::OutputBufferPtr& outbuff)
-{
+                                  isc::util::OutputBufferPtr& outbuff) {
     // Point to the data in the staging buffer and note how much there is.
     const uint8_t* data = static_cast<const uint8_t*>(staging);
     size_t data_length = length;
@@ -497,7 +493,7 @@ TCPSocket<C>::close() {
     }
 }
 
-} // namespace asiolink
-} // namespace isc
+}  // namespace asiolink
+}  // namespace isc
 
 #endif // TCP_SOCKET_H

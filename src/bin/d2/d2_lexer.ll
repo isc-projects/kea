@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +12,7 @@
 #include <cctype>
 #include <cerrno>
 #include <climits>
+#include <cstdint>
 #include <cstdlib>
 #include <string>
 #include <d2/parser_context.h>
@@ -273,6 +274,8 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::d2::D2ParserContext::TSIG_KEY:
     case isc::d2::D2ParserContext::TSIG_KEYS:
     case isc::d2::D2ParserContext::CONTROL_SOCKET:
+    case isc::d2::D2ParserContext::AUTHENTICATION:
+    case isc::d2::D2ParserContext::CLIENTS:
     case isc::d2::D2ParserContext::LOGGERS:
         return isc::d2::D2Parser::make_USER_CONTEXT(driver.loc_);
     default:
@@ -290,6 +293,8 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::d2::D2ParserContext::TSIG_KEY:
     case isc::d2::D2ParserContext::TSIG_KEYS:
     case isc::d2::D2ParserContext::CONTROL_SOCKET:
+    case isc::d2::D2ParserContext::AUTHENTICATION:
+    case isc::d2::D2ParserContext::CLIENTS:
     case isc::d2::D2ParserContext::LOGGERS:
         return isc::d2::D2Parser::make_COMMENT(driver.loc_);
     default:
@@ -397,12 +402,31 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"secret-file\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::TSIG_KEY:
+    case isc::d2::D2ParserContext::TSIG_KEYS:
+        return isc::d2::D2Parser::make_SECRET_FILE(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("secret-file", driver.loc_);
+    }
+}
+
 \"control-socket\" {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::DHCPDDNS:
         return isc::d2::D2Parser::make_CONTROL_SOCKET(driver.loc_);
     default:
         return isc::d2::D2Parser::make_STRING("control-socket", driver.loc_);
+    }
+}
+
+\"control-sockets\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::DHCPDDNS:
+        return isc::d2::D2Parser::make_CONTROL_SOCKETS(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("control-sockets", driver.loc_);
     }
 }
 
@@ -415,12 +439,183 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"unix\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::CONTROL_SOCKET_TYPE:
+        return isc::d2::D2Parser::make_UNIX(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("unix", driver.loc_);
+    }
+}
+
+\"http\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::CONTROL_SOCKET_TYPE:
+        return isc::d2::D2Parser::make_HTTP(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("http", driver.loc_);
+    }
+}
+
+\"https\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::CONTROL_SOCKET_TYPE:
+        return isc::d2::D2Parser::make_HTTPS(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("https", driver.loc_);
+    }
+}
+
 \"socket-name\" {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::CONTROL_SOCKET:
         return isc::d2::D2Parser::make_SOCKET_NAME(driver.loc_);
     default:
         return isc::d2::D2Parser::make_STRING("socket-name", driver.loc_);
+    }
+}
+
+\"socket-address\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::CONTROL_SOCKET:
+        return isc::d2::D2Parser::make_SOCKET_ADDRESS(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("socket-address", driver.loc_);
+    }
+}
+
+\"socket-port\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::CONTROL_SOCKET:
+        return isc::d2::D2Parser::make_SOCKET_PORT(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("socket-port", driver.loc_);
+    }
+}
+
+\"authentication\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::CONTROL_SOCKET:
+        return isc::d2::D2Parser::make_AUTHENTICATION(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("authentication", driver.loc_);
+    }
+}
+
+\"type\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::AUTHENTICATION:
+        return isc::d2::D2Parser::make_TYPE(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("type", driver.loc_);
+    }
+}
+
+\"basic\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::AUTH_TYPE:
+        return isc::d2::D2Parser::make_BASIC(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("basic", driver.loc_);
+    }
+}
+
+\"realm\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::AUTHENTICATION:
+        return isc::d2::D2Parser::make_REALM(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("realm", driver.loc_);
+    }
+}
+
+\"directory\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::AUTHENTICATION:
+        return isc::d2::D2Parser::make_DIRECTORY(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("directory", driver.loc_);
+    }
+}
+
+\"clients\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::AUTHENTICATION:
+        return isc::d2::D2Parser::make_CLIENTS(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("clients", driver.loc_);
+    }
+}
+
+\"user\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::CLIENTS:
+        return isc::d2::D2Parser::make_USER(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("user", driver.loc_);
+    }
+}
+
+\"user-file\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::CLIENTS:
+        return isc::d2::D2Parser::make_USER_FILE(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("user-file", driver.loc_);
+    }
+}
+
+\"password\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::CLIENTS:
+        return isc::d2::D2Parser::make_PASSWORD(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("password", driver.loc_);
+    }
+}
+
+\"password-file\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::CLIENTS:
+        return isc::d2::D2Parser::make_PASSWORD_FILE(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("password-file", driver.loc_);
+    }
+}
+
+\"trust-anchor\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::CONTROL_SOCKET:
+        return isc::d2::D2Parser::make_TRUST_ANCHOR(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("trust-anchor", driver.loc_);
+    }
+}
+
+\"cert-file\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::CONTROL_SOCKET:
+        return isc::d2::D2Parser::make_CERT_FILE(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("cert-file", driver.loc_);
+    }
+}
+
+\"key-file\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::CONTROL_SOCKET:
+        return isc::d2::D2Parser::make_KEY_FILE(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("key-file", driver.loc_);
+    }
+}
+
+\"cert-required\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::CONTROL_SOCKET:
+        return isc::d2::D2Parser::make_CERT_REQUIRED(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("cert-required", driver.loc_);
     }
 }
 
@@ -466,6 +661,15 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
         return isc::d2::D2Parser::make_OUTPUT_OPTIONS(driver.loc_);
     default:
         return isc::d2::D2Parser::make_STRING("output_options", driver.loc_);
+    }
+}
+
+\"output-options\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::LOGGERS:
+        return isc::d2::D2Parser::make_OUTPUT_OPTIONS(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("output-options", driver.loc_);
     }
 }
 

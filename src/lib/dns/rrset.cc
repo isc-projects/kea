@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,25 +6,25 @@
 
 #include <config.h>
 
-#include <algorithm>
-#include <string>
-#include <vector>
-
-#include <boost/shared_ptr.hpp>
-#include <boost/foreach.hpp>
-
-#include <util/buffer.h>
+#include <exceptions/isc_assert.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
 #include <dns/rrttl.h>
 #include <dns/rrset.h>
+#include <util/buffer.h>
 
-using namespace std;
+#include <algorithm>
+#include <string>
+#include <vector>
+#include <boost/shared_ptr.hpp>
+
 using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::dns::rdata;
+
+using namespace std;
 
 namespace isc {
 namespace dns {
@@ -71,9 +71,9 @@ namespace { // unnamed namespace
 // FIXME: This method's code should somehow be unified with
 // BasicRRsetImpl::toWire() below to avoid duplication.
 template <typename T>
-inline unsigned int
+inline uint32_t
 rrsetToWire(const AbstractRRset& rrset, T& output, const size_t limit) {
-    unsigned int n = 0;
+    uint32_t n = 0;
     RdataIteratorPtr it = rrset.getRdataIterator();
 
     if (it->isLast()) {
@@ -98,7 +98,7 @@ rrsetToWire(const AbstractRRset& rrset, T& output, const size_t limit) {
     // other options.  Details to be considered.
     do {
         const size_t pos0 = output.getLength();
-        assert(pos0 < 65536);
+        isc_throw_assert(pos0 < 65536);
 
         rrset.getName().toWire(output);
         rrset.getType().toWire(output);
@@ -125,14 +125,14 @@ rrsetToWire(const AbstractRRset& rrset, T& output, const size_t limit) {
 
 } // end of unnamed namespace
 
-unsigned int
+uint32_t
 AbstractRRset::toWire(OutputBuffer& buffer) const {
     return (rrsetToWire<OutputBuffer>(*this, buffer, 0));
 }
 
-unsigned int
+uint32_t
 AbstractRRset::toWire(AbstractMessageRenderer& renderer) const {
-    const unsigned int rrs_written = rrsetToWire<AbstractMessageRenderer>(
+    const uint32_t rrs_written = rrsetToWire<AbstractMessageRenderer>(
         *this, renderer, renderer.getLengthLimit());
     if (getRdataCount() > rrs_written) {
         renderer.setTruncated();
@@ -164,7 +164,7 @@ public:
                    const RRType& rrtype, const RRTTL& ttl) :
         name_(name), rrclass_(rrclass), rrtype_(rrtype), ttl_(ttl) {}
 
-    unsigned int toWire(AbstractMessageRenderer& renderer, size_t limit) const;
+    uint32_t toWire(AbstractMessageRenderer& renderer, size_t limit) const;
 
     Name name_;
     RRClass rrclass_;
@@ -178,7 +178,7 @@ public:
 
 // FIXME: This method's code should somehow be unified with
 // rrsetToWire() above to avoid duplication.
-unsigned int
+uint32_t
 BasicRRsetImpl::toWire(AbstractMessageRenderer& renderer, size_t limit) const {
     if (rdatalist_.empty()) {
         // empty rrsets are only allowed for classes ANY and NONE
@@ -198,13 +198,13 @@ BasicRRsetImpl::toWire(AbstractMessageRenderer& renderer, size_t limit) const {
         return (1);
     }
 
-    unsigned int n = 0;
+    uint32_t n = 0;
 
     // sort the set of Rdata based on rrset-order and sortlist, and possible
     // other options.  Details to be considered.
-    BOOST_FOREACH(const ConstRdataPtr& rdata, rdatalist_) {
+    for (auto const& rdata : rdatalist_) {
         const size_t pos0 = renderer.getLength();
-        assert(pos0 < 65536);
+        isc_throw_assert(pos0 < 65536);
 
         name_.toWire(renderer);
         rrtype_.toWire(renderer);
@@ -229,13 +229,11 @@ BasicRRsetImpl::toWire(AbstractMessageRenderer& renderer, size_t limit) const {
 }
 
 BasicRRset::BasicRRset(const Name& name, const RRClass& rrclass,
-                       const RRType& rrtype, const RRTTL& ttl)
-{
-    impl_ = new BasicRRsetImpl(name, rrclass, rrtype, ttl);
+                       const RRType& rrtype, const RRTTL& ttl) {
+    impl_.reset(new BasicRRsetImpl(name, rrclass, rrtype, ttl));
 }
 
 BasicRRset::~BasicRRset() {
-    delete impl_;
 }
 
 void
@@ -253,7 +251,7 @@ BasicRRset::addRdata(const std::string& rdata_str) {
     addRdata(createRdata(getType(), getClass(), rdata_str));
 }
 
-unsigned int
+uint32_t
 BasicRRset::getRdataCount() const {
     return (impl_->rdatalist_.size());
 }
@@ -323,7 +321,7 @@ BasicRRset::getLength() const {
         rrlen += 2; // RDLENGTH field
         rrlen += it->getCurrent().getLength();
 
-        assert(length + rrlen < 65536);
+        isc_throw_assert(length + rrlen < 65536);
         length += rrlen;
 
         it->next();
@@ -332,14 +330,14 @@ BasicRRset::getLength() const {
     return (length);
 }
 
-unsigned int
+uint32_t
 BasicRRset::toWire(OutputBuffer& buffer) const {
     return (AbstractRRset::toWire(buffer));
 }
 
-unsigned int
+uint32_t
 BasicRRset::toWire(AbstractMessageRenderer& renderer) const {
-    const unsigned int rrs_written = impl_->toWire(renderer,
+    const uint32_t rrs_written = impl_->toWire(renderer,
                                                    renderer.getLengthLimit());
     if (impl_->rdatalist_.size() > rrs_written) {
         renderer.setTruncated();
@@ -348,15 +346,14 @@ BasicRRset::toWire(AbstractMessageRenderer& renderer) const {
 }
 
 RRset::RRset(const Name& name, const RRClass& rrclass,
-            const RRType& rrtype, const RRTTL& ttl) :
-    BasicRRset(name, rrclass, rrtype, ttl)
-{
-    rrsig_ = RRsetPtr();
+             const RRType& rrtype, const RRTTL& ttl) :
+    BasicRRset(name, rrclass, rrtype, ttl) {
 }
 
-RRset::~RRset() {}
+RRset::~RRset() {
+}
 
-unsigned int
+uint32_t
 RRset::getRRsigDataCount() const {
     if (rrsig_) {
         return (rrsig_->getRdataCount());
@@ -373,16 +370,16 @@ RRset::getLength() const {
         const uint16_t rrsigs_length = rrsig_->getLength();
         // the uint16_ts are promoted to ints during addition below, so
         // it won't overflow a 16-bit register.
-        assert(length + rrsigs_length < 65536);
+        isc_throw_assert(length + rrsigs_length < 65536);
         length += rrsigs_length;
     }
 
     return (length);
 }
 
-unsigned int
+uint32_t
 RRset::toWire(OutputBuffer& buffer) const {
-    unsigned int rrs_written = BasicRRset::toWire(buffer);
+    uint32_t rrs_written = BasicRRset::toWire(buffer);
     if (getRdataCount() > rrs_written) {
         return (rrs_written);
     }
@@ -394,9 +391,9 @@ RRset::toWire(OutputBuffer& buffer) const {
     return (rrs_written);
 }
 
-unsigned int
+uint32_t
 RRset::toWire(AbstractMessageRenderer& renderer) const {
-    unsigned int rrs_written = BasicRRset::toWire(renderer);
+    uint32_t rrs_written = BasicRRset::toWire(renderer);
     if (getRdataCount() > rrs_written) {
         return (rrs_written);
     }
@@ -418,10 +415,12 @@ class BasicRdataIterator : public RdataIterator {
 public:
     /// @brief Constructor.
     BasicRdataIterator(const std::vector<rdata::ConstRdataPtr>& datavector) :
-        datavector_(&datavector), it_(datavector_->begin()) {}
+        datavector_(&datavector), it_(datavector_->begin()) {
+    }
 
     /// @brief Destructor.
-    ~BasicRdataIterator() {}
+    ~BasicRdataIterator() {
+    }
 
     /// @brief Set iterator at first position.
     virtual void first() {

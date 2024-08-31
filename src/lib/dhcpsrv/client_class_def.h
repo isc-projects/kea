@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,9 +12,10 @@
 #include <cc/user_context.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfg_option_def.h>
-#include <util/triplet.h>
 #include <eval/token.h>
 #include <exceptions/exceptions.h>
+#include <util/triplet.h>
+#include <util/optional.h>
 
 #include <string>
 #include <unordered_map>
@@ -56,7 +57,6 @@ public:
     /// @param options Collection of options members should be given
     ClientClassDef(const std::string& name, const ExpressionPtr& match_expr,
                    const CfgOptionPtr& options = CfgOptionPtr());
-
 
     /// Copy constructor
     ClientClassDef(const ClientClassDef& rhs);
@@ -222,6 +222,28 @@ public:
         preferred_ = preferred;
     }
 
+    /// @brief Sets offer lifetime for the class.
+    ///
+    /// @param offer_lft the offer lifetime assigned to the class (may be empty if not defined)
+    void setOfferLft(const util::Optional<uint32_t>& offer_lft) {
+        offer_lft_ = offer_lft;
+    }
+
+    /// @brief Returns offer lifetime for the class.
+    ///
+    /// @return offer lifetime value
+    util::Optional<uint32_t> getOfferLft() const {
+        return (offer_lft_);
+    }
+
+    /// @brief Test method which checks if the packet belongs to the class
+    ///
+    /// If the packet belongs to the class, the class is added to the packet.
+    ///
+    /// @param pkt The packet checked if it belongs to the class.
+    /// @param expr_ptr Expression the class will use to determine membership
+    virtual void test(PktPtr pkt, const ExpressionPtr& expr_ptr);
+
     /// @brief Unparse a configuration object
     ///
     /// @return a pointer to unparsed configuration
@@ -240,9 +262,9 @@ private:
     std::string test_;
 
     /// @brief The only-if-required flag: when false (the default) membership
-    /// is determined during classification so is available, of instance,
-    /// for subnet selection. When true, membership is evaluated
-    /// only when required and is usable only for option configuration.
+    /// is determined during classification so is available for instance for
+    /// subnet selection. When true, membership is evaluated only when required
+    /// and is usable only for option configuration.
     bool required_;
 
     /// @brief The depend on known aka use host flag: when false (the default),
@@ -283,6 +305,42 @@ private:
 
     /// @brief a Triplet (min/default/max) holding allowed preferred lifetime values
     util::Triplet<uint32_t> preferred_;
+
+    /// @brief offer lifetime for this class (V4 only).
+    util::Optional<uint32_t> offer_lft_;
+};
+
+class TemplateClientClassDef : public ClientClassDef {
+public:
+    /// @brief Constructor
+    ///
+    /// @param name Name to assign to this class
+    /// @param match_expr Expression the class will use to determine membership
+    /// @param options Collection of options members should be given
+    TemplateClientClassDef(const std::string& name, const ExpressionPtr& match_expr,
+                           const CfgOptionPtr& options = CfgOptionPtr());
+
+    /// @brief Test method which checks if the packet belongs to the class
+    ///
+    /// If the packet belongs to the class, the class is added to the packet.
+    ///
+    /// @param pkt The packet checked if it belongs to the class.
+    /// @param expr_ptr Expression the class will use to determine membership
+    virtual void test(PktPtr pkt, const ExpressionPtr& expr_ptr) override;
+
+    /// @brief Unparse a configuration object
+    ///
+    /// @return a pointer to unparsed configuration
+    virtual isc::data::ElementPtr toElement() const override;
+
+    /// @brief This is a prefix added to the spawned class name
+    ///
+    /// If incoming packet is associated with the template class, the name of
+    /// generated spawned class is prepended with this prefix.
+    /// For example, a packet that associates with the template class "FOO" by
+    /// evaluating the template class expression to BAR will cause the packet to
+    /// be assigned to class SPAWN_FOO_BAR.
+    static const std::string SPAWN_CLASS_PREFIX;
 };
 
 /// @brief a pointer to an ClientClassDef
@@ -327,6 +385,8 @@ public:
     /// @param filename boot-file-name value for this class (optional)
     /// @param valid valid-lifetime triplet (optional)
     /// @param preferred preferred-lifetime triplet (optional)
+    /// @param is_template true if class is a template class. Defaults to false.
+    /// @param offer_lft the offer lifetime assigned to the class (may be empty if not defined)
     ///
     /// @throw DuplicateClientClassDef if class already exists within the
     /// dictionary.  See @ref dhcp::ClientClassDef::ClientClassDef() for
@@ -339,8 +399,10 @@ public:
                   asiolink::IOAddress next_server = asiolink::IOAddress("0.0.0.0"),
                   const std::string& sname = std::string(),
                   const std::string& filename = std::string(),
-                  const util::Triplet<uint32_t>&valid = util::Triplet<uint32_t>(),
-                  const util::Triplet<uint32_t>&preferred = util::Triplet<uint32_t>());
+                  const util::Triplet<uint32_t>& valid = util::Triplet<uint32_t>(),
+                  const util::Triplet<uint32_t>& preferred = util::Triplet<uint32_t>(),
+                  bool is_template = false,
+                  const util::Optional<uint32_t>& offer_lft = util::Optional<uint32_t>());
 
     /// @brief Adds a new class to the list
     ///
@@ -348,7 +410,7 @@ public:
     ///
     /// @throw DuplicateClientClassDef if class already exists within the
     /// dictionary, BadValue if the pointer is empty.
-    void addClass(ClientClassDefPtr& class_def);
+    void addClass(const ClientClassDefPtr& class_def);
 
     /// @brief Fetches the class definition for a given class name
     ///
@@ -409,6 +471,10 @@ public:
     /// @param cfg_option_def set of option definitions to use.
     void createOptions(const CfgOptionDefPtr& cfg_option_def);
 
+    /// @brief Iterates over the classes in the dictionary and encapsulates
+    /// suboptions.
+    void encapsulateOptions() const;
+
     /// @brief Equality operator.
     ///
     /// @param other Other client class dictionary to compare to.
@@ -463,7 +529,6 @@ extern std::list<std::string> builtinPrefixes;
 /// @param client_class A client class name to look for.
 /// @return true if built-in, false if not.
 bool isClientClassBuiltIn(const ClientClass& client_class);
-
 
 /// @brief Check if a client class name is already defined,
 /// i.e. is built-in or in the dictionary,

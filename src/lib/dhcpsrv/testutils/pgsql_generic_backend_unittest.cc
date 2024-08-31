@@ -6,8 +6,10 @@
 
 #include <config.h>
 #include <dhcpsrv/testutils/pgsql_generic_backend_unittest.h>
+#include <pgsql/testutils/pgsql_schema.h>
 
 using namespace isc::db;
+using namespace isc::db::test;
 
 namespace isc {
 namespace dhcp {
@@ -15,6 +17,7 @@ namespace test {
 
 PgSqlGenericBackendTest::PgSqlGenericBackendTest()
     : GenericBackendTest() {
+    createPgSQLSchema();
 }
 
 size_t

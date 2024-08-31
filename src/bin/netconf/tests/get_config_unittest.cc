@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,22 +6,19 @@
 
 #include <config.h>
 
-#include <cc/data.h>
 #include <cc/command_interpreter.h>
-#include <testutils/gtest_utils.h>
-#include <testutils/user_context_utils.h>
-#include <process/testutils/d_test_stubs.h>
+#include <cc/data.h>
 #include <netconf/netconf_cfg_mgr.h>
 #include <netconf/parser_context.h>
+#include <process/testutils/d_test_stubs.h>
+#include <testutils/gtest_utils.h>
+#include <testutils/user_context_utils.h>
 
-#include <boost/scoped_ptr.hpp>
+#include <fstream>
+#include <iostream>
+#include <string>
 
 #include <gtest/gtest.h>
-
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <sstream>
 
 #include "test_data_files_config.h"
 #include "test_libraries.h"
@@ -56,16 +53,16 @@ const bool generate_action = false;
 #endif
 
 /// @brief Read a file into a string
-std::string
-readFile(const std::string& file_path) {
-    std::ifstream ifs(file_path);
+string
+readFile(const string& file_path) {
+    ifstream ifs(file_path);
     if (!ifs.is_open()) {
         ADD_FAILURE() << "readFile cannot open " << file_path;
         isc_throw(isc::Unexpected, "readFile cannot open " << file_path);
     }
-    std::string lines;
-    std::string line;
-    while (std::getline(ifs, line)) {
+    string lines;
+    string line;
+    while (getline(ifs, line)) {
         lines += line + "\n";
     }
     ifs.close();
@@ -74,13 +71,13 @@ readFile(const std::string& file_path) {
 
 /// @brief Runs parser in JSON mode
 ElementPtr
-parseJSON(const std::string& in, bool verbose = false) {
+parseJSON(const string& in, bool verbose = false) {
     try {
         ParserContext ctx;
         return (ctx.parseString(in, ParserContext::PARSER_JSON));
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         if (verbose) {
-            std::cout << "EXCEPTION: " << ex.what() << std::endl;
+            cout << "EXCEPTION: " << ex.what() << endl;
         }
         throw;
     }
@@ -88,13 +85,13 @@ parseJSON(const std::string& in, bool verbose = false) {
 
 /// @brief Runs parser in NETCONF mode
 ElementPtr
-parseNETCONF(const std::string& in, bool verbose = false) {
+parseNETCONF(const string& in, bool verbose = false) {
     try {
         ParserContext ctx;
         return (ctx.parseString(in, ParserContext::PARSER_NETCONF));
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         if (verbose) {
-            std::cout << "EXCEPTION: " << ex.what() << std::endl;
+            cout << "EXCEPTION: " << ex.what() << endl;
         }
         throw;
     }
@@ -108,7 +105,7 @@ pathReplacer(ConstElementPtr netconf_cfg) {
         return;
     }
     ElementPtr first_lib = hooks_libs->getNonConst(0);
-    std::string lib_path(BASIC_CALLOUT_LIBRARY);
+    string lib_path(BASIC_CALLOUT_LIBRARY);
     first_lib->set("library", Element::create(lib_path));
 }
 
@@ -116,7 +113,7 @@ pathReplacer(ConstElementPtr netconf_cfg) {
 class NakedNetconfCfgMgr : public NetconfCfgMgr {
 public:
     using NetconfCfgMgr::parse;
-};
+};  // NakedNetconfCfgMgr
 
 }  // namespace
 
@@ -145,12 +142,12 @@ public:
     ///
     /// @return true if the configuration succeeded, false if not.
     bool
-    executeConfiguration(const std::string& config, const char* operation) {
+    executeConfiguration(const string& config, const char* operation) {
         // try JSON parser
-        ConstElementPtr json;
+        ElementPtr json;
         try {
             json = parseJSON(config, true);
-        } catch (const std::exception& ex) {
+        } catch (exception const& ex) {
             ADD_FAILURE() << "invalid JSON for " << operation
                           << " failed with " << ex.what()
                           << " on\n" << config << "\n";
@@ -181,7 +178,7 @@ public:
         ConstElementPtr status;
         try {
             status = srv_->parse(ca, true);
-        } catch (const std::exception& ex) {
+        } catch (exception const& ex) {
             ADD_FAILURE() << "configure for " << operation
                           << " failed with " << ex.what()
                           << " on\n" << prettyPrint(json) << "\n";
@@ -224,23 +221,23 @@ public:
         EXPECT_TRUE(executeConfiguration(config, "reset config"));
     }
 
-    boost::scoped_ptr<NakedNetconfCfgMgr> srv_; ///< Netconf server under test
-    int rcode_;                       ///< Return code from element parsing
-    ConstElementPtr comment_;         ///< Reason for parse fail
-};
+    unique_ptr<NakedNetconfCfgMgr> srv_;    ///< Netconf server under test
+    int rcode_;                             ///< Return code from element parsing
+    ConstElementPtr comment_;               ///< Reason for parse fail
+};  // NetconfGetCfgTest
 
 // Test a simple configuration.
 TEST_F(NetconfGetCfgTest, simple) {
 
     // get the simple configuration
-    std::string simple_file = string(CFG_EXAMPLES) + "/" + "simple-dhcp4.json";
-    std::string config;
+    string simple_file = string(CFG_EXAMPLES) + "/" + "simple-dhcp4.json";
+    string config;
     ASSERT_NO_THROW_LOG(config = readFile(simple_file));
 
     // get the expected configuration
-    std::string expected_file =
-        std::string(NETCONF_TEST_DATA_DIR) + "/" + "get_config.json";
-    std::string expected;
+    string expected_file =
+        string(NETCONF_TEST_DATA_DIR) + "/" + "get_config.json";
+    string expected;
     ASSERT_NO_THROW_LOG(expected = readFile(expected_file));
 
     // execute the sample configuration
@@ -248,15 +245,15 @@ TEST_F(NetconfGetCfgTest, simple) {
 
     // unparse it
     NetconfConfigPtr context = srv_->getNetconfConfig();
-    ConstElementPtr unparsed;
+    ElementPtr unparsed;
     ASSERT_NO_THROW_LOG(unparsed = context->toElement());
 
     // dump if wanted else check
     if (generate_action) {
-        std::cerr << "// Generated Configuration (remove this line)\n";
+        cerr << "// Generated Configuration (remove this line)\n";
         ASSERT_NO_THROW_LOG(expected = prettyPrint(unparsed));
-        prettyPrint(unparsed, std::cerr, 0, 4);
-        std::cerr << "\n";
+        prettyPrint(unparsed, cerr, 0, 4);
+        cerr << "\n";
     } else {
         // get the expected config using the netconf syntax parser
         ElementPtr jsond;
@@ -274,8 +271,8 @@ TEST_F(NetconfGetCfgTest, simple) {
         // check that unparsed and updated expected values match
         EXPECT_TRUE(isEquivalent(unparsed, jsonj));
         // check on pretty prints too
-        std::string current = prettyPrint(unparsed, 0, 4);
-        std::string expected2 = prettyPrint(jsonj, 0, 4);
+        string current = prettyPrint(unparsed, 0, 4);
+        string expected2 = prettyPrint(jsonj, 0, 4);
         EXPECT_EQ(expected2, current);
         if (expected2 != current) {
             expected = current + "\n";
@@ -287,7 +284,7 @@ TEST_F(NetconfGetCfgTest, simple) {
 
     // is it a fixed point?
     NetconfConfigPtr context2 = srv_->getNetconfConfig();
-    ConstElementPtr unparsed2;
+    ElementPtr unparsed2;
     ASSERT_NO_THROW_LOG(unparsed2 = context2->toElement());
     ASSERT_TRUE(unparsed2);
     EXPECT_TRUE(isEquivalent(unparsed, unparsed2));

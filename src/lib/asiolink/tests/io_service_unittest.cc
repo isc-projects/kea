@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -32,8 +32,8 @@ TEST(IOService, post) {
     // They have not yet been called
     EXPECT_TRUE(called.empty());
     // Process two events
-    service.run_one();
-    service.run_one();
+    service.runOne();
+    service.runOne();
     // Both events were called in the right order
     ASSERT_EQ(2, called.size());
     EXPECT_EQ(1, called[0]);

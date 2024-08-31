@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,7 +14,7 @@
 #include <log/logger_support.h>
 #include <process/config_base.h>
 #include <process/redact_config.h>
-#include <util/filename.h>
+#include <util/filesystem.h>
 
 #include <functional>
 #include <sstream>
@@ -23,7 +23,7 @@
 #include <errno.h>
 
 using namespace isc::data;
-namespace ph = std::placeholders;
+using namespace isc::util::file;
 
 /// @brief provides default implementation for basic daemon operations
 ///
@@ -87,11 +87,10 @@ Daemon::getVerbose() {
 
 void Daemon::loggerInit(const char* name, bool verbose) {
 
-    setenv("KEA_LOGGER_DESTINATION",  "stdout", 0);
+    setenv("KEA_LOGGER_DESTINATION", "stdout", 0);
 
     // Initialize logger system
-    isc::log::initLogger(name, isc::log::DEBUG, isc::log::MAX_DEBUG_LEVEL,
-                         NULL);
+    isc::log::initLogger(name, isc::log::DEBUG, isc::log::MAX_DEBUG_LEVEL, 0);
 
     // Apply default configuration (log INFO or DEBUG to stdout)
     isc::log::setDefaultLoggingOutput(verbose);
@@ -117,10 +116,10 @@ Daemon::checkConfigFile() const {
         isc_throw(isc::BadValue, "config file name is not set");
     }
 
-    // Create Filename instance from the config_file_ pathname, and
+    // Create Path instance from the config_file_ pathname, and
     // check the file name component.
-    isc::util::Filename file(config_file_);
-    if (file.name().empty()) {
+    Path file(config_file_);
+    if (file.stem().empty()) {
         isc_throw(isc::BadValue, "config file:" << config_file_
                   << " is missing file name");
     }
@@ -129,7 +128,7 @@ Daemon::checkConfigFile() const {
 std::string
 Daemon::getProcName() {
     return (proc_name_);
-};
+}
 
 void
 Daemon::setProcName(const std::string& proc_name) {
@@ -153,7 +152,7 @@ Daemon::getPIDFileName() const {
     }
 
     return ("");
-};
+}
 
 void
 Daemon::setPIDFileName(const std::string& pid_file_name) {
@@ -168,7 +167,7 @@ Daemon::setPIDFileName(const std::string& pid_file_name) {
     }
 
     pid_file_.reset(new util::PIDFile(pid_file_name));
-};
+}
 
 std::string
 Daemon::makePIDFileName() const {
@@ -177,10 +176,10 @@ Daemon::makePIDFileName() const {
                   "Daemon::makePIDFileName config file name is not set");
     }
 
-    // Create Filename instance from the config_file_ pathname, so we can
+    // Create Path instance from the config_file_ pathname, so we can
     // extract the fname component.
-    isc::util::Filename file(config_file_);
-    if (file.name().empty()) {
+    Path file(config_file_);
+    if (file.stem().empty()) {
         isc_throw(isc::BadValue, "Daemon::makePIDFileName config file:"
                   << config_file_ << " is missing file name");
     }
@@ -193,7 +192,7 @@ Daemon::makePIDFileName() const {
     // Make the pathname for the PID file from the runtime directory,
     // configuration name and process name.
     std::ostringstream stream;
-    stream  << pid_file_dir_ << "/" << file.name()
+    stream  << pid_file_dir_ << "/" << file.stem()
             << "." << proc_name_ << ".pid";
 
     return(stream.str());
@@ -231,6 +230,9 @@ Daemon::writeConfigFile(const std::string& config_file,
     if (!cfg) {
         isc_throw(Unexpected, "Can't write configuration: conversion to JSON failed");
     }
+
+    // Remove rights for other from the umask.
+    Umask mask(S_IRWXO);
 
     std::ofstream out(config_file, std::ios::trunc);
     if (!out.good()) {

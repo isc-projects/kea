@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 
 #include <asiolink/io_service.h>
 #include <cc/data.h>
+#include <config/http_command_config.h>
 #include <exceptions/exceptions.h>
 #include <d2srv/d2_config.h>
 #include <hooks/hooks_config.h>
@@ -59,6 +60,7 @@ public:
     }
 
     /// @brief Sets the forward domain list manager
+    ///
     /// @param forward_mgr pointer to the new forward manager
     void setForwardMgr(DdnsDomainListMgrPtr forward_mgr) {
         forward_mgr_ = forward_mgr;
@@ -72,6 +74,7 @@ public:
     }
 
     /// @brief Sets the reverse domain list manager
+    ///
     /// @param reverse_mgr pointer to the new reverse manager
     void setReverseMgr(DdnsDomainListMgrPtr reverse_mgr) {
         reverse_mgr_ = reverse_mgr;
@@ -91,16 +94,32 @@ public:
         keys_ = keys;
     }
 
-    /// @brief Returns information about control socket
-    /// @return pointer to the Element that holds control-socket map
+    /// @brief Returns information about UNIX control socket
+    ///
+    /// @return pointer to the UNIX control socket config
     const isc::data::ConstElementPtr getControlSocketInfo() const {
-        return (control_socket_);
+        return (unix_control_socket_);
     }
 
-    /// @brief Sets information about the control socket
-    /// @param control_socket Element that holds control-socket map
+    /// @brief Sets information about the UNIX control socket
+    ///
+    /// @param control_socket UNIX control socket config
     void setControlSocketInfo(const isc::data::ConstElementPtr& control_socket) {
-        control_socket_ = control_socket;
+        unix_control_socket_ = control_socket;
+    }
+
+    /// @brief Returns information about HTTP/HTTPS control socket
+    ///
+    /// @return pointer to the HTTP/HTTPS control socket config
+    isc::config::HttpCommandConfigPtr getHttpControlSocketInfo() const {
+        return (http_control_socket_);
+    }
+
+    /// @brief Sets information about the HTTP/HTTPS control socket
+    ///
+    /// @param control_socket HTTP/HTTPS control socket config
+    void setHttpControlSocketInfo(const isc::config::HttpCommandConfigPtr& control_socket) {
+        http_control_socket_ = control_socket;
     }
 
     /// @brief Returns non-const reference to configured hooks libraries.
@@ -142,8 +161,11 @@ private:
     /// @brief Storage for the map of TSIGKeyInfos.
     TSIGKeyInfoMapPtr keys_;
 
-    /// @brief Pointer to the control-socket information.
-    isc::data::ConstElementPtr control_socket_;
+    /// @brief Pointer to the UNIX control socket configuration.
+    isc::data::ConstElementPtr unix_control_socket_;
+
+    /// @brief Pointer to the HTTP/HTTPS control socket configuration.
+    isc::config::HttpCommandConfigPtr http_control_socket_;
 
     /// @brief Configured hooks libraries.
     isc::hooks::HooksConfig hooks_config_;
@@ -161,10 +183,12 @@ typedef boost::shared_ptr<DdnsDomainListMgr> DdnsDomainListMgrPtr;
 class D2CfgMgr : public process::DCfgMgrBase {
 public:
     /// @brief Reverse zone suffix added to IPv4 addresses for reverse lookups
+    ///
     /// @todo This should be configurable.
     static const char* IPV4_REV_ZONE_SUFFIX;
 
     /// @brief Reverse zone suffix added to IPv6 addresses for reverse lookups
+    ///
     /// @todo This should be configurable.
     static const char* IPV6_REV_ZONE_SUFFIX;
 
@@ -282,13 +306,21 @@ public:
     static std::string reverseV6Address(const isc::asiolink::IOAddress& ioaddr);
 
     /// @brief Convenience method fetches the D2Params from context
+    ///
     /// @return reference to const D2ParamsPtr
     const D2ParamsPtr& getD2Params();
 
-    /// @brief Convenience method fetches information about control socket
-    /// from context
+    /// @brief Convenience method fetches information about
+    /// UNIX control socket from context
+    ///
     /// @return pointer to the Element that holds control-socket map
     const isc::data::ConstElementPtr getControlSocketInfo();
+
+    /// @brief Convenience method fetches information about
+    /// HTTP/HTTPS control socket from context
+    ///
+    /// @return pointer to the HTTP/HTTPS control socket config
+    isc::config::HttpCommandConfigPtr getHttpControlSocketInfo();
 
     /// @brief Returns configuration summary in the textual format.
     ///
@@ -306,6 +338,7 @@ protected:
     /// @param config Pointer to a configuration specified for D2.
     /// @param check_only Boolean flag indicating if this method should
     /// only verify correctness of the provided configuration.
+    ///
     /// @return Pointer to a result of configuration parsing.
     virtual isc::data::ConstElementPtr
     parse(isc::data::ConstElementPtr config, bool check_only) override;

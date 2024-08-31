@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,9 @@
 #include <d2/d2_queue_mgr.h>
 #include <d2srv/d2_log.h>
 #include <dhcp_ddns/ncr_udp.h>
+#include <stats/stats_mgr.h>
+
+using namespace isc::stats;
 
 namespace isc {
 namespace d2 {
@@ -60,6 +63,7 @@ D2QueueMgr::operator()(const dhcp_ddns::NameChangeListener::Result result,
             // is no receive in progress.
             LOG_ERROR(dhcp_to_d2_logger, DHCP_DDNS_QUEUE_MGR_QUEUE_FULL)
                       .arg(max_queue_size_);
+            StatsMgr::instance().addValue("queue-mgr-queue-full", static_cast<int64_t>(1));
             stopListening(STOPPED_QUEUE_FULL);
             break;
 
@@ -108,9 +112,8 @@ D2QueueMgr::initUDPListener(const isc::asiolink::IOAddress& ip_address,
 
     // Instantiate a UDP listener and set state to INITTED.
     // Note UDP listener constructor does not throw.
-    listener_.reset(new dhcp_ddns::
-                    NameChangeUDPListener(ip_address, port, format, *this,
-                                          reuse_address));
+    listener_.reset(new dhcp_ddns::NameChangeUDPListener(ip_address, port, format,
+                                                         shared_from_this(), reuse_address));
     mgr_state_ = INITTED;
 }
 
@@ -131,7 +134,7 @@ D2QueueMgr::startListening() {
 
     // Instruct the listener to start listening and set state accordingly.
     try {
-        listener_->startListening(*io_service_);
+        listener_->startListening(io_service_);
         mgr_state_ = RUNNING;
     } catch (const isc::Exception& ex) {
         isc_throw(D2QueueMgrError, "D2QueueMgr listener start failed: "
@@ -178,7 +181,6 @@ D2QueueMgr::updateStopState() {
               DHCP_DDNS_QUEUE_MGR_STOPPED);
 }
 
-
 void
 D2QueueMgr::removeListener() {
     // Force our managing layer(s) to stop us properly first.
@@ -223,7 +225,6 @@ D2QueueMgr::dequeueAt(const size_t index) {
     RequestQueue::iterator pos = ncr_queue_.begin() + index;
     ncr_queue_.erase(pos);
 }
-
 
 void
 D2QueueMgr::dequeue() {

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -41,10 +41,10 @@ DStubProcess::run() {
     // To use run(), the "managing" layer must issue an io_service::stop
     // or the call to run will continue to block, and shutdown will not
     // occur.
-    asiolink::IOServicePtr& io_service = getIoService();
+    asiolink::IOServicePtr& io_service = getIOService();
     while (!shouldShutdown()) {
         try {
-            io_service->run_one();
+            io_service->runOne();
         } catch (const std::exception& ex) {
             isc_throw (DProcessBaseError,
                 std::string("Process run method failed: ") + ex.what());
@@ -61,15 +61,16 @@ DStubProcess::shutdown(isc::data::ConstElementPtr /* args */) {
 
     setShutdownFlag(true);
     stopIOService();
-    return (isc::config::createAnswer(0, "Shutdown initiated."));
+    return (isc::config::createAnswer(isc::config::CONTROL_RESULT_SUCCESS,
+                                      "Shutdown initiated."));
 }
 
 isc::data::ConstElementPtr
 DStubProcess::configure(isc::data::ConstElementPtr config_set, bool check_only) {
     if (SimFailure::shouldFailOn(SimFailure::ftProcessConfigure)) {
         // Simulates a process configure failure.
-        return (isc::config::createAnswer(1,
-                "Simulated process configuration error."));
+        return (isc::config::createAnswer(isc::config::CONTROL_RESULT_ERROR,
+                                          "Simulated process configuration error."));
     }
 
     return (getCfgMgr()->simpleParseConfig(config_set, check_only));
@@ -193,7 +194,7 @@ void
 DControllerTest::scheduleTimedWrite(const std::string& config,
                                     int write_time_ms) {
     new_cfg_content_ = config;
-    write_timer_.reset(new asiolink::IntervalTimer(*getIOService()));
+    write_timer_.reset(new asiolink::IntervalTimer(getIOService()));
     write_timer_->setup(std::bind(&DControllerTest::timedWriteCallback, this),
                         write_time_ms, asiolink::IntervalTimer::ONE_SHOT);
 }
@@ -205,7 +206,7 @@ DControllerTest::runWithConfig(const std::string& config, int run_time_ms,
     writeFile(config);
 
     // Shutdown (without error) after runtime.
-    isc::asiolink::IntervalTimer timer(*getIOService());
+    isc::asiolink::IntervalTimer timer(getIOService());
     timer.setup(genShutdownCallback, run_time_ms);
 
     // Record start time, and invoke launch().
@@ -235,7 +236,7 @@ DControllerTest::runWithConfig(const std::string& config, int run_time_ms,
     writeFile(config);
 
     // Shutdown (without error) after runtime.
-    isc::asiolink::IntervalTimer timer(*getIOService());
+    isc::asiolink::IntervalTimer timer(getIOService());
     timer.setup([&] { callback(); genShutdownCallback(); }, run_time_ms);
 
     // Record start time, and invoke launch().
@@ -329,7 +330,8 @@ DStubCfgMgr::createNewContext() {
 
 isc::data::ConstElementPtr
 DStubCfgMgr::parse(isc::data::ConstElementPtr /*config*/, bool /*check_only*/) {
-    return (isc::config::createAnswer(0, "It all went fine. I promise"));
+    return (isc::config::createAnswer(isc::config::CONTROL_RESULT_SUCCESS,
+                                      "It all went fine. I promise"));
 }
 
 } // namespace isc::process

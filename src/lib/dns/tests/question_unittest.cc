@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -39,8 +39,8 @@ protected:
                      test_question1(example_name1, RRClass::IN(),
                                     RRType::NS()),
                      test_question2(example_name2, RRClass::CH(),
-                                    RRType::A())
-    {}
+                                    RRType::A()) {
+    }
     OutputBuffer obuffer;
     MessageRenderer renderer;
     Name example_name1;
@@ -132,9 +132,12 @@ TEST_F(QuestionTest, LeftShiftOperator) {
 }
 
 TEST_F(QuestionTest, comparison) {
-    const Name a("a"), b("b");
-    const RRClass in(RRClass::IN()), ch(RRClass::CH());
-    const RRType ns(RRType::NS()), aaaa(RRType::AAAA());
+    const Name a("a");
+    const Name b("b");
+    const RRClass in(RRClass::IN());
+    const RRClass ch(RRClass::CH());
+    const RRType ns(RRType::NS());
+    const RRType aaaa(RRType::AAAA());
 
     EXPECT_TRUE(Question(a, in, ns) < Question(a, in, aaaa));
     EXPECT_FALSE(Question(a, in, aaaa) < Question(a, in, ns));
@@ -190,7 +193,6 @@ TEST_F(QuestionTest, comparison) {
 
     EXPECT_FALSE(Question(b, ch, aaaa) == Question(a, in, ns));
     EXPECT_TRUE(Question(b, ch, aaaa) != Question(a, in, ns));
-
 }
 
 }

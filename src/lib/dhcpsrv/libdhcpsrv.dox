@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -188,21 +188,19 @@ and only stateless configuration is handed out.
 
 @section allocengine Allocation Engine
 
-Allocation Engine (\ref isc::dhcp::AllocEngine) is what its name say - an engine
-that handles allocation of new leases. It takes parameters that the client
-provided (client-id, DUID, subnet, a hint if the user provided one, etc.) and
-then attempts to allocate a lease.
+The Allocation Engine (\ref isc::dhcp::AllocEngine) is one of the core Kea modules.
+It uses the data from the received client DHCP messages to find an available
+lease and allocate it to the client. Finding a free lease is very complex
+because the engine has to consider the client's hints, whether or not the
+client has a static reservation, classes associated with the client, and
+many more. If the engine cannot allocate a lease indicated in the hint and
+the client has no static reservations, it has to find an available lease
+in the configured address or prefix delegation pools. It is the responsibility
+of the allocator (\ref isc::dhcp::Allocator).
 
-There is no single best solution to the address assignment problem. Server
-is expected to pick an address from its available pools is currently not used.
-There are many possible algorithms that can do that, each with its own advantages
-and drawbacks. This allocation engine must provide robust operation is radically
-different scenarios, so there address selection problem was abstracted into
-separate module, called allocator. Its sole purpose is to pick an address from
-a pool. Allocation engine will then check if the picked address is free and if
-it is not, then will ask allocator to pick again.
-
-At least 3 allocators will be implemented:
+Allocators are implemented in C++ classes with a well-defined interface. Each
+allocator uses a different algorithm for selecting a lease from the configured
+pools:
 
 - Iterative - it iterates over all resources (addresses or prefixes) in
 available pools, one by one. The advantages of this approach are: speed
@@ -214,9 +212,32 @@ can also be considered a serious flaw in some environments, as prediction of the
 next address is trivial and can be leveraged by an attacker. Another drawback of
 this allocator is that it does not attempt to give the same address to returning
 clients (clients that released or expired their leases and are requesting a new
-lease will likely to get a different lease). This allocator is not suitable for
+lease will likely get a different lease). This allocator is not suitable for
 temporary addresses, which must be randomized. This allocator is implemented
-in \ref isc::dhcp::AllocEngine::IterativeAllocator.
+in \ref isc::dhcp::IterativeAllocator.
+
+- Random - an allocator generating IP permutations within configured address pool
+using the Fisher-Yates shuffle algorithm. The allocator picks the leases from
+the permutation, so the leases are offered in random order. The permutation
+holds a state indicating which leases have already been offered to avoid
+returning the same lease multiple times. The advantage of the random allocator
+is that it makes the attacks based on address prediction more difficult. On
+the other hand, this allocator consumes more memory than the iterative allocator
+to hold the permutation state. This allocator is implemented
+in \ref isc::dhcp::RandomAllocator.
+
+The following allocators are not implemented in Kea but can be considered in
+the future:
+
+- FLQ (Free Lease Queue) - it is a specialized allocator optimizing lease
+selection when the server has nearly depleted pools. The iterative and
+random allocators can be slow in this case because they are unaware of
+which leases have already been taken. The FLQ allocator tracks lease
+allocations and avoids offering already allocated leases. It must maintain
+the list of available leases and offer them from this list. When the lease
+is allocated, it must be removed from the list. Populating the list of
+available leases is performed during the server startup or reconfiguration,
+possibly impacting the server's startup and reconfiguration time.
 
 - Hashed - ISC-DHCP uses hash of the client-id or DUID to determine, which
 address is tried first. If that address is not available, the result is hashed
@@ -229,16 +250,7 @@ pools are almost depleted. It also may be difficult to guarantee that the
 repeated hashing will iterate over all available addresses in all pools. Flawed
 hash algorithm can go into cycles that iterate over only part of the addresses.
 It is difficult to detect such issues as only some initial seed (client-id
-or DUID) values may trigger short cycles. This allocator is currently not
-implemented. This will be the only allocator allowed for temporary addresses.
-
-- Random - Another possible approach to address selection is randomization. This
-allocator can pick an address randomly from the configured pool. The benefit
-of this approach is that it is easy to implement and makes attacks based on
-address prediction more difficult. The drawback of this approach is that
-returning clients are almost guaranteed to get a different address. Another
-drawback is that with almost depleted pools it is increasingly difficult to
-"guess" an address that is free. This allocator is currently not implemented.
+or DUID) values may trigger short cycles.
 
 @subsection allocEngineTypes Different lease types support
 

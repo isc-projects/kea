@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,7 +10,7 @@
 #include <gtest/gtest.h>
 
 #include <database/backend_selector.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp4/dhcp4_srv.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/json_config_parser.h>
@@ -20,10 +20,9 @@
 #include <dhcpsrv/testutils/generic_backend_unittest.h>
 #include <dhcpsrv/testutils/test_config_backend_dhcp4.h>
 
-#include "dhcp4_test_utils.h"
-#include "get_config_unittest.h"
+#include <dhcp4/tests/dhcp4_test_utils.h>
+#include <dhcp4/tests/get_config_unittest.h>
 
-#include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
 
 #include <iostream>
@@ -131,7 +130,7 @@ public:
         ASSERT_TRUE(status);
 
         int rcode;
-        ConstElementPtr comment = parseAnswer(rcode, status);
+        ConstElementPtr comment = parseAnswerText(rcode, status);
         ASSERT_EQ(expected_code, rcode) << " comment: "
                     << comment->stringValue();
 
@@ -193,6 +192,8 @@ TEST_F(Dhcp4CBTest, mergeGlobals) {
     StampedValuePtr calc_tee_times(new StampedValue("calculate-tee-times", Element::create(bool(false))));
     StampedValuePtr t2_percent(new StampedValue("t2-percent", Element::create(0.75)));
     StampedValuePtr renew_timer(new StampedValue("renew-timer", Element::create(500)));
+    StampedValuePtr mt_enabled(new StampedValue("multi-threading.enable-multi-threading", Element::create(true)));
+    StampedValuePtr mt_pool_size(new StampedValue("multi-threading.thread-pool-size", Element::create(256)));
 
     // Let's add all of the globals to the second backend.  This will verify
     // we find them there.
@@ -201,6 +202,8 @@ TEST_F(Dhcp4CBTest, mergeGlobals) {
     db2_->createUpdateGlobalParameter4(ServerSelector::ALL(), calc_tee_times);
     db2_->createUpdateGlobalParameter4(ServerSelector::ALL(), t2_percent);
     db2_->createUpdateGlobalParameter4(ServerSelector::ALL(), renew_timer);
+    db2_->createUpdateGlobalParameter4(ServerSelector::ALL(), mt_enabled);
+    db2_->createUpdateGlobalParameter4(ServerSelector::ALL(), mt_pool_size);
 
     // Should parse and merge without error.
     ASSERT_NO_FATAL_FAILURE(configure(base_config, CONTROL_RESULT_SUCCESS, ""));
@@ -228,6 +231,8 @@ TEST_F(Dhcp4CBTest, mergeGlobals) {
     ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, calc_tee_times));
     ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, t2_percent));
     ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, renew_timer));
+    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, mt_enabled));
+    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, mt_pool_size));
 }
 
 // This test verifies that externally configured option definitions
@@ -337,21 +342,24 @@ TEST_F(Dhcp4CBTest, mergeOptions) {
     // Add host-name to the first backend.
     opt.reset(new OptionDescriptor(
               createOption<OptionString>(Option::V4, DHO_HOST_NAME,
-                                         true, false, "new.example.com")));
+                                         true, false, false,
+                                         "new.example.com")));
     opt->space_name_ = DHCP4_OPTION_SPACE;
     db1_->createUpdateOption4(ServerSelector::ALL(), opt);
 
     // Add boot-file-name to the first backend.
     opt.reset(new OptionDescriptor(
               createOption<OptionString>(Option::V4, DHO_BOOT_FILE_NAME,
-                                         true, false, "my-boot-file")));
+                                         true, false, false,
+                                         "my-boot-file")));
     opt->space_name_ = DHCP4_OPTION_SPACE;
     db1_->createUpdateOption4(ServerSelector::ALL(), opt);
 
     // Add boot-file-name to the second backend.
     opt.reset(new OptionDescriptor(
               createOption<OptionString>(Option::V4, DHO_BOOT_FILE_NAME,
-                                         true, false, "your-boot-file")));
+                                         true, false, false,
+                                         "your-boot-file")));
     opt->space_name_ = DHCP4_OPTION_SPACE;
     db2_->createUpdateOption4(ServerSelector::ALL(), opt);
 
@@ -380,6 +388,63 @@ TEST_F(Dhcp4CBTest, mergeOptions) {
     found_opt = options->get(DHCP4_OPTION_SPACE, DHO_BOOT_FILE_NAME);
     ASSERT_TRUE(found_opt.option_);
     EXPECT_EQ("my-boot-file", found_opt.option_->toString());
+}
+
+// This test verifies that DHCP options fetched from the config backend
+// encapsulate their suboptions.
+TEST_F(Dhcp4CBTest, mergeOptionsWithSuboptions) {
+    string base_config =
+        "{ \n"
+        "    \"option-def\": [ { \n"
+        "        \"name\": \"vendor-suboption-1\", \n"
+        "        \"code\": 1, \n"
+        "        \"type\": \"string\", \n"
+        "        \"space\": \"vendor-encapsulated-options-space\" \n"
+        "    }], \n"
+        "    \"config-control\": { \n"
+        "       \"config-databases\": [ { \n"
+        "               \"type\": \"memfile\", \n"
+        "               \"host\": \"db1\" \n"
+        "           },{ \n"
+        "               \"type\": \"memfile\", \n"
+        "               \"host\": \"db2\" \n"
+        "           } \n"
+        "       ] \n"
+        "   } \n"
+        "} \n";
+
+    extractConfig(base_config);
+
+    // Create option 43 instance and store it in the database.
+    OptionDescriptorPtr opt;
+    opt.reset(new OptionDescriptor(
+              createEmptyOption(Option::V4, DHO_VENDOR_ENCAPSULATED_OPTIONS,
+                                true, false)));
+    opt->space_name_ = DHCP4_OPTION_SPACE;
+    db1_->createUpdateOption4(ServerSelector::ALL(), opt);
+
+    // Create option 43 suboption and store it in the database.
+    opt.reset(new OptionDescriptor(
+              createOption<OptionString>(Option::V4, 1, true, false, false,
+                                         "http://server:8080")
+          )
+    );
+    opt->space_name_ = VENDOR_ENCAPSULATED_OPTION_SPACE;
+    db1_->createUpdateOption4(ServerSelector::ALL(), opt);
+
+    // Fetch the configuration from the config backend.
+    ASSERT_NO_FATAL_FAILURE(configure(base_config, CONTROL_RESULT_SUCCESS, ""));
+
+    auto staging_cfg = CfgMgr::instance().getStagingCfg();
+
+    // Make sure that option 43 has been fetched.
+    auto found_opt_desc = staging_cfg->getCfgOption()->
+        get(DHCP4_OPTION_SPACE, DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    ASSERT_TRUE(found_opt_desc.option_);
+
+    // Make sure that the option 43 contains its suboption.
+    auto found_subopt = found_opt_desc.option_->getOption(1);
+    EXPECT_TRUE(found_subopt);
 }
 
 // This test verifies that externally configured shared-networks are

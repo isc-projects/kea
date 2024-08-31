@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,7 +11,7 @@
 #include <dhcp/option.h>
 #include <dhcp/option_data_types.h>
 #include <dhcp/option_space.h>
-#include <util/io_utilities.h>
+#include <util/io.h>
 
 #include <stdint.h>
 #include <sstream>
@@ -104,6 +104,7 @@ public:
     /// byte after stored option.
     ///
     /// @param [out] buf buffer (option will be stored here)
+    /// @param check if set to false, allows options larger than 255 for v4
     ///
     /// @throw isc::dhcp::InvalidDataType if size of a data field type is not
     /// equal to 1, 2 or 4 bytes. The data type is not checked in this function
@@ -200,10 +201,8 @@ public:
         // The data length is equal to size of T.
         length += sizeof(T);;
         // length of all suboptions
-        for (OptionCollection::const_iterator it = options_.begin();
-             it != options_.end();
-             ++it) {
-            length += (*it).second->len();
+        for (auto const& it : options_) {
+            length += it.second->len();
         }
         return (length);
     }

@@ -21,6 +21,9 @@
     "description": "See <xref linkend=\"idp62\"/>",
     "hook": "lease_cmds",
     "name": "lease6-update",
+    "resp-comment": [
+        "If the returned result is equal to 4, it indicates that the lease could not be updated because it was in conflict with the server's state or its notion of the configuration. The High Availability hook library can handle such a result differently than a general error. A general error of 1 can indicate issues with processing the command, database availability etc."
+    ],
     "support": [
         "kea-dhcp6"
     ]

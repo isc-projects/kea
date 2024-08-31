@@ -1,10 +1,11 @@
-// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <asiolink/io_address.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
@@ -12,13 +13,19 @@
 #include <dhcpsrv/cfg_hosts_util.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <testutils/gtest_utils.h>
+#include <testutils/multi_threading_utils.h>
+
 #include <gtest/gtest.h>
+
 #include <sstream>
 #include <set>
 
 using namespace isc;
-using namespace isc::dhcp;
 using namespace isc::asiolink;
+using namespace isc::dhcp;
+using namespace isc::test;
+using namespace isc::util;
 
 namespace {
 
@@ -50,6 +57,42 @@ public:
     ///
     /// @param address Address to be increased.
     IOAddress increase(const IOAddress& address, const uint8_t num) const;
+
+    /// @brief test methods.
+    void testGetAllNonRepeatingHosts();
+    void testGetAllRepeatingHosts();
+    void testGetAll4BySubnet();
+    void testGetAll6BySubnet();
+    void testGetAll6ByAddress();
+    void testGetPage4();
+    void testGetPage6();
+    void testGetPage4All();
+    void testGetPage6All();
+    void testGetAll4ByAddress();
+    void testDeleteForIPv4();
+    void testDeleteForIPv6();
+    void testDelete2ForIPv6();
+    void testDeleteBothForIPv6();
+    void testDel4();
+    void testDel6();
+    void testDeleteAll4();
+    void testGet4();
+    void testUnparsed4();
+    void testGet6();
+    void testDeleteAll6();
+    void testUnparse6();
+    void testGet6ByAddr();
+    void testGet6MultipleAddrs();
+    void testAdd4AlreadyReserved();
+    void testAllow4AlreadyReserved();
+    void testAdd6Invalid2Hosts();
+    void testAllowAddress6AlreadyReserved();
+    void testAllowPrefix6AlreadyReserved();
+    void testDuplicatesSubnet4HWAddr();
+    void testDuplicatesSubnet4DUID();
+    void testDuplicatesSubnet6HWAddr();
+    void testDuplicatesSubnet6DUID();
+    void testUpdate();
 
     /// @brief Collection of HW address objects allocated for unit tests.
     std::vector<HWAddrPtr> hwaddrs_;
@@ -91,10 +134,12 @@ CfgHostsTest::CfgHostsTest() {
         IOAddress addrb(addrb_template + i);
         addressesb_.push_back(addrb);
     }
+    MultiThreadingMgr::instance().setMode(false);
 }
 
 CfgHostsTest::~CfgHostsTest() {
     CfgMgr::instance().setFamily(AF_INET);
+    MultiThreadingMgr::instance().setMode(false);
 }
 
 IOAddress
@@ -109,7 +154,8 @@ CfgHostsTest::increase(const IOAddress& address, const uint8_t num) const {
 
 // This test checks that hosts with unique HW addresses and DUIDs can be
 // retrieved from the host configuration.
-TEST_F(CfgHostsTest, getAllNonRepeatingHosts) {
+void
+CfgHostsTest::testGetAllNonRepeatingHosts() {
     CfgHosts cfg;
     // Add 25 hosts identified by HW address and 25 hosts identified by
     // DUID. They are added to different subnets.
@@ -157,9 +203,19 @@ TEST_F(CfgHostsTest, getAllNonRepeatingHosts) {
     }
 }
 
+TEST_F(CfgHostsTest, getAllNonRepeatingHosts) {
+    testGetAllNonRepeatingHosts();
+}
+
+TEST_F(CfgHostsTest, getAllNonRepeatingHostsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testGetAllNonRepeatingHosts();
+}
+
 // This test verifies that the host can be added to multiple subnets and
 // that the getAll message retrieves all instances of the host.
-TEST_F(CfgHostsTest, getAllRepeatingHosts) {
+void
+CfgHostsTest::testGetAllRepeatingHosts() {
     CfgHosts cfg;
     // Add hosts.
     for (unsigned i = 0; i < 25; ++i) {
@@ -215,9 +271,19 @@ TEST_F(CfgHostsTest, getAllRepeatingHosts) {
     }
 }
 
+TEST_F(CfgHostsTest, getAllRepeatingHosts) {
+    testGetAllRepeatingHosts();
+}
+
+TEST_F(CfgHostsTest, getAllRepeatingHostsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testGetAllRepeatingHosts();
+}
+
 // This test checks that hosts in the same subnet can be retrieved from
 // the host configuration.
-TEST_F(CfgHostsTest, getAll4BySubnet) {
+void
+CfgHostsTest::testGetAll4BySubnet() {
     CfgHosts cfg;
     // Add 25 hosts identified by HW address in the same subnet.
     for (unsigned i = 0; i < 25; ++i) {
@@ -241,9 +307,19 @@ TEST_F(CfgHostsTest, getAll4BySubnet) {
     }
 }
 
+TEST_F(CfgHostsTest, getAll4BySubnet) {
+    testGetAll4BySubnet();
+}
+
+TEST_F(CfgHostsTest, getAll4BySubnetMultiThreading) {
+    MultiThreadingTest mt(true);
+    testGetAll4BySubnet();
+}
+
 // This test checks that hosts in the same subnet can be retrieved from
 // the host configuration.
-TEST_F(CfgHostsTest, getAll6BySubnet) {
+void
+CfgHostsTest::testGetAll6BySubnet() {
     CfgHosts cfg;
     // Add 25 hosts identified by DUID in the same subnet.
     for (unsigned i = 0; i < 25; ++i) {
@@ -273,9 +349,57 @@ TEST_F(CfgHostsTest, getAll6BySubnet) {
     }
 }
 
+TEST_F(CfgHostsTest, getAll6BySubnet) {
+    testGetAll6BySubnet();
+}
+
+TEST_F(CfgHostsTest, getAll6BySubnetMultiThreading) {
+    MultiThreadingTest mt(true);
+    testGetAll6BySubnet();
+}
+
+// This test checks that hosts with the same reserved address can be retrieved
+// from the host configuration.
+void
+CfgHostsTest::testGetAll6ByAddress() {
+    CfgHosts cfg;
+    // Add 25 hosts identified by DUID in the same subnet.
+    for (unsigned i = 0; i < 25; ++i) {
+        HostPtr host = HostPtr(new Host(duids_[i]->toText(), "duid",
+                                        SUBNET_ID_UNUSED, SubnetID(i+1),
+                                        IOAddress("0.0.0.0")));
+        host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                       increase(IOAddress("2001:db8:1::1"),
+                                                i % 5)));
+        cfg.add(host);
+    }
+
+    // Try to retrieve all added reservations with IP equals 2001:db8:1::1.
+    auto hosts = cfg.getAll6(IOAddress("2001:db8:1::1"));
+    EXPECT_EQ(5, hosts.size());
+    for (unsigned i = 0; i < 5; ++i) {
+        EXPECT_EQ(1 + 5 * i, hosts[i]->getIPv6SubnetID());
+        IPv6ResrvRange reservations =
+            hosts[i]->getIPv6Reservations(IPv6Resrv::TYPE_NA);
+        ASSERT_EQ(1, std::distance(reservations.first, reservations.second));
+        EXPECT_EQ(IOAddress("2001:db8:1::1"),
+                  reservations.first->second.getPrefix());
+    }
+}
+
+TEST_F(CfgHostsTest, getAll6ByAddress) {
+    testGetAll6ByAddress();
+}
+
+TEST_F(CfgHostsTest, getAll6ByAddressMultiThreading) {
+    MultiThreadingTest mt(true);
+    testGetAll6ByAddress();
+}
+
 // This test checks that hosts in the same subnet can be retrieved from
 // the host configuration by pages.
-TEST_F(CfgHostsTest, getPage4) {
+void
+CfgHostsTest::testGetPage4() {
     CfgHosts cfg;
     // Add 25 hosts identified by DUID in the same subnet.
     for (unsigned i = 0; i < 25; ++i) {
@@ -310,9 +434,19 @@ TEST_F(CfgHostsTest, getPage4) {
     EXPECT_EQ(0, page.size());
 }
 
+TEST_F(CfgHostsTest, getPage4) {
+    testGetPage4();
+}
+
+TEST_F(CfgHostsTest, getPage4MultiThreading) {
+    MultiThreadingTest mt(true);
+    testGetPage4();
+}
+
 // This test checks that hosts in the same subnet can be retrieved from
 // the host configuration by pages.
-TEST_F(CfgHostsTest, getPage6) {
+void
+CfgHostsTest::testGetPage6() {
     CfgHosts cfg;
     // Add 25 hosts identified by HW address in the same subnet.
     for (unsigned i = 0; i < 25; ++i) {
@@ -352,9 +486,19 @@ TEST_F(CfgHostsTest, getPage6) {
     EXPECT_EQ(0, page.size());
 }
 
+TEST_F(CfgHostsTest, getPage6) {
+    testGetPage6();
+}
+
+TEST_F(CfgHostsTest, getPage6MultiThreading) {
+    MultiThreadingTest mt(true);
+    testGetPage6();
+}
+
 // This test checks that all hosts can be retrieved from the host
 // configuration by pages.
-TEST_F(CfgHostsTest, getPage4All) {
+void
+CfgHostsTest::testGetPage4All() {
     CfgHosts cfg;
     // Add 25 hosts identified by DUID.
     for (unsigned i = 0; i < 25; ++i) {
@@ -385,9 +529,19 @@ TEST_F(CfgHostsTest, getPage4All) {
     EXPECT_EQ(0, page.size());
 }
 
+TEST_F(CfgHostsTest, getPage4All) {
+    testGetPage4All();
+}
+
+TEST_F(CfgHostsTest, getPage4AllMultiThreading) {
+    MultiThreadingTest mt(true);
+    testGetPage4All();
+}
+
 // This test checks that all hosts can be retrieved from the host
 // configuration by pages.
-TEST_F(CfgHostsTest, getPage6All) {
+void
+CfgHostsTest::testGetPage6All() {
     CfgHosts cfg;
     // Add 25 hosts identified by HW address.
     for (unsigned i = 0; i < 25; ++i) {
@@ -423,9 +577,19 @@ TEST_F(CfgHostsTest, getPage6All) {
     EXPECT_EQ(0, page.size());
 }
 
+TEST_F(CfgHostsTest, getPage6All) {
+    testGetPage6All();
+}
+
+TEST_F(CfgHostsTest, getPage6AllMultiThreading) {
+    MultiThreadingTest mt(true);
+    testGetPage6All();
+}
+
 // This test checks that all reservations for the specified IPv4 address can
 // be retrieved.
-TEST_F(CfgHostsTest, getAll4ByAddress) {
+void
+CfgHostsTest::testGetAll4ByAddress() {
     CfgHosts cfg;
     // Add hosts.
     for (unsigned i = 0; i < 25; ++i) {
@@ -443,18 +607,368 @@ TEST_F(CfgHostsTest, getAll4ByAddress) {
 
     HostCollection hosts = cfg.getAll4(IOAddress("192.0.2.10"));
     std::set<uint32_t> subnet_ids;
-    for (HostCollection::const_iterator host = hosts.begin(); host != hosts.end();
-         ++host) {
-        subnet_ids.insert((*host)->getIPv4SubnetID());
+    for (auto const& host : hosts) {
+        subnet_ids.insert(host->getIPv4SubnetID());
     }
     ASSERT_EQ(25, subnet_ids.size());
     EXPECT_EQ(1, *subnet_ids.begin());
     EXPECT_EQ(25, *subnet_ids.rbegin());
 }
 
+TEST_F(CfgHostsTest, getAll4ByAddress) {
+    testGetAll4ByAddress();
+}
+
+TEST_F(CfgHostsTest, getAll4ByAddressMultiThreading) {
+    MultiThreadingTest mt(true);
+    testGetAll4ByAddress();
+}
+
+// This test checks that the IPv4 reservation for the specified IPv4 address can
+// be deleted.
+void
+CfgHostsTest::testDeleteForIPv4() {
+    CfgHosts cfg;
+    // Add hosts.
+    IOAddress address("10.0.0.42");
+    SubnetID subnet_id(42);
+    size_t host_count = 10;
+
+    for (size_t i = 0; i < host_count; i++)
+    {
+        cfg.add(HostPtr(new Host(hwaddrs_[i]->toText(false),
+                                "hw-address",
+                                subnet_id, SUBNET_ID_UNUSED,
+                                increase(address, i))));
+    }
+
+    // Get all inserted hosts.
+    HostCollection hosts_by_subnet = cfg.getAll4(subnet_id);
+    HostCollection hosts_by_address = cfg.getAll4(address);
+    // Make sure the hosts and IP reservations were added.
+    ASSERT_EQ(host_count, hosts_by_subnet.size());
+    ASSERT_EQ(1, hosts_by_address.size());
+
+    // Delete one host.
+    EXPECT_TRUE(cfg.del(subnet_id, address));
+
+    // Check if the host is actually deleted.
+    hosts_by_subnet = cfg.getAll4(subnet_id);
+    hosts_by_address = cfg.getAll4(address);
+    EXPECT_EQ(host_count-1, hosts_by_subnet.size());
+    EXPECT_EQ(0, hosts_by_address.size());
+}
+
+TEST_F(CfgHostsTest, deleteForIPv4) {
+    testDeleteForIPv4();
+}
+
+TEST_F(CfgHostsTest, deleteForIPv4MultiThreading) {
+    MultiThreadingTest mt(true);
+    testDeleteForIPv4();
+}
+
+// This test checks that the IPv6 reservation for the specified subnet ID and
+// IPv6 address can be deleted.
+void
+CfgHostsTest::testDeleteForIPv6() {
+    CfgHosts cfg;
+    // Add hosts.
+    IOAddress address("2001:db8:1::1");
+    size_t host_count = 10;
+    SubnetID subnet_id(42);
+
+    for (size_t i = 0; i < host_count; i++)
+    {
+        HostPtr host = HostPtr(new Host(duids_[i]->toText(), "duid",
+                                        SUBNET_ID_UNUSED, subnet_id,
+                                        IOAddress::IPV4_ZERO_ADDRESS()));
+        host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                       increase(IOAddress(address), i)));
+        cfg.add(host);
+    }
+
+
+    // Get all inserted hosts.
+    auto hosts_by_subnet_and_address = cfg.getAll6(subnet_id, address);
+    auto hosts_by_subnet = cfg.getAll6(subnet_id);
+    // Make sure the hosts and IP reservations were added.
+    ASSERT_EQ(1, hosts_by_subnet_and_address.size());
+    ASSERT_EQ(host_count, hosts_by_subnet.size());
+
+    // Delete one host.
+    EXPECT_TRUE(cfg.del(subnet_id, address));
+
+    // Check if the host is actually deleted.
+    hosts_by_subnet_and_address = cfg.getAll6(subnet_id, address);
+    hosts_by_subnet = cfg.getAll6(subnet_id);
+    EXPECT_EQ(0, hosts_by_subnet_and_address.size());
+    EXPECT_EQ(host_count-1, hosts_by_subnet.size());
+}
+
+TEST_F(CfgHostsTest, deleteForIPv6) {
+    testDeleteForIPv6();
+}
+
+TEST_F(CfgHostsTest, deleteForIPv6MultiThreading) {
+    MultiThreadingTest mt(true);
+    testDeleteForIPv6();
+}
+
+// This test checks that two IPv6 reservations for the specified subnet ID and
+// IPv6 address can be deleted.
+void
+CfgHostsTest::testDelete2ForIPv6() {
+    CfgHosts cfg;
+    // Add a host with two addresses.
+    IOAddress address1("2001:db8:1::1");
+    IOAddress address2("2001:db8:2::2");
+    size_t host_count = 10;
+    SubnetID subnet_id(42);
+
+    HostPtr host = HostPtr(new Host(duids_[0]->toText(), "duid",
+                                    SUBNET_ID_UNUSED, subnet_id,
+                                    IOAddress::IPV4_ZERO_ADDRESS()));
+    host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA, address1));
+    host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA, address2));
+    cfg.add(host);
+
+    // Delete the host using its first address.
+    EXPECT_TRUE(cfg.del(subnet_id, address1));
+
+    // Check if all addresses were removed.
+    EXPECT_FALSE(cfg.get6(subnet_id, address2));
+    EXPECT_FALSE(cfg.del(subnet_id, address2));
+}
+
+TEST_F(CfgHostsTest, delete2ForIPv6) {
+    testDelete2ForIPv6();
+}
+
+TEST_F(CfgHostsTest, delete2ForIPv6MultiThreading) {
+    MultiThreadingTest mt(true);
+    testDelete2ForIPv6();
+}
+
+// This test checks that IPv6 address and prefix reservations for the specified
+// subnet ID and IPv6 address can be deleted.
+void
+CfgHostsTest::testDeleteBothForIPv6() {
+    CfgHosts cfg;
+    // Add a host with two addresses.
+    IOAddress address1("2001:db8:1::1");
+    IOAddress address2("2001:db8:2::");
+    size_t host_count = 10;
+    SubnetID subnet_id(42);
+
+    HostPtr host = HostPtr(new Host(duids_[0]->toText(), "duid",
+                                    SUBNET_ID_UNUSED, subnet_id,
+                                    IOAddress::IPV4_ZERO_ADDRESS()));
+    host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA, address1));
+    host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_PD, address2, 64));
+    cfg.add(host);
+
+    // Delete the host using its address.
+    EXPECT_TRUE(cfg.del(subnet_id, address1));
+
+    // Check if all reservations were removed.
+    EXPECT_FALSE(cfg.get6(subnet_id, address2));
+    EXPECT_FALSE(cfg.del(subnet_id, address2));
+}
+
+TEST_F(CfgHostsTest, deleteBothForIPv6) {
+    testDeleteBothForIPv6();
+}
+
+TEST_F(CfgHostsTest, deleteBothForIPv6MultiThreading) {
+    MultiThreadingTest mt(true);
+    testDeleteBothForIPv6();
+}
+
+// This test checks that false is returned for deleting the IPv4 reservation
+// that doesn't exist.
+TEST_F(CfgHostsTest, deleteForMissingIPv4) {
+    CfgHosts cfg;
+
+    // Delete non-existent host.
+    EXPECT_FALSE(cfg.del(SubnetID(42), IOAddress(("10.0.0.42"))));
+
+    MultiThreadingTest mt(true);
+    EXPECT_FALSE(cfg.del(SubnetID(42), IOAddress(("10.0.0.42"))));
+}
+
+// This test checks that false is returned for deleting the IPv6 reservation
+// that doesn't exist.
+TEST_F(CfgHostsTest, deleteForMissingIPv6) {
+    CfgHosts cfg;
+
+    // Delete non-existent host.
+    EXPECT_FALSE(cfg.del(SubnetID(42), IOAddress(("2001:db8:1::1"))));
+
+    MultiThreadingTest mt(true);
+    EXPECT_FALSE(cfg.del(SubnetID(42), IOAddress(("2001:db8:1::1"))));
+}
+
+// This test checks that the reservation for the specified IPv4 subnet and
+// identifier can be deleted.
+void
+CfgHostsTest::testDel4() {
+    CfgHosts cfg;
+
+    // Add hosts.
+    size_t host_count = 20;
+    size_t host_id = 5;
+    SubnetID subnet_id(42);
+    IOAddress address("10.0.0.1");
+
+    // Add half of the hosts with the same subnet ID but differ with DUID and
+    // address.
+    for (size_t i = 0; i < host_count / 2; i++) {
+        HostPtr host = HostPtr(new Host(duids_[i]->toText(), "duid",
+                                        subnet_id, SUBNET_ID_UNUSED,
+                                        increase(address, i)));
+        cfg.add(host);
+    }
+    // Add half of the hosts with the same subnet DUID and address but
+    // differ with address.
+    for (size_t i = 0; i < host_count / 2; i++) {
+        HostPtr host = HostPtr(new Host(duids_[host_id]->toText(), "duid",
+                                        SubnetID(subnet_id + i + 1), SUBNET_ID_UNUSED,
+                                        increase(address, host_id)));
+        cfg.add(host);
+    }
+
+
+    // Get all inserted hosts.
+    HostCollection hosts_by_subnet = cfg.getAll4(subnet_id);
+    HostCollection hosts_by_address = cfg.getAll4(increase(address, host_id));
+    HostPtr host = cfg.get4(subnet_id, Host::IdentifierType::IDENT_DUID,
+                                             &duids_[host_id]->getDuid()[0],
+                                             duids_[host_id]->getDuid().size());
+    // Make sure the hosts and IP reservations were added.
+    ASSERT_EQ(host_count / 2, hosts_by_subnet.size());
+    ASSERT_EQ(host_count / 2 + 1, hosts_by_address.size());
+    ASSERT_TRUE(host);
+
+    // Delete one host.
+    EXPECT_TRUE(cfg.del4(subnet_id, Host::IdentifierType::IDENT_DUID,
+                         &duids_[host_id]->getDuid()[0], duids_[host_id]->getDuid().size()));
+
+    // Check if the host is actually deleted.
+    hosts_by_subnet = cfg.getAll4(subnet_id);
+    hosts_by_address = cfg.getAll4(increase(address, host_id));
+    host = cfg.get4(subnet_id, Host::IdentifierType::IDENT_DUID,
+                                             &duids_[host_id]->getDuid()[0],
+                                             duids_[host_id]->getDuid().size());
+    EXPECT_EQ((host_count / 2)-1, hosts_by_subnet.size());
+    EXPECT_EQ(host_count / 2, hosts_by_address.size());
+    EXPECT_FALSE(host);
+}
+
+TEST_F(CfgHostsTest, del4) {
+    testDel4();
+}
+
+TEST_F(CfgHostsTest, del4MultiThreading) {
+    MultiThreadingTest mt(true);
+    testDel4();
+}
+
+// This test checks that the host and its reservations for the specified IPv6
+// subnet and identifier can be deleted.
+void
+CfgHostsTest::testDel6() {
+    CfgHosts cfg;
+
+    // Add hosts.
+    size_t host_count = 20;
+    size_t host_id = 5;
+    SubnetID subnet_id(42);
+    IOAddress address("2001:db8:1::1");
+
+    // Add half of the hosts with the same subnet ID but differ with DUID and
+    // address.
+    for (size_t i = 0; i < host_count / 2; i++) {
+        HostPtr host = HostPtr(new Host(duids_[i]->toText(), "duid",
+                                        SUBNET_ID_UNUSED, subnet_id,
+                                        IOAddress::IPV4_ZERO_ADDRESS()));
+        host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                       increase(IOAddress(address), i)));
+        cfg.add(host);
+    }
+    // Add half of the hosts with the same subnet DUID and address but
+    // differ with address.
+    for (size_t i = 0; i < host_count / 2; i++) {
+        HostPtr host = HostPtr(new Host(duids_[host_id]->toText(), "duid",
+                                        SUBNET_ID_UNUSED, SubnetID(subnet_id + i + 1),
+                                        IOAddress::IPV4_ZERO_ADDRESS()));
+        host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                       increase(address, host_id)));
+        cfg.add(host);
+    }
+
+
+    // Get all inserted hosts.
+    HostCollection hosts_by_subnet = cfg.getAll6(subnet_id);
+    HostCollection hosts_by_address = cfg.getAll6(increase(address, host_id));
+    HostPtr host = cfg.get6(subnet_id, Host::IdentifierType::IDENT_DUID,
+                                             &duids_[host_id]->getDuid()[0],
+                                             duids_[host_id]->getDuid().size());
+    // Make sure the hosts and IP reservations were added.
+    ASSERT_EQ(host_count / 2, hosts_by_subnet.size());
+    ASSERT_EQ(host_count / 2 + 1, hosts_by_address.size());
+    ASSERT_TRUE(host);
+
+    // Delete one host.
+    EXPECT_TRUE(cfg.del6(subnet_id, Host::IdentifierType::IDENT_DUID,
+                         &duids_[host_id]->getDuid()[0], duids_[host_id]->getDuid().size()));
+
+    // Check if the host is actually deleted.
+    hosts_by_subnet = cfg.getAll6(subnet_id);
+    hosts_by_address = cfg.getAll6(increase(address, host_id));
+    host = cfg.get6(subnet_id, Host::IdentifierType::IDENT_DUID,
+                                             &duids_[host_id]->getDuid()[0],
+                                             duids_[host_id]->getDuid().size());
+    EXPECT_EQ((host_count / 2)-1, hosts_by_subnet.size());
+    EXPECT_EQ(host_count / 2, hosts_by_address.size());
+    EXPECT_FALSE(host);
+}
+
+TEST_F(CfgHostsTest, del6) {
+    testDel6();
+}
+
+TEST_F(CfgHostsTest, del6MultiThreading) {
+    MultiThreadingTest mt(true);
+    testDel6();
+}
+
+// This test checks that false is returned for deleting the IPv4 host that
+// doesn't exist.
+TEST_F(CfgHostsTest, del4MissingHost) {
+    CfgHosts cfg;
+    EXPECT_FALSE(cfg.del4(SubnetID(42), Host::IdentifierType::IDENT_DUID,
+                         &duids_[0]->getDuid()[0], duids_[0]->getDuid().size()));
+    MultiThreadingTest mt(true);
+    EXPECT_FALSE(cfg.del4(SubnetID(42), Host::IdentifierType::IDENT_DUID,
+                         &duids_[0]->getDuid()[0], duids_[0]->getDuid().size()));
+}
+
+// This test checks that false is returned for deleting the IPv6 host that
+// doesn't exist.
+TEST_F(CfgHostsTest, del6MissingHost) {
+    CfgHosts cfg;
+    EXPECT_FALSE(cfg.del6(SubnetID(42), Host::IdentifierType::IDENT_DUID,
+                         &duids_[0]->getDuid()[0], duids_[0]->getDuid().size()));
+    MultiThreadingTest mt(true);
+    EXPECT_FALSE(cfg.del6(SubnetID(42), Host::IdentifierType::IDENT_DUID,
+                         &duids_[0]->getDuid()[0], duids_[0]->getDuid().size()));
+}
+
 // This test checks that all reservations for the specified IPv4 subnet can
 // be deleted.
-TEST_F(CfgHostsTest, deleteAll4) {
+void
+CfgHostsTest::testDeleteAll4() {
     CfgHosts cfg;
     // Add hosts.
     for (unsigned i = 0; i < 25; ++i) {
@@ -469,15 +983,14 @@ TEST_F(CfgHostsTest, deleteAll4) {
                                  "hw-address",
                                  SubnetID(1 + i % 2), SUBNET_ID_UNUSED,
                                  IOAddress::IPV4_ZERO_ADDRESS(),
-                                 "hostname")));
+                                 s.str())));
     }
 
     // Get all inserted hosts.
     HostCollection hosts = cfg.getAll4(IOAddress::IPV4_ZERO_ADDRESS());
     std::set<uint32_t> subnet_ids;
-    for (HostCollection::const_iterator host = hosts.begin(); host != hosts.end();
-         ++host) {
-        subnet_ids.insert((*host)->getIPv4SubnetID());
+    for (auto const& host : hosts) {
+        subnet_ids.insert(host->getIPv4SubnetID());
     }
     // Make sure there are two unique subnets: 1 and 2.
     ASSERT_EQ(2, subnet_ids.size());
@@ -490,9 +1003,8 @@ TEST_F(CfgHostsTest, deleteAll4) {
     // Gather the host counts again.
     subnet_ids.clear();
     hosts = cfg.getAll4(IOAddress::IPV4_ZERO_ADDRESS());
-    for (HostCollection::const_iterator host = hosts.begin(); host != hosts.end();
-         ++host) {
-        subnet_ids.insert((*host)->getIPv4SubnetID());
+    for (auto const& host : hosts) {
+        subnet_ids.insert(host->getIPv4SubnetID());
     }
     // We should only have hosts for one subnet and it should be the subnet
     // with ID of 1.
@@ -500,9 +1012,19 @@ TEST_F(CfgHostsTest, deleteAll4) {
     EXPECT_EQ(1, *subnet_ids.begin());
 }
 
+TEST_F(CfgHostsTest, deleteAll4) {
+    testDeleteAll4();
+}
+
+TEST_F(CfgHostsTest, deleteAll4MultiThreading) {
+    MultiThreadingTest mt(true);
+    testDeleteAll4();
+}
+
 // This test checks that the reservations can be retrieved for the particular
 // host connected to the specific IPv4 subnet (by subnet id).
-TEST_F(CfgHostsTest, get4) {
+void
+CfgHostsTest::testGet4() {
     CfgHosts cfg;
     // Add hosts.
     for (unsigned i = 0; i < 25; ++i) {
@@ -539,8 +1061,18 @@ TEST_F(CfgHostsTest, get4) {
     }
 }
 
+TEST_F(CfgHostsTest, get4) {
+    testGet4();
+}
+
+TEST_F(CfgHostsTest, get4MultiThreading) {
+    MultiThreadingTest mt(true);
+    testGet4();
+}
+
 // This test checks that the DHCPv4 reservations can be unparsed
-TEST_F(CfgHostsTest, unparsed4) {
+void
+CfgHostsTest::testUnparsed4() {
     CfgMgr::instance().setFamily(AF_INET);
     CfgHosts cfg;
     CfgHostsList list;
@@ -623,9 +1155,19 @@ TEST_F(CfgHostsTest, unparsed4) {
     }
 }
 
+TEST_F(CfgHostsTest, unparsed4) {
+    testUnparsed4();
+}
+
+TEST_F(CfgHostsTest, unparsed4MultiThreading) {
+    MultiThreadingTest mt(true);
+    testUnparsed4();
+}
+
 // This test checks that the reservations can be retrieved for the particular
 // host connected to the specific IPv6 subnet (by subnet id).
-TEST_F(CfgHostsTest, get6) {
+void
+CfgHostsTest::testGet6() {
     CfgHosts cfg;
     // Add hosts.
     for (unsigned i = 0; i < 25; ++i) {
@@ -674,9 +1216,19 @@ TEST_F(CfgHostsTest, get6) {
     }
 }
 
+TEST_F(CfgHostsTest, get6) {
+    testGet6();
+}
+
+TEST_F(CfgHostsTest, get6MultiThreading) {
+    MultiThreadingTest mt(true);
+    testGet6();
+}
+
 // This test checks that all reservations for the specified IPv6 subnet can
 // be deleted.
-TEST_F(CfgHostsTest, deleteAll6) {
+void
+CfgHostsTest::testDeleteAll6() {
     CfgHosts cfg;
     // Add hosts.
     for (unsigned i = 0; i < 25; ++i) {
@@ -715,14 +1267,24 @@ TEST_F(CfgHostsTest, deleteAll6) {
                       reservations.first->second.getPrefix());
 
         } else {
-            // All hosts for subnet id 2 should be gone.
+            // All hosts for subnet id 1 should be gone.
             EXPECT_FALSE(host);
         }
     }
 }
 
+TEST_F(CfgHostsTest, deleteAll6) {
+    testDeleteAll6();
+}
+
+TEST_F(CfgHostsTest, deleteAll6MultiThreading) {
+    MultiThreadingTest mt(true);
+    testDeleteAll6();
+}
+
 // This test checks that the DHCPv6 reservations can be unparsed
-TEST_F(CfgHostsTest, unparse6) {
+void
+CfgHostsTest::testUnparse6() {
     CfgMgr::instance().setFamily(AF_INET6);
     CfgHosts cfg;
     CfgHostsList list;
@@ -823,9 +1385,19 @@ TEST_F(CfgHostsTest, unparse6) {
     }
 }
 
+TEST_F(CfgHostsTest, unparse6) {
+    testUnparse6();
+}
+
+TEST_F(CfgHostsTest, unparse6MultiThreading) {
+    MultiThreadingTest mt(true);
+    testUnparse6();
+}
+
 // This test checks that the IPv6 reservations can be retrieved for a particular
 // (subnet-id, address) tuple.
-TEST_F(CfgHostsTest, get6ByAddr) {
+void
+CfgHostsTest::testGet6ByAddr() {
     CfgHosts cfg;
     // Add hosts.
     for (unsigned i = 0; i < 25; ++i) {
@@ -855,9 +1427,19 @@ TEST_F(CfgHostsTest, get6ByAddr) {
     }
 }
 
+TEST_F(CfgHostsTest, get6ByAddr) {
+    testGet6ByAddr();
+}
+
+TEST_F(CfgHostsTest, get6ByAddrMultiThreading) {
+    MultiThreadingTest mt(true);
+    testGet6ByAddr();
+}
+
 // This test checks that the IPv6 reservations can be retrieved for a particular
 // (subnet-id, address) tuple.
-TEST_F(CfgHostsTest, get6MultipleAddrs) {
+void
+CfgHostsTest::testGet6MultipleAddrs() {
     CfgHosts cfg;
 
     // Add 25 hosts. Each host has reservations for 5 addresses.
@@ -906,10 +1488,19 @@ TEST_F(CfgHostsTest, get6MultipleAddrs) {
     }
 }
 
+TEST_F(CfgHostsTest, get6MultipleAddrs) {
+    testGet6MultipleAddrs();
+}
+
+TEST_F(CfgHostsTest, get6MultipleAddrsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testGet6MultipleAddrs();
+}
 
 // Checks that it's not possible for a second host to reserve an address
 // which is already reserved.
-TEST_F(CfgHostsTest, add4AlreadyReserved) {
+void
+CfgHostsTest::testAdd4AlreadyReserved() {
     CfgHosts cfg;
 
     // First host has a reservation for address 192.0.2.1
@@ -931,9 +1522,19 @@ TEST_F(CfgHostsTest, add4AlreadyReserved) {
     EXPECT_THROW(cfg.add(host2), isc::dhcp::ReservedAddress);
 }
 
+TEST_F(CfgHostsTest, add4AlreadyReserved) {
+    testAdd4AlreadyReserved();
+}
+
+TEST_F(CfgHostsTest, add4AlreadyReservedMultiThreading) {
+    MultiThreadingTest mt(true);
+    testAdd4AlreadyReserved();
+}
+
 // Test that it is possible to allow inserting multiple reservations for
 // the same IP address.
-TEST_F(CfgHostsTest, allow4AlreadyReserved) {
+void
+CfgHostsTest::testAllow4AlreadyReserved() {
     CfgHosts cfg;
     // Allow creating multiple reservations for the same IP address.
     ASSERT_TRUE(cfg.setIPReservationsUnique(false));
@@ -964,9 +1565,19 @@ TEST_F(CfgHostsTest, allow4AlreadyReserved) {
               returned[1]->getIPv4Reservation().toText());
 }
 
+TEST_F(CfgHostsTest, allow4AlreadyReserved) {
+    testAllow4AlreadyReserved();
+}
+
+TEST_F(CfgHostsTest, allow4AlreadyReservedMultiThreading) {
+    MultiThreadingTest mt(true);
+    testAllow4AlreadyReserved();
+}
+
 // Checks that it's not possible for two hosts to have the same address
 // reserved at the same time.
-TEST_F(CfgHostsTest, add6Invalid2Hosts) {
+void
+CfgHostsTest::testAdd6Invalid2Hosts() {
     CfgHosts cfg;
 
     // First host has a reservation for address 2001:db8::1
@@ -990,9 +1601,19 @@ TEST_F(CfgHostsTest, add6Invalid2Hosts) {
     EXPECT_THROW(cfg.add(host2), isc::dhcp::DuplicateHost);
 }
 
+TEST_F(CfgHostsTest, add6Invalid2Hosts) {
+    testAdd6Invalid2Hosts();
+}
+
+TEST_F(CfgHostsTest, add6Invalid2HostsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testAdd6Invalid2Hosts();
+}
+
 // Test that it is possible to allow inserting multiple reservations for
 // the same IPv6 address.
-TEST_F(CfgHostsTest, allowAddress6AlreadyReserved) {
+void
+CfgHostsTest::testAllowAddress6AlreadyReserved() {
     CfgHosts cfg;
     // Allow creating multiple reservations for the same IP address.
     ASSERT_TRUE(cfg.setIPReservationsUnique(false));
@@ -1031,9 +1652,19 @@ TEST_F(CfgHostsTest, allowAddress6AlreadyReserved) {
               range1.first->second.getPrefix().toText());
 }
 
+TEST_F(CfgHostsTest, allowAddress6AlreadyReserved) {
+    testAllowAddress6AlreadyReserved();
+}
+
+TEST_F(CfgHostsTest, allowAddress6AlreadyReservedMultiThreading) {
+    MultiThreadingTest mt(true);
+    testAllowAddress6AlreadyReserved();
+}
+
 // Test that it is possible to allow inserting multiple reservations for
 // the same IPv6 delegated prefix.
-TEST_F(CfgHostsTest, allowPrefix6AlreadyReserved) {
+void
+CfgHostsTest::testAllowPrefix6AlreadyReserved() {
     CfgHosts cfg;
     // Allow creating multiple reservations for the same delegated prefix.
     ASSERT_TRUE(cfg.setIPReservationsUnique(false));
@@ -1072,6 +1703,15 @@ TEST_F(CfgHostsTest, allowPrefix6AlreadyReserved) {
               range1.first->second.getPrefix().toText());
 }
 
+TEST_F(CfgHostsTest, allowPrefix6AlreadyReserved) {
+    testAllowPrefix6AlreadyReserved();
+}
+
+TEST_F(CfgHostsTest, allowPrefix6AlreadyReservedMultiThreading) {
+    MultiThreadingTest mt(true);
+    testAllowPrefix6AlreadyReserved();
+}
+
 // Check that no error is reported when adding a host with subnet
 // ids equal to global.
 TEST_F(CfgHostsTest, globalSubnetIDs) {
@@ -1096,7 +1736,8 @@ TEST_F(CfgHostsTest, unusedSubnetIDs) {
 
 // This test verifies that it is not possible to add the same Host to the
 // same IPv4 subnet twice.
-TEST_F(CfgHostsTest, duplicatesSubnet4HWAddr) {
+void
+CfgHostsTest::testDuplicatesSubnet4HWAddr() {
     CfgHosts cfg;
     // Add a host.
     ASSERT_NO_THROW(cfg.add(HostPtr(new Host(hwaddrs_[0]->toText(false),
@@ -1117,11 +1758,21 @@ TEST_F(CfgHostsTest, duplicatesSubnet4HWAddr) {
                                              "hw-address",
                                              SubnetID(11), SUBNET_ID_UNUSED,
                                              IOAddress("10.0.0.10")))));
+}
+
+TEST_F(CfgHostsTest, duplicatesSubnet4HWAddr) {
+    testDuplicatesSubnet4HWAddr();
+}
+
+TEST_F(CfgHostsTest, duplicatesSubnet4HWAddrMultiThreading) {
+    MultiThreadingTest mt(true);
+    testDuplicatesSubnet4HWAddr();
 }
 
 // This test verifies that it is not possible to add the same Host to the
 // same IPv4 subnet twice.
-TEST_F(CfgHostsTest, duplicatesSubnet4DUID) {
+void
+CfgHostsTest::testDuplicatesSubnet4DUID() {
     CfgHosts cfg;
     // Add a host.
     ASSERT_NO_THROW(cfg.add(HostPtr(new Host(duids_[0]->toText(),
@@ -1144,9 +1795,19 @@ TEST_F(CfgHostsTest, duplicatesSubnet4DUID) {
                                              IOAddress("10.0.0.10")))));
 }
 
+TEST_F(CfgHostsTest, duplicatesSubnet4DUID) {
+    testDuplicatesSubnet4DUID();
+}
+
+TEST_F(CfgHostsTest, duplicatesSubnet4DUIDMultiThreading) {
+    MultiThreadingTest mt(true);
+    testDuplicatesSubnet4DUID();
+}
+
 // This test verifies that it is not possible to add the same Host to the
 // same IPv6 subnet twice.
-TEST_F(CfgHostsTest, duplicatesSubnet6HWAddr) {
+void
+CfgHostsTest::testDuplicatesSubnet6HWAddr() {
     CfgHosts cfg;
     // Add a host.
     ASSERT_NO_THROW(cfg.add(HostPtr(new Host(hwaddrs_[0]->toText(false),
@@ -1172,9 +1833,19 @@ TEST_F(CfgHostsTest, duplicatesSubnet6HWAddr) {
                                              "foo.example.com"))));
 }
 
+TEST_F(CfgHostsTest, duplicatesSubnet6HWAddr) {
+    testDuplicatesSubnet6HWAddr();
+}
+
+TEST_F(CfgHostsTest, duplicatesSubnet6HWAddrMultiThreading) {
+    MultiThreadingTest mt(true);
+    testDuplicatesSubnet6HWAddr();
+}
+
 // This test verifies that it is not possible to add the same Host to the
 // same IPv6 subnet twice.
-TEST_F(CfgHostsTest, duplicatesSubnet6DUID) {
+void
+CfgHostsTest::testDuplicatesSubnet6DUID() {
     CfgHosts cfg;
     // Add a host.
     ASSERT_NO_THROW(cfg.add(HostPtr(new Host(duids_[0]->toText(),
@@ -1200,5 +1871,81 @@ TEST_F(CfgHostsTest, duplicatesSubnet6DUID) {
                                              "foo.example.com"))));
 }
 
+TEST_F(CfgHostsTest, duplicatesSubnet6DUID) {
+    testDuplicatesSubnet6DUID();
+}
 
-} // end of anonymous namespace
+TEST_F(CfgHostsTest, duplicatesSubnet6DUIDMultiThreading) {
+    MultiThreadingTest mt(true);
+    testDuplicatesSubnet6DUID();
+}
+
+// Checks that updates work correctly.
+void
+CfgHostsTest::testUpdate() {
+    CfgHosts cfg;
+
+    HostPtr const host(boost::make_shared<Host>(duids_[0]->toText(), "duid", SUBNET_ID_UNUSED,
+                                                SubnetID(1), IOAddress("0.0.0.0"),
+                                                "foo.example.com"));
+
+    // Updating a host that doesn't exist should throw.
+    EXPECT_THROW_MSG(cfg.update(host), HostNotFound, "Host not updated (not found).");
+
+    // There should be no hosts.
+    HostCollection hosts(cfg.getAll6(SubnetID(1)));
+    EXPECT_EQ(0, hosts.size());
+
+    // Add a host.
+    EXPECT_NO_THROW(cfg.add(host));
+
+    // The host should be in the config.
+    hosts = cfg.getAll6(SubnetID(1));
+    ASSERT_EQ(1, hosts.size());
+    EXPECT_EQ("duid=010203040500 ipv6_subnet_id=1 hostname=foo.example.com "
+              "ipv4_reservation=(no) siaddr=(no) sname=(empty) file=(empty) "
+              "key=(empty) ipv6_reservations=(none)", hosts[0]->toText());
+
+    // Update the host. Change nothing.
+    EXPECT_NO_THROW(cfg.update(host));
+
+    // The same host should be in the config.
+    hosts = cfg.getAll6(SubnetID(1));
+    ASSERT_EQ(1, hosts.size());
+    EXPECT_EQ("duid=010203040500 ipv6_subnet_id=1 hostname=foo.example.com "
+              "ipv4_reservation=(no) siaddr=(no) sname=(empty) file=(empty) "
+              "key=(empty) ipv6_reservations=(none)", hosts[0]->toText());
+
+    // Update the host with new hostname.
+    host->setHostname("bar.example.com");
+    EXPECT_NO_THROW(cfg.update(host));
+
+    // The change should be reflected in the config.
+    hosts = cfg.getAll6(SubnetID(1));
+    ASSERT_EQ(1, hosts.size());
+    EXPECT_EQ("duid=010203040500 ipv6_subnet_id=1 hostname=bar.example.com "
+              "ipv4_reservation=(no) siaddr=(no) sname=(empty) file=(empty) "
+              "key=(empty) ipv6_reservations=(none)", hosts[0]->toText());
+
+    // Remove hostname from host.
+    host->setHostname("");
+    EXPECT_NO_THROW(cfg.update(host));
+
+    // The change should be reflected in the config.
+    hosts = cfg.getAll6(SubnetID(1));
+    ASSERT_EQ(1, hosts.size());
+    EXPECT_EQ("duid=010203040500 ipv6_subnet_id=1 hostname=(empty) "
+              "ipv4_reservation=(no) siaddr=(no) sname=(empty) file=(empty) "
+              "key=(empty) ipv6_reservations=(none)", hosts[0]->toText());
+}
+
+TEST_F(CfgHostsTest, update) {
+    testUpdate();
+}
+
+TEST_F(CfgHostsTest, updateMultiThreading) {
+    MultiThreadingTest mt(true);
+    testUpdate();
+}
+
+}  // namespace

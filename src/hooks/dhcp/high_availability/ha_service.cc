@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,6 +22,7 @@
 #include <http/date_time.h>
 #include <http/response_json.h>
 #include <http/post_request_json.h>
+#include <util/boost_time_utils.h>
 #include <util/multi_threading_mgr.h>
 #include <util/stopwatch.h>
 #include <boost/pointer_cast.hpp>
@@ -49,6 +50,13 @@ public:
         CtrlChannelError(file, line, what) {}
 };
 
+/// @brief Exception thrown when conflict status code has been returned.
+class ConflictError : public CtrlChannelError {
+public:
+    ConflictError(const char* file, size_t line, const char* what) :
+        CtrlChannelError(file, line, what) {}
+};
+
 }
 
 namespace isc {
@@ -63,13 +71,15 @@ const int HAService::HA_MAINTENANCE_START_EVT;
 const int HAService::HA_MAINTENANCE_CANCEL_EVT;
 const int HAService::HA_CONTROL_RESULT_MAINTENANCE_NOT_ALLOWED;
 const int HAService::HA_SYNCED_PARTNER_UNAVAILABLE_EVT;
+const int HAService::HA_WAITING_TO_TERMINATED_ST_DELAY_MINUTES;
 
-HAService::HAService(const IOServicePtr& io_service, const NetworkStatePtr& network_state,
-                     const HAConfigPtr& config, const HAServerType& server_type)
-    : io_service_(io_service), network_state_(network_state), config_(config),
+HAService::HAService(const unsigned int id, const IOServicePtr& io_service,
+                     const NetworkStatePtr& network_state, const HAConfigPtr& config,
+                     const HAServerType& server_type)
+    : id_(id), io_service_(io_service), network_state_(network_state), config_(config),
       server_type_(server_type), client_(), listener_(), communication_state_(),
-      query_filter_(config), mutex_(), pending_requests_(),
-      lease_update_backlog_(config->getDelayedUpdatesLimit()),
+      query_filter_(config), lease_sync_filter_(server_type, config), mutex_(),
+      pending_requests_(), lease_update_backlog_(config->getDelayedUpdatesLimit()),
       sync_complete_notified_(false) {
 
     if (server_type == HAServerType::DHCPv4) {
@@ -79,17 +89,17 @@ HAService::HAService(const IOServicePtr& io_service, const NetworkStatePtr& netw
         communication_state_.reset(new CommunicationState6(io_service_, config));
     }
 
-    network_state_->reset(NetworkState::Origin::HA_COMMAND);
+    network_state_->enableService(getLocalOrigin());
 
     startModel(HA_WAITING_ST);
 
     // Create the client and(or) listener as appropriate.
     if (!config_->getEnableMultiThreading()) {
         // Not configured for multi-threading, start a client in ST mode.
-        client_.reset(new HttpClient(*io_service_, 0));
+        client_.reset(new HttpClient(io_service_, false));
     } else {
         // Create an MT-mode client.
-        client_.reset(new HttpClient(*io_service_,
+        client_.reset(new HttpClient(io_service_, true,
                       config_->getHttpClientThreads(), true));
 
         // If we're configured to use our own listener create and start it.
@@ -129,6 +139,7 @@ HAService::HAService(const IOServicePtr& io_service, const NetworkStatePtr& netw
     }
 
     LOG_INFO(ha_logger, HA_SERVICE_STARTED)
+        .arg(config_->getThisServerName())
         .arg(HAConfig::HAModeToString(config->getHAMode()))
         .arg(HAConfig::PeerConfig::roleToString(config->getThisServerConfig()->getRole()));
 }
@@ -137,7 +148,14 @@ HAService::~HAService() {
     // Stop client and/or listener.
     stopClientAndListener();
 
-    network_state_->reset(NetworkState::Origin::HA_COMMAND);
+    network_state_->enableService(getLocalOrigin());
+}
+
+std::string
+HAService::getCSCallbacksSetName() const {
+    std::ostringstream s;
+    s << "HA_MT_" << id_;
+    return (s.str());
 }
 
 void
@@ -442,7 +460,8 @@ HAService::inMaintenanceStateHandler() {
         // Log if the state machine is paused.
         conditionalLogPausedState();
 
-        LOG_INFO(ha_logger, HA_MAINTENANCE_SHUTDOWN_SAFE);
+        LOG_INFO(ha_logger, HA_MAINTENANCE_SHUTDOWN_SAFE)
+            .arg(config_->getThisServerName());
     }
 
     scheduleHeartbeat();
@@ -474,6 +493,7 @@ HAService::partnerDownStateHandler() {
             query_filter_.serveDefaultScopes();
         }
         adjustNetworkState();
+        communication_state_->clearRejectedLeaseUpdates();
 
         // Log if the state machine is paused.
         conditionalLogPausedState();
@@ -481,7 +501,8 @@ HAService::partnerDownStateHandler() {
         if (maintenance) {
             // If we ended up in the partner-down state as a result of
             // receiving the ha-maintenance-start command let's log it.
-            LOG_INFO(ha_logger, HA_MAINTENANCE_STARTED_IN_PARTNER_DOWN);
+            LOG_INFO(ha_logger, HA_MAINTENANCE_STARTED_IN_PARTNER_DOWN)
+                .arg(config_->getThisServerName());
         }
 
     } else if (getLastEvent() == HA_SYNCED_PARTNER_UNAVAILABLE_EVT) {
@@ -556,7 +577,8 @@ HAService::partnerInMaintenanceStateHandler() {
         // Log if the state machine is paused.
         conditionalLogPausedState();
 
-        LOG_INFO(ha_logger, HA_MAINTENANCE_STARTED);
+        LOG_INFO(ha_logger, HA_MAINTENANCE_STARTED)
+            .arg(config_->getThisServerName());
     }
 
     scheduleHeartbeat();
@@ -608,6 +630,7 @@ HAService::readyStateHandler() {
     if (doOnEntry()) {
         query_filter_.serveNoScopes();
         adjustNetworkState();
+        communication_state_->clearRejectedLeaseUpdates();
 
         // Log if the state machine is paused.
         conditionalLogPausedState();
@@ -687,6 +710,7 @@ HAService::syncingStateHandler() {
     if (doOnEntry()) {
         query_filter_.serveNoScopes();
         adjustNetworkState();
+        communication_state_->clearRejectedLeaseUpdates();
 
         // Log if the state machine is paused.
         conditionalLogPausedState();
@@ -748,7 +772,7 @@ HAService::syncingStateHandler() {
         // Perform synchronous leases update.
         std::string status_message;
         int sync_status = synchronize(status_message,
-                                      config_->getFailoverPeerConfig()->getName(),
+                                      config_->getFailoverPeerConfig(),
                                       dhcp_disable_timeout);
 
         // If the leases synchronization was successful, let's transition
@@ -776,6 +800,7 @@ HAService::terminatedStateHandler() {
     if (doOnEntry()) {
         query_filter_.serveDefaultScopes();
         adjustNetworkState();
+        communication_state_->clearRejectedLeaseUpdates();
 
         // In the terminated state we don't send heartbeat.
         communication_state_->stopHeartbeat();
@@ -783,7 +808,8 @@ HAService::terminatedStateHandler() {
         // Log if the state machine is paused.
         conditionalLogPausedState();
 
-        LOG_ERROR(ha_logger, HA_TERMINATED);
+        LOG_ERROR(ha_logger, HA_TERMINATED)
+            .arg(config_->getThisServerName());
     }
 
     postNextEvent(NOP_EVT);
@@ -797,6 +823,7 @@ HAService::waitingStateHandler() {
     if (doOnEntry()) {
         query_filter_.serveNoScopes();
         adjustNetworkState();
+        communication_state_->clearRejectedLeaseUpdates();
 
         // Log if the state machine is paused.
         conditionalLogPausedState();
@@ -859,17 +886,28 @@ HAService::waitingStateHandler() {
         postNextEvent(NOP_EVT);
         break;
 
-    case HA_TERMINATED_ST:
+    case HA_TERMINATED_ST: {
+        auto partner_in_terminated = communication_state_->getDurationSincePartnerStateTime();
+        if (!partner_in_terminated.is_not_a_date_time() &&
+            (partner_in_terminated.total_seconds()) / 60 >= HA_WAITING_TO_TERMINATED_ST_DELAY_MINUTES) {
+            LOG_WARN(ha_logger, HA_TERMINATED_PARTNER_DID_NOT_RESTART)
+                .arg(config_->getThisServerName())
+                .arg(HA_WAITING_TO_TERMINATED_ST_DELAY_MINUTES);
+            verboseTransition(HA_TERMINATED_ST);
+            break;
+        }
+
         // We have checked above whether the clock skew is exceeding the threshold
         // and we should terminate. If we're here, it means that the clock skew
         // is acceptable. The partner may be still in the terminated state because
         // it hasn't been restarted yet. Probably, this server is the first one
         // being restarted after syncing the clocks. Let's just sit in the waiting
         // state until the partner gets restarted.
-        LOG_INFO(ha_logger, HA_TERMINATED_RESTART_PARTNER);
+        LOG_INFO(ha_logger, HA_TERMINATED_RESTART_PARTNER)
+            .arg(config_->getThisServerName());
         postNextEvent(NOP_EVT);
         break;
-
+    }
     case HA_WAITING_ST:
         // If both servers are waiting, the primary server 'wins' and is
         // transitioned to the next state first.
@@ -916,6 +954,7 @@ HAService::verboseTransition(const unsigned state) {
 
         // Log the transition.
         LOG_INFO(ha_logger, HA_STATE_TRANSITION)
+            .arg(config_->getThisServerName())
             .arg(current_state_name)
             .arg(new_state_name)
             .arg(partner_state_name);
@@ -923,6 +962,7 @@ HAService::verboseTransition(const unsigned state) {
     } else {
         // In the passive-backup mode we don't know the partner's state.
         LOG_INFO(ha_logger, HA_STATE_TRANSITION_PASSIVE_BACKUP)
+            .arg(config_->getThisServerName())
             .arg(current_state_name)
             .arg(new_state_name);
     }
@@ -932,7 +972,8 @@ HAService::verboseTransition(const unsigned state) {
     // administratively disabled. Let's remind the user about this
     // configuration setting.
     if ((state == HA_READY_ST) && (getCurrState() == HA_WAITING_ST)) {
-        LOG_INFO(ha_logger, HA_CONFIG_LEASE_SYNCING_DISABLED_REMINDER);
+        LOG_INFO(ha_logger, HA_CONFIG_LEASE_SYNCING_DISABLED_REMINDER)
+            .arg(config_->getThisServerName());
     }
 
     // Do the actual transition.
@@ -945,11 +986,13 @@ HAService::verboseTransition(const unsigned state) {
         (config_->getThisServerConfig()->getRole() != HAConfig::PeerConfig::BACKUP)) {
         if (shouldSendLeaseUpdates(config_->getFailoverPeerConfig())) {
             LOG_INFO(ha_logger, HA_LEASE_UPDATES_ENABLED)
+                .arg(config_->getThisServerName())
                 .arg(new_state_name);
 
         } else if (!config_->amSendingLeaseUpdates()) {
             // Lease updates are administratively disabled.
             LOG_INFO(ha_logger, HA_CONFIG_LEASE_UPDATES_DISABLED_REMINDER)
+                .arg(config_->getThisServerName())
                 .arg(new_state_name);
 
         } else {
@@ -957,6 +1000,7 @@ HAService::verboseTransition(const unsigned state) {
             // are not issued because this is the backup server or because
             // in this state the server should not generate lease updates.
             LOG_INFO(ha_logger, HA_LEASE_UPDATES_DISABLED)
+                .arg(config_->getThisServerName())
                 .arg(new_state_name);
         }
     }
@@ -981,7 +1025,8 @@ HAService::getNormalState() const {
 bool
 HAService::unpause() {
     if (isModelPaused()) {
-        LOG_INFO(ha_logger, HA_STATE_MACHINE_CONTINUED);
+        LOG_INFO(ha_logger, HA_STATE_MACHINE_CONTINUED)
+            .arg(config_->getThisServerName());
         unpauseModel();
         return (true);
     }
@@ -995,6 +1040,7 @@ HAService::conditionalLogPausedState() const {
         std::string state_name = stateToString(getCurrState());
         boost::to_upper(state_name);
         LOG_INFO(ha_logger, HA_STATE_MACHINE_PAUSED)
+            .arg(config_->getThisServerName())
             .arg(state_name);
     }
 }
@@ -1002,6 +1048,11 @@ HAService::conditionalLogPausedState() const {
 void
 HAService::serveDefaultScopes() {
     query_filter_.serveDefaultScopes();
+}
+
+void
+HAService::serveFailoverScopes() {
+    query_filter_.serveFailoverScopes();
 }
 
 bool
@@ -1025,7 +1076,7 @@ HAService::inScopeInternal(QueryPtrType& query) {
     query->addClass(dhcp::ClientClass(scope_class));
     // The following is the part of the server failure detection algorithm.
     // If the query should be processed by the partner we need to check if
-    // the partner responds. If the number of unanswered queries exceeds a
+    // the partner responds. If the number of unansweered queries exceeds a
     // configured threshold, we will consider the partner to be offline.
     if (!in_scope && communication_state_->isCommunicationInterrupted()) {
         communication_state_->analyzeMessage(query);
@@ -1049,20 +1100,20 @@ HAService::adjustNetworkState() {
                                 (getCurrState() == HA_TERMINATED_ST));
 
     if (!should_enable && network_state_->isServiceEnabled()) {
-        std::string current_state_name = getStateLabel(getCurrState());
+        current_state_name = getStateLabel(getCurrState());
         boost::to_upper(current_state_name);
         LOG_INFO(ha_logger, HA_LOCAL_DHCP_DISABLE)
             .arg(config_->getThisServerName())
             .arg(current_state_name);
-        network_state_->disableService(NetworkState::Origin::HA_COMMAND);
+        network_state_->disableService(getLocalOrigin());
 
     } else if (should_enable && !network_state_->isServiceEnabled()) {
-        std::string current_state_name = getStateLabel(getCurrState());
+        current_state_name = getStateLabel(getCurrState());
         boost::to_upper(current_state_name);
         LOG_INFO(ha_logger, HA_LOCAL_DHCP_ENABLE)
             .arg(config_->getThisServerName())
             .arg(current_state_name);
-        network_state_->enableService(NetworkState::Origin::HA_COMMAND);
+        network_state_->enableService(getLocalOrigin());
     }
 }
 
@@ -1101,6 +1152,9 @@ HAService::shouldTerminate() const {
     // If not issue a warning if it's getting large.
     if (!should_terminate) {
         communication_state_->clockSkewShouldWarn();
+        // Check if we should terminate because the number of rejected leases
+        // has been exceeded.
+        should_terminate = communication_state_->rejectedLeaseUpdatesShouldTerminate();
     }
 
     return (should_terminate);
@@ -1116,21 +1170,24 @@ HAService::isPartnerStateInvalid() const {
     switch (communication_state_->getPartnerState()) {
         case HA_COMMUNICATION_RECOVERY_ST:
             if (config_->getHAMode() != HAConfig::LOAD_BALANCING) {
-                LOG_WARN(ha_logger, HA_INVALID_PARTNER_STATE_COMMUNICATION_RECOVERY);
+                LOG_WARN(ha_logger, HA_INVALID_PARTNER_STATE_COMMUNICATION_RECOVERY)
+                    .arg(config_->getThisServerName());
                 return (true);
             }
             break;
 
         case HA_HOT_STANDBY_ST:
             if (config_->getHAMode() != HAConfig::HOT_STANDBY) {
-                LOG_WARN(ha_logger, HA_INVALID_PARTNER_STATE_HOT_STANDBY);
+                LOG_WARN(ha_logger, HA_INVALID_PARTNER_STATE_HOT_STANDBY)
+                    .arg(config_->getThisServerName());
                 return (true);
             }
             break;
 
         case HA_LOAD_BALANCING_ST:
             if (config_->getHAMode() != HAConfig::LOAD_BALANCING) {
-                LOG_WARN(ha_logger, HA_INVALID_PARTNER_STATE_LOAD_BALANCING);
+                LOG_WARN(ha_logger, HA_INVALID_PARTNER_STATE_LOAD_BALANCING)
+                    .arg(config_->getThisServerName());
                 return (true);
             }
             break;
@@ -1153,21 +1210,27 @@ HAService::asyncSendLeaseUpdates(const dhcp::Pkt4Ptr& query,
     size_t sent_num = 0;
 
     // Schedule sending lease updates to each peer.
-    for (auto p = peers_configs.begin(); p != peers_configs.end(); ++p) {
-        HAConfig::PeerConfigPtr conf = p->second;
+    for (auto const& p : peers_configs) {
+        HAConfig::PeerConfigPtr conf = p.second;
 
         // Check if the lease updates should be queued. This is the case when the
         // server is in the communication-recovery state. Queued lease updates may
         // be sent when the communication is re-established.
         if (shouldQueueLeaseUpdates(conf)) {
             // Lease updates for deleted leases.
-            for (auto l = deleted_leases->begin(); l != deleted_leases->end(); ++l) {
-                lease_update_backlog_.push(LeaseUpdateBacklog::DELETE, *l);
+            for (auto const& l : *deleted_leases) {
+                // If a released lease is preserved in the database send the lease
+                // update to the partner. Otherwise, delete the lease.
+                if (l->state_ == Lease4::STATE_RELEASED) {
+                    lease_update_backlog_.push(LeaseUpdateBacklog::ADD, l);
+                } else {
+                    lease_update_backlog_.push(LeaseUpdateBacklog::DELETE, l);
+                }
             }
 
             // Lease updates for new allocations and updated leases.
-            for (auto l = leases->begin(); l != leases->end(); ++l) {
-                lease_update_backlog_.push(LeaseUpdateBacklog::ADD, *l);
+            for (auto const& l : *leases) {
+                lease_update_backlog_.push(LeaseUpdateBacklog::ADD, l);
             }
 
             continue;
@@ -1188,14 +1251,21 @@ HAService::asyncSendLeaseUpdates(const dhcp::Pkt4Ptr& query,
         }
 
         // Lease updates for deleted leases.
-        for (auto l = deleted_leases->begin(); l != deleted_leases->end(); ++l) {
-            asyncSendLeaseUpdate(query, conf, CommandCreator::createLease4Delete(**l),
-                                 parking_lot);
+        for (auto const& l : *deleted_leases) {
+            // If a released lease is preserved in the database send the lease
+            // update to the partner. Otherwise, delete the lease.
+            if (l->state_ == Lease4::STATE_RELEASED) {
+                asyncSendLeaseUpdate(query, conf, CommandCreator::createLease4Update(*l),
+                                     parking_lot);
+            } else {
+                asyncSendLeaseUpdate(query, conf, CommandCreator::createLease4Delete(*l),
+                                     parking_lot);
+            }
         }
 
         // Lease updates for new allocations and updated leases.
-        for (auto l = leases->begin(); l != leases->end(); ++l) {
-            asyncSendLeaseUpdate(query, conf, CommandCreator::createLease4Update(**l),
+        for (auto const& l : *leases) {
+            asyncSendLeaseUpdate(query, conf, CommandCreator::createLease4Update(*l),
                                  parking_lot);
         }
 
@@ -1211,6 +1281,17 @@ HAService::asyncSendLeaseUpdates(const dhcp::Pkt4Ptr& query,
 }
 
 size_t
+HAService::asyncSendSingleLeaseUpdate(const dhcp::Pkt4Ptr& query,
+                                      const dhcp::Lease4Ptr& lease,
+                                      const hooks::ParkingLotHandlePtr& parking_lot) {
+    Lease4CollectionPtr leases(new Lease4Collection());
+    leases->push_back(lease);
+    Lease4CollectionPtr deleted_leases(new Lease4Collection());
+
+    return (asyncSendLeaseUpdates(query, leases, deleted_leases, parking_lot));
+}
+
+size_t
 HAService::asyncSendLeaseUpdates(const dhcp::Pkt6Ptr& query,
                                  const dhcp::Lease6CollectionPtr& leases,
                                  const dhcp::Lease6CollectionPtr& deleted_leases,
@@ -1222,20 +1303,26 @@ HAService::asyncSendLeaseUpdates(const dhcp::Pkt6Ptr& query,
     size_t sent_num = 0;
 
     // Schedule sending lease updates to each peer.
-    for (auto p = peers_configs.begin(); p != peers_configs.end(); ++p) {
-        HAConfig::PeerConfigPtr conf = p->second;
+    for (auto const& p : peers_configs) {
+        HAConfig::PeerConfigPtr conf = p.second;
 
         // Check if the lease updates should be queued. This is the case when the
         // server is in the communication-recovery state. Queued lease updates may
         // be sent when the communication is re-established.
         if (shouldQueueLeaseUpdates(conf)) {
-            for (auto l = deleted_leases->begin(); l != deleted_leases->end(); ++l) {
-                lease_update_backlog_.push(LeaseUpdateBacklog::DELETE, *l);
+            for (auto const& l : *deleted_leases) {
+                // If a released lease is preserved in the database send the lease
+                // update to the partner. Otherwise, delete the lease.
+                if (l->state_ == Lease4::STATE_RELEASED) {
+                    lease_update_backlog_.push(LeaseUpdateBacklog::ADD, l);
+                } else {
+                    lease_update_backlog_.push(LeaseUpdateBacklog::DELETE, l);
+                }
             }
 
             // Lease updates for new allocations and updated leases.
-            for (auto l = leases->begin(); l != leases->end(); ++l) {
-                lease_update_backlog_.push(LeaseUpdateBacklog::ADD, *l);
+            for (auto const& l : *leases) {
+                lease_update_backlog_.push(LeaseUpdateBacklog::ADD, l);
             }
 
             continue;
@@ -1291,7 +1378,9 @@ HAService::leaseUpdateCompleteInternal(QueryPtrType& query,
     // If there are no more pending requests for this query, let's unpark
     // the DHCP packet.
     if (it == pending_requests_.end() || (--pending_requests_[query] <= 0)) {
-        parking_lot->unpark(query);
+        if (parking_lot) {
+            parking_lot->unpark(query);
+        }
 
         // If we have unparked the packet we can clear pending requests for
         // this query.
@@ -1363,17 +1452,21 @@ HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
                           " HA peer. This is programmatic error");
             }
 
-            // There are three possible groups of errors during the lease update.
+            // There are four possible groups of errors during the lease update.
             // One is the IO error causing issues in communication with the peer.
-            // Another one is an HTTP parsing error. The last type of error is
-            // when non-success error code is returned in the response carried
-            // in the HTTP message or if the JSON response is otherwise broken.
+            // Another one is an HTTP parsing error. The third type occurs when
+            // the partner receives the command but it is invalid or there is
+            // an internal processing error. Finally, the forth type is when the
+            // conflict status code is returned in the response indicating that
+            // the lease update does not match the partner's configuration.
 
             bool lease_update_success = true;
+            bool lease_update_conflict = false;
 
             // Handle first two groups of errors.
             if (ec || !error_str.empty()) {
                 LOG_WARN(ha_logger, HA_LEASE_UPDATE_COMMUNICATIONS_FAILED)
+                    .arg(config_->getThisServerName())
                     .arg(query->getLabel())
                     .arg(config->getLogLabel())
                     .arg(ec ? ec.message() : error_str);
@@ -1384,7 +1477,6 @@ HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
 
             } else {
 
-                // Handle third group of errors.
                 try {
                     int rcode = 0;
                     auto args = verifyAsyncResponse(response, rcode);
@@ -1392,8 +1484,22 @@ HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
                     // updates and we should log them.
                     logFailedLeaseUpdates(query, args);
 
+                } catch (const ConflictError& ex) {
+                    // Handle forth group of errors.
+                    lease_update_conflict = true;
+                    lease_update_success = false;
+                    communication_state_->reportRejectedLeaseUpdate(query);
+
+                    LOG_WARN(ha_logger, HA_LEASE_UPDATE_CONFLICT)
+                        .arg(config_->getThisServerName())
+                        .arg(query->getLabel())
+                        .arg(config->getLogLabel())
+                        .arg(ex.what());
+
                 } catch (const std::exception& ex) {
+                    // Handle third group of errors.
                     LOG_WARN(ha_logger, HA_LEASE_UPDATE_FAILED)
+                        .arg(config_->getThisServerName())
                         .arg(query->getLabel())
                         .arg(config->getLogLabel())
                         .arg(ex.what());
@@ -1405,10 +1511,22 @@ HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
 
             // We don't care about the result of the lease update to the backup server.
             // It is a best effort update.
-            if ((config->getRole() != HAConfig::PeerConfig::BACKUP) && !lease_update_success) {
-                // If we were unable to communicate with the partner we set partner's
+            if (config->getRole() != HAConfig::PeerConfig::BACKUP) {
+                // If the lease update was unsuccessful we may need to set the partner
                 // state as unavailable.
-                communication_state_->setPartnerState("unavailable");
+                if (!lease_update_success) {
+                    // Do not set it as unavailable if it was a conflict because the
+                    // partner actually responded.
+                    if (!lease_update_conflict) {
+                        // If we were unable to communicate with the partner we set partner's
+                        // state as unavailable.
+                        communication_state_->setPartnerUnavailable();
+                    }
+                } else {
+                    // Lease update successful and we may need to clear some previously
+                    // rejected lease updates.
+                    communication_state_->reportSuccessfulLeaseUpdate(query);
+                }
             }
 
             // It is possible to configure the server to not wait for a response from
@@ -1419,7 +1537,9 @@ HAService::asyncSendLeaseUpdate(const QueryPtrType& query,
                 // a backup server and the lease update was unsuccessful. In such
                 // case the DHCP exchange fails.
                 if (!lease_update_success) {
-                    parking_lot->drop(query);
+                    if (parking_lot) {
+                        parking_lot->drop(query);
+                    }
                 }
             } else {
                 // This was a response from the backup server and we're configured to
@@ -1569,10 +1689,17 @@ HAService::processStatusGet() const {
     }
     std::set<std::string> scopes = query_filter_.getServedScopes();
     ElementPtr list = Element::createList();
-    for (std::string scope : scopes) {
+    for (auto const& scope : scopes) {
         list->add(Element::create(scope));
     }
     local->set("scopes", list);
+    local->set("server-name", Element::create(config_->getThisServerName()));
+    auto const my_time(communication_state_->getMyTimeAtSkew());
+    if (my_time.is_not_a_date_time()) {
+        local->set("system-time", Element::create());
+    } else {
+        local->set("system-time", Element::create(ptimeToText(my_time, 0)));
+    }
     ha_servers->set("local", local);
 
     // Do not include remote server information if this is a backup server or
@@ -1587,12 +1714,13 @@ HAService::processStatusGet() const {
 
     try {
         role = config_->getFailoverPeerConfig()->getRole();
-        std::string role_txt = HAConfig::PeerConfig::roleToString(role);
+        role_txt = HAConfig::PeerConfig::roleToString(role);
         remote->set("role", Element::create(role_txt));
 
     } catch (...) {
         remote->set("role", Element::create(std::string()));
     }
+    remote->set("server-name", Element::create(config_->getFailoverPeerConfig()->getName()));
     ha_servers->set("remote", remote);
 
     return (ha_servers);
@@ -1609,7 +1737,7 @@ HAService::processHeartbeat() {
 
     auto scopes = query_filter_.getServedScopes();
     ElementPtr scopes_list = Element::createList();
-    for (auto scope : scopes) {
+    for (auto const& scope : scopes) {
         scopes_list->add(Element::create(scope));
     }
     arguments->set("scopes", scopes_list);
@@ -1650,7 +1778,8 @@ HAService::asyncSendHeartbeat() {
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
          HostHttpHeader(partner_config->getUrl().getStrippedHostname()));
     partner_config->addBasicAuthHttpHeader(request);
-    request->setBodyAsJson(CommandCreator::createHeartbeat(server_type_));
+    request->setBodyAsJson(CommandCreator::createHeartbeat(config_->getThisServerName(),
+                                                           server_type_));
     request->finalize();
 
     // Response object should also be created because the HTTP client needs
@@ -1677,6 +1806,7 @@ HAService::asyncSendHeartbeat() {
             // Handle first two groups of errors.
             if (ec || !error_str.empty()) {
                 LOG_WARN(ha_logger, HA_HEARTBEAT_COMMUNICATIONS_FAILED)
+                    .arg(config_->getThisServerName())
                     .arg(partner_config->getLogLabel())
                     .arg(ec ? ec.message() : error_str);
                 heartbeat_success = false;
@@ -1741,6 +1871,7 @@ HAService::asyncSendHeartbeat() {
 
                 } catch (const std::exception& ex) {
                     LOG_WARN(ha_logger, HA_HEARTBEAT_FAILED)
+                        .arg(config_->getThisServerName())
                         .arg(partner_config->getLogLabel())
                         .arg(ex.what());
                     heartbeat_success = false;
@@ -1755,10 +1886,11 @@ HAService::asyncSendHeartbeat() {
             } else {
                 // We were unable to retrieve partner's state, so let's mark it
                 // as unavailable.
-                communication_state_->setPartnerState("unavailable");
+                communication_state_->setPartnerUnavailable();
                 // Log if the communication is interrupted.
                 if (communication_state_->isCommunicationInterrupted()) {
                     LOG_WARN(ha_logger, HA_COMMUNICATION_INTERRUPTED)
+                        .arg(config_->getThisServerName())
                         .arg(partner_config->getName());
                 }
             }
@@ -1802,18 +1934,17 @@ HAService::startHeartbeat() {
 
 void
 HAService::asyncDisableDHCPService(HttpClient& http_client,
-                                   const std::string& server_name,
+                                   const HAConfig::PeerConfigPtr& remote_config,
                                    const unsigned int max_period,
                                    PostRequestCallback post_request_action) {
-    HAConfig::PeerConfigPtr remote_config = config_->getPeerConfig(server_name);
-
     // Create HTTP/1.1 request including our command.
     PostHttpRequestJsonPtr request = boost::make_shared<PostHttpRequestJson>
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
          HostHttpHeader(remote_config->getUrl().getStrippedHostname()));
 
     remote_config->addBasicAuthHttpHeader(request);
-    request->setBodyAsJson(CommandCreator::createDHCPDisable(max_period,
+    request->setBodyAsJson(CommandCreator::createDHCPDisable(getRemoteOrigin(),
+                                                             max_period,
                                                              server_type_));
     request->finalize();
 
@@ -1843,6 +1974,7 @@ HAService::asyncDisableDHCPService(HttpClient& http_client,
              if (ec || !error_str.empty()) {
                  error_message = (ec ? ec.message() : error_str);
                  LOG_ERROR(ha_logger, HA_DHCP_DISABLE_COMMUNICATIONS_FAILED)
+                     .arg(config_->getThisServerName())
                      .arg(remote_config->getLogLabel())
                      .arg(error_message);
 
@@ -1855,6 +1987,7 @@ HAService::asyncDisableDHCPService(HttpClient& http_client,
                  } catch (const std::exception& ex) {
                      error_message = ex.what();
                      LOG_ERROR(ha_logger, HA_DHCP_DISABLE_FAILED)
+                         .arg(config_->getThisServerName())
                          .arg(remote_config->getLogLabel())
                          .arg(error_message);
                  }
@@ -1863,7 +1996,7 @@ HAService::asyncDisableDHCPService(HttpClient& http_client,
              // If there was an error communicating with the partner, mark the
              // partner as unavailable.
              if (!error_message.empty()) {
-                 communication_state_->setPartnerState("unavailable");
+                 communication_state_->setPartnerUnavailable();
              }
 
              // Invoke post request action if it was specified.
@@ -1882,16 +2015,15 @@ HAService::asyncDisableDHCPService(HttpClient& http_client,
 
 void
 HAService::asyncEnableDHCPService(HttpClient& http_client,
-                                  const std::string& server_name,
+                                  const HAConfig::PeerConfigPtr& remote_config,
                                   PostRequestCallback post_request_action) {
-    HAConfig::PeerConfigPtr remote_config = config_->getPeerConfig(server_name);
-
     // Create HTTP/1.1 request including our command.
     PostHttpRequestJsonPtr request = boost::make_shared<PostHttpRequestJson>
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
          HostHttpHeader(remote_config->getUrl().getStrippedHostname()));
     remote_config->addBasicAuthHttpHeader(request);
-    request->setBodyAsJson(CommandCreator::createDHCPEnable(server_type_));
+    request->setBodyAsJson(CommandCreator::createDHCPEnable(getRemoteOrigin(),
+                                                            server_type_));
     request->finalize();
 
     // Response object should also be created because the HTTP client needs
@@ -1920,6 +2052,7 @@ HAService::asyncEnableDHCPService(HttpClient& http_client,
              if (ec || !error_str.empty()) {
                  error_message = (ec ? ec.message() : error_str);
                  LOG_ERROR(ha_logger, HA_DHCP_ENABLE_COMMUNICATIONS_FAILED)
+                     .arg(config_->getThisServerName())
                      .arg(remote_config->getLogLabel())
                      .arg(error_message);
 
@@ -1932,6 +2065,7 @@ HAService::asyncEnableDHCPService(HttpClient& http_client,
                  } catch (const std::exception& ex) {
                      error_message = ex.what();
                      LOG_ERROR(ha_logger, HA_DHCP_ENABLE_FAILED)
+                         .arg(config_->getThisServerName())
                          .arg(remote_config->getLogLabel())
                          .arg(error_message);
                  }
@@ -1940,7 +2074,7 @@ HAService::asyncEnableDHCPService(HttpClient& http_client,
              // If there was an error communicating with the partner, mark the
              // partner as unavailable.
              if (!error_message.empty()) {
-                 communication_state_->setPartnerState("unavailable");
+                 communication_state_->setPartnerUnavailable();
              }
 
              // Invoke post request action if it was specified.
@@ -1959,12 +2093,12 @@ HAService::asyncEnableDHCPService(HttpClient& http_client,
 
 void
 HAService::localDisableDHCPService() {
-    network_state_->disableService(NetworkState::Origin::HA_COMMAND);
+    network_state_->disableService(getLocalOrigin());
 }
 
 void
 HAService::localEnableDHCPService() {
-    network_state_->enableService(NetworkState::Origin::HA_COMMAND);
+    network_state_->enableService(getLocalOrigin());
 }
 
 void
@@ -1979,13 +2113,14 @@ HAService::asyncSyncLeases() {
         dhcp_disable_timeout = 1;
     }
 
-    asyncSyncLeases(*client_, config_->getFailoverPeerConfig()->getName(),
+    lease_sync_filter_.apply();
+    asyncSyncLeases(*client_, config_->getFailoverPeerConfig(),
                     dhcp_disable_timeout, LeasePtr(), null_action);
 }
 
 void
 HAService::asyncSyncLeases(http::HttpClient& http_client,
-                           const std::string& server_name,
+                           const HAConfig::PeerConfigPtr& remote_config,
                            const unsigned int max_period,
                            const dhcp::LeasePtr& last_lease,
                            PostSyncCallback post_sync_action,
@@ -1995,8 +2130,8 @@ HAService::asyncSyncLeases(http::HttpClient& http_client,
     // to allocate new leases while we fetch from it. The DHCP service will
     // be disabled for a certain amount of time and will be automatically
     // re-enabled if we die during the synchronization.
-    asyncDisableDHCPService(http_client, server_name, max_period,
-                            [this, &http_client, server_name, max_period, last_lease,
+    asyncDisableDHCPService(http_client, remote_config, max_period,
+                            [this, &http_client, remote_config, max_period, last_lease,
                              post_sync_action, dhcp_disabled]
                             (const bool success, const std::string& error_message, const int) {
 
@@ -2005,7 +2140,7 @@ HAService::asyncSyncLeases(http::HttpClient& http_client,
         if (success) {
             // The last argument indicates that disabling the DHCP
             // service on the partner server was successful.
-            asyncSyncLeasesInternal(http_client, server_name, max_period,
+            asyncSyncLeasesInternal(http_client, remote_config, max_period,
                                     last_lease, post_sync_action, true);
 
         } else {
@@ -2016,19 +2151,16 @@ HAService::asyncSyncLeases(http::HttpClient& http_client,
 
 void
 HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
-                                   const std::string& server_name,
+                                   const HAConfig::PeerConfigPtr& remote_config,
                                    const unsigned int max_period,
                                    const dhcp::LeasePtr& last_lease,
                                    PostSyncCallback post_sync_action,
                                    const bool dhcp_disabled) {
-
-    HAConfig::PeerConfigPtr partner_config = config_->getFailoverPeerConfig();
-
     // Create HTTP/1.1 request including our command.
     PostHttpRequestJsonPtr request = boost::make_shared<PostHttpRequestJson>
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
-         HostHttpHeader(partner_config->getUrl().getStrippedHostname()));
-    partner_config->addBasicAuthHttpHeader(request);
+         HostHttpHeader(remote_config->getUrl().getStrippedHostname()));
+    remote_config->addBasicAuthHttpHeader(request);
     if (server_type_ == HAServerType::DHCPv4) {
         request->setBodyAsJson(CommandCreator::createLease4GetPage(
             boost::dynamic_pointer_cast<Lease4>(last_lease), config_->getSyncPageLimit()));
@@ -2044,11 +2176,10 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
     HttpResponseJsonPtr response = boost::make_shared<HttpResponseJson>();
 
     // Schedule asynchronous HTTP request.
-    http_client.asyncSendRequest(partner_config->getUrl(),
-                                 partner_config->getTlsContext(),
+    http_client.asyncSendRequest(remote_config->getUrl(),
+                                 remote_config->getTlsContext(),
                                  request, response,
-        [this, partner_config, post_sync_action, &http_client, server_name,
-         max_period, dhcp_disabled]
+        [this, remote_config, post_sync_action, &http_client, max_period, dhcp_disabled]
             (const boost::system::error_code& ec,
              const HttpResponsePtr& response,
              const std::string& error_str) {
@@ -2069,7 +2200,8 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
             if (ec || !error_str.empty()) {
                 error_message = (ec ? ec.message() : error_str);
                 LOG_ERROR(ha_logger, HA_LEASES_SYNC_COMMUNICATIONS_FAILED)
-                    .arg(partner_config->getLogLabel())
+                    .arg(config_->getThisServerName())
+                    .arg(remote_config->getLogLabel())
                     .arg(error_message);
 
             } else {
@@ -2092,38 +2224,20 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
                     }
 
                     // Iterate over the leases and update the database as appropriate.
-                    const auto& leases_element = leases->listValue();
+                    auto const& leases_element = leases->listValue();
 
                     LOG_INFO(ha_logger, HA_LEASES_SYNC_LEASE_PAGE_RECEIVED)
+                        .arg(config_->getThisServerName())
                         .arg(leases_element.size())
-                        .arg(server_name);
+                        .arg(remote_config->getLogLabel());
 
+                    // Count actually applied leases.
+                    uint64_t applied_lease_count = 0;
                     for (auto l = leases_element.begin(); l != leases_element.end(); ++l) {
                         try {
 
                             if (server_type_ == HAServerType::DHCPv4) {
                                 Lease4Ptr lease = Lease4::fromElement(*l);
-
-                                // Check if there is such lease in the database already.
-                                Lease4Ptr existing_lease = LeaseMgrFactory::instance().getLease4(lease->addr_);
-                                if (!existing_lease) {
-                                    // There is no such lease, so let's add it.
-                                    LeaseMgrFactory::instance().addLease(lease);
-
-                                } else if (existing_lease->cltt_ < lease->cltt_) {
-                                    // If the existing lease is older than the fetched lease, update
-                                    // the lease in our local database.
-                                    // Update lease current expiration time with value received from the
-                                    // database. Some database backends reject operations on the lease if
-                                    // the current expiration time value does not match what is stored.
-                                    Lease::syncCurrentExpirationTime(*existing_lease, *lease);
-                                    LeaseMgrFactory::instance().updateLease4(lease);
-
-                                } else {
-                                    LOG_DEBUG(ha_logger, DBGLVL_TRACE_BASIC, HA_LEASE_SYNC_STALE_LEASE4_SKIP)
-                                        .arg(lease->addr_.toText())
-                                        .arg(lease->subnet_id_);
-                                }
 
                                 // If we're not on the last page and we're processing final lease on
                                 // this page, let's record the lease as input to the next
@@ -2133,8 +2247,48 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
                                     last_lease = boost::dynamic_pointer_cast<Lease>(lease);
                                 }
 
+                                if (!lease_sync_filter_.shouldSync(lease)) {
+                                    continue;
+                                }
+
+                                // Check if there is such lease in the database already.
+                                Lease4Ptr existing_lease = LeaseMgrFactory::instance().getLease4(lease->addr_);
+                                if (!existing_lease) {
+                                    // There is no such lease, so let's add it.
+                                    LeaseMgrFactory::instance().addLease(lease);
+                                    ++applied_lease_count;
+
+                                } else if (existing_lease->cltt_ < lease->cltt_) {
+                                    // If the existing lease is older than the fetched lease, update
+                                    // the lease in our local database.
+                                    // Update lease current expiration time with value received from the
+                                    // database. Some database backends reject operations on the lease if
+                                    // the current expiration time value does not match what is stored.
+                                    Lease::syncCurrentExpirationTime(*existing_lease, *lease);
+                                    LeaseMgrFactory::instance().updateLease4(lease);
+                                    ++applied_lease_count;
+
+                                } else {
+                                    LOG_DEBUG(ha_logger, DBGLVL_TRACE_BASIC, HA_LEASE_SYNC_STALE_LEASE4_SKIP)
+                                        .arg(config_->getThisServerName())
+                                        .arg(lease->addr_.toText())
+                                        .arg(lease->subnet_id_);
+                                }
+
                             } else {
                                 Lease6Ptr lease = Lease6::fromElement(*l);
+
+                                // If we're not on the last page and we're processing final lease on
+                                // this page, let's record the lease as input to the next
+                                // lease6-get-page command.
+                                if ((leases_element.size() >= config_->getSyncPageLimit()) &&
+                                    (l + 1 == leases_element.end())) {
+                                    last_lease = boost::dynamic_pointer_cast<Lease>(lease);
+                                }
+
+                                if (!lease_sync_filter_.shouldSync(lease)) {
+                                    continue;
+                                }
 
                                 // Check if there is such lease in the database already.
                                 Lease6Ptr existing_lease = LeaseMgrFactory::instance().getLease6(lease->type_,
@@ -2142,6 +2296,7 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
                                 if (!existing_lease) {
                                     // There is no such lease, so let's add it.
                                     LeaseMgrFactory::instance().addLease(lease);
+                                    ++applied_lease_count;
 
                                 } else if (existing_lease->cltt_ < lease->cltt_) {
                                     // If the existing lease is older than the fetched lease, update
@@ -2151,33 +2306,33 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
                                     // the current expiration time value does not match what is stored.
                                     Lease::syncCurrentExpirationTime(*existing_lease, *lease);
                                     LeaseMgrFactory::instance().updateLease6(lease);
+                                    ++applied_lease_count;
 
                                 } else {
                                     LOG_DEBUG(ha_logger, DBGLVL_TRACE_BASIC, HA_LEASE_SYNC_STALE_LEASE6_SKIP)
+                                        .arg(config_->getThisServerName())
                                         .arg(lease->addr_.toText())
                                         .arg(lease->subnet_id_);
-                                }
-
-                                // If we're not on the last page and we're processing final lease on
-                                // this page, let's record the lease as input to the next
-                                // lease6-get-page command.
-                                if ((leases_element.size() >= config_->getSyncPageLimit()) &&
-                                    (l + 1 == leases_element.end())) {
-                                    last_lease = boost::dynamic_pointer_cast<Lease>(lease);
                                 }
                             }
 
                         } catch (const std::exception& ex) {
                             LOG_WARN(ha_logger, HA_LEASE_SYNC_FAILED)
+                                .arg(config_->getThisServerName())
                                 .arg((*l)->str())
                                 .arg(ex.what());
                         }
                     }
 
+                    LOG_INFO(ha_logger, HA_LEASES_SYNC_APPLIED_LEASES)
+                        .arg(config_->getThisServerName())
+                        .arg(applied_lease_count);
+
                 } catch (const std::exception& ex) {
                     error_message = ex.what();
                     LOG_ERROR(ha_logger, HA_LEASES_SYNC_FAILED)
-                        .arg(partner_config->getLogLabel())
+                        .arg(config_->getThisServerName())
+                        .arg(remote_config->getLogLabel())
                         .arg(error_message);
                 }
             }
@@ -2185,12 +2340,12 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
              // If there was an error communicating with the partner, mark the
              // partner as unavailable.
              if (!error_message.empty()) {
-                 communication_state_->setPartnerState("unavailable");
+                 communication_state_->setPartnerUnavailable();
 
              } else if (last_lease) {
                  // This indicates that there are more leases to be fetched.
                  // Therefore, we have to send another leaseX-get-page command.
-                 asyncSyncLeases(http_client, server_name, max_period, last_lease,
+                 asyncSyncLeases(http_client, remote_config, max_period, last_lease,
                                  post_sync_action, dhcp_disabled);
                  return;
              }
@@ -2213,18 +2368,32 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
 ConstElementPtr
 HAService::processSynchronize(const std::string& server_name,
                               const unsigned int max_period) {
+    HAConfig::PeerConfigPtr remote_config;
+    try {
+        remote_config = config_->getPeerConfig(server_name);
+    } catch (const std::exception& ex) {
+        return (createAnswer(CONTROL_RESULT_ERROR, ex.what()));
+    }
+    // We must not synchronize with self.
+    if (remote_config->getName() == config_->getThisServerName()) {
+        return (createAnswer(CONTROL_RESULT_ERROR, "'" + remote_config->getName()
+            + "' points to local server but should point to a partner"));
+    }
     std::string answer_message;
-    int sync_status = synchronize(answer_message, server_name, max_period);
+    int sync_status = synchronize(answer_message, remote_config, max_period);
     return (createAnswer(sync_status, answer_message));
 }
 
 int
-HAService::synchronize(std::string& status_message, const std::string& server_name,
+HAService::synchronize(std::string& status_message,
+                       const HAConfig::PeerConfigPtr& remote_config,
                        const unsigned int max_period) {
-    IOService io_service;
-    HttpClient client(io_service);
+    lease_sync_filter_.apply();
 
-    asyncSyncLeases(client, server_name, max_period, Lease4Ptr(),
+    IOServicePtr io_service(new IOService());
+    HttpClient client(io_service, false);
+
+    asyncSyncLeases(client, remote_config, max_period, Lease4Ptr(),
                     [&](const bool success, const std::string& error_message,
                         const bool dhcp_disabled) {
         // If there was a fatal error while fetching the leases, let's
@@ -2242,7 +2411,7 @@ HAService::synchronize(std::string& status_message, const std::string& server_na
             // try to send the ha-sync-complete-notify command to the
             // partner.
             if (success) {
-                asyncSyncCompleteNotify(client, server_name,
+                asyncSyncCompleteNotify(client, remote_config,
                                         [&](const bool success,
                                             const std::string& error_message,
                                             const int rcode) {
@@ -2250,7 +2419,7 @@ HAService::synchronize(std::string& status_message, const std::string& server_na
                     // runs an older Kea version. In that case, send the dhcp-enable
                     // command as in previous Kea version.
                     if (rcode == CONTROL_RESULT_COMMAND_UNSUPPORTED) {
-                        asyncEnableDHCPService(client, server_name,
+                        asyncEnableDHCPService(client, remote_config,
                                                [&](const bool success,
                                                    const std::string& error_message,
                                                    const int) {
@@ -2264,7 +2433,7 @@ HAService::synchronize(std::string& status_message, const std::string& server_na
                             // The synchronization process is completed, so let's break
                             // the IO service so as we can return the response to the
                             // controlling client.
-                            io_service.stop();
+                            io_service->stop();
                         });
 
                     } else {
@@ -2274,7 +2443,7 @@ HAService::synchronize(std::string& status_message, const std::string& server_na
                             status_message = error_message;
                         }
 
-                        io_service.stop();
+                        io_service->stop();
                     }
                 });
 
@@ -2283,7 +2452,7 @@ HAService::synchronize(std::string& status_message, const std::string& server_na
                 //  re-enable the DHCP service. Note, that we don't send the
                 // ha-sync-complete-notify command in this case. It is only sent in
                 // the case when synchronization ends successfully.
-                asyncEnableDHCPService(client, server_name,
+                asyncEnableDHCPService(client, remote_config,
                                        [&](const bool success,
                                            const std::string& error_message,
                                            const int) {
@@ -2294,7 +2463,7 @@ HAService::synchronize(std::string& status_message, const std::string& server_na
                     // The synchronization process is completed, so let's break
                     // the IO service so as we can return the response to the
                     // controlling client.
-                    io_service.stop();
+                    io_service->stop();
 
                 });
             }
@@ -2302,21 +2471,27 @@ HAService::synchronize(std::string& status_message, const std::string& server_na
         } else {
             // Also stop IO service if there is no need to enable DHCP
             // service.
-            io_service.stop();
+            io_service->stop();
         }
     });
 
-    LOG_INFO(ha_logger, HA_SYNC_START).arg(server_name);
+    LOG_INFO(ha_logger, HA_SYNC_START)
+        .arg(config_->getThisServerName())
+        .arg(remote_config->getLogLabel());
 
     // Measure duration of the synchronization.
     Stopwatch stopwatch;
 
     // Run the IO service until it is stopped by any of the callbacks. This
     // makes it synchronous.
-    io_service.run();
+    io_service->run();
 
     // End measuring duration.
     stopwatch.stop();
+
+    client.stop();
+
+    io_service->stopAndPoll();
 
     // If an error message has been recorded, return an error to the controlling
     // client.
@@ -2324,7 +2499,8 @@ HAService::synchronize(std::string& status_message, const std::string& server_na
         postNextEvent(HA_SYNCING_FAILED_EVT);
 
         LOG_ERROR(ha_logger, HA_SYNC_FAILED)
-            .arg(server_name)
+            .arg(config_->getThisServerName())
+            .arg(remote_config->getLogLabel())
             .arg(status_message);
 
         return (CONTROL_RESULT_ERROR);
@@ -2336,7 +2512,8 @@ HAService::synchronize(std::string& status_message, const std::string& server_na
     postNextEvent(HA_SYNCING_SUCCEEDED_EVT);
 
     LOG_INFO(ha_logger, HA_SYNC_SUCCESSFUL)
-        .arg(server_name)
+        .arg(config_->getThisServerName())
+        .arg(remote_config->getLogLabel())
         .arg(stopwatch.logFormatLastDuration());
 
     return (CONTROL_RESULT_SUCCESS);
@@ -2390,6 +2567,7 @@ HAService::asyncSendLeaseUpdatesFromBacklog(HttpClient& http_client,
              if (ec || !error_str.empty()) {
                  error_message = (ec ? ec.message() : error_str);
                  LOG_WARN(ha_logger, HA_LEASES_BACKLOG_COMMUNICATIONS_FAILED)
+                     .arg(config_->getThisServerName())
                      .arg(config->getLogLabel())
                      .arg(ec ? ec.message() : error_str);
 
@@ -2400,6 +2578,7 @@ HAService::asyncSendLeaseUpdatesFromBacklog(HttpClient& http_client,
                  } catch (const std::exception& ex) {
                      error_message = ex.what();
                      LOG_WARN(ha_logger, HA_LEASES_BACKLOG_FAILED)
+                         .arg(config_->getThisServerName())
                          .arg(config->getLogLabel())
                          .arg(ex.what());
                  }
@@ -2422,22 +2601,24 @@ bool
 HAService::sendLeaseUpdatesFromBacklog() {
     auto num_updates = lease_update_backlog_.size();
     if (num_updates == 0) {
-        LOG_INFO(ha_logger, HA_LEASES_BACKLOG_NOTHING_TO_SEND);
+        LOG_INFO(ha_logger, HA_LEASES_BACKLOG_NOTHING_TO_SEND)
+            .arg(config_->getThisServerName());
         return (true);
     }
 
-    IOService io_service;
-    HttpClient client(io_service);
+    IOServicePtr io_service(new IOService());
+    HttpClient client(io_service, false);
     auto remote_config = config_->getFailoverPeerConfig();
     bool updates_successful = true;
 
     LOG_INFO(ha_logger, HA_LEASES_BACKLOG_START)
+        .arg(config_->getThisServerName())
         .arg(num_updates)
         .arg(remote_config->getName());
 
     asyncSendLeaseUpdatesFromBacklog(client, remote_config,
                                      [&](const bool success, const std::string&, const int) {
-        io_service.stop();
+        io_service->stop();
         updates_successful = success;
     });
 
@@ -2445,13 +2626,18 @@ HAService::sendLeaseUpdatesFromBacklog() {
     Stopwatch stopwatch;
 
     // Run the IO service until it is stopped by the callback. This makes it synchronous.
-    io_service.run();
+    io_service->run();
 
     // End measuring duration.
     stopwatch.stop();
 
+    client.stop();
+
+    io_service->stopAndPoll();
+
     if (updates_successful) {
         LOG_INFO(ha_logger, HA_LEASES_BACKLOG_SUCCESS)
+            .arg(config_->getThisServerName())
             .arg(remote_config->getName())
             .arg(stopwatch.logFormatLastDuration());
     }
@@ -2463,7 +2649,8 @@ void
 HAService::asyncSendHAReset(HttpClient& http_client,
                             const HAConfig::PeerConfigPtr& config,
                             PostRequestCallback post_request_action) {
-    ConstElementPtr command = CommandCreator::createHAReset(server_type_);
+    ConstElementPtr command = CommandCreator::createHAReset(config_->getThisServerName(),
+                                                            server_type_);
 
     // Create HTTP/1.1 request including our command.
     PostHttpRequestJsonPtr request = boost::make_shared<PostHttpRequestJson>
@@ -2490,6 +2677,7 @@ HAService::asyncSendHAReset(HttpClient& http_client,
              if (ec || !error_str.empty()) {
                  error_message = (ec ? ec.message() : error_str);
                  LOG_WARN(ha_logger, HA_RESET_COMMUNICATIONS_FAILED)
+                     .arg(config_->getThisServerName())
                      .arg(config->getLogLabel())
                      .arg(ec ? ec.message() : error_str);
 
@@ -2500,6 +2688,7 @@ HAService::asyncSendHAReset(HttpClient& http_client,
                  } catch (const std::exception& ex) {
                      error_message = ex.what();
                      LOG_WARN(ha_logger, HA_RESET_FAILED)
+                         .arg(config_->getThisServerName())
                          .arg(config->getLogLabel())
                          .arg(ex.what());
                  }
@@ -2511,19 +2700,23 @@ HAService::asyncSendHAReset(HttpClient& http_client,
 
 bool
 HAService::sendHAReset() {
-    IOService io_service;
-    HttpClient client(io_service);
+    IOServicePtr io_service(new IOService());
+    HttpClient client(io_service, false);
     auto remote_config = config_->getFailoverPeerConfig();
     bool reset_successful = true;
 
     asyncSendHAReset(client, remote_config,
                      [&](const bool success, const std::string&, const int) {
-        io_service.stop();
+        io_service->stop();
         reset_successful = success;
     });
 
     // Run the IO service until it is stopped by the callback. This makes it synchronous.
-    io_service.run();
+    io_service->run();
+
+    client.stop();
+
+    io_service->stopAndPoll();
 
     return (reset_successful);
 }
@@ -2607,15 +2800,16 @@ HAService::processMaintenanceStart() {
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
          HostHttpHeader(remote_config->getUrl().getStrippedHostname()));
     remote_config->addBasicAuthHttpHeader(request);
-    request->setBodyAsJson(CommandCreator::createMaintenanceNotify(false, server_type_));
+    request->setBodyAsJson(CommandCreator::createMaintenanceNotify(config_->getThisServerName(),
+                                                                   false, server_type_));
     request->finalize();
 
     // Response object should also be created because the HTTP client needs
     // to know the type of the expected response.
     HttpResponseJsonPtr response = boost::make_shared<HttpResponseJson>();
 
-    IOService io_service;
-    HttpClient client(io_service);
+    IOServicePtr io_service(new IOService());
+    HttpClient client(io_service, false);
 
     boost::system::error_code captured_ec;
     std::string captured_error_message;
@@ -2631,7 +2825,7 @@ HAService::processMaintenanceStart() {
              const HttpResponsePtr& response,
              const std::string& error_str) {
 
-             io_service.stop();
+             io_service->stop();
 
              // There are three possible groups of errors. One is the IO error
              // causing issues in communication with the peer. Another one is
@@ -2645,6 +2839,7 @@ HAService::processMaintenanceStart() {
              if (ec || !error_str.empty()) {
                  error_message = (ec ? ec.message() : error_str);
                  LOG_ERROR(ha_logger, HA_MAINTENANCE_NOTIFY_COMMUNICATIONS_FAILED)
+                     .arg(config_->getThisServerName())
                      .arg(remote_config->getLogLabel())
                      .arg(error_message);
 
@@ -2657,6 +2852,7 @@ HAService::processMaintenanceStart() {
                  } catch (const std::exception& ex) {
                      error_message = ex.what();
                      LOG_ERROR(ha_logger, HA_MAINTENANCE_NOTIFY_FAILED)
+                         .arg(config_->getThisServerName())
                          .arg(remote_config->getLogLabel())
                          .arg(error_message);
                  }
@@ -2665,7 +2861,7 @@ HAService::processMaintenanceStart() {
              // If there was an error communicating with the partner, mark the
              // partner as unavailable.
              if (!error_message.empty()) {
-                 communication_state_->setPartnerState("unavailable");
+                 communication_state_->setPartnerUnavailable();
              }
 
              captured_ec = ec;
@@ -2679,7 +2875,11 @@ HAService::processMaintenanceStart() {
 
     // Run the IO service until it is stopped by any of the callbacks. This
     // makes it synchronous.
-    io_service.run();
+    io_service->run();
+
+    client.stop();
+
+    io_service->stopAndPoll();
 
     // If there was a communication problem with the partner we assume that
     // the partner is already down while we receive this command.
@@ -2731,15 +2931,16 @@ HAService::processMaintenanceCancel() {
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
          HostHttpHeader(remote_config->getUrl().getStrippedHostname()));
     remote_config->addBasicAuthHttpHeader(request);
-    request->setBodyAsJson(CommandCreator::createMaintenanceNotify(true, server_type_));
+    request->setBodyAsJson(CommandCreator::createMaintenanceNotify(config_->getThisServerName(),
+                                                                   true, server_type_));
     request->finalize();
 
     // Response object should also be created because the HTTP client needs
     // to know the type of the expected response.
     HttpResponseJsonPtr response = boost::make_shared<HttpResponseJson>();
 
-    IOService io_service;
-    HttpClient client(io_service);
+    IOServicePtr io_service(new IOService());
+    HttpClient client(io_service, false);
 
     std::string error_message;
 
@@ -2752,12 +2953,13 @@ HAService::processMaintenanceCancel() {
              const HttpResponsePtr& response,
              const std::string& error_str) {
 
-             io_service.stop();
+             io_service->stop();
 
              // Handle first two groups of errors.
              if (ec || !error_str.empty()) {
                  error_message = (ec ? ec.message() : error_str);
                  LOG_ERROR(ha_logger, HA_MAINTENANCE_NOTIFY_CANCEL_COMMUNICATIONS_FAILED)
+                     .arg(config_->getThisServerName())
                      .arg(remote_config->getLogLabel())
                      .arg(error_message);
 
@@ -2771,6 +2973,7 @@ HAService::processMaintenanceCancel() {
                  } catch (const std::exception& ex) {
                      error_message = ex.what();
                      LOG_ERROR(ha_logger, HA_MAINTENANCE_NOTIFY_CANCEL_FAILED)
+                         .arg(config_->getThisServerName())
                          .arg(remote_config->getLogLabel())
                          .arg(error_message);
                  }
@@ -2779,7 +2982,7 @@ HAService::processMaintenanceCancel() {
              // If there was an error communicating with the partner, mark the
              // partner as unavailable.
              if (!error_message.empty()) {
-                 communication_state_->setPartnerState("unavailable");
+                 communication_state_->setPartnerUnavailable();
              }
         },
         HttpClient::RequestTimeout(TIMEOUT_DEFAULT_HTTP_CLIENT_REQUEST),
@@ -2790,7 +2993,11 @@ HAService::processMaintenanceCancel() {
 
     // Run the IO service until it is stopped by any of the callbacks. This
     // makes it synchronous.
-    io_service.run();
+    io_service->run();
+
+    client.stop();
+
+    io_service->stopAndPoll();
 
     // There was an error in communication with the partner or the
     // partner was unable to revert its state.
@@ -2813,17 +3020,17 @@ HAService::processMaintenanceCancel() {
 
 void
 HAService::asyncSyncCompleteNotify(HttpClient& http_client,
-                                   const std::string& server_name,
+                                   const HAConfig::PeerConfigPtr& remote_config,
                                    PostRequestCallback post_request_action) {
-    HAConfig::PeerConfigPtr remote_config = config_->getPeerConfig(server_name);
-
     // Create HTTP/1.1 request including our command.
     PostHttpRequestJsonPtr request = boost::make_shared<PostHttpRequestJson>
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11(),
          HostHttpHeader(remote_config->getUrl().getStrippedHostname()));
 
     remote_config->addBasicAuthHttpHeader(request);
-    request->setBodyAsJson(CommandCreator::createSyncCompleteNotify(server_type_));
+    request->setBodyAsJson(CommandCreator::createSyncCompleteNotify(getRemoteOrigin(),
+                                                                    config_->getThisServerName(),
+                                                                    server_type_));
     request->finalize();
 
     // Response object should also be created because the HTTP client needs
@@ -2852,6 +3059,7 @@ HAService::asyncSyncCompleteNotify(HttpClient& http_client,
              if (ec || !error_str.empty()) {
                  error_message = (ec ? ec.message() : error_str);
                  LOG_ERROR(ha_logger, HA_SYNC_COMPLETE_NOTIFY_COMMUNICATIONS_FAILED)
+                     .arg(config_->getThisServerName())
                      .arg(remote_config->getLogLabel())
                      .arg(error_message);
 
@@ -2867,6 +3075,7 @@ HAService::asyncSyncCompleteNotify(HttpClient& http_client,
                  } catch (const std::exception& ex) {
                      error_message = ex.what();
                      LOG_ERROR(ha_logger, HA_SYNC_COMPLETE_NOTIFY_FAILED)
+                         .arg(config_->getThisServerName())
                          .arg(remote_config->getLogLabel())
                          .arg(error_message);
                  }
@@ -2875,7 +3084,7 @@ HAService::asyncSyncCompleteNotify(HttpClient& http_client,
              // If there was an error communicating with the partner, mark the
              // partner as unavailable.
              if (!error_message.empty()) {
-                 communication_state_->setPartnerState("unavailable");
+                 communication_state_->setPartnerUnavailable();
              }
 
              // Invoke post request action if it was specified.
@@ -2893,12 +3102,22 @@ HAService::asyncSyncCompleteNotify(HttpClient& http_client,
 }
 
 ConstElementPtr
-HAService::processSyncCompleteNotify() {
+HAService::processSyncCompleteNotify(const unsigned int origin_id) {
     if (getCurrState() == HA_PARTNER_DOWN_ST) {
         sync_complete_notified_ = true;
-    } else {
-        localEnableDHCPService();
+        // We're in the partner-down state and the partner notified us
+        // that it has synchronized its database. We can't enable the
+        // service yet, because it may result in some new lease allocations
+        // that the partner would miss (we don't send lease updates in the
+        // partner-down state). We must first send the heartbeat and let
+        // the state machine resolve the situation between the partners.
+        // It may unblock the network service.
+        network_state_->disableService(getLocalOrigin());
     }
+    // Release the network state lock for the remote origin because we have
+    // acquired the local network state lock above (partner-down state), or
+    // we don't need the lock (other states).
+    network_state_->enableService(origin_id);
     return (createAnswer(CONTROL_RESULT_SUCCESS,
                          "Server successfully notified about the synchronization completion."));
 }
@@ -2946,23 +3165,83 @@ HAService::verifyAsyncResponse(const HttpResponsePtr& response, int& rcode) {
     // Check if the status code of the first response. We don't support multiple
     // at this time, because we always send a request to a single location.
     ConstElementPtr args = parseAnswer(rcode, body->get(0));
-    if ((rcode != CONTROL_RESULT_SUCCESS) &&
-        (rcode != CONTROL_RESULT_EMPTY)) {
-        std::ostringstream s;
-        // Include an error text if available.
-        if (args && args->getType() == Element::string) {
-            s << args->stringValue() << ", ";
-        }
-        // Include an error code.
-        s << "error code " << rcode;
-
-        if (rcode == CONTROL_RESULT_COMMAND_UNSUPPORTED) {
-            isc_throw(CommandUnsupportedError, s.str());
-        } else {
-            isc_throw(CtrlChannelError, s.str());
-        }
+    if (rcode == CONTROL_RESULT_SUCCESS) {
+        return (args);
     }
 
+    std::ostringstream s;
+
+    // The empty status can occur for the lease6-bulk-apply command. In that
+    // case, the response may contain conflicted or erred leases within the
+    // arguments, rather than globally. For other error cases let's construct
+    // the error message from the global values.
+    if (rcode != CONTROL_RESULT_EMPTY) {
+        // Include an error text if available.
+        if (args && args->getType() == Element::string) {
+            s << args->stringValue() << " (";
+        }
+        // Include an error code.
+        s << "error code " << rcode << ")";
+    }
+
+    switch (rcode) {
+    case CONTROL_RESULT_COMMAND_UNSUPPORTED:
+        isc_throw(CommandUnsupportedError, s.str());
+
+    case CONTROL_RESULT_CONFLICT:
+        isc_throw(ConflictError, s.str());
+
+    case CONTROL_RESULT_EMPTY:
+        // Handle the lease6-bulk-apply error cases.
+        if (args && (args->getType() == Element::map)) {
+            auto failed_leases = args->get("failed-leases");
+            if (!failed_leases || (failed_leases->getType() != Element::list)) {
+                // If there are no failed leases there is nothing to do.
+                break;
+            }
+            auto conflict = false;
+            ConstElementPtr conflict_error_message;
+            for (auto i = 0; i < failed_leases->size(); ++i) {
+                auto lease = failed_leases->get(i);
+                if (!lease || lease->getType() != Element::map) {
+                    continue;
+                }
+                auto result = lease->get("result");
+                if (!result || result->getType() != Element::integer) {
+                    continue;
+                }
+                auto error_message = lease->get("error-message");
+                // Error status code takes precedence over the conflict.
+                if (result->intValue() == CONTROL_RESULT_ERROR) {
+                    if (error_message && error_message->getType()) {
+                        s << error_message->stringValue() << " (";
+                    }
+                    s << "error code " << result->intValue() << ")";
+                    isc_throw(CtrlChannelError, s.str());
+                }
+                if (result->intValue() == CONTROL_RESULT_CONFLICT) {
+                    // Let's record the conflict but there may still be some
+                    // leases with an error status code, so do not throw the
+                    // conflict exception yet.
+                    conflict = true;
+                    conflict_error_message = error_message;
+                }
+            }
+            if (conflict) {
+                // There are no errors. There are only conflicts. Throw
+                // appropriate exception.
+                if (conflict_error_message &&
+                    (conflict_error_message->getType() == Element::string)) {
+                    s << conflict_error_message->stringValue() << " (";
+                }
+                s << "error code " << CONTROL_RESULT_CONFLICT << ")";
+                isc_throw(ConflictError, s.str());
+            }
+        }
+        break;
+    default:
+        isc_throw(CtrlChannelError, s.str());
+    }
     return (args);
 }
 
@@ -3011,7 +3290,7 @@ HAService::clientCloseHandler(int tcp_native_fd) {
     if (tcp_native_fd >= 0) {
         IfaceMgr::instance().deleteExternalSocket(tcp_native_fd);
     }
-};
+}
 
 size_t
 HAService::pendingRequestSize() {
@@ -3061,20 +3340,22 @@ HAService::checkPermissionsClientAndListener() {
         }
     } catch (const isc::MultiThreadingInvalidOperation& ex) {
         LOG_ERROR(ha_logger, HA_PAUSE_CLIENT_LISTENER_ILLEGAL)
-                  .arg(ex.what());
+            .arg(config_->getThisServerName())
+            .arg(ex.what());
         // The exception needs to be propagated to the caller of the
         // @ref MultiThreadingCriticalSection constructor.
         throw;
     } catch (const std::exception& ex) {
         LOG_ERROR(ha_logger, HA_PAUSE_CLIENT_LISTENER_FAILED)
-                  .arg(ex.what());
+            .arg(config_->getThisServerName())
+            .arg(ex.what());
     }
 }
 
 void
 HAService::startClientAndListener() {
     // Add critical section callbacks.
-    MultiThreadingMgr::instance().addCriticalSectionCallbacks("HA_MT",
+    MultiThreadingMgr::instance().addCriticalSectionCallbacks(getCSCallbacksSetName(),
         std::bind(&HAService::checkPermissionsClientAndListener, this),
         std::bind(&HAService::pauseClientAndListener, this),
         std::bind(&HAService::resumeClientAndListener, this));
@@ -3120,14 +3401,15 @@ HAService::resumeClientAndListener() {
         }
     } catch (std::exception& ex) {
         LOG_ERROR(ha_logger, HA_RESUME_CLIENT_LISTENER_FAILED)
-                  .arg(ex.what());
+            .arg(config_->getThisServerName())
+            .arg(ex.what());
     }
 }
 
 void
 HAService::stopClientAndListener() {
     // Remove critical section callbacks.
-    MultiThreadingMgr::instance().removeCriticalSectionCallbacks("HA_MT");
+    MultiThreadingMgr::instance().removeCriticalSectionCallbacks(getCSCallbacksSetName());
 
     if (client_) {
         client_->stop();

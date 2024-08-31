@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,30 +6,36 @@
 
 #include <config.h>
 
+#include <cc/data.h>
 #include <dhcp/classify.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/option.h>
 #include <dhcp/option_string.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_shared_networks.h>
 #include <dhcpsrv/cfg_subnets6.h>
+#include <dhcpsrv/iterative_allocator.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_id.h>
+
 #include <dhcpsrv/subnet_selector.h>
 #include <dhcpsrv/cfg_hosts.h>
 #include <stats/stats_mgr.h>
 #include <testutils/gtest_utils.h>
+#include <testutils/log_utils.h>
 #include <testutils/test_to_element.h>
 #include <util/doubles.h>
 
+#include <boost/range/adaptor/reversed.hpp>
 #include <gtest/gtest.h>
 #include <string>
 
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::stats;
@@ -37,6 +43,30 @@ using namespace isc::test;
 using namespace isc::util;
 
 namespace {
+
+/// @brief An allocator recording calls to @c initAfterConfigure.
+class InitRecordingAllocator : public IterativeAllocator {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// @param type specifies the type of allocated leases.
+    /// @param subnet weak pointer to the subnet owning the allocator.
+    InitRecordingAllocator(Lease::Type type, const WeakSubnetPtr& subnet)
+        : IterativeAllocator(type, subnet), callcount_(0) {
+    }
+
+    /// @brief Increases the call count of this function.
+    ///
+    /// The call count can be later examined to check whether or not
+    /// the function was called.
+    virtual void initAfterConfigureInternal() {
+        ++callcount_;
+    };
+
+    /// @brief Call count of the @c initAllocatorsAfterConfigure.
+    int callcount_;
+};
 
 /// @brief Generates interface id option.
 ///
@@ -65,7 +95,7 @@ void checkMergedSubnet(CfgSubnets6& cfg_subnets,
 
     // Make sure we have the one we expect.
     ASSERT_EQ(exp_subnet_id, subnet->getID()) << "subnet ID is wrong";
-    ASSERT_EQ(exp_valid, subnet->getValid()) << "subnetID:"
+    ASSERT_EQ(exp_valid, subnet->getValid().get()) << "subnetID:"
               << subnet->getID() << ", subnet valid time is wrong";
 
     SharedNetwork6Ptr shared_network;
@@ -101,29 +131,29 @@ TEST(CfgSubnets6Test, getSpecificSubnet) {
     subnets.push_back(subnet3);
 
     // Add all subnets to the configuration.
-    for (auto subnet = subnets.cbegin(); subnet != subnets.cend(); ++subnet) {
-        ASSERT_NO_THROW(cfg.add(*subnet)) << "failed to add subnet with id: "
-            << (*subnet)->getID();
+    for (auto const& subnet : subnets) {
+        ASSERT_NO_THROW(cfg.add(subnet)) << "failed to add subnet with id: "
+            << subnet->getID();
     }
 
     // Iterate over all subnets and make sure they can be retrieved by
     // subnet identifier.
-    for (auto subnet = subnets.rbegin(); subnet != subnets.rend(); ++subnet) {
-        ConstSubnet6Ptr subnet_returned = cfg.getBySubnetId((*subnet)->getID());
+    for (auto const& subnet : boost::adaptors::reverse(subnets)) {
+        ConstSubnet6Ptr subnet_returned = cfg.getBySubnetId(subnet->getID());
         ASSERT_TRUE(subnet_returned) << "failed to return subnet with id: "
-            << (*subnet)->getID();
-        EXPECT_EQ((*subnet)->getID(), subnet_returned->getID());
-        EXPECT_EQ((*subnet)->toText(), subnet_returned->toText());
+            << subnet->getID();
+        EXPECT_EQ(subnet->getID(), subnet_returned->getID());
+        EXPECT_EQ(subnet->toText(), subnet_returned->toText());
     }
 
     // Repeat the previous test, but this time retrieve subnets by their
     // prefixes.
-    for (auto subnet = subnets.rbegin(); subnet != subnets.rend(); ++subnet) {
-        ConstSubnet6Ptr subnet_returned = cfg.getByPrefix((*subnet)->toText());
+    for (auto const& subnet : boost::adaptors::reverse(subnets)) {
+        ConstSubnet6Ptr subnet_returned = cfg.getByPrefix(subnet->toText());
         ASSERT_TRUE(subnet_returned) << "failed to return subnet with id: "
-            << (*subnet)->getID();
-        EXPECT_EQ((*subnet)->getID(), subnet_returned->getID());
-        EXPECT_EQ((*subnet)->toText(), subnet_returned->toText());
+            << subnet->getID();
+        EXPECT_EQ(subnet->getID(), subnet_returned->getID());
+        EXPECT_EQ(subnet->toText(), subnet_returned->toText());
     }
 
     // Make sure that null pointers are returned for non-existing subnets.
@@ -136,9 +166,12 @@ TEST(CfgSubnets6Test, deleteSubnet) {
     CfgSubnets6 cfg;
 
     // Create 3 subnets.
-    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:3::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"),
+                                   48, 1, 2, 3, 4, SubnetID(1)));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"),
+                                   48, 1, 2, 3, 4, SubnetID(2)));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:3::"),
+                                   48, 1, 2, 3, 4, SubnetID(3)));
 
     ASSERT_NO_THROW(cfg.add(subnet1));
     ASSERT_NO_THROW(cfg.add(subnet2));
@@ -229,9 +262,12 @@ TEST(CfgSubnets6Test, selectSubnetByRelayAddress) {
     CfgSubnets6 cfg;
 
     // Let's configure 3 subnets
-    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:3::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"),
+                                   48, 1, 2, 3, 4, SubnetID(1)));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"),
+                                   48, 1, 2, 3, 4, SubnetID(2)));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:3::"),
+                                   48, 1, 2, 3, 4, SubnetID(3)));
     cfg.add(subnet1);
     cfg.add(subnet2);
     cfg.add(subnet3);
@@ -269,9 +305,12 @@ TEST(CfgSubnets6Test, selectSubnetByNetworkRelayAddress) {
     SharedNetwork6Ptr network3(new SharedNetwork6("net3"));
 
     // Let's configure 3 subnets
-    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:3::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"),
+                                   48, 1, 2, 3, 4, SubnetID(1)));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"),
+                                   48, 1, 2, 3, 4, SubnetID(2)));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:3::"),
+                                   48, 1, 2, 3, 4, SubnetID(3)));
 
     // Allow subnet class of clients to use the subnets.
     subnet1->allowClientClass("subnet");
@@ -336,9 +375,12 @@ TEST(CfgSubnets6Test, selectSubnetByInterfaceName) {
     CfgSubnets6 cfg;
 
     // Let's create 3 subnets.
-    Subnet6Ptr subnet1(new Subnet6(IOAddress("2000::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet2(new Subnet6(IOAddress("3000::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet3(new Subnet6(IOAddress("4000::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2000::"),
+                                   48, 1, 2, 3, 4, SubnetID(1)));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("3000::"),
+                                   48, 1, 2, 3, 4, SubnetID(2)));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("4000::"),
+                                   48, 1, 2, 3, 4, SubnetID(3)));
     subnet1->setIface("foo");
     subnet2->setIface("bar");
     subnet3->setIface("foobar");
@@ -383,9 +425,12 @@ TEST(CfgSubnets6Test, selectSubnetByInterfaceId) {
     CfgSubnets6 cfg;
 
     // Create 3 subnets.
-    Subnet6Ptr subnet1(new Subnet6(IOAddress("2000::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet2(new Subnet6(IOAddress("3000::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet3(new Subnet6(IOAddress("4000::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2000::"),
+                                   48, 1, 2, 3, 4, SubnetID(1)));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("3000::"),
+                                   48, 1, 2, 3, 4, SubnetID(2)));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("4000::"),
+                                   48, 1, 2, 3, 4, SubnetID(3)));
 
     // Create Interface-id options used in subnets 1,2, and 3
     OptionPtr ifaceid1 = generateInterfaceId("relay1.eth0");
@@ -441,9 +486,12 @@ TEST(CfgSubnets6Test, selectSubnetByRelayAddressAndClassify) {
     CfgSubnets6 cfg;
 
     // Let's configure 3 subnets
-    Subnet6Ptr subnet1(new Subnet6(IOAddress("2000::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet2(new Subnet6(IOAddress("3000::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet3(new Subnet6(IOAddress("4000::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2000::"),
+                                   48, 1, 2, 3, 4, SubnetID(1)));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("3000::"),
+                                   48, 1, 2, 3, 4, SubnetID(2)));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("4000::"),
+                                   48, 1, 2, 3, 4, SubnetID(3)));
     cfg.add(subnet1);
     cfg.add(subnet2);
     cfg.add(subnet3);
@@ -508,9 +556,12 @@ TEST(CfgSubnets6Test, selectSubnetByRelayAddressAndClassify) {
 TEST(CfgSubnets6Test, selectSubnetByInterfaceNameAndClassify) {
     CfgSubnets6 cfg;
 
-    Subnet6Ptr subnet1(new Subnet6(IOAddress("2000::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet2(new Subnet6(IOAddress("3000::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet3(new Subnet6(IOAddress("4000::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2000::"),
+                                   48, 1, 2, 3, 4, SubnetID(1)));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("3000::"),
+                                   48, 1, 2, 3, 4, SubnetID(2)));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("4000::"),
+                                   48, 1, 2, 3, 4, SubnetID(3)));
     subnet1->setIface("foo");
     subnet2->setIface("bar");
     subnet3->setIface("foobar");
@@ -546,9 +597,12 @@ TEST(CfgSubnets6Test, selectSubnetByInterfaceNameAndClassify) {
 TEST(CfgSubnets6Test, selectSubnetByInterfaceIdAndClassify) {
     CfgSubnets6 cfg;
 
-    Subnet6Ptr subnet1(new Subnet6(IOAddress("2000::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet2(new Subnet6(IOAddress("3000::"), 48, 1, 2, 3, 4));
-    Subnet6Ptr subnet3(new Subnet6(IOAddress("4000::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2000::"),
+                                   48, 1, 2, 3, 4, SubnetID(1)));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("3000::"),
+                                   48, 1, 2, 3, 4, SubnetID(2)));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("4000::"),
+                                   48, 1, 2, 3, 4, SubnetID(3)));
 
     // interface-id options used in subnets 1,2, and 3
     OptionPtr ifaceid1 = generateInterfaceId("relay1.eth0");
@@ -947,7 +1001,7 @@ TEST(CfgSubnets6Test, mergeSubnets) {
     std::string value("Yay!");
     OptionPtr option(new Option(Option::V6, 1));
     option->setData(value.begin(), value.end());
-    ASSERT_NO_THROW(subnet1b->getCfgOption()->add(option, false, "isc"));
+    ASSERT_NO_THROW(subnet1b->getCfgOption()->add(option, false, false, "isc"));
 
     // subnet 3b updates subnet 3 with different UD and removes it
     // from network 2
@@ -958,7 +1012,7 @@ TEST(CfgSubnets6Test, mergeSubnets) {
     value = "Team!";
     option.reset(new Option(Option::V6, 1));
     option->setData(value.begin(), value.end());
-    ASSERT_NO_THROW(subnet3b->getCfgOption()->add(option, false, "isc"));
+    ASSERT_NO_THROW(subnet3b->getCfgOption()->add(option, false, false, "isc"));
 
     // subnet 4b updates subnet 4 and moves it from network2 to network 1
     Subnet6Ptr subnet4b(new Subnet6(IOAddress("2001:4::"),
@@ -976,7 +1030,7 @@ TEST(CfgSubnets6Test, mergeSubnets) {
     value = "POOLS";
     option.reset(new Option(Option::V6, 1));
     option->setData(value.begin(), value.end());
-    ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, "isc"));
+    ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, false, "isc"));
     subnet5->addPool(pool);
 
     // Add pool 2
@@ -984,7 +1038,7 @@ TEST(CfgSubnets6Test, mergeSubnets) {
     value ="RULE!";
     option.reset(new Option(Option::V6, 1));
     option->setData(value.begin(), value.end());
-    ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, "isc"));
+    ASSERT_NO_THROW(pool->getCfgOption()->add(option, false, false, "isc"));
     subnet5->addPool(pool);
 
     // Add subnets to the merge from config.
@@ -1023,6 +1077,7 @@ TEST(CfgSubnets6Test, mergeSubnets) {
     opstr = boost::dynamic_pointer_cast<OptionString>(desc.option_);
     ASSERT_TRUE(opstr);
     EXPECT_EQ("Team!", opstr->getValue());
+    EXPECT_TRUE(subnet->getCfgOption()->isEncapsulated());
 
     // subnet4 should be replaced by subnet4b and moved to network1.
     ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, "2001:4::/64",
@@ -1040,6 +1095,7 @@ TEST(CfgSubnets6Test, mergeSubnets) {
     opstr = boost::dynamic_pointer_cast<OptionString>(desc.option_);
     ASSERT_TRUE(opstr);
     EXPECT_EQ("POOLS", opstr->getValue());
+    EXPECT_TRUE(merged_pool->getCfgOption()->isEncapsulated());
 
     const PoolPtr merged_pool2 = subnet->getPool(Lease::TYPE_PD, IOAddress("2001:1::"));
     ASSERT_TRUE(merged_pool2);
@@ -1047,6 +1103,79 @@ TEST(CfgSubnets6Test, mergeSubnets) {
     opstr = boost::dynamic_pointer_cast<OptionString>(desc.option_);
     ASSERT_TRUE(opstr);
     EXPECT_EQ("RULE!", opstr->getValue());
+    EXPECT_TRUE(merged_pool2->getCfgOption()->isEncapsulated());
+}
+
+// This test verifies the Subnet6 parser's validation logic for id parameter.
+TEST(CfgSubnets6Test, idValidation) {
+    {
+        // id 0.
+        SCOPED_TRACE("id 0");
+        std::string json =
+            "        {\n"
+            "            \"id\": 0,\n"
+            "            \"subnet\": \"2001:db8:1::/64\"\n"
+            "        }\n";
+        data::ElementPtr elems;
+        ASSERT_NO_THROW(elems = data::Element::fromJSON(json))
+            << "invalid JSON:" << json  << "\n test is broken";
+        std::string expected = "subnet configuration failed: ";
+        expected += "The 'id' value (0) is not within ";
+        expected += "expected range: (1 - 4294967294)";
+        try {
+            // Attempt to parse the configuration.
+            Subnet6ConfigParser parser;
+            Subnet6Ptr subnet = parser.parse(elems);
+            ADD_FAILURE() << "expected exception";
+        } catch (const std::exception& ex) {
+            EXPECT_EQ(expected, ex.what());
+        }
+    }
+
+    {
+        // id 4294967295.
+        SCOPED_TRACE("id 4294967295");
+        std::string json =
+            "        {\n"
+            "            \"id\": 4294967295,\n"
+            "            \"subnet\": \"2001:db8:1::/64\"\n"
+            "        }\n";
+        data::ElementPtr elems;
+        ASSERT_NO_THROW(elems = data::Element::fromJSON(json))
+            << "invalid JSON:" << json  << "\n test is broken";
+        std::string expected = "subnet configuration failed: ";
+        expected += "The 'id' value (4294967295) is not within ";
+        expected += "expected range: (1 - 4294967294)";
+        try {
+            // Attempt to parse the configuration.
+            Subnet6ConfigParser parser;
+            Subnet6Ptr subnet = parser.parse(elems);
+            ADD_FAILURE() << "expected exception";
+        } catch (const std::exception& ex) {
+            EXPECT_EQ(expected, ex.what());
+        }
+    }
+
+    {
+        // id 1 (valid).
+        SCOPED_TRACE("id 1");
+        std::string json =
+            "        {\n"
+            "            \"id\": 1,\n"
+            "            \"subnet\": \"2001:db8:1::/64\"\n"
+            "        }\n";
+        data::ElementPtr elems;
+        ASSERT_NO_THROW(elems = data::Element::fromJSON(json))
+            << "invalid JSON:" << json  << "\n test is broken";
+        try {
+            // Attempt to parse the configuration.
+            Subnet6ConfigParser parser;
+            Subnet6Ptr subnet = parser.parse(elems);
+            EXPECT_TRUE(subnet);
+        } catch (const std::exception& ex) {
+            ADD_FAILURE() << "unexpected failure " << ex.what();
+        }
+    }
 }
 
 // This test verifies the Subnet6 parser's validation logic for
@@ -1112,14 +1241,14 @@ TEST(CfgSubnets6Test, teeTimePercentValidation) {
 
     // Iterate over the test scenarios, verifying each prescribed
     // outcome.
-    for (auto test = tests.begin(); test != tests.end(); ++test) {
+    for (auto const& test : tests) {
         {
-            SCOPED_TRACE("test: " + (*test).label);
+            SCOPED_TRACE("test: " + test.label);
 
             // Set this scenario's configuration parameters
-            elems->set("calculate-tee-times", data::Element::create((*test).calculate_tee_times));
-            elems->set("t1-percent", data::Element::create((*test).t1_percent));
-            elems->set("t2-percent", data::Element::create((*test).t2_percent));
+            elems->set("calculate-tee-times", data::Element::create(test.calculate_tee_times));
+            elems->set("t1-percent", data::Element::create(test.t1_percent));
+            elems->set("t2-percent", data::Element::create(test.t2_percent));
 
             Subnet6Ptr subnet;
             try {
@@ -1127,9 +1256,9 @@ TEST(CfgSubnets6Test, teeTimePercentValidation) {
                 Subnet6ConfigParser parser;
                 subnet = parser.parse(elems);
             } catch (const std::exception& ex) {
-                if (!(*test).error_message.empty()) {
+                if (!test.error_message.empty()) {
                     // We expected a failure, did we fail the correct way?
-                    EXPECT_EQ((*test).error_message, ex.what());
+                    EXPECT_EQ(test.error_message, ex.what());
                 } else {
                     // Should not have failed.
                     ADD_FAILURE() << "Scenario should not have failed: " << ex.what();
@@ -1140,11 +1269,11 @@ TEST(CfgSubnets6Test, teeTimePercentValidation) {
             }
 
             // We parsed correctly, make sure the values are right.
-            EXPECT_EQ((*test).calculate_tee_times, subnet->getCalculateTeeTimes());
-            EXPECT_TRUE(util::areDoublesEquivalent((*test).t1_percent, subnet->getT1Percent()))
-                << "expected:" << (*test).t1_percent << " actual: " << subnet->getT1Percent();
-            EXPECT_TRUE(util::areDoublesEquivalent((*test).t2_percent, subnet->getT2Percent()))
-                << "expected:" << (*test).t2_percent << " actual: " << subnet->getT2Percent();
+            EXPECT_EQ(test.calculate_tee_times, subnet->getCalculateTeeTimes());
+            EXPECT_TRUE(util::areDoublesEquivalent(test.t1_percent, subnet->getT1Percent()))
+                << "expected:" << test.t1_percent << " actual: " << subnet->getT1Percent();
+            EXPECT_TRUE(util::areDoublesEquivalent(test.t2_percent, subnet->getT2Percent()))
+                << "expected:" << test.t2_percent << " actual: " << subnet->getT2Percent();
         }
     }
 }
@@ -1200,7 +1329,7 @@ TEST(CfgSubnets6Test, preferredLifetimeValidation) {
         ASSERT_NO_THROW(subnet = parser.parse(copied));
         ASSERT_TRUE(subnet);
         EXPECT_FALSE(subnet->getPreferred().unspecified());
-        EXPECT_EQ(100, subnet->getPreferred());
+        EXPECT_EQ(100, subnet->getPreferred().get());
         EXPECT_EQ(100, subnet->getPreferred().getMin());
         EXPECT_EQ(100, subnet->getPreferred().getMax());
         data::ConstElementPtr repr = subnet->toElement();
@@ -1224,7 +1353,7 @@ TEST(CfgSubnets6Test, preferredLifetimeValidation) {
         ASSERT_NO_THROW(subnet = parser.parse(copied));
         ASSERT_TRUE(subnet);
         EXPECT_FALSE(subnet->getPreferred().unspecified());
-        EXPECT_EQ(100, subnet->getPreferred());
+        EXPECT_EQ(100, subnet->getPreferred().get());
         EXPECT_EQ(100, subnet->getPreferred().getMin());
         EXPECT_EQ(100, subnet->getPreferred().getMax());
         data::ConstElementPtr repr = subnet->toElement();
@@ -1248,7 +1377,7 @@ TEST(CfgSubnets6Test, preferredLifetimeValidation) {
         ASSERT_NO_THROW(subnet = parser.parse(copied));
         ASSERT_TRUE(subnet);
         EXPECT_FALSE(subnet->getPreferred().unspecified());
-        EXPECT_EQ(100, subnet->getPreferred());
+        EXPECT_EQ(100, subnet->getPreferred().get());
         EXPECT_EQ(100, subnet->getPreferred().getMin());
         EXPECT_EQ(100, subnet->getPreferred().getMax());
         data::ConstElementPtr repr = subnet->toElement();
@@ -1274,7 +1403,7 @@ TEST(CfgSubnets6Test, preferredLifetimeValidation) {
         ASSERT_NO_THROW(subnet = parser.parse(copied));
         ASSERT_TRUE(subnet);
         EXPECT_FALSE(subnet->getPreferred().unspecified());
-        EXPECT_EQ(200, subnet->getPreferred());
+        EXPECT_EQ(200, subnet->getPreferred().get());
         EXPECT_EQ(100, subnet->getPreferred().getMin());
         EXPECT_EQ(200, subnet->getPreferred().getMax());
         data::ConstElementPtr repr = subnet->toElement();
@@ -1300,7 +1429,7 @@ TEST(CfgSubnets6Test, preferredLifetimeValidation) {
         ASSERT_NO_THROW(subnet = parser.parse(copied));
         ASSERT_TRUE(subnet);
         EXPECT_FALSE(subnet->getPreferred().unspecified());
-        EXPECT_EQ(100, subnet->getPreferred());
+        EXPECT_EQ(100, subnet->getPreferred().get());
         EXPECT_EQ(100, subnet->getPreferred().getMin());
         EXPECT_EQ(200, subnet->getPreferred().getMax());
         data::ConstElementPtr repr = subnet->toElement();
@@ -1338,7 +1467,7 @@ TEST(CfgSubnets6Test, preferredLifetimeValidation) {
         ASSERT_NO_THROW(subnet = parser.parse(copied));
         ASSERT_TRUE(subnet);
         EXPECT_FALSE(subnet->getPreferred().unspecified());
-        EXPECT_EQ(200, subnet->getPreferred());
+        EXPECT_EQ(200, subnet->getPreferred().get());
         EXPECT_EQ(100, subnet->getPreferred().getMin());
         EXPECT_EQ(300, subnet->getPreferred().getMax());
         data::ConstElementPtr repr = subnet->toElement();
@@ -1388,7 +1517,7 @@ TEST(CfgSubnets6Test, preferredLifetimeValidation) {
         ASSERT_NO_THROW(subnet = parser.parse(copied));
         ASSERT_TRUE(subnet);
         EXPECT_FALSE(subnet->getPreferred().unspecified());
-        EXPECT_EQ(100, subnet->getPreferred());
+        EXPECT_EQ(100, subnet->getPreferred().get());
         EXPECT_EQ(100, subnet->getPreferred().getMin());
         EXPECT_EQ(100, subnet->getPreferred().getMax());
         data::ConstElementPtr repr = subnet->toElement();
@@ -1503,12 +1632,12 @@ TEST(CfgSubnets6Test, cacheParamValidation) {
 
     // Iterate over the test scenarios, verifying each prescribed
     // outcome.
-    for (auto test = tests.begin(); test != tests.end(); ++test) {
+    for (auto const& test : tests) {
         {
-            SCOPED_TRACE("test: " + (*test).label);
+            SCOPED_TRACE("test: " + test.label);
 
             // Set this scenario's configuration parameters
-            elems->set("cache-threshold", data::Element::create((*test).threshold));
+            elems->set("cache-threshold", data::Element::create(test.threshold));
 
             Subnet6Ptr subnet;
             try {
@@ -1516,9 +1645,9 @@ TEST(CfgSubnets6Test, cacheParamValidation) {
                 Subnet6ConfigParser parser;
                 subnet = parser.parse(elems);
             } catch (const std::exception& ex) {
-                if (!(*test).error_message.empty()) {
+                if (!test.error_message.empty()) {
                     // We expected a failure, did we fail the correct way?
-                    EXPECT_EQ((*test).error_message, ex.what());
+                    EXPECT_EQ(test.error_message, ex.what());
                 } else {
                     // Should not have failed.
                     ADD_FAILURE() << "Scenario should not have failed: " << ex.what();
@@ -1529,7 +1658,7 @@ TEST(CfgSubnets6Test, cacheParamValidation) {
             }
 
             // We parsed correctly, make sure the values are right.
-            EXPECT_TRUE(util::areDoublesEquivalent((*test).threshold, subnet->getCacheThreshold()));
+            EXPECT_TRUE(util::areDoublesEquivalent(test.threshold, subnet->getCacheThreshold()));
         }
     }
 }
@@ -1590,6 +1719,12 @@ TEST(CfgSubnets6Test, updateStatistics) {
     // Create subnet.
     Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 48, 1, 2, 3, 4, 100));
 
+    Pool6Ptr pool(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::"), IOAddress("2001:db8:1::FF")));
+    subnet->addPool(pool);
+
+    pool.reset(new Pool6(Lease::TYPE_PD, IOAddress("3001:1:2::"), 96, 112));
+    subnet->addPool(pool);
+
     // Add subnet.
     cfg->add(subnet);
 
@@ -1620,7 +1755,17 @@ TEST(CfgSubnets6Test, updateStatistics) {
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "total-nas")));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
                                "total-pds"));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "total-pds")));
     ASSERT_FALSE(observation);
 
     observation = StatsMgr::instance().getObservation(
@@ -1630,7 +1775,17 @@ TEST(CfgSubnets6Test, updateStatistics) {
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "assigned-nas")));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
                                "assigned-pds"));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "assigned-pds")));
     ASSERT_FALSE(observation);
 
     observation = StatsMgr::instance().getObservation(
@@ -1640,7 +1795,17 @@ TEST(CfgSubnets6Test, updateStatistics) {
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "cumulative-assigned-nas")));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
                                "cumulative-assigned-pds"));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "cumulative-assigned-pds")));
     ASSERT_FALSE(observation);
 
     observation = StatsMgr::instance().getObservation(
@@ -1650,12 +1815,32 @@ TEST(CfgSubnets6Test, updateStatistics) {
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "declined-addresses")));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
                                "reclaimed-declined-addresses"));
     ASSERT_FALSE(observation);
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "reclaimed-declined-addresses")));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
                                "reclaimed-leases"));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "reclaimed-leases")));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "reclaimed-leases")));
     ASSERT_FALSE(observation);
 
     cfg->updateStatistics();
@@ -1689,17 +1874,35 @@ TEST(CfgSubnets6Test, updateStatistics) {
         StatsMgr::generateName("subnet", subnet_id,
                                "total-nas"));
     ASSERT_TRUE(observation);
-    ASSERT_EQ(0, observation->getInteger().first);
+    ASSERT_EQ(256, observation->getBigInteger().first);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "total-nas")));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(256, observation->getBigInteger().first);
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
                                "total-pds"));
     ASSERT_TRUE(observation);
-    ASSERT_EQ(0, observation->getInteger().first);
+    ASSERT_EQ(65536, observation->getBigInteger().first);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "total-pds")));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(65536, observation->getBigInteger().first);
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
                                "assigned-nas"));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "assigned-nas")));
     ASSERT_TRUE(observation);
     ASSERT_EQ(0, observation->getInteger().first);
 
@@ -1711,7 +1914,19 @@ TEST(CfgSubnets6Test, updateStatistics) {
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "assigned-pds")));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
                                "cumulative-assigned-nas"));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "cumulative-assigned-nas")));
     ASSERT_TRUE(observation);
     ASSERT_EQ(0, observation->getInteger().first);
 
@@ -1723,7 +1938,19 @@ TEST(CfgSubnets6Test, updateStatistics) {
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "cumulative-assigned-pds")));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
                                "declined-addresses"));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "declined-addresses")));
     ASSERT_TRUE(observation);
     ASSERT_EQ(0, observation->getInteger().first);
 
@@ -1735,7 +1962,25 @@ TEST(CfgSubnets6Test, updateStatistics) {
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "reclaimed-declined-addresses")));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
                                "reclaimed-leases"));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "reclaimed-leases")));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "reclaimed-leases")));
     ASSERT_TRUE(observation);
     ASSERT_EQ(0, observation->getInteger().first);
 }
@@ -1752,30 +1997,58 @@ TEST(CfgSubnets6Test, removeStatistics) {
     // Create subnet.
     Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 48, 1, 2, 3, 4, 100));
 
+    Pool6Ptr pool(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::"), IOAddress("2001:db8:1::FF")));
+    subnet->addPool(pool);
+
+    pool.reset(new Pool6(Lease::TYPE_PD, IOAddress("3001:1:2::"), 96, 112));
+    subnet->addPool(pool);
+
     // Add subnet.
     cfg.add(subnet);
 
     StatsMgr::instance().setValue(
         StatsMgr::generateName("subnet", subnet_id,
                                "total-nas"),
-        int64_t(0));
+        int128_t(0));
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
                                "total-nas"));
     ASSERT_TRUE(observation);
-    ASSERT_EQ(0, observation->getInteger().first);
+    ASSERT_EQ(0, observation->getBigInteger().first);
+
+    StatsMgr::instance().setValue(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "total-nas")),
+        int128_t(0));
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "total-nas")));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getBigInteger().first);
 
     StatsMgr::instance().setValue(
         StatsMgr::generateName("subnet", subnet_id,
                                "total-pds"),
-        int64_t(0));
+        int128_t(0));
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
                                "total-pds"));
     ASSERT_TRUE(observation);
-    ASSERT_EQ(0, observation->getInteger().first);
+    ASSERT_EQ(0, observation->getBigInteger().first);
+
+    StatsMgr::instance().setValue(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "total-pds")),
+        int128_t(0));
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "total-pds")));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getBigInteger().first);
 
     StatsMgr::instance().setValue(
         StatsMgr::generateName("subnet", subnet_id,
@@ -1785,6 +2058,17 @@ TEST(CfgSubnets6Test, removeStatistics) {
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
                                "assigned-nas"));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    StatsMgr::instance().setValue(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "assigned-nas")),
+        int64_t(0));
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "assigned-nas")));
     ASSERT_TRUE(observation);
     ASSERT_EQ(0, observation->getInteger().first);
 
@@ -1801,12 +2085,34 @@ TEST(CfgSubnets6Test, removeStatistics) {
 
     StatsMgr::instance().setValue(
         StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "assigned-pds")),
+        int64_t(0));
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "assigned-pds")));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    StatsMgr::instance().setValue(
+        StatsMgr::generateName("subnet", subnet_id,
                                "cumulative-assigned-nas"),
         int64_t(0));
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
                                "cumulative-assigned-nas"));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    StatsMgr::instance().setValue(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "cumulative-assigned-nas")),
+        int64_t(0));
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "cumulative-assigned-nas")));
     ASSERT_TRUE(observation);
     ASSERT_EQ(0, observation->getInteger().first);
 
@@ -1823,12 +2129,34 @@ TEST(CfgSubnets6Test, removeStatistics) {
 
     StatsMgr::instance().setValue(
         StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "cumulative-assigned-pds")),
+        int64_t(0));
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "cumulative-assigned-pds")));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    StatsMgr::instance().setValue(
+        StatsMgr::generateName("subnet", subnet_id,
                                "declined-addresses"),
         int64_t(0));
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
                                "declined-addresses"));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    StatsMgr::instance().setValue(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "declined-addresses")),
+        int64_t(0));
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "declined-addresses")));
     ASSERT_TRUE(observation);
     ASSERT_EQ(0, observation->getInteger().first);
 
@@ -1845,12 +2173,45 @@ TEST(CfgSubnets6Test, removeStatistics) {
 
     StatsMgr::instance().setValue(
         StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "reclaimed-declined-addresses")),
+        int64_t(0));
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "reclaimed-declined-addresses")));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    StatsMgr::instance().setValue(
+        StatsMgr::generateName("subnet", subnet_id,
                                "reclaimed-leases"),
         int64_t(0));
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
                                "reclaimed-leases"));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    StatsMgr::instance().setValue(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "reclaimed-leases")),
+        int64_t(0));
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "reclaimed-leases")));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    StatsMgr::instance().setValue(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "reclaimed-leases")),
+        int64_t(0));
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "reclaimed-leases")));
     ASSERT_TRUE(observation);
     ASSERT_EQ(0, observation->getInteger().first);
 
@@ -1864,7 +2225,17 @@ TEST(CfgSubnets6Test, removeStatistics) {
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "total-nas")));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
                                "total-pds"));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "total-pds")));
     ASSERT_FALSE(observation);
 
     observation = StatsMgr::instance().getObservation(
@@ -1874,7 +2245,17 @@ TEST(CfgSubnets6Test, removeStatistics) {
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "assigned-nas")));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
                                "assigned-pds"));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "assigned-pds")));
     ASSERT_FALSE(observation);
 
     observation = StatsMgr::instance().getObservation(
@@ -1884,7 +2265,17 @@ TEST(CfgSubnets6Test, removeStatistics) {
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "cumulative-assigned-nas")));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
                                "cumulative-assigned-pds"));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "cumulative-assigned-pds")));
     ASSERT_FALSE(observation);
 
     observation = StatsMgr::instance().getObservation(
@@ -1894,12 +2285,32 @@ TEST(CfgSubnets6Test, removeStatistics) {
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "declined-addresses")));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
                                "reclaimed-declined-addresses"));
     ASSERT_FALSE(observation);
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "reclaimed-declined-addresses")));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
                                "reclaimed-leases"));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pool", 0, "reclaimed-leases")));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               StatsMgr::generateName("pd-pool", 0, "reclaimed-leases")));
     ASSERT_FALSE(observation);
 }
 
@@ -2003,6 +2414,157 @@ TEST(CfgSubnets6Test, hostPD) {
     EXPECT_FALSE(subnet->inRange(prefixes.first->second.getPrefix()));
 
     CfgMgr::instance().clear();
+}
+
+// This test verifies that the getLinks tool works as expected.
+TEST(CfgSubnets6Test, getLinks) {
+    CfgSubnets6 cfg;
+
+    // Create 4 subnets.
+    Subnet6Ptr subnet0(new Subnet6(IOAddress("::"), 48, 1, 2, 3, 4,
+                                   SubnetID(111)));
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 64, 1, 2, 3, 4,
+                                   SubnetID(1)));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"), 64, 1, 2, 3, 4,
+                                   SubnetID(2)));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:3::"), 64, 1, 2, 3, 4,
+                                   SubnetID(3)));
+
+    // Add all subnets to the configuration.
+    ASSERT_NO_THROW(cfg.add(subnet0));
+    ASSERT_NO_THROW(cfg.add(subnet1));
+    ASSERT_NO_THROW(cfg.add(subnet2));
+    ASSERT_NO_THROW(cfg.add(subnet3));
+
+    // No 2001:db8:4:: subnet.
+    SubnetIDSet links;
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("2001:db8:4::")));
+    EXPECT_TRUE(links.empty());
+
+    // A 2001:db8:2::/64 subnet.
+    links.clear();
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("2001:db8:2::")));
+    SubnetIDSet expected = { 2 };
+    EXPECT_EQ(expected, links);
+
+    // Check that any address in the subnet works.
+    links.clear();
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("2001:db8:2::1234:5678:9abc:def0")));
+    EXPECT_EQ(expected, links);
+
+    // Check that an address outside the subnet does not work.
+    links.clear();
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("2001:db8:2:1::")));
+    EXPECT_TRUE(links.empty());
+
+    // Add a second 2001:db8:2::/64 subnet.
+    Subnet6Ptr subnet10(new Subnet6(IOAddress("2001:db8:2::10"), 64, 1, 2, 3,
+                                    4, SubnetID(10)));
+    ASSERT_NO_THROW(cfg.add(subnet10));
+
+    // Now we should get 2 subnets.
+    links.clear();
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("2001:db8:2::")));
+    expected = { 2, 10 };
+    EXPECT_EQ(expected, links);
+
+    // Add a larger subnet.
+    Subnet6Ptr subnet20(new Subnet6(IOAddress("2001:db8:2::20"), 56, 1, 2, 3,
+                                    4, SubnetID(20)));
+    ASSERT_NO_THROW(cfg.add(subnet20));
+
+    // Now we should get 3 subnets.
+    links.clear();
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("2001:db8:2::")));
+    expected = { 2, 10, 20 };
+    EXPECT_EQ(expected, links);
+
+    // But only the larger subnet if the address is only in it.
+    links.clear();
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("2001:db8:2:1::")));
+    expected = { 20 };
+    EXPECT_EQ(expected, links);
+
+    // Even it is not used for Bulk Leasequery, it works for :: too.
+    links.clear();
+    EXPECT_NO_THROW(links = cfg.getLinks(IOAddress("::")));
+    expected = { 111 };
+    EXPECT_EQ(expected, links);
+}
+
+// This test verifies that for each subnet in the configuration it calls
+// the registerLeaseMgrCallback function.
+TEST(CfgSubnets6Test, initAllocatorsAfterConfigure) {
+    CfgSubnets6 cfg;
+
+    // Create 4 subnets.
+    Subnet6Ptr subnet0(new Subnet6(IOAddress("2001:db8:1::"),
+                                   64, 1, 2, 3, 4, SubnetID(111)));
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:2::"),
+                                   64, 1, 2, 3, 4, SubnetID(1)));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:3::"),
+                                   64, 1, 2, 3, 4, SubnetID(2)));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:4::"),
+                                   64, 1, 2, 3, 4, SubnetID(3)));
+
+    auto allocator0 = boost::make_shared<InitRecordingAllocator>(Lease::TYPE_NA, subnet0);
+    subnet0->setAllocator(Lease::TYPE_NA, allocator0);
+
+    auto allocator2 = boost::make_shared<InitRecordingAllocator>(Lease::TYPE_PD, subnet2);
+    subnet2->setAllocator(Lease::TYPE_PD, allocator2);
+
+    cfg.add(subnet0);
+    cfg.add(subnet1);
+    cfg.add(subnet2);
+    cfg.add(subnet3);
+
+    EXPECT_EQ(0, allocator0->callcount_);
+    EXPECT_EQ(0, allocator2->callcount_);
+
+    cfg.initAllocatorsAfterConfigure();
+
+    EXPECT_EQ(1, allocator0->callcount_);
+    EXPECT_EQ(1, allocator2->callcount_);
+}
+
+
+/// @brief Test fixture for parsing v6 Subnets that can verify log output.
+class Subnet6ParserTest : public LogContentTest {
+public:
+
+    /// @brief virtual destructor
+    virtual ~Subnet6ParserTest() = default;
+};
+
+// This test verifies that subnet parser for IPv6 works properly
+// when using invalid renew and rebind timers.
+TEST_F(Subnet6ParserTest, parseWithInvalidRenewRebind) {
+    std::string config =
+        "{\n"
+        "    \"id\": 1,\n"
+        "    \"subnet\": \"2001:db8:1::/64\",\n"
+        "    \"valid-lifetime\": 399,\n"
+        "    \"rebind-timer\": 199,\n"
+        "    \"renew-timer\": 200\n"
+        "}";
+
+    // Basic configuration for subnet6 but with a renew-timer value
+    // larger than rebind-timer.
+    ElementPtr config_element = Element::fromJSON(config);
+
+    // Parse configuration specified above.
+    Subnet6ConfigParser parser(false);
+    Subnet6Ptr subnet;
+
+    // Parser should not throw.
+    ASSERT_NO_THROW(subnet = parser.parse(config_element));
+    ASSERT_TRUE(subnet);
+
+    // Veriy we emitted the proper log message.
+    addString("DHCPSRV_CFGMGR_RENEW_GTR_REBIND in subnet-id 1,"
+              " the value of renew-timer 200 is greater than the value"
+              " of rebind-timer 199, ignoring renew-timer");
+    EXPECT_TRUE(checkFile());
 }
 
 } // end of anonymous namespace

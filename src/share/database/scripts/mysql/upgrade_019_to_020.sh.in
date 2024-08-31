@@ -1,0 +1,94 @@
+#!/bin/sh
+
+# Copyright (C) 2023-2024 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# Exit with error if commands exit with non-zero and if undefined variables are
+# used.
+set -eu
+
+# shellcheck disable=SC2034
+# SC2034: ... appears unused. Verify use (or export if used externally).
+prefix="@prefix@"
+
+# Include utilities based on location of this script. Check for sources first,
+# so that the unexpected situations with weird paths fall on the default
+# case of installed.
+script_path=$(cd "$(dirname "${0}")" && pwd)
+if test "${script_path}" = "@abs_top_builddir@/src/share/database/scripts/mysql"; then
+    # shellcheck source=./src/bin/admin/admin-utils.sh.in
+    . "@abs_top_builddir@/src/bin/admin/admin-utils.sh"
+else
+    # shellcheck source=./src/bin/admin/admin-utils.sh.in
+    . "@datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh"
+fi
+
+# Check version.
+version=$(mysql_version "${@}")
+if test "${version}" != "19.0"; then
+    printf 'This script upgrades 19.0 to 20.0. '
+    printf 'Reported version is %s. Skipping upgrade.\n' "${version}"
+    exit 0
+fi
+
+# Get the schema name from database argument. We need this to
+# query information_schema for the right database.
+for arg in "${@}"
+do
+    if ! printf '%s' "${arg}" | grep -Eq -- '^--'
+    then
+        schema="$arg"
+        break
+    fi
+done
+
+# Make sure we have the schema.
+if [ -z "$schema" ]
+then
+    printf "Could not find database schema name in cmd line args: %s\n" "${*}"
+    exit 255
+fi
+
+mysql "$@" <<EOF
+
+-- This line starts the schema upgrade to version 20.0.
+
+-- Convert ddns-use-conflict-resolution to ddns-conflict-resolution-mode
+SET @disable_audit = 1;
+UPDATE dhcp4_global_parameter
+SET name = 'ddns-conflict-resolution-mode', value = 'check-with-dhcid', parameter_type = 4
+WHERE name = 'ddns-use-conflict-resolution' and value = '1';
+
+UPDATE dhcp4_global_parameter
+SET name = 'ddns-conflict-resolution-mode', value = 'no-check-with-dhcid', parameter_type = 4
+WHERE name = 'ddns-use-conflict-resolution' and value = '0';
+
+UPDATE dhcp6_global_parameter
+SET name = 'ddns-conflict-resolution-mode', value = 'check-with-dhcid', parameter_type = 4
+WHERE name = 'ddns-use-conflict-resolution' and value = '1';
+
+UPDATE dhcp6_global_parameter
+SET name = 'ddns-conflict-resolution-mode', value = 'no-check-with-dhcid', parameter_type = 4
+WHERE name = 'ddns-use-conflict-resolution' and value = '0';
+
+-- Add a constraint on lease6_relay_id that any lease_addr must map to
+-- a lease6 address.
+ALTER TABLE lease6_relay_id
+    ADD CONSTRAINT fk_lease6_relay_id_addr FOREIGN KEY (lease_addr)
+    REFERENCES lease6 (address) ON DELETE CASCADE ON UPDATE NO ACTION;
+
+-- Add a constraint on lease6_remote_id that any lease_addr must map to
+-- a lease6 address.
+ALTER TABLE lease6_remote_id
+    ADD CONSTRAINT fk_lease6_remote_id_addr FOREIGN KEY (lease_addr)
+    REFERENCES lease6 (address) ON DELETE CASCADE ON UPDATE NO ACTION;
+
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '20', minor = '0';
+
+-- This line concludes the schema upgrade to version 20.0.
+EOF

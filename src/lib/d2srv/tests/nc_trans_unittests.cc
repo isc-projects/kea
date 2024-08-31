@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,6 +22,7 @@
 
 using namespace std;
 using namespace isc;
+using namespace isc::asiolink;
 using namespace isc::d2;
 using namespace isc::util;
 using namespace boost::posix_time;
@@ -272,13 +273,18 @@ typedef boost::shared_ptr<NameChangeStub> NameChangeStubPtr;
 class NameChangeTransactionTest : public TransactionTest {
 public:
     NameChangeTransactionTest() {
+        io_service_.reset(new IOService());
+        timer_.reset(new IntervalTimer(io_service_));
     }
 
     virtual ~NameChangeTransactionTest() {
+        timer_->cancel();
+        io_service_->stopAndPoll();
+        io_service_.reset(new IOService());
+        timer_.reset(new IntervalTimer(io_service_));
     }
 
-
-    /// @brief  Instantiates a NameChangeStub test transaction
+    /// @brief Instantiates a NameChangeStub test transaction
     /// The transaction is constructed around a predefined (i.e "canned")
     /// NameChangeRequest. The request has both forward and reverse DNS
     /// changes requested, and both forward and reverse domains are populated.
@@ -296,7 +302,7 @@ public:
                                   forward_domain_, reverse_domain_, cfg_mgr_)));
     }
 
-    /// @brief  Instantiates a NameChangeStub test transaction
+    /// @brief Instantiates a NameChangeStub test transaction
     /// The transaction is constructed around a predefined (i.e "canned")
     /// NameChangeRequest. The request has both forward and reverse DNS
     /// changes requested, and both forward and reverse domains are populated.
@@ -349,6 +355,10 @@ public:
             }
         }
     }
+
+    boost::shared_ptr<FauxServer> server_;
+
+    NameChangeStubPtr name_change_;
 };
 
 /// @brief Tests NameChangeTransaction construction.
@@ -359,8 +369,7 @@ public:
 /// 3. Construction with null reverse domain is not allowed when the request
 /// requires reverse change.
 /// 4. Valid construction functions properly
-TEST(NameChangeTransaction, construction) {
-    asiolink::IOServicePtr io_service(new isc::asiolink::IOService());
+TEST_F(NameChangeTransactionTest, construction) {
     D2CfgMgrPtr cfg_mgr(new D2CfgMgr());
 
     const char* msg_str =
@@ -396,32 +405,31 @@ TEST(NameChangeTransaction, construction) {
                                        NameChangeTransactionError);
 
     // Verify that construction with an empty NameChangeRequest throws.
-    EXPECT_THROW(NameChangeTransaction(io_service, empty_ncr,
+    EXPECT_THROW(NameChangeTransaction(io_service_, empty_ncr,
                                        forward_domain, reverse_domain, cfg_mgr),
-                                        NameChangeTransactionError);
+                                       NameChangeTransactionError);
 
     // Verify that construction with an empty D2CfgMgr throws.
     D2CfgMgrPtr empty_cfg;
-    EXPECT_THROW(NameChangeTransaction(io_service, empty_ncr,
+    EXPECT_THROW(NameChangeTransaction(io_service_, empty_ncr,
                                        forward_domain, reverse_domain,
                                        empty_cfg),
                                        NameChangeTransactionError);
 
-
     // Verify that construction with an empty forward domain when the
     // NameChangeRequest calls for a forward change throws.
-    EXPECT_THROW(NameChangeTransaction(io_service, ncr,
+    EXPECT_THROW(NameChangeTransaction(io_service_, ncr,
                                        empty_domain, reverse_domain, cfg_mgr),
                                        NameChangeTransactionError);
 
     // Verify that construction with an empty reverse domain when the
     // NameChangeRequest calls for a reverse change throws.
-    EXPECT_THROW(NameChangeTransaction(io_service, ncr,
+    EXPECT_THROW(NameChangeTransaction(io_service_, ncr,
                                        forward_domain, empty_domain, cfg_mgr),
                                        NameChangeTransactionError);
 
     // Verify that a valid construction attempt works.
-    EXPECT_NO_THROW(NameChangeTransaction(io_service, ncr,
+    EXPECT_NO_THROW(NameChangeTransaction(io_service_, ncr,
                                           forward_domain, reverse_domain,
                                           cfg_mgr));
 
@@ -429,7 +437,7 @@ TEST(NameChangeTransaction, construction) {
     // not include a forward change.
     ncr->setForwardChange(false);
     ncr->setReverseChange(true);
-    EXPECT_NO_THROW(NameChangeTransaction(io_service, ncr,
+    EXPECT_NO_THROW(NameChangeTransaction(io_service_, ncr,
                                           empty_domain, reverse_domain,
                                           cfg_mgr));
 
@@ -437,7 +445,7 @@ TEST(NameChangeTransaction, construction) {
     // not include a reverse change.
     ncr->setForwardChange(true);
     ncr->setReverseChange(false);
-    EXPECT_NO_THROW(NameChangeTransaction(io_service, ncr,
+    EXPECT_NO_THROW(NameChangeTransaction(io_service_, ncr,
                                           forward_domain, empty_domain,
                                           cfg_mgr));
 }
@@ -445,198 +453,192 @@ TEST(NameChangeTransaction, construction) {
 /// @brief General testing of member accessors.
 /// Most if not all of these are also tested as a byproduct of larger tests.
 TEST_F(NameChangeTransactionTest, accessors) {
-    NameChangeStubPtr name_change;
-    ASSERT_NO_THROW(name_change = makeCannedTransaction());
+    ASSERT_NO_THROW(name_change_ = makeCannedTransaction());
 
     // Verify that fetching the NameChangeRequest works.
-    dhcp_ddns::NameChangeRequestPtr ncr = name_change->getNcr();
+    dhcp_ddns::NameChangeRequestPtr ncr = name_change_->getNcr();
     ASSERT_TRUE(ncr);
 
     // Verify that getTransactionKey works.
-    EXPECT_EQ(ncr->getDhcid(), name_change->getTransactionKey());
+    EXPECT_EQ(ncr->getDhcid(), name_change_->getTransactionKey());
 
     // Verify that getRequestId works.
-    EXPECT_EQ(ncr->getRequestId(), name_change->getRequestId());
+    EXPECT_EQ(ncr->getRequestId(), name_change_->getRequestId());
 
     // Verify that NcrStatus can be set and retrieved.
-    EXPECT_NO_THROW(name_change->setNcrStatus(dhcp_ddns::ST_FAILED));
+    EXPECT_NO_THROW(name_change_->setNcrStatus(dhcp_ddns::ST_FAILED));
     EXPECT_EQ(dhcp_ddns::ST_FAILED, ncr->getStatus());
 
     // Verify that the forward domain can be retrieved.
-    ASSERT_TRUE(name_change->getForwardDomain());
-    EXPECT_EQ(forward_domain_, name_change->getForwardDomain());
+    ASSERT_TRUE(name_change_->getForwardDomain());
+    EXPECT_EQ(forward_domain_, name_change_->getForwardDomain());
 
     // Verify that the reverse domain can be retrieved.
-    ASSERT_TRUE(name_change->getReverseDomain());
-    EXPECT_EQ(reverse_domain_, name_change->getReverseDomain());
+    ASSERT_TRUE(name_change_->getReverseDomain());
+    EXPECT_EQ(reverse_domain_, name_change_->getReverseDomain());
 
     // Neither of these have direct setters, but are tested under server
     // selection.
-    EXPECT_FALSE(name_change->getDNSClient());
-    EXPECT_FALSE(name_change->getCurrentServer());
+    EXPECT_FALSE(name_change_->getDNSClient());
+    EXPECT_FALSE(name_change_->getCurrentServer());
 
     // Verify that DNS update status can be set and retrieved.
-    EXPECT_NO_THROW(name_change->setDnsUpdateStatus(DNSClient::TIMEOUT));
-    EXPECT_EQ(DNSClient::TIMEOUT, name_change->getDnsUpdateStatus());
+    EXPECT_NO_THROW(name_change_->setDnsUpdateStatus(DNSClient::TIMEOUT));
+    EXPECT_EQ(DNSClient::TIMEOUT, name_change_->getDnsUpdateStatus());
 
     // Verify that the forward change complete flag can be set and fetched.
-    EXPECT_NO_THROW(name_change->setForwardChangeCompleted(true));
-    EXPECT_TRUE(name_change->getForwardChangeCompleted());
+    EXPECT_NO_THROW(name_change_->setForwardChangeCompleted(true));
+    EXPECT_TRUE(name_change_->getForwardChangeCompleted());
 
     // Verify that the reverse change complete flag can be set and fetched.
-    EXPECT_NO_THROW(name_change->setReverseChangeCompleted(true));
-    EXPECT_TRUE(name_change->getReverseChangeCompleted());
+    EXPECT_NO_THROW(name_change_->setReverseChangeCompleted(true));
+    EXPECT_TRUE(name_change_->getReverseChangeCompleted());
 }
 
 /// @brief Tests DNS update request accessor methods.
 TEST_F(NameChangeTransactionTest, dnsUpdateRequestAccessors) {
     // Create a transaction.
-    NameChangeStubPtr name_change;
-    ASSERT_NO_THROW(name_change = makeCannedTransaction());
+    ASSERT_NO_THROW(name_change_ = makeCannedTransaction());
 
     // Post transaction construction, there should not be an update request.
-    EXPECT_FALSE(name_change->getDnsUpdateRequest());
+    EXPECT_FALSE(name_change_->getDnsUpdateRequest());
 
     // Create a request.
     D2UpdateMessagePtr req;
     ASSERT_NO_THROW(req.reset(new D2UpdateMessage(D2UpdateMessage::OUTBOUND)));
 
     // Use the setter and then verify we can fetch the request.
-    ASSERT_NO_THROW(name_change->setDnsUpdateRequest(req));
+    ASSERT_NO_THROW(name_change_->setDnsUpdateRequest(req));
 
     // Post set, we should be able to fetch it.
-    ASSERT_TRUE(name_change->getDnsUpdateRequest());
+    ASSERT_TRUE(name_change_->getDnsUpdateRequest());
 
     // Should be able to clear it.
-    ASSERT_NO_THROW(name_change->clearDnsUpdateRequest());
+    ASSERT_NO_THROW(name_change_->clearDnsUpdateRequest());
 
     // Should be empty again.
-    EXPECT_FALSE(name_change->getDnsUpdateRequest());
+    EXPECT_FALSE(name_change_->getDnsUpdateRequest());
 }
 
 /// @brief Tests DNS update request accessor methods.
 TEST_F(NameChangeTransactionTest, dnsUpdateResponseAccessors) {
     // Create a transaction.
-    NameChangeStubPtr name_change;
-    ASSERT_NO_THROW(name_change = makeCannedTransaction());
+    ASSERT_NO_THROW(name_change_ = makeCannedTransaction());
 
     // Post transaction construction, there should not be an update response.
-    EXPECT_FALSE(name_change->getDnsUpdateResponse());
+    EXPECT_FALSE(name_change_->getDnsUpdateResponse());
 
     // Create a response.
     D2UpdateMessagePtr resp;
     ASSERT_NO_THROW(resp.reset(new D2UpdateMessage(D2UpdateMessage::INBOUND)));
 
     // Use the setter and then verify we can fetch the response.
-    ASSERT_NO_THROW(name_change->setDnsUpdateResponse(resp));
+    ASSERT_NO_THROW(name_change_->setDnsUpdateResponse(resp));
 
     // Post set, we should be able to fetch it.
-    EXPECT_TRUE(name_change->getDnsUpdateResponse());
+    EXPECT_TRUE(name_change_->getDnsUpdateResponse());
 
     // Should be able to clear it.
-    ASSERT_NO_THROW(name_change->clearDnsUpdateResponse());
+    ASSERT_NO_THROW(name_change_->clearDnsUpdateResponse());
 
     // Should be empty again.
-    EXPECT_FALSE(name_change->getDnsUpdateResponse());
+    EXPECT_FALSE(name_change_->getDnsUpdateResponse());
 
 }
 
 /// @brief Tests responseString method.
 TEST_F(NameChangeTransactionTest, responseString) {
     // Create a transaction.
-    NameChangeStubPtr name_change;
-    ASSERT_NO_THROW(name_change = makeCannedTransaction());
+    ASSERT_NO_THROW(name_change_ = makeCannedTransaction());
 
     // Make sure it is safe to call when status says success but there
     // is no update response.
-    ASSERT_NO_THROW(name_change->setDnsUpdateStatus(DNSClient::SUCCESS));
+    ASSERT_NO_THROW(name_change_->setDnsUpdateStatus(DNSClient::SUCCESS));
     EXPECT_EQ("SUCCESS, rcode:  update response is NULL",
-              name_change->responseString());
+              name_change_->responseString());
 
     // Create a response. (We use an OUTBOUND message so we can set RCODE)
     D2UpdateMessagePtr resp;
     ASSERT_NO_THROW(resp.reset(new D2UpdateMessage(D2UpdateMessage::OUTBOUND)));
-    ASSERT_NO_THROW(name_change->setDnsUpdateResponse(resp));
+    ASSERT_NO_THROW(name_change_->setDnsUpdateResponse(resp));
 
     // Make sure we decode Rcode when status is successful.
     ASSERT_NO_THROW(resp->setRcode(dns::Rcode::NXDOMAIN()));
-    EXPECT_EQ("SUCCESS, rcode: NXDOMAIN", name_change->responseString());
+    EXPECT_EQ("SUCCESS, rcode: NXDOMAIN", name_change_->responseString());
 
     // Test all of the non-success values for status.
-    ASSERT_NO_THROW(name_change->setDnsUpdateStatus(DNSClient::TIMEOUT));
-    EXPECT_EQ("TIMEOUT", name_change->responseString());
+    ASSERT_NO_THROW(name_change_->setDnsUpdateStatus(DNSClient::TIMEOUT));
+    EXPECT_EQ("TIMEOUT", name_change_->responseString());
 
-    ASSERT_NO_THROW(name_change->setDnsUpdateStatus(DNSClient::IO_STOPPED));
-    EXPECT_EQ("IO_STOPPED", name_change->responseString());
+    ASSERT_NO_THROW(name_change_->setDnsUpdateStatus(DNSClient::IO_STOPPED));
+    EXPECT_EQ("IO_STOPPED", name_change_->responseString());
 
-    ASSERT_NO_THROW(name_change->setDnsUpdateStatus(DNSClient::
-                                                    INVALID_RESPONSE));
-    EXPECT_EQ("INVALID_RESPONSE", name_change->responseString());
+    ASSERT_NO_THROW(name_change_->setDnsUpdateStatus(DNSClient::
+                                                     INVALID_RESPONSE));
+    EXPECT_EQ("INVALID_RESPONSE", name_change_->responseString());
 
-    ASSERT_NO_THROW(name_change->setDnsUpdateStatus(DNSClient::OTHER));
-    EXPECT_EQ("OTHER", name_change->responseString());
+    ASSERT_NO_THROW(name_change_->setDnsUpdateStatus(DNSClient::OTHER));
+    EXPECT_EQ("OTHER", name_change_->responseString());
 }
 
 /// @brief Tests transactionOutcomeString method.
 TEST_F(NameChangeTransactionTest, transactionOutcomeString) {
     // Create a transaction.
-    NameChangeStubPtr name_change;
     dhcp_ddns::NameChangeRequestPtr ncr;
-    ASSERT_NO_THROW(name_change = makeCannedTransaction());
-    ncr = name_change->getNcr();
+    ASSERT_NO_THROW(name_change_ = makeCannedTransaction());
+    ncr = name_change_->getNcr();
 
     // Check case of failed transaction in both directions
     std::string exp_str("Status: Failed, Event: UNDEFINED,  Forward change:"
                         " failed,  Reverse change: failed,  request: ");
     exp_str += ncr->toText();
 
-    std::string tstring = name_change->transactionOutcomeString();
+    std::string tstring = name_change_->transactionOutcomeString();
     std::cout << "tstring is: [" << tstring << "]" << std::endl;
 
-    EXPECT_EQ(exp_str, name_change->transactionOutcomeString());
+    EXPECT_EQ(exp_str, name_change_->transactionOutcomeString());
 
     // Check case of success all around
-    name_change->setNcrStatus(dhcp_ddns::ST_COMPLETED);
-    name_change->setForwardChangeCompleted(true);
-    name_change->setReverseChangeCompleted(true);
+    name_change_->setNcrStatus(dhcp_ddns::ST_COMPLETED);
+    name_change_->setForwardChangeCompleted(true);
+    name_change_->setReverseChangeCompleted(true);
 
     exp_str = "Status: Completed, Event: UNDEFINED,  Forward change: completed,"
               "  Reverse change: completed,  request: " + ncr->toText();
-    EXPECT_EQ(exp_str, name_change->transactionOutcomeString());
+    EXPECT_EQ(exp_str, name_change_->transactionOutcomeString());
 
     // Check case of success, with no forward change
-    name_change->setNcrStatus(dhcp_ddns::ST_COMPLETED);
+    name_change_->setNcrStatus(dhcp_ddns::ST_COMPLETED);
     ncr->setForwardChange(false);
     exp_str = "Status: Completed, Event: UNDEFINED, "
               " Reverse change: completed,  request: " + ncr->toText();
-    EXPECT_EQ(exp_str, name_change->transactionOutcomeString());
+    EXPECT_EQ(exp_str, name_change_->transactionOutcomeString());
 
     // Check case of success, with no reverse change
-    name_change->setNcrStatus(dhcp_ddns::ST_COMPLETED);
+    name_change_->setNcrStatus(dhcp_ddns::ST_COMPLETED);
     ncr->setForwardChange(true);
     ncr->setReverseChange(false);
     exp_str = "Status: Completed, Event: UNDEFINED, "
               " Forward change: completed,  request: " + ncr->toText();
-    EXPECT_EQ(exp_str, name_change->transactionOutcomeString());
+    EXPECT_EQ(exp_str, name_change_->transactionOutcomeString());
 }
 
 /// @brief Tests event and state dictionary construction and verification.
 TEST_F(NameChangeTransactionTest, dictionaryCheck) {
-    NameChangeStubPtr name_change;
-    ASSERT_NO_THROW(name_change = makeCannedTransaction());
+    ASSERT_NO_THROW(name_change_ = makeCannedTransaction());
 
     // Verify that the event and state dictionary validation fails prior
     // dictionary construction.
-    ASSERT_THROW(name_change->verifyEvents(), StateModelError);
-    ASSERT_THROW(name_change->verifyStates(), StateModelError);
+    ASSERT_THROW(name_change_->verifyEvents(), StateModelError);
+    ASSERT_THROW(name_change_->verifyStates(), StateModelError);
 
     // Construct both dictionaries.
-    ASSERT_NO_THROW(name_change->defineEvents());
-    ASSERT_NO_THROW(name_change->defineStates());
+    ASSERT_NO_THROW(name_change_->defineEvents());
+    ASSERT_NO_THROW(name_change_->defineStates());
 
     // Verify both event and state dictionaries now pass validation.
-    ASSERT_NO_THROW(name_change->verifyEvents());
-    ASSERT_NO_THROW(name_change->verifyStates());
+    ASSERT_NO_THROW(name_change_->verifyEvents());
+    ASSERT_NO_THROW(name_change_->verifyStates());
 }
 
 /// @brief Tests server selection methods.
@@ -646,11 +648,10 @@ TEST_F(NameChangeTransactionTest, dictionaryCheck) {
 /// when a DNS exchange fails due to an IO error.  This test verifies the
 /// ability to iteratively select a server from the list as the current server.
 TEST_F(NameChangeTransactionTest, serverSelectionTest) {
-    NameChangeStubPtr name_change;
-    ASSERT_NO_THROW(name_change = makeCannedTransaction());
+    ASSERT_NO_THROW(name_change_ = makeCannedTransaction());
 
     // Verify that the forward domain and its list of servers can be retrieved.
-    DdnsDomainPtr& domain = name_change->getForwardDomain();
+    DdnsDomainPtr& domain = name_change_->getForwardDomain();
     ASSERT_TRUE(domain);
     DnsServerInfoStoragePtr servers = domain->getServers();
     ASSERT_TRUE(servers);
@@ -662,39 +663,39 @@ TEST_F(NameChangeTransactionTest, serverSelectionTest) {
     // Verify that we can initialize server selection.  This "resets" the
     // selection process to start over using the list of servers in the
     // given domain.
-    ASSERT_NO_THROW(name_change->initServerSelection(domain));
+    ASSERT_NO_THROW(name_change_->initServerSelection(domain));
 
     // The server selection process determines the current server,
     // instantiates a new DNSClient, and a DNS response message buffer.
     // We need to save the values before each selection, so we can verify
     // they are correct after each selection.
-    DnsServerInfoPtr prev_server = name_change->getCurrentServer();
-    DNSClientPtr prev_client = name_change->getDNSClient();
+    DnsServerInfoPtr prev_server = name_change_->getCurrentServer();
+    DNSClientPtr prev_client = name_change_->getDNSClient();
 
     // Verify response pointer is empty.
-    EXPECT_FALSE(name_change->getDnsUpdateResponse());
+    EXPECT_FALSE(name_change_->getDnsUpdateResponse());
 
     // Create dummy response so we can verify it is cleared at each
     // new server select.
     D2UpdateMessagePtr dummyResp;
     dummyResp.reset(new D2UpdateMessage(D2UpdateMessage::INBOUND));
-    ASSERT_NO_THROW(name_change->setDnsUpdateResponse(dummyResp));
-    ASSERT_TRUE(name_change->getDnsUpdateResponse());
+    ASSERT_NO_THROW(name_change_->setDnsUpdateResponse(dummyResp));
+    ASSERT_TRUE(name_change_->getDnsUpdateResponse());
 
     // Iteratively select through the list of servers.
     int passes = 0;
-    while (name_change->selectNextServer()) {
+    while (name_change_->selectNextServer()) {
         // Get the new values after the selection has been made.
-        DnsServerInfoPtr server = name_change->getCurrentServer();
-        DNSClientPtr client = name_change->getDNSClient();
-        D2UpdateMessagePtr response = name_change->getDnsUpdateResponse();
+        DnsServerInfoPtr server = name_change_->getCurrentServer();
+        DNSClientPtr client = name_change_->getDNSClient();
+        D2UpdateMessagePtr response = name_change_->getDnsUpdateResponse();
 
         // Verify that the new values are not empty.
         EXPECT_TRUE(server);
         EXPECT_TRUE(client);
 
         // Verify response pointer is now empty.
-        EXPECT_FALSE(name_change->getDnsUpdateResponse());
+        EXPECT_FALSE(name_change_->getDnsUpdateResponse());
 
         // Verify that the new values are indeed new.
         EXPECT_NE(server, prev_server);
@@ -706,18 +707,18 @@ TEST_F(NameChangeTransactionTest, serverSelectionTest) {
 
         // Create new dummy response.
         dummyResp.reset(new D2UpdateMessage(D2UpdateMessage::INBOUND));
-        ASSERT_NO_THROW(name_change->setDnsUpdateResponse(dummyResp));
-        ASSERT_TRUE(name_change->getDnsUpdateResponse());
+        ASSERT_NO_THROW(name_change_->setDnsUpdateResponse(dummyResp));
+        ASSERT_TRUE(name_change_->getDnsUpdateResponse());
 
         ++passes;
     }
 
     // Verify that the number of passes made equal the number of servers.
-    EXPECT_EQ (passes, num_servers);
+    EXPECT_EQ(passes, num_servers);
 
     // Repeat the same test using the reverse domain.
     // Verify that the reverse domain and its list of servers can be retrieved.
-    domain = name_change->getReverseDomain();
+    domain = name_change_->getReverseDomain();
     ASSERT_TRUE(domain);
     servers = domain->getServers();
     ASSERT_TRUE(servers);
@@ -729,29 +730,29 @@ TEST_F(NameChangeTransactionTest, serverSelectionTest) {
     // Verify that we can initialize server selection.  This "resets" the
     // selection process to start over using the list of servers in the
     // given domain.
-    ASSERT_NO_THROW(name_change->initServerSelection(domain));
+    ASSERT_NO_THROW(name_change_->initServerSelection(domain));
 
     // The server selection process determines the current server,
     // instantiates a new DNSClient, and resets the DNS response message buffer.
     // We need to save the values before each selection, so we can verify
     // they are correct after each selection.
-    prev_server = name_change->getCurrentServer();
-    prev_client = name_change->getDNSClient();
+    prev_server = name_change_->getCurrentServer();
+    prev_client = name_change_->getDNSClient();
 
     // Iteratively select through the list of servers.
     passes = 0;
-    while (name_change->selectNextServer()) {
+    while (name_change_->selectNextServer()) {
         // Get the new values after the selection has been made.
-        DnsServerInfoPtr server = name_change->getCurrentServer();
-        DNSClientPtr client = name_change->getDNSClient();
-        D2UpdateMessagePtr response = name_change->getDnsUpdateResponse();
+        DnsServerInfoPtr server = name_change_->getCurrentServer();
+        DNSClientPtr client = name_change_->getDNSClient();
+        D2UpdateMessagePtr response = name_change_->getDnsUpdateResponse();
 
         // Verify that the new values are not empty.
         EXPECT_TRUE(server);
         EXPECT_TRUE(client);
 
         // Verify response pointer is now empty.
-        EXPECT_FALSE(name_change->getDnsUpdateResponse());
+        EXPECT_FALSE(name_change_->getDnsUpdateResponse());
 
         // Verify that the new values are indeed new.
         EXPECT_NE(server, prev_server);
@@ -763,123 +764,119 @@ TEST_F(NameChangeTransactionTest, serverSelectionTest) {
 
         // Create new dummy response.
         dummyResp.reset(new D2UpdateMessage(D2UpdateMessage::INBOUND));
-        ASSERT_NO_THROW(name_change->setDnsUpdateResponse(dummyResp));
-        ASSERT_TRUE(name_change->getDnsUpdateResponse());
+        ASSERT_NO_THROW(name_change_->setDnsUpdateResponse(dummyResp));
+        ASSERT_TRUE(name_change_->getDnsUpdateResponse());
 
         ++passes;
     }
 
     // Verify that the number of passes made equal the number of servers.
-    EXPECT_EQ (passes, num_servers);
+    EXPECT_EQ(passes, num_servers);
 }
 
 /// @brief Tests that the transaction will be "failed" upon model errors.
 TEST_F(NameChangeTransactionTest, modelFailure) {
-    NameChangeStubPtr name_change;
-    ASSERT_NO_THROW(name_change = makeCannedTransaction());
+    ASSERT_NO_THROW(name_change_ = makeCannedTransaction());
 
     // Now call runModel() with an undefined event which should not throw,
     // but should result in a failed model and failed transaction.
-    EXPECT_NO_THROW(name_change->runModel(9999));
+    EXPECT_NO_THROW(name_change_->runModel(9999));
 
     // Verify that the model reports are done but failed.
-    EXPECT_TRUE(name_change->isModelDone());
-    EXPECT_TRUE(name_change->didModelFail());
+    EXPECT_TRUE(name_change_->isModelDone());
+    EXPECT_TRUE(name_change_->didModelFail());
 
     // Verify that the transaction has failed.
-    EXPECT_EQ(dhcp_ddns::ST_FAILED, name_change->getNcrStatus());
+    EXPECT_EQ(dhcp_ddns::ST_FAILED, name_change_->getNcrStatus());
 }
 
 /// @brief Tests the ability to use startTransaction to initiate the state
 /// model execution, and DNSClient callback, operator(), to resume the
 /// model with a update successful outcome.
 TEST_F(NameChangeTransactionTest, successfulUpdateTest) {
-    NameChangeStubPtr name_change;
-    ASSERT_NO_THROW(name_change = makeCannedTransaction());
-    ASSERT_TRUE(name_change->selectFwdServer());
+    ASSERT_NO_THROW(name_change_ = makeCannedTransaction());
+    ASSERT_TRUE(name_change_->selectFwdServer());
 
-    EXPECT_TRUE(name_change->isModelNew());
-    EXPECT_FALSE(name_change->getForwardChangeCompleted());
+    EXPECT_TRUE(name_change_->isModelNew());
+    EXPECT_FALSE(name_change_->getForwardChangeCompleted());
 
     // Launch the transaction by calling startTransaction.  The state model
     // should run up until the "IO" operation is initiated in DOING_UPDATE_ST.
-    ASSERT_NO_THROW(name_change->startTransaction());
+    ASSERT_NO_THROW(name_change_->startTransaction());
 
     // Verify that the model is running but waiting, and that forward change
     // completion is still false.
-    EXPECT_TRUE(name_change->isModelRunning());
-    EXPECT_TRUE(name_change->isModelWaiting());
-    EXPECT_FALSE(name_change->getForwardChangeCompleted());
+    EXPECT_TRUE(name_change_->isModelRunning());
+    EXPECT_TRUE(name_change_->isModelWaiting());
+    EXPECT_FALSE(name_change_->getForwardChangeCompleted());
 
     // Simulate completion of DNSClient exchange by invoking the callback, as
     // DNSClient would.  This should cause the state model to progress through
     // completion.
-    EXPECT_NO_THROW((*name_change)(DNSClient::SUCCESS));
+    EXPECT_NO_THROW((*name_change_)(DNSClient::SUCCESS));
 
     // The model should have worked through to completion.
     // Verify that the model is done and not failed.
-    EXPECT_TRUE(name_change->isModelDone());
-    EXPECT_FALSE(name_change->didModelFail());
+    EXPECT_TRUE(name_change_->isModelDone());
+    EXPECT_FALSE(name_change_->didModelFail());
 
     // Verify that NCR status is completed, and that the forward change
     // was completed.
-    EXPECT_EQ(dhcp_ddns::ST_COMPLETED, name_change->getNcrStatus());
-    EXPECT_TRUE(name_change->getForwardChangeCompleted());
+    EXPECT_EQ(dhcp_ddns::ST_COMPLETED, name_change_->getNcrStatus());
+    EXPECT_TRUE(name_change_->getForwardChangeCompleted());
 }
 
 /// @brief Tests the ability to use startTransaction to initiate the state
 /// model execution, and DNSClient callback, operator(), to resume the
 /// model with a update failure outcome.
 TEST_F(NameChangeTransactionTest, failedUpdateTest) {
-    NameChangeStubPtr name_change;
-    ASSERT_NO_THROW(name_change = makeCannedTransaction());
-    ASSERT_TRUE(name_change->selectFwdServer());
+    ASSERT_NO_THROW(name_change_ = makeCannedTransaction());
+    ASSERT_TRUE(name_change_->selectFwdServer());
 
     // Launch the transaction by calling startTransaction.  The state model
     // should run up until the "IO" operation is initiated in DOING_UPDATE_ST.
-    ASSERT_NO_THROW(name_change->startTransaction());
+    ASSERT_NO_THROW(name_change_->startTransaction());
 
     // Verify that the model is running but waiting, and that the forward
     // change has not been completed.
-    EXPECT_TRUE(name_change->isModelRunning());
-    EXPECT_TRUE(name_change->isModelWaiting());
-    EXPECT_FALSE(name_change->getForwardChangeCompleted());
+    EXPECT_TRUE(name_change_->isModelRunning());
+    EXPECT_TRUE(name_change_->isModelWaiting());
+    EXPECT_FALSE(name_change_->getForwardChangeCompleted());
 
     // Simulate completion of DNSClient exchange by invoking the callback, as
     // DNSClient would.  This should cause the state model to progress through
     // to completion.
-    EXPECT_NO_THROW((*name_change)(DNSClient::TIMEOUT));
+    EXPECT_NO_THROW((*name_change_)(DNSClient::TIMEOUT));
 
     // The model should have worked through to completion.
     // Verify that the model is done and not failed.
-    EXPECT_TRUE(name_change->isModelDone());
-    EXPECT_FALSE(name_change->didModelFail());
+    EXPECT_TRUE(name_change_->isModelDone());
+    EXPECT_FALSE(name_change_->didModelFail());
 
     // Verify that the NCR status is failed and that the forward change
     // was not completed.
-    EXPECT_EQ(dhcp_ddns::ST_FAILED, name_change->getNcrStatus());
-    EXPECT_FALSE(name_change->getForwardChangeCompleted());
+    EXPECT_EQ(dhcp_ddns::ST_FAILED, name_change_->getNcrStatus());
+    EXPECT_FALSE(name_change_->getForwardChangeCompleted());
 }
 
 /// @brief Tests update attempt accessors.
 TEST_F(NameChangeTransactionTest, updateAttempts) {
-    NameChangeStubPtr name_change;
-    ASSERT_NO_THROW(name_change = makeCannedTransaction());
+    ASSERT_NO_THROW(name_change_ = makeCannedTransaction());
 
     // Post transaction construction, update attempts should be 0.
-    EXPECT_EQ(0, name_change->getUpdateAttempts());
+    EXPECT_EQ(0, name_change_->getUpdateAttempts());
 
     // Set it to a known value.
-    name_change->setUpdateAttempts(5);
+    name_change_->setUpdateAttempts(5);
 
     // Verify that the value is as expected.
-    EXPECT_EQ(5, name_change->getUpdateAttempts());
+    EXPECT_EQ(5, name_change_->getUpdateAttempts());
 
     // Clear it.
-    name_change->clearUpdateAttempts();
+    name_change_->clearUpdateAttempts();
 
     // Verify that it was cleared as expected.
-    EXPECT_EQ(0, name_change->getUpdateAttempts());
+    EXPECT_EQ(0, name_change_->getUpdateAttempts());
 }
 
 /// @brief Tests retryTransition method
@@ -890,52 +887,51 @@ TEST_F(NameChangeTransactionTest, updateAttempts) {
 /// transition to the state given with a next event of SERVER_IO_ERROR_EVT.
 TEST_F(NameChangeTransactionTest, retryTransition) {
     // Create the transaction.
-    NameChangeStubPtr name_change;
-    ASSERT_NO_THROW(name_change = makeCannedTransaction());
+    ASSERT_NO_THROW(name_change_ = makeCannedTransaction());
 
     // Define dictionaries.
-    ASSERT_NO_THROW(name_change->initDictionaries());
+    ASSERT_NO_THROW(name_change_->initDictionaries());
 
     // Transition to a known spot.
-    ASSERT_NO_THROW(name_change->transition(
+    ASSERT_NO_THROW(name_change_->transition(
                     NameChangeStub::DOING_UPDATE_ST,
                     NameChangeStub::SEND_UPDATE_EVT));
 
     // Verify we are at the known spot.
     ASSERT_EQ(NameChangeStub::DOING_UPDATE_ST,
-              name_change->getCurrState());
+              name_change_->getCurrState());
     ASSERT_EQ(NameChangeStub::SEND_UPDATE_EVT,
-              name_change->getNextEvent());
+              name_change_->getNextEvent());
 
     // Verify that we have not exceeded maximum number of attempts.
-    ASSERT_LT(name_change->getUpdateAttempts(),
+    ASSERT_LT(name_change_->getUpdateAttempts(),
               NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER);
 
     // Call retryTransition.
-    ASSERT_NO_THROW(name_change->retryTransition(
+    ASSERT_NO_THROW(name_change_->retryTransition(
                     NameChangeTransaction::PROCESS_TRANS_FAILED_ST));
 
     // Since the number of update attempts is less than the maximum allowed
     // we should remain in our current state but with next event of
     // SERVER_SELECTED_EVT posted.
     ASSERT_EQ(NameChangeStub::DOING_UPDATE_ST,
-              name_change->getCurrState());
+              name_change_->getCurrState());
     ASSERT_EQ(NameChangeTransaction::SERVER_SELECTED_EVT,
-              name_change->getNextEvent());
+              name_change_->getNextEvent());
 
     // Now set the number of attempts to the maximum.
-    name_change->setUpdateAttempts(NameChangeTransaction::
-                                   MAX_UPDATE_TRIES_PER_SERVER);
+    name_change_->setUpdateAttempts(NameChangeTransaction::
+                                    MAX_UPDATE_TRIES_PER_SERVER);
     // Call retryTransition.
-    ASSERT_NO_THROW(name_change->retryTransition(
+    ASSERT_NO_THROW(name_change_->retryTransition(
                     NameChangeTransaction::PROCESS_TRANS_FAILED_ST));
 
     // Since we have exceeded maximum attempts, we should transition to
     // PROCESS_UPDATE_FAILED_ST with a next event of SERVER_IO_ERROR_EVT.
     ASSERT_EQ(NameChangeTransaction::PROCESS_TRANS_FAILED_ST,
-              name_change->getCurrState());
+              name_change_->getCurrState());
     ASSERT_EQ(NameChangeTransaction::SERVER_IO_ERROR_EVT,
-              name_change->getNextEvent());
+              name_change_->getNextEvent());
 }
 
 /// @brief Tests sendUpdate method when underlying doUpdate throws.
@@ -944,33 +940,31 @@ TEST_F(NameChangeTransactionTest, retryTransition) {
 /// sendUpdate handling of such a throw by passing doUpdate a request
 /// that will not render.
 TEST_F(NameChangeTransactionTest, sendUpdateDoUpdateFailure) {
-    NameChangeStubPtr name_change;
-    ASSERT_NO_THROW(name_change = makeCannedTransaction());
-    ASSERT_NO_THROW(name_change->initDictionaries());
-    ASSERT_TRUE(name_change->selectFwdServer());
+    ASSERT_NO_THROW(name_change_ = makeCannedTransaction());
+    ASSERT_NO_THROW(name_change_->initDictionaries());
+    ASSERT_TRUE(name_change_->selectFwdServer());
 
     // Set the transaction's request to an empty DNS update.
     D2UpdateMessagePtr req;
     ASSERT_NO_THROW(req.reset(new D2UpdateMessage(D2UpdateMessage::OUTBOUND)));
-    ASSERT_NO_THROW(name_change->setDnsUpdateRequest(req));
+    ASSERT_NO_THROW(name_change_->setDnsUpdateRequest(req));
 
     // Verify that sendUpdate does not throw, but it should fail because
     // the request won't render.
-    ASSERT_NO_THROW(name_change->sendUpdate());
+    ASSERT_NO_THROW(name_change_->sendUpdate());
 
     // Verify that we transition to failed state and event.
     ASSERT_EQ(NameChangeTransaction::PROCESS_TRANS_FAILED_ST,
-              name_change->getCurrState());
+              name_change_->getCurrState());
     ASSERT_EQ(NameChangeTransaction::UPDATE_FAILED_EVT,
-              name_change->getNextEvent());
+              name_change_->getNextEvent());
 }
 
 /// @brief Tests sendUpdate method when underlying doUpdate times out.
 TEST_F(NameChangeTransactionTest, sendUpdateTimeout) {
-    NameChangeStubPtr name_change;
-    ASSERT_NO_THROW(name_change = makeCannedTransaction());
-    ASSERT_NO_THROW(name_change->initDictionaries());
-    ASSERT_TRUE(name_change->selectFwdServer());
+    ASSERT_NO_THROW(name_change_ = makeCannedTransaction());
+    ASSERT_NO_THROW(name_change_->initDictionaries());
+    ASSERT_TRUE(name_change_->selectFwdServer());
 
     // Build a valid request, call sendUpdate and process the response.
     // Note we have to wait for DNSClient timeout plus a bit more to allow
@@ -983,57 +977,55 @@ TEST_F(NameChangeTransactionTest, sendUpdateTimeout) {
     D2ParamsPtr d2_params = cfg_mgr_->getD2Params();
     size_t timeout = d2_params->getDnsServerTimeout() + 100;
 
-    ASSERT_NO_FATAL_FAILURE(doOneExchange(name_change, timeout));
+    ASSERT_NO_FATAL_FAILURE(doOneExchange(name_change_, timeout));
 
     // Verify that next event is IO_COMPLETED_EVT and DNS status is TIMEOUT.
     ASSERT_EQ(NameChangeTransaction::IO_COMPLETED_EVT,
-              name_change->getNextEvent());
-    ASSERT_EQ(DNSClient::TIMEOUT, name_change->getDnsUpdateStatus());
+              name_change_->getNextEvent());
+    ASSERT_EQ(DNSClient::TIMEOUT, name_change_->getDnsUpdateStatus());
 }
 
 /// @brief Tests sendUpdate method when it receives a corrupt response from
 /// the server.
 TEST_F(NameChangeTransactionTest, sendUpdateCorruptResponse) {
-    NameChangeStubPtr name_change;
-    ASSERT_NO_THROW(name_change = makeCannedTransaction());
-    ASSERT_NO_THROW(name_change->initDictionaries());
-    ASSERT_TRUE(name_change->selectFwdServer());
+    ASSERT_NO_THROW(name_change_ = makeCannedTransaction());
+    ASSERT_NO_THROW(name_change_->initDictionaries());
+    ASSERT_TRUE(name_change_->selectFwdServer());
 
     // Create a server and start it listening.
-    FauxServer server(*io_service_, *(name_change->getCurrentServer()));
-    server.receive(FauxServer::CORRUPT_RESP);
+    server_.reset(new FauxServer(io_service_, *(name_change_->getCurrentServer())));
+    server_->receive(FauxServer::CORRUPT_RESP);
 
     // Build a valid request, call sendUpdate and process the response.
-    ASSERT_NO_FATAL_FAILURE(doOneExchange(name_change));
+    ASSERT_NO_FATAL_FAILURE(doOneExchange(name_change_));
 
     // Verify that next event is IO_COMPLETED_EVT and DNS status is INVALID.
     ASSERT_EQ(NameChangeTransaction::IO_COMPLETED_EVT,
-              name_change->getNextEvent());
-    ASSERT_EQ(DNSClient::INVALID_RESPONSE, name_change->getDnsUpdateStatus());
+              name_change_->getNextEvent());
+    ASSERT_EQ(DNSClient::INVALID_RESPONSE, name_change_->getDnsUpdateStatus());
 }
 
 /// @brief Tests sendUpdate method when the exchange succeeds.
 TEST_F(NameChangeTransactionTest, sendUpdate) {
-    NameChangeStubPtr name_change;
-    ASSERT_NO_THROW(name_change = makeCannedTransaction());
-    ASSERT_NO_THROW(name_change->initDictionaries());
-    ASSERT_TRUE(name_change->selectFwdServer());
+    ASSERT_NO_THROW(name_change_ = makeCannedTransaction());
+    ASSERT_NO_THROW(name_change_->initDictionaries());
+    ASSERT_TRUE(name_change_->selectFwdServer());
 
     // Create a server and start it listening.
-    FauxServer server(*io_service_, *(name_change->getCurrentServer()));
-    server.receive (FauxServer::USE_RCODE, dns::Rcode::NOERROR());
+    server_.reset(new FauxServer(io_service_, *(name_change_->getCurrentServer())));
+    server_->receive(FauxServer::USE_RCODE, dns::Rcode::NOERROR());
 
     // Build a valid request, call sendUpdate and process the response.
-    ASSERT_NO_FATAL_FAILURE(doOneExchange(name_change));
+    ASSERT_NO_FATAL_FAILURE(doOneExchange(name_change_));
 
     // Verify that next event is IO_COMPLETED_EVT and DNS status is SUCCESS.
     ASSERT_EQ(NameChangeTransaction::IO_COMPLETED_EVT,
-              name_change->getNextEvent());
-    ASSERT_EQ(DNSClient::SUCCESS, name_change->getDnsUpdateStatus());
+              name_change_->getNextEvent());
+    ASSERT_EQ(DNSClient::SUCCESS, name_change_->getDnsUpdateStatus());
 
     // Verify that we have a response and it's Rcode is NOERROR,
     // and the zone is as expected.
-    D2UpdateMessagePtr response = name_change->getDnsUpdateResponse();
+    D2UpdateMessagePtr response = name_change_->getDnsUpdateResponse();
     ASSERT_TRUE(response);
     ASSERT_EQ(dns::Rcode::NOERROR().getCode(), response->getRcode().getCode());
     D2ZonePtr zone = response->getZone();
@@ -1043,29 +1035,28 @@ TEST_F(NameChangeTransactionTest, sendUpdate) {
 
 /// @brief Tests that an unsigned response to a signed request is an error
 TEST_F(NameChangeTransactionTest, tsigUnsignedResponse) {
-    NameChangeStubPtr name_change;
-    ASSERT_NO_THROW(name_change = makeCannedTransaction("key_one"));
-    ASSERT_NO_THROW(name_change->initDictionaries());
-    ASSERT_TRUE(name_change->selectFwdServer());
+    ASSERT_NO_THROW(name_change_ = makeCannedTransaction("key_one"));
+    ASSERT_NO_THROW(name_change_->initDictionaries());
+    ASSERT_TRUE(name_change_->selectFwdServer());
 
     // Create a server and start it listening.
-    FauxServer server(*io_service_, *(name_change->getCurrentServer()));
-    server.receive (FauxServer::USE_RCODE, dns::Rcode::NOERROR());
+    server_.reset(new FauxServer(io_service_, *(name_change_->getCurrentServer())));
+    server_->receive(FauxServer::USE_RCODE, dns::Rcode::NOERROR());
 
     // Do the update.
-    ASSERT_NO_FATAL_FAILURE(doOneExchange(name_change));
+    ASSERT_NO_FATAL_FAILURE(doOneExchange(name_change_));
 
     // Verify that next event is IO_COMPLETED_EVT and DNS status is
     // INVALID_RESPONSE.
     ASSERT_EQ(NameChangeTransaction::IO_COMPLETED_EVT,
-              name_change->getNextEvent());
+              name_change_->getNextEvent());
 
-    ASSERT_EQ(DNSClient::INVALID_RESPONSE, name_change->getDnsUpdateStatus());
+    ASSERT_EQ(DNSClient::INVALID_RESPONSE, name_change_->getDnsUpdateStatus());
 
     // When TSIG errors occur, only the message header (including Rcode) is
     // unpacked.  In this case, it should be NOERROR but have no other
     // information.
-    D2UpdateMessagePtr response = name_change->getDnsUpdateResponse();
+    D2UpdateMessagePtr response = name_change_->getDnsUpdateResponse();
     ASSERT_TRUE(response);
     ASSERT_EQ(dns::Rcode::NOERROR().getCode(), response->getRcode().getCode());
     EXPECT_FALSE(response->getZone());
@@ -1073,30 +1064,29 @@ TEST_F(NameChangeTransactionTest, tsigUnsignedResponse) {
 
 /// @brief Tests that a response signed with the wrong key is an error
 TEST_F(NameChangeTransactionTest, tsigInvalidResponse) {
-    NameChangeStubPtr name_change;
-    ASSERT_NO_THROW(name_change = makeCannedTransaction("key_one"));
-    ASSERT_NO_THROW(name_change->initDictionaries());
-    ASSERT_TRUE(name_change->selectFwdServer());
+    ASSERT_NO_THROW(name_change_ = makeCannedTransaction("key_one"));
+    ASSERT_NO_THROW(name_change_->initDictionaries());
+    ASSERT_TRUE(name_change_->selectFwdServer());
 
     // Create a server, tell it to sign responses with a "random" key,
     // then start it listening.
-    FauxServer server(*io_service_, *(name_change->getCurrentServer()));
-    server.receive (FauxServer::INVALID_TSIG, dns::Rcode::NOERROR());
+    server_.reset(new FauxServer(io_service_, *(name_change_->getCurrentServer())));
+    server_->receive(FauxServer::INVALID_TSIG, dns::Rcode::NOERROR());
 
     // Do the update.
-    ASSERT_NO_FATAL_FAILURE(doOneExchange(name_change));
+    ASSERT_NO_FATAL_FAILURE(doOneExchange(name_change_));
 
     // Verify that next event is IO_COMPLETED_EVT and DNS status is
     // INVALID_RESPONSE.
     ASSERT_EQ(NameChangeTransaction::IO_COMPLETED_EVT,
-              name_change->getNextEvent());
+              name_change_->getNextEvent());
 
-    ASSERT_EQ(DNSClient::INVALID_RESPONSE, name_change->getDnsUpdateStatus());
+    ASSERT_EQ(DNSClient::INVALID_RESPONSE, name_change_->getDnsUpdateStatus());
 
     // When TSIG errors occur, only the message header (including Rcode) is
     // unpacked.  In this case, it should be NOERROR but have no other
     // information.
-    D2UpdateMessagePtr response = name_change->getDnsUpdateResponse();
+    D2UpdateMessagePtr response = name_change_->getDnsUpdateResponse();
     ASSERT_TRUE(response);
     ASSERT_EQ(dns::Rcode::NOERROR().getCode(), response->getRcode().getCode());
     EXPECT_FALSE(response->getZone());
@@ -1106,26 +1096,25 @@ TEST_F(NameChangeTransactionTest, tsigInvalidResponse) {
 /// Currently our policy is to accept a signed response to an unsigned request
 /// even though the spec says a server MUST not do that.
 TEST_F(NameChangeTransactionTest, tsigUnexpectedSignedResponse) {
-    NameChangeStubPtr name_change;
-    ASSERT_NO_THROW(name_change = makeCannedTransaction());
-    ASSERT_NO_THROW(name_change->initDictionaries());
-    ASSERT_TRUE(name_change->selectFwdServer());
+    ASSERT_NO_THROW(name_change_ = makeCannedTransaction());
+    ASSERT_NO_THROW(name_change_->initDictionaries());
+    ASSERT_TRUE(name_change_->selectFwdServer());
 
     // Create a server, tell it to sign responses with a "random" key,
     // then start it listening.
-    FauxServer server(*io_service_, *(name_change->getCurrentServer()));
-    server.receive (FauxServer::INVALID_TSIG, dns::Rcode::NOERROR());
+    server_.reset(new FauxServer(io_service_, *(name_change_->getCurrentServer())));
+    server_->receive(FauxServer::INVALID_TSIG, dns::Rcode::NOERROR());
 
     // Perform an update without TSIG.
-    ASSERT_NO_FATAL_FAILURE(doOneExchange(name_change));
+    ASSERT_NO_FATAL_FAILURE(doOneExchange(name_change_));
 
     // Verify that next event is IO_COMPLETED_EVT and DNS status is SUCCESS.
     ASSERT_EQ(NameChangeTransaction::IO_COMPLETED_EVT,
-              name_change->getNextEvent());
+              name_change_->getNextEvent());
 
-    ASSERT_EQ(DNSClient::SUCCESS, name_change->getDnsUpdateStatus());
+    ASSERT_EQ(DNSClient::SUCCESS, name_change_->getDnsUpdateStatus());
 
-    D2UpdateMessagePtr response = name_change->getDnsUpdateResponse();
+    D2UpdateMessagePtr response = name_change_->getDnsUpdateResponse();
     ASSERT_TRUE(response);
     ASSERT_EQ(dns::Rcode::NOERROR().getCode(), response->getRcode().getCode());
     D2ZonePtr zone = response->getZone();
@@ -1145,34 +1134,33 @@ TEST_F(NameChangeTransactionTest, tsigAllValid) {
     algorithms.push_back(TSIGKeyInfo::HMAC_SHA512_STR);
 
     for (int i = 0; i < algorithms.size(); ++i) {
-        SCOPED_TRACE (algorithms[i]);
+        SCOPED_TRACE(algorithms[i]);
         TSIGKeyInfoPtr key;
         ASSERT_NO_THROW(key.reset(new TSIGKeyInfo("test_key",
                                                   algorithms[i],
                                                   "GWG/Xfbju4O2iXGqkSu4PQ==")));
-        NameChangeStubPtr name_change;
-        ASSERT_NO_THROW(name_change = makeCannedTransaction(key));
-        ASSERT_NO_THROW(name_change->initDictionaries());
-        ASSERT_TRUE(name_change->selectFwdServer());
+        ASSERT_NO_THROW(name_change_ = makeCannedTransaction(key));
+        ASSERT_NO_THROW(name_change_->initDictionaries());
+        ASSERT_TRUE(name_change_->selectFwdServer());
 
         // Create a server, set its TSIG key, and then start it listening.
-        FauxServer server(*io_service_, *(name_change->getCurrentServer()));
+        server_.reset(new FauxServer(io_service_, *(name_change_->getCurrentServer())));
         // Since we create a new server instance each time we need to tell
         // it not reschedule receives automatically.
-        server.perpetual_receive_ = false;
-        server.setTSIGKey(key->getTSIGKey());
-        server.receive (FauxServer::USE_RCODE, dns::Rcode::NOERROR());
+        server_->perpetual_receive_ = false;
+        server_->setTSIGKey(key->getTSIGKey());
+        server_->receive(FauxServer::USE_RCODE, dns::Rcode::NOERROR());
 
         // Do the update.
-        ASSERT_NO_FATAL_FAILURE(doOneExchange(name_change));
+        ASSERT_NO_FATAL_FAILURE(doOneExchange(name_change_));
 
         // Verify that next event is IO_COMPLETED_EVT and DNS status is SUCCESS.
         ASSERT_EQ(NameChangeTransaction::IO_COMPLETED_EVT,
-                  name_change->getNextEvent());
+                  name_change_->getNextEvent());
 
-        ASSERT_EQ(DNSClient::SUCCESS, name_change->getDnsUpdateStatus());
+        ASSERT_EQ(DNSClient::SUCCESS, name_change_->getDnsUpdateStatus());
 
-        D2UpdateMessagePtr response = name_change->getDnsUpdateResponse();
+        D2UpdateMessagePtr response = name_change_->getDnsUpdateResponse();
         ASSERT_TRUE(response);
         ASSERT_EQ(dns::Rcode::NOERROR().getCode(),
                   response->getRcode().getCode());
@@ -1182,33 +1170,31 @@ TEST_F(NameChangeTransactionTest, tsigAllValid) {
     }
 }
 
-
 /// @brief Tests the prepNewRequest method
 TEST_F(NameChangeTransactionTest, prepNewRequest) {
-    NameChangeStubPtr name_change;
-    ASSERT_NO_THROW(name_change = makeCannedTransaction());
+    ASSERT_NO_THROW(name_change_ = makeCannedTransaction());
     D2UpdateMessagePtr request;
 
     // prepNewRequest should fail on empty domain.
-    ASSERT_THROW(request = name_change->prepNewRequest(DdnsDomainPtr()),
+    ASSERT_THROW(request = name_change_->prepNewRequest(DdnsDomainPtr()),
         NameChangeTransactionError);
 
     // Verify that prepNewRequest fails on invalid zone name.
     // @todo This test becomes obsolete if/when DdnsDomain enforces valid
     // names as is done in dns::Name.
     DdnsDomainPtr bsDomain = makeDomain(".badname","");
-    ASSERT_THROW(request = name_change->prepNewRequest(bsDomain),
+    ASSERT_THROW(request = name_change_->prepNewRequest(bsDomain),
         NameChangeTransactionError);
 
     // Verify that prepNewRequest properly constructs a message given
     // valid input.
-    ASSERT_NO_THROW(request = name_change->prepNewRequest(forward_domain_));
+    ASSERT_NO_THROW(request = name_change_->prepNewRequest(forward_domain_));
     checkZone(request, forward_domain_->getName());
 
     // The query id is random so 0 is not impossible
     for (unsigned i = 0; i < 10; ++i) {
         if (request->getId() == 0) {
-            request = name_change->prepNewRequest(forward_domain_);
+            request = name_change_->prepNewRequest(forward_domain_);
         }
     }
 
@@ -1217,15 +1203,14 @@ TEST_F(NameChangeTransactionTest, prepNewRequest) {
 
 /// @brief Tests the addLeaseAddressRData method
 TEST_F(NameChangeTransactionTest, addLeaseAddressRData) {
-    NameChangeStubPtr name_change;
-    ASSERT_NO_THROW(name_change = makeCannedTransaction());
-    dhcp_ddns::NameChangeRequestPtr ncr = name_change->getNcr();
+    ASSERT_NO_THROW(name_change_ = makeCannedTransaction());
+    dhcp_ddns::NameChangeRequestPtr ncr = name_change_->getNcr();
 
     // Verify we can add a lease RData to an valid RRset.
     dns::RRsetPtr rrset(new dns::RRset(dns::Name("bs"), dns::RRClass::IN(),
-                                       name_change->getAddressRRType(),
+                                       name_change_->getAddressRRType(),
                                        dns::RRTTL(0)));
-    ASSERT_NO_THROW(name_change->addLeaseAddressRdata(rrset));
+    ASSERT_NO_THROW(name_change_->addLeaseAddressRdata(rrset));
 
     // Verify the Rdata was added and the value is correct.
     ASSERT_EQ(1, rrset->getRdataCount());
@@ -1237,14 +1222,13 @@ TEST_F(NameChangeTransactionTest, addLeaseAddressRData) {
 
 /// @brief Tests the addDhcidRData method
 TEST_F(NameChangeTransactionTest, addDhcidRdata) {
-    NameChangeStubPtr name_change;
-    ASSERT_NO_THROW(name_change = makeCannedTransaction());
-    dhcp_ddns::NameChangeRequestPtr ncr = name_change->getNcr();
+    ASSERT_NO_THROW(name_change_ = makeCannedTransaction());
+    dhcp_ddns::NameChangeRequestPtr ncr = name_change_->getNcr();
 
     // Verify we can add a lease RData to an valid RRset.
     dns::RRsetPtr rrset(new dns::RRset(dns::Name("bs"), dns::RRClass::IN(),
                                        dns::RRType::DHCID(), dns::RRTTL(0)));
-    ASSERT_NO_THROW(name_change->addDhcidRdata(rrset));
+    ASSERT_NO_THROW(name_change_->addDhcidRdata(rrset));
 
     // Verify the Rdata was added and the value is correct.
     ASSERT_EQ(1, rrset->getRdataCount());
@@ -1259,14 +1243,13 @@ TEST_F(NameChangeTransactionTest, addDhcidRdata) {
 
 /// @brief Tests the addPtrData method
 TEST_F(NameChangeTransactionTest, addPtrRdata) {
-    NameChangeStubPtr name_change;
-    ASSERT_NO_THROW(name_change = makeCannedTransaction());
-    dhcp_ddns::NameChangeRequestPtr ncr = name_change->getNcr();
+    ASSERT_NO_THROW(name_change_ = makeCannedTransaction());
+    dhcp_ddns::NameChangeRequestPtr ncr = name_change_->getNcr();
 
     // Verify we can add a PTR RData to an valid RRset.
-    dns::RRsetPtr rrset (new dns::RRset(dns::Name("bs"), dns::RRClass::IN(),
+    dns::RRsetPtr rrset(new dns::RRset(dns::Name("bs"), dns::RRClass::IN(),
                                         dns::RRType::PTR(), dns::RRTTL(0)));
-    ASSERT_NO_THROW(name_change->addPtrRdata(rrset));
+    ASSERT_NO_THROW(name_change_->addPtrRdata(rrset));
 
     // Verify the Rdata was added and the value is correct.
     ASSERT_EQ(1, rrset->getRdataCount());

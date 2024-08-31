@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -106,10 +106,12 @@ public:
 
     /// @brief Constructor.
     ///
+    /// @param space The DHCP space (v4 or v6).
     /// @param parameters A data structure relating keywords and values
     /// concerned with the database.
     /// @param db_reconnect_callback The connection recovery callback.
-    explicit MySqlConfigBackendImpl(const db::DatabaseConnection::ParameterMap& parameters,
+    explicit MySqlConfigBackendImpl(const std::string& space,
+                                    const db::DatabaseConnection::ParameterMap& parameters,
                                     const db::DbCallback db_reconnect_callback);
 
     /// @brief Destructor.
@@ -127,7 +129,7 @@ public:
         if (value.unspecified()) {
             return (db::MySqlBinding::createNull());
         }
-        return (db::MySqlBinding::createInteger(value));
+        return (db::MySqlBinding::createInteger(value.get()));
     }
 
     /// @brief Creates MySQL binding from a @c Triplet.
@@ -562,6 +564,7 @@ public:
     /// - formatted_value,
     /// - space,
     /// - persistent,
+    /// - cancelled,
     /// - dhcp4_subnet_id/dhcp6_subnet_id,
     /// - scope_id,
     /// - user_context,
@@ -630,11 +633,9 @@ public:
     db::MySqlBindingPtr createInputRequiredClassesBinding(const T& object) {
         // Create JSON list of required classes.
         data::ElementPtr required_classes_element = data::Element::createList();
-        const auto& required_classes = object->getRequiredClasses();
-        for (auto required_class = required_classes.cbegin();
-             required_class != required_classes.cend();
-             ++required_class) {
-            required_classes_element->add(data::Element::create(*required_class));
+        auto const& required_classes = object->getRequiredClasses();
+        for (auto const& required_class : required_classes) {
+            required_classes_element->add(data::Element::create(required_class));
         }
 
         return (required_classes_element ?
@@ -727,7 +728,7 @@ public:
     void multipleUpdateDeleteQueries(T first_index, R... other_indexes) {
         std::vector<T> indexes({ first_index, other_indexes... });
         db::MySqlBindingCollection empty_bindings;
-        for (auto index : indexes) {
+        for (auto const& index : indexes) {
             conn_.updateDeleteQuery(index, empty_bindings);
         }
     }
@@ -835,16 +836,18 @@ public:
         return (parameters_);
     }
 
-    /// @brief Sets IO service to be used by the MySQL config backend.
+    /// @brief Get the hook I/O service.
     ///
-    /// @param IOService object, used for all ASIO operations.
-    static void setIOService(const isc::asiolink::IOServicePtr& io_service) {
-        io_service_ = io_service;
+    /// @return the hook I/O service.
+    static isc::asiolink::IOServicePtr getIOService() {
+        return (io_service_);
     }
 
-    /// @brief Returns pointer to the IO service.
-    static isc::asiolink::IOServicePtr& getIOService() {
-        return (io_service_);
+    /// @brief Set the hook I/O service.
+    ///
+    /// @param io_service the hook I/O service.
+    static void setIOService(isc::asiolink::IOServicePtr io_service) {
+        io_service_ = io_service;
     }
 
     /// @brief Represents connection to the MySQL database.
@@ -863,7 +866,7 @@ private:
     /// @brief Connection parameters
     isc::db::DatabaseConnection::ParameterMap parameters_;
 
-    /// @brief The IOService object, used for all ASIO operations.
+    /// @brief The hook I/O service.
     static isc::asiolink::IOServicePtr io_service_;
 };
 

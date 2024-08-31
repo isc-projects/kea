@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -62,8 +62,10 @@ LoggerManagerImpl::processEnd() {
 // add output specifications.
 void
 LoggerManagerImpl::processSpecification(const LoggerSpecification& spec) {
-    log4cplus::Logger logger = log4cplus::Logger::getInstance(
-                                   expandLoggerName(spec.getName()));
+    string const& name(spec.getName());
+    string const& root_logger_name(getRootLoggerName());
+
+    log4cplus::Logger logger = log4cplus::Logger::getInstance(expandLoggerName(name));
 
     // Set severity level according to specification entry.
     logger.setLogLevel(LoggerLevelImpl::convertFromBindLevel(
@@ -72,36 +74,50 @@ LoggerManagerImpl::processSpecification(const LoggerSpecification& spec) {
     // Set the additive flag.
     logger.setAdditivity(spec.getAdditive());
 
+    // Replace all appenders for this logger.
+    logger.removeAllAppenders();
+
+    if (name == root_logger_name) {
+        // Store a copy of the root specification. It might be required later.
+        root_spec_ = spec;
+    }
+
     // Output options given?
     if (spec.optionCount() > 0) {
-        // Replace all appenders for this logger.
-        logger.removeAllAppenders();
+        // If there are output options provided, continue with the given spec.
+        appenderFactory(logger, spec);
+    } else {
+        // If there are no output options, inherit them from the root logger.
+        // It's important that root_spec_.getName() is not used further since it
+        // may be different than the logger being configured here.
+        appenderFactory(logger, root_spec_);
+    }
+}
 
-        // Now process output specifications.
-        for (LoggerSpecification::const_iterator i = spec.begin();
-             i != spec.end(); ++i) {
-            switch (i->destination) {
-            case OutputOption::DEST_CONSOLE:
-                createConsoleAppender(logger, *i);
-                break;
+void
+LoggerManagerImpl::appenderFactory(log4cplus::Logger& logger,
+                                   LoggerSpecification const& spec) {
+    for (OutputOption const& i : spec) {
+        switch (i.destination) {
+        case OutputOption::DEST_CONSOLE:
+            createConsoleAppender(logger, i);
+            break;
 
-            case OutputOption::DEST_FILE:
-                createFileAppender(logger, *i);
-                break;
+        case OutputOption::DEST_FILE:
+            createFileAppender(logger, i);
+            break;
 
-            case OutputOption::DEST_SYSLOG:
-                createSyslogAppender(logger, *i);
-                break;
+        case OutputOption::DEST_SYSLOG:
+            createSyslogAppender(logger, i);
+            break;
 
-            default:
-                // Not a valid destination.  As we are in the middle of updating
-                // logging destinations, we could be in the situation where
-                // there are no valid appenders.  For this reason, throw an
-                // exception.
-                isc_throw(UnknownLoggingDestination,
-                          "Unknown logging destination, code = " <<
-                          i->destination);
-            }
+        default:
+            // Not a valid destination.  As we are in the middle of updating
+            // logging destinations, we could be in the situation where
+            // there are no valid appenders.  For this reason, throw an
+            // exception.
+            isc_throw(UnknownLoggingDestination,
+                      "Unknown logging destination, code = " << i.destination);
         }
     }
 }
@@ -279,10 +295,8 @@ void LoggerManagerImpl::setAppenderLayout(
 void LoggerManagerImpl::storeBufferAppenders() {
     // Walk through all loggers, and find any buffer appenders there
     log4cplus::LoggerList loggers = log4cplus::Logger::getCurrentLoggers();
-    log4cplus::LoggerList::iterator it;
-    for (it = loggers.begin(); it != loggers.end(); ++it) {
-        log4cplus::SharedAppenderPtr buffer_appender =
-            it->getAppender("buffer");
+    for (auto& it : loggers) {
+        log4cplus::SharedAppenderPtr buffer_appender = it.getAppender("buffer");
         if (buffer_appender) {
             buffer_appender_store_.push_back(buffer_appender);
         }
@@ -293,10 +307,8 @@ void LoggerManagerImpl::flushBufferAppenders() {
     std::vector<log4cplus::SharedAppenderPtr> copy;
     buffer_appender_store_.swap(copy);
 
-    std::vector<log4cplus::SharedAppenderPtr>::iterator it;
-    for (it = copy.begin(); it != copy.end(); ++it) {
-        internal::BufferAppender* app =
-            dynamic_cast<internal::BufferAppender*>(it->get());
+    for (auto const& it : copy) {
+        internal::BufferAppender* app = dynamic_cast<internal::BufferAppender*>(it.get());
         isc_throw_assert(app);
         app->flush();
     }

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -225,8 +225,15 @@ TEST(MessageInitializerTest1, duplicates) {
         "DUPE", "dupe",
         NULL
     };
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wshadow"
+#endif
     const MessageInitializer init_message_initializer_unittest_1(dupe);
     const MessageInitializer init_message_initializer_unittest_2(dupe);
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
     MessageInitializer::loadDictionary();
     // Should be a dupe now

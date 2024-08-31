@@ -5,15 +5,15 @@
 { "Dhcp6":
 
 {
-// Kea is told to listen on ethX interface only.
+// Kea is told to listen on eth0 interface only.
   "interfaces-config": {
-    "interfaces": [ "ethX" ]
+    "interfaces": [ "eth0" ]
   },
 
 // We need to specify the database used to store leases. As of
 // June 2022, three database backends are supported: MySQL,
 // PostgreSQL and the in-memory database, Memfile.
-// We'll use memfile  because it doesn't require any prior set up.
+// We'll use memfile because it doesn't require any prior set up.
 // Note, we're setting the maximum number of row read errors to 100,
 // (defaults to 0, meaning unlimited).
   "lease-database": {
@@ -31,6 +31,9 @@
 // routine will process at most 500 leases or will last for at most
 // 100ms, during a single run. If there are still some unreclaimed
 // leases after 10 attempts, a warning message is issued.
+// If both "flush-reclaimed-timer-wait-time" and "hold-reclaimed-time" are not
+// 0, when the client sends a release message the lease is expired instead of
+// being deleted from lease storage.
   "expired-leases-processing": {
     "reclaim-timer-wait-time": 5,
     "hold-reclaimed-time": 1800,
@@ -55,9 +58,10 @@
 // least subnet and pool entries.
   "subnet6": [
     {
+      "id": 1,
       "pools": [ { "pool": "2001:db8:1::/80" } ],
       "subnet": "2001:db8:1::/64",
-      "interface": "ethX"
+      "interface": "eth0"
     }
   ],
 
@@ -67,7 +71,7 @@
     "loggers": [
         {
             "name": "kea-dhcp6",
-            "output_options": [
+            "output-options": [
                 {
                     "output": "stdout"
                 }

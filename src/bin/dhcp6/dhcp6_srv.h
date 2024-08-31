@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -147,7 +147,7 @@ public:
     /// Main server processing step. Receives one incoming packet, calls
     /// the processing packet routing and (if necessary) transmits
     /// a response.
-    void run_one();
+    void runOne();
 
     /// @brief Process a single incoming DHCPv6 packet and sends the response.
     ///
@@ -155,7 +155,7 @@ public:
     /// methods, generates appropriate answer, sends the answer to the client.
     ///
     /// @param query A pointer to the packet to be processed.
-    void processPacketAndSendResponse(Pkt6Ptr& query);
+    void processPacketAndSendResponse(Pkt6Ptr query);
 
     /// @brief Process a single incoming DHCPv6 packet and sends the response.
     ///
@@ -163,41 +163,68 @@ public:
     /// methods, generates appropriate answer, sends the answer to the client.
     ///
     /// @param query A pointer to the packet to be processed.
-    void processPacketAndSendResponseNoThrow(Pkt6Ptr& query);
+    void processPacketAndSendResponseNoThrow(Pkt6Ptr query);
 
     /// @brief Process an unparked DHCPv6 packet and sends the response.
     ///
     /// @param callout_handle pointer to the callout handle.
     /// @param query A pointer to the packet to be processed.
     /// @param rsp A pointer to the response.
+    /// @param subnet A pointer to the selected subnet.
     void sendResponseNoThrow(hooks::CalloutHandlePtr& callout_handle,
-                             Pkt6Ptr& query, Pkt6Ptr& rsp);
+                             Pkt6Ptr query, Pkt6Ptr& rsp, Subnet6Ptr& subnet);
 
     /// @brief Process a single incoming DHCPv6 packet.
     ///
-    /// It verifies correctness of the passed packet, calls per-type processXXX
-    /// methods, generates appropriate answer.
+    /// It verifies correctness of the passed packet, localizes it,
+    /// calls per-type processXXX methods, generates appropriate answer.
     ///
     /// @param query A pointer to the packet to be processed.
-    /// @param rsp A pointer to the response.
-    void processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp);
+    /// @return A pointer to the response.
+    Pkt6Ptr processPacket(Pkt6Ptr query);
 
     /// @brief Process a single incoming DHCPv6 query.
+    ///
+    /// It localizes the query, calls per-type processXXX methods,
+    /// generates appropriate answer.
+    ///
+    /// @param query A pointer to the packet to be processed.
+    /// @return A pointer to the response.
+    Pkt6Ptr processDhcp6Query(Pkt6Ptr query);
+
+    /// @brief Process a single incoming DHCPv6 query.
+    ///
+    /// It localizes the query, calls per-type processXXX methods,
+    /// generates appropriate answer, sends the answer to the client.
+    ///
+    /// @param query A pointer to the packet to be processed.
+    void processDhcp6QueryAndSendResponse(Pkt6Ptr query);
+
+    /// @brief Process a localized incoming DHCPv6 query.
     ///
     /// It calls per-type processXXX methods, generates appropriate answer.
     ///
-    /// @param query A pointer to the packet to be processed.
-    /// @param rsp A pointer to the response.
-    void processDhcp6Query(Pkt6Ptr& query, Pkt6Ptr& rsp);
+    /// @param ctx Pointer to The client context.
+    /// @return A pointer to the response.
+    Pkt6Ptr processLocalizedQuery6(AllocEngine::ClientContext6& ctx);
 
-    /// @brief Process a single incoming DHCPv6 query.
+    /// @brief Process a localized incoming DHCPv6 query.
     ///
     /// It calls per-type processXXX methods, generates appropriate answer,
     /// sends the answer to the client.
     ///
     /// @param query A pointer to the packet to be processed.
-    /// @param rsp A pointer to the response.
-    void processDhcp6QueryAndSendResponse(Pkt6Ptr& query, Pkt6Ptr& rsp);
+    /// @param ctx Pointer to The client context.
+    void processLocalizedQuery6AndSendResponse(Pkt6Ptr query,
+                                               AllocEngine::ClientContext6& ctx);
+
+    /// @brief Process a localized incoming DHCPv6 query.
+    ///
+    /// A variant of the precedent method used to resume processing
+    /// for packets parked in the subnet6_select callout.
+    ///
+    /// @param query A pointer to the unparked packet.
+    void processLocalizedQuery6AndSendResponse(Pkt6Ptr query);
 
     /// @brief Instructs the server to shut down.
     void shutdown() override;
@@ -254,6 +281,13 @@ public:
     /// Clears the packet parking lots of all packets.
     /// Called during reconfigure and shutdown.
     void discardPackets();
+
+    /// @brief Initialize client context (first part).
+    ///
+    /// @param query The query message.
+    /// @param ctx Reference to client context.
+    void initContext0(const Pkt6Ptr& query,
+                      AllocEngine::ClientContext6& ctx);
 
     /// @brief Initialize client context and perform early global
     /// reservations lookup.
@@ -709,7 +743,7 @@ protected:
     /// - If there is a Client FQDN but no reserved hostname then both the
     /// FQDN and lease hostname will be equal to the name provided in the
     /// client FQDN adjusted according the DhcpDdns configuration
-    /// parameters (e.g.replace-client-name, qualifying suffix...).
+    /// parameters (e.g. ddns-replace-client-name, ddns-qualifying-suffix...).
     ///
     /// All the logic required to form appropriate answer to the client is
     /// held in this function.
@@ -821,8 +855,8 @@ protected:
     /// @brief Assigns incoming packet to zero or more classes.
     ///
     /// @note This is done in two phases: first the content of the
-    /// vendor-class-identifier option is used as a class, by
-    /// calling @ref classifyByVendor(). Second, the classification match
+    /// vendor-class-identifier options are used as classes, by
+    /// calling (private) classifyByVendor. Second, the classification match
     /// expressions are evaluated. The resulting classes will be stored
     /// in the packet (see @ref isc::dhcp::Pkt6::classes_ and
     /// @ref isc::dhcp::Pkt6::inClass).
@@ -905,7 +939,6 @@ protected:
     /// @brief Initializes client context for specified packet
     ///
     /// This method:
-    /// - Performs the subnet selection and stores the result in context
     /// - Extracts the duid from the packet and saves it to the context
     /// - Extracts the hardware address from the packet and saves it to
     /// the context
@@ -919,12 +952,9 @@ protected:
     /// the Rapid Commit option was included and that the server respects
     /// it.
     ///
-    /// @param pkt pointer to a packet for which context will be created.
     /// @param [out] ctx reference to context object to be initialized.
     /// @param [out] drop if it is true the packet will be dropped.
-    void initContext(const Pkt6Ptr& pkt,
-                     AllocEngine::ClientContext6& ctx,
-                     bool& drop);
+    void initContext(AllocEngine::ClientContext6& ctx, bool& drop);
 
     /// @brief this is a prefix added to the content of vendor-class option
     ///
@@ -1041,14 +1071,12 @@ public:
 
 private:
 
-    /// @public
-    /// @brief Assign class using vendor-class-identifier option
+    /// @brief Assign class using vendor-class-identifier options
     ///
     /// @note This is the first part of @ref classifyPacket
     ///
     /// @param pkt packet to be classified
-    /// @param classes a reference to added class names for logging
-    void classifyByVendor(const Pkt6Ptr& pkt, std::string& classes);
+    void classifyByVendor(const Pkt6Ptr& pkt);
 
     /// @brief Update FQDN based on the reservations in the current subnet.
     ///
@@ -1127,6 +1155,14 @@ private:
     /// @return true if option has been requested in the ORO.
     bool requestedInORO(const Pkt6Ptr& query, const uint16_t code) const;
 
+    /// @brief Check if the parking limit has been exceeded for given hook label.
+    ///
+    /// @brief hook_label Hook point name.
+    ///
+    /// @return tuple with boolean value concluding whether the limit has been
+    /// exceeded, and the integer limit as a second value.
+    static std::tuple<bool, uint32_t> parkingLimitExceeded(std::string const& hook_label);
+
 protected:
     /// UDP port number on which server listens.
     uint16_t server_port_;
@@ -1174,8 +1210,9 @@ protected:
     /// @param callout_handle pointer to the callout handle.
     /// @param query Pointer to a query.
     /// @param rsp Pointer to a response.
+    /// @param subnet A pointer to the selected subnet.
     void processPacketPktSend(hooks::CalloutHandlePtr& callout_handle,
-                              Pkt6Ptr& query, Pkt6Ptr& rsp);
+                              Pkt6Ptr& query, Pkt6Ptr& rsp, Subnet6Ptr& subnet);
 
     /// @brief Allocation Engine.
     /// Pointer to the allocation engine that we are currently using

@@ -1,13 +1,10 @@
 #!/bin/sh
 
-# Copyright (C) 2020-2021 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2020-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-# shellcheck disable=SC2039
-# SC2039: In POSIX sh, 'local' is undefined.
 
 # Usage:
 #
@@ -115,13 +112,14 @@ for i in $(get_source_files); do
   includes=$(grep -E '^#include' "${i}" | sort -V)
   unique_includes=$(grep -E '^#include' "${i}" | sort -uV)
   diff=$(posix_diff "${includes}" "${unique_includes}" | \
-    grep -F '#include' | grep -E '^\-|^\+' | sed -E 's/^([^-+ ]*)[-+ ]/\1/' )
+    grep -F '#include' | grep -E '^-|^\+' | sed -E 's/^([^-+ ]*)[-+ ]/\1/' )
   if test -n "${diff}"; then
     printf '%s has the following duplicate includes:\n%s\n\n' "${i}" "${diff}"
     found=true
   fi
 done
 
+# exit 1 if any diff was found so that CI properly fails.
 if "${found}"; then
   exit 1
 fi

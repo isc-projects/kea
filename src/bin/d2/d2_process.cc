@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,8 +6,10 @@
 
 #include <config.h>
 #include <asiolink/asio_wrapper.h>
+#include <asiolink/io_service_mgr.h>
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
+#include <config/http_command_mgr.h>
 #include <d2/d2_controller.h>
 #include <d2/d2_process.h>
 #include <d2srv/d2_cfg_mgr.h>
@@ -17,6 +19,8 @@
 #include <hooks/hooks.h>
 #include <hooks/hooks_manager.h>
 
+using namespace isc::asiolink;
+using namespace isc::config;
 using namespace isc::hooks;
 using namespace isc::process;
 
@@ -57,13 +61,13 @@ D2Process::D2Process(const char* name, const asiolink::IOServicePtr& io_service)
     // been received.  This means that until we receive the configuration,
     // D2 will neither receive nor process NameChangeRequests.
     // Pass in IOService for NCR IO event processing.
-    queue_mgr_.reset(new D2QueueMgr(getIoService()));
+    queue_mgr_.reset(new D2QueueMgr(getIOService()));
 
     // Instantiate update manager.
     // Pass in both queue manager and configuration manager.
     // Pass in IOService for DNS update transaction IO event processing.
     D2CfgMgrPtr tmp = getD2CfgMgr();
-    update_mgr_.reset(new D2UpdateMgr(queue_mgr_, tmp, getIoService()));
+    update_mgr_.reset(new D2UpdateMgr(queue_mgr_, tmp, getIOService()));
 
     // Initialize stats manager.
     D2Stats::init();
@@ -71,8 +75,16 @@ D2Process::D2Process(const char* name, const asiolink::IOServicePtr& io_service)
 
 void
 D2Process::init() {
-    // CommandMgr uses IO service to run asynchronous socket operations.
-    isc::config::CommandMgr::instance().setIOService(getIoService());
+    using namespace isc::config;
+    // Command managers use IO service to run asynchronous socket operations.
+    CommandMgr::instance().setIOService(getIOService());
+    HttpCommandMgr::instance().setIOService(getIOService());
+
+    // Set the HTTP authentication default realm.
+    HttpCommandConfig::DEFAULT_AUTHENTICATION_REALM = "kea-dhcp-ddns-server";
+
+    // D2 server does not use the interface manager.
+    HttpCommandMgr::instance().addExternalSockets(false);
 };
 
 void
@@ -128,28 +140,28 @@ D2Process::run() {
 
 size_t
 D2Process::runIO() {
+    // Handle events registered by hooks using external IOService objects.
+    IOServiceMgr::instance().pollIOServices();
     // We want to block until at least one handler is called.  We'll use
     // boost::asio::io_service directly for two reasons. First off
-    // asiolink::IOService::run_one is a void and boost::asio::io_service::stopped
+    // asiolink::IOService::runOne is a void and boost::asio::io_service::stopped
     // is not present in older versions of boost.  We need to know if any
     // handlers ran or if the io_service was stopped.  That latter represents
     // some form of error and the application cannot proceed with a stopped
     // service.  Secondly, asiolink::IOService does not provide the poll
     // method.  This is a handy method which runs all ready handlers without
     // blocking.
-    asiolink::IOServicePtr& io = getIoService();
-    boost::asio::io_service& asio_io_service = io->get_io_service();
 
     // Poll runs all that are ready. If none are ready it returns immediately
     // with a count of zero.
-    size_t cnt = asio_io_service.poll();
+    size_t cnt = getIOService()->poll();
     if (!cnt) {
         // Poll ran no handlers either none are ready or the service has been
-        // stopped.  Either way, call run_one to wait for a IO event. If the
+        // stopped.  Either way, call runOne to wait for a IO event. If the
         // service is stopped it will return immediately with a cnt of zero.
-        cnt = asio_io_service.run_one();
+        cnt = getIOService()->runOne();
     }
-
+    config::HttpCommandMgr::instance().garbageCollectListeners();
     return (cnt);
 }
 
@@ -221,16 +233,18 @@ D2Process::shutdown(isc::data::ConstElementPtr args) {
                 shutdown_type_ = SD_NOW;
             } else {
                 setShutdownFlag(false);
-                return (isc::config::createAnswer(1, "Invalid Shutdown type: "
-                                                  + type_str));
+                return (isc::config::createAnswer(CONTROL_RESULT_ERROR,
+                                                  "Invalid Shutdown type: " +
+                                                  type_str));
             }
         }
     }
 
     // Set the base class's shutdown flag.
     setShutdownFlag(true);
-    return (isc::config::createAnswer(0, "Shutdown initiated, type is: "
-                                      + type_str));
+    return (isc::config::createAnswer(CONTROL_RESULT_SUCCESS,
+                                      "Shutdown initiated, type is: " +
+                                      type_str));
 }
 
 isc::data::ConstElementPtr
@@ -280,7 +294,7 @@ D2Process::configure(isc::data::ConstElementPtr config_set, bool check_only) {
     if (HooksManager::calloutsPresent(Hooks.hooks_index_d2_srv_configured_)) {
         CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
 
-        callout_handle->setArgument("io_context", getIoService());
+        callout_handle->setArgument("io_context", getIOService());
         callout_handle->setArgument("json_config", config_set);
         callout_handle->setArgument("server_config",
                                     getD2CfgMgr()->getD2CfgContext());
@@ -295,9 +309,20 @@ D2Process::configure(isc::data::ConstElementPtr config_set, bool check_only) {
             LOG_ERROR(d2_logger, DHCP_DDNS_CONFIGURED_CALLOUT_DROP)
                 .arg(error);
             reconf_queue_flag_ = false;
-            answer = isc::config::createAnswer(1, error);
+            answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, error);
             return (answer);
         }
+    }
+
+    /// Let postponed hook initializations run.
+    try {
+        // Handle events registered by hooks using external IOService objects.
+        IOServiceMgr::instance().pollIOServices();
+    } catch (const std::exception& ex) {
+        std::ostringstream err;
+        err << "Error initializing hooks: "
+            << ex.what();
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
     }
 
     // If we are here, configuration was valid, at least it parsed correctly
@@ -405,8 +430,10 @@ D2Process::reconfigureQueueMgr() {
         /// Warn the user if the server address is not the loopback.
         /// @todo Remove this once we provide a secure mechanism.
         std::string ip_address = d2_params->getIpAddress().toText();
-        if (ip_address != "127.0.0.1" && ip_address != "::1") {
-            LOG_WARN(d2_logger, DHCP_DDNS_NOT_ON_LOOPBACK).arg(ip_address);
+        if (ip_address == "0.0.0.0" || ip_address == "::") {
+            LOG_WARN(d2_logger, DHCP_DDNS_LISTENING_ON_ALL_INTERFACES).arg(ip_address);
+        } else if (ip_address != "127.0.0.1" && ip_address != "::1") {
+           LOG_WARN(d2_logger, DHCP_DDNS_NOT_ON_LOOPBACK).arg(ip_address);
         }
 
         // Instantiate the listener.
@@ -436,6 +463,9 @@ D2Process::reconfigureQueueMgr() {
 }
 
 D2Process::~D2Process() {
+    queue_mgr_->stopListening();
+    getIOService()->stopAndPoll();
+    queue_mgr_->removeListener();
 }
 
 D2CfgMgrPtr
@@ -447,7 +477,7 @@ D2Process::getD2CfgMgr() {
 }
 
 const char* D2Process::getShutdownTypeStr(const ShutdownType& type) {
-    const char* str = "invalid";
+    const char* str;
     switch (type) {
     case SD_NORMAL:
         str = "normal";
@@ -459,6 +489,7 @@ const char* D2Process::getShutdownTypeStr(const ShutdownType& type) {
         str = "now";
         break;
     default:
+        str = "invalid";
         break;
     }
 
@@ -496,6 +527,13 @@ D2Process::reconfigureCommandChannel() {
 
     // Commit the new socket configuration.
     current_control_socket_ = sock_cfg;
+
+    // HTTP control socket is simpler: just (re)configure it.
+
+    // Get new config.
+    HttpCommandConfigPtr http_config =
+        getD2CfgMgr()->getHttpControlSocketInfo();
+    HttpCommandMgr::instance().configure(http_config);
 }
 
 } // namespace isc::d2

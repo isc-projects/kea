@@ -10,9 +10,9 @@
     "cmd-syntax": [
         "{",
         "    \"command\": \"ha-scopes\",",
-        "    \"service\": [ <service, typically 'dhcp4' or 'dhcp6'> ],",
         "    \"arguments\": {",
-        "        \"scopes\": [ \"HA_server1\", \"HA_server2\" ]",
+        "        \"scopes\": [ \"HA_server1\", \"HA_server2\" ],",
+        "        \"server-name\": \"server1\"",
         "    }",
         "}"
     ],

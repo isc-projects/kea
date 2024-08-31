@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -27,6 +27,11 @@ using namespace std;
 
 namespace isc {
 namespace asiolink {
+
+size_t
+IOAddress::Hash::operator()(const IOAddress &io_address) const {
+    return (hash_value(io_address));
+}
 
 // XXX: we cannot simply construct the address in the initialization list,
 // because we'd like to throw our own exception on failure.
@@ -57,8 +62,7 @@ IOAddress
 IOAddress::fromBytes(short family, const uint8_t* data) {
     if (data == NULL) {
         isc_throw(BadValue, "NULL pointer received.");
-    } else
-    if ( (family != AF_INET) && (family != AF_INET6) ) {
+    } else if ((family != AF_INET) && (family != AF_INET6)) {
         isc_throw(BadValue, "Invalid family type. Only AF_INET and AF_INET6"
                   << "are supported");
     }
@@ -185,5 +189,5 @@ hash_value(const IOAddress& address) {
     }
 }
 
-} // namespace asiolink
-} // namespace isc
+}  // namespace asiolink
+}  // namespace isc

@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -44,6 +44,18 @@ TEST_F(PktFilterInetTest, isDirectResponseSupported) {
     EXPECT_FALSE(pkt_filter.isDirectResponseSupported());
 }
 
+// This test verifies that the PktFilterInet class reports its capability
+// to create SOCKET_RECEIVED events.
+TEST_F(PktFilterInetTest, isSocketReceivedTimeSupported) {
+    // Create object under test.
+    PktFilterInet pkt_filter;
+#ifdef SO_TIMESTAMP
+    EXPECT_TRUE(pkt_filter.isSocketReceivedTimeSupported());
+#else
+    EXPECT_FALSE(pkt_filter.isSocketReceivedTimeSupported());
+#endif
+}
+
 // This test verifies that the INET datagram socket is correctly opened and
 // bound to the appropriate address and port.
 TEST_F(PktFilterInetTest, openSocket) {
@@ -83,6 +95,9 @@ TEST_F(PktFilterInetTest, send) {
     int result = -1;
     ASSERT_NO_THROW(result = pkt_filter.send(iface, sock_info_.sockfd_, test_message_));
     ASSERT_EQ(0, result);
+
+    // Verify that we have only the RESPONSE_SENT event with a good timestamp.
+    testPktEvents(test_message_, start_time_, std::list<std::string>{PktEvent::RESPONSE_SENT});
 
     // Read the data from socket.
     fd_set readfds;
@@ -143,6 +158,9 @@ TEST_F(PktFilterInetTest, receive) {
     // Check if the received message is correct.
     testRcvdMessage(rcvd_pkt);
     testRcvdMessageAddressPort(rcvd_pkt);
+
+    // Verify that the packet event stack is as expected.
+    testReceivedPktEvents(rcvd_pkt, pkt_filter.isSocketReceivedTimeSupported());
 }
 
 } // anonymous namespace

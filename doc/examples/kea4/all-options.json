@@ -13,7 +13,9 @@
 
 {
   "Dhcp4": {
-    /*                Data for all standard option definitions                */
+    /*
+                      Data for all standard option definitions
+    */
     // Option data defined globally
     "option-data": [
       /*
@@ -263,7 +265,7 @@
       // Type: array of {IPv4 address}
       {
         "code": 21,
-        "data": "192.0.2.21, 192.0.2.22",
+        "data": "10.229.0.128, 255.255.255.128, 10.27.129.0, 255.255.255.0",
         "name": "policy-filter"
       },
 
@@ -687,7 +689,7 @@
       // Type: string
       {
         "code": 56,
-        "data": "Error: here's a DHCPNAK!",
+        "data": "Error: here is a DHCPNAK!",
         "name": "dhcp-message"
       },
 
@@ -1229,7 +1231,7 @@
       {
         "code": 114,
         "data": "https://default.example.org",
-        "name": "default-url"
+        "name": "v4-captive-portal"
       },
 
       // Option code 115 is unassigned.
@@ -1293,7 +1295,39 @@
         "name": "domain-search"
       },
 
-      // Option codes 120-123 are not defined in Kea.
+      // Option code 120 is not defined in Kea.
+
+      /*
+        Code Len Destination 1    Router 1
+      +-----+---+----+-----+----+----+----+----+----+
+      | 121 | n | d1 | ... | dN | r1 | r2 | r3 | r4 |
+      +-----+---+----+-----+----+----+----+----+----+
+
+       Destination 2       Router 2
+      +----+-----+----+----+----+----+----+
+      | d1 | ... | dN | r1 | r2 | r3 | r4 |
+      +----+-----+----+----+----+----+----+
+
+      Destination 1...N     Destination descriptors - describe the IP
+                            subnet number and subnet mask of a particular
+                            destination using a compact encoding. This
+                            encoding consists of one octet describing
+                            the width of the subnet mask, followed by all
+                            the significant octets of the subnet number.
+
+      Router 1...N          The IP address of the router that should
+                            be used to reach that destination.
+      */
+      // Type: internal
+      {
+        "code": 121,
+        // please mind the convenience notation used:
+        // subnet1 - router1 IP addr, subnet2 - router2 IP addr, ..., subnetN - routerN IP addr
+        "data": "10.229.0.128/25 - 10.229.0.1, 10.198.122.47/32 - 10.198.122.1",
+        "name": "classless-static-route"
+      },
+
+      // Option codes 122-123 are not defined in Kea.
 
       /*
                            1 1 1 1 1 1
@@ -1381,8 +1415,8 @@
         "name": "vivso-suboptions"
       },
 
-    // Option codes 126-127 are unassigned.
-    // Option codes 128-135 are not defined in Kea.
+      // Option codes 126-127 are unassigned.
+      // Option codes 128-135 are not defined in Kea.
 
       /*
       0                   1
@@ -1473,7 +1507,43 @@
         "name": "sip-ua-cs-domains"
       },
 
-      // Option codes 142-145 are not defined in Kea.
+      // Option code 142 is not defined in Kea.
+
+      /*
+       0                             1
+       0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+      +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+      |   option-code (143)   |     option-length     |
+      +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+      .                                               .
+      .    bootstrap-server-list (variable length)    .
+      .                                               .
+      +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+
+      option-code: OPTION_V4_SZTP_REDIRECT (143)
+
+      option-length: The option length in octets.
+
+      bootstrap-server-list: A list of servers for the
+       client to attempt contacting, in order to obtain
+       further bootstrapping data. Each URI entry in the
+       bootstrap-server-list is structured as follows:
+
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-...-+-+-+-+-+-+-+
+      |       uri-length              |          URI                  |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-...-+-+-+-+-+-+-+
+
+      uri-length: 2 octets long; specifies the length of the URI data.
+      URI: URI of the SZTP bootstrap server.
+      */
+      // Type: array of {tuple}
+      {
+        "code": 143,
+        "data": "https://sztp1.example.com:8443, https://sztp2.example.com:8444",
+        "name": "v4-sztp-redirect"
+      },
+
+      // Option codes 144-145 are not defined in Kea.
 
       // Type: uint8, IPv4 address, IPv4 address, array of {FQDN}
       {
@@ -1491,14 +1561,99 @@
         "name": "v4-portparams"
       },
 
-      // Type: string
+      // Option codes 160-161 are unassigned.
+
+      /*
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      | OPTION_V4_DNR |     Length    |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      ~      DNR Instance Data #1     ~
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+   ---
+      .              ...              .    |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ optional
+      ~      DNR Instance Data #n     ~    |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+   ---
+
+      DNR Instance Data Format:
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |    DNR Instance Data Length   |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |       Service Priority        |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |   ADN Length  |               |
+      +-+-+-+-+-+-+-+-+               |
+      ~  authentication-domain-name   ~
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |  Addr Length  |               |
+      +-+-+-+-+-+-+-+-+               |
+      ~        IPv4 Address(es)       ~
+      |               +-+-+-+-+-+-+-+-+
+      |               |               |
+      +-+-+-+-+-+-+-+-+               |
+      ~Service Parameters (SvcParams) ~
+      |                               |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      Code:  OPTION_V4_DNR (162).
+
+      Length:  Indicates the length of the enclosed data in octets.
+
+      DNR Instance Data:  Includes the configuration data of an encrypted
+         DNS resolver. When several encrypted DNS resolvers are to be included, the "DNR
+         Instance Data" field is repeated.
+
+      DNR Instance Data Length:  Length of all following data in octets.
+         This field is set to ('ADN Length' + 3) when only an ADN is
+         provided for a DNR instance.
+
+      Service Priority:  The priority of this instance compared to other
+         DNR instances.  This 16-bit unsigned integer is interpreted
+         following the rules specified in Section 2.4.1 of
+         [RFC9460].
+
+      ADN Length:  Length of the authentication-domain-name in octets.
+
+      authentication-domain-name (variable length):  The authentication
+         domain name of the encrypted DNS resolver.  This field is
+         formatted as specified in Section 10 of [RFC8415].
+
+      Addr Length:  Length of included IPv4 addresses in octets.  When
+         present, it MUST be a multiple of 4.
+
+      IPv4 Address(es) (variable length):  Indicates one or more IPv4
+         addresses to reach the encrypted DNS resolver.  Both private and
+         public IPv4 addresses can be included in this field.
+
+      Service Parameters (SvcParams) (variable length):  Specifies a set of
+         service parameters that are encoded following the rules in
+         Section 2.2 of [RFC9460].
+         The length of this field is ('DNR Instance Data Length' - 4 - 'ADN
+         Length' - 'Addr Length').
+
+      Note that "Addr Length", "IPv4 Address(es)", and "Service Parameters
+      (SvcParams)" fields are not present if the ADN-only mode is used.
+      */
+      // Type: internal
       {
-        "code": 160,
-        "data": "portal",
-        "name": "v4-captive-portal"
+        // DNR option may be configured using convenient notation. DNR Instances must be delimited with pipe "|" char.
+        // For each DNR Instance comma delimited fields must be provided:
+        // - service priority (mandatory),
+        // - ADN (mandatory),
+        // - IP address(es) (optional - if more than one - they must be space-separated)
+        // - SvcParams (optional - if more than one - they must be space-separated;
+        //   to provide more than one alpn-id separate them with double-backslash escaped comma like in the
+        //   example below).
+        // Note: whenever pipe "|" char needs to be used not as the delimiter, it must be escaped with
+        //       double backslash, like in case of escaped commas in alpn-ids list.
+        // Basing on the config, Kea will encode the option according to RFC9463.
+        "code": 162,
+        "name": "v4-dnr",
+        "data": "1, resolver.example., 10.2.3.4 10.0.4.5, alpn=dot\\,doq\\,h2\\,h3 dohpath=/q{?dns} | 2, resolver.example., 10.0.5.6, alpn=dot port=8530 | 3, fooexp.resolver.example."
       },
 
-      // Option codes 161-209 are unassigned.
+      // Option codes 163-209 are unassigned.
 
       /*
       0                   1                   2                   3
@@ -1580,7 +1735,9 @@
       // Option codes 220-221 are not defined in Kea.
       // Option codes 222-254 are unassigned
 
-      /*                         Custom option data                           */
+      /*
+                                 Custom option data
+      */
       // See "option-def" below for the definitions.
       {
         "code": 1,
@@ -1606,7 +1763,9 @@
       }
     ],
 
-    /*                       Custom option definitions                        */
+    /*
+                             Custom option definitions
+    */
     // For kea-dhcp4, custom option definitions can be global or in a client
     // class.
     "option-def": [
@@ -1663,7 +1822,9 @@
     ],
 
     "subnet4": [
-      /*                         DOCSIS3 option data                          */
+      /*
+                                 DOCSIS3 option data
+      */
       // Headers are as defined in CL-SP-CANN-DHCP-Reg-I16-200715.
       // "space" is required to be explicitly defined as "docsis3-v4"
       {
@@ -1720,6 +1881,7 @@
             "space": "docsis3-v4"
           }
         ],
+        "id": 1,
         "subnet": "192.0.2.0/24"
       }
     ]

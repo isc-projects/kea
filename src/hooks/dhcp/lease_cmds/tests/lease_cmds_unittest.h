@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,6 +16,7 @@
 #include <dhcpsrv/resource_handler.h>
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
+#include <process/daemon.h>
 #include <stats/stats_mgr.h>
 #include <testutils/user_context_utils.h>
 #include <testutils/multi_threading_utils.h>
@@ -47,6 +48,16 @@ public:
     /// Removes files that may be left over from previous tests
     virtual ~LibLoadTest() {
         unloadLibs();
+    }
+
+    /// @brief Set family.
+    void setFamily(uint16_t family) {
+        isc::dhcp::CfgMgr::instance().setFamily(family);
+        if (family == AF_INET) {
+            isc::process::Daemon::setProcName("kea-dhcp4");
+        } else {
+            isc::process::Daemon::setProcName("kea-dhcp6");
+        }
     }
 
     /// @brief Adds library/parameters to list of libraries to be loaded
@@ -166,24 +177,23 @@ public:
     /// @param cms a vector of string with command names
     void testCommands(const std::vector<std::string> cmds) {
         // The commands should not be registered yet.
-        for (auto cmd = cmds.begin(); cmd != cmds.end(); ++cmd) {
-            checkCommandRegistered(*cmd, false);
+        for (auto const& cmd : cmds) {
+            checkCommandRegistered(cmd, false);
         }
 
         loadLib();
 
         // The commands should be available after library was loaded.
-        for (auto cmd = cmds.begin(); cmd != cmds.end(); ++cmd) {
-            checkCommandRegistered(*cmd, true);
+        for (auto const& cmd : cmds) {
+            checkCommandRegistered(cmd, true);
         }
 
         unloadLibs();
 
         // and the commands should be gone now.
-        for (auto cmd = cmds.begin(); cmd != cmds.end(); ++cmd) {
-            checkCommandRegistered(*cmd, false);
+        for (auto const& cmd : cmds) {
+            checkCommandRegistered(cmd, false);
         }
-
     }
 
     // Check that the library can be loaded and unloaded multiple times.
@@ -300,7 +310,7 @@ public:
                                       const isc::dhcp::SubnetID& subnet_id,
                                       const uint8_t hw_address_pattern,
                                       const uint8_t client_id_pattern,
-                                      bool declined = false) {
+                                      bool declined = false, uint32_t pool_id = 0) {
         isc::dhcp::Lease4Ptr lease(new isc::dhcp::Lease4());
 
         lease->addr_ = isc::asiolink::IOAddress(ip_address);
@@ -320,6 +330,7 @@ public:
         lease->fqdn_fwd_ = false;
         lease->fqdn_rev_ = true;
         lease->hostname_ = "myhost.example.com.";
+        lease->pool_id_ = pool_id;
 
         return (lease);
     }
@@ -340,7 +351,7 @@ public:
     isc::dhcp::Lease6Ptr createLease6(const std::string& ip_address,
                                       const isc::dhcp::SubnetID& subnet_id,
                                       const uint8_t duid_pattern,
-                                      bool declined = false) {
+                                      bool declined = false, uint32_t pool_id = 0) {
         isc::dhcp::Lease6Ptr lease(new isc::dhcp::Lease6());
 
         lease->addr_ = isc::asiolink::IOAddress(ip_address);
@@ -361,6 +372,7 @@ public:
         lease->fqdn_fwd_ = false;
         lease->fqdn_rev_ = true;
         lease->hostname_ = "myhost.example.com.";
+        lease->pool_id_ = pool_id;
 
         return (lease);
     }
@@ -378,7 +390,12 @@ public:
     void initLeaseMgr(bool v6, bool insert_lease, bool declined = false) {
         isc::dhcp::LeaseMgrFactory::destroy();
         std::ostringstream s;
-        s << "type=memfile persist=false " << (v6 ? "universe=6" : "universe=4");
+        s << "type=memfile persist=false ";
+        if (v6) {
+            s << "universe=6 extended-info-tables=true";
+        } else {
+            s << "universe=4";
+        }
         isc::dhcp::LeaseMgrFactory::create(s.str());
 
         lmptr_ = &(isc::dhcp::LeaseMgrFactory::instance());
@@ -404,7 +421,7 @@ public:
         if (insert_lease) {
             if (v6) {
                 lmptr_->addLease(createLease6("2001:db8:1::1", 66, 0x42, declined));
-                lmptr_->addLease(createLease6("2001:db8:1::2", 66, 0x56, declined));
+                lmptr_->addLease(createLease6("2001:db8:1::2", 66, 0x56, declined, 5));
                 lmptr_->addLease(createLease6("2001:db8:2::1", 99, 0x42, declined));
                 lmptr_->addLease(createLease6("2001:db8:2::2", 99, 0x56, declined));
                 if (declined) {
@@ -430,7 +447,7 @@ public:
                     int64_t(2));
             } else {
                 lmptr_->addLease(createLease4("192.0.2.1", 44, 0x08, 0x42, declined));
-                lmptr_->addLease(createLease4("192.0.2.2", 44, 0x09, 0x56, declined));
+                lmptr_->addLease(createLease4("192.0.2.2", 44, 0x09, 0x56, declined, 5));
                 lmptr_->addLease(createLease4("192.0.3.1", 88, 0x08, 0x42, declined));
                 lmptr_->addLease(createLease4("192.0.3.2", 88, 0x09, 0x56, declined));
                 if (declined) {
@@ -519,6 +536,7 @@ public:
 
     /// @brief Disables DHCP-DDNS updates.
     void disableD2() {
+        d2_mgr_.stop();
         d2_mgr_.stopSender();
         // Default constructor creates a config with DHCP-DDNS updates
         // disabled.

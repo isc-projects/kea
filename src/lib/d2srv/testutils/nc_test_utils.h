@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -42,8 +42,8 @@ public:
         INVALID_TSIG  // Generate a response with the wrong TSIG key
     };
 
-    /// @brief Reference to IOService to use for IO processing.
-    asiolink::IOService& io_service_;
+    /// @brief The IO service used to handle events.
+    asiolink::IOServicePtr io_service_;
 
     /// @brief IP address at which to listen for requests.
     const asiolink::IOAddress& address_;
@@ -72,12 +72,15 @@ public:
     /// NULL TSIG is not used.
     D2TsigKeyPtr tsig_key_;
 
+    /// @brief Flag which indicated that the server has been stopped.
+    bool stopped_;
+
     /// @brief Constructor
     ///
     /// @param io_service IOService to be used for socket IO.
     /// @param address  IP address at which the server should listen.
     /// @param port Port number at which the server should listen.
-    FauxServer(asiolink::IOService& io_service, asiolink::IOAddress& address,
+    FauxServer(asiolink::IOServicePtr& io_service, asiolink::IOAddress& address,
                size_t port);
 
     /// @brief Constructor
@@ -85,10 +88,13 @@ public:
     /// @param io_service IOService to be used for socket IO.
     /// @param server DnsServerInfo of server the DNS server. This supplies the
     /// server's ip address and port.
-    FauxServer(asiolink::IOService& io_service, DnsServerInfo& server);
+    FauxServer(asiolink::IOServicePtr& io_service, DnsServerInfo& server);
 
     /// @brief Destructor
     virtual ~FauxServer();
+
+    /// @brief Stop the server
+    void stop();
 
     /// @brief Initiates an asynchronous receive
     ///
@@ -98,8 +104,8 @@ public:
     /// @param response_mode Selects how the server responds to a request
     /// @param response_rcode The Rcode value set in the response. Not used
     /// for all modes.
-    void receive (const ResponseMode& response_mode,
-                  const dns::Rcode& response_rcode=dns::Rcode::NOERROR());
+    void receive(const ResponseMode& response_mode,
+                 const dns::Rcode& response_rcode=dns::Rcode::NOERROR());
 
     /// @brief Socket IO Completion callback
     ///
@@ -143,7 +149,7 @@ public:
 class TimedIO  {
 public:
     asiolink::IOServicePtr io_service_;
-    asiolink::IntervalTimer timer_;
+    asiolink::IntervalTimerPtr timer_;
     int run_time_;
 
     /// @brief Constructor
@@ -161,10 +167,10 @@ public:
     ///
     /// This method first polls IOService to run any ready handlers.  If no
     /// handlers are ready, it starts the internal time to run for the given
-    /// amount of time and invokes service's run_one method.  This method
+    /// amount of time and invokes service's runOne method.  This method
     /// blocks until at least one handler executes or the IO Service is stopped.
     /// Upon completion of this method the timer is cancelled.  Should the
-    /// timer expires prior to run_one returning, the timesUp handler will be
+    /// timer expires prior to runOne returning, the timesUp handler will be
     /// invoked which stops the IO service and fails the test.
     ///
     /// Note that this method closely mimics the runIO method in D2Process.
@@ -490,6 +496,75 @@ extern void checkContext(NameChangeTransactionPtr trans, const int exp_state,
 
 /// @brief Macro for calling checkContext() that supplies invocation location
 #define CHECK_CONTEXT(a,b,c) checkContext(a,b,c,__FILE__,__LINE__)
+
+/// @brief Verifies a forward mapping replacement DNS update request
+/// with the "check-exists-with-dhcid" conflict resolution mode.
+///
+/// Tests that the DNS Update request for a given transaction, is correct for
+/// replacing a forward DNS mapping with the "check-exists-with-dhcid"
+/// conflict resolution mode.
+///
+/// @param tran Transaction containing the request to be verified.
+extern void checkExistsReplaceFwdAddressRequest(NameChangeTransaction& tran);
+/// @brief Verifies a forward mapping removal DNS update request
+/// with the "check-exists-with-dhcid" conflict resolution mode.
+///
+/// Tests that the DNS Update request for a given transaction, is correct for
+/// removing a forward DNS mapping with the "check-exists-with-dhcid"
+/// conflict resolution mode.
+///
+/// @param tran Transaction containing the request to be verified.
+extern void checkExistsRemoveFwdAddressRequest(NameChangeTransaction& tran);
+
+/// @brief Verifies a forward RR removal DNS update request
+/// with the "check-exists-with-dhcid" conflict resolution mode.
+///
+/// Tests that the DNS Update request for a given transaction, is correct for
+/// removing a forward RR DNS entries with the "check-exists-with-dhcid"
+/// conflict resolution mode.
+///
+/// @param tran Transaction containing the request to be verified.
+extern void checkExistsRemoveFwdRRsRequest(NameChangeTransaction& tran);
+
+/// @brief Verifies a simple forward mapping replacement DNS update request
+/// with the "no-check-without-dhcid" conflict resolution mode.
+///
+/// Tests that the DNS Update request for a given transaction, is correct for
+/// replacing a forward DNS mapping with the "no-check-without-dhcid"
+/// conflict resolution mode.
+///
+/// @param tran Transaction containing the request to be verified.
+extern void checkSimpleReplaceFwdAddressWithoutDHCIDRequest(NameChangeTransaction& tran);
+
+/// @brief Verifies a simple forward RR removal DNS update request
+/// with the "no-check-without-dhcid" conflict resolution mode.
+///
+/// Tests that the DNS Update request for a given transaction, is correct for
+/// removing forward RR DNS entries with the "no-check-without-dhcid"
+/// conflict resolution mode.
+///
+/// @param tran Transaction containing the request to be verified.
+extern void checkSimpleRemoveFwdRRsWithoutDHCIDRequest(NameChangeTransaction& tran);
+
+/// @brief Verifies a reverse mapping replacement DNS update request
+/// with the "no-check-without-dhcid" conflict resolution mode.
+///
+/// Tests that the DNS Update request for a given transaction, is correct for
+/// replacing a reverse DNS mapping with the "no-check-without-dhcid"
+/// conflict resolution mode.
+///
+/// @param tran Transaction containing the request to be verified.
+extern void checkSimpleReplaceRevPtrsWithoutDHCIDRequest(NameChangeTransaction& tran);
+
+/// @brief Verifies a simple reverse RR removal DNS update request
+/// with the "no-check-without-dhcid" conflict resolution mode.
+///
+/// Tests that the DNS Update request for a given transaction, is correct for
+/// removing reverse RR DNS entries with the "no-check-without-dhcid"
+/// conflict resolution mode.
+///
+/// @param tran Transaction containing the request to be verified.
+extern void  checkSimpleRemoveRevPtrsWithoutDHCIDRequest(NameChangeTransaction& tran);
 
 } // namespace isc::d2
 } // namespace isc

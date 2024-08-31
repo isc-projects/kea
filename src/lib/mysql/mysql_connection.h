@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -256,10 +256,21 @@ public:
     /// @brief Destructor
     virtual ~MySqlConnection();
 
+    /// @brief Convert MySQL library parameters to kea-admin parameters.
+    ///
+    /// @param params input MySQL parameters
+    ///
+    /// @return vector of kea-admin parameters
+    static std::vector<std::string>
+    toKeaAdminParameters(ParameterMap const& params);
+
     /// @brief Get the schema version.
     ///
     /// @param parameters A data structure relating keywords and values
     ///        concerned with the database.
+    /// @param ac An IOServiceAccessor object.
+    /// @param cb The dbReconnect callback.
+    /// @param timer_name The DB reconnect timer name.
     ///
     /// @return Version number as a pair of unsigned integers.  "first" is the
     ///         major version number, "second" the minor number.
@@ -267,7 +278,36 @@ public:
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     static std::pair<uint32_t, uint32_t>
-    getVersion(const ParameterMap& parameters);
+    getVersion(const ParameterMap& parameters,
+               const IOServiceAccessorPtr& ac = IOServiceAccessorPtr(),
+               const DbCallback& cb = DbCallback(),
+               const std::string& timer_name = std::string());
+
+    /// @brief Retrieve schema version, validate it against the hardcoded
+    ///     version, and attempt to initialize the schema if there is an
+    ///     error during retrieval.
+    ///
+    /// Properly handles retrying of the database connection.
+    ///
+    /// @param parameters A data structure relating keywords and values
+    ///     concerned with the database.
+    /// @param cb The dbReconnect callback.
+    /// @param timer_name The DB reconnect timer name.
+    ///
+    /// @throw isc::db::ScehamInitializationFailed if the initialization fails
+    static void
+    ensureSchemaVersion(const ParameterMap& parameters,
+                        const DbCallback& cb = DbCallback(),
+                        const std::string& timer_name = std::string());
+
+    /// @brief Initialize schema.
+    ///
+    /// @param parameters A data structure relating keywords and values
+    ///     concerned with the database.
+    ///
+    /// @throw isc::db::ScehamInitializationFailed if the initialization fails
+    static void
+    initializeSchema(const ParameterMap& parameters);
 
     /// @brief Prepare Single Statement
     ///
@@ -301,8 +341,23 @@ public:
     void prepareStatements(const TaggedStatement* start_statement,
                            const TaggedStatement* end_statement);
 
-    /// @brief Clears prepared statements and text statements.
-    void clearStatements();
+    /// @brief Returns a prepared statement by an index
+    ///
+    /// @tparam StatementIndex Type of the statement index enum.
+    ///
+    /// @param index Statement index.
+    /// @return Pointer to the prepared statement.
+    /// @throw isc::db::DbConnectionUnusable when the @c mysql pointer in the
+    ///        returned statement is NULL; it may be the result of the database
+    ///        connectivity loss.
+    template<typename StatementIndex>
+    MYSQL_STMT* getStatement(StatementIndex index) const {
+        if (statements_[index]->mysql == 0) {
+            isc_throw(db::DbConnectionUnusable,
+                      "MySQL pointer for the prepared statement is NULL as a result of connectivity loss");
+        }
+        return (statements_[index]);
+    }
 
     /// @brief Open Database
     ///
@@ -429,38 +484,38 @@ public:
         checkUnusable();
         // Extract native input bindings.
         std::vector<MYSQL_BIND> in_bind_vec;
-        for (MySqlBindingPtr in_binding : in_bindings) {
+        for (const MySqlBindingPtr& in_binding : in_bindings) {
             in_bind_vec.push_back(in_binding->getMySqlBinding());
         }
 
         int status = 0;
         if (!in_bind_vec.empty()) {
             // Bind parameters to the prepared statement.
-            status = mysql_stmt_bind_param(statements_[index],
+            status = mysql_stmt_bind_param(getStatement(index),
                                            in_bind_vec.empty() ? 0 : &in_bind_vec[0]);
             checkError(status, index, "unable to bind parameters for select");
         }
 
         // Bind variables that will receive results as well.
         std::vector<MYSQL_BIND> out_bind_vec;
-        for (MySqlBindingPtr out_binding : out_bindings) {
+        for (const MySqlBindingPtr& out_binding : out_bindings) {
             out_bind_vec.push_back(out_binding->getMySqlBinding());
         }
         if (!out_bind_vec.empty()) {
-            status = mysql_stmt_bind_result(statements_[index], &out_bind_vec[0]);
+            status = mysql_stmt_bind_result(getStatement(index), &out_bind_vec[0]);
             checkError(status, index, "unable to bind result parameters for select");
         }
 
         // Execute query.
-        status = MysqlExecuteStatement(statements_[index]);
+        status = MysqlExecuteStatement(getStatement(index));
         checkError(status, index, "unable to execute");
 
-        status = mysql_stmt_store_result(statements_[index]);
+        status = mysql_stmt_store_result(getStatement(index));
         checkError(status, index, "unable to set up for storing all results");
 
         // Fetch results.
-        MySqlFreeResult fetch_release(statements_[index]);
-        while ((status = mysql_stmt_fetch(statements_[index])) ==
+        MySqlFreeResult fetch_release(getStatement(index));
+        while ((status = mysql_stmt_fetch(getStatement(index))) ==
                MLM_MYSQL_FETCH_SUCCESS) {
             try {
                 // For each returned row call user function which should
@@ -506,17 +561,17 @@ public:
                      const MySqlBindingCollection& in_bindings) {
         checkUnusable();
         std::vector<MYSQL_BIND> in_bind_vec;
-        for (MySqlBindingPtr in_binding : in_bindings) {
+        for (const MySqlBindingPtr& in_binding : in_bindings) {
             in_bind_vec.push_back(in_binding->getMySqlBinding());
         }
 
         // Bind the parameters to the statement
-        int status = mysql_stmt_bind_param(statements_[index],
+        int status = mysql_stmt_bind_param(getStatement(index),
                                            in_bind_vec.empty() ? 0 : &in_bind_vec[0]);
         checkError(status, index, "unable to bind parameters");
 
         // Execute the statement
-        status = MysqlExecuteStatement(statements_[index]);
+        status = MysqlExecuteStatement(getStatement(index));
 
         if (status != 0) {
             // Failure: check for the special case of duplicate entry.
@@ -550,17 +605,17 @@ public:
                                const MySqlBindingCollection& in_bindings) {
         checkUnusable();
         std::vector<MYSQL_BIND> in_bind_vec;
-        for (MySqlBindingPtr in_binding : in_bindings) {
+        for (const MySqlBindingPtr& in_binding : in_bindings) {
             in_bind_vec.push_back(in_binding->getMySqlBinding());
         }
 
         // Bind the parameters to the statement
-        int status = mysql_stmt_bind_param(statements_[index],
+        int status = mysql_stmt_bind_param(getStatement(index),
                                            in_bind_vec.empty() ? 0 : &in_bind_vec[0]);
         checkError(status, index, "unable to bind parameters");
 
         // Execute the statement
-        status = MysqlExecuteStatement(statements_[index]);
+        status = MysqlExecuteStatement(getStatement(index));
 
         if (status != 0) {
             // Failure: check for the special case of duplicate entry.
@@ -581,7 +636,7 @@ public:
         }
 
         // Let's return how many rows were affected.
-        return (static_cast<uint64_t>(mysql_stmt_affected_rows(statements_[index])));
+        return (static_cast<uint64_t>(mysql_stmt_affected_rows(getStatement(index))));
     }
 
     /// @brief Commits current transaction
@@ -712,11 +767,32 @@ public:
         return (cipher ? std::string(cipher) : "");
     }
 
+private:
+
+    /// @brief Convenience function parsing and setting an integer parameter,
+    /// if it exists.
+    ///
+    /// If the parameter is not present, this function doesn't change the @c value.
+    /// Otherwise, it tries to convert the parameter to the type @c T. Finally,
+    /// it checks if the converted number is within the specified range.
+    ///
+    /// @param name Parameter name.
+    /// @param min Expected minimal value.
+    /// @param max Expected maximal value.
+    /// @param [out] value Reference to a value returning the parsed parameter.
+    /// @tparam T Parameter type.
+    /// @throw BadValue if the parameter is not a valid number or if it is out
+    /// of range.
+    template<typename T>
+    void setIntParameterValue(const std::string& name, int64_t min, int64_t max, T& value);
+
     /// @brief Prepared statements
     ///
-    /// This field is public, because it is used heavily from MySqlConnection
-    /// and will be from MySqlHostDataSource.
+    /// The statements should be accessed using the @c getStatement method because
+    /// it checks whether the returned statement is valid.
     std::vector<MYSQL_STMT*> statements_;
+
+public:
 
     /// @brief Raw text of statements
     ///
@@ -752,6 +828,10 @@ public:
 
     /// @brief TLS flag (true when TLS was required, false otherwise).
     bool tls_;
+
+    /// @brief Holds location to kea-admin. By default, it points to kea-admin
+    /// from installation. In tests, it points to kea-admin from sources.
+    static std::string KEA_ADMIN_;
 };
 
 } // end of isc::db namespace

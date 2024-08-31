@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -64,7 +64,7 @@ public:
     /// if the queue is empty.
     virtual PacketTypePtr dequeuePacket() {
         eatPackets(QueueEnd::FRONT);
-        return(popPacket());
+        return (popPacket());
     }
 
     /// @brief Determines if a packet should be discarded.
@@ -164,7 +164,7 @@ public:
     /// @brief Returns True if the queue is empty.
     virtual bool empty() const {
         std::lock_guard<std::mutex> lock(*mutex_);
-        return(queue_.empty());
+        return (queue_.empty());
     }
 
     /// @brief Returns the maximum number of packets allowed in the buffer.
@@ -204,7 +204,7 @@ public:
        data::ElementPtr info = PacketQueue<PacketTypePtr>::getInfo();
        info->set("capacity", data::Element::create(static_cast<int64_t>(getCapacity())));
        info->set("size", data::Element::create(static_cast<int64_t>(getSize())));
-       return(info);
+       return (info);
     }
 
 private:

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,8 +6,8 @@
 
 #include <config.h>
 
-#include "command_options_helper.h"
-#include "../test_control.h"
+#include <command_options_helper.h>
+#include <test_control.h>
 
 #include <asiolink/io_address.h>
 #include <exceptions/exceptions.h>
@@ -19,7 +19,6 @@
 #include <dhcp/option6_iaprefix.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/foreach.hpp>
 #include <boost/format.hpp>
 
 #include <algorithm>
@@ -1496,6 +1495,33 @@ TEST_F(TestControlTest, Packet6Relayed) {
     EXPECT_EQ(pkt6->relay_info_[0].msg_type_, DHCPV6_RELAY_FORW);
     EXPECT_EQ(pkt6->relay_info_[0].linkaddr_, tc.socket_.addr_);
     EXPECT_EQ(pkt6->relay_info_[0].peeraddr_, tc.socket_.addr_);
+}
+
+TEST_F(TestControlTest, Packet6RelayedWithRelayOpts) {
+    CommandOptions opt;
+    processCmdLine(opt, "perfdhcp -6 -l fake -A1 --or 1:32,00000E10 -L 10547 servers");
+    NakedTestControl tc(opt);
+    uint32_t transid = 123;
+    boost::shared_ptr<Pkt6> pkt6(new Pkt6(DHCPV6_SOLICIT, transid));
+    // Set packet's parameters.
+    tc.setDefaults6(pkt6);
+    // Validate if parameters have been set correctly.
+    EXPECT_EQ(tc.fake_sock_.iface_->getName(), pkt6->getIface());
+    EXPECT_EQ(tc.socket_.ifindex_, pkt6->getIndex());
+    EXPECT_EQ(DHCP6_CLIENT_PORT, pkt6->getLocalPort());
+    EXPECT_EQ(DHCP6_SERVER_PORT, pkt6->getRemotePort());
+    EXPECT_EQ(tc.socket_.addr_, pkt6->getLocalAddr());
+    EXPECT_EQ(asiolink::IOAddress("FF05::1:3"), pkt6->getRemoteAddr());
+    // Packet should be relayed.
+    EXPECT_EQ(pkt6->relay_info_.size(), 1);
+    EXPECT_EQ(pkt6->relay_info_[0].hop_count_, 0);
+    EXPECT_EQ(pkt6->relay_info_[0].msg_type_, DHCPV6_RELAY_FORW);
+    EXPECT_EQ(pkt6->relay_info_[0].linkaddr_, tc.socket_.addr_);
+    EXPECT_EQ(pkt6->relay_info_[0].peeraddr_, tc.socket_.addr_);
+    // Checking if relayed option is there.
+    OptionBuffer opt_data = pkt6->relay_info_[0].options_.find(32)->second->getData();
+    EXPECT_EQ(4, opt_data.size());
+    EXPECT_EQ("0x00000E10", pkt6->relay_info_[0].options_.find(32)->second->toHexString());
 }
 
 TEST_F(TestControlTest, Packet4Exchange) {

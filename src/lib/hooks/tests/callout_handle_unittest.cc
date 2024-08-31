@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -374,6 +374,35 @@ TEST_F(CalloutHandleTest, scopedState) {
 
     // Context should be intact.
     ASSERT_NO_THROW(handle->getContext("three", value));
+    EXPECT_EQ(three, value);
+}
+
+TEST_F(CalloutHandleTest, getOptionalContext) {
+    // Create pointer to the handle to be wrapped.
+    CalloutHandlePtr handle(new CalloutHandle(getCalloutManager()));
+
+    int two = 2;
+    int three = 3;
+    int value = 77;
+
+    // Should not find two or three. Value should not change.
+    EXPECT_FALSE(handle->getOptionalContext("two", value));
+    EXPECT_EQ(77, value);
+
+    EXPECT_FALSE(handle->getOptionalContext("three", value));
+    EXPECT_EQ(77, value);
+
+    // Set "two" in the context.
+    handle->setContext("two", two);
+
+    // Should find two but not three.
+    EXPECT_TRUE(handle->getOptionalContext("two", value));
+    EXPECT_EQ(two, value);
+    EXPECT_FALSE(handle->getOptionalContext("three", value));
+
+    // Should find three.
+    handle->setContext("three", three);
+    EXPECT_TRUE(handle->getOptionalContext("three", value));
     EXPECT_EQ(three, value);
 }
 

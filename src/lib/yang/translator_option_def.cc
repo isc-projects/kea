@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,82 +7,68 @@
 #include <config.h>
 
 #include <yang/translator_option_def.h>
-#include <yang/adaptor.h>
 #include <yang/yang_models.h>
+
 #include <sstream>
 
 using namespace std;
 using namespace isc::data;
+using namespace libyang;
 using namespace sysrepo;
 
 namespace isc {
 namespace yang {
 
-TranslatorOptionDef::TranslatorOptionDef(S_Session session,
+TranslatorOptionDef::TranslatorOptionDef(Session session,
                                          const string& model)
-    : TranslatorBasic(session, model) {
-}
-
-TranslatorOptionDef::~TranslatorOptionDef() {
+    : Translator(session, model) {
 }
 
 ElementPtr
-TranslatorOptionDef::getOptionDef(const string& xpath) {
+TranslatorOptionDef::getOptionDef(DataNode const& data_node) {
     try {
         if ((model_ == KEA_DHCP4_SERVER) ||
             (model_ == KEA_DHCP6_SERVER)) {
-            return (getOptionDefKea(xpath));
+            return (getOptionDefKea(data_node));
         }
-    } catch (const sysrepo_exception& ex) {
-        isc_throw(SysrepoError,
-                  "sysrepo error getting option definition at '" << xpath
-                  << "': " << ex.what());
+    } catch (Error const& ex) {
+        isc_throw(NetconfError,
+                  "getting option definition:"
+                  << ex.what());
     }
     isc_throw(NotImplemented,
               "getOptionDef not implemented for the model: " << model_);
 }
 
 ElementPtr
-TranslatorOptionDef::getOptionDefKea(const string& xpath) {
-    ConstElementPtr code = getItem(xpath + "/code");
-    ConstElementPtr name = getItem(xpath + "/name");
-    ConstElementPtr type = getItem(xpath + "/type");
-    ConstElementPtr space = getItem(xpath + "/space");
-    if (!code || !space) {
-        // Can't happen as code and space are the keys.
-        isc_throw(Unexpected, "getOptionDefKea requires code and space: "
-                  << xpath);
+TranslatorOptionDef::getOptionDefFromAbsoluteXpath(string const& xpath) {
+    try {
+        return getOptionDef(findXPath(xpath));
+    } catch (NetconfError const&) {
+        return ElementPtr();
     }
-    if (!name || !type) {
-        isc_throw(BadValue, "getOptionDefKea requires name and type: "
-                  << xpath);
-    }
+}
+
+ElementPtr
+TranslatorOptionDef::getOptionDefKea(DataNode const& data_node) {
     ElementPtr result = Element::createMap();
-    result->set("code", code);
-    result->set("name", name);
-    result->set("type", type);
-    result->set("space", getItem(xpath + "/space"));
-    ConstElementPtr record = getItem(xpath + "/record-types");
-    if (record) {
-        result->set("record-types", record);
-    }
-    ConstElementPtr array = getItem(xpath + "/array");
-    if (array) {
-        result->set("array", array);
-    }
-    ConstElementPtr encapsulate = getItem(xpath + "/encapsulate");
-    if (encapsulate) {
-        result->set("encapsulate", encapsulate);
-    }
-    ConstElementPtr context = getItem(xpath + "/user-context");
-    if (context) {
-        result->set("user-context", Element::fromJSON(context->stringValue()));
-    }
-    return (result);
+
+    getMandatoryLeaf(result, data_node, "code");
+    getMandatoryLeaf(result, data_node, "name");
+    getMandatoryLeaf(result, data_node, "space");
+    getMandatoryLeaf(result, data_node, "type");
+
+    checkAndGetLeaf(result, data_node, "array");
+    checkAndGetLeaf(result, data_node, "encapsulate");
+    checkAndGetLeaf(result, data_node, "record-types");
+
+    checkAndGetAndJsonifyLeaf(result, data_node, "user-context");
+
+    return (result->empty() ? ElementPtr() : result);
 }
 
 void
-TranslatorOptionDef::setOptionDef(const string& xpath, ConstElementPtr elem) {
+TranslatorOptionDef::setOptionDef(string const& xpath, ConstElementPtr elem) {
     try {
         if ((model_ == KEA_DHCP4_SERVER) ||
             (model_ == KEA_DHCP6_SERVER)) {
@@ -92,79 +78,71 @@ TranslatorOptionDef::setOptionDef(const string& xpath, ConstElementPtr elem) {
                       "setOptionDef not implemented for the model: "
                       << model_);
         }
-    } catch (const sysrepo_exception& ex) {
-        isc_throw(SysrepoError,
-                  "sysrepo error setting option definition '" << elem->str()
-                  << "' at '" << xpath << "': " << ex.what());
+    } catch (Error const& ex) {
+        isc_throw(NetconfError,
+                  "setting option definition '" << elem->str()
+                  << "' : " << ex.what());
     }
 }
 
 void
-TranslatorOptionDef::setOptionDefKea(const string& xpath,
+TranslatorOptionDef::setOptionDefKea(string const& xpath,
                                      ConstElementPtr elem) {
-    // Skip code and space as they are the keys.
-    ConstElementPtr name = elem->get("name");
-    if (!name) {
-        isc_throw(BadValue, "option definition with name: " << elem->str());
-    }
-    setItem(xpath + "/name", name, SR_STRING_T);
-    ConstElementPtr type = elem->get("type");
-    if (!type) {
-        isc_throw(BadValue, "option definition with type: " << elem->str());
-    }
-    setItem(xpath + "/type", type, SR_STRING_T);
-    ConstElementPtr record = elem->get("record-types");
-    if (record) {
-        setItem(xpath + "/record-types", record, SR_STRING_T);
-    }
-    ConstElementPtr array = elem->get("array");
-    if (array) {
-        setItem(xpath + "/array", array, SR_BOOL_T);
-    }
-    ConstElementPtr encapsulate = elem->get("encapsulate");
-    if (encapsulate) {
-        setItem(xpath + "/encapsulate", encapsulate, SR_STRING_T);
-    }
-    ConstElementPtr context = Adaptor::getContext(elem);
-    if (context) {
-        setItem(xpath + "/user-context", Element::create(context->str()),
-                SR_STRING_T);
-    }
+    // Set the list element. This is important in case we have no other elements except the keys.
+    setItem(xpath, ElementPtr(), LeafBaseType::Unknown);
+
+    // Skip keys "code" and "space" since they were set with the
+    // list element in the call above with the LeafBaseType::Unknown parameter.
+
+    setMandatoryLeaf(elem, xpath, "name", LeafBaseType::String);
+    setMandatoryLeaf(elem, xpath, "type", LeafBaseType::String);
+
+    checkAndSetLeaf(elem, xpath, "array", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "encapsulate", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "record-types", LeafBaseType::String);
+
+    checkAndSetUserContext(elem, xpath);
 }
 
-TranslatorOptionDefList::TranslatorOptionDefList(S_Session session,
+TranslatorOptionDefList::TranslatorOptionDefList(Session session,
                                                  const string& model)
-    : TranslatorBasic(session, model),
+    : Translator(session, model),
       TranslatorOptionDef(session, model) {
 }
 
-TranslatorOptionDefList::~TranslatorOptionDefList() {
-}
-
 ConstElementPtr
-TranslatorOptionDefList::getOptionDefList(const string& xpath) {
+TranslatorOptionDefList::getOptionDefList(DataNode const& data_node) {
     try {
         if ((model_ == KEA_DHCP4_SERVER) ||
             (model_ == KEA_DHCP6_SERVER)) {
-            return (getOptionDefListKea(xpath));
+            return (getOptionDefListKea(data_node));
         }
-    } catch (const sysrepo_exception& ex) {
-        isc_throw(SysrepoError,
-                  "sysrepo error getting option definition list at '" << xpath
-                  << "': " << ex.what());
+    } catch (Error const& ex) {
+        isc_throw(NetconfError,
+                  "getting option definition list:"
+                  << ex.what());
     }
     isc_throw(NotImplemented,
               "getOptionDefList not implemented for the model: " << model_);
 }
 
 ConstElementPtr
-TranslatorOptionDefList::getOptionDefListKea(const string& xpath) {
-    return getList<TranslatorOptionDef>(xpath + "/option-def", *this,
+TranslatorOptionDefList::getOptionDefListFromAbsoluteXpath(string const& xpath) {
+    try {
+        return getOptionDefList(findXPath(xpath));
+    } catch (NetconfError const&) {
+        return ElementPtr();
+    }
+}
+
+ConstElementPtr
+TranslatorOptionDefList::getOptionDefListKea(DataNode const& data_node) {
+    return getList<TranslatorOptionDef>(data_node, "option-def", *this,
                                         &TranslatorOptionDefList::getOptionDef);
 }
 
 void
-TranslatorOptionDefList::setOptionDefList(const string& xpath,
+TranslatorOptionDefList::setOptionDefList(string const& xpath,
                                           ConstElementPtr elem) {
     try {
         if ((model_ == KEA_DHCP4_SERVER) ||
@@ -175,18 +153,18 @@ TranslatorOptionDefList::setOptionDefList(const string& xpath,
                       "setOptionDefList not implemented for the model: "
                       << model_);
         }
-    } catch (const sysrepo_exception& ex) {
-        isc_throw(SysrepoError,
-                  "sysrepo error setting option definition list '"
-                  << elem->str() << "' at '" << xpath << "': " << ex.what());
+    } catch (Error const& ex) {
+        isc_throw(NetconfError,
+                  "setting option definition list '"
+                  << elem->str() << "' : " << ex.what());
     }
 }
 
 void
-TranslatorOptionDefList::setOptionDefListKea(const string& xpath,
+TranslatorOptionDefList::setOptionDefListKea(string const& xpath,
                                              ConstElementPtr elem) {
     for (size_t i = 0; i < elem->size(); ++i) {
-        ConstElementPtr def = elem->get(i);
+        ElementPtr def = elem->getNonConst(i);
         if (!def->contains("code")) {
             isc_throw(BadValue,
                       "option definition without code: " << def->str());

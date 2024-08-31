@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -59,6 +59,10 @@
 /// As of 2016-08-19, the version 5.4.0 from Ubuntu 16.04 is affected. Updated
 /// the check to cover everything that is not 6.0, hoping that 6.0 solves the
 /// problem.
+
+// Some boost headers need the <utility> header to be included for some Boost versions under C++20.
+// Include it in all situations for simplicity.
+#include <utility>
 
 #define GNU_CC_VERSION (__GNUC__ * 10000 \
                      + __GNUC_MINOR__ * 100 \

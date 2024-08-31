@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 #define EVAL_CONTEXT_H
 #include <string>
 #include <map>
+#include <vector>
 #include <eval/parser.h>
 #include <eval/eval_context_decl.h>
 #include <exceptions/exceptions.h>
@@ -64,7 +65,13 @@ public:
     static bool acceptAll(const ClientClass& client_class);
 
     /// @brief Parsed expression (output tokens are stored here)
-    isc::dhcp::Expression expression;
+    isc::dhcp::Expression expression_;
+
+    /// @brief Label counter.
+    unsigned label_;
+
+    /// @brief Label stack.
+    std::vector<unsigned> labels_;
 
     /// @brief Method called before scanning starts on a string.
     ///
@@ -225,7 +232,7 @@ public:
     /// @return true if the client class is defined, false if not
     bool isClientClassDefined(const ClientClass& client_class);
 
- private:
+private:
     /// @brief Flag determining scanner debugging.
     bool trace_scanning_;
 

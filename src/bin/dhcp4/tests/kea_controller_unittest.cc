@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -201,6 +201,7 @@ public:
 
     ~JSONFileBackendTest() {
         LeaseMgrFactory::destroy();
+        isc::log::setDefaultLoggingOutput();
         static_cast<void>(remove(TEST_FILE));
         static_cast<void>(remove(TEST_INCLUDE));
     };
@@ -229,19 +230,20 @@ public:
     /// stops the IO service and causes the function to return.
     void runTimersWithTimeout(const IOServicePtr& io_service, const long timeout_ms,
                               std::function<bool()> cond = std::function<bool()>()) {
-        IntervalTimer timer(*io_service);
-        bool stopped = false;
+        IntervalTimer timer(io_service);
+        std::atomic<bool> stopped(false);
         timer.setup([&io_service, &stopped]() {
-            io_service->stop();
             stopped = true;
+            io_service->stop();
         }, timeout_ms, IntervalTimer::ONE_SHOT);
 
         // Run as long as the timeout hasn't occurred and the interrupting
         // condition is not specified or not met.
         while (!stopped && (!cond || !cond())) {
-            io_service->run_one();
+            io_service->runOne();
         }
-        io_service->get_io_service().reset();
+        io_service->stop();
+        io_service->restart();
     }
 
     /// @brief This test verifies that the timer used to fetch the configuration
@@ -310,9 +312,8 @@ public:
             EXPECT_EQ(cb_control->getDatabaseCurrentConfigFetchCalls(), 0);
             EXPECT_EQ(cb_control->getDatabaseStagingConfigFetchCalls(), 1);
 
-            ConstElementPtr result =
-                ControlledDhcpv4Srv::processCommand("config-backend-pull",
-                                                    ConstElementPtr());
+            ConstElementPtr list_cmds = createCommand("config-backend-pull");
+            ConstElementPtr result = CommandMgr::instance().processCommand(list_cmds);
             EXPECT_EQ(cb_control->getDatabaseTotalConfigFetchCalls(), 2);
             std::string expected;
 
@@ -398,15 +399,17 @@ TEST_F(JSONFileBackendTest, jsonFile) {
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"id\": 1, "
         "    \"subnet\": \"192.0.2.0/24\" "
         " },"
         " {"
         "    \"pools\": [ { \"pool\": \"192.0.3.101 - 192.0.3.150\" } ],"
         "    \"subnet\": \"192.0.3.0/24\", "
-        "    \"id\": 0 "
+        "    \"id\": 2 "
         " },"
         " {"
         "    \"pools\": [ { \"pool\": \"192.0.4.101 - 192.0.4.150\" } ],"
+        "    \"id\": 3, "
         "    \"subnet\": \"192.0.4.0/24\" "
         " } ],"
         "\"valid-lifetime\": 4000 }"
@@ -483,6 +486,7 @@ TEST_F(JSONFileBackendTest, hashComments) {
         "# comments in the middle should be ignored, too\n"
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.0/24\" } ],"
+        "    \"id\": 1, "
         "    \"subnet\": \"192.0.2.0/22\" "
         " } ],"
         "\"valid-lifetime\": 4000 }"
@@ -534,6 +538,7 @@ TEST_F(JSONFileBackendTest, cppLineComments) {
         "// comments in the middle should be ignored, too\n"
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.0/24\" } ],"
+        "    \"id\": 1, "
         "    \"subnet\": \"192.0.2.0/22\" "
         " } ],"
         "\"valid-lifetime\": 4000 }"
@@ -585,6 +590,7 @@ TEST_F(JSONFileBackendTest, cBlockComments) {
         "/* comments in the middle should be ignored, too*/\n"
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.0/24\" } ],"
+        "    \"id\": 1, "
         "    \"subnet\": \"192.0.2.0/22\" "
         " } ],"
         "\"valid-lifetime\": 4000 }"
@@ -637,6 +643,7 @@ TEST_F(JSONFileBackendTest, include) {
     string include = "\n"
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.0/24\" } ],"
+        "    \"id\": 1, "
         "    \"subnet\": \"192.0.2.0/22\" "
         " } ]\n";
 
@@ -683,6 +690,7 @@ TEST_F(JSONFileBackendTest, recursiveInclude) {
         "\"renew-timer\": 1000, \n"
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.0/24\" } ],"
+        "    \"id\": 1, "
         "    \"subnet\": \"192.0.2.0/22\" "
         " } ],"
         "\"valid-lifetime\": 4000 }"
@@ -721,12 +729,13 @@ TEST_F(JSONFileBackendTest, configBroken) {
     string config_empty = "";
 
     // This config does not have mandatory Dhcp4 element
-    string config_v4 = "{ \"Dhcp6\": { \"interfaces\": [ \"*\" ],"
+    string config_v6 = "{ \"Dhcp6\": { \"interfaces\": [ \"*\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
         "    \"pool\": [ \"2001:db8::/80\" ],"
+        "    \"id\": 1, "
         "    \"subnet\": \"2001:db8::/64\" "
         " } ]}";
 
@@ -747,7 +756,7 @@ TEST_F(JSONFileBackendTest, configBroken) {
     EXPECT_THROW(srv->init(TEST_FILE), BadValue);
 
     // Now try to load a config that does not have Dhcp4 component.
-    writeFile(TEST_FILE, config_v4);
+    writeFile(TEST_FILE, config_v6);
     EXPECT_THROW(srv->init(TEST_FILE), BadValue);
 
     // Now try to load a config with Dhcp4 full of nonsense.

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -105,7 +105,7 @@ public:
 
     /// @brief Constructor.
     HttpConnectionPoolTest()
-        : io_service_(),
+        : io_service_(new IOService()),
           acceptor_(new HttpAcceptor(io_service_)),
           connection_pool_(),
           response_creator_(new TestHttpResponseCreator()) {
@@ -114,6 +114,7 @@ public:
 
     /// @brief Destructor.
     ~HttpConnectionPoolTest() {
+        io_service_->stopAndPoll();
         MultiThreadingMgr::instance().setMode(false);
     }
 
@@ -216,7 +217,7 @@ public:
         ASSERT_EQ(1, pool.hasConnection(conn1));
     }
 
-    IOService io_service_;                      ///< IO service.
+    IOServicePtr io_service_;                   ///< IO service.
     HttpAcceptorPtr acceptor_;                  ///< Test acceptor.
     HttpConnectionPool connection_pool_;        ///< Test connection pool.
     HttpResponseCreatorPtr response_creator_;   ///< Test response creator.

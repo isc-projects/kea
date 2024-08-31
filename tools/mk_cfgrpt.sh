@@ -1,11 +1,11 @@
 #!/bin/sh
-# Copyright (C) 2015-2021 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #
-# This script embeds config.report into src/bin/cfgrpt/config_report.cc
+# This script embeds config.report into src/lib/process/cfgrpt/config_report.cc
 # Called by configure
 
 # shellcheck disable=SC2129

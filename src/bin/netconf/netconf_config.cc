@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,14 +6,10 @@
 
 #include <config.h>
 
-#include <netconf/netconf_log.h>
-#include <netconf/netconf_cfg_mgr.h>
-#include <exceptions/exceptions.h>
 #include <asiolink/io_error.h>
-
-#include <boost/foreach.hpp>
-#include <boost/scoped_ptr.hpp>
-#include <boost/algorithm/string/predicate.hpp>
+#include <exceptions/exceptions.h>
+#include <netconf/netconf_cfg_mgr.h>
+#include <netconf/netconf_log.h>
 
 #include <sstream>
 #include <string>
@@ -93,7 +89,7 @@ CfgServer::toText() const {
             s << "UNIX:'" << control_socket_->getName() << "'";
             break;
         case CfgControlSocket::Type::HTTP:
-          s << "HTTP:'" << control_socket_->getUrl().toText() << "'";
+            s << "HTTP:'" << control_socket_->getUrl().toText() << "'";
             break;
         case CfgControlSocket::Type::STDOUT:
             s << "STDOUT";
@@ -145,7 +141,7 @@ ControlSocketConfigParser::parse(ConstElementPtr ctrl_sock_config) {
     CfgControlSocket::Type type;
     try {
         type = CfgControlSocket::stringToType(type_str);
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         isc_throw(ConfigError, ex.what() << " '" << type_str << "' ("
                   << getPosition("socket-type", ctrl_sock_config)  << ")");
     }
@@ -161,7 +157,7 @@ ControlSocketConfigParser::parse(ConstElementPtr ctrl_sock_config) {
     // Create the control socket.
     try {
         result.reset(new CfgControlSocket(type, name, url));
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         isc_throw(ConfigError, ex.what() << " ("
                   << ctrl_sock_config->getPosition() << ")");
     }
@@ -189,7 +185,7 @@ ServerConfigParser::parse(ConstElementPtr server_config) {
     }
     try {
         result.reset(new CfgServer(model, ctrl_sock));
-    } catch (const std::exception& ex) {
+    } catch (exception const& ex) {
         isc_throw(ConfigError, ex.what() << " ("
                   << server_config->getPosition() << ")");
     }

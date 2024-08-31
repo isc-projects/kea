@@ -1,4 +1,4 @@
-// Copyright (C) 2015,2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -106,7 +106,7 @@ ExpirationConfigParserTest::renderConfig() const {
 
     // Parse the configuration. This may emit exceptions.
     ExpirationConfigParser parser;
-    parser.parse(config_element);
+    parser.parse(config_element, CfgMgr::instance().getStagingCfg()->getCfgExpiration());
 
     // No exception so return configuration.
     return (CfgMgr::instance().getStagingCfg()->getCfgExpiration());
@@ -246,7 +246,9 @@ TEST_F(ExpirationConfigParserTest, notNumberValue) {
 
     // Parse the configuration. It should throw exception.
     ExpirationConfigParser parser;
-    EXPECT_THROW(parser.parse(config_element), DhcpConfigError);
+    EXPECT_THROW(parser.parse(config_element,
+                              CfgMgr::instance().getStagingCfg()->getCfgExpiration()),
+                 DhcpConfigError);
 }
 
 } // end of anonymous namespace

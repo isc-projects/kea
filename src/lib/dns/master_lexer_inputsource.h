@@ -1,11 +1,11 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef DNS_INPUTSOURCE_H
-#define DNS_INPUTSOURCE_H 1
+#define DNS_INPUTSOURCE_H
 
 #include <exceptions/exceptions.h>
 
@@ -87,7 +87,9 @@ public:
     /// the size of sources and for when the size can be unknown.
     ///
     /// \throw None
-    size_t getSize() const { return (input_size_); }
+    size_t getSize() const {
+        return (input_size_);
+    }
 
     /// \brief Returns the current read position in the input source.
     ///
@@ -105,7 +107,9 @@ public:
     /// values may not always monotonically increase.
     ///
     /// \throw None
-    size_t getPosition() const { return (total_pos_); }
+    size_t getPosition() const {
+        return (total_pos_);
+    }
 
     /// \brief Returns if the input source is at end of file.
     bool atEOF() const {
@@ -179,7 +183,3 @@ private:
 } // namespace isc
 
 #endif  // DNS_INPUTSOURCE_H
-
-// Local Variables:
-// mode: c++
-// End:

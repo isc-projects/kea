@@ -4,6 +4,14 @@
     "brief": [
         "This command resets the HA state machine of the server by transitioning it to the waiting state."
     ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"ha-reset\",",
+        "    \"arguments\": {",
+        "        \"server-name\": \"server1\"",
+        "    }",
+        "}"
+    ],
     "description": "See <xref linkend=\"command-ha-reset\"/>",
     "hook": "high_availability",
     "name": "ha-reset",

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -89,7 +89,3 @@ matchTextData(const std::string& expected_text,
 }
 
 #endif // UTIL_UNITTESTS_TEXTDATA_H
-
-// Local Variables:
-// mode: c++
-// End:

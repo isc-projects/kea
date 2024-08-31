@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -67,7 +67,7 @@ public:
                const boost::shared_ptr<UnixDomainSocket>& socket,
                ConnectionPool& connection_pool,
                const long timeout)
-        : socket_(socket), timeout_timer_(*io_service), timeout_(timeout),
+        : socket_(socket), timeout_timer_(io_service), timeout_(timeout),
           buf_(), response_(), connection_pool_(connection_pool), feed_(),
           response_in_progress_(false), watch_socket_(new util::WatchSocket()) {
 
@@ -181,7 +181,6 @@ public:
     void receiveHandler(const boost::system::error_code& ec,
                         size_t bytes_transferred);
 
-
     /// @brief Handler invoked when the data is sent over the control socket.
     ///
     /// If there are still data to be sent, another asynchronous send is
@@ -262,9 +261,8 @@ public:
 
     /// @brief Stops all connections which are allowed to stop.
     void stopAll() {
-        for (auto conn = connections_.begin(); conn != connections_.end();
-             ++conn) {
-            (*conn)->stop();
+        for (auto const& conn : connections_) {
+            conn->stop();
         }
         connections_.clear();
     }
@@ -464,7 +462,6 @@ Connection::timeoutHandler() {
     doSend();
 }
 
-
 }
 
 namespace isc {
@@ -576,7 +573,7 @@ CommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr& socket_info)
 
     try {
         // Start asynchronous acceptor service.
-        acceptor_.reset(new UnixDomainSocketAcceptor(*io_service_));
+        acceptor_.reset(new UnixDomainSocketAcceptor(io_service_));
         UnixDomainSocketEndpoint endpoint(socket_name_);
         acceptor_->open(endpoint);
         acceptor_->bind(endpoint);
@@ -594,7 +591,7 @@ CommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr& socket_info)
 void
 CommandMgrImpl::doAccept() {
     // Create a socket into which the acceptor will accept new connection.
-    socket_.reset(new UnixDomainSocket(*io_service_));
+    socket_.reset(new UnixDomainSocket(io_service_));
     acceptor_->asyncAccept(*socket_, [this](const boost::system::error_code& ec) {
         if (!ec) {
             // New connection is arriving. Start asynchronous transmission.
@@ -645,7 +642,6 @@ CommandMgr::getControlSocketFD() {
     return (impl_->acceptor_ ? impl_->acceptor_->getNative() : -1);
 }
 
-
 CommandMgr&
 CommandMgr::instance() {
     static CommandMgr cmd_mgr;
@@ -662,6 +658,5 @@ CommandMgr::setConnectionTimeout(const long timeout) {
     impl_->timeout_ = timeout;
 }
 
-
-}; // end of isc::config
-}; // end of isc
+} // end of isc::config
+} // end of isc

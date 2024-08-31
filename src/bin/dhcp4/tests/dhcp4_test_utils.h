@@ -1,17 +1,19 @@
-// Copyright (C) 2013-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-/// @file   dhcp4_test_utils.h
+/// @file dhcp4_test_utils.h
 ///
-/// @brief  This file contains utility classes used for DHCPv4 server testing
+/// @brief This file contains utility classes used for DHCPv4 server testing
 
 #ifndef DHCP4_TEST_UTILS_H
 #define DHCP4_TEST_UTILS_H
 
 #include <gtest/gtest.h>
+
+#include <asiolink/process_spawn.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/option4_addrlst.h>
 #include <dhcp/pkt4.h>
@@ -25,6 +27,7 @@
 #include <dhcp4/parser_context.h>
 #include <asiolink/io_address.h>
 #include <cc/command_interpreter.h>
+#include <config/command_mgr.h>
 #include <util/multi_threading_mgr.h>
 #include <list>
 
@@ -122,10 +125,18 @@ public:
         // Create a default lease database backend.
         std::string dbconfig = "type=memfile universe=4 persist=false";
         isc::dhcp::LeaseMgrFactory::create(dbconfig);
+
         // Create fixed server id.
         server_id_.reset(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER,
                                             asiolink::IOAddress("192.0.3.1")));
-        LeaseMgr::setIOService(getIOService());
+
+        isc::asiolink::ProcessSpawn::setIOService(getIOService());
+
+        db::DatabaseConnection::setIOService(getIOService());
+
+        dhcp::TimerMgr::instance()->setIOService(getIOService());
+
+        config::CommandMgr::instance().setIOService(getIOService());
     }
 
     /// @brief Returns fixed server identifier assigned to the naked server
@@ -142,7 +153,6 @@ public:
     ///
     /// See fake_received_ field for description
     virtual Pkt4Ptr receivePacket(int /*timeout*/) {
-
         // If there is anything prepared as fake incoming traffic, use it
         if (!fake_received_.empty()) {
             Pkt4Ptr pkt = fake_received_.front();
@@ -163,12 +173,8 @@ public:
     /// Pretend to send a packet, but instead just store it in fake_send_ list
     /// where test can later inspect server's response.
     virtual void sendPacket(const Pkt4Ptr& pkt) {
-        if (isc::util::MultiThreadingMgr::instance().getMode()) {
-            std::lock_guard<std::mutex> lk(mutex_);
-            fake_sent_.push_back(pkt);
-        } else {
-            fake_sent_.push_back(pkt);
-        }
+        isc::util::MultiThreadingLock lock(mutex_);
+        fake_sent_.push_back(pkt);
     }
 
     /// @brief fake receive packet from server
@@ -177,25 +183,17 @@ public:
     ///
     /// @return The received packet.
     Pkt4Ptr receiveOneMsg() {
-        if (isc::util::MultiThreadingMgr::instance().getMode()) {
-            std::lock_guard<std::mutex> lk(mutex_);
-            return (receiveOneMsgInternal());
-        } else {
-            return (receiveOneMsgInternal());
-        }
-    }
+        // Make sure the server processed all packets.
+        isc::util::MultiThreadingMgr::instance().getThreadPool().wait(2);
 
-    /// @brief fake receive packet from server
-    ///
-    /// The client uses this packet as a reply from the server.
-    /// This function should be called in a thread safe context.
-    ///
-    /// @return The received packet.
-    Pkt4Ptr receiveOneMsgInternal() {
+        // Lock the mutex for the rest of the function.
+        isc::util::MultiThreadingLock lock(mutex_);
+
         // Return empty pointer if server hasn't responded.
         if (fake_sent_.empty()) {
             return (Pkt4Ptr());
         }
+
         Pkt4Ptr msg = fake_sent_.front();
         fake_sent_.pop_front();
         return (msg);
@@ -205,11 +203,13 @@ public:
     ///
     /// See fake_received_ field for description
     void fakeReceive(const Pkt4Ptr& pkt) {
+        // Add packet events normally set by PktFilter.
+        pkt->addPktEvent(PktEvent::SOCKET_RECEIVED);
+        pkt->addPktEvent(PktEvent::BUFFER_READ);
         fake_received_.push_back(pkt);
     }
 
-    virtual ~NakedDhcpv4Srv() {
-    }
+    virtual ~NakedDhcpv4Srv() = default;
 
     /// @brief Runs processing DHCPDISCOVER.
     ///
@@ -218,6 +218,12 @@ public:
     Pkt4Ptr processDiscover(Pkt4Ptr& discover) {
         AllocEngine::ClientContext4Ptr context(new AllocEngine::ClientContext4());
         earlyGHRLookup(discover, context);
+        sanityCheck(discover);
+        bool drop = false;
+        context->subnet_ = selectSubnet(discover, drop);
+        if (drop) {
+            return (Pkt4Ptr ());
+        }
         return (processDiscover(discover, context));
     }
 
@@ -228,6 +234,12 @@ public:
     Pkt4Ptr processRequest(Pkt4Ptr& request) {
         AllocEngine::ClientContext4Ptr context(new AllocEngine::ClientContext4());
         earlyGHRLookup(request, context);
+        sanityCheck(request);
+        bool drop = false;
+        context->subnet_ = selectSubnet(request, drop);
+        if (drop) {
+            return (Pkt4Ptr ());
+        }
         return (processRequest(request, context));
     }
 
@@ -237,6 +249,7 @@ public:
     void processRelease(Pkt4Ptr& release) {
         AllocEngine::ClientContext4Ptr context(new AllocEngine::ClientContext4());
         earlyGHRLookup(release, context);
+        sanityCheck(release);
         processRelease(release, context);
     }
 
@@ -246,6 +259,7 @@ public:
     void processDecline(Pkt4Ptr& decline) {
         AllocEngine::ClientContext4Ptr context(new AllocEngine::ClientContext4());
         earlyGHRLookup(decline, context);
+        sanityCheck(decline);
         processDecline(decline, context);
     }
 
@@ -256,6 +270,12 @@ public:
     Pkt4Ptr processInform(Pkt4Ptr& inform) {
         AllocEngine::ClientContext4Ptr context(new AllocEngine::ClientContext4());
         earlyGHRLookup(inform, context);
+        sanityCheck(inform);
+        bool drop = false;
+        context->subnet_ = selectSubnet(inform, drop);
+        if (drop) {
+            return (Pkt4Ptr ());
+        }
         return (processInform(inform, context));
     }
 
@@ -287,6 +307,7 @@ public:
     using Dhcpv4Srv::srvidToString;
     using Dhcpv4Srv::classifyPacket;
     using Dhcpv4Srv::deferredUnpack;
+    using Dhcpv4Srv::recoverStashedAgentOption;
     using Dhcpv4Srv::accept;
     using Dhcpv4Srv::acceptMessageType;
     using Dhcpv4Srv::selectSubnet;
@@ -329,10 +350,16 @@ private:
 
 class Dhcpv4SrvTest : public BaseServerTest {
 public:
-
+    /// @brief Specifies expected outcome
     enum ExpectedResult {
         SHOULD_PASS, // pass = accept decline, move lease to declined state.
         SHOULD_FAIL  // fail = reject the decline
+    };
+
+    /// @brief Specifies if lease affinity is enabled or disabled
+    enum LeaseAffinity {
+        LEASE_AFFINITY_ENABLED,
+        LEASE_AFFINITY_DISABLED
     };
 
     class Dhcpv4SrvMTTestGuard {
@@ -368,6 +395,17 @@ public:
     ///
     /// @param pkt packet to add PRL option to.
     void addPrlOption(Pkt4Ptr& pkt);
+
+    /// @brief Used to configure a server for tests.
+    ///
+    /// A wrapper over configureDhcp4Server() to which any other
+    /// simulations of production code are added.
+    ///
+    /// @brief server the server being tested
+    /// @brief config the configuration the server is configured with
+    ///
+    /// @return a JSON-formatted status of the reconfiguration
+    static ConstElementPtr configure(Dhcpv4Srv& server, isc::data::ConstElementPtr config);
 
     /// @brief Configures options being requested in the PRL option.
     ///
@@ -554,24 +592,40 @@ public:
     /// @param config String holding server configuration in JSON format.
     /// @param commit A boolean flag indicating if the new configuration
     /// should be committed (if true), or not (if false).
-    /// @param open_sockets  A boolean flag indicating if sockets should
+    /// @param open_sockets A boolean flag indicating if sockets should
     /// be opened (if true), or not (if false).
+    /// @param create_managers A boolean flag indicating if managers should be
+    /// recreated.
+    /// @param test A boolean flag which indicates if only testing config.
+    /// @param lease_affinity A flag which indicates if lease affinity should
+    /// be enabled or disabled.
     void configure(const std::string& config,
                    const bool commit = true,
-                   const bool open_sockets = true);
+                   const bool open_sockets = true,
+                   const bool create_managers = true,
+                   const bool test = false,
+                   const LeaseAffinity lease_affinity = LEASE_AFFINITY_DISABLED);
 
-    /// @brief Configure specified DHCP server using JSON string.
+    /// @brief Configure the DHCPv4 server using the JSON string.
     ///
     /// @param config String holding server configuration in JSON format.
     /// @param srv Instance of the server to be configured.
     /// @param commit A boolean flag indicating if the new configuration
     /// should be committed (if true), or not (if false).
-    /// @param open_sockets  A boolean flag indicating if sockets should
+    /// @param open_sockets A boolean flag indicating if sockets should
     /// be opened (if true), or not (if false).
+    /// @param create_managers A boolean flag indicating if managers should be
+    /// recreated.
+    /// @param test A boolean flag which indicates if only testing config.
+    /// @param lease_affinity A flag which indicates if lease affinity should
+    /// be enabled or disabled.
     void configure(const std::string& config,
                    NakedDhcpv4Srv& srv,
                    const bool commit = true,
-                   const bool open_sockets = true);
+                   const bool open_sockets = true,
+                   const bool create_managers = true,
+                   const bool test = false,
+                   const LeaseAffinity lease_affinity = LEASE_AFFINITY_DISABLED);
 
     /// @brief Configure specified DHCP server using JSON string.
     ///
@@ -619,12 +673,15 @@ public:
     /// @param expected_result SHOULD_PASS if the lease is expected to
     /// be successfully declined, or SHOULD_FAIL if the lease is expected
     /// to not be declined.
+    /// @param config_index specifies which config index should be used:
+    /// 0 - memfile, 1 - mysql, 2 - pgsql
     void acquireAndDecline(Dhcp4Client& client,
                            const std::string& hw_address_1,
                            const std::string& client_id_1,
                            const std::string& hw_address_2,
                            const std::string& client_id_2,
-                           ExpectedResult expected_result);
+                           ExpectedResult expected_result,
+                           uint8_t config_index = 0);
 
     /// @brief Checks if received relay agent info option is echoed back to the
     /// client.
@@ -637,8 +694,16 @@ public:
     /// @brief Checks if client port can be overridden in packets being sent.
     void portsClientPort();
 
-    /// @brief  Checks if server port can be overridden in packets being sent.
+    /// @brief Checks if server port can be overridden in packets being sent.
     void portsServerPort();
+
+    /// @brief Check if example files contain valid configuration.
+    void checkConfigFiles();
+
+    /// @brief Check if the server configuration stored in file is valid.
+    ///
+    /// @param path The path to the configuration file.
+    void loadConfigFile(const std::string& path);
 
     /// @brief This function cleans up after the test.
     virtual void TearDown();
@@ -647,6 +712,14 @@ public:
     void setMultiThreading(bool enabled) {
         multi_threading_ = enabled;
     }
+
+    /// @brief Checks the contents of a packet's event stack agains a list
+    /// of expected events.
+    ///
+    /// @param msg pointer to the packet under test.
+    /// @param expected_events a list of the event labels in the order they
+    /// are expected to occur in the stack.
+    void checkPktEvents(const PktPtr& msg, std::list<std::string> expected_events);
 
     /// @brief A subnet used in most tests.
     Subnet4Ptr subnet_;
@@ -668,6 +741,9 @@ public:
 
     /// @brief The multi-threading flag.
     bool multi_threading_;
+
+    /// @brief Time the test started (UTC/microseconds)
+    boost::posix_time::ptime start_time_;
 };
 
 /// @brief Patch the server config to add interface-config/re-detect=false

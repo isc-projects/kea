@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -31,6 +31,13 @@ public:
 class DbOpenError : public Exception {
 public:
     DbOpenError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+/// @brief Exception thrown on failure to open database but permit retries
+class DbOpenErrorWithRetry : public Exception {
+public:
+    DbOpenErrorWithRetry(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
 
@@ -68,6 +75,15 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+/// @brief Invalid port number
+///
+/// Thrown when the port number specified for the database connection is invalid.
+class DbInvalidPort : public Exception {
+public:
+    DbInvalidPort(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
 /// @brief Invalid 'readonly' value specification.
 ///
 /// Thrown when the value of the 'readonly' boolean parameter is invalid.
@@ -76,6 +92,14 @@ public:
     DbInvalidReadOnly(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
+
+/// @brief Thrown when an initialization of the schema failed.
+class SchemaInitializationFailed : public Exception {
+public:
+    SchemaInitializationFailed(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
 
 /// @brief Defines a callback prototype for propagating events upward
 typedef std::function<bool (util::ReconnectCtlPtr db_reconnect_ctl)> DbCallback;
@@ -206,6 +230,18 @@ public:
     /// @return a pointer to configuration
     static isc::data::ElementPtr toElementDbAccessString(const std::string& dbaccess);
 
+    /// @brief Sets IO service to be used by the database backends.
+    ///
+    /// @param io_service IOService object, used for all ASIO operations.
+    static void setIOService(const isc::asiolink::IOServicePtr& io_service) {
+        io_service_ = io_service;
+    }
+
+    /// @brief Returns pointer to the IO service.
+    static isc::asiolink::IOServicePtr& getIOService() {
+        return (io_service_);
+    }
+
     /// @brief Optional callback function to invoke if an opened connection is
     /// lost
     static DbCallback db_lost_callback_;
@@ -217,6 +253,14 @@ public:
     /// @brief Optional callback function to invoke if an opened connection
     /// recovery failed
     static DbCallback db_failed_callback_;
+
+    /// @brief Flag which indicates if the database connection should be retried
+    /// on fail.
+    ///
+    /// Allow the first database connection attempt to fail and start recovery.
+    /// Sequential tries invoked by the dbReconnect callback should not start yet
+    /// another database connection attempt.
+    static bool retry_;
 
     /// @brief Throws an exception if the connection is not usable.
     /// @throw DbConnectionUnusable
@@ -234,6 +278,7 @@ public:
     }
 
 protected:
+
     /// @brief Sets the unusable flag to true.
     void markUnusable() { unusable_ = true; }
 
@@ -263,6 +308,27 @@ private:
 
     /// @brief Reconnect settings.
     util::ReconnectCtlPtr reconnect_ctl_;
+
+    /// The IOService object, used for all ASIO operations.
+    static isc::asiolink::IOServicePtr io_service_;
+};
+
+/// @brief RAII class to enable DB reconnect retries on server startup.
+class DbConnectionInitWithRetry {
+public:
+    /// @brief Constructor.
+    ///
+    /// Enable DB reconnect retries on server startup.
+    DbConnectionInitWithRetry() {
+        DatabaseConnection::retry_ = true;
+    }
+
+    /// @brief Destructor.
+    ///
+    /// Disable DB reconnect retries.
+    ~DbConnectionInitWithRetry() {
+        DatabaseConnection::retry_ = false;
+    }
 };
 
 }  // namespace db

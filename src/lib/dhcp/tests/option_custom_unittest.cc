@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -438,12 +438,24 @@ TEST_F(OptionCustomTest, fqdnData) {
     // This option should have one suboption.
     EXPECT_TRUE(hasV6Suboption(option.get()));
 
+    ASSERT_FALSE(Option::lenient_parsing_);
     // Check that the option with truncated data can't be created.
     EXPECT_THROW(
         option.reset(new OptionCustom(opt_def, Option::V6,
                                       buf.begin(), buf.begin() + 4)),
         isc::dhcp::BadDataTypeCast
     );
+
+    // Check lenient parsing mitigates a mal-formed option by throwing
+    // SkipThisOptionError.
+    Option::lenient_parsing_ = true;
+    EXPECT_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6,
+                                      buf.begin(), buf.begin() + 4)),
+        isc::dhcp::SkipThisOptionError
+    );
+
+    Option::lenient_parsing_ = false;
 }
 
 // The purpose of this test is to verify that the option definition comprising
@@ -1737,13 +1749,13 @@ TEST_F(OptionCustomTest, setUint16DataArray) {
     ASSERT_EQ(3, option->getDataFieldsNum());
 
     // Check that the values have been correctly set.
-    uint16_t value0;
+    uint16_t value0 = 0;
     ASSERT_NO_THROW(value0 = option->readInteger<uint16_t>(0));
     EXPECT_EQ(67, value0);
-    uint16_t value1;
+    uint16_t value1 = 0;
     ASSERT_NO_THROW(value1 = option->readInteger<uint16_t>(1));
     EXPECT_EQ(876, value1);
-    uint16_t value2;
+    uint16_t value2 = 0;
     ASSERT_NO_THROW(value2 = option->readInteger<uint16_t>(2));
     EXPECT_EQ(32222, value2);
 }
@@ -2042,7 +2054,7 @@ TEST_F(OptionCustomTest, setRecordData) {
     ASSERT_EQ(9, option->getDataFieldsNum());
 
     // Check that the default values have been correctly set.
-    uint16_t value0;
+    uint16_t value0 = 0;
     ASSERT_NO_THROW(value0 = option->readInteger<uint16_t>(0));
     EXPECT_EQ(0, value0);
     bool value1 = true;
@@ -2133,7 +2145,7 @@ TEST_F(OptionCustomTest, setRecordArrayData) {
     ASSERT_EQ(9, option->getDataFieldsNum());
 
     // Check that the default values have been correctly set.
-    uint16_t value0;
+    uint16_t value0 = 0;
     ASSERT_NO_THROW(value0 = option->readInteger<uint16_t>(0));
     EXPECT_EQ(0, value0);
     bool value1 = true;
@@ -2368,7 +2380,7 @@ TEST_F(OptionCustomTest, unpackRecordArray) {
     ASSERT_EQ(4, option->getDataFieldsNum());
 
     // We expect a 16 bit integer
-    uint16_t value0;
+    uint16_t value0 = 0;
     ASSERT_NO_THROW(value0 = option->readInteger<uint16_t>(0));
     EXPECT_EQ(8712, value0);
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -132,7 +132,7 @@ void Dhcp6to4Ipc::handler(int /* fd */) {
                                        *callout_handle);
 
             // Callouts decided to skip the next processing step. The next
-            // processing step would to parse the packet, so skip at this
+            // processing step would be to parse the packet, so skip at this
             // stage means drop.
             if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) ||
                 (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP)) {
@@ -145,8 +145,11 @@ void Dhcp6to4Ipc::handler(int /* fd */) {
             callout_handle->getArgument("response6", pkt);
         }
 
-        LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_RESPONSE_DATA)
-            .arg(static_cast<int>(pkt->getType())).arg(pkt->toText());
+        LOG_DEBUG(packet6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_DHCP4O6_RESPONSE_DATA)
+            .arg(pkt->getLabel())
+            .arg(pkt->getName())
+            .arg(static_cast<int>(pkt->getType()))
+            .arg(pkt->toText());
 
         // Forward packet to the client.
         IfaceMgr::instance().send(pkt);
@@ -155,7 +158,9 @@ void Dhcp6to4Ipc::handler(int /* fd */) {
         Dhcpv6Srv::processStatsSent(pkt);
 
     } catch (const std::exception& e) {
-        LOG_ERROR(packet6_logger, DHCP6_DHCP4O6_SEND_FAIL).arg(e.what());
+        LOG_ERROR(packet6_logger, DHCP6_DHCP4O6_SEND_FAIL)
+            .arg(pkt->getLabel())
+            .arg(e.what());
     }
 }
 

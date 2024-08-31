@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,14 +6,15 @@
 
 #include <config.h>
 
+#include <gtest/gtest.h>
+
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/option_data_types.h>
 #include <dhcp/option_space.h>
 #include <testutils/gtest_utils.h>
 #include <yang/adaptor_option.h>
-
-#include <gtest/gtest.h>
+#include <yang/netconf_error.h>
 
 using namespace std;
 using namespace isc;
@@ -30,7 +31,7 @@ TEST(AdaptorOptionTest, setSpaceNoSpace) {
     ElementPtr json;
     ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     ConstElementPtr copied = copy(json);
-    EXPECT_NO_THROW(AdaptorOption::setSpace(json, "foo"));
+    EXPECT_NO_THROW_LOG(AdaptorOption::setSpace(json, "foo"));
     EXPECT_FALSE(copied->equals(*json));
     ConstElementPtr space = json->get("space");
     ASSERT_TRUE(space);
@@ -46,7 +47,7 @@ TEST(AdaptorOptionTest, setSpace) {
     ElementPtr json;
     ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     ConstElementPtr copied = copy(json);
-    EXPECT_NO_THROW(AdaptorOption::setSpace(json, "foo"));
+    EXPECT_NO_THROW_LOG(AdaptorOption::setSpace(json, "foo"));
     EXPECT_TRUE(copied->equals(*json));
 }
 
@@ -57,7 +58,7 @@ TEST(AdaptorOptionTest, checkType) {
         "}";
     ConstElementPtr json;
     ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
-    EXPECT_NO_THROW(AdaptorOption::checkType(json));
+    EXPECT_NO_THROW_LOG(AdaptorOption::checkType(json));
 }
 
 // Verifies that checkType does not accept an option without type.
@@ -66,7 +67,8 @@ TEST(AdaptorOptionTest, checkTypeNoType) {
         "}";
     ConstElementPtr json;
     ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
-    EXPECT_THROW(AdaptorOption::checkType(json), MissingKey);
+    EXPECT_THROW_MSG(AdaptorOption::checkType(json), MissingKey,
+                     "missing type in option definition {  }");
 }
 
 // Verifies that checkCode accepts an option with code.
@@ -76,7 +78,7 @@ TEST(AdaptorOptionTest, checkCode) {
         "}";
     ConstElementPtr json;
     ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
-    EXPECT_NO_THROW(AdaptorOption::checkCode(json));
+    EXPECT_NO_THROW_LOG(AdaptorOption::checkCode(json));
 }
 
 // Verifies that checkCode does not accept an option without code.
@@ -85,7 +87,7 @@ TEST(AdaptorOptionTest, checkCodeNoCode) {
         "}";
     ConstElementPtr json;
     ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
-    EXPECT_THROW(AdaptorOption::checkCode(json), MissingKey);
+    EXPECT_THROW_MSG(AdaptorOption::checkCode(json), MissingKey, "missing code in option {  }");
 }
 
 // Verifies that collect works as expected.
@@ -101,7 +103,7 @@ TEST(AdaptorOptionTest, collect) {
     ASSERT_NO_THROW_LOG(AdaptorOption::collect(json, codes));
     EXPECT_EQ(1, codes.size());
     EXPECT_EQ(123, codes["bar@foo"]);
-    EXPECT_THROW(codes.at("foo@bar"), out_of_range);
+    EXPECT_FALSE(codes.contains("foo@bar"));
 }
 
 // Verifies that collect skips an already known option definition.
@@ -130,7 +132,7 @@ TEST(AdaptorOptionTest, setCodeNoCode) {
     ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     ConstElementPtr copied = copy(json);
     OptionCodes codes = { { "bar@foo", 123 } };
-    EXPECT_NO_THROW(AdaptorOption::setCode(json, codes));
+    EXPECT_NO_THROW_LOG(AdaptorOption::setCode(json, codes));
     EXPECT_FALSE(copied->equals(*json));
     ConstElementPtr code = json->get("code");
     ASSERT_TRUE(code);
@@ -147,7 +149,7 @@ TEST(AdaptorOptionTest, setCode) {
     ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     ConstElementPtr copied = copy(json);
     OptionCodes codes;
-    EXPECT_NO_THROW(AdaptorOption::setCode(json, codes));
+    EXPECT_NO_THROW_LOG(AdaptorOption::setCode(json, codes));
     EXPECT_TRUE(copied->equals(*json));
 }
 
@@ -159,7 +161,8 @@ TEST(AdaptorOptionTest, setCodeNoName) {
     ElementPtr json;
     ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     OptionCodes codes;
-    EXPECT_THROW(AdaptorOption::setCode(json, codes), MissingKey);
+    EXPECT_THROW_MSG(AdaptorOption::setCode(json, codes), MissingKey,
+                     "missing name and code in option { \"space\": \"bar\" }");
 }
 
 // Note the code assumes there is a space, i.e. setSpace was called.
@@ -174,14 +177,15 @@ TEST(AdaptorOptionTest, setCodeNotInMap) {
     ElementPtr json;
     ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     OptionCodes codes;
-    EXPECT_THROW(AdaptorOption::setCode(json, codes), MissingKey);
+    EXPECT_THROW_MSG(AdaptorOption::setCode(json, codes), MissingKey,
+                     "can't get code from option { \"name\": \"foo\", \"space\": \"bar\" }");
 }
 
 /// @brief Test class to make initCodes public.
 class TestAdaptorOption : public AdaptorOption {
 public:
     using AdaptorOption::initCodesInternal;
-};
+};  // TestAdaptorOption
 
 // Verifies that initCodesInternal works as expected.
 TEST(AdaptorOptionTest, initCodesInternal) {
@@ -208,7 +212,7 @@ TEST(AdaptorOptionTest, initCodes4) {
     ASSERT_NO_THROW_LOG(AdaptorOption::initCodes(codes, DHCP4_OPTION_SPACE));
     EXPECT_EQ(DHO_SUBNET_MASK, codes["dhcp4@subnet-mask"]);
     EXPECT_EQ(DHO_TIME_OFFSET, codes["dhcp4@time-offset"]);
-    EXPECT_THROW(codes.at("dhcp6@clientid"), out_of_range);
+    EXPECT_FALSE(codes.contains("dhcp6@clientid"));
 
     // initCodes loads last resort too.
     EXPECT_EQ(DHO_VENDOR_ENCAPSULATED_OPTIONS,
@@ -224,7 +228,7 @@ TEST(AdaptorOptionTest, initCodes6) {
     ASSERT_NO_THROW_LOG(AdaptorOption::initCodes(codes, DHCP6_OPTION_SPACE));
     EXPECT_EQ(D6O_CLIENTID, codes["dhcp6@clientid"]);
     EXPECT_EQ(D6O_SERVERID, codes["dhcp6@serverid"]);
-    EXPECT_THROW(codes.at("dhcp4@subnet-mask"), out_of_range);
+    EXPECT_FALSE(codes.contains("dhcp4@subnet-mask"));
 
     // initCodes loads DOCSIS3 too.
     EXPECT_EQ(32, codes["vendor-4491@tftp-servers"]);
@@ -238,4 +242,4 @@ TEST(AdaptorOptionTest, initCodes6) {
     EXPECT_EQ(ISC_V6_4O6_INTERFACE, codes["vendor-2495@4o6-interface"]);
 }
 
-} // end of anonymous namespace
+}  //anonymous namespace

@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -31,7 +31,7 @@ static const std::string KEA_DHCP_DDNS = "kea-dhcp-ddns";
 /// by ISC in the near future.
 static const std::string KEA_CTRL_AGENT = "kea-ctrl-agent";
 
-}; // end of namespace isc::yang
-}; // end of namespace isc
+}  // namespace yang
+}  // namespace isc
 
-#endif // ISC_YANG_MODELS_H
+#endif  // ISC_YANG_MODELS_H

@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,8 +9,8 @@
 #include <eval/token.h>
 #include <eval/eval_log.h>
 #include <eval/eval_context.h>
-#include <util/encode/hex.h>
-#include <util/io_utilities.h>
+#include <util/encode/encode.h>
+#include <util/io.h>
 #include <asiolink/io_address.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
@@ -20,6 +20,7 @@
 #include <dhcp/option_vendor.h>
 #include <dhcp/option_vendor_class.h>
 
+#include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 
@@ -35,14 +36,17 @@ using namespace std;
 
 using isc::util::encode::toHex;
 
-void
-TokenString::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+unsigned
+TokenString::evaluate(Pkt& pkt, ValueStack& values) {
     // Literals only push, nothing to pop
     values.push(value_);
 
     // Log what we pushed
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_STRING)
+        .arg(pkt.getLabel())
         .arg('\'' + value_ + '\'');
+
+    return (0);
 }
 
 TokenHexString::TokenHexString(const string& str) : value_("") {
@@ -73,14 +77,59 @@ TokenHexString::TokenHexString(const string& str) : value_("") {
     memmove(&value_[0], &binary[0], binary.size());
 }
 
-void
-TokenHexString::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+unsigned
+TokenHexString::evaluate(Pkt& pkt, ValueStack& values) {
     // Literals only push, nothing to pop
     values.push(value_);
 
     // Log what we pushed
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_HEXSTRING)
+        .arg(pkt.getLabel())
         .arg(toHex(value_));
+
+    return (0);
+}
+
+unsigned
+TokenLowerCase::evaluate(Pkt& pkt, ValueStack& values) {
+    if (values.size() == 0) {
+        isc_throw(EvalBadStack, "Incorrect empty stack.");
+    }
+
+    string op = values.top();
+
+    values.pop();
+    string result(boost::algorithm::to_lower_copy(op));
+    values.push(result);
+
+    // Log what we pushed
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_LCASE)
+        .arg(pkt.getLabel())
+        .arg('\'' + op + '\'')
+        .arg('\'' + result + '\'');
+
+    return (0);
+}
+
+unsigned
+TokenUpperCase::evaluate(Pkt& pkt, ValueStack& values) {
+    if (values.size() == 0) {
+        isc_throw(EvalBadStack, "Incorrect empty stack.");
+    }
+
+    string op = values.top();
+
+    values.pop();
+    string result(boost::algorithm::to_upper_copy(op));
+    values.push(result);
+
+    // Log what we pushed
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_UCASE)
+        .arg(pkt.getLabel())
+        .arg('\'' + op + '\'')
+        .arg('\'' + result + '\'');
+
+    return (0);
 }
 
 TokenIpAddress::TokenIpAddress(const string& addr) : value_("") {
@@ -98,18 +147,21 @@ TokenIpAddress::TokenIpAddress(const string& addr) : value_("") {
     memmove(&value_[0], &binary[0], binary.size());
 }
 
-void
-TokenIpAddress::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+unsigned
+TokenIpAddress::evaluate(Pkt& pkt, ValueStack& values) {
     // Literals only push, nothing to pop
     values.push(value_);
 
     // Log what we pushed
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_IPADDRESS)
+        .arg(pkt.getLabel())
         .arg(toHex(value_));
+
+    return (0);
 }
 
-void
-TokenIpAddressToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+unsigned
+TokenIpAddressToText::evaluate(Pkt& pkt, ValueStack& values) {
     if (values.size() == 0) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
     }
@@ -118,7 +170,7 @@ TokenIpAddressToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     size_t size = op.size();
 
     if (!size) {
-        return;
+        return (0);
     }
 
     values.pop();
@@ -139,11 +191,14 @@ TokenIpAddressToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
     // Log what we pushed
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_IPADDRESSTOTEXT)
+        .arg(pkt.getLabel())
         .arg(op);
+
+    return (0);
 }
 
-void
-TokenInt8ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+unsigned
+TokenInt8ToText::evaluate(Pkt& pkt, ValueStack& values) {
     if (values.size() == 0) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
     }
@@ -152,7 +207,7 @@ TokenInt8ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     size_t size = op.size();
 
     if (!size) {
-        return;
+      return (0);
     }
 
     values.pop();
@@ -162,17 +217,20 @@ TokenInt8ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     }
 
     stringstream tmp;
-    tmp << static_cast<int32_t>(*(reinterpret_cast<int8_t*>(const_cast<char*>(op.data()))));
+    tmp << static_cast<int32_t>(*(reinterpret_cast<const int8_t*>(op.data())));
     op = tmp.str();
     values.push(op);
 
     // Log what we pushed
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_INT8TOTEXT)
+        .arg(pkt.getLabel())
         .arg(op);
+
+    return (0);
 }
 
-void
-TokenInt16ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+unsigned
+TokenInt16ToText::evaluate(Pkt& pkt, ValueStack& values) {
     if (values.size() == 0) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
     }
@@ -181,7 +239,7 @@ TokenInt16ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     size_t size = op.size();
 
     if (!size) {
-        return;
+      return (0);
     }
 
     values.pop();
@@ -191,19 +249,21 @@ TokenInt16ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     }
 
     stringstream tmp;
-    uint16_t value = *(reinterpret_cast<uint16_t*>(const_cast<char*>(op.data())));
-    std::string data = EvalContext::fromUint16(value);
-    tmp << *(reinterpret_cast<int16_t*>(const_cast<char*>(data.data())));
+    int16_t value = static_cast<int16_t>(readUint16(const_cast<const char*>(op.data()), size));
+    tmp << value;
     op = tmp.str();
     values.push(op);
 
     // Log what we pushed
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_INT16TOTEXT)
+        .arg(pkt.getLabel())
         .arg(op);
+
+    return (0);
 }
 
-void
-TokenInt32ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+unsigned
+TokenInt32ToText::evaluate(Pkt& pkt, ValueStack& values) {
     if (values.size() == 0) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
     }
@@ -212,7 +272,7 @@ TokenInt32ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     size_t size = op.size();
 
     if (!size) {
-        return;
+      return (0);
     }
 
     values.pop();
@@ -222,19 +282,21 @@ TokenInt32ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     }
 
     stringstream tmp;
-    uint32_t value = *(reinterpret_cast<uint32_t*>(const_cast<char*>(op.data())));
-    std::string data = EvalContext::fromUint32(value);
-    tmp << *(reinterpret_cast<int32_t*>(const_cast<char*>(data.data())));
+    int32_t value = static_cast<int32_t>(readUint32(const_cast<const char*>(op.data()), size));
+    tmp << value;
     op = tmp.str();
     values.push(op);
 
     // Log what we pushed
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_INT32TOTEXT)
+        .arg(pkt.getLabel())
         .arg(op);
+
+    return (0);
 }
 
-void
-TokenUInt8ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+unsigned
+TokenUInt8ToText::evaluate(Pkt& pkt, ValueStack& values) {
     if (values.size() == 0) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
     }
@@ -243,7 +305,7 @@ TokenUInt8ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     size_t size = op.size();
 
     if (!size) {
-        return;
+      return (0);
     }
 
     values.pop();
@@ -253,17 +315,20 @@ TokenUInt8ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     }
 
     stringstream tmp;
-    tmp << static_cast<uint32_t>(*(reinterpret_cast<uint8_t*>(const_cast<char*>(op.data()))));
+    tmp << static_cast<uint32_t>(*(reinterpret_cast<const uint8_t*>(op.data())));
     op = tmp.str();
     values.push(op);
 
     // Log what we pushed
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_UINT8TOTEXT)
+        .arg(pkt.getLabel())
         .arg(op);
+
+    return (0);
 }
 
-void
-TokenUInt16ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+unsigned
+TokenUInt16ToText::evaluate(Pkt& pkt, ValueStack& values) {
     if (values.size() == 0) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
     }
@@ -272,7 +337,7 @@ TokenUInt16ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     size_t size = op.size();
 
     if (!size) {
-        return;
+      return (0);
     }
 
     values.pop();
@@ -282,19 +347,21 @@ TokenUInt16ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     }
 
     stringstream tmp;
-    uint16_t value = *(reinterpret_cast<uint16_t*>(const_cast<char*>(op.data())));
-    std::string data = EvalContext::fromUint16(value);
-    tmp << *(reinterpret_cast<uint16_t*>(const_cast<char*>(data.data())));
+    uint16_t value = readUint16(const_cast<const char*>(op.data()), size);
+    tmp << value;
     op = tmp.str();
     values.push(op);
 
     // Log what we pushed
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_UINT16TOTEXT)
+        .arg(pkt.getLabel())
         .arg(op);
+
+    return (0);
 }
 
-void
-TokenUInt32ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+unsigned
+TokenUInt32ToText::evaluate(Pkt& pkt, ValueStack& values) {
     if (values.size() == 0) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
     }
@@ -303,7 +370,7 @@ TokenUInt32ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     size_t size = op.size();
 
     if (!size) {
-        return;
+      return (0);
     }
 
     values.pop();
@@ -313,15 +380,17 @@ TokenUInt32ToText::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     }
 
     stringstream tmp;
-    uint32_t value = *(reinterpret_cast<uint32_t*>(const_cast<char*>(op.data())));
-    std::string data = EvalContext::fromUint32(value);
-    tmp << *(reinterpret_cast<uint32_t*>(const_cast<char*>(data.data())));
+    uint32_t value = readUint32(const_cast<const char*>(op.data()), size);
+    tmp << value;
     op = tmp.str();
     values.push(op);
 
     // Log what we pushed
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_UINT32TOTEXT)
+        .arg(pkt.getLabel())
         .arg(op);
+
+    return (0);
 }
 
 OptionPtr
@@ -329,7 +398,7 @@ TokenOption::getOption(Pkt& pkt) {
     return (pkt.getOption(option_code_));
 }
 
-void
+unsigned
 TokenOption::evaluate(Pkt& pkt, ValueStack& values) {
     OptionPtr opt = getOption(pkt);
     std::string opt_str;
@@ -358,13 +427,17 @@ TokenOption::evaluate(Pkt& pkt, ValueStack& values) {
     // of the requested option.
     if (representation_type_ == HEXADECIMAL) {
         LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_OPTION)
+            .arg(pkt.getLabel())
             .arg(option_code_)
             .arg(toHex(opt_str));
     } else {
         LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_OPTION)
+            .arg(pkt.getLabel())
             .arg(option_code_)
             .arg('\'' + opt_str + '\'');
     }
+
+    return (0);
 }
 
 std::string
@@ -379,10 +452,11 @@ TokenOption::pushFailure(ValueStack& values) {
 
 TokenRelay4Option::TokenRelay4Option(const uint16_t option_code,
                                      const RepresentationType& rep_type)
-    :TokenOption(option_code, rep_type) {
+    : TokenOption(option_code, rep_type) {
 }
 
-OptionPtr TokenRelay4Option::getOption(Pkt& pkt) {
+OptionPtr
+TokenRelay4Option::getOption(Pkt& pkt) {
     // Check if there is Relay Agent Option.
     OptionPtr rai = pkt.getOption(DHO_DHCP_AGENT_OPTIONS);
     if (!rai) {
@@ -393,7 +467,8 @@ OptionPtr TokenRelay4Option::getOption(Pkt& pkt) {
     return (rai->getOption(option_code_));
 }
 
-OptionPtr TokenRelay6Option::getOption(Pkt& pkt) {
+OptionPtr
+TokenRelay6Option::getOption(Pkt& pkt) {
     try {
         // Check if it's a Pkt6.  If it's not the dynamic_cast will
         // throw std::bad_cast.
@@ -428,7 +503,7 @@ OptionPtr TokenRelay6Option::getOption(Pkt& pkt) {
 
 }
 
-void
+unsigned
 TokenPkt::evaluate(Pkt& pkt, ValueStack& values) {
     string value;
     vector<uint8_t> binary;
@@ -461,8 +536,7 @@ TokenPkt::evaluate(Pkt& pkt, ValueStack& values) {
         break;
 
     default:
-        isc_throw(EvalTypeError, "Bad meta data specified: "
-                  << static_cast<int>(type_) );
+        isc_throw(EvalTypeError, "Bad meta data specified: " << static_cast<int>(type_));
     }
 
     if (is_binary) {
@@ -475,11 +549,14 @@ TokenPkt::evaluate(Pkt& pkt, ValueStack& values) {
 
     // Log what we pushed
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_PKT)
+        .arg(pkt.getLabel())
         .arg(type_str)
         .arg(print_hex ? toHex(value) : value);
+
+    return (0);
 }
 
-void
+unsigned
 TokenPkt4::evaluate(Pkt& pkt, ValueStack& values) {
     vector<uint8_t> binary;
     string value;
@@ -538,8 +615,7 @@ TokenPkt4::evaluate(Pkt& pkt, ValueStack& values) {
             type_str = "transid";
             break;
         default:
-            isc_throw(EvalTypeError, "Bad field specified: "
-                      << static_cast<int>(type_) );
+            isc_throw(EvalTypeError, "Bad field specified: " << static_cast<int>(type_));
         }
 
     } catch (const std::bad_cast&) {
@@ -554,11 +630,14 @@ TokenPkt4::evaluate(Pkt& pkt, ValueStack& values) {
 
     // Log what we pushed
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_PKT4)
+        .arg(pkt.getLabel())
         .arg(type_str)
         .arg(toHex(value));
+
+    return (0);
 }
 
-void
+unsigned
 TokenPkt6::evaluate(Pkt& pkt, ValueStack& values) {
     string value;
     string type_str;
@@ -582,8 +661,7 @@ TokenPkt6::evaluate(Pkt& pkt, ValueStack& values) {
           break;
       }
       default:
-          isc_throw(EvalTypeError, "Bad field specified: "
-                    << static_cast<int>(type_) );
+          isc_throw(EvalTypeError, "Bad field specified: " << static_cast<int>(type_));
       }
 
     } catch (const std::bad_cast&) {
@@ -594,11 +672,14 @@ TokenPkt6::evaluate(Pkt& pkt, ValueStack& values) {
 
     // Log what we pushed
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_PKT6)
+        .arg(pkt.getLabel())
         .arg(type_str)
         .arg(toHex(value));
+
+    return (0);
 }
 
-void
+unsigned
 TokenRelay6Field::evaluate(Pkt& pkt, ValueStack& values) {
     vector<uint8_t> binary;
     string type_str;
@@ -637,10 +718,11 @@ TokenRelay6Field::evaluate(Pkt& pkt, ValueStack& values) {
             values.push("");
             // Log what we pushed
             LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_RELAY6_RANGE)
-              .arg(type_str)
-              .arg(int(nest_level_))
-              .arg("0x");
-            return;
+                .arg(pkt.getLabel())
+                .arg(type_str)
+                .arg(int(nest_level_))
+                .arg("0x");
+            return (0);
         }
     } catch (const std::bad_cast&) {
         isc_throw(EvalTypeError, "Specified packet is not Pkt6");
@@ -655,13 +737,16 @@ TokenRelay6Field::evaluate(Pkt& pkt, ValueStack& values) {
 
     // Log what we pushed
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_RELAY6)
+        .arg(pkt.getLabel())
         .arg(type_str)
         .arg(int(nest_level_))
         .arg(toHex(value));
+
+    return (0);
 }
 
-void
-TokenEqual::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+unsigned
+TokenEqual::evaluate(Pkt& pkt, ValueStack& values) {
     if (values.size() < 2) {
         isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
                   "2 values for == operator, got " << values.size());
@@ -679,13 +764,16 @@ TokenEqual::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
     // Log what we popped and pushed
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_EQUAL)
+        .arg(pkt.getLabel())
         .arg(toHex(op1))
         .arg(toHex(op2))
         .arg('\'' + values.top() + '\'');
+
+    return (0);
 }
 
-void
-TokenSubstring::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+unsigned
+TokenSubstring::evaluate(Pkt& pkt, ValueStack& values) {
     if (values.size() < 3) {
         isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
                   "3 values for substring operator, got " << values.size());
@@ -704,11 +792,12 @@ TokenSubstring::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
         // Log what we popped and pushed
         LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_SUBSTRING_EMPTY)
+            .arg(pkt.getLabel())
             .arg(len_str)
             .arg(start_str)
             .arg("0x")
             .arg("0x");
-        return;
+        return (0);
     }
 
     // Convert the starting position and length from strings to numbers
@@ -744,11 +833,12 @@ TokenSubstring::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
         // Log what we popped and pushed
         LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_SUBSTRING_RANGE)
+            .arg(pkt.getLabel())
             .arg(len_str)
             .arg(start_str)
             .arg(toHex(string_str))
             .arg("0x");
-        return;
+        return (0);
     }
 
     // Adjust the values to be something for substr.  We first figure out
@@ -773,14 +863,17 @@ TokenSubstring::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
     // Log what we popped and pushed
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_SUBSTRING)
+        .arg(pkt.getLabel())
         .arg(len_str)
         .arg(start_str)
         .arg(toHex(string_str))
         .arg(toHex(values.top()));
+
+    return (0);
 }
 
-void
-TokenSplit::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+unsigned
+TokenSplit::evaluate(Pkt& pkt, ValueStack& values) {
     if (values.size() < 3) {
         isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
                   "3 values for split operator, got " << values.size());
@@ -800,11 +893,12 @@ TokenSplit::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
         // Log what we popped and pushed
         LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_SPLIT_EMPTY)
+            .arg(pkt.getLabel())
             .arg(field_str)
             .arg(delim_str)
             .arg(string_str)
             .arg("0x");
-        return;
+        return (0);
     }
 
     // Convert the field position from string to number
@@ -824,11 +918,12 @@ TokenSplit::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
         // Log what we popped and pushed
         LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_SPLIT_DELIM_EMPTY)
+            .arg(pkt.getLabel())
             .arg(field_str)
             .arg(delim_str)
             .arg(string_str)
             .arg(toHex(values.top()));
-        return;
+        return (0);
     }
 
     // Split the string into fields.
@@ -843,11 +938,12 @@ TokenSplit::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
         // Log what we popped and pushed
         LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_SPLIT_FIELD_OUT_OF_RANGE)
+            .arg(pkt.getLabel())
             .arg(field_str)
             .arg(delim_str)
             .arg(string_str)
             .arg("0x");
-        return;
+        return (0);
     }
 
     // Push the desired field.
@@ -855,14 +951,17 @@ TokenSplit::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
     // Log what we popped and pushed
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_SPLIT)
+            .arg(pkt.getLabel())
             .arg(field_str)
             .arg(delim_str)
             .arg(string_str)
             .arg(toHex(values.top()));
+
+    return (0);
 }
 
-void
-TokenConcat::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+unsigned
+TokenConcat::evaluate(Pkt& pkt, ValueStack& values) {
     if (values.size() < 2) {
         isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
                   "2 values for concat, got " << values.size());
@@ -878,13 +977,16 @@ TokenConcat::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
     // Log what we popped and pushed
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_CONCAT)
+        .arg(pkt.getLabel())
         .arg(toHex(op1))
         .arg(toHex(op2))
         .arg(toHex(values.top()));
+
+    return (0);
 }
 
-void
-TokenIfElse::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+unsigned
+TokenIfElse::evaluate(Pkt& pkt, ValueStack& values) {
     if (values.size() < 3) {
         isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
                   "3 values for ifelse, got " << values.size());
@@ -907,19 +1009,23 @@ TokenIfElse::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     // Log what we popped and pushed
     if (val) {
         LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_IFELSE_TRUE)
+            .arg(pkt.getLabel())
             .arg('\'' + cond + '\'')
             .arg(toHex(iffalse))
             .arg(toHex(iftrue));
     } else {
         LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_IFELSE_FALSE)
+            .arg(pkt.getLabel())
             .arg('\'' +cond + '\'')
             .arg(toHex(iftrue))
             .arg(toHex(iffalse));
     }
+
+    return (0);
 }
 
-void
-TokenToHexString::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+unsigned
+TokenToHexString::evaluate(Pkt& pkt, ValueStack& values) {
     if (values.size() < 2) {
         isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
                   "2 values for hexstring, got " << values.size());
@@ -946,13 +1052,16 @@ TokenToHexString::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
     // Log what we popped and pushed
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_TOHEXSTRING)
+        .arg(pkt.getLabel())
         .arg(toHex(binary))
         .arg(separator)
         .arg(tmp.str());
+
+    return (0);
 }
 
-void
-TokenNot::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+unsigned
+TokenNot::evaluate(Pkt& pkt, ValueStack& values) {
     if (values.size() == 0) {
         isc_throw(EvalBadStack, "Incorrect empty stack.");
     }
@@ -969,12 +1078,15 @@ TokenNot::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
     // Log what we popped and pushed
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_NOT)
+        .arg(pkt.getLabel())
         .arg('\'' + op + '\'')
         .arg('\'' + values.top() + '\'');
+
+    return (0);
 }
 
-void
-TokenAnd::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+unsigned
+TokenAnd::evaluate(Pkt& pkt, ValueStack& values) {
     if (values.size() < 2) {
         isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
                   "2 values for and operator, got " << values.size());
@@ -995,13 +1107,16 @@ TokenAnd::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
     // Log what we popped and pushed
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_AND)
+        .arg(pkt.getLabel())
         .arg('\'' + op1 + '\'')
         .arg('\'' + op2 + '\'')
         .arg('\'' + values.top() + '\'');
+
+    return (0);
 }
 
-void
-TokenOr::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+unsigned
+TokenOr::evaluate(Pkt& pkt, ValueStack& values) {
     if (values.size() < 2) {
         isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
                   "2 values for or operator, got " << values.size());
@@ -1022,12 +1137,15 @@ TokenOr::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
     // Log what we popped and pushed
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_OR)
+        .arg(pkt.getLabel())
         .arg('\'' + op1 + '\'')
         .arg('\'' + op2 + '\'')
         .arg('\'' + values.top() + '\'');
+
+    return (0);
 }
 
-void
+unsigned
 TokenMember::evaluate(Pkt& pkt, ValueStack& values) {
     if (pkt.inClass(client_class_)) {
         values.push("true");
@@ -1037,33 +1155,39 @@ TokenMember::evaluate(Pkt& pkt, ValueStack& values) {
 
     // Log what we pushed
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_MEMBER)
+        .arg(pkt.getLabel())
         .arg(client_class_)
         .arg('\'' + values.top() + '\'');
+
+    return (0);
 }
 
 TokenVendor::TokenVendor(Option::Universe u, uint32_t vendor_id, RepresentationType repr,
                          uint16_t option_code)
-    :TokenOption(option_code, repr), universe_(u), vendor_id_(vendor_id),
-     field_(option_code ? SUBOPTION : EXISTS) {
+    : TokenOption(option_code, repr), universe_(u), vendor_id_(vendor_id),
+      field_(option_code ? SUBOPTION : EXISTS) {
 }
 
 TokenVendor::TokenVendor(Option::Universe u, uint32_t vendor_id, FieldType field)
-    :TokenOption(0, TokenOption::HEXADECIMAL), universe_(u), vendor_id_(vendor_id),
-     field_(field) {
+    : TokenOption(0, TokenOption::HEXADECIMAL), universe_(u), vendor_id_(vendor_id),
+      field_(field) {
     if (field_ == EXISTS) {
         representation_type_ = TokenOption::EXISTS;
     }
 }
 
-uint32_t TokenVendor::getVendorId() const {
+uint32_t
+TokenVendor::getVendorId() const {
     return (vendor_id_);
 }
 
-TokenVendor::FieldType TokenVendor::getField() const {
+TokenVendor::FieldType
+TokenVendor::getField() const {
     return (field_);
 }
 
-void TokenVendor::evaluate(Pkt& pkt, ValueStack& values) {
+unsigned
+TokenVendor::evaluate(Pkt& pkt, ValueStack& values) {
     // Get the option first.
     uint16_t code = 0;
     switch (universe_) {
@@ -1081,9 +1205,10 @@ void TokenVendor::evaluate(Pkt& pkt, ValueStack& values) {
         // There's no vendor option, give up.
         std::string txt = pushFailure(values);
         LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_VENDOR_NO_OPTION)
+            .arg(pkt.getLabel())
             .arg(code)
             .arg(txt);
-        return;
+        return (0);
     }
 
     if (vendor_id_ && (vendor_id_ != vendor->getVendorId())) {
@@ -1091,10 +1216,11 @@ void TokenVendor::evaluate(Pkt& pkt, ValueStack& values) {
         // than we're looking for. (0 means accept any vendor-id)
         std::string txt = pushFailure(values);
         LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_VENDOR_ENTERPRISE_ID_MISMATCH)
+            .arg(pkt.getLabel())
             .arg(vendor_id_)
             .arg(vendor->getVendorId())
             .arg(txt);
-        return;
+        return (0);
     }
 
     switch (field_) {
@@ -1106,32 +1232,36 @@ void TokenVendor::evaluate(Pkt& pkt, ValueStack& values) {
         memcpy(&txt[0], &value, sizeof(uint32_t));
         values.push(txt);
         LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_VENDOR_ENTERPRISE_ID)
+            .arg(pkt.getLabel())
             .arg(vendor->getVendorId())
             .arg(util::encode::encodeHex(std::vector<uint8_t>(txt.begin(),
                                                               txt.end())));
-        return;
+        break;
     }
     case SUBOPTION:
         /// This is vendor[X].option[Y].exists, let's try to
         /// extract the option
-        TokenOption::evaluate(pkt, values);
-        return;
+        return (TokenOption::evaluate(pkt, values));
     case EXISTS:
         // We already passed all the checks: the option is there and has specified
         // enterprise-id.
         LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_VENDOR_EXISTS)
+            .arg(pkt.getLabel())
             .arg(vendor->getVendorId())
             .arg("true");
         values.push("true");
-        return;
+        break;
     case DATA:
         // This is for vendor-class option, we can skip it here.
         isc_throw(EvalTypeError, "Field None is not valid for vendor-class");
-        return;
+        break;
     }
+
+    return (0);
 }
 
-OptionPtr TokenVendor::getOption(Pkt& pkt) {
+OptionPtr
+TokenVendor::getOption(Pkt& pkt) {
    uint16_t code = 0;
     switch (universe_) {
     case Option::V4:
@@ -1155,20 +1285,22 @@ OptionPtr TokenVendor::getOption(Pkt& pkt) {
 
 TokenVendorClass::TokenVendorClass(Option::Universe u, uint32_t vendor_id,
                                    RepresentationType repr)
-    :TokenVendor(u, vendor_id, repr, 0), index_(0) {
+    : TokenVendor(u, vendor_id, repr, 0), index_(0) {
 }
 
 TokenVendorClass::TokenVendorClass(Option::Universe u, uint32_t vendor_id,
                                    FieldType field, uint16_t index)
-    :TokenVendor(u, vendor_id, TokenOption::HEXADECIMAL, 0), index_(index) {
+    : TokenVendor(u, vendor_id, TokenOption::HEXADECIMAL, 0), index_(index) {
     field_ = field;
 }
 
-uint16_t TokenVendorClass::getDataIndex() const {
+uint16_t
+TokenVendorClass::getDataIndex() const {
     return (index_);
 }
 
-void TokenVendorClass::evaluate(Pkt& pkt, ValueStack& values) {
+unsigned
+TokenVendorClass::evaluate(Pkt& pkt, ValueStack& values) {
     // Get the option first.
     uint16_t code = 0;
     switch (universe_) {
@@ -1186,9 +1318,10 @@ void TokenVendorClass::evaluate(Pkt& pkt, ValueStack& values) {
         // There's no vendor class option, give up.
         std::string txt = pushFailure(values);
         LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_VENDOR_CLASS_NO_OPTION)
+            .arg(pkt.getLabel())
             .arg(code)
             .arg(txt);
-        return;
+        return (0);
     }
 
     if (vendor_id_ && (vendor_id_ != vendor->getVendorId())) {
@@ -1196,10 +1329,11 @@ void TokenVendorClass::evaluate(Pkt& pkt, ValueStack& values) {
         // than we're looking for. (0 means accept any vendor-id)
         std::string txt = pushFailure(values);
         LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID_MISMATCH)
+            .arg(pkt.getLabel())
             .arg(vendor_id_)
             .arg(vendor->getVendorId())
             .arg(txt);
-        return;
+        return (0);
     }
 
     switch (field_) {
@@ -1211,23 +1345,25 @@ void TokenVendorClass::evaluate(Pkt& pkt, ValueStack& values) {
         memcpy(&txt[0], &value, sizeof(uint32_t));
         values.push(txt);
         LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_VENDOR_CLASS_ENTERPRISE_ID)
+            .arg(pkt.getLabel())
             .arg(vendor->getVendorId())
             .arg(util::encode::encodeHex(std::vector<uint8_t>(txt.begin(),
                                                               txt.end())));
-        return;
+        break;
     }
     case SUBOPTION:
         // Extract sub-options
         isc_throw(EvalTypeError, "Field None is not valid for vendor-class");
-        return;
+        break;
     case EXISTS:
         // We already passed all the checks: the option is there and has specified
         // enterprise-id.
         LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_VENDOR_CLASS_EXISTS)
+            .arg(pkt.getLabel())
             .arg(vendor->getVendorId())
             .arg("true");
         values.push("true");
-        return;
+        break;
     case DATA:
     {
         size_t max = vendor->getTuplesNum();
@@ -1235,12 +1371,13 @@ void TokenVendorClass::evaluate(Pkt& pkt, ValueStack& values) {
             // The index specified is out of bounds, e.g. there are only
             // 2 tuples and index specified is 5.
             LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_VENDOR_CLASS_DATA_NOT_FOUND)
+                .arg(pkt.getLabel())
                 .arg(index_)
                 .arg(vendor->getVendorId())
                 .arg(max)
                 .arg("");
             values.push("");
-            return;
+            break;
         }
 
         OpaqueDataTuple tuple = vendor->getTuple(index_);
@@ -1248,20 +1385,23 @@ void TokenVendorClass::evaluate(Pkt& pkt, ValueStack& values) {
         string txt(buf.begin(), buf.end());
 
         LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_VENDOR_CLASS_DATA)
+            .arg(pkt.getLabel())
             .arg(index_)
             .arg(max)
             .arg(txt);
 
         values.push(txt);
-        return;
+        break;
     }
     default:
         isc_throw(EvalTypeError, "Invalid field specified." << field_);
     }
+
+    return (0);
 }
 
 TokenInteger::TokenInteger(const uint32_t value)
-    :TokenString(EvalContext::fromUint32(value)), int_value_(value) {
+    : TokenString(EvalContext::fromUint32(value)), int_value_(value) {
 }
 
 OptionPtr
@@ -1272,7 +1412,7 @@ TokenSubOption::getSubOption(const OptionPtr& parent) {
     return (parent->getOption(sub_option_code_));
 }
 
-void
+unsigned
 TokenSubOption::evaluate(Pkt& pkt, ValueStack& values) {
     OptionPtr parent = getOption(pkt);
     std::string txt;
@@ -1314,13 +1454,147 @@ TokenSubOption::evaluate(Pkt& pkt, ValueStack& values) {
     // of the requested parent option and sub-option.
     if (representation_type_ == HEXADECIMAL) {
         LOG_DEBUG(eval_logger, EVAL_DBG_STACK, msgid)
+            .arg(pkt.getLabel())
             .arg(option_code_)
             .arg(sub_option_code_)
             .arg(toHex(txt));
     } else {
         LOG_DEBUG(eval_logger, EVAL_DBG_STACK, msgid)
+            .arg(pkt.getLabel())
             .arg(option_code_)
             .arg(sub_option_code_)
             .arg('\'' + txt + '\'');
     }
+
+    return (0);
+}
+
+TokenMatch::TokenMatch(const std::string& reg_exp) : reg_exp_str_(reg_exp) {
+    try {
+        reg_exp_ = regex(reg_exp);
+    } catch (const exception& ex) {
+        isc_throw(EvalParseError, "invalid regular expression '" << reg_exp
+                  << "': " << ex.what());
+    }
+}
+
+unsigned
+TokenMatch::evaluate(Pkt&, ValueStack& values) {
+    if (values.size() == 0) {
+        isc_throw(EvalBadStack, "Incorrect empty stack.");
+    }
+
+    string val = values.top();
+    values.pop();
+    string txt = "false";
+    try {
+        if (regex_match(val, reg_exp_)) {
+            txt = "true";
+        }
+        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_MATCH)
+            .arg(reg_exp_str_)
+            .arg(val)
+            .arg(txt);
+    } catch (const exception& ex) {
+        LOG_ERROR(eval_logger, EVAL_DEBUG_MATCH_ERROR)
+            .arg(reg_exp_str_)
+            .arg(val)
+            .arg(ex.what());
+    }
+    values.push(txt);
+
+    return (0);
+}
+
+TokenLabel::TokenLabel(const unsigned label) : label_(label) {
+    if (label == 0) {
+        isc_throw(EvalParseError, "label must be not zero");
+    }
+}
+
+unsigned
+TokenLabel::evaluate(Pkt&, ValueStack&) {
+    return (0);
+}
+
+TokenBranch::TokenBranch(const unsigned target) : target_(target) {
+    if (target == 0) {
+        isc_throw(EvalParseError, "target must be not zero");
+    }
+}
+
+unsigned
+TokenBranch::evaluate(Pkt&, ValueStack&) {
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_BRANCH)
+        .arg(target_);
+    return (target_);
+}
+
+TokenPopOrBranchTrue::TokenPopOrBranchTrue(const unsigned target)
+    : TokenBranch(target) {
+}
+
+unsigned
+TokenPopOrBranchTrue::evaluate(Pkt&, ValueStack& values) {
+    if (values.size() == 0) {
+        isc_throw(EvalBadStack, "Incorrect empty stack.");
+    }
+
+    string op = values.top();
+    bool val = toBool(op);
+
+    if (!val) {
+        values.pop();
+        return (0);
+    }
+
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_POP_OR_BRANCH_TRUE)
+        .arg(target_);
+    return (target_);
+}
+
+TokenPopOrBranchFalse::TokenPopOrBranchFalse(const unsigned target)
+    : TokenBranch(target) {
+}
+
+unsigned
+TokenPopOrBranchFalse::evaluate(Pkt&, ValueStack& values) {
+    if (values.size() == 0) {
+        isc_throw(EvalBadStack, "Incorrect empty stack.");
+    }
+
+    string op = values.top();
+    bool val = toBool(op);
+
+    if (val) {
+        values.pop();
+        return (0);
+    }
+
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_POP_OR_BRANCH_FALSE)
+        .arg(target_);
+    return (target_);
+}
+
+TokenPopAndBranchFalse::TokenPopAndBranchFalse(const unsigned target)
+    : TokenBranch(target) {
+}
+
+unsigned
+TokenPopAndBranchFalse::evaluate(Pkt&, ValueStack& values) {
+    if (values.size() == 0) {
+        isc_throw(EvalBadStack, "Incorrect empty stack.");
+    }
+
+    string op = values.top();
+    values.pop();
+    bool val = toBool(op);
+
+    if (val) {
+        return (0);
+    }
+
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_POP_AND_BRANCH_FALSE)
+        .arg(target_);
+    return (target_);
 }

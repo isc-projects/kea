@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,7 +8,7 @@
 #include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <dhcp/dhcp4.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp/option.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_string.h>
@@ -95,7 +95,7 @@ const char* NETWORKS_CONFIG[] = {
     "        {"
     "            \"name\": \"frog\","
     "            \"relay\": {"
-    "                \"ip-address\": \"192.3.5.6\""
+    "                \"ip-addresses\": [ \"192.3.5.6\" ]"
     "            },"
     "            \"subnet4\": ["
     "                {"
@@ -115,7 +115,7 @@ const char* NETWORKS_CONFIG[] = {
     "            \"subnet\": \"192.0.2.64/26\","
     "            \"id\": 1000,"
     "            \"relay\": {"
-    "                \"ip-address\": \"192.1.2.3\""
+    "                \"ip-addresses\": [ \"192.1.2.3\" ]"
     "            },"
     "            \"pools\": ["
     "                {"
@@ -148,7 +148,7 @@ const char* NETWORKS_CONFIG[] = {
     "        {"
     "            \"name\": \"frog\","
     "            \"relay\": {"
-    "                \"ip-address\": \"192.3.5.6\""
+    "                \"ip-addresses\": [ \"192.3.5.6\" ]"
     "            },"
     "            \"subnet4\": ["
     "                {"
@@ -197,7 +197,7 @@ const char* NETWORKS_CONFIG[] = {
     "        {"
     "            \"name\": \"frog\","
     "            \"relay\": {"
-    "                \"ip-address\": \"192.3.5.6\""
+    "                \"ip-addresses\": [ \"192.3.5.6\" ]"
     "            },"
     "            \"subnet4\": ["
     "                {"
@@ -236,7 +236,7 @@ const char* NETWORKS_CONFIG[] = {
     "        {"
     "            \"name\": \"frog\","
     "            \"relay\": {"
-    "                \"ip-address\": \"192.3.5.6\""
+    "                \"ip-addresses\": [ \"192.3.5.6\" ]"
     "            },"
     "            \"subnet4\": ["
     "                {"
@@ -286,7 +286,7 @@ const char* NETWORKS_CONFIG[] = {
     "        {"
     "            \"name\": \"frog\","
     "            \"relay\": {"
-    "                \"ip-address\": \"192.3.5.6\""
+    "                \"ip-addresses\": [ \"192.3.5.6\" ]"
     "            },"
     "            \"subnet4\": ["
     "                {"
@@ -343,7 +343,7 @@ const char* NETWORKS_CONFIG[] = {
     "        {"
     "            \"name\": \"frog\","
     "            \"relay\": {"
-    "                \"ip-address\": \"192.3.5.6\""
+    "                \"ip-addresses\": [ \"192.3.5.6\" ]"
     "            },"
     "            \"subnet4\": ["
     "                {"
@@ -527,7 +527,7 @@ const char* NETWORKS_CONFIG[] = {
     "    \"shared-networks\": ["
     "        {"
     "            \"name\": \"frog\","
-    "            \"relay\": { \"ip-address\": \"10.1.2.3\" },"
+    "            \"relay\": { \"ip-addresses\": [ \"10.1.2.3\" ] },"
     "            \"subnet4\": ["
     "                {"
     "                    \"subnet\": \"192.0.2.0/26\","
@@ -551,7 +551,7 @@ const char* NETWORKS_CONFIG[] = {
     "        },"
     "        {"
     "            \"name\": \"dog\","
-    "            \"relay\": { \"ip-address\": \"192.1.2.3\" },"
+    "            \"relay\": { \"ip-addresses\": [ \"192.1.2.3\" ] },"
     "            \"subnet4\": ["
     "                {"
     "                    \"subnet\": \"10.0.0.0/26\","
@@ -593,7 +593,7 @@ const char* NETWORKS_CONFIG[] = {
     "        {"
     "            \"name\": \"frog\","
     "            \"relay\": {"
-    "                \"ip-address\": \"192.3.5.6\""
+    "                \"ip-addresses\": [ \"192.3.5.6\" ]"
     "            },"
     "            \"subnet4\": ["
     "                {"
@@ -764,14 +764,14 @@ const char* NETWORKS_CONFIG[] = {
     "        {"
     "            \"name\": \"frog\","
     "            \"relay\": {"
-    "                \"ip-address\": \"192.3.5.6\""
+    "                \"ip-addresses\": [ \"192.3.5.6\" ]"
     "            },"
     "            \"subnet4\": ["
     "                {"
     "                    \"subnet\": \"192.0.2.0/26\","
     "                    \"id\": 10,"
     "                    \"relay\": {"
-    "                        \"ip-address\": \"192.1.1.1\""
+    "                        \"ip-addresses\": [ \"192.1.1.1\" ]"
     "                    },"
     "                    \"pools\": ["
     "                        {"
@@ -783,7 +783,7 @@ const char* NETWORKS_CONFIG[] = {
     "                    \"subnet\": \"10.0.0.0/24\","
     "                    \"id\": 100,"
     "                    \"relay\": {"
-    "                        \"ip-address\": \"192.2.2.2\""
+    "                        \"ip-addresses\": [ \"192.2.2.2\" ]"
     "                    },"
     "                    \"pools\": ["
     "                        {"
@@ -799,7 +799,7 @@ const char* NETWORKS_CONFIG[] = {
     "            \"subnet\": \"192.0.2.64/26\","
     "            \"id\": 1000,"
     "            \"relay\": {"
-    "                \"ip-address\": \"192.3.3.3\""
+    "                \"ip-addresses\": [ \"192.3.3.3\" ]"
     "            },"
     "            \"pools\": ["
     "                {"
@@ -1028,7 +1028,7 @@ const char* NETWORKS_CONFIG[] = {
     "        {"
     "            \"name\": \"frog\","
     "            \"relay\": {"
-    "                \"ip-address\": \"192.3.5.6\""
+    "                \"ip-addresses\": [ \"192.3.5.6\" ]"
     "            },"
     "            \"subnet4\": ["
     "                {"
@@ -1047,6 +1047,87 @@ const char* NETWORKS_CONFIG[] = {
     "                        {"
     "                            \"circuit-id\": \"'charter950'\","
     "                            \"ip-address\": \"192.0.2.28\""
+    "                        }"
+    "                    ]"
+    "                }"
+    "            ]"
+    "        }"
+    "    ]"
+    "}",
+
+// Configuration #21
+// - a shared network with two subnets
+// - first subnet uses the FLQ allocator
+// - second subnet uses the random allocator
+    "{"
+    "    \"interfaces-config\": {"
+    "        \"interfaces\": [ \"*\" ]"
+    "    },"
+    "    \"valid-lifetime\": 600,"
+    "    \"shared-networks\": ["
+    "        {"
+    "            \"name\": \"frog\","
+    "            \"relay\": {"
+    "                \"ip-addresses\": [ \"192.3.5.6\" ]"
+    "            },"
+    "            \"subnet4\": ["
+    "                {"
+    "                    \"subnet\": \"192.0.2.0/24\","
+    "                    \"id\": 100,"
+    "                    \"allocator\": \"flq\","
+    "                    \"pools\": ["
+    "                        {"
+    "                            \"pool\": \"192.0.2.1 - 192.0.2.10\""
+    "                        }"
+    "                    ]"
+    "                },"
+    "                {"
+    "                    \"subnet\": \"192.0.3.0/24\","
+    "                    \"id\": 10,"
+    "                    \"allocator\": \"random\","
+    "                    \"pools\": ["
+    "                        {"
+    "                            \"pool\": \"192.0.3.1 - 192.0.3.10\""
+    "                        }"
+    "                    ]"
+    "                }"
+    "            ]"
+    "        }"
+    "    ]"
+    "}",
+// Configuration #22
+// - a shared network with two subnets
+// - first subnet uses the random allocator
+// - second subnet uses the FLQ allocator
+    "{"
+    "    \"interfaces-config\": {"
+    "        \"interfaces\": [ \"*\" ]"
+    "    },"
+    "    \"valid-lifetime\": 600,"
+    "    \"shared-networks\": ["
+    "        {"
+    "            \"name\": \"frog\","
+    "            \"relay\": {"
+    "                \"ip-addresses\": [ \"192.3.5.6\" ]"
+    "            },"
+    "            \"subnet4\": ["
+    "                {"
+    "                    \"subnet\": \"192.0.2.0/24\","
+    "                    \"id\": 100,"
+    "                    \"allocator\": \"random\","
+    "                    \"pools\": ["
+    "                        {"
+    "                            \"pool\": \"192.0.2.1 - 192.0.2.10\""
+    "                        }"
+    "                    ]"
+    "                },"
+    "                {"
+    "                    \"subnet\": \"192.0.3.0/24\","
+    "                    \"id\": 10,"
+    "                    \"allocator\": \"flq\","
+    "                    \"pools\": ["
+    "                        {"
+    "                            \"pool\": \"192.0.3.1 - 192.0.3.10\""
     "                        }"
     "                    ]"
     "                }"
@@ -1084,10 +1165,9 @@ public:
     Subnet4Ptr getConfiguredSubnet(const IOAddress& address) {
         CfgSubnets4Ptr cfg = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4();
         const Subnet4Collection* subnets = cfg->getAll();
-        for (auto subnet_it = subnets->cbegin(); subnet_it != subnets->cend();
-             ++subnet_it) {
-            if ((*subnet_it)->inRange(address)) {
-                return (*subnet_it);
+        for (auto const& subnet_it : *subnets) {
+            if (subnet_it->inRange(address)) {
+                return (subnet_it);
             }
         }
         return (Subnet4Ptr());
@@ -1357,6 +1437,48 @@ public:
             "}";
 
         return (cfg);
+    }
+
+    // @brief Test that different allocator types can be used within a shared network.
+    //
+    // All available addresses should be assigned from the subnets belonging to
+    // the shared network.
+    //
+    /// @param config server configuration that should contain a shared network with
+    /// two subnets. Each subnet should contain an address pool with 10 addresses.
+    void testDifferentAllocatorsInNetwork(const std::string& config) {
+        // Create the base client and server configuration.
+        Dhcp4Client client(Dhcp4Client::SELECTING);
+        configure(config, *client.getServer());
+
+        // Record what addresses have been allocated.
+        std::set<std::string> allocated_set;
+
+        // Simulate allocations from different clients.
+        for (auto i = 0; i < 20; ++i) {
+            // Create a client from the base client.
+            Dhcp4Client next_client(client.getServer(), Dhcp4Client::SELECTING);
+            next_client.useRelay(true, IOAddress("192.3.5.6"), IOAddress("10.0.0.2"));
+            // Run 4-way exchange.
+            ASSERT_NO_THROW(next_client.doDORA());
+            // Make sure that the server responded.
+            ASSERT_TRUE(next_client.getContext().response_);
+            // Make sure that the server has responded with DHCPACK.
+            ASSERT_EQ(DHCPACK, static_cast<int>(next_client.getContext().response_->getType()));
+            // Make sure that the address is not zero.
+            ASSERT_FALSE(next_client.config_.lease_.addr_.isV4Zero());
+            // Remember allocated address uniqueness.
+            allocated_set.insert(next_client.config_.lease_.addr_.toText());
+        }
+        // Make sure that we have 20 distinct allocations.
+        ASSERT_EQ(20, allocated_set.size());
+
+        // Try one more time. This time no leases should be allocated because
+        // the pools are exhausted.
+        Dhcp4Client next_client(client.getServer(), Dhcp4Client::SELECTING);
+        next_client.useRelay(true, IOAddress("192.3.5.6"), IOAddress("10.0.0.2"));
+        ASSERT_NO_THROW(next_client.doDiscover());
+        EXPECT_FALSE(next_client.getContext().response_);
     }
 
     /// @brief Destructor.
@@ -1705,6 +1827,14 @@ TEST_F(Dhcpv4SharedNetworkTest, reservationInSharedNetwork) {
     EXPECT_EQ(DHCPACK, resp1->getType());
     EXPECT_NE("10.0.0.29", resp1->getYiaddr().toText());
     EXPECT_NE("192.0.2.28", resp1->getYiaddr().toText());
+    // Ensure stats are being recorded for HR conflicts
+    ObservationPtr subnet_conflicts = StatsMgr::instance().getObservation(
+        "subnet[10].v4-reservation-conflicts");
+    ASSERT_TRUE(subnet_conflicts);
+    ASSERT_EQ(1, subnet_conflicts->getInteger().first);
+    subnet_conflicts = StatsMgr::instance().getObservation("v4-reservation-conflicts");
+    ASSERT_TRUE(subnet_conflicts);
+    ASSERT_EQ(1, subnet_conflicts->getInteger().first);
 
     // Client #2 is now doing 4-way exchange and should get its newly reserved
     // address, released by the 4-way transaction of client 1.
@@ -1768,6 +1898,15 @@ TEST_F(Dhcpv4SharedNetworkTest, reservationInSharedNetworkTwoClientsSameIdentifi
     testAssigned([this, &client2]() {
         doRequest(client2, "10.0.0.1");
     });
+
+    // Ensure stats are being recorded for HR conflicts
+    ObservationPtr subnet_conflicts = StatsMgr::instance().getObservation(
+        "subnet[10].v4-reservation-conflicts");
+    ASSERT_TRUE(subnet_conflicts);
+    ASSERT_EQ(1, subnet_conflicts->getInteger().first);
+    subnet_conflicts = StatsMgr::instance().getObservation("v4-reservation-conflicts");
+    ASSERT_TRUE(subnet_conflicts);
+    ASSERT_EQ(1, subnet_conflicts->getInteger().first);
 }
 
 // Reserved address can't be assigned as long as access to a subnet is
@@ -2105,7 +2244,7 @@ TEST_F(Dhcpv4SharedNetworkTest, matchClientId) {
 
 // Shared network is selected based on the client class specified.
 TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSelectedByClass) {
-   // Create client #1.
+    // Create client #1.
     Dhcp4Client client1(Dhcp4Client::SELECTING);
     client1.setIfaceName("eth1");
     client1.setIfaceIndex(ETH1_INDEX);
@@ -2835,7 +2974,7 @@ TEST_F(Dhcpv4SharedNetworkTest, authoritative) {
 
     // Let's test them one by one
     int cnt = 0;
-    for ( auto s : scenarios) {
+    for (auto const& s : scenarios) {
         cnt++;
 
         string cfg = generateAuthConfig(s.global, s.subnet1, s.subnet2);
@@ -2854,6 +2993,20 @@ TEST_F(Dhcpv4SharedNetworkTest, authoritative) {
             EXPECT_EQ(result.first, 1) << "Configuration expected to fail, but succeeded";
         }
     }
+}
+
+// Test that different allocator types can be used within a shared network.
+// The first subnet uses the random allocator. The second subnet uses the FLQ
+// allocator.
+TEST_F(Dhcpv4SharedNetworkTest, randomAndFlqAllocation) {
+    testDifferentAllocatorsInNetwork(NETWORKS_CONFIG[21]);
+}
+
+// Test that different allocator types can be used within a shared network.
+// The first subnet uses the FLQ allocator. The second subnet uses the random
+// allocator.
+TEST_F(Dhcpv4SharedNetworkTest, flqAndRandomAllocation) {
+    testDifferentAllocatorsInNetwork(NETWORKS_CONFIG[22]);
 }
 
 } // end of anonymous namespace

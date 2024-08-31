@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -33,7 +33,7 @@ public:
     ///
     /// Removes unix socket descriptor before the test.
     UnixDomainSocketTest() :
-        io_service_(),
+        io_service_(new IOService()),
         test_socket_(new test::TestServerUnixSocket(io_service_,
                                                     unixSocketFilePath())),
         response_(),
@@ -47,6 +47,8 @@ public:
     /// Removes unix socket descriptor after the test.
     virtual ~UnixDomainSocketTest() {
         removeUnixSocketFile();
+        test_socket_.reset();
+        io_service_->stopAndPoll();
     }
 
     /// @brief Returns socket file path.
@@ -105,7 +107,7 @@ public:
     }
 
     /// @brief IO service used by the tests.
-    IOService io_service_;
+    IOServicePtr io_service_;
 
     /// @brief Server side unix socket used in these tests.
     test::TestServerUnixSocketPtr test_socket_;
@@ -138,7 +140,7 @@ TEST_F(UnixDomainSocketTest, sendReceive) {
     // Run IO service to generate server's response.
     while ((test_socket_->getResponseNum() < 1) &&
            (!test_socket_->isStopped())) {
-        io_service_.run_one();
+        io_service_->runOne();
     }
 
     // Receive response from the socket.
@@ -179,7 +181,7 @@ TEST_F(UnixDomainSocketTest, asyncSendReceive) {
     ));
     // Run IO service until connect handler is invoked.
     while (!connect_handler_invoked && (!test_socket_->isStopped())) {
-        io_service_.run_one();
+        io_service_->runOne();
     }
 
     // We are going to asynchronously send the 'foo' over the unix socket.
@@ -202,7 +204,7 @@ TEST_F(UnixDomainSocketTest, asyncSendReceive) {
     // Run IO service to generate server's response.
     while ((test_socket_->getResponseNum() < 1) &&
            (!test_socket_->isStopped())) {
-        io_service_.run_one();
+        io_service_->runOne();
     }
 
     // There is no guarantee that all data have been sent so we only check that
@@ -215,7 +217,7 @@ TEST_F(UnixDomainSocketTest, asyncSendReceive) {
     // Run IO service until we get the full response from the server.
     while ((response_.size() < expected_response.size()) &&
            !test_socket_->isStopped()) {
-        io_service_.run_one();
+        io_service_->runOne();
     }
 
     // Check that the entire response has been received and is correct.
@@ -259,7 +261,7 @@ TEST_F(UnixDomainSocketTest, asyncClientErrors) {
         EXPECT_TRUE(ec);
     });
     while (!connect_handler_invoked && !test_socket_->isStopped()) {
-        io_service_.run_one();
+        io_service_->runOne();
     }
 
     // Send
@@ -272,7 +274,7 @@ TEST_F(UnixDomainSocketTest, asyncClientErrors) {
         EXPECT_TRUE(ec);
     });
     while (!send_handler_invoked && !test_socket_->isStopped()) {
-        io_service_.run_one();
+        io_service_->runOne();
     }
 
     // Receive
@@ -285,7 +287,7 @@ TEST_F(UnixDomainSocketTest, asyncClientErrors) {
         EXPECT_TRUE(ec);
     });
     while (!receive_handler_invoked && !test_socket_->isStopped()) {
-        io_service_.run_one();
+        io_service_->runOne();
     }
 }
 

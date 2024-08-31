@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -160,7 +160,7 @@ public:
     /// @brief Removes staging configuration.
     ///
     /// This function should be called when there is a staging configuration
-    /// (likely created in the previous configuration attempt) but the entirely
+    /// (likely created in the previous configuration attempt) but the entire
     /// new configuration should be created. It removes the existing staging
     /// configuration and the next call to @c CfgMgr::getStagingCfg will return a
     /// fresh (default) configuration.
@@ -318,7 +318,7 @@ private:
     util::Optional<std::string> datadir_;
 
     /// @brief Manages the DHCP-DDNS client and its configuration.
-    D2ClientMgr d2_client_mgr_;
+    D2ClientMgrPtr d2_client_mgr_;
 
     /// @brief Server configuration
     ///

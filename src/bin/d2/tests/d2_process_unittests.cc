@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,9 +9,11 @@
 #include <asiolink/io_service.h>
 #include <cc/command_interpreter.h>
 #include <d2srv/testutils/nc_test_utils.h>
+#include <d2/d2_controller.h>
 #include <d2/d2_process.h>
 #include <d2/tests/test_configured_libraries.h>
 #include <dhcp_ddns/ncr_io.h>
+#include <hooks/hooks_manager.h>
 #include <process/testutils/d_test_stubs.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -25,6 +27,7 @@ using namespace isc;
 using namespace isc::config;
 using namespace isc::d2;
 using namespace isc::data;
+using namespace isc::hooks;
 using namespace isc::process;
 using namespace boost::posix_time;
 
@@ -64,6 +67,8 @@ public:
     D2ProcessTest() :
         D2Process("d2test",
                   asiolink::IOServicePtr(new isc::asiolink::IOService())) {
+        HooksManager::setTestMode(false);
+        D2Controller::instance();
     }
 
     /// @brief Destructor
@@ -113,9 +118,9 @@ public:
         const D2QueueMgrPtr& queue_mgr = getD2QueueMgr();
 
         // If queue manager isn't in the RUNNING state, return failure.
-        if (D2QueueMgr::RUNNING !=  queue_mgr->getMgrState()) {
+        if (D2QueueMgr::RUNNING != queue_mgr->getMgrState()) {
             return (::testing::AssertionFailure(::testing::Message() <<
-                                               "queue manager did not start"));
+                                                "queue manager did not start"));
         }
 
         //  Good to go.
@@ -297,7 +302,7 @@ TEST_F(D2ProcessTest, queueFullRecovery) {
         " \"dhcid\" : \"010203040A7F8E3D\" , "
         " \"lease-expires-on\" : \"20130121132405\" , "
         " \"lease-length\" : 1300, "
-        " \"use-conflict-resolution\" : true "
+        " \"conflict-resolution-mode\" : \"check-with-dhcid\""
         "}";
 
     // Start queue manager with known good config.
@@ -525,7 +530,7 @@ TEST_F(D2ProcessTest, canShutdown) {
         " \"dhcid\" : \"010203040A7F8E3D\" , "
         " \"lease-expires-on\" : \"20130121132405\" , "
         " \"lease-length\" : 1300, "
-        " \"use-conflict-resolution\" : true "
+        " \"conflict-resolution-mode\" : \"check-with-dhcid\""
         "}";
 
     // Manually enqueue a request.  This lets us test logic with queue
@@ -561,7 +566,7 @@ TEST_F(D2ProcessTest, canShutdown) {
 TEST_F(D2ProcessTest, normalShutdown) {
     // Use an asiolink IntervalTimer and callback to generate the
     // shutdown invocation. (Note IntervalTimer setup is in milliseconds).
-    isc::asiolink::IntervalTimer timer(*getIoService());
+    isc::asiolink::IntervalTimer timer(getIOService());
     timer.setup(std::bind(&D2ProcessTest::genShutdownCallback, this),
                 2 * 1000);
 
@@ -578,6 +583,9 @@ TEST_F(D2ProcessTest, normalShutdown) {
     time_duration elapsed = stop - start;
     EXPECT_TRUE(elapsed.total_milliseconds() >= 1900 &&
                 elapsed.total_milliseconds() <= 2200);
+
+    timer.cancel();
+    getIOService()->stopAndPoll();
 }
 
 /// @brief Verifies that an "uncaught" exception thrown during event loop
@@ -585,7 +593,7 @@ TEST_F(D2ProcessTest, normalShutdown) {
 TEST_F(D2ProcessTest, fatalErrorShutdown) {
     // Use an asiolink IntervalTimer and callback to generate the
     // the exception.  (Note IntervalTimer setup is in milliseconds).
-    isc::asiolink::IntervalTimer timer(*getIoService());
+    isc::asiolink::IntervalTimer timer(getIOService());
     timer.setup(std::bind(&D2ProcessTest::genFatalErrorCallback, this),
                 2 * 1000);
 
@@ -602,6 +610,9 @@ TEST_F(D2ProcessTest, fatalErrorShutdown) {
     time_duration elapsed = stop - start;
     EXPECT_TRUE(elapsed.total_milliseconds() >= 1900 &&
                 elapsed.total_milliseconds() <= 2200);
+
+    timer.cancel();
+    getIOService()->stopAndPoll();
 }
 
 /// @brief Used to permit visual inspection of logs to ensure

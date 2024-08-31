@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcpsrv/ip_range.h>
+#include <util/bigints.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -99,6 +100,13 @@ public:
     /// prefixes in the range.
     asiolink::IOAddress next(bool& done);
 
+    /// @brief Resets the permutation state.
+    ///
+    /// It effectively causes the permutation to start over the process of
+    /// serving addresses. Any previously returned addresses can be returned
+    /// again after calling this function.
+    void reset();
+
 private:
 
     /// Beginning of the range.
@@ -107,18 +115,21 @@ private:
     /// Distance between two neighboring addresses or delegated prefixes,
     /// i.e. 1 for address range and delegated prefix size for delegated
     /// prefixes.
-    uint64_t step_;
+    isc::util::uint128_t step_;
 
     /// Keeps the position of the next address or prefix to be swapped with
     /// a randomly picked address or prefix from the range of 0..cursor-1. The
     /// cursor value is decreased every time a new IP address or prefix
     /// is returned.
-    uint64_t cursor_;
+    isc::util::uint128_t cursor_;
+
+    /// Keeps the initial cursor position for @c reset function.
+    isc::util::uint128_t initial_cursor_;
 
     /// Keeps the current permutation state. The state associates the
     /// swapped IP addresses or delegated prefixes with their positions in
     /// the permutation.
-    std::map<uint64_t, asiolink::IOAddress> state_;
+    std::map<isc::util::uint128_t, asiolink::IOAddress> state_;
 
     /// Indicates if the addresses or delegated prefixes are exhausted.
     bool done_;

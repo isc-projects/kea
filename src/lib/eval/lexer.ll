@@ -1,4 +1,4 @@
-/* Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 
 #include <cerrno>
 #include <climits>
+#include <cstdint>
 #include <cstdlib>
 #include <string>
 #include <eval/eval_context.h>
@@ -117,8 +118,7 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
     /* A string has been matched. It contains the actual string and single quotes.
        We need to get those quotes out of the way and just use its content, e.g.
        for 'foo' we should get foo */
-    std::string tmp(evaltext+1);
-    tmp.resize(tmp.size() - 1);
+    std::string tmp(evaltext+1, evalleng-2);
 
     return isc::eval::EvalParser::make_STRING(tmp, loc);
 }
@@ -215,10 +215,13 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
 "data"         return isc::eval::EvalParser::make_DATA(loc);
 "enterprise"   return isc::eval::EvalParser::make_ENTERPRISE(loc);
 "substring"    return isc::eval::EvalParser::make_SUBSTRING(loc);
+"lcase"        return isc::eval::EvalParser::make_LCASE(loc);
+"ucase"        return isc::eval::EvalParser::make_UCASE(loc);
 "split"        return isc::eval::EvalParser::make_SPLIT(loc);
 "all"          return isc::eval::EvalParser::make_ALL(loc);
 "concat"       return isc::eval::EvalParser::make_CONCAT(loc);
 "ifelse"       return isc::eval::EvalParser::make_IFELSE(loc);
+"sifelse"      return isc::eval::EvalParser::make_SIFELSE(loc);
 "hexstring"    return isc::eval::EvalParser::make_TOHEXSTRING(loc);
 "addrtotext"   return isc::eval::EvalParser::make_ADDRTOTEXT(loc);
 "int8totext"   return isc::eval::EvalParser::make_INT8TOTEXT(loc);
@@ -229,8 +232,11 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
 "uint32totext" return isc::eval::EvalParser::make_UINT32TOTEXT(loc);
 "not"          return isc::eval::EvalParser::make_NOT(loc);
 "and"          return isc::eval::EvalParser::make_AND(loc);
+"sand"         return isc::eval::EvalParser::make_SAND(loc);
 "or"           return isc::eval::EvalParser::make_OR(loc);
+"sor"          return isc::eval::EvalParser::make_SOR(loc);
 "member"       return isc::eval::EvalParser::make_MEMBER(loc);
+"match"        return isc::eval::EvalParser::make_MATCH(loc);
 "."            return isc::eval::EvalParser::make_DOT(loc);
 "("            return isc::eval::EvalParser::make_LPAREN(loc);
 ")"            return isc::eval::EvalParser::make_RPAREN(loc);
@@ -251,6 +257,7 @@ EvalContext::scanStringBegin(ParserType type)
     start_token_flag = true;
     start_token_value = type;
 
+    label_ = 0;
     loc.initialize(&file_);
     eval_flex_debug = trace_scanning_;
     YY_BUFFER_STATE buffer;

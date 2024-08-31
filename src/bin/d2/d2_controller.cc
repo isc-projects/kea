@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,11 +6,12 @@
 
 #include <config.h>
 
-#include <cfgrpt/config_report.h>
 #include <config/command_mgr.h>
+#include <config/http_command_mgr.h>
 #include <d2/d2_controller.h>
 #include <d2/d2_process.h>
 #include <d2/parser_context.h>
+#include <process/cfgrpt/config_report.h>
 #include <stats/stats_mgr.h>
 
 #include <stdlib.h>
@@ -62,6 +63,9 @@ D2Controller::registerCommands() {
     CommandMgr::instance().registerCommand(CONFIG_GET_COMMAND,
         std::bind(&D2Controller::configGetHandler, this, ph::_1, ph::_2));
 
+    CommandMgr::instance().registerCommand(CONFIG_HASH_GET_COMMAND,
+        std::bind(&D2Controller::configHashGetHandler, this, ph::_1, ph::_2));
+
     CommandMgr::instance().registerCommand(CONFIG_RELOAD_COMMAND,
         std::bind(&D2Controller::configReloadHandler, this, ph::_1, ph::_2));
 
@@ -100,12 +104,14 @@ D2Controller::registerCommands() {
 void
 D2Controller::deregisterCommands() {
     try {
-        // Close the command socket (if it exists).
+        // Close command sockets.
         CommandMgr::instance().closeCommandSocket();
+        HttpCommandMgr::instance().close();
 
         // Deregister any registered commands (please keep in alphabetic order)
         CommandMgr::instance().deregisterCommand(BUILD_REPORT_COMMAND);
         CommandMgr::instance().deregisterCommand(CONFIG_GET_COMMAND);
+        CommandMgr::instance().deregisterCommand(CONFIG_HASH_GET_COMMAND);
         CommandMgr::instance().deregisterCommand(CONFIG_RELOAD_COMMAND);
         CommandMgr::instance().deregisterCommand(CONFIG_SET_COMMAND);
         CommandMgr::instance().deregisterCommand(CONFIG_TEST_COMMAND);
@@ -138,18 +144,6 @@ D2Controller::parseFile(const std::string& file_name) {
 }
 
 D2Controller::~D2Controller() {
-}
-
-// Refer to config_report so it will be embedded in the binary.
-const char* const* d2_config_report = isc::detail::config_report;
-
-std::string
-D2Controller::getVersionAddendum() {
-    std::stringstream stream;
-    // Currently the only dependency D2 adds to base is cryptolink
-    stream << isc::cryptolink::CryptoLink::getVersion() << std::endl;
-    return (stream.str());
-
 }
 
 } // end namespace isc::d2

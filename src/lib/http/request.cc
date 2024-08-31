@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -90,10 +90,8 @@ HttpRequest::create() {
         }
 
         // Copy headers from the context.
-        for (auto header = context_->headers_.begin();
-             header != context_->headers_.end();
-             ++header) {
-            HttpHeaderPtr hdr(new HttpHeader(header->name_, header->value_));
+        for (auto const& header : context_->headers_) {
+            HttpHeaderPtr hdr(new HttpHeader(header.name_, header.value_));
             headers_[hdr->getLowerCaseName()] = hdr;
         }
 
@@ -105,19 +103,17 @@ HttpRequest::create() {
 
         // Iterate over required headers and check that they exist
         // in the HTTP request.
-        for (auto req_header = required_headers_.begin();
-             req_header != required_headers_.end();
-             ++req_header) {
-            auto header = headers_.find(req_header->first);
+        for (auto const& req_header : required_headers_) {
+            auto header = headers_.find(req_header.first);
             if (header == headers_.end()) {
-                isc_throw(BadValue, "required header " << req_header->first
+                isc_throw(BadValue, "required header " << req_header.first
                           << " not found in the HTTP request");
-            } else if (!req_header->second->getValue().empty() &&
-                       !header->second->isValueEqual(req_header->second->getValue())) {
+            } else if (!req_header.second->getValue().empty() &&
+                       !header->second->isValueEqual(req_header.second->getValue())) {
                 // If specific value is required for the header, check
                 // that the value in the HTTP request matches it.
                 isc_throw(BadValue, "required header's " << header->first
-                          << " value is " << req_header->second->getValue()
+                          << " value is " << req_header.second->getValue()
                           << ", but " << header->second->getValue() << " was found");
             }
         }
@@ -200,10 +196,9 @@ HttpRequest::toString() const {
     }
 
     // Add all other headers.
-    for (auto header_it = headers_.cbegin(); header_it != headers_.cend();
-         ++header_it) {
-        if (header_it->second->getName() != "Host") {
-            s << header_it->second->getName() << ": " << header_it->second->getValue()
+    for (auto const& header_it : headers_) {
+        if (header_it.second->getName() != "Host") {
+            s << header_it.second->getName() << ": " << header_it.second->getValue()
               << crlf;
         }
     }

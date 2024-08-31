@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -23,7 +23,7 @@ typedef MasterToken Token; // shortcut
 class MasterLexerStateTest : public ::testing::Test {
 protected:
     MasterLexerStateTest() : common_options(MasterLexer::INITIAL_WS),
-                             s_null(NULL),
+                             s_null(0),
                              s_crlf(State::getInstance(State::CRLF)),
                              s_string(State::getInstance(State::String)),
                              s_qstring(State::getInstance(State::QString)),
@@ -268,7 +268,7 @@ stringTokenCheck(const std::string& expected, const MasterToken& token,
     EXPECT_EQ(expected, actual);
 
     // There should be "hidden" nul-terminator after the string data.
-    ASSERT_NE(static_cast<const char*>(NULL), token.getStringRegion().beg);
+    ASSERT_NE(static_cast<const char*>(0), token.getStringRegion().beg);
     EXPECT_EQ(0, *(token.getStringRegion().beg + token.getStringRegion().len));
 }
 

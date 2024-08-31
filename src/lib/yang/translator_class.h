@@ -1,4 +1,4 @@
-// Copyright (C) 2018,2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,7 +9,6 @@
 
 #include <yang/translator_option_data.h>
 #include <yang/translator_option_def.h>
-#include <list>
 
 namespace isc {
 namespace yang {
@@ -76,22 +75,37 @@ namespace yang {
 class TranslatorClass : virtual public TranslatorOptionDataList,
     virtual public TranslatorOptionDefList  {
 public:
-
     /// @brief Constructor.
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-    TranslatorClass(sysrepo::S_Session session, const std::string& model);
+    TranslatorClass(sysrepo::Session session, const std::string& model);
 
     /// @brief Destructor.
-    virtual ~TranslatorClass();
+    virtual ~TranslatorClass() = default;
 
-    /// @brief Get and translate a client class from YANG to JSON.
+    /// @brief Translate a client class from YANG to JSON.
     ///
-    /// @param xpath The xpath of the class .
-    /// @return JSON representation of the class .
-    /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ElementPtr getClass(const std::string& xpath);
+    /// @param data_node the YANG node representing the class
+    ///
+    /// @return the JSON representation of the class
+    ///
+    /// @throw NetconfError when sysrepo raises an error.
+    isc::data::ElementPtr getClass(libyang::DataNode const& data_node);
+
+    /// @brief Translate a client class from YANG to JSON.
+    ///
+    /// @note This is a computationally expensive operation that makes a lookup in the sysrepo
+    /// datastore by calling Session::getData(). It should be used sparingly in production code,
+    /// mainly to get an initial data node to work with. It may be used at will in unit tests.
+    /// Use getClass(libyang::DataNode) as a scalable alternative.
+    ///
+    /// @param xpath the xpath of the class
+    ///
+    /// @return JSON representation of the class
+    ///
+    /// @throw NetconfError when sysrepo raises an error.
+    isc::data::ElementPtr getClassFromAbsoluteXpath(std::string const& xpath);
 
     /// @brief Translate and set client class from JSON to YANG.
     ///
@@ -102,10 +116,12 @@ public:
 protected:
     /// @brief getClass JSON for kea-dhcp[46].
     ///
-    /// @param xpath The xpath of the class .
-    /// @return JSON representation of the class .
-    /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ElementPtr getClassKea(const std::string& xpath);
+    /// @param data_node the YANG node representing the client class
+    ///
+    /// @return JSON representation of the class
+    ///
+    /// @throw NetconfError when sysrepo raises an error.
+    isc::data::ElementPtr getClassKea(libyang::DataNode const& data_node);
 
     /// @brief setClass for kea-dhcp[46].
     ///
@@ -113,7 +129,7 @@ protected:
     /// @param elem The JSON element.
     void setClassKea(const std::string& xpath,
                      isc::data::ConstElementPtr elem);
-};
+};  // TranslatorClass
 
 /// @brief A translator class for converting a client class list between
 /// YANG and JSON.
@@ -122,22 +138,37 @@ protected:
 /// not define client class contents.
 class TranslatorClasses : virtual public TranslatorClass {
 public:
-
     /// @brief Constructor.
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-    TranslatorClasses(sysrepo::S_Session session, const std::string& model);
+    TranslatorClasses(sysrepo::Session session, const std::string& model);
 
     /// @brief Destructor.
-    virtual ~TranslatorClasses();
+    virtual ~TranslatorClasses() = default;
 
-    /// @brief Get and translate client classes from YANG to JSON.
+    /// @brief Translate client classes from YANG to JSON.
+    ///
+    /// @param data_node the YANG node representing the class
+    ///
+    /// @return the JSON representation of the list of classes
+    ///
+    /// @throw NetconfError when sysrepo raises an error.
+    isc::data::ElementPtr getClasses(libyang::DataNode const& data_node);
+
+    /// @brief Translate client classes from YANG to JSON.
+    ///
+    /// @note This is a computationally expensive operation that makes a lookup in the sysrepo
+    /// datastore by calling Session::getData(). It should be used sparingly in production code,
+    /// mainly to get an initial data node to work with. It may be used at will in unit tests.
+    /// Use getClasses(libyang::DataNode) as a scalable alternative.
     ///
     /// @param xpath The xpath of classes.
+    ///
     /// @return JSON representation of classes.
-    /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ConstElementPtr getClasses(const std::string& xpath);
+    ///
+    /// @throw NetconfError when sysrepo raises an error.
+    isc::data::ElementPtr getClassesFromAbsoluteXpath(std::string const& xpath);
 
     /// @brief Translate and set client classes from JSON to YANG.
     ///
@@ -149,21 +180,24 @@ public:
 protected:
     /// @brief getClasses JSON for kea-dhcp[46].
     ///
-    /// @param xpath The xpath of classes.
+    /// @param data_node the YANG node representing the classes
+    ///
     /// @return JSON representation of classes.
-    /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ElementPtr getClassesKea(const std::string& xpath);
+    ///
+    /// @throw NetconfError when sysrepo raises an error.
+    isc::data::ElementPtr getClassesKea(libyang::DataNode const& data_node);
 
     /// @brief setClasses for kea-dhcp[46].
     ///
     /// @param xpath The xpath of classes.
     /// @param elem The JSON element.
+    ///
     /// @throw BadValue on client class without name.
     void setClassesKea(const std::string& xpath,
                        isc::data::ConstElementPtr elem);
-};
+};  // TranslatorClasses
 
 }  // namespace yang
 }  // namespace isc
 
-#endif // ISC_TRANSLATOR_CLASS_H
+#endif  // ISC_TRANSLATOR_CLASS_H

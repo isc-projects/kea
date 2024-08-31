@@ -1,4 +1,4 @@
-SUBDIRS = . tests
+SUBDIRS = . tests testutils
 
 AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
@@ -43,17 +43,16 @@ libkea_http_la_SOURCES += auth_log.cc auth_log.h
 libkea_http_la_SOURCES += auth_messages.cc auth_messages.h
 libkea_http_la_SOURCES += basic_auth_config.cc basic_auth_config.h
 libkea_http_la_SOURCES += basic_auth.cc basic_auth.h
-libkea_http_la_SOURCES += http_thread_pool.cc http_thread_pool.h
 
 libkea_http_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_http_la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_http_la_LDFLAGS  = $(AM_LDFLAGS)
-libkea_http_la_LDFLAGS += -no-undefined -version-info 42:0:0
+libkea_http_la_LDFLAGS += -no-undefined -version-info 82:0:0
 
-libkea_http_la_LIBADD  =
+libkea_http_la_LIBADD  = $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 libkea_http_la_LIBADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
-libkea_http_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libkea_http_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+libkea_http_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libkea_http_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
 libkea_http_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_http_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
@@ -115,7 +114,6 @@ libkea_http_include_HEADERS = \
 	http_message.h \
 	http_message_parser_base.h \
 	http_messages.h \
-	http_thread_pool.h \
 	http_types.h \
 	listener.h \
 	listener_impl.h \

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -36,8 +36,7 @@ public:
     }
 
     /// @brief Override the error handler.
-    virtual void d2ClientErrorHandler(const dhcp_ddns::NameChangeSender::
-                                      Result result,
+    virtual void d2ClientErrorHandler(const dhcp_ddns::NameChangeSender::Result result,
                                       dhcp_ddns::NameChangeRequestPtr& ncr);
 };
 

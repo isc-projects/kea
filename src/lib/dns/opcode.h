@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,7 +11,7 @@
 #include <ostream>
 
 #ifndef OPCODE_H
-#define OPCODE_H 1
+#define OPCODE_H
 
 namespace isc {
 namespace dns {
@@ -75,7 +75,9 @@ public:
     /// This method never throws an exception.
     ///
     /// \return The underlying code value corresponding to the \c Opcode.
-    CodeValue getCode() const { return (code_); }
+    CodeValue getCode() const {
+        return (code_);
+    }
 
     /// \brief Return true iff two Opcodes are equal.
     ///
@@ -85,23 +87,29 @@ public:
     ///
     /// \param other the \c Opcode object to compare against.
     /// \return true if the two Opcodes are equal; otherwise false.
-    bool equals(const Opcode& other) const
-    { return (code_ == other.code_); }
+    bool equals(const Opcode& other) const {
+        return (code_ == other.code_);
+    }
 
     /// \brief Same as \c equals().
-    bool operator==(const Opcode& other) const { return (equals(other)); }
-    
+    bool operator==(const Opcode& other) const {
+        return (equals(other));
+    }
+
     /// \brief Return true iff two Opcodes are not equal.
     ///
     /// This method never throws an exception.
     ///
     /// \param other the \c Opcode object to compare against.
     /// \return true if the two Opcodes are not equal; otherwise false.
-    bool nequals(const Opcode& other) const
-    { return (code_ != other.code_); }
+    bool nequals(const Opcode& other) const {
+        return (code_ != other.code_);
+    }
 
     /// \brief Same as \c nequals().
-    bool operator!=(const Opcode& other) const { return (nequals(other)); }
+    bool operator!=(const Opcode& other) const {
+        return (nequals(other));
+    }
 
     /// \brief Convert the \c Opcode to a string.
     ///
@@ -276,7 +284,3 @@ std::ostream& operator<<(std::ostream& os, const Opcode& opcode);
 }
 }
 #endif  // OPCODE_H
-
-// Local Variables: 
-// mode: c++
-// End: 

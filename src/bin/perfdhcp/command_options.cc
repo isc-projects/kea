@@ -1,20 +1,21 @@
-// Copyright (C) 2012-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+#include <kea_version.h>
 
 #include <perfdhcp/command_options.h>
 
+#include <asiolink/io_error.h>
 #include <exceptions/exceptions.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/duid.h>
 #include <dhcp/option.h>
-#include <cfgrpt/config_report.h>
-#include <util/encode/hex.h>
-#include <asiolink/io_error.h>
+#include <process/cfgrpt/config_report.h>
+#include <util/encode/encode.h>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -37,9 +38,6 @@ using namespace isc::dhcp;
 
 namespace isc {
 namespace perfdhcp {
-
-// Refer to config_report so it will be embedded in the binary
-const char* const* perfdhcp_config_report = isc::detail::config_report;
 
 CommandOptions::LeaseType::LeaseType()
     : type_(ADDRESS) {
@@ -166,6 +164,10 @@ CommandOptions::reset() {
         single_thread_mode_ = false;
     }
     scenario_ = Scenario::BASIC;
+    for (uint8_t i = 1; i <= RELAY_OPTIONS_MAX_ENCAPSULATION ; i++) {
+        OptionCollection option_collection;
+        relay_opts_[i] = option_collection;
+    }
 }
 
 bool
@@ -206,7 +208,7 @@ CommandOptions::parse(int argc, char** const argv, bool print_cmd_line) {
     // Reset values of class members
     reset();
 
-    // Informs if program has been run with 'h' or 'v' option.
+    // Informs if program has been run with 'h', 'v' or 'V' option.
     bool help_or_version_mode = initialize(argc, argv, print_cmd_line);
     if (!help_or_version_mode) {
         validate();
@@ -215,10 +217,12 @@ CommandOptions::parse(int argc, char** const argv, bool print_cmd_line) {
 }
 
 const int LONG_OPT_SCENARIO = 300;
+const int LONG_OPT_RELAY_OPTION = 400;
 
 bool
 CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
     int opt = 0;                // Subsequent options returned by getopt()
+    int opt_long_index = 0;     // Holds index of long_option inside of long_options[]
     std::string drop_arg;       // Value of -D<value>argument
     size_t percent_loc = 0;     // Location of % sign in -D<value>
     double drop_percent = 0;    // % value (1..100) in -D<value%>
@@ -235,16 +239,19 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
 
     struct option long_options[] = {
         {"scenario", required_argument, 0, LONG_OPT_SCENARIO},
+        {"or",       required_argument, 0, LONG_OPT_RELAY_OPTION},
         {0,          0,                 0, 0}
     };
 
     // In this section we collect argument values from command line
     // they will be tuned and validated elsewhere
     while((opt = getopt_long(argc, argv,
-                             "huv46A:r:t:R:b:n:p:d:D:l:P:a:L:N:M:s:iBc1"
+                             "huvV46A:r:t:R:b:n:p:d:D:l:P:a:L:N:M:s:iBc1"
                              "J:T:X:O:o:E:S:I:x:W:w:e:f:F:g:C:y:Y:",
-                             long_options, NULL)) != -1) {
-        stream << " -" << static_cast<char>(opt);
+                             long_options, &opt_long_index)) != -1) {
+        stream << " -";
+        opt <= 'z' ? stream << static_cast<char>(opt) :
+                     stream << "-" << long_options[opt_long_index].name;
         if (optarg) {
             stream << " " << optarg;
         }
@@ -283,7 +290,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
         case 'b':
             check(base_.size() > 3, "-b<value> already specified,"
                   " unexpected occurrence of 5th -b<value>");
-            base_.push_back(optarg);
+            base_.push_back(optarg ? optarg : "");
             decodeBase(base_.back());
             break;
 
@@ -297,7 +304,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
 
         case 'C':
             clean_report_ = true;
-            clean_report_separator_ = optarg;
+            clean_report_separator_ = optarg ? optarg : "";
             break;
 
         case 'd':
@@ -306,7 +313,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
                   "unexpected 3rd occurrence of -d<value>");
             try {
                 drop_time_[drop_time_set_] =
-                    boost::lexical_cast<double>(optarg);
+                    boost::lexical_cast<double>(optarg ? optarg : "");
             } catch (const boost::bad_lexical_cast&) {
                 isc_throw(isc::InvalidParameter,
                           "value of drop time: -d<value>"
@@ -318,7 +325,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             break;
 
         case 'D':
-            drop_arg = std::string(optarg);
+            drop_arg = std::string(optarg ? optarg : "");
             percent_loc = drop_arg.find('%');
             check(max_pdrop_.size() > 1 || max_drop_.size() > 1,
                   "values of maximum drops: -D<value> already "
@@ -363,13 +370,17 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             break;
 
         case 'g': {
-            auto optarg_text = std::string(optarg);
+            std::string optarg_text(optarg ? optarg : "");
             if (optarg_text == "single") {
                 single_thread_mode_ = true;
             } else if (optarg_text == "multi") {
                 single_thread_mode_ = false;
             } else {
-                isc_throw(InvalidParameter, "value of thread mode (-g) '" << optarg << "' is wrong - should be '-g single' or '-g multi'");
+                if (optarg) {
+                    isc_throw(InvalidParameter, "value of thread mode (-g) '" << optarg << "' is wrong - should be '-g single' or '-g multi'");
+                } else {
+                    isc_throw(InvalidParameter, "value of thread mode (-g) is wrong - should be '-g single' or '-g multi'");
+                }
             }
             break;
         }
@@ -390,12 +401,12 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
         case 'J':
             check(num_subnet_list_files >= 1, "only one -J option can be specified");
             num_subnet_list_files++;
-            relay_addr_list_file_ = std::string(optarg);
+            relay_addr_list_file_ = std::string(optarg ? optarg : "");
             loadRelayAddr();
             break;
 
         case 'l':
-            localname_ = std::string(optarg);
+            localname_ = std::string(optarg ? optarg : "");
             initIsInterface();
             break;
 
@@ -422,7 +433,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
         case 'M':
             check(num_mac_list_files >= 1, "only one -M option can be specified");
             num_mac_list_files++;
-            mac_list_file_ = std::string(optarg);
+            mac_list_file_ = std::string(optarg ? optarg : "");
             loadMacs();
             break;
 
@@ -464,17 +475,17 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
                    "-4 or -6 must be explicitly specified before -o is used.");
 
             // custom option (expected format: code,hexstring)
-            std::string opt_text = std::string(optarg);
-            size_t coma_loc = opt_text.find(',');
-            check(coma_loc == std::string::npos,
-                  "-o option must provide option code, a coma and hexstring for"
+            std::string opt_text(optarg ? optarg : "");
+            size_t comma_loc = opt_text.find(',');
+            check(comma_loc == std::string::npos,
+                  "-o option must provide option code, a comma and hexstring for"
                   " the option content, e.g. -o60,646f63736973 for sending option"
                   " 60 (class-id) with the value 'docsis'");
             int code = 0;
 
             // Try to parse the option code
             try {
-                code = boost::lexical_cast<int>(opt_text.substr(0,coma_loc));
+                code = boost::lexical_cast<int>(opt_text.substr(0, comma_loc));
                 check(code <= 0, "Option code can't be negative");
             } catch (const boost::bad_lexical_cast&) {
                 isc_throw(InvalidParameter, "Invalid option code specified for "
@@ -482,7 +493,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             }
 
             // Now try to interpret the hexstring
-            opt_text = opt_text.substr(coma_loc + 1);
+            opt_text = opt_text.substr(comma_loc + 1);
             std::vector<uint8_t> bin;
             try {
                 isc::util::encode::decodeHex(opt_text, bin);
@@ -492,9 +503,9 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             }
 
             // Create and remember the option.
-            OptionPtr opt(new Option(ipversion_ == 4 ? Option::V4 : Option::V6,
-                                     code, bin));
-            extra_opts_.insert(make_pair(code, opt));
+            OptionPtr option(new Option(ipversion_ == 4 ? Option::V4 : Option::V6,
+                                        code, bin));
+            extra_opts_.insert(make_pair(code, option));
             break;
         }
         case 'p':
@@ -552,6 +563,10 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             version();
             return (true);
 
+        case 'V':
+            extendedVersion();
+            return (true);
+
         case 'w':
             wrapped_ = nonEmptyString("command for wrapped mode:"
                                       " -w<command> must be specified");
@@ -586,14 +601,80 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             break;
 
         case LONG_OPT_SCENARIO: {
-            auto optarg_text = std::string(optarg);
+            std::string optarg_text(optarg ? optarg : "");
             if (optarg_text == "basic") {
                 scenario_ = Scenario::BASIC;
             } else if (optarg_text == "avalanche") {
                 scenario_ = Scenario::AVALANCHE;
             } else {
-                isc_throw(InvalidParameter, "scenario value '" << optarg << "' is wrong - should be 'basic' or 'avalanche'");
+                isc_throw(InvalidParameter, "scenario value '" << optarg_text << "' is wrong - should be 'basic' or 'avalanche'");
             }
+            break;
+        }
+
+        case LONG_OPT_RELAY_OPTION: {
+            // for now this is only available for v6
+            // and must be used together with -A option.
+            check((ipversion_ != 6),
+                  "-6 must be explicitly specified before --or is used.");
+            check(v6_relay_encapsulation_level_ <= 0,
+                  "-A must be explicitly specified before --or is used.");
+
+            // custom option (expected format: encapsulation-level:code,hexstring)
+            std::string opt_text(optarg ? optarg : "");
+            size_t colon_loc = opt_text.find(':');
+            size_t comma_loc = opt_text.find(',');
+
+            // if encapsulation level is skipped by user, let's assume it is 1
+            uint8_t option_encapsulation_level = 1;
+            if (colon_loc == std::string::npos) {
+                // if colon was not found, default encapsulation level will be used
+                // and let's reset colon_loc to -1 so option code could be parsed later
+                colon_loc = -1;
+            } else {
+                // Try to parse the encapsulation level
+                try {
+                    option_encapsulation_level =
+                        boost::lexical_cast<int>(opt_text.substr(0, colon_loc));
+                    check(option_encapsulation_level != 1, "Relayed option encapsulation level "
+                                                           "supports only value 1 at the moment.");
+                } catch (const boost::bad_lexical_cast&) {
+                    isc_throw(InvalidParameter,
+                              "Invalid relayed option encapsulation level specified for "
+                              "--or option, expected format: --or <integer>:<integer>,<hexstring>");
+                }
+            }
+
+            check(comma_loc == std::string::npos,
+                  "--or option must provide encapsulation level, a colon, option code, a comma and "
+                  "hexstring for the option content, e.g. --or 1:38,31323334 for sending option"
+                  " 38 (subscriber-id) with the value 1234 at first level of encapsulation");
+            int code = 0;
+
+            // Try to parse the option code
+            try {
+                code = boost::lexical_cast<int>(
+                    opt_text.substr(colon_loc + 1, comma_loc - colon_loc - 1));
+                check(code <= 0, "Option code can't be negative or zero");
+            } catch (const boost::bad_lexical_cast&) {
+                isc_throw(InvalidParameter,
+                          "Invalid option code specified for "
+                          "--or option, expected format: --or <integer>:<integer>,<hexstring>");
+            }
+
+            // Now try to interpret the hexstring
+            opt_text = opt_text.substr(comma_loc + 1);
+            std::vector<uint8_t> bin;
+            try {
+                isc::util::encode::decodeHex(opt_text, bin);
+            } catch (const BadValue& e) {
+                isc_throw(InvalidParameter, "Error during decoding option --or:" << e.what());
+            }
+
+            // Create and remember the option.
+            OptionPtr option(new Option(Option::V6, code, bin));
+            auto relay_opts = relay_opts_.find(option_encapsulation_level);
+            relay_opts->second.insert(make_pair(code, option));
             break;
         }
         default:
@@ -691,9 +772,9 @@ CommandOptions::initClientsNum() {
         // be able to detect negative values provided
         // by user. We would not detect negative values
         // if we casted directly to unsigned value.
-        long long clients_num = boost::lexical_cast<long long>(optarg);
+        long long clients_num = boost::lexical_cast<long long>(optarg ? optarg : "");
         check(clients_num < 0, errmsg);
-        clients_num_ = boost::lexical_cast<uint32_t>(optarg);
+        clients_num_ = boost::lexical_cast<uint32_t>(optarg ? optarg : "");
     } catch (const boost::bad_lexical_cast&) {
         isc_throw(isc::InvalidParameter, errmsg);
     }
@@ -824,6 +905,16 @@ CommandOptions::generateDuidTemplate() {
     // randomized before sending a packet to simulate different
     // clients.
     memcpy(&duid_template_[8], &mac_template_[0], 6);
+}
+
+const isc::dhcp::OptionCollection&
+CommandOptions::getRelayOpts(uint8_t encapsulation_level) const {
+    if (encapsulation_level > RELAY_OPTIONS_MAX_ENCAPSULATION) {
+        isc_throw(isc::OutOfRange,
+                  "Trying to access relay options at encapsulation level that doesn't exist");
+    }
+
+    return relay_opts_.find(encapsulation_level)->second;
 }
 
 uint8_t
@@ -1020,7 +1111,7 @@ CommandOptions::check(bool condition, const std::string& errmsg) const {
 int
 CommandOptions::positiveInteger(const std::string& errmsg) const {
     try {
-        int value = boost::lexical_cast<int>(optarg);
+        int value = boost::lexical_cast<int>(optarg ? optarg : "");
         check(value <= 0, errmsg);
         return (value);
     } catch (const boost::bad_lexical_cast&) {
@@ -1031,7 +1122,7 @@ CommandOptions::positiveInteger(const std::string& errmsg) const {
 int
 CommandOptions::nonNegativeInteger(const std::string& errmsg) const {
     try {
-        int value = boost::lexical_cast<int>(optarg);
+        int value = boost::lexical_cast<int>(optarg ? optarg : "");
         check(value < 0, errmsg);
         return (value);
     } catch (const boost::bad_lexical_cast&) {
@@ -1041,7 +1132,7 @@ CommandOptions::nonNegativeInteger(const std::string& errmsg) const {
 
 std::string
 CommandOptions::nonEmptyString(const std::string& errmsg) const {
-    std::string sarg = optarg;
+    std::string sarg(optarg ? optarg : "");
     if (sarg.length() == 0) {
         isc_throw(isc::InvalidParameter, errmsg);
     }
@@ -1050,7 +1141,7 @@ CommandOptions::nonEmptyString(const std::string& errmsg) const {
 
 void
 CommandOptions::initLeaseType() {
-    std::string lease_type_arg = optarg;
+    std::string lease_type_arg(optarg ? optarg : "");
     lease_type_.fromCommandLine(lease_type_arg);
 }
 
@@ -1172,7 +1263,8 @@ R"(perfdhcp [-1] [-4 | -6] [-A encapsulation-level] [-b base] [-B] [-c]
          [-h] [-i] [-I ip-offset] [-J remote-address-list-file]
          [-l local-address|interface] [-L local-port] [-M mac-list-file]
          [-n num-request] [-N remote-port] [-O random-offset]
-         [-o code,hexstring] [-p test-period] [-P preload] [-r rate]
+         [-o code,hexstring] [--or encapsulation-level:code,hexstring]
+         [-p test-period] [-P preload] [-r rate]
          [-R num-clients] [-s seed] [-S srvid-offset] [--scenario name]
          [-t report] [-T template-file] [-u] [-v] [-W exit-wait-time]
          [-w script_name] [-x diagnostic-selector] [-X xid-offset] [server]
@@ -1278,7 +1370,8 @@ Options:
 -u: Enable checking address uniqueness. Lease valid lifetime should not be
     shorter than test duration and clients should not request address more than
     once without releasing it first.
--v: Report the version number of this program.
+-v: Display the Kea version.
+-V: Display the extended Kea version.
 -W<time>: Specifies exit-wait-time parameter, that makes perfdhcp wait
     for <time> us after an exit condition has been met to receive all
     packets without sending any new packets. Expressed in microseconds.
@@ -1311,6 +1404,11 @@ DHCPv6 only options:
     <encapsulation-level> value is 1, which means that the generated
     traffic is an equivalent of the traffic passing through a single
     relay agent.
+--or encapsulation-level:<code,hexstring>: Send given option included
+    to simulated DHCPv6 relayed traffic at given level of encapsulation
+    with the specified code and the specified buffer in hexstring format.
+    Currently the only supported encapsulation-level value is 1.
+    Must be used together with -A.
 
 The remaining options are typically used in conjunction with -r:
 
@@ -1350,7 +1448,12 @@ The exit status is:
 
 void
 CommandOptions::version() const {
-    std::cout << "VERSION: " << VERSION << std::endl;
+    std::cout << VERSION << std::endl;
+}
+
+void
+CommandOptions::extendedVersion() const {
+    cout << VERSION << " (" << EXTENDED_VERSION << ")" << endl;
 }
 
 

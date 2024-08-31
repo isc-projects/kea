@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -141,6 +141,12 @@ public:
                         const AddedOptions& added_options,
                         isc::data::ConstElementPtr user_context =
                         isc::data::ConstElementPtr()) const;
+
+    /// @brief Adds an IPv6 address to the host.
+    ///
+    /// @param host pointer to the host instance.
+    /// @param address an IPv6 address to be added as a string.
+    void addIPv6Address(const HostPtr& host, const std::string& address) const;
 
     /// @brief Pointer to the host data source
     HostDataSourcePtr hdsptr_;
@@ -502,6 +508,14 @@ public:
     /// Uses gtest macros to report failures.
     void testDeleteById6Options();
 
+    /// @brief Tests that two IPv6 reservations for the specified subnet ID
+    /// and IPv6 address can be deleted.
+    void testDelete2ForIPv6();
+
+    /// @brief Tests that IPv6 address and prefix reservations for the specified
+    /// subnet ID and IPv6 address can be deleted.
+    void testDeleteBothForIPv6();
+
     /// @brief Tests that multiple reservations without IPv4 addresses can be
     /// specified within a subnet.
     ///
@@ -512,6 +526,11 @@ public:
     ///
     /// Uses gtest macros to report failures.
     void testMultipleHosts6();
+
+    /// @brief Tests that hosts can be updated.
+    ///
+    /// Uses gtest macros to report failures.
+    void testUpdate();
 
     /// @brief Returns DUID with identical content as specified HW address
     ///
@@ -544,7 +563,7 @@ public:
         isc::db::DatabaseConnection::db_lost_callback_ = 0;
         isc::db::DatabaseConnection::db_recovered_callback_ = 0;
         isc::db::DatabaseConnection::db_failed_callback_ = 0;
-        isc::dhcp::HostMgr::setIOService(io_service_);
+        isc::db::DatabaseConnection::setIOService(io_service_);
         isc::dhcp::TimerMgr::instance()->setIOService(io_service_);
         isc::dhcp::CfgMgr::instance().clear();
     }
@@ -553,7 +572,7 @@ public:
         isc::db::DatabaseConnection::db_lost_callback_ = 0;
         isc::db::DatabaseConnection::db_recovered_callback_ = 0;
         isc::db::DatabaseConnection::db_failed_callback_ = 0;
-        isc::dhcp::HostMgr::setIOService(isc::asiolink::IOServicePtr());
+        isc::db::DatabaseConnection::setIOService(isc::asiolink::IOServicePtr());
         isc::dhcp::TimerMgr::instance()->unregisterTimers();
         isc::dhcp::CfgMgr::instance().clear();
     }
@@ -595,6 +614,50 @@ public:
     /// string
     virtual std::string invalidConnectString() = 0;
 
+    /// @brief Verifies the host manager's behavior if DB connection can not be
+    /// established but succeeds on retry
+    ///
+    /// This function creates a host manager with a back end that supports
+    /// connectivity lost callback (currently only MySQL and PostgreSQL). It
+    /// verifies that connectivity is unavailable and then recovered on retry:
+    /// -# The registered DbLostCallback was invoked
+    /// -# The registered DbRecoveredCallback was invoked
+    void testRetryOpenDbLostAndRecoveredCallback();
+
+    /// @brief Verifies the host manager's behavior if DB connection can not be
+    /// established but fails on retry
+    ///
+    /// This function creates a host manager with a back end that supports
+    /// connectivity lost callback (currently only MySQL and PostgreSQL). It
+    /// It verifies that connectivity is unavailable and then fails again on
+    /// retry:
+    /// -# The registered DbLostCallback was invoked
+    /// -# The registered DbFailedCallback was invoked
+    void testRetryOpenDbLostAndFailedCallback();
+
+    /// @brief Verifies the host manager's behavior if DB connection can not be
+    /// established but succeeds on retry
+    ///
+    /// This function creates a host manager with a back end that supports
+    /// connectivity lost callback (currently only MySQL and PostgreSQL). It
+    /// verifies that connectivity is unavailable and then recovered on retry:
+    /// -# The registered DbLostCallback was invoked
+    /// -# The registered DbRecoveredCallback was invoked after two reconnect
+    /// attempts (once failing and second triggered by timer)
+    void testRetryOpenDbLostAndRecoveredAfterTimeoutCallback();
+
+    /// @brief Verifies the host manager's behavior if DB connection can not be
+    /// established but fails on retry
+    ///
+    /// This function creates a host manager with a back end that supports
+    /// connectivity lost callback (currently only MySQL and PostgreSQL). It
+    /// It verifies that connectivity is unavailable and then fails again on
+    /// retry:
+    /// -# The registered DbLostCallback was invoked
+    /// -# The registered DbFailedCallback was invoked after two reconnect
+    /// attempts (once failing and second triggered by timer)
+    void testRetryOpenDbLostAndFailedAfterTimeoutCallback();
+
     /// @brief Verifies open failures do NOT invoke db lost callback
     ///
     /// The db lost callback should only be invoked after successfully
@@ -609,7 +672,7 @@ public:
     /// verifies connectivity by issuing a known valid query. Next it simulates
     /// connectivity lost by identifying and closing the socket connection to
     /// the CB backend. It then reissues the query and verifies that:
-    /// -# The Query throws  DbOperationError (rather than exiting)
+    /// -# The Query throws DbOperationError (rather than exiting)
     /// -# The registered DbLostCallback was invoked
     /// -# The registered DbRecoveredCallback was invoked
     void testDbLostAndRecoveredCallback();
@@ -621,7 +684,7 @@ public:
     /// verifies connectivity by issuing a known valid query. Next it simulates
     /// connectivity lost by identifying and closing the socket connection to
     /// the CB backend. It then reissues the query and verifies that:
-    /// -# The Query throws  DbOperationError (rather than exiting)
+    /// -# The Query throws DbOperationError (rather than exiting)
     /// -# The registered DbLostCallback was invoked
     /// -# The registered DbFailedCallback was invoked
     void testDbLostAndFailedCallback();
@@ -633,7 +696,7 @@ public:
     /// verifies connectivity by issuing a known valid query. Next it simulates
     /// connectivity lost by identifying and closing the socket connection to
     /// the CB backend. It then reissues the query and verifies that:
-    /// -# The Query throws  DbOperationError (rather than exiting)
+    /// -# The Query throws DbOperationError (rather than exiting)
     /// -# The registered DbLostCallback was invoked
     /// -# The registered DbRecoveredCallback was invoked after two reconnect
     /// attempts (once failing and second triggered by timer)
@@ -646,7 +709,7 @@ public:
     /// verifies connectivity by issuing a known valid query. Next it simulates
     /// connectivity lost by identifying and closing the socket connection to
     /// the CB backend. It then reissues the query and verifies that:
-    /// -# The Query throws  DbOperationError (rather than exiting)
+    /// -# The Query throws DbOperationError (rather than exiting)
     /// -# The registered DbLostCallback was invoked
     /// -# The registered DbFailedCallback was invoked after two reconnect
     /// attempts (once failing and second triggered by timer)
@@ -733,6 +796,23 @@ protected:
                   const DuidPtr& duid,
                   const SubnetID& subnet_id,
                   const isc::asiolink::IOAddress& address,
+                  const uint8_t prefix_len = 128);
+
+    /// @brief Inserts IPv6 reservation into the host data source.
+    ///
+    /// @param data_source Reference to the data source to which the reservation
+    /// should be inserted.
+    /// @param duid Pointer to the DUID to be associated with the reservation.
+    /// @param subnet_id IPv6 subnet id.
+    /// @param addresses IPv6 addresses/prefixes to be reserved.
+    /// @param prefix_len Prefix length. The default value is 128 which
+    /// indicates that the reservation is for an IPv6 address rather than a
+    /// prefix. Notice that this is common for all addresses in given vector
+    /// of addresses.
+    void addHost6(BaseHostDataSource& data_source,
+                  const DuidPtr& duid,
+                  const SubnetID& subnet_id,
+                  const std::vector<isc::asiolink::IOAddress>& addresses,
                   const uint8_t prefix_len = 128);
 
     /// @brief This test verifies that HostMgr returns all reservations for the
@@ -923,6 +1003,100 @@ protected:
     /// inserted.
     void testGetAll6BySubnetIP(BaseHostDataSource& data_source1,
                                BaseHostDataSource& data_source2);
+
+    /// @brief This test verifies that HostMgr returns all reservations for the
+    /// specified IPv6 address.
+    ///
+    /// If reservations are added to different host data sources, it is expected
+    /// that the @c HostMgr will retrieve reservations from both of them.
+    ///
+    /// @param data_source1 Host data source to which first reservation is
+    /// inserted.
+    /// @param data_source2 Host data source to which second reservation is
+    /// inserted.
+    void testGetAll6ByIP(BaseHostDataSource& data_source1,
+                         BaseHostDataSource& data_source2);
+
+    /// @brief This test verifies that HostMgr returns all reservations for the
+    /// specified IPv6 prefix/es.
+    ///
+    /// If reservations are added to different host data sources, it is expected
+    /// that the @c HostMgr will retrieve reservations from both of them.
+    ///
+    /// @param data_source1 Host data source to which first reservation is
+    /// inserted.
+    /// @param data_source2 Host data source to which second reservation is
+    /// inserted.
+    void testGetAll6ByIpPrefix(BaseHostDataSource& data_source1, BaseHostDataSource& data_source2);
+
+    /// @brief This test verifies that HostMgr adds the reservations to any
+    /// data source.
+    ///
+    /// The reservations are added to the external database (alternate sources)
+    /// by default but the primary source may be changed on demand too.
+    ///
+    /// @param data_source1 Host data source to which first reservation is
+    /// inserted.
+    /// @param data_source2 Host data source to which second reservation is
+    /// inserted.
+    void testAdd(BaseHostDataSource& data_source1,
+                 BaseHostDataSource& data_source2);
+
+    /// @brief This test verifies that HostMgr deletes the reservations by
+    /// the subnet ID and subnet address.
+    ///
+    /// The reservations are deleted from the external database (alternate
+    /// sources) only by default but the primary source may be changed on
+    /// demand too.
+    ///
+    /// @param data_source1 Host data source to which first reservation is
+    /// inserted.
+    /// @param data_source2 Host data source to which second reservation is
+    /// inserted.
+    void testDeleteByIDAndAddress(BaseHostDataSource& data_source1,
+                                  BaseHostDataSource& data_source2);
+
+    /// @brief This test verifies that HostMgr deletes only desired
+    /// reservations by the subnet ID and subnet address in alternate
+    /// data sources (hosts DB backends). It verifies that other reservations
+    /// in the subnet remain undeleted.
+    ///
+    /// @param data_source alternate host data source
+    void testDeleteOneHostByIDAndAddress(BaseHostDataSource& data_source);
+
+    /// @brief This test verifies that HostMgr deletes the IPv4 reservations by
+    /// the subnet ID and identifier.
+    ///
+    /// The reservations are deleted from the external database (alternate
+    /// sources) only by default but the primary source may be changed on
+    /// demand too.
+    ///
+    /// @param data_source1 Host data source to which first reservation is
+    /// inserted.
+    /// @param data_source2 Host data source to which second reservation is
+    /// inserted.
+    void testDelete4ByIDAndIdentifier(BaseHostDataSource& data_source1,
+                                      BaseHostDataSource& data_source2);
+
+    /// @brief This test verifies that HostMgr deletes the IPv6 reservations by
+    /// the subnet ID and identifier.
+    ///
+    /// The reservations are deleted from the external database (alternate
+    /// sources) only by default but the primary source may be changed on
+    /// demand too.
+    ///
+    /// @param data_source1 Host data source to which first reservation is
+    /// inserted.
+    /// @param data_source2 Host data source to which second reservation is
+    /// inserted.
+    void testDelete6ByIDAndIdentifier(BaseHostDataSource& data_source1,
+                                      BaseHostDataSource& data_source2);
+
+    /// @brief Utility function that returns true if a given data source
+    /// is primary (it isn't an alternate source).
+    /// @param data_source Host data source to check.
+    /// @return True if the data source is primary. Otherwise, false.
+    bool isPrimaryDataSource(const BaseHostDataSource& data_source) const;
 
     /// @brief HW addresses to be used by the tests.
     std::vector<HWAddrPtr> hwaddrs_;

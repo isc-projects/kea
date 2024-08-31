@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -217,6 +217,9 @@ public:
     /// @param top indicates if this is the first call to pack the options.
     /// When true logic to emit the message type first is executed. It
     /// defaults to false.
+    /// @param check indicates if the code should be more flexible with
+    /// PAD and END options. If true, PAD and END options will not be parsed.
+    /// This is useful for partial parsing and slightly broken packets.
     static void packOptions4(isc::util::OutputBuffer& buf,
                              const isc::dhcp::OptionCollection& options,
                              bool top = false, bool check = true);
@@ -226,6 +229,8 @@ public:
     ///
     /// @param options The option container which needs to be updated with split
     /// options.
+    /// @param scopedOptions temporary storage for options that are going to be
+    /// split. See @ref ScopedPktOptionsCopy for explanation.
     /// @param used The size of the buffer that has already been used by the
     /// parent option effectively shrinking the maximum supported length for
     /// each options in the container.
@@ -286,13 +291,12 @@ public:
                                  size_t* relay_msg_offset = 0,
                                  size_t* relay_msg_len = 0);
 
-    /// @brief Fuse multiple options with the same option code in long options
-    /// (RFC3396).
+    /// @brief Extend vendor options from fused options in multiple OptionVendor
+    /// or OptionVendorClass options and add respective suboptions or values.
     ///
-    /// @param options The option container which needs to be updated with fused
-    /// options.
-    /// @return True if any option has been fused, false otherwise.
-    static bool fuseOptions4(isc::dhcp::OptionCollection& options);
+    /// @param options The option container which needs to be updated with
+    /// extended vendor options.
+    static void extendVendorOptions4(isc::dhcp::OptionCollection& options);
 
     /// @brief Parses provided buffer as DHCPv4 options and creates
     /// Option objects.
@@ -413,6 +417,42 @@ public:
     /// @param option_space Option space name.
     /// @return vendor id.
     static uint32_t optionSpaceToVendorId(const std::string& option_space);
+
+    /// @brief Get definition of DHO_DHCP_REQUESTED_ADDRESS option.
+    static const OptionDefinition& DHO_DHCP_REQUESTED_ADDRESS_DEF();
+
+    /// @brief Get definition of DHO_DHCP_SERVER_IDENTIFIER option.
+    static const OptionDefinition& DHO_DHCP_SERVER_IDENTIFIER_DEF();
+
+    /// @brief Get definition of DHO_DHCP_AGENT_OPTIONS option.
+    static const OptionDefinition& DHO_DHCP_AGENT_OPTIONS_DEF();
+
+    /// @brief Get definition of DHO_SUBNET_SELECTION option.
+    static const OptionDefinition& DHO_SUBNET_SELECTION_DEF();
+
+    /// @brief Get definition of DHO_DOMAIN_SEARCH option.
+    static const OptionDefinition& DHO_DOMAIN_SEARCH_DEF();
+
+    /// @brief Get definition of DHO_STATUS_CODE option.
+    static const OptionDefinition& DHO_STATUS_CODE_DEF();
+
+    /// @brief Get definition of D6O_CLIENT_FQDN option.
+    static const OptionDefinition& D6O_CLIENT_FQDN_DEF();
+
+    /// @brief Get definition of D6O_LQ_QUERY option.
+    static const OptionDefinition& D6O_LQ_QUERY_DEF();
+
+    /// @brief Get definition of D6O_CLIENT_DATA option.
+    static const OptionDefinition& D6O_CLIENT_DATA_DEF();
+
+    /// @brief Get definition of D6O_LQ_RELAY_DATA option.
+    static const OptionDefinition& D6O_LQ_RELAY_DATA_DEF();
+
+    /// @brief Get definition of D6O_BOOTFILE_URL option.
+    static const OptionDefinition& D6O_BOOTFILE_URL_DEF();
+
+    /// @brief Get definition of D6O_RSOO option.
+    static const OptionDefinition& D6O_RSOO_DEF();
 
 private:
 

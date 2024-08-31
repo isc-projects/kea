@@ -1,6 +1,6 @@
 #!@PYTHON@
 
-# Copyright (C) 2017-2020 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,6 +15,7 @@ import sys
 from base64 import b64encode
 
 from kea_conn import CARequest
+
 
 class CARequestUnitTest(unittest.TestCase):
     """
@@ -161,12 +162,8 @@ class CARequestUnitTest(unittest.TestCase):
         """
         This test check if the basic HTTP authentication uses UTF-8 encoding.
         """
-        if sys.version_info[0] == 3:
-            user = 'libert\xe9'
-            password = '\xe9galit\xe9'
-        else:
-            user = u'libert\xe9'
-            password = u'\xe9galit\xe9'
+        user = 'libert\xe9'
+        password = '\xe9galit\xe9'
         buser = user.encode('utf-8')
         bpassword = password.encode('utf-8')
         secret = b':'.join((buser, bpassword))
@@ -194,6 +191,7 @@ class CARequestUnitTest(unittest.TestCase):
         """
         This method is called after each test. Currently it does nothing.
         """
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -5,9 +5,7 @@
 
 #include <log/message_types.h>
 
-extern const isc::log::MessageID STAT_CMDS_DEINIT_FAILED;
 extern const isc::log::MessageID STAT_CMDS_DEINIT_OK;
-extern const isc::log::MessageID STAT_CMDS_INIT_FAILED;
 extern const isc::log::MessageID STAT_CMDS_INIT_OK;
 extern const isc::log::MessageID STAT_CMDS_LEASE4_FAILED;
 extern const isc::log::MessageID STAT_CMDS_LEASE4_GET;

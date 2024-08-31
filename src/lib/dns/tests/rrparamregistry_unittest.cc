@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,10 +24,14 @@
 
 using namespace std;
 using namespace isc::dns;
-using namespace isc::util;
 using namespace isc::dns::rdata;
+using namespace isc::util;
 
 namespace {
+void
+nullCallback(const std::string&, size_t, const std::string&) {
+}
+
 class RRParamRegistryTest : public ::testing::Test {
 protected:
     RRParamRegistryTest()
@@ -122,7 +126,7 @@ TEST_F(RRParamRegistryTest, addRemoveFactory) {
     // Add factories so that we can treat this pair just like in::A.
     RRParamRegistry::getRegistry().add(test_type_str, test_type_code,
                                        test_class_str, test_class_code,
-                                       RdataFactoryPtr(new TestRdataFactory));
+                                       RdataFactoryPtr(new TestRdataFactory()));
     // Now it should be accepted, and should be identical to the same data of
     // in::A.
     EXPECT_EQ(0, in::A("192.0.2.1").compare(
@@ -135,7 +139,7 @@ TEST_F(RRParamRegistryTest, addRemoveFactory) {
                  InvalidRdataText);
     // Add the factories also as a class independent RRtype
     RRParamRegistry::getRegistry().add(test_type_str, test_type_code,
-                                       RdataFactoryPtr(new TestRdataFactory));
+                                       RdataFactoryPtr(new TestRdataFactory()));
     // Now it should be okay for other classes than the test class.
     EXPECT_EQ(0, in::A("192.0.2.1").compare(
                   *createRdata(RRType(test_type_code), RRClass("IN"),
@@ -155,13 +159,13 @@ TEST_F(RRParamRegistryTest, addRemoveFactory) {
 
 RdataPtr
 createRdataHelper(const std::string& str) {
-    boost::scoped_ptr<AbstractRdataFactory> rdf(new TestRdataFactory);
+    boost::scoped_ptr<AbstractRdataFactory> rdf(new TestRdataFactory());
 
     std::stringstream ss(str);
     MasterLexer lexer;
     lexer.pushSource(ss);
 
-    MasterLoaderCallbacks callbacks(MasterLoaderCallbacks::getNullCallbacks());
+    MasterLoaderCallbacks callbacks(nullCallback, nullCallback);
     const Name origin("example.org.");
 
     return (rdf->create(lexer, &origin,

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -94,14 +94,14 @@ public:
         std::vector<ElementPtr> answer_list = answer->listValue();
 
         ASSERT_EQ(expected_codes.size(), answer_list.size());
+        size_t count = 0;
         // Check all answers.
-        for (auto ans = answer_list.cbegin(); ans != answer_list.cend();
-             ++ans) {
+        for (auto const& ans : answer_list) {
             ConstElementPtr text;
-            ASSERT_NO_THROW(text = isc::config::parseAnswer(status_code, *ans));
-            EXPECT_EQ(expected_codes[std::distance(answer_list.cbegin(), ans)],
-                      status_code)
+            ASSERT_NO_THROW(text = isc::config::parseAnswer(status_code, ans));
+            EXPECT_EQ(expected_codes[count], status_code)
                 << "answer contains text: " << text->stringValue();
+            count++;
         }
     }
 
@@ -170,7 +170,7 @@ public:
     /// @param use_thread Indicates if the IO service will be ran in thread.
     void bindServerSocket(const std::string& response,
                           const bool use_thread = false) {
-        server_socket_.reset(new test::TestServerUnixSocket(*getIOService(),
+        server_socket_.reset(new test::TestServerUnixSocket(getIOService(),
                                                             unixSocketFilePath(),
                                                             response));
         server_socket_->startTimer(TEST_TIMEOUT);
@@ -248,8 +248,7 @@ public:
 
         // We have some cancelled operations for which we need to invoke the
         // handlers with the operation_aborted error code.
-        getIOService()->get_io_service().reset();
-        getIOService()->poll();
+        getIOService()->stopAndPoll(false);
 
         EXPECT_EQ(expected_responses, server_socket_->getResponseNum());
         checkAnswer(answer, expected_result0, expected_result1, expected_result2);
@@ -413,8 +412,7 @@ TEST_F(CtrlAgentCommandMgrTest, forwardListCommands) {
 
     // We have some cancelled operations for which we need to invoke the
     // handlers with the operation_aborted error code.
-    getIOService()->get_io_service().reset();
-    getIOService()->poll();
+    getIOService()->stopAndPoll(false);
 
     // Answer of 3 is specific to the stub response we send when the
     // command is forwarded. So having this value returned means that

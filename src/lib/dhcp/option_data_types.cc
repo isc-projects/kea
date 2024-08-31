@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,8 +9,9 @@
 #include <dhcp/option_data_types.h>
 #include <dns/labelsequence.h>
 #include <dns/name.h>
-#include <util/strutil.h>
-#include <util/encode/hex.h>
+#include <util/io.h>
+#include <util/str.h>
+#include <util/encode/encode.h>
 #include <algorithm>
 #include <limits>
 
@@ -50,6 +51,7 @@ OptionDataTypeUtil::OptionDataTypeUtil() {
     data_types_["string"] = OPT_STRING_TYPE;
     data_types_["tuple"] = OPT_TUPLE_TYPE;
     data_types_["fqdn"] = OPT_FQDN_TYPE;
+    data_types_["internal"] = OPT_INTERNAL_TYPE;
     data_types_["record"] = OPT_RECORD_TYPE;
 
     data_type_names_[OPT_EMPTY_TYPE] = "empty";
@@ -68,6 +70,7 @@ OptionDataTypeUtil::OptionDataTypeUtil() {
     data_type_names_[OPT_STRING_TYPE] = "string";
     data_type_names_[OPT_TUPLE_TYPE] = "tuple";
     data_type_names_[OPT_FQDN_TYPE] = "fqdn";
+    data_type_names_[OPT_INTERNAL_TYPE] = "internal";
     data_type_names_[OPT_RECORD_TYPE] = "record";
     // The "unknown" data type is declared here so as
     // it can be returned by reference by a getDataTypeName
@@ -188,6 +191,14 @@ OptionDataTypeUtil::writeBinary(const std::string& hex_str,
     // Decode was successful so append decoded binary value
     // to the buffer.
     buf.insert(buf.end(), binary.begin(), binary.end());
+}
+
+OpaqueDataTuple::LengthFieldType
+OptionDataTypeUtil::getTupleLenFieldType(Option::Universe u) {
+    if (u == Option::V4) {
+        return (OpaqueDataTuple::LENGTH_1_BYTE);
+    }
+    return (OpaqueDataTuple::LENGTH_2_BYTES);
 }
 
 std::string

@@ -24,7 +24,7 @@
                 // Eventually, the kea-netconf will be able to handle multiple
                 // models. However, for the time being the choices for
                 // DHCPv6 server are kea-dhcp6-server and
-                /// ietf-dhcpv6-server models but only the first is usable.
+                // ietf-dhcpv6-server models but only the first is usable.
                 "model": "kea-dhcp6-server",
 
                 // The three control flags can be defined in this scope too
@@ -62,43 +62,43 @@
                 },
 
                 // Comment is optional. You can put some notes here.
-                "comment": "Kea DHCP6 server serving network on floor 13"
+                "comment": "Kea DHCPv6 server serving network on floor 13"
             }
 
         },
 
         // Netconf is able to load hook libraries that augment its operation.
         // The primary functionality is the ability to add new commands.
-        //
+
         // Uncomment this section to load a hook library.
-        //
+
         // "hooks-libraries": [
         //    // Hook libraries list may contain more than one library.
         //    {
         //        // The only necessary parameter is the library filename.
         //        "library": "/opt/local/netconf-commands.so",
-        //
+
         //        // Some libraries may support parameters. Make sure you
         //        // type this section carefully, as the CA does not validate
-        //        // it (because the format is library specific).
+        //        // it (because the format is library-specific).
         //        "parameters": {
         //            "param1": "foo"
         //        }
         //    }
-        //]
+        // ]
 
         // Similar to other Kea components, Netconf also uses logging.
         "loggers": [
             {
                 "name": "kea-netconf",
-                "output_options": [
+                "output-options": [
                     {
-                        //"output": "/var/log/kea-netconf.log",
+                        // "output": "/var/log/kea-netconf.log",
                         "output": "stdout",
                         // Several additional parameters are possible in addition
                         // to the typical output. Flush determines whether logger
                         // flushes output to a file. Maxsize determines maximum
-                        // filesize before the file is being rotated. maxver
+                        // filesize before the file is rotated. maxver
                         // specifies the maximum number of rotated files being
                         // kept.
                         "flush": true,

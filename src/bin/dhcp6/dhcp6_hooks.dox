@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -55,16 +55,26 @@ to the end of this list.
 
  - @b Description: this callout is executed when the server has completed
    its (re)configuration. The server provides received and parsed configuration
-   structures to the hook library. It also provides a pointer to the IOService
-   object which is used by the server to run asynchronous operations. The hooks
-   libraries can use this IOService object to schedule asynchronous tasks which
-   are triggered by the DHCP server's main loop. The hook library should hold the
-   provided pointer until the library is unloaded. The NetworkState object
-   provides access to the DHCP service state of the server and allows for
-   enabling and disabling the DHCP service from the hooks libraries.
+   structures to the hook library.
+   If the library uses any IO operations, it should create a local IOService
+   object and register it with the IOServiceMgr. This way the local IOService is
+   used by the server to run asynchronous operations. The hooks library can use
+   the local IOService object to schedule asynchronous tasks which are triggered
+   by the DHCP server's main loop. The hook library can use the local IOService
+   until the library is unloaded at which stage it must unregister it.
+   The "io_context" parameter gives access to the main IOService, but it's use
+   has been deprecated in favor of a local IOService to avoid issues when
+   unloading the library. The parameter has been deprecated and will be removed
+   in future versions.
+   The NetworkState object provides access to the DHCP service state of the
+   server and allows for enabling and disabling the DHCP service from the hooks
+   libraries.
 
- - <b>Next step status</b>: Status codes returned by the callouts installed on
-   this hook point are ignored.
+ - <b>Next step status</b>: If any callout sets the status to DROP, the server
+   will interrupt the reconfiguration process. The hook callout is expected to
+   have completed the cause of the interruption under the "error" handle argument
+   with a std::string which is then logged. Finally, this leads to the
+   termination of kea-dhcp6.
 
  @subsection dhcpv6HooksCb6Update cb6_updated
  - @b Arguments:
@@ -308,9 +318,9 @@ called before "subnet6_select".
    - name: @b response6, type: isc::dhcp::Pkt6Ptr, direction: <b>in</b>
    - name: @b subnet6, type: isc::dhcp::Subnet6Ptr, direction: <b>in</b>
    - name: @b hostname, type: std::string, direction: <b>in/out</b>
-   - name: @b fwd_update, type: bool, direction: <b>in/out</b>
-   - name: @b rev_update, type: bool, direction: <b>in/out</b>
-   - name: @b ddns_params, type: isc::dhcp::DdnsParamsPtr, direction: <b>in</b>
+   - name: @b fwd-update, type: bool, direction: <b>in/out</b>
+   - name: @b rev-update, type: bool, direction: <b>in/out</b>
+   - name: @b ddns-params, type: isc::dhcp::DdnsParamsPtr, direction: <b>in</b>
 
  - @b Description: this callout is executed after the server has selected
    a lease and has formed a host name to associate with the lease and/or use
@@ -320,17 +330,17 @@ called before "subnet6_select".
    host name as well as whether or not forward and/or reverse updates are
    enabled.
 
-   Upon entry into the callout, the arguments <b>hostname</b>,<b>fwd_update</b>,
-   and <b>rev_update</b> have been set by the server based on the client packet,
+   Upon entry into the callout, the arguments <b>hostname</b>,<b>fwd-update</b>,
+   and <b>rev-update</b> have been set by the server based on the client packet,
    and various configuration values (e.g host reservations, DDNS behavioral
    parameters, etc).  Upon return from the callout, any changes to these
    values will be applied as follows:
    - If <b>hostname</b> has changed it will be used to update the outbound
    FQDN option (option 39) if it exists, and used as the FQDN sent in DNS
    updates
-   - Forward DNS update(s) will be done if <b>fwd_update</b> is true (and
+   - Forward DNS update(s) will be done if <b>fwd-update</b> is true (and
    <b>kea-dhcp-ddns</b> connectivity is enabled)
-   - Reverse DNS update(s) will be done if <b>rev_update</b> is true (and
+   - Reverse DNS update(s) will be done if <b>rev-update</b> is true (and
    <b>kea-dhcp-ddns</b> connectivity is enabled)
 
  - <b>Next step status</b>: Not applicable, its value will be ignored.
@@ -339,8 +349,8 @@ called before "subnet6_select".
 
  - @b Arguments:
    - name: @b query6, type: isc::dhcp::Pkt6Ptr, direction: <b>in</b>
-   - name: @b leases6, type: isc::dhcp::Leases6CollectionPtr, direction: <b>in</b>
-   - name: @b deleted_leases6, type: isc::dhcp::Leases6CollectionPtr, direction: <b>in</b>
+   - name: @b leases6, type: isc::dhcp::Lease6CollectionPtr, direction: <b>in</b>
+   - name: @b deleted_leases6, type: isc::dhcp::Lease6CollectionPtr, direction: <b>in</b>
 
  - @b Description: this callout is executed when the server has
    applied all lease changes as a result of DHCP message
@@ -374,9 +384,10 @@ called before "subnet6_select".
  - @b Arguments:
    - name: @b query6, type: isc::dhcp::Pkt6Ptr, direction: <b>in</b>
    - name: @b response6, type: isc::dhcp::Pkt6Ptr, direction: <b>in/out</b>
+   - name: @b subnet6, type: isc::dhcp::Subnet6Ptr, direction: <b>in</b>
 
  - @b Description: This callout is executed when server's response
-   is about to be send back to the client. The sole argument "response6"
+   is about to be send back to the client. The argument "response6"
    contains a pointer to an @c isc::dhcp::Pkt6 object that contains the
    packet, with set source and destination addresses, interface over which
    it will be send, list of all options and relay information.  All fields
@@ -384,6 +395,12 @@ called before "subnet6_select".
    noted that unless the callout sets the skip flag (see below), anything
    placed in the @c buffer_out_ field will be overwritten when the callout
    returns. (buffer_out_ is scratch space used for constructing the packet.)
+   The argument query6 contains a pointer to the corresponding query packet
+   (allowing to perform correlation between response and query). This object
+   cannot be modified.
+   The argument subnet6 contains a pointer to the selected subnet (if one).
+   This object cannot be modified.
+
 
  - <b>Next step status</b>: If any callout sets the status to SKIP, the server
    will assume that the callout did pack the "transaction-id", "message type"

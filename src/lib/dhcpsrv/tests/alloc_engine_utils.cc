@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -41,7 +41,7 @@ namespace dhcp {
 namespace test {
 
 bool testStatistics(const std::string& stat_name, const int64_t exp_value,
-                    const SubnetID subnet_id) {
+                    const SubnetID subnet_id, bool fail_missing) {
     try {
         std::string name = (subnet_id == SUBNET_ID_UNUSED ? stat_name :
                             StatsMgr::generateName("subnet", subnet_id, stat_name));
@@ -56,12 +56,42 @@ bool testStatistics(const std::string& stat_name, const int64_t exp_value,
             }
             return (observation->getInteger().first == exp_value);
         } else {
-            ADD_FAILURE() << "Expected statistic " << name
-                          << " not found.";
+            if (fail_missing) {
+                ADD_FAILURE() << "Expected statistic " << name
+                              << " not found.";
+            } else {
+                if (exp_value) {
+                    ADD_FAILURE() << "Checking non existent statistic and expected value is not 0. Broken test?";
+                }
+            }
         }
-
+        if (subnet_id != SUBNET_ID_UNUSED) {
+            name = StatsMgr::generateName("subnet", subnet_id, StatsMgr::generateName("pool", 0, stat_name));
+            observation = StatsMgr::instance().getObservation(name);
+            if (observation) {
+                if (observation->getInteger().first != exp_value) {
+                    ADD_FAILURE()
+                        << "value of the observed statistics '"
+                        << name << "' ("
+                        << observation->getInteger().first << ") "
+                        << "doesn't match expected value (" << exp_value << ")";
+                }
+                return (observation->getInteger().first == exp_value);
+            } else {
+                if (fail_missing) {
+                    ADD_FAILURE() << "Expected statistic " << name
+                                  << " not found.";
+                } else {
+                    if (exp_value) {
+                        ADD_FAILURE() << "Checking non existent statistic and expected value is not 0. Broken test?";
+                    }
+                }
+            }
+        }
+    } catch (const std::exception& e) {
+        ADD_FAILURE() << "Uncaught exception " << e.what();
     } catch (...) {
-        ;
+        ADD_FAILURE() << "Unknown exception";
     }
     return (false);
 }
@@ -74,8 +104,10 @@ int64_t getStatistics(const std::string& stat_name, const SubnetID subnet_id) {
         if (observation) {
             return (observation->getInteger().first);
         }
+    } catch (const std::exception& e) {
+        ADD_FAILURE() << "Uncaught exception " << e.what();
     } catch (...) {
-        ;
+        ADD_FAILURE() << "Unknown exception";
     }
     return (0);
 }
@@ -139,7 +171,6 @@ AllocEngine4Test::generateDeclinedLease(const std::string& addr,
 }
 
 AllocEngine6Test::AllocEngine6Test() {
-    Subnet::resetSubnetID();
     CfgMgr::instance().clear();
 
     // This lease mgr needs to exist to before configuration commits.
@@ -153,7 +184,7 @@ AllocEngine6Test::AllocEngine6Test() {
 
     // Let's use odd hardware type to check if there is no Ethernet
     // hardcoded anywhere.
-    const uint8_t mac[] = { 0, 1, 22, 33, 44, 55};
+    const uint8_t mac[] = { 0, 1, 22, 33, 44, 55 };
     hwaddr_ = HWAddrPtr(new HWAddr(mac, sizeof(mac), HTYPE_FDDI));
     // Initialize a subnet and short address pool.
     initSubnet(IOAddress("2001:db8:1::"),
@@ -176,7 +207,8 @@ AllocEngine6Test::initSubnet(const asiolink::IOAddress& subnet,
                              const uint8_t pd_delegated_length) {
     CfgMgr& cfg_mgr = CfgMgr::instance();
 
-    subnet_ = Subnet6Ptr(new Subnet6(subnet, 56, 100, 200, 300, 400));
+    static SubnetID id(1);
+    subnet_ = Subnet6::create(subnet, 56, 100, 200, 300, 400, id++);
     pool_ = Pool6Ptr(new Pool6(Lease::TYPE_NA, pool_start, pool_end));
 
     subnet_->addPool(pool_);
@@ -225,7 +257,7 @@ AllocEngine6Test::createHost6HWAddr(bool add_to_host_mgr, IPv6Resrv::Type type,
 Lease6Collection
 AllocEngine6Test::allocateTest(AllocEngine& engine, const Pool6Ptr& pool,
                                const asiolink::IOAddress& hint, bool fake,
-                               bool in_pool) {
+                               bool in_pool, uint8_t hint_prefix_length) {
     Lease::Type type = pool->getType();
     uint8_t expected_len = pool->getLength();
 
@@ -235,25 +267,25 @@ AllocEngine6Test::allocateTest(AllocEngine& engine, const Pool6Ptr& pool,
                                     fake, query);
     ctx.currentIA().iaid_ = iaid_;
     ctx.currentIA().type_ = type;
-    ctx.currentIA().addHint(hint);
+    ctx.currentIA().addHint(hint, hint_prefix_length);
 
     Lease6Collection leases;
 
     findReservation(engine, ctx);
     EXPECT_NO_THROW(leases = engine.allocateLeases6(ctx));
 
-    for (Lease6Collection::iterator it = leases.begin(); it != leases.end(); ++it) {
+    for (auto const& it : leases) {
 
         // Do all checks on the lease
-        checkLease6(duid_, *it, type, expected_len, in_pool, in_pool);
+        checkLease6(duid_, it, type, expected_len, in_pool, in_pool);
 
         // Check that context has been updated with allocated addresses or
         // prefixes.
-        checkAllocatedResources(*it, ctx);
+        checkAllocatedResources(it, ctx);
 
         // Check that the lease is indeed in LeaseMgr
         Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(type,
-                                                                   (*it)->addr_);
+                                                                   it->addr_);
         if (!fake) {
             // This is a real (REQUEST) allocation, the lease must be in the DB
             EXPECT_TRUE(from_mgr) << "Lease " << from_mgr->addr_.toText()
@@ -264,7 +296,7 @@ AllocEngine6Test::allocateTest(AllocEngine& engine, const Pool6Ptr& pool,
             }
 
             // Now check that the lease in LeaseMgr has the same parameters
-            detailCompareLease(*it, from_mgr);
+            detailCompareLease(it, from_mgr);
         } else {
             // This is a fake (SOLICIT) allocation, the lease must not be in DB
             EXPECT_FALSE(from_mgr) << "Lease " << from_mgr->addr_.toText()
@@ -289,13 +321,13 @@ AllocEngine6Test::simpleAlloc6Test(const Pool6Ptr& pool, const IOAddress& hint,
 Lease6Ptr
 AllocEngine6Test::simpleAlloc6Test(const Pool6Ptr& pool, const IOAddress& hint,
                                    uint32_t preferred, uint32_t valid,
-                                   uint32_t exp_preferred, uint32_t exp_valid) {
+                                   uint32_t exp_preferred, uint32_t exp_valid,
+                                   ClientClassDefPtr class_def) {
     Lease::Type type = pool->getType();
     uint8_t expected_len = pool->getLength();
 
     boost::scoped_ptr<AllocEngine> engine;
-    EXPECT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
-                                                 100)));
+    EXPECT_NO_THROW(engine.reset(new AllocEngine(100)));
     // We can't use ASSERT macros in non-void methods
     EXPECT_TRUE(engine);
     if (!engine) {
@@ -312,6 +344,12 @@ AllocEngine6Test::simpleAlloc6Test(const Pool6Ptr& pool, const IOAddress& hint,
     ctx.currentIA().addHint(hint, expected_len, preferred, valid);
     subnet_->setPreferred(Triplet<uint32_t>(200, 300, 400));
     subnet_->setValid(Triplet<uint32_t>(300, 400, 500));
+
+    if (class_def) {
+        std::cout << "adding class defintion" << std::endl;
+        CfgMgr::instance().getStagingCfg()->getClientClassDictionary()->addClass(class_def);
+        ctx.query_->addClass(class_def->getName());
+    }
 
     // Set some non-standard callout status to make sure it doesn't affect the
     // allocation.
@@ -345,8 +383,7 @@ AllocEngine6Test::simpleAlloc6Test(const Pool6Ptr& pool, const DuidPtr& duid,
     uint8_t expected_len = pool->getLength();
 
     boost::scoped_ptr<AllocEngine> engine;
-    EXPECT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
-                                                 100)));
+    EXPECT_NO_THROW(engine.reset(new AllocEngine(100)));
     // We can't use ASSERT macros in non-void methods
     EXPECT_TRUE(engine);
     if (!engine) {
@@ -405,8 +442,7 @@ AllocEngine6Test::simpleAlloc6Test(const Pool6Ptr& pool, const DuidPtr& duid,
 Lease6Collection
 AllocEngine6Test::renewTest(AllocEngine& engine, const Pool6Ptr& pool,
                             AllocEngine::HintContainer& hints,
-                            bool in_pool) {
-
+                            bool in_subnet, bool in_pool) {
     Lease::Type type = pool->getType();
     uint8_t expected_len = pool->getLength();
 
@@ -420,18 +456,18 @@ AllocEngine6Test::renewTest(AllocEngine& engine, const Pool6Ptr& pool,
     findReservation(engine, ctx);
     Lease6Collection leases = engine.renewLeases6(ctx);
 
-    for (Lease6Collection::iterator it = leases.begin(); it != leases.end(); ++it) {
+    for (auto const& it : leases) {
 
         // Do all checks on the lease
-        checkLease6(duid_, *it, type, expected_len, in_pool, in_pool);
+        checkLease6(duid_, it, type, expected_len, in_subnet, in_pool);
 
         // Check that context has been updated with allocated addresses or
         // prefixes.
-        checkAllocatedResources(*it, ctx);
+        checkAllocatedResources(it, ctx);
 
         // Check that the lease is indeed in LeaseMgr
         Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(type,
-                                                                   (*it)->addr_);
+                                                                   it->addr_);
 
         // This is a real (REQUEST) allocation, the lease must be in the DB
         EXPECT_TRUE(from_mgr) << "Lease " << from_mgr->addr_.toText()
@@ -442,7 +478,7 @@ AllocEngine6Test::renewTest(AllocEngine& engine, const Pool6Ptr& pool,
         }
 
         // Now check that the lease in LeaseMgr has the same parameters
-        detailCompareLease(*it, from_mgr);
+        detailCompareLease(it, from_mgr);
     }
 
     return (leases);
@@ -453,7 +489,7 @@ AllocEngine6Test::allocWithUsedHintTest(Lease::Type type, IOAddress used_addr,
                                         IOAddress requested,
                                         uint8_t expected_pd_len) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(100)));
     ASSERT_TRUE(engine);
 
     // Let's create a lease and put it in the LeaseMgr
@@ -502,7 +538,7 @@ void
 AllocEngine6Test::allocBogusHint6(Lease::Type type, asiolink::IOAddress hint,
                                   uint8_t expected_pd_len) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(100)));
     ASSERT_TRUE(engine);
 
     // Client would like to get a 3000::abc lease, which does not belong to any
@@ -601,7 +637,8 @@ AllocEngine4Test::initSubnet(const asiolink::IOAddress& pool_start,
                              const asiolink::IOAddress& pool_end) {
     CfgMgr& cfg_mgr = CfgMgr::instance();
 
-    subnet_ = Subnet4Ptr(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3));
+    static SubnetID id(1);
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24, 1, 2, 3, id++);
     pool_ = Pool4Ptr(new Pool4(pool_start, pool_end));
     subnet_->addPool(pool_);
 
@@ -609,7 +646,6 @@ AllocEngine4Test::initSubnet(const asiolink::IOAddress& pool_start,
 }
 
 AllocEngine4Test::AllocEngine4Test() {
-    Subnet::resetSubnetID();
     CfgMgr::instance().clear();
 
     // This lease mgr needs to exist to before configuration commits.

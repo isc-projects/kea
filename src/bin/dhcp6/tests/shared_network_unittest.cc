@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,7 +10,7 @@
 #include <dhcp/option_int.h>
 #include <dhcp/option6_client_fqdn.h>
 #include <dhcp/option6_addrlst.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcpsrv/cfg_subnets6.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
@@ -100,7 +100,7 @@ const char* NETWORKS_CONFIG[] = {
     "        {"
     "            \"name\": \"frog\","
     "            \"relay\": {"
-    "                \"ip-address\": \"3001::1\""
+    "                \"ip-addresses\": [ \"3001::1\" ]"
     "            },"
     "            \"subnet6\": ["
     "                {"
@@ -120,7 +120,7 @@ const char* NETWORKS_CONFIG[] = {
     "            \"subnet\": \"2001:db8:2::/64\","
     "            \"id\": 1000,"
     "            \"relay\": {"
-    "                \"ip-address\": \"3001::2\""
+    "                \"ip-addresses\": [ \"3001::2\" ]"
     "            },"
     "            \"pools\": ["
     "                {"
@@ -427,7 +427,7 @@ const char* NETWORKS_CONFIG[] = {
     "        }"
     "    ],"
     "    \"subnet6\": ["
-    "        \{"
+    "        {"
     "            \"subnet\": \"3000::/96\","
     "            \"id\": 1000,"
     "            \"interface\": \"eth0\","
@@ -510,7 +510,7 @@ const char* NETWORKS_CONFIG[] = {
     "        {"
     "            \"name\": \"frog\","
     "            \"relay\": {"
-    "                \"ip-address\": \"3000::1\""
+    "                \"ip-addresses\": [ \"3000::1\" ]"
     "            },"
     "            \"subnet6\": ["
     "                {"
@@ -536,7 +536,7 @@ const char* NETWORKS_CONFIG[] = {
     "        {"
     "            \"name\": \"dog\","
     "            \"relay\": {"
-    "                \"ip-address\": \"3000::2\""
+    "                \"ip-addresses\": [ \"3000::2\" ]"
     "            },"
     "            \"subnet6\": ["
     "                {"
@@ -716,7 +716,7 @@ const char* NETWORKS_CONFIG[] = {
     "                    \"subnet\": \"2001:db8:1::/64\","
     "                    \"id\": 10,"
     "                    \"relay\": {"
-    "                        \"ip-address\": \"3001::1\""
+    "                        \"ip-addresses\": [ \"3001::1\" ]"
     "                    },"
     "                    \"pools\": ["
     "                        {"
@@ -728,7 +728,7 @@ const char* NETWORKS_CONFIG[] = {
     "                    \"subnet\": \"2001:db8:2::/64\","
     "                    \"id\": 100,"
     "                    \"relay\": {"
-    "                        \"ip-address\": \"3001::1\""
+    "                        \"ip-addresses\": [ \"3001::1\" ]"
     "                    },"
     "                    \"pools\": ["
     "                        {"
@@ -744,7 +744,7 @@ const char* NETWORKS_CONFIG[] = {
     "            \"subnet\": \"2001:db8:3::/64\","
     "            \"id\": 1000,"
     "            \"relay\": {"
-    "                \"ip-address\": \"3001::2\""
+    "                \"ip-addresses\": [ \"3001::2\" ]"
     "            },"
     "            \"pools\": ["
     "                {"
@@ -1101,8 +1101,84 @@ const char* NETWORKS_CONFIG[] = {
     "            ]"
     "        }"
     "    ]"
-    "}"
+    "}",
 
+// Configuration #23.
+// - a shared network with two subnets
+// - first subnet uses the FLQ allocator
+// - second subnet uses the random allocator
+    "{"
+    "    \"shared-networks\": ["
+    "        {"
+    "            \"name\": \"frog\","
+    "            \"interface\": \"eth1\","
+    "            \"subnet6\": ["
+    "                {"
+    "                    \"id\": 100, "
+    "                    \"subnet\": \"2001:db8:1::/64\","
+    "                    \"pd-allocator\": \"flq\","
+    "                    \"pd-pools\": ["
+    "                        {"
+    "                            \"prefix\": \"2001:db8:1::\","
+    "                            \"prefix-len\": 64,"
+    "                            \"delegated-len\": 68"
+    "                        }"
+    "                    ]"
+    "                },"
+    "                {"
+    "                    \"id\": 10, "
+    "                    \"subnet\": \"2001:db8:2::/64\","
+    "                    \"pd-allocator\": \"random\","
+    "                    \"pd-pools\": ["
+    "                        {"
+    "                            \"prefix\": \"2001:db8:2::\","
+    "                            \"prefix-len\": 64,"
+    "                            \"delegated-len\": 68"
+    "                        }"
+    "                    ]"
+    "                }"
+    "            ]"
+    "        }"
+    "    ]"
+    "}",
+// Configuration #24.
+// - a shared network with two subnets
+// - first subnet uses the random allocator
+// - second subnet uses the FLQ allocator
+    "{"
+    "    \"shared-networks\": ["
+    "        {"
+    "            \"name\": \"frog\","
+    "            \"interface\": \"eth1\","
+    "            \"subnet6\": ["
+    "                {"
+    "                    \"id\": 100, "
+    "                    \"subnet\": \"2001:db8:1::/64\","
+    "                    \"pd-allocator\": \"random\","
+    "                    \"pd-pools\": ["
+    "                        {"
+    "                            \"prefix\": \"2001:db8:1::\","
+    "                            \"prefix-len\": 64,"
+    "                            \"delegated-len\": 68"
+    "                        }"
+    "                    ]"
+    "                },"
+    "                {"
+    "                    \"id\": 10, "
+    "                    \"subnet\": \"2001:db8:2::/64\","
+    "                    \"pd-allocator\": \"flq\","
+    "                    \"pd-pools\": ["
+    "                        {"
+    "                            \"prefix\": \"2001:db8:2::\","
+    "                            \"prefix-len\": 64,"
+    "                            \"delegated-len\": 68"
+    "                        }"
+    "                    ]"
+    "                }"
+    "            ]"
+    "        }"
+    "    ]"
+    "}"
 };
 
 /// @Brief Test fixture class for DHCPv6 server using shared networks.
@@ -1203,9 +1279,9 @@ public:
     Subnet6Ptr getConfiguredSubnet(const Lease::Type& type, const IOAddress& resource) const {
         CfgSubnets6Ptr cfg = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6();
         const Subnet6Collection* subnets = cfg->getAll();
-        for (auto subnet_it = subnets->cbegin(); subnet_it != subnets->cend(); ++subnet_it) {
-            if ((*subnet_it)->inPool(type, resource)) {
-                return (*subnet_it);
+        for (auto const& subnet_it : *subnets) {
+            if (subnet_it->inPool(type, resource)) {
+                return (subnet_it);
             }
         }
 
@@ -1304,13 +1380,13 @@ public:
     bool hasLeaseForAddressRange(Dhcp6Client& client, const IOAddress& first, const IOAddress& last,
                                  const LeaseOnServer& lease_on_server = LeaseOnServer::MUST_EXIST) {
         std::vector<Lease6> leases = client.getLeasesByAddressRange(first, last);
-        for (auto lease_it = leases.cbegin(); lease_it != leases.cend(); ++lease_it) {
+        for (auto const& lease_it : leases) {
             // Take into account only valid leases.
-            if (lease_it->valid_lft_ == 0) {
+            if (lease_it.valid_lft_ == 0) {
                 continue;
             }
 
-            Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, lease_it->addr_);
+            Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, lease_it.addr_);
             if ((lease && (lease_on_server == LeaseOnServer::MUST_NOT_EXIST)) ||
                 (!lease && (lease_on_server == LeaseOnServer::MUST_EXIST))) {
                 return (false);
@@ -1339,13 +1415,13 @@ public:
                                const LeaseOnServer& lease_on_server = LeaseOnServer::MUST_EXIST) {
         std::vector<Lease6> leases = client.getLeasesByPrefixPool(prefix, prefix_len, delegated_len);
 
-        for (auto lease_it = leases.cbegin(); lease_it != leases.cend(); ++lease_it) {
+        for (auto const& lease_it : leases) {
             // Take into account only valid leases.
-            if (lease_it->valid_lft_ == 0) {
+            if (lease_it.valid_lft_ == 0) {
                 continue;
             }
 
-            Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_PD, lease_it->addr_);
+            Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_PD, lease_it.addr_);
             if ((lease && (lease->prefixlen_ == lease->prefixlen_) &&
                  (lease_on_server == LeaseOnServer::MUST_NOT_EXIST)) ||
                 (!lease && (lease_on_server == LeaseOnServer::MUST_EXIST))) {
@@ -1487,6 +1563,52 @@ public:
         auto addrs = servers->getAddresses();
         ASSERT_EQ(1, addrs.size());
         EXPECT_EQ(ns_address, addrs[0].toText());
+    }
+
+    // @brief Test that different allocator types can be used within a shared network.
+    //
+    // All available prefixes should be delegated from the subnets belonging to
+    // the shared network.
+    //
+    /// @param config server configuration that should contain a shared network with
+    /// two subnets. Each subnet should contain a prefix pool with 16 prefixes.
+    void testDifferentAllocatorsInNetwork(const std::string& config) {
+        // Create the base client and server configuration.
+        Dhcp6Client client;
+        ASSERT_NO_FATAL_FAILURE(configure(config, *client.getServer()));
+
+        // Record what prefixes have been allocated.
+        std::set<std::string> allocated_set;
+
+        // Simulate allocations from different clients.
+        for (auto i = 0; i < 32; ++i) {
+            // Create a client from the base client.
+            Dhcp6Client next_client(client.getServer());
+            next_client.setInterface("eth1");
+            next_client.requestPrefix();
+            // Run 4-way exchange.
+            ASSERT_NO_THROW(next_client.doSARR());
+            // Make sure that the server responded.
+            ASSERT_TRUE(next_client.getContext().response_);
+            auto leases = next_client.getLeasesByType(Lease::TYPE_PD);
+            ASSERT_EQ(1, leases.size());
+            // Make sure that the prefix is not zero.
+            ASSERT_FALSE(leases[0].addr_.isV6Zero());
+            // Remember the allocated prefix uniqueness.
+            allocated_set.insert(leases[0].addr_.toText());
+        }
+        // Make sure that we have 32 distinct allocations.
+        ASSERT_EQ(32, allocated_set.size());
+
+        // Try one more time. This time no leases should be allocated because
+        // the pools are exhausted.
+        Dhcp6Client next_client(client.getServer());
+        next_client.setInterface("eth1");
+        next_client.requestPrefix();
+        ASSERT_NO_THROW(next_client.doSARR());
+        ASSERT_TRUE(next_client.getContext().response_);
+        auto leases = next_client.getLeasesByType(Lease::TYPE_PD);
+        EXPECT_TRUE(leases.empty());
     }
 
     /// @brief Destructor.
@@ -1754,7 +1876,7 @@ TEST_F(Dhcpv6SharedNetworkTest, reservationInSharedNetwork) {
 
     // Reconfigure the server. Now, the first client get's second client's
     // reservation and vice versa.
-    ASSERT_NO_FATAL_FAILURE(configure(NETWORKS_CONFIG[5], *client1.getServer()));
+    ASSERT_NO_FATAL_FAILURE(configure(NETWORKS_CONFIG[5], *client1.getServer(), true, true, false));
 
     // The first client is trying to renew the lease but should get a different lease
     // because its lease is now reserved for some other client. The client won't be
@@ -2495,6 +2617,20 @@ TEST_F(Dhcpv6SharedNetworkTest, poolInSubnetSelectedByClass) {
     });
     EXPECT_EQ(1, client2.getLeaseNum());
     EXPECT_EQ(1, client2.getLeasesWithNonZeroLifetime().size());
+}
+
+// Test that different allocator types can be used within a shared network.
+// The first subnet uses the random allocator. The second subnet uses the FLQ
+// allocator.
+TEST_F(Dhcpv6SharedNetworkTest, randomAndFlqAllocation) {
+    testDifferentAllocatorsInNetwork(NETWORKS_CONFIG[23]);
+}
+
+// Test that different allocator types can be used within a shared network.
+// The first subnet uses the FLQ allocator. The second subnet uses the random
+// allocator.
+TEST_F(Dhcpv6SharedNetworkTest, flqAndRandomAllocation) {
+    testDifferentAllocatorsInNetwork(NETWORKS_CONFIG[24]);
 }
 
 // Verify option processing precedence

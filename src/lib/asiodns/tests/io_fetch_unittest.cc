@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,7 +17,7 @@
 #include <dns/name.h>
 #include <dns/rcode.h>
 #include <util/buffer.h>
-#include <util/io_utilities.h>
+#include <util/io.h>
 
 #include <gtest/gtest.h>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
@@ -31,12 +31,14 @@
 #include <iterator>
 #include <vector>
 
-using namespace boost::asio::ip;
-using namespace boost::asio;
 using namespace isc::asiolink;
 using namespace isc::dns;
 using namespace isc::util;
+
+using namespace boost::asio;
+using namespace boost::asio::ip;
 using namespace std;
+
 namespace ph = std::placeholders;
 
 namespace isc {
@@ -52,43 +54,46 @@ const size_t MAX_SIZE = 64 * 1024;  // Should be able to take 64kB
 const bool DEBUG = false;
 
 /// \brief Test fixture for the asiolink::IOFetch.
-class IOFetchTest : public virtual ::testing::Test, public virtual IOFetch::Callback
-{
+class IOFetchTest : public virtual ::testing::Test, public virtual IOFetch::Callback {
 public:
-    IOService       service_;       ///< Service to run the query
-    IOFetch::Result expected_;      ///< Expected result of the callback
-    bool            run_;           ///< Did the callback run already?
-    Question        question_;      ///< What to ask
-    OutputBufferPtr result_buff_;   ///< Buffer to hold result of fetch
-    OutputBufferPtr msgbuf_;        ///< Buffer corresponding to known question
-    IOFetch         udp_fetch_;     ///< For UDP query test
-    IOFetch         tcp_fetch_;     ///< For TCP query test
-    IOFetch::Protocol protocol_;    ///< Protocol being tested
-    size_t          cumulative_;    ///< Cumulative data received by "server".
-    deadline_timer  timer_;         ///< Timer to measure timeouts
+    IOServicePtr                     service_;                  ///< Service to run the query
+    IOFetch::Result                  expected_;                 ///< Expected result of the callback
+    bool                             run_;                      ///< Did the callback run already?
+    Question                         question_;                 ///< What to ask
+    OutputBufferPtr                  result_buff_;              ///< Buffer to hold result of fetch
+    OutputBufferPtr                  msgbuf_;                   ///< Buffer corresponding to known question
+    IOFetch                          udp_fetch_;                ///< For UDP query test
+    IOFetch                          tcp_fetch_;                ///< For TCP query test
+    IOFetch::Protocol                protocol_;                 ///< Protocol being tested
+    size_t                           cumulative_;               ///< Cumulative data received by "server".
+    deadline_timer                   timer_;                    ///< Timer to measure timeouts
 
     // The next member is the buffer in which the "server" (implemented by the
     // response handler methods in this class) receives the question sent by the
     // fetch object.
-    uint8_t         receive_buffer_[MAX_SIZE]; ///< Server receive buffer
-    OutputBufferPtr expected_buffer_;          ///< Data we expect to receive
-    vector<uint8_t> send_buffer_;           ///< Server send buffer
-    uint16_t        send_cumulative_;       ///< Data sent so far
+    uint8_t                          receive_buffer_[MAX_SIZE]; ///< Server receive buffer
+    OutputBufferPtr                  expected_buffer_;          ///< Data we expect to receive
+    vector<uint8_t>                  send_buffer_;              ///< Server send buffer
+    uint16_t                         send_cumulative_;          ///< Data sent so far
 
     // Other data.
-    string          return_data_;           ///< Data returned by server
-    string          test_data_;             ///< Large string - here for convenience
-    bool            debug_;                 ///< true to enable debug output
-    size_t          tcp_send_size_;         ///< Max size of TCP send
-    uint8_t         qid_0;                  ///< First octet of qid
-    uint8_t         qid_1;                  ///< Second octet of qid
+    string                           return_data_;              ///< Data returned by server
+    string                           test_data_;                ///< Large string - here for convenience
+    bool                             debug_;                    ///< true to enable debug output
+    size_t                           tcp_send_size_;            ///< Max size of TCP send
+    uint8_t                          qid_0;                     ///< First octet of qid
+    uint8_t                          qid_1;                     ///< Second octet of qid
 
-    bool            tcp_short_send_;        ///< If set to true, we do not send
-                                            ///  all data in the tcp response
+    bool                             tcp_short_send_;           ///< If set to true, we do not send
+                                                                ///  all data in the tcp response
+    boost::shared_ptr<udp::socket>   udp_socket_;
+    boost::shared_ptr<tcp::socket>   tcp_socket_;
+    boost::shared_ptr<tcp::acceptor> tcp_acceptor_;
+    bool                             shutdown_;
 
     /// \brief Constructor
     IOFetchTest() :
-        service_(),
+        service_(new IOService()),
         expected_(IOFetch::NOTSET),
         run_(false),
         question_(Name("example.net"), RRClass::IN(), RRType::A()),
@@ -101,7 +106,7 @@ public:
                                         // Timeout interval chosen to ensure no timeout
         protocol_(IOFetch::TCP),        // for initialization - will be changed
         cumulative_(0),
-        timer_(service_.get_io_service()),
+        timer_(service_->getInternalIOService()),
         receive_buffer_(),
         expected_buffer_(new OutputBuffer(512)),
         send_buffer_(),
@@ -112,8 +117,8 @@ public:
         tcp_send_size_(0),
         qid_0(0),
         qid_1(0),
-        tcp_short_send_(false)
-    {
+        tcp_short_send_(false),
+        shutdown_(false) {
         // Construct the data buffer for question we expect to receive.
         Message msg(Message::RENDER);
         msg.setQid(0);
@@ -139,7 +144,7 @@ public:
         // the class.)
         //
         // We could initialize the data with a single character, but as an added
-        // check we'll make ssre that it has some structure.
+        // check we'll make sure that it has some structure.
 
         test_data_.clear();
         test_data_.reserve(MAX_SIZE);
@@ -147,6 +152,12 @@ public:
             test_data_ += "A message to be returned to the client that has "
                           "some sort of structure.";
         }
+    }
+
+    virtual ~IOFetchTest() {
+        shutdown_ = true;
+        timer_.cancel();
+        service_->stopAndPoll();
     }
 
     /// \brief UDP Response handler (the "remote UDP DNS server")
@@ -167,8 +178,10 @@ public:
     void udpReceiveHandler(udp::endpoint* remote, udp::socket* socket,
                            boost::system::error_code ec = boost::system::error_code(),
                            size_t length = 0, bool bad_qid = false,
-                           bool second_send = false)
-    {
+                           bool second_send = false) {
+        if (shutdown_) {
+            return;
+        }
         if (debug_) {
             cout << "udpReceiveHandler(): error = " << ec.value() <<
                     ", length = " << length << endl;
@@ -185,7 +198,7 @@ public:
         // identical, then check that the data is identical as well.
         EXPECT_EQ(msgbuf_->getLength(), length);
         EXPECT_TRUE(equal(receive_buffer_, (receive_buffer_ + length - 1),
-        static_cast<const uint8_t*>(msgbuf_->getData())));
+                          msgbuf_->getData()));
 
         // Return a message back to the IOFetch object.
         if (!bad_qid) {
@@ -217,8 +230,10 @@ public:
     /// \param socket Socket on which data will be received
     /// \param ec Boost error code, value should be zero.
     void tcpAcceptHandler(tcp::socket* socket,
-                          boost::system::error_code ec = boost::system::error_code())
-    {
+                          boost::system::error_code ec = boost::system::error_code()) {
+        if (shutdown_) {
+            return;
+        }
         if (debug_) {
             cout << "tcpAcceptHandler(): error = " << ec.value() << endl;
         }
@@ -258,8 +273,10 @@ public:
     /// \param length Amount of data received.
     void tcpReceiveHandler(tcp::socket* socket,
                            boost::system::error_code ec = boost::system::error_code(),
-                           size_t length = 0)
-    {
+                           size_t length = 0) {
+        if (shutdown_) {
+            return;
+        }
         if (debug_) {
             cout << "tcpReceiveHandler(): error = " << ec.value() <<
                     ", length = " << length << endl;
@@ -294,7 +311,7 @@ public:
 
         receive_buffer_[2] = receive_buffer_[3] = 0;
         EXPECT_TRUE(equal((receive_buffer_ + 2), (receive_buffer_ + cumulative_ - 2),
-            static_cast<const uint8_t*>(msgbuf_->getData())));
+                          msgbuf_->getData()));
 
         // ... and return a message back.  This has to be preceded by a two-byte
         // count field.
@@ -326,6 +343,9 @@ public:
     ///
     /// \param socket Socket over which send should take place
     void tcpSendData(tcp::socket* socket) {
+        if (shutdown_) {
+            return;
+        }
         if (debug_) {
             cout << "tcpSendData()" << endl;
         }
@@ -343,7 +363,7 @@ public:
 
         } else {
 
-            // For all subsequent times, send the remainder, maximised to
+            // For all subsequent times, send the remainder, maximized to
             // whatever we have chosen for the maximum send size.
             amount = min(tcp_send_size_,
                         (send_buffer_.size() - send_cumulative_));
@@ -391,8 +411,10 @@ public:
     /// \param length Number of bytes sent.
     void tcpSendHandler(size_t expected, tcp::socket* socket,
                         boost::system::error_code ec = boost::system::error_code(),
-                        size_t length = 0)
-    {
+                        size_t length = 0) {
+        if (shutdown_) {
+            return;
+        }
         if (debug_) {
             cout << "tcpSendHandler(): error = " << ec.value() <<
                     ", length = " << length << endl;
@@ -449,13 +471,13 @@ public:
                     result_buff_->writeUint8At(return_data_[0], 0);
                     result_buff_->writeUint8At(return_data_[1], 1);
                 }
-                const uint8_t* start = static_cast<const uint8_t*>(result_buff_->getData());
+                const uint8_t* start = result_buff_->getData();
                 EXPECT_TRUE(equal(return_data_.begin(), return_data_.end(), start));
             }
         }
 
         // ... and cause the run loop to exit.
-        service_.stop();
+        service_->stop();
     }
 
     // The next set of methods are the tests themselves.  A number of the TCP
@@ -474,16 +496,15 @@ public:
         expected_ = IOFetch::STOPPED;
 
         // Post the query
-        service_.get_io_service().post(fetch);
+        service_->post(fetch);
 
         // Post query_.stop() (yes, the std::bind thing is just
         // query_.stop()).
-        service_.get_io_service().post(
-            std::bind(&IOFetch::stop, fetch, IOFetch::STOPPED));
+        service_->post(std::bind(&IOFetch::stop, fetch, IOFetch::STOPPED));
 
         // Run both of them.  run() returns when everything in the I/O service
         // queue has completed.
-        service_.run();
+        service_->run();
         EXPECT_TRUE(run_);
     }
 
@@ -501,9 +522,9 @@ public:
 
         // Stop before it is started
         fetch.stop();
-        service_.get_io_service().post(fetch);
 
-        service_.run();
+        service_->post(fetch);
+        service_->run();
         EXPECT_TRUE(run_);
     }
 
@@ -517,8 +538,8 @@ public:
         protocol_ = protocol;
         expected_ = IOFetch::TIME_OUT;
 
-        service_.get_io_service().post(fetch);
-        service_.run();
+        service_->post(fetch);
+        service_->run();
         EXPECT_TRUE(run_);
     }
 
@@ -543,25 +564,27 @@ public:
         }
 
         // Socket into which the connection will be accepted.
-        tcp::socket socket(service_.get_io_service());
+        tcp_socket_.reset(new tcp::socket(service_->getInternalIOService()));
 
         // Acceptor object - called when the connection is made, the handler
         // will initiate a read on the socket.
-        tcp::acceptor acceptor(service_.get_io_service(),
-                               tcp::endpoint(tcp::v4(), TEST_PORT));
-        acceptor.async_accept(socket,
-            std::bind(&IOFetchTest::tcpAcceptHandler, this, &socket, ph::_1));
+        tcp_acceptor_.reset(new tcp::acceptor(service_->getInternalIOService(),
+                                              tcp::endpoint(tcp::v4(), TEST_PORT)));
+        tcp_acceptor_->async_accept(*tcp_socket_,
+                                    std::bind(&IOFetchTest::tcpAcceptHandler,
+                                              this, tcp_socket_.get(), ph::_1));
 
         // Post the TCP fetch object to send the query and receive the response.
-        service_.get_io_service().post(tcp_fetch_);
+        service_->post(tcp_fetch_);
 
         // ... and execute all the callbacks.  This exits when the fetch
         // completes.
-        service_.run();
-        EXPECT_TRUE(run_);  // Make sure the callback did execute
+        service_->run();
 
         // Tidy up
-        socket.close();
+        tcp_socket_->close();
+
+        EXPECT_TRUE(run_);  // Make sure the callback did execute
     }
 
     /// Perform a send/receive test over UDP
@@ -575,28 +598,29 @@ public:
         protocol_ = IOFetch::UDP;
 
         // Set up the server.
-        udp::socket socket(service_.get_io_service(), udp::v4());
-        socket.set_option(socket_base::reuse_address(true));
-        socket.bind(udp::endpoint(TEST_HOST, TEST_PORT));
+        udp_socket_.reset(new udp::socket(service_->getInternalIOService(), udp::v4()));
+        udp_socket_->set_option(socket_base::reuse_address(true));
+        udp_socket_->bind(udp::endpoint(TEST_HOST, TEST_PORT));
         return_data_ = "Message returned to the client";
 
         udp::endpoint remote;
-        socket.async_receive_from(boost::asio::buffer(receive_buffer_,
-                                               sizeof(receive_buffer_)),
-                                  remote,
-                                  std::bind(&IOFetchTest::udpReceiveHandler,
-                                            this, &remote, &socket,
-                                            ph::_1, ph::_2, bad_qid, second_send));
-        service_.get_io_service().post(udp_fetch_);
+        udp_socket_->async_receive_from(boost::asio::buffer(receive_buffer_,
+                                                            sizeof(receive_buffer_)),
+                                        remote,
+                                        std::bind(&IOFetchTest::udpReceiveHandler,
+                                                  this, &remote, udp_socket_.get(),
+                                                  ph::_1, ph::_2, bad_qid, second_send));
+        service_->post(udp_fetch_);
         if (debug_) {
             cout << "udpSendReceive: async_receive_from posted,"
                 "waiting for callback" << endl;
         }
-        service_.run();
+        service_->run();
 
-        socket.close();
+        // Tidy up
+        udp_socket_->close();
 
-        EXPECT_TRUE(run_);
+        EXPECT_TRUE(run_);  // Make sure the callback did execute
     }
 };
 
@@ -734,5 +758,5 @@ TEST_F(IOFetchTest, TcpSendReceive8192ShortSend) {
 }
 
 
-} // namespace asiodns
-} // namespace isc
+}  // namespace asiodns
+}  // namespace isc

@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -35,7 +35,7 @@ public:
     /// @brief Constructor.
     ///
     /// @param io_service IO service.
-    explicit TCPAcceptor(IOService& io_service)
+    explicit TCPAcceptor(const IOServicePtr& io_service)
         : IOAcceptor<boost::asio::ip::tcp, C>(io_service) {
     }
 

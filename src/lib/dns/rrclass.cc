@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,20 +6,19 @@
 
 #include <config.h>
 
-#include <stdint.h>
-
-#include <string>
-
 #include <exceptions/exceptions.h>
-
-#include <util/buffer.h>
 #include <dns/messagerenderer.h>
 #include <dns/rrparamregistry.h>
 #include <dns/rrclass.h>
+#include <util/buffer.h>
 
-using namespace std;
+#include <stdint.h>
+#include <string>
+
 using namespace isc::dns;
 using namespace isc::util;
+
+using namespace std;
 
 namespace isc {
 namespace dns {
@@ -62,7 +61,7 @@ RRClass::createFromText(const string& class_str) {
                                                        class_code)) {
         return (new RRClass(class_code));
     }
-    return (NULL);
+    return (0);
 }
 
 ostream&

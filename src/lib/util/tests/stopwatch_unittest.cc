@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017,2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -296,6 +296,12 @@ TEST_F(StopwatchTest, logFormat) {
 
     duration = microseconds(2000);
     EXPECT_EQ("2.000 ms", StopwatchImpl::logFormat(duration));
+
+    duration = milliseconds(2100);
+    EXPECT_EQ("2.10 s", StopwatchImpl::logFormat(duration));
+
+    duration = milliseconds(3123);
+    EXPECT_EQ("3.12 s", StopwatchImpl::logFormat(duration));
 }
 
 } // end of anonymous namespace

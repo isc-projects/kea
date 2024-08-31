@@ -9,8 +9,8 @@
 
 #include <asiolink/io_address.h>
 #include <asiolink/io_service.h>
+#include <asiolink/io_service_thread_pool.h>
 #include <http/listener.h>
-#include <http/http_thread_pool.h>
 #include <thread>
 #include <vector>
 
@@ -145,7 +145,7 @@ private:
     std::size_t thread_pool_size_;
 
     /// @brief The pool of threads that do IO work.
-    http::HttpThreadPoolPtr thread_pool_;
+    asiolink::IoServiceThreadPoolPtr thread_pool_;
 
     /// @brief The TLS context.
     asiolink::TlsContextPtr tls_context_;

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -100,7 +100,7 @@ public:
     /// not be modified after the call to @c merge because it may affect the
     /// merged configuration.
     ///
-    /// @param cfg_def set of of user-defined option definitions to use
+    /// @param cfg_def set of user-defined option definitions to use
     /// when creating option instances.
     /// @param networks collection of shared networks that to which assignments
     /// should be added. In other words, the list of shared networks that belong
@@ -136,7 +136,9 @@ public:
     ///
     /// @return Pointer to the @c Subnet6 object or null pointer if such
     /// subnet doesn't exist.
-    ConstSubnet6Ptr getBySubnetId(const SubnetID& subnet_id) const;
+    ConstSubnet6Ptr getBySubnetId(const SubnetID& subnet_id) const {
+        return (getSubnet(subnet_id));
+    }
 
     /// @brief Returns const pointer to a subnet which matches the specified
     /// prefix in the canonical form.
@@ -203,11 +205,9 @@ public:
 
     /// @brief Returns subnet with specified subnet-id value
     ///
-    /// Warning: this method uses full scan. Its use is not recommended for
-    /// packet processing.
     /// Please use @ref getBySubnetId instead when possible.
     ///
-    /// @return Subnet (or NULL)
+    /// @return Subnet (or null)
     Subnet6Ptr getSubnet(const SubnetID id) const;
 
     /// @brief Selects the subnet using a specified address.
@@ -248,6 +248,17 @@ public:
                  const ClientClasses& client_classes = ClientClasses(),
                  const bool is_relay_address = false) const;
 
+    /// @brief Convert a link address into a link set.
+    ///
+    /// Given a link address this returns the ordered list aka set of id
+    /// of subnets the address belongs to.
+    ///
+    /// @todo: extend to consider whether a shared network is a link.
+    ///
+    /// @param link_addr The link address.
+    /// @return The set of subnet ids the link address belongs to.
+    SubnetIDSet getLinks(const asiolink::IOAddress& link_addr) const;
+
     /// @brief Updates statistics.
     ///
     /// This method updates statistics that are affected by the newly committed
@@ -264,6 +275,12 @@ public:
     /// anything related to subnets, as there may be fewer subnets in the new
     /// configuration and also subnet-ids may change.
     void removeStatistics();
+
+    /// @brief Calls @c initAllocatorsAfterConfigure for each subnet.
+    void initAllocatorsAfterConfigure();
+
+    /// @brief Clears all subnets from the configuration.
+    void clear();
 
     /// @brief Unparse a configuration object
     ///

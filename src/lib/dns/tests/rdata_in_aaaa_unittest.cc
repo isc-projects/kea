@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,19 +6,18 @@
 
 #include <config.h>
 
-#include <util/buffer.h>
 #include <dns/exceptions.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
-
-#include <gtest/gtest.h>
-
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
+#include <util/buffer.h>
 #include <util/unittests/wiredata.h>
+
+#include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc::dns;
@@ -146,6 +145,7 @@ TEST_F(Rdata_IN_AAAA_Test, compare) {
     EXPECT_LT(0, large2.compare(small2));
 
     // comparison attempt between incompatible RR types should be rejected
-    EXPECT_THROW(rdata_in_aaaa.compare(*RdataTest::rdata_nomatch), bad_cast); 
+    EXPECT_THROW(rdata_in_aaaa.compare(*RdataTest::rdata_nomatch), bad_cast);
 }
+
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -30,8 +30,7 @@ namespace dhcp {
 ///
 /// @todo This class doesn't validate the lease values read from the file.
 /// The @c Lease6 is a structure that should be itself responsible for this
-/// validation (see http://oldkea.isc.org/ticket/2405). However, when #2405
-/// is implemented, the @c next function may need to be updated to use the
+/// validation. However, the @c next function may need to be updated to use the
 /// validation capability of @c Lease6.
 class CSVLeaseFile6 : public isc::util::VersionedCSVFile, public LeaseFileStats {
 public:
@@ -80,8 +79,7 @@ public:
     /// (false).
     ///
     /// @todo Make sure that the values read from the file are correct.
-    /// The appropriate @c Lease6 validation mechanism should be used once
-    /// ticket http://oldkea.isc.org/ticket/2405 is implemented.
+    /// The appropriate @c Lease6 validation mechanism should be used.
     bool next(Lease6Ptr& lease);
 
 private:
@@ -106,6 +104,7 @@ private:
     /// - user_context
     /// - hwtype
     /// - hwaddr_source
+    /// - pool_id
     void initColumns();
 
     ///
@@ -152,6 +151,11 @@ private:
     ///
     /// @param row CSV file row holding lease information.
     SubnetID readSubnetID(const util::CSVRow& row);
+
+    /// @brief Reads pool id from the CSV file row.
+    ///
+    /// @param row CSV file row holding lease information.
+    uint32_t readPoolID(const util::CSVRow& row);
 
     /// @brief Reads prefix length from the CSV file row.
     ///

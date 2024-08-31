@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,7 +7,9 @@
 #ifndef HA_CONFIG_H
 #define HA_CONFIG_H
 
+#include <ha_relationship_mapper.h>
 #include <asiolink/crypto_tls.h>
+#include <dhcpsrv/subnet.h>
 #include <exceptions/exceptions.h>
 #include <http/basic_auth.h>
 #include <http/post_request_json.h>
@@ -28,6 +30,17 @@ public:
     HAConfigValidationError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
+
+class HAConfig;
+
+/// @brief Pointer to the High Availability configuration structure.
+typedef boost::shared_ptr<HAConfig> HAConfigPtr;
+
+/// @brief Type of an object mapping @c HAConfig to relationships.
+typedef HARelationshipMapper<HAConfig> HAConfigMapper;
+
+/// @brief Pointer to an object mapping @c HAConfig to relationships.
+typedef boost::shared_ptr<HAConfigMapper> HAConfigMapperPtr;
 
 /// @brief Storage for High Availability configuration.
 class HAConfig {
@@ -314,6 +327,9 @@ public:
     /// @brief Constructor.
     HAConfig();
 
+    /// @brief Instantiates a HAConfig.
+    static HAConfigPtr create();
+
     /// @brief Creates and returns pointer to the new peer's configuration.
     ///
     /// This method is called during peers configuration parsing, when the
@@ -550,6 +566,39 @@ public:
         max_unacked_clients_ = max_unacked_clients;
     }
 
+    /// @brief Returns a maximum number of clients for whom lease updates failed
+    /// due to other than general error.
+    ///
+    /// A lease update may fail due to a conflict with the partner's configuration.
+    /// The server distinguishes such errors from general errors (e.g., related to
+    /// communication issues) to avoid transitioning to the partner-down state
+    /// when there is in fact a problem with a lease or the configuration. On the other
+    /// hand, if such problematic leases accumulate, the server can no longer provide
+    /// the HA service and should transition to the terminated state. Consequently,
+    /// an administrator must fix the configuration problem. This function returns
+    /// the maximum number of clients with conflicting leases before the server
+    /// transitions to the terminated state.
+    ///
+    /// @return Maximum number of rejected lease updates before the server terminates
+    /// the HA service.
+    uint32_t getMaxRejectedLeaseUpdates() const {
+        return (max_rejected_lease_updates_);
+    }
+
+    /// @brief Sets the maximum number of clients for whom the lease updates can fail
+    /// due to other than general error.
+    ///
+    /// The service is terminated when the actual number of rejected clients is equal
+    /// or greater that number.
+    ///
+    /// @param max_rejected_lease_updates maximum number of distinct clients for which
+    /// the lease updates can fail before the server terminates the HA service.
+    /// A special value of 0 configures the server to never transition to the
+    /// terminated state as a result of the lease updates issues.
+    void setMaxRejectedLeaseUpdates(const uint32_t max_rejected_lease_updates) {
+        max_rejected_lease_updates_ = max_rejected_lease_updates;
+    }
+
     /// @brief Configures the server to wait/not wait for the lease update
     /// acknowledgments from the backup servers.
     ///
@@ -755,6 +804,18 @@ public:
     /// @throw HAConfigValidationError if configuration is invalid.
     void validate();
 
+    /// @brief Convenience function extracting a value of the ha-server-name
+    /// parameter from a subnet context.
+    ///
+    /// If the subnet does not contain this parameter it tries to find this
+    /// parameter in the shared network.
+    ///
+    /// @param subnet pointer to the subnet.
+    /// @return ha-server-name parameter value or an empty string if it was
+    /// not found.
+    /// @throw BadValue if the parameter is not a string or is empty.
+    static std::string getSubnetServerName(const dhcp::SubnetPtr& subnet);
+
     std::string this_server_name_;            ///< This server name.
     HAMode ha_mode_;                          ///< Mode of operation.
     bool send_lease_updates_;                 ///< Send lease updates to partner?
@@ -768,6 +829,7 @@ public:
     uint32_t max_response_delay_;             ///< Max delay in response to heartbeats.
     uint32_t max_ack_delay_;                  ///< Maximum DHCP message ack delay.
     uint32_t max_unacked_clients_;            ///< Maximum number of unacked clients.
+    uint32_t max_rejected_lease_updates_;     ///< Limit of rejected lease updates before termination.
     bool wait_backup_ack_;                    ///< Wait for lease update ack from backup?
     bool enable_multi_threading_;             ///< Enable multi-threading.
     bool http_dedicated_listener_;            ///< Enable use of own HTTP listener.
@@ -781,9 +843,6 @@ public:
     PeerConfigMap peers_;                      ///< Map of peers' configurations.
     StateMachineConfigPtr state_machine_;      ///< State machine configuration.
 };
-
-/// @brief Pointer to the High Availability configuration structure.
-typedef boost::shared_ptr<HAConfig> HAConfigPtr;
 
 } // end of namespace isc::ha
 } // end of namespace isc

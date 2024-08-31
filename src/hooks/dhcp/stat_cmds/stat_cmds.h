@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -31,7 +31,7 @@ public:
     ///
     /// This command attempts to fetch lease4 statistics for one or
     /// more subnets based upon subnet selection criteria (or lack thereof).
-    /// It extracts the command name and arguments from the given Callouthandle,
+    /// It extracts the command name and arguments from the given CalloutHandle,
     /// attempts to process them, and then set's the handle's "response"
     /// arguments accordingly.
     /// {
@@ -75,7 +75,7 @@ public:
     ///
     /// This command attempts to fetch lease6 statistics for one or
     /// more subnets based upon subnet selection criteria (or lack thereof).
-    /// It extracts the command name and arguments from the given Callouthandle,
+    /// It extracts the command name and arguments from the given CalloutHandle,
     /// attempts to process them, and then set's the handle's "response"
     /// argument accordingly.
     /// {
@@ -99,7 +99,7 @@ public:
     ///             "timestamp": "2018-03-22 09:43:30.815371",
     ///             "columns": ["subnet_id", "total-nas",
     ///                         "cumulative-assigned-nas",
-    ///                         "assigned-nas", "declined-nas",
+    ///                         "assigned-nas", "declined-addresses",
     ///                         "total-pds", "cumulative-assigned-pds",
     ///                         "assigned-pds"],
     ///             "rows": [

@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,7 +8,6 @@
 
 #include <cc/simple_parser.h>
 #include <asiolink/io_address.h>
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <cc/data.h>
 #include <string>
@@ -24,7 +23,7 @@ namespace data {
 void
 SimpleParser::checkRequired(const SimpleRequiredKeywords& required,
                             ConstElementPtr scope) {
-    for (auto name : required) {
+    for (auto const& name : required) {
         if (scope->contains(name)) {
             continue;
         }
@@ -36,7 +35,7 @@ void
 SimpleParser::checkKeywords(const SimpleKeywords& keywords,
                             ConstElementPtr scope) {
     string spurious;
-    for (auto entry : scope->mapValue()) {
+    for (auto const& entry : scope->mapValue()) {
         if (keywords.count(entry.first) == 0) {
             if (spurious.empty()) {
                 spurious = entry.first;
@@ -178,7 +177,7 @@ size_t SimpleParser::setDefaults(ElementPtr scope,
     const Element::Position pos("<default-value>", 0, 0);
 
     // Let's go over all parameters we have defaults for.
-    BOOST_FOREACH(SimpleDefault def_value, default_values) {
+    for (auto const& def_value : default_values) {
 
         // Try if such a parameter is there. If it is, let's
         // skip it, because user knows best *cough*.
@@ -245,7 +244,7 @@ size_t
 SimpleParser::setListDefaults(ConstElementPtr list,
                               const SimpleDefaults& default_values) {
     size_t cnt = 0;
-    BOOST_FOREACH(ElementPtr entry, list->listValue()) {
+    for (auto const& entry : list->listValue()) {
         cnt += setDefaults(entry, default_values);
     }
     return (cnt);
@@ -261,7 +260,7 @@ SimpleParser::deriveParams(ConstElementPtr parent,
     }
 
     size_t cnt = 0;
-    BOOST_FOREACH(string param, params) {
+    for (auto const& param : params) {
         ConstElementPtr x = parent->get(param);
         if (!x) {
             // Parent doesn't define this parameter, so there's

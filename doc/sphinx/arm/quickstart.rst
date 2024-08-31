@@ -16,9 +16,10 @@ Quick Start Guide Using tarball
 1.  Install required runtime and build dependencies. See
     :ref:`build-requirements` for details.
 
-2.  Download the Kea source tarball from the `ISC.org downloads
-    page <https://www.isc.org/download/>`__ or the `ISC downloads site
-    <https://downloads.isc.org/isc/kea/>`__.
+2.  Download the Kea source tarball from
+    `the main isc.org downloads page <https://www.isc.org/download/>`__, 
+    `the ISC downloads site <https://downloads.isc.org/isc/kea/>`__, or
+    `the ISC Cloudsmith page <https://cloudsmith.io/~isc/packages/?q=format%3Araw>`__.
 
 3.  Extract the tarball. For example:
 
@@ -52,71 +53,265 @@ Quick Start Guide Using Native Packages
 =======================================
 
 ISC provides native Alpine, deb, and RPM packages, which make Kea installation
-much easier. Unless specific compilation options are desired, it is usually
+much easier than building from source. Unless specific compilation options are desired, it is usually
 easier to install Kea using native packages.
 
-1. Go to `Kea on cloudsmith.io <https://cloudsmith.io/~isc/repos/>`__,
-   choose the Kea version, and enter the repository.
+1. Go to `Kea on cloudsmith.io <https://cloudsmith.io/~isc/repos/>`__.
 
-2. Use ``Set Me Up`` and follow instructions to add the repository
-   to the local system.
+2. Choose the Cloudsmith repository e.g. |cloudsmith_repo| for Kea |version|. Or kea-2-4 for Kea 2.4.
 
-3. Update system repositories. For example:
+.. note::
+  All stable releases are stored in separate repositories, such as kea-2-4, kea-2-6, and so on.
+  All development releases, which are not recommended for production use,
+  are located in the kea-dev repository.
+
+3. Click on the arrow beside the "Set Me Up" button and select the desired OS flavor:
+   Alpine, Debian, or RedHat.
+
+4. Follow the onscreen instructions.
+
+.. note::
+  For example, the Debian setup instructions for Kea 2.4 can be found here:
+  https://cloudsmith.io/~isc/repos/kea-2-4/setup/#formats-deb
+
+  The dropdown near the top of the page offers instructions for
+  other operating systems.
+
+5. Kea is split into various packages. The entire list is available on the
+   Cloudsmith repository page under ``Packages``, or it can be retrieved
+   using ``apk``/``apt``/``dnf``.
+
+.. list-table::
+    :stub-columns: 1
+    :widths: 10 90
+
+    * - Debian/Ubuntu
+
+      - .. code-block:: console
+
+            $ apt search isc-kea
+
+        .. note::
+            ``isc-kea-dhcp4-server`` and ``isc-kea-dhcp6-server`` are empty
+            transitional packages. The working server packages are
+            ``isc-kea-dhcp4`` and ``isc-kea-dhcp6``.
+
+    * - Fedora/RedHat
+
+      - .. code-block:: console
+
+            $ dnf search 'isc-kea*'
+
+    * - Alpine
+
+      - .. code-block:: console
+
+            $ apk search isc-kea
+
+6. Install the metapackage containing all the tools, libraries, servers,
+   documentation, and open source hooks:
+
+.. list-table::
+    :stub-columns: 1
+    :widths: 10 90
+
+    * - Debian/Ubuntu
+
+      - .. code-block:: console
+
+            $ sudo apt install isc-kea
+
+    * - Fedora/RedHat
+
+      - .. code-block:: console
+
+            $ sudo dnf install isc-kea
+
+    * - Alpine
+
+      - .. code-block:: console
+
+            # apk add isc-kea
+
+or specific packages:
+
+.. list-table::
+    :stub-columns: 1
+    :widths: 10 90
+
+    * - Debian/Ubuntu
+
+      - .. code-block:: console
+
+            $ sudo apt install isc-kea-dhcp6
+
+    * - Fedora/RedHat
+
+      - .. code-block:: console
+
+            $ sudo dnf install isc-kea-dhcp6
+
+    * - Alpine
+
+      - .. code-block:: console
+
+            $ apk add isc-kea-dhcp6
+
+or ALL Kea-related packages, including development headers, debug
+symbols, and premium hooks (if available):
+
+.. list-table::
+    :stub-columns: 1
+    :widths: 10 90
+
+    * - Debian/Ubuntu
+
+      - .. code-block:: console
+
+            $ sudo apt install 'isc-kea*'
+
+    * - Fedora/RedHat
+
+      - .. code-block:: console
+
+            $ sudo dnf install 'isc-kea*'
+
+    * - Alpine
+
+      - Installing packages via globbing (``*``) is not available for Alpine,
+        but it can be simulated with the following command:
+
+        .. code-block:: console
+
+            # apk search isc-kea | sed 's/-[0-9].*//g' | xargs apk add
+
+or all packages with a specified version number:
+
+.. list-table::
+    :stub-columns: 1
+    :widths: 10 90
+
+    * - Debian/Ubuntu
+
+      - .. code-block:: console
+
+            $ sudo apt install 'isc-kea*=2.4.0-isc20230921141113'
+
+    * - Fedora/RedHat
+
+      - .. code-block:: console
+
+            $ sudo dnf install 'isc-kea*2.4.0-isc20230921141113*'
+
+    * - Alpine
+
+      - Installing packages via globbing (``*``) is not available for Alpine,
+        but it can be simulated with the following command:
+
+        .. code-block:: console
+
+            # apk search isc-kea | sed 's/-[0-9].*//g' | grep r20230921141113 | xargs apk add
+
+8. All installed packages should be now available.
+
+    You can start a server manually:
 
     .. code-block:: console
 
-        $ apt-get update
-
-4. Kea is split into various packages. The entire list is available on
-   `cloudsmith.io <https://cloudsmith.io/~isc/repos/>`__  or using apt/yum/dnf.
-   For example:
-
-    .. code-block:: console
-
-        $ apt-cache search isc-kea
-
-5. Install specific packages:
-
-    .. code-block:: console
-
-        $ sudo apt-get install isc-kea-dhcp6-server
-
-   or all packages:
-
-    .. code-block:: console
-
-        $ sudo apt-get install isc-kea*
-
-   or all packages with a specified version number:
-
-    .. code-block:: console
-
-        $ sudo apt-get install isc-kea*=1.8.1-isc0000920201106154401
-
-6. All installed packages should be now available directly; for example:
-
-    .. code-block:: console
-
-       # kea-dhcp6 -c /path/to/your/kea6/config/file.json
+        # kea-dhcp6 -c /etc/kea/kea-dhcp6.conf
 
    or using systemd:
 
     .. code-block:: console
 
-       # systemctl restart isc-kea-dhcp6-server
+        # systemctl restart kea-dhcp6
 
-   ``keactrl`` is not available in packages as similar functionality is provided
-   by the native systemctl scripts.
+   or using OpenRC on Alpine:
+
+    .. code-block:: console
+
+        # service kea-dhcp6 restart
+
+.. note::
+  :iscman:`keactrl` is not available in packages, as similar functionality is provided
+  by the native systemctl scripts.
+
+9. On Debian/Ubuntu systems, the service is automatically enabled at boot time
+   when the package is installed. On Fedora/RHEL and Alpine, the service is not
+   automatically enabled, so if desired, it must be enabled manually.
+
+    With systemd on Fedora/RedHat:
+
+    .. code-block:: console
+
+        # systemctl enable kea-dhcp6
+
+    With OpenRC on Alpine:
+
+    .. code-block:: console
+
+        # rc-update add kea-dhcp6
+
+
+.. _quick-start-docker:
+
+Quick Start Guide Using Docker Containers
+=========================================
+
+1. Go to the `ISC docker repository on cloudsmith.io <https://cloudsmith.io/~isc/repos/docker/packages/>`__.
+
+2. Create an ipvlan network attached to the client-facing host interface and
+   assigned to the subnet that is served by Kea.
+
+.. code-block:: console
+
+    $ docker network create --driver ipvlan --ipv6 --subnet 2001:db8::/64 --opt parent=eth0 ipvlan0
+
+3. Pick the desired image and pull it locally.
+
+.. code-block:: console
+
+    $ docker pull docker.cloudsmith.io/isc/docker/kea-dhcp6
+
+4. Create a container from the image. Mount the configuration volume and the
+   data volume if needed.
+
+.. code-block:: console
+
+    $ docker create \
+        --name kea-dhcp6 \
+        --network ipvlan0 \
+        --volume /local/kea/config:/etc/kea \
+        --volume /local/kea/data:/var/lib/kea \
+        docker.cloudsmith.io/isc/docker/kea-dhcp6
+
+5. Start the docker container.
+
+.. code-block:: console
+
+    $ docker start kea-dhcp6
+
+6. To stop the docker container, run:
+
+.. code-block:: console
+
+    $ docker stop kea-dhcp6
+
+.. note::
+
+    Refer to the `kea-docker readme <https://gitlab.isc.org/isc-projects/kea-docker#user-content-docker-files-for-building-kea-containers>`__ for more complex scenarios.
+
 
 .. _quick-start-services:
 
 Quick Start Guide for DHCPv4 and DHCPv6 Services
 ================================================
+
 1.  Edit the Kea configuration files, which by default are installed in
     the ``[kea-install-dir]/etc/kea/`` directory. These are:
     ``kea-dhcp4.conf``, ``kea-dhcp6.conf``, ``kea-dhcp-ddns.conf`` and
-    ``kea-ctrl-agent.conf``, ``keactrl.conf`` for DHCPv4 server, DHCPv6 server,
-    D2, Control Agent, and the keactrl script, respectively.
+    ``kea-ctrl-agent.conf``, ``keactrl.conf`` for the DHCPv4 server, DHCPv6 server,
+    D2, Control Agent, and keactrl script, respectively.
 
 2.  To start the DHCPv4 server in the background, run the
     following command (as root):
@@ -167,7 +362,7 @@ For system-specific instructions, please read the
 available in the Kea section of `ISC's
 Knowledgebase <https://kb.isc.org/docs>`__.
 
-The details of ``keactrl`` script usage can be found in :ref:`keactrl`.
+The details of :iscman:`keactrl` script usage can be found in :ref:`keactrl`.
 
 Once Kea services are up and running, consider deploying a dashboard solution
 to monitor running services. For more details, see :ref:`stork`.
@@ -178,7 +373,7 @@ Running the Kea Servers Directly
 ================================
 
 The Kea servers can be started directly, without the need to use
-``keactrl`` or ``systemctl``. To start the DHCPv4 server run the following command:
+:iscman:`keactrl` or ``systemctl``. To start the DHCPv4 server run the following command:
 
 .. code-block:: console
 

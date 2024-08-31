@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -243,6 +243,120 @@ TEST(ProtocolUtilTest, writeEthernetHeader) {
     for (unsigned i = 0; i < 6; ++i) {
         EXPECT_EQ(dest_hw_addr[i], buf[i]);
     }
+
+    // Verify that following 6 bytes comprise the valid source
+    // HW address.
+    for (unsigned i = 0; i < 6; ++i) {
+        EXPECT_EQ(src_hw_addr[i], buf[i + 6]);
+    }
+
+    // The last two bytes comprise the encapsulated protocol type.
+    // We expect IPv4 protocol type which is specified by 0x0800.
+    EXPECT_EQ(0x08, buf[12]);
+    EXPECT_EQ(0x0, buf[13]);
+}
+
+/// The purpose of this test is to verify that the ethernet
+/// header is correctly constructed from the destination and
+/// hardware addresses with the broadcast flag set.
+TEST(ProtocolUtilTest, writeEthernetHeaderBroadcast) {
+    // Source HW address, 6 bytes.
+    const uint8_t src_hw_addr[6] = {
+        0x10, 0x11, 0x12, 0x13, 0x14, 0x15
+    };
+    // Destination HW address, 6 bytes.
+    const uint8_t dest_hw_addr[6] = {
+        0x20, 0x31, 0x42, 0x53, 0x64, 0x75
+    };
+
+    // Create output buffer.
+    OutputBuffer buf(1);
+    Pkt4Ptr pkt(new Pkt4(DHCPDISCOVER, 0));
+
+    HWAddrPtr local_hw_addr(new HWAddr(src_hw_addr, 6, 1));
+    ASSERT_NO_THROW(pkt->setLocalHWAddr(local_hw_addr));
+    HWAddrPtr remote_hw_addr(new HWAddr(dest_hw_addr, 6, 1));
+    ASSERT_NO_THROW(pkt->setRemoteHWAddr(remote_hw_addr));
+
+    // Set the broadcast flags.
+    pkt->setFlags(pkt->getFlags() | Pkt4::FLAG_BROADCAST_MASK);
+
+    // Construct the ethernet header using HW addresses stored
+    // in the pkt object.
+    writeEthernetHeader(pkt, buf);
+
+    // The resulting ethernet header consists of destination
+    // and src HW address (each 6 bytes long) and two bytes
+    // of encapsulated protocol type.
+    ASSERT_EQ(14, buf.getLength());
+
+    // Verify that first 6 bytes comprise broadcast destination
+    // HW address.
+    for (unsigned i = 0; i < 6; ++i) {
+        EXPECT_EQ(255, buf[i]);
+    }
+
+    // Verify that following 6 bytes comprise the valid source
+    // HW address.
+    for (unsigned i = 0; i < 6; ++i) {
+        EXPECT_EQ(src_hw_addr[i], buf[i + 6]);
+    }
+
+    // The last two bytes comprise the encapsulated protocol type.
+    // We expect IPv4 protocol type which is specified by 0x0800.
+    EXPECT_EQ(0x08, buf[12]);
+    EXPECT_EQ(0x0, buf[13]);
+}
+
+/// The purpose of this test is to verify that the ethernet
+/// header is correctly constructed from the destination and
+/// hardware addresses with the broadcast flag set but the packet
+/// was relayed.
+TEST(ProtocolUtilTest, writeEthernetHeaderBroadcastRelayed) {
+    // Source HW address, 6 bytes.
+    const uint8_t src_hw_addr[6] = {
+        0x10, 0x11, 0x12, 0x13, 0x14, 0x15
+    };
+    // Destination HW address, 6 bytes.
+    const uint8_t dest_hw_addr[6] = {
+        0x20, 0x31, 0x42, 0x53, 0x64, 0x75
+    };
+
+    // Create output buffer.
+    OutputBuffer buf(1);
+    Pkt4Ptr pkt(new Pkt4(DHCPDISCOVER, 0));
+
+    HWAddrPtr local_hw_addr(new HWAddr(src_hw_addr, 6, 1));
+    ASSERT_NO_THROW(pkt->setLocalHWAddr(local_hw_addr));
+    HWAddrPtr remote_hw_addr(new HWAddr(dest_hw_addr, 6, 1));
+    ASSERT_NO_THROW(pkt->setRemoteHWAddr(remote_hw_addr));
+
+    // Set the broadcast flags.
+    pkt->setFlags(pkt->getFlags() | Pkt4::FLAG_BROADCAST_MASK);
+
+    // Set a gateway address: the broadcast flag is now for
+    // the relay, no longer for the server.
+    pkt->setGiaddr(IOAddress("192.0.2.4"));
+
+    // Construct the ethernet header using HW addresses stored
+    // in the pkt object.
+    writeEthernetHeader(pkt, buf);
+
+    // The resulting ethernet header consists of destination
+    // and src HW address (each 6 bytes long) and two bytes
+    // of encapsulated protocol type.
+    ASSERT_EQ(14, buf.getLength());
+
+    // Verify that first 6 bytes comprise valid destination
+    // HW address. Instead of using memory comparison functions
+    // we check bytes one-by-one. In case of mismatch we will
+    // get exact values that are mismatched. If memcmp was used
+    // the error message would not indicate the values of
+    // mismatched bytes.
+    for (unsigned i = 0; i < 6; ++i) {
+        EXPECT_EQ(dest_hw_addr[i], buf[i]);
+    }
+
     // Verify that following 6 bytes comprise the valid source
     // HW address.
     for (unsigned i = 0; i < 6; ++i) {
@@ -426,9 +540,19 @@ TEST(ScopedOptionsCopy, pkt4OptionsCopy) {
     size_t count = options.size();
     ASSERT_NE(0, count);
     ASSERT_EQ(option, pkt->getOption(DHO_BOOT_FILE_NAME));
+    std::string expected = pkt->toText();
+    pkt->pack();
+    OutputBuffer buf = pkt->getBuffer();
     {
         ScopedPkt4OptionsCopy oc(*pkt);
-        ASSERT_EQ(pkt->options_, options);
+        ASSERT_NE(pkt->options_, options);
+        ASSERT_NE(option, pkt->getOption(DHO_BOOT_FILE_NAME));
+        pkt->pack();
+        ASSERT_EQ(buf.getLength(), pkt->getBuffer().getLength());
+        for (size_t index = 0; index < buf.getLength(); ++index) {
+            ASSERT_EQ(buf[index], pkt->getBuffer()[index]);
+        }
+        ASSERT_EQ(expected, pkt->toText());
         pkt->delOption(DHO_BOOT_FILE_NAME);
         ASSERT_EQ(pkt->options_.size(), count - 1);
         ASSERT_FALSE(pkt->getOption(DHO_BOOT_FILE_NAME));
@@ -438,7 +562,14 @@ TEST(ScopedOptionsCopy, pkt4OptionsCopy) {
     {
         try {
             ScopedPkt4OptionsCopy oc(*pkt);
-            ASSERT_EQ(pkt->options_, options);
+            ASSERT_NE(pkt->options_, options);
+            ASSERT_NE(option, pkt->getOption(DHO_BOOT_FILE_NAME));
+            pkt->pack();
+            ASSERT_EQ(buf.getLength(), pkt->getBuffer().getLength());
+            for (size_t index = 0; index < buf.getLength(); ++index) {
+                ASSERT_EQ(buf[index], pkt->getBuffer()[index]);
+            }
+            ASSERT_EQ(expected, pkt->toText());
             pkt->delOption(DHO_BOOT_FILE_NAME);
             ASSERT_EQ(pkt->options_.size(), count - 1);
             ASSERT_FALSE(pkt->getOption(DHO_BOOT_FILE_NAME));
@@ -462,9 +593,19 @@ TEST(ScopedOptionsCopy, pkt6OptionsCopy) {
     size_t count = options.size();
     ASSERT_NE(0, count);
     ASSERT_EQ(option, pkt->getOption(D6O_BOOTFILE_URL));
+    std::string expected = pkt->toText();
+    pkt->pack();
+    OutputBuffer buf = pkt->getBuffer();
     {
         ScopedPkt6OptionsCopy oc(*pkt);
-        ASSERT_EQ(pkt->options_, options);
+        ASSERT_NE(pkt->options_, options);
+        ASSERT_NE(option, pkt->getOption(D6O_BOOTFILE_URL));
+        pkt->pack();
+        ASSERT_EQ(buf.getLength(), pkt->getBuffer().getLength());
+        for (size_t index = 0; index < buf.getLength(); ++index) {
+            ASSERT_EQ(buf[index], pkt->getBuffer()[index]);
+        }
+        ASSERT_EQ(expected, pkt->toText());
         pkt->delOption(D6O_BOOTFILE_URL);
         ASSERT_EQ(pkt->options_.size(), count - 1);
         ASSERT_FALSE(pkt->getOption(D6O_BOOTFILE_URL));
@@ -474,7 +615,14 @@ TEST(ScopedOptionsCopy, pkt6OptionsCopy) {
     {
         try {
             ScopedPkt6OptionsCopy oc(*pkt);
-            ASSERT_EQ(pkt->options_, options);
+            ASSERT_NE(pkt->options_, options);
+            ASSERT_NE(option, pkt->getOption(D6O_BOOTFILE_URL));
+            pkt->pack();
+            ASSERT_EQ(buf.getLength(), pkt->getBuffer().getLength());
+            for (size_t index = 0; index < buf.getLength(); ++index) {
+                ASSERT_EQ(buf[index], pkt->getBuffer()[index]);
+            }
+            ASSERT_EQ(expected, pkt->toText());
             pkt->delOption(D6O_BOOTFILE_URL);
             ASSERT_EQ(pkt->options_.size(), count - 1);
             ASSERT_FALSE(pkt->getOption(D6O_BOOTFILE_URL));
@@ -501,6 +649,7 @@ TEST(ScopedOptionsCopy, subOptionsCopy) {
     {
         ScopedSubOptionsCopy oc(initial);
         ASSERT_EQ(initial->getOptions(), options);
+        ASSERT_EQ(option, initial->getOption(DHO_BOOT_FILE_NAME));
         initial->delOption(DHO_BOOT_FILE_NAME);
         ASSERT_EQ(initial->getOptions().size(), count - 1);
         ASSERT_FALSE(initial->getOption(DHO_BOOT_FILE_NAME));
@@ -511,6 +660,7 @@ TEST(ScopedOptionsCopy, subOptionsCopy) {
         try {
             ScopedSubOptionsCopy oc(initial);
             ASSERT_EQ(initial->getOptions(), options);
+            ASSERT_EQ(option, initial->getOption(DHO_BOOT_FILE_NAME));
             initial->delOption(DHO_BOOT_FILE_NAME);
             ASSERT_EQ(initial->getOptions().size(), count - 1);
             ASSERT_FALSE(initial->getOption(DHO_BOOT_FILE_NAME));

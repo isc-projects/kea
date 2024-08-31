@@ -1,4 +1,4 @@
-// Copyright (C) 2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,6 +19,7 @@
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <process/daemon.h>
 
 #include <gtest/gtest.h>
 #include <errno.h>
@@ -28,6 +29,7 @@ using namespace isc;
 using namespace isc::hooks;
 using namespace isc::data;
 using namespace isc::dhcp;
+using namespace isc::process;
 
 namespace {
 
@@ -97,6 +99,10 @@ TEST_F(CalloutTest, pkt4Send) {
     ElementPtr add = Element::create(string("'abc'"));
     option->set("add", add);
 
+    // Set family and proc name.
+    CfgMgr::instance().setFamily(AF_INET);
+    Daemon::setProcName("kea-dhcp4");
+
     // Load the library.
     addLib(FLEX_OPTION_LIB_SO, params);
     loadLibs();
@@ -128,9 +134,6 @@ TEST_F(CalloutTest, pkt4Send) {
 
 // Simple test which exercises the pkt6_send callout.
 TEST_F(CalloutTest, pkt6Send) {
-    // Move to DHCPv6.
-    CfgMgr::instance().setFamily(AF_INET6);
-
     // Prepare load() parameters.
     ElementPtr params = Element::createMap();
     ElementPtr options = Element::createList();
@@ -141,6 +144,10 @@ TEST_F(CalloutTest, pkt6Send) {
     option->set("code", code);
     ElementPtr supersede = Element::create(string("'abc'"));
     option->set("supersede", supersede);
+
+    // Set family and proc name.
+    CfgMgr::instance().setFamily(AF_INET6);
+    Daemon::setProcName("kea-dhcp6");
 
     // Load the library.
     addLib(FLEX_OPTION_LIB_SO, params);

@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -139,7 +139,7 @@ TEST_F(HttpRequestTest, includeHeaders) {
     ASSERT_NO_THROW(content_type = request_->getHeaderValue("Content-Type"));
     EXPECT_EQ("application/json", content_type);
 
-    uint64_t content_length;
+    uint64_t content_length = 0;
     ASSERT_NO_THROW(
         content_length = request_->getHeaderValueAsUint64("Content-Length")
     );

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -50,6 +50,9 @@ const bool generate_action = true;
 #else
 const bool generate_action = false;
 #endif
+
+/// @brief the test secret file name.
+std::string test_file_name(TEST_DATA_BUILDDIR "/sf-test");
 
 /// @brief Read a file into a string
 std::string
@@ -107,6 +110,28 @@ void pathReplacer(ConstElementPtr d2_cfg) {
     first_lib->set("library", Element::create(lib_path));
 }
 
+/// @brief Replace the test secret file name.
+void testFileNameReplacer(ConstElementPtr d2_cfg) {
+    ConstElementPtr tsig_keys = d2_cfg->get("tsig-keys");
+    if (!tsig_keys || (tsig_keys->size() != 4)) {
+        return;
+    }
+    ElementPtr third_key = tsig_keys->getNonConst(2);
+    if (third_key->contains("secret")) {
+        return;
+    }
+    third_key->set("secret-file", Element::create(test_file_name));
+}
+
+/// @brief Create and fill the secret file.
+void fillSecretFile() {
+    std::ofstream fs(test_file_name.c_str(),
+                     std::ofstream::out | std::ofstream::trunc);
+    ASSERT_TRUE(fs.is_open());
+    fs << "Gwk53fvy3CmbupoI9TgigA==";
+    fs.close();
+}
+
 }
 
 /// Test fixture class
@@ -119,9 +144,12 @@ public:
         Daemon::setVerbose(false);
         // Create fresh context.
         resetConfiguration();
+        // Fill test secret file.
+        fillSecretFile();
     }
 
     ~D2GetConfigTest() {
+        static_cast<void>(remove(test_file_name.c_str()));
         resetConfiguration();
     }
 
@@ -167,6 +195,9 @@ public:
 
         // update hooks-libraries
         pathReplacer(d2);
+
+        // update tsig-keys.
+        testFileNameReplacer(d2);
 
         // try DHCPDDNS configure
         ConstElementPtr status;
@@ -270,6 +301,7 @@ TEST_F(D2GetConfigTest, sample1) {
         ASSERT_NO_THROW(d2 = jsonj->get("DhcpDdns"));
         ASSERT_TRUE(d2);
         pathReplacer(d2);
+        testFileNameReplacer(d2);
         // check that unparsed and expected values match
         EXPECT_TRUE(isEquivalent(unparsed, jsonj));
         // check on pretty prints too

@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -72,8 +72,12 @@ public:
     /// It tries to validate all the libraries stored in libraries_.
     ///
     /// @param position position of the hooks-library map for error reporting
+    /// @param multi_threading_enabled The flag which indicates if MT is enabled
+    ///        (used to check hook libraries compatibility with MT).
+    ///
     /// @throw InvalidHooksLibraries if any issue is discovered.
-    void verifyLibraries(const isc::data::Element::Position& position) const;
+    void verifyLibraries(const isc::data::Element::Position& position,
+                         bool multi_threading_enabled) const;
 
     /// @brief Commits hooks libraries configuration.
     ///
@@ -83,8 +87,11 @@ public:
     /// different to those already loaded, this method loads the new set of
     /// libraries (and unloads the existing set).
     ///
+    /// @param multi_threading_enabled The flag which indicates if MT is enabled
+    ///        (used to check hook libraries compatibility with MT).
+    ///
     /// @throw InvalidHooksLibraries if the call to HooksManager fails.
-    void loadLibraries() const;
+    void loadLibraries(bool multi_threading_enabled) const;
 
     /// @brief Unparse a configuration object
     ///
@@ -102,7 +109,7 @@ private:
     isc::hooks::HookLibsCollection libraries_;
 };
 
-};
-};
+}  // namespace hooks
+}  // namespace isc
 
 #endif // HOOKS_CONFIG_H

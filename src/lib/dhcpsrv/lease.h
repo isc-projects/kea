@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,6 +14,7 @@
 #include <dhcpsrv/subnet_id.h>
 #include <cc/user_context.h>
 #include <cc/cfg_to_element.h>
+#include <util/dhcp_space.h>
 
 namespace isc {
 namespace dhcp {
@@ -73,6 +74,9 @@ struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
     /// @brief Expired and reclaimed lease.
     static const uint32_t STATE_EXPIRED_RECLAIMED;
 
+    /// @brief Released lease held in the database for lease affinity.
+    static const uint32_t STATE_RELEASED;
+
     /// @brief Returns name(s) of the basic lease state(s).
     ///
     /// @param state A numeric value holding a state information.
@@ -107,6 +111,11 @@ struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
 
     /// @brief Destructor
     virtual ~Lease() {}
+
+    /// @brief Returns Lease type
+    ///
+    /// One of normal address, temporary address, or prefix, or V4
+    virtual Lease::Type getType() const = 0;
 
     /// @brief IPv4 ot IPv6 address
     ///
@@ -146,6 +155,11 @@ struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
     ///
     /// Specifies the identification of the subnet to which the lease belongs.
     SubnetID subnet_id_;
+
+    /// @brief The pool id
+    ///
+    /// Specifies the identification of the pool from a subnet to which the lease belongs.
+    uint32_t pool_id_;
 
     /// @brief Client hostname
     ///
@@ -343,14 +357,17 @@ struct Lease4 : public Lease {
     /// @brief Default constructor
     ///
     /// Initialize fields that don't have a default constructor.
-    Lease4() : Lease(0, 0, 0, 0, false, false, "", HWAddrPtr())
-    {
-    }
+    Lease4();
 
-    /// @brief Copy constructor
+    /// @brief Returns Lease type
     ///
-    /// @param other the @c Lease4 object to be copied.
-    Lease4(const Lease4& other);
+    /// Since @c Lease does not define a member for lease type, we implement this
+    /// so we don't store the same value in a billion v4 lease instances.
+    ///
+    /// @return Lease::TYPE_V4
+    virtual Lease::Type getType() const {
+        return (Lease::TYPE_V4);
+    }
 
     /// @brief Returns name of the lease states specific to DHCPv4.
     ///
@@ -436,11 +453,6 @@ struct Lease4 : public Lease {
     bool belongsToClient(const HWAddrPtr& hw_address,
                          const ClientIdPtr& client_id) const;
 
-    /// @brief Assignment operator.
-    ///
-    /// @param other the @c Lease4 object to be assigned.
-    Lease4& operator=(const Lease4& other);
-
     /// @brief Compare two leases for equality
     ///
     /// @param other lease6 object with which to compare
@@ -476,6 +488,12 @@ struct Lease4 : public Lease {
     static Lease4Ptr fromElement(const data::ConstElementPtr& element);
 
     /// @todo: Add DHCPv4 failover related fields here
+
+    /// @brief Remote identifier for Bulk Lease Query
+    std::vector<uint8_t> remote_id_;
+
+    /// @brief Relay identifier for Bulk Lease Query
+    std::vector<uint8_t> relay_id_;
 };
 
 /// @brief A collection of IPv4 leases.
@@ -531,6 +549,16 @@ struct Lease6 : public Lease {
     /// i.e. when the lease can be reused.
     uint32_t reuseable_preferred_lft_;
 
+    /// @brief Action on extended info tables.
+    typedef enum {
+        ACTION_IGNORE, ///< ignore extended info,
+        ACTION_DELETE, ///< delete reference to the lease
+        ACTION_UPDATE  ///< update extended info tables.
+    } ExtendedInfoAction;
+
+    /// @brief Record the action on extended info tables in the lease.
+    ExtendedInfoAction extended_info_action_;
+
     /// @todo: Add DHCPv6 failover related fields here
 
     /// @brief Constructor
@@ -572,6 +600,16 @@ struct Lease6 : public Lease {
     ///
     /// Initialize fields that don't have a default constructor.
     Lease6();
+
+    /// @brief Returns Lease type
+    ///
+    /// Since @c Lease does not define a member for lease type, we implement this
+    /// so code that only has LeasePtr can see what it has.
+    ///
+    /// @return Type of lease
+    virtual Lease::Type getType() const {
+        return (type_);
+    }
 
     /// @brief Returns name of the lease states specific to DHCPv6.
     ///
@@ -634,7 +672,6 @@ typedef boost::shared_ptr<const Lease6> ConstLease6Ptr;
 /// @brief A collection of IPv6 leases.
 typedef std::vector<Lease6Ptr> Lease6Collection;
 
-
 /// @brief A shared pointer to the collection of IPv6 leases.
 typedef boost::shared_ptr<Lease6Collection> Lease6CollectionPtr;
 
@@ -647,7 +684,33 @@ typedef boost::shared_ptr<Lease6Collection> Lease6CollectionPtr;
 std::ostream&
 operator<<(std::ostream& os, const Lease& lease);
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+/// @brief adapters for linking templates to qualified names
+/// @{
+namespace {
+
+template <isc::util::DhcpSpace D>
+struct AdapterLease {};
+
+template <>
+struct AdapterLease<isc::util::DHCPv4> {
+    using type = Lease4;
+};
+
+template <>
+struct AdapterLease<isc::util::DHCPv6> {
+    using type = Lease6;
+};
+
+}  // namespace
+
+template <isc::util::DhcpSpace D>
+using LeaseT = typename AdapterLease<D>::type;
+
+template <isc::util::DhcpSpace D>
+using LeaseTPtr = boost::shared_ptr<LeaseT<D>>;
+/// @}
+
+}  // end of isc::dhcp namespace
+}  // end of isc namespace
 
 #endif // LEASE_H

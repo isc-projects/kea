@@ -7,7 +7,10 @@
 #ifndef CLASSIFY_H
 #define CLASSIFY_H
 
+#include <cc/data.h>
+
 #include <boost/multi_index_container.hpp>
+#include <boost/multi_index/member.hpp>
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/identity.hpp>
 #include <boost/multi_index/ordered_index.hpp>
@@ -33,7 +36,6 @@
 /// though they reside in the dhcp directory.
 
 namespace isc {
-
 namespace dhcp {
 
     /// @brief Defines a single class name.
@@ -61,6 +63,44 @@ namespace dhcp {
         >
     > ClientClassContainer;
 
+    /// @brief Defines a subclass to template class relation.
+    struct SubClassRelation {
+        /// @brief Constructor.
+        SubClassRelation(const ClientClass& class_def, const ClientClass& subclass) :
+            class_def_(class_def), class_(subclass) {
+        }
+
+        /// @brief The class definition name.
+        ClientClass class_def_;
+
+        /// @brief The class or subclass name.
+        ClientClass class_;
+    };
+
+    /// @brief Tag for the sequence index.
+    struct TemplateClassSequenceTag { };
+
+    /// @brief Tag for the name index.
+    struct TemplateClassNameTag { };
+
+    /// @brief the subclass multi-index.
+    typedef boost::multi_index_container<
+        SubClassRelation,
+        boost::multi_index::indexed_by<
+            // First index is the sequence one.
+            boost::multi_index::sequenced<
+                boost::multi_index::tag<TemplateClassSequenceTag>
+            >,
+            // Second index is the name hash one.
+            boost::multi_index::hashed_unique<
+                boost::multi_index::tag<TemplateClassNameTag>,
+                boost::multi_index::member<SubClassRelation,
+                                           ClientClass,
+                                           &SubClassRelation::class_def_>
+            >
+        >
+    > SubClassRelationContainer;
+
     /// @brief Container for storing client class names
     ///
     /// Both a list to iterate on it in insert order and unordered
@@ -80,7 +120,7 @@ namespace dhcp {
         ///
         /// @param class_names A string containing a client classes separated
         /// with commas. The class names are trimmed before insertion to the set.
-        ClientClasses(const ClientClass& class_names);
+        ClientClasses(const std::string& class_names);
 
         /// @brief Insert an element.
         ///
@@ -149,14 +189,20 @@ namespace dhcp {
         /// @param separator Separator to be used between class names. The
         /// default separator comprises comma sign followed by space
         /// character.
+        ///
+        /// @return the string representation of all classes
         std::string toText(const std::string& separator = ", ") const;
+
+        /// @brief Returns all class names as an ElementPtr of type ListElement
+        ///
+        /// @return the list
+        isc::data::ElementPtr toElement() const;
 
     private:
         /// @brief container part
         ClientClassContainer container_;
     };
 }
-
 }
 
 #endif /* CLASSIFY_H */

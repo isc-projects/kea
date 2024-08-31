@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -62,17 +62,17 @@ CmdHttpListener::start() {
 
         // Create the HTTP listener. It will open up a TCP socket and be
         // prepared to accept incoming connections.
-        http_listener_.reset(new HttpListener(*thread_io_service_, address_,
+        http_listener_.reset(new HttpListener(thread_io_service_, address_,
                                               port_, tls_context_, rcf,
                                               HttpListener::RequestTimeout(TIMEOUT_AGENT_RECEIVE_COMMAND),
                                               HttpListener::IdleTimeout(TIMEOUT_AGENT_IDLE_CONNECTION_TIMEOUT)));
 
-        // Create the thread pool with immediate start.
-        thread_pool_.reset(new HttpThreadPool(thread_io_service_, thread_pool_size_));
-
         // Instruct the HTTP listener to actually open socket, install
         // callback and start listening.
         http_listener_->start();
+
+        // Create the thread pool with immediate start.
+        thread_pool_.reset(new IoServiceThreadPool(thread_io_service_, thread_pool_size_));
 
         // OK, seems like we're good to go.
         LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_HTTP_LISTENER_STARTED)
@@ -81,7 +81,31 @@ CmdHttpListener::start() {
             .arg(port_)
             .arg(tls_context_ ? "true" : "false");
     } catch (const std::exception& ex) {
-        isc_throw(Unexpected, "CmdHttpListener::run failed:" << ex.what());
+        if (thread_pool_) {
+            // Stop the thread pool.
+            thread_pool_->stop();
+        }
+
+        if (http_listener_) {
+            // Stop the listener.
+            http_listener_->stop();
+        }
+
+        if (thread_io_service_) {
+            thread_io_service_->stopAndPoll();
+            thread_io_service_->stop();
+        }
+
+        // Get rid of the thread pool.
+        thread_pool_.reset();
+
+        // Get rid of the listener.
+        http_listener_.reset();
+
+        // Ditch the IOService.
+        thread_io_service_.reset();
+
+        isc_throw(Unexpected, "CmdHttpListener::run failed: " << ex.what());
     }
 }
 
@@ -119,6 +143,15 @@ CmdHttpListener::stop() {
 
     // Stop the thread pool.
     thread_pool_->stop();
+
+    // Stop the listener.
+    http_listener_->stop();
+
+    thread_io_service_->stopAndPoll();
+    thread_io_service_->stop();
+
+    // Get rid of the thread pool.
+    thread_pool_.reset();
 
     // Get rid of the listener.
     http_listener_.reset();
@@ -158,5 +191,5 @@ CmdHttpListener::isPaused() {
     return (false);
 }
 
-} // namespace isc::config
-} // namespace isc
+}  // namespace config
+}  // namespace isc

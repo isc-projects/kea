@@ -1,5 +1,5 @@
 ..
-   Copyright (C) 2019-2022 Internet Systems Consortium, Inc. ("ISC")
+   Copyright (C) 2019-2024 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
    See the COPYRIGHT file distributed with this work for additional
    information regarding copyright ownership.
 
+.. iscman:: kea-admin
 
 ``kea-admin`` - Shell script for managing Kea databases
 -------------------------------------------------------
@@ -54,12 +55,17 @@ Arguments
       for the Cassandra backend has been deprecated.)
       The first line of the file contains the column names. This can be used
       as a way to switch from a database backend to a memfile backend.
-      Alternatively, it can be used as a diagnostic tool, so it provides a
-      portable form of the lease data.
+      It can also be used as a diagnostic tool, as it provides a
+      portable form of the lease data. There are other mandatory arguments
+      that must be used together with this command: either ``-4`` or ``-6`` must
+      be specified, and either ``-o`` or ``--output`` must be provided.
 
    ``lease-upload``
       Uploads leases from a CSV (comma-separated values) text file to a MySQL or
       a PostgreSQL lease database. The CSV file needs to be in memfile format.
+      There are other mandatory arguments that must be used together with this
+      command: either ``-4`` or ``-6`` must be specified,
+      and either ``-i`` or ``--input`` must be provided.
 
    ``stats-recount``
       Recounts lease statistics for a MySQL or PostgreSQL database.
@@ -71,6 +77,10 @@ Arguments
 ``-h|--host hostname``
    Specifies the hostname when connecting to a database.
    The default value is ``localhost``.
+
+``-i|--input input_file``
+   Specifies the CSV (comma-separated values) text file with the leases to be uploaded;
+   required for ``lease-upload``.
 
 ``-P|--port port``
    Specifies the port when connecting to a database. If not specified,
@@ -101,7 +111,10 @@ Arguments
    ``lease-dump``.
 
 ``-v|--version``
-   Prints the ``kea-admin`` version and quits.
+   Displays the Kea version.
+
+``-V``
+   Displays the extended Kea version.
 
 ``-4``
    Directs ``kea-admin`` to lease-dump the DHCPv4 leases. Incompatible with

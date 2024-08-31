@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,6 +18,7 @@
 namespace {
 
 using namespace isc::dhcp;
+using namespace boost::posix_time;
 
 /// @brief Maximum number of attempts to open BPF device.
 const unsigned int MAX_BPF_OPEN_ATTEMPTS = 100;
@@ -226,7 +227,6 @@ PktFilterBPF::openSocket(Iface& iface,
                          const isc::asiolink::IOAddress& addr,
                          const uint16_t port, const bool,
                          const bool) {
-
     // Open fallback socket first. If it fails, it will give us an indication
     // that there is another service (perhaps DHCP server) running.
     // The function will throw an exception and effectively cease opening
@@ -376,6 +376,7 @@ PktFilterBPF::openSocket(Iface& iface,
         close(sock);
         throw;
     }
+
     return (SocketInfo(addr, port, sock, fallback));
 }
 
@@ -537,6 +538,22 @@ PktFilterBPF::receive(Iface& iface, const SocketInfo& socket_info) {
     pkt->setLocalHWAddr(dummy_pkt->getLocalHWAddr());
     pkt->setRemoteHWAddr(dummy_pkt->getRemoteHWAddr());
 
+    // Set time the packet was stored in the buffer.
+#if (defined(BPF_TIMEVAL)) && (BPF_TIMEVAL == timeval32)
+    // Convert to ptime directly to avoid timeval vs
+    // timeval32 definitons under MacOS.
+    time_t time_t_secs = bpfh.bh_tstamp.tv_sec;
+    ptime timestamp = from_time_t(time_t_secs);
+    time_duration usecs(0, 0, 0, bpfh.bh_tstamp.tv_usec);
+    timestamp += usecs;
+    pkt->addPktEvent(PktEvent::SOCKET_RECEIVED, timestamp);
+#else
+    pkt->addPktEvent(PktEvent::SOCKET_RECEIVED, bpfh.bh_tstamp);
+#endif
+
+    // Set time packet was read from the buffer.
+    pkt->addPktEvent(PktEvent::BUFFER_READ);
+
     return (pkt);
 }
 
@@ -586,6 +603,7 @@ PktFilterBPF::send(const Iface& iface, uint16_t sockfd, const Pkt4Ptr& pkt) {
                   << strerror(errno));
     }
 
+    pkt->addPktEvent(PktEvent::RESPONSE_SENT);
     return (0);
 }
 

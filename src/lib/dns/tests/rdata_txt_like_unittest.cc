@@ -1,10 +1,10 @@
-// Copyright (C) 2011-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// This is the common code for TXT and SPF tests.
+// This is the common code for TXT tests.
 
 #include <config.h>
 
@@ -39,7 +39,6 @@ public:
 };
 
 template<> RRTYPE<generic::TXT>::RRTYPE() : RRType(RRType::TXT()) {}
-template<> RRTYPE<generic::SPF>::RRTYPE() : RRType(RRType::SPF()) {}
 
 const uint8_t wiredata_txt_like[] = {
     sizeof("Test-String") - 1,
@@ -68,7 +67,7 @@ protected:
 };
 
 // The list of types we want to test.
-typedef testing::Types<generic::TXT, generic::SPF> Implementations;
+typedef testing::Types<generic::TXT> Implementations;
 
 #ifdef TYPED_TEST_SUITE
 TYPED_TEST_SUITE(Rdata_TXT_LIKE_Test, Implementations);
@@ -107,25 +106,25 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createFromText) {
     // case, then with MasterLexer.  For the latter, we need to read and skip
     // '\n'.  These apply to most of the other cases below.
     EXPECT_EQ(0, this->rdata_txt_like.compare(*rdata));
-    EXPECT_EQ(0, TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS,
+    EXPECT_EQ(0, TypeParam(this->lexer, 0, MasterLoader::MANY_ERRORS,
                            this->loader_cb).compare(*rdata));
     EXPECT_EQ(MasterToken::END_OF_LINE, this->lexer.getNextToken().getType());
 
     // surrounding double-quotes shouldn't change the result.
     EXPECT_EQ(0, this->rdata_txt_like_quoted.compare(*rdata));
-    EXPECT_EQ(0, TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS,
+    EXPECT_EQ(0, TypeParam(this->lexer, 0, MasterLoader::MANY_ERRORS,
                            this->loader_cb).compare(*rdata));
     EXPECT_EQ(MasterToken::END_OF_LINE, this->lexer.getNextToken().getType());
 
     // multi-line input with ()
     EXPECT_EQ(0, TypeParam(multi_line).compare(*rdata));
-    EXPECT_EQ(0, TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS,
+    EXPECT_EQ(0, TypeParam(this->lexer, 0, MasterLoader::MANY_ERRORS,
                            this->loader_cb).compare(*rdata));
     EXPECT_EQ(MasterToken::END_OF_LINE, this->lexer.getNextToken().getType());
 
     // for the same data using escape
     EXPECT_EQ(0, TypeParam(escaped_txt).compare(*rdata));
-    EXPECT_EQ(0, TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS,
+    EXPECT_EQ(0, TypeParam(this->lexer, 0, MasterLoader::MANY_ERRORS,
                            this->loader_cb).compare(*rdata));
     EXPECT_EQ(MasterToken::END_OF_LINE, this->lexer.getNextToken().getType());
 
@@ -136,7 +135,7 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createFromText) {
                   this->obuffer.getData(), this->obuffer.getLength());
 
     this->obuffer.clear();
-    TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS, this->loader_cb).
+    TypeParam(this->lexer, 0, MasterLoader::MANY_ERRORS, this->loader_cb).
         toWire(this->obuffer);
     matchWireData(wiredata_nulltxt, sizeof(wiredata_nulltxt),
                   this->obuffer.getData(), this->obuffer.getLength());
@@ -151,7 +150,7 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createFromText) {
                   this->obuffer.getData(), this->obuffer.getLength());
 
     this->obuffer.clear();
-    TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS, this->loader_cb).
+    TypeParam(this->lexer, 0, MasterLoader::MANY_ERRORS, this->loader_cb).
         toWire(this->obuffer);
     matchWireData(&this->wiredata_longesttxt[0],
                   this->wiredata_longesttxt.size(),
@@ -161,14 +160,14 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createFromText) {
 
     // Too long text for a valid character-string.
     EXPECT_THROW(TypeParam(string(256, 'a')), CharStringTooLong);
-    EXPECT_THROW(TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS,
+    EXPECT_THROW(TypeParam(this->lexer, 0, MasterLoader::MANY_ERRORS,
                            this->loader_cb), CharStringTooLong);
     EXPECT_EQ(MasterToken::END_OF_LINE, this->lexer.getNextToken().getType());
 
     // The escape character makes the double quote a part of character-string,
     // so this is invalid input and should be rejected.
     EXPECT_THROW(TypeParam("\"Test-String\\\""), InvalidRdataText);
-    EXPECT_THROW(TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS,
+    EXPECT_THROW(TypeParam(this->lexer, 0, MasterLoader::MANY_ERRORS,
                            this->loader_cb), MasterLexer::LexerError);
     EXPECT_EQ(MasterToken::END_OF_LINE, this->lexer.getNextToken().getType());
 }
@@ -186,9 +185,8 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createMultiStringsFromText) {
     texts.push_back("Test-String\"Test-String\""); // and no space either
 
     std::stringstream ss;
-    for (std::vector<std::string >::const_iterator it = texts.begin();
-         it != texts.end(); ++it) {
-        ss << *it << "\n";
+    for (auto const& it : texts) {
+        ss << it << "\n";
     }
     this->lexer.pushSource(ss);
 
@@ -199,12 +197,11 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createMultiStringsFromText) {
 
     // Confirm we can construct the Rdata from the test text, both from
     // std::string and with lexer, and that matches the from-wire data.
-    for (std::vector<std::string >::const_iterator it = texts.begin();
-         it != texts.end(); ++it) {
-        SCOPED_TRACE(*it);
-        EXPECT_EQ(0, TypeParam(*it).compare(*rdata));
+    for (auto const& it : texts) {
+        SCOPED_TRACE(it);
+        EXPECT_EQ(0, TypeParam(it).compare(*rdata));
 
-        EXPECT_EQ(0, TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS,
+        EXPECT_EQ(0, TypeParam(this->lexer, 0, MasterLoader::MANY_ERRORS,
                                this->loader_cb).compare(*rdata));
         EXPECT_EQ(MasterToken::END_OF_LINE,
                   this->lexer.getNextToken().getType());
@@ -243,7 +240,7 @@ makeLargest(vector<uint8_t>& data) {
     data.push_back(254);
     data.insert(data.end(), 254, ch);
 
-    assert(data.size() == 65535);
+    ASSERT_TRUE(data.size() == 65535);
 }
 
 TYPED_TEST(Rdata_TXT_LIKE_Test, createFromWire) {

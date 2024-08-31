@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,8 +16,9 @@
 #include <log/log_messages.h>
 #include <log/message_exception.h>
 #include <log/message_reader.h>
-#include <util/strutil.h>
+#include <util/str.h>
 
+using namespace isc::util;
 using namespace std;
 
 namespace {
@@ -71,7 +72,7 @@ void
 MessageReader::processLine(const string& line, MessageReader::Mode mode) {
 
     // Get rid of leading and trailing spaces
-    string text = isc::util::str::trim(line);
+    string text(str::trim(line));
 
     if (text.empty()) {
         ;                           // Ignore blank lines
@@ -96,14 +97,14 @@ MessageReader::parseDirective(const std::string& text) {
 
 
     // Break into tokens
-    vector<string> tokens = isc::util::str::tokens(text);
+    vector<string> tokens(str::tokens(text));
 
     // Uppercase directive and branch on valid ones
-    isc::util::str::uppercase(tokens[0]);
-    if (tokens[0] == string("$PREFIX")) {
+    str::uppercase(tokens[0]);
+    if (tokens[0] == "$PREFIX") {
         parsePrefix(tokens);
 
-    } else if (tokens[0] == string("$NAMESPACE")) {
+    } else if (tokens[0] == "$NAMESPACE") {
         parseNamespace(tokens);
 
     } else {
@@ -227,7 +228,7 @@ MessageReader::parseMessage(const std::string& text, MessageReader::Mode mode) {
     }
 
     // Strip off the introducer and any leading space after that.
-    string message_line = isc::util::str::trim(text.substr(1));
+    string message_line = str::trim(text.substr(1));
 
     // Look for the first delimiter.
     size_t first_delim = message_line.find_first_of(delimiters);
@@ -249,7 +250,7 @@ MessageReader::parseMessage(const std::string& text, MessageReader::Mode mode) {
                         LOG_INVALID_MESSAGE_ID, ident, lineno_);
         }
     }
-    isc::util::str::uppercase(ident);
+    str::uppercase(ident);
 
     // Locate the start of the message text
     size_t first_text = message_line.find_first_not_of(delimiters, first_delim);

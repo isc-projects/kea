@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -138,7 +138,7 @@ TEST_F(SimpleParser6Test, globalDefaults6) {
     EXPECT_TRUE(num >= 5);
 
     checkIntegerValue(empty, "valid-lifetime", 7200);
-    checkIntegerValue(empty, "preferred-lifetime", 3600);
+    checkNoValue(empty, "preferred-lifetime");
     checkBoolValue(empty, "calculate-tee-times", true);
     checkDoubleValue(empty, "t1-percent", 0.5);
     checkDoubleValue(empty, "t2-percent", 0.8);
@@ -204,8 +204,8 @@ TEST_F(SimpleParser6Test, subnetDefaults6) {
     ConstElementPtr subnet = subnets->get(0);
     ASSERT_TRUE(subnet);
 
-    // we should have "id" parameter with the default value of 0 added for us.
-    checkIntegerValue(subnet, "id", 0);
+    // no "id" where added.
+    ASSERT_FALSE(subnet->get("id"));
 }
 
 // This test checks if the parameters in option-data are assigned default values
@@ -228,7 +228,7 @@ TEST_F(SimpleParser6Test, optionDataDefaults6) {
     ASSERT_TRUE(option);
 
     // we should have appropriate default value set. See
-    // SimpleParser4::OPTION4_DEFAULTS for a list of default values.
+    // SimpleParser6::OPTION6_DEFAULTS for a list of default values.
     checkStringValue(option, "space", "dhcp6");
     checkBoolValue(option, "csv-format", true);
 }
@@ -251,12 +251,11 @@ TEST_F(SimpleParser6Test, optionDefDefaults6) {
     ASSERT_TRUE(def);
 
     // we should have appropriate default value set. See
-    // SimpleParser4::OPTION4_DEFAULTS for a list of default values.
+    // SimpleParser6::OPTION6_DEFAULTS for a list of default values.
     checkStringValue(def, "record-types", "");
     checkStringValue(def, "space", "dhcp6");
     checkStringValue(def, "encapsulate", "");
     checkBoolValue(def, "array", false);
 }
 
-
-};
+}

@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,7 +9,7 @@
 #include <asiolink/io_address.h>
 #include <dhcp/pkt4o6.h>
 #include <dhcp/pkt6.h>
-#include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/dhcp4to6_ipc.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
@@ -180,9 +180,7 @@ Dhcp4to6IpcTest::createDHCPv4MsgOption() const {
     Pkt4Ptr pkt(new Pkt4(DHCPREQUEST, 1234));
     // Make a wire representation of the DHCPv4 message.
     pkt->pack();
-    OutputBuffer& output_buffer = pkt->getBuffer();
-    const uint8_t* data = static_cast<const uint8_t*>(output_buffer.getData());
-    OptionBuffer option_buffer(data, data + output_buffer.getLength());
+    const OptionBuffer& option_buffer = pkt->getBuffer().getVector();
 
     // Create the DHCPv4 Message option holding the created message.
     OptionPtr opt_msg(new Option(Option::V6, D6O_DHCPV4_MSG, option_buffer));
@@ -334,9 +332,7 @@ TEST_F(Dhcp4to6IpcTest, process) {
     infreq->setCiaddr(IOAddress("192.0.1.2"));
     // Make a wire representation of the DHCPv4 message.
     infreq->pack();
-    OutputBuffer& output_buffer = infreq->getBuffer();
-    const uint8_t* data = static_cast<const uint8_t*>(output_buffer.getData());
-    OptionBuffer option_buffer(data, data + output_buffer.getLength());
+    const OptionBuffer& option_buffer = infreq->getBuffer().getVector();
 
     // Create the DHCPv4 Message option holding the created message.
     OptionPtr opt_msg(new Option(Option::V6, D6O_DHCPV4_MSG, option_buffer));

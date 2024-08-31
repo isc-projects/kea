@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -52,6 +52,12 @@ const int CONTROL_RESULT_COMMAND_UNSUPPORTED = 2;
 ///        completed the search, but couldn't find the object it was looking for.
 const int CONTROL_RESULT_EMPTY = 3;
 
+/// @brief Status code indicating that the command was unsuccessful due to a
+/// conflict between the command arguments and the server state. For example,
+/// a lease4-add fails when the subnet identifier in the command does not
+/// match the subnet identifier in the server configuration.
+const int CONTROL_RESULT_CONFLICT = 4;
+
 /// @brief A standard control channel exception that is thrown if a function
 /// is there is a problem with one of the messages
 class CtrlChannelError : public isc::Exception {
@@ -95,14 +101,29 @@ isc::data::ConstElementPtr createAnswer(const int status_code,
                                         const std::string& status,
                                         const isc::data::ConstElementPtr& arg);
 
-/// @brief Parses a standard config/command level answer message.
+/// @brief Parses a standard config/command level answer and returns arguments
+/// or text status code.
+///
+/// If you need to get the text status, please use @ref parseAnswerText.
 ///
 /// @param status_code This value will be set to the return code contained in
 ///              the message
 /// @param msg The message to parse
-/// @return The optional argument in the message.
-isc::data::ConstElementPtr parseAnswer(int &status_code,
-                                       const isc::data::ConstElementPtr& msg);
+/// @return The optional argument in the message (or null)
+isc::data::ConstElementPtr
+parseAnswer(int &status_code, const isc::data::ConstElementPtr& msg);
+
+/// @brief Parses a standard config/command level answer and returns text status.
+///
+/// This method returns the text status. If you need to get the arguments provided,
+/// please use @ref parseAnswer.
+///
+/// @param rcode This value will be set to the return code contained in
+///              the message
+/// @param msg The message to parse
+/// @return The optional argument in the message (or null)
+isc::data::ConstElementPtr
+parseAnswerText(int &rcode, const isc::data::ConstElementPtr& msg);
 
 /// @brief Converts answer to printable text
 ///

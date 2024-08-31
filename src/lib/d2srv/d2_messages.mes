@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,29 +15,18 @@ documented in preceding log entries.
 This is an informational message issued after DHCP_DDNS has submitted DNS
 mapping additions which were received and accepted by an appropriate DNS server.
 
-% DHCP_DDNS_ALREADY_RUNNING %1 already running? %2
-This is an error message that occurs when DHCP_DDNS encounters a pre-existing
-PID file which contains the PID of a running process.  This most likely
-indicates an attempt to start a second instance of DHCP_DDNS using the
-same configuration file.  It is possible, though unlikely, that the PID file
-is a remnant left behind by a server crash or power failure and the PID
-it contains refers to a process other than DHCP_DDNS.  In such an event,
-it would be necessary to manually remove the PID file.  The first argument is
-the DHCP_DDNS process name, the second contains the PID and PID file.
-
 % DHCP_DDNS_AT_MAX_TRANSACTIONS application has %1 queued requests but has reached maximum number of %2 concurrent transactions
+Logged at debug log level 55.
 This is a debug message that indicates that the application has DHCP_DDNS
 requests in the queue but is working as many concurrent requests as allowed.
 
 % DHCP_DDNS_CLEARED_FOR_SHUTDOWN application has met shutdown criteria for shutdown type: %1
+Logged at debug log level 0.
 This is a debug message issued when the application has been instructed
 to shutdown and has met the required criteria to exit.
 
-% DHCP_DDNS_COMMAND command directive received, command: %1 - args: %2
-This is a debug message issued when the DHCP-DDNS application command method
-has been invoked.
-
 % DHCP_DDNS_CONFIGURE configuration %1 received: %2
+Logged at debug log level 40.
 This is a debug message issued when the DHCP-DDNS application configure method
 has been invoked.
 
@@ -77,7 +66,7 @@ This is most likely a configuration issue.
 
 % DHCP_DDNS_FORWARD_ADD_IO_ERROR DHCP_DDNS Request ID %1: encountered an IO error sending a forward mapping add for FQDN %2 to DNS server %3
 This is an error message issued when a communication error occurs while
-DHCP_DDNS is carrying out a forward address update.  The application will
+DHCP_DDNS is carrying out a forward address add.  The application will
 retry against the same server or others as appropriate.
 
 % DHCP_DDNS_FORWARD_ADD_REJECTED DNS Request ID %1: Server, %2, rejected a DNS update request to add the address mapping for FQDN, %3, with an RCODE: %4
@@ -89,6 +78,12 @@ in RFC 2136.
 This is an error message issued when the response received by DHCP_DDNS, to a
 update request to add a forward address mapping,  is mangled or malformed.
 The application will retry against the same server or others as appropriate.
+
+% DHCP_DDNS_FORWARD_ADD_TIMEOUT DHCP_DDNS Request ID %1: timed out waiting for a response to forward mapping add for FQDN %2 to DNS server %3
+This is an error message issued when no response is received from the DNS
+server before exceeding dns-server-timeout while DHCP_DDNS is carrying out
+a forward address add.  The application will retry against the same
+server or others as appropriate.
 
 % DHCP_DDNS_FORWARD_REMOVE_ADDRS_BAD_DNSCLIENT_STATUS DHCP_DDNS Request ID %1: received an unknown DNSClient status: %2, while removing a forward address mapping for FQDN %3 to DNS server %4
 This is an error message issued when DNSClient returns an unrecognized status
@@ -117,6 +112,12 @@ This is an error message issued when the response received by DHCP_DDNS, to a
 update request to remove a forward address mapping, is mangled or malformed.
 The application will retry against the same server or others as appropriate.
 
+% DHCP_DDNS_FORWARD_REMOVE_ADDRS_TIMEOUT DHCP_DDNS Request ID %1: timed out waiting for a response to forward mapping address removal for FQDN %2 to DNS server %3
+This is an error message issued when no response is received from the DNS
+server before exceeding dns-server-timeout while DHCP_DDNS is carrying out
+a forward mapping address removal.  The application will retry against the same
+server or others as appropriate.
+
 % DHCP_DDNS_FORWARD_REMOVE_RRS_BAD_DNSCLIENT_STATUS DHCP_DDNS Request ID %1: received an unknown DNSClient status: %2, while removing forward RRs for FQDN %3 to DNS server %4
 This is an error message issued when DNSClient returns an unrecognized status
 while DHCP_DDNS was removing forward RRs.  The request will be aborted. This is
@@ -144,6 +145,12 @@ update request to remove forward RRs mapping, is mangled or malformed.
 The application will retry against the same server or others as appropriate.
 /*sar*/
 
+% DHCP_DDNS_FORWARD_REMOVE_RRS_TIMEOUT DHCP_DDNS Request ID %1: timed out waiting for response to forward RR removal for FQDN %2 to DNS server %3
+This is an error message issued when no response is received from the DNS
+server before exceeding dns-server-timeout while DHCP_DDNS is carrying out
+a forward RR removal.  The application will retry against the same
+server or others as appropriate.
+
 % DHCP_DDNS_FORWARD_REPLACE_BAD_DNSCLIENT_STATUS DHCP_DDNS Request ID %1: received an unknown DNSClient status: %2, while replacing forward address mapping for FQDN %3 to DNS server %4
 This is an error message issued when DNSClient returns an unrecognized status
 while DHCP_DDNS was replacing a forward address mapping.  The request will be
@@ -157,7 +164,7 @@ aborted.  This is most likely a configuration issue.
 
 % DHCP_DDNS_FORWARD_REPLACE_IO_ERROR DHCP_DDNS Request ID %1: encountered an IO error sending a forward mapping replace for FQDN %2 to DNS server %3
 This is an error message issued when a communication error occurs while
-DHCP_DDNS is carrying out a forward address update.  The application will
+DHCP_DDNS is carrying out a forward mapping replace.  The application will
 retry against the same server or others as appropriate.
 
 % DHCP_DDNS_FORWARD_REPLACE_REJECTED DNS Request ID %1: Server, %2, rejected a DNS update request to replace the address mapping for FQDN, %3, with an RCODE: %4
@@ -170,15 +177,31 @@ This is an error message issued when the response received by DHCP_DDNS, to a
 update request to replace a forward address mapping,  is mangled or malformed.
 The application will retry against the same server or others as appropriate.
 
+% DHCP_DDNS_FORWARD_REPLACE_TIMEOUT DHCP_DDNS Request ID %1: timed out waiting for a response to forward mapping replace for FQDN %2 to DNS server %3
+This is an error message issued when no response is received from the DNS
+server before exceeding dns-server-timeout while DHCP_DDNS is carrying out
+a forward mapping replace.  The application will retry against the same
+server or others as appropriate.
+
 % DHCP_DDNS_FWD_REQUEST_IGNORED Request ID %1: Forward updates are disabled, the forward portion of request will be ignored: %2
+Logged at debug log level 55.
 This is a debug message issued when forward DNS updates are disabled and
 DHCP_DDNS receives an update request containing a forward DNS update. The
 forward update will not performed.
 
 % DHCP_DDNS_INVALID_RESPONSE received response to DNS Update message is malformed: %1
+Logged at debug log level 50.
 This is a debug message issued when the DHCP-DDNS application encountered an
 error while decoding a response to DNS Update message. Typically, this error
 will be encountered when a response message is malformed.
+
+% DHCP_DDNS_LISTENING_ON_ALL_INTERFACES the DHCP-DDNS server has been configured to listen on %1. This is an insecure configuration supported for testing purposes only
+This is a warning message issued when the DHCP-DDNS server is configured to
+listen at either `0.0.0.0` or `::`. It is possible for a malicious attacker to send
+bogus NameChangeRequests to it and change entries in the DNS. For this reason,
+listening on all interfaces should only be used when deploying in containers
+or for testing purposes. A future version of Kea will disable this ability by
+default.
 
 % DHCP_DDNS_NOT_ON_LOOPBACK the DHCP-DDNS server has been configured to listen on %1 which is not the local loopback.  This is an insecure configuration supported for testing purposes only
 This is a warning message issued when the DHCP-DDNS server is configured to
@@ -189,6 +212,7 @@ IPv6 loopback addresses should only be used for testing purposes. A future
 version of Kea will implement authentication to guard against such attacks.
 
 % DHCP_DDNS_NO_ELIGIBLE_JOBS although there are queued requests, there are pending transactions for each, Queue count: %1  Transaction count: %2
+Logged at debug log level 55.
 This is a debug message issued when all of the queued requests represent clients
 for which there is an update already in progress.  This may occur under
 normal operations but should be temporary situation.
@@ -212,10 +236,6 @@ no configured DDNS domains in the DHCP_DDNS configuration.  Either the DHCP_DDNS
 configuration needs to be updated or the source of the FQDN itself should be
 investigated.
 
-% DHCP_DDNS_PROCESS_INIT application init invoked
-This is a debug message issued when the DHCP-DDNS application enters
-its initialization method.
-
 % DHCP_DDNS_QUEUE_MGR_QUEUE_FULL application request queue has reached maximum number of entries %1
 This an error message indicating that DHCP-DDNS is receiving DNS update
 requests faster than they can be processed.  This may mean the maximum queue
@@ -224,11 +244,13 @@ requests too quickly, or perhaps upstream DNS servers are experiencing
 load issues.
 
 % DHCP_DDNS_QUEUE_MGR_QUEUE_RECEIVE Request ID %1: received and queued a request.
+Logged at debug log level 55.
 This is an informational message indicating that the NameChangeRequest listener used
 by DHCP-DDNS to receive a request has received a request and queued it for further
 processing.
 
 % DHCP_DDNS_QUEUE_MGR_RECONFIGURING application is reconfiguring the queue manager
+Logged at debug log level 40.
 This is an informational message indicating that DHCP_DDNS is reconfiguring the queue manager as part of normal startup or in response to a new configuration.
 
 % DHCP_DDNS_QUEUE_MGR_RECOVERING application is attempting to recover from a queue manager IO error
@@ -256,6 +278,7 @@ accepting new requests, has processed enough entries from the receive queue to
 resume accepting requests.
 
 % DHCP_DDNS_QUEUE_MGR_STARTED application's queue manager has begun listening for requests.
+Logged at debug log level 0.
 This is a debug message indicating that DHCP_DDNS's Queue Manager has
 successfully started and is now listening for NameChangeRequests.
 
@@ -267,12 +290,14 @@ such as an IP address or port, that are unavailable.  DHCP_DDNS will attempt to
 restart the queue manager if given a new configuration.
 
 % DHCP_DDNS_QUEUE_MGR_STOPPED application's queue manager has stopped listening for requests.
+Logged at debug log level 40.
 This is a debug message indicating that DHCP_DDNS's Queue Manager has
 stopped listening for NameChangeRequests.  This may be because of normal event
 such as reconfiguration or as a result of an error.  There should be log
 messages preceding this one to indicate why it has stopped.
 
 % DHCP_DDNS_QUEUE_MGR_STOPPING application is stopping the queue manager for %1
+Logged at debug log level 0.
 This is an informational message indicating that DHCP_DDNS is stopping the
 queue manager either to reconfigure it or as part of application shutdown.
 
@@ -305,6 +330,7 @@ This is an informational message issued after DHCP_DDNS has submitted DNS
 mapping removals which were received and accepted by an appropriate DNS server.
 
 % DHCP_DDNS_REQUEST_DROPPED Request ID %1: Request contains no enabled update requests and will be dropped: %2
+Logged at debug log level 55.
 This is a debug message issued when DHCP_DDNS receives a request which does not
 contain updates in a direction that is enabled.  In other words, if only forward
 updates are enabled and request is received that asks only for reverse updates
@@ -323,7 +349,7 @@ aborted.  This is most likely a configuration issue.
 
 % DHCP_DDNS_REVERSE_REMOVE_IO_ERROR DHCP_DDNS Request ID %1: encountered an IO error sending a reverse mapping remove for FQDN %2 to DNS server %3
 This is an error message issued when a communication error occurs while
-DHCP_DDNS is carrying out a reverse address update.  The application will
+DHCP_DDNS is carrying out a reverse mapping remove.  The application will
 retry against the same server or others as appropriate.
 
 % DHCP_DDNS_REVERSE_REMOVE_REJECTED DNS Request ID %1: Server, %2, rejected a DNS update request to remove the reverse mapping for FQDN, %3, with an RCODE: %4
@@ -335,6 +361,12 @@ in RFC 2136.
 This is an error message issued when the response received by DHCP_DDNS, to a
 update request to remove a reverse address,  is mangled or malformed.
 The application will retry against the same server or others as appropriate.
+
+% DHCP_DDNS_REVERSE_REMOVE_TIMEOUT DHCP_DDNS Request ID %1: timed out waiting for a response to reverse mapping remove for FQDN %2 to DNS server %3
+This is an error message issued when no response is received from the DNS
+server before exceeding dns-server-timeout while DHCP_DDNS is carrying out
+a reverse mapping remove. The application will retry against the same
+server or others as appropriate.
 
 % DHCP_DDNS_REVERSE_REPLACE_BAD_DNSCLIENT_STATUS DHCP_DDNS Request ID %1: received an unknown DNSClient status: %2, while replacing reverse address mapping for FQDN %3 to DNS server %4
 This is an error message issued when DNSClient returns an unrecognized status
@@ -349,7 +381,7 @@ aborted.  This is most likely a configuration issue.
 
 % DHCP_DDNS_REVERSE_REPLACE_IO_ERROR DHCP_DDNS Request ID %1: encountered an IO error sending a reverse mapping replacement for FQDN %2 to DNS server %3
 This is an error message issued when a communication error occurs while
-DHCP_DDNS is carrying out a reverse address update.  The application will
+DHCP_DDNS is carrying out a reverse mapping replacement.  The application will
 retry against the same server or others as appropriate.
 
 % DHCP_DDNS_REVERSE_REPLACE_REJECTED DNS Request ID %1: Server, %2, rejected a DNS update request to replace the reverse mapping for FQDN, %3, with an RCODE: %4
@@ -362,16 +394,25 @@ This is an error message issued when the response received by DHCP_DDNS, to a
 update request to replace a reverse address,  is mangled or malformed.
 The application will retry against the same server or others as appropriate.
 
+% DHCP_DDNS_REVERSE_REPLACE_TIMEOUT DHCP_DDNS Request ID %1: timed out waiting for a response to reverse mapping replacement for FQDN %2 to DNS server %3
+This is an error message issued when no response is received from the DNS
+server before exceeding dns-server-timeout while DHCP_DDNS is carrying out
+a reverse mapping replacement.  The application will retry against the same
+server or others as appropriate.
+
 % DHCP_DDNS_REV_REQUEST_IGNORED Request ID %1: Reverse updates are disabled, the reverse portion of request will be ignored: %2
+Logged at debug log level 55.
 This is a debug message issued when reverse DNS updates are disabled and
 DHCP_DDNS receives an update request containing a reverse DNS update.  The
 reverse update will not performed.
 
 % DHCP_DDNS_RUN_EXIT application is exiting the event loop
+Logged at debug log level 0.
 This is a debug message issued when the DHCP-DDNS server exits its
 event lo
 
 % DHCP_DDNS_SHUTDOWN_COMMAND application received shutdown command with args: %1
+Logged at debug log level 0.
 This is a debug message issued when the application has been instructed
 to shut down by the controller.
 
@@ -381,6 +422,7 @@ processed all configuration information and is ready to begin processing.
 The version is also printed.
 
 % DHCP_DDNS_STARTING_TRANSACTION Request ID %1:
+Logged at debug log level 50.
 This is a debug message issued when DHCP-DDNS has begun a transaction for
 a given request.
 
@@ -397,9 +439,11 @@ likely a programmatic error, rather than a communications issue. Some or all
 of the DNS updates requested as part of this request did not succeed.
 
 % DHCP_DDNS_UPDATE_REQUEST_SENT Request ID %1: %2 to server: %3
+Logged at debug log level 50.
 This is a debug message issued when DHCP_DDNS sends a DNS request to a DNS
 server.
 
 % DHCP_DDNS_UPDATE_RESPONSE_RECEIVED Request ID %1: to server: %2 status: %3
+Logged at debug log level 50.
 This is a debug message issued when DHCP_DDNS receives sends a DNS update
 response from a DNS server.

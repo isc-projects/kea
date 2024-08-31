@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -103,22 +103,22 @@ CSVLeaseFile6Test::writeSampleFile() const {
     io_.writeFile("address,duid,valid_lifetime,expire,subnet_id,"
                   "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
                   "fqdn_rev,hostname,hwaddr,state,user_context,"
-                  "hwtype,hwaddr_source\n"
+                  "hwtype,hwaddr_source,pool_id\n"
                   "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
                   "200,200,8,100,0,7,0,1,1,host.example.com,,1,,"
-                  "1,0\n"
+                  "1,0,0\n"
                   "2001:db8:1::1,,200,200,8,100,0,7,0,1,1,host.example.com,,1,,"
-                  "1,0\n"
+                  "1,0,0\n"
                   "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,300,300,6,150,"
                   "0,8,0,0,0,,,1,,"
-                  "1,0\n"
+                  "1,0,0\n"
                   "3000:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,0,200,8,0,2,"
                   "16,64,0,0,,,1,{ \"foobar\": true },,"
-                  "1,0\n"
-                  "2001:db8:1::2,00,200,200,8,100,0,7,0,1,1,host.example.com,,0,,"
-                  "1,0\n"
-                  "2001:db8:1::3,00,200,200,8,100,0,7,0,1,1,host.example.com,,1,,"
-                  "1,0\n");
+                  "1,0,0\n"
+                  "2001:db8:1::2,00:00:00,200,200,8,100,0,7,0,1,1,host.example.com,,0,,"
+                  "1,0,0\n"
+                  "2001:db8:1::3,00:00:00,200,200,8,100,0,7,0,1,1,host.example.com,,1,,"
+                  "1,0,0\n");
 }
 
 // This test checks the capability to read and parse leases from the file.
@@ -154,7 +154,7 @@ TEST_F(CSVLeaseFile6Test, parse) {
     EXPECT_EQ(100, lease->preferred_lft_);
     EXPECT_EQ(Lease::TYPE_NA, lease->type_);
     EXPECT_EQ(7, lease->iaid_);
-    EXPECT_EQ(0, lease->prefixlen_);
+    EXPECT_EQ(128, lease->prefixlen_);
     EXPECT_TRUE(lease->fqdn_fwd_);
     EXPECT_TRUE(lease->fqdn_rev_);
     EXPECT_EQ("host.example.com", lease->hostname_);
@@ -187,7 +187,7 @@ TEST_F(CSVLeaseFile6Test, parse) {
     EXPECT_EQ(150, lease->preferred_lft_);
     EXPECT_EQ(Lease::TYPE_NA, lease->type_);
     EXPECT_EQ(8, lease->iaid_);
-    EXPECT_EQ(0, lease->prefixlen_);
+    EXPECT_EQ(128, lease->prefixlen_);
     EXPECT_FALSE(lease->fqdn_fwd_);
     EXPECT_FALSE(lease->fqdn_rev_);
     EXPECT_TRUE(lease->hostname_.empty());
@@ -221,7 +221,6 @@ TEST_F(CSVLeaseFile6Test, parse) {
     EXPECT_EQ("{ \"foobar\": true }", lease->getContext()->str());
     }
 
-
     // Fifth lease is invalid - DUID is empty, state is not DECLINED
     {
     SCOPED_TRACE("Fifth lease invalid");
@@ -239,7 +238,7 @@ TEST_F(CSVLeaseFile6Test, parse) {
     // Verify that the lease is correct.
     EXPECT_EQ("2001:db8:1::3", lease->addr_.toText());
     ASSERT_TRUE(lease->duid_);
-    EXPECT_EQ("00", lease->duid_->toText());
+    EXPECT_EQ("00:00:00", lease->duid_->toText());
     EXPECT_EQ(Lease::STATE_DECLINED, lease->state_);
     }
 
@@ -325,17 +324,16 @@ TEST_F(CSVLeaseFile6Test, recreate) {
     checkStats(lf, 0, 0, 0, 5, 4, 1);
     }
 
-
     EXPECT_EQ("address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
               "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,"
-              "state,user_context,hwtype,hwaddr_source\n"
+              "state,user_context,hwtype,hwaddr_source,pool_id\n"
               "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-              "200,200,8,100,0,7,128,1,1,host.example.com,,0,,,\n"
+              "200,200,8,100,0,7,128,1,1,host.example.com,,0,,,,0\n"
               "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05"
-              ",300,300,6,150,0,8,128,0,0,,,0,,,\n"
+              ",300,300,6,150,0,8,128,0,0,,,0,,,,0\n"
               "3000:1:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-              "300,300,10,150,2,7,64,0,0,,,0,{ \"foobar\": true },,\n"
-              "2001:db8:2::10,00,300,300,6,150,0,8,128,0,0,,,1,,,\n",
+              "300,300,10,150,2,7,64,0,0,,,0,{ \"foobar\": true },,,0\n"
+              "2001:db8:2::10,00:00:00,300,300,6,150,0,8,128,0,0,,,1,,,,0\n",
               io_.readFile());
 }
 
@@ -384,7 +382,7 @@ TEST_F(CSVLeaseFile6Test, mixedSchemaLoad) {
     EXPECT_EQ(100, lease->preferred_lft_);
     EXPECT_EQ(Lease::TYPE_NA, lease->type_);
     EXPECT_EQ(7, lease->iaid_);
-    EXPECT_EQ(0, lease->prefixlen_);
+    EXPECT_EQ(128, lease->prefixlen_);
     EXPECT_TRUE(lease->fqdn_fwd_);
     EXPECT_TRUE(lease->fqdn_rev_);
     EXPECT_EQ("one.example.com", lease->hostname_);
@@ -410,7 +408,7 @@ TEST_F(CSVLeaseFile6Test, mixedSchemaLoad) {
     EXPECT_EQ(100, lease->preferred_lft_);
     EXPECT_EQ(Lease::TYPE_NA, lease->type_);
     EXPECT_EQ(7, lease->iaid_);
-    EXPECT_EQ(0, lease->prefixlen_);
+    EXPECT_EQ(128, lease->prefixlen_);
     EXPECT_TRUE(lease->fqdn_fwd_);
     EXPECT_TRUE(lease->fqdn_rev_);
     EXPECT_EQ("two.example.com", lease->hostname_);
@@ -436,7 +434,7 @@ TEST_F(CSVLeaseFile6Test, mixedSchemaLoad) {
     EXPECT_EQ(100, lease->preferred_lft_);
     EXPECT_EQ(Lease::TYPE_NA, lease->type_);
     EXPECT_EQ(7, lease->iaid_);
-    EXPECT_EQ(0, lease->prefixlen_);
+    EXPECT_EQ(128, lease->prefixlen_);
     EXPECT_TRUE(lease->fqdn_fwd_);
     EXPECT_TRUE(lease->fqdn_rev_);
     EXPECT_EQ("three.example.com", lease->hostname_);
@@ -461,7 +459,7 @@ TEST_F(CSVLeaseFile6Test, mixedSchemaLoad) {
     EXPECT_EQ(100, lease->preferred_lft_);
     EXPECT_EQ(Lease::TYPE_NA, lease->type_);
     EXPECT_EQ(7, lease->iaid_);
-    EXPECT_EQ(0, lease->prefixlen_);
+    EXPECT_EQ(128, lease->prefixlen_);
     EXPECT_TRUE(lease->fqdn_fwd_);
     EXPECT_TRUE(lease->fqdn_rev_);
     EXPECT_EQ("three.example.com", lease->hostname_);
@@ -502,15 +500,15 @@ TEST_F(CSVLeaseFile6Test, invalidHeaderColumn) {
 TEST_F(CSVLeaseFile6Test, downGrade) {
     // Create a mixed schema file
     io_.writeFile(
-             // schema 4.0 header
+              // schema 5.0 header
               "address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,"
               "lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,"
-              "hwaddr,state,user_context,hwtype,hwaddr_source,FUTURE_COLUMN\n"
+              "hwaddr,state,user_context,hwtype,hwaddr_source,pool_id,FUTURE_COLUMN\n"
 
-              // schema 4.0 record
+              // schema 5.0 record
               "2001:db8:1::3,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:03,"
               "200,200,8,100,0,7,0,1,1,three.example.com,0a:0b:0c:0d:0e,1,"
-              "{ \"foobar\": true },1,0,FUTURE_VALUE\n");
+              "{ \"foobar\": true },1,0,0,FUTURE_VALUE\n");
 
     // Open should succeed in the event someone is downgrading.
     CSVLeaseFile6 lf(filename_);
@@ -518,7 +516,6 @@ TEST_F(CSVLeaseFile6Test, downGrade) {
     EXPECT_TRUE(lf.needsConversion());
     EXPECT_EQ(util::VersionedCSVFile::NEEDS_DOWNGRADE,
               lf.getInputSchemaState());
-
 
     Lease6Ptr lease;
     {
@@ -536,7 +533,7 @@ TEST_F(CSVLeaseFile6Test, downGrade) {
     EXPECT_EQ(100, lease->preferred_lft_);
     EXPECT_EQ(Lease::TYPE_NA, lease->type_);
     EXPECT_EQ(7, lease->iaid_);
-    EXPECT_EQ(0, lease->prefixlen_);
+    EXPECT_EQ(128, lease->prefixlen_);
     EXPECT_TRUE(lease->fqdn_fwd_);
     EXPECT_TRUE(lease->fqdn_rev_);
     EXPECT_EQ("three.example.com", lease->hostname_);
@@ -557,13 +554,13 @@ TEST_F(CSVLeaseFile6Test, declinedLeaseTest) {
     io_.writeFile("address,duid,valid_lifetime,expire,subnet_id,"
                   "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
                   "fqdn_rev,hostname,hwaddr,state,user_context,"
-                  "hwtype,hwaddr_source\n"
-                  "2001:db8:1::1,00,"
-                  "200,200,8,100,0,7,0,1,1,host.example.com,,0,,,\n"
+                  "hwtype,hwaddr_source,pool_id\n"
+                  "2001:db8:1::1,00:00:00,"
+                  "200,200,8,100,0,7,0,1,1,host.example.com,,0,,,,0\n"
                   "2001:db8:1::1,,"
-                  "200,200,8,100,0,7,0,1,1,host.example.com,,0,,,\n"
-                  "2001:db8:1::1,00,"
-                  "200,200,8,100,0,7,0,1,1,host.example.com,,1,,,\n");
+                  "200,200,8,100,0,7,0,1,1,host.example.com,,0,,,,0\n"
+                  "2001:db8:1::1,00:00:00,"
+                  "200,200,8,100,0,7,0,1,1,host.example.com,,1,,,,0\n");
 
     CSVLeaseFile6 lf(filename_);
     ASSERT_NO_THROW(lf.open());
@@ -585,7 +582,7 @@ TEST_F(CSVLeaseFile6Test, declinedLeaseTest) {
     EXPECT_FALSE(lf.next(lease));
     EXPECT_FALSE(lease);
     EXPECT_EQ(lf.getReadErrs(), 2);
-    EXPECT_EQ(lf.getReadMsg(), "Empty DUIDs are not allowed");
+    EXPECT_EQ(lf.getReadMsg(), "identifier is too short (0), at least 3 is required");
     }
 
     {
@@ -596,7 +593,6 @@ TEST_F(CSVLeaseFile6Test, declinedLeaseTest) {
     EXPECT_EQ(lf.getReadMsg(), "validation not started");
     }
 }
-
 
 // Verifies that it is possible to output a lease with very high valid
 // lifetime (infinite in RFC2131 terms) and current time, and then read
@@ -712,13 +708,10 @@ TEST_F(CSVLeaseFile6Test, embeddedEscapes) {
     EXPECT_EQ(context_str, lease->getContext()->str());
 }
 
-
-
-
 /// @todo Currently we don't check invalid lease attributes, such as invalid
 /// lease type, invalid preferred lifetime vs valid lifetime etc. The Lease6
 /// should be extended with the function that validates lease attributes. Once
 /// this is implemented we should provide more tests for malformed leases
-/// in the CSV file. See http://oldkea.isc.org/ticket/2405.
+/// in the CSV file.
 
 } // end of anonymous namespace

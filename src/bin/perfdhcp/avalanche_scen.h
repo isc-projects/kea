@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2019,2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 
 #include <perfdhcp/abstract_scen.h>
 
+#include <unordered_map>
 
 namespace isc {
 namespace perfdhcp {

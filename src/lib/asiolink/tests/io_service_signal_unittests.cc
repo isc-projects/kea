@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -50,18 +50,21 @@ public:
 
     /// @brief Constructor.
     IOSignalTest() :
-        io_service_(new asiolink::IOService()), test_timer_(*io_service_),
-        test_time_ms_(0), io_signal_set_(),
-        processed_signals_(), stop_at_count_(0), handler_throw_error_(false) {
+        io_service_(new asiolink::IOService()), test_timer_(io_service_),
+        test_time_ms_(0), io_signal_set_(), processed_signals_(), stop_at_count_(0),
+        handler_throw_error_(false) {
 
-        io_signal_set_.reset(new IOSignalSet(
-                                     io_service_,
-                                     std::bind(&IOSignalTest::processSignal,
-                                               this, ph::_1)));
+        io_signal_set_.reset(new IOSignalSet(io_service_,
+                                             std::bind(&IOSignalTest::processSignal,
+                                                       this, ph::_1)));
     }
 
     /// @brief Destructor.
-    ~IOSignalTest() {}
+    ~IOSignalTest() {
+        io_signal_set_.reset();
+        // Make sure the cancel handler for the IOSignalSet is called.
+        io_service_->poll();
+    }
 
     /// @brief Method used as the IOSignalSet handler.
     ///
@@ -115,14 +118,14 @@ TEST_F(IOSignalTest, singleSignalTest) {
     ASSERT_NO_THROW(io_signal_set_->add(SIGINT));
 
     // Use TimedSignal to generate SIGINT 100 ms after we start IOService::run.
-    TimedSignal sig_int(*io_service_, SIGINT, 100);
+    TimedSignal sig_int(io_service_, SIGINT, 100);
 
     // The first handler executed is the IOSignal's internal timer expire
     // callback.
-    io_service_->run_one();
+    io_service_->runOne();
 
     // The next handler executed is IOSignal's handler.
-    io_service_->run_one();
+    io_service_->runOne();
 
     // Polling once to be sure.
     io_service_->poll();
@@ -140,14 +143,14 @@ TEST_F(IOSignalTest, singleSignalTest) {
     ASSERT_NO_THROW(io_signal_set_->remove(SIGINT));
 
     // Use TimedSignal to generate SIGINT 100 ms after we start IOService::run.
-    TimedSignal sig_int_too_late(*io_service_, SIGINT, 100);
+    TimedSignal sig_int_too_late(io_service_, SIGINT, 100);
 
     // The first handler executed is the IOSignal's internal timer expire
     // callback.
-    io_service_->run_one();
+    io_service_->runOne();
 
     // The next handler executed is IOSignal's handler.
-    io_service_->run_one();
+    io_service_->runOne();
 
     // Polling once to be sure.
     io_service_->poll();
@@ -171,7 +174,7 @@ TEST_F(IOSignalTest, hammer) {
 
     // User a repeating TimedSignal so we should generate a signal every 1 ms
     // until we hit our stop count.
-    TimedSignal sig_int(*io_service_, SIGINT, 1,
+    TimedSignal sig_int(io_service_, SIGINT, 1,
                         asiolink::IntervalTimer::REPEATING);
 
     // Start processing IO.  This should continue until we stop either by
@@ -200,7 +203,7 @@ TEST_F(IOSignalTest, handlerThrow) {
     stop_at_count_ = 1;
 
     // Use TimedSignal to generate SIGINT after we start IOService::run.
-    TimedSignal sig_int(*io_service_, SIGINT, 100,
+    TimedSignal sig_int(io_service_, SIGINT, 100,
                         asiolink::IntervalTimer::REPEATING);
 
     // Set the test flag to cause the handler to throw an exception.
@@ -226,16 +229,20 @@ TEST_F(IOSignalTest, mixedSignals) {
     ASSERT_NO_THROW(io_signal_set_->add(SIGUSR1));
     ASSERT_NO_THROW(io_signal_set_->add(SIGUSR2));
 
+    // Stop the IO run once we have received eight signals.
     stop_at_count_ = 8;
 
-    // User a repeating TimedSignal so we should generate a signal every 3, 5
-    // and 7 ms until we hit our stop count.
-    TimedSignal sig_1(*io_service_, SIGINT, 3,
-                      asiolink::IntervalTimer::REPEATING);
-    TimedSignal sig_2(*io_service_, SIGUSR1, 5,
-                      asiolink::IntervalTimer::REPEATING);
-    TimedSignal sig_3(*io_service_, SIGUSR2, 7,
-                      asiolink::IntervalTimer::REPEATING);
+    // Since signal order arrival cannot be guaranteed, we'll use
+    // explicit one shot signals so we can guarantee how many
+    // of each signal we should get.
+    TimedSignal sig1(io_service_, SIGINT, 2);
+    TimedSignal sig2(io_service_, SIGUSR1, 2);
+    TimedSignal sig3(io_service_, SIGINT, 2);
+    TimedSignal sig4(io_service_, SIGUSR2, 2);
+    TimedSignal sig5(io_service_, SIGINT, 2);
+    TimedSignal sig6(io_service_, SIGUSR1, 2);
+    TimedSignal sig7(io_service_, SIGINT, 2);
+    TimedSignal sig8(io_service_, SIGUSR2, 2);
 
     // Start processing IO.  This should continue until we stop either by
     // hitting the stop count or if things go wrong, max test time.

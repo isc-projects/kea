@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -43,7 +43,7 @@ CfgMgr::setD2ClientConfig(D2ClientConfigPtr& new_config) {
     // Note that D2ClientMgr::setD2Config() actually attempts to apply the
     // configuration by stopping its sender and opening a new one and so
     // forth per the new configuration.
-    d2_client_mgr_.setD2ClientConfig(new_config);
+    d2_client_mgr_->setD2ClientConfig(new_config);
 
     // Manager will throw if the set fails, if it succeeds
     // we'll update our SrvConfig, configuration_, with the D2ClientConfig
@@ -54,17 +54,17 @@ CfgMgr::setD2ClientConfig(D2ClientConfigPtr& new_config) {
 
 bool
 CfgMgr::ddnsEnabled() {
-    return (d2_client_mgr_.ddnsEnabled());
+    return (d2_client_mgr_->ddnsEnabled());
 }
 
 const D2ClientConfigPtr&
 CfgMgr::getD2ClientConfig() const {
-    return (d2_client_mgr_.getD2ClientConfig());
+    return (d2_client_mgr_->getD2ClientConfig());
 }
 
 D2ClientMgr&
 CfgMgr::getD2ClientMgr() {
-    return (d2_client_mgr_);
+    return (*d2_client_mgr_);
 }
 
 void
@@ -197,6 +197,7 @@ CfgMgr::mergeIntoCurrentCfg(const uint32_t seq) {
         // First we need to remove statistics.
         getCurrentCfg()->removeStatistics();
         mergeIntoCfg(getCurrentCfg(), seq);
+        LibDHCP::setRuntimeOptionDefs(getCurrentCfg()->getCfgOptionDef()->getContainer());
 
     } catch (...) {
         // Make sure the statistics is updated even if the merge failed.
@@ -220,7 +221,7 @@ CfgMgr::mergeIntoCfg(const SrvConfigPtr& target_config, const uint32_t seq) {
 }
 
 CfgMgr::CfgMgr()
-    : datadir_(DHCP_DATA_DIR, true), d2_client_mgr_(), family_(AF_INET) {
+    : datadir_(DHCP_DATA_DIR, true), d2_client_mgr_(new D2ClientMgr()), family_(AF_INET) {
     // DHCP_DATA_DIR must be set set with -DDHCP_DATA_DIR="..." in Makefile.am
     // Note: the definition of DHCP_DATA_DIR needs to include quotation marks
     // See AM_CPPFLAGS definition in Makefile.am

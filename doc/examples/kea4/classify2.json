@@ -2,11 +2,13 @@
 // The purpose of this example is to showcase how clients can be classified
 // with advanced features.
 
-{ "Dhcp4": {
+{ "Dhcp4":
 
-// Kea is told to listen on ethX interface only.
+{
+
+// Kea is told to listen on eth0 interface only.
   "interfaces-config": {
-      "interfaces": [ "ethX" ]
+      "interfaces": [ "eth0" ]
   },
 
 // Let's use the simplest backend: memfile and use some reasonable values
@@ -87,9 +89,10 @@
     {
 // This one is for VoIP devices only.
         "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
+        "id": 1,
         "subnet": "192.0.2.0/24",
         "client-class": "VoIP",
-        "interface": "ethX"
+        "interface": "eth0"
     },
 // This one doesn't have any client-class specified, so everyone
 // is allowed in. The normal subnet selection rules still apply,
@@ -98,13 +101,14 @@
 // be assigned to this class.
     {
         "pools": [ { "pool":  "192.0.3.1 - 192.0.3.200" } ],
+        "id": 2,
         "subnet": "192.0.3.0/24",
         "reservations": [
         {
             "hw-address": "1a:1b:1c:1d:1e:1f",
             "client-classes": [ "VoIP" ]
         } ],
-        "interface": "ethX",
+        "interface": "eth0",
         "require-client-classes": [ "second_subnet" ]
     },
 
@@ -124,16 +128,17 @@
            {
                "pool":  "192.0.5.1 - 192.0.5.200"
            } ],
+           "id": 3,
            "subnet": "192.0.4.0/23",
-           "interface": "ethY"
+           "interface": "eth1"
         },
 // This subnet is divided in two pools for unknown and known
 // (i.e. which have a reservation) clients. The built-in KNOWN and
 // UNKNOWN classes are set or not at host reservation lookup (KNOWN if
 // this returns something, UNKNOWN if this finds nothing) and client
-//classes depending on it are evaluated.
+// classes depending on it are evaluated.
 // This happens after subnet selection and before address allocation
-//from pools.
+// from pools.
         {
            "pools": [
                 {
@@ -145,6 +150,7 @@
                    "client-class": "KNOWN"
                 }
             ],
+            "id": 4,
             "subnet": "192.0.8.0/23",
             "reservations": [
                 {  "hw-address": "00:00:00:11:22:33", "hostname": "h1" },
@@ -161,7 +167,7 @@
     "loggers": [
         {
             "name": "kea-dhcp4",
-            "output_options": [
+            "output-options": [
                 {
                     "output": "stdout"
                 }

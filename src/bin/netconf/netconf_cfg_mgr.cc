@@ -1,21 +1,28 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
+#include <cc/command_interpreter.h>
+#include <cc/simple_parser.h>
+#include <exceptions/exceptions.h>
 #include <netconf/netconf_cfg_mgr.h>
 #include <netconf/netconf_log.h>
 #include <netconf/simple_parser.h>
-#include <cc/simple_parser.h>
-#include <cc/command_interpreter.h>
-#include <exceptions/exceptions.h>
+
+#include <map>
+#include <sstream>
 
 using namespace isc::config;
 using namespace isc::dhcp;
 using namespace isc::process;
 using namespace isc::data;
+using namespace isc::hooks;
+
+using namespace std;
 
 namespace isc {
 namespace netconf {
@@ -37,11 +44,10 @@ NetconfConfig::extractConfiguredGlobals(ConstElementPtr config) {
                   "extractConfiguredGlobals must be given a map element");
     }
 
-    const std::map<std::string, ConstElementPtr>& values = config->mapValue();
-    for (auto value = values.begin(); value != values.end(); ++value) {
-        if (value->second->getType() != Element::list &&
-            value->second->getType() != Element::map) {
-            addConfiguredGlobal(value->first, value->second);
+    for (auto const& value : config->mapValue()) {
+        if (value.second->getType() != Element::list &&
+            value.second->getType() != Element::map) {
+            addConfiguredGlobal(value.first, value.second);
         }
     }
 }
@@ -50,16 +56,16 @@ NetconfCfgMgr::NetconfCfgMgr()
     : DCfgMgrBase(ConfigPtr(new NetconfConfig())) {
 }
 
-std::string
+string
 NetconfCfgMgr::getConfigSummary(const uint32_t /*selection*/) {
 
     NetconfConfigPtr ctx = getNetconfConfig();
 
     // No globals to print.
-    std::ostringstream s;
+    ostringstream s;
 
     // Then print managed servers.
-    for (auto serv : *ctx->getCfgServersMap()) {
+    for (auto const& serv : *ctx->getCfgServersMap()) {
         if (s.tellp() != 0) {
             s << " ";
         }
@@ -71,10 +77,10 @@ NetconfCfgMgr::getConfigSummary(const uint32_t /*selection*/) {
     }
 
     // Finally, print the hook libraries names
-    const isc::hooks::HookLibsCollection libs = ctx->getHooksConfig().get();
+    const HookLibsCollection libs = ctx->getHooksConfig().get();
     s << ", " << libs.size() << " lib(s):";
-    for (auto lib = libs.begin(); lib != libs.end(); ++lib) {
-        s << lib->first << " ";
+    for (HookLibInfo const& lib : libs) {
+        s << lib.first << " ";
     }
 
     return (s.str());
@@ -99,13 +105,13 @@ NetconfCfgMgr::parse(isc::data::ConstElementPtr config_set,
     ctx->extractConfiguredGlobals(config_set);
 
     // Set the defaults and derive parameters.
-    ElementPtr cfg = boost::const_pointer_cast<Element>(config_set);
+    ElementPtr cfg = copy(config_set, 0);
     NetconfSimpleParser::setAllDefaults(cfg);
     NetconfSimpleParser::deriveParameters(cfg);
 
     // And parse the configuration.
     ConstElementPtr answer;
-    std::string excuse;
+    string excuse;
     try {
         // Do the actual parsing
         NetconfSimpleParser parser;
@@ -129,11 +135,9 @@ NetconfCfgMgr::parse(isc::data::ConstElementPtr config_set,
     }
 
     if (check_only) {
-        answer = createAnswer(CONTROL_RESULT_SUCCESS,
-                              "Configuration check successful");
+        answer = createAnswer(CONTROL_RESULT_SUCCESS, "Configuration check successful");
     } else {
-        answer = createAnswer(CONTROL_RESULT_SUCCESS,
-                              "Configuration applied successfully.");
+        answer = createAnswer(CONTROL_RESULT_SUCCESS, "Configuration applied successfully.");
     }
 
     return (answer);
@@ -150,8 +154,8 @@ NetconfConfig::toElement() const {
     netconf->set("hooks-libraries", hooks_config_.toElement());
     // Set managed-servers
     ElementPtr servers = Element::createMap();
-    for (auto serv : *servers_map_) {
-        ConstElementPtr server = serv.second->toElement();
+    for (auto const& serv : *servers_map_) {
+        ElementPtr server = serv.second->toElement();
         servers->set(serv.first, server);
     }
     netconf->set("managed-servers", servers);
@@ -161,13 +165,13 @@ NetconfConfig::toElement() const {
     return (result);
 }
 
-std::list<std::list<std::string>>
+list<list<string>>
 NetconfCfgMgr::jsonPathsToRedact() const {
-    static std::list<std::list<std::string>> const list({
+    static list<list<string>> const list({
         {"hooks-libraries", "[]", "parameters", "*"},
     });
     return list;
 }
 
-} // namespace isc::netconf
-} // namespace isc
+}  // namespace netconf
+}  // namespace isc

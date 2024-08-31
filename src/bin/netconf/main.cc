@@ -1,17 +1,21 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <netconf/netconf_controller.h>
+
 #include <exceptions/exceptions.h>
+#include <netconf/netconf_controller.h>
+
 #include <cstdlib>
 #include <iostream>
 
 using namespace isc::netconf;
 using namespace isc::process;
+
+using namespace std;
 
 int main(int argc, char* argv[]) {
     int ret = EXIT_SUCCESS;
@@ -25,21 +29,21 @@ int main(int argc, char* argv[]) {
         // 'false' value disables test mode.
         controller->launch(argc, argv, false);
     } catch (const VersionMessage& ex) {
-        std::string msg(ex.what());
+        string msg(ex.what());
         if (!msg.empty()) {
-            std::cout << msg << std::endl;
+            cout << msg << endl;
         }
     } catch (const InvalidUsage& ex) {
-        std::string msg(ex.what());
+        string msg(ex.what());
         if (!msg.empty()) {
-            std::cerr << msg << std::endl;
+            cerr << msg << endl;
         }
         ret = EXIT_FAILURE;
-    } catch (const std::exception& ex) {
-        std::cerr << "Service failed: " << ex.what() << std::endl;
+    } catch (exception const& ex) {
+        cerr << "Service failed: " << ex.what() << endl;
         ret = EXIT_FAILURE;
     } catch (...) {
-        std::cerr << "Service failed" << std::endl;
+        cerr << "Service failed" << endl;
         ret = EXIT_FAILURE;
     }
 

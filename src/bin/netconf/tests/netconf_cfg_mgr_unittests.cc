@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,18 +6,16 @@
 
 #include <config.h>
 
+#include <cc/command_interpreter.h>
+#include <exceptions/exceptions.h>
 #include <netconf/netconf_cfg_mgr.h>
 #include <netconf/parser_context.h>
-#include <exceptions/exceptions.h>
-#include <cc/command_interpreter.h>
-#include <process/testutils/d_test_stubs.h>
+#include <netconf/tests/test_libraries.h>
 #include <process/d_cfg_mgr.h>
-#include <yang/yang_models.h>
+#include <process/testutils/d_test_stubs.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/test_to_element.h>
-#include <netconf/tests/test_libraries.h>
-
-#include <boost/scoped_ptr.hpp>
+#include <yang/yang_models.h>
 
 #include <gtest/gtest.h>
 
@@ -31,17 +29,17 @@ using namespace isc::http;
 using namespace isc::process;
 using namespace isc::yang;
 
-namespace  {
+namespace {
 
 /// @brief Almost regular netconf CfgMgr with internal parse method exposed.
 class NakedNetconfCfgMgr : public NetconfCfgMgr {
 public:
     using NetconfCfgMgr::parse;
-};
+};  // NakedNetconfCfgMgr
 
 // Tests construction of NetconfCfgMgr class.
 TEST(NetconfCfgMgr, construction) {
-    boost::scoped_ptr<NetconfCfgMgr> cfg_mgr;
+    unique_ptr<NetconfCfgMgr> cfg_mgr;
 
     // Verify that configuration manager constructions without error.
     ASSERT_NO_THROW_LOG(cfg_mgr.reset(new NetconfCfgMgr()));
@@ -52,7 +50,7 @@ TEST(NetconfCfgMgr, construction) {
     EXPECT_TRUE(context);
 
     // Verify that the manager can be destructed without error.
-    EXPECT_NO_THROW(cfg_mgr.reset());
+    EXPECT_NO_THROW_LOG(cfg_mgr.reset());
 }
 
 // Tests if getContext can be retrieved.
@@ -66,7 +64,6 @@ TEST(NetconfCfgMgr, getContext) {
 
 // Tests if context can store and retrieve managed server information.
 TEST(NetconfCfgMgr, contextServer) {
-
     NetconfConfig ctx;
 
     // Check managed server parameters.
@@ -96,16 +93,16 @@ TEST(NetconfCfgMgr, contextServer) {
     CfgServerPtr server4(new CfgServer("model4", socket4));
 
     // Ok, now set the server for D2
-    EXPECT_NO_THROW(ctx.getCfgServersMap()->insert(make_pair("d2", server1)));
+    EXPECT_NO_THROW_LOG(ctx.getCfgServersMap()->insert(make_pair("d2", server1)));
 
     // Now check the values returned
     EXPECT_EQ(1, ctx.getCfgServersMap()->size());
     ASSERT_NO_THROW_LOG(ctx.getCfgServersMap()->at("d2"));
     EXPECT_EQ(server1, ctx.getCfgServersMap()->at("d2"));
-    EXPECT_THROW(ctx.getCfgServersMap()->at("dhcp4"), std::out_of_range);
+    EXPECT_FALSE(ctx.getCfgServersMap()->contains("dhcp4"));
 
     // Now set the v6 server and sanity check again
-    EXPECT_NO_THROW(ctx.getCfgServersMap()->insert(make_pair("dhcp6", server2)));
+    EXPECT_NO_THROW_LOG(ctx.getCfgServersMap()->insert(make_pair("dhcp6", server2)));
 
     // Should be possible to retrieve two servers
     EXPECT_EQ(2, ctx.getCfgServersMap()->size());
@@ -114,8 +111,8 @@ TEST(NetconfCfgMgr, contextServer) {
     EXPECT_EQ(server2, ctx.getCfgServersMap()->at("dhcp6"));
 
     // Finally, set all servers.
-    EXPECT_NO_THROW(ctx.getCfgServersMap()->insert(make_pair("dhcp4", server3)));
-    EXPECT_NO_THROW(ctx.getCfgServersMap()->insert(make_pair("ca", server4)));
+    EXPECT_NO_THROW_LOG(ctx.getCfgServersMap()->insert(make_pair("dhcp4", server3)));
+    EXPECT_NO_THROW_LOG(ctx.getCfgServersMap()->insert(make_pair("ca", server4)));
     EXPECT_EQ(4, ctx.getCfgServersMap()->size());
     ASSERT_NO_THROW_LOG(ctx.getCfgServersMap()->at("dhcp4"));
     ASSERT_NO_THROW_LOG(ctx.getCfgServersMap()->at("ca"));
@@ -131,7 +128,7 @@ TEST(NetconfCfgMgr, contextHookParams) {
     HooksConfig& libs = ctx.getHooksConfig();
     EXPECT_TRUE(libs.get().empty());
 
-    libs.add("libone.so", ConstElementPtr());
+    libs.add("libone.so", ElementPtr());
     libs.add("libtwo.so", Element::fromJSON("{\"foo\": true}"));
     libs.add("libthree.so", Element::fromJSON("{\"bar\": 42}"));
 
@@ -146,18 +143,19 @@ TEST(NetconfCfgMgr, contextGlobals) {
     NetconfConfig ctx;
 
     // By default there should be no globals.
-    ConstElementPtr globals = ctx.getConfiguredGlobals();
+    ElementPtr globals = ctx.getConfiguredGlobals();
     ASSERT_TRUE(globals);
     ASSERT_EQ(Element::map, globals->getType());
     EXPECT_EQ(0, globals->mapValue().size());
 
     // Attempting to extract globals from a non-map should throw.
-    ASSERT_THROW(ctx.extractConfiguredGlobals(Element::create(777)), BadValue);
+    EXPECT_THROW_MSG(ctx.extractConfiguredGlobals(Element::create(777)), BadValue,
+                     "extractConfiguredGlobals must be given a map element");
 
     // Now let's create a configuration from which to extract global scalars.
     // Extraction (currently) has no business logic, so the elements we use
     // can be arbitrary.
-    ConstElementPtr global_cfg;
+    ElementPtr global_cfg;
     string global_cfg_str =
     "{\n"
     " \"astring\": \"okay\",\n"
@@ -178,7 +176,7 @@ TEST(NetconfCfgMgr, contextGlobals) {
     EXPECT_NE(0, globals->mapValue().size());
 
     // Maps and lists should be excluded.
-    for (auto it : globals->mapValue()) {
+    for (auto const& it : globals->mapValue()) {
         if (it.first == "astring") {
             ASSERT_EQ(Element::string, it.second->getType());
             EXPECT_EQ("okay", it.second->stringValue());
@@ -356,18 +354,18 @@ const char* NETCONF_CONFIGS[] = {
     "        }\n"
     "    }\n"
     "}"
-};
+};  // NETCONF_CONFIGS
 
 // Tests the handling of bad socket type. Can't use the fixture class
 // because the Netconf parser does not allow bad socket types.
 TEST(NetconfParser, badSocketType) {
-    ConstElementPtr json;
+    ElementPtr json;
     ParserContext parser;
-    EXPECT_NO_THROW(json = parser.parseString(NETCONF_CONFIGS[10],
-                                              ParserContext::PARSER_JSON));
+    EXPECT_NO_THROW_LOG(json = parser.parseString(NETCONF_CONFIGS[10],
+                                                  ParserContext::PARSER_JSON));
     ConstElementPtr answer;
     NakedNetconfCfgMgr cfg_mgr;
-    EXPECT_NO_THROW(answer = cfg_mgr.parse(json, false));
+    EXPECT_NO_THROW_LOG(answer = cfg_mgr.parse(json, false));
     int rcode = 0;
     string expected =
         "\"Unknown control socket type: tcp 'tcp' (<string>:5:32)\"";
@@ -378,16 +376,15 @@ TEST(NetconfParser, badSocketType) {
 /// @brief Class used for testing CfgMgr
 class NetconfParserTest : public isc::process::ConfigParseTest {
 public:
-
     /// @brief Tries to load input text as a configuration
     ///
     /// @param config text containing input configuration
     /// @param expected_answer expected result of configuration (0 = success)
     void configParse(const char* config, int expected_answer) {
         isc::netconf::ParserContext parser;
-        ConstElementPtr json = parser.parseString(config, ParserContext::PARSER_SUB_NETCONF);
+        ElementPtr json = parser.parseString(config, ParserContext::PARSER_SUB_NETCONF);
 
-        EXPECT_NO_THROW(answer_ = cfg_mgr_.parse(json, false));
+        EXPECT_NO_THROW_LOG(answer_ = cfg_mgr_.parse(json, false));
         EXPECT_TRUE(checkAnswer(expected_answer));
     }
 
@@ -404,7 +401,7 @@ public:
 
     /// Configuration Manager (used in tests)
     NakedNetconfCfgMgr cfg_mgr_;
-};
+};  // NetconfParserTest
 
 // This test verifies if an empty config is handled properly. In practice such
 // a config makes little sense, but perhaps it's ok for a default deployment.

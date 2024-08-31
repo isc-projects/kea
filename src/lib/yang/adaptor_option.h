@@ -1,4 +1,4 @@
-// Copyright (C) 2018,2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,17 +7,12 @@
 #ifndef ISC_ADAPTOR_OPTION_H
 #define ISC_ADAPTOR_OPTION_H 1
 
+#include <dhcp/option_data_types.h>
 #include <yang/adaptor.h>
-#include <map>
-#include <list>
+
+#include <unordered_map>
 
 namespace isc {
-
-namespace dhcp {
-/// @brief Forward declaration of option definition parameters.
-struct OptionDefParams;
-};
-
 namespace yang {
 
 /// @brief Map for DHCP option definitions handling code and
@@ -25,7 +20,7 @@ namespace yang {
 ///
 /// The map is used to store space+name to code mappings so for
 /// an option data without a code entry the code entry can be supplied.
-typedef std::map<std::string, uint16_t> OptionCodes;
+using OptionCodes = std::unordered_map<std::string, uint16_t>;
 
 /// @brief JSON adaptor for option data or definition setting defaults.
 ///
@@ -44,12 +39,8 @@ typedef std::map<std::string, uint16_t> OptionCodes;
 /// and raises an error when it can't.
 class AdaptorOption {
 public:
-
-    /// @brief Constructor.
-    AdaptorOption();
-
     /// @brief Destructor.
-    virtual ~AdaptorOption();
+    virtual ~AdaptorOption() = default;
 
     /// @brief Set space.
     ///
@@ -103,9 +94,9 @@ protected:
     static void initCodesInternal(OptionCodes& codes, const std::string& space,
                                   const isc::dhcp::OptionDefParams* params,
                                   size_t params_size);
-};
+};  // AdaptorOption
 
-}; // end of namespace isc::yang
-}; // end of namespace isc
+}  // namespace yang
+}  // namespace isc
 
-#endif // ISC_ADAPTOR_OPTION_H
+#endif  // ISC_ADAPTOR_OPTION_H

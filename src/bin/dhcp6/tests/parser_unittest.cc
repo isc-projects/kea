@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <dhcpsrv/parsers/simple_parser6.h>
 #include <testutils/io_utils.h>
 #include <testutils/log_utils.h>
+#include <testutils/test_to_element.h>
 #include <testutils/user_context_utils.h>
 #include <testutils/gtest_utils.h>
 
@@ -35,9 +36,7 @@ namespace test {
 /// @param a first to be compared
 /// @param b second to be compared
 void compareJSON(ConstElementPtr a, ConstElementPtr b) {
-    ASSERT_TRUE(a);
-    ASSERT_TRUE(b);
-    EXPECT_EQ(a->str(), b->str());
+    expectEqWithDiff(a, b);
 }
 
 /// @brief Tests if the input string can be parsed with specific parser
@@ -100,138 +99,161 @@ TEST(ParserTest, nestedLists) {
 
 TEST(ParserTest, listsInMaps) {
     string txt = "{ \"constellations\": { \"orion\": [ \"rigel\", \"betelgeuse\" ], "
-                    "\"cygnus\": [ \"deneb\", \"albireo\"] } }";
+                 "\"cygnus\": [ \"deneb\", \"albireo\"] } }";
     testParser(txt, Parser6Context::PARSER_JSON);
 }
 
 TEST(ParserTest, mapsInLists) {
-    string txt = "[ { \"body\": \"earth\", \"gravity\": 1.0 },"
-                 " { \"body\": \"mars\", \"gravity\": 0.376 } ]";
+    string txt = "[ { \"body\": \"earth\", \"gravity\": 1.0 }, "
+                 "{ \"body\": \"mars\", \"gravity\": 0.376 } ]";
     testParser(txt, Parser6Context::PARSER_JSON);
 }
 
 TEST(ParserTest, types) {
-    string txt = "{ \"string\": \"foo\","
-                   "\"integer\": 42,"
-                   "\"boolean\": true,"
-                   "\"map\": { \"foo\": \"bar\" },"
-                   "\"list\": [ 1, 2, 3 ],"
-                   "\"null\": null }";
+    string txt = "{ \"string\": \"foo\", "
+                 "\"integer\": 42, "
+                 "\"boolean\": true, "
+                 "\"map\": { \"foo\": \"bar\" }, "
+                 "\"list\": [ 1, 2, 3 ], "
+                 "\"null\": null }";
     testParser(txt, Parser6Context::PARSER_JSON);
 }
 
 TEST(ParserTest, keywordJSON) {
-    string txt = "{ \"name\": \"user\","
-                   "\"type\": \"password\","
-                   "\"user\": \"name\","
-                   "\"password\": \"type\" }";
+    string txt = "{ \"name\": \"user\", "
+                 "\"type\": \"password\", "
+                 "\"user\": \"name\", "
+                 "\"password\": \"type\" }";
     testParser(txt, Parser6Context::PARSER_JSON);
 }
 
 TEST(ParserTest, keywordDhcp6) {
      string txt = "{ \"Dhcp6\": { \"interfaces-config\": {"
-                  " \"interfaces\": [ \"type\", \"htype\" ] },\n"
+                  "  \"interfaces\": [ \"type\", \"htype\" ] },\n"
                   "\"preferred-lifetime\": 3000,\n"
                   "\"rebind-timer\": 2000, \n"
                   "\"renew-timer\": 1000, \n"
                   "\"subnet6\": [ { "
+                  "    \"id\": 1, "
                   "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
                   "    \"subnet\": \"2001:db8:1::/48\", "
                   "    \"interface\": \"test\" } ],\n"
-                   "\"valid-lifetime\": 4000 } }";
+                  "\"valid-lifetime\": 4000 } }";
      testParser(txt, Parser6Context::PARSER_DHCP6);
 }
 
 // Tests if bash (#) comments are supported. That's the only comment type that
 // was supported by the old parser.
 TEST(ParserTest, bashComments) {
-    string txt= "{ \"Dhcp6\": { \"interfaces-config\": {"
-                "  \"interfaces\": [ \"*\" ]"
-                "},\n"
-                "\"preferred-lifetime\": 3000,\n"
-                "# this is a comment\n"
-                "\"rebind-timer\": 2000, \n"
-                "# lots of comments here\n"
-                "# and here\n"
-                "\"renew-timer\": 1000, \n"
-                "\"subnet6\": [ { "
-                "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
-                "    \"subnet\": \"2001:db8:1::/48\", "
-                "    \"interface\": \"eth0\""
-                " } ],"
-                "\"valid-lifetime\": 4000 } }";
+    string txt = "{ \"Dhcp6\": { \"interfaces-config\": {"
+                 "  \"interfaces\": [ \"*\" ]"
+                 "},\n"
+                 "\"preferred-lifetime\": 3000,\n"
+                 "# this is a comment\n"
+                 "\"rebind-timer\": 2000, \n"
+                 "# lots of comments here\n"
+                 "# and here\n"
+                 "\"renew-timer\": 1000, \n"
+                 "\"subnet6\": [ { "
+                 "    \"id\": 1, "
+                 "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+                 "    \"subnet\": \"2001:db8:1::/48\", "
+                 "    \"interface\": \"eth0\""
+                 " } ],"
+                 "\"valid-lifetime\": 4000 } }";
     testParser(txt, Parser6Context::PARSER_DHCP6);
 }
 
 // Tests if C++ (//) comments can start anywhere, not just in the first line.
 TEST(ParserTest, cppComments) {
-    string txt= "{ \"Dhcp6\": { \"interfaces-config\": {"
-                "  \"interfaces\": [ \"*\" ]"
-                "},\n"
-                "\"preferred-lifetime\": 3000, // this is a comment \n"
-                "\"rebind-timer\": 2000, // everything after // is ignored\n"
-                "\"renew-timer\": 1000, // this will be ignored, too\n"
-                "\"subnet6\": [ { "
-                "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
-                "    \"subnet\": \"2001:db8:1::/48\", "
-                "    \"interface\": \"eth0\""
-                " } ],"
-                "\"valid-lifetime\": 4000 } }";
+    string txt = "{ \"Dhcp6\": { \"interfaces-config\": {"
+                 "  \"interfaces\": [ \"*\" ]"
+                 "},\n"
+                 "\"preferred-lifetime\": 3000, // this is a comment \n"
+                 "\"rebind-timer\": 2000, // everything after // is ignored\n"
+                 "\"renew-timer\": 1000, // this will be ignored, too\n"
+                 "\"subnet6\": [ { "
+                 "    \"id\": 1, "
+                 "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+                 "    \"subnet\": \"2001:db8:1::/48\", "
+                 "    \"interface\": \"eth0\""
+                 " } ],"
+                 "\"valid-lifetime\": 4000 } }";
     testParser(txt, Parser6Context::PARSER_DHCP6, false);
 }
 
 // Tests if bash (#) comments can start anywhere, not just in the first line.
 TEST(ParserTest, bashCommentsInline) {
-    string txt= "{ \"Dhcp6\": { \"interfaces-config\": {"
-                "  \"interfaces\": [ \"*\" ]"
-                "},\n"
-                "\"preferred-lifetime\": 3000, # this is a comment \n"
-                "\"rebind-timer\": 2000, # everything after # is ignored\n"
-                "\"renew-timer\": 1000, # this will be ignored, too\n"
-                "\"subnet6\": [ { "
-                "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
-                "    \"subnet\": \"2001:db8:1::/48\", "
-                "    \"interface\": \"eth0\""
-                " } ],"
-                "\"valid-lifetime\": 4000 } }";
+    string txt = "{ \"Dhcp6\": { \"interfaces-config\": {"
+                 "  \"interfaces\": [ \"*\" ]"
+                 "},\n"
+                 "\"preferred-lifetime\": 3000, # this is a comment \n"
+                 "\"rebind-timer\": 2000, # everything after # is ignored\n"
+                 "\"renew-timer\": 1000, # this will be ignored, too\n"
+                 "\"subnet6\": [ { "
+                 "    \"id\": 1, "
+                 "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+                 "    \"subnet\": \"2001:db8:1::/48\", "
+                 "    \"interface\": \"eth0\""
+                 " } ],"
+                 "\"valid-lifetime\": 4000 } }";
     testParser(txt, Parser6Context::PARSER_DHCP6, false);
 }
 
 // Tests if multi-line C style comments are handled correctly.
 TEST(ParserTest, multilineComments) {
-    string txt= "{ \"Dhcp6\": { \"interfaces-config\": {"
-                "  \"interfaces\": [ \"*\" ]"
-                "},\n"
-                "\"preferred-lifetime\": 3000, /* this is a C style comment\n"
-                "that\n can \n span \n multiple \n lines */ \n"
-                "\"rebind-timer\": 2000,\n"
-                "\"renew-timer\": 1000, \n"
-                "\"subnet6\": [ { "
-                "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
-                "    \"subnet\": \"2001:db8:1::/48\", "
-                "    \"interface\": \"eth0\""
-                " } ],"
-                "\"valid-lifetime\": 4000 } }";
+    string txt = "{ \"Dhcp6\": { \"interfaces-config\": {"
+                 "  \"interfaces\": [ \"*\" ]"
+                 "},\n"
+                 "\"preferred-lifetime\": 3000, /* this is a C style comment\n"
+                 "that\n can \n span \n multiple \n lines */ \n"
+                 "\"rebind-timer\": 2000,\n"
+                 "\"renew-timer\": 1000, \n"
+                 "\"subnet6\": [ { "
+                 "    \"id\": 1, "
+                 "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+                 "    \"subnet\": \"2001:db8:1::/48\", "
+                 "    \"interface\": \"eth0\""
+                 " } ],"
+                 "\"valid-lifetime\": 4000 } }";
     testParser(txt, Parser6Context::PARSER_DHCP6, false);
 }
 
 // Tests if embedded comments are handled correctly.
 TEST(ParserTest, embbededComments) {
-    string txt= "{ \"Dhcp6\": { \"interfaces-config\": {"
-                "  \"interfaces\": [ \"*\" ]"
-                "},\n"
-                "\"comment\": \"a comment\",\n"
-                "\"preferred-lifetime\": 3000,\n"
-                "\"rebind-timer\": 2000,\n"
-                "\"renew-timer\": 1000, \n"
-                "\"subnet6\": [ { "
-                "    \"user-context\": { \"comment\": \"indirect\" },"
-                "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
-                "    \"subnet\": \"2001:db8:1::/48\", "
-                "    \"interface\": \"eth0\""
-                " } ],"
-                "\"user-context\": { \"compatible\": true },"
-                "\"valid-lifetime\": 4000 } }";
+    string txt = "{ \"Dhcp6\": { \"interfaces-config\": {"
+                 "  \"interfaces\": [ \"*\" ]"
+                 "},\n"
+                 "\"comment\": \"a comment\",\n"
+                 "\"preferred-lifetime\": 3000,\n"
+                 "\"rebind-timer\": 2000,\n"
+                 "\"renew-timer\": 1000, \n"
+                 "\"subnet6\": [ { "
+                 "    \"id\": 1, "
+                 "    \"user-context\": { \"comment\": \"indirect\" },"
+                 "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+                 "    \"subnet\": \"2001:db8:1::/48\", "
+                 "    \"interface\": \"eth0\""
+                 " } ],"
+                 "\"user-context\": { \"compatible\": true },"
+                 "\"valid-lifetime\": 4000 } }";
+    testParser(txt, Parser6Context::PARSER_DHCP6, false);
+}
+
+// Test that output_options is an alias of output-options.
+TEST(ParserTest, outputDashOptions) {
+    string txt = "{ \"Dhcp6\": { \"interfaces-config\": {"
+                 "  \"interfaces\": [ \"*\" ]"
+                 "},\n"
+                 "\"preferred-lifetime\": 3000,\n"
+                 "\"rebind-timer\": 2000,\n"
+                 "\"renew-timer\": 1000, \n"
+                 "\"valid-lifetime\": 4000,\n"
+                 "\"loggers\": [ { "
+                 "    \"name\": \"kea-dhcp6\","
+                 "    \"output_options\": [ { \"output\": \"stdout\" } ],"
+                 "    \"severity\": \"INFO\" } ]\n"
+                 "} }";
     testParser(txt, Parser6Context::PARSER_DHCP6, false);
 }
 
@@ -285,9 +307,12 @@ TEST(ParserTest, file) {
     configs.push_back("classify.json");
     configs.push_back("classify2.json");
     configs.push_back("comments.json");
+    configs.push_back("config-backend.json");
     configs.push_back("dhcpv4-over-dhcpv6.json");
     configs.push_back("duid.json");
     configs.push_back("global-reservations.json");
+    configs.push_back("ha-hot-standby-server1-with-tls.json");
+    configs.push_back("ha-hot-standby-server2.json");
     configs.push_back("hooks.json");
     configs.push_back("iPXE.json");
     configs.push_back("leases-expiration.json");
@@ -300,6 +325,7 @@ TEST(ParserTest, file) {
     configs.push_back("simple.json");
     configs.push_back("softwire46.json");
     configs.push_back("stateless.json");
+    configs.push_back("tee-times.json");
     configs.push_back("with-ddns.json");
 
     for (int i = 0; i<configs.size(); i++) {
@@ -754,20 +780,19 @@ TEST(ParserTest, mapEntries) {
     loadFile(sample_dir + "reservations.json", sample_json);
     loadFile(sample_dir + "all-keys-netconf.json", sample_json);
     KeywordSet sample_keys = {
-        "hosts-database",
-        "reservation-mode"
+        "hosts-database"
     };
     // Recursively extract keywords.
     static void (*extract)(ConstElementPtr, KeywordSet&) =
         [] (ConstElementPtr json, KeywordSet& set) {
             if (json->getType() == Element::list) {
                 // Handle lists.
-                for (auto elem : json->listValue()) {
+                for (auto const& elem : json->listValue()) {
                     extract(elem, set);
                 }
             } else if (json->getType() == Element::map) {
                 // Handle maps.
-                for (auto elem : json->mapValue()) {
+                for (auto const& elem : json->mapValue()) {
                     static_cast<void>(set.insert(elem.first));
                     // Skip entries with free content.
                     if ((elem.first != "user-context") &&
@@ -783,7 +808,7 @@ TEST(ParserTest, mapEntries) {
     auto print_keys = [](const KeywordSet& keys) {
         string s = "{";
         bool first = true;
-        for (auto key : keys) {
+        for (auto const& key : keys) {
             if (first) {
                 first = false;
                 s += " ";
@@ -834,12 +859,12 @@ TEST(ParserTest, duplicateMapEntries) {
         [] (ElementPtr config, ElementPtr json, size_t& cnt) {
             if (json->getType() == Element::list) {
                 // Handle lists.
-                for (auto elem : json->listValue()) {
+                for (auto const& elem : json->listValue()) {
                     test(config, elem, cnt);
                 }
             } else if (json->getType() == Element::map) {
                 // Handle maps.
-                for (auto elem : json->mapValue()) {
+                for (auto const& elem : json->mapValue()) {
                     // Skip entries with free content.
                     if ((elem.first == "user-context") ||
                         (elem.first == "parameters")) {
@@ -885,10 +910,21 @@ public:
 TEST_F(TrailingCommasTest, tests) {
     string txt(R"({
   "Dhcp6": {
-    "control-socket": {
-      "socket-name": "/tmp/kea-dhcp6-ctrl.sock",
-      "socket-type": "unix",
-    },
+    "control-sockets": [
+      {
+        "socket-type": "http",
+        "socket-address": "::1",
+        "authentication": {
+          "clients": [
+            {
+              "password-file": "/tmp/pwd",
+            }
+          ],
+          "type": "basic",
+        },
+        "socket-port": 8000,
+      },
+    ],
     "hooks-libraries": [
       {
         "library": "/usr/local/lib/kea/hooks/libdhcp_dummy.so",
@@ -908,7 +944,7 @@ TEST_F(TrailingCommasTest, tests) {
       {
         "debuglevel": 99,
         "name": "kea-dhcp6",
-        "output_options": [
+        "output-options": [
           {
             "output": "stdout",
           },
@@ -929,33 +965,83 @@ TEST_F(TrailingCommasTest, tests) {
           },
         ],
         "subnet": "2001:db8:1::/64",
+        "id": 1,
       },
     ],
   },
 })");
     testParser(txt, Parser6Context::PARSER_DHCP6, false);
 
-    addLog("<string>:5.28");
-    addLog("<string>:9.63");
-    addLog("<string>:10.8");
-    addLog("<string>:14.15");
-    addLog("<string>:15.8");
-    addLog("<string>:20.24");
-    addLog("<string>:28.31");
-    addLog("<string>:29.12");
-    addLog("<string>:31.28");
-    addLog("<string>:32.8");
-    addLog("<string>:43.38");
-    addLog("<string>:44.12");
-    addLog("<string>:46.36");
-    addLog("<string>:47.8");
-    addLog("<string>:48.6");
-    addLog("<string>:49.4");
+    addLog("<string>:10.42");
+    addLog("<string>:13.26");
+    addLog("<string>:15.28");
+    addLog("<string>:16.8");
+    addLog("<string>:20.63");
+    addLog("<string>:21.8");
+    addLog("<string>:25.15");
+    addLog("<string>:26.8");
+    addLog("<string>:31.24");
+    addLog("<string>:39.31");
+    addLog("<string>:40.12");
+    addLog("<string>:42.28");
+    addLog("<string>:43.8");
+    addLog("<string>:54.38");
+    addLog("<string>:55.12");
+    addLog("<string>:58.16");
+    addLog("<string>:59.8");
+    addLog("<string>:60.6");
+    addLog("<string>:61.4");
     EXPECT_TRUE(checkFile());
 
     // Test with many consecutive commas.
     boost::replace_all(txt, ",", ",,,,");
     testParser(txt, Parser6Context::PARSER_DHCP6, false);
+}
+
+/// @brief Tests control socket config conflicts.
+TEST(ParserTest, duplicateControlSocket) {
+    // Valid configuration.
+    string txt(R"({
+    "Dhcp6": {
+        "control-socket": {
+            "socket-type": "http",
+            "socket-address": "::1"
+        }
+     }
+})");
+    testParser(txt, Parser6Context::PARSER_DHCP6, false);
+
+    // Invalid configuration: both map and list.
+    string bad1(R"({
+    "Dhcp6": {
+        "control-socket": {
+            "socket-type": "http",
+            "socket-address": "::1"
+        },
+        "control-sockets": [ ]
+     }
+})");
+
+    ASSERT_NO_THROW(Element::fromJSON(bad1, true));
+    Parser6Context ctx1;
+    EXPECT_THROW(ctx1.parseString(bad1, Parser6Context::PARSER_DHCP6),
+                 Dhcp6ParseError);
+
+    // Invalid configuration: both name and address.
+    string bad2(R"({
+    "Dhcp6": {
+        "control-socket": {
+            "socket-type": "http",
+            "socket-address": "::1",
+            "socket-name": "127.0.0.1"
+        }
+     }
+})");
+
+    ASSERT_NO_THROW(Element::fromJSON(bad1, true));
+    Parser6Context ctx2;
+    EXPECT_THROW(ctx2.parseString(bad2, Parser6Context::PARSER_DHCP6),
+                 Dhcp6ParseError);
 }
 
 }  // namespace test
