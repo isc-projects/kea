@@ -1658,7 +1658,12 @@ TEST_F(HAConfigTest, badTrustAnchor) {
 #ifdef WITH_OPENSSL
     expected += "No such file or directory";
 #else
-    expected += "I/O error: DataSource: Failure opening file /this-file-does-not-exist";
+    expected += "I/O error: DataSource: Failure opening file ";
+#if BOTAN_VERSION_MAJOR > 2
+    expected += "'/this-file-does-not-exist'";
+#else
+    expected += "/this-file-does-not-exist";
+#endif
 #endif
     testInvalidConfig(patched, expected);
 }
@@ -1698,7 +1703,12 @@ TEST_F(HAConfigTest, badCertFile) {
 #ifdef WITH_OPENSSL
     expected += "No such file or directory";
 #else
-    expected += "I/O error: DataSource: Failure opening file /this-file-does-not-exist";
+    expected += "I/O error: DataSource: Failure opening file ";
+#if BOTAN_VERSION_MAJOR > 2
+    expected += "'/this-file-does-not-exist'";
+#else
+    expected += "/this-file-does-not-exist";
+#endif
 #endif
     testInvalidConfig(patched, expected);
 }
@@ -1738,7 +1748,12 @@ TEST_F(HAConfigTest, badKeyFile) {
 #ifdef WITH_OPENSSL
     expected += "No such file or directory";
 #else
-    expected += "I/O error: DataSource: Failure opening file /this-file-does-not-exist";
+    expected += "I/O error: DataSource: Failure opening file ";
+#if BOTAN_VERSION_MAJOR > 2
+    expected += "'/this-file-does-not-exist'";
+#else
+    expected += "/this-file-does-not-exist";
+#endif
 #endif
     testInvalidConfig(patched, expected);
 }
