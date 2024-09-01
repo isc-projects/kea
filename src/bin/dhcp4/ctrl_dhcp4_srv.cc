@@ -12,6 +12,7 @@
 #include <cc/data.h>
 #include <config/command_mgr.h>
 #include <config/http_command_mgr.h>
+#include <config/unix_command_mgr.h>
 #include <cryptolink/crypto_hash.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
@@ -1082,7 +1083,7 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t server_port /*= DHCP4_SERVER_P
     TimerMgr::instance()->setIOService(getIOService());
 
     // Command managers use IO service to run asynchronous socket operations.
-    CommandMgr::instance().setIOService(getIOService());
+    UnixCommandMgr::instance().setIOService(getIOService());
     HttpCommandMgr::instance().setIOService(getIOService());
 
     // Set the HTTP authentication default realm.
@@ -1193,7 +1194,7 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         cleanup();
 
         // Close command sockets.
-        CommandMgr::instance().closeCommandSocket();
+        UnixCommandMgr::instance().closeCommandSocket();
         HttpCommandMgr::instance().close();
 
         // Deregister any registered commands (please keep in alphabetic order)

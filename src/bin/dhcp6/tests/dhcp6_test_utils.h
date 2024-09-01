@@ -31,6 +31,7 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <hooks/hooks_manager.h>
 #include <config/command_mgr.h>
+#include <config/unix_command_mgr.h>
 #include <util/multi_threading_mgr.h>
 #include <testutils/log_utils.h>
 
@@ -145,7 +146,7 @@ public:
 
         dhcp::TimerMgr::instance()->setIOService(getIOService());
 
-        config::CommandMgr::instance().setIOService(getIOService());
+        config::UnixCommandMgr::instance().setIOService(getIOService());
     }
 
     /// @brief fakes packet reception

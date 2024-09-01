@@ -10,6 +10,7 @@
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
 #include <config/timeouts.h>
+#include <config/unix_command_mgr.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -111,7 +112,7 @@ public:
         LeaseMgrFactory::destroy();
         StatsMgr::instance().removeAll();
         CommandMgr::instance().deregisterAll();
-        CommandMgr::instance().setConnectionTimeout(DEFAULT_CONNECTION_TIMEOUT);
+        UnixCommandMgr::instance().setConnectionTimeout(DEFAULT_CONNECTION_TIMEOUT);
 
         reset();
     }
@@ -167,9 +168,9 @@ public:
         LeaseMgrFactory::destroy();
         StatsMgr::instance().removeAll();
 
-        CommandMgr::instance().closeCommandSocket();
+        UnixCommandMgr::instance().closeCommandSocket();
         CommandMgr::instance().deregisterAll();
-        CommandMgr::instance().setConnectionTimeout(TIMEOUT_DHCP_SERVER_RECEIVE_COMMAND);
+        UnixCommandMgr::instance().setConnectionTimeout(TIMEOUT_DHCP_SERVER_RECEIVE_COMMAND);
 
         server_.reset();
         reset();
@@ -258,7 +259,7 @@ public:
         ASSERT_EQ(0, status) << txt->str();
 
         // Now check that the socket was indeed open.
-        ASSERT_GT(isc::config::CommandMgr::instance().getControlSocketFD(), -1);
+        ASSERT_GT(isc::config::UnixCommandMgr::instance().getControlSocketFD(), -1);
     }
 
     /// @brief Reset
@@ -2289,7 +2290,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, connectionTimeoutPartialCommand) {
     // Set connection timeout to 2s to prevent long waiting time for the
     // timeout during this test.
     const unsigned short timeout = 2000;
-    CommandMgr::instance().setConnectionTimeout(timeout);
+    UnixCommandMgr::instance().setConnectionTimeout(timeout);
 
     // Server's response will be assigned to this variable.
     std::string response;
@@ -2343,7 +2344,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, connectionTimeoutNoData) {
     // Set connection timeout to 2s to prevent long waiting time for the
     // timeout during this test.
     const unsigned short timeout = 2000;
-    CommandMgr::instance().setConnectionTimeout(timeout);
+    UnixCommandMgr::instance().setConnectionTimeout(timeout);
 
     // Server's response will be assigned to this variable.
     std::string response;

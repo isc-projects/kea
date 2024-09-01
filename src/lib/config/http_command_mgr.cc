@@ -215,8 +215,7 @@ HttpCommandMgr::instance() {
     return (http_cmd_mgr);
 }
 
-HttpCommandMgr::HttpCommandMgr()
-    : HookedCommandMgr(), impl_(new HttpCommandMgrImpl()) {
+HttpCommandMgr::HttpCommandMgr() : impl_(new HttpCommandMgrImpl()) {
 }
 
 void

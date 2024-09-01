@@ -9,6 +9,7 @@
 #include <asiolink/io_address.h>
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
+#include <config/unix_command_mgr.h>
 #include <config_backend/base_config_backend.h>
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
@@ -329,10 +330,10 @@ Dhcpv6SrvTest::loadConfigFile(const string& path) {
     TimerMgr::instance()->unregisterTimers();
 
     // Close the command socket (if it exists).
-    CommandMgr::instance().closeCommandSocket();
+    UnixCommandMgr::instance().closeCommandSocket();
 
     // Reset CommandMgr IO service.
-    CommandMgr::instance().setIOService(IOServicePtr());
+    UnixCommandMgr::instance().setIOService(IOServicePtr());
 
     // Reset DatabaseConnection IO service.
     DatabaseConnection::setIOService(IOServicePtr());

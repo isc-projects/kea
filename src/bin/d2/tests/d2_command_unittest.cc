@@ -11,6 +11,7 @@
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
 #include <config/timeouts.h>
+#include <config/unix_command_mgr.h>
 #include <testutils/io_utils.h>
 #include <testutils/unix_control_client.h>
 #include <d2/d2_controller.h>
@@ -144,7 +145,7 @@ public:
 
         // Reset command manager.
         CommandMgr::instance().deregisterAll();
-        CommandMgr::instance().setConnectionTimeout(TIMEOUT_DHCP_SERVER_RECEIVE_COMMAND);
+        UnixCommandMgr::instance().setConnectionTimeout(TIMEOUT_DHCP_SERVER_RECEIVE_COMMAND);
     }
 
     /// @brief Returns pointer to the server's IO service.
@@ -216,7 +217,7 @@ public:
         ASSERT_EQ(0, status) << txt->str();
 
         // Now check that the socket was indeed open.
-        ASSERT_GT(CommandMgr::instance().getControlSocketFD(), -1);
+        ASSERT_GT(UnixCommandMgr::instance().getControlSocketFD(), -1);
     }
 
     /// @brief Conducts a command/response exchange via UnixCommandSocket.
@@ -456,7 +457,7 @@ TEST_F(CtrlChannelD2Test, configure) {
     ASSERT_EQ(Element::string, txt->getType());
     EXPECT_EQ("'socket-type' parameter is mandatory in control-sockets items",
               txt->stringValue());
-    EXPECT_EQ(-1, CommandMgr::instance().getControlSocketFD());
+    EXPECT_EQ(-1, UnixCommandMgr::instance().getControlSocketFD());
 
     // no name.
     string bad3 =
@@ -482,7 +483,7 @@ TEST_F(CtrlChannelD2Test, configure) {
     ASSERT_EQ(Element::string, txt->getType());
     EXPECT_EQ("Mandatory 'socket-name' parameter missing",
               txt->stringValue());
-    EXPECT_EQ(-1, CommandMgr::instance().getControlSocketFD());
+    EXPECT_EQ(-1, UnixCommandMgr::instance().getControlSocketFD());
 }
 
 // This test checks which commands are registered by the D2 server.
@@ -787,7 +788,7 @@ TEST_F(CtrlChannelD2Test, configTest) {
     ASSERT_TRUE(keys);
     EXPECT_EQ(1, keys->size());
 
-    ASSERT_GT(CommandMgr::instance().getControlSocketFD(), -1);
+    ASSERT_GT(UnixCommandMgr::instance().getControlSocketFD(), -1);
 
     // Create a config with invalid content that should fail to parse.
     os.str("");
@@ -926,7 +927,7 @@ TEST_F(CtrlChannelD2Test, configSet) {
     ASSERT_TRUE(keys);
     EXPECT_EQ(1, keys->size());
 
-    ASSERT_GT(CommandMgr::instance().getControlSocketFD(), -1);
+    ASSERT_GT(UnixCommandMgr::instance().getControlSocketFD(), -1);
 
     // Create a config with invalid content that should fail to parse.
     os.str("");
@@ -1316,7 +1317,7 @@ TEST_F(CtrlChannelD2Test, connectionTimeoutPartialCommand) {
     // Set connection timeout to 2s to prevent long waiting time for the
     // timeout during this test.
     const unsigned short timeout = 2000;
-    CommandMgr::instance().setConnectionTimeout(timeout);
+    UnixCommandMgr::instance().setConnectionTimeout(timeout);
 
     // Server's response will be assigned to this variable.
     string response;
@@ -1369,7 +1370,7 @@ TEST_F(CtrlChannelD2Test, connectionTimeoutNoData) {
     // Set connection timeout to 2s to prevent long waiting time for the
     // timeout during this test.
     const unsigned short timeout = 2000;
-    CommandMgr::instance().setConnectionTimeout(timeout);
+    UnixCommandMgr::instance().setConnectionTimeout(timeout);
 
     // Server's response will be assigned to this variable.
     string response;

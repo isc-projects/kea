@@ -12,6 +12,7 @@
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
 #include <config/http_command_mgr.h>
+#include <config/unix_command_mgr.h>
 #include <database/database_connection.h>
 #include <database/dbaccess_parser.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
@@ -442,14 +443,14 @@ void configureCommandChannel() {
     // receive the configuration result.
     if (!sock_cfg || !current_sock_cfg || sock_changed) {
         // Close the existing socket (if any).
-        CommandMgr::instance().closeCommandSocket();
+        UnixCommandMgr::instance().closeCommandSocket();
 
         if (sock_cfg) {
             // This will create a control socket and install the external
             // socket in IfaceMgr. That socket will be monitored when
             // Dhcp6Srv::receivePacket() calls IfaceMgr::receive6() and
             // callback in CommandMgr will be called, if necessary.
-            CommandMgr::instance().openCommandSocket(sock_cfg);
+            UnixCommandMgr::instance().openCommandSocket(sock_cfg);
         }
     }
 

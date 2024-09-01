@@ -50,7 +50,7 @@ public:
     /// This method returns Element tree structure that describes the control
     /// socket (or null pointer if the socket is not defined for a particular
     /// server type). This information is expected to be compatible with
-    /// data passed to @ref isc::config::CommandMgr::openCommandSocket.
+    /// data passed to @ref isc::config::UnixCommandMgr::openCommandSocket.
     ///
     /// @param service server being controlled
     /// @return pointer to the Element that holds control-socket map (or NULL)
@@ -61,7 +61,7 @@ public:
     ///
     /// This method stores Element tree structure that describes the control
     /// socket. This information is expected to be compatible with
-    /// data passed to @ref isc::config::CommandMgr::openCommandSocket.
+    /// data passed to @ref isc::config::UnixCommandMgr::openCommandSocket.
     ///
     /// @param control_socket Element that holds control-socket map
     /// @param service server being controlled

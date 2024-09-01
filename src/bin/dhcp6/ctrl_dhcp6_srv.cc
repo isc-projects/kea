@@ -12,6 +12,7 @@
 #include <cc/data.h>
 #include <config/command_mgr.h>
 #include <config/http_command_mgr.h>
+#include <config/unix_command_mgr.h>
 #include <cryptolink/crypto_hash.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
@@ -1106,7 +1107,7 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t server_port /*= DHCP6_SERVER_P
     TimerMgr::instance()->setIOService(getIOService());
 
     // Command managers use IO service to run asynchronous socket operations.
-    CommandMgr::instance().setIOService(getIOService());
+    UnixCommandMgr::instance().setIOService(getIOService());
     HttpCommandMgr::instance().setIOService(getIOService());
 
     // Set the HTTP default socket address to the IPv6 (vs IPv4) loopback.
@@ -1220,7 +1221,7 @@ ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
         cleanup();
 
         // Close command sockets.
-        CommandMgr::instance().closeCommandSocket();
+        UnixCommandMgr::instance().closeCommandSocket();
         HttpCommandMgr::instance().close();
 
         // Deregister any registered commands (please keep in alphabetic order)

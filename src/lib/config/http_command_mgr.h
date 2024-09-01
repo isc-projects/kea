@@ -9,7 +9,6 @@
 
 #include <asiolink/io_service.h>
 #include <config/http_command_config.h>
-#include <config/hooked_command_mgr.h>
 #include <http/listener.h>
 #include <boost/noncopyable.hpp>
 
@@ -21,8 +20,8 @@ class HttpCommandMgrImpl;
 
 /// @brief HTTP Commands Manager implementation for the Kea servers.
 ///
-/// Similar to @c CommandMgr but using HTTP/HTTPS instead of UNIX sockets.
-class HttpCommandMgr : public HookedCommandMgr, public boost::noncopyable {
+/// Similar to @c UnixCommandMgr but using HTTP/HTTPS instead of UNIX sockets.
+class HttpCommandMgr : public boost::noncopyable {
 public:
 
     /// @brief HttpCommandMgr is a singleton class. This method
@@ -31,7 +30,7 @@ public:
     /// @return The only existing instance of the manager.
     static HttpCommandMgr& instance();
 
-    /// @brief Sets IO service to be used by the command manager.
+    /// @brief Sets IO service to be used by the http command manager.
     ///
     /// The server should use this method to provide the Command
     /// Manager with the common IO service used by the server.
@@ -56,12 +55,12 @@ public:
     /// @param use_external True (default) add external sockets.
     void addExternalSockets(bool use_external = true);
 
-    /// @brief Configure control socket from configuration.
+    /// @brief Configure http control socket from configuration.
     ///
-    /// @param config Configuration of the control socket.
+    /// @param config Configuration of the control http socket.
     void configure(HttpCommandConfigPtr config);
 
-    /// @brief Close control socket.
+    /// @brief Close http control socket.
     ///
     /// @note When remove is false @c garbageCollectListeners must
     /// be called after.

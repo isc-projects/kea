@@ -28,6 +28,7 @@
 #include <asiolink/io_address.h>
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
+#include <config/unix_command_mgr.h>
 #include <util/multi_threading_mgr.h>
 #include <list>
 
@@ -136,7 +137,7 @@ public:
 
         dhcp::TimerMgr::instance()->setIOService(getIOService());
 
-        config::CommandMgr::instance().setIOService(getIOService());
+        config::UnixCommandMgr::instance().setIOService(getIOService());
     }
 
     /// @brief Returns fixed server identifier assigned to the naked server

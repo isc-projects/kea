@@ -10,6 +10,7 @@
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
 #include <config/http_command_mgr.h>
+#include <config/unix_command_mgr.h>
 #include <d2/d2_controller.h>
 #include <d2/d2_process.h>
 #include <d2srv/d2_cfg_mgr.h>
@@ -77,7 +78,7 @@ void
 D2Process::init() {
     using namespace isc::config;
     // Command managers use IO service to run asynchronous socket operations.
-    CommandMgr::instance().setIOService(getIOService());
+    UnixCommandMgr::instance().setIOService(getIOService());
     HttpCommandMgr::instance().setIOService(getIOService());
 
     // Set the HTTP authentication default realm.
@@ -161,7 +162,7 @@ D2Process::runIO() {
         // service is stopped it will return immediately with a cnt of zero.
         cnt = getIOService()->runOne();
     }
-    config::HttpCommandMgr::instance().garbageCollectListeners();
+    HttpCommandMgr::instance().garbageCollectListeners();
     return (cnt);
 }
 
@@ -515,13 +516,13 @@ D2Process::reconfigureCommandChannel() {
     if (!sock_cfg || !current_control_socket_ || sock_changed) {
         // Close the existing socket.
         if (current_control_socket_) {
-            isc::config::CommandMgr::instance().closeCommandSocket();
+            UnixCommandMgr::instance().closeCommandSocket();
             current_control_socket_.reset();
         }
 
         // Open the new socket.
         if (sock_cfg) {
-            isc::config::CommandMgr::instance().openCommandSocket(sock_cfg);
+            UnixCommandMgr::instance().openCommandSocket(sock_cfg);
         }
     }
 
