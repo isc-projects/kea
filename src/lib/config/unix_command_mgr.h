@@ -56,6 +56,14 @@ public:
     /// @param timeout New connection timeout in milliseconds.
     void setConnectionTimeout(const long timeout);
 
+    /// @brief Use external sockets flag.
+    ///
+    /// Add sockets as external sockets of the interface manager
+    /// so available I/O on them makes a waiting select to return.
+    ///
+    /// @param use_external True (default) add external sockets.
+    void addExternalSockets(bool use_external = true);
+
     /// @brief Opens unix control socket with parameters specified in socket_info
     /// (required parameters: socket-type: unix, socket-name:/unix/path).
     ///

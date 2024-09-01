@@ -85,6 +85,7 @@ D2Process::init() {
     HttpCommandConfig::DEFAULT_AUTHENTICATION_REALM = "kea-dhcp-ddns-server";
 
     // D2 server does not use the interface manager.
+    UnixCommandMgr::instance().addExternalSockets(false);
     HttpCommandMgr::instance().addExternalSockets(false);
 };
 
