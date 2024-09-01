@@ -243,8 +243,8 @@ D2CfgMgr::getD2Params() {
 }
 
 const isc::data::ConstElementPtr
-D2CfgMgr::getControlSocketInfo() {
-    return (getD2CfgContext()->getControlSocketInfo());
+D2CfgMgr::getUnixControlSocketInfo() {
+    return (getD2CfgContext()->getUnixControlSocketInfo());
 }
 
 isc::config::HttpCommandConfigPtr

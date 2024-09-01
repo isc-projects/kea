@@ -7384,7 +7384,7 @@ TEST_F(Dhcp6ParserTest, comments) {
 
     // There is a UNIX control socket.
     ConstElementPtr socket =
-        CfgMgr::instance().getStagingCfg()->getControlSocketInfo();
+        CfgMgr::instance().getStagingCfg()->getUnixControlSocketInfo();
     ASSERT_TRUE(socket);
     ASSERT_TRUE(socket->get("socket-type"));
     EXPECT_EQ("\"unix\"", socket->get("socket-type")->str());

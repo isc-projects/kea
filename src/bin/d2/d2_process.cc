@@ -499,8 +499,9 @@ const char* D2Process::getShutdownTypeStr(const ShutdownType& type) {
 
 void
 D2Process::reconfigureCommandChannel() {
-    // Get new socket configuration.
-    isc::data::ConstElementPtr sock_cfg = getD2CfgMgr()->getControlSocketInfo();
+    // Get new Unix socket configuration.
+    isc::data::ConstElementPtr sock_cfg =
+        getD2CfgMgr()->getUnixControlSocketInfo();
 
     // Determine if the socket configuration has changed. It has if
     // both old and new configuration is specified but respective

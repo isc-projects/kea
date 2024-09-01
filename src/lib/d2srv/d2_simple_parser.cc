@@ -301,7 +301,7 @@ void D2SimpleParser::parse(const D2CfgContextPtr& ctx,
                               "control socket of type 'unix' already configured");
                 }
                 seen_unix = true;
-                ctx->setControlSocketInfo(socket);
+                ctx->setUnixControlSocketInfo(socket);
             } else if ((type == "http") || (type == "https")) {
                 if (seen_http) {
                     isc_throw(D2CfgError,

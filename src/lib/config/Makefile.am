@@ -94,5 +94,5 @@ libkea_cfgclient_include_HEADERS = \
 	http_command_mgr.h \
 	http_command_response_creator.h \
 	http_command_response_creator_factory.h \
-	timeouts.h
-
+	timeouts.h \
+	unix_command_mgr.h

@@ -105,7 +105,7 @@ void ControlSocketsParser::parse(SrvConfig& srv_cfg, ConstElementPtr value) {
                           "control socket of type 'unix' already configured");
             }
             seen_unix = true;
-            srv_cfg.setControlSocketInfo(socket);
+            srv_cfg.setUnixControlSocketInfo(socket);
         } else if ((type == "http") || (type == "https")) {
             if (seen_http) {
                 isc_throw(DhcpConfigError,

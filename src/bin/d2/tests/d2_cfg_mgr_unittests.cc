@@ -551,8 +551,8 @@ TEST_F(D2CfgMgrTest, fullConfig) {
     EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_params->getNcrProtocol());
     EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_params->getNcrFormat());
 
-    // Verify that the control socket can be retrieved.
-    ConstElementPtr ctrl_sock = context->getControlSocketInfo();
+    // Verify that the UNIX control socket can be retrieved.
+    ConstElementPtr ctrl_sock = context->getUnixControlSocketInfo();
     ASSERT_TRUE(ctrl_sock);
     ASSERT_EQ(Element::map, ctrl_sock->getType());
     EXPECT_EQ(2, ctrl_sock->size());
@@ -1031,7 +1031,7 @@ TEST_F(D2CfgMgrTest, comments) {
     EXPECT_EQ("\"D2 config\"", ctx->get("comment")->str());
 
     // There is a UNIX control socket.
-    ConstElementPtr socket = d2_context->getControlSocketInfo();
+    ConstElementPtr socket = d2_context->getUnixControlSocketInfo();
     ASSERT_TRUE(socket);
     ConstElementPtr ctx_socket = socket->get("user-context");
     ASSERT_TRUE(ctx_socket);

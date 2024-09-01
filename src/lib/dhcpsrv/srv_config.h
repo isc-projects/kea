@@ -534,14 +534,14 @@ public:
     /// @brief Returns information about UNIX control socket
     ///
     /// @return pointer to the UNIX control socket config
-    const isc::data::ConstElementPtr getControlSocketInfo() const {
+    const isc::data::ConstElementPtr getUnixControlSocketInfo() const {
         return (unix_control_socket_);
     }
 
     /// @brief Sets information about the UNIX control socket
     ///
     /// @param control_socket UNIX control socket config
-    void setControlSocketInfo(const isc::data::ConstElementPtr& control_socket) {
+    void setUnixControlSocketInfo(const isc::data::ConstElementPtr& control_socket) {
         unix_control_socket_ = control_socket;
     }
 

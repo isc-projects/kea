@@ -320,13 +320,13 @@ namespace dhcp {
 /// In that case the user simply has to accept they'll be disconnected.
 ///
 void configureCommandChannel() {
-    // Get new socket configuration.
+    // Get new UNIX socket configuration.
     ConstElementPtr sock_cfg =
-        CfgMgr::instance().getStagingCfg()->getControlSocketInfo();
+        CfgMgr::instance().getStagingCfg()->getUnixControlSocketInfo();
 
-    // Get current socket configuration.
+    // Get current UNIX socket configuration.
     ConstElementPtr current_sock_cfg =
-            CfgMgr::instance().getCurrentCfg()->getControlSocketInfo();
+        CfgMgr::instance().getCurrentCfg()->getUnixControlSocketInfo();
 
     // Determine if the socket configuration has changed. It has if
     // both old and new configuration is specified but respective
