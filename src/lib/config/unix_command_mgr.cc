@@ -573,7 +573,7 @@ UnixCommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr& socket_i
 
     // First let's open lock file.
     std::string lock_name = getLockName();
-    if (lock_fd_ != 1) {
+    if (lock_fd_ != -1) {
         close(lock_fd_);
     }
     lock_fd_ = open(lock_name.c_str(), O_RDONLY | O_CREAT, 0600);
