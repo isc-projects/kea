@@ -573,11 +573,8 @@ UnixCommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr& socket_i
 
     // First let's open lock file.
     std::string lock_name = getLockName();
-    if (lock_fd_ != -1) {
-        close(lock_fd_);
-    }
-    lock_fd_ = open(lock_name.c_str(), O_RDONLY | O_CREAT, 0600);
-    if (lock_fd_ == -1) {
+    int new_lock_fd = open(lock_name.c_str(), O_RDONLY | O_CREAT, 0600);
+    if (new_lock_fd == -1) {
         std::string errmsg = strerror(errno);
         isc_throw(SocketError, "cannot create socket lockfile, "
                   << lock_name  << ", : " << errmsg);
@@ -585,13 +582,12 @@ UnixCommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr& socket_i
 
     // Try to acquire lock. If we can't somebody else is actively
     // using it.
-    int ret = flock(lock_fd_, LOCK_EX | LOCK_NB);
+    int ret = flock(new_lock_fd, LOCK_EX | LOCK_NB);
     if (ret != 0) {
         std::string errmsg = strerror(errno);
+        close(new_lock_fd);
         isc_throw(SocketError, "cannot lock socket lockfile, "
                   << lock_name  << ", : " << errmsg);
-        close(lock_fd_);
-        lock_fd_ = -1;
     }
 
     // We have the lock, so let's remove the pre-existing socket
@@ -600,6 +596,12 @@ UnixCommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr& socket_i
 
     LOG_INFO(command_logger, COMMAND_ACCEPTOR_START)
         .arg(socket_name_);
+
+    // Close previous lock to avoid file descriptor leak.
+    if (lock_fd_ != -1) {
+        close(lock_fd_);
+    }
+    lock_fd_ = new_lock_fd;
 
     try {
         // Start asynchronous acceptor service.
