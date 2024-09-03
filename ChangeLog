@@ -1,3 +1,8 @@
+2279.	[build]		pprindeville
+	Replace the cut and rev utilities with shell variable expansions,
+	improving compatibility with minimal setups on embedded systems.
+	(Gitlab #3533)
+
 2278.	[build]		dim
 	Replace ``std::basic_string<uint8_t>`` with equivalent
 	``std::vector<uint8_t>`` constructs, since the former has been

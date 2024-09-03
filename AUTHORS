@@ -268,3 +268,6 @@ We have received the following contributions:
 
  - Dimitry Andric
    2024-09: Added support for libc++ 19 and later.
+
+ - Philip Prindeville
+   2024-09: Brought down the number of utilities keactrl depends on.
