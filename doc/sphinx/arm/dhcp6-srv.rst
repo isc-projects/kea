@@ -4273,17 +4273,16 @@ another.
 
 .. note::
 
-   Since Kea 2.7.1, a reserved (so delegated) prefix can be associated
-   with a single prefix to exclude as for prefix delegation pools
-   :ref:`pd-exclude-option`. The host reservation syntax is extended
-   by a new entry ``excluded-prefixes`` which when is present must have
-   the same size as the ``prefixes`` entry: both contains strings
-   representing IPv6 prefixes (e.g. ``2001:db8::/48``). Each element of
-   the ``excluded-prefixes`` must be either the empty string or match
-   the prefix at the same position in the ``prefixes`` list, e.g.
-   ``2001:db8:0:1::/64`` matches / can be associated with ``2001:db8::/48``.
-   An empty ``excluded-prefixes`` list or a list with only empty strings
-   can be omitted (and will be omitted when produced by Kea).
+   Beginning with Kea 2.7.3, the host reservation syntax supports
+   a new entry, ``excluded-prefixes``. It can be used to specify
+   prefixes the client should exclude from delegated prefixes.
+   When present it must have the same number of elements as the
+   ``prefixes`` entry. Both entries contain strings representing IPv6
+   prefixes. Each element of the ``excluded-prefixes`` must be either
+   an empty string or match the prefix at the same position in
+   ``prefixes``. An empty ``excluded-prefixes`` list or a list with
+   only empty strings can be omitted. An example which excludes
+   ``2001:db8:0:1::/64`` from ``2001:db8::/48`` is shown below:
 
 ::
 
@@ -4303,10 +4302,11 @@ another.
 
 .. note::
 
-   Host reservations have precedence over prefix pools so when a reserved
-   prefix without an excluded prefix is assigned no pd-exclude option
-   is added to the prefix option even the prefix is in a configured
-   prefix pool with an excluded prefix (different from previous behavior).
+   Since host reservations have precedence over prefix pools, a reserved
+   prefix without an excluded prefix will not add a pd-exclude option
+   to the prefix option even if the delegated prefix is in a configured
+   prefix pool that does specify an excluded prefix (different from
+   previous behavior).
 
 .. _reservation6-conflict:
 

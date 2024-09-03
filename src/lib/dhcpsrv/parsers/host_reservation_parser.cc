@@ -381,6 +381,8 @@ HostReservationParser6::parseInternal(const SubnetID& subnet_id,
                     uint8_t excluded_prefix_len(0);
                     parsePrefix(exclude, excluded_prefix, excluded_prefix_len,
                                 "exclude prefix");
+                    // setPDExclude calls the Option6PDExclude constructor
+                    // which throws on invalid prefix.
                     res.setPDExclude(excluded_prefix, excluded_prefix_len);
                 }
                 host->addReservation(res);

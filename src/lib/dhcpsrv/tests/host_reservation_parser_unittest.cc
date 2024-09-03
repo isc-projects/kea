@@ -969,6 +969,24 @@ TEST_F(HostReservationParserTest, dhcp6ExcludedTooLong) {
 }
 
 // This test verifies that the configuration parser throws an exception
+// when the excluded prefix is invalid (prefixes do not match).
+TEST_F(HostReservationParserTest, dhcp6ExcludedPrefixNotMatch) {
+    std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+        "\"prefixes\": [ \"2001:db8::/48\" ],"
+        "\"excluded-prefixes\": [ \"2001:db9:0:1::/64\" ] }";
+    testInvalidConfig<HostReservationParser6>(config);
+}
+
+// This test verifies that the configuration parser throws an exception
+// when the excluded prefix is invalid (bad length).
+TEST_F(HostReservationParserTest, dhcp6ExcludedPrefixBadLength) {
+    std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+        "\"prefixes\": [ \"2001:db8::/48\" ],"
+        "\"excluded-prefixes\": [ \"2001:db8::/48\" ] }";
+    testInvalidConfig<HostReservationParser6>(config);
+}
+
+// This test verifies that the configuration parser throws an exception
 // when invalid prefix length type is specified.
 TEST_F(HostReservationParserTest, dhcp6InvalidPrefixLengthType) {
     std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","

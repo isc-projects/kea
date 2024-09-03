@@ -419,12 +419,16 @@ public:
     /// @brief This test verifies that it is possible to specify an excluded
     /// prefix (RFC 6603) and send it back to the client requesting prefix
     /// delegation using a pool.
-    void directClientExcludedPrefixPool();
+    ///
+    /// @param request_pdx request pd exclude option.
+    void directClientExcludedPrefixPool(bool request_pdx);
 
     /// @brief This test verifies that it is possible to specify an excluded
     /// prefix (RFC 6603) and send it back to the client requesting prefix
     /// delegation using a reservation.
-    void directClientExcludedPrefixHost();
+    ///
+    /// @param request_pdx request pd exclude option.
+    void directClientExcludedPrefixHost(bool request_pdx);
 
     /// @brief Check that when the client includes the Rapid Commit option in
     /// its Solicit, the server responds with Reply and commits the lease.
@@ -682,11 +686,14 @@ TEST_F(SARRTest, optionsInheritanceMultiThreading) {
 }
 
 void
-SARRTest::directClientExcludedPrefixPool() {
+SARRTest::directClientExcludedPrefixPool(bool request_pdx) {
     Dhcp6Client client;
     // Configure client to request IA_PD.
     client.requestPrefix();
-    client.requestOption(D6O_PD_EXCLUDE);
+    // Request pd exclude option when wanted.
+    if (request_pdx) {
+        client.requestOption(D6O_PD_EXCLUDE);
+    }
     configure(CONFIGS[3], *client.getServer());
     // Make sure we ended-up having expected number of subnets configured.
     const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
@@ -713,6 +720,10 @@ SARRTest::directClientExcludedPrefixPool() {
     Option6IAPrefixPtr pd_option = boost::dynamic_pointer_cast<Option6IAPrefix>(option);
     ASSERT_TRUE(pd_option);
     option = pd_option->getOption(D6O_PD_EXCLUDE);
+    if (!request_pdx) {
+        EXPECT_FALSE(option);
+        return;
+    }
     ASSERT_TRUE(option);
     Option6PDExcludePtr pd_exclude = boost::dynamic_pointer_cast<Option6PDExclude>(option);
     ASSERT_TRUE(pd_exclude);
@@ -723,22 +734,35 @@ SARRTest::directClientExcludedPrefixPool() {
 
 TEST_F(SARRTest, directClientExcludedPrefixPool) {
     Dhcpv6SrvMTTestGuard guard(*this, false);
-    directClientExcludedPrefixPool();
+    directClientExcludedPrefixPool(true);
 }
 
 TEST_F(SARRTest, directClientExcludedPrefixPoolMultiThreading) {
     Dhcpv6SrvMTTestGuard guard(*this, true);
-    directClientExcludedPrefixPool();
+    directClientExcludedPrefixPool(true);
+}
+
+TEST_F(SARRTest, directClientExcludedPrefixPoolNoOro) {
+    Dhcpv6SrvMTTestGuard guard(*this, false);
+    directClientExcludedPrefixPool(false);
+}
+
+TEST_F(SARRTest, directClientExcludedPrefixPoolNoOroMultiThreading) {
+    Dhcpv6SrvMTTestGuard guard(*this, true);
+    directClientExcludedPrefixPool(false);
 }
 
 void
-SARRTest::directClientExcludedPrefixHost() {
+SARRTest::directClientExcludedPrefixHost(bool request_pdx) {
     Dhcp6Client client;
     // Set DUID matching the one used to create host reservations.
     client.setDUID("01:02:03:05");
     // Configure client to request IA_PD.
     client.requestPrefix();
-    client.requestOption(D6O_PD_EXCLUDE);
+    // Request pd exclude option when wanted.
+    if (request_pdx) {
+        client.requestOption(D6O_PD_EXCLUDE);
+    }
     configure(CONFIGS[8], *client.getServer());
     // Make sure we ended-up having expected number of subnets configured.
     const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
@@ -765,6 +789,10 @@ SARRTest::directClientExcludedPrefixHost() {
     Option6IAPrefixPtr pd_option = boost::dynamic_pointer_cast<Option6IAPrefix>(option);
     ASSERT_TRUE(pd_option);
     option = pd_option->getOption(D6O_PD_EXCLUDE);
+    if (!request_pdx) {
+        EXPECT_FALSE(option);
+        return;
+    }
     ASSERT_TRUE(option);
     Option6PDExcludePtr pd_exclude = boost::dynamic_pointer_cast<Option6PDExclude>(option);
     ASSERT_TRUE(pd_exclude);
@@ -775,12 +803,22 @@ SARRTest::directClientExcludedPrefixHost() {
 
 TEST_F(SARRTest, directClientExcludedPrefixHost) {
     Dhcpv6SrvMTTestGuard guard(*this, false);
-    directClientExcludedPrefixHost();
+    directClientExcludedPrefixHost(true);
 }
 
 TEST_F(SARRTest, directClientExcludedPrefixHostMultiThreading) {
     Dhcpv6SrvMTTestGuard guard(*this, true);
-    directClientExcludedPrefixHost();
+    directClientExcludedPrefixHost(true);
+}
+
+TEST_F(SARRTest, directClientExcludedPrefixHostNoOro) {
+    Dhcpv6SrvMTTestGuard guard(*this, false);
+    directClientExcludedPrefixHost(false);
+}
+
+TEST_F(SARRTest, directClientExcludedPrefixHostNoOroMultiThreading) {
+    Dhcpv6SrvMTTestGuard guard(*this, true);
+    directClientExcludedPrefixHost(false);
 }
 
 void

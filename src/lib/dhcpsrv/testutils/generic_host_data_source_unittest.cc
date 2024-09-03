@@ -1531,19 +1531,8 @@ GenericHostDataSourceTest::testPrefixExclude(std::string prefix,
     ASSERT_TRUE(from_hds);
 
     HostDataSourceUtils::compareHosts(host, from_hds);
-
-#if 0
-    // Verify the test is meaningful.
-    HostPtr host2 = HostDataSourceUtils::initializeHost6(prefix,
-                                                         "2001:db8:0:2::",
-                                                         Host::IDENT_DUID,
-                                                         false);
-    host2->setIPv4SubnetID(host->getIPv4SubnetID());
-    host2->setIPv6SubnetID(host->getIPv6SubnetID());
-    ASSERT_TRUE(host2);
-    HostDataSourceUtils::compareHosts(host, host2);
-#endif
 }
+
 void
 GenericHostDataSourceTest::testMultipleSubnets(int subnets,
                                                const Host::IdentifierType& id) {
