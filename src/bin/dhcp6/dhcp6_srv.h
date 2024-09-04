@@ -1064,7 +1064,7 @@ protected:
     ///
     /// @param ctx client context (contains subnet and hosts).
     /// @param lease lease (contains address/prefix and prefix length).
-    /// @param the prefix exclude option or null.
+    /// @return the prefix exclude option or null.
     OptionPtr getPDExclude(const AllocEngine::ClientContext6& ctx,
                            const Lease6Ptr& lease);
 
