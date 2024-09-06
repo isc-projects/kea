@@ -283,5 +283,7 @@ DbCallback DatabaseConnection::db_failed_callback_ = 0;
 bool DatabaseConnection::retry_ = false;
 IOServicePtr DatabaseConnection::io_service_ = IOServicePtr();
 
+bool DatabaseConnection::test_mode_ = false;
+
 }  // namespace db
 }  // namespace isc

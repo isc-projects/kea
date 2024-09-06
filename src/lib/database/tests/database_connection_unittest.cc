@@ -641,3 +641,13 @@ TEST(DatabaseConnection, toElementDbAccessStringEmpty) {
     ASSERT_TRUE(elements);
     ASSERT_EQ(0, elements->size());
 }
+
+// Check that the test mode works as expected.
+TEST(DatabaseConnection, testMode) {
+    ASSERT_FALSE(DatabaseConnection::test_mode_);
+    {
+        DatabaseConnection::EnterTest et;
+        EXPECT_TRUE(DatabaseConnection::test_mode_);
+    }
+    EXPECT_FALSE(DatabaseConnection::test_mode_);
+}

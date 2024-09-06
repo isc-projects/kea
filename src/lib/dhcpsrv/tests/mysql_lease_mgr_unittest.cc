@@ -121,6 +121,9 @@ TEST(MySqlOpenTest, OpenDatabase) {
     // Schema needs to be created for the test to work.
     createMySQLSchema(true);
 
+    // Enter test mode to avoid ensureSchemaVersion to invole kea-admin.
+    DatabaseConnection::EnterTest et;
+
     // Check that lease manager opens the database correctly and tidy up.  If it
     // fails, print the error message.
     try {

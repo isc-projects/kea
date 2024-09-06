@@ -164,6 +164,9 @@ TEST(PgSqlHostDataSource, OpenDatabase) {
     destroyPgSQLSchema();
     createPgSQLSchema();
 
+    // Enter test mode to avoid ensureSchemaVersion to invole kea-admin.
+    DatabaseConnection::EnterTest et;
+
     // Check that host manager opens the database correctly and tidy up.  If it
     // fails, print the error message.
     try {
@@ -262,6 +265,9 @@ TEST(PgSqlHostDataSource, OpenDatabaseMultiThreading) {
     // Schema needs to be created for the test to work.
     destroyPgSQLSchema();
     createPgSQLSchema();
+
+    // Enter test mode to avoid ensureSchemaVersion to invole kea-admin.
+    DatabaseConnection::EnterTest et;
 
     // Check that host manager opens the database correctly and tidy up.  If it
     // fails, print the error message.

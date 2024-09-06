@@ -191,6 +191,10 @@ PgSqlConnection::ensureSchemaVersion(const ParameterMap& parameters,
     } catch (DbOpenErrorWithRetry const& exception) {
         throw;
     } catch (exception const& exception) {
+        // Disable the recovery mechanism in test mode.
+        if (DatabaseConnection::test_mode_) {
+            throw;
+        }
         // This failure may occur for a variety of reasons. We are looking at
         // initializing schema as the only potential mitigation. We could narrow
         // down on the error that would suggest an uninitialized schema

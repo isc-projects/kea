@@ -277,6 +277,26 @@ public:
         return (unusable_);
     }
 
+    /// @brief Test mode flag (default false).
+    static bool test_mode_;
+
+    /// @brief RAII device to set the test mode.
+    class EnterTest {
+    public:
+
+        /// @brief Constructor.
+        /// Set the test mode to true.
+        EnterTest() {
+            DatabaseConnection::test_mode_ = true;
+        }
+
+        /// @brief Destructor.
+        /// Reset the test mode to false.
+        ~EnterTest() {
+            DatabaseConnection::test_mode_ = false;
+        }
+    };
+
 protected:
 
     /// @brief Sets the unusable flag to true.
