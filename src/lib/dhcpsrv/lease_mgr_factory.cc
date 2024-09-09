@@ -77,11 +77,13 @@ LeaseMgrFactory::create(const std::string& dbaccess) {
     LeaseMgrFactory::registerFactory("postgresql", pgsql_factory, true);
 #endif
 
-    if (parameters[type] == string("memfile")) {
-        LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_DB).arg(redacted);
-        getLeaseMgrPtr().reset(new Memfile_LeaseMgr(parameters));
-        return;
-    }
+    // Factory method
+    auto memfile_factory = [](const DatabaseConnection::ParameterMap& parameters) -> TrackingLeaseMgrPtr {
+        LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_DB)
+            .arg(DatabaseConnection::redactedAccessString(parameters));
+        return (TrackingLeaseMgrPtr(new Memfile_LeaseMgr(parameters)));
+    };
+    LeaseMgrFactory::registerFactory("memfile", memfile_factory, true);
 
     string db_type = it->second;
     auto index = map_.find(db_type);
@@ -121,6 +123,7 @@ LeaseMgrFactory::destroy() {
             .arg(getLeaseMgrPtr()->getType());
     }
     getLeaseMgrPtr().reset();
+    LeaseMgrFactory::deregisterFactory("memfile", true);
     // Code will be moved to appropriate hook library.
 #ifdef HAVE_MYSQL
     LeaseMgrFactory::deregisterFactory("mysql", true);
@@ -152,7 +155,7 @@ LeaseMgrFactory::recreate(const std::string& dbaccess, bool preserve_callbacks) 
 
 bool
 LeaseMgrFactory::haveInstance() {
-    return (getLeaseMgrPtr().get());
+    return (!!getLeaseMgrPtr());
 }
 
 TrackingLeaseMgr&
