@@ -149,7 +149,7 @@ TEST_F(HostDataSourceFactoryTest, notype) {
                  InvalidType);
 }
 
-// Verify that factory must not return NULL
+// Verify that factory must not return null
 TEST_F(HostDataSourceFactoryTest, null) {
     EXPECT_TRUE(HostDataSourceFactory::registerFactory("mem", factory0));
     EXPECT_THROW(HostDataSourceFactory::add(sources_, "type=mem"),

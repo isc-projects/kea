@@ -303,7 +303,7 @@ protected:
 };
 
 /// @brief TrackingLeaseMgr pointer
-typedef boost::shared_ptr<TrackingLeaseMgr> TrackingLeaseMgrPtr;
+typedef std::unique_ptr<TrackingLeaseMgr> TrackingLeaseMgrPtr;
 
 } // end of namespace isc::dhcp
 } // end of namespace isc

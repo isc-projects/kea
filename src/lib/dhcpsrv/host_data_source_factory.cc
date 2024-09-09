@@ -43,7 +43,7 @@ HostDataSourceFactory::add(HostDataSourceList& sources,
     DatabaseConnection::ParameterMap parameters =
             DatabaseConnection::parse(dbaccess);
 
-    // Get the database type and open the corresponding database
+    // Get the database type and open the corresponding database.
     DatabaseConnection::ParameterMap::iterator it = parameters.find("type");
     if (it == parameters.end()) {
         isc_throw(InvalidParameter, "Host database configuration does not "
@@ -55,8 +55,7 @@ HostDataSourceFactory::add(HostDataSourceList& sources,
 
     // No match?
     if (index == map_.end()) {
-        if ((db_type == "mysql") ||
-            (db_type == "postgresql")) {
+        if ((db_type == "mysql") || (db_type == "postgresql")) {
             string with = (db_type == "postgresql" ? "pgsql" : db_type);
             isc_throw(InvalidType, "The type of host backend: '" << db_type
                       << "' is not compiled in. Did you forget to use --with-"
@@ -69,11 +68,11 @@ HostDataSourceFactory::add(HostDataSourceList& sources,
     // Call the factory and push the pointer on sources.
     sources.push_back(index->second(parameters));
 
-    // Check the factory did not return NULL.
+    // Check the factory did not return null.
     if (!sources.back()) {
         sources.pop_back();
         isc_throw(Unexpected, "Hosts database " << db_type <<
-                  " factory returned NULL");
+                  " factory returned null");
     }
 }
 
@@ -163,14 +162,18 @@ HostDataSourceFactory::registeredFactory(const std::string& db_type) {
 }
 
 void
-HostDataSourceFactory::printRegistered() {
+HostDataSourceFactory::logRegistered() {
     std::stringstream txt;
 
     for (auto const& x : map_) {
-        txt << x.first << " ";
+        if (!txt.str().empty()) {
+            txt << " ";
+        }
+        txt << x.first;
     }
 
-    LOG_INFO(hosts_logger, HOSTS_BACKENDS_REGISTERED).arg(txt.str());
+    LOG_INFO(hosts_logger, HOSTS_BACKENDS_REGISTERED)
+        .arg(txt.str());
 }
 
 }  // namespace dhcp

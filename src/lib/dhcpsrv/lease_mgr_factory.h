@@ -18,7 +18,6 @@
 namespace isc {
 namespace dhcp {
 
-
 /// @brief No lease manager exception
 ///
 /// Thrown if an attempt is made to get a reference to the current lease
@@ -106,7 +105,7 @@ public:
     /// @brief Type of lease mgr factory
     ///
     /// A factory takes a parameter map and returns a pointer to a lease mgr.
-    /// In case of failure it must throw and not return NULL.
+    /// In case of failure it must throw and not return null.
     typedef std::function<TrackingLeaseMgrPtr (const db::DatabaseConnection::ParameterMap&)> Factory;
 
     /// @brief Register a lease mgr factory
@@ -121,7 +120,8 @@ public:
     /// @return true if the factory was successfully added to the map, false
     /// if it already exists.
     static bool registerFactory(const std::string& db_type,
-                                const Factory& factory, bool no_log = false);
+                                const Factory& factory,
+                                bool no_log = false);
 
     /// @brief Deregister a lease mgr factory
     ///
@@ -141,12 +141,12 @@ public:
     /// @return true if a factory was registered for db_type, false if not.
     static bool registeredFactory(const std::string& db_type);
 
-    /// @brief Prints out all registered backends.
+    /// @brief Logs out all registered backends.
     ///
     /// We need a dedicated method for this, because we sometimes can't log
     /// the backend type when doing early initialization for backends
     /// initialized statically.
-    static void printRegistered();
+    static void logRegistered();
 
 private:
     /// @brief Hold pointer to lease manager

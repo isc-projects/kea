@@ -96,7 +96,7 @@ public:
     /// @brief Type of host data source factory
     ///
     /// A factory takes a parameter map and returns a pointer to a host
-    /// data source. In case of failure it must throw and not return NULL.
+    /// data source. In case of failure it must throw and not return null.
     typedef std::function<HostDataSourcePtr (const db::DatabaseConnection::ParameterMap&)> Factory;
 
     /// @brief Register a host data source factory
@@ -131,12 +131,12 @@ public:
     /// @return true if a factory was registered for db_type, false if not.
     static bool registeredFactory(const std::string& db_type);
 
-    /// @brief Prints out all registered backends.
+    /// @brief Logs out all registered backends.
     ///
     /// We need a dedicated method for this, because we sometimes can't log
     /// the backend type when doing early initialization for backends
     /// initialized statically.
-    static void printRegistered();
+    static void logRegistered();
 
 private:
     /// @brief Factory map

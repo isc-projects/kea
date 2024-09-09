@@ -1036,11 +1036,11 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
         }
     }
 
-    // Print the list of known backends.
-    LeaseMgrFactory::printRegistered();
+    // Log the list of known backends.
+    LeaseMgrFactory::logRegistered();
 
-    // Print the list of known backends.
-    HostDataSourceFactory::printRegistered();
+    // Log the list of known backends.
+    HostDataSourceFactory::logRegistered();
 
     // Moved from the commit block to add the config backend indication.
     if (status_code == CONTROL_RESULT_SUCCESS && (!check_only || extra_checks)) {

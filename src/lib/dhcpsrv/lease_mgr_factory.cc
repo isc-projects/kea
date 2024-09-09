@@ -47,7 +47,7 @@ LeaseMgrFactory::create(const std::string& dbaccess) {
     DatabaseConnection::ParameterMap parameters = DatabaseConnection::parse(dbaccess);
     std::string redacted = DatabaseConnection::redactedAccessString(parameters);
 
-    // Get the database type and open the corresponding database
+    // Get the database type and open the corresponding database.
     DatabaseConnection::ParameterMap::iterator it = parameters.find(type);
     if (it == parameters.end()) {
         LOG_ERROR(dhcpsrv_logger, DHCPSRV_NOTYPE_DB).arg(dbaccess);
@@ -88,8 +88,7 @@ LeaseMgrFactory::create(const std::string& dbaccess) {
 
     // No match?
     if (index == map_.end()) {
-        if ((db_type == "mysql") ||
-            (db_type == "postgresql")) {
+        if ((db_type == "mysql") || (db_type == "postgresql")) {
             LOG_ERROR(dhcpsrv_logger, DHCPSRV_UNKNOWN_DB).arg(db_type);
             string with = (db_type == "postgresql" ? "pgsql" : db_type);
             isc_throw(InvalidType, "The Kea server has not been compiled with "
@@ -106,10 +105,10 @@ LeaseMgrFactory::create(const std::string& dbaccess) {
     // Call the factory.
     getLeaseMgrPtr() = index->second(parameters);
 
-    // Check the factory did not return NULL.
+    // Check the factory did not return null.
     if (!getLeaseMgrPtr()) {
         isc_throw(Unexpected, "Lease database " << db_type <<
-                  " factory returned NULL");
+                  " factory returned null");
     }
 }
 
@@ -159,7 +158,7 @@ LeaseMgrFactory::haveInstance() {
 TrackingLeaseMgr&
 LeaseMgrFactory::instance() {
     TrackingLeaseMgr* lmptr = getLeaseMgrPtr().get();
-    if (lmptr == NULL) {
+    if (!lmptr) {
         isc_throw(NoLeaseManager, "no current lease manager is available");
     }
     return (*lmptr);
@@ -208,14 +207,18 @@ LeaseMgrFactory::registeredFactory(const std::string& db_type) {
 }
 
 void
-LeaseMgrFactory::printRegistered() {
+LeaseMgrFactory::logRegistered() {
     std::stringstream txt;
 
     for (auto const& x : map_) {
-        txt << x.first << " ";
+        if (!txt.str().empty()) {
+            txt << " ";
+        }
+        txt << x.first;
     }
 
-    LOG_INFO(dhcpsrv_logger, DHCPSRV_LEASE_MGR_BACKENDS_REGISTERED).arg(txt.str());
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_LEASE_MGR_BACKENDS_REGISTERED)
+        .arg(txt.str());
 }
 
 } // namespace dhcp

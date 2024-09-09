@@ -173,7 +173,7 @@ TEST_F(LeaseMgrFactoryTest, notype) {
     EXPECT_FALSE(LeaseMgrFactory::haveInstance());
 }
 
-// Verify that factory must not return NULL
+// Verify that factory must not return null
 TEST_F(LeaseMgrFactoryTest, null) {
     EXPECT_TRUE(LeaseMgrFactory::registerFactory("mem", factory0));
     EXPECT_THROW(LeaseMgrFactory::create("type=mem"),
