@@ -1,7 +1,7 @@
 SUBDIRS = . testutils tests
 
 AM_CPPFLAGS  =
-AM_CPPFLAGS += -DKEA_ADMIN=\"@prefix@/sbin/kea-admin\"
+AM_CPPFLAGS += -DKEA_ADMIN=\"@sbindir@/kea-admin\"
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(PGSQL_CPPFLAGS)
 
