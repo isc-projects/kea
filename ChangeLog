@@ -1,3 +1,8 @@
+2281.	[bug]		andrei
+	An issue was fixed where kea-admin and kea-lfc were not found by
+	the Kea DHCP servers when installed via a custom defined sbindir.
+	(Gitlab #3504)
+
 2280.	[func]		fdupont
 	IPv6 host reservation syntax now accepts a new entry
 	"excluded-prefixes": a pd-exclude option (RFC6603)
