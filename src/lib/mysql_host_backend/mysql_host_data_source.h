@@ -10,6 +10,7 @@
 #include <database/database_connection.h>
 #include <database/db_exceptions.h>
 #include <dhcpsrv/base_host_data_source.h>
+#include <dhcpsrv/host_data_source_factory.h>
 #include <mysql/mysql_connection.h>
 
 #include <stdint.h>
@@ -529,6 +530,27 @@ public:
 private:
     /// @brief Pointer to the implementation of the @ref MySqlHostDataSource.
     MySqlHostDataSourceImplPtr impl_;
+};
+
+struct MySqlHostDataSourceInit {
+    // Constructor registers
+    MySqlHostDataSourceInit() {
+        isc::dhcp::HostDataSourceFactory::registerFactory("mysql", factory, true);
+    }
+
+    // Destructor deregisters
+    ~MySqlHostDataSourceInit() {
+        isc::dhcp::HostDataSourceFactory::deregisterFactory("mysql", true);
+    }
+
+    // Factory class method
+    static HostDataSourcePtr
+    factory(const isc::db::DatabaseConnection::ParameterMap& parameters) {
+        // TODO - fix messages
+        //LOG_INFO(hosts_logger, DHCPSRV_MYSQL_HOST_DB)
+        //    .arg(DatabaseConnection::redactedAccessString(parameters));
+        return (HostDataSourcePtr(new MySqlHostDataSource(parameters)));
+    }
 };
 
 }

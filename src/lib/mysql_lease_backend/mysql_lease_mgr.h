@@ -1297,6 +1297,27 @@ private:
     std::string timer_name_;
 };
 
+struct MySqlLeaseMgrInit {
+    // Constructor registers
+    MySqlLeaseMgrInit() {
+        LeaseMgrFactory::registerFactory("mysql", factory, true);
+    }
+
+    // Destructor deregisters
+    ~MySqlLeaseMgrInit() {
+        LeaseMgrFactory::deregisterFactory("mysql", true);
+    }
+
+    // Factory class method
+    static TrackingLeaseMgrPtr
+    factory(const isc::db::DatabaseConnection::ParameterMap& parameters) {
+        // TODO - fix messages
+        //LOG_INFO(dhcpsrv_logger, DHCPSRV_MYSQL_DB)
+        //    .arg(DatabaseConnection::redactedAccessString(parameters));
+        return (TrackingLeaseMgrPtr(new MySqlLeaseMgr(parameters)));
+    }
+};
+
 }  // namespace dhcp
 }  // namespace isc
 

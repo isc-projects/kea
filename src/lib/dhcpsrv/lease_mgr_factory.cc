@@ -9,13 +9,6 @@
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/memfile_lease_mgr.h>
-#ifdef HAVE_MYSQL
-#include <dhcpsrv/mysql_lease_mgr.h>
-#endif
-#ifdef HAVE_PGSQL
-#include <dhcpsrv/pgsql_lease_mgr.h>
-#endif
-
 #include <boost/algorithm/string.hpp>
 
 #include <algorithm>
@@ -54,28 +47,6 @@ LeaseMgrFactory::create(const std::string& dbaccess) {
         isc_throw(InvalidParameter, "Database configuration parameters do not "
                   "contain the 'type' keyword");
     }
-
-    // Code will be moved to appropriate hook library.
-#ifdef HAVE_MYSQL
-    // Factory method
-    auto mysql_factory = [](const DatabaseConnection::ParameterMap& parameters) -> TrackingLeaseMgrPtr {
-        LOG_INFO(dhcpsrv_logger, DHCPSRV_MYSQL_DB)
-            .arg(DatabaseConnection::redactedAccessString(parameters));
-        return (TrackingLeaseMgrPtr(new MySqlLeaseMgr(parameters)));
-    };
-    LeaseMgrFactory::registerFactory("mysql", mysql_factory, true);
-#endif
-
-    // Code will be moved to appropriate hook library.
-#ifdef HAVE_PGSQL
-    // Factory method
-    auto pgsql_factory = [](const DatabaseConnection::ParameterMap& parameters) -> TrackingLeaseMgrPtr {
-        LOG_INFO(dhcpsrv_logger, DHCPSRV_PGSQL_DB)
-            .arg(DatabaseConnection::redactedAccessString(parameters));
-        return (TrackingLeaseMgrPtr(new PgSqlLeaseMgr(parameters)));
-    };
-    LeaseMgrFactory::registerFactory("postgresql", pgsql_factory, true);
-#endif
 
     // Factory method
     auto memfile_factory = [](const DatabaseConnection::ParameterMap& parameters) -> TrackingLeaseMgrPtr {
@@ -124,14 +95,6 @@ LeaseMgrFactory::destroy() {
     }
     getLeaseMgrPtr().reset();
     LeaseMgrFactory::deregisterFactory("memfile", true);
-    // Code will be moved to appropriate hook library.
-#ifdef HAVE_MYSQL
-    LeaseMgrFactory::deregisterFactory("mysql", true);
-#endif
-    // Code will be moved to appropriate hook library.
-#ifdef HAVE_PGSQL
-    LeaseMgrFactory::deregisterFactory("postgresql", true);
-#endif
 }
 
 void

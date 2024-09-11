@@ -351,6 +351,19 @@ public:
     }
 };
 
+template <typename T>
+struct Initializer {
+    /// @brief Constructor.
+    Initializer() : init_(new T()) {
+    }
+
+    /// @brief Destructo.
+    ~Initializer() = default;
+
+    /// @brief smart pointer to an instance of an initializer.
+    std::unique_ptr<T> init_;
+};
+
 }  // namespace db
 }  // namespace isc
 

@@ -17,19 +17,20 @@ if USE_STATIC_LINK
 AM_LDFLAGS = -static
 endif
 
+CLEANFILES  = *.gcno *.gcda
+
 EXTRA_DIST = dhcp6.dox dhcp6_hooks.dox dhcp4o6.dox
 EXTRA_DIST += dhcp6_parser.yy
-
 
 # convenience archive
 
 noinst_LTLIBRARIES = libdhcp6.la
 
 libdhcp6_la_SOURCES  =
-libdhcp6_la_SOURCES += dhcp6_log.cc dhcp6_log.h
-libdhcp6_la_SOURCES += dhcp6_srv.cc dhcp6_srv.h
 libdhcp6_la_SOURCES += ctrl_dhcp6_srv.cc ctrl_dhcp6_srv.h
 libdhcp6_la_SOURCES += json_config_parser.cc json_config_parser.h
+libdhcp6_la_SOURCES += dhcp6_log.cc dhcp6_log.h
+libdhcp6_la_SOURCES += dhcp6_srv.cc dhcp6_srv.h
 libdhcp6_la_SOURCES += dhcp6to4_ipc.cc dhcp6to4_ipc.h
 libdhcp6_la_SOURCES += client_handler.cc client_handler.h
 libdhcp6_la_SOURCES += dhcp6_lexer.ll location.hh
@@ -53,12 +54,18 @@ kea_dhcp6_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 
+# to be removed
 if HAVE_PGSQL
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
+kea_dhcp6_LDADD += $(top_builddir)/src/lib/pgsql_lease_backend/libkea-pgsql-lease-backend.la
+kea_dhcp6_LDADD += $(top_builddir)/src/lib/pgsql_host_backend/libkea-pgsql-host-backend.la
 endif
 
+# to be removed
 if HAVE_MYSQL
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
+kea_dhcp6_LDADD += $(top_builddir)/src/lib/mysql_lease_backend/libkea-mysql-lease-backend.la
+kea_dhcp6_LDADD += $(top_builddir)/src/lib/mysql_host_backend/libkea-mysql-host-backend.la
 endif
 
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/database/libkea-database.la

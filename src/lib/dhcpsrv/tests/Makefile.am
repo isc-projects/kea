@@ -59,7 +59,6 @@ libco3_la_LDFLAGS = -avoid-version -export-dynamic -module -rpath /nowhere
 TESTS += libdhcpsrv_unittests
 
 libdhcpsrv_unittests_SOURCES  = run_unittests.cc
-libdhcpsrv_unittests_SOURCES += alloc_engine_utils.cc alloc_engine_utils.h
 libdhcpsrv_unittests_SOURCES += alloc_engine_expiration_unittest.cc
 libdhcpsrv_unittests_SOURCES += alloc_engine_hooks_unittest.cc
 libdhcpsrv_unittests_SOURCES += alloc_engine4_unittest.cc
@@ -116,16 +115,6 @@ libdhcpsrv_unittests_SOURCES += memfile_lease_mgr_unittest.cc
 libdhcpsrv_unittests_SOURCES += multi_threading_config_parser_unittest.cc
 libdhcpsrv_unittests_SOURCES += dhcp_parsers_unittest.cc
 libdhcpsrv_unittests_SOURCES += ncr_generator_unittest.cc
-if HAVE_MYSQL
-libdhcpsrv_unittests_SOURCES += mysql_lease_mgr_unittest.cc
-libdhcpsrv_unittests_SOURCES += mysql_lease_extended_info_unittest.cc
-libdhcpsrv_unittests_SOURCES += mysql_host_data_source_unittest.cc
-endif
-if HAVE_PGSQL
-libdhcpsrv_unittests_SOURCES += pgsql_lease_mgr_unittest.cc
-libdhcpsrv_unittests_SOURCES += pgsql_lease_extended_info_unittest.cc
-libdhcpsrv_unittests_SOURCES += pgsql_host_data_source_unittest.cc
-endif
 libdhcpsrv_unittests_SOURCES += pool_unittest.cc
 libdhcpsrv_unittests_SOURCES += random_allocation_state_unittest.cc
 libdhcpsrv_unittests_SOURCES += random_allocator_unittest.cc

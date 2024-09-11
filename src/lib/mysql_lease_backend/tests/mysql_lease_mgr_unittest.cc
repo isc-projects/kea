@@ -8,7 +8,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <dhcpsrv/mysql_lease_mgr.h>
+#include <mysql_lease_backend/mysql_lease_mgr.h>
 #include <dhcpsrv/testutils/test_utils.h>
 #include <dhcpsrv/testutils/generic_lease_mgr_unittest.h>
 #include <dhcpsrv/testutils/mysql_generic_backend_unittest.h>
@@ -38,7 +38,6 @@ using namespace isc::util;
 using namespace std;
 
 namespace {
-
 
 /// @brief Test fixture class for testing MySQL Lease Manager
 ///
@@ -106,6 +105,9 @@ public:
         LeaseMgrFactory::create(validMySQLConnectionString());
         lmptr_ = &(LeaseMgrFactory::instance());
     }
+
+    /// @brief Initializer.
+    Initializer<MySqlLeaseMgrInit> init_;
 };
 
 /// @brief Check that database can be opened
@@ -115,6 +117,7 @@ public:
 /// MySqlLeaseMgr test fixture set.  This test checks that the database can be
 /// opened: the fixtures assume that and check basic operations.
 TEST(MySqlOpenTest, OpenDatabase) {
+    Initializer<MySqlLeaseMgrInit> init;
     // Explicitly disable Multi-Threading.
     MultiThreadingMgr::instance().setMode(false);
 
@@ -217,6 +220,7 @@ TEST(MySqlOpenTest, OpenDatabase) {
 
 /// @brief Check that database can be opened with Multi-Threading
 TEST(MySqlOpenTest, OpenDatabaseMultiThreading) {
+    Initializer<MySqlLeaseMgrInit> init;
     // Enable Multi-Threading.
     MultiThreadingTest mt(true);
 
@@ -990,6 +994,9 @@ public:
         return (connectionString(MYSQL_VALID_TYPE, INVALID_NAME, VALID_HOST,
                                  VALID_USER, VALID_PASSWORD));
     }
+
+    /// @brief Initializer.
+    Initializer<MySqlLeaseMgrInit> init_;
 };
 
 /// @brief Verifies that loss of connectivity to MySQL is handled correctly.
@@ -1352,6 +1359,41 @@ TEST_F(MySqlLeaseMgrTest, recreateWithoutCallbacks) {
 
 TEST_F(MySqlLeaseMgrTest, bigStats) {
     testBigStats();
+}
+
+/// @brief Test fixture class for testing @ref CfgDbAccessTest using MySQL
+/// backend.
+class CfgMySqlDbAccessTest : public ::testing::Test {
+public:
+
+    /// @brief Constructor.
+    CfgMySqlDbAccessTest() {
+        // Ensure we have the proper schema with no transient data.
+        db::test::createMySQLSchema();
+    }
+
+    /// @brief Destructor.
+    virtual ~CfgMySqlDbAccessTest() {
+        // If data wipe enabled, delete transient data otherwise destroy the schema
+        db::test::destroyMySQLSchema();
+        LeaseMgrFactory::destroy();
+    }
+
+    /// @brief Initializer.
+    Initializer<MySqlLeaseMgrInit> init_;
+};
+
+// Tests that MySQL lease manager and host data source can be created from a
+// specified configuration.
+TEST_F(CfgMySqlDbAccessTest, createManagers) {
+    CfgDbAccess cfg;
+    ASSERT_NO_THROW(cfg.setLeaseDbAccessString(db::test::validMySQLConnectionString()));
+    ASSERT_NO_THROW(cfg.createManagers());
+
+    ASSERT_NO_THROW({
+        LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
+        EXPECT_EQ("mysql", lease_mgr.getType());
+    });
 }
 
 }  // namespace

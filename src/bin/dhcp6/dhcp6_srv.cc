@@ -55,14 +55,14 @@
 #include <log/logger.h>
 #include <cryptolink/cryptolink.h>
 #include <process/cfgrpt/config_report.h>
+#include <dhcpsrv/memfile_lease_mgr.h>
 
 #ifdef HAVE_MYSQL
-#include <dhcpsrv/mysql_lease_mgr.h>
+#include <mysql_lease_backend/mysql_lease_mgr.h>
 #endif
 #ifdef HAVE_PGSQL
-#include <dhcpsrv/pgsql_lease_mgr.h>
+#include <pgsql_lease_backend/pgsql_lease_mgr.h>
 #endif
-#include <dhcpsrv/memfile_lease_mgr.h>
 
 #include <boost/tokenizer.hpp>
 #include <boost/foreach.hpp>

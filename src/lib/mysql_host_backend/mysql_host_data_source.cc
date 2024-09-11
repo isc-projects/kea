@@ -17,7 +17,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/host_mgr.h>
-#include <dhcpsrv/mysql_host_data_source.h>
+#include <mysql_host_data_source.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <util/buffer.h>
 #include <util/multi_threading_mgr.h>

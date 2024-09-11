@@ -12,6 +12,7 @@
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
 #include <config/http_command_mgr.h>
+#include <database/database_connection.h>
 #include <database/dbaccess_parser.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/dhcp6_log.h>
@@ -50,6 +51,16 @@
 #include <util/multi_threading_mgr.h>
 #include <util/triplet.h>
 
+#ifdef HAVE_MYSQL
+#include <mysql_lease_backend/mysql_lease_mgr.h>
+#include <mysql_host_backend/mysql_host_data_source.h>
+#endif
+
+#ifdef HAVE_PGSQL
+#include <pgsql_lease_backend/pgsql_lease_mgr.h>
+#include <pgsql_host_backend/pgsql_host_data_source.h>
+#endif
+
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -66,6 +77,7 @@
 using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::data;
+using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::hooks;
 using namespace isc::process;
@@ -73,7 +85,24 @@ using namespace isc::util;
 using namespace isc;
 using namespace std;
 
+//
+// Register database backends
+//
 namespace {
+
+// Code will be moved to appropriate hook library.
+#ifdef HAVE_MYSQL
+// Database backend will be registered at object initialization
+MySqlLeaseMgrInit mysql_init_lease;
+MySqlHostDataSourceInit mysql_init_host;
+#endif
+
+// Code will be moved to appropriate hook library.
+#ifdef HAVE_PGSQL
+// Database backend will be registered at object initialization
+PgSqlLeaseMgrInit pgsql_init_lease;
+PgSqlHostDataSourceInit pgsql_init_host;
+#endif
 
 /// @brief Checks if specified directory exists.
 ///

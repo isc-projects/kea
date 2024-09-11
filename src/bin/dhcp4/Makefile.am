@@ -54,12 +54,18 @@ kea_dhcp4_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 
+# to be removed
 if HAVE_PGSQL
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
+kea_dhcp4_LDADD += $(top_builddir)/src/lib/pgsql_lease_backend/libkea-pgsql-lease-backend.la
+kea_dhcp4_LDADD += $(top_builddir)/src/lib/pgsql_host_backend/libkea-pgsql-host-backend.la
 endif
 
+# to be removed
 if HAVE_MYSQL
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
+kea_dhcp4_LDADD += $(top_builddir)/src/lib/mysql_lease_backend/libkea-mysql-lease-backend.la
+kea_dhcp4_LDADD += $(top_builddir)/src/lib/mysql_host_backend/libkea-mysql-host-backend.la
 endif
 
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/database/libkea-database.la

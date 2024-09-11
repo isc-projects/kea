@@ -7,7 +7,7 @@
 #include <config.h>
 #include <asiolink/io_address.h>
 #include <dhcpsrv/random_allocator.h>
-#include <dhcpsrv/tests/alloc_engine_utils.h>
+#include <dhcpsrv/testutils/alloc_engine_utils.h>
 #include <boost/make_shared.hpp>
 #include <gtest/gtest.h>
 #include <set>

@@ -1257,6 +1257,27 @@ private:
     std::string timer_name_;
 };
 
+struct PgSqlLeaseMgrInit {
+    // Constructor registers
+    PgSqlLeaseMgrInit() {
+        LeaseMgrFactory::registerFactory("postgresql", factory, true);
+    }
+
+    // Destructor deregisters
+    ~PgSqlLeaseMgrInit() {
+        LeaseMgrFactory::deregisterFactory("postgresql", true);
+    }
+
+    // Factory class method
+    static TrackingLeaseMgrPtr
+    factory(const isc::db::DatabaseConnection::ParameterMap& parameters) {
+        // TODO - fix messages
+        //LOG_INFO(dhcpsrv_logger, DHCPSRV_PGSQL_DB)
+        //    .arg(DatabaseConnection::redactedAccessString(parameters));
+        return (TrackingLeaseMgrPtr(new PgSqlLeaseMgr(parameters)));
+    }
+};
+
 }  // namespace dhcp
 }  // namespace isc
 

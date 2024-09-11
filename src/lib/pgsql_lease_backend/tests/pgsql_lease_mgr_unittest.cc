@@ -8,7 +8,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <dhcpsrv/pgsql_lease_mgr.h>
+#include <pgsql_lease_backend/pgsql_lease_mgr.h>
 #include <dhcpsrv/testutils/test_utils.h>
 #include <dhcpsrv/testutils/generic_lease_mgr_unittest.h>
 #include <dhcpsrv/testutils/pgsql_generic_backend_unittest.h>
@@ -38,7 +38,6 @@ using namespace isc::util;
 using namespace std;
 
 namespace {
-
 
 /// @brief Test fixture class for testing PostgreSQL Lease Manager
 ///
@@ -106,6 +105,9 @@ public:
         LeaseMgrFactory::create(validPgSQLConnectionString());
         lmptr_ = &(LeaseMgrFactory::instance());
     }
+
+    /// @brief Initializer.
+    Initializer<PgSqlLeaseMgrInit> init_;
 };
 
 /// @brief Check that database can be opened
@@ -115,6 +117,7 @@ public:
 /// PgSqlLeaseMgr test fixture set.  This test checks that the database can be
 /// opened: the fixtures assume that and check basic operations.
 TEST(PgSqlOpenTest, OpenDatabase) {
+    Initializer<PgSqlLeaseMgrInit> init;
     // Explicitly disable Multi-Threading.
     MultiThreadingMgr::instance().setMode(false);
 
@@ -225,6 +228,7 @@ TEST(PgSqlOpenTest, OpenDatabase) {
 
 /// @brief Check that database can be opened with Multi-Threading
 TEST(PgSqlOpenTest, OpenDatabaseMultiThreading) {
+    Initializer<PgSqlLeaseMgrInit> init;
     // Enable Multi-Threading.
     MultiThreadingTest mt(true);
 
@@ -957,6 +961,9 @@ public:
         return (connectionString(PGSQL_VALID_TYPE, INVALID_NAME, VALID_HOST,
                                  VALID_USER, VALID_PASSWORD));
     }
+
+    /// @brief Initializer.
+    Initializer<PgSqlLeaseMgrInit> init_;
 };
 
 /// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
@@ -1346,6 +1353,41 @@ TEST_F(PgSqlLeaseMgrTest, recreateWithoutCallbacks) {
 
 TEST_F(PgSqlLeaseMgrTest, bigStats) {
     testBigStats();
+}
+
+/// @brief Test fixture class for testing @ref CfgDbAccessTest using PgSQL
+/// backend.
+class CfgPgSqlDbAccessTest : public ::testing::Test {
+public:
+
+    /// @brief Constructor.
+    CfgPgSqlDbAccessTest() {
+        // Ensure we have the proper schema with no transient data.
+        db::test::createPgSQLSchema();
+    }
+
+    /// @brief Destructor.
+    virtual ~CfgPgSqlDbAccessTest() {
+        // If data wipe enabled, delete transient data otherwise destroy the schema
+        db::test::destroyPgSQLSchema();
+        LeaseMgrFactory::destroy();
+    }
+
+    /// @brief Initializer.
+    Initializer<PgSqlLeaseMgrInit> init_;
+};
+
+// Tests that PostgreSQL lease manager and host data source can be created from a
+// specified configuration.
+TEST_F(CfgPgSqlDbAccessTest, createManagers) {
+    CfgDbAccess cfg;
+    ASSERT_NO_THROW(cfg.setLeaseDbAccessString(db::test::validPgSQLConnectionString()));
+    ASSERT_NO_THROW(cfg.createManagers());
+
+    ASSERT_NO_THROW({
+        LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
+        EXPECT_EQ("postgresql", lease_mgr.getType());
+    });
 }
 
 }  // namespace

@@ -377,8 +377,7 @@ public:
     NameDhcpv4SrvTest()
         : Dhcpv4SrvTest(),
           d2_mgr_(CfgMgr::instance().getD2ClientMgr()),
-          iface_mgr_test_config_(true)
-    {
+          iface_mgr_test_config_(true) {
         srv_ = boost::make_shared<NakedDhcpv4Srv>(0);
         IfaceMgr::instance().openSockets4();
         // Config DDNS to be enabled, all controls off
@@ -853,7 +852,7 @@ public:
     /// @param client_flags Mask of client FQDN flags which are true
     /// @param response_flags Mask of expected FQDN flags in the response
     void flagVsConfigScenario(const uint8_t client_flags,
-                       const uint8_t response_flags) {
+                              const uint8_t response_flags) {
         // Create fake interfaces and open fake sockets.
         IfaceMgrTestConfig iface_config(true);
         IfaceMgr::instance().openSockets4();
@@ -890,7 +889,6 @@ public:
             }
         }
     }
-
 
     /// @brief Checks the value of an integer statistic for a given subnet.
     ///
@@ -1160,7 +1158,6 @@ TEST_F(NameDhcpv4SrvTest, noConflictResolution) {
                             lease->cltt_, 100, false, NO_CHECK_WITH_DHCID);
 }
 
-
 // Verifies that createNameChange request only generates requests
 // if the situation dictates that it should. It checks:
 //
@@ -1347,7 +1344,6 @@ TEST_F(NameDhcpv4SrvTest, processRequestEmptyDomainNameDisabled) {
     EXPECT_EQ(hostname, fqdn->getDomainName());
     EXPECT_EQ(Option4ClientFqdn::FULL, fqdn->getDomainNameType());
 }
-
 
 // Test that server generates client's hostname from the IP address assigned
 // to it when Hostname option carries the top level domain-name.
@@ -2183,7 +2179,6 @@ TEST_F(NameDhcpv4SrvTest, sanitizeHostDefault) {
         }
     }
 }
-
 
 // Verifies that setting hostname-char-set sanitizes Hostname option
 // values received from clients.

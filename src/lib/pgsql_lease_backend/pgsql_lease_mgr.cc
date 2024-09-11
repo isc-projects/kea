@@ -14,7 +14,7 @@
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/dhcpsrv_exceptions.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <dhcpsrv/pgsql_lease_mgr.h>
+#include <pgsql_lease_mgr.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <util/multi_threading_mgr.h>
 

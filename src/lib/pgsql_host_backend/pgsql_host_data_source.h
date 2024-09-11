@@ -9,6 +9,7 @@
 
 #include <database/database_connection.h>
 #include <dhcpsrv/base_host_data_source.h>
+#include <dhcpsrv/host_data_source_factory.h>
 #include <pgsql/pgsql_connection.h>
 #include <pgsql/pgsql_exchange.h>
 
@@ -581,6 +582,27 @@ public:
 private:
     /// @brief Pointer to the implementation of the @ref PgSqlHostDataSource.
     PgSqlHostDataSourceImplPtr impl_;
+};
+
+struct PgSqlHostDataSourceInit {
+    // Constructor registers
+    PgSqlHostDataSourceInit() {
+        isc::dhcp::HostDataSourceFactory::registerFactory("postgresql", factory, true);
+    }
+
+    // Destructor deregisters
+    ~PgSqlHostDataSourceInit() {
+        isc::dhcp::HostDataSourceFactory::deregisterFactory("postgresql", true);
+    }
+
+    // Factory class method
+    static HostDataSourcePtr
+    factory(const isc::db::DatabaseConnection::ParameterMap& parameters) {
+        // TODO - fix messages
+        //LOG_INFO(hosts_logger, DHCPSRV_PGSQL_HOST_DB)
+        //    .arg(DatabaseConnection::redactedAccessString(parameters));
+        return (HostDataSourcePtr(new PgSqlHostDataSource(parameters)));
+    }
 };
 
 }  // namespace dhcp

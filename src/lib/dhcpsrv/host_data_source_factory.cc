@@ -11,14 +11,6 @@
 #include <dhcpsrv/hosts_log.h>
 #include <log/logger_support.h>
 
-#ifdef HAVE_MYSQL
-#include <dhcpsrv/mysql_host_data_source.h>
-#endif
-
-#ifdef HAVE_PGSQL
-#include <dhcpsrv/pgsql_host_data_source.h>
-#endif
-
 #include <boost/algorithm/string.hpp>
 
 #include <algorithm>
@@ -178,65 +170,3 @@ HostDataSourceFactory::logRegistered() {
 
 }  // namespace dhcp
 }  // namespace isc
-
-//
-// Register database backends
-//
-
-using namespace isc::dhcp;
-
-namespace {
-
-// Code will be moved to appropriate hook library.
-#ifdef HAVE_MYSQL
-struct MySqlHostDataSourceInit {
-    // Constructor registers
-    MySqlHostDataSourceInit() {
-        HostDataSourceFactory::registerFactory("mysql", factory, true);
-    }
-
-    // Destructor deregisters
-    ~MySqlHostDataSourceInit() {
-        HostDataSourceFactory::deregisterFactory("mysql", true);
-    }
-
-    // Factory class method
-    static HostDataSourcePtr
-    factory(const DatabaseConnection::ParameterMap& parameters) {
-        LOG_INFO(hosts_logger, DHCPSRV_MYSQL_HOST_DB)
-            .arg(DatabaseConnection::redactedAccessString(parameters));
-        return (HostDataSourcePtr(new MySqlHostDataSource(parameters)));
-    }
-};
-
-// Database backend will be registered at object initialization
-MySqlHostDataSourceInit mysql_init_;
-#endif
-
-// Code will be moved to appropriate hook library.
-#ifdef HAVE_PGSQL
-struct PgSqlHostDataSourceInit {
-    // Constructor registers
-    PgSqlHostDataSourceInit() {
-        HostDataSourceFactory::registerFactory("postgresql", factory, true);
-    }
-
-    // Destructor deregisters
-    ~PgSqlHostDataSourceInit() {
-        HostDataSourceFactory::deregisterFactory("postgresql", true);
-    }
-
-    // Factory class method
-    static HostDataSourcePtr
-    factory(const DatabaseConnection::ParameterMap& parameters) {
-        LOG_INFO(hosts_logger, DHCPSRV_PGSQL_HOST_DB)
-            .arg(DatabaseConnection::redactedAccessString(parameters));
-        return (HostDataSourcePtr(new PgSqlHostDataSource(parameters)));
-    }
-};
-
-// Database backend will be registered at object initialization
-PgSqlHostDataSourceInit pgsql_init_;
-#endif
-
-} // end of anonymous namespace

@@ -402,6 +402,7 @@ TEST_F(Dhcp4SrvD2Test, queueMaxError) {
     // Verify that updates are disabled and we are no longer sending.
     ASSERT_FALSE(mgr.ddnsEnabled());
     ASSERT_FALSE(mgr.amSending());
+    mgr.clearQueue();
 }
 
 // Tests invalid config with TCP protocol

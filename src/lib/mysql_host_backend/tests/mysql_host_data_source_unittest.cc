@@ -10,7 +10,7 @@
 #include <dhcpsrv/testutils/test_utils.h>
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/host.h>
-#include <dhcpsrv/mysql_host_data_source.h>
+#include <mysql_host_backend/mysql_host_data_source.h>
 #include <dhcpsrv/testutils/generic_host_data_source_unittest.h>
 #include <dhcpsrv/testutils/host_data_source_utils.h>
 #include <dhcpsrv/host_mgr.h>
@@ -153,6 +153,8 @@ public:
         return (countRowsInTable("ipv6_reservations"));
     }
 
+    /// @brief Initializer.
+    Initializer<MySqlHostDataSourceInit> init_;
 };
 
 /// @brief Check that database can be opened
@@ -162,6 +164,7 @@ public:
 /// MySqlHostMgr test fixture set.  This test checks that the database can be
 /// opened: the fixtures assume that and check basic operations.
 TEST(MySqlHostDataSource, OpenDatabase) {
+    Initializer<MySqlHostDataSourceInit> init;
     // Schema needs to be created for the test to work.
     destroyMySQLSchema();
     createMySQLSchema();
@@ -250,6 +253,7 @@ TEST(MySqlHostDataSource, OpenDatabase) {
 /// MySqlHostMgr test fixture set.  This test checks that the database can be
 /// opened: the fixtures assume that and check basic operations.
 TEST(MySqlHostDataSource, OpenDatabaseMultiThreading) {
+    Initializer<MySqlHostDataSourceInit> init;
     // Enable Multi-Threading.
     MultiThreadingTest mt(true);
 
@@ -351,6 +355,7 @@ bool db_lost_callback(ReconnectCtlPtr /* db_conn_retry */) {
 /// in a unit test is next to impossible. That has to be done
 /// as a system test.
 TEST(MySqlHostDataSource, NoCallbackOnOpenFail) {
+    Initializer<MySqlHostDataSourceInit> init;
     // Schema needs to be created for the test to work.
     destroyMySQLSchema();
     createMySQLSchema();
@@ -375,6 +380,7 @@ TEST(MySqlHostDataSource, NoCallbackOnOpenFail) {
 /// in a unit test is next to impossible. That has to be done
 /// as a system test.
 TEST(MySqlHostDataSource, NoCallbackOnOpenFailMultiThreading) {
+    Initializer<MySqlHostDataSourceInit> init;
     // Enable Multi-Threading.
     MultiThreadingTest mt(true);
 
@@ -1525,6 +1531,9 @@ protected:
 
     /// @brief Rollback and drop MySQL schema after the test.
     virtual void TearDown();
+
+    /// @brief Initializer.
+    Initializer<MySqlHostDataSourceInit> init_;
 };
 
 void
@@ -1582,6 +1591,9 @@ public:
         return (connectionString(MYSQL_VALID_TYPE, INVALID_NAME, VALID_HOST,
                                  VALID_USER, VALID_PASSWORD));
     }
+
+    /// @brief Initializer.
+    Initializer<MySqlHostDataSourceInit> init_;
 };
 
 // This test verifies that reservations for a particular client can
@@ -1840,6 +1852,92 @@ TEST_F(MySQLHostMgrDbLostCallbackTest, testDbLostAndFailedAfterTimeoutCallback) 
 TEST_F(MySQLHostMgrDbLostCallbackTest, testDbLostAndFailedAfterTimeoutCallbackMultiThreading) {
     MultiThreadingTest mt(true);
     testDbLostAndFailedAfterTimeoutCallback();
+}
+
+/// @brief Test fixture class for testing @ref CfgDbAccessTest using MySQL
+/// backend.
+class CfgMySqlDbAccessTest : public ::testing::Test {
+public:
+
+    /// @brief Constructor.
+    CfgMySqlDbAccessTest() {
+        // Ensure we have the proper schema with no transient data.
+        db::test::createMySQLSchema();
+    }
+
+    /// @brief Destructor.
+    virtual ~CfgMySqlDbAccessTest() {
+        // If data wipe enabled, delete transient data otherwise destroy the schema
+        db::test::destroyMySQLSchema();
+    }
+
+    /// @brief Initializer.
+    Initializer<MySqlHostDataSourceInit> init_;
+};
+
+// Tests that MySQL lease manager and host data source can be created from a
+// specified configuration.
+TEST_F(CfgMySqlDbAccessTest, createManagers) {
+    CfgDbAccess cfg;
+    ASSERT_NO_THROW(cfg.setLeaseDbAccessString("type=memfile persist=false universe=4"));
+    ASSERT_NO_THROW(cfg.setHostDbAccessString(db::test::validMySQLConnectionString()));
+    ASSERT_NO_THROW(cfg.createManagers());
+
+    ASSERT_NO_THROW({
+        const HostDataSourcePtr& host_data_source =
+            HostMgr::instance().getHostDataSource();
+        ASSERT_TRUE(host_data_source);
+        EXPECT_EQ("mysql", host_data_source->getType());
+    });
+
+    // Because of the lazy initialization of the HostMgr instance, it is
+    // possible that the first call to the instance() function tosses
+    // existing connection to the database created by the call to
+    // createManagers(). Let's make sure that this doesn't happen.
+    ASSERT_NO_THROW(HostMgr::instance());
+
+    ASSERT_NO_THROW({
+        const HostDataSourcePtr& host_data_source =
+            HostMgr::instance().getHostDataSource();
+        ASSERT_TRUE(host_data_source);
+        EXPECT_EQ("mysql", host_data_source->getType());
+    });
+
+    EXPECT_TRUE(HostMgr::instance().getIPReservationsUnique());
+}
+
+// Tests that the createManagers function utilizes the setting in the
+// CfgDbAccess class which controls whether the IP reservations must
+// be unique or can be non-unique.
+TEST_F(CfgMySqlDbAccessTest, createManagersIPResrvUnique) {
+    CfgDbAccess cfg;
+
+    cfg.setIPReservationsUnique(false);
+    ASSERT_NO_THROW(cfg.setLeaseDbAccessString("type=memfile persist=false universe=6"));
+    ASSERT_NO_THROW(cfg.setHostDbAccessString(db::test::validMySQLConnectionString()));
+    ASSERT_NO_THROW(cfg.createManagers());
+
+    ASSERT_NO_THROW({
+        const HostDataSourcePtr& host_data_source =
+            HostMgr::instance().getHostDataSource();
+        ASSERT_TRUE(host_data_source);
+        EXPECT_EQ("mysql", host_data_source->getType());
+    });
+
+    // Because of the lazy initialization of the HostMgr instance, it is
+    // possible that the first call to the instance() function tosses
+    // existing connection to the database created by the call to
+    // createManagers(). Let's make sure that this doesn't happen.
+    ASSERT_NO_THROW(HostMgr::instance());
+
+    ASSERT_NO_THROW({
+        const HostDataSourcePtr& host_data_source =
+            HostMgr::instance().getHostDataSource();
+        ASSERT_TRUE(host_data_source);
+        EXPECT_EQ("mysql", host_data_source->getType());
+    });
+
+    EXPECT_FALSE(HostMgr::instance().getIPReservationsUnique());
 }
 
 }  // namespace

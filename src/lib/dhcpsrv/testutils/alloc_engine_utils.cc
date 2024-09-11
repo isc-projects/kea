@@ -19,7 +19,7 @@
 #include <stats/stats_mgr.h>
 
 #include <dhcpsrv/testutils/test_utils.h>
-#include <dhcpsrv/tests/alloc_engine_utils.h>
+#include <dhcpsrv/testutils/alloc_engine_utils.h>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>

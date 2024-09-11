@@ -16,8 +16,9 @@ DISTCLEANFILES += test_data_files_config.h
 DISTCLEANFILES += test_libraries.h
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
-AM_CPPFLAGS += -I$(top_srcdir)/src -I$(top_builddir)/src
 AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
+AM_CPPFLAGS += -I$(top_srcdir)/src -I$(top_builddir)/src
+
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/bin/dhcp4/tests\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
@@ -75,35 +76,38 @@ noinst_LTLIBRARIES = libco1.la libco2.la libco3.la libco4.la
 # C++ tests
 PROGRAM_TESTS = dhcp4_unittests
 
-dhcp4_unittests_SOURCES  = d2_unittest.h d2_unittest.cc
-dhcp4_unittests_SOURCES += dhcp4_unittests.cc
-dhcp4_unittests_SOURCES += dhcp4_srv_unittest.cc
-dhcp4_unittests_SOURCES += dhcp4_test_utils.cc dhcp4_test_utils.h
-dhcp4_unittests_SOURCES += direct_client_unittest.cc
+# This list is ordered alphabetically. When adding new files, please maintain
+# this order.
+dhcp4_unittests_SOURCES  = classify_unittest.cc
+dhcp4_unittests_SOURCES += client_handler_unittest.cc
+dhcp4_unittests_SOURCES += config_parser_unittest.cc
+dhcp4_unittests_SOURCES += config_backend_unittest.cc
 dhcp4_unittests_SOURCES += ctrl_dhcp4_srv_unittest.cc
 dhcp4_unittests_SOURCES += http_control_socket_unittest.cc
-dhcp4_unittests_SOURCES += classify_unittest.cc
-dhcp4_unittests_SOURCES += config_backend_unittest.cc
-dhcp4_unittests_SOURCES += config_parser_unittest.cc
-dhcp4_unittests_SOURCES += fqdn_unittest.cc
-dhcp4_unittests_SOURCES += marker_file.cc
-dhcp4_unittests_SOURCES += dhcp4_client.cc dhcp4_client.h
-dhcp4_unittests_SOURCES += hooks_unittest.cc
-dhcp4_unittests_SOURCES += inform_unittest.cc
-dhcp4_unittests_SOURCES += dora_unittest.cc
-dhcp4_unittests_SOURCES += host_options_unittest.cc
-dhcp4_unittests_SOURCES += release_unittest.cc
-dhcp4_unittests_SOURCES += parser_unittest.cc
-dhcp4_unittests_SOURCES += out_of_range_unittest.cc
+dhcp4_unittests_SOURCES += d2_unittest.h d2_unittest.cc
 dhcp4_unittests_SOURCES += decline_unittest.cc
-dhcp4_unittests_SOURCES += kea_controller_unittest.cc
+dhcp4_unittests_SOURCES += dhcp4_client.cc dhcp4_client.h
+dhcp4_unittests_SOURCES += dhcp4_srv_unittest.cc
+dhcp4_unittests_SOURCES += dhcp4_test_utils.cc dhcp4_test_utils.h
+dhcp4_unittests_SOURCES += dhcp4_unittests.cc
 dhcp4_unittests_SOURCES += dhcp4to6_ipc_unittest.cc
-dhcp4_unittests_SOURCES += simple_parser4_unittest.cc
+dhcp4_unittests_SOURCES += direct_client_unittest.cc
+dhcp4_unittests_SOURCES += dora_unittest.cc
+dhcp4_unittests_SOURCES += fqdn_unittest.cc
 dhcp4_unittests_SOURCES += get_config_unittest.cc get_config_unittest.h
-dhcp4_unittests_SOURCES += shared_network_unittest.cc
+dhcp4_unittests_SOURCES += hooks_unittest.cc
+dhcp4_unittests_SOURCES += host_options_unittest.cc
 dhcp4_unittests_SOURCES += host_unittest.cc
+dhcp4_unittests_SOURCES += inform_unittest.cc
+dhcp4_unittests_SOURCES += kea_controller_unittest.cc
+dhcp4_unittests_SOURCES += marker_file.cc
+dhcp4_unittests_SOURCES += out_of_range_unittest.cc
+dhcp4_unittests_SOURCES += parser_unittest.cc
+dhcp4_unittests_SOURCES += release_unittest.cc
+
+dhcp4_unittests_SOURCES += simple_parser4_unittest.cc
+dhcp4_unittests_SOURCES += shared_network_unittest.cc
 dhcp4_unittests_SOURCES += vendor_opts_unittest.cc
-dhcp4_unittests_SOURCES += client_handler_unittest.cc
 
 nodist_dhcp4_unittests_SOURCES = marker_file.h test_libraries.h
 
@@ -133,11 +137,15 @@ dhcp4_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 if HAVE_PGSQL
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/pgsql/testutils/libpgsqltest.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/pgsql_lease_backend/libkea-pgsql-lease-backend.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/pgsql_host_backend/libkea-pgsql-host-backend.la
 endif
 
 if HAVE_MYSQL
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/mysql/testutils/libmysqltest.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/mysql_lease_backend/libkea-mysql-lease-backend.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/mysql_host_backend/libkea-mysql-host-backend.la
 endif
 
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/database/testutils/libdatabasetest.la

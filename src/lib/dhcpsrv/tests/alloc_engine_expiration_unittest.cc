@@ -8,7 +8,7 @@
 #include <dhcp/duid.h>
 #include <dhcp/option_data_types.h>
 #include <dhcp_ddns/ncr_msg.h>
-#include <dhcpsrv/tests/alloc_engine_utils.h>
+#include <dhcpsrv/testutils/alloc_engine_utils.h>
 #include <dhcpsrv/testutils/test_utils.h>
 #include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>

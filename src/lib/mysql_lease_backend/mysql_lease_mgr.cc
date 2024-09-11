@@ -13,7 +13,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <dhcpsrv/mysql_lease_mgr.h>
+#include <mysql_lease_mgr.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <mysql/mysql_connection.h>
 #include <util/multi_threading_mgr.h>

@@ -7,10 +7,10 @@
 #include <config.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
+#include <dhcpsrv/allocator.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
-#include <dhcpsrv/tests/alloc_engine_utils.h>
-#include <dhcpsrv/allocator.h>
+#include <dhcpsrv/testutils/alloc_engine_utils.h>
 #include <dhcpsrv/testutils/test_utils.h>
 #include <eval/eval_context.h>
 #include <stats/stats_mgr.h>
