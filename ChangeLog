@@ -1,3 +1,10 @@
+2282.	[bug]		razvan
+	Fixed a bug caused by starting listeners when checking the
+	configuration using the '-T' command line parameter. This was also
+	causing the check to fail if loading the High Availability hook
+	library.
+	(Gitlab #3542)
+
 2281.	[bug]		andrei
 	An issue was fixed where kea-admin and kea-lfc were not found by
 	the Kea DHCP servers when installed via a custom defined sbindir.
