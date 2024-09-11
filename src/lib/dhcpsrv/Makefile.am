@@ -128,21 +128,9 @@ libkea_dhcpsrv_la_SOURCES += lease_mgr_factory.cc lease_mgr_factory.h
 libkea_dhcpsrv_la_SOURCES += memfile_lease_limits.cc memfile_lease_limits.h
 libkea_dhcpsrv_la_SOURCES += memfile_lease_mgr.cc memfile_lease_mgr.h
 libkea_dhcpsrv_la_SOURCES += memfile_lease_storage.h
-
-if HAVE_MYSQL
-libkea_dhcpsrv_la_SOURCES += mysql_lease_mgr.cc mysql_lease_mgr.h
-libkea_dhcpsrv_la_SOURCES += mysql_host_data_source.cc mysql_host_data_source.h
-endif
-
 libkea_dhcpsrv_la_SOURCES += ncr_generator.cc ncr_generator.h
 libkea_dhcpsrv_la_SOURCES += network.cc network.h
 libkea_dhcpsrv_la_SOURCES += network_state.cc network_state.h
-
-if HAVE_PGSQL
-libkea_dhcpsrv_la_SOURCES += pgsql_host_data_source.cc pgsql_host_data_source.h
-libkea_dhcpsrv_la_SOURCES += pgsql_lease_mgr.cc pgsql_lease_mgr.h
-endif
-
 libkea_dhcpsrv_la_SOURCES += pool.cc pool.h
 libkea_dhcpsrv_la_SOURCES += random_allocation_state.cc random_allocation_state.h
 libkea_dhcpsrv_la_SOURCES += random_allocator.cc random_allocator.h
@@ -206,14 +194,6 @@ libkea_dhcpsrv_la_LIBADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 libkea_dhcpsrv_la_LIBADD += $(top_builddir)/src/lib/http/libkea-http.la
 libkea_dhcpsrv_la_LIBADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 libkea_dhcpsrv_la_LIBADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
-
-if HAVE_MYSQL
-libkea_dhcpsrv_la_LIBADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
-endif
-if HAVE_PGSQL
-libkea_dhcpsrv_la_LIBADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
-endif
-
 libkea_dhcpsrv_la_LIBADD += $(top_builddir)/src/lib/database/libkea-database.la
 libkea_dhcpsrv_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libkea_dhcpsrv_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
@@ -226,12 +206,6 @@ libkea_dhcpsrv_la_LIBADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
 
 libkea_dhcpsrv_la_LDFLAGS  = -no-undefined -version-info 121:0:0
 libkea_dhcpsrv_la_LDFLAGS += $(CRYPTO_LDFLAGS)
-if HAVE_MYSQL
-libkea_dhcpsrv_la_LDFLAGS += $(MYSQL_LIBS)
-endif
-if HAVE_PGSQL
-libkea_dhcpsrv_la_LDFLAGS += $(PGSQL_LIBS)
-endif
 
 # The message file should be in the distribution
 EXTRA_DIST += alloc_engine_messages.mes
@@ -381,18 +355,6 @@ libkea_dhcpsrv_include_HEADERS = \
 	timer_mgr.h \
 	utils.h \
 	writable_host_data_source.h
-
-if HAVE_MYSQL
-libkea_dhcpsrv_include_HEADERS += \
-	mysql_host_data_source.h \
-	mysql_lease_mgr.h
-endif
-
-if HAVE_PGSQL
-libkea_dhcpsrv_include_HEADERS += \
-	pgsql_host_data_source.h \
-	pgsql_lease_mgr.h
-endif
 
 if ENABLE_AFL
 libkea_dhcpsrv_include_HEADERS += \

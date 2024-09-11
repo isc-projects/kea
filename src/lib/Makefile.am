@@ -22,3 +22,14 @@ SUBDIRS += yang
 endif
 
 SUBDIRS += asiodns dhcp_ddns eval process dhcpsrv d2srv
+
+if HAVE_MYSQL
+SUBDIRS += mysql_lease_backend
+SUBDIRS += mysql_host_backend
+endif
+
+if HAVE_PGSQL
+SUBDIRS += pgsql_lease_backend
+SUBDIRS += pgsql_host_backend
+endif
+
