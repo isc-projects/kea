@@ -166,7 +166,7 @@ TEST(MySqlHostDataSource, OpenDatabase) {
     destroyMySQLSchema();
     createMySQLSchema();
 
-    // Enter test mode to avoid ensureSchemaVersion to invole kea-admin.
+    // Enter test mode to avoid ensureSchemaVersion to invoke kea-admin.
     DatabaseConnection::EnterTest et;
 
     // Check that host manager opens the database correctly and tidy up.  If it
@@ -257,7 +257,7 @@ TEST(MySqlHostDataSource, OpenDatabaseMultiThreading) {
     destroyMySQLSchema();
     createMySQLSchema();
 
-    // Enter test mode to avoid ensureSchemaVersion to invole kea-admin.
+    // Enter test mode to avoid ensureSchemaVersion to invoke kea-admin.
     DatabaseConnection::EnterTest et;
 
     // Check that host manager opens the database correctly and tidy up.  If it
