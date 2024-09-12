@@ -77,7 +77,7 @@ DISTCHECK_CONFIGURE_FLAGS += $(DISTCHECK_SYSREPOCPP_CONFIGURE_FLAG)
 
 dist_doc_DATA = AUTHORS COPYING ChangeLog README CONTRIBUTING.md SECURITY.md platforms.rst code_of_conduct.md
 
-.PHONY: check-valgrind check-valgrind-suppress
+.PHONY: add-changelog-entry check-valgrind check-valgrind-suppress
 
 check-valgrind:
 if HAVE_VALGRIND
@@ -178,6 +178,9 @@ install-exec-hook:
 	mkdir -p $(DESTDIR)${localstatedir}/log/
 	mkdir -p $(DESTDIR)${localstatedir}/lib/${PACKAGE_NAME}
 	mkdir -p $(DESTDIR)${runstatedir}/${PACKAGE_NAME}
+
+add-changelog-entry:
+	./changelog_unreleased/.add-entry.sh
 
 #### include external sources in the distributed tarball:
 EXTRA_DIST = ext/coroutine/coroutine.hpp
