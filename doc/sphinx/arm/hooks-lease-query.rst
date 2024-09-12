@@ -446,10 +446,6 @@ defined in RFC 6607.
    so the presence of option 221 in the query is considered a
    (NotAllowed) error.
 
-.. note::
-
-   The new query types are only supported with the memfile lease backend.
-
 .. _bulk-lease-query-dhcpv6:
 
 DHCPv6 Bulk Leasequery
@@ -475,10 +471,6 @@ not yet used by the hook library.
    subnet prefixes are returned. Currently, ``query-by-address`` does not
    support finding delegated prefixes by specifying an address that lies within
    the prefix.
-
-.. note::
-
-   The new query types are only supported with the memfile lease backend.
 
 .. _bulk-lease-query-dhcpv6-config:
 
