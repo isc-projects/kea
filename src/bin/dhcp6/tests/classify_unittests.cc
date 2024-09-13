@@ -2630,4 +2630,101 @@ TEST_F(ClassifyTest, earlyDrop) {
     EXPECT_TRUE(client2.getContext().response_);
 }
 
+// Checks that sub-class options have precedence of template class options
+TEST_F(ClassifyTest, subClassPrecedence) {
+    IfaceMgrTestConfig test_config(true);
+
+    NakedDhcpv6Srv srv(0);
+
+    string config = R"^(
+    {
+        "interfaces-config": {
+          "interfaces": [ "*" ]
+        },
+        "preferred-lifetime": 3000,
+        "rebind-timer": 2000,
+        "renew-timer": 1000,
+        "valid-lifetime": 4000,
+        "subnet6": [
+        {   "pools": [ { "pool": "2001:db8:1::/64" } ],
+            "subnet": "2001:db8:1::/48",
+            "id": 1,
+            "interface": "eth1",
+        }],
+        "option-def": [{
+            "name": "opt1",
+            "code": 1249,
+            "type": "string"
+        },
+        {
+            "name": "opt2",
+            "code": 1250,
+            "type": "string"
+
+        }],
+        "client-classes": [
+        {
+            "name": "template-client-id",
+            "template-test": "substring(option[1].hex,0,3)",
+            "option-data": [
+            {
+                "name": "opt1",
+                "data": "template one"
+            },
+            {
+                "name": "opt2",
+                "data": "template two"
+            }]
+        },
+        {
+            "name": "SPAWN_template-client-id_def",
+            "option-data": [
+            {
+                "name": "opt2",
+                "data": "spawn two"
+            }]
+        }]
+    }
+    )^";
+
+    ASSERT_NO_THROW(configure(config));
+
+    // Create packets with enough to select the subnet
+    Pkt6Ptr query1 = createSolicit();
+
+    // Create and add an ORO option to the first 2 queries
+    OptionUint16ArrayPtr oro(new OptionUint16Array(Option::V6, D6O_ORO));
+    ASSERT_TRUE(oro);
+    oro->addValue(1249);
+    oro->addValue(1250);
+    query1->addOption(oro);
+
+    // Classify packets
+    srv.classifyPacket(query1);
+
+    // Verify class membership is as expected.
+    EXPECT_TRUE(query1->inClass("template-client-id"));
+    EXPECT_TRUE(query1->inClass("SPAWN_template-client-id_def"));
+
+    // Process queries
+    AllocEngine::ClientContext6 ctx1;
+    bool drop = !srv.earlyGHRLookup(query1, ctx1);
+    ASSERT_FALSE(drop);
+    ctx1.subnet_ = srv_.selectSubnet(query1, drop);
+    ASSERT_FALSE(drop);
+    srv.initContext(ctx1, drop);
+    ASSERT_FALSE(drop);
+    Pkt6Ptr response1 = srv.processSolicit(ctx1);
+
+    // Verify that opt1 is inherited from the template.
+    OptionPtr opt = response1->getOption(1249);
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(opt->toString(), "template one");
+
+    // Verify that for opt2 subclass overrides the template.
+    opt = response1->getOption(1250);
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(opt->toString(), "spawn two");
+}
+
 } // end of anonymous namespace

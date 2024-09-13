@@ -1086,6 +1086,21 @@ TEST_F(Pkt4Test, templateClasses) {
     EXPECT_TRUE(pkt.inClass("SPAWN_template-interface-name_eth0"));
     EXPECT_TRUE(pkt.inClass("SPAWN_template-interface-id_interface-id0"));
 
+    // Verify the order is as expected.
+    const ClientClasses& classes = pkt.getClasses();
+    auto cclass = classes.cbegin();
+    ASSERT_NE(cclass, classes.cend());
+    EXPECT_EQ("SPAWN_template-interface-name_eth0", (*cclass));
+    ++cclass;
+    ASSERT_NE(cclass, classes.cend());
+    EXPECT_EQ("template-interface-name", (*cclass));
+    ++cclass;
+    ASSERT_NE(cclass, classes.cend());
+    EXPECT_EQ("SPAWN_template-interface-id_interface-id0", (*cclass));
+    ++cclass;
+    ASSERT_NE(cclass, classes.cend());
+    EXPECT_EQ("template-interface-id", (*cclass));
+
     // Check that it's ok to add to the same subclass repeatedly
     EXPECT_NO_THROW(pkt.addSubClass("template-foo", "SPAWN_template-foo_bar"));
     EXPECT_NO_THROW(pkt.addSubClass("template-foo", "SPAWN_template-foo_bar"));

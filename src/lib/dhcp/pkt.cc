@@ -133,13 +133,13 @@ Pkt::addClass(const ClientClass& client_class, bool required) {
 
 void
 Pkt::addSubClass(const ClientClass& class_def, const ClientClass& subclass) {
-    if (!classes_.contains(class_def)) {
-        classes_.insert(class_def);
-        static_cast<void>(subclasses_.push_back(SubClassRelation(class_def, subclass)));
-    }
     if (!classes_.contains(subclass)) {
         classes_.insert(subclass);
         static_cast<void>(subclasses_.push_back(SubClassRelation(subclass, subclass)));
+    }
+    if (!classes_.contains(class_def)) {
+        classes_.insert(class_def);
+        static_cast<void>(subclasses_.push_back(SubClassRelation(class_def, subclass)));
     }
 }
 
