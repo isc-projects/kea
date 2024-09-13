@@ -83,7 +83,7 @@ TEST_F(PgSqlAllocEngine4Test, bootpAlloc4) {
     // Check that the lease is indeed in LeaseMgr
     Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
     ASSERT_TRUE(from_mgr);
-    // The PostgreSql database does not keep the hwtype for DHCPv4 leases.
+    // The PostgreSQL database does not keep the hwtype for DHCPv4 leases.
     from_mgr->hwaddr_->htype_ = HTYPE_FDDI;
 
     // Now check that the lease in LeaseMgr has the same parameters

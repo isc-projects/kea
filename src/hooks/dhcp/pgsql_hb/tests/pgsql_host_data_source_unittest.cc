@@ -1822,7 +1822,7 @@ TEST_F(PgSQLHostMgrDbLostCallbackTest, testDbLostAndFailedAfterTimeoutCallbackMu
     testDbLostAndFailedAfterTimeoutCallback();
 }
 
-/// @brief Test fixture class for testing @ref CfgDbAccessTest using PgSQL
+/// @brief Test fixture class for testing @ref CfgDbAccessTest using PostgreSQL
 /// backend.
 class CfgPgSqlDbAccessTest : public ::testing::Test {
 public:

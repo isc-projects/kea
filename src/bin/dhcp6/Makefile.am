@@ -44,6 +44,19 @@ sbin_PROGRAMS = kea-dhcp6
 kea_dhcp6_SOURCES  = main.cc
 
 kea_dhcp6_LDADD  = libdhcp6.la
+
+# to be removed
+if HAVE_PGSQL
+kea_dhcp6_LDADD += $(top_builddir)/src/hooks/dhcp/pgsql_lb/libpgsqllb.la
+kea_dhcp6_LDADD += $(top_builddir)/src/hooks/dhcp/pgsql_hb/libpgsqlhb.la
+endif
+
+# to be removed
+if HAVE_MYSQL
+kea_dhcp6_LDADD += $(top_builddir)/src/hooks/dhcp/mysql_lb/libmysqllb.la
+kea_dhcp6_LDADD += $(top_builddir)/src/hooks/dhcp/mysql_hb/libmysqlhb.la
+endif
+
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
@@ -57,15 +70,11 @@ kea_dhcp6_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 # to be removed
 if HAVE_PGSQL
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
-kea_dhcp6_LDADD += $(top_builddir)/src/hooks/dhcp/pgsql_lb/libpgsqllb.la
-kea_dhcp6_LDADD += $(top_builddir)/src/hooks/dhcp/pgsql_hb/libpgsqlhb.la
 endif
 
 # to be removed
 if HAVE_MYSQL
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
-kea_dhcp6_LDADD += $(top_builddir)/src/hooks/dhcp/mysql_lb/libmysqllb.la
-kea_dhcp6_LDADD += $(top_builddir)/src/hooks/dhcp/mysql_hb/libmysqlhb.la
 endif
 
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
@@ -77,6 +86,13 @@ kea_dhcp6_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 kea_dhcp6_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
+
+if HAVE_MYSQL
+kea_dhcp6_LDADD += $(MYSQL_LIBS)
+endif
+if HAVE_PGSQL
+kea_dhcp6_LDADD += $(PGSQL_LIBS)
+endif
 
 kea_dhcp6_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
 if HAVE_MYSQL
