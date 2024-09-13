@@ -58,10 +58,10 @@
 #include <dhcpsrv/memfile_lease_mgr.h>
 
 #ifdef HAVE_MYSQL
-#include <mysql_lease_backend/mysql_lease_mgr.h>
+#include <hooks/dhcp/mysql_lb/mysql_lease_mgr.h>
 #endif
 #ifdef HAVE_PGSQL
-#include <pgsql_lease_backend/pgsql_lease_mgr.h>
+#include <hooks/dhcp/pgsql_lb/pgsql_lease_mgr.h>
 #endif
 
 #include <boost/tokenizer.hpp>

@@ -9,8 +9,8 @@
 #include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <dhcpsrv/testutils/generic_lease_extended_info_unittest.h>
-#include <pgsql/testutils/pgsql_schema.h>
-#include <pgsql_lease_backend/pgsql_lease_mgr.h>
+#include <mysql/testutils/mysql_schema.h>
+#include <mysql_lease_mgr.h>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -25,213 +25,213 @@ using namespace std;
 namespace {
 
 /// @brief A derivation of the lease manager exposing protected methods.
-class NakedPgSqlLeaseMgr : public PgSqlLeaseMgr {
+class NakedMySqlLeaseMgr : public MySqlLeaseMgr {
 public:
     /// @brief Constructor.
     ///
     /// Creates an instance of the lease manager.
     ///
     /// @param parameters Parameter map.
-    NakedPgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
-        : PgSqlLeaseMgr(parameters) {
+    NakedMySqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
+        : MySqlLeaseMgr(parameters) {
     }
 
     /// @brief Destructor.
-    virtual ~NakedPgSqlLeaseMgr() {
+    virtual ~NakedMySqlLeaseMgr() {
     }
 
     /// @brief Exposes protected methods.
-    using PgSqlLeaseMgr::deleteExtendedInfo6;
-    using PgSqlLeaseMgr::addRelayId6;
-    using PgSqlLeaseMgr::addRemoteId6;
+    using MySqlLeaseMgr::deleteExtendedInfo6;
+    using MySqlLeaseMgr::addRelayId6;
+    using MySqlLeaseMgr::addRemoteId6;
 
     /// @brief Return valid connection string.
     static string validConnectionString() {
-        return (validPgSQLConnectionString());
+        return (validMySQLConnectionString());
     }
 
     /// @brief Create the database schema.
     static void createSchema() {
-        createPgSQLSchema();
+        createMySQLSchema();
     }
 
     /// @brief Destroy the database schema.
     static void destroySchema() {
-        destroyPgSQLSchema();
+        destroyMySQLSchema();
     }
 
     /// @brief Initializer.
-    Initializer<PgSqlLeaseMgrInit> init_;
+    Initializer<MySqlLeaseMgrInit> init_;
 };
 
 /// @brief Test fixture class for extended info tests.
-class PgSqlExtendedInfoTest : public isc::dhcp::test::GenericExtendedInfoTest<NakedPgSqlLeaseMgr> {
+class MySqlExtendedInfoTest : public isc::dhcp::test::GenericExtendedInfoTest<NakedMySqlLeaseMgr> {
     /// @brief Initializer.
-    Initializer<PgSqlLeaseMgrInit> init_;
+    Initializer<MySqlLeaseMgrInit> init_;
 };
 
 /// @brief Verifies that the lease manager can start.
-TEST_F(PgSqlExtendedInfoTest, startWithoutExtendedTables) {
+TEST_F(MySqlExtendedInfoTest, startWithoutExtendedTables) {
     start(false);
 }
 
 /// @brief Verifies that the lease manager can start with MT.
-TEST_F(PgSqlExtendedInfoTest, startWithoutExtendedTablesMultiThreading) {
+TEST_F(MySqlExtendedInfoTest, startWithoutExtendedTablesMultiThreading) {
     MultiThreadingTest mt(true);
     start(false);
 }
 
 /// @brief Verifies that the lease manager can start with tables.
-TEST_F(PgSqlExtendedInfoTest, startWithExtendedTables) {
+TEST_F(MySqlExtendedInfoTest, startWithExtendedTables) {
     start(true);
 }
 
 /// @brief Verifies that the lease manager can start with tables and MT.
-TEST_F(PgSqlExtendedInfoTest, startWithExtendedTablesMultiThreading) {
+TEST_F(MySqlExtendedInfoTest, startWithExtendedTablesMultiThreading) {
     MultiThreadingTest mt(true);
     start(true);
 }
 
-TEST_F(PgSqlExtendedInfoTest, initLease4) {
+TEST_F(MySqlExtendedInfoTest, initLease4) {
     testInitLease4();
 }
 
-TEST_F(PgSqlExtendedInfoTest, initLease4MultiThreading) {
+TEST_F(MySqlExtendedInfoTest, initLease4MultiThreading) {
     MultiThreadingTest mt(true);
     testInitLease4();
 }
 
-TEST_F(PgSqlExtendedInfoTest, getLeases4ByRelayId) {
+TEST_F(MySqlExtendedInfoTest, getLeases4ByRelayId) {
     testGetLeases4ByRelayId();
 }
 
-TEST_F(PgSqlExtendedInfoTest, getLeases4ByRelayIdMultiThreading) {
+TEST_F(MySqlExtendedInfoTest, getLeases4ByRelayIdMultiThreading) {
     MultiThreadingTest mt(true);
     testGetLeases4ByRelayId();
 }
 
-TEST_F(PgSqlExtendedInfoTest, getLeases4ByRemoteId) {
+TEST_F(MySqlExtendedInfoTest, getLeases4ByRemoteId) {
     testGetLeases4ByRemoteId();
 }
 
-TEST_F(PgSqlExtendedInfoTest, getLeases4ByRemoteIdMultiThreading) {
+TEST_F(MySqlExtendedInfoTest, getLeases4ByRemoteIdMultiThreading) {
     MultiThreadingTest mt(true);
     testGetLeases4ByRemoteId();
 }
 
-TEST_F(PgSqlExtendedInfoTest, upgradeExtendedInfo4None) {
+TEST_F(MySqlExtendedInfoTest, upgradeExtendedInfo4None) {
     testUpgradeExtendedInfo4(CfgConsistency::EXTENDED_INFO_CHECK_NONE,
                              LeasePageSize(100));
 }
 
-TEST_F(PgSqlExtendedInfoTest, upgradeExtendedInfo4Fix) {
+TEST_F(MySqlExtendedInfoTest, upgradeExtendedInfo4Fix) {
     testUpgradeExtendedInfo4(CfgConsistency::EXTENDED_INFO_CHECK_FIX,
                              LeasePageSize(100));
 }
 
-TEST_F(PgSqlExtendedInfoTest, upgradeExtendedInfo4Strict) {
+TEST_F(MySqlExtendedInfoTest, upgradeExtendedInfo4Strict) {
     testUpgradeExtendedInfo4(CfgConsistency::EXTENDED_INFO_CHECK_STRICT,
                              LeasePageSize(100));
 }
 
-TEST_F(PgSqlExtendedInfoTest, upgradeExtendedInfo4Pedantic) {
+TEST_F(MySqlExtendedInfoTest, upgradeExtendedInfo4Pedantic) {
     testUpgradeExtendedInfo4(CfgConsistency::EXTENDED_INFO_CHECK_PEDANTIC,
                              LeasePageSize(100));
 }
 
-TEST_F(PgSqlExtendedInfoTest, upgradeExtendedInfo4_10) {
+TEST_F(MySqlExtendedInfoTest, upgradeExtendedInfo4_10) {
     testUpgradeExtendedInfo4(CfgConsistency::EXTENDED_INFO_CHECK_FIX,
                              LeasePageSize(10));
 }
 
-TEST_F(PgSqlExtendedInfoTest, upgradeExtendedInfo4_5) {
+TEST_F(MySqlExtendedInfoTest, upgradeExtendedInfo4_5) {
     testUpgradeExtendedInfo4(CfgConsistency::EXTENDED_INFO_CHECK_FIX,
                              LeasePageSize(5));
 }
 
-TEST_F(PgSqlExtendedInfoTest, upgradeExtendedInfo4_2) {
+TEST_F(MySqlExtendedInfoTest, upgradeExtendedInfo4_2) {
     testUpgradeExtendedInfo4(CfgConsistency::EXTENDED_INFO_CHECK_FIX,
                              LeasePageSize(2));
 }
 
-TEST_F(PgSqlExtendedInfoTest, upgradeExtendedInfo4_1) {
+TEST_F(MySqlExtendedInfoTest, upgradeExtendedInfo4_1) {
     testUpgradeExtendedInfo4(CfgConsistency::EXTENDED_INFO_CHECK_FIX,
                              LeasePageSize(1));
 }
 
-TEST_F(PgSqlExtendedInfoTest, initLease6) {
+TEST_F(MySqlExtendedInfoTest, initLease6) {
     testInitLease6();
 }
 
-TEST_F(PgSqlExtendedInfoTest, initLease6MultiThreading) {
+TEST_F(MySqlExtendedInfoTest, initLease6MultiThreading) {
     MultiThreadingTest mt(true);
     testInitLease6();
 }
 
-TEST_F(PgSqlExtendedInfoTest, enableTables) {
+TEST_F(MySqlExtendedInfoTest, enableTables) {
     testEnableTables();
 }
 
-TEST_F(PgSqlExtendedInfoTest, enableTablesMultiThreading) {
+TEST_F(MySqlExtendedInfoTest, enableTablesMultiThreading) {
     MultiThreadingTest mt(true);
     testEnableTables();
 }
 
-TEST_F(PgSqlExtendedInfoTest, deleteCascade) {
+TEST_F(MySqlExtendedInfoTest, deleteCascade) {
     testDeleteCascade();
 }
 
-TEST_F(PgSqlExtendedInfoTest, deleteCascadeMultiThreading) {
+TEST_F(MySqlExtendedInfoTest, deleteCascadeMultiThreading) {
     MultiThreadingTest mt(true);
     testDeleteCascade();
 }
 
-TEST_F(PgSqlExtendedInfoTest, getLeases6ByRelayId) {
+TEST_F(MySqlExtendedInfoTest, getLeases6ByRelayId) {
     testGetLeases6ByRelayId();
 }
 
-TEST_F(PgSqlExtendedInfoTest, getLeases6ByRelayIdMultiThreading) {
+TEST_F(MySqlExtendedInfoTest, getLeases6ByRelayIdMultiThreading) {
     MultiThreadingTest mt(true);
     testGetLeases6ByRelayId();
 }
 
-TEST_F(PgSqlExtendedInfoTest, getLeases6ByRemoteId) {
+TEST_F(MySqlExtendedInfoTest, getLeases6ByRemoteId) {
     testGetLeases6ByRemoteId();
 }
 
-TEST_F(PgSqlExtendedInfoTest, getLeases6ByRemoteIdMultiThreading) {
+TEST_F(MySqlExtendedInfoTest, getLeases6ByRemoteIdMultiThreading) {
     MultiThreadingTest mt(true);
     testGetLeases6ByRemoteId();
 }
 
-TEST_F(PgSqlExtendedInfoTest, getLeases6ByLink) {
+TEST_F(MySqlExtendedInfoTest, getLeases6ByLink) {
     testGetLeases6ByLink();
 }
 
-TEST_F(PgSqlExtendedInfoTest, getLeases6ByLinkMultiThreading) {
+TEST_F(MySqlExtendedInfoTest, getLeases6ByLinkMultiThreading) {
     MultiThreadingTest mt(true);
     testGetLeases6ByLink();
 }
 
-TEST_F(PgSqlExtendedInfoTest, upgradeExtendedInfo6NoCheckDisabled) {
+TEST_F(MySqlExtendedInfoTest, upgradeExtendedInfo6NoCheckDisabled) {
     testUpgradeExtendedInfo6(CfgConsistency::EXTENDED_INFO_CHECK_NONE,
                              false,
                              LeasePageSize(100));
 }
 
-TEST_F(PgSqlExtendedInfoTest, upgradeExtendedInfo6NoCheckEnabled) {
+TEST_F(MySqlExtendedInfoTest, upgradeExtendedInfo6NoCheckEnabled) {
     testUpgradeExtendedInfo6(CfgConsistency::EXTENDED_INFO_CHECK_NONE,
                              true,
                              LeasePageSize(100));
 }
 
-TEST_F(PgSqlExtendedInfoTest, upgradeExtendedInfo6FixkDisabled) {
+TEST_F(MySqlExtendedInfoTest, upgradeExtendedInfo6FixkDisabled) {
     testUpgradeExtendedInfo6(CfgConsistency::EXTENDED_INFO_CHECK_FIX,
                              false,
                              LeasePageSize(100));
 }
 
-TEST_F(PgSqlExtendedInfoTest, upgradeExtendedInfo6FixEnabled) {
+TEST_F(MySqlExtendedInfoTest, upgradeExtendedInfo6FixEnabled) {
     testUpgradeExtendedInfo6(CfgConsistency::EXTENDED_INFO_CHECK_FIX,
                              true,
                              LeasePageSize(100));

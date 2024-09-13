@@ -137,15 +137,15 @@ dhcp4_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 if HAVE_PGSQL
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/pgsql/testutils/libpgsqltest.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
-dhcp4_unittests_LDADD += $(top_builddir)/src/lib/pgsql_lease_backend/libkea-pgsql-lease-backend.la
-dhcp4_unittests_LDADD += $(top_builddir)/src/lib/pgsql_host_backend/libkea-pgsql-host-backend.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/hooks/dhcp/pgsql_lb/libpgsqllb.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/hooks/dhcp/pgsql_hb/libpgsqlhb.la
 endif
 
 if HAVE_MYSQL
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/mysql/testutils/libmysqltest.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
-dhcp4_unittests_LDADD += $(top_builddir)/src/lib/mysql_lease_backend/libkea-mysql-lease-backend.la
-dhcp4_unittests_LDADD += $(top_builddir)/src/lib/mysql_host_backend/libkea-mysql-host-backend.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/hooks/dhcp/mysql_lb/libmysqllb.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/hooks/dhcp/mysql_hb/libmysqlhb.la
 endif
 
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/database/testutils/libdatabasetest.la

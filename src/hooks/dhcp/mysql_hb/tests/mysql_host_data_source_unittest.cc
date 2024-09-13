@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,13 +10,13 @@
 #include <dhcpsrv/testutils/test_utils.h>
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/host.h>
-#include <pgsql_host_backend/pgsql_host_data_source.h>
+#include <mysql_host_data_source.h>
 #include <dhcpsrv/testutils/generic_host_data_source_unittest.h>
 #include <dhcpsrv/testutils/host_data_source_utils.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/host_data_source_factory.h>
-#include <pgsql/pgsql_connection.h>
-#include <pgsql/testutils/pgsql_schema.h>
+#include <mysql/mysql_connection.h>
+#include <mysql/testutils/mysql_schema.h>
 #include <testutils/multi_threading_utils.h>
 #include <util/multi_threading_mgr.h>
 
@@ -41,21 +41,21 @@ using namespace std;
 
 namespace {
 
-class PgSqlHostDataSourceTest : public GenericHostDataSourceTest {
+class MySqlHostDataSourceTest : public GenericHostDataSourceTest {
 public:
     /// @brief Clears the database and opens connection to it.
     void initializeTest() {
         // Ensure we have the proper schema with no transient data.
-        createPgSQLSchema();
+        createMySQLSchema();
 
         // Connect to the database
         try {
             HostMgr::create();
-            HostMgr::addBackend(validPgSQLConnectionString());
+            HostMgr::addBackend(validMySQLConnectionString());
         } catch (...) {
             std::cerr << "*** ERROR: unable to open database. The test\n"
                          "*** environment is broken and must be fixed before\n"
-                         "*** the PostgreSQL tests will run correctly.\n"
+                         "*** the MySQL tests will run correctly.\n"
                          "*** The reason for the problem is described in the\n"
                          "*** accompanying exception output.\n";
             throw;
@@ -77,13 +77,13 @@ public:
         HostMgr::delAllBackends();
         hdsptr_.reset();
         // If data wipe enabled, delete transient data otherwise destroy the schema
-        destroyPgSQLSchema();
+        destroyMySQLSchema();
     }
 
     /// @brief Constructor
     ///
     /// Deletes everything from the database and opens it.
-    PgSqlHostDataSourceTest() {
+    MySqlHostDataSourceTest() {
         initializeTest();
     }
 
@@ -91,7 +91,7 @@ public:
     ///
     /// Rolls back all pending transactions.  The deletion of hdsptr_ will close
     /// the database.  Then reopen it and delete everything created by the test.
-    virtual ~PgSqlHostDataSourceTest() {
+    virtual ~MySqlHostDataSourceTest() {
         destroyTest();
     }
 
@@ -100,11 +100,11 @@ public:
     /// Closes the database and re-open it.  Anything committed should be
     /// visible.
     ///
-    /// Parameter is ignored for PostgreSQL backend as the v4 and v6 hosts share
+    /// Parameter is ignored for MySQL backend as the v4 and v6 hosts share
     /// the same database.
     void reopen(Universe) {
         HostMgr::create();
-        HostMgr::addBackend(validPgSQLConnectionString());
+        HostMgr::addBackend(validMySQLConnectionString());
         hdsptr_ = HostMgr::instance().getHostDataSource();
     }
 
@@ -123,15 +123,17 @@ public:
         params["user"] = "keatest";
         params["password"] = "keatest";
 
-        PgSqlConnection conn(params);
+        MySqlConnection conn(params);
         conn.openDatabase();
 
-        PgSqlResult r(PQexec(conn, query.c_str()));
-        if (PQresultStatus(r) != PGRES_TUPLES_OK) {
-            isc_throw(DbOperationError, "Query failed: " << PQerrorMessage(conn));
+        int status = MysqlQuery(conn.mysql_, query.c_str());
+        if (status != 0) {
+            isc_throw(DbOperationError, "Query failed: " << mysql_error(conn.mysql_));
         }
 
-        int numrows = PQntuples(r);
+        MYSQL_RES * res = mysql_store_result(conn.mysql_);
+        int numrows = static_cast<int>(mysql_num_rows(res));
+        mysql_free_result(res);
 
         return (numrows);
     }
@@ -152,20 +154,20 @@ public:
     }
 
     /// @brief Initializer.
-    Initializer<PgSqlHostDataSourceInit> init_;
+    Initializer<MySqlHostDataSourceInit> init_;
 };
 
 /// @brief Check that database can be opened
 ///
-/// This test checks if the PgSqlHostDataSource can be instantiated.  This happens
+/// This test checks if the MySqlHostDataSource can be instantiated.  This happens
 /// only if the database can be opened.  Note that this is not part of the
-/// PgSqlHostMgr test fixture set.  This test checks that the database can be
+/// MySqlHostMgr test fixture set.  This test checks that the database can be
 /// opened: the fixtures assume that and check basic operations.
-TEST(PgSqlHostDataSource, OpenDatabase) {
-    Initializer<PgSqlHostDataSourceInit> init;
+TEST(MySqlHostDataSource, OpenDatabase) {
+    Initializer<MySqlHostDataSourceInit> init;
     // Schema needs to be created for the test to work.
-    destroyPgSQLSchema();
-    createPgSQLSchema();
+    destroyMySQLSchema();
+    createMySQLSchema();
 
     // Enter test mode to avoid ensureSchemaVersion to invoke kea-admin.
     DatabaseConnection::EnterTest et;
@@ -174,28 +176,28 @@ TEST(PgSqlHostDataSource, OpenDatabase) {
     // fails, print the error message.
     try {
         HostMgr::create();
-        EXPECT_NO_THROW(HostMgr::addBackend(validPgSQLConnectionString()));
-        HostMgr::delBackend("postgresql");
+        EXPECT_NO_THROW(HostMgr::addBackend(validMySQLConnectionString()));
+        HostMgr::delBackend("mysql");
     } catch (const isc::Exception& ex) {
         FAIL() << "*** ERROR: unable to open database, reason:\n"
                << "    " << ex.what() << "\n"
                << "*** The test environment is broken and must be fixed\n"
-               << "*** before the PostgreSQL tests will run correctly.\n";
+               << "*** before the MySQL tests will run correctly.\n";
     }
 
     // Check that host manager opens the database correctly with a longer
     // timeout.  If it fails, print the error message.
     try {
-        string connection_string = validPgSQLConnectionString() + string(" ") +
+        string connection_string = validMySQLConnectionString() + string(" ") +
                                    string(VALID_TIMEOUT);
         HostMgr::create();
         EXPECT_NO_THROW(HostMgr::addBackend(connection_string));
-        HostMgr::delBackend("postgresql");
+        HostMgr::delBackend("mysql");
     } catch (const isc::Exception& ex) {
         FAIL() << "*** ERROR: unable to open database, reason:\n"
                << "    " << ex.what() << "\n"
                << "*** The test environment is broken and must be fixed\n"
-               << "*** before the PostgreSQL tests will run correctly.\n";
+               << "*** before the MySQL tests will run correctly.\n";
     }
 
     // Check that attempting to get an instance of the host data source when
@@ -214,61 +216,50 @@ TEST(PgSqlHostDataSource, OpenDatabase) {
 
     // Check that invalid login data causes an exception.
     EXPECT_THROW(HostMgr::addBackend(connectionString(
-        PGSQL_VALID_TYPE, INVALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
+        MYSQL_VALID_TYPE, INVALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
         DbOpenError);
     EXPECT_THROW(HostMgr::addBackend(connectionString(
-        PGSQL_VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)),
+        MYSQL_VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)),
         DbOpenError);
     EXPECT_THROW(HostMgr::addBackend(connectionString(
-        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
+        MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         DbOpenError);
     EXPECT_THROW(HostMgr::addBackend(connectionString(
-        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_PASSWORD)),
+        MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_PASSWORD)),
         DbOpenError);
     EXPECT_THROW(HostMgr::addBackend(connectionString(
-        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_1)),
+        MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_1)),
         DbInvalidTimeout);
     EXPECT_THROW(HostMgr::addBackend(connectionString(
-        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_2)),
+        MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_2)),
         DbInvalidTimeout);
     EXPECT_THROW(HostMgr::addBackend(connectionString(
-        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD,
+        MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD,
         VALID_TIMEOUT, INVALID_READONLY_DB)), DbInvalidReadOnly);
 
     // Check for missing parameters
     EXPECT_THROW(HostMgr::addBackend(connectionString(
-        PGSQL_VALID_TYPE, NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
+        MYSQL_VALID_TYPE, NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         NoDatabaseName);
 
-    // Check for SSL/TLS support.
-#ifdef HAVE_PGSQL_SSL
-    EXPECT_NO_THROW(HostMgr::addBackend(connectionString(
-        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD,
-        0, 0, 0, 0, VALID_CA)));
-#else
-    EXPECT_THROW(HostMgr::addBackend(connectionString(
-        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD,
-        0, 0, 0, 0, VALID_CA)), DbOpenError);
-#endif
-
     // Tidy up after the test
-    destroyPgSQLSchema();
+    destroyMySQLSchema();
 }
 
 /// @brief Check that database can be opened with Multi-Threading
 ///
-/// This test checks if the PgSqlHostDataSource can be instantiated.  This happens
+/// This test checks if the MySqlHostDataSource can be instantiated.  This happens
 /// only if the database can be opened.  Note that this is not part of the
-/// PgSqlHostMgr test fixture set.  This test checks that the database can be
+/// MySqlHostMgr test fixture set.  This test checks that the database can be
 /// opened: the fixtures assume that and check basic operations.
-TEST(PgSqlHostDataSource, OpenDatabaseMultiThreading) {
-    Initializer<PgSqlHostDataSourceInit> init;
+TEST(MySqlHostDataSource, OpenDatabaseMultiThreading) {
+    Initializer<MySqlHostDataSourceInit> init;
     // Enable Multi-Threading.
     MultiThreadingTest mt(true);
 
     // Schema needs to be created for the test to work.
-    destroyPgSQLSchema();
-    createPgSQLSchema();
+    destroyMySQLSchema();
+    createMySQLSchema();
 
     // Enter test mode to avoid ensureSchemaVersion to invoke kea-admin.
     DatabaseConnection::EnterTest et;
@@ -277,28 +268,28 @@ TEST(PgSqlHostDataSource, OpenDatabaseMultiThreading) {
     // fails, print the error message.
     try {
         HostMgr::create();
-        EXPECT_NO_THROW(HostMgr::addBackend(validPgSQLConnectionString()));
-        HostMgr::delBackend("postgresql");
+        EXPECT_NO_THROW(HostMgr::addBackend(validMySQLConnectionString()));
+        HostMgr::delBackend("mysql");
     } catch (const isc::Exception& ex) {
         FAIL() << "*** ERROR: unable to open database, reason:\n"
                << "    " << ex.what() << "\n"
                << "*** The test environment is broken and must be fixed\n"
-               << "*** before the PostgreSQL tests will run correctly.\n";
+               << "*** before the MySQL tests will run correctly.\n";
     }
 
     // Check that host manager opens the database correctly with a longer
     // timeout.  If it fails, print the error message.
     try {
-        string connection_string = validPgSQLConnectionString() + string(" ") +
+        string connection_string = validMySQLConnectionString() + string(" ") +
                                    string(VALID_TIMEOUT);
         HostMgr::create();
         EXPECT_NO_THROW(HostMgr::addBackend(connection_string));
-        HostMgr::delBackend("postgresql");
+        HostMgr::delBackend("mysql");
     } catch (const isc::Exception& ex) {
         FAIL() << "*** ERROR: unable to open database, reason:\n"
                << "    " << ex.what() << "\n"
                << "*** The test environment is broken and must be fixed\n"
-               << "*** before the PostgreSQL tests will run correctly.\n";
+               << "*** before the MySQL tests will run correctly.\n";
     }
 
     // Check that attempting to get an instance of the host data source when
@@ -317,34 +308,34 @@ TEST(PgSqlHostDataSource, OpenDatabaseMultiThreading) {
 
     // Check that invalid login data causes an exception.
     EXPECT_THROW(HostMgr::addBackend(connectionString(
-        PGSQL_VALID_TYPE, INVALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
+        MYSQL_VALID_TYPE, INVALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
         DbOpenError);
     EXPECT_THROW(HostMgr::addBackend(connectionString(
-        PGSQL_VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)),
+        MYSQL_VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)),
         DbOpenError);
     EXPECT_THROW(HostMgr::addBackend(connectionString(
-        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
+        MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         DbOpenError);
     EXPECT_THROW(HostMgr::addBackend(connectionString(
-        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_PASSWORD)),
+        MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_PASSWORD)),
         DbOpenError);
     EXPECT_THROW(HostMgr::addBackend(connectionString(
-        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_1)),
+        MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_1)),
         DbInvalidTimeout);
     EXPECT_THROW(HostMgr::addBackend(connectionString(
-        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_2)),
+        MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_2)),
         DbInvalidTimeout);
     EXPECT_THROW(HostMgr::addBackend(connectionString(
-        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD,
+        MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD,
         VALID_TIMEOUT, INVALID_READONLY_DB)), DbInvalidReadOnly);
 
     // Check for missing parameters
     EXPECT_THROW(HostMgr::addBackend(connectionString(
-        PGSQL_VALID_TYPE, NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
+        MYSQL_VALID_TYPE, NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         NoDatabaseName);
 
     // Tidy up after the test
-    destroyPgSQLSchema();
+    destroyMySQLSchema();
 }
 
 /// @brief Flag used to detect calls to db_lost_callback function
@@ -363,21 +354,21 @@ bool db_lost_callback(ReconnectCtlPtr /* db_conn_retry */) {
 /// unit test environment.  So testing the callback invocation
 /// in a unit test is next to impossible. That has to be done
 /// as a system test.
-TEST(PgSqlHostDataSource, NoCallbackOnOpenFail) {
-    Initializer<PgSqlHostDataSourceInit> init;
+TEST(MySqlHostDataSource, NoCallbackOnOpenFail) {
+    Initializer<MySqlHostDataSourceInit> init;
     // Schema needs to be created for the test to work.
-    destroyPgSQLSchema();
-    createPgSQLSchema();
+    destroyMySQLSchema();
+    createMySQLSchema();
 
     callback_called = false;
     DatabaseConnection::db_lost_callback_ = db_lost_callback;
     HostMgr::create();
     EXPECT_THROW(HostMgr::addBackend(connectionString(
-        PGSQL_VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)),
+        MYSQL_VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)),
                  DbOpenError);
 
     EXPECT_FALSE(callback_called);
-    destroyPgSQLSchema();
+    destroyMySQLSchema();
 }
 
 /// @brief Make sure open failures do NOT invoke db lost callback
@@ -388,431 +379,472 @@ TEST(PgSqlHostDataSource, NoCallbackOnOpenFail) {
 /// unit test environment.  So testing the callback invocation
 /// in a unit test is next to impossible. That has to be done
 /// as a system test.
-TEST(PgSqlHostDataSource, NoCallbackOnOpenFailMultiThreading) {
-    Initializer<PgSqlHostDataSourceInit> init;
+TEST(MySqlHostDataSource, NoCallbackOnOpenFailMultiThreading) {
+    Initializer<MySqlHostDataSourceInit> init;
     // Enable Multi-Threading.
     MultiThreadingTest mt(true);
 
     // Schema needs to be created for the test to work.
-    destroyPgSQLSchema();
-    createPgSQLSchema();
+    destroyMySQLSchema();
+    createMySQLSchema();
 
     callback_called = false;
     DatabaseConnection::db_lost_callback_ = db_lost_callback;
     HostMgr::create();
     EXPECT_THROW(HostMgr::addBackend(connectionString(
-        PGSQL_VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)),
+        MYSQL_VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)),
                  DbOpenError);
 
     EXPECT_FALSE(callback_called);
-    destroyPgSQLSchema();
+    destroyMySQLSchema();
+}
+
+/// @brief Check conversion functions
+///
+/// The server works using cltt and valid_filetime.  In the database, the
+/// information is stored as expire_time and valid-lifetime, which are
+/// related by
+///
+/// expire_time = cltt + valid_lifetime
+///
+/// This test checks that the conversion is correct.  It does not check that the
+/// data is entered into the database correctly, only that the MYSQL_TIME
+/// structure used for the entry is correctly set up.
+TEST(MySqlConnection, checkTimeConversion) {
+    const time_t cltt = time(NULL);
+    const uint32_t valid_lft = 86400;       // 1 day
+    struct tm tm_expire;
+    MYSQL_TIME mysql_expire;
+
+    // Work out what the broken-down time will be for one day
+    // after the current time.
+    time_t expire_time = cltt + valid_lft;
+    (void) localtime_r(&expire_time, &tm_expire);
+
+    // Convert to the database time
+    MySqlConnection::convertToDatabaseTime(cltt, valid_lft, mysql_expire);
+
+    // Are the times the same?
+    EXPECT_EQ(tm_expire.tm_year + 1900, mysql_expire.year);
+    EXPECT_EQ(tm_expire.tm_mon + 1,  mysql_expire.month);
+    EXPECT_EQ(tm_expire.tm_mday, mysql_expire.day);
+    EXPECT_EQ(tm_expire.tm_hour, mysql_expire.hour);
+    EXPECT_EQ(tm_expire.tm_min, mysql_expire.minute);
+    EXPECT_EQ(tm_expire.tm_sec, mysql_expire.second);
+    EXPECT_EQ(0, mysql_expire.second_part);
+    EXPECT_EQ(0, mysql_expire.neg);
+
+    // Convert back
+    time_t converted_cltt = 0;
+    MySqlConnection::convertFromDatabaseTime(mysql_expire, valid_lft, converted_cltt);
+    EXPECT_EQ(cltt, converted_cltt);
 }
 
 /// @brief This test verifies that database backend can operate in Read-Only mode.
-TEST_F(PgSqlHostDataSourceTest, testReadOnlyDatabase) {
-    testReadOnlyDatabase(PGSQL_VALID_TYPE);
+TEST_F(MySqlHostDataSourceTest, testReadOnlyDatabase) {
+    testReadOnlyDatabase(MYSQL_VALID_TYPE);
 }
 
 /// @brief This test verifies that database backend can operate in Read-Only mode.
-TEST_F(PgSqlHostDataSourceTest, testReadOnlyDatabaseMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, testReadOnlyDatabaseMultiThreading) {
     MultiThreadingTest mt(true);
-    testReadOnlyDatabase(PGSQL_VALID_TYPE);
+    testReadOnlyDatabase(MYSQL_VALID_TYPE);
 }
 
 /// @brief Test verifies if a host reservation can be added and later retrieved by IPv4
 /// address. Host uses hw address as identifier.
-TEST_F(PgSqlHostDataSourceTest, basic4HWAddr) {
+TEST_F(MySqlHostDataSourceTest, basic4HWAddr) {
     testBasic4(Host::IDENT_HWADDR);
 }
 
 /// @brief Test verifies if a host reservation can be added and later retrieved by IPv4
 /// address. Host uses hw address as identifier.
-TEST_F(PgSqlHostDataSourceTest, basic4HWAddrMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, basic4HWAddrMultiThreading) {
     MultiThreadingTest mt(true);
     testBasic4(Host::IDENT_HWADDR);
 }
 
 /// @brief Verifies that IPv4 host reservation with options can have the global
 /// subnet id value
-TEST_F(PgSqlHostDataSourceTest, globalSubnetId4) {
+TEST_F(MySqlHostDataSourceTest, globalSubnetId4) {
     testGlobalSubnetId4();
 }
 
 /// @brief Verifies that IPv4 host reservation with options can have the global
 /// subnet id value
-TEST_F(PgSqlHostDataSourceTest, globalSubnetId4MultiThreading) {
+TEST_F(MySqlHostDataSourceTest, globalSubnetId4MultiThreading) {
     MultiThreadingTest mt(true);
     testGlobalSubnetId4();
 }
 
 /// @brief Verifies that IPv6 host reservation with options can have the global
 /// subnet id value
-TEST_F(PgSqlHostDataSourceTest, globalSubnetId6) {
+TEST_F(MySqlHostDataSourceTest, globalSubnetId6) {
     testGlobalSubnetId6();
 }
 
 /// @brief Verifies that IPv6 host reservation with options can have the global
 /// subnet id value
-TEST_F(PgSqlHostDataSourceTest, globalSubnetId6MultiThreading) {
+TEST_F(MySqlHostDataSourceTest, globalSubnetId6MultiThreading) {
     MultiThreadingTest mt(true);
     testGlobalSubnetId6();
 }
 
 /// @brief Verifies that IPv4 host reservation with options can have a max value
 /// for dhcp4_subnet id
-TEST_F(PgSqlHostDataSourceTest, maxSubnetId4) {
+TEST_F(MySqlHostDataSourceTest, maxSubnetId4) {
     testMaxSubnetId4();
 }
 
 /// @brief Verifies that IPv4 host reservation with options can have a max value
 /// for dhcp4_subnet id
-TEST_F(PgSqlHostDataSourceTest, maxSubnetId4MultiThreading) {
+TEST_F(MySqlHostDataSourceTest, maxSubnetId4MultiThreading) {
     MultiThreadingTest mt(true);
     testMaxSubnetId4();
 }
 
 /// @brief Verifies that IPv6 host reservation with options can have a max value
 /// for dhcp6_subnet id
-TEST_F(PgSqlHostDataSourceTest, maxSubnetId6) {
+TEST_F(MySqlHostDataSourceTest, maxSubnetId6) {
     testMaxSubnetId6();
 }
 
 /// @brief Verifies that IPv6 host reservation with options can have a max value
 /// for dhcp6_subnet id
-TEST_F(PgSqlHostDataSourceTest, maxSubnetId6MultiThreading) {
+TEST_F(MySqlHostDataSourceTest, maxSubnetId6MultiThreading) {
     MultiThreadingTest mt(true);
     testMaxSubnetId6();
 }
 
 /// @brief Verifies that IPv4 host reservations in the same subnet can be retrieved
-TEST_F(PgSqlHostDataSourceTest, getAll4BySubnet) {
+TEST_F(MySqlHostDataSourceTest, getAll4BySubnet) {
     testGetAll4();
 }
 
 /// @brief Verifies that IPv4 host reservations in the same subnet can be retrieved
-TEST_F(PgSqlHostDataSourceTest, getAll4BySubnetMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, getAll4BySubnetMultiThreading) {
     MultiThreadingTest mt(true);
     testGetAll4();
 }
 
 /// @brief Verifies that IPv6 host reservations in the same subnet can be retrieved
-TEST_F(PgSqlHostDataSourceTest, getAll6BySubnet) {
+TEST_F(MySqlHostDataSourceTest, getAll6BySubnet) {
     testGetAll6();
 }
 
 /// @brief Verifies that IPv6 host reservations in the same subnet can be retrieved
-TEST_F(PgSqlHostDataSourceTest, getAll6BySubnetMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, getAll6BySubnetMultiThreading) {
     MultiThreadingTest mt(true);
     testGetAll6();
 }
 
 /// @brief Verifies that host reservations with the same hostname can be retrieved
-TEST_F(PgSqlHostDataSourceTest, getAllbyHostname) {
+TEST_F(MySqlHostDataSourceTest, getAllbyHostname) {
     testGetAllbyHostname();
 }
 
 /// @brief Verifies that host reservations with the same hostname can be retrieved
-TEST_F(PgSqlHostDataSourceTest, getAllbyHostnameMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, getAllbyHostnameMultiThreading) {
     MultiThreadingTest mt(true);
     testGetAllbyHostname();
 }
 
 /// @brief Verifies that IPv4 host reservations with the same hostname and in
 /// the same subnet can be retrieved
-TEST_F(PgSqlHostDataSourceTest, getAllbyHostnameSubnet4) {
+TEST_F(MySqlHostDataSourceTest, getAllbyHostnameSubnet4) {
     testGetAllbyHostnameSubnet4();
 }
 
 /// @brief Verifies that IPv4 host reservations with the same hostname and in
 /// the same subnet can be retrieved
-TEST_F(PgSqlHostDataSourceTest, getAllbyHostnameSubnet4MultiThreading) {
+TEST_F(MySqlHostDataSourceTest, getAllbyHostnameSubnet4MultiThreading) {
     MultiThreadingTest mt(true);
     testGetAllbyHostnameSubnet4();
 }
 
 /// @brief Verifies that IPv6 host reservations with the same hostname and in
 /// the same subnet can be retrieved
-TEST_F(PgSqlHostDataSourceTest, getAllbyHostnameSubnet6) {
+TEST_F(MySqlHostDataSourceTest, getAllbyHostnameSubnet6) {
     testGetAllbyHostnameSubnet6();
 }
 
 /// @brief Verifies that IPv6 host reservations with the same hostname and in
 /// the same subnet can be retrieved
-TEST_F(PgSqlHostDataSourceTest, getAllbyHostnameSubnet6MultiThreading) {
+TEST_F(MySqlHostDataSourceTest, getAllbyHostnameSubnet6MultiThreading) {
     MultiThreadingTest mt(true);
     testGetAllbyHostnameSubnet6();
 }
 
 /// @brief Verifies that IPv4 host reservations in the same subnet can be retrieved
 /// by pages.
-TEST_F(PgSqlHostDataSourceTest, getPage4) {
+TEST_F(MySqlHostDataSourceTest, getPage4) {
     testGetPage4();
 }
 
 /// @brief Verifies that IPv4 host reservations in the same subnet can be retrieved
 /// by pages.
-TEST_F(PgSqlHostDataSourceTest, getPage4MultiThreading) {
+TEST_F(MySqlHostDataSourceTest, getPage4MultiThreading) {
     MultiThreadingTest mt(true);
     testGetPage4();
 }
 
 /// @brief Verifies that IPv6 host reservations in the same subnet can be retrieved
 /// by pages.
-TEST_F(PgSqlHostDataSourceTest, getPage6) {
+TEST_F(MySqlHostDataSourceTest, getPage6) {
     testGetPage6();
 }
 
 /// @brief Verifies that IPv6 host reservations in the same subnet can be retrieved
 /// by pages.
-TEST_F(PgSqlHostDataSourceTest, getPage6MultiThreading) {
+TEST_F(MySqlHostDataSourceTest, getPage6MultiThreading) {
     MultiThreadingTest mt(true);
     testGetPage6();
 }
 
 /// @brief Verifies that IPv4 host reservations in the same subnet can be retrieved
 /// by pages without truncation from the limit.
-TEST_F(PgSqlHostDataSourceTest, getPageLimit4) {
+TEST_F(MySqlHostDataSourceTest, getPageLimit4) {
     testGetPageLimit4(Host::IDENT_DUID);
 }
 
 /// @brief Verifies that IPv4 host reservations in the same subnet can be retrieved
 /// by pages without truncation from the limit.
-TEST_F(PgSqlHostDataSourceTest, getPageLimit4MultiThreading) {
+TEST_F(MySqlHostDataSourceTest, getPageLimit4MultiThreading) {
     MultiThreadingTest mt(true);
     testGetPageLimit4(Host::IDENT_DUID);
 }
 
 /// @brief Verifies that IPv6 host reservations in the same subnet can be retrieved
 /// by pages without truncation from the limit.
-TEST_F(PgSqlHostDataSourceTest, getPageLimit6) {
+TEST_F(MySqlHostDataSourceTest, getPageLimit6) {
     testGetPageLimit6(Host::IDENT_HWADDR);
 }
 
 /// @brief Verifies that IPv6 host reservations in the same subnet can be retrieved
 /// by pages without truncation from the limit.
-TEST_F(PgSqlHostDataSourceTest, getPageLimit6MultiThreading) {
+TEST_F(MySqlHostDataSourceTest, getPageLimit6MultiThreading) {
     MultiThreadingTest mt(true);
     testGetPageLimit6(Host::IDENT_HWADDR);
 }
 
 /// @brief Verifies that IPv4 host reservations in the same subnet can be retrieved
 /// by pages even with multiple subnets.
-TEST_F(PgSqlHostDataSourceTest, getPage4Subnets) {
+TEST_F(MySqlHostDataSourceTest, getPage4Subnets) {
     testGetPage4Subnets();
 }
 
 /// @brief Verifies that IPv4 host reservations in the same subnet can be retrieved
 /// by pages even with multiple subnets.
-TEST_F(PgSqlHostDataSourceTest, getPage4SubnetsMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, getPage4SubnetsMultiThreading) {
     MultiThreadingTest mt(true);
     testGetPage4Subnets();
 }
 
 /// @brief Verifies that IPv6 host reservations in the same subnet can be retrieved
 /// by pages even with multiple subnets.
-TEST_F(PgSqlHostDataSourceTest, getPage6Subnets) {
+TEST_F(MySqlHostDataSourceTest, getPage6Subnets) {
     testGetPage6Subnets();
 }
 
 /// @brief Verifies that IPv6 host reservations in the same subnet can be retrieved
 /// by pages even with multiple subnets.
-TEST_F(PgSqlHostDataSourceTest, getPage6SubnetsMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, getPage6SubnetsMultiThreading) {
     MultiThreadingTest mt(true);
     testGetPage6Subnets();
 }
 
 // Verifies that all IPv4 host reservations can be retrieved by pages.
-TEST_F(PgSqlHostDataSourceTest, getPage4All) {
+TEST_F(MySqlHostDataSourceTest, getPage4All) {
     testGetPage4All();
 }
 
 // Verifies that all IPv4 host reservations can be retrieved by pages.
-TEST_F(PgSqlHostDataSourceTest, getPage4AllMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, getPage4AllMultiThreading) {
     MultiThreadingTest mt(true);
     testGetPage4All();
 }
 
 // Verifies that all IPv6 host reservations can be retrieved by pages.
-TEST_F(PgSqlHostDataSourceTest, getPage6All) {
+TEST_F(MySqlHostDataSourceTest, getPage6All) {
     testGetPage6All();
 }
 
 // Verifies that all IPv6 host reservations can be retrieved by pages.
-TEST_F(PgSqlHostDataSourceTest, getPage6AllMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, getPage6AllMultiThreading) {
     MultiThreadingTest mt(true);
     testGetPage6All();
 }
 
 /// @brief Test verifies if a host reservation can be added and later retrieved by IPv4
 /// address. Host uses client-id (DUID) as identifier.
-TEST_F(PgSqlHostDataSourceTest, basic4ClientId) {
+TEST_F(MySqlHostDataSourceTest, basic4ClientId) {
     testBasic4(Host::IDENT_DUID);
 }
 
 /// @brief Test verifies if a host reservation can be added and later retrieved by IPv4
 /// address. Host uses client-id (DUID) as identifier.
-TEST_F(PgSqlHostDataSourceTest, basic4ClientIdMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, basic4ClientIdMultiThreading) {
     MultiThreadingTest mt(true);
     testBasic4(Host::IDENT_DUID);
 }
 
 /// @brief Test verifies that multiple hosts can be added and later retrieved by their
 /// reserved IPv4 address. This test uses HW addresses as identifiers.
-TEST_F(PgSqlHostDataSourceTest, getByIPv4HWaddr) {
+TEST_F(MySqlHostDataSourceTest, getByIPv4HWaddr) {
     testGetByIPv4(Host::IDENT_HWADDR);
 }
 
 /// @brief Test verifies that multiple hosts can be added and later retrieved by their
 /// reserved IPv4 address. This test uses HW addresses as identifiers.
-TEST_F(PgSqlHostDataSourceTest, getByIPv4HWaddrMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, getByIPv4HWaddrMultiThreading) {
     MultiThreadingTest mt(true);
     testGetByIPv4(Host::IDENT_HWADDR);
 }
 
 /// @brief Test verifies that multiple hosts can be added and later retrieved by their
 /// reserved IPv4 address. This test uses client-id (DUID) as identifiers.
-TEST_F(PgSqlHostDataSourceTest, getByIPv4ClientId) {
+TEST_F(MySqlHostDataSourceTest, getByIPv4ClientId) {
     testGetByIPv4(Host::IDENT_DUID);
 }
 
 /// @brief Test verifies that multiple hosts can be added and later retrieved by their
 /// reserved IPv4 address. This test uses client-id (DUID) as identifiers.
-TEST_F(PgSqlHostDataSourceTest, getByIPv4ClientIdMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, getByIPv4ClientIdMultiThreading) {
     MultiThreadingTest mt(true);
     testGetByIPv4(Host::IDENT_DUID);
 }
 
 /// @brief Test verifies if a host reservation can be added and later retrieved by
 /// hardware address.
-TEST_F(PgSqlHostDataSourceTest, get4ByHWaddr) {
+TEST_F(MySqlHostDataSourceTest, get4ByHWaddr) {
     testGet4ByIdentifier(Host::IDENT_HWADDR);
 }
 
 /// @brief Test verifies if a host reservation can be added and later retrieved by
 /// hardware address.
-TEST_F(PgSqlHostDataSourceTest, get4ByHWaddrMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, get4ByHWaddrMultiThreading) {
     MultiThreadingTest mt(true);
     testGet4ByIdentifier(Host::IDENT_HWADDR);
 }
 
 /// @brief Test verifies if a host reservation can be added and later retrieved by
 /// DUID.
-TEST_F(PgSqlHostDataSourceTest, get4ByDUID) {
+TEST_F(MySqlHostDataSourceTest, get4ByDUID) {
     testGet4ByIdentifier(Host::IDENT_DUID);
 }
 
 /// @brief Test verifies if a host reservation can be added and later retrieved by
 /// DUID.
-TEST_F(PgSqlHostDataSourceTest, get4ByDUIDMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, get4ByDUIDMultiThreading) {
     MultiThreadingTest mt(true);
     testGet4ByIdentifier(Host::IDENT_DUID);
 }
 
 /// @brief Test verifies if a host reservation can be added and later retrieved by
 /// circuit id.
-TEST_F(PgSqlHostDataSourceTest, get4ByCircuitId) {
+TEST_F(MySqlHostDataSourceTest, get4ByCircuitId) {
     testGet4ByIdentifier(Host::IDENT_CIRCUIT_ID);
 }
 
 /// @brief Test verifies if a host reservation can be added and later retrieved by
 /// circuit id.
-TEST_F(PgSqlHostDataSourceTest, get4ByCircuitIdMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, get4ByCircuitIdMultiThreading) {
     MultiThreadingTest mt(true);
     testGet4ByIdentifier(Host::IDENT_CIRCUIT_ID);
 }
 
 /// @brief Test verifies if a host reservation can be added and later retrieved by
 /// client-id.
-TEST_F(PgSqlHostDataSourceTest, get4ByClientId) {
+TEST_F(MySqlHostDataSourceTest, get4ByClientId) {
     testGet4ByIdentifier(Host::IDENT_CLIENT_ID);
 }
 
 /// @brief Test verifies if a host reservation can be added and later retrieved by
 /// client-id.
-TEST_F(PgSqlHostDataSourceTest, get4ByClientIdMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, get4ByClientIdMultiThreading) {
     MultiThreadingTest mt(true);
     testGet4ByIdentifier(Host::IDENT_CLIENT_ID);
 }
 
 /// @brief Test verifies if hardware address and client identifier are not confused.
-TEST_F(PgSqlHostDataSourceTest, hwaddrNotClientId1) {
+TEST_F(MySqlHostDataSourceTest, hwaddrNotClientId1) {
     testHWAddrNotClientId();
 }
 
 /// @brief Test verifies if hardware address and client identifier are not confused.
-TEST_F(PgSqlHostDataSourceTest, hwaddrNotClientId1MultiThreading) {
+TEST_F(MySqlHostDataSourceTest, hwaddrNotClientId1MultiThreading) {
     MultiThreadingTest mt(true);
     testHWAddrNotClientId();
 }
 
 /// @brief Test verifies if hardware address and client identifier are not confused.
-TEST_F(PgSqlHostDataSourceTest, hwaddrNotClientId2) {
+TEST_F(MySqlHostDataSourceTest, hwaddrNotClientId2) {
     testClientIdNotHWAddr();
 }
 
 /// @brief Test verifies if hardware address and client identifier are not confused.
-TEST_F(PgSqlHostDataSourceTest, hwaddrNotClientId2MultiThreading) {
+TEST_F(MySqlHostDataSourceTest, hwaddrNotClientId2MultiThreading) {
     MultiThreadingTest mt(true);
     testClientIdNotHWAddr();
 }
 
 /// @brief Test verifies if a host with FQDN hostname can be stored and later retrieved.
-TEST_F(PgSqlHostDataSourceTest, hostnameFQDN) {
+TEST_F(MySqlHostDataSourceTest, hostnameFQDN) {
     testHostname("foo.example.org", 1);
 }
 
 /// @brief Test verifies if a host with FQDN hostname can be stored and later retrieved.
-TEST_F(PgSqlHostDataSourceTest, hostnameFQDNMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, hostnameFQDNMultiThreading) {
     MultiThreadingTest mt(true);
     testHostname("foo.example.org", 1);
 }
 
 /// @brief Test verifies if 100 hosts with unique FQDN hostnames can be stored and later
 /// retrieved.
-TEST_F(PgSqlHostDataSourceTest, hostnameFQDN100) {
+TEST_F(MySqlHostDataSourceTest, hostnameFQDN100) {
     testHostname("foo.example.org", 100);
 }
 
 /// @brief Test verifies if 100 hosts with unique FQDN hostnames can be stored and later
 /// retrieved.
-TEST_F(PgSqlHostDataSourceTest, hostnameFQDN100MultiThreading) {
+TEST_F(MySqlHostDataSourceTest, hostnameFQDN100MultiThreading) {
     MultiThreadingTest mt(true);
     testHostname("foo.example.org", 100);
 }
 
 /// @brief Test verifies if a host without any hostname specified can be stored and later
 /// retrieved.
-TEST_F(PgSqlHostDataSourceTest, noHostname) {
+TEST_F(MySqlHostDataSourceTest, noHostname) {
     testHostname("", 1);
 }
 
 /// @brief Test verifies if a host without any hostname specified can be stored and later
 /// retrieved.
-TEST_F(PgSqlHostDataSourceTest, noHostnameMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, noHostnameMultiThreading) {
     MultiThreadingTest mt(true);
     testHostname("", 1);
 }
 
 /// @brief Test verifies if a host with user context can be stored and later retrieved.
-TEST_F(PgSqlHostDataSourceTest, usercontext) {
+TEST_F(MySqlHostDataSourceTest, usercontext) {
     string comment = "{ \"comment\": \"a host reservation\" }";
     testUserContext(Element::fromJSON(comment));
 }
 
 /// @brief Test verifies if a host with user context can be stored and later retrieved.
-TEST_F(PgSqlHostDataSourceTest, usercontextMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, usercontextMultiThreading) {
     MultiThreadingTest mt(true);
     string comment = "{ \"comment\": \"a host reservation\" }";
     testUserContext(Element::fromJSON(comment));
 }
 
 /// @brief Test insert and retrieve a v6 host with prefix exclude option.
-TEST_F(PgSqlHostDataSourceTest, prefixExclude) {
+TEST_F(MySqlHostDataSourceTest, prefixExclude) {
     testPrefixExclude("2001:db8::", "2001:db8:0:1::");
 }
 
 /// @brief Test verifies if the hardware or client-id query can match hardware address.
-TEST_F(PgSqlHostDataSourceTest, DISABLED_hwaddrOrClientId1) {
+TEST_F(MySqlHostDataSourceTest, DISABLED_hwaddrOrClientId1) {
     /// @todo: The logic behind ::get4(subnet_id, hwaddr, duid) call needs to
     /// be discussed.
     ///
@@ -822,7 +854,7 @@ TEST_F(PgSqlHostDataSourceTest, DISABLED_hwaddrOrClientId1) {
 }
 
 /// @brief Test verifies if the hardware or client-id query can match hardware address.
-TEST_F(PgSqlHostDataSourceTest, DISABLED_hwaddrOrClientId1MultiThreading) {
+TEST_F(MySqlHostDataSourceTest, DISABLED_hwaddrOrClientId1MultiThreading) {
     MultiThreadingTest mt(true);
     /// @todo: The logic behind ::get4(subnet_id, hwaddr, duid) call needs to
     /// be discussed.
@@ -833,7 +865,7 @@ TEST_F(PgSqlHostDataSourceTest, DISABLED_hwaddrOrClientId1MultiThreading) {
 }
 
 /// @brief Test verifies if the hardware or client-id query can match client-id.
-TEST_F(PgSqlHostDataSourceTest, DISABLED_hwaddrOrClientId2) {
+TEST_F(MySqlHostDataSourceTest, DISABLED_hwaddrOrClientId2) {
     /// @todo: The logic behind ::get4(subnet_id, hwaddr, duid) call needs to
     /// be discussed.
     ///
@@ -843,7 +875,7 @@ TEST_F(PgSqlHostDataSourceTest, DISABLED_hwaddrOrClientId2) {
 }
 
 /// @brief Test verifies if the hardware or client-id query can match client-id.
-TEST_F(PgSqlHostDataSourceTest, DISABLED_hwaddrOrClientId2MultiThreading) {
+TEST_F(MySqlHostDataSourceTest, DISABLED_hwaddrOrClientId2MultiThreading) {
     MultiThreadingTest mt(true);
     /// @todo: The logic behind ::get4(subnet_id, hwaddr, duid) call needs to
     /// be discussed.
@@ -855,169 +887,169 @@ TEST_F(PgSqlHostDataSourceTest, DISABLED_hwaddrOrClientId2MultiThreading) {
 
 /// @brief Test verifies that host with IPv6 address and DUID can be added and
 /// later retrieved by IPv6 address.
-TEST_F(PgSqlHostDataSourceTest, get6AddrWithDuid) {
+TEST_F(MySqlHostDataSourceTest, get6AddrWithDuid) {
     testGetByIPv6(Host::IDENT_DUID, false);
 }
 
 /// @brief Test verifies that host with IPv6 address and DUID can be added and
 /// later retrieved by IPv6 address.
-TEST_F(PgSqlHostDataSourceTest, get6AddrWithDuidMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, get6AddrWithDuidMultiThreading) {
     MultiThreadingTest mt(true);
     testGetByIPv6(Host::IDENT_DUID, false);
 }
 
 /// @brief Test verifies that host with IPv6 address and HWAddr can be added and
 /// later retrieved by IPv6 address.
-TEST_F(PgSqlHostDataSourceTest, get6AddrWithHWAddr) {
+TEST_F(MySqlHostDataSourceTest, get6AddrWithHWAddr) {
     testGetByIPv6(Host::IDENT_HWADDR, false);
 }
 
 /// @brief Test verifies that host with IPv6 address and HWAddr can be added and
 /// later retrieved by IPv6 address.
-TEST_F(PgSqlHostDataSourceTest, get6AddrWithHWAddrMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, get6AddrWithHWAddrMultiThreading) {
     MultiThreadingTest mt(true);
     testGetByIPv6(Host::IDENT_HWADDR, false);
 }
 
 /// @brief Test verifies that host with IPv6 prefix and DUID can be added and
 /// later retrieved by IPv6 prefix.
-TEST_F(PgSqlHostDataSourceTest, get6PrefixWithDuid) {
+TEST_F(MySqlHostDataSourceTest, get6PrefixWithDuid) {
     testGetByIPv6(Host::IDENT_DUID, true);
 }
 
 /// @brief Test verifies that host with IPv6 prefix and DUID can be added and
 /// later retrieved by IPv6 prefix.
-TEST_F(PgSqlHostDataSourceTest, get6PrefixWithDuidMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, get6PrefixWithDuidMultiThreading) {
     MultiThreadingTest mt(true);
     testGetByIPv6(Host::IDENT_DUID, true);
 }
 
 /// @brief Test verifies that host with IPv6 prefix and HWAddr can be added and
 /// later retrieved by IPv6 prefix.
-TEST_F(PgSqlHostDataSourceTest, get6PrefixWithHWaddr) {
+TEST_F(MySqlHostDataSourceTest, get6PrefixWithHWaddr) {
     testGetByIPv6(Host::IDENT_HWADDR, true);
 }
 
 /// @brief Test verifies that host with IPv6 prefix and HWAddr can be added and
 /// later retrieved by IPv6 prefix.
-TEST_F(PgSqlHostDataSourceTest, get6PrefixWithHWaddrMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, get6PrefixWithHWaddrMultiThreading) {
     MultiThreadingTest mt(true);
     testGetByIPv6(Host::IDENT_HWADDR, true);
 }
 
 /// @brief Test verifies that host with IPv6 prefix reservation can be retrieved
 /// by subnet id and prefix value.
-TEST_F(PgSqlHostDataSourceTest, get6SubnetPrefix) {
+TEST_F(MySqlHostDataSourceTest, get6SubnetPrefix) {
     testGetBySubnetIPv6();
 }
 
 /// @brief Test verifies that host with IPv6 prefix reservation can be retrieved
 /// by subnet id and prefix value.
-TEST_F(PgSqlHostDataSourceTest, get6SubnetPrefixMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, get6SubnetPrefixMultiThreading) {
     MultiThreadingTest mt(true);
     testGetBySubnetIPv6();
 }
 
 /// @brief Test verifies if a host reservation can be added and later retrieved by
 /// hardware address.
-TEST_F(PgSqlHostDataSourceTest, get6ByHWaddr) {
+TEST_F(MySqlHostDataSourceTest, get6ByHWaddr) {
     testGet6ByHWAddr();
 }
 
 /// @brief Test verifies if a host reservation can be added and later retrieved by
 /// hardware address.
-TEST_F(PgSqlHostDataSourceTest, get6ByHWaddrMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, get6ByHWaddrMultiThreading) {
     MultiThreadingTest mt(true);
     testGet6ByHWAddr();
 }
 
 /// @brief Test verifies if a host reservation can be added and later retrieved by
 /// client identifier.
-TEST_F(PgSqlHostDataSourceTest, get6ByClientId) {
+TEST_F(MySqlHostDataSourceTest, get6ByClientId) {
     testGet6ByClientId();
 }
 
 /// @brief Test verifies if a host reservation can be added and later retrieved by
 /// client identifier.
-TEST_F(PgSqlHostDataSourceTest, get6ByClientIdMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, get6ByClientIdMultiThreading) {
     MultiThreadingTest mt(true);
     testGet6ByClientId();
 }
 
 /// @brief Test verifies if a host reservation can be stored with both IPv6 address and
 /// prefix.
-TEST_F(PgSqlHostDataSourceTest, addr6AndPrefix) {
+TEST_F(MySqlHostDataSourceTest, addr6AndPrefix) {
     testAddr6AndPrefix();
 }
 
 /// @brief Test verifies if a host reservation can be stored with both IPv6 address and
 /// prefix.
-TEST_F(PgSqlHostDataSourceTest, addr6AndPrefixMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, addr6AndPrefixMultiThreading) {
     MultiThreadingTest mt(true);
     testAddr6AndPrefix();
 }
 
 /// @brief Tests if host with multiple IPv6 reservations can be added and then
 /// retrieved correctly. Test checks reservations comparing.
-TEST_F(PgSqlHostDataSourceTest, multipleReservations) {
+TEST_F(MySqlHostDataSourceTest, multipleReservations) {
     testMultipleReservations();
 }
 
 /// @brief Tests if host with multiple IPv6 reservations can be added and then
 /// retrieved correctly. Test checks reservations comparing.
-TEST_F(PgSqlHostDataSourceTest, multipleReservationsMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, multipleReservationsMultiThreading) {
     MultiThreadingTest mt(true);
     testMultipleReservations();
 }
 
 /// @brief Tests if compareIPv6Reservations() method treats same pool of reservations
 /// but added in different order as equal.
-TEST_F(PgSqlHostDataSourceTest, multipleReservationsDifferentOrder) {
+TEST_F(MySqlHostDataSourceTest, multipleReservationsDifferentOrder) {
     testMultipleReservationsDifferentOrder();
 }
 
 /// @brief Tests if compareIPv6Reservations() method treats same pool of reservations
 /// but added in different order as equal.
-TEST_F(PgSqlHostDataSourceTest, multipleReservationsDifferentOrderMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, multipleReservationsDifferentOrderMultiThreading) {
     MultiThreadingTest mt(true);
     testMultipleReservationsDifferentOrder();
 }
 
 /// @brief Test that multiple client classes for IPv4 can be inserted and
 /// retrieved for a given host reservation.
-TEST_F(PgSqlHostDataSourceTest, multipleClientClasses4) {
+TEST_F(MySqlHostDataSourceTest, multipleClientClasses4) {
     testMultipleClientClasses4();
 }
 
 /// @brief Test that multiple client classes for IPv4 can be inserted and
 /// retrieved for a given host reservation.
-TEST_F(PgSqlHostDataSourceTest, multipleClientClasses4MultiThreading) {
+TEST_F(MySqlHostDataSourceTest, multipleClientClasses4MultiThreading) {
     MultiThreadingTest mt(true);
     testMultipleClientClasses4();
 }
 
 /// @brief Test that multiple client classes for IPv6 can be inserted and
 /// retrieved for a given host reservation.
-TEST_F(PgSqlHostDataSourceTest, multipleClientClasses6) {
+TEST_F(MySqlHostDataSourceTest, multipleClientClasses6) {
     testMultipleClientClasses6();
 }
 
 /// @brief Test that multiple client classes for IPv6 can be inserted and
 /// retrieved for a given host reservation.
-TEST_F(PgSqlHostDataSourceTest, multipleClientClasses6MultiThreading) {
+TEST_F(MySqlHostDataSourceTest, multipleClientClasses6MultiThreading) {
     MultiThreadingTest mt(true);
     testMultipleClientClasses6();
 }
 
 /// @brief Test that multiple client classes for both IPv4 and IPv6 can
 /// be inserted and retrieved for a given host reservation.
-TEST_F(PgSqlHostDataSourceTest, multipleClientClassesBoth) {
+TEST_F(MySqlHostDataSourceTest, multipleClientClassesBoth) {
     testMultipleClientClassesBoth();
 }
 
 /// @brief Test that multiple client classes for both IPv4 and IPv6 can
 /// be inserted and retrieved for a given host reservation.
-TEST_F(PgSqlHostDataSourceTest, multipleClientClassesBothMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, multipleClientClassesBothMultiThreading) {
     MultiThreadingTest mt(true);
     testMultipleClientClassesBoth();
 }
@@ -1027,7 +1059,7 @@ TEST_F(PgSqlHostDataSourceTest, multipleClientClassesBothMultiThreading) {
 /// Insert 10 host reservations for a given physical host (the same
 /// hardware address), but for different subnets (different subnet-ids).
 /// Make sure that getAll() returns them all correctly.
-TEST_F(PgSqlHostDataSourceTest, multipleSubnetsHWAddr) {
+TEST_F(MySqlHostDataSourceTest, multipleSubnetsHWAddr) {
     testMultipleSubnets(10, Host::IDENT_HWADDR);
 }
 
@@ -1036,7 +1068,7 @@ TEST_F(PgSqlHostDataSourceTest, multipleSubnetsHWAddr) {
 /// Insert 10 host reservations for a given physical host (the same
 /// hardware address), but for different subnets (different subnet-ids).
 /// Make sure that getAll() returns them all correctly.
-TEST_F(PgSqlHostDataSourceTest, multipleSubnetsHWAddrMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, multipleSubnetsHWAddrMultiThreading) {
     MultiThreadingTest mt(true);
     testMultipleSubnets(10, Host::IDENT_HWADDR);
 }
@@ -1047,7 +1079,7 @@ TEST_F(PgSqlHostDataSourceTest, multipleSubnetsHWAddrMultiThreading) {
 /// Insert 10 host reservations for a given physical host (the same
 /// client-identifier), but for different subnets (different subnet-ids).
 /// Make sure that getAll() returns them correctly.
-TEST_F(PgSqlHostDataSourceTest, multipleSubnetsClientId) {
+TEST_F(MySqlHostDataSourceTest, multipleSubnetsClientId) {
     testMultipleSubnets(10, Host::IDENT_DUID);
 }
 
@@ -1057,7 +1089,7 @@ TEST_F(PgSqlHostDataSourceTest, multipleSubnetsClientId) {
 /// Insert 10 host reservations for a given physical host (the same
 /// client-identifier), but for different subnets (different subnet-ids).
 /// Make sure that getAll() returns them correctly.
-TEST_F(PgSqlHostDataSourceTest, multipleSubnetsClientIdMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, multipleSubnetsClientIdMultiThreading) {
     MultiThreadingTest mt(true);
     testMultipleSubnets(10, Host::IDENT_DUID);
 }
@@ -1067,7 +1099,7 @@ TEST_F(PgSqlHostDataSourceTest, multipleSubnetsClientIdMultiThreading) {
 ///
 /// Insert 10 host reservations for different subnets. Make sure that
 /// get6(subnet-id, ...) calls return correct reservation.
-TEST_F(PgSqlHostDataSourceTest, subnetId6) {
+TEST_F(MySqlHostDataSourceTest, subnetId6) {
     testSubnetId6(10, Host::IDENT_HWADDR);
 }
 
@@ -1076,7 +1108,7 @@ TEST_F(PgSqlHostDataSourceTest, subnetId6) {
 ///
 /// Insert 10 host reservations for different subnets. Make sure that
 /// get6(subnet-id, ...) calls return correct reservation.
-TEST_F(PgSqlHostDataSourceTest, subnetId6MultiThreading) {
+TEST_F(MySqlHostDataSourceTest, subnetId6MultiThreading) {
     MultiThreadingTest mt(true);
     testSubnetId6(10, Host::IDENT_HWADDR);
 }
@@ -1085,7 +1117,7 @@ TEST_F(PgSqlHostDataSourceTest, subnetId6MultiThreading) {
 /// follows: try to add multiple instances of the same host reservation and
 /// verify that the second and following attempts will throw exceptions.
 /// Hosts with same DUID.
-TEST_F(PgSqlHostDataSourceTest, addDuplicate6WithDUID) {
+TEST_F(MySqlHostDataSourceTest, addDuplicate6WithDUID) {
     testAddDuplicate6WithSameDUID();
 }
 
@@ -1093,7 +1125,7 @@ TEST_F(PgSqlHostDataSourceTest, addDuplicate6WithDUID) {
 /// follows: try to add multiple instances of the same host reservation and
 /// verify that the second and following attempts will throw exceptions.
 /// Hosts with same DUID.
-TEST_F(PgSqlHostDataSourceTest, addDuplicate6WithDUIDMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, addDuplicate6WithDUIDMultiThreading) {
     MultiThreadingTest mt(true);
     testAddDuplicate6WithSameDUID();
 }
@@ -1102,7 +1134,7 @@ TEST_F(PgSqlHostDataSourceTest, addDuplicate6WithDUIDMultiThreading) {
 /// follows: try to add multiple instances of the same host reservation and
 /// verify that the second and following attempts will throw exceptions.
 /// Hosts with same HWAddr.
-TEST_F(PgSqlHostDataSourceTest, addDuplicate6WithHWAddr) {
+TEST_F(MySqlHostDataSourceTest, addDuplicate6WithHWAddr) {
     testAddDuplicate6WithSameHWAddr();
 }
 
@@ -1110,18 +1142,18 @@ TEST_F(PgSqlHostDataSourceTest, addDuplicate6WithHWAddr) {
 /// follows: try to add multiple instances of the same host reservation and
 /// verify that the second and following attempts will throw exceptions.
 /// Hosts with same HWAddr.
-TEST_F(PgSqlHostDataSourceTest, addDuplicate6WithHWAddrMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, addDuplicate6WithHWAddrMultiThreading) {
     MultiThreadingTest mt(true);
     testAddDuplicate6WithSameHWAddr();
 }
 
 /// @brief Test if the same IPv6 reservation can't be inserted multiple times.
-TEST_F(PgSqlHostDataSourceTest, addDuplicateIPv6) {
+TEST_F(MySqlHostDataSourceTest, addDuplicateIPv6) {
     testAddDuplicateIPv6();
 }
 
 /// @brief Test if the same IPv6 reservation can't be inserted multiple times.
-TEST_F(PgSqlHostDataSourceTest, addDuplicateIPv6MultiThreading) {
+TEST_F(MySqlHostDataSourceTest, addDuplicateIPv6MultiThreading) {
     MultiThreadingTest mt(true);
     testAddDuplicateIPv6();
 }
@@ -1129,14 +1161,14 @@ TEST_F(PgSqlHostDataSourceTest, addDuplicateIPv6MultiThreading) {
 /// @brief Test if the host reservation for the same IPv6 address can be inserted
 /// multiple times when allowed by the configuration and when the host identifier
 /// is different.
-TEST_F(PgSqlHostDataSourceTest, allowDuplicateIPv6) {
+TEST_F(MySqlHostDataSourceTest, allowDuplicateIPv6) {
     testAllowDuplicateIPv6();
 }
 
 /// @brief Test if the host reservation for the same IPv6 address can be inserted
 /// multiple times when allowed by the configuration and when the host identifier
 /// is different.
-TEST_F(PgSqlHostDataSourceTest, allowDuplicateIPv6MultiThreading) {
+TEST_F(MySqlHostDataSourceTest, allowDuplicateIPv6MultiThreading) {
     MultiThreadingTest mt(true);
     testAllowDuplicateIPv6();
 }
@@ -1144,14 +1176,14 @@ TEST_F(PgSqlHostDataSourceTest, allowDuplicateIPv6MultiThreading) {
 /// @brief Test if the duplicate IPv4 host instances can't be inserted. The test logic is as
 /// follows: try to add multiple instances of the same host reservation and
 /// verify that the second and following attempts will throw exceptions.
-TEST_F(PgSqlHostDataSourceTest, addDuplicateIPv4) {
+TEST_F(MySqlHostDataSourceTest, addDuplicateIPv4) {
     testAddDuplicateIPv4();
 }
 
 /// @brief Test if the duplicate IPv4 host instances can't be inserted. The test logic is as
 /// follows: try to add multiple instances of the same host reservation and
 /// verify that the second and following attempts will throw exceptions.
-TEST_F(PgSqlHostDataSourceTest, addDuplicateIPv4MultiThreading) {
+TEST_F(MySqlHostDataSourceTest, addDuplicateIPv4MultiThreading) {
     MultiThreadingTest mt(true);
     testAddDuplicateIPv4();
 }
@@ -1159,43 +1191,43 @@ TEST_F(PgSqlHostDataSourceTest, addDuplicateIPv4MultiThreading) {
 /// @brief Test if the host reservation for the same IPv4 address can be inserted
 /// multiple times when allowed by the configuration and when the host identifier
 /// is different.
-TEST_F(PgSqlHostDataSourceTest, allowDuplicateIPv4) {
+TEST_F(MySqlHostDataSourceTest, allowDuplicateIPv4) {
     testAllowDuplicateIPv4();
 }
 
 /// @brief Test if the host reservation for the same IPv4 address can be inserted
 /// multiple times when allowed by the configuration and when the host identifier
 /// is different.
-TEST_F(PgSqlHostDataSourceTest, allowDuplicateIPv4MultiThreading) {
+TEST_F(MySqlHostDataSourceTest, allowDuplicateIPv4MultiThreading) {
     MultiThreadingTest mt(true);
     testAllowDuplicateIPv4();
 }
 
 /// @brief This test verifies that DHCPv4 options can be inserted in a binary format
-/// and retrieved from the PostgreSQL host database.
-TEST_F(PgSqlHostDataSourceTest, optionsReservations4) {
+/// and retrieved from the MySQL host database.
+TEST_F(MySqlHostDataSourceTest, optionsReservations4) {
     string comment = "{ \"comment\": \"a host reservation\" }";
     testOptionsReservations4(false, Element::fromJSON(comment));
 }
 
 /// @brief This test verifies that DHCPv4 options can be inserted in a binary format
-/// and retrieved from the PostgreSQL host database.
-TEST_F(PgSqlHostDataSourceTest, optionsReservations4MultiThreading) {
+/// and retrieved from the MySQL host database.
+TEST_F(MySqlHostDataSourceTest, optionsReservations4MultiThreading) {
     MultiThreadingTest mt(true);
     string comment = "{ \"comment\": \"a host reservation\" }";
     testOptionsReservations4(false, Element::fromJSON(comment));
 }
 
 /// @brief This test verifies that DHCPv6 options can be inserted in a binary format
-/// and retrieved from the PostgreSQL host database.
-TEST_F(PgSqlHostDataSourceTest, optionsReservations6) {
+/// and retrieved from the MySQL host database.
+TEST_F(MySqlHostDataSourceTest, optionsReservations6) {
     string comment = "{ \"comment\": \"a host reservation\" }";
     testOptionsReservations6(false, Element::fromJSON(comment));
 }
 
 /// @brief This test verifies that DHCPv6 options can be inserted in a binary format
-/// and retrieved from the PostgreSQL host database.
-TEST_F(PgSqlHostDataSourceTest, optionsReservations6MultiThreading) {
+/// and retrieved from the MySQL host database.
+TEST_F(MySqlHostDataSourceTest, optionsReservations6MultiThreading) {
     MultiThreadingTest mt(true);
     string comment = "{ \"comment\": \"a host reservation\" }";
     testOptionsReservations6(false, Element::fromJSON(comment));
@@ -1203,42 +1235,42 @@ TEST_F(PgSqlHostDataSourceTest, optionsReservations6MultiThreading) {
 
 /// @brief This test verifies that DHCPv4 and DHCPv6 options can be inserted in a
 /// binary format and retrieved with a single query to the database.
-TEST_F(PgSqlHostDataSourceTest, optionsReservations46) {
+TEST_F(MySqlHostDataSourceTest, optionsReservations46) {
     testOptionsReservations46(false);
 }
 
 /// @brief This test verifies that DHCPv4 and DHCPv6 options can be inserted in a
 /// binary format and retrieved with a single query to the database.
-TEST_F(PgSqlHostDataSourceTest, optionsReservations46MultiThreading) {
+TEST_F(MySqlHostDataSourceTest, optionsReservations46MultiThreading) {
     MultiThreadingTest mt(true);
     testOptionsReservations46(false);
 }
 
 /// @brief This test verifies that DHCPv4 options can be inserted in a textual format
-/// and retrieved from the PostgreSQL host database.
-TEST_F(PgSqlHostDataSourceTest, formattedOptionsReservations4) {
+/// and retrieved from the MySQL host database.
+TEST_F(MySqlHostDataSourceTest, formattedOptionsReservations4) {
     string comment = "{ \"comment\": \"a host reservation\" }";
     testOptionsReservations4(true, Element::fromJSON(comment));
 }
 
 /// @brief This test verifies that DHCPv4 options can be inserted in a textual format
-/// and retrieved from the PostgreSQL host database.
-TEST_F(PgSqlHostDataSourceTest, formattedOptionsReservations4MultiThreading) {
+/// and retrieved from the MySQL host database.
+TEST_F(MySqlHostDataSourceTest, formattedOptionsReservations4MultiThreading) {
     MultiThreadingTest mt(true);
     string comment = "{ \"comment\": \"a host reservation\" }";
     testOptionsReservations4(true, Element::fromJSON(comment));
 }
 
 /// @brief This test verifies that DHCPv6 options can be inserted in a textual format
-/// and retrieved from the PostgreSQL host database.
-TEST_F(PgSqlHostDataSourceTest, formattedOptionsReservations6) {
+/// and retrieved from the MySQL host database.
+TEST_F(MySqlHostDataSourceTest, formattedOptionsReservations6) {
     string comment = "{ \"comment\": \"a host reservation\" }";
     testOptionsReservations6(true, Element::fromJSON(comment));
 }
 
 /// @brief This test verifies that DHCPv6 options can be inserted in a textual format
-/// and retrieved from the PostgreSQL host database.
-TEST_F(PgSqlHostDataSourceTest, formattedOptionsReservations6MultiThreading) {
+/// and retrieved from the MySQL host database.
+TEST_F(MySqlHostDataSourceTest, formattedOptionsReservations6MultiThreading) {
     MultiThreadingTest mt(true);
     string comment = "{ \"comment\": \"a host reservation\" }";
     testOptionsReservations6(true, Element::fromJSON(comment));
@@ -1246,13 +1278,13 @@ TEST_F(PgSqlHostDataSourceTest, formattedOptionsReservations6MultiThreading) {
 
 /// @brief This test verifies that DHCPv4 and DHCPv6 options can be inserted in a
 /// textual format and retrieved with a single query to the database.
-TEST_F(PgSqlHostDataSourceTest, formattedOptionsReservations46) {
+TEST_F(MySqlHostDataSourceTest, formattedOptionsReservations46) {
     testOptionsReservations46(true);
 }
 
 /// @brief This test verifies that DHCPv4 and DHCPv6 options can be inserted in a
 /// textual format and retrieved with a single query to the database.
-TEST_F(PgSqlHostDataSourceTest, formattedOptionsReservations46MultiThreading) {
+TEST_F(MySqlHostDataSourceTest, formattedOptionsReservations46MultiThreading) {
     MultiThreadingTest mt(true);
     testOptionsReservations46(true);
 }
@@ -1260,7 +1292,7 @@ TEST_F(PgSqlHostDataSourceTest, formattedOptionsReservations46MultiThreading) {
 /// @brief This test checks transactional insertion of the host information
 /// into the database. The failure to insert host information at
 /// any stage should cause the whole transaction to be rolled back.
-TEST_F(PgSqlHostDataSourceTest, testAddRollback) {
+TEST_F(MySqlHostDataSourceTest, testAddRollback) {
     // Make sure we have the pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
 
@@ -1274,16 +1306,16 @@ TEST_F(PgSqlHostDataSourceTest, testAddRollback) {
     params["name"] = "keatest";
     params["user"] = "keatest";
     params["password"] = "keatest";
-    PgSqlConnection conn(params);
+    MySqlConnection conn(params);
     ASSERT_NO_THROW(conn.openDatabase());
 
-    PgSqlResult r(PQexec(conn, "DROP TABLE IF EXISTS ipv6_reservations"));
-    ASSERT_TRUE (PQresultStatus(r) == PGRES_COMMAND_OK)
-                 << " drop command failed :" << PQerrorMessage(conn);
+    int status = MysqlQuery(conn.mysql_,
+                            "DROP TABLE IF EXISTS ipv6_reservations");
+    ASSERT_EQ(0, status) << mysql_error(conn.mysql_);
 
     // Create a host with a reservation.
     HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8:1::1",
-                                        Host::IDENT_HWADDR, false, "randomKey");
+                                        Host::IDENT_HWADDR, false);
     // Let's assign some DHCPv4 subnet to the host, because we will use the
     // DHCPv4 subnet to try to retrieve the host after failed insertion.
     host->setIPv4SubnetID(SubnetID(4));
@@ -1309,7 +1341,7 @@ TEST_F(PgSqlHostDataSourceTest, testAddRollback) {
 /// @brief This test checks transactional insertion of the host information
 /// into the database. The failure to insert host information at
 /// any stage should cause the whole transaction to be rolled back.
-TEST_F(PgSqlHostDataSourceTest, testAddRollbackMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, testAddRollbackMultiThreading) {
     MultiThreadingTest mt(true);
     // Make sure we have the pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
@@ -1324,16 +1356,16 @@ TEST_F(PgSqlHostDataSourceTest, testAddRollbackMultiThreading) {
     params["name"] = "keatest";
     params["user"] = "keatest";
     params["password"] = "keatest";
-    PgSqlConnection conn(params);
+    MySqlConnection conn(params);
     ASSERT_NO_THROW(conn.openDatabase());
 
-    PgSqlResult r(PQexec(conn, "DROP TABLE IF EXISTS ipv6_reservations"));
-    ASSERT_TRUE (PQresultStatus(r) == PGRES_COMMAND_OK)
-                 << " drop command failed :" << PQerrorMessage(conn);
+    int status = MysqlQuery(conn.mysql_,
+                            "DROP TABLE IF EXISTS ipv6_reservations");
+    ASSERT_EQ(0, status) << mysql_error(conn.mysql_);
 
     // Create a host with a reservation.
     HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8:1::1",
-                                        Host::IDENT_HWADDR, false, "randomKey");
+                                        Host::IDENT_HWADDR, false);
     // Let's assign some DHCPv4 subnet to the host, because we will use the
     // DHCPv4 subnet to try to retrieve the host after failed insertion.
     host->setIPv4SubnetID(SubnetID(4));
@@ -1358,166 +1390,166 @@ TEST_F(PgSqlHostDataSourceTest, testAddRollbackMultiThreading) {
 
 /// @brief This test checks that siaddr, sname, file fields can be retrieved
 /// from a database for a host.
-TEST_F(PgSqlHostDataSourceTest, messageFields) {
+TEST_F(MySqlHostDataSourceTest, messageFields) {
     testMessageFields4();
 }
 
 /// @brief This test checks that siaddr, sname, file fields can be retrieved
 /// from a database for a host.
-TEST_F(PgSqlHostDataSourceTest, messageFieldsMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, messageFieldsMultiThreading) {
     MultiThreadingTest mt(true);
     testMessageFields4();
 }
 
 /// @brief Check that delete(subnet-id, addr4) works.
-TEST_F(PgSqlHostDataSourceTest, deleteByAddr4) {
+TEST_F(MySqlHostDataSourceTest, deleteByAddr4) {
     testDeleteByAddr4();
 }
 
 /// @brief Check that delete(subnet-id, addr4) works.
-TEST_F(PgSqlHostDataSourceTest, deleteByAddr4MultiThreading) {
+TEST_F(MySqlHostDataSourceTest, deleteByAddr4MultiThreading) {
     MultiThreadingTest mt(true);
     testDeleteByAddr4();
 }
 
 /// @brief Check that delete(subnet4-id, identifier-type, identifier) works.
-TEST_F(PgSqlHostDataSourceTest, deleteById4) {
+TEST_F(MySqlHostDataSourceTest, deleteById4) {
     testDeleteById4();
 }
 
 /// @brief Check that delete(subnet4-id, identifier-type, identifier) works.
-TEST_F(PgSqlHostDataSourceTest, deleteById4MultiThreading) {
+TEST_F(MySqlHostDataSourceTest, deleteById4MultiThreading) {
     MultiThreadingTest mt(true);
     testDeleteById4();
 }
 
 /// @brief Check that delete(subnet4-id, identifier-type, identifier) works,
 /// even when options are present.
-TEST_F(PgSqlHostDataSourceTest, deleteById4Options) {
+TEST_F(MySqlHostDataSourceTest, deleteById4Options) {
     testDeleteById4Options();
 }
 
 /// @brief Check that delete(subnet4-id, identifier-type, identifier) works,
 /// even when options are present.
-TEST_F(PgSqlHostDataSourceTest, deleteById4OptionsMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, deleteById4OptionsMultiThreading) {
     MultiThreadingTest mt(true);
     testDeleteById4Options();
 }
 
 /// @brief Check that delete(subnet6-id, identifier-type, identifier) works.
-TEST_F(PgSqlHostDataSourceTest, deleteById6) {
+TEST_F(MySqlHostDataSourceTest, deleteById6) {
     testDeleteById6();
 }
 
 /// @brief Check that delete(subnet6-id, identifier-type, identifier) works.
-TEST_F(PgSqlHostDataSourceTest, deleteById6MultiThreading) {
+TEST_F(MySqlHostDataSourceTest, deleteById6MultiThreading) {
     MultiThreadingTest mt(true);
     testDeleteById6();
 }
 
 /// @brief Check that delete(subnet6-id, identifier-type, identifier) works,
 /// even when options are present.
-TEST_F(PgSqlHostDataSourceTest, deleteById6Options) {
+TEST_F(MySqlHostDataSourceTest, deleteById6Options) {
     testDeleteById6Options();
 }
 
 /// @brief Check that delete(subnet6-id, identifier-type, identifier) works,
 /// even when options are present.
-TEST_F(PgSqlHostDataSourceTest, deleteById6OptionsMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, deleteById6OptionsMultiThreading) {
     MultiThreadingTest mt(true);
     testDeleteById6Options();
 }
 
 // This test verifies that all reservations can be deleted from database
 // by providing subnet ID and one address.
-TEST_F(PgSqlHostDataSourceTest, del2) {
+TEST_F(MySqlHostDataSourceTest, del2) {
     testDelete2ForIPv6();
 }
 
 // This test verifies that all reservations can be deleted from database
 // by providing subnet ID and one address.
-TEST_F(PgSqlHostDataSourceTest, del2MultiThreading) {
+TEST_F(MySqlHostDataSourceTest, del2MultiThreading) {
     MultiThreadingTest mt(true);
     testDelete2ForIPv6();
 }
 
 // This test verifies that address and PD reservations can be deleted from database
 // by providing subnet ID and the address.
-TEST_F(PgSqlHostDataSourceTest, delBoth) {
+TEST_F(MySqlHostDataSourceTest, delBoth) {
     testDelete2ForIPv6();
 }
 
 // This test verifies that address and PD reservations can be deleted from database
 // by providing subnet ID and the address.
-TEST_F(PgSqlHostDataSourceTest, delBothMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, delBothMultiThreading) {
     MultiThreadingTest mt(true);
     testDelete2ForIPv6();
 }
 
 /// @brief Tests that multiple reservations without IPv4 addresses can be
 /// specified within a subnet.
-TEST_F(PgSqlHostDataSourceTest, testMultipleHostsNoAddress4) {
+TEST_F(MySqlHostDataSourceTest, testMultipleHostsNoAddress4) {
     testMultipleHostsNoAddress4();
 }
 
 /// @brief Tests that multiple reservations without IPv4 addresses can be
 /// specified within a subnet.
-TEST_F(PgSqlHostDataSourceTest, testMultipleHostsNoAddress4MultiThreading) {
+TEST_F(MySqlHostDataSourceTest, testMultipleHostsNoAddress4MultiThreading) {
     MultiThreadingTest mt(true);
     testMultipleHostsNoAddress4();
 }
 
 /// @brief Tests that multiple hosts can be specified within an IPv6 subnet.
-TEST_F(PgSqlHostDataSourceTest, testMultipleHosts6) {
+TEST_F(MySqlHostDataSourceTest, testMultipleHosts6) {
     testMultipleHosts6();
 }
 
 /// @brief Tests that multiple hosts can be specified within an IPv6 subnet.
-TEST_F(PgSqlHostDataSourceTest, testMultipleHosts6MultiThreading) {
+TEST_F(MySqlHostDataSourceTest, testMultipleHosts6MultiThreading) {
     MultiThreadingTest mt(true);
     testMultipleHosts6();
 }
 
 /// @brief Tests that hosts can be updated.
-TEST_F(PgSqlHostDataSourceTest, update) {
+TEST_F(MySqlHostDataSourceTest, update) {
     testUpdate();
 }
 
 /// @brief Tests that hosts can be updated.
-TEST_F(PgSqlHostDataSourceTest, updateMultiThreading) {
+TEST_F(MySqlHostDataSourceTest, updateMultiThreading) {
     MultiThreadingTest mt(true);
     testUpdate();
 }
 
 /// @brief Test fixture class for validating @c HostMgr using
-/// PostgreSQL as alternate host data source.
-class PgSQLHostMgrTest : public HostMgrTest {
+/// MySQL as alternate host data source.
+class MySQLHostMgrTest : public HostMgrTest {
 protected:
 
-    /// @brief Build PostgreSQL schema for a test.
+    /// @brief Build MySQL schema for a test.
     virtual void SetUp();
 
-    /// @brief Rollback and drop PostgreSQL schema after the test.
+    /// @brief Rollback and drop MySQL schema after the test.
     virtual void TearDown();
 
     /// @brief Initializer.
-    Initializer<PgSqlHostDataSourceInit> init_;
+    Initializer<MySqlHostDataSourceInit> init_;
 };
 
 void
-PgSQLHostMgrTest::SetUp() {
+MySQLHostMgrTest::SetUp() {
     HostMgrTest::SetUp();
 
     // Ensure we have the proper schema with no transient data.
-    db::test::createPgSQLSchema();
+    db::test::createMySQLSchema();
 
     // Connect to the database
     try {
-        HostMgr::addBackend(db::test::validPgSQLConnectionString());
+        HostMgr::addBackend(db::test::validMySQLConnectionString());
     } catch (...) {
         std::cerr << "*** ERROR: unable to open database. The test\n"
             "*** environment is broken and must be fixed before\n"
-            "*** the PostgreSQL tests will run correctly.\n"
+            "*** the MySQL tests will run correctly.\n"
             "*** The reason for the problem is described in the\n"
             "*** accompanying exception output.\n";
         throw;
@@ -1525,337 +1557,337 @@ PgSQLHostMgrTest::SetUp() {
 }
 
 void
-PgSQLHostMgrTest::TearDown() {
+MySQLHostMgrTest::TearDown() {
     try {
         HostMgr::instance().getHostDataSource()->rollback();
     } catch(...) {
         // we don't care if we aren't in a transaction.
     }
 
-    HostMgr::delBackend("postgresql");
+    HostMgr::delBackend("mysql");
     // If data wipe enabled, delete transient data otherwise destroy the schema
-    db::test::destroyPgSQLSchema();
+    db::test::destroyMySQLSchema();
 }
 
 /// @brief Test fixture class for validating @c HostMgr using
-/// PostgreSQL as alternate host data source and PostgreSQL connectivity loss.
-class PgSQLHostMgrDbLostCallbackTest : public HostMgrDbLostCallbackTest {
+/// MySQL as alternate host data source and MySQL connectivity loss.
+class MySQLHostMgrDbLostCallbackTest : public HostMgrDbLostCallbackTest {
 public:
     virtual void destroySchema() {
         // If data wipe enabled, delete transient data otherwise destroy the schema
-        db::test::destroyPgSQLSchema();
+        db::test::destroyMySQLSchema();
     }
 
     virtual void createSchema() {
         // Ensure we have the proper schema with no transient data.
-        db::test::createPgSQLSchema();
+        db::test::createMySQLSchema();
     }
 
     virtual std::string validConnectString() {
-        return (db::test::validPgSQLConnectionString());
+        return (db::test::validMySQLConnectionString());
     }
 
     virtual std::string invalidConnectString() {
-        return (connectionString(PGSQL_VALID_TYPE, INVALID_NAME, VALID_HOST,
+        return (connectionString(MYSQL_VALID_TYPE, INVALID_NAME, VALID_HOST,
                                  VALID_USER, VALID_PASSWORD));
     }
 
     /// @brief Initializer.
-    Initializer<PgSqlHostDataSourceInit> init_;
+    Initializer<MySqlHostDataSourceInit> init_;
 };
 
 // This test verifies that reservations for a particular client can
 // be retrieved from the configuration file and a database simultaneously.
-TEST_F(PgSQLHostMgrTest, getAll) {
+TEST_F(MySQLHostMgrTest, getAll) {
     testGetAll(*getCfgHosts(), HostMgr::instance());
 }
 
 // This test verifies that reservations for a particular subnet can
 // be retrieved from the configuration file and a database simultaneously.
-TEST_F(PgSQLHostMgrTest, getAll4BySubnet) {
+TEST_F(MySQLHostMgrTest, getAll4BySubnet) {
     testGetAll4BySubnet(*getCfgHosts(), HostMgr::instance());
 }
 
 // This test verifies that reservations for a particular subnet can
 // be retrieved from the configuration file and a database simultaneously.
-TEST_F(PgSQLHostMgrTest, getAll6BySubnet) {
+TEST_F(MySQLHostMgrTest, getAll6BySubnet) {
     testGetAll6BySubnet(*getCfgHosts(), HostMgr::instance());
 }
 
 // This test verifies that HostMgr returns all reservations for the specified
 // IPv4 subnet and reserved address.
-TEST_F(PgSQLHostMgrTest, getAll4BySubnetIP) {
+TEST_F(MySQLHostMgrTest, getAll4BySubnetIP) {
     testGetAll4BySubnetIP(*getCfgHosts(), *getCfgHosts());
 }
 
 // This test verifies that HostMgr returns all reservations for the specified
 // IPv6 subnet and reserved address.
-TEST_F(PgSQLHostMgrTest, getAll6BySubnetIP) {
+TEST_F(MySQLHostMgrTest, getAll6BySubnetIP) {
     testGetAll6BySubnetIP(*getCfgHosts(), *getCfgHosts());
 }
 
-// This test verifies that HostMgr returns all reservations for the specified
+// This test verifies that HostMgr returns all reservations for the
 // IPv6 reserved address.
-TEST_F(PgSQLHostMgrTest, getAll6ByIP) {
+TEST_F(MySQLHostMgrTest, getAll6ByIP) {
     testGetAll6ByIP(*getCfgHosts(), *getCfgHosts());
 }
 
 // This test verifies that HostMgr returns all reservations for the
 // IPv6 reserved prefix.
-TEST_F(PgSQLHostMgrTest, getAll6ByIpPrefix) {
+TEST_F(MySQLHostMgrTest, getAll6ByIpPrefix) {
     testGetAll6ByIpPrefix(*getCfgHosts(), *getCfgHosts());
 }
 
 // This test verifies that reservations for a particular hostname can be
 // retrieved from the configuration file and a database simultaneously.
-TEST_F(PgSQLHostMgrTest, getAllbyHostname) {
+TEST_F(MySQLHostMgrTest, getAllbyHostname) {
     testGetAllbyHostname(*getCfgHosts(), HostMgr::instance());
 }
 
 // This test verifies that reservations for a particular hostname and
 // DHCPv4 subnet can be retrieved from the configuration file and a
 // database simultaneously.
-TEST_F(PgSQLHostMgrTest, getAllbyHostnameSubnet4) {
+TEST_F(MySQLHostMgrTest, getAllbyHostnameSubnet4) {
     testGetAllbyHostnameSubnet4(*getCfgHosts(), HostMgr::instance());
 }
 
 // This test verifies that reservations for a particular hostname and
 // DHCPv6 subnet can be retrieved from the configuration file and a
 // database simultaneously.
-TEST_F(PgSQLHostMgrTest, getAllbyHostnameSubnet6) {
+TEST_F(MySQLHostMgrTest, getAllbyHostnameSubnet6) {
     testGetAllbyHostnameSubnet6(*getCfgHosts(), HostMgr::instance());
 }
 
 // This test verifies that reservations for a particular subnet can
 // be retrieved by pages from the configuration file and a database
 // simultaneously.
-TEST_F(PgSQLHostMgrTest, getPage4) {
+TEST_F(MySQLHostMgrTest, getPage4) {
     testGetPage4(true);
 }
 
 // This test verifies that all v4 reservations be retrieved by pages
 // from the configuration file and a database simultaneously.
-TEST_F(PgSQLHostMgrTest, getPage4All) {
+TEST_F(MySQLHostMgrTest, getPage4All) {
     testGetPage4All(true);
 }
 
 // This test verifies that reservations for a particular subnet can
 // be retrieved by pages from the configuration file and a database
 // simultaneously.
-TEST_F(PgSQLHostMgrTest, getPage6) {
+TEST_F(MySQLHostMgrTest, getPage6) {
     testGetPage6(true);
 }
 
 // This test verifies that all v6 reservations be retrieved by pages
 // from the configuration file and a database simultaneously.
-TEST_F(PgSQLHostMgrTest, getPage6All) {
+TEST_F(MySQLHostMgrTest, getPage6All) {
     testGetPage6All(true);
 }
 
 // This test verifies that IPv4 reservations for a particular client can
 // be retrieved from the configuration file and a database simultaneously.
-TEST_F(PgSQLHostMgrTest, getAll4) {
+TEST_F(MySQLHostMgrTest, getAll4) {
     testGetAll4(*getCfgHosts(), HostMgr::instance());
 }
 
 // This test verifies that the IPv4 reservation can be retrieved from a
 // database.
-TEST_F(PgSQLHostMgrTest, get4) {
+TEST_F(MySQLHostMgrTest, get4) {
     testGet4(HostMgr::instance());
 }
 
 // This test verifies that the IPv6 reservation can be retrieved from a
 // database.
-TEST_F(PgSQLHostMgrTest, get6) {
+TEST_F(MySQLHostMgrTest, get6) {
     testGet6(HostMgr::instance());
 }
 
 // This test verifies that the IPv6 prefix reservation can be retrieved
 // from a configuration file and a database.
-TEST_F(PgSQLHostMgrTest, get6ByPrefix) {
+TEST_F(MySQLHostMgrTest, get6ByPrefix) {
     testGet6ByPrefix(*getCfgHosts(), HostMgr::instance());
 }
 
 // This test verifies that the reservations can be added to a configuration
 // file and a database.
-TEST_F(PgSQLHostMgrTest, add) {
+TEST_F(MySQLHostMgrTest, add) {
     testAdd(*getCfgHosts(), HostMgr::instance());
 }
 
 // This test verifies that the reservations can be deleted from a configuration
 // file and a database by subnet ID and address.
-TEST_F(PgSQLHostMgrTest, del) {
+TEST_F(MySQLHostMgrTest, del) {
     testDeleteByIDAndAddress(*getCfgHosts(), HostMgr::instance());
 }
 
 // This test verifies that the reservation can be deleted from database
 // by providing subnet ID and address, and other reservations in the subnet
 // remain undeleted.
-TEST_F(PgSQLHostMgrTest, delOneHost) {
+TEST_F(MySQLHostMgrTest, delOneHost) {
     testDeleteOneHostByIDAndAddress(HostMgr::instance());
 }
 
 // This test verifies that the IPv4 reservations can be deleted from a
 // configuration file and a database by subnet ID and identifier.
-TEST_F(PgSQLHostMgrTest, del4) {
+TEST_F(MySQLHostMgrTest, del4) {
     testDelete4ByIDAndIdentifier(*getCfgHosts(), HostMgr::instance());
 }
 
 // This test verifies that the IPv6 reservations can be deleted from a
 // configuration file and a database by subnet ID and identifier.
-TEST_F(PgSQLHostMgrTest, del6) {
+TEST_F(MySQLHostMgrTest, del6) {
     testDelete6ByIDAndIdentifier(*getCfgHosts(), HostMgr::instance());
 }
 
 // This test verifies that it is possible to control whether the reserved
 // IP addresses are unique or non unique via the HostMgr.
-TEST_F(PgSQLHostMgrTest, setIPReservationsUnique) {
+TEST_F(MySQLHostMgrTest, setIPReservationsUnique) {
     EXPECT_TRUE(HostMgr::instance().setIPReservationsUnique(true));
     EXPECT_TRUE(HostMgr::instance().setIPReservationsUnique(false));
 }
 
-/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
-TEST_F(PgSQLHostMgrDbLostCallbackTest, testRetryOpenDbLostAndRecoveredCallback) {
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySQLHostMgrDbLostCallbackTest, testRetryOpenDbLostAndRecoveredCallback) {
     MultiThreadingTest mt(false);
     testRetryOpenDbLostAndRecoveredCallback();
 }
 
-/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
-TEST_F(PgSQLHostMgrDbLostCallbackTest, testRetryOpenDbLostAndRecoveredCallbackMultiThreading) {
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySQLHostMgrDbLostCallbackTest, testRetryOpenDbLostAndRecoveredCallbackMultiThreading) {
     MultiThreadingTest mt(true);
     testRetryOpenDbLostAndRecoveredCallback();
 }
 
-/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
-TEST_F(PgSQLHostMgrDbLostCallbackTest, testRetryOpenDbLostAndFailedCallback) {
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySQLHostMgrDbLostCallbackTest, testRetryOpenDbLostAndFailedCallback) {
     MultiThreadingTest mt(false);
     testRetryOpenDbLostAndFailedCallback();
 }
 
-/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
-TEST_F(PgSQLHostMgrDbLostCallbackTest, testRetryOpenDbLostAndFailedCallbackMultiThreading) {
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySQLHostMgrDbLostCallbackTest, testRetryOpenDbLostAndFailedCallbackMultiThreading) {
     MultiThreadingTest mt(true);
     testRetryOpenDbLostAndFailedCallback();
 }
 
-/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
-TEST_F(PgSQLHostMgrDbLostCallbackTest, testRetryOpenDbLostAndRecoveredAfterTimeoutCallback) {
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySQLHostMgrDbLostCallbackTest, testRetryOpenDbLostAndRecoveredAfterTimeoutCallback) {
     MultiThreadingTest mt(false);
     testRetryOpenDbLostAndRecoveredAfterTimeoutCallback();
 }
 
-/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
-TEST_F(PgSQLHostMgrDbLostCallbackTest, testRetryOpenDbLostAndRecoveredAfterTimeoutCallbackMultiThreading) {
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySQLHostMgrDbLostCallbackTest, testRetryOpenDbLostAndRecoveredAfterTimeoutCallbackMultiThreading) {
     MultiThreadingTest mt(true);
     testRetryOpenDbLostAndRecoveredAfterTimeoutCallback();
 }
 
-/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
-TEST_F(PgSQLHostMgrDbLostCallbackTest, testRetryOpenDbLostAndFailedAfterTimeoutCallback) {
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySQLHostMgrDbLostCallbackTest, testRetryOpenDbLostAndFailedAfterTimeoutCallback) {
     MultiThreadingTest mt(false);
     testRetryOpenDbLostAndFailedAfterTimeoutCallback();
 }
 
-/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
-TEST_F(PgSQLHostMgrDbLostCallbackTest, testRetryOpenDbLostAndFailedAfterTimeoutCallbackMultiThreading) {
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySQLHostMgrDbLostCallbackTest, testRetryOpenDbLostAndFailedAfterTimeoutCallbackMultiThreading) {
     MultiThreadingTest mt(true);
     testRetryOpenDbLostAndFailedAfterTimeoutCallback();
 }
 
 /// @brief Verifies that db lost callback is not invoked on an open failure
-TEST_F(PgSQLHostMgrDbLostCallbackTest, testNoCallbackOnOpenFailure) {
+TEST_F(MySQLHostMgrDbLostCallbackTest, testNoCallbackOnOpenFailure) {
     MultiThreadingTest mt(false);
     testNoCallbackOnOpenFailure();
 }
 
 /// @brief Verifies that db lost callback is not invoked on an open failure
-TEST_F(PgSQLHostMgrDbLostCallbackTest, testNoCallbackOnOpenFailureMultiThreading) {
+TEST_F(MySQLHostMgrDbLostCallbackTest, testNoCallbackOnOpenFailureMultiThreading) {
     MultiThreadingTest mt(true);
     testNoCallbackOnOpenFailure();
 }
 
-/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
-TEST_F(PgSQLHostMgrDbLostCallbackTest, testDbLostAndRecoveredCallback) {
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySQLHostMgrDbLostCallbackTest, testDbLostAndRecoveredCallback) {
     MultiThreadingTest mt(false);
     testDbLostAndRecoveredCallback();
 }
 
-/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
-TEST_F(PgSQLHostMgrDbLostCallbackTest, testDbLostAndRecoveredCallbackMultiThreading) {
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySQLHostMgrDbLostCallbackTest, testDbLostAndRecoveredCallbackMultiThreading) {
     MultiThreadingTest mt(true);
     testDbLostAndRecoveredCallback();
 }
 
-/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
-TEST_F(PgSQLHostMgrDbLostCallbackTest, testDbLostAndFailedCallback) {
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySQLHostMgrDbLostCallbackTest, testDbLostAndFailedCallback) {
     MultiThreadingTest mt(false);
     testDbLostAndFailedCallback();
 }
 
-/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
-TEST_F(PgSQLHostMgrDbLostCallbackTest, testDbLostAndFailedCallbackMultiThreading) {
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySQLHostMgrDbLostCallbackTest, testDbLostAndFailedCallbackMultiThreading) {
     MultiThreadingTest mt(true);
     testDbLostAndFailedCallback();
 }
 
-/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
-TEST_F(PgSQLHostMgrDbLostCallbackTest, testDbLostAndRecoveredAfterTimeoutCallback) {
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySQLHostMgrDbLostCallbackTest, testDbLostAndRecoveredAfterTimeoutCallback) {
     MultiThreadingTest mt(false);
     testDbLostAndRecoveredAfterTimeoutCallback();
 }
 
-/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
-TEST_F(PgSQLHostMgrDbLostCallbackTest, testDbLostAndRecoveredAfterTimeoutCallbackMultiThreading) {
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySQLHostMgrDbLostCallbackTest, testDbLostAndRecoveredAfterTimeoutCallbackMultiThreading) {
     MultiThreadingTest mt(true);
     testDbLostAndRecoveredAfterTimeoutCallback();
 }
 
-/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
-TEST_F(PgSQLHostMgrDbLostCallbackTest, testDbLostAndFailedAfterTimeoutCallback) {
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySQLHostMgrDbLostCallbackTest, testDbLostAndFailedAfterTimeoutCallback) {
     MultiThreadingTest mt(false);
     testDbLostAndFailedAfterTimeoutCallback();
 }
 
-/// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
-TEST_F(PgSQLHostMgrDbLostCallbackTest, testDbLostAndFailedAfterTimeoutCallbackMultiThreading) {
+/// @brief Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySQLHostMgrDbLostCallbackTest, testDbLostAndFailedAfterTimeoutCallbackMultiThreading) {
     MultiThreadingTest mt(true);
     testDbLostAndFailedAfterTimeoutCallback();
 }
 
-/// @brief Test fixture class for testing @ref CfgDbAccessTest using PgSQL
+/// @brief Test fixture class for testing @ref CfgDbAccessTest using MySQL
 /// backend.
-class CfgPgSqlDbAccessTest : public ::testing::Test {
+class CfgMySqlDbAccessTest : public ::testing::Test {
 public:
 
     /// @brief Constructor.
-    CfgPgSqlDbAccessTest() {
+    CfgMySqlDbAccessTest() {
         // Ensure we have the proper schema with no transient data.
-        db::test::createPgSQLSchema();
+        db::test::createMySQLSchema();
     }
 
     /// @brief Destructor.
-    virtual ~CfgPgSqlDbAccessTest() {
+    virtual ~CfgMySqlDbAccessTest() {
         // If data wipe enabled, delete transient data otherwise destroy the schema
-        db::test::destroyPgSQLSchema();
+        db::test::destroyMySQLSchema();
     }
 
     /// @brief Initializer.
-    Initializer<PgSqlHostDataSourceInit> init_;
+    Initializer<MySqlHostDataSourceInit> init_;
 };
 
-// Tests that PostgreSQL lease manager and host data source can be created from a
+// Tests that MySQL lease manager and host data source can be created from a
 // specified configuration.
-TEST_F(CfgPgSqlDbAccessTest, createManagers) {
+TEST_F(CfgMySqlDbAccessTest, createManagers) {
     CfgDbAccess cfg;
     ASSERT_NO_THROW(cfg.setLeaseDbAccessString("type=memfile persist=false universe=4"));
-    ASSERT_NO_THROW(cfg.setHostDbAccessString(db::test::validPgSQLConnectionString()));
+    ASSERT_NO_THROW(cfg.setHostDbAccessString(db::test::validMySQLConnectionString()));
     ASSERT_NO_THROW(cfg.createManagers());
 
     ASSERT_NO_THROW({
         const HostDataSourcePtr& host_data_source =
             HostMgr::instance().getHostDataSource();
         ASSERT_TRUE(host_data_source);
-        EXPECT_EQ("postgresql", host_data_source->getType());
+        EXPECT_EQ("mysql", host_data_source->getType());
     });
 
     // Because of the lazy initialization of the HostMgr instance, it is
@@ -1868,7 +1900,7 @@ TEST_F(CfgPgSqlDbAccessTest, createManagers) {
         const HostDataSourcePtr& host_data_source =
             HostMgr::instance().getHostDataSource();
         ASSERT_TRUE(host_data_source);
-        EXPECT_EQ("postgresql", host_data_source->getType());
+        EXPECT_EQ("mysql", host_data_source->getType());
     });
 
     EXPECT_TRUE(HostMgr::instance().getIPReservationsUnique());
@@ -1877,19 +1909,19 @@ TEST_F(CfgPgSqlDbAccessTest, createManagers) {
 // Tests that the createManagers function utilizes the setting in the
 // CfgDbAccess class which controls whether the IP reservations must
 // be unique or can be non-unique.
-TEST_F(CfgPgSqlDbAccessTest, createManagersIPResrvUnique) {
+TEST_F(CfgMySqlDbAccessTest, createManagersIPResrvUnique) {
     CfgDbAccess cfg;
 
     cfg.setIPReservationsUnique(false);
     ASSERT_NO_THROW(cfg.setLeaseDbAccessString("type=memfile persist=false universe=6"));
-    ASSERT_NO_THROW(cfg.setHostDbAccessString(db::test::validPgSQLConnectionString()));
+    ASSERT_NO_THROW(cfg.setHostDbAccessString(db::test::validMySQLConnectionString()));
     ASSERT_NO_THROW(cfg.createManagers());
 
     ASSERT_NO_THROW({
         const HostDataSourcePtr& host_data_source =
             HostMgr::instance().getHostDataSource();
         ASSERT_TRUE(host_data_source);
-        EXPECT_EQ("postgresql", host_data_source->getType());
+        EXPECT_EQ("mysql", host_data_source->getType());
     });
 
     // Because of the lazy initialization of the HostMgr instance, it is
@@ -1902,7 +1934,7 @@ TEST_F(CfgPgSqlDbAccessTest, createManagersIPResrvUnique) {
         const HostDataSourcePtr& host_data_source =
             HostMgr::instance().getHostDataSource();
         ASSERT_TRUE(host_data_source);
-        EXPECT_EQ("postgresql", host_data_source->getType());
+        EXPECT_EQ("mysql", host_data_source->getType());
     });
 
     EXPECT_FALSE(HostMgr::instance().getIPReservationsUnique());

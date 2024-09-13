@@ -57,15 +57,15 @@ kea_dhcp6_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 # to be removed
 if HAVE_PGSQL
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
-kea_dhcp6_LDADD += $(top_builddir)/src/lib/pgsql_lease_backend/libkea-pgsql-lease-backend.la
-kea_dhcp6_LDADD += $(top_builddir)/src/lib/pgsql_host_backend/libkea-pgsql-host-backend.la
+kea_dhcp6_LDADD += $(top_builddir)/src/hooks/dhcp/pgsql_lb/libpgsqllb.la
+kea_dhcp6_LDADD += $(top_builddir)/src/hooks/dhcp/pgsql_hb/libpgsqlhb.la
 endif
 
 # to be removed
 if HAVE_MYSQL
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
-kea_dhcp6_LDADD += $(top_builddir)/src/lib/mysql_lease_backend/libkea-mysql-lease-backend.la
-kea_dhcp6_LDADD += $(top_builddir)/src/lib/mysql_host_backend/libkea-mysql-host-backend.la
+kea_dhcp6_LDADD += $(top_builddir)/src/hooks/dhcp/mysql_lb/libmysqllb.la
+kea_dhcp6_LDADD += $(top_builddir)/src/hooks/dhcp/mysql_hb/libmysqlhb.la
 endif
 
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/database/libkea-database.la

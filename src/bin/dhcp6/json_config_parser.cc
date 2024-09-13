@@ -52,13 +52,13 @@
 #include <util/triplet.h>
 
 #ifdef HAVE_MYSQL
-#include <mysql_lease_backend/mysql_lease_mgr.h>
-#include <mysql_host_backend/mysql_host_data_source.h>
+#include <hooks/dhcp/mysql_lb/mysql_lease_mgr.h>
+#include <hooks/dhcp/mysql_hb/mysql_host_data_source.h>
 #endif
 
 #ifdef HAVE_PGSQL
-#include <pgsql_lease_backend/pgsql_lease_mgr.h>
-#include <pgsql_host_backend/pgsql_host_data_source.h>
+#include <hooks/dhcp/pgsql_lb/pgsql_lease_mgr.h>
+#include <hooks/dhcp/pgsql_hb/pgsql_host_data_source.h>
 #endif
 
 #include <boost/algorithm/string.hpp>

@@ -9,8 +9,8 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/testutils/alloc_engine_utils.h>
 #include <dhcpsrv/testutils/test_utils.h>
-#include <pgsql/testutils/pgsql_schema.h>
-#include <pgsql_lease_backend/pgsql_lease_mgr.h>
+#include <mysql/testutils/mysql_schema.h>
+#include <mysql_lease_mgr.h>
 #include <util/triplet.h>
 
 #include <gtest/gtest.h>
@@ -24,30 +24,30 @@ using namespace isc::util;
 
 namespace {
 
-/// @brief Extension of the fixture class to use the PostgreSQL backend.
-class PgSqlAllocEngine4Test : public AllocEngine4Test {
+/// @brief Extension of the fixture class to use the MySQL backend.
+class MySqlAllocEngine4Test : public AllocEngine4Test {
 public:
     /// @brief Constructor.
-    PgSqlAllocEngine4Test() {
+    MySqlAllocEngine4Test() {
         // Ensure we have the proper schema with no transient data.
-        isc::db::test::createPgSQLSchema();
-        factory_.create(isc::db::test::validPgSQLConnectionString());
+        isc::db::test::createMySQLSchema();
+        factory_.create(isc::db::test::validMySQLConnectionString());
     }
 
     /// @brief Destructor.
-    ~PgSqlAllocEngine4Test() {
+    ~MySqlAllocEngine4Test() {
         // If data wipe enabled, delete transient data otherwise destroy
         // the schema.
-        isc::db::test::destroyPgSQLSchema();
+        isc::db::test::destroyMySQLSchema();
         LeaseMgrFactory::destroy();
     }
 
     /// @brief Initializer.
-    Initializer<PgSqlLeaseMgrInit> init_;
+    Initializer<MySqlLeaseMgrInit> init_;
 };
 
 // This test checks that simple allocation handles BOOTP queries.
-TEST_F(PgSqlAllocEngine4Test, bootpAlloc4) {
+TEST_F(MySqlAllocEngine4Test, bootpAlloc4) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
@@ -83,7 +83,7 @@ TEST_F(PgSqlAllocEngine4Test, bootpAlloc4) {
     // Check that the lease is indeed in LeaseMgr
     Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(lease->addr_);
     ASSERT_TRUE(from_mgr);
-    // The PostgreSql database does not keep the hwtype for DHCPv4 leases.
+    // The MySQL database does not keep the hwtype for DHCPv4 leases.
     from_mgr->hwaddr_->htype_ = HTYPE_FDDI;
 
     // Now check that the lease in LeaseMgr has the same parameters
@@ -91,7 +91,7 @@ TEST_F(PgSqlAllocEngine4Test, bootpAlloc4) {
 }
 
 // This test checks simple renewal handles BOOTP queries.
-TEST_F(PgSqlAllocEngine4Test, bootpRenew4) {
+TEST_F(MySqlAllocEngine4Test, bootpRenew4) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
@@ -148,7 +148,7 @@ TEST_F(PgSqlAllocEngine4Test, bootpRenew4) {
 }
 
 // This test checks that deleteRelease handles BOOTP leases.
-TEST_F(PgSqlAllocEngine4Test, bootpDelete) {
+TEST_F(MySqlAllocEngine4Test, bootpDelete) {
     boost::scoped_ptr<AllocEngine> engine;
     ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
