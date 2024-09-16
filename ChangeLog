@@ -1,3 +1,12 @@
+2283.   [func]      tmark
+	The order or precedence of options specified in a
+	template class and its spawned classes has been
+	reversed.  An option specified in a spawned class now
+	takes precedence over the same option if specified in
+	the template class. This change applies to both
+	kea-dhcp4 and kea-dhcp6.
+	(Gitlab #3576)
+
 2282.	[bug]		razvan
 	Fixed a bug caused by starting listeners when checking the
 	configuration using the '-T' command line parameter. This was

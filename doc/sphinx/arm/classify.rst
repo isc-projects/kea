@@ -730,7 +730,8 @@ A client class definition can contain the following properties:
    The resulting spawned class has the following generated name format:
    ``SPAWN_<template-class-name>_<evaluated-value>``.
    After classes are evaluated and a spawned class is generated, the corresponding
-   template class name is also associated with the packet.
+   template class name is also associated with the packet. An Option specified in a
+   spawned class will take precedence over the same option if set in its template class.
  - The ``option-data`` list is not mandatory and contains options that should be
    assigned to members of this class. In the case of a template class, these
    options are assigned to the generated spawned class.
