@@ -1875,7 +1875,7 @@ public:
     Initializer<MySqlHostDataSourceInit> init_;
 };
 
-// Tests that MySQL lease manager and host data source can be created from a
+// Tests that memfile lease manager and MySQL host data source can be created from a
 // specified configuration.
 TEST_F(CfgMySqlDbAccessTest, createManagers) {
     CfgDbAccess cfg;

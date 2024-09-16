@@ -57,3 +57,4 @@ pgsql_lb_unittests_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS) $(GTE
 endif
 
 noinst_PROGRAMS = $(TESTS)
+

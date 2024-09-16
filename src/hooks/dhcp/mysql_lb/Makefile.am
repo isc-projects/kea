@@ -71,3 +71,4 @@ messages mysql_lb_messages.h mysql_lb_messages.cc:
 	@echo Messages generation disabled. Configure with --enable-generate-messages to enable it.
 
 endif
+

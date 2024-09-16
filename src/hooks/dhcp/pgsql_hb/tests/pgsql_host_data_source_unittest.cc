@@ -1843,7 +1843,7 @@ public:
     Initializer<PgSqlHostDataSourceInit> init_;
 };
 
-// Tests that PostgreSQL lease manager and host data source can be created from a
+// Tests that memfile lease manager and PostgreSQL host data source can be created from a
 // specified configuration.
 TEST_F(CfgPgSqlDbAccessTest, createManagers) {
     CfgDbAccess cfg;

@@ -71,3 +71,4 @@ messages pgsql_hb_messages.h pgsql_hb_messages.cc:
 	@echo Messages generation disabled. Configure with --enable-generate-messages to enable it.
 
 endif
+

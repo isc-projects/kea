@@ -56,7 +56,6 @@ public:
         isc::Exception(file, line, what) {}
 };
 
-
 /// @brief Invalid type exception
 ///
 /// Thrown when the factory doesn't recognize the type of the backend.
@@ -99,7 +98,6 @@ public:
     SchemaInitializationFailed(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
-
 
 /// @brief Defines a callback prototype for propagating events upward
 typedef std::function<bool (util::ReconnectCtlPtr db_reconnect_ctl)> DbCallback;
@@ -329,7 +327,7 @@ private:
     /// @brief Reconnect settings.
     util::ReconnectCtlPtr reconnect_ctl_;
 
-    /// The IOService object, used for all ASIO operations.
+    /// @brief The IOService object, used for all ASIO operations.
     static isc::asiolink::IOServicePtr io_service_;
 };
 
@@ -351,16 +349,23 @@ public:
     }
 };
 
+/// @brief RAII class to register a database backend by dynamically
+/// constructing an initialization object.
+///
+/// Used mostly in unittests.
+///
+/// @tparam T The initialization class which registers the database backend
+/// on constructor and deregisters it on destructor.
 template <typename T>
 struct Initializer {
     /// @brief Constructor.
     Initializer() : init_(new T()) {
     }
 
-    /// @brief Destructo.
+    /// @brief Destructor.
     ~Initializer() = default;
 
-    /// @brief smart pointer to an instance of an initializer.
+    /// @brief Smart pointer to an instance of an initializer.
     std::unique_ptr<T> init_;
 };
 
