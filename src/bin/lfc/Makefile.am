@@ -47,12 +47,6 @@ kea_lfc_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 kea_lfc_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
 
 kea_lfc_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
-if HAVE_MYSQL
-kea_lfc_LDFLAGS += $(MYSQL_LIBS)
-endif
-if HAVE_PGSQL
-kea_lfc_LDFLAGS += $(PGSQL_LIBS)
-endif
 
 kea_lfcdir = $(pkgdatadir)
 

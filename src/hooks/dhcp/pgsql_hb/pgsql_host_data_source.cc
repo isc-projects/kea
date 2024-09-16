@@ -17,6 +17,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/host_mgr.h>
+#include <pgsql_hb_log.h>
 #include <pgsql_host_data_source.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <util/buffer.h>
@@ -3372,6 +3373,13 @@ PgSqlHostDataSource::setIPReservationsUnique(const bool unique) {
 bool
 PgSqlHostDataSource::isUnusable() {
     return (impl_->unusable_);
+}
+
+HostDataSourcePtr
+PgSqlHostDataSource::factory(const isc::db::DatabaseConnection::ParameterMap& parameters) {
+    LOG_INFO(pgsql_hb_logger, PGSQL_HB_DB)
+        .arg(isc::db::DatabaseConnection::redactedAccessString(parameters));
+    return (HostDataSourcePtr(new PgSqlHostDataSource(parameters)));
 }
 
 }  // namespace dhcp

@@ -13,12 +13,6 @@ AM_CPPFLAGS += -DTOP_BUILDDIR="\"$(top_builddir)\""
 # Set location of the kea-lfc binary.
 AM_CPPFLAGS += -DKEA_LFC_EXECUTABLE="\"$(kea_lfc_location)\""
 AM_CPPFLAGS += $(BOOST_INCLUDES)
-if HAVE_MYSQL
-AM_CPPFLAGS += $(MYSQL_CPPFLAGS)
-endif
-if HAVE_PGSQL
-AM_CPPFLAGS += $(PGSQL_CPPFLAGS)
-endif
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 

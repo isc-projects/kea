@@ -20,15 +20,6 @@
 #include <stats/stats_mgr.h>
 #include <testutils/gtest_utils.h>
 #include <util/str.h>
-
-#if defined HAVE_MYSQL
-#include <mysql/testutils/mysql_schema.h>
-#endif
-
-#if defined HAVE_PGSQL
-#include <pgsql/testutils/pgsql_schema.h>
-#endif
-
 #include <boost/pointer_cast.hpp>
 
 using namespace std;

@@ -51,17 +51,6 @@
 #include <util/encode/encode.h>
 #include <util/multi_threading_mgr.h>
 #include <util/triplet.h>
-
-#ifdef HAVE_MYSQL
-#include <hooks/dhcp/mysql_lb/mysql_lease_mgr.h>
-#include <hooks/dhcp/mysql_hb/mysql_host_data_source.h>
-#endif
-
-#ifdef HAVE_PGSQL
-#include <hooks/dhcp/pgsql_lb/pgsql_lease_mgr.h>
-#include <hooks/dhcp/pgsql_hb/pgsql_host_data_source.h>
-#endif
-
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -90,20 +79,6 @@ using namespace std;
 // Register database backends
 //
 namespace {
-
-// Code will be moved to appropriate hook library.
-#ifdef HAVE_MYSQL
-// Database backend will be registered at object initialization
-MySqlLeaseMgrInit mysql_init_lease;
-MySqlHostDataSourceInit mysql_init_host;
-#endif
-
-// Code will be moved to appropriate hook library.
-#ifdef HAVE_PGSQL
-// Database backend will be registered at object initialization
-PgSqlLeaseMgrInit pgsql_init_lease;
-PgSqlHostDataSourceInit pgsql_init_host;
-#endif
 
 /// @brief Checks if specified directory exists.
 ///

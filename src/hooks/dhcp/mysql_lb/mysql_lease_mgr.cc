@@ -13,8 +13,9 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <mysql_lease_mgr.h>
 #include <dhcpsrv/timer_mgr.h>
+#include <mysql_lb_log.h>
+#include <mysql_lease_mgr.h>
 #include <mysql/mysql_connection.h>
 #include <util/multi_threading_mgr.h>
 
@@ -4671,6 +4672,13 @@ MySqlLeaseMgr::byRemoteId6size() const {
         checkError(ctx, status, stindex, "unable to fetch results");
     }
     return (static_cast<size_t>(count));
+}
+
+TrackingLeaseMgrPtr
+MySqlLeaseMgr::factory(const isc::db::DatabaseConnection::ParameterMap& parameters) {
+    LOG_INFO(mysql_lb_logger, MYSQL_LB_DB)
+        .arg(isc::db::DatabaseConnection::redactedAccessString(parameters));
+    return (TrackingLeaseMgrPtr(new MySqlLeaseMgr(parameters)));
 }
 
 }  // namespace dhcp

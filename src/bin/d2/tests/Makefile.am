@@ -60,12 +60,7 @@ d2_unittests_SOURCES += check_exists_remove_unittests.cc
 
 d2_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 d2_unittests_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
-if HAVE_MYSQL
-d2_unittests_LDFLAGS += $(MYSQL_LIBS)
-endif
-if HAVE_PGSQL
-d2_unittests_LDFLAGS += $(PGSQL_LIBS)
-endif
+
 d2_unittests_LDFLAGS += $(GTEST_LDFLAGS)
 
 d2_unittests_LDADD  = $(top_builddir)/src/bin/d2/libd2.la

@@ -7,15 +7,28 @@
 #include <config.h>
 #include <asiolink/io_address.h>
 #include <cc/data.h>
+#include <database/database_connection.h>
 #include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/tests/dhcp6_message_test.h>
 #include <dhcpsrv/lease.h>
+
+#ifdef HAVE_MYSQL
+#include <mysql/testutils/mysql_schema.h>
+#include <hooks/dhcp/mysql_lb/mysql_lease_mgr.h>
+#endif
+
+#ifdef HAVE_PGSQL
+#include <pgsql/testutils/pgsql_schema.h>
+#include <hooks/dhcp/pgsql_lb/pgsql_lease_mgr.h>
+#endif
+
 #include <stats/stats_mgr.h>
 
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::data;
+using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::stats;
@@ -254,6 +267,7 @@ TEST_F(DeclineTest, basicMemfile) {
 #ifdef HAVE_MYSQL
 // This test checks that the client can acquire and decline the lease.
 TEST_F(DeclineTest, basicMySQL) {
+    Initializer<MySqlLeaseMgrInit> init;
     Dhcp6Client client;
     acquireAndDecline(client, "01:02:03:04:05:06", 1234, "01:02:03:04:05:06",
                       1234, VALID_ADDR, SHOULD_PASS, 1);
@@ -262,6 +276,7 @@ TEST_F(DeclineTest, basicMySQL) {
 
 #ifdef HAVE_PGSQL
 TEST_F(DeclineTest, basicPgSQL) {
+    Initializer<PgSqlLeaseMgrInit> init;
     Dhcp6Client client;
     acquireAndDecline(client, "01:02:03:04:05:06", 1234, "01:02:03:04:05:06",
                       1234, VALID_ADDR, SHOULD_PASS, 2);

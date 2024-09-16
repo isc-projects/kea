@@ -56,14 +56,6 @@
 #include <log/logger.h>
 #include <cryptolink/cryptolink.h>
 #include <process/cfgrpt/config_report.h>
-#include <dhcpsrv/memfile_lease_mgr.h>
-
-#ifdef HAVE_MYSQL
-#include <hooks/dhcp/mysql_lb/mysql_lease_mgr.h>
-#endif
-#ifdef HAVE_PGSQL
-#include <hooks/dhcp/pgsql_lb/pgsql_lease_mgr.h>
-#endif
 
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
@@ -5025,6 +5017,8 @@ Dhcpv4Srv::getVersion(bool extended) {
         tmp << "- " << Logger::getVersion() << endl;
         tmp << "- " << CryptoLink::getVersion() << endl;
         tmp << "backends:" << endl;
+        /*
+TODO - implement LeaseMgrFactory::getDBVersions
 #ifdef HAVE_MYSQL
         tmp << "- " << MySqlLeaseMgr::getDBVersion() << endl;
 #endif
@@ -5034,6 +5028,7 @@ Dhcpv4Srv::getVersion(bool extended) {
         tmp << "- " << Memfile_LeaseMgr::getDBVersion(Memfile_LeaseMgr::V4);
 
         // @todo: more details about database runtime
+*/
     }
 
     return (tmp.str());

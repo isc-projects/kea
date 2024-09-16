@@ -8,10 +8,22 @@
 #include <config.h>
 #include <asiolink/io_address.h>
 #include <cc/data.h>
+#include <database/database_connection.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/subnet_id.h>
+
+#ifdef HAVE_MYSQL
+#include <mysql/testutils/mysql_schema.h>
+#include <hooks/dhcp/mysql_lb/mysql_lease_mgr.h>
+#endif
+
+#ifdef HAVE_PGSQL
+#include <pgsql/testutils/pgsql_schema.h>
+#include <hooks/dhcp/pgsql_lb/pgsql_lease_mgr.h>
+#endif
+
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp4/tests/dhcp4_client.h>
 #include <stats/stats_mgr.h>
@@ -21,6 +33,7 @@
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::data;
+using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::stats;
@@ -257,6 +270,7 @@ TEST_F(DeclineTest, declineNoIdentifierChangeMemfile) {
 #ifdef HAVE_MYSQL
 // This test checks that the client can acquire and decline the lease.
 TEST_F(DeclineTest, declineNoIdentifierChangeMySQL) {
+    Initializer<MySqlLeaseMgrInit> init;
     Dhcp4Client client(Dhcp4Client::SELECTING);
     acquireAndDecline(client, "01:02:03:04:05:06", "12:14",
                       "01:02:03:04:05:06", "12:14",
@@ -267,6 +281,7 @@ TEST_F(DeclineTest, declineNoIdentifierChangeMySQL) {
 #ifdef HAVE_PGSQL
 // This test checks that the client can acquire and decline the lease.
 TEST_F(DeclineTest, declineNoIdentifierChangePgSQL) {
+    Initializer<PgSqlLeaseMgrInit> init;
     Dhcp4Client client(Dhcp4Client::SELECTING);
     acquireAndDecline(client, "01:02:03:04:05:06", "12:14",
                       "01:02:03:04:05:06", "12:14",

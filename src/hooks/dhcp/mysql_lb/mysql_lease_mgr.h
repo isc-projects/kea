@@ -13,7 +13,6 @@
 #include <dhcpsrv/dhcpsrv_exceptions.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/tracking_lease_mgr.h>
-#include <mysql_lb_log.h>
 #include <mysql/mysql_connection.h>
 
 #include <boost/scoped_ptr.hpp>
@@ -1307,11 +1306,7 @@ public:
     ///
     /// @return The MySQL Lease Manager.
     static TrackingLeaseMgrPtr
-    factory(const isc::db::DatabaseConnection::ParameterMap& parameters) {
-        LOG_INFO(mysql_lb_logger, MYSQL_LB_DB)
-            .arg(isc::db::DatabaseConnection::redactedAccessString(parameters));
-        return (TrackingLeaseMgrPtr(new MySqlLeaseMgr(parameters)));
-    }
+    factory(const isc::db::DatabaseConnection::ParameterMap& parameters);
 };
 
 struct MySqlLeaseMgrInit {

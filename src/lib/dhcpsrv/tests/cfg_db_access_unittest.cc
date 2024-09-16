@@ -15,14 +15,6 @@
 #include <testutils/test_to_element.h>
 #include <gtest/gtest.h>
 
-#if defined HAVE_MYSQL
-#include <mysql/testutils/mysql_schema.h>
-#endif
-
-#if defined HAVE_PGSQL
-#include <pgsql/testutils/pgsql_schema.h>
-#endif
-
 using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::test;

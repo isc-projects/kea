@@ -4,12 +4,6 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
 AM_CPPFLAGS += -I$(top_srcdir)/src -I$(top_builddir)/src
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
-if HAVE_MYSQL
-AM_CPPFLAGS += $(MYSQL_CPPFLAGS)
-endif
-if HAVE_PGSQL
-AM_CPPFLAGS += $(PGSQL_CPPFLAGS)
-endif
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -44,19 +38,6 @@ sbin_PROGRAMS = kea-dhcp4
 kea_dhcp4_SOURCES  = main.cc
 
 kea_dhcp4_LDADD  = libdhcp4.la
-
-# to be removed
-if HAVE_PGSQL
-kea_dhcp4_LDADD += $(top_builddir)/src/hooks/dhcp/pgsql_lb/libpgsqllb.la
-kea_dhcp4_LDADD += $(top_builddir)/src/hooks/dhcp/pgsql_hb/libpgsqlhb.la
-endif
-
-# to be removed
-if HAVE_MYSQL
-kea_dhcp4_LDADD += $(top_builddir)/src/hooks/dhcp/mysql_lb/libmysqllb.la
-kea_dhcp4_LDADD += $(top_builddir)/src/hooks/dhcp/mysql_hb/libmysqlhb.la
-endif
-
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
@@ -66,17 +47,6 @@ kea_dhcp4_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
-
-# to be removed
-if HAVE_PGSQL
-kea_dhcp4_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
-endif
-
-# to be removed
-if HAVE_MYSQL
-kea_dhcp4_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
-endif
-
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
@@ -87,20 +57,7 @@ kea_dhcp4_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 kea_dhcp4_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
 
-if HAVE_MYSQL
-kea_dhcp4_LDADD += $(MYSQL_LIBS)
-endif
-if HAVE_PGSQL
-kea_dhcp4_LDADD += $(PGSQL_LIBS)
-endif
-
 kea_dhcp4_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
-if HAVE_MYSQL
-kea_dhcp4_LDFLAGS += $(MYSQL_LIBS)
-endif
-if HAVE_PGSQL
-kea_dhcp4_LDFLAGS += $(PGSQL_LIBS)
-endif
 
 kea_dhcp4dir = $(pkgdatadir)
 

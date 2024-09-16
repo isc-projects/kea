@@ -27,6 +27,13 @@ AM_CPPFLAGS += -DSYNTAX_FILE=\"$(abs_srcdir)/../dhcp4_parser.yy\"
 AM_CPPFLAGS += -DKEA_LFC_EXECUTABLE=\"$(abs_top_builddir)/src/bin/lfc/kea-lfc\"
 AM_CPPFLAGS += -DTEST_CA_DIR=\"$(abs_top_srcdir)/src/lib/asiolink/testutils/ca\"
 
+if HAVE_MYSQL
+AM_CPPFLAGS += $(MYSQL_CPPFLAGS)
+endif
+if HAVE_PGSQL
+AM_CPPFLAGS += $(PGSQL_CPPFLAGS)
+endif
+
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
 if USE_STATIC_LINK
@@ -114,6 +121,7 @@ dhcp4_unittests_SOURCES += vendor_opts_unittest.cc
 nodist_dhcp4_unittests_SOURCES = marker_file.h test_libraries.h
 
 dhcp4_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
+
 dhcp4_unittests_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
 if HAVE_MYSQL
 dhcp4_unittests_LDFLAGS += $(MYSQL_LIBS)

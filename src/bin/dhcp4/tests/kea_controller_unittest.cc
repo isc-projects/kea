@@ -10,6 +10,7 @@
 #include <asiolink/io_address.h>
 #include <asiolink/io_service.h>
 #include <cc/command_interpreter.h>
+#include <database/database_connection.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/hwaddr.h>
 #include <dhcp/iface_mgr.h>
@@ -24,6 +25,7 @@
 
 #ifdef HAVE_MYSQL
 #include <mysql/testutils/mysql_schema.h>
+#include <hooks/dhcp/mysql_lb/mysql_lease_mgr.h>
 #endif
 
 #include <log/logger_support.h>
@@ -47,6 +49,7 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::data;
+using namespace isc::db;
 
 #ifdef HAVE_MYSQL
 using namespace isc::db::test;
@@ -1000,6 +1003,9 @@ public:
     /// reconfiguration.
     void testBackendReconfiguration(const std::string& backend_first,
                                     const std::string& backend_second);
+
+    /// @brief Initializer.
+    Initializer<MySqlLeaseMgrInit> init_;
 };
 
 std::string

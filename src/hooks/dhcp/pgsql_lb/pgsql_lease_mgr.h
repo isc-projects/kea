@@ -13,7 +13,6 @@
 #include <dhcpsrv/dhcpsrv_exceptions.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/tracking_lease_mgr.h>
-#include <pgsql_lb_log.h>
 #include <pgsql/pgsql_connection.h>
 #include <pgsql/pgsql_exchange.h>
 
@@ -1266,11 +1265,7 @@ public:
     ///
     /// @return The PostgreSQL Lease Manager.
     static TrackingLeaseMgrPtr
-    factory(const isc::db::DatabaseConnection::ParameterMap& parameters) {
-        LOG_INFO(pgsql_lb_logger, PGSQL_LB_DB)
-            .arg(isc::db::DatabaseConnection::redactedAccessString(parameters));
-        return (TrackingLeaseMgrPtr(new PgSqlLeaseMgr(parameters)));
-    }
+    factory(const isc::db::DatabaseConnection::ParameterMap& parameters);
 };
 
 struct PgSqlLeaseMgrInit {

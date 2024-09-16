@@ -17,6 +17,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/host_mgr.h>
+#include <mysql_hb_log.h>
 #include <mysql_host_data_source.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <util/buffer.h>
@@ -4207,6 +4208,13 @@ MySqlHostDataSource::setIPReservationsUnique(const bool unique) {
 bool
 MySqlHostDataSource::isUnusable() {
     return (impl_->unusable_);
+}
+
+HostDataSourcePtr
+MySqlHostDataSource::factory(const isc::db::DatabaseConnection::ParameterMap& parameters) {
+    LOG_INFO(mysql_hb_logger, MYSQL_HB_DB)
+        .arg(isc::db::DatabaseConnection::redactedAccessString(parameters));
+    return (HostDataSourcePtr(new MySqlHostDataSource(parameters)));
 }
 
 }  // namespace dhcp

@@ -7,6 +7,7 @@
 #include <config.h>
 #include <asiolink/io_address.h>
 #include <cc/data.h>
+#include <database/database_connection.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -17,10 +18,12 @@
 
 #ifdef HAVE_MYSQL
 #include <mysql/testutils/mysql_schema.h>
+#include <hooks/dhcp/mysql_lb/mysql_lease_mgr.h>
 #endif
 
 #ifdef HAVE_PGSQL
 #include <pgsql/testutils/pgsql_schema.h>
+#include <hooks/dhcp/pgsql_lb/pgsql_lease_mgr.h>
 #endif
 
 #include <dhcp4/tests/dhcp4_test_utils.h>
@@ -34,6 +37,7 @@
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::data;
+using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::stats;
@@ -3342,6 +3346,9 @@ public:
         // If data wipe enabled, delete transient data otherwise destroy the schema.
         db::test::destroyMySQLSchema();
     }
+
+    /// @brief Initializer.
+    Initializer<MySqlLeaseMgrInit> init_;
 };
 
 // Test that the client using the same hardware address but multiple
@@ -3385,6 +3392,9 @@ public:
         // If data wipe enabled, delete transient data otherwise destroy the schema
         db::test::destroyPgSQLSchema();
     }
+
+    /// @brief Initializer.
+    Initializer<PgSqlLeaseMgrInit> init_;
 };
 
 // Test that the client using the same hardware address but multiple

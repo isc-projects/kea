@@ -10,7 +10,6 @@
 #include <database/database_connection.h>
 #include <dhcpsrv/base_host_data_source.h>
 #include <dhcpsrv/host_data_source_factory.h>
-#include <pgsql_hb_log.h>
 #include <pgsql/pgsql_connection.h>
 #include <pgsql/pgsql_exchange.h>
 
@@ -592,11 +591,7 @@ public:
     ///
     /// @return The PostgreSQL Host Manager.
     static HostDataSourcePtr
-    factory(const isc::db::DatabaseConnection::ParameterMap& parameters) {
-        LOG_INFO(pgsql_hb_logger, PGSQL_HB_DB)
-            .arg(isc::db::DatabaseConnection::redactedAccessString(parameters));
-        return (HostDataSourcePtr(new PgSqlHostDataSource(parameters)));
-    }
+    factory(const isc::db::DatabaseConnection::ParameterMap& parameters);
 };
 
 struct PgSqlHostDataSourceInit {

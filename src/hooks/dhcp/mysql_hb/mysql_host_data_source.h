@@ -11,7 +11,6 @@
 #include <database/db_exceptions.h>
 #include <dhcpsrv/base_host_data_source.h>
 #include <dhcpsrv/host_data_source_factory.h>
-#include <mysql_hb_log.h>
 #include <mysql/mysql_connection.h>
 
 #include <stdint.h>
@@ -540,11 +539,7 @@ public:
     ///
     /// @return The MySQL Host Manager.
     static HostDataSourcePtr
-    factory(const isc::db::DatabaseConnection::ParameterMap& parameters) {
-        LOG_INFO(mysql_hb_logger, MYSQL_HB_DB)
-            .arg(isc::db::DatabaseConnection::redactedAccessString(parameters));
-        return (HostDataSourcePtr(new MySqlHostDataSource(parameters)));
-    }
+    factory(const isc::db::DatabaseConnection::ParameterMap& parameters);
 };
 
 struct MySqlHostDataSourceInit {

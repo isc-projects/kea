@@ -14,6 +14,7 @@
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/dhcpsrv_exceptions.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <pgsql_lb_log.h>
 #include <pgsql_lease_mgr.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <util/multi_threading_mgr.h>
@@ -3681,6 +3682,13 @@ PgSqlLeaseMgr::byRemoteId6size() const {
     uint64_t count;
     PgSqlExchange::getColumnValue(r, 0, 0, count);
     return (static_cast<size_t>(count));
+}
+
+TrackingLeaseMgrPtr
+PgSqlLeaseMgr::factory(const isc::db::DatabaseConnection::ParameterMap& parameters) {
+    LOG_INFO(pgsql_lb_logger, PGSQL_LB_DB)
+        .arg(isc::db::DatabaseConnection::redactedAccessString(parameters));
+    return (TrackingLeaseMgrPtr(new PgSqlLeaseMgr(parameters)));
 }
 
 }  // namespace dhcp
