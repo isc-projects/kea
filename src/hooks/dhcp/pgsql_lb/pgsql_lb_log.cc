@@ -4,19 +4,14 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef MYSQL_CB_LOG_H
-#define MYSQL_CB_LOG_H
+#include <config.h>
 
-#include <log/logger_support.h>
-#include <log/macros.h>
-#include <mysql_cb_messages.h>
+#include <pgsql_lb_log.h>
 
 namespace isc {
 namespace dhcp {
 
-extern isc::log::Logger mysql_cb_logger;
+isc::log::Logger pgsql_lb_logger("pgsql-lb-hooks");
 
 }  // namespace dhcp
 }  // namespace isc
-
-#endif

@@ -8,9 +8,12 @@
 #define MYSQL_LEASE_MGR_H
 
 #include <asiolink/io_service.h>
+#include <database/database_connection.h>
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/dhcpsrv_exceptions.h>
+#include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/tracking_lease_mgr.h>
+#include <mysql_lb_log.h>
 #include <mysql/mysql_connection.h>
 
 #include <boost/scoped_ptr.hpp>
@@ -1295,26 +1298,31 @@ private:
 
     /// @brief Timer name used to register database reconnect timer.
     std::string timer_name_;
+
+public:
+    /// @brief Factory class method.
+    ///
+    /// @param parameters A data structure relating keywords and values
+    ///        concerned with the database.
+    ///
+    /// @return The MySQL Lease Manager.
+    static TrackingLeaseMgrPtr
+    factory(const isc::db::DatabaseConnection::ParameterMap& parameters) {
+        LOG_INFO(mysql_lb_logger, MYSQL_LB_DB)
+            .arg(isc::db::DatabaseConnection::redactedAccessString(parameters));
+        return (TrackingLeaseMgrPtr(new MySqlLeaseMgr(parameters)));
+    }
 };
 
 struct MySqlLeaseMgrInit {
     // Constructor registers
     MySqlLeaseMgrInit() {
-        LeaseMgrFactory::registerFactory("mysql", factory, true);
+        LeaseMgrFactory::registerFactory("mysql", MySqlLeaseMgr::factory, true);
     }
 
     // Destructor deregisters
     ~MySqlLeaseMgrInit() {
         LeaseMgrFactory::deregisterFactory("mysql", true);
-    }
-
-    // Factory class method
-    static TrackingLeaseMgrPtr
-    factory(const isc::db::DatabaseConnection::ParameterMap& parameters) {
-        // TODO - fix messages
-        //LOG_INFO(dhcpsrv_logger, DHCPSRV_MYSQL_DB)
-        //    .arg(DatabaseConnection::redactedAccessString(parameters));
-        return (TrackingLeaseMgrPtr(new MySqlLeaseMgr(parameters)));
     }
 };
 

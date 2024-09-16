@@ -143,7 +143,6 @@ extern const isc::log::MessageID DHCPSRV_MULTIPLE_RAW_SOCKETS_PER_IFACE = "DHCPS
 extern const isc::log::MessageID DHCPSRV_MYSQL_ADD_ADDR4 = "DHCPSRV_MYSQL_ADD_ADDR4";
 extern const isc::log::MessageID DHCPSRV_MYSQL_ADD_ADDR6 = "DHCPSRV_MYSQL_ADD_ADDR6";
 extern const isc::log::MessageID DHCPSRV_MYSQL_COMMIT = "DHCPSRV_MYSQL_COMMIT";
-extern const isc::log::MessageID DHCPSRV_MYSQL_DB = "DHCPSRV_MYSQL_DB";
 extern const isc::log::MessageID DHCPSRV_MYSQL_DELETED_EXPIRED_RECLAIMED = "DHCPSRV_MYSQL_DELETED_EXPIRED_RECLAIMED";
 extern const isc::log::MessageID DHCPSRV_MYSQL_DELETE_ADDR = "DHCPSRV_MYSQL_DELETE_ADDR";
 extern const isc::log::MessageID DHCPSRV_MYSQL_DELETE_EXPIRED_RECLAIMED4 = "DHCPSRV_MYSQL_DELETE_EXPIRED_RECLAIMED4";
@@ -173,7 +172,6 @@ extern const isc::log::MessageID DHCPSRV_MYSQL_GET_SUBID_CLIENTID = "DHCPSRV_MYS
 extern const isc::log::MessageID DHCPSRV_MYSQL_GET_SUBID_HWADDR = "DHCPSRV_MYSQL_GET_SUBID_HWADDR";
 extern const isc::log::MessageID DHCPSRV_MYSQL_GET_SUBID_PAGE6 = "DHCPSRV_MYSQL_GET_SUBID_PAGE6";
 extern const isc::log::MessageID DHCPSRV_MYSQL_GET_VERSION = "DHCPSRV_MYSQL_GET_VERSION";
-extern const isc::log::MessageID DHCPSRV_MYSQL_HOST_DB = "DHCPSRV_MYSQL_HOST_DB";
 extern const isc::log::MessageID DHCPSRV_MYSQL_HOST_DB_GET_VERSION = "DHCPSRV_MYSQL_HOST_DB_GET_VERSION";
 extern const isc::log::MessageID DHCPSRV_MYSQL_HOST_DB_READONLY = "DHCPSRV_MYSQL_HOST_DB_READONLY";
 extern const isc::log::MessageID DHCPSRV_MYSQL_HOST_DB_RECONNECT_ATTEMPT_FAILED = "DHCPSRV_MYSQL_HOST_DB_RECONNECT_ATTEMPT_FAILED";
@@ -200,7 +198,6 @@ extern const isc::log::MessageID DHCPSRV_OPEN_SOCKET_FAIL = "DHCPSRV_OPEN_SOCKET
 extern const isc::log::MessageID DHCPSRV_PGSQL_ADD_ADDR4 = "DHCPSRV_PGSQL_ADD_ADDR4";
 extern const isc::log::MessageID DHCPSRV_PGSQL_ADD_ADDR6 = "DHCPSRV_PGSQL_ADD_ADDR6";
 extern const isc::log::MessageID DHCPSRV_PGSQL_COMMIT = "DHCPSRV_PGSQL_COMMIT";
-extern const isc::log::MessageID DHCPSRV_PGSQL_DB = "DHCPSRV_PGSQL_DB";
 extern const isc::log::MessageID DHCPSRV_PGSQL_DELETE_ADDR = "DHCPSRV_PGSQL_DELETE_ADDR";
 extern const isc::log::MessageID DHCPSRV_PGSQL_DELETE_EXPIRED_RECLAIMED4 = "DHCPSRV_PGSQL_DELETE_EXPIRED_RECLAIMED4";
 extern const isc::log::MessageID DHCPSRV_PGSQL_DELETE_EXPIRED_RECLAIMED6 = "DHCPSRV_PGSQL_DELETE_EXPIRED_RECLAIMED6";
@@ -229,7 +226,6 @@ extern const isc::log::MessageID DHCPSRV_PGSQL_GET_SUBID_CLIENTID = "DHCPSRV_PGS
 extern const isc::log::MessageID DHCPSRV_PGSQL_GET_SUBID_HWADDR = "DHCPSRV_PGSQL_GET_SUBID_HWADDR";
 extern const isc::log::MessageID DHCPSRV_PGSQL_GET_SUBID_PAGE6 = "DHCPSRV_PGSQL_GET_SUBID_PAGE6";
 extern const isc::log::MessageID DHCPSRV_PGSQL_GET_VERSION = "DHCPSRV_PGSQL_GET_VERSION";
-extern const isc::log::MessageID DHCPSRV_PGSQL_HOST_DB = "DHCPSRV_PGSQL_HOST_DB";
 extern const isc::log::MessageID DHCPSRV_PGSQL_HOST_DB_GET_VERSION = "DHCPSRV_PGSQL_HOST_DB_GET_VERSION";
 extern const isc::log::MessageID DHCPSRV_PGSQL_HOST_DB_READONLY = "DHCPSRV_PGSQL_HOST_DB_READONLY";
 extern const isc::log::MessageID DHCPSRV_PGSQL_HOST_DB_RECONNECT_ATTEMPT_FAILED = "DHCPSRV_PGSQL_HOST_DB_RECONNECT_ATTEMPT_FAILED";
@@ -416,7 +412,6 @@ const char* values[] = {
     "DHCPSRV_MYSQL_ADD_ADDR4", "adding IPv4 lease with address %1",
     "DHCPSRV_MYSQL_ADD_ADDR6", "adding IPv6 lease with address %1, lease type %2",
     "DHCPSRV_MYSQL_COMMIT", "committing to MySQL database",
-    "DHCPSRV_MYSQL_DB", "opening MySQL lease database: %1",
     "DHCPSRV_MYSQL_DELETED_EXPIRED_RECLAIMED", "deleted %1 reclaimed leases from the database",
     "DHCPSRV_MYSQL_DELETE_ADDR", "deleting lease for address %1",
     "DHCPSRV_MYSQL_DELETE_EXPIRED_RECLAIMED4", "deleting reclaimed IPv4 leases that expired more than %1 seconds ago",
@@ -446,7 +441,6 @@ const char* values[] = {
     "DHCPSRV_MYSQL_GET_SUBID_HWADDR", "obtaining IPv4 lease for subnet ID %1 and hardware address %2",
     "DHCPSRV_MYSQL_GET_SUBID_PAGE6", "obtaining at most %1 IPv6 leases starting from address %2 for subnet ID %3",
     "DHCPSRV_MYSQL_GET_VERSION", "obtaining schema version information",
-    "DHCPSRV_MYSQL_HOST_DB", "opening MySQL hosts database: %1",
     "DHCPSRV_MYSQL_HOST_DB_GET_VERSION", "obtaining schema version information for the MySQL hosts database",
     "DHCPSRV_MYSQL_HOST_DB_READONLY", "MySQL host database opened for read access only",
     "DHCPSRV_MYSQL_HOST_DB_RECONNECT_ATTEMPT_FAILED", "database reconnect failed: %1",
@@ -473,7 +467,6 @@ const char* values[] = {
     "DHCPSRV_PGSQL_ADD_ADDR4", "adding IPv4 lease with address %1",
     "DHCPSRV_PGSQL_ADD_ADDR6", "adding IPv6 lease with address %1, lease type %2",
     "DHCPSRV_PGSQL_COMMIT", "committing to PostgreSQL database",
-    "DHCPSRV_PGSQL_DB", "opening PostgreSQL lease database: %1",
     "DHCPSRV_PGSQL_DELETE_ADDR", "deleting lease for address %1",
     "DHCPSRV_PGSQL_DELETE_EXPIRED_RECLAIMED4", "deleting reclaimed IPv4 leases that expired more than %1 seconds ago",
     "DHCPSRV_PGSQL_DELETE_EXPIRED_RECLAIMED6", "deleting reclaimed IPv6 leases that expired more than %1 seconds ago",
@@ -502,7 +495,6 @@ const char* values[] = {
     "DHCPSRV_PGSQL_GET_SUBID_HWADDR", "obtaining IPv4 lease for subnet ID %1 and hardware address %2",
     "DHCPSRV_PGSQL_GET_SUBID_PAGE6", "obtaining at most %1 IPv6 leases starting from address %2 for subnet ID %3",
     "DHCPSRV_PGSQL_GET_VERSION", "obtaining schema version information",
-    "DHCPSRV_PGSQL_HOST_DB", "opening PostgreSQL hosts database: %1",
     "DHCPSRV_PGSQL_HOST_DB_GET_VERSION", "obtaining schema version information for the PostgreSQL hosts database",
     "DHCPSRV_PGSQL_HOST_DB_READONLY", "PostgreSQL host database opened for read access only",
     "DHCPSRV_PGSQL_HOST_DB_RECONNECT_ATTEMPT_FAILED", "database reconnect failed: %1",

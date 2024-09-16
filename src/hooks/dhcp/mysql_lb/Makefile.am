@@ -14,7 +14,11 @@ CLEANFILES = *.gcno *.gcda
 # convenience archive
 
 noinst_LTLIBRARIES = libmysqllb.la
-libmysqllb_la_SOURCES = mysql_lease_mgr.cc mysql_lease_mgr.h
+libmysqllb_la_SOURCES  = mysql_lb_callouts.cc
+libmysqllb_la_SOURCES += mysql_lb_log.cc mysql_lb_log.h
+libmysqllb_la_SOURCES += mysql_lb_messages.cc mysql_lb_messages.h
+libmysqllb_la_SOURCES += mysql_lease_mgr.cc mysql_lease_mgr.h
+libmysqllb_la_SOURCES += version.cc
 
 libmysqllb_la_CXXFLAGS = $(AM_CXXFLAGS)
 libmysqllb_la_CPPFLAGS = $(AM_CPPFLAGS)

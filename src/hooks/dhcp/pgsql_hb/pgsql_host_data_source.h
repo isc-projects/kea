@@ -10,6 +10,7 @@
 #include <database/database_connection.h>
 #include <dhcpsrv/base_host_data_source.h>
 #include <dhcpsrv/host_data_source_factory.h>
+#include <pgsql_hb_log.h>
 #include <pgsql/pgsql_connection.h>
 #include <pgsql/pgsql_exchange.h>
 
@@ -582,26 +583,31 @@ public:
 private:
     /// @brief Pointer to the implementation of the @ref PgSqlHostDataSource.
     PgSqlHostDataSourceImplPtr impl_;
+
+public:
+    /// @brief Factory class method.
+    ///
+    /// @param parameters A data structure relating keywords and values
+    ///        concerned with the database.
+    ///
+    /// @return The PostgreSQL Host Manager.
+    static HostDataSourcePtr
+    factory(const isc::db::DatabaseConnection::ParameterMap& parameters) {
+        LOG_INFO(pgsql_hb_logger, PGSQL_HB_DB)
+            .arg(isc::db::DatabaseConnection::redactedAccessString(parameters));
+        return (HostDataSourcePtr(new PgSqlHostDataSource(parameters)));
+    }
 };
 
 struct PgSqlHostDataSourceInit {
     // Constructor registers
     PgSqlHostDataSourceInit() {
-        isc::dhcp::HostDataSourceFactory::registerFactory("postgresql", factory, true);
+        isc::dhcp::HostDataSourceFactory::registerFactory("postgresql", PgSqlHostDataSource::factory, true);
     }
 
     // Destructor deregisters
     ~PgSqlHostDataSourceInit() {
         isc::dhcp::HostDataSourceFactory::deregisterFactory("postgresql", true);
-    }
-
-    // Factory class method
-    static HostDataSourcePtr
-    factory(const isc::db::DatabaseConnection::ParameterMap& parameters) {
-        // TODO - fix messages
-        //LOG_INFO(hosts_logger, DHCPSRV_PGSQL_HOST_DB)
-        //    .arg(DatabaseConnection::redactedAccessString(parameters));
-        return (HostDataSourcePtr(new PgSqlHostDataSource(parameters)));
     }
 };
 

@@ -14,7 +14,11 @@ CLEANFILES = *.gcno *.gcda
 # convenience archive
 
 noinst_LTLIBRARIES = libpgsqllb.la
-libpgsqllb_la_SOURCES = pgsql_lease_mgr.cc pgsql_lease_mgr.h
+libpgsqllb_la_SOURCES  = pgsql_lb_callouts.cc
+libpgsqllb_la_SOURCES += pgsql_lb_log.cc pgsql_lb_log.h
+libpgsqllb_la_SOURCES += pgsql_lb_messages.cc pgsql_lb_messages.h
+libpgsqllb_la_SOURCES += pgsql_lease_mgr.cc pgsql_lease_mgr.h
+libpgsqllb_la_SOURCES += version.cc
 
 libpgsqllb_la_CXXFLAGS = $(AM_CXXFLAGS)
 libpgsqllb_la_CPPFLAGS = $(AM_CPPFLAGS)

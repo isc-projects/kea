@@ -88,7 +88,7 @@ Debug message issued when triggered an action to create or update subnet
 Logged at debug log level 40.
 Debug message issued when triggered an action to create or update subnet
 
-% MYSQL_CB_DEINIT_OK unloading MYSQL CB hooks library successful
+% MYSQL_CB_DEINIT_OK unloading MySQL CB hooks library successful
 This informational message indicates that the MySQL Configuration Backend hooks
 library has been unloaded successfully.
 
@@ -720,7 +720,7 @@ Debug message issued when triggered an action to retrieve type
 Logged at debug log level 40.
 Debug message issued when triggered an action to retrieve type
 
-% MYSQL_CB_INIT_OK loading MYSQL CB hooks library successful
+% MYSQL_CB_INIT_OK loading MySQL CB hooks library successful
 This informational message indicates that the MySQL Configuration Backend hooks
 library has been loaded successfully. Enjoy!
 

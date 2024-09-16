@@ -11,6 +11,7 @@
 #include <database/db_exceptions.h>
 #include <dhcpsrv/base_host_data_source.h>
 #include <dhcpsrv/host_data_source_factory.h>
+#include <mysql_hb_log.h>
 #include <mysql/mysql_connection.h>
 
 #include <stdint.h>
@@ -530,26 +531,31 @@ public:
 private:
     /// @brief Pointer to the implementation of the @ref MySqlHostDataSource.
     MySqlHostDataSourceImplPtr impl_;
+
+public:
+    /// @brief Factory class method.
+    ///
+    /// @param parameters A data structure relating keywords and values
+    ///        concerned with the database.
+    ///
+    /// @return The MySQL Host Manager.
+    static HostDataSourcePtr
+    factory(const isc::db::DatabaseConnection::ParameterMap& parameters) {
+        LOG_INFO(mysql_hb_logger, MYSQL_HB_DB)
+            .arg(isc::db::DatabaseConnection::redactedAccessString(parameters));
+        return (HostDataSourcePtr(new MySqlHostDataSource(parameters)));
+    }
 };
 
 struct MySqlHostDataSourceInit {
     // Constructor registers
     MySqlHostDataSourceInit() {
-        isc::dhcp::HostDataSourceFactory::registerFactory("mysql", factory, true);
+        isc::dhcp::HostDataSourceFactory::registerFactory("mysql", MySqlHostDataSource::factory, true);
     }
 
     // Destructor deregisters
     ~MySqlHostDataSourceInit() {
         isc::dhcp::HostDataSourceFactory::deregisterFactory("mysql", true);
-    }
-
-    // Factory class method
-    static HostDataSourcePtr
-    factory(const isc::db::DatabaseConnection::ParameterMap& parameters) {
-        // TODO - fix messages
-        //LOG_INFO(hosts_logger, DHCPSRV_MYSQL_HOST_DB)
-        //    .arg(DatabaseConnection::redactedAccessString(parameters));
-        return (HostDataSourcePtr(new MySqlHostDataSource(parameters)));
     }
 };
 

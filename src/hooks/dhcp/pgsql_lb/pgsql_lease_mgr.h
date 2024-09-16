@@ -8,10 +8,12 @@
 #define PGSQL_LEASE_MGR_H
 
 #include <asiolink/io_service.h>
+#include <database/database_connection.h>
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/dhcpsrv_exceptions.h>
-#include <dhcpsrv/lease_mgr.h>
+#include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/tracking_lease_mgr.h>
+#include <pgsql_lb_log.h>
 #include <pgsql/pgsql_connection.h>
 #include <pgsql/pgsql_exchange.h>
 
@@ -1255,26 +1257,31 @@ private:
 
     /// @brief Timer name used to register database reconnect timer.
     std::string timer_name_;
+
+public:
+    /// @brief Factory class method.
+    ///
+    /// @param parameters A data structure relating keywords and values
+    ///        concerned with the database.
+    ///
+    /// @return The PostgreSQL Lease Manager.
+    static TrackingLeaseMgrPtr
+    factory(const isc::db::DatabaseConnection::ParameterMap& parameters) {
+        LOG_INFO(pgsql_lb_logger, PGSQL_LB_DB)
+            .arg(isc::db::DatabaseConnection::redactedAccessString(parameters));
+        return (TrackingLeaseMgrPtr(new PgSqlLeaseMgr(parameters)));
+    }
 };
 
 struct PgSqlLeaseMgrInit {
     // Constructor registers
     PgSqlLeaseMgrInit() {
-        LeaseMgrFactory::registerFactory("postgresql", factory, true);
+        LeaseMgrFactory::registerFactory("postgresql", PgSqlLeaseMgr::factory, true);
     }
 
     // Destructor deregisters
     ~PgSqlLeaseMgrInit() {
         LeaseMgrFactory::deregisterFactory("postgresql", true);
-    }
-
-    // Factory class method
-    static TrackingLeaseMgrPtr
-    factory(const isc::db::DatabaseConnection::ParameterMap& parameters) {
-        // TODO - fix messages
-        //LOG_INFO(dhcpsrv_logger, DHCPSRV_PGSQL_DB)
-        //    .arg(DatabaseConnection::redactedAccessString(parameters));
-        return (TrackingLeaseMgrPtr(new PgSqlLeaseMgr(parameters)));
     }
 };
 
