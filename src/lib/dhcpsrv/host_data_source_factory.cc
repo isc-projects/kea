@@ -168,5 +168,19 @@ HostDataSourceFactory::logRegistered() {
         .arg(txt.str());
 }
 
+std::string
+HostDataSourceFactory::getDBVersions() {
+    std::stringstream txt;
+
+    for (auto const& x : map_) {
+        if (!txt.str().empty()) {
+            txt << " ";
+        }
+        txt << x.first;
+    }
+
+    return (txt.str());
+}
+
 }  // namespace dhcp
 }  // namespace isc

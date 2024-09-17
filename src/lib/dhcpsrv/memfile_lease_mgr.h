@@ -114,7 +114,6 @@ public:
     static const int MINOR_VERSION_V6 = 0;
     /// @}
 
-
     /// @brief Specifies universe (V4, V6)
     ///
     /// This enumeration is used by various functions in Memfile %Lease Manager,
@@ -155,6 +154,9 @@ public:
 
     /// @brief Destructor (closes file)
     virtual ~Memfile_LeaseMgr();
+
+    /// @brief Return extended version info
+    static std::string getDBVersion();
 
     /// @brief Local version of getDBVersion() class method
     static std::string getDBVersion(Universe const& u);
@@ -981,7 +983,6 @@ public:
                                     const LFCFileType& file_type);
     //@}
 
-
     /// @name Miscellaneous public convenience methods.
     ///       The following methods allow for retrieving useful information
     ///       about the state of the backend.
@@ -1526,7 +1527,6 @@ public:
 protected:
 
     /// Extended information / Bulk Lease Query shared interface.
-
 
     /// @brief Build extended info v6 tables.
     void buildExtendedInfoTables6();

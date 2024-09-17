@@ -187,5 +187,19 @@ LeaseMgrFactory::logRegistered() {
         .arg(txt.str());
 }
 
+std::string
+LeaseMgrFactory::getDBVersions() {
+    std::stringstream txt;
+
+    for (auto const& x : map_) {
+        if (!txt.str().empty()) {
+            txt << " ";
+        }
+        txt << x.first;
+    }
+
+    return (txt.str());
+}
+
 } // namespace dhcp
 } // namespace isc

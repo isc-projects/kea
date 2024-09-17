@@ -36,6 +36,7 @@
 #include <dhcp6/dhcp6_srv.h>
 #include <dhcpsrv/cfg_host_operations.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/ncr_generator.h>
@@ -4693,19 +4694,11 @@ Dhcpv6Srv::getVersion(bool extended) {
         tmp << "linked with:" << endl;
         tmp << "- " << Logger::getVersion() << endl;
         tmp << "- " << CryptoLink::getVersion() << endl;
-        tmp << "backends:" << endl;
-        /*
-TODO - implement LeaseMgrFactory::getDBVersions
-#ifdef HAVE_MYSQL
-        tmp << "- " << MySqlLeaseMgr::getDBVersion() << endl;
-#endif
-#ifdef HAVE_PGSQL
-        tmp << "- " << PgSqlLeaseMgr::getDBVersion() << endl;
-#endif
-        tmp << "- " << Memfile_LeaseMgr::getDBVersion(Memfile_LeaseMgr::V6);
-
+        tmp << "lease backends:" << endl;
+        tmp << LeaseMgrFactory::getDBVersions() << endl;
+        tmp << "host backends:" << endl;
+        tmp << HostDataSourceFactory::getDBVersions() << endl;
         // @todo: more details about database runtime
-*/
     }
 
     return (tmp.str());

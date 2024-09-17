@@ -148,6 +148,9 @@ public:
     /// initialized statically.
     static void logRegistered();
 
+    /// @brief Return extended version info for registered backends.
+    static std::string getDBVersions();
+
 private:
     /// @brief Hold pointer to lease manager
     ///

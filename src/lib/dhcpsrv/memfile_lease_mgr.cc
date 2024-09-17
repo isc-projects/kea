@@ -1041,6 +1041,16 @@ Memfile_LeaseMgr::getDBVersion(Universe const& u) {
     return tmp.str();
 }
 
+std::string
+Memfile_LeaseMgr::getDBVersion() {
+    uint16_t family = CfgMgr::instance().getFamily();
+    if (family == AF_INET6) {
+        return (Memfile_LeaseMgr::getDBVersion(Memfile_LeaseMgr::V6));
+    } else {
+        return (Memfile_LeaseMgr::getDBVersion(Memfile_LeaseMgr::V4));
+    }
+}
+
 bool
 Memfile_LeaseMgr::addLeaseInternal(const Lease4Ptr& lease) {
     if (getLease4Internal(lease->addr_)) {

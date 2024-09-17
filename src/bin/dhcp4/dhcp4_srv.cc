@@ -37,6 +37,7 @@
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/dhcpsrv_exceptions.h>
 #include <dhcpsrv/fuzz.h>
+#include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/ncr_generator.h>
@@ -5016,19 +5017,11 @@ Dhcpv4Srv::getVersion(bool extended) {
         tmp << "linked with:" << endl;
         tmp << "- " << Logger::getVersion() << endl;
         tmp << "- " << CryptoLink::getVersion() << endl;
-        tmp << "backends:" << endl;
-        /*
-TODO - implement LeaseMgrFactory::getDBVersions
-#ifdef HAVE_MYSQL
-        tmp << "- " << MySqlLeaseMgr::getDBVersion() << endl;
-#endif
-#ifdef HAVE_PGSQL
-        tmp << "- " << PgSqlLeaseMgr::getDBVersion() << endl;
-#endif
-        tmp << "- " << Memfile_LeaseMgr::getDBVersion(Memfile_LeaseMgr::V4);
-
+        tmp << "lease backends:" << endl;
+        tmp << LeaseMgrFactory::getDBVersions() << endl;
+        tmp << "host backends:" << endl;
+        tmp << HostDataSourceFactory::getDBVersions() << endl;
         // @todo: more details about database runtime
-*/
     }
 
     return (tmp.str());
