@@ -39,10 +39,12 @@
 
 #ifdef HAVE_MYSQL
 #include <mysql/testutils/mysql_schema.h>
+#include <hooks/dhcp/mysql_hb/mysql_host_data_source.h>
 #endif
 
 #ifdef HAVE_PGSQL
 #include <pgsql/testutils/pgsql_schema.h>
+#include <hooks/dhcp/pgsql_hb/pgsql_host_data_source.h>
 #endif
 
 #include <boost/pointer_cast.hpp>

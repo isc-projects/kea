@@ -8,6 +8,7 @@
 
 #include <asiolink/io_address.h>
 #include <database/database_connection.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/memfile_lease_mgr.h>
 #include <dhcpsrv/tracking_lease_mgr.h>
@@ -40,7 +41,10 @@ memFactory(const DatabaseConnection::ParameterMap& parameters) {
 
 // @brief Register memFactory
 bool registerFactory() {
-    return (LeaseMgrFactory::registerFactory("mem", memFactory));
+    static auto db_version = []() -> std::string {
+        return (std::string("version 1"));
+    };
+    return (LeaseMgrFactory::registerFactory("mem", memFactory, false, db_version));
 }
 
 // @brief Derive mem1 class
@@ -86,7 +90,10 @@ mem2Factory(const DatabaseConnection::ParameterMap& parameters) {
 
 // @brief Register mem2Factory
 bool registerFactory2() {
-    return (LeaseMgrFactory::registerFactory("mem2", mem2Factory));
+    static auto db_version = []() -> std::string {
+        return (std::string("version 2"));
+    };
+    return (LeaseMgrFactory::registerFactory("mem2", mem2Factory, false, db_version));
 }
 
 // @brief Factory function returning 0
@@ -198,7 +205,8 @@ TEST_F(LeaseMgrFactoryTest, destroy) {
 }
 
 // Verify create and destroy class method on multiple backends
-TEST_F(LeaseMgrFactoryTest, multiple) {
+TEST_F(LeaseMgrFactoryTest, multipleV4) {
+    CfgMgr::instance().setFamily(AF_INET);
     // Add foo twice
     EXPECT_TRUE(registerFactory1());
     EXPECT_NO_THROW(LeaseMgrFactory::create("type=mem1 persist=false universe=4"));
@@ -211,6 +219,39 @@ TEST_F(LeaseMgrFactoryTest, multiple) {
     EXPECT_NO_THROW(LeaseMgrFactory::create("type=mem2 persist=false universe=6"));
     EXPECT_TRUE(LeaseMgrFactory::haveInstance());
     EXPECT_EQ(LeaseMgrFactory::instance().getType(), "mem2");
+
+    EXPECT_EQ("version 2 Memfile backend 3.0", LeaseMgrFactory::getDBVersions());
+
+    EXPECT_TRUE(registerFactory());
+
+    EXPECT_EQ("version 1  version 2 Memfile backend 3.0", LeaseMgrFactory::getDBVersions());
+
+    // Delete them
+    EXPECT_NO_THROW(LeaseMgrFactory::destroy());
+    EXPECT_FALSE(LeaseMgrFactory::haveInstance());
+}
+
+// Verify create and destroy class method on multiple backends
+TEST_F(LeaseMgrFactoryTest, multipleV6) {
+    CfgMgr::instance().setFamily(AF_INET6);
+    // Add foo twice
+    EXPECT_TRUE(registerFactory1());
+    EXPECT_NO_THROW(LeaseMgrFactory::create("type=mem1 persist=false universe=4"));
+    EXPECT_NO_THROW(LeaseMgrFactory::create("type=mem1 persist=false universe=6"));
+    EXPECT_TRUE(LeaseMgrFactory::haveInstance());
+    EXPECT_EQ(LeaseMgrFactory::instance().getType(), "mem1");
+
+    // Add mem2 once
+    EXPECT_TRUE(registerFactory2());
+    EXPECT_NO_THROW(LeaseMgrFactory::create("type=mem2 persist=false universe=6"));
+    EXPECT_TRUE(LeaseMgrFactory::haveInstance());
+    EXPECT_EQ(LeaseMgrFactory::instance().getType(), "mem2");
+
+    EXPECT_EQ("version 2 Memfile backend 5.0", LeaseMgrFactory::getDBVersions());
+
+    EXPECT_TRUE(registerFactory());
+
+    EXPECT_EQ("version 1  version 2 Memfile backend 5.0", LeaseMgrFactory::getDBVersions());
 
     // Delete them
     EXPECT_NO_THROW(LeaseMgrFactory::destroy());

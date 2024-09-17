@@ -24,7 +24,10 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
-map<string, LeaseMgrFactory::Factory> LeaseMgrFactory::map_;
+map<string, pair<LeaseMgrFactory::Factory, LeaseMgrFactory::DBVersion>> LeaseMgrFactory::map_;
+
+/// @brief Initializer.
+MemfileLeaseMgrInit memfile_init;
 
 TrackingLeaseMgrPtr&
 LeaseMgrFactory::getLeaseMgrPtr() {
@@ -48,14 +51,6 @@ LeaseMgrFactory::create(const std::string& dbaccess) {
                   "contain the 'type' keyword");
     }
 
-    // Factory method
-    auto memfile_factory = [](const DatabaseConnection::ParameterMap& parameters) -> TrackingLeaseMgrPtr {
-        LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_DB)
-            .arg(DatabaseConnection::redactedAccessString(parameters));
-        return (TrackingLeaseMgrPtr(new Memfile_LeaseMgr(parameters)));
-    };
-    LeaseMgrFactory::registerFactory("memfile", memfile_factory, true);
-
     string db_type = it->second;
     auto index = map_.find(db_type);
 
@@ -67,7 +62,8 @@ LeaseMgrFactory::create(const std::string& dbaccess) {
             isc_throw(InvalidType, "The Kea server has not been compiled with "
                       "support for database type: " << db_type
                       << ". Did you forget to use --with-"
-                      << with << " during compilation?");
+                      << with << " during compilation or to load libdhcp_"
+                      << with << "_lb hook library?");
         }
         // Get here on no match
         LOG_ERROR(dhcpsrv_logger, DHCPSRV_UNKNOWN_DB).arg(parameters[type]);
@@ -76,7 +72,7 @@ LeaseMgrFactory::create(const std::string& dbaccess) {
     }
 
     // Call the factory.
-    getLeaseMgrPtr() = index->second(parameters);
+    getLeaseMgrPtr() = index->second.first(parameters);
 
     // Check the factory did not return null.
     if (!getLeaseMgrPtr()) {
@@ -94,7 +90,6 @@ LeaseMgrFactory::destroy() {
             .arg(getLeaseMgrPtr()->getType());
     }
     getLeaseMgrPtr().reset();
-    LeaseMgrFactory::deregisterFactory("memfile", true);
 }
 
 void
@@ -133,11 +128,21 @@ LeaseMgrFactory::instance() {
 bool
 LeaseMgrFactory::registerFactory(const string& db_type,
                                  const Factory& factory,
-                                 bool no_log) {
+                                 bool no_log,
+                                 DBVersion db_version) {
     if (map_.count(db_type)) {
         return (false);
     }
-    map_.insert(pair<string, Factory>(db_type, factory));
+
+    static auto default_db_version = []() -> std::string {
+        return (std::string());
+    };
+
+    if (!db_version) {
+        db_version = default_db_version;
+    }
+
+    map_.insert(pair<string, pair<Factory, DBVersion>>(db_type, pair<Factory, DBVersion>(factory, db_version)));
 
     // We are dealing here with static logger initialization fiasco.
     // registerFactory may be called from constructors of static global
@@ -195,7 +200,7 @@ LeaseMgrFactory::getDBVersions() {
         if (!txt.str().empty()) {
             txt << " ";
         }
-        txt << x.first;
+        txt << x.second.second();
     }
 
     return (txt.str());

@@ -592,17 +592,22 @@ public:
     /// @return The PostgreSQL Host Manager.
     static HostDataSourcePtr
     factory(const isc::db::DatabaseConnection::ParameterMap& parameters);
+
+    /// @brief Local version of getDBVersion() class method
+    static std::string getDBVersion();
 };
 
+/// @brief Initialization structure used to register and deregister PostgreSQL Host Mgr.
 struct PgSqlHostDataSourceInit {
     // Constructor registers
     PgSqlHostDataSourceInit() {
-        isc::dhcp::HostDataSourceFactory::registerFactory("postgresql", PgSqlHostDataSource::factory, true);
+        HostDataSourceFactory::registerFactory("postgresql", PgSqlHostDataSource::factory, true,
+                                               PgSqlHostDataSource::getDBVersion);
     }
 
     // Destructor deregisters
     ~PgSqlHostDataSourceInit() {
-        isc::dhcp::HostDataSourceFactory::deregisterFactory("postgresql", true);
+        HostDataSourceFactory::deregisterFactory("postgresql", true);
     }
 };
 

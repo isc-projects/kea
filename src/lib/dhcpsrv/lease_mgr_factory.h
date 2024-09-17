@@ -108,6 +108,9 @@ public:
     /// In case of failure it must throw and not return null.
     typedef std::function<TrackingLeaseMgrPtr (const db::DatabaseConnection::ParameterMap&)> Factory;
 
+    /// @brief Type of lease mgr version
+    typedef std::function<std::string ()> DBVersion;
+
     /// @brief Register a lease mgr factory
     ///
     /// Associate the factory to a database type in the map.
@@ -117,11 +120,13 @@ public:
     /// @param db_type database type
     /// @param factory lease mgr factory
     /// @param no_log do not log (default false)
+    /// @param db_version lease mgr version
     /// @return true if the factory was successfully added to the map, false
     /// if it already exists.
     static bool registerFactory(const std::string& db_type,
                                 const Factory& factory,
-                                bool no_log = false);
+                                bool no_log = false,
+                                DBVersion db_version = DBVersion());
 
     /// @brief Deregister a lease mgr factory
     ///
@@ -160,7 +165,7 @@ private:
     static TrackingLeaseMgrPtr& getLeaseMgrPtr();
 
     /// @brief Factory map
-    static std::map<std::string, Factory> map_;
+    static std::map<std::string, std::pair<Factory, DBVersion>> map_;
 };
 
 } // end of isc::dhcp namespace

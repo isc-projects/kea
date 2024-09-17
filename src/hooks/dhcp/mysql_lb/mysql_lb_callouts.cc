@@ -52,7 +52,8 @@ int load(LibraryHandle& /* handle */) {
     }
 
     // Register MySQL LB factories with Lease Managers
-    LeaseMgrFactory::registerFactory("mysql", MySqlLeaseMgr::factory, true);
+    LeaseMgrFactory::registerFactory("mysql", MySqlLeaseMgr::factory, true,
+                                     MySqlLeaseMgr::getDBVersion);
 
     LOG_INFO(mysql_lb_logger, MYSQL_LB_INIT_OK);
     return (0);

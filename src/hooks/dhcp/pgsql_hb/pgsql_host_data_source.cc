@@ -3382,5 +3382,14 @@ PgSqlHostDataSource::factory(const isc::db::DatabaseConnection::ParameterMap& pa
     return (HostDataSourcePtr(new PgSqlHostDataSource(parameters)));
 }
 
+std::string
+PgSqlHostDataSource::getDBVersion() {
+    std::stringstream tmp;
+    tmp << "PostgreSQL backend " << PGSQL_SCHEMA_VERSION_MAJOR;
+    tmp << "." << PGSQL_SCHEMA_VERSION_MINOR;
+    tmp << ", library " << PQlibVersion();
+    return (tmp.str());
+}
+
 }  // namespace dhcp
 }  // namespace isc

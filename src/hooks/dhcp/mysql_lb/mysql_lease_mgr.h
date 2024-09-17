@@ -1309,10 +1309,12 @@ public:
     factory(const isc::db::DatabaseConnection::ParameterMap& parameters);
 };
 
+/// @brief Initialization structure used to register and deregister MySQL Lease Mgr.
 struct MySqlLeaseMgrInit {
     // Constructor registers
     MySqlLeaseMgrInit() {
-        LeaseMgrFactory::registerFactory("mysql", MySqlLeaseMgr::factory, true);
+        LeaseMgrFactory::registerFactory("mysql", MySqlLeaseMgr::factory, true,
+                                         MySqlLeaseMgr::getDBVersion);
     }
 
     // Destructor deregisters

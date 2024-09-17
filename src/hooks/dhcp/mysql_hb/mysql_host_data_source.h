@@ -540,17 +540,22 @@ public:
     /// @return The MySQL Host Manager.
     static HostDataSourcePtr
     factory(const isc::db::DatabaseConnection::ParameterMap& parameters);
+
+    /// @brief Local version of getDBVersion() class method
+    static std::string getDBVersion();
 };
 
+/// @brief Initialization structure used to register and deregister MySQL Host Mgr.
 struct MySqlHostDataSourceInit {
     // Constructor registers
     MySqlHostDataSourceInit() {
-        isc::dhcp::HostDataSourceFactory::registerFactory("mysql", MySqlHostDataSource::factory, true);
+        HostDataSourceFactory::registerFactory("mysql", MySqlHostDataSource::factory, true,
+                                               MySqlHostDataSource::getDBVersion);
     }
 
     // Destructor deregisters
     ~MySqlHostDataSourceInit() {
-        isc::dhcp::HostDataSourceFactory::deregisterFactory("mysql", true);
+        HostDataSourceFactory::deregisterFactory("mysql", true);
     }
 };
 

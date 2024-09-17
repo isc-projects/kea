@@ -52,7 +52,8 @@ int load(LibraryHandle& /* handle */) {
     }
 
     // Register PgSQL HB factories with Host Managers
-    isc::dhcp::HostDataSourceFactory::registerFactory("postgresql", PgSqlHostDataSource::factory, true);
+    HostDataSourceFactory::registerFactory("postgresql", PgSqlHostDataSource::factory, true,
+                                           PgSqlHostDataSource::getDBVersion);
 
     LOG_INFO(pgsql_hb_logger, PGSQL_HB_INIT_OK);
     return (0);
@@ -63,7 +64,7 @@ int load(LibraryHandle& /* handle */) {
 /// @return 0 if deregistration was successful, 1 otherwise
 int unload() {
     // Unregister the factories and remove PgSQL backends
-    isc::dhcp::HostDataSourceFactory::deregisterFactory("postgresql", true);
+    HostDataSourceFactory::deregisterFactory("postgresql", true);
 
     LOG_INFO(pgsql_hb_logger, PGSQL_HB_DEINIT_OK);
     return (0);

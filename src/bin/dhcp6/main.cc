@@ -83,6 +83,9 @@ main(int argc, char* argv[]) {
     // The standard config file
     std::string config_file("");
 
+    // This is the DHCPv6 server
+    CfgMgr::instance().setFamily(AF_INET6);
+
     while ((ch = getopt(argc, argv, "dvVWc:p:P:t:T:")) != -1) {
         switch (ch) {
         case 'd':
@@ -161,9 +164,6 @@ main(int argc, char* argv[]) {
         cerr << "Configuration file not specified." << endl;
         usage();
     }
-
-    // This is the DHCPv6 server
-    CfgMgr::instance().setFamily(AF_INET6);
 
     if (check_mode) {
         try {

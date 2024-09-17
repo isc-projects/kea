@@ -4217,5 +4217,14 @@ MySqlHostDataSource::factory(const isc::db::DatabaseConnection::ParameterMap& pa
     return (HostDataSourcePtr(new MySqlHostDataSource(parameters)));
 }
 
+std::string
+MySqlHostDataSource::getDBVersion() {
+    std::stringstream tmp;
+    tmp << "MySQL backend " << MYSQL_SCHEMA_VERSION_MAJOR;
+    tmp << "." << MYSQL_SCHEMA_VERSION_MINOR;
+    tmp << ", library " << mysql_get_client_info();
+    return (tmp.str());
+}
+
 }  // namespace dhcp
 }  // namespace isc

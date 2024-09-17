@@ -52,7 +52,8 @@ int load(LibraryHandle& /* handle */) {
     }
 
     // Register MySQL HB factories with Host Managers
-    isc::dhcp::HostDataSourceFactory::registerFactory("mysql", MySqlHostDataSource::factory, true);
+    HostDataSourceFactory::registerFactory("mysql", MySqlHostDataSource::factory, true,
+                                           MySqlHostDataSource::getDBVersion);
 
     LOG_INFO(mysql_hb_logger, MYSQL_HB_INIT_OK);
     return (0);
@@ -63,7 +64,7 @@ int load(LibraryHandle& /* handle */) {
 /// @return 0 if deregistration was successful, 1 otherwise
 int unload() {
     // Unregister the factories and remove MySQL backends
-    isc::dhcp::HostDataSourceFactory::deregisterFactory("mysql", true);
+    HostDataSourceFactory::deregisterFactory("mysql", true);
 
     LOG_INFO(mysql_hb_logger, MYSQL_HB_DEINIT_OK);
     return (0);

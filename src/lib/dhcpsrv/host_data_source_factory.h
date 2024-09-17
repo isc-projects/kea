@@ -99,6 +99,9 @@ public:
     /// data source. In case of failure it must throw and not return null.
     typedef std::function<HostDataSourcePtr (const db::DatabaseConnection::ParameterMap&)> Factory;
 
+    /// @brief Type of host mgr version
+    typedef std::function<std::string ()> DBVersion;
+
     /// @brief Register a host data source factory
     ///
     /// Associate the factory to a database type in the map.
@@ -108,10 +111,13 @@ public:
     /// @param db_type database type
     /// @param factory host data source factory
     /// @param no_log do not log (default false)
+    /// @param db_version host mgr version
     /// @return true if the factory was successfully added to the map, false
     /// if it already exists.
     static bool registerFactory(const std::string& db_type,
-                                const Factory& factory, bool no_log = false);
+                                const Factory& factory,
+                                bool no_log = false,
+                                DBVersion db_version = DBVersion());
 
     /// @brief Deregister a host data source factory
     ///
@@ -143,7 +149,7 @@ public:
 
 private:
     /// @brief Factory map
-    static std::map<std::string, Factory> map_;
+    static std::map<std::string, std::pair<Factory, DBVersion>> map_;
 };
 
 } // end of isc::dhcp namespace

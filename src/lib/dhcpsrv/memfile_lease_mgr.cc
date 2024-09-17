@@ -1030,7 +1030,7 @@ Memfile_LeaseMgr::~Memfile_LeaseMgr() {
 }
 
 std::string
-Memfile_LeaseMgr::getDBVersion(Universe const& u) {
+Memfile_LeaseMgr::getDBVersionInternal(Universe const& u) {
     std::stringstream tmp;
     tmp << "Memfile backend ";
     if (u == V4) {
@@ -1045,9 +1045,9 @@ std::string
 Memfile_LeaseMgr::getDBVersion() {
     uint16_t family = CfgMgr::instance().getFamily();
     if (family == AF_INET6) {
-        return (Memfile_LeaseMgr::getDBVersion(Memfile_LeaseMgr::V6));
+        return (Memfile_LeaseMgr::getDBVersionInternal(Memfile_LeaseMgr::V6));
     } else {
-        return (Memfile_LeaseMgr::getDBVersion(Memfile_LeaseMgr::V4));
+        return (Memfile_LeaseMgr::getDBVersionInternal(Memfile_LeaseMgr::V4));
     }
 }
 
@@ -3457,6 +3457,13 @@ Memfile_LeaseMgr::writeLeases6Internal(const std::string& filename) {
         }
         throw;
     }
+}
+
+TrackingLeaseMgrPtr
+Memfile_LeaseMgr::factory(const isc::db::DatabaseConnection::ParameterMap& parameters) {
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_DB)
+        .arg(DatabaseConnection::redactedAccessString(parameters));
+    return (TrackingLeaseMgrPtr(new Memfile_LeaseMgr(parameters)));
 }
 
 }  // namespace dhcp

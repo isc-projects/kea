@@ -2378,7 +2378,7 @@ TEST_F(MemfileLeaseMgrTest, checkVersion4) {
 
     // DBVersion too.
     EXPECT_EQ("Memfile backend " + s.str(),
-              lease_mgr->getDBVersion(Memfile_LeaseMgr::V4));
+              lease_mgr->getDBVersionInternal(Memfile_LeaseMgr::V4));
 }
 
 TEST_F(MemfileLeaseMgrTest, checkVersion6) {
@@ -2403,7 +2403,7 @@ TEST_F(MemfileLeaseMgrTest, checkVersion6) {
 
     // DBVersion too.
     EXPECT_EQ("Memfile backend " + s.str(),
-              lease_mgr->getDBVersion(Memfile_LeaseMgr::V6));
+              lease_mgr->getDBVersionInternal(Memfile_LeaseMgr::V6));
 }
 
 /// @brief Checks that complex user context can be read in v4.

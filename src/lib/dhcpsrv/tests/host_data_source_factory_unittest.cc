@@ -25,7 +25,10 @@ namespace {
 
 // @brief Register memFactory 
 bool registerFactory() {
-    return (HostDataSourceFactory::registerFactory("mem", memFactory));
+    static auto db_version = []() -> std::string {
+        return (std::string("version 1"));
+    };
+    return (HostDataSourceFactory::registerFactory("mem", memFactory, false, db_version));
 }
 
 // @brief Derive mem1 class
@@ -63,7 +66,10 @@ mem2Factory(const DatabaseConnection::ParameterMap&) {
 
 // @brief Register mem2Factory
 bool registerFactory2() {
-    return (HostDataSourceFactory::registerFactory("mem2", mem2Factory));
+    static auto db_version = []() -> std::string {
+        return (std::string("version 2"));
+    };
+    return (HostDataSourceFactory::registerFactory("mem2", mem2Factory, false, db_version));
 }
 
 // @brief Factory function returning 0
@@ -186,6 +192,12 @@ TEST_F(HostDataSourceFactoryTest, multiple) {
     // Add mem2 once
     EXPECT_TRUE(registerFactory2());
     EXPECT_NO_THROW(HostDataSourceFactory::add(sources_, "type=mem2"));
+
+    EXPECT_EQ("version 2", HostDataSourceFactory::getDBVersions());
+
+    EXPECT_TRUE(registerFactory());
+
+    EXPECT_EQ("version 1  version 2", HostDataSourceFactory::getDBVersions());
 
     // Delete them
     EXPECT_TRUE(HostDataSourceFactory::del(sources_, "mem1"));

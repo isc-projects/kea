@@ -52,7 +52,8 @@ int load(LibraryHandle& /* handle */) {
     }
 
     // Register PgSQL LB factories with Lease Managers
-    LeaseMgrFactory::registerFactory("postgresql", PgSqlLeaseMgr::factory, true);
+    LeaseMgrFactory::registerFactory("postgresql", PgSqlLeaseMgr::factory, true,
+                                     PgSqlLeaseMgr::getDBVersion);
 
     LOG_INFO(pgsql_lb_logger, PGSQL_LB_INIT_OK);
     return (0);

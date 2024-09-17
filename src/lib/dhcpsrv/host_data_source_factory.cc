@@ -26,7 +26,7 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
-map<string, HostDataSourceFactory::Factory> HostDataSourceFactory::map_;
+map<string, pair<HostDataSourceFactory::Factory, HostDataSourceFactory::DBVersion>> HostDataSourceFactory::map_;
 
 void
 HostDataSourceFactory::add(HostDataSourceList& sources,
@@ -51,14 +51,15 @@ HostDataSourceFactory::add(HostDataSourceList& sources,
             string with = (db_type == "postgresql" ? "pgsql" : db_type);
             isc_throw(InvalidType, "The type of host backend: '" << db_type
                       << "' is not compiled in. Did you forget to use --with-"
-                      << with << " during compilation?");
+                      << with << " during compilation or to load libdhcp_"
+                      << with << "_hb hook library?");
         }
         isc_throw(InvalidType, "The type of host backend: '" <<
                   db_type << "' is not supported");
     }
 
     // Call the factory and push the pointer on sources.
-    sources.push_back(index->second(parameters));
+    sources.push_back(index->second.first(parameters));
 
     // Check the factory did not return null.
     if (!sources.back()) {
@@ -114,11 +115,21 @@ HostDataSourceFactory::del(HostDataSourceList& sources,
 bool
 HostDataSourceFactory::registerFactory(const string& db_type,
                                        const Factory& factory,
-                                       bool no_log) {
+                                       bool no_log,
+                                       DBVersion db_version) {
     if (map_.count(db_type)) {
         return (false);
     }
-    map_.insert(pair<string, Factory>(db_type, factory));
+
+    static auto default_db_version = []() -> std::string {
+        return (std::string());
+    };
+
+    if (!db_version) {
+        db_version = default_db_version;
+    }
+
+    map_.insert(pair<string, pair<Factory, DBVersion>>(db_type, pair<Factory, DBVersion>(factory, db_version)));
 
     // We are dealing here with static logger initialization fiasco.
     // registerFactory may be called from constructors of static global
@@ -176,7 +187,7 @@ HostDataSourceFactory::getDBVersions() {
         if (!txt.str().empty()) {
             txt << " ";
         }
-        txt << x.first;
+        txt << x.second.second();
     }
 
     return (txt.str());
