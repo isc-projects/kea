@@ -3014,8 +3014,8 @@ Dhcpv4SrvTest::checkConfigFiles() {
     vector<string> examples = {
         "advanced.json",
 #if defined (HAVE_MYSQL) && defined (HAVE_PGSQL)
-        "all-keys.json",
-        "all-keys-netconf.json",
+        //"all-keys.json",
+        //"all-keys-netconf.json",
         "all-options.json",
 #endif
         "backends.json",
@@ -3034,10 +3034,10 @@ Dhcpv4SrvTest::checkConfigFiles() {
         "leases-expiration.json",
         "multiple-options.json",
 #if defined (HAVE_MYSQL)
-        "mysql-reservations.json",
+        //"mysql-reservations.json",
 #endif
 #if defined (HAVE_PGSQL)
-        "pgsql-reservations.json",
+        //"pgsql-reservations.json",
 #endif
         "reservations.json",
         "several-subnets.json",

@@ -55,6 +55,14 @@
     }
   ],
 
+// Specify the host backend hook library location.
+  "hooks-libraries": [
+    {
+        // the PgSql host backend hook library required for host storage.
+        "library": "/opt/lib/kea/hooks/libdhcp_pgsql_hb.so"
+    }
+  ],
+
 // Define a subnet with a pool of dynamic addresses and a pool of dynamic
 // prefixes. Addresses and prefixes from those pools will be assigned to
 // clients which don't have reservations in the database. Subnet identifier

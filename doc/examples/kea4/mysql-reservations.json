@@ -70,6 +70,14 @@
     "cipher-list": "AES"
   },
 
+// Specify the host backend hook library location.
+  "hooks-libraries": [
+    {
+        // the MySql host backend hook library required for host storage.
+        "library": "/opt/lib/kea/hooks/libdhcp_mysql_hb.so"
+    }
+  ],
+
 // Define a subnet with a single pool of dynamic addresses. Addresses from
 // this pool will be assigned to clients which don't have reservations in the
 // database. Subnet identifier is equal to 1. If this subnet is selected for
