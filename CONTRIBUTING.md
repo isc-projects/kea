@@ -12,12 +12,28 @@ Here's a quick list of how to contribute a patch:
    or basically anyone from the Kea dev team)
 4. **fork Kea code**: go to Kea project page, click [Fork button](https://gitlab.isc.org/isc-projects/kea/forks/new).
    If you can't, you didn't complete step 3.
-5. **Implement your fix or feature, push code** to your repo. Make sure it compiles, has unit-tests,
+5. **Give ISC access to the forked project**. This is required to see pipeline status and to merge code.
+   From the sidebar on the project page, go to `Manage` -> `Members` -> `Invite members`.
+     - `Username, name or email address`: `@andrei, @fdupont, @marcin, @mgodzina, @piotrek, @razvan, @slawek, @tmark, @tomek, @wlodek`
+     - `Select a role`: `Developer`
+     - Click `Invite`.
+6. **Configure Danger**. From the sidebar on the project page, go to `Settings` -> `Access Tokens` -> `Add new token`:
+     - `Token name`: `danger`
+     - `Select a role`: `Developer`
+     - `Select scopes`: `[api]`
+     - Click `Create project access token`.
+     - Copy the token's value.
+   Then, go to `Settings` -> `CI/CD` -> `Variables` -> `Add variable`:
+     - `Visibility`: `Masked`
+     - `Key`: `DANGER_GITLAB_API_TOKEN`
+     - `Value`: copied token value
+     - Click `Add variable`.
+7. **Implement your fix or feature, push code** to your repo. Make sure it compiles, has unit-tests,
    is documented and does what it's supposed to do.
-6. **Open Merge Request**: go to Kea project [merge requests page](https://gitlab.isc.org/isc-projects/kea/merge_requests),
+8. **Open Merge Request**: go to Kea project [merge requests page](https://gitlab.isc.org/isc-projects/kea/merge_requests),
    click [New merge request](https://gitlab.isc.org/isc-projects/kea/merge_requests/new). If you
    don't see the button, you didn't complete step 3.
-7. **Participate in the code review**: Once you submit the MR, someone from ISC will eventually get
+9. **Participate in the code review**: Once you submit the MR, someone from ISC will eventually get
    to the issue and will review your code. Please make sure you respond to comments. It's likely
    you'll be asked to update the code.
 
