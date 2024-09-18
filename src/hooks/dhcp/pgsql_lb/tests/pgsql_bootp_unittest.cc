@@ -43,7 +43,7 @@ public:
     }
 
     /// @brief Initializer.
-    Initializer<PgSqlLeaseMgrInit> init_;
+    PgSqlLeaseMgrInit init_;
 };
 
 // This test checks that simple allocation handles BOOTP queries.

@@ -220,11 +220,11 @@ TEST_F(LeaseMgrFactoryTest, multipleV4) {
     EXPECT_TRUE(LeaseMgrFactory::haveInstance());
     EXPECT_EQ(LeaseMgrFactory::instance().getType(), "mem2");
 
-    EXPECT_EQ("version 2 Memfile backend 3.0", LeaseMgrFactory::getDBVersions());
+    EXPECT_EQ("- version 2\n- Memfile backend 3.0", LeaseMgrFactory::getDBVersions());
 
     EXPECT_TRUE(registerFactory());
 
-    EXPECT_EQ("version 1  version 2 Memfile backend 3.0", LeaseMgrFactory::getDBVersions());
+    EXPECT_EQ("- version 1\n- version 2\n- Memfile backend 3.0", LeaseMgrFactory::getDBVersions());
 
     // Delete them
     EXPECT_NO_THROW(LeaseMgrFactory::destroy());
@@ -247,11 +247,11 @@ TEST_F(LeaseMgrFactoryTest, multipleV6) {
     EXPECT_TRUE(LeaseMgrFactory::haveInstance());
     EXPECT_EQ(LeaseMgrFactory::instance().getType(), "mem2");
 
-    EXPECT_EQ("version 2 Memfile backend 5.0", LeaseMgrFactory::getDBVersions());
+    EXPECT_EQ("- version 2\n- Memfile backend 5.0", LeaseMgrFactory::getDBVersions());
 
     EXPECT_TRUE(registerFactory());
 
-    EXPECT_EQ("version 1  version 2 Memfile backend 5.0", LeaseMgrFactory::getDBVersions());
+    EXPECT_EQ("- version 1\n- version 2\n- Memfile backend 5.0", LeaseMgrFactory::getDBVersions());
 
     // Delete them
     EXPECT_NO_THROW(LeaseMgrFactory::destroy());

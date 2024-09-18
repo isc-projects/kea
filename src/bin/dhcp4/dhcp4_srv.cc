@@ -5020,7 +5020,7 @@ Dhcpv4Srv::getVersion(bool extended) {
         tmp << "lease backends:" << endl;
         tmp << LeaseMgrFactory::getDBVersions() << endl;
         tmp << "host backends:" << endl;
-        tmp << HostDataSourceFactory::getDBVersions() << endl;
+        tmp << HostDataSourceFactory::getDBVersions();
         // @todo: more details about database runtime
     }
 

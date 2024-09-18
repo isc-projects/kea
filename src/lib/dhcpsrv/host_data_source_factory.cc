@@ -184,10 +184,13 @@ HostDataSourceFactory::getDBVersions() {
     std::stringstream txt;
 
     for (auto const& x : map_) {
-        if (!txt.str().empty()) {
-            txt << " ";
+        auto version = x.second.second();
+        if (!txt.str().empty() && !version.empty()) {
+            txt << endl;
         }
-        txt << x.second.second();
+        if (!version.empty()) {
+            txt << "- " << version;
+        }
     }
 
     return (txt.str());

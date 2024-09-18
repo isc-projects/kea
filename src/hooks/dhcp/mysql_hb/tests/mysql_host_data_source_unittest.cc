@@ -154,7 +154,7 @@ public:
     }
 
     /// @brief Initializer.
-    Initializer<MySqlHostDataSourceInit> init_;
+    MySqlHostDataSourceInit init_;
 };
 
 /// @brief Check that database can be opened
@@ -164,7 +164,7 @@ public:
 /// MySqlHostMgr test fixture set.  This test checks that the database can be
 /// opened: the fixtures assume that and check basic operations.
 TEST(MySqlHostDataSource, OpenDatabase) {
-    Initializer<MySqlHostDataSourceInit> init;
+    MySqlHostDataSourceInit init;
     // Schema needs to be created for the test to work.
     destroyMySQLSchema();
     createMySQLSchema();
@@ -253,7 +253,7 @@ TEST(MySqlHostDataSource, OpenDatabase) {
 /// MySqlHostMgr test fixture set.  This test checks that the database can be
 /// opened: the fixtures assume that and check basic operations.
 TEST(MySqlHostDataSource, OpenDatabaseMultiThreading) {
-    Initializer<MySqlHostDataSourceInit> init;
+    MySqlHostDataSourceInit init;
     // Enable Multi-Threading.
     MultiThreadingTest mt(true);
 
@@ -355,7 +355,7 @@ bool db_lost_callback(ReconnectCtlPtr /* db_conn_retry */) {
 /// in a unit test is next to impossible. That has to be done
 /// as a system test.
 TEST(MySqlHostDataSource, NoCallbackOnOpenFail) {
-    Initializer<MySqlHostDataSourceInit> init;
+    MySqlHostDataSourceInit init;
     // Schema needs to be created for the test to work.
     destroyMySQLSchema();
     createMySQLSchema();
@@ -380,7 +380,7 @@ TEST(MySqlHostDataSource, NoCallbackOnOpenFail) {
 /// in a unit test is next to impossible. That has to be done
 /// as a system test.
 TEST(MySqlHostDataSource, NoCallbackOnOpenFailMultiThreading) {
-    Initializer<MySqlHostDataSourceInit> init;
+    MySqlHostDataSourceInit init;
     // Enable Multi-Threading.
     MultiThreadingTest mt(true);
 
@@ -1533,7 +1533,7 @@ protected:
     virtual void TearDown();
 
     /// @brief Initializer.
-    Initializer<MySqlHostDataSourceInit> init_;
+    MySqlHostDataSourceInit init_;
 };
 
 void
@@ -1593,7 +1593,7 @@ public:
     }
 
     /// @brief Initializer.
-    Initializer<MySqlHostDataSourceInit> init_;
+    MySqlHostDataSourceInit init_;
 };
 
 // This test verifies that reservations for a particular client can
@@ -1872,7 +1872,7 @@ public:
     }
 
     /// @brief Initializer.
-    Initializer<MySqlHostDataSourceInit> init_;
+    MySqlHostDataSourceInit init_;
 };
 
 // Tests that memfile lease manager and MySQL host data source can be created from a

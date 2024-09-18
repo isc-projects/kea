@@ -107,7 +107,7 @@ public:
     }
 
     /// @brief Initializer.
-    Initializer<PgSqlLeaseMgrInit> init_;
+    PgSqlLeaseMgrInit init_;
 };
 
 /// @brief Check that database can be opened
@@ -117,7 +117,7 @@ public:
 /// PgSqlLeaseMgr test fixture set.  This test checks that the database can be
 /// opened: the fixtures assume that and check basic operations.
 TEST(PgSqlOpenTest, OpenDatabase) {
-    Initializer<PgSqlLeaseMgrInit> init;
+    PgSqlLeaseMgrInit init;
     // Explicitly disable Multi-Threading.
     MultiThreadingMgr::instance().setMode(false);
 
@@ -228,7 +228,7 @@ TEST(PgSqlOpenTest, OpenDatabase) {
 
 /// @brief Check that database can be opened with Multi-Threading
 TEST(PgSqlOpenTest, OpenDatabaseMultiThreading) {
-    Initializer<PgSqlLeaseMgrInit> init;
+    PgSqlLeaseMgrInit init;
     // Enable Multi-Threading.
     MultiThreadingTest mt(true);
 
@@ -963,7 +963,7 @@ public:
     }
 
     /// @brief Initializer.
-    Initializer<PgSqlLeaseMgrInit> init_;
+    PgSqlLeaseMgrInit init_;
 };
 
 /// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.
@@ -1374,7 +1374,7 @@ public:
     }
 
     /// @brief Initializer.
-    Initializer<PgSqlLeaseMgrInit> init_;
+    PgSqlLeaseMgrInit init_;
 };
 
 // Tests that PostgreSQL lease manager and host data source can be created from a

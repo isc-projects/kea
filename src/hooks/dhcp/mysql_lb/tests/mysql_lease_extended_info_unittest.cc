@@ -61,13 +61,13 @@ public:
     }
 
     /// @brief Initializer.
-    Initializer<MySqlLeaseMgrInit> init_;
+    MySqlLeaseMgrInit init_;
 };
 
 /// @brief Test fixture class for extended info tests.
 class MySqlExtendedInfoTest : public isc::dhcp::test::GenericExtendedInfoTest<NakedMySqlLeaseMgr> {
     /// @brief Initializer.
-    Initializer<MySqlLeaseMgrInit> init_;
+    MySqlLeaseMgrInit init_;
 };
 
 /// @brief Verifies that the lease manager can start.

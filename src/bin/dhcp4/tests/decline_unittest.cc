@@ -8,7 +8,6 @@
 #include <config.h>
 #include <asiolink/io_address.h>
 #include <cc/data.h>
-#include <database/database_connection.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -270,7 +269,7 @@ TEST_F(DeclineTest, declineNoIdentifierChangeMemfile) {
 #ifdef HAVE_MYSQL
 // This test checks that the client can acquire and decline the lease.
 TEST_F(DeclineTest, declineNoIdentifierChangeMySQL) {
-    Initializer<MySqlLeaseMgrInit> init;
+    MySqlLeaseMgrInit init;
     Dhcp4Client client(Dhcp4Client::SELECTING);
     acquireAndDecline(client, "01:02:03:04:05:06", "12:14",
                       "01:02:03:04:05:06", "12:14",
@@ -281,7 +280,7 @@ TEST_F(DeclineTest, declineNoIdentifierChangeMySQL) {
 #ifdef HAVE_PGSQL
 // This test checks that the client can acquire and decline the lease.
 TEST_F(DeclineTest, declineNoIdentifierChangePgSQL) {
-    Initializer<PgSqlLeaseMgrInit> init;
+    PgSqlLeaseMgrInit init;
     Dhcp4Client client(Dhcp4Client::SELECTING);
     acquireAndDecline(client, "01:02:03:04:05:06", "12:14",
                       "01:02:03:04:05:06", "12:14",

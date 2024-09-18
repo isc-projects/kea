@@ -7,7 +7,6 @@
 #include <config.h>
 #include <asiolink/io_address.h>
 #include <cc/data.h>
-#include <database/database_connection.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -3348,7 +3347,7 @@ public:
     }
 
     /// @brief Initializer.
-    Initializer<MySqlLeaseMgrInit> init_;
+    MySqlLeaseMgrInit init_;
 };
 
 // Test that the client using the same hardware address but multiple
@@ -3394,7 +3393,7 @@ public:
     }
 
     /// @brief Initializer.
-    Initializer<PgSqlLeaseMgrInit> init_;
+    PgSqlLeaseMgrInit init_;
 };
 
 // Test that the client using the same hardware address but multiple

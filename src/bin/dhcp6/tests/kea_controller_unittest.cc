@@ -8,7 +8,6 @@
 
 #include <asiolink/io_address.h>
 #include <cc/command_interpreter.h>
-#include <database/database_connection.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/duid.h>
 #include <dhcp/iface_mgr.h>
@@ -991,8 +990,7 @@ public:
                                     const std::string& backend_second);
 
     /// @brief Initializer.
-    Initializer<MySqlLeaseMgrInit> init_;
-
+    MySqlLeaseMgrInit init_;
 };
 
 std::string

@@ -349,26 +349,6 @@ public:
     }
 };
 
-/// @brief RAII class to register a database backend by dynamically
-/// constructing an initialization object.
-///
-/// Used mostly in unittests.
-///
-/// @tparam T The initialization class which registers the database backend
-/// on constructor and deregisters it on destructor.
-template <typename T>
-struct Initializer {
-    /// @brief Constructor.
-    Initializer() : init_(new T()) {
-    }
-
-    /// @brief Destructor.
-    ~Initializer() = default;
-
-    /// @brief Smart pointer to an instance of an initializer.
-    std::unique_ptr<T> init_;
-};
-
 }  // namespace db
 }  // namespace isc
 

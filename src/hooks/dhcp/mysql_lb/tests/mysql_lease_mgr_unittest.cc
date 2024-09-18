@@ -107,7 +107,7 @@ public:
     }
 
     /// @brief Initializer.
-    Initializer<MySqlLeaseMgrInit> init_;
+    MySqlLeaseMgrInit init_;
 };
 
 /// @brief Check that database can be opened
@@ -117,7 +117,7 @@ public:
 /// MySqlLeaseMgr test fixture set.  This test checks that the database can be
 /// opened: the fixtures assume that and check basic operations.
 TEST(MySqlOpenTest, OpenDatabase) {
-    Initializer<MySqlLeaseMgrInit> init;
+    MySqlLeaseMgrInit init;
     // Explicitly disable Multi-Threading.
     MultiThreadingMgr::instance().setMode(false);
 
@@ -220,7 +220,7 @@ TEST(MySqlOpenTest, OpenDatabase) {
 
 /// @brief Check that database can be opened with Multi-Threading
 TEST(MySqlOpenTest, OpenDatabaseMultiThreading) {
-    Initializer<MySqlLeaseMgrInit> init;
+    MySqlLeaseMgrInit init;
     // Enable Multi-Threading.
     MultiThreadingTest mt(true);
 
@@ -996,7 +996,7 @@ public:
     }
 
     /// @brief Initializer.
-    Initializer<MySqlLeaseMgrInit> init_;
+    MySqlLeaseMgrInit init_;
 };
 
 /// @brief Verifies that loss of connectivity to MySQL is handled correctly.
@@ -1380,7 +1380,7 @@ public:
     }
 
     /// @brief Initializer.
-    Initializer<MySqlLeaseMgrInit> init_;
+    MySqlLeaseMgrInit init_;
 };
 
 // Tests that MySQL lease manager and host data source can be created from a

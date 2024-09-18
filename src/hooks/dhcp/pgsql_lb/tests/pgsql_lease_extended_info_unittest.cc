@@ -61,13 +61,13 @@ public:
     }
 
     /// @brief Initializer.
-    Initializer<PgSqlLeaseMgrInit> init_;
+    PgSqlLeaseMgrInit init_;
 };
 
 /// @brief Test fixture class for extended info tests.
 class PgSqlExtendedInfoTest : public isc::dhcp::test::GenericExtendedInfoTest<NakedPgSqlLeaseMgr> {
     /// @brief Initializer.
-    Initializer<PgSqlLeaseMgrInit> init_;
+    PgSqlLeaseMgrInit init_;
 };
 
 /// @brief Verifies that the lease manager can start.

@@ -375,10 +375,10 @@ class DBInitializer {
 void
 Dhcpv6SrvTest::checkConfigFiles() {
 #if defined (HAVE_MYSQL)
-    Initializer<MySqlHostDataSourceInit> mysql_init;
+    MySqlHostDataSourceInit mysql_init;
 #endif
 #if defined (HAVE_PGSQL)
-    Initializer<PgSqlHostDataSourceInit> pgsql_init;
+    PgSqlHostDataSourceInit pgsql_init;
 #endif
     DBInitializer dbi;
     IfaceMgrTestConfig test_config(true);

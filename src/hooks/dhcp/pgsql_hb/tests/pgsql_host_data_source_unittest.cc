@@ -152,7 +152,7 @@ public:
     }
 
     /// @brief Initializer.
-    Initializer<PgSqlHostDataSourceInit> init_;
+    PgSqlHostDataSourceInit init_;
 };
 
 /// @brief Check that database can be opened
@@ -162,7 +162,7 @@ public:
 /// PgSqlHostMgr test fixture set.  This test checks that the database can be
 /// opened: the fixtures assume that and check basic operations.
 TEST(PgSqlHostDataSource, OpenDatabase) {
-    Initializer<PgSqlHostDataSourceInit> init;
+    PgSqlHostDataSourceInit init;
     // Schema needs to be created for the test to work.
     destroyPgSQLSchema();
     createPgSQLSchema();
@@ -262,7 +262,7 @@ TEST(PgSqlHostDataSource, OpenDatabase) {
 /// PgSqlHostMgr test fixture set.  This test checks that the database can be
 /// opened: the fixtures assume that and check basic operations.
 TEST(PgSqlHostDataSource, OpenDatabaseMultiThreading) {
-    Initializer<PgSqlHostDataSourceInit> init;
+    PgSqlHostDataSourceInit init;
     // Enable Multi-Threading.
     MultiThreadingTest mt(true);
 
@@ -364,7 +364,7 @@ bool db_lost_callback(ReconnectCtlPtr /* db_conn_retry */) {
 /// in a unit test is next to impossible. That has to be done
 /// as a system test.
 TEST(PgSqlHostDataSource, NoCallbackOnOpenFail) {
-    Initializer<PgSqlHostDataSourceInit> init;
+    PgSqlHostDataSourceInit init;
     // Schema needs to be created for the test to work.
     destroyPgSQLSchema();
     createPgSQLSchema();
@@ -389,7 +389,7 @@ TEST(PgSqlHostDataSource, NoCallbackOnOpenFail) {
 /// in a unit test is next to impossible. That has to be done
 /// as a system test.
 TEST(PgSqlHostDataSource, NoCallbackOnOpenFailMultiThreading) {
-    Initializer<PgSqlHostDataSourceInit> init;
+    PgSqlHostDataSourceInit init;
     // Enable Multi-Threading.
     MultiThreadingTest mt(true);
 
@@ -1501,7 +1501,7 @@ protected:
     virtual void TearDown();
 
     /// @brief Initializer.
-    Initializer<PgSqlHostDataSourceInit> init_;
+    PgSqlHostDataSourceInit init_;
 };
 
 void
@@ -1561,7 +1561,7 @@ public:
     }
 
     /// @brief Initializer.
-    Initializer<PgSqlHostDataSourceInit> init_;
+    PgSqlHostDataSourceInit init_;
 };
 
 // This test verifies that reservations for a particular client can
@@ -1840,7 +1840,7 @@ public:
     }
 
     /// @brief Initializer.
-    Initializer<PgSqlHostDataSourceInit> init_;
+    PgSqlHostDataSourceInit init_;
 };
 
 // Tests that memfile lease manager and PostgreSQL host data source can be created from a

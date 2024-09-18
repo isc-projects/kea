@@ -193,11 +193,11 @@ TEST_F(HostDataSourceFactoryTest, multiple) {
     EXPECT_TRUE(registerFactory2());
     EXPECT_NO_THROW(HostDataSourceFactory::add(sources_, "type=mem2"));
 
-    EXPECT_EQ("version 2", HostDataSourceFactory::getDBVersions());
+    EXPECT_EQ("- version 2", HostDataSourceFactory::getDBVersions());
 
     EXPECT_TRUE(registerFactory());
 
-    EXPECT_EQ("version 1  version 2", HostDataSourceFactory::getDBVersions());
+    EXPECT_EQ("- version 1\n- version 2", HostDataSourceFactory::getDBVersions());
 
     // Delete them
     EXPECT_TRUE(HostDataSourceFactory::del(sources_, "mem1"));

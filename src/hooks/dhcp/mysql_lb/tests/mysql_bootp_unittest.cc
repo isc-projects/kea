@@ -43,7 +43,7 @@ public:
     }
 
     /// @brief Initializer.
-    Initializer<MySqlLeaseMgrInit> init_;
+    MySqlLeaseMgrInit init_;
 };
 
 // This test checks that simple allocation handles BOOTP queries.
