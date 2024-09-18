@@ -179,21 +179,17 @@ HostDataSourceFactory::logRegistered() {
         .arg(txt.str());
 }
 
-std::string
+std::list<std::string>
 HostDataSourceFactory::getDBVersions() {
-    std::stringstream txt;
-
+    std::list<std::string> result;
     for (auto const& x : map_) {
         auto version = x.second.second();
-        if (!txt.str().empty() && !version.empty()) {
-            txt << endl;
-        }
         if (!version.empty()) {
-            txt << "- " << version;
+            result.push_back(version);
         }
     }
 
-    return (txt.str());
+    return (result);
 }
 
 }  // namespace dhcp

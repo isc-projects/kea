@@ -145,7 +145,7 @@ public:
     static void logRegistered();
 
     /// @brief Return extended version info for registered backends.
-    static std::string getDBVersions();
+    static std::list<std::string> getDBVersions();
 
 private:
     /// @brief Factory map

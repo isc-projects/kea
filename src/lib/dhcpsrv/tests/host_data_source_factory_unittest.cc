@@ -193,11 +193,16 @@ TEST_F(HostDataSourceFactoryTest, multiple) {
     EXPECT_TRUE(registerFactory2());
     EXPECT_NO_THROW(HostDataSourceFactory::add(sources_, "type=mem2"));
 
-    EXPECT_EQ("- version 2", HostDataSourceFactory::getDBVersions());
+    std::list<std::string> expected;
+    expected.push_back("version 2");
+    EXPECT_EQ(expected, HostDataSourceFactory::getDBVersions());
 
     EXPECT_TRUE(registerFactory());
 
-    EXPECT_EQ("- version 1\n- version 2", HostDataSourceFactory::getDBVersions());
+    expected.clear();
+    expected.push_back("version 1");
+    expected.push_back("version 2");
+    EXPECT_EQ(expected, HostDataSourceFactory::getDBVersions());
 
     // Delete them
     EXPECT_TRUE(HostDataSourceFactory::del(sources_, "mem1"));

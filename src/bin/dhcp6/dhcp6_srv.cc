@@ -4695,14 +4695,18 @@ Dhcpv6Srv::getVersion(bool extended) {
         tmp << "- " << Logger::getVersion() << endl;
         tmp << "- " << CryptoLink::getVersion();
         auto info = LeaseMgrFactory::getDBVersions();
-        if (!info.empty()) {
-            tmp << endl <<"lease backends:" << endl;
-            tmp << info;
+        if (info.size()) {
+            tmp << endl << "lease backends:";
+            for (auto const& version : info) {
+                tmp << endl << "- " << version;
+            }
         }
         info = HostDataSourceFactory::getDBVersions();
-        if (!info.empty()) {
-            tmp << endl << "host backends:" << endl;
-            tmp << info;
+        if (info.size()) {
+            tmp << endl << "host backends:";
+            for (auto const& version : info) {
+                tmp << endl << "- " << version;
+            }
         }
         // @todo: more details about database runtime
     }

@@ -220,11 +220,18 @@ TEST_F(LeaseMgrFactoryTest, multipleV4) {
     EXPECT_TRUE(LeaseMgrFactory::haveInstance());
     EXPECT_EQ(LeaseMgrFactory::instance().getType(), "mem2");
 
-    EXPECT_EQ("- version 2\n- Memfile backend 3.0", LeaseMgrFactory::getDBVersions());
+    std::list<std::string> expected;
+    expected.push_back("version 2");
+    expected.push_back("Memfile backend 3.0");
+    EXPECT_EQ(expected, LeaseMgrFactory::getDBVersions());
 
     EXPECT_TRUE(registerFactory());
 
-    EXPECT_EQ("- version 1\n- version 2\n- Memfile backend 3.0", LeaseMgrFactory::getDBVersions());
+    expected.clear();
+    expected.push_back("version 1");
+    expected.push_back("version 2");
+    expected.push_back("Memfile backend 3.0");
+    EXPECT_EQ(expected, LeaseMgrFactory::getDBVersions());
 
     // Delete them
     EXPECT_NO_THROW(LeaseMgrFactory::destroy());
@@ -247,11 +254,18 @@ TEST_F(LeaseMgrFactoryTest, multipleV6) {
     EXPECT_TRUE(LeaseMgrFactory::haveInstance());
     EXPECT_EQ(LeaseMgrFactory::instance().getType(), "mem2");
 
-    EXPECT_EQ("- version 2\n- Memfile backend 5.0", LeaseMgrFactory::getDBVersions());
+    std::list<std::string> expected;
+    expected.push_back("version 2");
+    expected.push_back("Memfile backend 5.0");
+    EXPECT_EQ(expected, LeaseMgrFactory::getDBVersions());
 
     EXPECT_TRUE(registerFactory());
 
-    EXPECT_EQ("- version 1\n- version 2\n- Memfile backend 5.0", LeaseMgrFactory::getDBVersions());
+    expected.clear();
+    expected.push_back("version 1");
+    expected.push_back("version 2");
+    expected.push_back("Memfile backend 5.0");
+    EXPECT_EQ(expected, LeaseMgrFactory::getDBVersions());
 
     // Delete them
     EXPECT_NO_THROW(LeaseMgrFactory::destroy());
