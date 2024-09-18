@@ -1,3 +1,11 @@
+# Copyright (C) 2024 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+$NAMESPACE isc::dhcp
+
 % MYSQL_LB_DB opening MySQL lease database: %1
 This informational message is logged when a DHCP server (either V4 or
 V6) is about to open a MySQL lease database. The parameters of the
