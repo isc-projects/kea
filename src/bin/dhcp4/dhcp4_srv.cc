@@ -5016,11 +5016,17 @@ Dhcpv4Srv::getVersion(bool extended) {
         tmp << "premium: " << PREMIUM_EXTENDED_VERSION << endl;
         tmp << "linked with:" << endl;
         tmp << "- " << Logger::getVersion() << endl;
-        tmp << "- " << CryptoLink::getVersion() << endl;
-        tmp << "lease backends:" << endl;
-        tmp << LeaseMgrFactory::getDBVersions() << endl;
-        tmp << "host backends:" << endl;
-        tmp << HostDataSourceFactory::getDBVersions();
+        tmp << "- " << CryptoLink::getVersion();
+        auto info = LeaseMgrFactory::getDBVersions();
+        if (!info.empty()) {
+            tmp << endl <<"lease backends:" << endl;
+            tmp << info;
+        }
+        info = HostDataSourceFactory::getDBVersions();
+        if (!info.empty()) {
+            tmp << endl << "host backends:" << endl;
+            tmp << info;
+        }
         // @todo: more details about database runtime
     }
 
