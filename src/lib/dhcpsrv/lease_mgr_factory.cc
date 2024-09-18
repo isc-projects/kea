@@ -26,8 +26,12 @@ namespace dhcp {
 
 map<string, pair<LeaseMgrFactory::Factory, LeaseMgrFactory::DBVersion>> LeaseMgrFactory::map_;
 
+namespace {
+
 /// @brief Initializer.
-MemfileLeaseMgrInit memfile_init;
+isc::dhcp::MemfileLeaseMgrInit memfile_init;
+
+}
 
 TrackingLeaseMgrPtr&
 LeaseMgrFactory::getLeaseMgrPtr() {
