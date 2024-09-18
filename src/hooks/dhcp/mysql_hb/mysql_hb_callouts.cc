@@ -52,7 +52,9 @@ int load(LibraryHandle& /* handle */) {
     }
 
     // Register MySQL HB factories with Host Managers
-    HostDataSourceFactory::registerFactory("mysql", MySqlHostDataSource::factory, true,
+    HostDataSourceFactory::registerFactory("mysql",
+                                           MySqlHostDataSource::factory,
+                                           true,
                                            MySqlHostDataSource::getDBVersion);
 
     LOG_INFO(mysql_hb_logger, MYSQL_HB_INIT_OK);

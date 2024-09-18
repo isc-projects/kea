@@ -549,7 +549,9 @@ public:
 struct MySqlHostDataSourceInit {
     // Constructor registers
     MySqlHostDataSourceInit() {
-        HostDataSourceFactory::registerFactory("mysql", MySqlHostDataSource::factory, true,
+        HostDataSourceFactory::registerFactory("mysql",
+                                               MySqlHostDataSource::factory,
+                                               true,
                                                MySqlHostDataSource::getDBVersion);
     }
 

@@ -4,9 +4,15 @@
 #include <log/message_types.h>
 #include <log/message_initializer.h>
 
+namespace isc {
+namespace dhcp {
+
 extern const isc::log::MessageID MYSQL_LB_DB = "MYSQL_LB_DB";
 extern const isc::log::MessageID MYSQL_LB_DEINIT_OK = "MYSQL_LB_DEINIT_OK";
 extern const isc::log::MessageID MYSQL_LB_INIT_OK = "MYSQL_LB_INIT_OK";
+
+} // namespace dhcp
+} // namespace isc
 
 namespace {
 

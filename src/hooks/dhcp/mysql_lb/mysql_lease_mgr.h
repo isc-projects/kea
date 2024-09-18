@@ -1313,7 +1313,9 @@ public:
 struct MySqlLeaseMgrInit {
     // Constructor registers
     MySqlLeaseMgrInit() {
-        LeaseMgrFactory::registerFactory("mysql", MySqlLeaseMgr::factory, true,
+        LeaseMgrFactory::registerFactory("mysql",
+                                         MySqlLeaseMgr::factory,
+                                         true,
                                          MySqlLeaseMgr::getDBVersion);
     }
 

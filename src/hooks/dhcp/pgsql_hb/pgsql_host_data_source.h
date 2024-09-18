@@ -601,7 +601,9 @@ public:
 struct PgSqlHostDataSourceInit {
     // Constructor registers
     PgSqlHostDataSourceInit() {
-        HostDataSourceFactory::registerFactory("postgresql", PgSqlHostDataSource::factory, true,
+        HostDataSourceFactory::registerFactory("postgresql",
+                                               PgSqlHostDataSource::factory,
+                                               true,
                                                PgSqlHostDataSource::getDBVersion);
     }
 

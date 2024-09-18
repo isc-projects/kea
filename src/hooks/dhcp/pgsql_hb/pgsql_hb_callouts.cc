@@ -52,7 +52,9 @@ int load(LibraryHandle& /* handle */) {
     }
 
     // Register PgSQL HB factories with Host Managers
-    HostDataSourceFactory::registerFactory("postgresql", PgSqlHostDataSource::factory, true,
+    HostDataSourceFactory::registerFactory("postgresql",
+                                           PgSqlHostDataSource::factory,
+                                           true,
                                            PgSqlHostDataSource::getDBVersion);
 
     LOG_INFO(pgsql_hb_logger, PGSQL_HB_INIT_OK);

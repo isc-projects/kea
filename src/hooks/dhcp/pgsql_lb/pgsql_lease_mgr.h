@@ -1272,7 +1272,9 @@ public:
 struct PgSqlLeaseMgrInit {
     // Constructor registers
     PgSqlLeaseMgrInit() {
-        LeaseMgrFactory::registerFactory("postgresql", PgSqlLeaseMgr::factory, true,
+        LeaseMgrFactory::registerFactory("postgresql",
+                                         PgSqlLeaseMgr::factory,
+                                         true,
                                          PgSqlLeaseMgr::getDBVersion);
     }
 

@@ -1579,7 +1579,9 @@ public:
 struct MemfileLeaseMgrInit {
     // Constructor registers
     MemfileLeaseMgrInit() {
-        LeaseMgrFactory::registerFactory("memfile", Memfile_LeaseMgr::factory, true,
+        LeaseMgrFactory::registerFactory("memfile",
+                                         Memfile_LeaseMgr::factory,
+                                         true,
                                          Memfile_LeaseMgr::getDBVersion);
     }
 

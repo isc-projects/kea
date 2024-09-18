@@ -4,9 +4,15 @@
 #include <log/message_types.h>
 #include <log/message_initializer.h>
 
+namespace isc {
+namespace dhcp {
+
 extern const isc::log::MessageID PGSQL_HB_DB = "PGSQL_HB_DB";
 extern const isc::log::MessageID PGSQL_HB_DEINIT_OK = "PGSQL_HB_DEINIT_OK";
 extern const isc::log::MessageID PGSQL_HB_INIT_OK = "PGSQL_HB_INIT_OK";
+
+} // namespace dhcp
+} // namespace isc
 
 namespace {
 
