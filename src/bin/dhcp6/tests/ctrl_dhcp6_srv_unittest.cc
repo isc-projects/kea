@@ -461,7 +461,7 @@ TEST_F(CtrlDhcpv6SrvTest, commands) {
     comment = parseAnswer(rcode, result);
     EXPECT_EQ(0, rcode); // expect success
     // Exit value should default to 0.
-    EXPECT_EQ(0, server_->getExitValue());
+    EXPECT_EQ(0, srv->getExitValue());
 
     // Case 3: send shutdown command with exit-value parameter.
     ConstElementPtr x(new isc::data::IntElement(77));
