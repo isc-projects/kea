@@ -1458,7 +1458,8 @@ TEST_F(ClassifyTest, subClassPrecedence) {
             "name": "opt1",
             "code": 249,
             "type": "string"
-        },{
+        },
+        {
             "name": "opt2",
             "code": 250,
             "type": "string"
@@ -1469,11 +1470,13 @@ TEST_F(ClassifyTest, subClassPrecedence) {
             "option-data": [{
                 "name": "opt1",
                 "data": "template one"
-            },{
+            },
+            {
                 "name": "opt2",
                 "data": "template two"
             }]
-        },{
+        },
+        {
             "name": "SPAWN_template-client-id_111",
             "option-data": [{
                 "name": "opt2",

@@ -2657,11 +2657,11 @@ TEST_F(ClassifyTest, subClassPrecedence) {
             "name": "opt1",
             "code": 1249,
             "type": "string"
-        },{
+        },
+        {
             "name": "opt2",
             "code": 1250,
             "type": "string"
-
         }],
         "client-classes": [{
             "name": "template-client-id",
@@ -2674,7 +2674,8 @@ TEST_F(ClassifyTest, subClassPrecedence) {
                 "name": "opt2",
                 "data": "template two"
             }]
-        },{
+        },
+        {
             "name": "SPAWN_template-client-id_def",
             "option-data": [{
                 "name": "opt2",
