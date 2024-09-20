@@ -532,7 +532,7 @@ public:
     /// @brief Connection timeout.
     long timeout_;
 
-    /// @brief Use external sockets flag..
+    /// @brief Use external sockets flag.
     bool use_external_;
 
     /// @brief File description to lock name file.

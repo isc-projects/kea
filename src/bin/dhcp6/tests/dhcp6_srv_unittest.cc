@@ -8,7 +8,6 @@
 
 #include <asiolink/io_address.h>
 #include <cc/command_interpreter.h>
-#include <config/command_mgr.h>
 #include <config/unix_command_mgr.h>
 #include <config_backend/base_config_backend.h>
 #include <dhcp6/json_config_parser.h>
