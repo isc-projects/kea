@@ -90,9 +90,6 @@ using namespace std;
   HOSTS_DATABASE "hosts-database"
   HOSTS_DATABASES "hosts-databases"
   TYPE "type"
-  MEMFILE "memfile"
-  MYSQL "mysql"
-  POSTGRESQL "postgresql"
   USER "user"
   PASSWORD "password"
   HOST "host"
@@ -306,7 +303,6 @@ using namespace std;
 %type <ElementPtr> map_value
 %type <ElementPtr> socket_type
 %type <ElementPtr> outbound_interface_value
-%type <ElementPtr> db_type
 %type <ElementPtr> on_fail_mode
 %type <ElementPtr> ncr_protocol_value
 %type <ElementPtr> ddns_replace_client_name_value
@@ -1118,16 +1114,12 @@ database_map_param: database_type
 
 database_type: TYPE {
     ctx.unique("type", ctx.loc2pos(@1));
-    ctx.enter(ctx.DATABASE_TYPE);
-} COLON db_type {
-    ctx.stack_.back()->set("type", $4);
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr db_type(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("type", db_type);
     ctx.leave();
 };
-
-db_type: MEMFILE { $$ = ElementPtr(new StringElement("memfile", ctx.loc2pos(@1))); }
-       | MYSQL { $$ = ElementPtr(new StringElement("mysql", ctx.loc2pos(@1))); }
-       | POSTGRESQL { $$ = ElementPtr(new StringElement("postgresql", ctx.loc2pos(@1))); }
-       ;
 
 user: USER {
     ctx.unique("user", ctx.loc2pos(@1));

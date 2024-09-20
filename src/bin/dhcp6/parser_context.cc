@@ -159,8 +159,6 @@ Parser6Context::contextName() {
         return ("lease-database");
     case HOSTS_DATABASE:
         return ("hosts-database");
-    case DATABASE_TYPE:
-        return ("database-type");
     case DATABASE_ON_FAIL:
         return ("database-on-fail");
     case MAC_SOURCES:

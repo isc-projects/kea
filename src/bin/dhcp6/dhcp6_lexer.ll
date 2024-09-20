@@ -558,33 +558,6 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
-\"memfile\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::DATABASE_TYPE:
-        return isc::dhcp::Dhcp6Parser::make_MEMFILE(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("memfile", driver.loc_);
-    }
-}
-
-\"mysql\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::DATABASE_TYPE:
-        return isc::dhcp::Dhcp6Parser::make_MYSQL(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("mysql", driver.loc_);
-    }
-}
-
-\"postgresql\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::DATABASE_TYPE:
-        return isc::dhcp::Dhcp6Parser::make_POSTGRESQL(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("postgresql", driver.loc_);
-    }
-}
-
 \"user\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LEASE_DATABASE:

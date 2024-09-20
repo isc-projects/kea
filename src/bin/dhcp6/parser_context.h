@@ -252,9 +252,6 @@ public:
         /// Used while parsing Dhcp6/hosts-database[s] structures.
         HOSTS_DATABASE,
 
-        /// Used while parsing Dhcp6/*-database/type.
-        DATABASE_TYPE,
-
         /// Used while parsing Dhcp6/*-database/on-fail.
         DATABASE_ON_FAIL,
 

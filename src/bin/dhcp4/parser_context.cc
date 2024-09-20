@@ -164,8 +164,6 @@ Parser4Context::contextName() {
         return ("lease-database");
     case HOSTS_DATABASE:
         return ("hosts-database");
-    case DATABASE_TYPE:
-        return ("database-type");
     case DATABASE_ON_FAIL:
         return ("database-on-fail");
     case HOST_RESERVATION_IDENTIFIERS:
