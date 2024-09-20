@@ -2645,8 +2645,10 @@ TEST_F(ClassifyTest, subClassPrecedence) {
         "rebind-timer": 2000,
         "renew-timer": 1000,
         "valid-lifetime": 4000,
-        "subnet6": [
-        {   "pools": [ { "pool": "2001:db8:1::/64" } ],
+        "subnet6": [{
+            "pools": [{
+                "pool": "2001:db8:1::/64"
+            }],
             "subnet": "2001:db8:1::/48",
             "id": 1,
             "interface": "eth1",
@@ -2655,19 +2657,16 @@ TEST_F(ClassifyTest, subClassPrecedence) {
             "name": "opt1",
             "code": 1249,
             "type": "string"
-        },
-        {
+        },{
             "name": "opt2",
             "code": 1250,
             "type": "string"
 
         }],
-        "client-classes": [
-        {
+        "client-classes": [{
             "name": "template-client-id",
             "template-test": "substring(option[1].hex,0,3)",
-            "option-data": [
-            {
+            "option-data": [{
                 "name": "opt1",
                 "data": "template one"
             },
@@ -2675,11 +2674,9 @@ TEST_F(ClassifyTest, subClassPrecedence) {
                 "name": "opt2",
                 "data": "template two"
             }]
-        },
-        {
+        },{
             "name": "SPAWN_template-client-id_def",
-            "option-data": [
-            {
+            "option-data": [{
                 "name": "opt2",
                 "data": "spawn two"
             }]

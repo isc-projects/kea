@@ -7,6 +7,7 @@
 #include <config.h>
 #include <asiolink/io_address.h>
 #include <dhcp/dhcp4.h>
+#include <dhcp/option_int_array.h>
 #include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp4/tests/dhcp4_client.h>
 #include <dhcp/option_int.h>
@@ -1429,6 +1430,100 @@ TEST_F(ClassifyTest, earlyDrop) {
 
     // Not matching so not dropped.
     EXPECT_TRUE(client2.getContext().response_);
+}
+
+// Checks that sub-class options have precedence of template class options
+TEST_F(ClassifyTest, subClassPrecedence) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    string config = R"^(
+    {
+        "interfaces-config": {
+            "interfaces": [ "*" ]
+        },
+        "rebind-timer": 2000,
+        "renew-timer": 1000,
+        "valid-lifetime": 4000,
+        "subnet4": [{
+            "id": 1,
+            "subnet": "192.0.2.0/24",
+            "pools": [{
+                "pool": "192.0.2.1 - 192.0.2.100"
+             }]
+        }],
+        "option-def": [{
+            "name": "opt1",
+            "code": 249,
+            "type": "string"
+        },{
+            "name": "opt2",
+            "code": 250,
+            "type": "string"
+        }],
+        "client-classes": [{
+            "name": "template-client-id",
+            "template-test": "substring(option[61].hex,0,3)",
+            "option-data": [{
+                "name": "opt1",
+                "data": "template one"
+            },{
+                "name": "opt2",
+                "data": "template two"
+            }]
+        },{
+            "name": "SPAWN_template-client-id_111",
+            "option-data": [{
+                "name": "opt2",
+                "data": "spawn two"
+            }]
+        }]
+    }
+    )^";
+
+    // Configure DHCP server.
+    configure(config, srv);
+
+    // Create packets with enough to select the subnet
+    auto id = ClientId::fromText("31:31:31");
+    OptionPtr clientid = (OptionPtr(new Option(Option::V4,
+                                               DHO_DHCP_CLIENT_IDENTIFIER,
+                                               id->getClientId())));
+
+    Pkt4Ptr query1(new Pkt4(DHCPDISCOVER, 1234));
+    query1->setRemoteAddr(IOAddress("192.0.2.1"));
+    query1->addOption(clientid);
+    query1->setIface("eth1");
+    query1->setIndex(ETH1_INDEX);
+
+    // Create and add a PRL option to the first 2 queries
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    prl->addValue(249);
+    prl->addValue(250);
+    query1->addOption(prl);
+
+    // Classify packets
+    srv.classifyPacket(query1);
+
+    // Verify class membership is as expected.
+    EXPECT_TRUE(query1->inClass("template-client-id"));
+    EXPECT_TRUE(query1->inClass("SPAWN_template-client-id_111"));
+
+    // Process query
+    Pkt4Ptr response1 = srv.processDiscover(query1);
+
+    // Verify that opt1 is inherited from the template.
+    OptionPtr opt = response1->getOption(249);
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(opt->toString(), "template one");
+
+    // Verify that for opt2 subclass overrides the template.
+    opt = response1->getOption(250);
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(opt->toString(), "spawn two");
 }
 
 } // end of anonymous namespace
