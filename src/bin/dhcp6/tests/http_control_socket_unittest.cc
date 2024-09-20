@@ -118,12 +118,12 @@ public:
         IfaceMgr::instance().deleteAllExternalSockets();
         CfgMgr::instance().clear();
     }
-
 };
 
 /// @brief Base fixture class intended for testing HTTP/HTTPS control channel.
 class BaseCtrlChannelDhcpv6Test : public HttpCtrlDhcpv6Test {
 public:
+
     /// @brief List of interfaces (defaults to "*").
     std::string interfaces_;
 
@@ -201,7 +201,6 @@ public:
     /// @brief Create a server with a HTTP command channel.
     virtual void createHttpChannelServer() = 0;
 
-    /// @brief Create a server with a HTTP command channel.
     /// @brief Reset
     void reset() override {
         HttpCtrlDhcpv6Test::reset();
@@ -567,6 +566,7 @@ public:
 class HttpCtrlChannelDhcpv6Test : public BaseCtrlChannelDhcpv6Test {
 public:
 
+    /// @brief Create a server with a HTTP command channel.
     virtual void createHttpChannelServer() override {
         // Just a simple config. The important part here is the socket
         // location information.
@@ -678,6 +678,7 @@ public:
 class HttpsCtrlChannelDhcpv6Test : public BaseCtrlChannelDhcpv6Test {
 public:
 
+    /// @brief Create a server with a HTTP command channel.
     virtual void createHttpChannelServer() override {
         // Just a simple config. The important part here is the socket
         // location information.
@@ -823,7 +824,8 @@ BaseCtrlChannelDhcpv6Test::testControlChannelShutdown() {
     std::string response;
 
     sendHttpCommand("{ \"command\": \"shutdown\" }", response);
-    EXPECT_EQ("[ { \"result\": 0, \"text\": \"Shutting down.\" } ]", response);
+    EXPECT_EQ("[ { \"result\": 0, \"text\": \"Shutting down.\" } ]",
+              response);
 
     EXPECT_EQ(EXIT_SUCCESS, server_->getExitValue());
 }
@@ -834,6 +836,135 @@ TEST_F(HttpCtrlChannelDhcpv6Test, controlChannelShutdown) {
 
 TEST_F(HttpsCtrlChannelDhcpv6Test, controlChannelShutdown) {
     testControlChannelShutdown();
+}
+
+// Tests that the server properly responds to statistics commands.  Note this
+// is really only intended to verify that the appropriate Statistics handler
+// is called based on the command.  It is not intended to be an exhaustive
+// test of Dhcpv6 statistics.
+void
+BaseCtrlChannelDhcpv6Test::testControlChannelStats() {
+    createHttpChannelServer();
+    std::string response;
+
+    // Check statistic-get
+    sendHttpCommand("{ \"command\" : \"statistic-get\", "
+                    "  \"arguments\": {"
+                    "  \"name\":\"bogus\" }}", response);
+    EXPECT_EQ("[ { \"arguments\": {  }, \"result\": 0 } ]", response);
+
+    // Check statistic-get-all
+    sendHttpCommand("{ \"command\" : \"statistic-get-all\", "
+                    "  \"arguments\": {}}", response);
+
+    std::set<std::string> initial_stats = {
+        "pkt6-received",
+        "pkt6-solicit-received",
+        "pkt6-advertise-received",
+        "pkt6-request-received",
+        "pkt6-reply-received",
+        "pkt6-renew-received",
+        "pkt6-rebind-received",
+        "pkt6-decline-received",
+        "pkt6-release-received",
+        "pkt6-infrequest-received",
+        "pkt6-dhcpv4-query-received",
+        "pkt6-dhcpv4-response-received",
+        "pkt6-unknown-received",
+        "pkt6-sent",
+        "pkt6-advertise-sent",
+        "pkt6-reply-sent",
+        "pkt6-dhcpv4-response-sent",
+        "pkt6-parse-failed",
+        "pkt6-receive-drop",
+        "v6-allocation-fail",
+        "v6-allocation-fail-shared-network",
+        "v6-allocation-fail-subnet",
+        "v6-allocation-fail-no-pools",
+        "v6-allocation-fail-classes",
+        "v6-ia-na-lease-reuses",
+        "v6-ia-pd-lease-reuses",
+    };
+
+    std::ostringstream s;
+    s << "[ { \"arguments\": { ";
+    bool first = true;
+    for (auto const& st : initial_stats) {
+        if (!first) {
+            s << ", ";
+        } else {
+            first = false;
+        }
+        s << "\"" << st << "\": [ [ 0, \"";
+        s << isc::util::clockToText(StatsMgr::instance().getObservation(st)->getInteger().second);
+        s << "\" ] ]";
+    }
+    s << " }, \"result\": 0 } ]";
+
+    auto stats_get_all = s.str();
+
+    EXPECT_EQ(stats_get_all, response);
+
+    // Check statistic-reset
+    sendHttpCommand("{ \"command\" : \"statistic-reset\", "
+                    "  \"arguments\": {"
+                    "  \"name\":\"bogus\" }}", response);
+    EXPECT_EQ("[ { \"result\": 1, \"text\": \"No 'bogus' statistic found\" } ]",
+              response);
+
+    // Check statistic-reset-all
+    sendHttpCommand("{ \"command\" : \"statistic-reset-all\", "
+                    "  \"arguments\": {}}", response);
+    EXPECT_EQ("[ { \"result\": 0, \"text\": "
+              "\"All statistics reset to neutral values.\" } ]",
+              response);
+
+    // Check statistic-remove
+    sendHttpCommand("{ \"command\" : \"statistic-remove\", "
+                    "  \"arguments\": {"
+                    "  \"name\":\"bogus\" }}", response);
+    EXPECT_EQ("[ { \"result\": 1, \"text\": \"No 'bogus' statistic found\" } ]",
+              response);
+
+    // Check statistic-remove-all (deprecated)
+
+    // Check statistic-sample-age-set
+    sendHttpCommand("{ \"command\" : \"statistic-sample-age-set\", "
+                    "  \"arguments\": {"
+                    "  \"name\":\"bogus\", \"duration\": 1245 }}", response);
+    EXPECT_EQ("[ { \"result\": 1, \"text\": \"No 'bogus' statistic found\" } ]",
+              response);
+
+    // Check statistic-sample-age-set-all
+    sendHttpCommand("{ \"command\" : \"statistic-sample-age-set-all\", "
+                    "  \"arguments\": {"
+                    "  \"duration\": 1245 }}", response);
+    EXPECT_EQ("[ { \"result\": 0, \"text\": "
+              "\"All statistics duration limit are set.\" } ]",
+              response);
+
+    // Check statistic-sample-count-set
+    sendHttpCommand("{ \"command\" : \"statistic-sample-count-set\", "
+                    "  \"arguments\": {"
+                    "  \"name\":\"bogus\", \"max-samples\": 100 }}", response);
+    EXPECT_EQ("[ { \"result\": 1, \"text\": \"No 'bogus' statistic found\" } ]",
+              response);
+
+    // Check statistic-sample-count-set-all
+    sendHttpCommand("{ \"command\" : \"statistic-sample-count-set-all\", "
+                    "  \"arguments\": {"
+                    "  \"max-samples\": 100 }}", response);
+    EXPECT_EQ("[ { \"result\": 0, \"text\": "
+              "\"All statistics count limit are set.\" } ]",
+              response);
+}
+
+TEST_F(HttpCtrlChannelDhcpv6Test, controlChannelStats) {
+    testControlChannelStats();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv6Test, controlChannelStats) {
+    testControlChannelStats();
 }
 
 // Check that the "config-set" command will replace current configuration.
@@ -1566,7 +1697,7 @@ TEST_F(HttpsCtrlChannelDhcpv6Test, configTest) {
     CfgMgr::instance().clear();
 }
 
-// This test verifies that the DHCP server handles version-get commands
+// This test verifies that the DHCP server handles version-get commands.
 void
 BaseCtrlChannelDhcpv6Test::testGetVersion() {
     createHttpChannelServer();
@@ -1591,6 +1722,38 @@ TEST_F(HttpCtrlChannelDhcpv6Test, getVersion) {
 
 TEST_F(HttpsCtrlChannelDhcpv6Test, getVersion) {
     testGetVersion();
+}
+
+// This test verifies that the DHCP server handles server-tag-get command.
+void
+BaseCtrlChannelDhcpv6Test::testServerTagGet() {
+    createHttpChannelServer();
+
+    std::string response;
+    std::string expected;
+
+    // Send the server-tag-get command
+    sendHttpCommand("{ \"command\": \"server-tag-get\" }", response);
+    expected = "[ { \"arguments\": { \"server-tag\": \"\" }, ";
+    expected += "\"result\": 0 } ]";
+    EXPECT_EQ(expected, response);
+
+    // Set a value to the server tag
+    CfgMgr::instance().getCurrentCfg()->setServerTag("foobar");
+
+    // Retry...
+    sendHttpCommand("{ \"command\": \"server-tag-get\" }", response);
+    expected = "[ { \"arguments\": { \"server-tag\": \"foobar\" }, ";
+    expected += "\"result\": 0 } ]";
+    EXPECT_EQ(expected, response);
+}
+
+TEST_F(HttpCtrlChannelDhcpv6Test, serverTagGet) {
+    testServerTagGet();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv6Test, serverTagGet) {
+    testServerTagGet();
 }
 
 // This test verifies that the DHCP server handles status-get commands.
@@ -1863,38 +2026,6 @@ TEST_F(HttpsCtrlChannelDhcpv6Test, statusGetSocketsErrors) {
     testStatusGetSocketsErrors();
 }
 
-// This test verifies that the DHCP server handles server-tag-get command.
-void
-BaseCtrlChannelDhcpv6Test::testServerTagGet() {
-    createHttpChannelServer();
-
-    std::string response;
-    std::string expected;
-
-    // Send the server-tag-get command
-    sendHttpCommand("{ \"command\": \"server-tag-get\" }", response);
-    expected = "[ { \"arguments\": { \"server-tag\": \"\" }, ";
-    expected += "\"result\": 0 } ]";
-    EXPECT_EQ(expected, response);
-
-    // Set a value to the server tag
-    CfgMgr::instance().getCurrentCfg()->setServerTag("foobar");
-
-    // Retry...
-    sendHttpCommand("{ \"command\": \"server-tag-get\" }", response);
-    expected = "[ { \"arguments\": { \"server-tag\": \"foobar\" }, ";
-    expected += "\"result\": 0 } ]";
-    EXPECT_EQ(expected, response);
-}
-
-TEST_F(HttpCtrlChannelDhcpv6Test, serverTagGet) {
-    testServerTagGet();
-}
-
-TEST_F(HttpsCtrlChannelDhcpv6Test, serverTagGet) {
-    testServerTagGet();
-}
-
 // This test verifies that the DHCP server handles config-backend-pull command.
 void
 BaseCtrlChannelDhcpv6Test::testConfigBackendPull() {
@@ -2045,135 +2176,6 @@ TEST_F(HttpsCtrlChannelDhcpv6Test, controlLeasesReclaimRemove) {
     testControlLeasesReclaimRemove();
 }
 
-// Tests that the server properly responds to statistics commands.  Note this
-// is really only intended to verify that the appropriate Statistics handler
-// is called based on the command.  It is not intended to be an exhaustive
-// test of Dhcpv6 statistics.
-void
-BaseCtrlChannelDhcpv6Test::testControlChannelStats() {
-    createHttpChannelServer();
-    std::string response;
-
-    // Check statistic-get
-    sendHttpCommand("{ \"command\" : \"statistic-get\", "
-                    "  \"arguments\": {"
-                    "  \"name\":\"bogus\" }}", response);
-    EXPECT_EQ("[ { \"arguments\": {  }, \"result\": 0 } ]", response);
-
-    // Check statistic-get-all
-    sendHttpCommand("{ \"command\" : \"statistic-get-all\", "
-                    "  \"arguments\": {}}", response);
-
-    std::set<std::string> initial_stats = {
-        "pkt6-received",
-        "pkt6-solicit-received",
-        "pkt6-advertise-received",
-        "pkt6-request-received",
-        "pkt6-reply-received",
-        "pkt6-renew-received",
-        "pkt6-rebind-received",
-        "pkt6-decline-received",
-        "pkt6-release-received",
-        "pkt6-infrequest-received",
-        "pkt6-dhcpv4-query-received",
-        "pkt6-dhcpv4-response-received",
-        "pkt6-unknown-received",
-        "pkt6-sent",
-        "pkt6-advertise-sent",
-        "pkt6-reply-sent",
-        "pkt6-dhcpv4-response-sent",
-        "pkt6-parse-failed",
-        "pkt6-receive-drop",
-        "v6-allocation-fail",
-        "v6-allocation-fail-shared-network",
-        "v6-allocation-fail-subnet",
-        "v6-allocation-fail-no-pools",
-        "v6-allocation-fail-classes",
-        "v6-ia-na-lease-reuses",
-        "v6-ia-pd-lease-reuses",
-    };
-
-    std::ostringstream s;
-    bool first = true;
-    s << "[ { \"arguments\": { ";
-    for (auto const& st : initial_stats) {
-        if (!first) {
-            s << ", ";
-        } else {
-            first = false;
-        }
-        s << "\"" << st << "\": [ [ 0, \"";
-        s << isc::util::clockToText(StatsMgr::instance().getObservation(st)->getInteger().second);
-        s << "\" ] ]";
-    }
-    s << " }, \"result\": 0 } ]";
-
-    auto stats_get_all = s.str();
-
-    EXPECT_EQ(stats_get_all, response);
-
-    // Check statistic-reset
-    sendHttpCommand("{ \"command\" : \"statistic-reset\", "
-                    "  \"arguments\": {"
-                    "  \"name\":\"bogus\" }}", response);
-    EXPECT_EQ("[ { \"result\": 1, \"text\": \"No 'bogus' statistic found\" } ]",
-              response);
-
-    // Check statistic-reset-all
-    sendHttpCommand("{ \"command\" : \"statistic-reset-all\", "
-                    "  \"arguments\": {}}", response);
-    EXPECT_EQ("[ { \"result\": 0, \"text\": "
-              "\"All statistics reset to neutral values.\" } ]",
-              response);
-
-    // Check statistic-remove
-    sendHttpCommand("{ \"command\" : \"statistic-remove\", "
-                    "  \"arguments\": {"
-                    "  \"name\":\"bogus\" }}", response);
-    EXPECT_EQ("[ { \"result\": 1, \"text\": \"No 'bogus' statistic found\" } ]",
-              response);
-
-    // Check statistic-remove-all (deprecated)
-
-    // Check statistic-sample-age-set
-    sendHttpCommand("{ \"command\" : \"statistic-sample-age-set\", "
-                    "  \"arguments\": {"
-                    "  \"name\":\"bogus\", \"duration\": 1245 }}", response);
-    EXPECT_EQ("[ { \"result\": 1, \"text\": \"No 'bogus' statistic found\" } ]",
-              response);
-
-    // Check statistic-sample-age-set-all
-    sendHttpCommand("{ \"command\" : \"statistic-sample-age-set-all\", "
-                    "  \"arguments\": {"
-                    "  \"duration\": 1245 }}", response);
-    EXPECT_EQ("[ { \"result\": 0, \"text\": \"All statistics duration "
-              "limit are set.\" } ]",
-              response);
-
-    // Check statistic-sample-count-set
-    sendHttpCommand("{ \"command\" : \"statistic-sample-count-set\", "
-                    "  \"arguments\": {"
-                    "  \"name\":\"bogus\", \"max-samples\": 100 }}", response);
-    EXPECT_EQ("[ { \"result\": 1, \"text\": \"No 'bogus' statistic found\" } ]",
-              response);
-
-    // Check statistic-sample-count-set-all
-    sendHttpCommand("{ \"command\" : \"statistic-sample-count-set-all\", "
-                    "  \"arguments\": {"
-                    "  \"max-samples\": 100 }}", response);
-    EXPECT_EQ("[ { \"result\": 0, \"text\": \"All statistics count limit "
-              "are set.\" } ]",
-              response);
-}
-
-TEST_F(HttpCtrlChannelDhcpv6Test, controlChannelStats) {
-    testControlChannelStats();
-}
-
-TEST_F(HttpsCtrlChannelDhcpv6Test, controlChannelStats) {
-    testControlChannelStats();
-}
-
 // Tests that the server properly responds to list-commands command sent
 // via ControlChannel.
 void
@@ -2284,8 +2286,8 @@ BaseCtrlChannelDhcpv6Test::testConfigReloadMissingFile() {
 
     // Verify the reload was rejected.
     EXPECT_EQ("[ { \"result\": 1, \"text\": \"Config reload failed: "
-              "configuration error using file 'test6.json': Unable to "
-              "open file test6.json\" } ]",
+              "configuration error using file 'test6.json': "
+              "Unable to open file test6.json\" } ]",
               response);
 }
 

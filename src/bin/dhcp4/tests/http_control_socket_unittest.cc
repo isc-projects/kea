@@ -937,7 +937,7 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, controlChannelStats) {
     testControlChannelStats();
 }
 
-// Check that the "config-set" command will replace current configuration
+// Check that the "config-set" command will replace current configuration.
 TEST_F(HttpCtrlChannelDhcpv4Test, configSet) {
     createHttpChannelServer();
 
@@ -1106,7 +1106,7 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configSet) {
     CfgMgr::instance().clear();
 }
 
-// Check that the "config-set" command will replace current configuration
+// Check that the "config-set" command will replace current configuration.
 TEST_F(HttpsCtrlChannelDhcpv4Test, configSet) {
     createHttpChannelServer();
 
@@ -1507,7 +1507,6 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configTest) {
 }
 
 // Verify that the "config-test" command will do what we expect.
-//////// TODO
 TEST_F(HttpsCtrlChannelDhcpv4Test, configTest) {
     createHttpChannelServer();
 

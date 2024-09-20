@@ -559,6 +559,123 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelShutdown) {
     EXPECT_EQ("{ \"result\": 0, \"text\": \"Shutting down.\" }",response);
 }
 
+// Tests that the server properly responds to statistics commands.  Note this
+// is really only intended to verify that the appropriate Statistics handler
+// is called based on the command.  It is not intended to be an exhaustive
+// test of Dhcpv6 statistics.
+TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelStats) {
+    createUnixChannelServer();
+    std::string response;
+
+    // Check statistic-get
+    sendUnixCommand("{ \"command\" : \"statistic-get\", "
+                    "  \"arguments\": {"
+                    "  \"name\":\"bogus\" }}", response);
+    EXPECT_EQ("{ \"arguments\": {  }, \"result\": 0 }", response);
+
+    // Check statistic-get-all
+    sendUnixCommand("{ \"command\" : \"statistic-get-all\", "
+                    "  \"arguments\": {}}", response);
+
+    std::set<std::string> initial_stats = {
+        "pkt6-received",
+        "pkt6-solicit-received",
+        "pkt6-advertise-received",
+        "pkt6-request-received",
+        "pkt6-reply-received",
+        "pkt6-renew-received",
+        "pkt6-rebind-received",
+        "pkt6-decline-received",
+        "pkt6-release-received",
+        "pkt6-infrequest-received",
+        "pkt6-dhcpv4-query-received",
+        "pkt6-dhcpv4-response-received",
+        "pkt6-unknown-received",
+        "pkt6-sent",
+        "pkt6-advertise-sent",
+        "pkt6-reply-sent",
+        "pkt6-dhcpv4-response-sent",
+        "pkt6-parse-failed",
+        "pkt6-receive-drop",
+        "v6-allocation-fail",
+        "v6-allocation-fail-shared-network",
+        "v6-allocation-fail-subnet",
+        "v6-allocation-fail-no-pools",
+        "v6-allocation-fail-classes",
+        "v6-ia-na-lease-reuses",
+        "v6-ia-pd-lease-reuses",
+    };
+
+    std::ostringstream s;
+    bool first = true;
+    s << "{ \"arguments\": { ";
+    for (auto const& st : initial_stats) {
+        if (!first) {
+            s << ", ";
+        } else {
+            first = false;
+        }
+        s << "\"" << st << "\": [ [ 0, \"";
+        s << isc::util::clockToText(StatsMgr::instance().getObservation(st)->getInteger().second);
+        s << "\" ] ]";
+    }
+    s << " }, \"result\": 0 }";
+
+    auto stats_get_all = s.str();
+
+    EXPECT_EQ(stats_get_all, response);
+
+    // Check statistic-reset
+    sendUnixCommand("{ \"command\" : \"statistic-reset\", "
+                    "  \"arguments\": {"
+                    "  \"name\":\"bogus\" }}", response);
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"No 'bogus' statistic found\" }",
+              response);
+
+    // Check statistic-reset-all
+    sendUnixCommand("{ \"command\" : \"statistic-reset-all\", "
+                    "  \"arguments\": {}}", response);
+    EXPECT_EQ("{ \"result\": 0, \"text\": "
+              "\"All statistics reset to neutral values.\" }", response);
+
+    // Check statistic-remove
+    sendUnixCommand("{ \"command\" : \"statistic-remove\", "
+                    "  \"arguments\": {"
+                    "  \"name\":\"bogus\" }}", response);
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"No 'bogus' statistic found\" }",
+              response);
+
+    // Check statistic-remove-all (deprecated)
+
+    // Check statistic-sample-age-set
+    sendUnixCommand("{ \"command\" : \"statistic-sample-age-set\", "
+                    "  \"arguments\": {"
+                    "  \"name\":\"bogus\", \"duration\": 1245 }}", response);
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"No 'bogus' statistic found\" }",
+              response);
+
+    // Check statistic-sample-age-set-all
+    sendUnixCommand("{ \"command\" : \"statistic-sample-age-set-all\", "
+                    "  \"arguments\": {"
+                    "  \"duration\": 1245 }}", response);
+    EXPECT_EQ("{ \"result\": 0, \"text\": \"All statistics duration limit are set.\" }",
+              response);
+
+    // Check statistic-sample-count-set
+    sendUnixCommand("{ \"command\" : \"statistic-sample-count-set\", "
+                    "  \"arguments\": {"
+                    "  \"name\":\"bogus\", \"max-samples\": 100 }}", response);
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"No 'bogus' statistic found\" }",
+              response);
+
+    // Check statistic-sample-count-set-all
+    sendUnixCommand("{ \"command\" : \"statistic-sample-count-set-all\", "
+                    "  \"arguments\": {"
+                    "  \"max-samples\": 100 }}", response);
+    EXPECT_EQ("{ \"result\": 0, \"text\": \"All statistics count limit are set.\" }",
+              response);
+}
+
 // Check that the "config-set" command will replace current configuration
 TEST_F(CtrlChannelDhcpv6SrvTest, configSet) {
     createUnixChannelServer();
@@ -965,6 +1082,27 @@ TEST_F(CtrlChannelDhcpv6SrvTest, getVersion) {
     EXPECT_TRUE(response.find("GTEST_VERSION") != string::npos);
 }
 
+// This test verifies that the DHCP server handles server-tag-get command
+TEST_F(CtrlChannelDhcpv6SrvTest, serverTagGet) {
+    createUnixChannelServer();
+
+    std::string response;
+    std::string expected;
+
+    // Send the server-tag-get command
+    sendUnixCommand("{ \"command\": \"server-tag-get\" }", response);
+    expected = "{ \"arguments\": { \"server-tag\": \"\" }, \"result\": 0 }";
+    EXPECT_EQ(expected, response);
+
+    // Set a value to the server tag
+    CfgMgr::instance().getCurrentCfg()->setServerTag("foobar");
+
+    // Retry...
+    sendUnixCommand("{ \"command\": \"server-tag-get\" }", response);
+    expected = "{ \"arguments\": { \"server-tag\": \"foobar\" }, \"result\": 0 }";
+    EXPECT_EQ(expected, response);
+}
+
 // This test verifies that the DHCP server handles status-get commands
 TEST_F(CtrlChannelDhcpv6SrvTest, statusGet) {
     createUnixChannelServer();
@@ -1179,26 +1317,6 @@ TEST_F(CtrlChannelDhcpv6SrvTest, statusGetSocketsErrors) {
     ASSERT_EQ("the interface down_interface is down", error->stringValue());
 }
 
-// This test verifies that the DHCP server handles server-tag-get command
-TEST_F(CtrlChannelDhcpv6SrvTest, serverTagGet) {
-    createUnixChannelServer();
-
-    std::string response;
-    std::string expected;
-
-    // Send the server-tag-get command
-    sendUnixCommand("{ \"command\": \"server-tag-get\" }", response);
-    expected = "{ \"arguments\": { \"server-tag\": \"\" }, \"result\": 0 }";
-    EXPECT_EQ(expected, response);
-
-    // Set a value to the server tag
-    CfgMgr::instance().getCurrentCfg()->setServerTag("foobar");
-
-    // Retry...
-    sendUnixCommand("{ \"command\": \"server-tag-get\" }", response);
-    expected = "{ \"arguments\": { \"server-tag\": \"foobar\" }, \"result\": 0 }";
-}
-
 // This test verifies that the DHCP server handles config-backend-pull command
 TEST_F(CtrlChannelDhcpv6SrvTest, configBackendPull) {
     createUnixChannelServer();
@@ -1315,123 +1433,6 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlLeasesReclaimRemove) {
     );
     ASSERT_FALSE(lease0);
     ASSERT_FALSE(lease1);
-}
-
-// Tests that the server properly responds to statistics commands.  Note this
-// is really only intended to verify that the appropriate Statistics handler
-// is called based on the command.  It is not intended to be an exhaustive
-// test of Dhcpv6 statistics.
-TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelStats) {
-    createUnixChannelServer();
-    std::string response;
-
-    // Check statistic-get
-    sendUnixCommand("{ \"command\" : \"statistic-get\", "
-                    "  \"arguments\": {"
-                    "  \"name\":\"bogus\" }}", response);
-    EXPECT_EQ("{ \"arguments\": {  }, \"result\": 0 }", response);
-
-    // Check statistic-get-all
-    sendUnixCommand("{ \"command\" : \"statistic-get-all\", "
-                    "  \"arguments\": {}}", response);
-
-    std::set<std::string> initial_stats = {
-        "pkt6-received",
-        "pkt6-solicit-received",
-        "pkt6-advertise-received",
-        "pkt6-request-received",
-        "pkt6-reply-received",
-        "pkt6-renew-received",
-        "pkt6-rebind-received",
-        "pkt6-decline-received",
-        "pkt6-release-received",
-        "pkt6-infrequest-received",
-        "pkt6-dhcpv4-query-received",
-        "pkt6-dhcpv4-response-received",
-        "pkt6-unknown-received",
-        "pkt6-sent",
-        "pkt6-advertise-sent",
-        "pkt6-reply-sent",
-        "pkt6-dhcpv4-response-sent",
-        "pkt6-parse-failed",
-        "pkt6-receive-drop",
-        "v6-allocation-fail",
-        "v6-allocation-fail-shared-network",
-        "v6-allocation-fail-subnet",
-        "v6-allocation-fail-no-pools",
-        "v6-allocation-fail-classes",
-        "v6-ia-na-lease-reuses",
-        "v6-ia-pd-lease-reuses",
-    };
-
-    std::ostringstream s;
-    bool first = true;
-    s << "{ \"arguments\": { ";
-    for (auto const& st : initial_stats) {
-        if (!first) {
-            s << ", ";
-        } else {
-            first = false;
-        }
-        s << "\"" << st << "\": [ [ 0, \"";
-        s << isc::util::clockToText(StatsMgr::instance().getObservation(st)->getInteger().second);
-        s << "\" ] ]";
-    }
-    s << " }, \"result\": 0 }";
-
-    auto stats_get_all = s.str();
-
-    EXPECT_EQ(stats_get_all, response);
-
-    // Check statistic-reset
-    sendUnixCommand("{ \"command\" : \"statistic-reset\", "
-                    "  \"arguments\": {"
-                    "  \"name\":\"bogus\" }}", response);
-    EXPECT_EQ("{ \"result\": 1, \"text\": \"No 'bogus' statistic found\" }",
-              response);
-
-    // Check statistic-reset-all
-    sendUnixCommand("{ \"command\" : \"statistic-reset-all\", "
-                    "  \"arguments\": {}}", response);
-    EXPECT_EQ("{ \"result\": 0, \"text\": "
-              "\"All statistics reset to neutral values.\" }", response);
-
-    // Check statistic-remove
-    sendUnixCommand("{ \"command\" : \"statistic-remove\", "
-                    "  \"arguments\": {"
-                    "  \"name\":\"bogus\" }}", response);
-    EXPECT_EQ("{ \"result\": 1, \"text\": \"No 'bogus' statistic found\" }",
-              response);
-
-    // Check statistic-remove-all (deprecated)
-
-    // Check statistic-sample-age-set
-    sendUnixCommand("{ \"command\" : \"statistic-sample-age-set\", "
-                    "  \"arguments\": {"
-                    "  \"name\":\"bogus\", \"duration\": 1245 }}", response);
-    EXPECT_EQ("{ \"result\": 1, \"text\": \"No 'bogus' statistic found\" }",
-              response);
-
-    // Check statistic-sample-age-set-all
-    sendUnixCommand("{ \"command\" : \"statistic-sample-age-set-all\", "
-                    "  \"arguments\": {"
-                    "  \"duration\": 1245 }}", response);
-    EXPECT_EQ("{ \"result\": 0, \"text\": \"All statistics duration limit are set.\" }",
-              response);
-
-    // Check statistic-sample-count-set
-    sendUnixCommand("{ \"command\" : \"statistic-sample-count-set\", "
-                    "  \"arguments\": {"
-                    "  \"name\":\"bogus\", \"max-samples\": 100 }}", response);
-    EXPECT_EQ("{ \"result\": 1, \"text\": \"No 'bogus' statistic found\" }",
-              response);
-
-    // Check statistic-sample-count-set-all
-    sendUnixCommand("{ \"command\" : \"statistic-sample-count-set-all\", "
-                    "  \"arguments\": {"
-                    "  \"max-samples\": 100 }}", response);
-    EXPECT_EQ("{ \"result\": 0, \"text\": \"All statistics count limit are set.\" }",
-              response);
 }
 
 // Tests that the server properly responds to list-commands command sent

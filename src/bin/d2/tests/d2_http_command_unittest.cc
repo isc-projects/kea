@@ -429,7 +429,7 @@ public:
     void testShutdownExitValue();
 
     // This test verifies that the D2 server handles version-get commands.
-    void testGetversion();
+    void testGetVersion();
 
     // Tests that the server properly responds to list-commands command.
     void testListCommands();
@@ -688,6 +688,8 @@ TEST_F(HttpsCtrlChannelD2Test, shutdown) {
     testShutdown();
 }
 
+// Tests that the server sets exit value supplied as argument
+// to shutdown command.
 void
 BaseCtrlChannelD2Test::testShutdownExitValue() {
     EXPECT_NO_THROW(createHttpChannelServer());
@@ -703,21 +705,17 @@ BaseCtrlChannelD2Test::testShutdownExitValue() {
     EXPECT_EQ(77, server_->getExitValue());
 }
 
-// Tests that the server sets exit value supplied as argument
-// to shutdown command.
 TEST_F(HttpCtrlChannelD2Test, shutdownExitValue) {
     testShutdownExitValue();
 }
 
-// Tests that the server sets exit value supplied as argument
-// to shutdown command.
 TEST_F(HttpsCtrlChannelD2Test, shutdownExitValue) {
     testShutdownExitValue();
 }
 
 // This test verifies that the D2 server handles version-get commands.
 void
-BaseCtrlChannelD2Test::testGetversion() {
+BaseCtrlChannelD2Test::testGetVersion() {
     EXPECT_NO_THROW(createHttpChannelServer());
     string response;
 
@@ -733,12 +731,12 @@ BaseCtrlChannelD2Test::testGetversion() {
     EXPECT_TRUE(response.find("GTEST_VERSION") != string::npos);
 }
 
-TEST_F(HttpCtrlChannelD2Test, getversion) {
-    testGetversion();
+TEST_F(HttpCtrlChannelD2Test, getVersion) {
+    testGetVersion();
 }
 
-TEST_F(HttpsCtrlChannelD2Test, getversion) {
-    testGetversion();
+TEST_F(HttpsCtrlChannelD2Test, getVersion) {
+    testGetVersion();
 }
 
 // Tests that the server properly responds to list-commands command.
@@ -1728,7 +1726,7 @@ BaseCtrlChannelD2Test::testLongCommand() {
 
     ostringstream command;
 
-    // This is the desired size of the command sent to the server (MB).
+    // This is the desired size of the command sent to the server (1MB).
     // The actual size sent will be slightly greater than that.
     const size_t command_size = 1024 * 1000;
 
@@ -1842,4 +1840,4 @@ TEST_F(HttpsCtrlChannelD2Test, connectionTimeoutNoData) {
     testConnectionTimeoutNoData();
 }
 
-} // End of anonymous namespace
+} // end of anonymous namespace
