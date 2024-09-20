@@ -1,4 +1,9 @@
-2283.   [func]      tmark
+2284.	[build]		razvan
+	The library version numbers have been bumped up for the Kea 2.7.3
+	development release.
+	(Gitlab #3597)
+
+2283.	[func]		tmark
 	The order or precedence of options specified in a
 	template class and its spawned classes has been
 	reversed.  An option specified in a spawned class now

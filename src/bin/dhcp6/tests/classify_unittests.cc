@@ -2639,7 +2639,7 @@ TEST_F(ClassifyTest, subClassPrecedence) {
     string config = R"^(
     {
         "interfaces-config": {
-          "interfaces": [ "*" ]
+            "interfaces": [ "*" ]
         },
         "preferred-lifetime": 3000,
         "rebind-timer": 2000,
