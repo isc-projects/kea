@@ -118,7 +118,7 @@ public:
         if (env) {
             socket_path_ = string(env) + "/kea4.sock";
         } else {
-            socket_path_ = sandbox.join("kea4.sock");
+            socket_path_ = sandbox.join("/kea4.sock");
         }
         reset();
         IfaceMgr::instance().setTestMode(false);
@@ -1068,6 +1068,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, serverTagGet) {
     // Retry...
     sendUnixCommand("{ \"command\": \"server-tag-get\" }", response);
     expected = "{ \"arguments\": { \"server-tag\": \"foobar\" }, \"result\": 0 }";
+    EXPECT_EQ(expected, response);
 }
 
 // This test verifies that the DHCP server handles status-get commands

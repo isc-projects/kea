@@ -22,10 +22,10 @@
 #include <log/logger_support.h>
 #include <stats/stats_mgr.h>
 #include <util/multi_threading_mgr.h>
+#include <util/chrono_time_utils.h>
 #include <testutils/io_utils.h>
 #include <testutils/unix_control_client.h>
 #include <testutils/sandbox.h>
-#include <util/chrono_time_utils.h>
 
 #include "marker_file.h"
 #include "test_libraries.h"
@@ -460,6 +460,8 @@ TEST_F(CtrlDhcpv6SrvTest, commands) {
     result = CommandMgr::instance().processCommand(createCommand("shutdown", params));
     comment = parseAnswer(rcode, result);
     EXPECT_EQ(0, rcode); // expect success
+    // Exit value should default to 0.
+    EXPECT_EQ(0, server_->getExitValue());
 
     // Case 3: send shutdown command with exit-value parameter.
     ConstElementPtr x(new isc::data::IntElement(77));
@@ -472,8 +474,6 @@ TEST_F(CtrlDhcpv6SrvTest, commands) {
     // Exit value should match.
     EXPECT_EQ(77, srv->getExitValue());
 }
-
-typedef std::map<std::string, isc::data::ConstElementPtr> ElementMap;
 
 // This test checks which commands are registered by the DHCPv6 server.
 TEST_F(CtrlDhcpv6SrvTest, commandsRegistration) {
@@ -607,8 +607,8 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelStats) {
     };
 
     std::ostringstream s;
-    bool first = true;
     s << "{ \"arguments\": { ";
+    bool first = true;
     for (auto const& st : initial_stats) {
         if (!first) {
             s << ", ";
