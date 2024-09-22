@@ -165,6 +165,10 @@ def process_file(filename):
     with open(filename, encoding='utf-8') as f:
         lines = f.read().splitlines()
 
+    # Do not process the file if it is empty.
+    if len(lines) == 0:
+        return
+
     # Search for the first line starting with the percent character.  Everything
     # before it is considered the file header and is copied to the output with
     # leading and trailing spaces removed.
