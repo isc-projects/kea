@@ -1259,11 +1259,11 @@ LibDHCP::splitNtpServerOptions6(OptionCollection& options) {
     if (range.first == range.second) {
         return;
     }
-    auto ntp_servers = OptionCollection(range.first, range.second);
+    auto const& ntp_servers = OptionCollection(range.first, range.second);
     static_cast<void>(options.erase(range.first, range.second));
-    auto def = D6O_NTP_SERVER_DEF();
-    for (auto opt : ntp_servers) {
-        for (auto sub : opt.second->getOptions()) {
+    auto const& def = D6O_NTP_SERVER_DEF();
+    for (auto const& opt : ntp_servers) {
+        for (auto const& sub : opt.second->getOptions()) {
             auto new_option(new OptionCustom(def, Option::V6));
             new_option->addOption(sub.second);
             options.insert(make_pair(D6O_NTP_SERVER, new_option));

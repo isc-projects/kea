@@ -3736,25 +3736,22 @@ TEST_F(LibDhcpTest, unpackOptions6LenientFqdn) {
 TEST_F(LibDhcpTest, v6NtpServer) {
     // A NTP server option with the 3 suboptions.
     std::vector<uint8_t> bin {
-        0, 56, 0, 53,    // ntp-server
-        0, 1, 0, 16,    // ntp-server-address
+        0, 56, 0, 53,                      // ntp-server
+        0, 1, 0, 16,                       // ntp-server-address
         0x20, 0x01, 0xd, 0xb8, 0, 0, 0, 0, // 2001:db8::abcd
         0, 0, 0, 0, 0, 0, 0xab, 0xcd,
-        0, 2, 0, 16,    // ntp-server-multicast
-        0xff, 0x02, 0, 0, 0, 0, 0, 0, // ff02::101
+        0, 2, 0, 16,                       // ntp-server-multicast
+        0xff, 0x02, 0, 0, 0, 0, 0, 0,      // ff02::101
         0, 0, 0, 0, 0, 0, 0x01, 0x01,
-        0, 3, 0, 9,     // ntp-server-fqdn
-        3, 0x66, 0x6f, 0x6f, // foo.bar.
+        0, 3, 0, 9,                        // ntp-server-fqdn
+        3, 0x66, 0x6f, 0x6f,               // foo.bar.
         3, 0x62, 0x61, 0x72, 0
     };
 
     // List of parsed options will be stored here.
-    isc::dhcp::OptionCollection options;
-
+    OptionCollection options;
     OptionBuffer buf(bin);
-
     size_t parsed = 0;
-
     EXPECT_NO_THROW(parsed = LibDHCP::unpackOptions6(buf, DHCP6_OPTION_SPACE,
                                                      options));
     EXPECT_EQ(bin.size(), parsed);
@@ -3841,7 +3838,7 @@ TEST_F(LibDhcpTest, v6NtpServer) {
     option->addOption(fqdn);
 
     // Pack output.
-    isc::util::OutputBuffer outbuf(0);
+    OutputBuffer outbuf(0);
     ASSERT_NO_THROW(option->pack(outbuf, true));
     ASSERT_EQ(bin.size(), outbuf.getLength());
     EXPECT_TRUE(memcmp(&bin[0], outbuf.getData(), bin.size()) == 0);
@@ -3902,7 +3899,7 @@ TEST_F(LibDhcpTest, splitNtpServerOptions6) {
     expected += "  type=00003, len=00009: \"foo.bar.\" (fqdn)\n";
     expected += "type=00059, len=00006: \"foobar\" (string)\n";
     ostringstream output;
-    for (auto opt : col) {
+    for (auto const& opt : col) {
         output << opt.second->toText() << endl;
     }
     EXPECT_EQ(expected, output.str());
