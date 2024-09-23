@@ -36,6 +36,12 @@ ClientClasses::ClientClasses(const std::string& class_names)
     }
 }
 
+ClientClasses::ClientClasses(const ClientClasses& other) {
+    for (auto const& cclass : other) {
+        insert(cclass);
+    }
+}
+
 void
 ClientClasses::erase(const ClientClass& class_name) {
     auto& idx = container_.get<ClassNameTag>();
@@ -73,6 +79,21 @@ ClientClasses::toElement() const {
         result->add(Element::create(c));
     }
     return (result);
+}
+
+bool
+ClientClasses::equals(const ClientClasses& other) const {
+ return ((size() == other.size()) && std::equal(cbegin(), cend(), other.cbegin()));
+}
+
+ClientClasses&
+ClientClasses::operator=(const ClientClasses& other) {
+    clear();
+    for (auto const& cclass : other) {
+        insert(cclass);
+    }
+
+    return (*this);
 }
 
 } // end of namespace isc::dhcp

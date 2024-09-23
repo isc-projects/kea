@@ -2036,6 +2036,7 @@ option_data_param: option_data_name
                  | option_data_never_send
                  | user_context
                  | comment
+                 | option_data_client_classes
                  | unknown_map_entry
                  ;
 
@@ -2070,6 +2071,17 @@ option_data_never_send: NEVER_SEND COLON BOOLEAN {
     ctx.unique("never-send", ctx.loc2pos(@1));
     ElementPtr cancel(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("never-send", cancel);
+};
+
+option_data_client_classes: CLIENT_CLASSES {
+    ctx.unique("client-classes", ctx.loc2pos(@1));
+    ElementPtr c(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("client-classes", c);
+    ctx.stack_.push_back(c);
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON list_strings {
+    ctx.stack_.pop_back();
+    ctx.leave();
 };
 
 // ---- pools ------------------------------------

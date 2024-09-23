@@ -28,7 +28,7 @@ TEST(ClassifyTest, ClientClasses) {
     EXPECT_FALSE(classes.contains(""));
     EXPECT_FALSE(classes.contains("alpha"));
     EXPECT_FALSE(classes.contains("beta"));
-    EXPECT_FALSE(classes.contains("gamma")); 
+    EXPECT_FALSE(classes.contains("gamma"));
     classes.insert("beta");
     EXPECT_FALSE(classes.contains(""));
     EXPECT_FALSE(classes.contains("alpha"));
@@ -40,6 +40,31 @@ TEST(ClassifyTest, ClientClasses) {
     EXPECT_TRUE (classes.contains("alpha"));
     EXPECT_TRUE (classes.contains("beta"));
     EXPECT_TRUE (classes.contains("gamma"));
+
+    // Copy Constructor and equality operators.
+    ClientClasses classes2(classes);
+    EXPECT_EQ(classes, classes2);
+
+    // A bigger than B
+    classes.insert("zeta");
+    EXPECT_NE(classes, classes2);
+
+    // A and B equal again.
+    classes2.insert("zeta");
+    EXPECT_EQ(classes, classes2);
+
+    // B bigger than A.
+    classes2.insert("chi");
+    EXPECT_NE(classes, classes2);
+
+    // Order matters.
+    ClientClasses classes3;
+    classes3.insert("alpha");
+    classes3.insert("gamma");
+    classes3.insert("beta");
+    classes3.insert("zeta");
+    EXPECT_EQ(classes3.size(), classes.size());
+    EXPECT_NE(classes3, classes);
 }
 
 // Check if ClientClasses object can be created from the string of comma

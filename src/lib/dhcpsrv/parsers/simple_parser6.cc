@@ -175,16 +175,17 @@ const SimpleDefaults SimpleParser6::OPTION6_DEF_DEFAULTS = {
 /// list and map types for entries.
 /// Order follows option_param rules in bison grammar.
 const SimpleKeywords SimpleParser6::OPTION6_PARAMETERS = {
-    { "name",         Element::string },
-    { "data",         Element::string },
-    { "code",         Element::integer },
-    { "space",        Element::string },
-    { "csv-format",   Element::boolean },
-    { "always-send",  Element::boolean },
-    { "never-send",   Element::boolean },
-    { "user-context", Element::map },
-    { "comment",      Element::string },
-    { "metadata",     Element::map }
+    { "name",           Element::string },
+    { "data",           Element::string },
+    { "code",           Element::integer },
+    { "space",          Element::string },
+    { "csv-format",     Element::boolean },
+    { "always-send",    Element::boolean },
+    { "never-send",     Element::boolean },
+    { "user-context",   Element::map },
+    { "comment",        Element::string },
+    { "metadata",       Element::map },
+    { "client-classes", Element::list }
 };
 
 /// @brief This table defines default values for options in DHCPv6.

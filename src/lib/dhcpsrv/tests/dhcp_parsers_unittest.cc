@@ -8,6 +8,7 @@
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
 #include <cc/simple_parser.h>
+#include <dhcp/classify.h>
 #include <dhcp/option.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_int.h>
@@ -459,6 +460,22 @@ public:
         }
 
         return (option_ptr);
+    }
+
+    /// @brief Find the OptionDescriptor for a given space and code within the parser
+    /// context.
+    /// @param space is the space name of the desired option.
+    /// @param code is the numeric "type" of the desired option.
+    /// @return an OptionDecriptorPtr to the descriptor found or an empty ptr
+    OptionDescriptorPtr getOptionDescriptor(std::string space, uint32_t code) {
+        OptionDescriptorPtr od_ptr;
+        const auto &cfg_options = CfgMgr::instance().getStagingCfg()->getCfgOption();
+        auto od = cfg_options->get(space, code);
+        if (od.option_) {
+            od_ptr = OptionDescriptor::create(od);
+        }
+
+        return (od_ptr);
     }
 
     /// @brief Wipes the contents of the context to allowing another parsing
@@ -1879,6 +1896,164 @@ setHooksLibrariesConfig(const char* lib1 = NULL, const char* lib2 = NULL,
     config += std::string("] }");
 
     return (config);
+}
+
+/// @brief Check parsing of a v4 option with a client-class list.
+TEST_F(ParseConfigTest, optionDataClientClasses4) {
+    family_ = AF_INET;
+    // Configuration string.
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 0,"
+        "      \"type\": \"ipv4-address\","
+        "      \"space\": \"isc\""
+        " } ], "
+        " \"option-data\": [ {"
+        "    \"name\": \"foo\","
+        "    \"space\": \"isc\","
+        "    \"code\": 0,"
+        "    \"data\": \"192.0.2.0\","
+        "    \"csv-format\": true,"
+        "    \"always-send\": false,"
+        "    \"client-classes\": [ \"water\", \"melon\" ]"
+        " } ]"
+        "}";
+
+    // Verify that the configuration string parses.
+    int rcode = parseConfiguration(config);
+    ASSERT_EQ(0, rcode);
+
+    // Verify that the option can be retrieved.
+    OptionPtr opt_ptr = getOptionPtr("isc", 0);
+    ASSERT_TRUE(opt_ptr);
+
+    // Verify the option descriptor's client-classes lists is correct.
+    ClientClasses exp_cc("water, melon");
+    OptionDescriptorPtr od = getOptionDescriptor("isc", 0);
+    ASSERT_TRUE(od);
+    EXPECT_EQ(od->client_classes_, exp_cc);
+
+    // Check if it can be unparsed.
+    CfgOptionsTest cfg(CfgMgr::instance().getStagingCfg());
+    cfg.runCfgOptionsTest(family_, config);
+}
+
+/// @brief Check parsing of a v4 option with a client-class list.
+TEST_F(ParseConfigTest, optionDataClientClassesEmpty4) {
+    family_ = AF_INET;
+    // Configuration string.
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 0,"
+        "      \"type\": \"ipv4-address\","
+        "      \"space\": \"isc\""
+        " } ], "
+        " \"option-data\": [ {"
+        "    \"name\": \"foo\","
+        "    \"space\": \"isc\","
+        "    \"code\": 0,"
+        "    \"data\": \"192.0.2.0\","
+        "    \"csv-format\": true,"
+        "    \"always-send\": false,"
+        "    \"client-classes\": []"
+        " } ]"
+        "}";
+
+    // Verify that the configuration string parses.
+    int rcode = parseConfiguration(config);
+    ASSERT_EQ(0, rcode);
+
+    // Verify that the option can be retrieved.
+    OptionPtr opt_ptr = getOptionPtr("isc", 0);
+    ASSERT_TRUE(opt_ptr);
+
+    // Verify the option descriptor's client-classes list is empty.
+    OptionDescriptorPtr od = getOptionDescriptor("isc", 0);
+    ASSERT_TRUE(od);
+    EXPECT_TRUE(od->client_classes_.empty());
+
+    // We skip unparse test because client-classes is only emitited if not empty.
+}
+
+/// @brief Check parsing of a v6 option with a client-class list.
+TEST_F(ParseConfigTest, optionDataClientClasses6) {
+    family_ = AF_INET6;
+    // Configuration string.
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 0,"
+        "      \"type\": \"ipv4-address\","
+        "      \"space\": \"isc\""
+        " } ], "
+        " \"option-data\": [ {"
+        "    \"name\": \"foo\","
+        "    \"space\": \"isc\","
+        "    \"code\": 0,"
+        "    \"data\": \"192.0.2.0\","
+        "    \"csv-format\": true,"
+        "    \"always-send\": false,"
+        "    \"client-classes\": [ \"water\", \"melon\" ]"
+        " } ]"
+        "}";
+
+    // Verify that the configuration string parses.
+    int rcode = parseConfiguration(config);
+    ASSERT_EQ(0, rcode);
+
+    // Verify that the option can be retrieved.
+    OptionPtr opt_ptr = getOptionPtr("isc", 0);
+    ASSERT_TRUE(opt_ptr);
+
+    // Verify the option descriptor's client-classes lists is correct.
+    ClientClasses exp_cc("water, melon");
+    OptionDescriptorPtr od = getOptionDescriptor("isc", 0);
+    ASSERT_TRUE(od);
+    EXPECT_EQ(od->client_classes_, exp_cc);
+
+    // Check if it can be unparsed.
+    CfgOptionsTest cfg(CfgMgr::instance().getStagingCfg());
+    cfg.runCfgOptionsTest(family_, config);
+}
+
+/// @brief Check parsing of a v4 option with a client-class list.
+TEST_F(ParseConfigTest, optionDataClientClassesEmpty6) {
+    family_ = AF_INET6;
+    // Configuration string.
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 0,"
+        "      \"type\": \"ipv4-address\","
+        "      \"space\": \"isc\""
+        " } ], "
+        " \"option-data\": [ {"
+        "    \"name\": \"foo\","
+        "    \"space\": \"isc\","
+        "    \"code\": 0,"
+        "    \"data\": \"192.0.2.0\","
+        "    \"csv-format\": true,"
+        "    \"always-send\": false,"
+        "    \"client-classes\": []"
+        " } ]"
+        "}";
+
+    // Verify that the configuration string parses.
+    int rcode = parseConfiguration(config);
+    ASSERT_EQ(0, rcode);
+
+    // Verify that the option can be retrieved.
+    OptionPtr opt_ptr = getOptionPtr("isc", 0);
+    ASSERT_TRUE(opt_ptr);
+
+    // Verify the option descriptor's client-classes list is empty.
+    OptionDescriptorPtr od = getOptionDescriptor("isc", 0);
+    ASSERT_TRUE(od);
+    EXPECT_TRUE(od->client_classes_.empty());
+
+    // We skip unparse test because client-classes is only emitited if not empty.
 }
 
 // hooks-libraries element that does not contain anything.

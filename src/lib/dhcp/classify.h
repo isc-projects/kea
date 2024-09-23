@@ -122,6 +122,33 @@ namespace dhcp {
         /// with commas. The class names are trimmed before insertion to the set.
         ClientClasses(const std::string& class_names);
 
+        /// @brief Copy constructor.
+        ///
+        /// @param ClientClasses object to be copied.
+        ClientClasses(const ClientClasses& other);
+
+        /// @brief Assigns the contents of on container to another
+        ClientClasses& operator=(const ClientClasses& other);
+
+        /// @brief Compares two ClientClasses container for equality
+        ///
+        /// @return True if the two containers are equal, false otherwise.
+        bool equals(const ClientClasses& other) const;
+
+        /// @brief Compares two ClientClasses container for equality
+        ///
+        /// @return True if the two containers are equal, false otherwise.
+        bool operator==(const ClientClasses& other) const {
+            return(equals(other));
+        }
+
+        /// @brief Compares two ClientClasses container for inequality
+        ///
+        /// @return True if the two containers are not equal, false otherwise.
+        bool operator!=(const ClientClasses& other) const {
+            return(!equals(other));
+        }
+
         /// @brief Insert an element.
         ///
         /// @param class_name The name of the class to insert

@@ -1606,6 +1606,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
     case isc::dhcp::Parser6Context::RESERVATIONS:
+    case isc::dhcp::Parser6Context::OPTION_DATA:
         return isc::dhcp::Dhcp6Parser::make_CLIENT_CLASSES(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("client-classes", driver.loc_);

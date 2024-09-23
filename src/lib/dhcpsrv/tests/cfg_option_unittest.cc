@@ -1256,6 +1256,8 @@ TEST_F(CfgOptionTest, unparse) {
     OptionDescriptor desc2(opt2, false, true, "12, 12, 12, 12");
     std::string ctx = "{ \"comment\": \"foo\", \"bar\": 1 }";
     desc2.setContext(data::Element::fromJSON(ctx));
+    desc2.addClientClass("water");
+    desc2.addClientClass("melon");
     cfg.add(desc2, "dns");
     OptionPtr opt3(new Option(Option::V6, D6O_STATUS_CODE, OptionBuffer(2, 0)));
     cfg.add(opt3, false, false, DHCP6_OPTION_SPACE);
@@ -1264,24 +1266,15 @@ TEST_F(CfgOptionTest, unparse) {
     OptionPtr opt5(new Option(Option::V6, 111));
     cfg.add(opt5, false, true, "vendor-5678");
 
+    OptionPtr opt6(new Option(Option::V6, 112));
+    OptionDescriptor desc6(opt6, false, false);
+    desc6.addClientClass("foo");
+    desc6.addClientClass("bar");
+    cfg.add(desc6, "vendor-9999");
+
     // Unparse
     std::string expected = "[\n"
         "{\n"
-        "    \"code\": 100,\n"
-        "    \"space\": \"dns\",\n"
-        "    \"csv-format\": false,\n"
-        "    \"data\": \"12121212\",\n"
-        "    \"always-send\": false,\n"
-        "    \"never-send\": true\n"
-        "},{\n"
-        "    \"code\": 101,\n"
-        "    \"space\": \"dns\",\n"
-        "    \"csv-format\": true,\n"
-        "    \"data\": \"12, 12, 12, 12\",\n"
-        "    \"always-send\": false,\n"
-        "    \"never-send\": true,\n"
-        "    \"user-context\": { \"comment\": \"foo\", \"bar\": 1 }\n"
-        "},{\n"
         "    \"code\": 13,\n"
         "    \"name\": \"status-code\",\n"
         "    \"space\": \"dhcp6\",\n"
@@ -1289,6 +1282,22 @@ TEST_F(CfgOptionTest, unparse) {
         "    \"data\": \"0000\",\n"
         "    \"always-send\": false,\n"
         "    \"never-send\": false\n"
+        "},{\n"
+        "    \"code\": 100,\n"
+        "    \"space\": \"dns\",\n"
+        "    \"csv-format\": false,\n"
+        "    \"data\": \"12121212\",\n"
+        "    \"always-send\": false,\n"
+        "    \"never-send\": true\n"
+        "},{\n"
+        "    \"client-classes\": [ \"water\", \"melon\" ],\n"
+        "    \"code\": 101,\n"
+        "    \"space\": \"dns\",\n"
+        "    \"csv-format\": true,\n"
+        "    \"data\": \"12, 12, 12, 12\",\n"
+        "    \"always-send\": false,\n"
+        "    \"never-send\": true,\n"
+        "    \"user-context\": { \"comment\": \"foo\", \"bar\": 1 }\n"
         "},{\n"
         "    \"code\": 100,\n"
         "    \"space\": \"vendor-1234\",\n"
@@ -1301,6 +1310,14 @@ TEST_F(CfgOptionTest, unparse) {
         "    \"space\": \"vendor-5678\",\n"
         "    \"always-send\": false,\n"
         "    \"never-send\": true\n"
+        "},{\n"
+        "    \"always-send\": false,\n"
+        "    \"client-classes\": [ \"foo\", \"bar\" ],\n"
+        "    \"code\": 112,\n"
+        "    \"csv-format\": false,\n"
+        "    \"data\": \"\",\n"
+        "    \"never-send\": false\n,"
+        "    \"space\": \"vendor-9999\"\n"
         "}]\n";
     isc::test::runToElementTest<CfgOption>(expected, cfg);
 }

@@ -278,6 +278,7 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
     Optional<std::string> data_param = extractData(option_data);
     std::string space_param = extractSpace(option_data);
     ConstElementPtr user_context = option_data->get("user-context");
+    ConstElementPtr client_classes = option_data->get("client-classes");
 
     // Require that option code or option name is specified.
     if (code_param.unspecified() && name_param.unspecified()) {
@@ -438,6 +439,12 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
     // Add user context
     if (user_context) {
         desc.setContext(user_context);
+    }
+
+    if (client_classes) {
+        for (auto const& class_element : client_classes->listValue()) {
+            desc.addClientClass(class_element->stringValue());
+        }
     }
 
     // All went good, so we can set the option space name.

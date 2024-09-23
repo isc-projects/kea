@@ -8,6 +8,7 @@
 #define CFG_OPTION_H
 
 #include <dhcp/option.h>
+#include <dhcp/classify.h>
 #include <dhcp/option_space_container.h>
 #include <cc/cfg_to_element.h>
 #include <cc/stamped_element.h>
@@ -89,6 +90,10 @@ public:
     /// won't be set.
     std::string space_name_;
 
+    /// @brief Collection of classes for the which option is allowed.
+    /// An empty list means no class restrictions.
+    ClientClasses client_classes_;
+
     /// @brief Constructor.
     ///
     /// @param opt option instance.
@@ -122,7 +127,8 @@ public:
           persistent_(desc.persistent_),
           cancelled_(desc.cancelled_),
           formatted_value_(desc.formatted_value_),
-          space_name_(desc.space_name_) {
+          space_name_(desc.space_name_),
+          client_classes_(desc.client_classes_) {
         setContext(desc.getContext());
     };
 
@@ -138,6 +144,7 @@ public:
             cancelled_ = other.cancelled_;
             formatted_value_ = other.formatted_value_;
             space_name_ = other.space_name_;
+            client_classes_ = other.client_classes_;
             setContext(other.getContext());
         }
         return (*this);
@@ -198,6 +205,11 @@ public:
     bool operator!=(const OptionDescriptor& other) const {
         return (!equals(other));
     }
+
+    /// @brief Adds new client class for which the option is allowed.
+    ///
+    /// @param class_name Class name.
+    void addClientClass(const std::string& class_name);
 };
 
 /// @brief Multi index container for DHCP option descriptors.

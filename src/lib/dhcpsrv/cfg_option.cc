@@ -51,6 +51,14 @@ OptionDescriptor::equals(const OptionDescriptor& other) const {
             option_->equals(other.option_));
 }
 
+void
+OptionDescriptor::addClientClass(const std::string& class_name) {
+    std::string trimmed = util::str::trim(class_name);
+    if (!trimmed.empty()) {
+        client_classes_.insert(ClientClass(trimmed));
+    }
+}
+
 CfgOption::CfgOption()
     : encapsulated_(false) {
 }
@@ -502,6 +510,11 @@ CfgOption::toElementWithMetadata(const bool include_metadata) const {
                 map->set("metadata", opt.getMetadata());
             }
 
+            // Include client-classes if not empty.
+            if (!opt.client_classes_.empty()) {
+                map->set("client-classes", opt.client_classes_.toElement());
+            }
+
             // Push on the list
             result->add(map);
         }
@@ -557,10 +570,17 @@ CfgOption::toElementWithMetadata(const bool include_metadata) const {
             map->set("always-send", Element::create(opt.persistent_));
             // Set the cancellation flag
             map->set("never-send", Element::create(opt.cancelled_));
+
+            // Include client-classes if not empty.
+            if (!opt.client_classes_.empty()) {
+                map->set("client-classes", opt.client_classes_.toElement());
+            }
+
             // Push on the list
             result->add(map);
         }
     }
+
     return (result);
 }
 
