@@ -168,7 +168,6 @@ public:
         LeaseMgrFactory::destroy();
         StatsMgr::instance().removeAll();
 
-        UnixCommandMgr::instance().closeCommandSocket();
         CommandMgr::instance().deregisterAll();
         UnixCommandMgr::instance().setConnectionTimeout(TIMEOUT_DHCP_SERVER_RECEIVE_COMMAND);
 
@@ -558,7 +557,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelShutdown) {
     std::string response;
 
     sendUnixCommand("{ \"command\": \"shutdown\" }", response);
-    EXPECT_EQ("{ \"result\": 0, \"text\": \"Shutting down.\" }",response);
+    EXPECT_EQ("{ \"result\": 0, \"text\": \"Shutting down.\" }", response);
 }
 
 // Tests that the server properly responds to statistics commands.  Note this

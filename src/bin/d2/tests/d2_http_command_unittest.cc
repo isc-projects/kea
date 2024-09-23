@@ -534,9 +534,8 @@ public:
         response = "";
         IOServicePtr io_service = getIOService();
         ASSERT_TRUE(io_service);
-        boost::scoped_ptr<TestHttpClient> client;
-        client.reset(new TestHttpClient(io_service, SERVER_ADDRESS,
-                                        SERVER_PORT));
+        TestHttpClientPtr client(new TestHttpClient(io_service, SERVER_ADDRESS,
+                                                    SERVER_PORT));
         ASSERT_TRUE(client);
 
         // Send the command. This will trigger server's handler which
@@ -620,11 +619,11 @@ public:
         response = "";
         IOServicePtr io_service = getIOService();
         ASSERT_TRUE(io_service);
-        boost::scoped_ptr<TestHttpsClient> client;
+
         TlsContextPtr client_tls_context;
         configClient(client_tls_context);
-        client.reset(new TestHttpsClient(io_service, client_tls_context,
-                                         SERVER_ADDRESS, SERVER_PORT));
+        TestHttpsClientPtr client(new TestHttpsClient(io_service, client_tls_context,
+                                                      SERVER_ADDRESS, SERVER_PORT));
         ASSERT_TRUE(client);
 
         // Send the command. This will trigger server's handler which

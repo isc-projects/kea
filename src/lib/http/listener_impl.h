@@ -13,13 +13,14 @@
 #include <http/connection.h>
 #include <http/connection_pool.h>
 #include <http/response_creator_factory.h>
+#include <boost/enable_shared_from_this.hpp>
 #include <boost/scoped_ptr.hpp>
 
 namespace isc {
 namespace http {
 
 /// @brief Implementation of the @ref HttpListener.
-class HttpListenerImpl {
+class HttpListenerImpl : public boost::enable_shared_from_this<HttpListenerImpl> {
 public:
 
     /// @brief Constructor.

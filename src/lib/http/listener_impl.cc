@@ -116,7 +116,7 @@ HttpListenerImpl::accept() {
     // depends on the use case.
     HttpResponseCreatorPtr response_creator = creator_factory_->create();
     HttpAcceptorCallback acceptor_callback =
-        std::bind(&HttpListenerImpl::acceptHandler, this, ph::_1);
+        std::bind(&HttpListenerImpl::acceptHandler, shared_from_this(), ph::_1);
     HttpConnectionPtr conn = createConnection(response_creator,
                                               acceptor_callback);
     // Transmit the use external sockets flag.
