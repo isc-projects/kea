@@ -4021,8 +4021,13 @@ Dhcpv4Srv::processDecline(Pkt4Ptr& decline, AllocEngine::ClientContext4Ptr& cont
         client_id.reset(new ClientId(opt_clientid->getData()));
     }
 
-    // Check if the client attempted to decline a lease it doesn't own.
-    if (!lease->belongsToClient(decline->getHWAddr(), client_id)) {
+    // Check if the client attempted to decline an expired lease or a lease
+    // it doesn't own. Declining expired leases is typically a client
+    // misbehavior and may lead to pool exhaustion in case of a storm of
+    // such declines. Only decline the lease if the lease has been recently
+    // allocated to the client.
+    if (lease->expired() || lease->state_ != Lease::STATE_DEFAULT ||
+        !lease->belongsToClient(decline->getHWAddr(), client_id)) {
 
         // Get printable hardware addresses
         string client_hw = decline->getHWAddr() ?

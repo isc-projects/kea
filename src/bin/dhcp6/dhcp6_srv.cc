@@ -4069,7 +4069,7 @@ Dhcpv6Srv::declineIA(const Pkt6Ptr& decline, const DuidPtr& duid,
         Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
                                                                 decline_addr->getAddress());
 
-        if (!lease) {
+        if (!lease || lease->expired() || lease->state_ != Lease::STATE_DEFAULT) {
             // Client trying to decline a lease that we don't know about.
             LOG_INFO(lease6_logger, DHCP6_DECLINE_FAIL_NO_LEASE)
                 .arg(decline->getLabel()).arg(decline_addr->getAddress().toText());

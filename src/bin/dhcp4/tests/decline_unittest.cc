@@ -364,4 +364,77 @@ TEST_F(DeclineTest, declineNonMatchingIPAddress) {
     EXPECT_EQ(Lease::STATE_DEFAULT, lease->state_);
 }
 
+// Test that the released lease cannot be declined.
+TEST_F(DeclineTest, declineAfterRelease) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    // Configure DHCP server.
+    configure(DECLINE_CONFIGS[0], *client.getServer(), true, true, true, false, LEASE_AFFINITY_ENABLED);
+    // Perform 4-way exchange to obtain a new lease.
+    acquireLease(client);
+
+    // Remember the acquired address.
+    IOAddress leased_address = client.config_.lease_.addr_;
+
+    // Release the acquired lease.
+    client.doRelease();
+
+    // Try to decline the released address.
+    client.config_.lease_.addr_ = leased_address;
+    ASSERT_NO_THROW(client.doDecline());
+
+    // The address should not be declined. It should still be in the
+    // released state.
+    Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(leased_address);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(Lease::STATE_RELEASED, lease->state_);
+}
+
+// Test that the expired lease cannot be declined.
+TEST_F(DeclineTest, declineAfterExpire) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    // Configure DHCP server.
+    configure(DECLINE_CONFIGS[0], *client.getServer());
+    // Perform 4-way exchange to obtain a new lease.
+    acquireLease(client);
+
+    // Age the lease (expire it).
+    auto lease = LeaseMgrFactory::instance().getLease4(client.config_.lease_.addr_);
+    ASSERT_TRUE(lease);
+    lease->cltt_ -= 7200;
+    LeaseMgrFactory::instance().updateLease4(lease);
+
+    // Try to decline the expired lease.
+    ASSERT_NO_THROW(client.doDecline());
+
+    // The address should not be declined. It should still be in the
+    // default state.
+    lease = LeaseMgrFactory::instance().getLease4(lease->addr_);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(Lease::STATE_DEFAULT, lease->state_);
+}
+
+// Test that expired-reclaimed lease cannot be declined.
+TEST_F(DeclineTest, declineAfterReclamation) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    // Configure DHCP server.
+    configure(DECLINE_CONFIGS[0], *client.getServer());
+    // Perform 4-way exchange to obtain a new lease.
+    acquireLease(client);
+
+    // Reclaim the lease.
+    auto lease = LeaseMgrFactory::instance().getLease4(client.config_.lease_.addr_);
+    ASSERT_TRUE(lease);
+    lease->state_ = Lease::STATE_EXPIRED_RECLAIMED;
+    LeaseMgrFactory::instance().updateLease4(lease);
+
+    // Try to decline the reclaimed lease.
+    ASSERT_NO_THROW(client.doDecline());
+
+    // The address should not be declined. It should still be in the
+    // reclaimed state.
+    lease = LeaseMgrFactory::instance().getLease4(lease->addr_);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(Lease::STATE_EXPIRED_RECLAIMED, lease->state_);
+}
+
 } // end of anonymous namespace
