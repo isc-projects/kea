@@ -814,6 +814,7 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                       | reservation_client_classes
                       | ip_addresses
                       | prefixes
+                      | excluded_prefixes
                       | hw_address
                       | hostname
                       | flex_id_value
@@ -825,6 +826,8 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
      ip_addresses ::= "ip-addresses" ":" list_strings
 
      prefixes ::= "prefixes" ":" list_strings
+
+     excluded_prefixes ::= "excluded-prefixes" ":" list_strings
 
      duid ::= "duid" ":" STRING
 

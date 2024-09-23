@@ -385,6 +385,20 @@ the extended info deleted from the lease user context.
 Logged at debug log level 40.
 This debug message is printed when a lease extended info was upgraded.
 
+% DHCPSRV_LEASE_MGR_BACKENDS_REGISTERED the following lease backend types are available: %1
+This informational message lists all possible lease backends that could
+be used in lease-database.
+
+% DHCPSRV_LEASE_MGR_BACKEND_DEREGISTER deregistered lease backend type: %1
+Logged at debug log level 40.
+This debug message is issued when a backend factory was deregistered.
+It is no longer possible to use lease backend of this type.
+
+% DHCPSRV_LEASE_MGR_BACKEND_REGISTER registered lease backend type: %1
+Logged at debug log level 40.
+This debug message is issued when a backend factory was successfully
+registered. It is now possible to use lease backend of this type.
+
 % DHCPSRV_LEASE_MGR_CALLBACK_EXCEPTION exception occurred in a lease manager callback for callback type %1, subnet id %2, and lease %3: %4
 This warning message is printed when one of the callback functions registered
 in the lease manager causes an error. The callback functions can serve
@@ -409,20 +423,6 @@ This is an informational message issued when the server failed to connect to
 the lease database. The operation started a retry to connect procedure.
 The database access string with password redacted is logged, along with the
 error and details for the reconnect procedure.
-
-% DHCPSRV_LEASE_MGR_BACKENDS_REGISTERED the following lease backend types are available: %1
-This informational message lists all possible lease backends that could
-be used in lease-database.
-
-% DHCPSRV_LEASE_MGR_BACKEND_DEREGISTER deregistered lease backend type: %1
-Logged at debug log level 40.
-This debug message is issued when a backend factory was deregistered.
-It is no longer possible to use lease backend of this type.
-
-% DHCPSRV_LEASE_MGR_BACKEND_REGISTER registered lease backend type: %1
-Logged at debug log level 40.
-This debug message is issued when a backend factory was successfully
-registered. It is now possible to use lease backend of this type.
 
 % DHCPSRV_LEASE_SANITY_FAIL The lease %1 with subnet-id %2 failed subnet-id checks (%3).
 This warning message is printed when the lease being loaded does not match the

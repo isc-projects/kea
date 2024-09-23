@@ -1,5 +1,0 @@
-[build]		tomek
-	Changed image type in the Developer's guide from PNG to SVG.
-	This drastically reduced the size of the generated docs
-	(from 2.7GB to 560MB).
-	(Gitlab #3566)

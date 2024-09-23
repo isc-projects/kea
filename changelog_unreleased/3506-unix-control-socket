@@ -1,3 +1,0 @@
-[func]		fdupont
-	Reorganized UNIX control socket code.
-	(Gitlab #3506)

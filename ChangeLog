@@ -1,3 +1,15 @@
+Kea 2.7.3 (development) released on August 25, 2024
+
+2286.	[func]		fdupont
+	Reorganized UNIX control socket code.
+	(Gitlab #3506)
+
+2285.	[build]		tomek
+	Changed image type in the Developer's guide from PNG to SVG.
+	This drastically reduced the size of the generated docs
+	(from 2.7GB to 560MB).
+	(Gitlab #3566)
+
 2284.	[build]		razvan
 	The library version numbers have been bumped up for the Kea 2.7.3
 	development release.

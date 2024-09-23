@@ -8790,6 +8790,38 @@ DHCPSRV_LEASE6_EXTENDED_INFO_UPGRADED
 Logged at debug log level 40.
 This debug message is printed when a lease extended info was upgraded.
 
+DHCPSRV_LEASE_MGR_BACKENDS_REGISTERED
+=====================================
+
+.. code-block:: text
+
+    the following lease backend types are available: %1
+
+This informational message lists all possible lease backends that could
+be used in lease-database.
+
+DHCPSRV_LEASE_MGR_BACKEND_DEREGISTER
+====================================
+
+.. code-block:: text
+
+    deregistered lease backend type: %1
+
+Logged at debug log level 40.
+This debug message is issued when a backend factory was deregistered.
+It is no longer possible to use lease backend of this type.
+
+DHCPSRV_LEASE_MGR_BACKEND_REGISTER
+==================================
+
+.. code-block:: text
+
+    registered lease backend type: %1
+
+Logged at debug log level 40.
+This debug message is issued when a backend factory was successfully
+registered. It is now possible to use lease backend of this type.
+
 DHCPSRV_LEASE_MGR_CALLBACK_EXCEPTION
 ====================================
 
@@ -16920,7 +16952,7 @@ HTTP_COMMAND_MGR_IGNORED_TLS_SETUP_CHANGES
 The warning message is issued when the HTTP/HTTPS control socket was
 reconfigured with a different TLS setup but keeping the address and port.
 These changes are ignored because they can't be applied without opening a new
-socket which will conflicts with the existing one.
+socket which will conflict with the existing one.
 
 HTTP_COMMAND_MGR_SERVICE_STARTED
 ================================
