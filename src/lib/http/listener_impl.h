@@ -128,7 +128,7 @@ protected:
     boost::scoped_ptr<asiolink::TCPEndpoint> endpoint_;
 
     /// @brief Pool of active connections.
-    HttpConnectionPool connections_;
+    HttpConnectionPoolPtr connections_;
 
     /// @brief Pointer to the @ref HttpResponseCreatorFactory.
     HttpResponseCreatorFactoryPtr creator_factory_;
@@ -143,7 +143,6 @@ protected:
     /// @brief Use external sockets flag.
     bool use_external_;
 };
-
 
 } // end of namespace isc::http
 } // end of namespace isc

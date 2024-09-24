@@ -187,7 +187,10 @@ public:
                                    this, true),
                          TEST_TIMEOUT, IntervalTimer::ONE_SHOT);
         // Run until the client stops the service or an error occurs.
-        io_service->run();
+        try {
+	    io_service->run();
+        } catch (...) {
+        }
         test_timer.cancel();
         if (io_service->stopped()) {
             io_service->restart();

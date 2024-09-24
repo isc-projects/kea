@@ -68,7 +68,7 @@ SocketCallback::operator()(boost::system::error_code ec, size_t length) {
 HttpConnection::HttpConnection(const asiolink::IOServicePtr& io_service,
                                const HttpAcceptorPtr& acceptor,
                                const TlsContextPtr& tls_context,
-                               HttpConnectionPool& connection_pool,
+                               HttpConnectionPoolPtr connection_pool,
                                const HttpResponseCreatorPtr& response_creator,
                                const HttpAcceptorCallback& callback,
                                const long request_timeout,
@@ -234,11 +234,16 @@ HttpConnection::close() {
 
 void
 HttpConnection::shutdownConnection() {
+    auto connection_pool = connection_pool_.lock();
     try {
         LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC,
                   HTTP_CONNECTION_SHUTDOWN)
             .arg(getRemoteEndpointAddressAsText());
-        connection_pool_.shutdown(shared_from_this());
+        if (connection_pool) {
+            connection_pool->shutdown(shared_from_this());
+        } else {
+            shutdown();
+        }
     } catch (...) {
         LOG_ERROR(http_logger, HTTP_CONNECTION_SHUTDOWN_FAILED);
     }
@@ -246,11 +251,16 @@ HttpConnection::shutdownConnection() {
 
 void
 HttpConnection::stopThisConnection() {
+    auto connection_pool = connection_pool_.lock();
     try {
         LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC,
                   HTTP_CONNECTION_STOP)
             .arg(getRemoteEndpointAddressAsText());
-        connection_pool_.stop(shared_from_this());
+        if (connection_pool) {
+            connection_pool->stop(shared_from_this());
+        } else {
+            close();
+        }
     } catch (...) {
         LOG_ERROR(http_logger, HTTP_CONNECTION_STOP_FAILED);
     }

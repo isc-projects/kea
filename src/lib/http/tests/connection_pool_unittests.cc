@@ -107,7 +107,7 @@ public:
     HttpConnectionPoolTest()
         : io_service_(new IOService()),
           acceptor_(new HttpAcceptor(io_service_)),
-          connection_pool_(),
+          connection_pool_(new HttpConnectionPool()),
           response_creator_(new TestHttpResponseCreator()) {
         MultiThreadingMgr::instance().setMode(false);
     }
@@ -219,7 +219,7 @@ public:
 
     IOServicePtr io_service_;                   ///< IO service.
     HttpAcceptorPtr acceptor_;                  ///< Test acceptor.
-    HttpConnectionPool connection_pool_;        ///< Test connection pool.
+    HttpConnectionPoolPtr connection_pool_;     ///< Test connection pool.
     HttpResponseCreatorPtr response_creator_;   ///< Test response creator.
 
 };

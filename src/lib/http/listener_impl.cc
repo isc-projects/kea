@@ -26,7 +26,7 @@ HttpListenerImpl::HttpListenerImpl(const IOServicePtr& io_service,
                                    const long request_timeout,
                                    const long idle_timeout)
     : io_service_(io_service), tls_context_(tls_context), acceptor_(),
-      endpoint_(), connections_(),
+      endpoint_(), connections_(new HttpConnectionPool()),
       creator_factory_(creator_factory),
       request_timeout_(request_timeout), idle_timeout_(idle_timeout),
       use_external_(false) {
@@ -102,7 +102,7 @@ HttpListenerImpl::start() {
 
 void
 HttpListenerImpl::stop() {
-    connections_.stopAll();
+    connections_->stopAll();
     if (use_external_) {
         IfaceMgr::instance().deleteExternalSocket(acceptor_->getNative());
     }
@@ -124,7 +124,7 @@ HttpListenerImpl::accept() {
         conn->addExternalSockets(true);
     }
     // Add this new connection to the pool.
-    connections_.start(conn);
+    connections_->start(conn);
 }
 
 void

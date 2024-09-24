@@ -245,7 +245,7 @@ public:
     HttpConnection(const asiolink::IOServicePtr& io_service,
                    const HttpAcceptorPtr& acceptor,
                    const asiolink::TlsContextPtr& tls_context,
-                   HttpConnectionPool& connection_pool,
+                   std::shared_ptr<HttpConnectionPool> connection_pool,
                    const HttpResponseCreatorPtr& response_creator,
                    const HttpAcceptorCallback& callback,
                    const long request_timeout,
@@ -441,7 +441,7 @@ protected:
     HttpAcceptorPtr acceptor_;
 
     /// @brief Connection pool holding this connection.
-    HttpConnectionPool& connection_pool_;
+    std::weak_ptr<HttpConnectionPool> connection_pool_;
 
     /// @brief Pointer to the @ref HttpResponseCreator object used to create
     /// HTTP responses.
