@@ -536,6 +536,7 @@ TEST(DatabaseConnection, toElementDbAccessStringValid) {
         "\"port\" : 300, \n"
         "\"readonly\" : false, \n"
         "\"reconnect-wait-time\": 99, \n"
+        "\"retry-on-startup\" : true, \n"
         "\"type\": \"memfile\", \n"
         "\"user\": \"user_str\", \n"
         "\"max-row-errors\": 50, \n"

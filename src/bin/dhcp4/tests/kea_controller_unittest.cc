@@ -27,6 +27,7 @@
 #endif
 
 #include <log/logger_support.h>
+#include <testutils/test_to_element.h>
 #include <util/stopwatch.h>
 
 #include <boost/pointer_cast.hpp>
@@ -55,6 +56,7 @@ using namespace isc::db::test;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::hooks;
+using namespace isc::test;
 
 namespace {
 
@@ -176,7 +178,7 @@ typedef boost::shared_ptr<TestCBControlDHCPv4> TestCBControlDHCPv4Ptr;
 ///
 /// Exposes internal fields and installs stub implementation of the
 /// @c CBControlDHCPv4 object.
-class NakedControlledDhcpv4Srv: public ControlledDhcpv4Srv {
+class NakedControlledDhcpv4Srv : public ControlledDhcpv4Srv {
 public:
 
     /// @brief Constructor.
@@ -185,7 +187,14 @@ public:
         // We're replacing the @c CBControlDHCPv4 instance with our
         // stub implementation used in tests.
         cb_control_.reset(new TestCBControlDHCPv4());
+
+        CfgMgr::instance().setFamily(AF_INET);
     }
+
+    using ControlledDhcpv4Srv::commandConfigGetHandler;
+    using ControlledDhcpv4Srv::commandConfigSetHandler;
+    using ControlledDhcpv4Srv::commandConfigReloadHandler;
+    using ControlledDhcpv4Srv::commandConfigWriteHandler;
 };
 
 /// @brief test class for Kea configuration backend
@@ -300,7 +309,6 @@ public:
         EXPECT_EQ(1, cb_control->getDatabaseTotalConfigFetchCalls());
         EXPECT_EQ(0, cb_control->getDatabaseCurrentConfigFetchCalls());
         EXPECT_EQ(1, cb_control->getDatabaseStagingConfigFetchCalls());
-
 
         if (call_command) {
             // The case where there is no backend is tested in the
@@ -1079,7 +1087,6 @@ testBackendReconfiguration(const std::string& backend_first,
               LeaseMgrFactory::instance().getType());
 }
 
-
 // This test verifies that backend specification can be added on
 // server reconfiguration.
 TEST_F(JSONFileBackendMySQLTest, reconfigureBackendUndefinedToMySQL) {
@@ -1099,5 +1106,95 @@ TEST_F(JSONFileBackendMySQLTest, reconfigureBackendMemfileToMySQL) {
 }
 
 #endif
+
+/// @brief Test that all-keys.json config file can be loaded, written to disk
+/// and reloaded.
+TEST_F(JSONFileBackendTest, DISABLED_loadWriteReloadTest) {
+
+    // Create server first.
+    boost::scoped_ptr<NakedControlledDhcpv4Srv> srv;
+    ASSERT_NO_THROW(
+        srv.reset(new NakedControlledDhcpv4Srv());
+    );
+
+    try {
+        srv->init(CFG_EXAMPLES"/all-keys.json");
+    } catch (const std::exception& ex) {
+        ADD_FAILURE() << "Exception thrown on load: " << ex.what() << endl;
+    }
+
+    // Save initial configuration.
+    // ConstElementPtr expected_json;
+
+    // Read contents of the file and parse it as JSON.
+    // {
+    //     Parser4Context parser;
+    //     expected_json = parser.parseFile(CFG_EXAMPLES"/all-keys.json", Parser4Context::PARSER_DHCP4);
+    //     if (!expected_json) {
+    //         ADD_FAILURE() << "Invalid configuration in " << CFG_EXAMPLES"/all-keys.json" << endl;
+    //     }
+    // }
+
+    // Set test file used write and reload configuration.
+    srv->setConfigFile(TEST_FILE);
+
+    // Save initial configuration to check it with the reloaded configuration.
+    // ConstElementPtr expected;
+    // try {
+    //     expected = srv->commandConfigGetHandler("", ConstElementPtr());
+    // } catch (const std::exception& ex) {
+    //     ADD_FAILURE() << "Exception thrown on get: " << ex.what() << endl;
+    // }
+
+    ConstElementPtr result;
+    int rcode;
+
+    // Configuration is written to test file.
+    try {
+        result = srv->commandConfigWriteHandler("", ConstElementPtr());
+        result = parseAnswerText(rcode, result);
+    } catch (const std::exception& ex) {
+        ADD_FAILURE() << "Exception thrown on write: " << ex.what() << endl;
+    }
+
+    ASSERT_EQ(CONTROL_RESULT_SUCCESS, rcode);
+    ASSERT_EQ("Configuration written to test-config.json successful", result->stringValue());
+
+    // Save written configuration.
+    // ConstElementPtr actual_json;
+
+    // {
+    //     Parser4Context parser;
+    //     actual_json = parser.parseFile(TEST_FILE, Parser4Context::PARSER_DHCP4);
+    //     if (!actual_json) {
+    //         ADD_FAILURE() << "Invalid configuration in written file " << TEST_FILE << endl;
+    //     }
+    // }
+
+    // Configuration is reloaded from test file.
+    try {
+        result = srv->commandConfigReloadHandler("", ConstElementPtr());
+        result = parseAnswerText(rcode, result);
+    }  catch (const std::exception& ex) {
+        ADD_FAILURE() << "Exception thrown on reload: " << ex.what() << endl;
+    }
+
+    ASSERT_EQ(CONTROL_RESULT_SUCCESS, rcode);
+    ASSERT_EQ("Configuration successful.", result->stringValue());
+
+    // Save reloaded configuration.
+    // ConstElementPtr actual;
+    // try {
+    //     expected = srv->commandConfigGetHandler("", ConstElementPtr());
+    // } catch (const std::exception& ex) {
+    //     ADD_FAILURE() << "Exception thrown on get after reload: " << ex.what() << endl;
+    // }
+
+    // Check initial configuration with reloaded configuration.
+    // expectEqWithDiff(expected_json, actual_json);
+
+    // Check initial configuration with reloaded configuration.
+    // expectEqWithDiff(expected, actual);
+}
 
 } // End of anonymous namespace

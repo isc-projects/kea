@@ -55,15 +55,14 @@ Parser4Context::parseCommon() {
             isc_throw(Dhcp4ParseError, "Parser abort");
         }
         scanEnd();
-    }
-    catch (...) {
+    } catch (...) {
         scanEnd();
         throw;
     }
     if (stack_.size() == 1) {
         return (stack_[0]);
     } else {
-        isc_throw(Dhcp4ParseError, "Expected exactly one terminal Element expected, found "
+        isc_throw(Dhcp4ParseError, "Expected exactly one terminal Element, found "
                   << stack_.size());
     }
 }
