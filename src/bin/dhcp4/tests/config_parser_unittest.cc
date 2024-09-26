@@ -163,6 +163,7 @@ const char* PARSER_CONFIGS[] = {
     "        \"type\": \"mysql\","
     "        \"name\": \"keatest2\","
     "        \"user\": \"keatest\","
+    "        \"retry-on-startup\": true,"
     "        \"password\": \"keatest\""
     "      }"
     "    ]"
@@ -280,6 +281,7 @@ const char* PARSER_CONFIGS[] = {
     "               \"type\": \"mysql\", \n"
     "               \"name\": \"keatest2\", \n"
     "               \"user\": \"keatest\", \n"
+    "               \"retry-on-startup\": true, \n"
     "               \"password\": \"keatest\" \n"
     "           } \n"
     "       ] \n"
@@ -6704,7 +6706,7 @@ TEST_F(Dhcp4ParserTest, hostsDatabases) {
     ASSERT_EQ(2, hal.size());
     // Keywords are in alphabetical order
     EXPECT_EQ("name=keatest1 password=keatest type=mysql user=keatest", hal.front());
-    EXPECT_EQ("name=keatest2 password=keatest type=mysql user=keatest", hal.back());
+    EXPECT_EQ("name=keatest2 password=keatest retry-on-startup=true type=mysql user=keatest", hal.back());
 }
 
 // This test checks comments. Please keep it last.
@@ -7146,7 +7148,7 @@ TEST_F(Dhcp4ParserTest, configControlInfo) {
     //  alphabetical order).
     EXPECT_EQ("name=keatest1 password=keatest type=mysql user=keatest",
               dblist.front().getAccessString());
-    EXPECT_EQ("name=keatest2 password=keatest type=mysql user=keatest",
+    EXPECT_EQ("name=keatest2 password=keatest retry-on-startup=true type=mysql user=keatest",
               dblist.back().getAccessString());
 
     // Verify that the config-fetch-wait-time is correct.
