@@ -977,16 +977,9 @@ TEST_F(Dhcpv4SrvTest, appendServerID) {
     // Make sure that the option has been added.
     OptionPtr opt = response->getOption(DHO_DHCP_SERVER_IDENTIFIER);
     ASSERT_TRUE(opt);
-    Option4AddrLstPtr opt_server_id =
-        boost::dynamic_pointer_cast<Option4AddrLst>(opt);
-    ASSERT_TRUE(opt_server_id);
-
-    // The option is represented as a list of IPv4 addresses but with
-    // only one address added.
-    Option4AddrLst::AddressContainer addrs = opt_server_id->getAddresses();
-    ASSERT_EQ(1, addrs.size());
-    // This address should match the local address of the packet.
-    EXPECT_EQ("192.0.3.1", addrs[0].toText());
+    OptionCustomPtr opt_serverid = boost::dynamic_pointer_cast<OptionCustom>(opt);
+    ASSERT_TRUE(opt_serverid);
+    EXPECT_EQ("192.0.3.1", opt_serverid->readAddress().toText());
 }
 
 // Sanity check. Verifies that both Dhcpv4Srv and its derived

@@ -2000,8 +2000,9 @@ Dhcpv4Srv::appendServerID(Dhcpv4Exchange& ex) {
         local_addr = IfaceMgr::instance().getSocket(query).addr_;
     }
 
-    OptionPtr opt_srvid(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER,
-                                           local_addr));
+    static const OptionDefinition& server_id_def = LibDHCP::DHO_DHCP_SERVER_IDENTIFIER_DEF();
+    OptionCustomPtr opt_srvid(new OptionCustom(server_id_def, Option::V4));
+    opt_srvid->writeAddress(local_addr);
     ex.getResponse()->addOption(opt_srvid);
 }
 
@@ -2115,6 +2116,7 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
     }
 
     std::set<uint8_t> cancelled_opts;
+    const auto& cclasses = query->getClasses();
 
     // Iterate on the configured option list to add persistent and
     // cancelled options.
@@ -2161,7 +2163,7 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
             for (auto const& copts : co_list) {
                 OptionDescriptor desc = copts->get(DHCP4_OPTION_SPACE, opt);
                 // Got it: add it and jump to the outer loop
-                if (desc.option_) {
+                if (desc.option_ && desc.allowedForClientClasses(cclasses)) {
                     resp->addOption(desc.option_);
                     break;
                 }
@@ -2189,7 +2191,7 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
         for (auto const& copts : co_list) {
             for (auto const& desc : copts->getList(DHCP4_OPTION_SPACE,
                                                         DHO_VIVCO_SUBOPTIONS)) {
-                if (!desc.option_) {
+                if (!desc.option_ || !desc.allowedForClientClasses(cclasses)) {
                     continue;
                 }
                 OptionVendorClassPtr vendor_opts =
@@ -2227,7 +2229,7 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
         for (auto const& copts : co_list) {
             for (auto const& desc : copts->getList(DHCP4_OPTION_SPACE,
                                                    DHO_VIVSO_SUBOPTIONS)) {
-                if (!desc.option_) {
+                if (!desc.option_ || !desc.allowedForClientClasses(cclasses)) {
                     continue;
                 }
                 OptionVendorPtr vendor_opts =
@@ -2404,7 +2406,7 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
             if (!vendor_rsp->getOption(opt)) {
                 for (auto const& copts : co_list) {
                     OptionDescriptor desc = copts->get(vendor_id, opt);
-                    if (desc.option_) {
+                    if (desc.option_ && desc.allowedForClientClasses(query->getClasses())) {
                         vendor_rsp->addOption(desc.option_);
                         added = true;
                         break;
@@ -2453,7 +2455,8 @@ Dhcpv4Srv::appendBasicOptions(Dhcpv4Exchange& ex) {
             // Check whether option has been configured.
             for (auto const& copts : co_list) {
                 OptionDescriptor desc = copts->get(DHCP4_OPTION_SPACE, required);
-                if (desc.option_) {
+                /// @todo TKM - not sure if otion class-tagging should be allowed here?
+                if (desc.option_ && desc.allowedForClientClasses(ex.getQuery()->getClasses())) {
                     resp->addOption(desc.option_);
                     break;
                 }

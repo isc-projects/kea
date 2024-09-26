@@ -59,6 +59,22 @@ OptionDescriptor::addClientClass(const std::string& class_name) {
     }
 }
 
+bool
+OptionDescriptor::allowedForClientClasses(const ClientClasses& cclasses) const {
+    if (client_classes_.empty()) {
+        return (true);
+    }
+    
+    for (const auto& cclass : client_classes_) {
+        if (cclasses.contains(cclass)) {
+            return (true);
+        }
+    }
+
+    return (false);
+}
+
+
 CfgOption::CfgOption()
     : encapsulated_(false) {
 }

@@ -1014,6 +1014,16 @@ Dhcpv4SrvTest::checkPktEvents(const PktPtr& msg,
     }
 }
 
+void
+Dhcpv4SrvTest::checkServerIdentifier(Pkt4Ptr msg, std::string exp_address) {
+    ASSERT_TRUE(msg);
+    OptionPtr opt = msg->getOption(DHO_DHCP_SERVER_IDENTIFIER);
+    ASSERT_TRUE(opt);
+    OptionCustomPtr opt_serverid = boost::dynamic_pointer_cast<OptionCustom>(opt);
+    ASSERT_TRUE(opt_serverid);
+    EXPECT_EQ(exp_address, opt_serverid->readAddress().toText());
+}
+
 } // end of isc::dhcp::test namespace
 } // end of isc::dhcp namespace
 } // end of isc namespace

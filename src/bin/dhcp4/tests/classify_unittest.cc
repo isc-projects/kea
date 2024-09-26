@@ -8,8 +8,10 @@
 #include <asiolink/io_address.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/option_int_array.h>
+#include <dhcp/option_vendor.h>
 #include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp4/tests/dhcp4_client.h>
+#include <dhcp/docsis3_option_defs.h>
 #include <dhcp/option_int.h>
 #include <stats/stats_mgr.h>
 #include <algorithm>
@@ -1604,5 +1606,539 @@ TEST_F(ClassifyTest, subClassPrecedence) {
     ASSERT_TRUE(opt);
     EXPECT_EQ(opt->toString(), "spawn two");
 }
+
+// Verifies that (non-vendor) requested options can be gated
+// by option class tagging.
+TEST_F(ClassifyTest, requestedOptionClassTagTest) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    string config = R"^(
+    {
+        "interfaces-config": {
+            "interfaces": [ "*" ]
+        },
+        "rebind-timer": 2000,
+        "renew-timer": 1000,
+        "valid-lifetime": 4000,
+        "subnet4": [{
+            "id": 1,
+            "subnet": "192.0.2.0/24",
+            "pools": [{
+                "pool": "192.0.2.1 - 192.0.2.100"
+             }]
+        }],
+        "option-def": [{
+            "name": "no_classes",
+            "code": 249,
+            "type": "string"
+        },
+        {
+            "name": "wrong_class",
+            "code": 250,
+            "type": "string"
+        },
+        {
+            "name": "right_class",
+            "code": 251,
+            "type": "string"
+        }],
+        "option-data": [{
+            "name": "no_classes",
+            "data": "oompa"
+        },
+        {
+            "name": "wrong_class",
+            "data": "loompa",
+            "client-classes": [ "wrong" ]
+        },
+        {
+            "name": "right_class",
+            "data": "doompadee",
+            "client-classes": [ "right" ]
+        }],
+        "client-classes": [{
+            "name": "right",
+            "test": "substring(option[61].hex,0,3) == '111'"
+        }]
+    }
+    )^";
+
+    // Configure DHCP server.
+    configure(config, srv);
+
+    // Create packets with enough to select the subnet
+    auto id = ClientId::fromText("31:31:31");
+    OptionPtr clientid = (OptionPtr(new Option(Option::V4,
+                                               DHO_DHCP_CLIENT_IDENTIFIER,
+                                               id->getClientId())));
+
+    Pkt4Ptr query1(new Pkt4(DHCPDISCOVER, 1234));
+    query1->setRemoteAddr(IOAddress("192.0.2.1"));
+    query1->addOption(clientid);
+    query1->setIface("eth1");
+    query1->setIndex(ETH1_INDEX);
+
+    // Create and add a PRL option to the first 2 queries
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    prl->addValue(249);
+    prl->addValue(250);
+    prl->addValue(251);
+    query1->addOption(prl);
+
+    // Classify packets
+    srv.classifyPacket(query1);
+
+    // Verify class membership is as expected.
+    EXPECT_TRUE(query1->inClass("right"));
+
+    // Process query
+    Pkt4Ptr response1 = srv.processDiscover(query1);
+
+    // Option without class tags should be included.
+    OptionPtr opt = response1->getOption(249);
+    ASSERT_TRUE(opt);
+
+    // Option with class tag that doesn't match should not included.
+    opt = response1->getOption(250);
+    ASSERT_FALSE(opt);
+
+    // Option with class tag that matches should be included.
+    opt = response1->getOption(251);
+    ASSERT_TRUE(opt);
+}
+
+// Verifies the requested vendor options can be gated by
+// option class tagging.
+TEST_F(ClassifyTest, vendorOptionClassTagTest) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    string config = R"^(
+    {
+        "interfaces-config": {
+            "interfaces": [ "*" ]
+        },
+        "rebind-timer": 2000,
+        "renew-timer": 1000,
+        "valid-lifetime": 4000,
+        "subnet4": [{
+            "id": 1,
+            "subnet": "192.0.2.0/24",
+            "pools": [{
+                "pool": "192.0.2.1 - 192.0.2.100"
+             }]
+        }],
+        "option-def": [{
+            "space": "vendor-4491",
+            "name": "one",
+            "code": 101,
+            "type": "string"
+        },
+        {
+            "space": "vendor-4491",
+            "name": "two",
+            "code": 102,
+            "type": "string"
+        },
+        {
+            "space": "vendor-4491",
+            "name": "three",
+            "code": 103,
+            "type": "string"
+        }],
+        "option-data": [{ 
+            "space": "vendor-4491",
+            "code": 101,
+            "csv-format": true,
+            "data": "zippy-ah",
+            "client-classes": [ "melon" ]
+        },
+        {
+            "space": "vendor-4491",
+            "code": 102,
+            "csv-format": true,
+            "data": "dee",
+            "client-classes": [ "ball" ]
+        },
+        {
+            "space": "vendor-4491",
+            "code": 103,
+            "csv-format": true,
+            "data": "doo-dah"
+        }],
+        "client-classes": [{
+            "name": "melon",
+            "test": "substring(option[61].hex,0,3) == '111'"
+        }]
+    }
+    )^";
+
+    // Configure DHCP server.
+    configure(config, srv);
+
+    // Create packets with enough to select the subnet
+    auto id = ClientId::fromText("31:31:31");
+    OptionPtr clientid = (OptionPtr(new Option(Option::V4,
+                                               DHO_DHCP_CLIENT_IDENTIFIER,
+                                               id->getClientId())));
+
+    Pkt4Ptr query1(new Pkt4(DHCPDISCOVER, 1234));
+    query1->setRemoteAddr(IOAddress("192.0.2.1"));
+    query1->addOption(clientid);
+    query1->setIface("eth1");
+    query1->setIndex(ETH1_INDEX);
+
+    // Let's add a vendor-option (vendor-id=4491).
+    OptionPtr vendor(new OptionVendor(Option::V4, 4491));
+    query1->addOption(vendor);
+
+    // Let's add a vendor-option (vendor-id=4491) with three sub-options.
+    boost::shared_ptr<OptionUint8Array> vendor_oro(new OptionUint8Array(Option::V4,
+                                                                        DOCSIS3_V4_ORO));
+    // Request the suboptions.
+    vendor_oro->addValue(101); 
+    vendor_oro->addValue(102);
+    vendor_oro->addValue(103);
+    vendor->addOption(vendor_oro);
+
+    // Classify packets
+    srv.classifyPacket(query1);
+
+    // Verify class membership is as expected.
+    EXPECT_TRUE(query1->inClass("melon"));
+    EXPECT_FALSE(query1->inClass("ball"));
+
+    // Process query
+    Pkt4Ptr response1 = srv.processDiscover(query1);
+
+    // Check if there is a vendor option response
+    OptionPtr tmp = response1->getOption(DHO_VIVSO_SUBOPTIONS);
+    ASSERT_TRUE(tmp);
+
+    // The response should be OptionVendor object
+    boost::shared_ptr<OptionVendor> vendor_resp =
+        boost::dynamic_pointer_cast<OptionVendor>(tmp);
+    ASSERT_TRUE(vendor_resp);
+
+    // Should have options 1 and 3.
+    EXPECT_EQ(2, vendor_resp->getOptions().size());
+    EXPECT_TRUE(vendor_resp->getOption(101));
+    EXPECT_FALSE(vendor_resp->getOption(102));
+    EXPECT_TRUE(vendor_resp->getOption(103));
+}
+
+// Verifies that requested VIVCO suboption can be gated by 
+// option class tagging.
+TEST_F(ClassifyTest, vivcoOptionClassTagTest) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    string config = R"^(
+    {
+        "interfaces-config": {
+            "interfaces": [ "*" ]
+        },
+        "rebind-timer": 2000,
+        "renew-timer": 1000,
+        "valid-lifetime": 4000,
+        "subnet4": [{
+            "id": 1,
+            "subnet": "192.0.2.0/24",
+            "pools": [{
+                "pool": "192.0.2.1 - 192.0.2.100"
+             }]
+        }],
+        "option-data": [{
+            "name": "vivco-suboptions",
+            "data": "1234, 03666f6f",
+            "client-classes": [ "melon" ]
+        }],
+        "client-classes": [{
+            "name": "melon",
+            "test": "substring(option[61].hex,0,3) == '111'"
+        }]
+    }
+    )^";
+
+    // Configure DHCP server.
+    configure(config, srv);
+
+    // Create packet with enough to select the subnet
+    auto id = ClientId::fromText("31:31:31");
+    OptionPtr clientid = (OptionPtr(new Option(Option::V4,
+                                               DHO_DHCP_CLIENT_IDENTIFIER,
+                                               id->getClientId())));
+
+    Pkt4Ptr query1(new Pkt4(DHCPDISCOVER, 1234));
+    query1->setRemoteAddr(IOAddress("192.0.2.1"));
+    query1->addOption(clientid);
+    query1->setIface("eth1");
+    query1->setIndex(ETH1_INDEX);
+
+    // Create and add a PRL option.
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    prl->addValue(DHO_VIVCO_SUBOPTIONS);
+    query1->addOption(prl);
+
+    // Classify packet
+    srv.classifyPacket(query1);
+
+    // Verify it is a member of "melon".
+    ASSERT_TRUE(query1->inClass("melon"));
+
+    // Process query
+    Pkt4Ptr response1 = srv.processDiscover(query1);
+
+    // Check if there is a vendor option response
+    OptionPtr tmp = response1->getOption(DHO_VIVCO_SUBOPTIONS);
+    EXPECT_TRUE(tmp);
+
+    // Try again with a different client id.
+    id = ClientId::fromText("31:31:32");
+    clientid = (OptionPtr(new Option(Option::V4, DHO_DHCP_CLIENT_IDENTIFIER,
+                                                 id->getClientId())));
+    query1.reset(new Pkt4(DHCPDISCOVER, 1235));
+    query1->setRemoteAddr(IOAddress("192.0.2.1"));
+    query1->addOption(clientid);
+    query1->setIface("eth1");
+    query1->setIndex(ETH1_INDEX);
+    query1->addOption(prl);
+
+    // Classify packet
+    srv.classifyPacket(query1);
+
+    // Verify it is not a member of "melon".
+    ASSERT_FALSE(query1->inClass("melon"));
+
+    // Process query
+    response1 = srv.processDiscover(query1);
+
+    // VIVCO suboption should not be present.
+    tmp = response1->getOption(DHO_VIVCO_SUBOPTIONS);
+    ASSERT_FALSE(tmp);
+}
+
+// Verifies that requested VIVSO suboption can be gated by 
+// option class tagging.
+TEST_F(ClassifyTest, vivsoOptionClassTagTest) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    string config = R"^(
+    {
+        "interfaces-config": {
+            "interfaces": [ "*" ]
+        },
+        "rebind-timer": 2000,
+        "renew-timer": 1000,
+        "valid-lifetime": 4000,
+        "subnet4": [{
+            "id": 1,
+            "subnet": "192.0.2.0/24",
+            "pools": [{
+                "pool": "192.0.2.1 - 192.0.2.100"
+             }]
+        }],
+        "option-data": [{
+            "name": "vivso-suboptions",
+            "data": "1234",
+            "client-classes": [ "melon" ]
+        }],
+        "client-classes": [{
+            "name": "melon",
+            "test": "substring(option[61].hex,0,3) == '111'"
+        }]
+    }
+    )^";
+
+    // Configure DHCP server.
+    configure(config, srv);
+
+    // Create packet with enough to select the subnet
+    auto id = ClientId::fromText("31:31:31");
+    OptionPtr clientid = (OptionPtr(new Option(Option::V4,
+                                               DHO_DHCP_CLIENT_IDENTIFIER,
+                                               id->getClientId())));
+
+    Pkt4Ptr query1(new Pkt4(DHCPDISCOVER, 1234));
+    query1->setRemoteAddr(IOAddress("192.0.2.1"));
+    query1->addOption(clientid);
+    query1->setIface("eth1");
+    query1->setIndex(ETH1_INDEX);
+
+    // Create and add a PRL option.
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    prl->addValue(DHO_VIVSO_SUBOPTIONS);
+    query1->addOption(prl);
+
+    // Classify packet
+    srv.classifyPacket(query1);
+
+    // Verify it is a member of "melon".
+    ASSERT_TRUE(query1->inClass("melon"));
+
+    // Process query
+    Pkt4Ptr response1 = srv.processDiscover(query1);
+
+    // Check if there is a vendor option response
+    OptionPtr tmp = response1->getOption(DHO_VIVSO_SUBOPTIONS);
+    EXPECT_TRUE(tmp);
+
+    // Try again with a different client id.
+    id = ClientId::fromText("31:31:32");
+    clientid = (OptionPtr(new Option(Option::V4, DHO_DHCP_CLIENT_IDENTIFIER,
+                                                 id->getClientId())));
+    query1.reset(new Pkt4(DHCPDISCOVER, 1235));
+    query1->setRemoteAddr(IOAddress("192.0.2.1"));
+    query1->addOption(clientid);
+    query1->setIface("eth1");
+    query1->setIndex(ETH1_INDEX);
+    query1->addOption(prl);
+
+    // Classify packet
+    srv.classifyPacket(query1);
+
+    // Verify it is not a member of "melon".
+    ASSERT_FALSE(query1->inClass("melon"));
+
+    // Process query
+    response1 = srv.processDiscover(query1);
+
+    // VIVCO suboption should not be present.
+    tmp = response1->getOption(DHO_VIVSO_SUBOPTIONS);
+    ASSERT_FALSE(tmp);
+}
+
+// Verifies that "basic" options can be gated by 
+// option class tagging.
+TEST_F(ClassifyTest, basicOptionClassTagTest) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    string config = R"^(
+    {
+        "interfaces-config": {
+            "interfaces": [ "*" ]
+        },
+        "rebind-timer": 2000,
+        "renew-timer": 1000,
+        "valid-lifetime": 4000,
+        "subnet4": [{
+            "id": 1,
+            "subnet": "192.0.2.0/24",
+            "pools": [{
+                "pool": "192.0.2.1 - 192.0.2.100"
+             }]
+        }],
+        "option-data": [{
+            "name": "routers",
+            "data": "192.0.2.1",
+            "client-classes": [ "melon" ]
+        },
+        {
+            "name": "domain-name",
+            "data": "example.com",
+            "client-classes": [ "melon" ]
+        },
+        {
+            "name": "domain-name-servers",
+            "data": "192.0.2.3",
+            "client-classes": [ "melon" ]
+        },
+        {
+            "name": "dhcp-server-identifier",
+            "data": "192.0.2.0",
+            "client-classes": [ "melon" ]
+        }],
+        "client-classes": [{
+            "name": "melon",
+            "test": "substring(option[61].hex,0,3) == '111'"
+        }]
+    }
+    )^";
+
+    // Configure DHCP server.
+    configure(config, srv);
+
+    // Create packet with enough to select the subnet
+    auto id = ClientId::fromText("31:31:31");
+    OptionPtr clientid = (OptionPtr(new Option(Option::V4,
+                                               DHO_DHCP_CLIENT_IDENTIFIER,
+                                               id->getClientId())));
+
+    Pkt4Ptr query1(new Pkt4(DHCPDISCOVER, 1234));
+    query1->setRemoteAddr(IOAddress("192.0.2.1"));
+    query1->addOption(clientid);
+    query1->setIface("eth1");
+    query1->setIndex(ETH1_INDEX);
+
+    // Configure DHCP server.
+    configure(config, srv);
+
+    // Classify packet
+    srv.classifyPacket(query1);
+
+    // Verify it is a member of "melon".
+    ASSERT_TRUE(query1->inClass("melon"));
+
+    // Process query
+    Pkt4Ptr response1 = srv.processDiscover(query1);
+
+    // Verify that routers, domain-name, and domain-name-servers are present.
+    OptionPtr tmp = response1->getOption(DHO_ROUTERS);
+    EXPECT_TRUE(tmp);
+    tmp = response1->getOption(DHO_DOMAIN_NAME);
+    EXPECT_TRUE(tmp);
+    tmp = response1->getOption(DHO_DOMAIN_NAME_SERVERS);
+    EXPECT_TRUE(tmp);
+
+    // Verify that server id is present and is the configured value. 
+    checkServerIdentifier(response1, "192.0.2.0");
+
+    // Try again with a different client id.
+    id = ClientId::fromText("31:31:32");
+    clientid = (OptionPtr(new Option(Option::V4, DHO_DHCP_CLIENT_IDENTIFIER,
+                                                 id->getClientId())));
+    query1.reset(new Pkt4(DHCPDISCOVER, 1235));
+    query1->setRemoteAddr(IOAddress("192.0.2.1"));
+    query1->addOption(clientid);
+    query1->setIface("eth1");
+    query1->setIndex(ETH1_INDEX);
+
+    // Classify packet
+    srv.classifyPacket(query1);
+
+    // Verify it is not a member of "melon".
+    ASSERT_FALSE(query1->inClass("melon"));
+
+    // Process query
+    response1 = srv.processDiscover(query1);
+
+    // Verify that routers, domain-name, and domain-name-servers are not present.
+    tmp = response1->getOption(DHO_ROUTERS);
+    EXPECT_FALSE(tmp);
+    tmp = response1->getOption(DHO_DOMAIN_NAME);
+    EXPECT_FALSE(tmp);
+    tmp = response1->getOption(DHO_DOMAIN_NAME_SERVERS);
+    EXPECT_FALSE(tmp);
+
+    // Verify that server id is present and is the generated value. 
+    checkServerIdentifier(response1, "0.0.0.0");
+}
+
 
 } // end of anonymous namespace

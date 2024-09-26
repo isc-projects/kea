@@ -210,6 +210,14 @@ public:
     ///
     /// @param class_name Class name.
     void addClientClass(const std::string& class_name);
+
+    /// @brief Validates an OptionDescriptor's client-classes against a list
+    /// of classes
+    ///
+    /// @param cclasses list of ClientClasses to validate against
+    /// @return True if descriptor's client-classes is empty or at least
+    /// one of its members is found in the validation list.
+    bool allowedForClientClasses(const ClientClasses& cclasses) const;
 };
 
 /// @brief Multi index container for DHCP option descriptors.
@@ -809,8 +817,11 @@ private:
     VendorOptionSpaceCollection vendor_options_;
 };
 
+class CfgOption; // forward declaration 
+
 /// @name Pointers to the @c CfgOption objects.
 //@{
+
 /// @brief Non-const pointer.
 typedef boost::shared_ptr<CfgOption> CfgOptionPtr;
 

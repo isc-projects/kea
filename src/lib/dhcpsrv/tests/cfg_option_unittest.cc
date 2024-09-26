@@ -106,6 +106,37 @@ TEST(OptionDescriptorTest, assign) {
     EXPECT_EQ(context, desc->getContext());
 }
 
+// Exercise OptionDescriptor::allowedForClientClasses function.
+TEST(OptionDescriptorTest, allowedForClientClassesTest) {
+    ClientClasses filter_classes;
+
+    OptionPtr opt(new Option(Option::V6, 112));
+    OptionDescriptor desc(opt, false, false);
+
+    // Option should be allowed when both lists are empty.
+    EXPECT_TRUE(desc.allowedForClientClasses(filter_classes));
+
+    // Add some classes to the filter list.
+    filter_classes.insert("water");
+    filter_classes.insert("dog");
+
+    // Option should be allowed when option's client-classes is empty.
+    EXPECT_TRUE(desc.allowedForClientClasses(filter_classes));
+
+    //  Add classes to the option.
+    desc.addClientClass("avacado");
+    desc.addClientClass("cat");
+
+    // No intersection, option should not be allowed.
+    EXPECT_FALSE(desc.allowedForClientClasses(filter_classes));
+
+    // Add a matching class to the filter list.
+    filter_classes.insert("cat");
+
+    // Option should be allowed.
+    EXPECT_TRUE(desc.allowedForClientClasses(filter_classes));
+}
+
 /// This class fixture for testing @c CfgOption class, holding option
 /// configuration.
 class CfgOptionTest : public ::testing::Test {

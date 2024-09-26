@@ -722,6 +722,12 @@ public:
     /// are expected to occur in the stack.
     void checkPktEvents(const PktPtr& msg, std::list<std::string> expected_events);
 
+    /// @brief Checks the message for an expected value of DHO_DHCP_SERVER_IDENTIFIER
+    ///
+    /// @param msg pointer to the packet under test.
+    /// @param exp_address expected ip address as a string
+    void checkServerIdentifier(Pkt4Ptr msg, std::string exp_address);
+
     /// @brief A subnet used in most tests.
     Subnet4Ptr subnet_;
 
