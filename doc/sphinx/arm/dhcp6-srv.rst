@@ -2250,7 +2250,7 @@ in :ref:`dnr4-options`.
 NTP Server Suboptions
 ---------------------
 
-NTP server option is a contaier of suboptions: ntp-server-address (1), ntp-server-multicast (2)
+NTP server option is a container of suboptions: ntp-server-address (1), ntp-server-multicast (2)
 carrying an IPv6 address, and ntp-server-fqdn (3) carrying a FQDN in wire format defined
 in the "v6-ntp-server-suboptions" option space. Each option instance carries one and only one
 suboption as required by `RFC 5908 <https://tools.ietf.org/html/rfc5908>`__.

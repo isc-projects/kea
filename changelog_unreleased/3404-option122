@@ -1,0 +1,6 @@
+[func]		fdupont
+	Added support of DHCPv4 "cablelab-client-conf" (122) option
+	and its associated suboptions specified by RFC 3495, 3594
+	and 3634 in the "cablelabs-client-conf" space at the
+	exception of the suboption 3.
+	(Gitlab #3404)

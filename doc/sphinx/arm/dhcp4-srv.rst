@@ -2051,6 +2051,8 @@ types are given in :ref:`dhcp-types`.
    +----------------------------------------+------+---------------------------+-------------+-------------+
    | classless-static-route                 | 121  | internal                  | false       | false       |
    +----------------------------------------+------+---------------------------+-------------+-------------+
+   | cablelabs-client-conf                  | 122  | empty                     | false       | false       |
+   +----------------------------------------+------+---------------------------+-------------+-------------+
    | vivco-suboptions                       | 124  | record (uint32, binary)   | false       | false       |
    +----------------------------------------+------+---------------------------+-------------+-------------+
    | vivso-suboptions                       | 125  | uint32                    | false       | false       |
@@ -2275,6 +2277,55 @@ includes all packets with a specific ``remote-id`` value would look as follows:
 Classes may be used to segregate traffic into a relatively small number of groups, which then
 can be used to select specific subnets, pools and extra options, and more. If per-host behavior
 is necessary, using host reservations with flexible identifiers is strongly recommended.
+
+.. _cablelabs-client-conf-suboptions:
+
+CableLabs Client Conf Suboptions
+--------------------------------
+
+CableLabs client conf option ("cablelabs-client-conf" code 122) is a
+container of suboptions in the "cablelabs-client-conf" space listed in
+the table below.
+
+.. table:: List of CableLabs Client Conf sub-options that Kea can understand
+
+   +------------------------+------+-----------------------------+
+   | Name                   | Code | Format                      |
+   +========================+======+=============================+
+   | tsp-primary-server     | 1    | IPv4 address                |
+   +------------------------+------+-----------------------------+
+   | tsp-secondary-server   | 2    | IPv4 address                |
+   +------------------------+------+-----------------------------+
+   | tsp-as-parameters      | 4    | record of 3 uint32          |
+   +------------------------+------+-----------------------------+
+   | tsp-ap-parameters      | 5    | record of 3 uint32          |
+   +------------------------+------+-----------------------------+
+   | tsp-realm              | 6    | Fully Qualified Domain Name |
+   +------------------------+------+-----------------------------+
+   | tsp-use-tgt            | 7    | boolean                     |
+   +------------------------+------+-----------------------------+
+   | tsp-provisioning-timer | 8    | uint8                       |
+   +------------------------+------+-----------------------------+
+   | tsp-sct                | 9    | uint16                      |
+   +------------------------+------+-----------------------------+
+   | kdc-server             | 10   | array of IPv4 address       |
+   +------------------------+------+-----------------------------+
+
+These suboptions are defined in
+`RFC 3495 <https://tools.ietf.org/html/rfc3495>`_ including its errata
+which clarifies the realm format,
+`RFC 3594 <https://tools.ietf.org/html/rfc3594>`_ and
+`RFC 3634 <https://tools.ietf.org/html/rfc3634>`_.
+
+.. note::
+
+  The suboption 3 carries the TSP provisioning server address as an
+  IPv4 address or a FQDN. This can't be defined in Kea so no standatd
+  suboption is defined for the code 3 leaving the choice to configure
+  its content as a binary value, or if it is used only as an IPv4
+  address or a FQDN to define it as a record of an ``uint8`` (set
+  to 0) and ``ipv4-address`, or a record of an ``uint8`` (set to 1)
+  and a ``fqdn``, allowing the use of CSV data.
 
 .. _dhcp4-custom-options:
 
