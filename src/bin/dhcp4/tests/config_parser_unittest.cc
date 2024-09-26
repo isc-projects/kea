@@ -63,7 +63,7 @@ using namespace std;
 namespace {
 
 const char* PARSER_CONFIGS[] = {
-    // CONFIGURATION 0: one subnet with one pool, no user contexts
+    // Configuration 0: one subnet with one pool, no user contexts
     "{"
     "    \"interfaces-config\": {"
     "        \"interfaces\": [\"*\" ]"
@@ -889,9 +889,8 @@ TEST_F(Dhcp4ParserTest, emptyInterfaceConfig) {
     checkResult(status, 0);
 }
 
-/// The goal of this test is to verify if wrongly defined subnet will
-/// be rejected. Properly defined subnet must include at least one
-/// pool definition.
+/// The goal of this test is to verify if configuration without any
+/// subnets defined can be accepted.
 TEST_F(Dhcp4ParserTest, emptySubnet) {
 
     std::string config = "{ " + genIfaceConfig() + "," +

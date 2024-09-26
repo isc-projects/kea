@@ -67,7 +67,7 @@ using namespace std;
 namespace {
 
 const char* PARSER_CONFIGS[] = {
-    // CONFIGURATION 0: one subnet with one pool, no user contexts
+    // Configuration 0: one subnet with one pool, no user contexts
     "{"
     "    \"interfaces-config\": {"
     "        \"interfaces\": [\"*\" ]"
@@ -7697,6 +7697,24 @@ TEST_F(Dhcp6ParserTest, globalReservations) {
     opt_prf = retrieveOption<OptionUint8Ptr>(*host, D6O_PREFERENCE);
     ASSERT_TRUE(opt_prf);
     EXPECT_EQ(11, static_cast<int>(opt_prf->getValue()));
+}
+
+// Rather than disable these tests they are compiled out.  This avoids them
+// reporting as disabled and thereby drawing attention to them.
+// This test verifies that configuration control with unsupported type fails
+TEST_F(Dhcp6ParserTest, configControlInfoNoFactory) {
+    string config = PARSER_CONFIGS[8];
+
+    // Unregister "mysql" and ignore the return value.
+    static_cast<void>(TestConfigBackendDHCPv6::
+                      unregisterBackendType(ConfigBackendDHCPv6Mgr::instance(),
+                                            "mysql"));
+
+    // Should fail because "type=mysql" has no factories.
+    configure(config, CONTROL_RESULT_ERROR,
+              "during update from config backend database: "
+              "The type of the configuration backend: "
+              "'mysql' is not supported");
 }
 
 // This test verifies that configuration control info gets populated.
