@@ -2296,9 +2296,9 @@ the table below.
    +------------------------+------+-----------------------------+
    | tsp-secondary-server   | 2    | IPv4 address                |
    +------------------------+------+-----------------------------+
-   | tsp-as-parameters      | 4    | record of 3 uint32          |
+   | tsp-as-parameters      | 4    | record of 3 uint32's        |
    +------------------------+------+-----------------------------+
-   | tsp-ap-parameters      | 5    | record of 3 uint32          |
+   | tsp-ap-parameters      | 5    | record of 3 uint32's        |
    +------------------------+------+-----------------------------+
    | tsp-realm              | 6    | Fully Qualified Domain Name |
    +------------------------+------+-----------------------------+
@@ -2308,7 +2308,7 @@ the table below.
    +------------------------+------+-----------------------------+
    | tsp-sct                | 9    | uint16                      |
    +------------------------+------+-----------------------------+
-   | kdc-server             | 10   | array of IPv4 address       |
+   | kdc-server             | 10   | array of IPv4 addresses     |
    +------------------------+------+-----------------------------+
 
 These suboptions are defined in
@@ -2320,12 +2320,12 @@ which clarifies the realm format,
 .. note::
 
   The suboption 3 carries the TSP provisioning server address as an
-  IPv4 address or a FQDN. This can't be defined in Kea so no standatd
-  suboption is defined for the code 3 leaving the choice to configure
-  its content as a binary value, or if it is used only as an IPv4
-  address or a FQDN to define it as a record of an ``uint8`` (set
-  to 0) and ``ipv4-address`, or a record of an ``uint8`` (set to 1)
-  and a ``fqdn``, allowing the use of CSV data.
+  either IPv4 address or a FQDN. This can't be defined in Kea so no
+  standard suboption is defined for the code 3 leaving the choice to
+  configure its content as a binary value, or if it is used only as an
+  IPv4 address or a FQDN to define it as a record of an ``uint8`` (set
+  to 0) and ``ipv4-address``, or a record of an ``uint8`` (set to 1)
+  and a ``fqdn``, allowing the use of CSV formatted data.
 
 .. _dhcp4-custom-options:
 
@@ -8001,9 +8001,25 @@ The following standards are currently supported in Kea:
    (DHCP) version 4*, `RFC 3442 <https://tools.ietf.org/html/rfc3442>`__:
    The option is supported.
 
+-  *Dynamic Host Configuration Protocol (DHCP) Option for CableLabs Client
+   Configuration*, `RFC 3495 <https://tools.ietf.org/html/rfc3495>`__:
+   The option and its suboptions 1, 2, 4, 5, 6, 7 and 8 are supported.
+   See :ref:`cablelabs-client-conf-suboptions` for details.
+
 -  *Link Selection sub-option for the Relay Agent Option*, `RFC 3527
    <https://tools.ietf.org/html/rfc3527>`__: The link selection sub-option
    is supported.
+
+-  *PacketCable Security Ticket Control Sub-Option for the DHCP CableLabs
+   Client Configuration (CCC) Option*, `RFC 3594
+   <https://tools.ietf.org/html/rfc3594>`__: The Security Ticket Control
+   sub-option is supported.
+   
+-  *Key Distribution Center (KDC) Server Address Sub-option for the
+   Dynamic Host Configuration Protocol (DHCP) CableLabs Client
+   Configuration (CCC) Option*, `RFC 3634
+   <https://tools.ietf.org/html/rfc3634>`__: The Key Distribution Center
+   IP Address sub-option is supported.
 
 -  *Unused Dynamic Host Configuration Protocol (DHCP) Option Codes*, `RFC 3679
    <https://tools.ietf.org/html/rfc3679>`__: Kea does not support any of the
