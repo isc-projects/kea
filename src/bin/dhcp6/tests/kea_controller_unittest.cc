@@ -185,7 +185,7 @@ public:
     }
 };
 
-/// @brief test class for Kea configuration backend
+/// @brief test class for Kea configuration backend.
 ///
 /// This class is used for testing Kea configuration backend.
 /// It is very simple and currently focuses on reading
