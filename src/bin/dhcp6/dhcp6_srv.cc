@@ -1623,6 +1623,7 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
         }
     }
 
+    const auto& cclasses = question->getClasses();
     // For each requested option code get the first instance of the option
     // to be returned to the client.
     for (uint16_t opt : requested_opts) {
@@ -1639,8 +1640,8 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
             // Iterate on the configured option list
             for (auto const& copts : co_list) {
                 OptionDescriptor desc = copts->get(DHCP6_OPTION_SPACE, opt);
-                // Got it: add it and jump to the outer loop
-                if (desc.option_) {
+                // Got it: if allowed add it and jump to the outer loop.
+                if (desc.option_ && desc.allowedForClientClasses(cclasses)) {
                     answer->addOption(desc.option_);
                     break;
                 }
@@ -1667,7 +1668,8 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
         // Iterate on the configured option list.
         for (auto const& copts : co_list) {
             for (auto const& desc : copts->getList(DHCP6_OPTION_SPACE, D6O_VENDOR_CLASS)) {
-                if (!desc.option_) {
+                // Empty or not allowed, skip i.
+                if (!desc.option_ || !desc.allowedForClientClasses(cclasses)) {
                     continue;
                 }
                 OptionVendorClassPtr vendor_class =
@@ -1704,7 +1706,8 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
         // Iterate on the configured option list
         for (auto const& copts : co_list) {
             for (auto const& desc : copts->getList(DHCP6_OPTION_SPACE, D6O_VENDOR_OPTS)) {
-                if (!desc.option_) {
+                // Empty or not allowed, skip i.
+                if (!desc.option_ || !desc.allowedForClientClasses(cclasses)) {
                     continue;
                 }
                 OptionVendorPtr vendor_opts =
@@ -1815,6 +1818,7 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
     }
 
     map<uint32_t, set<uint16_t> > cancelled_opts;
+    const auto& cclasses = question->getClasses();
 
     // Iterate on the configured option list to add persistent and
     // cancelled options.
@@ -1876,7 +1880,8 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
             if (!vendor_rsp->getOption(opt)) {
                 for (auto const& copts : co_list) {
                     OptionDescriptor desc = copts->get(vendor_id, opt);
-                    if (desc.option_) {
+                    // Got it: if allowed add it and jump to outer loop.
+                    if (desc.option_ && desc.allowedForClientClasses(cclasses)) {
                         vendor_rsp->addOption(desc.option_);
                         added = true;
                         break;

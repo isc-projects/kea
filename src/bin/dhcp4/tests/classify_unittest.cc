@@ -1782,7 +1782,7 @@ TEST_F(ClassifyTest, vendorOptionClassTagTest) {
     // Configure DHCP server.
     configure(config, srv);
 
-    // Create packets with enough to select the subnet
+    // Create a DISCOVER that matches class "melon" but not "ball".
     auto id = ClientId::fromText("31:31:31");
     OptionPtr clientid = (OptionPtr(new Option(Option::V4,
                                                DHO_DHCP_CLIENT_IDENTIFIER,
@@ -1794,27 +1794,26 @@ TEST_F(ClassifyTest, vendorOptionClassTagTest) {
     query1->setIface("eth1");
     query1->setIndex(ETH1_INDEX);
 
-    // Let's add a vendor-option (vendor-id=4491).
+    // Add a vendor-option (vendor-id=4491).
     OptionPtr vendor(new OptionVendor(Option::V4, 4491));
     query1->addOption(vendor);
 
-    // Let's add a vendor-option (vendor-id=4491) with three sub-options.
+    // Add the ORO sub-option requesting all three sub-options.
     boost::shared_ptr<OptionUint8Array> vendor_oro(new OptionUint8Array(Option::V4,
                                                                         DOCSIS3_V4_ORO));
-    // Request the suboptions.
     vendor_oro->addValue(101); 
     vendor_oro->addValue(102);
     vendor_oro->addValue(103);
     vendor->addOption(vendor_oro);
 
-    // Classify packets
+    // Classify query.
     srv.classifyPacket(query1);
 
-    // Verify class membership is as expected.
+    // Verify it belongs to "melon" but not "ball".
     EXPECT_TRUE(query1->inClass("melon"));
     EXPECT_FALSE(query1->inClass("ball"));
 
-    // Process query
+    // Process the query
     Pkt4Ptr response1 = srv.processDiscover(query1);
 
     // Check if there is a vendor option response
@@ -1826,14 +1825,14 @@ TEST_F(ClassifyTest, vendorOptionClassTagTest) {
         boost::dynamic_pointer_cast<OptionVendor>(tmp);
     ASSERT_TRUE(vendor_resp);
 
-    // Should have options 1 and 3.
+    // Should have options 1 and 3, but not 2.
     EXPECT_EQ(2, vendor_resp->getOptions().size());
     EXPECT_TRUE(vendor_resp->getOption(101));
     EXPECT_FALSE(vendor_resp->getOption(102));
     EXPECT_TRUE(vendor_resp->getOption(103));
 }
 
-// Verifies that requested VIVCO suboption can be gated by 
+// Verifies that a requested VIVCO suboption can be gated by 
 // option class tagging.
 TEST_F(ClassifyTest, vivcoOptionClassTagTest) {
     IfaceMgrTestConfig test_config(true);
@@ -1871,7 +1870,7 @@ TEST_F(ClassifyTest, vivcoOptionClassTagTest) {
     // Configure DHCP server.
     configure(config, srv);
 
-    // Create packet with enough to select the subnet
+    // Create a DISCOVER that matches class "melon".
     auto id = ClientId::fromText("31:31:31");
     OptionPtr clientid = (OptionPtr(new Option(Option::V4,
                                                DHO_DHCP_CLIENT_IDENTIFIER,
@@ -1883,7 +1882,7 @@ TEST_F(ClassifyTest, vivcoOptionClassTagTest) {
     query1->setIface("eth1");
     query1->setIndex(ETH1_INDEX);
 
-    // Create and add a PRL option.
+    // Add a PRL option requesting the VIVCO suboption.
     OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
                                                  DHO_DHCP_PARAMETER_REQUEST_LIST));
     prl->addValue(DHO_VIVCO_SUBOPTIONS);
@@ -1902,7 +1901,7 @@ TEST_F(ClassifyTest, vivcoOptionClassTagTest) {
     OptionPtr tmp = response1->getOption(DHO_VIVCO_SUBOPTIONS);
     EXPECT_TRUE(tmp);
 
-    // Try again with a different client id.
+    // Try again with a client id that does not match "melon".
     id = ClientId::fromText("31:31:32");
     clientid = (OptionPtr(new Option(Option::V4, DHO_DHCP_CLIENT_IDENTIFIER,
                                                  id->getClientId())));
@@ -1965,7 +1964,7 @@ TEST_F(ClassifyTest, vivsoOptionClassTagTest) {
     // Configure DHCP server.
     configure(config, srv);
 
-    // Create packet with enough to select the subnet
+    // Create a DISCOVER that matches class "melon".
     auto id = ClientId::fromText("31:31:31");
     OptionPtr clientid = (OptionPtr(new Option(Option::V4,
                                                DHO_DHCP_CLIENT_IDENTIFIER,
@@ -1977,7 +1976,7 @@ TEST_F(ClassifyTest, vivsoOptionClassTagTest) {
     query1->setIface("eth1");
     query1->setIndex(ETH1_INDEX);
 
-    // Create and add a PRL option.
+    // Add a PRL option requesting the VIVSO sub-option.
     OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
                                                  DHO_DHCP_PARAMETER_REQUEST_LIST));
     prl->addValue(DHO_VIVSO_SUBOPTIONS);
@@ -1992,11 +1991,11 @@ TEST_F(ClassifyTest, vivsoOptionClassTagTest) {
     // Process query
     Pkt4Ptr response1 = srv.processDiscover(query1);
 
-    // Check if there is a vendor option response
+    // Verify the reponse contains the VIVSO sub-option
     OptionPtr tmp = response1->getOption(DHO_VIVSO_SUBOPTIONS);
     EXPECT_TRUE(tmp);
 
-    // Try again with a different client id.
+    // Try again with a client id that does not match "melon".
     id = ClientId::fromText("31:31:32");
     clientid = (OptionPtr(new Option(Option::V4, DHO_DHCP_CLIENT_IDENTIFIER,
                                                  id->getClientId())));
@@ -2016,13 +2015,13 @@ TEST_F(ClassifyTest, vivsoOptionClassTagTest) {
     // Process query
     response1 = srv.processDiscover(query1);
 
-    // VIVCO suboption should not be present.
+    // VIVSO suboption should not be present.
     tmp = response1->getOption(DHO_VIVSO_SUBOPTIONS);
     ASSERT_FALSE(tmp);
 }
 
-// Verifies that "basic" options can be gated by 
-// option class tagging.
+// Verifies that the "basic" options (routers, domain-name, domain-name-servers,
+// and dhcp-server-id) can be gated by option class tagging.
 TEST_F(ClassifyTest, basicOptionClassTagTest) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
@@ -2074,7 +2073,7 @@ TEST_F(ClassifyTest, basicOptionClassTagTest) {
     // Configure DHCP server.
     configure(config, srv);
 
-    // Create packet with enough to select the subnet
+    // Create a DISCOVER that matches class "melon".
     auto id = ClientId::fromText("31:31:31");
     OptionPtr clientid = (OptionPtr(new Option(Option::V4,
                                                DHO_DHCP_CLIENT_IDENTIFIER,
@@ -2109,7 +2108,7 @@ TEST_F(ClassifyTest, basicOptionClassTagTest) {
     // Verify that server id is present and is the configured value. 
     checkServerIdentifier(response1, "192.0.2.0");
 
-    // Try again with a different client id.
+    // Try again with a client id that does not match "melon".
     id = ClientId::fromText("31:31:32");
     clientid = (OptionPtr(new Option(Option::V4, DHO_DHCP_CLIENT_IDENTIFIER,
                                                  id->getClientId())));
@@ -2136,9 +2135,8 @@ TEST_F(ClassifyTest, basicOptionClassTagTest) {
     tmp = response1->getOption(DHO_DOMAIN_NAME_SERVERS);
     EXPECT_FALSE(tmp);
 
-    // Verify that server id is present and is the generated value. 
+    // Verify that server id is present but it is the generated value.
     checkServerIdentifier(response1, "0.0.0.0");
 }
-
 
 } // end of anonymous namespace

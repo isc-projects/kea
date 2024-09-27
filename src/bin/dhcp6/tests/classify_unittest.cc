@@ -13,12 +13,15 @@
 #include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp/opaque_data_tuple.h>
 #include <dhcp/option_string.h>
+#include <dhcp/option_vendor.h>
 #include <dhcp/option_vendor_class.h>
 #include <dhcp/option6_addrlst.h>
 #include <dhcp/testutils/pkt_captures.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/tests/dhcp6_client.h>
+#include <dhcp/docsis3_option_defs.h>
+
 #include <asiolink/io_address.h>
 #include <stats/stats_mgr.h>
 #include <boost/pointer_cast.hpp>
@@ -525,6 +528,17 @@ public:
             query->setIndex(ETH1_INDEX);
             query->addOption(generateIA(D6O_IA_NA, 123, 1500, 3000));
             return (query);
+    }
+
+    void processQuery(NakedDhcpv6Srv& srv, Pkt6Ptr query, Pkt6Ptr& response) {
+        AllocEngine::ClientContext6 ctx;
+        bool drop = !srv.earlyGHRLookup(query, ctx);
+        ASSERT_FALSE(drop);
+        ctx.subnet_ = srv_.selectSubnet(query, drop);
+        ASSERT_FALSE(drop);
+        srv.initContext(ctx, drop);
+        ASSERT_FALSE(drop);
+        response = srv.processSolicit(ctx);
     }
 
     /// @brief Interface Manager's fake configuration control.
@@ -2867,15 +2881,9 @@ TEST_F(ClassifyTest, subClassPrecedence) {
     EXPECT_TRUE(query1->inClass("template-client-id"));
     EXPECT_TRUE(query1->inClass("SPAWN_template-client-id_def"));
 
-    // Process queries
-    AllocEngine::ClientContext6 ctx1;
-    bool drop = !srv.earlyGHRLookup(query1, ctx1);
-    ASSERT_FALSE(drop);
-    ctx1.subnet_ = srv_.selectSubnet(query1, drop);
-    ASSERT_FALSE(drop);
-    srv.initContext(ctx1, drop);
-    ASSERT_FALSE(drop);
-    Pkt6Ptr response1 = srv.processSolicit(ctx1);
+    // Process the query
+    Pkt6Ptr response1;
+    processQuery(srv, query1, response1);
 
     // Verify that opt1 is inherited from the template.
     OptionPtr opt = response1->getOption(1249);
@@ -2886,6 +2894,389 @@ TEST_F(ClassifyTest, subClassPrecedence) {
     opt = response1->getOption(1250);
     ASSERT_TRUE(opt);
     EXPECT_EQ(opt->toString(), "spawn two");
+}
+
+// Verifies that (non-vendor) requested options can be gated
+// by option class tagging.
+TEST_F(ClassifyTest, requestedOptionClassTag) {
+    IfaceMgrTestConfig test_config(true);
+
+    NakedDhcpv6Srv srv(0);
+
+    string config = R"^(
+    {
+        "interfaces-config": {
+            "interfaces": [ "*" ]
+        },
+        "preferred-lifetime": 3000,
+        "rebind-timer": 2000,
+        "renew-timer": 1000,
+        "valid-lifetime": 4000,
+        "subnet6": [{
+            "pools": [{
+                "pool": "2001:db8:1::/64"
+            }],
+            "subnet": "2001:db8:1::/48",
+            "id": 1,
+            "interface": "eth1",
+        }],
+        "option-def": [{
+            "name": "no_classes",
+            "code": 1249,
+            "type": "string"
+        },
+        {
+            "name": "wrong_class",
+            "code": 1250,
+            "type": "string"
+        },
+        {
+            "name": "right_class",
+            "code": 1251,
+            "type": "string"
+        }],
+        "option-data": [{
+            "name": "no_classes",
+            "data": "oompa"
+        },
+        {
+            "name": "wrong_class",
+            "data": "loompa",
+            "client-classes": [ "wrong" ]
+        },
+        {
+            "name": "right_class",
+            "data": "doompadee",
+            "client-classes": [ "right" ]
+        }],
+        "client-classes": [{
+            "name": "right",
+            "test": "substring(option[1].hex,0,3) == '111'"
+        }]
+    }
+    )^";
+
+    ASSERT_NO_THROW(configure(config));
+
+    // Create a SOLICIT that matches class "right".
+    Pkt6Ptr query = createSolicit();
+    query->delOption(D6O_CLIENTID);
+
+    uint8_t duid[] = { 0x31, 0x31, 0x31 };
+    OptionBuffer buf(duid, duid + sizeof(duid));
+    OptionPtr clientid2(new Option(Option::V6, D6O_CLIENTID, buf));
+    query->addOption(clientid2);
+
+    // Add an ORO option requesting all three options.
+    OptionUint16ArrayPtr oro(new OptionUint16Array(Option::V6, D6O_ORO));
+    ASSERT_TRUE(oro);
+    oro->addValue(1249);
+    oro->addValue(1250);
+    oro->addValue(1251);
+    query->addOption(oro);
+
+    // Classify the query. 
+    srv.classifyPacket(query);
+
+    // Verify query is in class "right".
+    ASSERT_TRUE(query->inClass("right"));
+
+    // Process the solicit.
+    Pkt6Ptr response;
+    processQuery(srv, query, response);
+
+    // Option without class tags should be included.
+    OptionPtr opt = response->getOption(1249);
+    EXPECT_TRUE(opt);
+
+    // Option with class tag that doesn't match should not included.
+    opt = response->getOption(1250);
+    EXPECT_FALSE(opt);
+
+    // Option with class tag that matches should be included.
+    opt = response->getOption(1251);
+    EXPECT_TRUE(opt);
+}
+
+// Verifies that D6O_VENDOR_CLASS options can be gated
+// by option class tagging.
+TEST_F(ClassifyTest, vendorClassOptionClassTag) {
+    IfaceMgrTestConfig test_config(true);
+
+    NakedDhcpv6Srv srv(0);
+
+    string config = R"^(
+    {
+        "interfaces-config": {
+            "interfaces": [ "*" ]
+        },
+        "preferred-lifetime": 3000,
+        "rebind-timer": 2000,
+        "renew-timer": 1000,
+        "valid-lifetime": 4000,
+        "subnet6": [{
+            "pools": [{
+                "pool": "2001:db8:1::/64"
+            }],
+            "subnet": "2001:db8:1::/48",
+            "id": 1,
+            "interface": "eth1",
+        }],
+        "option-def": [
+        ],
+        "option-data": [{
+            "name": "vendor-class",
+            "always-send": true,
+            "data": "1234, 0003666f6f",
+            "client-classes": [ "melon" ]
+        }],
+        "client-classes": [{
+            "name": "melon",
+            "test": "substring(option[1].hex,0,3) == '111'"
+        }]
+    }
+    )^";
+
+    ASSERT_NO_THROW(configure(config));
+
+    // Create a SOLICIT that matches class "right".
+    Pkt6Ptr query = createSolicit();
+    query->delOption(D6O_CLIENTID);
+
+    uint8_t duid[] = { 0x31, 0x31, 0x31 };
+    OptionBuffer buf(duid, duid + sizeof(duid));
+    OptionPtr clientid2(new Option(Option::V6, D6O_CLIENTID, buf));
+    query->addOption(clientid2);
+
+    // Classify the query. 
+    srv.classifyPacket(query);
+
+    // Verify query is in class "melon".
+    ASSERT_TRUE(query->inClass("melon"));
+
+    // Process the solicit.
+    Pkt6Ptr response;
+    processQuery(srv, query, response);
+
+    const auto& vendor_classes = response->getOptions(D6O_VENDOR_CLASS);
+    ASSERT_EQ(1, vendor_classes.size());
+
+    // Create a SOLICIT that does not match class "right".
+    query = createSolicit();
+
+    // Classify the query. 
+    srv.classifyPacket(query);
+
+    // Verify query is in not class "melon".
+    ASSERT_FALSE(query->inClass("melon"));
+
+    // Process the SOLICIT.
+    processQuery(srv, query, response);
+
+    // Should not have any vendor class options.
+    const auto& vendor_classes2 = response->getOptions(D6O_VENDOR_CLASS);
+    ASSERT_EQ(0, vendor_classes2.size());
+}
+
+// Verifies that D6O_VENDOR_OPTS option can be gated by option class
+// tagging. Note that class-tagging only suppresses this option when 
+// none of the vendor's sub-options are being returned.
+TEST_F(ClassifyTest, persistedVendorOptsOptionClassTag) {
+    IfaceMgrTestConfig test_config(true);
+
+    NakedDhcpv6Srv srv(0);
+
+    string config = R"^(
+    {
+        "interfaces-config": {
+            "interfaces": [ "*" ]
+        },
+        "preferred-lifetime": 3000,
+        "rebind-timer": 2000,
+        "renew-timer": 1000,
+        "valid-lifetime": 4000,
+        "subnet6": [{
+            "pools": [{
+                "pool": "2001:db8:1::/64"
+            }],
+            "subnet": "2001:db8:1::/48",
+            "id": 1,
+            "interface": "eth1",
+        }],
+        "option-data": [{
+            "always-send": true,
+            "name": "vendor-opts",
+            "data": "4491",
+            "space": "dhcp6",
+            "client-classes": [ "melon" ]
+        }],
+        "client-classes": [{
+            "name": "melon",
+            "test": "substring(option[1].hex,0,3) == '111'"
+        }]
+    }
+    )^";
+
+    ASSERT_NO_THROW(configure(config));
+
+    // Create a SOLICIT that does not match class.
+    Pkt6Ptr query = createSolicit();
+
+    // Classify the query. 
+    srv.classifyPacket(query);
+
+    // Verify query is not in class "melon".
+    ASSERT_FALSE(query->inClass("melon"));
+
+    // Process the solicit.
+    Pkt6Ptr response;
+    processQuery(srv, query, response);
+
+    // The response should not have the D6O_VENDOR_OPTS option.
+    const auto& vendor_opts = response->getOptions(D6O_VENDOR_OPTS);
+    ASSERT_EQ(0, vendor_opts.size());
+
+    // Create a SOLICIT that matches class "melon".
+    query = createSolicit();
+    query->delOption(D6O_CLIENTID);
+
+    uint8_t duid[] = { 0x31, 0x31, 0x31 };
+    OptionBuffer buf(duid, duid + sizeof(duid));
+    OptionPtr clientid2(new Option(Option::V6, D6O_CLIENTID, buf));
+    query->addOption(clientid2);
+
+    // Classify the query. 
+    srv.classifyPacket(query);
+
+    // Verify query is in class "melon".
+    ASSERT_TRUE(query->inClass("melon"));
+
+    // Process the solicit.
+    processQuery(srv, query, response);
+
+    // The response should have the D6O_VENDOR_OPTS option.
+    const auto& vendor_opts2 = response->getOptions(D6O_VENDOR_OPTS);
+    ASSERT_EQ(1, vendor_opts2.size());
+}
+
+// Verifies that vendor options can be gated by option class tagging.
+TEST_F(ClassifyTest, requestedVendorOptionsClassTag) {
+    IfaceMgrTestConfig test_config(true);
+
+    NakedDhcpv6Srv srv(0);
+
+    string config = R"^(
+    {
+        "interfaces-config": {
+            "interfaces": [ "*" ]
+        },
+        "preferred-lifetime": 3000,
+        "rebind-timer": 2000,
+        "renew-timer": 1000,
+        "valid-lifetime": 4000,
+        "subnet6": [{
+            "pools": [{
+                "pool": "2001:db8:1::/64"
+            }],
+            "subnet": "2001:db8:1::/48",
+            "id": 1,
+            "interface": "eth1",
+        }],
+        "option-def": [{
+            "space": "vendor-4491",
+            "name": "one",
+            "code": 101,
+            "type": "string"
+        },
+        {
+            "space": "vendor-4491",
+            "name": "two",
+            "code": 102,
+            "type": "string"
+        },
+        {
+            "space": "vendor-4491",
+            "name": "three",
+            "code": 103,
+            "type": "string"
+        }],
+        "option-data": [{ 
+            "space": "vendor-4491",
+            "code": 101,
+            "csv-format": true,
+            "data": "zippy-ah",
+            "always-send": true,
+            "client-classes": [ "melon" ]
+        },
+        {
+            "space": "vendor-4491",
+            "code": 102,
+            "csv-format": true,
+            "data": "dee",
+            "always-send": true,
+            "client-classes": [ "ball" ]
+        },
+        {
+            "space": "vendor-4491",
+            "code": 103,
+            "csv-format": true,
+            "always-send": true,
+            "data": "doo-dah"
+        }],
+        "client-classes": [{
+            "name": "melon",
+            "test": "substring(option[1].hex,0,3) == '111'"
+        }]
+    }
+    )^";
+
+    ASSERT_NO_THROW(configure(config));
+
+    // Create a SOLICIT that matches class "right".
+    Pkt6Ptr query = createSolicit();
+    query->delOption(D6O_CLIENTID);
+
+    uint8_t duid[] = { 0x31, 0x31, 0x31 };
+    OptionBuffer buf(duid, duid + sizeof(duid));
+    OptionPtr clientid2(new Option(Option::V6, D6O_CLIENTID, buf));
+    query->addOption(clientid2);
+
+    // Add a vendor-id option with a vendor ORO requesting all three vendor options.
+    OptionVendorPtr vendor(new OptionVendor(Option::V6, 4491));
+    query->addOption(vendor);
+
+    OptionUint16ArrayPtr vendor_oro(new OptionUint16Array(Option::V6, DOCSIS3_V6_ORO));
+    vendor_oro->addValue(101);
+    vendor_oro->addValue(102);
+    vendor_oro->addValue(103);
+    vendor->addOption(vendor_oro);
+
+    // Classify the query. 
+    srv.classifyPacket(query);
+
+    // Verify query is in class "melon".
+    ASSERT_TRUE(query->inClass("melon"));
+
+    // Process the solicit.
+    Pkt6Ptr response;
+    processQuery(srv, query, response);
+
+    // Should have 1 vendor response option.
+    const auto& vendor_opts = response->getOptions(D6O_VENDOR_OPTS);
+    ASSERT_EQ(1, vendor_opts.size());
+
+    auto const& opt = (*vendor_opts.begin()).second;
+    OptionVendorPtr vendor_resp = boost::dynamic_pointer_cast<OptionVendor>(opt);
+    ASSERT_TRUE(vendor_resp);
+
+    ASSERT_EQ(4491, vendor_resp->getVendorId());
+    // It should vendor otions 101 and 103, but not 102.
+    OptionPtr custom = vendor_resp->getOption(101);
+    EXPECT_TRUE(custom);
+    custom = vendor_resp->getOption(102);
+    EXPECT_FALSE(custom);
+    custom = vendor_resp->getOption(103);
+    EXPECT_TRUE(custom);
 }
 
 } // end of anonymous namespace
