@@ -843,6 +843,20 @@ mysql_upgrade_24_to_25_test() {
     assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
 }
 
+mysql_upgrade_25_to_26_test() {
+    # client_classes been added to dhcp4_options 
+    qry="select client_classes from dhcp4_options limit 1"
+    run_command \
+        mysql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+
+    # client_classes been added to dhcp6_options 
+    qry="select client_classes from dhcp6_options limit 1"
+    run_command \
+        mysql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+}
+
 mysql_upgrade_test() {
 
     test_start "mysql.upgrade"
@@ -864,7 +878,7 @@ mysql_upgrade_test() {
 
     # Verify that the upgraded schema reports the latest version.
     version=$("${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "25.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "26.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's check that the new tables are indeed there.
 
@@ -1535,6 +1549,9 @@ SET @disable_audit = 0"
 
     # Check upgrade from 24.0 to 25.0.
     mysql_upgrade_24_to_25_test
+
+    # Check upgrade from 25.0 to 26.0.
+    mysql_upgrade_25_to_26_test
 
     # Let's wipe the whole database
     mysql_wipe

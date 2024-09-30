@@ -6484,6 +6484,21 @@ UPDATE schema_version
 
 -- This line concludes the schema upgrade to version 25.0.
 
+-- This line starts the schema upgrade to version 26.0.
+
+-- Add client_classes column to options tables for option class taggging.
+ALTER TABLE dhcp4_options
+    ADD COLUMN client_classes TEXT DEFAULT NULL;
+
+ALTER TABLE dhcp6_options
+    ADD COLUMN client_classes TEXT DEFAULT NULL;
+
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '26', minor = '0';
+
+-- This line concludes the schema upgrade to version 26.0.
+
 -- Commit the script transaction.
 COMMIT;
 

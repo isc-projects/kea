@@ -142,7 +142,7 @@ pgsql_db_version_test() {
     run_command \
         "${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}"
     version="${OUTPUT}"
-    assert_str_eq "25.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "26.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     pgsql_wipe
@@ -936,6 +936,20 @@ pgsql_upgrade_24_to_25_test() {
     assert_eq 0 "${EXIT_CODE}" "ipv6_reservations is missing excluded_prefix_len column. (expected status code %d, returned %d)"
 }
 
+pgsql_upgrade_25_to_26_test() {
+    # client_classes been added to dhcp4_options 
+    qry="select client_classes from dhcp4_options limit 1"
+    run_command \
+        pgsql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+
+    # client_classes been added to dhcp6_options 
+    qry="select client_classes from dhcp6_options limit 1"
+    run_command \
+        pgsql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+}
+
 pgsql_upgrade_test() {
     test_start "pgsql.upgrade"
 
@@ -954,7 +968,7 @@ pgsql_upgrade_test() {
 
     # Verify upgraded schema reports the latest version.
     version=$("${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "25.0" "${version}" 'Expected kea-admin to return %s, returned value was %s'
+    assert_str_eq "26.0" "${version}" 'Expected kea-admin to return %s, returned value was %s'
 
     # Check 1.0 to 2.0 upgrade
     pgsql_upgrade_1_0_to_2_0_test
@@ -1021,6 +1035,9 @@ pgsql_upgrade_test() {
 
     # Check 24 to 25 upgrade
     pgsql_upgrade_24_to_25_test
+
+    # Check 25 to 26 upgrade
+    pgsql_upgrade_25_to_26_test
 
     # Let's wipe the whole database
     pgsql_wipe

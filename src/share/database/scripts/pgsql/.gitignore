@@ -28,4 +28,5 @@
 /upgrade_022_to_023.sh
 /upgrade_023_to_024.sh
 /upgrade_024_to_025.sh
+/upgrade_025_to_026.sh
 /wipe_data.sh
