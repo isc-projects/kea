@@ -63,6 +63,9 @@ public:
     ~IOSignalTest() {
         io_signal_set_.reset();
         // Make sure the cancel handler for the IOSignalSet is called.
+        if (io_service_->stopped()) {
+            io_service_->restart();
+        }
         io_service_->poll();
     }
 
