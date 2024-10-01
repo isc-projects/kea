@@ -6,25 +6,25 @@
 
 #include <config.h>
 
+#include <asiolink/addr_utilities.h>
 #include <cc/command_interpreter.h>
 #include <config/http_command_config.h>
+#include <dhcp/classify.h>
 #include <dhcp/docsis3_option_defs.h>
-#include <dhcp/libdhcp++.h>
-#include <dhcp/option6_ia.h>
 #include <dhcp/iface_mgr.h>
+#include <dhcp/libdhcp++.h>
+#include <dhcp/option6_addrlst.h>
+#include <dhcp/option6_ia.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_int.h>
-#include <dhcp/option6_addrlst.h>
-#include <dhcp/classify.h>
 #include <dhcp/testutils/iface_mgr_test_config.h>
-#include <dhcp6/json_config_parser.h>
-#include <dhcp6/dhcp6_srv.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
-#include <asiolink/addr_utilities.h>
-#include <dhcpsrv/cfgmgr.h>
+#include <dhcp6/dhcp6_srv.h>
+#include <dhcp6/json_config_parser.h>
 #include <dhcpsrv/cfg_expiration.h>
 #include <dhcpsrv/cfg_hosts.h>
 #include <dhcpsrv/cfg_subnets6.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/parsers/simple_parser6.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_selector.h>
@@ -38,24 +38,22 @@
 #include <testutils/test_to_element.h>
 #include <util/chrono_time_utils.h>
 #include <util/doubles.h>
-#include "marker_file.h"
-#include "test_data_files_config.h"
-#include "test_libraries.h"
-#include "dhcp6_test_utils.h"
-#include "get_config_unittest.h"
-#include <gtest/gtest.h>
 
 #include <boost/foreach.hpp>
-#include <boost/scoped_ptr.hpp>
-#include <fstream>
+
 #include <iostream>
 #include <sstream>
 #include <string>
 #include <vector>
 
 #include <arpa/inet.h>
-#include <limits.h>
+#include <gtest/gtest.h>
 #include <unistd.h>
+
+#include "dhcp6_test_utils.h"
+#include "get_config_unittest.h"
+#include "marker_file.h"
+#include "test_libraries.h"
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -462,7 +460,7 @@ public:
     void configure(std::string config, int expected_code,
                    std::string exp_error = "") {
         ConstElementPtr json;
-        ASSERT_NO_THROW(json = parseDHCP6(config, true));
+        ASSERT_NO_THROW_LOG(json = parseDHCP6(config, true));
 
         ConstElementPtr status;
         EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));

@@ -9,25 +9,24 @@
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
 #include <cc/simple_parser.h>
-#include <cc/cfg_to_element.h>
-#include <testutils/user_context_utils.h>
 #include <dhcp/testutils/iface_mgr_test_config.h>
-#include <dhcpsrv/cfgmgr.h>
-#include <dhcpsrv/parsers/simple_parser6.h>
-#include <dhcp6/dhcp6_srv.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
+#include <dhcp6/dhcp6_srv.h>
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/tests/get_config_unittest.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <testutils/gtest_utils.h>
-
-#include <boost/algorithm/string.hpp>
-#include <gtest/gtest.h>
+#include <testutils/user_context_utils.h>
 
 #include <iostream>
-#include <string>
-#include <sstream>
 #include <list>
+#include <sstream>
+#include <string>
+
+#include <boost/algorithm/string.hpp>
+
+#include <gtest/gtest.h>
 
 using namespace isc::config;
 using namespace isc::data;
