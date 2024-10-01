@@ -140,10 +140,7 @@ GenericConfigBackendDHCPv4Test::initTestSubnets() {
     subnet->addPool(pool2);
 
     // Add several options to the subnet.
-    subnet->getCfgOption()->add(test_options_[0]->option_,
-                                test_options_[0]->persistent_,
-                                test_options_[0]->cancelled_,
-                                test_options_[0]->space_name_);
+    subnet->getCfgOption()->add(*(test_options_[0]), test_options_[0]->space_name_);
 
     subnet->getCfgOption()->add(test_options_[1]->option_,
                                 test_options_[1]->persistent_,
@@ -337,6 +334,8 @@ GenericConfigBackendDHCPv4Test::initTestOptions() {
                                    true, false, false, "my-boot-file");
     desc.space_name_ = DHCP4_OPTION_SPACE;
     desc.setContext(user_context);
+    desc.addClientClass("class1");
+    desc.addClientClass("class2");
     test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
 
     desc = createOption<OptionUint8>(Option::V4, DHO_DEFAULT_IP_TTL,
@@ -368,6 +367,8 @@ GenericConfigBackendDHCPv4Test::initTestOptions() {
                                       true, false, false, "my-boot-file-2");
     desc.space_name_ = DHCP4_OPTION_SPACE;
     desc.setContext(user_context);
+    desc.addClientClass("class3");
+    desc.addClientClass("class4");
     test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
 
     desc = createOption<OptionString>(Option::V4, DHO_BOOT_FILE_NAME,

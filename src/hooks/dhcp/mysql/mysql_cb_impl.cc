@@ -757,6 +757,8 @@ MySqlConfigBackendImpl::getOptions(const int index,
     out_bindings.push_back(MySqlBinding::createInteger<uint64_t>());
     // modification_ts
     out_bindings.push_back(MySqlBinding::createTimestamp());
+    // client_classes
+    out_bindings.push_back(MySqlBinding::createString(OPTION_CLIENT_CLASSES_BUF_LENGTH));
     // server_tag
     out_bindings.push_back(MySqlBinding::createString(SERVER_TAG_BUF_LENGTH));
     // pd_pool_id
@@ -780,7 +782,7 @@ MySqlConfigBackendImpl::getOptions(const int index,
             OptionDescriptorPtr desc = processOptionRow(universe, out_bindings.begin());
             if (desc) {
                 // server_tag for the global option
-                ServerTag last_option_server_tag(out_bindings[13]->getString());
+                ServerTag last_option_server_tag(out_bindings[14]->getString());
                 desc->setServerTag(last_option_server_tag.get());
 
                 // If we're fetching options for a given server (explicit server
@@ -872,6 +874,30 @@ MySqlConfigBackendImpl::processOptionRow(const Option::Universe& universe,
     // Set database id for the option.
     if (!(*first_binding)->amNull()) {
         desc->setId((*first_binding)->getInteger<uint64_t>());
+    }
+
+    // user_context at 9.
+    ElementPtr user_context = (*(first_binding + 9))->getJSON();
+    if (user_context) {
+        desc->setContext(user_context);
+    }
+
+    // Get client classes list
+    ElementPtr client_classes = (*(first_binding + 13))->getJSON();
+    if (client_classes) {
+        if (client_classes->getType() != Element::list) {
+            isc_throw(BadValue, "invalid client_classes value "
+                                << (*(first_binding + 13))->getString());
+        }
+
+        for (auto i = 0; i < client_classes->size(); ++i) {
+            auto cclass = client_classes->get(i);
+                if (cclass->getType() != Element::string) {
+                    isc_throw(BadValue, "elements of client_classes list must be valid strings");
+                }
+
+            desc->addClientClass(cclass->stringValue());
+        }
     }
 
     return (desc);

@@ -88,6 +88,7 @@ namespace {
     "  x.shared_network_name," \
     "  x.pool_id," \
     "  x.modification_ts," \
+    "  x.client_classes, " \
     "  o.option_id," \
     "  o.code," \
     "  o.value," \
@@ -101,6 +102,7 @@ namespace {
     "  o.shared_network_name," \
     "  o.pool_id," \
     "  o.modification_ts," \
+    "  o.client_classes, " \
     "  s.calculate_tee_times," \
     "  s.t1_percent," \
     "  s.t2_percent," \
@@ -314,7 +316,8 @@ namespace {
       "  x.user_context," \
       "  x.shared_network_name," \
       "  x.pool_id," \
-      "  x.modification_ts " \
+      "  x.modification_ts," \
+      "  x.client_classes " \
       "FROM dhcp4_pool AS p " \
       server_join \
       "LEFT JOIN dhcp4_options AS x ON x.scope_id = 5 AND p.id = x.pool_id " \
@@ -448,6 +451,7 @@ namespace {
     "  o.shared_network_name," \
     "  o.pool_id," \
     "  o.modification_ts," \
+    "  o.client_classes," \
     "  n.calculate_tee_times," \
     "  n.t1_percent," \
     "  n.t2_percent," \
@@ -623,6 +627,7 @@ namespace {
     "  o.shared_network_name," \
     "  o.pool_id," \
     "  o.modification_ts," \
+    "  o.client_classes, " \
     "  s.tag " \
     pd_pool_id \
     "FROM " #table_prefix "_options AS o " \
@@ -719,6 +724,7 @@ namespace {
     "  x.shared_network_name," \
     "  x.pool_id," \
     "  x.modification_ts," \
+    "  x.client_classes," \
     "  s.tag " \
     "FROM dhcp4_client_class AS c " \
     "INNER JOIN dhcp4_client_class_order AS o " \
@@ -938,9 +944,10 @@ namespace {
     "  user_context," \
     "  shared_network_name," \
     "  pool_id," \
-    "  modification_ts" \
+    "  modification_ts," \
+    "  client_classes" \
     pd_pool_id \
-    ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?" last ")"
+    ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?" last ")"
 
 #define MYSQL_INSERT_OPTION4() \
     MYSQL_INSERT_OPTION_COMMON(dhcp4, "", "")
@@ -1058,7 +1065,8 @@ namespace {
     "  o.user_context = ?," \
     "  o.shared_network_name = ?," \
     "  o.pool_id = ?," \
-    "  o.modification_ts = ? " \
+    "  o.modification_ts = ?, " \
+    "  o.client_classes = ? " \
     pd_pool_id \
     "WHERE " #__VA_ARGS__
 

@@ -324,6 +324,7 @@ public:
             MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // pool option: shared_network_name
             MySqlBinding::createInteger<uint64_t>(), // pool option: pool_id
             MySqlBinding::createTimestamp(), //pool option: modification_ts
+            MySqlBinding::createString(OPTION_CLIENT_CLASSES_BUF_LENGTH), // pool option: client_classes
             MySqlBinding::createInteger<uint64_t>(), // option: option_id
             MySqlBinding::createInteger<uint8_t>(), // option: code
             MySqlBinding::createBlob(OPTION_VALUE_BUF_LENGTH), // option: value
@@ -337,6 +338,7 @@ public:
             MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // option: shared_network_name
             MySqlBinding::createInteger<uint64_t>(), // option: pool_id
             MySqlBinding::createTimestamp(), //option: modification_ts
+            MySqlBinding::createString(OPTION_CLIENT_CLASSES_BUF_LENGTH), // option: client_classes
             MySqlBinding::createInteger<uint8_t>(), // calculate_tee_times
             MySqlBinding::createInteger<float>(), // t1_percent
             MySqlBinding::createInteger<float>(), // t2_percent
@@ -411,8 +413,8 @@ public:
                 // min_valid_lifetime at 55.
                 // max_valid_lifetime at 56.
                 auto valid_lifetime = createTriplet(out_bindings[19],
-                                                    out_bindings[55],
-                                                    out_bindings[56]);
+                                                    out_bindings[57],
+                                                    out_bindings[58]);
 
                 // Create subnet with basic settings.
                 last_subnet = Subnet4::create(prefix_pair.first, prefix_pair.second,
@@ -536,97 +538,97 @@ public:
 
                 // valid_lifetime at 19.
 
-                // pool and option from 20 to 50.
+                // pool and option from 20 to 52.
 
-                // calculate_tee_times at 51.
-                if (!out_bindings[51]->amNull()) {
-                    last_subnet->setCalculateTeeTimes(out_bindings[51]->getBool());
-                }
-
-                // t1_percent at 52.
-                if (!out_bindings[52]->amNull()) {
-                    last_subnet->setT1Percent(out_bindings[52]->getFloat());
-                }
-
-                // t2_percent at 53.
+                // calculate_tee_times at 53.
                 if (!out_bindings[53]->amNull()) {
-                    last_subnet->setT2Percent(out_bindings[53]->getFloat());
+                    last_subnet->setCalculateTeeTimes(out_bindings[53]->getBool());
                 }
 
-                // authoritative at 54.
+                // t1_percent at 54.
                 if (!out_bindings[54]->amNull()) {
-                    last_subnet->setAuthoritative(out_bindings[54]->getBool());
+                    last_subnet->setT1Percent(out_bindings[54]->getFloat());
                 }
 
-                // min_valid_lifetime at 55.
-                // max_valid_lifetime at 56.
+                // t2_percent at 55.
+                if (!out_bindings[55]->amNull()) {
+                    last_subnet->setT2Percent(out_bindings[55]->getFloat());
+                }
+
+                // authoritative at 56.
+                if (!out_bindings[56]->amNull()) {
+                    last_subnet->setAuthoritative(out_bindings[56]->getBool());
+                }
+
+                // min_valid_lifetime at 57.
+                // max_valid_lifetime at 58.
 
                 // pool client_class, require_client_classes and user_context
-                // from 57 to 59.
+                // from 59 to 61.
 
-                // ddns_send_updates at 60.
-                if (!out_bindings[60]->amNull()) {
-                    last_subnet->setDdnsSendUpdates(out_bindings[60]->getBool());
-                }
-
-                // ddns_override_no_update at 61.
-                if (!out_bindings[61]->amNull()) {
-                    last_subnet->setDdnsOverrideNoUpdate(out_bindings[61]->getBool());
-                }
-
-                // ddns_override_client_update at 62.
+                // ddns_send_updates at 62.
                 if (!out_bindings[62]->amNull()) {
-                    last_subnet->setDdnsOverrideClientUpdate(out_bindings[62]->getBool());
+                    last_subnet->setDdnsSendUpdates(out_bindings[62]->getBool());
                 }
 
-                // ddns_replace_client_name at 63.
+                // ddns_override_no_update at 63.
                 if (!out_bindings[63]->amNull()) {
-                    last_subnet->setDdnsReplaceClientNameMode(static_cast<D2ClientConfig::ReplaceClientNameMode>
-                        (out_bindings[63]->getInteger<uint8_t>()));
+                    last_subnet->setDdnsOverrideNoUpdate(out_bindings[63]->getBool());
                 }
 
-                // ddns_generated_prefix at 64.
+                // ddns_override_client_update at 64.
                 if (!out_bindings[64]->amNull()) {
-                    last_subnet->setDdnsGeneratedPrefix(out_bindings[64]->getString());
+                    last_subnet->setDdnsOverrideClientUpdate(out_bindings[64]->getBool());
                 }
 
-                // ddns_qualifying_suffix at 65.
+                // ddns_replace_client_name at 65.
                 if (!out_bindings[65]->amNull()) {
-                    last_subnet->setDdnsQualifyingSuffix(out_bindings[65]->getString());
+                    last_subnet->setDdnsReplaceClientNameMode(static_cast<D2ClientConfig::ReplaceClientNameMode>
+                        (out_bindings[65]->getInteger<uint8_t>()));
                 }
 
-                // reservations_in_subnet at 66.
+                // ddns_generated_prefix at 66.
                 if (!out_bindings[66]->amNull()) {
-                    last_subnet->setReservationsInSubnet(out_bindings[66]->getBool());
+                    last_subnet->setDdnsGeneratedPrefix(out_bindings[66]->getString());
                 }
 
-                // reservations_out_of_pool at 67.
+                // ddns_qualifying_suffix at 67.
                 if (!out_bindings[67]->amNull()) {
-                    last_subnet->setReservationsOutOfPool(out_bindings[67]->getBool());
+                    last_subnet->setDdnsQualifyingSuffix(out_bindings[67]->getString());
                 }
 
-                // cache_threshold at 68.
+                // reservations_in_subnet at 68.
                 if (!out_bindings[68]->amNull()) {
-                    last_subnet->setCacheThreshold(out_bindings[68]->getFloat());
+                    last_subnet->setReservationsInSubnet(out_bindings[68]->getBool());
                 }
 
-                // cache_max_age at 69.
+                // reservations_out_of_pool at 69.
                 if (!out_bindings[69]->amNull()) {
-                    last_subnet->setCacheMaxAge(out_bindings[69]->getInteger<uint32_t>());
+                    last_subnet->setReservationsOutOfPool(out_bindings[69]->getBool());
                 }
 
-                // offer lifetime at 70.
+                // cache_threshold at 70.
                 if (!out_bindings[70]->amNull()) {
-                    Optional<uint32_t> offer_lft(out_bindings[70]->getInteger<uint32_t>());
+                    last_subnet->setCacheThreshold(out_bindings[70]->getFloat());
+                }
+
+                // cache_max_age at 71.
+                if (!out_bindings[71]->amNull()) {
+                    last_subnet->setCacheMaxAge(out_bindings[71]->getInteger<uint32_t>());
+                }
+
+                // offer lifetime at 72.
+                if (!out_bindings[72]->amNull()) {
+                    Optional<uint32_t> offer_lft(out_bindings[72]->getInteger<uint32_t>());
                     last_subnet->setOfferLft(offer_lft);
                 }
 
-                // allocator at 71.
-                if (!out_bindings[71]->amNull()) {
-                    last_subnet->setAllocatorType(out_bindings[71]->getString());
+                // allocator at 73.
+                if (!out_bindings[73]->amNull()) {
+                    last_subnet->setAllocatorType(out_bindings[73]->getString());
                 }
 
-                // server_tag at 72.
+                // server_tag at 74.
 
                 // Subnet ready. Add it to the list.
                 auto ret = subnets.insert(last_subnet);
@@ -639,10 +641,10 @@ public:
                 }
             }
 
-            // Check for new server tags at 71.
-            if (!out_bindings[72]->amNull() &&
-                (last_tag != out_bindings[72]->getString())) {
-                last_tag = out_bindings[72]->getString();
+            // Check for new server tags at 74.
+            if (!out_bindings[74]->amNull() &&
+                (last_tag != out_bindings[74]->getString())) {
+                last_tag = out_bindings[74]->getString();
                 if (!last_tag.empty() && !last_subnet->hasServerTag(ServerTag(last_tag))) {
                     last_subnet->setServerTag(last_tag);
                 }
@@ -664,17 +666,17 @@ public:
                 last_pool = Pool4::create(IOAddress(out_bindings[21]->getInteger<uint32_t>()),
                                           IOAddress(out_bindings[22]->getInteger<uint32_t>()));
 
-                // pool client_class at 57.
-                if (!out_bindings[57]->amNull()) {
-                    last_pool->allowClientClass(out_bindings[57]->getString());
+                // pool client_class at 59.
+                if (!out_bindings[59]->amNull()) {
+                    last_pool->allowClientClass(out_bindings[59]->getString());
                 }
 
-                // pool require_client_classes at 58.
-                ElementPtr require_element = out_bindings[58]->getJSON();
+                // pool require_client_classes at 60.
+                ElementPtr require_element = out_bindings[60]->getJSON();
                 if (require_element) {
                     if (require_element->getType() != Element::list) {
                         isc_throw(BadValue, "invalid pool require_client_classes value "
-                                  << out_bindings[58]->getString());
+                                  << out_bindings[60]->getString());
                     }
                     for (auto i = 0; i < require_element->size(); ++i) {
                         auto require_item = require_element->get(i);
@@ -686,8 +688,8 @@ public:
                     }
                 }
 
-                // pool user_context at 59.
-                ElementPtr user_context = out_bindings[59]->getJSON();
+                // pool user_context at 61.
+                ElementPtr user_context = out_bindings[61]->getJSON();
                 if (user_context) {
                     last_pool->setContext(user_context);
                 }
@@ -695,7 +697,7 @@ public:
                 last_subnet->addPool(last_pool);
             }
 
-            // Parse pool-specific option from 25 to 37.
+            // Parse pool-specific option from 25 to 38.
             if (last_pool && !out_bindings[25]->amNull() &&
                 (last_pool_option_id < out_bindings[25]->getInteger<uint64_t>())) {
                 last_pool_option_id = out_bindings[25]->getInteger<uint64_t>();
@@ -706,12 +708,12 @@ public:
                 }
             }
 
-            // Parse subnet-specific option from 38 to 50.
-            if (!out_bindings[38]->amNull() &&
-                (last_option_id < out_bindings[38]->getInteger<uint64_t>())) {
-                last_option_id = out_bindings[38]->getInteger<uint64_t>();
+            // Parse subnet-specific option from 39 to 52.
+            if (!out_bindings[39]->amNull() &&
+                (last_option_id < out_bindings[39]->getInteger<uint64_t>())) {
+                last_option_id = out_bindings[39]->getInteger<uint64_t>();
 
-                OptionDescriptorPtr desc = processOptionRow(Option::V4, out_bindings.begin() + 38);
+                OptionDescriptorPtr desc = processOptionRow(Option::V4, out_bindings.begin() + 39);
                 if (desc) {
                     last_subnet->getCfgOption()->add(*desc, desc->space_name_);
                 }
@@ -882,6 +884,7 @@ public:
             MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // pool option: shared_network_name
             MySqlBinding::createInteger<uint64_t>(), // pool option: pool_id
             MySqlBinding::createTimestamp(), //pool option: modification_ts
+            MySqlBinding::createString(OPTION_CLIENT_CLASSES_BUF_LENGTH) // pool option: client_classes
         };
 
         uint64_t last_pool_id = 0;
@@ -942,7 +945,6 @@ public:
             if (last_pool && !out_bindings[8]->amNull() &&
                 (last_pool_option_id < out_bindings[8]->getInteger<uint64_t>())) {
                 last_pool_option_id = out_bindings[8]->getInteger<uint64_t>();
-
                 OptionDescriptorPtr desc = processOptionRow(Option::V4, out_bindings.begin() + 8);
                 if (desc) {
                     last_pool->getCfgOption()->add(*desc, desc->space_name_);
@@ -1346,6 +1348,7 @@ public:
             MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // option: shared_network_name
             MySqlBinding::createInteger<uint64_t>(), // option: pool_id
             MySqlBinding::createTimestamp(), // option: modification_ts
+            MySqlBinding::createString(OPTION_CLIENT_CLASSES_BUF_LENGTH), // option: client_classes
             MySqlBinding::createInteger<uint8_t>(), // calculate_tee_times
             MySqlBinding::createInteger<float>(), // t1_percent
             MySqlBinding::createInteger<float>(), // t2_percent
@@ -1472,117 +1475,117 @@ public:
                 }
 
                 // valid_lifetime at 12.
-                // min_valid_lifetime at 33.
-                // max_valid_lifetime at 34.
+                // min_valid_lifetime at 34.
+                // max_valid_lifetime at 35.
                 if (!out_bindings[12]->amNull()) {
                     last_network->setValid(createTriplet(out_bindings[12],
-                                                         out_bindings[33],
-                                                         out_bindings[34]));
+                                                         out_bindings[34],
+                                                         out_bindings[35]));
                 }
 
-                // option from 13 to 25.
+                // option from 13 to 26.
 
-                // calculate_tee_times at 26.
-                if (!out_bindings[26]->amNull()) {
-                    last_network->setCalculateTeeTimes(out_bindings[26]->getBool());
-                }
-
-                // t1_percent at 27.
+                // calculate_tee_times at 27.
                 if (!out_bindings[27]->amNull()) {
-                    last_network->setT1Percent(out_bindings[27]->getFloat());
+                    last_network->setCalculateTeeTimes(out_bindings[27]->getBool());
                 }
 
-                // t2_percent at 28.
+                // t1_percent at 28.
                 if (!out_bindings[28]->amNull()) {
-                    last_network->setT2Percent(out_bindings[28]->getFloat());
+                    last_network->setT1Percent(out_bindings[28]->getFloat());
                 }
 
-                // authoritative at 29.
+                // t2_percent at 29.
                 if (!out_bindings[29]->amNull()) {
-                    last_network->setAuthoritative(out_bindings[29]->getBool());
+                    last_network->setT2Percent(out_bindings[29]->getFloat());
                 }
 
-                // boot_file_name at 30.
+                // authoritative at 30.
                 if (!out_bindings[30]->amNull()) {
-                    last_network->setFilename(out_bindings[30]->getString());
+                    last_network->setAuthoritative(out_bindings[30]->getBool());
                 }
 
-                // next_server at 31.
+                // boot_file_name at 31.
                 if (!out_bindings[31]->amNull()) {
-                    last_network->setSiaddr(IOAddress(out_bindings[31]->getInteger<uint32_t>()));
+                    last_network->setFilename(out_bindings[31]->getString());
                 }
 
-                // server_hostname at 32.
+                // next_server at 32.
                 if (!out_bindings[32]->amNull()) {
-                    last_network->setSname(out_bindings[32]->getString());
+                    last_network->setSiaddr(IOAddress(out_bindings[32]->getInteger<uint32_t>()));
                 }
 
-                // min_valid_lifetime at 33.
-                // max_valid_lifetime at 34.
-
-                // ddns_send_updates at 35.
-                if (!out_bindings[35]->amNull()) {
-                    last_network->setDdnsSendUpdates(out_bindings[35]->getBool());
+                // server_hostname at 33.
+                if (!out_bindings[33]->amNull()) {
+                    last_network->setSname(out_bindings[33]->getString());
                 }
 
-                // ddns_override_no_update at 36.
+                // min_valid_lifetime at 34.
+                // max_valid_lifetime at 35.
+
+                // ddns_send_updates at 36.
                 if (!out_bindings[36]->amNull()) {
-                    last_network->setDdnsOverrideNoUpdate(out_bindings[36]->getBool());
+                    last_network->setDdnsSendUpdates(out_bindings[36]->getBool());
                 }
 
-                // ddns_override_client_update at 37.
+                // ddns_override_no_update at 37.
                 if (!out_bindings[37]->amNull()) {
-                    last_network->setDdnsOverrideClientUpdate(out_bindings[37]->getBool());
+                    last_network->setDdnsOverrideNoUpdate(out_bindings[37]->getBool());
                 }
 
-                // ddns_replace_client_name at 38.
+                // ddns_override_client_update at 38.
                 if (!out_bindings[38]->amNull()) {
-                    last_network->setDdnsReplaceClientNameMode(static_cast<D2ClientConfig::ReplaceClientNameMode>
-                        (out_bindings[38]->getInteger<uint8_t>()));
+                    last_network->setDdnsOverrideClientUpdate(out_bindings[38]->getBool());
                 }
 
-                // ddns_generated_prefix at 39.
+                // ddns_replace_client_name at 39.
                 if (!out_bindings[39]->amNull()) {
-                    last_network->setDdnsGeneratedPrefix(out_bindings[39]->getString());
+                    last_network->setDdnsReplaceClientNameMode(static_cast<D2ClientConfig::ReplaceClientNameMode>
+                        (out_bindings[39]->getInteger<uint8_t>()));
                 }
 
-                // ddns_qualifying_suffix at 40.
+                // ddns_generated_prefix at 40.
                 if (!out_bindings[40]->amNull()) {
-                    last_network->setDdnsQualifyingSuffix(out_bindings[40]->getString());
+                    last_network->setDdnsGeneratedPrefix(out_bindings[40]->getString());
                 }
 
-                // reservations_in_subnet at 41.
+                // ddns_qualifying_suffix at 41.
                 if (!out_bindings[41]->amNull()) {
-                    last_network->setReservationsInSubnet(out_bindings[41]->getBool());
+                    last_network->setDdnsQualifyingSuffix(out_bindings[41]->getString());
                 }
 
                 // reservations_in_subnet at 42.
                 if (!out_bindings[42]->amNull()) {
-                    last_network->setReservationsOutOfPool(out_bindings[42]->getBool());
+                    last_network->setReservationsInSubnet(out_bindings[42]->getBool());
                 }
 
-                // cache_threshold at 43.
+                // reservations_in_subnet at 43.
                 if (!out_bindings[43]->amNull()) {
-                    last_network->setCacheThreshold(out_bindings[43]->getFloat());
+                    last_network->setReservationsOutOfPool(out_bindings[43]->getBool());
                 }
 
-                // cache_max_age at 44.
+                // cache_threshold at 44.
                 if (!out_bindings[44]->amNull()) {
-                    last_network->setCacheMaxAge(out_bindings[44]->getInteger<uint32_t>());
+                    last_network->setCacheThreshold(out_bindings[44]->getFloat());
                 }
 
-                // offer lifetime at 45.
+                // cache_max_age at 45.
                 if (!out_bindings[45]->amNull()) {
-                    Optional<uint32_t> offer_lft(out_bindings[45]->getInteger<uint32_t>());
+                    last_network->setCacheMaxAge(out_bindings[45]->getInteger<uint32_t>());
+                }
+
+                // offer lifetime at 46.
+                if (!out_bindings[46]->amNull()) {
+                    Optional<uint32_t> offer_lft(out_bindings[46]->getInteger<uint32_t>());
                     last_network->setOfferLft(offer_lft);
                 }
 
-                // allocator at 46.
-                if (!out_bindings[46]->amNull()) {
-                    last_network->setAllocatorType(out_bindings[46]->getString());
+                // allocator at 47.
+                if (!out_bindings[47]->amNull()) {
+                    last_network->setAllocatorType(out_bindings[47]->getString());
                 }
 
-                // server_tag at 47.
+                // server_tag at 48.
 
                 // Add the shared network.
                 auto ret = shared_networks.push_back(last_network);
@@ -1596,15 +1599,15 @@ public:
             }
 
             // Check for new server tags.
-            if (!out_bindings[47]->amNull() &&
-                (last_tag != out_bindings[47]->getString())) {
-                last_tag = out_bindings[47]->getString();
+            if (!out_bindings[48]->amNull() &&
+                (last_tag != out_bindings[48]->getString())) {
+                last_tag = out_bindings[48]->getString();
                 if (!last_tag.empty() && !last_network->hasServerTag(ServerTag(last_tag))) {
                     last_network->setServerTag(last_tag);
                 }
             }
 
-            // Parse option from 13 to 25.
+            // Parse option from 13 to 26.
             if (!out_bindings[13]->amNull() &&
                 (last_option_id < out_bindings[13]->getInteger<uint64_t>())) {
                 last_option_id = out_bindings[13]->getInteger<uint64_t>();
@@ -1848,6 +1851,8 @@ public:
 
         auto tag = getServerTag(server_selector, "creating or updating global option");
 
+        db::MySqlBindingPtr cc_binding = createInputClientClassesBinding(option->client_classes_);
+
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createInteger<uint8_t>(option->option_->getType()),
             createOptionValueBinding(option),
@@ -1862,9 +1867,10 @@ public:
             MySqlBinding::createNull(),
             MySqlBinding::createNull(),
             MySqlBinding::createTimestamp(option->getModificationTime()),
+            cc_binding,
             MySqlBinding::createString(tag),
             MySqlBinding::createInteger<uint8_t>(option->option_->getType()),
-            MySqlBinding::condCreateString(option->space_name_)
+            MySqlBinding::condCreateString(option->space_name_),
         };
 
         MySqlTransaction transaction(conn_);
@@ -1902,6 +1908,8 @@ public:
                       " (unassigned) is unsupported at the moment");
         }
 
+        db::MySqlBindingPtr cc_binding = createInputClientClassesBinding(option->client_classes_);
+
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createInteger<uint8_t>(option->option_->getType()),
             createOptionValueBinding(option),
@@ -1916,6 +1924,7 @@ public:
             MySqlBinding::createNull(),
             MySqlBinding::createNull(),
             MySqlBinding::createTimestamp(option->getModificationTime()),
+            cc_binding,
             MySqlBinding::createInteger<uint32_t>(static_cast<uint32_t>(subnet_id)),
             MySqlBinding::createInteger<uint8_t>(option->option_->getType()),
             MySqlBinding::condCreateString(option->space_name_)
@@ -1987,6 +1996,8 @@ public:
                       " (unassigned) is unsupported at the moment");
         }
 
+        db::MySqlBindingPtr cc_binding = createInputClientClassesBinding(option->client_classes_);
+
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createInteger<uint8_t>(option->option_->getType()),
             createOptionValueBinding(option),
@@ -2001,6 +2012,7 @@ public:
             MySqlBinding::createNull(),
             MySqlBinding::createInteger<uint64_t>(pool_id),
             MySqlBinding::createTimestamp(option->getModificationTime()),
+            cc_binding,
             MySqlBinding::createInteger<uint64_t>(pool_id),
             MySqlBinding::createInteger<uint8_t>(option->option_->getType()),
             MySqlBinding::condCreateString(option->space_name_)
@@ -2043,6 +2055,8 @@ public:
                       " (unassigned) is unsupported at the moment");
         }
 
+        db::MySqlBindingPtr cc_binding = createInputClientClassesBinding(option->client_classes_);
+
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createInteger<uint8_t>(option->option_->getType()),
             createOptionValueBinding(option),
@@ -2057,9 +2071,10 @@ public:
             MySqlBinding::createString(shared_network_name),
             MySqlBinding::createNull(),
             MySqlBinding::createTimestamp(option->getModificationTime()),
+            cc_binding,
             MySqlBinding::createString(shared_network_name),
             MySqlBinding::createInteger<uint8_t>(option->option_->getType()),
-            MySqlBinding::condCreateString(option->space_name_)
+            MySqlBinding::condCreateString(option->space_name_),
         };
 
         boost::scoped_ptr<MySqlTransaction> transaction;
@@ -2104,6 +2119,8 @@ public:
                       " (unassigned) is unsupported at the moment");
         }
 
+        db::MySqlBindingPtr cc_binding = createInputClientClassesBinding(option->client_classes_);
+
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createInteger<uint8_t>(option->option_->getType()),
             createOptionValueBinding(option),
@@ -2118,6 +2135,7 @@ public:
             MySqlBinding::createNull(),
             MySqlBinding::createNull(),
             MySqlBinding::createTimestamp(option->getModificationTime()),
+            cc_binding,
             MySqlBinding::createString(client_class->getName()),
             MySqlBinding::createInteger<uint8_t>(option->option_->getType()),
             MySqlBinding::condCreateString(option->space_name_)
@@ -2431,6 +2449,7 @@ public:
             MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // option: shared_network_name
             MySqlBinding::createInteger<uint64_t>(), // option: pool_id
             MySqlBinding::createTimestamp(), // option: modification_ts
+            MySqlBinding::createString(OPTION_CLIENT_CLASSES_BUF_LENGTH), // option: client_classes
             MySqlBinding::createString(SERVER_TAG_BUF_LENGTH) // server tag
         };
 
@@ -2516,9 +2535,9 @@ public:
             }
 
             // server tag
-            if (!out_bindings[38]->amNull() &&
-                (last_tag != out_bindings[38]->getString())) {
-                last_tag = out_bindings[38]->getString();
+            if (!out_bindings[39]->amNull() &&
+                (last_tag != out_bindings[39]->getString())) {
+                last_tag = out_bindings[39]->getString();
                 if (!last_tag.empty() && !last_client_class->hasServerTag(ServerTag(last_tag))) {
                     last_client_class->setServerTag(last_tag);
                 }
@@ -2535,7 +2554,7 @@ public:
                 }
             }
 
-            // Parse client class specific option from 25 to 37.
+            // Parse client class specific option from 25 to 38.
             if (!out_bindings[25]->amNull() &&
                 (last_option_id < out_bindings[25]->getInteger<uint64_t>())) {
                 last_option_id = out_bindings[25]->getInteger<uint64_t>();
