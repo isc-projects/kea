@@ -14,12 +14,12 @@
 
 #ifdef HAVE_MYSQL
 #include <mysql/testutils/mysql_schema.h>
-#include <hooks/dhcp/mysql_lb/mysql_lease_mgr.h>
+#include <hooks/dhcp/mysql/mysql_lease_mgr.h>
 #endif
 
 #ifdef HAVE_PGSQL
 #include <pgsql/testutils/pgsql_schema.h>
-#include <hooks/dhcp/pgsql_lb/pgsql_lease_mgr.h>
+#include <hooks/dhcp/pgsql/pgsql_lease_mgr.h>
 #endif
 
 #include <stats/stats_mgr.h>

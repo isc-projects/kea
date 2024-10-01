@@ -134,13 +134,11 @@ dhcp4_unittests_LDFLAGS += $(GTEST_LDFLAGS)
 dhcp4_unittests_LDADD  = $(top_builddir)/src/bin/dhcp4/libdhcp4.la
 
 if HAVE_PGSQL
-dhcp4_unittests_LDADD += $(top_builddir)/src/hooks/dhcp/pgsql_lb/libpgsqllb.la
-dhcp4_unittests_LDADD += $(top_builddir)/src/hooks/dhcp/pgsql_hb/libpgsqlhb.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/hooks/dhcp/pgsql/libpgsql.la
 endif
 
 if HAVE_MYSQL
-dhcp4_unittests_LDADD += $(top_builddir)/src/hooks/dhcp/mysql_lb/libmysqllb.la
-dhcp4_unittests_LDADD += $(top_builddir)/src/hooks/dhcp/mysql_hb/libmysqlhb.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/hooks/dhcp/mysql/libmysql.la
 endif
 
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la

@@ -22,7 +22,7 @@
 
 #ifdef HAVE_MYSQL
 #include <mysql/testutils/mysql_schema.h>
-#include <hooks/dhcp/mysql_lb/mysql_lease_mgr.h>
+#include <hooks/dhcp/mysql/mysql_lease_mgr.h>
 #endif
 
 #include <log/logger_support.h>
