@@ -1877,7 +1877,7 @@ TEST_F(ClassifyTest, member) {
 }
 
 // This test checks the precedence order in required evaluation.
-// This order is: shared-network > subnet > pools
+// This order is: pools > subnet > shared-network
 TEST_F(ClassifyTest, precedenceNone) {
     std::string config =
         "{"
@@ -1889,12 +1889,8 @@ TEST_F(ClassifyTest, precedenceNone) {
         "\"renew-timer\": 1000,"
         "\"client-classes\": ["
         "    {"
-        "       \"name\": \"all\","
-        "       \"test\": \"'' == ''\""
-        "    },"
-        "    {"
         "       \"name\": \"for-pool\","
-        "       \"test\": \"member('all')\","
+        "       \"test\": \"member('ALL')\","
         "       \"only-if-required\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"dns-servers\","
@@ -1903,7 +1899,7 @@ TEST_F(ClassifyTest, precedenceNone) {
         "    },"
         "    {"
         "       \"name\": \"for-subnet\","
-        "       \"test\": \"member('all')\","
+        "       \"test\": \"member('ALL')\","
         "       \"only-if-required\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"dns-servers\","
@@ -1912,7 +1908,7 @@ TEST_F(ClassifyTest, precedenceNone) {
         "    },"
         "    {"
         "       \"name\": \"for-network\","
-        "       \"test\": \"member('all')\","
+        "       \"test\": \"member('ALL')\","
         "       \"only-if-required\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"dns-servers\","
@@ -1955,7 +1951,7 @@ TEST_F(ClassifyTest, precedenceNone) {
 }
 
 // This test checks the precedence order in required evaluation.
-// This order is: shared-network > subnet > pools
+// This order is: pools > subnet > shared-network
 TEST_F(ClassifyTest, precedencePool) {
     std::string config =
         "{"
@@ -1964,12 +1960,8 @@ TEST_F(ClassifyTest, precedencePool) {
         "},"
         "\"client-classes\": ["
         "    {"
-        "       \"name\": \"all\","
-        "       \"test\": \"'' == ''\""
-        "    },"
-        "    {"
         "       \"name\": \"for-pool\","
-        "       \"test\": \"member('all')\","
+        "       \"test\": \"member('ALL')\","
         "       \"only-if-required\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"dns-servers\","
@@ -1978,7 +1970,7 @@ TEST_F(ClassifyTest, precedencePool) {
         "    },"
         "    {"
         "       \"name\": \"for-subnet\","
-        "       \"test\": \"member('all')\","
+        "       \"test\": \"member('ALL')\","
         "       \"only-if-required\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"dns-servers\","
@@ -1987,7 +1979,7 @@ TEST_F(ClassifyTest, precedencePool) {
         "    },"
         "    {"
         "       \"name\": \"for-network\","
-        "       \"test\": \"member('all')\","
+        "       \"test\": \"member('ALL')\","
         "       \"only-if-required\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"dns-servers\","
@@ -1998,9 +1990,11 @@ TEST_F(ClassifyTest, precedencePool) {
         "\"shared-networks\": [ {"
         "    \"name\": \"frog\","
         "    \"interface\": \"eth1\","
+        "    \"require-client-classes\": [ \"for-network\" ],"
         "    \"subnet6\": [ { "
         "        \"subnet\": \"2001:db8:1::/64\","
         "        \"id\": 1,"
+        "        \"require-client-classes\": [ \"for-subnet\" ],"
         "        \"pools\": [ { "
         "            \"pool\": \"2001:db8:1::1 - 2001:db8:1::64\","
         "            \"require-client-classes\": [ \"for-pool\" ]"
@@ -2037,7 +2031,7 @@ TEST_F(ClassifyTest, precedencePool) {
 }
 
 // This test checks the precedence order in required evaluation.
-// This order is: shared-network > subnet > pools
+// This order is: pools > subnet > shared-network
 TEST_F(ClassifyTest, precedenceSubnet) {
     std::string config =
         "{"
@@ -2046,12 +2040,8 @@ TEST_F(ClassifyTest, precedenceSubnet) {
         "},"
         "\"client-classes\": ["
         "    {"
-        "       \"name\": \"all\","
-        "       \"test\": \"'' == ''\""
-        "    },"
-        "    {"
         "       \"name\": \"for-pool\","
-        "       \"test\": \"member('all')\","
+        "       \"test\": \"member('ALL')\","
         "       \"only-if-required\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"dns-servers\","
@@ -2060,7 +2050,7 @@ TEST_F(ClassifyTest, precedenceSubnet) {
         "    },"
         "    {"
         "       \"name\": \"for-subnet\","
-        "       \"test\": \"member('all')\","
+        "       \"test\": \"member('ALL')\","
         "       \"only-if-required\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"dns-servers\","
@@ -2069,7 +2059,7 @@ TEST_F(ClassifyTest, precedenceSubnet) {
         "    },"
         "    {"
         "       \"name\": \"for-network\","
-        "       \"test\": \"member('all')\","
+        "       \"test\": \"member('ALL')\","
         "       \"only-if-required\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"dns-servers\","
@@ -2080,13 +2070,13 @@ TEST_F(ClassifyTest, precedenceSubnet) {
         "\"shared-networks\": [ {"
         "    \"name\": \"frog\","
         "    \"interface\": \"eth1\","
+        "    \"require-client-classes\": [ \"for-network\" ],"
         "    \"subnet6\": [ { "
         "        \"subnet\": \"2001:db8:1::/64\","
         "        \"id\": 1,"
         "        \"require-client-classes\": [ \"for-subnet\" ],"
         "        \"pools\": [ { "
-        "            \"pool\": \"2001:db8:1::1 - 2001:db8:1::64\","
-        "            \"require-client-classes\": [ \"for-pool\" ]"
+        "            \"pool\": \"2001:db8:1::1 - 2001:db8:1::64\""
         "        } ]"
         "    } ]"
         "} ],"
@@ -2120,7 +2110,7 @@ TEST_F(ClassifyTest, precedenceSubnet) {
 }
 
 // This test checks the precedence order in required evaluation.
-// This order is: shared-network > subnet > pools
+// This order is: pools > subnet > shared-network
 TEST_F(ClassifyTest, precedenceNetwork) {
     std::string config =
         "{"
@@ -2129,12 +2119,8 @@ TEST_F(ClassifyTest, precedenceNetwork) {
         "},"
         "\"client-classes\": ["
         "    {"
-        "       \"name\": \"all\","
-        "       \"test\": \"'' == ''\""
-        "    },"
-        "    {"
         "       \"name\": \"for-pool\","
-        "       \"test\": \"member('all')\","
+        "       \"test\": \"member('ALL')\","
         "       \"only-if-required\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"dns-servers\","
@@ -2143,7 +2129,7 @@ TEST_F(ClassifyTest, precedenceNetwork) {
         "    },"
         "    {"
         "       \"name\": \"for-subnet\","
-        "       \"test\": \"member('all')\","
+        "       \"test\": \"member('ALL')\","
         "       \"only-if-required\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"dns-servers\","
@@ -2152,7 +2138,7 @@ TEST_F(ClassifyTest, precedenceNetwork) {
         "    },"
         "    {"
         "       \"name\": \"for-network\","
-        "       \"test\": \"member('all')\","
+        "       \"test\": \"member('ALL')\","
         "       \"only-if-required\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"dns-servers\","
@@ -2167,10 +2153,8 @@ TEST_F(ClassifyTest, precedenceNetwork) {
         "    \"subnet6\": [ { "
         "        \"subnet\": \"2001:db8:1::/64\","
         "        \"id\": 1,"
-        "        \"require-client-classes\": [ \"for-subnet\" ],"
         "        \"pools\": [ { "
-        "            \"pool\": \"2001:db8:1::1 - 2001:db8:1::64\","
-        "            \"require-client-classes\": [ \"for-pool\" ]"
+        "            \"pool\": \"2001:db8:1::1 - 2001:db8:1::64\""
         "        } ]"
         "    } ]"
         "} ],"
