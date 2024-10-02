@@ -2,7 +2,7 @@ SUBDIRS = .
 
 AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += -I$(top_builddir)/src/hooks/dhcp/pgsql -I$(top_srcdir)/src/hooks/dhcp/pgsql
-AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CPPFLAGS += $(BOOST_INCLUDES) $(PGSQL_CPPFLAGS) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
 AM_CPPFLAGS += -DLIBDHCP_PGSQL_SO=\"$(abs_top_builddir)/src/hooks/dhcp/pgsql/.libs/libdhcp_pgsql.so\"
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 

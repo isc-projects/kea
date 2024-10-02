@@ -1,11 +1,11 @@
 SUBDIRS = . tests libloadtests
 
 AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
-AM_CPPFLAGS += $(BOOST_INCLUDES) $(MYSQL_CPPFLAGS)
+AM_CPPFLAGS += $(BOOST_INCLUDES) $(MYSQL_CPPFLAGS) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
 AM_CXXFLAGS  = $(KEA_CXXFLAGS)
 
 # Ensure that the message file is included in the distribution
-EXTRA_DIST = mysql_cb_messages.mes
+EXTRA_DIST  = mysql_cb_messages.mes
 EXTRA_DIST += mysql_hb_messages.mes
 EXTRA_DIST += mysql_lb_messages.mes
 
@@ -60,6 +60,9 @@ libdhcp_mysql_la_LIBADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.
 libdhcp_mysql_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
 libdhcp_mysql_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libdhcp_mysql_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+libdhcp_mysql_la_LIBADD += $(LOG4CPLUS_LIBS)
+libdhcp_mysql_la_LIBADD += $(CRYPTO_LIBS)
+libdhcp_mysql_la_LIBADD += $(BOOST_LIBS)
 
 # If we want to get rid of all generated messages files, we need to use
 # make maintainer-clean. The proper way to introduce custom commands for

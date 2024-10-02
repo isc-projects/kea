@@ -2,7 +2,7 @@ SUBDIRS = .
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += -I$(top_builddir)/src/hooks/dhcp/pgsql -I$(top_srcdir)/src/hooks/dhcp/pgsql
-AM_CPPFLAGS += $(BOOST_INCLUDES) $(PGSQL_CPPFLAGS)
+AM_CPPFLAGS += $(BOOST_INCLUDES) $(PGSQL_CPPFLAGS) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)

@@ -60,8 +60,8 @@ int load(LibraryHandle& /* handle */) {
     }
 
     // Register MySQL CB factories with CB Managers
-    isc::dhcp::MySqlConfigBackendDHCPv4::registerBackendType();
-    isc::dhcp::MySqlConfigBackendDHCPv6::registerBackendType();
+    MySqlConfigBackendDHCPv4::registerBackendType();
+    MySqlConfigBackendDHCPv6::registerBackendType();
     LOG_INFO(mysql_cb_logger, MYSQL_CB_INIT_OK);
 
     // Register MySQL HB factories with Host Managers
@@ -87,8 +87,8 @@ int load(LibraryHandle& /* handle */) {
 /// @param handle callout handle passed to the callout.
 /// @return 0 on success, 1 otherwise.
 int dhcp4_srv_configured(CalloutHandle& /* handle */) {
-    isc::dhcp::MySqlConfigBackendImpl::setIOService(IOServicePtr(new IOService()));
-    IOServiceMgr::instance().registerIOService(isc::dhcp::MySqlConfigBackendImpl::getIOService());
+    MySqlConfigBackendImpl::setIOService(IOServicePtr(new IOService()));
+    IOServiceMgr::instance().registerIOService(MySqlConfigBackendImpl::getIOService());
     return (0);
 }
 
@@ -99,8 +99,8 @@ int dhcp4_srv_configured(CalloutHandle& /* handle */) {
 /// @param handle callout handle passed to the callout.
 /// @return 0 on success, 1 otherwise.
 int dhcp6_srv_configured(CalloutHandle& /* handle */) {
-    isc::dhcp::MySqlConfigBackendImpl::setIOService(IOServicePtr(new IOService()));
-    IOServiceMgr::instance().registerIOService(isc::dhcp::MySqlConfigBackendImpl::getIOService());
+    MySqlConfigBackendImpl::setIOService(IOServicePtr(new IOService()));
+    IOServiceMgr::instance().registerIOService(MySqlConfigBackendImpl::getIOService());
     return (0);
 }
 
@@ -109,13 +109,13 @@ int dhcp6_srv_configured(CalloutHandle& /* handle */) {
 /// @return 0 if deregistration was successful, 1 otherwise
 int unload() {
     // Unregister the factories and remove MySQL backends
-    isc::dhcp::MySqlConfigBackendDHCPv4::unregisterBackendType();
-    isc::dhcp::MySqlConfigBackendDHCPv6::unregisterBackendType();
-    IOServicePtr io_service = isc::dhcp::MySqlConfigBackendImpl::getIOService();
+    MySqlConfigBackendDHCPv4::unregisterBackendType();
+    MySqlConfigBackendDHCPv6::unregisterBackendType();
+    IOServicePtr io_service = MySqlConfigBackendImpl::getIOService();
     if (io_service) {
         IOServiceMgr::instance().unregisterIOService(io_service);
         io_service->stopAndPoll();
-        isc::dhcp::MySqlConfigBackendImpl::setIOService(IOServicePtr());
+        MySqlConfigBackendImpl::setIOService(IOServicePtr());
     }
     LOG_INFO(mysql_cb_logger, MYSQL_CB_DEINIT_OK);
 

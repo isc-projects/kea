@@ -1,11 +1,11 @@
 SUBDIRS = . tests libloadtests
 
 AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
-AM_CPPFLAGS += $(BOOST_INCLUDES) $(PGSQL_CPPFLAGS)
+AM_CPPFLAGS += $(BOOST_INCLUDES) $(PGSQL_CPPFLAGS) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
 AM_CXXFLAGS  = $(KEA_CXXFLAGS)
 
 # Ensure that the message file is included in the distribution
-EXTRA_DIST = pgsql_cb_messages.mes
+EXTRA_DIST  = pgsql_cb_messages.mes
 EXTRA_DIST += pgsql_hb_messages.mes
 EXTRA_DIST += pgsql_lb_messages.mes
 
@@ -60,6 +60,9 @@ libdhcp_pgsql_la_LIBADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.
 libdhcp_pgsql_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
 libdhcp_pgsql_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libdhcp_pgsql_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+libdhcp_pgsql_la_LIBADD += $(LOG4CPLUS_LIBS)
+libdhcp_pgsql_la_LIBADD += $(CRYPTO_LIBS)
+libdhcp_pgsql_la_LIBADD += $(BOOST_LIBS)
 
 # If we want to get rid of all generated messages files, we need to use
 # make maintainer-clean. The proper way to introduce custom commands for

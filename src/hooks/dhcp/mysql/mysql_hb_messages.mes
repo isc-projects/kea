@@ -7,7 +7,7 @@
 $NAMESPACE isc::dhcp
 
 % MYSQL_HB_DB opening MySQL hosts database: %1
-Logged at debug log level 50.
+Logged at debug log level 40.
 This informational message is logged when a DHCP server (either V4 or
 V6) is about to open a MySQL hosts database. The parameters of the
 connection including database name and username needed to access it

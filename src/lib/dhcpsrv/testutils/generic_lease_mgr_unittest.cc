@@ -3647,12 +3647,19 @@ LeaseMgrDbLostCallbackTest::testDbLostAndRecoveredCallback() {
     std::string access = validConnectString();
     CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setLeaseDbAccessString(access);
 
+    // Find the most recently opened socket. Our SQL client's socket should
+    // be the next one.
+    int last_open_socket = findLastSocketFd();
+
+    // Fill holes.
+    FillFdHoles holes(last_open_socket);
+
     // Connect to the lease backend.
     ASSERT_NO_THROW(LeaseMgrFactory::create(access));
 
-    // The most recently opened socket should be for our SQL client.
-    int sql_socket = test::findLastSocketFd();
-    ASSERT_TRUE(sql_socket > -1);
+    // Find the SQL client socket.
+    int sql_socket = findLastSocketFd();
+    ASSERT_TRUE(sql_socket > last_open_socket);
 
     // Verify we can execute a query.  We do not care if
     // we find a lease or not.
@@ -3693,12 +3700,19 @@ LeaseMgrDbLostCallbackTest::testDbLostAndFailedCallback() {
     std::string access = validConnectString();
     CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setLeaseDbAccessString(access);
 
+    // Find the most recently opened socket. Our SQL client's socket should
+    // be the next one.
+    int last_open_socket = findLastSocketFd();
+
+    // Fill holes.
+    FillFdHoles holes(last_open_socket);
+
     // Connect to the lease backend.
     ASSERT_NO_THROW(LeaseMgrFactory::create(access));
 
-    // The most recently opened socket should be for our SQL client.
-    int sql_socket = test::findLastSocketFd();
-    ASSERT_TRUE(sql_socket > -1);
+    // Find the SQL client socket.
+    int sql_socket = findLastSocketFd();
+    ASSERT_TRUE(sql_socket > last_open_socket);
 
     // Verify we can execute a query.  We do not care if
     // we find a lease or not.
@@ -3746,12 +3760,19 @@ LeaseMgrDbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCallback() {
     access += extra;
     CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setLeaseDbAccessString(access);
 
+    // Find the most recently opened socket. Our SQL client's socket should
+    // be the next one.
+    int last_open_socket = findLastSocketFd();
+
+    // Fill holes.
+    FillFdHoles holes(last_open_socket);
+
     // Connect to the lease backend.
     ASSERT_NO_THROW(LeaseMgrFactory::create(access));
 
-    // The most recently opened socket should be for our SQL client.
-    int sql_socket = test::findLastSocketFd();
-    ASSERT_TRUE(sql_socket > -1);
+    // Find the SQL client socket.
+    int sql_socket = findLastSocketFd();
+    ASSERT_TRUE(sql_socket > last_open_socket);
 
     // Verify we can execute a query.  We do not care if
     // we find a lease or not.
@@ -3822,12 +3843,19 @@ LeaseMgrDbLostCallbackTest::testDbLostAndFailedAfterTimeoutCallback() {
     access += extra;
     CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setLeaseDbAccessString(access);
 
+    // Find the most recently opened socket. Our SQL client's socket should
+    // be the next one.
+    int last_open_socket = findLastSocketFd();
+
+    // Fill holes.
+    FillFdHoles holes(last_open_socket);
+
     // Connect to the lease backend.
     ASSERT_NO_THROW(LeaseMgrFactory::create(access));
 
-    // The most recently opened socket should be for our SQL client.
-    int sql_socket = test::findLastSocketFd();
-    ASSERT_TRUE(sql_socket > -1);
+    // Find the SQL client socket.
+    int sql_socket = findLastSocketFd();
+    ASSERT_TRUE(sql_socket > last_open_socket);
 
     // Verify we can execute a query.  We do not care if
     // we find a lease or not.

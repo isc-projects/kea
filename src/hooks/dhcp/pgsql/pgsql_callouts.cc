@@ -60,8 +60,8 @@ int load(LibraryHandle& /* handle */) {
     }
 
     // Register PostgreSQL CB factories with CB Managers
-    isc::dhcp::PgSqlConfigBackendDHCPv4::registerBackendType();
-    isc::dhcp::PgSqlConfigBackendDHCPv6::registerBackendType();
+    PgSqlConfigBackendDHCPv4::registerBackendType();
+    PgSqlConfigBackendDHCPv6::registerBackendType();
     LOG_INFO(pgsql_cb_logger, PGSQL_CB_INIT_OK);
 
     // Register PostgreSQL HB factories with Host Managers
@@ -87,8 +87,8 @@ int load(LibraryHandle& /* handle */) {
 /// @param handle callout handle passed to the callout.
 /// @return 0 on success, 1 otherwise.
 int dhcp4_srv_configured(CalloutHandle& /* handle */) {
-    isc::dhcp::PgSqlConfigBackendImpl::setIOService(IOServicePtr(new IOService()));
-    IOServiceMgr::instance().registerIOService(isc::dhcp::PgSqlConfigBackendImpl::getIOService());
+    PgSqlConfigBackendImpl::setIOService(IOServicePtr(new IOService()));
+    IOServiceMgr::instance().registerIOService(PgSqlConfigBackendImpl::getIOService());
     return (0);
 }
 
@@ -99,8 +99,8 @@ int dhcp4_srv_configured(CalloutHandle& /* handle */) {
 /// @param handle callout handle passed to the callout.
 /// @return 0 on success, 1 otherwise.
 int dhcp6_srv_configured(CalloutHandle& /* handle */) {
-    isc::dhcp::PgSqlConfigBackendImpl::setIOService(IOServicePtr(new IOService()));
-    IOServiceMgr::instance().registerIOService(isc::dhcp::PgSqlConfigBackendImpl::getIOService());
+    PgSqlConfigBackendImpl::setIOService(IOServicePtr(new IOService()));
+    IOServiceMgr::instance().registerIOService(PgSqlConfigBackendImpl::getIOService());
     return (0);
 }
 
@@ -109,13 +109,13 @@ int dhcp6_srv_configured(CalloutHandle& /* handle */) {
 /// @return 0 if deregistration was successful, 1 otherwise
 int unload() {
     // Unregister the factories and remove PostgreSQL backends
-    isc::dhcp::PgSqlConfigBackendDHCPv4::unregisterBackendType();
-    isc::dhcp::PgSqlConfigBackendDHCPv6::unregisterBackendType();
-    IOServicePtr io_service = isc::dhcp::PgSqlConfigBackendImpl::getIOService();
+    PgSqlConfigBackendDHCPv4::unregisterBackendType();
+    PgSqlConfigBackendDHCPv6::unregisterBackendType();
+    IOServicePtr io_service = PgSqlConfigBackendImpl::getIOService();
     if (io_service) {
         IOServiceMgr::instance().unregisterIOService(io_service);
         io_service->stopAndPoll();
-        isc::dhcp::PgSqlConfigBackendImpl::setIOService(IOServicePtr());
+        PgSqlConfigBackendImpl::setIOService(IOServicePtr());
     }
     LOG_INFO(pgsql_cb_logger, PGSQL_CB_DEINIT_OK);
 
