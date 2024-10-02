@@ -1488,7 +1488,7 @@ public:
             row.state_count_ = 0;
             if (!negative_count_) {
                 negative_count_ = true;
-                LOG_WARN(dhcpsrv_logger, DHCPSRV_PGSQL_NEGATIVE_LEASES_STAT);
+                LOG_WARN(pgsql_lb_logger, PGSQL_LB_NEGATIVE_LEASES_STAT);
             }
         }
 
@@ -1627,13 +1627,13 @@ PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
 #ifdef HAVE_PGSQL_SSL
     if ((tls > 0) && !PgSqlConnection::warned_about_tls) {
         PgSqlConnection::warned_about_tls = true;
-        LOG_INFO(dhcpsrv_logger, DHCPSRV_PGSQL_TLS_SUPPORT)
+        LOG_INFO(pgsql_lb_logger, PGSQL_LB_TLS_SUPPORT)
             .arg(DatabaseConnection::redactedAccessString(parameters_));
         PQinitSSL(1);
     }
 #else
     if (tls > 0) {
-        LOG_ERROR(dhcpsrv_logger, DHCPSRV_PGSQL_NO_TLS_SUPPORT)
+        LOG_ERROR(pgsql_lb_logger, PGSQL_LB_NO_TLS_SUPPORT)
             .arg(DatabaseConnection::redactedAccessString(parameters_));
         isc_throw(DbOpenError, "Attempt to configure TLS for PostgreSQL "
                   << "backend (built with this feature disabled)");
@@ -1675,7 +1675,7 @@ PgSqlLeaseMgr::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
         LeaseMgrFactory::recreate(cfg_db->getLeaseDbAccessString());
         reopened = true;
     } catch (const std::exception& ex) {
-        LOG_ERROR(dhcpsrv_logger, DHCPSRV_PGSQL_LEASE_DB_RECONNECT_ATTEMPT_FAILED)
+        LOG_ERROR(pgsql_lb_logger, PGSQL_LB_DB_RECONNECT_ATTEMPT_FAILED)
                 .arg(ex.what());
     }
 
@@ -1692,7 +1692,7 @@ PgSqlLeaseMgr::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
     } else {
         if (!db_reconnect_ctl->checkRetries()) {
             // We're out of retries, log it and initiate shutdown.
-            LOG_ERROR(dhcpsrv_logger, DHCPSRV_PGSQL_LEASE_DB_RECONNECT_FAILED)
+            LOG_ERROR(pgsql_lb_logger, PGSQL_LB_DB_RECONNECT_FAILED)
                     .arg(db_reconnect_ctl->maxRetries());
 
             // Cancel the timer.
@@ -1705,7 +1705,7 @@ PgSqlLeaseMgr::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
             return (false);
         }
 
-        LOG_INFO(dhcpsrv_logger, DHCPSRV_PGSQL_LEASE_DB_RECONNECT_ATTEMPT_SCHEDULE)
+        LOG_INFO(pgsql_lb_logger, PGSQL_LB_DB_RECONNECT_ATTEMPT_SCHEDULE)
                 .arg(db_reconnect_ctl->maxRetries() - db_reconnect_ctl->retriesLeft() + 1)
                 .arg(db_reconnect_ctl->maxRetries())
                 .arg(db_reconnect_ctl->retryInterval());
@@ -1793,7 +1793,7 @@ PgSqlLeaseMgr::addLeaseCommon(PgSqlLeaseContextPtr& ctx,
 
 bool
 PgSqlLeaseMgr::addLease(const Lease4Ptr& lease) {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_ADD_ADDR4)
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_ADD_ADDR4)
         .arg(lease->addr_.toText());
 
     // Get a context
@@ -1818,7 +1818,7 @@ PgSqlLeaseMgr::addLease(const Lease4Ptr& lease) {
 
 bool
 PgSqlLeaseMgr::addLease(const Lease6Ptr& lease) {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_ADD_ADDR6)
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_ADD_ADDR6)
         .arg(lease->addr_.toText())
         .arg(lease->type_);
 
@@ -1922,7 +1922,7 @@ PgSqlLeaseMgr::getLease(PgSqlLeaseContextPtr& ctx,
 
 Lease4Ptr
 PgSqlLeaseMgr::getLease4(const IOAddress& addr) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_ADDR4)
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_GET_ADDR4)
         .arg(addr.toText());
 
     // Set up the WHERE clause value
@@ -1946,7 +1946,7 @@ PgSqlLeaseMgr::getLease4(const IOAddress& addr) const {
 
 Lease4Collection
 PgSqlLeaseMgr::getLease4(const HWAddr& hwaddr) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_HWADDR)
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_GET_HWADDR)
         .arg(hwaddr.toText());
 
     // Set up the WHERE clause value
@@ -1973,7 +1973,7 @@ PgSqlLeaseMgr::getLease4(const HWAddr& hwaddr) const {
 
 Lease4Ptr
 PgSqlLeaseMgr::getLease4(const HWAddr& hwaddr, SubnetID subnet_id) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_SUBID_HWADDR)
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_GET_SUBID_HWADDR)
         .arg(subnet_id)
         .arg(hwaddr.toText());
 
@@ -2005,7 +2005,7 @@ PgSqlLeaseMgr::getLease4(const HWAddr& hwaddr, SubnetID subnet_id) const {
 
 Lease4Collection
 PgSqlLeaseMgr::getLease4(const ClientId& clientid) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_CLIENTID)
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_GET_CLIENTID)
         .arg(clientid.toText());
 
     // Set up the WHERE clause value
@@ -2028,7 +2028,7 @@ PgSqlLeaseMgr::getLease4(const ClientId& clientid) const {
 
 Lease4Ptr
 PgSqlLeaseMgr::getLease4(const ClientId& clientid, SubnetID subnet_id) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_SUBID_CLIENTID)
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_GET_SUBID_CLIENTID)
         .arg(subnet_id)
         .arg(clientid.toText());
 
@@ -2056,7 +2056,7 @@ PgSqlLeaseMgr::getLease4(const ClientId& clientid, SubnetID subnet_id) const {
 
 Lease4Collection
 PgSqlLeaseMgr::getLeases4(SubnetID subnet_id) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_SUBID4)
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_GET_SUBID4)
         .arg(subnet_id);
 
     // Set up the WHERE clause value
@@ -2080,7 +2080,7 @@ PgSqlLeaseMgr::getLeases4(SubnetID subnet_id) const {
 
 Lease4Collection
 PgSqlLeaseMgr::getLeases4(const std::string& hostname) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_HOSTNAME4)
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_GET_HOSTNAME4)
         .arg(hostname);
 
     // Set up the WHERE clause value
@@ -2103,7 +2103,7 @@ PgSqlLeaseMgr::getLeases4(const std::string& hostname) const {
 
 Lease4Collection
 PgSqlLeaseMgr::getLeases4() const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET4);
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_GET4);
 
     // Provide empty binding array because our query has no parameters in
     // WHERE clause.
@@ -2129,7 +2129,7 @@ PgSqlLeaseMgr::getLeases4(const IOAddress& lower_bound_address,
                   << lower_bound_address);
     }
 
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_PAGE4)
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_GET_PAGE4)
         .arg(page_size.page_size_)
         .arg(lower_bound_address.toText());
 
@@ -2159,7 +2159,7 @@ PgSqlLeaseMgr::getLeases4(const IOAddress& lower_bound_address,
 Lease6Ptr
 PgSqlLeaseMgr::getLease6(Lease::Type lease_type,
                          const IOAddress& addr) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_ADDR6)
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_GET_ADDR6)
         .arg(addr.toText())
         .arg(lease_type);
 
@@ -2189,7 +2189,7 @@ PgSqlLeaseMgr::getLease6(Lease::Type lease_type,
 Lease6Collection
 PgSqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID& duid,
                           uint32_t iaid) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_IAID_DUID)
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_GET_IAID_DUID)
         .arg(iaid)
         .arg(duid.toText())
         .arg(lease_type);
@@ -2223,7 +2223,7 @@ PgSqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID& duid,
 Lease6Collection
 PgSqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID& duid,
                           uint32_t iaid, SubnetID subnet_id) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_IAID_SUBID_DUID)
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_GET_IAID_SUBID_DUID)
         .arg(iaid)
         .arg(subnet_id)
         .arg(duid.toText())
@@ -2261,7 +2261,7 @@ PgSqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID& duid,
 
 Lease6Collection
 PgSqlLeaseMgr::getLeases6(SubnetID subnet_id) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_SUBID6)
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_GET_SUBID6)
         .arg(subnet_id);
 
     // Set up the WHERE clause value
@@ -2287,8 +2287,8 @@ Lease6Collection
 PgSqlLeaseMgr::getLeases6(SubnetID subnet_id,
                           const IOAddress& lower_bound_address,
                           const LeasePageSize& page_size) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_PGSQL_GET_SUBID_PAGE6)
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL,
+              PGSQL_LB_GET_SUBID_PAGE6)
         .arg(page_size.page_size_)
         .arg(lower_bound_address.toText())
         .arg(subnet_id);
@@ -2329,7 +2329,7 @@ PgSqlLeaseMgr::getLeases6(SubnetID subnet_id,
 
 Lease6Collection
 PgSqlLeaseMgr::getLeases6(const DUID& duid) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_DUID)
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_GET_DUID)
         .arg(duid.toText());
 
     // Set up the WHERE clause value
@@ -2351,7 +2351,7 @@ PgSqlLeaseMgr::getLeases6(const DUID& duid) const {
 
 Lease6Collection
 PgSqlLeaseMgr::getLeases6(const std::string& hostname) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_HOSTNAME6)
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_GET_HOSTNAME6)
         .arg(hostname);
 
     // Set up the WHERE clause value
@@ -2374,7 +2374,7 @@ PgSqlLeaseMgr::getLeases6(const std::string& hostname) const {
 
 Lease6Collection
 PgSqlLeaseMgr::getLeases6() const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET6);
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_GET6);
 
     // Provide empty binding array because our query has no parameters in
     // WHERE clause.
@@ -2400,7 +2400,7 @@ PgSqlLeaseMgr::getLeases6(const IOAddress& lower_bound_address,
                   << lower_bound_address);
     }
 
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_PAGE6)
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_GET_PAGE6)
         .arg(page_size.page_size_)
         .arg(lower_bound_address.toText());
 
@@ -2431,7 +2431,7 @@ PgSqlLeaseMgr::getLeases6(const IOAddress& lower_bound_address,
 void
 PgSqlLeaseMgr::getExpiredLeases4(Lease4Collection& expired_leases,
                                  const size_t max_leases) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_EXPIRED4)
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_GET_EXPIRED4)
         .arg(max_leases);
     getExpiredLeasesCommon(expired_leases, max_leases, GET_LEASE4_EXPIRE);
 }
@@ -2439,7 +2439,7 @@ PgSqlLeaseMgr::getExpiredLeases4(Lease4Collection& expired_leases,
 void
 PgSqlLeaseMgr::getExpiredLeases6(Lease6Collection& expired_leases,
                                  const size_t max_leases) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_EXPIRED6)
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_GET_EXPIRED6)
         .arg(max_leases);
     getExpiredLeasesCommon(expired_leases, max_leases, GET_LEASE6_EXPIRE);
 }
@@ -2511,7 +2511,7 @@ void
 PgSqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
     const StatementIndex stindex = UPDATE_LEASE4;
 
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_UPDATE_ADDR4)
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_UPDATE_ADDR4)
         .arg(lease->addr_.toText());
 
     // Get a context
@@ -2552,7 +2552,7 @@ void
 PgSqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
     const StatementIndex stindex = UPDATE_LEASE6;
 
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_UPDATE_ADDR6)
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_UPDATE_ADDR6)
         .arg(lease->addr_.toText())
         .arg(lease->type_);
 
@@ -2630,7 +2630,8 @@ PgSqlLeaseMgr::deleteLeaseCommon(PgSqlLeaseContextPtr& ctx,
 bool
 PgSqlLeaseMgr::deleteLease(const Lease4Ptr& lease) {
     const IOAddress& addr = lease->addr_;
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_DELETE_ADDR)
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL,
+              PGSQL_LB_DELETE_ADDR4)
         .arg(addr.toText());
 
     // Set up the WHERE clause value
@@ -2677,8 +2678,8 @@ PgSqlLeaseMgr::deleteLease(const Lease4Ptr& lease) {
 bool
 PgSqlLeaseMgr::deleteLease(const Lease6Ptr& lease) {
     const IOAddress& addr = lease->addr_;
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_PGSQL_DELETE_ADDR)
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL,
+              PGSQL_LB_DELETE_ADDR6)
         .arg(addr.toText());
 
     lease->extended_info_action_ = Lease6::ACTION_IGNORE;
@@ -2730,14 +2731,14 @@ PgSqlLeaseMgr::deleteLease(const Lease6Ptr& lease) {
 
 uint64_t
 PgSqlLeaseMgr::deleteExpiredReclaimedLeases4(const uint32_t secs) {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_DELETE_EXPIRED_RECLAIMED4)
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_DELETE_EXPIRED_RECLAIMED4)
         .arg(secs);
     return (deleteExpiredReclaimedLeasesCommon(secs, DELETE_LEASE4_STATE_EXPIRED));
 }
 
 uint64_t
 PgSqlLeaseMgr::deleteExpiredReclaimedLeases6(const uint32_t secs) {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_DELETE_EXPIRED_RECLAIMED6)
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_DELETE_EXPIRED_RECLAIMED6)
         .arg(secs);
     return (deleteExpiredReclaimedLeasesCommon(secs, DELETE_LEASE6_STATE_EXPIRED));
 }
@@ -3026,7 +3027,7 @@ PgSqlLeaseMgr::getDescription() const {
 
 std::pair<uint32_t, uint32_t>
 PgSqlLeaseMgr::getVersion(const string& timer_name) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_VERSION);
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_GET_VERSION);
 
     IOServiceAccessorPtr ac(new IOServiceAccessor(&DatabaseConnection::getIOService));
     DbCallback cb(&PgSqlLeaseMgr::dbReconnect);
@@ -3036,12 +3037,12 @@ PgSqlLeaseMgr::getVersion(const string& timer_name) const {
 
 void
 PgSqlLeaseMgr::commit() {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_COMMIT);
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_COMMIT);
 }
 
 void
 PgSqlLeaseMgr::rollback() {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_ROLLBACK);
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_ROLLBACK);
 }
 
 void
@@ -3224,8 +3225,8 @@ PgSqlLeaseMgr::getLeases4ByRelayId(const OptionBuffer& relay_id,
         isc_throw(BadValue, "start time must be before end time");
     }
 
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_PGSQL_GET_RELAYID4)
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL,
+              PGSQL_LB_GET_RELAYID4)
         .arg(page_size.page_size_)
         .arg(lower_bound_address.toText())
         .arg(idToText(relay_id))
@@ -3313,8 +3314,8 @@ PgSqlLeaseMgr::getLeases4ByRemoteId(const OptionBuffer& remote_id,
         isc_throw(BadValue, "start time must be before end time");
     }
 
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_PGSQL_GET_REMOTEID4)
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL,
+              PGSQL_LB_GET_REMOTEID4)
         .arg(page_size.page_size_)
         .arg(lower_bound_address.toText())
         .arg(idToText(remote_id))
@@ -3385,8 +3386,8 @@ PgSqlLeaseMgr::upgradeExtendedInfo4(const LeasePageSize& page_size) {
     size_t updated = 0;
     IOAddress start_addr = IOAddress::IPV4_ZERO_ADDRESS();
     for (;;) {
-        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-                  DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO4_PAGE)
+        LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL,
+                  PGSQL_LB_UPGRADE_EXTENDED_INFO4_PAGE)
             .arg(pages)
             .arg(start_addr.toText())
             .arg(updated);
@@ -3446,15 +3447,15 @@ PgSqlLeaseMgr::upgradeExtendedInfo4(const LeasePageSize& page_size) {
                 continue;
             } catch (const std::exception& ex) {
                 // Something when wrong, for instance extract failed.
-                LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
-                          DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO4_ERROR)
+                LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE,
+                          PGSQL_LB_UPGRADE_EXTENDED_INFO4_ERROR)
                     .arg(lease->addr_.toText())
                     .arg(ex.what());
             }
         }
     }
 
-    LOG_INFO(dhcpsrv_logger, DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO4)
+    LOG_INFO(pgsql_lb_logger, PGSQL_LB_UPGRADE_EXTENDED_INFO4)
         .arg(pages)
         .arg(updated);
 
@@ -3465,8 +3466,8 @@ Lease6Collection
 PgSqlLeaseMgr::getLeases6ByRelayId(const DUID& relay_id,
                                    const IOAddress& lower_bound_address,
                                    const LeasePageSize& page_size) {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_PGSQL_GET_RELAYID6)
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL,
+              PGSQL_LB_GET_RELAYID6)
         .arg(page_size.page_size_)
         .arg(lower_bound_address.toText())
         .arg(relay_id.toText());
@@ -3511,8 +3512,8 @@ Lease6Collection
 PgSqlLeaseMgr::getLeases6ByRemoteId(const OptionBuffer& remote_id,
                                     const IOAddress& lower_bound_address,
                                     const LeasePageSize& page_size) {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_PGSQL_GET_REMOTEID6)
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL,
+              PGSQL_LB_GET_REMOTEID6)
         .arg(page_size.page_size_)
         .arg(lower_bound_address.toText())
         .arg(idToText(remote_id));
@@ -3566,8 +3567,8 @@ PgSqlLeaseMgr::upgradeExtendedInfo6(const LeasePageSize& page_size) {
     size_t updated = 0;
     IOAddress start_addr = IOAddress::IPV6_ZERO_ADDRESS();
     for (;;) {
-        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-                  DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO6_PAGE)
+        LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL,
+                  PGSQL_LB_UPGRADE_EXTENDED_INFO6_PAGE)
             .arg(pages)
             .arg(start_addr.toText())
             .arg(updated);
@@ -3618,15 +3619,15 @@ PgSqlLeaseMgr::upgradeExtendedInfo6(const LeasePageSize& page_size) {
                 continue;
             } catch (const std::exception& ex) {
                 // Something when wrong, for instance extract failed.
-                LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
-                          DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO6_ERROR)
+                LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE,
+                          PGSQL_LB_UPGRADE_EXTENDED_INFO6_ERROR)
                     .arg(lease->addr_.toText())
                     .arg(ex.what());
             }
         }
     }
 
-    LOG_INFO(dhcpsrv_logger, DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO6)
+    LOG_INFO(pgsql_lb_logger, PGSQL_LB_UPGRADE_EXTENDED_INFO6)
         .arg(pages)
         .arg(updated);
 

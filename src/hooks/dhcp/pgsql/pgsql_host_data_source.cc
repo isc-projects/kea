@@ -2324,13 +2324,13 @@ PgSqlHostDataSourceImpl::PgSqlHostDataSourceImpl(const DatabaseConnection::Param
 #ifdef HAVE_PGSQL_SSL
     if ((tls > 0) && !PgSqlConnection::warned_about_tls) {
         PgSqlConnection::warned_about_tls = true;
-        LOG_INFO(dhcpsrv_logger, DHCPSRV_PGSQL_TLS_SUPPORT)
+        LOG_INFO(pgsql_hb_logger, PGSQL_HB_TLS_SUPPORT)
             .arg(DatabaseConnection::redactedAccessString(parameters_));
         PQinitSSL(1);
     }
 #else
     if (tls > 0) {
-        LOG_ERROR(dhcpsrv_logger, DHCPSRV_PGSQL_NO_TLS_SUPPORT)
+        LOG_ERROR(pgsql_hb_logger, PGSQL_HB_NO_TLS_SUPPORT)
             .arg(DatabaseConnection::redactedAccessString(parameters_));
         isc_throw(DbOpenError, "Attempt to configure TLS for PostgreSQL "
                   << "backend (built with this feature disabled)");
@@ -2376,7 +2376,7 @@ PgSqlHostDataSourceImpl::createContext() const {
         ctx->conn_.prepareStatements(tagged_statements.begin() + WRITE_STMTS_BEGIN,
                                      tagged_statements.end());
     } else {
-        LOG_INFO(dhcpsrv_logger, DHCPSRV_PGSQL_HOST_DB_READONLY);
+        LOG_INFO(pgsql_hb_logger, PGSQL_HB_DB_READONLY);
     }
 
     ctx->host_ipv4_exchange_.reset(new PgSqlHostWithOptionsExchange(PgSqlHostWithOptionsExchange::DHCP4_ONLY));
@@ -2419,7 +2419,7 @@ PgSqlHostDataSourceImpl::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
         }
         reopened = true;
     } catch (const std::exception& ex) {
-        LOG_ERROR(dhcpsrv_logger, DHCPSRV_PGSQL_HOST_DB_RECONNECT_ATTEMPT_FAILED)
+        LOG_ERROR(pgsql_hb_logger, PGSQL_HB_DB_RECONNECT_ATTEMPT_FAILED)
                 .arg(ex.what());
     }
 
@@ -2436,7 +2436,7 @@ PgSqlHostDataSourceImpl::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
     } else {
         if (!db_reconnect_ctl->checkRetries()) {
             // We're out of retries, log it and initiate shutdown.
-            LOG_ERROR(dhcpsrv_logger, DHCPSRV_PGSQL_HOST_DB_RECONNECT_FAILED)
+            LOG_ERROR(pgsql_hb_logger, PGSQL_HB_DB_RECONNECT_FAILED)
                     .arg(db_reconnect_ctl->maxRetries());
 
             // Cancel the timer.
@@ -2449,7 +2449,7 @@ PgSqlHostDataSourceImpl::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
             return (false);
         }
 
-        LOG_INFO(dhcpsrv_logger, DHCPSRV_PGSQL_HOST_DB_RECONNECT_ATTEMPT_SCHEDULE)
+        LOG_INFO(pgsql_hb_logger, PGSQL_HB_DB_RECONNECT_ATTEMPT_SCHEDULE)
                 .arg(db_reconnect_ctl->maxRetries() - db_reconnect_ctl->retriesLeft() + 1)
                 .arg(db_reconnect_ctl->maxRetries())
                 .arg(db_reconnect_ctl->retryInterval());
@@ -2655,7 +2655,7 @@ PgSqlHostDataSourceImpl::getHost(PgSqlHostContextPtr& ctx,
 
 std::pair<uint32_t, uint32_t>
 PgSqlHostDataSourceImpl::getVersion(const std::string& timer_name) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_HOST_DB_GET_VERSION);
+    LOG_DEBUG(pgsql_hb_logger, PGSQL_HB_DBG_TRACE_DETAIL, PGSQL_HB_DB_GET_VERSION);
 
     IOServiceAccessorPtr ac(new IOServiceAccessor(&DatabaseConnection::getIOService));
     DbCallback cb(&PgSqlHostDataSourceImpl::dbReconnect);

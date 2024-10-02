@@ -2983,10 +2983,10 @@ MySqlHostDataSourceImpl::createContext() const {
     if (ctx->conn_.getTls()) {
         std::string cipher = ctx->conn_.getTlsCipher();
         if (cipher.empty()) {
-            LOG_ERROR(dhcpsrv_logger, DHCPSRV_MYSQL_NO_TLS);
+            LOG_ERROR(mysql_hb_logger, MYSQL_HB_NO_TLS);
         } else {
-            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
-                      DHCPSRV_MYSQL_TLS_CIPHER)
+            LOG_DEBUG(mysql_hb_logger, MYSQL_HB_DBG_TRACE,
+                      MYSQL_HB_TLS_CIPHER)
                 .arg(cipher);
         }
     }
@@ -3008,7 +3008,7 @@ MySqlHostDataSourceImpl::createContext() const {
         ctx->conn_.prepareStatements(tagged_statements.begin() + WRITE_STMTS_BEGIN,
                                      tagged_statements.end());
     } else {
-        LOG_INFO(dhcpsrv_logger, DHCPSRV_MYSQL_HOST_DB_READONLY);
+        LOG_INFO(mysql_hb_logger, MYSQL_HB_DB_READONLY);
     }
 
     // Create the exchange objects for use in exchanging data between the
@@ -3053,7 +3053,7 @@ MySqlHostDataSourceImpl::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
         }
         reopened = true;
     } catch (const std::exception& ex) {
-        LOG_ERROR(dhcpsrv_logger, DHCPSRV_MYSQL_HOST_DB_RECONNECT_ATTEMPT_FAILED)
+        LOG_ERROR(mysql_hb_logger, MYSQL_HB_DB_RECONNECT_ATTEMPT_FAILED)
                 .arg(ex.what());
     }
 
@@ -3070,7 +3070,7 @@ MySqlHostDataSourceImpl::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
     } else {
         if (!db_reconnect_ctl->checkRetries()) {
             // We're out of retries, log it and initiate shutdown.
-            LOG_ERROR(dhcpsrv_logger, DHCPSRV_MYSQL_HOST_DB_RECONNECT_FAILED)
+            LOG_ERROR(mysql_hb_logger, MYSQL_HB_DB_RECONNECT_FAILED)
                     .arg(db_reconnect_ctl->maxRetries());
 
             // Cancel the timer.
@@ -3083,7 +3083,7 @@ MySqlHostDataSourceImpl::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
             return (false);
         }
 
-        LOG_INFO(dhcpsrv_logger, DHCPSRV_MYSQL_HOST_DB_RECONNECT_ATTEMPT_SCHEDULE)
+        LOG_INFO(mysql_hb_logger, MYSQL_HB_DB_RECONNECT_ATTEMPT_SCHEDULE)
                 .arg(db_reconnect_ctl->maxRetries() - db_reconnect_ctl->retriesLeft() + 1)
                 .arg(db_reconnect_ctl->maxRetries())
                 .arg(db_reconnect_ctl->retryInterval());
@@ -3103,7 +3103,7 @@ MySqlHostDataSourceImpl::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
 
 std::pair<uint32_t, uint32_t>
 MySqlHostDataSourceImpl::getVersion(const std::string& timer_name) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_HOST_DB_GET_VERSION);
+    LOG_DEBUG(mysql_hb_logger, MYSQL_HB_DBG_TRACE_DETAIL, MYSQL_HB_DB_GET_VERSION);
 
     IOServiceAccessorPtr ac(new IOServiceAccessor(&DatabaseConnection::getIOService));
     DbCallback cb(&MySqlHostDataSourceImpl::dbReconnect);

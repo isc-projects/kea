@@ -14,6 +14,43 @@
 namespace isc {
 namespace dhcp {
 
+///@{
+/// @brief MySQL Lease Mgr logging levels
+///
+/// Defines the levels used to output debug messages in the MySQL Lease Mgr
+/// Note that higher numbers equate to more verbose (and detailed) output.
+
+/// @brief Traces normal operations
+///
+/// E.g. sending a query to the database etc.
+extern const int MYSQL_LB_DBG_TRACE;
+
+/// @brief Records the results of the lookups
+///
+/// Using the example of tracing queries from the backend database, this will
+/// just record the summary results.
+extern const int MYSQL_LB_DBG_RESULTS;
+
+/// @brief Additional information
+///
+/// Record detailed tracing. This is generally reserved for tracing access to
+/// the lease database.
+extern const int MYSQL_LB_DBG_TRACE_DETAIL;
+
+/// @brief Additional information
+///
+/// Record detailed (and verbose) data on the server.
+extern const int MYSQL_LB_DBG_TRACE_DETAIL_DATA;
+
+// Trace hook related operations
+extern const int MYSQL_LB_DBG_HOOKS;
+///@}
+
+/// @brief MySQL Lease Mgr Logger
+///
+/// Define the logger used to log messages.  We could define it in multiple
+/// modules, but defining in a single module and linking to it saves time and
+/// space.
 extern isc::log::Logger mysql_lb_logger;
 
 }  // namespace dhcp
