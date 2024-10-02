@@ -379,11 +379,11 @@
             },
             {
                 // The MySql host backend hook library required for host storage.
-                "library": "/opt/lib/kea/hooks/libdhcp_mysql_hb.so"
+                "library": "/opt/lib/kea/hooks/libdhcp_mysql.so"
             },
             {
                 // The PgSql host backend hook library required for host storage.
-                "library": "/opt/lib/kea/hooks/libdhcp_pgsql_hb.so"
+                "library": "/opt/lib/kea/hooks/libdhcp_pgsql.so"
             }
         ],
 
