@@ -200,6 +200,7 @@ namespace {
     "  x.shared_network_name," \
     "  x.pool_id," \
     "  x.modification_ts," \
+    "  x.client_classes,"\
     "  x.pd_pool_id," \
     "  y.option_id," \
     "  y.code," \
@@ -214,6 +215,7 @@ namespace {
     "  y.shared_network_name," \
     "  y.pool_id," \
     "  y.modification_ts," \
+    "  y.client_classes,"\
     "  y.pd_pool_id," \
     "  o.option_id," \
     "  o.code," \
@@ -228,6 +230,7 @@ namespace {
     "  o.shared_network_name," \
     "  o.pool_id," \
     "  o.modification_ts," \
+    "  o.client_classes,"\
     "  o.pd_pool_id, " \
     "  s.calculate_tee_times," \
     "  s.t1_percent," \
@@ -404,6 +407,7 @@ namespace {
     "  x.shared_network_name," \
     "  x.pool_id," \
     "  x.modification_ts," \
+    "  x.client_classes," \
     "  x.pd_pool_id " \
     "FROM dhcp6_pd_pool AS p " \
     server_join \
@@ -535,6 +539,7 @@ namespace {
     "  o.shared_network_name," \
     "  o.pool_id," \
     "  o.modification_ts," \
+    "  o.client_classes," \
     "  o.pd_pool_id, " \
     "  n.calculate_tee_times," \
     "  n.t1_percent," \
@@ -789,6 +794,7 @@ namespace {
     "  x.shared_network_name," \
     "  x.pool_id," \
     "  x.modification_ts," \
+    "  x.client_classes, " \
     "  s.tag, " \
     "  c.preferred_lifetime," \
     "  c.min_preferred_lifetime, " \

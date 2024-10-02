@@ -140,17 +140,9 @@ GenericConfigBackendDHCPv4Test::initTestSubnets() {
     subnet->addPool(pool2);
 
     // Add several options to the subnet.
-    subnet->getCfgOption()->add(*(test_options_[0]), test_options_[0]->space_name_);
-
-    subnet->getCfgOption()->add(test_options_[1]->option_,
-                                test_options_[1]->persistent_,
-                                test_options_[1]->cancelled_,
-                                test_options_[1]->space_name_);
-
-    subnet->getCfgOption()->add(test_options_[2]->option_,
-                                test_options_[2]->persistent_,
-                                test_options_[2]->cancelled_,
-                                test_options_[2]->space_name_);
+    subnet->getCfgOption()->add(*test_options_[0], test_options_[0]->space_name_);
+    subnet->getCfgOption()->add(*test_options_[1], test_options_[1]->space_name_);
+    subnet->getCfgOption()->add(*test_options_[2], test_options_[2]->space_name_);
 
     test_subnets_.push_back(subnet);
 
@@ -164,15 +156,8 @@ GenericConfigBackendDHCPv4Test::initTestSubnets() {
                           IOAddress("10.0.0.20")));
     subnet->addPool(pool1);
 
-    pool1->getCfgOption()->add(test_options_[3]->option_,
-                               test_options_[3]->persistent_,
-                               test_options_[3]->cancelled_,
-                               test_options_[3]->space_name_);
-
-    pool1->getCfgOption()->add(test_options_[4]->option_,
-                               test_options_[4]->persistent_,
-                               test_options_[4]->cancelled_,
-                               test_options_[4]->space_name_);
+    pool1->getCfgOption()->add(*test_options_[3], test_options_[3]->space_name_);
+    pool1->getCfgOption()->add(*test_options_[4], test_options_[4]->space_name_);
 
     pool2.reset(new Pool4(IOAddress("10.0.0.50"),
                           IOAddress("10.0.0.60")));
@@ -200,10 +185,7 @@ GenericConfigBackendDHCPv4Test::initTestSubnets() {
     subnet->setDdnsGeneratedPrefix("myhost");
     subnet->setDdnsQualifyingSuffix("example.org");
 
-    subnet->getCfgOption()->add(test_options_[0]->option_,
-                                test_options_[0]->persistent_,
-                                test_options_[0]->cancelled_,
-                                test_options_[0]->space_name_);
+    subnet->getCfgOption()->add(*test_options_[0], test_options_[0]->space_name_);
 
     test_subnets_.push_back(subnet);
 
@@ -247,20 +229,9 @@ GenericConfigBackendDHCPv4Test::initTestSharedNetworks() {
     shared_network->setAllocatorType("iterative");
 
     // Add several options to the shared network.
-    shared_network->getCfgOption()->add(test_options_[2]->option_,
-                                        test_options_[2]->persistent_,
-                                        test_options_[2]->cancelled_,
-                                        test_options_[2]->space_name_);
-
-    shared_network->getCfgOption()->add(test_options_[3]->option_,
-                                        test_options_[3]->persistent_,
-                                        test_options_[3]->cancelled_,
-                                        test_options_[3]->space_name_);
-
-    shared_network->getCfgOption()->add(test_options_[4]->option_,
-                                        test_options_[4]->persistent_,
-                                        test_options_[4]->cancelled_,
-                                        test_options_[4]->space_name_);
+    shared_network->getCfgOption()->add(*test_options_[2], test_options_[2]->space_name_);
+    shared_network->getCfgOption()->add(*test_options_[3], test_options_[3]->space_name_);
+    shared_network->getCfgOption()->add(*test_options_[4], test_options_[4]->space_name_);
 
     test_networks_.push_back(shared_network);
 
@@ -283,10 +254,7 @@ GenericConfigBackendDHCPv4Test::initTestSharedNetworks() {
     shared_network->setDdnsGeneratedPrefix("myhost");
     shared_network->setDdnsQualifyingSuffix("example.org");
 
-    shared_network->getCfgOption()->add(test_options_[0]->option_,
-                                        test_options_[0]->persistent_,
-                                        test_options_[0]->cancelled_,
-                                        test_options_[0]->space_name_);
+    shared_network->getCfgOption()->add(*test_options_[0], test_options_[0]->space_name_);
     test_networks_.push_back(shared_network);
 
     shared_network.reset(new SharedNetwork4("level3"));
