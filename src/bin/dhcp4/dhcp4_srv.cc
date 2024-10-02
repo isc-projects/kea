@@ -4824,23 +4824,9 @@ void Dhcpv4Srv::requiredClassify(Dhcpv4Exchange& ex) {
     Subnet4Ptr subnet = ex.getContext()->subnet_;
 
     if (subnet) {
-        // Begin by the shared-network
-        SharedNetwork4Ptr network;
-        subnet->getSharedNetwork(network);
-        if (network) {
-            const ClientClasses& to_add = network->getRequiredClasses();
-            for (auto const& cclass : to_add) {
-                classes.insert(cclass);
-            }
-        }
+        // host reservation???
 
-        // Followed by the subnet
-        const ClientClasses& to_add = subnet->getRequiredClasses();
-        for (auto const& cclass : to_add) {
-            classes.insert(cclass);
-        }
-
-        // And finish by the pool
+        // Begin by the pool
         Pkt4Ptr resp = ex.getResponse();
         IOAddress addr = IOAddress::IPV4_ZERO_ADDRESS();
         if (resp) {
@@ -4856,7 +4842,21 @@ void Dhcpv4Srv::requiredClassify(Dhcpv4Exchange& ex) {
             }
         }
 
-        // host reservation???
+        // Followed by the subnet
+        const ClientClasses& to_add = subnet->getRequiredClasses();
+        for (auto const& cclass : to_add) {
+            classes.insert(cclass);
+        }
+
+        // And finish by the shared-network
+        SharedNetwork4Ptr network;
+        subnet->getSharedNetwork(network);
+        if (network) {
+            const ClientClasses& net_to_add = network->getRequiredClasses();
+            for (auto const& cclass : net_to_add) {
+                classes.insert(cclass);
+            }
+        }
     }
 
     // Run match expressions

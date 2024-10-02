@@ -4454,23 +4454,9 @@ Dhcpv6Srv::requiredClassify(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx
     Subnet6Ptr subnet = ctx.subnet_;
 
     if (subnet) {
-        // Begin by the shared-network
-        SharedNetwork6Ptr network;
-        subnet->getSharedNetwork(network);
-        if (network) {
-            const ClientClasses& to_add = network->getRequiredClasses();
-            for (auto const& cclass : to_add) {
-                classes.insert(cclass);
-            }
-        }
+        // host reservation???
 
-        // Followed by the subnet
-        const ClientClasses& to_add = subnet->getRequiredClasses();
-        for (auto const& cclass : to_add) {
-            classes.insert(cclass);
-        }
-
-        // And finish by pools
+        // Begin by pools
         for (auto const& resource : ctx.allocated_resources_) {
             PoolPtr pool =
                 ctx.subnet_->getPool(resource.getPrefixLength() == 128 ?
@@ -4485,7 +4471,21 @@ Dhcpv6Srv::requiredClassify(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx
             }
         }
 
-        // host reservation???
+        // Followed by the subnet
+        const ClientClasses& to_add = subnet->getRequiredClasses();
+        for (auto const& cclass : to_add) {
+            classes.insert(cclass);
+        }
+
+        // And finish by the shared-network
+        SharedNetwork6Ptr network;
+        subnet->getSharedNetwork(network);
+        if (network) {
+            const ClientClasses& net_to_add = network->getRequiredClasses();
+            for (auto const& cclass : net_to_add) {
+                classes.insert(cclass);
+            }
+        }
     }
 
     // Run match expressions
