@@ -3322,8 +3322,8 @@ DNS servers set to 192.0.2.1 and 192.0.2.2.
 Required Classification
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-In some cases it is useful to limit the scope of a class to a
-shared network, subnet, or pool. There are two parameters which are used
+In some cases it is useful to limit the scope of a class to a pool,
+subnet, or shared network. There are two parameters which are used
 to limit the scope of the class by instructing the server to evaluate test
 expressions when required.
 
@@ -3333,9 +3333,9 @@ is not evaluated at the reception of the incoming packet but later, and
 only if the class evaluation is required.
 
 The second is ``require-client-classes``, which takes a list of class
-names and is valid in shared-network, subnet, and pool scope. Classes in
+names and is valid in pool, subnet, and shared network scope. Classes in
 these lists are marked as required and evaluated after selection of this
-specific shared network/subnet/pool and before output-option processing.
+specific pool/subnet/shared network and before output-option processing.
 
 In this example, a class is assigned to the incoming packet when the
 specified subnet is used:
@@ -3370,9 +3370,9 @@ over ``option-data`` in a class. If ``option-data`` is moved to a
 required class and required in the subnet, a class evaluated earlier
 may take precedence.
 
-Required evaluation is also available at the shared-network and pool levels.
-The order in which required classes are considered is: shared-network,
-subnet, and pool, i.e. in the reverse order from the way in which
+Required evaluation is also available at the shared network and pool levels.
+The order in which required classes are considered is: pool, subnet,
+and shared network, i.e. in the same order from the way in which
 ``option-data`` is processed.
 
 .. note::

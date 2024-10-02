@@ -2032,6 +2032,87 @@ TEST_F(ClassifyTest, precedencePool) {
 
 // This test checks the precedence order in required evaluation.
 // This order is: pools > subnet > shared-network
+TEST_F(ClassifyTest, precedencePdPool) {
+    std::string config =
+        "{"
+        "\"interfaces-config\": {"
+        "   \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"client-classes\": ["
+        "    {"
+        "       \"name\": \"for-pool\","
+        "       \"test\": \"member('ALL')\","
+        "       \"only-if-required\": true,"
+        "       \"option-data\": [ {"
+        "           \"name\": \"dns-servers\","
+        "           \"data\": \"2001:db8:1::1\""
+        "       } ]"
+        "    },"
+        "    {"
+        "       \"name\": \"for-subnet\","
+        "       \"test\": \"member('ALL')\","
+        "       \"only-if-required\": true,"
+        "       \"option-data\": [ {"
+        "           \"name\": \"dns-servers\","
+        "           \"data\": \"2001:db8:1::2\""
+        "       } ]"
+        "    },"
+        "    {"
+        "       \"name\": \"for-network\","
+        "       \"test\": \"member('ALL')\","
+        "       \"only-if-required\": true,"
+        "       \"option-data\": [ {"
+        "           \"name\": \"dns-servers\","
+        "           \"data\": \"2001:db8:1::3\""
+        "       } ]"
+        "    }"
+        "],"
+        "\"shared-networks\": [ {"
+        "    \"name\": \"frog\","
+        "    \"interface\": \"eth1\","
+        "    \"require-client-classes\": [ \"for-network\" ],"
+        "    \"subnet6\": [ { "
+        "        \"subnet\": \"2001:db8:1::/64\","
+        "        \"id\": 1,"
+        "        \"require-client-classes\": [ \"for-subnet\" ],"
+        "        \"pd-pools\": [ { "
+        "            \"prefix\": \"2001:db8:1::\","
+        "            \"prefix-len\": 48, \"delegated-len\": 64,"
+        "            \"require-client-classes\": [ \"for-pool\" ]"
+        "        } ]"
+        "    } ]"
+        "} ],"
+        "\"valid-lifetime\": 600"
+        "}";
+
+    // Create a client requesting dns-servers option
+    Dhcp6Client client;
+    client.setInterface("eth1");
+    client.requestPrefix(0xabca);
+    client.requestOption(D6O_NAME_SERVERS);
+
+    // Load the config and perform a SARR
+    configure(config, *client.getServer());
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Check response
+    EXPECT_EQ(1, client.getLeaseNum());
+    Pkt6Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+
+    // Check dns-servers option
+    OptionPtr opt = resp->getOption(D6O_NAME_SERVERS);
+    ASSERT_TRUE(opt);
+    Option6AddrLstPtr servers =
+        boost::dynamic_pointer_cast<Option6AddrLst>(opt);
+    ASSERT_TRUE(servers);
+    auto addrs = servers->getAddresses();
+    ASSERT_EQ(1, addrs.size());
+    EXPECT_EQ("2001:db8:1::1", addrs[0].toText());
+}
+
+// This test checks the precedence order in required evaluation.
+// This order is: pools > subnet > shared-network
 TEST_F(ClassifyTest, precedenceSubnet) {
     std::string config =
         "{"

@@ -138,8 +138,8 @@ The classification process is conducted in several steps:
     callouts are called here.
 
 12. Classes marked as "required" are evaluated in the order in which
-    they are listed: first the shared network, then the subnet, and
-    finally the pools that assigned resources belong to.
+    they are listed: first pools, then the subnet, and finally
+    the shared network that assigned resources belong to.
 
 13. Options are assigned, again possibly based on the class information
     in the order that classes were associated with the incoming packet.
@@ -910,15 +910,16 @@ subnet, shared network, or pools are known but output-option processing has not
 yet been done. For this purpose, the ``only-if-required`` flag, which is
 ``false`` by default, allows the evaluation of the ``test`` expression or the
 ``template-test`` expression only when it is required, i.e. in a
-``require-client-classes`` list of the selected subnet, shared network, or pool.
+``require-client-classes`` list of the selected pool, subnet, or shared network.
 
-The ``require-client-classes`` list, which is valid for shared-network, subnet,
-and pool scope, specifies the classes which are evaluated in the second pass
-before output-option processing. The list is built in reverse-precedence
-order of the option data, i.e. an option data item in a subnet takes precedence over
-one in a shared network, but a required class in a subnet is added after one in a
-shared network. The mechanism is related to the ``only-if-required`` flag but it
-is not mandatory that the flag be set to ``true``.
+The ``require-client-classes`` list, which is valid for pool, subnet,
+and shared-network scope, specifies the classes which are evaluated in
+the second pass before output-option processing. The list is built in
+same precedence order of the option data, i.e. an option data item in
+a subnet takes precedence over one in a shared network, and also a
+required class in a subnet is added before one in a shared
+network. The mechanism is related to the ``only-if-required`` flag but
+it is not mandatory that the flag be set to ``true``.
 
 .. note ::
 
