@@ -84,6 +84,7 @@ namespace {
     "  x.shared_network_name," \
     "  x.pool_id," \
     "  gmt_epoch(x.modification_ts) as modification_ts, " \
+    "  x.client_classes," \
     "  o.option_id," \
     "  o.code," \
     "  o.value," \
@@ -97,6 +98,7 @@ namespace {
     "  o.shared_network_name," \
     "  o.pool_id," \
     "  gmt_epoch(o.modification_ts) as modification_ts, " \
+    "  o.client_classes," \
     "  s.calculate_tee_times," \
     "  s.t1_percent," \
     "  s.t2_percent," \
@@ -194,6 +196,7 @@ namespace {
     "  x.shared_network_name," \
     "  x.pool_id," \
     "  gmt_epoch(x.modification_ts) as modification_ts, " \
+    "  x.client_classes," \
     "  x.pd_pool_id," \
     "  y.option_id," \
     "  y.code," \
@@ -208,6 +211,7 @@ namespace {
     "  y.shared_network_name," \
     "  y.pool_id," \
     "  gmt_epoch(y.modification_ts) as modification_ts, " \
+    "  y.client_classes," \
     "  y.pd_pool_id," \
     "  o.option_id," \
     "  o.code," \
@@ -222,6 +226,7 @@ namespace {
     "  o.shared_network_name," \
     "  o.pool_id," \
     "  gmt_epoch(o.modification_ts) as modification_ts, " \
+    "  o.client_classes," \
     "  o.pd_pool_id, " \
     "  s.calculate_tee_times," \
     "  s.t1_percent," \
@@ -310,7 +315,8 @@ namespace {
       "  x.user_context," \
       "  x.shared_network_name," \
       "  x.pool_id," \
-      "  gmt_epoch(x.modification_ts) as modification_ts " \
+      "  gmt_epoch(x.modification_ts) as modification_ts," \
+      "  x.client_classes " \
       "FROM dhcp4_pool AS p " \
       server_join \
       "LEFT JOIN dhcp4_options AS x ON x.scope_id = 5 AND p.id = x.pool_id " \
@@ -352,6 +358,7 @@ namespace {
     "  x.shared_network_name," \
     "  x.pool_id," \
     "  gmt_epoch(x.modification_ts) as modification_ts, " \
+    "  x.client_classes," \
     "  x.pd_pool_id " \
     "FROM dhcp6_pool AS p " \
     server_join \
@@ -397,6 +404,7 @@ namespace {
     "  x.shared_network_name," \
     "  x.pool_id," \
     "  gmt_epoch(x.modification_ts) as modification_ts, " \
+    "  x.client_classes, " \
     "  x.pd_pool_id " \
     "FROM dhcp6_pd_pool AS p " \
     server_join \
@@ -444,6 +452,7 @@ namespace {
     "  o.shared_network_name," \
     "  o.pool_id," \
     "  gmt_epoch(o.modification_ts) as modification_ts, " \
+    "  o.client_classes, " \
     "  n.calculate_tee_times," \
     "  n.t1_percent," \
     "  n.t2_percent," \
@@ -527,6 +536,7 @@ namespace {
     "  o.shared_network_name," \
     "  o.pool_id," \
     "  gmt_epoch(o.modification_ts) as modification_ts, " \
+    "  o.client_classes, " \
     "  o.pd_pool_id, " \
     "  n.calculate_tee_times," \
     "  n.t1_percent," \
@@ -619,6 +629,7 @@ namespace {
     "  o.shared_network_name," \
     "  o.pool_id," \
     "  gmt_epoch(o.modification_ts) as modification_ts, " \
+    "  o.client_classes, " \
     "  s.tag " \
     pd_pool_id \
     "FROM " #table_prefix "_options AS o " \
@@ -715,6 +726,7 @@ namespace {
     "  x.shared_network_name," \
     "  x.pool_id," \
     "  gmt_epoch(x.modification_ts) as modification_ts, " \
+    "  x.client_classes, " \
     "  s.tag " \
     "FROM dhcp4_client_class AS c " \
     "INNER JOIN dhcp4_client_class_order AS o " \
@@ -779,6 +791,7 @@ namespace {
     "  x.shared_network_name," \
     "  x.pool_id," \
     "  gmt_epoch(x.modification_ts) as modification_ts, " \
+    "  x.client_classes, " \
     "  s.tag, " \
     "  c.preferred_lifetime," \
     "  c.min_preferred_lifetime, " \
@@ -935,15 +948,16 @@ namespace {
     "  user_context," \
     "  shared_network_name," \
     "  pool_id," \
-    "  modification_ts" \
+    "  modification_ts, " \
+    "  client_classes " \
     pd_pool_id \
-    ") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, cast($10 as json), $11, $12, $13" last ")"
+    ") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, cast($10 as json), $11, $12, $13, $14" last ")"
 
 #define PGSQL_INSERT_OPTION4() \
     PGSQL_INSERT_OPTION_COMMON(dhcp4, "", "")
 
 #define PGSQL_INSERT_OPTION6() \
-    PGSQL_INSERT_OPTION_COMMON(dhcp6, ", pd_pool_id ", ", $14")
+    PGSQL_INSERT_OPTION_COMMON(dhcp6, ", pd_pool_id ", ", $15")
 #endif
 
 #ifndef PGSQL_INSERT_OPTION_SERVER
@@ -1056,7 +1070,8 @@ namespace {
     "  user_context = cast($10 as json)," \
     "  shared_network_name = $11," \
     "  pool_id = $12," \
-    "  modification_ts = $13 " \
+    "  modification_ts = $13, " \
+    "  client_classes = $14 " \
     pd_pool_id \
     "WHERE " #__VA_ARGS__
 
@@ -1064,7 +1079,7 @@ namespace {
     PGSQL_UPDATE_OPTION_NO_TAG(dhcp4, "", __VA_ARGS__)
 
 #define PGSQL_UPDATE_OPTION6_NO_TAG(...) \
-    PGSQL_UPDATE_OPTION_NO_TAG(dhcp6, ", pd_pool_id = $14 ", __VA_ARGS__)
+    PGSQL_UPDATE_OPTION_NO_TAG(dhcp6, ", pd_pool_id = $15 ", __VA_ARGS__)
 #endif
 
 #ifndef PGSQL_UPDATE_OPTION_WITH_TAG
@@ -1083,7 +1098,8 @@ namespace {
     "  user_context = cast($10 as json)," \
     "  shared_network_name = $11," \
     "  pool_id = $12," \
-    "  modification_ts = $13 " \
+    "  modification_ts = $13, " \
+    "  client_classes = $14 " \
     pd_pool_id \
     "FROM " #table_prefix "_options_server as a, " \
     "     " #table_prefix "_server as s " \
@@ -1092,11 +1108,11 @@ namespace {
     #__VA_ARGS__
 
 #define PGSQL_UPDATE_OPTION4_WITH_TAG(...) \
-    PGSQL_UPDATE_OPTION_WITH_TAG(dhcp4, "", AND s.tag = $14 __VA_ARGS__)
+    PGSQL_UPDATE_OPTION_WITH_TAG(dhcp4, "", AND s.tag = $15 __VA_ARGS__)
 
 #define PGSQL_UPDATE_OPTION6_WITH_TAG(...) \
     PGSQL_UPDATE_OPTION_WITH_TAG(dhcp6, \
-    ", pd_pool_id = $14 ", AND s.tag = $15 __VA_ARGS__)
+    ", pd_pool_id = $15 ", AND s.tag = $16 __VA_ARGS__)
 #endif
 
 #ifndef PGSQL_UPDATE_CLIENT_CLASS4

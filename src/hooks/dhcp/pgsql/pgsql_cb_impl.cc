@@ -736,7 +736,7 @@ PgSqlConfigBackendImpl::getOptions(const int index,
             OptionDescriptorPtr desc = processOptionRow(universe, worker, 0);
             if (desc) {
                 // server_tag for the global option
-                ServerTag last_option_server_tag(worker.getString(13));
+                ServerTag last_option_server_tag(worker.getString(14));
                 desc->setServerTag(last_option_server_tag.get());
 
                 // If we're fetching options for a given server (explicit server
@@ -828,6 +828,17 @@ PgSqlConfigBackendImpl::processOptionRow(const Option::Universe& universe,
     desc->space_name_ = space;
     desc->setModificationTime(worker.getTimestamp(first_col + 12));
 
+    // Set user context.
+    if (!worker.isColumnNull(first_col + 9)) {
+        ElementPtr user_context = worker.getJSON(first_col + 9);
+        if (user_context) {
+            desc->setContext(user_context);
+        }
+    }
+
+    // Populate client classes.
+    setClientClasses(worker, first_col + 13, desc->client_classes_);
+
     // Set database id for the option.
     // @todo Can this actually ever be null and if it is, isn't that an error?
     if (!worker.isColumnNull(first_col)) {
@@ -835,6 +846,31 @@ PgSqlConfigBackendImpl::processOptionRow(const Option::Universe& universe,
     }
 
     return (desc);
+}
+
+void
+PgSqlConfigBackendImpl::setClientClasses(PgSqlResultRowWorker& worker, size_t col,
+                                         ClientClasses& client_classes) {
+    if (worker.isColumnNull(col)) {
+        return;
+    }
+
+    ElementPtr cclasses_element = worker.getJSON(col);
+    if (cclasses_element->getType() != Element::list) {
+        std::ostringstream ss;
+        cclasses_element->toJSON(ss);
+        isc_throw(BadValue, "invalid client_classes value " << ss.str());
+    }
+
+    for (auto i = 0; i < cclasses_element->size(); ++i) {
+        auto cclasses_item = cclasses_element->get(i);
+        if (cclasses_item->getType() != Element::string) {
+            isc_throw(BadValue, "elements of client_classes list must"
+                                "be valid strings");
+        }
+
+        client_classes.insert(cclasses_item->stringValue());
+    }
 }
 
 OptionDefinitionPtr
@@ -1146,6 +1182,18 @@ PgSqlConfigBackendImpl::addOptionValueBinding(PsqlBindArray& bindings,
     } else {
         bindings.addNull();
     }
+}
+
+void 
+PgSqlConfigBackendImpl::addClientClassesBinding(db::PsqlBindArray& bindings,
+                                                const ClientClasses& client_classes) {
+    // Create JSON list of client classes.
+    data::ElementPtr client_classes_element = data::Element::createList();
+    for (auto const& client_class : client_classes) {
+        client_classes_element->add(data::Element::create(client_class));
+    }
+
+    bindings.add(client_classes_element);
 }
 
 } // end of namespace isc::dhcp

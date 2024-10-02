@@ -1128,5 +1128,20 @@ MySqlConfigBackendImpl::getPort() const {
     return (0);
 }
 
+db::MySqlBindingPtr 
+MySqlConfigBackendImpl::createInputClientClassesBinding(const ClientClasses& client_classes) {
+    if (client_classes.empty()) {
+        return(db::MySqlBinding::createNull());
+    }
+
+    // Create JSON list of client classes.
+    data::ElementPtr client_classes_element = data::Element::createList();
+    for (auto const& client_class : client_classes) {
+        client_classes_element->add(data::Element::create(client_class));
+    }
+
+    return (db::MySqlBinding::createString(client_classes_element->str()));
+}
+
 } // end of namespace isc::dhcp
 } // end of namespace isc

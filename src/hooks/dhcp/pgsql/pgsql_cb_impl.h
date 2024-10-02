@@ -622,6 +622,29 @@ public:
     void setRequiredClasses(db::PgSqlResultRowWorker& worker, size_t col,
                             std::function<void(const std::string&)> setter);
 
+    /// @brief Addds 'client-classes' parameter to a bind array.
+    ///
+    /// Creates an Element tree of client class names and adds that to the end
+    /// of the given bind array.
+    ///
+    /// @param client_classes ClientClasses collection containing the class names
+    void addClientClassesBinding(db::PsqlBindArray& bindings, 
+                                 const ClientClasses& client_classes);
+
+    /// @brief Iterates over the class names in a JSON list element at a
+    /// given column, adding each name to the given ClientClasses instance.
+    ///
+    /// Has no effect if the column is null or is an empty list.
+    ///
+    /// @param worker result set row worker containing the row data
+    /// @param col column index of JSON element column
+    /// @param client_classes ClientCaLsses instance to populate
+    ///
+    /// @throw BadValue if the Element is not a list or if any of the
+    /// list's elements are not strings.
+    void setClientClasses(db::PgSqlResultRowWorker& worker, size_t col,
+                          ClientClasses& client_classes);
+
     /// @brief Adds an option value to a bind array.
     ///
     /// @param bindings PsqlBindArray to which the option value should be added.

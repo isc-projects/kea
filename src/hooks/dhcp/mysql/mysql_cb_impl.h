@@ -648,19 +648,7 @@ public:
     /// @param client_classes ClientClasses collection containing the class names
     /// @return Pointer to the binding (possibly null binding if there are no
     /// classes specified).
-    db::MySqlBindingPtr createInputClientClassesBinding(const ClientClasses& client_classes) {
-        if (client_classes.empty()) {
-            return(db::MySqlBinding::createNull());
-        }
-
-        // Create JSON list of client classes.
-        data::ElementPtr client_classes_element = data::Element::createList();
-        for (auto const& client_class : client_classes) {
-            client_classes_element->add(data::Element::create(client_class));
-        }
-
-        return (db::MySqlBinding::createString(client_classes_element->str()));
-    }
+    db::MySqlBindingPtr createInputClientClassesBinding(const ClientClasses& client_classes);
 
     /// @brief Creates input binding for user context parameter.
     ///

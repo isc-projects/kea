@@ -336,9 +336,9 @@ public:
                 auto prefix_pair = Subnet6::parsePrefix(subnet_prefix);
 
                 // preferred_lifetime (5)
-                // min_preferred_lifetime (72)
-                // max_preferred_lifetime (73)
-                auto preferred_lifetime = worker.getTriplet(5, 72, 73);
+                // min_preferred_lifetime (75)
+                // max_preferred_lifetime (76)
+                auto preferred_lifetime = worker.getTriplet(5, 75, 76);
 
                 // renew_timer at 9.
                 auto renew_timer = worker.getTriplet(9);
@@ -347,9 +347,9 @@ public:
                 auto rebind_timer = worker.getTriplet(7);
 
                 // valid_lifetime at 14.
-                // min_valid_lifetime at 74.
-                // max_valid_lifetime at 75.
-                auto valid_lifetime = worker.getTriplet(14, 74, 75);
+                // min_valid_lifetime at 77.
+                // max_valid_lifetime at 78.
+                auto valid_lifetime = worker.getTriplet(14, 77, 78);
 
                 // Create subnet with basic settings.
                 last_subnet = Subnet6::create(prefix_pair.first, prefix_pair.second,
@@ -412,103 +412,103 @@ public:
 
                 // 15 to 19 are pool
                 // 20 to 25 are pd pool
-                // 26 to 39 are pool option
-                // 40 to 53 are pd pool option
-                // 54 to 67 are option
+                // 26 to 40 are pool option
+                // 41 to 55 are pd pool option
+                // 56 to 70 are option
 
-                // calculate_tee_times at 68.
-                if (!worker.isColumnNull(68)) {
-                    last_subnet->setCalculateTeeTimes(worker.getBool(68));
+                // calculate_tee_times at 71.
+                if (!worker.isColumnNull(71)) {
+                    last_subnet->setCalculateTeeTimes(worker.getBool(71));
                 }
 
-                // t1_percent at 69.
-                if (!worker.isColumnNull(69)) {
-                    last_subnet->setT1Percent(worker.getDouble(69));
+                // t1_percent at 72.
+                if (!worker.isColumnNull(72)) {
+                    last_subnet->setT1Percent(worker.getDouble(72));
                 }
 
-                // t2_percent at 70.
-                if (!worker.isColumnNull(70)) {
-                    last_subnet->setT2Percent(worker.getDouble(70));
+                // t2_percent at 73.
+                if (!worker.isColumnNull(73)) {
+                    last_subnet->setT2Percent(worker.getDouble(73));
                 }
 
-                // interface_id at 71.
-                setInterfaceId(*last_subnet, worker, 71);
+                // interface_id at 74.
+                setInterfaceId(*last_subnet, worker, 74);
 
-                // 72 and 73 are {min,max}_preferred_lifetime
+                // 75 and 76 are {min,max}_preferred_lifetime
 
-                // 74 and 75 are {min,max}_valid_lifetime
+                // 77 and 78 are {min,max}_valid_lifetime
 
-                // 76 is pool client_class
-                // 77 is pool require_client_classes
-                // 78 is pool user_context
-                // 79 is pd pool excluded_prefix
-                // 80 is pd pool excluded_prefix_length
-                // 81 is pd pool client_class
-                // 82 is pd pool require_client_classes
-                // 83 is pd pool user_context
+                // 79 is pool client_class
+                // 80 is pool require_client_classes
+                // 81 is pool user_context
+                // 82 is pd pool excluded_prefix
+                // 83 is pd pool excluded_prefix_length
+                // 84 is pd pool client_class
+                // 85 is pd pool require_client_classes
+                // 86 is pd pool user_context
 
-                // ddns_send_updates at 84.
-                if (!worker.isColumnNull(84)) {
-                    last_subnet->setDdnsSendUpdates(worker.getBool(84));
-                }
-
-                // ddns_override_no_update at 85.
-                if (!worker.isColumnNull(85)) {
-                    last_subnet->setDdnsOverrideNoUpdate(worker.getBool(85));
-                }
-
-                // ddns_override_client_update at 86.
-                if (!worker.isColumnNull(86)) {
-                    last_subnet->setDdnsOverrideClientUpdate(worker.getBool(86));
-                }
-
-                // ddns_replace_client_name at 87.
+                // ddns_send_updates at 87.
                 if (!worker.isColumnNull(87)) {
-                    last_subnet->setDdnsReplaceClientNameMode(
-                        static_cast<D2ClientConfig::ReplaceClientNameMode>(worker.getSmallInt(87)));
+                    last_subnet->setDdnsSendUpdates(worker.getBool(87));
                 }
 
-                // ddns_generated_prefix at 88.
+                // ddns_override_no_update at 88.
                 if (!worker.isColumnNull(88)) {
-                    last_subnet->setDdnsGeneratedPrefix(worker.getString(88));
+                    last_subnet->setDdnsOverrideNoUpdate(worker.getBool(88));
                 }
 
-                // ddns_qualifying_suffix at 89.
+                // ddns_override_client_update at 89.
                 if (!worker.isColumnNull(89)) {
-                    last_subnet->setDdnsQualifyingSuffix(worker.getString(89));
+                    last_subnet->setDdnsOverrideClientUpdate(worker.getBool(89));
                 }
 
-                // reservations_in_subnet at 90.
+                // ddns_replace_client_name at 90.
                 if (!worker.isColumnNull(90)) {
-                    last_subnet->setReservationsInSubnet(worker.getBool(90));
+                    last_subnet->setDdnsReplaceClientNameMode(
+                        static_cast<D2ClientConfig::ReplaceClientNameMode>(worker.getSmallInt(90)));
                 }
 
-                // reservations_out_of_pool at 91.
+                // ddns_generated_prefix at 91.
                 if (!worker.isColumnNull(91)) {
-                    last_subnet->setReservationsOutOfPool(worker.getBool(91));
+                    last_subnet->setDdnsGeneratedPrefix(worker.getString(91));
                 }
 
-                // cache_threshold at 92.
+                // ddns_qualifying_suffix at 92.
                 if (!worker.isColumnNull(92)) {
-                    last_subnet->setCacheThreshold(worker.getDouble(92));
+                    last_subnet->setDdnsQualifyingSuffix(worker.getString(92));
                 }
 
-                // cache_max_age at 93.
+                // reservations_in_subnet at 93.
                 if (!worker.isColumnNull(93)) {
-                    last_subnet->setCacheMaxAge(worker.getInt(93));
+                    last_subnet->setReservationsInSubnet(worker.getBool(93));
                 }
 
-                // allocator at 94.
+                // reservations_out_of_pool at 94.
                 if (!worker.isColumnNull(94)) {
-                    last_subnet->setAllocatorType(worker.getString(94));
+                    last_subnet->setReservationsOutOfPool(worker.getBool(94));
                 }
 
-                // pd_allocator at 95.
+                // cache_threshold at 95.
                 if (!worker.isColumnNull(95)) {
-                    last_subnet->setPdAllocatorType(worker.getString(95));
+                    last_subnet->setCacheThreshold(worker.getDouble(95));
                 }
 
-                // server_tag at 96.
+                // cache_max_age at 96.
+                if (!worker.isColumnNull(96)) {
+                    last_subnet->setCacheMaxAge(worker.getInt(96));
+                }
+
+                // allocator at 97.
+                if (!worker.isColumnNull(97)) {
+                    last_subnet->setAllocatorType(worker.getString(97));
+                }
+
+                // pd_allocator at 98.
+                if (!worker.isColumnNull(98)) {
+                    last_subnet->setPdAllocatorType(worker.getString(98));
+                }
+
+                // server_tag at 99.
 
                 // Subnet ready. Add it to the list.
                 auto ret = subnets.insert(last_subnet);
@@ -521,9 +521,9 @@ public:
                 }
             }
 
-            // Check for new server tags at 96.
-            if (!worker.isColumnNull(96)) {
-                std::string new_tag = worker.getString(96);
+            // Check for new server tags at 99.
+            if (!worker.isColumnNull(99)) {
+                std::string new_tag = worker.getString(99);
                 if (last_tag != new_tag) {
                     if (!new_tag.empty() && !last_subnet->hasServerTag(ServerTag(new_tag))) {
                         last_subnet->setServerTag(new_tag);
@@ -533,7 +533,7 @@ public:
                 }
             }
 
-            // Pool is between 15 and 19 with extra between 76 and 78
+            // Pool is between 15 and 19 with extra between 79 and 81 
 
             // If the row contains information about the pool and it
             // appears to be new pool entry (checked by comparing pool
@@ -554,19 +554,19 @@ public:
                 // pool subnet_id at 18 (ignored)
                 // pool modification_ts at 19 (ignored)
 
-                // pool client_class at 76.
-                if (!worker.isColumnNull(76)) {
-                    last_pool->allowClientClass(worker.getString(76));
+                // pool client_class at 79.
+                if (!worker.isColumnNull(79)) {
+                    last_pool->allowClientClass(worker.getString(79));
                 }
 
-                // pool require_client_classes at 77.
-                setRequiredClasses(worker, 77, [&last_pool](const std::string& class_name) {
+                // pool require_client_classes at 80.
+                setRequiredClasses(worker, 80, [&last_pool](const std::string& class_name) {
                     last_pool->requireClientClass(class_name);
                 });
 
-                // pool user_context at 78.
-                if (!worker.isColumnNull(78)) {
-                    ElementPtr user_context = worker.getJSON(78);
+                // pool user_context at 81.
+                if (!worker.isColumnNull(81)) {
+                    ElementPtr user_context = worker.getJSON(81);
                     if (user_context) {
                         last_pool->setContext(user_context);
                     }
@@ -575,7 +575,7 @@ public:
                 last_subnet->addPool(last_pool);
             }
 
-            // Pd Pool is between 20 and 25 with extra between 79 and 83
+            // Pd Pool is between 20 and 25 with extra between 82 and 86
 
             // If the row contains information about the pd pool and
             // it appears to be new pd pool entry (checked by
@@ -594,10 +594,10 @@ public:
                 // 24 is pd pool subnet_id (ignored)
                 // 25 is pd pool modification_ts (ignored)
 
-                // excluded_prefix (79) and excluded_prefix_length (80)
+                // excluded_prefix (82) and excluded_prefix_length (83)
                 IOAddress excluded_prefix = IOAddress::IPV6_ZERO_ADDRESS();
-                if (!worker.isColumnNull(79)) {
-                    excluded_prefix = worker.getInet6(79);
+                if (!worker.isColumnNull(82)) {
+                    excluded_prefix = worker.getInet6(82);
                 }
 
                 last_pd_pool_id = worker.getBigInt(20);
@@ -605,21 +605,21 @@ public:
                                              static_cast<uint8_t>(worker.getSmallInt(22)),
                                              static_cast<uint8_t>(worker.getSmallInt(23)),
                                              excluded_prefix,
-                                             static_cast<uint8_t>(worker.getSmallInt(80)));
+                                             static_cast<uint8_t>(worker.getSmallInt(83)));
 
-                // pd pool client_class (81)
-                if (!worker.isColumnNull(81)) {
-                    last_pd_pool->allowClientClass(worker.getString(81));
+                // pd pool client_class (84)
+                if (!worker.isColumnNull(84)) {
+                    last_pd_pool->allowClientClass(worker.getString(84));
                 }
 
-                // pd pool require_client_classes at 82.
-                setRequiredClasses(worker, 82, [&last_pd_pool](const std::string& class_name) {
+                // pd pool require_client_classes at 85.
+                setRequiredClasses(worker, 85, [&last_pd_pool](const std::string& class_name) {
                     last_pd_pool->requireClientClass(class_name);
                 });
 
-                // pd pool user_context at 83.
-                if (!worker.isColumnNull(83)) {
-                    ElementPtr user_context = worker.getJSON(83);
+                // pd pool user_context at 86.
+                if (!worker.isColumnNull(86)) {
+                    ElementPtr user_context = worker.getJSON(86);
                     if (user_context) {
                         last_pd_pool->setContext(user_context);
                     }
@@ -628,7 +628,7 @@ public:
                 last_subnet->addPool(last_pd_pool);
             }
 
-            // Parse pool-specific option from 26 to 39.
+            // Parse pool-specific option from 26 to 40.
             if (last_pool && !worker.isColumnNull(26) &&
                 (last_pool_option_id < worker.getBigInt(26))) {
                 last_pool_option_id = worker.getBigInt(26);
@@ -639,23 +639,23 @@ public:
                 }
             }
 
-            // Parse pd pool-specific option from 40 to 53.
-            if (last_pd_pool && !worker.isColumnNull(40) &&
-                (last_pd_pool_option_id < worker.getBigInt(40))) {
-                last_pd_pool_option_id = worker.getBigInt(40);
+            // Parse pd pool-specific option from 41 to 55.
+            if (last_pd_pool && !worker.isColumnNull(41) &&
+                (last_pd_pool_option_id < worker.getBigInt(41))) {
+                last_pd_pool_option_id = worker.getBigInt(41);
 
-                OptionDescriptorPtr desc = processOptionRow(Option::V6, worker, 40);
+                OptionDescriptorPtr desc = processOptionRow(Option::V6, worker, 41);
                 if (desc) {
                     last_pd_pool->getCfgOption()->add(*desc, desc->space_name_);
                 }
             }
 
-            // Parse subnet-specific option from 54 to 67.
-            if (!worker.isColumnNull(54) &&
-                (last_option_id < worker.getBigInt(54))) {
-                last_option_id = worker.getBigInt(54);
+            // Parse subnet-specific option from 56 to 70.
+            if (!worker.isColumnNull(56) &&
+                (last_option_id < worker.getBigInt(56))) {
+                last_option_id = worker.getBigInt(56);
 
-                OptionDescriptorPtr desc = processOptionRow(Option::V6, worker, 54);
+                OptionDescriptorPtr desc = processOptionRow(Option::V6, worker, 56);
                 if (desc) {
                     last_subnet->getCfgOption()->add(*desc, desc->space_name_);
                 }
@@ -1456,9 +1456,9 @@ public:
                 last_network->setModificationTime(worker.getTimestamp(4));
 
                 // preferred_lifetime (5)
-                // min_preferred_lifetime (32)
-                // max_preferred_lifetime (33)
-                last_network->setPreferred(worker.getTriplet(5, 32, 33));
+                // min_preferred_lifetime (33)
+                // max_preferred_lifetime (34)
+                last_network->setPreferred(worker.getTriplet(5, 33, 34));
 
                 // rapid_commit at 6.
                 if (!worker.isColumnNull(6)) {
@@ -1497,99 +1497,99 @@ public:
                 }
 
                 // valid_lifetime at 13.
-                // min_valid_lifetime at 34.
-                // max_valid_lifetime at 35.
+                // min_valid_lifetime at 35.
+                // max_valid_lifetime at 36.
                 if (!worker.isColumnNull(13)) {
-                    last_network->setValid(worker.getTriplet(13, 34, 35));
+                    last_network->setValid(worker.getTriplet(13, 35, 36));
                 }
 
-                // option from 14 to 27.
+                // option from 14 to 28.
 
-                // calculate_tee_times at 28.
-                if (!worker.isColumnNull(28)) {
-                    last_network->setCalculateTeeTimes(worker.getBool(28));
-                }
-
-                // t1_percent at 29.
+                // calculate_tee_times at 29.
                 if (!worker.isColumnNull(29)) {
-                    last_network->setT1Percent(worker.getDouble(29));
+                    last_network->setCalculateTeeTimes(worker.getBool(29));
                 }
 
-                // t2_percent at 30.
+                // t1_percent at 30.
                 if (!worker.isColumnNull(30)) {
-                    last_network->setT2Percent(worker.getDouble(30));
+                    last_network->setT1Percent(worker.getDouble(30));
                 }
 
-                // interface_id at 31.
-                setInterfaceId(*last_network, worker, 31);
-
-                // min_preferred_lifetime at 32.
-                // max_preferred_lifetime at 33.
-                // min_valid_lifetime at 34.
-                // max_valid_lifetime at 35.
-
-                // ddns_send_updates at 36.
-                if (!worker.isColumnNull(36)) {
-                    last_network->setDdnsSendUpdates(worker.getBool(36));
+                // t2_percent at 31.
+                if (!worker.isColumnNull(31)) {
+                    last_network->setT2Percent(worker.getDouble(31));
                 }
 
-                // ddns_override_no_update at 37.
+                // interface_id at 32.
+                setInterfaceId(*last_network, worker, 32);
+
+                // min_preferred_lifetime at 33.
+                // max_preferred_lifetime at 34.
+                // min_valid_lifetime at 35.
+                // max_valid_lifetime at 36.
+
+                // ddns_send_updates at 37.
                 if (!worker.isColumnNull(37)) {
-                    last_network->setDdnsOverrideNoUpdate(worker.getBool(37));
+                    last_network->setDdnsSendUpdates(worker.getBool(37));
                 }
 
-                // ddns_override_client_update at 38.
+                // ddns_override_no_update at 38.
                 if (!worker.isColumnNull(38)) {
-                    last_network->setDdnsOverrideClientUpdate(worker.getBool(38));
+                    last_network->setDdnsOverrideNoUpdate(worker.getBool(38));
                 }
 
-                // ddns_replace_client_name at 39.
+                // ddns_override_client_update at 39.
                 if (!worker.isColumnNull(39)) {
-                    last_network->setDdnsReplaceClientNameMode(
-                        static_cast<D2ClientConfig::ReplaceClientNameMode>(worker.getSmallInt(39)));
+                    last_network->setDdnsOverrideClientUpdate(worker.getBool(39));
                 }
 
-                // ddns_generated_prefix at 40.
+                // ddns_replace_client_name at 40.
                 if (!worker.isColumnNull(40)) {
-                    last_network->setDdnsGeneratedPrefix(worker.getString(40));
+                    last_network->setDdnsReplaceClientNameMode(
+                        static_cast<D2ClientConfig::ReplaceClientNameMode>(worker.getSmallInt(40)));
                 }
 
-                // ddns_qualifying_suffix at 41.
+                // ddns_generated_prefix at 41.
                 if (!worker.isColumnNull(41)) {
-                    last_network->setDdnsQualifyingSuffix(worker.getString(41));
+                    last_network->setDdnsGeneratedPrefix(worker.getString(41));
                 }
 
-                // reservations_in_subnet at 42.
+                // ddns_qualifying_suffix at 42.
                 if (!worker.isColumnNull(42)) {
-                    last_network->setReservationsInSubnet(worker.getBool(42));
+                    last_network->setDdnsQualifyingSuffix(worker.getString(42));
                 }
 
                 // reservations_in_subnet at 43.
                 if (!worker.isColumnNull(43)) {
-                    last_network->setReservationsOutOfPool(worker.getBool(43));
+                    last_network->setReservationsInSubnet(worker.getBool(43));
                 }
 
-                // cache_threshold at 44.
+                // reservations_in_subnet at 44.
                 if (!worker.isColumnNull(44)) {
-                    last_network->setCacheThreshold(worker.getDouble(44));
+                    last_network->setReservationsOutOfPool(worker.getBool(44));
                 }
 
-                // cache_max_age at 45.
+                // cache_threshold at 45.
                 if (!worker.isColumnNull(45)) {
-                    last_network->setCacheMaxAge(worker.getInt(45));
+                    last_network->setCacheThreshold(worker.getDouble(45));
                 }
 
-                // allocator at 46.
+                // cache_max_age at 46.
                 if (!worker.isColumnNull(46)) {
-                    last_network->setAllocatorType(worker.getString(46));
+                    last_network->setCacheMaxAge(worker.getInt(46));
                 }
 
-                // pd_allocator at 47.
+                // allocator at 47.
                 if (!worker.isColumnNull(47)) {
-                    last_network->setPdAllocatorType(worker.getString(47));
+                    last_network->setAllocatorType(worker.getString(47));
                 }
 
-                // server_tag at 48.
+                // pd_allocator at 48.
+                if (!worker.isColumnNull(48)) {
+                    last_network->setPdAllocatorType(worker.getString(48));
+                }
+
+                // server_tag at 49.
 
                 // Add the shared network.
                 auto ret = shared_networks.push_back(last_network);
@@ -1603,8 +1603,8 @@ public:
             }
 
             // Check for new server tags.
-            if (!worker.isColumnNull(48)) {
-                std::string new_tag = worker.getString(48);
+            if (!worker.isColumnNull(49)) {
+                std::string new_tag = worker.getString(49);
                 if (last_tag != new_tag) {
                     if (!new_tag.empty() && !last_network->hasServerTag(ServerTag(new_tag))) {
                         last_network->setServerTag(new_tag);
@@ -1614,7 +1614,7 @@ public:
                 }
             }
 
-            // Parse network-specific option from 14 to 27.
+            // Parse network-specific option from 14 to 28.
             if (!worker.isColumnNull(14) &&
                 (last_option_id < worker.getBigInt(14))) {
                 last_option_id = worker.getBigInt(14);
@@ -1880,6 +1880,7 @@ public:
         in_bindings.addNull();
         in_bindings.addNull();
         in_bindings.addTimestamp(option->getModificationTime());
+        addClientClassesBinding(in_bindings, option->client_classes_);
         in_bindings.addNull();
 
         // Remember the size before we add where clause arguments.
@@ -1949,6 +1950,7 @@ public:
         in_bindings.addNull();
         in_bindings.addNull();
         in_bindings.addTimestamp(option->getModificationTime());
+        addClientClassesBinding(in_bindings, option->client_classes_);
         in_bindings.addNull();
 
         // Remember the size before we add where clause arguments.
@@ -2093,6 +2095,7 @@ public:
         }
 
         in_bindings.addTimestamp(option->getModificationTime());
+        addClientClassesBinding(in_bindings, option->client_classes_);
 
         // pd_pool_id
         if (pool_type == Lease::TYPE_PD) {
@@ -2178,6 +2181,7 @@ public:
         in_bindings.add(shared_network_name);
         in_bindings.addNull();
         in_bindings.addTimestamp(option->getModificationTime());
+        addClientClassesBinding(in_bindings, option->client_classes_);
         in_bindings.addNull();
 
         // Remember the size before we add where clause arguments.
@@ -2245,6 +2249,7 @@ public:
         in_bindings.addNull();
         in_bindings.addNull();
         in_bindings.addTimestamp(option->getModificationTime());
+        addClientClassesBinding(in_bindings, option->client_classes_);
         in_bindings.addNull();
 
         // Remember the size before we add where clause arguments.
@@ -2621,14 +2626,14 @@ public:
                 // class specific option from 21 to 33.
 
                 // preferred lifetime: default, min, max
-                last_client_class->setPreferred(worker.getTriplet(35, 36, 37));
+                last_client_class->setPreferred(worker.getTriplet(36, 37, 38));
 
                 class_list.push_back(last_client_class);
             }
 
-            // Check for new server tags at 34.
-            if (!worker.isColumnNull(34)) {
-                std::string new_tag = worker.getString(34);
+            // Check for new server tags at 35.
+            if (!worker.isColumnNull(35)) {
+                std::string new_tag = worker.getString(35);
                 if (last_tag != new_tag) {
                     if (!new_tag.empty() && !last_client_class->hasServerTag(ServerTag(new_tag))) {
                         last_client_class->setServerTag(new_tag);
@@ -2649,7 +2654,7 @@ public:
                 }
             }
 
-            // Parse client class specific option from 21 to 33.
+            // Parse client class specific option from 21 to 34.
             if (!worker.isColumnNull(21) &&
                 (last_option_id < worker.getBigInt(21))) {
                 last_option_id = worker.getBigInt(21);
@@ -4003,7 +4008,7 @@ TaggedStatementArray tagged_statements = { {
     // Insert subnet specific option.
     {
         // PgSqlConfigBackendDHCPv6Impl::INSERT_OPTION6,
-        14,
+        15,
         {
             OID_INT2,       //  1 code
             OID_BYTEA,      //  2 value
@@ -4018,7 +4023,8 @@ TaggedStatementArray tagged_statements = { {
             OID_VARCHAR,    // 11 shared_network_name
             OID_INT8,       // 12 pool_id
             OID_TIMESTAMP,  // 13 modification_ts
-            OID_INT8        // 14 pd_pool_id
+            OID_TEXT,       // 14 client_classes
+            OID_INT8        // 15 pd_pool_id
         },
         "INSERT_OPTION6",
         PGSQL_INSERT_OPTION6()
@@ -4337,7 +4343,7 @@ TaggedStatementArray tagged_statements = { {
     // Update existing global option.
     {
         // PgSqlConfigBackendDHCPv6Impl::UPDATE_OPTION6,
-        17,
+        18,
         {
             OID_INT2,       //  1 code
             OID_BYTEA,      //  2 value
@@ -4352,19 +4358,20 @@ TaggedStatementArray tagged_statements = { {
             OID_VARCHAR,    // 11 shared_network_name
             OID_INT8,       // 12 pool_id
             OID_TIMESTAMP,  // 13 modification_ts
-            OID_INT8,       // 14 pd_pool_id
-            OID_VARCHAR,    // 15 server_tag
-            OID_INT2,       // 16 code (of option to update)
-            OID_VARCHAR,    // 17 space (of option to update)
+            OID_TEXT,       // 14 client_classes
+            OID_INT8,       // 15 pd_pool_id
+            OID_VARCHAR,    // 16 server_tag
+            OID_INT2,       // 17 code (of option to update)
+            OID_VARCHAR,    // 18 space (of option to update)
         },
         "UPDATE_OPTION6",
-        PGSQL_UPDATE_OPTION6_WITH_TAG(AND o.scope_id = 0 AND o.code = $16 AND o.space = $17)
+        PGSQL_UPDATE_OPTION6_WITH_TAG(AND o.scope_id = 0 AND o.code = $17 AND o.space = $18)
     },
 
     // Update existing subnet level option.
     {
         // PgSqlConfigBackendDHCPv6Impl::UPDATE_OPTION6_SUBNET_ID,
-        17,
+        18,
         {
             OID_INT2,       //  1 code
             OID_BYTEA,      //  2 value
@@ -4379,19 +4386,20 @@ TaggedStatementArray tagged_statements = { {
             OID_VARCHAR,    // 11 shared_network_name
             OID_INT8,       // 12 pool_id
             OID_TIMESTAMP,  // 13 modification_ts
-            OID_INT8,       // 14 pd_pool_id
-            OID_INT8,       // 15 subnet_id (of option to update)
-            OID_INT2,       // 16 code (of option to update)
-            OID_VARCHAR     // 17 space (of option to update)
+            OID_TEXT,       // 14 client_classes
+            OID_INT8,       // 15 pd_pool_id
+            OID_INT8,       // 16 subnet_id (of option to update)
+            OID_INT2,       // 17 code (of option to update)
+            OID_VARCHAR     // 18 space (of option to update)
         },
         "UPDATE_OPTION6_SUBNET_ID",
-        PGSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 1 AND o.dhcp6_subnet_id = $15 AND o.code = $16 AND o.space = $17)
+        PGSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 1 AND o.dhcp6_subnet_id = $16 AND o.code = $17 AND o.space = $18)
     },
 
     // Update existing pool level option.
     {
         // PgSqlConfigBackendDHCPv6Impl::UPDATE_OPTION6_POOL_ID,
-        17,
+        18,
         {
             OID_INT2,       //  1 code
             OID_BYTEA,      //  2 value
@@ -4406,19 +4414,20 @@ TaggedStatementArray tagged_statements = { {
             OID_VARCHAR,    // 11 shared_network_name
             OID_INT8,       // 12 pool_id
             OID_TIMESTAMP,  // 13 modification_ts
-            OID_INT8,       // 14 pd_pool_id
-            OID_INT8,       // 15 pool_id (of option to update)
-            OID_INT2,       // 16 code (of option to update)
-            OID_VARCHAR     // 17 space (of option to update)
+            OID_TEXT,       // 14 client_classes
+            OID_INT8,       // 15 pd_pool_id
+            OID_INT8,       // 16 pool_id (of option to update)
+            OID_INT2,       // 17 code (of option to update)
+            OID_VARCHAR     // 18 space (of option to update)
         },
         "UPDATE_OPTION6_POOL_ID",
-        PGSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 5 AND o.pool_id = $15 AND o.code = $16 AND o.space = $17)
+        PGSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 5 AND o.pool_id = $16 AND o.code = $17 AND o.space = $18)
     },
 
     // Update existing pd pool level option.
     {
         // PgSqlConfigBackendDHCPv6Impl::UPDATE_OPTION6_PD_POOL_ID,
-        17,
+        18,
         {
             OID_INT2,       //  1 code
             OID_BYTEA,      //  2 value
@@ -4433,19 +4442,20 @@ TaggedStatementArray tagged_statements = { {
             OID_VARCHAR,    // 11 shared_network_name
             OID_INT8,       // 12 pool_id
             OID_TIMESTAMP,  // 13 modification_ts
-            OID_INT8,       // 14 pd_pool_id
-            OID_INT8,       // 15 pd_pool_id (of option to update)
-            OID_INT2,       // 16 code (of option to update)
-            OID_VARCHAR     // 17 space (of option to update)
+            OID_TEXT,       // 14 client_classes
+            OID_INT8,       // 15 pd_pool_id
+            OID_INT8,       // 16 pd_pool_id (of option to update)
+            OID_INT2,       // 17 code (of option to update)
+            OID_VARCHAR     // 18 space (of option to update)
         },
         "UPDATE_OPTION6_PD_POOL_ID",
-        PGSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 6 AND o.pd_pool_id = $15 AND o.code = $16 AND o.space = $17)
+        PGSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 6 AND o.pd_pool_id = $16 AND o.code = $17 AND o.space = $18)
     },
 
     // Update existing shared network level option.
     {
         // PgSqlConfigBackendDHCPv6Impl::UPDATE_OPTION6_SHARED_NETWORK,
-        17,
+        18,
         {
             OID_INT2,       //  1 code
             OID_BYTEA,      //  2 value
@@ -4460,19 +4470,20 @@ TaggedStatementArray tagged_statements = { {
             OID_VARCHAR,    // 11 shared_network_name
             OID_INT8,       // 12 pool_id
             OID_TIMESTAMP,  // 13 modification_ts
-            OID_INT8,       // 14 pd_pool_id
-            OID_VARCHAR,    // 15 shared_network_name (of option to update)
-            OID_INT2,       // 16 code (of option to update)
-            OID_VARCHAR     // 17 space (of option to update)
+            OID_TEXT,       // 14 client_classes
+            OID_INT8,       // 15 pd_pool_id
+            OID_VARCHAR,    // 16 shared_network_name (of option to update)
+            OID_INT2,       // 17 code (of option to update)
+            OID_VARCHAR     // 18 space (of option to update)
         },
         "UPDATE_OPTION6_SHARED_NETWORK",
-        PGSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 4 AND o.shared_network_name = $15 AND o.code = $16 AND o.space = $17)
+        PGSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 4 AND o.shared_network_name = $16 AND o.code = $17 AND o.space = $18)
     },
 
     // Update existing client class level option.
     {
         // PgSqlConfigBackendDHCPv6Impl::UPDATE_OPTION6_CLIENT_CLASS,
-        17,
+        18,
         {
             OID_INT2,       //  1 code
             OID_BYTEA,      //  2 value
@@ -4487,13 +4498,14 @@ TaggedStatementArray tagged_statements = { {
             OID_VARCHAR,    // 11 shared_network_name
             OID_INT8,       // 12 pool_id
             OID_TIMESTAMP,  // 13 modification_ts
-            OID_INT8,       // 14 pd_pool_id
-            OID_VARCHAR,    // 15 client_class (of option to update)
-            OID_INT2,       // 16 code (of option to update)
-            OID_VARCHAR     // 17 space (of option to update)
+            OID_TEXT,       // 14 client_classes
+            OID_INT8,       // 15 pd_pool_id
+            OID_VARCHAR,    // 16 client_class (of option to update)
+            OID_INT2,       // 17 code (of option to update)
+            OID_VARCHAR     // 18 space (of option to update)
         },
         "UPDATE_OPTION6_CLIENT_CLASS",
-        PGSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 2 AND o.dhcp_client_class = $15 AND o.code = $16 AND o.space = $17)
+        PGSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 2 AND o.dhcp_client_class = $16 AND o.code = $17 AND o.space = $18)
     },
 
     // Update existing client class with specifying its position.
