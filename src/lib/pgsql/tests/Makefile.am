@@ -3,7 +3,7 @@ SUBDIRS = .
 AM_CPPFLAGS  =
 AM_CPPFLAGS += -DKEA_ADMIN=\"${abs_top_builddir}/src/bin/admin/kea-admin\"
 AM_CPPFLAGS += -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
-AM_CPPFLAGS += $(BOOST_INCLUDES) $(PGSQL_CPPFLAGS)
+AM_CPPFLAGS += $(BOOST_INCLUDES) $(PGSQL_CPPFLAGS) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -36,7 +36,7 @@ libpgsql_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 libpgsql_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 libpgsql_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 libpgsql_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-libpgsql_unittests_LDADD += $(LOG4CPLUS_LIBS) $(BOOST_LIBS) $(GTEST_LDADD)
+libpgsql_unittests_LDADD += $(LOG4CPLUS_LIBS) $(BOOST_LIBS) $(GTEST_LDADD) $(CRYPTO_LIBS)
 
 endif
 

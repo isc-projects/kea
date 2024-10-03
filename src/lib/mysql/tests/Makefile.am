@@ -6,7 +6,7 @@ AM_CPPFLAGS  =
 AM_CPPFLAGS += -DTEST_CA_DIR=\"$(TEST_CA_DIR)\"
 AM_CPPFLAGS += -DKEA_ADMIN=\"${abs_top_builddir}/src/bin/admin/kea-admin\"
 AM_CPPFLAGS += -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
-AM_CPPFLAGS += $(BOOST_INCLUDES) $(MYSQL_CPPFLAGS)
+AM_CPPFLAGS += $(BOOST_INCLUDES) $(MYSQL_CPPFLAGS) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -38,7 +38,7 @@ libmysql_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 libmysql_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 libmysql_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 libmysql_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-libmysql_unittests_LDADD += $(LOG4CPLUS_LIBS) $(BOOST_LIBS) $(GTEST_LDADD)
+libmysql_unittests_LDADD += $(LOG4CPLUS_LIBS) $(BOOST_LIBS) $(GTEST_LDADD) $(CRYPTO_LIBS)
 
 endif
 
