@@ -12,12 +12,12 @@ V6) is about to open a MySQL lease database. The parameters of the
 connection including database name and username needed to access it
 (but not the password if any) are logged.
 
-% MYSQL_LB_DEINIT_OK unloading MySQL LB hooks library successful
-This informational message indicates that the MySQL Lease Backend hooks
+% MYSQL_DEINIT_OK unloading MySQL hooks library successful
+This informational message indicates that the MySQL Backend hooks
 library has been unloaded successfully.
 
-% MYSQL_LB_INIT_OK loading MySQL LB hooks library successful
-This informational message indicates that the MySQL Lease Backend hooks
+% MYSQL_INIT_OK loading MySQL hooks library successful
+This informational message indicates that the MySQL Backend hooks
 library has been loaded successfully. Enjoy!
 
 % MYSQL_LB_ADD_ADDR4 adding IPv4 lease with address %1

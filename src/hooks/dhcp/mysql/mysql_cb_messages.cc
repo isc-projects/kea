@@ -28,7 +28,6 @@ extern const isc::log::MessageID MYSQL_CB_CREATE_UPDATE_SHARED_NETWORK_OPTION4 =
 extern const isc::log::MessageID MYSQL_CB_CREATE_UPDATE_SHARED_NETWORK_OPTION6 = "MYSQL_CB_CREATE_UPDATE_SHARED_NETWORK_OPTION6";
 extern const isc::log::MessageID MYSQL_CB_CREATE_UPDATE_SUBNET4 = "MYSQL_CB_CREATE_UPDATE_SUBNET4";
 extern const isc::log::MessageID MYSQL_CB_CREATE_UPDATE_SUBNET6 = "MYSQL_CB_CREATE_UPDATE_SUBNET6";
-extern const isc::log::MessageID MYSQL_CB_DEINIT_OK = "MYSQL_CB_DEINIT_OK";
 extern const isc::log::MessageID MYSQL_CB_DELETE_ALL_CLIENT_CLASSES4 = "MYSQL_CB_DELETE_ALL_CLIENT_CLASSES4";
 extern const isc::log::MessageID MYSQL_CB_DELETE_ALL_CLIENT_CLASSES4_RESULT = "MYSQL_CB_DELETE_ALL_CLIENT_CLASSES4_RESULT";
 extern const isc::log::MessageID MYSQL_CB_DELETE_ALL_CLIENT_CLASSES6 = "MYSQL_CB_DELETE_ALL_CLIENT_CLASSES6";
@@ -185,7 +184,6 @@ extern const isc::log::MessageID MYSQL_CB_GET_SUBNET6_BY_PREFIX = "MYSQL_CB_GET_
 extern const isc::log::MessageID MYSQL_CB_GET_SUBNET6_BY_SUBNET_ID = "MYSQL_CB_GET_SUBNET6_BY_SUBNET_ID";
 extern const isc::log::MessageID MYSQL_CB_GET_TYPE4 = "MYSQL_CB_GET_TYPE4";
 extern const isc::log::MessageID MYSQL_CB_GET_TYPE6 = "MYSQL_CB_GET_TYPE6";
-extern const isc::log::MessageID MYSQL_CB_INIT_OK = "MYSQL_CB_INIT_OK";
 extern const isc::log::MessageID MYSQL_CB_NO_TLS = "MYSQL_CB_NO_TLS";
 extern const isc::log::MessageID MYSQL_CB_RECONNECT_ATTEMPT_FAILED4 = "MYSQL_CB_RECONNECT_ATTEMPT_FAILED4";
 extern const isc::log::MessageID MYSQL_CB_RECONNECT_ATTEMPT_FAILED6 = "MYSQL_CB_RECONNECT_ATTEMPT_FAILED6";
@@ -226,7 +224,6 @@ const char* values[] = {
     "MYSQL_CB_CREATE_UPDATE_SHARED_NETWORK_OPTION6", "create or update shared network: %1 option",
     "MYSQL_CB_CREATE_UPDATE_SUBNET4", "create or update subnet: %1",
     "MYSQL_CB_CREATE_UPDATE_SUBNET6", "create or update subnet: %1",
-    "MYSQL_CB_DEINIT_OK", "unloading MySQL CB hooks library successful",
     "MYSQL_CB_DELETE_ALL_CLIENT_CLASSES4", "delete all client classes",
     "MYSQL_CB_DELETE_ALL_CLIENT_CLASSES4_RESULT", "deleted: %1 entries",
     "MYSQL_CB_DELETE_ALL_CLIENT_CLASSES6", "delete all client classes",
@@ -383,7 +380,6 @@ const char* values[] = {
     "MYSQL_CB_GET_SUBNET6_BY_SUBNET_ID", "retrieving subnet by subnet id: %1",
     "MYSQL_CB_GET_TYPE4", "get type",
     "MYSQL_CB_GET_TYPE6", "get type",
-    "MYSQL_CB_INIT_OK", "loading MySQL CB hooks library successful",
     "MYSQL_CB_NO_TLS", "TLS was required but is not used",
     "MYSQL_CB_RECONNECT_ATTEMPT_FAILED4", "database reconnect failed: %1",
     "MYSQL_CB_RECONNECT_ATTEMPT_FAILED6", "database reconnect failed: %1",

@@ -14,8 +14,6 @@ extern const isc::log::MessageID MYSQL_HB_DB_READONLY;
 extern const isc::log::MessageID MYSQL_HB_DB_RECONNECT_ATTEMPT_FAILED;
 extern const isc::log::MessageID MYSQL_HB_DB_RECONNECT_ATTEMPT_SCHEDULE;
 extern const isc::log::MessageID MYSQL_HB_DB_RECONNECT_FAILED;
-extern const isc::log::MessageID MYSQL_HB_DEINIT_OK;
-extern const isc::log::MessageID MYSQL_HB_INIT_OK;
 extern const isc::log::MessageID MYSQL_HB_NO_TLS;
 extern const isc::log::MessageID MYSQL_HB_TLS_CIPHER;
 

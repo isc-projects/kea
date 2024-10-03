@@ -62,21 +62,19 @@ int load(LibraryHandle& /* handle */) {
     // Register MySQL CB factories with CB Managers
     MySqlConfigBackendDHCPv4::registerBackendType();
     MySqlConfigBackendDHCPv6::registerBackendType();
-    LOG_INFO(mysql_cb_logger, MYSQL_CB_INIT_OK);
 
     // Register MySQL HB factories with Host Managers
     HostDataSourceFactory::registerFactory("mysql",
                                            MySqlHostDataSource::factory,
                                            true,
                                            MySqlHostDataSource::getDBVersion);
-    LOG_INFO(mysql_hb_logger, MYSQL_HB_INIT_OK);
 
     // Register MySQL LB factories with Lease Managers
     LeaseMgrFactory::registerFactory("mysql",
                                      MySqlLeaseMgr::factory,
                                      true,
                                      MySqlLeaseMgr::getDBVersion);
-    LOG_INFO(mysql_lb_logger, MYSQL_LB_INIT_OK);
+    LOG_INFO(mysql_lb_logger, MYSQL_INIT_OK);
     return (0);
 }
 
@@ -117,15 +115,13 @@ int unload() {
         io_service->stopAndPoll();
         MySqlConfigBackendImpl::setIOService(IOServicePtr());
     }
-    LOG_INFO(mysql_cb_logger, MYSQL_CB_DEINIT_OK);
 
     // Unregister the factories and remove MySQL backends
     HostDataSourceFactory::deregisterFactory("mysql", true);
-    LOG_INFO(mysql_hb_logger, MYSQL_HB_DEINIT_OK);
 
     // Unregister the factories and remove MySQL backends
     LeaseMgrFactory::deregisterFactory("mysql", true);
-    LOG_INFO(mysql_lb_logger, MYSQL_LB_DEINIT_OK);
+    LOG_INFO(mysql_lb_logger, MYSQL_DEINIT_OK);
     return (0);
 }
 

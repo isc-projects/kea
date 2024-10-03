@@ -13,8 +13,6 @@ extern const isc::log::MessageID PGSQL_HB_DB_READONLY = "PGSQL_HB_DB_READONLY";
 extern const isc::log::MessageID PGSQL_HB_DB_RECONNECT_ATTEMPT_FAILED = "PGSQL_HB_DB_RECONNECT_ATTEMPT_FAILED";
 extern const isc::log::MessageID PGSQL_HB_DB_RECONNECT_ATTEMPT_SCHEDULE = "PGSQL_HB_DB_RECONNECT_ATTEMPT_SCHEDULE";
 extern const isc::log::MessageID PGSQL_HB_DB_RECONNECT_FAILED = "PGSQL_HB_DB_RECONNECT_FAILED";
-extern const isc::log::MessageID PGSQL_HB_DEINIT_OK = "PGSQL_HB_DEINIT_OK";
-extern const isc::log::MessageID PGSQL_HB_INIT_OK = "PGSQL_HB_INIT_OK";
 extern const isc::log::MessageID PGSQL_HB_NO_TLS_SUPPORT = "PGSQL_HB_NO_TLS_SUPPORT";
 extern const isc::log::MessageID PGSQL_HB_TLS_SUPPORT = "PGSQL_HB_TLS_SUPPORT";
 
@@ -30,8 +28,6 @@ const char* values[] = {
     "PGSQL_HB_DB_RECONNECT_ATTEMPT_FAILED", "database reconnect failed: %1",
     "PGSQL_HB_DB_RECONNECT_ATTEMPT_SCHEDULE", "scheduling attempt %1 of %2 in %3 milliseconds",
     "PGSQL_HB_DB_RECONNECT_FAILED", "maximum number of database reconnect attempts: %1, has been exhausted without success",
-    "PGSQL_HB_DEINIT_OK", "unloading PostgreSQL HB hooks library successful",
-    "PGSQL_HB_INIT_OK", "loading PostgreSQL HB hooks library successful",
     "PGSQL_HB_NO_TLS_SUPPORT", "Attempt to configure TLS (unsupported for PostgreSQL): %1",
     "PGSQL_HB_TLS_SUPPORT", "Attempt to configure TLS: %1",
     NULL

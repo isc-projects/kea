@@ -62,21 +62,19 @@ int load(LibraryHandle& /* handle */) {
     // Register PostgreSQL CB factories with CB Managers
     PgSqlConfigBackendDHCPv4::registerBackendType();
     PgSqlConfigBackendDHCPv6::registerBackendType();
-    LOG_INFO(pgsql_cb_logger, PGSQL_CB_INIT_OK);
 
     // Register PostgreSQL HB factories with Host Managers
     HostDataSourceFactory::registerFactory("postgresql",
                                            PgSqlHostDataSource::factory,
                                            true,
                                            PgSqlHostDataSource::getDBVersion);
-    LOG_INFO(pgsql_hb_logger, PGSQL_HB_INIT_OK);
 
     // Register PostgreSQL LB factories with Lease Managers
     LeaseMgrFactory::registerFactory("postgresql",
                                      PgSqlLeaseMgr::factory,
                                      true,
                                      PgSqlLeaseMgr::getDBVersion);
-    LOG_INFO(pgsql_lb_logger, PGSQL_LB_INIT_OK);
+    LOG_INFO(pgsql_lb_logger, PGSQL_INIT_OK);
     return (0);
 }
 
@@ -117,15 +115,13 @@ int unload() {
         io_service->stopAndPoll();
         PgSqlConfigBackendImpl::setIOService(IOServicePtr());
     }
-    LOG_INFO(pgsql_cb_logger, PGSQL_CB_DEINIT_OK);
 
     // Unregister the factories and remove PostgreSQL backends
     HostDataSourceFactory::deregisterFactory("postgresql", true);
-    LOG_INFO(pgsql_hb_logger, PGSQL_HB_DEINIT_OK);
 
     // Unregister the factories and remove PostgreSQL backends
     LeaseMgrFactory::deregisterFactory("postgresql", true);
-    LOG_INFO(pgsql_lb_logger, PGSQL_LB_DEINIT_OK);
+    LOG_INFO(pgsql_lb_logger, PGSQL_DEINIT_OK);
     return (0);
 }
 

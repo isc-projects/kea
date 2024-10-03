@@ -99,7 +99,7 @@ def check_that_debug_log_levels_are_documented(messages, debug_levels, log_lines
     for message_id, message in messages.items():
         log_level = None
         for line in log_lines:
-            if line.startswith('LOG_DEBUG') and re.search(fr'LOG_DEBUG\(.*\b{message_id}\b', line):
+            if re.match(fr'LOG_DEBUG\(.*\b{message_id}\b', line):
                 log_level = line.split(',')[1].strip().replace('isc::log::', '').replace('log::', '')
                 break
         if log_level is None:

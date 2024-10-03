@@ -28,7 +28,6 @@ extern const isc::log::MessageID PGSQL_CB_CREATE_UPDATE_SHARED_NETWORK_OPTION4 =
 extern const isc::log::MessageID PGSQL_CB_CREATE_UPDATE_SHARED_NETWORK_OPTION6 = "PGSQL_CB_CREATE_UPDATE_SHARED_NETWORK_OPTION6";
 extern const isc::log::MessageID PGSQL_CB_CREATE_UPDATE_SUBNET4 = "PGSQL_CB_CREATE_UPDATE_SUBNET4";
 extern const isc::log::MessageID PGSQL_CB_CREATE_UPDATE_SUBNET6 = "PGSQL_CB_CREATE_UPDATE_SUBNET6";
-extern const isc::log::MessageID PGSQL_CB_DEINIT_OK = "PGSQL_CB_DEINIT_OK";
 extern const isc::log::MessageID PGSQL_CB_DELETE_ALL_CLIENT_CLASSES4 = "PGSQL_CB_DELETE_ALL_CLIENT_CLASSES4";
 extern const isc::log::MessageID PGSQL_CB_DELETE_ALL_CLIENT_CLASSES4_RESULT = "PGSQL_CB_DELETE_ALL_CLIENT_CLASSES4_RESULT";
 extern const isc::log::MessageID PGSQL_CB_DELETE_ALL_CLIENT_CLASSES6 = "PGSQL_CB_DELETE_ALL_CLIENT_CLASSES6";
@@ -185,7 +184,6 @@ extern const isc::log::MessageID PGSQL_CB_GET_SUBNET6_BY_PREFIX = "PGSQL_CB_GET_
 extern const isc::log::MessageID PGSQL_CB_GET_SUBNET6_BY_SUBNET_ID = "PGSQL_CB_GET_SUBNET6_BY_SUBNET_ID";
 extern const isc::log::MessageID PGSQL_CB_GET_TYPE4 = "PGSQL_CB_GET_TYPE4";
 extern const isc::log::MessageID PGSQL_CB_GET_TYPE6 = "PGSQL_CB_GET_TYPE6";
-extern const isc::log::MessageID PGSQL_CB_INIT_OK = "PGSQL_CB_INIT_OK";
 extern const isc::log::MessageID PGSQL_CB_NO_TLS_SUPPORT = "PGSQL_CB_NO_TLS_SUPPORT";
 extern const isc::log::MessageID PGSQL_CB_RECONNECT_ATTEMPT_FAILED4 = "PGSQL_CB_RECONNECT_ATTEMPT_FAILED4";
 extern const isc::log::MessageID PGSQL_CB_RECONNECT_ATTEMPT_FAILED6 = "PGSQL_CB_RECONNECT_ATTEMPT_FAILED6";
@@ -226,7 +224,6 @@ const char* values[] = {
     "PGSQL_CB_CREATE_UPDATE_SHARED_NETWORK_OPTION6", "create or update shared network: %1 option",
     "PGSQL_CB_CREATE_UPDATE_SUBNET4", "create or update subnet: %1",
     "PGSQL_CB_CREATE_UPDATE_SUBNET6", "create or update subnet: %1",
-    "PGSQL_CB_DEINIT_OK", "unloading PostgreSQL CB hooks library successful",
     "PGSQL_CB_DELETE_ALL_CLIENT_CLASSES4", "delete all client classes",
     "PGSQL_CB_DELETE_ALL_CLIENT_CLASSES4_RESULT", "deleted: %1 entries",
     "PGSQL_CB_DELETE_ALL_CLIENT_CLASSES6", "delete all client classes",
@@ -383,7 +380,6 @@ const char* values[] = {
     "PGSQL_CB_GET_SUBNET6_BY_SUBNET_ID", "retrieving subnet by subnet id: %1",
     "PGSQL_CB_GET_TYPE4", "get type",
     "PGSQL_CB_GET_TYPE6", "get type",
-    "PGSQL_CB_INIT_OK", "loading PostgreSQL CB hooks library successful",
     "PGSQL_CB_NO_TLS_SUPPORT", "Attempt to configure TLS (unsupported for PostgreSQL): %1",
     "PGSQL_CB_RECONNECT_ATTEMPT_FAILED4", "database reconnect failed: %1",
     "PGSQL_CB_RECONNECT_ATTEMPT_FAILED6", "database reconnect failed: %1",

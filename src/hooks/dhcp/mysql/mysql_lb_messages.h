@@ -8,6 +8,8 @@
 namespace isc {
 namespace dhcp {
 
+extern const isc::log::MessageID MYSQL_DEINIT_OK;
+extern const isc::log::MessageID MYSQL_INIT_OK;
 extern const isc::log::MessageID MYSQL_LB_ADD_ADDR4;
 extern const isc::log::MessageID MYSQL_LB_ADD_ADDR6;
 extern const isc::log::MessageID MYSQL_LB_COMMIT;
@@ -15,7 +17,6 @@ extern const isc::log::MessageID MYSQL_LB_DB;
 extern const isc::log::MessageID MYSQL_LB_DB_RECONNECT_ATTEMPT_FAILED;
 extern const isc::log::MessageID MYSQL_LB_DB_RECONNECT_ATTEMPT_SCHEDULE;
 extern const isc::log::MessageID MYSQL_LB_DB_RECONNECT_FAILED;
-extern const isc::log::MessageID MYSQL_LB_DEINIT_OK;
 extern const isc::log::MessageID MYSQL_LB_DELETED_EXPIRED_RECLAIMED;
 extern const isc::log::MessageID MYSQL_LB_DELETE_ADDR4;
 extern const isc::log::MessageID MYSQL_LB_DELETE_ADDR6;
@@ -46,7 +47,6 @@ extern const isc::log::MessageID MYSQL_LB_GET_SUBID_CLIENTID;
 extern const isc::log::MessageID MYSQL_LB_GET_SUBID_HWADDR;
 extern const isc::log::MessageID MYSQL_LB_GET_SUBID_PAGE6;
 extern const isc::log::MessageID MYSQL_LB_GET_VERSION;
-extern const isc::log::MessageID MYSQL_LB_INIT_OK;
 extern const isc::log::MessageID MYSQL_LB_NEGATIVE_LEASES_STAT;
 extern const isc::log::MessageID MYSQL_LB_NO_TLS;
 extern const isc::log::MessageID MYSQL_LB_ROLLBACK;

@@ -88,10 +88,6 @@ Debug message issued when triggered an action to create or update subnet
 Logged at debug log level 40.
 Debug message issued when triggered an action to create or update subnet
 
-% PGSQL_CB_DEINIT_OK unloading PostgreSQL CB hooks library successful
-This informational message indicates that the PostgreSQL Configuration Backend hooks
-library has been unloaded successfully.
-
 % PGSQL_CB_DELETE_ALL_CLIENT_CLASSES4 delete all client classes
 Logged at debug log level 40.
 Debug message issued when triggered an action to delete all client classes
@@ -719,10 +715,6 @@ Debug message issued when triggered an action to retrieve type
 % PGSQL_CB_GET_TYPE6 get type
 Logged at debug log level 40.
 Debug message issued when triggered an action to retrieve type
-
-% PGSQL_CB_INIT_OK loading PostgreSQL CB hooks library successful
-This informational message indicates that the PostgreSQL Configuration Backend hooks
-library has been loaded successfully. Enjoy!
 
 % PGSQL_CB_NO_TLS_SUPPORT Attempt to configure TLS (unsupported for PostgreSQL): %1
 This error message is printed when TLS support was required in the Kea

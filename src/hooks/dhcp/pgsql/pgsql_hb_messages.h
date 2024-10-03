@@ -14,8 +14,6 @@ extern const isc::log::MessageID PGSQL_HB_DB_READONLY;
 extern const isc::log::MessageID PGSQL_HB_DB_RECONNECT_ATTEMPT_FAILED;
 extern const isc::log::MessageID PGSQL_HB_DB_RECONNECT_ATTEMPT_SCHEDULE;
 extern const isc::log::MessageID PGSQL_HB_DB_RECONNECT_FAILED;
-extern const isc::log::MessageID PGSQL_HB_DEINIT_OK;
-extern const isc::log::MessageID PGSQL_HB_INIT_OK;
 extern const isc::log::MessageID PGSQL_HB_NO_TLS_SUPPORT;
 extern const isc::log::MessageID PGSQL_HB_TLS_SUPPORT;
 

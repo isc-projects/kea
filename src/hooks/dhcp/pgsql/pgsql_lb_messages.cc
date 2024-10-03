@@ -7,6 +7,8 @@
 namespace isc {
 namespace dhcp {
 
+extern const isc::log::MessageID PGSQL_DEINIT_OK = "PGSQL_DEINIT_OK";
+extern const isc::log::MessageID PGSQL_INIT_OK = "PGSQL_INIT_OK";
 extern const isc::log::MessageID PGSQL_LB_ADD_ADDR4 = "PGSQL_LB_ADD_ADDR4";
 extern const isc::log::MessageID PGSQL_LB_ADD_ADDR6 = "PGSQL_LB_ADD_ADDR6";
 extern const isc::log::MessageID PGSQL_LB_COMMIT = "PGSQL_LB_COMMIT";
@@ -14,7 +16,6 @@ extern const isc::log::MessageID PGSQL_LB_DB = "PGSQL_LB_DB";
 extern const isc::log::MessageID PGSQL_LB_DB_RECONNECT_ATTEMPT_FAILED = "PGSQL_LB_DB_RECONNECT_ATTEMPT_FAILED";
 extern const isc::log::MessageID PGSQL_LB_DB_RECONNECT_ATTEMPT_SCHEDULE = "PGSQL_LB_DB_RECONNECT_ATTEMPT_SCHEDULE";
 extern const isc::log::MessageID PGSQL_LB_DB_RECONNECT_FAILED = "PGSQL_LB_DB_RECONNECT_FAILED";
-extern const isc::log::MessageID PGSQL_LB_DEINIT_OK = "PGSQL_LB_DEINIT_OK";
 extern const isc::log::MessageID PGSQL_LB_DELETE_ADDR4 = "PGSQL_LB_DELETE_ADDR4";
 extern const isc::log::MessageID PGSQL_LB_DELETE_ADDR6 = "PGSQL_LB_DELETE_ADDR6";
 extern const isc::log::MessageID PGSQL_LB_DELETE_EXPIRED_RECLAIMED4 = "PGSQL_LB_DELETE_EXPIRED_RECLAIMED4";
@@ -44,7 +45,6 @@ extern const isc::log::MessageID PGSQL_LB_GET_SUBID_CLIENTID = "PGSQL_LB_GET_SUB
 extern const isc::log::MessageID PGSQL_LB_GET_SUBID_HWADDR = "PGSQL_LB_GET_SUBID_HWADDR";
 extern const isc::log::MessageID PGSQL_LB_GET_SUBID_PAGE6 = "PGSQL_LB_GET_SUBID_PAGE6";
 extern const isc::log::MessageID PGSQL_LB_GET_VERSION = "PGSQL_LB_GET_VERSION";
-extern const isc::log::MessageID PGSQL_LB_INIT_OK = "PGSQL_LB_INIT_OK";
 extern const isc::log::MessageID PGSQL_LB_NEGATIVE_LEASES_STAT = "PGSQL_LB_NEGATIVE_LEASES_STAT";
 extern const isc::log::MessageID PGSQL_LB_NO_TLS_SUPPORT = "PGSQL_LB_NO_TLS_SUPPORT";
 extern const isc::log::MessageID PGSQL_LB_ROLLBACK = "PGSQL_LB_ROLLBACK";
@@ -64,6 +64,8 @@ extern const isc::log::MessageID PGSQL_LB_UPGRADE_EXTENDED_INFO6_PAGE = "PGSQL_L
 namespace {
 
 const char* values[] = {
+    "PGSQL_DEINIT_OK", "unloading PostgreSQL hooks library successful",
+    "PGSQL_INIT_OK", "loading PostgreSQL hooks library successful",
     "PGSQL_LB_ADD_ADDR4", "adding IPv4 lease with address %1",
     "PGSQL_LB_ADD_ADDR6", "adding IPv6 lease with address %1, lease type %2",
     "PGSQL_LB_COMMIT", "committing to PostgreSQL database",
@@ -71,7 +73,6 @@ const char* values[] = {
     "PGSQL_LB_DB_RECONNECT_ATTEMPT_FAILED", "database reconnect failed: %1",
     "PGSQL_LB_DB_RECONNECT_ATTEMPT_SCHEDULE", "scheduling attempt %1 of %2 in %3 milliseconds",
     "PGSQL_LB_DB_RECONNECT_FAILED", "maximum number of database reconnect attempts: %1, has been exhausted without success",
-    "PGSQL_LB_DEINIT_OK", "unloading PostgreSQL LB hooks library successful",
     "PGSQL_LB_DELETE_ADDR4", "deleting lease for address %1",
     "PGSQL_LB_DELETE_ADDR6", "deleting lease for address %1",
     "PGSQL_LB_DELETE_EXPIRED_RECLAIMED4", "deleting reclaimed IPv4 leases that expired more than %1 seconds ago",
@@ -101,7 +102,6 @@ const char* values[] = {
     "PGSQL_LB_GET_SUBID_HWADDR", "obtaining IPv4 lease for subnet ID %1 and hardware address %2",
     "PGSQL_LB_GET_SUBID_PAGE6", "obtaining at most %1 IPv6 leases starting from address %2 for subnet ID %3",
     "PGSQL_LB_GET_VERSION", "obtaining schema version information",
-    "PGSQL_LB_INIT_OK", "loading PostgreSQL LB hooks library successful",
     "PGSQL_LB_NEGATIVE_LEASES_STAT", "recount of leases returned a negative value",
     "PGSQL_LB_NO_TLS_SUPPORT", "Attempt to configure TLS (unsupported for PostgreSQL): %1",
     "PGSQL_LB_ROLLBACK", "rolling back PostgreSQL database",
