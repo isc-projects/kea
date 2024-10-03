@@ -856,20 +856,13 @@ PgSqlConfigBackendImpl::setClientClasses(PgSqlResultRowWorker& worker, size_t co
     }
 
     ElementPtr cclasses_element = worker.getJSON(col);
-    if (cclasses_element->getType() != Element::list) {
+    // Get client classes list
+    try {
+        client_classes.fromElement(cclasses_element);
+    } catch (const std::exception& ex) {
         std::ostringstream ss;
         cclasses_element->toJSON(ss);
-        isc_throw(BadValue, "invalid client_classes value " << ss.str());
-    }
-
-    for (auto i = 0; i < cclasses_element->size(); ++i) {
-        auto cclasses_item = cclasses_element->get(i);
-        if (cclasses_item->getType() != Element::string) {
-            isc_throw(BadValue, "elements of client_classes list must"
-                                "be valid strings");
-        }
-
-        client_classes.insert(cclasses_item->stringValue());
+        isc_throw(BadValue, "invalid 'client_classes' : " << ss.str() << ex.what());
     }
 }
 

@@ -225,6 +225,12 @@ namespace dhcp {
         /// @return the list
         isc::data::ElementPtr toElement() const;
 
+        /// @brief Sets contents from a ListElement
+        ///
+        /// @throw BadValue if the element is not a list or contents
+        /// are invalid
+        void fromElement(isc::data::ElementPtr list);
+
     private:
         /// @brief container part
         ClientClassContainer container_;

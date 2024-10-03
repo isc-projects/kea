@@ -884,20 +884,12 @@ MySqlConfigBackendImpl::processOptionRow(const Option::Universe& universe,
 
     // Get client classes list
     ElementPtr client_classes = (*(first_binding + 13))->getJSON();
-    if (client_classes) {
-        if (client_classes->getType() != Element::list) {
-            isc_throw(BadValue, "invalid client_classes value "
-                                << (*(first_binding + 13))->getString());
-        }
-
-        for (auto i = 0; i < client_classes->size(); ++i) {
-            auto cclass = client_classes->get(i);
-                if (cclass->getType() != Element::string) {
-                    isc_throw(BadValue, "elements of client_classes list must be valid strings");
-                }
-
-            desc->addClientClass(cclass->stringValue());
-        }
+    try {
+        desc->client_classes_.fromElement(client_classes);
+    } catch (const std::exception& ex) {
+        isc_throw(BadValue, "invalid 'client_classes' : "
+                            << (*(first_binding + 13))->getString()
+                            << ex.what());
     }
 
     return (desc);
@@ -1128,7 +1120,7 @@ MySqlConfigBackendImpl::getPort() const {
     return (0);
 }
 
-db::MySqlBindingPtr 
+db::MySqlBindingPtr
 MySqlConfigBackendImpl::createInputClientClassesBinding(const ClientClasses& client_classes) {
     if (client_classes.empty()) {
         return(db::MySqlBinding::createNull());

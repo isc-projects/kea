@@ -81,6 +81,25 @@ ClientClasses::toElement() const {
     return (result);
 }
 
+void
+ClientClasses::fromElement(isc::data::ElementPtr cc_list) {
+    if (cc_list) {
+        clear();
+        if (cc_list->getType() != Element::list) {
+            isc_throw(BadValue, "not a List element");
+        }
+
+        for (auto i = 0; i < cc_list->size(); ++i) {
+            auto cclass = cc_list->get(i);
+            if (cclass->getType() != Element::string) {
+                isc_throw(BadValue, "elements of list must be valid strings"); 
+            }
+
+            insert(cclass->stringValue());
+        }
+    }
+}
+
 bool
 ClientClasses::equals(const ClientClasses& other) const {
  return ((size() == other.size()) && std::equal(cbegin(), cend(), other.cbegin()));

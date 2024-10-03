@@ -6,9 +6,15 @@
 
 #include <config.h>
 #include <dhcp/classify.h>
+#include <exceptions/exceptions.h>
+#include <cc/data.h>
+#include <testutils/gtest_utils.h>
+
 #include <gtest/gtest.h>
 
+using namespace isc;
 using namespace isc::dhcp;
+using namespace isc::data;
 
 // Trivial test for now as ClientClass is a std::string.
 TEST(ClassifyTest, ClientClass) {
@@ -192,4 +198,59 @@ TEST(ClassifyTest, Erase) {
     classes.erase("alpha");
     EXPECT_FALSE(classes.contains("alpha"));
     EXPECT_FALSE(classes.contains("beta"));
+}
+
+// Check that the ClientClasses::fromElement function.
+TEST(ClassifyTest, ClientClassesFromElement) {
+    // No classes.
+    ClientClasses classes;
+    EXPECT_TRUE(classes.toElement()->empty());
+
+    ElementPtr cclasses_element;
+    // Verify a empty element pointer is harmless.
+    ASSERT_NO_THROW(classes.fromElement(cclasses_element));
+
+    // Verify A non-list element is caught.
+    cclasses_element = Element::create("bogus");
+    ASSERT_THROW_MSG(classes.fromElement(cclasses_element), BadValue,
+                    "not a List element");
+
+    // Verify an empty list is harmless.
+    cclasses_element = Element::createList();
+
+    // Verify a empty element pointer is harmless.
+    ASSERT_NO_THROW(classes.fromElement(cclasses_element));
+
+    // Verify an invalid list is caught.
+    cclasses_element->add(Element::create(123));
+    ASSERT_THROW_MSG(classes.fromElement(cclasses_element), BadValue,
+                    "elements of list must be valid strings");
+
+    cclasses_element = Element::createList();
+    cclasses_element->add(Element::create("one"));
+    cclasses_element->add(Element::create("two"));
+
+    // Verify a valid list works.
+    ASSERT_NO_THROW(classes.fromElement(cclasses_element));
+    EXPECT_TRUE(classes.contains("one"));
+    EXPECT_TRUE(classes.contains("two"));
+
+    // Verify a second invocation replaces the contents.
+    cclasses_element = Element::createList();
+    cclasses_element->add(Element::create("three"));
+    ASSERT_NO_THROW(classes.fromElement(cclasses_element));
+    EXPECT_FALSE(classes.contains("one"));
+    EXPECT_FALSE(classes.contains("two"));
+    EXPECT_TRUE(classes.contains("three"));
+
+    // Verify another invocation with an empty pointer is harmless. 
+    cclasses_element.reset();
+    ASSERT_NO_THROW(classes.fromElement(cclasses_element));
+    EXPECT_TRUE(classes.contains("three"));
+
+    // Verify another third invocation with an empty list
+    // clears the contents.
+    cclasses_element = Element::createList();
+    ASSERT_NO_THROW(classes.fromElement(cclasses_element));
+    EXPECT_TRUE(classes.empty());
 }
