@@ -1,3 +1,13 @@
+2289.	[func]*		razvan
+	Renamed the 'libdhcp_mysql_cb.so' hook library to
+	'libdhcp_mysql.so' and the 'libdhcp_pgsql_cb.so' hook library to
+	'libdhcp_pgsql.so' and merged the lease and host backends for
+	the respective database types in the same libraries. The hook
+	libraries are now required when using either MySQL or PostgreSQL
+	lease or host databases and must be added to the
+	'hooks-libraries' list.
+	(Gitlab #3536)
+
 2288.	[bug]		marcin
 	Prevent the clients from declining expired or released leases.
 	Only a valid lease assigned to the declining client can now
