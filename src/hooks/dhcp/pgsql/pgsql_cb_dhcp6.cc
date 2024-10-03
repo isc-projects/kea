@@ -3029,6 +3029,7 @@ public:
         }
 
         bool reopened = false;
+        bool do_exit = false;
 
         const std::string timer_name = db_reconnect_ctl->timerName();
 
@@ -3040,10 +3041,8 @@ public:
             // Something is definitely wrong. Did the configuration change
             // somehow and there is no configuration for CB?
             if (!config_ctl) {
-                std::string reason("No CB configuration found!");
-                LOG_ERROR(pgsql_cb_logger, PGSQL_CB_RECONNECT_ATTEMPT_FAILED6)
-                        .arg(reason);
-                return (true);
+                do_exit = true;
+                isc_throw(Unexpected, "No CB configuration found!");
             }
 
             // Iterate over the configured DBs and instantiate them.
@@ -3059,6 +3058,9 @@ public:
         } catch (const std::exception& ex) {
             LOG_ERROR(pgsql_cb_logger, PGSQL_CB_RECONNECT_ATTEMPT_FAILED6)
                     .arg(ex.what());
+            if (do_exit) {
+                return (true);
+            }
         }
 
         if (reopened) {
