@@ -1270,19 +1270,20 @@ the option to members of class "melon":
     {
         "id": 100,
         "subnet": "178.16.1.0/24",
-        "option-data"[{
+        "option-data": [{
             "name": "foo",
             "data": 456
         }],
         "pools": [{
-            "pool": "178.16.1.100 - 178.16.1.200"
-            "option-data"[{
+            "pool": "178.16.1.100 - 178.16.1.200",
+            "option-data": [{
                 "name": "foo",
                 "data": 123,
                 "client-classes" : [ "melon" ]
             }]
         }]
-    }]
+    }
+    
 
 Clients that match class "melon" will have a value of 123 for option "foo",
 while clients that do not match "melon" will have a value of 456 for option
