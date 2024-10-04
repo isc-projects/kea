@@ -284,11 +284,11 @@
                 "parameters": { }
             },
             {
-                // The MySql host backend hook library required for host storage.
+                // The MySQL host backend hook library required for host storage.
                 "library": "/opt/lib/kea/hooks/libdhcp_mysql.so"
             },
             {
-                // The PgSql host backend hook library required for host storage.
+                // The PostgreSQL host backend hook library required for host storage.
                 "library": "/opt/lib/kea/hooks/libdhcp_pgsql.so"
             }
         ],

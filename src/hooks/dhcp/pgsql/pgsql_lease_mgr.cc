@@ -1335,7 +1335,7 @@ private:
     //@}
 };
 
-/// @brief Base PgSql derivation of the statistical lease data query
+/// @brief Base PostgreSQL derivation of the statistical lease data query
 ///
 /// This class provides the functionality such as results storage and row
 /// fetching common to fulfilling the statistical lease data query.

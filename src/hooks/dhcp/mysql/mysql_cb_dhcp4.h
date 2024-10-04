@@ -19,7 +19,7 @@ namespace dhcp {
 
 class MySqlConfigBackendDHCPv4Impl;
 
-/// @brief Implementation of the MySql Configuration Backend for
+/// @brief Implementation of the MySQL Configuration Backend for
 /// Kea DHCPv4 server.
 ///
 /// All POSIX times specified in the methods belonging to this

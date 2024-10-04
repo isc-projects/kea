@@ -378,11 +378,11 @@
                 "parameters": { }
             },
             {
-                // The MySql host backend hook library required for host storage.
+                // The MySQL host backend hook library required for host storage.
                 "library": "/opt/lib/kea/hooks/libdhcp_mysql.so"
             },
             {
-                // The PgSql host backend hook library required for host storage.
+                // The PostgreSQL host backend hook library required for host storage.
                 "library": "/opt/lib/kea/hooks/libdhcp_pgsql.so"
             }
         ],
@@ -1161,7 +1161,7 @@
                                 "prefixes": [ "2001:db8:2:abcd::/64" ],
 
                                 // List of excluded IPv6 prefixes.
-				"excluded-prefixes": [ "2001:db8:2:abcd:1::/80" ],
+                                "excluded-prefixes": [ "2001:db8:2:abcd:1::/80" ],
 
                                 // Reserved hostname.
                                 "hostname": "foo.example.com",

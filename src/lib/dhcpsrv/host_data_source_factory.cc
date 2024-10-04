@@ -49,10 +49,11 @@ HostDataSourceFactory::add(HostDataSourceList& sources,
     if (index == map_.end()) {
         if ((db_type == "mysql") || (db_type == "postgresql")) {
             string with = (db_type == "postgresql" ? "pgsql" : db_type);
-            isc_throw(InvalidType, "The type of host backend: '" << db_type
-                      << "' is not compiled in. Did you forget to use --with-"
+            isc_throw(InvalidType, "The Kea server has not been compiled with "
+                      "support for host database type: " << db_type
+                      << ". Did you forget to use --with-"
                       << with << " during compilation or to load libdhcp_"
-                      << with << "_hb hook library?");
+                      << with << " hook library?");
         }
         isc_throw(InvalidType, "The type of host backend: '" <<
                   db_type << "' is not supported");

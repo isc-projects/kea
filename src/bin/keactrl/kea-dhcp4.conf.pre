@@ -276,6 +276,10 @@
     //       "parameters": {
     //           "identifier-expression": "relay4[2].hex"
     //       }
+    //   },
+    //   {
+    //       // the MySQL host backend hook library required for host storage.
+    //       "library": "@libdir@/kea/hooks/libdhcp_mysql.so"
     //   }
     // ],
 

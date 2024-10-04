@@ -1823,7 +1823,7 @@ private:
     my_bool              user_context_null_;                       ///< Used when user context is null
 };
 
-/// @brief MySql derivation of the statistical lease data query
+/// @brief MySQL derivation of the statistical lease data query
 ///
 /// This class is used to recalculate lease statistics for MySQL
 /// lease storage.  It does so by executing a query which returns a result

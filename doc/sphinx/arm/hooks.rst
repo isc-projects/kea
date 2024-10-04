@@ -593,10 +593,12 @@ loaded by the correct process per the table below.
    |                                                           |              | which packets receive a response. The limit can be applied   |
    |                                                           |              | per-client class or per-subnet.                              |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
-   | :ref:`MySQL Configuration Backend <hooks-cb-mysql>`       | Kea open     | This hook library is an implementation of the Kea            |
-   |                                                           | source       | Configuration Backend for MySQL. It uses a MySQL database as |
-   |                                                           |              | a repository for the Kea configuration information. Kea      |
-   |                                                           |              | servers use this library to fetch their configurations.      |
+   | :ref:`MySQL Configuration Backend <hooks-mysql>`          | Kea open     | This hook library is an implementation of the Kea Lease,     |
+   |                                                           | source       | Host and Configuration Backend for MySQL. It uses a          |
+   |                                                           |              | MySQL database as a repository for the Kea leases, host      |
+   |                                                           |              | reservations and configuration information. Kea servers use  |
+   |                                                           |              | this library to fetch their configurations if Configuration  |
+   |                                                           |              | Backend is used.                                             |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
    | :ref:`PerfMon <hooks-perfmon>`                            | Kea open     | With this hook library, :iscman:`kea-dhcp4` and              |
    | CURRENTLY EXPERIMENTAL                                    | source       | :iscman:`kea-dhcp6` servers can track and report performance |
@@ -606,11 +608,12 @@ loaded by the correct process per the table below.
    |                                                           | source       | perform ping checks of candidate lease addresses before      |
    |                                                           | customers    | offering them to clients.                                    |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
-   | :ref:`PostgreSQL Configuration Backend <hooks-cb-pgsql>`  | Kea open     | This hook library is an implementation of the Kea            |
-   |                                                           | source       | Configuration Backend for PostgreSQL. It uses a PostgreSQL   |
-   |                                                           |              | database as a repository for the Kea configuration           |
-   |                                                           |              | information. Kea servers use this library to fetch their     |
-   |                                                           |              | configurations.                                              |
+   | :ref:`PostgreSQL Database Backend <hooks-pgsql>`          | Kea open     | This hook library is an implementation of the Kea Lease,     |
+   |                                                           | source       | Host and Configuration Backend for PostgreSQL. It uses a     |
+   |                                                           |              | PostgreSQL database as a repository for the Kea leases, host |
+   |                                                           |              | reservations and configuration information. Kea servers use  |
+   |                                                           |              | this library to fetch their configurations if Configuration  |
+   |                                                           |              | Backend is used.                                             |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
    | :ref:`RADIUS <hooks-radius>`                              | ISC support  | The RADIUS hook library allows Kea to interact with          |
    |                                                           | customers    | RADIUS servers using access and accounting mechanisms. The   |
@@ -685,10 +688,10 @@ sections.
 .. include:: hooks-lease-query.rst
 .. include:: hooks-legal-log.rst
 .. include:: hooks-limits.rst
-.. include:: hooks-cb-mysql.rst
+.. include:: hooks-mysql.rst
 .. include:: hooks-perfmon.rst
 .. include:: hooks-ping-check.rst
-.. include:: hooks-cb-pgsql.rst
+.. include:: hooks-pgsql.rst
 .. include:: hooks-radius.rst
 .. include:: hooks-rbac.rst
 .. include:: hooks-run-script.rst

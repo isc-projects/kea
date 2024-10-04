@@ -19,7 +19,7 @@ namespace dhcp {
 
 class PgSqlConfigBackendDHCPv4Impl;
 
-/// @brief Implementation of the PgSql Configuration Backend for
+/// @brief Implementation of the PostgreSQL Configuration Backend for
 /// Kea DHCPv4 server.
 ///
 /// All POSIX times specified in the methods belonging to this

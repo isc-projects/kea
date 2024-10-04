@@ -4,19 +4,18 @@
 ``libdhcp_cb_cmds.so``: Configuration Backend Commands
 ======================================================
 
-This hook library is used to manage Kea
-servers' configurations in a configuration backend database. This library must
-be used in conjunction with the available CB hook libraries implementing
-the common APIs to create, read, update, and delete (CRUD) the
-configuration information in the respective databases. For example:
-:ischooklib:`libdhcp_mysql_cb.so` implements this API for MySQL while
-:ischooklib:`libdhcp_pgsql_cb.so` implements this API for PostgreSQL.
+This hook library is used to manage Kea servers' configurations in a
+configuration backend database. This library must be used in conjunction with
+the available CB hook libraries implementing the common APIs to create, read,
+update, and delete (CRUD) the configuration information in the respective
+databases. For example: :ischooklib:`libdhcp_mysql.so` implements this API for
+MySQL while :ischooklib:`libdhcp_pgsql.so` implements this API for PostgreSQL.
 To manage the configuration information in a MySQL database, both
-:ischooklib:`libdhcp_mysql_cb.so` and :ischooklib:`libdhcp_cb_cmds.so`
-must be loaded by the server used for configuration management.
+:ischooklib:`libdhcp_mysql.so` and :ischooklib:`libdhcp_cb_cmds.so` must be
+loaded by the server used for configuration management.
 To manage the configuration information in a PostgreSQL database, both
-:ischooklib:`libdhcp_pgsql_cb.so` and :ischooklib:`libdhcp_cb_cmds.so`
-must be loaded by the server used for configuration management.
+:ischooklib:`libdhcp_pgsql.so` and :ischooklib:`libdhcp_cb_cmds.so` must be
+loaded by the server used for configuration management.
 
 More information on how to configure the Configuration Backend hook library for
 use with a MySQL or PostgreSQL database can be found in the :ref:`dhcp4-cb`

@@ -616,6 +616,30 @@ error.
     ``host`` parameter is ``localhost``, but establishes a TCP connection
     for ``127.0.0.1``.
 
+Since Kea.2.7.4, the libdhcp_mysql.so hook library must be loaded in order to
+store leases in the MySQL Lease Database Backend.
+Specify the lease backend hook library location:
+
+::
+
+   "Dhcp6": { "hooks-libraries": [
+       {
+           // the MySQL lease backend hook library required for lease storage.
+           "library": "/opt/lib/kea/hooks/libdhcp_mysql.so"
+       }, ... ], ... }
+
+Since Kea.2.7.4, the libdhcp_pgsql.so hook library must be loaded in order to
+store leases in the PostgreSQL Lease Database Backend.
+Specify the lease backend hook library location.
+
+::
+
+   "Dhcp6": { "hooks-libraries": [
+       {
+           // the PostgreSQL lease backend hook library required for lease storage.
+           "library": "/opt/lib/kea/hooks/libdhcp_pgsql.so"
+       }, ... ], ... }
+
 
 .. _hosts6-storage:
 
@@ -848,6 +872,30 @@ the parameter is not specified.
 
    The ``readonly`` parameter is only supported for MySQL and
    PostgreSQL databases.
+
+Since Kea.2.7.4, the libdhcp_mysql.so hook library must be loaded in order to
+store host reservations in the MySQL Host Database Backend.
+Specify the lease backend hook library location:
+
+::
+
+   "Dhcp6": { "hooks-libraries": [
+       {
+           // the MySQL host backend hook library required for host storage.
+           "library": "/opt/lib/kea/hooks/libdhcp_mysql.so"
+       }, ... ], ... }
+
+Since Kea.2.7.4, the libdhcp_pgsql.so hook library must be loaded in order to
+store host reservations in the PostgreSQL Host Database Backend.
+Specify the lease backend hook library location.
+
+::
+
+   "Dhcp6": { "hooks-libraries": [
+       {
+           // the PostgreSQL host backend hook library required for host storage.
+           "library": "/opt/lib/kea/hooks/libdhcp_pgsql.so"
+       }, ... ], ... }
 
 
 Tuning Database Timeouts for Hosts Storage
@@ -8085,7 +8133,7 @@ database:
 
    {
        "Dhcp6": {
-       "server-tag": "my DHCPv6 server",
+           "server-tag": "my DHCPv6 server",
            "config-control": {
                "config-databases": [
                    {
@@ -8101,7 +8149,38 @@ database:
            },
            "hooks-libraries": [
                {
-                   "library": "/usr/local/lib/kea/hooks/libdhcp_mysql_cb.so"
+                   "library": "/usr/local/lib/kea/hooks/libdhcp_mysql.so"
+               },
+               {
+                   "library": "/usr/local/lib/kea/hooks/libdhcp_cb_cmds.so"
+               }
+           ]
+       }
+   }
+
+The following snippet illustrates the use of a PostgreSQL database:
+
+.. code-block:: json
+
+   {
+       "Dhcp6": {
+           "server-tag": "my DHCPv6 server",
+           "config-control": {
+               "config-databases": [
+                   {
+                       "type": "postgresql",
+                       "name": "kea",
+                       "user": "kea",
+                       "password": "kea",
+                       "host": "2001:db8:1::1",
+                       "port": 3302
+                   }
+               ],
+               "config-fetch-wait-time": 20
+           },
+           "hooks-libraries": [
+               {
+                   "library": "/usr/local/lib/kea/hooks/libdhcp_pgsql.so"
                },
                {
                    "library": "/usr/local/lib/kea/hooks/libdhcp_cb_cmds.so"

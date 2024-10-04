@@ -660,6 +660,30 @@ error.
     ``host`` parameter is ``localhost``, but establishes a TCP connection
     for ``127.0.0.1``.
 
+Since Kea.2.7.4, the libdhcp_mysql.so hook library must be loaded in order to
+store leases in the MySQL Lease Database Backend.
+Specify the lease backend hook library location:
+
+::
+
+   "Dhcp4": { "hooks-libraries": [
+       {
+           // the MySQL lease backend hook library required for lease storage.
+           "library": "/opt/lib/kea/hooks/libdhcp_mysql.so"
+       }, ... ], ... }
+
+Since Kea.2.7.4, the libdhcp_pgsql.so hook library must be loaded in order to
+store leases in the PostgreSQL Lease Database Backend.
+Specify the lease backend hook library location.
+
+::
+
+   "Dhcp4": { "hooks-libraries": [
+       {
+           // the PostgreSQL lease backend hook library required for lease storage.
+           "library": "/opt/lib/kea/hooks/libdhcp_pgsql.so"
+       }, ... ], ... }
+
 
 .. _hosts4-storage:
 
@@ -892,6 +916,30 @@ the parameter is not specified.
 
    The ``readonly`` parameter is only supported for MySQL and
    PostgreSQL databases.
+
+Since Kea.2.7.4, the libdhcp_mysql.so hook library must be loaded in order to
+store host reservations in the MySQL Host Database Backend.
+Specify the lease backend hook library location:
+
+::
+
+   "Dhcp4": { "hooks-libraries": [
+       {
+           // the MySQL host backend hook library required for host storage.
+           "library": "/opt/lib/kea/hooks/libdhcp_mysql.so"
+       }, ... ], ... }
+
+Since Kea.2.7.4, the libdhcp_pgsql.so hook library must be loaded in order to
+store host reservations in the PostgreSQL Host Database Backend.
+Specify the lease backend hook library location.
+
+::
+
+   "Dhcp4": { "hooks-libraries": [
+       {
+           // the PostgreSQL host backend hook library required for host storage.
+           "library": "/opt/lib/kea/hooks/libdhcp_pgsql.so"
+       }, ... ], ... }
 
 
 Tuning Database Timeouts for Hosts Storage
@@ -8272,29 +8320,61 @@ database:
 .. code-block:: json
 
    {
-     "Dhcp4": {
-       "server-tag": "my DHCPv4 server",
-       "config-control": {
-           "config-databases": [
-           {
-               "type": "mysql",
-               "name": "kea",
-               "user": "kea",
-               "password": "kea",
-               "host": "192.0.2.1",
-               "port": 3302
-           }
-           ],
-           "config-fetch-wait-time": 20
-       },
-       "hooks-libraries": [
-       {
-           "library": "/usr/local/lib/kea/hooks/libdhcp_mysql_cb.so"
-       }, {
-           "library": "/usr/local/lib/kea/hooks/libdhcp_cb_cmds.so"
+       "Dhcp4": {
+           "server-tag": "my DHCPv4 server",
+           "config-control": {
+               "config-databases": [
+                   {
+                       "type": "mysql",
+                       "name": "kea",
+                       "user": "kea",
+                       "password": "kea",
+                       "host": "192.0.2.1",
+                       "port": 3302
+                   }
+               ],
+               "config-fetch-wait-time": 20
+           },
+           "hooks-libraries": [
+               {
+                   "library": "/usr/local/lib/kea/hooks/libdhcp_mysql.so"
+               },
+               {
+                   "library": "/usr/local/lib/kea/hooks/libdhcp_cb_cmds.so"
+               }
+           ]
        }
-       ]
-     }
+   }
+
+The following snippet illustrates the use of a PostgreSQL database:
+
+.. code-block:: json
+
+   {
+       "Dhcp4": {
+           "server-tag": "my DHCPv4 server",
+           "config-control": {
+               "config-databases": [
+                   {
+                       "type": "postgresql",
+                       "name": "kea",
+                       "user": "kea",
+                       "password": "kea",
+                       "host": "192.0.2.1",
+                       "port": 3302
+                   }
+               ],
+               "config-fetch-wait-time": 20
+           },
+           "hooks-libraries": [
+               {
+                   "library": "/usr/local/lib/kea/hooks/libdhcp_pgsql.so"
+               },
+               {
+                   "library": "/usr/local/lib/kea/hooks/libdhcp_cb_cmds.so"
+               }
+           ]
+       }
    }
 
 The ``config-control`` map contains two parameters. ``config-databases``
@@ -8307,36 +8387,6 @@ only one database connection can be specified on the
 during startup or reconfiguration, and fetches the configuration
 available for this server from the database. This configuration is
 merged into the configuration read from the configuration file.
-
-The following snippet illustrates the use of a PostgreSQL database:
-
-.. code-block:: json
-
-   {
-     "Dhcp4": {
-       "server-tag": "my DHCPv4 server",
-       "config-control": {
-           "config-databases": [
-           {
-               "type": "postgresql",
-               "name": "kea",
-               "user": "kea",
-               "password": "kea",
-               "host": "192.0.2.1",
-               "port": 5432
-           }
-           ],
-           "config-fetch-wait-time": 20
-       },
-       "hooks-libraries": [
-       {
-           "library": "/usr/local/lib/kea/hooks/libdhcp_pgsql_cb.so"
-       }, {
-           "library": "/usr/local/lib/kea/hooks/libdhcp_cb_cmds.so"
-       }
-       ]
-     }
-   }
 
 .. note::
 
@@ -8376,11 +8426,11 @@ waiting for the next fetch cycle.
 
 In the configuration examples above, two hook libraries are loaded. The first
 is a library which implements the configuration backend for a specific database
-type: :ischooklib:`libdhcp_mysql_cb.so` provides support for MySQL and :ischooklib:`libdhcp_pgsql_cb.so`
-provides support for PostgreSQL. The library loaded must match the database
-``type`` specified within the ``config-control`` parameter; otherwise an error
-is logged when the server attempts to load its configuration, and the load
-fails.
+type: :ischooklib:`libdhcp_mysql.so` provides support for MySQL and
+:ischooklib:`libdhcp_pgsql.so` provides support for PostgreSQL. The library
+loaded must match the database ``type`` specified within the ``config-control``
+parameter; otherwise an error is logged when the server attempts to load its
+configuration, and the load fails.
 
 The second hook library, :ischooklib:`libdhcp_cb_cmds.so`, is optional. It should
 be loaded when the Kea server instance is to be used to manage the

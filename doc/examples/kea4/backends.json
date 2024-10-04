@@ -45,6 +45,13 @@
 //      "retry-on-startup": false,
 //      "connect-timeout": 3
 //  },
+// Since Kea.2.7.4, the libdhcp_mysql.so hook library must be loaded in order to
+// store leases in the MySQL Lease Database Backend.
+// Specify the lease backend hook library location.
+//  {
+//      // the MySQL lease backend hook library required for lease storage.
+//      "library": "/opt/lib/kea/hooks/libdhcp_mysql.so"
+//  },
 
 // 3. PostgreSQL backend. Leases will be stored in PostgreSQL database. Make
 // sure it is up, running and properly initialized. See kea-admin documentation
@@ -65,6 +72,13 @@
 //      "on-fail": "stop-retry-exit",
 //      "retry-on-startup": false,
 //      "connect-timeout": 3
+//  },
+// Since Kea.2.7.4, the libdhcp_pgsql.so hook library must be loaded in order to
+// store leases in the PostgreSQL Lease Database Backend.
+// Specify the lease backend hook library location.
+//  {
+//      // the PostgreSQL lease backend hook library required for lease storage.
+//      "library": "/opt/lib/kea/hooks/libdhcp_pgsql.so"
 //  },
 
 // Addresses will be assigned with a lifetime of 4000 seconds.

@@ -151,7 +151,7 @@ documentation.
 @subsection postgreSQLHostMgr PostgreSQL Host Reservation Management
 
 Storing and retrieving host reservations within a PostgreSQL schema is
-provided by the class, \ref isc::dhcp::PgSqlHostDataSource, a derivation of
+provided by the class, isc::dhcp::PgSqlHostDataSource, a derivation of
 \ref isc::dhcp::BaseHostDataSource and is depicted in the following
 class diagram:
 

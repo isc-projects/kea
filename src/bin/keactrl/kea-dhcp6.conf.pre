@@ -222,6 +222,10 @@
     //       "parameters": {
     //           "identifier-expression": "relay6[0].option[37].hex"
     //       }
+    //   },
+    //   {
+    //       // the MySQL host backend hook library required for host storage.
+    //       "library": "@libdir@/kea/hooks/libdhcp_mysql.so"
     //   }
     // ],
 

@@ -374,11 +374,27 @@ libraries), or hook libraries (open source or premium).
    |                                  |                                       | Forensic Logging               |
    |                                  |                                       | hook library.                  |
    +----------------------------------+---------------------------------------+--------------------------------+
-   | ``kea-dhcp4.mysql-cb-hooks``,    | :ischooklib:`libdhcp_mysql_cb.so`     | Used                           |
+   | ``kea-dhcp4.mysql-cb-hooks``,    | :ischooklib:`libdhcp_mysql.so`        | Used                           |
    | ``kea-dhcp6.mysql-cb-hooks``     | open-source hook library              | to log messages                |
    |                                  |                                       | related to the                 |
    |                                  |                                       | operation of the               |
    |                                  |                                       | MySQL Configuration            |
+   |                                  |                                       | Backend hook                   |
+   |                                  |                                       | library.                       |
+   +----------------------------------+---------------------------------------+--------------------------------+
+   | ``kea-dhcp4.mysql-hb-hooks``,    | :ischooklib:`libdhcp_mysql.so`        | Used                           |
+   | ``kea-dhcp6.mysql-hb-hooks``     | open-source hook library              | to log messages                |
+   |                                  |                                       | related to the                 |
+   |                                  |                                       | operation of the               |
+   |                                  |                                       | MySQL Host                     |
+   |                                  |                                       | Backend hook                   |
+   |                                  |                                       | library.                       |
+   +----------------------------------+---------------------------------------+--------------------------------+
+   | ``kea-dhcp4.mysql-lb-hooks``,    | :ischooklib:`libdhcp_mysql.so`        | Used                           |
+   | ``kea-dhcp6.mysql-lb-hooks``     | open-source hook library              | to log messages                |
+   |                                  |                                       | related to the                 |
+   |                                  |                                       | operation of the               |
+   |                                  |                                       | MySQL Lease                    |
    |                                  |                                       | Backend hook                   |
    |                                  |                                       | library.                       |
    +----------------------------------+---------------------------------------+--------------------------------+
@@ -437,11 +453,27 @@ libraries), or hook libraries (open source or premium).
    |                                  |                                       | the operation of the Ping      |
    |                                  |                                       | Check hook library.            |
    +----------------------------------+---------------------------------------+--------------------------------+
-   | ``kea-dhcp4.pgsql-cb-hooks``,    | :ischooklib:`libdhcp_pgsql_cb.so`     | Used                           |
+   | ``kea-dhcp4.pgsql-cb-hooks``,    | :ischooklib:`libdhcp_pgsql.so`        | Used                           |
    | ``kea-dhcp6.pgsql-cb-hooks``     | open-source hook library              | to log messages                |
    |                                  |                                       | related to the                 |
    |                                  |                                       | operation of the               |
    |                                  |                                       | PostgreSQL Configuration       |
+   |                                  |                                       | Backend hook                   |
+   |                                  |                                       | library.                       |
+   +----------------------------------+---------------------------------------+--------------------------------+
+   | ``kea-dhcp4.pgsql-hb-hooks``,    | :ischooklib:`libdhcp_pgsql.so`        | Used                           |
+   | ``kea-dhcp6.pgsql-hb-hooks``     | open-source hook library              | to log messages                |
+   |                                  |                                       | related to the                 |
+   |                                  |                                       | operation of the               |
+   |                                  |                                       | PostgreSQL Host                |
+   |                                  |                                       | Backend hook                   |
+   |                                  |                                       | library.                       |
+   +----------------------------------+---------------------------------------+--------------------------------+
+   | ``kea-dhcp4.pgsql-lb-hooks``,    | :ischooklib:`libdhcp_pgsql.so`        | Used                           |
+   | ``kea-dhcp6.pgsql-lb-hooks``     | open-source hook library              | to log messages                |
+   |                                  |                                       | related to the                 |
+   |                                  |                                       | operation of the               |
+   |                                  |                                       | PostgreSQL Lease               |
    |                                  |                                       | Backend hook                   |
    |                                  |                                       | library.                       |
    +----------------------------------+---------------------------------------+--------------------------------+
