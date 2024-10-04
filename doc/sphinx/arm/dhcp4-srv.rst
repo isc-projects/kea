@@ -1657,6 +1657,11 @@ responses on subnet ``192.0.3.0/24``. ``never-send`` has precedence over
    Both ``always-send`` and ``never-send`` have no effect on options
    which cannot be requested, for instance from a custom space.
 
+.. note::
+
+    Beginning with Kea 2.7.4, option inclusion can also be controlled through
+    option class-tagging, see :ref:`option-class-tagging`
+
 The ``name`` parameter specifies the option name. For a list of
 currently supported names, see :ref:`dhcp4-std-options-list`
 below. The ``code`` parameter specifies the option code, which must

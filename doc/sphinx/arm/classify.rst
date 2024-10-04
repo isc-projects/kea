@@ -1195,6 +1195,104 @@ the client requested. As the NTP server was defined twice, the server
 chooses only one of the values for the reply; the class from which the
 value is obtained is determined as explained in the previous paragraphs.
 
+.. _option-class-tagging:
+
+Option Class-Tagging
+====================
+
+Option class-tagging allows an option value to conditionally applied 
+to the response based on the client's class membership.  The effect is 
+similar to using an if-block in ISC DHCP to conditionally include 
+options at a given scope.  Class-tagging is done by specifying a list of
+one of more class names in the option's ``client-classes`` entry.
+
+Consider a case where members of a given class need the same value for
+one option but a subnet-specific value for another option.  The following
+example shows class-tagging used to give clients who belong to "GROUP1"
+a subnet-specific value for option "bar", while giving all members of "GROUP1"
+the same value for option "foo":
+
+::
+
+    {
+        "client-classes": [
+        {
+            "name": "GROUP1",
+            "test":"substring(option[123].hex,0,4) == 'ONE'",
+            "option-data": [{
+                "name": "foo",
+                "data": "somefile.txt"
+            }]
+        }],
+        "subnet4": [
+        {
+            "id": 1,
+            "subnet": "178.16.1.0/24",
+            "option-data": [{
+                "client-classes": ["GROUP1"],
+                "name": "bar",
+                "data": 123
+            }]
+        },
+        {
+            "id": 2,
+            "subnet": "178.16.2.0/24",
+            "option-data": [
+            {
+                "client-classes": ["GROUP1"],
+                "name": "bar",
+                "data": 789
+            }]
+        }]
+    }
+
+When ``never-send`` for an option is true at any scope, all 
+``client-classes`` entries for that option are ignored. The
+option will not included.
+
+When ``always-send`` is true at any scope, the option will be 
+included unless, the option determined by scope specifies 
+a ``client-classes`` list that does not contain any of the 
+client's classes.
+
+Otherwise, An option requested by the client will be included in 
+the response if  the option either does not specify ``client-classes``
+or the client belongs to at least one of the classes in ``client-classes``.
+
+When an option's class-tag does not match, it is as though 
+the option was not specified at that scope.  In the following
+example the option "foo" is specified for both the subnet and
+the pool.  The pool specification includes a class-tag that limits
+the option to members of class "melon":  
+
+::
+
+    {
+        "id": 100,
+        "subnet": "178.16.1.0/24",
+        "option-data"[{
+            "name": "foo",
+            "data": 456
+        }],
+        "pools": [{
+            "pool": "178.16.1.100 - 178.16.1.200"
+            "option-data"[{
+                "name": "foo",
+                "data": 123,
+                "client-classes" : [ "melon" ]
+            }]
+        }]
+    }]
+
+Clients that match class "melon" will have a value of 123 for option "foo",
+while clients that do not match "melon" will have a value of 456 for option
+"foo".  
+
+.. note::
+
+    Though examples above are for DHCPv4, class-tagging syntax and 
+    behavior is the same for DHPCv6. 
+
 Classes and Hooks
 =================
 

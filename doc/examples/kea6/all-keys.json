@@ -600,6 +600,13 @@
                 // requested.
                 "always-send": false,
 
+                // An optional list of classes for which this option applies.
+                // If the the client matches any of the classes in this list the
+                // option will be applied. If the list is empty or is
+                // omitted this option will be applied regardless of class
+                // membership.
+                "client-classes": [ "class1", "class2" ],
+
                 // Option code. It is not required if the option name is
                 // provided.
                 "code": 23,
@@ -976,6 +983,13 @@
                                 // Boolean flag indicating whether the particular option
                                 // should be always sent or sent only when requested.
                                 "always-send": false,
+
+                                // An optional list of classes for which this option applies.
+                                // If the the client matches any of the classes in this list the
+                                // option will be applied. If the list is empty or is
+                                // omitted this option will be applied regardless of class
+                                // membership.
+                                "client-classes": [ ],
 
                                 // Option code.
                                 "code": 7,

@@ -1658,6 +1658,11 @@ Options can also be specified in class or host-reservation scope. The
 current Kea options precedence order is (from most important to least): host
 reservation, pool, subnet, shared network, class, global.
 
+.. note::
+
+    Beginning with Kea 2.7.4, option inclusion can also be controlled through
+    option class-tagging, see :ref:`option-class-tagging`
+
 When a data field is a string and that string contains the comma (``,``;
 U+002C) character, the comma must be escaped with two backslashes (``\\,``;
 U+005C). This double escape is required because both the routine
