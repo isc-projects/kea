@@ -8219,8 +8219,8 @@ TEST_F(Dhcp6ParserTest, configControlInfoNoFactory) {
     // Should fail because "type=mysql" has no factories.
     configure(config, CONTROL_RESULT_ERROR,
               "during update from config backend database: "
-              "The Kea server has not been compiled with support for database "
-              "type: mysql. Did you forget to use --with-mysql during "
+              "The Kea server has not been compiled with support for configuration "
+              "database type: mysql. Did you forget to use --with-mysql during "
               "compilation or to load libdhcp_mysql hook library?");
 }
 
