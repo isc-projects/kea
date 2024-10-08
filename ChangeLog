@@ -1,3 +1,10 @@
+2290.	[bug]		razvan
+	Fixed applying 'output_options' when using the 'config-set'
+	command. Deprecated 'output_options' which will be removed in
+	future versions. Configurations should be updated by switching
+	to using 'output-options' instead.
+	(Gitlab #3594)
+
 2289.	[func]*		razvan
 	Renamed the 'libdhcp_mysql_cb.so' hook library to
 	'libdhcp_mysql.so' and the 'libdhcp_pgsql_cb.so' hook library to
