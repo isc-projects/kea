@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <cc/data.h>
+#include <process/d_log.h>
 #include <process/log_parser.h>
 #include <boost/lexical_cast.hpp>
 #include <log/logger_specification.h>
@@ -111,6 +112,7 @@ void LogConfigParser::parseConfigEntry(isc::data::ConstElementPtr entry) {
     }
 
     if (deprecated_output_options) {
+        LOG_WARN(dctl_logger, DCTL_DEPRECATED_OUTPUT_OPTIONS);
         output_options = deprecated_output_options;
         ElementPtr mutable_element = boost::const_pointer_cast<Element>(entry);
         mutable_element->remove("output_options");

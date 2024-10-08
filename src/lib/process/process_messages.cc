@@ -17,6 +17,7 @@ extern const isc::log::MessageID DCTL_CONFIG_FETCH = "DCTL_CONFIG_FETCH";
 extern const isc::log::MessageID DCTL_CONFIG_FILE_LOAD_FAIL = "DCTL_CONFIG_FILE_LOAD_FAIL";
 extern const isc::log::MessageID DCTL_CONFIG_START = "DCTL_CONFIG_START";
 extern const isc::log::MessageID DCTL_DB_OPEN_CONNECTION_WITH_RETRY_FAILED = "DCTL_DB_OPEN_CONNECTION_WITH_RETRY_FAILED";
+extern const isc::log::MessageID DCTL_DEPRECATED_OUTPUT_OPTIONS = "DCTL_DEPRECATED_OUTPUT_OPTIONS";
 extern const isc::log::MessageID DCTL_DEVELOPMENT_VERSION = "DCTL_DEVELOPMENT_VERSION";
 extern const isc::log::MessageID DCTL_INIT_PROCESS = "DCTL_INIT_PROCESS";
 extern const isc::log::MessageID DCTL_INIT_PROCESS_FAIL = "DCTL_INIT_PROCESS_FAIL";
@@ -49,6 +50,7 @@ const char* values[] = {
     "DCTL_CONFIG_FILE_LOAD_FAIL", "%1 reason: %2",
     "DCTL_CONFIG_START", "parsing new configuration: %1",
     "DCTL_DB_OPEN_CONNECTION_WITH_RETRY_FAILED", "Failed to connect to database: %1 with error: %2",
+    "DCTL_DEPRECATED_OUTPUT_OPTIONS", "The output_options parameter is deprecated. Use output-options parameter instead.",
     "DCTL_DEVELOPMENT_VERSION", "This software is a development branch of Kea. It is not recommended for production use.",
     "DCTL_INIT_PROCESS", "%1 initializing the application",
     "DCTL_INIT_PROCESS_FAIL", "%1 application initialization failed: %2",
