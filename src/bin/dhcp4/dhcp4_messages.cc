@@ -19,8 +19,6 @@ extern const isc::log::MessageID DHCP4_CLASSES_ASSIGNED = "DHCP4_CLASSES_ASSIGNE
 extern const isc::log::MessageID DHCP4_CLASSES_ASSIGNED_AFTER_SUBNET_SELECTION = "DHCP4_CLASSES_ASSIGNED_AFTER_SUBNET_SELECTION";
 extern const isc::log::MessageID DHCP4_CLASS_ASSIGNED = "DHCP4_CLASS_ASSIGNED";
 extern const isc::log::MessageID DHCP4_CLASS_UNCONFIGURED = "DHCP4_CLASS_UNCONFIGURED";
-extern const isc::log::MessageID DHCP4_CLASS_UNDEFINED = "DHCP4_CLASS_UNDEFINED";
-extern const isc::log::MessageID DHCP4_CLASS_UNTESTABLE = "DHCP4_CLASS_UNTESTABLE";
 extern const isc::log::MessageID DHCP4_CLIENTID_IGNORED_FOR_LEASES = "DHCP4_CLIENTID_IGNORED_FOR_LEASES";
 extern const isc::log::MessageID DHCP4_CLIENT_FQDN_DATA = "DHCP4_CLIENT_FQDN_DATA";
 extern const isc::log::MessageID DHCP4_CLIENT_FQDN_PROCESS = "DHCP4_CLIENT_FQDN_PROCESS";
@@ -150,6 +148,8 @@ extern const isc::log::MessageID DHCP4_RELEASE_FAIL_WRONG_CLIENT = "DHCP4_RELEAS
 extern const isc::log::MessageID DHCP4_REQUEST = "DHCP4_REQUEST";
 extern const isc::log::MessageID DHCP4_REQUIRED_CLASS_EVAL_ERROR = "DHCP4_REQUIRED_CLASS_EVAL_ERROR";
 extern const isc::log::MessageID DHCP4_REQUIRED_CLASS_EVAL_RESULT = "DHCP4_REQUIRED_CLASS_EVAL_RESULT";
+extern const isc::log::MessageID DHCP4_REQUIRED_CLASS_UNDEFINED = "DHCP4_REQUIRED_CLASS_UNDEFINED";
+extern const isc::log::MessageID DHCP4_REQUIRED_CLASS_UNTESTABLE = "DHCP4_REQUIRED_CLASS_UNTESTABLE";
 extern const isc::log::MessageID DHCP4_RESERVATIONS_LOOKUP_FIRST_ENABLED = "DHCP4_RESERVATIONS_LOOKUP_FIRST_ENABLED";
 extern const isc::log::MessageID DHCP4_RESERVED_HOSTNAME_ASSIGNED = "DHCP4_RESERVED_HOSTNAME_ASSIGNED";
 extern const isc::log::MessageID DHCP4_RESPONSE_DATA = "DHCP4_RESPONSE_DATA";
@@ -197,8 +197,6 @@ const char* values[] = {
     "DHCP4_CLASSES_ASSIGNED_AFTER_SUBNET_SELECTION", "%1: client packet has been assigned to the following classes: %2",
     "DHCP4_CLASS_ASSIGNED", "%1: client packet has been assigned to the following class: %2",
     "DHCP4_CLASS_UNCONFIGURED", "%1: client packet belongs to an unconfigured class: %2",
-    "DHCP4_CLASS_UNDEFINED", "required class %1 has no definition",
-    "DHCP4_CLASS_UNTESTABLE", "required class %1 has no test expression",
     "DHCP4_CLIENTID_IGNORED_FOR_LEASES", "%1: not using client identifier for lease allocation for subnet %2",
     "DHCP4_CLIENT_FQDN_DATA", "%1: Client sent FQDN option: %2",
     "DHCP4_CLIENT_FQDN_PROCESS", "%1: processing Client FQDN option",
@@ -328,6 +326,8 @@ const char* values[] = {
     "DHCP4_REQUEST", "%1: server is processing DHCPREQUEST with hint=%2",
     "DHCP4_REQUIRED_CLASS_EVAL_ERROR", "%1: Expression '%2' evaluated to %3",
     "DHCP4_REQUIRED_CLASS_EVAL_RESULT", "%1: Expression '%2' evaluated to %3",
+    "DHCP4_REQUIRED_CLASS_UNDEFINED", "required class %1 has no definition",
+    "DHCP4_REQUIRED_CLASS_UNTESTABLE", "required class %1 has no test expression",
     "DHCP4_RESERVATIONS_LOOKUP_FIRST_ENABLED", "Multi-threading is enabled and host reservations lookup is always performed first.",
     "DHCP4_RESERVED_HOSTNAME_ASSIGNED", "%1: server assigned reserved hostname %2",
     "DHCP4_RESPONSE_DATA", "%1: responding with packet %2 (type %3), packet details: %4",

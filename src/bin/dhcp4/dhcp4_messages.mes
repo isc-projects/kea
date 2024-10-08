@@ -94,16 +94,6 @@ which cannot be found in the configuration. Either a hook written
 before the classification was added to Kea is used, or class naming is
 inconsistent.
 
-% DHCP4_CLASS_UNDEFINED required class %1 has no definition
-Logged at debug log level 40.
-This debug message informs that a class is listed for required evaluation but
-has no definition.
-
-% DHCP4_CLASS_UNTESTABLE required class %1 has no test expression
-Logged at debug log level 40.
-This debug message informs that a class was listed for required evaluation but
-its definition does not include a test expression to evaluate.
-
 % DHCP4_CLIENTID_IGNORED_FOR_LEASES %1: not using client identifier for lease allocation for subnet %2
 Logged at debug log level 50.
 This debug message is issued when the server is processing the DHCPv4 message
@@ -988,6 +978,17 @@ Logged at debug log level 50.
 This debug message indicates that the expression of a required client class has
 been successfully evaluated. The client class name and the result value of the
 evaluation are printed.
+
+% DHCP4_REQUIRED_CLASS_UNDEFINED required class %1 has no definition
+Logged at debug log level 40.
+This debug message informs that a class is listed for required evaluation but
+has no definition. The class is ignored.
+
+% DHCP4_REQUIRED_CLASS_UNTESTABLE required class %1 has no test expression
+Logged at debug log level 40.
+This debug message informs that a class was listed for required evaluation but
+its definition does not include a test expression to evaluate. The class is
+unconditionally added to the query.
 
 % DHCP4_RESERVATIONS_LOOKUP_FIRST_ENABLED Multi-threading is enabled and host reservations lookup is always performed first.
 This is a message informing that host reservations lookup is performed before

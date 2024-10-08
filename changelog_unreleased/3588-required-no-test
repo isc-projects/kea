@@ -1,0 +1,6 @@
+[func]*		fdupont
+	Modified the behavior of required client classes
+	configured without a test expression: they are now
+	unconditionally added as they always evaluate to
+	true (vs false previously).
+	(Gitlab #3388)

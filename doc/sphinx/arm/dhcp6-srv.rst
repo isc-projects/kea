@@ -3201,6 +3201,10 @@ levels. The order in which required classes are considered is:
 (pd-)pool, subnet, and shared network, i.e. in the same order from the
 way in which ``option-data`` is processed.
 
+Since Kea version 2.7.4 required client classes configured without
+a test expression are unconditionally added, i.e. they are considered
+to always be evaluated to ``true``.
+
 .. _dhcp6-ddns-config:
 
 DDNS for DHCPv6

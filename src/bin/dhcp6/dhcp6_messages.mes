@@ -112,16 +112,6 @@ which cannot be found in the configuration. Either a hook written
 before the classification was added to Kea is used, or class naming is
 inconsistent.
 
-% DHCP6_CLASS_UNDEFINED required class %1 has no definition
-Logged at debug log level 40.
-This debug message informs that a class is listed for required evaluation but
-has no definition.
-
-% DHCP6_CLASS_UNTESTABLE required class %1 has no test expression
-Logged at debug log level 40.
-This debug message informs that a class was listed for required evaluation but
-its definition does not include a test expression to evaluate.
-
 % DHCP6_CONFIG_COMPLETE DHCPv6 server has completed configuration: %1
 This is an informational message announcing the successful processing of a
 new configuration. it is output during server startup, and when an updated
@@ -993,6 +983,17 @@ Logged at debug log level 50.
 This debug message indicates that the expression of a required client class has
 been successfully evaluated. The client class name and the result value of the
 evaluation are printed.
+
+% DHCP6_REQUIRED_CLASS_UNDEFINED required class %1 has no definition
+Logged at debug log level 40.
+This debug message informs that a class is listed for required evaluation but
+has no definition. The class is ignored.
+
+% DHCP6_REQUIRED_CLASS_UNTESTABLE required class %1 has no test expression
+Logged at debug log level 40.
+This debug message informs that a class was listed for required evaluation but
+its definition does not include a test expression to evaluate. The class is
+unconditionally added to the query.
 
 % DHCP6_REQUIRED_OPTIONS_CHECK_FAIL %1: %2 message received from %3 failed the following check: %4
 Logged at debug log level 40.

@@ -4495,15 +4495,19 @@ Dhcpv6Srv::requiredClassify(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx
     for (auto const& cclass : classes) {
         const ClientClassDefPtr class_def = dict->findClass(cclass);
         if (!class_def) {
-            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASS_UNDEFINED)
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC,
+                      DHCP6_REQUIRED_CLASS_UNDEFINED)
                 .arg(cclass);
+            // Ignore it as it can't have an attached action
             continue;
         }
         const ExpressionPtr& expr_ptr = class_def->getMatchExpr();
-        // Nothing to do without an expression to evaluate
+        // Add a class without an expression to evaluate
         if (!expr_ptr) {
-            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASS_UNTESTABLE)
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC,
+                      DHCP6_REQUIRED_CLASS_UNTESTABLE)
                 .arg(cclass);
+            pkt->addClass(cclass);
             continue;
         }
         // Evaluate the expression which can return false (no match),

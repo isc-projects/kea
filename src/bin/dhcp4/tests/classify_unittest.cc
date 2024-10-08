@@ -1238,6 +1238,100 @@ TEST_F(ClassifyTest, precedenceNetwork) {
     EXPECT_EQ("10.0.0.3", addrs[0].toText());
 }
 
+// This test checks a required class without a test entry can be
+// unconditionally added.
+TEST_F(ClassifyTest, requiredNoTest) {
+    std::string config =
+        "{"
+        "\"interfaces-config\": {"
+        "   \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"client-classes\": ["
+        "    {"
+        "       \"name\": \"for-network\","
+        "       \"option-data\": [ {"
+        "           \"name\": \"domain-name-servers\","
+        "           \"data\": \"10.0.0.3\""
+        "       } ]"
+        "    }"
+        "],"
+        "\"shared-networks\": [ {"
+        "    \"name\": \"frog\","
+        "    \"require-client-classes\": [ \"for-network\" ],"
+        "    \"subnet4\": [ { "
+        "        \"subnet\": \"10.0.0.0/24\","
+        "        \"id\": 1,"
+        "        \"pools\": [ { "
+        "            \"pool\": \"10.0.0.10-10.0.0.100\""
+        "         } ]"
+        "    } ]"
+        "} ]"
+        "}";
+
+    // Create a client requesting domain-name-servers option
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    client.requestOptions(DHO_DOMAIN_NAME_SERVERS);
+
+    // Load the config and perform a DORA
+    configure(config, *client.getServer());
+    ASSERT_NO_THROW(client.doDORA());
+
+    // Check response
+    Pkt4Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+    EXPECT_EQ("10.0.0.10", resp->getYiaddr().toText());
+
+    // Check domain-name-servers option
+    OptionPtr opt = resp->getOption(DHO_DOMAIN_NAME_SERVERS);
+    ASSERT_TRUE(opt);
+    Option4AddrLstPtr servers =
+        boost::dynamic_pointer_cast<Option4AddrLst>(opt);
+    ASSERT_TRUE(servers);
+    auto addrs = servers->getAddresses();
+    ASSERT_EQ(1, addrs.size());
+    EXPECT_EQ("10.0.0.3", addrs[0].toText());
+}
+
+// This test checks a required class which is not defined is ignored.
+TEST_F(ClassifyTest, requiredNoDefined) {
+    std::string config =
+        "{"
+        "\"interfaces-config\": {"
+        "   \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"shared-networks\": [ {"
+        "    \"name\": \"frog\","
+        "    \"require-client-classes\": [ \"for-network\" ],"
+        "    \"subnet4\": [ { "
+        "        \"subnet\": \"10.0.0.0/24\","
+        "        \"id\": 1,"
+        "        \"pools\": [ { "
+        "            \"pool\": \"10.0.0.10-10.0.0.100\""
+        "         } ]"
+        "    } ]"
+        "} ]"
+        "}";
+
+    // Create a client requesting domain-name-servers option
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    client.requestOptions(DHO_DOMAIN_NAME_SERVERS);
+
+    // Load the config and perform a DORA
+    configure(config, *client.getServer());
+    ASSERT_NO_THROW(client.doDORA());
+
+    // Check response
+    Pkt4Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+    EXPECT_EQ("10.0.0.10", resp->getYiaddr().toText());
+
+    // Check domain-name-servers option
+    OptionPtr opt = resp->getOption(DHO_DOMAIN_NAME_SERVERS);
+    EXPECT_FALSE(opt);
+}
+
 // This test checks the handling for the DROP special class.
 TEST_F(ClassifyTest, dropClass) {
     Dhcp4Client client(Dhcp4Client::SELECTING);

@@ -4866,15 +4866,19 @@ void Dhcpv4Srv::requiredClassify(Dhcpv4Exchange& ex) {
     for (auto const& cclass : classes) {
         const ClientClassDefPtr class_def = dict->findClass(cclass);
         if (!class_def) {
-            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_UNDEFINED)
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC,
+                      DHCP4_REQUIRED_CLASS_UNDEFINED)
                 .arg(cclass);
+            // Ignore it as it can't have an attached action
             continue;
         }
         const ExpressionPtr& expr_ptr = class_def->getMatchExpr();
-        // Nothing to do without an expression to evaluate
+        // Add a class without an expression to evaluate
         if (!expr_ptr) {
-            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_UNTESTABLE)
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC,
+                      DHCP4_REQUIRED_CLASS_UNTESTABLE)
                 .arg(cclass);
+            query->addClass(cclass);
             continue;
         }
         // Evaluate the expression which can return false (no match),
