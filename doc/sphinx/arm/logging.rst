@@ -628,11 +628,14 @@ where log messages are sent and are explained in detail below.
    The alias ``output-options`` was added in Kea 2.5.1, to be used
    interchangeably with the previous ``output_options`` configuration key.
    This was done to keep all configuration keys consistent, i.e.
-   using a hyphen (`-`) instead of an underscore (`_`) in the key name. Currently,
-   both configuration keys are considered correct and mean the same to Kea parsers.
+   using a hyphen (`-`) instead of an underscore (`_`) in the key name.
 
    As of Kea 2.5.2, ``output-options`` becomes the default configuration key
    and ``output_options`` can be used as an alias.
+
+   As of Kea 2.7.4, ``output_options`` configuration key has been deprecated and
+   will be removed in future versions. Please consider updating your
+   configuration by switching to using ``output-options`` instead.
 
 The ``output`` (string) Option
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
