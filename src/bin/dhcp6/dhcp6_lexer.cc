@@ -2141,39 +2141,21 @@ static const flex_int16_t yy_rule_linenum[238] =
       896,  905,  914,  923,  934,  945,  954,  963,  974,  985,
       996, 1007, 1018, 1029, 1040, 1051, 1062, 1071, 1080, 1089,
 
-<<<<<<< HEAD
      1101, 1112, 1122, 1133, 1142, 1151, 1166, 1182, 1191, 1200,
      1209, 1218, 1227, 1236, 1245, 1254, 1263, 1272, 1281, 1291,
      1317, 1343, 1352, 1362, 1372, 1381, 1391, 1402, 1413, 1424,
      1434, 1443, 1452, 1461, 1472, 1483, 1494, 1505, 1516, 1525,
-     1534, 1543, 1552, 1561, 1570, 1579, 1588, 1597, 1606, 1616,
-     1628, 1641, 1650, 1659, 1668, 1678, 1688, 1697, 1706, 1717,
-     1727, 1736, 1746, 1756, 1765, 1774, 1783, 1792, 1802, 1811,
-     1820, 1829, 1838, 1847, 1856, 1865, 1874, 1883, 1892, 1901,
-     1910, 1919, 1928, 1937, 1946, 1955, 1964, 1973, 1982, 1991,
-     2000, 2009, 2018, 2027, 2036, 2045, 2054, 2063, 2072, 2081,
-
-     2090, 2099, 2108, 2117, 2126, 2135, 2144, 2153, 2162, 2171,
-     2180, 2189, 2198, 2207, 2216, 2225, 2234, 2243, 2252, 2353,
-     2369, 2418, 2426, 2441, 2442, 2443, 2444, 2445, 2446, 2448,
-     2466, 2479, 2484, 2488, 2490, 2492, 2494
-=======
-     1098, 1107, 1116, 1128, 1139, 1149, 1160, 1169, 1178, 1193,
-     1209, 1218, 1227, 1236, 1245, 1254, 1263, 1272, 1281, 1290,
-     1299, 1308, 1318, 1344, 1370, 1379, 1389, 1399, 1408, 1418,
-     1429, 1440, 1451, 1461, 1470, 1479, 1488, 1499, 1510, 1521,
-     1532, 1543, 1552, 1561, 1570, 1579, 1588, 1597, 1606, 1615,
-     1624, 1633, 1644, 1656, 1669, 1678, 1687, 1696, 1706, 1716,
-     1725, 1734, 1745, 1755, 1764, 1774, 1784, 1793, 1802, 1811,
-     1820, 1830, 1839, 1848, 1857, 1866, 1875, 1884, 1893, 1902,
+     1534, 1543, 1552, 1561, 1570, 1579, 1588, 1597, 1606, 1617,
+     1629, 1642, 1651, 1660, 1669, 1679, 1689, 1698, 1707, 1718,
+     1728, 1737, 1747, 1757, 1766, 1775, 1784, 1793, 1803, 1812,
+     1821, 1830, 1839, 1848, 1857, 1866, 1875, 1884, 1893, 1902,
      1911, 1920, 1929, 1938, 1947, 1956, 1965, 1974, 1983, 1992,
      2001, 2010, 2019, 2028, 2037, 2046, 2055, 2064, 2073, 2082,
 
      2091, 2100, 2109, 2118, 2127, 2136, 2145, 2154, 2163, 2172,
-     2181, 2190, 2199, 2208, 2217, 2226, 2235, 2244, 2253, 2262,
-     2271, 2280, 2381, 2397, 2446, 2454, 2469, 2470, 2471, 2472,
-     2473, 2474, 2476, 2494, 2507, 2512, 2516, 2518, 2520, 2522
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+     2181, 2190, 2199, 2208, 2217, 2226, 2235, 2244, 2253, 2354,
+     2370, 2419, 2427, 2442, 2443, 2444, 2445, 2446, 2447, 2449,
+     2467, 2480, 2485, 2489, 2491, 2493, 2495
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -2228,11 +2210,7 @@ using namespace isc::dhcp;
 
 /* To avoid the call to exit... oops! */
 #define YY_FATAL_ERROR(msg) isc::dhcp::Parser6Context::fatal(msg)
-<<<<<<< HEAD
-#line 2213 "dhcp6_lexer.cc"
-=======
-#line 2227 "dhcp6_lexer.cc"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2214 "dhcp6_lexer.cc"
 /* noyywrap disables automatic rewinding for the next file to parse. Since we
    always parse only a single string, there's no need to do any wraps. And
    using yywrap requires linking with -lfl, which provides the default yywrap
@@ -2258,13 +2236,8 @@ using namespace isc::dhcp;
    by moving it ahead by yyleng bytes. yyleng specifies the length of the
    currently matched token. */
 #define YY_USER_ACTION  driver.loc_.columns(yyleng);
-<<<<<<< HEAD
-#line 2239 "dhcp6_lexer.cc"
 #line 2240 "dhcp6_lexer.cc"
-=======
-#line 2253 "dhcp6_lexer.cc"
-#line 2254 "dhcp6_lexer.cc"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2241 "dhcp6_lexer.cc"
 
 #define INITIAL 0
 #define COMMENT 1
@@ -2594,11 +2567,7 @@ YY_DECL
     }
 
 
-<<<<<<< HEAD
-#line 2570 "dhcp6_lexer.cc"
-=======
-#line 2584 "dhcp6_lexer.cc"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2571 "dhcp6_lexer.cc"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -4599,11 +4568,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 150:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1616 "dhcp6_lexer.ll"
-=======
-#line 1644 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1617 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SUBNET6:
@@ -4618,11 +4583,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 151:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1628 "dhcp6_lexer.ll"
-=======
-#line 1656 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1629 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SUBNET6:
@@ -4638,11 +4599,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 152:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1641 "dhcp6_lexer.ll"
-=======
-#line 1669 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1642 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::CLIENT_CLASSES:
@@ -4654,11 +4611,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 153:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1650 "dhcp6_lexer.ll"
-=======
-#line 1678 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1651 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::CLIENT_CLASSES:
@@ -4670,11 +4623,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 154:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1659 "dhcp6_lexer.ll"
-=======
-#line 1687 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1660 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::CLIENT_CLASSES:
@@ -4686,11 +4635,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 155:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1668 "dhcp6_lexer.ll"
-=======
-#line 1696 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1669 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -4703,11 +4648,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 156:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1678 "dhcp6_lexer.ll"
-=======
-#line 1706 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1679 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::RESERVATIONS:
@@ -4720,11 +4661,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 157:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1688 "dhcp6_lexer.ll"
-=======
-#line 1716 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1689 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::RESERVATIONS:
@@ -4736,11 +4673,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 158:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1697 "dhcp6_lexer.ll"
-=======
-#line 1725 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1698 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::RESERVATIONS:
@@ -4752,11 +4685,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 159:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1706 "dhcp6_lexer.ll"
-=======
-#line 1734 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1707 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::MAC_SOURCES:
@@ -4770,11 +4699,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 160:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1717 "dhcp6_lexer.ll"
-=======
-#line 1745 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1718 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::HOST_RESERVATION_IDENTIFIERS:
@@ -4787,11 +4712,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 161:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1727 "dhcp6_lexer.ll"
-=======
-#line 1755 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1728 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::RESERVATIONS:
@@ -4803,11 +4724,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 162:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1736 "dhcp6_lexer.ll"
-=======
-#line 1764 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1737 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::HOST_RESERVATION_IDENTIFIERS:
@@ -4820,11 +4737,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 163:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1746 "dhcp6_lexer.ll"
-=======
-#line 1774 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1747 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::OPTION_DEF:
@@ -4837,11 +4750,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 164:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1756 "dhcp6_lexer.ll"
-=======
-#line 1784 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1757 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::OPTION_DATA:
@@ -4853,11 +4762,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 165:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1765 "dhcp6_lexer.ll"
-=======
-#line 1793 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1766 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::OPTION_DEF:
@@ -4869,11 +4774,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 166:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1774 "dhcp6_lexer.ll"
-=======
-#line 1802 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1775 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::OPTION_DEF:
@@ -4885,11 +4786,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 167:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1783 "dhcp6_lexer.ll"
-=======
-#line 1811 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1784 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::OPTION_DEF:
@@ -4901,11 +4798,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 168:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1792 "dhcp6_lexer.ll"
-=======
-#line 1820 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1793 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SUBNET6:
@@ -4918,11 +4811,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 169:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1802 "dhcp6_lexer.ll"
-=======
-#line 1830 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1803 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -4934,11 +4823,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 170:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1811 "dhcp6_lexer.ll"
-=======
-#line 1839 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1812 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::HOOKS_LIBRARIES:
@@ -4950,11 +4835,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 171:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1820 "dhcp6_lexer.ll"
-=======
-#line 1848 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1821 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::HOOKS_LIBRARIES:
@@ -4966,11 +4847,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 172:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1829 "dhcp6_lexer.ll"
-=======
-#line 1857 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1830 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -4982,11 +4859,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 173:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1838 "dhcp6_lexer.ll"
-=======
-#line 1866 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1839 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DUID_TYPE:
@@ -4998,11 +4871,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 174:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1847 "dhcp6_lexer.ll"
-=======
-#line 1875 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1848 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DUID_TYPE:
@@ -5014,11 +4883,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 175:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1856 "dhcp6_lexer.ll"
-=======
-#line 1884 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1857 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DUID_TYPE:
@@ -5030,11 +4895,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 176:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1865 "dhcp6_lexer.ll"
-=======
-#line 1893 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1866 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SERVER_ID:
@@ -5046,11 +4907,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 177:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1874 "dhcp6_lexer.ll"
-=======
-#line 1902 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1875 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SERVER_ID:
@@ -5062,11 +4919,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 178:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1883 "dhcp6_lexer.ll"
-=======
-#line 1911 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1884 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SERVER_ID:
@@ -5078,11 +4931,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 179:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1892 "dhcp6_lexer.ll"
-=======
-#line 1920 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1893 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SERVER_ID:
@@ -5094,11 +4943,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 180:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1901 "dhcp6_lexer.ll"
-=======
-#line 1929 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1902 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -5110,11 +4955,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 181:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1910 "dhcp6_lexer.ll"
-=======
-#line 1938 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1911 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::EXPIRED_LEASES_PROCESSING:
@@ -5126,11 +4967,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 182:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1919 "dhcp6_lexer.ll"
-=======
-#line 1947 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1920 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::EXPIRED_LEASES_PROCESSING:
@@ -5142,11 +4979,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 183:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1928 "dhcp6_lexer.ll"
-=======
-#line 1956 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1929 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::EXPIRED_LEASES_PROCESSING:
@@ -5158,11 +4991,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 184:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1937 "dhcp6_lexer.ll"
-=======
-#line 1965 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1938 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::EXPIRED_LEASES_PROCESSING:
@@ -5174,11 +5003,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 185:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1946 "dhcp6_lexer.ll"
-=======
-#line 1974 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1947 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::EXPIRED_LEASES_PROCESSING:
@@ -5190,11 +5015,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 186:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1955 "dhcp6_lexer.ll"
-=======
-#line 1983 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1956 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::EXPIRED_LEASES_PROCESSING:
@@ -5206,11 +5027,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 187:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1964 "dhcp6_lexer.ll"
-=======
-#line 1992 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1965 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -5222,11 +5039,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 188:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1973 "dhcp6_lexer.ll"
-=======
-#line 2001 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1974 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -5238,11 +5051,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 189:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1982 "dhcp6_lexer.ll"
-=======
-#line 2010 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1983 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP_MULTI_THREADING:
@@ -5254,11 +5063,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 190:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 1991 "dhcp6_lexer.ll"
-=======
-#line 2019 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 1992 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP_MULTI_THREADING:
@@ -5270,11 +5075,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 191:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2000 "dhcp6_lexer.ll"
-=======
-#line 2028 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2001 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP_MULTI_THREADING:
@@ -5286,11 +5087,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 192:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2009 "dhcp6_lexer.ll"
-=======
-#line 2037 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2010 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -5302,11 +5099,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 193:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2018 "dhcp6_lexer.ll"
-=======
-#line 2046 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2019 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -5318,11 +5111,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 194:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2027 "dhcp6_lexer.ll"
-=======
-#line 2055 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2028 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::CONTROL_SOCKET:
@@ -5334,11 +5123,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 195:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2036 "dhcp6_lexer.ll"
-=======
-#line 2064 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2037 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::CONTROL_SOCKET_TYPE:
@@ -5350,11 +5135,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 196:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2045 "dhcp6_lexer.ll"
-=======
-#line 2073 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2046 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::CONTROL_SOCKET_TYPE:
@@ -5366,11 +5147,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 197:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2054 "dhcp6_lexer.ll"
-=======
-#line 2082 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2055 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::CONTROL_SOCKET_TYPE:
@@ -5382,11 +5159,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 198:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2063 "dhcp6_lexer.ll"
-=======
-#line 2091 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2064 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::CONTROL_SOCKET:
@@ -5398,11 +5171,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 199:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2072 "dhcp6_lexer.ll"
-=======
-#line 2100 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2073 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::CONTROL_SOCKET:
@@ -5414,11 +5183,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 200:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2081 "dhcp6_lexer.ll"
-=======
-#line 2109 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2082 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::CONTROL_SOCKET:
@@ -5430,11 +5195,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 201:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2090 "dhcp6_lexer.ll"
-=======
-#line 2118 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2091 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::CONTROL_SOCKET:
@@ -5446,11 +5207,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 202:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2099 "dhcp6_lexer.ll"
-=======
-#line 2127 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2100 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::AUTH_TYPE:
@@ -5462,11 +5219,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 203:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2108 "dhcp6_lexer.ll"
-=======
-#line 2136 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2109 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::AUTHENTICATION:
@@ -5478,11 +5231,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 204:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2117 "dhcp6_lexer.ll"
-=======
-#line 2145 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2118 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::AUTHENTICATION:
@@ -5494,11 +5243,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 205:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2126 "dhcp6_lexer.ll"
-=======
-#line 2154 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2127 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::AUTHENTICATION:
@@ -5510,11 +5255,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 206:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2135 "dhcp6_lexer.ll"
-=======
-#line 2163 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2136 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::CLIENTS:
@@ -5526,11 +5267,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 207:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2144 "dhcp6_lexer.ll"
-=======
-#line 2172 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2145 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::CLIENTS:
@@ -5542,11 +5279,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 208:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2153 "dhcp6_lexer.ll"
-=======
-#line 2181 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2154 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::CONTROL_SOCKET:
@@ -5558,11 +5291,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 209:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2162 "dhcp6_lexer.ll"
-=======
-#line 2190 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2163 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -5574,11 +5303,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 210:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2171 "dhcp6_lexer.ll"
-=======
-#line 2199 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2172 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP_QUEUE_CONTROL:
@@ -5590,11 +5315,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 211:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2180 "dhcp6_lexer.ll"
-=======
-#line 2208 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2181 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP_QUEUE_CONTROL:
@@ -5606,11 +5327,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 212:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2189 "dhcp6_lexer.ll"
-=======
-#line 2217 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2190 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP_QUEUE_CONTROL:
@@ -5622,11 +5339,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 213:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2198 "dhcp6_lexer.ll"
-=======
-#line 2226 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2199 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -5638,11 +5351,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 214:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2207 "dhcp6_lexer.ll"
-=======
-#line 2235 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2208 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -5654,11 +5363,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 215:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2216 "dhcp6_lexer.ll"
-=======
-#line 2244 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2217 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -5670,11 +5375,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 216:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2225 "dhcp6_lexer.ll"
-=======
-#line 2253 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2226 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -5686,11 +5387,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 217:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2234 "dhcp6_lexer.ll"
-=======
-#line 2262 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2235 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -5702,11 +5399,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 218:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2243 "dhcp6_lexer.ll"
-=======
-#line 2271 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2244 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::COMPATIBILITY:
@@ -5718,11 +5411,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 219:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2252 "dhcp6_lexer.ll"
-=======
-#line 2280 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2253 "dhcp6_lexer.ll"
 {
     /* A string has been matched. It contains the actual string and single quotes.
        We need to get those quotes out of the way and just use its content, e.g.
@@ -5827,11 +5516,7 @@ YY_RULE_SETUP
 case 220:
 /* rule 220 can match eol */
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2353 "dhcp6_lexer.ll"
-=======
-#line 2381 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2354 "dhcp6_lexer.ll"
 {
     /* Bad string with a forbidden control character inside */
     std::string raw(yytext+1);
@@ -5851,11 +5536,7 @@ YY_RULE_SETUP
 case 221:
 /* rule 221 can match eol */
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2369 "dhcp6_lexer.ll"
-=======
-#line 2397 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2370 "dhcp6_lexer.ll"
 {
     /* Bad string with a bad escape inside */
     std::string raw(yytext+1);
@@ -5907,11 +5588,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 222:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2418 "dhcp6_lexer.ll"
-=======
-#line 2446 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2419 "dhcp6_lexer.ll"
 {
     /* Bad string with an open escape at the end */
     std::string raw(yytext+1);
@@ -5922,11 +5599,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 223:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2426 "dhcp6_lexer.ll"
-=======
-#line 2454 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2427 "dhcp6_lexer.ll"
 {
     /* Bad string with an open unicode escape at the end */
     std::string raw(yytext+1);
@@ -5944,71 +5617,37 @@ YY_RULE_SETUP
 	YY_BREAK
 case 224:
 YY_RULE_SETUP
-#line 2441 "dhcp6_lexer.ll"
+#line 2442 "dhcp6_lexer.ll"
 { return isc::dhcp::Dhcp6Parser::make_LSQUARE_BRACKET(driver.loc_); }
 	YY_BREAK
 case 225:
 YY_RULE_SETUP
-#line 2442 "dhcp6_lexer.ll"
+#line 2443 "dhcp6_lexer.ll"
 { return isc::dhcp::Dhcp6Parser::make_RSQUARE_BRACKET(driver.loc_); }
 	YY_BREAK
 case 226:
 YY_RULE_SETUP
-#line 2443 "dhcp6_lexer.ll"
+#line 2444 "dhcp6_lexer.ll"
 { return isc::dhcp::Dhcp6Parser::make_LCURLY_BRACKET(driver.loc_); }
 	YY_BREAK
 case 227:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2444 "dhcp6_lexer.ll"
+#line 2445 "dhcp6_lexer.ll"
 { return isc::dhcp::Dhcp6Parser::make_RCURLY_BRACKET(driver.loc_); }
 	YY_BREAK
 case 228:
-YY_RULE_SETUP
-#line 2445 "dhcp6_lexer.ll"
-{ return isc::dhcp::Dhcp6Parser::make_COMMA(driver.loc_); }
-	YY_BREAK
-case 229:
 YY_RULE_SETUP
 #line 2446 "dhcp6_lexer.ll"
-{ return isc::dhcp::Dhcp6Parser::make_COLON(driver.loc_); }
-	YY_BREAK
-case 230:
-YY_RULE_SETUP
-#line 2448 "dhcp6_lexer.ll"
-=======
-#line 2469 "dhcp6_lexer.ll"
-{ return isc::dhcp::Dhcp6Parser::make_LSQUARE_BRACKET(driver.loc_); }
-	YY_BREAK
-case 228:
-YY_RULE_SETUP
-#line 2470 "dhcp6_lexer.ll"
-{ return isc::dhcp::Dhcp6Parser::make_RSQUARE_BRACKET(driver.loc_); }
+{ return isc::dhcp::Dhcp6Parser::make_COMMA(driver.loc_); }
 	YY_BREAK
 case 229:
 YY_RULE_SETUP
-#line 2471 "dhcp6_lexer.ll"
-{ return isc::dhcp::Dhcp6Parser::make_LCURLY_BRACKET(driver.loc_); }
+#line 2447 "dhcp6_lexer.ll"
+{ return isc::dhcp::Dhcp6Parser::make_COLON(driver.loc_); }
 	YY_BREAK
 case 230:
 YY_RULE_SETUP
-#line 2472 "dhcp6_lexer.ll"
-{ return isc::dhcp::Dhcp6Parser::make_RCURLY_BRACKET(driver.loc_); }
-	YY_BREAK
-case 231:
-YY_RULE_SETUP
-#line 2473 "dhcp6_lexer.ll"
-{ return isc::dhcp::Dhcp6Parser::make_COMMA(driver.loc_); }
-	YY_BREAK
-case 232:
-YY_RULE_SETUP
-#line 2474 "dhcp6_lexer.ll"
-{ return isc::dhcp::Dhcp6Parser::make_COLON(driver.loc_); }
-	YY_BREAK
-case 233:
-YY_RULE_SETUP
-#line 2476 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2449 "dhcp6_lexer.ll"
 {
     /* An integer was found. */
     std::string tmp(yytext);
@@ -6029,11 +5668,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 231:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2466 "dhcp6_lexer.ll"
-=======
-#line 2494 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2467 "dhcp6_lexer.ll"
 {
     /* A floating point was found. */
     std::string tmp(yytext);
@@ -6049,11 +5684,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 232:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2479 "dhcp6_lexer.ll"
-=======
-#line 2507 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2480 "dhcp6_lexer.ll"
 {
     string tmp(yytext);
     return isc::dhcp::Dhcp6Parser::make_BOOLEAN(tmp == "true", driver.loc_);
@@ -6061,57 +5692,33 @@ YY_RULE_SETUP
 	YY_BREAK
 case 233:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2484 "dhcp6_lexer.ll"
-=======
-#line 2512 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2485 "dhcp6_lexer.ll"
 {
    return isc::dhcp::Dhcp6Parser::make_NULL_TYPE(driver.loc_);
 }
 	YY_BREAK
 case 234:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2488 "dhcp6_lexer.ll"
-=======
-#line 2516 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2489 "dhcp6_lexer.ll"
 driver.error (driver.loc_, "JSON true reserved keyword is lower case only");
 	YY_BREAK
 case 235:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2490 "dhcp6_lexer.ll"
-=======
-#line 2518 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2491 "dhcp6_lexer.ll"
 driver.error (driver.loc_, "JSON false reserved keyword is lower case only");
 	YY_BREAK
 case 236:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2492 "dhcp6_lexer.ll"
-=======
-#line 2520 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2493 "dhcp6_lexer.ll"
 driver.error (driver.loc_, "JSON null reserved keyword is lower case only");
 	YY_BREAK
 case 237:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2494 "dhcp6_lexer.ll"
+#line 2495 "dhcp6_lexer.ll"
 driver.error (driver.loc_, "Invalid character: " + std::string(yytext));
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 2496 "dhcp6_lexer.ll"
-=======
-#line 2522 "dhcp6_lexer.ll"
-driver.error (driver.loc_, "Invalid character: " + std::string(yytext));
-	YY_BREAK
-case YY_STATE_EOF(INITIAL):
-#line 2524 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2497 "dhcp6_lexer.ll"
 {
     if (driver.states_.empty()) {
         return isc::dhcp::Dhcp6Parser::make_END(driver.loc_);
@@ -6137,17 +5744,10 @@ case YY_STATE_EOF(INITIAL):
 	YY_BREAK
 case 238:
 YY_RULE_SETUP
-<<<<<<< HEAD
-#line 2519 "dhcp6_lexer.ll"
+#line 2520 "dhcp6_lexer.ll"
 ECHO;
 	YY_BREAK
-#line 5749 "dhcp6_lexer.cc"
-=======
-#line 2547 "dhcp6_lexer.ll"
-ECHO;
-	YY_BREAK
-#line 5800 "dhcp6_lexer.cc"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 5751 "dhcp6_lexer.cc"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -7252,11 +6852,7 @@ void yyfree (void * ptr )
 
 /* %ok-for-header */
 
-<<<<<<< HEAD
-#line 2519 "dhcp6_lexer.ll"
-=======
-#line 2547 "dhcp6_lexer.ll"
->>>>>>> b1cd980387 ([#3583] Added client-class to OptionDescriptor)
+#line 2520 "dhcp6_lexer.ll"
 
 
 using namespace isc::dhcp;
