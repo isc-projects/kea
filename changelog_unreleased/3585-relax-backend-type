@@ -1,4 +1,4 @@
 [func]		fdupont
-	Relaxed the lease and host backend types in the
+	Relaxed the lease, host and config backend types in the
 	configuration syntax.
 	(Gitlab #3585)
