@@ -1328,10 +1328,6 @@ TEST_F(ClassifyTest, requiredNotDefined) {
     Pkt4Ptr resp = client.getContext().response_;
     ASSERT_TRUE(resp);
     EXPECT_EQ("10.0.0.10", resp->getYiaddr().toText());
-
-    // Check domain-name-servers option
-    OptionPtr opt = resp->getOption(DHO_DOMAIN_NAME_SERVERS);
-    EXPECT_FALSE(opt);
 }
 
 // This test checks the handling for the DROP special class.

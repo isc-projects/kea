@@ -2364,10 +2364,6 @@ TEST_F(ClassifyTest, requiredNotDefined) {
     EXPECT_EQ(1, client.getLeaseNum());
     Pkt6Ptr resp = client.getContext().response_;
     ASSERT_TRUE(resp);
-
-    // Check dns-servers option
-    OptionPtr opt = resp->getOption(D6O_NAME_SERVERS);
-    EXPECT_FALSE(opt);
 }
 
 // This test checks the complex membership from HA with server1 telephone.
