@@ -251,7 +251,7 @@ libraries), or hook libraries (open source or premium).
    |                                  |                                       | Identifier hook library.       |
    +----------------------------------+---------------------------------------+--------------------------------+
    | ``kea-dhcp4.flex-option-hooks``, | :ischooklib:`libdhcp_flex_option.so`  | Used to log messages related to|
-   | ``kea-dhcp6.flex-option-hooks``  | open-source hook library              | the operaton of the Flexible   |
+   | ``kea-dhcp6.flex-option-hooks``  | open-source hook library              | the operation of the Flexible  |
    |                                  |                                       | Option hook library.           |
    +----------------------------------+---------------------------------------+--------------------------------+
    | ``kea-dhcp4.ha-hooks``,          | :ischooklib:`libdhcp_ha.so`           | Used to log messages related to|
@@ -400,7 +400,7 @@ libraries), or hook libraries (open source or premium).
    |                                  |                                       | Commands hook library. In      |
    |                                  |                                       | general, these pertain to      |
    |                                  |                                       | loading and unloading the      |
-   |                                  |                                       | library and theexecution of    |
+   |                                  |                                       | library and the execution of   |
    |                                  |                                       | commands by the library.       |
    +----------------------------------+---------------------------------------+--------------------------------+
    | ``kea-dhcp4.tcp``,               | core                                  | Used to log messages related to|
