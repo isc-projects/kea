@@ -4876,7 +4876,7 @@ void Dhcpv4Srv::requiredClassify(Dhcpv4Exchange& ex) {
         // Add a class without an expression to evaluate
         if (!expr_ptr) {
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC,
-                      DHCP4_REQUIRED_CLASS_UNTESTABLE)
+                      DHCP4_REQUIRED_CLASS_NO_TEST)
                 .arg(cclass);
             query->addClass(cclass);
             continue;

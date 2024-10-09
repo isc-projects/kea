@@ -147,8 +147,8 @@ extern const isc::log::MessageID DHCP6_RELEASE_PD_FAIL_WRONG_DUID = "DHCP6_RELEA
 extern const isc::log::MessageID DHCP6_RELEASE_PD_FAIL_WRONG_IAID = "DHCP6_RELEASE_PD_FAIL_WRONG_IAID";
 extern const isc::log::MessageID DHCP6_REQUIRED_CLASS_EVAL_ERROR = "DHCP6_REQUIRED_CLASS_EVAL_ERROR";
 extern const isc::log::MessageID DHCP6_REQUIRED_CLASS_EVAL_RESULT = "DHCP6_REQUIRED_CLASS_EVAL_RESULT";
+extern const isc::log::MessageID DHCP6_REQUIRED_CLASS_NO_TEST = "DHCP6_REQUIRED_CLASS_NO_TEST";
 extern const isc::log::MessageID DHCP6_REQUIRED_CLASS_UNDEFINED = "DHCP6_REQUIRED_CLASS_UNDEFINED";
-extern const isc::log::MessageID DHCP6_REQUIRED_CLASS_UNTESTABLE = "DHCP6_REQUIRED_CLASS_UNTESTABLE";
 extern const isc::log::MessageID DHCP6_REQUIRED_OPTIONS_CHECK_FAIL = "DHCP6_REQUIRED_OPTIONS_CHECK_FAIL";
 extern const isc::log::MessageID DHCP6_RESERVATIONS_LOOKUP_FIRST_ENABLED = "DHCP6_RESERVATIONS_LOOKUP_FIRST_ENABLED";
 extern const isc::log::MessageID DHCP6_RESPONSE_DATA = "DHCP6_RESPONSE_DATA";
@@ -314,8 +314,8 @@ const char* values[] = {
     "DHCP6_RELEASE_PD_FAIL_WRONG_IAID", "%1: client tried to release prefix %2/%3, but it used wrong IAID (expected %4, but got %5)",
     "DHCP6_REQUIRED_CLASS_EVAL_ERROR", "%1: Expression '%2' evaluated to %3",
     "DHCP6_REQUIRED_CLASS_EVAL_RESULT", "%1: Expression '%2' evaluated to %3",
+    "DHCP6_REQUIRED_CLASS_NO_TEST", "required class %1 has no test expression",
     "DHCP6_REQUIRED_CLASS_UNDEFINED", "required class %1 has no definition",
-    "DHCP6_REQUIRED_CLASS_UNTESTABLE", "required class %1 has no test expression",
     "DHCP6_REQUIRED_OPTIONS_CHECK_FAIL", "%1: %2 message received from %3 failed the following check: %4",
     "DHCP6_RESERVATIONS_LOOKUP_FIRST_ENABLED", "Multi-threading is enabled and host reservations lookup is always performed first.",
     "DHCP6_RESPONSE_DATA", "%1: responding with packet %2 (type %3), packet details: %4",

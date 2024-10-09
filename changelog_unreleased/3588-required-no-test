@@ -1,6 +1,6 @@
 [func]*		fdupont
-	Modified the behavior of required client classes
-	configured without a test expression: they are now
-	unconditionally added as they always evaluate to
-	true (vs false previously).
+	Classes included in 'require-client-classes' that do
+	not have test expressions will now be unconditionally
+	added to the client's list of matching classes.
+	Previously they were ignored.
 	(Gitlab #3388)

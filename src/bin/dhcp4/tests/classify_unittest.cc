@@ -1294,7 +1294,9 @@ TEST_F(ClassifyTest, requiredNoTest) {
 }
 
 // This test checks a required class which is not defined is ignored.
-TEST_F(ClassifyTest, requiredNoDefined) {
+// Please set KEA_LOGGER_DESTINATION to stderr or stdout and check
+// that DHCP4_REQUIRED_CLASS_UNDEFINED is logged,
+TEST_F(ClassifyTest, requiredNotDefined) {
     std::string config =
         "{"
         "\"interfaces-config\": {"

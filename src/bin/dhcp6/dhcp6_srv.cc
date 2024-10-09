@@ -4505,7 +4505,7 @@ Dhcpv6Srv::requiredClassify(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx
         // Add a class without an expression to evaluate
         if (!expr_ptr) {
             LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC,
-                      DHCP6_REQUIRED_CLASS_UNTESTABLE)
+                      DHCP6_REQUIRED_CLASS_NO_TEST)
                 .arg(cclass);
             pkt->addClass(cclass);
             continue;
