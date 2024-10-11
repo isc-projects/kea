@@ -855,6 +855,12 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_COMMAND, DHCP6_CONFIG_RECEIVED)
         .arg(srv->redactConfig(config)->str());
 
+    // Destroy lease manager before hooks unload.
+    LeaseMgrFactory::destroy();
+
+    // Destroy host manager before hooks unload.
+    HostMgr::create();
+
     ConstElementPtr answer = configureDhcp6Server(*srv, config);
 
     // Check that configuration was successful. If not, do not reopen sockets

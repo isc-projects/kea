@@ -37,6 +37,7 @@
 #include <dhcpsrv/cfg_host_operations.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/host_data_source_factory.h>
+#include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/ncr_generator.h>
@@ -245,6 +246,7 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t server_port, uint16_t client_port)
         LOG_ERROR(dhcp6_logger, DHCP6_SRV_CONSTRUCT_ERROR).arg(e.what());
         return;
     }
+
     // Initializing all observations with default value
     setPacketStatisticsDefaults();
 
@@ -282,7 +284,12 @@ Dhcpv6Srv::~Dhcpv6Srv() {
 
     IfaceMgr::instance().closeSockets();
 
+    // The lease manager was instantiated during DHCPv6Srv configuration,
+    // so we should clean up after ourselves.
     LeaseMgrFactory::destroy();
+
+    // Destroy the host manager before hooks unload.
+    HostMgr::create();
 
     // Explicitly unload hooks
     HooksManager::prepareUnloadLibraries();

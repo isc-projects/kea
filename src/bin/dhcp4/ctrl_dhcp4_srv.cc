@@ -850,6 +850,12 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_COMMAND, DHCP4_CONFIG_RECEIVED)
         .arg(srv->redactConfig(config)->str());
 
+    // Destroy lease manager before hooks unload.
+    LeaseMgrFactory::destroy();
+
+    // Destroy host manager before hooks unload.
+    HostMgr::create();
+
     ConstElementPtr answer = configureDhcp4Server(*srv, config);
 
     // Check that configuration was successful. If not, do not reopen sockets

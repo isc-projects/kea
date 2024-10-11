@@ -38,6 +38,7 @@
 #include <dhcpsrv/dhcpsrv_exceptions.h>
 #include <dhcpsrv/fuzz.h>
 #include <dhcpsrv/host_data_source_factory.h>
+#include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/ncr_generator.h>
@@ -654,12 +655,13 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t server_port, uint16_t client_port,
 
     } catch (const std::exception &e) {
         LOG_ERROR(dhcp4_logger, DHCP4_SRV_CONSTRUCT_ERROR).arg(e.what());
-        shutdown_ = true;
         return;
     }
 
     // Initializing all observations with default value
     setPacketStatisticsDefaults();
+
+    // All done, so can proceed
     shutdown_ = false;
 }
 
@@ -696,6 +698,9 @@ Dhcpv4Srv::~Dhcpv4Srv() {
     // The lease manager was instantiated during DHCPv4Srv configuration,
     // so we should clean up after ourselves.
     LeaseMgrFactory::destroy();
+
+    // Destroy the host manager before hooks unload.
+    HostMgr::create();
 
     // Explicitly unload hooks
     HooksManager::prepareUnloadLibraries();

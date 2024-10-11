@@ -41,6 +41,7 @@
 #include <dhcpsrv/parsers/shared_networks_list_parser.h>
 #include <dhcpsrv/parsers/sanity_checks_parser.h>
 #include <dhcpsrv/host_data_source_factory.h>
+#include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <hooks/hooks_manager.h>
 #include <hooks/hooks_parser.h>
@@ -752,37 +753,21 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
     if (status_code == CONTROL_RESULT_SUCCESS) {
         if (check_only) {
             if (extra_checks) {
-                // Re-open lease and host database with new parameters.
+                std::ostringstream err;
+                // Configure DHCP packet queueing
                 try {
-                    // Get the staging configuration.
-                    srv_config = CfgMgr::instance().getStagingCfg();
-
-                    CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
-                    string params = "universe=4 persist=false";
-                    cfg_db->setAppendedParameters(params);
-                    cfg_db->createManagers();
-                } catch (const std::exception& ex) {
-                    answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, ex.what());
-                    status_code = CONTROL_RESULT_ERROR;
-                }
-
-                if (status_code == CONTROL_RESULT_SUCCESS) {
-                    std::ostringstream err;
-                    // Configure DHCP packet queueing
-                    try {
-                        data::ConstElementPtr qc;
-                        qc = CfgMgr::instance().getStagingCfg()->getDHCPQueueControl();
-                        if (IfaceMgr::instance().configureDHCPPacketQueue(AF_INET, qc)) {
-                            LOG_INFO(dhcp4_logger, DHCP4_CONFIG_PACKET_QUEUE)
-                                     .arg(IfaceMgr::instance().getPacketQueue4()->getInfoStr());
-                        }
-
-                    } catch (const std::exception& ex) {
-                        err << "Error setting packet queue controls after server reconfiguration: "
-                            << ex.what();
-                        answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str());
-                        status_code = CONTROL_RESULT_ERROR;
+                    data::ConstElementPtr qc;
+                    qc = CfgMgr::instance().getStagingCfg()->getDHCPQueueControl();
+                    if (IfaceMgr::instance().configureDHCPPacketQueue(AF_INET, qc)) {
+                        LOG_INFO(dhcp4_logger, DHCP4_CONFIG_PACKET_QUEUE)
+                                 .arg(IfaceMgr::instance().getPacketQueue4()->getInfoStr());
                     }
+
+                } catch (const std::exception& ex) {
+                    err << "Error setting packet queue controls after server reconfiguration: "
+                        << ex.what();
+                    answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str());
+                    status_code = CONTROL_RESULT_ERROR;
                 }
             }
         } else {
@@ -906,6 +891,22 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, "undefined configuration"
                                                " parsing error");
             status_code = CONTROL_RESULT_ERROR;
+        }
+
+        if (extra_checks && status_code == CONTROL_RESULT_SUCCESS) {
+            // Re-open lease and host database with new parameters.
+            try {
+                // Get the staging configuration.
+                srv_config = CfgMgr::instance().getStagingCfg();
+
+                CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
+                string params = "universe=4 persist=false";
+                cfg_db->setAppendedParameters(params);
+                cfg_db->createManagers();
+            } catch (const std::exception& ex) {
+                answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, ex.what());
+                status_code = CONTROL_RESULT_ERROR;
+            }
         }
     }
 
