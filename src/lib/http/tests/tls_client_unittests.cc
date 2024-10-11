@@ -37,7 +37,8 @@
 #include <http/tests/tls_response_creator_test.h>
 
 #ifdef WITH_BOTAN
-#define DISABLE_SOME_TESTS
+// All tests work with last Botan versions so commenting this.
+// #define DISABLE_SOME_TESTS
 #endif
 #ifdef WITH_OPENSSL
 #if !defined(LIBRESSL_VERSION_NUMBER) && (OPENSSL_VERSION_NUMBER < 0x10100000L)

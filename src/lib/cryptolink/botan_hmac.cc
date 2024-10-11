@@ -66,8 +66,6 @@ public:
             isc_throw(LibraryError, "Botan error: " << exc.what());
         }
 
-        // If the key length is larger than the block size, we hash the
-        // key itself first.
         try {
             // Botan 1.8 considers len 0 a bad key. 1.9 does not,
             // but we won't accept it anyway, and fail early

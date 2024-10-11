@@ -43,7 +43,7 @@ public:
 
     /// @brief Destructor.
     ///
-    /// @note The destructor can't be defined here because  a unique
+    /// @note The destructor can't be defined here because a unique
     /// pointer to an incomplete type is used.
     virtual ~TlsContext();
 

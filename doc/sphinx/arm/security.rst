@@ -76,7 +76,7 @@ that must be used:
 
   Without these header files, or with a Botan version prior
   to 2.14.0, Kea cannot build as the TLS/HTTPS support is considered
-  as essential for security.
+  essential for security.
 
 - Very old Boost versions provide SSL support (based on OpenSSL)
   without offering a choice of the TLS version; Kea can still use them,

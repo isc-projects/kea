@@ -182,7 +182,6 @@ public:
     static const std::vector<std::string> AllowedSignatureMethodsECDSA;
 };
 
-
 // Kea session manager.
 using KeaSessionManager = Botan::TLS::Session_Manager_Noop;
 
