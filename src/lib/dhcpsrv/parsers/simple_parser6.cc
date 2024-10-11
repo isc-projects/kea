@@ -184,8 +184,8 @@ const SimpleKeywords SimpleParser6::OPTION6_PARAMETERS = {
     { "never-send",     Element::boolean },
     { "user-context",   Element::map },
     { "comment",        Element::string },
-    { "metadata",       Element::map },
-    { "client-classes", Element::list }
+    { "client-classes", Element::list },
+    { "metadata",       Element::map }
 };
 
 /// @brief This table defines default values for options in DHCPv6.

@@ -462,11 +462,12 @@ public:
         return (option_ptr);
     }
 
-    /// @brief Find the OptionDescriptor for a given space and code within the parser
-    /// context.
+    /// @brief Find the OptionDescriptor for a given space and code within
+    /// the parser context.
+    ///
     /// @param space is the space name of the desired option.
     /// @param code is the numeric "type" of the desired option.
-    /// @return an OptionDecriptorPtr to the descriptor found or an empty ptr
+    /// @return an OptionDecriptorPtr to the descriptor found or an empty ptr.
     OptionDescriptorPtr getOptionDescriptor(std::string space, uint32_t code) {
         OptionDescriptorPtr od_ptr;
         const auto &cfg_options = CfgMgr::instance().getStagingCfg()->getCfgOption();
@@ -1974,7 +1975,7 @@ TEST_F(ParseConfigTest, optionDataClientClassesEmpty4) {
     ASSERT_TRUE(od);
     EXPECT_TRUE(od->client_classes_.empty());
 
-    // We skip unparse test because client-classes is only emitited if not empty.
+    // We skip unparse test because client-classes is only emitted if not empty.
 }
 
 /// @brief Check parsing of a v6 option with a client-class list.
@@ -2053,7 +2054,7 @@ TEST_F(ParseConfigTest, optionDataClientClassesEmpty6) {
     ASSERT_TRUE(od);
     EXPECT_TRUE(od->client_classes_.empty());
 
-    // We skip unparse test because client-classes is only emitited if not empty.
+    // We skip unparse test because client-classes is only emitted if not empty.
 }
 
 // hooks-libraries element that does not contain anything.

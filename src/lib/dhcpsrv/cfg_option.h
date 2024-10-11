@@ -817,8 +817,6 @@ private:
     VendorOptionSpaceCollection vendor_options_;
 };
 
-class CfgOption; // forward declaration 
-
 /// @name Pointers to the @c CfgOption objects.
 //@{
 

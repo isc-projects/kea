@@ -124,10 +124,10 @@ namespace dhcp {
 
         /// @brief Copy constructor.
         ///
-        /// @param ClientClasses object to be copied.
+        /// @param other ClientClasses object to be copied.
         ClientClasses(const ClientClasses& other);
 
-        /// @brief Assigns the contents of on container to another
+        /// @brief Assigns the contents of on container to another.
         ClientClasses& operator=(const ClientClasses& other);
 
         /// @brief Compares two ClientClasses container for equality
@@ -135,7 +135,7 @@ namespace dhcp {
         /// @return True if the two containers are equal, false otherwise.
         bool equals(const ClientClasses& other) const;
 
-        /// @brief Compares two ClientClasses container for equality
+        /// @brief Compares two ClientClasses containers for equality.
         ///
         /// @return True if the two containers are equal, false otherwise.
         bool operator==(const ClientClasses& other) const {
@@ -227,9 +227,12 @@ namespace dhcp {
 
         /// @brief Sets contents from a ListElement
         ///
+        /// @param list JSON list of classes from which to populate
+        /// the container.
+        ///
         /// @throw BadValue if the element is not a list or contents
         /// are invalid
-        void fromElement(isc::data::ElementPtr list);
+        void fromElement(isc::data::ConstElementPtr list);
 
     private:
         /// @brief container part

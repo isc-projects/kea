@@ -64,16 +64,24 @@ OptionDescriptor::allowedForClientClasses(const ClientClasses& cclasses) const {
     if (client_classes_.empty()) {
         return (true);
     }
-    
-    for (const auto& cclass : client_classes_) {
-        if (cclasses.contains(cclass)) {
-            return (true);
+
+    if (cclasses.size() > client_classes_.size()) {
+        for (const auto& cclass : client_classes_) {
+            if (cclasses.contains(cclass)) {
+                return (true);
+            }
+        }
+    }
+    else {
+        for (const auto& cclass : cclasses) {
+            if (client_classes_.contains(cclass)) {
+                return (true);
+            }
         }
     }
 
     return (false);
 }
-
 
 CfgOption::CfgOption()
     : encapsulated_(false) {
@@ -108,7 +116,7 @@ CfgOption::add(const OptionDescriptor& desc, const std::string& option_space) {
     if (!desc.option_) {
         isc_throw(isc::BadValue, "option being configured must not be NULL");
 
-    } else  if (!OptionSpace::validateName(option_space)) {
+    } else if (!OptionSpace::validateName(option_space)) {
         isc_throw(isc::BadValue, "invalid option space name: '"
                   << option_space << "'");
     }

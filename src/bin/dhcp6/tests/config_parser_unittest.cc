@@ -8987,4 +8987,38 @@ TEST_F(Dhcp6ParserTest, storeDdnsConflictResolutionMode) {
     }
 }
 
+// This test verifies that duplicates in option-data.client-classes
+// are ignored and do not affect class order.
+TEST_F(Dhcp6ParserTest, optionClientClassesDuplicateCheck) {
+    std::string config = "{ " + genIfaceConfig() + ","
+        R"^(
+        "option-data": [{
+            "name": "domain-search",
+            "data": "example.com",
+            "client-classes": [ "foo", "bar", "foo", "bar" ]
+        }],
+        "rebind-timer": 2000,
+        "renew-timer": 1000,
+        "subnet6": [],
+        "valid-lifetime": 400
+        })^";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
+    extractConfig(config);
+
+    ConstElementPtr status;
+    ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    checkResult(status, 0);
+
+    CfgOptionPtr cfg = CfgMgr::instance().getStagingCfg()->getCfgOption();
+    const auto desc = cfg->get(DHCP6_OPTION_SPACE, D6O_DOMAIN_SEARCH);
+    ASSERT_TRUE(desc.option_);
+    ASSERT_EQ(desc.client_classes_.size(), 2);
+    auto cclasses = desc.client_classes_.begin();
+    EXPECT_EQ(*cclasses, "foo");
+    ++cclasses;
+    EXPECT_EQ(*cclasses, "bar");
+}
+
 }  // namespace

@@ -1870,7 +1870,7 @@ public:
             cc_binding,
             MySqlBinding::createString(tag),
             MySqlBinding::createInteger<uint8_t>(option->option_->getType()),
-            MySqlBinding::condCreateString(option->space_name_),
+            MySqlBinding::condCreateString(option->space_name_)
         };
 
         MySqlTransaction transaction(conn_);
@@ -2074,7 +2074,7 @@ public:
             cc_binding,
             MySqlBinding::createString(shared_network_name),
             MySqlBinding::createInteger<uint8_t>(option->option_->getType()),
-            MySqlBinding::condCreateString(option->space_name_),
+            MySqlBinding::condCreateString(option->space_name_)
         };
 
         boost::scoped_ptr<MySqlTransaction> transaction;

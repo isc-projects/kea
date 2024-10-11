@@ -2342,6 +2342,7 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
         }
     }
 
+    const auto& cclasses = query->getClasses();
     for (uint32_t vendor_id : vendor_ids) {
 
         std::set<uint8_t> cancelled_opts;
@@ -2406,7 +2407,7 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
             if (!vendor_rsp->getOption(opt)) {
                 for (auto const& copts : co_list) {
                     OptionDescriptor desc = copts->get(vendor_id, opt);
-                    if (desc.option_ && desc.allowedForClientClasses(query->getClasses())) {
+                    if (desc.option_ && desc.allowedForClientClasses(cclasses)) {
                         vendor_rsp->addOption(desc.option_);
                         added = true;
                         break;
@@ -2446,6 +2447,7 @@ Dhcpv4Srv::appendBasicOptions(Dhcpv4Exchange& ex) {
     }
 
     Pkt4Ptr resp = ex.getResponse();
+    const auto& cclasses = ex.getQuery()->getClasses();
 
     // Try to find all 'required' options in the outgoing
     // message. Those that are not present will be added.
@@ -2456,7 +2458,7 @@ Dhcpv4Srv::appendBasicOptions(Dhcpv4Exchange& ex) {
             for (auto const& copts : co_list) {
                 OptionDescriptor desc = copts->get(DHCP4_OPTION_SPACE, required);
                 /// @todo TKM - not sure if otion class-tagging should be allowed here?
-                if (desc.option_ && desc.allowedForClientClasses(ex.getQuery()->getClasses())) {
+                if (desc.option_ && desc.allowedForClientClasses(cclasses)) {
                     resp->addOption(desc.option_);
                     break;
                 }
@@ -3635,7 +3637,7 @@ Dhcpv4Srv::setFixedFields(Dhcpv4Exchange& ex) {
 
     // Step 2: Try to set the values based on classes.
     // Any values defined in classes will override those from subnet level.
-    const ClientClasses classes = query->getClasses();
+    const ClientClasses& classes = query->getClasses();
     if (!classes.empty()) {
 
         // Let's get class definitions

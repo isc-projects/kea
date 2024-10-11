@@ -1246,6 +1246,12 @@ the same value for option "foo":
         }]
     }
 
+The ``client-classes`` list is allowed in an option specification at
+any scope.  Option class-tagging is enforced at the time options are
+being added to the response which occurs after lease assignment just
+before the response is to be sent to the client.
+
+
 When ``never-send`` for an option is true at any scope, all 
 ``client-classes`` entries for that option are ignored. The
 option will not included.

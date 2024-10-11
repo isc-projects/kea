@@ -82,7 +82,7 @@ ClientClasses::toElement() const {
 }
 
 void
-ClientClasses::fromElement(isc::data::ElementPtr cc_list) {
+ClientClasses::fromElement(isc::data::ConstElementPtr cc_list) {
     if (cc_list) {
         clear();
         if (cc_list->getType() != Element::list) {
@@ -95,7 +95,7 @@ ClientClasses::fromElement(isc::data::ElementPtr cc_list) {
                 isc_throw(BadValue, "elements of list must be valid strings"); 
             }
 
-            insert(cclass->stringValue());
+            static_cast<void>(insert(cclass->stringValue()));
         }
     }
 }

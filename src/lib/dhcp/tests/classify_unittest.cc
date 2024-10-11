@@ -253,4 +253,16 @@ TEST(ClassifyTest, ClientClassesFromElement) {
     cclasses_element = Element::createList();
     ASSERT_NO_THROW(classes.fromElement(cclasses_element));
     EXPECT_TRUE(classes.empty());
+
+    cclasses_element->add(Element::create("foo"));
+    cclasses_element->add(Element::create("bar"));
+    cclasses_element->add(Element::create("foo"));
+    cclasses_element->add(Element::create("bar"));
+
+    ASSERT_NO_THROW(classes.fromElement(cclasses_element));
+    ASSERT_EQ(classes.size(), 2);
+    auto cclass = classes.begin();
+    EXPECT_EQ(*cclass, "foo");
+    ++cclass;
+    EXPECT_EQ(*cclass, "bar");
 }
