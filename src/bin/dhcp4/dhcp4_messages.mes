@@ -979,7 +979,7 @@ This debug message indicates that the expression of a required client class has
 been successfully evaluated. The client class name and the result value of the
 evaluation are printed.
 
-% DHCP4_REQUIRED_CLASS_NO_TEST required class %1 has no test expression
+% DHCP4_REQUIRED_CLASS_NO_TEST required class %1 has no test expression, adding it to client's classes unconditionally
 Logged at debug log level 40.
 This debug message informs that a class was listed for required evaluation but
 its definition does not include a test expression to evaluate. The class is

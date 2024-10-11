@@ -326,7 +326,7 @@ const char* values[] = {
     "DHCP4_REQUEST", "%1: server is processing DHCPREQUEST with hint=%2",
     "DHCP4_REQUIRED_CLASS_EVAL_ERROR", "%1: Expression '%2' evaluated to %3",
     "DHCP4_REQUIRED_CLASS_EVAL_RESULT", "%1: Expression '%2' evaluated to %3",
-    "DHCP4_REQUIRED_CLASS_NO_TEST", "required class %1 has no test expression",
+    "DHCP4_REQUIRED_CLASS_NO_TEST", "required class %1 has no test expression, adding it to client's classes unconditionally",
     "DHCP4_REQUIRED_CLASS_UNDEFINED", "required class %1 has no definition",
     "DHCP4_RESERVATIONS_LOOKUP_FIRST_ENABLED", "Multi-threading is enabled and host reservations lookup is always performed first.",
     "DHCP4_RESERVED_HOSTNAME_ASSIGNED", "%1: server assigned reserved hostname %2",

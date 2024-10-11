@@ -314,7 +314,7 @@ const char* values[] = {
     "DHCP6_RELEASE_PD_FAIL_WRONG_IAID", "%1: client tried to release prefix %2/%3, but it used wrong IAID (expected %4, but got %5)",
     "DHCP6_REQUIRED_CLASS_EVAL_ERROR", "%1: Expression '%2' evaluated to %3",
     "DHCP6_REQUIRED_CLASS_EVAL_RESULT", "%1: Expression '%2' evaluated to %3",
-    "DHCP6_REQUIRED_CLASS_NO_TEST", "required class %1 has no test expression",
+    "DHCP6_REQUIRED_CLASS_NO_TEST", "required class %1 has no test expression, adding it to client's classes unconditionally",
     "DHCP6_REQUIRED_CLASS_UNDEFINED", "required class %1 has no definition",
     "DHCP6_REQUIRED_OPTIONS_CHECK_FAIL", "%1: %2 message received from %3 failed the following check: %4",
     "DHCP6_RESERVATIONS_LOOKUP_FIRST_ENABLED", "Multi-threading is enabled and host reservations lookup is always performed first.",
