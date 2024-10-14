@@ -3279,4 +3279,131 @@ TEST_F(ClassifyTest, requestedVendorOptionsClassTag) {
     EXPECT_TRUE(custom);
 }
 
+// Verifies that class-tagging does not subvert always-send.
+TEST_F(ClassifyTest, classTaggingAndAlwaysSend) {
+    IfaceMgrTestConfig test_config(true);
+
+    NakedDhcpv6Srv srv(0);
+
+    // Subnet level ipv6-forwarding enables always-send but with a non-matching
+    // class-tag. Response should contain the global value for ip6-fowarding.
+    std::string config = R"^(
+    {
+        "interfaces-config": { "interfaces": [ "*" ] },
+        "preferred-lifetime": 3000,
+        "rebind-timer": 2000,
+        "renew-timer": 1000,
+        "valid-lifetime": 4000,
+        "option-def": [{
+            "name": "ipv6-forwarding",
+            "code": 2345,
+            "type": "boolean"
+        }],
+        "option-data": [{
+            "name": "ipv6-forwarding",
+            "data": "true",
+            "always-send": false,
+            "never-send": false
+        }],
+        "subnet6": [{
+            "pools": [ { "pool": "2001:db8:1::/64" } ],
+            "id": 1,
+            "subnet": "2001:db8:1::/48",
+            "interface": "eth1",
+            "option-data": [{
+                    "name": "ipv6-forwarding",
+                     "data": "false",
+                     "client-classes": [ "no-match" ],
+                     "always-send": true
+
+            }]
+        }]
+    }
+    )^";
+
+    ASSERT_NO_THROW(configure(config));
+
+    // Create a packet with enough to select the subnet and go through
+    // the SOLICIT processing
+    Pkt6Ptr query = createSolicit();
+
+    // Do not add an ORO.
+    OptionPtr oro = query->getOption(D6O_ORO);
+    EXPECT_FALSE(oro);
+
+    // Process the query
+    Pkt6Ptr response;
+    processQuery(srv, query, response);
+
+    // Processing should add the global ip-forwarding option.
+    OptionPtr opt = response->getOption(2345);
+    ASSERT_TRUE(opt);
+    ASSERT_GT(opt->len(), opt->getHeaderLen());
+    EXPECT_EQ(1, opt->getUint8());
+}
+
+// Verifies that option class-tagging does not subvert never-send.
+TEST_F(ClassifyTest, classTaggingAndNeverSend) {
+    IfaceMgrTestConfig test_config(true);
+
+    NakedDhcpv6Srv srv(0);
+
+    // Subnet sets an ipv6-forwarding option in the response.
+    // The router class matches incoming packets with foo in a host-name
+    // option (code 1234) and sets an ipv6-forwarding option in the response.
+    // Subnet level option enables never-send non-matching class-tag.
+    // Response should not contain a value for ip6-fowarding.
+    std::string config = R"^(
+    {
+        "interfaces-config": { "interfaces": [ "*" ] },
+        "preferred-lifetime": 3000,
+        "rebind-timer": 2000,
+        "renew-timer": 1000,
+        "valid-lifetime": 4000,
+        "option-def": [{
+            "name": "ipv6-forwarding",
+            "code": 2345,
+            "type": "boolean"
+        }],
+        "option-data": [{
+            "name": "ipv6-forwarding",
+            "data": "true",
+            "always-send": true,
+            "never-send": false
+        }],
+        "subnet6": [{
+            "pools": [ { "pool": "2001:db8:1::/64" } ],
+            "id": 1,
+            "subnet": "2001:db8:1::/48",
+            "interface": "eth1",
+            "option-data": [{
+                    "name": "ipv6-forwarding",
+                     "data": "false",
+                     "client-classes": [ "no-match" ],
+                     "always-send": false,
+                     "never-send": true
+            }]
+        }]
+    }
+    )^";
+
+    ASSERT_NO_THROW(configure(config));
+
+    // Create a packet with enough to select the subnet and go through
+    // the SOLICIT processing
+    Pkt6Ptr query = createSolicit();
+
+    // Do not add an ORO.
+    OptionPtr oro = query->getOption(D6O_ORO);
+    EXPECT_FALSE(oro);
+
+    // Process the query
+    Pkt6Ptr response;
+    processQuery(srv, query, response);
+
+    // Processing should not add an ip-forwarding option
+    OptionPtr opt = response->getOption(2345);
+    ASSERT_FALSE(opt);
+}
+
 } // end of anonymous namespace

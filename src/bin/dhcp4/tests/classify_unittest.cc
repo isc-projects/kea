@@ -2139,4 +2139,138 @@ TEST_F(ClassifyTest, basicOptionClassTagTest) {
     checkServerIdentifier(response1, "0.0.0.0");
 }
 
+// Verifies that class-tagging does not subvert always-send.
+TEST_F(ClassifyTest, classTaggingAndAlwaysSend) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Global host-name option disables always-send.  Subnet level
+    // host-name enables always-send but has a non-matching class
+    // tag.  The Response should contain the global value for host-name.
+    string config = R"^(
+    {
+        "interfaces-config": {
+            "interfaces": [ "*" ]
+        },
+        "rebind-timer": 2000,
+        "renew-timer": 1000,
+        "valid-lifetime": 4000,
+        "option-data": [{
+            "name": "host-name",
+            "data": "global.com",
+            "always-send" : false,
+            "never-send" : false
+        }],
+        "subnet4": [{
+            "id": 1,
+            "subnet": "192.0.2.0/24",
+            "option-data": [{
+                "name": "host-name",
+                "data": "subnet.com",
+                "client-classes": [ "no-match" ],
+                "always-send" : true
+            }],
+            "pools": [{
+                "pool": "192.0.2.1 - 192.0.2.100"
+             }]
+        }]
+    }
+    )^";
+
+    // Configure DHCP server.
+    configure(config, srv);
+
+    // Create a DISCOVER that matches class "melon".
+    auto id = ClientId::fromText("31:31:31");
+    OptionPtr clientid = (OptionPtr(new Option(Option::V4,
+                                               DHO_DHCP_CLIENT_IDENTIFIER,
+                                               id->getClientId())));
+
+    Pkt4Ptr query1(new Pkt4(DHCPDISCOVER, 1234));
+    query1->setRemoteAddr(IOAddress("192.0.2.1"));
+    query1->addOption(clientid);
+    query1->setIface("eth1");
+    query1->setIndex(ETH1_INDEX);
+
+    // Configure DHCP server.
+    configure(config, srv);
+
+    // Process query
+    Pkt4Ptr response = srv.processDiscover(query1);
+
+    // Verify that global host-name is present.
+    OptionStringPtr hostname;
+    hostname = boost::dynamic_pointer_cast<OptionString>(response->getOption(DHO_HOST_NAME));
+    ASSERT_TRUE(hostname);
+    EXPECT_EQ("global.com", hostname->getValue());
+}
+
+// Verifies that class-tagging does not subvert never-send.
+TEST_F(ClassifyTest, classTaggingAndNeverSend) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Global host-name option enables always-send.  Subnet level
+    // host-name enables never-send but has a non-matching class
+    // tag.  The Response should not contain a value for host-name.
+    string config = R"^(
+    {
+        "interfaces-config": {
+            "interfaces": [ "*" ]
+        },
+        "rebind-timer": 2000,
+        "renew-timer": 1000,
+        "valid-lifetime": 4000,
+        "option-data": [{
+            "name": "host-name",
+            "data": "global.com",
+            "always-send" : true,
+            "never-send" : false
+        }],
+        "subnet4": [{
+            "id": 1,
+            "subnet": "192.0.2.0/24",
+            "option-data": [{
+                "name": "host-name",
+                "data": "subnet.com",
+                "client-classes": [ "no-match" ],
+                "always-send" : false,
+                "never-send" : true
+            }],
+            "pools": [{
+                "pool": "192.0.2.1 - 192.0.2.100"
+             }]
+        }]
+    }
+    )^";
+
+    // Configure DHCP server.
+    configure(config, srv);
+
+    // Create a DISCOVER that matches class "melon".
+    auto id = ClientId::fromText("31:31:31");
+    OptionPtr clientid = (OptionPtr(new Option(Option::V4,
+                                               DHO_DHCP_CLIENT_IDENTIFIER,
+                                               id->getClientId())));
+
+    Pkt4Ptr query1(new Pkt4(DHCPDISCOVER, 1234));
+    query1->setRemoteAddr(IOAddress("192.0.2.1"));
+    query1->addOption(clientid);
+    query1->setIface("eth1");
+    query1->setIndex(ETH1_INDEX);
+
+    // Configure DHCP server.
+    configure(config, srv);
+
+    // Process query
+    Pkt4Ptr response = srv.processDiscover(query1);
+
+    // The response should not contain host-name.
+    ASSERT_FALSE(response->getOption(DHO_HOST_NAME));
+}
+
 } // end of anonymous namespace
