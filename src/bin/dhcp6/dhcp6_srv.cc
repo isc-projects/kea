@@ -15,7 +15,6 @@
 #include <dhcp/docsis3_option_defs.h>
 #include <dhcp/duid.h>
 #include <dhcp/duid_factory.h>
-#include <dhcpsrv/fuzz.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option6_addrlst.h>
@@ -41,6 +40,7 @@
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/ncr_generator.h>
+#include <dhcpsrv/packet-fuzzer.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_selector.h>
 #include <dhcpsrv/utils.h>
@@ -54,6 +54,7 @@
 #include <util/encode/encode.h>
 #include <util/pointer_util.h>
 #include <util/range_utilities.h>
+#include <log/interprocess/interprocess_sync_file.h>
 #include <log/logger.h>
 #include <cryptolink/cryptolink.h>
 #include <process/cfgrpt/config_report.h>
@@ -82,6 +83,7 @@ using namespace isc::dhcp;
 using namespace isc::dhcp_ddns;
 using namespace isc::hooks;
 using namespace isc::log;
+using namespace isc::log::interprocess;
 using namespace isc::stats;
 using namespace isc::util;
 using namespace std;
@@ -597,10 +599,25 @@ Dhcpv6Srv::initContext(AllocEngine::ClientContext6& ctx, bool& drop) {
 
 int
 Dhcpv6Srv::run() {
-#ifdef ENABLE_AFL
+#ifdef HAVE_AFL
+    // Get the values of the environment variables used to control the
+    // fuzzing.
+
+    // Specfies the interface to be used to pass packets from AFL to Kea.
+    const char* interface = getenv("KEA_AFL_INTERFACE");
+    if (!interface) {
+        isc_throw(FuzzInitFail, "no fuzzing interface has been set");
+    }
+
+    // The address on the interface to be used.
+    const char* address = getenv("KEA_AFL_ADDRESS");
+    if (!address) {
+        isc_throw(FuzzInitFail, "no fuzzing address has been set");
+    }
+
     // Set up structures needed for fuzzing.
-    Fuzz fuzzer(6, server_port_);
-    //
+    PacketFuzzer fuzzer(6, server_port_, interface, address);
+
     // The next line is needed as a signature for AFL to recognize that we are
     // running persistent fuzzing.  This has to be in the main image file.
     while (__AFL_LOOP(fuzzer.maxLoopCount())) {
@@ -609,7 +626,7 @@ Dhcpv6Srv::run() {
         fuzzer.transfer();
 #else
     while (!shutdown_) {
-#endif // ENABLE_AFL
+#endif // HAVE_AFL
         try {
             runOne();
             // Handle events registered by hooks using external IOService objects.
@@ -4900,6 +4917,39 @@ Dhcpv6Srv::parkingLimitExceeded(string const& hook_label) {
 void Dhcpv6Srv::discardPackets() {
     // Dump all of our current packets, anything that is mid-stream
     HooksManager::clearParkingLots();
+}
+
+uint16_t Dhcpv6Srv::getServerPort() const {
+    char const* const randomize(getenv("KEA_DHCP6_FUZZING_RANDOMIZE_PORT"));
+    if (randomize) {
+        InterprocessSyncFile file("kea-dhcp6-fuzzing-randomize-port");
+        InterprocessSyncLocker locker(file);
+        while (!locker.lock()) {
+            this_thread::sleep_for(1s);
+        }
+        fstream port_file;
+        port_file.open("/tmp/port6.txt", ios::in);
+        string line;
+        int port;
+        getline(port_file, line);
+        port_file.close();
+        if (line.empty()) {
+            port = 2000;
+        } else {
+            port = stoi(line);
+            if (port < 3000) {
+                ++port;
+            } else {
+                port = 2000;
+            }
+        }
+        port_file.open("/tmp/port6.txt", ios::out | ios::trunc);
+        port_file << to_string(port) << endl;
+        port_file.close();
+        locker.unlock();
+        return port;
+    }
+    return server_port_;
 }
 
 /// @todo This logic to be modified if we decide to support infinite lease times.

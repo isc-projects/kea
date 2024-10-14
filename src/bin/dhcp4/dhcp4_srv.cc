@@ -36,12 +36,12 @@
 #include <dhcpsrv/cfg_shared_networks.h>
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/dhcpsrv_exceptions.h>
-#include <dhcpsrv/fuzz.h>
 #include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/ncr_generator.h>
+#include <dhcpsrv/packet-fuzzer.h>
 #include <dhcpsrv/resource_handler.h>
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet.h>
@@ -55,6 +55,7 @@
 #include <stats/stats_mgr.h>
 #include <util/encode/encode.h>
 #include <util/str.h>
+#include <log/interprocess/interprocess_sync_file.h>
 #include <log/logger.h>
 #include <cryptolink/cryptolink.h>
 #include <process/cfgrpt/config_report.h>
@@ -65,6 +66,8 @@
 #include <boost/pointer_cast.hpp>
 #include <boost/shared_ptr.hpp>
 
+
+#include <chrono>
 #include <functional>
 #include <iomanip>
 #include <set>
@@ -78,9 +81,11 @@ using namespace isc::dhcp;
 using namespace isc::dhcp_ddns;
 using namespace isc::hooks;
 using namespace isc::log;
+using namespace isc::log::interprocess;
 using namespace isc::stats;
 using namespace isc::util;
 using namespace std;
+using namespace std::chrono_literals;
 namespace ph = std::placeholders;
 
 namespace {
@@ -1122,10 +1127,25 @@ Dhcpv4Srv::earlyGHRLookup(const Pkt4Ptr& query,
 
 int
 Dhcpv4Srv::run() {
-#ifdef ENABLE_AFL
+#ifdef HAVE_AFL
+    // Get the values of the environment variables used to control the
+    // fuzzing.
+
+    // Specfies the interface to be used to pass packets from AFL to Kea.
+    const char* interface = getenv("KEA_AFL_INTERFACE");
+    if (!interface) {
+        isc_throw(FuzzInitFail, "no fuzzing interface has been set");
+    }
+
+    // The address on the interface to be used.
+    const char* address = getenv("KEA_AFL_ADDRESS");
+    if (!address) {
+        isc_throw(FuzzInitFail, "no fuzzing address has been set");
+    }
+
     // Set up structures needed for fuzzing.
-    Fuzz fuzzer(4, server_port_);
-    //
+    PacketFuzzer fuzzer(4, server_port_, interface, address);
+
     // The next line is needed as a signature for AFL to recognize that we are
     // running persistent fuzzing.  This has to be in the main image file.
     while (__AFL_LOOP(fuzzer.maxLoopCount())) {
@@ -1134,7 +1154,7 @@ Dhcpv4Srv::run() {
         fuzzer.transfer();
 #else
     while (!shutdown_) {
-#endif // ENABLE_AFL
+#endif // HAVE_AFL
         try {
             runOne();
             // Handle events registered by hooks using external IOService objects.
@@ -5157,6 +5177,39 @@ int Dhcpv4Srv::getHookIndexLease4Decline() {
 void Dhcpv4Srv::discardPackets() {
     // Dump all of our current packets, anything that is mid-stream
     HooksManager::clearParkingLots();
+}
+
+uint16_t Dhcpv4Srv::getServerPort() const {
+    char const* const randomize(getenv("KEA_DHCP4_FUZZING_RANDOMIZE_PORT"));
+    if (randomize) {
+        InterprocessSyncFile file("kea-dhcp4-fuzzing-randomize-port");
+        InterprocessSyncLocker locker(file);
+        while (!locker.lock()) {
+            this_thread::sleep_for(1s);
+        }
+        fstream port_file;
+        port_file.open("/tmp/port4.txt", ios::in);
+        string line;
+        int port;
+        getline(port_file, line);
+        port_file.close();
+        if (line.empty()) {
+            port = 2000;
+        } else {
+            port = stoi(line);
+            if (port < 3000) {
+                ++port;
+            } else {
+                port = 2000;
+            }
+        }
+        port_file.open("/tmp/port4.txt", ios::out | ios::trunc);
+        port_file << to_string(port) << endl;
+        port_file.close();
+        locker.unlock();
+        return port;
+    }
+    return server_port_;
 }
 
 std::list<std::list<std::string>> Dhcpv4Srv::jsonPathsToRedact() const {

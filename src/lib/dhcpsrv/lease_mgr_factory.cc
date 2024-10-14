@@ -92,6 +92,7 @@ LeaseMgrFactory::destroy() {
     if (getLeaseMgrPtr()) {
         LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CLOSE_DB)
             .arg(getLeaseMgrPtr()->getType());
+        getLeaseMgrPtr().reset();
     }
     getLeaseMgrPtr().reset();
 }

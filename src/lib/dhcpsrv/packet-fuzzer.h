@@ -1,13 +1,13 @@
-// Copyright (C) 2016-2019  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef FUZZ_H
-#define FUZZ_H
+#ifndef DHCPSRV_PACKET_FUZZER_H
+#define DHCPSRV_PACKET_FUZZER_H
 
-#ifdef ENABLE_AFL
+#ifdef FUZZING
 
 #include <exceptions/exceptions.h>
 
@@ -22,7 +22,6 @@
 #include <thread>
 
 namespace isc {
-    
 
 /// @brief AFL Fuzzing
 ///
@@ -35,12 +34,12 @@ namespace isc {
 /// is listening.  Kea then reads the data from that port and processes it
 /// in the usual way.
 ///
-/// The Fuzz class handles the transfer of data between AFL and Kea.  After
+/// The PacketFuzzer class handles the transfer of data between AFL and Kea.  After
 /// suitable initialization, its transfer() method is called in the main
 /// processing loop, right before Kea waits for input. The method handles the
 /// read from stdin and the write to the selected address port.
 
-class Fuzz {
+class PacketFuzzer {
 public:
     /// @brief size of the buffer used to transfer data between AFL and Kea.
     ///
@@ -65,7 +64,6 @@ public:
     /// environment variable KEA_AFL_LOOP_MAX.
     static constexpr long MAX_LOOP_COUNT = 1000;
 
-
     /// @brief Constructor
     ///
     /// Sets up data structures to access the address/port being used to
@@ -75,20 +73,24 @@ public:
     ///                  server responds to.
     /// @param port      Port on which the server is listening, and hence the
     ///                  port to which the fuzzer will send input from AFL.
-    Fuzz(int ipversion, uint16_t port);
+    PacketFuzzer(int const ipversion,
+                 uint16_t const port,
+                 std::string const interface,
+                 std::string const address);
 
     /// @brief Destructor
     ///
     /// Closes the socket used for transferring data from stdin to the selected
     /// interface.
-    ~Fuzz();
+    ~PacketFuzzer();
 
     /// @brief Transfer Data
     ///
     /// Called immediately prior to Kea reading data, this reads stdin (where
     /// AFL will have sent the packet being tested) and copies the data to the
     /// interface on which Kea is listening.
-    void transfer(void) const;
+    void transfer() const;
+    void transfer(uint8_t const* data, size_t size) const;
 
     /// @brief Return Max Loop Count
     ///
@@ -117,8 +119,10 @@ private:
     ///
     /// @throws FuzzInitFail Thrown if the address is not in the expected
     ///                      format.
-    void createAddressStructures(int ipversion, const char* interface,
-                                 const char* address, uint16_t port);
+    void createAddressStructures(int const ipversion,
+                                 uint16_t const port,
+                                 std::string const interface,
+                                 std::string const address);
 
     // Other member variables.
     long                loop_max_;      //< Maximum number of loop iterations
@@ -127,18 +131,17 @@ private:
     struct sockaddr_in  servaddr4_;     //< IPv6 address information
     struct sockaddr_in6 servaddr6_;     //< IPv6 address information
     int                 sockfd_;        //< Socket used to transfer data
-};
-
+};  // class PacketFuzzer
 
 /// @brief Exception thrown if fuzzing initialization fails.
 class FuzzInitFail : public Exception {
 public:
     FuzzInitFail(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
-};
+};  // class FuzzInitFail
 
-}
+}  // namespace isc
 
-#endif // ENABLE_AFL
+#endif  // FUZZING
 
-#endif // FUZZ_H
+#endif  // DHCPSRV_PACKET_FUZZER_H

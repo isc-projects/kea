@@ -204,6 +204,9 @@ AM_CONDITIONAL(USE_CLANGPP, test "X${CLANGPP}" = "Xyes")
 # Check for C++14 features support
 AX_ISC_CPP14
 
+# Check for C++17 features support
+AX_ISC_CPP17
+
 # Check for C++20 compiler support.
 AX_ISC_CPP20
 
@@ -345,6 +348,15 @@ CPPP="$CXXCPP"
 if less_than "5" "$CXX_DUMP_VERSION"; then
        CPPP="$CPPP -P"
 fi
+
+# Kea does not support unicode aka wide character strings. Some systems force it
+# by default in headers. Provide a way to explicitly disable it.
+AC_ARG_ENABLE(unicode,
+  [AS_HELP_STRING([--disable-unicode], [Explicitly disable unicode])],
+  [case "${enableval}" in
+   yes) AC_MSG_ERROR(["You are trying to explicitly enable unicode. Kea does not support unicode."]) ;;
+   no) KEA_CXXFLAGS="${KEA_CXXFLAGS} -U_UNICODE -UUNICODE" ;;
+   esac])
 
 case "$host" in
 *-solaris*)
@@ -676,7 +688,7 @@ int main() {
 # usable or not.
 # Let's be optimistic and assume it is by testing only the negative case.
 if test "${usable_regex}" = 'no'; then
-  AC_MSG_ERROR([Need proper regex functionality.])]
+  AC_MSG_ERROR([Need proper regex functionality.])
 fi
 
 # Check for NETCONF support. If NETCONF was enabled in the build, and this check
@@ -1405,25 +1417,48 @@ if test "x$VALGRIND" != "xno"; then
    found_valgrind="found"
 fi
 
+AC_MSG_CHECKING([for fuzzing])
 AC_ARG_ENABLE([fuzzing],
-  [AS_HELP_STRING([--enable-fuzzing],
-  [indicates that the code will be built with AFL (American Fuzzy Lop) support.
-   Code built this way is unusable as a regular server. [default=no]])],
-  [enable_fuzzing=$enableval], [enable_fuzzing=no])
-AM_CONDITIONAL([ENABLE_AFL], [test x$enable_fuzzing != xno])
+  [AS_HELP_STRING(
+    [--enable-fuzzing[[=mode]]],
+    [indicates that the code will be built for fuzzing purposes.
+     Code built this way is unusable as a regular server.
+     Mode can be ci or standalone. [default=no]])],
+  [if test ! "${CPP17_SUPPORTED}"; then
+     AC_MSG_RESULT("no. Fuzzing requires C++17 support.")
+     AC_MSG_ERROR("Fuzzing requires C++17 support.")
+   fi
+   enable_fuzzing=${enableval}],
+  [enable_fuzzing=no]
+)
+AM_CONDITIONAL([FUZZING], [test "${enable_fuzzing}" != 'no'])
+AM_CONDITIONAL([FUZZING_IN_CI], [test "${enable_fuzzing}" = 'ci'])
+fuzzing_enabled='no'
+if test "${enable_fuzzing}" != 'no' ; then
+  fuzzing_enabled='yes'
+  AC_DEFINE([FUZZING], [true], [Fuzzing enabled.])
 
-if test "x$enable_fuzzing" != "xno" ; then
-    AC_DEFINE([ENABLE_AFL], [1], [AFL fuzzing was enabled.])
-    AC_MSG_CHECKING([for AFL enabled compiler])
-    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],
-                                          [#ifndef __AFL_COMPILER
-                                           #error AFL compiler required
-                                           #endif
-                                          ])],
-                         [AC_MSG_RESULT([yes])],
-                         [AC_MSG_ERROR([set CXX to afl-clang-fast++ when --enable-fuzzing is used])])
+  if test "${enable_fuzzing}" = 'ci'; then
+    fuzzing_enabled='yes, running in CI'
+    AC_DEFINE([FUZZING_IN_CI], [true], [Fuzzing running in CI.])
+  fi
 fi
+AC_MSG_RESULT(${fuzzing_enabled})
 
+# Check for AFL.
+AC_MSG_CHECKING([for AFL compiler])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],
+                                   [#ifndef __AFL_COMPILER
+                                      #error AFL compiler required
+                                    #endif
+                                   ])],
+                  [have_afl='yes'],
+                  [have_afl='no'])
+AC_MSG_RESULT([${have_afl}])
+AM_CONDITIONAL([HAVE_AFL], [test "${have_afl}" = 'yes'])
+if test "${have_afl}" = 'yes'; then
+  AC_DEFINE([HAVE_AFL], [true], [AFL compiler enabled.])
+fi
 
 # Check for optreset in unistd.h. On BSD systems the optreset is
 # used to reset the state of getopt() function. Resetting its state
@@ -2148,7 +2183,8 @@ Developer:
   Generate Messages Files:   $enable_generate_messages
   Perfdhcp:                  $enable_perfdhcp
   Kea-shell:                 $shell_report
-  Enable fuzzing:            $enable_fuzzing
+  Fuzzing:                   $fuzzing_enabled
+  AFL:                       $have_afl
 
 END
 

@@ -454,9 +454,7 @@ public:
     /// for testing purposes only.
     ///
     /// @return UDP port on which server should listen.
-    uint16_t getServerPort() const {
-        return (server_port_);
-    }
+    uint16_t getServerPort() const;
 
     /// @brief Return bool value indicating that broadcast flags should be set
     /// on sockets.

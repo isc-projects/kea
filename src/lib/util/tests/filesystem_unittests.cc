@@ -85,7 +85,8 @@ TEST_F(FileUtilTest, umask) {
 TEST(PathTest, components) {
     // Complete name
     Path fname("/alpha/beta/gamma.delta");
-    EXPECT_EQ("/alpha/beta/", fname.parentPath());
+    EXPECT_EQ("/alpha/beta/gamma.delta", fname.str());
+    EXPECT_EQ("/alpha/beta", fname.parentPath());
     EXPECT_EQ("gamma", fname.stem());
     EXPECT_EQ(".delta", fname.extension());
     EXPECT_EQ("gamma.delta", fname.filename());
@@ -94,6 +95,7 @@ TEST(PathTest, components) {
 /// @brief Check replaceExtension.
 TEST(PathTest, replaceExtension) {
     Path fname("a.b");
+    EXPECT_EQ("a.b", fname.str());
 
     EXPECT_EQ("a", fname.replaceExtension("").str());
     EXPECT_EQ("a.f", fname.replaceExtension(".f").str());
@@ -110,11 +112,11 @@ TEST(PathTest, replaceParentPath) {
     EXPECT_EQ("a.b", fname.str());
 
     fname.replaceParentPath("/just/some/dir/");
-    EXPECT_EQ("/just/some/dir/", fname.parentPath());
+    EXPECT_EQ("/just/some/dir", fname.parentPath());
     EXPECT_EQ("/just/some/dir/a.b", fname.str());
 
     fname.replaceParentPath("/just/some/dir");
-    EXPECT_EQ("/just/some/dir/", fname.parentPath());
+    EXPECT_EQ("/just/some/dir", fname.parentPath());
     EXPECT_EQ("/just/some/dir/a.b", fname.str());
 
     fname.replaceParentPath("/");
@@ -126,11 +128,11 @@ TEST(PathTest, replaceParentPath) {
     EXPECT_EQ("a.b", fname.str());
 
     fname = Path("/first/a.b");
-    EXPECT_EQ("/first/", fname.parentPath());
+    EXPECT_EQ("/first", fname.parentPath());
     EXPECT_EQ("/first/a.b", fname.str());
 
     fname.replaceParentPath("/just/some/dir");
-    EXPECT_EQ("/just/some/dir/", fname.parentPath());
+    EXPECT_EQ("/just/some/dir", fname.parentPath());
     EXPECT_EQ("/just/some/dir/a.b", fname.str());
 }
 

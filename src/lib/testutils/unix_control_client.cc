@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -73,6 +73,10 @@ bool UnixControlClient::connectToServer(const std::string& socket_path) {
 }
 
 bool UnixControlClient::sendCommand(const std::string& command) {
+    if (socket_fd_ < 0) {
+        ADD_FAILURE() << "send command with closed socket";
+        return (false);
+    }
     // Send command
     int bytes_sent = send(socket_fd_, command.c_str(), command.length(), 0);
     if (bytes_sent < command.length()) {
@@ -118,13 +122,21 @@ bool UnixControlClient::getResponse(std::string& response,
 }
 
 int UnixControlClient::selectCheck(const unsigned int timeout_sec) {
+    if (socket_fd_ < 0) {
+        ADD_FAILURE() << "select check with closed socket";
+        return -1;
+    }
+    if (socket_fd_ > 1023) {
+        ADD_FAILURE() << "select check with out of bound socket";
+        return -1;
+    }
     int maxfd = 0;
 
     fd_set read_fds;
     FD_ZERO(&read_fds);
 
     // Add this socket to listening set
-    FD_SET(socket_fd_,  &read_fds);
+    FD_SET(socket_fd_, &read_fds);
     maxfd = socket_fd_;
 
     struct timeval select_timeout;
@@ -134,6 +146,6 @@ int UnixControlClient::selectCheck(const unsigned int timeout_sec) {
     return (select(maxfd + 1, &read_fds, NULL, NULL, &select_timeout));
 }
 
-};
-};
-};
+}
+}
+}

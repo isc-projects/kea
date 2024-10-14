@@ -14,7 +14,7 @@ namespace isc {
 namespace util {
 namespace file {
 
-/// \brief Get the content of a regular file.
+/// @brief Get the content of a regular file.
 ///
 /// \param file_name The file name.
 ///
@@ -23,7 +23,7 @@ namespace file {
 std::string
 getContent(const std::string& file_name);
 
-/// \brief Check if there is a file or directory at the given path.
+/// @brief Check if there is a file or directory at the given path.
 ///
 /// \param path The path being checked.
 ///
@@ -31,7 +31,7 @@ getContent(const std::string& file_name);
 bool
 exists(const std::string& path);
 
-/// \brief Check if there is a directory at the given path.
+/// @brief Check if there is a directory at the given path.
 ///
 /// \param path The path being checked.
 ///
@@ -40,7 +40,7 @@ exists(const std::string& path);
 bool
 isDir(const std::string& path);
 
-/// \brief Check if there is a file at the given path.
+/// @brief Check if there is a file at the given path.
 ///
 /// \param path The path being checked.
 ///
@@ -49,66 +49,69 @@ isDir(const std::string& path);
 bool
 isFile(const std::string& path);
 
-/// \brief RAII device to limit access of created files.
+/// @brief RAII device to limit access of created files.
 struct Umask {
-    /// \brief Constructor
+    /// @brief Constructor
     ///
     /// Set wanted bits in umask.
     Umask(mode_t mask);
 
-    /// \brief Destructor.
+    /// @brief Destructor.
     ///
     /// Restore umask.
     ~Umask();
 
 private:
-    /// \brief Original umask.
+    /// @brief Original umask.
     mode_t orig_umask_;
 };
 
-/// \brief Paths on a filesystem
+bool
+isSocket(const std::string& path);
+
+/// @brief Paths on a filesystem
 struct Path {
-    /// \brief Constructor
+    /// @brief Constructor
     ///
     /// Splits the full name into components.
     Path(std::string const& path);
 
-    /// \brief Get the path in textual format.
+    /// @brief Get the path in textual format.
     ///
     /// Counterpart for std::filesystem::path::string.
     ///
     /// \return stored filename.
     std::string str() const;
 
-    /// \brief Get the parent path.
+    /// @brief Get the parent path.
     ///
     /// Counterpart for std::filesystem::path::parent_path.
     ///
     /// \return parent path of current path.
     std::string parentPath() const;
 
-    /// \brief Get the base name of the file without the extension.
+    /// @brief Get the base name of the file without the extension.
     ///
     /// Counterpart for std::filesystem::path::stem.
     ///
     /// \return the base name of current path without the extension.
     std::string stem() const;
 
-    /// \brief Get the extension of the file.
+    /// @brief Get the extension of the file.
     ///
     /// Counterpart for std::filesystem::path::extension.
     ///
     /// \return extension of current path.
     std::string extension() const;
 
-    /// \brief Get the name of the file, extension included.
+    /// @brief Get the name of the file, extension included.
     ///
     /// Counterpart for std::filesystem::path::filename.
     ///
     /// \return name + extension of current path.
     std::string filename() const;
 
-    /// \brief Identifies the extension in {replacement}, trims it, and
+    /// @brief Identifies the extension in {replacement}, trims it, and
     /// replaces this instance's extension with it.
     ///
     /// Counterpart for std::filesystem::path::replace_extension.
@@ -121,7 +124,7 @@ struct Path {
     /// \return The current instance after the replacement was done.
     Path& replaceExtension(std::string const& replacement = std::string());
 
-    /// \brief Trims {replacement} and replaces this instance's parent path with
+    /// @brief Trims {replacement} and replaces this instance's parent path with
     /// it.
     ///
     /// The change is done in the members and {this} is returned to allow call
@@ -133,14 +136,22 @@ struct Path {
     Path& replaceParentPath(std::string const& replacement = std::string());
 
 private:
-    /// \brief Parent path.
+    /// @brief Parent path.
     std::string parent_path_;
 
-    /// \brief Stem.
+    /// @brief Stem.
     std::string stem_;
 
-    /// \brief File name extension.
+    /// @brief File name extension.
     std::string extension_;
+};
+
+struct TemporaryDirectory {
+    TemporaryDirectory();
+    ~TemporaryDirectory();
+    std::string dirName();
+private:
+    std::string dir_name_;
 };
 
 }  // namespace file

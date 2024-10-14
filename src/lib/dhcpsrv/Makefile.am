@@ -172,11 +172,11 @@ libkea_dhcpsrv_la_SOURCES += parsers/simple_parser4.h
 libkea_dhcpsrv_la_SOURCES += parsers/simple_parser6.cc
 libkea_dhcpsrv_la_SOURCES += parsers/simple_parser6.h
 
-if ENABLE_AFL
-libkea_dhcpsrv_la_SOURCES += fuzz.cc fuzz.h
+if FUZZING
+libkea_dhcpsrv_la_SOURCES += packet-fuzzer.cc packet-fuzzer.h
 libkea_dhcpsrv_la_SOURCES += fuzz_log.cc fuzz_log.h
 libkea_dhcpsrv_la_SOURCES += fuzz_messages.cc fuzz_messages.h
-endif
+endif  # FUZZING
 
 libkea_dhcpsrv_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_dhcpsrv_la_CPPFLAGS = $(AM_CPPFLAGS)
@@ -350,9 +350,9 @@ libkea_dhcpsrv_include_HEADERS = \
 	utils.h \
 	writable_host_data_source.h
 
-if ENABLE_AFL
+if FUZZING
 libkea_dhcpsrv_include_HEADERS += \
-	fuzz.h \
+	packet-fuzzer.h \
 	fuzz_log.h \
 	fuzz_messages.h
 endif

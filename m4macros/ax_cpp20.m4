@@ -1,9 +1,8 @@
 AC_DEFUN([AX_ISC_CPP20], [
-    AC_MSG_CHECKING(c++20 support)
+    AC_MSG_CHECKING([c++20 support])
 
     # Save flags.
     CPPFLAGS_SAVED="${CPPFLAGS}"
-    LIBS_SAVED="${LIBS}"
 
     # Provide -std=c++20 flag temporarily.
     CPPFLAGS="${CPPFLAGS} -std=c++20"

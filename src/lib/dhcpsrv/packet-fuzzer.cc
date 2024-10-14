@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2019  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,14 +6,10 @@
 
 #include <config.h>
 
-#ifdef ENABLE_AFL
-
-#ifndef __AFL_LOOP
-#error To use American Fuzzy Lop you have to set CXX to afl-clang-fast++
-#endif
+#ifdef FUZZING
 
 #include <dhcp/dhcp6.h>
-#include <dhcpsrv/fuzz.h>
+#include <dhcpsrv/packet-fuzzer.h>
 #include <dhcpsrv/fuzz_log.h>
 
 #include <boost/lexical_cast.hpp>
@@ -23,6 +19,7 @@
 #include <string.h>
 #include <signal.h>
 
+#include <algorithm>
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -32,39 +29,29 @@ using namespace isc;
 using namespace isc::dhcp;
 using namespace std;
 
-// Constants defined in the Fuzz class definition.
-constexpr size_t        Fuzz::BUFFER_SIZE;
-constexpr size_t        Fuzz::MAX_SEND_SIZE;
-constexpr long          Fuzz::MAX_LOOP_COUNT;
+// Constants defined in the PacketFuzzer class definition.
+constexpr size_t        PacketFuzzer::BUFFER_SIZE;
+constexpr size_t        PacketFuzzer::MAX_SEND_SIZE;
+constexpr long          PacketFuzzer::MAX_LOOP_COUNT;
 
 // Constructor
-Fuzz::Fuzz(int ipversion, uint16_t port) :
-    loop_max_(MAX_LOOP_COUNT), sockaddr_len_(0), sockaddr_ptr_(nullptr),
-    sockfd_(-1) {
+PacketFuzzer::PacketFuzzer(int const ipversion,
+                           uint16_t const port,
+                           string const interface,
+                           string const address)
+    : loop_max_(MAX_LOOP_COUNT), sockaddr_len_(0), sockaddr_ptr_(nullptr), sockfd_(-1) {
 
     try {
         stringstream reason;    // Used to construct exception messages
 
-        // Get the values of the environment variables used to control the
-        // fuzzing.
-
-        // Specfies the interface to be used to pass packets from AFL to Kea.
-        const char* interface = getenv("KEA_AFL_INTERFACE");
-        if (! interface) {
-            isc_throw(FuzzInitFail, "no fuzzing interface has been set");
-        }
-
-        // The address on the interface to be used.
-        const char* address = getenv("KEA_AFL_ADDRESS");
-        if (address == 0) {
-            isc_throw(FuzzInitFail, "no fuzzing address has been set");
-        }
-
         // Number of Kea packet-read loops before Kea exits and AFL starts a
         // new instance.  This is optional: the default is set by the constant
         // MAX_LOOP_COUNT.
-        const char *loop_max_ptr = getenv("KEA_AFL_LOOP_MAX");
-        if (loop_max_ptr != 0) {
+        const char *loop_max_ptr(nullptr);
+#ifdef HAVE_AFL
+        loop_max_ptr = getenv("KEA_AFL_LOOP_MAX");
+#endif
+        if (loop_max_ptr) {
             try {
                 loop_max_ = boost::lexical_cast<long>(loop_max_ptr);
             } catch (const boost::bad_lexical_cast&) {
@@ -81,7 +68,7 @@ Fuzz::Fuzz(int ipversion, uint16_t port) :
         }
 
         // Set up address structures used to route the packets from AFL to Kea.
-        createAddressStructures(ipversion, interface, address, port);
+        createAddressStructures(ipversion, port, interface, address);
 
         // Create the socket through which packets read from stdin will be sent
         // to the port on which Kea is listening.  This is closed in the
@@ -105,24 +92,26 @@ Fuzz::Fuzz(int ipversion, uint16_t port) :
 }
 
 // Destructor
-Fuzz::~Fuzz() {
+PacketFuzzer::~PacketFuzzer() {
     static_cast<void>(close(sockfd_));
 }
 
 // Set up address structures.
 void
-Fuzz::createAddressStructures(int ipversion, const char* interface,
-                              const char* address, uint16_t port) {
+PacketFuzzer::createAddressStructures(int const ipversion,
+                                      uint16_t const port,
+                                      string const interface,
+                                      string const address) {
     stringstream reason;    // Used in error messages
 
     // Set up the appropriate data structure depending on the address given.
-    if ((ipversion == 6) && (strstr(address, ":") != NULL)) {
+    if (ipversion == 6 && address.find(":") != string::npos) {
         // Expecting IPv6 and the address contains a colon, so assume it is an
         // an IPv6 address.
         memset(&servaddr6_, 0, sizeof (servaddr6_));
 
         servaddr6_.sin6_family = AF_INET6;
-        if (inet_pton(AF_INET6, address, &servaddr6_.sin6_addr) != 1) {
+        if (inet_pton(AF_INET6, address.c_str(), &servaddr6_.sin6_addr) != 1) {
             reason << "inet_pton() failed: can't convert "
                    << address << " to an IPv6 address" << endl;
             isc_throw(FuzzInitFail, reason.str());
@@ -130,7 +119,7 @@ Fuzz::createAddressStructures(int ipversion, const char* interface,
         servaddr6_.sin6_port = htons(port);
 
         // Interface ID is needed for IPv6 address structures.
-        servaddr6_.sin6_scope_id = if_nametoindex(interface);
+        servaddr6_.sin6_scope_id = if_nametoindex(interface.c_str());
         if (servaddr6_.sin6_scope_id == 0) {
             reason << "error retrieving interface ID for "
                    << interface << ": " << strerror(errno);
@@ -140,14 +129,14 @@ Fuzz::createAddressStructures(int ipversion, const char* interface,
         sockaddr_ptr_ = reinterpret_cast<sockaddr*>(&servaddr6_);
         sockaddr_len_ = sizeof(servaddr6_);
 
-    } else if ((ipversion == 4) && (strstr(address, ".") != NULL)) {
+    } else if (ipversion == 4 && address.find(".") != string::npos) {
         // Expecting an IPv4 address and it contains a dot, so assume it is.
         // This check is done after the IPv6 check, as it is possible for an
         // IPv4 address to be embedded in an IPv6 one.
         memset(&servaddr4_, 0, sizeof(servaddr4_));
 
         servaddr4_.sin_family = AF_INET;
-        if (inet_pton(AF_INET, address, &servaddr4_.sin_addr) != 1) {
+        if (inet_pton(AF_INET, address.c_str(), &servaddr4_.sin_addr) != 1) {
             reason << "inet_pton() failed: can't convert "
                    << address << " to an IPv6 address" << endl;
             isc_throw(FuzzInitFail, reason.str());
@@ -166,16 +155,26 @@ Fuzz::createAddressStructures(int ipversion, const char* interface,
 
 }
 
+void
+PacketFuzzer::transfer() const {
+    // Read from stdin.  Just return if nothing is read (or there is an error)
+    // and hope that this does not cause a hang.
+    uint8_t buf[BUFFER_SIZE];
+    ssize_t const length(read(0, buf, sizeof(buf)));
+
+    transfer(&buf[0], length);
+}
 
 // This is the main fuzzing function. It receives data from fuzzing engine over
 // stdin and then sends it to the configured UDP socket.
 void
-Fuzz::transfer(void) const {
-
-    // Read from stdin.  Just return if nothing is read (or there is an error)
-    // and hope that this does not cause a hang.
+PacketFuzzer::transfer(uint8_t const* data, size_t size) const {
     char buf[BUFFER_SIZE];
-    ssize_t length = read(0, buf, sizeof(buf));
+    ssize_t const length(size);
+
+    if (data) {
+        memcpy(&buf[0], data, min(BUFFER_SIZE, size));
+    }
 
     // Save the errno in case there was an error because if debugging is
     // enabled, the following LOG_DEBUG call may destroy its value.
@@ -189,12 +188,12 @@ Fuzz::transfer(void) const {
         size_t send_len = (length < MAX_SEND_SIZE) ? length : MAX_SEND_SIZE;
         ssize_t sent = sendto(sockfd_, buf, send_len, 0, sockaddr_ptr_,
                               sockaddr_len_);
-        if (sent > 0) {
-            LOG_DEBUG(fuzz_logger, FUZZ_DBG_TRACE_DETAIL, FUZZ_SEND).arg(sent);
+        if (sent < 0) {
+            LOG_ERROR(fuzz_logger, FUZZ_SEND_ERROR).arg(strerror(errno));
         } else if (sent != length) {
             LOG_WARN(fuzz_logger, FUZZ_SHORT_SEND).arg(length).arg(sent);
         } else {
-            LOG_ERROR(fuzz_logger, FUZZ_SEND_ERROR).arg(strerror(errno));
+            LOG_DEBUG(fuzz_logger, FUZZ_DBG_TRACE_DETAIL, FUZZ_SEND).arg(sent);
         }
     } else {
         // Read did not get any bytes.  A zero-length read (EOF) may have been
@@ -203,7 +202,6 @@ Fuzz::transfer(void) const {
             LOG_ERROR(fuzz_logger, FUZZ_READ_FAIL).arg(strerror(errnum));
         }
     }
-
 }
 
-#endif  // ENABLE_AFL
+#endif  // FUZZING

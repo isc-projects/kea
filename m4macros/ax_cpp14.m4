@@ -4,6 +4,8 @@ CXX_SAVED=$CXX
 feature=
 for retry in "none" "--std=c++14" "--std=c++1y" "fail"; do
         if test "$retry" = "fail"; then
+                AC_MSG_CHECKING([c++14 support])
+                AC_MSG_RESULT([no])
                 AC_MSG_ERROR([$feature (a C++14 feature) is not supported])
         fi
         if test "$retry" != "none"; then
@@ -249,5 +251,8 @@ for retry in "none" "--std=c++14" "--std=c++1y" "fail"; do
                  continue])
         break
 done
+
+AC_MSG_CHECKING([c++14 support])
+AC_MSG_RESULT([yes])
 
 ])

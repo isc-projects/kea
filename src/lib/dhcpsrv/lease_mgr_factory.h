@@ -42,6 +42,10 @@ public:
 ///        user-supplied backends (so that there is no need to modify the code).
 class LeaseMgrFactory {
 public:
+    ~LeaseMgrFactory() {
+        destroy();
+    }
+
     /// @brief Create an instance of a lease manager.
     ///
     /// Each database backend has its own lease manager type.  This static

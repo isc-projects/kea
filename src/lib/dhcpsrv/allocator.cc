@@ -1,4 +1,4 @@
-// Copyright (C) 2022-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2022-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -31,8 +31,7 @@ Allocator::~Allocator() {
         return;
     }
     // Remove the callbacks.
-    auto& lease_mgr = LeaseMgrFactory::instance();
-    lease_mgr.unregisterCallbacks(subnet_id_, pool_type_);
+    LeaseMgrFactory::instance().unregisterCallbacks(subnet_id_, pool_type_);
 }
 
 bool
