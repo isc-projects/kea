@@ -2975,7 +2975,7 @@ TEST_F(ClassifyTest, requestedOptionClassTag) {
     oro->addValue(1251);
     query->addOption(oro);
 
-    // Classify the query. 
+    // Classify the query.
     srv.classifyPacket(query);
 
     // Verify query is in class "right".
@@ -3048,7 +3048,7 @@ TEST_F(ClassifyTest, vendorClassOptionClassTag) {
     OptionPtr clientid2(new Option(Option::V6, D6O_CLIENTID, buf));
     query->addOption(clientid2);
 
-    // Classify the query. 
+    // Classify the query.
     srv.classifyPacket(query);
 
     // Verify query is in class "melon".
@@ -3064,7 +3064,7 @@ TEST_F(ClassifyTest, vendorClassOptionClassTag) {
     // Create a SOLICIT that does not match class "right".
     query = createSolicit();
 
-    // Classify the query. 
+    // Classify the query.
     srv.classifyPacket(query);
 
     // Verify query is in not class "melon".
@@ -3079,7 +3079,7 @@ TEST_F(ClassifyTest, vendorClassOptionClassTag) {
 }
 
 // Verifies that D6O_VENDOR_OPTS option can be gated by option class
-// tagging. Note that class-tagging only suppresses this option when 
+// tagging. Note that class-tagging only suppresses this option when
 // none of the vendor's sub-options are being returned.
 TEST_F(ClassifyTest, persistedVendorOptsOptionClassTag) {
     IfaceMgrTestConfig test_config(true);
@@ -3122,7 +3122,7 @@ TEST_F(ClassifyTest, persistedVendorOptsOptionClassTag) {
     // Create a SOLICIT that does not match class.
     Pkt6Ptr query = createSolicit();
 
-    // Classify the query. 
+    // Classify the query.
     srv.classifyPacket(query);
 
     // Verify query is not in class "melon".
@@ -3145,7 +3145,7 @@ TEST_F(ClassifyTest, persistedVendorOptsOptionClassTag) {
     OptionPtr clientid2(new Option(Option::V6, D6O_CLIENTID, buf));
     query->addOption(clientid2);
 
-    // Classify the query. 
+    // Classify the query.
     srv.classifyPacket(query);
 
     // Verify query is in class "melon".
@@ -3200,7 +3200,7 @@ TEST_F(ClassifyTest, requestedVendorOptionsClassTag) {
             "code": 103,
             "type": "string"
         }],
-        "option-data": [{ 
+        "option-data": [{
             "space": "vendor-4491",
             "code": 101,
             "csv-format": true,
@@ -3251,7 +3251,7 @@ TEST_F(ClassifyTest, requestedVendorOptionsClassTag) {
     vendor_oro->addValue(103);
     vendor->addOption(vendor_oro);
 
-    // Classify the query. 
+    // Classify the query.
     srv.classifyPacket(query);
 
     // Verify query is in class "melon".

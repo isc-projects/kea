@@ -8987,6 +8987,81 @@ TEST_F(Dhcp6ParserTest, storeDdnsConflictResolutionMode) {
     }
 }
 
+// This test verifies that class tagging can occur at any scope.
+TEST_F(Dhcp6ParserTest, classTagging) {
+    std::string config = "{ " + genIfaceConfig() + ","
+        R"^(
+        "option-data": [{
+             "name": "domain-search",
+             "data": "example.com",
+             "client-classes": [ "in-global" ]
+        }],
+        "valid-lifetime": 4000,
+        "preferred-lifetime": 3000,
+        "rebind-timer": 2000,
+        "renew-timer": 1000,
+        "shared-networks": [{
+            "name": "foo",
+            "subnet6": [{
+                "id": 1,
+                "subnet": "2001:db8::/32",
+                "option-data": [{
+                    "name": "domain-search",
+                    "data": "example.com",
+                    "client-classes": [ "in-subnet" ]
+                }],
+                "pools": [{
+                    "pool": "2001:db8::/64",
+                    "option-data": [{
+                        "name": "domain-search",
+                        "data": "example.com",
+                        "client-classes": [ "in-pool" ]
+                     }]
+                }],
+                "pd-pools": [{
+                    "prefix": "3001:db8::",
+                    "prefix-len": 56,
+                    "delegated-len": 64,
+                    "option-data": [{
+                        "name": "domain-search",
+                        "data": "example.com",
+                        "client-classes": [ "in-pd-pool" ]
+                    }]
+                }],
+                "reservations": [{
+                    "hw-address": "AA:BB:CC:DD:EE:FF",
+                    "option-data": [{
+                        "name": "domain-search",
+                        "data": "example.com",
+                        "client-classes": [ "in-reservation" ]
+                    }]
+               }]
+            }],
+            "option-data": [{
+                "name": "domain-search",
+                "data": "example.com",
+                "client-classes": [ "in-network" ]
+            }]
+        }],
+        "client-classes": [{
+            "name": "foo",
+            "option-data": [{
+                "name": "domain-search",
+                "data": "example.com",
+                "client-classes": [ "in-class" ]
+            }]
+        }]
+        })^";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
+    extractConfig(config);
+
+    ConstElementPtr status;
+    ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    checkResult(status, 0);
+}
+
 // This test verifies that duplicates in option-data.client-classes
 // are ignored and do not affect class order.
 TEST_F(Dhcp6ParserTest, optionClientClassesDuplicateCheck) {

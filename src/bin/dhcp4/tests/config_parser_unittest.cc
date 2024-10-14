@@ -8013,7 +8013,71 @@ TEST_F(Dhcp4ParserTest, storeDdnsConflictResolutionMode) {
     }
 }
 
-//This test verifies that duplicates in option-data.client-classes
+// This test verifies that class tagging can occur at any scope.
+TEST_F(Dhcp4ParserTest, classTagging) {
+    std::string config = "{ " + genIfaceConfig() + ","
+        R"^(
+        "option-data": [{
+             "name": "domain-name",
+             "data": "example.com",
+             "client-classes": [ "in-global" ]
+        }],
+        "valid-lifetime": 4000,
+        "rebind-timer": 2000,
+        "renew-timer": 1000,
+        "shared-networks": [{
+            "name": "foo",
+            "subnet4": [{
+                "id": 1,
+                "subnet": "192.0.2.0/24",
+                "option-data": [{
+                    "name": "domain-name",
+                    "data": "example.com",
+                    "client-classes": [ "in-subnet" ]
+                }],
+                "pools": [{
+                    "pool": "192.0.2.0/28",
+                    "option-data": [{
+                        "name": "domain-name",
+                        "data": "example.com",
+                        "client-classes": [ "in-pool" ]
+                     }]
+                }],
+                "reservations": [{
+                    "hw-address": "AA:BB:CC:DD:EE:FF",
+                    "option-data": [{
+                        "name": "domain-name",
+                        "data": "example.com",
+                        "client-classes": [ "in-reservation" ]
+                    }]
+               }]
+            }],
+            "option-data": [{
+                "name": "domain-name",
+                "data": "example.com",
+                "client-classes": [ "in-network" ]
+            }]
+        }],
+        "client-classes": [{
+            "name": "foo",
+            "option-data": [{
+                "name": "domain-name",
+                "data": "example.com",
+                "client-classes": [ "in-class" ]
+            }]
+        }]
+        })^";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
+
+    ConstElementPtr status;
+    ASSERT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    checkResult(status, 0);
+}
+
+// This test verifies that duplicates in option-data.client-classes
 // are ignored and do not affect class order.
 TEST_F(Dhcp4ParserTest, optionClientClassesDuplicateCheck) {
     std::string config = "{ " + genIfaceConfig() + ","

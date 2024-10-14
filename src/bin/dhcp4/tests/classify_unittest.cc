@@ -1752,7 +1752,7 @@ TEST_F(ClassifyTest, vendorOptionClassTagTest) {
             "code": 103,
             "type": "string"
         }],
-        "option-data": [{ 
+        "option-data": [{
             "space": "vendor-4491",
             "code": 101,
             "csv-format": true,
@@ -1801,7 +1801,7 @@ TEST_F(ClassifyTest, vendorOptionClassTagTest) {
     // Add the ORO sub-option requesting all three sub-options.
     boost::shared_ptr<OptionUint8Array> vendor_oro(new OptionUint8Array(Option::V4,
                                                                         DOCSIS3_V4_ORO));
-    vendor_oro->addValue(101); 
+    vendor_oro->addValue(101);
     vendor_oro->addValue(102);
     vendor_oro->addValue(103);
     vendor->addOption(vendor_oro);
@@ -1832,7 +1832,7 @@ TEST_F(ClassifyTest, vendorOptionClassTagTest) {
     EXPECT_TRUE(vendor_resp->getOption(103));
 }
 
-// Verifies that a requested VIVCO suboption can be gated by 
+// Verifies that a requested VIVCO suboption can be gated by
 // option class tagging.
 TEST_F(ClassifyTest, vivcoOptionClassTagTest) {
     IfaceMgrTestConfig test_config(true);
@@ -1926,7 +1926,7 @@ TEST_F(ClassifyTest, vivcoOptionClassTagTest) {
     ASSERT_FALSE(tmp);
 }
 
-// Verifies that requested VIVSO suboption can be gated by 
+// Verifies that requested VIVSO suboption can be gated by
 // option class tagging.
 TEST_F(ClassifyTest, vivsoOptionClassTagTest) {
     IfaceMgrTestConfig test_config(true);
@@ -2105,7 +2105,7 @@ TEST_F(ClassifyTest, basicOptionClassTagTest) {
     tmp = response1->getOption(DHO_DOMAIN_NAME_SERVERS);
     EXPECT_TRUE(tmp);
 
-    // Verify that server id is present and is the configured value. 
+    // Verify that server id is present and is the configured value.
     checkServerIdentifier(response1, "192.0.2.0");
 
     // Try again with a client id that does not match "melon".
