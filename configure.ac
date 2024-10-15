@@ -1428,6 +1428,10 @@ AC_ARG_ENABLE([fuzzing],
      AC_MSG_RESULT("no. Fuzzing requires C++17 support.")
      AC_MSG_ERROR("Fuzzing requires C++17 support.")
    fi
+   if test "${enable_gtest}" = 'no'; then
+     AC_MSG_RESULT("no. Fuzzing requires gtest to be enabled.")
+     AC_MSG_ERROR("Fuzzing requires gtest to be enabled.")
+   fi
    enable_fuzzing=${enableval}],
   [enable_fuzzing=no]
 )
@@ -1503,6 +1507,7 @@ if (echo ${runstatedir} | grep -q localstatedir); then
     runstatedir="$(eval echo ${runstatedir})"
 fi
 
+AC_CONFIG_FILES([kea_version.h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([doc/Makefile])
 AC_CONFIG_FILES([doc/sphinx/Makefile])
@@ -1510,7 +1515,9 @@ AC_CONFIG_FILES([doc/devel/Makefile])
 AC_CONFIG_FILES([ext/Makefile])
 AC_CONFIG_FILES([ext/gtest/Makefile])
 AC_CONFIG_FILES([ext/coroutine/Makefile])
-AC_CONFIG_FILES([kea_version.h])
+AC_CONFIG_FILES([fuzz/Makefile])
+AC_CONFIG_FILES([fuzz/input/Makefile])
+AC_CONFIG_FILES([fuzz/tests/Makefile])
 AC_CONFIG_FILES([m4macros/Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([src/bin/Makefile])

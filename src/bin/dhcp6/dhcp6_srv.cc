@@ -40,7 +40,7 @@
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/ncr_generator.h>
-#include <dhcpsrv/packet-fuzzer.h>
+#include <dhcpsrv/packet_fuzzer.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_selector.h>
 #include <dhcpsrv/utils.h>
@@ -616,7 +616,7 @@ Dhcpv6Srv::run() {
     }
 
     // Set up structures needed for fuzzing.
-    PacketFuzzer fuzzer(6, server_port_, interface, address);
+    PacketFuzzer fuzzer(server_port_, interface, address);
 
     // The next line is needed as a signature for AFL to recognize that we are
     // running persistent fuzzing.  This has to be in the main image file.
@@ -4920,7 +4920,8 @@ void Dhcpv6Srv::discardPackets() {
 }
 
 uint16_t Dhcpv6Srv::getServerPort() const {
-    char const* const randomize(getenv("KEA_DHCP6_FUZZING_RANDOMIZE_PORT"));
+#ifdef FUZZING
+    char const* const randomize(getenv("KEA_DHCP6_FUZZING_ROTATE_PORT"));
     if (randomize) {
         InterprocessSyncFile file("kea-dhcp6-fuzzing-randomize-port");
         InterprocessSyncLocker locker(file);
@@ -4949,6 +4950,7 @@ uint16_t Dhcpv6Srv::getServerPort() const {
         locker.unlock();
         return port;
     }
+#endif  // FUZZING
     return server_port_;
 }
 

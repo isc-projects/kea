@@ -94,7 +94,6 @@ LeaseMgrFactory::destroy() {
             .arg(getLeaseMgrPtr()->getType());
         getLeaseMgrPtr().reset();
     }
-    getLeaseMgrPtr().reset();
 }
 
 void

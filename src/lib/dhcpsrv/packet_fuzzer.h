@@ -9,6 +9,7 @@
 
 #ifdef FUZZING
 
+#include <asiolink/io_address.h>
 #include <exceptions/exceptions.h>
 
 #include <arpa/inet.h>
@@ -16,10 +17,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include <condition_variable>
-#include <mutex>
 #include <string>
-#include <thread>
 
 namespace isc {
 
@@ -69,12 +67,9 @@ public:
     /// Sets up data structures to access the address/port being used to
     /// transfer data from AFL to Kea.
     ///
-    /// @param ipversion Either 4 or 6 depending on what IP version the
-    ///                  server responds to.
     /// @param port      Port on which the server is listening, and hence the
     ///                  port to which the fuzzer will send input from AFL.
-    PacketFuzzer(int const ipversion,
-                 uint16_t const port,
+    PacketFuzzer(uint16_t const port,
                  std::string const interface,
                  std::string const address);
 
@@ -110,19 +105,15 @@ private:
     /// Create the address structures describing the address/port on whick Kea
     /// is listening for packets from AFL.
     ///
-    /// @param ipversion Either 4 or 6 depending on which IP version address
-    ///                  is expected.
-    /// @param interface Interface through which the fuzzer is sending packets
-    ///                  to Kea.
-    /// @param address   Address on the interface that will be used.
-    /// @param port      Port to be used.
+    /// @param port         Port to be used.
+    /// @param interface    Interface through which the fuzzer is sending packets to Kea.
+    /// @param io_address   Address on the interface that will be used.
     ///
     /// @throws FuzzInitFail Thrown if the address is not in the expected
     ///                      format.
-    void createAddressStructures(int const ipversion,
-                                 uint16_t const port,
-                                 std::string const interface,
-                                 std::string const address);
+    void createAddressStructures(uint16_t const port,
+                                 std::string const& interface,
+                                 isc::asiolink::IOAddress const& io_address);
 
     // Other member variables.
     long                loop_max_;      //< Maximum number of loop iterations

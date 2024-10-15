@@ -1,10 +1,11 @@
-// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 /**
+
 @page fuzzer Fuzzing Kea
 
 @section fuzzIntro Introduction
@@ -13,13 +14,125 @@ Fuzzing is a software-testing technique whereby a program is presented with a
 variety of generated data as input and is monitored for abnormal conditions
 such as crashes or hangs.
 
-Fuzz testing of Kea uses the AFL (American Fuzzy Lop) program.  In this, Kea is
-built using an AFL-supplied program that not only compiles the software but
-also instruments it.  When run, AFL generates test cases and monitors the
-execution of Kea as it processes them.  AFL will adjust the input based on
-these measurements, seeking to discover and test new execution paths.
+There are two ways to fuzz Kea.
 
-@section fuzzTypes Types of Kea Fuzzing
+Option 1. With the libfuzzer harness function LLVMFuzzerTestOneInput.
+
+Option 2. With the AFL (American Fuzzy Lop) compiler.
+
+@section LLVMFuzzerTestOneInput Using the LLVMFuzzerTestOneInput Harness Function
+
+This mode of fuzzing works with virtually any compiler.
+
+There are four types of fuzzers implemented with this mode:
+- Config fuzzer
+- HTTP endpoint fuzzer
+- Packet fuzzer
+- Unix socket fuzzer
+
+There are two binaries under test:
+- `kea-dhcp4`
+- `kea-dhcp6`
+
+Combining the binaries and the fuzzer types results in seven fuzzing binaries:
+- `fuzz/fuzz-config-kea-dhcp4`
+- `fuzz/fuzz-config-kea-dhcp6`
+- `fuzz/fuzz-http-endpoint`
+- `fuzz/fuzz-packets-kea-dhcp4`
+- `fuzz/fuzz-packets-kea-dhcp6`
+- `fuzz/fuzz-unix-socket-kea-dhcp4`
+- `fuzz/fuzz-unix-socket-kea-dhcp6`
+
+@subsection HowToBuild How to Build the LLVM Fuzzer
+
+Use the "--enable-fuzzing" during the configure step. Then just compile as usual.
+
+@code
+./configure --enable-fuzzing
+make
+@endcode
+
+You can check that `config.report` shows these lines:
+
+@code
+Developer:
+[...]
+   Fuzzing:                   yes
+   AFL:                       no
+@endcode
+
+Compiling with AFL is permitted, but is not required.
+
+@subsection HowToRun How to Run the LLVM Fuzzer
+
+Each of these binaries has two ways to run. It tries to find a directory called
+`input/<name>` relative to the binary where `<name>` is the name of the binary.
+
+- The first mode: if the directory exists, it recursively takes all the files
+from that directory and provides them as fuzz input one-by-one. All the fuzzers
+have an empty file and a one-byte file as inputs committed to the repository.
+Config fuzzers also have all the files in `doc/examples/kea[46]` symlinked.
+
+- The second mode: if the directory doesn't exist, then it accepts input from
+stdin, just like the old fuzzer did. In this mode, a fuzzer engine can be run on
+it. This is the mode used in CI.
+
+After compiling, all the fuzzers can be run with `make check` in the `fuzz`
+directory. The reasoning behind this is that while writing code, developers can
+quickly check if anything is broken. Obviously, this is not real fuzzing as long
+since the input from the `fuzz/input` directory is the same, but it rather tests
+if the fuzzers were broken during development.
+
+`make check` runs these fuzzers with `sudo`. It may interrupt the process asking
+for a password on systems that don't have passwordless root set up.
+
+@subsection FuzzingStructure The Code Structure of the LLVM Fuzzer
+
+The following functions are required to be implemented in each new fuzzer:
+
+- `int LLVMFuzzerInitialize();` - Does initialization that is required by the
+fuzzing. Is only run once. Is run automatically. It does not need to be run
+explicitly by the fuzzing engine.
+
+- `int LLVMFuzzerTearDown();` - Cleans up the setup like removing leftover
+files. Is automatically run at the beginning and the end of the fuzzing. It does
+not need to be run explicitly by the fuzzing engine.
+
+- `int LLVMFuzzerTestOneInput(uint8_t const* data, size_t size);` - Implements
+the actual fuzzing. Takes the parameter input and achieves the object of the
+fuzzing with it. It needs to start with
+`static bool initialized(DoInitialization());` to do the initialization only
+once. This function is the only one that needs to be run explicitly by the
+fuzzing engine.
+
+The following functions are common to all fuzzers:
+
+- `int main(int, char* argv[])` - Implements the input searching mentioned
+above.
+
+- `bool DoInitialization();` - Sets up logging to prevent spurious logging and
+calls `int LLVMFuzzerInitialize();`.
+
+- `void writeToFile(std::string const& file, std::string const& content);` -
+A helpful function to write to file used in some fuzzers.
+
+@subsection FuzzingConsiderations Development Considerations About LLVM Fuzzing in Kea
+
+Exceptions make it difficult to maintain a fuzzer. We have to triage some of the
+exceptions. For example, JSONError is thrown when an invalid JSON is provided as
+input in config fuzzing. That leads to a core dump and can be interpreted as a
+crash by the fuzzing engine, which is not really what we're interested in
+because this exception is caught in the kea-dhcp[46] binaries. The old way of
+fuzzing may have been better from this point of view, because there was the
+guarantee that the right exceptions were caught and nothing more and we didn't
+have to pay attention to what exceptions needed to be ignored and which weren't.
+
+@section usingAFL Using AFL
+
+In this, Kea is built using an AFL-supplied program that not only compiles the
+software but also instruments it.  When run, AFL generates test cases and
+monitors the execution of Kea as it processes them.  AFL will adjust the input
+based on these measurements, seeking to discover and test new execution paths.
 
 @subsection fuzzTypeNetwork Fuzzing with Network Packets
 
@@ -38,7 +151,7 @@ dictionary of valid keywords and runs Kea in configuration file check mode on
 them.  As with network packet fuzzing, the behaviour of Kea is monitored and
 the content of subsequent files adjusted accordingly.
 
-@section fuzzBuild Building Kea for Fuzzing
+@subsection fuzzBuild Building Kea for Fuzzing
 
 Whatever tests are done, Kea needs to be built with fuzzing in mind.  The steps
 for this are:
@@ -53,15 +166,15 @@ for this are:
 
 -# Build Kea.  Kea should be compiled and built as usual, although the
    following additional steps should be observed:
-   - Set the environment variable CXX to point to the afl-clang-fast++
+   - Set the environment variable CXX to point to the afl-clang-fast
      compiler.
    - Specify a value of "--prefix" on the command line to set the directory
      into which Kea is installed.
-   - Add the "--enable-fuzz" switch to the "configure" command line.
+   - Add the "--enable-fuzzing" switch to the "configure" command line.
    .
    For example:
    @code
-   CXX=/opt/afl/afl-clang-fast++ ./configure --enable-fuzz --prefix=$HOME/installed
+   CXX=afl-clang-fast ./configure --enable-fuzzing --prefix=$HOME/installed
    make
    @endcode
 
@@ -80,8 +193,6 @@ for this are:
    simpler to install the programs in the directories set by "--prefix" and run
    them from there.
 
-@section fuzzRun Running the Fuzzer
-
 @subsection fuzzRunNetwork Fuzzing with Network Packets
 
 -# In this type of fuzzing, Kea is processing packets from the fuzzer over a
@@ -95,20 +206,20 @@ for this are:
    using the loopback interface "lo" and IPv4 address 10.53.0.1, the
    configuration file would contain the following snippet:
    @code
+    {
        "Dhcp4": {
-           :
            "interfaces-config": {
-               "interfaces": ["lo/10.53.0.1"]
+               "interfaces": [
+                  "lo/10.53.0.1"
+               ]
            },
            "subnet4": [
                {
-                   :
-                   "interface": "lo",
-                   :
+                   "interface": "lo"
                }
-           ],
-           :
+           ]
         }
+    }
    @endcode
 
 -# The specification of the interface and address in the configuration file
@@ -140,7 +251,7 @@ for this are:
      data. Ensure that only the payload of the UDP packet is exported.
    - The "-o" switch specifies a directory (in this example called "fuzz-out")
      that AFL will use to hold packets it has generated and packets that it has
-     found causes crashes or hangs.
+     found causing crashes or hangs.
    - "--" Separates the AFL command line from that of Kea.
    - "./kea-dhcp6" is the program being fuzzed.  As mentioned above, this
      should be an executable image, and it will be simpler to fuzz one
@@ -164,7 +275,7 @@ for this are:
 @subsection fuzzRunConfig Fuzzing with Configuration Files
 
 AFL can be used to check the parsing of the configuration files.  In this type
-of fuzzing, AFL generates configuration files which is passes to Kea to check.
+of fuzzing, AFL generates configuration files which it passes to Kea to check.
 Steps for this fuzzing are:
 
 -# Build Kea as described above.
@@ -201,8 +312,6 @@ Steps for this fuzzing are:
      will replace these with the name of a file it has created when starting
      Kea.
 
-@section Fuzzing Internals
-
 @subsection fuzzInternalNetwork Fuzzing with Network Packets
 
 The AFL fuzzer delivers packets to Kea's stdin.  Although the part of Kea
@@ -217,7 +326,7 @@ while (not shutting down) {
     Read and process one packet
 }
 @endcode
-When --enable-fuzz is specified, this is conceptually modified to:
+When --enable-fuzzing is specified, this is conceptually modified to:
 @code{.unparsed}
 while (not shutting down) {
     Read stdin and copy data to address/port on which Kea is listening
@@ -225,10 +334,10 @@ while (not shutting down) {
 }
 @endcode
 
-Implementation is via an object of class "Fuzz".  When created, it identifies
-an interface, address and port on which Kea is listening and creates the
-appropriate address structures for these.  The port is passed as an argument to
-the constructor because at the point at which the object is constructed, that
+Implementation is via an object of class "PacketFuzzer".  When created, it
+identifies an interface, address and port on which Kea is listening and creates
+the appropriate address structures for these.  The port is passed as an argument
+to the constructor because at the point at which the object is constructed, that
 information is readily available.  The interface and address are picked up from
 the environment variables mentioned above.  Consideration was given to
 extracting the interface and address information from the configuration file,
@@ -264,7 +373,7 @@ leaks).
 No changes were required to Kea source code to fuzz configuration files. In
 fact, other than compiling with afl-clang++ and installing the resultant
 executable, no other steps are required.  In particular, there is no need to
-use the "--enable-fuzz" switch in the configuration command line (although
+use the "--enable-fuzzing" switch in the configuration command line (although
 doing so will not cause any problems).
 
 @subsection fuzzThreads Changes Required for Multi-Threaded Kea
@@ -278,17 +387,15 @@ above was adopted for the single-threaded Kea 1.6.  Should Kea be modified to
 become multi-threaded, the fuzzing code will need to be changed back to reading
 the AFL input in the background.
 
-@section fuzzNotes Notes
-
 @subsection fuzzNotesUnitTests Unit Test Failures
 
-If unit tests are built when --enable-fuzzing is specified, note that tests
-which check or use the DHCP servers (i.e. the unit tests in src/bin/dhcp4,
-src/bin/dhcp6 and src/bin/kea-admin) will fail.  With no AFL-related
-environment variables defined, a C++ exception will be thrown with the
-description "no fuzzing interface has been set".  However, if the
-KEA_AFL_INTERFACE and KEA_AFL_ADDRESS variables are set to valid values, the
-tests will hang.
+If unit tests are built when --enable-fuzzing is specified and with the AFL
+compiler, note that tests which check or use the DHCP servers (i.e. the unit
+tests in src/bin/dhcp4, src/bin/dhcp6 and src/bin/kea-admin) will fail.
+With no AFL-related environment variables defined, a C++ exception will be
+thrown with the description "no fuzzing interface has been set".
+However, if the `KEA_AFL_INTERFACE` and `KEA_AFL_ADDRESS` variables are set to
+valid values, the tests will hang.
 
 Both these results are expected and should cause no concern.  The exception is
 thrown by the fuzzing object constructor when it attempts to create the address
@@ -298,6 +405,5 @@ processing loop does a synchronous read from stdin, something not expected by
 the test. (Should random input be supplied on stdin, e.g.  from the keyboard,
 the test will most likely fail as the input is unlikely to be that expected by
 the test.)
-
 
 */

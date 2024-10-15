@@ -183,18 +183,20 @@ Path::replaceParentPath(string const& replacement) {
 TemporaryDirectory::TemporaryDirectory() {
     char dir[]("/tmp/kea-tmpdir-XXXXXX");
     char const* dir_name = mkdtemp(dir);
-    if(!dir_name) {
+    if (!dir_name) {
         isc_throw(Unexpected, "mkdtemp failed " << dir << ": " << strerror(errno));
     }
     dir_name_ = string(dir_name);
 }
 
 TemporaryDirectory::~TemporaryDirectory() {
-    rmdir(dir_name_.c_str());
     DIR *dir(opendir(dir_name_.c_str()));
+    if (!dir) {
+        return;
+    }
+
     struct dirent *i;
     string filepath;
-
     while ((i = readdir(dir))) {
         if (strcmp(i->d_name, ".") == 0 || strcmp(i->d_name, "..") == 0) {
             continue;

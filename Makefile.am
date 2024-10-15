@@ -2,7 +2,7 @@ ACLOCAL_AMFLAGS = -I m4macros ${ACLOCAL_FLAGS}
 # ^^^^^^^^ This has to be the first line and cannot come later in this
 # Makefile.am due to some bork in some versions of autotools.
 
-SUBDIRS = tools . ext src doc m4macros @PREMIUM_DIR@ @CONTRIB_DIR@
+SUBDIRS = tools . ext src fuzz doc m4macros @PREMIUM_DIR@ @CONTRIB_DIR@
 
 USE_LCOV=@USE_LCOV@
 LCOV=@LCOV@
@@ -173,7 +173,6 @@ cppcheck:
 docs:
 	$(MAKE) -C doc/sphinx
 
-
 # These steps are necessary during installation
 install-exec-hook:
 	mkdir -p $(DESTDIR)${localstatedir}/log/
@@ -188,3 +187,5 @@ CLEANFILES = $(abs_top_builddir)/logger_lockfile
 # config.h may be included by headers supplied for building user-written
 # hooks libraries, so we need to include it in the distribution.
 pkginclude_HEADERS = config.h kea_version.h
+
+.PHONY: clean-coverage coverage cppcheck docs report-coverage

@@ -131,6 +131,10 @@ libdhcpsrv_unittests_SOURCES += tracking_lease_mgr_unittest.cc
 libdhcpsrv_unittests_SOURCES += network_state_unittest.cc
 libdhcpsrv_unittests_SOURCES += network_unittest.cc
 
+if FUZZING
+libdhcpsrv_unittests_SOURCES += packet_fuzzer_unittest.cc
+endif
+
 libdhcpsrv_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 
 libdhcpsrv_unittests_CXXFLAGS = $(AM_CXXFLAGS)

@@ -173,7 +173,7 @@ libkea_dhcpsrv_la_SOURCES += parsers/simple_parser6.cc
 libkea_dhcpsrv_la_SOURCES += parsers/simple_parser6.h
 
 if FUZZING
-libkea_dhcpsrv_la_SOURCES += packet-fuzzer.cc packet-fuzzer.h
+libkea_dhcpsrv_la_SOURCES += packet_fuzzer.cc packet_fuzzer.h
 libkea_dhcpsrv_la_SOURCES += fuzz_log.cc fuzz_log.h
 libkea_dhcpsrv_la_SOURCES += fuzz_messages.cc fuzz_messages.h
 endif  # FUZZING
@@ -352,7 +352,7 @@ libkea_dhcpsrv_include_HEADERS = \
 
 if FUZZING
 libkea_dhcpsrv_include_HEADERS += \
-	packet-fuzzer.h \
+	packet_fuzzer.h \
 	fuzz_log.h \
 	fuzz_messages.h
 endif
