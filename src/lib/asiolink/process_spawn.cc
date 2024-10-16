@@ -154,7 +154,7 @@ private:
         /// @brief Constructor
         ///
         /// @param io_service The IOService which handles signal handlers.
-        IOSignalSetInitializer(IOServicePtr io_service) {
+        IOSignalSetInitializer(IOServicePtr io_service) : io_service_(io_service) {
             if (!io_service) {
                 isc_throw(ProcessSpawnError, "NULL IOService instance");
             }
@@ -168,6 +168,8 @@ private:
         /// @brief Destructor
         ~IOSignalSetInitializer() {
             io_signal_set_->remove(SIGCHLD);
+            io_signal_set_.reset();
+            io_service_->stopAndPoll();
         }
 
     public:
@@ -180,6 +182,9 @@ private:
         static void initIOSignalSet(IOServicePtr io_service);
 
     private:
+
+        /// @brief IOService instance to process IO.
+        asiolink::IOServicePtr io_service_;
 
         /// @brief ASIO signal set.
         IOSignalSetPtr io_signal_set_;

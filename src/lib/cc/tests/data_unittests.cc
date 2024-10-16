@@ -1193,6 +1193,7 @@ TEST(Element, isEquivalent) {
         ElementPtr l = Element::createList();
         l->add(l);
         EXPECT_THROW(isEquivalent(l, l), isc::BadValue);
+        l->remove(0);
     }
 }
 

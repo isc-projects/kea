@@ -56,7 +56,7 @@ public:
     ProcessSpawnTest() :
         io_service_(getIOService()), test_timer_(io_service_),
         test_time_ms_(0), io_signal_set_(), processed_signals_() {
-        ProcessSpawn::setIOService(getIOService());
+        ProcessSpawn::setIOService(io_service_);
 
         io_signal_set_.reset(new IOSignalSet(io_service_,
                                              std::bind(&ProcessSpawnTest::processSignal,
@@ -66,8 +66,11 @@ public:
 
     /// @brief Destructor.
     ~ProcessSpawnTest() {
+        test_timer_.cancel();
+        io_service_->stopAndPoll();
         io_signal_set_->remove(SIGCHLD);
         io_signal_set_.reset();
+        ProcessSpawn::setIOService(IOServicePtr());
         // Make sure the cancel handler for the IOSignalSet is called.
         io_service_->stopAndPoll();
     }
