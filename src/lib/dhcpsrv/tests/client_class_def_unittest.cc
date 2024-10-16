@@ -77,7 +77,7 @@ TEST(ClientClassDef, copyConstruction) {
     cclass->setContext(data::Element::create("my-context"));
     cclass->setCfgOptionDef(cfg_option_def);
     cclass->setTest("member('KNOWN')");
-    cclass->setRequired(true);
+    cclass->setAdditional(true);
     cclass->setDependOnKnown(true);
     cclass->setNextServer(IOAddress("1.2.3.4"));
     cclass->setSname("ufo");
@@ -98,7 +98,7 @@ TEST(ClientClassDef, copyConstruction) {
     ASSERT_TRUE(cclass->getMatchExpr());
     EXPECT_NE(cclass_copy->getMatchExpr(), cclass->getMatchExpr());
     EXPECT_EQ(cclass->getTest(), cclass_copy->getTest());
-    EXPECT_EQ(cclass->getRequired(), cclass_copy->getRequired());
+    EXPECT_EQ(cclass->getAdditional(), cclass_copy->getAdditional());
     EXPECT_EQ(cclass->getDependOnKnown(), cclass_copy->getDependOnKnown());
     EXPECT_EQ(cclass->getNextServer().toText(), cclass_copy->getNextServer().toText());
     EXPECT_EQ(cclass->getSname(), cclass_copy->getSname());
@@ -213,13 +213,13 @@ TEST(ClientClassDef, copyAndEquality) {
     EXPECT_TRUE(*cclass == *cclass2);
     EXPECT_FALSE(*cclass != *cclass2);
 
-    // Verify the required flag is enough to make classes not equal.
-    EXPECT_FALSE(cclass->getRequired());
-    cclass2->setRequired(true);
-    EXPECT_TRUE(cclass2->getRequired());
+    // Verify the additional flag is enough to make classes not equal.
+    EXPECT_FALSE(cclass->getAdditional());
+    cclass2->setAdditional(true);
+    EXPECT_TRUE(cclass2->getAdditional());
     EXPECT_FALSE(*cclass == *cclass2);
     EXPECT_TRUE(*cclass != *cclass2);
-    cclass2->setRequired(false);
+    cclass2->setAdditional(false);
     EXPECT_TRUE(*cclass == *cclass2);
 
     // Verify the depend on known flag is enough to make classes not equal.
@@ -623,7 +623,7 @@ TEST(ClientClassDef, fixedFieldsDefaults) {
     ASSERT_NO_THROW(cclass.reset(new ClientClassDef(name, expr)));
 
     // Let's checks that it doesn't return any nonsense
-    EXPECT_FALSE(cclass->getRequired());
+    EXPECT_FALSE(cclass->getAdditional());
     EXPECT_FALSE(cclass->getDependOnKnown());
     EXPECT_FALSE(cclass->getCfgOptionDef());
     string empty;
@@ -648,7 +648,7 @@ TEST(ClientClassDef, fixedFieldsBasics) {
     // Verify we can create a class with a name, expression, and no cfg_option
     ASSERT_NO_THROW(cclass.reset(new ClientClassDef(name, expr)));
 
-    cclass->setRequired(true);
+    cclass->setAdditional(true);
     cclass->setDependOnKnown(true);
 
     string sname = "This is a very long string that can be a server name";
@@ -659,7 +659,7 @@ TEST(ClientClassDef, fixedFieldsBasics) {
     cclass->setFilename(filename);
 
     // Let's checks that it doesn't return any nonsense
-    EXPECT_TRUE(cclass->getRequired());
+    EXPECT_TRUE(cclass->getAdditional());
     EXPECT_TRUE(cclass->getDependOnKnown());
     EXPECT_EQ(IOAddress("1.2.3.4"), cclass->getNextServer());
     EXPECT_EQ(sname, cclass->getSname());
@@ -681,7 +681,7 @@ TEST(ClientClassDef, unparseDef) {
     std::string user_context = "{ \"comment\": \"" + comment + "\", ";
     user_context += "\"bar\": 1 }";
     cclass->setContext(isc::data::Element::fromJSON(user_context));
-    cclass->setRequired(true);
+    cclass->setAdditional(true);
     // The depend on known flag in not visible
     cclass->setDependOnKnown(true);
     std::string next_server = "1.2.3.4";
@@ -695,7 +695,7 @@ TEST(ClientClassDef, unparseDef) {
     std::string expected = "{\n"
         "\"name\": \"" + name + "\",\n"
         "\"test\": \"" + test + "\",\n"
-        "\"only-if-required\": true,\n"
+        "\"only-in-additional-list\": true,\n"
         "\"next-server\": \"" + next_server + "\",\n"
         "\"server-hostname\": \"" + sname + "\",\n"
         "\"boot-file-name\": \"" + filename + "\",\n"
@@ -860,7 +860,7 @@ TEST(TemplateClientClassDef, copyConstruction) {
     cclass->setContext(data::Element::create("my-context"));
     cclass->setCfgOptionDef(cfg_option_def);
     cclass->setTest("member('KNOWN')");
-    cclass->setRequired(true);
+    cclass->setAdditional(true);
     cclass->setDependOnKnown(true);
     cclass->setNextServer(IOAddress("1.2.3.4"));
     cclass->setSname("ufo");
@@ -881,7 +881,7 @@ TEST(TemplateClientClassDef, copyConstruction) {
     ASSERT_TRUE(cclass->getMatchExpr());
     EXPECT_NE(cclass_copy->getMatchExpr(), cclass->getMatchExpr());
     EXPECT_EQ(cclass->getTest(), cclass_copy->getTest());
-    EXPECT_EQ(cclass->getRequired(), cclass_copy->getRequired());
+    EXPECT_EQ(cclass->getAdditional(), cclass_copy->getAdditional());
     EXPECT_EQ(cclass->getDependOnKnown(), cclass_copy->getDependOnKnown());
     EXPECT_EQ(cclass->getNextServer().toText(), cclass_copy->getNextServer().toText());
     EXPECT_EQ(cclass->getSname(), cclass_copy->getSname());
@@ -996,13 +996,13 @@ TEST(TemplateClientClassDef, copyAndEquality) {
     EXPECT_TRUE(*cclass == *cclass2);
     EXPECT_FALSE(*cclass != *cclass2);
 
-    // Verify the required flag is enough to make classes not equal.
-    EXPECT_FALSE(cclass->getRequired());
-    cclass2->setRequired(true);
-    EXPECT_TRUE(cclass2->getRequired());
+    // Verify the additional flag is enough to make classes not equal.
+    EXPECT_FALSE(cclass->getAdditional());
+    cclass2->setAdditional(true);
+    EXPECT_TRUE(cclass2->getAdditional());
     EXPECT_FALSE(*cclass == *cclass2);
     EXPECT_TRUE(*cclass != *cclass2);
-    cclass2->setRequired(false);
+    cclass2->setAdditional(false);
     EXPECT_TRUE(*cclass == *cclass2);
 
     // Verify the depend on known flag is enough to make classes not equal.
@@ -1469,7 +1469,7 @@ TEST(TemplateClientClassDef, fixedFieldsDefaults) {
     ASSERT_NO_THROW(cclass.reset(new TemplateClientClassDef(name, expr)));
 
     // Let's checks that it doesn't return any nonsense
-    EXPECT_FALSE(cclass->getRequired());
+    EXPECT_FALSE(cclass->getAdditional());
     EXPECT_FALSE(cclass->getDependOnKnown());
     EXPECT_FALSE(cclass->getCfgOptionDef());
     string empty;
@@ -1493,7 +1493,7 @@ TEST(TemplateClientClassDef, fixedFieldsBasics) {
     // Verify we can create a class with a name, expression, and no cfg_option
     ASSERT_NO_THROW(cclass.reset(new TemplateClientClassDef(name, expr)));
 
-    cclass->setRequired(true);
+    cclass->setAdditional(true);
     cclass->setDependOnKnown(true);
 
     string sname = "This is a very long string that can be a server name";
@@ -1504,7 +1504,7 @@ TEST(TemplateClientClassDef, fixedFieldsBasics) {
     cclass->setFilename(filename);
 
     // Let's checks that it doesn't return any nonsense
-    EXPECT_TRUE(cclass->getRequired());
+    EXPECT_TRUE(cclass->getAdditional());
     EXPECT_TRUE(cclass->getDependOnKnown());
     EXPECT_EQ(IOAddress("1.2.3.4"), cclass->getNextServer());
     EXPECT_EQ(sname, cclass->getSname());
@@ -1526,7 +1526,7 @@ TEST(TemplateClientClassDef, unparseDef) {
     std::string user_context = "{ \"comment\": \"" + comment + "\", ";
     user_context += "\"bar\": 1 }";
     cclass->setContext(isc::data::Element::fromJSON(user_context));
-    cclass->setRequired(true);
+    cclass->setAdditional(true);
     // The depend on known flag in not visible
     cclass->setDependOnKnown(true);
     std::string next_server = "1.2.3.4";
@@ -1540,7 +1540,7 @@ TEST(TemplateClientClassDef, unparseDef) {
     std::string expected = "{\n"
         "\"name\": \"" + name + "\",\n"
         "\"template-test\": \"" + test + "\",\n"
-        "\"only-if-required\": true,\n"
+        "\"only-in-additional-list\": true,\n"
         "\"next-server\": \"" + next_server + "\",\n"
         "\"server-hostname\": \"" + sname + "\",\n"
         "\"boot-file-name\": \"" + filename + "\",\n"

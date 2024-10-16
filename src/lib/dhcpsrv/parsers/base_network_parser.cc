@@ -17,6 +17,7 @@ using namespace isc::util;
 namespace isc {
 namespace dhcp {
 
+
 void
 BaseNetworkParser::parseCommon(const ConstElementPtr& network_data,
                                NetworkPtr& network) {
@@ -250,6 +251,35 @@ BaseNetworkParser::parseOfferLft(const data::ConstElementPtr& network_data,
     }
 }
 
+void
+BaseNetworkParser::getAdditionalClassesElem(ConstElementPtr params,
+                                            ClassAdderFunc adder_func) {
+    // Try setting up additional lient classes.
+    ConstElementPtr req_class_list = params->get("require-client-classes");
+    ConstElementPtr class_list = params->get("evaluate-additional-classes");
+    if (req_class_list) {
+        if (!class_list) {
+            LOG_WARN(dhcpsrv_logger, DHCPSRV_REQUIRE_CLIENT_CLASSES_DEPRECATED);
+            class_list = req_class_list;
+        } else {
+            isc_throw(isc::dhcp::DhcpConfigError,
+                      "cannot specify both 'require-client-classes' and "
+                      "'evaluate-additional-classes'.  Use only the latter.");
+        }
+    }
+
+    if (class_list) {
+        const std::vector<data::ElementPtr>& classes = class_list->listValue();
+        for (auto const& cclass : classes) {
+            if ((cclass->getType() != Element::string) ||
+                cclass->stringValue().empty()) {
+                isc_throw(DhcpConfigError, "invalid class name (" << cclass->getPosition() << ")");
+            }
+
+            (adder_func)(cclass->stringValue());
+        }
+    }
+}
 
 } // end of namespace isc::dhcp
 } // end of namespace isc

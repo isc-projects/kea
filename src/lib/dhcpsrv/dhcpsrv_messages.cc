@@ -143,10 +143,12 @@ extern const isc::log::MessageID DHCPSRV_MT_DISABLED_QUEUE_CONTROL = "DHCPSRV_MT
 extern const isc::log::MessageID DHCPSRV_MULTIPLE_RAW_SOCKETS_PER_IFACE = "DHCPSRV_MULTIPLE_RAW_SOCKETS_PER_IFACE";
 extern const isc::log::MessageID DHCPSRV_NOTYPE_DB = "DHCPSRV_NOTYPE_DB";
 extern const isc::log::MessageID DHCPSRV_NO_SOCKETS_OPEN = "DHCPSRV_NO_SOCKETS_OPEN";
+extern const isc::log::MessageID DHCPSRV_ONLY_IF_REQUIRED_DEPRECATED = "DHCPSRV_ONLY_IF_REQUIRED_DEPRECATED";
 extern const isc::log::MessageID DHCPSRV_OPEN_SOCKET_FAIL = "DHCPSRV_OPEN_SOCKET_FAIL";
 extern const isc::log::MessageID DHCPSRV_QUEUE_NCR = "DHCPSRV_QUEUE_NCR";
 extern const isc::log::MessageID DHCPSRV_QUEUE_NCR_FAILED = "DHCPSRV_QUEUE_NCR_FAILED";
 extern const isc::log::MessageID DHCPSRV_QUEUE_NCR_SKIP = "DHCPSRV_QUEUE_NCR_SKIP";
+extern const isc::log::MessageID DHCPSRV_REQUIRE_CLIENT_CLASSES_DEPRECATED = "DHCPSRV_REQUIRE_CLIENT_CLASSES_DEPRECATED";
 extern const isc::log::MessageID DHCPSRV_SUBNET4O6_SELECT_FAILED = "DHCPSRV_SUBNET4O6_SELECT_FAILED";
 extern const isc::log::MessageID DHCPSRV_SUBNET4_SELECT_BY_ADDRESS_NO_MATCH = "DHCPSRV_SUBNET4_SELECT_BY_ADDRESS_NO_MATCH";
 extern const isc::log::MessageID DHCPSRV_SUBNET4_SELECT_BY_INTERFACE_NO_MATCH = "DHCPSRV_SUBNET4_SELECT_BY_INTERFACE_NO_MATCH";
@@ -310,10 +312,12 @@ const char* values[] = {
     "DHCPSRV_MULTIPLE_RAW_SOCKETS_PER_IFACE", "current configuration will result in opening multiple broadcast capable sockets on some interfaces and some DHCP messages may be duplicated",
     "DHCPSRV_NOTYPE_DB", "no 'type' keyword to determine database backend: %1",
     "DHCPSRV_NO_SOCKETS_OPEN", "no interface configured to listen to DHCP traffic",
+    "DHCPSRV_ONLY_IF_REQUIRED_DEPRECATED", "The parameter 'only-if-required' is deprecated. Use 'only-in-additional-list' instead",
     "DHCPSRV_OPEN_SOCKET_FAIL", "failed to open socket: %1",
     "DHCPSRV_QUEUE_NCR", "%1: Name change request to %2 DNS entry queued: %3",
     "DHCPSRV_QUEUE_NCR_FAILED", "%1: queuing %2 name change request failed for lease %3: %4",
     "DHCPSRV_QUEUE_NCR_SKIP", "%1: skip queuing name change request for lease: %2",
+    "DHCPSRV_REQUIRE_CLIENT_CLASSES_DEPRECATED", "The parameter 'require-client-classes' is deprecated. Use 'evaluate-additional-classes' instead",
     "DHCPSRV_SUBNET4O6_SELECT_FAILED", "Failed to select any subnet for the DHCPv4o6 packet",
     "DHCPSRV_SUBNET4_SELECT_BY_ADDRESS_NO_MATCH", "No subnet matches address: %1",
     "DHCPSRV_SUBNET4_SELECT_BY_INTERFACE_NO_MATCH", "No subnet matches interface: %1",

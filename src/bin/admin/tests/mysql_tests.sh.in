@@ -72,6 +72,19 @@ mysql_wipe() {
     assert_eq 0 "${EXIT_CODE}" "mysql-wipe: drop table sql failed, expected %d, returned %d"
 }
 
+# Checks that a column in a table exists.
+# param table name of table containgin the column
+# param column name of the column to check
+check_table_column() {
+    column=$1;shift
+    table=$1;shift
+
+    qry="select $column from $table limit 1"
+    run_command \
+        mysql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+}
+
 mysql_db_init_test() {
     test_start "mysql.db-init"
 
@@ -946,13 +959,37 @@ mysql_upgrade_24_to_25_test() {
 }
 
 mysql_upgrade_25_to_26_test() {
-    # client_classes been added to dhcp4_options 
+
+    # client_classes been added to dhcp4_options
+    check_table_column client_classes dhcp4_options;
+
+    # client_classes been added to dhcp6_options
+    check_table_column client_classes dhcp6_options;
+
+    # check rename of require_client_classes to evaluate_additaionl_classes.
+    check_table_column evaluate_additional_classes dhcp4_shared_network
+    check_table_column evaluate_additional_classes dhcp4_shared_network
+    check_table_column evaluate_additional_classes dhcp4_shared_network
+    check_table_column evaluate_additional_classes dhcp4_subnet
+    check_table_column evaluate_additional_classes dhcp6_shared_network
+    check_table_column evaluate_additional_classes dhcp6_subnet
+    check_table_column evaluate_additional_classes dhcp4_pool
+    check_table_column evaluate_additional_classes dhcp6_pd_pool
+    check_table_column evaluate_additional_classes dhcp6_pool
+
+    # check rename of only_if_required to only_in_additional_list.
+    check_table_column only_in_additional_list dhcp4_client_class
+    check_table_column only_in_additional_list dhcp6_client_class
+}
+
+mysql_upgrade_25_to_26_test() {
+    # client_classes been added to dhcp4_options
     qry="select client_classes from dhcp4_options limit 1"
     run_command \
         mysql_execute "${qry}"
     assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
 
-    # client_classes been added to dhcp6_options 
+    # client_classes been added to dhcp6_options
     qry="select client_classes from dhcp6_options limit 1"
     run_command \
         mysql_execute "${qry}"
@@ -1232,7 +1269,7 @@ mysql_upgrade_test() {
     run_statement "dhcp4_option_def_server" "$qry"
 
     # table: dhcp4_shared_network
-    qry="select id, name, client_class, interface, match_client_id, modification_ts, rebind_timer, relay, renew_timer, require_client_classes, user_context, valid_lifetime, authoritative, calculate_tee_times, t1_percent, t2_percent, boot_file_name, next_server, server_hostname from dhcp4_shared_network"
+    qry="select id, name, client_class, interface, match_client_id, modification_ts, rebind_timer, relay, renew_timer, evaluate_additional_classes, user_context, valid_lifetime, authoritative, calculate_tee_times, t1_percent, t2_percent, boot_file_name, next_server, server_hostname from dhcp4_shared_network"
     run_statement "dhcp4_shared_network" "$qry"
 
     # table: dhcp4_shared_network_server
@@ -1240,7 +1277,7 @@ mysql_upgrade_test() {
     run_statement "dhcp4_shared_network_server" "$qry"
 
     # table: dhcp4_subnet
-    qry="select subnet_prefix, 4o6_interface, 4o6_interface_id, 4o6_subnet, boot_file_name, client_class, interface, match_client_id, modification_ts, next_server, rebind_timer, relay, renew_timer, require_client_classes, server_hostname, shared_network_name, subnet_id, user_context, valid_lifetime, authoritative, calculate_tee_times, t1_percent, t2_percent from dhcp4_subnet"
+    qry="select subnet_prefix, 4o6_interface, 4o6_interface_id, 4o6_subnet, boot_file_name, client_class, interface, match_client_id, modification_ts, next_server, rebind_timer, relay, renew_timer, evaluate_additional_classes, server_hostname, shared_network_name, subnet_id, user_context, valid_lifetime, authoritative, calculate_tee_times, t1_percent, t2_percent from dhcp4_subnet"
     run_statement "dhcp4_subnet" "$qry"
 
     # table: dhcp4_pool
@@ -1288,7 +1325,7 @@ mysql_upgrade_test() {
     run_statement "dhcp6_option_def_server" "$qry"
 
     # table: dhcp6_shared_network
-    qry="select id, name, client_class, interface, modification_ts, preferred_lifetime, rapid_commit, rebind_timer, relay, renew_timer, require_client_classes, user_context, valid_lifetime, calculate_tee_times, t1_percent, t2_percent, interface_id from dhcp6_shared_network"
+    qry="select id, name, client_class, interface, modification_ts, preferred_lifetime, rapid_commit, rebind_timer, relay, renew_timer, evaluate_additional_classes, user_context, valid_lifetime, calculate_tee_times, t1_percent, t2_percent, interface_id from dhcp6_shared_network"
     run_statement "dhcp6_shared_network" "$qry"
 
     # table: dhcp6_shared_network_server
@@ -1296,7 +1333,7 @@ mysql_upgrade_test() {
     run_statement "dhcp6_shared_network" "$qry"
 
     # table: dhcp6_subnet
-    qry="select subnet_prefix, client_class, interface, modification_ts, preferred_lifetime, rapid_commit, rebind_timer, relay, renew_timer, require_client_classes, shared_network_name, subnet_id, user_context, valid_lifetime, calculate_tee_times, t1_percent, t2_percent, interface_id from dhcp6_subnet"
+    qry="select subnet_prefix, client_class, interface, modification_ts, preferred_lifetime, rapid_commit, rebind_timer, relay, renew_timer, evaluate_additional_classes, shared_network_name, subnet_id, user_context, valid_lifetime, calculate_tee_times, t1_percent, t2_percent, interface_id from dhcp6_subnet"
     run_statement "dhcp6_subnet" "$qry"
 
     # table: dhcp6_subnet_server
@@ -1419,31 +1456,31 @@ mysql_upgrade_test() {
     # New lifetime bounds.
 
     # table: dhcp4_shared_network
-    qry="select id, name, client_class, interface, match_client_id, modification_ts, rebind_timer, relay, renew_timer, require_client_classes, user_context, valid_lifetime, min_valid_lifetime, max_valid_lifetime, authoritative, calculate_tee_times, t1_percent, t2_percent, boot_file_name, next_server, server_hostname from dhcp4_shared_network"
+    qry="select id, name, client_class, interface, match_client_id, modification_ts, rebind_timer, relay, renew_timer, evaluate_additional_classes, user_context, valid_lifetime, min_valid_lifetime, max_valid_lifetime, authoritative, calculate_tee_times, t1_percent, t2_percent, boot_file_name, next_server, server_hostname from dhcp4_shared_network"
     run_statement "dhcp4_shared_network" "$qry"
 
     # table: dhcp4_subnet
-    qry="select subnet_prefix, 4o6_interface, 4o6_interface_id, 4o6_subnet, boot_file_name, client_class, interface, match_client_id, modification_ts, next_server, rebind_timer, relay, renew_timer, require_client_classes, server_hostname, shared_network_name, subnet_id, user_context, valid_lifetime, min_valid_lifetime, max_valid_lifetime, authoritative, calculate_tee_times, t1_percent, t2_percent from dhcp4_subnet"
+    qry="select subnet_prefix, 4o6_interface, 4o6_interface_id, 4o6_subnet, boot_file_name, client_class, interface, match_client_id, modification_ts, next_server, rebind_timer, relay, renew_timer, evaluate_additional_classes, server_hostname, shared_network_name, subnet_id, user_context, valid_lifetime, min_valid_lifetime, max_valid_lifetime, authoritative, calculate_tee_times, t1_percent, t2_percent from dhcp4_subnet"
     run_statement "dhcp4_subnet" "$qry"
 
     # table: dhcp6_shared_network
-    qry="select id, name, client_class, interface, modification_ts, preferred_lifetime, min_preferred_lifetime, max_preferred_lifetime,rapid_commit, rebind_timer, relay, renew_timer, require_client_classes, user_context, valid_lifetime, min_valid_lifetime, max_valid_lifetime, calculate_tee_times, t1_percent, t2_percent from dhcp6_shared_network"
+    qry="select id, name, client_class, interface, modification_ts, preferred_lifetime, min_preferred_lifetime, max_preferred_lifetime,rapid_commit, rebind_timer, relay, renew_timer, evaluate_additional_classes, user_context, valid_lifetime, min_valid_lifetime, max_valid_lifetime, calculate_tee_times, t1_percent, t2_percent from dhcp6_shared_network"
     run_statement "dhcp6_shared_network" "$qry"
 
     # table: dhcp6_subnet
-    qry="select subnet_prefix, client_class, interface, modification_ts, preferred_lifetime, min_preferred_lifetime, max_preferred_lifetime, rapid_commit, rebind_timer, relay, renew_timer, require_client_classes, shared_network_name, subnet_id, user_context, valid_lifetime, min_valid_lifetime, max_valid_lifetime, calculate_tee_times, t1_percent, t2_percent from dhcp6_subnet"
+    qry="select subnet_prefix, client_class, interface, modification_ts, preferred_lifetime, min_preferred_lifetime, max_preferred_lifetime, rapid_commit, rebind_timer, relay, renew_timer, evaluate_additional_classes, shared_network_name, subnet_id, user_context, valid_lifetime, min_valid_lifetime, max_valid_lifetime, calculate_tee_times, t1_percent, t2_percent from dhcp6_subnet"
     run_statement "dhcp6_subnet" "$qry"
 
     # table: dhcp4_pool (should include three new columns)
-    qry="select client_class, require_client_classes, user_context from dhcp4_pool"
+    qry="select client_class, evaluate_additional_classes, user_context from dhcp4_pool"
     run_statement "dhcp4_pool" "$qry"
 
     # table: dhcp6_pd_pool (should include five new columns)
-    qry="select excluded_prefix, excluded_prefix_length, client_class, require_client_classes, user_context from dhcp6_pd_pool"
+    qry="select excluded_prefix, excluded_prefix_length, client_class, evaluate_additional_classes, user_context from dhcp6_pd_pool"
     run_statement "dhcp6_pd_pool" "$qry"
 
     # table: dhcp6_pool (should include three new columns)
-    qry="select client_class, require_client_classes, user_context from dhcp6_pool"
+    qry="select client_class, evaluate_additional_classes, user_context from dhcp6_pool"
     run_statement "dhcp6_pool" "$qry"
 
     # Verify that dhcp4_option_def column name is is_array

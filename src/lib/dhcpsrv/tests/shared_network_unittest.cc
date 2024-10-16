@@ -688,7 +688,7 @@ TEST(SharedNetwork4Test, unparse) {
     std::string uc = "{ \"comment\": \"bar\", \"foo\": 1}";
     data::ElementPtr ctx = data::Element::fromJSON(uc);
     network->setContext(ctx);
-    network->requireClientClass("foo");
+    network->addAdditionalClass("foo");
     network->addRelayAddress(IOAddress("192.168.2.1"));
     network->setAuthoritative(false);
     network->setMatchClientId(false);
@@ -718,7 +718,7 @@ TEST(SharedNetwork4Test, unparse) {
         "        \"ip-addresses\": [ \"192.168.2.1\" ]\n"
         "    },\n"
         "    \"renew-timer\": 100,\n"
-        "    \"require-client-classes\": [ \"foo\" ],\n"
+        "    \"evaluate-additional-classes\": [ \"foo\" ],\n"
         "    \"reservations-global\": false,\n"
         "    \"reservations-in-subnet\": true,\n"
         "    \"reservations-out-of-pool\": false,\n"
@@ -1402,11 +1402,11 @@ TEST(SharedNetwork6Test, unparse) {
     network->setPreferred(200);
     network->setValid(300);
     network->setRapidCommit(true);
-    network->requireClientClass("foo");
+    network->addAdditionalClass("foo");
 
     data::ElementPtr ctx = data::Element::fromJSON("{ \"foo\": \"bar\" }");
     network->setContext(ctx);
-    network->requireClientClass("foo");
+    network->addAdditionalClass("foo");
 
     network->addRelayAddress(IOAddress("2001:db8:1::7"));
     network->addRelayAddress(IOAddress("2001:db8:1::8"));
@@ -1457,7 +1457,7 @@ TEST(SharedNetwork6Test, unparse) {
         "        \"ip-addresses\": [ \"2001:db8:1::7\", \"2001:db8:1::8\" ]\n"
         "    },\n"
         "    \"renew-timer\": 100,\n"
-        "    \"require-client-classes\": [ \"foo\" ],\n"
+        "    \"evaluate-additional-classes\": [ \"foo\" ],\n"
         "    \"reservations-global\": false,\n"
         "    \"reservations-in-subnet\": true,\n"
         "    \"reservations-out-of-pool\": false,\n"

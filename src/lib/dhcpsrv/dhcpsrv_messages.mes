@@ -945,3 +945,15 @@ included in the message.
 % DHCPSRV_UNKNOWN_DB unknown database type: %1
 The database access string specified a database type (given in the
 message) that is unknown to the software. This is a configuration error.
+
+% DHCPSRV_REQUIRE_CLIENT_CLASSES_DEPRECATED The parameter 'require-client-classes' is deprecated. Use 'evaluate-additional-classes' instead
+This warning message is emitted when configuration parsing detects
+the use of the deprecated 'require-client-classes' parameter. It has
+been replaced by 'evaluate-additional-classes'.  Users should migrate
+to the new parameter.
+
+% DHCPSRV_ONLY_IF_REQUIRED_DEPRECATED The parameter 'only-if-required' is deprecated. Use 'only-in-additional-list' instead
+This warning message is emitted when configuration parsing detects
+the use of the deprecated 'only-if-required' parameter. It has
+been replaced by 'only-in-additional-list'.  Users should migrate
+to the new parameter.

@@ -27,7 +27,7 @@ ClientClassDef::ClientClassDef(const std::string& name,
                                const ExpressionPtr& match_expr,
                                const CfgOptionPtr& cfg_option)
     : UserContext(), CfgToElement(), StampedElement(), name_(name),
-      match_expr_(match_expr), required_(false), depend_on_known_(false),
+      match_expr_(match_expr), additional_(false), depend_on_known_(false),
       cfg_option_(cfg_option), next_server_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()),
       valid_(), preferred_() {
 
@@ -46,7 +46,7 @@ ClientClassDef::ClientClassDef(const std::string& name,
 
 ClientClassDef::ClientClassDef(const ClientClassDef& rhs)
     : UserContext(rhs), CfgToElement(rhs), StampedElement(rhs), name_(rhs.name_),
-      match_expr_(ExpressionPtr()), test_(rhs.test_), required_(rhs.required_),
+      match_expr_(ExpressionPtr()), test_(rhs.test_), additional_(rhs.additional_),
       depend_on_known_(rhs.depend_on_known_), cfg_option_(new CfgOption()),
       next_server_(rhs.next_server_), sname_(rhs.sname_),
       filename_(rhs.filename_), valid_(rhs.valid_), preferred_(rhs.preferred_),
@@ -101,13 +101,13 @@ ClientClassDef::setTest(const std::string& test) {
 }
 
 bool
-ClientClassDef::getRequired() const {
-    return (required_);
+ClientClassDef::getAdditional() const {
+    return (additional_);
 }
 
 void
-ClientClassDef::setRequired(bool required) {
-    required_ = required;
+ClientClassDef::setAdditional(bool additional) {
+    additional_ = additional;
 }
 
 bool
@@ -213,7 +213,7 @@ ClientClassDef::equals(const ClientClassDef& other) const {
         ((!cfg_option_def_ && !other.cfg_option_def_) ||
         (cfg_option_def_ && other.cfg_option_def_ &&
          (*cfg_option_def_ == *other.cfg_option_def_))) &&
-            (required_ == other.required_) &&
+            (additional_ == other.additional_) &&
             (depend_on_known_ == other.depend_on_known_) &&
             (next_server_ == other.next_server_) &&
             (sname_ == other.sname_) &&
@@ -232,9 +232,9 @@ ClientClassDef::toElement() const {
     if (!test_.empty()) {
         result->set("test", Element::create(test_));
     }
-    // Set only-if-required
-    if (required_) {
-        result->set("only-if-required", Element::create(required_));
+    // Set only-in-additional-list
+    if (additional_) {
+        result->set("only-in-additional-list", Element::create(additional_));
     }
     // Set option-def (used only by DHCPv4)
     if (cfg_option_def_ && (family == AF_INET)) {
@@ -336,7 +336,7 @@ void
 ClientClassDictionary::addClass(const std::string& name,
                                 const ExpressionPtr& match_expr,
                                 const std::string& test,
-                                bool required,
+                                bool additional,
                                 bool depend_on_known,
                                 const CfgOptionPtr& cfg_option,
                                 CfgOptionDefPtr cfg_option_def,
@@ -355,7 +355,7 @@ ClientClassDictionary::addClass(const std::string& name,
         cclass.reset(new ClientClassDef(name, match_expr, cfg_option));
     }
     cclass->setTest(test);
-    cclass->setRequired(required);
+    cclass->setAdditional(additional);
     cclass->setDependOnKnown(depend_on_known);
     cclass->setCfgOptionDef(cfg_option_def);
     cclass->setContext(user_context),

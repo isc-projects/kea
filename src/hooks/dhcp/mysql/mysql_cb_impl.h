@@ -622,33 +622,24 @@ public:
     /// relay addresses specified).
     db::MySqlBindingPtr createInputRelayBinding(const NetworkPtr& network);
 
-    /// @brief Creates input binding for 'require_client_classes' parameter.
-    ///
-    /// @tparam T of pointer to objects with getRequiredClasses
-    /// method, e.g. shared network, subnet, pool or prefix delegation pool.
-    /// @param object Pointer to an object with getRequiredClasses method
-    /// @return Pointer to the binding (possibly null binding if there are no
-    /// required classes specified).
-    template<typename T>
-    db::MySqlBindingPtr createInputRequiredClassesBinding(const T& object) {
-        // Create JSON list of required classes.
-        data::ElementPtr required_classes_element = data::Element::createList();
-        auto const& required_classes = object->getRequiredClasses();
-        for (auto const& required_class : required_classes) {
-            required_classes_element->add(data::Element::create(required_class));
-        }
-
-        return (required_classes_element ?
-                db::MySqlBinding::createString(required_classes_element->str()) :
-                db::MySqlBinding::createNull());
-    }
-
     /// @brief Creates input binding from a list of client classes
     ///
     /// @param client_classes ClientClasses collection containing the class names
     /// @return Pointer to the binding (possibly null binding if there are no
     /// classes specified).
     db::MySqlBindingPtr createInputClientClassesBinding(const ClientClasses& client_classes);
+
+    /// @brief Populates a ClientClasses container from a binding
+    ///
+    /// The input column is expected to be a JSON list of class names.
+    ///
+    /// @param binding binding of the column containing the class list.
+    /// @param column name of the column, used for error messages.
+    /// @param client_classes reference to the container to populate.
+    /// @throw BadValue if the input is invalid.k 
+    void clientClassesFromBinding(const db::MySqlBindingPtr& binding,  
+                                  const std::string& column,
+                                  ClientClasses& client_classes);
 
     /// @brief Creates input binding for user context parameter.
     ///

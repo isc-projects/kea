@@ -126,6 +126,18 @@ protected:
     /// @throw DhcpConfigError if the value is less than 0.
     void parseOfferLft(const data::ConstElementPtr& network_data,
                        Network4Ptr& network);
+public:
+    typedef std::function<void(const isc::dhcp::ClientClass&)> ClassAdderFunc;
+
+    /// @brief Fetches the element for either 'evaluate-additional-classes' or deprecated
+    /// 'require-client-classes'
+    ///
+    /// @param params configuration element tree to search.
+    /// @param adder_func function to add class names to an object's additional class list.
+    /// @return Element referred to or an empty pointer.
+    /// @throw DhcpConfigError if both entries are present.
+    static void getAdditionalClassesElem(data::ConstElementPtr params,
+                                         ClassAdderFunc adder_func);
 };
 
 } // end of namespace isc::dhcp

@@ -758,7 +758,7 @@ MySqlConfigBackendImpl::getOptions(const int index,
     // modification_ts
     out_bindings.push_back(MySqlBinding::createTimestamp());
     // client_classes
-    out_bindings.push_back(MySqlBinding::createString(OPTION_CLIENT_CLASSES_BUF_LENGTH));
+    out_bindings.push_back(MySqlBinding::createString(CLIENT_CLASS_LIST_BUF_LENGTH));
     // server_tag
     out_bindings.push_back(MySqlBinding::createString(SERVER_TAG_BUF_LENGTH));
     // pd_pool_id
@@ -883,14 +883,7 @@ MySqlConfigBackendImpl::processOptionRow(const Option::Universe& universe,
     }
 
     // Get client classes list
-    ElementPtr client_classes = (*(first_binding + 13))->getJSON();
-    try {
-        desc->client_classes_.fromElement(client_classes);
-    } catch (const std::exception& ex) {
-        isc_throw(BadValue, "invalid 'client_classes' : "
-                            << (*(first_binding + 13))->getString()
-                            << ex.what());
-    }
+    clientClassesFromBinding(*(first_binding + 13), "client_classe", desc->client_classes_);
 
     return (desc);
 }
@@ -1133,6 +1126,18 @@ MySqlConfigBackendImpl::createInputClientClassesBinding(const ClientClasses& cli
     }
 
     return (db::MySqlBinding::createString(client_classes_element->str()));
+}
+
+void
+MySqlConfigBackendImpl::clientClassesFromBinding(const MySqlBindingPtr& binding, 
+                                             const std::string& column,
+                                             ClientClasses& client_classes) {
+    try {
+        ElementPtr cclist_element = binding->getJSON();
+        client_classes.fromElement(cclist_element);
+    } catch (const std::exception& ex) {
+        isc_throw(BadValue, "invalid '" << column << "' value " << ex.what());
+    }
 }
 
 } // end of namespace isc::dhcp

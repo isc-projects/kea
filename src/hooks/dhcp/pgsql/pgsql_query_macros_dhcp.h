@@ -60,7 +60,7 @@ namespace {
     "  s.rebind_timer," \
     "  s.relay," \
     "  s.renew_timer," \
-    "  s.require_client_classes," \
+    "  s.evaluate_additional_classes," \
     "  s.reservations_global," \
     "  s.server_hostname," \
     "  s.shared_network_name," \
@@ -106,7 +106,7 @@ namespace {
     "  s.min_valid_lifetime," \
     "  s.max_valid_lifetime," \
     "  p.client_class," \
-    "  p.require_client_classes," \
+    "  p.evaluate_additional_classes," \
     "  p.user_context," \
     "  s.ddns_send_updates," \
     "  s.ddns_override_no_update," \
@@ -167,7 +167,7 @@ namespace {
     "  s.rebind_timer," \
     "  s.relay," \
     "  s.renew_timer," \
-    "  s.require_client_classes," \
+    "  s.evaluate_additional_classes," \
     "  s.reservations_global," \
     "  s.shared_network_name," \
     "  s.user_context," \
@@ -237,12 +237,12 @@ namespace {
     "  s.min_valid_lifetime," \
     "  s.max_valid_lifetime," \
     "  p.client_class," \
-    "  p.require_client_classes," \
+    "  p.evaluate_additional_classes," \
     "  p.user_context," \
     "  d.excluded_prefix," \
     "  d.excluded_prefix_length," \
     "  d.client_class," \
-    "  d.require_client_classes," \
+    "  d.evaluate_additional_classes," \
     "  d.user_context," \
     "  s.ddns_send_updates," \
     "  s.ddns_override_no_update," \
@@ -300,7 +300,7 @@ namespace {
       "  p.end_address," \
       "  p.subnet_id," \
       "  p.client_class," \
-      "  p.require_client_classes," \
+      "  p.evaluate_additional_classes," \
       "  p.user_context," \
       "  gmt_epoch(p.modification_ts) as modification_ts, " \
       "  x.option_id," \
@@ -342,7 +342,7 @@ namespace {
     "  p.end_address," \
     "  p.subnet_id," \
     "  p.client_class," \
-    "  p.require_client_classes," \
+    "  p.evaluate_additional_classes," \
     "  p.user_context," \
     "  gmt_epoch(p.modification_ts) as modification_ts, " \
     "  x.option_id," \
@@ -388,7 +388,7 @@ namespace {
     "  p.excluded_prefix," \
     "  p.excluded_prefix_length," \
     "  p.client_class," \
-    "  p.require_client_classes," \
+    "  p.evaluate_additional_classes," \
     "  p.user_context," \
     "  gmt_epoch(p.modification_ts) as modification_ts, " \
     "  x.option_id," \
@@ -435,7 +435,7 @@ namespace {
     "  n.rebind_timer," \
     "  n.relay," \
     "  n.renew_timer," \
-    "  n.require_client_classes," \
+    "  n.evaluate_additional_classes," \
     "  n.reservations_global," \
     "  n.user_context," \
     "  n.valid_lifetime," \
@@ -519,7 +519,7 @@ namespace {
     "  n.rebind_timer," \
     "  n.relay," \
     "  n.renew_timer," \
-    "  n.require_client_classes," \
+    "  n.evaluate_additional_classes," \
     "  n.reservations_global," \
     "  n.user_context," \
     "  n.valid_lifetime," \
@@ -694,7 +694,7 @@ namespace {
     "  c.next_server," \
     "  c.server_hostname," \
     "  c.boot_file_name," \
-    "  c.only_if_required," \
+    "  c.only_in_additional_list," \
     "  c.valid_lifetime," \
     "  c.min_valid_lifetime," \
     "  c.max_valid_lifetime," \
@@ -760,7 +760,7 @@ namespace {
     "  c.id," \
     "  c.name," \
     "  c.test," \
-    "  c.only_if_required," \
+    "  c.only_in_additional_list," \
     "  c.valid_lifetime," \
     "  c.min_valid_lifetime," \
     "  c.max_valid_lifetime," \
@@ -857,7 +857,7 @@ namespace {
     "  end_address," \
     "  subnet_id," \
     "  client_class," \
-    "  require_client_classes," \
+    "  evaluate_additional_classes," \
     "  user_context," \
     "  modification_ts" \
     ") VALUES (cast($1 as inet), cast($2 as inet), $3, $4, $5, cast($6 as json), $7)"
@@ -873,7 +873,7 @@ namespace {
     "  excluded_prefix," \
     "  excluded_prefix_length," \
     "  client_class," \
-    "  require_client_classes," \
+    "  evaluate_additional_classes," \
     "  user_context," \
     "  modification_ts" \
     ") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, cast($9 as json), $10)"
@@ -1123,7 +1123,7 @@ namespace {
     "  next_server = cast($3 as inet)," \
     "  server_hostname = $4," \
     "  boot_file_name = $5," \
-    "  only_if_required = $6," \
+    "  only_in_additional_list = $6," \
     "  valid_lifetime = $7," \
     "  min_valid_lifetime = $8," \
     "  max_valid_lifetime = $9," \
@@ -1140,7 +1140,7 @@ namespace {
     "UPDATE dhcp6_client_class SET" \
     "  name = $1," \
     "  test = $2," \
-    "  only_if_required = $3," \
+    "  only_in_additional_list = $3," \
     "  valid_lifetime = $4," \
     "  min_valid_lifetime = $5," \
     "  max_valid_lifetime = $6," \

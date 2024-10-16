@@ -355,9 +355,16 @@ public:
     /// ignored silently.
     ///
     /// @param client_class name of the class to be added
-    /// @param required the class is marked for required evaluation
-    void addClass(const isc::dhcp::ClientClass& client_class,
-                  bool required = false);
+    void addClass(const isc::dhcp::ClientClass& client_class);
+
+    /// @brief Adds a specified class to the packet's additional class list.
+    ///
+    /// A class can be added to the same packet repeatedly. Any additional
+    /// attempts to add to a packet the class already added, will be
+    /// ignored silently.
+    ///
+    /// @param client_class name of the class to be added
+    void addAdditionalClass(const isc::dhcp::ClientClass& client_class);
 
     /// @brief Adds a specified subclass to the packet.
     ///
@@ -373,12 +380,17 @@ public:
     /// @brief Returns the class set
     ///
     /// @note This should be used only to iterate over the class set.
-    /// @param required return classes or required to be evaluated classes.
-    /// @return if required is false (the default) the classes the
-    /// packet belongs to else the classes which are required to be
-    /// evaluated.
-    const ClientClasses& getClasses(bool required = false) const {
-        return (!required ? classes_ : required_classes_);
+    /// @return Classes to which the packet belongs
+    const ClientClasses& getClasses() const {
+        return (classes_);
+    }
+
+    /// @brief Returns the additional class list.
+    ///
+    /// @note This should be used only to iterate over the additional class set.
+    /// @return The classes to be evaluated.
+    const ClientClasses& getAdditionalClasses() const {
+        return (additional_classes_);
     }
 
     /// @brief Returns the class set including template classes associated with
@@ -386,9 +398,7 @@ public:
     ///
     /// @note This should be used only to iterate over the class set.
     /// @note SubClasses are always last.
-    /// @return if required is false (the default) the classes the
-    /// packet belongs to else the classes which are required to be
-    /// evaluated.
+    /// @return sub class relationships to which the packet belongs.
     const SubClassRelationContainer& getSubClassesRelations() const {
         return (subclasses_);
     }
@@ -769,13 +779,19 @@ public:
     /// @ref addClass to operate on this field.
     ClientClasses classes_;
 
-    /// @brief Classes which are required to be evaluated.
+    /// @brief Classes to be evaluated during additional class evaluation
     ///
-    /// The comment on @ref classes_ applies here.
+    /// This list allows hook libraries a way to add classes to the list of classes
+    /// which will be evaluated during evaluate-addtional-classes evaluation.
+    ///
+    /// This field is public, so the code outside of Pkt4 or Pkt6 class can
+    /// iterate over additional classes. Having it public also solves the problem
+    /// of returned reference lifetime. It is preferred to use @ref addAdditionalClass
+    /// operate on this field.
     ///
     /// Before output option processing these classes will be evaluated
-    /// and if evaluation status is true added to the previous collection.
-    ClientClasses required_classes_;
+    /// and if evaluation status is true added to the classes_ collection.
+    ClientClasses additional_classes_;
 
     /// @brief SubClasses this packet belongs to.
     ///

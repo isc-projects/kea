@@ -393,10 +393,9 @@ public:
 
                 // renew_timer at 13 (fetched before subnet create).
 
-                // require_client_classes at 14.
-                setRequiredClasses(worker, 14, [&last_subnet](const std::string& class_name) {
-                    last_subnet->requireClientClass(class_name);
-                });
+                // evaluate_additional_classes at 14.
+                clientClassesFromColumn(worker, 14, "evaluate_additional_classes",
+                                        last_subnet->getMutableAdditionalClasses());
 
                 // reservations_global at 15.
                 if (!worker.isColumnNull(15)) {
@@ -448,7 +447,7 @@ public:
                 // min_valid_lifetime at 57 (fetched as part of triplet).
                 // max_valid_lifetime at 58 (fetched as part of triplet).
 
-                // pool client_class, require_client_classes and user_context
+                // pool client_class, evaluate_additional_classes and user_context
                 // from 59 to 61.
 
                 // ddns_send_updates at 62.
@@ -558,10 +557,9 @@ public:
                     last_pool->allowClientClass(worker.getString(59));
                 }
 
-                // pool require_client_classes at 60.
-                setRequiredClasses(worker, 60, [&last_pool](const std::string& class_name) {
-                    last_pool->requireClientClass(class_name);
-                });
+                // pool evaluate_additional_classes at 60.
+                clientClassesFromColumn(worker, 60, "evaluate_additional_classes",
+                                        last_pool->getMutableAdditionalClasses());
 
                 // pool user_context at 61.
                 if (!worker.isColumnNull(61)) {
@@ -767,10 +765,9 @@ public:
                     last_pool->allowClientClass(worker.getString(4));
                 }
 
-                // pool require_client_classes (5)
-                setRequiredClasses(worker, 5, [&last_pool](const std::string& class_name) {
-                    last_pool->requireClientClass(class_name);
-                });
+                // pool evaluate_additional_classes (5)
+                clientClassesFromColumn(worker, 5, "evaluate_additional_classes",
+                                        last_pool->getMutableAdditionalClasses());
 
                 // pool user_context (6)
                 if (!worker.isColumnNull(6)) {
@@ -895,7 +892,7 @@ public:
         in_bindings.add(subnet->getT2(Network::Inheritance::NONE));
         addRelayBinding(in_bindings, subnet);
         in_bindings.add(subnet->getT1(Network::Inheritance::NONE));
-        addRequiredClassesBinding(in_bindings, subnet);
+        addAdditionalClassesBinding(in_bindings, subnet);
         in_bindings.addOptional(subnet->getReservationsGlobal(Network::Inheritance::NONE));
         in_bindings.addOptional(subnet->getSname(Network::Inheritance::NONE));
 
@@ -1036,7 +1033,7 @@ public:
         in_bindings.addInet4(pool->getLastAddress());
         in_bindings.add(subnet->getID());
         in_bindings.addOptional(pool->getClientClass());
-        addRequiredClassesBinding(in_bindings, pool);
+        addAdditionalClassesBinding(in_bindings, pool);
         in_bindings.add(pool->getContext());
         in_bindings.addTimestamp(subnet->getModificationTime());
 
@@ -1226,10 +1223,9 @@ public:
                     last_network->setT1(worker.getTriplet(8));
                 }
 
-                // require_client_classes at 9.
-                setRequiredClasses(worker, 9, [&last_network](const std::string& class_name) {
-                    last_network->requireClientClass(class_name);
-                });
+                // evaluate_additional_classes at 9.
+                clientClassesFromColumn(worker, 9, "evaluate_additional_classes",
+                                        last_network->getMutableAdditionalClasses());
 
                 // reservations_global at 10.
                 if (!worker.isColumnNull(10)) {
@@ -1495,7 +1491,7 @@ public:
         in_bindings.add(shared_network->getT2(Network::Inheritance::NONE));
         addRelayBinding(in_bindings, shared_network);
         in_bindings.add(shared_network->getT1(Network::Inheritance::NONE));
-        addRequiredClassesBinding(in_bindings, shared_network);
+        addAdditionalClassesBinding(in_bindings, shared_network);
         in_bindings.addOptional(shared_network->getReservationsGlobal(Network::Inheritance::NONE));
         in_bindings.add(shared_network->getContext());
         in_bindings.add(shared_network->getValid(Network::Inheritance::NONE));
@@ -2279,9 +2275,9 @@ public:
                     last_client_class->setFilename(worker.getString(5));
                 }
 
-                // required
+                // additional
                 if (!worker.isColumnNull(6)) {
-                    last_client_class->setRequired(worker.getBool(6));
+                    last_client_class->setAdditional(worker.getBool(6));
                 }
 
                 // valid lifetime: default, min, max
@@ -2451,7 +2447,7 @@ public:
         in_bindings.addInet4(client_class->getNextServer());
         in_bindings.addTempString(client_class->getSname());
         in_bindings.addTempString(client_class->getFilename());
-        in_bindings.add(client_class->getRequired());
+        in_bindings.add(client_class->getAdditional());
         in_bindings.add(client_class->getValid());
         in_bindings.add(client_class->getValid().getMin());
         in_bindings.add(client_class->getValid().getMax());
@@ -3339,7 +3335,7 @@ TaggedStatementArray tagged_statements = { {
             OID_INT8,       // 12 rebind_timer
             OID_TEXT,       // 13 relay
             OID_INT8,       // 14 renew_timer
-            OID_TEXT,       // 15 require_client_classes
+            OID_TEXT,       // 15 evaluate_additional_classes
             OID_BOOL,       // 16 reservations_global
             OID_VARCHAR,    // 17 server_hostname
             OID_VARCHAR,    // 18 shared_network_name
@@ -3380,7 +3376,7 @@ TaggedStatementArray tagged_statements = { {
         "  rebind_timer,"
         "  relay,"
         "  renew_timer,"
-        "  require_client_classes,"
+        "  evaluate_additional_classes,"
         "  reservations_global,"
         "  server_hostname,"
         "  shared_network_name,"
@@ -3434,7 +3430,7 @@ TaggedStatementArray tagged_statements = { {
             OID_TEXT,       // 2 end_address - cast as inet
             OID_INT8,       // 3 subnet_id
             OID_VARCHAR,    // 4 client_class
-            OID_TEXT,       // 5 require_client_classes
+            OID_TEXT,       // 5 evaluate_additional_classes
             OID_TEXT,       // 6 user_context - cast as json
             OID_TIMESTAMP   // 7 modification_ts
         },
@@ -3455,7 +3451,7 @@ TaggedStatementArray tagged_statements = { {
             OID_INT8,       //  6 rebind_timer,
             OID_TEXT,       //  7 relay,
             OID_INT8,       //  8 renew_timer,
-            OID_TEXT,       //  9 require_client_classes,
+            OID_TEXT,       //  9 evaluate_additional_classes,
             OID_BOOL,       // 10 reservations_global,
             OID_TEXT,       // 11 user_context,
             OID_INT8,       // 12 valid_lifetime,
@@ -3491,7 +3487,7 @@ TaggedStatementArray tagged_statements = { {
         "  rebind_timer,"
         "  relay,"
         "  renew_timer,"
-        "  require_client_classes,"
+        "  evaluate_additional_classes,"
         "  reservations_global,"
         "  user_context,"
         "  valid_lifetime,"
@@ -3637,7 +3633,7 @@ TaggedStatementArray tagged_statements = { {
             OID_TEXT,       //  3 next_server - cast as inet
             OID_VARCHAR,    //  4 server_hostname
             OID_VARCHAR,    //  5 boot_file_name
-            OID_BOOL,       //  6 only_if_required
+            OID_BOOL,       //  6 only_in_additional_list
             OID_INT8,       //  7 valid_lifetime
             OID_INT8,       //  8 min_valid_lifetime
             OID_INT8,       //  9 max_valid_lifetime
@@ -3654,7 +3650,7 @@ TaggedStatementArray tagged_statements = { {
         "  next_server,"
         "  server_hostname,"
         "  boot_file_name,"
-        "  only_if_required,"
+        "  only_in_additional_list,"
         "  valid_lifetime,"
         "  min_valid_lifetime,"
         "  max_valid_lifetime,"
@@ -3741,7 +3737,7 @@ TaggedStatementArray tagged_statements = { {
             OID_INT8,       // 12 rebind_timer
             OID_TEXT,       // 13 relay
             OID_INT8,       // 14 renew_timer
-            OID_TEXT,       // 15 require_client_classes
+            OID_TEXT,       // 15 evaluate_additional_classes
             OID_BOOL,       // 16 reservations_global
             OID_VARCHAR,    // 17 server_hostname
             OID_VARCHAR,    // 18 shared_network_name
@@ -3784,7 +3780,7 @@ TaggedStatementArray tagged_statements = { {
         "  rebind_timer = $12,"
         "  relay = $13,"
         "  renew_timer = $14,"
-        "  require_client_classes = $15,"
+        "  evaluate_additional_classes = $15,"
         "  reservations_global = $16,"
         "  server_hostname = $17,"
         "  shared_network_name = $18,"
@@ -3824,7 +3820,7 @@ TaggedStatementArray tagged_statements = { {
             OID_INT8,       //  6 rebind_timer,
             OID_TEXT,       //  7 relay,
             OID_INT8,       //  8 renew_timer,
-            OID_TEXT,       //  9 require_client_classes,
+            OID_TEXT,       //  9 evaluate_additional_classes,
             OID_BOOL,       // 10 reservations_global,
             OID_TEXT,       // 11 user_context,
             OID_INT8,       // 12 valid_lifetime,
@@ -3861,7 +3857,7 @@ TaggedStatementArray tagged_statements = { {
         "  rebind_timer = $6,"
         "  relay = $7,"
         "  renew_timer = $8,"
-        "  require_client_classes = $9,"
+        "  evaluate_additional_classes = $9,"
         "  reservations_global = $10,"
         "  user_context = cast($11 as json),"
         "  valid_lifetime = $12,"
@@ -4080,7 +4076,7 @@ TaggedStatementArray tagged_statements = { {
             OID_TEXT,       //  3 next_server - cast as inet
             OID_VARCHAR,    //  4 server_hostname
             OID_VARCHAR,    //  5 boot_file_name
-            OID_BOOL,       //  6 only_if_required
+            OID_BOOL,       //  6 only_in_additional_list
             OID_INT8,       //  7 valid_lifetime
             OID_INT8,       //  8 min_valid_lifetime
             OID_INT8,       //  9 max_valid_lifetime
@@ -4105,7 +4101,7 @@ TaggedStatementArray tagged_statements = { {
             OID_TEXT,       //  3 next_server - cast as inet
             OID_VARCHAR,    //  4 server_hostname
             OID_VARCHAR,    //  5 boot_file_name
-            OID_BOOL,       //  6 only_if_required
+            OID_BOOL,       //  6 only_in_additional_list
             OID_INT8,       //  7 valid_lifetime
             OID_INT8,       //  8 min_valid_lifetime
             OID_INT8,       //  9 max_valid_lifetime

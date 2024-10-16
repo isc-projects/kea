@@ -37,6 +37,7 @@ using namespace std;
 using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::util;
+namespace ph = std::placeholders;
 
 namespace isc {
 namespace dhcp {
@@ -522,19 +523,10 @@ PoolParser::parse(PoolStoragePtr pools,
         }
     }
 
-    // Try setting up required client classes.
-    ConstElementPtr class_list = pool_structure->get("require-client-classes");
-    if (class_list) {
-        const std::vector<data::ElementPtr>& classes = class_list->listValue();
-        for (auto const& cclass : classes) {
-            if ((cclass->getType() != Element::string) ||
-                 cclass->stringValue().empty()) {
-                isc_throw(DhcpConfigError, "invalid class name ("
-                          << cclass->getPosition() << ")");
-            }
-            pool->requireClientClass(cclass->stringValue());
-        }
-    }
+    // Setup additional class list.
+    BaseNetworkParser::getAdditionalClassesElem(pool_structure,
+                                                std::bind(&Pool::addAdditionalClass,
+                                                          pool, ph::_1));
 }
 
 boost::shared_ptr<OptionDataListParser>
@@ -898,19 +890,9 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
         }
     }
 
-    // Try setting up required client classes.
-    ConstElementPtr class_list = params->get("require-client-classes");
-    if (class_list) {
-        const std::vector<data::ElementPtr>& classes = class_list->listValue();
-        for (auto const& cclass : classes) {
-            if ((cclass->getType() != Element::string) ||
-                cclass->stringValue().empty()) {
-                isc_throw(DhcpConfigError, "invalid class name ("
-                          << cclass->getPosition() << ")");
-            }
-            subnet4->requireClientClass(cclass->stringValue());
-        }
-    }
+    // Setup additional class list.
+    getAdditionalClassesElem(params, std::bind(&Network::addAdditionalClass,
+                                               subnet4, ph::_1));
 
     // 4o6 specific parameter: 4o6-interface.
     if (params->contains("4o6-interface")) {
@@ -1131,8 +1113,6 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool,
         client_class_ = client_class;
     }
 
-    ConstElementPtr class_list = pd_pool->get("require-client-classes");
-
     // Check the pool parameters. It will throw an exception if any
     // of the required parameters are invalid.
     try {
@@ -1187,17 +1167,10 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool,
         }
     }
 
-    if (class_list) {
-        const std::vector<data::ElementPtr>& classes = class_list->listValue();
-        for (auto const& cclass : classes) {
-            if ((cclass->getType() != Element::string) ||
-                cclass->stringValue().empty()) {
-                isc_throw(DhcpConfigError, "invalid class name ("
-                          << cclass->getPosition() << ")");
-            }
-            pool_->requireClientClass(cclass->stringValue());
-        }
-    }
+    // Setup additional class list.
+    BaseNetworkParser::getAdditionalClassesElem(pd_pool,
+                                                std::bind(&Pool::addAdditionalClass,
+                                                          pool_, ph::_1));
 
     // Add the local pool to the external storage ptr.
     pools->push_back(pool_);
@@ -1426,21 +1399,9 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
         }
     }
 
-    if (params->contains("require-client-classes")) {
-        // Try setting up required client classes.
-        ConstElementPtr class_list = params->get("require-client-classes");
-        if (class_list) {
-            const std::vector<data::ElementPtr>& classes = class_list->listValue();
-            for (auto const& cclass : classes) {
-                if ((cclass->getType() != Element::string) ||
-                    cclass->stringValue().empty()) {
-                    isc_throw(DhcpConfigError, "invalid class name ("
-                              << cclass->getPosition() << ")");
-                }
-                subnet6->requireClientClass(cclass->stringValue());
-            }
-        }
-    }
+    // Setup additional class list.
+    getAdditionalClassesElem(params, std::bind(&Network::addAdditionalClass,
+                                               subnet6, ph::_1));
 
     /// client-class processing is now generic and handled in the common
     /// code (see isc::data::SubnetConfigParser::createSubnet)

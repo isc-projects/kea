@@ -1187,17 +1187,23 @@ protected:
 
 protected:
 
-    /// @brief Assigns incoming packet to zero or more classes (required pass).
+    /// @brief Evaluates classes in the additional classes lists
     ///
-    /// @note This required classification evaluates all classes which
-    /// were marked for required evaluation. Classes are collected so
-    /// evaluated in the reversed order than output option processing.
+    /// The evaluation takes place after all other classification and
+    /// lease assignment. It evaluates all classes in the packet's
+    /// additional_classes_ list plus any contributed via evaluate-additional-
+    /// class lists.
     ///
-    /// @note The only-if-required flag is related because it avoids
+    /// @note Evaluates all classes which were marked for the additional
+    /// evaluation stage. Classes are collected and evaluated in the following
+    /// order: pool, subnet, shared-network to produce option precedence
+    /// pool over subnet over shared-network.
+    ///
+    /// @note The only-in-additional-list flag is related because it avoids
     /// double evaluation (which is not forbidden).
     ///
     /// @param ex The exchange holding needed information.
-    void requiredClassify(Dhcpv4Exchange& ex);
+    void evaluateAdditionalClasses(Dhcpv4Exchange& ex);
 
     /// @brief Perform deferred option unpacking.
     ///

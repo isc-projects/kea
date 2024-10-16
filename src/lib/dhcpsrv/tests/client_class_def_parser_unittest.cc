@@ -373,7 +373,7 @@ TEST_F(ClientClassDefParserTest, checkAllSupported4) {
         "    \"option-def\": [ ],\n"
         "    \"option-data\": [ ],\n"
         "    \"user-context\": { },\n"
-        "    \"only-if-required\": false,\n"
+        "    \"only-in-additional-list\": false,\n"
         "    \"valid-lifetime\": 1000,\n"
         "    \"min-valid-lifetime\": 1000,\n"
         "    \"max-valid-lifetime\": 1000,\n"
@@ -399,7 +399,7 @@ TEST_F(ClientClassDefParserTest, checkAllSupported6) {
         "    \"test\": \"member('ALL')\","
         "    \"option-data\": [ ],\n"
         "    \"user-context\": { },\n"
-        "    \"only-if-required\": false,\n"
+        "    \"only-in-additional-list\": false,\n"
         "    \"template-test\": \"\",\n"
         "    \"preferred-lifetime\": 800,\n"
         "    \"min-preferred-lifetime\": 800,\n"
@@ -427,7 +427,7 @@ TEST_F(ClientClassDefParserTest, checkParams4Unsupported6) {
             "    \"option-def\": [ ],\n"
             "    \"option-data\": [ ],\n"
             "    \"user-context\": { },\n"
-            "    \"only-if-required\": false\n"
+            "    \"only-in-additional-list\": false\n"
             "}\n";
 
         testClassParamsUnsupported(cfg_text, AF_INET6);
@@ -441,7 +441,7 @@ TEST_F(ClientClassDefParserTest, checkParams4Unsupported6) {
             "    \"test\": \"member('ALL')\","
             "    \"option-data\": [ ],\n"
             "    \"user-context\": { },\n"
-            "    \"only-if-required\": false,\n"
+            "    \"only-in-additional-list\": false,\n"
             "    \"next-server\": \"192.0.2.3\"\n"
             "}\n";
 
@@ -456,7 +456,7 @@ TEST_F(ClientClassDefParserTest, checkParams4Unsupported6) {
             "    \"test\": \"member('ALL')\","
             "    \"option-data\": [ ],\n"
             "    \"user-context\": { },\n"
-            "    \"only-if-required\": false,\n"
+            "    \"only-in-additional-list\": false,\n"
             "    \"server-hostname\": \"myhost\"\n"
             "}\n";
 
@@ -471,7 +471,7 @@ TEST_F(ClientClassDefParserTest, checkParams4Unsupported6) {
             "    \"test\": \"member('ALL')\","
             "    \"option-data\": [ ],\n"
             "    \"user-context\": { },\n"
-            "    \"only-if-required\": false,\n"
+            "    \"only-in-additional-list\": false,\n"
             "    \"boot-file-name\": \"efi\""
             "}\n";
 
@@ -494,7 +494,7 @@ TEST_F(ClientClassDefParserTest, checkParams6Unsupported4) {
             "    \"preferred-lifetime\": 800,\n"
             "    \"option-data\": [ ],\n"
             "    \"user-context\": { },\n"
-            "    \"only-if-required\": false\n"
+            "    \"only-in-additional-list\": false\n"
             "}\n";
 
         testClassParamsUnsupported(cfg_text, AF_INET);
@@ -509,7 +509,7 @@ TEST_F(ClientClassDefParserTest, checkParams6Unsupported4) {
             "    \"min-preferred-lifetime\": 800,\n"
             "    \"option-data\": [ ],\n"
             "    \"user-context\": { },\n"
-            "    \"only-if-required\": false\n"
+            "    \"only-in-additional-list\": false\n"
             "}\n";
 
         testClassParamsUnsupported(cfg_text, AF_INET);
@@ -524,7 +524,7 @@ TEST_F(ClientClassDefParserTest, checkParams6Unsupported4) {
             "    \"max-preferred-lifetime\": 800,\n"
             "    \"option-data\": [ ],\n"
             "    \"user-context\": { },\n"
-            "    \"only-if-required\": false\n"
+            "    \"only-in-additional-list\": false\n"
             "}\n";
 
         testClassParamsUnsupported(cfg_text, AF_INET);
@@ -1887,7 +1887,7 @@ TEST_F(ClientClassDefListParserTest, builtinCheckError) {
         "[ \n"
         "   { \n"
         "       \"name\": \"ALL\", \n"
-        "       \"only-if-required\": true \n"
+        "       \"only-in-additional-list\": true \n"
         "   } \n"
         "] \n";
 
@@ -1907,7 +1907,7 @@ TEST_F(ClientClassDefListParserTest, builtinCheckError) {
         "[ \n"
         "   { \n"
         "       \"name\": \"KNOWN\", \n"
-        "       \"only-if-required\": true \n"
+        "       \"only-in-additional-list\": true \n"
         "   } \n"
         "] \n";
 
@@ -1927,7 +1927,7 @@ TEST_F(ClientClassDefListParserTest, builtinCheckError) {
         "[ \n"
         "   { \n"
         "       \"name\": \"UNKNOWN\", \n"
-        "       \"only-if-required\": true \n"
+        "       \"only-in-additional-list\": true \n"
         "   } \n"
         "] \n";
 
@@ -1960,7 +1960,7 @@ TEST_F(ClientClassDefListParserTest, dropCheckError) {
         "[ \n"
         "   { \n"
         "       \"name\": \"DROP\", \n"
-        "       \"only-if-required\": true \n"
+        "       \"only-in-additional-list\": true \n"
         "   } \n"
         "] \n";
 

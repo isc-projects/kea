@@ -349,13 +349,18 @@ public:
     /// @param class_name client class to be supported by this network
     void allowClientClass(const isc::dhcp::ClientClass& class_name);
 
-    /// @brief Adds class class_name to classes required to be evaluated.
+    /// @brief Adds class class_name to the additional classes list.
     ///
-    /// @param class_name client class required to be evaluated
-    void requireClientClass(const isc::dhcp::ClientClass& class_name);
+    /// @param class_name client class to add
+    void addAdditionalClass(const isc::dhcp::ClientClass& class_name);
 
-    /// @brief Returns classes which are required to be evaluated
-    const ClientClasses& getRequiredClasses() const;
+    /// @brief Returns the additional classes list.
+    const ClientClasses& getAdditionalClasses() const;
+
+    /// @brief Returns the mutable additional classes list.
+    ClientClasses& getMutableAdditionalClasses() {
+        return (additional_classes_);
+    }
 
     /// @brief returns the client class
     ///
@@ -1147,11 +1152,12 @@ protected:
     /// which means that any client is allowed, regardless of its class.
     util::Optional<ClientClass> client_class_;
 
-    /// @brief Required classes
+    /// @brief Additional classes
     ///
-    /// If the network is selected these classes will be added to the
-    /// incoming packet and their evaluation will be required.
-    ClientClasses required_classes_;
+    /// If the network is selected these classes will be evaluated against
+    /// incoming packet after all other classification and the lease has
+    /// been assigned.
+    ClientClasses additional_classes_;
 
     /// @brief a isc::util::Triplet (min/default/max) holding allowed renew timer values
     isc::util::Triplet<uint32_t> t1_;

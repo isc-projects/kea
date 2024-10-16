@@ -224,6 +224,7 @@ const SimpleKeywords SimpleParser6::SUBNET6_PARAMETERS = {
     { "rapid-commit",                   Element::boolean },
     { "client-class",                   Element::string },
     { "require-client-classes",         Element::list },
+    { "evaluate-additional-classes",    Element::list },
     { "reservations",                   Element::list },
     { "reservations-global",            Element::boolean },
     { "reservations-in-subnet",         Element::boolean },
@@ -317,14 +318,15 @@ const ParamsList SimpleParser6::INHERIT_TO_SUBNET6 = {
 /// list and map types for entries.
 /// Order follows pool_param rules in bison grammar.
 const SimpleKeywords SimpleParser6::POOL6_PARAMETERS = {
-    { "pool",                   Element::string },
-    { "pool-id",                Element::integer },
-    { "option-data",            Element::list },
-    { "client-class",           Element::string },
-    { "require-client-classes", Element::list },
-    { "user-context",           Element::map },
-    { "comment",                Element::string },
-    { "metadata",               Element::map }
+    { "pool",                        Element::string },
+    { "pool-id",                     Element::integer },
+    { "option-data",                 Element::list },
+    { "client-class",                Element::string },
+    { "require-client-classes",      Element::list },
+    { "evaluate-additional-classes", Element::list },
+    { "user-context",                Element::map },
+    { "comment",                     Element::string },
+    { "metadata",                    Element::map }
 };
 
 /// @brief This table defines all prefix delegation pool parameters.
@@ -333,18 +335,19 @@ const SimpleKeywords SimpleParser6::POOL6_PARAMETERS = {
 /// list and map types for entries.
 /// Order follows pd_pool_param rules in bison grammar.
 const SimpleKeywords SimpleParser6::PD_POOL6_PARAMETERS = {
-    { "prefix",                 Element::string },
-    { "prefix-len",             Element::integer },
-    { "delegated-len",          Element::integer },
-    { "pool-id",                Element::integer },
-    { "option-data",            Element::list },
-    { "client-class",           Element::string },
-    { "require-client-classes", Element::list },
-    { "excluded-prefix",        Element::string },
-    { "excluded-prefix-len",    Element::integer },
-    { "user-context",           Element::map },
-    { "comment",                Element::string },
-    { "metadata",               Element::map }
+    { "prefix",                      Element::string },
+    { "prefix-len",                  Element::integer },
+    { "delegated-len",               Element::integer },
+    { "pool-id",                     Element::integer },
+    { "option-data",                 Element::list },
+    { "client-class",                Element::string },
+    { "require-client-classes",      Element::list },
+    { "evaluate-additional-classes", Element::list },
+    { "excluded-prefix",             Element::string },
+    { "excluded-prefix-len",         Element::integer },
+    { "user-context",                Element::map },
+    { "comment",                     Element::string },
+    { "metadata",                    Element::map }
 };
 
 /// @brief This table defines all shared network parameters for DHCPv6.
@@ -366,6 +369,7 @@ const SimpleKeywords SimpleParser6::SHARED_NETWORK6_PARAMETERS = {
     { "reservations-out-of-pool",       Element::boolean },
     { "client-class",                   Element::string },
     { "require-client-classes",         Element::list },
+    { "evaluate-additional-classes",    Element::list },
     { "preferred-lifetime",             Element::integer },
     { "min-preferred-lifetime",         Element::integer },
     { "max-preferred-lifetime",         Element::integer },

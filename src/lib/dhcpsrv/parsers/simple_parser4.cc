@@ -224,6 +224,7 @@ const SimpleKeywords SimpleParser4::SUBNET4_PARAMETERS = {
     { "id",                             Element::integer },
     { "client-class",                   Element::string },
     { "require-client-classes",         Element::list },
+    { "evaluate-additional-classes",    Element::list },
     { "reservations",                   Element::list },
     { "reservations-global",            Element::boolean },
     { "reservations-in-subnet",         Element::boolean },
@@ -326,14 +327,15 @@ const ParamsList SimpleParser4::INHERIT_TO_SUBNET4 = {
 /// list and map types for entries.
 /// Order follows pool_param rules in bison grammar.
 const SimpleKeywords SimpleParser4::POOL4_PARAMETERS = {
-    { "pool",                   Element::string },
-    { "pool-id",                Element::integer },
-    { "option-data",            Element::list },
-    { "client-class",           Element::string },
-    { "require-client-classes", Element::list },
-    { "user-context",           Element::map },
-    { "comment",                Element::string },
-    { "metadata",               Element::map }
+    { "pool",                        Element::string },
+    { "pool-id",                     Element::integer },
+    { "option-data",                 Element::list },
+    { "client-class",                Element::string },
+    { "require-client-classes",      Element::list },
+    { "evaluate-additional-classes", Element::list },
+    { "user-context",                Element::map },
+    { "comment",                     Element::string },
+    { "metadata",                    Element::map }
 };
 
 /// @brief This table defines all shared network parameters for DHCPv4.
@@ -359,6 +361,7 @@ const SimpleKeywords SimpleParser4::SHARED_NETWORK4_PARAMETERS = {
     { "reservations-out-of-pool",       Element::boolean },
     { "client-class",                   Element::string },
     { "require-client-classes",         Element::list },
+    { "evaluate-additional-classes",    Element::list },
     { "valid-lifetime",                 Element::integer },
     { "min-valid-lifetime",             Element::integer },
     { "max-valid-lifetime",             Element::integer },

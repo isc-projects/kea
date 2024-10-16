@@ -218,7 +218,7 @@ Dhcpv4SrvTest::configureServerIdentifier() {
     desc.option_ = makeServerIdOption(IOAddress("192.0.5.254"));
     options->add(desc, DHCP4_OPTION_SPACE);
     CfgMgr::instance().getStagingCfg()->getClientClassDictionary()->addClass("foo", ExpressionPtr(), "", true, false, options);
-    subnet5->requireClientClass("foo");
+    subnet5->addAdditionalClass("foo");
 
     // Build and add subnet6.
     Subnet4Ptr subnet6(new Subnet4(IOAddress("192.0.6.0"), 24, unspec, unspec, 3600, 6));
@@ -233,7 +233,7 @@ Dhcpv4SrvTest::configureServerIdentifier() {
     desc_other.option_ = makeFqdnListOption();
     options->add(desc_other, DHCP4_OPTION_SPACE);
     CfgMgr::instance().getStagingCfg()->getClientClassDictionary()->addClass("bar", ExpressionPtr(), "", true, false, options);
-    subnet6->requireClientClass("bar");
+    subnet6->addAdditionalClass("bar");
 
     // Build and add subnet7.
     Subnet4Ptr subnet7(new Subnet4(IOAddress("192.0.7.0"), 24, unspec, unspec, 3600, 7));
@@ -245,7 +245,7 @@ Dhcpv4SrvTest::configureServerIdentifier() {
 
     options.reset();
     CfgMgr::instance().getStagingCfg()->getClientClassDictionary()->addClass("xyz", ExpressionPtr(), "", true, false, options);
-    subnet7->requireClientClass("xyz");
+    subnet7->addAdditionalClass("xyz");
 
     // Build and add a shared-network.
     CfgSharedNetworks4Ptr networks = cfg_mgr.getStagingCfg()->getCfgSharedNetworks4();

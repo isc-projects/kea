@@ -133,7 +133,7 @@ public:
                 "    \"reservations-in-subnet\": true,"
                 "    \"reservations-out-of-pool\": true,"
                 "    \"server-hostname\": \"example.org\","
-                "    \"require-client-classes\": [ \"runner\" ],"
+                "    \"evaluate-additional-classes\": [ \"runner\" ],"
                 "    \"user-context\": { \"comment\": \"example\" },"
                 "    \"valid-lifetime\": 399,"
                 "    \"min-valid-lifetime\": 299,"
@@ -176,7 +176,7 @@ public:
                 "            \"server-hostname\": \"\","
                 "            \"boot-file-name\": \"\","
                 "            \"client-class\": \"\","
-                "            \"require-client-classes\": []\n,"
+                "            \"evaluate-additional-classes\": []\n,"
                 "            \"reservations-global\": false,"
                 "            \"reservations-in-subnet\": true,"
                 "            \"reservations-out-of-pool\": false,"
@@ -204,7 +204,7 @@ public:
                 "            \"server-hostname\": \"\","
                 "            \"boot-file-name\": \"\","
                 "            \"client-class\": \"\","
-                "            \"require-client-classes\": []\n,"
+                "            \"evaluate-additional-classes\": []\n,"
                 "            \"reservations-global\": false,"
                 "            \"reservations-in-subnet\": true,"
                 "            \"reservations-out-of-pool\": false,"
@@ -291,10 +291,10 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     EXPECT_EQ(1, relay_info.getAddresses().size());
     EXPECT_TRUE(relay_info.containsAddress(IOAddress("10.1.1.1")));
 
-    // Required client classes.
-    auto required = network->getRequiredClasses();
-    ASSERT_EQ(1, required.size());
-    EXPECT_EQ("runner", *required.cbegin());
+    // Additional client classes.
+    auto additional = network->getAdditionalClasses();
+    ASSERT_EQ(1, additional.size());
+    EXPECT_EQ("runner", *additional.cbegin());
 
     // Check user context.
     ConstElementPtr context = network->getContext();
@@ -558,7 +558,7 @@ public:
                 "    \"rebind-timer\": 199,"
                 "    \"relay\": { \"ip-addresses\": [ \"2001:db8:1::1\" ] },"
                 "    \"renew-timer\": 99,"
-                "    \"require-client-classes\": [ \"runner\" ],"
+                "    \"evaluate-additional-classes\": [ \"runner\" ],"
                 "    \"reservations-global\": false,"
                 "    \"reservations-in-subnet\": true,"
                 "    \"reservations-out-of-pool\": true,"
@@ -604,7 +604,7 @@ public:
                 "            \"min-valid-lifetime\": 300,"
                 "            \"max-valid-lifetime\": 500,"
                 "            \"client-class\": \"\","
-                "            \"require-client-classes\": []\n,"
+                "            \"evaluate-additional-classes\": []\n,"
                 "            \"reservations-global\": false,"
                 "            \"reservations-in-subnet\": true,"
                 "            \"reservations-out-of-pool\": false,"
@@ -623,7 +623,7 @@ public:
                 "            \"preferred-lifetime\": 30,"
                 "            \"valid-lifetime\": 40,"
                 "            \"client-class\": \"\","
-                "            \"require-client-classes\": []\n,"
+                "            \"evaluate-additional-classes\": []\n,"
                 "            \"reservations-global\": false,"
                 "            \"reservations-in-subnet\": true,"
                 "            \"reservations-out-of-pool\": false,"
@@ -704,10 +704,10 @@ TEST_F(SharedNetwork6ParserTest, parse) {
     EXPECT_EQ(1, relay_info.getAddresses().size());
     EXPECT_TRUE(relay_info.containsAddress(IOAddress("2001:db8:1::1")));
 
-    // Required client classes.
-    auto required = network->getRequiredClasses();
-    ASSERT_EQ(1, required.size());
-    EXPECT_EQ("runner", *required.cbegin());
+    // Additional client classes.
+    auto additional = network->getAdditionalClasses();
+    ASSERT_EQ(1, additional.size());
+    EXPECT_EQ("runner", *additional.cbegin());
 
     // Check user context.
     ConstElementPtr context = network->getContext();
@@ -870,7 +870,7 @@ TEST_F(SharedNetwork6ParserTest, clientClass) {
     EXPECT_EQ("alpha", network->getClientClass().get());
 }
 
-// This test verifies that it's possible to specify require-client-classes
+// This test verifies that it's possible to specify evaluate-additional-classes
 // on shared-network level.
 TEST_F(SharedNetwork6ParserTest, evalClientClasses) {
     IfaceMgrTestConfig ifmgr(true);
@@ -881,7 +881,7 @@ TEST_F(SharedNetwork6ParserTest, evalClientClasses) {
     ElementPtr class_list = Element::createList();
     class_list->add(Element::create("alpha"));
     class_list->add(Element::create("beta"));
-    config_element->set("require-client-classes", class_list);
+    config_element->set("evaluate-additional-classes", class_list);
 
     // Parse configuration specified above.
     SharedNetwork6Parser parser;
@@ -889,12 +889,12 @@ TEST_F(SharedNetwork6ParserTest, evalClientClasses) {
     network = parser.parse(config_element);
     ASSERT_TRUE(network);
 
-    const ClientClasses& classes = network->getRequiredClasses();
+    const ClientClasses& classes = network->getAdditionalClasses();
     EXPECT_EQ(2, classes.size());
     EXPECT_EQ("alpha, beta", classes.toText());
 }
 
-// This test verifies that bad require-client-classes configs raise
+// This test verifies that bad evaluate-additional-classes configs raise
 // expected errors.
 TEST_F(SharedNetwork6ParserTest, badEvalClientClasses) {
     IfaceMgrTestConfig ifmgr(true);
@@ -906,7 +906,7 @@ TEST_F(SharedNetwork6ParserTest, badEvalClientClasses) {
     ElementPtr class_list = Element::createList();
     class_list->add(Element::create("alpha"));
     class_list->add(Element::create(1234));
-    config_element->set("require-client-classes", class_list);
+    config_element->set("evaluate-additional-classes", class_list);
 
     // Parse configuration specified above.
     SharedNetwork6Parser parser;

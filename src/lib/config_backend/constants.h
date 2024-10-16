@@ -38,7 +38,7 @@ constexpr unsigned long INTERFACE_ID_BUF_LENGTH = 128;
 
 constexpr unsigned long RELAY_BUF_LENGTH = 65536;
 
-constexpr unsigned long REQUIRE_CLIENT_CLASSES_BUF_LENGTH = 65536;
+constexpr unsigned long CLIENT_CLASS_LIST_BUF_LENGTH = 65536;
 
 constexpr unsigned long SERVER_HOSTNAME_BUF_LENGTH = 512;
 
@@ -81,8 +81,6 @@ constexpr unsigned long SERVER_DESCRIPTION_BUF_LENGTH = 65536;
 constexpr unsigned long DNS_NAME_BUF_LENGTH = 255;
 
 constexpr unsigned long ALLOCATOR_TYPE_BUF_LENGTH = 64;
-
-constexpr unsigned long OPTION_CLIENT_CLASSES_BUF_LENGTH = 65536;
 
 //*}
 

@@ -135,18 +135,23 @@ public:
         return (client_class_);
     }
 
-    /// @brief Adds class class_name to classes required to be evaluated
+    /// @brief Adds class class_name to the additional classes list.
     ///
-    /// @param class_name client class required to be evaluated
-    void requireClientClass(const ClientClass& class_name) {
-        if (!required_classes_.contains(class_name)) {
-            required_classes_.insert(class_name);
+    /// @param class_name client class to add
+    void addAdditionalClass(const ClientClass& class_name) {
+        if (!additional_classes_.contains(class_name)) {
+            additional_classes_.insert(class_name);
         }
     }
 
-    /// @brief Returns classes which are required to be evaluated
-    const ClientClasses& getRequiredClasses() const {
-        return (required_classes_);
+    /// @brief Returns the additional classes list.
+    const ClientClasses& getAdditionalClasses() const {
+        return (additional_classes_);
+    }
+
+    /// @brief Returns the mutable additional classes list.
+    ClientClasses& getMutableAdditionalClasses() {
+        return (additional_classes_);
     }
 
     /// @brief Returns pool-specific allocation state.
@@ -216,10 +221,10 @@ protected:
     /// @ref Network::client_class_
     ClientClass client_class_;
 
-    /// @brief Required classes
+    /// @brief Additional classes
     ///
-    /// @ref isc::dhcp::Network::required_classes_
-    ClientClasses required_classes_;
+    /// @ref isc::dhcp::Network::additional_classes_
+    ClientClasses additional_classes_;
 
     /// @brief Pointer to the user context (may be NULL)
     data::ConstElementPtr user_context_;

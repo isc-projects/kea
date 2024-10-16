@@ -82,15 +82,15 @@ Network::allowClientClass(const isc::dhcp::ClientClass& class_name) {
 }
 
 void
-Network::requireClientClass(const isc::dhcp::ClientClass& class_name) {
-    if (!required_classes_.contains(class_name)) {
-        required_classes_.insert(class_name);
+Network::addAdditionalClass(const isc::dhcp::ClientClass& class_name) {
+    if (!additional_classes_.contains(class_name)) {
+        additional_classes_.insert(class_name);
     }
 }
 
 const ClientClasses&
-Network::getRequiredClasses() const {
-    return (required_classes_);
+Network::getAdditionalClasses() const {
+    return (additional_classes_);
 }
 
 Optional<IOAddress>
@@ -141,13 +141,13 @@ Network::toElement() const {
     }
 
     // Set require-client-classes
-    const ClientClasses& classes = getRequiredClasses();
+    const ClientClasses& classes = getAdditionalClasses();
     if (!classes.empty()) {
         ElementPtr class_list = Element::createList();
         for (auto const& it : classes) {
             class_list->add(Element::create(it));
         }
-        map->set("require-client-classes", class_list);
+        map->set("evaluate-additional-classes", class_list);
     }
 
     // T1, T2, and Valid are optional for SharedNetworks, and

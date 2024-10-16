@@ -690,8 +690,8 @@ TEST(CfgSubnets6Test, unparseSubnet) {
     subnet2->setCacheMaxAge(80);
 
     subnet3->setIface("eth1");
-    subnet3->requireClientClass("foo");
-    subnet3->requireClientClass("bar");
+    subnet3->addAdditionalClass("foo");
+    subnet3->addAdditionalClass("bar");
     subnet3->setReservationsGlobal(false);
     subnet3->setReservationsInSubnet(true);
     subnet3->setReservationsOutOfPool(false);
@@ -781,7 +781,7 @@ TEST(CfgSubnets6Test, unparseSubnet) {
         "    \"pools\": [ ],\n"
         "    \"pd-pools\": [ ],\n"
         "    \"option-data\": [ ],\n"
-        "    \"require-client-classes\": [ \"foo\", \"bar\" ],\n"
+        "    \"evaluate-additional-classes\": [ \"foo\", \"bar\" ],\n"
         "    \"calculate-tee-times\": true,\n"
         "    \"t1-percent\": 0.50,\n"
         "    \"t2-percent\": 0.65,\n"
@@ -816,7 +816,7 @@ TEST(CfgSubnets6Test, unparsePool) {
     pool1->setContext(ctx1);
     data::ElementPtr ctx2 = data::Element::fromJSON("{ \"foo\": \"bar\" }");
     pool2->setContext(ctx2);
-    pool2->requireClientClass("foo");
+    pool2->addAdditionalClass("foo");
 
     subnet->addPool(pool1);
     subnet->addPool(pool2);
@@ -847,7 +847,7 @@ TEST(CfgSubnets6Test, unparsePool) {
         "            \"user-context\": { \"foo\": \"bar\" },\n"
         "            \"option-data\": [ ],\n"
         "            \"client-class\": \"bar\",\n"
-        "            \"require-client-classes\": [ \"foo\" ]\n"
+        "            \"evaluate-additional-classes\": [ \"foo\" ]\n"
         "        }\n"
         "    ],\n"
         "    \"pd-pools\": [ ],\n"
@@ -872,7 +872,7 @@ TEST(CfgSubnets6Test, unparsePdPool) {
 
     data::ElementPtr ctx1 = data::Element::fromJSON("{ \"foo\": [ \"bar\" ] }");
     pdpool1->setContext(ctx1);
-    pdpool1->requireClientClass("bar");
+    pdpool1->addAdditionalClass("bar");
     pdpool2->allowClientClass("bar");
 
     subnet->addPool(pdpool1);
@@ -901,7 +901,7 @@ TEST(CfgSubnets6Test, unparsePdPool) {
         "            \"delegated-len\": 64,\n"
         "            \"user-context\": { \"foo\": [ \"bar\" ] },\n"
         "            \"option-data\": [ ],\n"
-        "            \"require-client-classes\": [ \"bar\" ]\n"
+        "            \"evaluate-additional-classes\": [ \"bar\" ]\n"
         "        },{\n"
         "            \"prefix\": \"2001:db8:3::\",\n"
         "            \"prefix-len\": 48,\n"
@@ -1228,7 +1228,7 @@ TEST(CfgSubnets6Test, teeTimePercentValidation) {
         "            \"rebind-timer\": 200, \n"
         "            \"valid-lifetime\": 300, \n"
         "            \"client-class\": \"\", \n"
-        "            \"require-client-classes\": [] \n,"
+        "            \"evaluate-additional-classes\": [] \n,"
         "            \"reservations-global\": false, \n"
         "            \"reservations-in-subnet\": true, \n"
         "            \"reservations-out-of-pool\": false \n"
@@ -1293,7 +1293,7 @@ TEST(CfgSubnets6Test, preferredLifetimeValidation) {
         "            \"rebind-timer\": 200, \n"
         "            \"valid-lifetime\": 300, \n"
         "            \"client-class\": \"\", \n"
-        "            \"require-client-classes\": [] \n,"
+        "            \"evaluate-additional-classes\": [] \n,"
         "            \"reservations-global\": false, \n"
         "            \"reservations-in-subnet\": true, \n"
         "            \"reservations-out-of-pool\": false \n"
@@ -1548,7 +1548,7 @@ TEST(CfgSubnets6Test, hostnameSanitizierValidation) {
         "            \"rebind-timer\": 200, \n"
         "            \"valid-lifetime\": 300, \n"
         "            \"client-class\": \"\", \n"
-        "            \"require-client-classes\": [] \n,"
+        "            \"evaluate-additional-classes\": [] \n,"
         "            \"reservations-global\": false, \n"
         "            \"reservations-in-subnet\": true, \n"
         "            \"reservations-out-of-pool\": false \n"
@@ -1620,7 +1620,7 @@ TEST(CfgSubnets6Test, cacheParamValidation) {
         "            \"rebind-timer\": 200, \n"
         "            \"valid-lifetime\": 300, \n"
         "            \"client-class\": \"\", \n"
-        "            \"require-client-classes\": [] \n,"
+        "            \"evaluate-additional-classes\": [] \n,"
         "            \"reservations-global\": false, \n"
         "            \"reservations-in-subnet\": true, \n"
         "            \"reservations-out-of-pool\": false \n"

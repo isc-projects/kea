@@ -3777,7 +3777,8 @@ Dhcpv6Srv::processSolicit(AllocEngine::ClientContext6& ctx) {
     }
 
     conditionallySetReservedClientClasses(solicit, ctx);
-    requiredClassify(solicit, ctx);
+    // Evaluate addditional classes.
+    evaluateAdditionalClasses(solicit, ctx);
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASSES_ASSIGNED)
         .arg(solicit->getLabel())
@@ -3820,7 +3821,8 @@ Dhcpv6Srv::processRequest(AllocEngine::ClientContext6& ctx) {
     }
 
     conditionallySetReservedClientClasses(request, ctx);
-    requiredClassify(request, ctx);
+    // Evaluate addditional classes.
+    evaluateAdditionalClasses(request, ctx);
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASSES_ASSIGNED)
         .arg(request->getLabel())
@@ -3859,7 +3861,8 @@ Dhcpv6Srv::processRenew(AllocEngine::ClientContext6& ctx) {
     }
 
     conditionallySetReservedClientClasses(renew, ctx);
-    requiredClassify(renew, ctx);
+    // Evaluate addditional classes.
+    evaluateAdditionalClasses(renew, ctx);
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASSES_ASSIGNED)
         .arg(renew->getLabel())
@@ -3898,7 +3901,8 @@ Dhcpv6Srv::processRebind(AllocEngine::ClientContext6& ctx) {
     }
 
     conditionallySetReservedClientClasses(rebind, ctx);
-    requiredClassify(rebind, ctx);
+    // Evaluate addditional classes.
+    evaluateAdditionalClasses(rebind, ctx);
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASSES_ASSIGNED)
         .arg(rebind->getLabel())
@@ -3924,7 +3928,8 @@ Dhcpv6Srv::processConfirm(AllocEngine::ClientContext6& ctx) {
 
     Pkt6Ptr confirm = ctx.query_;
     conditionallySetReservedClientClasses(confirm, ctx);
-    requiredClassify(confirm, ctx);
+    // Evaluate addditional classes.
+    evaluateAdditionalClasses(confirm, ctx);
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASSES_ASSIGNED)
         .arg(confirm->getLabel())
@@ -4017,7 +4022,8 @@ Dhcpv6Srv::processRelease(AllocEngine::ClientContext6& ctx) {
 
     Pkt6Ptr release = ctx.query_;
     conditionallySetReservedClientClasses(release, ctx);
-    requiredClassify(release, ctx);
+    // Evaluate addditional classes.
+    evaluateAdditionalClasses(release, ctx);
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASSES_ASSIGNED)
         .arg(release->getLabel())
@@ -4048,7 +4054,8 @@ Dhcpv6Srv::processDecline(AllocEngine::ClientContext6& ctx) {
 
     Pkt6Ptr decline = ctx.query_;
     conditionallySetReservedClientClasses(decline, ctx);
-    requiredClassify(decline, ctx);
+    // Evaluate addditional classes.
+    evaluateAdditionalClasses(decline, ctx);
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASSES_ASSIGNED)
         .arg(decline->getLabel())
@@ -4368,7 +4375,8 @@ Dhcpv6Srv::processInfRequest(AllocEngine::ClientContext6& ctx) {
 
     Pkt6Ptr inf_request = ctx.query_;
     conditionallySetReservedClientClasses(inf_request, ctx);
-    requiredClassify(inf_request, ctx);
+    // Evaluate addditional classes.
+    evaluateAdditionalClasses(inf_request, ctx);
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASSES_ASSIGNED)
         .arg(inf_request->getLabel())
@@ -4466,7 +4474,7 @@ void Dhcpv6Srv::evaluateClasses(const Pkt6Ptr& pkt, bool depend_on_known) {
             continue;
         }
         // Not the right time if only when required
-        if (it->getRequired()) {
+        if (it->getAdditional()) {
             continue;
         }
         // Not the right pass.
@@ -4519,9 +4527,9 @@ Dhcpv6Srv::conditionallySetReservedClientClasses(const Pkt6Ptr& pkt,
 }
 
 void
-Dhcpv6Srv::requiredClassify(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx) {
-    // First collect required classes
-    ClientClasses classes = pkt->getClasses(true);
+Dhcpv6Srv::evaluateAdditionalClasses(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx) {
+    // Get additional classes to evaluate added elsewhere, posssibly by hooks.
+    ClientClasses classes = pkt->getAdditionalClasses();
     Subnet6Ptr subnet = ctx.subnet_;
 
     if (subnet) {
@@ -4535,7 +4543,7 @@ Dhcpv6Srv::requiredClassify(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx
                                      resource.getAddress(),
                                      false);
             if (pool) {
-                const ClientClasses& pool_to_add = pool->getRequiredClasses();
+                const ClientClasses& pool_to_add = pool->getAdditionalClasses();
                 for (auto const& cclass : pool_to_add) {
                     classes.insert(cclass);
                 }
@@ -4543,7 +4551,7 @@ Dhcpv6Srv::requiredClassify(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx
         }
 
         // Followed by the subnet
-        const ClientClasses& to_add = subnet->getRequiredClasses();
+        const ClientClasses& to_add = subnet->getAdditionalClasses();
         for (auto const& cclass : to_add) {
             classes.insert(cclass);
         }
@@ -4552,7 +4560,7 @@ Dhcpv6Srv::requiredClassify(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx
         SharedNetwork6Ptr network;
         subnet->getSharedNetwork(network);
         if (network) {
-            const ClientClasses& net_to_add = network->getRequiredClasses();
+            const ClientClasses& net_to_add = network->getAdditionalClasses();
             for (auto const& cclass : net_to_add) {
                 classes.insert(cclass);
             }

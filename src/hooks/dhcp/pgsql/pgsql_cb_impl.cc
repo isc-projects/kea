@@ -837,7 +837,7 @@ PgSqlConfigBackendImpl::processOptionRow(const Option::Universe& universe,
     }
 
     // Populate client classes.
-    setClientClasses(worker, first_col + 13, desc->client_classes_);
+    setClientClasses(worker, first_col + 13, "client_classes", desc->client_classes_);
 
     // Set database id for the option.
     // @todo Can this actually ever be null and if it is, isn't that an error?
@@ -850,6 +850,7 @@ PgSqlConfigBackendImpl::processOptionRow(const Option::Universe& universe,
 
 void
 PgSqlConfigBackendImpl::setClientClasses(PgSqlResultRowWorker& worker, size_t col,
+                                         const std::string& column,
                                          ClientClasses& client_classes) {
     if (worker.isColumnNull(col)) {
         return;
@@ -862,7 +863,7 @@ PgSqlConfigBackendImpl::setClientClasses(PgSqlResultRowWorker& worker, size_t co
     } catch (const std::exception& ex) {
         std::ostringstream ss;
         cclasses_element->toJSON(ss);
-        isc_throw(BadValue, "invalid 'client_classes' : " << ss.str() << ex.what());
+        isc_throw(BadValue, "invalid '" << column << "' : " << ss.str() << ex.what());
     }
 }
 
@@ -1137,29 +1138,21 @@ PgSqlConfigBackendImpl::setRelays(PgSqlResultRowWorker& worker, size_t col, Netw
 }
 
 void
-PgSqlConfigBackendImpl::setRequiredClasses(PgSqlResultRowWorker& worker, size_t col,
-                                           std::function<void(const std::string&)> setter) {
+PgSqlConfigBackendImpl::clientClassesFromColumn(PgSqlResultRowWorker& worker, size_t col,
+                                                const std::string& column,
+                                                ClientClasses& client_classes) {
     if (worker.isColumnNull(col)) {
         return;
     }
 
-    ElementPtr require_element = worker.getJSON(col);
-    if (require_element->getType() != Element::list) {
-        std::ostringstream ss;
-        require_element->toJSON(ss);
-        isc_throw(BadValue, "invalid require_client_classes value " << ss.str());
-    }
-
-    for (auto i = 0; i < require_element->size(); ++i) {
-        auto require_item = require_element->get(i);
-        if (require_item->getType() != Element::string) {
-            isc_throw(BadValue, "elements of require_client_classes list must"
-                                "be valid strings");
-        }
-
-        setter(require_item->stringValue());
+    try {
+        ElementPtr cclist_element = worker.getJSON(col);
+        client_classes.fromElement(cclist_element);
+    } catch (const std::exception& ex) {
+        isc_throw(BadValue, "invalid '" << column << "' value " << ex.what());
     }
 }
+
 
 void
 PgSqlConfigBackendImpl::addOptionValueBinding(PsqlBindArray& bindings,

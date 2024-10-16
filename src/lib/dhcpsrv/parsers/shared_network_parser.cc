@@ -22,6 +22,7 @@
 using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::util;
+namespace ph = std::placeholders;
 
 namespace isc {
 namespace dhcp {
@@ -164,18 +165,10 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data,
             shared_network->setContext(user_context);
         }
 
-        if (shared_network_data->contains("require-client-classes")) {
-            const std::vector<data::ElementPtr>& class_list =
-                shared_network_data->get("require-client-classes")->listValue();
-            for (auto const& cclass : class_list) {
-                if ((cclass->getType() != Element::string) ||
-                    cclass->stringValue().empty()) {
-                    isc_throw(DhcpConfigError, "invalid class name ("
-                              << cclass->getPosition() << ")");
-                }
-                shared_network->requireClientClass(cclass->stringValue());
-            }
-        }
+        // Setup additional class list.
+        getAdditionalClassesElem(shared_network_data,
+                                 std::bind(&Network::addAdditionalClass,
+                                           shared_network, ph::_1));
 
         if (shared_network_data->contains("relay")) {
             auto relay_parms = shared_network_data->get("relay");
@@ -335,18 +328,10 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data,
             shared_network->setContext(user_context);
         }
 
-        if (shared_network_data->contains("require-client-classes")) {
-            const std::vector<data::ElementPtr>& class_list =
-                shared_network_data->get("require-client-classes")->listValue();
-            for (auto const& cclass : class_list) {
-                if ((cclass->getType() != Element::string) ||
-                    cclass->stringValue().empty()) {
-                    isc_throw(DhcpConfigError, "invalid class name ("
-                              << cclass->getPosition() << ")");
-                }
-                shared_network->requireClientClass(cclass->stringValue());
-            }
-        }
+        // Setup additional class list.
+        getAdditionalClassesElem(shared_network_data,
+                                 std::bind(&Network::addAdditionalClass,
+                                           shared_network, ph::_1));
 
         if (shared_network_data->contains("subnet6")) {
             auto json = shared_network_data->get("subnet6");

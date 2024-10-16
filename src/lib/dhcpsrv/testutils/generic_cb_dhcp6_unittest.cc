@@ -112,8 +112,8 @@ GenericConfigBackendDHCPv6Test::initTestSubnets() {
     subnet->addRelayAddress(IOAddress("2001:db8:1::2"));
     subnet->addRelayAddress(IOAddress("2001:db8:3::4"));
     subnet->setT1(1234);
-    subnet->requireClientClass("required-class1");
-    subnet->requireClientClass("required-class2");
+    subnet->addAdditionalClass("required-class1");
+    subnet->addAdditionalClass("required-class2");
     subnet->setReservationsGlobal(false);
     subnet->setReservationsInSubnet(false);
     subnet->setContext(user_context);
@@ -171,8 +171,8 @@ GenericConfigBackendDHCPv6Test::initTestSubnets() {
     subnet->addPool(pool2);
 
     pool2->allowClientClass("work");
-    pool2->requireClientClass("required-class3");
-    pool2->requireClientClass("required-class4");
+    pool2->addAdditionalClass("required-class3");
+    pool2->addAdditionalClass("required-class4");
     user_context = Element::createMap();
     user_context->set("bar", Element::create("foo"));
     pool2->setContext(user_context);
@@ -190,8 +190,8 @@ GenericConfigBackendDHCPv6Test::initTestSubnets() {
     subnet->addPool(pdpool2);
 
     pdpool2->allowClientClass("work");
-    pdpool2->requireClientClass("required-class3");
-    pdpool2->requireClientClass("required-class4");
+    pdpool2->addAdditionalClass("required-class3");
+    pdpool2->addAdditionalClass("required-class4");
     user_context = Element::createMap();
     user_context->set("bar", Element::create("foo"));
     pdpool2->setContext(user_context);
@@ -241,8 +241,8 @@ GenericConfigBackendDHCPv6Test::initTestSharedNetworks() {
     shared_network->addRelayAddress(IOAddress("2001:db8:1::2"));
     shared_network->addRelayAddress(IOAddress("2001:db8:3::4"));
     shared_network->setT1(1234);
-    shared_network->requireClientClass("required-class1");
-    shared_network->requireClientClass("required-class2");
+    shared_network->addAdditionalClass("required-class1");
+    shared_network->addAdditionalClass("required-class2");
     shared_network->setReservationsGlobal(false);
     shared_network->setReservationsInSubnet(false);
     shared_network->setContext(user_context);
@@ -398,7 +398,7 @@ GenericConfigBackendDHCPv6Test::initTestClientClasses() {
     CfgOptionPtr cfg_option = boost::make_shared<CfgOption>();
     auto class1 = boost::make_shared<ClientClassDef>("foo", match_expr, cfg_option);
     class1->setCfgOptionDef(boost::make_shared<CfgOptionDef>());
-    class1->setRequired(true);
+    class1->setAdditional(true);
     class1->setValid(Triplet<uint32_t>(30, 60, 90));
     class1->setPreferred(Triplet<uint32_t>(25, 55, 85));
     test_client_classes_.push_back(class1);
@@ -4339,7 +4339,7 @@ GenericConfigBackendDHCPv6Test::getClientClass6Test() {
     ASSERT_NO_THROW_LOG(client_class = cbptr_->getClientClass6(ServerSelector::ALL(), class1->getName()));
     ASSERT_TRUE(client_class);
     EXPECT_EQ("foo", client_class->getName());
-    EXPECT_TRUE(client_class->getRequired());
+    EXPECT_TRUE(client_class->getAdditional());
     EXPECT_EQ(30, client_class->getValid().getMin());
     EXPECT_EQ(60, client_class->getValid().get());
     EXPECT_EQ(90, client_class->getValid().getMax());

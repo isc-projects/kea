@@ -60,6 +60,19 @@ run_statement() {
     fi
 }
 
+# Checks that a column in a table exists.
+# param table name of table containgin the column
+# param column name of the column to check
+check_table_column() {
+    column=$1;shift
+    table=$1;shift
+
+    qry="select $column from $table limit 1"
+    run_command \
+        pgsql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+}
+
 # Wipe all tables from the DB:
 pgsql_wipe() {
     printf "Wiping whole database %s...\n" "${db_name}"
@@ -1039,23 +1052,26 @@ pgsql_upgrade_24_to_25_test() {
 }
 
 pgsql_upgrade_25_to_26_test() {
-    # client_classes been added to dhcp4_options 
-    qry="select client_classes from dhcp4_options limit 1"
-    run_command \
-        pgsql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+    # client_classes been added to dhcp4_options
+    check_table_column client_classes dhcp4_options;
 
-    # client_classes been added to dhcp6_options 
-    qry="select client_classes from dhcp6_options limit 1"
-    run_command \
-        pgsql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+    # client_classes been added to dhcp6_options
+    check_table_column client_classes dhcp6_options;
 
-    qry="select name from option_def_data_type where id = 3"
-    run_command \
-        pgsql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
-    assert_str_eq 'int8' "${OUTPUT}" "${query}: expected output %s, returned %s"
+    # check rename of require_client_classes to evaluate_additaionl_classes.
+    check_table_column evaluate_additional_classes dhcp4_shared_network
+    check_table_column evaluate_additional_classes dhcp4_shared_network
+    check_table_column evaluate_additional_classes dhcp4_shared_network
+    check_table_column evaluate_additional_classes dhcp4_subnet
+    check_table_column evaluate_additional_classes dhcp6_shared_network
+    check_table_column evaluate_additional_classes dhcp6_subnet
+    check_table_column evaluate_additional_classes dhcp4_pool
+    check_table_column evaluate_additional_classes dhcp6_pd_pool
+    check_table_column evaluate_additional_classes dhcp6_pool
+
+    # check rename of only_if_required to only_in_additional_list.
+    check_table_column only_in_additional_list dhcp4_client_class
+    check_table_column only_in_additional_list dhcp6_client_class
 }
 
 pgsql_upgrade_test() {

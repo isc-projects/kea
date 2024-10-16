@@ -122,13 +122,13 @@ Pool::toElement() const {
     }
 
     // Set require-client-classes
-    const ClientClasses& classes = getRequiredClasses();
+    const ClientClasses& classes = getAdditionalClasses();
     if (!classes.empty()) {
         ElementPtr class_list = Element::createList();
         for (auto const& it : classes) {
             class_list->add(Element::create(it));
         }
-        map->set("require-client-classes", class_list);
+        map->set("evaluate-additional-classes", class_list);
     }
 
     if (id_) {

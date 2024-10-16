@@ -305,7 +305,7 @@ public:
             MySqlBinding::createInteger<uint32_t>(), // rebind_timer
             MySqlBinding::createString(RELAY_BUF_LENGTH), // relay
             MySqlBinding::createInteger<uint32_t>(), // renew_timer
-            MySqlBinding::createString(REQUIRE_CLIENT_CLASSES_BUF_LENGTH), // require_client_classes
+            MySqlBinding::createString(CLIENT_CLASS_LIST_BUF_LENGTH), // evaluate_additional_classes
             MySqlBinding::createInteger<uint8_t>(), // reservations_global
             MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // shared_network_name
             MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // user_context
@@ -334,7 +334,7 @@ public:
             MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // pool option: shared_network_name
             MySqlBinding::createInteger<uint64_t>(), // pool option: pool_id
             MySqlBinding::createTimestamp(), // pool option: modification_ts
-            MySqlBinding::createString(OPTION_CLIENT_CLASSES_BUF_LENGTH), // pool option: client_classes
+            MySqlBinding::createString(CLIENT_CLASS_LIST_BUF_LENGTH), // pool option: client_classes
             MySqlBinding::createInteger<uint64_t>(), // pool option: pd_pool_id
             MySqlBinding::createInteger<uint64_t>(), // pd pool option: option_id
             MySqlBinding::createInteger<uint16_t>(), // pd pool option: code
@@ -349,7 +349,7 @@ public:
             MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // pd pool option: shared_network_name
             MySqlBinding::createInteger<uint64_t>(), // pd pool option: pool_id
             MySqlBinding::createTimestamp(), // pd pool option: modification_ts
-            MySqlBinding::createString(OPTION_CLIENT_CLASSES_BUF_LENGTH), // pd_pool option: client_classes
+            MySqlBinding::createString(CLIENT_CLASS_LIST_BUF_LENGTH), // pd_pool option: client_classes
             MySqlBinding::createInteger<uint64_t>(), // pd pool option: pd_pool_id
             MySqlBinding::createInteger<uint64_t>(), // option: option_id
             MySqlBinding::createInteger<uint16_t>(), // option: code
@@ -364,7 +364,7 @@ public:
             MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // option: shared_network_name
             MySqlBinding::createInteger<uint64_t>(), // option: pool_id
             MySqlBinding::createTimestamp(), // option: modification_ts
-            MySqlBinding::createString(OPTION_CLIENT_CLASSES_BUF_LENGTH), // option: client_classes
+            MySqlBinding::createString(CLIENT_CLASS_LIST_BUF_LENGTH), // option: client_classes
             MySqlBinding::createInteger<uint64_t>(), // option: pd_pool_id
             MySqlBinding::createInteger<uint8_t>(), // calculate_tee_times
             MySqlBinding::createInteger<float>(), // t1_percent
@@ -375,12 +375,12 @@ public:
             MySqlBinding::createInteger<uint32_t>(), // min_valid_lifetime
             MySqlBinding::createInteger<uint32_t>(), // max_valid_lifetime
             MySqlBinding::createString(CLIENT_CLASS_BUF_LENGTH), // pool: client_class
-            MySqlBinding::createString(REQUIRE_CLIENT_CLASSES_BUF_LENGTH), // pool: require_client_classes
+            MySqlBinding::createString(CLIENT_CLASS_LIST_BUF_LENGTH), // pool: evaluate_additional_classes
             MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // pool: user_context
             MySqlBinding::createString(POOL_ADDRESS6_BUF_LENGTH), // pd pool: excluded_prefix
             MySqlBinding::createInteger<uint8_t>(), // pd pool: excluded_prefix_length
             MySqlBinding::createString(CLIENT_CLASS_BUF_LENGTH), // pd pool: client_class
-            MySqlBinding::createString(REQUIRE_CLIENT_CLASSES_BUF_LENGTH), // pd pool: require_client_classes
+            MySqlBinding::createString(CLIENT_CLASS_LIST_BUF_LENGTH), // pd pool: evaluate_additional_classes
             MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // pd pool: user_context
             MySqlBinding::createInteger<uint8_t>(), // ddns_send_updates
             MySqlBinding::createInteger<uint8_t>(), // ddns_override_no_update
@@ -511,22 +511,9 @@ public:
 
                 // 9 is renew_timer
 
-                // require_client_classes (10)
-                ElementPtr require_element = out_bindings[10]->getJSON();
-                if (require_element) {
-                    if (require_element->getType() != Element::list) {
-                        isc_throw(BadValue, "invalid require_client_classes value "
-                                  << out_bindings[10]->getString());
-                    }
-                    for (auto i = 0; i < require_element->size(); ++i) {
-                        auto require_item = require_element->get(i);
-                        if (require_item->getType() != Element::string) {
-                            isc_throw(BadValue, "elements of require_client_classes list must"
-                                      "be valid strings");
-                        }
-                        last_subnet->requireClientClass(require_item->stringValue());
-                    }
-                }
+                // evaluate_additional_classes (10)
+                clientClassesFromBinding(out_bindings[10], "evaluate-additional-classes",
+                                         last_subnet->getMutableAdditionalClasses());
 
                 // reservations_global (11)
                 if (!out_bindings[11]->amNull()) {
@@ -582,12 +569,12 @@ public:
                 // 77 and 78 are {min,max}_valid_lifetime
 
                 // 79 is pool client_class
-                // 80 is pool require_client_classes
+                // 80 is pool evaluate_additional_classes
                 // 81 is pool user_context
                 // 82 is pd pool excluded_prefix
                 // 83 is pd pool excluded_prefix_length
                 // 84 is pd pool client_class
-                // 85 is pd pool require_client_classes
+                // 85 is pd pool evaluate_additional_classes
                 // 86 is pd pool user_context
 
                 // ddns_send_updates (87)
@@ -699,22 +686,9 @@ public:
                     last_pool->allowClientClass(out_bindings[79]->getString());
                 }
 
-                // pool require_client_classes (80)
-                ElementPtr require_element = out_bindings[80]->getJSON();
-                if (require_element) {
-                    if (require_element->getType() != Element::list) {
-                        isc_throw(BadValue, "invalid pool require_client_classes value "
-                                  << out_bindings[80]->getString());
-                    }
-                    for (auto i = 0; i < require_element->size(); ++i) {
-                        auto require_item = require_element->get(i);
-                        if (require_item->getType() != Element::string) {
-                            isc_throw(BadValue, "elements of pool require_client_classes list must"
-                                      "be valid strings");
-                        }
-                        last_pool->requireClientClass(require_item->stringValue());
-                    }
-                }
+                // pool evaluate_additional_classes (80)
+                clientClassesFromBinding(out_bindings[80], "evaluate-additional-classes",
+                                         last_pool->getMutableAdditionalClasses());
 
                 // pool user_context (81)
                 ElementPtr user_context = out_bindings[81]->getJSON();
@@ -761,22 +735,9 @@ public:
                     last_pd_pool->allowClientClass(out_bindings[84]->getString());
                 }
 
-                // pd pool require_client_classes (85)
-                ElementPtr require_element = out_bindings[85]->getJSON();
-                if (require_element) {
-                    if (require_element->getType() != Element::list) {
-                        isc_throw(BadValue, "invalid pd pool require_client_classes value "
-                                  << out_bindings[85]->getString());
-                    }
-                    for (auto i = 0; i < require_element->size(); ++i) {
-                        auto require_item = require_element->get(i);
-                        if (require_item->getType() != Element::string) {
-                            isc_throw(BadValue, "elements of pd pool require_client_classes list must"
-                                      "be valid strings");
-                        }
-                        last_pd_pool->requireClientClass(require_item->stringValue());
-                    }
-                }
+                // pd pool evaluate_additional_classes (85)
+                clientClassesFromBinding(out_bindings[85], "evaluate-additional-classes",
+                                         last_pd_pool->getMutableAdditionalClasses());
 
                 // pd pool user_context (86)
                 ElementPtr user_context = out_bindings[86]->getJSON();
@@ -969,7 +930,7 @@ public:
             MySqlBinding::createString(POOL_ADDRESS6_BUF_LENGTH), // pool: end_address
             MySqlBinding::createInteger<uint32_t>(), // pool: subnet_id
             MySqlBinding::createString(CLIENT_CLASS_BUF_LENGTH), // pool: client_class
-            MySqlBinding::createString(REQUIRE_CLIENT_CLASSES_BUF_LENGTH), // pool: require_client_classes
+            MySqlBinding::createString(CLIENT_CLASS_LIST_BUF_LENGTH), // pool: evaluate_additional_classes
             MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // pool: user_context
             MySqlBinding::createTimestamp(), // pool: modification_ts
             MySqlBinding::createInteger<uint64_t>(), // pool option: option_id
@@ -1013,22 +974,9 @@ public:
                     last_pool->allowClientClass(out_bindings[4]->getString());
                 }
 
-                // pool require_client_classes (5)
-                ElementPtr require_element = out_bindings[5]->getJSON();
-                if (require_element) {
-                    if (require_element->getType() != Element::list) {
-                        isc_throw(BadValue, "invalid pool require_client_classes value "
-                                  << out_bindings[5]->getString());
-                    }
-                    for (auto i = 0; i < require_element->size(); ++i) {
-                        auto require_item = require_element->get(i);
-                        if (require_item->getType() != Element::string) {
-                            isc_throw(BadValue, "elements of pool require_client_classes list must"
-                                      "be valid strings");
-                        }
-                        last_pool->requireClientClass(require_item->stringValue());
-                    }
-                }
+                // pool evaluate_additional_classes (5)
+                clientClassesFromBinding(out_bindings[5], "evaluate-additional-classes",
+                                         last_pool->getMutableAdditionalClasses());
 
                 // pool user_context (6)
                 ElementPtr user_context = out_bindings[6]->getJSON();
@@ -1081,7 +1029,7 @@ public:
             MySqlBinding::createString(POOL_ADDRESS6_BUF_LENGTH), // pd pool: excluded_prefix
             MySqlBinding::createInteger<uint8_t>(), // pd pool: excluded_prefix_length
             MySqlBinding::createString(CLIENT_CLASS_BUF_LENGTH), // pd pool: client_class
-            MySqlBinding::createString(REQUIRE_CLIENT_CLASSES_BUF_LENGTH), // pd pool: require_client_classes
+            MySqlBinding::createString(CLIENT_CLASS_LIST_BUF_LENGTH), // pd pool: evaluate_additional_classes
             MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // pd pool: user_context
             MySqlBinding::createTimestamp(), // pd pool: modification_ts
             MySqlBinding::createInteger<uint64_t>(), // pd pool option: option_id
@@ -1097,7 +1045,7 @@ public:
             MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // pd pool option: shared_network_name
             MySqlBinding::createInteger<uint64_t>(), // pd pool option: pool_id
             MySqlBinding::createTimestamp(), // pd pool option: modification_ts
-            MySqlBinding::createString(OPTION_CLIENT_CLASSES_BUF_LENGTH), // pd pool option: client_classes
+            MySqlBinding::createString(CLIENT_CLASS_LIST_BUF_LENGTH), // pd pool option: client_classes
             MySqlBinding::createInteger<uint64_t>() // pd pool option: pd_pool_id
         };
 
@@ -1136,22 +1084,9 @@ public:
                     last_pd_pool->allowClientClass(out_bindings[7]->getString());
                 }
 
-                // pd pool require_client_classes (8)
-                ElementPtr require_element = out_bindings[8]->getJSON();
-                if (require_element) {
-                    if (require_element->getType() != Element::list) {
-                        isc_throw(BadValue, "invalid pd pool require_client_classes value "
-                                  << out_bindings[8]->getString());
-                    }
-                    for (auto i = 0; i < require_element->size(); ++i) {
-                        auto require_item = require_element->get(i);
-                        if (require_item->getType() != Element::string) {
-                            isc_throw(BadValue, "elements of pd pool require_client_classes list must"
-                                      "be valid strings");
-                        }
-                        last_pd_pool->requireClientClass(require_item->stringValue());
-                    }
-                }
+                // pd pool evaluate_additional_classes (8)
+                clientClassesFromBinding(out_bindings[8], "evaluate-additional-classes",
+                                         last_pd_pool->getMutableAdditionalClasses());
 
                 // pd pool user_context (9)
                 ElementPtr user_context = out_bindings[9]->getJSON();
@@ -1279,11 +1214,11 @@ public:
                       " (unassigned) is unsupported at the moment");
         }
 
-        // Create JSON list of required classes.
-        ElementPtr required_classes_element = Element::createList();
-        auto const& required_classes = subnet->getRequiredClasses();
-        for (auto const& required_class : required_classes) {
-            required_classes_element->add(Element::create(required_class));
+        // Create JSON list of additional classes.
+        ElementPtr additional_classes_element = Element::createList();
+        auto const& additional_classes = subnet->getAdditionalClasses();
+        for (auto const& additional_class : additional_classes) {
+            additional_classes_element->add(Element::create(additional_class));
         }
 
         // Create binding for DDNS replace client name mode.
@@ -1348,7 +1283,7 @@ public:
             createBinding(subnet->getT2(Network::Inheritance::NONE)),
             createInputRelayBinding(subnet),
             createBinding(subnet->getT1(Network::Inheritance::NONE)),
-            createInputRequiredClassesBinding(subnet),
+            createInputClientClassesBinding(subnet->getAdditionalClasses()),
             MySqlBinding::condCreateBool(subnet->getReservationsGlobal(Network::Inheritance::NONE)),
             shared_network_binding,
             createInputContextBinding(subnet),
@@ -1453,7 +1388,7 @@ public:
             MySqlBinding::createString(pool->getLastAddress().toText()),
             MySqlBinding::createInteger<uint32_t>(static_cast<uint32_t>(subnet->getID())),
             MySqlBinding::condCreateString(pool->getClientClass()),
-            createInputRequiredClassesBinding(pool),
+            createInputClientClassesBinding(pool->getAdditionalClasses()),
             createInputContextBinding(pool),
             MySqlBinding::createTimestamp(subnet->getModificationTime())
         };
@@ -1504,7 +1439,7 @@ public:
             MySqlBinding::condCreateString(xprefix_txt),
             MySqlBinding::createInteger<uint8_t>(xlen),
             MySqlBinding::condCreateString(pd_pool->getClientClass()),
-            createInputRequiredClassesBinding(pd_pool),
+            createInputClientClassesBinding(pd_pool->getAdditionalClasses()),
             createInputContextBinding(pd_pool),
             MySqlBinding::createTimestamp(subnet->getModificationTime())
         };
@@ -1661,7 +1596,7 @@ public:
             MySqlBinding::createInteger<uint32_t>(), // rebind_timer
             MySqlBinding::createString(RELAY_BUF_LENGTH), // relay
             MySqlBinding::createInteger<uint32_t>(), // renew_timer
-            MySqlBinding::createString(REQUIRE_CLIENT_CLASSES_BUF_LENGTH), // require_client_classes
+            MySqlBinding::createString(CLIENT_CLASS_LIST_BUF_LENGTH), // evaluate_additional_classes
             MySqlBinding::createInteger<uint8_t>(), // reservations_global
             MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // user_context
             MySqlBinding::createInteger<uint32_t>(), // valid_lifetime
@@ -1678,7 +1613,7 @@ public:
             MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // option: shared_network_name
             MySqlBinding::createInteger<uint64_t>(), // option: pool_id
             MySqlBinding::createTimestamp(), // option: modification_ts
-            MySqlBinding::createString(OPTION_CLIENT_CLASSES_BUF_LENGTH), // option: client_classes
+            MySqlBinding::createString(CLIENT_CLASS_LIST_BUF_LENGTH), // option: client_classes
             MySqlBinding::createInteger<uint64_t>(), // option: pd_pool_id
             MySqlBinding::createInteger<uint8_t>(), // calculate_tee_times
             MySqlBinding::createInteger<float>(), // t1_percent
@@ -1785,22 +1720,9 @@ public:
                     last_network->setT1(createTriplet(out_bindings[9]));
                 }
 
-                // require_client_classes at 10.
-                ElementPtr require_element = out_bindings[10]->getJSON();
-                if (require_element) {
-                    if (require_element->getType() != Element::list) {
-                        isc_throw(BadValue, "invalid require_client_classes value "
-                              << out_bindings[10]->getString());
-                    }
-                    for (auto i = 0; i < require_element->size(); ++i) {
-                        auto require_item = require_element->get(i);
-                        if (require_item->getType() != Element::string) {
-                            isc_throw(BadValue, "elements of require_client_classes list must"
-                                      "be valid strings");
-                        }
-                        last_network->requireClientClass(require_item->stringValue());
-                    }
-                }
+                // evaluate_additional_classes at 10.
+                clientClassesFromBinding(out_bindings[10], "evaluate-additional-classes",
+                                         last_network->getMutableAdditionalClasses());
 
                 // reservations_global at 11.
                 if (!out_bindings[11]->amNull()) {
@@ -2076,7 +1998,7 @@ public:
             createBinding(shared_network->getT2(Network::Inheritance::NONE)),
             createInputRelayBinding(shared_network),
             createBinding(shared_network->getT1(Network::Inheritance::NONE)),
-            createInputRequiredClassesBinding(shared_network),
+            createInputClientClassesBinding(shared_network->getAdditionalClasses()),
             MySqlBinding::condCreateBool(shared_network->getReservationsGlobal(Network::Inheritance::NONE)),
             createInputContextBinding(shared_network),
             createBinding(shared_network->getValid(Network::Inheritance::NONE)),
@@ -2851,7 +2773,7 @@ public:
             MySqlBinding::createInteger<uint64_t>(), // id
             MySqlBinding::createString(CLIENT_CLASS_NAME_BUF_LENGTH), // name
             MySqlBinding::createString(CLIENT_CLASS_TEST_BUF_LENGTH), // test
-            MySqlBinding::createInteger<uint8_t>(), // required
+            MySqlBinding::createInteger<uint8_t>(), // additional
             MySqlBinding::createInteger<uint32_t>(), // valid lifetime
             MySqlBinding::createInteger<uint32_t>(), // min valid lifetime
             MySqlBinding::createInteger<uint32_t>(), // max valid lifetime
@@ -2882,7 +2804,7 @@ public:
             MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // option: shared_network_name
             MySqlBinding::createInteger<uint64_t>(), // option: pool_id
             MySqlBinding::createTimestamp(), // option: modification_ts
-            MySqlBinding::createString(OPTION_CLIENT_CLASSES_BUF_LENGTH), // option: client_classes
+            MySqlBinding::createString(CLIENT_CLASS_LIST_BUF_LENGTH), // option: client_classes
             MySqlBinding::createString(SERVER_TAG_BUF_LENGTH),// server tag
             MySqlBinding::createInteger<uint32_t>(), // preferred lifetime
             MySqlBinding::createInteger<uint32_t>(), // min preferred lifetime
@@ -2926,9 +2848,9 @@ public:
                     last_client_class->setTest(out_bindings[2]->getString());
                 }
 
-                // required
+                // additional
                 if (!out_bindings[3]->amNull()) {
-                    last_client_class->setRequired(out_bindings[3]->getBool());
+                    last_client_class->setAdditional(out_bindings[3]->getBool());
                 }
 
                 // valid lifetime: default, min, max
@@ -3093,7 +3015,7 @@ public:
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createString(client_class->getName()),
             MySqlBinding::createString(client_class->getTest()),
-            MySqlBinding::createBool(client_class->getRequired()),
+            MySqlBinding::createBool(client_class->getAdditional()),
             createBinding(client_class->getValid()),
             createMinBinding(client_class->getValid()),
             createMaxBinding(client_class->getValid()),
@@ -3682,7 +3604,7 @@ TaggedStatementArray tagged_statements = { {
       "  rebind_timer,"
       "  relay,"
       "  renew_timer,"
-      "  require_client_classes,"
+      "  evaluate_additional_classes,"
       "  reservations_global,"
       "  shared_network_name,"
       "  user_context,"
@@ -3737,7 +3659,7 @@ TaggedStatementArray tagged_statements = { {
       "  rebind_timer,"
       "  relay,"
       "  renew_timer,"
-      "  require_client_classes,"
+      "  evaluate_additional_classes,"
       "  reservations_global,"
       "  user_context,"
       "  valid_lifetime,"
@@ -3797,7 +3719,7 @@ TaggedStatementArray tagged_statements = { {
       "INSERT INTO dhcp6_client_class("
       "  name,"
       "  test,"
-      "  only_if_required,"
+      "  only_in_additional_list,"
       "  valid_lifetime,"
       "  min_valid_lifetime,"
       "  max_valid_lifetime,"
@@ -3846,7 +3768,7 @@ TaggedStatementArray tagged_statements = { {
       "  rebind_timer = ?,"
       "  relay = ?,"
       "  renew_timer = ?,"
-      "  require_client_classes = ?,"
+      "  evaluate_additional_classes = ?,"
       "  reservations_global = ?,"
       "  shared_network_name = ?,"
       "  user_context = ?,"
@@ -3885,7 +3807,7 @@ TaggedStatementArray tagged_statements = { {
       "  rebind_timer = ?,"
       "  relay = ?,"
       "  renew_timer = ?,"
-      "  require_client_classes = ?,"
+      "  evaluate_additional_classes = ?,"
       "  reservations_global = ?,"
       "  user_context = ?,"
       "  valid_lifetime = ?,"

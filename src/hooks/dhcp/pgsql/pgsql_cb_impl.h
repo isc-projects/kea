@@ -585,44 +585,45 @@ public:
     /// list's elements are not valid IP addresses in string form.
     void setRelays(db::PgSqlResultRowWorker& r, size_t col, Network& network);
 
-    /// @brief Adds 'require_client_classes' parameter to a bind array.
+    /// @brief Adds 'evaluate_additional_classes' parameter to a bind array.
     ///
-    /// Creates an Element tree of required class names and adds that to the end
+    /// Creates an Element tree of additional class names and adds that to the end
     /// of the given bind array.
     ///
-    /// @tparam T of pointer to objects with getRequiredClasses
+    /// @tparam T of pointer to objects with getAdditionalClasses
     /// method, e.g. shared network, subnet, pool or prefix delegation pool.
     /// @param bindings PsqlBindArray to which the classes should be added.
-    /// @param object Pointer to an object with getRequiredClasses method
+    /// @param object Pointer to an object with getAdditionalClasses method
     /// @return Pointer to the binding (possibly null binding if there are no
-    /// required classes specified).
+    /// additional classes specified).
     template<typename T>
-    void addRequiredClassesBinding(db::PsqlBindArray& bindings, const T& object) {
-        // Create JSON list of required classes.
-        data::ElementPtr required_classes_element = data::Element::createList();
-        auto const& required_classes = object->getRequiredClasses();
-        for (auto const& required_class : required_classes) {
-            required_classes_element->add(data::Element::create(required_class));
+    void addAdditionalClassesBinding(db::PsqlBindArray& bindings, const T& object) {
+        // Create JSON list of additional classes.
+        data::ElementPtr additional_classes_element = data::Element::createList();
+        auto const& additional_classes = object->getAdditionalClasses();
+        for (auto const& additional_class : additional_classes) {
+            additional_classes_element->add(data::Element::create(additional_class));
         }
 
-        bindings.add(required_classes_element);
+        bindings.add(additional_classes_element);
     }
 
-    /// @brief Iterates over the class names in a JSON list element at a
-    /// given column, invoking a setter function for each one.
+    /// @brief Populates a ClientClasses container from a given column
     ///
     /// Has no effect if the column is null or is an empty list.
     ///
     /// @param worker result set row worker containing the row data
     /// @param col column index of JSON element column
-    /// @param setter function to invoke for each class name in the list
+    /// @param column name of the column used for error logging
+    /// @param client_classes reference to the container to populate.
     ///
     /// @throw BadValue if the Element is not a list or if any of the
     /// list's elements are not strings.
-    void setRequiredClasses(db::PgSqlResultRowWorker& worker, size_t col,
-                            std::function<void(const std::string&)> setter);
+    void clientClassesFromColumn(db::PgSqlResultRowWorker& worker, size_t col,
+                                 const std::string& column,
+                                 ClientClasses& client_classes);
 
-    /// @brief Addds 'client-classes' parameter to a bind array.
+    /// @brief Adds 'client-classes' parameter to a bind array.
     ///
     /// Creates an Element tree of client class names and adds that to the end
     /// of the given bind array.
@@ -637,12 +638,14 @@ public:
     /// Has no effect if the column is null or is an empty list.
     ///
     /// @param worker result set row worker containing the row data
+    /// @param column column name used for error messages
     /// @param col column index of JSON element column
     /// @param client_classes ClientCaLsses instance to populate
     ///
     /// @throw BadValue if the Element is not a list or if any of the
     /// list's elements are not strings.
     void setClientClasses(db::PgSqlResultRowWorker& worker, size_t col,
+                          const std::string& column,
                           ClientClasses& client_classes);
 
     /// @brief Adds an option value to a bind array.

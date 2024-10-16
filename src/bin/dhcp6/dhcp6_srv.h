@@ -902,18 +902,23 @@ protected:
     void conditionallySetReservedClientClasses(const Pkt6Ptr& pkt,
                                                const AllocEngine::ClientContext6& ctx);
 
-    /// @brief Assigns incoming packet to zero or more classes (required pass).
+    /// @brief Evaluates classes in the additional classes lists
     ///
-    /// @note This required classification evaluates all classes which
-    /// were marked for required evaluation. Classes are collected so
-    /// evaluated in the reversed order than output option processing.
+    /// The evaluation takes place after all other classification and
+    /// lease assignment. It evaluates all classes in the packet's
+    /// additional_classes_ list plus any contributed via evaluate-additional-
+    /// class lists.
     ///
-    /// @note The only-if-required flag is related because it avoids
+    /// @note Evaluates all classes which were marked for the additional
+    /// evaluation stage. Classes are collected and evaluated in the following
+    /// order: pool, subnet, shared-network to produce option precedence
+    /// pool over subnet over shared-network.
+    ///
+    /// @note The only-in-additional-list flag is related because it avoids
     /// double evaluation (which is not forbidden).
     ///
-    /// @param pkt packet to be classified
-    /// @param ctx allocation context where to get information
-    void requiredClassify(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx);
+    /// @param ex The exchange holding needed information.
+    void evaluateAdditionalClasses(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx);
 
     /// @brief Attempts to get a MAC/hardware address using configured sources
     ///

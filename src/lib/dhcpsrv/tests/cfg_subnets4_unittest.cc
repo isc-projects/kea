@@ -1095,8 +1095,8 @@ TEST(CfgSubnets4Test, unparseSubnet) {
     subnet2->setOfferLft(99);
 
     subnet3->setIface("eth1");
-    subnet3->requireClientClass("foo");
-    subnet3->requireClientClass("bar");
+    subnet3->addAdditionalClass("foo");
+    subnet3->addAdditionalClass("bar");
     subnet3->setCalculateTeeTimes(true);
     subnet3->setT1Percent(0.50);
     subnet3->setT2Percent(0.65);
@@ -1190,7 +1190,7 @@ TEST(CfgSubnets4Test, unparseSubnet) {
         "    \"reservations-out-of-pool\": false,\n"
         "    \"option-data\": [ ],\n"
         "    \"pools\": [ ]\n,"
-        "    \"require-client-classes\": [ \"foo\", \"bar\" ],\n"
+        "    \"evaluate-additional-classes\": [ \"foo\", \"bar\" ],\n"
         "    \"calculate-tee-times\": true,\n"
         "    \"t1-percent\": 0.50,\n"
         "    \"t2-percent\": 0.65,\n"
@@ -1222,7 +1222,7 @@ TEST(CfgSubnets4Test, unparsePool) {
     pool1->setContext(ctx1);
     data::ElementPtr ctx2 = data::Element::fromJSON("{ \"foo\": \"bar\" }");
     pool2->setContext(ctx2);
-    pool2->requireClientClass("foo");
+    pool2->addAdditionalClass("foo");
 
     subnet->addPool(pool1);
     subnet->addPool(pool2);
@@ -1254,7 +1254,7 @@ TEST(CfgSubnets4Test, unparsePool) {
         "            \"pool\": \"192.0.2.64/26\",\n"
         "            \"user-context\": { \"foo\": \"bar\" },\n"
         "            \"client-class\": \"bar\",\n"
-        "            \"require-client-classes\": [ \"foo\" ]\n"
+        "            \"evaluate-additional-classes\": [ \"foo\" ]\n"
         "        }\n"
         "    ]\n"
         "} ]\n";
@@ -1427,7 +1427,7 @@ TEST(CfgSubnets4Test, teeTimePercentValidation) {
         "            \"server-hostname\": \"\", \n"
         "            \"boot-file-name\": \"\", \n"
         "            \"client-class\": \"\", \n"
-        "            \"require-client-classes\": [] \n,"
+        "            \"evaluate-additional-classes\": [] \n,"
         "            \"reservations-global\": false, \n"
         "            \"reservations-in-subnet\": true, \n"
         "            \"reservations-out-of-pool\": false, \n"
@@ -1496,7 +1496,7 @@ TEST(CfgSubnets4Test, validLifetimeValidation) {
         "            \"server-hostname\": \"\", \n"
         "            \"boot-file-name\": \"\", \n"
         "            \"client-class\": \"\", \n"
-        "            \"require-client-classes\": [] \n,"
+        "            \"evaluate-additional-classes\": [] \n,"
         "            \"reservations-global\": false, \n"
         "            \"reservations-in-subnet\": true, \n"
         "            \"reservations-out-of-pool\": false, \n"
@@ -1758,7 +1758,7 @@ TEST(CfgSubnets4Test, hostnameSanitizierValidation) {
         "            \"server-hostname\": \"\", \n"
         "            \"boot-file-name\": \"\", \n"
         "            \"client-class\": \"\", \n"
-        "            \"require-client-classes\": [] \n,"
+        "            \"evaluate-additional-classes\": [] \n,"
         "            \"reservations-global\": false, \n"
         "            \"reservations-in-subnet\": true, \n"
         "            \"reservations-out-of-pool\": false, \n"
@@ -1838,7 +1838,7 @@ TEST(CfgSubnets4Test, cacheParamValidation) {
         "            \"server-hostname\": \"\", \n"
         "            \"boot-file-name\": \"\", \n"
         "            \"client-class\": \"\", \n"
-        "            \"require-client-classes\": [] \n,"
+        "            \"evaluate-additional-classes\": [] \n,"
         "            \"reservations-global\": false, \n"
         "            \"reservations-in-subnet\": true, \n"
         "            \"reservations-out-of-pool\": false, \n"

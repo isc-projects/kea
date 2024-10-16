@@ -6493,6 +6493,34 @@ ALTER TABLE dhcp4_options
 ALTER TABLE dhcp6_options
     ADD COLUMN client_classes TEXT DEFAULT NULL;
 
+-- Rename  require_client_classes and only_if_required.
+ALTER TABLE dhcp4_shared_network
+    RENAME COLUMN require_client_classes TO evaluate_additional_classes;
+
+ALTER TABLE dhcp4_subnet
+    RENAME COLUMN require_client_classes TO evaluate_additional_classes;
+
+ALTER TABLE dhcp6_shared_network
+    RENAME COLUMN require_client_classes TO evaluate_additional_classes;
+
+ALTER TABLE dhcp6_subnet
+    RENAME COLUMN require_client_classes TO evaluate_additional_classes;
+
+ALTER TABLE dhcp4_pool
+    RENAME COLUMN require_client_classes TO evaluate_additional_classes;
+
+ALTER TABLE dhcp6_pd_pool
+    RENAME COLUMN require_client_classes TO evaluate_additional_classes;
+
+ALTER TABLE dhcp6_pool
+    RENAME COLUMN require_client_classes TO evaluate_additional_classes;
+
+ALTER TABLE dhcp4_client_class
+    RENAME COLUMN only_if_required TO only_in_additional_list;
+
+ALTER TABLE dhcp6_client_class
+    RENAME COLUMN only_if_required TO only_in_additional_list;
+
 -- Update the schema version number.
 UPDATE schema_version
     SET version = '26', minor = '0';

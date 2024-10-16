@@ -645,8 +645,8 @@ void Dhcpv4Exchange::evaluateClasses(const Pkt4Ptr& pkt, bool depend_on_known) {
         if (!expr_ptr) {
             continue;
         }
-        // Not the right time if only when required
-        if (it->getRequired()) {
+        // Not the right time if only when additional
+        if (it->getAdditional()) {
             continue;
         }
         // Not the right pass.
@@ -3838,8 +3838,8 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover, AllocEngine::ClientContext4Ptr& co
         // network we have already fetched it and evaluated the classes.
         ex.conditionallySetReservedClientClasses();
 
-        // Required classification
-        requiredClassify(ex);
+        // Evaluate addditional classes.
+        evaluateAdditionalClasses(ex);
 
         LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASSES_ASSIGNED)
             .arg(discover->getLabel())
@@ -3924,8 +3924,8 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request, AllocEngine::ClientContext4Ptr& cont
         // network we have already fetched it and evaluated the classes.
         ex.conditionallySetReservedClientClasses();
 
-        // Required classification
-        requiredClassify(ex);
+        // Evaluate addditional classes.
+        evaluateAdditionalClasses(ex);
 
         LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASSES_ASSIGNED)
             .arg(request->getLabel())
@@ -4437,7 +4437,8 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform, AllocEngine::ClientContext4Ptr& contex
     // network we have already fetched it and evaluated the classes.
     ex.conditionallySetReservedClientClasses();
 
-    requiredClassify(ex);
+    // Evaluate addditional classes.
+    evaluateAdditionalClasses(ex);
 
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASSES_ASSIGNED)
         .arg(inform->getLabel())
@@ -4888,10 +4889,10 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
     Dhcpv4Exchange::classifyPacket(pkt);
 }
 
-void Dhcpv4Srv::requiredClassify(Dhcpv4Exchange& ex) {
+void Dhcpv4Srv::evaluateAdditionalClasses(Dhcpv4Exchange& ex) {
     // First collect required classes
     Pkt4Ptr query = ex.getQuery();
-    ClientClasses classes = query->getClasses(true);
+    ClientClasses classes = query->getAdditionalClasses();
     Subnet4Ptr subnet = ex.getContext()->subnet_;
 
     if (subnet) {
@@ -4906,7 +4907,7 @@ void Dhcpv4Srv::requiredClassify(Dhcpv4Exchange& ex) {
         if (!addr.isV4Zero()) {
             PoolPtr pool = subnet->getPool(Lease::TYPE_V4, addr, false);
             if (pool) {
-                const ClientClasses& pool_to_add = pool->getRequiredClasses();
+                const ClientClasses& pool_to_add = pool->getAdditionalClasses();
                 for (auto const& cclass : pool_to_add) {
                     classes.insert(cclass);
                 }
@@ -4914,7 +4915,7 @@ void Dhcpv4Srv::requiredClassify(Dhcpv4Exchange& ex) {
         }
 
         // Followed by the subnet
-        const ClientClasses& to_add = subnet->getRequiredClasses();
+        const ClientClasses& to_add = subnet->getAdditionalClasses();
         for (auto const& cclass : to_add) {
             classes.insert(cclass);
         }
@@ -4923,7 +4924,7 @@ void Dhcpv4Srv::requiredClassify(Dhcpv4Exchange& ex) {
         SharedNetwork4Ptr network;
         subnet->getSharedNetwork(network);
         if (network) {
-            const ClientClasses& net_to_add = network->getRequiredClasses();
+            const ClientClasses& net_to_add = network->getAdditionalClasses();
             for (auto const& cclass : net_to_add) {
                 classes.insert(cclass);
             }

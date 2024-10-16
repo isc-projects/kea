@@ -114,8 +114,8 @@ GenericConfigBackendDHCPv4Test::initTestSubnets() {
     subnet->addRelayAddress(IOAddress("10.2.3.4"));
     subnet->addRelayAddress(IOAddress("10.5.6.7"));
     subnet->setT1(1234);
-    subnet->requireClientClass("required-class1");
-    subnet->requireClientClass("required-class2");
+    subnet->addAdditionalClass("required-class1");
+    subnet->addAdditionalClass("required-class2");
     subnet->setReservationsGlobal(false);
     subnet->setReservationsInSubnet(false);
     subnet->setSname("server-hostname");
@@ -163,8 +163,8 @@ GenericConfigBackendDHCPv4Test::initTestSubnets() {
                           IOAddress("10.0.0.60")));
 
     pool2->allowClientClass("work");
-    pool2->requireClientClass("required-class3");
-    pool2->requireClientClass("required-class4");
+    pool2->addAdditionalClass("required-class3");
+    pool2->addAdditionalClass("required-class4");
     user_context = Element::createMap();
     user_context->set("bar", Element::create("foo"));
     pool2->setContext(user_context);
@@ -209,8 +209,8 @@ GenericConfigBackendDHCPv4Test::initTestSharedNetworks() {
     shared_network->addRelayAddress(IOAddress("10.2.3.4"));
     shared_network->addRelayAddress(IOAddress("10.5.6.7"));
     shared_network->setT1(1234);
-    shared_network->requireClientClass("required-class1");
-    shared_network->requireClientClass("required-class2");
+    shared_network->addAdditionalClass("required-class1");
+    shared_network->addAdditionalClass("required-class2");
     shared_network->setReservationsGlobal(false);
     shared_network->setReservationsInSubnet(false);
     shared_network->setContext(user_context);
@@ -369,7 +369,7 @@ GenericConfigBackendDHCPv4Test::initTestClientClasses() {
     CfgOptionPtr cfg_option = boost::make_shared<CfgOption>();
     auto class1 = boost::make_shared<ClientClassDef>("foo", match_expr, cfg_option);
     class1->setCfgOptionDef(boost::make_shared<CfgOptionDef>());
-    class1->setRequired(true);
+    class1->setAdditional(true);
     class1->setNextServer(IOAddress("1.2.3.4"));
     class1->setSname("cool");
     class1->setFilename("epc.cfg");
@@ -4191,7 +4191,7 @@ GenericConfigBackendDHCPv4Test::getClientClass4Test() {
     ASSERT_NO_THROW_LOG(client_class = cbptr_->getClientClass4(ServerSelector::ALL(), class1->getName()));
     ASSERT_TRUE(client_class);
     EXPECT_EQ("foo", client_class->getName());
-    EXPECT_TRUE(client_class->getRequired());
+    EXPECT_TRUE(client_class->getAdditional());
     EXPECT_EQ("1.2.3.4", client_class->getNextServer().toText());
     EXPECT_EQ("cool", client_class->getSname());
     EXPECT_EQ("epc.cfg", client_class->getFilename());
