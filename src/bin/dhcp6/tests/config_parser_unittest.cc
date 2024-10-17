@@ -9096,4 +9096,126 @@ TEST_F(Dhcp6ParserTest, optionClientClassesDuplicateCheck) {
     EXPECT_EQ(*cclasses, "bar");
 }
 
+// This test verifies that require-client-classes gets translated
+// to evaluate-additional-classes.
+TEST_F(Dhcp6ParserTest, deprecatedRequireClientClassesCheck) {
+    std::string config = "{ " + genIfaceConfig() + ","
+        R"^(
+        "rebind-timer": 2000,
+        "renew-timer": 1000,
+        "subnet6": [{
+            "require-client-classes": [ "foo" ],
+            "pools": [{ "pool":  "2001:db8::/64" }],
+            "id": 1,
+            "subnet": "2001:db8::/64"
+        }],
+        "valid-lifetime": 400
+        })^";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
+    extractConfig(config);
+
+    ConstElementPtr status;
+    ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    checkResult(status, 0);
+
+    Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->
+                            getCfgSubnets6()->selectSubnet(IOAddress("2001:db8::"));
+    ASSERT_TRUE(subnet);
+
+    const auto& cclass_list = subnet->getAdditionalClasses();
+    EXPECT_EQ(1, cclass_list.size());
+    auto cclasses = cclass_list.begin();
+    EXPECT_EQ(*cclasses, "foo");
+}
+
+// This test verifies that users cannot specify both
+// require-client-classes and evaluate-addtional-classes.
+TEST_F(Dhcp6ParserTest, deprecatedRequireClientClassesCheck2) {
+    std::string config = "{ " + genIfaceConfig() + ","
+        R"^(
+        "rebind-timer": 2000,
+        "renew-timer": 1000,
+        "subnet6": [{
+            "require-client-classes": [ "foo" ],
+            "evaluate-additional-classes": [ "foo" ],
+            "pools": [{ "pool":  "2001:db8::/64" }],
+            "id": 1,
+            "subnet": "2001:db8::/64"
+        }],
+        "valid-lifetime": 400
+        })^";
+
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
+    extractConfig(config);
+
+    ConstElementPtr status;
+    ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    checkResult(status, 1, 
+                "subnet configuration failed: cannot specify both 'require-client-classes'"
+                " and 'evaluate-additional-classes'.  Use only the latter.");
+}
+
+// This test verifies that only-if-required gets translated
+// to only-in-additional-list.
+TEST_F(Dhcp6ParserTest, deprecatedOnlyIfRequiredCheck) {
+    std::string config = "{ " + genIfaceConfig() + ","
+        R"^(
+        "rebind-timer": 2000,
+        "renew-timer": 1000,
+        "client-classes": [{
+            "name": "foo",
+            "only-if-required": true
+        }],
+        "subnet6": [ ],
+        "valid-lifetime": 400
+        })^";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
+    extractConfig(config);
+
+    ConstElementPtr status;
+    ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    checkResult(status, 0);
+
+    auto dictionary = CfgMgr::instance().getStagingCfg()->getClientClassDictionary();
+    ASSERT_TRUE(dictionary);
+    EXPECT_EQ(1, dictionary->getClasses()->size());
+
+    ClientClassDefPtr class_def = dictionary->findClass("foo");
+    ASSERT_TRUE(class_def);
+    EXPECT_TRUE(class_def->getAdditional());
+}
+
+// This test verifies that users cannot specify both
+// only-if-required and only-in-additional-list. 
+TEST_F(Dhcp6ParserTest, deprecatedOnlyIfRequiredCheck2) {
+    std::string config = "{ " + genIfaceConfig() + ","
+        R"^(
+        "rebind-timer": 2000,
+        "renew-timer": 1000,
+        "client-classes": [{
+            "name": "foo",
+            "only-if-required": true,
+            "only-in-additional-list": true
+        }],
+        "subnet6": [ ],
+        "valid-lifetime": 400
+        })^";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
+    extractConfig(config);
+
+    ConstElementPtr status;
+    ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    checkResult(status, 1, 
+                "cannot specify both 'only-if-required' and"
+                " 'only-in-additional-list'.  Use only the latter.");
+}
+
 }  // namespace

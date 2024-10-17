@@ -961,10 +961,10 @@ mysql_upgrade_24_to_25_test() {
 mysql_upgrade_25_to_26_test() {
 
     # client_classes been added to dhcp4_options
-    check_table_column client_classes dhcp4_options;
+    check_table_column client_classes dhcp4_options
 
     # client_classes been added to dhcp6_options
-    check_table_column client_classes dhcp6_options;
+    check_table_column client_classes dhcp6_options
 
     # check rename of require_client_classes to evaluate_additaionl_classes.
     check_table_column evaluate_additional_classes dhcp4_shared_network

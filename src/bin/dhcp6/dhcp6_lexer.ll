@@ -1625,6 +1625,18 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"evaluate-additional-classes\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::SUBNET6:
+    case isc::dhcp::Parser6Context::POOLS:
+    case isc::dhcp::Parser6Context::PD_POOLS:
+    case isc::dhcp::Parser6Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp6Parser::make_EVALUATE_ADDITIONAL_CLASSES(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("evaluate-additional-classes", driver.loc_);
+    }
+}
+
 \"client-class\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::SUBNET6:
@@ -1662,6 +1674,15 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
         return isc::dhcp::Dhcp6Parser::make_ONLY_IF_REQUIRED(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("only-if-required", driver.loc_);
+    }
+}
+
+\"only-in-additional-list\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::CLIENT_CLASSES:
+        return isc::dhcp::Dhcp6Parser::make_ONLY_IN_ADDITIONAL_LIST(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("only-in-additional-list", driver.loc_);
     }
 }
 
