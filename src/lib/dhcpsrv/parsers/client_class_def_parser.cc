@@ -184,7 +184,7 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
                       "'only-in-additional-list'.  Use only the latter.");
         }
     }
-
+            
     bool additional = false;
     if (additional_elem) {
         if (additional_elem->getType() == Element::boolean) {

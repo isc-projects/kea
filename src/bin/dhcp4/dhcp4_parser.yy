@@ -180,9 +180,11 @@ using namespace std;
 
   CLIENT_CLASSES "client-classes"
   REQUIRE_CLIENT_CLASSES "require-client-classes"
+  EVALUATE_ADDITIONAL_CLASSES "evaluate-additional-classes"
   TEST "test"
   TEMPLATE_TEST "template-test"
   ONLY_IF_REQUIRED "only-if-required"
+  ONLY_IN_ADDITIONAL_LIST "only-in-additional-list"
   CLIENT_CLASS "client-class"
   POOL_ID "pool-id"
 
@@ -1600,6 +1602,7 @@ subnet4_param: valid_lifetime
              | id
              | client_class
              | require_client_classes
+             | evaluate_additional_classes
              | reservations
              | reservations_global
              | reservations_in_subnet
@@ -1692,6 +1695,7 @@ client_class: CLIENT_CLASS {
     ctx.leave();
 };
 
+// Deprecated.
 require_client_classes: REQUIRE_CLIENT_CLASSES {
     ctx.unique("require-client-classes", ctx.loc2pos(@1));
     ElementPtr c(new ListElement(ctx.loc2pos(@1)));
@@ -1702,6 +1706,18 @@ require_client_classes: REQUIRE_CLIENT_CLASSES {
     ctx.stack_.pop_back();
     ctx.leave();
 };
+
+evaluate_additional_classes: EVALUATE_ADDITIONAL_CLASSES {
+    ctx.unique("evaluate-additional-classes", ctx.loc2pos(@1));
+    ElementPtr c(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("evaluate-additional-classes", c);
+    ctx.stack_.push_back(c);
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON list_strings {
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
 
 reservations_global: RESERVATIONS_GLOBAL COLON BOOLEAN {
     ctx.unique("reservations-global", ctx.loc2pos(@1));
@@ -1785,6 +1801,7 @@ shared_network_param: name
                     | reservations_out_of_pool
                     | client_class
                     | require_client_classes
+                    | evaluate_additional_classes
                     | valid_lifetime
                     | min_valid_lifetime
                     | max_valid_lifetime
@@ -2146,6 +2163,7 @@ pool_param: pool_entry
           | option_data_list
           | client_class
           | require_client_classes
+          | evaluate_additional_classes
           | user_context
           | comment
           | unknown_map_entry
@@ -2465,6 +2483,7 @@ client_class_param: client_class_name
                   | client_class_test
                   | client_class_template_test
                   | only_if_required
+                  | only_in_additional_list
                   | option_def_list
                   | option_data_list
                   | next_server
@@ -2499,10 +2518,17 @@ client_class_template_test: TEMPLATE_TEST {
     ctx.leave();
 };
 
+// Deprecated.
 only_if_required: ONLY_IF_REQUIRED COLON BOOLEAN {
     ctx.unique("only-if-required", ctx.loc2pos(@1));
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("only-if-required", b);
+};
+
+only_in_additional_list: ONLY_IN_ADDITIONAL_LIST COLON BOOLEAN {
+    ctx.unique("only-in-additional-list", ctx.loc2pos(@1));
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("only-in-additional-list", b);
 };
 
 // --- end of client classes ---------------------------------

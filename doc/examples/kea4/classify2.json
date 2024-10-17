@@ -22,13 +22,14 @@
 // One packet can belong to zero or more classes.
   "client-classes": [
 
-// This class is required by the second subnet and is evaluated only
-// if it is required. The test expression returns true.
+// This class is included by the second subnet in its 'evaluate-additional-classes'
+// list so only-in-addtional-list is enabled. This ensures the class  will only
+// be evaluated if the second subnet is selected. The test expression returns true.
 // Note it is not possible to depend on VoIP class because it is not yet
 // defined.
   {
       "name": "second_subnet",
-      "only-if-required": true,
+      "only-in-additional-list": true,
       "test": "member('ALL')",
       "option-data": [{
           "name": "domain-name-servers",
@@ -109,7 +110,7 @@
             "client-classes": [ "VoIP" ]
         } ],
         "interface": "eth0",
-        "require-client-classes": [ "second_subnet" ]
+        "evaluate-additional-classes": [ "second_subnet" ]
     },
 
 // The following list defines a subnet with pools. For some pools

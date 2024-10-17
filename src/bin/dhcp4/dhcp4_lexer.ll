@@ -1328,6 +1328,17 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"evaluate-additional-classes\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::POOLS:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp4Parser::make_EVALUATE_ADDITIONAL_CLASSES(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("evaluate-additional-classes", driver.loc_);
+    }
+}
+
 \"client-class\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
@@ -1364,6 +1375,15 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
         return isc::dhcp::Dhcp4Parser::make_ONLY_IF_REQUIRED(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("only-if-required", driver.loc_);
+    }
+}
+
+\"only-in-additional-list\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::CLIENT_CLASSES:
+        return isc::dhcp::Dhcp4Parser::make_ONLY_IN_ADDITIONAL_LIST(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("in-additional-list", driver.loc_);
     }
 }
 

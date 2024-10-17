@@ -95,11 +95,11 @@
                 "name": "late",
 
                 // Boolean flag indicating whether the class expression is only evaluated
-                // when the class is required, e.g. the selected address pool configuration
-                // includes this class name in its "require-client-classes" list. The
+                // when the selected configuration (i.e. pool,subnet, shared-network)
+                // includes this class name in an "evaluate-additional-classes" list. The
                 // default value false means that the class test expression must
                 // always be evaluated.
-                "only-if-required": true,
+                "only-in-additional-list": true,
 
                 // Class selection expression.
                 "test": "member('ALL')"
@@ -951,7 +951,7 @@
 
                 // List of client classes which must be evaluated when this shared
                 // network is selected for client assignments.
-                "require-client-classes": [ "late" ],
+                "evaluate-additional-classes": [ "late" ],
 
                 // Turn off storage of extended information (e.g. relay agent
                 // information) with each lease for this shared network.
@@ -1102,7 +1102,7 @@
 
                                 // List of client classes which must be evaluated when this pool
                                 // is selected for client assignments.
-                                "require-client-classes": [ "late" ]
+                                "evaluate-additional-classes": [ "late" ]
                             },
                             {
                                 // Restricts this pool to only be used for client
@@ -1117,7 +1117,7 @@
 
                                 // List of client classes which must be evaluated when this pool
                                 // is selected for client assignments.
-                                "require-client-classes": [],
+                                "evaluate-additional-classes": [],
 
                                 // Pool identifier used to enable statistics for this pool.
                                 // The pool ID does not need to be unique within the subnet
@@ -1197,7 +1197,7 @@
 
                         // List of client classes which must be evaluated when this subnet
                         // is selected for client assignments.
-                        "require-client-classes": [ "late" ],
+                        "evaluate-additional-classes": [ "late" ],
 
                         // Subnet-level server hostname set in 'sname' field.
                         "server-hostname": "",
