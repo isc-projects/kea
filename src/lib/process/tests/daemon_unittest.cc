@@ -221,8 +221,11 @@ TEST_F(DaemonTest, createPIDFileOverwrite) {
     ASSERT_GE(pid, 0);
 
     if (pid == 0) {
-        // This is the child, die right away. Tragic, no?
-        _exit (0);
+        char name[] = TEST_SCRIPT_SH;
+        char* argv[] = { name, 0 };
+        char* envp[] = { 0 };
+        execve(name, argv, envp);
+        _exit(0);
     }
 
     // Back in the parent test, we need to wait for the child to die

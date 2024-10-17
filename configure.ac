@@ -1682,6 +1682,8 @@ AC_CONFIG_FILES([src/lib/process/cfgrpt/Makefile])
 AC_CONFIG_FILES([src/lib/process/cfgrpt/tests/Makefile])
 AC_CONFIG_FILES([src/lib/process/tests/Makefile])
 AC_CONFIG_FILES([src/lib/process/testutils/Makefile])
+AC_CONFIG_FILES([src/lib/process/tests/process_test.sh],
+                [chmod +x src/lib/process/tests/process_test.sh])
 AC_CONFIG_FILES([src/lib/stats/Makefile])
 AC_CONFIG_FILES([src/lib/stats/tests/Makefile])
 AC_CONFIG_FILES([src/lib/stats/testutils/Makefile])
