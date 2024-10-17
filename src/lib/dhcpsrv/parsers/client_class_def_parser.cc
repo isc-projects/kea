@@ -181,7 +181,7 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
         } else {
             isc_throw(isc::dhcp::DhcpConfigError,
                       "cannot specify both 'only-if-required' and "
-                      "'only-in-additional-list'.  Use only the latter.");
+                      "'only-in-additional-list'. Use only the latter.");
         }
     }
             

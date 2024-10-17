@@ -8111,9 +8111,12 @@ TEST_F(Dhcp4ParserTest, optionClientClassesDuplicateCheck) {
     EXPECT_EQ(*cclasses, "bar");
 }
 
-// This test verifies that require-client-classes gets translated
-// to evaluate-additional-classes.
+// This test verifies that deprecated require-client-classes
+// gets handled properly.
 TEST_F(Dhcp4ParserTest, deprecatedRequireClientClassesCheck) {
+
+    // Verify that require-client-classes gets translated
+    // to additional classes.
     std::string config = "{ " + genIfaceConfig() + ","
         R"^(
         "rebind-timer": 2000,
@@ -8143,12 +8146,9 @@ TEST_F(Dhcp4ParserTest, deprecatedRequireClientClassesCheck) {
     EXPECT_EQ(1, cclass_list.size());
     auto cclasses = cclass_list.begin();
     EXPECT_EQ(*cclasses, "foo");
-}
 
-// This test verifies that users cannot specify both
-// require-client-classes and evaluate-addtional-classes.
-TEST_F(Dhcp4ParserTest, deprecatedRequireClientClassesCheck2) {
-    std::string config = "{ " + genIfaceConfig() + ","
+    // Now verify that users cannot specify both.
+    config = "{ " + genIfaceConfig() + ","
         R"^(
         "rebind-timer": 2000,
         "renew-timer": 1000,
@@ -8162,20 +8162,20 @@ TEST_F(Dhcp4ParserTest, deprecatedRequireClientClassesCheck2) {
         "valid-lifetime": 400
         })^";
 
-    ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
     extractConfig(config);
 
-    ConstElementPtr status;
     ASSERT_NO_THROW(status = configureDhcp4Server(*srv_, json));
     checkResult(status, 1,
                 "subnet configuration failed: cannot specify both 'require-client-classes'"
-                " and 'evaluate-additional-classes'.  Use only the latter.");
+                " and 'evaluate-additional-classes'. Use only the latter.");
 }
 
-// This test verifies that only-if-required gets translated
-// to only-in-additional-list.
+// This test verifies that deprecated only-if-required
+// gets handled properly.
 TEST_F(Dhcp4ParserTest, deprecatedOnlyIfRequiredCheck) {
+    // Verifies that only-if-required gets translated
+    // to only-in-additional-list.
     std::string config = "{ " + genIfaceConfig() + ","
         R"^(
         "rebind-timer": 2000,
@@ -8203,12 +8203,9 @@ TEST_F(Dhcp4ParserTest, deprecatedOnlyIfRequiredCheck) {
     ClientClassDefPtr class_def = dictionary->findClass("foo");
     ASSERT_TRUE(class_def);
     EXPECT_TRUE(class_def->getAdditional());
-}
 
-// This test verifies that users cannot specify both
-// only-if-required and only-in-additional-list.
-TEST_F(Dhcp4ParserTest, deprecatedOnlyIfRequiredCheck2) {
-    std::string config = "{ " + genIfaceConfig() + ","
+    // Now verify that users cannot specify both.
+    config = "{ " + genIfaceConfig() + ","
         R"^(
         "rebind-timer": 2000,
         "renew-timer": 1000,
@@ -8221,15 +8218,13 @@ TEST_F(Dhcp4ParserTest, deprecatedOnlyIfRequiredCheck2) {
         "valid-lifetime": 400
         })^";
 
-    ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
     extractConfig(config);
 
-    ConstElementPtr status;
     ASSERT_NO_THROW(status = configureDhcp4Server(*srv_, json));
     checkResult(status, 1,
                 "cannot specify both 'only-if-required' and"
-                " 'only-in-additional-list'.  Use only the latter.");
+                " 'only-in-additional-list'. Use only the latter.");
 }
 
 }  // namespace

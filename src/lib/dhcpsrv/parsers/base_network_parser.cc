@@ -264,7 +264,7 @@ BaseNetworkParser::getAdditionalClassesElem(ConstElementPtr params,
         } else {
             isc_throw(isc::dhcp::DhcpConfigError,
                       "cannot specify both 'require-client-classes' and "
-                      "'evaluate-additional-classes'.  Use only the latter.");
+                      "'evaluate-additional-classes'. Use only the latter.");
         }
     }
 

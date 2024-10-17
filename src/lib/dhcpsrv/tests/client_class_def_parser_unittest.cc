@@ -2148,4 +2148,34 @@ TEST_F(ClientClassDefParserTest, offerLftInvalid) {
                      " (<string>:3:23)");
 }
 
+TEST_F(ClientClassDefParserTest, deprecatedOnlyIfRequired) {
+    // Valid entry.
+    std::string cfg_text =
+       R"^({
+            "name": "foo",
+            "only-if-required": true
+        })^";
+
+    ClientClassDefPtr cclass;
+    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, AF_INET));
+
+    // Class should exist.
+    ASSERT_TRUE(cclass);
+    EXPECT_EQ("foo", cclass->getName());
+    ASSERT_TRUE(cclass->getAdditional());
+
+    // Invalid entry specifies both parameters. 
+    std::string cfg_text2 =
+       R"^({
+            "name": "foo",
+            "only-if-required": true,
+            "only-in-additional-list": true
+        })^";
+
+    ASSERT_THROW_MSG(cclass = parseClientClassDef(cfg_text2, AF_INET),
+                     DhcpConfigError,
+                     "cannot specify both 'only-if-required' and "
+                     "'only-in-additional-list'. Use only the latter.");
+}
+
 } // end of anonymous namespace

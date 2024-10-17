@@ -1043,5 +1043,92 @@ TEST_F(SharedNetwork6ParserTest, parseFLQAllocatorPD) {
     EXPECT_EQ("flq", network->getPdAllocatorType().get());
 }
 
+// Verify that deprecated require-client-classes is handled properly
+// by v4 parser.
+TEST_F(SharedNetwork4ParserTest, deprecatedRequireClientClasses) {
+    // Valid entry.
+    std::string config =
+       R"^({
+            "name": "foo",
+            "require-client-classes": [ "one", "two" ]
+        })^";
+    
+    ElementPtr config_element = Element::fromJSON(config);
+
+    // Parse configuration specified above.
+    SharedNetwork4Parser parser;
+    SharedNetwork4Ptr network;
+
+    ASSERT_NO_THROW(network = parser.parse(config_element));
+    ASSERT_TRUE(network);
+
+    const auto cclasses = network->getAdditionalClasses();
+    EXPECT_EQ(cclasses.size(), 2);
+    auto cclass = cclasses.begin();
+    EXPECT_EQ(*cclass, "one");
+    ++cclass;
+    EXPECT_EQ(*cclass, "two");
+
+    // Invalid entry specifies both parameters. 
+    config =
+       R"^({
+            "name": "foo",
+            "require-client-classes": [ "one", "two" ],
+            "evaluate-additional-classes": [ "one", "two" ]
+        })^";
+    
+    config_element = Element::fromJSON(config);
+
+    // Should throw a complaint.
+    ASSERT_THROW_MSG(parser.parse(config_element),
+                     DhcpConfigError,
+                     "cannot specify both 'require-client-classes' and"
+                     " 'evaluate-additional-classes'. Use only the latter.");
+}
+
+
+// Verify that deprecated require-client-classes is handled properly
+// by v6 parser.
+TEST_F(SharedNetwork6ParserTest, deprecatedRequireClientClasses) {
+    // Valid entry.
+    std::string config =
+       R"^({
+            "name": "foo",
+            "require-client-classes": [ "one", "two" ]
+        })^";
+    
+    ElementPtr config_element = Element::fromJSON(config);
+
+    // Parse configuration specified above.
+    SharedNetwork6Parser parser;
+    SharedNetwork6Ptr network;
+
+    ASSERT_NO_THROW(network = parser.parse(config_element));
+    ASSERT_TRUE(network);
+
+    const auto cclasses = network->getAdditionalClasses();
+    EXPECT_EQ(cclasses.size(), 2);
+    auto cclass = cclasses.begin();
+    EXPECT_EQ(*cclass, "one");
+    ++cclass;
+    EXPECT_EQ(*cclass, "two");
+
+    // Invalid entry specifies both parameters. 
+    config =
+       R"^({
+            "name": "foo",
+            "require-client-classes": [ "one", "two" ],
+            "evaluate-additional-classes": [ "one", "two" ]
+        })^";
+    
+    config_element = Element::fromJSON(config);
+
+    // Should throw a complaint.
+    ASSERT_THROW_MSG(parser.parse(config_element),
+                     DhcpConfigError,
+                     "cannot specify both 'require-client-classes' and"
+                     " 'evaluate-additional-classes'. Use only the latter."
+                     " (<string>:1:2)");
+}
 
 } // end of anonymous namespace
