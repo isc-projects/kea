@@ -477,7 +477,13 @@ CfgOption::toElement() const {
 }
 
 ElementPtr
-CfgOption::toElementWithMetadata(const bool include_metadata) const {
+CfgOption::toElement(CfgOptionDefPtr cfg_option_def) const {
+    return (toElementWithMetadata(false, cfg_option_def));
+}
+
+ElementPtr
+CfgOption::toElementWithMetadata(const bool include_metadata,
+                                 CfgOptionDefPtr cfg_option_def) const {
     // option-data value is a list of maps
     ElementPtr result = Element::createList();
     // Iterate first on options using space names
@@ -495,7 +501,13 @@ CfgOption::toElementWithMetadata(const bool include_metadata) const {
             uint16_t code = opt.option_->getType();
             map->set("code", Element::create(code));
             // Set the name (always for standard options else when asked for)
-            OptionDefinitionPtr def = LibDHCP::getOptionDef(name, code);
+            OptionDefinitionPtr def;
+            if (cfg_option_def) {
+                def = cfg_option_def->get(name, code);
+            }
+            if (!def) {
+                def = LibDHCP::getOptionDef(name, code);
+            }
             if (!def) {
                 def = LibDHCP::getRuntimeOptionDef(name, code);
             }

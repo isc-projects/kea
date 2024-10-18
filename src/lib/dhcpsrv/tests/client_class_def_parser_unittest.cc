@@ -1472,6 +1472,66 @@ TEST_F(ClientClassDefParserTest, option43Def) {
     EXPECT_EQ(0, std::memcmp(expected, &opt->getData()[0], 4));
 }
 
+// Test verifies option-def and option-data is correctly unparsed
+// option 43 as a string.
+TEST_F(ClientClassDefParserTest, option43DefString) {
+    std::string cfg_text =
+        "{ \n"
+        "    \"name\": \"aruba\", \n"
+        "    \"option-def\": [ \n"
+        "        { \n"
+        "           \"name\": \"vendor-encapsulated-options\", \n"
+        "           \"code\": 43, \n"
+        "           \"space\": \"dhcp4\", \n"
+        "           \"type\": \"string\" \n"
+        "        } \n"
+        "      ], \n"
+        "    \"option-data\": [ \n"
+        "      { \n"
+        "         \"name\": \"vendor-encapsulated-options\", \n"
+        "         \"csv-format\": true, \n"
+        "         \"data\": \"192.168.0.150\" \n"
+        "      } \n"
+        "    ] \n"
+        "} \n";
+
+    ClientClassDefPtr cclass;
+    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, AF_INET));
+
+    // We should find our class.
+    ASSERT_TRUE(cclass);
+
+    // And the option definition.
+    CfgOptionDefPtr cfg_def = cclass->getCfgOptionDef();
+    ASSERT_TRUE(cfg_def);
+    EXPECT_TRUE(cfg_def->get(DHCP4_OPTION_SPACE, 43));
+
+    // Verify the option data.
+    OptionDescriptor od = cclass->getCfgOption()->get(DHCP4_OPTION_SPACE, 43);
+    ASSERT_TRUE(od.option_);
+    EXPECT_EQ(43, od.option_->getType());
+    OptionStringPtr opstr = boost::dynamic_pointer_cast<OptionString>(od.option_);
+    ASSERT_TRUE(opstr);
+    EXPECT_EQ("192.168.0.150", opstr->getValue());
+
+    // Verify unparse.
+    auto const& unparsed = cclass->toElement();
+    ASSERT_TRUE(unparsed);
+    ASSERT_EQ(unparsed->getType(), Element::map);
+    auto const& option_data = unparsed->get("option-data");
+    ASSERT_TRUE(option_data);
+    ASSERT_EQ(option_data->getType(), Element::list);
+    ASSERT_EQ(1, option_data->size());
+    auto const& option = option_data->get(0);
+    ASSERT_TRUE(option);
+    ASSERT_EQ(option->getType(), Element::map);
+    auto const& data = option->get("data");
+    ASSERT_TRUE(data);
+    ASSERT_EQ(data->getType(), Element::string);
+    // Data entry must be "192.168.0.150", not "".
+    EXPECT_EQ("192.168.0.150", data->stringValue());
+}
+
 // Test verifies that it is possible to define next-server field and it
 // is actually set in the class properly.
 TEST_F(ClientClassDefParserTest, nextServer) {

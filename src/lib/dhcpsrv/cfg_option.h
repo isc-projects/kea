@@ -747,15 +747,23 @@ public:
     /// @return a pointer to unparsed configuration
     virtual isc::data::ElementPtr toElement() const;
 
+    /// @brief Unparse a configuration object
+    ///
+    /// @param cfg_option_def config option definitions
+    /// @return a pointer to unparsed configuration
+    virtual isc::data::ElementPtr toElement(CfgOptionDefPtr cfg_option_def) const;
+
     /// @brief Unparse a configuration object with optionally including
     /// the metadata.
     ///
     /// @param include_metadata boolean value indicating if the metadata
     /// should be included (if true) or not (if false).
+    /// @param cfg_option_def config option definitions (optional).
     ///
     /// @return A pointer to the unparsed configuration.
     isc::data::ElementPtr
-    toElementWithMetadata(const bool include_metadata) const;
+    toElementWithMetadata(const bool include_metadata,
+			  CfgOptionDefPtr cfg_option_def = CfgOptionDefPtr()) const;
 
 private:
 

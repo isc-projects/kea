@@ -239,9 +239,11 @@ ClientClassDef::toElement() const {
     // Set option-def (used only by DHCPv4)
     if (cfg_option_def_ && (family == AF_INET)) {
         result->set("option-def", cfg_option_def_->toElement());
+        result->set("option-data", cfg_option_->toElement(cfg_option_def_));
+    } else {
+        // Set option-data
+        result->set("option-data", cfg_option_->toElement());
     }
-    // Set option-data
-    result->set("option-data", cfg_option_->toElement());
 
     if (family == AF_INET) {
         // V4 only
