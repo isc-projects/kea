@@ -26,7 +26,7 @@
         "        \"client-classes\": [",
         "            {",
         "                \"name\": <name of the class>,",
-        "                \"only-if-required\": <only if required boolean value>,",
+        "                \"only-in-additional-list\": <only in additional list boolean value>,",
         "                \"test\": <test expression to be evaluated on incoming packets>,",
         "                \"option-data\": [ <option values here> ],",
         "                \"option-def\": [ <option definitions here> ],",

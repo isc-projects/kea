@@ -142,7 +142,7 @@ checked against the configured limits - are updated for each lease in the follow
 * ``lease6_renew``
 * ``lease6_rebind``
 
-As a result, classes for which ``"only-if-required"`` is "true" cannot be lease-limited.
+As a result, classes for which ``"only-in-additional-list"`` is "true" cannot be lease-limited.
 Please refer to :ref:`the classification steps <classify-classification-steps>` for more information on which
 client classes can be used to limit the number of leases.
 
@@ -185,7 +185,7 @@ In terms of rate limiting, client classes are evaluated at the ``pkt4_receive`` 
 ``pkt6_receive`` callout, respectively, so that rate limits are checked as early as possible in the
 packet-processing cycle. Thus, only those classes which are assigned to the packet solely via an
 independent test expression can be used. Classes that depend on host reservations or the special
-``BOOTP`` or ``KNOWN`` classes, and classes that are marked with ``"only-if-required": true``,
+``BOOTP`` or ``KNOWN`` classes, and classes that are marked with ``"only-in-additional-list": true``,
 cannot be rate limited. See :ref:`the classification steps <classify-classification-steps>` for
 more details on which client classes can be used to limit the packet rate.
 

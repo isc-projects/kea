@@ -973,26 +973,26 @@ client and transaction identification information. The second and third
 argument identify the prefix. The fourth and fifth argument hold the
 expected IAID and IAID found respectively.
 
-% DHCP6_REQUIRED_CLASS_EVAL_ERROR %1: Expression '%2' evaluated to %3
-This error message indicates that there a problem was encountered while
-evaluating an expression of a required client class that was marked as required.
+% DHCP6_ADDITIONAL_CLASS_EVAL_ERROR %1: Expression '%2' evaluated to %3
+This error message indicates that a problem was encountered while
+evaluating the expression of an additional client class.
 A description of the problem is printed.
 
-% DHCP6_REQUIRED_CLASS_EVAL_RESULT %1: Expression '%2' evaluated to %3
+% DHCP6_ADDITIONAL_CLASS_EVAL_RESULT %1: Expression '%2' evaluated to %3
 Logged at debug log level 50.
-This debug message indicates that the expression of a required client class has
+This debug message indicates that the expression of an additional client class has
 been successfully evaluated. The client class name and the result value of the
 evaluation are printed.
 
-% DHCP6_REQUIRED_CLASS_NO_TEST required class %1 has no test expression, adding it to client's classes unconditionally
+% DHCP6_ADDITIONAL_CLASS_NO_TEST additional class %1 has no test expression, adding it to client's classes unconditionally
 Logged at debug log level 40.
-This debug message informs that a class was listed for required evaluation but
+This debug message informs that a class was listed for additional evaluation but
 its definition does not include a test expression to evaluate. The class is
 unconditionally added to the query.
 
-% DHCP6_REQUIRED_CLASS_UNDEFINED required class %1 has no definition
+% DHCP6_ADDITIONAL_CLASS_UNDEFINED additional class %1 has no definition
 Logged at debug log level 40.
-This debug message informs that a class is listed for required evaluation but
+This debug message informs that a class is listed for additional evaluation but
 has no definition. The class is ignored.
 
 % DHCP6_REQUIRED_OPTIONS_CHECK_FAIL %1: %2 message received from %3 failed the following check: %4

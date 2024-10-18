@@ -2149,7 +2149,7 @@ TEST_F(ClientClassDefParserTest, offerLftInvalid) {
 }
 
 TEST_F(ClientClassDefParserTest, deprecatedOnlyIfRequired) {
-    // Valid entry.
+    // Valid entry using only-if-required.
     std::string cfg_text =
        R"^({
             "name": "foo",
@@ -2157,6 +2157,20 @@ TEST_F(ClientClassDefParserTest, deprecatedOnlyIfRequired) {
         })^";
 
     ClientClassDefPtr cclass;
+    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, AF_INET));
+
+    // Class should exist.
+    ASSERT_TRUE(cclass);
+    EXPECT_EQ("foo", cclass->getName());
+    ASSERT_TRUE(cclass->getAdditional());
+
+    // Valid entry using only-in-additional-list.
+    cfg_text =
+       R"^({
+            "name": "foo",
+            "only-in-additional-list": true
+        })^";
+
     ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, AF_INET));
 
     // Class should exist.

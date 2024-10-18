@@ -7,6 +7,10 @@
 namespace isc {
 namespace dhcp {
 
+extern const isc::log::MessageID DHCP4_ADDITIONAL_CLASS_EVAL_ERROR = "DHCP4_ADDITIONAL_CLASS_EVAL_ERROR";
+extern const isc::log::MessageID DHCP4_ADDITIONAL_CLASS_EVAL_RESULT = "DHCP4_ADDITIONAL_CLASS_EVAL_RESULT";
+extern const isc::log::MessageID DHCP4_ADDITIONAL_CLASS_NO_TEST = "DHCP4_ADDITIONAL_CLASS_NO_TEST";
+extern const isc::log::MessageID DHCP4_ADDITIONAL_CLASS_UNDEFINED = "DHCP4_ADDITIONAL_CLASS_UNDEFINED";
 extern const isc::log::MessageID DHCP4_ALREADY_RUNNING = "DHCP4_ALREADY_RUNNING";
 extern const isc::log::MessageID DHCP4_BUFFER_RECEIVED = "DHCP4_BUFFER_RECEIVED";
 extern const isc::log::MessageID DHCP4_BUFFER_RECEIVE_FAIL = "DHCP4_BUFFER_RECEIVE_FAIL";
@@ -146,10 +150,6 @@ extern const isc::log::MessageID DHCP4_RELEASE_FAIL = "DHCP4_RELEASE_FAIL";
 extern const isc::log::MessageID DHCP4_RELEASE_FAIL_NO_LEASE = "DHCP4_RELEASE_FAIL_NO_LEASE";
 extern const isc::log::MessageID DHCP4_RELEASE_FAIL_WRONG_CLIENT = "DHCP4_RELEASE_FAIL_WRONG_CLIENT";
 extern const isc::log::MessageID DHCP4_REQUEST = "DHCP4_REQUEST";
-extern const isc::log::MessageID DHCP4_REQUIRED_CLASS_EVAL_ERROR = "DHCP4_REQUIRED_CLASS_EVAL_ERROR";
-extern const isc::log::MessageID DHCP4_REQUIRED_CLASS_EVAL_RESULT = "DHCP4_REQUIRED_CLASS_EVAL_RESULT";
-extern const isc::log::MessageID DHCP4_REQUIRED_CLASS_NO_TEST = "DHCP4_REQUIRED_CLASS_NO_TEST";
-extern const isc::log::MessageID DHCP4_REQUIRED_CLASS_UNDEFINED = "DHCP4_REQUIRED_CLASS_UNDEFINED";
 extern const isc::log::MessageID DHCP4_RESERVATIONS_LOOKUP_FIRST_ENABLED = "DHCP4_RESERVATIONS_LOOKUP_FIRST_ENABLED";
 extern const isc::log::MessageID DHCP4_RESERVED_HOSTNAME_ASSIGNED = "DHCP4_RESERVED_HOSTNAME_ASSIGNED";
 extern const isc::log::MessageID DHCP4_RESPONSE_DATA = "DHCP4_RESPONSE_DATA";
@@ -185,6 +185,10 @@ extern const isc::log::MessageID DHCP4_V6_ONLY_PREFERRED_MISSING_IN_OFFER = "DHC
 namespace {
 
 const char* values[] = {
+    "DHCP4_ADDITIONAL_CLASS_EVAL_ERROR", "%1: Expression '%2' evaluated to %3",
+    "DHCP4_ADDITIONAL_CLASS_EVAL_RESULT", "%1: Expression '%2' evaluated to %3",
+    "DHCP4_ADDITIONAL_CLASS_NO_TEST", "additional class %1 has no test expression, adding it to client's classes unconditionally",
+    "DHCP4_ADDITIONAL_CLASS_UNDEFINED", "additional class %1 has no definition",
     "DHCP4_ALREADY_RUNNING", "%1 already running? %2",
     "DHCP4_BUFFER_RECEIVED", "received buffer from %1:%2 to %3:%4 over interface %5",
     "DHCP4_BUFFER_RECEIVE_FAIL", "error on attempt to receive packet: %1",
@@ -324,10 +328,6 @@ const char* values[] = {
     "DHCP4_RELEASE_FAIL_NO_LEASE", "%1: client is trying to release non-existing lease %2",
     "DHCP4_RELEASE_FAIL_WRONG_CLIENT", "%1: client is trying to release the lease %2 which belongs to a different client",
     "DHCP4_REQUEST", "%1: server is processing DHCPREQUEST with hint=%2",
-    "DHCP4_REQUIRED_CLASS_EVAL_ERROR", "%1: Expression '%2' evaluated to %3",
-    "DHCP4_REQUIRED_CLASS_EVAL_RESULT", "%1: Expression '%2' evaluated to %3",
-    "DHCP4_REQUIRED_CLASS_NO_TEST", "required class %1 has no test expression, adding it to client's classes unconditionally",
-    "DHCP4_REQUIRED_CLASS_UNDEFINED", "required class %1 has no definition",
     "DHCP4_RESERVATIONS_LOOKUP_FIRST_ENABLED", "Multi-threading is enabled and host reservations lookup is always performed first.",
     "DHCP4_RESERVED_HOSTNAME_ASSIGNED", "%1: server assigned reserved hostname %2",
     "DHCP4_RESPONSE_DATA", "%1: responding with packet %2 (type %3), packet details: %4",

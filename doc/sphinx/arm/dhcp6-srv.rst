@@ -3153,25 +3153,25 @@ eRouter1.0 client class are allowed to use that pool.
        ...
    }
 
-.. _dhcp6-required-class:
+.. _dhcp6-additional-class:
 
-Required Classification
-~~~~~~~~~~~~~~~~~~~~~~~
+Additional Classification
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In some cases it is useful to limit the scope of a class to a pool,
 subnet, or shared network. There are two parameters which are used
 to limit the scope of the class by instructing the server to evaluate test
 expressions when required.
 
-The first one is the per-class ``only-if-required`` flag, which is ``false``
-by default. When it is set to ``true``, the test expression of the class
-is not evaluated at the reception of the incoming packet but later, and
-only if the class evaluation is required.
-
-The second is ``require-client-classes``, which takes a list of class
+The ``evaluate-additional-classes``, which takes a list of class
 names and is valid in pool, subnet, and shared network scope. Classes in
-these lists are marked as required and evaluated after selection of this
+these lists are marked as additional and evaluated after selection of this
 specific pool/subnet/shared network and before output-option processing.
+
+The second one is the per-class ``only-in-additional-list`` flag, which is
+``false`` by default. When it is set to ``true``, the test expression of
+the class is not evaluated at the reception of the incoming packet but later,
+and only if the class is present in an ``evaluate-additional-classes`` list.
 
 In this example, a class is assigned to the incoming packet when the
 specified subnet is used:
@@ -3183,7 +3183,7 @@ specified subnet is used:
           {
               "name": "Client_foo",
               "test": "member('ALL')",
-              "only-if-required": true
+              "only-in-additional-list": true
           },
           ...
        ],
@@ -3195,7 +3195,7 @@ specified subnet is used:
                         "pool": "2001:db8:1::-2001:db8:1::ffff"
                     }
                ],
-               "require-client-classes": [ "Client_foo" ],
+               "evaluate-additional-classes": [ "Client_foo" ],
                ...
            },
            ...
@@ -3203,21 +3203,28 @@ specified subnet is used:
        ...
    }
 
-Required evaluation can be used to express complex dependencies like
+Additional evaluation can be used to express complex dependencies like
 subnet membership. It can also be used to reverse the
 precedence; if ``option-data`` is set in a subnet, it takes precedence
 over ``option-data`` in a class. If ``option-data`` is moved to a
 required class and required in the subnet, a class evaluated earlier
 may take precedence.
 
-Required evaluation is also available at shared network and pool/pd-pool
-levels. The order in which required classes are considered is:
+Additional evaluation is also available at shared network and pool/pd-pool
+levels. The order in which additional classes are considered is:
 (pd-)pool, subnet, and shared network, i.e. in the same order from the
 way in which ``option-data`` is processed.
 
-Since Kea version 2.7.4 required client classes configured without
+Since Kea version 2.7.4 additional classes configured without
 a test expression are unconditionally added, i.e. they are considered
 to always be evaluated to ``true``.
+
+.. note::
+
+   As of Kea version 2.7.4, ``only-if-required`` and ``require-client-classes``
+   have been renamed to ``only-in-additional-list`` and ``evaluate-additional-classes``
+   respectivley.  The original names will still be accepted as input to allow
+   users to migrate but will eventually be unsupported.
 
 .. _dhcp6-ddns-config:
 
@@ -4656,12 +4663,12 @@ For example:
             {
                 "name": "dependent-class",
                 "test": "member('KNOWN')",
-                "only-if-required": true
+                "only-in-additional-list": true
             }
         ]
     }
 
-The ``only-if-required`` parameter is needed here to force
+The ``only-in-additional-list`` parameter is needed here to force
 evaluation of the class after the lease has been allocated and thus the
 reserved class has been also assigned.
 
@@ -4669,21 +4676,21 @@ reserved class has been also assigned.
 
    The classes specified in non-global host reservations
    are assigned to the processed packet after all classes with the
-   ``only-if-required`` parameter set to ``false`` have been evaluated.
+   ``only-in-additional-list` parameter set to ``false`` have been evaluated.
    This means that these classes must not depend on the
    statically assigned classes from the host reservations. If
-   such a dependency is needed, the ``only-if-required`` must
+   such a dependency is needed, the ``only-in-addtional-list`` must
    be set to ``true`` for the dependent classes. Such classes are
    evaluated after the static classes have been assigned to the packet.
    This, however, imposes additional configuration overhead, because
-   all classes marked as ``only-if-required`` must be listed in the
-   ``require-client-classes`` list for every subnet where they are used.
+   all classes marked as ``only-in-addtional-list`` must be listed in the
+   ``evaluate-additional-classes`` list for every subnet where they are used.
 
 .. note::
 
    Client classes specified within the Kea configuration file may
    depend on the classes specified within the global host reservations.
-   In such a case the ``only-if-required`` parameter is not needed.
+   In such a case the ``only-in-additional-list`` parameter is not needed.
    Refer to the :ref:`pool-selection-with-class-reservations6` and
    :ref:`subnet-selection-with-class-reservations6`
    for specific use cases.

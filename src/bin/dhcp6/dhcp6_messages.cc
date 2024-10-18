@@ -8,6 +8,10 @@ namespace isc {
 namespace dhcp {
 
 extern const isc::log::MessageID DHCP4_HOOK_SUBNET6_SELECT_PARKING_LOT_FULL = "DHCP4_HOOK_SUBNET6_SELECT_PARKING_LOT_FULL";
+extern const isc::log::MessageID DHCP6_ADDITIONAL_CLASS_EVAL_ERROR = "DHCP6_ADDITIONAL_CLASS_EVAL_ERROR";
+extern const isc::log::MessageID DHCP6_ADDITIONAL_CLASS_EVAL_RESULT = "DHCP6_ADDITIONAL_CLASS_EVAL_RESULT";
+extern const isc::log::MessageID DHCP6_ADDITIONAL_CLASS_NO_TEST = "DHCP6_ADDITIONAL_CLASS_NO_TEST";
+extern const isc::log::MessageID DHCP6_ADDITIONAL_CLASS_UNDEFINED = "DHCP6_ADDITIONAL_CLASS_UNDEFINED";
 extern const isc::log::MessageID DHCP6_ADD_GLOBAL_STATUS_CODE = "DHCP6_ADD_GLOBAL_STATUS_CODE";
 extern const isc::log::MessageID DHCP6_ADD_STATUS_CODE_FOR_IA = "DHCP6_ADD_STATUS_CODE_FOR_IA";
 extern const isc::log::MessageID DHCP6_ALREADY_RUNNING = "DHCP6_ALREADY_RUNNING";
@@ -145,10 +149,6 @@ extern const isc::log::MessageID DHCP6_RELEASE_PD_EXPIRED = "DHCP6_RELEASE_PD_EX
 extern const isc::log::MessageID DHCP6_RELEASE_PD_FAIL = "DHCP6_RELEASE_PD_FAIL";
 extern const isc::log::MessageID DHCP6_RELEASE_PD_FAIL_WRONG_DUID = "DHCP6_RELEASE_PD_FAIL_WRONG_DUID";
 extern const isc::log::MessageID DHCP6_RELEASE_PD_FAIL_WRONG_IAID = "DHCP6_RELEASE_PD_FAIL_WRONG_IAID";
-extern const isc::log::MessageID DHCP6_REQUIRED_CLASS_EVAL_ERROR = "DHCP6_REQUIRED_CLASS_EVAL_ERROR";
-extern const isc::log::MessageID DHCP6_REQUIRED_CLASS_EVAL_RESULT = "DHCP6_REQUIRED_CLASS_EVAL_RESULT";
-extern const isc::log::MessageID DHCP6_REQUIRED_CLASS_NO_TEST = "DHCP6_REQUIRED_CLASS_NO_TEST";
-extern const isc::log::MessageID DHCP6_REQUIRED_CLASS_UNDEFINED = "DHCP6_REQUIRED_CLASS_UNDEFINED";
 extern const isc::log::MessageID DHCP6_REQUIRED_OPTIONS_CHECK_FAIL = "DHCP6_REQUIRED_OPTIONS_CHECK_FAIL";
 extern const isc::log::MessageID DHCP6_RESERVATIONS_LOOKUP_FIRST_ENABLED = "DHCP6_RESERVATIONS_LOOKUP_FIRST_ENABLED";
 extern const isc::log::MessageID DHCP6_RESPONSE_DATA = "DHCP6_RESPONSE_DATA";
@@ -175,6 +175,10 @@ namespace {
 
 const char* values[] = {
     "DHCP4_HOOK_SUBNET6_SELECT_PARKING_LOT_FULL", "The parked-packet-limit %1, has been reached, dropping query: %2",
+    "DHCP6_ADDITIONAL_CLASS_EVAL_ERROR", "%1: Expression '%2' evaluated to %3",
+    "DHCP6_ADDITIONAL_CLASS_EVAL_RESULT", "%1: Expression '%2' evaluated to %3",
+    "DHCP6_ADDITIONAL_CLASS_NO_TEST", "additional class %1 has no test expression, adding it to client's classes unconditionally",
+    "DHCP6_ADDITIONAL_CLASS_UNDEFINED", "additional class %1 has no definition",
     "DHCP6_ADD_GLOBAL_STATUS_CODE", "%1: adding Status Code to DHCPv6 packet: %2",
     "DHCP6_ADD_STATUS_CODE_FOR_IA", "%1: adding Status Code to IA with iaid=%2: %3",
     "DHCP6_ALREADY_RUNNING", "%1 already running? %2",
@@ -312,10 +316,6 @@ const char* values[] = {
     "DHCP6_RELEASE_PD_FAIL", "%1: failed to release prefix %2/%3 for iaid=%4",
     "DHCP6_RELEASE_PD_FAIL_WRONG_DUID", "%1: client tried to release prefix %2/%3, but it belongs to another client (duid=%4)",
     "DHCP6_RELEASE_PD_FAIL_WRONG_IAID", "%1: client tried to release prefix %2/%3, but it used wrong IAID (expected %4, but got %5)",
-    "DHCP6_REQUIRED_CLASS_EVAL_ERROR", "%1: Expression '%2' evaluated to %3",
-    "DHCP6_REQUIRED_CLASS_EVAL_RESULT", "%1: Expression '%2' evaluated to %3",
-    "DHCP6_REQUIRED_CLASS_NO_TEST", "required class %1 has no test expression, adding it to client's classes unconditionally",
-    "DHCP6_REQUIRED_CLASS_UNDEFINED", "required class %1 has no definition",
     "DHCP6_REQUIRED_OPTIONS_CHECK_FAIL", "%1: %2 message received from %3 failed the following check: %4",
     "DHCP6_RESERVATIONS_LOOKUP_FIRST_ENABLED", "Multi-threading is enabled and host reservations lookup is always performed first.",
     "DHCP6_RESPONSE_DATA", "%1: responding with packet %2 (type %3), packet details: %4",

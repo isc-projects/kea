@@ -229,7 +229,7 @@ are returned in the following format:
            "client-classes": [
                {
                    "name": "pxeclient",
-                   "only-if-required": true,
+                   "only-in-additional-list": true,
                    "test": "option[vendor-class-identifier].text == 'PXEClient'",
                    "option-def": [
                        {
@@ -251,5 +251,13 @@ Note that the example above is DHCPv4-specific; the last three
 parameters are only returned by the DHCPv4 server and are never returned
 by the DHCPv6 server. Also, some of the parameters provided in this
 example may not be returned if they are not specified for the class.
-Specifically, ``only-if-required``, ``test``, and ``option-def`` are not
+Specifically, ``only-in-additional-list``, ``test``, and ``option-def`` are not
 returned if they are not specified for the class.
+
+.. note::
+
+  As of Kea version 2.7.4, ``only-if-required`` has been replaced with
+  ``only-in-additional-list`` and deprecated. In order to allow users time
+  to migrate class commands will still accept it as input but translate it
+  to ``only-in-additional-list`` on output.  Eventually support for the
+  old name wil be removed.

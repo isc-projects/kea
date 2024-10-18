@@ -706,8 +706,8 @@ TEST_F(ClassifyTest, matchClassification) {
     EXPECT_FALSE(opt3);
 }
 
-// Check that only-if-required classes are not evaluated by classifyPacket
-TEST_F(ClassifyTest, required) {
+// Check that only-in-additional-list classes are not evaluated by classifyPacket
+TEST_F(ClassifyTest, additional) {
     IfaceMgrTestConfig test_config(true);
 
     NakedDhcpv6Srv srv(0);
@@ -734,7 +734,7 @@ TEST_F(ClassifyTest, required) {
         "    \"interface\": \"eth1\" } ],"
         "\"client-classes\": [ "
         "{   \"name\": \"router\", "
-        "    \"only-if-required\": true, "
+        "    \"only-in-additional-list\": true, "
         "    \"option-data\": ["
         "        {    \"name\": \"ipv6-forwarding\", "
         "             \"data\": \"true\" } ], "
@@ -820,8 +820,8 @@ TEST_F(ClassifyTest, required) {
     EXPECT_FALSE(opt3);
 }
 
-// Checks that when only-if-required classes are still evaluated
-TEST_F(ClassifyTest, requiredClassification) {
+// Checks that when only-in-additional-list classes are still evaluated
+TEST_F(ClassifyTest, additionalClassification) {
     IfaceMgrTestConfig test_config(true);
 
     NakedDhcpv6Srv srv(0);
@@ -845,11 +845,11 @@ TEST_F(ClassifyTest, requiredClassification) {
         "{   \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
         "    \"id\": 1, "
         "    \"subnet\": \"2001:db8:1::/48\", "
-        "    \"require-client-classes\": [ \"router\" ], "
+        "    \"evaluate-additional-classes\": [ \"router\" ], "
         "    \"interface\": \"eth1\" } ],"
         "\"client-classes\": [ "
         "{   \"name\": \"router\", "
-        "    \"only-if-required\": true, "
+        "    \"only-in-additional-list\": true, "
         "    \"option-data\": ["
         "        {    \"name\": \"ipv6-forwarding\", "
         "             \"data\": \"true\" } ], "
@@ -1890,7 +1890,7 @@ TEST_F(ClassifyTest, member) {
     EXPECT_FALSE(ipf3->readBoolean());
 }
 
-// This test checks the precedence order in required evaluation.
+// This test checks the precedence order in additional evaluation.
 // This order is: pools > subnet > shared-network
 TEST_F(ClassifyTest, precedenceNone) {
     std::string config =
@@ -1905,7 +1905,7 @@ TEST_F(ClassifyTest, precedenceNone) {
         "    {"
         "       \"name\": \"for-pool\","
         "       \"test\": \"member('ALL')\","
-        "       \"only-if-required\": true,"
+        "       \"only-in-additional-list\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"dns-servers\","
         "           \"data\": \"2001:db8:1::1\""
@@ -1914,7 +1914,7 @@ TEST_F(ClassifyTest, precedenceNone) {
         "    {"
         "       \"name\": \"for-subnet\","
         "       \"test\": \"member('ALL')\","
-        "       \"only-if-required\": true,"
+        "       \"only-in-additional-list\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"dns-servers\","
         "           \"data\": \"2001:db8:1::2\""
@@ -1923,7 +1923,7 @@ TEST_F(ClassifyTest, precedenceNone) {
         "    {"
         "       \"name\": \"for-network\","
         "       \"test\": \"member('ALL')\","
-        "       \"only-if-required\": true,"
+        "       \"only-in-additional-list\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"dns-servers\","
         "           \"data\": \"2001:db8:1::3\""
@@ -1964,7 +1964,7 @@ TEST_F(ClassifyTest, precedenceNone) {
     EXPECT_FALSE(opt);
 }
 
-// This test checks the precedence order in required evaluation.
+// This test checks the precedence order in additional evaluation.
 // This order is: pools > subnet > shared-network
 TEST_F(ClassifyTest, precedencePool) {
     std::string config =
@@ -1976,7 +1976,7 @@ TEST_F(ClassifyTest, precedencePool) {
         "    {"
         "       \"name\": \"for-pool\","
         "       \"test\": \"member('ALL')\","
-        "       \"only-if-required\": true,"
+        "       \"only-in-additional-list\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"dns-servers\","
         "           \"data\": \"2001:db8:1::1\""
@@ -1985,7 +1985,7 @@ TEST_F(ClassifyTest, precedencePool) {
         "    {"
         "       \"name\": \"for-subnet\","
         "       \"test\": \"member('ALL')\","
-        "       \"only-if-required\": true,"
+        "       \"only-in-additional-list\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"dns-servers\","
         "           \"data\": \"2001:db8:1::2\""
@@ -1994,7 +1994,7 @@ TEST_F(ClassifyTest, precedencePool) {
         "    {"
         "       \"name\": \"for-network\","
         "       \"test\": \"member('ALL')\","
-        "       \"only-if-required\": true,"
+        "       \"only-in-additional-list\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"dns-servers\","
         "           \"data\": \"2001:db8:1::3\""
@@ -2004,14 +2004,14 @@ TEST_F(ClassifyTest, precedencePool) {
         "\"shared-networks\": [ {"
         "    \"name\": \"frog\","
         "    \"interface\": \"eth1\","
-        "    \"require-client-classes\": [ \"for-network\" ],"
+        "    \"evaluate-additional-classes\": [ \"for-network\" ],"
         "    \"subnet6\": [ { "
         "        \"subnet\": \"2001:db8:1::/64\","
         "        \"id\": 1,"
-        "        \"require-client-classes\": [ \"for-subnet\" ],"
+        "        \"evaluate-additional-classes\": [ \"for-subnet\" ],"
         "        \"pools\": [ { "
         "            \"pool\": \"2001:db8:1::1 - 2001:db8:1::64\","
-        "            \"require-client-classes\": [ \"for-pool\" ]"
+        "            \"evaluate-additional-classes\": [ \"for-pool\" ]"
         "        } ]"
         "    } ]"
         "} ],"
@@ -2044,7 +2044,7 @@ TEST_F(ClassifyTest, precedencePool) {
     EXPECT_EQ("2001:db8:1::1", addrs[0].toText());
 }
 
-// This test checks the precedence order in required evaluation.
+// This test checks the precedence order in additional evaluation.
 // This order is: pools > subnet > shared-network
 TEST_F(ClassifyTest, precedencePdPool) {
     std::string config =
@@ -2056,7 +2056,7 @@ TEST_F(ClassifyTest, precedencePdPool) {
         "    {"
         "       \"name\": \"for-pool\","
         "       \"test\": \"member('ALL')\","
-        "       \"only-if-required\": true,"
+        "       \"only-in-additional-list\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"dns-servers\","
         "           \"data\": \"2001:db8:1::1\""
@@ -2065,7 +2065,7 @@ TEST_F(ClassifyTest, precedencePdPool) {
         "    {"
         "       \"name\": \"for-subnet\","
         "       \"test\": \"member('ALL')\","
-        "       \"only-if-required\": true,"
+        "       \"only-in-additional-list\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"dns-servers\","
         "           \"data\": \"2001:db8:1::2\""
@@ -2074,7 +2074,7 @@ TEST_F(ClassifyTest, precedencePdPool) {
         "    {"
         "       \"name\": \"for-network\","
         "       \"test\": \"member('ALL')\","
-        "       \"only-if-required\": true,"
+        "       \"only-in-additional-list\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"dns-servers\","
         "           \"data\": \"2001:db8:1::3\""
@@ -2084,15 +2084,15 @@ TEST_F(ClassifyTest, precedencePdPool) {
         "\"shared-networks\": [ {"
         "    \"name\": \"frog\","
         "    \"interface\": \"eth1\","
-        "    \"require-client-classes\": [ \"for-network\" ],"
+        "    \"evaluate-additional-classes\": [ \"for-network\" ],"
         "    \"subnet6\": [ { "
         "        \"subnet\": \"2001:db8:1::/64\","
         "        \"id\": 1,"
-        "        \"require-client-classes\": [ \"for-subnet\" ],"
+        "        \"evaluate-additional-classes\": [ \"for-subnet\" ],"
         "        \"pd-pools\": [ { "
         "            \"prefix\": \"2001:db8:1::\","
         "            \"prefix-len\": 48, \"delegated-len\": 64,"
-        "            \"require-client-classes\": [ \"for-pool\" ]"
+        "            \"evaluate-additional-classes\": [ \"for-pool\" ]"
         "        } ]"
         "    } ]"
         "} ],"
@@ -2125,7 +2125,7 @@ TEST_F(ClassifyTest, precedencePdPool) {
     EXPECT_EQ("2001:db8:1::1", addrs[0].toText());
 }
 
-// This test checks the precedence order in required evaluation.
+// This test checks the precedence order in additional evaluation.
 // This order is: pools > subnet > shared-network
 TEST_F(ClassifyTest, precedenceSubnet) {
     std::string config =
@@ -2137,7 +2137,7 @@ TEST_F(ClassifyTest, precedenceSubnet) {
         "    {"
         "       \"name\": \"for-pool\","
         "       \"test\": \"member('ALL')\","
-        "       \"only-if-required\": true,"
+        "       \"only-in-additional-list\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"dns-servers\","
         "           \"data\": \"2001:db8:1::1\""
@@ -2146,7 +2146,7 @@ TEST_F(ClassifyTest, precedenceSubnet) {
         "    {"
         "       \"name\": \"for-subnet\","
         "       \"test\": \"member('ALL')\","
-        "       \"only-if-required\": true,"
+        "       \"only-in-additional-list\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"dns-servers\","
         "           \"data\": \"2001:db8:1::2\""
@@ -2155,7 +2155,7 @@ TEST_F(ClassifyTest, precedenceSubnet) {
         "    {"
         "       \"name\": \"for-network\","
         "       \"test\": \"member('ALL')\","
-        "       \"only-if-required\": true,"
+        "       \"only-in-additional-list\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"dns-servers\","
         "           \"data\": \"2001:db8:1::3\""
@@ -2165,11 +2165,11 @@ TEST_F(ClassifyTest, precedenceSubnet) {
         "\"shared-networks\": [ {"
         "    \"name\": \"frog\","
         "    \"interface\": \"eth1\","
-        "    \"require-client-classes\": [ \"for-network\" ],"
+        "    \"evaluate-additional-classes\": [ \"for-network\" ],"
         "    \"subnet6\": [ { "
         "        \"subnet\": \"2001:db8:1::/64\","
         "        \"id\": 1,"
-        "        \"require-client-classes\": [ \"for-subnet\" ],"
+        "        \"evaluate-additional-classes\": [ \"for-subnet\" ],"
         "        \"pools\": [ { "
         "            \"pool\": \"2001:db8:1::1 - 2001:db8:1::64\""
         "        } ]"
@@ -2204,7 +2204,7 @@ TEST_F(ClassifyTest, precedenceSubnet) {
     EXPECT_EQ("2001:db8:1::2", addrs[0].toText());
 }
 
-// This test checks the precedence order in required evaluation.
+// This test checks the precedence order in additional evaluation.
 // This order is: pools > subnet > shared-network
 TEST_F(ClassifyTest, precedenceNetwork) {
     std::string config =
@@ -2216,7 +2216,7 @@ TEST_F(ClassifyTest, precedenceNetwork) {
         "    {"
         "       \"name\": \"for-pool\","
         "       \"test\": \"member('ALL')\","
-        "       \"only-if-required\": true,"
+        "       \"only-in-additional-list\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"dns-servers\","
         "           \"data\": \"2001:db8:1::1\""
@@ -2225,7 +2225,7 @@ TEST_F(ClassifyTest, precedenceNetwork) {
         "    {"
         "       \"name\": \"for-subnet\","
         "       \"test\": \"member('ALL')\","
-        "       \"only-if-required\": true,"
+        "       \"only-in-additional-list\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"dns-servers\","
         "           \"data\": \"2001:db8:1::2\""
@@ -2234,7 +2234,7 @@ TEST_F(ClassifyTest, precedenceNetwork) {
         "    {"
         "       \"name\": \"for-network\","
         "       \"test\": \"member('ALL')\","
-        "       \"only-if-required\": true,"
+        "       \"only-in-additional-list\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"dns-servers\","
         "           \"data\": \"2001:db8:1::3\""
@@ -2244,7 +2244,7 @@ TEST_F(ClassifyTest, precedenceNetwork) {
         "\"shared-networks\": [ {"
         "    \"name\": \"frog\","
         "    \"interface\": \"eth1\","
-        "    \"require-client-classes\": [ \"for-network\" ],"
+        "    \"evaluate-additional-classes\": [ \"for-network\" ],"
         "    \"subnet6\": [ { "
         "        \"subnet\": \"2001:db8:1::/64\","
         "        \"id\": 1,"
@@ -2282,9 +2282,9 @@ TEST_F(ClassifyTest, precedenceNetwork) {
     EXPECT_EQ("2001:db8:1::3", addrs[0].toText());
 }
 
-// This test checks a required class without a test entry can be
+// This test checks a additional class without a test entry can be
 // unconditionally added.
-TEST_F(ClassifyTest, requiredNoTest) {
+TEST_F(ClassifyTest, additionalNoTest) {
     std::string config =
         "{"
         "\"interfaces-config\": {"
@@ -2302,7 +2302,7 @@ TEST_F(ClassifyTest, requiredNoTest) {
         "\"shared-networks\": [ {"
         "    \"name\": \"frog\","
         "    \"interface\": \"eth1\","
-        "    \"require-client-classes\": [ \"for-network\" ],"
+        "    \"evaluate-additional-classes\": [ \"for-network\" ],"
         "    \"subnet6\": [ { "
         "        \"subnet\": \"2001:db8:1::/64\","
         "        \"id\": 1,"
@@ -2340,10 +2340,10 @@ TEST_F(ClassifyTest, requiredNoTest) {
     EXPECT_EQ("2001:db8:1::3", addrs[0].toText());
 }
 
-// This test checks a required class which is not defined is ignored.
+// This test checks a additional class which is not defined is ignored.
 // Please set KEA_LOGGER_DESTINATION to stderr or stdout and check
 // that DHCP6_REQUIRED_CLASS_UNDEFINED is logged,
-TEST_F(ClassifyTest, requiredNotDefined) {
+TEST_F(ClassifyTest, additionalNotDefined) {
     std::string config =
         "{"
         "\"interfaces-config\": {"
@@ -2352,7 +2352,7 @@ TEST_F(ClassifyTest, requiredNotDefined) {
         "\"shared-networks\": [ {"
         "    \"name\": \"frog\","
         "    \"interface\": \"eth1\","
-        "    \"require-client-classes\": [ \"for-network\" ],"
+        "    \"evaluate-additional-classes\": [ \"for-network\" ],"
         "    \"subnet6\": [ { "
         "        \"subnet\": \"2001:db8:1::/64\","
         "        \"id\": 1,"

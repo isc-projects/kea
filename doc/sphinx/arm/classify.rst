@@ -736,11 +736,14 @@ A client class definition can contain the following properties:
    assigned to members of this class. In the case of a template class, these
    options are assigned to the generated spawned class.
  - The ``option-def`` list is not mandatory and is used to define custom options.
- - The ``only-if-required`` flag is not mandatory; when its value is set to
+ - The ``only-if-required`` has been replaced with ``only-in-additional-list`` and
+   is now deprecated. It will still be accepted as input for a time to allow users
+   to migrate but will eventually be unsupported.
+ - The ``only-in-additional-list`` flag is not mandatory; when its value is set to
    ``false`` (the default), membership is determined during classification and is
    available for subnet selection, for instance. When the value is set to
-   ``true``, membership is evaluated only when required and is usable only for
-   option configuration.
+   ``true``, membership is evaluated only if the class appears in an ``evaluate-
+   additional-classes`` list and is usable only for option configuration.
  - The ``user-context`` is not mandatory and represents a map with user-defined data
    and possibly configuration options for hook libraries.
  - The ``next-server`` parameter is not mandatory and configures the ``siaddr`` field in
@@ -907,18 +910,19 @@ expression for example purposes.
 Usually the ``test`` and ``template-test`` expressions are evaluated before
 subnet selection, but in some cases it is useful to evaluate it later when the
 subnet, shared network, or pools are known but output-option processing has not
-yet been done. For this purpose, the ``only-if-required`` flag, which is
+yet been done. For this purpose, the ``only-in-additional-list`` flag, which is
 ``false`` by default, allows the evaluation of the ``test`` expression or the
-``template-test`` expression only when it is required, i.e. in a
-``require-client-classes`` list of the selected pool, subnet, or shared network.
+``template-test`` expression only when it is required by the class's presence
+in the ``evaluate-additional-classes`` list of the selected pool, subnet, or
+shared network.
 
-The ``require-client-classes`` list, which is valid for pool, subnet,
+The ``evaluate-additional-classes`` list, which is valid for pool, subnet,
 and shared-network scope, specifies the classes which are evaluated in
 the second pass before output-option processing. The list is built in
-same precedence order of the option data, i.e. an option data item in
-a subnet takes precedence over one in a shared network, and also a
-required class in a subnet is added before one in a shared
-network. The mechanism is related to the ``only-if-required`` flag but
+same precedence order as the option data, i.e. an option data item in
+a subnet takes precedence over one in a shared network. An
+additional class in a subnet is added before one in a shared
+network. The mechanism is related to the ``only-in-additional-list`` flag but
 it is not mandatory that the flag be set to ``true``.
 
 .. note ::
@@ -1200,9 +1204,9 @@ value is obtained is determined as explained in the previous paragraphs.
 Option Class-Tagging
 ====================
 
-Option class-tagging allows an option value to conditionally applied 
-to the response based on the client's class membership.  The effect is 
-similar to using an if-block in ISC DHCP to conditionally include 
+Option class-tagging allows an option value to conditionally applied
+to the response based on the client's class membership.  The effect is
+similar to using an if-block in ISC DHCP to conditionally include
 options at a given scope.  Class-tagging is done by specifying a list of
 one of more class names in the option's ``client-classes`` entry.
 
@@ -1252,24 +1256,24 @@ being added to the response which occurs after lease assignment just
 before the response is to be sent to the client.
 
 
-When ``never-send`` for an option is true at any scope, all 
+When ``never-send`` for an option is true at any scope, all
 ``client-classes`` entries for that option are ignored. The
 option will not included.
 
-When ``always-send`` is true at any scope, the option will be 
-included unless, the option determined by scope specifies 
-a ``client-classes`` list that does not contain any of the 
+When ``always-send`` is true at any scope, the option will be
+included unless, the option determined by scope specifies
+a ``client-classes`` list that does not contain any of the
 client's classes.
 
-Otherwise, An option requested by the client will be included in 
+Otherwise, An option requested by the client will be included in
 the response if  the option either does not specify ``client-classes``
 or the client belongs to at least one of the classes in ``client-classes``.
 
-When an option's class-tag does not match, it is as though 
+When an option's class-tag does not match, it is as though
 the option was not specified at that scope.  In the following
 example the option "foo" is specified for both the subnet and
 the pool.  The pool specification includes a class-tag that limits
-the option to members of class "melon":  
+the option to members of class "melon":
 
 ::
 
@@ -1289,16 +1293,16 @@ the option to members of class "melon":
             }]
         }]
     }
-    
+
 
 Clients that match class "melon" will have a value of 123 for option "foo",
 while clients that do not match "melon" will have a value of 456 for option
-"foo".  
+"foo".
 
 .. note::
 
-    Though examples above are for DHCPv4, class-tagging syntax and 
-    behavior is the same for DHPCv6. 
+    Though examples above are for DHCPv4, class-tagging syntax and
+    behavior is the same for DHPCv6.
 
 Classes and Hooks
 =================

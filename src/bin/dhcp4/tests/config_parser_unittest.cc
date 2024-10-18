@@ -8121,11 +8121,18 @@ TEST_F(Dhcp4ParserTest, deprecatedRequireClientClassesCheck) {
         R"^(
         "rebind-timer": 2000,
         "renew-timer": 1000,
-        "subnet4": [{
-            "require-client-classes": [ "foo" ],
-            "pools": [{ "pool":  "192.0.2.0/28" }],
-            "id": 1,
-            "subnet": "192.0.2.0/24"
+        "shared-networks":[{
+            "name": "net1",
+            "require-client-classes": [ "one" ],
+            "subnet4": [{
+                "require-client-classes": [ "two" ],
+                "pools": [{
+                    "pool":  "192.0.2.0/28",
+                    "require-client-classes": [ "three" ]
+                }],
+                "id": 1,
+                "subnet": "192.0.2.0/24"
+            }],
         }],
         "valid-lifetime": 400
         })^";
@@ -8138,14 +8145,31 @@ TEST_F(Dhcp4ParserTest, deprecatedRequireClientClassesCheck) {
     ASSERT_NO_THROW(status = configureDhcp4Server(*srv_, json));
     checkResult(status, 0);
 
+    SharedNetwork4Ptr network = CfgMgr::instance().getStagingCfg()->
+                                getCfgSharedNetworks4()->getByName("net1");
+    ASSERT_TRUE(network);
+
+    auto& net_class_list = network->getAdditionalClasses();
+    EXPECT_EQ(1, net_class_list.size());
+    auto cclasses = net_class_list.begin();
+    EXPECT_EQ(*cclasses, "one");
+
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
                             getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.0"));
     ASSERT_TRUE(subnet);
 
-    const auto& cclass_list = subnet->getAdditionalClasses();
-    EXPECT_EQ(1, cclass_list.size());
-    auto cclasses = cclass_list.begin();
-    EXPECT_EQ(*cclasses, "foo");
+    auto& sub_class_list = subnet->getAdditionalClasses();
+    EXPECT_EQ(1, sub_class_list.size());
+    cclasses = sub_class_list.begin();
+    EXPECT_EQ(*cclasses, "two");
+
+    PoolPtr pool = subnet->getPool(Lease::TYPE_V4, IOAddress("192.0.2.0"), false);
+    ASSERT_TRUE(pool);
+
+    auto& pool_class_list = pool->getAdditionalClasses();
+    EXPECT_EQ(1, pool_class_list.size());
+    cclasses = pool_class_list.begin();
+    EXPECT_EQ(*cclasses, "three");
 
     // Now verify that users cannot specify both.
     config = "{ " + genIfaceConfig() + ","

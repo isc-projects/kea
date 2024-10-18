@@ -9105,11 +9105,24 @@ TEST_F(Dhcp6ParserTest, deprecatedRequireClientClassesCheck) {
         R"^(
         "rebind-timer": 2000,
         "renew-timer": 1000,
-        "subnet6": [{
-            "require-client-classes": [ "foo" ],
-            "pools": [{ "pool":  "2001:db8::/64" }],
-            "id": 1,
-            "subnet": "2001:db8::/64"
+        "shared-networks":[{
+            "name": "net1",
+            "require-client-classes": [ "one" ],
+            "subnet6": [{
+                "require-client-classes": [ "two" ],
+                "pools": [{
+                    "pool":  "2001:db8::/64",
+                    "require-client-classes": [ "three" ],
+                }],
+                "pd-pools": [{ 
+                    "prefix": "3001:db8::",
+                    "prefix-len": 56,
+                    "delegated-len": 64,
+                    "require-client-classes": [ "four" ],
+                }],
+                "id": 1,
+                "subnet": "2001:db8::/64"
+            }],
         }],
         "valid-lifetime": 400
         })^";
@@ -9122,14 +9135,39 @@ TEST_F(Dhcp6ParserTest, deprecatedRequireClientClassesCheck) {
     ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
     checkResult(status, 0);
 
+    SharedNetwork6Ptr network = CfgMgr::instance().getStagingCfg()->
+                                getCfgSharedNetworks6()->getByName("net1");
+    ASSERT_TRUE(network);
+
+    auto& net_class_list = network->getAdditionalClasses();
+    EXPECT_EQ(1, net_class_list.size());
+    auto cclasses = net_class_list.begin();
+    EXPECT_EQ(*cclasses, "one");
+
     Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->
                             getCfgSubnets6()->selectSubnet(IOAddress("2001:db8::"));
     ASSERT_TRUE(subnet);
 
-    const auto& cclass_list = subnet->getAdditionalClasses();
-    EXPECT_EQ(1, cclass_list.size());
-    auto cclasses = cclass_list.begin();
-    EXPECT_EQ(*cclasses, "foo");
+    const auto& sub_class_list = subnet->getAdditionalClasses();
+    EXPECT_EQ(1, sub_class_list.size());
+    cclasses = sub_class_list.begin();
+    EXPECT_EQ(*cclasses, "two");
+
+    PoolPtr pool = subnet->getPool(Lease::TYPE_NA, IOAddress("2001:db8::"), false);
+    ASSERT_TRUE(pool);
+
+    auto& pool_class_list = pool->getAdditionalClasses();
+    EXPECT_EQ(1, pool_class_list.size());
+    cclasses = pool_class_list.begin();
+    EXPECT_EQ(*cclasses, "three");
+
+    pool = subnet->getPool(Lease::TYPE_PD, IOAddress("3001:db8::"), false);
+    ASSERT_TRUE(pool);
+
+    auto& pd_pool_class_list = pool->getAdditionalClasses();
+    EXPECT_EQ(1, pd_pool_class_list.size());
+    cclasses = pd_pool_class_list.begin();
+    EXPECT_EQ(*cclasses, "four");
 
     // Now verify that users cannot specify both.
     config = "{ " + genIfaceConfig() + ","

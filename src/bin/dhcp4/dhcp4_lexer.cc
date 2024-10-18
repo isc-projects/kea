@@ -4326,7 +4326,7 @@ YY_RULE_SETUP
     case isc::dhcp::Parser4Context::CLIENT_CLASSES:
         return isc::dhcp::Dhcp4Parser::make_ONLY_IN_ADDITIONAL_LIST(driver.loc_);
     default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("in-additional-list", driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_STRING("only-in-additional-list", driver.loc_);
     }
 }
 	YY_BREAK

@@ -968,26 +968,26 @@ about the address that the client would like to have allocated.
 If there is no hint, the argument should provide the text indicating
 that the hint hasn't been sent.
 
-% DHCP4_REQUIRED_CLASS_EVAL_ERROR %1: Expression '%2' evaluated to %3
+% DHCP4_ADDITIONAL_CLASS_EVAL_ERROR %1: Expression '%2' evaluated to %3
 This error message indicates that there a problem was encountered while
-evaluating an expression of a required client class that was marked as required.
+evaluating an expression of a additional client class that was marked as additional.
 A description of the problem is printed.
 
-% DHCP4_REQUIRED_CLASS_EVAL_RESULT %1: Expression '%2' evaluated to %3
+% DHCP4_ADDITIONAL_CLASS_EVAL_RESULT %1: Expression '%2' evaluated to %3
 Logged at debug log level 50.
-This debug message indicates that the expression of a required client class has
+This debug message indicates that the expression of a additional client class has
 been successfully evaluated. The client class name and the result value of the
 evaluation are printed.
 
-% DHCP4_REQUIRED_CLASS_NO_TEST required class %1 has no test expression, adding it to client's classes unconditionally
+% DHCP4_ADDITIONAL_CLASS_NO_TEST additional class %1 has no test expression, adding it to client's classes unconditionally
 Logged at debug log level 40.
-This debug message informs that a class was listed for required evaluation but
+This debug message informs that a class was listed for additional evaluation but
 its definition does not include a test expression to evaluate. The class is
 unconditionally added to the query.
 
-% DHCP4_REQUIRED_CLASS_UNDEFINED required class %1 has no definition
+% DHCP4_ADDITIONAL_CLASS_UNDEFINED additional class %1 has no definition
 Logged at debug log level 40.
-This debug message informs that a class is listed for required evaluation but
+This debug message informs that a class is listed for additional evaluation but
 has no definition. The class is ignored.
 
 % DHCP4_RESERVATIONS_LOOKUP_FIRST_ENABLED Multi-threading is enabled and host reservations lookup is always performed first.

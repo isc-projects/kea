@@ -246,19 +246,19 @@ const char* CONFIGS[] = {
         "{"
         "   \"name\": \"pxe1\","
         "   \"test\": \"option[93].hex == 0x0009\","
-        "   \"only-if-required\": true,"
+        "   \"only-in-additional-list\": true,"
         "   \"next-server\": \"1.2.3.4\""
         "},"
         "{"
         "   \"name\": \"pxe2\","
         "   \"test\": \"option[93].hex == 0x0007\","
-        "   \"only-if-required\": true,"
+        "   \"only-in-additional-list\": true,"
         "   \"server-hostname\": \"deneb\""
         "},"
         "{"
         "   \"name\": \"pxe3\","
         "   \"test\": \"option[93].hex == 0x0006\","
-        "   \"only-if-required\": false,"
+        "   \"only-in-additional-list\": false,"
         "   \"boot-file-name\": \"pxelinux.0\""
         "},"
         "{"
@@ -778,7 +778,7 @@ TEST_F(ClassifyTest, fixedFieldsInformNoClasses3) {
     testFixedFields(CONFIGS[3], DHCPINFORM, OptionPtr(), "0.0.0.0", "", "");
 }
 
-// Class 'pxe1' is only-if-required and not subject to required evaluation
+// Class 'pxe1' is only-in-additional-list and not subject to additional evaluation
 TEST_F(ClassifyTest, fixedFieldsDiscoverNextServer3) {
     OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0009));
 
@@ -795,7 +795,7 @@ TEST_F(ClassifyTest, fixedFieldsInformNextServer3) {
     testFixedFields(CONFIGS[3], DHCPINFORM, pxe, "0.0.0.0", "", "");
 }
 
-// Class pxe2 is only-if-required but the subnet requires its evaluation
+// Class pxe2 is only-in-additional-list but the subnet requires its evaluation
 TEST_F(ClassifyTest, fixedFieldsDiscoverHostname3) {
     OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0007));
 
@@ -944,7 +944,7 @@ TEST_F(ClassifyTest, server2computer) {
     EXPECT_EQ("10.0.0.160", resp->getYiaddr().toText());
 }
 
-// This test checks the precedence order in required evaluation.
+// This test checks the precedence order in additional evaluation.
 // This order is: pools > subnet > shared-network
 TEST_F(ClassifyTest, precedenceNone) {
     std::string config =
@@ -957,7 +957,7 @@ TEST_F(ClassifyTest, precedenceNone) {
         "    {"
         "       \"name\": \"for-pool\","
         "       \"test\": \"member('ALL')\","
-        "       \"only-if-required\": true,"
+        "       \"only-in-additional-list\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"domain-name-servers\","
         "           \"data\": \"10.0.0.1\""
@@ -966,7 +966,7 @@ TEST_F(ClassifyTest, precedenceNone) {
         "    {"
         "       \"name\": \"for-subnet\","
         "       \"test\": \"member('ALL')\","
-        "       \"only-if-required\": true,"
+        "       \"only-in-additional-list\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"domain-name-servers\","
         "           \"data\": \"10.0.0.2\""
@@ -975,7 +975,7 @@ TEST_F(ClassifyTest, precedenceNone) {
         "    {"
         "       \"name\": \"for-network\","
         "       \"test\": \"member('ALL')\","
-        "       \"only-if-required\": true,"
+        "       \"only-in-additional-list\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"domain-name-servers\","
         "           \"data\": \"10.0.0.3\""
@@ -1025,7 +1025,7 @@ TEST_F(ClassifyTest, precedencePool) {
         "    {"
         "       \"name\": \"for-pool\","
         "       \"test\": \"member('ALL')\","
-        "       \"only-if-required\": true,"
+        "       \"only-in-additional-list\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"domain-name-servers\","
         "           \"data\": \"10.0.0.1\""
@@ -1034,7 +1034,7 @@ TEST_F(ClassifyTest, precedencePool) {
         "    {"
         "       \"name\": \"for-subnet\","
         "       \"test\": \"member('ALL')\","
-        "       \"only-if-required\": true,"
+        "       \"only-in-additional-list\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"domain-name-servers\","
         "           \"data\": \"10.0.0.2\""
@@ -1043,7 +1043,7 @@ TEST_F(ClassifyTest, precedencePool) {
         "    {"
         "       \"name\": \"for-network\","
         "       \"test\": \"member('ALL')\","
-        "       \"only-if-required\": true,"
+        "       \"only-in-additional-list\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"domain-name-servers\","
         "           \"data\": \"10.0.0.3\""
@@ -1102,7 +1102,7 @@ TEST_F(ClassifyTest, precedenceSubnet) {
         "    {"
         "       \"name\": \"for-pool\","
         "       \"test\": \"member('ALL')\","
-        "       \"only-if-required\": true,"
+        "       \"only-in-additional-list\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"domain-name-servers\","
         "           \"data\": \"10.0.0.1\""
@@ -1111,7 +1111,7 @@ TEST_F(ClassifyTest, precedenceSubnet) {
         "    {"
         "       \"name\": \"for-subnet\","
         "       \"test\": \"member('ALL')\","
-        "       \"only-if-required\": true,"
+        "       \"only-in-additional-list\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"domain-name-servers\","
         "           \"data\": \"10.0.0.2\""
@@ -1120,7 +1120,7 @@ TEST_F(ClassifyTest, precedenceSubnet) {
         "    {"
         "       \"name\": \"for-network\","
         "       \"test\": \"member('ALL')\","
-        "       \"only-if-required\": true,"
+        "       \"only-in-additional-list\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"domain-name-servers\","
         "           \"data\": \"10.0.0.3\""
@@ -1178,7 +1178,7 @@ TEST_F(ClassifyTest, precedenceNetwork) {
         "    {"
         "       \"name\": \"for-pool\","
         "       \"test\": \"member('ALL')\","
-        "       \"only-if-required\": true,"
+        "       \"only-in-additional-list\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"domain-name-servers\","
         "           \"data\": \"10.0.0.1\""
@@ -1187,7 +1187,7 @@ TEST_F(ClassifyTest, precedenceNetwork) {
         "    {"
         "       \"name\": \"for-subnet\","
         "       \"test\": \"member('ALL')\","
-        "       \"only-if-required\": true,"
+        "       \"only-in-additional-list\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"domain-name-servers\","
         "           \"data\": \"10.0.0.2\""
@@ -1196,7 +1196,7 @@ TEST_F(ClassifyTest, precedenceNetwork) {
         "    {"
         "       \"name\": \"for-network\","
         "       \"test\": \"member('ALL')\","
-        "       \"only-if-required\": true,"
+        "       \"only-in-additional-list\": true,"
         "       \"option-data\": [ {"
         "           \"name\": \"domain-name-servers\","
         "           \"data\": \"10.0.0.3\""

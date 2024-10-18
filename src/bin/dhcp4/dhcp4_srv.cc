@@ -2523,7 +2523,6 @@ Dhcpv4Srv::appendBasicOptions(Dhcpv4Exchange& ex) {
             // Check whether option has been configured.
             for (auto const& copts : co_list) {
                 OptionDescriptor desc = copts->get(DHCP4_OPTION_SPACE, required);
-                /// @todo TKM - not sure if otion class-tagging should be allowed here?
                 if (desc.option_ && desc.allowedForClientClasses(cclasses)) {
                     resp->addOption(desc.option_);
                     break;
@@ -4939,7 +4938,7 @@ void Dhcpv4Srv::evaluateAdditionalClasses(Dhcpv4Exchange& ex) {
         const ClientClassDefPtr class_def = dict->findClass(cclass);
         if (!class_def) {
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC,
-                      DHCP4_REQUIRED_CLASS_UNDEFINED)
+                      DHCP4_ADDITIONAL_CLASS_UNDEFINED)
                 .arg(cclass);
             // Ignore it as it can't have an attached action
             continue;
@@ -4948,7 +4947,7 @@ void Dhcpv4Srv::evaluateAdditionalClasses(Dhcpv4Exchange& ex) {
         // Add a class without an expression to evaluate
         if (!expr_ptr) {
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC,
-                      DHCP4_REQUIRED_CLASS_NO_TEST)
+                      DHCP4_ADDITIONAL_CLASS_NO_TEST)
                 .arg(cclass);
             query->addClass(cclass);
             continue;
@@ -4957,7 +4956,7 @@ void Dhcpv4Srv::evaluateAdditionalClasses(Dhcpv4Exchange& ex) {
         // true (match) or raise an exception (error)
         try {
             bool status = evaluateBool(*expr_ptr, *query);
-            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_REQUIRED_CLASS_EVAL_RESULT)
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_ADDITIONAL_CLASS_EVAL_RESULT)
                 .arg(query->getLabel())
                 .arg(cclass)
                 .arg(status ? "true" : "false");
@@ -4966,7 +4965,7 @@ void Dhcpv4Srv::evaluateAdditionalClasses(Dhcpv4Exchange& ex) {
                 query->addClass(cclass);
             }
         } catch (const Exception& ex) {
-            LOG_ERROR(dhcp4_logger, DHCP4_REQUIRED_CLASS_EVAL_ERROR)
+            LOG_ERROR(dhcp4_logger, DHCP4_ADDITIONAL_CLASS_EVAL_ERROR)
                 .arg(query->getLabel())
                 .arg(cclass)
                 .arg(ex.what());

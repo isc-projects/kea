@@ -4575,7 +4575,7 @@ Dhcpv6Srv::evaluateAdditionalClasses(const Pkt6Ptr& pkt, AllocEngine::ClientCont
         const ClientClassDefPtr class_def = dict->findClass(cclass);
         if (!class_def) {
             LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC,
-                      DHCP6_REQUIRED_CLASS_UNDEFINED)
+                      DHCP6_ADDITIONAL_CLASS_UNDEFINED)
                 .arg(cclass);
             // Ignore it as it can't have an attached action
             continue;
@@ -4584,7 +4584,7 @@ Dhcpv6Srv::evaluateAdditionalClasses(const Pkt6Ptr& pkt, AllocEngine::ClientCont
         // Add a class without an expression to evaluate
         if (!expr_ptr) {
             LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC,
-                      DHCP6_REQUIRED_CLASS_NO_TEST)
+                      DHCP6_ADDITIONAL_CLASS_NO_TEST)
                 .arg(cclass);
             pkt->addClass(cclass);
             continue;
@@ -4593,7 +4593,7 @@ Dhcpv6Srv::evaluateAdditionalClasses(const Pkt6Ptr& pkt, AllocEngine::ClientCont
         // true (match) or raise an exception (error)
         try {
             bool status = evaluateBool(*expr_ptr, *pkt);
-            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_REQUIRED_CLASS_EVAL_RESULT)
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_ADDITIONAL_CLASS_EVAL_RESULT)
                 .arg(pkt->getLabel())
                 .arg(cclass)
                 .arg(status ? "true" : "false");
@@ -4602,7 +4602,7 @@ Dhcpv6Srv::evaluateAdditionalClasses(const Pkt6Ptr& pkt, AllocEngine::ClientCont
                 pkt->addClass(cclass);
             }
         } catch (const Exception& ex) {
-            LOG_ERROR(dhcp6_logger, DHCP6_REQUIRED_CLASS_EVAL_ERROR)
+            LOG_ERROR(dhcp6_logger, DHCP6_ADDITIONAL_CLASS_EVAL_ERROR)
                 .arg(pkt->getLabel())
                 .arg(cclass)
                 .arg(ex.what());
