@@ -2349,7 +2349,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4RAILinkSelect) {
                     "        \"link\": \"10.0.1.1\""
                     "    }"
                     "}", response);
-    EXPECT_EQ("{ \"result\": 3, \"text\": \"no selected subnet\" }",
+    EXPECT_EQ("{ \"result\": 3, \"text\": \"no subnet selected\" }",
               response);
 
     // Address in range: the subnet is selected.
@@ -2400,7 +2400,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4SubnetSelect) {
                     "        \"subnet\": \"10.0.1.1\""
                     "    }"
                     "}", response);
-    EXPECT_EQ("{ \"result\": 3, \"text\": \"no selected subnet\" }",
+    EXPECT_EQ("{ \"result\": 3, \"text\": \"no subnet selected\" }",
               response);
 
     // Address in range: the subnet is selected.
@@ -2452,7 +2452,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4RelayAddress) {
                     "        \"relay\": \"10.0.1.1\""
                     "    }"
                     "}", response);
-    EXPECT_EQ("{ \"result\": 3, \"text\": \"no selected subnet\" }",
+    EXPECT_EQ("{ \"result\": 3, \"text\": \"no subnet selected\" }",
               response);
 
     // Address in range: the subnet is selected.
@@ -2503,7 +2503,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4Gateway) {
                     "        \"relay\": \"10.0.1.1\""
                     "    }"
                     "}", response);
-    EXPECT_EQ("{ \"result\": 3, \"text\": \"no selected subnet\" }",
+    EXPECT_EQ("{ \"result\": 3, \"text\": \"no subnet selected\" }",
               response);
 
     // Address in range: the subnet is selected.
@@ -2554,7 +2554,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4Client) {
                     "        \"address\": \"10.0.1.1\""
                     "    }"
                     "}", response);
-    EXPECT_EQ("{ \"result\": 3, \"text\": \"no selected subnet\" }",
+    EXPECT_EQ("{ \"result\": 3, \"text\": \"no subnet selected\" }",
               response);
 
     // Address in range: the subnet is selected.
@@ -2605,7 +2605,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4Remote) {
                     "        \"remote\": \"10.0.1.1\""
                     "    }"
                     "}", response);
-    EXPECT_EQ("{ \"result\": 3, \"text\": \"no selected subnet\" }",
+    EXPECT_EQ("{ \"result\": 3, \"text\": \"no subnet selected\" }",
               response);
 
     // Address in range: the subnet is selected.
@@ -2659,7 +2659,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4Iface) {
                     "        \"interface\": \"eth0\""
                     "    }"
                     "}", response);
-    EXPECT_EQ("{ \"result\": 3, \"text\": \"no selected subnet\" }",
+    EXPECT_EQ("{ \"result\": 3, \"text\": \"no subnet selected\" }",
               response);
 
     // Same interface: the subnet is selected.
@@ -2710,7 +2710,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4Class) {
                     "        \"address\": \"192.0.2.1\""
                     "    }"
                     "}", response);
-    EXPECT_EQ("{ \"result\": 3, \"text\": \"no selected subnet\" }",
+    EXPECT_EQ("{ \"result\": 3, \"text\": \"no subnet selected\" }",
               response);
 
     // Address in range and in guard: the subnet is selected.
@@ -3036,7 +3036,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6Remote) {
                     "        \"remote\": \"2001:db8:2::2\""
                     "    }"
                     "}", response);
-    EXPECT_EQ("{ \"result\": 3, \"text\": \"no selected subnet\" }",
+    EXPECT_EQ("{ \"result\": 3, \"text\": \"no subnet selected\" }",
               response);
 
     // Address in range: the subnet is selected.
@@ -3092,7 +3092,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6RelayInterfaceId) {
                     "        \"interface-id\": \"'foobar'\""
                     "    }"
                     "}", response);
-    EXPECT_EQ("{ \"result\": 3, \"text\": \"no selected subnet\" }",
+    EXPECT_EQ("{ \"result\": 3, \"text\": \"no subnet selected\" }",
               response);
 
     // Same interface: the subnet is selected.
@@ -3145,7 +3145,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6Iface) {
                     "        \"interface\": \"foobar\""
                     "    }"
                     "}", response);
-    EXPECT_EQ("{ \"result\": 3, \"text\": \"no selected subnet\" }",
+    EXPECT_EQ("{ \"result\": 3, \"text\": \"no subnet selected\" }",
               response);
 
     // Same interface: the subnet is selected.

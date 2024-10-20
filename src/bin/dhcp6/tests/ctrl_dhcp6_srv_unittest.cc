@@ -2280,7 +2280,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, localize6Addr) {
                     "        \"remote\": \"fe80::abcd\""
                     "    }"
                     "}", response);
-    EXPECT_EQ("{ \"result\": 3, \"text\": \"no selected subnet\" }",
+    EXPECT_EQ("{ \"result\": 3, \"text\": \"no subnet selected\" }",
               response);
 
     // Address in range: the subnet is selected.
@@ -2332,7 +2332,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, localize6Iface) {
                     "        \"interface\": \"bar\""
                     "    }"
                     "}", response);
-    EXPECT_EQ("{ \"result\": 3, \"text\": \"no selected subnet\" }",
+    EXPECT_EQ("{ \"result\": 3, \"text\": \"no subnet selected\" }",
               response);
 
     // Same interface: the subnet is selected.
@@ -2383,7 +2383,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, localize6RelayLinkaddr) {
                     "        \"link\": \"2001:db8:2::2\""
                     "    }"
                     "}", response);
-    EXPECT_EQ("{ \"result\": 3, \"text\": \"no selected subnet\" }",
+    EXPECT_EQ("{ \"result\": 3, \"text\": \"no subnet selected\" }",
               response);
 
     // Address in range: the subnet is selected.
@@ -2441,7 +2441,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, localize6RelayInterfaceId) {
                     "        \"interface-id\": \"'foobar'\""
                     "    }"
                     "}", response);
-    EXPECT_EQ("{ \"result\": 3, \"text\": \"no selected subnet\" }",
+    EXPECT_EQ("{ \"result\": 3, \"text\": \"no subnet selected\" }",
               response);
 
     // Same interface id: the subnet is selected.
@@ -2494,7 +2494,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, localize6Class) {
                     "        \"remote\": \"2001:db8:1::1\""
                     "    }"
                     "}", response);
-    EXPECT_EQ("{ \"result\": 3, \"text\": \"no selected subnet\" }",
+    EXPECT_EQ("{ \"result\": 3, \"text\": \"no subnet selected\" }",
               response);
 
     // Address in range and in guard: the subnet is selected.

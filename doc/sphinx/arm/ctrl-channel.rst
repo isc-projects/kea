@@ -873,8 +873,9 @@ Commands Supported by the DHCPv4 Server
 The ``localize4`` Command
 -------------------------
 
-The :isccmd:`localize4` command returns the result of DHCPv4 subnet selection.
-Recognized entries take strings and are:
+The :isccmd:`localize4` provides a way to test DHCPv4 subnet selection based 
+on a set of input parameters typically supplied in a client packet.
+Recognized parameters take strings and are:
 
  -  ``interface`` - the incoming interface name
  -  ``address`` - the client address
@@ -901,8 +902,9 @@ Outside of errors possible results are:
 The ``localize4o6`` Command
 ---------------------------
 
-The :isccmd:`localize4o6` command returns the result of DHCPv4-over-DHCPv6
-subnet selection. Recognized entries take strings and are:
+The :isccmd:`localize4to5` provides a way to test DHCPv4-over-DHCPv6 subnet
+selection based  on a set of input parameters typically supplied in a client
+packet. Recognized parameters take strings and are:
 
  -  ``interface`` - the incoming interface name of the DHCPv6 server
  -  ``interface-id`` - the binary content of the interface-id relay option
@@ -935,8 +937,9 @@ Commands Supported by the DHCPv6 Server
 The ``localize6`` Command
 -------------------------
 
-The :isccmd:`localize6` command returns the result of DHCPv6 subnet selection.
-Recognized entries take strings and are:
+The :isccmd:`localize6` provides a way to test DHCPv6 subnet selection based 
+on a set of input parameters typically supplied in a client packet.
+Recognized parameters take strings and are:
 
  -  ``interface`` - the incoming interface name
  -  ``interface-id`` - the binary content of the interface-id relay option

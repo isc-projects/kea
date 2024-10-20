@@ -848,7 +848,7 @@ ControlledDhcpv4Srv::commandLocalize4Handler(const string&,
     ConstSubnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets4()->selectSubnet(selector);
     if (!subnet) {
-        return (createAnswer(CONTROL_RESULT_EMPTY, "no selected subnet"));
+        return (createAnswer(CONTROL_RESULT_EMPTY, "no subnet selected"));
     }
     SharedNetwork4Ptr network;
     subnet->getSharedNetwork(network);

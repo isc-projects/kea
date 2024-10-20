@@ -798,7 +798,7 @@ ControlledDhcpv6Srv::commandLocalize6Handler(const string&,
     ConstSubnet6Ptr subnet = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets6()->selectSubnet(selector);
     if (!subnet) {
-        return (createAnswer(CONTROL_RESULT_EMPTY, "no selected subnet"));
+        return (createAnswer(CONTROL_RESULT_EMPTY, "no subnet selected"));
     }
     SharedNetwork6Ptr network;
     subnet->getSharedNetwork(network);
