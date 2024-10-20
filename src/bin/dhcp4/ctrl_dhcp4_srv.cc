@@ -1035,7 +1035,7 @@ ControlledDhcpv4Srv::commandLocalize4o6Handler(const string&,
     ConstSubnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets4()->selectSubnet4o6(selector);
     if (!subnet) {
-        return (createAnswer(CONTROL_RESULT_EMPTY, "no selected subnet"));
+        return (createAnswer(CONTROL_RESULT_EMPTY, "no subnet selected"));
     }
     SharedNetwork4Ptr network;
     subnet->getSharedNetwork(network);
