@@ -982,26 +982,6 @@ mysql_upgrade_25_to_26_test() {
     check_table_column only_in_additional_list dhcp6_client_class
 }
 
-mysql_upgrade_25_to_26_test() {
-    # client_classes been added to dhcp4_options
-    qry="select client_classes from dhcp4_options limit 1"
-    run_command \
-        mysql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
-
-    # client_classes been added to dhcp6_options
-    qry="select client_classes from dhcp6_options limit 1"
-    run_command \
-        mysql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
-
-    qry="select name from option_def_data_type where id = 3"
-    run_command \
-        mysql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
-    assert_str_eq 'int8' "${OUTPUT}" "${query}: expected output %s, returned %s"
-}
-
 mysql_upgrade_test() {
 
     test_start "mysql.upgrade"
