@@ -873,7 +873,7 @@ Commands Supported by the DHCPv4 Server
 The ``subnet4-select-test`` Command
 -----------------------------------
 
-The :isccmd:`subnet4-select-test` provides a way to test DHCPv4 subnet selection based 
+The :isccmd:`subnet4-select-test` provides a way to test DHCPv4 subnet selection based
 on a set of input parameters typically supplied in a client packet.
 Recognized parameters take strings and are:
 
@@ -903,7 +903,7 @@ The ``subnet4o6-select-test`` Command
 -------------------------------------
 
 The :isccmd:`subnet4o6-select-test` provides a way to test DHCPv4-over-DHCPv6 subnet
-selection based  on a set of input parameters typically supplied in a client
+selection based on a set of input parameters typically supplied in a client
 packet. Recognized parameters take strings and are:
 
  -  ``interface`` - the incoming interface name of the DHCPv6 server
@@ -917,7 +917,7 @@ packet. Recognized parameters take strings and are:
  -  ``classes`` - (list of strings) client classes (allowing to select a guarded subnet)
 
 According to the code only ``remote``, ``interface-id`` and ``interface``
-selectors are used. In  DHCPv4-over-DHCPv6 implementation ``interface` and
+selectors are used. In DHCPv4-over-DHCPv6 implementation ``interface` and
 ``remote`` values are transmitted from the DHCPv6 server, ``interface-id``
 and ``link`` are carried in the relay info part of the DHCPv6 packet so
 are the same as for the DHCPv6 server.
@@ -937,7 +937,7 @@ Commands Supported by the DHCPv6 Server
 The ``subnet6-select-test`` Command
 -----------------------------------
 
-The :isccmd:`subnet6-select-test` provides a way to test DHCPv6 subnet selection based 
+The :isccmd:`subnet6-select-test` provides a way to test DHCPv6 subnet selection based
 on a set of input parameters typically supplied in a client packet.
 Recognized parameters take strings and are:
 

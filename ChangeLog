@@ -1,3 +1,10 @@
+2291.	[func]		fdupont
+	Added three new API commands: subnet4-select-test and
+	subnet4o6-select-test to kea-dhcp4, and subnet6-select-test
+	to kea-dhcp6.  These commands can be used to check which
+	subnet the server will select based on given input paramters.
+	(Gitlab #2794)
+
 2290.	[bug]		razvan
 	Fixed applying 'output_options' when using the 'config-set'
 	command. Deprecated 'output_options' which will be removed in
