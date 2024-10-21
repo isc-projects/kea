@@ -698,8 +698,8 @@ ControlledDhcpv6Srv::commandLeasesReclaimHandler(const string&,
 }
 
 ConstElementPtr
-ControlledDhcpv6Srv::commandLocalize6Handler(const string&,
-                                             ConstElementPtr args) {
+ControlledDhcpv6Srv::commandSubnet6SelectTestHandler(const string&,
+                                                     ConstElementPtr args) {
     if (!args) {
         return (createAnswer(CONTROL_RESULT_ERROR, "empty arguments"));
     }
@@ -1277,8 +1277,8 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t server_port /*= DHCP6_SERVER_P
     CommandMgr::instance().registerCommand("leases-reclaim",
         std::bind(&ControlledDhcpv6Srv::commandLeasesReclaimHandler, this, ph::_1, ph::_2));
 
-    CommandMgr::instance().registerCommand("localize6",
-        std::bind(&ControlledDhcpv6Srv::commandLocalize6Handler, this, ph::_1, ph::_2));
+    CommandMgr::instance().registerCommand("subnet6-select-test",
+        std::bind(&ControlledDhcpv6Srv::commandSubnet6SelectTestHandler, this, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand("server-tag-get",
         std::bind(&ControlledDhcpv6Srv::commandServerTagGetHandler, this, ph::_1, ph::_2));
@@ -1362,7 +1362,7 @@ ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
         CommandMgr::instance().deregisterCommand("dhcp-disable");
         CommandMgr::instance().deregisterCommand("dhcp-enable");
         CommandMgr::instance().deregisterCommand("leases-reclaim");
-        CommandMgr::instance().deregisterCommand("localize6");
+        CommandMgr::instance().deregisterCommand("subnet6-select-test");
         CommandMgr::instance().deregisterCommand("server-tag-get");
         CommandMgr::instance().deregisterCommand("shutdown");
         CommandMgr::instance().deregisterCommand("statistic-get");

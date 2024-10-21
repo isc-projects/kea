@@ -482,8 +482,8 @@ TEST_F(CtrlChannelDhcpv4SrvTest, commandsRegistration) {
     EXPECT_TRUE(command_list.find("\"config-set\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"config-write\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"leases-reclaim\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"localize4\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"localize4o6\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"subnet4-select-test\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"subnet4o6-select-test\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"server-tag-get\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"shutdown\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-get\"") != string::npos);
@@ -2056,14 +2056,14 @@ TEST_F(CtrlChannelDhcpv4SrvTest, dhcpEnableOriginId) {
     EXPECT_TRUE(server_->network_state_->isServiceEnabled());
 }
 
-// This test verifies that localize4 command performs sanity check parameters.
-TEST_F(CtrlChannelDhcpv4SrvTest, localize4BadParam) {
+// This test verifies that subnet4-select-test command performs sanity check parameters.
+TEST_F(CtrlChannelDhcpv4SrvTest, subnet4SelectTestBadParam) {
     createUnixChannelServer();
     std::string response;
     ConstElementPtr rsp;
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\""
+                    "    \"command\": \"subnet4-select-test\""
                     "}", response);
 
     // The response should be a valid JSON.
@@ -2074,7 +2074,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4BadParam) {
               response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": [ ]"
                     "    }"
                     "}", response);
@@ -2082,7 +2082,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4BadParam) {
               response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"foo\": \"bar\""
                     "    }"
@@ -2091,7 +2091,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4BadParam) {
               response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"interface\": 1"
                     "    }"
@@ -2102,7 +2102,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"address\": 1"
                     "    }"
@@ -2113,7 +2113,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"address\": \"2001:db8:1::1\""
                     "    }"
@@ -2124,7 +2124,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"address\": \"foobar\""
                     "    }"
@@ -2136,7 +2136,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"relay\": 1"
                     "    }"
@@ -2147,7 +2147,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"relay\": \"2001:db8:1::1\""
                     "    }"
@@ -2158,7 +2158,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"relay\": \"foobar\""
                     "    }"
@@ -2170,7 +2170,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"local\": 1"
                     "    }"
@@ -2181,7 +2181,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"local\": \"2001:db8:1::1\""
                     "    }"
@@ -2192,7 +2192,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"local\": \"foobar\""
                     "    }"
@@ -2204,7 +2204,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"remote\": 1"
                     "    }"
@@ -2215,7 +2215,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"remote\": \"2001:db8:1::1\""
                     "    }"
@@ -2226,7 +2226,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"remote\": \"foobar\""
                     "    }"
@@ -2238,7 +2238,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"link\": 1"
                     "    }"
@@ -2249,7 +2249,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"link\": \"2001:db8:1::1\""
                     "    }"
@@ -2260,7 +2260,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"link\": \"foobar\""
                     "    }"
@@ -2272,7 +2272,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"subnet\": 1"
                     "    }"
@@ -2283,7 +2283,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"subnet\": \"2001:db8:1::1\""
                     "    }"
@@ -2294,7 +2294,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"subnet\": \"foobar\""
                     "    }"
@@ -2306,7 +2306,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"classes\": \"foo\""
                     "    }"
@@ -2317,7 +2317,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"classes\": [ 1 ]"
                     "    }"
@@ -2328,9 +2328,9 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4BadParam) {
     EXPECT_EQ(expected, response);
 }
 
-// This test verifies if localize4 command returns proper subnet for a given
+// This test verifies if subnet4-select-test command returns proper subnet for a given
 // relay link select address.
-TEST_F(CtrlChannelDhcpv4SrvTest, localize4RAILinkSelect) {
+TEST_F(CtrlChannelDhcpv4SrvTest, subnet4SelectTestRAILinkSelect) {
     createUnixChannelServer();
     std::string response;
 
@@ -2344,7 +2344,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4RAILinkSelect) {
 
     // Address not in range: nothing can be selected.
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"link\": \"10.0.1.1\""
                     "    }"
@@ -2354,7 +2354,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4RAILinkSelect) {
 
     // Address in range: the subnet is selected.
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"link\": \"192.0.2.1\""
                     "    }"
@@ -2367,7 +2367,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4RAILinkSelect) {
     // Add the subnet to the shared network.
     subnet->setSharedNetwork(network);
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"link\": \"192.0.2.1\""
                     "    }"
@@ -2379,9 +2379,9 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4RAILinkSelect) {
     EXPECT_EQ(expected, response);
 }
 
-// This test verifies if localize4 command returns proper subnet for a given
+// This test verifies if subnet4-select-test command returns proper subnet for a given
 // subnet select address.
-TEST_F(CtrlChannelDhcpv4SrvTest, localize4SubnetSelect) {
+TEST_F(CtrlChannelDhcpv4SrvTest, subnet4SelectTestSubnetSelect) {
     createUnixChannelServer();
     std::string response;
 
@@ -2395,7 +2395,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4SubnetSelect) {
 
     // Address not in range: nothing can be selected.
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"subnet\": \"10.0.1.1\""
                     "    }"
@@ -2405,7 +2405,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4SubnetSelect) {
 
     // Address in range: the subnet is selected.
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"subnet\": \"192.0.2.1\""
                     "    }"
@@ -2418,7 +2418,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4SubnetSelect) {
     // Add the subnet to the shared network.
     subnet->setSharedNetwork(network);
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"subnet\": \"192.0.2.1\""
                     "    }"
@@ -2430,9 +2430,9 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4SubnetSelect) {
     EXPECT_EQ(expected, response);
 }
 
-// This test verifies if localize4 command returns proper subnet for a given
+// This test verifies if subnet4-select-test command returns proper subnet for a given
 // relay address.
-TEST_F(CtrlChannelDhcpv4SrvTest, localize4RelayAddress) {
+TEST_F(CtrlChannelDhcpv4SrvTest, subnet4SelectTestRelayAddress) {
     createUnixChannelServer();
     std::string response;
 
@@ -2447,7 +2447,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4RelayAddress) {
 
     // Address not in range: nothing can be selected.
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"relay\": \"10.0.1.1\""
                     "    }"
@@ -2457,7 +2457,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4RelayAddress) {
 
     // Address in range: the subnet is selected.
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"relay\": \"192.0.3.1\""
                     "    }"
@@ -2470,7 +2470,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4RelayAddress) {
     // Add the subnet to the shared network.
     subnet->setSharedNetwork(network);
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"relay\": \"192.0.3.1\""
                     "    }"
@@ -2482,9 +2482,9 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4RelayAddress) {
     EXPECT_EQ(expected, response);
 }
 
-// This test verifies if localize4 command returns proper subnet for a given
+// This test verifies if subnet4-select-test command returns proper subnet for a given
 // gateway address.
-TEST_F(CtrlChannelDhcpv4SrvTest, localize4Gateway) {
+TEST_F(CtrlChannelDhcpv4SrvTest, subnet4SelectTestGateway) {
     createUnixChannelServer();
     std::string response;
 
@@ -2498,7 +2498,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4Gateway) {
 
     // Address not in range: nothing can be selected.
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"relay\": \"10.0.1.1\""
                     "    }"
@@ -2508,7 +2508,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4Gateway) {
 
     // Address in range: the subnet is selected.
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"relay\": \"192.0.2.1\""
                     "    }"
@@ -2521,7 +2521,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4Gateway) {
     // Add the subnet to the shared network.
     subnet->setSharedNetwork(network);
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"relay\": \"192.0.2.1\""
                     "    }"
@@ -2533,9 +2533,9 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4Gateway) {
     EXPECT_EQ(expected, response);
 }
 
-// This test verifies if localize4 command returns proper subnet for a given
+// This test verifies if subnet4-select-test command returns proper subnet for a given
 // client address.
-TEST_F(CtrlChannelDhcpv4SrvTest, localize4Client) {
+TEST_F(CtrlChannelDhcpv4SrvTest, subnet4SelectTestClient) {
     createUnixChannelServer();
     std::string response;
 
@@ -2549,7 +2549,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4Client) {
 
     // Address not in range: nothing can be selected.
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"address\": \"10.0.1.1\""
                     "    }"
@@ -2559,7 +2559,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4Client) {
 
     // Address in range: the subnet is selected.
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"address\": \"192.0.2.1\""
                     "    }"
@@ -2572,7 +2572,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4Client) {
     // Add the subnet to the shared network.
     subnet->setSharedNetwork(network);
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"address\": \"192.0.2.1\""
                     "    }"
@@ -2584,9 +2584,9 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4Client) {
     EXPECT_EQ(expected, response);
 }
 
-// This test verifies if localize4 command returns proper subnet for a given
+// This test verifies if subnet4-select-test command returns proper subnet for a given
 // remote/source address.
-TEST_F(CtrlChannelDhcpv4SrvTest, localize4Remote) {
+TEST_F(CtrlChannelDhcpv4SrvTest, subnet4SelectTestRemote) {
     createUnixChannelServer();
     std::string response;
 
@@ -2600,7 +2600,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4Remote) {
 
     // Address not in range: nothing can be selected.
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"remote\": \"10.0.1.1\""
                     "    }"
@@ -2610,7 +2610,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4Remote) {
 
     // Address in range: the subnet is selected.
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"remote\": \"192.0.2.1\""
                     "    }"
@@ -2623,7 +2623,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4Remote) {
     // Add the subnet to the shared network.
     subnet->setSharedNetwork(network);
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"remote\": \"192.0.2.1\""
                     "    }"
@@ -2635,9 +2635,9 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4Remote) {
     EXPECT_EQ(expected, response);
 }
 
-// This test verifies if localize4 command returns proper subnet for a given
+// This test verifies if subnet4-select-test command returns proper subnet for a given
 // incoming interface.
-TEST_F(CtrlChannelDhcpv4SrvTest, localize4Iface) {
+TEST_F(CtrlChannelDhcpv4SrvTest, subnet4SelectTestIface) {
     isc::dhcp::test::IfaceMgrTestConfig test_config(true);
     createUnixChannelServer();
     std::string response;
@@ -2654,7 +2654,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4Iface) {
 
     // Different interface: nothing can be selected.
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"interface\": \"eth0\""
                     "    }"
@@ -2664,7 +2664,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4Iface) {
 
     // Same interface: the subnet is selected.
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"interface\": \"eth1\""
                     "    }"
@@ -2677,7 +2677,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4Iface) {
     // Add the subnet to the shared network.
     subnet->setSharedNetwork(network);
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"interface\": \"eth1\""
                     "    }"
@@ -2689,8 +2689,8 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4Iface) {
     EXPECT_EQ(expected, response);
 }
 
-// This test verifies if localize4 command returns proper guarded subnet.
-TEST_F(CtrlChannelDhcpv4SrvTest, localize4Class) {
+// This test verifies if subnet4-select-test command returns proper guarded subnet.
+TEST_F(CtrlChannelDhcpv4SrvTest, subnet4SelectTestClass) {
     createUnixChannelServer();
     std::string response;
 
@@ -2705,7 +2705,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4Class) {
 
     // Address in range but not in guard: nothing can be selected.
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"address\": \"192.0.2.1\""
                     "    }"
@@ -2715,7 +2715,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4Class) {
 
     // Address in range and in guard: the subnet is selected.
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"address\": \"192.0.2.1\","
                     "        \"classes\": [ \"foobar\" ]"
@@ -2729,7 +2729,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4Class) {
     // Add the subnet to the shared network.
     subnet->setSharedNetwork(network);
     sendUnixCommand("{"
-                    "    \"command\": \"localize4\","
+                    "    \"command\": \"subnet4-select-test\","
                     "    \"arguments\": {"
                     "        \"address\": \"192.0.2.1\","
                     "        \"classes\": [ \"foobar\" ]"
@@ -2742,14 +2742,14 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4Class) {
     EXPECT_EQ(expected, response);
 }
 
-// This test verifies that localize4o6 command performs sanity check parameters.
-TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6BadParam) {
+// This test verifies that subnet4o6-select-test command performs sanity check parameters.
+TEST_F(CtrlChannelDhcpv4SrvTest, subnet4o6SelectTestBadParam) {
     createUnixChannelServer();
     std::string response;
     ConstElementPtr rsp;
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4o6\""
+                    "    \"command\": \"subnet4o6-select-test\""
                     "}", response);
 
     // The response should be a valid JSON.
@@ -2760,7 +2760,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6BadParam) {
               response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4o6\","
+                    "    \"command\": \"subnet4o6-select-test\","
                     "    \"arguments\": [ ]"
                     "    }"
                     "}", response);
@@ -2768,7 +2768,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6BadParam) {
               response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4o6\","
+                    "    \"command\": \"subnet4o6-select-test\","
                     "    \"arguments\": {"
                     "        \"foo\": \"bar\""
                     "    }"
@@ -2777,7 +2777,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6BadParam) {
               response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4o6\","
+                    "    \"command\": \"subnet4o6-select-test\","
                     "    \"arguments\": {"
                     "        \"interface\": 1"
                     "    }"
@@ -2788,7 +2788,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4o6\","
+                    "    \"command\": \"subnet4o6-select-test\","
                     "    \"arguments\": {"
                     "        \"address\": 1"
                     "    }"
@@ -2799,7 +2799,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4o6\","
+                    "    \"command\": \"subnet4o6-select-test\","
                     "    \"arguments\": {"
                     "        \"address\": \"2001:db8:1::1\""
                     "    }"
@@ -2810,7 +2810,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4o6\","
+                    "    \"command\": \"subnet4o6-select-test\","
                     "    \"arguments\": {"
                     "        \"address\": \"foobar\""
                     "    }"
@@ -2822,7 +2822,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4o6\","
+                    "    \"command\": \"subnet4o6-select-test\","
                     "    \"arguments\": {"
                     "        \"relay\": 1"
                     "    }"
@@ -2833,7 +2833,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4o6\","
+                    "    \"command\": \"subnet4o6-select-test\","
                     "    \"arguments\": {"
                     "        \"relay\": \"2001:db8:1::1\""
                     "    }"
@@ -2844,7 +2844,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4o6\","
+                    "    \"command\": \"subnet4o6-select-test\","
                     "    \"arguments\": {"
                     "        \"relay\": \"foobar\""
                     "    }"
@@ -2856,7 +2856,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4o6\","
+                    "    \"command\": \"subnet4o6-select-test\","
                     "    \"arguments\": {"
                     "        \"local\": 1"
                     "    }"
@@ -2867,7 +2867,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4o6\","
+                    "    \"command\": \"subnet4o6-select-test\","
                     "    \"arguments\": {"
                     "        \"local\": \"192.2.1.2\""
                     "    }"
@@ -2878,7 +2878,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4o6\","
+                    "    \"command\": \"subnet4o6-select-test\","
                     "    \"arguments\": {"
                     "        \"local\": \"foobar\""
                     "    }"
@@ -2890,7 +2890,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4o6\","
+                    "    \"command\": \"subnet4o6-select-test\","
                     "    \"arguments\": {"
                     "        \"remote\": 1"
                     "    }"
@@ -2901,7 +2901,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4o6\","
+                    "    \"command\": \"subnet4o6-select-test\","
                     "    \"arguments\": {"
                     "        \"remote\": \"192.2.1.2\""
                     "    }"
@@ -2912,7 +2912,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4o6\","
+                    "    \"command\": \"subnet4o6-select-test\","
                     "    \"arguments\": {"
                     "        \"remote\": \"foobar\""
                     "    }"
@@ -2924,7 +2924,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4o6\","
+                    "    \"command\": \"subnet4o6-select-test\","
                     "    \"arguments\": {"
                     "        \"link\": 1"
                     "    }"
@@ -2935,7 +2935,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4o6\","
+                    "    \"command\": \"subnet4o6-select-test\","
                     "    \"arguments\": {"
                     "        \"link\": \"192.2.1.2\""
                     "    }"
@@ -2946,7 +2946,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4o6\","
+                    "    \"command\": \"subnet4o6-select-test\","
                     "    \"arguments\": {"
                     "        \"link\": \"foobar\""
                     "    }"
@@ -2958,7 +2958,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4o6\","
+                    "    \"command\": \"subnet4o6-select-test\","
                     "    \"arguments\": {"
                     "        \"subnet\": 1"
                     "    }"
@@ -2969,7 +2969,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4o6\","
+                    "    \"command\": \"subnet4o6-select-test\","
                     "    \"arguments\": {"
                     "        \"subnet\": \"2001:db8:1::1\""
                     "    }"
@@ -2980,7 +2980,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4o6\","
+                    "    \"command\": \"subnet4o6-select-test\","
                     "    \"arguments\": {"
                     "        \"subnet\": \"foobar\""
                     "    }"
@@ -2992,7 +2992,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4o6\","
+                    "    \"command\": \"subnet4o6-select-test\","
                     "    \"arguments\": {"
                     "        \"classes\": \"foo\""
                     "    }"
@@ -3003,7 +3003,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6BadParam) {
     EXPECT_EQ(expected, response);
 
     sendUnixCommand("{"
-                    "    \"command\": \"localize4o6\","
+                    "    \"command\": \"subnet4o6-select-test\","
                     "    \"arguments\": {"
                     "        \"classes\": [ 1 ]"
                     "    }"
@@ -3014,9 +3014,9 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6BadParam) {
     EXPECT_EQ(expected, response);
 }
 
-// This test verifies if localize4o6 command returns proper subnet for a given
+// This test verifies if subnet4o6-select-test command returns proper subnet for a given
 // remote/source address.
-TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6Remote) {
+TEST_F(CtrlChannelDhcpv4SrvTest, subnet4o6SelectTestRemote) {
     createUnixChannelServer();
     std::string response;
 
@@ -3031,7 +3031,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6Remote) {
 
     // Address not in range: nothing can be selected.
     sendUnixCommand("{"
-                    "    \"command\": \"localize4o6\","
+                    "    \"command\": \"subnet4o6-select-test\","
                     "    \"arguments\": {"
                     "        \"remote\": \"2001:db8:2::2\""
                     "    }"
@@ -3041,7 +3041,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6Remote) {
 
     // Address in range: the subnet is selected.
     sendUnixCommand("{"
-                    "    \"command\": \"localize4o6\","
+                    "    \"command\": \"subnet4o6-select-test\","
                     "    \"arguments\": {"
                     "        \"remote\": \"2001:db8:1::1\""
                     "    }"
@@ -3054,7 +3054,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6Remote) {
     // Add the subnet to the shared network.
     subnet->setSharedNetwork(network);
     sendUnixCommand("{"
-                    "    \"command\": \"localize4o6\","
+                    "    \"command\": \"subnet4o6-select-test\","
                     "    \"arguments\": {"
                     "        \"remote\": \"2001:db8:1::1\""
                     "    }"
@@ -3066,9 +3066,9 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6Remote) {
     EXPECT_EQ(expected, response);
 }
 
-// This test verifies if localize4o6 command returns proper subnet for a given
+// This test verifies if subnet4o6-select-test command returns proper subnet for a given
 // relay interface id.
-TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6RelayInterfaceId) {
+TEST_F(CtrlChannelDhcpv4SrvTest, subnet4o6SelectTestRelayInterfaceId) {
     isc::dhcp::test::IfaceMgrTestConfig test_config(true);
     createUnixChannelServer();
     std::string response;
@@ -3087,7 +3087,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6RelayInterfaceId) {
 
     // Different interface: nothing can be selected.
     sendUnixCommand("{"
-                    "    \"command\": \"localize4o6\","
+                    "    \"command\": \"subnet4o6-select-test\","
                     "    \"arguments\": {"
                     "        \"interface-id\": \"'foobar'\""
                     "    }"
@@ -3097,7 +3097,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6RelayInterfaceId) {
 
     // Same interface: the subnet is selected.
     sendUnixCommand("{"
-                    "    \"command\": \"localize4o6\","
+                    "    \"command\": \"subnet4o6-select-test\","
                     "    \"arguments\": {"
                     "        \"interface-id\": \"'relay'\""
                     "    }"
@@ -3110,7 +3110,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6RelayInterfaceId) {
     // Add the subnet to the shared network.
     subnet->setSharedNetwork(network);
     sendUnixCommand("{"
-                    "    \"command\": \"localize4o6\","
+                    "    \"command\": \"subnet4o6-select-test\","
                     "    \"arguments\": {"
                     "        \"interface-id\": \"'relay'\""
                     "    }"
@@ -3122,9 +3122,9 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6RelayInterfaceId) {
     EXPECT_EQ(expected, response);
 }
 
-// This test verifies if localize4o6 command returns proper subnet for a given
+// This test verifies if subnet4o6-select-test command returns proper subnet for a given
 // incoming interface.
-TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6Iface) {
+TEST_F(CtrlChannelDhcpv4SrvTest, subnet4o6SelectTestIface) {
     isc::dhcp::test::IfaceMgrTestConfig test_config(true);
     createUnixChannelServer();
     std::string response;
@@ -3140,7 +3140,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6Iface) {
 
     // Different interface: nothing can be selected.
     sendUnixCommand("{"
-                    "    \"command\": \"localize4o6\","
+                    "    \"command\": \"subnet4o6-select-test\","
                     "    \"arguments\": {"
                     "        \"interface\": \"foobar\""
                     "    }"
@@ -3150,7 +3150,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6Iface) {
 
     // Same interface: the subnet is selected.
     sendUnixCommand("{"
-                    "    \"command\": \"localize4o6\","
+                    "    \"command\": \"subnet4o6-select-test\","
                     "    \"arguments\": {"
                     "        \"interface\": \"eth0\""
                     "    }"
@@ -3163,7 +3163,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, localize4o6Iface) {
     // Add the subnet to the shared network.
     subnet->setSharedNetwork(network);
     sendUnixCommand("{"
-                    "    \"command\": \"localize4o6\","
+                    "    \"command\": \"subnet4o6-select-test\","
                     "    \"arguments\": {"
                     "        \"interface\": \"eth0\""
                     "    }"

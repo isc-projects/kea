@@ -867,13 +867,13 @@ command-line argument. This command does not take any parameters.
 Commands Supported by the DHCPv4 Server
 =======================================
 
-.. isccmd:: localize4
-.. _command-localize4:
+.. isccmd:: subnet4-select-test
+.. _command-subnet4-select-test:
 
-The ``localize4`` Command
--------------------------
+The ``subnet4-select-test`` Command
+-----------------------------------
 
-The :isccmd:`localize4` provides a way to test DHCPv4 subnet selection based 
+The :isccmd:`subnet4-select-test` provides a way to test DHCPv4 subnet selection based 
 on a set of input parameters typically supplied in a client packet.
 Recognized parameters take strings and are:
 
@@ -896,13 +896,13 @@ Outside of errors possible results are:
  -  "selected shared network '<name>' starting with subnet '<subnet>' id <id>"
  -  "selected subnet '<subnet>' id <id>"
 
-.. isccmd:: localize4o6
-.. _command-localize4o6:
+.. isccmd:: subnet4o6-select-test
+.. _command-subnet4o6-select-test:
 
-The ``localize4o6`` Command
----------------------------
+The ``subnet4o6-select-test`` Command
+-------------------------------------
 
-The :isccmd:`localize4to5` provides a way to test DHCPv4-over-DHCPv6 subnet
+The :isccmd:`subnet4o6-select-test` provides a way to test DHCPv4-over-DHCPv6 subnet
 selection based  on a set of input parameters typically supplied in a client
 packet. Recognized parameters take strings and are:
 
@@ -931,13 +931,13 @@ Outside of errors possible results are:
 Commands Supported by the DHCPv6 Server
 =======================================
 
-.. isccmd:: localize6
-.. _command-localize6:
+.. isccmd:: subnet6-select-test
+.. _command-subnet6-select-test:
 
-The ``localize6`` Command
--------------------------
+The ``subnet6-select-test`` Command
+-----------------------------------
 
-The :isccmd:`localize6` provides a way to test DHCPv6 subnet selection based 
+The :isccmd:`subnet6-select-test` provides a way to test DHCPv6 subnet selection based 
 on a set of input parameters typically supplied in a client packet.
 Recognized parameters take strings and are:
 

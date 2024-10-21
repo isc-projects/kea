@@ -696,8 +696,8 @@ ControlledDhcpv4Srv::commandLeasesReclaimHandler(const string&,
 }
 
 ConstElementPtr
-ControlledDhcpv4Srv::commandLocalize4Handler(const string&,
-                                             ConstElementPtr args) {
+ControlledDhcpv4Srv::commandSubnet4SelectTestHandler(const string&,
+                                                     ConstElementPtr args) {
     if (!args) {
         return (createAnswer(CONTROL_RESULT_ERROR, "empty arguments"));
     }
@@ -865,8 +865,8 @@ ControlledDhcpv4Srv::commandLocalize4Handler(const string&,
 }
 
 ConstElementPtr
-ControlledDhcpv4Srv::commandLocalize4o6Handler(const string&,
-                                               ConstElementPtr args) {
+ControlledDhcpv4Srv::commandSubnet4o6SelectTestHandler(const string&,
+                                                       ConstElementPtr args) {
     if (!args) {
         return (createAnswer(CONTROL_RESULT_ERROR, "empty arguments"));
     }
@@ -1489,11 +1489,11 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t server_port /*= DHCP4_SERVER_P
     CommandMgr::instance().registerCommand("leases-reclaim",
         std::bind(&ControlledDhcpv4Srv::commandLeasesReclaimHandler, this, ph::_1, ph::_2));
 
-    CommandMgr::instance().registerCommand("localize4",
-        std::bind(&ControlledDhcpv4Srv::commandLocalize4Handler, this, ph::_1, ph::_2));
+    CommandMgr::instance().registerCommand("subnet4-select-test",
+        std::bind(&ControlledDhcpv4Srv::commandSubnet4SelectTestHandler, this, ph::_1, ph::_2));
 
-    CommandMgr::instance().registerCommand("localize4o6",
-        std::bind(&ControlledDhcpv4Srv::commandLocalize4o6Handler, this, ph::_1, ph::_2));
+    CommandMgr::instance().registerCommand("subnet4o6-select-test",
+        std::bind(&ControlledDhcpv4Srv::commandSubnet4o6SelectTestHandler, this, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand("server-tag-get",
         std::bind(&ControlledDhcpv4Srv::commandServerTagGetHandler, this, ph::_1, ph::_2));
@@ -1578,8 +1578,8 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         CommandMgr::instance().deregisterCommand("dhcp-enable");
         CommandMgr::instance().deregisterCommand("leases-reclaim");
         CommandMgr::instance().deregisterCommand("server-tag-get");
-        CommandMgr::instance().deregisterCommand("localize4");
-        CommandMgr::instance().deregisterCommand("localize4o6");
+        CommandMgr::instance().deregisterCommand("subnet4-select-test");
+        CommandMgr::instance().deregisterCommand("subnet4o6-select-test");
         CommandMgr::instance().deregisterCommand("shutdown");
         CommandMgr::instance().deregisterCommand("statistic-get");
         CommandMgr::instance().deregisterCommand("statistic-get-all");

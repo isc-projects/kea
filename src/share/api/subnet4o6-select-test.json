@@ -1,13 +1,14 @@
 {
     "access": "read",
     "avail": "2.7.0",
-    "brief": [ "This command returns the result of DHCPv4 subnet selection" ],
-    "cmd-comment": [ "Possible parameters are the incoming interface name, client address, relay address, client classes, etc." ],
+    "brief": [ "This command returns the result of DHCPv4o6 subnet selection" ],
+    "cmd-comment": [ "Possible parameters are the remote address, interface id option, interface name (the three from the DHCPv6 server), etc." ],
     "cmd-syntax": [
         "{",
-        "    \"command\": \"localize4\",",
+        "    \"command\": \"subnet4o6-select-test\",",
         "    \"arguments\": {",
         "        \"interface\": <string>,",
+        "        \"interface-id\": <string>,",
         "        \"address\": <string>,",
         "        \"relay\": <string>,",
         "        \"local\": <string>,",
@@ -18,8 +19,8 @@
         "    }",
         "}"
     ],
-    "description": [ "See <xref linkend=\"command-localize4\"/>" ],
-    "name": "localize4",
+    "description": [ "See <xref linkend=\"command-subnet4o6-select-test\"/>" ],
+    "name": "subnet4o6-select-test",
     "resp-comment": [ "3 forms for selected shared network, subnet or nothing.." ],
     "resp-syntax": [ "{ \"result\": 1, \"text\": <localization result> }" ],
     "support": [ "kea-dhcp4" ]

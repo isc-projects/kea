@@ -5,7 +5,7 @@
     "cmd-comment": [ "Possible parameters are the incoming interface name, remote address, relay link address, client classes, etc." ],
     "cmd-syntax": [
         "{",
-        "    \"command\": \"localize6\",",
+        "    \"command\": \"subnet6-select-test\",",
         "    \"arguments\": {",
         "        \"interface\": <string>,",
         "        \"interface-id\": <string>,",
@@ -15,8 +15,8 @@
         "    }",
         "}"
     ],
-    "description": [ "See <xref linkend=\"command-localize6\"/>" ],
-    "name": "localize6",
+    "description": [ "See <xref linkend=\"command-subnet6-select-test\"/>" ],
+    "name": "subnet6-select-test",
     "resp-comment": [ "3 forms for selected shared network, subnet or nothing.." ],
     "resp-syntax": [ "{ \"result\": 1, \"text\": <localization result> }" ],
     "support": [ "kea-dhcp6" ]
