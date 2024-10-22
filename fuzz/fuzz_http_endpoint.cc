@@ -164,8 +164,9 @@ LLVMFuzzerTestOneInput(uint8_t const* data, size_t size) {
         }
     }
     listener.stop();
-    io_service->poll();
     client.stop();
+    run_io_service_timer.cancel();
+    io_service->poll();
     MultiThreadingMgr::instance().setMode(false);
 
     return 0;

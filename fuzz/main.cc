@@ -6,14 +6,17 @@
 
 #include <config.h>
 
+#include <exceptions/exceptions.h>
 #include <util/filesystem.h>
 #include <fuzz.h>
 
 #include <cassert>
 #include <cstdio>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <list>
+#include <memory>
 #include <sstream>
 #include <vector>
 
@@ -22,6 +25,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+using namespace isc;
 using namespace isc::util::file;
 using namespace std;
 
@@ -52,7 +56,11 @@ main(int, char* argv[]) {
         list<string> files;
 
         struct dirent *dp;
-        DIR *dfd(opendir(p.str().c_str()));
+        DIR *dfd(opendir(directory.c_str()));
+        if (!dfd) {
+            isc_throw(Unexpected, "opendir failed " << directory << ": " << strerror(errno));
+        }
+        std::unique_ptr<DIR, void(*)(DIR*)> defer(dfd, [](DIR* d) { closedir(d); });
         while ((dp = readdir(dfd)) != nullptr) {
             string file(dp->d_name);
             if (file == "." || file == "..") {
