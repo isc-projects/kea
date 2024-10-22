@@ -37,7 +37,6 @@ static string const KEA_DHCP6_CSV(KEA_FUZZ_DIR + "/kea-dhcp6-" + PID_STR + ".csv
 static string const SOCKET(KEA_FUZZ_DIR + "/kea-dhcp6-ctrl-" + PID_STR + ".sock");
 
 static UnixControlClient CLIENT;
-static IOServicePtr IO_SERVICE(new IOService());
 
 }  // namespace
 
@@ -60,6 +59,7 @@ LLVMFuzzerInitialize() {
           },
           "lease-database": {
             "name": ")" + KEA_DHCP6_CSV + R"(",
+            "persist": false,
             "type": "memfile"
           },
           "server-id": {

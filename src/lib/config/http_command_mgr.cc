@@ -165,7 +165,7 @@ HttpCommandMgrImpl::close(bool remove) {
     ostringstream ep;
     if (current_config_) {
         use_https = !current_config_->getCertFile().empty();
-        ep << " bound to address " << current_config_->getSocketAddress()
+        ep << "bound to address " << current_config_->getSocketAddress()
            << " port " << current_config_->getSocketPort();
     }
     LOG_INFO(command_logger, HTTP_COMMAND_MGR_SERVICE_STOPPING)

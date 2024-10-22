@@ -45,13 +45,9 @@ static pid_t const PID(getpid());
 static int const PORT(getpid() % 1000 + 2000);
 static string const PID_STR(to_string(PID));
 static string const PORT_STR(to_string(PORT));
+static string const ADDRESS("0.0.0.0");
 static string const KEA_DHCP4_CONF(KEA_FUZZ_DIR + "/kea-dhcp4-" + PID_STR + ".conf");
 static string const KEA_DHCP4_CSV(KEA_FUZZ_DIR + "/kea-dhcp4-" + PID_STR + ".csv");
-
-void timeoutHandler() {
-    cerr << "Timeout occurred while fuzzing!" << endl;
-    abort();
-}
 
 /// @brief Represents HTTP POST request with JSON body.
 ///
@@ -97,8 +93,6 @@ struct PostHttpRequestBytes : PostHttpRequest {
 
 using PostHttpRequestBytesPtr = boost::shared_ptr<PostHttpRequestBytes>;
 
-ThreadPool<function<void()>> THREAD_POOL;
-
 }  // namespace
 
 extern "C" {
@@ -113,13 +107,14 @@ LLVMFuzzerInitialize() {
         "Dhcp4": {
           "control-sockets": [
             {
-              "socket-address": "0.0.0.0",
+              "socket-address": ")" + ADDRESS + R"(",
               "socket-port": )" + PORT_STR + R"(,
               "socket-type": "http"
             }
           ],
           "lease-database": {
             "name": ")" + KEA_DHCP4_CSV + R"(",
+            "persist": false,
             "type": "memfile"
           }
         }
@@ -148,22 +143,9 @@ LLVMFuzzerTestOneInput(uint8_t const* data, size_t size) {
     ControlledDhcpv4Srv server;
     server.init(KEA_DHCP4_CONF);
 
-    string const address("127.0.0.1");
-    int const port(18000);
-    int const timeout(100000);
-
-    CmdHttpListener listener(IOAddress(address), port);
-    MultiThreadingMgr::instance().setMode(true);
-
-    // Start the server.
-    listener.start();
-
-    // Create a client and specify the URL on which the server can be reached.
-    IOServicePtr io_service(new IOService());
-    IntervalTimer run_io_service_timer(io_service);
-    HttpClient client(io_service, false);
+    HttpClient client(ControlledDhcpv4Srv::getInstance()->getIOService(), false);
     stringstream ss;
-    ss << "http://" << address << ":" << port;
+    ss << "http://" << ADDRESS << ":" << PORT_STR;
     Url url(ss.str());
 
     // Initiate request to the server.
@@ -182,14 +164,7 @@ LLVMFuzzerTestOneInput(uint8_t const* data, size_t size) {
            string const&) {
         });
 
-    // Actually trigger the requests. The requests should be handlded by the
-    // server one after another. While the first request is being processed
-    // the server should queue another one.
-    io_service->getInternalIOService().reset();
-    run_io_service_timer.setup(&timeoutHandler, timeout, IntervalTimer::ONE_SHOT);
-    io_service->runOne();
-    io_service->getInternalIOService().reset();
-    io_service->poll();
+    ControlledDhcpv4Srv::getInstance()->getIOService()->poll();
 
     // Make sure that the received responses are different. We check that by
     // comparing value of the sequence parameters.
@@ -200,10 +175,8 @@ LLVMFuzzerTestOneInput(uint8_t const* data, size_t size) {
             cout << "no response" << endl;
         }
     }
-    listener.stop();
     client.stop();
-    run_io_service_timer.cancel();
-    io_service->poll();
+    ControlledDhcpv4Srv::getInstance()->getIOService()->poll();
     MultiThreadingMgr::instance().setMode(false);
 
     return 0;
