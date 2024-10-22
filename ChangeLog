@@ -1,3 +1,9 @@
+2292.	[doc]		tmark
+	Updated the ARM to include and explanation for why
+	the default values for 'calculate-tee-times' are
+	different for kea-dhcp4 and kea-dhcp6.
+	(Gitlab #3538)
+
 2291.	[func]		fdupont
 	Added three new API commands: subnet4-select-test and
 	subnet4o6-select-test to kea-dhcp4, and subnet6-select-test
