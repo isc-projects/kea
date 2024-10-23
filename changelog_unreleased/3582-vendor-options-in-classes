@@ -1,0 +1,4 @@
+[bug]		fdupont
+	Fixed a bug where Kea did not return the value of
+    vendor-encapsulated-options when redefined in a client class.
+	(Gitlab #3582)
