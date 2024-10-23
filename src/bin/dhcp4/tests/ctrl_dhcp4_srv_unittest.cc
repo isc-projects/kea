@@ -1035,6 +1035,34 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configTest) {
     CfgMgr::instance().clear();
 }
 
+// Verify that the "subnet4-select-test" command will do what we expect.
+TEST_F(CtrlChannelDhcpv4SrvTest, subnetSelectTest) {
+    createUnixChannelServer();
+
+    string command_txt = "{ \"command\": \"subnet4-select-test\", \"arguments\": { \"classes\": [ \"foo\" ] } }";
+
+    // Send the subnet4-select-test command
+    std::string response;
+    sendUnixCommand(command_txt, response);
+
+    EXPECT_EQ("{ \"result\": 3, \"text\": \"no subnet selected\" }",
+              response);
+}
+
+// Verify that the "subnet4o6-select-test" command will do what we expect.
+TEST_F(CtrlChannelDhcpv4SrvTest, subnet4o6SelectTest) {
+    createUnixChannelServer();
+
+    string command_txt = "{ \"command\": \"subnet4o6-select-test\", \"arguments\": { \"classes\": [ \"foo\" ] } }";
+
+    // Send the subnet4o6-select-test command
+    std::string response;
+    sendUnixCommand(command_txt, response);
+
+    EXPECT_EQ("{ \"result\": 3, \"text\": \"no subnet selected\" }",
+              response);
+}
+
 // This test verifies that the DHCP server handles version-get commands
 TEST_F(CtrlChannelDhcpv4SrvTest, getVersion) {
     createUnixChannelServer();

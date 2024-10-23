@@ -1663,6 +1663,62 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, configTest) {
     CfgMgr::instance().clear();
 }
 
+// Verify that the "subnet4-select-test" command will do what we expect.
+TEST_F(HttpCtrlChannelDhcpv4Test, subnetSelectTest) {
+    createHttpChannelServer();
+
+    string command_txt = "{ \"command\": \"subnet4-select-test\", \"arguments\": { \"classes\": [ \"foo\" ] } }";
+
+    // Send the subnet4-select-test command
+    std::string response;
+    sendHttpCommand(command_txt, response);
+
+    EXPECT_EQ("[ { \"result\": 3, \"text\": \"no subnet selected\" } ]",
+              response);
+}
+
+// Verify that the "subnet4-select-test" command will do what we expect.
+TEST_F(HttpsCtrlChannelDhcpv4Test, subnetSelectTest) {
+    createHttpChannelServer();
+
+    string command_txt = "{ \"command\": \"subnet4-select-test\", \"arguments\": { \"classes\": [ \"foo\" ] } }";
+
+    // Send the subnet4-select-test command
+    std::string response;
+    sendHttpCommand(command_txt, response);
+
+    EXPECT_EQ("[ { \"result\": 3, \"text\": \"no subnet selected\" } ]",
+              response);
+}
+
+// Verify that the "subnet4o6-select-test" command will do what we expect.
+TEST_F(HttpCtrlChannelDhcpv4Test, subnet4o6SelectTest) {
+    createHttpChannelServer();
+
+    string command_txt = "{ \"command\": \"subnet4o6-select-test\", \"arguments\": { \"classes\": [ \"foo\" ] } }";
+
+    // Send the subnet4o6-select-test command
+    std::string response;
+    sendHttpCommand(command_txt, response);
+
+    EXPECT_EQ("[ { \"result\": 3, \"text\": \"no subnet selected\" } ]",
+              response);
+}
+
+// Verify that the "subnet4o6-select-test" command will do what we expect.
+TEST_F(HttpsCtrlChannelDhcpv4Test, subnet4o6SelectTest) {
+    createHttpChannelServer();
+
+    string command_txt = "{ \"command\": \"subnet4o6-select-test\", \"arguments\": { \"classes\": [ \"foo\" ] } }";
+
+    // Send the subnet4o6-select-test command
+    std::string response;
+    sendHttpCommand(command_txt, response);
+
+    EXPECT_EQ("[ { \"result\": 3, \"text\": \"no subnet selected\" } ]",
+              response);
+}
+
 // This test verifies that the DHCP server handles version-get commands.
 void
 BaseCtrlChannelDhcpv4Test::testGetVersion() {

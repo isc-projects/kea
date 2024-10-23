@@ -1697,6 +1697,34 @@ TEST_F(HttpsCtrlChannelDhcpv6Test, configTest) {
     CfgMgr::instance().clear();
 }
 
+// Verify that the "subnet6-select-test" command will do what we expect.
+TEST_F(HttpCtrlChannelDhcpv6Test, subnetSelectTest) {
+    createHttpChannelServer();
+
+    string command_txt = "{ \"command\": \"subnet6-select-test\", \"arguments\": { \"classes\": [ \"foo\" ] } }";
+
+    // Send the subnet6-select-test command
+    std::string response;
+    sendHttpCommand(command_txt, response);
+
+    EXPECT_EQ("[ { \"result\": 3, \"text\": \"no subnet selected\" } ]",
+              response);
+}
+
+// Verify that the "subnet6-select-test" command will do what we expect.
+TEST_F(HttpsCtrlChannelDhcpv6Test, subnetSelectTest) {
+    createHttpChannelServer();
+
+    string command_txt = "{ \"command\": \"subnet6-select-test\", \"arguments\": { \"classes\": [ \"foo\" ] } }";
+
+    // Send the subnet6-select-test command
+    std::string response;
+    sendHttpCommand(command_txt, response);
+
+    EXPECT_EQ("[ { \"result\": 3, \"text\": \"no subnet selected\" } ]",
+              response);
+}
+
 // This test verifies that the DHCP server handles version-get commands.
 void
 BaseCtrlChannelDhcpv6Test::testGetVersion() {
