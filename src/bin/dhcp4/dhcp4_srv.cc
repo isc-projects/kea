@@ -67,7 +67,6 @@
 #include <boost/shared_ptr.hpp>
 
 
-#include <chrono>
 #include <functional>
 #include <iomanip>
 #include <set>
@@ -85,7 +84,6 @@ using namespace isc::log::interprocess;
 using namespace isc::stats;
 using namespace isc::util;
 using namespace std;
-using namespace std::chrono_literals;
 namespace ph = std::placeholders;
 
 namespace {
