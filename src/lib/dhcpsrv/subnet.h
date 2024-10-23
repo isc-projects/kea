@@ -339,7 +339,7 @@ protected:
     ///
     /// A virtual destructor is needed because other classes
     /// derive from this class.
-    virtual ~Subnet() { };
+    virtual ~Subnet() { }
 
     /// @brief Checks if used pool type is valid.
     ///

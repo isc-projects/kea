@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -309,7 +309,7 @@ typedef HostContainer6::nth_index<4>::type HostContainer6Index4;
 typedef std::pair<HostContainer6Index4::iterator,
                   HostContainer6Index4::iterator> HostContainer6Index4Range;
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // HOST_CONTAINER_H

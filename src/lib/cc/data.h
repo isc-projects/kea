@@ -172,7 +172,7 @@ protected:
 
 public:
     // base class; make dtor virtual
-    virtual ~Element() {};
+    virtual ~Element() {}
 
     /// @return the type of this element
     types getType() const { return (type_); }
@@ -232,24 +232,24 @@ public:
     /// getValue() below
     //@{
     virtual int64_t intValue() const
-    { throwTypeError("intValue() called on non-integer Element"); };
+    { throwTypeError("intValue() called on non-integer Element"); }
     virtual isc::util::int128_t bigIntValue() const {
         throwTypeError("bigIntValue() called on non-big-integer Element");
     }
     virtual double doubleValue() const
-    { throwTypeError("doubleValue() called on non-double Element"); };
+    { throwTypeError("doubleValue() called on non-double Element"); }
     virtual bool boolValue() const
-    { throwTypeError("boolValue() called on non-Bool Element"); };
+    { throwTypeError("boolValue() called on non-Bool Element"); }
     virtual std::string stringValue() const
-    { throwTypeError("stringValue() called on non-string Element"); };
+    { throwTypeError("stringValue() called on non-string Element"); }
     virtual const std::vector<ElementPtr>& listValue() const {
         // replace with real exception or empty vector?
         throwTypeError("listValue() called on non-list Element");
-    };
+    }
     virtual const std::map<std::string, ConstElementPtr>& mapValue() const {
         // replace with real exception or empty map?
         throwTypeError("mapValue() called on non-map Element");
-    };
+    }
     //@}
 
     /// @name Exception-safe getters
@@ -281,8 +281,8 @@ public:
     //@{
     virtual bool setValue(const long long int v);
     virtual bool setValue(const isc::util::int128_t& v);
-    bool setValue(const long int i) { return (setValue(static_cast<long long int>(i))); };
-    bool setValue(const int i) { return (setValue(static_cast<long long int>(i))); };
+    bool setValue(const long int i) { return (setValue(static_cast<long long int>(i))); }
+    bool setValue(const int i) { return (setValue(static_cast<long long int>(i))); }
     virtual bool setValue(const double v);
     virtual bool setValue(const bool t);
     virtual bool setValue(const std::string& v);
@@ -673,7 +673,7 @@ class DoubleElement : public Element {
 
 public:
     DoubleElement(double v, const Position& pos = ZERO_POSITION())
-        : Element(real, pos), d(v) {};
+        : Element(real, pos), d(v) {}
     double doubleValue() const { return (d); }
     using Element::getValue;
     bool getValue(double& t) const { t = d; return (true); }
@@ -688,7 +688,7 @@ class BoolElement : public Element {
 
 public:
     BoolElement(const bool v, const Position& pos = ZERO_POSITION())
-        : Element(boolean, pos), b(v) {};
+        : Element(boolean, pos), b(v) {}
     bool boolValue() const { return (b); }
     using Element::getValue;
     bool getValue(bool& t) const { t = b; return (true); }
@@ -701,7 +701,7 @@ public:
 class NullElement : public Element {
 public:
     NullElement(const Position& pos = ZERO_POSITION())
-        : Element(null, pos) {};
+        : Element(null, pos) {}
     void toJSON(std::ostream& ss) const;
     bool equals(const Element& other) const;
 };
@@ -711,7 +711,7 @@ class StringElement : public Element {
 
 public:
     StringElement(std::string v, const Position& pos = ZERO_POSITION())
-        : Element(string, pos), s(v) {};
+        : Element(string, pos), s(v) {}
     std::string stringValue() const { return (s); }
     using Element::getValue;
     bool getValue(std::string& t) const { t = s; return (true); }
@@ -745,9 +745,9 @@ public:
     void set(size_t i, ElementPtr e) {
         l.at(i) = e;
     }
-    void add(ElementPtr e) { l.push_back(e); };
+    void add(ElementPtr e) { l.push_back(e); }
     using Element::remove;
-    void remove(int i) { l.erase(l.begin() + i); };
+    void remove(int i) { l.erase(l.begin() + i); }
     void toJSON(std::ostream& ss) const;
     size_t size() const { return (l.size()); }
     bool empty() const { return (l.empty()); }

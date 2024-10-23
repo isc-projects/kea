@@ -94,21 +94,21 @@ extern std::string ncrProtocolToString(NameChangeProtocol protocol);
 class NcrListenerError : public isc::Exception {
 public:
     NcrListenerError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Exception thrown if an error occurs during IO source open.
 class NcrListenerOpenError : public isc::Exception {
 public:
     NcrListenerOpenError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Exception thrown if an error occurs initiating an IO receive.
 class NcrListenerReceiveError : public isc::Exception {
 public:
     NcrListenerReceiveError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Abstract interface for receiving NameChangeRequests.
@@ -213,7 +213,7 @@ public:
 
     /// @brief Destructor
     virtual ~NameChangeListener() {
-    };
+    }
 
     /// @brief Prepares the IO for reception and initiates the first receive.
     ///
@@ -360,28 +360,28 @@ typedef boost::shared_ptr<NameChangeListener> NameChangeListenerPtr;
 class NcrSenderError : public isc::Exception {
 public:
     NcrSenderError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Exception thrown if an error occurs during IO source open.
 class NcrSenderOpenError : public isc::Exception {
 public:
     NcrSenderOpenError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Exception thrown if an error occurs initiating an IO send.
 class NcrSenderQueueFull : public isc::Exception {
 public:
     NcrSenderQueueFull(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Exception thrown if an error occurs initiating an IO send.
 class NcrSenderSendError : public isc::Exception {
 public:
     NcrSenderSendError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Abstract interface for sending NameChangeRequests.

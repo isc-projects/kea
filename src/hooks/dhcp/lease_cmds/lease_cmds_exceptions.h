@@ -1,4 +1,4 @@
-// Copyright (C) 2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2022-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,7 +19,7 @@
 class LeaseCmdsConflict : public isc::Exception {
 public:
     LeaseCmdsConflict(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 #endif // LEASE_CMDS_EXCEPTIONS_H

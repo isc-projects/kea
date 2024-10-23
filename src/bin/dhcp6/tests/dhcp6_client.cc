@@ -92,7 +92,7 @@ void getLeasesByPool(const Dhcp6Client::Configuration& config,
     }
 }
 
-}; // end of anonymous namespace
+}  // end of anonymous namespace
 
 namespace isc {
 namespace dhcp {

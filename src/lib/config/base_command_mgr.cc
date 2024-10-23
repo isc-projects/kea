@@ -39,7 +39,7 @@ struct BaseCommandMgrHooks {
 // module is called.
 BaseCommandMgrHooks Hooks;
 
-}; // anonymous namespace
+}  // anonymous namespace
 
 namespace isc {
 namespace config {

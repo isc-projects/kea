@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,7 +24,7 @@ namespace process {
 class ConfigDbInfo : public isc::data::CfgToElement {
 public:
     /// @brief Constructor
-    ConfigDbInfo() {};
+    ConfigDbInfo() {}
 
     /// @brief Set the access string.
     ///
@@ -143,7 +143,7 @@ public:
 
     /// @brief Constructor.
     ConfigControlInfo()
-        : config_fetch_wait_time_(30, true) {};
+        : config_fetch_wait_time_(30, true) {}
 
     /// @brief Copy Constructor.
     ConfigControlInfo(const ConfigControlInfo& other);

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,7 +22,7 @@ namespace http {
 class HttpMessageError : public Exception {
 public:
     HttpMessageError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Exception thrown when attempt is made to retrieve a
@@ -31,7 +31,7 @@ class HttpMessageNonExistingHeader : public HttpMessageError {
 public:
     HttpMessageNonExistingHeader(const char* file, size_t line,
                                  const char* what) :
-        HttpMessageError(file, line, what) { };
+        HttpMessageError(file, line, what) { }
 };
 
 

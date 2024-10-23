@@ -20,7 +20,7 @@ namespace tcp {
 class TcpListenerError : public Exception {
 public:
     TcpListenerError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Implements a class that listens for, accepts, and manages

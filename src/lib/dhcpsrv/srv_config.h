@@ -49,7 +49,7 @@ class CfgMgr;
 class DdnsParams {
 public:
     /// @brief Default constructor
-    DdnsParams() : subnet_(), d2_client_enabled_(false) {};
+    DdnsParams() : subnet_(), d2_client_enabled_(false) {}
 
     /// @brief Constructor for DHPCv4 subnets
     ///

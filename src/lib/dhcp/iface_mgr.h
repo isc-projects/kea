@@ -41,21 +41,21 @@ namespace dhcp {
 class IfaceDetectError : public Exception {
 public:
     IfaceDetectError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Exception thrown when it is not allowed to set new Packet Filter.
 class PacketFilterChangeDenied : public Exception {
 public:
     PacketFilterChangeDenied(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Exception thrown when a call to select is interrupted by a signal.
 class SignalInterruptOnSelect : public Exception {
 public:
     SignalInterruptOnSelect(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief IfaceMgr exception thrown thrown when socket opening
@@ -63,7 +63,7 @@ public:
 class SocketConfigError : public Exception {
 public:
     SocketConfigError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief IfaceMgr exception thrown thrown when error occurred during
@@ -71,7 +71,7 @@ public:
 class SocketReadError : public Exception {
 public:
     SocketReadError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief IfaceMgr exception thrown thrown when error occurred during
@@ -79,21 +79,21 @@ public:
 class SocketWriteError : public Exception {
 public:
     SocketWriteError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief IfaceMgr exception thrown when there is no suitable interface.
 class IfaceNotFound : public Exception {
 public:
     IfaceNotFound(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief IfaceMgr exception thrown when there is no suitable socket found.
 class SocketNotFound : public Exception {
 public:
     SocketNotFound(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Represents a single network interface
@@ -221,7 +221,7 @@ public:
     /// @brief Returns interface name.
     ///
     /// @return interface name
-    std::string getName() const { return name_; };
+    std::string getName() const { return name_; }
 
     /// @brief Sets up hardware type of the interface.
     ///

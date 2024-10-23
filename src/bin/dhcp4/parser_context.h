@@ -28,7 +28,7 @@ namespace dhcp {
 class Dhcp4ParseError : public isc::Exception {
 public:
     Dhcp4ParseError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Evaluation context, an interface to the expression evaluation.
@@ -421,7 +421,7 @@ public:
     isc::data::ElementPtr parseCommon();
 };
 
-}; // end of isc::eval namespace
-}; // end of isc namespace
+}  // namespace dhcp
+}  // namespace isc
 
 #endif

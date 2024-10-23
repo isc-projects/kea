@@ -27,7 +27,7 @@ namespace d2 {
 class D2UpdateMgrError : public isc::Exception {
 public:
     D2UpdateMgrError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Defines a list of transactions.

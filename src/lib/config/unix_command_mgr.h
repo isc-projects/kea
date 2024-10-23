@@ -20,14 +20,14 @@ namespace config {
 class BadSocketInfo : public Exception {
 public:
     BadSocketInfo(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief An exception indicating a problem with socket operation
 class SocketError : public Exception {
 public:
     SocketError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 class UnixCommandMgrImpl;

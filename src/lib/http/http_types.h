@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -53,7 +53,7 @@ struct HttpVersion {
     static const HttpVersion& HTTP_10() {
         static HttpVersion ver(1, 0);
         return (ver);
-    };
+    }
 
     /// @brief HTTP version 1.1.
     static const HttpVersion& HTTP_11() {

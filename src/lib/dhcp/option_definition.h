@@ -30,14 +30,14 @@ namespace dhcp {
 class InvalidOptionValue : public Exception {
 public:
     InvalidOptionValue(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Exception to be thrown when option definition is invalid.
 class MalformedOptionDefinition : public Exception {
 public:
     MalformedOptionDefinition(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Exception to be thrown when the particular option definition
@@ -45,7 +45,7 @@ public:
 class DuplicateOptionDefinition : public Exception {
 public:
     DuplicateOptionDefinition(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Forward declaration to OptionDefinition.
@@ -384,7 +384,7 @@ public:
     /// @brief Return option data type.
     ///
     /// @return option data type.
-    OptionDataType getType() const { return (type_); };
+    OptionDataType getType() const { return (type_); }
 
     /// @brief Returns const pointer to the user context
     data::ConstElementPtr getContext() const {

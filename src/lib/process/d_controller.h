@@ -30,7 +30,7 @@ namespace process {
 class InvalidUsage : public isc::Exception {
 public:
     InvalidUsage(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Exception used to convey version info upwards.
@@ -41,21 +41,21 @@ public:
 class VersionMessage : public isc::Exception {
 public:
     VersionMessage(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Exception thrown when the controller launch fails.
 class LaunchError: public isc::Exception {
 public:
     LaunchError (const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Exception thrown when the application process fails.
 class ProcessInitError: public isc::Exception {
 public:
     ProcessInitError (const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Exception thrown when the application process encounters an
@@ -63,14 +63,14 @@ public:
 class ProcessRunError: public isc::Exception {
 public:
     ProcessRunError (const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Exception thrown when the controller encounters an operational error.
 class DControllerBaseError : public isc::Exception {
 public:
     DControllerBaseError (const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Defines a shared pointer to DControllerBase.

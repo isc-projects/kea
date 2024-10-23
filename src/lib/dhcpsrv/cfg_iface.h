@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,28 +24,28 @@ namespace dhcp {
 class DuplicateIfaceName : public Exception {
 public:
     DuplicateIfaceName(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Exception thrown when specified interface name is invalid.
 class InvalidIfaceName : public Exception {
 public:
     InvalidIfaceName(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Exception thrown when specified interface doesn't exist in a system.
 class NoSuchIface : public Exception {
 public:
     NoSuchIface(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Exception thrown when duplicated address specified.
 class DuplicateAddress : public Exception {
 public:
     DuplicateAddress(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Exception thrown when specified unicast address is not assigned
@@ -53,7 +53,7 @@ public:
 class NoSuchAddress : public Exception {
 public:
     NoSuchAddress(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Exception thrown when invalid socket type has been specified
@@ -61,7 +61,7 @@ public:
 class InvalidSocketType : public Exception {
 public:
     InvalidSocketType(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Represents selection of interfaces for DHCP server.

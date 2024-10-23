@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -149,7 +149,7 @@ private:
 /// @brief Defines a shared pointer to CtrlAgentProcess.
 typedef boost::shared_ptr<CtrlAgentProcess> CtrlAgentProcessPtr;
 
-}; // namespace isc::agent
-}; // namespace isc
+}  // namespace isc::agent
+}  // namespace isc
 
 #endif // CTRL_AGENT_PROCESS_H

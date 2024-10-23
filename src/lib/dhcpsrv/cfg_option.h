@@ -108,7 +108,7 @@ public:
           cancelled_(cancel), formatted_value_(formatted_value),
           space_name_() {
         setContext(user_context);
-    };
+    }
 
     /// @brief Constructor.
     ///
@@ -116,7 +116,7 @@ public:
     /// @param cancel if true, option is never sent.
     OptionDescriptor(bool persist, bool cancel)
         : data::StampedElement(), option_(OptionPtr()), persistent_(persist),
-          cancelled_(cancel), formatted_value_(), space_name_() {};
+          cancelled_(cancel), formatted_value_(), space_name_() {}
 
     /// @brief Copy constructor.
     ///
@@ -130,7 +130,7 @@ public:
           space_name_(desc.space_name_),
           client_classes_(desc.client_classes_) {
         setContext(desc.getContext());
-    };
+    }
 
     /// @brief Assignment operator.
     ///

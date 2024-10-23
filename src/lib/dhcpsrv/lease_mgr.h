@@ -183,14 +183,14 @@ public:
     LeaseStatsQuery(const SubnetID& first_subnet_id, const SubnetID& last_subnet_id);
 
     /// @brief virtual destructor
-    virtual ~LeaseStatsQuery() {};
+    virtual ~LeaseStatsQuery() {}
 
     /// @brief Executes the query
     ///
     /// This method should conduct whatever steps are required to
     /// calculate the lease statistical data by examining the
     /// lease data and making that results available row by row.
-    virtual void start() {};
+    virtual void start() {}
 
     /// @brief Fetches the next row of data
     ///
@@ -203,19 +203,19 @@ public:
     /// @brief Returns the value of first subnet ID specified (or zero)
     SubnetID getFirstSubnetID() const {
         return (first_subnet_id_);
-    };
+    }
 
     /// @brief Returns the value of last subnet ID specified (or zero)
     SubnetID getLastSubnetID() const {
         return (last_subnet_id_);
-    };
+    }
 
     /// @brief Returns the selection criteria mode
     /// The value returned is based upon the constructor variant used
     /// and it indicates which query variant will be executed.
     SelectMode getSelectMode() const {
         return (select_mode_);
-    };
+    }
 
 protected:
     /// @brief First (or only) subnet_id in the selection criteria

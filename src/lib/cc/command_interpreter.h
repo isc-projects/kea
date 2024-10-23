@@ -219,7 +219,7 @@ isc::data::ConstElementPtr
 combineCommandsLists(const isc::data::ConstElementPtr& response1,
                      const isc::data::ConstElementPtr& response2);
 
-}; // end of namespace isc::config
-}; // end of namespace isc
+}  // namespace config
+}  // namespace isc
 
 #endif // COMMAND_INTERPRETER_H

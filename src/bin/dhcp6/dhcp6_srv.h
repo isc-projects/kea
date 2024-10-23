@@ -48,7 +48,7 @@ namespace dhcp {
 class DHCPv6DiscardMessageError : public Exception {
 public:
     DHCPv6DiscardMessageError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief DHCPv6 server service.

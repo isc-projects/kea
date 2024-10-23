@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -57,7 +57,7 @@ public:
         :  queue_type_(queue_type) {}
 
     /// Virtual destructor
-    virtual ~PacketQueue(){};
+    virtual ~PacketQueue(){}
 
     /// @brief Adds a packet to the queue
     ///
@@ -117,7 +117,7 @@ public:
     /// @return Fetches the logical name of the type of this queue.
     std::string getQueueType() {
         return (queue_type_);
-    };
+    }
 
 private:
     /// @brief Logical name of the this queue's implementation type.
@@ -135,7 +135,7 @@ typedef boost::shared_ptr<PacketQueue<Pkt4Ptr>> PacketQueue4Ptr;
 /// DHCPv6 packet queue factories.
 typedef boost::shared_ptr<PacketQueue<Pkt6Ptr>> PacketQueue6Ptr;
 
-}; // namespace isc::dhcp
-}; // namespace isc
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // PACKET_QUEUE_H

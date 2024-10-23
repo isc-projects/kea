@@ -22,7 +22,7 @@ namespace {
 const size_t OPTION6_STATUS_CODE_MIN_LEN = sizeof(uint16_t);
 const size_t OPTION4_SLP_SERVICE_SCOPEMIN_LEN = sizeof(uint8_t);
 
-}; // end of anonymous namespace
+}  // end of anonymous namespace
 
 namespace isc {
 namespace dhcp {

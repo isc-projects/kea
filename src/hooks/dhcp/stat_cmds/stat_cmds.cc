@@ -43,7 +43,7 @@ namespace stat_cmds {
 class NotFound: public isc::Exception {
 public:
     NotFound (const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Implements command handling for stat-leaseX-get commands

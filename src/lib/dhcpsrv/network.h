@@ -226,7 +226,7 @@ public:
     /// @brief Virtual destructor.
     ///
     /// Does nothing at the moment.
-    virtual ~Network() { };
+    virtual ~Network() { }
 
     /// @brief Sets the optional callback function used to fetch globally
     /// configured parameters.
@@ -270,7 +270,7 @@ public:
     getIface(const Inheritance& inheritance = Inheritance::ALL) const {
         return (getProperty<Network>(&Network::getIface, iface_name_,
                                      inheritance));
-    };
+    }
 
     /// @brief Sets information about relay
     ///
@@ -1483,7 +1483,7 @@ public:
     /// option support is enabled (if true), or disabled (if false).
     void setRapidCommit(const util::Optional<bool>& rapid_commit) {
         rapid_commit_ = rapid_commit;
-    };
+    }
 
     /// @brief Returns allocator type for prefix delegation.
     ///

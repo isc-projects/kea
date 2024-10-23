@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -113,5 +113,5 @@ std::string decommentJSONfile(const std::string& input_file) {
     return (outfile);
 }
 
-}; // end of isc::test namespace
-}; // end of isc namespace
+}  // end of isc::test namespace
+}  // end of isc namespace

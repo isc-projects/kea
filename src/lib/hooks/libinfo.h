@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -36,7 +36,7 @@ typedef boost::shared_ptr<HookLibsCollection> HookLibsCollectionPtr;
 /// @brief Extracts library names from full library information structure
 std::vector<std::string> extractNames(const HookLibsCollection& libinfo);
 
-};
-};
+}  // namespace hooks
+}  // namespace isc
 
 #endif

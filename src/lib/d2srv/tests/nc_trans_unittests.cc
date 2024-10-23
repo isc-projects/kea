@@ -1259,4 +1259,4 @@ TEST_F(NameChangeTransactionTest, addPtrRdata) {
     EXPECT_EQ(ncr->getFqdn(), rdata_it->getCurrent().toText());
 }
 
-}; // anonymous namespace
+}  // anonymous namespace

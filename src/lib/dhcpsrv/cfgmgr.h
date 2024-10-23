@@ -35,7 +35,7 @@ namespace dhcp {
 class DuplicateListeningIface : public Exception {
 public:
     DuplicateListeningIface(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Configuration Manager

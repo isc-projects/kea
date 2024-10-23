@@ -38,7 +38,7 @@ struct CbCtlHooks {
 // module is called.
 CbCtlHooks hooks_;
 
-}; // anonymous namespace
+}  // anonymous namespace
 
 namespace isc {
 namespace dhcp {

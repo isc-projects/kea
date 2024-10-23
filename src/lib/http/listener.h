@@ -22,7 +22,7 @@ namespace http {
 class HttpListenerError : public Exception {
 public:
     HttpListenerError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief HttpListener implementation.

@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,7 +18,7 @@ namespace isc {
 class ParseError : public isc::Exception {
  public:
  ParseError(const char* file, size_t line, const char* what) :
-    isc::Exception(file, line, what) { };
+    isc::Exception(file, line, what) { }
 };
 
 /// An exception that is thrown if an error occurs while configuring
@@ -66,7 +66,7 @@ public:
         : isc::Exception(file, line, what) {}
 };
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // DHCP_CONFIG_ERROR_H

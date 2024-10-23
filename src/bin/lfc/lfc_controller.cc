@@ -35,7 +35,7 @@ using namespace isc::log;
 namespace {
 /// @brief Maximum number of errors to allow when reading leases from the file.
 const uint32_t MAX_LEASE_ERRORS = 100;
-}; // namespace anonymous
+}  // namespace anonymous
 
 namespace isc {
 namespace lfc {
@@ -438,5 +438,5 @@ LFCController::startLogger(const bool test_mode) const {
     }
 }
 
-}; // namespace isc::lfc
-}; // namespace isc
+}  // namespace isc::lfc
+}  // namespace isc

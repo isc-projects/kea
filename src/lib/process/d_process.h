@@ -24,7 +24,7 @@ namespace process {
 class DProcessBaseError : public isc::Exception {
 public:
     DProcessBaseError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief String value for the version-get command.
@@ -95,7 +95,7 @@ public:
         if (!cfg_mgr_) {
             isc_throw (DProcessBaseError, "CfgMgr cannot be null");
         }
-    };
+    }
 
     /// @brief May be used after instantiation to perform initialization unique
     /// to application. It must be invoked prior to invoking run. This would

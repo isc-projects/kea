@@ -30,7 +30,7 @@ namespace dhcp_ddns {
 class NcrMessageError : public isc::Exception {
 public:
     NcrMessageError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Exception thrown when there is an error occurred during computation
@@ -38,7 +38,7 @@ public:
 class DhcidRdataComputeError : public isc::Exception {
 public:
     DhcidRdataComputeError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Defines the types of DNS updates that can be requested.
@@ -795,8 +795,7 @@ private:
     NameChangeStatus status_;
 };
 
-
-}; // end of isc::dhcp_ddns namespace
-}; // end of isc namespace
+}  // namespace dhcp_ddns
+}  // namespace isc
 
 #endif

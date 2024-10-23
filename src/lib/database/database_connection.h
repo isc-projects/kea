@@ -147,7 +147,7 @@ public:
     }
 
     /// @brief Destructor
-    virtual ~DatabaseConnection(){};
+    virtual ~DatabaseConnection(){}
 
     /// @brief Instantiates a ReconnectCtl based on the connection's
     /// reconnect parameters

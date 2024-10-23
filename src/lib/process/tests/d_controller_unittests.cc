@@ -466,5 +466,5 @@ TEST_F(DStubControllerTest, sigtermShutdown) {
     EXPECT_TRUE(elapsed_time.total_milliseconds() < 300);
 }
 
-}; // end of isc::process namespace
-}; // end of isc namespace
+}  // end of isc::process namespace
+}  // end of isc namespace

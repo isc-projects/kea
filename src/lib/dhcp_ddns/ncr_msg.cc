@@ -751,5 +751,5 @@ NameChangeRequest::operator != (const NameChangeRequest& other) const {
 }
 
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // end of isc::dhcp namespace
+}  // end of isc namespace

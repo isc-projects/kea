@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,14 +20,14 @@ namespace config {
 class InvalidCommandHandler : public Exception {
 public:
     InvalidCommandHandler(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Exception indicating that the command name is not valid
 class InvalidCommandName : public Exception {
 public:
     InvalidCommandName(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Commands Manager, responsible for processing external commands.
@@ -103,7 +103,7 @@ public:
     BaseCommandMgr();
 
     /// @brief Destructor.
-    virtual ~BaseCommandMgr() { };
+    virtual ~BaseCommandMgr() { }
 
     /// @brief Triggers command processing.
     ///

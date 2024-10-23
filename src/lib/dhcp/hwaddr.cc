@@ -81,5 +81,5 @@ bool HWAddr::operator!=(const HWAddr& other) const {
     return !(*this == other);
 }
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // end of isc::dhcp namespace
+}  // end of isc namespace

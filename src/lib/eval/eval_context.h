@@ -27,7 +27,7 @@ namespace eval {
 class EvalParseError : public isc::Exception {
 public:
     EvalParseError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 

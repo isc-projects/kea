@@ -28,7 +28,7 @@ typedef std::deque<dhcp_ddns::NameChangeRequestPtr> RequestQueue;
 class D2QueueMgrError : public isc::Exception {
 public:
     D2QueueMgrError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Thrown if the queue manager's receive handler is passed
@@ -37,7 +37,7 @@ public:
 class D2QueueMgrReceiveError : public isc::Exception {
 public:
     D2QueueMgrReceiveError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Thrown if the request queue is full when an enqueue is attempted.
@@ -45,21 +45,21 @@ public:
 class D2QueueMgrQueueFull : public isc::Exception {
 public:
     D2QueueMgrQueueFull(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Thrown if the request queue empty and a read is attempted.
 class D2QueueMgrQueueEmpty : public isc::Exception {
 public:
     D2QueueMgrQueueEmpty(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Thrown if a queue index is beyond the end of the queue
 class D2QueueMgrInvalidIndex : public isc::Exception {
 public:
     D2QueueMgrInvalidIndex(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief D2QueueMgr creates and manages a queue of DNS update requests.

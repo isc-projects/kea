@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -23,7 +23,7 @@ namespace dhcp_ddns {
 /// read, > 0 if it is ready to read.
 int selectCheck(int fd_to_check);
 
-}; // namespace isc::dhcp_ddns;
-}; // namespace isc;
+}  // namespace isc::dhcp_ddns;
+}  // namespace isc;
 
 #endif

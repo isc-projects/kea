@@ -137,7 +137,7 @@ private:
 class FuzzInitFail : public Exception {
 public:
     FuzzInitFail(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };  // class FuzzInitFail
 
 }  // namespace isc

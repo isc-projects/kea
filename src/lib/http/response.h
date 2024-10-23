@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -23,7 +23,7 @@ namespace http {
 class HttpResponseError : public HttpMessageError {
 public:
     HttpResponseError(const char* file, size_t line, const char* what) :
-        HttpMessageError(file, line, what) { };
+        HttpMessageError(file, line, what) { }
 };
 
 /// @brief HTTP status codes (cf RFC 2068)
@@ -232,7 +232,7 @@ private:
     ///
     /// @param status_code Status code for which the body should be
     /// generated.
-    void setGenericBody(const HttpStatusCode& /*status_code*/) { };
+    void setGenericBody(const HttpStatusCode& /*status_code*/) { }
 
 protected:
 

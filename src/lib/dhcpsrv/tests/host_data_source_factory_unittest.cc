@@ -23,7 +23,7 @@ using namespace isc::dhcp::test;
 
 namespace {
 
-// @brief Register memFactory 
+// @brief Register memFactory
 bool registerFactory() {
     static auto db_version = []() -> std::string {
         return (std::string("version 1"));
@@ -216,4 +216,4 @@ TEST_F(HostDataSourceFactoryTest, multiple) {
     EXPECT_FALSE(HostDataSourceFactory::del(sources_, "mem2"));
 }
 
-}; // end of anonymous namespace
+}  // end of anonymous namespace
