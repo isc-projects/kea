@@ -1596,6 +1596,12 @@ def _configure_pgsql(system, features):
         cmd += "EOF\n\""
         execute(cmd, cwd='/tmp')
 
+        # This is needed for postgres >= 15
+        cmd = """sh -c \"cat <<EOF | sudo -u postgres psql -U postgres -d keadb
+            GRANT ALL PRIVILEGES ON SCHEMA public TO keauser;\n"""
+        cmd += 'EOF\n"'
+        execute(cmd, cwd='/tmp')
+
     log.info('postgresql just configured')
 
 
