@@ -1,4 +1,3 @@
-premium/src/hooks/agent/rbac/rbac_messages.mes
 premium/src/hooks/d2/gss_tsig/gss_tsig_messages.mes
 premium/src/hooks/dhcp/cb_cmds/cb_cmds_messages.mes
 premium/src/hooks/dhcp/class_cmds/class_cmds_messages.mes
@@ -11,6 +10,7 @@ premium/src/hooks/dhcp/lease_query/lease_query_messages.mes
 premium/src/hooks/dhcp/limits/limits_messages.mes
 premium/src/hooks/dhcp/ping_check/ping_check_messages.mes
 premium/src/hooks/dhcp/radius/radius_messages.mes
+premium/src/hooks/dhcp/rbac/rbac_messages.mes
 premium/src/hooks/dhcp/subnet_cmds/subnet_cmds_messages.mes
 src/bin/agent/ca_messages.mes
 src/bin/dhcp4/dhcp4_messages.mes

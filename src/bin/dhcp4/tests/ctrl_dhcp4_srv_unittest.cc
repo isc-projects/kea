@@ -2790,6 +2790,39 @@ TEST_F(CtrlChannelDhcpv4SrvTest, subnet4o6SelectTestBadParam) {
     sendUnixCommand("{"
                     "    \"command\": \"subnet4o6-select-test\","
                     "    \"arguments\": {"
+                    "        \"interface-id\": 1"
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "'interface-id' entry must be a string";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"subnet4o6-select-test\","
+                    "    \"arguments\": {"
+                    "        \"interface-id\": \"\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "'interface-id' must be not empty";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"subnet4o6-select-test\","
+                    "    \"arguments\": {"
+                    "        \"interface-id\": \"foo\""
+                    "    }"
+                    "}", response);
+    expected = "{ \"result\": 1, \"text\": \"";
+    expected += "value of 'interface-id' was not recognized";
+    expected += "\" }";
+    EXPECT_EQ(expected, response);
+
+    sendUnixCommand("{"
+                    "    \"command\": \"subnet4o6-select-test\","
+                    "    \"arguments\": {"
                     "        \"address\": 1"
                     "    }"
                     "}", response);
@@ -3069,7 +3102,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, subnet4o6SelectTestRemote) {
 // This test verifies if subnet4o6-select-test command returns proper subnet for a given
 // relay interface id.
 TEST_F(CtrlChannelDhcpv4SrvTest, subnet4o6SelectTestRelayInterfaceId) {
-    isc::dhcp::test::IfaceMgrTestConfig test_config(true);
     createUnixChannelServer();
     std::string response;
 
@@ -3125,7 +3157,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, subnet4o6SelectTestRelayInterfaceId) {
 // This test verifies if subnet4o6-select-test command returns proper subnet for a given
 // incoming interface.
 TEST_F(CtrlChannelDhcpv4SrvTest, subnet4o6SelectTestIface) {
-    isc::dhcp::test::IfaceMgrTestConfig test_config(true);
     createUnixChannelServer();
     std::string response;
 

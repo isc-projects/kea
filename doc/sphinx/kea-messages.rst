@@ -3306,6 +3306,16 @@ the configuration database. The operation started a retry to connect procedure.
 The database access string with password redacted is logged, along with the
 error and details for the reconnect procedure.
 
+DCTL_DEPRECATED_OUTPUT_OPTIONS
+==============================
+
+.. code-block:: text
+
+    The output_options parameter is deprecated. Use output-options parameter instead.
+
+This warning message is displayed when deprecated output_options is used instead
+of output-options.
+
 DCTL_DEVELOPMENT_VERSION
 ========================
 
@@ -3772,28 +3782,6 @@ This debug message informs that incoming packet belongs to a class
 which cannot be found in the configuration. Either a hook written
 before the classification was added to Kea is used, or class naming is
 inconsistent.
-
-DHCP4_CLASS_UNDEFINED
-=====================
-
-.. code-block:: text
-
-    required class %1 has no definition
-
-Logged at debug log level 40.
-This debug message informs that a class is listed for required evaluation but
-has no definition.
-
-DHCP4_CLASS_UNTESTABLE
-======================
-
-.. code-block:: text
-
-    required class %1 has no test expression
-
-Logged at debug log level 40.
-This debug message informs that a class was listed for required evaluation but
-its definition does not include a test expression to evaluate.
 
 DHCP4_CLIENTID_IGNORED_FOR_LEASES
 =================================
@@ -5541,6 +5529,29 @@ This debug message indicates that the expression of a required client class has
 been successfully evaluated. The client class name and the result value of the
 evaluation are printed.
 
+DHCP4_REQUIRED_CLASS_NO_TEST
+============================
+
+.. code-block:: text
+
+    required class %1 has no test expression, adding it to client's classes unconditionally
+
+Logged at debug log level 40.
+This debug message informs that a class was listed for required evaluation but
+its definition does not include a test expression to evaluate. The class is
+unconditionally added to the query.
+
+DHCP4_REQUIRED_CLASS_UNDEFINED
+==============================
+
+.. code-block:: text
+
+    required class %1 has no definition
+
+Logged at debug log level 40.
+This debug message informs that a class is listed for required evaluation but
+has no definition. The class is ignored.
+
 DHCP4_RESERVATIONS_LOOKUP_FIRST_ENABLED
 =======================================
 
@@ -6063,28 +6074,6 @@ This debug message informs that incoming packet belongs to a class
 which cannot be found in the configuration. Either a hook written
 before the classification was added to Kea is used, or class naming is
 inconsistent.
-
-DHCP6_CLASS_UNDEFINED
-=====================
-
-.. code-block:: text
-
-    required class %1 has no definition
-
-Logged at debug log level 40.
-This debug message informs that a class is listed for required evaluation but
-has no definition.
-
-DHCP6_CLASS_UNTESTABLE
-======================
-
-.. code-block:: text
-
-    required class %1 has no test expression
-
-Logged at debug log level 40.
-This debug message informs that a class was listed for required evaluation but
-its definition does not include a test expression to evaluate.
 
 DHCP6_CONFIG_COMPLETE
 =====================
@@ -7824,6 +7813,29 @@ This debug message indicates that the expression of a required client class has
 been successfully evaluated. The client class name and the result value of the
 evaluation are printed.
 
+DHCP6_REQUIRED_CLASS_NO_TEST
+============================
+
+.. code-block:: text
+
+    required class %1 has no test expression, adding it to client's classes unconditionally
+
+Logged at debug log level 40.
+This debug message informs that a class was listed for required evaluation but
+its definition does not include a test expression to evaluate. The class is
+unconditionally added to the query.
+
+DHCP6_REQUIRED_CLASS_UNDEFINED
+==============================
+
+.. code-block:: text
+
+    required class %1 has no definition
+
+Logged at debug log level 40.
+This debug message informs that a class is listed for required evaluation but
+has no definition. The class is ignored.
+
 DHCP6_REQUIRED_OPTIONS_CHECK_FAIL
 =================================
 
@@ -9004,8 +9016,20 @@ V6) is about to open a memory file lease database. The parameters of
 the connection including database name and username needed to access it
 (but not the password if any) are logged.
 
-DHCPSRV_MEMFILE_DELETE_ADDR
-===========================
+DHCPSRV_MEMFILE_DELETE_ADDR4
+============================
+
+.. code-block:: text
+
+    deleting lease for address %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to delete a lease
+for the specified address from the memory file database for the specified
+address.
+
+DHCPSRV_MEMFILE_DELETE_ADDR6
+============================
 
 .. code-block:: text
 
@@ -9622,619 +9646,6 @@ interfaces. It must be noted that this may lead to receiving and processing
 the same DHCP message multiple times, as it will be received by each socket
 individually.
 
-DHCPSRV_MYSQL_ADD_ADDR4
-=======================
-
-.. code-block:: text
-
-    adding IPv4 lease with address %1
-
-Logged at debug log level 50.
-A debug message issued when the server is about to add an IPv4 lease
-with the specified address to the MySQL backend database.
-
-DHCPSRV_MYSQL_ADD_ADDR6
-=======================
-
-.. code-block:: text
-
-    adding IPv6 lease with address %1, lease type %2
-
-Logged at debug log level 50.
-A debug message issued when the server is about to add an IPv6 lease
-with the specified address to the MySQL backend database.
-
-DHCPSRV_MYSQL_COMMIT
-====================
-
-.. code-block:: text
-
-    committing to MySQL database
-
-Logged at debug log level 50.
-The code has issued a commit call. All outstanding transactions will be
-committed to the database. Note that depending on the MySQL settings,
-the commit may not include a write to disk.
-
-DHCPSRV_MYSQL_DB
-================
-
-.. code-block:: text
-
-    opening MySQL lease database: %1
-
-This informational message is logged when a DHCP server (either V4 or
-V6) is about to open a MySQL lease database. The parameters of the
-connection including database name and username needed to access it
-(but not the password if any) are logged.
-
-DHCPSRV_MYSQL_DELETED_EXPIRED_RECLAIMED
-=======================================
-
-.. code-block:: text
-
-    deleted %1 reclaimed leases from the database
-
-Logged at debug log level 50.
-A debug message issued when the server has removed a number of reclaimed
-leases from the database. The number of removed leases is included in the
-message.
-
-DHCPSRV_MYSQL_DELETE_ADDR
-=========================
-
-.. code-block:: text
-
-    deleting lease for address %1
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to delete a lease for
-the specified address from the MySQL database for the specified address.
-
-DHCPSRV_MYSQL_DELETE_EXPIRED_RECLAIMED4
-=======================================
-
-.. code-block:: text
-
-    deleting reclaimed IPv4 leases that expired more than %1 seconds ago
-
-Logged at debug log level 50.
-A debug message issued when the server is removing reclaimed DHCPv4
-leases which have expired longer than a specified period of time.
-The argument is the amount of time Kea waits after a reclaimed
-lease expires before considering its removal.
-
-DHCPSRV_MYSQL_DELETE_EXPIRED_RECLAIMED6
-=======================================
-
-.. code-block:: text
-
-    deleting reclaimed IPv6 leases that expired more than %1 seconds ago
-
-Logged at debug log level 50.
-A debug message issued when the server is removing reclaimed DHCPv6
-leases which have expired longer than a specified period of time.
-The argument is the amount of time Kea waits after a reclaimed
-lease expires before considering its removal.
-
-DHCPSRV_MYSQL_GET4
-==================
-
-.. code-block:: text
-
-    obtaining all IPv4 leases
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain all IPv4
-leases from the MySQL database.
-
-DHCPSRV_MYSQL_GET6
-==================
-
-.. code-block:: text
-
-    obtaining all IPv6 leases
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain all IPv6
-leases from the MySQL database.
-
-DHCPSRV_MYSQL_GET_ADDR4
-=======================
-
-.. code-block:: text
-
-    obtaining IPv4 lease for address %1
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain an IPv4
-lease from the MySQL database for the specified address.
-
-DHCPSRV_MYSQL_GET_ADDR6
-=======================
-
-.. code-block:: text
-
-    obtaining IPv6 lease for address %1, lease type %2
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain an IPv6
-lease from the MySQL database for the specified address.
-
-DHCPSRV_MYSQL_GET_CLIENTID
-==========================
-
-.. code-block:: text
-
-    obtaining IPv4 leases for client ID %1
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a set
-of IPv4 leases from the MySQL database for a client with the specified
-client identification.
-
-DHCPSRV_MYSQL_GET_DUID
-======================
-
-.. code-block:: text
-
-    obtaining IPv6 lease for duid %1,
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain an IPv6
-lease from the MySQL database for the specified duid.
-
-DHCPSRV_MYSQL_GET_EXPIRED4
-==========================
-
-.. code-block:: text
-
-    obtaining maximum %1 of expired IPv4 leases
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain expired
-IPv4 leases to reclaim them. The maximum number of leases to be retrieved
-is logged in the message.
-
-DHCPSRV_MYSQL_GET_EXPIRED6
-==========================
-
-.. code-block:: text
-
-    obtaining maximum %1 of expired IPv6 leases
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain expired
-IPv6 leases to reclaim them. The maximum number of leases to be retrieved
-is logged in the message.
-
-DHCPSRV_MYSQL_GET_HOSTNAME4
-===========================
-
-.. code-block:: text
-
-    obtaining IPv4 leases for hostname %1
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a set
-of IPv4 leases from the MySQL database for a client with the specified
-hostname.
-
-DHCPSRV_MYSQL_GET_HOSTNAME6
-===========================
-
-.. code-block:: text
-
-    obtaining IPv6 leases for hostname %1
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a set
-of IPv6 leases from the MySQL database for a client with the specified
-hostname.
-
-DHCPSRV_MYSQL_GET_HWADDR
-========================
-
-.. code-block:: text
-
-    obtaining IPv4 leases for hardware address %1
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a set
-of IPv4 leases from the MySQL database for a client with the specified
-hardware address.
-
-DHCPSRV_MYSQL_GET_IAID_DUID
-===========================
-
-.. code-block:: text
-
-    obtaining IPv6 leases for IAID %1, DUID %2, lease type %3
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a set of IPv6
-leases from the MySQL database for a client with the specified IAID (Identity
-Association ID) and DUID (DHCP Unique Identifier).
-
-DHCPSRV_MYSQL_GET_IAID_SUBID_DUID
-=================================
-
-.. code-block:: text
-
-    obtaining IPv6 leases for IAID %1, Subnet ID %2, DUID %3, lease type %4
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain an IPv6
-lease from the MySQL database for a client with the specified IAID
-(Identity Association ID), Subnet ID and DUID (DHCP Unique Identifier).
-
-DHCPSRV_MYSQL_GET_PAGE4
-=======================
-
-.. code-block:: text
-
-    obtaining at most %1 IPv4 leases starting from address %2
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a page
-of leases beginning with the specified address.
-
-DHCPSRV_MYSQL_GET_PAGE6
-=======================
-
-.. code-block:: text
-
-    obtaining at most %1 IPv6 leases starting from address %2
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a page
-of leases beginning with the specified address.
-
-DHCPSRV_MYSQL_GET_RELAYID4
-==========================
-
-.. code-block:: text
-
-    obtaining at most %1 IPv4 leases starting from address %2 with relay id %3 and cltt between %4 and %5
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a page of
-IPv4 leases beginning with the specified address with a relay id and client
-transaction time between start and end dates.
-
-DHCPSRV_MYSQL_GET_RELAYID6
-==========================
-
-.. code-block:: text
-
-    obtaining at most %1 IPv6 leases starting from address %2 with relay id %3
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a page of
-IPv6 leases beginning with the specified address with a relay id.
-
-DHCPSRV_MYSQL_GET_REMOTEID4
-===========================
-
-.. code-block:: text
-
-    obtaining at most %1 IPv4 leases starting from address %2 with remote id %3 and cltt between %4 and %5
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a page of
-IPv4 leases beginning with the specified address with a remote id and client
-transaction time between start and end dates.
-
-DHCPSRV_MYSQL_GET_REMOTEID6
-===========================
-
-.. code-block:: text
-
-    obtaining at most %1 IPv6 leases starting from address %2 with remote id %3
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a page of
-IPv6 leases beginning with the specified address with a remote id.
-
-DHCPSRV_MYSQL_GET_SUBID4
-========================
-
-.. code-block:: text
-
-    obtaining IPv4 leases for subnet ID %1
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain all IPv4
-leases for a given subnet identifier from the MySQL database.
-
-DHCPSRV_MYSQL_GET_SUBID6
-========================
-
-.. code-block:: text
-
-    obtaining IPv6 leases for subnet ID %1
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain all IPv6
-leases for a given subnet identifier from the MySQL database.
-
-DHCPSRV_MYSQL_GET_SUBID_CLIENTID
-================================
-
-.. code-block:: text
-
-    obtaining IPv4 lease for subnet ID %1 and client ID %2
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain an IPv4
-lease from the MySQL database for a client with the specified subnet ID
-and client ID.
-
-DHCPSRV_MYSQL_GET_SUBID_HWADDR
-==============================
-
-.. code-block:: text
-
-    obtaining IPv4 lease for subnet ID %1 and hardware address %2
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain an IPv4
-lease from the MySQL database for a client with the specified subnet ID
-and hardware address.
-
-DHCPSRV_MYSQL_GET_SUBID_PAGE6
-=============================
-
-.. code-block:: text
-
-    obtaining at most %1 IPv6 leases starting from address %2 for subnet ID %3
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a page of
-IPv6 leases from the MySQL database beginning with the specified address
-for the specified subnet identifier.
-
-DHCPSRV_MYSQL_GET_VERSION
-=========================
-
-.. code-block:: text
-
-    obtaining schema version information
-
-Logged at debug log level 50.
-A debug message issued when the server is about to obtain schema version
-information from the MySQL database.
-
-DHCPSRV_MYSQL_HOST_DB
-=====================
-
-.. code-block:: text
-
-    opening MySQL hosts database: %1
-
-Logged at debug log level 50.
-This informational message is logged when a DHCP server (either V4 or
-V6) is about to open a MySQL hosts database. The parameters of the
-connection including database name and username needed to access it
-(but not the password if any) are logged.
-
-DHCPSRV_MYSQL_HOST_DB_GET_VERSION
-=================================
-
-.. code-block:: text
-
-    obtaining schema version information for the MySQL hosts database
-
-Logged at debug log level 50.
-A debug message issued when the server is about to obtain schema version
-information from the MySQL hosts database.
-
-DHCPSRV_MYSQL_HOST_DB_READONLY
-==============================
-
-.. code-block:: text
-
-    MySQL host database opened for read access only
-
-This informational message is issued when the user has configured the MySQL
-database in read-only mode. Kea will not be able to insert or modify
-host reservations but will be able to retrieve existing ones and
-assign them to the clients communicating with the server.
-
-DHCPSRV_MYSQL_HOST_DB_RECONNECT_ATTEMPT_FAILED
-==============================================
-
-.. code-block:: text
-
-    database reconnect failed: %1
-
-An error message issued when an attempt to reconnect has failed.
-
-DHCPSRV_MYSQL_HOST_DB_RECONNECT_ATTEMPT_SCHEDULE
-================================================
-
-.. code-block:: text
-
-    scheduling attempt %1 of %2 in %3 milliseconds
-
-An info message issued when the server is scheduling the next attempt to reconnect
-to the database. This occurs when the server has lost database connectivity and
-is attempting to reconnect automatically.
-
-DHCPSRV_MYSQL_HOST_DB_RECONNECT_FAILED
-======================================
-
-.. code-block:: text
-
-    maximum number of database reconnect attempts: %1, has been exhausted without success
-
-An error message issued when the server failed to reconnect. Loss of connectivity
-is typically a network or database server issue.
-
-DHCPSRV_MYSQL_LEASE_DB_RECONNECT_ATTEMPT_FAILED
-===============================================
-
-.. code-block:: text
-
-    database reconnect failed: %1
-
-An error message issued when an attempt to reconnect has failed.
-
-DHCPSRV_MYSQL_LEASE_DB_RECONNECT_ATTEMPT_SCHEDULE
-=================================================
-
-.. code-block:: text
-
-    scheduling attempt %1 of %2 in %3 milliseconds
-
-An info message issued when the server is scheduling the next attempt to reconnect
-to the database. This occurs when the server has lost database connectivity and
-is attempting to reconnect automatically.
-
-DHCPSRV_MYSQL_LEASE_DB_RECONNECT_FAILED
-=======================================
-
-.. code-block:: text
-
-    maximum number of database reconnect attempts: %1, has been exhausted without success
-
-An error message issued when the server failed to reconnect. Loss of connectivity
-is typically a network or database server issue.
-
-DHCPSRV_MYSQL_NEGATIVE_LEASES_STAT
-==================================
-
-.. code-block:: text
-
-    recount of leases returned a negative value
-
-This warning message is issued when the recount of leases using counters
-in the MySQL database returned a negative value. This shows a problem
-which can be fixed only by an offline direct recount on the database.
-This message is issued only once.
-
-DHCPSRV_MYSQL_NO_TLS
-====================
-
-.. code-block:: text
-
-    TLS was required but is not used
-
-This error message is issued when TLS for the connection was required but
-TLS is not used.
-
-DHCPSRV_MYSQL_ROLLBACK
-======================
-
-.. code-block:: text
-
-    rolling back MySQL database
-
-Logged at debug log level 50.
-The code has issued a rollback call. All outstanding transaction will
-be rolled back and not committed to the database.
-
-DHCPSRV_MYSQL_TLS_CIPHER
-========================
-
-.. code-block:: text
-
-    TLS cipher: %1
-
-Logged at debug log level 40.
-A debug message issued when a new MySQL connected is created with TLS.
-The TLS cipher name is logged.
-
-DHCPSRV_MYSQL_UPDATE_ADDR4
-==========================
-
-.. code-block:: text
-
-    updating IPv4 lease for address %1
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to update IPv4
-lease from the MySQL database for the specified address.
-
-DHCPSRV_MYSQL_UPDATE_ADDR6
-==========================
-
-.. code-block:: text
-
-    updating IPv6 lease for address %1, lease type %2
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to update IPv6
-lease from the MySQL database for the specified address.
-
-DHCPSRV_MYSQL_UPGRADE_EXTENDED_INFO4
-====================================
-
-.. code-block:: text
-
-    upgrading IPv4 leases done in %1 pages with %2 updated leases
-
-Logged at debug log level 40.
-The server upgraded extended info. The number of pages and the final count of
-updated leases are displayed.
-
-DHCPSRV_MYSQL_UPGRADE_EXTENDED_INFO4_ERROR
-==========================================
-
-.. code-block:: text
-
-    upgrading extending info for IPv4 lease at %1 failed with %2
-
-Logged at debug log level 40.
-A debug message issued when the server failed to upgrade an extended info.
-The address of the lease and the error message are displayed.
-
-DHCPSRV_MYSQL_UPGRADE_EXTENDED_INFO4_PAGE
-=========================================
-
-.. code-block:: text
-
-    upgrading IPv4 lease extended info at page %1 starting at %2 (updated %3)
-
-Logged at debug log level 50.
-A debug message issued when the server upgrades IPv4 lease extended info.
-The page number and started address, and the count of already updated leases
-are displayed.
-
-DHCPSRV_MYSQL_UPGRADE_EXTENDED_INFO6
-====================================
-
-.. code-block:: text
-
-    upgrading IPv6 leases done in %1 pages with %2 updated leases
-
-Logged at debug log level 40.
-The server upgraded extended info. The number of pages and the final count of
-updated leases are displayed.
-
-DHCPSRV_MYSQL_UPGRADE_EXTENDED_INFO6_ERROR
-==========================================
-
-.. code-block:: text
-
-    upgrading extending info for IPv6 lease at %1 failed with %2
-
-Logged at debug log level 40.
-A debug message issued when the server failed to upgrade the extended info
-for a lease. The address of the lease and the error message are displayed.
-
-DHCPSRV_MYSQL_UPGRADE_EXTENDED_INFO6_PAGE
-=========================================
-
-.. code-block:: text
-
-    upgrading IPv6 lease extended info at page %1 starting at %2 (updated %3)
-
-Logged at debug log level 50.
-A debug message issued when the server upgrades IPv6 lease extended info.
-The page number and started address, and the count of already updated leases
-are displayed.
-
 DHCPSRV_NOTYPE_DB
 =================
 
@@ -10268,609 +9679,6 @@ DHCPSRV_OPEN_SOCKET_FAIL
 A warning message issued when IfaceMgr fails to open and bind a socket.
 The reason for the failure is appended as an argument of the log message.
 
-DHCPSRV_PGSQL_ADD_ADDR4
-=======================
-
-.. code-block:: text
-
-    adding IPv4 lease with address %1
-
-Logged at debug log level 50.
-A debug message issued when the server is about to add an IPv4 lease
-with the specified address to the PostgreSQL backend database.
-
-DHCPSRV_PGSQL_ADD_ADDR6
-=======================
-
-.. code-block:: text
-
-    adding IPv6 lease with address %1, lease type %2
-
-Logged at debug log level 50.
-A debug message issued when the server is about to add an IPv6 lease
-with the specified address to the PostgreSQL backend database.
-
-DHCPSRV_PGSQL_COMMIT
-====================
-
-.. code-block:: text
-
-    committing to PostgreSQL database
-
-Logged at debug log level 50.
-The code has issued a commit call. All outstanding transactions will be
-committed to the database. Note that depending on the PostgreSQL settings,
-the commit may not include a write to disk.
-
-DHCPSRV_PGSQL_DB
-================
-
-.. code-block:: text
-
-    opening PostgreSQL lease database: %1
-
-This informational message is logged when a DHCP server (either V4 or
-V6) is about to open a PostgreSQL lease database. The parameters of the
-connection including database name and username needed to access it
-(but not the password if any) are logged.
-
-DHCPSRV_PGSQL_DELETE_ADDR
-=========================
-
-.. code-block:: text
-
-    deleting lease for address %1
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to delete a lease for
-the specified address from the PostgreSQL database for the specified address.
-
-DHCPSRV_PGSQL_DELETE_EXPIRED_RECLAIMED4
-=======================================
-
-.. code-block:: text
-
-    deleting reclaimed IPv4 leases that expired more than %1 seconds ago
-
-Logged at debug log level 50.
-A debug message issued when the server is removing reclaimed DHCPv4
-leases which have expired longer than a specified period of time.
-The argument is the amount of time Kea waits after a reclaimed
-lease expires before considering its removal.
-
-DHCPSRV_PGSQL_DELETE_EXPIRED_RECLAIMED6
-=======================================
-
-.. code-block:: text
-
-    deleting reclaimed IPv6 leases that expired more than %1 seconds ago
-
-Logged at debug log level 50.
-A debug message issued when the server is removing reclaimed DHCPv6
-leases which have expired longer than a specified period of time.
-The argument is the amount of time Kea waits after a reclaimed
-lease expires before considering its removal.
-
-DHCPSRV_PGSQL_GET4
-==================
-
-.. code-block:: text
-
-    obtaining all IPv4 leases
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain all IPv4
-leases from the PostgreSQL database.
-
-DHCPSRV_PGSQL_GET6
-==================
-
-.. code-block:: text
-
-    obtaining all IPv6 leases
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain all IPv6
-leases from the PostgreSQL database.
-
-DHCPSRV_PGSQL_GET_ADDR4
-=======================
-
-.. code-block:: text
-
-    obtaining IPv4 lease for address %1
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain an IPv4
-lease from the PostgreSQL database for the specified address.
-
-DHCPSRV_PGSQL_GET_ADDR6
-=======================
-
-.. code-block:: text
-
-    obtaining IPv6 lease for address %1 (lease type %2)
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain an IPv6
-lease from the PostgreSQL database for the specified address.
-
-DHCPSRV_PGSQL_GET_CLIENTID
-==========================
-
-.. code-block:: text
-
-    obtaining IPv4 leases for client ID %1
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a set
-of IPv4 leases from the PostgreSQL database for a client with the specified
-client identification.
-
-DHCPSRV_PGSQL_GET_DUID
-======================
-
-.. code-block:: text
-
-    obtaining IPv6 leases for DUID %1,
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a set of IPv6
-leases from the PostgreSQL database for a client with the specified DUID (DHCP Unique Identifier).
-
-DHCPSRV_PGSQL_GET_EXPIRED4
-==========================
-
-.. code-block:: text
-
-    obtaining maximum %1 of expired IPv4 leases
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain expired
-IPv4 leases to reclaim them. The maximum number of leases to be retrieved
-is logged in the message.
-
-DHCPSRV_PGSQL_GET_EXPIRED6
-==========================
-
-.. code-block:: text
-
-    obtaining maximum %1 of expired IPv6 leases
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain expired
-IPv6 leases to reclaim them. The maximum number of leases to be retrieved
-is logged in the message.
-
-DHCPSRV_PGSQL_GET_HOSTNAME4
-===========================
-
-.. code-block:: text
-
-    obtaining IPv4 leases for hostname %1
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a set
-of IPv4 leases from the PostgreSQL database for a client with the specified
-hostname.
-
-DHCPSRV_PGSQL_GET_HOSTNAME6
-===========================
-
-.. code-block:: text
-
-    obtaining IPv6 leases for hostname %1
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a set
-of IPv6 leases from the PostgreSQL database for a client with the specified
-hostname.
-
-DHCPSRV_PGSQL_GET_HWADDR
-========================
-
-.. code-block:: text
-
-    obtaining IPv4 leases for hardware address %1
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a set
-of IPv4 leases from the PostgreSQL database for a client with the specified
-hardware address.
-
-DHCPSRV_PGSQL_GET_IAID_DUID
-===========================
-
-.. code-block:: text
-
-    obtaining IPv4 leases for IAID %1 and DUID %2, lease type %3
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a set of IPv6
-leases from the PostgreSQL database for a client with the specified IAID
-(Identity Association ID) and DUID (DHCP Unique Identifier).
-
-DHCPSRV_PGSQL_GET_IAID_SUBID_DUID
-=================================
-
-.. code-block:: text
-
-    obtaining IPv4 leases for IAID %1, Subnet ID %2, DUID %3, and lease type %4
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain an IPv6
-lease from the PostgreSQL database for a client with the specified IAID
-(Identity Association ID), Subnet ID and DUID (DHCP Unique Identifier).
-
-DHCPSRV_PGSQL_GET_PAGE4
-=======================
-
-.. code-block:: text
-
-    obtaining at most %1 IPv4 leases starting from address %2
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a page
-of leases beginning with the specified address.
-
-DHCPSRV_PGSQL_GET_PAGE6
-=======================
-
-.. code-block:: text
-
-    obtaining at most %1 IPv6 leases starting from address %2
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a page
-of leases beginning with the specified address.
-
-DHCPSRV_PGSQL_GET_RELAYID4
-==========================
-
-.. code-block:: text
-
-    obtaining at most %1 IPv4 leases starting from address %2 with relay id %3 and cltt between %4 and %5
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a page of
-IPv4 leases beginning with the specified address with a relay id and client
-transaction time between start and end dates.
-
-DHCPSRV_PGSQL_GET_RELAYID6
-==========================
-
-.. code-block:: text
-
-    obtaining at most %1 IPv6 leases starting from address %2 with relay id %3
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a page of
-IPv6 leases beginning with the specified address with a relay id.
-
-DHCPSRV_PGSQL_GET_REMOTEID4
-===========================
-
-.. code-block:: text
-
-    obtaining at most %1 IPv4 leases starting from address %2 with remote id %3 and cltt between %4 and %5
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a page of
-IPv4 leases beginning with the specified address with a remote id and client
-transaction time between start and end dates.
-
-DHCPSRV_PGSQL_GET_REMOTEID6
-===========================
-
-.. code-block:: text
-
-    obtaining at most %1 IPv6 leases starting from address %2 with remote id %3
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a page of
-IPv6 leases beginning with the specified address with a remote id.
-
-DHCPSRV_PGSQL_GET_SUBID4
-========================
-
-.. code-block:: text
-
-    obtaining IPv4 leases for subnet ID %1
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain all IPv4
-leases for a given subnet identifier from the PostgreSQL database.
-
-DHCPSRV_PGSQL_GET_SUBID6
-========================
-
-.. code-block:: text
-
-    obtaining IPv6 leases for subnet ID %1
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain all IPv6
-leases for a given subnet identifier from the PostgreSQL database.
-
-DHCPSRV_PGSQL_GET_SUBID_CLIENTID
-================================
-
-.. code-block:: text
-
-    obtaining IPv4 lease for subnet ID %1 and client ID %2
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain an IPv4
-lease from the PostgreSQL database for a client with the specified subnet ID
-and client ID.
-
-DHCPSRV_PGSQL_GET_SUBID_HWADDR
-==============================
-
-.. code-block:: text
-
-    obtaining IPv4 lease for subnet ID %1 and hardware address %2
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain an IPv4
-lease from the PostgreSQL database for a client with the specified subnet ID
-and hardware address.
-
-DHCPSRV_PGSQL_GET_SUBID_PAGE6
-=============================
-
-.. code-block:: text
-
-    obtaining at most %1 IPv6 leases starting from address %2 for subnet ID %3
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a page of
-IPv6 leases from the PostgreSQL database beginning with the specified address
-for the specified subnet identifier.
-
-DHCPSRV_PGSQL_GET_VERSION
-=========================
-
-.. code-block:: text
-
-    obtaining schema version information
-
-Logged at debug log level 50.
-A debug message issued when the server is about to obtain schema version
-information from the PostgreSQL database.
-
-DHCPSRV_PGSQL_HOST_DB
-=====================
-
-.. code-block:: text
-
-    opening PostgreSQL hosts database: %1
-
-Logged at debug log level 50.
-This informational message is logged when a DHCP server (either V4 or
-V6) is about to open a PostgreSQL hosts database. The parameters of the
-connection including database name and username needed to access it
-(but not the password if any) are logged.
-
-DHCPSRV_PGSQL_HOST_DB_GET_VERSION
-=================================
-
-.. code-block:: text
-
-    obtaining schema version information for the PostgreSQL hosts database
-
-Logged at debug log level 50.
-A debug message issued when the server is about to obtain schema version
-information from the PostgreSQL hosts database.
-
-DHCPSRV_PGSQL_HOST_DB_READONLY
-==============================
-
-.. code-block:: text
-
-    PostgreSQL host database opened for read access only
-
-This informational message is issued when the user has configured the PostgreSQL
-database in read-only mode. Kea will not be able to insert or modify
-host reservations but will be able to retrieve existing ones and
-assign them to the clients communicating with the server.
-
-DHCPSRV_PGSQL_HOST_DB_RECONNECT_ATTEMPT_FAILED
-==============================================
-
-.. code-block:: text
-
-    database reconnect failed: %1
-
-An error message issued when an attempt to reconnect has failed.
-
-DHCPSRV_PGSQL_HOST_DB_RECONNECT_ATTEMPT_SCHEDULE
-================================================
-
-.. code-block:: text
-
-    scheduling attempt %1 of %2 in %3 milliseconds
-
-An info message issued when the server is scheduling the next attempt to reconnect
-to the database. This occurs when the server has lost database connectivity and
-is attempting to reconnect automatically.
-
-DHCPSRV_PGSQL_HOST_DB_RECONNECT_FAILED
-======================================
-
-.. code-block:: text
-
-    maximum number of database reconnect attempts: %1, has been exhausted without success
-
-An error message issued when the server failed to reconnect. Loss of connectivity
-is typically a network or database server issue.
-
-DHCPSRV_PGSQL_LEASE_DB_RECONNECT_ATTEMPT_FAILED
-===============================================
-
-.. code-block:: text
-
-    database reconnect failed: %1
-
-An error message issued when an attempt to reconnect has failed.
-
-DHCPSRV_PGSQL_LEASE_DB_RECONNECT_ATTEMPT_SCHEDULE
-=================================================
-
-.. code-block:: text
-
-    scheduling attempt %1 of %2 in %3 milliseconds
-
-An info message issued when the server is scheduling the next attempt to reconnect
-to the database. This occurs when the server has lost database connectivity and
-is attempting to reconnect automatically.
-
-DHCPSRV_PGSQL_LEASE_DB_RECONNECT_FAILED
-=======================================
-
-.. code-block:: text
-
-    maximum number of database reconnect attempts: %1, has been exhausted without success
-
-An error message issued when the server failed to reconnect. Loss of connectivity
-is typically a network or database server issue.
-
-DHCPSRV_PGSQL_NEGATIVE_LEASES_STAT
-==================================
-
-.. code-block:: text
-
-    recount of leases returned a negative value
-
-This warning message is issued when the recount of leases using counters
-in the PostgreSQL database returned a negative value. This shows a problem
-which can be fixed only by an offline direct recount on the database.
-This message is issued only once.
-
-DHCPSRV_PGSQL_NO_TLS_SUPPORT
-============================
-
-.. code-block:: text
-
-    Attempt to configure TLS (unsupported for PostgreSQL): %1
-
-This error message is printed when TLS support was required in the Kea
-configuration: Kea was built with this feature disabled for PostgreSQL.
-The parameters of the connection are logged.
-
-DHCPSRV_PGSQL_ROLLBACK
-======================
-
-.. code-block:: text
-
-    rolling back PostgreSQL database
-
-Logged at debug log level 50.
-The code has issued a rollback call. All outstanding transaction will
-be rolled back and not committed to the database.
-
-DHCPSRV_PGSQL_TLS_SUPPORT
-=========================
-
-.. code-block:: text
-
-    Attempt to configure TLS: %1
-
-This informational message is printed when TLS support was required in
-the Kea configuration: The TLS support in PostgreSQL will be initialized but
-its configuration is fully managed outside the C API.
-The parameters of the connection are logged.
-
-DHCPSRV_PGSQL_UPDATE_ADDR4
-==========================
-
-.. code-block:: text
-
-    updating IPv4 lease for address %1
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to update IPv4
-lease from the PostgreSQL database for the specified address.
-
-DHCPSRV_PGSQL_UPDATE_ADDR6
-==========================
-
-.. code-block:: text
-
-    updating IPv6 lease for address %1, lease type %2
-
-Logged at debug log level 50.
-A debug message issued when the server is attempting to update IPv6
-lease from the PostgreSQL database for the specified address.
-
-DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO4
-====================================
-
-.. code-block:: text
-
-    upgrading IPv4 leases done in %1 pages with %2 updated leases
-
-Logged at debug log level 40.
-The server upgraded extended info. The number of pages and the final count of
-updated leases are displayed.
-
-DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO4_ERROR
-==========================================
-
-.. code-block:: text
-
-    upgrading extending info for IPv4 lease at %1 failed with %2
-
-Logged at debug log level 40.
-A debug message issued when the server failed to upgrade an extended info.
-The address of the lease and the error message are displayed.
-
-DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO4_PAGE
-=========================================
-
-.. code-block:: text
-
-    upgrading IPv4 lease extended info at page %1 starting at %2 (updated %3)
-
-Logged at debug log level 50.
-A debug message issued when the server upgrades IPv4 lease extended info.
-The page number and started address, and the count of already updated leases
-are displayed.
-
-DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO6
-====================================
-
-.. code-block:: text
-
-    upgrading IPv6 leases done in %1 pages with %2 updated leases
-
-Logged at debug log level 40.
-The server upgraded extended info. The number of pages and the final count of
-updated leases are displayed.
-
-DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO6_ERROR
-==========================================
-
-.. code-block:: text
-
-    upgrading extending info for IPv6 lease at %1 failed with %2
-
-Logged at debug log level 40.
-A debug message issued when the server failed to upgrade the extended info
-for a lease. The address of the lease and the error message are displayed.
-
-DHCPSRV_PGSQL_UPGRADE_EXTENDED_INFO6_PAGE
-=========================================
-
-.. code-block:: text
-
-    upgrading IPv6 lease extended info at page %1 starting at %2 (updated %3)
-
-Logged at debug log level 50.
-A debug message issued when the server upgrades IPv6 lease extended info.
-The page number and started address, and the count of already updated leases
-are displayed.
-
 DHCPSRV_QUEUE_NCR
 =================
 
@@ -10878,7 +9686,7 @@ DHCPSRV_QUEUE_NCR
 
     %1: Name change request to %2 DNS entry queued: %3
 
-Logged at debug log level 50.
+Logged at debug log level 55.
 A debug message which is logged when the NameChangeRequest to add or remove
 a DNS entries for a particular lease has been queued. The first argument
 includes the client identification information. The second argument
@@ -15420,7 +14228,7 @@ HOSTS_CFG_GET_ALL
 
     get all hosts with reservations
 
-Logged at debug log level 45.
+Logged at debug log level 40.
 This debug message is issued when starting to retrieve all hosts.
 
 HOSTS_CFG_GET_ALL_ADDRESS4
@@ -15430,7 +14238,7 @@ HOSTS_CFG_GET_ALL_ADDRESS4
 
     get all hosts with reservations for IPv4 address %1
 
-Logged at debug log level 45.
+Logged at debug log level 40.
 This debug message is issued when starting to retrieve all hosts, holding the
 reservation for the specific IPv4 address, from the configuration. The
 argument specifies the IPv4 address used to search the hosts.
@@ -15466,7 +14274,7 @@ HOSTS_CFG_GET_ALL_ADDRESS6
 
     get all hosts with reservations for IPv6 address %1
 
-Logged at debug log level 45.
+Logged at debug log level 40.
 This debug message is issued when starting to retrieve all hosts, holding the
 reservation for the specific IPv6 address, from the configuration.
 The argument specifies the IPv6 address used to search the hosts.
@@ -15513,7 +14321,7 @@ HOSTS_CFG_GET_ALL_HOST
 
     found host: %1
 
-Logged at debug log level 45.
+Logged at debug log level 55.
 This debug message includes the details of the host found. The argument
 specifies found host details.
 
@@ -15524,7 +14332,7 @@ HOSTS_CFG_GET_ALL_HOSTNAME
 
     get all hosts with reservations for hostname %1
 
-Logged at debug log level 45.
+Logged at debug log level 40.
 This debug message is issued when starting to retrieve all hosts with
 the specific hostname. The argument specifies hostname.
 
@@ -15558,7 +14366,7 @@ HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID4
 
     get all hosts with reservations for hostname %1 and IPv4 subnet %2
 
-Logged at debug log level 45.
+Logged at debug log level 40.
 This debug message is issued when starting to retrieve all hosts with
 the specific hostname connected to the specific DHCPv4 subnet. The argument
 specifies hostname and subnet id.
@@ -15594,7 +14402,7 @@ HOSTS_CFG_GET_ALL_HOSTNAME_SUBNET_ID6
 
     get all hosts with reservations for hostname %1 and IPv6 subnet %2
 
-Logged at debug log level 45.
+Logged at debug log level 40.
 This debug message is issued when starting to retrieve all hosts with
 the specific hostname connected to the specific DHCPv6 subnet. The argument
 specifies hostname and subnet id.
@@ -15630,7 +14438,7 @@ HOSTS_CFG_GET_ALL_IDENTIFIER
 
     get all hosts with reservations using identifier: %1
 
-Logged at debug log level 45.
+Logged at debug log level 40.
 This debug message is issued when starting to retrieve reservations for all hosts
 identified by HW address or DUID. The argument holds both the identifier
 type and the value.
@@ -15666,7 +14474,7 @@ HOSTS_CFG_GET_ALL_SUBNET_ID4
 
     get all hosts with reservations for IPv4 subnet %1
 
-Logged at debug log level 45.
+Logged at debug log level 40.
 This debug message is issued when starting to retrieve all hosts connected to
 the specific DHCPv4 subnet. The argument specifies subnet id.
 
@@ -15700,7 +14508,7 @@ HOSTS_CFG_GET_ALL_SUBNET_ID6
 
     get all hosts with reservations for IPv6 subnet %1
 
-Logged at debug log level 45.
+Logged at debug log level 40.
 This debug message is issued when starting to retrieve all hosts connected to
 the specific DHCPv6 subnet. The argument specifies subnet id.
 
@@ -15734,7 +14542,7 @@ HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS4
 
     get all hosts with reservations for subnet id %1 and IPv4 address %2
 
-Logged at debug log level 45.
+Logged at debug log level 40.
 This debug message is issued when starting to retrieve all hosts having
 the reservation for the given IPv4 address within the given subnet. The
 first argument specifies subnet identifier. The second argument specifies
@@ -15774,7 +14582,7 @@ HOSTS_CFG_GET_ALL_SUBNET_ID_ADDRESS6
 
     get all hosts with reservations for subnet id %1 and IPv6 address %2
 
-Logged at debug log level 45.
+Logged at debug log level 40.
 This debug message is issued when starting to retrieve all hosts connected to
 the specific subnet and having the specific IPv6 address reserved.
 The arguments specify subnet id and IPv6 address respectively.
@@ -15846,7 +14654,7 @@ HOSTS_CFG_GET_ONE_SUBNET_ID_ADDRESS4
 
     get one host with reservation for subnet id %1 and IPv4 address %2
 
-Logged at debug log level 45.
+Logged at debug log level 40.
 This debug message is issued when starting to retrieve a host connected to the
 specific subnet and having the specific IPv4 address reserved. The
 arguments specify subnet id and IPv4 address respectively.
@@ -15880,7 +14688,7 @@ HOSTS_CFG_GET_ONE_SUBNET_ID_ADDRESS6
 
     get one host with reservation for subnet id %1 and having IPv6 address %2
 
-Logged at debug log level 45.
+Logged at debug log level 40.
 This debug message is issued when starting to retrieve a host connected to the
 specific subnet and having the specific IPv6 address reserved. The
 arguments specify subnet id and IPv6 address respectively.
@@ -15914,7 +14722,7 @@ HOSTS_CFG_GET_ONE_SUBNET_ID_IDENTIFIER
 
     get one host with %1 reservation for subnet id %2, identified by %3
 
-Logged at debug log level 45.
+Logged at debug log level 40.
 This debug message is issued when starting to retrieve a host holding
 IPv4 or IPv6 reservations, which is connected to a specific subnet and
 is identified by a specific unique identifier. The first argument
@@ -16003,7 +14811,7 @@ HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_IDENTIFIER
 
     get one host with IPv4 reservation for subnet id %1, identified by %2
 
-Logged at debug log level 45.
+Logged at debug log level 40.
 This debug message is issued when starting to retrieve a host holding
 IPv4 reservation, which is connected to a specific subnet and
 is identified by a specific unique identifier.
@@ -16064,7 +14872,7 @@ HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER
 
     get one host with IPv6 reservation for subnet id %1, identified by %2
 
-Logged at debug log level 45.
+Logged at debug log level 40.
 This debug message is issued when starting to retrieve a host holding
 IPv4 reservation, which is connected to a specific subnet and
 is identified by a specific unique identifier.
@@ -16384,7 +15192,7 @@ HOST_CACHE_GET_ONE_PREFIX
 
     get one host with reservation for prefix %1/%2
 
-Logged at debug log level 45.
+Logged at debug log level 40.
 This debug message is issued when starting to retrieve a host cache entry
 having a reservation for a specified prefix. The arguments specify a prefix
 and prefix length.
@@ -16408,7 +15216,7 @@ HOST_CACHE_GET_ONE_SUBNET_ID_ADDRESS4
 
     get one host with reservation for subnet id %1 and IPv4 address %2
 
-Logged at debug log level 45.
+Logged at debug log level 40.
 This debug message is issued when starting to retrieve a host cache entry
 connected to the specific subnet and having the specific IPv4 address reserved.
 The arguments specify subnet id and IPv4 address respectively.
@@ -16431,7 +15239,7 @@ HOST_CACHE_GET_ONE_SUBNET_ID_ADDRESS6
 
     get one host with reservation for subnet id %1 and including IPv6 address %2
 
-Logged at debug log level 45.
+Logged at debug log level 40.
 This debug message is issued when starting to retrieve a host cache entry
 connected to the specific subnet and having the specific IPv6 address
 reserved. The arguments specify subnet id and IPv6 address respectively.
@@ -16454,7 +15262,7 @@ HOST_CACHE_GET_ONE_SUBNET_ID_IDENTIFIER
 
     get one host with %1 reservation for subnet id %2, identified by %3
 
-Logged at debug log level 45.
+Logged at debug log level 40.
 This debug message is issued when starting to retrieve a host cache entry
 holding IPv4 or IPv6 reservations, which is connected to a specific subnet
 and is identified by a specific unique identifier. The first argument
@@ -18752,16 +17560,6 @@ MYSQL_CB_CREATE_UPDATE_SUBNET6
 Logged at debug log level 40.
 Debug message issued when triggered an action to create or update subnet
 
-MYSQL_CB_DEINIT_OK
-==================
-
-.. code-block:: text
-
-    unloading MYSQL CB hooks library successful
-
-This informational message indicates that the MySQL Configuration Backend hooks
-library has been unloaded successfully.
-
 MYSQL_CB_DELETE_ALL_CLIENT_CLASSES4
 ===================================
 
@@ -20326,16 +19124,6 @@ MYSQL_CB_GET_TYPE6
 Logged at debug log level 40.
 Debug message issued when triggered an action to retrieve type
 
-MYSQL_CB_INIT_OK
-================
-
-.. code-block:: text
-
-    loading MYSQL CB hooks library successful
-
-This informational message indicates that the MySQL Configuration Backend hooks
-library has been loaded successfully. Enjoy!
-
 MYSQL_CB_NO_TLS
 ===============
 
@@ -20446,6 +19234,647 @@ MYSQL_CB_UNREGISTER_BACKEND_TYPE4
 
 Logged at debug log level 40.
 Debug message issued when triggered an action to unregister backend
+
+MYSQL_DEINIT_OK
+===============
+
+.. code-block:: text
+
+    unloading MySQL hooks library successful
+
+This informational message indicates that the MySQL Backend hooks
+library has been unloaded successfully.
+
+MYSQL_HB_DB
+===========
+
+.. code-block:: text
+
+    opening MySQL hosts database: %1
+
+This informational message is logged when a DHCP server (either V4 or
+V6) is about to open a MySQL hosts database. The parameters of the
+connection including database name and username needed to access it
+(but not the password if any) are logged.
+
+MYSQL_HB_DB_GET_VERSION
+=======================
+
+.. code-block:: text
+
+    obtaining schema version information for the MySQL hosts database
+
+Logged at debug log level 50.
+A debug message issued when the server is about to obtain schema version
+information from the MySQL hosts database.
+
+MYSQL_HB_DB_READONLY
+====================
+
+.. code-block:: text
+
+    MySQL host database opened for read access only
+
+This informational message is issued when the user has configured the MySQL
+database in read-only mode. Kea will not be able to insert or modify
+host reservations but will be able to retrieve existing ones and
+assign them to the clients communicating with the server.
+
+MYSQL_HB_DB_RECONNECT_ATTEMPT_FAILED
+====================================
+
+.. code-block:: text
+
+    database reconnect failed: %1
+
+An error message issued when an attempt to reconnect has failed.
+
+MYSQL_HB_DB_RECONNECT_ATTEMPT_SCHEDULE
+======================================
+
+.. code-block:: text
+
+    scheduling attempt %1 of %2 in %3 milliseconds
+
+An info message issued when the server is scheduling the next attempt to reconnect
+to the database. This occurs when the server has lost database connectivity and
+is attempting to reconnect automatically.
+
+MYSQL_HB_DB_RECONNECT_FAILED
+============================
+
+.. code-block:: text
+
+    maximum number of database reconnect attempts: %1, has been exhausted without success
+
+An error message issued when the server failed to reconnect. Loss of connectivity
+is typically a network or database server issue.
+
+MYSQL_HB_NO_TLS
+===============
+
+.. code-block:: text
+
+    TLS was required but is not used
+
+This error message is issued when TLS for the connection was required but
+TLS is not used.
+
+MYSQL_INIT_OK
+=============
+
+.. code-block:: text
+
+    loading MySQL hooks library successful
+
+This informational message indicates that the MySQL Backend hooks
+library has been loaded successfully. Enjoy!
+
+MYSQL_LB_ADD_ADDR4
+==================
+
+.. code-block:: text
+
+    adding IPv4 lease with address %1
+
+Logged at debug log level 50.
+A debug message issued when the server is about to add an IPv4 lease
+with the specified address to the MySQL backend database.
+
+MYSQL_LB_ADD_ADDR6
+==================
+
+.. code-block:: text
+
+    adding IPv6 lease with address %1, lease type %2
+
+Logged at debug log level 50.
+A debug message issued when the server is about to add an IPv6 lease
+with the specified address to the MySQL backend database.
+
+MYSQL_LB_COMMIT
+===============
+
+.. code-block:: text
+
+    committing to MySQL database
+
+Logged at debug log level 50.
+The code has issued a commit call. All outstanding transactions will be
+committed to the database. Note that depending on the MySQL settings,
+the commit may not include a write to disk.
+
+MYSQL_LB_DB
+===========
+
+.. code-block:: text
+
+    opening MySQL lease database: %1
+
+This informational message is logged when a DHCP server (either V4 or
+V6) is about to open a MySQL lease database. The parameters of the
+connection including database name and username needed to access it
+(but not the password if any) are logged.
+
+MYSQL_LB_DB_RECONNECT_ATTEMPT_FAILED
+====================================
+
+.. code-block:: text
+
+    database reconnect failed: %1
+
+An error message issued when an attempt to reconnect has failed.
+
+MYSQL_LB_DB_RECONNECT_ATTEMPT_SCHEDULE
+======================================
+
+.. code-block:: text
+
+    scheduling attempt %1 of %2 in %3 milliseconds
+
+An info message issued when the server is scheduling the next attempt to reconnect
+to the database. This occurs when the server has lost database connectivity and
+is attempting to reconnect automatically.
+
+MYSQL_LB_DB_RECONNECT_FAILED
+============================
+
+.. code-block:: text
+
+    maximum number of database reconnect attempts: %1, has been exhausted without success
+
+An error message issued when the server failed to reconnect. Loss of connectivity
+is typically a network or database server issue.
+
+MYSQL_LB_DELETED_EXPIRED_RECLAIMED
+==================================
+
+.. code-block:: text
+
+    deleted %1 reclaimed leases from the database
+
+Logged at debug log level 50.
+A debug message issued when the server has removed a number of reclaimed
+leases from the database. The number of removed leases is included in the
+message.
+
+MYSQL_LB_DELETE_ADDR4
+=====================
+
+.. code-block:: text
+
+    deleting lease for address %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to delete a lease for
+the specified address from the MySQL database for the specified address.
+
+MYSQL_LB_DELETE_ADDR6
+=====================
+
+.. code-block:: text
+
+    deleting lease for address %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to delete a lease for
+the specified address from the MySQL database for the specified address.
+
+MYSQL_LB_DELETE_EXPIRED_RECLAIMED4
+==================================
+
+.. code-block:: text
+
+    deleting reclaimed IPv4 leases that expired more than %1 seconds ago
+
+Logged at debug log level 50.
+A debug message issued when the server is removing reclaimed DHCPv4
+leases which have expired longer than a specified period of time.
+The argument is the amount of time Kea waits after a reclaimed
+lease expires before considering its removal.
+
+MYSQL_LB_DELETE_EXPIRED_RECLAIMED6
+==================================
+
+.. code-block:: text
+
+    deleting reclaimed IPv6 leases that expired more than %1 seconds ago
+
+Logged at debug log level 50.
+A debug message issued when the server is removing reclaimed DHCPv6
+leases which have expired longer than a specified period of time.
+The argument is the amount of time Kea waits after a reclaimed
+lease expires before considering its removal.
+
+MYSQL_LB_GET4
+=============
+
+.. code-block:: text
+
+    obtaining all IPv4 leases
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain all IPv4
+leases from the MySQL database.
+
+MYSQL_LB_GET6
+=============
+
+.. code-block:: text
+
+    obtaining all IPv6 leases
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain all IPv6
+leases from the MySQL database.
+
+MYSQL_LB_GET_ADDR4
+==================
+
+.. code-block:: text
+
+    obtaining IPv4 lease for address %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain an IPv4
+lease from the MySQL database for the specified address.
+
+MYSQL_LB_GET_ADDR6
+==================
+
+.. code-block:: text
+
+    obtaining IPv6 lease for address %1, lease type %2
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain an IPv6
+lease from the MySQL database for the specified address.
+
+MYSQL_LB_GET_CLIENTID
+=====================
+
+.. code-block:: text
+
+    obtaining IPv4 leases for client ID %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set
+of IPv4 leases from the MySQL database for a client with the specified
+client identification.
+
+MYSQL_LB_GET_DUID
+=================
+
+.. code-block:: text
+
+    obtaining IPv6 lease for duid %1,
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain an IPv6
+lease from the MySQL database for the specified duid.
+
+MYSQL_LB_GET_EXPIRED4
+=====================
+
+.. code-block:: text
+
+    obtaining maximum %1 of expired IPv4 leases
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain expired
+IPv4 leases to reclaim them. The maximum number of leases to be retrieved
+is logged in the message.
+
+MYSQL_LB_GET_EXPIRED6
+=====================
+
+.. code-block:: text
+
+    obtaining maximum %1 of expired IPv6 leases
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain expired
+IPv6 leases to reclaim them. The maximum number of leases to be retrieved
+is logged in the message.
+
+MYSQL_LB_GET_HOSTNAME4
+======================
+
+.. code-block:: text
+
+    obtaining IPv4 leases for hostname %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set
+of IPv4 leases from the MySQL database for a client with the specified
+hostname.
+
+MYSQL_LB_GET_HOSTNAME6
+======================
+
+.. code-block:: text
+
+    obtaining IPv6 leases for hostname %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set
+of IPv6 leases from the MySQL database for a client with the specified
+hostname.
+
+MYSQL_LB_GET_HWADDR
+===================
+
+.. code-block:: text
+
+    obtaining IPv4 leases for hardware address %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set
+of IPv4 leases from the MySQL database for a client with the specified
+hardware address.
+
+MYSQL_LB_GET_IAID_DUID
+======================
+
+.. code-block:: text
+
+    obtaining IPv6 leases for IAID %1, DUID %2, lease type %3
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set of IPv6
+leases from the MySQL database for a client with the specified IAID (Identity
+Association ID) and DUID (DHCP Unique Identifier).
+
+MYSQL_LB_GET_IAID_SUBID_DUID
+============================
+
+.. code-block:: text
+
+    obtaining IPv6 leases for IAID %1, Subnet ID %2, DUID %3, lease type %4
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain an IPv6
+lease from the MySQL database for a client with the specified IAID
+(Identity Association ID), Subnet ID and DUID (DHCP Unique Identifier).
+
+MYSQL_LB_GET_PAGE4
+==================
+
+.. code-block:: text
+
+    obtaining at most %1 IPv4 leases starting from address %2
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a page
+of leases beginning with the specified address.
+
+MYSQL_LB_GET_PAGE6
+==================
+
+.. code-block:: text
+
+    obtaining at most %1 IPv6 leases starting from address %2
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a page
+of leases beginning with the specified address.
+
+MYSQL_LB_GET_RELAYID4
+=====================
+
+.. code-block:: text
+
+    obtaining at most %1 IPv4 leases starting from address %2 with relay id %3 and cltt between %4 and %5
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a page of
+IPv4 leases beginning with the specified address with a relay id and client
+transaction time between start and end dates.
+
+MYSQL_LB_GET_RELAYID6
+=====================
+
+.. code-block:: text
+
+    obtaining at most %1 IPv6 leases starting from address %2 with relay id %3
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a page of
+IPv6 leases beginning with the specified address with a relay id.
+
+MYSQL_LB_GET_REMOTEID4
+======================
+
+.. code-block:: text
+
+    obtaining at most %1 IPv4 leases starting from address %2 with remote id %3 and cltt between %4 and %5
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a page of
+IPv4 leases beginning with the specified address with a remote id and client
+transaction time between start and end dates.
+
+MYSQL_LB_GET_REMOTEID6
+======================
+
+.. code-block:: text
+
+    obtaining at most %1 IPv6 leases starting from address %2 with remote id %3
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a page of
+IPv6 leases beginning with the specified address with a remote id.
+
+MYSQL_LB_GET_SUBID4
+===================
+
+.. code-block:: text
+
+    obtaining IPv4 leases for subnet ID %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain all IPv4
+leases for a given subnet identifier from the MySQL database.
+
+MYSQL_LB_GET_SUBID6
+===================
+
+.. code-block:: text
+
+    obtaining IPv6 leases for subnet ID %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain all IPv6
+leases for a given subnet identifier from the MySQL database.
+
+MYSQL_LB_GET_SUBID_CLIENTID
+===========================
+
+.. code-block:: text
+
+    obtaining IPv4 lease for subnet ID %1 and client ID %2
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain an IPv4
+lease from the MySQL database for a client with the specified subnet ID
+and client ID.
+
+MYSQL_LB_GET_SUBID_HWADDR
+=========================
+
+.. code-block:: text
+
+    obtaining IPv4 lease for subnet ID %1 and hardware address %2
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain an IPv4
+lease from the MySQL database for a client with the specified subnet ID
+and hardware address.
+
+MYSQL_LB_GET_SUBID_PAGE6
+========================
+
+.. code-block:: text
+
+    obtaining at most %1 IPv6 leases starting from address %2 for subnet ID %3
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a page of
+IPv6 leases from the MySQL database beginning with the specified address
+for the specified subnet identifier.
+
+MYSQL_LB_GET_VERSION
+====================
+
+.. code-block:: text
+
+    obtaining schema version information
+
+Logged at debug log level 50.
+A debug message issued when the server is about to obtain schema version
+information from the MySQL database.
+
+MYSQL_LB_NEGATIVE_LEASES_STAT
+=============================
+
+.. code-block:: text
+
+    recount of leases returned a negative value
+
+This warning message is issued when the recount of leases using counters
+in the MySQL database returned a negative value. This shows a problem
+which can be fixed only by an offline direct recount on the database.
+This message is issued only once.
+
+MYSQL_LB_NO_TLS
+===============
+
+.. code-block:: text
+
+    TLS was required but is not used
+
+This error message is issued when TLS for the connection was required but
+TLS is not used.
+
+MYSQL_LB_ROLLBACK
+=================
+
+.. code-block:: text
+
+    rolling back MySQL database
+
+Logged at debug log level 50.
+The code has issued a rollback call. All outstanding transaction will
+be rolled back and not committed to the database.
+
+MYSQL_LB_TLS_CIPHER
+===================
+
+.. code-block:: text
+
+    TLS cipher: %1
+
+Logged at debug log level 40.
+A debug message issued when a new MySQL connected is created with TLS.
+The TLS cipher name is logged.
+
+MYSQL_LB_UPDATE_ADDR4
+=====================
+
+.. code-block:: text
+
+    updating IPv4 lease for address %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to update IPv4
+lease from the MySQL database for the specified address.
+
+MYSQL_LB_UPDATE_ADDR6
+=====================
+
+.. code-block:: text
+
+    updating IPv6 lease for address %1, lease type %2
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to update IPv6
+lease from the MySQL database for the specified address.
+
+MYSQL_LB_UPGRADE_EXTENDED_INFO4
+===============================
+
+.. code-block:: text
+
+    upgrading IPv4 leases done in %1 pages with %2 updated leases
+
+Logged at debug log level 40.
+The server upgraded extended info. The number of pages and the final count of
+updated leases are displayed.
+
+MYSQL_LB_UPGRADE_EXTENDED_INFO4_ERROR
+=====================================
+
+.. code-block:: text
+
+    upgrading extending info for IPv4 lease at %1 failed with %2
+
+Logged at debug log level 40.
+A debug message issued when the server failed to upgrade an extended info.
+The address of the lease and the error message are displayed.
+
+MYSQL_LB_UPGRADE_EXTENDED_INFO4_PAGE
+====================================
+
+.. code-block:: text
+
+    upgrading IPv4 lease extended info at page %1 starting at %2 (updated %3)
+
+Logged at debug log level 50.
+A debug message issued when the server upgrades IPv4 lease extended info.
+The page number and started address, and the count of already updated leases
+are displayed.
+
+MYSQL_LB_UPGRADE_EXTENDED_INFO6
+===============================
+
+.. code-block:: text
+
+    upgrading IPv6 leases done in %1 pages with %2 updated leases
+
+Logged at debug log level 40.
+The server upgraded extended info. The number of pages and the final count of
+updated leases are displayed.
+
+MYSQL_LB_UPGRADE_EXTENDED_INFO6_ERROR
+=====================================
+
+.. code-block:: text
+
+    upgrading extending info for IPv6 lease at %1 failed with %2
+
+Logged at debug log level 40.
+A debug message issued when the server failed to upgrade the extended info
+for a lease. The address of the lease and the error message are displayed.
 
 *******
 NETCONF
@@ -21222,16 +20651,6 @@ PGSQL_CB_CREATE_UPDATE_SUBNET6
 
 Logged at debug log level 40.
 Debug message issued when triggered an action to create or update subnet
-
-PGSQL_CB_DEINIT_OK
-==================
-
-.. code-block:: text
-
-    unloading Postgres CB hooks library successful
-
-This informational message indicates that the Postgres Configuration Backend hooks
-library has been unloaded successfully.
 
 PGSQL_CB_DELETE_ALL_CLIENT_CLASSES4
 ===================================
@@ -22797,16 +22216,6 @@ PGSQL_CB_GET_TYPE6
 Logged at debug log level 40.
 Debug message issued when triggered an action to retrieve type
 
-PGSQL_CB_INIT_OK
-================
-
-.. code-block:: text
-
-    loading Postgres CB hooks library successful
-
-This informational message indicates that the Postgres Configuration Backend hooks
-library has been loaded successfully. Enjoy!
-
 PGSQL_CB_NO_TLS_SUPPORT
 =======================
 
@@ -22919,6 +22328,638 @@ PGSQL_CB_UNREGISTER_BACKEND_TYPE4
 
 Logged at debug log level 40.
 Debug message issued when triggered an action to unregister backend
+
+PGSQL_DEINIT_OK
+===============
+
+.. code-block:: text
+
+    unloading PostgreSQL hooks library successful
+
+This informational message indicates that the PostgreSQL Backend hooks
+library has been unloaded successfully.
+
+PGSQL_HB_DB
+===========
+
+.. code-block:: text
+
+    opening PostgreSQL hosts database: %1
+
+This informational message is logged when a DHCP server (either V4 or
+V6) is about to open a PostgreSQL hosts database. The parameters of the
+connection including database name and username needed to access it
+(but not the password if any) are logged.
+
+PGSQL_HB_DB_GET_VERSION
+=======================
+
+.. code-block:: text
+
+    obtaining schema version information for the PostgreSQL hosts database
+
+Logged at debug log level 50.
+A debug message issued when the server is about to obtain schema version
+information from the PostgreSQL hosts database.
+
+PGSQL_HB_DB_READONLY
+====================
+
+.. code-block:: text
+
+    PostgreSQL host database opened for read access only
+
+This informational message is issued when the user has configured the PostgreSQL
+database in read-only mode. Kea will not be able to insert or modify
+host reservations but will be able to retrieve existing ones and
+assign them to the clients communicating with the server.
+
+PGSQL_HB_DB_RECONNECT_ATTEMPT_FAILED
+====================================
+
+.. code-block:: text
+
+    database reconnect failed: %1
+
+An error message issued when an attempt to reconnect has failed.
+
+PGSQL_HB_DB_RECONNECT_ATTEMPT_SCHEDULE
+======================================
+
+.. code-block:: text
+
+    scheduling attempt %1 of %2 in %3 milliseconds
+
+An info message issued when the server is scheduling the next attempt to reconnect
+to the database. This occurs when the server has lost database connectivity and
+is attempting to reconnect automatically.
+
+PGSQL_HB_DB_RECONNECT_FAILED
+============================
+
+.. code-block:: text
+
+    maximum number of database reconnect attempts: %1, has been exhausted without success
+
+An error message issued when the server failed to reconnect. Loss of connectivity
+is typically a network or database server issue.
+
+PGSQL_HB_NO_TLS_SUPPORT
+=======================
+
+.. code-block:: text
+
+    Attempt to configure TLS (unsupported for PostgreSQL): %1
+
+This error message is printed when TLS support was required in the Kea
+configuration: Kea was built with this feature disabled for PostgreSQL.
+The parameters of the connection are logged.
+
+PGSQL_INIT_OK
+=============
+
+.. code-block:: text
+
+    loading PostgreSQL hooks library successful
+
+This informational message indicates that the PostgreSQL Backend hooks
+library has been loaded successfully. Enjoy!
+
+PGSQL_LB_ADD_ADDR4
+==================
+
+.. code-block:: text
+
+    adding IPv4 lease with address %1
+
+Logged at debug log level 50.
+A debug message issued when the server is about to add an IPv4 lease
+with the specified address to the PostgreSQL backend database.
+
+PGSQL_LB_ADD_ADDR6
+==================
+
+.. code-block:: text
+
+    adding IPv6 lease with address %1, lease type %2
+
+Logged at debug log level 50.
+A debug message issued when the server is about to add an IPv6 lease
+with the specified address to the PostgreSQL backend database.
+
+PGSQL_LB_COMMIT
+===============
+
+.. code-block:: text
+
+    committing to PostgreSQL database
+
+Logged at debug log level 50.
+The code has issued a commit call. All outstanding transactions will be
+committed to the database. Note that depending on the PostgreSQL settings,
+the commit may not include a write to disk.
+
+PGSQL_LB_DB
+===========
+
+.. code-block:: text
+
+    opening PostgreSQL lease database: %1
+
+This informational message is logged when a DHCP server (either V4 or
+V6) is about to open a PostgreSQL lease database. The parameters of the
+connection including database name and username needed to access it
+(but not the password if any) are logged.
+
+PGSQL_LB_DB_RECONNECT_ATTEMPT_FAILED
+====================================
+
+.. code-block:: text
+
+    database reconnect failed: %1
+
+An error message issued when an attempt to reconnect has failed.
+
+PGSQL_LB_DB_RECONNECT_ATTEMPT_SCHEDULE
+======================================
+
+.. code-block:: text
+
+    scheduling attempt %1 of %2 in %3 milliseconds
+
+An info message issued when the server is scheduling the next attempt to reconnect
+to the database. This occurs when the server has lost database connectivity and
+is attempting to reconnect automatically.
+
+PGSQL_LB_DB_RECONNECT_FAILED
+============================
+
+.. code-block:: text
+
+    maximum number of database reconnect attempts: %1, has been exhausted without success
+
+An error message issued when the server failed to reconnect. Loss of connectivity
+is typically a network or database server issue.
+
+PGSQL_LB_DELETE_ADDR4
+=====================
+
+.. code-block:: text
+
+    deleting lease for address %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to delete a lease for
+the specified address from the PostgreSQL database for the specified address.
+
+PGSQL_LB_DELETE_ADDR6
+=====================
+
+.. code-block:: text
+
+    deleting lease for address %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to delete a lease for
+the specified address from the PostgreSQL database for the specified address.
+
+PGSQL_LB_DELETE_EXPIRED_RECLAIMED4
+==================================
+
+.. code-block:: text
+
+    deleting reclaimed IPv4 leases that expired more than %1 seconds ago
+
+Logged at debug log level 50.
+A debug message issued when the server is removing reclaimed DHCPv4
+leases which have expired longer than a specified period of time.
+The argument is the amount of time Kea waits after a reclaimed
+lease expires before considering its removal.
+
+PGSQL_LB_DELETE_EXPIRED_RECLAIMED6
+==================================
+
+.. code-block:: text
+
+    deleting reclaimed IPv6 leases that expired more than %1 seconds ago
+
+Logged at debug log level 50.
+A debug message issued when the server is removing reclaimed DHCPv6
+leases which have expired longer than a specified period of time.
+The argument is the amount of time Kea waits after a reclaimed
+lease expires before considering its removal.
+
+PGSQL_LB_GET4
+=============
+
+.. code-block:: text
+
+    obtaining all IPv4 leases
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain all IPv4
+leases from the PostgreSQL database.
+
+PGSQL_LB_GET6
+=============
+
+.. code-block:: text
+
+    obtaining all IPv6 leases
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain all IPv6
+leases from the PostgreSQL database.
+
+PGSQL_LB_GET_ADDR4
+==================
+
+.. code-block:: text
+
+    obtaining IPv4 lease for address %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain an IPv4
+lease from the PostgreSQL database for the specified address.
+
+PGSQL_LB_GET_ADDR6
+==================
+
+.. code-block:: text
+
+    obtaining IPv6 lease for address %1 (lease type %2)
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain an IPv6
+lease from the PostgreSQL database for the specified address.
+
+PGSQL_LB_GET_CLIENTID
+=====================
+
+.. code-block:: text
+
+    obtaining IPv4 leases for client ID %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set
+of IPv4 leases from the PostgreSQL database for a client with the specified
+client identification.
+
+PGSQL_LB_GET_DUID
+=================
+
+.. code-block:: text
+
+    obtaining IPv6 leases for DUID %1,
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set of IPv6
+leases from the PostgreSQL database for a client with the specified DUID (DHCP Unique Identifier).
+
+PGSQL_LB_GET_EXPIRED4
+=====================
+
+.. code-block:: text
+
+    obtaining maximum %1 of expired IPv4 leases
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain expired
+IPv4 leases to reclaim them. The maximum number of leases to be retrieved
+is logged in the message.
+
+PGSQL_LB_GET_EXPIRED6
+=====================
+
+.. code-block:: text
+
+    obtaining maximum %1 of expired IPv6 leases
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain expired
+IPv6 leases to reclaim them. The maximum number of leases to be retrieved
+is logged in the message.
+
+PGSQL_LB_GET_HOSTNAME4
+======================
+
+.. code-block:: text
+
+    obtaining IPv4 leases for hostname %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set
+of IPv4 leases from the PostgreSQL database for a client with the specified
+hostname.
+
+PGSQL_LB_GET_HOSTNAME6
+======================
+
+.. code-block:: text
+
+    obtaining IPv6 leases for hostname %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set
+of IPv6 leases from the PostgreSQL database for a client with the specified
+hostname.
+
+PGSQL_LB_GET_HWADDR
+===================
+
+.. code-block:: text
+
+    obtaining IPv4 leases for hardware address %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set
+of IPv4 leases from the PostgreSQL database for a client with the specified
+hardware address.
+
+PGSQL_LB_GET_IAID_DUID
+======================
+
+.. code-block:: text
+
+    obtaining IPv4 leases for IAID %1 and DUID %2, lease type %3
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set of IPv6
+leases from the PostgreSQL database for a client with the specified IAID
+(Identity Association ID) and DUID (DHCP Unique Identifier).
+
+PGSQL_LB_GET_IAID_SUBID_DUID
+============================
+
+.. code-block:: text
+
+    obtaining IPv4 leases for IAID %1, Subnet ID %2, DUID %3, and lease type %4
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain an IPv6
+lease from the PostgreSQL database for a client with the specified IAID
+(Identity Association ID), Subnet ID and DUID (DHCP Unique Identifier).
+
+PGSQL_LB_GET_PAGE4
+==================
+
+.. code-block:: text
+
+    obtaining at most %1 IPv4 leases starting from address %2
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a page
+of leases beginning with the specified address.
+
+PGSQL_LB_GET_PAGE6
+==================
+
+.. code-block:: text
+
+    obtaining at most %1 IPv6 leases starting from address %2
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a page
+of leases beginning with the specified address.
+
+PGSQL_LB_GET_RELAYID4
+=====================
+
+.. code-block:: text
+
+    obtaining at most %1 IPv4 leases starting from address %2 with relay id %3 and cltt between %4 and %5
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a page of
+IPv4 leases beginning with the specified address with a relay id and client
+transaction time between start and end dates.
+
+PGSQL_LB_GET_RELAYID6
+=====================
+
+.. code-block:: text
+
+    obtaining at most %1 IPv6 leases starting from address %2 with relay id %3
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a page of
+IPv6 leases beginning with the specified address with a relay id.
+
+PGSQL_LB_GET_REMOTEID4
+======================
+
+.. code-block:: text
+
+    obtaining at most %1 IPv4 leases starting from address %2 with remote id %3 and cltt between %4 and %5
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a page of
+IPv4 leases beginning with the specified address with a remote id and client
+transaction time between start and end dates.
+
+PGSQL_LB_GET_REMOTEID6
+======================
+
+.. code-block:: text
+
+    obtaining at most %1 IPv6 leases starting from address %2 with remote id %3
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a page of
+IPv6 leases beginning with the specified address with a remote id.
+
+PGSQL_LB_GET_SUBID4
+===================
+
+.. code-block:: text
+
+    obtaining IPv4 leases for subnet ID %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain all IPv4
+leases for a given subnet identifier from the PostgreSQL database.
+
+PGSQL_LB_GET_SUBID6
+===================
+
+.. code-block:: text
+
+    obtaining IPv6 leases for subnet ID %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain all IPv6
+leases for a given subnet identifier from the PostgreSQL database.
+
+PGSQL_LB_GET_SUBID_CLIENTID
+===========================
+
+.. code-block:: text
+
+    obtaining IPv4 lease for subnet ID %1 and client ID %2
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain an IPv4
+lease from the PostgreSQL database for a client with the specified subnet ID
+and client ID.
+
+PGSQL_LB_GET_SUBID_HWADDR
+=========================
+
+.. code-block:: text
+
+    obtaining IPv4 lease for subnet ID %1 and hardware address %2
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain an IPv4
+lease from the PostgreSQL database for a client with the specified subnet ID
+and hardware address.
+
+PGSQL_LB_GET_SUBID_PAGE6
+========================
+
+.. code-block:: text
+
+    obtaining at most %1 IPv6 leases starting from address %2 for subnet ID %3
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a page of
+IPv6 leases from the PostgreSQL database beginning with the specified address
+for the specified subnet identifier.
+
+PGSQL_LB_GET_VERSION
+====================
+
+.. code-block:: text
+
+    obtaining schema version information
+
+Logged at debug log level 50.
+A debug message issued when the server is about to obtain schema version
+information from the PostgreSQL database.
+
+PGSQL_LB_NEGATIVE_LEASES_STAT
+=============================
+
+.. code-block:: text
+
+    recount of leases returned a negative value
+
+This warning message is issued when the recount of leases using counters
+in the PostgreSQL database returned a negative value. This shows a problem
+which can be fixed only by an offline direct recount on the database.
+This message is issued only once.
+
+PGSQL_LB_NO_TLS_SUPPORT
+=======================
+
+.. code-block:: text
+
+    Attempt to configure TLS (unsupported for PostgreSQL): %1
+
+This error message is printed when TLS support was required in the Kea
+configuration: Kea was built with this feature disabled for PostgreSQL.
+The parameters of the connection are logged.
+
+PGSQL_LB_ROLLBACK
+=================
+
+.. code-block:: text
+
+    rolling back PostgreSQL database
+
+Logged at debug log level 50.
+The code has issued a rollback call. All outstanding transaction will
+be rolled back and not committed to the database.
+
+PGSQL_LB_TLS_SUPPORT
+====================
+
+.. code-block:: text
+
+    Attempt to configure TLS: %1
+
+This informational message is printed when TLS support was required in
+the Kea configuration: The TLS support in PostgreSQL will be initialized but
+its configuration is fully managed outside the C API.
+The parameters of the connection are logged.
+
+PGSQL_LB_UPDATE_ADDR4
+=====================
+
+.. code-block:: text
+
+    updating IPv4 lease for address %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to update IPv4
+lease from the PostgreSQL database for the specified address.
+
+PGSQL_LB_UPDATE_ADDR6
+=====================
+
+.. code-block:: text
+
+    updating IPv6 lease for address %1, lease type %2
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to update IPv6
+lease from the PostgreSQL database for the specified address.
+
+PGSQL_LB_UPGRADE_EXTENDED_INFO4
+===============================
+
+.. code-block:: text
+
+    upgrading IPv4 leases done in %1 pages with %2 updated leases
+
+Logged at debug log level 40.
+The server upgraded extended info. The number of pages and the final count of
+updated leases are displayed.
+
+PGSQL_LB_UPGRADE_EXTENDED_INFO4_ERROR
+=====================================
+
+.. code-block:: text
+
+    upgrading extending info for IPv4 lease at %1 failed with %2
+
+Logged at debug log level 40.
+A debug message issued when the server failed to upgrade an extended info.
+The address of the lease and the error message are displayed.
+
+PGSQL_LB_UPGRADE_EXTENDED_INFO4_PAGE
+====================================
+
+.. code-block:: text
+
+    upgrading IPv4 lease extended info at page %1 starting at %2 (updated %3)
+
+Logged at debug log level 50.
+A debug message issued when the server upgrades IPv4 lease extended info.
+The page number and started address, and the count of already updated leases
+are displayed.
+
+PGSQL_LB_UPGRADE_EXTENDED_INFO6
+===============================
+
+.. code-block:: text
+
+    upgrading IPv6 leases done in %1 pages with %2 updated leases
+
+Logged at debug log level 40.
+The server upgraded extended info. The number of pages and the final count of
+updated leases are displayed.
+
+PGSQL_LB_UPGRADE_EXTENDED_INFO6_ERROR
+=====================================
+
+.. code-block:: text
+
+    upgrading extending info for IPv6 lease at %1 failed with %2
+
+Logged at debug log level 40.
+A debug message issued when the server failed to upgrade the extended info
+for a lease. The address of the lease and the error message are displayed.
 
 ****
 PING

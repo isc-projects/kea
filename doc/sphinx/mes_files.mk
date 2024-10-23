@@ -1,4 +1,3 @@
-mes_files += $(top_srcdir)/premium/src/hooks/agent/rbac/rbac_messages.mes
 mes_files += $(top_srcdir)/premium/src/hooks/d2/gss_tsig/gss_tsig_messages.mes
 mes_files += $(top_srcdir)/premium/src/hooks/dhcp/cb_cmds/cb_cmds_messages.mes
 mes_files += $(top_srcdir)/premium/src/hooks/dhcp/class_cmds/class_cmds_messages.mes
@@ -11,6 +10,7 @@ mes_files += $(top_srcdir)/premium/src/hooks/dhcp/lease_query/lease_query_messag
 mes_files += $(top_srcdir)/premium/src/hooks/dhcp/limits/limits_messages.mes
 mes_files += $(top_srcdir)/premium/src/hooks/dhcp/ping_check/ping_check_messages.mes
 mes_files += $(top_srcdir)/premium/src/hooks/dhcp/radius/radius_messages.mes
+mes_files += $(top_srcdir)/premium/src/hooks/dhcp/rbac/rbac_messages.mes
 mes_files += $(top_srcdir)/premium/src/hooks/dhcp/subnet_cmds/subnet_cmds_messages.mes
 mes_files += $(top_srcdir)/src/bin/agent/ca_messages.mes
 mes_files += $(top_srcdir)/src/bin/dhcp4/dhcp4_messages.mes
