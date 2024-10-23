@@ -262,6 +262,7 @@ ConstElementPtr
 ControlledDhcpv6Srv::commandConfigHashGetHandler(const string&,
                                                  ConstElementPtr /*args*/) {
     ConstElementPtr config = CfgMgr::instance().getCurrentCfg()->toElement();
+
     string hash = BaseCommandMgr::getHash(config);
 
     ElementPtr params = Element::createMap();

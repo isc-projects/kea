@@ -1351,7 +1351,6 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
         return (notify_libraries);
     }
 
-
     // Initialize the allocators. If the user selected a Free Lease Queue Allocator
     // for any of the subnets, the server will now populate free leases to the queue.
     // It may take a while!
@@ -1577,9 +1576,9 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         CommandMgr::instance().deregisterCommand("dhcp-disable");
         CommandMgr::instance().deregisterCommand("dhcp-enable");
         CommandMgr::instance().deregisterCommand("leases-reclaim");
-        CommandMgr::instance().deregisterCommand("server-tag-get");
         CommandMgr::instance().deregisterCommand("subnet4-select-test");
         CommandMgr::instance().deregisterCommand("subnet4o6-select-test");
+        CommandMgr::instance().deregisterCommand("server-tag-get");
         CommandMgr::instance().deregisterCommand("shutdown");
         CommandMgr::instance().deregisterCommand("statistic-get");
         CommandMgr::instance().deregisterCommand("statistic-get-all");
