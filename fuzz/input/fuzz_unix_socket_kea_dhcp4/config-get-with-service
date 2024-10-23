@@ -1,0 +1,4 @@
+{
+  "command": "config-get",
+  "service": [ "dhcp4" ]
+}

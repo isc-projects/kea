@@ -1,6 +1,7 @@
 /fuzz_config_kea_dhcp4
 /fuzz_config_kea_dhcp6
-/fuzz_http_endpoint
+/fuzz_http_endpoint_kea_dhcp4
+/fuzz_http_endpoint_kea_dhcp6
 /fuzz_packets_kea_dhcp4
 /fuzz_packets_kea_dhcp6
 /fuzz_unix_socket_kea_dhcp4

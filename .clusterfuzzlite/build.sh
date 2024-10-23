@@ -35,12 +35,11 @@ install_kea() {
   # Copy internal libraries.
   # SC2156 (warning): Injecting filenames is fragile and insecure. Use parameters.
   # shellcheck disable=SC2156
-  find "/opt/kea/lib" -mindepth 1 -maxdepth 1 -exec sh -c "cp {} ${KEA_BUILD_DIR}" ';'
+  find "/opt/kea/lib" -mindepth 1 -maxdepth 1 -not -type d -exec sh -c "cp {} ${KEA_BUILD_DIR}" ';'
 
   # Copy the binaries.
-  for fuzzer in fuzz-config-kea-dhcp4 fuzz-packets-kea-dhcp4 fuzz-unix-socket-kea-dhcp4 \
-                fuzz-config-kea-dhcp6 fuzz-packets-kea-dhcp6 fuzz-unix-socket-kea-dhcp6 \
-                fuzz-http-endpoint \
+  for fuzzer in fuzz_config_kea_dhcp4 fuzz_http_endpoint_kea_dhcp4 fuzz_packets_kea_dhcp4 fuzz_unix_socket_kea_dhcp4 \
+                fuzz_config_kea_dhcp6 fuzz_http_endpoint_kea_dhcp6 fuzz_packets_kea_dhcp6 fuzz_unix_socket_kea_dhcp6 \
       ; do
     cp "/opt/kea/sbin/${fuzzer}" "${OUT}/${fuzzer}"
     # copy all required libraries

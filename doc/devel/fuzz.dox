@@ -34,14 +34,15 @@ There are two binaries under test:
 - `kea-dhcp4`
 - `kea-dhcp6`
 
-Combining the binaries and the fuzzer types results in seven fuzzing binaries:
-- `fuzz/fuzz-config-kea-dhcp4`
-- `fuzz/fuzz-config-kea-dhcp6`
-- `fuzz/fuzz-http-endpoint`
-- `fuzz/fuzz-packets-kea-dhcp4`
-- `fuzz/fuzz-packets-kea-dhcp6`
-- `fuzz/fuzz-unix-socket-kea-dhcp4`
-- `fuzz/fuzz-unix-socket-kea-dhcp6`
+Combining the binaries and the fuzzer types results in eight fuzzing binaries:
+- `fuzz/fuzz_config_kea_dhcp4`
+- `fuzz/fuzz_config_kea_dhcp6`
+- `fuzz/fuzz_http_endpoint_kea_dhcp4`
+- `fuzz/fuzz_http_endpoint_kea_dhcp6`
+- `fuzz/fuzz_packets_kea_dhcp4`
+- `fuzz/fuzz_packets_kea_dhcp6`
+- `fuzz/fuzz_unix_socket_kea_dhcp4`
+- `fuzz/fuzz_unix_socket_kea_dhcp6`
 
 @subsection HowToBuild How to Build the LLVM Fuzzer
 

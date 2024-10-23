@@ -17,6 +17,8 @@
 #include <asiolink/interval_timer.h>
 #include <cc/data.h>
 #include <config/cmd_http_listener.h>
+#include <dhcp4/ctrl_dhcp4_srv.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <http/listener.h>
 #include <http/post_request_json.h>
 #include <http/response.h>
@@ -30,6 +32,7 @@
 using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::data;
+using namespace isc::dhcp;
 using namespace isc::process;
 using namespace isc::http;
 using namespace isc::http::test;
@@ -37,6 +40,13 @@ using namespace isc::util;
 using namespace std;
 
 namespace {
+
+static pid_t const PID(getpid());
+static int const PORT(getpid() % 1000 + 2000);
+static string const PID_STR(to_string(PID));
+static string const PORT_STR(to_string(PORT));
+static string const KEA_DHCP4_CONF(KEA_FUZZ_DIR + "/kea-dhcp4-" + PID_STR + ".conf");
+static string const KEA_DHCP4_CSV(KEA_FUZZ_DIR + "/kea-dhcp4-" + PID_STR + ".csv");
 
 void timeoutHandler() {
     cerr << "Timeout occurred while fuzzing!" << endl;
@@ -89,9 +99,6 @@ using PostHttpRequestBytesPtr = boost::shared_ptr<PostHttpRequestBytes>;
 
 ThreadPool<function<void()>> THREAD_POOL;
 
-static pid_t const PID(getpid());
-static string const PID_STR(to_string(PID));
-
 }  // namespace
 
 extern "C" {
@@ -101,16 +108,46 @@ LLVMFuzzerInitialize() {
     static bool initialized(DoInitialization());
     assert(initialized);
 
+    writeToFile(KEA_DHCP4_CONF, R"(
+      {
+        "Dhcp4": {
+          "control-sockets": [
+            {
+              "socket-address": "0.0.0.0",
+              "socket-port": )" + PORT_STR + R"(,
+              "socket-type": "http"
+            }
+          ],
+          "lease-database": {
+            "name": ")" + KEA_DHCP4_CSV + R"(",
+            "type": "memfile"
+          }
+        }
+      }
+    )");
+
     return 0;
 }
 
 int
 LLVMFuzzerTearDown() {
+    try {
+        remove(KEA_DHCP4_CONF.c_str());
+    } catch (...) {
+    }
+    try {
+        remove(KEA_DHCP4_CSV.c_str());
+    } catch (...) {
+    }
     return 0;
 }
 
 int
 LLVMFuzzerTestOneInput(uint8_t const* data, size_t size) {
+    CfgMgr::instance().clear();
+    ControlledDhcpv4Srv server;
+    server.init(KEA_DHCP4_CONF);
+
     string const address("127.0.0.1");
     int const port(18000);
     int const timeout(100000);

@@ -20,7 +20,8 @@ CLEANFILES = *.gcno *.gcda
 sbin_PROGRAMS  =
 sbin_PROGRAMS += fuzz_config_kea_dhcp4
 sbin_PROGRAMS += fuzz_config_kea_dhcp6
-sbin_PROGRAMS += fuzz_http_endpoint
+sbin_PROGRAMS += fuzz_http_endpoint_kea_dhcp4
+sbin_PROGRAMS += fuzz_http_endpoint_kea_dhcp6
 sbin_PROGRAMS += fuzz_packets_kea_dhcp4
 sbin_PROGRAMS += fuzz_packets_kea_dhcp6
 sbin_PROGRAMS += fuzz_unix_socket_kea_dhcp4
@@ -65,9 +66,13 @@ fuzz_config_kea_dhcp6_SOURCES  = $(common_sources)
 fuzz_config_kea_dhcp6_SOURCES += fuzz_config_kea_dhcp6.cc
 fuzz_config_kea_dhcp6_LDADD = $(V6_LDADD) $(LDADD)
 
-fuzz_http_endpoint_SOURCES  = $(common_sources)
-fuzz_http_endpoint_SOURCES += fuzz_http_endpoint.cc
-fuzz_http_endpoint_LDADD = $(LDADD)
+fuzz_http_endpoint_kea_dhcp4_SOURCES  = $(common_sources)
+fuzz_http_endpoint_kea_dhcp4_SOURCES += fuzz_http_endpoint_kea_dhcp4.cc
+fuzz_http_endpoint_kea_dhcp4_LDADD = $(V4_LDADD) $(LDADD)
+
+fuzz_http_endpoint_kea_dhcp6_SOURCES  = $(common_sources)
+fuzz_http_endpoint_kea_dhcp6_SOURCES += fuzz_http_endpoint_kea_dhcp6.cc
+fuzz_http_endpoint_kea_dhcp6_LDADD = $(V6_LDADD) $(LDADD)
 
 fuzz_packets_kea_dhcp4_SOURCES  = $(common_sources)
 fuzz_packets_kea_dhcp4_SOURCES += fuzz_packets_kea_dhcp4.cc
