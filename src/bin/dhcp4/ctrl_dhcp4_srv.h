@@ -303,7 +303,7 @@ private:
     /// @return status of the command with the selection result
     isc::data::ConstElementPtr
     commandSubnet4o6SelectTestHandler(const std::string& command,
-                              isc::data::ConstElementPtr args);
+                                      isc::data::ConstElementPtr args);
 
     /// @brief handler for server-tag-get command
     ///

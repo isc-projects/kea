@@ -2,7 +2,7 @@
 	Added three new API commands: subnet4-select-test and
 	subnet4o6-select-test to kea-dhcp4, and subnet6-select-test
 	to kea-dhcp6.  These commands can be used to check which
-	subnet the server will select based on given input paramters.
+	subnet the server will select based on given input parameters.
 	(Gitlab #2794)
 
 2290.	[bug]		razvan

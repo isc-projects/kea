@@ -917,7 +917,7 @@ packet. Recognized parameters take strings and are:
  -  ``classes`` - (list of strings) client classes (allowing to select a guarded subnet)
 
 According to the code only ``remote``, ``interface-id`` and ``interface``
-selectors are used. In DHCPv4-over-DHCPv6 implementation ``interface` and
+selectors are used. In DHCPv4-over-DHCPv6 implementation ``interface`` and
 ``remote`` values are transmitted from the DHCPv6 server, ``interface-id``
 and ``link`` are carried in the relay info part of the DHCPv6 packet so
 are the same as for the DHCPv6 server.
