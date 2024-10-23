@@ -4921,9 +4921,9 @@ void Dhcpv6Srv::discardPackets() {
 
 uint16_t Dhcpv6Srv::getServerPort() const {
 #ifdef FUZZING
-    char const* const randomize(getenv("KEA_DHCP6_FUZZING_ROTATE_PORT"));
-    if (randomize) {
-        InterprocessSyncFile file("kea-dhcp6-fuzzing-randomize-port");
+    char const* const rotate(getenv("KEA_DHCP6_FUZZING_ROTATE_PORT"));
+    if (rotate) {
+        InterprocessSyncFile file("kea-dhcp6-fuzzing-rotate-port");
         InterprocessSyncLocker locker(file);
         while (!locker.lock()) {
             this_thread::sleep_for(1s);

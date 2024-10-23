@@ -42,12 +42,13 @@ using namespace std;
 namespace {
 
 static pid_t const PID(getpid());
-static int const PORT(getpid() % 1000 + 2000);
 static string const PID_STR(to_string(PID));
-static string const PORT_STR(to_string(PORT));
-static string const ADDRESS("0.0.0.0");
+static string const ADDRESS("127.0.0.1");
 static string const KEA_DHCP4_CONF(KEA_FUZZ_DIR + "/kea-dhcp4-" + PID_STR + ".conf");
 static string const KEA_DHCP4_CSV(KEA_FUZZ_DIR + "/kea-dhcp4-" + PID_STR + ".csv");
+
+static int PORT;
+static string PORT_STR;
 
 /// @brief Represents HTTP POST request with JSON body.
 ///
@@ -102,24 +103,7 @@ LLVMFuzzerInitialize() {
     static bool initialized(DoInitialization());
     assert(initialized);
 
-    writeToFile(KEA_DHCP4_CONF, R"(
-      {
-        "Dhcp4": {
-          "control-sockets": [
-            {
-              "socket-address": ")" + ADDRESS + R"(",
-              "socket-port": )" + PORT_STR + R"(,
-              "socket-type": "http"
-            }
-          ],
-          "lease-database": {
-            "name": ")" + KEA_DHCP4_CSV + R"(",
-            "persist": false,
-            "type": "memfile"
-          }
-        }
-      }
-    )");
+    setenv("KEA_DHCP4_FUZZING_ROTATE_PORT", "true", 0);
 
     return 0;
 }
@@ -141,6 +125,29 @@ int
 LLVMFuzzerTestOneInput(uint8_t const* data, size_t size) {
     CfgMgr::instance().clear();
     ControlledDhcpv4Srv server;
+
+    PORT = ControlledDhcpv4Srv::getInstance()->getServerPort();
+    PORT_STR = to_string(PORT);
+
+    writeToFile(KEA_DHCP4_CONF, R"(
+      {
+        "Dhcp4": {
+          "control-sockets": [
+            {
+              "socket-address": ")" + ADDRESS + R"(",
+              "socket-port": )" + PORT_STR + R"(,
+              "socket-type": "http"
+            }
+          ],
+          "lease-database": {
+            "name": ")" + KEA_DHCP4_CSV + R"(",
+            "persist": false,
+            "type": "memfile"
+          }
+        }
+      }
+    )");
+
     server.init(KEA_DHCP4_CONF);
 
     HttpClient client(ControlledDhcpv4Srv::getInstance()->getIOService(), false);

@@ -42,12 +42,13 @@ using namespace std;
 namespace {
 
 static pid_t const PID(getpid());
-static int const PORT(getpid() % 1000 + 2000);
 static string const PID_STR(to_string(PID));
-static string const PORT_STR(to_string(PORT));
-static string const ADDRESS("::");
+static string const ADDRESS("::1");
 static string const KEA_DHCP6_CONF(KEA_FUZZ_DIR + "/kea-dhcp6-" + PID_STR + ".conf");
 static string const KEA_DHCP6_CSV(KEA_FUZZ_DIR + "/kea-dhcp6-" + PID_STR + ".csv");
+
+static int PORT;
+static string PORT_STR;
 
 /// @brief Represents HTTP POST request with JSON body.
 ///
@@ -102,6 +103,32 @@ LLVMFuzzerInitialize() {
     static bool initialized(DoInitialization());
     assert(initialized);
 
+    setenv("KEA_DHCP6_FUZZING_ROTATE_PORT", "true", 0);
+
+    return 0;
+}
+
+int
+LLVMFuzzerTearDown() {
+    try {
+        remove(KEA_DHCP6_CONF.c_str());
+    } catch (...) {
+    }
+    try {
+        remove(KEA_DHCP6_CSV.c_str());
+    } catch (...) {
+    }
+    return 0;
+}
+
+int
+LLVMFuzzerTestOneInput(uint8_t const* data, size_t size) {
+    CfgMgr::instance().clear();
+    ControlledDhcpv6Srv server;
+
+    PORT = ControlledDhcpv6Srv::getInstance()->getServerPort();
+    PORT_STR = to_string(PORT);
+
     writeToFile(KEA_DHCP6_CONF, R"(
       {
         "Dhcp6": {
@@ -127,26 +154,6 @@ LLVMFuzzerInitialize() {
       }
     )");
 
-    return 0;
-}
-
-int
-LLVMFuzzerTearDown() {
-    try {
-        remove(KEA_DHCP6_CONF.c_str());
-    } catch (...) {
-    }
-    try {
-        remove(KEA_DHCP6_CSV.c_str());
-    } catch (...) {
-    }
-    return 0;
-}
-
-int
-LLVMFuzzerTestOneInput(uint8_t const* data, size_t size) {
-    CfgMgr::instance().clear();
-    ControlledDhcpv6Srv server;
     server.init(KEA_DHCP6_CONF);
 
     HttpClient client(ControlledDhcpv6Srv::getInstance()->getIOService(), false);

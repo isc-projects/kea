@@ -1,6 +1,6 @@
 #!/bin/sh
 
-if ! sudo -n true; then exec sudo -E -- "${0}" "${@}"; fi
+if test "$(id -u)" != 0; then exec sudo -E -- "${0}" "${@}"; fi
 
 script_path=$(cd "$(dirname "${0}")" && pwd)
 
