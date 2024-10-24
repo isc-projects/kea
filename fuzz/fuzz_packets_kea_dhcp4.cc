@@ -43,8 +43,16 @@ LLVMFuzzerInitialize() {
 
     setenv("KEA_DHCP4_FUZZING_ROTATE_PORT", "true", 0);
 
+    if (if_nametoindex("lo") > 0) {
+        KEA_DHCP4_FUZZING_INTERFACE = string("lo");
+    } else if (if_nametoindex("lo0") > 0) {
+        KEA_DHCP4_FUZZING_INTERFACE = string("lo0");
+    }
+
     char const* interface(getenv("KEA_DHCP4_FUZZING_INTERFACE"));
-    KEA_DHCP4_FUZZING_INTERFACE = string(interface ? interface : "lo");
+    if (interface) {
+        KEA_DHCP4_FUZZING_INTERFACE = string(interface);
+    }
 
     char const* address(getenv("KEA_DHCP4_FUZZING_ADDRESS"));
     KEA_DHCP4_FUZZING_ADDRESS = string(address ? address : "127.0.0.1");

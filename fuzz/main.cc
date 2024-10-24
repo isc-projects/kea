@@ -81,7 +81,7 @@ main(int, char* argv[]) {
 
         for (string& f : files) {
             // Read content from file.
-            basic_ifstream<uint8_t> file(f, ios::binary);
+            ifstream file(f, ios::binary);
 
             if (!file.is_open()) {
                 cerr << "ERROR: could not open file " << f << endl;
@@ -95,7 +95,7 @@ main(int, char* argv[]) {
 
             // Read the entire file into a vector.
             vector<uint8_t> buffer(bytes);
-            file.read(buffer.data(), bytes);
+            file.read(reinterpret_cast<char*>(buffer.data()), bytes);
 
             file.close();
 

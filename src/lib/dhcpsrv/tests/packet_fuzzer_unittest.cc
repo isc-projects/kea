@@ -21,8 +21,7 @@ TEST(PacketFuzzerTest, constructor) {
     // v6 requires valid interface. Skip positive test case.
 
     // Negative test cases
-    EXPECT_THROW_MSG(PacketFuzzer(547, "invalid_eth%", "fe80::1"), FuzzInitFail,
-                     "error retrieving interface ID for invalid_eth%: No such device");
+    EXPECT_THROW(PacketFuzzer(547, "invalid_eth%", "fe80::1"), FuzzInitFail);
     EXPECT_THROW_MSG(PacketFuzzer(1234, "testeth", "abcd"), isc::asiolink::IOError,
                      "Failed to convert string to address 'abcd': Invalid argument");
 }
