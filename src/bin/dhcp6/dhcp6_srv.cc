@@ -79,6 +79,7 @@
 #include <hooks/hooks_manager.h>
 #include <hooks/parking_lots.h>
 #include <hooks/server_hooks.h>
+#include <log/interprocess/interprocess_sync_file.h>
 #include <log/log_dbglevels.h>
 #include <log/log_formatter.h>
 #include <log/logger.h>
