@@ -2809,7 +2809,7 @@ Calculation of the values is controlled by the following three parameters:
 
 .. note::
 
-   Unlike DHCPv4 the tee times are always present in DHCPv6 address and
+   Unlike DHCPv4 the tee (T1, T2) times are always present in DHCPv6 address and
    prefix options.  Therefore the default value for ``calculate-tee-times``
    for :iscman:`kea-dhcp6` is ``true``. This ensures the server's default
    behavior will result in non-zero tee times being sent to clients. This
