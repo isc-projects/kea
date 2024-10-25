@@ -6432,7 +6432,7 @@ BEGIN
         (0, 'empty'),
         (1, 'binary'),
         (2, 'boolean'),
-        (3, 'int8"'),
+        (3, 'int8'),
         (4, 'int16'),
         (5, 'int32'),
         (6, 'uint8'),

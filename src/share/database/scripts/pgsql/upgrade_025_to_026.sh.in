@@ -46,6 +46,8 @@ ALTER TABLE dhcp4_options
 ALTER TABLE dhcp6_options
     ADD COLUMN client_classes TEXT DEFAULT NULL;
 
+UPDATE option_def_data_type SET name='int8' where id = 3;
+
 -- Update the schema version number.
 UPDATE schema_version
     SET version = '26', minor = '0';
