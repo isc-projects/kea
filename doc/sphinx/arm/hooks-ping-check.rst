@@ -11,11 +11,6 @@ to a behavior available in ISC DHCP and one suggested in `RFC
 
 .. note::
 
-    This library is experimental and not recommended for use in production
-    environments.
-
-.. note::
-
     :ischooklib:`libdhcp_ping_check.so` is available only to ISC customers
     with a paid support contract. For more information on subscription options,
     please complete the form at https://www.isc.org/contact.

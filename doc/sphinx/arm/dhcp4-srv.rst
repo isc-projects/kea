@@ -4535,7 +4535,7 @@ Stash Agent Options
 -------------------
 
 This global parameter was added in version 2.5.8 to mirror a feature that was
-previously available in ISC DHCP. When the ``stash-agent-option`` parameter
+previously available in ISC DHCP. When the ``stash-agent-options`` parameter
 is ``true``, the server records the relay agent information options sent
 during the client's initial DHCPREQUEST message (when the client was in the
 SELECTING state) and behaves as if those options are included in all

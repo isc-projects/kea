@@ -1056,9 +1056,8 @@ parameters as defined in :ref:`database-configuration4`. The ``type``
 parameter should be ``mysql``, ``postgresql`` or ``logfile``; when
 it is absent or set to ``logfile``, files are used.
 
-This database feature is experimental. No specific tools are provided
-to operate the database, but standard tools may be used, for example,
-to dump the logs table from a MYSQL database:
+No specific tools are provided to operate the database, but standard
+tools may be used, for example, to dump the logs table from a MYSQL database:
 
 ::
 
