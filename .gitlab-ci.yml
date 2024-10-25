@@ -295,15 +295,9 @@ include:
 .sast-analyzer:
   extends: sast
   stage: test
-  <<: *rules_for_test_stage
   allow_failure: true
   script:
     - /analyzer run
-  rules:
-    - if: $SAST_DISABLED
-      when: never
-    - if: $CI_PIPELINE_SOURCE == 'schedule'
-      when: never
 
 flawfinder-sast:
   extends: .sast-analyzer
@@ -313,12 +307,21 @@ flawfinder-sast:
     SAST_ANALYZER_IMAGE_TAG: latest
     SAST_ANALYZER_IMAGE: "$SECURE_ANALYZERS_PREFIX/flawfinder:$SAST_ANALYZER_IMAGE_TAG"
   rules:
+    - if: $SAST_DISABLED
+      when: never
+    - if: $CI_PIPELINE_SOURCE == 'schedule'
+      when: never
     - if: $SAST_EXCLUDED_ANALYZERS =~ /flawfinder/
       when: never
-    - if: $CI_COMMIT_BRANCH
-      exists:
-        - '**/*.cc'
-        - '**/*.h'
+    - when: always
 
 semgrep-sast:
   extends: .sast-analyzer
+  rules:
+    - if: $SAST_DISABLED
+      when: never
+    - if: $CI_PIPELINE_SOURCE == 'schedule'
+      when: never
+    - if: $SAST_EXCLUDED_ANALYZERS =~ /semgrep/
+      when: never
+    - when: always
