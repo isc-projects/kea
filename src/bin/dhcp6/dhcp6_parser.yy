@@ -1130,7 +1130,6 @@ tcp_user_timeout: TCP_USER_TIMEOUT COLON INTEGER {
     ctx.stack_.back()->set("tcp-user-timeout", n);
 };
 
-
 reconnect_wait_time: RECONNECT_WAIT_TIME COLON INTEGER {
     ctx.unique("reconnect-wait-time", ctx.loc2pos(@1));
     ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
@@ -1708,7 +1707,6 @@ evaluate_additional_classes: EVALUATE_ADDITIONAL_CLASSES {
     ctx.stack_.pop_back();
     ctx.leave();
 };
-
 
 reservations_global: RESERVATIONS_GLOBAL COLON BOOLEAN {
     ctx.unique("reservations-global", ctx.loc2pos(@1));

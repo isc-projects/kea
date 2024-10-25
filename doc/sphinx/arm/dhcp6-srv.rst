@@ -4668,22 +4668,22 @@ For example:
         ]
     }
 
-The ``only-in-additional-list`` parameter is needed here to force
-evaluation of the class after the lease has been allocated and thus the
-reserved class has been also assigned.
+The ``only-in-additional-list`` parameter is needed here to force evaluation
+of the class after the lease has been allocated and thus the reserved
+class has been also assigned.
 
 .. note::
 
    The classes specified in non-global host reservations
    are assigned to the processed packet after all classes with the
-   ``only-in-additional-list` parameter set to ``false`` have been evaluated.
+   ``only-in-additional-list`` parameter set to ``false`` have been evaluated.
    This means that these classes must not depend on the
    statically assigned classes from the host reservations. If
-   such a dependency is needed, the ``only-in-addtional-list`` must
+   such a dependency is needed, the ``only-in-additional-list`` parameter must
    be set to ``true`` for the dependent classes. Such classes are
    evaluated after the static classes have been assigned to the packet.
    This, however, imposes additional configuration overhead, because
-   all classes marked as ``only-in-addtional-list`` must be listed in the
+   all classes marked as ``only-in-additional-list`` must be listed in the
    ``evaluate-additional-classes`` list for every subnet where they are used.
 
 .. note::
@@ -8059,7 +8059,9 @@ at which it is currently supported.
    +-----------------------------+----------------------------+-----------+-----------+-----------+-----------+------------+
    | renew-timer                 | yes                        | n/a       | yes       | yes       | n/a       | n/a        |
    +-----------------------------+----------------------------+-----------+-----------+-----------+-----------+------------+
-   | require-client-classes      | n/a                        | n/a       | yes       | yes       | yes       | yes        |
+   | require-client-classes      | no                         | n/a       | yes       | yes       | yes       | yes        |
+   +-----------------------------+----------------------------+-----------+-----------+-----------+-----------+------------+
+   | evaluate-additional-classes | no                         | n/a       | yes       | yes       | yes       | yes        |
    +-----------------------------+----------------------------+-----------+-----------+-----------+-----------+------------+
    | reservations-global         | yes                        | n/a       | yes       | yes       | n/a       | n/a        |
    +-----------------------------+----------------------------+-----------+-----------+-----------+-----------+------------+

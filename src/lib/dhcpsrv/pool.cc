@@ -121,7 +121,7 @@ Pool::toElement() const {
         map->set("client-class", Element::create(cclass));
     }
 
-    // Set require-client-classes
+    // Set evaluate-additional-classes
     const ClientClasses& classes = getAdditionalClasses();
     if (!classes.empty()) {
         ElementPtr class_list = Element::createList();

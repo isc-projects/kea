@@ -254,7 +254,7 @@ BaseNetworkParser::parseOfferLft(const data::ConstElementPtr& network_data,
 void
 BaseNetworkParser::getAdditionalClassesElem(ConstElementPtr params,
                                             ClassAdderFunc adder_func) {
-    // Try setting up additional lient classes.
+    // Try setting up additional client classes.
     ConstElementPtr req_class_list = params->get("require-client-classes");
     ConstElementPtr class_list = params->get("evaluate-additional-classes");
     if (req_class_list) {

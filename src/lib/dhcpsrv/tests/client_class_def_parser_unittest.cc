@@ -2178,7 +2178,7 @@ TEST_F(ClientClassDefParserTest, deprecatedOnlyIfRequired) {
     EXPECT_EQ("foo", cclass->getName());
     ASSERT_TRUE(cclass->getAdditional());
 
-    // Invalid entry specifies both parameters. 
+    // Invalid entry specifies both parameters.
     std::string cfg_text2 =
        R"^({
             "name": "foo",

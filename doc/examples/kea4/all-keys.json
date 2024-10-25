@@ -95,8 +95,8 @@
                 "name": "late",
 
                 // Boolean flag indicating whether the class expression is only evaluated
-                // when the selected configuration (i.e. pool,subnet, shared-network)
-                // includes this class name in an "evaluate-additional-classes" list. The
+                // when the selected configuration (i.e. pool, subnet, shared-network)
+                // includes this class name in its "evaluate-additional-classes" list. The
                 // default value false means that the class test expression must
                 // always be evaluated.
                 "only-in-additional-list": true,

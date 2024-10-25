@@ -499,7 +499,7 @@ public:
                 // renew_timer at 13.
 
                 // evaluate_additional_classes at 14.
-                clientClassesFromBinding(out_bindings[14], "evaluate-additional-classes", 
+                clientClassesFromBinding(out_bindings[14], "evaluate_additional_classes",
                                          last_subnet->getMutableAdditionalClasses());
 
                 // reservations_global at 15.
@@ -659,7 +659,7 @@ public:
                 }
 
                 // pool evaluate_additional_classes at 60.
-                clientClassesFromBinding(out_bindings[60], "evaluate-additional-classes", 
+                clientClassesFromBinding(out_bindings[60], "evaluate_additional_classes",
                                          last_pool->getMutableAdditionalClasses());
 
                 // pool user_context at 61.
@@ -887,7 +887,7 @@ public:
                 }
 
                 // pool evaluate_additional_classes (5)
-                clientClassesFromBinding(out_bindings[5], "evaluate-additional-classes",
+                clientClassesFromBinding(out_bindings[5], "evaluate_additional_classes",
                                          last_pool->getMutableAdditionalClasses());
 
                 // pool user_context (6)
@@ -1408,7 +1408,7 @@ public:
                 }
 
                 // evaluate_additional_classes at 9.
-                clientClassesFromBinding(out_bindings[9], "evaluate-additional-classes",
+                clientClassesFromBinding(out_bindings[9], "evaluate_additional_classes",
                                          last_network->getMutableAdditionalClasses());
 
                 // reservations_global at 10.

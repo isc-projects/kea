@@ -512,7 +512,7 @@ public:
                 // 9 is renew_timer
 
                 // evaluate_additional_classes (10)
-                clientClassesFromBinding(out_bindings[10], "evaluate-additional-classes",
+                clientClassesFromBinding(out_bindings[10], "evaluate_additional_classes",
                                          last_subnet->getMutableAdditionalClasses());
 
                 // reservations_global (11)
@@ -687,7 +687,7 @@ public:
                 }
 
                 // pool evaluate_additional_classes (80)
-                clientClassesFromBinding(out_bindings[80], "evaluate-additional-classes",
+                clientClassesFromBinding(out_bindings[80], "evaluate_additional_classes",
                                          last_pool->getMutableAdditionalClasses());
 
                 // pool user_context (81)
@@ -736,7 +736,7 @@ public:
                 }
 
                 // pd pool evaluate_additional_classes (85)
-                clientClassesFromBinding(out_bindings[85], "evaluate-additional-classes",
+                clientClassesFromBinding(out_bindings[85], "evaluate_additional_classes",
                                          last_pd_pool->getMutableAdditionalClasses());
 
                 // pd pool user_context (86)
@@ -975,7 +975,7 @@ public:
                 }
 
                 // pool evaluate_additional_classes (5)
-                clientClassesFromBinding(out_bindings[5], "evaluate-additional-classes",
+                clientClassesFromBinding(out_bindings[5], "evaluate_additional_classes",
                                          last_pool->getMutableAdditionalClasses());
 
                 // pool user_context (6)
@@ -1085,7 +1085,7 @@ public:
                 }
 
                 // pd pool evaluate_additional_classes (8)
-                clientClassesFromBinding(out_bindings[8], "evaluate-additional-classes",
+                clientClassesFromBinding(out_bindings[8], "evaluate_additional_classes",
                                          last_pd_pool->getMutableAdditionalClasses());
 
                 // pd pool user_context (9)
@@ -1721,7 +1721,7 @@ public:
                 }
 
                 // evaluate_additional_classes at 10.
-                clientClassesFromBinding(out_bindings[10], "evaluate-additional-classes",
+                clientClassesFromBinding(out_bindings[10], "evaluate_additional_classes",
                                          last_network->getMutableAdditionalClasses());
 
                 // reservations_global at 11.

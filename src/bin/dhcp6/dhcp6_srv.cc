@@ -3777,7 +3777,7 @@ Dhcpv6Srv::processSolicit(AllocEngine::ClientContext6& ctx) {
     }
 
     conditionallySetReservedClientClasses(solicit, ctx);
-    // Evaluate addditional classes.
+    // Evaluate additional classes.
     evaluateAdditionalClasses(solicit, ctx);
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASSES_ASSIGNED)
@@ -3821,7 +3821,7 @@ Dhcpv6Srv::processRequest(AllocEngine::ClientContext6& ctx) {
     }
 
     conditionallySetReservedClientClasses(request, ctx);
-    // Evaluate addditional classes.
+    // Evaluate additional classes.
     evaluateAdditionalClasses(request, ctx);
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASSES_ASSIGNED)
@@ -3861,7 +3861,7 @@ Dhcpv6Srv::processRenew(AllocEngine::ClientContext6& ctx) {
     }
 
     conditionallySetReservedClientClasses(renew, ctx);
-    // Evaluate addditional classes.
+    // Evaluate additional classes.
     evaluateAdditionalClasses(renew, ctx);
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASSES_ASSIGNED)
@@ -3901,7 +3901,7 @@ Dhcpv6Srv::processRebind(AllocEngine::ClientContext6& ctx) {
     }
 
     conditionallySetReservedClientClasses(rebind, ctx);
-    // Evaluate addditional classes.
+    // Evaluate additional classes.
     evaluateAdditionalClasses(rebind, ctx);
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASSES_ASSIGNED)
@@ -3928,7 +3928,7 @@ Dhcpv6Srv::processConfirm(AllocEngine::ClientContext6& ctx) {
 
     Pkt6Ptr confirm = ctx.query_;
     conditionallySetReservedClientClasses(confirm, ctx);
-    // Evaluate addditional classes.
+    // Evaluate additional classes.
     evaluateAdditionalClasses(confirm, ctx);
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASSES_ASSIGNED)
@@ -4022,7 +4022,7 @@ Dhcpv6Srv::processRelease(AllocEngine::ClientContext6& ctx) {
 
     Pkt6Ptr release = ctx.query_;
     conditionallySetReservedClientClasses(release, ctx);
-    // Evaluate addditional classes.
+    // Evaluate additional classes.
     evaluateAdditionalClasses(release, ctx);
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASSES_ASSIGNED)
@@ -4054,7 +4054,7 @@ Dhcpv6Srv::processDecline(AllocEngine::ClientContext6& ctx) {
 
     Pkt6Ptr decline = ctx.query_;
     conditionallySetReservedClientClasses(decline, ctx);
-    // Evaluate addditional classes.
+    // Evaluate additional classes.
     evaluateAdditionalClasses(decline, ctx);
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASSES_ASSIGNED)
@@ -4375,7 +4375,7 @@ Dhcpv6Srv::processInfRequest(AllocEngine::ClientContext6& ctx) {
 
     Pkt6Ptr inf_request = ctx.query_;
     conditionallySetReservedClientClasses(inf_request, ctx);
-    // Evaluate addditional classes.
+    // Evaluate additional classes.
     evaluateAdditionalClasses(inf_request, ctx);
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASSES_ASSIGNED)

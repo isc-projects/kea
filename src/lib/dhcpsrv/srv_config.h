@@ -51,7 +51,7 @@ public:
     /// @brief Default constructor
     DdnsParams() : subnet_(), d2_client_enabled_(false) {}
 
-    /// @brief Constructor for DHPCv4 subnets
+    /// @brief Constructor for DHCPv4 subnets
     ///
     /// @param subnet Pointer to Subnet4 instance to use for fetching
     /// parameter values (typically this is the selected subnet).
@@ -62,7 +62,7 @@ public:
         : subnet_(boost::dynamic_pointer_cast<Subnet>(subnet)),
           d2_client_enabled_(d2_client_enabled) {}
 
-    /// @brief Constructor for DHPCv6 subnets
+    /// @brief Constructor for DHCPv6 subnets
     ///
     /// @param subnet Pointer to Subnet6 instance to use for fetching
     /// parameter values (typically this is the selected subnet).

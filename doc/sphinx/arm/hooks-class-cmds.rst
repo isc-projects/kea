@@ -260,4 +260,4 @@ returned if they are not specified for the class.
   ``only-in-additional-list`` and deprecated. In order to allow users time
   to migrate class commands will still accept it as input but translate it
   to ``only-in-additional-list`` on output.  Eventually support for the
-  old name wil be removed.
+  old name will be removed.

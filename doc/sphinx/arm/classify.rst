@@ -742,8 +742,8 @@ A client class definition can contain the following properties:
  - The ``only-in-additional-list`` flag is not mandatory; when its value is set to
    ``false`` (the default), membership is determined during classification and is
    available for subnet selection, for instance. When the value is set to
-   ``true``, membership is evaluated only if the class appears in an ``evaluate-
-   additional-classes`` list and is usable only for option configuration.
+   ``true``, membership is evaluated only if the class appears in an
+   ``evaluate-additional-classes`` list and is usable only for option configuration.
  - The ``user-context`` is not mandatory and represents a map with user-defined data
    and possibly configuration options for hook libraries.
  - The ``next-server`` parameter is not mandatory and configures the ``siaddr`` field in
@@ -1294,7 +1294,6 @@ the option to members of class "melon":
         }]
     }
 
-
 Clients that match class "melon" will have a value of 123 for option "foo",
 while clients that do not match "melon" will have a value of 456 for option
 "foo".
@@ -1302,7 +1301,7 @@ while clients that do not match "melon" will have a value of 456 for option
 .. note::
 
     Though examples above are for DHCPv4, class-tagging syntax and
-    behavior is the same for DHPCv6.
+    behavior is the same for DHCPv6.
 
 Classes and Hooks
 =================

@@ -61,8 +61,8 @@ run_statement() {
 }
 
 # Checks that a column in a table exists.
-# param table name of table containgin the column
 # param column name of the column to check
+# param table name of table containing the column
 check_table_column() {
     column=$1;shift
     table=$1;shift
@@ -1053,21 +1053,19 @@ pgsql_upgrade_24_to_25_test() {
 
 pgsql_upgrade_25_to_26_test() {
     # client_classes been added to dhcp4_options
-    check_table_column client_classes dhcp4_options;
+    check_table_column client_classes dhcp4_options
 
     # client_classes been added to dhcp6_options
-    check_table_column client_classes dhcp6_options;
+    check_table_column client_classes dhcp6_options
 
-    # check rename of require_client_classes to evaluate_additaionl_classes.
-    check_table_column evaluate_additional_classes dhcp4_shared_network
-    check_table_column evaluate_additional_classes dhcp4_shared_network
+    # check rename of require_client_classes to evaluate_additional_classes.
     check_table_column evaluate_additional_classes dhcp4_shared_network
     check_table_column evaluate_additional_classes dhcp4_subnet
+    check_table_column evaluate_additional_classes dhcp4_pool
     check_table_column evaluate_additional_classes dhcp6_shared_network
     check_table_column evaluate_additional_classes dhcp6_subnet
-    check_table_column evaluate_additional_classes dhcp4_pool
-    check_table_column evaluate_additional_classes dhcp6_pd_pool
     check_table_column evaluate_additional_classes dhcp6_pool
+    check_table_column evaluate_additional_classes dhcp6_pd_pool
 
     # check rename of only_if_required to only_in_additional_list.
     check_table_column only_in_additional_list dhcp4_client_class

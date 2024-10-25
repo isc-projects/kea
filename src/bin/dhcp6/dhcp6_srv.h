@@ -906,18 +906,19 @@ protected:
     ///
     /// The evaluation takes place after all other classification and
     /// lease assignment. It evaluates all classes in the packet's
-    /// additional_classes_ list plus any contributed via evaluate-additional-
-    /// class lists.
+    /// additional classes list plus any contributed via
+    /// evaluate-additional-classes lists.
     ///
     /// @note Evaluates all classes which were marked for the additional
     /// evaluation stage. Classes are collected and evaluated in the following
-    /// order: pool, subnet, shared-network to produce option precedence
-    /// pool over subnet over shared-network.
+    /// order: pool/pd-pool, subnet, shared-network to produce option precedence
+    /// pool/pd-pool over subnet over shared-network.
     ///
     /// @note The only-in-additional-list flag is related because it avoids
     /// double evaluation (which is not forbidden).
     ///
-    /// @param ex The exchange holding needed information.
+    /// @param pkt packet to be classified
+    /// @param ctx allocation context where to get information
     void evaluateAdditionalClasses(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx);
 
     /// @brief Attempts to get a MAC/hardware address using configured sources

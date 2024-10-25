@@ -14,7 +14,7 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief Packet Queue Manager for DHPCv4 servers.
+/// @brief Packet Queue Manager for DHCPv4 servers.
 ///
 /// Implements the "manager" class which holds information about the
 /// supported DHCPv4 packet queue implementations and provides management

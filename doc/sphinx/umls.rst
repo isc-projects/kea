@@ -22,7 +22,7 @@ These diagrams are focused on those aspects of Kea processing that will be most 
 Main Loop
 ^^^^^^^^^
 
-The main loop is common to both DHCPv4 and DHPCv6 servers.
+The main loop is common to both DHCPv4 and DHCPv6 servers.
 
 .. figure:: uml/main-loop.*
 

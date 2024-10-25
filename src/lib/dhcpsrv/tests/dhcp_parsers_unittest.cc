@@ -3747,7 +3747,7 @@ TEST_F(DhcpParserTest, deprecatedRequireClientClassesSubnet4) {
             "subnet": "192.0.2.0/24",
             "require-client-classes": [ "one", "two" ]
         })^";
-    
+
     ElementPtr config_element = Element::fromJSON(config);
 
     // Parse configuration specified above.
@@ -3764,7 +3764,7 @@ TEST_F(DhcpParserTest, deprecatedRequireClientClassesSubnet4) {
     ++cclass;
     EXPECT_EQ(*cclass, "two");
 
-    // Invalid entry specifies both parameters. 
+    // Invalid entry specifies both parameters.
     config =
        R"^({
             "id": 1,
@@ -3772,7 +3772,7 @@ TEST_F(DhcpParserTest, deprecatedRequireClientClassesSubnet4) {
             "require-client-classes": [ "one", "two" ],
             "evaluate-additional-classes": [ "one", "two" ]
         })^";
-    
+
     config_element = Element::fromJSON(config);
 
     // Should throw a complaint.
@@ -3793,7 +3793,7 @@ TEST_F(DhcpParserTest, deprecatedRequireClientClassesSubnet6) {
             "subnet": "2001:db8::/64",
             "require-client-classes": [ "one", "two" ]
         })^";
-    
+
     ElementPtr config_element = Element::fromJSON(config);
 
     // Parse configuration specified above.
@@ -3810,7 +3810,7 @@ TEST_F(DhcpParserTest, deprecatedRequireClientClassesSubnet6) {
     ++cclass;
     EXPECT_EQ(*cclass, "two");
 
-    // Invalid entry specifies both parameters. 
+    // Invalid entry specifies both parameters.
     config =
        R"^({
             "id": 1,
@@ -3818,7 +3818,7 @@ TEST_F(DhcpParserTest, deprecatedRequireClientClassesSubnet6) {
             "require-client-classes": [ "one", "two" ],
             "evaluate-additional-classes": [ "one", "two" ]
         })^";
-    
+
     config_element = Element::fromJSON(config);
 
     // Should throw a complaint.
@@ -3838,7 +3838,7 @@ TEST_F(DhcpParserTest, deprecatedRequireClientClassesPool4) {
             "pool": "192.0.2.0/24",
             "require-client-classes": [ "one", "two" ]
         })^";
-    
+
     ElementPtr config_element = Element::fromJSON(config);
 
     // Parse configuration specified above.
@@ -3855,14 +3855,14 @@ TEST_F(DhcpParserTest, deprecatedRequireClientClassesPool4) {
     ++cclass;
     EXPECT_EQ(*cclass, "two");
 
-    // Invalid entry specifies both parameters. 
+    // Invalid entry specifies both parameters.
     config =
        R"^({
             "pool": "192.0.2.0/24",
             "require-client-classes": [ "one", "two" ],
             "evaluate-additional-classes": [ "one", "two" ]
         })^";
-    
+
     config_element = Element::fromJSON(config);
 
     // Should throw a complaint.
@@ -3882,7 +3882,7 @@ TEST_F(DhcpParserTest, deprecatedRequireClientClassesPool6) {
             "pool": "2001:db8::/64",
             "require-client-classes": [ "one", "two" ]
         })^";
-    
+
     ElementPtr config_element = Element::fromJSON(config);
 
     // Parse configuration specified above.
@@ -3899,14 +3899,14 @@ TEST_F(DhcpParserTest, deprecatedRequireClientClassesPool6) {
     ++cclass;
     EXPECT_EQ(*cclass, "two");
 
-    // Invalid entry specifies both parameters. 
+    // Invalid entry specifies both parameters.
     config =
        R"^({
             "pool": "2001:db8::/64",
             "require-client-classes": [ "one", "two" ],
             "evaluate-additional-classes": [ "one", "two" ]
         })^";
-    
+
     config_element = Element::fromJSON(config);
 
     // Should throw a complaint.

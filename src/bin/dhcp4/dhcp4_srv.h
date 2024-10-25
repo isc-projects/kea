@@ -1191,8 +1191,8 @@ protected:
     ///
     /// The evaluation takes place after all other classification and
     /// lease assignment. It evaluates all classes in the packet's
-    /// additional_classes_ list plus any contributed via evaluate-additional-
-    /// class lists.
+    /// additional classes list plus any contributed via
+    /// evaluate-additional-classes lists.
     ///
     /// @note Evaluates all classes which were marked for the additional
     /// evaluation stage. Classes are collected and evaluated in the following

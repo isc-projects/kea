@@ -883,7 +883,7 @@ MySqlConfigBackendImpl::processOptionRow(const Option::Universe& universe,
     }
 
     // Get client classes list
-    clientClassesFromBinding(*(first_binding + 13), "client_classe", desc->client_classes_);
+    clientClassesFromBinding(*(first_binding + 13), "client_classes", desc->client_classes_);
 
     return (desc);
 }
@@ -1129,9 +1129,9 @@ MySqlConfigBackendImpl::createInputClientClassesBinding(const ClientClasses& cli
 }
 
 void
-MySqlConfigBackendImpl::clientClassesFromBinding(const MySqlBindingPtr& binding, 
-                                             const std::string& column,
-                                             ClientClasses& client_classes) {
+MySqlConfigBackendImpl::clientClassesFromBinding(const MySqlBindingPtr& binding,
+                                                 const std::string& column,
+                                                 ClientClasses& client_classes) {
     try {
         ElementPtr cclist_element = binding->getJSON();
         client_classes.fromElement(cclist_element);

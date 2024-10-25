@@ -23,7 +23,7 @@
   "client-classes": [
 
 // This class is included by the second subnet in its 'evaluate-additional-classes'
-// list so only-in-addtional-list is enabled. This ensures the class  will only
+// list so 'only-in-additional-list' is enabled. This ensures the class will only
 // be evaluated if the second subnet is selected. The test expression returns true.
 // Note it is not possible to depend on VoIP class because it is not yet
 // defined.

@@ -24,8 +24,9 @@
 // One packet can belong to zero or more classes.
   "client-classes": [
 
-// This class is required by the second subnet and is evaluated only
-// if it is required. The test expression returns true.
+// This class is included by the second subnet in its 'evaluate-additional-classes'
+// list so 'only-in-additional-list' is enabled. This ensures the class will only
+// be evaluated if the second subnet is selected. The test expression returns true.
 // Note it is not possible to depend on cable-modems class because it
 // is not yet defined.
   {

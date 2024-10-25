@@ -303,7 +303,7 @@ log with details. No further attempts to communicate with kea-dhcp-ddns will
 be made without intervention.
 
 % DHCPSRV_EVAL_ERROR %1: Expression '%2' evaluated to %3
-This error message indicates that there a problem was encountered while
+This error message indicates that a problem was encountered while
 evaluating an expression of a client class.
 A description of the problem is printed.
 
@@ -886,7 +886,7 @@ A debug message issued when the server was unable to select a subnet using
 the specified interface name.
 
 % DHCPSRV_TEMPLATE_EVAL_ERROR %1: Expression '%2' evaluated to %3
-This error message indicates that there a problem was encountered while
+This error message indicates that a problem was encountered while
 evaluating an expression of a template client class.
 A description of the problem is printed.
 

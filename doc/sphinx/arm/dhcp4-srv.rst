@@ -3474,12 +3474,12 @@ over ``option-data`` in a class. If ``option-data`` is moved to a
 required class and required in the subnet, a class evaluated earlier
 may take precedence.
 
-Additional evaluation is also available at the shared network and pool levels.
+Additional evaluation is also available at shared network and pool levels.
 The order in which additional classes are considered is: pool, subnet,
 and shared network, i.e. in the same order from the way in which
 ``option-data`` is processed.
 
-Since Kea version 2.7.4 additional client classes configured without
+Since Kea version 2.7.4 additional classes configured without
 a test expression are unconditionally added, i.e. they are considered
 to always be evaluated to ``true``.
 
@@ -8310,6 +8310,8 @@ at which it is currently supported.
    | relay                       | n/a                        | n/a          | yes         | yes         | n/a         |
    +-----------------------------+----------------------------+--------------+-------------+-------------+-------------+
    | require-client-classes      | no                         | n/a          | yes         | yes         | yes         |
+   +-----------------------------+----------------------------+--------------+-------------+-------------+-------------+
+   | evaluate-additional-classes | no                         | n/a          | yes         | yes         | yes         |
    +-----------------------------+----------------------------+--------------+-------------+-------------+-------------+
    | reservations-global         | yes                        | n/a          | yes         | yes         | n/a         |
    +-----------------------------+----------------------------+--------------+-------------+-------------+-------------+

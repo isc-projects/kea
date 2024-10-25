@@ -636,8 +636,8 @@ public:
     /// @param binding binding of the column containing the class list.
     /// @param column name of the column, used for error messages.
     /// @param client_classes reference to the container to populate.
-    /// @throw BadValue if the input is invalid.k 
-    void clientClassesFromBinding(const db::MySqlBindingPtr& binding,  
+    /// @throw BadValue if the input is invalid.
+    void clientClassesFromBinding(const db::MySqlBindingPtr& binding,
                                   const std::string& column,
                                   ClientClasses& client_classes);
 

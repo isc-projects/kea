@@ -140,7 +140,7 @@ Network::toElement() const {
         map->set("client-class", Element::create(client_class_.get()));
     }
 
-    // Set require-client-classes
+    // Set evaluate-additional-classes
     const ClientClasses& classes = getAdditionalClasses();
     if (!classes.empty()) {
         ElementPtr class_list = Element::createList();

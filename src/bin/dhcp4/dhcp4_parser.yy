@@ -1718,7 +1718,6 @@ evaluate_additional_classes: EVALUATE_ADDITIONAL_CLASSES {
     ctx.leave();
 };
 
-
 reservations_global: RESERVATIONS_GLOBAL COLON BOOLEAN {
     ctx.unique("reservations-global", ctx.loc2pos(@1));
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));

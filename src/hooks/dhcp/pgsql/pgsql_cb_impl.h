@@ -615,7 +615,7 @@ public:
     /// @param worker result set row worker containing the row data
     /// @param col column index of JSON element column
     /// @param column name of the column used for error logging
-    /// @param client_classes reference to the container to populate.
+    /// @param client_classes reference to the container to populate
     ///
     /// @throw BadValue if the Element is not a list or if any of the
     /// list's elements are not strings.

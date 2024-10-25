@@ -1052,7 +1052,7 @@ TEST_F(SharedNetwork4ParserTest, deprecatedRequireClientClasses) {
             "name": "foo",
             "require-client-classes": [ "one", "two" ]
         })^";
-    
+
     ElementPtr config_element = Element::fromJSON(config);
 
     // Parse configuration specified above.
@@ -1069,21 +1069,22 @@ TEST_F(SharedNetwork4ParserTest, deprecatedRequireClientClasses) {
     ++cclass;
     EXPECT_EQ(*cclass, "two");
 
-    // Invalid entry specifies both parameters. 
+    // Invalid entry specifies both parameters.
     config =
        R"^({
             "name": "foo",
             "require-client-classes": [ "one", "two" ],
             "evaluate-additional-classes": [ "one", "two" ]
         })^";
-    
+
     config_element = Element::fromJSON(config);
 
     // Should throw a complaint.
     ASSERT_THROW_MSG(parser.parse(config_element),
                      DhcpConfigError,
                      "cannot specify both 'require-client-classes' and"
-                     " 'evaluate-additional-classes'. Use only the latter.");
+                     " 'evaluate-additional-classes'. Use only the latter."
+                     " (<string>:1:2)");
 }
 
 
@@ -1096,7 +1097,7 @@ TEST_F(SharedNetwork6ParserTest, deprecatedRequireClientClasses) {
             "name": "foo",
             "require-client-classes": [ "one", "two" ]
         })^";
-    
+
     ElementPtr config_element = Element::fromJSON(config);
 
     // Parse configuration specified above.
@@ -1113,14 +1114,14 @@ TEST_F(SharedNetwork6ParserTest, deprecatedRequireClientClasses) {
     ++cclass;
     EXPECT_EQ(*cclass, "two");
 
-    // Invalid entry specifies both parameters. 
+    // Invalid entry specifies both parameters.
     config =
        R"^({
             "name": "foo",
             "require-client-classes": [ "one", "two" ],
             "evaluate-additional-classes": [ "one", "two" ]
         })^";
-    
+
     config_element = Element::fromJSON(config);
 
     // Should throw a complaint.

@@ -2342,7 +2342,7 @@ TEST_F(ClassifyTest, additionalNoTest) {
 
 // This test checks a additional class which is not defined is ignored.
 // Please set KEA_LOGGER_DESTINATION to stderr or stdout and check
-// that DHCP6_REQUIRED_CLASS_UNDEFINED is logged,
+// that DHCP6_ADDITIONAL_CLASS_UNDEFINED is logged,
 TEST_F(ClassifyTest, additionalNotDefined) {
     std::string config =
         "{"

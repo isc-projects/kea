@@ -15,7 +15,7 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief Configuration Backend Manager for DHPCv6 servers.
+/// @brief Configuration Backend Manager for DHCPv6 servers.
 ///
 /// Implements the "manager" class which holds information about the
 /// supported and configured backends and provides access to those

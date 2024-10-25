@@ -1573,7 +1573,7 @@ TEST_F(IfaceMgrTest, DISABLED_sockets6Mcast) {
     close(socket2);
 }
 
-// Verifies that basic DHPCv6 packet send and receive operates
+// Verifies that basic DHCPv6 packet send and receive operates
 // in either direct or indirect mode.
 TEST_F(IfaceMgrTest, sendReceive6) {
     data::ElementPtr queue_control;
@@ -1592,7 +1592,7 @@ TEST_F(IfaceMgrTest, sendReceive6) {
     sendReceive6Test(queue_control, true);
 }
 
-// Verifies that basic DHPCv4 packet send and receive operates
+// Verifies that basic DHCPv4 packet send and receive operates
 // in either direct or indirect mode.
 TEST_F(IfaceMgrTest, sendReceive4) {
     data::ElementPtr queue_control;

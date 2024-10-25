@@ -176,7 +176,6 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 }
 <DIR_EXIT>"?>" BEGIN(INITIAL);
 
-
 <*>{blank}+   {
     /* Ok, we found a with space. Let's ignore it and update loc variable. */
     driver.loc_.step();
@@ -187,7 +186,6 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     driver.loc_.lines(yyleng);
     driver.loc_.step();
 }
-
 
 \"enable-updates\" {
     switch(driver.ctx_) {
@@ -1093,9 +1091,6 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     tmp.resize(tmp.size() - 1);
     return isc::dhcp::Dhcp6Parser::make_STRING(tmp, driver.loc_);
 }
-
-
-
 
 \"ddns-ttl-percent\" {
     switch(driver.ctx_) {

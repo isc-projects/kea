@@ -9114,7 +9114,7 @@ TEST_F(Dhcp6ParserTest, deprecatedRequireClientClassesCheck) {
                     "pool":  "2001:db8::/64",
                     "require-client-classes": [ "three" ],
                 }],
-                "pd-pools": [{ 
+                "pd-pools": [{
                     "prefix": "3001:db8::",
                     "prefix-len": 56,
                     "delegated-len": 64,
@@ -9136,7 +9136,7 @@ TEST_F(Dhcp6ParserTest, deprecatedRequireClientClassesCheck) {
     checkResult(status, 0);
 
     SharedNetwork6Ptr network = CfgMgr::instance().getStagingCfg()->
-                                getCfgSharedNetworks6()->getByName("net1");
+                                    getCfgSharedNetworks6()->getByName("net1");
     ASSERT_TRUE(network);
 
     auto& net_class_list = network->getAdditionalClasses();
@@ -9148,7 +9148,7 @@ TEST_F(Dhcp6ParserTest, deprecatedRequireClientClassesCheck) {
                             getCfgSubnets6()->selectSubnet(IOAddress("2001:db8::"));
     ASSERT_TRUE(subnet);
 
-    const auto& sub_class_list = subnet->getAdditionalClasses();
+    auto& sub_class_list = subnet->getAdditionalClasses();
     EXPECT_EQ(1, sub_class_list.size());
     cclasses = sub_class_list.begin();
     EXPECT_EQ(*cclasses, "two");
@@ -9196,7 +9196,7 @@ TEST_F(Dhcp6ParserTest, deprecatedRequireClientClassesCheck) {
 // This test verifies that deprecated only-if-required
 // gets handled properly.
 TEST_F(Dhcp6ParserTest, deprecatedOnlyIfRequiredCheck) {
-    // Verify that only-if-required gets translated
+    // Verifies that only-if-required gets translated
     // to only-in-additional-list.
     std::string config = "{ " + genIfaceConfig() + ","
         R"^(

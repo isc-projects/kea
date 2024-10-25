@@ -8114,9 +8114,8 @@ TEST_F(Dhcp4ParserTest, optionClientClassesDuplicateCheck) {
 // This test verifies that deprecated require-client-classes
 // gets handled properly.
 TEST_F(Dhcp4ParserTest, deprecatedRequireClientClassesCheck) {
-
     // Verify that require-client-classes gets translated
-    // to additional classes.
+    // to evaluate-additional-classes.
     std::string config = "{ " + genIfaceConfig() + ","
         R"^(
         "rebind-timer": 2000,
@@ -8146,7 +8145,7 @@ TEST_F(Dhcp4ParserTest, deprecatedRequireClientClassesCheck) {
     checkResult(status, 0);
 
     SharedNetwork4Ptr network = CfgMgr::instance().getStagingCfg()->
-                                getCfgSharedNetworks4()->getByName("net1");
+                                    getCfgSharedNetworks4()->getByName("net1");
     ASSERT_TRUE(network);
 
     auto& net_class_list = network->getAdditionalClasses();

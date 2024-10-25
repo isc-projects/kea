@@ -1746,7 +1746,7 @@ lease, it parks the client response until the peers acknowledge the lease
 update. At that point, the server unparks the response and sends it to the
 client. This applies to client queries that cause lease changes, such as
 DHCPREQUEST for DHCPv4 and Request, Renew, and Rebind for DHCPv6. It does not
-apply to DHPCDISCOVERs (v4) or Solicits (v6).
+apply to DHCPDISCOVERs (v4) or Solicits (v6).
 
 .. _ha-maintenance:
 

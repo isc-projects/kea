@@ -3837,7 +3837,7 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover, AllocEngine::ClientContext4Ptr& co
         // network we have already fetched it and evaluated the classes.
         ex.conditionallySetReservedClientClasses();
 
-        // Evaluate addditional classes.
+        // Evaluate additional classes.
         evaluateAdditionalClasses(ex);
 
         LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASSES_ASSIGNED)
@@ -3923,7 +3923,7 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request, AllocEngine::ClientContext4Ptr& cont
         // network we have already fetched it and evaluated the classes.
         ex.conditionallySetReservedClientClasses();
 
-        // Evaluate addditional classes.
+        // Evaluate additional classes.
         evaluateAdditionalClasses(ex);
 
         LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASSES_ASSIGNED)
@@ -4436,7 +4436,7 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform, AllocEngine::ClientContext4Ptr& contex
     // network we have already fetched it and evaluated the classes.
     ex.conditionallySetReservedClientClasses();
 
-    // Evaluate addditional classes.
+    // Evaluate additional classes.
     evaluateAdditionalClasses(ex);
 
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASSES_ASSIGNED)

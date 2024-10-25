@@ -1553,7 +1553,7 @@ private:
 
     /// @brief Receives a single DHCPv4 packet from an interface socket
     ///
-    /// Called by @c receiveDHPC4Packets when a socket fd is flagged as
+    /// Called by @c receiveDHCP4Packets when a socket fd is flagged as
     /// ready. It uses the DHCPv4 packet filter to receive a single packet
     /// from the given interface socket, adds it to the packet queue, and
     /// marks the "receive" watch socket ready. If an error occurs during
@@ -1576,7 +1576,7 @@ private:
 
     /// @brief Receives a single DHCPv6 packet from an interface socket
     ///
-    /// Called by @c receiveDHPC6Packets when a socket fd is flagged as
+    /// Called by @c receiveDHCP6Packets when a socket fd is flagged as
     /// ready. It uses the DHCPv6 packet filter to receive a single packet
     /// from the given interface socket, adds it to the packet queue, and
     /// marks the "receive" watch socket ready. If an error occurs during

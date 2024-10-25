@@ -969,13 +969,13 @@ If there is no hint, the argument should provide the text indicating
 that the hint hasn't been sent.
 
 % DHCP4_ADDITIONAL_CLASS_EVAL_ERROR %1: Expression '%2' evaluated to %3
-This error message indicates that there a problem was encountered while
-evaluating an expression of a additional client class that was marked as additional.
+This error message indicates that a problem was encountered while
+evaluating the expression of an additional client class.
 A description of the problem is printed.
 
 % DHCP4_ADDITIONAL_CLASS_EVAL_RESULT %1: Expression '%2' evaluated to %3
 Logged at debug log level 50.
-This debug message indicates that the expression of a additional client class has
+This debug message indicates that the expression of an additional client class has
 been successfully evaluated. The client class name and the result value of the
 evaluation are printed.
 

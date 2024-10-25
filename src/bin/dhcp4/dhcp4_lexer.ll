@@ -174,7 +174,6 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 }
 <DIR_EXIT>"?>" BEGIN(INITIAL);
 
-
 <*>{blank}+   {
     /* Ok, we found a with space. Let's ignore it and update loc variable. */
     driver.loc_.step();
@@ -185,7 +184,6 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     driver.loc_.lines(yyleng);
     driver.loc_.step();
 }
-
 
 \"Dhcp4\" {
     switch(driver.ctx_) {
@@ -896,7 +894,6 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     return isc::dhcp::Dhcp4Parser::make_STRING(tmp, driver.loc_);
 }
 
-
 \"ddns-ttl-percent\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -1214,7 +1211,6 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
         return isc::dhcp::Dhcp4Parser::make_STRING("cache-max-age", driver.loc_);
     }
 }
-
 
 \"loggers\" {
     switch(driver.ctx_) {
@@ -1538,7 +1534,6 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
         return isc::dhcp::Dhcp4Parser::make_STRING("hooks-libraries", driver.loc_);
     }
 }
-
 
 \"parameters\" {
     switch(driver.ctx_) {

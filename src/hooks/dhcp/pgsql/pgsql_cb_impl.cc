@@ -1153,7 +1153,6 @@ PgSqlConfigBackendImpl::clientClassesFromColumn(PgSqlResultRowWorker& worker, si
     }
 }
 
-
 void
 PgSqlConfigBackendImpl::addOptionValueBinding(PsqlBindArray& bindings,
                                               const OptionDescriptorPtr& option) {

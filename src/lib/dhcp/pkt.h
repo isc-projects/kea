@@ -782,7 +782,7 @@ public:
     /// @brief Classes to be evaluated during additional class evaluation
     ///
     /// This list allows hook libraries a way to add classes to the list of classes
-    /// which will be evaluated during evaluate-addtional-classes evaluation.
+    /// which will be evaluated during evaluate-additional-classes evaluation.
     ///
     /// This field is public, so the code outside of Pkt4 or Pkt6 class can
     /// iterate over additional classes. Having it public also solves the problem
