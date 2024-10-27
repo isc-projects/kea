@@ -2954,6 +2954,49 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
                                     fqdn1_buf.end(), typeid(OptionCustom));
 }
 
+/// Test verifies if the CableLabs Client Configuration (CCC) options are
+/// parsed properly.
+TEST_F(LibDhcpTest, ccc) {
+    // CCC (CableLabs Client Config) options for cable modems
+    const unsigned char ccc_data[] = {
+        // opt 1: TSP's primary DHCP address 161.162.163.164
+        0x01, 0x04, 0xa1, 0xa2, 0xa3, 0xa4,
+
+        // sub-option 2, len 4, TSP's secondary DHCP addr: 177.178.179.180
+        0x02, 0x04, 0xb1, 0xb2, 0xb3, 0xb4,
+        // sub-option 3 is not defined, because the RFC defined it
+        // conditionally. It's either IP address or FQDN. Kea doesn't support
+        // conditional formatting, so we left this one out and let the user
+
+        // sub-option 4, len 12, MTA's Kerberos AS-REQ/AS-REP timeout,
+        // backoff, and retry mechanism.
+        0x04, 0x0c, 0x01, 0x02, 0x03, 0x04, 0x11, 0x12, 0x13, 0x14,
+        0x21, 0x22, 0x23, 0x24,
+
+        // sub-option 5, len 12, TSP's AP-REQ/AP-REP Backoff and Retry
+        0x05, 0x0c, 0x31, 0x32, 0x33, 0x34, 0x41, 0x42, 0x43, 0x44,
+        0x51, 0x52, 0x53, 0x54,
+
+        // sub-option 6, len var, TSP's Kerberos Realm Name Sub-Option
+        // realm = "testrealm"
+        0x06, 0x0b, 0x09, 0x54,0x45,0x53,0x54,0x52,0x45,0x41,0x4c,0x4d, 0x00,
+
+        // sub-option 7, TSP's Ticket Granting Server Utilization Sub-Option
+        // granting not allowed = 0
+        0x07, 0x01, 0x00,
+
+        // sub-option 8, TSP's Provisioning Timer Sub-Option
+        // timer value = 100
+        0x08, 0x01, 0x64
+
+        // todo: 3
+    };
+    std::vector<uint8_t> ccc_buf(ccc_data, ccc_data + sizeof(ccc_data));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_CCC, ccc_buf.begin(), ccc_buf.end(),
+        typeid(OptionCustom), "cablelabs-client-conf");
+}
+
 // Test that definitions of standard options have been initialized
 // correctly.
 // @todo Only limited number of option definitions are now created
