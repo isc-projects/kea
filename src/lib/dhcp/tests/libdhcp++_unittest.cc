@@ -2959,6 +2959,9 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
 TEST_F(LibDhcpTest, ccc) {
     // CCC (CableLabs Client Config) options for cable modems
     const unsigned char ccc_data[] = {
+
+        // RFC3495 sub-opts
+
         // opt 1: TSP's primary DHCP address 161.162.163.164
         0x01, 0x04, 0xa1, 0xa2, 0xa3, 0xa4,
 
@@ -2987,9 +2990,18 @@ TEST_F(LibDhcpTest, ccc) {
 
         // sub-option 8, TSP's Provisioning Timer Sub-Option
         // timer value = 100
-        0x08, 0x01, 0x64
+        0x08, 0x01, 0x64,
 
-        // todo: 3
+        // RFC 3594 sub-option (9)
+
+        // sub-option 9, Security Ticket Control, set bits 0 (PacketCable
+        // Provisioning Server used by the CCD) and 1 (the group of all
+        // PacketCable Call Management Servers used by the CCD)
+        0x09, 0x02, 0x0, 0x03,
+
+        // RFC 3634 (sub-option 10), Key Distrbution Center, two KDC servers
+        // configured: 1.2.3.4, 17.18.19.20
+        0x0a, 0x08, 0x01, 0x02, 0x03, 0x04, 0x11, 0x12, 0x13, 0x14
     };
     std::vector<uint8_t> ccc_buf(ccc_data, ccc_data + sizeof(ccc_data));
 
