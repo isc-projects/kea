@@ -1,3 +1,8 @@
+2293.	[build]		razvan
+	The library version numbers have been bumped up for the Kea 2.7.4
+	development release.
+	(Gitlab #3639)
+
 2292.	[doc]		tmark
 	Updated the ARM to include and explanation for why
 	the default values for 'calculate-tee-times' are

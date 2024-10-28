@@ -243,7 +243,7 @@ TEST(ClassifyTest, ClientClassesFromElement) {
     EXPECT_FALSE(classes.contains("two"));
     EXPECT_TRUE(classes.contains("three"));
 
-    // Verify another invocation with an empty pointer is harmless. 
+    // Verify another invocation with an empty pointer is harmless.
     cclasses_element.reset();
     ASSERT_NO_THROW(classes.fromElement(cclasses_element));
     EXPECT_TRUE(classes.contains("three"));
