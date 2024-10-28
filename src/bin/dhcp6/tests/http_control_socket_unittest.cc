@@ -188,8 +188,11 @@ public:
                          TEST_TIMEOUT, IntervalTimer::ONE_SHOT);
         // Run until the client stops the service or an error occurs.
         try {
-	    io_service->run();
+            io_service->run();
+        } catch (const std::exception& ex) {
+            ADD_FAILURE() << "Exception thrown while running test. Error: " << ex.what();
         } catch (...) {
+            ADD_FAILURE() << "Unknown exception thrown while running test.";
         }
         test_timer.cancel();
         if (io_service->stopped()) {
