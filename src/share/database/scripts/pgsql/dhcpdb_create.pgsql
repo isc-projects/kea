@@ -6493,6 +6493,8 @@ ALTER TABLE dhcp4_options
 ALTER TABLE dhcp6_options
     ADD COLUMN client_classes TEXT DEFAULT NULL;
 
+UPDATE option_def_data_type SET name='int8' where id = 3;
+
 -- Rename require_client_classes and only_if_required.
 ALTER TABLE dhcp4_shared_network
     RENAME COLUMN require_client_classes TO evaluate_additional_classes;
