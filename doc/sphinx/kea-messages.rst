@@ -3623,6 +3623,52 @@ cached version.
 DHCP4
 *****
 
+DHCP4_ADDITIONAL_CLASS_EVAL_ERROR
+=================================
+
+.. code-block:: text
+
+    %1: Expression '%2' evaluated to %3
+
+This error message indicates that a problem was encountered while
+evaluating the expression of an additional client class.
+A description of the problem is printed.
+
+DHCP4_ADDITIONAL_CLASS_EVAL_RESULT
+==================================
+
+.. code-block:: text
+
+    %1: Expression '%2' evaluated to %3
+
+Logged at debug log level 50.
+This debug message indicates that the expression of an additional client class has
+been successfully evaluated. The client class name and the result value of the
+evaluation are printed.
+
+DHCP4_ADDITIONAL_CLASS_NO_TEST
+==============================
+
+.. code-block:: text
+
+    additional class %1 has no test expression, adding it to client's classes unconditionally
+
+Logged at debug log level 40.
+This debug message informs that a class was listed for additional evaluation but
+its definition does not include a test expression to evaluate. The class is
+unconditionally added to the query.
+
+DHCP4_ADDITIONAL_CLASS_UNDEFINED
+================================
+
+.. code-block:: text
+
+    additional class %1 has no definition
+
+Logged at debug log level 40.
+This debug message informs that a class is listed for additional evaluation but
+has no definition. The class is ignored.
+
 DHCP4_ALREADY_RUNNING
 =====================
 
@@ -5506,52 +5552,6 @@ about the address that the client would like to have allocated.
 If there is no hint, the argument should provide the text indicating
 that the hint hasn't been sent.
 
-DHCP4_REQUIRED_CLASS_EVAL_ERROR
-===============================
-
-.. code-block:: text
-
-    %1: Expression '%2' evaluated to %3
-
-This error message indicates that there a problem was encountered while
-evaluating an expression of a required client class that was marked as required.
-A description of the problem is printed.
-
-DHCP4_REQUIRED_CLASS_EVAL_RESULT
-================================
-
-.. code-block:: text
-
-    %1: Expression '%2' evaluated to %3
-
-Logged at debug log level 50.
-This debug message indicates that the expression of a required client class has
-been successfully evaluated. The client class name and the result value of the
-evaluation are printed.
-
-DHCP4_REQUIRED_CLASS_NO_TEST
-============================
-
-.. code-block:: text
-
-    required class %1 has no test expression, adding it to client's classes unconditionally
-
-Logged at debug log level 40.
-This debug message informs that a class was listed for required evaluation but
-its definition does not include a test expression to evaluate. The class is
-unconditionally added to the query.
-
-DHCP4_REQUIRED_CLASS_UNDEFINED
-==============================
-
-.. code-block:: text
-
-    required class %1 has no definition
-
-Logged at debug log level 40.
-This debug message informs that a class is listed for required evaluation but
-has no definition. The class is ignored.
-
 DHCP4_RESERVATIONS_LOOKUP_FIRST_ENABLED
 =======================================
 
@@ -5899,6 +5899,52 @@ expected: the erroneous response is dropped, the request query is displayed.
 *****
 DHCP6
 *****
+
+DHCP6_ADDITIONAL_CLASS_EVAL_ERROR
+=================================
+
+.. code-block:: text
+
+    %1: Expression '%2' evaluated to %3
+
+This error message indicates that a problem was encountered while
+evaluating the expression of an additional client class.
+A description of the problem is printed.
+
+DHCP6_ADDITIONAL_CLASS_EVAL_RESULT
+==================================
+
+.. code-block:: text
+
+    %1: Expression '%2' evaluated to %3
+
+Logged at debug log level 50.
+This debug message indicates that the expression of an additional client class has
+been successfully evaluated. The client class name and the result value of the
+evaluation are printed.
+
+DHCP6_ADDITIONAL_CLASS_NO_TEST
+==============================
+
+.. code-block:: text
+
+    additional class %1 has no test expression, adding it to client's classes unconditionally
+
+Logged at debug log level 40.
+This debug message informs that a class was listed for additional evaluation but
+its definition does not include a test expression to evaluate. The class is
+unconditionally added to the query.
+
+DHCP6_ADDITIONAL_CLASS_UNDEFINED
+================================
+
+.. code-block:: text
+
+    additional class %1 has no definition
+
+Logged at debug log level 40.
+This debug message informs that a class is listed for additional evaluation but
+has no definition. The class is ignored.
 
 DHCP6_ADD_GLOBAL_STATUS_CODE
 ============================
@@ -7790,52 +7836,6 @@ client and transaction identification information. The second and third
 argument identify the prefix. The fourth and fifth argument hold the
 expected IAID and IAID found respectively.
 
-DHCP6_REQUIRED_CLASS_EVAL_ERROR
-===============================
-
-.. code-block:: text
-
-    %1: Expression '%2' evaluated to %3
-
-This error message indicates that there a problem was encountered while
-evaluating an expression of a required client class that was marked as required.
-A description of the problem is printed.
-
-DHCP6_REQUIRED_CLASS_EVAL_RESULT
-================================
-
-.. code-block:: text
-
-    %1: Expression '%2' evaluated to %3
-
-Logged at debug log level 50.
-This debug message indicates that the expression of a required client class has
-been successfully evaluated. The client class name and the result value of the
-evaluation are printed.
-
-DHCP6_REQUIRED_CLASS_NO_TEST
-============================
-
-.. code-block:: text
-
-    required class %1 has no test expression, adding it to client's classes unconditionally
-
-Logged at debug log level 40.
-This debug message informs that a class was listed for required evaluation but
-its definition does not include a test expression to evaluate. The class is
-unconditionally added to the query.
-
-DHCP6_REQUIRED_CLASS_UNDEFINED
-==============================
-
-.. code-block:: text
-
-    required class %1 has no definition
-
-Logged at debug log level 40.
-This debug message informs that a class is listed for required evaluation but
-has no definition. The class is ignored.
-
 DHCP6_REQUIRED_OPTIONS_CHECK_FAIL
 =================================
 
@@ -8648,7 +8648,7 @@ DHCPSRV_EVAL_ERROR
 
     %1: Expression '%2' evaluated to %3
 
-This error message indicates that there a problem was encountered while
+This error message indicates that a problem was encountered while
 evaluating an expression of a client class.
 A description of the problem is printed.
 
@@ -9669,6 +9669,18 @@ This warning message is issued when the current server configuration specifies
 no interfaces that the server should listen on, or when the specified interfaces are not
 configured to receive the traffic.
 
+DHCPSRV_ONLY_IF_REQUIRED_DEPRECATED
+===================================
+
+.. code-block:: text
+
+    The parameter 'only-if-required' is deprecated. Use 'only-in-additional-list' instead
+
+This warning message is emitted when configuration parsing detects
+the use of the deprecated 'only-if-required' parameter. It has
+been replaced by 'only-in-additional-list'.  Users should migrate
+to the new parameter.
+
 DHCPSRV_OPEN_SOCKET_FAIL
 ========================
 
@@ -9719,6 +9731,18 @@ change request because the lease doesn't include the FQDN, the forward and
 reverse update is disabled for this lease or the DNS updates are disabled
 in the configuration. The first argument includes the client identification
 information. The second argument includes the leased address.
+
+DHCPSRV_REQUIRE_CLIENT_CLASSES_DEPRECATED
+=========================================
+
+.. code-block:: text
+
+    The parameter 'require-client-classes' is deprecated. Use 'evaluate-additional-classes' instead
+
+This warning message is emitted when configuration parsing detects
+the use of the deprecated 'require-client-classes' parameter. It has
+been replaced by 'evaluate-additional-classes'.  Users should migrate
+to the new parameter.
 
 DHCPSRV_SUBNET4O6_SELECT_FAILED
 ===============================
@@ -9837,7 +9861,7 @@ DHCPSRV_TEMPLATE_EVAL_ERROR
 
     %1: Expression '%2' evaluated to %3
 
-This error message indicates that there a problem was encountered while
+This error message indicates that a problem was encountered while
 evaluating an expression of a template client class.
 A description of the problem is printed.
 

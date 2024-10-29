@@ -1,6 +1,0 @@
-[func]*		fdupont
-	Required classes are now evaluated in the same order as
-	for option data, i.e. (pd-)pool, subnet and shared network.
-	Before the order was reversed but this feature was not
-	used.
-	(Gitlab #3590)

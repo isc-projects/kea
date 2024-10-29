@@ -45,4 +45,3 @@ This informational message is printed when TLS support was required in
 the Kea configuration: The TLS support in PostgreSQL will be initialized but
 its configuration is fully managed outside the C API.
 The parameters of the connection are logged.
-

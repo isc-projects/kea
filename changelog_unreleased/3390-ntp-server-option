@@ -1,5 +1,0 @@
-[func]		fdupont
-	Added support of DHCPv6 "ntp-server" (56) option
-	specified by RFC 5908 and its associated suboptions
-	in the "v6-ntp-server-suboptions" space.
-	(Gitlab #3390)

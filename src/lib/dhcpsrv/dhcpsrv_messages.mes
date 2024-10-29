@@ -808,6 +808,12 @@ This warning message is issued when the current server configuration specifies
 no interfaces that the server should listen on, or when the specified interfaces are not
 configured to receive the traffic.
 
+% DHCPSRV_ONLY_IF_REQUIRED_DEPRECATED The parameter 'only-if-required' is deprecated. Use 'only-in-additional-list' instead
+This warning message is emitted when configuration parsing detects
+the use of the deprecated 'only-if-required' parameter. It has
+been replaced by 'only-in-additional-list'.  Users should migrate
+to the new parameter.
+
 % DHCPSRV_OPEN_SOCKET_FAIL failed to open socket: %1
 A warning message issued when IfaceMgr fails to open and bind a socket.
 The reason for the failure is appended as an argument of the log message.
@@ -834,6 +840,12 @@ change request because the lease doesn't include the FQDN, the forward and
 reverse update is disabled for this lease or the DNS updates are disabled
 in the configuration. The first argument includes the client identification
 information. The second argument includes the leased address.
+
+% DHCPSRV_REQUIRE_CLIENT_CLASSES_DEPRECATED The parameter 'require-client-classes' is deprecated. Use 'evaluate-additional-classes' instead
+This warning message is emitted when configuration parsing detects
+the use of the deprecated 'require-client-classes' parameter. It has
+been replaced by 'evaluate-additional-classes'.  Users should migrate
+to the new parameter.
 
 % DHCPSRV_SUBNET4O6_SELECT_FAILED Failed to select any subnet for the DHCPv4o6 packet
 Logged at debug log level 40.
@@ -945,15 +957,3 @@ included in the message.
 % DHCPSRV_UNKNOWN_DB unknown database type: %1
 The database access string specified a database type (given in the
 message) that is unknown to the software. This is a configuration error.
-
-% DHCPSRV_REQUIRE_CLIENT_CLASSES_DEPRECATED The parameter 'require-client-classes' is deprecated. Use 'evaluate-additional-classes' instead
-This warning message is emitted when configuration parsing detects
-the use of the deprecated 'require-client-classes' parameter. It has
-been replaced by 'evaluate-additional-classes'.  Users should migrate
-to the new parameter.
-
-% DHCPSRV_ONLY_IF_REQUIRED_DEPRECATED The parameter 'only-if-required' is deprecated. Use 'only-in-additional-list' instead
-This warning message is emitted when configuration parsing detects
-the use of the deprecated 'only-if-required' parameter. It has
-been replaced by 'only-in-additional-list'.  Users should migrate
-to the new parameter.

@@ -1,4 +1,0 @@
-[build, func]		andrei
-	Standalone fuzz target binaries used in fuzz testing were added
-	to the "fuzz" directory.
-	(Gitlab #3605)

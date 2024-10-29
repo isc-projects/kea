@@ -1,6 +1,0 @@
-[func]		fdupont
-	Relaxed the lease, host and config database backend types
-	in the configuration syntax. This change is introduced to
-	better handle optional backends provided in hooks, such as
-	currently available MySQL or PostgreSQL hooks.
-	(Gitlab #3585)

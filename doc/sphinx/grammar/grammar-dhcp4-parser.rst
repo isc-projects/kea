@@ -337,11 +337,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                        | cipher_list
                        | unknown_map_entry
 
-     database_type ::= "type" ":" db_type
-
-     db_type ::= "memfile"
-            | "mysql"
-            | "postgresql"
+     database_type ::= "type" ":" STRING
 
      user ::= "user" ":" STRING
 
@@ -509,6 +505,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                   | id
                   | client_class
                   | require_client_classes
+                  | evaluate_additional_classes
                   | reservations
                   | reservations_global
                   | reservations_in_subnet
@@ -560,6 +557,8 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      require_client_classes ::= "require-client-classes" ":" list_strings
 
+     evaluate_additional_classes ::= "evaluate-additional-classes" ":" list_strings
+
      reservations_global ::= "reservations-global" ":" BOOLEAN
 
      reservations_in_subnet ::= "reservations-in-subnet" ":" BOOLEAN
@@ -600,6 +599,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                          | reservations_out_of_pool
                          | client_class
                          | require_client_classes
+                         | evaluate_additional_classes
                          | valid_lifetime
                          | min_valid_lifetime
                          | max_valid_lifetime
@@ -707,6 +707,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                       | option_data_never_send
                       | user_context
                       | comment
+                      | option_data_client_classes
                       | unknown_map_entry
 
      option_data_name ::= name
@@ -722,6 +723,8 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
      option_data_always_send ::= "always-send" ":" BOOLEAN
 
      option_data_never_send ::= "never-send" ":" BOOLEAN
+
+     option_data_client_classes ::= "client-classes" ":" list_strings
 
      pools_list ::= "pools" ":" "[" pools_list_content "]"
 
@@ -745,6 +748,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                | option_data_list
                | client_class
                | require_client_classes
+               | evaluate_additional_classes
                | user_context
                | comment
                | unknown_map_entry
@@ -840,6 +844,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                        | client_class_test
                        | client_class_template_test
                        | only_if_required
+                       | only_in_additional_list
                        | option_def_list
                        | option_data_list
                        | next_server
@@ -860,6 +865,8 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
      client_class_template_test ::= "template-test" ":" STRING
 
      only_if_required ::= "only-if-required" ":" BOOLEAN
+
+     only_in_additional_list ::= "only-in-additional-list" ":" BOOLEAN
 
      dhcp4o6_port ::= "dhcp4o6-port" ":" INTEGER
 

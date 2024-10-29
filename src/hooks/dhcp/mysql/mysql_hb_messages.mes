@@ -43,4 +43,3 @@ TLS is not used.
 Logged at debug log level 40.
 A debug message issued when a new MySQL connected is created with TLS.
 The TLS cipher name is logged.
-

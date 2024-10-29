@@ -6,12 +6,6 @@
 
 $NAMESPACE isc::dhcp
 
-% MYSQL_LB_DB opening MySQL lease database: %1
-This informational message is logged when a DHCP server (either V4 or
-V6) is about to open a MySQL lease database. The parameters of the
-connection including database name and username needed to access it
-(but not the password if any) are logged.
-
 % MYSQL_DEINIT_OK unloading MySQL hooks library successful
 This informational message indicates that the MySQL Backend hooks
 library has been unloaded successfully.
@@ -35,6 +29,24 @@ Logged at debug log level 50.
 The code has issued a commit call. All outstanding transactions will be
 committed to the database. Note that depending on the MySQL settings,
 the commit may not include a write to disk.
+
+% MYSQL_LB_DB opening MySQL lease database: %1
+This informational message is logged when a DHCP server (either V4 or
+V6) is about to open a MySQL lease database. The parameters of the
+connection including database name and username needed to access it
+(but not the password if any) are logged.
+
+% MYSQL_LB_DB_RECONNECT_ATTEMPT_FAILED database reconnect failed: %1
+An error message issued when an attempt to reconnect has failed.
+
+% MYSQL_LB_DB_RECONNECT_ATTEMPT_SCHEDULE scheduling attempt %1 of %2 in %3 milliseconds
+An info message issued when the server is scheduling the next attempt to reconnect
+to the database. This occurs when the server has lost database connectivity and
+is attempting to reconnect automatically.
+
+% MYSQL_LB_DB_RECONNECT_FAILED maximum number of database reconnect attempts: %1, has been exhausted without success
+An error message issued when the server failed to reconnect. Loss of connectivity
+is typically a network or database server issue.
 
 % MYSQL_LB_DELETED_EXPIRED_RECLAIMED deleted %1 reclaimed leases from the database
 Logged at debug log level 50.
@@ -204,18 +216,6 @@ Logged at debug log level 50.
 A debug message issued when the server is about to obtain schema version
 information from the MySQL database.
 
-% MYSQL_LB_DB_RECONNECT_ATTEMPT_FAILED database reconnect failed: %1
-An error message issued when an attempt to reconnect has failed.
-
-% MYSQL_LB_DB_RECONNECT_ATTEMPT_SCHEDULE scheduling attempt %1 of %2 in %3 milliseconds
-An info message issued when the server is scheduling the next attempt to reconnect
-to the database. This occurs when the server has lost database connectivity and
-is attempting to reconnect automatically.
-
-% MYSQL_LB_DB_RECONNECT_FAILED maximum number of database reconnect attempts: %1, has been exhausted without success
-An error message issued when the server failed to reconnect. Loss of connectivity
-is typically a network or database server issue.
-
 % MYSQL_LB_NEGATIVE_LEASES_STAT recount of leases returned a negative value
 This warning message is issued when the recount of leases using counters
 in the MySQL database returned a negative value. This shows a problem
@@ -277,4 +277,3 @@ Logged at debug log level 50.
 A debug message issued when the server upgrades IPv6 lease extended info.
 The page number and started address, and the count of already updated leases
 are displayed.
-
