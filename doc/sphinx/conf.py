@@ -26,7 +26,7 @@ import api2doc  # noqa  # pylint: disable=wrong-import-position
 # -- Project information -----------------------------------------------------
 
 project = 'Kea'
-copyright = '2019-2024, Internet Systems Consortium'
+copyright = '2019-2024, Internet Systems Consortium'  # pylint: disable=redefined-builtin
 author = 'Internet Systems Consortium'
 
 # get current kea version
