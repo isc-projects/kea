@@ -21,19 +21,31 @@ namespace dhcp {
 Pool::Pool(Lease::Type type, const isc::asiolink::IOAddress& first,
            const isc::asiolink::IOAddress& last)
     : id_(0), first_(first), last_(last), type_(type), capacity_(0),
-      cfg_option_(new CfgOption()), client_class_("") {
+      cfg_option_(new CfgOption()) {
 }
 
-bool Pool::inRange(const isc::asiolink::IOAddress& addr) const {
+bool 
+Pool::inRange(const isc::asiolink::IOAddress& addr) const {
     return (first_ <= addr && addr <= last_);
 }
 
-bool Pool::clientSupported(const ClientClasses& classes) const {
-    return (client_class_.empty() || classes.contains(client_class_));
+bool 
+Pool::clientSupported(const ClientClasses& classes) const {
+    return (client_classes_.empty() || client_classes_.intersects(classes));
 }
 
-void Pool::allowClientClass(const ClientClass& class_name) {
-    client_class_ = class_name;
+void 
+Pool::allowClientClass(const ClientClass& class_name) {
+    if (!client_classes_.contains(class_name)) {
+        client_classes_.insert(class_name);
+    }
+}
+
+void
+Pool::addAdditionalClass(const isc::dhcp::ClientClass& class_name) {
+    if (!additional_classes_.contains(class_name)) {
+        additional_classes_.insert(class_name);
+    }
 }
 
 std::string
@@ -115,20 +127,15 @@ Pool::toElement() const {
     ConstCfgOptionPtr opts = getCfgOption();
     map->set("option-data", opts->toElement());
 
-    // Set client-class
-    const ClientClass& cclass = getClientClass();
-    if (!cclass.empty()) {
-        map->set("client-class", Element::create(cclass));
+    // Set client-classes
+    if (!client_classes_.empty()) {
+        map->set("client-classes", client_classes_.toElement());
     }
 
     // Set evaluate-additional-classes
-    const ClientClasses& classes = getAdditionalClasses();
-    if (!classes.empty()) {
-        ElementPtr class_list = Element::createList();
-        for (auto const& it : classes) {
-            class_list->add(Element::create(it));
-        }
-        map->set("evaluate-additional-classes", class_list);
+    if (!additional_classes_.empty()) {
+        map->set("evaluate-additional-classes",
+                 additional_classes_.toElement());
     }
 
     if (id_) {

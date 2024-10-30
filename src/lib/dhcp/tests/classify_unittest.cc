@@ -266,3 +266,28 @@ TEST(ClassifyTest, ClientClassesFromElement) {
     ++cclass;
     EXPECT_EQ(*cclass, "bar");
 }
+
+// Check that the ClientClasses::intersects function works.
+TEST(ClassifyTest, ClientClassesIntersects) {
+    ClientClasses classes1;
+    ClientClasses classes2;
+
+    EXPECT_FALSE(classes1.intersects(classes2));
+    EXPECT_FALSE(classes2.intersects(classes1));
+
+    classes1.insert("one");
+
+    EXPECT_FALSE(classes1.intersects(classes2));
+    EXPECT_FALSE(classes2.intersects(classes1));
+
+    classes2.insert("two");
+    classes2.insert("three");
+
+    EXPECT_FALSE(classes1.intersects(classes2));
+    EXPECT_FALSE(classes2.intersects(classes1));
+
+    classes2.insert("one");
+
+    EXPECT_TRUE(classes1.intersects(classes2));
+    EXPECT_TRUE(classes2.intersects(classes1));
+}

@@ -53,7 +53,8 @@ const SimpleKeywords SimpleParser6::GLOBAL6_PARAMETERS = {
     { "mac-sources",                      Element::list },
     { "relay-supplied-options",           Element::list },
     { "host-reservation-identifiers",     Element::list },
-    { "client-classes",                   Element::list },
+    { "client-class",                     Element::string },
+    { "client-classes",                   Element::string },
     { "option-def",                       Element::list },
     { "option-data",                      Element::list },
     { "hooks-libraries",                  Element::list },
@@ -223,6 +224,7 @@ const SimpleKeywords SimpleParser6::SUBNET6_PARAMETERS = {
     { "id",                             Element::integer },
     { "rapid-commit",                   Element::boolean },
     { "client-class",                   Element::string },
+    { "client-classes",                 Element::list },
     { "require-client-classes",         Element::list },
     { "evaluate-additional-classes",    Element::list },
     { "reservations",                   Element::list },
@@ -262,7 +264,6 @@ const SimpleKeywords SimpleParser6::SUBNET6_PARAMETERS = {
 /// defined on global level.
 const SimpleDefaults SimpleParser6::SUBNET6_DEFAULTS = {
     { "interface",        Element::string,  "" },
-    { "client-class",     Element::string,  "" },
     { "rapid-commit",     Element::boolean, "false" }, // rapid-commit disabled by default
     { "interface-id",     Element::string,  "" }
 };
@@ -277,7 +278,6 @@ const SimpleDefaults SimpleParser6::SHARED_SUBNET6_DEFAULTS = {
 
 /// @brief This table defines default values for each IPv6 shared network.
 const SimpleDefaults SimpleParser6::SHARED_NETWORK6_DEFAULTS = {
-    { "client-class",     Element::string,  "" },
     { "interface",        Element::string,  "" },
     { "interface-id",     Element::string,  "" },
     { "rapid-commit",     Element::boolean, "false" } // rapid-commit disabled by default
@@ -322,6 +322,7 @@ const SimpleKeywords SimpleParser6::POOL6_PARAMETERS = {
     { "pool-id",                     Element::integer },
     { "option-data",                 Element::list },
     { "client-class",                Element::string },
+    { "client-classes",              Element::list },
     { "require-client-classes",      Element::list },
     { "evaluate-additional-classes", Element::list },
     { "user-context",                Element::map },
@@ -341,6 +342,7 @@ const SimpleKeywords SimpleParser6::PD_POOL6_PARAMETERS = {
     { "pool-id",                     Element::integer },
     { "option-data",                 Element::list },
     { "client-class",                Element::string },
+    { "client-classes",              Element::list },
     { "require-client-classes",      Element::list },
     { "evaluate-additional-classes", Element::list },
     { "excluded-prefix",             Element::string },
@@ -368,6 +370,7 @@ const SimpleKeywords SimpleParser6::SHARED_NETWORK6_PARAMETERS = {
     { "reservations-in-subnet",         Element::boolean },
     { "reservations-out-of-pool",       Element::boolean },
     { "client-class",                   Element::string },
+    { "client-classes",                 Element::list },
     { "require-client-classes",         Element::list },
     { "evaluate-additional-classes",    Element::list },
     { "preferred-lifetime",             Element::integer },

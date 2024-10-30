@@ -186,13 +186,6 @@ TEST_F(NetworkTest, inheritanceSupport4) {
 
     // For each parameter for which inheritance is supported run
     // the test that checks if the values are inherited properly.
-
-    {
-        SCOPED_TRACE("client_class");
-        testNetworkInheritance<TestNetwork>(&Network::getClientClass,
-                                            &Network::allowClientClass,
-                                            "n", "g", false);
-    }
     {
         SCOPED_TRACE("valid-lifetime");
         testNetworkInheritance<TestNetwork>(&Network::getValid, &Network::setValid,

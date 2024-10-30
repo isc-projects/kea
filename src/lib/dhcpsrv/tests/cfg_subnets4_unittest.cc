@@ -1082,6 +1082,7 @@ TEST(CfgSubnets4Test, unparseSubnet) {
     Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3, 125));
 
     subnet1->allowClientClass("foo");
+    subnet1->allowClientClass("bar");
 
     subnet1->setT1Percent(0.45);
     subnet1->setT2Percent(0.70);
@@ -1141,7 +1142,7 @@ TEST(CfgSubnets4Test, unparseSubnet) {
         "    \"valid-lifetime\": 3,\n"
         "    \"min-valid-lifetime\": 3,\n"
         "    \"max-valid-lifetime\": 3,\n"
-        "    \"client-class\": \"foo\",\n"
+        "    \"client-classes\": [ \"foo\", \"bar\" ],\n"
         "    \"4o6-interface\": \"\",\n"
         "    \"4o6-interface-id\": \"\",\n"
         "    \"4o6-subnet\": \"\",\n"
@@ -1253,7 +1254,7 @@ TEST(CfgSubnets4Test, unparsePool) {
         "            \"option-data\": [ ],\n"
         "            \"pool\": \"192.0.2.64/26\",\n"
         "            \"user-context\": { \"foo\": \"bar\" },\n"
-        "            \"client-class\": \"bar\",\n"
+        "            \"client-classes\": [ \"bar\" ],\n"
         "            \"evaluate-additional-classes\": [ \"foo\" ]\n"
         "        }\n"
         "    ]\n"
@@ -1426,7 +1427,7 @@ TEST(CfgSubnets4Test, teeTimePercentValidation) {
         "            \"next-server\": \"\", \n"
         "            \"server-hostname\": \"\", \n"
         "            \"boot-file-name\": \"\", \n"
-        "            \"client-class\": \"\", \n"
+        "            \"client-classes\": [] , \n"
         "            \"evaluate-additional-classes\": [] \n,"
         "            \"reservations-global\": false, \n"
         "            \"reservations-in-subnet\": true, \n"
@@ -1495,8 +1496,8 @@ TEST(CfgSubnets4Test, validLifetimeValidation) {
         "            \"next-server\": \"\", \n"
         "            \"server-hostname\": \"\", \n"
         "            \"boot-file-name\": \"\", \n"
-        "            \"client-class\": \"\", \n"
-        "            \"evaluate-additional-classes\": [] \n,"
+        "            \"client-classes\": [], \n"
+        "            \"evaluate-additional-classes\": [], \n"
         "            \"reservations-global\": false, \n"
         "            \"reservations-in-subnet\": true, \n"
         "            \"reservations-out-of-pool\": false, \n"
@@ -1757,8 +1758,8 @@ TEST(CfgSubnets4Test, hostnameSanitizierValidation) {
         "            \"next-server\": \"\", \n"
         "            \"server-hostname\": \"\", \n"
         "            \"boot-file-name\": \"\", \n"
-        "            \"client-class\": \"\", \n"
-        "            \"evaluate-additional-classes\": [] \n,"
+        "            \"client-classes\": [], \n"
+        "            \"evaluate-additional-classes\": [], \n"
         "            \"reservations-global\": false, \n"
         "            \"reservations-in-subnet\": true, \n"
         "            \"reservations-out-of-pool\": false, \n"
@@ -1837,8 +1838,8 @@ TEST(CfgSubnets4Test, cacheParamValidation) {
         "            \"next-server\": \"\", \n"
         "            \"server-hostname\": \"\", \n"
         "            \"boot-file-name\": \"\", \n"
-        "            \"client-class\": \"\", \n"
-        "            \"evaluate-additional-classes\": [] \n,"
+        "            \"client-classes\": [], \n"
+        "            \"evaluate-additional-classes\": [], \n"
         "            \"reservations-global\": false, \n"
         "            \"reservations-in-subnet\": true, \n"
         "            \"reservations-out-of-pool\": false, \n"

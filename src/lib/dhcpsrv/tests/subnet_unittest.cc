@@ -82,8 +82,7 @@ TEST(Subnet4Test, defaults) {
     EXPECT_TRUE(subnet.getIface().unspecified());
     EXPECT_TRUE(subnet.getIface().empty());
 
-    EXPECT_TRUE(subnet.getClientClass().unspecified());
-    EXPECT_TRUE(subnet.getClientClass().empty());
+    EXPECT_TRUE(subnet.getClientClasses().empty());
 
     EXPECT_TRUE(subnet.getValid().unspecified());
     EXPECT_EQ(0, subnet.getValid().get());
@@ -542,7 +541,7 @@ TEST(Subnet4Test, clientClass) {
     four_classes.insert("network");
 
     // No class restrictions defined, any client should be supported
-    EXPECT_TRUE(subnet->getClientClass().empty());
+    EXPECT_TRUE(subnet->getClientClasses().empty());
     EXPECT_TRUE(subnet->clientSupported(no_class));
     EXPECT_TRUE(subnet->clientSupported(foo_class));
     EXPECT_TRUE(subnet->clientSupported(bar_class));
@@ -550,7 +549,7 @@ TEST(Subnet4Test, clientClass) {
 
     // Let's allow only clients belonging to "bar" class.
     subnet->allowClientClass("bar");
-    EXPECT_EQ("bar", subnet->getClientClass().get());
+    EXPECT_TRUE(subnet->getClientClasses().contains("bar"));
 
     EXPECT_FALSE(subnet->clientSupported(no_class));
     EXPECT_FALSE(subnet->clientSupported(foo_class));
@@ -880,8 +879,7 @@ TEST(SharedNetwork6Test, defaults) {
     EXPECT_TRUE(subnet.getIface().unspecified());
     EXPECT_TRUE(subnet.getIface().empty());
 
-    EXPECT_TRUE(subnet.getClientClass().unspecified());
-    EXPECT_TRUE(subnet.getClientClass().empty());
+    EXPECT_TRUE(subnet.getClientClasses().empty());
 
     EXPECT_TRUE(subnet.getValid().unspecified());
     EXPECT_EQ(0, subnet.getValid().get());
@@ -1261,7 +1259,7 @@ TEST(Subnet6Test, clientClass) {
     four_classes.insert("network");
 
     // No class restrictions defined, any client should be supported
-    EXPECT_TRUE(subnet->getClientClass().empty());
+    EXPECT_TRUE(subnet->getClientClasses().empty());
     EXPECT_TRUE(subnet->clientSupported(no_class));
     EXPECT_TRUE(subnet->clientSupported(foo_class));
     EXPECT_TRUE(subnet->clientSupported(bar_class));
@@ -1269,7 +1267,7 @@ TEST(Subnet6Test, clientClass) {
 
     // Let's allow only clients belonging to "bar" class.
     subnet->allowClientClass("bar");
-    EXPECT_EQ("bar", subnet->getClientClass().get());
+    EXPECT_TRUE(subnet->getClientClasses().contains("bar"));
 
     EXPECT_FALSE(subnet->clientSupported(no_class));
     EXPECT_FALSE(subnet->clientSupported(foo_class));

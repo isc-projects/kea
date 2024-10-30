@@ -281,5 +281,42 @@ BaseNetworkParser::getAdditionalClassesElem(ConstElementPtr params,
     }
 }
 
+void
+BaseNetworkParser::getClientClassesElem(ConstElementPtr params,
+                                        ClassAdderFunc adder_func) {
+    // Try setting up client client classes.
+    ConstElementPtr class_elem = params->get("client-class");
+    ConstElementPtr class_list = params->get("client-classes");
+    if (class_elem) {
+        if (!class_list) {
+            LOG_WARN(dhcpsrv_logger, DHCPSRV_CLIENT_CLASS_DEPRECATED);
+            if (class_elem->getType() != Element::string) {
+                isc_throw(DhcpConfigError, "invalid class name (" << class_elem->getPosition() << ")");
+            }
+
+            if (!class_elem->stringValue().empty()) {
+                (adder_func)(class_elem->stringValue());
+            }
+        } else {
+            isc_throw(isc::dhcp::DhcpConfigError,
+                      "cannot specify both 'client-class' and "
+                      "'client-classes'. Use only the latter.");
+        }
+    }
+
+    if (class_list) {
+        const std::vector<data::ElementPtr>& classes = class_list->listValue();
+        for (auto const& cclass : classes) {
+            if ((cclass->getType() != Element::string) ||
+                cclass->stringValue().empty()) {
+                isc_throw(DhcpConfigError, "invalid class name (" << cclass->getPosition() << ")");
+            }
+
+            (adder_func)(cclass->stringValue());
+        }
+    }
+}
+
+
 } // end of namespace isc::dhcp
 } // end of namespace isc

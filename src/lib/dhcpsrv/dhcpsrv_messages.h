@@ -48,6 +48,7 @@ extern const isc::log::MessageID DHCPSRV_CFGMGR_USE_ADDRESS;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_USE_ALLOCATOR;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_USE_UNICAST;
 extern const isc::log::MessageID DHCPSRV_CLASS_WITH_ADDTIONAL_AND_LIFETIMES;
+extern const isc::log::MessageID DHCPSRV_CLIENT_CLASS_DEPRECATED;
 extern const isc::log::MessageID DHCPSRV_CLOSE_DB;
 extern const isc::log::MessageID DHCPSRV_DDNS_TTL_PERCENT_TOO_SMALL;
 extern const isc::log::MessageID DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET;

@@ -57,6 +57,26 @@ ClientClasses::contains(const ClientClass& x) const {
     return (idx.count(x) != 0);
 }
 
+bool
+ClientClasses::intersects(const ClientClasses& cclasses) const {
+    if (cclasses.size() > size()) {
+        for (const auto& cclass : *this) {
+            if (cclasses.contains(cclass)) {
+                return (true);
+            }
+        }
+    }
+    else {
+        for (const auto& cclass : cclasses) {
+            if (contains(cclass)) {
+                return (true);
+            }
+        }
+    }
+
+    return (false);
+}
+
 std::string
 ClientClasses::toText(const std::string& separator) const {
     std::stringstream s;

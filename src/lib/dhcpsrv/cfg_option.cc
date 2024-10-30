@@ -65,22 +65,7 @@ OptionDescriptor::allowedForClientClasses(const ClientClasses& cclasses) const {
         return (true);
     }
 
-    if (cclasses.size() > client_classes_.size()) {
-        for (const auto& cclass : client_classes_) {
-            if (cclasses.contains(cclass)) {
-                return (true);
-            }
-        }
-    }
-    else {
-        for (const auto& cclass : cclasses) {
-            if (client_classes_.contains(cclass)) {
-                return (true);
-            }
-        }
-    }
-
-    return (false);
+    return (client_classes_.intersects(cclasses));
 }
 
 CfgOption::CfgOption()

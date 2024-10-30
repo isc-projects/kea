@@ -254,7 +254,7 @@ TEST_F(SharedNetwork4ParserTest, parse) {
 
     // Check basic parameters.
     EXPECT_TRUE(network->getAuthoritative());
-    EXPECT_EQ("srv1", network->getClientClass().get());
+    EXPECT_TRUE(network->getClientClasses().contains("srv1"));
     EXPECT_EQ("bird", network->getName());
     EXPECT_EQ("eth1961", network->getIface().get());
     EXPECT_EQ(99, network->getT1().get());
@@ -369,7 +369,7 @@ TEST_F(SharedNetwork4ParserTest, clientClassMatchClientIdAuthoritative) {
     network = parser.parse(config_element);
     ASSERT_TRUE(network);
 
-    EXPECT_EQ("alpha", network->getClientClass().get());
+    EXPECT_TRUE(network->getClientClasses().contains("alpha"));
 
     EXPECT_FALSE(network->getMatchClientId());
 
@@ -669,7 +669,7 @@ TEST_F(SharedNetwork6ParserTest, parse) {
     ASSERT_TRUE(network);
 
     // Check basic parameters.
-    EXPECT_EQ("srv1", network->getClientClass().get());
+    EXPECT_TRUE(network->getClientClasses().contains("srv1"));
     EXPECT_EQ("bird", network->getName());
     EXPECT_EQ("eth1961", network->getIface().get());
     EXPECT_EQ(211, network->getPreferred().get());
@@ -867,7 +867,7 @@ TEST_F(SharedNetwork6ParserTest, clientClass) {
     network = parser.parse(config_element);
     ASSERT_TRUE(network);
 
-    EXPECT_EQ("alpha", network->getClientClass().get());
+    EXPECT_TRUE(network->getClientClasses().contains("alpha"));
 }
 
 // This test verifies that it's possible to specify evaluate-additional-classes
@@ -1087,7 +1087,6 @@ TEST_F(SharedNetwork4ParserTest, deprecatedRequireClientClasses) {
                      " (<string>:1:2)");
 }
 
-
 // Verify that deprecated require-client-classes is handled properly
 // by v6 parser.
 TEST_F(SharedNetwork6ParserTest, deprecatedRequireClientClasses) {
@@ -1095,8 +1094,7 @@ TEST_F(SharedNetwork6ParserTest, deprecatedRequireClientClasses) {
     std::string config =
        R"^({
             "name": "foo",
-            "require-client-classes": [ "one", "two" ]
-        })^";
+            "require-client-classes": [ "one", "two" ] })^";
 
     ElementPtr config_element = Element::fromJSON(config);
 
@@ -1131,5 +1129,90 @@ TEST_F(SharedNetwork6ParserTest, deprecatedRequireClientClasses) {
                      " 'evaluate-additional-classes'. Use only the latter."
                      " (<string>:1:2)");
 }
+
+// Verify that deprecated client-class is handled properly
+// by v4 parser.
+TEST_F(SharedNetwork4ParserTest, deprecatedClientClass) {
+    // Valid entry.
+    std::string config =
+       R"^({
+            "name": "foo",
+            "client-class": "one"
+        })^";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    // Parse configuration specified above.
+    SharedNetwork4Parser parser;
+    SharedNetwork4Ptr network;
+
+    ASSERT_NO_THROW(network = parser.parse(config_element));
+    ASSERT_TRUE(network);
+
+    const auto cclasses = network->getClientClasses();
+    EXPECT_EQ(cclasses.size(), 1);
+    auto cclass = cclasses.begin();
+    EXPECT_EQ(*cclass, "one");
+
+    // Invalid entry specifies both parameters.
+    config =
+       R"^({
+            "name": "foo",
+            "client-class": "one",
+            "client-classes": [ "one", "two" ]
+        })^";
+
+    config_element = Element::fromJSON(config);
+
+    // Should throw a complaint.
+    ASSERT_THROW_MSG(parser.parse(config_element),
+                     DhcpConfigError,
+                     "cannot specify both 'client-class' and"
+                     " 'client-classes'. Use only the latter."
+                     " (<string>:1:2)");
+}
+
+// Verify that deprecated client-class is handled properly
+// by v6 parser.
+TEST_F(SharedNetwork6ParserTest, deprecatedClientClass) {
+    // Valid entry.
+    std::string config =
+       R"^({
+            "name": "foo",
+            "client-class": "one"
+        })^";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    // Parse configuration specified above.
+    SharedNetwork6Parser parser;
+    SharedNetwork6Ptr network;
+
+    ASSERT_NO_THROW(network = parser.parse(config_element));
+    ASSERT_TRUE(network);
+
+    const auto cclasses = network->getClientClasses();
+    EXPECT_EQ(cclasses.size(), 1);
+    auto cclass = cclasses.begin();
+    EXPECT_EQ(*cclass, "one");
+
+    // Invalid entry specifies both parameters.
+    config =
+       R"^({
+            "name": "foo",
+            "client-class": "one",
+            "client-classes": [ "one", "two" ]
+        })^";
+
+    config_element = Element::fromJSON(config);
+
+    // Should throw a complaint.
+    ASSERT_THROW_MSG(parser.parse(config_element),
+                     DhcpConfigError,
+                     "cannot specify both 'client-class' and"
+                     " 'client-classes'. Use only the latter."
+                     " (<string>:1:2)");
+}
+
 
 } // end of anonymous namespace

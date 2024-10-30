@@ -67,18 +67,19 @@ Network::getRelayAddresses() const {
 
 bool
 Network::clientSupported(const isc::dhcp::ClientClasses& classes) const {
-    if (client_class_.empty()) {
-        // There is no class defined for this network, so we do
-        // support everyone.
+    if (client_classes_.empty()) {
+        // Empty list for this network, so we support everyone.
         return (true);
     }
 
-    return (classes.contains(client_class_));
+    return (client_classes_.intersects(classes));
 }
 
 void
 Network::allowClientClass(const isc::dhcp::ClientClass& class_name) {
-    client_class_ = class_name;
+    if (!client_classes_.contains(class_name)) {
+        client_classes_.insert(class_name);
+    }
 }
 
 void
@@ -86,11 +87,6 @@ Network::addAdditionalClass(const isc::dhcp::ClientClass& class_name) {
     if (!additional_classes_.contains(class_name)) {
         additional_classes_.insert(class_name);
     }
-}
-
-const ClientClasses&
-Network::getAdditionalClasses() const {
-    return (additional_classes_);
 }
 
 Optional<IOAddress>
@@ -135,19 +131,15 @@ Network::toElement() const {
     relay_map->set("ip-addresses", address_list);
     map->set("relay", relay_map);
 
-    // Set client-class
-    if (!client_class_.unspecified()) {
-        map->set("client-class", Element::create(client_class_.get()));
+    // Set client-classes
+    if (!client_classes_.empty()) {
+        map->set("client-classes", client_classes_.toElement());
     }
 
     // Set evaluate-additional-classes
-    const ClientClasses& classes = getAdditionalClasses();
-    if (!classes.empty()) {
-        ElementPtr class_list = Element::createList();
-        for (auto const& it : classes) {
-            class_list->add(Element::create(it));
-        }
-        map->set("evaluate-additional-classes", class_list);
+    if (!additional_classes_.empty()) {
+        map->set("evaluate-additional-classes", 
+                 additional_classes_.toElement());
     }
 
     // T1, T2, and Valid are optional for SharedNetworks, and

@@ -196,8 +196,8 @@ TEST(Pool4Test, userContext) {
     EXPECT_EQ(ctx->str(), pool->getContext()->str());
 }
 
-// This test checks that handling for client-class is valid.
-TEST(Pool4Test, clientClass) {
+// This test checks that handling for client-classes is valid.
+TEST(Pool4Test, clientClasses) {
     // Create a pool.
     Pool4Ptr pool(new Pool4(IOAddress("192.0.2.0"),
                             IOAddress("192.0.2.255")));
@@ -220,7 +220,7 @@ TEST(Pool4Test, clientClass) {
     three_classes.insert("baz");
 
     // No class restrictions defined, any client should be supported
-    EXPECT_TRUE(pool->getClientClass().empty());
+    EXPECT_TRUE(pool->getClientClasses().empty());
     EXPECT_TRUE(pool->clientSupported(no_class));
     EXPECT_TRUE(pool->clientSupported(foo_class));
     EXPECT_TRUE(pool->clientSupported(bar_class));
@@ -228,7 +228,7 @@ TEST(Pool4Test, clientClass) {
 
     // Let's allow only clients belonging to "bar" class.
     pool->allowClientClass("bar");
-    EXPECT_EQ("bar", pool->getClientClass());
+    EXPECT_TRUE(pool->getClientClasses().contains("bar"));
 
     EXPECT_FALSE(pool->clientSupported(no_class));
     EXPECT_FALSE(pool->clientSupported(foo_class));
@@ -624,7 +624,7 @@ TEST(Pool6Test, clientClass) {
     three_classes.insert("baz");
 
     // No class restrictions defined, any client should be supported
-    EXPECT_TRUE(pool.getClientClass().empty());
+    EXPECT_TRUE(pool.getClientClasses().empty());
     EXPECT_TRUE(pool.clientSupported(no_class));
     EXPECT_TRUE(pool.clientSupported(foo_class));
     EXPECT_TRUE(pool.clientSupported(bar_class));
@@ -632,7 +632,7 @@ TEST(Pool6Test, clientClass) {
 
     // Let's allow only clients belonging to "bar" class.
     pool.allowClientClass("bar");
-    EXPECT_EQ("bar", pool.getClientClass());
+    EXPECT_TRUE(pool.getClientClasses().contains("bar"));
 
     EXPECT_FALSE(pool.clientSupported(no_class));
     EXPECT_FALSE(pool.clientSupported(foo_class));

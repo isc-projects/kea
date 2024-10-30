@@ -211,7 +211,7 @@ public:
 
     /// @brief Constructor.
     Network()
-        : iface_name_(), client_class_(), t1_(), t2_(), valid_(),
+        : iface_name_(), client_classes_(), t1_(), t2_(), valid_(),
           reservations_global_(false, true), reservations_in_subnet_(true, true),
           reservations_out_of_pool_(false, true), cfg_option_(new CfgOption()),
           calculate_tee_times_(), t1_percent_(), t2_percent_(),
@@ -327,8 +327,8 @@ public:
     /// @return True if a relay with the given address is found, false otherwise
     bool hasRelayAddress(const asiolink::IOAddress& address) const;
 
-    /// @brief Checks whether this network supports client that belongs to
-    /// specified classes.
+    /// @brief Checks whether this network supports a client that belongs to
+    /// the specified classes.
     ///
     /// This method checks whether a client that belongs to given classes can
     /// use this network. For example, if this class is reserved for client
@@ -336,18 +336,25 @@ public:
     /// it is supported. On the other hand, client belonging to classes
     /// "foobar" and "zyxxy" is not supported.
     ///
-    /// @note: changed the planned white and black lists idea to a simple
-    /// client class name.
-    ///
     /// @param client_classes list of all classes the client belongs to
     /// @return true if client can be supported, false otherwise
     virtual bool
     clientSupported(const isc::dhcp::ClientClasses& client_classes) const;
 
-    /// @brief Sets the supported class to class class_name
+    /// @brief Adds class clas_name to the allowed client classes list.
     ///
     /// @param class_name client class to be supported by this network
     void allowClientClass(const isc::dhcp::ClientClass& class_name);
+
+    /// @brief Returns the list of allowed client classes.
+    const ClientClasses& getClientClasses() const {
+        return (client_classes_);
+    }
+
+    /// @brief Returns the mutable list of allowed client classes.
+    ClientClasses& getMutableClientClasses() {
+        return (client_classes_);
+    }
 
     /// @brief Adds class class_name to the additional classes list.
     ///
@@ -355,24 +362,13 @@ public:
     void addAdditionalClass(const isc::dhcp::ClientClass& class_name);
 
     /// @brief Returns the additional classes list.
-    const ClientClasses& getAdditionalClasses() const;
+    const ClientClasses& getAdditionalClasses() const {
+        return (additional_classes_);
+    }
 
     /// @brief Returns the mutable additional classes list.
     ClientClasses& getMutableAdditionalClasses() {
         return (additional_classes_);
-    }
-
-    /// @brief returns the client class
-    ///
-    /// @note The returned reference is only valid as long as the object
-    /// returned it is valid.
-    ///
-    /// @param inheritance inheritance mode to be used.
-    /// @return client class @ref client_class_
-    util::Optional<ClientClass>
-    getClientClass(const Inheritance& inheritance = Inheritance::ALL) const {
-        return (getProperty<Network>(&Network::getClientClass, client_class_,
-                                     inheritance));
     }
 
     /// @brief Return valid-lifetime for addresses in that prefix
@@ -1145,12 +1141,13 @@ protected:
     /// See @ref RelayInfo for detailed description.
     RelayInfo relay_;
 
-    /// @brief Optional definition of a client class
+    /// @brief List of client classes allowed to use this network.
     ///
-    /// If defined, only clients belonging to that class will be allowed to use
-    /// this particular network. The default value for this is an empty string,
-    /// which means that any client is allowed, regardless of its class.
-    util::Optional<ClientClass> client_class_;
+    /// If not empty, only clients belonging to at least one of the classes
+    /// in this list will be allowed to use this particular network.  By default
+    /// the list is empty which means that any client is allowed, regardless
+    /// of its class membership.
+    ClientClasses client_classes_;
 
     /// @brief Additional classes
     ///

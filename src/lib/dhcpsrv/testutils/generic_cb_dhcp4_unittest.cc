@@ -1145,8 +1145,7 @@ GenericConfigBackendDHCPv4Test::getSubnet4WithOptionalUnspecifiedTest() {
     EXPECT_TRUE(returned_subnet->getIface().unspecified());
     EXPECT_TRUE(returned_subnet->getIface().empty());
 
-    EXPECT_TRUE(returned_subnet->getClientClass().unspecified());
-    EXPECT_TRUE(returned_subnet->getClientClass().empty());
+    EXPECT_TRUE(returned_subnet->getClientClasses().empty());
 
     EXPECT_TRUE(returned_subnet->getValid().unspecified());
     EXPECT_EQ(0, returned_subnet->getValid().get());
@@ -2159,8 +2158,7 @@ GenericConfigBackendDHCPv4Test::getSharedNetwork4WithOptionalUnspecifiedTest() {
     EXPECT_TRUE(returned_network->getIface().unspecified());
     EXPECT_TRUE(returned_network->getIface().empty());
 
-    EXPECT_TRUE(returned_network->getClientClass().unspecified());
-    EXPECT_TRUE(returned_network->getClientClass().empty());
+    EXPECT_TRUE(returned_network->getClientClasses().empty());
 
     EXPECT_TRUE(returned_network->getValid().unspecified());
     EXPECT_EQ(0, returned_network->getValid().get());

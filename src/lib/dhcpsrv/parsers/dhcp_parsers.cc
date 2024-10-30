@@ -523,6 +523,11 @@ PoolParser::parse(PoolStoragePtr pools,
         }
     }
 
+    // Setup client class list.
+    BaseNetworkParser::getClientClassesElem(pool_structure,
+                                            std::bind(&Pool::allowClientClass,
+                                                      pool, ph::_1));
+
     // Setup additional class list.
     BaseNetworkParser::getAdditionalClassesElem(pool_structure,
                                                 std::bind(&Pool::addAdditionalClass,
@@ -890,6 +895,10 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
         }
     }
 
+    // Setup client class list.
+    getClientClassesElem(params, std::bind(&Network::allowClientClass,
+                                           subnet4, ph::_1));
+
     // Setup additional class list.
     getAdditionalClassesElem(params, std::bind(&Network::addAdditionalClass,
                                                subnet4, ph::_1));
@@ -1167,6 +1176,11 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool,
         }
     }
 
+    // Setup client class list.
+    BaseNetworkParser::getClientClassesElem(pd_pool,
+                                            std::bind(&Pool::allowClientClass,
+                                                      pool_, ph::_1));
+
     // Setup additional class list.
     BaseNetworkParser::getAdditionalClassesElem(pd_pool,
                                                 std::bind(&Pool::addAdditionalClass,
@@ -1398,6 +1412,10 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
             subnet6->allowClientClass(client_class);
         }
     }
+
+    // Setup client class list.
+    getClientClassesElem(params, std::bind(&Network::allowClientClass,
+                                           subnet6, ph::_1));
 
     // Setup additional class list.
     getAdditionalClassesElem(params, std::bind(&Network::addAdditionalClass,

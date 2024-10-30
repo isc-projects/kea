@@ -308,7 +308,7 @@ public:
             if (preferred_subnet == s) {
                 continue;
             }
-            if (s->getClientClass().get() != selected_subnet->getClientClass().get()) {
+            if (s->getClientClasses() != selected_subnet->getClientClasses()) {
                 continue;
             }
             auto current_subnet_state = s->getAllocationState(lease_type);

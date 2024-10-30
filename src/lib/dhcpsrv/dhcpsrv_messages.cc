@@ -47,6 +47,7 @@ extern const isc::log::MessageID DHCPSRV_CFGMGR_USE_ADDRESS = "DHCPSRV_CFGMGR_US
 extern const isc::log::MessageID DHCPSRV_CFGMGR_USE_ALLOCATOR = "DHCPSRV_CFGMGR_USE_ALLOCATOR";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_USE_UNICAST = "DHCPSRV_CFGMGR_USE_UNICAST";
 extern const isc::log::MessageID DHCPSRV_CLASS_WITH_ADDTIONAL_AND_LIFETIMES = "DHCPSRV_CLASS_WITH_ADDTIONAL_AND_LIFETIMES";
+extern const isc::log::MessageID DHCPSRV_CLIENT_CLASS_DEPRECATED = "DHCPSRV_CLIENT_CLASS_DEPRECATED";
 extern const isc::log::MessageID DHCPSRV_CLOSE_DB = "DHCPSRV_CLOSE_DB";
 extern const isc::log::MessageID DHCPSRV_DDNS_TTL_PERCENT_TOO_SMALL = "DHCPSRV_DDNS_TTL_PERCENT_TOO_SMALL";
 extern const isc::log::MessageID DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET = "DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET";
@@ -217,6 +218,7 @@ const char* values[] = {
     "DHCPSRV_CFGMGR_USE_ALLOCATOR", "using the %1 allocator for %2 leases in subnet %3",
     "DHCPSRV_CFGMGR_USE_UNICAST", "listening on unicast address %1, on interface %2",
     "DHCPSRV_CLASS_WITH_ADDTIONAL_AND_LIFETIMES", "class: %1 has 'only-in-additional-list' true while specifying one or more lease life time values. Life time values will be ignored.",
+    "DHCPSRV_CLIENT_CLASS_DEPRECATED", "The parameter 'client-class' is deprecated. Use 'client-classes' list parameter instead",
     "DHCPSRV_CLOSE_DB", "closing currently open %1 database",
     "DHCPSRV_DDNS_TTL_PERCENT_TOO_SMALL", "ddns-ttl-percent %1 of lease lifetime %2 is too small, ignoring it",
     "DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET", "received bad DHCPv4o6 packet: %1",

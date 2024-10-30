@@ -958,7 +958,7 @@ included in the message.
 The database access string specified a database type (given in the
 message) that is unknown to the software. This is a configuration error.
 
-% DHCPSRV_CLASS_WITH_ADDTIONAL_AND_LIFETIMES class: %1 has 'only-in-additional-list' true while specifying one or more lease life time values. Life time values will be ignored.
+% DHCPSRV_CLASS_WITH_ADDITIONAL_AND_LIFETIMES class: %1 has 'only-in-additional-list' true while specifying one or more lease life time values. Life time values will be ignored.
 This warning is emitted whenever a class is configured with
 'only-in-addition-list' true as well as specifying one or
 more lease life time parameters (e.g. 'valid-lifetime',
@@ -966,3 +966,8 @@ more lease life time parameters (e.g. 'valid-lifetime',
 are evaluated after lease assignment, thus parameters that would otherwise
 impact lease life times will have no affect.
 
+% DHCPSRV_CLIENT_CLASS_DEPRECATED The parameter 'client-class' is deprecated. Use 'client-classes' list parameter instead
+This warning message is emitted when configuration parsing detects
+the use of the deprecated 'client-class' parameter. It has
+been replaced by 'client-classes'.  Users should migrate
+to the new list parameter.

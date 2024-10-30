@@ -21,10 +21,7 @@
 /// @file   classify.h
 ///
 /// @brief Defines elements for storing the names of client classes
-///
-/// This file defines common elements used to track the client classes
-/// that may be associated with a given packet.  In order to minimize the
-/// exposure of the DHCP library to server side concepts such as client
+/// /// This file defines common elements used to track the client classes /// that may be associated with a given packet.  In order to minimize the /// exposure of the DHCP library to server side concepts such as client
 /// classification the classes herein provide a mechanism to maintain lists
 /// of class names, rather than the classes they represent.  It is the
 /// upper layers' prerogative to use these names as they see fit.
@@ -199,6 +196,14 @@ namespace dhcp {
             return (container_.end());
         }
         /// @}
+
+        /// @brief returns whether this container has at least one class
+        /// in given container.
+        ///
+        /// @param cclasses list of classes to check for intersection with
+        /// @return true if this container has at least one class that is
+        /// also in cclasses, false otherwise.
+        bool intersects(const ClientClasses& cclasses) const;
 
         /// @brief returns if class x belongs to the defined classes
         ///

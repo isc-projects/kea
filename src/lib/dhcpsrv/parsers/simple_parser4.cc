@@ -223,6 +223,7 @@ const SimpleKeywords SimpleParser4::SUBNET4_PARAMETERS = {
     { "interface",                      Element::string },
     { "id",                             Element::integer },
     { "client-class",                   Element::string },
+    { "client-classes",                 Element::list },
     { "require-client-classes",         Element::list },
     { "evaluate-additional-classes",    Element::list },
     { "reservations",                   Element::list },
@@ -271,7 +272,6 @@ const SimpleKeywords SimpleParser4::SUBNET4_PARAMETERS = {
 /// interface.
 const SimpleDefaults SimpleParser4::SUBNET4_DEFAULTS = {
     { "interface",        Element::string,  "" },
-    { "client-class",     Element::string,  "" },
     { "4o6-interface",    Element::string,  "" },
     { "4o6-interface-id", Element::string,  "" },
     { "4o6-subnet",       Element::string,  "" },
@@ -291,7 +291,6 @@ const SimpleDefaults SimpleParser4::SHARED_SUBNET4_DEFAULTS = {
 
 /// @brief This table defines default values for each IPv4 shared network.
 const SimpleDefaults SimpleParser4::SHARED_NETWORK4_DEFAULTS = {
-    { "client-class",     Element::string, "" },
     { "interface",        Element::string, "" }
 };
 
@@ -331,6 +330,7 @@ const SimpleKeywords SimpleParser4::POOL4_PARAMETERS = {
     { "pool-id",                     Element::integer },
     { "option-data",                 Element::list },
     { "client-class",                Element::string },
+    { "client-classes",              Element::list },
     { "require-client-classes",      Element::list },
     { "evaluate-additional-classes", Element::list },
     { "user-context",                Element::map },
@@ -360,6 +360,7 @@ const SimpleKeywords SimpleParser4::SHARED_NETWORK4_PARAMETERS = {
     { "reservations-in-subnet",         Element::boolean },
     { "reservations-out-of-pool",       Element::boolean },
     { "client-class",                   Element::string },
+    { "client-classes",                 Element::list },
     { "require-client-classes",         Element::list },
     { "evaluate-additional-classes",    Element::list },
     { "valid-lifetime",                 Element::integer },

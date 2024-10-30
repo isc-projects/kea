@@ -114,35 +114,29 @@ public:
     /// @brief Checks whether this pool supports client that belongs to
     /// specified classes.
     ///
-    /// @todo: currently doing the same as network which needs improving.
-    ///
     /// @param client_classes list of all classes the client belongs to
     /// @return true if client can be supported, false otherwise
     bool clientSupported(const ClientClasses& client_classes) const;
 
-    /// @brief Sets the supported class to  class class_name
+    /// @brief Adds class clas_name to the allowed client classes list.
     ///
-    /// @param class_name client class to be supported by this pool
-    void allowClientClass(const ClientClass& class_name);
+    /// @param class_name client class to be supported by this network
+    void allowClientClass(const isc::dhcp::ClientClass& class_name);
 
-    /// @brief returns the client class
-    ///
-    /// @note The returned reference is only valid as long as the object
-    /// returned is valid.
-    ///
-    /// @return client class @ref client_class_
-    const ClientClass& getClientClass() const {
-        return (client_class_);
+    /// @brief Returns the list of allowed client classes.
+    const ClientClasses& getClientClasses() const {
+        return (client_classes_);
+    }
+
+    /// @brief Returns the mutable list of allowed client classes.
+    ClientClasses& getMutableClientClasses() {
+        return (client_classes_);
     }
 
     /// @brief Adds class class_name to the additional classes list.
     ///
     /// @param class_name client class to add
-    void addAdditionalClass(const ClientClass& class_name) {
-        if (!additional_classes_.contains(class_name)) {
-            additional_classes_.insert(class_name);
-        }
-    }
+    void addAdditionalClass(const ClientClass& class_name);
 
     /// @brief Returns the additional classes list.
     const ClientClasses& getAdditionalClasses() const {
@@ -216,10 +210,13 @@ protected:
     /// @brief Pointer to the option data configuration for this pool.
     CfgOptionPtr cfg_option_;
 
-    /// @brief Optional definition of a client class
+    /// @brief List of client classes allowed to use this pool.
     ///
-    /// @ref Network::client_class_
-    ClientClass client_class_;
+    /// If not empty, only clients belonging to at least one of the classes
+    /// in this list will be allowed to use this particular pool.  By default
+    /// the list is empty which means that any client is allowed, regardless
+    /// of its class membership.
+    ClientClasses client_classes_;
 
     /// @brief Additional classes
     ///

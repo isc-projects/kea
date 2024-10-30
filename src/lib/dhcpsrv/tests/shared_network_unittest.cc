@@ -77,8 +77,7 @@ TEST(SharedNetwork4Test, defaults) {
     EXPECT_TRUE(network->getIface().unspecified());
     EXPECT_TRUE(network->getIface().empty());
 
-    EXPECT_TRUE(network->getClientClass().unspecified());
-    EXPECT_TRUE(network->getClientClass().empty());
+    EXPECT_TRUE(network->getClientClasses().empty());
 
     EXPECT_TRUE(network->getValid().unspecified());
     EXPECT_EQ(0, network->getValid().get());
@@ -829,8 +828,7 @@ TEST(SharedNetwork6Test, defaults) {
     EXPECT_TRUE(network->getIface().unspecified());
     EXPECT_TRUE(network->getIface().empty());
 
-    EXPECT_TRUE(network->getClientClass().unspecified());
-    EXPECT_TRUE(network->getClientClass().empty());
+    EXPECT_TRUE(network->getClientClasses().empty());
 
     EXPECT_TRUE(network->getValid().unspecified());
     EXPECT_EQ(0, network->getValid().get());

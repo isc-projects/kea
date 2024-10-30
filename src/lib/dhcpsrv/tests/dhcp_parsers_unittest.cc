@@ -2898,8 +2898,7 @@ TEST_F(ParseConfigTest, defaultSubnet4) {
     EXPECT_TRUE(subnet->getIface().unspecified());
     EXPECT_TRUE(subnet->getIface().empty());
 
-    EXPECT_TRUE(subnet->getClientClass().unspecified());
-    EXPECT_TRUE(subnet->getClientClass().empty());
+    EXPECT_TRUE(subnet->getClientClasses().empty());
 
     EXPECT_TRUE(subnet->getValid().unspecified());
     EXPECT_EQ(0, subnet->getValid().get());
@@ -3017,8 +3016,7 @@ TEST_F(ParseConfigTest, defaultSubnet6) {
     EXPECT_TRUE(subnet->getIface().unspecified());
     EXPECT_TRUE(subnet->getIface().empty());
 
-    EXPECT_TRUE(subnet->getClientClass().unspecified());
-    EXPECT_TRUE(subnet->getClientClass().empty());
+    EXPECT_TRUE(subnet->getClientClasses().empty());
 
     EXPECT_TRUE(subnet->getValid().unspecified());
     EXPECT_EQ(0, subnet->getValid().get());
@@ -3122,8 +3120,7 @@ TEST_F(ParseConfigTest, defaultSharedNetwork4) {
     EXPECT_TRUE(network->getIface().unspecified());
     EXPECT_TRUE(network->getIface().empty());
 
-    EXPECT_TRUE(network->getClientClass().unspecified());
-    EXPECT_TRUE(network->getClientClass().empty());
+    EXPECT_TRUE(network->getClientClasses().empty());
 
     EXPECT_TRUE(network->getValid().unspecified());
     EXPECT_EQ(0, network->getValid().get());
@@ -3215,8 +3212,7 @@ TEST_F(ParseConfigTest, defaultSharedNetwork6) {
     EXPECT_TRUE(network->getIface().unspecified());
     EXPECT_TRUE(network->getIface().empty());
 
-    EXPECT_TRUE(network->getClientClass().unspecified());
-    EXPECT_TRUE(network->getClientClass().empty());
+    EXPECT_TRUE(network->getClientClasses().empty());
 
     EXPECT_TRUE(network->getValid().unspecified());
     EXPECT_EQ(0, network->getValid().get());
@@ -3914,6 +3910,209 @@ TEST_F(DhcpParserTest, deprecatedRequireClientClassesPool6) {
                      DhcpConfigError,
                      "cannot specify both 'require-client-classes' and"
                      " 'evaluate-additional-classes'. Use only the latter.");
+}
+
+// Verify that deprecated client-class is handled properly
+// by Subnet4 parser.
+TEST_F(DhcpParserTest, deprecatedClientClassSubnet4) {
+    // Valid empty entry.
+    std::string config =
+       R"^({
+            "id": 1,
+            "subnet": "192.0.2.0/24",
+            "client-class": ""
+        })^";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    // Parse configuration specified above.
+    Subnet4ConfigParser parser(AF_INET);
+    Subnet4Ptr subnet;
+
+    ASSERT_NO_THROW(subnet = parser.parse(config_element));
+    ASSERT_TRUE(subnet);
+
+    EXPECT_EQ(subnet->getClientClasses().size(), 0);
+
+    // Valid entry.
+    config =
+       R"^({
+            "id": 1,
+            "subnet": "192.0.2.0/24",
+            "client-class": "one"
+        })^";
+
+    config_element = Element::fromJSON(config);
+
+    // Parse configuration specified above.
+    ASSERT_NO_THROW(subnet = parser.parse(config_element));
+    ASSERT_TRUE(subnet);
+
+    const auto cclasses = subnet->getClientClasses();
+    EXPECT_EQ(cclasses.size(), 1);
+    auto cclass = cclasses.begin();
+    EXPECT_EQ(*cclass, "one");
+
+    // Invalid entry specifies both parameters.
+    config =
+       R"^({
+            "id": 1,
+            "subnet": "192.0.2.0/24",
+            "client-class": "one",
+            "client-classes": [ "one", "two" ]
+        })^";
+
+    config_element = Element::fromJSON(config);
+
+    // Should throw a complaint.
+    ASSERT_THROW_MSG(parser.parse(config_element),
+                     DhcpConfigError,
+                     "subnet configuration failed: "
+                     "cannot specify both 'client-class' and"
+                     " 'client-classes'. Use only the latter.");
+}
+
+// Verify that deprecated client-class is handled properly
+// by Subnet6 parser.
+TEST_F(DhcpParserTest, deprecatedClientClassSubnet6) {
+    // Valid empty entry.
+    std::string config =
+       R"^({
+            "id": 1,
+            "subnet": "2001:db8::/64",
+            "client-class": ""
+        })^";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    // Parse configuration specified above.
+    Subnet6ConfigParser parser(AF_INET);
+    Subnet6Ptr subnet;
+
+    ASSERT_NO_THROW(subnet = parser.parse(config_element));
+    ASSERT_TRUE(subnet);
+
+    EXPECT_EQ(subnet->getClientClasses().size(), 0);
+
+    // Valid entry.
+    config =
+       R"^({
+            "id": 1,
+            "subnet": "2001:db8::/64",
+            "client-class": "one"
+        })^";
+
+    config_element = Element::fromJSON(config);
+
+    // Parse configuration specified above.
+    ASSERT_NO_THROW(subnet = parser.parse(config_element));
+    ASSERT_TRUE(subnet);
+
+    const auto cclasses = subnet->getClientClasses();
+    EXPECT_EQ(cclasses.size(), 1);
+    auto cclass = cclasses.begin();
+    EXPECT_EQ(*cclass, "one");
+
+    // Invalid entry specifies both parameters.
+    config =
+       R"^({
+            "id": 1,
+            "subnet": "2001:db8::/64",
+            "client-class": "one",
+            "client-classes": [ "one", "two" ]
+        })^";
+
+    config_element = Element::fromJSON(config);
+
+    // Should throw a complaint.
+    ASSERT_THROW_MSG(parser.parse(config_element),
+                     DhcpConfigError,
+                     "subnet configuration failed: "
+                     "cannot specify both 'client-class' and"
+                     " 'client-classes'. Use only the latter.");
+}
+
+// Verify that deprecated client-class is handled properly
+// by Pool4 parser. 
+TEST_F(DhcpParserTest, deprecatedClientClassPool4) {
+    // Valid entry.
+    std::string config =
+       R"^({
+            "pool": "192.0.2.0/24",
+            "client-class": "one"
+        })^";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    // Parse configuration specified above.
+    Pool4Parser parser;
+    PoolStoragePtr pools(new PoolStorage());
+
+    ASSERT_NO_THROW(parser.parse(pools, config_element, AF_INET));
+    EXPECT_EQ(1, pools->size());
+
+    const auto cclasses = (*pools)[0]->getClientClasses();
+    EXPECT_EQ(cclasses.size(), 1);
+    auto cclass = cclasses.begin();
+    EXPECT_EQ(*cclass, "one");
+
+    // Invalid entry specifies both parameters.
+    config =
+       R"^({
+            "pool": "192.0.2.0/24",
+            "client-class": "one",
+            "client-classes": [ "one", "two" ]
+        })^";
+
+    config_element = Element::fromJSON(config);
+
+    // Should throw a complaint.
+    ASSERT_THROW_MSG(parser.parse(pools, config_element, AF_INET),
+                     DhcpConfigError,
+                     "cannot specify both 'client-class' and"
+                     " 'client-classes'. Use only the latter.");
+}
+
+// Verify that deprecated client-class is handled properly
+// by Pool6 parser.  We only test TYPE_NA and as the same code is
+// used for either v6 pool type.
+TEST_F(DhcpParserTest, deprecatedClientClassPool6) {
+    // Valid entry.
+    std::string config =
+       R"^({
+            "pool": "2001:db8::/64",
+            "client-class": "one"
+        })^";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    // Parse configuration specified above.
+    Pool6Parser parser;
+    PoolStoragePtr pools(new PoolStorage());
+
+    ASSERT_NO_THROW(parser.parse(pools, config_element, AF_INET6, Lease::TYPE_NA));
+    EXPECT_EQ(1, pools->size());
+
+    const auto cclasses = (*pools)[0]->getClientClasses();
+    EXPECT_EQ(cclasses.size(), 1);
+    auto cclass = cclasses.begin();
+    EXPECT_EQ(*cclass, "one");
+
+    // Invalid entry specifies both parameters.
+    config =
+       R"^({
+            "pool": "2001:db8::/64",
+            "client-class": "one",
+            "client-classes": [ "one", "two" ]
+        })^";
+
+    config_element = Element::fromJSON(config);
+
+    // Should throw a complaint.
+    ASSERT_THROW_MSG(parser.parse(pools, config_element, AF_INET6, Lease::TYPE_NA),
+                     DhcpConfigError,
+                     "cannot specify both 'client-class' and"
+                     " 'client-classes'. Use only the latter.");
 }
 
 }  // Anonymous namespace

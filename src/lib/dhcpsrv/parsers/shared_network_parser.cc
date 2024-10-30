@@ -153,17 +153,15 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data,
             }
         }
 
-        if (shared_network_data->contains("client-class")) {
-            std::string client_class = getString(shared_network_data, "client-class");
-            if (!client_class.empty()) {
-                shared_network->allowClientClass(client_class);
-            }
-        }
-
         ConstElementPtr user_context = shared_network_data->get("user-context");
         if (user_context) {
             shared_network->setContext(user_context);
         }
+
+        // Setup additional class list.
+        getClientClassesElem(shared_network_data,
+                             std::bind(&Network::allowClientClass,
+                                       shared_network, ph::_1));
 
         // Setup additional class list.
         getAdditionalClassesElem(shared_network_data,
@@ -313,17 +311,15 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data,
             parser->parse(cfg_option, json, encapsulate_options);
         }
 
-        if (shared_network_data->contains("client-class")) {
-            std::string client_class = getString(shared_network_data, "client-class");
-            if (!client_class.empty()) {
-                shared_network->allowClientClass(client_class);
-            }
-        }
-
         ConstElementPtr user_context = shared_network_data->get("user-context");
         if (user_context) {
             shared_network->setContext(user_context);
         }
+
+        // Setup additional class list.
+        getClientClassesElem(shared_network_data,
+                             std::bind(&Network::allowClientClass,
+                                       shared_network, ph::_1));
 
         // Setup additional class list.
         getAdditionalClassesElem(shared_network_data,
