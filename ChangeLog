@@ -1,5 +1,12 @@
 Kea 2.7.4 (development) released on October 30, 2024
 
+2302.   [func]		tmark
+	Options may now be configured with a list of client
+	classes for which they apply.  This feature is referred to
+	as "option class-tagging" and is supported by both
+	kea-dhcp4 and kea-dhcp6.
+	(GitLab #3583)
+
 2301.	[func]		fdupont
 	Added support of DHCPv4 "cablelab-client-conf" (122) option
 	and its associated suboptions specified by RFC 3495, 3594
@@ -56,7 +63,7 @@ Kea 2.7.4 (development) released on October 30, 2024
 	(Gitlab #3639)
 
 2292.	[doc]		tmark
-	Updated the ARM to include and explanation for why
+	Updated the ARM to include and an explanation for why
 	the default values for 'calculate-tee-times' are
 	different for kea-dhcp4 and kea-dhcp6.
 	(Gitlab #3538)
@@ -66,7 +73,7 @@ Kea 2.7.4 (development) released on October 30, 2024
 	subnet4o6-select-test to kea-dhcp4, and subnet6-select-test
 	to kea-dhcp6.  These commands can be used to check which
 	subnet the server will select based on given input parameters.
-	(Gitlab #2794)
+	(Gitlab #2974)
 
 2290.	[bug]		razvan
 	Fixed applying 'output_options' when using the 'config-set'
@@ -76,7 +83,7 @@ Kea 2.7.4 (development) released on October 30, 2024
 	(Gitlab #3594)
 
 2289.	[func]*		razvan
-	Support for lease, host, and config back ends for MySQL and
+	Support for lease, host, and config backends for MySQL and
 	PostgreSQL have been consolidated into a single hook library for
 	each data base: 'libdhcp_mysql.so' and 'libdhcp_pgsql.so'
 	respectively.
@@ -85,8 +92,8 @@ Kea 2.7.4 (development) released on October 30, 2024
 2288.	[bug]		marcin
 	Prevent the clients from declining expired or released leases.
 	Only a valid lease assigned to the declining client can now
-	be declined. When misbehaving client declined a lease it did
-	not own it often led to inconsistent statistcs of assigned and
+	be declined. When a misbehaving client declined a lease it did
+	not own it often led to inconsistent statistics of assigned and
 	declined leases.
 	(Gitlab #3565)
 
