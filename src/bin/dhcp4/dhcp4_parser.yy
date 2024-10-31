@@ -1603,6 +1603,7 @@ subnet4_param: valid_lifetime
              | interface
              | id
              | client_class
+             | network_client_classes
              | require_client_classes
              | evaluate_additional_classes
              | reservations
@@ -1694,6 +1695,18 @@ client_class: CLIENT_CLASS {
 } COLON STRING {
     ElementPtr cls(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("client-class", cls);
+    ctx.leave();
+};
+
+// Used by shared-network,subnet, and pool
+network_client_classes: CLIENT_CLASSES {
+    ctx.unique("client-classes", ctx.loc2pos(@1));
+    ElementPtr c(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("client-classes", c);
+    ctx.stack_.push_back(c);
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON list_strings {
+    ctx.stack_.pop_back();
     ctx.leave();
 };
 
@@ -1801,6 +1814,7 @@ shared_network_param: name
                     | reservations_in_subnet
                     | reservations_out_of_pool
                     | client_class
+                    | network_client_classes
                     | require_client_classes
                     | evaluate_additional_classes
                     | valid_lifetime
@@ -2163,6 +2177,7 @@ pool_param: pool_entry
           | pool_id
           | option_data_list
           | client_class
+          | network_client_classes
           | require_client_classes
           | evaluate_additional_classes
           | user_context

@@ -315,13 +315,13 @@ const char* CONFIGS[] = {
         "    \"id\": 1,"
         "    \"pools\": [ "
         "        { \"pool\": \"10.0.0.10-10.0.0.49\","
-        "          \"client-class\": \"server1_and_telephones\" },"
+        "          \"client-classes\": [ \"server1_and_telephones\" ] },"
         "        { \"pool\": \"10.0.0.60-10.0.0.99\","
-        "          \"client-class\": \"server1_and_computers\" },"
+        "          \"client-classes\": [ \"server1_and_computers\" ] },"
         "        { \"pool\": \"10.0.0.110-10.0.0.149\","
-        "          \"client-class\": \"server2_and_telephones\" },"
+        "          \"client-classes\": [ \"server2_and_telephones\" ] },"
         "        { \"pool\": \"10.0.0.160-10.0.0.199\","
-        "          \"client-class\": \"server2_and_computers\" } ]"
+        "          \"client-classes\": [ \"server2_and_computers\" ] } ]"
         " } ]"
     "}",
 
@@ -2194,9 +2194,6 @@ TEST_F(ClassifyTest, classTaggingAndAlwaysSend) {
     query1->setIface("eth1");
     query1->setIndex(ETH1_INDEX);
 
-    // Configure DHCP server.
-    configure(config, srv);
-
     // Process query
     Pkt4Ptr response = srv.processDiscover(query1);
 
@@ -2263,14 +2260,126 @@ TEST_F(ClassifyTest, classTaggingAndNeverSend) {
     query1->setIface("eth1");
     query1->setIndex(ETH1_INDEX);
 
-    // Configure DHCP server.
-    configure(config, srv);
-
     // Process query
     Pkt4Ptr response = srv.processDiscover(query1);
 
     // The response should not contain host-name.
     ASSERT_FALSE(response->getOption(DHO_HOST_NAME));
+}
+
+// Verifies that client-classes specified at various
+// network scopes result in proper subnet selection.
+TEST_F(ClassifyTest, networkScopeClientClasses) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    string config = R"^(
+    {
+        "interfaces-config": {
+            "interfaces": [ "*" ]
+        },
+        "client-classes":[{
+            "name": "in-net",
+            "test": "(substring(option[61].hex,0,1) == 'i')"
+        },{
+            "name": "subnet-1",
+            "test": "(substring(option[61].hex,1,1) == '1')"
+        },{
+            "name": "subnet-2",
+            "test": "(substring(option[61].hex,1,1) == '2')"
+        },{
+            "name": "pool-a",
+            "test": "(substring(option[61].hex,2,1) == 'a')"
+        },{
+            "name": "pool-b",
+            "test": "(substring(option[61].hex,2,1) == 'b')"
+        }],
+        "rebind-timer": 2000,
+        "renew-timer": 1000,
+        "valid-lifetime": 4000,
+        "shared-networks": [{
+            "name": "snet",
+            "interface": "eth0",
+            "client-classes": [ "in-net" ],
+            "subnet4": [{
+                "id": 1,
+                "client-classes": [ "subnet-1" ],
+                "subnet": "192.0.1.0/24",
+                "pools": [{
+                    "client-classes": [ "pool-a" ],
+                    "pool": "192.0.1.1 - 192.0.1.1"
+                },{
+                    "client-classes": [ "pool-b" ],
+                    "pool": "192.0.1.4 - 192.0.1.4"
+                }]
+            },{
+                "id": 2,
+               "client-classes": [ "subnet-2" ],
+                "subnet": "192.0.2.0/24",
+                "pools": [{
+                    "pool": "192.0.2.1 - 192.0.2.1"
+                }]
+            },{
+                "id": 3,
+                "subnet": "192.0.3.0/24",
+                "pools": [{
+                    "pool": "192.0.3.1 - 192.0.3.1"
+                }]
+            }]
+        }]
+    }
+    )^";
+
+    // Configure DHCP server.
+    configure(config, srv);
+
+    // Describes a single scenario.
+    struct Scenario {
+        std::vector<uint8_t> client_id_; // client-id to use
+        uint8_t exp_type_;               // expected DHCP response type (if one)
+        std::string exp_address_;        // expected value for offered address (if one)
+    };
+
+    // Scenarios to run.
+    std::list<Scenario> scenarios = {
+        { { 'i', '1', 'a' }, DHCPOFFER,     "192.0.1.1" },
+        { { 'i', '1', 'b' }, DHCPOFFER,     "192.0.1.4" },
+        { { 'i', '1', '-' }, DHCPOFFER,     "192.0.3.1" },
+        { { 'i', '2', '-' }, DHCPOFFER,     "192.0.2.1" },
+        { { 'i', 'x', '-' }, DHCPOFFER,     "192.0.3.1" },
+        { { '-', '1', 'a' }, DHCP_NOTYPE,   ""          },
+        { { '-', '2', '-' }, DHCP_NOTYPE,   ""          },
+        { { '-', 'x', '-' }, DHCP_NOTYPE,   ""          }
+    };
+
+    // Run scenarios.
+    for (const auto& scenario : scenarios) {
+        ClientId id(scenario.client_id_);
+        SCOPED_TRACE(id.toText());
+        Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 1234));
+        query->addOption(OptionPtr(new Option(Option::V4,
+                                               DHO_DHCP_CLIENT_IDENTIFIER,
+                                               id.getClientId())));
+        query->setIface("eth0");
+        query->setIndex(ETH0_INDEX);
+
+        // Classify packet
+        srv.classifyPacket(query);
+
+        // Process query
+        Pkt4Ptr response = srv.processDiscover(query);
+        if (scenario.exp_type_ == DHCP_NOTYPE) {
+            EXPECT_FALSE(response);
+        } else {
+            ASSERT_TRUE(response);
+            EXPECT_EQ(static_cast<int>(response->getType()), scenario.exp_type_);
+            if (!scenario.exp_address_.empty()) {
+                EXPECT_EQ(response->getYiaddr(), IOAddress(scenario.exp_address_));
+            }
+        }
+    }
 }
 
 } // end of anonymous namespace

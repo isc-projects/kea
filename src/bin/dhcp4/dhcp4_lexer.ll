@@ -1310,6 +1310,9 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::RESERVATIONS:
     case isc::dhcp::Parser4Context::OPTION_DATA:
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::POOLS:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp4Parser::make_CLIENT_CLASSES(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("client-classes", driver.loc_);

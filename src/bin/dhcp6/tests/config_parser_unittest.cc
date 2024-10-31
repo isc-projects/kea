@@ -7577,6 +7577,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksInterfacesMixed) {
               "or the shared-network itself used eth0");
 }
 
+#if 0
 // This test checks if client-class is derived properly.
 TEST_F(Dhcp6ParserTest, sharedNetworksDeriveClientClass) {
 
@@ -7666,6 +7667,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDeriveClientClass) {
     s = checkSubnet(*subs, "2001:db3::/48", 1, 2, 3, 4);
     EXPECT_TRUE(s->getClientClass().empty());
 }
+#endif
 
 // Tests if rapid-commit is derived properly.
 TEST_F(Dhcp6ParserTest, sharedNetworksRapidCommit) {

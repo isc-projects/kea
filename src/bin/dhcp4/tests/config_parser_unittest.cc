@@ -4787,7 +4787,7 @@ TEST_F(Dhcp4ParserTest, classifySubnets) {
         "    \"id\": 3,"
         "    \"pools\": [ { \"pool\": \"192.0.4.101 - 192.0.4.150\" } ],"
         "    \"subnet\": \"192.0.4.0/24\", "
-        "    \"client-class\": \"gamma\" "
+        "    \"client-classes\": [ \"gamma\" ]  "
         " },"
         " {"
         "    \"id\": 4,"
@@ -4871,15 +4871,15 @@ TEST_F(Dhcp4ParserTest, classifyPools) {
         "    \"id\": 1,"
         "    \"pools\": [ { "
         "        \"pool\": \"192.0.2.1 - 192.0.2.100\", "
-        "        \"client-class\": \"alpha\" "
+        "        \"client-classes\":  [ \"alpha\" ]"
         "     },"
         "     {"
         "        \"pool\": \"192.0.3.101 - 192.0.3.150\", "
-        "        \"client-class\": \"beta\" "
+        "        \"client-classes\": [ \"beta\" ] "
         "     },"
         "     {"
         "        \"pool\": \"192.0.4.101 - 192.0.4.150\", "
-        "        \"client-class\": \"gamma\" "
+        "        \"client-classes\": [ \"gamma\" ] "
         "     },"
         "     {"
         "        \"pool\": \"192.0.5.101 - 192.0.5.150\" "
@@ -6877,95 +6877,6 @@ TEST_F(Dhcp4ParserTest, sharedNetworksInterfacesMixed) {
     configure(config, CONTROL_RESULT_ERROR, "Subnet 192.0.2.0/24 has specified "
               "interface eth1, but earlier subnet in the same shared-network "
               "or the shared-network itself used eth0");
-}
-
-// This test checks if client-class is derived properly.
-TEST_F(Dhcp4ParserTest, sharedNetworksDeriveClientClass) {
-
-    // This config is structured in a way that the first shared network has
-    // client-class defined. This should in general be inherited by subnets, but
-    // it's also possible to override the values on subnet level.
-    string config = "{\n"
-        "\"renew-timer\": 1, \n" // global values here
-        "\"rebind-timer\": 2, \n"
-        "\"valid-lifetime\": 4, \n"
-        "\"shared-networks\": [ {\n"
-        "    \"name\": \"foo\"\n," // shared network values here
-        "    \"client-class\": \"alpha\",\n"
-        "    \"subnet4\": [\n"
-        "    { \n"
-        "        \"id\": 1,\n"
-        "        \"subnet\": \"192.0.1.0/24\",\n"
-        "        \"pools\": [ { \"pool\": \"192.0.1.1-192.0.1.10\" } ]\n"
-        "    },\n"
-        "    { \n"
-        "        \"id\": 2,\n"
-        "        \"subnet\": \"192.0.2.0/24\",\n"
-        "        \"pools\": [ { \"pool\": \"192.0.2.1-192.0.2.10\" } ],\n"
-        "        \"client-class\": \"beta\"\n"
-        "    }\n"
-        "    ]\n"
-        " },\n"
-        "{ // second shared-network starts here\n"
-        "    \"name\": \"bar\",\n"
-        "    \"subnet4\": [\n"
-        "    {\n"
-        "        \"id\": 3,\n"
-        "        \"subnet\": \"192.0.3.0/24\",\n"
-        "        \"pools\": [ { \"pool\": \"192.0.3.1-192.0.3.10\" } ]\n"
-        "    }\n"
-        "    ]\n"
-        " } ]\n"
-        "} \n";
-
-    configure(config, CONTROL_RESULT_SUCCESS, "");
-
-    // Now verify that the shared network was indeed configured.
-    CfgSharedNetworks4Ptr cfg_net = CfgMgr::instance().getStagingCfg()
-        ->getCfgSharedNetworks4();
-
-    // Two shared networks are expected.
-    ASSERT_TRUE(cfg_net);
-    const SharedNetwork4Collection* nets = cfg_net->getAll();
-    ASSERT_TRUE(nets);
-    ASSERT_EQ(2, nets->size());
-
-    // Let's check the first one.
-    SharedNetwork4Ptr net = nets->at(0);
-    ASSERT_TRUE(net);
-
-    EXPECT_EQ("alpha", net->getClientClass().get());
-
-    // The first shared network has two subnets.
-    const Subnet4SimpleCollection* subs = net->getAllSubnets();
-    ASSERT_TRUE(subs);
-    EXPECT_EQ(2, subs->size());
-
-    // For the first subnet, the client-class should be inherited from
-    // shared-network level.
-    Subnet4Ptr s = checkSubnet(*subs, "192.0.1.0/24", 1, 2, 4);
-    ASSERT_TRUE(s);
-    EXPECT_EQ("alpha", s->getClientClass().get());
-
-    // For the second subnet, the values are overridden on subnet level.
-    // The value should not be inherited.
-    s = checkSubnet(*subs, "192.0.2.0/24", 1, 2, 4);
-    ASSERT_TRUE(s);
-    EXPECT_EQ("beta", s->getClientClass().get()); // beta defined on subnet level
-
-    // Ok, now check the second shared network. It doesn't have
-    // anything defined on shared-network or subnet level, so
-    // everything should have default values.
-    net = nets->at(1);
-    ASSERT_TRUE(net);
-
-    subs = net->getAllSubnets();
-    ASSERT_TRUE(subs);
-    EXPECT_EQ(1, subs->size());
-
-    // This subnet should derive its renew-timer from global scope.
-    s = checkSubnet(*subs, "192.0.3.0/24", 1, 2, 4);
-    EXPECT_TRUE(s->getClientClass().empty());
 }
 
 // This test checks multiple host data sources.
