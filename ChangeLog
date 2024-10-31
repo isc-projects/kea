@@ -1,6 +1,6 @@
 Kea 2.7.4 (development) released on October 30, 2024
 
-2302.   [func]		tmark
+2302.	[func]		tmark
 	Options may now be configured with a list of client
 	classes for which they apply.  This feature is referred to
 	as "option class-tagging" and is supported by both
@@ -14,7 +14,7 @@ Kea 2.7.4 (development) released on October 30, 2024
 	exception of the suboption 3.
 	(Gitlab #3404)
 
-2300.	[build, func]		andrei
+2300.	[build, func]	andrei
 	Standalone fuzz target binaries used in fuzz testing were added
 	to the "fuzz" directory.
 	(Gitlab #3605)
@@ -31,7 +31,7 @@ Kea 2.7.4 (development) released on October 30, 2024
 	vendor-encapsulated-options when redefined in a client class.
 	(Gitlab #3582)
 
-2297.	[build]*		fdupont
+2297.	[build]*	fdupont
 	Made the Botan boost TLS support mandatory. Changed
 	the configure argument to --with-botan using
 	the Botan pkg-config library name e.g. "botan-2".
