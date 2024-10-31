@@ -5165,19 +5165,19 @@ TEST_F(Dhcp6ParserTest, classifySubnets) {
         "    \"id\": 1,"
         "    \"pools\": [ { \"pool\": \"2001:db8:1::/80\" } ],"
         "    \"subnet\": \"2001:db8:1::/64\", "
-        "    \"client-class\": \"alpha\" "
+        "    \"client-classes\": [ \"alpha\" ] "
         " },"
         " {"
         "    \"id\": 2,"
         "    \"pools\": [ { \"pool\": \"2001:db8:2::/80\" } ],"
         "    \"subnet\": \"2001:db8:2::/64\", "
-        "    \"client-class\": \"beta\" "
+        "    \"client-classes\": [ \"beta\" ] "
         " },"
         " {"
         "    \"id\": 3,"
         "    \"pools\": [ { \"pool\": \"2001:db8:3::/80\" } ],"
         "    \"subnet\": \"2001:db8:3::/64\", "
-        "    \"client-class\": \"gamma\" "
+        "    \"client-classes\": [ \"gamma\" ] "
         " },"
         " {"
         "    \"id\": 4,"
@@ -5262,15 +5262,15 @@ TEST_F(Dhcp6ParserTest, classifyPools) {
         "    \"id\": 1,"
         "    \"pools\": [ { "
         "        \"pool\": \"2001:db8:1::/80\", "
-        "        \"client-class\": \"alpha\" "
+        "        \"client-classes\": [ \"alpha\" ] "
         "     },"
         "     {"
         "        \"pool\": \"2001:db8:2::/80\", "
-        "        \"client-class\": \"beta\" "
+        "        \"client-classes\": [ \"beta\" ] "
         "     },"
         "     {"
         "        \"pool\": \"2001:db8:3::/80\", "
-        "        \"client-class\": \"gamma\" "
+        "        \"client-classes\": [ \"gamma\" ] "
         "     },"
         "     {"
         "         \"pool\": \"2001:db8:4::/80\" "
@@ -5355,19 +5355,19 @@ TEST_F(Dhcp6ParserTest, classifyPdPools) {
         "        \"prefix-len\": 48, "
         "        \"delegated-len\": 64, "
         "        \"prefix\": \"2001:db8:1::\", "
-        "        \"client-class\": \"alpha\" "
+        "        \"client-classes\": [ \"alpha\" ] "
         "     },"
         "     {"
         "        \"prefix-len\": 48, "
         "        \"delegated-len\": 64, "
         "        \"prefix\": \"2001:db8:2::\", "
-        "        \"client-class\": \"beta\" "
+        "        \"client-classes\": [ \"beta\" ] "
         "     },"
         "     {"
         "        \"prefix-len\": 48, "
         "        \"delegated-len\": 64, "
         "        \"prefix\": \"2001:db8:3::\", "
-        "        \"client-class\": \"gamma\" "
+        "        \"client-classes\": [ \"gamma\" ] "
         "     },"
         "     {"
         "        \"prefix-len\": 48, "
@@ -7577,98 +7577,6 @@ TEST_F(Dhcp6ParserTest, sharedNetworksInterfacesMixed) {
               "or the shared-network itself used eth0");
 }
 
-#if 0
-// This test checks if client-class is derived properly.
-TEST_F(Dhcp6ParserTest, sharedNetworksDeriveClientClass) {
-
-    // This config is structured in a way that the first shared network has
-    // client-class defined. This should in general be inherited by subnets, but
-    // it's also possible to override the values on subnet level.
-    string config = "{\n"
-        "\"renew-timer\": 1, \n" // global values here
-        "\"rebind-timer\": 2, \n"
-        "\"preferred-lifetime\": 3,\n"
-        "\"valid-lifetime\": 4, \n"
-        "\"shared-networks\": [ {\n"
-        "    \"name\": \"foo\"\n," // shared network values here
-        "    \"client-class\": \"alpha\",\n"
-        "    \"subnet6\": [\n"
-        "    { \n"
-        "        \"id\": 1,\n"
-        "        \"subnet\": \"2001:db1::/48\",\n"
-        "        \"pools\": [ { \"pool\": \"2001:db1::/64\" } ]\n"
-        "    },\n"
-        "    { \n"
-        "        \"id\": 2,\n"
-        "        \"subnet\": \"2001:db2::/48\",\n"
-        "        \"pools\": [ { \"pool\": \"2001:db2::/64\" } ],\n"
-        "        \"client-class\": \"beta\"\n"
-        "    }\n"
-        "    ]\n"
-        " },\n"
-        "{ // second shared-network starts here\n"
-        "    \"name\": \"bar\",\n"
-        "    \"subnet6\": [\n"
-        "    {\n"
-        "        \"id\": 3,\n"
-        "        \"subnet\": \"2001:db3::/48\",\n"
-        "        \"pools\": [ { \"pool\": \"2001:db3::/64\" } ]\n"
-        "    }\n"
-        "    ]\n"
-        " } ]\n"
-        "} \n";
-
-    configure(config, CONTROL_RESULT_SUCCESS, "");
-
-    // Now verify that the shared network was indeed configured.
-    CfgSharedNetworks6Ptr cfg_net = CfgMgr::instance().getStagingCfg()
-        ->getCfgSharedNetworks6();
-
-    // Two shared networks are expected.
-    ASSERT_TRUE(cfg_net);
-    const SharedNetwork6Collection* nets = cfg_net->getAll();
-    ASSERT_TRUE(nets);
-    ASSERT_EQ(2, nets->size());
-
-    // Let's check the first one.
-    SharedNetwork6Ptr net = nets->at(0);
-    ASSERT_TRUE(net);
-
-    EXPECT_EQ("alpha", net->getClientClass().get());
-
-    // The first shared network has two subnets.
-    const Subnet6SimpleCollection* subs = net->getAllSubnets();
-    ASSERT_TRUE(subs);
-    EXPECT_EQ(2, subs->size());
-
-    // For the first subnet, the client-class should be inherited from
-    // shared-network level.
-    Subnet6Ptr s = checkSubnet(*subs, "2001:db1::/48", 1, 2, 3, 4);
-    ASSERT_TRUE(s);
-    EXPECT_EQ("alpha", s->getClientClass().get());
-
-    // For the second subnet, the values are overridden on subnet level.
-    // The value should not be inherited.
-    s = checkSubnet(*subs, "2001:db2::/48", 1, 2, 3, 4);
-    ASSERT_TRUE(s);
-    EXPECT_EQ("beta", s->getClientClass().get()); // beta defined on subnet level
-
-    // Ok, now check the second shared network. It doesn't have
-    // anything defined on shared-network or subnet level, so
-    // everything should have default values.
-    net = nets->at(1);
-    ASSERT_TRUE(net);
-
-    subs = net->getAllSubnets();
-    ASSERT_TRUE(subs);
-    EXPECT_EQ(1, subs->size());
-
-    // This subnet should derive its renew-timer from global scope.
-    s = checkSubnet(*subs, "2001:db3::/48", 1, 2, 3, 4);
-    EXPECT_TRUE(s->getClientClass().empty());
-}
-#endif
-
 // Tests if rapid-commit is derived properly.
 TEST_F(Dhcp6ParserTest, sharedNetworksRapidCommit) {
 
@@ -7686,7 +7594,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksRapidCommit) {
         "        \"id\": 2, \n"
         "        \"subnet\": \"2001:db2::/48\",\n"
         "        \"pools\": [ { \"pool\": \"2001:db2::/64\" } ],\n"
-        "        \"client-class\": \"beta\"\n"
+        "        \"client-classes\": [ \"beta\" ]\n"
         "    }\n"
         "    ]\n"
         " },\n"
@@ -7760,7 +7668,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksRapidCommitMix) {
         "        \"subnet\": \"2001:db2::/48\",\n"
         "        \"rapid-commit\": false,\n"
         "        \"pools\": [ { \"pool\": \"2001:db2::/64\" } ],\n"
-        "        \"client-class\": \"beta\"\n"
+        "        \"client-classes\":  [ \"beta\" ]\n"
         "    }\n"
         "    ]\n"
         " } ]\n"
@@ -9280,6 +9188,101 @@ TEST_F(Dhcp6ParserTest, deprecatedOnlyIfRequiredCheck) {
     checkResult(status, 1,
                 "cannot specify both 'only-if-required' and"
                 " 'only-in-additional-list'. Use only the latter.");
+}
+
+// This test verifies that deprecated client-class
+// gets handled properly.
+TEST_F(Dhcp6ParserTest, deprecatedClientClassesCheck) {
+    // Verify that require-client-classes gets translated
+    // to evaluate-additional-classes.
+    std::string config = "{ " + genIfaceConfig() + ","
+        R"^(
+        "rebind-timer": 2000,
+        "renew-timer": 1000,
+        "shared-networks":[{
+            "name": "net1",
+            "client-class": "one",
+            "subnet6": [{
+                "client-class": "two",
+                "pools": [{
+                    "pool":  "2001:db8::/64",
+                    "client-class": "three",
+                }],
+                "pd-pools": [{
+                    "prefix": "3001:db8::",
+                    "prefix-len": 56,
+                    "delegated-len": 64,
+                    "client-class": "four",
+                }],
+                "id": 1,
+                "subnet": "2001:db8::/64"
+            }],
+        }],
+        "valid-lifetime": 400
+        })^";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
+    extractConfig(config);
+
+    ConstElementPtr status;
+    ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    checkResult(status, 0);
+
+    SharedNetwork6Ptr network = CfgMgr::instance().getStagingCfg()->
+                                    getCfgSharedNetworks6()->getByName("net1");
+    ASSERT_TRUE(network);
+
+    auto& net_class_list = network->getClientClasses();
+    ASSERT_EQ(1, net_class_list.size());
+    auto cclasses = net_class_list.begin();
+    EXPECT_EQ(*cclasses, "one");
+
+    auto subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->getBySubnetId(1);
+    ASSERT_TRUE(subnet);
+
+    auto& sub_class_list = subnet->getClientClasses();
+    ASSERT_EQ(1, sub_class_list.size());
+    cclasses = sub_class_list.begin();
+    EXPECT_EQ(*cclasses, "two");
+
+    PoolPtr pool = subnet->getPool(Lease::TYPE_NA, IOAddress("2001:db8::"), false);
+    ASSERT_TRUE(pool);
+
+    auto& pool_class_list = pool->getClientClasses();
+    ASSERT_EQ(1, pool_class_list.size());
+    cclasses = pool_class_list.begin();
+    EXPECT_EQ(*cclasses, "three");
+
+    pool = subnet->getPool(Lease::TYPE_PD, IOAddress("3001:db8::"), false);
+    ASSERT_TRUE(pool);
+
+    auto& pd_pool_class_list = pool->getClientClasses();
+    ASSERT_EQ(1, pd_pool_class_list.size());
+    cclasses = pd_pool_class_list.begin();
+    EXPECT_EQ(*cclasses, "four");
+
+    // Now verify that users cannot specify both.
+    config = "{ " + genIfaceConfig() + ","
+        R"^(
+        "rebind-timer": 2000,
+        "renew-timer": 1000,
+        "subnet6": [{
+            "client-class": "foo",
+            "client-classes": [ "bar" ],
+            "pools": [{ "pool":  "2001:db8::/64" }],
+            "id": 1,
+            "subnet": "2001:db8::/64"
+        }],
+        "valid-lifetime": 400
+        })^";
+
+    ASSERT_NO_THROW(json = parseDHCP6(config));
+
+    ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    checkResult(status, 1,
+                "subnet configuration failed: cannot specify both 'client-class'"
+                " and 'client-classes'. Use only the latter.");
 }
 
 }  // namespace

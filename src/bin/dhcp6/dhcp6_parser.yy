@@ -1619,6 +1619,7 @@ subnet6_param: preferred_lifetime
              | id
              | rapid_commit
              | client_class
+             | network_client_classes
              | require_client_classes
              | evaluate_additional_classes
              | reservations
@@ -1684,6 +1685,18 @@ client_class: CLIENT_CLASS {
 } COLON STRING {
     ElementPtr cls(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("client-class", cls);
+    ctx.leave();
+};
+
+// Used by shared-network,subnet, pool, and pd_pool
+network_client_classes: CLIENT_CLASSES {
+    ctx.unique("client-classes", ctx.loc2pos(@1));
+    ElementPtr c(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("client-classes", c);
+    ctx.stack_.push_back(c);
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON list_strings {
+    ctx.stack_.pop_back();
     ctx.leave();
 };
 
@@ -1793,6 +1806,7 @@ shared_network_param: name
                     | reservations_in_subnet
                     | reservations_out_of_pool
                     | client_class
+                    | network_client_classes
                     | require_client_classes
                     | evaluate_additional_classes
                     | preferred_lifetime
@@ -2159,6 +2173,7 @@ pool_param: pool_entry
           | pool_id
           | option_data_list
           | client_class
+          | network_client_classes
           | require_client_classes
           | evaluate_additional_classes
           | user_context
@@ -2297,6 +2312,7 @@ pd_pool_param: pd_prefix
              | pool_id
              | option_data_list
              | client_class
+             | network_client_classes
              | require_client_classes
              | evaluate_additional_classes
              | excluded_prefix

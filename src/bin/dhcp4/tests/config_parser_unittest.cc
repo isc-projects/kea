@@ -8187,4 +8187,87 @@ TEST_F(Dhcp4ParserTest, deprecatedOnlyIfRequiredCheck) {
                 " 'only-in-additional-list'. Use only the latter.");
 }
 
+// This test verifies that deprecated client-class
+// gets handled properly.
+TEST_F(Dhcp4ParserTest, deprecatedClientClassesCheck) {
+    // Verify that require-client-classes gets translated
+    // to evaluate-additional-classes.
+    std::string config = "{ " + genIfaceConfig() + ","
+        R"^(
+        "rebind-timer": 2000,
+        "renew-timer": 1000,
+        "shared-networks":[{
+            "name": "net1",
+            "client-class": "one",
+            "subnet4": [{
+                "client-class": "two",
+                "pools": [{
+                    "pool":  "192.0.2.0/28",
+                    "client-class": "three"
+                }],
+                "id": 1,
+                "subnet": "192.0.2.0/24"
+            }],
+        }],
+        "valid-lifetime": 400
+        })^";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
+
+    ConstElementPtr status;
+    ASSERT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    checkResult(status, 0);
+
+    SharedNetwork4Ptr network = CfgMgr::instance().getStagingCfg()->
+                                    getCfgSharedNetworks4()->getByName("net1");
+    ASSERT_TRUE(network);
+
+    auto& net_class_list = network->getClientClasses();
+    ASSERT_EQ(1, net_class_list.size());
+    auto cclasses = net_class_list.begin();
+    EXPECT_EQ(*cclasses, "one");
+
+    auto subnet = CfgMgr::instance().getStagingCfg()->
+                            getCfgSubnets4()->getBySubnetId(1);
+    ASSERT_TRUE(subnet);
+
+    auto& sub_class_list = subnet->getClientClasses();
+    ASSERT_EQ(1, sub_class_list.size());
+    cclasses = sub_class_list.begin();
+    EXPECT_EQ(*cclasses, "two");
+
+    PoolPtr pool = subnet->getPool(Lease::TYPE_V4, IOAddress("192.0.2.0"), false);
+    ASSERT_TRUE(pool);
+
+    auto& pool_class_list = pool->getClientClasses();
+    ASSERT_EQ(1, pool_class_list.size());
+    cclasses = pool_class_list.begin();
+    EXPECT_EQ(*cclasses, "three");
+
+    // Now verify that users cannot specify both.  We don't check all scopes
+    // as they all use the same function.
+    config = "{ " + genIfaceConfig() + ","
+        R"^(
+        "rebind-timer": 2000,
+        "renew-timer": 1000,
+        "subnet4": [{
+            "client-class": "foo",
+            "client-classes": [ "bar" ],
+            "pools": [{ "pool":  "192.0.2.0/28" }],
+            "id": 1,
+            "subnet": "192.0.2.0/24"
+        }],
+        "valid-lifetime": 400
+        })^";
+
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+
+    ASSERT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    checkResult(status, 1,
+                "subnet configuration failed: cannot specify both 'client-class'"
+                " and 'client-classes'. Use only the latter.");
+}
+
 }  // namespace

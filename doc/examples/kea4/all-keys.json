@@ -859,9 +859,9 @@
                 "boot-file-name": "/dev/null",
 
                 // Restricts this shared network to allow only clients
-                // that belong to a particular client class. If an
-                // empty string is provided, no restriction is applied.
-                "client-class": "",
+                // that belong to at least one class in this list. If omitted
+                // or an empty list is provided, no restriction is applied.
+                "client-classes": [],
 
                 // Shared-network level value. See description at the global level.
                 "ddns-generated-prefix": "myhost",
@@ -998,10 +998,10 @@
                         // Subnet-level bootfile name, set in 'file' field.
                         "boot-file-name": "",
 
-                        // Restricts this subnet to allow only clients that belong
-                        // to a particular client class. If an empty string is
-                        // provided, no restriction is applied.
-                        "client-class": "",
+                        // Restricts this subnet to allow only clients
+                        // that belong to at least one class in this list. If omitted
+                        // or an empty list is provided, no restriction is applied.
+                        "client-classes": [],
 
                         // Subnet-level value. See description at the global level.
                         "ddns-generated-prefix": "myhost",
@@ -1076,7 +1076,7 @@
                                 // option will be applied. If the list is empty or is
                                 // omitted this option will be applied regardless of class
                                 // membership.
-                                "client-classes": [ ],
+                                "client-classes": [],
 
                                 // Option code.
                                 "code": 3,
@@ -1105,9 +1105,10 @@
                         // List of IP address pools belonging to the subnet.
                         "pools": [
                             {
-                                // Restricts this pool to only be used for client
-                                // requests belonging to a particular client class.
-                                "client-class": "phones_server1",
+                                // Restricts this pool to allow only clients
+                                // that belong to at least one class in this list. If omitted
+                                // or an empty list is provided, no restriction is applied.
+                                "client-classes": [ "phones_server1" ],
 
                                 // Pool-level list of DHCP options.
                                 "option-data": [],
@@ -1120,9 +1121,10 @@
                                 "evaluate-additional-classes": [ "late" ]
                             },
                             {
-                                // Restricts this pool to only be used for client
-                                // requests belonging to a particular client class.
-                                "client-class": "phones_server2",
+                                // Restricts this pool to allow only clients
+                                // that belong to at least one class in this list. If omitted
+                                // or an empty list is provided, no restriction is applied.
+                                "client-classes": [ "phones_server2" ],
 
                                 // Pool-level list of DHCP options.
                                 "option-data": [],

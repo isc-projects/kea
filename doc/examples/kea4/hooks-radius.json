@@ -106,12 +106,12 @@
          {
             // Red pool (10-19 are for reservations)
             "pool": "192.0.2.20-192.0.2.99",
-            "client-class": "red"
+            "client-classes": [ "red" ]
          },
          {
             // White pool (110-119 are for reservations)
             "pool": "192.0.2.120-192.0.2.199",
-            "client-class": "white"
+            "client-classes":  [ "white" ]
          }
 
           // Note there are not pools available to anyone. This is
