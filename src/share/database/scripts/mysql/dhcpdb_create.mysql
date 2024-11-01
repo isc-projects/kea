@@ -6068,6 +6068,35 @@ UPDATE schema_version
 
 -- This line concludes the schema upgrade to version 26.0.
 
+-- This line starts the schema upgrade to version 27.0.
+
+ALTER TABLE dhcp4_shared_network
+    CHANGE client_class client_classes LONGTEXT DEFAULT NULL;
+
+ALTER TABLE dhcp4_subnet
+    CHANGE client_class client_classes LONGTEXT DEFAULT NULL;
+
+ALTER TABLE dhcp4_pool
+    CHANGE client_class client_classes LONGTEXT DEFAULT NULL;
+
+ALTER TABLE dhcp6_shared_network
+    CHANGE client_class client_classes LONGTEXT DEFAULT NULL;
+
+ALTER TABLE dhcp6_subnet
+    CHANGE client_class client_classes LONGTEXT DEFAULT NULL;
+
+ALTER TABLE dhcp6_pool
+    CHANGE client_class client_classes LONGTEXT DEFAULT NULL;
+
+ALTER TABLE dhcp6_pd_pool
+    CHANGE client_class client_classes LONGTEXT DEFAULT NULL;
+
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '27', minor = '0';
+
+-- This line concludes the schema upgrade to version 27.0.
+
 # Notes:
 #
 # Indexes

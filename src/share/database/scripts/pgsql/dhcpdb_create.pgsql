@@ -6529,6 +6529,33 @@ UPDATE schema_version
 
 -- This line concludes the schema upgrade to version 26.0.
 
+-- This line starts the schema upgrade to version 27.0.
+
+ALTER TABLE dhcp4_shared_network RENAME client_class TO client_classes;
+ALTER TABLE dhcp4_shared_network ALTER COLUMN client_classes TYPE TEXT;
+
+ALTER TABLE dhcp4_subnet RENAME client_class TO client_classes;
+ALTER TABLE dhcp4_subnet ALTER COLUMN client_classes TYPE TEXT;
+
+ALTER TABLE dhcp4_pool RENAME client_class TO client_classes;
+ALTER TABLE dhcp4_pool ALTER COLUMN client_classes TYPE TEXT;
+
+ALTER TABLE dhcp6_shared_network RENAME client_class TO client_classes;
+ALTER TABLE dhcp6_shared_network ALTER COLUMN client_classes TYPE TEXT;
+
+ALTER TABLE dhcp6_subnet RENAME client_class TO client_classes;
+ALTER TABLE dhcp6_subnet ALTER COLUMN client_classes TYPE TEXT;
+
+ALTER TABLE dhcp6_pool RENAME client_class TO client_classes;
+ALTER TABLE dhcp6_pool ALTER COLUMN client_classes TYPE TEXT;
+
+ALTER TABLE dhcp6_pd_pool RENAME client_class TO client_classes;
+ALTER TABLE dhcp6_pd_pool ALTER COLUMN client_classes TYPE TEXT;
+
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '27', minor = '0';
+
 -- Commit the script transaction.
 COMMIT;
 
