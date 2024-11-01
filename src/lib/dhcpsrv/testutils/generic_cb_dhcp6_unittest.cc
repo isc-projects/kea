@@ -106,6 +106,7 @@ GenericConfigBackendDHCPv6Test::initTestSubnets() {
     Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8::"), 64,
                                   30, 40, 50, 60, 1024));
     subnet->allowClientClass("home");
+    subnet->allowClientClass("office");
     subnet->setIface("eth1");
     subnet->setInterfaceId(opt_interface_id);
     subnet->setT2(323212);
@@ -171,6 +172,7 @@ GenericConfigBackendDHCPv6Test::initTestSubnets() {
     subnet->addPool(pool2);
 
     pool2->allowClientClass("work");
+    pool2->allowClientClass("play");
     pool2->addAdditionalClass("required-class3");
     pool2->addAdditionalClass("required-class4");
     user_context = Element::createMap();

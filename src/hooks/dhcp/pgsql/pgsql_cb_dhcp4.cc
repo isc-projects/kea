@@ -363,10 +363,9 @@ public:
                     last_subnet->setFilename(worker.getString(5));
                 }
 
-                // client_class at 6.
-                if (!worker.isColumnNull(6)) {
-                    last_subnet->allowClientClass(worker.getString(6));
-                }
+                // client_classes at 6.
+                clientClassesFromColumn(worker, 6, "client_classes",
+                                        last_subnet->getMutableClientClasses());
 
                 // interface at 7.
                 if (!worker.isColumnNull(7)) {
@@ -552,10 +551,9 @@ public:
                 last_pool = Pool4::create(IOAddress(worker.getInet4(21)),
                                           IOAddress(worker.getInet4(22)));
 
-                // pool client_class at 59.
-                if (!worker.isColumnNull(59)) {
-                    last_pool->allowClientClass(worker.getString(59));
-                }
+                // pool client_classes at 59.
+                clientClassesFromColumn(worker, 59, "client_classes",
+                                        last_pool->getMutableClientClasses());
 
                 // pool evaluate_additional_classes at 60.
                 clientClassesFromColumn(worker, 60, "evaluate_additional_classes",
@@ -760,10 +758,9 @@ public:
 
                 // pool subnet_id (3) (ignored)
 
-                // pool client_class (4)
-                if (!worker.isColumnNull(4)) {
-                    last_pool->allowClientClass(worker.getString(4));
-                }
+                // pool client_classes (4)
+                clientClassesFromColumn(worker, 4, "client_classes",
+                                        last_pool->getMutableClientClasses());
 
                 // pool evaluate_additional_classes (5)
                 clientClassesFromColumn(worker, 5, "evaluate_additional_classes",
@@ -884,7 +881,7 @@ public:
         in_bindings.addOptional(dhcp4o6_subnet);
 
         in_bindings.addOptional(subnet->getFilename(Network::Inheritance::NONE));
-        in_bindings.addOptional(subnet->getClientClass(Network::Inheritance::NONE));
+        addClientClassesBinding(in_bindings, subnet->getClientClasses());
         in_bindings.addOptional(subnet->getIface(Network::Inheritance::NONE));
         in_bindings.addOptional(subnet->getMatchClientId(Network::Inheritance::NONE));
         in_bindings.addTimestamp(subnet->getModificationTime());
@@ -1032,7 +1029,7 @@ public:
         in_bindings.addInet4(pool->getFirstAddress());
         in_bindings.addInet4(pool->getLastAddress());
         in_bindings.add(subnet->getID());
-        in_bindings.addOptional(pool->getClientClass());
+        addClientClassesBinding(in_bindings, pool->getClientClasses());
         addAdditionalClassesBinding(in_bindings, pool);
         in_bindings.add(pool->getContext());
         in_bindings.addTimestamp(subnet->getModificationTime());
@@ -1192,10 +1189,9 @@ public:
                 last_network = SharedNetwork4::create(worker.getString(1));
                 last_network->setId(last_network_id);
 
-                // client_class at 2.
-                if (!worker.isColumnNull(2)) {
-                    last_network->allowClientClass(worker.getString(2));
-                }
+                // client_classes at 2.
+                clientClassesFromColumn(worker, 2, "client_classes",
+                                        last_network->getMutableClientClasses());
 
                 // interface at 3.
                 if (!worker.isColumnNull(3)) {
@@ -1484,7 +1480,7 @@ public:
 
         PsqlBindArray in_bindings;
         in_bindings.addTempString(shared_network->getName());
-        in_bindings.addOptional(shared_network->getClientClass(Network::Inheritance::NONE));
+        addClientClassesBinding(in_bindings, shared_network->getClientClasses());
         in_bindings.addOptional(shared_network->getIface(Network::Inheritance::NONE));
         in_bindings.addOptional(shared_network->getMatchClientId(Network::Inheritance::NONE));
         in_bindings.addTimestamp(shared_network->getModificationTime()),
@@ -3327,7 +3323,7 @@ TaggedStatementArray tagged_statements = { {
             OID_VARCHAR,    //  4 interface_id_4o6
             OID_VARCHAR,    //  5 subnet_4o6
             OID_VARCHAR,    //  6 boot_file_name
-            OID_VARCHAR,    //  7 client_class
+            OID_TEXT,       //  7 client_classes
             OID_VARCHAR,    //  8 interface
             OID_BOOL,       //  9 match_client_id
             OID_TIMESTAMP,  // 10 modification_ts
@@ -3368,7 +3364,7 @@ TaggedStatementArray tagged_statements = { {
         "  interface_id_4o6,"
         "  subnet_4o6,"
         "  boot_file_name,"
-        "  client_class,"
+        "  client_classes,"
         "  interface,"
         "  match_client_id,"
         "  modification_ts,"
@@ -3429,7 +3425,7 @@ TaggedStatementArray tagged_statements = { {
             OID_TEXT,       // 1 start_address - cast as inet
             OID_TEXT,       // 2 end_address - cast as inet
             OID_INT8,       // 3 subnet_id
-            OID_VARCHAR,    // 4 client_class
+            OID_TEXT,       // 4 client_classes
             OID_TEXT,       // 5 evaluate_additional_classes
             OID_TEXT,       // 6 user_context - cast as json
             OID_TIMESTAMP   // 7 modification_ts
@@ -3444,7 +3440,7 @@ TaggedStatementArray tagged_statements = { {
         33,
         {
             OID_VARCHAR,    //  1 name,
-            OID_VARCHAR,    //  2 client_class,
+            OID_TEXT,       //  2 client_classes,
             OID_VARCHAR,    //  3 interface,
             OID_BOOL,       //  4 match_client_id,
             OID_TIMESTAMP,  //  5 modification_ts,
@@ -3480,7 +3476,7 @@ TaggedStatementArray tagged_statements = { {
         "INSERT_SHARED_NETWORK4",
         "INSERT INTO dhcp4_shared_network("
         "  name,"
-        "  client_class,"
+        "  client_classes,"
         "  interface,"
         "  match_client_id,"
         "  modification_ts,"
@@ -3772,7 +3768,7 @@ TaggedStatementArray tagged_statements = { {
         "  interface_id_4o6 = $4,"
         "  subnet_4o6 = $5,"
         "  boot_file_name = $6,"
-        "  client_class = $7,"
+        "  client_classes = $7,"
         "  interface = $8,"
         "  match_client_id = $9,"
         "  modification_ts = $10,"
@@ -3813,7 +3809,7 @@ TaggedStatementArray tagged_statements = { {
         34,
         {
             OID_VARCHAR,    //  1 name,
-            OID_VARCHAR,    //  2 client_class,
+            OID_TEXT,       //  2 client_classes,
             OID_VARCHAR,    //  3 interface,
             OID_BOOL,       //  4 match_client_id,
             OID_TIMESTAMP,  //  5 modification_ts,
@@ -3850,7 +3846,7 @@ TaggedStatementArray tagged_statements = { {
         "UPDATE_SHARED_NETWORK4",
         "UPDATE dhcp4_shared_network SET"
         "  name = $1,"
-        "  client_class = $2,"
+        "  client_classes = $2,"
         "  interface = $3,"
         "  match_client_id = $4,"
         "  modification_ts = $5,"

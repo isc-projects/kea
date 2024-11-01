@@ -56,7 +56,7 @@ namespace {
     "  s.4o6_interface_id," \
     "  s.4o6_subnet," \
     "  s.boot_file_name," \
-    "  s.client_class," \
+    "  s.client_classes," \
     "  s.interface," \
     "  s.match_client_id," \
     "  s.modification_ts," \
@@ -109,7 +109,7 @@ namespace {
     "  s.authoritative," \
     "  s.min_valid_lifetime," \
     "  s.max_valid_lifetime," \
-    "  p.client_class," \
+    "  p.client_classes," \
     "  p.evaluate_additional_classes," \
     "  p.user_context," \
     "  s.ddns_send_updates," \
@@ -163,7 +163,7 @@ namespace {
     "SELECT" \
     "  s.subnet_id," \
     "  s.subnet_prefix," \
-    "  s.client_class," \
+    "  s.client_classes," \
     "  s.interface," \
     "  s.modification_ts," \
     "  s.preferred_lifetime," \
@@ -240,12 +240,12 @@ namespace {
     "  s.max_preferred_lifetime," \
     "  s.min_valid_lifetime," \
     "  s.max_valid_lifetime," \
-    "  p.client_class," \
+    "  p.client_classes," \
     "  p.evaluate_additional_classes," \
     "  p.user_context," \
     "  d.excluded_prefix," \
     "  d.excluded_prefix_length," \
-    "  d.client_class," \
+    "  d.client_classes," \
     "  d.evaluate_additional_classes," \
     "  d.user_context," \
     "  s.ddns_send_updates," \
@@ -303,7 +303,7 @@ namespace {
       "  p.start_address," \
       "  p.end_address," \
       "  p.subnet_id," \
-      "  p.client_class," \
+      "  p.client_classes," \
       "  p.evaluate_additional_classes," \
       "  p.user_context," \
       "  p.modification_ts," \
@@ -345,7 +345,7 @@ namespace {
     "  p.start_address," \
     "  p.end_address," \
     "  p.subnet_id," \
-    "  p.client_class," \
+    "  p.client_classes," \
     "  p.evaluate_additional_classes," \
     "  p.user_context," \
     "  p.modification_ts," \
@@ -390,7 +390,7 @@ namespace {
     "  p.subnet_id," \
     "  p.excluded_prefix," \
     "  p.excluded_prefix_length," \
-    "  p.client_class," \
+    "  p.client_classes," \
     "  p.evaluate_additional_classes," \
     "  p.user_context," \
     "  p.modification_ts," \
@@ -431,7 +431,7 @@ namespace {
     "SELECT" \
     "  n.id," \
     "  n.name," \
-    "  n.client_class," \
+    "  n.client_classes," \
     "  n.interface," \
     "  n.match_client_id," \
     "  n.modification_ts," \
@@ -514,7 +514,7 @@ namespace {
     "SELECT" \
     "  n.id," \
     "  n.name," \
-    "  n.client_class," \
+    "  n.client_classes," \
     "  n.interface," \
     "  n.modification_ts," \
     "  n.preferred_lifetime," \
@@ -859,7 +859,7 @@ namespace {
     "  start_address," \
     "  end_address," \
     "  subnet_id," \
-    "  client_class," \
+    "  client_classes," \
     "  evaluate_additional_classes," \
     "  user_context," \
     "  modification_ts" \
@@ -875,7 +875,7 @@ namespace {
     "  subnet_id," \
     "  excluded_prefix," \
     "  excluded_prefix_length," \
-    "  client_class," \
+    "  client_classes," \
     "  evaluate_additional_classes," \
     "  user_context," \
     "  modification_ts" \

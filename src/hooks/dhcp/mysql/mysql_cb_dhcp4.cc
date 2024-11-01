@@ -455,10 +455,9 @@ public:
                     last_subnet->setFilename(out_bindings[5]->getString());
                 }
 
-                // client_class at 6.
-                if (!out_bindings[6]->amNull()) {
-                    last_subnet->allowClientClass(out_bindings[6]->getString());
-                }
+                // client_classes at 6.
+                clientClassesFromBinding(out_bindings[6], "client_classes",
+                                         last_subnet->getMutableClientClasses());
 
                 // interface at 7.
                 if (!out_bindings[7]->amNull()) {
@@ -653,10 +652,9 @@ public:
                 last_pool = Pool4::create(IOAddress(out_bindings[21]->getInteger<uint32_t>()),
                                           IOAddress(out_bindings[22]->getInteger<uint32_t>()));
 
-                // pool client_class at 59.
-                if (!out_bindings[59]->amNull()) {
-                    last_pool->allowClientClass(out_bindings[59]->getString());
-                }
+                // pool client_classes at 59.
+                clientClassesFromBinding(out_bindings[59], "client_classes",
+                                         last_pool->getMutableClientClasses());
 
                 // pool evaluate_additional_classes at 60.
                 clientClassesFromBinding(out_bindings[60], "evaluate_additional_classes",
@@ -881,10 +879,9 @@ public:
 
                 // pool subnet_id (3) (ignored)
 
-                // pool client_class (4)
-                if (!out_bindings[4]->amNull()) {
-                    last_pool->allowClientClass(out_bindings[4]->getString());
-                }
+                // pool client_classes (4)
+                clientClassesFromBinding(out_bindings[4], "client_classes",
+                                         last_pool->getMutableClientClasses());
 
                 // pool evaluate_additional_classes (5)
                 clientClassesFromBinding(out_bindings[5], "evaluate_additional_classes",
@@ -996,13 +993,6 @@ public:
             dhcp4o6_subnet = s.str();
         }
 
-        // Create JSON list of additional classes.
-        ElementPtr additional_classes_element = Element::createList();
-        auto const& additional_classes = subnet->getAdditionalClasses();
-        for (auto const& additional_class : additional_classes) {
-            additional_classes_element->add(Element::create(additional_class));
-        }
-
         // Create binding for DDNS replace client name mode.
         MySqlBindingPtr ddns_rcn_mode_binding;
         auto ddns_rcn_mode = subnet->getDdnsReplaceClientNameMode(Network::Inheritance::NONE);
@@ -1048,7 +1038,7 @@ public:
             dhcp4o6_interface_id_binding,
             MySqlBinding::condCreateString(dhcp4o6_subnet),
             MySqlBinding::condCreateString(subnet->getFilename(Network::Inheritance::NONE)),
-            MySqlBinding::condCreateString(subnet->getClientClass(Network::Inheritance::NONE)),
+            createInputClientClassesBinding(subnet->getClientClasses()),
             MySqlBinding::condCreateString(subnet->getIface(Network::Inheritance::NONE)),
             MySqlBinding::condCreateBool(subnet->getMatchClientId(Network::Inheritance::NONE)),
             MySqlBinding::createTimestamp(subnet->getModificationTime()),
@@ -1153,7 +1143,7 @@ public:
             MySqlBinding::createInteger<uint32_t>(pool->getFirstAddress().toUint32()),
             MySqlBinding::createInteger<uint32_t>(pool->getLastAddress().toUint32()),
             MySqlBinding::createInteger<uint32_t>(static_cast<uint32_t>(subnet->getID())),
-            MySqlBinding::condCreateString(pool->getClientClass()),
+            createInputClientClassesBinding(pool->getClientClasses()),
             createInputClientClassesBinding(pool->getAdditionalClasses()),
             createInputContextBinding(pool),
             MySqlBinding::createTimestamp(subnet->getModificationTime())
@@ -1363,10 +1353,9 @@ public:
                 last_network = SharedNetwork4::create(out_bindings[1]->getString());
                 last_network->setId(last_network_id);
 
-                // client_class at 2.
-                if (!out_bindings[2]->amNull()) {
-                    last_network->allowClientClass(out_bindings[2]->getString());
-                }
+                // client_classes at 2.
+                clientClassesFromBinding(out_bindings[2], "client_classes",
+                                         last_network->getMutableClientClasses());
 
                 // interface at 3.
                 if (!out_bindings[3]->amNull()) {
@@ -1673,7 +1662,7 @@ public:
 
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createString(shared_network->getName()),
-            MySqlBinding::condCreateString(shared_network->getClientClass(Network::Inheritance::NONE)),
+            createInputClientClassesBinding(shared_network->getClientClasses()),
             MySqlBinding::condCreateString(shared_network->getIface(Network::Inheritance::NONE)),
             MySqlBinding::condCreateBool(shared_network->getMatchClientId(Network::Inheritance::NONE)),
             MySqlBinding::createTimestamp(shared_network->getModificationTime()),
@@ -3188,7 +3177,7 @@ TaggedStatementArray tagged_statements = { {
       "  4o6_interface_id,"
       "  4o6_subnet,"
       "  boot_file_name,"
-      "  client_class,"
+      "  client_classes,"
       "  interface,"
       "  match_client_id,"
       "  modification_ts,"
@@ -3237,7 +3226,7 @@ TaggedStatementArray tagged_statements = { {
     { MySqlConfigBackendDHCPv4Impl::INSERT_SHARED_NETWORK4,
       "INSERT INTO dhcp4_shared_network("
       "  name,"
-      "  client_class,"
+      "  client_classes,"
       "  interface,"
       "  match_client_id,"
       "  modification_ts,"
@@ -3351,7 +3340,7 @@ TaggedStatementArray tagged_statements = { {
       "  4o6_interface_id = ?,"
       "  4o6_subnet = ?,"
       "  boot_file_name = ?,"
-      "  client_class = ?,"
+      "  client_classes = ?,"
       "  interface = ?,"
       "  match_client_id = ?,"
       "  modification_ts = ?,"
@@ -3389,7 +3378,7 @@ TaggedStatementArray tagged_statements = { {
     { MySqlConfigBackendDHCPv4Impl::UPDATE_SHARED_NETWORK4,
       "UPDATE dhcp4_shared_network SET"
       "  name = ?,"
-      "  client_class = ?,"
+      "  client_classes = ?,"
       "  interface = ?,"
       "  match_client_id = ?,"
       "  modification_ts = ?,"

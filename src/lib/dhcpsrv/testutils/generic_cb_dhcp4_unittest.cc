@@ -107,6 +107,7 @@ GenericConfigBackendDHCPv4Test::initTestSubnets() {
     subnet->get4o6().setSubnet4o6(IOAddress("2001:db8:1::"), 64);
     subnet->setFilename("/tmp/filename");
     subnet->allowClientClass("home");
+    subnet->allowClientClass("office");
     subnet->setIface("eth1");
     subnet->setMatchClientId(false);
     subnet->setSiaddr(IOAddress("10.1.2.3"));
@@ -163,6 +164,7 @@ GenericConfigBackendDHCPv4Test::initTestSubnets() {
                           IOAddress("10.0.0.60")));
 
     pool2->allowClientClass("work");
+    pool2->allowClientClass("play");
     pool2->addAdditionalClass("required-class3");
     pool2->addAdditionalClass("required-class4");
     user_context = Element::createMap();

@@ -360,9 +360,8 @@ public:
                 // 0 and 1 are subnet_id and subnet_prefix
 
                 // client_class at 2.
-                if (!worker.isColumnNull(2)) {
-                    last_subnet->allowClientClass(worker.getString(2));
-                }
+                clientClassesFromColumn(worker, 2, "client_classes",
+                                        last_subnet->getMutableClientClasses());
 
                 // interface at 3.
                 if (!worker.isColumnNull(3)) {
@@ -437,7 +436,7 @@ public:
 
                 // 77 and 78 are {min,max}_valid_lifetime
 
-                // 79 is pool client_class
+                // 79 is pool client_classes
                 // 80 is pool evaluate_additional_classes
                 // 81 is pool user_context
                 // 82 is pd pool excluded_prefix
@@ -553,10 +552,9 @@ public:
                 // pool subnet_id at 18 (ignored)
                 // pool modification_ts at 19 (ignored)
 
-                // pool client_class at 79.
-                if (!worker.isColumnNull(79)) {
-                    last_pool->allowClientClass(worker.getString(79));
-                }
+                // pool client_classes at 79.
+                clientClassesFromColumn(worker, 79, "client_classes",
+                                        last_pool->getMutableClientClasses());
 
                 // pool evaluate_additional_classes at 80.
                 clientClassesFromColumn(worker, 80, "evaluate_additional_classes",
@@ -605,10 +603,9 @@ public:
                                              excluded_prefix,
                                              static_cast<uint8_t>(worker.getSmallInt(83)));
 
-                // pd pool client_class (84)
-                if (!worker.isColumnNull(84)) {
-                    last_pd_pool->allowClientClass(worker.getString(84));
-                }
+                // pd pool client_classes (84)
+                clientClassesFromColumn(worker, 84, "client_classes",
+                                        last_pd_pool->getMutableClientClasses());
 
                 // pd pool evaluate_additional_classes at 85.
                 clientClassesFromColumn(worker, 85, "evaluate_additional_classes",
@@ -824,10 +821,9 @@ public:
 
                 // pool subnet_id (3) (ignored)
 
-                // pool client_class (4)
-                if (!worker.isColumnNull(4)) {
-                    last_pool->allowClientClass(worker.getString(4));
-                }
+                // pool client_classes (4)
+                clientClassesFromColumn(worker, 4, "client_classes",
+                                        last_pool->getMutableClientClasses());
 
                 // pool evaluate_additional_classes (5)
                 clientClassesFromColumn(worker, 5, "evaluate_additional_classes",
@@ -912,9 +908,8 @@ public:
                 // pd pool subnet_id (4) (ignored)
 
                 // pool client_class (7)
-                if (!worker.isColumnNull(7)) {
-                    last_pd_pool->allowClientClass(worker.getString(7));
-                }
+                clientClassesFromColumn(worker, 7, "client_classes",
+                                        last_pd_pool->getMutableClientClasses());
 
                 // pool evaluate_additional_classes (8)
                 clientClassesFromColumn(worker, 8, "evaluate_additional_classes",
@@ -1049,7 +1044,7 @@ public:
         PsqlBindArray in_bindings;
         in_bindings.add(subnet->getID());
         in_bindings.addTempString(subnet->toText());
-        in_bindings.addOptional(subnet->getClientClass(Network::Inheritance::NONE));
+        addClientClassesBinding(in_bindings, subnet->getClientClasses());
         in_bindings.addOptional(subnet->getIface(Network::Inheritance::NONE));
         in_bindings.addTimestamp(subnet->getModificationTime());
         in_bindings.add(subnet->getPreferred(Network::Inheritance::NONE));
@@ -1205,7 +1200,7 @@ public:
         in_bindings.addInet6(pool->getFirstAddress());
         in_bindings.addInet6(pool->getLastAddress());
         in_bindings.add(subnet->getID());
-        in_bindings.addOptional(pool->getClientClass());
+        addClientClassesBinding(in_bindings, pool->getClientClasses());
         addAdditionalClassesBinding(in_bindings, pool);
         in_bindings.add(pool->getContext());
         in_bindings.addTimestamp(subnet->getModificationTime());
@@ -1259,7 +1254,7 @@ public:
         in_bindings.add(subnet->getID());
         in_bindings.addOptional(xprefix_txt);
         in_bindings.add(xlen);
-        in_bindings.addOptional(pd_pool->getClientClass());
+        addClientClassesBinding(in_bindings, pd_pool->getClientClasses());
         addAdditionalClassesBinding(in_bindings, pd_pool);
         in_bindings.add(pd_pool->getContext());
         in_bindings.addTimestamp(subnet->getModificationTime());
@@ -1437,10 +1432,9 @@ public:
                 last_network = SharedNetwork6::create(worker.getString(1));
                 last_network->setId(last_network_id);
 
-                // client_class at 2.
-                if (!worker.isColumnNull(2)) {
-                    last_network->allowClientClass(worker.getString(2));
-                }
+                // client_classes at 2.
+                clientClassesFromColumn(worker, 2, "client_classes",
+                                        last_network->getMutableClientClasses());
 
                 // interface at 3.
                 if (!worker.isColumnNull(3)) {
@@ -1719,7 +1713,7 @@ public:
 
         PsqlBindArray in_bindings;
         in_bindings.addTempString(shared_network->getName());
-        in_bindings.addOptional(shared_network->getClientClass(Network::Inheritance::NONE));
+        addClientClassesBinding(in_bindings, shared_network->getClientClasses());
         in_bindings.addOptional(shared_network->getIface(Network::Inheritance::NONE));
         in_bindings.addTimestamp(shared_network->getModificationTime());
         in_bindings.add(shared_network->getPreferred(Network::Inheritance::NONE));
@@ -3722,7 +3716,7 @@ TaggedStatementArray tagged_statements = { {
         {
             OID_INT8,       //  1 subnet_id,
             OID_VARCHAR,    //  2 subnet_prefix
-            OID_VARCHAR,    //  3 client_class
+            OID_TEXT,       //  3 client_class
             OID_VARCHAR,    //  4 interface
             OID_TIMESTAMP,  //  5 modification_ts
             OID_INT8,       //  6 preferred_lifetime
@@ -3760,7 +3754,7 @@ TaggedStatementArray tagged_statements = { {
         "INSERT INTO dhcp6_subnet("
         "  subnet_id,"
         "  subnet_prefix,"
-        "  client_class,"
+        "  client_classes,"
         "  interface,"
         "  modification_ts,"
         "  preferred_lifetime,"
@@ -3822,7 +3816,7 @@ TaggedStatementArray tagged_statements = { {
             OID_TEXT,       // 1 start_address - cast as inet
             OID_TEXT,       // 2 end_address - cast as inet
             OID_INT8,       // 3 subnet_id
-            OID_VARCHAR,    // 4 client_class
+            OID_TEXT,       // 4 client_classes
             OID_TEXT,       // 5 evaluate_additional_classes
             OID_TEXT,       // 6 user_context - cast as json
             OID_TIMESTAMP   // 7 modification_ts
@@ -3842,7 +3836,7 @@ TaggedStatementArray tagged_statements = { {
             OID_INT8,       //  4 subnet_id
             OID_VARCHAR,    //  5 excluded_prefix
             OID_INT2,       //  6 excluded_prefix_length
-            OID_VARCHAR,    //  7 client_class
+            OID_TEXT,       //  7 client_classes
             OID_TEXT,       //  8 evaluate_additional_classes
             OID_TEXT,       //  9 user_context - cast as json
             OID_TIMESTAMP,  // 10 modification_ts
@@ -3857,7 +3851,7 @@ TaggedStatementArray tagged_statements = { {
         33,
         {
             OID_VARCHAR,    //  1 name
-            OID_VARCHAR,    //  2 client_class
+            OID_TEXT,       //  2 client_classes
             OID_VARCHAR,    //  3 interface
             OID_TIMESTAMP,  //  4 modification_ts
             OID_INT8,       //  5 preferred_lifetime
@@ -3893,7 +3887,7 @@ TaggedStatementArray tagged_statements = { {
         "INSERT_SHARED_NETWORK6",
         "INSERT INTO dhcp6_shared_network("
         "  name,"
-        "  client_class,"
+        "  client_classes,"
         "  interface,"
         "  modification_ts,"
         "  preferred_lifetime,"
@@ -4137,7 +4131,7 @@ TaggedStatementArray tagged_statements = { {
         {
             OID_INT8,       //  1 subnet_id,
             OID_VARCHAR,    //  2 subnet_prefix
-            OID_VARCHAR,    //  3 client_class
+            OID_TEXT,       //  3 client_classes
             OID_VARCHAR,    //  4 interface
             OID_TIMESTAMP,  //  5 modification_ts
             OID_INT8,       //  6 preferred_lifetime
@@ -4175,7 +4169,7 @@ TaggedStatementArray tagged_statements = { {
         "UPDATE dhcp6_subnet SET"
         "  subnet_id = $1,"
         "  subnet_prefix = $2,"
-        "  client_class = $3,"
+        "  client_classes = $3,"
         "  interface = $4,"
         "  modification_ts = $5,"
         "  preferred_lifetime = $6,"
@@ -4217,7 +4211,7 @@ TaggedStatementArray tagged_statements = { {
         34,
         {
             OID_VARCHAR,    //  1 name
-            OID_VARCHAR,    //  2 client_class
+            OID_TEXT,       //  2 client_classes
             OID_VARCHAR,    //  3 interface
             OID_TIMESTAMP,  //  4 modification_ts
             OID_INT8,       //  5 preferred_lifetime
@@ -4253,7 +4247,7 @@ TaggedStatementArray tagged_statements = { {
         "UPDATE_SHARED_NETWORK6",
         "UPDATE dhcp6_shared_network SET"
         "  name = $1,"
-        "  client_class = $2,"
+        "  client_classes = $2,"
         "  interface = $3,"
         "  modification_ts = $4,"
         "  preferred_lifetime = $5,"
