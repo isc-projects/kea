@@ -712,10 +712,10 @@ only difference that ``this-server-name`` should be set to "server2" and
            "subnet": "192.0.3.0/24",
            "pools": [{
                "pool": "192.0.3.100 - 192.0.3.150",
-               "client-class": "HA_server1"
+               "client-classes": [ "HA_server1 ]"
             }, {
                "pool": "192.0.3.200 - 192.0.3.250",
-               "client-class": "HA_server2"
+               "client-classes": [ "HA_server2" ]
             }],
 
             "option-data": [{
@@ -1022,16 +1022,16 @@ library configuration has been removed from this example.
            "subnet": "192.0.3.0/24",
            "pools": [{
                "pool": "192.0.3.100 - 192.0.3.125",
-               "client-class": "phones_server1"
+               "client-classes": [ "phones_server1" ]
            }, {
                "pool": "192.0.3.126 - 192.0.3.150",
-               "client-class": "laptops_server1"
+               "client-classes": [ "laptops_server1" ]
            }, {
                "pool": "192.0.3.200 - 192.0.3.225",
-               "client-class": "phones_server2"
+               "client-classes": [ "phones_server2" ]
            }, {
                "pool": "192.0.3.226 - 192.0.3.250",
-               "client-class": "laptops_server2"
+               "client-classes": [ "laptops_server2" ]
            }],
 
            "option-data": [{
@@ -1109,7 +1109,7 @@ The following is an example configuration of the primary server in a
            "subnet": "192.0.3.0/24",
            "pools": [{
                "pool": "192.0.3.100 - 192.0.3.250",
-               "client-class": "HA_server1"
+               "client-classes": [ "HA_server1" ]
            }],
 
            "option-data": [{

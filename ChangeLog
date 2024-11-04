@@ -1,3 +1,10 @@
+2306.	[func]		tmark
+	The parameter "client-class" (a single class name) in 
+	shared networks, subnets, and pools has been replaced with
+	"client-classes" (a list of one or more class names).
+	This applies to both kea-dhcp4 and kea-dhcp6.
+	(Gitlab #3592)
+
 2305.	[func]		fdupont
 	Added a new "http-headers" parameter to the CA and
 	HTTP control socket configuration sections which can
@@ -18,7 +25,7 @@
 	generating DDNS update requests when leases are
 	being reused due to lease caching.
 	(Gitlab #3257)
-
+	
 Kea 2.7.4 (development) released on October 30, 2024
 
 2302.	[func]		tmark

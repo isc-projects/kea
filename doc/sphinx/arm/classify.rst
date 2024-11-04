@@ -1000,9 +1000,18 @@ Pool selection is performed after all host reservations lookups.
 Configuring Subnets With Class Information
 ==========================================
 
+.. note:
+
+    As of Kea 2.7.5, ``client-class`` (a single class name) has been replaced
+    with ``client-classes`` (a list of one or more class names) and is now
+    deprecated. It will still be accepted as input for a time to allow users
+    to migrate but will eventually be unsupported.
+
 In certain cases it is beneficial to restrict access to certain subnets
-only to clients that belong to a given class, using the ``client-class``
-keyword when defining the subnet.
+only to clients that belong to a given class, using the ``client-classes``
+parameter when defining the subnet.  This parameter may be used to sepcify
+a list of one or more classes to which clients must belong in order to
+use the subnet.
 
 Let's assume that the server is connected to a network segment that uses the
 192.0.2.0/24 prefix. The administrator of that network has decided that
@@ -1034,7 +1043,7 @@ this subnet. Such a configuration can be achieved in the following way:
                "id": 1,
                "subnet": "192.0.2.0/24",
                "pools": [ { "pool": "192.0.2.10 - 192.0.2.20" } ],
-               "client-class": "Client_foo"
+               "client-classes": [ "Client_foo" ]
            },
            ...
        ],
@@ -1069,7 +1078,7 @@ configuration restricts use of the addresses in the range 2001:db8:1::1 to
                "id": 1,
                "subnet": "2001:db8:1::/64",
                "pools": [ { "pool": "2001:db8:1::-2001:db8:1::ffff" } ],
-               "client-class": "Client_enterprise"
+               "client-classes": "Client_enterprise"
            }
        ],
        ...
@@ -1080,9 +1089,17 @@ configuration restricts use of the addresses in the range 2001:db8:1::1 to
 Configuring Pools With Class Information
 ========================================
 
+.. note:
+
+    As of Kea 2.7.5, ``client-class`` (a single class name) has been replaced
+    with ``client-classes`` (a list of one or more class names) and is now
+    deprecated. It will still be accepted as input for a time to allow users
+    to migrate but will eventually be unsupported.
+
 Similar to subnets, in certain cases access to certain address or prefix
-pools must be restricted to only clients that belong to a given class,
-using the ``client-class`` when defining the pool.
+pools must be restricted to only clients that belong to at least one of a
+list of one or more classes, using the ``client-classes`` when defining
+the pool.
 
 Let's assume that the server is connected to a network segment that uses the
 192.0.2.0/24 prefix. The administrator of that network has decided that
@@ -1116,7 +1133,7 @@ to use this pool. Such a configuration can be achieved in the following way:
                "pools": [
                    {
                        "pool": "192.0.2.10 - 192.0.2.20",
-                       "client-class": "Client_foo"
+                       "client-classes": [ "Client_foo" ]
                    }
                ]
            },
@@ -1157,7 +1174,7 @@ configuration restricts use of the addresses in the range 2001:db8:1::1 to
                "pools": [
                    {
                        "pool": "2001:db8:1::-2001:db8:1::ffff",
-                       "client-class": "Client_foo"
+                       "client-classes": [ "Client_foo" ]
                    }
                ]
            },

@@ -3123,7 +3123,7 @@ servers set to 2001:db8:0::1 and 2001:db8:2::1.
                "id": 1,
                "subnet": "2001:db8:1::/64",
                "pools": [ { "pool": "2001:db8:1::-2001:db8:1::ffff" } ],
-               "client-class": "Client_enterprise"
+               "client-classes": [ "Client_enterprise" ]
            }
        ],
        ...
@@ -3147,7 +3147,7 @@ eRouter1.0 client class are allowed to use that pool.
                         "pool": "2001:db8:1::-2001:db8:1::ffff"
                     }
                 ],
-               "client-class": "VENDOR_CLASS_eRouter1.0"
+               "client-classes": [ "VENDOR_CLASS_eRouter1.0" ]
            }
        ],
        ...
@@ -5190,7 +5190,7 @@ Pool Selection with Client Class Reservations
 Client classes can be specified both in the Kea configuration file and/or
 via host reservations. The classes specified in the Kea configuration file are
 evaluated immediately after receiving the DHCP packet and therefore can be
-used to influence subnet selection using the ``client-class`` parameter
+used to influence subnet selection using the ``client-classes`` parameter
 specified in the subnet scope. The classes specified within the host
 reservations are fetched and assigned to the packet after the server has
 already selected a subnet for the client. This means that the client
@@ -5230,11 +5230,11 @@ within the subnet as follows:
                 "pools": [
                     {
                         "pool": "2001:db8:1::10-2001:db8:1::20",
-                        "client-class": "reserved_class"
+                        "client-classes": [ "reserved_class" ]
                     },
                     {
                         "pool": "2001:db8:1::30-2001:db8:1::40",
-                        "client-class": "unreserved_class"
+                        "client-classes": [ "unreserved_class" ]
                     }
                 ]
             }
@@ -5301,7 +5301,7 @@ following example:
                     "pools": [
                         {
                             "pool": "2001:db8:1::10-2001:db8:1::20",
-                            "client-class": "reserved_class"
+                            "client-classes": [ "reserved_class" ]
                         }
                     ]
                 },
@@ -5311,7 +5311,7 @@ following example:
                     "pools": [
                         {
                             "pool": "2001:db8:2::10-2001:db8:2::20",
-                            "client-class": "unreserved_class"
+                            "client-classes": [ "unreserved_class" ]
                         }
                     ]
                 }
@@ -5331,7 +5331,7 @@ In addition, the reservation for the client class must be specified at the
 global scope (global reservation) and ``reservations-global`` must be
 set to ``true``.
 
-In the example above, the ``client-class`` could also be specified at the
+In the example above, the ``client-classes`` could also be specified at the
 subnet level rather than the pool level, and would yield the same effect.
 
 .. _multiple-reservations-same-ip6:
@@ -5949,8 +5949,24 @@ If a subnet is associated with a class, only the clients belonging to
 this class can use this subnet. If there are no classes specified for a
 subnet, any client connected to a given shared network can use this
 subnet. A common mistake is to assume that the subnet that includes a client
-class is preferred over subnets without client classes. Consider the
-following example:
+class is preferred over subnets without client classes.
+
+The ``client-classes`` parameter may be specified at the shared network, subnet,
+and/or pool scopes. If specified for a shared network, clients must belong to at
+least one of the classes specified for that network to be considered for subnets
+within that network. If specified for a subnet, clients must belong to at least
+one of the classes specified for that subnet to be considered for any of that
+subnet's pools.  If sepcified for a pool, clients must belong to at least one
+of the classes specified for that pool to be given a lease from that pool.
+
+.. note:
+
+    As of Kea 2.7.5, ``client-class`` (a single class name) has been replaced
+    with ``client-classes`` (a list of one or more class names) and is now
+    deprecated. It will still be accepted as input for a time to allow users
+    to migrate but will eventually be unsupported.
+
+Consider the following example:
 
 .. code-block:: json
 
@@ -5977,7 +5993,7 @@ following example:
                        "id": 2,
                        "subnet": "2001:db8:3::/64",
                        "pools": [ { "pool": "2001:db8:3::20 - 2001:db8:3::ff" } ],
-                       "client-class": "b-devices"
+                       "client-classes": "b-devices"
                    }
                ]
            }
@@ -6027,13 +6043,13 @@ on option 1234 values.
                        "id": 1,
                        "subnet": "2001:db8:1::/64",
                        "pools": [ { "pool": "2001:db8:1::20 - 2001:db8:1::ff" } ],
-                       "client-class": "a-devices"
+                       "client-classes": [ "a-devices" ]
                    },
                    {
                        "id": 2,
                        "subnet": "2001:db8:3::/64",
                        "pools": [ { "pool": "2001:db8:3::20 - 2001:db8:3::ff" } ],
-                       "client-class": "b-devices"
+                       "client-classes": [ "b-devices" ]
                    }
                ]
            }
@@ -6542,7 +6558,7 @@ The following configuration can serve that situation:
                "pools": [
                    { "pool": "3000::2 - 3000::ffff" }
                ],
-               "client-class": "VENDOR_CLASS_docsis3.0",
+               "client-classes": [ "VENDOR_CLASS_docsis3.0" ],
                "relay": {
                    "ip-addresses": [ "3000::1" ]
                }

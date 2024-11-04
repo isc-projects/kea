@@ -3379,7 +3379,7 @@ class are allowed to use that pool.
                "id": 1,
                "subnet": "192.0.2.0/24",
                "pools": [ { "pool": "192.0.2.10 - 192.0.2.20" } ],
-               "client-class": "VENDOR_CLASS_docsis3.0"
+               "client-classes": [ "VENDOR_CLASS_docsis3.0" ]
            }
        ],
        ...
@@ -3419,7 +3419,7 @@ DNS servers set to 192.0.2.1 and 192.0.2.2.
                "id": 1,
                "subnet": "192.0.2.0/24",
                "pools": [ { "pool": "192.0.2.10 - 192.0.2.20" } ],
-               "client-class": "Client_foo"
+               "client-classes": [ "Client_foo" ]
            },
            ...
        ],
@@ -5912,7 +5912,7 @@ Pool Selection with Client Class Reservations
 Client classes can be specified in the Kea configuration file and/or via
 host reservations. The classes specified in the Kea configuration file are
 evaluated immediately after receiving the DHCP packet and therefore can be
-used to influence subnet selection using the ``client-class`` parameter
+used to influence subnet selection using the ``client-classes`` parameter
 specified in the subnet scope. The classes specified within the host
 reservations are fetched and assigned to the packet after the server has
 already selected a subnet for the client. This means that the client
@@ -5952,11 +5952,11 @@ within the subnet as follows:
                 "pools": [
                     {
                         "pool": "192.0.2.10-192.0.2.20",
-                        "client-class": "reserved_class"
+                        "client-classes": [ "reserved_class" ]
                     },
                     {
                         "pool": "192.0.2.30-192.0.2.40",
-                        "client-class": "unreserved_class"
+                        "client-classes": [ "unreserved_class" ]
                     }
                 ]
             }
@@ -6023,7 +6023,7 @@ following example:
                     "pools": [
                         {
                             "pool": "192.0.2.10-192.0.2.20",
-                            "client-class": "reserved_class"
+                            "client-classes": [ "reserved_class" ]
                         }
                     ]
                 },
@@ -6033,7 +6033,7 @@ following example:
                     "pools": [
                         {
                             "pool": "192.0.3.10-192.0.3.20",
-                            "client-class": "unreserved_class"
+                            "client-classes": [ "unreserved_class" ]
                         }
                     ]
                 }
@@ -6053,7 +6053,7 @@ In addition, the reservation for the client class must be specified at the
 global scope (global reservation) and ``reservations-global`` must be
 set to ``true``.
 
-In the example above, the ``client-class`` could also be specified at the
+In the example above, the ``client-classes`` could also be specified at the
 subnet level rather than the pool level, and would yield the same effect.
 
 .. _multiple-reservations-same-ip4:
@@ -6631,19 +6631,36 @@ Client Classification in Shared Networks
 
 Sometimes it is desirable to segregate clients into specific subnets
 based on certain properties. This mechanism is called client
-classification and is described in :ref:`classify`. Client
-classification can be applied to subnets belonging to shared networks in
+classification and is described in :ref:`classify`.
+
+Client classification can be applied to subnets belonging to shared networks in
 the same way as it is used for subnets specified outside of shared
 networks. It is important to understand how the server selects subnets
 for clients when client classification is in use, to ensure that the
 appropriate subnet is selected for a given client type.
 
-If a subnet is associated with a class, only the clients belonging to
-this class can use this subnet. If there are no classes specified for a
-subnet, any client connected to a given shared network can use this
-subnet. A common mistake is to assume that a subnet that includes a client
-class is preferred over subnets without client classes. Consider the
-following example:
+If a subnet is associated with one or more classes, only the clients belonging
+to at least one of these classes may this subnet. If there are no classes
+specified for a subnet, any client connected to a given shared network can use
+this subnet. A common mistake is to assume that a subnet that includes a client
+class is preferred over subnets without client classes.
+
+The ``client-classes`` parameter may be specified at the shared network, subnet,
+and/or pool scopes. If specified for a shared network, clients must belong to at
+least one of the classes specified for that network to be considered for subnets
+within that network. If specified for a subnet, clients must belong to at least
+one of the classes specified for that subnet to be considered for any of that
+subnet's pools.  If sepcified for a pool, clients must belong to at least one
+of the classes specified for that pool to be given a lease from that pool.
+
+.. note:
+
+    As of Kea 2.7.5, ``client-class`` (a single class name) has been replaced
+    with ``client-classes`` (a list of one or more class names) and is now
+    deprecated. It will still be accepted as input for a time to allow users
+    to migrate but will eventually be unsupported.
+
+Consider the following example:
 
 ::
 
@@ -6668,7 +6685,7 @@ following example:
                        "id": 2,
                        "subnet": "10.0.0.0/24",
                        "pools": [ { "pool": "10.0.0.2 - 10.0.0.250" } ],
-                       "client-class": "b-devices"
+                       "client-classes": [ "b-devices" ]
                    }
                ]
            }
@@ -6715,13 +6732,13 @@ on option 93 values.
                        "id": 1,
                        "subnet": "192.0.2.0/26",
                        "pools": [ { "pool": "192.0.2.1 - 192.0.2.63" } ],
-                       "client-class": "a-devices"
+                       "client-classes": [ "a-devices" ]
                    },
                    {
                        "id": 2,
                        "subnet": "10.0.0.0/24",
                        "pools": [ { "pool": "10.0.0.2 - 10.0.0.250" } ],
-                       "client-class": "b-devices"
+                       "client-classes": [ "b-devices" ]
                    }
                ]
            }
@@ -6992,7 +7009,7 @@ everything connected behind the modems should get addresses from the
                "id": 1,
                "subnet": "10.1.1.0/24",
                "pools":  [ { "pool": "10.1.1.2 - 10.1.1.20" } ],
-               "client-class": "docsis3.0",
+               "client-classes": [ "docsis3.0" ],
                "relay": {
                    "ip-addresses": [ "10.1.1.1" ]
                }
