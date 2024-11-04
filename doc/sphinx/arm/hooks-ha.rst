@@ -712,7 +712,7 @@ only difference that ``this-server-name`` should be set to "server2" and
            "subnet": "192.0.3.0/24",
            "pools": [{
                "pool": "192.0.3.100 - 192.0.3.150",
-               "client-classes": [ "HA_server1 ]"
+               "client-classes": [ "HA_server1" ]
             }, {
                "pool": "192.0.3.200 - 192.0.3.250",
                "client-classes": [ "HA_server2" ]
