@@ -28,6 +28,14 @@
 	
 Kea 2.7.4 (development) released on October 30, 2024
 
+2303.	[func]		tmark
+	The parameters 'require-client-classes' and 
+	'only-if-required' have been replaced with 'evaluate-
+	additonal-classes' and 'only-in-additional-list' 
+	respectively and deprecated. This applies to both
+	kea-dhcp4 and kea-dhcp6.
+	(Gitlab #3587) 
+
 2302.	[func]		tmark
 	Options may now be configured with a list of client
 	classes for which they apply.  This feature is referred to
