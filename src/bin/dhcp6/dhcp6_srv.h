@@ -1065,7 +1065,7 @@ protected:
     //
     void checkDynamicSubnetChange(const Pkt6Ptr& question, Pkt6Ptr& answer,
                                   AllocEngine::ClientContext6& ctx,
-                                  const Subnet6Ptr orig_subnet);
+                                  const ConstSubnet6Ptr orig_subnet);
 
     /// @brief Return the PD exclude option to include.
     ///

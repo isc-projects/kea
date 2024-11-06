@@ -2546,7 +2546,7 @@ Dhcpv6Srv::getPDExclude(const AllocEngine::ClientContext6& ctx,
     }
 
     // Search the pool the address is from.
-    const Subnet6Ptr& subnet = ctx.subnet_;
+    const ConstSubnet6Ptr& subnet = ctx.subnet_;
     Pool6Ptr pool = boost::dynamic_pointer_cast<Pool6>(
         subnet->getPool(Lease::TYPE_PD, lease->addr_));
     if (pool) {

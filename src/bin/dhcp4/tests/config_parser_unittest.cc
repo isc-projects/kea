@@ -2077,8 +2077,8 @@ TEST_F(Dhcp4ParserTest, subnetInterface) {
     // returned value should be 0 (configuration success)
     checkResult(status, 0);
 
-    Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->
-        selectSubnet(IOAddress("192.0.2.200"), classify_);
+    ConstSubnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
+        getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"), classify_);
     ASSERT_TRUE(subnet);
     EXPECT_EQ(valid_iface_, subnet->getIface().get());
 }
@@ -2110,8 +2110,8 @@ TEST_F(Dhcp4ParserTest, subnetInterfaceBogus) {
     checkResult(status, 1);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 
-    Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->
-        selectSubnet(IOAddress("192.0.2.200"), classify_);
+    ConstSubnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
+        getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"), classify_);
     EXPECT_FALSE(subnet);
 }
 
@@ -7760,7 +7760,7 @@ TEST_F(Dhcp4ParserTest, storeExtendedInfoNoGlobal) {
     mutable_subnet1->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
         return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
     });
-    EXPECT_TRUE(subnet->getStoreExtendedInfo());
+    EXPECT_TRUE(subnet1->getStoreExtendedInfo());
 
     // Second subnet should use its own value.
     ConstSubnet4Ptr subnet2 = cfg->selectSubnet(IOAddress("192.0.3.1"));
@@ -7770,7 +7770,7 @@ TEST_F(Dhcp4ParserTest, storeExtendedInfoNoGlobal) {
     mutable_subnet2->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
         return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
     });
-    EXPECT_FALSE(subnet->getStoreExtendedInfo());
+    EXPECT_FALSE(subnet2->getStoreExtendedInfo());
 }
 
 // This test checks that the global store-extended-info parameter is used
@@ -8168,8 +8168,8 @@ TEST_F(Dhcp4ParserTest, deprecatedRequireClientClassesCheck) {
     auto cclasses = net_class_list.begin();
     EXPECT_EQ(*cclasses, "one");
 
-    Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
-                            getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.0"));
+    ConstSubnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
+        getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.0"));
     ASSERT_TRUE(subnet);
 
     auto& sub_class_list = subnet->getAdditionalClasses();

@@ -2907,8 +2907,9 @@ Dhcpv4Srv::createNameChangeRequests(const Lease4Ptr& lease,
 }
 
 bool
-Dhcpv4Srv::assignZero(Subnet4Ptr& subnet, const ClientClasses& client_classes) {
-    Subnet4Ptr current_subnet = subnet;
+Dhcpv4Srv::assignZero(ConstSubnet4Ptr& subnet,
+                      const ClientClasses& client_classes) {
+    ConstSubnet4Ptr current_subnet = subnet;
     // Try subnets.
     while (current_subnet) {
         const ConstCfgOptionPtr& co = current_subnet->getCfgOption();
@@ -2948,7 +2949,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
     AllocEngine::ClientContext4Ptr ctx = ex.getContext();
 
     // Subnet should have been already selected when the context was created.
-    Subnet4Ptr subnet = ctx->subnet_;
+    ConstSubnet4Ptr subnet = ctx->subnet_;
 
     // "Fake" allocation is processing of DISCOVER message. We pretend to do an
     // allocation, but we do not put the lease in the database. That is ok,

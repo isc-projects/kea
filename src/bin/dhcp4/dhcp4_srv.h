@@ -743,7 +743,8 @@ protected:
     /// the option is found in another subnet of the shared network.
     /// @param client_classes Client classes.
     /// @return true if an IPv6-Only Preferred option was found, false otherwise.
-    bool assignZero(Subnet4Ptr& subnet, const ClientClasses& client_classes);
+    bool assignZero(ConstSubnet4Ptr& subnet,
+                    const ClientClasses& client_classes);
 
     /// @brief Assigns a lease and appends corresponding options
     ///
