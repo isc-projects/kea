@@ -5621,11 +5621,6 @@ TEST_F(Dhcp4ParserTest, hostReservationGlobal) {
     ConstSubnet4Ptr subnet;
     subnet = subnets->selectSubnet(IOAddress("192.0.2.1"));
     ASSERT_TRUE(subnet);
-    // Reset the fetch global function to staging (vs current) config.
-    Subnet4Ptr mutable_subnet = boost::const_pointer_cast<Subnet4>(subnet);
-    mutable_subnet->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
-        return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
-    });
     EXPECT_FALSE(subnet->getReservationsGlobal());
     EXPECT_TRUE(subnet->getReservationsInSubnet());
     EXPECT_FALSE(subnet->getReservationsOutOfPool());
@@ -5633,11 +5628,6 @@ TEST_F(Dhcp4ParserTest, hostReservationGlobal) {
     // Subnet 2
     subnet = subnets->selectSubnet(IOAddress("192.0.3.1"));
     ASSERT_TRUE(subnet);
-    // Reset the fetch global function to staging (vs current) config.
-    mutable_subnet = boost::const_pointer_cast<Subnet4>(subnet);
-    mutable_subnet->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
-        return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
-    });
     EXPECT_FALSE(subnet->getReservationsGlobal());
     EXPECT_TRUE(subnet->getReservationsInSubnet());
     EXPECT_TRUE(subnet->getReservationsOutOfPool());
