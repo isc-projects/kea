@@ -255,12 +255,17 @@ public:
     ///
     /// @param iaid IAID
     /// @param pkt A DHCPv6 message to which the IA option should be added.
-    void addIA(const uint32_t iaid, const IOAddress& addr, Pkt6Ptr& pkt) {
+    /// @param cxt allocation engine context to which IA option should be 
+    /// added. 
+    void addIA(const uint32_t iaid, const IOAddress& addr, Pkt6Ptr& pkt,
+               AllocEngine::ClientContext6& ctx) {
         Option6IAPtr opt_ia = generateIA(D6O_IA_NA, iaid, 1500, 3000);
         Option6IAAddrPtr opt_iaaddr(new Option6IAAddr(D6O_IAADDR, addr,
                                                       300, 500));
         opt_ia->addOption(opt_iaaddr);
         pkt->addOption(opt_ia);
+        ctx.createIAContext();
+        ctx.currentIA().ia_rsp_ = opt_ia;
     }
 
     /// @brief Adds IA option to the message.
@@ -270,10 +275,15 @@ public:
     /// @param iaid IAID
     /// @param status_code Status code
     /// @param pkt A DHCPv6 message to which the option should be added.
-    void addIA(const uint32_t iaid, const uint16_t status_code, Pkt6Ptr& pkt) {
+    /// @param cxt allocation engine context to which IA option should be 
+    /// added. 
+    void addIA(const uint32_t iaid, const uint16_t status_code, Pkt6Ptr& pkt,
+               AllocEngine::ClientContext6& ctx) {
         Option6IAPtr opt_ia = generateIA(D6O_IA_NA, iaid, 1500, 3000);
         addStatusCode(status_code, "", opt_ia);
         pkt->addOption(opt_ia);
+        ctx.createIAContext();
+        ctx.currentIA().ia_rsp_ = opt_ia;
     }
 
     /// @brief Creates status code with the specified code and message.
@@ -347,12 +357,12 @@ public:
                                                 ? DHCPV6_ADVERTISE :
                                                 DHCPV6_REPLY);
 
-        // Create three IAs, each having different address.
-        addIA(1234, IOAddress("2001:db8:1::1"), answer);
-
         AllocEngine::ClientContext6 ctx;
         // Set the selected subnet so ddns params get returned correctly.
         ctx.subnet_ = subnet_;
+
+        // Create three IAs, each having different address.
+        addIA(1234, IOAddress("2001:db8:1::1"), answer, ctx);
 
         ASSERT_NO_THROW(srv_->processClientFqdn(question, answer, ctx));
         Option6ClientFqdnPtr answ_fqdn = boost::dynamic_pointer_cast<
@@ -823,10 +833,15 @@ TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequests) {
     // Create Reply message with Client Id and Server id.
     Pkt6Ptr answer = generateMessageWithIds(DHCPV6_REPLY);
 
+    // Create NameChangeRequest for the first allocated address.
+    AllocEngine::ClientContext6 ctx;
+    ctx.subnet_ = subnet_;
+    ctx.fwd_dns_update_ = ctx.rev_dns_update_ = true;
+
     // Create three IAs, each having different address.
-    addIA(1234, IOAddress("2001:db8:1::1"), answer);
-    addIA(2345, IOAddress("2001:db8:1::2"), answer);
-    addIA(3456, IOAddress("2001:db8:1::3"), answer);
+    addIA(1234, IOAddress("2001:db8:1::1"), answer, ctx);
+    addIA(2345, IOAddress("2001:db8:1::2"), answer, ctx);
+    addIA(3456, IOAddress("2001:db8:1::3"), answer, ctx);
 
     // Use domain name in upper case. It should be converted to lower-case
     // before DHCID is calculated. So, we should get the same result as if
@@ -836,10 +851,7 @@ TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequests) {
                                                  Option6ClientFqdn::FULL);
     answer->addOption(fqdn);
 
-    // Create NameChangeRequest for the first allocated address.
-    AllocEngine::ClientContext6 ctx;
-    ctx.subnet_ = subnet_;
-    ctx.fwd_dns_update_ = ctx.rev_dns_update_ = true;
+
     ASSERT_NO_THROW(srv_->createNameChangeRequests(answer, ctx));
     ASSERT_EQ(1, d2_mgr_.getQueueSize());
 
@@ -857,8 +869,14 @@ TEST_F(FqdnDhcpv6SrvTest, noConflictResolution) {
     // Create Reply message with Client Id and Server id.
     Pkt6Ptr answer = generateMessageWithIds(DHCPV6_REPLY);
 
+    // Create NameChangeRequest for the first allocated address.
+    AllocEngine::ClientContext6 ctx;
+    subnet_->setDdnsConflictResolutionMode("no-check-with-dhcid");
+    ctx.subnet_ = subnet_;
+    ctx.fwd_dns_update_ = ctx.rev_dns_update_ = true;
+
     // Create three IAs, each having different address.
-    addIA(1234, IOAddress("2001:db8:1::1"), answer);
+    addIA(1234, IOAddress("2001:db8:1::1"), answer, ctx);
 
     // Use domain name in upper case. It should be converted to lower-case
     // before DHCID is calculated. So, we should get the same result as if
@@ -868,11 +886,6 @@ TEST_F(FqdnDhcpv6SrvTest, noConflictResolution) {
                                                  Option6ClientFqdn::FULL);
     answer->addOption(fqdn);
 
-    // Create NameChangeRequest for the first allocated address.
-    AllocEngine::ClientContext6 ctx;
-    subnet_->setDdnsConflictResolutionMode("no-check-with-dhcid");
-    ctx.subnet_ = subnet_;
-    ctx.fwd_dns_update_ = ctx.rev_dns_update_ = true;
     ASSERT_NO_THROW(srv_->createNameChangeRequests(answer, ctx));
     ASSERT_EQ(1, d2_mgr_.getQueueSize());
 
@@ -893,8 +906,13 @@ TEST_F(FqdnDhcpv6SrvTest, noAddRequestsWhenDisabled) {
     // Create Reply message with Client Id and Server id.
     Pkt6Ptr answer = generateMessageWithIds(DHCPV6_REPLY);
 
+    // An attempt to send a NCR would throw.
+    AllocEngine::ClientContext6 ctx;
+    ctx.subnet_ = subnet_;
+    ctx.fwd_dns_update_ = ctx.rev_dns_update_ = true;
+
     // Create three IAs, each having different address.
-    addIA(1234, IOAddress("2001:db8:1::1"), answer);
+    addIA(1234, IOAddress("2001:db8:1::1"), answer, ctx);
 
     // Use domain name in upper case. It should be converted to lower-case
     // before DHCID is calculated. So, we should get the same result as if
@@ -904,10 +922,6 @@ TEST_F(FqdnDhcpv6SrvTest, noAddRequestsWhenDisabled) {
                                                  Option6ClientFqdn::FULL);
     answer->addOption(fqdn);
 
-    // An attempt to send a NCR would throw.
-    AllocEngine::ClientContext6 ctx;
-    ctx.subnet_ = subnet_;
-    ctx.fwd_dns_update_ = ctx.rev_dns_update_ = true;
     ASSERT_NO_THROW(srv_->createNameChangeRequests(answer, ctx));
 }
 
@@ -2153,8 +2167,15 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsTtlPercent) {
     // Create Reply message with Client Id and Server id.
     Pkt6Ptr answer = generateMessageWithIds(DHCPV6_REPLY);
 
+    // Create NameChangeRequest for the first allocated address.
+    AllocEngine::ClientContext6 ctx;
+    subnet_->setDdnsConflictResolutionMode("no-check-with-dhcid");
+    subnet_->setDdnsTtlPercent(Optional<double>(0.10));
+    ctx.subnet_ = subnet_;
+    ctx.fwd_dns_update_ = ctx.rev_dns_update_ = true;
+
     // Create an IA.
-    addIA(1234, IOAddress("2001:db8:1::1"), answer);
+    addIA(1234, IOAddress("2001:db8:1::1"), answer, ctx);
 
     // Use domain name in upper case. It should be converted to lower-case
     // before DHCID is calculated. So, we should get the same result as if
@@ -2164,12 +2185,6 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsTtlPercent) {
                                                  Option6ClientFqdn::FULL);
     answer->addOption(fqdn);
 
-    // Create NameChangeRequest for the first allocated address.
-    AllocEngine::ClientContext6 ctx;
-    subnet_->setDdnsConflictResolutionMode("no-check-with-dhcid");
-    subnet_->setDdnsTtlPercent(Optional<double>(0.10));
-    ctx.subnet_ = subnet_;
-    ctx.fwd_dns_update_ = ctx.rev_dns_update_ = true;
     ASSERT_NO_THROW(srv_->createNameChangeRequests(answer, ctx));
     ASSERT_EQ(1, d2_mgr_.getQueueSize());
 

@@ -1,3 +1,9 @@
+2303.	[bug]		tmark
+	Modified both kea-dhcp4 and kea-dhcp6 to avoid
+	generating DDNS update requests when leases are
+	being reused due to lease caching.
+	(Gitlab #3257)
+	
 Kea 2.7.4 (development) released on October 30, 2024
 
 2302.	[func]		tmark

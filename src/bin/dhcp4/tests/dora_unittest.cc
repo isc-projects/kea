@@ -633,6 +633,11 @@ const char* DORA_CONFIGS[] = {
         "interfaces-config": {
             "interfaces": [ "*" ]
         },
+        "dhcp-ddns": {
+            "enable-updates": true
+        },
+        "ddns-send-updates": true,
+        "ddns-update-on-renew": true,
         "subnet4": [
             {
                 "id": 1,
@@ -3049,9 +3054,17 @@ DORATest::leaseCaching() {
     // Configure a DHCP client.
     Dhcp4Client client;
     client.includeClientId("11:22");
-
+    // Include the Client FQDN option.
+    ASSERT_NO_THROW(client.includeFQDN((Option4ClientFqdn::FLAG_S
+                                       | Option4ClientFqdn::FLAG_E),
+                                       "first.example.com.",
+                                       Option4ClientFqdn::FULL));
     // Configure a DHCP server.
     configure(DORA_CONFIGS[18], *client.getServer());
+
+    ASSERT_NO_THROW(client.getServer()->startD2());
+    auto& d2_mgr = CfgMgr::instance().getD2ClientMgr();
+    ASSERT_EQ(0, d2_mgr.getQueueSize());
 
     // Obtain a lease from the server using the 4-way exchange.
     ASSERT_NO_THROW(client.doDORA());
@@ -3077,6 +3090,12 @@ DORATest::leaseCaching() {
 
     // There should only be the default statistic point in the other subnet.
     checkStat("subnet[2].v4-lease-reuses", 1, 0);
+
+    // There should be a single NCR.
+    ASSERT_EQ(1, d2_mgr.getQueueSize());
+    // Clear the NCR queue.
+    ASSERT_NO_THROW(d2_mgr.runReadyIO());
+    ASSERT_EQ(0, d2_mgr.getQueueSize());
 
     // Assume the client enters init-reboot and does a request.
     client.setState(Dhcp4Client::INIT_REBOOT);
@@ -3104,6 +3123,9 @@ DORATest::leaseCaching() {
     // Statistics for the other subnet should not be affected.
     checkStat("subnet[2].v4-lease-reuses", 1, 0);
 
+    // There should be no NCRs queued.
+    ASSERT_EQ(0, d2_mgr.getQueueSize());
+
     // Let's say the client suddenly decides to do a full DORA.
     ASSERT_NO_THROW(client.doDORA());
 
@@ -3129,6 +3151,9 @@ DORATest::leaseCaching() {
     // Statistics for the other subnet should not be affected.
     checkStat("subnet[2].v4-lease-reuses", 1, 0);
 
+    // There should be no NCRs queued.
+    ASSERT_EQ(0, d2_mgr.getQueueSize());
+
     // Try to request a different address than the client has. The server
     // should respond with DHCPNAK.
     client.config_.lease_.addr_ = IOAddress("10.0.0.30");
@@ -3153,6 +3178,9 @@ DORATest::leaseCaching() {
 
     // Statistics for the other subnet should certainly not be affected.
     checkStat("subnet[2].v4-lease-reuses", 1, 0);
+
+    // There should be no NCRs queued.
+    ASSERT_EQ(0, d2_mgr.getQueueSize());
 }
 
 TEST_F(DORATest, leaseCaching) {

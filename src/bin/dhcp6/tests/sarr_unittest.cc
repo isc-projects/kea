@@ -313,6 +313,11 @@ const char* CONFIGS[] = {
         "interfaces-config": {
             "interfaces": [ "*" ]
         },
+        "dhcp-ddns": {
+            "enable-updates": true
+        },
+        "ddns-send-updates": true,
+        "ddns-update-on-renew": true,
         "subnet6": [
             {
                 "id": 1,
@@ -1367,6 +1372,16 @@ SARRTest::leaseCaching() {
     ASSERT_NO_THROW(client.requestAddress(1234, asiolink::IOAddress("2001:db8::10")));
     ASSERT_NO_THROW(client.requestPrefix(5678, 32, asiolink::IOAddress("2001:db8:1::")));
 
+    // Include FQDN to trigger generation of name change requests.
+    ASSERT_NO_THROW(client.useFQDN(Option6ClientFqdn::FLAG_S,
+                                   "client-name.example.org",
+                                   Option6ClientFqdn::FULL));
+
+    // Start D2 client mgr and verify the NCR queue is empty.
+    ASSERT_NO_THROW(client.getServer()->startD2());
+    auto& d2_mgr = CfgMgr::instance().getD2ClientMgr();
+    ASSERT_EQ(0, d2_mgr.getQueueSize());
+
     // Perform 4-way exchange.
     ASSERT_NO_THROW(client.doSARR());
 
@@ -1393,6 +1408,12 @@ SARRTest::leaseCaching() {
     checkStat("subnet[1].v6-ia-pd-lease-reuses", 1, 0);
     checkStat("subnet[2].v6-ia-pd-lease-reuses", 1, 0);
 
+    // There should be a single NCR.
+    ASSERT_EQ(1, d2_mgr.getQueueSize());
+    // Clear the NCR queue.
+    ASSERT_NO_THROW(d2_mgr.runReadyIO());
+    ASSERT_EQ(0, d2_mgr.getQueueSize());
+
     // Request the same prefix with a different length. The server should
     // return an existing lease.
     client.clearRequestedIAs();
@@ -1415,6 +1436,9 @@ SARRTest::leaseCaching() {
     checkStat("subnet[1].v6-ia-pd-lease-reuses", 2, 1);
     checkStat("subnet[2].v6-ia-pd-lease-reuses", 1, 0);
 
+    // There should be no NCRs queued.
+    ASSERT_EQ(0, d2_mgr.getQueueSize());
+
     // Try to request another prefix. The client should still get the existing
     // lease.
     client.clearRequestedIAs();
@@ -1436,6 +1460,9 @@ SARRTest::leaseCaching() {
     checkStat("v6-ia-pd-lease-reuses", 3, 2);
     checkStat("subnet[1].v6-ia-pd-lease-reuses", 3, 2);
     checkStat("subnet[2].v6-ia-pd-lease-reuses", 1, 0);
+
+    // There should be no NCRs queued.
+    ASSERT_EQ(0, d2_mgr.getQueueSize());
 }
 
 TEST_F(SARRTest, leaseCaching) {

@@ -224,7 +224,7 @@ AllocEngine::ClientContext6::ClientContext6(const ConstSubnet6Ptr& subnet,
 
 AllocEngine::ClientContext6::IAContext::IAContext()
     : iaid_(0), type_(Lease::TYPE_NA), hints_(), old_leases_(),
-      changed_leases_(), new_resources_(), ia_rsp_() {
+      changed_leases_(),reused_leases_(), new_resources_(), ia_rsp_() {
 }
 
 void
@@ -2371,6 +2371,10 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
                 lease->pool_id_ = pool->getID();
             }
             LeaseMgrFactory::instance().updateLease6(lease);
+        } else {
+           // Server looks at changed_leases_ (i.e. old_data) when deciding
+           // on DNS updates etc.
+           old_data->reuseable_valid_lft_ = lease->reuseable_valid_lft_;
         }
 
         if (update_stats) {
@@ -2465,9 +2469,13 @@ AllocEngine::updateLeaseData(ClientContext6& ctx, const Lease6Collection& leases
             if (!fqdn_changed) {
                 setLeaseReusable(lease, current_preferred_lft, ctx);
             }
+
             if (lease->reuseable_valid_lft_ == 0) {
                 ctx.currentIA().changed_leases_.push_back(lease_it);
                 LeaseMgrFactory::instance().updateLease6(lease);
+            } else {
+                // Server needs to know about resused leases to avoid DNS updates.
+                ctx.currentIA().reused_leases_.push_back(lease_it);
             }
 
             if (update_stats) {

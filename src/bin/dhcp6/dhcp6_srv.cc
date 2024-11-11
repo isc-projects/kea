@@ -2439,13 +2439,17 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
     // Compute DHCID from Client Identifier and FQDN.
     isc::dhcp_ddns::D2Dhcid dhcid(*duid, buf_vec);
 
-    // Get all IAs from the answer. For each IA, holding an address we will
-    // create a corresponding NameChangeRequest.
-    for (auto const& answer_ia : answer->getOptions(D6O_IA_NA)) {
+    // Iterate over the IAContexts (there should be one per client IA processed).
+    // For the first address in each IA_NA, create the appropriate NCR(s).
+    for (auto& ia_ctx : ctx.getIAContexts()) {
+        if ((ia_ctx.type_ != Lease::TYPE_NA) || !ia_ctx.ia_rsp_) {
+            continue;
+        }
+
         /// @todo IA_NA may contain multiple addresses. We should process
-        /// each address individually. Currently we get only one.
-        Option6IAAddrPtr iaaddr = boost::static_pointer_cast<
-            Option6IAAddr>(answer_ia.second->getOption(D6O_IAADDR));
+        /// each address individually. Currently we only process the first one.
+        Option6IAAddrPtr iaaddr = boost::static_pointer_cast
+                                  <Option6IAAddr>(ia_ctx.ia_rsp_->getOption(D6O_IAADDR));
 
         // We need an address to create a name-to-address mapping.
         // If address is missing for any reason, go to the next IA.
@@ -2453,19 +2457,33 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
             continue;
         }
 
+        bool extended_only = false;
+        // If the lease is being reused (i.e. lease caching in effect) skip it.
+        IOAddress ia_address = iaaddr->getAddress();
+        for (auto const& l : ia_ctx.reused_leases_) {
+            if (l->addr_ == ia_address) {
+                extended_only = true;
+                break;
+            }
+        }
+
+        if (extended_only) {
+            continue;
+        }
+
         // If the lease for iaaddr is in the list of changed leases, we need
         // to determine if the changes included changes to the FQDN. If so
         // then we may need to do a CHG_REMOVE.
-        bool extended_only = false;
-        for (auto const& l : ctx.currentIA().changed_leases_) {
+        for (auto const& l : ia_ctx.changed_leases_) {
 
-            if (l->addr_ == iaaddr->getAddress()) {
+            if (l->addr_ == ia_address) {
                 // The address is the same so this must be renewal. If we're not
                 // always updating on renew, then we only renew if DNS info has
                 // changed.
-                if (!ctx.getDdnsParams()->getUpdateOnRenew() &&
+                if (l->reuseable_valid_lft_ ||
+                    (!ctx.getDdnsParams()->getUpdateOnRenew() &&
                     (l->hostname_ == opt_fqdn->getDomainName() &&
-                     l->fqdn_fwd_ == do_fwd && l->fqdn_rev_ == do_rev)) {
+                     l->fqdn_fwd_ == do_fwd && l->fqdn_rev_ == do_rev))) {
                     extended_only = true;
                 } else {
                     // Queue a CHG_REMOVE of the old data.
@@ -2630,6 +2648,7 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query,
     // Do not use OptionDefinition to create option's instance so
     // as we can initialize IAID using a constructor.
     Option6IAPtr ia_rsp(new Option6IA(D6O_IA_NA, ia->getIAID()));
+    ctx.currentIA().ia_rsp_ = ia_rsp;
 
     if (lease) {
         // We have a lease! Let's wrap its content into IA_NA option
@@ -2648,6 +2667,8 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query,
         } else {
             lease->valid_lft_ = lease->reuseable_valid_lft_;
             lease->preferred_lft_ = lease->reuseable_preferred_lft_;
+            std::cout << __LINE__ << " flagged as resuseable: " << lease->addr_.toText() << std::endl;
+            ctx.currentIA().reused_leases_.push_back(lease);
             LOG_INFO(lease6_logger, DHCP6_LEASE_REUSE)
                 .arg(query->getLabel())
                 .arg(lease->addr_.toText())
@@ -2751,6 +2772,7 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query,
         ctx.currentIA().addHint(hint, 0);
     }
     ctx.currentIA().type_ = Lease::TYPE_PD;
+    ctx.currentIA().ia_rsp_ = ia_rsp;
 
     // Use allocation engine to pick a lease for this client. Allocation engine
     // will try to honor the hint, but it is just a hint - some other address

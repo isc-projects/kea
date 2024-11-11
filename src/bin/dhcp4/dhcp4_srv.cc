@@ -2893,7 +2893,8 @@ Dhcpv4Srv::createNameChangeRequests(const Lease4Ptr& lease,
         return;
     }
 
-    if (!old_lease || ddns_params.getUpdateOnRenew() || !lease->hasIdenticalFqdn(*old_lease)) {
+    if ((!lease->reuseable_valid_lft_) &&
+        (!old_lease || ddns_params.getUpdateOnRenew() || !lease->hasIdenticalFqdn(*old_lease))) {
         if (old_lease) {
             // Queue's up a remove of the old lease's DNS (if needed)
             queueNCR(CHG_REMOVE, old_lease);

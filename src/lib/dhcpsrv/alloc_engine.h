@@ -322,6 +322,9 @@ public:
             /// FQDN has changed.
             Lease6Collection changed_leases_;
 
+            /// @brief Set of leases marked for reuse by lease caching
+            Lease6Collection reused_leases_;
+
             /// @brief Holds addresses and prefixes allocated for this IA.
             ///
             /// This collection is used to update at most once new leases.
@@ -422,6 +425,10 @@ public:
                 createIAContext();
             }
             return (ias_.back());
+        }
+
+        std::vector<IAContext>& getIAContexts() {
+            return (ias_);
         }
 
         /// @brief Creates new IA context.
