@@ -10,7 +10,6 @@
 #include <http/header_context.h>
 #include <boost/shared_ptr.hpp>
 #include <string>
-#include <vector>
 
 namespace isc {
 namespace http {
@@ -30,7 +29,7 @@ struct HttpResponseContext {
     /// @brief HTTP status phrase.
     std::string phrase_;
     /// @brief Collection of HTTP headers.
-    std::vector<HttpHeaderContext> headers_;
+    HttpHeaderContexts headers_;
     /// @brief HTTP request body.
     std::string body_;
 };

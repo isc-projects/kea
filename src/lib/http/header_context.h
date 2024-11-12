@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <boost/lexical_cast.hpp>
 #include <cstdint>
 #include <string>
+#include <vector>
 
 namespace isc {
 namespace http {
@@ -42,6 +43,9 @@ struct HttpHeaderContext {
         : name_(name), value_(boost::lexical_cast<std::string>(value)) {
     }
 };
+
+/// @brief Collection of HTTP header contexts.
+typedef std::vector<HttpHeaderContext> HttpHeaderContexts;
 
 } // namespace http
 } // namespace isc
