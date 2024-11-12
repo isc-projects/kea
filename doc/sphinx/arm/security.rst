@@ -36,6 +36,13 @@ protection possible:
    the two security mechanisms, and therefore no proof that the TLS client and server
    are the same as the HTTP authentication client and server.
 
+.. note::
+
+   On reconfiguration a new listener HTTP socket is opened only when the
+   address or the port was changed so to apply a TLS setup change, e.g.
+   a certificate update, Kea must be restarted (i.e. stopped and started
+   vs reloaded).
+
 .. _tls_config:
 
 Building Kea with TLS/HTTPS Support
