@@ -1,3 +1,11 @@
+2304.	[func]		tmark
+	Both kea-dhcp4 and kea-dhcp6 will now emit a warning
+	log message when classes are configured with both
+	``only-in-additional-list`` true and parameter(s)
+	that normally impact lease lifetimes (e.g. 'valid-
+	lifetime', 'preferred-lifetime`).
+	(Gitlab #2736)
+
 2303.	[bug]		tmark
 	Modified both kea-dhcp4 and kea-dhcp6 to avoid
 	generating DDNS update requests when leases are

@@ -3484,6 +3484,12 @@ a test expression are unconditionally added, i.e. they are considered
 to always be evaluated to ``true``.
 
 .. note::
+   Because additional evaluation occurs after lease assignment, parameters
+   that would otherwise impact lease life times (e.g. ``valid-lifetime``,
+   ``offer-lifetime``) will have no effect when specified in a class that
+   also sets ``only-in-additional-list`` true.
+
+.. note::
 
    As of Kea version 2.7.4, ``only-if-required`` and ``require-client-classes``
    have been renamed to ``only-in-additional-list`` and ``evaluate-additional-classes``
@@ -8021,7 +8027,7 @@ The following standards are currently supported in Kea:
    Client Configuration (CCC) Option*, `RFC 3594
    <https://tools.ietf.org/html/rfc3594>`__: The Security Ticket Control
    sub-option is supported.
-   
+
 -  *Key Distribution Center (KDC) Server Address Sub-option for the
    Dynamic Host Configuration Protocol (DHCP) CableLabs Client
    Configuration (CCC) Option*, `RFC 3634

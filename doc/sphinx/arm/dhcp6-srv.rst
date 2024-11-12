@@ -3220,6 +3220,12 @@ a test expression are unconditionally added, i.e. they are considered
 to always be evaluated to ``true``.
 
 .. note::
+   Because additional evaluation occurs after lease assignment, parameters
+   that would otherwise impact lease life times (e.g. ``valid-lifetime``,
+   ``preferred-lifetime``) will have no effect when specified in a class that
+   also sets ``only-in-additional-list`` true.
+
+.. note::
 
    As of Kea version 2.7.4, ``only-if-required`` and ``require-client-classes``
    have been renamed to ``only-in-additional-list`` and ``evaluate-additional-classes``

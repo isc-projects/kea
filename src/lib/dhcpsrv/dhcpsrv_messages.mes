@@ -957,3 +957,12 @@ included in the message.
 % DHCPSRV_UNKNOWN_DB unknown database type: %1
 The database access string specified a database type (given in the
 message) that is unknown to the software. This is a configuration error.
+
+% DHCPSRV_CLASS_WITH_ADDTIONAL_AND_LIFETIMES class: %1 has 'only-in-additional-list' true while specifying one or more lease life time values. Life time values will be ignored.
+This warning is emitted whenever a class is configured with
+'only-in-addition-list' true as well as specifying one or
+more lease life time parameters (e.g. 'valid-lifetime',
+'preferred-lifetime', or 'offer-lifetime'). Additional list classes
+are evaluated after lease assignment, thus parameters that would otherwise
+impact lease life times will have no affect.
+

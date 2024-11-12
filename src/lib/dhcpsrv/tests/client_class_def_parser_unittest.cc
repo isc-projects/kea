@@ -16,6 +16,7 @@
 #include <asiolink/io_address.h>
 #include <eval/evaluate.h>
 #include <testutils/gtest_utils.h>
+#include <testutils/log_utils.h>
 #include <gtest/gtest.h>
 #include <sstream>
 #include <stdint.h>
@@ -28,6 +29,7 @@ using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
 using namespace isc::util;
+using namespace isc::dhcp::test;
 
 namespace {
 
@@ -101,7 +103,8 @@ protected:
 };
 
 /// @brief Test fixture class for @c ClientClassDefParser.
-class ClientClassDefParserTest : public ::testing::Test {
+//class ClientClassDefParserTest : public ::testing::Test {
+class ClientClassDefParserTest : public LogContentTest {
 protected:
 
     /// @brief Convenience method for parsing a configuration
@@ -2190,6 +2193,154 @@ TEST_F(ClientClassDefParserTest, deprecatedOnlyIfRequired) {
                      DhcpConfigError,
                      "cannot specify both 'only-if-required' and "
                      "'only-in-additional-list'. Use only the latter.");
+}
+
+// Verifies that the parser detects use of life time parameters
+// in classes that also set `only-in-additinal-list' true.
+TEST_F(ClientClassDefParserTest, addtionalWithLifetimes4) {
+    CfgMgr::instance().setFamily(AF_INET);
+    boost::scoped_ptr<ClientClassDef> cclass;
+
+    struct Scenario {
+        size_t line_no_;
+        std::string cfg_;
+        bool should_log_;
+    };
+
+    std::list<Scenario> scenarios = {
+        {
+            __LINE__,
+            R"({
+                "name": "boo",
+                "only-in-additional-list": true
+            })",
+        },{
+            __LINE__,
+            R"({
+                "name": "boo",
+                "only-in-additional-list": true,
+                "valid-lifetime": 100
+            })",
+            true
+        },{
+            __LINE__,
+            R"({
+                "name": "boo",
+                "only-in-additional-list": true,
+                "offer-lifetime": 100
+            })",
+            true
+        },{
+            __LINE__,
+            R"({
+                "name": "boo",
+                "only-in-additional-list": false,
+                "valid-lifetime": 100
+            })",
+            false
+        },{
+            __LINE__,
+            R"({
+                "name": "boo",
+                "only-in-additional-list": false,
+                "offer-lifetime": 100
+            })",
+            false
+        }
+    };
+
+    size_t exp_log_count = 0;
+    for (auto& scenario : scenarios) {
+        std::stringstream oss;
+        oss << "scenario at: " << scenario.line_no_;
+        SCOPED_TRACE(oss.str());
+        // Parse the class definition.
+        auto class_def = parseClientClassDef(scenario.cfg_, AF_INET);
+        ASSERT_TRUE(class_def);
+
+        // If we expect the warning log to be emitted the occurrences
+        // in the log file should bump by 1.
+        if (scenario.should_log_) {
+            // Veriy we emitted another instance of the log message.
+            ++exp_log_count;
+            ASSERT_EQ(countFile("DHCPSRV_CLASS_WITH_ADDTIONAL_AND_LIFETIMES"),
+                      exp_log_count);
+        }
+    }
+}
+
+// Verifies that the parser detects use of life time parameters
+// in classes that also set `only-in-additinal-list' true.
+TEST_F(ClientClassDefParserTest, addtionalWithLifetimes6) {
+    CfgMgr::instance().setFamily(AF_INET6);
+    boost::scoped_ptr<ClientClassDef> cclass;
+
+    struct Scenario {
+        size_t line_no_;
+        std::string cfg_;
+        bool should_log_;
+    };
+
+    std::list<Scenario> scenarios = {
+        {
+            __LINE__,
+            R"({
+                "name": "boo",
+                "only-in-additional-list": true
+            })",
+        },{
+            __LINE__,
+            R"({
+                "name": "boo",
+                "only-in-additional-list": true,
+                "valid-lifetime": 100
+            })",
+            true
+        },{
+            __LINE__,
+            R"({
+                "name": "boo",
+                "only-in-additional-list": true,
+                "preferred-lifetime": 100
+            })",
+            true
+        },{
+            __LINE__,
+            R"({
+                "name": "boo",
+                "only-in-additional-list": false,
+                "valid-lifetime": 100
+            })",
+            false
+        },{
+            __LINE__,
+            R"({
+                "name": "boo",
+                "only-in-additional-list": false,
+                "preferred-lifetime": 100
+            })",
+            false
+        }
+    };
+
+    size_t exp_log_count = 0;
+    for (auto& scenario : scenarios) {
+        std::stringstream oss;
+        oss << "scenario at: " << scenario.line_no_;
+        SCOPED_TRACE(oss.str());
+        // Parse the class definition.
+        auto class_def = parseClientClassDef(scenario.cfg_, AF_INET6);
+        ASSERT_TRUE(class_def);
+
+        // If we expect the warning log to be emitted the occurrences
+        // in the log file should bump by 1.
+        if (scenario.should_log_) {
+            // Veriy we emitted another instance of the log message.
+            ++exp_log_count;
+            ASSERT_EQ(countFile("DHCPSRV_CLASS_WITH_ADDTIONAL_AND_LIFETIMES"),
+                      exp_log_count);
+        }
+    }
 }
 
 } // end of anonymous namespace
