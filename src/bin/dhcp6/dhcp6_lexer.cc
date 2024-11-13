@@ -5359,10 +5359,10 @@ YY_RULE_SETUP
 #line 2182 "dhcp6_lexer.ll"
 {
     switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::CONTROL_SOCKET:
-        return isc::dhcp::Dhcp4Parser::make_HTTP_HEADERS(driver.loc_);
+    case isc::dhcp::Parser6Context::CONTROL_SOCKET:
+        return isc::dhcp::Dhcp6Parser::make_HTTP_HEADERS(driver.loc_);
     default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("http-headers", driver.loc_);
+        return isc::dhcp::Dhcp6Parser::make_STRING("http-headers", driver.loc_);
     }
 }
 	YY_BREAK

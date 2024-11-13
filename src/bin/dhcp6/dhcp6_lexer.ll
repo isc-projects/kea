@@ -2180,10 +2180,10 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 
 \"http-headers\" {
     switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::CONTROL_SOCKET:
-        return isc::dhcp::Dhcp4Parser::make_HTTP_HEADERS(driver.loc_);
+    case isc::dhcp::Parser6Context::CONTROL_SOCKET:
+        return isc::dhcp::Dhcp6Parser::make_HTTP_HEADERS(driver.loc_);
     default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("http-headers", driver.loc_);
+        return isc::dhcp::Dhcp6Parser::make_STRING("http-headers", driver.loc_);
     }
 }
 
