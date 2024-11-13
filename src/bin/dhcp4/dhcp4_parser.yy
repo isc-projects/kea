@@ -2663,12 +2663,16 @@ http_headers: HTTP_HEADERS {
     ctx.leave();
 };
 
-http_header_list: http_header
-                | not_empty_http_header_list COMMA http_header
-                | not_empty_http_header_list COMMA {
-                    ctx.warnAboutExtraCommas(@2);
-                    }
+http_header_list: %empty
+                | not_empty_http_header_list
                 ;
+
+not_empty_http_header_list: http_header
+                          | not_empty_http_header_list COMMA http_header
+                          | not_empty_http_header_list COMMA {
+                              ctx.warnAboutExtraCommas(@2);
+                              }
+                          ;
 
 http_header: LCURLY_BRACKET {
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
