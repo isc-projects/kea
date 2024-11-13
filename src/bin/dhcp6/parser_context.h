@@ -307,6 +307,9 @@ public:
         /// structures.
         CLIENTS,
 
+        ///< Used while parsing Dhcp6/control-socket/http-headers structures.
+        HTTP_HEADERS,
+
         /// Used while parsing Dhcp6/dhcp-queue-control structures.
         DHCP_QUEUE_CONTROL,
 

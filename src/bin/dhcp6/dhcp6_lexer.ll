@@ -1166,6 +1166,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser6Context::CLIENT_CLASSES:
     case isc::dhcp::Parser6Context::LOGGERS:
     case isc::dhcp::Parser6Context::SHARED_NETWORK:
+    case isc::dhcp::Parser6Context::HTTP_HEADERS:
     case isc::dhcp::Parser6Context::CONFIG_DATABASE:
         return isc::dhcp::Dhcp6Parser::make_NAME(driver.loc_);
     default:
@@ -1298,6 +1299,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser6Context::CONTROL_SOCKET:
     case isc::dhcp::Parser6Context::AUTHENTICATION:
     case isc::dhcp::Parser6Context::CLIENTS:
+    case isc::dhcp::Parser6Context::HTTP_HEADERS:
     case isc::dhcp::Parser6Context::DHCP_QUEUE_CONTROL:
     case isc::dhcp::Parser6Context::DHCP_MULTI_THREADING:
     case isc::dhcp::Parser6Context::LOGGERS:
@@ -1324,6 +1326,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser6Context::CONTROL_SOCKET:
     case isc::dhcp::Parser6Context::AUTHENTICATION:
     case isc::dhcp::Parser6Context::CLIENTS:
+    case isc::dhcp::Parser6Context::HTTP_HEADERS:
     case isc::dhcp::Parser6Context::DHCP_QUEUE_CONTROL:
     case isc::dhcp::Parser6Context::DHCP_MULTI_THREADING:
     case isc::dhcp::Parser6Context::LOGGERS:
@@ -2172,6 +2175,15 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
         return isc::dhcp::Dhcp6Parser::make_CERT_REQUIRED(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("cert-required", driver.loc_);
+    }
+}
+
+\"http-headers\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::CONTROL_SOCKET:
+        return isc::dhcp::Dhcp4Parser::make_HTTP_HEADERS(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("http-headers", driver.loc_);
     }
 }
 

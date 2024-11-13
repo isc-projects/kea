@@ -162,6 +162,8 @@ ParserContext::contextName()
         return ("toplevel");
     case AGENT:
         return ("Control-agent");
+    case HTTP_HEADERS:
+        return ("http-headers");
     case AUTHENTICATION:
         return ("authentication");
     case AUTH_TYPE:

@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -202,9 +202,19 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"http-headers\" {
+    switch(driver.ctx_) {
+    case ParserContext::AGENT:
+        return AgentParser::make_HTTP_HEADERS(driver.loc_);
+    default:
+        return AgentParser::make_STRING("http-headers", driver.loc_);
+    }
+}
+
 \"user-context\" {
     switch(driver.ctx_) {
     case ParserContext::AGENT:
+    case ParserContext::HTTP_HEADERS:
     case ParserContext::AUTHENTICATION:
     case ParserContext::CLIENTS:
     case ParserContext::SERVER:
@@ -218,6 +228,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 \"comment\" {
     switch(driver.ctx_) {
     case ParserContext::AGENT:
+    case ParserContext::HTTP_HEADERS:
     case ParserContext::AUTHENTICATION:
     case ParserContext::CLIENTS:
     case ParserContext::SERVER:
@@ -225,6 +236,25 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
         return AgentParser::make_COMMENT(driver.loc_);
     default:
         return AgentParser::make_STRING("comment", driver.loc_);
+    }
+}
+
+\"name\" {
+    switch(driver.ctx_) {
+    case ParserContext::LOGGERS:
+    case ParserContext::HTTP_HEADERS:
+        return AgentParser::make_NAME(driver.loc_);
+    default:
+        return AgentParser::make_STRING("name", driver.loc_);
+    }
+}
+
+\"value\" {
+    switch(driver.ctx_) {
+    case ParserContext::HTTP_HEADERS:
+        return AgentParser::make_VALUE(driver.loc_);
+    default:
+        return AgentParser::make_STRING("value", driver.loc_);
     }
 }
 
@@ -450,15 +480,6 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
         return AgentParser::make_LOGGERS(driver.loc_);
     default:
         return AgentParser::make_STRING("loggers", driver.loc_);
-    }
-}
-
-\"name\" {
-    switch(driver.ctx_) {
-    case ParserContext::LOGGERS:
-        return AgentParser::make_NAME(driver.loc_);
-    default:
-        return AgentParser::make_STRING("name", driver.loc_);
     }
 }
 

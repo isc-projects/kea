@@ -191,6 +191,8 @@ Parser6Context::contextName() {
         return ("auth-type");
     case CLIENTS:
         return ("clients");
+    case HTTP_HEADERS:
+        return ("http-headers");
     case DHCP_QUEUE_CONTROL:
         return ("dhcp-queue-control");
     case DHCP_MULTI_THREADING:

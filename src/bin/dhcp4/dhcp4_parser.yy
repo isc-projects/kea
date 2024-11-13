@@ -236,6 +236,8 @@ using namespace std;
   USER_FILE "user-file"
   PASSWORD_FILE "password-file"
   CERT_REQUIRED "cert-required"
+  HTTP_HEADERS "http-headers"
+  VALUE "value"
 
   DHCP_QUEUE_CONTROL "dhcp-queue-control"
   ENABLE_QUEUE "enable-queue"
@@ -2599,6 +2601,7 @@ control_socket_param: control_socket_type
                     | cert_file
                     | key_file
                     | cert_required
+                    | http_headers
                     | user_context
                     | comment
                     | unknown_map_entry
@@ -2648,6 +2651,54 @@ cert_required: CERT_REQUIRED COLON BOOLEAN {
     ctx.unique("cert-required", ctx.loc2pos(@1));
     ElementPtr req(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("cert-required", req);
+};
+
+http_headers: HTTP_HEADERS {
+    ctx.unique("http-headers", ctx.loc2pos(@1));
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("http-headers", l);
+    ctx.enter(ctx.HTTP_HEADERS);
+} COLON LSQUARE_BRACKET http_header_list RSQUARE_BRACKET {
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+http_header_list: http_header
+                | not_empty_http_header_list COMMA http_header
+                | not_empty_http_header_list COMMA {
+                    ctx.warnAboutExtraCommas(@2);
+                    }
+                ;
+
+http_header: LCURLY_BRACKET {
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->add(m);
+    ctx.stack_.push_back(m);
+} http_header_params RCURLY_BRACKET {
+    ctx.stack_.pop_back();
+};
+
+http_header_params: http_header_param
+                  | http_header_params COMMA http_header_param
+                  | http_header_params COMMA {
+                      ctx.warnAboutExtraCommas(@2);
+                      }
+                  ;
+
+http_header_param: name
+                 | value
+                 | user_context
+                 | comment
+                 | unknown_map_entry
+                 ;
+
+value: VALUE {
+    ctx.unique("value", ctx.loc2pos(@1));
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr value(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("value", value);
+    ctx.leave();
 };
 
 // --- authentication ---------------------------------------------
