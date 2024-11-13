@@ -23,13 +23,14 @@ namespace isc {
 namespace agent {
 
 CtrlAgentCfgContext::CtrlAgentCfgContext()
-    : http_host_(""), http_port_(0),
+    : http_host_(""), http_port_(0), http_headers_(),
       trust_anchor_(""), cert_file_(""), key_file_(""), cert_required_(true) {
 }
 
 CtrlAgentCfgContext::CtrlAgentCfgContext(const CtrlAgentCfgContext& orig)
     : ConfigBase(), ctrl_sockets_(orig.ctrl_sockets_),
       http_host_(orig.http_host_), http_port_(orig.http_port_),
+      http_headers_(orig.http_headers_),
       trust_anchor_(orig.trust_anchor_), cert_file_(orig.cert_file_),
       key_file_(orig.key_file_), cert_required_(orig.cert_required_),
       hooks_config_(orig.hooks_config_), auth_config_(orig.auth_config_) {
@@ -186,6 +187,10 @@ CtrlAgentCfgContext::toElement() const {
     ca->set("http-host", Element::create(http_host_));
     // Set http-port
     ca->set("http-port", Element::create(static_cast<int64_t>(http_port_)));
+    // Set http-headers
+    if (!http_headers_.empty()) {
+        ca->set("http-headers", toElement(http_headers_));
+    }
     // Set TLS setup when enabled
     if (!trust_anchor_.empty()) {
         ca->set("trust-anchor", Element::create(trust_anchor_));
