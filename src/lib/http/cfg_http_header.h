@@ -56,7 +56,7 @@ void copyHttpHeaders(const CfgHttpHeaders& headers, const HTTP_MSG& message) {
 ///
 /// @param headers Config HTTP headers.
 /// @return A pointer to unparsed headers configuration.
-isc::data::ElementPtr toElement(const CfgHttpHeaders& headers);
+isc::data::ElementPtr CfgHttpHeaderstoElement(const CfgHttpHeaders& headers);
 
 /// @brief Parse config HTTP headers.
 ///

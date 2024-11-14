@@ -189,7 +189,7 @@ CtrlAgentCfgContext::toElement() const {
     ca->set("http-port", Element::create(static_cast<int64_t>(http_port_)));
     // Set http-headers
     if (!http_headers_.empty()) {
-        ca->set("http-headers", toElement(http_headers_));
+        ca->set("http-headers", CfgHttpHeaderstoElement(http_headers_));
     }
     // Set TLS setup when enabled
     if (!trust_anchor_.empty()) {

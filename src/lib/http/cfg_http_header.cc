@@ -25,7 +25,7 @@ CfgHttpHeader::toElement() const {
 }
 
 ElementPtr
-toElement(const CfgHttpHeaders& headers) {
+CfgHttpHeaderstoElement(const CfgHttpHeaders& headers) {
     ElementPtr list = Element::createList();
     for (auto const& header : headers) {
         list->add(header.toElement());
@@ -57,12 +57,12 @@ parseCfgHttpHeader(const ConstElementPtr& config) {
     SimpleParser::checkRequired(HTTP_HEADER_REQUIRED, config);
     string name = config->get("name")->stringValue();
     if (name.empty()) {
-        isc_throw(DhcpConfigError, "empty 'name' ("
+        isc_throw(DhcpConfigError, "empty 'name' parameter ("
                   << config->get("name")->getPosition() << ")");
     }
     string value = config->get("value")->stringValue();
     if (value.empty()) {
-        isc_throw(DhcpConfigError, "empty 'value' ("
+        isc_throw(DhcpConfigError, "empty 'value' parameter ("
                   << config->get("value")->getPosition() << ")");
     }
     CfgHttpHeader header(name, value);
