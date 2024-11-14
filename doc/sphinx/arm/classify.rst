@@ -137,7 +137,7 @@ The classification process is conducted in several steps:
     The ``lease4_select``, ``lease4_renew``, ``lease6_select``, ``lease6_renew``, and ``lease6_rebind``
     callouts are called here.
 
-12. Classes marked as "required" are evaluated in the order in which
+12. Classes marked as "additional" are evaluated in the order in which
     they are listed: first pools, then the subnet, and finally
     the shared network that assigned resources belong to.
 
@@ -1170,8 +1170,9 @@ Class Priority
 ==============
 
 Client classes in Kea follow the order in which they are specified in the
-configuration (vs. alphabetical order). Required classes follow the order in
-which they are required.
+configuration (vs. alphabetical order). Additional classes are ordered by 
+pool, subnet, and then shared-network and within each scope by the order in 
+which they appear in ``evaluate-additional-classes``.
 
 When determining which client-class information (comprised of
 options, lease lifetimes, or DHCPv4 field values) is part of the class
@@ -1188,7 +1189,13 @@ reservation.
 
 On the other hand, lease lifetimes and DHCPv4 field values defined at class
 scope override any values defined globally, in a subnet scope, or in a
-shared-network scope.
+shared-network scope.  
+
+.. note::
+   Because additional evaluation occurs after lease assignment, parameters
+   that would otherwise impact lease life times (e.g. ``valid-lifetime``,
+   ``offer-lifetime``) will have no effect when specified in a class that
+   also sets ``only-in-additional-list`` true.
 
 As an example, imagine that an incoming packet matches two classes.
 Class ``foo`` defines values for an NTP server (option 42 in DHCPv4) and
