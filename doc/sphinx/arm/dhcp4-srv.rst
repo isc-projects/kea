@@ -2200,10 +2200,15 @@ what values are accepted for them.
    |                 | Section                                               |
    |                 | 2 <https://tools.ietf.org/html/rfc2132#section-2>`__. |
    +-----------------+-------------------------------------------------------+
-   | tuple           | A length encoded as an 8-bit (16-bit                  |
-   |                 | for DHCPv6) unsigned integer                          |
-   |                 | followed by a string of this                          |
-   |                 | length.                                               |
+   | tuple           | A length field encoded as an 8-bit                    |
+   |                 | or 16-bit unsigned integer followed by                |
+   |                 | a string of this length. Typically, for DHCPv4,       |
+   |                 | the length is 8-bit, and for DHCPv6, it is 16-bit.    |
+   |                 | However, there might be exceptions to that rule.      |
+   |                 | E.g. for the DHCPv4 SZTP Redirect Option,             |
+   |                 | bootstrap-server-list is encoded as a list of         |
+   |                 | tuples where the URI-length in each tuple is          |
+   |                 | a 16-bit unsigned integer.                            |
    +-----------------+-------------------------------------------------------+
    | uint8           | An 8-bit unsigned integer with                        |
    |                 | allowed values 0 to 255.                              |
