@@ -52,6 +52,7 @@ TEST_F(HttpCommandConfigTest, default) {
     EXPECT_EQ("http", http_config_->getSocketType());
     EXPECT_EQ("127.0.0.1", http_config_->getSocketAddress().toText());
     EXPECT_EQ(8000, http_config_->getSocketPort());
+    EXPECT_TRUE(http_config_->getHttpHeaders().empty());
     EXPECT_FALSE(http_config_->getAuthConfig());
     EXPECT_EQ("", http_config_->getTrustAnchor());
     EXPECT_EQ("", http_config_->getCertFile());
@@ -215,6 +216,55 @@ TEST_F(HttpCommandConfigTest, errors) {
         EXPECT_THROW_MSG(http_config_.reset(new HttpCommandConfig(json)),
                          DhcpConfigError, s.msg);
     }
+}
+
+// This test verifies a HTTP control socket configuration with HTTP headers
+// can be parsed and unparsed.
+TEST_F(HttpCommandConfigTest, headers) {
+    // Configure with HTTP headers.
+    string config = R"(
+    {
+        "http-headers": [
+            {
+                "name": "Strict-Transport-Security",
+                "value": "max-age=31536000"
+            },
+            {
+                "name": "Foo",
+                "value": "bar"
+            }
+        ]
+    })";
+    ElementPtr json;
+    ASSERT_NO_THROW(json = Element::fromJSON(config));
+    ASSERT_NO_THROW(http_config_.reset(new HttpCommandConfig(json)));
+
+    // Verify HTTP headers.
+    auto headers = http_config_->getHttpHeaders();
+    ASSERT_EQ(2, headers.size());
+    EXPECT_EQ("Strict-Transport-Security", headers[0].name_);
+    EXPECT_EQ("max-age=31536000", headers[0].value_);
+    EXPECT_EQ("Foo", headers[1].name_);
+    EXPECT_EQ("bar", headers[1].value_);
+
+    // Check unparse.
+    string expected = R"(
+    {
+        "socket-type": "http",
+        "socket-address": "127.0.0.1",
+        "socket-port": 8000,
+        "http-headers": [
+            {
+                "name": "Strict-Transport-Security",
+                "value": "max-age=31536000"
+            },
+            {
+                "name": "Foo",
+                "value": "bar"
+            }
+        ]
+    })";
+    runToElementTest(expected, *http_config_);
 }
 
 // This test verifies a HTTP control socket configuration with authentication

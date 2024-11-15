@@ -2187,6 +2187,15 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"value\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::HTTP_HEADERS:
+        return isc::dhcp::Dhcp6Parser::make_VALUE(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("value", driver.loc_);
+    }
+}
+
 \"dhcp-queue-control\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:

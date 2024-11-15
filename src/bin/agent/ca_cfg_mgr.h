@@ -104,14 +104,14 @@ public:
     ///
     /// @param headers Collection of config HTTP headers.
     void setHttpHeaders(const isc::http::CfgHttpHeaders& headers) {
-	http_headers_ = headers;
+        http_headers_ = headers;
     }
 
     /// @brief Returns http-headers parameter
     ///
     /// @return Collection of config HTTP headers.
     const isc::http::CfgHttpHeaders& getHttpHeaders() const {
-	return (http_headers_);
+        return (http_headers_);
     }
 
     /// @brief Sets HTTP authentication configuration.

@@ -11,6 +11,7 @@
 #include <cc/cfg_to_element.h>
 #include <cc/user_context.h>
 #include <http/auth_config.h>
+#include <http/cfg_http_header.h>
 
 namespace isc {
 namespace config {
@@ -67,6 +68,20 @@ public:
     /// @param socket_port The new socket port.
     void setSocketPort(const uint16_t socket_port) {
         socket_port_ = socket_port;
+    }
+
+    /// @brief Returns http-headers configuration.
+    ///
+    /// @return Collection of config HTTP headers.
+    const isc::http::CfgHttpHeaders& getHttpHeaders() const {
+        return (http_headers_);
+    }
+
+    /// @brief Sets http-headers configuration.
+    ///
+    /// @param headers Collection of config HTTP headers.
+    void setHttpHeaders(const isc::http::CfgHttpHeaders& headers) {
+        http_headers_ = headers;
     }
 
     /// @brief Returns HTTP authentication configuration.
@@ -190,6 +205,9 @@ private:
 
     /// @brief Socket port.
     uint16_t socket_port_;
+
+    /// Config HTTP headers.
+    isc::http::CfgHttpHeaders http_headers_;
 
     /// @brief HTTP authentication configuration.
     isc::http::HttpAuthConfigPtr auth_config_;

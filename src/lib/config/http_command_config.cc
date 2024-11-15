@@ -30,7 +30,7 @@ string HttpCommandConfig::DEFAULT_AUTHENTICATION_REALM = "";
 
 HttpCommandConfig::HttpCommandConfig(ConstElementPtr config)
     : socket_type_("http"), socket_address_(DEFAULT_SOCKET_ADDRESS),
-      socket_port_(DEFAULT_SOCKET_PORT), auth_config_(),
+      socket_port_(DEFAULT_SOCKET_PORT), http_headers_(), auth_config_(),
       trust_anchor_(""), cert_file_(""), key_file_(""), cert_required_(true),
       emulate_agent_response_(true) {
     if (config->getType() != Element::map) {
@@ -92,6 +92,12 @@ HttpCommandConfig::HttpCommandConfig(ConstElementPtr config)
                       << socket_port->getPosition() << ")");
         }
         socket_port_ = static_cast<uint16_t>(value);
+    }
+
+    // Get HTTP headers.
+    ConstElementPtr headers = config->get("http-headers");
+    if (headers) {
+        http_headers_ = parseCfgHttpHeaders(headers);
     }
 
     // Get HTTP authentication.
@@ -212,6 +218,10 @@ HttpCommandConfig::toElement() const {
     result->set("socket-type", Element::create(socket_type_));
     // Set socket address.
     result->set("socket-address", Element::create(socket_address_.toText()));
+    // Set http-headers.
+    if (!http_headers_.empty()) {
+        result->set("http-headers", CfgHttpHeaderstoElement(http_headers_));
+    }
     // Set socket port.
     result->set("socket-port",
                 Element::create(static_cast<uint32_t>(socket_port_)));

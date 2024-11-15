@@ -165,8 +165,8 @@ AgentSimpleParser::parse(const CtrlAgentCfgContextPtr& ctx,
     // HTTP headers are fifth.
     ConstElementPtr headers_config = config->get("http-headers");
     if (headers_config) {
-	using namespace isc::http;
-	ctx->setHttpHeaders(parseCfgHttpHeaders(headers_config));
+        using namespace isc::http;
+        ctx->setHttpHeaders(parseCfgHttpHeaders(headers_config));
     }
 
     // User context can be done at anytime.
