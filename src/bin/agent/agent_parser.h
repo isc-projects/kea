@@ -674,87 +674,88 @@ namespace isc { namespace agent {
         S_http_header_param = 105,               // http_header_param
         S_name = 106,                            // name
         S_107_17 = 107,                          // $@17
-        S_108_18 = 108,                          // $@18
-        S_hooks_libraries = 109,                 // hooks_libraries
-        S_110_19 = 110,                          // $@19
-        S_hooks_libraries_list = 111,            // hooks_libraries_list
-        S_not_empty_hooks_libraries_list = 112,  // not_empty_hooks_libraries_list
-        S_hooks_library = 113,                   // hooks_library
-        S_114_20 = 114,                          // $@20
-        S_hooks_params = 115,                    // hooks_params
-        S_hooks_param = 116,                     // hooks_param
-        S_library = 117,                         // library
-        S_118_21 = 118,                          // $@21
-        S_parameters = 119,                      // parameters
-        S_120_22 = 120,                          // $@22
-        S_control_sockets = 121,                 // control_sockets
-        S_122_23 = 122,                          // $@23
-        S_control_sockets_params = 123,          // control_sockets_params
-        S_control_socket = 124,                  // control_socket
-        S_dhcp4_server_socket = 125,             // dhcp4_server_socket
-        S_126_24 = 126,                          // $@24
-        S_dhcp6_server_socket = 127,             // dhcp6_server_socket
-        S_128_25 = 128,                          // $@25
-        S_d2_server_socket = 129,                // d2_server_socket
-        S_130_26 = 130,                          // $@26
-        S_control_socket_params = 131,           // control_socket_params
-        S_control_socket_param = 132,            // control_socket_param
-        S_socket_name = 133,                     // socket_name
-        S_134_27 = 134,                          // $@27
-        S_socket_type = 135,                     // socket_type
-        S_136_28 = 136,                          // $@28
-        S_socket_type_value = 137,               // socket_type_value
-        S_authentication = 138,                  // authentication
-        S_139_29 = 139,                          // $@29
-        S_auth_params = 140,                     // auth_params
-        S_auth_param = 141,                      // auth_param
-        S_auth_type = 142,                       // auth_type
-        S_143_30 = 143,                          // $@30
-        S_auth_type_value = 144,                 // auth_type_value
-        S_realm = 145,                           // realm
-        S_146_31 = 146,                          // $@31
-        S_directory = 147,                       // directory
-        S_148_32 = 148,                          // $@32
-        S_clients = 149,                         // clients
-        S_150_33 = 150,                          // $@33
-        S_clients_list = 151,                    // clients_list
-        S_not_empty_clients_list = 152,          // not_empty_clients_list
-        S_basic_auth = 153,                      // basic_auth
-        S_154_34 = 154,                          // $@34
-        S_clients_params = 155,                  // clients_params
-        S_clients_param = 156,                   // clients_param
-        S_user = 157,                            // user
-        S_158_35 = 158,                          // $@35
-        S_user_file = 159,                       // user_file
-        S_160_36 = 160,                          // $@36
-        S_password = 161,                        // password
-        S_162_37 = 162,                          // $@37
-        S_password_file = 163,                   // password_file
-        S_164_38 = 164,                          // $@38
-        S_loggers = 165,                         // loggers
-        S_166_39 = 166,                          // $@39
-        S_loggers_entries = 167,                 // loggers_entries
-        S_logger_entry = 168,                    // logger_entry
-        S_169_40 = 169,                          // $@40
-        S_logger_params = 170,                   // logger_params
-        S_logger_param = 171,                    // logger_param
-        S_debuglevel = 172,                      // debuglevel
-        S_severity = 173,                        // severity
-        S_174_41 = 174,                          // $@41
-        S_output_options_list = 175,             // output_options_list
-        S_176_42 = 176,                          // $@42
-        S_output_options_list_content = 177,     // output_options_list_content
-        S_output_entry = 178,                    // output_entry
-        S_179_43 = 179,                          // $@43
-        S_output_params_list = 180,              // output_params_list
-        S_output_params = 181,                   // output_params
-        S_output = 182,                          // output
-        S_183_44 = 183,                          // $@44
-        S_flush = 184,                           // flush
-        S_maxsize = 185,                         // maxsize
-        S_maxver = 186,                          // maxver
-        S_pattern = 187,                         // pattern
-        S_188_45 = 188                           // $@45
+        S_header_value = 108,                    // header_value
+        S_109_18 = 109,                          // $@18
+        S_hooks_libraries = 110,                 // hooks_libraries
+        S_111_19 = 111,                          // $@19
+        S_hooks_libraries_list = 112,            // hooks_libraries_list
+        S_not_empty_hooks_libraries_list = 113,  // not_empty_hooks_libraries_list
+        S_hooks_library = 114,                   // hooks_library
+        S_115_20 = 115,                          // $@20
+        S_hooks_params = 116,                    // hooks_params
+        S_hooks_param = 117,                     // hooks_param
+        S_library = 118,                         // library
+        S_119_21 = 119,                          // $@21
+        S_parameters = 120,                      // parameters
+        S_121_22 = 121,                          // $@22
+        S_control_sockets = 122,                 // control_sockets
+        S_123_23 = 123,                          // $@23
+        S_control_sockets_params = 124,          // control_sockets_params
+        S_control_socket = 125,                  // control_socket
+        S_dhcp4_server_socket = 126,             // dhcp4_server_socket
+        S_127_24 = 127,                          // $@24
+        S_dhcp6_server_socket = 128,             // dhcp6_server_socket
+        S_129_25 = 129,                          // $@25
+        S_d2_server_socket = 130,                // d2_server_socket
+        S_131_26 = 131,                          // $@26
+        S_control_socket_params = 132,           // control_socket_params
+        S_control_socket_param = 133,            // control_socket_param
+        S_socket_name = 134,                     // socket_name
+        S_135_27 = 135,                          // $@27
+        S_socket_type = 136,                     // socket_type
+        S_137_28 = 137,                          // $@28
+        S_socket_type_value = 138,               // socket_type_value
+        S_authentication = 139,                  // authentication
+        S_140_29 = 140,                          // $@29
+        S_auth_params = 141,                     // auth_params
+        S_auth_param = 142,                      // auth_param
+        S_auth_type = 143,                       // auth_type
+        S_144_30 = 144,                          // $@30
+        S_auth_type_value = 145,                 // auth_type_value
+        S_realm = 146,                           // realm
+        S_147_31 = 147,                          // $@31
+        S_directory = 148,                       // directory
+        S_149_32 = 149,                          // $@32
+        S_clients = 150,                         // clients
+        S_151_33 = 151,                          // $@33
+        S_clients_list = 152,                    // clients_list
+        S_not_empty_clients_list = 153,          // not_empty_clients_list
+        S_basic_auth = 154,                      // basic_auth
+        S_155_34 = 155,                          // $@34
+        S_clients_params = 156,                  // clients_params
+        S_clients_param = 157,                   // clients_param
+        S_user = 158,                            // user
+        S_159_35 = 159,                          // $@35
+        S_user_file = 160,                       // user_file
+        S_161_36 = 161,                          // $@36
+        S_password = 162,                        // password
+        S_163_37 = 163,                          // $@37
+        S_password_file = 164,                   // password_file
+        S_165_38 = 165,                          // $@38
+        S_loggers = 166,                         // loggers
+        S_167_39 = 167,                          // $@39
+        S_loggers_entries = 168,                 // loggers_entries
+        S_logger_entry = 169,                    // logger_entry
+        S_170_40 = 170,                          // $@40
+        S_logger_params = 171,                   // logger_params
+        S_logger_param = 172,                    // logger_param
+        S_debuglevel = 173,                      // debuglevel
+        S_severity = 174,                        // severity
+        S_175_41 = 175,                          // $@41
+        S_output_options_list = 176,             // output_options_list
+        S_177_42 = 177,                          // $@42
+        S_output_options_list_content = 178,     // output_options_list_content
+        S_output_entry = 179,                    // output_entry
+        S_180_43 = 180,                          // $@43
+        S_output_params_list = 181,              // output_params_list
+        S_output_params = 182,                   // output_params
+        S_output = 183,                          // output
+        S_184_44 = 184,                          // $@44
+        S_flush = 185,                           // flush
+        S_maxsize = 186,                         // maxsize
+        S_maxver = 187,                          // maxver
+        S_pattern = 188,                         // pattern
+        S_189_45 = 189                           // $@45
       };
     };
 
@@ -2351,8 +2352,8 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 284,     ///< Last index in yytable_.
-      yynnts_ = 131,  ///< Number of nonterminal symbols.
+      yylast_ = 279,     ///< Last index in yytable_.
+      yynnts_ = 132,  ///< Number of nonterminal symbols.
       yyfinal_ = 8 ///< Termination state number.
     };
 
@@ -2569,7 +2570,7 @@ switch (yykind)
 
 #line 14 "agent_parser.yy"
 } } // isc::agent
-#line 2573 "agent_parser.h"
+#line 2574 "agent_parser.h"
 
 
 
