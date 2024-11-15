@@ -9195,7 +9195,6 @@ TEST_F(Dhcp6ParserTest, deprecatedRequireClientClassesCheck) {
         })^";
 
     ASSERT_NO_THROW(json = parseDHCP6(config));
-    extractConfig(config);
 
     ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
     checkResult(status, 1,
@@ -9251,7 +9250,6 @@ TEST_F(Dhcp6ParserTest, deprecatedOnlyIfRequiredCheck) {
         })^";
 
     ASSERT_NO_THROW(json = parseDHCP6(config));
-    extractConfig(config);
 
     ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
     checkResult(status, 1,

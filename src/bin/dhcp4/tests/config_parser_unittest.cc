@@ -8191,7 +8191,6 @@ TEST_F(Dhcp4ParserTest, deprecatedRequireClientClassesCheck) {
         })^";
 
     ASSERT_NO_THROW(json = parseDHCP4(config));
-    extractConfig(config);
 
     ASSERT_NO_THROW(status = configureDhcp4Server(*srv_, json));
     checkResult(status, 1,
@@ -8247,7 +8246,6 @@ TEST_F(Dhcp4ParserTest, deprecatedOnlyIfRequiredCheck) {
         })^";
 
     ASSERT_NO_THROW(json = parseDHCP4(config));
-    extractConfig(config);
 
     ASSERT_NO_THROW(status = configureDhcp4Server(*srv_, json));
     checkResult(status, 1,
