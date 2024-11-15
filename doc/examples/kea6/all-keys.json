@@ -142,6 +142,21 @@
                 // means they are optional.
                 "cert-required": true,
 
+                // Extra HTTP headers to add in responses.
+                "http-headers":
+                [
+                    {
+                        // Optional user context.
+                        "user-context": { "comment": "HSTS header" },
+
+                        // Required HTTP header name.
+                        "name": "Strict-Transport-Security",
+
+                        // Required HTTP header value.
+                        "value": "max-age=31536000"
+                    }
+                ],
+
                 // Optional authentication.
                 "authentication": {
 

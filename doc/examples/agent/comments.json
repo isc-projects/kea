@@ -18,6 +18,16 @@
         // is specifically for HA updates only.
         "http-port": 8000,
 
+        // Extra HTTP headers to add in responses.
+        "http-headers":
+        [
+            {
+                "comment": "HSTS header",
+                "name": "Strict-Transport-Security",
+                "value": "max-age=31536000"
+            }
+        ],
+
         // In authentication
         "authentication":
         {

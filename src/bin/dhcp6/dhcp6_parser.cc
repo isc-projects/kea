@@ -4331,6 +4331,7 @@ namespace isc { namespace dhcp {
     ctx.unique("http-headers", ctx.loc2pos(yystack_[0].location));
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("http-headers", l);
+    ctx.stack_.push_back(l);
     ctx.enter(ctx.HTTP_HEADERS);
 }
 #line 4337 "dhcp6_parser.cc"

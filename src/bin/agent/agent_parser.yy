@@ -412,6 +412,7 @@ http_headers: HTTP_HEADERS {
     ctx.unique("http-headers", ctx.loc2pos(@1));
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("http-headers", l);
+    ctx.stack_.push_back(l);
     ctx.enter(ctx.HTTP_HEADERS);
 } COLON LSQUARE_BRACKET http_header_list RSQUARE_BRACKET {
     ctx.stack_.pop_back();
@@ -445,7 +446,7 @@ http_header_params: http_header_param
                   ;
 
 http_header_param: name
-                 | value
+                 | header_value
                  | user_context
                  | comment
                  | unknown_map_entry
@@ -460,7 +461,7 @@ name: NAME {
     ctx.leave();
 };
 
-value: VALUE {
+header_value: VALUE {
     ctx.unique("value", ctx.loc2pos(@1));
     ctx.enter(ctx.NO_KEYWORDS);
 } COLON STRING {
