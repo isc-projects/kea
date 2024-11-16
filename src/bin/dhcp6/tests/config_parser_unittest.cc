@@ -327,6 +327,11 @@ const char* PARSER_CONFIGS[] = {
     "            \"socket-type\": \"http\","
     "            \"socket-address\": \"127.0.0.1\","
     "            \"socket-port\": 8000,"
+    "            \"http-headers\": [ {"
+    "                \"comment\": \"HSTS header\","
+    "                \"name\": \"Strict-Transport-Security\","
+    "                \"value\": \"max-age=31536000\""
+    "            } ],"
     "            \"authentication\": {"
     "                \"comment\": \"basic HTTP authentication\","
     "                \"type\": \"basic\","
@@ -7923,6 +7928,18 @@ TEST_F(Dhcp6ParserTest, comments) {
     ASSERT_EQ(1, ctx_socket->size());
     ASSERT_TRUE(ctx_socket->get("comment"));
     EXPECT_EQ("\"HTTP control socket\"", ctx_socket->get("comment")->str());
+
+    // HTTP headers.
+    ConstElementPtr headers = socket->get("http-headers");
+    ASSERT_TRUE(headers);
+    ASSERT_EQ(1, headers->size());
+    ConstElementPtr header = headers->get(0);
+    ASSERT_TRUE(header);
+    ConstElementPtr ctx_header = header->get("user-context");
+    ASSERT_TRUE(ctx_header);
+    ASSERT_EQ(1, ctx_header->size());
+    ASSERT_TRUE(ctx_header->get("comment"));
+    EXPECT_EQ("\"HSTS header\"", ctx_header->get("comment")->str());
 
     // HTTP authentication.
     ConstElementPtr auth = socket->get("authentication");

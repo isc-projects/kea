@@ -358,6 +358,11 @@ const char* AGENT_CONFIGS[] = {
     "    \"user-context\": { \"comment\": \"Indirect comment\" },\n"
     "    \"http-host\": \"betelgeuse\",\n"
     "    \"http-port\": 8001,\n"
+    "    \"http-headers\": [ {\n"
+    "        \"comment\": \"HSTS header\",\n"
+    "        \"name\": \"Strict-Transport-Security\",\n"
+    "        \"value\": \"max-age=31536000\"\n"
+    "    } ],\n"
     "    \"authentication\": {\n"
     "        \"comment\": \"basic HTTP authentication\",\n"
     "        \"type\": \"basic\",\n"
@@ -624,14 +629,23 @@ TEST_F(AgentParserTest, comments) {
     ASSERT_TRUE(ctx6->get("version"));
     EXPECT_EQ("1", ctx6->get("version")->str());
 
-    // Check authentication comment.
-    const HttpAuthConfigPtr& auth = agent_ctx->getAuthConfig();
-    ASSERT_TRUE(auth);
-    ConstElementPtr ctx7 = auth->getContext();
+    // Check HTTP header comment.
+    const CfgHttpHeaders& headers = agent_ctx->getHttpHeaders();
+    ASSERT_EQ(1, headers.size());
+    ConstElementPtr ctx7 = headers[0].getContext();
     ASSERT_TRUE(ctx7);
     ASSERT_EQ(1, ctx7->size());
     ASSERT_TRUE(ctx7->get("comment"));
-    EXPECT_EQ("\"basic HTTP authentication\"", ctx7->get("comment")->str());
+    EXPECT_EQ("\"HSTS header\"", ctx7->get("comment")->str());
+
+    // Check authentication comment.
+    const HttpAuthConfigPtr& auth = agent_ctx->getAuthConfig();
+    ASSERT_TRUE(auth);
+    ConstElementPtr ctx8 = auth->getContext();
+    ASSERT_TRUE(ctx8);
+    ASSERT_EQ(1, ctx8->size());
+    ASSERT_TRUE(ctx8->get("comment"));
+    EXPECT_EQ("\"basic HTTP authentication\"", ctx8->get("comment")->str());
 
     // Check basic HTTP authentication client comment.
     const BasicHttpAuthConfigPtr& basic_auth =
@@ -639,18 +653,18 @@ TEST_F(AgentParserTest, comments) {
     ASSERT_TRUE(basic_auth);
     auto clients = basic_auth->getClientList();
     ASSERT_EQ(2, clients.size());
-    ConstElementPtr ctx8 = clients.front().getContext();
-    ASSERT_TRUE(ctx8);
-    ASSERT_EQ(1, ctx8->size());
-    ASSERT_TRUE(ctx8->get("comment"));
-    EXPECT_EQ("\"foo is authorized\"", ctx8->get("comment")->str());
-
-    // Check basic HTTP authentication client user context.
-    ConstElementPtr ctx9 = clients.back().getContext();
+    ConstElementPtr ctx9 = clients.front().getContext();
     ASSERT_TRUE(ctx9);
     ASSERT_EQ(1, ctx9->size());
-    ASSERT_TRUE(ctx9->get("no password"));
-    EXPECT_EQ("true", ctx9->get("no password")->str());
+    ASSERT_TRUE(ctx9->get("comment"));
+    EXPECT_EQ("\"foo is authorized\"", ctx9->get("comment")->str());
+
+    // Check basic HTTP authentication client user context.
+    ConstElementPtr ctx10 = clients.back().getContext();
+    ASSERT_TRUE(ctx10);
+    ASSERT_EQ(1, ctx10->size());
+    ASSERT_TRUE(ctx10->get("no password"));
+    EXPECT_EQ("true", ctx10->get("no password")->str());
 }
 
 // This test checks if a config with TLS parameters is parsed properly.
