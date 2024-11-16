@@ -68,7 +68,6 @@ namespace {
 ///@{
 /// @brief extracted configurations
 const char* EXTRACTED_CONFIGS[] = {
-/// put this after const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 0
 "{\n"
 "        \"interfaces-config\": {\n"
@@ -2113,6 +2112,15 @@ const char* EXTRACTED_CONFIGS[] = {
 "                        \"comment\": \"basic HTTP authentication\"\n"
 "                    }\n"
 "                },\n"
+"                \"http-headers\": [\n"
+"                    {\n"
+"                        \"name\": \"Strict-Transport-Security\",\n"
+"                        \"user-context\": {\n"
+"                            \"comment\": \"HSTS header\"\n"
+"                        },\n"
+"                        \"value\": \"max-age=31536000\"\n"
+"                    }\n"
+"                ],\n"
 "                \"socket-address\": \"::1\",\n"
 "                \"socket-port\": 8000,\n"
 "                \"socket-type\": \"http\",\n"
@@ -2619,7 +2627,6 @@ const char* EXTRACTED_CONFIGS[] = {
 
 /// @brief unparsed configurations
 const char* UNPARSED_CONFIGS[] = {
-///put this after const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 0
 "{\n"
 "        \"allocator\": \"iterative\",\n"
@@ -11474,6 +11481,15 @@ const char* UNPARSED_CONFIGS[] = {
 "                        \"comment\": \"basic HTTP authentication\"\n"
 "                    }\n"
 "                },\n"
+"                \"http-headers\": [\n"
+"                    {\n"
+"                        \"name\": \"Strict-Transport-Security\",\n"
+"                        \"user-context\": {\n"
+"                            \"comment\": \"HSTS header\"\n"
+"                        },\n"
+"                        \"value\": \"max-age=31536000\"\n"
+"                    }\n"
+"                ],\n"
 "                \"socket-address\": \"::1\",\n"
 "                \"socket-port\": 8000,\n"
 "                \"socket-type\": \"http\",\n"
