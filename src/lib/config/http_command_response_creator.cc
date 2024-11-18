@@ -80,19 +80,32 @@ createStockHttpResponseInternal(const HttpRequestPtr& request,
     }
     // This will generate the response holding JSON content.
     HttpResponsePtr response(new HttpResponseJson(http_version, status_code));
+    // Add extra headers.
+    if (config_) {
+        copyHttpHeaders(config_->getHttpHeaders(), *response);
+    }
     return (response);
 }
 
 HttpResponsePtr
 HttpCommandResponseCreator::createDynamicHttpResponse(HttpRequestPtr request) {
+    CfgHttpHeaders headers;
     HttpResponseJsonPtr http_response;
 
     // Check the basic HTTP authentication.
     if (config_) {
+        headers = config_->getHttpHeaders();
         const HttpAuthConfigPtr& auth = config_->getAuthConfig();
         if (auth) {
             http_response = auth->checkAuth(*this, request);
         }
+    }
+
+    // Pass extra headers to the hook.
+    bool auth_failed = false;
+    if (http_response) {
+        auth_failed = true;
+        copyHttpHeaders(headers, *http_response);
     }
 
     // Callout point for "http_auth".
@@ -121,6 +134,15 @@ HttpCommandResponseCreator::createDynamicHttpResponse(HttpRequestPtr request) {
     // The basic HTTP authentication check or a callout failed and
     // left a response.
     if (http_response) {
+        // Avoid to copy extra headers twice even this should not be required.
+        if (!auth_failed && !headers.empty()) {
+            copyHttpHeaders(headers, *http_response);
+            if (http_response->isFinalized()) {
+                // Argh! The response was already finalized.
+                http_response->reset();
+                http_response->finalize();
+            }
+        }
         return (http_response);
     }
 

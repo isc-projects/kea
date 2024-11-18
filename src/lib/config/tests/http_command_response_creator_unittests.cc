@@ -146,6 +146,16 @@ public:
         return (createAnswer(CONTROL_RESULT_SUCCESS, arguments));
     }
 
+    /// @brief Convert header vector to header map.
+    static std::map<std::string, std::string>
+    headers2map(std::vector<HttpHeaderContext> headers) {
+        std::map<std::string, std::string> result;
+        for (const auto& header : headers) {
+            result[header.name_] = header.value_;
+        }
+        return (result);
+    }
+
     /// @brief HTTP control socket configuration.
     HttpCommandConfigPtr http_config_;
 
@@ -196,6 +206,35 @@ TEST_F(HttpCommandResponseCreatorTest, createStockHttpResponseCorrectVersion) {
     testStockResponse(HttpStatusCode::NO_CONTENT, "HTTP/1.1 204 No Content");
 }
 
+// Test that the server responds with extra headers for an error response.
+TEST_F(HttpCommandResponseCreatorTest, createStockHttpResponseHeaders) {
+    // Add a STS header.
+    CfgHttpHeader hsts("Strict-Transport-Security", "max-age=31536000");
+    CfgHttpHeaders headers;
+    headers.push_back(hsts);
+    // Add a random header.
+    CfgHttpHeader foobar("Foo", "bar");
+    headers.push_back(foobar);
+    setHttpConfig();
+    http_config_->setHttpHeaders(headers);
+
+    setHttpCreator();
+
+    // Set request.
+    request_->context()->http_version_major_ = 1;
+    request_->context()->http_version_minor_ = 1;
+    const HttpStatusCode& status_code = HttpStatusCode::NO_CONTENT;
+    HttpResponsePtr response;
+    response = response_creator_->createStockHttpResponse(request_,
+                                                          status_code);
+    ASSERT_TRUE(response);
+
+    // Check that the two extra headers are in the response.
+    auto got = headers2map(response->context()->headers_);
+    EXPECT_EQ("max-age=31536000", got["Strict-Transport-Security"]);
+    EXPECT_EQ("bar", got["Foo"]);
+}
+
 // Test successful server response when the client specifies valid command.
 TEST_F(HttpCommandResponseCreatorTest, createDynamicHttpResponse) {
     setHttpCreator();
@@ -230,6 +269,39 @@ TEST_F(HttpCommandResponseCreatorTest, createDynamicHttpResponse) {
     // Response must contain JSON body with "result" of 0.
     EXPECT_TRUE(response_json->toString().find("\"result\": 0") !=
                 string::npos);
+}
+
+// Test that the server responds with extra headers for a command response.
+TEST_F(HttpCommandResponseCreatorTest, createDynamicHttpResponseHeaders) {
+    // Add a STS header.
+    CfgHttpHeader hsts("Strict-Transport-Security", "max-age=31536000");
+    CfgHttpHeaders headers;
+    headers.push_back(hsts);
+    // Add a random header.
+    CfgHttpHeader foobar("Foo", "bar");
+    headers.push_back(foobar);
+    setHttpConfig();
+    http_config_->setHttpHeaders(headers);
+
+    setHttpCreator();
+
+    setBasicContext(request_);
+
+    // Body: "foo" command has been registered in the test fixture constructor.
+    request_->context()->body_ = "{ \"command\": \"foo\" }";
+
+    // All requests must be finalized before they can be processed.
+    ASSERT_NO_THROW(request_->finalize());
+
+    // Create response from the request.
+    HttpResponsePtr response;
+    ASSERT_NO_THROW(response = response_creator_->createHttpResponse(request_));
+    ASSERT_TRUE(response);
+
+    // Check that the two extra headers are in the response.
+    auto got = headers2map(response->context()->headers_);
+    EXPECT_EQ("max-age=31536000", got["Strict-Transport-Security"]);
+    EXPECT_EQ("bar", got["Foo"]);
 }
 
 // Test successful server response without emulating agent response.
@@ -322,6 +394,45 @@ TEST_F(HttpCommandResponseCreatorTest, basicAuthReject) {
 
     // Response must not be successful.
     EXPECT_EQ("HTTP/1.1 401 Unauthorized", response->toBriefString());
+}
+
+// Test that the server responds with extra headers for auth reject response.
+TEST_F(HttpCommandResponseCreatorTest, basicAuthRejectHeaders) {
+    // Create basic HTTP authentication configuration.
+    BasicHttpAuthConfigPtr basic(new BasicHttpAuthConfig());
+    EXPECT_NO_THROW(basic->add("test", "", "123\xa3", ""));
+    setHttpConfig(false, basic);
+
+    // Add a STS header.
+    CfgHttpHeader hsts("Strict-Transport-Security", "max-age=31536000");
+    CfgHttpHeaders headers;
+    headers.push_back(hsts);
+    // Add a random header.
+    CfgHttpHeader foobar("Foo", "bar");
+    headers.push_back(foobar);
+    http_config_->setHttpHeaders(headers);
+
+    setHttpCreator(false);
+
+    setBasicContext(request_);
+
+    // Body: "foo" command has been registered in the test fixture constructor.
+    request_->context()->body_ = "{ \"command\": \"foo\" }";
+
+    // Add no basic HTTP authentication.
+
+    // All requests must be finalized before they can be processed.
+    ASSERT_NO_THROW(request_->finalize());
+
+    // Create response from the request.
+    HttpResponsePtr response;
+    ASSERT_NO_THROW(response = response_creator_->createHttpResponse(request_));
+    ASSERT_TRUE(response);
+
+    // Check that the two extra headers are in the response.
+    auto got = headers2map(response->context()->headers_);
+    EXPECT_EQ("max-age=31536000", got["Strict-Transport-Security"]);
+    EXPECT_EQ("bar", got["Foo"]);
 }
 
 // This test verifies basic HTTP authentication - accept case.
