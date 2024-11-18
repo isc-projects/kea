@@ -81,12 +81,30 @@ createStockHttpResponseInternal(const HttpRequestPtr& request,
     }
     // This will generate the response holding JSON content.
     HttpResponsePtr response(new HttpResponseJson(http_version, status_code));
+    // See the comment below.
+    boost::shared_ptr<CtrlAgentController> controller =
+        boost::dynamic_pointer_cast<CtrlAgentController>(CtrlAgentController::instance());
+    if (controller) {
+        CtrlAgentProcessPtr process = controller->getCtrlAgentProcess();
+        if (process) {
+            CtrlAgentCfgMgrPtr cfgmgr = process->getCtrlAgentCfgMgr();
+            if (cfgmgr) {
+                CtrlAgentCfgContextPtr ctx = cfgmgr->getCtrlAgentCfgContext();
+                if (ctx) {
+                    copyHttpHeaders(ctx->getHttpHeaders(), *response);
+                }
+            }
+        }
+    }
     return (response);
 }
 
 HttpResponsePtr
 CtrlAgentResponseCreator::
 createDynamicHttpResponse(HttpRequestPtr request) {
+    // Extra headers.
+    CfgHttpHeaders headers;
+
     // First check authentication.
     HttpResponseJsonPtr http_response;
 
@@ -106,6 +124,7 @@ createDynamicHttpResponse(HttpRequestPtr request) {
             if (cfgmgr) {
                 ctx = cfgmgr->getCtrlAgentCfgContext();
                 if (ctx) {
+                    headers = ctx->getHttpHeaders();
                     const HttpAuthConfigPtr& auth = ctx->getAuthConfig();
                     if (auth) {
                         // Check authentication.
@@ -114,6 +133,13 @@ createDynamicHttpResponse(HttpRequestPtr request) {
                 }
             }
         }
+    }
+
+    // Pass extra headers to the hook.
+    bool auth_failed = false;
+    if (http_response) {
+        auth_failed = true;
+        copyHttpHeaders(headers, *http_response);
     }
 
     // Callout point for "http_auth".
@@ -142,6 +168,15 @@ createDynamicHttpResponse(HttpRequestPtr request) {
     // The basic HTTP authentication check or a callout failed and
     // left a response.
     if (http_response) {
+        // Avoid to copy extra headers twice even this should not be required.
+        if (!auth_failed && !headers.empty()) {
+            copyHttpHeaders(headers, *http_response);
+            if (http_response->isFinalized()) {
+                // Argh! The response was already finalized.
+                http_response->reset();
+                http_response->finalize();
+            }
+        }
         return (http_response);
     }
 

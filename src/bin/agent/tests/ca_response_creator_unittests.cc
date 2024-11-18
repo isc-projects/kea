@@ -152,6 +152,16 @@ public:
         return (ctx);
     }
 
+    /// @brief Convert header vector to header map.
+    static std::map<std::string, std::string>
+    headers2map(std::vector<HttpHeaderContext> headers) {
+        std::map<std::string, std::string> result;
+        for (const auto& header : headers) {
+            result[header.name_] = header.value_;
+        }
+        return (result);
+    }
+
     /// @brief Instance of the response creator.
     CtrlAgentResponseCreator response_creator_;
 
@@ -191,6 +201,31 @@ TEST_F(CtrlAgentResponseCreatorTest, createStockHttpResponseCorrectVersion) {
     testStockResponse(HttpStatusCode::NO_CONTENT, "HTTP/1.1 204 No Content");
 }
 
+// Test that the server responds with extra headers for an error response.
+TEST_F(CtrlAgentResponseCreatorTest, createStockHttpResponseHeaders) {
+    CtrlAgentCfgContextPtr ctx = getCtrlAgentCfgContext();
+    ASSERT_TRUE(ctx);
+    // Add a STS header.
+    CfgHttpHeader hsts("Strict-Transport-Security", "max-age=31536000");
+    CfgHttpHeaders headers;
+    headers.push_back(hsts);
+    // Add a random header.
+    CfgHttpHeader foobar("Foo", "bar");
+    headers.push_back(foobar);
+    ctx->setHttpHeaders(headers);
+    // Set request.
+    request_->context()->http_version_major_ = 1;
+    request_->context()->http_version_minor_ = 1;
+    const HttpStatusCode& status_code = HttpStatusCode::NO_CONTENT;
+    HttpResponsePtr response;
+    response = response_creator_.createStockHttpResponse(request_, status_code);
+    ASSERT_TRUE(response);
+    // Check that the two extra headers are in the response.
+    auto got = headers2map(response->context()->headers_);
+    EXPECT_EQ("max-age=31536000", got["Strict-Transport-Security"]);
+    EXPECT_EQ("bar", got["Foo"]);
+}
+
 // Test successful server response when the client specifies valid command.
 TEST_F(CtrlAgentResponseCreatorTest, createDynamicHttpResponse) {
     setBasicContext(request_);
@@ -217,6 +252,39 @@ TEST_F(CtrlAgentResponseCreatorTest, createDynamicHttpResponse) {
     // Response must contain JSON body with "result" of 0.
     EXPECT_TRUE(response_json->toString().find("\"result\": 0") !=
                 std::string::npos);
+}
+
+// Test that the server responds with extra headers for a command response.
+TEST_F(CtrlAgentResponseCreatorTest, createDynamicHttpResponseHeaders) {
+    CtrlAgentCfgContextPtr ctx = getCtrlAgentCfgContext();
+    ASSERT_TRUE(ctx);
+    // Add a STS header.
+    CfgHttpHeader hsts("Strict-Transport-Security", "max-age=31536000");
+    CfgHttpHeaders headers;
+    headers.push_back(hsts);
+    // Add a random header.
+    CfgHttpHeader foobar("Foo", "bar");
+    headers.push_back(foobar);
+    ctx->setHttpHeaders(headers);
+
+    // From previous test.
+    setBasicContext(request_);
+
+    // Body: "foo" command has been registered in the test fixture constructor.
+    request_->context()->body_ = "{ \"command\": \"foo\" }";
+
+    // All requests must be finalized before they can be processed.
+    ASSERT_NO_THROW(request_->finalize());
+
+    // Create response from the request.
+    HttpResponsePtr response;
+    ASSERT_NO_THROW(response = response_creator_.createHttpResponse(request_));
+    ASSERT_TRUE(response);
+
+    // Check that the two extra headers are in the response.
+    auto got = headers2map(response->context()->headers_);
+    EXPECT_EQ("max-age=31536000", got["Strict-Transport-Security"]);
+    EXPECT_EQ("bar", got["Foo"]);
 }
 
 // This test verifies that Internal Server Error is returned when invalid C++
@@ -280,6 +348,44 @@ TEST_F(CtrlAgentResponseCreatorTest, noAuth) {
     // Reponse should contain WWW-Authenticate header with configured realm.
     expected = "WWW-Authenticate: Basic realm=\"ISC.ORG\"";
     EXPECT_TRUE(response_json->toString().find(expected) != std::string::npos);
+}
+
+// Test that the server responds with extra headers for no auth response.
+TEST_F(CtrlAgentResponseCreatorTest, noAuthHeader) {
+    setBasicContext(request_);
+
+    // Body: "list-commands" is natively supported by the command manager.
+    request_->context()->body_ = "{ \"command\": \"list-commands\" }";
+
+    // All requests must be finalized before they can be processed.
+    ASSERT_NO_THROW(request_->finalize());
+
+    // Require authentication.
+    CtrlAgentCfgContextPtr ctx = getCtrlAgentCfgContext();
+    ASSERT_TRUE(ctx);
+    BasicHttpAuthConfigPtr auth(new BasicHttpAuthConfig());
+    ASSERT_NO_THROW(ctx->setAuthConfig(auth));
+    auth->setRealm("ISC.ORG");
+    auth->add("foo", "", "bar", "");
+
+    // Add a STS header.
+    CfgHttpHeader hsts("Strict-Transport-Security", "max-age=31536000");
+    CfgHttpHeaders headers;
+    headers.push_back(hsts);
+    // Add a random header.
+    CfgHttpHeader foobar("Foo", "bar");
+    headers.push_back(foobar);
+    ctx->setHttpHeaders(headers);
+
+    HttpResponsePtr response;
+    ASSERT_NO_THROW(response = response_creator_.createHttpResponse(request_));
+    EXPECT_TRUE(request_->getBasicAuth().empty());
+    ASSERT_TRUE(response);
+
+    // Check that the two extra headers are in the response.
+    auto got = headers2map(response->context()->headers_);
+    EXPECT_EQ("max-age=31536000", got["Strict-Transport-Security"]);
+    EXPECT_EQ("bar", got["Foo"]);
 }
 
 // Test successful server response when the client is authenticated.
@@ -381,6 +487,62 @@ TEST_F(CtrlAgentResponseCreatorTest, hookNoAuth) {
     // Reponse should contain WWW-Authenticate header with configured realm.
     expected = "WWW-Authenticate: Basic realm=\"ISC.ORG\"";
     EXPECT_TRUE(response_json->toString().find(expected) != std::string::npos);
+}
+
+// This test verifies that the server responds with extra headers for no
+// auth response provided by the hool.
+TEST_F(CtrlAgentResponseCreatorTest, hookNoAuthHeaders) {
+    setBasicContext(request_);
+
+    // Body: "list-commands" is natively supported by the command manager.
+    // We add a random value in the extra entry: see next unit test
+    // for an explanation about how it is used.
+    auto r32 = isc::cryptolink::random(4);
+    ASSERT_EQ(4, r32.size());
+    int extra = r32[0];
+    extra = (extra << 8) | r32[1];
+    extra = (extra << 8) | r32[2];
+    extra = (extra << 8) | r32[3];
+    request_->context()->body_ = "{ \"command\": \"list-commands\", ";
+    request_->context()->body_ += "\"extra\": " + std::to_string(extra) + " }";
+
+    // All requests must be finalized before they can be processed.
+    ASSERT_NO_THROW(request_->finalize());
+
+    // Setup hook.
+    CtrlAgentCfgContextPtr ctx = getCtrlAgentCfgContext();
+    ASSERT_TRUE(ctx);
+    HooksConfig& hooks_cfg = ctx->getHooksConfig();
+    std::string auth_cfg = "{ \"config\": {\n"
+        "\"type\": \"basic\",\n"
+        "\"realm\": \"ISC.ORG\",\n"
+        "\"clients\": [{\n"
+        " \"user\": \"foo\",\n"
+        " \"password\": \"bar\"\n"
+        " }]}}";
+    ConstElementPtr auth_json;
+    ASSERT_NO_THROW(auth_json = Element::fromJSON(auth_cfg));
+    hooks_cfg.add(std::string(BASIC_AUTH_LIBRARY), auth_json);
+    ASSERT_NO_THROW(hooks_cfg.loadLibraries(false));
+
+    // Add a STS header.
+    CfgHttpHeader hsts("Strict-Transport-Security", "max-age=31536000");
+    CfgHttpHeaders headers;
+    headers.push_back(hsts);
+    // Add a random header.
+    CfgHttpHeader foobar("Foo", "bar");
+    headers.push_back(foobar);
+    ctx->setHttpHeaders(headers);
+
+    HttpResponsePtr response;
+    ASSERT_NO_THROW(response = response_creator_.createHttpResponse(request_));
+    EXPECT_TRUE(request_->getBasicAuth().empty());
+    ASSERT_TRUE(response);
+
+    // Check that the two extra headers are in the response.
+    auto got = headers2map(response->context()->headers_);
+    EXPECT_EQ("max-age=31536000", got["Strict-Transport-Security"]);
+    EXPECT_EQ("bar", got["Foo"]);
 }
 
 // Test successful server response when the client is authenticated.

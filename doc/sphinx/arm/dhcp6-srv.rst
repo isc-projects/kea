@@ -7591,6 +7591,9 @@ TLS is required). The ``socket-address`` (default ``::1``) and
 ``socket-port`` (default 8000) specify an IP address and port to which
 the HTTP service will be bound.
 
+Since Kea 1.7.5 the ``http-headers`` parameter specifies a list of
+extra HTTP headers to add to HTTP responses.
+
 The ``trust-anchor``, ``cert-file``, ``key-file``, and ``cert-required``
 parameters specify the TLS setup for HTTP, i.e. HTTPS. If these parameters
 are not specified, HTTP is used. The TLS/HTTPS support in Kea is
@@ -7646,6 +7649,12 @@ to detect configuration errors as soon as possible.
                "socket-type": "https",
                "socket-address": "2010:30:40::50",
                "socket-port": 8005,
+               "http-headers": [
+                   {
+                       "name": "Strict-Transport-Security",
+                       "value": "max-age=31536000"
+                    }
+               ],
                "trust-anchor": "/path/to/the/ca-cert.pem",
                "cert-file": "/path/to/the/agent-cert.pem",
                "key-file": "/path/to/the/agent-key.pem",

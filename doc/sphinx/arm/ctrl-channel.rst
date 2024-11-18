@@ -207,6 +207,11 @@ depends on the specific command.
        }
    }
 
+.. note::
+
+   Since Kea 2.7.5 it is possible to specify extra HTTP headers which
+   are added to HTTP responses.
+
 .. _ctrl-channel-control-agent-command-response-format:
 
 Control Agent Command Response Format

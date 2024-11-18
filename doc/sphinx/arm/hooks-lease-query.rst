@@ -649,7 +649,7 @@ and includes either the count of leases updated or the nature of the failure:
 
 This ``extended-info6-upgrade`` command must be called when:
 
-- the database schema was upgraded from 2.4.1 or older version. 
+- the database schema was upgraded from 2.4.1 or older version.
   ``extended-info4-upgrade`` can be used when upgrading from 2.3.8 or older version.
 
 - Bulk Leasequery was not enabled; tables are maintained only when v6 BLQ is

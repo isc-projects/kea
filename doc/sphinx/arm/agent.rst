@@ -56,6 +56,12 @@ The following example demonstrates the basic CA configuration.
        "Control-agent": {
            "http-host": "10.20.30.40",
            "http-port": 8000,
+           "http-headers": [
+               {
+                   "name": "Strict-Transport-Security",
+                   "value": "max-age=31536000"
+                }
+           ],
            "trust-anchor": "/path/to/the/ca-cert.pem",
            "cert-file": "/path/to/the/agent-cert.pem",
            "key-file": "/path/to/the/agent-key.pem",
@@ -113,6 +119,9 @@ the address:port combination used for CA must be
 different from the HA peer URLs, which are strictly
 for internal HA traffic between the peers. User commands should
 still be sent via the CA.
+
+Since Kea 1.7.5 the ``http-headers`` parameter specifies a list of
+extra HTTP headers to add to HTTP responses.
 
 The ``trust-anchor``, ``cert-file``, ``key-file``, and ``cert-required``
 parameters specify the TLS setup for HTTP, i.e. HTTPS. If these parameters

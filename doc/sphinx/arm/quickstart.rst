@@ -17,7 +17,7 @@ Quick Start Guide Using tarball
     :ref:`build-requirements` for details.
 
 2.  Download the Kea source tarball from
-    `the main isc.org downloads page <https://www.isc.org/download/>`__, 
+    `the main isc.org downloads page <https://www.isc.org/download/>`__,
     `the ISC downloads site <https://downloads.isc.org/isc/kea/>`__, or
     `the ISC Cloudsmith page <https://cloudsmith.io/~isc/packages/?q=format%3Araw>`__.
 

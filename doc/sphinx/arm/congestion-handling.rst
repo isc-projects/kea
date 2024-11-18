@@ -22,7 +22,7 @@ Congestion typically occurs when there is a network event that causes overly lar
 numbers of clients to simultaneously need leases, such as recovery after
 a network outage. In a well-planned deployment, the number and capacity of servers is
 matched to the maximum expected client load. If the load is routinely too
-heavy, then the deployment needs to be re-evaluated. 
+heavy, then the deployment needs to be re-evaluated.
 
 The goal of congestion handling is to help servers mitigate the peak in
 traffic by fulfilling as many of the most relevant requests as possible
