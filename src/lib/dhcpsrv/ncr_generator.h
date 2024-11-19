@@ -46,19 +46,16 @@ void queueNCR(const dhcp_ddns::NameChangeType& chg_type, const Lease6Ptr& lease)
 ///
 /// The logic for calculating TTL is as follow:
 ///
-/// If ddns-ttl is specified use it unconditionally.
+/// 1. If ddns-ttl is specified use it unconditionally.
 ///
-/// If ddns-ttl-percnet is specified use it otherwise use 1/3 as
-/// called for by RFC 4702.
+/// 2. If ddns-ttl-percent is specified use it, otherwise use 1/3 as called for by RFC 4702.
 ///
-/// Calculate the candidate TTL based on the deteremined percentage.
+/// 3. Calculate the candidate TTL based on the determined percentage.
 ///
-/// If ddsn-ttl-min is specified used it otherwise use a minimum of
-/// 600 per RFC 4702.  If the TTL is less than the mininum return
-/// the minimum.
+/// 4. If ddns-ttl-min is specified use it otherwise use a minimum of 600 seconds per RFC 4702.
+/// If the calculated TTL is less than the minimum return the minimum.
 ///
-/// If ddsn-ttl-max is specified limit the ttl to that value otherwse
-/// return the ttl.
+/// 5. If ddns-ttl-max is specified limit the calculated TTL to that value.
 ///
 /// @param lease_life_time valid life time of the lease
 /// @param ddns_ttl_percent optional percentage to use in calculation
