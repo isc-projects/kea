@@ -103,7 +103,6 @@ protected:
 };
 
 /// @brief Test fixture class for @c ClientClassDefParser.
-//class ClientClassDefParserTest : public ::testing::Test {
 class ClientClassDefParserTest : public LogContentTest {
 protected:
 
@@ -2261,11 +2260,12 @@ TEST_F(ClientClassDefParserTest, addtionalWithLifetimes4) {
         // If we expect the warning log to be emitted the occurrences
         // in the log file should bump by 1.
         if (scenario.should_log_) {
-            // Veriy we emitted another instance of the log message.
             ++exp_log_count;
-            ASSERT_EQ(countFile("DHCPSRV_CLASS_WITH_ADDTIONAL_AND_LIFETIMES"),
-                      exp_log_count);
         }
+
+        // Veriy we have the expected count of log messages.
+        ASSERT_EQ(countFile("DHCPSRV_CLASS_WITH_ADDTIONAL_AND_LIFETIMES"), 
+                            exp_log_count);
     }
 }
 
@@ -2335,11 +2335,12 @@ TEST_F(ClientClassDefParserTest, addtionalWithLifetimes6) {
         // If we expect the warning log to be emitted the occurrences
         // in the log file should bump by 1.
         if (scenario.should_log_) {
-            // Veriy we emitted another instance of the log message.
             ++exp_log_count;
-            ASSERT_EQ(countFile("DHCPSRV_CLASS_WITH_ADDTIONAL_AND_LIFETIMES"),
-                      exp_log_count);
         }
+
+        // Veriy we have the expected count of log messages.
+        ASSERT_EQ(countFile("DHCPSRV_CLASS_WITH_ADDTIONAL_AND_LIFETIMES"),
+                            exp_log_count);
     }
 }
 

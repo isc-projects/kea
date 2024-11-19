@@ -1170,8 +1170,8 @@ Class Priority
 ==============
 
 Client classes in Kea follow the order in which they are specified in the
-configuration (vs. alphabetical order). Additional classes are ordered by 
-pool, subnet, and then shared-network and within each scope by the order in 
+configuration (vs. alphabetical order). Additional classes are ordered by
+pool, subnet, and then shared-network and within each scope by the order in
 which they appear in ``evaluate-additional-classes``.
 
 When determining which client-class information (comprised of
@@ -1189,7 +1189,7 @@ reservation.
 
 On the other hand, lease lifetimes and DHCPv4 field values defined at class
 scope override any values defined globally, in a subnet scope, or in a
-shared-network scope.  
+shared-network scope.
 
 .. note::
    Because additional evaluation occurs after lease assignment, parameters
