@@ -2448,8 +2448,8 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
 
         /// @todo IA_NA may contain multiple addresses. We should process
         /// each address individually. Currently we only process the first one.
-        Option6IAAddrPtr iaaddr = boost::static_pointer_cast
-                                  <Option6IAAddr>(ia_ctx.ia_rsp_->getOption(D6O_IAADDR));
+        Option6IAAddrPtr iaaddr = boost::static_pointer_cast<
+            Option6IAAddr>(ia_ctx.ia_rsp_->getOption(D6O_IAADDR));
 
         // We need an address to create a name-to-address mapping.
         // If address is missing for any reason, go to the next IA.
@@ -2480,7 +2480,7 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
                 // The address is the same so this must be renewal. If we're not
                 // always updating on renew, then we only renew if DNS info has
                 // changed.
-                if (l->reuseable_valid_lft_ ||
+                if ((l->reuseable_valid_lft_ > 0) ||
                     (!ctx.getDdnsParams()->getUpdateOnRenew() &&
                     (l->hostname_ == opt_fqdn->getDomainName() &&
                      l->fqdn_fwd_ == do_fwd && l->fqdn_rev_ == do_rev))) {
@@ -2667,7 +2667,6 @@ Dhcpv6Srv::assignIA_NA(const Pkt6Ptr& query,
         } else {
             lease->valid_lft_ = lease->reuseable_valid_lft_;
             lease->preferred_lft_ = lease->reuseable_preferred_lft_;
-            std::cout << __LINE__ << " flagged as resuseable: " << lease->addr_.toText() << std::endl;
             ctx.currentIA().reused_leases_.push_back(lease);
             LOG_INFO(lease6_logger, DHCP6_LEASE_REUSE)
                 .arg(query->getLabel())
