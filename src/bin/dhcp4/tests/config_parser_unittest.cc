@@ -8269,4 +8269,180 @@ TEST_F(Dhcp4ParserTest, deprecatedClientClassesCheck) {
                 " and 'client-classes'. Use only the latter.");
 }
 
+TEST_F(Dhcp4ParserTest, ddnsTtlPercent) {
+    string config = R"(
+    {
+        "ddns-ttl-percent": 0.75,
+        "valid-lifetime": 4000,
+        "shared-networks": [{ 
+            "name": "net",
+            "ddns-ttl-percent": 0.50,
+            "subnet4": [{
+                "id": 1,
+                "subnet": "10.0.2.0/24",
+                "ddns-ttl-percent": 0.25
+            }],
+        }]
+    }
+    )";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
+
+    ConstElementPtr status;
+
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
+    // returned value should be 0 (success)
+    checkResult(status, 0);
+
+    // Commit it so global inheritance works.
+    CfgMgr::instance().commit();
+
+    ConstSubnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets4()->selectSubnet(IOAddress("10.0.2.0"));
+    ASSERT_TRUE(subnet);
+
+    EXPECT_FALSE(subnet->getDdnsTtlPercent(Network::Inheritance::NONE).unspecified());
+    EXPECT_EQ(0.25, subnet->getDdnsTtlPercent(Network::Inheritance::NONE).get());
+
+    EXPECT_FALSE(subnet->getDdnsTtlPercent(Network::Inheritance::PARENT_NETWORK).unspecified());
+    EXPECT_EQ(0.50, subnet->getDdnsTtlPercent(Network::Inheritance::PARENT_NETWORK).get());
+
+    EXPECT_FALSE(subnet->getDdnsTtlPercent(Network::Inheritance::GLOBAL).unspecified());
+    EXPECT_EQ(0.75, subnet->getDdnsTtlPercent(Network::Inheritance::GLOBAL).get());
+}
+
+TEST_F(Dhcp4ParserTest, ddnsTtl) {
+    string config = R"(
+    {
+        "ddns-ttl": 750,
+        "valid-lifetime": 4000,
+        "shared-networks": [{ 
+            "name": "net",
+            "ddns-ttl": 500,
+            "subnet4": [{
+                "id": 1,
+                "subnet": "10.0.2.0/24",
+                "ddns-ttl": 250
+            }],
+        }]
+    }
+    )";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
+
+    // returned value should be 0 (success)
+    checkResult(status, 0);
+
+    // Commit it so global inheritance works.
+    CfgMgr::instance().commit();
+
+    ConstSubnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets4()->selectSubnet(IOAddress("10.0.2.0"));
+    ASSERT_TRUE(subnet);
+
+    EXPECT_FALSE(subnet->getDdnsTtl(Network::Inheritance::NONE).unspecified());
+    EXPECT_EQ(250, subnet->getDdnsTtl(Network::Inheritance::NONE).get());
+
+    EXPECT_FALSE(subnet->getDdnsTtl(Network::Inheritance::PARENT_NETWORK).unspecified());
+    EXPECT_EQ(500, subnet->getDdnsTtl(Network::Inheritance::PARENT_NETWORK).get());
+
+    EXPECT_FALSE(subnet->getDdnsTtl(Network::Inheritance::GLOBAL).unspecified());
+    EXPECT_EQ(750, subnet->getDdnsTtl(Network::Inheritance::GLOBAL).get());
+}
+
+TEST_F(Dhcp4ParserTest, ddnsTtlMin) {
+    string config = R"(
+    {
+        "ddns-ttl-min": 750,
+        "valid-lifetime": 4000,
+        "shared-networks": [{ 
+            "name": "net",
+            "ddns-ttl-min": 500,
+            "subnet4": [{
+                "id": 1,
+                "subnet": "10.0.2.0/24",
+                "ddns-ttl-min": 250
+            }],
+        }]
+    }
+    )";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
+
+    // returned value should be 0 (success)
+    checkResult(status, 0);
+
+    // Commit it so global inheritance works.
+    CfgMgr::instance().commit();
+
+    ConstSubnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets4()->selectSubnet(IOAddress("10.0.2.0"));
+    ASSERT_TRUE(subnet);
+
+    EXPECT_FALSE(subnet->getDdnsTtlMin(Network::Inheritance::NONE).unspecified());
+    EXPECT_EQ(250, subnet->getDdnsTtlMin(Network::Inheritance::NONE).get());
+
+    EXPECT_FALSE(subnet->getDdnsTtlMin(Network::Inheritance::PARENT_NETWORK).unspecified());
+    EXPECT_EQ(500, subnet->getDdnsTtlMin(Network::Inheritance::PARENT_NETWORK).get());
+
+    EXPECT_FALSE(subnet->getDdnsTtlMin(Network::Inheritance::GLOBAL).unspecified());
+    EXPECT_EQ(750, subnet->getDdnsTtlMin(Network::Inheritance::GLOBAL).get());
+}
+
+TEST_F(Dhcp4ParserTest, ddnsTtlMax) {
+    string config = R"(
+    {
+        "ddns-ttl-max": 750,
+        "valid-lifetime": 4000,
+        "shared-networks": [{ 
+            "name": "net",
+            "ddns-ttl-max": 500,
+            "subnet4": [{
+                "id": 1,
+                "subnet": "10.0.2.0/24",
+                "ddns-ttl-max": 250
+            }],
+        }]
+    }
+    )";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
+
+    // returned value should be 0 (success)
+    checkResult(status, 0);
+
+    // Commit it so global inheritance works.
+    CfgMgr::instance().commit();
+
+    ConstSubnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets4()->selectSubnet(IOAddress("10.0.2.0"));
+    ASSERT_TRUE(subnet);
+
+    EXPECT_FALSE(subnet->getDdnsTtlMax(Network::Inheritance::NONE).unspecified());
+    EXPECT_EQ(250, subnet->getDdnsTtlMax(Network::Inheritance::NONE).get());
+
+    EXPECT_FALSE(subnet->getDdnsTtlMax(Network::Inheritance::PARENT_NETWORK).unspecified());
+    EXPECT_EQ(500, subnet->getDdnsTtlMax(Network::Inheritance::PARENT_NETWORK).get());
+
+    EXPECT_FALSE(subnet->getDdnsTtlMax(Network::Inheritance::GLOBAL).unspecified());
+    EXPECT_EQ(750, subnet->getDdnsTtlMax(Network::Inheritance::GLOBAL).get());
+}
+
 }  // namespace

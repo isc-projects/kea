@@ -150,6 +150,30 @@ public:
     /// @return TTL percent as an Optional.
     util::Optional<double> getTtlPercent() const;
 
+    /// @brief Returns explicit TTL to use
+    ///
+    /// This value, if greater than zero, is used as the lifetime
+    /// passed to D2 in the NCR. 
+    ///
+    /// @return TTL as an Optional.
+    util::Optional<uint32_t> getTtl() const;
+
+    /// @brief Returns the minimum TTL to use
+    ///
+    /// This value, if greater than zero, is used as the lower boundary
+    /// for calculated TTLs.
+    ///
+    /// @return TTL minimum as an Optional.
+    util::Optional<uint32_t> getTtlMin() const;
+
+    /// @brief Returns the maximum TTL to use
+    ///
+    /// This value, if greater than zero, is used as the upper boundary
+    /// for calculated TTLs.
+    ///
+    /// @return TTL maximum as an Optional.
+    util::Optional<uint32_t> getTtlMax() const;
+
     /// @brief Returns the DDNS config resolution mode for kea-dhcp-ddns
     ///
     /// This value is communicated to D2 via the NCR.
@@ -950,6 +974,16 @@ public:
     /// @param name Base name of the lifetime parameter.
     void sanityChecksLifetime(const SrvConfig& target_config,
                               const std::string& name) const;
+
+    /// @brief Conducts sanity checks on global DDNS ttl parameters:
+    /// ddsn-ttl, ddsn-ttl-percent, ddns-ttl-min, ddns-ttl-max
+    ///
+    /// If ddns-ttl is specified none of the others can be
+    /// If ddns-ttl-min and ddsn-ttl-max are specified max cannot
+    /// be less than min. 
+    ///
+    /// @throw Throws BadValue if any of the rules are violated.
+    void sanityChecksDdnsTtlParameters() const;
 
     /// @brief Configures the server to allow or disallow specifying multiple
     /// hosts with the same IP address/subnet.

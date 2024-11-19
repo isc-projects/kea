@@ -49,7 +49,8 @@ extern const isc::log::MessageID DHCPSRV_CFGMGR_USE_UNICAST = "DHCPSRV_CFGMGR_US
 extern const isc::log::MessageID DHCPSRV_CLASS_WITH_ADDITIONAL_AND_LIFETIMES = "DHCPSRV_CLASS_WITH_ADDITIONAL_AND_LIFETIMES";
 extern const isc::log::MessageID DHCPSRV_CLIENT_CLASS_DEPRECATED = "DHCPSRV_CLIENT_CLASS_DEPRECATED";
 extern const isc::log::MessageID DHCPSRV_CLOSE_DB = "DHCPSRV_CLOSE_DB";
-extern const isc::log::MessageID DHCPSRV_DDNS_TTL_PERCENT_TOO_SMALL = "DHCPSRV_DDNS_TTL_PERCENT_TOO_SMALL";
+extern const isc::log::MessageID DHCPSRV_DDNS_TTL_TOO_LARGE = "DHCPSRV_DDNS_TTL_TOO_LARGE";
+extern const isc::log::MessageID DHCPSRV_DDNS_TTL_TOO_SMALL = "DHCPSRV_DDNS_TTL_TOO_SMALL";
 extern const isc::log::MessageID DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET = "DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET";
 extern const isc::log::MessageID DHCPSRV_DHCP_DDNS_ERROR_EXCEPTION = "DHCPSRV_DHCP_DDNS_ERROR_EXCEPTION";
 extern const isc::log::MessageID DHCPSRV_DHCP_DDNS_HANDLER_NULL = "DHCPSRV_DHCP_DDNS_HANDLER_NULL";
@@ -220,7 +221,8 @@ const char* values[] = {
     "DHCPSRV_CLASS_WITH_ADDITIONAL_AND_LIFETIMES", "class: %1 has 'only-in-additional-list' true while specifying one or more lease life time values. Life time values will be ignored.",
     "DHCPSRV_CLIENT_CLASS_DEPRECATED", "The parameter 'client-class' is deprecated. Use 'client-classes' list parameter instead",
     "DHCPSRV_CLOSE_DB", "closing currently open %1 database",
-    "DHCPSRV_DDNS_TTL_PERCENT_TOO_SMALL", "ddns-ttl-percent %1 of lease lifetime %2 is too small, ignoring it",
+    "DHCPSRV_DDNS_TTL_TOO_LARGE", "%1 of lease life time %2 is %3, using maximum of %4 instead.",
+    "DHCPSRV_DDNS_TTL_TOO_SMALL", "%1 of lease life time %2 is %3, using minimum of %4 instead.",
     "DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET", "received bad DHCPv4o6 packet: %1",
     "DHCPSRV_DHCP_DDNS_ERROR_EXCEPTION", "error handler for DHCP_DDNS IO generated an expected exception: %1",
     "DHCPSRV_DHCP_DDNS_HANDLER_NULL", "error handler for DHCP_DDNS IO is not set.",

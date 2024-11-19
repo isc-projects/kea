@@ -101,6 +101,9 @@ const SimpleKeywords SimpleParser4::GLOBAL4_PARAMETERS = {
     { "ddns-ttl-percent",                 Element::real },
     { "ddns-conflict-resolution-mode",    Element::string },
     { "stash-agent-options",              Element::boolean },
+    { "ddns-ttl",                         Element::integer },
+    { "ddns-ttl-min",                     Element::integer },
+    { "ddns-ttl-max",                     Element::integer },
 };
 
 /// @brief This table defines default global values for DHCPv4
@@ -261,6 +264,9 @@ const SimpleKeywords SimpleParser4::SUBNET4_PARAMETERS = {
     { "offer-lifetime",                 Element::integer },
     { "ddns-ttl-percent",               Element::real },
     { "ddns-conflict-resolution-mode",  Element::string },
+    { "ddns-ttl",                       Element::integer },
+    { "ddns-ttl-min",                   Element::integer },
+    { "ddns-ttl-max",                   Element::integer },
 };
 
 /// @brief This table defines default values for each IPv4 subnet.
@@ -388,6 +394,9 @@ const SimpleKeywords SimpleParser4::SHARED_NETWORK4_PARAMETERS = {
     { "offer-lifetime",                 Element::integer },
     { "ddns-ttl-percent",               Element::real },
     { "ddns-conflict-resolution-mode",  Element::string },
+    { "ddns-ttl",                       Element::integer },
+    { "ddns-ttl-min",                   Element::integer },
+    { "ddns-ttl-max",                   Element::integer },
 };
 
 /// @brief This table defines default values for interfaces for DHCPv4.

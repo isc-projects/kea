@@ -231,6 +231,18 @@ Network::toElement() const {
         map->set("ddns-ttl-percent", Element::create(ddns_ttl_percent_));
     }
 
+    if (!ddns_ttl_.unspecified()) {
+        map->set("ddns-ttl", Element::create(ddns_ttl_));
+    }
+
+    if (!ddns_ttl_min_.unspecified()) {
+        map->set("ddns-ttl-min", Element::create(ddns_ttl_min_));
+    }
+
+    if (!ddns_ttl_max_.unspecified()) {
+            map->set("ddns-ttl-max", Element::create(ddns_ttl_max_));
+    }
+
     if (!hostname_char_set_.unspecified()) {
         map->set("hostname-char-set", Element::create(hostname_char_set_));
     }

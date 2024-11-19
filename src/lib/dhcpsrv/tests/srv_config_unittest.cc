@@ -2214,4 +2214,73 @@ TEST_F(SrvConfigTest, sanityChecksLifetime) {
     }
 }
 
+// Verifies that sanityChecksDdnsTtlParams works as expected.
+TEST_F(SrvConfigTest, sanityChecksDdnsTtlParameters) {
+    {
+        SCOPED_TRACE("none");
+        SrvConfig conf(32);
+        EXPECT_NO_THROW(conf.sanityChecksDdnsTtlParameters());
+    }
+
+    {
+        SCOPED_TRACE("ddns-ttl only");
+        SrvConfig conf(32);
+        conf.addConfiguredGlobal("ddns-ttl", Element::create(200));
+        EXPECT_NO_THROW(conf.sanityChecksDdnsTtlParameters());
+    }
+
+    {
+        SCOPED_TRACE("ddns-ttl and ddns-ttl-percent");
+        SrvConfig conf(32);
+        conf.addConfiguredGlobal("ddns-ttl", Element::create(200));
+        conf.addConfiguredGlobal("ddns-ttl-percent", Element::create(50.0));
+        EXPECT_THROW_MSG(conf.sanityChecksDdnsTtlParameters(), isc::BadValue,
+                         "cannot specify both ddns-ttl-percent and ddns-ttl");
+    }
+
+    {
+        SCOPED_TRACE("ddns-ttl and ddns-ttl-min");
+        SrvConfig conf(32);
+        conf.addConfiguredGlobal("ddns-ttl", Element::create(200));
+        conf.addConfiguredGlobal("ddns-ttl-min", Element::create(100));
+        EXPECT_THROW_MSG(conf.sanityChecksDdnsTtlParameters(), isc::BadValue,
+                         "cannot specify both ddns-ttl-min and ddns-ttl");
+    }
+
+    {
+        SCOPED_TRACE("ddns-ttl and ddns-ttl-max");
+        SrvConfig conf(32);
+        conf.addConfiguredGlobal("ddns-ttl", Element::create(200));
+        conf.addConfiguredGlobal("ddns-ttl-max", Element::create(100));
+        EXPECT_THROW_MSG(conf.sanityChecksDdnsTtlParameters(), isc::BadValue,
+                         "cannot specify both ddns-ttl-max and ddns-ttl");
+    }
+
+    {
+        SCOPED_TRACE("ddns-ttl-min < ddns-ttl-max");
+        SrvConfig conf(32);
+        conf.addConfiguredGlobal("ddns-ttl-min", Element::create(25));
+        conf.addConfiguredGlobal("ddns-ttl-max", Element::create(100));
+        EXPECT_NO_THROW(conf.sanityChecksDdnsTtlParameters());
+    }
+
+    {
+        SCOPED_TRACE("ddns-ttl-min > ddns-ttl-max");
+        SrvConfig conf(32);
+        conf.addConfiguredGlobal("ddns-ttl-min", Element::create(100));
+        conf.addConfiguredGlobal("ddns-ttl-max", Element::create(25));
+        EXPECT_THROW_MSG(conf.sanityChecksDdnsTtlParameters(), isc::BadValue,
+                         "ddns-ttl-max: 25 must be greater than ddns-ttl-min: 100");
+    }
+
+    {
+        SCOPED_TRACE("ddsn-ttl-percent and ddns-ttl-min < ddns-ttl-max");
+        SrvConfig conf(32);
+        conf.addConfiguredGlobal("ddns-ttl-percent", Element::create(50.0));
+        conf.addConfiguredGlobal("ddns-ttl-min", Element::create(25));
+        conf.addConfiguredGlobal("ddns-ttl-max", Element::create(100));
+        EXPECT_NO_THROW(conf.sanityChecksDdnsTtlParameters());
+    }
+}
+
 } // end of anonymous namespace

@@ -106,8 +106,155 @@ public:
     /// @param test_config JSON configuration text to parse
     /// @return A reference to the Network created if parsing is successful
     virtual Network& parseIntoNetwork(ConstElementPtr test_config) = 0;
-};
 
+    // Verifies valid permuatations of ddns-ttl-percent, ddns-ttl,
+    // ddns-ttl-min, and ddns-ttl-max values for SharedNetwork4.
+    template<typename NetworkTypePtr, typename ParserType>
+    void validDdnsTtlParmatersTest() {
+        struct Scenario {
+            size_t line_no_;
+            std::string json_;
+            double ddns_ttl_percent_;
+            uint32_t ddns_ttl_;
+            uint32_t ddns_ttl_min_;
+            uint32_t ddns_ttl_max_;
+        };
+
+        std::list<Scenario> scenarios = {
+        {
+            __LINE__,
+            R"^({
+                "name": "one",
+                "ddns-ttl": 100
+            })^",
+            0.0, 100, 0, 0
+        },{
+            __LINE__,
+            R"^({
+                "name": "one",
+                "ddns-ttl-percent": 5.0 
+            })^",
+            5.0, 0, 0, 0
+        },{
+            __LINE__,
+            R"^({
+                "name": "one",
+                "ddns-ttl-min": 25 
+            })^",
+            0.0, 0, 25, 0
+        },{
+            __LINE__,
+            R"^({
+                "name": "one",
+                "ddns-ttl-max": 150 
+            })^",
+            0.0, 0, 0, 150 
+        },{
+            __LINE__,
+            R"^({
+                "name": "one",
+                "ddns-ttl-min": 25,
+                "ddns-ttl-max": 150 
+            })^",
+            0.0, 0, 25, 150 
+        },{
+            __LINE__,
+            R"^({
+                "name": "one",
+                "ddns-ttl-percent": 5.0,
+                "ddns-ttl-min": 25,
+                "ddns-ttl-max": 150 
+            })^",
+            5.0, 0, 25, 150 
+        }};
+
+        for (const auto& scenario : scenarios) {
+            std::stringstream oss; 
+            oss << "scenario at " << scenario.line_no_;
+            SCOPED_TRACE(oss.str());
+
+            // Parse configuration specified above.
+            ElementPtr config_element;
+            ASSERT_NO_THROW_LOG(config_element = Element::fromJSON(scenario.json_));
+
+            ParserType parser;
+            NetworkTypePtr network;
+
+            ASSERT_NO_THROW_LOG(network = parser.parse(config_element));
+            ASSERT_TRUE(network);
+
+            EXPECT_EQ(network->getDdnsTtlPercent().unspecified(), (scenario.ddns_ttl_percent_ == 0.0)); 
+            EXPECT_EQ(network->getDdnsTtlPercent(), scenario.ddns_ttl_percent_); 
+
+            EXPECT_EQ(network->getDdnsTtl().unspecified(), (scenario.ddns_ttl_ == 0)); 
+            EXPECT_EQ(network->getDdnsTtl(), scenario.ddns_ttl_); 
+    
+            EXPECT_EQ(network->getDdnsTtlMin().unspecified(), (scenario.ddns_ttl_min_ == 0)); 
+            EXPECT_EQ(network->getDdnsTtlMin(), scenario.ddns_ttl_min_); 
+
+            EXPECT_EQ(network->getDdnsTtlMax().unspecified(), (scenario.ddns_ttl_max_ == 0)); 
+            EXPECT_EQ(network->getDdnsTtlMax(), scenario.ddns_ttl_max_); 
+        }
+    }
+
+    // Verifies invalid permuatations of ddns-ttl-percent, ddns-ttl,
+    // ddns-ttl-min, and ddns-ttl-max values for SharedNetwork.
+    template<typename ParserType>
+    void invalidDdnsTtlParmatersTest() {
+        struct Scenario {
+            size_t line_no_;
+            std::string json_;
+            std::string exp_message_;
+            };
+
+        std::list<Scenario> scenarios = {
+        {
+            __LINE__,
+            R"^({
+                "name": "one",
+                "ddns-ttl-percent": 5.0,
+                "ddns-ttl": 100
+            })^",
+            "cannot specify both ddns-ttl-percent and ddns-ttl (<string>:1:2)"
+        },{
+            __LINE__,
+            R"^({
+                "name": "one",
+                "ddns-ttl": 100,
+                "ddns-ttl-min": 25
+            })^",
+            "cannot specify both ddns-ttl-min and ddns-ttl (<string>:1:2)"
+        },{
+            __LINE__,
+            R"^({
+                "name": "one",
+                "ddns-ttl": 100,
+                "ddns-ttl-max": 150 
+            })^",
+            "cannot specify both ddns-ttl-max and ddns-ttl (<string>:1:2)"
+        },{
+            __LINE__,
+            R"^({
+                "name": "one",
+                "ddns-ttl-min": 150,
+                "ddns-ttl-max": 25 
+            })^",
+            "ddns-ttl-max: 25 must be greater than ddns-ttl-min: 150 (<string>:1:2)"
+        }};
+
+        for (const auto& scenario : scenarios) {
+            std::stringstream oss; 
+            oss << "scenario at " << scenario.line_no_;
+            SCOPED_TRACE(oss.str());
+
+            // Parse configuration specified above.
+            ElementPtr config_element;
+            ASSERT_NO_THROW_LOG(config_element = Element::fromJSON(scenario.json_));
+            ParserType parser;
+            ASSERT_THROW_MSG(parser.parse(config_element), DhcpConfigError, scenario.exp_message_);
+        }
+    }
+};
 
 /// @brief Test fixture class for SharedNetwork4Parser class.
 class SharedNetwork4ParserTest : public SharedNetworkParserTest {
@@ -1215,5 +1362,28 @@ TEST_F(SharedNetwork6ParserTest, deprecatedClientClass) {
                      " (<string>:1:2)");
 }
 
+// Verifies valid permuatations of ddns-ttl-percent, ddns-ttl,
+// ddns-ttl-min, and ddns-ttl-max values for SharedNetwork4.
+TEST_F(SharedNetwork4ParserTest, validDdnsTtlParmaters4) {
+    validDdnsTtlParmatersTest<SharedNetwork4Ptr, SharedNetwork4Parser>();
+}
+
+// Verifies valid permuatations of ddns-ttl-percent, ddns-ttl,
+// ddns-ttl-min, and ddns-ttl-max values for SharedNetwork6.
+TEST_F(SharedNetwork6ParserTest, validDdnsTtlParmaters6) {
+    validDdnsTtlParmatersTest<SharedNetwork6Ptr, SharedNetwork6Parser>();
+}
+
+// Verifies invalid permuatations of ddns-ttl-percent, ddns-ttl,
+// ddns-ttl-min, and ddns-ttl-max values for Subnet4.
+TEST_F(SharedNetwork4ParserTest, invalidDdnsTtlParmaters4) {
+    invalidDdnsTtlParmatersTest<SharedNetwork4Parser>();
+}
+
+// Verifies invalid permuatations of ddns-ttl-percent, ddns-ttl,
+// ddns-ttl-min, and ddns-ttl-max values for Subnet6.
+TEST_F(SharedNetwork6ParserTest, invalidDdnsTtlParmaters6) {
+    invalidDdnsTtlParmatersTest<SharedNetwork6Parser>();
+}
 
 } // end of anonymous namespace

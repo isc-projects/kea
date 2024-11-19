@@ -284,6 +284,9 @@ public:
         cfg->sanityChecksLifetime("preferred-lifetime");
         cfg->sanityChecksLifetime("valid-lifetime");
 
+        /// Sanity check global ddns-ttl parameters
+        cfg->sanityChecksDdnsTtlParameters();
+
         /// Shared network sanity checks
         const SharedNetwork6Collection* networks = cfg->getCfgSharedNetworks6()->getAll();
         if (networks) {

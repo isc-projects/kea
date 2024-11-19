@@ -772,6 +772,100 @@ public:
 
     }
 
+    /// @brief Verifies that DDNS TTL parameters are used when specified. 
+    ///
+    /// @param valid_flt lease life time
+    /// @param ddns_ttl_percent expected configured value for ddns-ttl-percent
+    /// @param ddns_ttl expected configured value for ddns-ttl
+    /// @param ddns_ttl_min expected configured value for ddns-ttl-min
+    /// @param ddns_ttl_max expected configured value for ddns-ttl-max
+    void testDdnsTtlParameters(uint32_t valid_lft,
+                               Optional<double> ddns_ttl_percent = Optional<double>(),
+                               Optional<uint32_t> ddns_ttl = Optional<uint32_t>(),
+                               Optional<uint32_t> ddns_ttl_min = Optional<uint32_t>(),
+                               Optional<uint32_t> ddns_ttl_max = Optional<uint32_t>()) {
+
+        std::string config_header = R"(
+        { 
+            "interfaces-config": { "interfaces": [ "*" ] },
+            "subnet4": [ {
+                "subnet": "10.0.0.0/24", 
+                "interface": "eth1",
+                "id": 1,
+                "pools": [ { "pool": "10.0.0.10-10.0.0.10" } ]
+        )";
+
+        std::string config_footer = R"(
+            }],
+            "ddns-qualifying-suffix": "example.com.",
+            "dhcp-ddns": { "enable-updates": true }
+        }
+        )";
+
+        std::stringstream oss;
+        oss << config_header;
+
+        oss << ",\n \"valid-lifetime\":" << valid_lft;
+
+        if (!ddns_ttl_percent.unspecified()) {
+            oss << ",\n, \"ddns-ttl-percent\" :" << util::str::dumpDouble(ddns_ttl_percent.get());
+        }
+
+        if (!ddns_ttl.unspecified()) {
+            oss << ",\n, \"ddns-ttl\" :" << ddns_ttl.get();
+        }
+
+        if (!ddns_ttl_min.unspecified()) {
+            oss << ",\n, \"ddns-ttl-min\" :" << ddns_ttl_min.get();
+        }
+
+        if (!ddns_ttl_max.unspecified()) {
+            oss << ",\n, \"ddns-ttl-max\" :" << ddns_ttl_max.get();
+        }
+
+        oss << "\n" << config_footer;
+
+        // Load a configuration with D2 enabled and ddns-ttl* parameters.
+        ASSERT_NO_FATAL_FAILURE(configure(oss.str(), *srv_));
+        ASSERT_TRUE(CfgMgr::instance().ddnsEnabled());
+
+        // Create a client and get a lease.
+        Dhcp4Client client1(srv_, Dhcp4Client::SELECTING);
+        client1.setIfaceName("eth1");
+        client1.setIfaceIndex(ETH1_INDEX);
+        ASSERT_NO_THROW(client1.includeHostname("client1"));
+
+        // Do the DORA.
+        ASSERT_NO_THROW(client1.doDORA());
+        Pkt4Ptr resp = client1.getContext().response_;
+        ASSERT_TRUE(resp);
+        ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+
+        // Obtain the Hostname option sent in the response and make sure that the server
+        // has used the hostname reserved for this client.
+        OptionStringPtr hostname;
+        hostname = boost::dynamic_pointer_cast<OptionString>(resp->getOption(DHO_HOST_NAME));
+        ASSERT_TRUE(hostname);
+        EXPECT_EQ("client1.example.com", hostname->getValue());
+
+        // Make sure the lease is in the database and hostname is correct.
+        Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(IOAddress("10.0.0.10"));
+        ASSERT_TRUE(lease);
+        EXPECT_EQ("client1.example.com", lease->hostname_);
+
+        // Verify that an NCR was generated correctly.
+        ASSERT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+        verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                                resp->getYiaddr().toText(),
+                                "client1.example.com.", "",
+                                time(NULL), lease->valid_lft_, true,
+                                CHECK_WITH_DHCID, 
+                                ddns_ttl_percent, 
+                                ddns_ttl, 
+                                ddns_ttl_min, 
+                                ddns_ttl_max);
+    }
+
     ///@brief Verify that NameChangeRequest holds valid values.
     ///
     /// Pulls the NCR from the top of the send queue and checks its content
@@ -794,6 +888,10 @@ public:
     /// lease expiration time is conducted as greater than or equal to rather
     /// equal to CLTT plus lease ttl .
     /// @param exp_conflict_resolution_mode expected value of conflict resolution mode
+    /// @param ddns_ttl_percent expected configured value for ddns-ttl-percent
+    /// @param ddns_ttl expected configured value for ddns-ttl
+    /// @param ddns_ttl_min expected configured value for ddns-ttl-min
+    /// @param ddns_ttl_max expected configured value for ddns-ttl-max
     void verifyNameChangeRequest(const isc::dhcp_ddns::NameChangeType type,
                                  const bool reverse, const bool forward,
                                  const std::string& addr,
@@ -804,7 +902,10 @@ public:
                                  const bool not_strict_expire_check = false,
                                  const ConflictResolutionMode
                                  exp_conflict_resolution_mode = CHECK_WITH_DHCID,
-                                 Optional<double> ttl_percent = Optional<double>()) {
+                                 Optional<double> ddns_ttl_percent = Optional<double>(),
+                                 Optional<uint32_t> ddns_ttl = Optional<uint32_t>(),
+                                 Optional<uint32_t> ddns_ttl_min = Optional<uint32_t>(),
+                                 Optional<uint32_t> ddns_ttl_max = Optional<uint32_t>()) {
         NameChangeRequestPtr ncr;
         ASSERT_NO_THROW(ncr = d2_mgr_.peekAt(0));
         ASSERT_TRUE(ncr);
@@ -825,7 +926,10 @@ public:
         // current time as cltt but the it may not check the lease expiration
         // time for equality but rather check that the lease expiration time
         // is not greater than the current time + lease lifetime.
-        uint32_t ttl = calculateDdnsTtl(valid_lft, ttl_percent);
+
+        uint32_t ttl = calculateDdnsTtl(valid_lft, ddns_ttl_percent, 
+                                        ddns_ttl, ddns_ttl_min, ddns_ttl_max);
+
         if (not_strict_expire_check) {
             EXPECT_GE(cltt + ttl, ncr->getLeaseExpiresOn());
         } else {
@@ -2840,7 +2944,7 @@ TEST_F(NameDhcpv4SrvTest, withOfferLifetime) {
 }
 
 // Verifies the DNS TTL when ttl percent is specified
-// than zero.
+// greater than zero.
 TEST_F(NameDhcpv4SrvTest, withDdnsTtlPercent) {
     // Load a configuration with D2 enabled and ddns-ttl-percent
     ASSERT_NO_FATAL_FAILURE(configure(CONFIGS[12], *srv_));
@@ -2956,6 +3060,38 @@ TEST_F(NameDhcpv4SrvTest, checkExistsDHCIDConflictResolutionMode) {
                             "00010132E91AA355CFBB753C0F0497A5A940436965"
                             "B68B6D438D98E680BF10B09F3BCF",
                             lease->cltt_, 100, false, CHECK_EXISTS_WITH_DHCID);
+}
+
+// Verify the ddns-ttl-percent is used when specified.
+TEST_F(NameDhcpv4SrvTest, ddnsTtlPercentTest) {
+    testDdnsTtlParameters(2100, 0.5);
+}
+
+// Verify the ddns-ttl is used when specified.
+TEST_F(NameDhcpv4SrvTest, ddnsTtlTest) {
+    testDdnsTtlParameters(2100,                     // valid lft
+                          Optional<double>(),       // percent
+                          999,                      // ttl
+                          Optional<uint32_t>(),     // min 
+                          Optional<uint32_t>());    // max
+}
+
+// Verify the ddns-ttl-min is used when specified.
+TEST_F(NameDhcpv4SrvTest, ddnsTtlMinTest) {
+    testDdnsTtlParameters(2100,                     // valid lft
+                          Optional<double>(),       // percent
+                          Optional<uint32_t>(),     // ttl 
+                          800,                      // ttl-min
+                          Optional<uint32_t>());    // ttl-max
+}
+
+// Verify the ddns-ttl-max is used when specified.
+TEST_F(NameDhcpv4SrvTest, ddnsTtlMaxTest) {
+    testDdnsTtlParameters(2100,                     // valid lft
+                          Optional<double>(),       // percent
+                          Optional<uint32_t>(),     // ttl 
+                          Optional<uint32_t>(),     // ttl-min
+                          500);                     // ttl-max 
 }
 
 } // end of anonymous namespace

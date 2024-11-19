@@ -195,6 +195,9 @@ public:
         /// Global lifetime sanity checks
         cfg->sanityChecksLifetime("valid-lifetime");
 
+        /// Sanity check global ddns-ttl parameters
+        cfg->sanityChecksDdnsTtlParameters();
+
         /// Shared network sanity checks
         const SharedNetwork4Collection* networks = cfg->getCfgSharedNetworks4()->getAll();
         if (networks) {
@@ -673,7 +676,10 @@ processDhcp4Config(isc::data::ConstElementPtr config_set) {
                  (config_pair.first == "parked-packet-limit") ||
                  (config_pair.first == "allocator") ||
                  (config_pair.first == "offer-lifetime") ||
-                 (config_pair.first == "stash-agent-options") ) {
+                 (config_pair.first == "ddns-ttl") ||
+                 (config_pair.first == "ddns-ttl-min") ||
+                 (config_pair.first == "ddns-ttl-max") ||
+                 (config_pair.first == "stash-agent-options")) {
                 CfgMgr::instance().getStagingCfg()->addConfiguredGlobal(config_pair.first,
                                                                         config_pair.second);
                 continue;

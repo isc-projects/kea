@@ -340,6 +340,13 @@ dumpAsHex(const uint8_t* data, size_t length) {
     return (output.str());
 }
 
+string
+dumpDouble(double val, size_t precision) {
+    std::stringstream oss;
+    oss << setprecision(precision) << val;
+    return (oss.str());
+}
+
 }  // namespace str
 }  // namespace util
 }  // namespace isc

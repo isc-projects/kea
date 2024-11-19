@@ -905,6 +905,39 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"ddns-ttl\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp4Parser::make_DDNS_TTL(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("ddns-ttl", driver.loc_);
+    }
+}
+
+\"ddns-ttl-min\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp4Parser::make_DDNS_TTL_MIN(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("ddns-ttl-min", driver.loc_);
+    }
+}
+
+\"ddns-ttl-max\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp4Parser::make_DDNS_TTL_MAX(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("ddns-ttl-max", driver.loc_);
+    }
+}
+
 \"subnet4\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:

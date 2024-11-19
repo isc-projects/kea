@@ -1057,6 +1057,42 @@ DdnsParams::getHostnameSanitizer() const {
     return (sanitizer);
 }
 
+void
+SrvConfig::sanityChecksDdnsTtlParameters() const {
+    // Need to check that global DDNS TTL values make sense
+
+    // Get ddns-ttl first. If ddns-ttl is specified none of the others should be.
+    ConstElementPtr has_ddns_ttl = getConfiguredGlobal("ddns-ttl");
+
+    if (getConfiguredGlobal("ddns-ttl-percent")) {
+        if (has_ddns_ttl) {
+            isc_throw(BadValue, "cannot specify both ddns-ttl-percent and ddns-ttl");
+        }
+    }
+
+    ConstElementPtr has_ddns_ttl_min = getConfiguredGlobal("ddns-ttl-min");
+    if (has_ddns_ttl_min && has_ddns_ttl) {
+        isc_throw(BadValue, "cannot specify both ddns-ttl-min and ddns-ttl");
+    }
+
+    ConstElementPtr has_ddns_ttl_max = getConfiguredGlobal("ddns-ttl-max");
+    if (has_ddns_ttl_max) {
+        if (has_ddns_ttl) {
+            isc_throw(BadValue, "cannot specify both ddns-ttl-max and ddns-ttl");
+        }
+
+        if (has_ddns_ttl_min) {
+            // Have min and max, make sure the range is sane.
+            uint32_t ddns_ttl_min = has_ddns_ttl_min->intValue();
+            uint32_t ddns_ttl_max = has_ddns_ttl_max->intValue();
+            if (ddns_ttl_max < ddns_ttl_min) {
+                isc_throw(BadValue, "ddns-ttl-max: " << ddns_ttl_max
+                          << " must be greater than ddns-ttl-min: " <<  ddns_ttl_min);
+            }
+        }
+    }
+}
+
 bool
 DdnsParams::getUpdateOnRenew() const {
     if (!subnet_) {
@@ -1073,6 +1109,33 @@ DdnsParams::getTtlPercent() const {
     }
 
     return (subnet_->getDdnsTtlPercent());
+}
+
+util::Optional<uint32_t>
+DdnsParams::getTtl() const {
+    if (!subnet_) {
+        return (util::Optional<uint32_t>());
+    }
+
+    return (subnet_->getDdnsTtl());
+}
+
+util::Optional<uint32_t>
+DdnsParams::getTtlMin() const {
+    if (!subnet_) {
+        return (util::Optional<uint32_t>());
+    }
+
+    return (subnet_->getDdnsTtlMin());
+}
+
+util::Optional<uint32_t>
+DdnsParams::getTtlMax() const {
+    if (!subnet_) {
+        return (util::Optional<uint32_t>());
+    }
+
+    return (subnet_->getDdnsTtlMax());
 }
 
 std::string

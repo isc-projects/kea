@@ -219,8 +219,9 @@ public:
           ddns_replace_client_name_mode_(), ddns_generated_prefix_(), ddns_qualifying_suffix_(),
           hostname_char_set_(), hostname_char_replacement_(), store_extended_info_(),
           cache_threshold_(), cache_max_age_(), ddns_update_on_renew_(),
-          ddns_conflict_resolution_mode_(), ddns_ttl_percent_(), allocator_type_(),
-          default_allocator_type_() {
+          ddns_conflict_resolution_mode_(), ddns_ttl_percent_(), 
+          ddns_ttl_(), ddns_ttl_min_(), ddns_ttl_max_(),
+          allocator_type_(), default_allocator_type_() {
     }
 
     /// @brief Virtual destructor.
@@ -680,6 +681,59 @@ public:
     /// @param ddns_ttl_percent New value to use.
     void setDdnsTtlPercent(const util::Optional<double>& ddns_ttl_percent) {
         ddns_ttl_percent_ = ddns_ttl_percent;
+    }
+
+
+    /// @brief Returns ddns-ttl
+    ///
+    /// @param inheritance inheritance mode to be used.
+    util::Optional<uint32_t>
+    getDdnsTtl(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network>(&Network::getDdnsTtl,
+                                     ddns_ttl_, inheritance,
+                                     CfgGlobals::DDNS_TTL));
+    }
+
+    /// @brief Sets new ddns-ttl
+    ///
+    /// @param ddns_ttl New value to use.
+    void setDdnsTtl(const util::Optional<uint32_t>& ddns_ttl) {
+        ddns_ttl_ = ddns_ttl;
+    }
+
+
+    /// @brief Returns ddns-ttl-min
+    ///
+    /// @param inheritance inheritance mode to be used.
+    util::Optional<uint32_t>
+    getDdnsTtlMin(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network>(&Network::getDdnsTtlMin,
+                                     ddns_ttl_min_, inheritance,
+                                     CfgGlobals::DDNS_TTL_MIN));
+    }
+
+    /// @brief Sets new ddns-ttl-min
+    ///
+    /// @param ddns_ttl_min New value to use.
+    void setDdnsTtlMin(const util::Optional<uint32_t>& ddns_ttl_min) {
+        ddns_ttl_min_ = ddns_ttl_min;
+    }
+
+    /// @brief Returns ddns-ttl-max
+    ///
+    /// @param inheritance inheritance mode to be used.
+    util::Optional<uint32_t>
+    getDdnsTtlMax(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network>(&Network::getDdnsTtlMax,
+                                     ddns_ttl_max_, inheritance,
+                                     CfgGlobals::DDNS_TTL_MAX));
+    }
+
+    /// @brief Sets new ddns-ttl-max
+    ///
+    /// @param ddns_ttl_max New value to use.
+    void setDdnsTtlMax(const util::Optional<uint32_t>& ddns_ttl_max) {
+        ddns_ttl_max_ = ddns_ttl_max;
     }
 
     /// @brief Return the char set regexp used to sanitize client hostnames.
@@ -1236,6 +1290,15 @@ protected:
 
     /// @brief Percentage of the lease lifetime to use for DNS TTL.
     util::Optional<double> ddns_ttl_percent_;
+
+    /// @brief Explicit value to use for DNS TTL.
+    util::Optional<uint32_t> ddns_ttl_;
+
+    /// @brief Minimum value to use for DNS TTL.
+    util::Optional<uint32_t> ddns_ttl_min_;
+
+    /// @brief Maximum value to use for DNS TTL.
+    util::Optional<uint32_t> ddns_ttl_max_;
 
     /// @brief Allocator used for IP address allocations.
     util::Optional<std::string> allocator_type_;

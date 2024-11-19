@@ -197,8 +197,44 @@ BaseNetworkParser::parseDdnsParams(const data::ConstElementPtr& network_data,
         network->setDdnsUpdateOnRenew(getBoolean(network_data, "ddns-update-on-renew"));
     }
 
+    bool has_ddns_ttl = false;
+    uint32_t ddns_ttl = 0;
+    if (network_data->contains("ddns-ttl")) {
+        ddns_ttl = getInteger(network_data, "ddns-ttl");
+        network->setDdnsTtl(ddns_ttl);
+        has_ddns_ttl = true;
+    }
+
     if (network_data->contains("ddns-ttl-percent")) {
+        if (has_ddns_ttl) {
+            isc_throw(BadValue, "cannot specify both ddns-ttl-percent and ddns-ttl");
+        }
+
         network->setDdnsTtlPercent(getDouble(network_data, "ddns-ttl-percent"));
+    }
+
+    uint32_t ddns_ttl_min = 0;
+    if (network_data->contains("ddns-ttl-min")) {
+        if (has_ddns_ttl) {
+            isc_throw(BadValue, "cannot specify both ddns-ttl-min and ddns-ttl");
+        }
+
+        ddns_ttl_min = getInteger(network_data, "ddns-ttl-min");
+        network->setDdnsTtlMin(ddns_ttl_min);
+    }
+
+    if (network_data->contains("ddns-ttl-max")) {
+        if (has_ddns_ttl) {
+            isc_throw(BadValue, "cannot specify both ddns-ttl-max and ddns-ttl");
+        }
+
+        uint32_t ddns_ttl_max = getInteger(network_data, "ddns-ttl-max");
+        if (ddns_ttl_max < ddns_ttl_min) {
+            isc_throw(BadValue, "ddns-ttl-max: " << ddns_ttl_max 
+                      << " must be greater than ddns-ttl-min: " <<  ddns_ttl_min);
+        }
+
+        network->setDdnsTtlMax(ddns_ttl_max);
     }
 
     // For backward compatibility, ddns-conflict-resolution-mode is optional.

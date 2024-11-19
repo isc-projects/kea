@@ -80,6 +80,9 @@ public:
         MULTI_THREADING,
         SANITY_CHECKS,
         DHCP_QUEUE_CONTROL,
+        DDNS_TTL,
+        DDNS_TTL_MIN,
+        DDNS_TTL_MAX,
 
         // DHCPv4 specific parameters.
         ECHO_CLIENT_ID,

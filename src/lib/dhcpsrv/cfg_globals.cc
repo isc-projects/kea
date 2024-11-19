@@ -57,6 +57,9 @@ CfgGlobals::nameToIndex = {
     { "multi-threading", MULTI_THREADING },
     { "sanity-checks", SANITY_CHECKS },
     { "dhcp-queue-control", DHCP_QUEUE_CONTROL },
+    { "ddns-ttl", DDNS_TTL },
+    { "ddns-ttl-min", DDNS_TTL_MIN },
+    { "ddns-ttl-max", DDNS_TTL_MAX },
 
     // DHCPv4 specific parameters.
     { "echo-client-id", ECHO_CLIENT_ID },

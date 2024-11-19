@@ -85,6 +85,7 @@ CBControlDHCPv6::databaseConfigApply(const db::BackendSelector& backend_selector
             // Sanity check it.
             external_cfg->sanityChecksLifetime("preferred-lifetime");
             external_cfg->sanityChecksLifetime("valid-lifetime");
+            external_cfg->sanityChecksDdnsTtlParameters();
 
             // Now that we successfully fetched the new global parameters, let's
             // remove existing ones and merge them into the current configuration.
@@ -325,6 +326,7 @@ CBControlDHCPv6::databaseConfigApply(const db::BackendSelector& backend_selector
         auto const& cfg = CfgMgr::instance().getStagingCfg();
         external_cfg->sanityChecksLifetime(*cfg, "preferred-lifetime");
         external_cfg->sanityChecksLifetime(*cfg, "valid-lifetime");
+        external_cfg->sanityChecksDdnsTtlParameters();
         CfgMgr::instance().mergeIntoStagingCfg(external_cfg->getSequence());
 
     } else {
@@ -348,6 +350,7 @@ CBControlDHCPv6::databaseConfigApply(const db::BackendSelector& backend_selector
         auto const& cfg = CfgMgr::instance().getCurrentCfg();
         external_cfg->sanityChecksLifetime(*cfg, "preferred-lifetime");
         external_cfg->sanityChecksLifetime(*cfg, "valid-lifetime");
+        external_cfg->sanityChecksDdnsTtlParameters();
         CfgMgr::instance().mergeIntoCurrentCfg(external_cfg->getSequence());
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->initAllocatorsAfterConfigure();
     }

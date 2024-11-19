@@ -44,22 +44,38 @@ void queueNCR(const dhcp_ddns::NameChangeType& chg_type, const Lease6Ptr& lease)
 
 /// @brief Calculates TTL for a DNS resource record based on lease life time.
 ///
-/// If the parameter, ddns_ttl_percent is greater than zero, it is used to calculate
-/// the TTL directly:
+/// The logic for calculating TTL is as follow:
 ///
-/// TTL = (lease life time * ddns-ttl-percent)
+/// If ddns-ttl is specified use it unconditionally.
 ///
-/// Otherwise it is calculated as per RFC 4702 Section 5:
+/// If ddns-ttl-percnet is specified use it otherwise use 1/3 as
+/// called for by RFC 4702.
 ///
-/// TTL = ((lease life time / 3)  < 10 minutes) ? 10 minutes : (lease life time / 3)
+/// Calculate the candidate TTL based on the deteremined percentage.
+///
+/// If ddsn-ttl-min is specified used it otherwise use a minimum of
+/// 600 per RFC 4702.  If the TTL is less than the mininum return
+/// the minimum.
+///
+/// If ddsn-ttl-max is specified limit the ttl to that value otherwse
+/// return the ttl.
 ///
 /// @param lease_life_time valid life time of the lease
 /// @param ddns_ttl_percent optional percentage to use in calculation
+/// @param ddns_ttl optional percentage to use in calculation
+/// @param ddns_ttl_min optional minium TTL to allow
+/// @param ddns_ttl_max optional maximum TTL to allow
 ///
 /// @return the calculated TTL.
 uint32_t calculateDdnsTtl(uint32_t lease_life_time,
                           const util::Optional<double>& ddns_ttl_percent
-                          = util::Optional<double>());
+                          = util::Optional<double>(),
+                          const util::Optional<uint32_t>& ddns_ttl
+                          = util::Optional<uint32_t>(),
+                          const util::Optional<uint32_t>& ddns_ttl_min
+                          = util::Optional<uint32_t>(),
+                          const util::Optional<uint32_t>& ddns_ttl_max
+                          = util::Optional<uint32_t>());
 
 } // end of isc::dhcp namespace
 } // end of isc namespace

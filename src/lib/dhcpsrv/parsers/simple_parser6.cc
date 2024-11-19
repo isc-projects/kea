@@ -100,6 +100,9 @@ const SimpleKeywords SimpleParser6::GLOBAL6_PARAMETERS = {
     { "pd-allocator",                     Element::string },
     { "ddns-ttl-percent",                 Element::real },
     { "ddns-conflict-resolution-mode",    Element::string },
+    { "ddns-ttl",                         Element::integer },
+    { "ddns-ttl-min",                     Element::integer },
+    { "ddns-ttl-max",                     Element::integer },
 };
 
 /// @brief This table defines default global values for DHCPv6
@@ -253,6 +256,9 @@ const SimpleKeywords SimpleParser6::SUBNET6_PARAMETERS = {
     { "pd-allocator",                   Element::string },
     { "ddns-ttl-percent",               Element::real },
     { "ddns-conflict-resolution-mode",  Element::string },
+    { "ddns-ttl",                       Element::integer },
+    { "ddns-ttl-min",                   Element::integer },
+    { "ddns-ttl-max",                   Element::integer },
 };
 
 /// @brief This table defines default values for each IPv6 subnet.
@@ -401,6 +407,9 @@ const SimpleKeywords SimpleParser6::SHARED_NETWORK6_PARAMETERS = {
     { "pd-allocator",                   Element::string },
     { "ddns-ttl-percent",               Element::real },
     { "ddns-conflict-resolution-mode",  Element::string },
+    { "ddns-ttl",                       Element::integer },
+    { "ddns-ttl-min",                   Element::integer },
+    { "ddns-ttl-max",                   Element::integer },
 };
 
 /// @brief This table defines default values for interfaces for DHCPv6.

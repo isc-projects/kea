@@ -86,6 +86,7 @@ CBControlDHCPv4::databaseConfigApply(const BackendSelector& backend_selector,
 
             // Sanity check it.
             external_cfg->sanityChecksLifetime("valid-lifetime");
+            external_cfg->sanityChecksDdnsTtlParameters();
 
             // Now that we successfully fetched the new global parameters, let's
             // remove existing ones and merge them into the current configuration.
@@ -310,6 +311,7 @@ CBControlDHCPv4::databaseConfigApply(const BackendSelector& backend_selector,
         // ip-reservations-unique setting here. It will be applied when the
         // configuration is committed.
         external_cfg->sanityChecksLifetime(*staging_cfg, "valid-lifetime");
+        external_cfg->sanityChecksDdnsTtlParameters();
         CfgMgr::instance().mergeIntoStagingCfg(external_cfg->getSequence());
 
     } else {
@@ -331,6 +333,7 @@ CBControlDHCPv4::databaseConfigApply(const BackendSelector& backend_selector,
             }
         }
         external_cfg->sanityChecksLifetime(*current_cfg, "valid-lifetime");
+        external_cfg->sanityChecksDdnsTtlParameters();
         CfgMgr::instance().mergeIntoCurrentCfg(external_cfg->getSequence());
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->initAllocatorsAfterConfigure();
     }

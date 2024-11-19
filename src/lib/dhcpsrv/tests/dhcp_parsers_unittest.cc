@@ -72,6 +72,161 @@ public:
     void resetIfaceCfg() {
         CfgMgr::instance().clear();
     }
+
+	// Verifies valid permuatations of ddns-ttl-percent, ddns-ttl,
+	// ddns-ttl-min, and ddns-ttl-max values for SubnetX.
+    template<typename ParserType, typename NetworkPtrType>
+	void validDdnsTtlParmatersSubnet(int family) {
+	    struct Scenario {
+	        size_t line_no_;
+	        std::string json_;
+	        double ddns_ttl_percent_;
+	        uint32_t ddns_ttl_;
+	        uint32_t ddns_ttl_min_;
+	        uint32_t ddns_ttl_max_;
+	    };
+
+	    std::list<Scenario> scenarios = {
+	    {
+	        __LINE__,
+	        R"^({
+	            "id": 1,
+	            "ddns-ttl": 100
+	        })^",
+	        0.0, 100, 0, 0
+	    },{
+	        __LINE__,
+	        R"^({
+	            "id": 1,
+	            "ddns-ttl-percent": 5.0 
+	        })^",
+	        5.0, 0, 0, 0
+	    },{
+	        __LINE__,
+	        R"^({
+	            "id": 1,
+	            "ddns-ttl-min": 25 
+	        })^",
+	        0.0, 0, 25, 0
+	    },{
+	        __LINE__,
+	        R"^({
+	            "id": 1, 
+	            "ddns-ttl-max": 150 
+	        })^",
+	        0.0, 0, 0, 150 
+	    },{
+	        __LINE__,
+	        R"^({
+	            "id": 1,
+	            "ddns-ttl-min": 25,
+	            "ddns-ttl-max": 150 
+	        })^",
+	        0.0, 0, 25, 150 
+	    },{
+	        __LINE__,
+	        R"^({
+	            "id": 1, "subnet": "192.0.2.0/24",
+	            "ddns-ttl-percent": 5.0,
+	            "ddns-ttl-min": 25,
+	            "ddns-ttl-max": 150 
+	        })^",
+	        5.0, 0, 25, 150 
+	    }};
+
+        ElementPtr subnet_elem = Element::create(family == AF_INET ?
+                                                 "192.0.2.0/24" : "2001:db8::/64");	
+	    for (const auto& scenario : scenarios) {
+	        std::stringstream oss; 
+	        oss << "scenario at " << scenario.line_no_;
+	        SCOPED_TRACE(oss.str());
+	
+	        // Parse configuration specified above.
+	        ElementPtr config_element;
+	        ASSERT_NO_THROW_LOG(config_element = Element::fromJSON(scenario.json_));
+            config_element->set("subnet", subnet_elem);
+
+	        ParserType parser(family);
+
+	        NetworkPtrType subnet;
+	
+	        ASSERT_NO_THROW_LOG(subnet = parser.parse(config_element));
+	        ASSERT_TRUE(subnet);
+	
+	        EXPECT_EQ(subnet->getDdnsTtlPercent().unspecified(), (scenario.ddns_ttl_percent_ == 0.0)); 
+	        EXPECT_EQ(subnet->getDdnsTtlPercent(), scenario.ddns_ttl_percent_); 
+	
+	        EXPECT_EQ(subnet->getDdnsTtl().unspecified(), (scenario.ddns_ttl_ == 0)); 
+	        EXPECT_EQ(subnet->getDdnsTtl(), scenario.ddns_ttl_); 
+	
+	        EXPECT_EQ(subnet->getDdnsTtlMin().unspecified(), (scenario.ddns_ttl_min_ == 0)); 
+	        EXPECT_EQ(subnet->getDdnsTtlMin(), scenario.ddns_ttl_min_); 
+	
+	        EXPECT_EQ(subnet->getDdnsTtlMax().unspecified(), (scenario.ddns_ttl_max_ == 0)); 
+	        EXPECT_EQ(subnet->getDdnsTtlMax(), scenario.ddns_ttl_max_); 
+	    }
+	}
+	
+	// Verifies invalid permuatations of ddns-ttl-percent, ddns-ttl,
+	// ddns-ttl-min, and ddns-ttl-max values for SubnetX.
+    template<typename ParserType>
+	void invalidDdnsTtlParmatersSubnet(int family) {
+	    struct Scenario {
+	        size_t line_no_;
+	        std::string json_;
+	        std::string exp_message_;
+	    };
+	
+	    std::list<Scenario> scenarios = {
+	    {
+	        __LINE__,
+	        R"^({
+	            "id": 1,
+	            "ddns-ttl-percent": 5.0,
+	            "ddns-ttl": 100
+	        })^",
+	        "subnet configuration failed: cannot specify both ddns-ttl-percent and ddns-ttl"
+	    },{
+	        __LINE__,
+	        R"^({
+	            "id": 1,
+	            "ddns-ttl": 100,
+	            "ddns-ttl-min": 25
+	        })^",
+	        "subnet configuration failed: cannot specify both ddns-ttl-min and ddns-ttl"
+	    },{
+	        __LINE__,
+	        R"^({
+	            "id": 1,
+	            "ddns-ttl": 100,
+	            "ddns-ttl-max": 150 
+	        })^",
+	        "subnet configuration failed: cannot specify both ddns-ttl-max and ddns-ttl"
+	    },{
+	        __LINE__,
+	        R"^({
+	            "id": 1,
+	            "ddns-ttl-min": 150,
+	            "ddns-ttl-max": 25 
+	        })^",
+	        "subnet configuration failed: ddns-ttl-max: 25 must be greater than ddns-ttl-min: 150"
+	    }};
+	
+        ElementPtr subnet_elem = Element::create(family == AF_INET ?
+                                                 "192.0.2.0/24" : "2001:db8::/64");	
+	    for (const auto& scenario : scenarios) {
+	        std::stringstream oss; 
+	        oss << "scenario at " << scenario.line_no_;
+	        SCOPED_TRACE(oss.str());
+	
+	        // Parse configuration specified above.
+	        ElementPtr config_element;
+	        ASSERT_NO_THROW_LOG(config_element = Element::fromJSON(scenario.json_));
+            config_element->set("subnet", subnet_elem);
+	        ParserType parser(family);
+	        ASSERT_THROW_MSG(parser.parse(config_element), DhcpConfigError, scenario.exp_message_);
+	    }
+	}
 };
 
 /// Verifies the code that parses mac sources and adds them to CfgMgr
@@ -4113,6 +4268,30 @@ TEST_F(DhcpParserTest, deprecatedClientClassPool6) {
                      DhcpConfigError,
                      "cannot specify both 'client-class' and"
                      " 'client-classes'. Use only the latter.");
+}
+
+// Verifies valid permuatations of ddns-ttl-percent, ddns-ttl,
+// ddns-ttl-min, and ddns-ttl-max values for Subnet4.
+TEST_F(DhcpParserTest, validDdnsTtlParmatersSubnet4) {
+    validDdnsTtlParmatersSubnet<Subnet4ConfigParser, Subnet4Ptr>(AF_INET);
+}
+
+// Verifies invalid permuatations of ddns-ttl-percent, ddns-ttl,
+// ddns-ttl-min, and ddns-ttl-max values for Subnet4.
+TEST_F(DhcpParserTest, invalidDdnsTtlParmatersSubnet4) {
+    invalidDdnsTtlParmatersSubnet<Subnet4ConfigParser>(AF_INET);
+}
+
+// Verifies valid permuatations of ddns-ttl-percent, ddns-ttl,
+// ddns-ttl-min, and ddns-ttl-max values for Subnet6.
+TEST_F(DhcpParserTest, validDdnsTtlParmatersSubnet6) {
+    validDdnsTtlParmatersSubnet<Subnet6ConfigParser, Subnet6Ptr>(AF_INET6);
+}
+
+// Verifies invalid permuatations of ddns-ttl-percent, ddns-ttl,
+// ddns-ttl-min, and ddns-ttl-max values for Subnet6.
+TEST_F(DhcpParserTest, invalidDdnsTtlParmatersSubnet6) {
+    invalidDdnsTtlParmatersSubnet<Subnet6ConfigParser>(AF_INET6);
 }
 
 }  // Anonymous namespace
