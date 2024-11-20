@@ -1,3 +1,9 @@
+2314.	[func]		tmark
+	Added three new parameters which may be used to
+	influence DNS TTL to kea-dhcp4 and kea-dhcp6:
+	'ddns-ttl', 'ddns-ttl-min', and 'ddns-ttl-max'.
+	(Gitlab #2819)
+
 Kea 2.7.5 (development) released on December 11, 2024
 
 2313.	[doc]		marcin
