@@ -295,6 +295,17 @@
         // to use for the DNS TTL.
         "ddns-ttl-percent": 0.75,
 
+        // When greater than 0 it will be used as the DNS TTL. Specified in seconds.
+        "ddns-ttl": 0,
+
+        // When greater than 0 it used as the lower boundary for calculated DNS TTL values.
+        // Specified in seconds.
+        "ddns-ttl-min": 24000,
+
+        // When greater than 0 it used as the upper boundary for calculated DNS TTL values.
+        // Specified in seconds.
+        "ddns-ttl-max": 64000,
+
         // Time in seconds specifying how long a declined lease should be
         // excluded from DHCP assignments. The default value is 24 hours.
         "decline-probation-period": 86400,
@@ -839,6 +850,15 @@
                 "ddns-ttl-percent": 0.65,
 
                 // Shared-network level value. See description at the global level.
+                "ddns-ttl": 0,
+
+                // Shared-network level value. See description at the global level.
+                "ddns-ttl-min": 10000,
+
+                // Shared-network level value. See description at the global level.
+                "ddns-ttl-max": 20000,
+
+                // Shared-network level value. See description at the global level.
                 "hostname-char-replacement": "x",
 
                 // Shared-network level value. See description at the global level.
@@ -969,6 +989,15 @@
 
                         // Subnet-level value. See description at the global level.
                         "ddns-ttl-percent": 0.55,
+
+                        // Subnet-level value. See description at the global level.
+                        "ddns-ttl": 0,
+
+                        // Subnet-evel value. See description at the global level.
+                        "ddns-ttl-min": 10000,
+
+                        // Subnet-level value. See description at the global level.
+                        "ddns-ttl-max": 20000,
 
                         // Subnet-level value. See description at the global level.
                         "hostname-char-replacement": "x",

@@ -2516,7 +2516,10 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
                                         iaaddr->getAddress().toText(),
                                         dhcid, 0,
                                         calculateDdnsTtl(iaaddr->getValid(),
-                                                         ctx.getDdnsParams()->getTtlPercent()),
+                                                         ctx.getDdnsParams()->getTtlPercent(),
+                                                         ctx.getDdnsParams()->getTtl(),
+                                                         ctx.getDdnsParams()->getTtlMin(),
+                                                         ctx.getDdnsParams()->getTtlMax()),
                                         cr_mode));
         LOG_DEBUG(ddns6_logger, DBG_DHCP6_DETAIL, DHCP6_DDNS_CREATE_ADD_NAME_CHANGE_REQUEST)
             .arg(answer->getLabel())

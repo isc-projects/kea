@@ -617,6 +617,9 @@ public:
     /// @param exp_cr_mode expected value of NCR::conflict_resolution_mode_
     /// @param ddns_ttl_percent expected value of ddns_ttl_percent used for
     /// the NCR
+    /// @param exp_ddns_ttl expected configured value for ddns-ttl
+    /// @param exp_ddns_ttl_min expected configured value for ddns-ttl-min
+    /// @param exp_ddns_ttl_max expected configured value for ddns-ttl-max
     void verifyNameChangeRequest(const isc::dhcp_ddns::NameChangeType type,
                                  const bool reverse, const bool forward,
                                  const std::string& addr,
@@ -626,7 +629,10 @@ public:
                                  const std::string& fqdn = "",
                                  const ConflictResolutionMode exp_cr_mode = CHECK_WITH_DHCID,
                                  util::Optional<double> exp_ddns_ttl_percent
-                                 = util::Optional<double>()) {
+                                 = util::Optional<double>(),
+                                 Optional<uint32_t> exp_ddns_ttl = Optional<uint32_t>(),
+                                 Optional<uint32_t> exp_ddns_ttl_min = Optional<uint32_t>(),
+                                 Optional<uint32_t> exp_ddns_ttl_max = Optional<uint32_t>()) {
         NameChangeRequestPtr ncr;
         ASSERT_NO_THROW(ncr = d2_mgr_.peekAt(0));
         ASSERT_TRUE(ncr);
@@ -639,7 +645,8 @@ public:
             EXPECT_EQ(dhcid, ncr->getDhcid().toStr());
         }
 
-        uint32_t ttl = calculateDdnsTtl(valid_lft, exp_ddns_ttl_percent);
+        uint32_t ttl = calculateDdnsTtl(valid_lft, exp_ddns_ttl_percent, exp_ddns_ttl,
+                                        exp_ddns_ttl_min, exp_ddns_ttl_max);
         if (expires != 0) {
             EXPECT_EQ(expires + ttl, ncr->getLeaseExpiresOn());
         }
@@ -686,6 +693,66 @@ public:
         ASSERT_TRUE(pool);
         pool_ = boost::dynamic_pointer_cast<Pool6>(pool);
         ASSERT_TRUE(pool);
+    }
+
+    /// @brief Verifies that DDNS TTL parameters are used when specified. 
+    ///
+    /// @param valid_flt lease life time
+    /// @param ddns_ttl_percent expected configured value for ddns-ttl-percent
+    /// @param ddns_ttl expected configured value for ddns-ttl
+    /// @param ddns_ttl_min expected configured value for ddns-ttl-min
+    /// @param ddns_ttl_max expected configured value for ddns-ttl-max
+    void testDdnsTtlParameters(uint32_t valid_lft,
+                               Optional<double> ddns_ttl_percent = Optional<double>(),
+                               Optional<uint32_t> ddns_ttl = Optional<uint32_t>(),
+                               Optional<uint32_t> ddns_ttl_min = Optional<uint32_t>(),
+                               Optional<uint32_t> ddns_ttl_max = Optional<uint32_t>()) {
+
+        // Create Reply message with Client Id and Server id.
+        Pkt6Ptr answer = generateMessageWithIds(DHCPV6_REPLY);
+
+        // Create NameChangeRequest for the first allocated address.
+        AllocEngine::ClientContext6 ctx;
+        subnet_->setDdnsConflictResolutionMode("no-check-with-dhcid");
+        subnet_->setDdnsTtlPercent(ddns_ttl_percent);
+        subnet_->setDdnsTtl(ddns_ttl);
+        subnet_->setDdnsTtlMin(ddns_ttl_min);
+        subnet_->setDdnsTtlMax(ddns_ttl_max);
+
+        ctx.subnet_ = subnet_;
+        ctx.fwd_dns_update_ = ctx.rev_dns_update_ = true;
+
+        // Create an IA.
+        Option6IAPtr opt_ia = generateIA(D6O_IA_NA, 1234, 1500, 3000);
+        Option6IAAddrPtr opt_iaaddr(new Option6IAAddr(D6O_IAADDR, 
+                                                      IOAddress("2001:db8:1::1"),
+                                                      valid_lft, valid_lft));
+        opt_ia->addOption(opt_iaaddr);
+        answer->addOption(opt_ia);
+        ctx.createIAContext();
+        ctx.currentIA().ia_rsp_ = opt_ia;
+
+        // Use domain name in upper case. It should be converted to lower-case
+        // before DHCID is calculated. So, we should get the same result as if
+        // we typed domain name in lower-case.
+        Option6ClientFqdnPtr fqdn = createClientFqdn(Option6ClientFqdn::FLAG_S,
+                                                     "MYHOST.EXAMPLE.COM",
+                                                     Option6ClientFqdn::FULL);
+        answer->addOption(fqdn);
+
+        ASSERT_NO_THROW(srv_->createNameChangeRequests(answer, ctx));
+        ASSERT_EQ(1, d2_mgr_.getQueueSize());
+
+        // Verify that NameChangeRequest is correct.
+        verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                                "2001:db8:1::1",
+                                "000201415AA33D1187D148275136FA30300478"
+                                "FAAAA3EBD29826B5C907B2C9268A6F52",
+                                0, valid_lft, "", NO_CHECK_WITH_DHCID,
+                                ddns_ttl_percent,
+                                ddns_ttl,
+                                ddns_ttl_min,
+                                ddns_ttl_max);
     }
 
     /// Pointer to Dhcpv6Srv that is used in tests
@@ -2161,39 +2228,36 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenew) {
     }
 }
 
-// Verify that when specified ddns-ttl-percent is used to calculate
-// the lease length in an NCR.
-TEST_F(FqdnDhcpv6SrvTest, ddnsTtlPercent) {
-    // Create Reply message with Client Id and Server id.
-    Pkt6Ptr answer = generateMessageWithIds(DHCPV6_REPLY);
+// Verify the ddns-ttl-percent is used when specified.
+TEST_F(FqdnDhcpv6SrvTest, ddnsTtlPercentTest) {
+    testDdnsTtlParameters(2100, 0.5);
+}
 
-    // Create NameChangeRequest for the first allocated address.
-    AllocEngine::ClientContext6 ctx;
-    subnet_->setDdnsConflictResolutionMode("no-check-with-dhcid");
-    subnet_->setDdnsTtlPercent(Optional<double>(0.10));
-    ctx.subnet_ = subnet_;
-    ctx.fwd_dns_update_ = ctx.rev_dns_update_ = true;
+// Verify the ddns-ttl is used when specified.
+TEST_F(FqdnDhcpv6SrvTest, ddnsTtlTest) {
+    testDdnsTtlParameters(2100,                     // valid lft
+                          Optional<double>(),       // percent
+                          999,                      // ttl
+                          Optional<uint32_t>(),     // min 
+                          Optional<uint32_t>());    // max
+}
 
-    // Create an IA.
-    addIA(1234, IOAddress("2001:db8:1::1"), answer, ctx);
+// Verify the ddns-ttl-min is used when specified.
+TEST_F(FqdnDhcpv6SrvTest, ddnsTtlMinTest) {
+    testDdnsTtlParameters(2100,                     // valid lft
+                          Optional<double>(),       // percent
+                          Optional<uint32_t>(),     // ttl 
+                          800,                      // ttl-min
+                          Optional<uint32_t>());    // ttl-max
+}
 
-    // Use domain name in upper case. It should be converted to lower-case
-    // before DHCID is calculated. So, we should get the same result as if
-    // we typed domain name in lower-case.
-    Option6ClientFqdnPtr fqdn = createClientFqdn(Option6ClientFqdn::FLAG_S,
-                                                 "MYHOST.EXAMPLE.COM",
-                                                 Option6ClientFqdn::FULL);
-    answer->addOption(fqdn);
-
-    ASSERT_NO_THROW(srv_->createNameChangeRequests(answer, ctx));
-    ASSERT_EQ(1, d2_mgr_.getQueueSize());
-
-    // Verify that NameChangeRequest is correct.
-    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
-                            "2001:db8:1::1",
-                            "000201415AA33D1187D148275136FA30300478"
-                            "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            0, 500, "", NO_CHECK_WITH_DHCID, subnet_->getDdnsTtlPercent());
+// Verify the ddns-ttl-max is used when specified.
+TEST_F(FqdnDhcpv6SrvTest, ddnsTtlMaxTest) {
+    testDdnsTtlParameters(2100,                     // valid lft
+                          Optional<double>(),       // percent
+                          Optional<uint32_t>(),     // ttl 
+                          Optional<uint32_t>(),     // ttl-min
+                          500);                     // ttl-max 
 }
 
 } // end of anonymous namespace

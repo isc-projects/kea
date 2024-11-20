@@ -9284,4 +9284,187 @@ TEST_F(Dhcp6ParserTest, deprecatedClientClassesCheck) {
                 " and 'client-classes'. Use only the latter.");
 }
 
+// Verifies ddns-ttl-percent is supported at global,
+// shared-network, and subnet scopes.
+TEST_F(Dhcp6ParserTest, ddnsTtlPercent) {
+    string config = R"(
+    {
+        "ddns-ttl-percent": 0.75,
+        "valid-lifetime": 4000,
+        "shared-networks": [{ 
+            "name": "net",
+            "ddns-ttl-percent": 0.50,
+            "subnet6": [{
+                "id": 1,
+                "subnet": "2001:db8:1::/64",
+                "ddns-ttl-percent": 0.25
+            }],
+        }]
+    }
+    )";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
+    extractConfig(config);
+
+    ConstElementPtr status;
+    ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    // returned value should be 0 (success)
+    checkResult(status, 0);
+
+    // Commit it so global inheritance works.
+    CfgMgr::instance().commit();
+
+    ConstSubnet6Ptr subnet = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets6()->selectSubnet(IOAddress("2001:db8:1::"));
+    ASSERT_TRUE(subnet);
+
+    EXPECT_FALSE(subnet->getDdnsTtlPercent(Network::Inheritance::NONE).unspecified());
+    EXPECT_EQ(0.25, subnet->getDdnsTtlPercent(Network::Inheritance::NONE).get());
+
+    EXPECT_FALSE(subnet->getDdnsTtlPercent(Network::Inheritance::PARENT_NETWORK).unspecified());
+    EXPECT_EQ(0.50, subnet->getDdnsTtlPercent(Network::Inheritance::PARENT_NETWORK).get());
+
+    EXPECT_FALSE(subnet->getDdnsTtlPercent(Network::Inheritance::GLOBAL).unspecified());
+    EXPECT_EQ(0.75, subnet->getDdnsTtlPercent(Network::Inheritance::GLOBAL).get());
+}
+
+// Verifies ddns-ttl is supported at global,
+// shared-network, and subnet scopes.
+TEST_F(Dhcp6ParserTest, ddnsTtl) {
+    string config = R"(
+    {
+        "ddns-ttl": 750,
+        "valid-lifetime": 4000,
+        "shared-networks": [{ 
+            "name": "net",
+            "ddns-ttl": 500,
+            "subnet6": [{
+                "id": 1,
+                "subnet": "2001:db8:1::/64",
+                "ddns-ttl": 250
+            }],
+        }]
+    }
+    )";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
+    extractConfig(config);
+
+    ConstElementPtr status;
+    ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
+
+    // returned value should be 0 (success)
+    checkResult(status, 0);
+
+    // Commit it so global inheritance works.
+    CfgMgr::instance().commit();
+
+    ConstSubnet6Ptr subnet = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets6()->selectSubnet(IOAddress("2001:db8:1::"));
+    ASSERT_TRUE(subnet);
+
+    EXPECT_FALSE(subnet->getDdnsTtl(Network::Inheritance::NONE).unspecified());
+    EXPECT_EQ(250, subnet->getDdnsTtl(Network::Inheritance::NONE).get());
+
+    EXPECT_FALSE(subnet->getDdnsTtl(Network::Inheritance::PARENT_NETWORK).unspecified());
+    EXPECT_EQ(500, subnet->getDdnsTtl(Network::Inheritance::PARENT_NETWORK).get());
+
+    EXPECT_FALSE(subnet->getDdnsTtl(Network::Inheritance::GLOBAL).unspecified());
+    EXPECT_EQ(750, subnet->getDdnsTtl(Network::Inheritance::GLOBAL).get());
+}
+
+// Verifies ddns-ttl-min is supported at global,
+// shared-network, and subnet scopes.
+TEST_F(Dhcp6ParserTest, ddnsTtlMin) {
+    string config = R"(
+    {
+        "ddns-ttl-min": 750,
+        "valid-lifetime": 4000,
+        "shared-networks": [{ 
+            "name": "net",
+            "ddns-ttl-min": 500,
+            "subnet6": [{
+                "id": 1,
+                "subnet": "2001:db8:1::/64",
+                "ddns-ttl-min": 250
+            }],
+        }]
+    }
+    )";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
+    extractConfig(config);
+
+    ConstElementPtr status;
+    ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
+
+    // returned value should be 0 (success)
+    checkResult(status, 0);
+
+    // Commit it so global inheritance works.
+    CfgMgr::instance().commit();
+
+    ConstSubnet6Ptr subnet = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets6()->selectSubnet(IOAddress("2001:db8:1::"));
+    ASSERT_TRUE(subnet);
+
+    EXPECT_FALSE(subnet->getDdnsTtlMin(Network::Inheritance::NONE).unspecified());
+    EXPECT_EQ(250, subnet->getDdnsTtlMin(Network::Inheritance::NONE).get());
+
+    EXPECT_FALSE(subnet->getDdnsTtlMin(Network::Inheritance::PARENT_NETWORK).unspecified());
+    EXPECT_EQ(500, subnet->getDdnsTtlMin(Network::Inheritance::PARENT_NETWORK).get());
+
+    EXPECT_FALSE(subnet->getDdnsTtlMin(Network::Inheritance::GLOBAL).unspecified());
+    EXPECT_EQ(750, subnet->getDdnsTtlMin(Network::Inheritance::GLOBAL).get());
+}
+
+// Verifies ddns-ttl-max is supported at global,
+// shared-network, and subnet scopes.
+TEST_F(Dhcp6ParserTest, ddnsTtlMax) {
+    string config = R"(
+    {
+        "ddns-ttl-max": 750,
+        "valid-lifetime": 4000,
+        "shared-networks": [{ 
+            "name": "net",
+            "ddns-ttl-max": 500,
+            "subnet6": [{
+                "id": 1,
+                "subnet": "2001:db8:1::/64",
+                "ddns-ttl-max": 250
+            }],
+        }]
+    }
+    )";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
+    extractConfig(config);
+
+    ConstElementPtr status;
+    ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
+
+    // returned value should be 0 (success)
+    checkResult(status, 0);
+
+    // Commit it so global inheritance works.
+    CfgMgr::instance().commit();
+
+    ConstSubnet6Ptr subnet = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets6()->selectSubnet(IOAddress("2001:db8:1::"));
+    ASSERT_TRUE(subnet);
+
+    EXPECT_FALSE(subnet->getDdnsTtlMax(Network::Inheritance::NONE).unspecified());
+    EXPECT_EQ(250, subnet->getDdnsTtlMax(Network::Inheritance::NONE).get());
+
+    EXPECT_FALSE(subnet->getDdnsTtlMax(Network::Inheritance::PARENT_NETWORK).unspecified());
+    EXPECT_EQ(500, subnet->getDdnsTtlMax(Network::Inheritance::PARENT_NETWORK).get());
+
+    EXPECT_FALSE(subnet->getDdnsTtlMax(Network::Inheritance::GLOBAL).unspecified());
+    EXPECT_EQ(750, subnet->getDdnsTtlMax(Network::Inheritance::GLOBAL).get());
+}
+
 }  // namespace

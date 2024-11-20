@@ -122,6 +122,9 @@ using namespace std;
   DDNS_UPDATE_ON_RENEW "ddns-update-on-renew"
   DDNS_USE_CONFLICT_RESOLUTION "ddns-use-conflict-resolution"
   DDNS_TTL_PERCENT "ddns-ttl-percent"
+  DDNS_TTL "ddns-ttl"
+  DDNS_TTL_MIN "ddns-ttl-min"
+  DDNS_TTL_MAX "ddns-ttl-mix"
   STORE_EXTENDED_INFO "store-extended-info"
   SUBNET6 "subnet6"
   OPTION_DEF "option-def"
@@ -571,6 +574,9 @@ global_param: data_directory
             | ddns_use_conflict_resolution
             | ddns_conflict_resolution_mode
             | ddns_ttl_percent
+            | ddns_ttl
+            | ddns_ttl_min
+            | ddns_ttl_max
             | store_extended_info
             | statistic_default_sample_count
             | statistic_default_sample_age
@@ -787,6 +793,24 @@ ddns_ttl_percent: DDNS_TTL_PERCENT COLON FLOAT {
     ctx.unique("ddns-ttl-percent", ctx.loc2pos(@1));
     ElementPtr ttl(new DoubleElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("ddns-ttl-percent", ttl);
+};
+
+ddns_ttl: DDNS_TTL COLON INTEGER {
+    ctx.unique("ddns-ttl", ctx.loc2pos(@1));
+    ElementPtr ttl(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("ddns-ttl", ttl);
+};
+
+ddns_ttl_min: DDNS_TTL_MIN COLON INTEGER {
+    ctx.unique("ddns-ttl-min", ctx.loc2pos(@1));
+    ElementPtr ttl(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("ddns-ttl-min", ttl);
+};
+
+ddns_ttl_max: DDNS_TTL_MAX COLON INTEGER {
+    ctx.unique("ddns-ttl-max", ctx.loc2pos(@1));
+    ElementPtr ttl(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("ddns-ttl-max", ttl);
 };
 
 hostname_char_set: HOSTNAME_CHAR_SET {
@@ -1646,6 +1670,9 @@ subnet6_param: preferred_lifetime
              | ddns_use_conflict_resolution
              | ddns_conflict_resolution_mode
              | ddns_ttl_percent
+             | ddns_ttl
+             | ddns_ttl_min
+             | ddns_ttl_max
              | store_extended_info
              | allocator
              | pd_allocator
@@ -1835,6 +1862,9 @@ shared_network_param: name
                     | ddns_use_conflict_resolution
                     | ddns_conflict_resolution_mode
                     | ddns_ttl_percent
+                    | ddns_ttl
+                    | ddns_ttl_min
+                    | ddns_ttl_max
                     | store_extended_info
                     | allocator
                     | pd_allocator
