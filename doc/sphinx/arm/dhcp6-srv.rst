@@ -3286,7 +3286,10 @@ DDNS-related parameters are split into two groups:
     -  ``ddns-qualifying-suffix``
     -  ``ddns-update-on-renew``
     -  ``ddns-conflict-resolution-mode``
+    -  ``ddns-ttl``
     -  ``ddns-ttl-percent``
+    -  ``ddns-ttl-min``
+    -  ``ddns-ttl-max``
     -  ``hostname-char-set``
     -  ``hostname-char-replacement``
 
@@ -3437,16 +3440,32 @@ offers four modes of conflict resolution-related behavior:
     to generate DNS removal requests to D2.
 
 The DNS entries Kea creates contain a value for TTL (time to live).
-The :iscman:`kea-dhcp6` server calculates that value based on
+By default, the :iscman:`kea-dhcp4` server calculates that value based on
 `RFC 4702, Section 5 <https://tools.ietf.org/html/rfc4702#section-5>`__,
-which suggests that the TTL value be 1/3 of the lease's lifetime, with
-a minimum value of 10 minutes.
+which suggests that the TTL value be 1/3 of the lease's life time, with
+a minimum value of 10 minutes.  There are four optional parameters which
+may be used to influence the TTL calculation:
 
-The parameter ``ddns-ttl-percent``, when specified,
-causes the TTL to be calculated as a simple percentage of the lease's
-lifetime, using the parameter's value as the percentage. It is specified
-as a decimal percent (e.g. .25, .75, 1.00) and may be specified at the
-global, shared-network, and subnet levels. By default it is unspecified.
+    - ``ddns-ttl`` - If specified and greater than 0 use it as the value of TTL
+      unconditionally.  It is specified in seconds. By default it is unspecified.
+
+    - ``ddns-ttl-percent`` - If specified and greater than zero use it as the
+      percentage of the lease life time otherwise use 1/3 (per RFC 4702) of the
+      lease life time. It is specified as a decimal percentage (e.g. 0.75, 0.50)
+      and is unspecified by default.
+
+    - ``ddns-ttl-min`` - If specified and greater than 0 use it the minimum
+      otherwise use a minimum of 600 seconds (per RFC 4702). If the calculated TTL
+      is less than the minimum return the minimum.  It is specified in seconds. By
+      default it is unspecified.
+
+    - ``ddns-ttl-max`` - If specified and greater than zero limit the calculated TTL
+      to its value. It is specified in seconds. By default it is unspecified.
+
+.. note::
+
+    A value of zero for any of the TTL parameters can be used to suppress (i.e. "unspecify")
+    the value of that parameter inherited from a higher scope.
 
 .. _dhcpv6-d2-io-config:
 
