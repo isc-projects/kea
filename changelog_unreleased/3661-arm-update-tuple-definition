@@ -1,0 +1,4 @@
+[doc]		piotrek
+	Added more extensive definition of the tuple DHCP option type in
+	the ARM documentation.
+	(Gitlab #3661)
