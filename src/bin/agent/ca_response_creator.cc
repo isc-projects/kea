@@ -63,6 +63,31 @@ createStockHttpResponse(const HttpRequestPtr& request,
     return (response);
 }
 
+namespace {
+
+/// Getting the config context.
+CtrlAgentCfgContextPtr getCtrlAgentCfgContext() {
+    // There is a hierarchy of the objects through which we need to pass to get
+    // the configuration context. We may simplify this at some point but since
+    // we're in the singleton we want to make sure that we're using most current
+    // configuration.
+    CtrlAgentCfgContextPtr ctx;
+    boost::shared_ptr<CtrlAgentController> controller =
+        boost::dynamic_pointer_cast<CtrlAgentController>(CtrlAgentController::instance());
+    if (controller) {
+        CtrlAgentProcessPtr process = controller->getCtrlAgentProcess();
+        if (process) {
+            CtrlAgentCfgMgrPtr cfgmgr = process->getCtrlAgentCfgMgr();
+            if (cfgmgr) {
+                ctx = cfgmgr->getCtrlAgentCfgContext();
+            }
+        }
+    }
+    return (ctx);
+}
+
+} // end of anonymous namespace.
+
 HttpResponsePtr
 CtrlAgentResponseCreator::
 createStockHttpResponseInternal(const HttpRequestPtr& request,
@@ -81,20 +106,9 @@ createStockHttpResponseInternal(const HttpRequestPtr& request,
     }
     // This will generate the response holding JSON content.
     HttpResponsePtr response(new HttpResponseJson(http_version, status_code));
-    // See the comment below.
-    boost::shared_ptr<CtrlAgentController> controller =
-        boost::dynamic_pointer_cast<CtrlAgentController>(CtrlAgentController::instance());
-    if (controller) {
-        CtrlAgentProcessPtr process = controller->getCtrlAgentProcess();
-        if (process) {
-            CtrlAgentCfgMgrPtr cfgmgr = process->getCtrlAgentCfgMgr();
-            if (cfgmgr) {
-                CtrlAgentCfgContextPtr ctx = cfgmgr->getCtrlAgentCfgContext();
-                if (ctx) {
-                    copyHttpHeaders(ctx->getHttpHeaders(), *response);
-                }
-            }
-        }
+    CtrlAgentCfgContextPtr ctx = getCtrlAgentCfgContext();
+    if (ctx) {
+        copyHttpHeaders(ctx->getHttpHeaders(), *response);
     }
     return (response);
 }
@@ -109,29 +123,13 @@ createDynamicHttpResponse(HttpRequestPtr request) {
     HttpResponseJsonPtr http_response;
 
     // Context will hold the server configuration.
-    CtrlAgentCfgContextPtr ctx;
-
-    // There is a hierarchy of the objects through which we need to pass to get
-    // the configuration context. We may simplify this at some point but since
-    // we're in the singleton we want to make sure that we're using most current
-    // configuration.
-    boost::shared_ptr<CtrlAgentController> controller =
-        boost::dynamic_pointer_cast<CtrlAgentController>(CtrlAgentController::instance());
-    if (controller) {
-        CtrlAgentProcessPtr process = controller->getCtrlAgentProcess();
-        if (process) {
-            CtrlAgentCfgMgrPtr cfgmgr = process->getCtrlAgentCfgMgr();
-            if (cfgmgr) {
-                ctx = cfgmgr->getCtrlAgentCfgContext();
-                if (ctx) {
-                    headers = ctx->getHttpHeaders();
-                    const HttpAuthConfigPtr& auth = ctx->getAuthConfig();
-                    if (auth) {
-                        // Check authentication.
-                        http_response = auth->checkAuth(*this, request);
-                    }
-                }
-            }
+    CtrlAgentCfgContextPtr ctx = getCtrlAgentCfgContext();
+    if (ctx) {
+        headers = ctx->getHttpHeaders();
+        const HttpAuthConfigPtr& auth = ctx->getAuthConfig();
+        if (auth) {
+            // Check authentication.
+            http_response = auth->checkAuth(*this, request);
         }
     }
 

@@ -180,7 +180,7 @@ TEST_F(HttpResponseTest, addHeader) {
         "<head><title>Kea page title</title></head>"
         "<body><h1>Some header</h1></body>"
         "</html>";
-        response.context()->headers_.push_back(HttpHeaderContext("Content-Type", "text/html"));
+    response.context()->headers_.push_back(HttpHeaderContext("Content-Type", "text/html"));
     response.context()->headers_.push_back(HttpHeaderContext("Host", "kea.example.org"));
     response.context()->body_ = sample_body;
     ASSERT_NO_THROW(response.finalize());

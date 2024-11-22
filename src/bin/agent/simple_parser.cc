@@ -153,7 +153,7 @@ AgentSimpleParser::parse(const CtrlAgentCfgContextPtr& ctx,
         }
     }
 
-    // Basic HTTP authentications are forth.
+    // Basic HTTP authentications are fourth.
     ConstElementPtr auth_config = config->get("authentication");
     if (auth_config) {
         using namespace isc::http;

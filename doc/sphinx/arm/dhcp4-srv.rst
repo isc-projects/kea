@@ -7777,7 +7777,7 @@ TLS is required). The ``socket-address`` (default ``127.0.0.1``) and
 ``socket-port`` (default 8000) specify an IP address and port to which
 the HTTP service will be bound.
 
-Since Kea 1.7.5 the ``http-headers`` parameter specifies a list of
+Since Kea 2.7.5 the ``http-headers`` parameter specifies a list of
 extra HTTP headers to add to HTTP responses.
 
 The ``trust-anchor``, ``cert-file``, ``key-file``, and ``cert-required``

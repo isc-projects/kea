@@ -120,7 +120,7 @@ different from the HA peer URLs, which are strictly
 for internal HA traffic between the peers. User commands should
 still be sent via the CA.
 
-Since Kea 1.7.5 the ``http-headers`` parameter specifies a list of
+Since Kea 2.7.5 the ``http-headers`` parameter specifies a list of
 extra HTTP headers to add to HTTP responses.
 
 The ``trust-anchor``, ``cert-file``, ``key-file``, and ``cert-required``

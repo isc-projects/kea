@@ -17,7 +17,10 @@ namespace http {
 
 /// @brief HTTP header context.
 struct HttpHeaderContext {
+    /// @brief Header name.
     std::string name_;
+
+    /// @brief Header value.
     std::string value_;
 
     /// @brief Constructor.

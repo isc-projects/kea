@@ -7935,6 +7935,12 @@ TEST_F(Dhcp6ParserTest, comments) {
     ASSERT_EQ(1, headers->size());
     ConstElementPtr header = headers->get(0);
     ASSERT_TRUE(header);
+    ASSERT_TRUE(header->get("name"));
+    EXPECT_EQ("\"Strict-Transport-Security\"", header->get("name")->str());
+    ASSERT_TRUE(header->get("value"));
+    EXPECT_EQ("\"max-age=31536000\"", header->get("value")->str());
+
+    // Check HTTP header user context.
     ConstElementPtr ctx_header = header->get("user-context");
     ASSERT_TRUE(ctx_header);
     ASSERT_EQ(1, ctx_header->size());

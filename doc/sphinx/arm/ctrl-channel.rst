@@ -210,7 +210,21 @@ depends on the specific command.
 .. note::
 
    Since Kea 2.7.5 it is possible to specify extra HTTP headers which
-   are added to HTTP responses.
+   are added to HTTP responses. Each header is specified by its name
+   and value with optionally a user context. For instance:
+
+::
+
+   ...,
+   "http-headers": [
+       {
+           "name": "Strict-Transport-Security",
+           "value": "max-age=31536000"
+       }
+    ],
+    ...
+
+adds a HSTS header declaring that HTTPS (vs HTTP) must be used for one year.
 
 .. _ctrl-channel-control-agent-command-response-format:
 

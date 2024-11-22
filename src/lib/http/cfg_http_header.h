@@ -17,9 +17,16 @@ namespace isc {
 namespace http {
 
 /// @brief Config HTTP header.
+///
+/// Extra headers to include in a message are configured as a list of
+/// objects of this class. At the difference of other HTTP header classes
+/// there is no numeric value.
 class CfgHttpHeader : public isc::data::UserContext, public isc::data::CfgToElement {
 public:
+    /// @brief Header name.
     std::string name_;
+
+    /// @brief Header value.
     std::string value_;
 
     /// @brief Constructor.
