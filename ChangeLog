@@ -1,7 +1,8 @@
 2305.	[func]		fdupont
-	Added the new "http-headers" parameters which specify
-	by name and value in CA or HTTP control socket
-	configuration extra headers to add to HTTP responses.
+	Added a new "http-headers" parameter to the CA and
+	HTTP control socket configuration sections which can
+	be used to specify extra 'name: value' headers to be
+	added to HTTP responses.
 	(Gitlab #3609)
 
 2304.	[func]		tmark
