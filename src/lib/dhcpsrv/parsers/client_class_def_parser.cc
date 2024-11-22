@@ -296,7 +296,7 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
         (!valid_lft.unspecified() ||
          !preferred_lft.unspecified() ||
          !offer_lft.unspecified())) {
-        LOG_WARN(dhcpsrv_logger, DHCPSRV_CLASS_WITH_ADDTIONAL_AND_LIFETIMES)
+        LOG_WARN(dhcpsrv_logger, DHCPSRV_CLASS_WITH_ADDITIONAL_AND_LIFETIMES)
             .arg(name);
     }
 
