@@ -215,14 +215,15 @@ depends on the specific command.
 
 ::
 
-   ...,
-   "http-headers": [
-       {
-           "name": "Strict-Transport-Security",
-           "value": "max-age=31536000"
-       }
-    ],
+   {
+       "http-headers": [
+           {
+               "name": "Strict-Transport-Security",
+               "value": "max-age=31536000"
+           }
+        ],
     ...
+    }
 
 adds a HSTS header declaring that HTTPS (vs HTTP) must be used for one year.
 

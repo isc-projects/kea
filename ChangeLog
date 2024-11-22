@@ -1,8 +1,14 @@
+2305.	[func]		fdupont
+	Added the new "http-headers" parameters which specify
+	by name and value in CA or HTTP control socket
+	configuration extra headers to add to HTTP responses.
+	(Gitlab #3609)
+
 2304.	[func]		tmark
 	Both kea-dhcp4 and kea-dhcp6 servers will now
 	log a warning message when they detect classes that
 	configure lease life time parameters (e.g. 'valid-lifetime',
-	'preferred-lifetime') while also setting 
+	'preferred-lifetime') while also setting
 	'only-in-addditiional-list' to true.
 	(Gitlab #2736)
 
