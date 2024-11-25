@@ -305,8 +305,7 @@ BaseNetworkParser::getClientClassesElem(ConstElementPtr params,
     }
 
     if (class_list) {
-        const std::vector<data::ElementPtr>& classes = class_list->listValue();
-        for (auto const& cclass : classes) {
+        for (auto const& cclass : class_list->listValue()) {
             if ((cclass->getType() != Element::string) ||
                 cclass->stringValue().empty()) {
                 isc_throw(DhcpConfigError, "invalid class name (" << cclass->getPosition() << ")");

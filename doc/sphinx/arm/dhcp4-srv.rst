@@ -3499,7 +3499,7 @@ to always be evaluated to ``true``.
    As of Kea version 2.7.4, ``only-if-required`` and ``require-client-classes``
    have been renamed to ``only-in-additional-list`` and ``evaluate-additional-classes``
    respectivley.  The original names will still be accepted as input to allow
-   users to migrate but will eventually be unsupported.
+   users to migrate but will eventually be rejected.
 
 .. note::
 
@@ -6640,7 +6640,7 @@ for clients when client classification is in use, to ensure that the
 appropriate subnet is selected for a given client type.
 
 If a subnet is associated with one or more classes, only the clients belonging
-to at least one of these classes may this subnet. If there are no classes
+to at least one of these classes may use this subnet. If there are no classes
 specified for a subnet, any client connected to a given shared network can use
 this subnet. A common mistake is to assume that a subnet that includes a client
 class is preferred over subnets without client classes.

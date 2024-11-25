@@ -1005,11 +1005,11 @@ Configuring Subnets With Class Information
     As of Kea 2.7.5, ``client-class`` (a single class name) has been replaced
     with ``client-classes`` (a list of one or more class names) and is now
     deprecated. It will still be accepted as input for a time to allow users
-    to migrate but will eventually be unsupported.
+    to migrate but will eventually be rejected.
 
 In certain cases it is beneficial to restrict access to certain subnets
 only to clients that belong to a given class, using the ``client-classes``
-parameter when defining the subnet.  This parameter may be used to sepcify
+parameter when defining the subnet.  This parameter may be used to specify
 a list of one or more classes to which clients must belong in order to
 use the subnet.
 

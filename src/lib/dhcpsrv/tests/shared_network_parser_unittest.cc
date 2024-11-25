@@ -1094,7 +1094,8 @@ TEST_F(SharedNetwork6ParserTest, deprecatedRequireClientClasses) {
     std::string config =
        R"^({
             "name": "foo",
-            "require-client-classes": [ "one", "two" ] })^";
+            "require-client-classes": [ "one", "two" ]
+       })^";
 
     ElementPtr config_element = Element::fromJSON(config);
 

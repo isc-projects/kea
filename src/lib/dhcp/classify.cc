@@ -65,8 +65,7 @@ ClientClasses::intersects(const ClientClasses& cclasses) const {
                 return (true);
             }
         }
-    }
-    else {
+    } else {
         for (const auto& cclass : cclasses) {
             if (contains(cclass)) {
                 return (true);

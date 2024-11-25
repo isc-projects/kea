@@ -144,7 +144,6 @@ public:
     ///
     /// @param params configuration element tree to search.
     /// @param adder_func function to add class names to an object's client class list.
-    /// @return Element referred to or an empty pointer.
     /// @throw DhcpConfigError if both entries are present.
     static void getClientClassesElem(data::ConstElementPtr params,
                                      ClassAdderFunc adder_func);

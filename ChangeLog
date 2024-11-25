@@ -12,15 +12,15 @@
 	added to HTTP responses.
 	(Gitlab #3609)
 
-2304.	[func]		tmark
+2305.	[func]		tmark
 	Both kea-dhcp4 and kea-dhcp6 servers will now
 	log a warning message when they detect classes that
 	configure lease life time parameters (e.g. 'valid-lifetime',
 	'preferred-lifetime') while also setting
-	'only-in-addditiional-list' to true.
+	'only-in-additiional-list' to true.
 	(Gitlab #2736)
 
-2303.	[bug]		tmark
+2304.	[bug]		tmark
 	Modified both kea-dhcp4 and kea-dhcp6 to avoid
 	generating DDNS update requests when leases are
 	being reused due to lease caching.

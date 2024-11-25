@@ -3230,7 +3230,7 @@ to always be evaluated to ``true``.
    As of Kea version 2.7.4, ``only-if-required`` and ``require-client-classes``
    have been renamed to ``only-in-additional-list`` and ``evaluate-additional-classes``
    respectivley.  The original names will still be accepted as input to allow
-   users to migrate but will eventually be unsupported.
+   users to migrate but will eventually be rejected.
 
 .. _dhcp6-ddns-config:
 

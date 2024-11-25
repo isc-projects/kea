@@ -2355,13 +2355,13 @@ TEST_F(ClassifyTest, networkScopeClientClasses) {
     };
 
     // Run scenarios.
-    for (const auto& scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         ClientId id(scenario.client_id_);
         SCOPED_TRACE(id.toText());
         Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 1234));
         query->addOption(OptionPtr(new Option(Option::V4,
-                                               DHO_DHCP_CLIENT_IDENTIFIER,
-                                               id.getClientId())));
+                                              DHO_DHCP_CLIENT_IDENTIFIER,
+                                              id.getClientId())));
         query->setIface("eth0");
         query->setIndex(ETH0_INDEX);
 
