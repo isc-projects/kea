@@ -150,7 +150,7 @@ public:
     /// @brief Commits the staging configuration.
     ///
     /// The staging configuration becomes current configuration when this
-    /// function is called. It removes the oldest configuration held in the
+    /// function is called. It removes the oldest configurations held in the
     /// history so as the size of the list of configuration does not exceed
     /// the @c CONFIG_LIST_SIZE.
     ///

@@ -19,7 +19,9 @@ using namespace isc::util;
 namespace isc {
 namespace dhcp {
 
-const size_t CfgMgr::CONFIG_LIST_SIZE = 10;
+// Value 0 effectively disables configuration history. Higher values can lead to proportionally
+// increased memory usage which can be extreme in case of sizable configurations.
+const size_t CfgMgr::CONFIG_LIST_SIZE = 0;
 
 CfgMgr&
 CfgMgr::instance() {
@@ -69,7 +71,7 @@ CfgMgr::getD2ClientMgr() {
 
 void
 CfgMgr::ensureCurrentAllocated() {
-    if (!configuration_ || configs_.empty()) {
+    if (!configuration_) {
         configuration_.reset(new SrvConfig());
         configs_.push_back(configuration_);
     }
@@ -79,6 +81,7 @@ void
 CfgMgr::clear() {
     if (configuration_) {
         configuration_->removeStatistics();
+        configuration_.reset();
     }
     configs_.clear();
     external_configs_.clear();
@@ -92,18 +95,14 @@ CfgMgr::commit() {
 
     // First we need to remove statistics. The new configuration can have fewer
     // subnets. Also, it may change subnet-ids. So we need to remove them all
-    // and add it back.
+    // and add them back.
     configuration_->removeStatistics();
 
-    if (!configs_.back()->sequenceEquals(*configuration_)) {
+    bool promoted(false);
+    if (!configs_.empty() && !configs_.back()->sequenceEquals(*configuration_)) {
+        // Promote the staging configuration to the current configuration.
         configuration_ = configs_.back();
-        // Keep track of the maximum size of the configs history. Before adding
-        // new element, we have to remove the oldest one.
-        if (configs_.size() > CONFIG_LIST_SIZE) {
-            SrvConfigList::iterator it = configs_.begin();
-            std::advance(it, configs_.size() - CONFIG_LIST_SIZE);
-            configs_.erase(configs_.begin(), it);
-        }
+        promoted = true;
     }
 
     // Set the last commit timestamp.
@@ -114,12 +113,21 @@ CfgMgr::commit() {
     configuration_->updateStatistics();
 
     configuration_->configureLowerLevelLibraries();
+
+    if (promoted) {
+        // Keep track of the maximum size of the configs history. Remove the oldest elements.
+        if (configs_.size() > CONFIG_LIST_SIZE) {
+            SrvConfigList::const_iterator it = configs_.begin();
+            std::advance(it, configs_.size() - CONFIG_LIST_SIZE);
+            configs_.erase(configs_.begin(), it);
+        }
+    }
 }
 
 void
 CfgMgr::rollback() {
     ensureCurrentAllocated();
-    if (!configuration_->sequenceEquals(*configs_.back())) {
+    if (!configs_.empty() && !configuration_->sequenceEquals(*configs_.back())) {
         configs_.pop_back();
     }
 }
@@ -130,9 +138,9 @@ CfgMgr::revert(const size_t index) {
     if (index == 0) {
         isc_throw(isc::OutOfRange, "invalid commit index 0 when reverting"
                   " to an old configuration");
-    } else if (index > configs_.size() - 1) {
+    } else if (configs_.size() <= index) {
         isc_throw(isc::OutOfRange, "unable to revert to commit index '"
-                  << index << "', only '" << configs_.size() - 1
+                  << index << "', only '" << (configs_.size() == 0 ? 0 : configs_.size() - 1)
                   << "' previous commits available");
     }
 
@@ -143,18 +151,20 @@ CfgMgr::revert(const size_t index) {
     // configuration is destroyed by this rollback.
     rollback();
 
-    // Get the iterator to the current configuration and then advance to the
-    // desired one.
-    SrvConfigList::const_reverse_iterator it = configs_.rbegin();
-    std::advance(it, index);
+    if (!configs_.empty()) {
+        // Get the iterator to the current configuration and then advance to the
+        // desired one.
+        SrvConfigList::const_reverse_iterator it = configs_.rbegin();
+        std::advance(it, index);
 
-    // Copy the desired configuration to the new staging configuration. The
-    // staging configuration is re-created here because we rolled back earlier
-    // in this function.
-    (*it)->copy(*getStagingCfg());
+        // Copy the desired configuration to the new staging configuration. The
+        // staging configuration is re-created here because we rolled back earlier
+        // in this function.
+        (*it)->copy(*getStagingCfg());
 
-    // Make the staging configuration a current one.
-    commit();
+        // Make the staging configuration a current one.
+        commit();
+    }
 }
 
 SrvConfigPtr
@@ -166,7 +176,7 @@ CfgMgr::getCurrentCfg() {
 SrvConfigPtr
 CfgMgr::getStagingCfg() {
     ensureCurrentAllocated();
-    if (configuration_->sequenceEquals(*configs_.back())) {
+    if (configs_.empty() || configuration_->sequenceEquals(*configs_.back())) {
         uint32_t sequence = configuration_->getSequence();
         configs_.push_back(SrvConfigPtr(new SrvConfig(++sequence)));
     }

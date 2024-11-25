@@ -17,6 +17,7 @@
 #include <hooks/hooks_manager.h>
 #include <hooks/callout_handle.h>
 #include <stats/stats_mgr.h>
+#include <testutils/gtest_utils.h>
 
 #include <dhcpsrv/testutils/test_utils.h>
 #include <dhcpsrv/testutils/alloc_engine_utils.h>
@@ -642,7 +643,7 @@ AllocEngine4Test::initSubnet(const asiolink::IOAddress& pool_start,
     pool_ = Pool4Ptr(new Pool4(pool_start, pool_end));
     subnet_->addPool(pool_);
 
-    cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet_);
+    EXPECT_NO_THROW_LOG(cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet_));
 }
 
 AllocEngine4Test::AllocEngine4Test() {
