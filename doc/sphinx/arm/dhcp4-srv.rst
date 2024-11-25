@@ -2204,7 +2204,7 @@ what values are accepted for them.
    |                 | or 16-bit unsigned integer followed by                |
    |                 | a string of this length. Typically, for DHCPv4,       |
    |                 | the length is 8-bit, and for DHCPv6, it is 16-bit.    |
-   |                 | However, there might be exceptions to that rule.      |
+   |                 | However, there are exceptions to that rule.           |
    |                 | E.g. for the DHCPv4 SZTP Redirect Option,             |
    |                 | bootstrap-server-list is encoded as a list of         |
    |                 | tuples where the URI-length in each tuple is          |
