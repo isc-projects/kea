@@ -2176,6 +2176,60 @@ TEST_F(HAImplTest, maintenanceNotifyBadServerName) {
     checkAnswer(response, CONTROL_RESULT_ERROR, "server5 matches no configured 'server-name'");
 }
 
+// Test ha-maintenance-notify command handler with partner state.
+TEST_F(HAImplTest, maintenanceNotifyPartnerState) {
+    ha_impl_.reset(new HAImpl());
+    ha_impl_->setIOService(io_service_);
+    ASSERT_NO_THROW(ha_impl_->configure(createValidJsonConfiguration()));
+
+    // Starting the service is required prior to running any callouts.
+    NetworkStatePtr network_state(new NetworkState());
+    ASSERT_NO_THROW(ha_impl_->startServices(network_state,
+                                            HAServerType::DHCPv4));
+
+    // Start the maintenance.
+    ConstElementPtr command = Element::fromJSON(
+        "{"
+        "    \"command\": \"ha-maintenance-notify\","
+        "    \"arguments\": {"
+        "        \"cancel\": false"
+        "    }"
+         "}"
+    );
+
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    callout_handle->setArgument("command", command);
+
+    ASSERT_NO_THROW(ha_impl_->maintenanceNotifyHandler(*callout_handle));
+
+    ConstElementPtr response;
+    callout_handle->getArgument("response", response);
+    ASSERT_TRUE(response);
+
+    checkAnswer(response, CONTROL_RESULT_SUCCESS, "Server is in-maintenance state.");
+
+    // Cancel the maintenance.
+    command = Element::fromJSON(
+        "{"
+        "    \"command\": \"ha-maintenance-notify\","
+        "    \"arguments\": {"
+        "        \"cancel\": true,"
+        "        \"server-name\": \"server1\","
+        "        \"state\": \"waiting\""
+        "    }"
+         "}"
+    );
+
+    callout_handle->setArgument("command", command);
+
+    ASSERT_NO_THROW(ha_impl_->maintenanceNotifyHandler(*callout_handle));
+
+    callout_handle->getArgument("response", response);
+    ASSERT_TRUE(response);
+
+    checkAnswer(response, CONTROL_RESULT_SUCCESS, "Server maintenance canceled.");
+}
+
 // Test ha-reset command handler with a specified server name.
 TEST_F(HAImplTest, haReset) {
     ha_impl_.reset(new HAImpl());

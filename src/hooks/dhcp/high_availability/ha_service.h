@@ -1048,9 +1048,12 @@ public:
     /// @param cancel boolean value indicating if the maintenance is being
     /// canceled with this operation. If it is set to false the maintenance
     /// is being started.
+    /// @param state partner's state as string. It should be set to "unavailable"
+    /// if the state was not explicitly provided by the partner.
     ///
     /// @return Pointer to the response to the ha-maintenance-notify.
-    data::ConstElementPtr processMaintenanceNotify(const bool cancel);
+    data::ConstElementPtr processMaintenanceNotify(const bool cancel,
+                                                   const std::string& state);
 
     /// @brief Processes ha-maintenance-start command and returns a response.
     ///

@@ -1076,7 +1076,7 @@ HAService::inScopeInternal(QueryPtrType& query) {
     query->addClass(dhcp::ClientClass(scope_class));
     // The following is the part of the server failure detection algorithm.
     // If the query should be processed by the partner we need to check if
-    // the partner responds. If the number of unansweered queries exceeds a
+    // the partner responds. If the number of unanswered queries exceeds a
     // configured threshold, we will consider the partner to be offline.
     if (!in_scope && communication_state_->isCommunicationInterrupted()) {
         communication_state_->analyzeMessage(query);
@@ -2743,7 +2743,7 @@ HAService::processContinue() {
 }
 
 ConstElementPtr
-HAService::processMaintenanceNotify(const bool cancel) {
+HAService::processMaintenanceNotify(const bool cancel, const std::string& state) {
     if (cancel) {
         if (getCurrState() != HA_IN_MAINTENANCE_ST) {
             return (createAnswer(CONTROL_RESULT_ERROR, "Unable to cancel the"
@@ -2751,10 +2751,28 @@ HAService::processMaintenanceNotify(const bool cancel) {
                                  " in-maintenance state."));
         }
 
+        try {
+            communication_state_->setPartnerState(state);
+
+        } catch (...) {
+            // Hopefully the received state is correct. If it isn't, let's set the
+            // partner state to unavailable and count on the state machine to resolve.
+            communication_state_->setPartnerUnavailable();
+        }
         postNextEvent(HA_MAINTENANCE_CANCEL_EVT);
-        verboseTransition(getPrevState());
+        // In rare cases the previous state may be the server's current state. Transitioning
+        // to it would cause a deadlock and the server will remain stuck in maintenance.
+        // In these cases let's simply transition to the waiting state and the state machine
+        // should solve it.
+        verboseTransition(getPrevState() == HA_IN_MAINTENANCE_ST ? HA_WAITING_ST : getPrevState());
         runModel(NOP_EVT);
-        return (createAnswer(CONTROL_RESULT_SUCCESS, "Server maintenance canceled."));
+
+        // Communicate the new state to the partner.
+        ElementPtr arguments = Element::createMap();
+        std::string state_label = getState(getCurrState())->getLabel();
+        arguments->set("state", Element::create(state_label));
+
+        return (createAnswer(CONTROL_RESULT_SUCCESS, "Server maintenance canceled.", arguments));
     }
 
     switch (getCurrState()) {
@@ -2801,7 +2819,7 @@ HAService::processMaintenanceStart() {
          HostHttpHeader(remote_config->getUrl().getStrippedHostname()));
     remote_config->addBasicAuthHttpHeader(request);
     request->setBodyAsJson(CommandCreator::createMaintenanceNotify(config_->getThisServerName(),
-                                                                   false, server_type_));
+                                                                   false, getCurrState(), server_type_));
     request->finalize();
 
     // Response object should also be created because the HTTP client needs
@@ -2932,7 +2950,7 @@ HAService::processMaintenanceCancel() {
          HostHttpHeader(remote_config->getUrl().getStrippedHostname()));
     remote_config->addBasicAuthHttpHeader(request);
     request->setBodyAsJson(CommandCreator::createMaintenanceNotify(config_->getThisServerName(),
-                                                                   true, server_type_));
+                                                                   true, getCurrState(), server_type_));
     request->finalize();
 
     // Response object should also be created because the HTTP client needs
@@ -2968,8 +2986,26 @@ HAService::processMaintenanceCancel() {
                  // Handle third group of errors.
                  try {
                      int rcode = 0;
-                     static_cast<void>(verifyAsyncResponse(response, rcode));
+                     ConstElementPtr args = verifyAsyncResponse(response, rcode);
 
+                     // Partner's state has changed after the notification. However, we don't know
+                     // its new state. We'll check if the partner returned its state. If it didn't,
+                     // we set the unavailable state as a default.
+                     communication_state_->setPartnerUnavailable();
+
+                     // Newer Kea versions return the state of the notified server.
+                     // Older versions don't, so the arguments may not be present.
+                     if (args && args->getType() == Element::map) {
+                         // Arguments may include partner's state.
+                         ConstElementPtr state = args->get("state");
+                         if (state) {
+                             if (state->getType() != Element::string) {
+                                 isc_throw(CtrlChannelError, "server state not returned in response"
+                                           " to a ha-heartbeat command or it is not a string");
+                             }
+                             communication_state_->setPartnerState(state->stringValue());
+                         }
+                     }
                  } catch (const std::exception& ex) {
                      error_message = ex.what();
                      LOG_ERROR(ha_logger, HA_MAINTENANCE_NOTIFY_CANCEL_FAILED)
@@ -3009,9 +3045,10 @@ HAService::processMaintenanceCancel() {
     }
 
     // Successfully reverted partner's state. Let's also revert our state to the
-    // previous one.
+    // previous one. Avoid returning to the partner-in-maintenance if it was
+    // the previous state.
     postNextEvent(HA_MAINTENANCE_CANCEL_EVT);
-    verboseTransition(getPrevState());
+    verboseTransition(getPrevState() == HA_PARTNER_IN_MAINTENANCE_ST ? HA_WAITING_ST : getPrevState());
     runModel(NOP_EVT);
 
     return (createAnswer(CONTROL_RESULT_SUCCESS,

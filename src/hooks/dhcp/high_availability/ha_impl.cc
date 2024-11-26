@@ -789,9 +789,15 @@ HAImpl::maintenanceNotifyHandler(hooks::CalloutHandle& callout_handle) {
             isc_throw(BadValue, "'cancel' must be a boolean in the 'ha-maintenance-notify' command");
         }
 
+        ConstElementPtr state = args->get("state");
+        if (state && state->getType() != Element::string) {
+            isc_throw(BadValue, "'state' must be a string in the 'ha-maintenance-notify' command");
+        }
+
         service = getHAServiceByServerName("ha-maintenance-notify", args);
 
-        ConstElementPtr response = service->processMaintenanceNotify(cancel_op->boolValue());
+        ConstElementPtr response = service->processMaintenanceNotify(cancel_op->boolValue(),
+                                                                     state ? state->stringValue() : "unavailable");
         callout_handle.setArgument("response", response);
 
     } catch (const std::exception& ex) {
