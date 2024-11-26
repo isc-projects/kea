@@ -5956,8 +5956,9 @@ and/or pool scopes. If specified for a shared network, clients must belong to at
 least one of the classes specified for that network to be considered for subnets
 within that network. If specified for a subnet, clients must belong to at least
 one of the classes specified for that subnet to be considered for any of that
-subnet's pools.  If specified for a pool, clients must belong to at least one
-of the classes specified for that pool to be given a lease from that pool.
+subnet's pools or host reservations.  If specified for a pool, clients must
+belong to at least one of the classes specified for that pool to be given a
+lease from that pool.
 
 .. note:
 

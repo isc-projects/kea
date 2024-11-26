@@ -1,5 +1,5 @@
 2306.	[func]		tmark
-	The parameter "client-class" (a single class name) in 
+	The parameter "client-class" (a single class name) in
 	shared networks, subnets, and pools has been replaced with
 	"client-classes" (a list of one or more class names).
 	This applies to both kea-dhcp4 and kea-dhcp6.
@@ -17,7 +17,7 @@
 	log a warning message when they detect classes that
 	configure lease life time parameters (e.g. 'valid-lifetime',
 	'preferred-lifetime') while also setting
-	'only-in-additiional-list' to true.
+	'only-in-additional-list' to true.
 	(Gitlab #2736)
 
 2304.	[bug]		tmark
@@ -25,16 +25,16 @@
 	generating DDNS update requests when leases are
 	being reused due to lease caching.
 	(Gitlab #3257)
-	
+
 Kea 2.7.4 (development) released on October 30, 2024
 
 2303.	[func]		tmark
-	The parameters 'require-client-classes' and 
+	The parameters 'require-client-classes' and
 	'only-if-required' have been replaced with 'evaluate-
-	additonal-classes' and 'only-in-additional-list' 
+	additional-classes' and 'only-in-additional-list'
 	respectively and deprecated. This applies to both
 	kea-dhcp4 and kea-dhcp6.
-	(Gitlab #3587) 
+	(Gitlab #3587)
 
 2302.	[func]		tmark
 	Options may now be configured with a list of client
