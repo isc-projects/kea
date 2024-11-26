@@ -1,3 +1,9 @@
+2308.	[bug]		marcin
+	Prevent the servers from returning to HA maintenance
+	states after receiving the ha-maintenance-cancel command
+	while they also respond to the DHCP traffic.
+	(Gitlab #3655)
+
 2307.	[func]		tmark
 	The parameter "client-class" (a single class name) in
 	shared networks, subnets, and pools has been replaced with
