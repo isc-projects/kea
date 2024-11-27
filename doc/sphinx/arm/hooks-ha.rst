@@ -2280,9 +2280,14 @@ previous state. See the :ref:`ha-maintenance` section for details.
        "service": [ "dhcp4" ],
        "arguments": {
            "cancel": false,
+           "state": "ready",
            "server-name": "server2"
        }
    }
+
+The ``state`` argument informs the recipient about the state of this server. The
+recipient can instantly resume the operation of the state machine without sending
+a heartbeat to check the partner's state.
 
 The optional ``server-name`` parameter specifies the name of one of the partners in
 the HA relationship that this command pertains to. This parameter can be omitted if the
