@@ -53,7 +53,7 @@ public:
                        const HAServerType& server_type);
 
     /// @brief Destructor.
-    ~HAImpl();
+    virtual ~HAImpl();
 
     /// @brief Returns a configuration for the first relationship.
     ///
@@ -118,6 +118,11 @@ public:
     /// @param callout_handle Callout handle provided to the callout.
     void lease4ServerDecline(hooks::CalloutHandle& callout_handle);
 
+    /// @brief Implementation of the "lease4_expire" callout.
+    ///
+    /// @param callout_handle Callout handle provided to the callout.
+    void lease4Expire(hooks::CalloutHandle& callout_handle);
+
     /// @brief Implementation of the "buffer6_receive" callout.
     ///
     /// This callout uses HA service to check if the query should be processed
@@ -153,6 +158,11 @@ public:
     ///
     /// @param callout_handle Callout handle provided to the callout.
     void leases6Committed(hooks::CalloutHandle& callout_handle);
+
+    /// @brief Implementation of the "lease6_expire" callout.
+    ///
+    /// @param callout_handle Callout handle provided to the callout.
+    void lease6Expire(hooks::CalloutHandle& callout_handle);
 
     /// @brief Implementation of the "command_processed" callout.
     ///
@@ -236,6 +246,34 @@ public:
     }
 
 protected:
+
+    /// @brief Checks if the lease should be reclaimed by this server.
+    ///
+    /// The lease must not be reclaimed by the server when the server is in the
+    /// terminated state and the lease belongs to another server (per load balancing
+    /// algorithm or when it is a standby server).
+    ///
+    /// This function is virtual so that it can be derived and mocked in the tests.
+    ///
+    /// @param service pointer to the HA service to which the lease belongs.
+    /// @param lease4 pointer to the DHCPv4 lease being reclaimed.
+    /// @return true if the DHCPv4 lease should be reclaimed by this server instance,
+    /// false otherwise.
+    virtual bool shouldReclaim(const HAServicePtr& service, const dhcp::Lease4Ptr& lease4) const;
+
+    /// @brief Checks if the lease should be reclaimed by this server.
+    ///
+    /// The lease must not be reclaimed by the server when the server is in the
+    /// terminated state and the lease belongs to another server (per load balancing
+    /// algorithm or when it is a standby server).
+    ///
+    /// This function is virtual so that it can be derived and mocked in the tests.
+    ///
+    /// @param service pointer to the HA service to which the lease belongs.
+    /// @param lease6 pointer to the DHCPv4 lease being reclaimed.
+    /// @return true if the DHCPv6 lease should be reclaimed by this server instance,
+    /// false otherwise.
+    virtual bool shouldReclaim(const HAServicePtr& service, const dhcp::Lease6Ptr& lease6) const;
 
     /// @brief The hook I/O service.
     isc::asiolink::IOServicePtr io_service_;

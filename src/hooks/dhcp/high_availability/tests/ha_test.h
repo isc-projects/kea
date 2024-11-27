@@ -240,6 +240,20 @@ public:
     /// @param duid DUI to be included in the query. It is used in load balancing.
     dhcp::Pkt6Ptr createQuery6(const std::vector<uint8_t>& duid) const;
 
+    /// @brief Creates test DHCPv4 lease instance.
+    ///
+    /// @param hw_address_vec HW address to be included in the lease. It is used
+    /// in load balancing.
+    /// @param client_id_vec optional client identifier.
+    dhcp::Lease4Ptr createLease4(const std::vector<uint8_t>& hw_address_vec,
+                                 const std::vector<uint8_t>& client_id_vec =
+                                 std::vector<uint8_t>()) const;
+
+    /// @brief Creates test DHCPv6 lease instance.
+    ///
+    /// @param duid_vec DUID to be included in the query. It is used in load balancing.
+    dhcp::Lease6Ptr createLease6(const std::vector<uint8_t>& duid_vec) const;
+
     /// @brief Generates simple DHCPv6 message.
     ///
     /// @param msg_type DHCPv6 message type to be created.

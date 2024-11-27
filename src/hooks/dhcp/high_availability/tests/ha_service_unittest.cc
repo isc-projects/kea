@@ -9137,6 +9137,56 @@ TEST_F(HAServiceStateMachineTest, doNotTerminateWhenPartnerUnavailable) {
     EXPECT_EQ(HA_COMMUNICATION_RECOVERY_ST, service_->getCurrState());
 }
 
+// This test verifies that the service correctly identifies the leases that can
+// be reclaimed while the server is the primary.
+TEST_F(HAServiceStateMachineTest, shouldReclaimLease4HotStandbyThisPrimary) {
+    startService(createValidConfiguration(HAConfig::HOT_STANDBY));
+    service_->verboseTransition(HA_TERMINATED_ST);
+    service_->runModel(HAService::NOP_EVT);
+
+    Lease4Ptr lease4 = createLease4(randomKey(HWAddr::ETHERNET_HWADDR_LEN));
+    EXPECT_TRUE(service_->shouldReclaim(lease4));
+}
+
+// This test verifies that the service correctly identifies the leases that can
+// be reclaimed while the server is the standby.
+TEST_F(HAServiceStateMachineTest, shouldReclaimLease4HotStandbyThisStandby) {
+    HAConfigPtr valid_config = createValidConfiguration(HAConfig::HOT_STANDBY);
+    valid_config->getPeerConfig("server2")->setRole("standby");
+    valid_config->setThisServerName("server2");
+    startService(valid_config);
+    service_->verboseTransition(HA_TERMINATED_ST);
+    service_->runModel(HAService::NOP_EVT);
+
+    Lease4Ptr lease4 = createLease4(randomKey(HWAddr::ETHERNET_HWADDR_LEN));
+    EXPECT_FALSE(service_->shouldReclaim(lease4));
+}
+
+// This test verifies that the service correctly identifies the leases that can
+// be reclaimed while the server is the primary.
+TEST_F(HAServiceStateMachineTest, shouldReclaimLease6HotStandbyThisPrimary) {
+    startService(createValidConfiguration(HAConfig::HOT_STANDBY));
+    service_->verboseTransition(HA_TERMINATED_ST);
+    service_->runModel(HAService::NOP_EVT);
+
+    Lease6Ptr lease6 = createLease6(randomKey(10));
+    EXPECT_TRUE(service_->shouldReclaim(lease6));
+}
+
+// This test verifies that the service correctly identifies the leases that can
+// be reclaimed while the server is the standby.
+TEST_F(HAServiceStateMachineTest, shouldReclaimLease6HotStandbyThisStandby) {
+    HAConfigPtr valid_config = createValidConfiguration(HAConfig::HOT_STANDBY);
+    valid_config->getPeerConfig("server2")->setRole("standby");
+    valid_config->setThisServerName("server2");
+    startService(valid_config);
+    service_->verboseTransition(HA_TERMINATED_ST);
+    service_->runModel(HAService::NOP_EVT);
+
+    Lease6Ptr lease6 = createLease6(randomKey(10));
+    EXPECT_FALSE(service_->shouldReclaim(lease6));
+}
+
 // Test scenario when a single lease4 update is sent successfully, parking is not
 // employed.
 TEST_F(HAServiceTest, successfulSendSingleLeaseUpdateWithoutParking) {

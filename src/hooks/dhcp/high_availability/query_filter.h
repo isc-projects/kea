@@ -184,6 +184,36 @@ public:
     /// server, false otherwise.
     bool inScope(const dhcp::Pkt6Ptr& query6, std::string& scope_class) const;
 
+    /// @brief Checks if this server should reclaim the DHCPv4 lease.
+    ///
+    /// This method is used to select DHCPv4 leases that are allocated by this
+    /// server during the normal operation. It is used when the servers in the
+    /// terminated state must reclaim expired leases. In this case each server
+    /// can only reclaim the leases it is responsible for to avoid the situation
+    /// that one of the servers reclaims a lease that another server allocates,
+    /// as it would cause conflicts of the DNS updates between the servers.
+    ///
+    /// @param lease4 pointer to the DHCPv4 lease instance.
+    ///
+    /// @return true if the specified query should be processed by this
+    /// server, false otherwise.
+    bool inScope(const dhcp::Lease4Ptr& lease4) const;
+
+    /// @brief Checks if this server should process the DHCPv6 query.
+    ///
+    /// This method is used to select DHCPv4 leases that are allocated by this
+    /// server during the normal operation. It is used when the servers in the
+    /// terminated state must reclaim expired leases. In this case each server
+    /// can only reclaim the leases it is responsible for to avoid the situation
+    /// that one of the servers reclaims a lease that another server allocates,
+    /// as it would cause conflicts of the DNS updates between the servers.
+    ///
+    /// @param lease6 pointer to the DHCPv6 lease instance.
+    ///
+    /// @return true if the specified query should be processed by this
+    /// server, false otherwise.
+    bool inScope(const dhcp::Lease6Ptr& lease6) const;
+
     /// @brief Determines if a DHCPv4 query is a message type HA should process.
     ///
     /// @param query4 DHCPv4 packet to test. Must not be null.
@@ -285,7 +315,20 @@ private:
     /// @return true if the specified query should be processed by this
     /// server, false otherwise.
     template<typename QueryPtrType>
-    bool inScopeInternal(const QueryPtrType& query, std::string& scope_class) const;
+    bool queryInScopeInternal(const QueryPtrType& query, std::string& scope_class) const;
+
+    /// @brief Generic implementation of the @c inScope function for DHCPv4
+    /// and DHCPv6 leases.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// @tparam LeasePtrType type of the lease, i.e. DHCPv4 or DHCPv6 lease.
+    /// @param lease pointer to the DHCP lease instance.
+    ///
+    /// @return true if the specified lease should be reclaimed by this
+    /// server, false otherwise.
+    template<typename LeasePtrType>
+    bool leaseInScopeInternal(const LeasePtrType& lease) const;
 
 protected:
 
@@ -316,6 +359,34 @@ protected:
     /// returns negative value if the query is malformed, i.e. contains
     /// no DUID.
     int loadBalance(const dhcp::Pkt6Ptr& query6) const;
+
+    /// @brief Performs load balancing of the DHCPv4 leases.
+    ///
+    /// This method returns an index of the server configuration
+    /// held within @c peers_ vector. This points to a server
+    /// which should process the given lease. Currently, we only
+    /// support load balancing between two servers, therefore this
+    /// value should be 0 or 1.
+    ///
+    /// @param lease4 pointer to the DHCPv4 lease instance.
+    /// @return Index of the server which should process the lease. It
+    /// returns negative value if the lease is malformed, i.e. contains
+    /// no HW address and no client identifier.
+    int loadBalance(const dhcp::Lease4Ptr& lease4) const;
+
+    /// @brief Performs load balancing of the DHCPv6 leases.
+    ///
+    /// This method returns an index of the server configuration
+    /// held within @c peers_ vector. This points to a server
+    /// which should process the given lease. Currently, we only
+    /// support load balancing between two servers, therefore this
+    /// value should be 0 or 1.
+    ///
+    /// @param lease6 pointer to the DHCPv6 lease instance.
+    /// @return Index of the server which should process the lease. It
+    /// returns negative value if the lease is malformed, i.e. contains
+    /// no DUID.
+    int loadBalance(const dhcp::Lease6Ptr& lease6) const;
 
     /// @brief Compute load balancing hash.
     ///

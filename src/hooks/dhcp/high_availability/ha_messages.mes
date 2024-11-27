@@ -449,6 +449,46 @@ number of lease updates for which a conflict status code was returned
 by the partner exceeds the limit set with max-rejected-lease-updates
 configuration parameter.
 
+% HA_LEASE4_EXPIRE_FAILED lease4_expire callout failed: %1
+This error message is issued when the callout for the lease4_expire hook
+point failed. This includes unexpected errors like wrong arguments provided to
+the callout by the DHCP server (unlikely internal server error).
+The argument contains a reason for the error.
+
+% HA_LEASE4_EXPIRE_INVALID_HA_SERVER_NAME %1: invalid ha-server-name value for subnet %2
+This error message is issued when the reclaimed DHCPv4 lease belongs to
+a subnet which includes ha-server-name value in the user-context but this
+value is not a string or is empty. It is a server's misconifguration.
+The first argument holds the lease information. The second argument is a
+subnet prefix.
+
+% HA_LEASE4_EXPIRE_RECLAMATION_SKIP %1: skipping reclamation of the lease that belongs to a partner
+Logged at debug log level 40.
+This debug message is issued when the server is in the terminated state and
+skips reclamation of the lease that was probably allocated by another server,
+or is maintained by the other server while the servers are in the HA terminated
+state. The argument is the lease address.
+
+% HA_LEASE6_EXPIRE_FAILED lease4_expire callout failed: %1
+This error message is issued when the callout for the lease4_expire hook
+point failed. This includes unexpected errors like wrong arguments provided to
+the callout by the DHCP server (unlikely internal server error).
+The argument contains a reason for the error.
+
+% HA_LEASE6_EXPIRE_INVALID_HA_SERVER_NAME %1: invalid ha-server-name value for subnet %2
+This error message is issued when the reclaimed DHCPv6 lease belongs to
+a subnet which includes ha-server-name value in the user-context but this
+value is not a string or is empty. It is a server's misconifguration.
+The first argument holds the lease information. The second argument is a
+subnet prefix.
+
+% HA_LEASE6_EXPIRE_RECLAMATION_SKIP %1: skipping reclamation of the lease that belongs to a partner
+Logged at debug log level 40.
+This debug message is issued when the server is in the terminated state and
+skips reclamation of the lease that was probably allocated by another server,
+or is maintained by the other server while the servers are in the HA terminated
+state. The argument is the lease address.
+
 % HA_LOAD_BALANCING_DUID_MISSING %1: load balancing failed for the DHCPv6 message (transaction id: %2) because DUID is missing
 Logged at debug log level 40.
 This debug message is issued when the HA hook library was unable to load
@@ -462,6 +502,18 @@ This debug message is issued when the HA hook library was unable to load
 balance an incoming DHCPv4 query because neither client identifier nor
 HW address was included in the query. The query will be dropped. The
 sole argument contains transaction id.
+
+% HA_LOAD_BALANCING_LEASE_DUID_MISSING %1: load balancing failed for the DHCPv6 lease %2 because DUID is missing
+Logged at debug log level 40.
+This debug message is issued when the HA hook library was unable to load
+balance a reclaimed DHCPv6 lease because client identifier was not included
+found in the lease.
+
+% HA_LOAD_BALANCING_LEASE_IDENTIFIER_MISSING %1: load balancing failed for the DHCPv4 lease %2 because HW address and client identifier are missing
+Logged at debug log level 40.
+This debug message is issued when the HA hook library was unable to load
+balance a reclaimed DHCPv4 lease because neither client identifier nor
+HW address was included in the query.
 
 % HA_LOCAL_DHCP_DISABLE local DHCP service is disabled while the %1 is in the %2 state
 This informational message is issued to indicate that the local DHCP service

@@ -129,14 +129,19 @@ QueryFilterTest::loadBalancingThisPrimary() {
     const unsigned queries_num = 65535;
     std::string scope_class;
     for (unsigned i = 0; i < queries_num; ++i) {
-        // Create query with random HW address.
-        Pkt4Ptr query4 = createQuery4(randomKey(HWAddr::ETHERNET_HWADDR_LEN));
+        // Create query and lease with with random HW address.
+        auto key = randomKey(HWAddr::ETHERNET_HWADDR_LEN);
+        Pkt4Ptr query4 = createQuery4(key);
+        Lease4Ptr lease4 = createLease4(key);
         // If the query is in scope, increase the counter of packets in scope.
         if (filter.inScope(query4, scope_class)) {
-            ASSERT_EQ("HA_server1", scope_class);
-            ASSERT_NE(scope_class, "HA_server2");
             ++in_scope;
+            EXPECT_EQ("HA_server1", scope_class);
+            EXPECT_TRUE(filter.inScope(lease4));
+        } else {
+            EXPECT_FALSE(filter.inScope(lease4));
         }
+        return;
     }
 
     // We should have roughly 50/50 split of in scope and out of scope queries.
@@ -156,10 +161,13 @@ QueryFilterTest::loadBalancingThisPrimary() {
 
     // Repeat the test, but this time all should be in scope.
     for (unsigned i = 0; i < queries_num; ++i) {
-        // Create query with random HW address.
-        Pkt4Ptr query4 = createQuery4(randomKey(HWAddr::ETHERNET_HWADDR_LEN));
-        // Every single query mist be in scope.
-        ASSERT_TRUE(filter.inScope(query4, scope_class));
+        // Create query and lease with random HW address.
+        auto key = randomKey(HWAddr::ETHERNET_HWADDR_LEN);
+        Pkt4Ptr query4 = createQuery4(key);
+        Lease4Ptr lease4 = createLease4(key);
+        // Every single query and lease must be in scope.
+        EXPECT_TRUE(filter.inScope(query4, scope_class));
+        EXPECT_TRUE(filter.inScope(lease4));
     }
 
     // However, the one that lacks HW address and client id should be out of
@@ -189,13 +197,17 @@ QueryFilterTest::loadBalancingClientIdThisPrimary() {
     const unsigned queries_num = 65535;
     std::string scope_class;
     for (unsigned i = 0; i < queries_num; ++i) {
-        // Create query with random client identifier.
-        Pkt4Ptr query4 = createQuery4(hw_address, randomKey(8));
+        // Create query and lease with random client identifier.
+        auto key = randomKey(8);
+        Pkt4Ptr query4 = createQuery4(hw_address, key);
+        Lease4Ptr lease4 = createLease4(hw_address, key);
         // If the query is in scope, increase the counter of packets in scope.
         if (filter.inScope(query4, scope_class)) {
-            ASSERT_EQ("HA_server1", scope_class);
-            ASSERT_NE(scope_class, "HA_server2");
             ++in_scope;
+            EXPECT_EQ("HA_server1", scope_class);
+            EXPECT_TRUE(filter.inScope(lease4));
+        } else {
+            EXPECT_FALSE(filter.inScope(lease4));
         }
     }
 
@@ -216,10 +228,13 @@ QueryFilterTest::loadBalancingClientIdThisPrimary() {
 
     // Repeat the test, but this time all should be in scope.
     for (unsigned i = 0; i < queries_num; ++i) {
-        // Create query with random client identifier.
-        Pkt4Ptr query4 = createQuery4(hw_address, randomKey(8));
-        // Every single query mist be in scope.
-        ASSERT_TRUE(filter.inScope(query4, scope_class));
+        // Create query and lease with random client identifier.
+        auto key = randomKey(8);
+        Pkt4Ptr query4 = createQuery4(hw_address, key);
+        Lease4Ptr lease4 = createLease4(hw_address, key);
+        // Every single query and lease must be in scope.
+        EXPECT_TRUE(filter.inScope(query4, scope_class));
+        EXPECT_TRUE(filter.inScope(lease4));
     }
 }
 
@@ -244,13 +259,17 @@ QueryFilterTest::loadBalancingThisSecondary() {
     const unsigned queries_num = 65535;
     std::string scope_class;
     for (unsigned i = 0; i < queries_num; ++i) {
-        // Create query with random HW address.
-        Pkt4Ptr query4 = createQuery4(randomKey(HWAddr::ETHERNET_HWADDR_LEN));
+        // Create query and lease with random HW address.
+        auto key = randomKey(HWAddr::ETHERNET_HWADDR_LEN);
+        Pkt4Ptr query4 = createQuery4(key);
+        Lease4Ptr lease4 = createLease4(key);
         // If the query is in scope, increase the counter of packets in scope.
         if (filter.inScope(query4, scope_class)) {
-            ASSERT_EQ("HA_server2", scope_class);
-            ASSERT_NE(scope_class, "HA_server1");
             ++in_scope;
+            EXPECT_EQ("HA_server2", scope_class);
+            EXPECT_TRUE(filter.inScope(lease4));
+        } else {
+            EXPECT_FALSE(filter.inScope(lease4));
         }
     }
 
@@ -271,10 +290,13 @@ QueryFilterTest::loadBalancingThisSecondary() {
 
     // Repeat the test, but this time all should be in scope.
     for (unsigned i = 0; i < queries_num; ++i) {
-        // Create query with random HW address.
-        Pkt4Ptr query4 = createQuery4(randomKey(HWAddr::ETHERNET_HWADDR_LEN));
-        // Every single query must be in scope.
-        ASSERT_TRUE(filter.inScope(query4, scope_class));
+        // Create query and lease with random HW address.
+        auto key = randomKey(HWAddr::ETHERNET_HWADDR_LEN);
+        Pkt4Ptr query4 = createQuery4(key);
+        Lease4Ptr lease4 = createLease4(key);
+        // Every single query and lease must be in scope.
+        EXPECT_TRUE(filter.inScope(query4, scope_class));
+        EXPECT_TRUE(filter.inScope(lease4));
     }
 }
 
@@ -295,10 +317,13 @@ QueryFilterTest::loadBalancingThisBackup() {
     const unsigned queries_num = 65535;
     std::string scope_class;
     for (unsigned i = 0; i < queries_num; ++i) {
-        // Create query with random HW address.
-        Pkt4Ptr query4 = createQuery4(randomKey(HWAddr::ETHERNET_HWADDR_LEN));
-        // None of the packets should be handlded by the backup server.
-        ASSERT_FALSE(filter.inScope(query4, scope_class));
+        // Create query and lease with random HW address.
+        auto key = randomKey(HWAddr::ETHERNET_HWADDR_LEN);
+        Pkt4Ptr query4 = createQuery4(key);
+        Lease4Ptr lease4 = createLease4(key);
+        // None of the packets should be handled by the backup server.
+        EXPECT_FALSE(filter.inScope(query4, scope_class));
+        EXPECT_FALSE(filter.inScope(lease4));
     }
 
     // Simulate failover. Although, backup server never starts handling
@@ -313,10 +338,13 @@ QueryFilterTest::loadBalancingThisBackup() {
 
     // Repeat the test, but this time all should be in scope.
     for (unsigned i = 0; i < queries_num; ++i) {
-        // Create query with random HW address.
-        Pkt4Ptr query4 = createQuery4(randomKey(HWAddr::ETHERNET_HWADDR_LEN));
-        // Every single query must be in scope.
-        ASSERT_TRUE(filter.inScope(query4, scope_class));
+        // Create query and lease with random HW address.
+        auto key = randomKey(HWAddr::ETHERNET_HWADDR_LEN);
+        Pkt4Ptr query4 = createQuery4(key);
+        Lease4Ptr lease4 = createLease4(key);
+        // Every single query and lease must be in scope.
+        EXPECT_TRUE(filter.inScope(query4, scope_class));
+        EXPECT_TRUE(filter.inScope(lease4));
     }
 }
 
@@ -328,6 +356,7 @@ QueryFilterTest::hotStandbyThisPrimary() {
     QueryFilter filter(config);
 
     Pkt4Ptr query4 = createQuery4("11:22:33:44:55:66");
+    Lease4Ptr lease4 = createLease4(query4->getHWAddr()->hwaddr_);
 
     // By default, only the primary server is active.
     EXPECT_TRUE(filter.amServingScope("server1"));
@@ -338,6 +367,7 @@ QueryFilterTest::hotStandbyThisPrimary() {
 
     // It should process its queries.
     EXPECT_TRUE(filter.inScope(query4, scope_class));
+    EXPECT_TRUE(filter.inScope(lease4));
 
     // Simulate failover scenario, in which the active server detects a
     // failure of the standby server. This doesn't change anything in how
@@ -351,7 +381,7 @@ QueryFilterTest::hotStandbyThisPrimary() {
 
     EXPECT_TRUE(filter.inScope(query4, scope_class));
     EXPECT_EQ("HA_server1", scope_class);
-    EXPECT_NE(scope_class, "HA_server2");
+    EXPECT_TRUE(filter.inScope(lease4));
 }
 
 void
@@ -363,6 +393,7 @@ QueryFilterTest::hotStandbyThisSecondary() {
     QueryFilter filter(config);
 
     Pkt4Ptr query4 = createQuery4("11:22:33:44:55:66");
+    Lease4Ptr lease4 = createLease4(query4->getHWAddr()->hwaddr_);
 
     // The server2 doesn't process any queries by default. The whole
     // traffic is processed by the server1.
@@ -374,7 +405,7 @@ QueryFilterTest::hotStandbyThisSecondary() {
 
     EXPECT_FALSE(filter.inScope(query4, scope_class));
     EXPECT_EQ("HA_server1", scope_class);
-    EXPECT_NE(scope_class, "HA_server2");
+    EXPECT_FALSE(filter.inScope(lease4));
 
     // Simulate failover case whereby the standby server detects a
     // failure of the active server.
@@ -389,6 +420,7 @@ QueryFilterTest::hotStandbyThisSecondary() {
     EXPECT_TRUE(filter.inScope(query4, scope_class));
     EXPECT_EQ("HA_server1", scope_class);
     EXPECT_NE(scope_class, "HA_server2");
+    EXPECT_TRUE(filter.inScope(lease4));
 }
 
 void
@@ -400,6 +432,7 @@ QueryFilterTest::hotStandbyThisBackup() {
     QueryFilter filter(config);
 
     Pkt4Ptr query4 = createQuery4("11:22:33:44:55:66");
+    Lease4Ptr lease4 = createLease4(query4->getHWAddr()->hwaddr_);
 
     // By default the backup server doesn't process any traffic.
     EXPECT_FALSE(filter.amServingScope("server1"));
@@ -409,6 +442,7 @@ QueryFilterTest::hotStandbyThisBackup() {
     std::string scope_class;
 
     EXPECT_FALSE(filter.inScope(query4, scope_class));
+    EXPECT_FALSE(filter.inScope(lease4));
 
     // Simulate failover. Although, backup server never starts handling
     // other server's traffic automatically, it can be manually instructed
@@ -422,6 +456,7 @@ QueryFilterTest::hotStandbyThisBackup() {
     EXPECT_FALSE(filter.amServingScope("server3"));
 
     EXPECT_TRUE(filter.inScope(query4, scope_class));
+    EXPECT_TRUE(filter.inScope(lease4));
 }
 
 void
@@ -442,13 +477,17 @@ QueryFilterTest::loadBalancingThisPrimary6() {
     const unsigned queries_num = 65535;
     std::string scope_class;
     for (unsigned i = 0; i < queries_num; ++i) {
-        // Create query with random DUID.
-        Pkt6Ptr query6 = createQuery6(randomKey(10));
+        // Create query and lease with random DUID.
+        auto key = randomKey(10);
+        Pkt6Ptr query6 = createQuery6(key);
+        Lease6Ptr lease6 = createLease6(key);
         // If the query is in scope, increase the counter of packets in scope.
         if (filter.inScope(query6, scope_class)) {
-            ASSERT_EQ("HA_server1", scope_class);
-            ASSERT_NE(scope_class, "HA_server2");
             ++in_scope;
+            EXPECT_EQ("HA_server1", scope_class);
+            EXPECT_TRUE(filter.inScope(lease6));
+        } else {
+            EXPECT_FALSE(filter.inScope(lease6));
         }
     }
 
@@ -469,10 +508,13 @@ QueryFilterTest::loadBalancingThisPrimary6() {
 
     // Repeat the test, but this time all should be in scope.
     for (unsigned i = 0; i < queries_num; ++i) {
-        // Create query with random HW address.
-        Pkt6Ptr query6 = createQuery6(randomKey(10));
-        // Every single query mist be in scope.
-        ASSERT_TRUE(filter.inScope(query6, scope_class));
+        // Create query and lease with random HW address.
+        auto key = randomKey(10);
+        Pkt6Ptr query6 = createQuery6(key);
+        Lease6Ptr lease6 = createLease6(key);
+        // Every single query and lease must be in scope.
+        EXPECT_TRUE(filter.inScope(query6, scope_class));
+        EXPECT_TRUE(filter.inScope(lease6));
     }
 
     // However, the one that lacks DUID should be out of scope.
@@ -501,13 +543,17 @@ QueryFilterTest::loadBalancingThisSecondary6() {
     const unsigned queries_num = 65535;
     std::string scope_class;
     for (unsigned i = 0; i < queries_num; ++i) {
-        // Create query with random HW address.
-        Pkt6Ptr query6 = createQuery6(randomKey(10));
+        // Create query and lease with random HW address.
+        auto key = randomKey(10);
+        Pkt6Ptr query6 = createQuery6(key);
+        Lease6Ptr lease6 = createLease6(key);
         // If the query is in scope, increase the counter of packets in scope.
         if (filter.inScope(query6, scope_class)) {
-            ASSERT_EQ("HA_server2", scope_class);
-            ASSERT_NE(scope_class, "HA_server1");
             ++in_scope;
+            EXPECT_EQ("HA_server2", scope_class);
+            EXPECT_TRUE(filter.inScope(lease6));
+        } else {
+            EXPECT_FALSE(filter.inScope(lease6));
         }
     }
 
@@ -528,10 +574,13 @@ QueryFilterTest::loadBalancingThisSecondary6() {
 
     // Repeat the test, but this time all should be in scope.
     for (unsigned i = 0; i < queries_num; ++i) {
-        // Create query with random HW address.
-        Pkt6Ptr query6 = createQuery6(randomKey(HWAddr::ETHERNET_HWADDR_LEN));
-        // Every single query must be in scope.
-        ASSERT_TRUE(filter.inScope(query6, scope_class));
+        // Create query and lease with random HW address.
+        auto key = randomKey(HWAddr::ETHERNET_HWADDR_LEN);
+        Pkt6Ptr query6 = createQuery6(key);
+        Lease6Ptr lease6 = createLease6(key);
+        // Every single query and lease must be in scope.
+        EXPECT_TRUE(filter.inScope(query6, scope_class));
+        EXPECT_TRUE(filter.inScope(lease6));
     }
 }
 
@@ -552,10 +601,13 @@ QueryFilterTest::loadBalancingThisBackup6() {
     const unsigned queries_num = 65535;
     std::string scope_class;
     for (unsigned i = 0; i < queries_num; ++i) {
-        // Create query with random HW address.
-        Pkt6Ptr query6 = createQuery6(randomKey(10));
+        // Create query and lease with random HW address.
+        auto key = randomKey(10);
+        Pkt6Ptr query6 = createQuery6(key);
+        Lease6Ptr lease6 = createLease6(key);
         // None of the packets should be handlded by the backup server.
-        ASSERT_FALSE(filter.inScope(query6, scope_class));
+        EXPECT_FALSE(filter.inScope(query6, scope_class));
+        EXPECT_FALSE(filter.inScope(lease6));
     }
 
     // Simulate failover. Although, backup server never starts handling
@@ -570,10 +622,13 @@ QueryFilterTest::loadBalancingThisBackup6() {
 
     // Repeat the test, but this time all should be in scope.
     for (unsigned i = 0; i < queries_num; ++i) {
-        // Create query with random HW address.
-        Pkt6Ptr query6 = createQuery6(randomKey(10));
-        // Every single query must be in scope.
-        ASSERT_TRUE(filter.inScope(query6, scope_class));
+        // Create query and lease with random HW address.
+        auto key = randomKey(10);
+        Pkt6Ptr query6 = createQuery6(key);
+        Lease6Ptr lease6 = createLease6(key);
+        // Every single query and lease must be in scope.
+        EXPECT_TRUE(filter.inScope(query6, scope_class));
+        EXPECT_TRUE(filter.inScope(lease6));
     }
 }
 
@@ -584,7 +639,9 @@ QueryFilterTest::hotStandbyThisPrimary6() {
 
     QueryFilter filter(config);
 
-    Pkt6Ptr query6 = createQuery6("01:02:11:22:33:44:55:66");
+    auto key = randomKey(10);
+    Pkt6Ptr query6 = createQuery6(key);
+    Lease6Ptr lease6 = createLease6(key);
 
     // By default, only the primary server is active.
     EXPECT_TRUE(filter.amServingScope("server1"));
@@ -595,6 +652,7 @@ QueryFilterTest::hotStandbyThisPrimary6() {
 
     // It should process its queries.
     EXPECT_TRUE(filter.inScope(query6, scope_class));
+    EXPECT_TRUE(filter.inScope(lease6));
 
     // Simulate failover scenario, in which the active server detects a
     // failure of the standby server. This doesn't change anything in how
@@ -608,7 +666,7 @@ QueryFilterTest::hotStandbyThisPrimary6() {
 
     EXPECT_TRUE(filter.inScope(query6, scope_class));
     EXPECT_EQ("HA_server1", scope_class);
-    EXPECT_NE(scope_class, "HA_server2");
+    EXPECT_TRUE(filter.inScope(lease6));
 }
 
 void
@@ -619,7 +677,9 @@ QueryFilterTest::hotStandbyThisSecondary6() {
 
     QueryFilter filter(config);
 
-    Pkt6Ptr query6 = createQuery6("01:02:11:22:33:44:55:66");
+    auto key = randomKey(10);
+    Pkt6Ptr query6 = createQuery6(key);
+    Lease6Ptr lease6 = createLease6(key);
 
     // The server2 doesn't process any queries by default. The whole
     // traffic is processed by the server1.
@@ -631,7 +691,7 @@ QueryFilterTest::hotStandbyThisSecondary6() {
 
     EXPECT_FALSE(filter.inScope(query6, scope_class));
     EXPECT_EQ("HA_server1", scope_class);
-    EXPECT_NE(scope_class, "HA_server2");
+    EXPECT_FALSE(filter.inScope(lease6));
 
     // Simulate failover case whereby the standby server detects a
     // failure of the active server.
@@ -645,7 +705,7 @@ QueryFilterTest::hotStandbyThisSecondary6() {
 
     EXPECT_TRUE(filter.inScope(query6, scope_class));
     EXPECT_EQ("HA_server1", scope_class);
-    EXPECT_NE(scope_class, "HA_server2");
+    EXPECT_TRUE(filter.inScope(lease6));
 }
 
 void
@@ -656,7 +716,9 @@ QueryFilterTest::hotStandbyThisBackup6() {
 
     QueryFilter filter(config);
 
-    Pkt6Ptr query6 = createQuery6(randomKey(10));
+    auto key = randomKey(10);
+    Pkt6Ptr query6 = createQuery6(key);
+    Lease6Ptr lease6 = createLease6(key);
 
     // By default the backup server doesn't process any traffic.
     EXPECT_FALSE(filter.amServingScope("server1"));
@@ -666,6 +728,7 @@ QueryFilterTest::hotStandbyThisBackup6() {
     std::string scope_class;
 
     EXPECT_FALSE(filter.inScope(query6, scope_class));
+    EXPECT_FALSE(filter.inScope(lease6));
 
     // Simulate failover. Although, backup server never starts handling
     // other server's traffic automatically, it can be manually instructed
@@ -679,6 +742,7 @@ QueryFilterTest::hotStandbyThisBackup6() {
     EXPECT_FALSE(filter.amServingScope("server3"));
 
     EXPECT_TRUE(filter.inScope(query6, scope_class));
+    EXPECT_TRUE(filter.inScope(lease6));
 }
 
 void
@@ -748,16 +812,20 @@ QueryFilterTest::loadBalancingHaTypes4() {
     for (unsigned i = 0; i < max_scope_tries; ++i) {
         // Create query with random HW address.
         std::string scope_class;
-        Pkt4Ptr query4 = createQuery4(randomKey(HWAddr::ETHERNET_HWADDR_LEN));
+        auto key = randomKey(HWAddr::ETHERNET_HWADDR_LEN);
+        Pkt4Ptr query4 = createQuery4(key);
+        Lease4Ptr lease4 = createLease4(key);
         // If the query is in scope then we're done.
         if (filter.inScope(query4, scope_class)) {
-            ASSERT_EQ("HA_server1", scope_class);
+            EXPECT_EQ("HA_server1", scope_class);
+            EXPECT_TRUE(filter.inScope(lease4));
             server1_pkt = query4;
             if (server2_pkt) {
                 break;
             }
         } else {
-            ASSERT_EQ("HA_server2", scope_class);
+            EXPECT_EQ("HA_server2", scope_class);
+            EXPECT_FALSE(filter.inScope(lease4));
             server2_pkt = query4;
             if (server1_pkt) {
                 break;
@@ -822,10 +890,13 @@ QueryFilterTest::loadBalancingHaTypes6() {
         // Create query with random HW address.
         std::string scope_class;
 
-        // Create query with random DUID.
-        Pkt6Ptr query6 = createQuery6(randomKey(10));
+        // Create query and lease with random DUID.
+        auto key = randomKey(10);
+        Pkt6Ptr query6 = createQuery6(key);
+        Lease6Ptr lease6 = createLease6(key);
         if (filter.inScope(query6, scope_class)) {
-            ASSERT_EQ("HA_server1", scope_class);
+            EXPECT_EQ("HA_server1", scope_class);
+            EXPECT_TRUE(filter.inScope(lease6));
             // In scope for server1, save it.
             server1_pkt = query6;
             if (server2_pkt) {
@@ -833,7 +904,8 @@ QueryFilterTest::loadBalancingHaTypes6() {
                 break;
             }
         } else {
-            ASSERT_EQ("HA_server2", scope_class);
+            EXPECT_EQ("HA_server2", scope_class);
+            EXPECT_FALSE(filter.inScope(lease6));
             // In scope for server2, save it.
             server2_pkt = query6;
             if (server1_pkt) {

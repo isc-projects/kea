@@ -494,6 +494,45 @@ private:
 
 public:
 
+    /// @brief Checks if the lease should be reclaimed by this server.
+    ///
+    /// The lease must not be reclaimed by the server when the server is in the
+    /// terminated state and the lease belongs to another server (per load balancing
+    /// algorithm or when it is a standby server).
+    ///
+    /// @param lease4 pointer to the DHCPv4 lease being reclaimed.
+    /// @return true if the DHCPv4 lease should be reclaimed by this server instance,
+    /// false otherwise.
+    bool shouldReclaim(const dhcp::Lease4Ptr& lease4) const;
+
+    /// @brief Checks if the lease should be reclaimed by this server.
+    ///
+    /// The lease must not be reclaimed by the server when the server is in the
+    /// terminated state and the lease belongs to another server (per load balancing
+    /// algorithm or when it is a standby server).
+    ///
+    /// @param lease6 pointer to the DHCPv4 lease being reclaimed.
+    /// @return true if the DHCPv6 lease should be reclaimed by this server instance,
+    /// false otherwise.
+    bool shouldReclaim(const dhcp::Lease6Ptr& lease6) const;
+
+private:
+
+    /// @brief Checks if the lease should be reclaimed by this server.
+    ///
+    /// The lease must not be reclaimed by the server when the server is in the
+    /// terminated state and the lease belongs to another server (per load balancing
+    /// algorithm or when it is a standby server).
+    ///
+    /// @tparam LeasePtrType type of the pointer to the DHCP lease.
+    /// @param lease pointer to the DHCP lease being reclaimed.
+    /// @return true if the DHCP lease should be reclaimed by this server instance,
+    /// false otherwise.
+    template<typename LeaseTypePtr>
+    bool shouldReclaimInternal(const LeaseTypePtr& lease) const;
+
+public:
+
     /// @brief Enables or disables network state depending on the served scopes.
     ///
     /// This method is called in each HA state to enable/disable DHCP service

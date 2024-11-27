@@ -49,7 +49,13 @@ extern const isc::log::MessageID HA_INIT_OK = "HA_INIT_OK";
 extern const isc::log::MessageID HA_INVALID_PARTNER_STATE_COMMUNICATION_RECOVERY = "HA_INVALID_PARTNER_STATE_COMMUNICATION_RECOVERY";
 extern const isc::log::MessageID HA_INVALID_PARTNER_STATE_HOT_STANDBY = "HA_INVALID_PARTNER_STATE_HOT_STANDBY";
 extern const isc::log::MessageID HA_INVALID_PARTNER_STATE_LOAD_BALANCING = "HA_INVALID_PARTNER_STATE_LOAD_BALANCING";
+extern const isc::log::MessageID HA_LEASE4_EXPIRE_FAILED = "HA_LEASE4_EXPIRE_FAILED";
+extern const isc::log::MessageID HA_LEASE4_EXPIRE_INVALID_HA_SERVER_NAME = "HA_LEASE4_EXPIRE_INVALID_HA_SERVER_NAME";
+extern const isc::log::MessageID HA_LEASE4_EXPIRE_RECLAMATION_SKIP = "HA_LEASE4_EXPIRE_RECLAMATION_SKIP";
 extern const isc::log::MessageID HA_LEASE4_SERVER_DECLINE_FAILED = "HA_LEASE4_SERVER_DECLINE_FAILED";
+extern const isc::log::MessageID HA_LEASE6_EXPIRE_FAILED = "HA_LEASE6_EXPIRE_FAILED";
+extern const isc::log::MessageID HA_LEASE6_EXPIRE_INVALID_HA_SERVER_NAME = "HA_LEASE6_EXPIRE_INVALID_HA_SERVER_NAME";
+extern const isc::log::MessageID HA_LEASE6_EXPIRE_RECLAMATION_SKIP = "HA_LEASE6_EXPIRE_RECLAMATION_SKIP";
 extern const isc::log::MessageID HA_LEASES4_COMMITTED_FAILED = "HA_LEASES4_COMMITTED_FAILED";
 extern const isc::log::MessageID HA_LEASES4_COMMITTED_NOTHING_TO_UPDATE = "HA_LEASES4_COMMITTED_NOTHING_TO_UPDATE";
 extern const isc::log::MessageID HA_LEASES4_COMMITTED_NO_RELATIONSHIP = "HA_LEASES4_COMMITTED_NO_RELATIONSHIP";
@@ -78,6 +84,8 @@ extern const isc::log::MessageID HA_LEASE_UPDATE_FAILED = "HA_LEASE_UPDATE_FAILE
 extern const isc::log::MessageID HA_LEASE_UPDATE_REJECTS_CAUSED_TERMINATION = "HA_LEASE_UPDATE_REJECTS_CAUSED_TERMINATION";
 extern const isc::log::MessageID HA_LOAD_BALANCING_DUID_MISSING = "HA_LOAD_BALANCING_DUID_MISSING";
 extern const isc::log::MessageID HA_LOAD_BALANCING_IDENTIFIER_MISSING = "HA_LOAD_BALANCING_IDENTIFIER_MISSING";
+extern const isc::log::MessageID HA_LOAD_BALANCING_LEASE_DUID_MISSING = "HA_LOAD_BALANCING_LEASE_DUID_MISSING";
+extern const isc::log::MessageID HA_LOAD_BALANCING_LEASE_IDENTIFIER_MISSING = "HA_LOAD_BALANCING_LEASE_IDENTIFIER_MISSING";
 extern const isc::log::MessageID HA_LOCAL_DHCP_DISABLE = "HA_LOCAL_DHCP_DISABLE";
 extern const isc::log::MessageID HA_LOCAL_DHCP_ENABLE = "HA_LOCAL_DHCP_ENABLE";
 extern const isc::log::MessageID HA_MAINTENANCE_CANCEL_HANDLER_FAILED = "HA_MAINTENANCE_CANCEL_HANDLER_FAILED";
@@ -174,7 +182,13 @@ const char* values[] = {
     "HA_INVALID_PARTNER_STATE_COMMUNICATION_RECOVERY", "%1: partner is in the communication-recovery state unexpectedly",
     "HA_INVALID_PARTNER_STATE_HOT_STANDBY", "%1: partner is in the hot-standby state unexpectedly",
     "HA_INVALID_PARTNER_STATE_LOAD_BALANCING", "%1: partner is in the load-balancing state unexpectedly",
+    "HA_LEASE4_EXPIRE_FAILED", "lease4_expire callout failed: %1",
+    "HA_LEASE4_EXPIRE_INVALID_HA_SERVER_NAME", "%1: invalid ha-server-name value for subnet %2",
+    "HA_LEASE4_EXPIRE_RECLAMATION_SKIP", "%1: skipping reclamation of the lease that belongs to a partner",
     "HA_LEASE4_SERVER_DECLINE_FAILED", "lease4_server_decline callout failed: %1",
+    "HA_LEASE6_EXPIRE_FAILED", "lease4_expire callout failed: %1",
+    "HA_LEASE6_EXPIRE_INVALID_HA_SERVER_NAME", "%1: invalid ha-server-name value for subnet %2",
+    "HA_LEASE6_EXPIRE_RECLAMATION_SKIP", "%1: skipping reclamation of the lease that belongs to a partner",
     "HA_LEASES4_COMMITTED_FAILED", "leases4_committed callout failed: %1",
     "HA_LEASES4_COMMITTED_NOTHING_TO_UPDATE", "%1: leases4_committed callout was invoked without any leases",
     "HA_LEASES4_COMMITTED_NO_RELATIONSHIP", "%1: HA relationship not found: %2",
@@ -203,6 +217,8 @@ const char* values[] = {
     "HA_LEASE_UPDATE_REJECTS_CAUSED_TERMINATION", "%1: too many rejected lease updates cause the HA service to terminate",
     "HA_LOAD_BALANCING_DUID_MISSING", "%1: load balancing failed for the DHCPv6 message (transaction id: %2) because DUID is missing",
     "HA_LOAD_BALANCING_IDENTIFIER_MISSING", "%1: load balancing failed for the DHCPv4 message (transaction id: %2) because HW address and client identifier are missing",
+    "HA_LOAD_BALANCING_LEASE_DUID_MISSING", "%1: load balancing failed for the DHCPv6 lease %2 because DUID is missing",
+    "HA_LOAD_BALANCING_LEASE_IDENTIFIER_MISSING", "%1: load balancing failed for the DHCPv4 lease %2 because HW address and client identifier are missing",
     "HA_LOCAL_DHCP_DISABLE", "local DHCP service is disabled while the %1 is in the %2 state",
     "HA_LOCAL_DHCP_ENABLE", "local DHCP service is enabled while the %1 is in the %2 state",
     "HA_MAINTENANCE_CANCEL_HANDLER_FAILED", "ha-maintenance-cancel command failed: %1",

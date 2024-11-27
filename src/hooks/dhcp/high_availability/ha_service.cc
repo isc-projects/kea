@@ -1085,6 +1085,22 @@ HAService::inScopeInternal(QueryPtrType& query) {
     return (in_scope);
 }
 
+bool
+HAService::shouldReclaim(const dhcp::Lease4Ptr& lease4) const {
+    return (shouldReclaimInternal(lease4));
+}
+
+bool
+HAService::shouldReclaim(const dhcp::Lease6Ptr& lease6) const {
+    return (shouldReclaimInternal(lease6));
+}
+
+template<typename LeasePtrType>
+bool
+HAService::shouldReclaimInternal(const LeasePtrType& lease) const {
+    return (getCurrState() != HA_TERMINATED_ST || query_filter_.inScope(lease));
+}
+
 void
 HAService::adjustNetworkState() {
     std::string current_state_name = getStateLabel(getCurrState());

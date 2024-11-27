@@ -14,6 +14,7 @@
 #include <cc/command_interpreter.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet.h>
@@ -336,6 +337,63 @@ HAImpl::lease4ServerDecline(CalloutHandle& callout_handle) {
 }
 
 void
+HAImpl::lease4Expire(CalloutHandle& callout_handle) {
+    Lease4Ptr lease4;
+    callout_handle.getArgument("lease4", lease4);
+
+    // If there are multiple relationships we need to take a detour and find
+    // a subnet the lease belongs to. The subnet will contain the information
+    // required to select appropriate HA service.
+    HAServicePtr service;
+    if (services_->hasMultiple()) {
+        auto subnet4 = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getBySubnetId(lease4->subnet_id_);
+        if (!subnet4) {
+            // No subnet means that we possibly have some stale leases that don't
+            // really belong to us. Therefore, there we return early and rely on the
+            // DHCP server to reclaim them. The HA hook has no way to juristiction here.
+            return;
+        }
+
+        std::string server_name;
+        try {
+            server_name = HAConfig::getSubnetServerName(subnet4);
+            if (server_name.empty()) {
+                // Again, this subnet has no hint for HA where our lease belongs.
+                // We have to rely on the server to run reclamation of this lease.
+                return;
+            }
+        } catch (...) {
+            // Someone has tried to configure the hint for HA in the subnet but
+            // it was poorly specified. We will log an error and leave again.
+            LOG_ERROR(ha_logger, HA_LEASE4_EXPIRE_INVALID_HA_SERVER_NAME)
+                .arg(lease4->addr_.toText())
+                .arg(subnet4->toText());
+            return;
+        }
+        service = services_->get(server_name);
+
+    } else {
+        service = services_->get();
+    }
+
+    if (!service) {
+        // This is highly unlikely but better handle null pointers.
+        return;
+    }
+
+    if (!shouldReclaim(service, lease4)) {
+        // While the server is in the terminated state it has to be careful about
+        // reclaiming the leases to avoid conflicting DNS updates with a server that
+        // owns the lease. This lease apparently belongs to another server, so we
+        // should not reclaim it.
+        LOG_DEBUG(ha_logger, DBGLVL_TRACE_BASIC, HA_LEASE4_EXPIRE_RECLAMATION_SKIP)
+            .arg(lease4->addr_.toText());
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
+        return;
+    }
+}
+
+void
 HAImpl::buffer6Receive(hooks::CalloutHandle& callout_handle) {
     // If there are multiple relationships, the HA-specific processing is
     // in the subnet6_select hook point.
@@ -557,6 +615,63 @@ HAImpl::leases6Committed(CalloutHandle& callout_handle) {
     // should leave the packet parked.  It will be unparked until each hook
     // library with a reference, unparks the packet.
     callout_handle.setStatus(CalloutHandle::NEXT_STEP_PARK);
+}
+
+void
+HAImpl::lease6Expire(CalloutHandle& callout_handle) {
+    Lease6Ptr lease6;
+    callout_handle.getArgument("lease6", lease6);
+
+    // If there are multiple relationships we need to take a detour and find
+    // a subnet the lease belongs to. The subnet will contain the information
+    // required to select appropriate HA service.
+    HAServicePtr service;
+    if (services_->hasMultiple()) {
+        auto subnet6 = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getBySubnetId(lease6->subnet_id_);
+        if (!subnet6) {
+            // No subnet means that we possibly have some stale leases that don't
+            // really belong to us. Therefore, there we return early and rely on the
+            // DHCP server to reclaim them. The HA hook has no way to juristiction here.
+            return;
+        }
+
+        std::string server_name;
+        try {
+            server_name = HAConfig::getSubnetServerName(subnet6);
+            if (server_name.empty()) {
+                // Again, this subnet has no hint for HA where our lease belongs.
+                // We have to rely on the server to run reclamation of this lease.
+                return;
+            }
+        } catch (...) {
+            // Someone has tried to configure the hint for HA in the subnet but
+            // it was poorly specified. We will log an error and leave again.
+            LOG_ERROR(ha_logger, HA_LEASE6_EXPIRE_INVALID_HA_SERVER_NAME)
+                .arg(lease6->addr_.toText())
+                .arg(subnet6->toText());
+            return;
+        }
+        service = services_->get(server_name);
+
+    } else {
+        service = services_->get();
+    }
+
+    if (!service) {
+        // This is highly unlikely but better handle null pointers.
+        return;
+    }
+
+    if (!shouldReclaim(service, lease6)) {
+        // While the server is in the terminated state it has to be careful about
+        // reclaiming the leases to avoid conflicting DNS updates with a server that
+        // owns the lease. This lease apparently belongs to another server, so we
+        // should not reclaim it.
+        LOG_DEBUG(ha_logger, DBGLVL_TRACE_BASIC, HA_LEASE6_EXPIRE_RECLAMATION_SKIP)
+            .arg(lease6->addr_.toText());
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
+        return;
+    }
 }
 
 void
@@ -932,6 +1047,17 @@ HAImpl::getHAServiceByServerName(const std::string& command_name, ConstElementPt
 
     return (service);
 }
+
+bool
+HAImpl::shouldReclaim(const HAServicePtr& service, const dhcp::Lease4Ptr& lease4) const {
+    return (service->shouldReclaim(lease4));
+}
+
+bool
+HAImpl::shouldReclaim(const HAServicePtr& service, const dhcp::Lease6Ptr& lease6) const {
+    return (service->shouldReclaim(lease6));
+}
+
 
 } // end of namespace isc::ha
 } // end of namespace isc
