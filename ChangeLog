@@ -1,11 +1,11 @@
-2306.	[func]		tmark
+2307.	[func]		tmark
 	The parameter "client-class" (a single class name) in
 	shared networks, subnets, and pools has been replaced with
 	"client-classes" (a list of one or more class names).
 	This applies to both kea-dhcp4 and kea-dhcp6.
 	(Gitlab #3592)
 
-2305.	[func]		fdupont
+2306.	[func]		fdupont
 	Added a new "http-headers" parameter to the CA and
 	HTTP control socket configuration sections which can
 	be used to specify extra 'name: value' headers to be
