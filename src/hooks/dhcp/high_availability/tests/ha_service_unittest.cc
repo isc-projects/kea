@@ -5398,8 +5398,8 @@ TEST_F(HAServiceTest, processMaintenanceNotifyCancelSetAvoidDeadlock) {
     ASSERT_NO_THROW(rsp = service.processMaintenanceNotify(true, "ready"));
     EXPECT_EQ(HA_READY_ST, service.communication_state_->getPartnerState());
 
-    // The state machine should have been transitioned to the state it was in
-    // prior to transitioning to the in-maintenance state.
+    // The state machine should have been transitioned to the waiting state
+    // given the partner didn't provide their state.
     EXPECT_EQ(HA_WAITING_ST, service.getCurrState());
 }
 
