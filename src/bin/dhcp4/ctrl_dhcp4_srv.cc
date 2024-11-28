@@ -179,7 +179,7 @@ ControlledDhcpv4Srv::loadConfigFile(const std::string& file_name) {
     } catch (const std::exception& ex) {
         // If configuration failed at any stage, we drop the staging
         // configuration and continue to use the previous one.
-        CfgMgr::instance().rollback();
+        CfgMgr::instance().clearStagingConfiguration();
 
         LOG_ERROR(dhcp4_logger, DHCP4_CONFIG_LOAD_FAIL)
             .arg(file_name).arg(ex.what());
@@ -372,7 +372,7 @@ ControlledDhcpv4Srv::commandConfigSetHandler(const string&,
     // We are starting the configuration process so we should remove any
     // staging configuration that has been created during previous
     // configuration attempts.
-    CfgMgr::instance().rollback();
+    CfgMgr::instance().clearStagingConfiguration();
 
     // Parse the logger configuration explicitly into the staging config.
     // Note this does not alter the current loggers, they remain in
@@ -478,7 +478,7 @@ ControlledDhcpv4Srv::commandConfigTestHandler(const string&,
     // We are starting the configuration process so we should remove any
     // staging configuration that has been created during previous
     // configuration attempts.
-    CfgMgr::instance().rollback();
+    CfgMgr::instance().clearStagingConfiguration();
 
     // Now we check the server proper.
     return (checkConfig(dhcp4));

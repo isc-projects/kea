@@ -69,12 +69,6 @@ public:
 /// @ref isc::dhcp::SimpleParser6::deriveParameters.
 class CfgMgr : public boost::noncopyable {
 public:
-
-    /// @brief A number of configurations held by @c CfgMgr.
-    ///
-    /// @todo Make it configurable.
-    static const size_t CONFIG_LIST_SIZE;
-
     /// @brief returns a single instance of Configuration Manager
     ///
     /// CfgMgr is a singleton and this method is the only way of
@@ -127,18 +121,13 @@ public:
     /// The following methods manage the process of preparing a configuration
     /// without affecting a currently used configuration and then committing
     /// the configuration to replace current configuration atomically.
-    /// They also allow for keeping a history of previous configurations so
-    /// as the @c CfgMgr can revert to the historical configuration when
-    /// required.
     ///
     /// @todo Migrate all configuration parameters to use the model supported
     /// by these functions.
     ///
-    /// @todo Make the size of the configurations history configurable.
-    ///
     //@{
 
-    /// @brief Removes current, staging and all previous configurations.
+    /// @brief Remove current, staging, and external configurations.
     ///
     /// This function removes all configurations, including current,
     /// staging and external configurations. It creates a new current
@@ -147,52 +136,18 @@ public:
     /// This function is exception safe.
     void clear();
 
+    /// @brief Remove staging configuration.
+    ///
+    /// This function is exception safe.
+    void clearStagingConfiguration();
+
     /// @brief Commits the staging configuration.
     ///
     /// The staging configuration becomes current configuration when this
-    /// function is called. It removes the oldest configurations held in the
-    /// history so as the size of the list of configuration does not exceed
-    /// the @c CONFIG_LIST_SIZE.
+    /// function is called.
     ///
     /// This function is exception safe.
     void commit();
-
-    /// @brief Removes staging configuration.
-    ///
-    /// This function should be called when there is a staging configuration
-    /// (likely created in the previous configuration attempt) but the entire
-    /// new configuration should be created. It removes the existing staging
-    /// configuration and the next call to @c CfgMgr::getStagingCfg will return a
-    /// fresh (default) configuration.
-    ///
-    /// This function is exception safe.
-    void rollback();
-
-    /// @brief Reverts to one of the previous configurations.
-    ///
-    /// This function reverts to selected previous configuration. The previous
-    /// configuration is entirely copied to a new @c SrvConfig instance. This
-    /// new instance has a unique sequence id (sequence id is not copied). The
-    /// previous configuration (being copied) is not modified by this operation.
-    ///
-    /// The configuration to be copied is identified by the index value which
-    /// is the distance between the current (most recent) and desired
-    /// configuration. If the index is out of range an exception is thrown.
-    ///
-    /// @warning Revert operation will rollback any changes to the staging
-    /// configuration (if it exists).
-    ///
-    /// @warning This function requires that the entire previous configuration
-    /// is copied to the new configuration object. This is not working for
-    /// some of the complex configuration objects, e.g. subnets. Hence, the
-    /// "revert" operation is not really usable at this point.
-    ///
-    /// @param index A distance from the current configuration to the
-    /// past configuration to be reverted. The minimal value is 1 which points
-    /// to the nearest configuration.
-    ///
-    /// @throw isc::OutOfRange if the specified index is out of range.
-    void revert(const size_t index);
 
     /// @brief Returns a pointer to the current configuration.
     ///
@@ -294,18 +249,9 @@ protected:
     CfgMgr();
 
     /// @brief virtual destructor
-    virtual ~CfgMgr();
+    virtual ~CfgMgr() = default;
 
 private:
-
-    /// @brief Checks if current configuration is created and creates it if needed.
-    ///
-    /// This private method is called to ensure that the current configuration
-    /// is created. If current configuration is not set, it creates the
-    /// default current configuration.
-    void ensureCurrentAllocated();
-
-
     /// @brief Merges external configuration with the given sequence number
     /// into the specified configuration.
     ///
@@ -320,21 +266,16 @@ private:
     /// @brief Manages the DHCP-DDNS client and its configuration.
     D2ClientMgrPtr d2_client_mgr_;
 
-    /// @brief Server configuration
+    /// @brief Current server configuration
     ///
     /// This is a structure that will hold all configuration.
     /// @todo: migrate all other parameters to that structure.
     SrvConfigPtr configuration_;
 
-    /// @name Configuration List.
+    /// @brief Staging server configuration
     ///
-    //@{
-    /// @brief Server configuration list type.
-    typedef std::list<SrvConfigPtr> SrvConfigList;
-
-    /// @brief Container holding all previous and current configurations.
-    SrvConfigList configs_;
-    //@}
+    /// This is a structure that holds configuration until it is applied.
+    SrvConfigPtr staging_configuration_;
 
     /// @name Map of external configurations.
     ///

@@ -19,9 +19,10 @@ using namespace isc::util;
 namespace isc {
 namespace dhcp {
 
-// Value 0 effectively disables configuration history. Higher values can lead to proportionally
-// increased memory usage which can be extreme in case of sizable configurations.
-const size_t CfgMgr::CONFIG_LIST_SIZE = 0;
+CfgMgr::CfgMgr()
+    : datadir_(DHCP_DATA_DIR, true), d2_client_mgr_(new D2ClientMgr()),
+      configuration_(new SrvConfig()), family_(AF_INET) {
+}
 
 CfgMgr&
 CfgMgr::instance() {
@@ -41,7 +42,6 @@ CfgMgr::setDataDir(const std::string& datadir, bool unspecified) {
 
 void
 CfgMgr::setD2ClientConfig(D2ClientConfigPtr& new_config) {
-    ensureCurrentAllocated();
     // Note that D2ClientMgr::setD2Config() actually attempts to apply the
     // configuration by stopping its sender and opening a new one and so
     // forth per the new configuration.
@@ -70,39 +70,35 @@ CfgMgr::getD2ClientMgr() {
 }
 
 void
-CfgMgr::ensureCurrentAllocated() {
-    if (!configuration_) {
-        configuration_.reset(new SrvConfig());
-        configs_.push_back(configuration_);
-    }
-}
-
-void
 CfgMgr::clear() {
+    if (staging_configuration_) {
+        staging_configuration_.reset();
+    }
     if (configuration_) {
         configuration_->removeStatistics();
-        configuration_.reset();
+        configuration_.reset(new SrvConfig());
     }
-    configs_.clear();
     external_configs_.clear();
     D2ClientConfigPtr d2_default_conf(new D2ClientConfig());
     setD2ClientConfig(d2_default_conf);
 }
 
 void
-CfgMgr::commit() {
-    ensureCurrentAllocated();
+CfgMgr::clearStagingConfiguration() {
+    staging_configuration_.reset();
+}
 
+void
+CfgMgr::commit() {
     // First we need to remove statistics. The new configuration can have fewer
     // subnets. Also, it may change subnet-ids. So we need to remove them all
     // and add them back.
     configuration_->removeStatistics();
 
-    bool promoted(false);
-    if (!configs_.empty() && !configs_.back()->sequenceEquals(*configuration_)) {
+    if (staging_configuration_ && !configuration_->sequenceEquals(*staging_configuration_)) {
         // Promote the staging configuration to the current configuration.
-        configuration_ = configs_.back();
-        promoted = true;
+        configuration_ = staging_configuration_;
+        staging_configuration_.reset();
     }
 
     // Set the last commit timestamp.
@@ -113,74 +109,20 @@ CfgMgr::commit() {
     configuration_->updateStatistics();
 
     configuration_->configureLowerLevelLibraries();
-
-    if (promoted) {
-        // Keep track of the maximum size of the configs history. Remove the oldest elements.
-        if (configs_.size() > CONFIG_LIST_SIZE) {
-            SrvConfigList::const_iterator it = configs_.begin();
-            std::advance(it, configs_.size() - CONFIG_LIST_SIZE);
-            configs_.erase(configs_.begin(), it);
-        }
-    }
-}
-
-void
-CfgMgr::rollback() {
-    ensureCurrentAllocated();
-    if (!configs_.empty() && !configuration_->sequenceEquals(*configs_.back())) {
-        configs_.pop_back();
-    }
-}
-
-void
-CfgMgr::revert(const size_t index) {
-    ensureCurrentAllocated();
-    if (index == 0) {
-        isc_throw(isc::OutOfRange, "invalid commit index 0 when reverting"
-                  " to an old configuration");
-    } else if (configs_.size() <= index) {
-        isc_throw(isc::OutOfRange, "unable to revert to commit index '"
-                  << index << "', only '" << (configs_.size() == 0 ? 0 : configs_.size() - 1)
-                  << "' previous commits available");
-    }
-
-    // Let's rollback an existing configuration to make sure that the last
-    // configuration on the list is the current one. Note that all remaining
-    // operations in this function should be exception free so there shouldn't
-    // be a problem that the revert operation fails and the staging
-    // configuration is destroyed by this rollback.
-    rollback();
-
-    if (!configs_.empty()) {
-        // Get the iterator to the current configuration and then advance to the
-        // desired one.
-        SrvConfigList::const_reverse_iterator it = configs_.rbegin();
-        std::advance(it, index);
-
-        // Copy the desired configuration to the new staging configuration. The
-        // staging configuration is re-created here because we rolled back earlier
-        // in this function.
-        (*it)->copy(*getStagingCfg());
-
-        // Make the staging configuration a current one.
-        commit();
-    }
 }
 
 SrvConfigPtr
 CfgMgr::getCurrentCfg() {
-    ensureCurrentAllocated();
     return (configuration_);
 }
 
 SrvConfigPtr
 CfgMgr::getStagingCfg() {
-    ensureCurrentAllocated();
-    if (configs_.empty() || configuration_->sequenceEquals(*configs_.back())) {
+    if (!staging_configuration_ || configuration_->sequenceEquals(*staging_configuration_)) {
         uint32_t sequence = configuration_->getSequence();
-        configs_.push_back(SrvConfigPtr(new SrvConfig(++sequence)));
+        staging_configuration_ = SrvConfigPtr(new SrvConfig(++sequence));
     }
-    return (configs_.back());
+    return (staging_configuration_);
 }
 
 SrvConfigPtr
@@ -228,16 +170,6 @@ CfgMgr::mergeIntoCfg(const SrvConfigPtr& target_config, const uint32_t seq) {
         isc_throw(BadValue, "the external configuration with the sequence number "
                   "of " << seq << " was not found");
     }
-}
-
-CfgMgr::CfgMgr()
-    : datadir_(DHCP_DATA_DIR, true), d2_client_mgr_(new D2ClientMgr()), family_(AF_INET) {
-    // DHCP_DATA_DIR must be set set with -DDHCP_DATA_DIR="..." in Makefile.am
-    // Note: the definition of DHCP_DATA_DIR needs to include quotation marks
-    // See AM_CPPFLAGS definition in Makefile.am
-}
-
-CfgMgr::~CfgMgr() {
 }
 
 } // end of isc::dhcp namespace
