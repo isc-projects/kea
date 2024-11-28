@@ -1827,7 +1827,7 @@ TEST_F(HAImplTest, lease4ExpireHubInvalidServerName) {
 }
 
 // Tests lease4_expire callout implementation when the server is a hub
-// with multiple relationship.
+// with multiple relationships.
 TEST_F(HAImplTest, lease4ExpireSingleService) {
     ConstElementPtr ha_config = createValidJsonConfiguration();
 
@@ -2034,7 +2034,7 @@ TEST_F(HAImplTest, lease6ExpireHubInvalidServerName) {
 }
 
 // Tests lease4_expire callout implementation when the server is a hub
-// with multiple relationship.
+// with multiple relationships.
 TEST_F(HAImplTest, lease6ExpireSingleService) {
     ConstElementPtr ha_config = createValidJsonConfiguration();
 
