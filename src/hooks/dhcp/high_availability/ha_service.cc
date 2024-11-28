@@ -2941,6 +2941,10 @@ HAService::processMaintenanceCancel() {
                              " partner-in-maintenance state."));
     }
 
+    // This is the state the server will transition to if the notification to the
+    // partner is successful.
+    int next_state = getPrevState() == HA_PARTNER_IN_MAINTENANCE_ST ? HA_WAITING_ST : getPrevState();
+
     HAConfig::PeerConfigPtr remote_config = config_->getFailoverPeerConfig();
 
     // Create HTTP/1.1 request including ha-maintenance-notify command
@@ -2950,7 +2954,9 @@ HAService::processMaintenanceCancel() {
          HostHttpHeader(remote_config->getUrl().getStrippedHostname()));
     remote_config->addBasicAuthHttpHeader(request);
     request->setBodyAsJson(CommandCreator::createMaintenanceNotify(config_->getThisServerName(),
-                                                                   true, getCurrState(), server_type_));
+                                                                   true,
+                                                                   next_state,
+                                                                   server_type_));
     request->finalize();
 
     // Response object should also be created because the HTTP client needs
@@ -3048,7 +3054,7 @@ HAService::processMaintenanceCancel() {
     // previous one. Avoid returning to the partner-in-maintenance if it was
     // the previous state.
     postNextEvent(HA_MAINTENANCE_CANCEL_EVT);
-    verboseTransition(getPrevState() == HA_PARTNER_IN_MAINTENANCE_ST ? HA_WAITING_ST : getPrevState());
+    verboseTransition(next_state);
     runModel(NOP_EVT);
 
     return (createAnswer(CONTROL_RESULT_SUCCESS,
