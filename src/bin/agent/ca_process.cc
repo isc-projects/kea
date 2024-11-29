@@ -181,15 +181,29 @@ CtrlAgentProcess::configure(isc::data::ConstElementPtr config_set,
             // active listeners. The next step will be to remove all other
             // active listeners, but we do it inside the main process loop.
             http_listeners_.push_back(http_listener);
+        } else if (!http_listeners_.empty()) {
+            // Reconfig keeping the same address and port.
+            if (http_listeners_.back()->getTlsContext()) {
+                LOG_INFO(agent_logger, CTRL_AGENT_HTTPS_SERVICE_REUSED)
+                    .arg(server_address.toText())
+                    .arg(server_port);
+            } else {
+                LOG_INFO(agent_logger, CTRL_AGENT_HTTP_SERVICE_REUSED)
+                    .arg(server_address.toText())
+                    .arg(server_port);
+            }
+            return;
         }
 
         // Ok, seems we're good to go.
         if (use_https) {
           LOG_INFO(agent_logger, CTRL_AGENT_HTTPS_SERVICE_STARTED)
-              .arg(server_address.toText()).arg(server_port);
+              .arg(server_address.toText())
+              .arg(server_port);
         } else {
             LOG_INFO(agent_logger, CTRL_AGENT_HTTP_SERVICE_STARTED)
-                .arg(server_address.toText()).arg(server_port);
+                .arg(server_address.toText())
+                .arg(server_port);
         }
     });
 

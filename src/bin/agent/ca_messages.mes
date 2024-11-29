@@ -43,10 +43,19 @@ error. The error was displayed and the configuration parsing resumed.
 This is a fatal error message issued when the Control Agent application
 encounters an unrecoverable error from within the event loop.
 
+% CTRL_AGENT_HTTPS_SERVICE_REUSED reused HTTPS service bound to address %1:%2
+This informational message indicates that the server has reused existing
+HTTPS service on the specified address and port. Note that any change in
+the TLS setup was ignored.
+
 % CTRL_AGENT_HTTPS_SERVICE_STARTED HTTPS service bound to address %1:%2
 This informational message indicates that the server has started HTTPS service
 on the specified address and port. All control commands should be sent to this
 address and port over a TLS channel.
+
+% CTRL_AGENT_HTTP_SERVICE_REUSED reused HTTP service bound to address %1:%2
+This informational message indicates that the server has reused existing
+HTTPS service on the specified address and port.
 
 % CTRL_AGENT_HTTP_SERVICE_STARTED HTTP service bound to address %1:%2
 This informational message indicates that the server has started HTTP service
