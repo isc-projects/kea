@@ -115,6 +115,9 @@ public:
     /// @brief Returns local port on which server is listening.
     uint16_t getLocalPort() const;
 
+    /// @brief Returns reference to the current TLS context.
+    const asiolink::TlsContextPtr& getTlsContext() const;
+
     /// @brief file descriptor of the underlying acceptor socket.
     int getNative() const;
 

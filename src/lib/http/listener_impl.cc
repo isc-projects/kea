@@ -70,6 +70,11 @@ HttpListenerImpl::getEndpoint() const {
     return (*endpoint_);
 }
 
+const TlsContextPtr&
+HttpListenerImpl::getTlsContext() const {
+    return (tls_context_);
+}
+
 int
 HttpListenerImpl::getNative() const {
     return (acceptor_ ? acceptor_->getNative() : -1);

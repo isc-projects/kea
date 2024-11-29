@@ -42,6 +42,11 @@ HttpListener::getLocalPort() const {
     return (impl_->getEndpoint().getPort());
 }
 
+const TlsContextPtr&
+HttpListener::getTlsContext() const {
+    return (impl_->getTlsContext());
+}
+
 int
 HttpListener::getNative() const {
     return (impl_->getNative());

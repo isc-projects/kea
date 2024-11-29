@@ -392,6 +392,7 @@ public:
         ASSERT_NO_THROW(listener.start());
         ASSERT_EQ(SERVER_ADDRESS, listener.getLocalAddress().toText());
         ASSERT_EQ(SERVER_PORT, listener.getLocalPort());
+        ASSERT_EQ(server_context_, listener.getTlsContext());
         ASSERT_NO_THROW(startRequest(request));
         ASSERT_NO_THROW(runIOService());
         ASSERT_EQ(1, clients_.size());
