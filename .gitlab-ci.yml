@@ -25,13 +25,16 @@ stages:
   - test
   - fuzz
 
-# Do not run the test stage on pipeline schedule trigger.
 .base_rules_for_test_jobs: &rules_for_test_stage
   rules:
-    - if: $CI_PIPELINE_SOURCE != 'schedule'
-      when: always
+    # Do not run the test stage on pipeline schedule trigger.
     - if: $CI_PIPELINE_SOURCE == 'schedule'
       when: never
+    # Prevent duplicate pipelines.
+    - if: $CI_OPEN_MERGE_REQUESTS && $CI_COMMIT_BRANCH == null
+      when: never
+    # On any other event, including push to MR branch and push to master.
+    - when: always
 
 are-database-scripts-in-sync:
   stage: test
@@ -155,15 +158,17 @@ fuzz:
     matrix:
       - SANITIZER: [address, undefined]
   rules:
+    # Prevent duplicate pipelines.
+    - if: $CI_OPEN_MERGE_REQUESTS && $CI_COMMIT_BRANCH == null
+      when: never
     # On merge request.
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
       variables:
         MODE: "code-change"
       when: manual
       allow_failure: true
-    # And on push to master.
-    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
-      when: always
+    # Run on any other event, including push to MR branch and push to master.
+    - when: always
   before_script:
     # Get GitLab's container id.
     - export CFL_CONTAINER_ID=`docker ps -q -f "label=com.gitlab.gitlab-runner.job.id=$CI_JOB_ID" -f "label=com.gitlab.gitlab-runner.type=build"`
@@ -313,6 +318,10 @@ flawfinder-sast:
       when: never
     - if: $SAST_EXCLUDED_ANALYZERS =~ /flawfinder/
       when: never
+    # Prevent duplicate pipelines.
+    - if: $CI_OPEN_MERGE_REQUESTS && $CI_COMMIT_BRANCH == null
+      when: never
+    # Run on any other event, including push to master.
     - when: always
 
 semgrep-sast:
@@ -322,6 +331,8 @@ semgrep-sast:
       when: never
     - if: $CI_PIPELINE_SOURCE == 'schedule'
       when: never
-    - if: $SAST_EXCLUDED_ANALYZERS =~ /semgrep/
+    # Prevent duplicate pipelines.
+    - if: $CI_OPEN_MERGE_REQUESTS && $CI_COMMIT_BRANCH == null
       when: never
+    # Run on any other event, including push to MR branch and push to master.
     - when: always
