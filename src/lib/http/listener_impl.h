@@ -60,6 +60,9 @@ public:
     /// @brief Returns reference to the current listener endpoint.
     const asiolink::TCPEndpoint& getEndpoint() const;
 
+    /// @brief Returns reference to the current TLS context.
+    const asiolink::TlsContextPtr& getTlsContext() const;
+
     /// @brief file descriptor of the underlying acceptor socket.
     int getNative() const;
 
