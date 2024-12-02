@@ -100,7 +100,7 @@ int lease4_renew(CalloutHandle& handle) {
     Pkt4Ptr pkt4;
     handle.getArgument("query4", pkt4);
     RunScriptImpl::extractPkt4(vars, pkt4, "QUERY4");
-    Subnet4Ptr subnet4;
+    ConstSubnet4Ptr subnet4;
     handle.getArgument("subnet4", subnet4);
     RunScriptImpl::extractSubnet4(vars, subnet4, "SUBNET4");
     ClientIdPtr clientid;

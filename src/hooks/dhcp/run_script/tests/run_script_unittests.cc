@@ -877,7 +877,7 @@ TEST_F(RunScriptTest, lease4Renew) {
     CalloutHandle handle(getCalloutManager());
     Pkt4Ptr pkt4 = generatePkt4();
     handle.setArgument("query4", pkt4);
-    Subnet4Ptr subnet4 = generateSubnet4();
+    ConstSubnet4Ptr subnet4 = generateSubnet4();
     handle.setArgument("subnet4", subnet4);
     ClientIdPtr clientid = generateClientId();
     handle.setArgument("clientid", clientid);
