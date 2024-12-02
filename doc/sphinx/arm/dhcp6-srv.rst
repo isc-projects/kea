@@ -6037,7 +6037,7 @@ on option 1234 values.
            {
                "name": "galah",
                "relay": {
-                   "ip-addresses":  [ "2001:db8:2:34::1" ]
+                   "ip-addresses": [ "2001:db8:2:34::1" ]
                },
                "subnet6": [
                    {

@@ -7008,7 +7008,7 @@ everything connected behind the modems should get addresses from the
            {
                "id": 1,
                "subnet": "10.1.1.0/24",
-               "pools":  [ { "pool": "10.1.1.2 - 10.1.1.20" } ],
+               "pools": [ { "pool": "10.1.1.2 - 10.1.1.20" } ],
                "client-classes": [ "docsis3.0" ],
                "relay": {
                    "ip-addresses": [ "10.1.1.1" ]

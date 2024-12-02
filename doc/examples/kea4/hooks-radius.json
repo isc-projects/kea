@@ -111,7 +111,7 @@
          {
             // White pool (110-119 are for reservations)
             "pool": "192.0.2.120-192.0.2.199",
-            "client-classes":  [ "white" ]
+            "client-classes": [ "white" ]
          }
 
           // Note there are not pools available to anyone. This is
