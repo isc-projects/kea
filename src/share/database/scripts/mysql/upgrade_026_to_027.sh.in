@@ -56,26 +56,60 @@ mysql "$@" <<EOF
 
 -- This line starts the schema upgrade to version 27.0.
 
+SET @disable_audit = 1;
+
+DROP FUNCTION IF EXISTS textToJSONList;
+DELIMITER $$
+CREATE FUNCTION textToJSONList(orig TEXT)
+RETURNS  TEXT
+DETERMINISTIC
+BEGIN
+    IF orig = '' THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN CONCAT('[ "', orig, '" ]');
+END $$
+DELIMITER ;
+
 ALTER TABLE dhcp4_shared_network
     CHANGE client_class client_classes LONGTEXT DEFAULT NULL;
+
+UPDATE dhcp4_shared_network SET client_classes = textToJSONList(client_classes);
 
 ALTER TABLE dhcp4_subnet
     CHANGE client_class client_classes LONGTEXT DEFAULT NULL;
 
+UPDATE dhcp4_subnet SET client_classes = textToJSONList(client_classes);
+
 ALTER TABLE dhcp4_pool
     CHANGE client_class client_classes LONGTEXT DEFAULT NULL;
+
+UPDATE dhcp4_pool SET client_classes = textToJSONList(client_classes);
 
 ALTER TABLE dhcp6_shared_network
     CHANGE client_class client_classes LONGTEXT DEFAULT NULL;
 
+UPDATE dhcp6_shared_network SET client_classes = textToJSONList(client_classes);
+
 ALTER TABLE dhcp6_subnet
     CHANGE client_class client_classes LONGTEXT DEFAULT NULL;
+
+UPDATE dhcp6_subnet SET client_classes = textToJSONList(client_classes);
 
 ALTER TABLE dhcp6_pool
     CHANGE client_class client_classes LONGTEXT DEFAULT NULL;
 
+UPDATE dhcp6_pool SET client_classes = textToJSONList(client_classes);
+
 ALTER TABLE dhcp6_pd_pool
     CHANGE client_class client_classes LONGTEXT DEFAULT NULL;
+
+UPDATE dhcp6_pd_pool SET client_classes = textToJSONList(client_classes);
+
+DROP FUNCTION textToJSONList;
+
+SET @disable_audit = 0;
 
 -- Update the schema version number.
 UPDATE schema_version

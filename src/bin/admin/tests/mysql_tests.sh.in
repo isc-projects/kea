@@ -3609,6 +3609,131 @@ mysql_remove_control_socket_parameters_test() {
     test_finish 0
 }
 
+# Verifies that client_class to client_classes migrates
+# single text entries to JSON list correctly
+mysql_migrate_client_class_test() {
+    test_start "mysql.migrate_client_class_test"
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    # We need to create an older database with lease data so we can
+    # verify the upgrade mechanisms which prepopulate the lease stat
+    # tables.
+    #
+    # Initialize database to schema 1.0.
+    mysql -u"${db_user}" -p"${db_password}" "${db_name}" < "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql"
+
+    # Now upgrade to schema 4.0, this has lease_state in it
+    mysql_upgrade_schema_to_version 26.0
+
+    # Now we need insert some leases to "migrate" for both v4 and v6
+    qry=\
+"set @disable_audit 1;\
+ insert into dhcp4_shared_network (name, client_classes) values ('aaa', 'abc');\
+ insert into dhcp4_shared_network (name, client_classes) values ('bbb', '');\
+ insert into dhcp4_shared_network (name) values ('ccc');\
+ set @disable_audit 0;\
+    run_statement "insert v4 networks" "$qry"
+
+    # Let's upgrade it to the latest version.
+    run_command \
+        "${kea_admin}" db-upgrade mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
+
+    qry="select client_classes from dhcp4_shared_network where name = 'aaa' and client_classes = '[ \"abc\" ]';
+    run_statement "#4.1" "$qry" 1
+
+    mysql_wipe
+
+    test_finish 0
+}
+
+# Verifies that client_class to client_classes migrates
+# single text entries to JSON list correctly
+mysql_migrate_client_class_test() {
+    test_start "mysql.migrate_client_class_test"
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    # We need to create an older database with lease data so we can
+    # verify the upgrade mechanisms which prepopulate the lease stat
+    # tables.
+    #
+    # Initialize database to schema 1.0.
+    mysql -u"${db_user}" -p"${db_password}" "${db_name}" < "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql"
+
+    # Now upgrade to schema 4.0, this has lease_state in it
+    mysql_upgrade_schema_to_version 26.0
+
+    # Now we need insert some leases to "migrate" for both v4 and v6
+    qry="\
+ set @disable_audit = 1;\
+ insert into dhcp4_shared_network (name, client_class, modification_ts) values ('net1', 'abc', current_timestamp);\
+ insert into dhcp4_shared_network (name, client_class, modification_ts) values ('net2', '', current_timestamp);\
+ insert into dhcp4_shared_network (name, modification_ts) values ('net3', current_timestamp);\
+ insert into dhcp4_subnet (subnet_id, subnet_prefix, modification_ts, client_class)\
+    values (1, '192.0.0.0/24', current_timestamp, 'subber');\
+ insert into dhcp4_pool (subnet_id, start_address, end_address, modification_ts, client_class)\
+    values (1, INET_ATON('192.0.0.0'), INET_ATON('192.0.0.1'), current_timestamp, 'poolio');\
+ insert into dhcp6_shared_network (name, client_class, modification_ts) values ('net6', 'xyz', current_timestamp);\
+ insert into dhcp6_subnet (subnet_id, subnet_prefix, modification_ts, client_class)\
+    values (6, '2001:db8:1::/64', current_timestamp, 'subber6');\
+ insert into dhcp6_pool (subnet_id, start_address, end_address, modification_ts, client_class)\
+    values (6, ('2001:db8:1::1'), ('2001:db8:1::2'), current_timestamp, 'poolio6');\
+ insert into dhcp6_pd_pool (subnet_id, prefix, prefix_length, delegated_prefix_length, \
+                            excluded_prefix_length, modification_ts, client_class) \
+    values (6, ('3001::'), 64, 72, 0, current_timestamp, 'pd_poolio');\
+ set @disable_audit = 0;\
+ "
+    run_statement "insert v4 networks" "$qry"
+
+    # Let's upgrade it to the latest version.
+    run_command \
+        "${kea_admin}" db-upgrade mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
+
+    # Verify dhcp4_shared_network values
+    qry="select count(name) from dhcp4_shared_network where name = 'net1' and client_classes = '[ \"abc\" ]';"
+    run_statement "#1" "$qry" 1
+
+    qry="select count(name) from dhcp4_shared_network where name = 'net2' and client_classes IS NULL;"
+    run_statement "#2" "$qry" 1
+
+    qry="select count(name) from dhcp4_shared_network where name = 'net3' and client_classes IS NULL;"
+    run_statement "#3" "$qry" 1
+
+    # We don't bother verifying all null and '' handling again, only that the conversion function is
+    # called for remaining tables.
+
+    # Verify dhcp4_subnet.
+    qry="select count(subnet_id) from dhcp4_subnet where subnet_id = 1 and client_classes = '[ \"subber\" ]';"
+    run_statement "#4" "$qry" 1
+
+    # Verify dhcp4_pool.
+    qry="select count(subnet_id) from dhcp4_pool where subnet_id = 1 and client_classes = '[ \"poolio\" ]';"
+    run_statement "#5" "$qry" 1
+
+    # Verify dhcp6_shared_network.
+    qry="select count(name) from dhcp6_shared_network where name = 'net6' and client_classes = '[ \"xyz\" ]';"
+    run_statement "#6" "$qry" 1
+
+    # Verify dhcp6_subnet.
+    qry="select count(subnet_id) from dhcp6_subnet where subnet_id = 6 and client_classes = '[ \"subber6\" ]';"
+    run_statement "#7" "$qry" 1
+
+    # Verify dhcp6_pool.
+    qry="select count(subnet_id) from dhcp6_pool where subnet_id = 6 and client_classes = '[ \"poolio6\" ]';"
+    run_statement "#8" "$qry" 1
+
+    # Verify dhcp6_pd_pool.
+    qry="select count(subnet_id) from dhcp6_pd_pool where subnet_id = 6 and client_classes = '[ \"pd_poolio\" ]';"
+    run_statement "#9" "$qry" 1
+
+    mysql_wipe
+
+    test_finish 0
+}
+
 # Run tests.
 mysql_db_init_test
 mysql_host_reservation_init_test
@@ -3643,3 +3768,4 @@ mysql_reservation_mode_global_parameters_test
 mysql_reservation_mode_out_of_pool_parameters_test
 mysql_migrate_opt_record_type
 mysql_remove_control_socket_parameters_test
+mysql_migrate_client_class_test
