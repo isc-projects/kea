@@ -6078,7 +6078,7 @@ CREATE FUNCTION textToJSONList(orig TEXT)
 RETURNS  TEXT
 DETERMINISTIC
 BEGIN
-    IF orig = '' THEN
+    IF orig = '' OR orig IS NULL THEN
         RETURN NULL;
     END IF;
 

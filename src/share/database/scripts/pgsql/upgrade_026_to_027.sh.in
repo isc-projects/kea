@@ -39,26 +39,58 @@ START TRANSACTION;
 
 -- This line starts the schema upgrade to version 27.0.
 
+SELECT set_config('kea.disable_audit', 'true', false);
+
+CREATE OR REPLACE FUNCTION textToJSONList(orig TEXT)
+    RETURNS TEXT AS \$\$
+DECLARE
+BEGIN
+    IF orig = '' OR orig IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN CONCAT('[ "', orig, '" ]');
+END;
+\$\$ LANGUAGE plpgsql;
+
 ALTER TABLE dhcp4_shared_network RENAME client_class TO client_classes;
 ALTER TABLE dhcp4_shared_network ALTER COLUMN client_classes TYPE TEXT;
+
+UPDATE dhcp4_shared_network SET client_classes = textToJSONList(client_classes);
 
 ALTER TABLE dhcp4_subnet RENAME client_class TO client_classes;
 ALTER TABLE dhcp4_subnet ALTER COLUMN client_classes TYPE TEXT;
 
+UPDATE dhcp4_subnet SET client_classes = textToJSONList(client_classes);
+
 ALTER TABLE dhcp4_pool RENAME client_class TO client_classes;
 ALTER TABLE dhcp4_pool ALTER COLUMN client_classes TYPE TEXT;
+
+UPDATE dhcp4_pool SET client_classes = textToJSONList(client_classes);
 
 ALTER TABLE dhcp6_shared_network RENAME client_class TO client_classes;
 ALTER TABLE dhcp6_shared_network ALTER COLUMN client_classes TYPE TEXT;
 
+UPDATE dhcp6_shared_network SET client_classes = textToJSONList(client_classes);
+
 ALTER TABLE dhcp6_subnet RENAME client_class TO client_classes;
 ALTER TABLE dhcp6_subnet ALTER COLUMN client_classes TYPE TEXT;
+
+UPDATE dhcp6_subnet SET client_classes = textToJSONList(client_classes);
 
 ALTER TABLE dhcp6_pool RENAME client_class TO client_classes;
 ALTER TABLE dhcp6_pool ALTER COLUMN client_classes TYPE TEXT;
 
+UPDATE dhcp6_pool SET client_classes = textToJSONList(client_classes);
+
 ALTER TABLE dhcp6_pd_pool RENAME client_class TO client_classes;
 ALTER TABLE dhcp6_pd_pool ALTER COLUMN client_classes TYPE TEXT;
+
+UPDATE dhcp6_pd_pool SET client_classes = textToJSONList(client_classes);
+
+DROP FUNCTION IF EXISTS testToJSONList();
+
+SELECT set_config('kea.disable_audit', 'false', false);
 
 -- Update the schema version number.
 UPDATE schema_version
