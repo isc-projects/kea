@@ -72,8 +72,8 @@ the ``hostname-expr`` one would use to reverse this rule:
                 "parameters": {
                     "hostname-expr" : "ifelse(option[12].exists, option[host-name].text, option[81].text)"
                 }
-            },
-        ],
+            }
+        ]
     }
 
 It is also possible to define this parameter in a subnet, using the user-context mechanism.
