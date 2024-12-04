@@ -4029,6 +4029,13 @@ qualifying suffix is "example.com", and the default value is used for
 
 ``myhost-172-16-1-10.example.com.``
 
+.. note::
+
+    When the client sends the host name option, ``kea-dhcp4`` never adds a dot to
+    the returned host name. It will only end with a dot if the client sent it
+    already qualified and ending with a dot.  When the client sends the FQDN option,
+    the FQDN returned in the response will always end with a dot.
+
 .. _dhcp4-host-name-sanitization:
 
 Sanitizing Client Host Name and FQDN Names
