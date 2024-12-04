@@ -69,6 +69,7 @@ public:
                   asiolink::IOServicePtr(new isc::asiolink::IOService())) {
         HooksManager::setTestMode(false);
         D2Controller::instance();
+        init();
     }
 
     /// @brief Destructor

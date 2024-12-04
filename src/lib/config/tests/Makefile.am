@@ -21,6 +21,7 @@ TESTS += run_unittests
 run_unittests_SOURCES = client_connection_unittests.cc
 run_unittests_SOURCES += run_unittests.cc
 run_unittests_SOURCES += command_mgr_unittests.cc
+run_unittests_SOURCES += unix_command_config_unittests.cc
 run_unittests_SOURCES += unix_command_mgr_unittests.cc
 run_unittests_SOURCES += cmd_http_listener_unittests.cc
 run_unittests_SOURCES += cmd_response_creator_unittests.cc

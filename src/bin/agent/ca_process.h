@@ -15,6 +15,27 @@
 namespace isc {
 namespace agent {
 
+struct HttpSocketInfo {
+    /// @brief Flag which indicates if socket can be reused.
+    bool usable_;
+
+    /// @brief Pointer to the socket config.
+    CtrlAgentCfgContextPtr config_;
+
+    /// @brief Pointer to HTTP/HTTPS listener.
+    isc::http::HttpListenerPtr listener_;
+
+    /// @brief Constructor.
+    HttpSocketInfo() : usable_(true) {
+    }
+
+    /// @brief Destructor.
+    ~HttpSocketInfo() = default;
+};
+
+/// @brief Pointer to a HttpSocketInfo object.
+typedef boost::shared_ptr<HttpSocketInfo> HttpSocketInfoPtr;
+
 /// @brief Kea Control Agent Application Process
 ///
 /// CtrlAgentProcess provides top level application logic for the Control
@@ -109,31 +130,23 @@ public:
     /// @brief Returns a pointer to the configuration manager.
     CtrlAgentCfgMgrPtr getCtrlAgentCfgMgr();
 
-    /// @brief Returns a const pointer to the HTTP listener used by the process.
+    /// @brief Returns a const pointer to the HTTP listener.
+    ///
+    /// @param info Configuration information for the http control socket.
     ///
     /// @return Const pointer to the currently used listener or null pointer if
-    /// we're not listening. In fact, the latter should never be the case given
-    /// that we provide default listener configuration.
-    http::ConstHttpListenerPtr getHttpListener() const;
+    /// there is no listener.
+    isc::http::ConstHttpListenerPtr getHttpListener(HttpSocketInfoPtr info = HttpSocketInfoPtr()) const;
 
     /// @brief Checks if the process is listening to the HTTP requests.
     ///
     /// @return true if the process is listening.
     bool isListening() const;
 
-private:
+    /// @brief Close http control socket.
+    void closeCommandSockets();
 
-    /// @brief Removes listeners which are no longer in use.
-    ///
-    /// This method should be called after executing
-    /// @ref CtrlAgentProcess::configure to remove listeners used previously
-    /// (no longer used because the listening address and port has changed as
-    // a result of the reconfiguration). If there are no listeners additional
-    /// to the one that is currently in use, the method has no effect.
-    /// This method is reused to remove all listeners at shutdown time.
-    ///
-    /// @param leaving The number of listener to leave (default one).
-    void garbageCollectListeners(size_t leaving = 1);
+private:
 
     /// @brief Polls all ready handlers and then runs one handler if none
     /// handlers have been executed as a result of polling.
@@ -141,9 +154,8 @@ private:
     /// @return Number of executed handlers.
     size_t runIO();
 
-    /// @brief Holds a list of pointers to the active listeners.
-    std::vector<http::HttpListenerPtr> http_listeners_;
-
+    /// @brief The HTTP/HTTPS socket configurations.
+    std::map<std::pair<isc::asiolink::IOAddress, uint16_t>, HttpSocketInfoPtr> sockets_;
 };
 
 /// @brief Defines a shared pointer to CtrlAgentProcess.

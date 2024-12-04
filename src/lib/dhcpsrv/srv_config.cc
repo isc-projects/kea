@@ -896,10 +896,14 @@ SrvConfig::toElement() const {
     // Set control-sockets.
     ElementPtr control_sockets = Element::createList();
     if (!isNull(unix_control_socket_)) {
-        control_sockets->add(UserContext::toElement(unix_control_socket_));
+        for (auto const& socket : unix_control_socket_->listValue()) {
+            control_sockets->add(UserContext::toElement(socket));
+        }
     }
-    if (http_control_socket_) {
-        control_sockets->add(http_control_socket_->toElement());
+    if (!isNull(http_control_socket_)) {
+        for (auto const& socket : http_control_socket_->listValue()) {
+            control_sockets->add(UserContext::toElement(socket));
+        }
     }
     if (!control_sockets->empty()) {
         dhcp->set("control-sockets", control_sockets);

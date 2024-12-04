@@ -674,7 +674,6 @@ Dhcpv6Srv::run() {
             // Handle events registered by hooks using external IOService objects.
             IOServiceMgr::instance().pollIOServices();
             getIOService()->poll();
-            config::HttpCommandMgr::instance().garbageCollectListeners();
         } catch (const std::exception& e) {
             // General catch-all standard exceptions that are not caught by more
             // specific catches.

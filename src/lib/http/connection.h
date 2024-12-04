@@ -418,6 +418,9 @@ protected:
     /// @brief Close the watch socket.
     void closeWatchSocket();
 
+    /// @brief The IO service used to handle events.
+    asiolink::IOServicePtr io_service_;
+
     /// @brief Timer used to detect Request Timeout.
     asiolink::IntervalTimer request_timer_;
 
@@ -456,6 +459,10 @@ protected:
     /// @brief Pointer to watch socket instance used to signal that the socket
     /// is ready for read or write when use external sockets is true.
     util::WatchSocketPtr watch_socket_;
+
+    /// @brief Flag which indicates if the connection shutdown should be
+    /// deferred until the connection is no longer used (a reply is sent).
+    bool defer_shutdown_;
 };
 
 } // end of namespace isc::http

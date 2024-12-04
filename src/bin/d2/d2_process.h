@@ -308,9 +308,11 @@ private:
     /// @brief Indicates the type of shutdown requested.
     ShutdownType shutdown_type_;
 
-    /// @brief Current socket control configuration.
-    isc::data::ConstElementPtr current_control_socket_;
+    /// @brief Current UNIX socket control configuration.
+    isc::data::ConstElementPtr current_unix_control_socket_;
 
+    /// @brief Current HTTP/HTTPS socket control configuration.
+    isc::data::ConstElementPtr current_http_control_socket_;
 };
 
 /// @brief Defines a shared pointer to D2Process.

@@ -4,6 +4,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
 
 #include <asiolink/io_address.h>
 #include <asiolink/addr_utilities.h>
@@ -15,8 +16,6 @@
 #include <dhcpsrv/lease_mgr.h>
 #include <lease_cmds_exceptions.h>
 #include <lease_parser.h>
-
-#include <config.h>
 
 using namespace std;
 using namespace isc::dhcp;

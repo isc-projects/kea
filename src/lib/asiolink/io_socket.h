@@ -14,6 +14,7 @@
 
 #include <functional>
 #include <string>
+#include <boost/asio/socket_base.hpp>
 
 #include <exceptions/exceptions.h>
 

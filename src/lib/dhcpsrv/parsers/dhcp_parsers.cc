@@ -5,6 +5,9 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
+#include <config/http_command_config.h>
+#include <config/unix_command_config.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/libdhcp++.h>
@@ -35,6 +38,7 @@
 
 using namespace std;
 using namespace isc::asiolink;
+using namespace isc::config;
 using namespace isc::data;
 using namespace isc::util;
 namespace ph = std::placeholders;
@@ -82,8 +86,9 @@ void ControlSocketsParser::parse(SrvConfig& srv_cfg, ConstElementPtr value) {
                   "Specified control-sockets is expected to be a list");
     }
     bool seen_unix(false);
-    bool seen_http(false);
-    for (ConstElementPtr socket : value->listValue()) {
+    ElementPtr unix_config = Element::createList();
+    ElementPtr http_config = Element::createList();
+    for (ElementPtr socket : value->listValue()) {
         if (socket->getType() != Element::map) {
             // Sanity check: not supposed to fail.
             isc_throw(DhcpConfigError,
@@ -105,24 +110,24 @@ void ControlSocketsParser::parse(SrvConfig& srv_cfg, ConstElementPtr value) {
                 isc_throw(DhcpConfigError,
                           "control socket of type 'unix' already configured");
             }
+            UnixCommandConfig cmd_config(socket);
             seen_unix = true;
-            srv_cfg.setUnixControlSocketInfo(socket);
+            unix_config->add(socket);
         } else if ((type == "http") || (type == "https")) {
-            if (seen_http) {
-                isc_throw(DhcpConfigError,
-                          "control socket of type 'http' or 'https'"
-                          " already configured");
-            }
-            seen_http = true;
-            using namespace isc::config;
-            HttpCommandConfigPtr http_config(new HttpCommandConfig(socket));
-            srv_cfg.setHttpControlSocketInfo(http_config);
+            HttpCommandConfig cmd_config(socket);
+            http_config->add(socket);
         } else {
             // Sanity check: not supposed to fail.
             isc_throw(DhcpConfigError,
                       "unsupported 'socket-type': '" << type
                       << "' not 'unix', 'http' or 'https'");
         }
+    }
+    if (unix_config->size()) {
+        srv_cfg.setUnixControlSocketInfo(unix_config);
+    }
+    if (http_config->size()) {
+        srv_cfg.setHttpControlSocketInfo(http_config);
     }
 }
 

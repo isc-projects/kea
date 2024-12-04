@@ -554,6 +554,9 @@ TEST_F(D2CfgMgrTest, fullConfig) {
     // Verify that the UNIX control socket can be retrieved.
     ConstElementPtr ctrl_sock = context->getUnixControlSocketInfo();
     ASSERT_TRUE(ctrl_sock);
+    ASSERT_EQ(Element::list, ctrl_sock->getType());
+    ASSERT_EQ(ctrl_sock->size(), 1);
+    ctrl_sock = ctrl_sock->get(0);
     ASSERT_EQ(Element::map, ctrl_sock->getType());
     EXPECT_EQ(2, ctrl_sock->size());
     ASSERT_TRUE(ctrl_sock->get("socket-type"));
@@ -1033,6 +1036,10 @@ TEST_F(D2CfgMgrTest, comments) {
     // There is a UNIX control socket.
     ConstElementPtr socket = d2_context->getUnixControlSocketInfo();
     ASSERT_TRUE(socket);
+    ASSERT_EQ(Element::list, socket->getType());
+    ASSERT_EQ(socket->size(), 1);
+    socket = socket->get(0);
+    ASSERT_TRUE(socket);
     ConstElementPtr ctx_socket = socket->get("user-context");
     ASSERT_TRUE(ctx_socket);
     ASSERT_EQ(1, ctx_socket->size());
@@ -1040,12 +1047,13 @@ TEST_F(D2CfgMgrTest, comments) {
     EXPECT_EQ("\"Indirect comment\"", ctx_socket->get("comment")->str());
 
     // There is a HTTP control socket with authentication.
-    config::HttpCommandConfigPtr http_socket =
-        d2_context->getHttpControlSocketInfo();
-    ASSERT_TRUE(http_socket);
-    /// @todo use the configuration object.
-    socket = http_socket->toElement();
+    socket = d2_context->getHttpControlSocketInfo();
     ASSERT_TRUE(socket);
+    ASSERT_EQ(Element::list, socket->getType());
+    ASSERT_EQ(socket->size(), 1);
+    socket = socket->get(0);
+    ASSERT_TRUE(socket);
+    /// @todo use the configuration object.
     ctx_socket = socket->get("user-context");
     ASSERT_TRUE(ctx_socket);
     ASSERT_EQ(1, ctx_socket->size());

@@ -1348,8 +1348,8 @@ ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
         cleanup();
 
         // Close command sockets.
-        UnixCommandMgr::instance().closeCommandSocket();
-        HttpCommandMgr::instance().close();
+        UnixCommandMgr::instance().closeCommandSockets();
+        HttpCommandMgr::instance().closeCommandSockets();
 
         // Deregister any registered commands (please keep in alphabetic order)
         CommandMgr::instance().deregisterCommand("build-report");

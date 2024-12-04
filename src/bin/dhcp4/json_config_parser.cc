@@ -300,43 +300,54 @@ namespace dhcp {
 ///
 void configureCommandChannel() {
     // Get new UNIX socket configuration.
-    ConstElementPtr sock_cfg =
+    ConstElementPtr unix_config =
         CfgMgr::instance().getStagingCfg()->getUnixControlSocketInfo();
 
     // Get current UNIX socket configuration.
-    ConstElementPtr current_sock_cfg =
+    ConstElementPtr current_unix_config =
         CfgMgr::instance().getCurrentCfg()->getUnixControlSocketInfo();
 
     // Determine if the socket configuration has changed. It has if
     // both old and new configuration is specified but respective
     // data elements aren't equal.
-    bool sock_changed = (sock_cfg && current_sock_cfg &&
-                         !sock_cfg->equals(*current_sock_cfg));
+    bool sock_changed = (unix_config && current_unix_config &&
+                         !unix_config->equals(*current_unix_config));
 
     // If the previous or new socket configuration doesn't exist or
     // the new configuration differs from the old configuration we
     // close the existing socket and open a new socket as appropriate.
     // Note that closing an existing socket means the client will not
     // receive the configuration result.
-    if (!sock_cfg || !current_sock_cfg || sock_changed) {
-        // Close the existing socket (if any).
-        UnixCommandMgr::instance().closeCommandSocket();
-
-        if (sock_cfg) {
+    if (!unix_config || !current_unix_config || sock_changed) {
+        if (unix_config) {
             // This will create a control socket and install the external
             // socket in IfaceMgr. That socket will be monitored when
             // Dhcp4Srv::receivePacket() calls IfaceMgr::receive4() and
             // callback in CommandMgr will be called, if necessary.
-            UnixCommandMgr::instance().openCommandSocket(sock_cfg);
+            UnixCommandMgr::instance().openCommandSockets(unix_config);
+        } else if (current_unix_config) {
+            UnixCommandMgr::instance().closeCommandSockets();
         }
     }
 
-    // HTTP control socket is simpler: just (re)configure it.
-
-    // Get new config.
-    HttpCommandConfigPtr http_config =
+    // Get new HTTP/HTTPS socket configuration.
+    ConstElementPtr http_config =
         CfgMgr::instance().getStagingCfg()->getHttpControlSocketInfo();
-    HttpCommandMgr::instance().configure(http_config);
+
+    // Get current HTTP/HTTPS socket configuration.
+    ConstElementPtr current_http_config =
+        CfgMgr::instance().getCurrentCfg()->getHttpControlSocketInfo();
+
+    sock_changed = (http_config && current_http_config &&
+                    !http_config->equals(*current_http_config));
+
+    if (!http_config || !current_http_config || sock_changed) {
+        if (http_config) {
+            HttpCommandMgr::instance().openCommandSockets(http_config);
+        } else if (current_http_config) {
+            HttpCommandMgr::instance().closeCommandSockets();
+        }
+    }
 }
 
 /// @brief Process a DHCPv4 confguration and return an answer stating if the

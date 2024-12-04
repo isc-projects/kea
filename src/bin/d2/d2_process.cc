@@ -22,6 +22,7 @@
 
 using namespace isc::asiolink;
 using namespace isc::config;
+using namespace isc::data;
 using namespace isc::hooks;
 using namespace isc::process;
 
@@ -154,7 +155,6 @@ D2Process::runIO() {
         // service is stopped it will return immediately with a cnt of zero.
         cnt = getIOService()->runOne();
     }
-    HttpCommandMgr::instance().garbageCollectListeners();
     return (cnt);
 }
 
@@ -492,42 +492,50 @@ const char* D2Process::getShutdownTypeStr(const ShutdownType& type) {
 void
 D2Process::reconfigureCommandChannel() {
     // Get new Unix socket configuration.
-    isc::data::ConstElementPtr sock_cfg =
+    ConstElementPtr unix_config =
         getD2CfgMgr()->getUnixControlSocketInfo();
 
     // Determine if the socket configuration has changed. It has if
     // both old and new configuration is specified but respective
     // data elements aren't equal.
-    bool sock_changed = (sock_cfg && current_control_socket_ &&
-                         !sock_cfg->equals(*current_control_socket_));
+    bool sock_changed = (unix_config && current_unix_control_socket_ &&
+                         !unix_config->equals(*current_unix_control_socket_));
 
     // If the previous or new socket configuration doesn't exist or
     // the new configuration differs from the old configuration we
     // close the existing socket and open a new socket as appropriate.
     // Note that closing an existing socket means the client will not
     // receive the configuration result.
-    if (!sock_cfg || !current_control_socket_ || sock_changed) {
-        // Close the existing socket.
-        if (current_control_socket_) {
-            UnixCommandMgr::instance().closeCommandSocket();
-            current_control_socket_.reset();
-        }
-
-        // Open the new socket.
-        if (sock_cfg) {
-            UnixCommandMgr::instance().openCommandSocket(sock_cfg);
+    if (!unix_config || !current_unix_control_socket_ || sock_changed) {
+        // Open the new sockets and close old ones, keeping reused.
+        if (unix_config) {
+            UnixCommandMgr::instance().openCommandSockets(unix_config);
+        } else if (current_unix_control_socket_) {
+            UnixCommandMgr::instance().closeCommandSockets();
         }
     }
 
     // Commit the new socket configuration.
-    current_control_socket_ = sock_cfg;
+    current_unix_control_socket_ = unix_config;
 
-    // HTTP control socket is simpler: just (re)configure it.
-
-    // Get new config.
-    HttpCommandConfigPtr http_config =
+    // Get new HTTP/HTTPS socket configuration.
+    ConstElementPtr http_config =
         getD2CfgMgr()->getHttpControlSocketInfo();
-    HttpCommandMgr::instance().configure(http_config);
+
+    sock_changed = (http_config && current_http_control_socket_ &&
+                    !http_config->equals(*current_http_control_socket_));
+
+    if (!http_config || !current_http_control_socket_ || sock_changed) {
+        // Open the new sockets and close old ones, keeping reused.
+        if (http_config) {
+            HttpCommandMgr::instance().openCommandSockets(http_config);
+        } else if (current_http_control_socket_) {
+            HttpCommandMgr::instance().closeCommandSockets();
+        }
+    }
+
+    // Commit the new socket configuration.
+    current_http_control_socket_ = http_config;
 }
 
 } // namespace isc::d2

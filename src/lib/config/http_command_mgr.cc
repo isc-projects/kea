@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <asiolink/asio_wrapper.h>
+#include <config/command_mgr.h>
 #include <config/config_log.h>
 #include <config/http_command_mgr.h>
 #include <config/http_command_response_creator_factory.h>
@@ -18,6 +19,8 @@
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::config;
+using namespace isc::data;
+using namespace isc::dhcp;
 using namespace isc::http;
 using namespace std;
 
@@ -32,25 +35,35 @@ public:
     HttpCommandMgrImpl()
         : io_service_(), timeout_(TIMEOUT_AGENT_RECEIVE_COMMAND),
           idle_timeout_(TIMEOUT_AGENT_IDLE_CONNECTION_TIMEOUT),
-          current_config_(), http_listeners_(), active_(0),
           use_external_(true) {
     }
 
     /// @brief Configure control socket from configuration.
     ///
     /// @param config Configuration of the control socket.
-    void configure(HttpCommandConfigPtr config);
+    void openCommandSocket(const isc::data::ConstElementPtr config);
+
+    /// @brief Configure control socket from configuration.
+    ///
+    /// @param config Configuration of the control socket.
+    void openCommandSockets(const isc::data::ConstElementPtr config);
 
     /// @brief Close control socket.
     ///
+    /// @param info Configuration information for the http control socket.
     /// @param remove When true remove the listeners immediately.
-    void close(bool remove);
+    void closeCommandSocket(HttpSocketInfoPtr info, bool remove);
 
-    /// @brief Removes listeners which are no longer in use.
-    void garbageCollectListeners();
+    /// @brief Close control socket.
+    void closeCommandSockets();
 
     /// @brief Returns a const pointer to the HTTP listener.
-    ConstHttpListenerPtr getHttpListener() const;
+    ///
+    /// @param info Configuration information for the http control socket.
+    ///
+    /// @return Const pointer to the currently used listener or null pointer if
+    /// there is no listener.
+    ConstHttpListenerPtr getHttpListener(HttpSocketInfoPtr info) const;
 
     /// @brief Pointer to the IO service.
     IOServicePtr io_service_;
@@ -61,72 +74,81 @@ public:
     /// @brief Idle connection timeout.
     long idle_timeout_;
 
-    /// @brief Current config.
-    HttpCommandConfigPtr current_config_;
-
-    /// @brief Active listeners.
-    vector<HttpListenerPtr> http_listeners_;
-
-    /// @brief Number of active listeners (0 or 1).
-    size_t active_;
+    /// @brief The HTTP/HTTPS socket configurations.
+    std::map<std::pair<IOAddress, uint16_t>, HttpSocketInfoPtr> sockets_;
 
     /// @brief Use external sockets flag.
     bool use_external_;
 };
 
 void
-HttpCommandMgrImpl::configure(HttpCommandConfigPtr config) {
-    // First case: from no config to no config.
-    if (!config && http_listeners_.empty()) {
-        return;
+HttpCommandMgrImpl::openCommandSockets(const isc::data::ConstElementPtr config) {
+    if (!config) {
+        isc_throw(BadSocketInfo, "Missing config parameters, can't create socket.");
     }
 
-    // Second case: from config to no config.
-    if (!config && !http_listeners_.empty()) {
-        close(false);
-        return;
-   }
+    if (config->getType() != Element::list) {
+        isc_throw(DhcpConfigError, "expected list type ("
+                  << config->getPosition() << ")");
+    }
 
-    // Third case: no address or port change.
-    if (config && current_config_ &&
-        (config->getSocketAddress() == current_config_->getSocketAddress()) &&
-        (config->getSocketPort() == current_config_->getSocketPort())) {
-        // Check if TLS setup changed.
-        if ((config->getTrustAnchor() != current_config_->getTrustAnchor()) ||
-            (config->getCertFile() != current_config_->getCertFile()) ||
-            (config->getKeyFile() != current_config_->getKeyFile()) ||
-            (config->getCertRequired() != current_config_->getCertRequired())) {
+    for (auto const& socket : config->listValue()) {
+        openCommandSocket(socket);
+    }
+
+    auto copy = sockets_;
+    for (auto const& data : copy) {
+        if (data.second->usable_) {
+            data.second->usable_ = false;
+        } else {
+            closeCommandSocket(data.second, true);
+        }
+    }
+}
+
+void
+HttpCommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr config) {
+    if (!config) {
+        isc_throw(BadSocketInfo, "Missing config parameters, can't create socket.");
+    }
+
+    HttpCommandConfigPtr cmd_config(new HttpCommandConfig(config));
+
+    IOAddress server_address = cmd_config->getSocketAddress();
+    uint16_t server_port = cmd_config->getSocketPort();
+
+    auto it = sockets_.find(std::make_pair(server_address, server_port));
+    if (it != sockets_.end()) {
+        if ((cmd_config->getTrustAnchor() != it->second->config_->getTrustAnchor()) ||
+            (cmd_config->getCertFile() != it->second->config_->getCertFile()) ||
+            (cmd_config->getKeyFile() != it->second->config_->getKeyFile()) ||
+            (cmd_config->getCertRequired() != it->second->config_->getCertRequired())) {
             LOG_WARN(command_logger, HTTP_COMMAND_MGR_IGNORED_TLS_SETUP_CHANGES);
             // Overwrite the authentication setup and the emulation flag
             // in the response creator config.
-            current_config_->setAuthConfig(config->getAuthConfig());
-            current_config_->setEmulateAgentResponse(config->getEmulateAgentResponse());
-        } else {
-            current_config_ = config;
+            it->second->config_->setAuthConfig(cmd_config->getAuthConfig());
+            it->second->config_->setEmulateAgentResponse(cmd_config->getEmulateAgentResponse());
         }
+        it->second->usable_ = true;
         return;
     }
 
-    // Last case: from no config, or address or port change.
-    current_config_ = config;
-    IOAddress server_address = config->getSocketAddress();
-    uint16_t server_port = config->getSocketPort();
     bool use_https = false;
     TlsContextPtr tls_context;
-    if (!config->getCertFile().empty()) {
+    if (!cmd_config->getCertFile().empty()) {
         TlsContext::configure(tls_context,
                               TlsRole::SERVER,
-                              config->getTrustAnchor(),
-                              config->getCertFile(),
-                              config->getKeyFile(),
-                              config->getCertRequired());
+                              cmd_config->getTrustAnchor(),
+                              cmd_config->getCertFile(),
+                              cmd_config->getKeyFile(),
+                              cmd_config->getCertRequired());
         use_https = true;
     }
 
     // Create response creator factory first. It will be used to
     // generate response creators. Each response creator will be used
     // to generate answer to specific request.
-    HttpResponseCreatorFactoryPtr rfc(new HttpCommandResponseCreatorFactory(config));
+    HttpResponseCreatorFactoryPtr rfc(new HttpCommandResponseCreatorFactory(cmd_config));
 
     // Create HTTP listener. It will open up a TCP socket and be
     // prepared to accept incoming connection.
@@ -146,11 +168,11 @@ HttpCommandMgrImpl::configure(HttpCommandConfigPtr config) {
     // callback and start listening.
     http_listener->start();
 
-    // The new listener is running so add it to the collection of
-    // active listeners. The next step will be to remove all other
-    // active listeners, but we do it inside the main process loop.
-    http_listeners_.push_back(http_listener);
-    active_ = 1;
+    HttpSocketInfoPtr socket_info(new HttpSocketInfo());
+    socket_info->config_ = cmd_config;
+    socket_info->listener_ = http_listener;
+
+    sockets_[std::make_pair(server_address, server_port)] = socket_info;
 
     // Ok, seems we're good to go.
     LOG_INFO(command_logger, HTTP_COMMAND_MGR_SERVICE_STARTED)
@@ -160,53 +182,83 @@ HttpCommandMgrImpl::configure(HttpCommandConfigPtr config) {
 }
 
 void
-HttpCommandMgrImpl::close(bool remove) {
+HttpCommandMgrImpl::closeCommandSocket(HttpSocketInfoPtr info, bool remove) {
     bool use_https = false;
-    ostringstream ep;
-    if (current_config_) {
-        use_https = !current_config_->getCertFile().empty();
-        ep << "bound to address " << current_config_->getSocketAddress()
-           << " port " << current_config_->getSocketPort();
+    if (info) {
+        ostringstream ep;
+        use_https = !info->config_->getCertFile().empty();
+        ep << "bound to address " << info->config_->getSocketAddress()
+           << " port " << info->config_->getSocketPort();
+
+        LOG_INFO(command_logger, HTTP_COMMAND_MGR_SERVICE_STOPPING)
+            .arg(use_https ? "HTTPS" : "HTTP")
+            .arg(ep.str());
+        info->listener_->stop();
+        if (remove) {
+            auto it = sockets_.find(std::make_pair(info->config_->getSocketAddress(), info->config_->getSocketPort()));
+            if (it != sockets_.end()) {
+                sockets_.erase(it);
+            }
+        }
+    } else {
+        for (auto const& data : sockets_) {
+            ostringstream ep;
+            use_https = !data.second->config_->getCertFile().empty();
+            ep << "bound to address " << data.second->config_->getSocketAddress()
+               << " port " << data.second->config_->getSocketPort();
+
+            LOG_INFO(command_logger, HTTP_COMMAND_MGR_SERVICE_STOPPING_NO_DATA)
+                .arg(use_https ? "HTTPS" : "HTTP")
+                .arg(ep.str());
+            data.second->listener_->stop();
+        }
+        if (remove) {
+            sockets_.clear();
+        }
     }
-    LOG_INFO(command_logger, HTTP_COMMAND_MGR_SERVICE_STOPPING)
-        .arg(use_https ? "HTTPS" : "HTTP")
-        .arg(ep.str());
-    current_config_.reset();
-    active_ = 0;
-    if (remove) {
-        garbageCollectListeners();
+    // We have stopped listeners but there may be some pending handlers
+    // related to these listeners. Need to invoke these handlers.
+    try {
+        io_service_->pollOne();
+    } catch (...) {
     }
 }
 
 void
-HttpCommandMgrImpl::garbageCollectListeners() {
-    // We expect only one active listener. If there are more (most likely 2),
-    // it means we have just reconfigured the server and need to shut down all
-    // listeners except the most recently added.
-    if (http_listeners_.size() > active_) {
-        // Stop no longer used listeners.
-        for (auto l = http_listeners_.begin();
-             l != http_listeners_.end() - active_;
-             ++l) {
-            (*l)->stop();
-        }
-        // We have stopped listeners but there may be some pending handlers
-        // related to these listeners. Need to invoke these handlers.
-        try {
-            io_service_->poll();
-        } catch (...) {
-        }
-        // Finally, we're ready to remove no longer used listeners.
-        http_listeners_.erase(http_listeners_.begin(),
-                              http_listeners_.end() - active_);
+HttpCommandMgrImpl::closeCommandSockets() {
+    bool use_https = false;
+    for (auto const& data : sockets_) {
+        ostringstream ep;
+        use_https = !data.second->config_->getCertFile().empty();
+        ep << "bound to address " << data.second->config_->getSocketAddress()
+           << " port " << data.second->config_->getSocketPort();
+
+        LOG_INFO(command_logger, HTTP_COMMAND_MGR_SERVICE_STOPPING_ALL)
+            .arg(use_https ? "HTTPS" : "HTTP")
+            .arg(ep.str());
+        data.second->listener_->stop();
+    }
+    sockets_.clear();
+    // We have stopped listeners but there may be some pending handlers
+    // related to these listeners. Need to invoke these handlers.
+    try {
+        io_service_->pollOne();
+    } catch (...) {
     }
 }
 
 ConstHttpListenerPtr
-HttpCommandMgrImpl::getHttpListener() const {
+HttpCommandMgrImpl::getHttpListener(HttpSocketInfoPtr info) const {
     // Return the most recent listener or null.
-    return (http_listeners_.empty() ? ConstHttpListenerPtr() :
-            http_listeners_.back());
+    if (info) {
+        auto it = sockets_.find(std::make_pair(info->config_->getSocketAddress(), info->config_->getSocketPort()));
+        if (it != sockets_.end()) {
+            return (it->second->listener_);
+        }
+    } else if (sockets_.size()) {
+        return (sockets_.begin()->second->listener_);
+    }
+    return (ConstHttpListenerPtr());
 }
 
 HttpCommandMgr&
@@ -239,23 +291,28 @@ HttpCommandMgr::addExternalSockets(bool use_external) {
 }
 
 void
-HttpCommandMgr::configure(HttpCommandConfigPtr config) {
-    impl_->configure(config);
+HttpCommandMgr::openCommandSocket(const isc::data::ConstElementPtr config) {
+    impl_->openCommandSocket(config);
 }
 
 void
-HttpCommandMgr::close(bool remove) {
-    impl_->close(remove);
+HttpCommandMgr::openCommandSockets(const isc::data::ConstElementPtr config) {
+    impl_->openCommandSockets(config);
 }
 
 void
-HttpCommandMgr::garbageCollectListeners() {
-    impl_->garbageCollectListeners();
+HttpCommandMgr::closeCommandSocket(HttpSocketInfoPtr info, bool remove) {
+    impl_->closeCommandSocket(info, remove);
+}
+
+void
+HttpCommandMgr::closeCommandSockets() {
+    impl_->closeCommandSockets();
 }
 
 ConstHttpListenerPtr
-HttpCommandMgr::getHttpListener() const {
-    return (impl_->getHttpListener());
+HttpCommandMgr::getHttpListener(HttpSocketInfoPtr info) const {
+    return (impl_->getHttpListener(info));
 }
 
 } // end of isc::config

@@ -47,6 +47,7 @@
 // "%code requires" blocks.
 #line 17 "d2_parser.yy"
 
+#include <config.h>
 #include <string>
 #include <cc/data.h>
 #include <d2srv/d2_config.h>
@@ -57,7 +58,7 @@ using namespace isc::d2;
 using namespace isc::data;
 using namespace std;
 
-#line 61 "d2_parser.h"
+#line 62 "d2_parser.h"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -206,7 +207,7 @@ using namespace std;
 
 #line 14 "d2_parser.yy"
 namespace isc { namespace d2 {
-#line 210 "d2_parser.h"
+#line 211 "d2_parser.h"
 
 
 
@@ -3052,7 +3053,7 @@ switch (yykind)
 
 #line 14 "d2_parser.yy"
 } } // isc::d2
-#line 3056 "d2_parser.h"
+#line 3057 "d2_parser.h"
 
 
 

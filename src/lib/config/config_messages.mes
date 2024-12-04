@@ -167,3 +167,11 @@ control commands.
 % HTTP_COMMAND_MGR_SERVICE_STOPPING stopping %1 service %2
 This informational message indicates that the server has stopped
 HTTP/HTTPS service. When known the address and port are displayed.
+
+% HTTP_COMMAND_MGR_SERVICE_STOPPING_NO_DATA stopping %1 service %2
+This informational message indicates that the server has stopped
+HTTP/HTTPS service. When known the address and port are displayed.
+
+% HTTP_COMMAND_MGR_SERVICE_STOPPING_ALL stopping %1 service %2
+This informational message indicates that the server has stopped
+HTTP/HTTPS service. When known the address and port are displayed.

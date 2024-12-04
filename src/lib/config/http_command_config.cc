@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <cc/dhcp_config_error.h>
+#include <config/command_mgr.h>
 #include <config/http_command_config.h>
 #include <http/basic_auth_config.h>
 #include <limits>
@@ -54,8 +55,9 @@ HttpCommandConfig::HttpCommandConfig(ConstElementPtr config)
     // Reject UNIX only socket-name.
     if (config->contains("socket-name")) {
         isc_throw(DhcpConfigError,
-                  "parameter 'socket-name' is not supported by HTTP "
-                  "control sockets");
+                  "parameter 'socket-name' is not supported by "
+                  << (socket_type_ == string("http") ? string("HTTP") : string("HTTPS"))
+                  << " control sockets");
     }
     // Get socket address.
     ConstElementPtr socket_address = config->get("socket-address");

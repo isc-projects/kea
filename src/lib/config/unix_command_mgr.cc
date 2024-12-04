@@ -13,6 +13,7 @@
 #include <asiolink/unix_domain_socket_acceptor.h>
 #include <asiolink/unix_domain_socket_endpoint.h>
 #include <config/command_mgr.h>
+#include <config/unix_command_config.h>
 #include <config/unix_command_mgr.h>
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
@@ -40,6 +41,11 @@ namespace {
 const size_t BUF_SIZE = 32768;
 
 class ConnectionPool;
+
+class Connection;
+
+/// @brief Pointer to the @c Connection.
+typedef boost::shared_ptr<Connection> ConnectionPtr;
 
 /// @brief Represents a single connection over control socket.
 ///
@@ -71,10 +77,10 @@ public:
                ConnectionPool& connection_pool,
                const long timeout,
                bool use_external)
-        : socket_(socket), timeout_timer_(io_service), timeout_(timeout),
-          buf_(), response_(), connection_pool_(connection_pool), feed_(),
-          response_in_progress_(false), watch_socket_(),
-          use_external_(use_external) {
+        : io_service_(io_service), socket_(socket), timeout_timer_(io_service_),
+          timeout_(timeout), buf_(), response_(),
+          connection_pool_(connection_pool), feed_(), watch_socket_(),
+          use_external_(use_external), defer_shutdown_(false) {
 
         LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_SOCKET_CONNECTION_OPENED)
             .arg(socket_->getNative());
@@ -114,25 +120,28 @@ public:
     /// sent to the client. Closing a socket during processing a request would
     /// cause the server to not send a response to the client.
     void stop() {
-        if (!response_in_progress_) {
-            LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_SOCKET_CONNECTION_CLOSED)
-                .arg(socket_->getNative());
-
-            if (use_external_) {
-                IfaceMgr::instance().deleteExternalSocket(watch_socket_->getSelectFd());
-                IfaceMgr::instance().deleteExternalSocket(socket_->getNative());
-
-                // Close watch socket and log errors if occur.
-                std::string watch_error;
-                if (!watch_socket_->closeSocket(watch_error)) {
-                    LOG_ERROR(command_logger, COMMAND_WATCH_SOCKET_CLOSE_ERROR)
-                        .arg(watch_error);
-                }
-            }
-
-            socket_->close();
-            timeout_timer_.cancel();
+        if (defer_shutdown_) {
+            io_service_->post(std::bind([](ConnectionPtr c) { c->stop(); }, shared_from_this()));
+            return;
         }
+
+        LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_SOCKET_CONNECTION_CLOSED)
+            .arg(socket_->getNative());
+
+        if (use_external_) {
+            IfaceMgr::instance().deleteExternalSocket(watch_socket_->getSelectFd());
+            IfaceMgr::instance().deleteExternalSocket(socket_->getNative());
+
+            // Close watch socket and log errors if occur.
+            std::string watch_error;
+            if (!watch_socket_->closeSocket(watch_error)) {
+                LOG_ERROR(command_logger, COMMAND_WATCH_SOCKET_CLOSE_ERROR)
+                    .arg(watch_error);
+            }
+        }
+
+        socket_->close();
+        timeout_timer_.cancel();
     }
 
     /// @brief Gracefully terminates current connection.
@@ -211,6 +220,9 @@ public:
 
 private:
 
+    /// @brief The IO service used to handle events.
+    IOServicePtr io_service_;
+
     /// @brief Pointer to the socket used for transmission.
     boost::shared_ptr<UnixDomainSocket> socket_;
 
@@ -233,20 +245,17 @@ private:
     /// when the command ends.
     JSONFeed feed_;
 
-    /// @brief Boolean flag indicating if the request to stop connection is a
-    /// result of server reconfiguration.
-    bool response_in_progress_;
-
     /// @brief Pointer to watch socket instance used to signal that the socket
     /// is ready for read or write.
     util::WatchSocketPtr watch_socket_;
 
     /// @brief Use external sockets flag.
     bool use_external_;
-};
 
-/// @brief Pointer to the @c Connection.
-typedef boost::shared_ptr<Connection> ConnectionPtr;
+    /// @brief Flag which indicates if the connection shutdown should be
+    /// deferred until the connection is no longer used (a reply is sent).
+    bool defer_shutdown_;
+};
 
 /// @brief Holds all open connections.
 class ConnectionPool {
@@ -353,7 +362,10 @@ Connection::receiveHandler(const boost::system::error_code& ec,
         // Received entire command. Parse the command into JSON.
         if (feed_.feedOk()) {
             cmd = feed_.toElement();
-            response_in_progress_ = true;
+
+            defer_shutdown_ = true;
+
+            std::unique_ptr<Connection, void(*)(Connection*)> p(this, [](Connection* p) { p->defer_shutdown_ = false; });
 
             // Cancel the timer to make sure that long lasting command
             // processing doesn't cause the timeout.
@@ -361,8 +373,6 @@ Connection::receiveHandler(const boost::system::error_code& ec,
 
             // If successful, then process it as a command.
             rsp = CommandMgr::instance().processCommand(cmd);
-
-            response_in_progress_ = false;
 
         } else {
             // Failed to parse command as JSON or process the received command.
@@ -488,93 +498,105 @@ public:
 
     /// @brief Constructor.
     UnixCommandMgrImpl()
-        : io_service_(), acceptor_(), socket_(), socket_name_(),
-          connection_pool_(), timeout_(TIMEOUT_DHCP_SERVER_RECEIVE_COMMAND),
-          use_external_(true), lock_fd_(-1) {
+        : timeout_(TIMEOUT_DHCP_SERVER_RECEIVE_COMMAND), use_external_(true) {
     }
 
     /// @brief Opens acceptor service allowing the control clients to connect.
     ///
-    /// @param socket_info Configuration information for the control socket.
+    /// @param config Configuration information for the control socket.
     /// @throw BadSocketInfo When socket configuration is invalid.
     /// @throw SocketError When socket operation fails.
-    void openCommandSocket(const isc::data::ConstElementPtr& socket_info);
+    void openCommandSockets(const isc::data::ConstElementPtr config);
+
+    /// @brief Opens acceptor service allowing the control clients to connect.
+    ///
+    /// @param config Configuration information for the control socket.
+    /// @throw BadSocketInfo When socket configuration is invalid.
+    /// @throw SocketError When socket operation fails.
+    void openCommandSocket(const isc::data::ConstElementPtr config);
 
     /// @brief Shuts down any open unix control sockets
-    void closeCommandSocket();
+    ///
+    /// @param info Configuration information for the unix control socket.
+    void closeCommandSocket(UnixSocketInfoPtr info);
+
+    /// @brief Shuts down any open unix control sockets
+    void closeCommandSockets();
 
     /// @brief Asynchronously accepts next connection.
-    void doAccept();
+    ///
+    /// @param info Configuration information for the unix control socket.
+    void doAccept(UnixSocketInfoPtr info);
 
-    /// @brief Returns the lock file name
-    std::string getLockName() {
-        return (std::string(socket_name_ + ".lock"));
-    }
+    /// @brief Returns unix control socket descriptor.
+    ///
+    /// This method should be used only in tests.
+    ///
+    /// @param info Configuration information for the unix control socket.
+    ///
+    /// @return The file descriptor of the specified unix constrol socket.
+    int getControlSocketFD(UnixSocketInfoPtr info);
 
     /// @brief Pointer to the IO service used by the server process for running
     /// asynchronous tasks.
     IOServicePtr io_service_;
 
-    /// @brief Pointer to the acceptor service.
-    boost::shared_ptr<UnixDomainSocketAcceptor> acceptor_;
-
-    /// @brief Pointer to the socket into which the new connection is accepted.
-    boost::shared_ptr<UnixDomainSocket> socket_;
-
-    /// @brief Path to the unix domain socket descriptor.
-    ///
-    /// This is used to remove the socket file once the connection terminates.
-    std::string socket_name_;
-
     /// @brief Pool of connections.
     ConnectionPool connection_pool_;
+
+    /// @brief The UNIX sockets.
+    std::map<std::string, UnixSocketInfoPtr> sockets_;
 
     /// @brief Connection timeout.
     long timeout_;
 
     /// @brief Use external sockets flag.
     bool use_external_;
-
-    /// @brief File description to lock name file.
-    int lock_fd_;
 };
 
 void
-UnixCommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr& socket_info) {
-    socket_name_.clear();
-
-    if (!socket_info) {
-        isc_throw(BadSocketInfo, "Missing socket_info parameters, can't create socket.");
+UnixCommandMgrImpl::openCommandSockets(const isc::data::ConstElementPtr config) {
+    if (!config) {
+        isc_throw(BadSocketInfo, "Missing config parameters, can't create socket.");
     }
 
-    ConstElementPtr type = socket_info->get("socket-type");
-    if (!type) {
-        isc_throw(BadSocketInfo, "Mandatory 'socket-type' parameter missing");
+    if (config->getType() != Element::list) {
+        isc_throw(DhcpConfigError, "expected list type ("
+                  << config->getPosition() << ")");
     }
 
-    // Only supporting unix sockets right now.
-    if (type->stringValue() != "unix") {
-        isc_throw(BadSocketInfo, "Invalid 'socket-type' parameter value "
-                  << type->stringValue());
+    for (auto const& socket : config->listValue()) {
+        openCommandSocket(socket);
     }
 
-    // UNIX socket is requested. It takes one parameter: socket-name that
-    // specifies UNIX path of the socket.
-    ConstElementPtr name = socket_info->get("socket-name");
-    if (!name) {
-        isc_throw(BadSocketInfo, "Mandatory 'socket-name' parameter missing");
+    auto copy = sockets_;
+    for (auto const& data : copy) {
+        if (data.second->usable_) {
+            data.second->usable_ = false;
+        } else {
+            closeCommandSocket(data.second);
+        }
+    }
+}
+
+void
+UnixCommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr config) {
+    if (!config) {
+        isc_throw(BadSocketInfo, "Missing config parameters, can't create socket.");
     }
 
-    if (name->getType() != Element::string) {
-        isc_throw(BadSocketInfo, "'socket-name' parameter expected to be a string");
-    }
+    UnixCommandConfigPtr cmd_config(new UnixCommandConfig(config));
 
-    socket_name_ = name->stringValue();
+    auto it = sockets_.find(cmd_config->getSocketName());
+    if (it != sockets_.end()) {
+        it->second->usable_ = true;
+        return;
+    }
 
     // First let's open lock file.
-    std::string lock_name = getLockName();
-    lock_fd_ = open(lock_name.c_str(), O_RDONLY | O_CREAT, 0600);
-    if (lock_fd_ == -1) {
+    std::string lock_name = cmd_config->getLockName();
+    int lock_fd = open(lock_name.c_str(), O_RDONLY | O_CREAT, 0600);
+    if (lock_fd == -1) {
         std::string errmsg = strerror(errno);
         isc_throw(SocketError, "cannot create socket lockfile, "
                   << lock_name  << ", : " << errmsg);
@@ -582,72 +604,138 @@ UnixCommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr& socket_i
 
     // Try to acquire lock. If we can't somebody else is actively
     // using it.
-    int ret = flock(lock_fd_, LOCK_EX | LOCK_NB);
+    int ret = flock(lock_fd, LOCK_EX | LOCK_NB);
     if (ret != 0) {
         std::string errmsg = strerror(errno);
-        close(lock_fd_);
-        lock_fd_ = -1;
+        close(lock_fd);
         isc_throw(SocketError, "cannot lock socket lockfile, "
                   << lock_name  << ", : " << errmsg);
     }
 
     // We have the lock, so let's remove the pre-existing socket
     // file if it exists.
-    static_cast<void>(::remove(socket_name_.c_str()));
+    static_cast<void>(::remove(cmd_config->getSocketName().c_str()));
 
     LOG_INFO(command_logger, COMMAND_ACCEPTOR_START)
-        .arg(socket_name_);
+        .arg(cmd_config->getSocketName());
+
+    UnixSocketInfoPtr socket_info(new UnixSocketInfo());
+    socket_info->config_ = cmd_config;
+    socket_info->lock_fd_ = lock_fd;
 
     try {
         // Start asynchronous acceptor service.
-        acceptor_.reset(new UnixDomainSocketAcceptor(io_service_));
-        UnixDomainSocketEndpoint endpoint(socket_name_);
-        acceptor_->open(endpoint);
-        acceptor_->bind(endpoint);
-        acceptor_->listen();
+        socket_info->acceptor_.reset(new UnixDomainSocketAcceptor(io_service_));
+        UnixDomainSocketEndpoint endpoint(cmd_config->getSocketName());
+        socket_info->acceptor_->open(endpoint);
+        socket_info->acceptor_->bind(endpoint);
+        socket_info->acceptor_->listen();
         if (use_external_) {
             // Install this socket in Interface Manager.
-            IfaceMgr::instance().addExternalSocket(acceptor_->getNative(), 0);
+            IfaceMgr::instance().addExternalSocket(socket_info->acceptor_->getNative(), 0);
         }
 
-        doAccept();
+        doAccept(socket_info);
 
     } catch (const std::exception& ex) {
         isc_throw(SocketError, ex.what());
     }
+
+    sockets_[cmd_config->getSocketName()] = socket_info;
 }
 
 void
-UnixCommandMgrImpl::closeCommandSocket() {
-    // Close acceptor if the acceptor is open.
-    if (acceptor_ && acceptor_->isOpen()) {
-        if (use_external_) {
-            IfaceMgr::instance().deleteExternalSocket(acceptor_->getNative());
+UnixCommandMgrImpl::closeCommandSocket(UnixSocketInfoPtr info) {
+    if (info) {
+        // Close acceptor if the acceptor is open.
+        if (info->acceptor_ && info->acceptor_->isOpen()) {
+            if (use_external_) {
+                IfaceMgr::instance().deleteExternalSocket(info->acceptor_->getNative());
+            }
+            info->acceptor_->close();
+            static_cast<void>(::remove(info->config_->getSocketName().c_str()));
+            static_cast<void>(::remove(info->config_->getLockName().c_str()));
         }
-        acceptor_->close();
-        static_cast<void>(::remove(socket_name_.c_str()));
-        static_cast<void>(::remove(getLockName().c_str()));
-    }
 
-    // Stop all connections which can be closed. The only connection that won't
-    // be closed is the one over which we have received a request to reconfigure
-    // the server. This connection will be held until the UnixCommandMgr
-    // responds to such request.
-    connection_pool_.stopAll();
-    if (lock_fd_ != -1) {
-        close(lock_fd_);
-        lock_fd_ = -1;
+        // Stop all connections which can be closed. The only connection that won't
+        // be closed is the one over which we have received a request to reconfigure
+        // the server. This connection will be held until the UnixCommandMgr
+        // responds to such request.
+        connection_pool_.stopAll();
+        if (info->lock_fd_ != -1) {
+            close(info->lock_fd_);
+            info->lock_fd_ = -1;
+        }
+        auto it = sockets_.find(info->config_->getSocketName());
+        if (it != sockets_.end()) {
+            sockets_.erase(it);
+        }
+    } else {
+        for (auto const& data : sockets_) {
+            if (data.second->acceptor_ && data.second->acceptor_->isOpen()) {
+                if (use_external_) {
+                    IfaceMgr::instance().deleteExternalSocket(data.second->acceptor_->getNative());
+                }
+                data.second->acceptor_->close();
+                static_cast<void>(::remove(data.second->config_->getSocketName().c_str()));
+                static_cast<void>(::remove(data.second->config_->getLockName().c_str()));
+            }
+
+            // Stop all connections which can be closed. The only connection that won't
+            // be closed is the one over which we have received a request to reconfigure
+            // the server. This connection will be held until the UnixCommandMgr
+            // responds to such request.
+            connection_pool_.stopAll();
+            if (data.second->lock_fd_ != -1) {
+                close(data.second->lock_fd_);
+                data.second->lock_fd_ = -1;
+            }
+        }
+    }
+    try {
+        io_service_->pollOne();
+    } catch (...) {
     }
 }
 
 void
-UnixCommandMgrImpl::doAccept() {
+UnixCommandMgrImpl::closeCommandSockets() {
+    for (auto const& data : sockets_) {
+        if (data.second->acceptor_ && data.second->acceptor_->isOpen()) {
+            if (use_external_) {
+                IfaceMgr::instance().deleteExternalSocket(data.second->acceptor_->getNative());
+            }
+            data.second->acceptor_->close();
+            static_cast<void>(::remove(data.second->config_->getSocketName().c_str()));
+            static_cast<void>(::remove(data.second->config_->getLockName().c_str()));
+        }
+
+        // Stop all connections which can be closed. The only connection that won't
+        // be closed is the one over which we have received a request to reconfigure
+        // the server. This connection will be held until the UnixCommandMgr
+        // responds to such request.
+        connection_pool_.stopAll();
+        if (data.second->lock_fd_ != -1) {
+            close(data.second->lock_fd_);
+            data.second->lock_fd_ = -1;
+        }
+    }
+    try {
+        io_service_->pollOne();
+    } catch (...) {
+    }
+    sockets_.clear();
+}
+
+void
+UnixCommandMgrImpl::doAccept(UnixSocketInfoPtr info) {
     // Create a socket into which the acceptor will accept new connection.
-    socket_.reset(new UnixDomainSocket(io_service_));
-    acceptor_->asyncAccept(*socket_, [this](const boost::system::error_code& ec) {
+    info->socket_.reset(new UnixDomainSocket(io_service_));
+    info->acceptor_->asyncAccept(*info->socket_,
+                                 [this, info](const boost::system::error_code& ec) {
         if (!ec) {
             // New connection is arriving. Start asynchronous transmission.
-            ConnectionPtr connection(new Connection(io_service_, socket_,
+            ConnectionPtr connection(new Connection(io_service_, info->socket_,
                                                     connection_pool_,
                                                     timeout_,
                                                     use_external_));
@@ -655,32 +743,56 @@ UnixCommandMgrImpl::doAccept() {
 
         } else if (ec.value() != boost::asio::error::operation_aborted) {
             LOG_ERROR(command_logger, COMMAND_SOCKET_ACCEPT_FAIL)
-                .arg(acceptor_->getNative()).arg(ec.message());
+                .arg(info->acceptor_->getNative()).arg(ec.message());
         }
 
         // Unless we're stopping the service, start accepting connections again.
         if (ec.value() != boost::asio::error::operation_aborted) {
-            doAccept();
+            doAccept(info);
         }
     });
+}
+
+int
+UnixCommandMgrImpl::getControlSocketFD(UnixSocketInfoPtr info) {
+    // Return the most recent listener or null.
+    if (info) {
+        auto const& it = sockets_.find(info->config_->getSocketName());
+        if (it != sockets_.end()) {
+            return (it->second->acceptor_->getNative());
+        }
+    } else if (sockets_.size()) {
+        return (sockets_.begin()->second->acceptor_->getNative());
+    }
+    return (-1);
 }
 
 UnixCommandMgr::UnixCommandMgr() : impl_(new UnixCommandMgrImpl()) {
 }
 
 void
-UnixCommandMgr::openCommandSocket(const isc::data::ConstElementPtr& socket_info) {
-    impl_->openCommandSocket(socket_info);
+UnixCommandMgr::openCommandSocket(const isc::data::ConstElementPtr config) {
+    impl_->openCommandSocket(config);
 }
 
 void
-UnixCommandMgr::closeCommandSocket() {
-    impl_->closeCommandSocket();
+UnixCommandMgr::openCommandSockets(const isc::data::ConstElementPtr config) {
+    impl_->openCommandSockets(config);
+}
+
+void
+UnixCommandMgr::closeCommandSocket(UnixSocketInfoPtr info) {
+    impl_->closeCommandSocket(info);
+}
+
+void
+UnixCommandMgr::closeCommandSockets() {
+    impl_->closeCommandSockets();
 }
 
 int
-UnixCommandMgr::getControlSocketFD() {
-    return (impl_->acceptor_ ? impl_->acceptor_->getNative() : -1);
+UnixCommandMgr::getControlSocketFD(UnixSocketInfoPtr info) {
+    return (impl_->getControlSocketFD(info));
 }
 
 UnixCommandMgr&

@@ -29,12 +29,10 @@ namespace agent {
 
 CtrlAgentProcess::CtrlAgentProcess(const char* name,
                                    const asiolink::IOServicePtr& io_service)
-    : DProcessBase(name, io_service, DCfgMgrBasePtr(new CtrlAgentCfgMgr())),
-      http_listeners_() {
+    : DProcessBase(name, io_service, DCfgMgrBasePtr(new CtrlAgentCfgMgr())) {
 }
 
 CtrlAgentProcess::~CtrlAgentProcess() {
-    garbageCollectListeners(0);
 }
 
 void
@@ -55,14 +53,10 @@ CtrlAgentProcess::run() {
         // Let's process incoming data or expiring timers in a loop until
         // shutdown condition is detected.
         while (!shouldShutdown()) {
-            // Remove unused listeners within the main loop because new listeners
-            // are created in within a callback method. This avoids removal the
-            // listeners within a callback.
-            garbageCollectListeners(1);
             runIO();
         }
         // Done so removing all listeners.
-        garbageCollectListeners(0);
+        closeCommandSockets();
         stopIOService();
     } catch (const std::exception& ex) {
         LOG_FATAL(agent_logger, CTRL_AGENT_FAILED).arg(ex.what());
@@ -141,59 +135,63 @@ CtrlAgentProcess::configure(isc::data::ConstElementPtr config_set,
         }
 
         uint16_t server_port = ctx->getHttpPort();
-        bool use_https = false;
 
-        // Only open a new listener if the configuration has changed.
-        if (http_listeners_.empty() ||
-            (http_listeners_.back()->getLocalAddress() != server_address) ||
-            (http_listeners_.back()->getLocalPort() != server_port)) {
-            // Create a TLS context.
-            TlsContextPtr tls_context;
-            // When TLS is enabled configure it.
-            if (!ctx->getCertFile().empty()) {
-                TlsContext::configure(tls_context,
-                                      TlsRole::SERVER,
-                                      ctx->getTrustAnchor(),
-                                      ctx->getCertFile(),
-                                      ctx->getKeyFile(),
-                                      ctx->getCertRequired());
-                use_https = true;
+        auto it = sockets_.find(std::make_pair(server_address, server_port));
+        if (it != sockets_.end()) {
+            auto listener = getHttpListener();
+            if (listener) {
+                // Reconfig keeping the same address and port.
+                if (listener->getTlsContext()) {
+                    LOG_INFO(agent_logger, CTRL_AGENT_HTTPS_SERVICE_REUSED)
+                        .arg(server_address.toText())
+                        .arg(server_port);
+                } else {
+                    LOG_INFO(agent_logger, CTRL_AGENT_HTTP_SERVICE_REUSED)
+                        .arg(server_address.toText())
+                        .arg(server_port);
+                }
             }
-
-            // Create response creator factory first. It will be used to
-            // generate response creators. Each response creator will be
-            // used to generate answer to specific request.
-            HttpResponseCreatorFactoryPtr rcf(new CtrlAgentResponseCreatorFactory());
-
-            // Create http listener. It will open up a TCP socket and be
-            // prepared to accept incoming connection.
-            HttpListenerPtr http_listener
-                (new HttpListener(getIOService(), server_address,
-                                  server_port, tls_context, rcf,
-                                  HttpListener::RequestTimeout(TIMEOUT_AGENT_RECEIVE_COMMAND),
-                                  HttpListener::IdleTimeout(TIMEOUT_AGENT_IDLE_CONNECTION_TIMEOUT)));
-
-            // Instruct the http listener to actually open socket, install
-            // callback and start listening.
-            http_listener->start();
-
-            // The new listener is running so add it to the collection of
-            // active listeners. The next step will be to remove all other
-            // active listeners, but we do it inside the main process loop.
-            http_listeners_.push_back(http_listener);
-        } else if (!http_listeners_.empty()) {
-            // Reconfig keeping the same address and port.
-            if (http_listeners_.back()->getTlsContext()) {
-                LOG_INFO(agent_logger, CTRL_AGENT_HTTPS_SERVICE_REUSED)
-                    .arg(server_address.toText())
-                    .arg(server_port);
-            } else {
-                LOG_INFO(agent_logger, CTRL_AGENT_HTTP_SERVICE_REUSED)
-                    .arg(server_address.toText())
-                    .arg(server_port);
-            }
+            it->second->usable_ = true;
             return;
         }
+
+        bool use_https = false;
+        TlsContextPtr tls_context;
+        if (!ctx->getCertFile().empty()) {
+            TlsContext::configure(tls_context,
+                                  TlsRole::SERVER,
+                                  ctx->getTrustAnchor(),
+                                  ctx->getCertFile(),
+                                  ctx->getKeyFile(),
+                                  ctx->getCertRequired());
+            use_https = true;
+        }
+
+        // Create response creator factory first. It will be used to
+        // generate response creators. Each response creator will be
+        // used to generate answer to specific request.
+        HttpResponseCreatorFactoryPtr rcf(new CtrlAgentResponseCreatorFactory());
+
+        // Create HTTP listener. It will open up a TCP socket and be
+        // prepared to accept incoming connection.
+        HttpListenerPtr http_listener
+            (new HttpListener(getIOService(),
+                              server_address,
+                              server_port,
+                              tls_context,
+                              rcf,
+                              HttpListener::RequestTimeout(TIMEOUT_AGENT_RECEIVE_COMMAND),
+                              HttpListener::IdleTimeout(TIMEOUT_AGENT_IDLE_CONNECTION_TIMEOUT)));
+
+        // Instruct the HTTP listener to actually open socket, install
+        // callback and start listening.
+        http_listener->start();
+
+        HttpSocketInfoPtr socket_info(new HttpSocketInfo());
+        socket_info->config_ = ctx;
+        socket_info->listener_ = http_listener;
+
+        sockets_[std::make_pair(server_address, server_port)] = socket_info;
 
         // Ok, seems we're good to go.
         if (use_https) {
@@ -225,24 +223,16 @@ CtrlAgentProcess::configure(isc::data::ConstElementPtr config_set,
 }
 
 void
-CtrlAgentProcess::garbageCollectListeners(size_t leaving) {
-    // We expect only one active listener. If there are more (most likely 2),
-    // it means we have just reconfigured the server and need to shut down all
-    // listeners except the most recently added.
-    if (http_listeners_.size() > leaving) {
-        // Stop no longer used listeners.
-        for (auto l = http_listeners_.begin(); l != http_listeners_.end() - leaving; ++l) {
-            (*l)->stop();
-        }
-        // We have stopped listeners but there may be some pending handlers
-        // related to these listeners. Need to invoke these handlers.
-        try {
-            getIOService()->poll();
-        } catch (...) {
-        }
-        // Finally, we're ready to remove no longer used listeners.
-        http_listeners_.erase(http_listeners_.begin(),
-                              http_listeners_.end() - leaving);
+CtrlAgentProcess::closeCommandSockets() {
+    for (auto const& data : sockets_) {
+        data.second->listener_->stop();
+    }
+    sockets_.clear();
+    // We have stopped listeners but there may be some pending handlers
+    // related to these listeners. Need to invoke these handlers.
+    try {
+        getIOService()->pollOne();
+    } catch (...) {
     }
 }
 
@@ -252,10 +242,17 @@ CtrlAgentProcess::getCtrlAgentCfgMgr() {
 }
 
 ConstHttpListenerPtr
-CtrlAgentProcess::getHttpListener() const {
+CtrlAgentProcess::getHttpListener(HttpSocketInfoPtr info) const {
     // Return the most recent listener or null.
-    return (http_listeners_.empty() ? ConstHttpListenerPtr() :
-            http_listeners_.back());
+    if (info) {
+        auto it = sockets_.find(std::make_pair(info->config_->getHttpHost(), info->config_->getHttpPort()));
+        if (it != sockets_.end()) {
+            return (it->second->listener_);
+        }
+    } else if (sockets_.size()) {
+        return (sockets_.begin()->second->listener_);
+    }
+    return (ConstHttpListenerPtr());
 }
 
 bool

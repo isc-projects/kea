@@ -9,19 +9,14 @@
 
 #include <asiolink/io_service.h>
 #include <cc/data.h>
+#include <config/unix_command_config.h>
+
 #include <exceptions/exceptions.h>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace config {
-
-/// @brief An exception indicating that specified socket parameters are invalid
-class BadSocketInfo : public Exception {
-public:
-    BadSocketInfo(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { }
-};
 
 /// @brief An exception indicating a problem with socket operation
 class SocketError : public Exception {
@@ -70,17 +65,34 @@ public:
     /// @throw BadSocketInfo When socket configuration is invalid.
     /// @throw SocketError When socket operation fails.
     ///
-    /// @param socket_info Configuration information for the unix control socket.
-    void
-    openCommandSocket(const isc::data::ConstElementPtr& socket_info);
+    /// @param config Configuration information for the unix control socket.
+    void openCommandSockets(const isc::data::ConstElementPtr config);
 
-    /// @brief Shuts down any open unix control sockets
-    void closeCommandSocket();
+    /// @brief Opens unix control socket with parameters specified in socket_info
+    /// (required parameters: socket-type: unix, socket-name:/unix/path).
+    ///
+    /// @throw BadSocketInfo When socket configuration is invalid.
+    /// @throw SocketError When socket operation fails.
+    ///
+    /// @param config Configuration information for the unix control socket.
+    void openCommandSocket(const isc::data::ConstElementPtr config);
 
-    /// @brief Returns unix control socket descriptor
+    /// @brief Shuts down any open unix control sockets.
+    ///
+    /// @param config Configuration information for the unix control socket.
+    void closeCommandSocket(UnixSocketInfoPtr info = UnixSocketInfoPtr());
+
+    /// @brief Shuts down any open unix control sockets.
+    void closeCommandSockets();
+
+    /// @brief Returns unix control socket descriptor.
     ///
     /// This method should be used only in tests.
-    int getControlSocketFD();
+    ///
+    /// @param config Configuration information for the unix control socket.
+    ///
+    /// @return The file descriptor of the specified unix control socket.
+    int getControlSocketFD(UnixSocketInfoPtr info = UnixSocketInfoPtr());
 
 private:
 

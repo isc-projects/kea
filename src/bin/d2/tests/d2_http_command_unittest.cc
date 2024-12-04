@@ -225,7 +225,12 @@ public:
     /// @param command the command text to execute in JSON form.
     /// @param response variable into which the received response should be
     /// placed.
-    virtual void sendHttpCommand(const string& command, string& response) = 0;
+    /// @param address The server address to connect to.
+    /// @param port The server port to connect to.
+    virtual void sendHttpCommand(const string& command,
+                                 string& response,
+                                 std::string address = std::string(),
+                                 int port = 0) = 0;
 
     /// @brief Parse list answer.
     ///
@@ -529,13 +534,23 @@ public:
     /// @param command the command text to execute in JSON form.
     /// @param response variable into which the received response should be
     /// placed.
+    /// @param address The server address to connect to.
+    /// @param port The server port to connect to.
     virtual void sendHttpCommand(const string& command,
-                                 string& response) override {
+                                 string& response,
+                                 std::string address = std::string(),
+                                 int port = 0) override {
         response = "";
         IOServicePtr io_service = getIOService();
         ASSERT_TRUE(io_service);
-        TestHttpClientPtr client(new TestHttpClient(io_service, SERVER_ADDRESS,
-                                                    SERVER_PORT));
+        if (address.empty()) {
+            address = SERVER_ADDRESS;
+        }
+        if (!port) {
+            port = SERVER_PORT;
+        }
+        TestHttpClientPtr client(new TestHttpClient(io_service, address,
+                                                    port));
         ASSERT_TRUE(client);
 
         // Send the command. This will trigger server's handler which
@@ -614,16 +629,26 @@ public:
     /// @param command the command text to execute in JSON form.
     /// @param response variable into which the received response should be
     /// placed.
+    /// @param address The server address to connect to.
+    /// @param port The server port to connect to.
     virtual void sendHttpCommand(const string& command,
-                                 string& response) override {
+                                 string& response,
+                                 std::string address = std::string(),
+                                 int port = 0) override {
         response = "";
         IOServicePtr io_service = getIOService();
         ASSERT_TRUE(io_service);
 
         TlsContextPtr client_tls_context;
         configClient(client_tls_context);
+        if (address.empty()) {
+            address = SERVER_ADDRESS;
+        }
+        if (!port) {
+            port = SERVER_PORT;
+        }
         TestHttpsClientPtr client(new TestHttpsClient(io_service, client_tls_context,
-                                                      SERVER_ADDRESS, SERVER_PORT));
+                                                      address, port));
         ASSERT_TRUE(client);
 
         // Send the command. This will trigger server's handler which
@@ -1258,7 +1283,7 @@ TEST_F(HttpCtrlChannelD2Test, configSet) {
     sendHttpCommand(config_test_txt, response);
 
     // Verify the HTTP control channel socket no longer exists.
-    ASSERT_NO_THROW(HttpCommandMgr::instance().garbageCollectListeners());
+    ASSERT_NO_THROW(HttpCommandMgr::instance().closeCommandSockets());
     EXPECT_FALSE(HttpCommandMgr::instance().getHttpListener());
 
     // Verify the configuration was successful.
@@ -1395,7 +1420,7 @@ TEST_F(HttpsCtrlChannelD2Test, configSet) {
     sendHttpCommand(config_test_txt, response);
 
     // Verify the HTTP control channel socket no longer exists.
-    ASSERT_NO_THROW(HttpCommandMgr::instance().garbageCollectListeners());
+    ASSERT_NO_THROW(HttpCommandMgr::instance().closeCommandSockets());
     EXPECT_FALSE(HttpCommandMgr::instance().getHttpListener());
 
     // Verify the configuration was successful.
@@ -1812,6 +1837,126 @@ TEST_F(HttpCtrlChannelD2Test, longResponse) {
 
 TEST_F(HttpsCtrlChannelD2Test, longResponse) {
     testLongResponse();
+}
+
+// Verify that the dual stack scenario works as expect.
+TEST_F(HttpCtrlChannelD2Test, dualStack) {
+
+    string d2_cfg_txt =
+        "    { \n"
+        "        \"ip-address\": \"192.168.77.1\", \n"
+        "        \"port\": 777, \n"
+        "        \"forward-ddns\" : {}, \n"
+        "        \"reverse-ddns\" : {}, \n"
+        "        \"tsig-keys\": [ \n"
+        "            {\"name\": \"d2_key.example.com\", \n"
+        "             \"algorithm\": \"hmac-md5\", \n"
+        "             \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"} \n"
+        "          ], \n"
+        "        \"control-sockets\": [ { \n"
+        "           \"socket-type\": \"http\", \n"
+        "           \"socket-address\": \"127.0.0.1\", \n"
+        "           \"socket-port\": 18125 \n"
+        "        }, { \n"
+        "           \"socket-type\": \"http\", \n"
+        "           \"socket-address\": \"::1\", \n"
+        "           \"socket-port\": 18125 \n"
+        "        } ] \n"
+        "    } \n";
+
+    ASSERT_TRUE(server_);
+
+    ConstElementPtr config;
+    ASSERT_NO_THROW(config = parseDHCPDDNS(d2_cfg_txt, true));
+    ASSERT_NO_THROW(d2Controller()->initProcess());
+    D2ProcessPtr proc = d2Controller()->getProcess();
+    ASSERT_TRUE(proc);
+    ConstElementPtr answer = proc->configure(config, false);
+    ASSERT_TRUE(answer);
+    EXPECT_EQ("{ \"arguments\": { \"hash\": \"948CDC181979EBB24333894B477C6A29FF158800A11E8AF7C7BA9981F15FC62D\" }, \"result\": 0, \"text\": \"Configuration applied successfully.\" }",
+              answer->str());
+    ASSERT_NO_THROW(d2Controller()->registerCommands());
+
+    string response;
+
+    // Send the version-get command
+    sendHttpCommand("{ \"command\": \"version-get\" }", response);
+    EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
+    EXPECT_TRUE(response.find("log4cplus") != string::npos);
+    EXPECT_FALSE(response.find("GTEST_VERSION") != string::npos);
+
+    // Send the version-get command
+    sendHttpCommand("{ \"command\": \"version-get\" }", response, "::1");
+    EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
+    EXPECT_TRUE(response.find("log4cplus") != string::npos);
+    EXPECT_FALSE(response.find("GTEST_VERSION") != string::npos);
+}
+
+// Verify that the dual stack scenario works as expect.
+TEST_F(HttpsCtrlChannelD2Test, dualStack) {
+
+    string ca_dir(string(TEST_CA_DIR));
+    ostringstream d2_st;
+    d2_st << "    { \n"
+          << "        \"ip-address\": \"192.168.77.1\", \n"
+          << "        \"port\": 777, \n"
+          << "        \"forward-ddns\" : {}, \n"
+          << "        \"reverse-ddns\" : {}, \n"
+          << "        \"tsig-keys\": [ \n"
+          << "            {\"name\": \"d2_key.example.com\", \n"
+          << "             \"algorithm\": \"hmac-md5\", \n"
+          << "             \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"} \n"
+          << "          ], \n"
+          << "        \"control-sockets\": [ { \n"
+          << "           \"socket-type\": \"https\", \n"
+          << "           \"socket-address\": \"127.0.0.1\", \n"
+          << "           \"socket-port\": 18125, \n"
+          << "           \"trust-anchor\": \"" << ca_dir << "/kea-ca.crt\", \n"
+          << "           \"cert-file\": \"" << ca_dir << "/kea-server.crt\", \n"
+          << "           \"key-file\": \"" << ca_dir << "/kea-server.key\" \n"
+          << "        }, { \n"
+          << "           \"socket-type\": \"https\", \n"
+          << "           \"socket-address\": \"::1\", \n"
+          << "           \"socket-port\": 18125, \n"
+          << "           \"trust-anchor\": \"" << ca_dir << "/kea-ca.crt\", \n"
+          << "           \"cert-file\": \"" << ca_dir << "/kea-server.crt\", \n"
+          << "           \"key-file\": \"" << ca_dir << "/kea-server.key\" \n"
+          << "        } ] \n"
+          << "    } \n";
+
+    ASSERT_TRUE(server_);
+
+    ConstElementPtr config;
+    ASSERT_NO_THROW(config = parseDHCPDDNS(d2_st.str(), true));
+    ASSERT_NO_THROW(d2Controller()->initProcess());
+    D2ProcessPtr proc = d2Controller()->getProcess();
+    ASSERT_TRUE(proc);
+    ConstElementPtr answer = proc->configure(config, false);
+    ASSERT_TRUE(answer);
+    // Verify the configuration was successful. The config contains random
+    // file paths (CA directory), so the hash will be different each time.
+    // As such, we can do simplified checks:
+    // - verify the "result": 0 is there
+    // - verify the "text": "Configuration applied successfully." is there
+    string answer_txt = answer->str();
+    EXPECT_NE(answer_txt.find("\"result\": 0"), std::string::npos);
+    EXPECT_NE(answer_txt.find("\"text\": \"Configuration applied successfully.\""),
+              std::string::npos);
+    ASSERT_NO_THROW(d2Controller()->registerCommands());
+
+    string response;
+
+    // Send the version-get command
+    sendHttpCommand("{ \"command\": \"version-get\" }", response);
+    EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
+    EXPECT_TRUE(response.find("log4cplus") != string::npos);
+    EXPECT_FALSE(response.find("GTEST_VERSION") != string::npos);
+
+    // Send the version-get command
+    sendHttpCommand("{ \"command\": \"version-get\" }", response, "::1");
+    EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
+    EXPECT_TRUE(response.find("log4cplus") != string::npos);
+    EXPECT_FALSE(response.find("GTEST_VERSION") != string::npos);
 }
 
 // This test verifies that the server signals timeout if the transmission

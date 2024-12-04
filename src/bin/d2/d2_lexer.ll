@@ -9,6 +9,8 @@
 /* Generated files do not make clang static analyser so happy */
 #ifndef __clang_analyzer__
 
+#include <config.h>
+
 #include <cctype>
 #include <cerrno>
 #include <climits>

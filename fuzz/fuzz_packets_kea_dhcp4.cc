@@ -49,9 +49,9 @@ LLVMFuzzerInitialize() {
         KEA_DHCP4_FUZZING_INTERFACE = string("lo0");
     }
 
-    char const* interface(getenv("KEA_DHCP4_FUZZING_INTERFACE"));
-    if (interface) {
-        KEA_DHCP4_FUZZING_INTERFACE = string(interface);
+    char const* iface(getenv("KEA_DHCP4_FUZZING_INTERFACE"));
+    if (iface) {
+        KEA_DHCP4_FUZZING_INTERFACE = string(iface);
     }
 
     char const* address(getenv("KEA_DHCP4_FUZZING_ADDRESS"));

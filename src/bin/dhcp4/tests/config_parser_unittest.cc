@@ -6992,6 +6992,10 @@ TEST_F(Dhcp4ParserTest, comments) {
     ConstElementPtr socket =
         CfgMgr::instance().getStagingCfg()->getUnixControlSocketInfo();
     ASSERT_TRUE(socket);
+    ASSERT_EQ(Element::list, socket->getType());
+    ASSERT_EQ(socket->size(), 1);
+    socket = socket->get(0);
+    ASSERT_TRUE(socket);
     ASSERT_TRUE(socket->get("socket-type"));
     EXPECT_EQ("\"unix\"", socket->get("socket-type")->str());
     ASSERT_TRUE(socket->get("socket-name"));
@@ -7005,12 +7009,13 @@ TEST_F(Dhcp4ParserTest, comments) {
     EXPECT_EQ("\"Indirect comment\"", ctx_socket->get("comment")->str());
 
     // There is a HTTP control socket with authentication.
-    HttpCommandConfigPtr http_socket =
-        CfgMgr::instance().getStagingCfg()->getHttpControlSocketInfo();
-    ASSERT_TRUE(http_socket);
-    /// @todo use the configuration object.
-    socket = http_socket->toElement();
+    socket = CfgMgr::instance().getStagingCfg()->getHttpControlSocketInfo();
     ASSERT_TRUE(socket);
+    ASSERT_EQ(Element::list, socket->getType());
+    ASSERT_EQ(socket->size(), 1);
+    socket = socket->get(0);
+    ASSERT_TRUE(socket);
+    /// @todo use the configuration object.
     ASSERT_TRUE(socket->get("socket-type"));
     EXPECT_EQ("\"http\"", socket->get("socket-type")->str());
     ASSERT_TRUE(socket->get("socket-address"));

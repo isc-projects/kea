@@ -15,6 +15,7 @@
 %define parse.assert
 %code requires
 {
+#include <config.h>
 #include <string>
 #include <cc/data.h>
 #include <d2srv/d2_config.h>

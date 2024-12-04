@@ -73,18 +73,12 @@ HttpConnection::HttpConnection(const asiolink::IOServicePtr& io_service,
                                const HttpAcceptorCallback& callback,
                                const long request_timeout,
                                const long idle_timeout)
-    : request_timer_(io_service),
-      request_timeout_(request_timeout),
-      tls_context_(tls_context),
-      idle_timeout_(idle_timeout),
-      tcp_socket_(),
-      tls_socket_(),
-      acceptor_(acceptor),
-      connection_pool_(connection_pool),
-      response_creator_(response_creator),
-      acceptor_callback_(callback),
-      use_external_(false),
-      watch_socket_() {
+    : io_service_(io_service), request_timer_(io_service_),
+      request_timeout_(request_timeout), tls_context_(tls_context),
+      idle_timeout_(idle_timeout), tcp_socket_(), tls_socket_(),
+      acceptor_(acceptor), connection_pool_(connection_pool),
+      response_creator_(response_creator), acceptor_callback_(callback),
+      use_external_(false), watch_socket_(), defer_shutdown_(false) {
     if (!tls_context) {
         tcp_socket_.reset(new asiolink::TCPSocket<SocketCallback>(io_service));
     } else {
@@ -211,6 +205,10 @@ HttpConnection::closeWatchSocket() {
 
 void
 HttpConnection::close() {
+    if (defer_shutdown_) {
+        io_service_->post(std::bind([](HttpConnectionPtr c) { c->close(); }, shared_from_this()));
+        return;
+    }
     request_timer_.cancel();
     if (tcp_socket_) {
         if (use_external_) {
@@ -415,7 +413,6 @@ HttpConnection::asyncSendResponse(const ConstHttpResponsePtr& response,
     doWrite(transaction);
 }
 
-
 void
 HttpConnection::acceptorCallback(const boost::system::error_code& ec) {
     if (!acceptor_->isOpen()) {
@@ -548,6 +545,10 @@ HttpConnection::socketReadCallback(HttpConnection::TransactionPtr transaction,
 
         // Don't want to timeout if creation of the response takes long.
         request_timer_.cancel();
+
+        defer_shutdown_ = true;
+
+        std::unique_ptr<HttpConnection, void(*)(HttpConnection*)> p(this, [](HttpConnection* p) { p->defer_shutdown_ = false; });
 
         // Create the response from the received request using the custom
         // response creator.

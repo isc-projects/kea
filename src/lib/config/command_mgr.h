@@ -13,6 +13,13 @@
 namespace isc {
 namespace config {
 
+/// @brief An exception indicating that specified socket parameters are invalid
+class BadSocketInfo : public Exception {
+public:
+    BadSocketInfo(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { }
+};
+
 /// @brief Commands Manager implementation for the Kea servers.
 ///
 /// This class extends @ref BaseCommandMgr with the ability to receive and

@@ -9,7 +9,6 @@
 
 #include <asiolink/io_service.h>
 #include <config/http_command_config.h>
-#include <http/listener.h>
 #include <boost/noncopyable.hpp>
 
 namespace isc {
@@ -57,32 +56,30 @@ public:
 
     /// @brief Configure http control socket from configuration.
     ///
-    /// @param config Configuration of the control http socket.
-    void configure(HttpCommandConfigPtr config);
+    /// @param config Configuration information for the http control socket.
+    void openCommandSockets(const isc::data::ConstElementPtr config);
+
+    /// @brief Configure http control socket from configuration.
+    ///
+    /// @param config Configuration information for the http control socket.
+    void openCommandSocket(const isc::data::ConstElementPtr config);
 
     /// @brief Close http control socket.
     ///
-    /// @note When remove is false @c garbageCollectListeners must
-    /// be called after.
-    ///
+    /// @param info Configuration information for the http control socket.
     /// @param remove When true remove the listeners immediately.
-    void close(bool remove = true);
+    void closeCommandSocket(HttpSocketInfoPtr info = HttpSocketInfoPtr(), bool remove = true);
 
-    /// @brief Removes listeners which are no longer in use.
-    ///
-    /// This method should be called after server reconfiguration to
-    /// remove listeners used previously (no longer used because the
-    /// listening address and port has changed as a result of the
-    /// reconfiguration). If there are no listeners additional to the
-    /// one that is currently in use, the method has no effect.
-    /// This method is reused to remove all listeners at shutdown time.
-    void garbageCollectListeners();
+    /// @brief Close http control socket.
+    void closeCommandSockets();
 
     /// @brief Returns a const pointer to the HTTP listener.
     ///
+    /// @param info Configuration information for the http control socket.
+    ///
     /// @return Const pointer to the currently used listener or null pointer if
     /// there is no listener.
-    isc::http::ConstHttpListenerPtr getHttpListener() const;
+    isc::http::ConstHttpListenerPtr getHttpListener(HttpSocketInfoPtr info = HttpSocketInfoPtr()) const;
 
 private:
 

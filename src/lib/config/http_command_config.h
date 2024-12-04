@@ -12,6 +12,7 @@
 #include <cc/user_context.h>
 #include <http/auth_config.h>
 #include <http/cfg_http_header.h>
+#include <http/listener.h>
 
 namespace isc {
 namespace config {
@@ -230,6 +231,27 @@ private:
 
 /// @brief Pointer to a HttpCommandConfig object.
 typedef boost::shared_ptr<HttpCommandConfig> HttpCommandConfigPtr;
+
+struct HttpSocketInfo {
+    /// @brief Flag which indicates if socket can be reused.
+    bool usable_;
+
+    /// @brief Pointer to the socket config.
+    HttpCommandConfigPtr config_;
+
+    /// @brief Pointer to HTTP/HTTPS listener.
+    isc::http::HttpListenerPtr listener_;
+
+    /// @brief Constructor.
+    HttpSocketInfo() : usable_(true) {
+    }
+
+    /// @brief Destructor.
+    ~HttpSocketInfo() = default;
+};
+
+/// @brief Pointer to a HttpSocketInfo object.
+typedef boost::shared_ptr<HttpSocketInfo> HttpSocketInfoPtr;
 
 } // end of isc::config namespace
 } // end of isc namespace

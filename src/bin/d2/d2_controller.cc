@@ -106,8 +106,8 @@ void
 D2Controller::deregisterCommands() {
     try {
         // Close command sockets.
-        UnixCommandMgr::instance().closeCommandSocket();
-        HttpCommandMgr::instance().close();
+        UnixCommandMgr::instance().closeCommandSockets();
+        HttpCommandMgr::instance().closeCommandSockets();
 
         // Deregister any registered commands (please keep in alphabetic order)
         CommandMgr::instance().deregisterCommand(BUILD_REPORT_COMMAND);

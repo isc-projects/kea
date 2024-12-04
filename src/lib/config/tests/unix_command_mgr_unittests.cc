@@ -10,13 +10,19 @@
 
 #include <testutils/sandbox.h>
 #include <asiolink/io_service.h>
+#include <cc/dhcp_config_error.h>
+#include <config/command_mgr.h>
 #include <config/unix_command_mgr.h>
 #include <string>
 
 using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::data;
+using namespace isc::dhcp;
 using namespace std;
+
+/// @brief Test timeout (ms).
+const long TEST_TIMEOUT = 10000;
 
 // Test class for Unix Command Manager
 class UnixCommandMgrTest : public ::testing::Test {
@@ -26,12 +32,12 @@ public:
     /// Default constructor
     UnixCommandMgrTest() : io_service_(new IOService()) {
         UnixCommandMgr::instance().setIOService(io_service_);
-        UnixCommandMgr::instance().closeCommandSocket();
+        UnixCommandMgr::instance().closeCommandSockets();
     }
 
     /// Default destructor
     virtual ~UnixCommandMgrTest() {
-        UnixCommandMgr::instance().closeCommandSocket();
+        UnixCommandMgr::instance().closeCommandSockets();
     }
 
     /// @brief Returns socket path (using either hardcoded path or env variable)
@@ -56,21 +62,21 @@ public:
 TEST_F(UnixCommandMgrTest, unixCreate) {
     // Null pointer is obviously a bad idea.
     EXPECT_THROW(UnixCommandMgr::instance().openCommandSocket(ConstElementPtr()),
-                 isc::config::BadSocketInfo);
+                 BadSocketInfo);
 
     // So is passing no parameters.
     ElementPtr socket_info = Element::createMap();
     EXPECT_THROW(UnixCommandMgr::instance().openCommandSocket(socket_info),
-                 isc::config::BadSocketInfo);
+                 BadSocketInfo);
 
     // We don't support ipx sockets
     socket_info->set("socket-type", Element::create("ipx"));
     EXPECT_THROW(UnixCommandMgr::instance().openCommandSocket(socket_info),
-                 isc::config::BadSocketInfo);
+                 DhcpConfigError);
 
     socket_info->set("socket-type", Element::create("unix"));
     EXPECT_THROW(UnixCommandMgr::instance().openCommandSocket(socket_info),
-                 isc::config::BadSocketInfo);
+                 BadSocketInfo);
 
     socket_info->set("socket-name", Element::create(getSocketPath()));
     EXPECT_NO_THROW(UnixCommandMgr::instance().openCommandSocket(socket_info));
@@ -92,6 +98,7 @@ TEST_F(UnixCommandMgrTest, unixCreateTooLong) {
 }
 
 // Verifies that a socket cannot be concurrently opened more than once.
+// It should be reused instead.
 TEST_F(UnixCommandMgrTest, exclusiveOpen) {
     // Pass in valid parameters.
     ElementPtr socket_info = Element::createMap();
@@ -100,13 +107,14 @@ TEST_F(UnixCommandMgrTest, exclusiveOpen) {
 
     EXPECT_NO_THROW(UnixCommandMgr::instance().openCommandSocket(socket_info));
     EXPECT_GE(UnixCommandMgr::instance().getControlSocketFD(), 0);
+    int fd = UnixCommandMgr::instance().getControlSocketFD();
 
-    // Should not be able to open it twice.
-    EXPECT_THROW(UnixCommandMgr::instance().openCommandSocket(socket_info),
-                 isc::config::SocketError);
+    // Should be able to open it twice (reuse).
+    EXPECT_NO_THROW(UnixCommandMgr::instance().openCommandSocket(socket_info));
+    EXPECT_EQ(fd, UnixCommandMgr::instance().getControlSocketFD());
 
     // Now let's close it.
-    EXPECT_NO_THROW(UnixCommandMgr::instance().closeCommandSocket());
+    EXPECT_NO_THROW(UnixCommandMgr::instance().closeCommandSockets());
 
     // Should be able to re-open it now.
     EXPECT_NO_THROW(UnixCommandMgr::instance().openCommandSocket(socket_info));

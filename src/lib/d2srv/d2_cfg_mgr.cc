@@ -36,7 +36,7 @@ D2CfgContext::D2CfgContext()
       reverse_mgr_(new DdnsDomainListMgr("reverse-ddns")),
       keys_(new TSIGKeyInfoMap()),
       unix_control_socket_(ConstElementPtr()),
-      http_control_socket_(HttpCommandConfigPtr()) {
+      http_control_socket_(ConstElementPtr()) {
 }
 
 D2CfgContext::D2CfgContext(const D2CfgContext& rhs) : ConfigBase(rhs) {
@@ -104,10 +104,14 @@ D2CfgContext::toElement() const {
     // Set control-sockets.
     ElementPtr control_sockets = Element::createList();
     if (!isNull(unix_control_socket_)) {
-        control_sockets->add(UserContext::toElement(unix_control_socket_));
+        for (auto const& socket : unix_control_socket_->listValue()) {
+            control_sockets->add(UserContext::toElement(socket));
+        }
     }
-    if (http_control_socket_) {
-        control_sockets->add(http_control_socket_->toElement());
+    if (!isNull(http_control_socket_)) {
+        for (auto const& socket : http_control_socket_->listValue()) {
+            control_sockets->add(UserContext::toElement(socket));
+        }
     }
     if (!control_sockets->empty()) {
         d2->set("control-sockets", control_sockets);
@@ -247,7 +251,7 @@ D2CfgMgr::getUnixControlSocketInfo() {
     return (getD2CfgContext()->getUnixControlSocketInfo());
 }
 
-isc::config::HttpCommandConfigPtr
+const isc::data::ConstElementPtr
 D2CfgMgr::getHttpControlSocketInfo() {
     return (getD2CfgContext()->getHttpControlSocketInfo());
 }

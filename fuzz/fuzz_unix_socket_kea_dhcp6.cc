@@ -36,7 +36,7 @@ static string const KEA_DHCP6_CONF(KEA_FUZZ_DIR + "/kea-dhcp6-" + PID_STR + ".co
 static string const KEA_DHCP6_CSV(KEA_FUZZ_DIR + "/kea-dhcp6-" + PID_STR + ".csv");
 static string const SOCKET(KEA_FUZZ_DIR + "/kea-dhcp6-ctrl-" + PID_STR + ".sock");
 
-static UnixControlClient CLIENT;
+static UnixControlClient TEST_CLIENT;
 
 }  // namespace
 
@@ -113,13 +113,13 @@ LLVMFuzzerTestOneInput(uint8_t const* data, size_t size) {
     assert(isSocket(SOCKET));
 
     string const command(reinterpret_cast<char const*>(data), size);
-    CLIENT.connectToServer(SOCKET);
-    CLIENT.sendCommand(command);
+    TEST_CLIENT.connectToServer(SOCKET);
+    TEST_CLIENT.sendCommand(command);
     ControlledDhcpv6Srv::getInstance()->getIOService()->poll();
     string response;
-    CLIENT.getResponse(response);
+    TEST_CLIENT.getResponse(response);
     ControlledDhcpv6Srv::getInstance()->getIOService()->poll();
-    CLIENT.disconnectFromServer();
+    TEST_CLIENT.disconnectFromServer();
     ControlledDhcpv6Srv::getInstance()->getIOService()->poll();
 
     return 0;

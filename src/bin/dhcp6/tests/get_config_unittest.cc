@@ -11334,7 +11334,6 @@ const char* UNPARSED_CONFIGS[] = {
 "                            }\n"
 "                        }\n"
 "                    ],\n"
-"                    \"directory\": \"\",\n"
 "                    \"realm\": \"kea-dhcpv6-server\",\n"
 "                    \"type\": \"basic\",\n"
 "                    \"user-context\": {\n"

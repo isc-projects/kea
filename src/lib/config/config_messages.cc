@@ -37,6 +37,8 @@ extern const isc::log::MessageID COMMAND_WATCH_SOCKET_MARK_READY_ERROR = "COMMAN
 extern const isc::log::MessageID HTTP_COMMAND_MGR_IGNORED_TLS_SETUP_CHANGES = "HTTP_COMMAND_MGR_IGNORED_TLS_SETUP_CHANGES";
 extern const isc::log::MessageID HTTP_COMMAND_MGR_SERVICE_STARTED = "HTTP_COMMAND_MGR_SERVICE_STARTED";
 extern const isc::log::MessageID HTTP_COMMAND_MGR_SERVICE_STOPPING = "HTTP_COMMAND_MGR_SERVICE_STOPPING";
+extern const isc::log::MessageID HTTP_COMMAND_MGR_SERVICE_STOPPING_ALL = "HTTP_COMMAND_MGR_SERVICE_STOPPING_ALL";
+extern const isc::log::MessageID HTTP_COMMAND_MGR_SERVICE_STOPPING_NO_DATA = "HTTP_COMMAND_MGR_SERVICE_STOPPING_NO_DATA";
 
 } // namespace config
 } // namespace isc
@@ -74,6 +76,8 @@ const char* values[] = {
     "HTTP_COMMAND_MGR_IGNORED_TLS_SETUP_CHANGES", "ignore a change in TLS setup of the http control socket",
     "HTTP_COMMAND_MGR_SERVICE_STARTED", "started %1 service bound to address %2 port %3",
     "HTTP_COMMAND_MGR_SERVICE_STOPPING", "stopping %1 service %2",
+    "HTTP_COMMAND_MGR_SERVICE_STOPPING_ALL", "stopping %1 service %2",
+    "HTTP_COMMAND_MGR_SERVICE_STOPPING_NO_DATA", "stopping %1 service %2",
     NULL
 };
 

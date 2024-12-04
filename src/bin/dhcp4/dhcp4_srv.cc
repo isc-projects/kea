@@ -1201,10 +1201,9 @@ Dhcpv4Srv::run() {
             // Handle events registered by hooks using external IOService objects.
             IOServiceMgr::instance().pollIOServices();
             getIOService()->poll();
-            config::HttpCommandMgr::instance().garbageCollectListeners();
         } catch (const std::exception& e) {
-            // General catch-all exception that are not caught by more specific
-            // catches. This one is for exceptions derived from std::exception.
+            // General catch-all standard exceptions that are not caught by more
+            // specific catches.
             LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_STD_EXCEPTION_MAIN)
                 .arg(e.what());
         } catch (...) {

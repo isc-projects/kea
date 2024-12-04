@@ -202,7 +202,9 @@ public:
     }
 
     /// @brief Create a server with a HTTP command channel.
-    virtual void createHttpChannelServer() = 0;
+    ///
+    /// @param test_config The test configuration to use (if not empty).
+    virtual void createHttpChannelServer(std::string test_config = std::string()) = 0;
 
     /// @brief Reset
     void reset() override {
@@ -256,8 +258,12 @@ public:
     /// @param command the command text to execute in JSON form.
     /// @param response variable into which the received response should be
     /// placed.
+    /// @param address The server address to connect to.
+    /// @param port The server port to connect to.
     virtual void sendHttpCommand(const std::string& command,
-                                 std::string& response) = 0;
+                                 std::string& response,
+                                 std::string address = std::string(),
+                                 int port = 0) = 0;
 
     /// @brief Parse list answer.
     ///
@@ -570,7 +576,9 @@ class HttpCtrlChannelDhcpv6Test : public BaseCtrlChannelDhcpv6Test {
 public:
 
     /// @brief Create a server with a HTTP command channel.
-    virtual void createHttpChannelServer() override {
+    ///
+    /// @param test_config The test configuration to use (if not empty).
+    virtual void createHttpChannelServer(std::string test_config = std::string()) override {
         // Just a simple config. The important part here is the socket
         // location information.
         std::string header =
@@ -604,6 +612,9 @@ public:
             "}";
 
         std::string config_txt = header + interfaces_ + body;
+        if (!test_config.empty()) {
+            config_txt = test_config;
+        }
         ASSERT_NO_THROW(server_.reset(new NakedControlledDhcpv6Srv()));
 
         ConstElementPtr config;
@@ -648,13 +659,23 @@ public:
     /// @param command the command text to execute in JSON form.
     /// @param response variable into which the received response should be
     /// placed.
+    /// @param address The server address to connect to.
+    /// @param port The server port to connect to.
     virtual void sendHttpCommand(const std::string& command,
-                                 std::string& response) override {
+                                 std::string& response,
+                                 std::string address = std::string(),
+                                 int port = 0) override {
         response = "";
         IOServicePtr io_service = getIOService();
         ASSERT_TRUE(io_service);
-        TestHttpClientPtr client(new TestHttpClient(io_service, SERVER_ADDRESS,
-                                                    SERVER_PORT));
+        if (address.empty()) {
+            address = SERVER_ADDRESS;
+        }
+        if (!port) {
+            port = SERVER_PORT;
+        }
+        TestHttpClientPtr client(new TestHttpClient(io_service, address,
+                                                    port));
         ASSERT_TRUE(client);
 
         // Send the command. This will trigger server's handler which receives
@@ -681,7 +702,9 @@ class HttpsCtrlChannelDhcpv6Test : public BaseCtrlChannelDhcpv6Test {
 public:
 
     /// @brief Create a server with a HTTP command channel.
-    virtual void createHttpChannelServer() override {
+    ///
+    /// @param test_config The test configuration to use (if not empty).
+    virtual void createHttpChannelServer(std::string test_config = std::string()) override {
         // Just a simple config. The important part here is the socket
         // location information.
         string ca_dir(string(TEST_CA_DIR));
@@ -719,10 +742,15 @@ public:
             << "       } ]"
             << "}";
 
+        std::string config_txt = config_st.str();
+
         ASSERT_NO_THROW(server_.reset(new NakedControlledDhcpv6Srv()));
+        if (!test_config.empty()) {
+            config_txt = test_config;
+        }
 
         ConstElementPtr config;
-        ASSERT_NO_THROW(config = parseDHCP6(config_st.str()));
+        ASSERT_NO_THROW(config = parseDHCP6(config_txt));
 
         // Parse the logger configuration explicitly into the staging config.
         // Note this does not alter the current loggers, they remain in
@@ -763,16 +791,26 @@ public:
     /// @param command the command text to execute in JSON form.
     /// @param response variable into which the received response should be
     /// placed.
+    /// @param address The server address to connect to.
+    /// @param port The server port to connect to.
     virtual void sendHttpCommand(const std::string& command,
-                                 std::string& response) override {
+                                 std::string& response,
+                                 std::string address = std::string(),
+                                 int port = 0) override {
         response = "";
         IOServicePtr io_service = getIOService();
         ASSERT_TRUE(io_service);
 
         TlsContextPtr client_tls_context;
         configClient(client_tls_context);
+        if (address.empty()) {
+            address = SERVER_ADDRESS;
+        }
+        if (!port) {
+            port = SERVER_PORT;
+        }
         TestHttpsClientPtr client(new TestHttpsClient(io_service, client_tls_context,
-                                                      SERVER_ADDRESS, SERVER_PORT));
+                                                      address, port));
         ASSERT_TRUE(client);
 
         // Send the command. This will trigger server's handler which receives
@@ -1124,7 +1162,7 @@ TEST_F(HttpCtrlChannelDhcpv6Test, configSet) {
     sendHttpCommand(os.str(), response);
 
     // Verify the HTTP control channel socket no longer exists.
-    ASSERT_NO_THROW(HttpCommandMgr::instance().garbageCollectListeners());
+    ASSERT_NO_THROW(HttpCommandMgr::instance().closeCommandSockets());
     EXPECT_FALSE(HttpCommandMgr::instance().getHttpListener());
 
     // With no command channel, should still receive the response.
@@ -1310,7 +1348,7 @@ TEST_F(HttpsCtrlChannelDhcpv6Test, configSet) {
     sendHttpCommand(os.str(), response);
 
     // Verify the HTTP control channel socket no longer exists.
-    ASSERT_NO_THROW(HttpCommandMgr::instance().garbageCollectListeners());
+    ASSERT_NO_THROW(HttpCommandMgr::instance().closeCommandSockets());
     EXPECT_FALSE(HttpCommandMgr::instance().getHttpListener());
 
     // With no command channel, should still receive the response.
@@ -1524,7 +1562,6 @@ TEST_F(HttpCtrlChannelDhcpv6Test, configTest) {
     sendHttpCommand(os.str(), response);
 
     // Verify the HTTP control channel socket still exists.
-    ASSERT_NO_THROW(HttpCommandMgr::instance().garbageCollectListeners());
     EXPECT_TRUE(HttpCommandMgr::instance().getHttpListener());
 
     // Verify the configuration was successful.
@@ -1682,7 +1719,6 @@ TEST_F(HttpsCtrlChannelDhcpv6Test, configTest) {
     sendHttpCommand(os.str(), response);
 
     // Verify the HTTP control channel socket still exists.
-    ASSERT_NO_THROW(HttpCommandMgr::instance().garbageCollectListeners());
     EXPECT_TRUE(HttpCommandMgr::instance().getHttpListener());
 
     // Verify the configuration was successful.
@@ -3216,6 +3252,128 @@ TEST_F(HttpCtrlChannelDhcpv6Test, longResponse) {
 
 TEST_F(HttpsCtrlChannelDhcpv6Test, longResponse) {
     testLongResponse();
+}
+
+// Verify that the dual stack scenario works as expect.
+TEST_F(HttpCtrlChannelDhcpv6Test, dualStack) {
+    std::string header =
+        "{"
+        "    \"interfaces-config\": {"
+        "        \"interfaces\": [";
+
+    std::string body = "]"
+        "    },"
+        "    \"expired-leases-processing\": {"
+        "         \"reclaim-timer-wait-time\": 60,"
+        "         \"hold-reclaimed-time\": 500,"
+        "         \"flush-reclaimed-timer-wait-time\": 60"
+        "    },"
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
+        "    \"subnet6\": [ ],"
+        "    \"valid-lifetime\": 4000,"
+        "    \"control-sockets\": [ {"
+        "        \"socket-type\": \"http\","
+        "        \"socket-address\": \"::1\","
+        "        \"socket-port\": 18126"
+        "    },{"
+        "        \"socket-type\": \"http\","
+        "        \"socket-address\": \"127.0.0.1\","
+        "        \"socket-port\": 18126"
+        "    } ],"
+        "    \"lease-database\": {"
+        "       \"type\": \"memfile\", \"persist\": false },"
+        "    \"loggers\": [ {"
+        "       \"name\": \"kea-dhcp6\","
+        "       \"severity\": \"INFO\","
+        "       \"debuglevel\": 0"
+        "       } ]"
+        "}";
+
+    std::string config_txt = header + interfaces_ + body;
+
+    createHttpChannelServer(config_txt);
+
+    std::string response;
+
+    // Send the version-get command
+    sendHttpCommand("{ \"command\": \"version-get\" }", response);
+    EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
+    EXPECT_TRUE(response.find("log4cplus") != string::npos);
+    EXPECT_FALSE(response.find("GTEST_VERSION") != string::npos);
+
+    // Send the version-get command
+    sendHttpCommand("{ \"command\": \"version-get\" }", response, "127.0.0.1");
+    EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
+    EXPECT_TRUE(response.find("log4cplus") != string::npos);
+    EXPECT_FALSE(response.find("GTEST_VERSION") != string::npos);
+
+    // Clean up after the test.
+    CfgMgr::instance().clear();
+}
+
+// Verify that the dual stack scenario works as expect.
+TEST_F(HttpsCtrlChannelDhcpv6Test, dualStack) {
+    string ca_dir(string(TEST_CA_DIR));
+    ostringstream config_st;
+    config_st
+        << "{"
+        << "    \"interfaces-config\": {"
+        << "        \"interfaces\": ["
+        << interfaces_
+        << "]"
+        << "    },"
+        << "    \"expired-leases-processing\": {"
+        << "         \"reclaim-timer-wait-time\": 60,"
+        << "         \"hold-reclaimed-time\": 500,"
+        << "         \"flush-reclaimed-timer-wait-time\": 60"
+        << "    },"
+        << "    \"rebind-timer\": 2000, "
+        << "    \"renew-timer\": 1000, "
+        << "    \"subnet6\": [ ],"
+        << "    \"valid-lifetime\": 4000,"
+        << "    \"control-sockets\": [ {"
+        << "        \"socket-type\": \"http\","
+        << "        \"socket-address\": \"::1\","
+        << "        \"socket-port\": 18126,"
+        << "        \"trust-anchor\": \"" << ca_dir << "/kea-ca.crt\","
+        << "        \"cert-file\": \"" << ca_dir << "/kea-server.crt\","
+        << "        \"key-file\": \"" << ca_dir << "/kea-server.key\""
+        << "    },{"
+        << "        \"socket-type\": \"http\","
+        << "        \"socket-address\": \"127.0.0.1\","
+        << "        \"socket-port\": 18126,"
+        << "        \"trust-anchor\": \"" << ca_dir << "/kea-ca.crt\","
+        << "        \"cert-file\": \"" << ca_dir << "/kea-server.crt\","
+        << "        \"key-file\": \"" << ca_dir << "/kea-server.key\""
+        << "    } ],"
+        << "    \"lease-database\": {"
+        << "       \"type\": \"memfile\", \"persist\": false },"
+        << "    \"loggers\": [ {"
+        << "       \"name\": \"kea-dhcp6\","
+        << "       \"severity\": \"INFO\","
+        << "       \"debuglevel\": 0"
+        << "       } ]"
+        << "}";
+
+    createHttpChannelServer(config_st.str());
+
+    std::string response;
+
+    // Send the version-get command
+    sendHttpCommand("{ \"command\": \"version-get\" }", response);
+    EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
+    EXPECT_TRUE(response.find("log4cplus") != string::npos);
+    EXPECT_FALSE(response.find("GTEST_VERSION") != string::npos);
+
+    // Send the version-get command
+    sendHttpCommand("{ \"command\": \"version-get\" }", response, "127.0.0.1");
+    EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
+    EXPECT_TRUE(response.find("log4cplus") != string::npos);
+    EXPECT_FALSE(response.find("GTEST_VERSION") != string::npos);
+
+    // Clean up after the test.
+    CfgMgr::instance().clear();
 }
 
 // This test verifies that the server signals timeout if the transmission
