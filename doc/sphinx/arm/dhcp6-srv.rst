@@ -8484,5 +8484,12 @@ the FLQ allocator only for selected subnets. That way, when a new subnet is
 added without an allocator specification, the global setting is used, thus
 avoiding unnecessary impact on the server's startup time.
 
-Like the random allocator, the FLQ allocator offers leases in
-random order, which makes it suitable for use with a shared lease database.
+.. warning::
+
+   The FLQ allocator is not suitable for use with a shared lease database
+   (i.e., when multiple Kea servers store leases in the same database).
+   The servers are unaware of the expired leases reclaimed by the
+   sibling servers and never return them to their local free lease queues.
+   As a result, the servers will not be able to offer some of the available
+   leases to the clients. Only a server reclaiming a particular lease will
+   be able to offer it.
