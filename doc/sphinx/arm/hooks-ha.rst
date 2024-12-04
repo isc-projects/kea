@@ -2285,7 +2285,7 @@ previous state. See the :ref:`ha-maintenance` section for details.
        }
    }
 
-The ``state`` argument informs the recipient about the state of this server. The
+The ``state`` argument informs the recipient about the state of the sending server. The
 recipient can instantly resume the operation of the state machine without sending
 a heartbeat to check the partner's state.
 
