@@ -3628,45 +3628,6 @@ mysql_migrate_client_class_test() {
     mysql_upgrade_schema_to_version 26.0
 
     # Now we need insert some leases to "migrate" for both v4 and v6
-    qry=\
-"set @disable_audit 1;\
- insert into dhcp4_shared_network (name, client_classes) values ('aaa', 'abc');\
- insert into dhcp4_shared_network (name, client_classes) values ('bbb', '');\
- insert into dhcp4_shared_network (name) values ('ccc');\
- set @disable_audit 0;\
-    run_statement "insert v4 networks" "$qry"
-
-    # Let's upgrade it to the latest version.
-    run_command \
-        "${kea_admin}" db-upgrade mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
-
-    qry="select client_classes from dhcp4_shared_network where name = 'aaa' and client_classes = '[ \"abc\" ]';
-    run_statement "#4.1" "$qry" 1
-
-    mysql_wipe
-
-    test_finish 0
-}
-
-# Verifies that client_class to client_classes migrates
-# single text entries to JSON list correctly
-mysql_migrate_client_class_test() {
-    test_start "mysql.migrate_client_class_test"
-
-    # Let's wipe the whole database
-    mysql_wipe
-
-    # We need to create an older database with lease data so we can
-    # verify the upgrade mechanisms which prepopulate the lease stat
-    # tables.
-    #
-    # Initialize database to schema 1.0.
-    mysql -u"${db_user}" -p"${db_password}" "${db_name}" < "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql"
-
-    # Now upgrade to schema 4.0, this has lease_state in it
-    mysql_upgrade_schema_to_version 26.0
-
-    # Now we need insert some leases to "migrate" for both v4 and v6
     qry="\
  set @disable_audit = 1;\
  insert into dhcp4_shared_network (name, client_class, modification_ts) values ('net1', 'abc', current_timestamp);\
