@@ -1,0 +1,4 @@
+[doc]		marcin
+	Clarified that the FLQ allocator should not be used with shared
+	lease database.
+	(Gitlab #3577)
