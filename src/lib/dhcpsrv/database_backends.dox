@@ -110,6 +110,46 @@
         expire = cltt if valid_lifetime == 0xffffffff
   @endcode
 
+  @subsection lease4-csv DHCPv4 lease entry format in CSV files
+
+  - <b>address</b> - IPv4 address
+  - <b>hwaddr</b> - hardware address (without the hardware type)
+  - <b>client_id</b> - client identifier
+  - <b>valid_lifetime</b> - valid lifetime
+  - <b>expire</b> - expiration date (cltt + valid lifetime)
+  - <b>subnet_id</b> - DHCPv4 suvbet identifier
+  - <b>fqdn_fwd</b> - FQDN forward DNS RR update flag
+  - <b>fqdn_rev</b> - FQDN reverse DNS RR update flag
+  - <b>hostname</b> - hostname
+  - <b>state</b> - lease state
+  - <b>user_context</b> - user context (separators are escaped)
+  - <b>pool_id</b> - pool identifier
+
+  Examples can be found in unit tests.
+
+  @subsection lease6-csv DHCPv6 lease entry format in CSV files
+
+  - <b>address</b> - IPv6 address
+  - <b>DUID</b> - client DUID
+  - <b>valid_lifetime</b> - valid lifetime
+  - <b>expire</b> - expiration date (cltt + valid lifetime)
+  - <b>subnet_id</b> - DHCPv6 suvbet identifier
+  - <b>pref_lifetime</b> - preferred lifetime
+  - <b>lease_type</b> - lease type (0 for NA, 2 for PD)
+  - <b>iaid</b> - IA identifier
+  - <b>prefix_len</b> - prefix length
+  - <b>fqdn_fwd</b> - FQDN forward DNS RR update flag
+  - <b>fqdn_rev</b> - FQDN reverse DNS RR update flag
+  - <b>hostname</b> - hostname
+  - <b>hwaddr</b> - hardware address
+  - <b>state</b> - lease state
+  - <b>user_context</b> - user context (separators are escaped)
+  - <b>hwtype</b> - hardware type
+  - <b>hwaddr_source</b> - source of hardeare address and type
+  - <b>pool_id</b> - pool identifier
+
+  Examples can be found in unit tests.
+
   @section dhcpdb-host Host Backends
 
   Host backends (known also as host data sources) are similar to lease
