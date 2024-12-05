@@ -350,7 +350,7 @@ HAImpl::lease4Expire(CalloutHandle& callout_handle) {
         if (!subnet4) {
             // No subnet means that we possibly have some stale leases that don't
             // really belong to us. Therefore, there we return early and rely on the
-            // DHCP server to reclaim them. The HA hook has no way to juristiction here.
+            // DHCP server to reclaim them. The HA hook has no jurisdiction here.
             return;
         }
 
@@ -631,7 +631,7 @@ HAImpl::lease6Expire(CalloutHandle& callout_handle) {
         if (!subnet6) {
             // No subnet means that we possibly have some stale leases that don't
             // really belong to us. Therefore, there we return early and rely on the
-            // DHCP server to reclaim them. The HA hook has no way to juristiction here.
+            // DHCP server to reclaim them. The HA hook has no jurisdiction here.
             return;
         }
 

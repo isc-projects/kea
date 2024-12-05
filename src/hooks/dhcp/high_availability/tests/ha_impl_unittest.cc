@@ -85,21 +85,17 @@ public:
 
     /// @brief Mock function checking if the lease should be reclaimed by this server.
     ///
-    /// @param service pointer to the HA service to which the lease belongs.
-    /// @param lease4 pointer to the DHCPv4 lease being reclaimed.
     /// @return true if the DHCPv4 lease should be reclaimed by this server instance,
     /// false otherwise.
-    virtual bool shouldReclaim(const HAServicePtr& service, const Lease4Ptr& lease4) const {
+    virtual bool shouldReclaim(const HAServicePtr& /*service*/, const Lease4Ptr& /*lease4*/) const {
         return (should_reclaim_dhcpv4_lease_);
     }
 
     /// @brief Mock function checking if the lease should be reclaimed by this server.
     ///
-    /// @param service pointer to the HA service to which the lease belongs.
-    /// @param lease6 pointer to the DHCPv4 lease being reclaimed.
     /// @return true if the DHCPv6 lease should be reclaimed by this server instance,
     /// false otherwise.
-    virtual bool shouldReclaim(const HAServicePtr& service, const Lease6Ptr& lease6) const {
+    virtual bool shouldReclaim(const HAServicePtr& /*service*/, const Lease6Ptr& /*lease6*/) const {
         return (should_reclaim_dhcpv6_lease_);
     }
 
@@ -1734,6 +1730,8 @@ TEST_F(HAImplTest, lease4ExpireHubNoSubnet) {
     lease4->subnet_id_ = 7;
     callout_handle->setArgument("lease4", lease4);
 
+    // Reclamation should continue because this server's jurisdiction is
+    // indeterminate.
     test_ha_impl_->should_reclaim_dhcpv4_lease_ = false;
     ASSERT_NO_THROW(test_ha_impl_->lease4Expire(*callout_handle));
     EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
