@@ -125,7 +125,12 @@
   - <b>user_context</b> - user context (separators are escaped)
   - <b>pool_id</b> - pool identifier
 
-  Examples can be found in unit tests.
+  for instance:
+\verbatim
+192.0.2.2,02:02:02:02:02:02,,200,200,8,1,1,,1,{ \"foo\": true },0\n
+\endverbatim
+
+  More examples can be found in unit tests.
 
   @subsection lease6-csv DHCPv6 lease entry format in CSV files
 
@@ -148,7 +153,12 @@
   - <b>hwaddr_source</b> - source of hardeare address and type
   - <b>pool_id</b> - pool identifier
 
-  Examples can be found in unit tests.
+  For instance:
+\verbatim
+2001:db8::1,00:01:02:03:04:05:06:0f,200,800,8,100,0,7,128,1,1,,,1,{ \"foo\": true },,,0\n
+\endverbatim
+  
+  More examples can be found in unit tests.
 
   @section dhcpdb-host Host Backends
 
