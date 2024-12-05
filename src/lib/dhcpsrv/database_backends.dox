@@ -117,7 +117,7 @@
   - <b>client_id</b> - client identifier
   - <b>valid_lifetime</b> - valid lifetime
   - <b>expire</b> - expiration date (cltt + valid lifetime)
-  - <b>subnet_id</b> - DHCPv4 suvbet identifier
+  - <b>subnet_id</b> - DHCPv4 subnet identifier
   - <b>fqdn_fwd</b> - FQDN forward DNS RR update flag
   - <b>fqdn_rev</b> - FQDN reverse DNS RR update flag
   - <b>hostname</b> - hostname
@@ -133,7 +133,7 @@
   - <b>DUID</b> - client DUID
   - <b>valid_lifetime</b> - valid lifetime
   - <b>expire</b> - expiration date (cltt + valid lifetime)
-  - <b>subnet_id</b> - DHCPv6 suvbet identifier
+  - <b>subnet_id</b> - DHCPv6 subnet identifier
   - <b>pref_lifetime</b> - preferred lifetime
   - <b>lease_type</b> - lease type (0 for NA, 2 for PD)
   - <b>iaid</b> - IA identifier
