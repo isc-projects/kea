@@ -1,3 +1,0 @@
-[bug]		andrei
-	Kea servers no longer increase in memory when being reconfigured.
-	(Gitlab #3652)

@@ -507,6 +507,7 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                   | id
                   | rapid_commit
                   | client_class
+                  | network_client_classes
                   | require_client_classes
                   | evaluate_additional_classes
                   | reservations
@@ -545,6 +546,8 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
      interface_id ::= "interface-id" ":" STRING
 
      client_class ::= "client-class" ":" STRING
+
+     network_client_classes ::= "client-classes" ":" list_strings
 
      require_client_classes ::= "require-client-classes" ":" list_strings
 
@@ -587,6 +590,7 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                          | reservations_in_subnet
                          | reservations_out_of_pool
                          | client_class
+                         | network_client_classes
                          | require_client_classes
                          | evaluate_additional_classes
                          | preferred_lifetime
@@ -740,6 +744,7 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                | pool_id
                | option_data_list
                | client_class
+               | network_client_classes
                | require_client_classes
                | evaluate_additional_classes
                | user_context
@@ -777,6 +782,7 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                   | pool_id
                   | option_data_list
                   | client_class
+                  | network_client_classes
                   | require_client_classes
                   | evaluate_additional_classes
                   | excluded_prefix
@@ -947,6 +953,7 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                          | cert_file
                          | key_file
                          | cert_required
+                         | http_headers
                          | user_context
                          | comment
                          | unknown_map_entry
@@ -964,6 +971,29 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
      control_socket_port ::= "socket-port" ":" INTEGER
 
      cert_required ::= "cert-required" ":" BOOLEAN
+
+     http_headers ::= "http-headers" ":" "[" http_header_list "]"
+
+     http_header_list ::= 
+                     | not_empty_http_header_list
+
+     not_empty_http_header_list ::= http_header
+                               | not_empty_http_header_list "," http_header
+                               | not_empty_http_header_list ","
+
+     http_header ::= "{" http_header_params "}"
+
+     http_header_params ::= http_header_param
+                       | http_header_params "," http_header_param
+                       | http_header_params ","
+
+     http_header_param ::= name
+                      | header_value
+                      | user_context
+                      | comment
+                      | unknown_map_entry
+
+     header_value ::= "value" ":" STRING
 
      authentication ::= "authentication" ":" "{" auth_params "}"
 

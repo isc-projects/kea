@@ -1,3 +1,25 @@
+Kea 2.7.5 (development) released on December 11, 2024
+
+2313.	[doc]		marcin
+	Clarified that the FLQ allocator should not be used with shared
+	lease database.
+	(Gitlab #3577)
+
+2312.	[doc]		fdupont
+	Made clear that when a HTTP control channel is reconfigured
+	with the same address and port the listener socket is reused
+	so any TLS setup change is ignored.
+	(Gitlab #3255)
+
+2311.	[doc]		piotrek
+	Added a more extensive definition of the tuple DHCP option
+	type in the ARM documentation.
+	(Gitlab #3661)
+
+2310.	[bug]		andrei
+	Kea servers no longer increase in memory when being reconfigured.
+	(Gitlab #3652)
+
 2309.	[build]		mgodzina
 	The library version numbers have been bumped up for the Kea 2.7.5
 	development release.

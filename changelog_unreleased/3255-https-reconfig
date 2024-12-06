@@ -1,5 +1,0 @@
-[doc]		fdupont
-	Made clear that when a HTTP control channel is reconfigured
-	with the same address and port the listener socket is reused
-	so any TLS setup change is ignored.
-	(Gitlab #3255)

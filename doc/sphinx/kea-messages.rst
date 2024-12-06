@@ -2948,6 +2948,17 @@ CTRL_AGENT_FAILED
 This is a fatal error message issued when the Control Agent application
 encounters an unrecoverable error from within the event loop.
 
+CTRL_AGENT_HTTPS_SERVICE_REUSED
+===============================
+
+.. code-block:: text
+
+    reused HTTPS service bound to address %1:%2
+
+This informational message indicates that the server has reused existing
+HTTPS service on the specified address and port. Note that any change in
+the TLS setup was ignored.
+
 CTRL_AGENT_HTTPS_SERVICE_STARTED
 ================================
 
@@ -2958,6 +2969,16 @@ CTRL_AGENT_HTTPS_SERVICE_STARTED
 This informational message indicates that the server has started HTTPS service
 on the specified address and port. All control commands should be sent to this
 address and port over a TLS channel.
+
+CTRL_AGENT_HTTP_SERVICE_REUSED
+==============================
+
+.. code-block:: text
+
+    reused HTTP service bound to address %1:%2
+
+This informational message indicates that the server has reused existing
+HTTPS service on the specified address and port.
 
 CTRL_AGENT_HTTP_SERVICE_STARTED
 ===============================
@@ -8523,6 +8544,32 @@ DHCPSRV_CFGMGR_USE_UNICAST
 
 An info message issued when configuring the DHCP server to listen on the unicast
 address on the specific interface.
+
+DHCPSRV_CLASS_WITH_ADDITIONAL_AND_LIFETIMES
+===========================================
+
+.. code-block:: text
+
+    class: %1 has 'only-in-additional-list' true while specifying one or more lease life time values. Life time values will be ignored.
+
+This warning is emitted whenever a class is configured with
+'only-in-addition-list' true as well as specifying one or
+more lease life time parameters (e.g. 'valid-lifetime',
+'preferred-lifetime', or 'offer-lifetime'). Additional list classes
+are evaluated after lease assignment, thus parameters that would otherwise
+impact lease life times will have no affect.
+
+DHCPSRV_CLIENT_CLASS_DEPRECATED
+===============================
+
+.. code-block:: text
+
+    The parameter 'client-class' is deprecated. Use 'client-classes' list parameter instead
+
+This warning message is emitted when configuration parsing detects
+the use of the deprecated 'client-class' parameter. It has
+been replaced by 'client-classes'.  Users should migrate
+to the new list parameter.
 
 DHCPSRV_CLOSE_DB
 ================
