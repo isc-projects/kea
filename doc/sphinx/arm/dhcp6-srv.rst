@@ -5249,7 +5249,7 @@ within the subnet as follows:
 ``reserved_class`` is declared without the ``test`` parameter because
 it may be only assigned to a client via host reservation mechanism. The
 second class, ``unreserved_class``, is assigned to clients which do not
-belong to the ``reserved_class``.
+belong to ``reserved_class``.
 
 The first pool with the subnet is used for clients not having such a reservation.
 The second pool is only used for clients having a reservation for ``reserved_class``.

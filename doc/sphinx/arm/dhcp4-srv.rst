@@ -5961,7 +5961,7 @@ within the subnet as follows:
                     "pools": [
                         {
                             "pool": "192.0.2.10 - 192.0.2.20",
-                            "client-classes": [ "reserved_class" ]
+                            "client-classes": [ "unreserved_class" ]
                         },
                         {
                             "pool": "192.0.2.30 - 192.0.2.40",
@@ -5979,9 +5979,9 @@ within the subnet as follows:
 ``reserved_class`` is declared without the ``test`` parameter because
 it may only be assigned to a client via the host reservation mechanism. The
 second class, ``unreserved_class``, is assigned to clients which do not
-belong to the ``reserved_class``.
+belong to ``reserved_class``.
 
-The first pool with the subnet is used for clients not having such a reservation.
+The first pool in the subnet is used for clients not having such a reservation.
 The second pool is only used for clients having a reservation for ``reserved_class``.
 The third pool is an unrestricted pool for any clients, comprising of both
 ``reserved_class`` clients and ``unreserved_class``.
