@@ -93,7 +93,7 @@
 
   For details, see @ref isc::db::PgSqlConnection::openDatabase().
 
-  @subsection infinite-valid-lifetime Infinite Valid Lifetime
+  @subsubsection infinite-valid-lifetime Infinite Valid Lifetime
 
   The @c isc::dhcp::Lease class uses cltt (client last transmission time)
   and valid lifetime, backend lease uses expire and valid lifetime.
@@ -110,20 +110,34 @@
         expire = cltt if valid_lifetime == 0xffffffff
   @endcode
 
-  @subsection lease4-csv DHCPv4 lease entry format in CSV files
+  @subsection memfile-description Memfile Lease Back-End
+
+  The memfile backend does not use any database, but stores leases in
+  plain CSV file instead: kea-keases4.csv for DHCPv4 and kea-leases6.csv
+  for DHCPv6. These are effectively journal files, so changes are
+  appended at the end. For example, if a single device obtains a lease,
+  renews it 3 times and then it is released, there would be 5
+  entries. Periodically, the lease file is cleaned by LFC (Lease File
+  Cleanup) process. That process does move the file to the side, then
+  creates a new file and writes cleaned entries there. Depending on the
+  situation, there may be other files, such as kea-leases4.csv.2 with .1
+  (used during LFC taking place) or .2 extensions (left over after LFC
+  is complete as "backup", i.e.  old file before clean-up).
+
+  @subsubsection lease4-csv DHCPv4 lease entry format in CSV files
 
   - <b>address</b> - IPv4 address
   - <b>hwaddr</b> - hardware address (without the hardware type)
   - <b>client_id</b> - client identifier
-  - <b>valid_lifetime</b> - valid lifetime
-  - <b>expire</b> - expiration date (cltt + valid lifetime)
-  - <b>subnet_id</b> - DHCPv4 subnet identifier
-  - <b>fqdn_fwd</b> - FQDN forward DNS RR update flag
-  - <b>fqdn_rev</b> - FQDN reverse DNS RR update flag
-  - <b>hostname</b> - hostname
-  - <b>state</b> - lease state
+  - <b>valid_lifetime</b> - valid lifetime (uint32_t)
+  - <b>expire</b> - expiration date (uint64_t, cltt + valid lifetime)
+  - <b>subnet_id</b> - DHCPv4 subnet identifier (uint32_t)
+  - <b>fqdn_fwd</b> - FQDN forward DNS RR update flag (bool, 0 or 1)
+  - <b>fqdn_rev</b> - FQDN reverse DNS RR update flag (bool, 0 or 1)
+  - <b>hostname</b> - hostname (separators are escaped)
+  - <b>state</b> - lease state (uint32_t, 0 to 3)
   - <b>user_context</b> - user context (separators are escaped)
-  - <b>pool_id</b> - pool identifier
+  - <b>pool_id</b> - pool identifier (uint32_t)
 
   for instance:
 \verbatim
@@ -136,22 +150,22 @@
 
   - <b>address</b> - IPv6 address
   - <b>DUID</b> - client DUID
-  - <b>valid_lifetime</b> - valid lifetime
-  - <b>expire</b> - expiration date (cltt + valid lifetime)
-  - <b>subnet_id</b> - DHCPv6 subnet identifier
-  - <b>pref_lifetime</b> - preferred lifetime
-  - <b>lease_type</b> - lease type (0 for NA, 2 for PD)
-  - <b>iaid</b> - IA identifier
-  - <b>prefix_len</b> - prefix length
-  - <b>fqdn_fwd</b> - FQDN forward DNS RR update flag
-  - <b>fqdn_rev</b> - FQDN reverse DNS RR update flag
-  - <b>hostname</b> - hostname
-  - <b>hwaddr</b> - hardware address
-  - <b>state</b> - lease state
+  - <b>valid_lifetime</b> - valid lifetime (uint32_t)
+  - <b>expire</b> - expiration date (uint64_t, cltt + valid lifetime)
+  - <b>subnet_id</b> - DHCPv6 subnet identifier (uint32_t)
+  - <b>pref_lifetime</b> - preferred lifetime (uint32_t)
+  - <b>lease_type</b> - lease type (Lease::Type enum0 for NA, 2 for PD)
+  - <b>iaid</b> - IA identifier (uint32_t)
+  - <b>prefix_len</b> - prefix length (uint8_t, 0 to 128)
+  - <b>fqdn_fwd</b> - FQDN forward DNS RR update flag (bool, 0 or 1)
+  - <b>fqdn_rev</b> - FQDN reverse DNS RR update flag (bool, 0 or 1)
+  - <b>hostname</b> - hostname (separators are escaped)
+  - <b>hwaddr</b> - hardware address (hardware type is in hwtype column)
+  - <b>state</b> - lease state (uint32_t, 0 to 3)
   - <b>user_context</b> - user context (separators are escaped)
-  - <b>hwtype</b> - hardware type
-  - <b>hwaddr_source</b> - source of hardware address and type
-  - <b>pool_id</b> - pool identifier
+  - <b>hwtype</b> - hardware type (uint16_t)
+  - <b>hwaddr_source</b> - source of hardware address and type (uint32_t, 8 bit mask)
+  - <b>pool_id</b> - pool identifier (uint32_t)
 
   For instance:
 \verbatim
