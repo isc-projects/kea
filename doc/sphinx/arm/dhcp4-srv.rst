@@ -4031,10 +4031,11 @@ qualifying suffix is "example.com", and the default value is used for
 
 .. note::
 
-    When the client sends the host name option, ``kea-dhcp4`` never adds a dot to
-    the returned host name. It will only end with a dot if the client sent it
-    already qualified and ending with a dot.  When the client sends the FQDN option,
-    the FQDN returned in the response will always end with a dot.
+    When the client sends the host name option, ``kea-dhcp4`` never adds
+    a dot to the host name in the returned option. It will only end with
+    a dot if the client sent it already qualified and ending with a dot.
+    When the client sends the FQDN option, the FQDN returned in the response
+    will always end with a dot.
 
 .. _dhcp4-host-name-sanitization:
 
