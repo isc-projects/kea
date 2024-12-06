@@ -128,15 +128,15 @@
 
   - <b>address</b> - IPv4 address \n
     type: string \n
-    example: `192.0.2.1	
+    example: 192.0.2.1	
 
   - <b>hwaddr</b> - hardware address (without the hardware type) \n 
     type: string \n 
-    example: '00:01:02:03:04:05`
+    example: 00:01:02:03:04:05
  
   - <b>client_id</b> - client identifier \n 
     type: string \n
-    example: `01:02:03:03:04:aa:bb:cc`
+    example: 01:02:03:03:04:aa:bb:cc
 
   - <b>valid_lifetime</b> - valid lifetime \n
     type: uint32_t \n 
@@ -233,7 +233,7 @@
 
   - <b>hwaddr</b> - hardware address (hardware type is in hwtype column) \n
     type: string \n
-    example: '00:01:02:03:04:05`
+    example: 00:01:02:03:04:05
 
   - <b>state</b> - lease state \n
     type: int32_t (0 to 3) \n
