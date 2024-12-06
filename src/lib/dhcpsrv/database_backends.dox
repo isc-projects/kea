@@ -150,7 +150,7 @@
   - <b>state</b> - lease state
   - <b>user_context</b> - user context (separators are escaped)
   - <b>hwtype</b> - hardware type
-  - <b>hwaddr_source</b> - source of hardeare address and type
+  - <b>hwaddr_source</b> - source of hardware address and type
   - <b>pool_id</b> - pool identifier
 
   For instance:
