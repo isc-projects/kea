@@ -1,3 +1,8 @@
+2309.	[build]		mgodzina
+	The library version numbers have been bumped up for the Kea 2.7.5
+	development release.
+	(Gitlab #3695)
+
 2308.	[bug]		marcin
 	Prevent the servers from returning to HA maintenance
 	states after receiving the ha-maintenance-cancel command
