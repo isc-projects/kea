@@ -1011,7 +1011,8 @@ In certain cases it is beneficial to restrict access to certain subnets
 only to clients that belong to a given class, using the ``client-classes``
 parameter when defining the subnet.  This parameter may be used to specify
 a list of one or more classes to which clients must belong in order to
-use the subnet.
+use the subnet. This can be referred to as a class guard for the subnet, or in
+other words the subnet is guarded by a client class.
 
 Let's assume that the server is connected to a network segment that uses the
 192.0.2.0/24 prefix. The administrator of that network has decided that
@@ -1099,7 +1100,8 @@ Configuring Pools With Class Information
 Similar to subnets, in certain cases access to certain address or prefix
 pools must be restricted to only clients that belong to at least one of a
 list of one or more classes, using the ``client-classes`` when defining
-the pool.
+the pool. This can be referred to as a class guard for the pool, or in other
+words the pool is guarded by a client class.
 
 Let's assume that the server is connected to a network segment that uses the
 192.0.2.0/24 prefix. The administrator of that network has decided that

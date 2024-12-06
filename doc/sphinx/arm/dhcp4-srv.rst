@@ -5932,55 +5932,67 @@ If the subnet does not belong to a shared network, the subnet
 is not changed once selected.
 
 If the subnet does not belong to a shared network, it is possible to
-use host reservation-based client classification to select an address pool
+use host reservation-based client classification to select a pool
 within the subnet as follows:
 
-::
+.. code-block:: json
 
-    "Dhcp4": {
-        "client-classes": [
-            {
-                "name": "reserved_class"
-            },
-            {
-                "name": "unreserved_class",
-                "test": "not member('reserved_class')"
-            }
-        ],
-        "subnet4": [
-            {
-                "id": 1,
-                "subnet": "192.0.2.0/24",
-                "reservations": [
-                    {
-                        "hw-address": "aa:bb:cc:dd:ee:fe",
-                        "client-classes": [ "reserved_class" ]
-                    }
-                ],
-                "pools": [
-                    {
-                        "pool": "192.0.2.10-192.0.2.20",
-                        "client-classes": [ "reserved_class" ]
-                    },
-                    {
-                        "pool": "192.0.2.30-192.0.2.40",
-                        "client-classes": [ "unreserved_class" ]
-                    }
-                ]
-            }
-        ]
+    {
+        "Dhcp4": {
+            "client-classes": [
+                {
+                    "name": "reserved_class"
+                },
+                {
+                    "name": "unreserved_class",
+                    "test": "not member('reserved_class')"
+                }
+            ],
+            "subnet4": [
+                {
+                    "id": 1,
+                    "subnet": "192.0.2.0/24",
+                    "reservations": [
+                        {
+                            "hw-address": "aa:bb:cc:dd:ee:fe",
+                            "client-classes": [ "unreserved_class" ]
+                        }
+                    ],
+                    "pools": [
+                        {
+                            "pool": "192.0.2.10 - 192.0.2.20",
+                            "client-classes": [ "reserved_class" ]
+                        },
+                        {
+                            "pool": "192.0.2.30 - 192.0.2.40",
+                            "client-classes": [ "reserved_class" ]
+                        },
+                        {
+                            "pool": "192.0.2.50 - 192.0.2.60"
+                        }
+                    ]
+                }
+            ]
+        }
     }
 
-The ``reserved_class`` is declared without the ``test`` parameter because
-it may only be assigned to the client via the host reservation mechanism. The
+``reserved_class`` is declared without the ``test`` parameter because
+it may only be assigned to a client via the host reservation mechanism. The
 second class, ``unreserved_class``, is assigned to clients which do not
-belong to the ``reserved_class``. The first pool within the subnet is only
-used for clients having a reservation for the ``reserved_class``. The
-second pool is used for clients not having such a reservation. The
-configuration snippet includes one host reservation which causes the client
-with the MAC address aa:bb:cc:dd:ee:fe to be assigned to the
-``reserved_class``. Thus, this client will be given an IP address from the
-first address pool.
+belong to the ``reserved_class``.
+
+The first pool with the subnet is used for clients not having such a reservation.
+The second pool is only used for clients having a reservation for ``reserved_class``.
+The third pool is an unrestricted pool for any clients, comprising of both
+``reserved_class`` clients and ``unreserved_class``.
+
+The configuration snippet includes one host reservation which causes the client
+with the MAC address ``aa:bb:cc:dd:ee:fe`` to be assigned to ``reserved_class``.
+Thus, this client will be given an IP address from the second address pool.
+
+Reservations defined on a subnet that belongs to a shared network are not
+visible to an otherwise matching client, so they cannot be used to select pools,
+nor subnets for that matter.
 
 .. _subnet-selection-with-class-reservations4:
 
@@ -5993,76 +6005,104 @@ client belongs to a shared network. In such a case it is possible to use
 classification to select a subnet within this shared network. Consider the
 following example:
 
-::
+.. code-block:: json
 
-    "Dhcp4": {
-        "client-classes": [
-            {
-                "name": "reserved_class"
-            },
-            {
-                "name": "unreserved_class",
-                "test": "not member('reserved_class')"
-            }
-        ],
-        "reservations": [
-            {
-                "hw-address": "aa:bb:cc:dd:ee:fe",
-                "client-classes": [ "reserved_class" ]
-            }
-        ],
-        # It is replaced by the "reservations-global",
-        # "reservations-in-subnet", and "reservations-out-of-pool" parameters.
-        # Specify if the server should look up global reservations.
-        "reservations-global": true,
-        # Specify if the server should look up in-subnet reservations.
-        "reservations-in-subnet": false,
-        # Specify if the server can assume that all reserved addresses
-        # are out-of-pool. It can be ignored because "reservations-in-subnet"
-        # is false, but if specified, it is inherited by "shared-networks"
-        # and "subnet4" levels.
-        # "reservations-out-of-pool": false,
-        "shared-networks": [
-            {
-            "subnet4": [
+    {
+        "Dhcp4": {
+            "client-classes": [
                 {
-                    "id": 1,
-                    "subnet": "192.0.2.0/24",
-                    "pools": [
-                        {
-                            "pool": "192.0.2.10-192.0.2.20",
-                            "client-classes": [ "reserved_class" ]
-                        }
-                    ]
+                    "name": "reserved_class"
                 },
                 {
-                    "id": 2,
-                    "subnet": "192.0.3.0/24",
-                    "pools": [
+                    "name": "unreserved_class",
+                    "test": "not member('reserved_class')"
+                }
+            ],
+            "reservations": [
+                {
+                    "hw-address": "aa:bb:cc:dd:ee:fe",
+                    "client-classes": [ "reserved_class" ]
+                }
+            ],
+            "reservations-global": true,
+            "reservations-in-subnet": false,
+            "shared-networks": [
+                {
+                    "name": "net",
+                    "subnet4": [
                         {
-                            "pool": "192.0.3.10-192.0.3.20",
-                            "client-classes": [ "unreserved_class" ]
+                            "id": 1,
+                            "subnet": "192.0.2.0/24",
+                            "pools": [
+                                {
+                                    "pool": "192.0.2.10-192.0.2.20",
+                                    "client-classes": [ "unreserved_class" ]
+                                },
+                                {
+                                    "pool": "192.0.2.30-192.0.2.40",
+                                    "client-classes": [ "unreserved_class" ]
+                                }
+                            ]
+                        },
+                        {
+                            "id": 2,
+                            "subnet": "192.0.3.0/24",
+                            "pools": [
+                                {
+                                    "pool": "192.0.3.10-192.0.3.20",
+                                    "client-classes": [ "reserved_class" ]
+                                },
+                                {
+                                    "pool": "192.0.3.30-192.0.3.40",
+                                    "client-classes": [ "reserved_class" ]
+                                }
+                            ]
+                        },
+                        {
+                            "id": 3,
+                            "subnet": "192.0.4.0/24",
+                            "pools": [
+                                {
+                                    "pool": "192.0.4.10-192.0.4.20"
+                                },
+                                {
+                                    "pool": "192.0.4.30-192.0.4.40"
+                                }
+                            ]
                         }
                     ]
                 }
             ]
-            }
-        ]
+        }
     }
 
 This is similar to the example described in
 :ref:`pool-selection-with-class-reservations4`. This time, however, there
-are two subnets, each of which has a pool associated with a different
-class. The clients that do not have a reservation for the ``reserved_class``
-are assigned an address from the subnet 192.0.3.0/24. Clients with
-a reservation for the ``reserved_class`` are assigned an address from
-the subnet 192.0.2.0/24. The subnets must belong to the same shared network.
+are three subnets, of which the first two have a pool associated with a different
+class each.
+
+The clients that do not have a reservation for ``reserved_class``
+are assigned an address from the first subnet and when that is filled from
+the third subnet. Clients with a reservation for ``reserved_class`` are assigned
+an address from the second subnet and when that is filled from the third subnet.
+
+The subnets must belong to the same shared network.
+
+For a subnet to be restricted to a certain class, or skipped, all of the pools
+inside that subnet must be guarded by ``reserved_class`` or ``unreserved_class``
+respectively.
+
 In addition, the reservation for the client class must be specified at the
 global scope (global reservation) and ``reservations-global`` must be
 set to ``true``.
 
-In the example above, the ``client-classes`` could also be specified at the
-subnet level rather than the pool level, and would yield the same effect.
+In the example above, the ``client-classes`` configuration parameter could also
+be specified at the subnet level rather than the pool level, and would yield the
+same effect.
+
+If the subnets were defined outside shared networks, and ``client-classes`` were
+specified at the subnet level, then ``early-global-reservations-lookup`` would
+also need to be enabled in order for subnet selection to work.
 
 .. _multiple-reservations-same-ip4:
 
