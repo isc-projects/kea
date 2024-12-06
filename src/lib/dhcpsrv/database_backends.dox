@@ -163,7 +163,7 @@
     example: foo.bar
     
   - <b>state</b> - lease state \n
-    type: int32_t (0 to 3) \n
+    type: int32_t (0 = assigned, 1 = declined, 2 = expired-reclaimed, 3 = released) \n
     example: 0
 
   - <b>user_context</b> - user context \n
@@ -236,7 +236,7 @@
     example: 00:01:02:03:04:05
 
   - <b>state</b> - lease state \n
-    type: int32_t (0 to 3) \n
+    type: int32_t (0 = assigned, 1 = declined, 2 = expired-reclaimed, 3 = released) \n
     example: 0
 
   - <b>user_context</b> - user context \n
