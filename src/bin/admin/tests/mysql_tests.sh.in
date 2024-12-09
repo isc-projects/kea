@@ -992,6 +992,33 @@ mysql_upgrade_26_to_27_test() {
     check_table_column client_classes dhcp6_pd_pool
 }
 
+mysql_upgrade_27_to_28_test() {
+
+    # check ddns ttl fields were added to dhcp4_shared_network
+    check_table_column ddns_ttl_percent dhcp4_shared_network
+    check_table_column ddns_ttl dhcp4_shared_network
+    check_table_column ddns_ttl_min dhcp4_shared_network
+    check_table_column ddns_ttl_max dhcp4_shared_network
+
+    # check ddns ttl fields were added to dhcp4_subnet
+    check_table_column ddns_ttl_percent dhcp4_subnet
+    check_table_column ddns_ttl dhcp4_subnet
+    check_table_column ddns_ttl_min dhcp4_subnet
+    check_table_column ddns_ttl_max dhcp4_subnet
+
+    # check ddns ttl fields were added to dhcp6_shared_network
+    check_table_column ddns_ttl_percent dhcp6_shared_network
+    check_table_column ddns_ttl dhcp6_shared_network
+    check_table_column ddns_ttl_min dhcp6_shared_network
+    check_table_column ddns_ttl_max dhcp6_shared_network
+
+    # check ddns ttl fields were added to dhcp6_subnet
+    check_table_column ddns_ttl_percent dhcp6_subnet
+    check_table_column ddns_ttl dhcp6_subnet
+    check_table_column ddns_ttl_min dhcp6_subnet
+    check_table_column ddns_ttl_max dhcp6_subnet
+}
+
 mysql_upgrade_test() {
 
     test_start "mysql.upgrade"
@@ -1013,7 +1040,7 @@ mysql_upgrade_test() {
 
     # Verify that the upgraded schema reports the latest version.
     version=$("${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "27.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "28.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's check that the new tables are indeed there.
 
@@ -1690,6 +1717,9 @@ SET @disable_audit = 0"
 
     # Check upgrade from 26.0 to 27.0.
     mysql_upgrade_26_to_27_test
+
+    # Check upgrade from 27.0 to 28.0.
+    mysql_upgrade_27_to_28_test
 
     # Let's wipe the whole database
     mysql_wipe
