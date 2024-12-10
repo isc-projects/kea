@@ -6588,6 +6588,40 @@ SELECT set_config('kea.disable_audit', 'false', false);
 UPDATE schema_version
     SET version = '27', minor = '0';
 
+-- This line concludes the schema upgrade to version 27.0.
+
+-- This line starts the schema upgrade to version 28.0.
+
+ALTER TABLE dhcp4_shared_network
+    ADD COLUMN ddns_ttl_percent FLOAT DEFAULT NULL,
+    ADD COLUMN ddns_ttl         BIGINT DEFAULT NULL,
+    ADD COLUMN ddns_ttl_min     BIGINT DEFAULT NULL,
+    ADD COLUMN ddns_ttl_max     BIGINT DEFAULT NULL;
+
+ALTER TABLE dhcp4_subnet
+    ADD COLUMN ddns_ttl_percent FLOAT DEFAULT NULL,
+    ADD COLUMN ddns_ttl         BIGINT DEFAULT NULL,
+    ADD COLUMN ddns_ttl_min     BIGINT DEFAULT NULL,
+    ADD COLUMN ddns_ttl_max     BIGINT DEFAULT NULL;
+
+ALTER TABLE dhcp6_shared_network
+    ADD COLUMN ddns_ttl_percent FLOAT DEFAULT NULL,
+    ADD COLUMN ddns_ttl         BIGINT DEFAULT NULL,
+    ADD COLUMN ddns_ttl_min     BIGINT DEFAULT NULL,
+    ADD COLUMN ddns_ttl_max     BIGINT DEFAULT NULL;
+
+ALTER TABLE dhcp6_subnet
+    ADD COLUMN ddns_ttl_percent FLOAT DEFAULT NULL,
+    ADD COLUMN ddns_ttl         BIGINT DEFAULT NULL,
+    ADD COLUMN ddns_ttl_min     BIGINT DEFAULT NULL,
+    ADD COLUMN ddns_ttl_max     BIGINT DEFAULT NULL;
+
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '28', minor = '0';
+
+-- This line concludes the schema upgrade to version 28.0.
+
 -- Commit the script transaction.
 COMMIT;
 
