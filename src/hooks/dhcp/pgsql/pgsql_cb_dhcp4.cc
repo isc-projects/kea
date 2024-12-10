@@ -510,7 +510,27 @@ public:
                     last_subnet->setAllocatorType(worker.getString(73));
                 }
 
-                // server_tag at 74.
+                // ddns_ttl_percent at 74.
+                if (!worker.isColumnNull(74)) {
+                    last_subnet->setDdnsTtlPercent(worker.getDouble(74));
+                }
+
+                // ddns_ttl at 75.
+                if (!worker.isColumnNull(75)) {
+                    last_subnet->setDdnsTtl(worker.getInt(75));
+                }
+
+                // ddns_ttl_min at 76.
+                if (!worker.isColumnNull(76)) {
+                    last_subnet->setDdnsTtlMin(worker.getInt(76));
+                }
+
+                // ddns_ttl_max at 77.
+                if (!worker.isColumnNull(77)) {
+                    last_subnet->setDdnsTtlMax(worker.getInt(77));
+                }
+
+                // server_tag at 78.
 
                 // Subnet ready. Add it to the list.
                 auto ret = subnets.insert(last_subnet);
@@ -523,9 +543,9 @@ public:
                 }
             }
 
-            // Check for new server tags at 74.
-            if (!worker.isColumnNull(74)) {
-                std::string new_tag = worker.getString(74);
+            // Check for new server tags at 78.
+            if (!worker.isColumnNull(78)) {
+                std::string new_tag = worker.getString(78);
                 if (last_tag != new_tag) {
                     if (!new_tag.empty() && !last_subnet->hasServerTag(ServerTag(new_tag))) {
                         last_subnet->setServerTag(new_tag);
@@ -937,6 +957,10 @@ public:
         in_bindings.addOptional(subnet->getCacheMaxAge(Network::Inheritance::NONE));
         in_bindings.addOptional(subnet->getOfferLft(Network::Inheritance::NONE));
         in_bindings.addOptional(subnet->getAllocatorType(Network::Inheritance::NONE));
+        in_bindings.addOptional(subnet->getDdnsTtlPercent(Network::Inheritance::NONE));
+        in_bindings.addOptional(subnet->getDdnsTtl(Network::Inheritance::NONE));
+        in_bindings.addOptional(subnet->getDdnsTtlMin(Network::Inheritance::NONE));
+        in_bindings.addOptional(subnet->getDdnsTtlMax(Network::Inheritance::NONE));
 
         // Start transaction.
         PgSqlTransaction transaction(conn_);
@@ -1344,7 +1368,27 @@ public:
                     last_network->setAllocatorType(worker.getString(47));
                 }
 
-                // server_tag at 48.
+                // ddns_ttl_percent at 48.
+                if (!worker.isColumnNull(48)) {
+                    last_network->setDdnsTtlPercent(worker.getDouble(48));
+                }
+
+                // ddns_ttl at 49.
+                if (!worker.isColumnNull(49)) {
+                    last_network->setDdnsTtl(worker.getInt(49));
+                }
+
+                // ddns_ttl_min at 50.
+                if (!worker.isColumnNull(50)) {
+                    last_network->setDdnsTtlMin(worker.getInt(50));
+                }
+
+                // ddns_ttl_max at 51.
+                if (!worker.isColumnNull(51)) {
+                    last_network->setDdnsTtlMax(worker.getInt(51));
+                }
+
+                // server_tag at 52.
 
                 // Add the shared network.
                 auto ret = shared_networks.push_back(last_network);
@@ -1358,8 +1402,8 @@ public:
             }
 
             // Check for new server tags.
-            if (!worker.isColumnNull(48)) {
-                std::string new_tag = worker.getString(48);
+            if (!worker.isColumnNull(52)) {
+                std::string new_tag = worker.getString(52);
                 if (last_tag != new_tag) {
                     if (!new_tag.empty() && !last_network->hasServerTag(ServerTag(new_tag))) {
                         last_network->setServerTag(new_tag);
@@ -1512,6 +1556,10 @@ public:
         in_bindings.addOptional(shared_network->getCacheMaxAge(Network::Inheritance::NONE));
         in_bindings.addOptional(shared_network->getOfferLft(Network::Inheritance::NONE));
         in_bindings.addOptional(shared_network->getAllocatorType(Network::Inheritance::NONE));
+        in_bindings.addOptional(shared_network->getDdnsTtlPercent(Network::Inheritance::NONE));
+        in_bindings.addOptional(shared_network->getDdnsTtl(Network::Inheritance::NONE));
+        in_bindings.addOptional(shared_network->getDdnsTtlMin(Network::Inheritance::NONE));
+        in_bindings.addOptional(shared_network->getDdnsTtlMax(Network::Inheritance::NONE));
 
         // Start transaction.
         PgSqlTransaction transaction(conn_);
@@ -3315,7 +3363,7 @@ TaggedStatementArray tagged_statements = { {
     // Insert a subnet.
     {
         // PgSqlConfigBackendDHCPv4Impl::INSERT_SUBNET4,
-        38,
+        42,
         {
             OID_INT8,       //  1 subnet_id,
             OID_VARCHAR,    //  2 subnet_prefix
@@ -3354,7 +3402,11 @@ TaggedStatementArray tagged_statements = { {
             OID_TEXT,       // 35 cache_threshold - cast as float
             OID_INT8,       // 36 cache_max_age
             OID_INT8,       // 37 offer_lifetime
-            OID_VARCHAR     // 38 allocator
+            OID_VARCHAR,    // 38 allocator
+            OID_TEXT,       // 39 ddns_ttl_percent - cast as float
+            OID_INT8,       // 40 ddns_ttl
+            OID_INT8,       // 41 ddns_ttl_min
+            OID_INT8,       // 42 ddns_ttl_max
         },
         "INSERT_SUBNET4",
         "INSERT INTO dhcp4_subnet("
@@ -3395,12 +3447,17 @@ TaggedStatementArray tagged_statements = { {
         "  cache_threshold,"
         "  cache_max_age,"
         "  offer_lifetime,"
-        "  allocator"
+        "  allocator,"
+        "  ddns_ttl_percent,"
+        "  ddns_ttl,"
+        "  ddns_ttl_min,"
+        "  ddns_ttl_max"
         ") VALUES ("
             "$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, "
             "cast($11 as inet), $12, $13, $14, $15, $16, $17, $18, cast($19 as json), $20, "
             "$21, $22, $23, cast($24 as float), cast($25 as float), $26, $27, $28, $29, $30, "
-            "$31, $32, $33, $34, cast($35 as float), $36, $37, $38"
+            "$31, $32, $33, $34, cast($35 as float), $36, $37, $38, "
+            "cast($39 as float), $40, $41, $42"
         ")"
     },
 
@@ -3437,7 +3494,7 @@ TaggedStatementArray tagged_statements = { {
     // Insert a shared network.
     {
         // PgSqlConfigBackendDHCPv4Impl::INSERT_SHARED_NETWORK4,
-        33,
+        37,
         {
             OID_VARCHAR,    //  1 name,
             OID_TEXT,       //  2 client_classes,
@@ -3471,7 +3528,11 @@ TaggedStatementArray tagged_statements = { {
             OID_TEXT,       // 30 cache_threshold - cast as float
             OID_INT8,       // 31 cache_max_age
             OID_INT8,       // 32 offer_lifetime
-            OID_VARCHAR     // 33 allocator
+            OID_VARCHAR,    // 33 allocator
+            OID_TEXT,       // 34 ddns_ttl_percent - cast as float
+            OID_INT8,       // 35 ddns_ttl
+            OID_INT8,       // 36 ddns_ttl_min
+            OID_INT8        // 37 ddns_ttl_max
         },
         "INSERT_SHARED_NETWORK4",
         "INSERT INTO dhcp4_shared_network("
@@ -3507,12 +3568,17 @@ TaggedStatementArray tagged_statements = { {
         "  cache_threshold,"
         "  cache_max_age,"
         "  offer_lifetime,"
-        "  allocator"
+        "  allocator,"
+        "  ddns_ttl_percent,"
+        "  ddns_ttl,"
+        "  ddns_ttl_min,"
+        "  ddns_ttl_max"
         ") VALUES ("
             "$1, $2, $3, $4, $5, $6, $7, $8, $9, $10,"
             "cast($11 as json), $12, $13, $14, $15, "
             "cast($16 as float), cast($17 as float), $18, $19, cast($20 as inet), "
-            "$21, $22, $23, $24, $25, $26, $27, $28, $29, cast($30 as float), $31, $32, $33"
+            "$21, $22, $23, $24, $25, $26, $27, $28, $29, cast($30 as float), $31, $32, $33, "
+            "cast($34 as float), $35, $36, $37"
         ")"
     },
 
@@ -3717,7 +3783,7 @@ TaggedStatementArray tagged_statements = { {
     // Update existing subnet.
     {
         // PgSqlConfigBackendDHCPv4Impl::UPDATE_SUBNET4,
-        40,
+        44,
         {
             OID_INT8,       //  1 subnet_id,
             OID_VARCHAR,    //  2 subnet_prefix
@@ -3757,8 +3823,12 @@ TaggedStatementArray tagged_statements = { {
             OID_INT8,       // 36 cache_max_age"
             OID_INT8,       // 37 offer_lifetime"
             OID_VARCHAR,    // 38 allocator
-            OID_INT8,       // 39 subnet_id (of subnet to update)
-            OID_VARCHAR,    // 40 subnet_prefix (of subnet to update)
+            OID_TEXT,       // 39 ddns_ttl_percent - cast as float
+            OID_INT8,       // 40 ddns_ttl
+            OID_INT8,       // 41 ddns_ttl_min
+            OID_INT8,       // 42 ddns_ttl_max
+            OID_INT8,       // 43 subnet_id (of subnet to update)
+            OID_VARCHAR,    // 44 subnet_prefix (of subnet to update)
         },
         "UPDATE_SUBNET4,",
         "UPDATE dhcp4_subnet SET"
@@ -3799,14 +3869,18 @@ TaggedStatementArray tagged_statements = { {
         "  cache_threshold = cast($35 as float),"
         "  cache_max_age = $36,"
         "  offer_lifetime = $37,"
-        "  allocator = $38 "
-        "WHERE subnet_id = $39 OR subnet_prefix = $40"
+        "  allocator = $38,"
+        "  ddns_ttl_percent = cast($39 as float),"
+        "  ddns_ttl = $40,"
+        "  ddns_ttl_min = $41,"
+        "  ddns_ttl_max = $42 "
+        "WHERE subnet_id = $43 OR subnet_prefix = $44"
     },
 
     // Update existing shared network.
     {
         // PgSqlConfigBackendDHCPv4Impl::UPDATE_SHARED_NETWORK4,
-        34,
+        38,
         {
             OID_VARCHAR,    //  1 name,
             OID_TEXT,       //  2 client_classes,
@@ -3840,8 +3914,12 @@ TaggedStatementArray tagged_statements = { {
             OID_TEXT,       // 30 cache_threshold - cast as float
             OID_INT8,       // 31 cache_max_age
             OID_INT8,       // 32 offer_lifetime
-            OID_VARCHAR,    // 33 name (of network to update)
-            OID_VARCHAR     // 34 allocator
+            OID_VARCHAR,    // 33 allocator
+            OID_TEXT,       // 34 ddns_ttl_percent - cast as float
+            OID_INT8,       // 35 ddns_ttl
+            OID_INT8,       // 36 ddns_ttl_min
+            OID_INT8,       // 37 ddns_ttl_max
+            OID_VARCHAR,    // 38 name (of network to update)
         },
         "UPDATE_SHARED_NETWORK4",
         "UPDATE dhcp4_shared_network SET"
@@ -3877,8 +3955,12 @@ TaggedStatementArray tagged_statements = { {
         "  cache_threshold = cast($30 as float),"
         "  cache_max_age = $31,"
         "  offer_lifetime = $32,"
-        "  allocator = $33 "
-        "WHERE name = $34"
+        "  allocator = $33,"
+        "  ddns_ttl_percent = cast($34 as float),"
+        "  ddns_ttl = $35,"
+        "  ddns_ttl_min = $36,"
+        "  ddns_ttl_max = $37 "
+        "WHERE name = $38"
     },
 
     // Update existing option definition.

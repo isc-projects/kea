@@ -506,7 +506,27 @@ public:
                     last_subnet->setPdAllocatorType(worker.getString(98));
                 }
 
-                // server_tag at 99.
+                // ddns_ttl_percent at 99.
+                if (!worker.isColumnNull(99)) {
+                    last_subnet->setDdnsTtlPercent(worker.getDouble(99));
+                }
+
+                // ddns_ttl at 100.
+                if (!worker.isColumnNull(100)) {
+                    last_subnet->setDdnsTtl(worker.getInt(100));
+                }
+
+                // ddns_ttl_min at 101.
+                if (!worker.isColumnNull(101)) {
+                    last_subnet->setDdnsTtlMin(worker.getInt(101));
+                }
+
+                // ddns_ttl_max at 102.
+                if (!worker.isColumnNull(102)) {
+                    last_subnet->setDdnsTtlMax(worker.getInt(102));
+                }
+
+                // server_tag at 103.
 
                 // Subnet ready. Add it to the list.
                 auto ret = subnets.insert(last_subnet);
@@ -519,9 +539,9 @@ public:
                 }
             }
 
-            // Check for new server tags at 99.
-            if (!worker.isColumnNull(99)) {
-                std::string new_tag = worker.getString(99);
+            // Check for new server tags at 103.
+            if (!worker.isColumnNull(103)) {
+                std::string new_tag = worker.getString(103);
                 if (last_tag != new_tag) {
                     if (!new_tag.empty() && !last_subnet->hasServerTag(ServerTag(new_tag))) {
                         last_subnet->setServerTag(new_tag);
@@ -1101,6 +1121,10 @@ public:
         in_bindings.addOptional(subnet->getCacheMaxAge(Network::Inheritance::NONE));
         in_bindings.addOptional(subnet->getAllocatorType(Network::Inheritance::NONE));
         in_bindings.addOptional(subnet->getPdAllocatorType(Network::Inheritance::NONE));
+        in_bindings.addOptional(subnet->getDdnsTtlPercent(Network::Inheritance::NONE));
+        in_bindings.addOptional(subnet->getDdnsTtl(Network::Inheritance::NONE));
+        in_bindings.addOptional(subnet->getDdnsTtlMin(Network::Inheritance::NONE));
+        in_bindings.addOptional(subnet->getDdnsTtlMax(Network::Inheritance::NONE));
 
         // Start transaction.
         PgSqlTransaction transaction(conn_);
@@ -1577,7 +1601,27 @@ public:
                     last_network->setPdAllocatorType(worker.getString(48));
                 }
 
-                // server_tag at 49.
+                // ddns_ttl_percent at 49.
+                if (!worker.isColumnNull(49)) {
+                    last_network->setDdnsTtlPercent(worker.getDouble(49));
+                }
+
+                // ddns_ttl at 50.
+                if (!worker.isColumnNull(50)) {
+                    last_network->setDdnsTtl(worker.getInt(50));
+                }
+
+                // ddns_ttl_min at 51.
+                if (!worker.isColumnNull(51)) {
+                    last_network->setDdnsTtlMin(worker.getInt(51));
+                }
+
+                // ddns_ttl_max at 52.
+                if (!worker.isColumnNull(52)) {
+                    last_network->setDdnsTtlMax(worker.getInt(52));
+                }
+
+                // server_tag at 53.
 
                 // Add the shared network.
                 auto ret = shared_networks.push_back(last_network);
@@ -1591,8 +1635,8 @@ public:
             }
 
             // Check for new server tags.
-            if (!worker.isColumnNull(49)) {
-                std::string new_tag = worker.getString(49);
+            if (!worker.isColumnNull(53)) {
+                std::string new_tag = worker.getString(53);
                 if (last_tag != new_tag) {
                     if (!new_tag.empty() && !last_network->hasServerTag(ServerTag(new_tag))) {
                         last_network->setServerTag(new_tag);
@@ -1745,6 +1789,10 @@ public:
         in_bindings.addOptional(shared_network->getCacheMaxAge(Network::Inheritance::NONE));
         in_bindings.addOptional(shared_network->getAllocatorType(Network::Inheritance::NONE));
         in_bindings.addOptional(shared_network->getPdAllocatorType(Network::Inheritance::NONE));
+        in_bindings.addOptional(shared_network->getDdnsTtlPercent(Network::Inheritance::NONE));
+        in_bindings.addOptional(shared_network->getDdnsTtl(Network::Inheritance::NONE));
+        in_bindings.addOptional(shared_network->getDdnsTtlMin(Network::Inheritance::NONE));
+        in_bindings.addOptional(shared_network->getDdnsTtlMax(Network::Inheritance::NONE));
 
         // Start transaction.
         PgSqlTransaction transaction(conn_);
@@ -3712,7 +3760,7 @@ TaggedStatementArray tagged_statements = { {
     // Insert a subnet.
     {
         // PgSqlConfigBackendDHCPv6Impl::INSERT_SUBNET6,
-        35,
+        39,
         {
             OID_INT8,       //  1 subnet_id,
             OID_VARCHAR,    //  2 subnet_prefix
@@ -3748,7 +3796,11 @@ TaggedStatementArray tagged_statements = { {
             OID_TEXT,       // 32 cache_threshold - cast as float
             OID_INT8,       // 33 cache_max_age
             OID_VARCHAR,    // 34 allocator
-            OID_VARCHAR     // 35 pd_allocator
+            OID_VARCHAR,    // 35 pd_allocator
+            OID_TEXT,       // 36 ddns_ttl_percent - cast as float
+            OID_INT8,       // 37 ddns_ttl
+            OID_INT8,       // 38 ddns_ttl_min
+            OID_INT8        // 39 ddns_ttl_max
         },
         "INSERT_SUBNET6",
         "INSERT INTO dhcp6_subnet("
@@ -3786,12 +3838,17 @@ TaggedStatementArray tagged_statements = { {
         "  cache_threshold,"
         "  cache_max_age,"
         "  allocator,"
-        "  pd_allocator"
+        "  pd_allocator,"
+        "  ddns_ttl_percent,"
+        "  ddns_ttl,"
+        "  ddns_ttl_min,"
+        "  ddns_ttl_max"
         ") VALUES ("
         "   $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, "
         "   $11, $12, $13, $14, $15, cast($16 as json), $17, $18, $19, $20, "
         "   cast($21 as float), cast($22 as float), $23, $24, $25, $26, $27, $28, $29, $30, "
-        "   $31, cast($32 as float), $33, $34, $35"
+        "   $31, cast($32 as float), $33, $34, $35, "
+        "   cast($36 as float), $37, $38, $39"
         ")"
     },
 
@@ -3848,7 +3905,7 @@ TaggedStatementArray tagged_statements = { {
     // Insert a shared network.
     {
         // PgSqlConfigBackendDHCPv6Impl::INSERT_SHARED_NETWORK6,
-        33,
+        37,
         {
             OID_VARCHAR,    //  1 name
             OID_TEXT,       //  2 client_classes
@@ -3882,7 +3939,11 @@ TaggedStatementArray tagged_statements = { {
             OID_TEXT,       // 30 cache_threshold - cast as float
             OID_INT8,       // 31 cache_max_age
             OID_VARCHAR,    // 32 allocator
-            OID_VARCHAR     // 33 pd_allocator
+            OID_VARCHAR,    // 33 pd_allocator
+            OID_TEXT,       // 34 ddns_ttl_percent - cast as float
+            OID_INT8,       // 35 ddns_ttl
+            OID_INT8,       // 36 ddns_ttl_min
+            OID_INT8        // 37 ddns_ttl_max
         },
         "INSERT_SHARED_NETWORK6",
         "INSERT INTO dhcp6_shared_network("
@@ -3918,12 +3979,17 @@ TaggedStatementArray tagged_statements = { {
         "  cache_threshold,"
         "  cache_max_age,"
         "  allocator,"
-        "  pd_allocator"
+        "  pd_allocator,"
+        "  ddns_ttl_percent,"
+        "  ddns_ttl,"
+        "  ddns_ttl_min,"
+        "  ddns_ttl_max"
         ") VALUES ("
         "   $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, "
         "   $11, $12, $13, cast($14 as json), $15, $16, $17, $18,"
         "   cast($19 as float), cast($20 as float), $21, $22, $23,"
-        "   $24, $25, $26, $27, $28, $29, cast($30 as float), $31, $32, $33"
+        "   $24, $25, $26, $27, $28, $29, cast($30 as float), $31, $32, $33, "
+        "   cast($34 as float), $35, $36, $37"
         ")"
     },
 
@@ -4127,7 +4193,7 @@ TaggedStatementArray tagged_statements = { {
     // Update existing subnet.
     {
         // PgSqlConfigBackendDHCPv6Impl::UPDATE_SUBNET6,
-        37,
+        41,
         {
             OID_INT8,       //  1 subnet_id,
             OID_VARCHAR,    //  2 subnet_prefix
@@ -4163,7 +4229,13 @@ TaggedStatementArray tagged_statements = { {
             OID_TEXT,       // 32 cache_threshold - cast as float
             OID_INT8,       // 33 cache_max_age
             OID_VARCHAR,    // 34 allocator
-            OID_VARCHAR     // 35 pd_allocator
+            OID_VARCHAR,    // 35 pd_allocator
+            OID_TEXT,       // 36 ddns_ttl_percent - cast as float
+            OID_INT8,       // 37 ddns_ttl
+            OID_INT8,       // 38 ddns_ttl_min
+            OID_INT8,       // 39 ddns_ttl_max
+            OID_INT8,       // 40 subnet_id,
+            OID_VARCHAR     // 41 subnet_prefix
         },
         "UPDATE_SUBNET6",
         "UPDATE dhcp6_subnet SET"
@@ -4201,14 +4273,18 @@ TaggedStatementArray tagged_statements = { {
         "  cache_threshold = cast($32 as float),"
         "  cache_max_age =  $33,"
         "  allocator = $34,"
-        "  pd_allocator = $35 "
-        "WHERE subnet_id = $36 OR subnet_prefix = $37"
+        "  pd_allocator = $35,"
+        "  ddns_ttl_percent = cast($36 as float),"
+        "  ddns_ttl = $37,"
+        "  ddns_ttl_min = $38,"
+        "  ddns_ttl_max = $39 "
+        "WHERE subnet_id = $40 OR subnet_prefix = $41"
     },
 
     // Update existing shared network.
     {
         // PgSqlConfigBackendDHCPv6Impl::UPDATE_SHARED_NETWORK6,
-        34,
+        38,
         {
             OID_VARCHAR,    //  1 name
             OID_TEXT,       //  2 client_classes
@@ -4242,7 +4318,12 @@ TaggedStatementArray tagged_statements = { {
             OID_TEXT,       // 30 cache_threshold - cast as float
             OID_INT8,       // 31 cache_max_age
             OID_VARCHAR,    // 32 allocator
-            OID_VARCHAR     // 33 pd_allocator
+            OID_VARCHAR,    // 33 pd_allocator
+            OID_TEXT,       // 34 ddns_ttl_percent - cast as float
+            OID_INT8,       // 35 ddns_ttl
+            OID_INT8,       // 36 ddns_ttl_min
+            OID_INT8,       // 37 ddns_ttl_max
+            OID_VARCHAR     // 38 name
         },
         "UPDATE_SHARED_NETWORK6",
         "UPDATE dhcp6_shared_network SET"
@@ -4278,8 +4359,12 @@ TaggedStatementArray tagged_statements = { {
         "  cache_threshold = cast($30 as float),"
         "  cache_max_age = $31,"
         "  allocator = $32,"
-        "  pd_allocator = $33 "
-        "WHERE name = $34"
+        "  pd_allocator = $33,"
+        "  ddns_ttl_percent = cast($34 as float),"
+        "  ddns_ttl = $35,"
+        "  ddns_ttl_min = $36,"
+        "  ddns_ttl_max = $37 "
+        "WHERE name = $38"
     },
 
     // Update existing option definition.
