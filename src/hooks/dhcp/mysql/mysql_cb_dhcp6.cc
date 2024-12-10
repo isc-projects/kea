@@ -394,6 +394,10 @@ public:
             MySqlBinding::createInteger<uint32_t>(), // cache_max_age
             MySqlBinding::createString(ALLOCATOR_TYPE_BUF_LENGTH), // allocator
             MySqlBinding::createString(ALLOCATOR_TYPE_BUF_LENGTH), // pd_allocator
+            MySqlBinding::createInteger<float>(), // ddns_ttl_percent
+            MySqlBinding::createInteger<uint32_t>(), // ddns_ttl
+            MySqlBinding::createInteger<uint32_t>(), // ddns_ttl_min
+            MySqlBinding::createInteger<uint32_t>(), // ddns_ttl_max
             MySqlBinding::createString(SERVER_TAG_BUF_LENGTH) // server_tag
         };
 
@@ -637,7 +641,27 @@ public:
                     last_subnet->setPdAllocatorType(out_bindings[98]->getString());
                 }
 
-                // server_tag (99 / last)
+                // ddns_ttl_percent at 99
+                if (!out_bindings[99]->amNull()) {
+                    last_subnet->setDdnsTtlPercent(out_bindings[99]->getFloat());
+                }
+
+                // ddns_ttl at 100
+                if (!out_bindings[100]->amNull()) {
+                    last_subnet->setDdnsTtl(out_bindings[100]->getInteger<uint32_t>());
+                }
+
+                // ddns_ttl_min at 101
+                if (!out_bindings[101]->amNull()) {
+                    last_subnet->setDdnsTtlMin(out_bindings[101]->getInteger<uint32_t>());
+                }
+
+                // ddns_ttl_max at 102
+                if (!out_bindings[102]->amNull()) {
+                    last_subnet->setDdnsTtlMax(out_bindings[102]->getInteger<uint32_t>());
+                }
+
+                // server_tag (103 / last)
 
                 // Subnet ready. Add it to the list.
                 auto ret = subnets.insert(last_subnet);
@@ -651,9 +675,9 @@ public:
             }
 
             // Check for new server tags.
-            if (!out_bindings[99]->amNull() &&
-                (last_tag != out_bindings[99]->getString())) {
-                last_tag = out_bindings[99]->getString();
+            if (!out_bindings[103]->amNull() &&
+                (last_tag != out_bindings[103]->getString())) {
+                last_tag = out_bindings[103]->getString();
                 if (!last_tag.empty() && !last_subnet->hasServerTag(ServerTag(last_tag))) {
                     last_subnet->setServerTag(last_tag);
                 }
@@ -1293,7 +1317,11 @@ public:
             MySqlBinding::condCreateFloat(subnet->getCacheThreshold(Network::Inheritance::NONE)),
             condCreateInteger<uint32_t>(subnet->getCacheMaxAge(Network::Inheritance::NONE)),
             MySqlBinding::condCreateString(subnet->getAllocatorType(Network::Inheritance::NONE)),
-            MySqlBinding::condCreateString(subnet->getPdAllocatorType(Network::Inheritance::NONE))
+            MySqlBinding::condCreateString(subnet->getPdAllocatorType(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateFloat(subnet->getDdnsTtlPercent(Network::Inheritance::NONE)),
+            condCreateInteger<uint32_t>(subnet->getDdnsTtl(Network::Inheritance::NONE)),
+            condCreateInteger<uint32_t>(subnet->getDdnsTtlMin(Network::Inheritance::NONE)),
+            condCreateInteger<uint32_t>(subnet->getDdnsTtlMax(Network::Inheritance::NONE))
         };
 
         MySqlTransaction transaction(conn_);
@@ -1623,6 +1651,10 @@ public:
             MySqlBinding::createInteger<uint32_t>(), // cache_max_age
             MySqlBinding::createString(ALLOCATOR_TYPE_BUF_LENGTH), // allocator
             MySqlBinding::createString(ALLOCATOR_TYPE_BUF_LENGTH), // pd_allocator
+            MySqlBinding::createInteger<float>(), // ddns_ttl_percent
+            MySqlBinding::createInteger<uint32_t>(), // ddns_ttl
+            MySqlBinding::createInteger<uint32_t>(), // ddns_ttl_min
+            MySqlBinding::createInteger<uint32_t>(), // ddns_ttl_max
             MySqlBinding::createString(SERVER_TAG_BUF_LENGTH) // server_tag
         };
 
@@ -1824,7 +1856,27 @@ public:
                     last_network->setPdAllocatorType(out_bindings[48]->getString());
                 }
 
-                // server_tag at 49.
+                // ddns_ttl_percent at 49.
+                if (!out_bindings[49]->amNull()) {
+                    last_network->setDdnsTtlPercent(out_bindings[49]->getFloat());
+                }
+
+                // ddns_ttl at 50.
+                if (!out_bindings[50]->amNull()) {
+                    last_network->setDdnsTtl(out_bindings[50]->getInteger<uint32_t>());
+                }
+
+                // ddns_ttl_min at 51.
+                if (!out_bindings[51]->amNull()) {
+                    last_network->setDdnsTtlMin(out_bindings[51]->getInteger<uint32_t>());
+                }
+
+                // ddns_ttl_max at 52.
+                if (!out_bindings[52]->amNull()) {
+                    last_network->setDdnsTtlMax(out_bindings[52]->getInteger<uint32_t>());
+                }
+
+                // server_tag at 53.
 
                 // Add the shared network.
                 auto ret = shared_networks.push_back(last_network);
@@ -1838,9 +1890,9 @@ public:
             }
 
             // Check for new server tags.
-            if (!out_bindings[49]->amNull() &&
-                (last_tag != out_bindings[49]->getString())) {
-                last_tag = out_bindings[49]->getString();
+            if (!out_bindings[53]->amNull() &&
+                (last_tag != out_bindings[53]->getString())) {
+                last_tag = out_bindings[53]->getString();
                 if (!last_tag.empty() && !last_network->hasServerTag(ServerTag(last_tag))) {
                     last_network->setServerTag(last_tag);
                 }
@@ -2006,7 +2058,11 @@ public:
             MySqlBinding::condCreateFloat(shared_network->getCacheThreshold(Network::Inheritance::NONE)),
             condCreateInteger<uint32_t>(shared_network->getCacheMaxAge(Network::Inheritance::NONE)),
             MySqlBinding::condCreateString(shared_network->getAllocatorType(Network::Inheritance::NONE)),
-            MySqlBinding::condCreateString(shared_network->getPdAllocatorType(Network::Inheritance::NONE))
+            MySqlBinding::condCreateString(shared_network->getPdAllocatorType(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateFloat(shared_network->getDdnsTtlPercent(Network::Inheritance::NONE)),
+            condCreateInteger<uint32_t>(shared_network->getDdnsTtl(Network::Inheritance::NONE)),
+            condCreateInteger<uint32_t>(shared_network->getDdnsTtlMin(Network::Inheritance::NONE)),
+            condCreateInteger<uint32_t>(shared_network->getDdnsTtlMax(Network::Inheritance::NONE)),
         };
 
         MySqlTransaction transaction(conn_);
@@ -3613,9 +3669,14 @@ TaggedStatementArray tagged_statements = { {
       "  cache_threshold,"
       "  cache_max_age,"
       "  allocator,"
-      "  pd_allocator"
+      "  pd_allocator,"
+      "  ddns_ttl_percent,"
+      "  ddns_ttl,"
+      "  ddns_ttl_min,"
+      "  ddns_ttl_max"
       ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
-      " ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
+      " ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
+      " ?, ?, ?, ?)" },
 
     // Insert association of the subnet with a server.
     { MySqlConfigBackendDHCPv6Impl::INSERT_SUBNET6_SERVER,
@@ -3667,9 +3728,14 @@ TaggedStatementArray tagged_statements = { {
       "  cache_threshold,"
       "  cache_max_age,"
       "  allocator,"
-      "  pd_allocator"
+      "  pd_allocator,"
+      "  ddns_ttl_percent,"
+      "  ddns_ttl,"
+      "  ddns_ttl_min,"
+      "  ddns_ttl_max"
       ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
-      " ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
+      " ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
+      " ?, ?, ?, ?)" },
 
     // Insert association of the shared network with a server.
     { MySqlConfigBackendDHCPv6Impl::INSERT_SHARED_NETWORK6_SERVER,
@@ -3777,7 +3843,11 @@ TaggedStatementArray tagged_statements = { {
       "  cache_threshold = ?,"
       "  cache_max_age = ?,"
       "  allocator = ?,"
-      "  pd_allocator = ? "
+      "  pd_allocator = ?,"
+      "  ddns_ttl_percent = ?,"
+      "  ddns_ttl = ?,"
+      "  ddns_ttl_min = ?,"
+      "  ddns_ttl_max = ? "
       "WHERE subnet_id = ? OR subnet_prefix = ?" },
 
     // Update existing shared network.
@@ -3815,7 +3885,11 @@ TaggedStatementArray tagged_statements = { {
       "  cache_threshold = ?,"
       "  cache_max_age = ?,"
       "  allocator = ?,"
-      "  pd_allocator = ? "
+      "  pd_allocator = ?,"
+      "  ddns_ttl_percent = ?,"
+      "  ddns_ttl = ?,"
+      "  ddns_ttl_min = ?,"
+      "  ddns_ttl_max = ? "
       "WHERE name = ?" },
 
     // Update existing option definition.

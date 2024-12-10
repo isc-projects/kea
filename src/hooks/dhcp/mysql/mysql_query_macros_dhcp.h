@@ -124,6 +124,10 @@ namespace {
     "  s.cache_max_age," \
     "  s.offer_lifetime, " \
     "  s.allocator, " \
+    "  s.ddns_ttl_percent," \
+    "  s.ddns_ttl," \
+    "  s.ddns_ttl_min," \
+    "  s.ddns_ttl_max," \
     "  srv.tag " \
     "FROM dhcp4_subnet AS s " \
     server_join \
@@ -260,6 +264,10 @@ namespace {
     "  s.cache_max_age," \
     "  s.allocator," \
     "  s.pd_allocator," \
+    "  s.ddns_ttl_percent," \
+    "  s.ddns_ttl," \
+    "  s.ddns_ttl_min," \
+    "  s.ddns_ttl_max," \
     "  srv.tag " \
     "FROM dhcp6_subnet AS s " \
     server_join \
@@ -477,6 +485,10 @@ namespace {
     "  n.cache_max_age," \
     "  n.offer_lifetime, " \
     "  n.allocator, " \
+    "  n.ddns_ttl_percent," \
+    "  n.ddns_ttl," \
+    "  n.ddns_ttl_min," \
+    "  n.ddns_ttl_max," \
     "  s.tag " \
     "FROM dhcp4_shared_network AS n " \
     server_join \
@@ -561,6 +573,10 @@ namespace {
     "  n.cache_max_age," \
     "  n.allocator," \
     "  n.pd_allocator," \
+    "  n.ddns_ttl_percent," \
+    "  n.ddns_ttl," \
+    "  n.ddns_ttl_min," \
+    "  n.ddns_ttl_max," \
     "  s.tag " \
     "FROM dhcp6_shared_network AS n " \
     server_join \

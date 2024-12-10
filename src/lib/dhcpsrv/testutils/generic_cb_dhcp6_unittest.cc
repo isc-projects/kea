@@ -126,6 +126,7 @@ GenericConfigBackendDHCPv6Test::initTestSubnets() {
     subnet->setDdnsSendUpdates(false);
     subnet->setAllocatorType("random");
     subnet->setPdAllocatorType("iterative");
+    subnet->setDdnsTtl(880);
 
     Pool6Ptr pool1(new Pool6(Lease::TYPE_NA,
                              IOAddress("2001:db8::10"),
@@ -213,6 +214,9 @@ GenericConfigBackendDHCPv6Test::initTestSubnets() {
     subnet->setDdnsReplaceClientNameMode(D2ClientConfig::ReplaceClientNameMode::RCM_WHEN_PRESENT);
     subnet->setDdnsGeneratedPrefix("myhost");
     subnet->setDdnsQualifyingSuffix("example.org");
+    subnet->setDdnsTtlPercent(0.50);
+    subnet->setDdnsTtlMin(300);
+    subnet->setDdnsTtlMax(700);
 
     subnet->getCfgOption()->add(*test_options_[0], test_options_[0]->space_name_);
 
@@ -256,6 +260,9 @@ GenericConfigBackendDHCPv6Test::initTestSharedNetworks() {
     shared_network->setDdnsSendUpdates(false);
     shared_network->setAllocatorType("iterative");
     shared_network->setPdAllocatorType("random");
+    shared_network->setDdnsTtlPercent(0.70);
+    shared_network->setDdnsTtlMin(200);
+    shared_network->setDdnsTtlMax(800);
 
     // Add several options to the shared network.
     shared_network->getCfgOption()->add(*test_options_[2], test_options_[2]->space_name_);
@@ -284,6 +291,7 @@ GenericConfigBackendDHCPv6Test::initTestSharedNetworks() {
     shared_network->setDdnsReplaceClientNameMode(D2ClientConfig::ReplaceClientNameMode::RCM_WHEN_PRESENT);
     shared_network->setDdnsGeneratedPrefix("myhost");
     shared_network->setDdnsQualifyingSuffix("example.org");
+    shared_network->setDdnsTtl(9000);
 
     shared_network->getCfgOption()->add(*test_options_[0], test_options_[0]->space_name_);
     test_networks_.push_back(shared_network);

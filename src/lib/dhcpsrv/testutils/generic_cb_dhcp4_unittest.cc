@@ -131,6 +131,7 @@ GenericConfigBackendDHCPv4Test::initTestSubnets() {
     subnet->setCacheMaxAge(20);
     subnet->setOfferLft(77);
     subnet->setAllocatorType("random");
+    subnet->setDdnsTtl(880);
 
     Pool4Ptr pool1(new Pool4(IOAddress("192.0.2.10"),
                              IOAddress("192.0.2.20")));
@@ -144,6 +145,7 @@ GenericConfigBackendDHCPv4Test::initTestSubnets() {
     subnet->getCfgOption()->add(*test_options_[0], test_options_[0]->space_name_);
     subnet->getCfgOption()->add(*test_options_[1], test_options_[1]->space_name_);
     subnet->getCfgOption()->add(*test_options_[2], test_options_[2]->space_name_);
+
 
     test_subnets_.push_back(subnet);
 
@@ -186,6 +188,9 @@ GenericConfigBackendDHCPv4Test::initTestSubnets() {
     subnet->setDdnsReplaceClientNameMode(D2ClientConfig::ReplaceClientNameMode::RCM_WHEN_PRESENT);
     subnet->setDdnsGeneratedPrefix("myhost");
     subnet->setDdnsQualifyingSuffix("example.org");
+    subnet->setDdnsTtlPercent(0.50);
+    subnet->setDdnsTtlMin(300);
+    subnet->setDdnsTtlMax(700);
 
     subnet->getCfgOption()->add(*test_options_[0], test_options_[0]->space_name_);
 
@@ -229,6 +234,9 @@ GenericConfigBackendDHCPv4Test::initTestSharedNetworks() {
     shared_network->setCacheMaxAge(21);
     shared_network->setOfferLft(78);
     shared_network->setAllocatorType("iterative");
+    shared_network->setDdnsTtlPercent(0.70);
+    shared_network->setDdnsTtlMin(200);
+    shared_network->setDdnsTtlMax(800);
 
     // Add several options to the shared network.
     shared_network->getCfgOption()->add(*test_options_[2], test_options_[2]->space_name_);
@@ -255,6 +263,7 @@ GenericConfigBackendDHCPv4Test::initTestSharedNetworks() {
     shared_network->setDdnsReplaceClientNameMode(D2ClientConfig::ReplaceClientNameMode::RCM_WHEN_PRESENT);
     shared_network->setDdnsGeneratedPrefix("myhost");
     shared_network->setDdnsQualifyingSuffix("example.org");
+    shared_network->setDdnsTtl(9000);
 
     shared_network->getCfgOption()->add(*test_options_[0], test_options_[0]->space_name_);
     test_networks_.push_back(shared_network);
