@@ -2214,7 +2214,7 @@ TEST_F(SrvConfigTest, sanityChecksLifetime) {
     }
 }
 
-// Verifies that sanityChecksDdnsTtlParams works as expected.
+// Verifies that sanityChecksDdnsTtlParameters works as expected.
 TEST_F(SrvConfigTest, sanityChecksDdnsTtlParameters) {
     {
         SCOPED_TRACE("none");

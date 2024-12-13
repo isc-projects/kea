@@ -290,7 +290,7 @@ dumpAsHex(const uint8_t* data, size_t length);
 ///
 /// @param val double to convert
 /// @param precision number of maxium number decimal places to output
-/// @return string representaion of val
+/// @return string representation of val
 std::string dumpDouble(double val, size_t precision = 5);
 
 }  // namespace str

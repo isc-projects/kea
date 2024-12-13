@@ -73,8 +73,8 @@ public:
         CfgMgr::instance().clear();
     }
 
-	// Verifies valid permuatations of ddns-ttl-percent, ddns-ttl,
-	// ddns-ttl-min, and ddns-ttl-max values for SubnetX.
+    // Verifies valid permuatations of ddns-ttl-percent, ddns-ttl,
+    // ddns-ttl-min, and ddns-ttl-max values for SubnetX.
     template<typename ParserType, typename NetworkPtrType>
 	void validDdnsTtlParmatersSubnet(int family) {
 	    struct Scenario {

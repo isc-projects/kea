@@ -976,10 +976,10 @@ public:
                               const std::string& name) const;
 
     /// @brief Conducts sanity checks on global DDNS ttl parameters:
-    /// ddsn-ttl, ddsn-ttl-percent, ddns-ttl-min, ddns-ttl-max
+    /// ddns-ttl, ddns-ttl-percent, ddns-ttl-min, ddns-ttl-max
     ///
-    /// If ddns-ttl is specified none of the others can be
-    /// If ddns-ttl-min and ddsn-ttl-max are specified max cannot
+    /// If ddns-ttl is specified none of the others can be.
+    /// If ddns-ttl-min and ddns-ttl-max are specified max cannot
     /// be less than min. 
     ///
     /// @throw Throws BadValue if any of the rules are violated.

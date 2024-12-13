@@ -107,7 +107,7 @@ public:
     /// @return A reference to the Network created if parsing is successful
     virtual Network& parseIntoNetwork(ConstElementPtr test_config) = 0;
 
-    // Verifies valid permuatations of ddns-ttl-percent, ddns-ttl,
+    // Verifies valid permutations of ddns-ttl-percent, ddns-ttl,
     // ddns-ttl-min, and ddns-ttl-max values for SharedNetwork4.
     template<typename NetworkTypePtr, typename ParserType>
     void validDdnsTtlParmatersTest() {
@@ -197,7 +197,7 @@ public:
         }
     }
 
-    // Verifies invalid permuatations of ddns-ttl-percent, ddns-ttl,
+    // Verifies invalid permatations of ddns-ttl-percent, ddns-ttl,
     // ddns-ttl-min, and ddns-ttl-max values for SharedNetwork.
     template<typename ParserType>
     void invalidDdnsTtlParmatersTest() {
@@ -1362,25 +1362,25 @@ TEST_F(SharedNetwork6ParserTest, deprecatedClientClass) {
                      " (<string>:1:2)");
 }
 
-// Verifies valid permuatations of ddns-ttl-percent, ddns-ttl,
+// Verifies valid permutations of ddns-ttl-percent, ddns-ttl,
 // ddns-ttl-min, and ddns-ttl-max values for SharedNetwork4.
 TEST_F(SharedNetwork4ParserTest, validDdnsTtlParmaters4) {
     validDdnsTtlParmatersTest<SharedNetwork4Ptr, SharedNetwork4Parser>();
 }
 
-// Verifies valid permuatations of ddns-ttl-percent, ddns-ttl,
+// Verifies valid permutations of ddns-ttl-percent, ddns-ttl,
 // ddns-ttl-min, and ddns-ttl-max values for SharedNetwork6.
 TEST_F(SharedNetwork6ParserTest, validDdnsTtlParmaters6) {
     validDdnsTtlParmatersTest<SharedNetwork6Ptr, SharedNetwork6Parser>();
 }
 
-// Verifies invalid permuatations of ddns-ttl-percent, ddns-ttl,
+// Verifies invalid permutations of ddns-ttl-percent, ddns-ttl,
 // ddns-ttl-min, and ddns-ttl-max values for Subnet4.
 TEST_F(SharedNetwork4ParserTest, invalidDdnsTtlParmaters4) {
     invalidDdnsTtlParmatersTest<SharedNetwork4Parser>();
 }
 
-// Verifies invalid permuatations of ddns-ttl-percent, ddns-ttl,
+// Verifies invalid permutations of ddns-ttl-percent, ddns-ttl,
 // ddns-ttl-min, and ddns-ttl-max values for Subnet6.
 TEST_F(SharedNetwork6ParserTest, invalidDdnsTtlParmaters6) {
     invalidDdnsTtlParmatersTest<SharedNetwork6Parser>();

@@ -160,7 +160,7 @@ uint32_t calculateDdnsTtl(uint32_t lease_lft,
     // Adjust for minimum and maximum.
     // If we have a custom mininum enforce it, otherwise per RFC 4702 it
     // should not less than 600.
-    uint32_t ttl_min = (ddns_ttl_min.get() > 0) ?  ddns_ttl_min.get() : 600;
+    uint32_t ttl_min = (ddns_ttl_min.get() > 0) ? ddns_ttl_min.get() : 600;
     if (ttl < ttl_min) {
         LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL_DATA,
                       DHCPSRV_DDNS_TTL_TOO_SMALL)

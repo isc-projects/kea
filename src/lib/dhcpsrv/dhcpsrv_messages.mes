@@ -967,8 +967,8 @@ message) that is unknown to the software. This is a configuration error.
 % DHCPSRV_DDNS_TTL_TOO_SMALL %1 of lease life time %2 is %3, using minimum of %4 instead.
 Logged at debug log level 55.
 A debug message issued when the DDNS TTL value calculated using the
-ddns-ttl-percent if specfieed or (0.33 if not) is too small.  Kea will
-ignore the value and is the minimum (ddns-ttl-min is specifed or 600
+ddns-ttl-percent if specified or (0.33 if not) is too small.  Kea will
+ignore the value and use the minimum (ddns-ttl-min if specifed or 600
 seconds if not). The message details include the percentage, the lease
 life time, the calculated TTL, and the value actually used.
 
@@ -977,6 +977,6 @@ Logged at debug log level 55.
 A debug message issued when the DDNS TTL value calculated using the
 ddns-ttl-percent if specfieed or (0.33 if not) is larger than the
 the specified value of ddns-ttl-max. Kea will ignore the value and
-use  is the specified maxinimum instead. The message details include
+use the specified maximum instead. The message details include
 the percentage, the lease life time, the calculated TTL, and the value
 actually used.
