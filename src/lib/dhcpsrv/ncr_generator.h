@@ -60,7 +60,7 @@ void queueNCR(const dhcp_ddns::NameChangeType& chg_type, const Lease6Ptr& lease)
 /// @param lease_life_time valid life time of the lease
 /// @param ddns_ttl_percent optional percentage to use in calculation
 /// @param ddns_ttl optional percentage to use in calculation
-/// @param ddns_ttl_min optional minium TTL to allow
+/// @param ddns_ttl_min optional minimum TTL to allow
 /// @param ddns_ttl_max optional maximum TTL to allow
 ///
 /// @return the calculated TTL.

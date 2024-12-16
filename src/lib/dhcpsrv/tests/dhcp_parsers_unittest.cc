@@ -73,7 +73,7 @@ public:
         CfgMgr::instance().clear();
     }
 
-    // Verifies valid permuatations of ddns-ttl-percent, ddns-ttl,
+    // Verifies valid permutations of ddns-ttl-percent, ddns-ttl,
     // ddns-ttl-min, and ddns-ttl-max values for SubnetX.
     template<typename ParserType, typename NetworkPtrType>
 	void validDdnsTtlParmatersSubnet(int family) {
@@ -167,7 +167,7 @@ public:
 	    }
 	}
 	
-	// Verifies invalid permuatations of ddns-ttl-percent, ddns-ttl,
+	// Verifies invalid permutations of ddns-ttl-percent, ddns-ttl,
 	// ddns-ttl-min, and ddns-ttl-max values for SubnetX.
     template<typename ParserType>
 	void invalidDdnsTtlParmatersSubnet(int family) {
@@ -4270,25 +4270,25 @@ TEST_F(DhcpParserTest, deprecatedClientClassPool6) {
                      " 'client-classes'. Use only the latter.");
 }
 
-// Verifies valid permuatations of ddns-ttl-percent, ddns-ttl,
+// Verifies valid permutations of ddns-ttl-percent, ddns-ttl,
 // ddns-ttl-min, and ddns-ttl-max values for Subnet4.
 TEST_F(DhcpParserTest, validDdnsTtlParmatersSubnet4) {
     validDdnsTtlParmatersSubnet<Subnet4ConfigParser, Subnet4Ptr>(AF_INET);
 }
 
-// Verifies invalid permuatations of ddns-ttl-percent, ddns-ttl,
+// Verifies invalid permutations of ddns-ttl-percent, ddns-ttl,
 // ddns-ttl-min, and ddns-ttl-max values for Subnet4.
 TEST_F(DhcpParserTest, invalidDdnsTtlParmatersSubnet4) {
     invalidDdnsTtlParmatersSubnet<Subnet4ConfigParser>(AF_INET);
 }
 
-// Verifies valid permuatations of ddns-ttl-percent, ddns-ttl,
+// Verifies valid permutations of ddns-ttl-percent, ddns-ttl,
 // ddns-ttl-min, and ddns-ttl-max values for Subnet6.
 TEST_F(DhcpParserTest, validDdnsTtlParmatersSubnet6) {
     validDdnsTtlParmatersSubnet<Subnet6ConfigParser, Subnet6Ptr>(AF_INET6);
 }
 
-// Verifies invalid permuatations of ddns-ttl-percent, ddns-ttl,
+// Verifies invalid permutations of ddns-ttl-percent, ddns-ttl,
 // ddns-ttl-min, and ddns-ttl-max values for Subnet6.
 TEST_F(DhcpParserTest, invalidDdnsTtlParmatersSubnet6) {
     invalidDdnsTtlParmatersSubnet<Subnet6ConfigParser>(AF_INET6);
