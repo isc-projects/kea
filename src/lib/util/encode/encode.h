@@ -128,16 +128,16 @@ public:
         return (max_pad_);
     }
 
-    /// @brief Get the maxium index value of the digit set
+    /// @brief Get the maximum index value of the digit set
     ///
-    /// @return Maxium index value of the digit set
+    /// @return Maximum index value of the digit set
     size_t getMaxBitsToDigit() {
         return (max_bits_to_digit_);
     }
 
-    /// @brief Get the maxium index value of the algorithm bit table
+    /// @brief Get the maximum index value of the algorithm bit table
     ///
-    /// @return Maxium index value of the algorithm bit table
+    /// @return Maximum index value of the algorithm bit table
     size_t getMaxDigitToBits() {
         return (max_digit_to_bits_);
     }
@@ -179,10 +179,10 @@ protected:
     /// @brief Indicates whether or not the algorithm's digit set is case-sensitive
     bool case_sensitive_;
 
-    /// @brief Maxium index value of the digit set
+    /// @brief Maximum index value of the digit set
     size_t max_bits_to_digit_;
 
-    /// @brief Maxium index value of the algorithm bit table
+    /// @brief Maximum index value of the algorithm bit table
     size_t max_digit_to_bits_;
 };
 

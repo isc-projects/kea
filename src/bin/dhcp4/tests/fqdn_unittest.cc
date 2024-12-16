@@ -325,7 +325,7 @@ const char* CONFIGS[] = {
     "}",
     // 12
     // D2 enabled
-    // ddns-ttl-percent specfied
+    // ddns-ttl-percent specified
     "{ \"interfaces-config\": {\n"
         "      \"interfaces\": [ \"*\" ]\n"
         "},\n"

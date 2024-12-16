@@ -746,7 +746,7 @@ TEST_F(NCRGenerator4Test, calculateDdnsTtlThroughQueueNcr) {
         // No modifiers, should be RFC % (i.e lft / 3)
         { __LINE__, 2100, no_percent, no_ttl, no_min, no_max, 700 },
 
-        // No modifiers, RFC % < RFC minium 600
+        // No modifiers, RFC % < RFC minimum 600
         { __LINE__, 1500, no_percent, no_ttl, no_min, no_max, 600 },
 
         // RFC % < specified minimum
@@ -764,7 +764,7 @@ TEST_F(NCRGenerator4Test, calculateDdnsTtlThroughQueueNcr) {
         // Explicit ttl wins over specified minimum
         { __LINE__, 2100, no_percent, 900,    1000,   no_max, 900 },
 
-        // Explicit ttl wins over specified maxiumum
+        // Explicit ttl wins over specified maximum
         { __LINE__, 2100, no_percent, 900,   no_min,  800,    900 },
 
         // Specified percent > RFC minimum

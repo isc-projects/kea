@@ -197,7 +197,7 @@ public:
         }
     }
 
-    // Verifies invalid permatations of ddns-ttl-percent, ddns-ttl,
+    // Verifies invalid permutations of ddns-ttl-percent, ddns-ttl,
     // ddns-ttl-min, and ddns-ttl-max values for SharedNetwork.
     template<typename ParserType>
     void invalidDdnsTtlParmatersTest() {
