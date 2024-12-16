@@ -345,7 +345,9 @@
         "ddns-ttl-percent": 0.75,
 
         // When greater than 0 it will be used as the DNS TTL. Specified in seconds.
-        "ddns-ttl": 0,
+        // You cannot specify both ddns-ttl and any of ddns-ttl-percent, ddns-ttl-min, or
+        // ddns-ttl-max. They are mutually exclusive.
+        //"ddns-ttl": 500,
 
         // When greater than 0 it used as the lower boundary for calculated DNS TTL values.
         // Specified in seconds.
@@ -907,7 +909,9 @@
                 "ddns-ttl-percent": 0.65,
 
                 // Shared-network level value. See description at the global level.
-                "ddns-ttl": 0,
+                // You cannot specify both ddns-ttl and any of ddns-ttl-percent, ddns-ttl-min, or
+                // ddns-ttl-max. They are mutually exclusive.
+                // "ddns-ttl": 500,
 
                 // Shared-network level value. See description at the global level.
                 "ddns-ttl-min": 10000,
@@ -1053,16 +1057,18 @@
                         "ddns-conflict-resolution-mode": "check-with-dhcid",
 
                         // Subnet-level value. See description at the global level.
-                        "ddns-ttl-percent": 0.55,
+                        // "ddns-ttl-percent": 0.55,
 
                         // Subnet-level value. See description at the global level.
-                        "ddns-ttl": 0,
+                        // You cannot specify both ddns-ttl and any of ddns-ttl-percent, ddns-ttl-min, or
+                        // ddns-ttl-max. They are mutually exclusive.
+                        "ddns-ttl": 500,
 
                         // Subnet-evel value. See description at the global level.
-                        "ddns-ttl-min": 10000,
+                        // "ddns-ttl-min": 10000,
 
                         // Subnet-level value. See description at the global level.
-                        "ddns-ttl-max": 20000,
+                        // "ddns-ttl-max": 20000,
 
                         // Subnet-level value. See description at the global level.
                         "hostname-char-replacement": "x",
