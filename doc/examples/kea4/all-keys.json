@@ -347,7 +347,7 @@
         // When greater than 0 it will be used as the DNS TTL. Specified in seconds.
         // You cannot specify both ddns-ttl and any of ddns-ttl-percent, ddns-ttl-min, or
         // ddns-ttl-max. They are mutually exclusive.
-        //"ddns-ttl": 500,
+        // "ddns-ttl": 500,
 
         // When greater than 0 it used as the lower boundary for calculated DNS TTL values.
         // Specified in seconds.
