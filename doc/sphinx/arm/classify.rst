@@ -1230,7 +1230,7 @@ value is obtained is determined as explained in the previous paragraphs.
 Option Class-Tagging
 ====================
 
-Option class-tagging allows an option value to conditionally applied
+Option class-tagging allows an option value to be conditionally applied
 to the response based on the client's class membership.  The effect is
 similar to using an if-block in ISC DHCP to conditionally include
 options at a given scope.  Class-tagging is done by specifying a list of
@@ -1284,14 +1284,14 @@ before the response is to be sent to the client.
 
 When ``never-send`` for an option is true at any scope, all
 ``client-classes`` entries for that option are ignored. The
-option will not included.
+option will not be included.
 
 When ``always-send`` is true at any scope, the option will be
 included unless, the option determined by scope specifies
 a ``client-classes`` list that does not contain any of the
 client's classes.
 
-Otherwise, An option requested by the client will be included in
+Otherwise, an option requested by the client will be included in
 the response if  the option either does not specify ``client-classes``
 or the client belongs to at least one of the classes in ``client-classes``.
 
