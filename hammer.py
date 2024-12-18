@@ -66,6 +66,7 @@ SYSTEMS = {
         '38': True,
         '39': True,
         '40': True,
+        '41': True,
     },
     'centos': {
         '7': False,
@@ -118,6 +119,7 @@ SYSTEMS = {
         '3.18': True,
         '3.19': True,
         '3.20': True,
+        '3.21': True,
     },
     'arch': {},
 }
