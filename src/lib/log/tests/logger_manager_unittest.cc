@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -29,7 +29,6 @@
 #include <log/logger_specification.h>
 #include <log/message_initializer.h>
 #include <log/output_option.h>
-#include <log/tests/tempdir.h>
 #include <testutils/gtest_utils.h>
 
 #include <sys/types.h>
@@ -109,7 +108,7 @@ public:
     //
     // \return Temporary file name
     static std::string createTempFilename() {
-        string filename = TEMP_DIR + "/kea_logger_manager_test_XXXXXX";
+        string filename = string(TEMP_DIR) + "/kea_logger_manager_test_XXXXXX";
 
         // Copy into writable storage for the call to mkstemp
         boost::scoped_array<char> tname(new char[filename.size() + 1]);

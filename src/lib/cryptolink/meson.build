@@ -1,0 +1,21 @@
+kea_cryptolink_lib = library('kea-cryptolink',
+  'cryptolink.cc',
+  'cryptolink.h',
+  'crypto_hash.cc',
+  'crypto_hash.h',
+  'crypto_hmac.cc',
+  'crypto_hmac.h',
+  'crypto_rng.cc',
+  'crypto_rng.h',
+  'openssl_common.h',
+  'openssl_hash.cc',
+  'openssl_hmac.cc',
+  'openssl_link.cc',
+  dependencies: [crypto],
+  include_directories: [include_directories('.')] + includes,
+  install: true,
+  install_dir: 'lib',
+  link_with: libs_built_so_far,
+)
+libs_built_so_far = [kea_cryptolink_lib] + libs_built_so_far
+subdir('tests')

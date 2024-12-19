@@ -1,0 +1,294 @@
+/* config.h inclusion marker */
+#define CONFIG_H_WAS_INCLUDED
+
+/* Whether system and steady clocks use the same duration type */
+#mesondefine CHRONO_SAME_DURATION
+
+/* Enable low-performing debugging facilities? */
+#mesondefine ENABLE_DEBUG
+
+/* Check logger messages? */
+#mesondefine ENABLE_LOGGER_CHECKS
+
+/* Fuzzing enabled. */
+#mesondefine FUZZING
+
+/* Fuzzing running in CI. */
+#mesondefine FUZZING_IN_CI
+
+/* Does this platform have some undefined pthreads behavior? */
+#mesondefine HAS_UNDEFINED_PTHREAD_BEHAVIOR
+
+/* AFL compiler enabled. */
+#mesondefine HAVE_AFL
+
+/* Whether you have the <boost/asio/coroutine.hpp> header file. */
+#mesondefine HAVE_BOOST_ASIO_COROUTINE_HPP
+
+/* Whether you have the <boost/asio.hpp> header file. */
+#mesondefine HAVE_BOOST_ASIO_HPP
+
+/* Whether you have the <boost/asio/ip/address.hpp> header file. */
+#mesondefine HAVE_BOOST_ASIO_IP_ADDRESS_HPP
+
+/* Whether you have the <boost/asio/signal_set.hpp> header file. */
+#mesondefine HAVE_BOOST_ASIO_SIGNAL_SET_HPP
+
+/* Whether you have the <boost/asio/ssl.hpp> header file. */
+#mesondefine HAVE_BOOST_ASIO_SSL_HPP
+
+/* Whether you have the <boost/atomic.hpp> header file. */
+#mesondefine HAVE_BOOST_ATOMIC_HPP
+
+/* Whether you have the <boost/circular_buffer.hpp> header file. */
+#mesondefine HAVE_BOOST_CIRCULAR_BUFFER_HPP
+
+/* Whether you have the <boost/date_time/posix_time/posix_time_types.hpp> header file. */
+#mesondefine HAVE_BOOST_DATE_TIME_POSIX_TIME_POSIX_TIME_TYPES_HPP
+
+/* Whether you have the <boost/foreach.hpp> header file. */
+#mesondefine HAVE_BOOST_FOREACH_HPP
+
+/* Whether you have the <boost/functional/hash.hpp> header file. */
+#mesondefine HAVE_BOOST_FUNCTIONAL_HASH_HPP
+
+/* Whether you have the <boost/integer/common_factor.hpp> header file. */
+#mesondefine HAVE_BOOST_INTEGER_COMMON_FACTOR_HPP
+
+/* Whether you have the <boost/interprocess/sync/interprocess_upgradable_mutex.hpp> header file. */
+#mesondefine HAVE_BOOST_INTERPROCESS_SYNC_INTERPROCESS_UPGRADABLE_MUTEX_HPP
+
+/* Whether you have the <boost/shared_ptr.hpp> header file. */
+#mesondefine HAVE_BOOST_SHARED_PTR_HPP
+
+/* Whether you have the <boost/system/error_code.hpp> header file. */
+#mesondefine HAVE_BOOST_SYSTEM_ERROR_CODE_HPP
+
+/* Whether you have the <botan/asio_stream.h> header file. */
+#mesondefine HAVE_BOTAN_ASIO_STREAM_H
+
+/* Whether you have the <botan/build.h> header file. */
+#mesondefine HAVE_BOTAN_BUILD_H
+
+/* Whether getsockopt(IPV6_USE_MIN_MTU) does not work */
+#mesondefine HAVE_BROKEN_GET_IPV
+
+/* Whether gtest defines edit_distance::CreateUnifiedDiff */
+#mesondefine HAVE_CREATE_UNIFIED_DIFF
+
+/* Whether you have the <dlfcn.h> header file. */
+#mesondefine HAVE_DLFCN_H
+
+/* Whether you have the 'EVP_MD_CTX_create' function. */
+#mesondefine HAVE_EVP_MD_CTX_CREATE
+
+/* Whether you have the 'EVP_MD_CTX_destroy' function. */
+#mesondefine HAVE_EVP_MD_CTX_DESTROY
+
+/* Whether you have the 'EVP_MD_CTX_free' function. */
+#mesondefine HAVE_EVP_MD_CTX_FREE
+
+/* Whether you have the 'EVP_MD_CTX_new' function. */
+#mesondefine HAVE_EVP_MD_CTX_NEW
+
+/* Whether you have the 'EVP_PKEY_new_mac_key' function. */
+#mesondefine HAVE_EVP_PKEY_NEW_MAC_KEY
+
+/* Whether you have the 'EVP_PKEY_new_raw_private_key' function. */
+#mesondefine HAVE_EVP_PKEY_NEW_RAW_PRIVATE_KEY
+
+/* Whether boost::asio::ssl::context::tls is available */
+#mesondefine HAVE_GENERIC_TLS_METHOD
+
+/* Whether you have the <gssapi/gssapi.h> header file. */
+#mesondefine HAVE_GSSAPI_GSSAPI_H
+
+/* Whether you have the <gssapi/gssapi_krb5.h> header file. */
+#mesondefine HAVE_GSSAPI_GSSAPI_KRB
+
+/* gss_str_to_oid is available */
+#mesondefine HAVE_GSS_STR_TO_OID
+
+/* Whether you have the <inttypes.h> header file. */
+#mesondefine HAVE_INTTYPES_H
+
+/* Whether std::is_base_of is available */
+#mesondefine HAVE_IS_BASE_OF
+
+/* Whether you have the <krb5.h> header file. */
+#mesondefine HAVE_KRB
+
+/* Whether you have the <krb5/krb5.h> header file. */
+#mesondefine HAVE_KRB
+
+/* Whether you have the <log4cplus/logger.h> header file. */
+#mesondefine HAVE_LOG
+
+/* MySQL is present */
+#mesondefine HAVE_MYSQL
+
+/* MySQL has mysql_get_option defined. */
+#mesondefine HAVE_MYSQL_GET_OPTION
+
+/* MySQL uses my_bool */
+#mesondefine HAVE_MYSQL_MY_BOOL
+
+/* MySQL has MYSQL_OPT_RECONNNECT */
+#mesondefine HAVE_MYSQL_OPT_RECONNECT
+
+/* NETCONF capabilities enabled */
+#mesondefine HAVE_NETCONF
+
+/* Check for optreset? */
+#mesondefine HAVE_OPTRESET
+
+/* PostgreSQL is present */
+#mesondefine HAVE_PGSQL
+
+/* PostgreSQL was built with OpenSSL support */
+#mesondefine HAVE_PGSQL_SSL
+
+/* PostgreSQL connection parameter tcp_user_timeout supported */
+#mesondefine HAVE_PGSQL_TCP_USER_TIMEOUT
+
+/* Whether you have the 'pselect' function. */
+#mesondefine HAVE_PSELECT
+
+/* Whether sockaddr has a sa_len member, and corresponding sin_len and sun_len */
+#mesondefine HAVE_SA_LEN
+
+/* Whether stdbool.h conforms to C99. */
+#mesondefine HAVE_STDBOOL_H
+
+/* Whether you have the <stdint.h> header file. */
+#mesondefine HAVE_STDINT_H
+
+/* Whether you have the <stdio.h> header file. */
+#mesondefine HAVE_STDIO_H
+
+/* Whether you have the <stdlib.h> header file. */
+#mesondefine HAVE_STDLIB_H
+
+/* Whether boost::asio::ssl::error::stream_truncated is available */
+#mesondefine HAVE_STREAM_TRUNCATED_ERROR
+
+/* Whether you have the <strings.h> header file. */
+#mesondefine HAVE_STRINGS_H
+
+/* Whether you have the <string.h> header file. */
+#mesondefine HAVE_STRING_H
+
+/* Whether you have the <sys/devpoll.h> header file. */
+#mesondefine HAVE_SYS_DEVPOLL_H
+
+/* Whether you have the <sys/filio.h> header file. */
+#mesondefine HAVE_SYS_FILIO_H
+
+/* Whether you have the <sys/stat.h> header file. */
+#mesondefine HAVE_SYS_STAT_H
+
+/* Whether you have the <sys/types.h> header file. */
+#mesondefine HAVE_SYS_TYPES_H
+
+/* Whether boost::asio::ssl::context::tlsv12 is available */
+#mesondefine HAVE_TLS_
+
+/* Whether you have the <unistd.h> header file. */
+#mesondefine HAVE_UNISTD_H
+
+/* Whether you have the <utils/errcodes.h> header file. */
+#mesondefine HAVE_UTILS_ERRCODES_H
+
+/* Check valgrind headers */
+#mesondefine HAVE_VALGRIND_HEADERS
+
+/* Whether you have the <valgrind/valgrind.h> header file. */
+#mesondefine HAVE_VALGRIND_VALGRIND_H
+
+/* Whether the system has the type '_Bool'. */
+#mesondefine HAVE__BOOL
+
+/* Whether libc is musl */
+#mesondefine LIBC_MUSL
+
+/* Explicit initialization of log4cplus possible */
+#mesondefine LOG
+
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
+#mesondefine LT_OBJDIR
+
+/* Running on BSD? */
+#mesondefine OS_BSD
+
+/* Running on FreeBSD? */
+#mesondefine OS_FREEBSD
+
+/* Running on Linux? */
+#mesondefine OS_LINUX
+
+/* Running on NetBSD? */
+#mesondefine OS_NETBSD
+
+/* Running on OpenBSD? */
+#mesondefine OS_OPENBSD
+
+/* Running on OSX? */
+#mesondefine OS_OSX
+
+/* Running on Solaris? */
+#mesondefine OS_SOLARIS
+
+/* Name of package */
+#mesondefine PACKAGE
+
+/* Define to the address where bug reports for this package should be sent. */
+#mesondefine PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#mesondefine PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#mesondefine PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#mesondefine PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#mesondefine PACKAGE_URL
+
+/* Define to the version of this package. */
+#mesondefine PACKAGE_VERSION
+
+/* Kea-premium hooks found */
+#mesondefine PREMIUM
+
+/* Whether all of the C89 standard headers exist (not just the ones
+   required in a freestanding environment). This macro is provided for
+   backward compatibility; new code need not use it. */
+#mesondefine STDC_HEADERS
+
+#mesondefine TOP_BUILDDIR
+
+/* Was Kea statically linked? */
+#mesondefine USE_STATIC_LINK
+
+/* Version number of package */
+#mesondefine VERSION
+
+/* Compile with Botan crypto */
+#mesondefine WITH_BOTAN
+
+/* Heimdal GSS-API implementation */
+#mesondefine WITH_HEIMDAL
+
+/* Compile with OpenSSL crypto */
+#mesondefine WITH_OPENSSL
+
+/* Whether 'lex' declares 'yytext' as a 'char *' by default, not a 'char[]'. */
+#mesondefine YYTEXT_POINTER
+
+/* Define as 'unsigned int' if <stddef.h> doesn't define. */
+#mesondefine SIZE_T
+
+/* Define as 'int' if <sys/types.h> doesn't define. */
+#mesondefine SSIZE_T

@@ -1,0 +1,17 @@
+lfc_lib = static_library('lfc',
+  'lfc_controller.cc',
+  'lfc_controller.h',
+  'lfc_log.cc',
+  'lfc_log.h',
+  'lfc_messages.cc',
+  'lfc_messages.h',
+  include_directories: [include_directories('.')] + includes,
+  link_with: libs_built_so_far,
+)
+kea_lfc_exe = executable('kea-lfc',
+  'main.cc',
+  include_directories: [include_directories('.')] + includes,
+  install: true,
+  install_dir: 'sbin',
+  link_with: libs_built_so_far + [lfc_lib],
+)

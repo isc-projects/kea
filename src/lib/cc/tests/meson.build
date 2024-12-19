@@ -1,0 +1,17 @@
+kea_cc_tests_exe = executable('kea-cc-tests',
+  'command_interpreter_unittests.cc',
+  'data_file_unittests.cc',
+  'data_unittests.cc',
+  'element_value_unittests.cc',
+  'json_feed_unittests.cc',
+  'run_unittests.cc',
+  'server_tag_unittest.cc',
+  'simple_parser_unittest.cc',
+  'stamped_element_unittest.cc',
+  'stamped_value_unittest.cc',
+  'user_context_unittests.cc',
+  dependencies: [gtest],
+  include_directories: [include_directories('.')] + includes,
+  link_with: libs_built_so_far + [kea_util_unittests_lib],
+)
+test('kea_cc_tests_exe', kea_cc_tests_exe)

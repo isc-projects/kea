@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -92,7 +92,7 @@ template std::string
 durationToText<system_clock::duration>(system_clock::duration dur,
                                        size_t fsecs_precision);
 
-#if !CHRONO_SAME_DURATION
+#ifndef CHRONO_SAME_DURATION
 template std::string
 durationToText<steady_clock::duration>(steady_clock::duration dur,
                                        size_t fsecs_precision);
