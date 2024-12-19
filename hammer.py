@@ -2016,7 +2016,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             packages.extend(['cmake', 'git', 'pcre2'])
 
         if 'unittest' in features:
-            packages.append('googletest')
+            deferred_functions.append(_install_gtest_sources)
 
         install_pkgs(packages, env=env, timeout=6 * 60, check_times=check_times)
 
