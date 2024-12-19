@@ -661,7 +661,9 @@ const OptionDefParams STANDARD_V6_OPTION_DEFINITIONS[] = {
     { "s46-cont-lw", D6O_S46_CONT_LW, DHCP6_OPTION_SPACE, OPT_EMPTY_TYPE,
       false, NO_RECORD_DEF, LW_V6_OPTION_SPACE },
     { "v6-dnr", D6O_V6_DNR, DHCP6_OPTION_SPACE, OPT_INTERNAL_TYPE,
-     false, NO_RECORD_DEF, "" }
+      false, NO_RECORD_DEF, "" },
+    { "addr-reg-enable", D6O_ADDR_REG_ENABLE, DHCP6_OPTION_SPACE,
+      OPT_EMPTY_TYPE, false, NO_RECORD_DEF, "" }
 
     // @todo There is still a bunch of options for which we have to provide
     // definitions but we don't do it because they are not really
