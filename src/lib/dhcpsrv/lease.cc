@@ -284,10 +284,10 @@ Lease::fromElementCommon(const LeasePtr& lease, const data::ConstElementPtr& ele
                   " or it is not an integer");
     }
 
-    if ((state->intValue() < 0) || (state->intValue() > Lease::STATE_EXPIRED_RECLAIMED)) {
+    if ((state->intValue() < 0) || (state->intValue() > Lease::STATE_RELEASED)) {
         isc_throw(BadValue, "state " << state->intValue()
                   << " must be in range [0.."
-                  << Lease::STATE_EXPIRED_RECLAIMED << "]");
+                  << Lease::STATE_RELEASED << "]");
     }
 
     lease->state_ = state->intValue();

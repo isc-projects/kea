@@ -509,6 +509,32 @@ TEST_F(Lease4Test, fromElement) {
     EXPECT_EQ("{ \"foo\": \"bar\" }", lease->getContext()->str());
 }
 
+// Verify that a released Lease4 can be created from JSON.
+TEST_F(Lease4Test, fromElementReleased) {
+    // Same as fromElement test at the exception of the state.
+    std::string json = "{"
+        "\"client-id\": \"17:34:e2:ff:09:92:54\","
+        "\"cltt\": 12345678,"
+        "\"fqdn-fwd\": true,"
+        "\"fqdn-rev\": true,"
+        "\"hostname\": \"urania.example.ORG\","
+        "\"hw-address\": \"08:00:2b:02:3f:4e\","
+        "\"ip-address\": \"192.0.2.3\","
+        "\"state\": 3,"
+        "\"subnet-id\": 789,"
+        "\"pool-id\": 5,"
+        "\"user-context\": { \"foo\": \"bar\" },"
+        "\"valid-lft\": 3600 "
+        "}";
+
+    Lease4Ptr lease;
+    ASSERT_NO_THROW(lease = Lease4::fromElement(Element::fromJSON(json)));
+
+    ASSERT_TRUE(lease);
+
+    EXPECT_EQ(Lease::STATE_RELEASED, lease->state_);
+}
+
 // Test that specifying invalid values for a lease or not specifying
 // mandatory lease parameters causes an error while parsing the lease.
 TEST_F(Lease4Test, fromElementInvalidValues) {
@@ -590,6 +616,7 @@ TEST_F(Lease4Test, stateToText) {
     EXPECT_EQ("declined", Lease4::statesToText(Lease::STATE_DECLINED));
     EXPECT_EQ("expired-reclaimed", Lease4::statesToText(Lease::STATE_EXPIRED_RECLAIMED));
     EXPECT_EQ("released", Lease4::statesToText(Lease::STATE_RELEASED));
+    EXPECT_EQ("unknown (4)", Lease4::statesToText(4));
 }
 
 /// @brief Creates an instance of the lease with certain FQDN data.
@@ -1299,6 +1326,35 @@ TEST(Lease6Test, fromElementPD) {
     EXPECT_EQ(400, lease->preferred_lft_);
 }
 
+  // Verify that a released Lease6 can be created from JSON.
+TEST(Lease6Test, fromElementReleased) {
+    // Same as fromElementNA test at the exception of the state.
+    std::string json = "{"
+        "\"cltt\": 12345678,"
+        "\"duid\": \"00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f\","
+        "\"fqdn-fwd\": false,"
+        "\"fqdn-rev\": false,"
+        "\"hostname\": \"urania.EXAMPLE.org\","
+        "\"hw-address\": \"08:00:2b:02:3f:4e\","
+        "\"iaid\": 123456,"
+        "\"ip-address\": \"2001:db8::1\","
+        "\"preferred-lft\": 400,"
+        "\"state\": 3,"
+        "\"subnet-id\": 5678,"
+        "\"pool-id\": 5,"
+        "\"type\": \"IA_NA\","
+        "\"user-context\": { \"foobar\": 1234 },"
+        "\"valid-lft\": 800"
+        "}";
+
+    Lease6Ptr lease;
+    ASSERT_NO_THROW(lease = Lease6::fromElement(Element::fromJSON(json)));
+
+    ASSERT_TRUE(lease);
+
+    EXPECT_EQ(Lease::STATE_RELEASED, lease->state_);
+}
+
 // Test that specifying invalid values for a lease or not specifying
 // mandatory lease parameters causes an error while parsing the lease.
 TEST(Lease6Test, fromElementInvalidValues) {
@@ -1365,6 +1421,7 @@ TEST(Lease6Test, stateToText) {
     EXPECT_EQ("declined", Lease6::statesToText(Lease::STATE_DECLINED));
     EXPECT_EQ("expired-reclaimed", Lease6::statesToText(Lease::STATE_EXPIRED_RECLAIMED));
     EXPECT_EQ("released", Lease6::statesToText(Lease::STATE_RELEASED));
+    EXPECT_EQ("unknown (4)", Lease6::statesToText(4));
 }
 
 } // end of anonymous namespace
