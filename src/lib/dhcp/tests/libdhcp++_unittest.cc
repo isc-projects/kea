@@ -3324,6 +3324,9 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
     LibDhcpTest::testStdOptionDefs6(D6O_IPV6_ADDRESS_ANDSF, begin, end,
                                     typeid(Option6AddrLst));
 
+    LibDhcpTest::testStdOptionDefs6(D6O_ADDR_REG_ENABLE, begin, end,
+                                    typeid(Option));
+
     // RFC7598 options
     LibDhcpTest::testOptionDefs6(MAPE_V6_OPTION_SPACE, D6O_S46_RULE, begin, end,
                                  typeid(OptionCustom), V4V6_RULE_OPTION_SPACE);

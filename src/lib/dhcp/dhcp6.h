@@ -154,9 +154,19 @@ enum DHCPv6OptionType {
 // D6O_F_STATE_EXPIRATION_TIME            = 134, /* RFC8156 */
    D6O_RELAY_SOURCE_PORT                  = 135, /* RFC8357 */
    D6O_V6_SZTP_REDIRECT                   = 136, /* RFC8572 */
-   // Option codes 137-142 are unassigned.
+// D6O_S46_BIND_IPV6_PREFIX               = 137, /* RFC8539 */
+// D6O_IA_LL                              = 138, /* RFC8947 */
+// D6O_LLADDR                             = 139, /* RFC8947 */
+// D6O_SLAP_QUAD                          = 140, /* RFC8958 */
+// D6O_V6_DOTS_RI                         = 141, /* RFC8973 */
+// D6O_V6_DOTS_ADDRESS                    = 142, /* RFC8973 */
    D6O_IPV6_ADDRESS_ANDSF                 = 143, /* RFC6153 */
-   D6O_V6_DNR                             = 144 /* RFC9463 */
+   D6O_V6_DNR                             = 144, /* RFC9463 */
+// D6O_REGISTERED_DOMAIN                  = 145, /* RFC9527 */
+// D6O_FORWARD_DIST_MANAGER               = 146, /* RFC9527 */
+// D6O_REVERSE_DIST_MANAGER               = 147, /* RFC9527 */
+   D6O_ADDR_REG_ENABLE                    = 148 /* RFC3683 */
+// 149 and 150 temporary assigned.
 };
 
 /*
@@ -236,6 +246,8 @@ enum DHCPv6MessageType {
    DHCPV6_DISCONNECT           = 33,
    DHCPV6_STATE                = 34,
    DHCPV6_CONTACT              = 35,
+   DHCPV6_ADD_REG_INFORM       = 36,
+   DHCPV6_ADD_REG_REPLY        = 37,
    DHCPV6_TYPES_EOF
 };
 

@@ -1858,6 +1858,8 @@ types are given in :ref:`dhcp-types`.
    |                          |                 | uint16, fqdn,   |                 |
    |                          |                 | binary)         |                 |
    +--------------------------+-----------------+-----------------+-----------------+
+   | addr-reg-enable          | 148             | empty           | false           |
+   +--------------------------+-----------------+-----------------+-----------------+
 
 Options marked with (1) have option definitions, but the logic behind
 them is not implemented. That means that, technically, Kea knows how to
