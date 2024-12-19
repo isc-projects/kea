@@ -1034,7 +1034,7 @@ IfaceMgr::getLocalAddress(const IOAddress& remote_addr, const uint16_t port) {
     }
 
     // Create socket that will be used to connect to remote endpoint.
-    boost::asio::io_service io_service;
+    boost::asio::io_context io_service;
     boost::asio::ip::udp::socket sock(io_service);
 
     boost::system::error_code err_code;
