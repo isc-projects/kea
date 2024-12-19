@@ -23,6 +23,8 @@ namespace hooks {
 
 // @todo use the flat style, split into list and item
 
+string HooksLibrariesParser::default_hooks_path_ = string(DEFAULT_HOOKS_PATH);
+
 void
 HooksLibrariesParser::parse(HooksConfig& libraries, ConstElementPtr value) {
     // Initialize.
@@ -75,6 +77,11 @@ HooksLibrariesParser::parse(HooksConfig& libraries, ConstElementPtr value) {
                         " error: value of 'library' element must not be"
                         " blank (" <<
                         entry_item.second->getPosition() << ")");
+                }
+
+                // If only the name of the library was provided, add the full path.
+                if (libname.find("/") == string::npos) {
+                    libname = HooksLibrariesParser::default_hooks_path_ + "/" + libname;
                 }
 
                 // Note we have found the library name.

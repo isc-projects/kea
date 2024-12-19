@@ -1,6 +1,7 @@
 SUBDIRS = . tests
 
 AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
+AM_CPPFLAGS += -DDEFAULT_HOOKS_PATH=\"$(libdir)/kea/hooks\"
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS  = $(KEA_CXXFLAGS)
 

@@ -57,6 +57,10 @@ public:
     /// @param libraries parsed libraries information will be stored here
     /// @param value pointer to the content to be parsed
     void parse(HooksConfig& libraries, isc::data::ConstElementPtr value);
+
+    /// @brief The default installation path for hooks, used to generate full
+    /// path if only the hook name is provided.
+    static std::string default_hooks_path_;
 };
 
 }  // namespace isc::hooks

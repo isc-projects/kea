@@ -213,6 +213,33 @@ configuration would be:
    because the parameters specified for the library (or the files those
    parameters point to) may have changed.
 
+Since Kea-2.7.5, the server is able to load hooks specified only by name, if
+they reside in the default install location (the path is OS specific).
+
+::
+
+       "hooks-libraries": [
+           {
+               "library": "first_custom_hooks_example.so"
+           },
+           {
+               "library": "second_custom_hooks_example.so"
+           }
+       ]
+
+This snipper (on Ubuntu 24.04) is equivalent to:
+
+::
+
+       "hooks-libraries": [
+           {
+               "library": "/usr/lib/x86_64-linux-gnu/kea/hooks/first_custom_hooks_example.so"
+           },
+           {
+               "library": "/usr/lib/x86_64-linux-gnu/kea/hooks/second_custom_hooks_example.so"
+           }
+       ]
+
 Libraries may have additional parameters that are not mandatory, in the
 sense that there may be libraries that do not require them. However, for any
 given library there is often a requirement to specify a certain
