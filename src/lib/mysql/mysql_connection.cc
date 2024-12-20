@@ -8,6 +8,7 @@
 
 #include <asiolink/io_service.h>
 #include <asiolink/process_spawn.h>
+#include <cc/default_credentials.h>
 #include <database/database_connection.h>
 #include <database/db_log.h>
 #include <exceptions/exceptions.h>
@@ -24,6 +25,7 @@
 
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::data;
 using namespace std;
 
 namespace isc {
@@ -95,6 +97,10 @@ MySqlConnection::openDatabase() {
         password = spassword.c_str();
     } catch (...) {
         // No password.  Fine, we'll use NULL
+    }
+    if (password) {
+        // Refuse default password.
+        DefaultCredentials::check(spassword);
     }
 
     const char* name = NULL;

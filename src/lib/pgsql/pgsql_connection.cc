@@ -8,6 +8,7 @@
 
 #include <asiolink/io_service.h>
 #include <asiolink/process_spawn.h>
+#include <cc/default_credentials.h>
 #include <database/database_connection.h>
 #include <database/db_exceptions.h>
 #include <database/db_log.h>
@@ -36,6 +37,7 @@
 #include <sstream>
 
 using namespace isc::asiolink;
+using namespace isc::data;
 using namespace std;
 
 namespace isc {
@@ -357,6 +359,10 @@ PgSqlConnection::getConnParametersInternal(bool logging) {
         dbconnparameters += " password = '" + spassword + "'";
     } catch(...) {
         // No password. Fine, we'll use NULL
+    }
+    if (!spassword.empty()) {
+        // Refuse default password.
+        DefaultCredentials::check(spassword);
     }
 
     string sname;

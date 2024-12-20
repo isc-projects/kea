@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <cc/default_credentials.h>
 #include <database/db_exceptions.h>
 #include <pgsql/pgsql_connection.h>
 #include <pgsql/pgsql_exchange.h>
@@ -574,6 +575,14 @@ TEST_F(PgSqlConnectionTest, portInvalid) {
                                             INVALID_PORT_1);
     PgSqlConnection conn(DatabaseConnection::parse(conn_str));
     EXPECT_THROW(conn.getConnParameters(), DbInvalidPort);
+}
+
+// Tests that default password causes an error.
+TEST_F(PgSqlConnectionTest, defaultPassword) {
+    std::string conn_str = connectionString(PGSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_USER, DEFAULT_PASSWORD);
+    PgSqlConnection conn(DatabaseConnection::parse(conn_str));
+    EXPECT_THROW(conn.getConnParameters(), isc::data::DefaultCredential);
 }
 
 // Tests that valid connection timeout is accepted.
