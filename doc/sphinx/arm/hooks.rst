@@ -213,8 +213,10 @@ configuration would be:
    because the parameters specified for the library (or the files those
    parameters point to) may have changed.
 
-Since Kea-2.7.5, the server is able to load hooks specified only by name, if
-they reside in the default install location (the path is OS specific).
+Since Kea-2.7.6, the server is able to load hook libraries specifying only the binary name,
+if they reside in the default installation directory (the path is OS specific).
+The default hook libraries installation path is provided in the config report as
+"Hooks directory".
 
 ::
 

@@ -1,3 +1,9 @@
+2315.	[func]		razvan
+	Kea can now load hook libraries specifying only the binary name.
+	It uses the default hook libraries installation path which is
+	provided in the config report as "Hooks directory".
+	(Gitlab #2101, #3579)
+
 2314.	[func]		tmark
 	Added three new parameters which may be used to
 	influence DNS TTL to kea-dhcp4 and kea-dhcp6:
