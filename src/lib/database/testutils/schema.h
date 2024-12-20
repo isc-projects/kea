@@ -28,6 +28,7 @@ extern const char* VALID_SECURE_USER;
 extern const char* INVALID_USER;
 extern const char* VALID_PASSWORD;
 extern const char* INVALID_PASSWORD;
+extern const char* DEFAULT_PASSWORD;
 extern const char* VALID_TIMEOUT;
 extern const char* INVALID_TIMEOUT_1;
 extern const char* INVALID_TIMEOUT_2;

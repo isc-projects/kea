@@ -7,6 +7,7 @@
 #include <config.h>
 #include <cc/cfg_to_element.h>
 #include <cc/data.h>
+#include <cc/default_credentials.h>
 #include <database/database_connection.h>
 #include <database/dbaccess_parser.h>
 #include <exceptions/exceptions.h>
@@ -423,6 +424,13 @@ TEST(DatabaseConnectionTest, parseInvalid) {
     parameters = DatabaseConnection::parse(invalid);
     EXPECT_EQ(1, parameters.size());
     EXPECT_EQ("", parameters[""]);
+}
+
+// This test checks that quoted default password is refused.
+TEST(DatabaseConnectionTest, parseQuotedDefaultPassword) {
+
+    std::string bad = "user=me password='1234' name=kea type=mysql";
+    EXPECT_THROW(DatabaseConnection::parse(bad), DefaultCredential);
 }
 
 /// @brief redactedAccessString test

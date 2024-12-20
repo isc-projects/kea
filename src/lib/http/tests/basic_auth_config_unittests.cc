@@ -440,6 +440,18 @@ TEST(BasicHttpAuthConfigTest, parse) {
     EXPECT_EQ("", config.getClientList().front().getPassword());
     config.clear();
 
+    // Default password is refused.
+    password_cfg = Element::create(string("1234"));
+    client_cfg = Element::createMap();
+    client_cfg->set("user", user_cfg);
+    client_cfg->set("password", password_cfg);
+    clients_cfg = Element::createList();
+    clients_cfg->add(client_cfg);
+    cfg->set("clients", clients_cfg);
+    EXPECT_THROW_MSG(config.parse(cfg), DhcpConfigError,
+                     "password must not be a default one (:0:0)");
+    password_cfg = Element::create(string(""));
+
     // The password-file parameter must be a string.
     ElementPtr password_file_cfg = Element::create(1);
     client_cfg = Element::createMap();

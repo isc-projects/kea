@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <cc/default_credentials.h>
 #include <http/auth_log.h>
 #include <http/basic_auth_config.h>
 #include <util/filesystem.h>
@@ -224,6 +225,13 @@ BasicHttpAuthConfig::parse(const ConstElementPtr& config) {
                           << password_cfg->getPosition() << ")");
             }
             password = password_cfg->stringValue();
+            try {
+                DefaultCredentials::check(password);
+            } catch (const DefaultCredential&) {
+                isc_throw(DhcpConfigError,
+                          "password must not be a default one ("
+                          << password_cfg->getPosition() << ")");
+            }
         }
 
         // password file.

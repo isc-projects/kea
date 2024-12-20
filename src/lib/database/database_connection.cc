@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <cc/cfg_to_element.h>
+#include <cc/default_credentials.h>
 #include <database/database_connection.h>
 #include <database/db_exceptions.h>
 #include <database/db_log.h>
@@ -18,6 +19,7 @@
 #include <vector>
 
 using namespace isc::asiolink;
+using namespace isc::data;
 using namespace isc::util;
 using namespace std;
 
@@ -59,6 +61,8 @@ DatabaseConnection::parse(const std::string& dbaccess) {
                 // at the position of ending apostrophe.
                 auto password = dba.substr(password_pos + password_prefix.length(),
                                            password_end_pos - password_pos - password_prefix.length());
+                // Refuse default passwords.
+                DefaultCredentials::check(password);
                 mapped_tokens.insert(make_pair("password", password));
 
                 // We need to erase the password from the access string because the generic
