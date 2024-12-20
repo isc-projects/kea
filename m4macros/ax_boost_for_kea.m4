@@ -101,6 +101,8 @@ AC_CHECK_HEADERS(boost/asio/coroutine.hpp,,AC_MSG_RESULT(not found, using built-
 
 AC_CHECK_HEADERS(boost/integer/common_factor.hpp)
 
+AC_CHECK_HEADERS(boost/asio/io_context.hpp,,AC_MSG_ERROR([Missing boost asio io_context header: boost version must be at least 1.66]))
+
 # Verify that the path does not include standard headers by mistake.
 # There are two regex.h headers: one is a standard system header (usually
 # in /usr/include) and the second one is provided by boost. If you specify the

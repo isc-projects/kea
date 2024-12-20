@@ -101,13 +101,13 @@ public:
         work_.reset();
     }
 
-    /// @brief Return the native @c io_service object used in this wrapper.
+    /// @brief Return the native @c io_context object used in this wrapper.
     ///
     /// This is a short term work around to support other Kea modules
-    /// that share the same @c io_service with the authoritative server.
+    /// that share the same @c io_context with the authoritative server.
     /// It will eventually be removed once the wrapper interface is
     /// generalized.
-    boost::asio::io_service& getInternalIOService() {
+    boost::asio::io_context& getInternalIOService() {
         return (io_service_);
     }
 
@@ -119,8 +119,8 @@ public:
     }
 
 private:
-    boost::asio::io_service io_service_;
-    boost::asio::executor_work_guard<boost::asio::io_service::executor_type> work_;
+    boost::asio::io_context io_service_;
+    boost::asio::executor_work_guard<boost::asio::io_context::executor_type> work_;
 };
 
 IOService::IOService() : io_impl_(new IOServiceImpl()) {
@@ -169,7 +169,7 @@ IOService::stopWork() {
     io_impl_->stopWork();
 }
 
-boost::asio::io_service&
+boost::asio::io_context&
 IOService::getInternalIOService() {
     return (io_impl_->getInternalIOService());
 }

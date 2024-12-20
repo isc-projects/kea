@@ -19,6 +19,10 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+#if BOOST_VERSION < 106600
+#error "Boost ASIO older than 1.66 are not supported"
+#endif
+
 using namespace boost::asio;
 using boost::asio::ip::udp;
 using boost::asio::ip::tcp;

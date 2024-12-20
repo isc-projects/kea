@@ -12,14 +12,14 @@
 #include <functional>
 #include <list>
 
+#if BOOST_VERSION < 106600
+#error "Boost ASIO older than 1.66 are not supported"
+#endif
+
+// Include boost/asio/io_context.hpp instead?
 namespace boost {
 namespace asio {
-#if BOOST_VERSION < 106600
-    class io_service;
-#else
-    class io_context;
-    typedef io_context io_service;
-#endif
+class io_context;
 }
 }
 
@@ -32,7 +32,7 @@ class IOService;
 /// @brief Defines a smart pointer to an IOService instance.
 typedef boost::shared_ptr<IOService> IOServicePtr;
 
-/// @brief The @ref IOService class is a wrapper for the ASIO @c io_service
+/// @brief The @ref IOService class is a wrapper for the ASIO @c io_context
 /// class.
 class IOService {
     /// @brief Constructors and Destructor.
@@ -99,15 +99,15 @@ public:
     /// when all handlers have been invoked.
     void stopWork();
 
-    /// @brief Return the native @c io_service object used in this wrapper.
+    /// @brief Return the native @c io_context object used in this wrapper.
     ///
     /// This is a short term work around to support other Kea modules
-    /// that share the same @c io_service with the authoritative server.
+    /// that share the same @c io_context with the authoritative server.
     /// It will eventually be removed once the wrapper interface is
     /// generalized.
     ///
-    /// @return The internal io_service object.
-    boost::asio::io_service& getInternalIOService();
+    /// @return The internal io_context object.
+    boost::asio::io_context& getInternalIOService();
 
     /// @brief Post a callback to the end of the queue.
     ///
