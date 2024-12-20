@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <asiolink/io_address.h>
+#include <cc/default_credentials.h>
 #include <dhcpsrv/testutils/test_utils.h>
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/host.h>
@@ -226,6 +227,9 @@ TEST(PgSqlHostDataSource, OpenDatabase) {
         PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_PASSWORD)),
         DbOpenError);
     EXPECT_THROW(HostMgr::addBackend(connectionString(
+        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, DEFAULT_PASSWORD)),
+        DefaultCredential);
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_1)),
         DbInvalidTimeout);
     EXPECT_THROW(HostMgr::addBackend(connectionString(
@@ -328,6 +332,9 @@ TEST(PgSqlHostDataSource, OpenDatabaseMultiThreading) {
     EXPECT_THROW(HostMgr::addBackend(connectionString(
         PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_PASSWORD)),
         DbOpenError);
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
+        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, DEFAULT_PASSWORD)),
+        DefaultCredential);
     EXPECT_THROW(HostMgr::addBackend(connectionString(
         PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_1)),
         DbInvalidTimeout);

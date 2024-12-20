@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <asiolink/io_address.h>
+#include <cc/default_credentials.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <pgsql_lease_mgr.h>
 #include <dhcpsrv/testutils/test_utils.h>
@@ -189,6 +190,10 @@ TEST(PgSqlOpenTest, OpenDatabase) {
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_PASSWORD)),
         DbOpenError);
+
+    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
+        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, DEFAULT_PASSWORD)),
+         isc::data::DefaultCredential);
 
     // Check for invalid timeouts
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
