@@ -161,8 +161,7 @@ TEST_F(HttpsListenerTest, addressInUse) {
     tcp::acceptor acceptor(io_service_->getInternalIOService());
     // Use other port than SERVER_PORT to make sure that this TCP connection
     // doesn't affect subsequent tests.
-    tcp::endpoint endpoint(address::from_string(SERVER_ADDRESS),
-                           SERVER_PORT + 1);
+    tcp::endpoint endpoint(make_address(SERVER_ADDRESS), SERVER_PORT + 1);
     acceptor.open(endpoint.protocol());
     acceptor.bind(endpoint);
 

@@ -114,7 +114,7 @@ public:
     /// Upon successful connection, carry out the TLS handshake. If the handshake
     /// completes successful start sending requests.
     void start() {
-        isc::asiolink::TCPEndpoint endpoint(boost::asio::ip::address::from_string(server_address_), server_port_);
+        isc::asiolink::TCPEndpoint endpoint(boost::asio::ip::make_address(server_address_), server_port_);
         SocketCallback socket_cb(
             [this](boost::system::error_code ec, size_t /*length */) {
                 receive_done_ = false;

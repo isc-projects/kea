@@ -179,7 +179,7 @@ public:
 
     /// @brief Runs IO service with optional timeout.
     ///
-    /// We iterate over calls to asio::io_service.run(), until
+    /// We iterate over calls to asio::io_context.run(), until
     /// all the clients have completed their requests.  We do it this way
     /// because the test clients stop the io_service when they're
     /// through with a request.

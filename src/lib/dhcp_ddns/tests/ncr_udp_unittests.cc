@@ -222,7 +222,7 @@ public:
 
         // Create an endpoint pointed at the listener.
         boost::asio::ip::udp::endpoint
-            listener_endpoint(boost::asio::ip::address::from_string(TEST_ADDRESS),
+            listener_endpoint(boost::asio::ip::make_address(TEST_ADDRESS),
                               LISTENER_PORT);
 
         // A response message is now ready to send. Send it!

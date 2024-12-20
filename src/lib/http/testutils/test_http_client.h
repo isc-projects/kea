@@ -117,7 +117,7 @@ public:
     ///
     /// @param request HTTP request in the textual format.
     virtual void startRequest(const std::string& request) {
-        tcp::endpoint endpoint(address::from_string(server_address_), server_port_);
+        tcp::endpoint endpoint(make_address(server_address_), server_port_);
         auto ref = shared_from_this();
         socket_.async_connect(endpoint,
                               [this, ref, request](const boost::system::error_code& ec) {
@@ -392,8 +392,7 @@ public:
     ///
     /// @param request HTTP request in the textual format.
     virtual void startRequest(const std::string& request) {
-        tcp::endpoint endpoint(address::from_string(server_address_),
-                               server_port_);
+        tcp::endpoint endpoint(make_address(server_address_), server_port_);
         auto ref = shared_from_this();
         stream_.lowest_layer().async_connect(endpoint,
                                              [this, ref, request](const boost::system::error_code& ec) {
