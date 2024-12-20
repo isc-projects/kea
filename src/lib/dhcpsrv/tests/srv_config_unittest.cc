@@ -2283,4 +2283,231 @@ TEST_F(SrvConfigTest, sanityChecksDdnsTtlParameters) {
     }
 }
 
+/// @brief Class for DdnsParams class.
+class DdnsParamsTest : public testing::Test {
+public:
+    /// @brief Constructor
+    DdnsParamsTest() = default;
+
+    /// @brief Destructor
+    virtual ~DdnsParamsTest() = default;
+
+    /// @brief Verifies that the DdnsParams accessors return parameter values
+    /// from the proper source.
+    ///
+    /// @param subnet Subnet under test.
+    /// @param address Address to locate the pool within the subnet via 
+    /// DdnsParams::setPoolFromAddress().
+    /// @param expected_pool expected Pool returned by setPoolFromAddress().
+    void checkDdnsParameters(SubnetPtr subnet, IOAddress address, PoolPtr expected_pool) {
+        // Create DdnsParams instance with the subnet.
+        DdnsParamsPtr params(new DdnsParams(subnet, true));
+
+        // Attempt to locate the pool based on the given address.
+        PoolPtr pool = params->setPoolFromAddress(address);
+
+        if (!expected_pool) {
+            // Pool should not have been found.
+            ASSERT_FALSE(pool);
+        } else {
+            // Pool should have been found.
+            ASSERT_TRUE(pool);
+        }
+
+        // Verify each of the parameters comes from the expected source, either
+        // the subnet or the pool.
+        if (pool && !(pool->getDdnsSendUpdates().unspecified())) {
+            EXPECT_EQ(params->getEnableUpdates(), pool->getDdnsSendUpdates().get());
+        } else {
+            EXPECT_EQ(params->getEnableUpdates(), subnet->getDdnsSendUpdates().get());
+        }
+
+        if (pool && !(pool->getDdnsOverrideNoUpdate().unspecified())) {
+            EXPECT_EQ(params->getOverrideNoUpdate(), pool->getDdnsOverrideNoUpdate().get());
+        } else {
+            EXPECT_EQ(params->getOverrideNoUpdate(), subnet->getDdnsOverrideNoUpdate().get());
+        }
+        
+        if (pool && !(pool->getDdnsOverrideClientUpdate().unspecified())) {
+            EXPECT_EQ(params->getOverrideClientUpdate(), pool->getDdnsOverrideClientUpdate().get());
+        } else {
+            EXPECT_EQ(params->getOverrideClientUpdate(), subnet->getDdnsOverrideClientUpdate().get());
+        }
+
+        if (pool && !(pool->getDdnsReplaceClientNameMode().unspecified())) {
+            EXPECT_EQ(params->getReplaceClientNameMode(), pool->getDdnsReplaceClientNameMode().get());
+        } else {
+            EXPECT_EQ(params->getReplaceClientNameMode(), subnet->getDdnsReplaceClientNameMode().get());
+        }
+
+        if (pool && !(pool->getDdnsGeneratedPrefix().unspecified())) {
+            EXPECT_EQ(params->getGeneratedPrefix(), pool->getDdnsGeneratedPrefix().get());
+        } else {
+            EXPECT_EQ(params->getGeneratedPrefix(), subnet->getDdnsGeneratedPrefix().get());
+        }
+
+        if (pool && !(pool->getDdnsQualifyingSuffix().unspecified())) {
+            EXPECT_EQ(params->getQualifyingSuffix(), pool->getDdnsQualifyingSuffix().get());
+        } else {
+            EXPECT_EQ(params->getQualifyingSuffix(), subnet->getDdnsQualifyingSuffix().get());
+        }
+
+        if (pool && !(pool->getDdnsUpdateOnRenew().unspecified())) {
+            EXPECT_EQ(params->getUpdateOnRenew(), pool->getDdnsUpdateOnRenew().get());
+        } else {
+            EXPECT_EQ(params->getUpdateOnRenew(), subnet->getDdnsUpdateOnRenew().get());
+        }
+
+        if (pool && !(pool->getDdnsConflictResolutionMode().unspecified())) {
+            EXPECT_EQ(params->getConflictResolutionMode(), pool->getDdnsConflictResolutionMode().get());
+        } else {
+            EXPECT_EQ(params->getConflictResolutionMode(), subnet->getDdnsConflictResolutionMode().get());
+        }
+
+        if (pool && !(pool->getDdnsTtlPercent().unspecified())) {
+            EXPECT_EQ(params->getTtlPercent(), pool->getDdnsTtlPercent().get());
+        } else {
+            EXPECT_EQ(params->getTtlPercent(), subnet->getDdnsTtlPercent().get());
+        }
+
+        if (pool && !(pool->getDdnsTtl().unspecified())) {
+            EXPECT_EQ(params->getTtl(), pool->getDdnsTtl().get());
+        } else {
+            EXPECT_EQ(params->getTtl(), subnet->getDdnsTtl().get());
+        }
+
+        if (pool && !(pool->getDdnsTtlMin().unspecified())) {
+            EXPECT_EQ(params->getTtlMin(), pool->getDdnsTtlMin().get());
+        } else {
+            EXPECT_EQ(params->getTtlMin(), subnet->getDdnsTtlMin().get());
+        }
+
+        if (pool && !(pool->getDdnsTtlMax().unspecified())) {
+            EXPECT_EQ(params->getTtlMax(), pool->getDdnsTtlMax().get());
+        } else {
+            EXPECT_EQ(params->getTtlMax(), subnet->getDdnsTtlMax().get());
+        }
+    }
+};
+
+TEST_F(DdnsParamsTest, checkDdnsParameters4) {
+    // Create a subnet.
+    Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3, 10));
+
+    // Set values in the subnet for each of the DDNS parameters.
+    subnet->setDdnsSendUpdates(false);
+    subnet->setDdnsOverrideNoUpdate(true);
+    subnet->setDdnsOverrideClientUpdate(true);
+    subnet->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_ALWAYS);
+    subnet->setDdnsGeneratedPrefix("sn_prefix");
+    subnet->setDdnsQualifyingSuffix("sn_suffix");
+    subnet->setDdnsUpdateOnRenew(true);
+    subnet->setDdnsConflictResolutionMode("check-with-dhcid");
+    subnet->setDdnsTtlPercent(0.75);
+    subnet->setDdnsTtl(500);
+    subnet->setDdnsTtlMin(250);
+    subnet->setDdnsTtlMax(750);
+    subnet->setHostnameCharReplacement("X");
+    subnet->setHostnameCharSet("[^A-Z]");
+
+    // Create a pool and add it to the subnet. 
+    Pool4Ptr pool(new Pool4(IOAddress("192.0.2.1"), IOAddress("192.0.2.100")));
+    ASSERT_NO_THROW(subnet->addPool(pool));
+
+    {
+        // Values all come from subnet, address not in pool.
+        SCOPED_TRACE("Address not in pool");
+        checkDdnsParameters(subnet, IOAddress("192.0.2.200"), Pool4Ptr());
+    }
+
+    {
+        // Values all come from subnet, address in pool but pool specifies no values.
+        SCOPED_TRACE("Pool exists but specifies none");
+        checkDdnsParameters(subnet, IOAddress("192.0.2.50"), pool);
+    }
+
+    // Set values in the pool for each of the DDNS parameters.
+    pool->setDdnsSendUpdates(true);
+    pool->setDdnsOverrideNoUpdate(false);
+    pool->setDdnsOverrideClientUpdate(false);
+    pool->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_NEVER);
+    pool->setDdnsGeneratedPrefix("pl_prefix");
+    pool->setDdnsQualifyingSuffix("pl_suffix");
+    pool->setDdnsUpdateOnRenew(false);
+    pool->setDdnsConflictResolutionMode("check-without-dhcid");
+    pool->setDdnsTtlPercent(0.85);
+    pool->setDdnsTtl(400);
+    pool->setDdnsTtlMin(150);
+    pool->setDdnsTtlMax(650);
+    pool->setHostnameCharReplacement("y");
+    pool->setHostnameCharSet("[^a-z]");
+
+    {
+        // Values all come from pool.
+        SCOPED_TRACE("Pool specifies all");
+        checkDdnsParameters(subnet, IOAddress("192.0.2.50"), pool);
+    }
+}
+
+TEST_F(DdnsParamsTest, checkDdnsParameters6) {
+    // Create a subnet.
+    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 64,
+                                  1, 2, 3, 4, SubnetID(1)));
+
+    // Set values in the subnet for each of the DDNS parameters.
+    subnet->setDdnsSendUpdates(false);
+    subnet->setDdnsOverrideNoUpdate(true);
+    subnet->setDdnsOverrideClientUpdate(true);
+    subnet->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_ALWAYS);
+    subnet->setDdnsGeneratedPrefix("sn_prefix");
+    subnet->setDdnsQualifyingSuffix("sn_suffix");
+    subnet->setDdnsUpdateOnRenew(true);
+    subnet->setDdnsConflictResolutionMode("check-with-dhcid");
+    subnet->setDdnsTtlPercent(0.75);
+    subnet->setDdnsTtl(500);
+    subnet->setDdnsTtlMin(250);
+    subnet->setDdnsTtlMax(750);
+    subnet->setHostnameCharReplacement("X");
+    subnet->setHostnameCharSet("[^A-Z]");
+
+    // Create a pool and add it to the subnet. 
+    Pool6Ptr pool(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::"), 
+                            IOAddress("2001:db8:1::100")));
+    ASSERT_NO_THROW(subnet->addPool(pool));
+
+    {
+        // Values all come from subnet, address not in pool.
+        SCOPED_TRACE("Address not in pool");
+        checkDdnsParameters(subnet, IOAddress("2001:db8:1::200"), Pool6Ptr());
+    }
+
+    {
+        // Values all come from subnet, address in pool but pool specifies no values.
+        SCOPED_TRACE("Pool exists but specifies none");
+        checkDdnsParameters(subnet, IOAddress("2001:db8:1::10"), pool);
+    }
+
+    // Set values in the pool for each of the DDNS parameters.
+    pool->setDdnsSendUpdates(true);
+    pool->setDdnsOverrideNoUpdate(false);
+    pool->setDdnsOverrideClientUpdate(false);
+    pool->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_NEVER);
+    pool->setDdnsGeneratedPrefix("pl_prefix");
+    pool->setDdnsQualifyingSuffix("pl_suffix");
+    pool->setDdnsUpdateOnRenew(false);
+    pool->setDdnsConflictResolutionMode("check-without-dhcid");
+    pool->setDdnsTtlPercent(0.85);
+    pool->setDdnsTtl(400);
+    pool->setDdnsTtlMin(150);
+    pool->setDdnsTtlMax(650);
+    pool->setHostnameCharReplacement("y");
+    pool->setHostnameCharSet("[^a-z]");
+
+    {
+        // Values all come from pool.
+        SCOPED_TRACE("Pool specifies all");
+        checkDdnsParameters(subnet, IOAddress("2001:db8:1::10"), pool);
+    }
+}
+
 } // end of anonymous namespace

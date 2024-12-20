@@ -51,26 +51,15 @@ public:
     /// @brief Default constructor
     DdnsParams() : subnet_(), d2_client_enabled_(false) {}
 
-    /// @brief Constructor for DHCPv4 subnets
+    /// @brief Constructor
     ///
-    /// @param subnet Pointer to Subnet4 instance to use for fetching
+    /// @param subnet Pointer to subnet instance to use for fetching
     /// parameter values (typically this is the selected subnet).
     /// @param d2_client_enabled flag which indicates whether or not
     /// D2Client is enabled (typically the value should come from
     /// global D2Client configuration).
-    DdnsParams(const ConstSubnet4Ptr& subnet, bool d2_client_enabled)
-        : subnet_(boost::dynamic_pointer_cast<const Subnet>(subnet)),
-          d2_client_enabled_(d2_client_enabled) {}
-
-    /// @brief Constructor for DHCPv6 subnets
-    ///
-    /// @param subnet Pointer to Subnet6 instance to use for fetching
-    /// parameter values (typically this is the selected subnet).
-    /// @param d2_client_enabled flag which indicates whether or not
-    /// D2Client is enabled (typically the value should come from
-    /// global D2Client configuration).
-    DdnsParams(const ConstSubnet6Ptr& subnet, bool d2_client_enabled)
-        : subnet_(boost::dynamic_pointer_cast<const Subnet>(subnet)),
+    DdnsParams(const ConstSubnetPtr& subnet, bool d2_client_enabled)
+        : subnet_(subnet),
           d2_client_enabled_(d2_client_enabled) {}
 
     /// @brief Returns whether or not DHCP DDNS updating is enabled.
@@ -192,12 +181,25 @@ public:
         }
     }
 
+    PoolPtr setPoolFromAddress(const asiolink::IOAddress& address);
+
+    void resetPool() {
+        pool_.reset();
+    }
+
+    PoolPtr getPool() const {
+        return (pool_);
+    }
+
 private:
     /// @brief Subnet from which values should be fetched.
     ConstSubnetPtr subnet_;
 
     /// @brief Flag indicating whether or not the D2Client is enabled.
     bool d2_client_enabled_;
+
+    /// @brief Pool within the subnet from which values should be fetched.
+    PoolPtr pool_;
 };
 
 /// @brief Defines a pointer for DdnsParams instances.

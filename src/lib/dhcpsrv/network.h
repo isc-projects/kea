@@ -834,8 +834,7 @@ public:
         ddns_update_on_renew_ = ddns_update_on_renew;
     }
 
-
-    /// @brief Returns ib-ddns-conflict-resolution-mode
+    /// @brief Returns ddns-conflict-resolution-mode
     ///
     /// @param inheritance inheritance mode to be used.
     util::Optional<std::string>
@@ -846,7 +845,7 @@ public:
                                      CfgGlobals::DDNS_CONFLICT_RESOLUTION_MODE));
     }
 
-    /// @brief Sets new ib-ddns-conflict-resolution-mode
+    /// @brief Sets new ddns-conflict-resolution-mode
     ///
     /// @param ddns_conflict_resolution_mode New value to use.
     void setDdnsConflictResolutionMode(const util::Optional<std::string>& ddns_conflict_resolution_mode) {

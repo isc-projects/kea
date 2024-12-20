@@ -25,6 +25,131 @@ using namespace isc::asiolink;
 
 namespace {
 
+/// @brief Class for testing pools.
+class PoolTest : public ::testing::Test {
+public:
+    /// @brief Constructor
+    PoolTest() = default;
+
+    /// @brief Destructor
+    virtual ~PoolTest() = default;
+
+    /// @brief Verifies the DDNS parameter accessors and the
+    /// hasDdnsParameters() method.
+    ///
+    /// @param family sets the protocol to be used AF_INET or AF_INET6.
+    void checkDdnsParamters(uint16_t family) {
+        PoolPtr pool;
+        if (family == AF_INET) {
+            pool.reset(new Pool4(IOAddress("192.0.2.0"), 25));
+        } else {
+            pool.reset(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8::1"),
+                                 IOAddress("2001:db8::2")));
+        }
+
+        EXPECT_FALSE(pool->hasDdnsParameters());
+
+        util::Optional<bool> bool_unspec;
+        util::Optional<bool> bool_spec(true);
+
+        pool->setDdnsSendUpdates(bool_spec);
+        EXPECT_EQ(pool->getDdnsSendUpdates(), bool_spec);
+        EXPECT_TRUE(pool->hasDdnsParameters());
+        pool->setDdnsSendUpdates(bool_unspec);
+        EXPECT_FALSE(pool->hasDdnsParameters());
+
+        pool->setDdnsOverrideNoUpdate(bool_spec);
+        EXPECT_EQ(pool->getDdnsOverrideNoUpdate(), bool_spec);
+        EXPECT_TRUE(pool->hasDdnsParameters());
+        pool->setDdnsOverrideNoUpdate(bool_unspec);
+        EXPECT_FALSE(pool->hasDdnsParameters());
+
+        pool->setDdnsOverrideClientUpdate(bool_spec);
+        EXPECT_EQ(pool->getDdnsOverrideClientUpdate(), bool_spec);
+        EXPECT_TRUE(pool->hasDdnsParameters());
+        pool->setDdnsOverrideClientUpdate(bool_unspec);
+        EXPECT_FALSE(pool->hasDdnsParameters());
+
+        util::Optional<D2ClientConfig::ReplaceClientNameMode> mode_unspec;
+        util::Optional<D2ClientConfig::ReplaceClientNameMode>
+            mode_spec(D2ClientConfig::RCM_WHEN_PRESENT);
+
+        pool->setDdnsReplaceClientNameMode(mode_spec);
+        EXPECT_EQ(pool->getDdnsReplaceClientNameMode(), mode_spec);
+        EXPECT_TRUE(pool->hasDdnsParameters());
+        pool->setDdnsReplaceClientNameMode(mode_unspec);
+        EXPECT_FALSE(pool->hasDdnsParameters());
+
+        util::Optional<std::string> string_unspec;
+        util::Optional<std::string> string_spec("some_string");
+
+        pool->setDdnsGeneratedPrefix(string_spec);
+        EXPECT_EQ(pool->getDdnsGeneratedPrefix(), string_spec);
+        EXPECT_TRUE(pool->hasDdnsParameters());
+        pool->setDdnsGeneratedPrefix(string_unspec);
+        EXPECT_FALSE(pool->hasDdnsParameters());
+
+        pool->setDdnsQualifyingSuffix(string_spec);
+        EXPECT_EQ(pool->getDdnsQualifyingSuffix(), string_spec);
+        EXPECT_TRUE(pool->hasDdnsParameters());
+        pool->setDdnsQualifyingSuffix(string_unspec);
+        EXPECT_FALSE(pool->hasDdnsParameters());
+
+        pool->setDdnsUpdateOnRenew(bool_spec);
+        EXPECT_EQ(pool->getDdnsUpdateOnRenew(), bool_spec);
+        EXPECT_TRUE(pool->hasDdnsParameters());
+        pool->setDdnsUpdateOnRenew(bool_unspec);
+        EXPECT_FALSE(pool->hasDdnsParameters());
+
+        pool->setDdnsConflictResolutionMode(string_spec);
+        EXPECT_EQ(pool->getDdnsConflictResolutionMode(), string_spec);
+        EXPECT_TRUE(pool->hasDdnsParameters());
+        pool->setDdnsConflictResolutionMode(string_unspec);
+
+        util::Optional<double> double_unspec;
+        util::Optional<double> double_spec(0.5);
+
+        pool->setDdnsTtlPercent(double_spec);
+        EXPECT_EQ(pool->getDdnsTtlPercent(), double_spec);
+        EXPECT_TRUE(pool->hasDdnsParameters());
+        pool->setDdnsTtlPercent(double_unspec);
+        EXPECT_FALSE(pool->hasDdnsParameters());
+
+        util::Optional<uint32_t> int_unspec;
+        util::Optional<uint32_t> int_spec(750);
+
+        pool->setDdnsTtl(int_spec);
+        EXPECT_EQ(pool->getDdnsTtl(), int_spec);
+        EXPECT_TRUE(pool->hasDdnsParameters());
+        pool->setDdnsTtl(int_unspec);
+        EXPECT_FALSE(pool->hasDdnsParameters());
+
+        pool->setDdnsTtlMin(int_spec);
+        EXPECT_EQ(pool->getDdnsTtlMin(), int_spec);
+        EXPECT_TRUE(pool->hasDdnsParameters());
+        pool->setDdnsTtlMin(int_unspec);
+        EXPECT_FALSE(pool->hasDdnsParameters());
+
+        pool->setDdnsTtlMax(int_spec);
+        EXPECT_EQ(pool->getDdnsTtlMax(), int_spec);
+        EXPECT_TRUE(pool->hasDdnsParameters());
+        pool->setDdnsTtlMax(int_unspec);
+        EXPECT_FALSE(pool->hasDdnsParameters());
+
+        pool->setHostnameCharSet(string_spec);
+        EXPECT_EQ(pool->getHostnameCharSet(), string_spec);
+        EXPECT_TRUE(pool->hasDdnsParameters());
+        pool->setHostnameCharSet(string_unspec);
+        EXPECT_FALSE(pool->hasDdnsParameters());
+
+        pool->setHostnameCharReplacement(string_spec);
+        EXPECT_EQ(pool->getHostnameCharReplacement(), string_spec);
+        EXPECT_TRUE(pool->hasDdnsParameters());
+        pool->setHostnameCharReplacement(string_unspec);
+        EXPECT_FALSE(pool->hasDdnsParameters());
+    }
+};
+
 TEST(Pool4Test, constructorFirstLast) {
 
     // let's construct 192.0.2.1-192.0.2.255 pool
@@ -127,6 +252,45 @@ TEST(Pool4Test, toElement) {
         " \"pool-id\": 5 "
         "}";
     isc::test::runToElementTest<Pool4>(expected3, pool3);
+
+    pool3.setDdnsSendUpdates(true);
+    pool3.setDdnsOverrideNoUpdate(true);
+    pool3.setDdnsOverrideClientUpdate(true);
+    pool3.setDdnsReplaceClientNameMode(D2ClientConfig::RCM_NEVER);
+    pool3.setDdnsGeneratedPrefix("prefix");
+    pool3.setDdnsQualifyingSuffix("example.com.");
+    pool3.setDdnsUpdateOnRenew(false);
+    pool3.setDdnsConflictResolutionMode("check-without-dhcid");
+    pool3.setDdnsTtlPercent(0.85);
+    pool3.setDdnsTtl(400);
+    pool3.setDdnsTtlMin(150);
+    pool3.setDdnsTtlMax(650);
+    pool3.setHostnameCharReplacement("x");
+    pool3.setHostnameCharSet("[^A-Z]");
+
+    std::string expected4 = R"(
+        {
+         "pool": "192.0.2.0/25",
+         "option-data": [ ],
+         "pool-id": 5,
+         "ddns-send-updates": true,
+         "ddns-override-no-update": true,
+         "ddns-override-client-update": true,
+         "ddns-replace-client-name": "never",
+         "ddns-generated-prefix": "prefix",
+         "ddns-qualifying-suffix": "example.com.",
+         "ddns-update-on-renew": false,
+         "ddns-conflict-resolution-mode": "check-without-dhcid",
+         "ddns-ttl": 400,
+         "ddns-ttl-max": 650,
+         "ddns-ttl-min": 150,
+         "ddns-ttl-percent": 0.85,
+         "hostname-char-replacement": "x",
+         "hostname-char-set": "[^A-Z]"
+        })";
+
+    isc::test::runToElementTest<Pool4>(expected4, pool3);
+
 }
 
 // This test checks that it is possible to specify pool specific options.
@@ -667,6 +831,14 @@ TEST(Pool6Test, additionalClasses) {
 
     // Check that 'foo' is marked for additional evaluation
     EXPECT_TRUE(pool.getAdditionalClasses().contains("foo"));
+}
+
+TEST_F(PoolTest, ddnsParameters4) {
+    checkDdnsParamters(AF_INET);
+}
+
+TEST_F(PoolTest, ddnsParameters6) {
+    checkDdnsParamters(AF_INET6);
 }
 
 }  // end of anonymous namespace

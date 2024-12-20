@@ -39,7 +39,7 @@ namespace {
 template<typename LeasePtrType, typename IdentifierType>
 void queueNCRCommon(const NameChangeType& chg_type, const LeasePtrType& lease,
                     const IdentifierType& identifier, const std::string& label,
-                    NetworkPtr subnet) {
+                    const ConstSubnetPtr subnet) {
     // Check if there is a need for update.
     if (lease->hostname_.empty() || (!lease->fqdn_fwd_ && !lease->fqdn_rev_)
         || !CfgMgr::instance().getD2ClientMgr().ddnsEnabled()) {
@@ -51,22 +51,26 @@ void queueNCRCommon(const NameChangeType& chg_type, const LeasePtrType& lease,
         return;
     }
 
-     ConflictResolutionMode conflict_resolution_mode = CHECK_WITH_DHCID;
-     util::Optional<double> ddns_ttl_percent;
-     util::Optional<uint32_t> ddns_ttl;
-     util::Optional<uint32_t> ddns_ttl_min;
-     util::Optional<uint32_t> ddns_ttl_max;
-     if (subnet) {
-         auto mode = subnet->getDdnsConflictResolutionMode();
-         if (!mode.empty()) {
-             conflict_resolution_mode = StringToConflictResolutionMode(mode);
-         }
+    ConflictResolutionMode conflict_resolution_mode = CHECK_WITH_DHCID;
+    util::Optional<double> ddns_ttl_percent;
+    util::Optional<uint32_t> ddns_ttl;
+    util::Optional<uint32_t> ddns_ttl_min;
+    util::Optional<uint32_t> ddns_ttl_max;
+    if (subnet) {
+        // Create a DdnsParams so we have access to pool scope values.
+        DdnsParams ddns_params(subnet, true);
+        static_cast<void>(ddns_params.setPoolFromAddress(lease->addr_));
 
-         ddns_ttl_percent = subnet->getDdnsTtlPercent();
-         ddns_ttl = subnet->getDdnsTtl();
-         ddns_ttl_min = subnet->getDdnsTtlMin();
-         ddns_ttl_max = subnet->getDdnsTtlMax();
-     }
+        auto mode = ddns_params.getConflictResolutionMode();
+        if (!mode.empty()) {
+            conflict_resolution_mode = StringToConflictResolutionMode(mode);
+        }
+
+        ddns_ttl_percent = ddns_params.getTtlPercent();
+        ddns_ttl = ddns_params.getTtl();
+        ddns_ttl_min = ddns_params.getTtlMin();
+        ddns_ttl_max = ddns_params.getTtlMax();
+    }
 
     try {
         // Create DHCID
@@ -112,8 +116,8 @@ void queueNCR(const NameChangeType& chg_type, const Lease4Ptr& lease) {
     if (lease) {
         // Figure out from the lease's subnet if we should use conflict resolution.
         // If there's no subnet, something hinky is going on so we'll set it true.
-        Subnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()
-                            ->getCfgSubnets4()->getSubnet(lease->subnet_id_);
+        ConstSubnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()
+                                 ->getCfgSubnets4()->getSubnet(lease->subnet_id_);
 
         // Client id takes precedence over HW address.
         if (lease->client_id_) {
@@ -133,7 +137,7 @@ void queueNCR(const NameChangeType& chg_type, const Lease6Ptr& lease) {
     if (lease && (lease->type_ != Lease::TYPE_PD) && lease->duid_) {
         // Figure out from the lease's subnet if we should use conflict resolution.
         // If there's no subnet, something hinky is going on so we'll set it true.
-        Subnet6Ptr subnet = CfgMgr::instance().getCurrentCfg()
+        ConstSubnet6Ptr subnet = CfgMgr::instance().getCurrentCfg()
                             ->getCfgSubnets6()->getSubnet(lease->subnet_id_);
         queueNCRCommon(chg_type, lease, *(lease->duid_),
                        Pkt6::makeLabel(lease->duid_, lease->hwaddr_), subnet);

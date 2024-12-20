@@ -977,6 +977,13 @@ DdnsParams::getEnableUpdates() const {
         return (false);
     }
 
+    if (pool_) {
+        auto optional = pool_->getDdnsSendUpdates();
+        if (!optional.unspecified()) {
+            return (optional.get());
+        }
+    }
+
     return (d2_client_enabled_ && subnet_->getDdnsSendUpdates().get());
 }
 
@@ -986,12 +993,26 @@ DdnsParams::getOverrideNoUpdate() const {
         return (false);
     }
 
+    if (pool_) {
+        auto optional = pool_->getDdnsOverrideNoUpdate();
+        if (!optional.unspecified()) {
+            return (optional.get());
+        }
+    }
+
     return (subnet_->getDdnsOverrideNoUpdate().get());
 }
 
 bool DdnsParams::getOverrideClientUpdate() const {
     if (!subnet_) {
         return (false);
+    }
+
+    if (pool_) {
+        auto optional = pool_->getDdnsOverrideClientUpdate();
+        if (!optional.unspecified()) {
+            return (optional.get());
+        }
     }
 
     return (subnet_->getDdnsOverrideClientUpdate().get());
@@ -1003,6 +1024,13 @@ DdnsParams::getReplaceClientNameMode() const {
         return (D2ClientConfig::RCM_NEVER);
     }
 
+    if (pool_) {
+        auto optional = pool_->getDdnsReplaceClientNameMode();
+        if (!optional.unspecified()) {
+            return (optional.get());
+        }
+    }
+
     return (subnet_->getDdnsReplaceClientNameMode().get());
 }
 
@@ -1012,6 +1040,13 @@ DdnsParams::getGeneratedPrefix() const {
         return ("");
     }
 
+    if (pool_) {
+        auto optional = pool_->getDdnsGeneratedPrefix();
+        if (!optional.unspecified()) {
+            return (optional.get());
+        }
+    }
+
     return (subnet_->getDdnsGeneratedPrefix().get());
 }
 
@@ -1019,6 +1054,13 @@ std::string
 DdnsParams::getQualifyingSuffix() const {
     if (!subnet_) {
         return ("");
+    }
+
+    if (pool_) {
+        auto optional = pool_->getDdnsQualifyingSuffix();
+        if (!optional.unspecified()) {
+            return (optional.get());
+        }
     }
 
     return (subnet_->getDdnsQualifyingSuffix().get());
@@ -1103,13 +1145,44 @@ DdnsParams::getUpdateOnRenew() const {
         return (false);
     }
 
+    if (pool_) {
+        auto optional = pool_->getDdnsUpdateOnRenew();
+        if (!optional.unspecified()) {
+            return (optional.get());
+        }
+    }
+
     return (subnet_->getDdnsUpdateOnRenew().get());
 }
+
+std::string
+DdnsParams::getConflictResolutionMode() const {
+    if (!subnet_) {
+        return ("check-with-dhcid");
+    }
+
+    if (pool_) {
+        auto optional = pool_->getDdnsConflictResolutionMode();
+        if (!optional.unspecified()) {
+            return (optional.get());
+        }
+    }
+
+    return (subnet_->getDdnsConflictResolutionMode().get());
+}
+
 
 util::Optional<double>
 DdnsParams::getTtlPercent() const {
     if (!subnet_) {
         return (util::Optional<double>());
+    }
+
+    if (pool_) {
+        auto optional = pool_->getDdnsTtlPercent();
+        if (!optional.unspecified()) {
+            return (optional.get());
+        }
     }
 
     return (subnet_->getDdnsTtlPercent());
@@ -1121,6 +1194,13 @@ DdnsParams::getTtl() const {
         return (util::Optional<uint32_t>());
     }
 
+    if (pool_) {
+        auto optional = pool_->getDdnsTtl();
+        if (!optional.unspecified()) {
+            return (optional.get());
+        }
+    }
+
     return (subnet_->getDdnsTtl());
 }
 
@@ -1128,6 +1208,13 @@ util::Optional<uint32_t>
 DdnsParams::getTtlMin() const {
     if (!subnet_) {
         return (util::Optional<uint32_t>());
+    }
+
+    if (pool_) {
+        auto optional = pool_->getDdnsTtlMin();
+        if (!optional.unspecified()) {
+            return (optional.get());
+        }
     }
 
     return (subnet_->getDdnsTtlMin());
@@ -1139,17 +1226,28 @@ DdnsParams::getTtlMax() const {
         return (util::Optional<uint32_t>());
     }
 
+    if (pool_) {
+        auto optional = pool_->getDdnsTtlMax();
+        if (!optional.unspecified()) {
+            return (optional.get());
+        }
+    }
+
     return (subnet_->getDdnsTtlMax());
 }
 
-std::string
-DdnsParams::getConflictResolutionMode() const {
+PoolPtr
+DdnsParams::setPoolFromAddress(const asiolink::IOAddress& address) {
     if (!subnet_) {
-        return ("check-with-dhcid");
+        /// @todo  Not sure this can happen.
+        isc_throw(InvalidOperation,
+                  "DdnsParams::setPoolFromAddress called without a subnet");
     }
 
-    return (subnet_->getDdnsConflictResolutionMode().get());
+    pool_ = subnet_->getPool((address.isV4() ?  Lease::TYPE_V4 : Lease::TYPE_NA), address, false);
+    return (pool_);
 }
+
 
 } // namespace dhcp
 } // namespace isc

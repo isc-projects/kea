@@ -3177,13 +3177,25 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
     // Get a lease.
     Lease4Ptr lease = alloc_engine_->allocateLease4(*ctx);
 
-    // Tracks whether or not the client name (FQDN or host) has changed since
-    // the lease was allocated.
-    bool client_name_changed = false;
+    bool reprocess_client_name = false;
+    if (lease) {
+        auto ddns_params = ex.getContext()->getDdnsParams();
+        auto pool = ddns_params->setPoolFromAddress(lease->addr_);
+        if (pool) {
+            reprocess_client_name = pool->hasDdnsParameters();
+        }
+    }
 
     // Subnet may be modified by the allocation engine, if the initial subnet
     // belongs to a shared network.
     if (subnet && ctx->subnet_ && subnet->getID() != ctx->subnet_->getID()) {
+        // We changed subnets and that means DDNS parameters might be different
+        // so we need to rerun client name processing logic.  Arguably we could
+        // compare DDNS parameters for both subnets and then decide if we need
+        // to rerun the name logic, but that's not likely to be any faster than
+        // just re-running the name logic.  @todo When inherited parameter
+        // performance is improved this argument could be revisited.
+        // Another case is the new subnet has a reserved hostname.
         SharedNetwork4Ptr network;
         subnet->getSharedNetwork(network);
         LOG_DEBUG(packet4_logger, DBG_DHCP4_BASIC_DATA, DHCP4_SUBNET_DYNAMICALLY_CHANGED)
@@ -3193,37 +3205,36 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
                 .arg(network ? network->getName() : "<no network?>");
 
         subnet = ctx->subnet_;
-
         if (lease) {
-            // We changed subnets and that means DDNS parameters might be different
-            // so we need to rerun client name processing logic.  Arguably we could
-            // compare DDNS parameters for both subnets and then decide if we need
-            // to rerun the name logic, but that's not likely to be any faster than
-            // just re-running the name logic.  @todo When inherited parameter
-            // performance is improved this argument could be revisited.
-            // Another case is the new subnet has a reserved hostname.
+            reprocess_client_name = true;
+        }
+    }
 
-            // First, we need to remove the prior values from the response and reset
-            // those in context, to give processClientName a clean slate.
-            resp->delOption(DHO_FQDN);
-            resp->delOption(DHO_HOST_NAME);
-            ctx->hostname_ = "";
-            ctx->fwd_dns_update_  = false;
-            ctx->rev_dns_update_ = false;
+    // Tracks whether or not the client name (FQDN or host) has changed since
+    // the lease was allocated.
+    bool client_name_changed = false;
 
-            // Regenerate the name and dns flags.
-            processClientName(ex);
+    if (reprocess_client_name) {
+        // First, we need to remove the prior values from the response and reset
+        // those in context, to give processClientName a clean slate.
+        resp->delOption(DHO_FQDN);
+        resp->delOption(DHO_HOST_NAME);
+        ctx->hostname_ = "";
+        ctx->fwd_dns_update_  = false;
+        ctx->rev_dns_update_ = false;
 
-            // If the results are different from the values already on the
-            // lease, flag it so the lease gets updated down below.
-            if ((lease->hostname_ != ctx->hostname_) ||
-                (lease->fqdn_fwd_ != ctx->fwd_dns_update_) ||
-                (lease->fqdn_rev_ != ctx->rev_dns_update_)) {
-                lease->hostname_ = ctx->hostname_;
-                lease->fqdn_fwd_ = ctx->fwd_dns_update_;
-                lease->fqdn_rev_ = ctx->rev_dns_update_;
-                client_name_changed = true;
-            }
+        // Regenerate the name and dns flags.
+        processClientName(ex);
+
+        // If the results are different from the values already on the
+        // lease, flag it so the lease gets updated down below.
+        if ((lease->hostname_ != ctx->hostname_) ||
+            (lease->fqdn_fwd_ != ctx->fwd_dns_update_) ||
+            (lease->fqdn_rev_ != ctx->rev_dns_update_)) {
+            lease->hostname_ = ctx->hostname_;
+            lease->fqdn_fwd_ = ctx->fwd_dns_update_;
+            lease->fqdn_rev_ = ctx->rev_dns_update_;
+            client_name_changed = true;
         }
     }
 
