@@ -6,11 +6,13 @@
 
 #include <config.h>
 #include <kea_version.h>
+#include <hooks/hooks_parser.h>
 #include <process/cfgrpt/config_report.h>
 
 #include <gtest/gtest.h>
 
 using namespace isc;
+using namespace isc::hooks;
 using namespace std;
 
 // This test verifies that the getConfigReport() function
@@ -25,4 +27,5 @@ TEST(ConfigReportTest, getConfigReport) {
     ASSERT_FALSE(cfgReport.empty());
     EXPECT_NE(std::string::npos, cfgReport.find(VERSION));
     EXPECT_NE(std::string::npos, cfgReport.find(EXTENDED_VERSION));
+    EXPECT_NE(std::string::npos, cfgReport.find(HooksLibrariesParser::default_hooks_path_));
 }
