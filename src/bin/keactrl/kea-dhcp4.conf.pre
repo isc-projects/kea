@@ -73,7 +73,7 @@
     //     "type": "mysql",
     //     "name": "kea",
     //     "user": "kea",
-    //     "password": "kea",
+    //     "password": "1234",
     //     "host": "localhost",
     //     "port": 3306
     // },

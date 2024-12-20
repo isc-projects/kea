@@ -601,7 +601,7 @@ access the database should be set:
    "Dhcp4": {
        "lease-database": {
            "user": "user-name",
-           "password": "password",
+           "password": "1234",
            ...
        },
        ...
@@ -708,7 +708,7 @@ connection to MySQL:
            "type": "mysql",
            "name": "kea",
            "user": "kea",
-           "password": "secret123",
+           "password": "1234",
            "host": "localhost",
            "port": 3306
        }
@@ -858,7 +858,7 @@ access the database should be set:
    "Dhcp4": {
        "hosts-database": {
            "user": "user-name",
-           "password": "password",
+           "password": "1234",
            ...
        },
        ...
@@ -8532,7 +8532,7 @@ database:
                        "type": "mysql",
                        "name": "kea",
                        "user": "kea",
-                       "password": "kea",
+                       "password": "1234",
                        "host": "192.0.2.1",
                        "port": 3302
                    }
@@ -8563,7 +8563,7 @@ The following snippet illustrates the use of a PostgreSQL database:
                        "type": "postgresql",
                        "name": "kea",
                        "user": "kea",
-                       "password": "kea",
+                       "password": "1234",
                        "host": "192.0.2.1",
                        "port": 3302
                    }

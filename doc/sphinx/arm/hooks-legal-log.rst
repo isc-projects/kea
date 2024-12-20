@@ -240,7 +240,7 @@ Additional parameters for the database connection can be specified, e.g:
             "library": "/usr/local/lib/kea/hooks/libdhcp_legal_log.so",
             "parameters": {
               "name": "database-name",
-              "password": "passwd",
+              "password": "1234",
               "type": "mysql",
               "user": "user-name"
             }
@@ -478,7 +478,7 @@ Examples:
             "library": "/usr/local/lib/kea/hooks/libdhcp_legal_log.so",
             "parameters": {
               "name": "database-name",
-              "password": "passwd",
+              "password": "1234",
               "type": "mysql",
               "user": "user-name",
               "request-parser-format": "'log entry' + 0x0a + 'same log entry'",
@@ -803,7 +803,7 @@ Examples:
             "library": "/usr/local/lib/kea/hooks/libdhcp_legal_log.so",
             "parameters": {
               "name": "database-name",
-              "password": "passwd",
+              "password": "1234",
               "type": "mysql",
               "user": "user-name",
               "request-parser-format": "'log entry' + 0x0a + 'same log entry'",
@@ -1061,7 +1061,7 @@ tools may be used, for example, to dump the logs table from a MYSQL database:
 
 ::
 
-   $ mysql --user keatest --password keatest -e "select * from logs;"
+   $ mysql --user keatest --password 1234 -e "select * from logs;"
    +---------------------+--------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------+----+
    | timestamp           | address      | log                                                                                                                                                             | id |
    +---------------------+--------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------+----+

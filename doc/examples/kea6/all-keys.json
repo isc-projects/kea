@@ -425,7 +425,7 @@
                 "host": "localhost",
 
                 // Database password.
-                "password": "keatest",
+                "password": "1234",
 
                 // Port on which the database is available.
                 "port": 3306,
@@ -488,7 +488,7 @@
                 "host": "localhost",
 
                 // Database password.
-                "password": "keatest",
+                "password": "1234",
 
                 // Port on which the database is available.
                 "port": 5432,

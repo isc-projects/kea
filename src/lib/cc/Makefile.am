@@ -10,6 +10,7 @@ libkea_cc_la_SOURCES += data.cc data.h
 libkea_cc_la_SOURCES += element_value.h
 libkea_cc_la_SOURCES += cfg_to_element.h dhcp_config_error.h
 libkea_cc_la_SOURCES += command_interpreter.cc command_interpreter.h
+libkea_cc_la_SOURCES += default_credentials.cc default_credentials.h
 libkea_cc_la_SOURCES += json_feed.cc json_feed.h
 libkea_cc_la_SOURCES += server_tag.cc server_tag.h
 libkea_cc_la_SOURCES += simple_parser.cc simple_parser.h
@@ -31,6 +32,7 @@ libkea_cc_include_HEADERS = \
 	cfg_to_element.h \
 	command_interpreter.h \
 	data.h \
+	default_credentials.h \
 	dhcp_config_error.h \
 	element_value.h \
 	json_feed.h \

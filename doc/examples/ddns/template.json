@@ -91,7 +91,7 @@
 //            "digest-bits" : 256,
 //            Minimum truncated length in bits.
 //            Default 0 (means truncation is forbidden).
-//            "secret" : "<shared secret value>"
+//            "secret" : "1234" (shared secret value)
 //        }
 //        ,
 //        {

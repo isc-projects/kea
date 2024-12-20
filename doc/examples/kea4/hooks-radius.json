@@ -173,7 +173,7 @@
                          // These are parameters for the first (and only) access server
                          "name": "127.0.0.1",
                          "port": 1812,
-                         "secret": "secret"
+                         "secret": "1234"
                      }
                      // Additional access servers could be specified here
                  ],
@@ -212,7 +212,7 @@
                  "servers": [ {
                          "name": "127.0.0.1",
                          "port": 1813,
-                         "secret": "secret"
+                         "secret": "1234"
                      }
                 ]
              }

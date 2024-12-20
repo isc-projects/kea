@@ -63,7 +63,7 @@
        "max-reconnect-tries": 3,
        "name": "keatest",
        "user": "keatest",
-       "password": "keatest",
+       "password": "1234",
        "host": "localhost"
     }
   ],

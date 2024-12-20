@@ -700,7 +700,7 @@ only difference that ``this-server-name`` should be set to "server2" and
                        "url": "http://192.168.56.99:8000/",
                        "role": "backup",
                        "basic-auth-user": "foo",
-                       "basic-auth-password": "bar",
+                       "basic-auth-password": "1234",
                        "auto-failover": false
                    }]
                }]
@@ -945,7 +945,7 @@ other words, if the query would normally be processed by ``server2`` but this
 server is not available, ``server1`` allocates the lease from the pool of
 "192.0.3.200 - 192.0.3.250". The Kea control agent in front of ``server3``
 requires basic HTTP authentication, and authorizes the user ID "foo" with the
-password "bar".
+password "1234".
 
 .. note::
 
@@ -1096,7 +1096,7 @@ The following is an example configuration of the primary server in a
                        "name": "server3",
                        "url": "http://192.168.56.99:8000/",
                        "basic-auth-user": "foo",
-                       "basic-auth-password": "bar",
+                       "basic-auth-password": "1234",
                        "role": "backup",
                        "auto-failover": false
                    }]
@@ -1175,7 +1175,7 @@ The following is an example configuration file for the primary server in a
                        "name": "server3",
                        "url": "http://192.168.56.99:8000/",
                        "basic-auth-user": "foo",
-                       "basic-auth-password": "bar",
+                       "basic-auth-password": "1234",
                        "role": "backup"
                    }]
                }]
