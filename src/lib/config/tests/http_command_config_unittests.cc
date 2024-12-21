@@ -276,7 +276,7 @@ TEST_F(HttpCommandConfigTest, authentication) {
         "authentication": {
             "clients": [ {
                 "user": "admin",
-                "password": "1234"
+                "password": "foobar"
             } ]
         }
     })";
@@ -307,7 +307,7 @@ TEST_F(HttpCommandConfigTest, authentication) {
             "realm": "BAR",
             "clients": [ {
                 "user": "admin",
-                "password": "1234"
+                "password": "foobar"
             } ]
         }
     })";
@@ -329,7 +329,7 @@ TEST_F(HttpCommandConfigTest, authentication) {
             "directory": "",
             "clients": [ {
                 "user": "admin",
-                "password": "1234"
+                "password": "foobar"
             } ]
         }
     })";
