@@ -9,6 +9,7 @@
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
 #include <testutils/user_context_utils.h>
+#include <process/redact_config.h>
 #include <process/testutils/d_test_stubs.h>
 #include <agent/ca_cfg_mgr.h>
 #include <agent/parser_context.h>
@@ -188,6 +189,9 @@ public:
 
         // update authentication directory
         dirReplacer(ca);
+
+        // redact passwords
+        ca = redactConfig(ca, { "*" }, "-----");
 
         // try AGENT configure
         ConstElementPtr status;

@@ -993,7 +993,7 @@ TEST_F(D2CfgMgrTest, comments) {
                         "  \"clients\": [ {"
                         "   \"comment\": \"admin is authorized\","
                         "   \"user\": \"admin\","
-                        "   \"password\": \"1234\""
+                        "   \"password\": \"foobar\""
                         "  } ]"
                         " }"
                         "}"

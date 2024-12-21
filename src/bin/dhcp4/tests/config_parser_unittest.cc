@@ -257,7 +257,7 @@ const char* PARSER_CONFIGS[] = {
     "                \"clients\": [ {"
     "                    \"comment\": \"admin is authorized\","
     "                    \"user\": \"admin\","
-    "                    \"password\": \"1234\""
+    "                    \"password\": \"foobar\""
     "                } ]"
     "            }"
     "        }"
@@ -7069,7 +7069,7 @@ TEST_F(Dhcp4ParserTest, comments) {
     ASSERT_TRUE(client->get("user"));
     ASSERT_EQ("\"admin\"", client->get("user")->str());
     ASSERT_TRUE(client->get("password"));
-    ASSERT_EQ("\"1234\"", client->get("password")->str());
+    ASSERT_EQ("\"foobar\"", client->get("password")->str());
     ConstElementPtr ctx_client = client->get("user-context");
     ASSERT_TRUE(ctx_client);
     ASSERT_EQ(1, ctx_client->size());

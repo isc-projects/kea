@@ -3,7 +3,7 @@
         "authentication": {
             "clients": [
                 {
-                    "password": "1234",
+                    "password": "-----",
                     "user": "admin",
                     "user-context": {
                         "comment": "admin is authorized"

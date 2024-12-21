@@ -32,6 +32,7 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/utils.h>
 #include <dhcpsrv/host_mgr.h>
+#include <process/redact_config.h>
 #include <stats/stats_mgr.h>
 #include <testutils/gtest_utils.h>
 #include <util/encode/encode.h>
@@ -62,6 +63,7 @@ using namespace isc::data;
 using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
+using namespace isc::process;
 using namespace isc::util;
 using namespace std;
 
@@ -2933,23 +2935,33 @@ Dhcpv4SrvTest::loadConfigFile(const string& path) {
     mutable_config->set(string("hooks-libraries"), Element::createList());
     // Remove TLS parameters
     ConstElementPtr hosts = dhcp4->get("hosts-database");
-    removeTlsParameters(hosts);
+    if (hosts) {
+        removeTlsParameters(hosts);
+        hosts = redactConfig(hosts, { "*" }, "keatest");
+        mutable_config->set("hosts-database", hosts);
+    }
     hosts = dhcp4->get("hosts-databases");
     if (hosts) {
         for (auto const& host : hosts->listValue()) {
             removeTlsParameters(host);
         }
+        hosts = redactConfig(hosts, { "*" }, "keatest");
+        mutable_config->set("hosts-databases", hosts);
     }
     // Remove authentication clients using files.
     ConstElementPtr control_sockets = dhcp4->get("control-socket");
     if (control_sockets) {
         removeAuthFiles(control_sockets);
+        control_sockets = redactConfig(control_sockets, { "*" }, "-----");
+        mutable_config->set("control-socket", control_sockets);
     }
     control_sockets = dhcp4->get("control-sockets");
     if (control_sockets) {
         for (int i = 0; i < control_sockets->size(); ++i) {
             removeAuthFiles(control_sockets->get(i));
         }
+        control_sockets = redactConfig(control_sockets, { "*" }, "-----");
+        mutable_config->set("control-sockets", control_sockets);
     }
 
     ASSERT_NO_THROW(Dhcpv4SrvTest::configure(dhcp4->str(), true, true, true, true));
