@@ -8,7 +8,7 @@
 #define DEFAULT_CREDENTIALS_H
 
 #include <exceptions/exceptions.h>
-#include <list>
+#include <unordered_set>
 #include <string>
 
 namespace isc {
@@ -24,9 +24,7 @@ public:
 /// @brief Base class for default credentials.
 struct DefaultCredentials {
     /// @brief Default credentials.
-    ///
-    /// @note Using a list as there are only a few default credentials.
-    static const std::list<std::string> DEFAULT_CREDENTIALS;
+    static const std::unordered_set<std::string> DEFAULT_CREDENTIALS;
 
     /// @brief Check if the value is a default credential.
     ///

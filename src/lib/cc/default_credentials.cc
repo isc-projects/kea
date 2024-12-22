@@ -10,7 +10,8 @@
 namespace isc {
 namespace data {
 
-const std::list<std::string> DefaultCredentials::DEFAULT_CREDENTIALS = {
+const std::unordered_set<std::string>
+DefaultCredentials::DEFAULT_CREDENTIALS = {
 #ifndef IGNORE_KEA_DEFAULT_CREDENTIALS
 #ifndef ALLOW_KEATEST
     "keatest",
@@ -22,12 +23,11 @@ const std::list<std::string> DefaultCredentials::DEFAULT_CREDENTIALS = {
 #endif
 };
 
-void DefaultCredentials::check(const std::string& value) {
-    for (auto const& cred : DEFAULT_CREDENTIALS) {
-        if (value == cred) {
-            isc_throw(DefaultCredential,
-                      "illegal use of a default value as credential");
-        }
+void
+DefaultCredentials::check(const std::string& value) {
+    if (DEFAULT_CREDENTIALS.count(value)) {
+        isc_throw(DefaultCredential,
+                  "illegal use of a default value as credential");
     }
 }
 
