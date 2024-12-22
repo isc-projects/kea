@@ -1535,7 +1535,7 @@ pgsql_upgrade_schema_to_version() {
 
     # Postgres psql does not accept pw on command line, but can do it
     # thru an env
-    export PGPASSWORD=$db_password
+    export PGPASSWORD="${db_password}"
 
     for script in "${upgrade_scripts_dir}"/upgrade*.sh
     do
