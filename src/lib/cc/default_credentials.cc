@@ -12,6 +12,9 @@ namespace data {
 
 const std::list<std::string> DefaultCredentials::DEFAULT_CREDENTIALS = {
 #ifndef IGNORE_KEA_DEFAULT_CREDENTIALS
+#ifndef ALLOW_KEATEST
+    "keatest",
+#endif
     "1234", "*****"
 #endif
 #ifdef EXTRA_KEA_DEFAULT_CREDENTIALS

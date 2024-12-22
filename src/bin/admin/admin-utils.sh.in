@@ -26,9 +26,14 @@ set -eu
 # specific deployment. Also used in unit tests.
 db_host='localhost'
 db_user='keatest'
-db_password='keatest'
+db_password='1234'
 db_name='keatest'
 extra_arguments=
+
+# Set the db_password.
+set_db_password() {
+    db_password=$1
+}
 
 # Runs all the given arguments as a single command. Maintains quoting. Places
 # output in ${OUTPUT} and exit code in ${EXIT_CODE}. Does not support pipes and

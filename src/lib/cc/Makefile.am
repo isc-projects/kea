@@ -2,7 +2,11 @@ SUBDIRS = . tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
+if HAVE_GTEST
+AM_CPPFLAGS += -DALLOW_KEATEST
+endif
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
+
 
 lib_LTLIBRARIES = libkea-cc.la
 libkea_cc_la_SOURCES = base_stamped_element.cc base_stamped_element.h

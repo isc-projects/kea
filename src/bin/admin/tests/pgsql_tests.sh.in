@@ -22,6 +22,9 @@ set -eu
 # shellcheck source=src/bin/admin/admin-utils.sh.in
 . "@abs_top_builddir@/src/bin/admin/admin-utils.sh"
 
+# Set the test database password
+set_db_password "keatest"
+
 # Set path to the production schema scripts
 db_scripts_dir="@abs_top_srcdir@/src/share/database/scripts"
 

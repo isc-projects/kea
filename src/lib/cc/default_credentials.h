@@ -25,7 +25,7 @@ public:
 struct DefaultCredentials {
     /// @brief Default credentials.
     ///
-    /// @note Using a list as there are only two default credentials.
+    /// @note Using a list as there are only a few default credentials.
     static const std::list<std::string> DEFAULT_CREDENTIALS;
 
     /// @brief Check if the value is a default credential.

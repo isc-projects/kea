@@ -52,7 +52,7 @@
   (no embedded spaces), each pair separated by a space from the others, e.g.
 
   \code
-  type=mysql user=keatest password=keatest name=keatest host=localhost
+  type=mysql user=keatest password=1234 name=keatest host=localhost
   \endcode
 
   The following keywords are used for all backends:
