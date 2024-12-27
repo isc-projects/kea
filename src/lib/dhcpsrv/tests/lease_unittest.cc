@@ -619,7 +619,8 @@ TEST_F(Lease4Test, stateToText) {
     EXPECT_EQ("declined", Lease4::statesToText(Lease::STATE_DECLINED));
     EXPECT_EQ("expired-reclaimed", Lease4::statesToText(Lease::STATE_EXPIRED_RECLAIMED));
     EXPECT_EQ("released", Lease4::statesToText(Lease::STATE_RELEASED));
-    EXPECT_EQ("unknown (4)", Lease4::statesToText(4));
+    EXPECT_EQ("registered", Lease4::statesToText(Lease::STATE_REGISTERED));
+    EXPECT_EQ("unknown (5)", Lease4::statesToText(5));
 }
 
 /// @brief Creates an instance of the lease with certain FQDN data.
@@ -1329,8 +1330,8 @@ TEST(Lease6Test, fromElementPD) {
     EXPECT_EQ(400, lease->preferred_lft_);
 }
 
-  // Verify that a released Lease6 can be created from JSON.
-TEST(Lease6Test, fromElementReleased) {
+  // Verify that a registered Lease6 can be created from JSON.
+TEST(Lease6Test, fromElementRegistered) {
     // Same as fromElementNA test at the exception of the state.
     std::string json = "{"
         "\"cltt\": 12345678,"
@@ -1342,7 +1343,7 @@ TEST(Lease6Test, fromElementReleased) {
         "\"iaid\": 123456,"
         "\"ip-address\": \"2001:db8::1\","
         "\"preferred-lft\": 400,"
-        "\"state\": 3,"
+        "\"state\": 4,"
         "\"subnet-id\": 5678,"
         "\"pool-id\": 5,"
         "\"type\": \"IA_NA\","
@@ -1355,7 +1356,7 @@ TEST(Lease6Test, fromElementReleased) {
 
     ASSERT_TRUE(lease);
 
-    EXPECT_EQ(Lease::STATE_RELEASED, lease->state_);
+    EXPECT_EQ(Lease::STATE_REGISTERED, lease->state_);
 }
 
 // Test that specifying invalid values for a lease or not specifying
@@ -1424,7 +1425,8 @@ TEST(Lease6Test, stateToText) {
     EXPECT_EQ("declined", Lease6::statesToText(Lease::STATE_DECLINED));
     EXPECT_EQ("expired-reclaimed", Lease6::statesToText(Lease::STATE_EXPIRED_RECLAIMED));
     EXPECT_EQ("released", Lease6::statesToText(Lease::STATE_RELEASED));
-    EXPECT_EQ("unknown (4)", Lease6::statesToText(4));
+    EXPECT_EQ("registered", Lease6::statesToText(Lease::STATE_REGISTERED));
+    EXPECT_EQ("unknown (5)", Lease6::statesToText(5));
 }
 
 } // end of anonymous namespace

@@ -1110,7 +1110,14 @@ pgsql_upgrade_27_to_28_test() {
     check_table_column ddns_ttl_percent dhcp6_subnet
     check_table_column ddns_ttl dhcp6_subnet
     check_table_column ddns_ttl_min dhcp6_subnet
-   check_table_column ddns_ttl_max dhcp6_subnet
+    check_table_column ddns_ttl_max dhcp6_subnet
+
+    # check registered were added tp lease_state
+    query="SELECT name FROM lease_state WHERE state = 4"
+    run_command \
+        pgsql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+    assert_str_eq 'registered' "${OUTPUT}" "${query}: expected output %s, returned %s"
 }
 
 pgsql_upgrade_test() {

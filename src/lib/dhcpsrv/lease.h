@@ -77,6 +77,9 @@ struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
     /// @brief Released lease held in the database for lease affinity.
     static const uint32_t STATE_RELEASED;
 
+    /// @brief Registered self-generated lease.
+    static const uint32_t STATE_REGISTERED;
+
     /// @brief Returns name(s) of the basic lease state(s).
     ///
     /// @param state A numeric value holding a state information.

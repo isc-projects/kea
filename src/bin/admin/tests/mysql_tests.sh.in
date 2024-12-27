@@ -1020,6 +1020,13 @@ mysql_upgrade_27_to_28_test() {
     check_table_column ddns_ttl dhcp6_subnet
     check_table_column ddns_ttl_min dhcp6_subnet
     check_table_column ddns_ttl_max dhcp6_subnet
+
+    # check registered were added tp lease_state
+    qry="SELECT name FROM lease_state WHERE state = 4"
+    run_command \
+        mysql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "${qry}: expected %d, returned %d"
+    assert_str_eq 'registered' "${OUTPUT}" "${qry}: expected output %s, returned %s"
 }
 
 mysql_upgrade_test() {
