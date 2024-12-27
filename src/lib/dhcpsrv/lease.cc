@@ -28,6 +28,7 @@ const uint32_t Lease::STATE_DEFAULT = 0;
 const uint32_t Lease::STATE_DECLINED = 1;
 const uint32_t Lease::STATE_EXPIRED_RECLAIMED = 2;
 const uint32_t Lease::STATE_RELEASED = 3;
+const uint32_t Lease::STATE_REGISTERED = 4;
 
 std::string
 Lease::lifetimeToText(uint32_t lifetime) {
@@ -100,6 +101,8 @@ Lease::basicStatesToText(const uint32_t state) {
         return ("expired-reclaimed");
     case STATE_RELEASED:
         return ("released");
+    case STATE_REGISTERED:
+        return ("registered");
     default:
         // The default case will be handled further on
         ;
@@ -284,10 +287,10 @@ Lease::fromElementCommon(const LeasePtr& lease, const data::ConstElementPtr& ele
                   " or it is not an integer");
     }
 
-    if ((state->intValue() < 0) || (state->intValue() > Lease::STATE_RELEASED)) {
+    if ((state->intValue() < 0) || (state->intValue() > Lease::STATE_REGISTERED)) {
         isc_throw(BadValue, "state " << state->intValue()
                   << " must be in range [0.."
-                  << Lease::STATE_RELEASED << "]");
+                  << Lease::STATE_REGISTERED << "]");
     }
 
     lease->state_ = state->intValue();
