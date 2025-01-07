@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -332,16 +332,30 @@ const ParamsList SimpleParser4::INHERIT_TO_SUBNET4 = {
 /// list and map types for entries.
 /// Order follows pool_param rules in bison grammar.
 const SimpleKeywords SimpleParser4::POOL4_PARAMETERS = {
-    { "pool",                        Element::string },
-    { "pool-id",                     Element::integer },
-    { "option-data",                 Element::list },
-    { "client-class",                Element::string },
-    { "client-classes",              Element::list },
-    { "require-client-classes",      Element::list },
-    { "evaluate-additional-classes", Element::list },
-    { "user-context",                Element::map },
-    { "comment",                     Element::string },
-    { "metadata",                    Element::map }
+    { "pool",                           Element::string },
+    { "pool-id",                        Element::integer },
+    { "option-data",                    Element::list },
+    { "client-class",                   Element::string },
+    { "client-classes",                 Element::list },
+    { "require-client-classes",         Element::list },
+    { "evaluate-additional-classes",    Element::list },
+    { "user-context",                   Element::map },
+    { "comment",                        Element::string },
+    { "metadata",                       Element::map },
+    { "ddns-send-updates",              Element::boolean },
+    { "ddns-override-no-update",        Element::boolean },
+    { "ddns-override-client-update",    Element::boolean },
+    { "ddns-replace-client-name",       Element::string },
+    { "ddns-generated-prefix",          Element::string },
+    { "ddns-qualifying-suffix",         Element::string },
+    { "hostname-char-set",              Element::string },
+    { "hostname-char-replacement",      Element::string },
+    { "ddns-update-on-renew",           Element::boolean },
+    { "ddns-ttl-percent",               Element::real },
+    { "ddns-conflict-resolution-mode",  Element::string },
+    { "ddns-ttl",                       Element::integer },
+    { "ddns-ttl-min",                   Element::integer },
+    { "ddns-ttl-max",                   Element::integer }
 };
 
 /// @brief This table defines all shared network parameters for DHCPv4.

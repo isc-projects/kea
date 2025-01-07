@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -4335,6 +4335,112 @@ TEST_F(DhcpParserTest, validDdnsTtlParmatersSubnet6) {
 // ddns-ttl-min, and ddns-ttl-max values for Subnet6.
 TEST_F(DhcpParserTest, invalidDdnsTtlParmatersSubnet6) {
     invalidDdnsTtlParmatersSubnet<Subnet6ConfigParser>(AF_INET6);
+}
+
+// Verifies valid DDNS parameters in v4 pools.  As this uses the
+// same parser as Network derivatives we skip retesting all the
+// invalid permuations. This test ensures all supported
+// parameters can be set. 
+TEST_F(DhcpParserTest, validDdnsParmatersPool4) {
+
+    std::string config =
+       R"^([{
+            "pool": "192.0.1.0/24",
+            "ddns-send-updates": true,
+            "ddns-override-no-update": true,
+            "ddns-override-client-update": true,
+            "ddns-replace-client-name": "always",
+            "ddns-generated-prefix": "prefix", 
+            "ddns-qualifying-suffix": "suffix", 
+            "hostname-char-set": "[a-z]",
+            "hostname-char-replacement": "X",
+            "ddns-update-on-renew": true, 
+            "ddns-ttl-percent": 0.5,
+            "ddns-conflict-resolution-mode": "check-with-dhcid",
+            "ddns-ttl-min": 200,
+            "ddns-ttl-max": 500 
+        },
+        {
+            "pool": "192.0.2.0/24",
+            "ddns-ttl": 300
+        }])^";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    PoolStoragePtr pools(new PoolStorage());
+    Pools4ListParser parser;
+    ASSERT_NO_THROW_LOG(parser.parse(pools, config_element));
+
+    // Should have two pools.
+    ASSERT_EQ(pools->size(), 2);
+
+    // First pool specifies all but ddns-ttl.
+    PoolPtr pool  = (*pools)[0];
+    ASSERT_TRUE(pool);
+    
+    ASSERT_FALSE(pool->getDdnsSendUpdates().unspecified());
+    EXPECT_TRUE(pool->getDdnsSendUpdates().get());
+
+    ASSERT_FALSE(pool->getDdnsOverrideNoUpdate().unspecified());
+    EXPECT_TRUE(pool->getDdnsOverrideNoUpdate().get());
+
+    ASSERT_FALSE(pool->getDdnsOverrideClientUpdate().unspecified());
+    EXPECT_TRUE(pool->getDdnsOverrideClientUpdate().get());
+
+    ASSERT_FALSE(pool->getDdnsReplaceClientNameMode().unspecified());
+    EXPECT_EQ(pool->getDdnsReplaceClientNameMode().get(), 
+              D2ClientConfig::RCM_ALWAYS);
+
+    ASSERT_FALSE(pool->getDdnsGeneratedPrefix().unspecified());
+    EXPECT_EQ(pool->getDdnsGeneratedPrefix().get(), "prefix");
+
+    ASSERT_FALSE(pool->getDdnsQualifyingSuffix().unspecified());
+    EXPECT_EQ(pool->getDdnsQualifyingSuffix().get(), "suffix");
+
+    ASSERT_FALSE(pool->getHostnameCharSet().unspecified());
+    EXPECT_EQ(pool->getHostnameCharSet().get(), "[a-z]");
+
+    ASSERT_FALSE(pool->getHostnameCharReplacement().unspecified());
+    EXPECT_EQ(pool->getHostnameCharReplacement().get(), "X");
+
+    ASSERT_FALSE(pool->getDdnsUpdateOnRenew().unspecified());
+    EXPECT_TRUE(pool->getDdnsUpdateOnRenew().get());
+
+    ASSERT_FALSE(pool->getDdnsTtlPercent().unspecified());
+    EXPECT_EQ(pool->getDdnsTtlPercent().get(), 0.5);
+
+    ASSERT_FALSE(pool->getDdnsConflictResolutionMode().unspecified());
+    EXPECT_EQ(pool->getDdnsConflictResolutionMode().get(), "check-with-dhcid");
+
+    ASSERT_TRUE(pool->getDdnsTtl().unspecified());
+
+    ASSERT_FALSE(pool->getDdnsTtlMin().unspecified());
+    EXPECT_EQ(pool->getDdnsTtlMin().get(), 200);
+
+    ASSERT_FALSE(pool->getDdnsTtlMax().unspecified());
+    EXPECT_EQ(pool->getDdnsTtlMax().get(), 500);
+
+    // Second pool only specifies ddns-ttl.
+    pool = (*pools)[1];
+    ASSERT_TRUE(pool);
+    
+    ASSERT_TRUE(pool->getDdnsSendUpdates().unspecified());
+    ASSERT_TRUE(pool->getDdnsOverrideNoUpdate().unspecified());
+    ASSERT_TRUE(pool->getDdnsOverrideClientUpdate().unspecified());
+    ASSERT_TRUE(pool->getDdnsReplaceClientNameMode().unspecified());
+    ASSERT_TRUE(pool->getDdnsGeneratedPrefix().unspecified());
+    ASSERT_TRUE(pool->getDdnsQualifyingSuffix().unspecified());
+    ASSERT_TRUE(pool->getHostnameCharSet().unspecified());
+    ASSERT_TRUE(pool->getHostnameCharReplacement().unspecified());
+    ASSERT_TRUE(pool->getDdnsUpdateOnRenew().unspecified());
+    ASSERT_TRUE(pool->getDdnsTtlPercent().unspecified());
+    ASSERT_TRUE(pool->getDdnsConflictResolutionMode().unspecified());
+    ASSERT_TRUE(pool->getDdnsTtlMin().unspecified());
+
+    ASSERT_FALSE(pool->getDdnsTtl().unspecified());
+    EXPECT_EQ(pool->getDdnsTtl().get(), 300);
+
+    ASSERT_TRUE(pool->getDdnsTtlMax().unspecified());
 }
 
 }  // Anonymous namespace

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -772,7 +772,7 @@ public:
 
     }
 
-    /// @brief Verifies that DDNS TTL parameters are used when specified. 
+    /// @brief Verifies that DDNS TTL parameters are used when specified.
     ///
     /// @param valid_flt lease life time
     /// @param ddns_ttl_percent expected configured value for ddns-ttl-percent
@@ -786,10 +786,10 @@ public:
                                Optional<uint32_t> ddns_ttl_max = Optional<uint32_t>()) {
 
         std::string config_header = R"(
-        { 
+        {
             "interfaces-config": { "interfaces": [ "*" ] },
             "subnet4": [ {
-                "subnet": "10.0.0.0/24", 
+                "subnet": "10.0.0.0/24",
                 "interface": "eth1",
                 "id": 1,
                 "pools": [ { "pool": "10.0.0.10-10.0.0.10" } ]
@@ -859,11 +859,133 @@ public:
                                 resp->getYiaddr().toText(),
                                 "client1.example.com.", "",
                                 time(NULL), lease->valid_lft_, true,
-                                CHECK_WITH_DHCID, 
-                                ddns_ttl_percent, 
-                                ddns_ttl, 
-                                ddns_ttl_min, 
+                                CHECK_WITH_DHCID,
+                                ddns_ttl_percent,
+                                ddns_ttl,
+                                ddns_ttl_min,
                                 ddns_ttl_max);
+    }
+
+    /// @brief Verifies that DDNS parameters specified at the pool level
+    /// are used when specified. We don't verify all of them, just enough
+    /// enough to ensure proper scoping of values.
+    void testPoolDdnsParameters() {
+        std::string config = R"(
+        {
+            "interfaces-config": { "interfaces": [ "*" ] },
+            "dhcp-ddns": { "enable-updates": true },
+            "subnet4": [{
+                "subnet": "10.0.0.0/24",
+                "interface": "eth1",
+                "id": 1,
+                "ddns-qualifying-suffix": "subfix.com",
+                "pools": [{
+                    "pool": "10.0.0.10-10.0.0.10",
+                    "ddns-qualifying-suffix": "poolfix.com",
+                },
+                {
+                    "pool": "10.0.0.11-10.0.0.11"
+                },
+                {
+                    "pool": "10.0.0.12-10.0.0.12",
+                    "ddns-send-updates": false
+                }]
+              }],
+              "valid-lifetime": 400
+        })";
+
+        // Load theconfiguration with D2 enabled.
+        ASSERT_NO_FATAL_FAILURE(configure(config, *srv_));
+        ASSERT_TRUE(CfgMgr::instance().ddnsEnabled());
+
+        // Create a client and get a lease.
+        Dhcp4Client client1(srv_, Dhcp4Client::SELECTING);
+        client1.setIfaceName("eth1");
+        client1.setIfaceIndex(ETH1_INDEX);
+        ASSERT_NO_THROW(client1.includeHostname("client1"));
+
+        // Do the DORA.
+        ASSERT_NO_THROW(client1.doDORA());
+        Pkt4Ptr resp = client1.getContext().response_;
+        ASSERT_TRUE(resp);
+        ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+
+        // Make sure the lease is in the database and hostname uses the
+        // first pool's qualifying suffix.
+        Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(IOAddress("10.0.0.10"));
+        ASSERT_TRUE(lease);
+        EXPECT_EQ("client1.poolfix.com", lease->hostname_);
+
+        // Verify the hostname option sent in the response.
+        OptionStringPtr hostname;
+        hostname = boost::dynamic_pointer_cast<OptionString>(resp->getOption(DHO_HOST_NAME));
+        ASSERT_TRUE(hostname);
+        EXPECT_EQ("client1.poolfix.com", hostname->getValue());
+
+        // Verify that an NCR was generated correctly.
+        ASSERT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+        verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                                resp->getYiaddr().toText(),
+                                "client1.poolfix.com.", "",
+                                time(NULL), lease->valid_lft_, true,
+                                CHECK_WITH_DHCID);
+
+        // Create another client and get a lease.
+        Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
+        client2.setIfaceName("eth1");
+        client2.setIfaceIndex(ETH1_INDEX);
+        ASSERT_NO_THROW(client2.includeHostname("client2"));
+
+        // Do the DORA.
+        ASSERT_NO_THROW(client2.doDORA());
+        resp = client2.getContext().response_;
+        ASSERT_TRUE(resp);
+        ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+
+        // Make sure the lease is in the database and hostname uses the subnet's
+        // qualifying suffix.
+        lease = LeaseMgrFactory::instance().getLease4(IOAddress("10.0.0.11"));
+        ASSERT_TRUE(lease);
+        EXPECT_EQ("client2.subfix.com", lease->hostname_);
+
+        // Verify the hostname option sent in the response.
+        hostname = boost::dynamic_pointer_cast<OptionString>(resp->getOption(DHO_HOST_NAME));
+        ASSERT_TRUE(hostname);
+        EXPECT_EQ("client2.subfix.com", hostname->getValue());
+
+        // Verify that an NCR was generated correctly.
+        ASSERT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+        verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                                resp->getYiaddr().toText(),
+                                "client2.subfix.com.", "",
+                                time(NULL), lease->valid_lft_, true,
+                                CHECK_WITH_DHCID);
+
+        // Create another third client and get a lease.
+        Dhcp4Client client3(srv_, Dhcp4Client::SELECTING);
+        client3.setIfaceName("eth1");
+        client3.setIfaceIndex(ETH1_INDEX);
+        ASSERT_NO_THROW(client3.includeHostname("client3"));
+
+        // Do the DORA.
+        ASSERT_NO_THROW(client3.doDORA());
+        resp = client3.getContext().response_;
+        ASSERT_TRUE(resp);
+        ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+
+        // Make sure the lease is in the database and hostname uses the subnet suffix.
+        lease = LeaseMgrFactory::instance().getLease4(IOAddress("10.0.0.12"));
+        ASSERT_TRUE(lease);
+        EXPECT_EQ("client3.subfix.com", lease->hostname_);
+
+        // Verify the hostname option sent in the response.
+        hostname = boost::dynamic_pointer_cast<OptionString>(resp->getOption(DHO_HOST_NAME));
+        ASSERT_TRUE(hostname);
+        EXPECT_EQ("client3.subfix.com", hostname->getValue());
+
+        // There should not be an NCR in the queue since the third pool
+        // disables DDNS updates.
+        ASSERT_EQ(0, CfgMgr::instance().getD2ClientMgr().getQueueSize());
     }
 
     ///@brief Verify that NameChangeRequest holds valid values.
@@ -927,7 +1049,7 @@ public:
         // time for equality but rather check that the lease expiration time
         // is not greater than the current time + lease lifetime.
 
-        uint32_t ttl = calculateDdnsTtl(valid_lft, ddns_ttl_percent, 
+        uint32_t ttl = calculateDdnsTtl(valid_lft, ddns_ttl_percent,
                                         ddns_ttl, ddns_ttl_min, ddns_ttl_max);
 
         if (not_strict_expire_check) {
@@ -3072,7 +3194,7 @@ TEST_F(NameDhcpv4SrvTest, ddnsTtlTest) {
     testDdnsTtlParameters(2100,                     // valid lft
                           Optional<double>(),       // percent
                           999,                      // ttl
-                          Optional<uint32_t>(),     // min 
+                          Optional<uint32_t>(),     // min
                           Optional<uint32_t>());    // max
 }
 
@@ -3080,7 +3202,7 @@ TEST_F(NameDhcpv4SrvTest, ddnsTtlTest) {
 TEST_F(NameDhcpv4SrvTest, ddnsTtlMinTest) {
     testDdnsTtlParameters(2100,                     // valid lft
                           Optional<double>(),       // percent
-                          Optional<uint32_t>(),     // ttl 
+                          Optional<uint32_t>(),     // ttl
                           800,                      // ttl-min
                           Optional<uint32_t>());    // ttl-max
 }
@@ -3089,9 +3211,14 @@ TEST_F(NameDhcpv4SrvTest, ddnsTtlMinTest) {
 TEST_F(NameDhcpv4SrvTest, ddnsTtlMaxTest) {
     testDdnsTtlParameters(2100,                     // valid lft
                           Optional<double>(),       // percent
-                          Optional<uint32_t>(),     // ttl 
+                          Optional<uint32_t>(),     // ttl
                           Optional<uint32_t>(),     // ttl-min
-                          500);                     // ttl-max 
+                          500);                     // ttl-max
+}
+
+// Verify pool-level DDNS pararmeters are used.
+TEST_F(NameDhcpv4SrvTest, poolDdnsParametersTest) {
+    testPoolDdnsParameters();
 }
 
 } // end of anonymous namespace

@@ -8585,19 +8585,19 @@ the database access parameters are changed: in the latter case, the
 server closes the currently open database, and opens a database using
 the new parameters.
 
-DHCPSRV_DDNS_TTL_PERCENT_TOO_SMALL
-==================================
+DHCPSRV_DDNS_TTL_TOO_SMALL
+==========================
 
 .. code-block:: text
 
-    ddns-ttl-percent %1 of lease lifetime %2 is too small, ignoring it
+    %1 of lease life time %2 is %3, using minimum of %4 instead.
 
 Logged at debug log level 55.
 A debug message issued when the DDNS TTL value calculated using the
-ddns-ttl-percent is zero.  Kea will ignore the value and calculate
-the DDNS TTL as though ddsn-ttl-percent were not specified. The
-value of ddns-ttl-percent and the lease lifetime are shown in
-the message details.
+ddns-ttl-percent if specified or (0.33 if not) is too small.  Kea will
+ignore the value and use the minimum (ddns-ttl-min if specified or 600
+seconds if not). The message details include the percentage, the lease
+life time, the calculated TTL, and the value actually used.
 
 DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET
 ===================================
@@ -10011,6 +10011,16 @@ Logged at debug log level 40.
 A debug message issued when one of the registered interval timers
 is unregistered from the Timer Manager. The name of the timer is
 included in the message.
+
+DHCPSRV_UNKNOWN_DB
+==================
+
+.. code-block:: text
+
+    unknown database type: %1
+
+The database access string specified a database type (given in the
+message) that is unknown to the software. This is a configuration error.
 
 ****
 DHCP

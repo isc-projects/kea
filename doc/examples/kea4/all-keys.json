@@ -1153,7 +1153,51 @@
 
                                 // List of client classes which must be evaluated when this pool
                                 // is selected for client assignments.
-                                "evaluate-additional-classes": [ "late" ]
+                                "evaluate-additional-classes": [ "late" ],
+
+                                // Pool-level value. See description at the global level.
+                                "ddns-generated-prefix": "mypool",
+
+                                // Pool-level value. See description at the global level.
+                                "ddns-override-client-update": false,
+
+                                // Pool-level value. See description at the global level.
+                                "ddns-override-no-update": false,
+
+                                // Pool-level value. See description at the global level.
+                                "ddns-qualifying-suffix": "pool.example.com.",
+
+                                // Pool-level value. See description at the global level.
+                                "ddns-replace-client-name": "always",
+
+                                // Pool-level value. See description at the global level.
+                                "ddns-send-updates": true,
+
+                                // Pool-level value. See description at the global level.
+                                "ddns-update-on-renew": false,
+
+                                // Pool-level value. See description at the global level.
+                                "ddns-conflict-resolution-mode": "check-with-dhcid",
+
+                                // Pool-level value. See description at the global level.
+                                "ddns-ttl-percent": 0.55,
+
+                                // Pool-level value. See description at the global level.
+                                // You cannot specify both ddns-ttl and any of ddns-ttl-percent,
+                                // ddns-ttl-min, or ddns-ttl-max. They are mutually exclusive.
+                                // "ddns-ttl": 500,
+
+                                // Pool-evel value. See description at the global level.
+                                "ddns-ttl-min": 10000,
+
+                                // Pool-level value. See description at the global level.
+                                "ddns-ttl-max": 20000,
+
+                                // Pool-level value. See description at the global level.
+                                "hostname-char-replacement": "x",
+
+                                // Pool-level value. See description at the global level.
+                                "hostname-char-set": "[^A-Za-z0-9.-]"
                             },
                             {
                                 // Restricts this pool to allow only clients

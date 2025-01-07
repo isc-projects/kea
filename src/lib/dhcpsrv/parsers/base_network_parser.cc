@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -140,108 +140,7 @@ BaseNetworkParser::parseCacheParams(const ConstElementPtr& network_data,
 void
 BaseNetworkParser::parseDdnsParams(const data::ConstElementPtr& network_data,
                                    NetworkPtr& network) {
-
-    if (network_data->contains("ddns-send-updates")) {
-        network->setDdnsSendUpdates(getBoolean(network_data, "ddns-send-updates"));
-    }
-
-    if (network_data->contains("ddns-override-no-update")) {
-        network->setDdnsOverrideNoUpdate(getBoolean(network_data, "ddns-override-no-update"));
-    }
-
-    if (network_data->contains("ddns-override-client-update")) {
-        network->setDdnsOverrideClientUpdate(getBoolean(network_data, "ddns-override-client-update"));
-    }
-
-    if (network_data->contains("ddns-replace-client-name")) {
-        network->setDdnsReplaceClientNameMode(getAndConvert<D2ClientConfig::ReplaceClientNameMode,
-                                                            D2ClientConfig::stringToReplaceClientNameMode>
-                                                            (network_data, "ddns-replace-client-name",
-                                                             "ReplaceClientName mode"));
-    }
-
-    if (network_data->contains("ddns-generated-prefix")) {
-        network->setDdnsGeneratedPrefix(getString(network_data, "ddns-generated-prefix"));
-    }
-
-    if (network_data->contains("ddns-qualifying-suffix")) {
-        network->setDdnsQualifyingSuffix(getString(network_data, "ddns-qualifying-suffix"));
-    }
-
-    std::string hostname_char_set;
-    if (network_data->contains("hostname-char-set")) {
-        hostname_char_set = getString(network_data, "hostname-char-set");
-        network->setHostnameCharSet(hostname_char_set);
-    }
-
-    std::string hostname_char_replacement;
-    if (network_data->contains("hostname-char-replacement")) {
-        hostname_char_replacement = getString(network_data, "hostname-char-replacement");
-        network->setHostnameCharReplacement(hostname_char_replacement);
-    }
-
-    // We need to validate sanitizer values here so we can detect problems and
-    // cause a configuration.  We don't retain the compilation because it's not
-    // something we can inherit.
-    if (!hostname_char_set.empty()) {
-        try {
-            str::StringSanitizerPtr sanitizer(new str::StringSanitizer(hostname_char_set,
-                                                                       hostname_char_replacement));
-        } catch (const std::exception& ex) {
-            isc_throw(BadValue, "hostname-char-set '" << hostname_char_set
-                      << "' is not a valid regular expression");
-        }
-    }
-
-    if (network_data->contains("ddns-update-on-renew")) {
-        network->setDdnsUpdateOnRenew(getBoolean(network_data, "ddns-update-on-renew"));
-    }
-
-    bool has_ddns_ttl = false;
-    uint32_t ddns_ttl = 0;
-    if (network_data->contains("ddns-ttl")) {
-        ddns_ttl = getInteger(network_data, "ddns-ttl");
-        network->setDdnsTtl(ddns_ttl);
-        has_ddns_ttl = true;
-    }
-
-    if (network_data->contains("ddns-ttl-percent")) {
-        if (has_ddns_ttl) {
-            isc_throw(BadValue, "cannot specify both ddns-ttl-percent and ddns-ttl");
-        }
-
-        network->setDdnsTtlPercent(getDouble(network_data, "ddns-ttl-percent"));
-    }
-
-    uint32_t ddns_ttl_min = 0;
-    if (network_data->contains("ddns-ttl-min")) {
-        if (has_ddns_ttl) {
-            isc_throw(BadValue, "cannot specify both ddns-ttl-min and ddns-ttl");
-        }
-
-        ddns_ttl_min = getInteger(network_data, "ddns-ttl-min");
-        network->setDdnsTtlMin(ddns_ttl_min);
-    }
-
-    if (network_data->contains("ddns-ttl-max")) {
-        if (has_ddns_ttl) {
-            isc_throw(BadValue, "cannot specify both ddns-ttl-max and ddns-ttl");
-        }
-
-        uint32_t ddns_ttl_max = getInteger(network_data, "ddns-ttl-max");
-        if (ddns_ttl_max < ddns_ttl_min) {
-            isc_throw(BadValue, "ddns-ttl-max: " << ddns_ttl_max 
-                      << " must be greater than ddns-ttl-min: " <<  ddns_ttl_min);
-        }
-
-        network->setDdnsTtlMax(ddns_ttl_max);
-    }
-
-    // For backward compatibility, ddns-conflict-resolution-mode is optional.
-    if (network_data->contains("ddns-conflict-resolution-mode")) {
-        network->setDdnsConflictResolutionMode(getString(network_data,
-                                                         "ddns-conflict-resolution-mode"));
-    }
+    parseDdnsParameters(network_data, network);
 }
 
 void

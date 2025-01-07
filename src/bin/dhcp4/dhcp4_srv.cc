@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -3179,6 +3179,8 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
 
     bool reprocess_client_name = false;
     if (lease) {
+        // Since we have a lease check for pool-level DDNS parameters.
+        // If there are any we need to call processClientName() again.
         auto ddns_params = ex.getContext()->getDdnsParams();
         auto pool = ddns_params->setPoolFromAddress(lease->addr_);
         if (pool) {

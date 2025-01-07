@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -537,6 +537,10 @@ PoolParser::parse(PoolStoragePtr pools,
     BaseNetworkParser::getAdditionalClassesElem(pool_structure,
                                                 std::bind(&Pool::addAdditionalClass,
                                                           pool, ph::_1));
+
+    // Parse DDNS behavioral parameters.
+    BaseNetworkParser parser;
+    parser.parseDdnsParameters(pool_structure, pool);
 }
 
 boost::shared_ptr<OptionDataListParser>
