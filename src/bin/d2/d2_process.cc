@@ -522,16 +522,11 @@ D2Process::reconfigureCommandChannel() {
     ConstElementPtr http_config =
         getD2CfgMgr()->getHttpControlSocketInfo();
 
-    sock_changed = (http_config && current_http_control_socket_ &&
-                    !http_config->equals(*current_http_control_socket_));
-
-    if (!http_config || !current_http_control_socket_ || sock_changed) {
-        // Open the new sockets and close old ones, keeping reused.
-        if (http_config) {
-            HttpCommandMgr::instance().openCommandSockets(http_config);
-        } else if (current_http_control_socket_) {
-            HttpCommandMgr::instance().closeCommandSockets();
-        }
+    // Open the new sockets and close old ones, keeping reused.
+    if (http_config) {
+        HttpCommandMgr::instance().openCommandSockets(http_config);
+    } else if (current_http_control_socket_) {
+        HttpCommandMgr::instance().closeCommandSockets();
     }
 
     // Commit the new socket configuration.

@@ -30,6 +30,7 @@ AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/bin/agent/tests\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 AM_CPPFLAGS += -DCFG_EXAMPLES=\"$(abs_top_srcdir)/doc/examples/agent\"
 AM_CPPFLAGS += -DSYNTAX_FILE=\"$(abs_srcdir)/../agent_parser.yy\"
+AM_CPPFLAGS += -DTEST_CA_DIR=\"$(abs_top_srcdir)/src/lib/asiolink/testutils/ca\"
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 

@@ -127,15 +127,37 @@ HttpCommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr config) {
     // Search for the specific connection and reuse the existing one if found.
     auto it = sockets_.find(std::make_pair(server_address, server_port));
     if (it != sockets_.end()) {
-        if ((cmd_config->getTrustAnchor() != it->second->config_->getTrustAnchor()) ||
-            (cmd_config->getCertFile() != it->second->config_->getCertFile()) ||
-            (cmd_config->getKeyFile() != it->second->config_->getKeyFile()) ||
-            (cmd_config->getCertRequired() != it->second->config_->getCertRequired())) {
-            LOG_WARN(command_logger, HTTP_COMMAND_MGR_IGNORED_TLS_SETUP_CHANGES);
-            // Overwrite the authentication setup and the emulation flag
-            // in the response creator config.
-            it->second->config_->setAuthConfig(cmd_config->getAuthConfig());
-            it->second->config_->setEmulateAgentResponse(cmd_config->getEmulateAgentResponse());
+        auto listener = it->second->listener_;
+        if (listener) {
+            // Reconfig keeping the same address and port.
+            if (listener->getTlsContext()) {
+                if (cmd_config->getTrustAnchor().empty()) {
+                    // Can not switch from HTTPS to HTTP
+                    LOG_INFO(command_logger, HTTP_COMMAND_MGR_HTTPS_SERVICE_REUSED)
+                        .arg(server_address.toText())
+                        .arg(server_port);
+                } else {
+                    // Apply TLS settings each time.
+                    TlsContextPtr tls_context;
+                    TlsContext::configure(tls_context,
+                                          TlsRole::SERVER,
+                                          cmd_config->getTrustAnchor(),
+                                          cmd_config->getCertFile(),
+                                          cmd_config->getKeyFile(),
+                                          cmd_config->getCertRequired());
+                    // Overwrite the authentication setup, the http headers and the emulation flag
+                    // in the response creator config.
+                    it->second->config_->setAuthConfig(cmd_config->getAuthConfig());
+                    it->second->config_->setHttpHeaders(cmd_config->getHttpHeaders());
+                    it->second->config_->setEmulateAgentResponse(cmd_config->getEmulateAgentResponse());
+                    io_service_->post([listener, tls_context]() { listener->setTlsContext(tls_context); });
+                }
+            } else if (!cmd_config->getTrustAnchor().empty()) {
+                // Can not switch from HTTP to HTTPS
+                LOG_INFO(command_logger, HTTP_COMMAND_MGR_HTTP_SERVICE_REUSED)
+                    .arg(server_address.toText())
+                    .arg(server_port);
+            }
         }
         // If the connection can be reused, mark it as usable.
         it->second->usable_ = true;

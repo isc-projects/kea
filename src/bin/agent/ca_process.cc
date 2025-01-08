@@ -139,14 +139,31 @@ CtrlAgentProcess::configure(isc::data::ConstElementPtr config_set,
         // Search for the specific connection and reuse the existing one if found.
         auto it = sockets_.find(std::make_pair(server_address, server_port));
         if (it != sockets_.end()) {
-            auto listener = getHttpListener();
+            auto listener = it->second->listener_;
             if (listener) {
                 // Reconfig keeping the same address and port.
                 if (listener->getTlsContext()) {
-                    LOG_INFO(agent_logger, CTRL_AGENT_HTTPS_SERVICE_REUSED)
-                        .arg(server_address.toText())
-                        .arg(server_port);
-                } else {
+                    if (ctx->getTrustAnchor().empty()) {
+                        // Can not switch from HTTPS to HTTP
+                        LOG_INFO(agent_logger, CTRL_AGENT_HTTPS_SERVICE_REUSED)
+                            .arg(server_address.toText())
+                            .arg(server_port);
+                    } else {
+                        // Apply TLS settings each time.
+                        TlsContextPtr tls_context;
+                        TlsContext::configure(tls_context,
+                                              TlsRole::SERVER,
+                                              ctx->getTrustAnchor(),
+                                              ctx->getCertFile(),
+                                              ctx->getKeyFile(),
+                                              ctx->getCertRequired());
+                        // Overwrite the authentication setup and the http headers in the response creator config.
+                        it->second->config_->setAuthConfig(ctx->getAuthConfig());
+                        it->second->config_->setHttpHeaders(ctx->getHttpHeaders());
+                        getIOService()->post([listener, tls_context]() { listener->setTlsContext(tls_context); });
+                    }
+                } else if (!ctx->getTrustAnchor().empty()) {
+                    // Can not switch from HTTP to HTTPS
                     LOG_INFO(agent_logger, CTRL_AGENT_HTTP_SERVICE_REUSED)
                         .arg(server_address.toText())
                         .arg(server_port);

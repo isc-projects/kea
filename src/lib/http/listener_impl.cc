@@ -75,6 +75,11 @@ HttpListenerImpl::getTlsContext() const {
     return (tls_context_);
 }
 
+void
+HttpListenerImpl::setTlsContext(const TlsContextPtr& context) {
+    tls_context_ = context;
+}
+
 int
 HttpListenerImpl::getNative() const {
     return (acceptor_ ? acceptor_->getNative() : -1);

@@ -338,15 +338,10 @@ void configureCommandChannel() {
     ConstElementPtr current_http_config =
         CfgMgr::instance().getCurrentCfg()->getHttpControlSocketInfo();
 
-    sock_changed = (http_config && current_http_config &&
-                    !http_config->equals(*current_http_config));
-
-    if (!http_config || !current_http_config || sock_changed) {
-        if (http_config) {
-            HttpCommandMgr::instance().openCommandSockets(http_config);
-        } else if (current_http_config) {
-            HttpCommandMgr::instance().closeCommandSockets();
-        }
+    if (http_config) {
+        HttpCommandMgr::instance().openCommandSockets(http_config);
+    } else if (current_http_config) {
+        HttpCommandMgr::instance().closeCommandSockets();
     }
 }
 

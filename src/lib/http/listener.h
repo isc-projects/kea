@@ -118,6 +118,9 @@ public:
     /// @brief Returns reference to the current TLS context.
     const asiolink::TlsContextPtr& getTlsContext() const;
 
+    /// @brief Sets reference of the current TLS context.
+    void setTlsContext(const asiolink::TlsContextPtr& context);
+
     /// @brief file descriptor of the underlying acceptor socket.
     int getNative() const;
 

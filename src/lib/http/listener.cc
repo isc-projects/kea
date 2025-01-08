@@ -47,6 +47,11 @@ HttpListener::getTlsContext() const {
     return (impl_->getTlsContext());
 }
 
+void
+HttpListener::setTlsContext(const TlsContextPtr& context) {
+    impl_->setTlsContext(context);
+}
+
 int
 HttpListener::getNative() const {
     return (impl_->getNative());
