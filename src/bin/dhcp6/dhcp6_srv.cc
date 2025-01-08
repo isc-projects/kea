@@ -2249,9 +2249,10 @@ Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
         }
     }
 
-    // Subnet may be modified by the allocation engine, there are things
-    // we need to do when that happens.
-    checkDynamicSubnetChange(question, answer, ctx, orig_subnet);
+    // Need to check for pool-level DDNS parameters and if the
+    // subnet was modified by the allocation engine, there are things
+    // we need to do either case.
+    checkPostAssignmentChanges(question, answer, ctx, orig_subnet);
 }
 
 void
@@ -2440,6 +2441,8 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
 
     // Iterate over the IAContexts (there should be one per client IA processed).
     // For the first address in each IA_NA, create the appropriate NCR(s).
+    /// @todo TKM - we should really consider only doing this for the first
+    /// IA_NA.
     for (auto& ia_ctx : ctx.getIAContexts()) {
         if ((ia_ctx.type_ != Lease::TYPE_NA) || !ia_ctx.ia_rsp_) {
             continue;
@@ -3267,9 +3270,10 @@ Dhcpv6Srv::extendLeases(const Pkt6Ptr& query, Pkt6Ptr& reply,
         }
     }
 
-    // Subnet may be modified by the allocation engine, there are things
-    // we need to do when that happens.
-    checkDynamicSubnetChange(query, reply, ctx, orig_subnet);
+    // Need to check for pool-level DDNS parameters and if the
+    // subnet was modified by the allocation engine, there are things
+    // we need to do either case.
+    checkPostAssignmentChanges(query, reply, ctx, orig_subnet);
 }
 
 void
@@ -5069,52 +5073,71 @@ Dhcpv6Srv::setTeeTimes(uint32_t preferred_lft,
 }
 
 void
-Dhcpv6Srv::checkDynamicSubnetChange(const Pkt6Ptr& question, Pkt6Ptr& answer,
-                                    AllocEngine::ClientContext6& ctx,
-                                    const ConstSubnet6Ptr orig_subnet) {
-    // If the subnet's are the same there's nothing to do.
-    if ((!ctx.subnet_) || (!orig_subnet) || (orig_subnet->getID() == ctx.subnet_->getID())) {
-        return;
+Dhcpv6Srv::checkPostAssignmentChanges(const Pkt6Ptr& question, Pkt6Ptr& answer,
+                                      AllocEngine::ClientContext6& ctx,
+                                      const ConstSubnet6Ptr orig_subnet) {
+    bool reprocess_client_name = false;
+
+    // Find the pool to which the first active lease address belongs and use it
+    // to update DDNS parameters to include those from the pool.
+    OptionPtr ia = answer->getOption(D6O_IA_NA);
+    if (ia) {
+        Option6IAAddrPtr iaaddr = boost::dynamic_pointer_cast<Option6IAAddr>(ia->getOption(D6O_IAADDR));
+        if (iaaddr && (iaaddr->getValid() > 0)) {
+            auto ddns_params = ctx.getDdnsParams();
+            auto pool = ddns_params->setPoolFromAddress(iaaddr->getAddress());
+            if (pool) {
+                // If the pool has any DDNS parameters we need to recalculate the FQDN.
+                reprocess_client_name = pool->hasDdnsParameters();
+            }
+        }
     }
 
-    // We get the network for logging only. It should always be set as this a dynamic
-    // change should only happen within shared-networks.  Not having one might not be
-    // an error if a hook changed the subnet?
-    SharedNetwork6Ptr network;
-    orig_subnet->getSharedNetwork(network);
-    LOG_DEBUG(packet6_logger, DBG_DHCP6_BASIC_DATA, DHCP6_SUBNET_DYNAMICALLY_CHANGED)
-             .arg(question->getLabel())
-             .arg(orig_subnet->toText())
-             .arg(ctx.subnet_->toText())
-             .arg(network ? network->getName() : "<no network?>");
+    // Check if the subnet was dynamnically changed by the allocation engine.
+    if (ctx.subnet_ && orig_subnet && (orig_subnet->getID() != ctx.subnet_->getID())) {
+        // We get the network for logging only. It should always be set as this a dynamic
+        // change should only happen within shared-networks.  Not having one might not be
+        // an error if a hook changed the subnet?
+        SharedNetwork6Ptr network;
+        orig_subnet->getSharedNetwork(network);
+        LOG_DEBUG(packet6_logger, DBG_DHCP6_BASIC_DATA, DHCP6_SUBNET_DYNAMICALLY_CHANGED)
+                 .arg(question->getLabel())
+                 .arg(orig_subnet->toText())
+                 .arg(ctx.subnet_->toText())
+                 .arg(network ? network->getName() : "<no network?>");
 
-    // The DDNS parameters may have changed with the subnet, so we need to
-    // recalculate the client name.
+        // The subnet changed so we need to recalculate the FQDN.
+        reprocess_client_name = true;
+    }
 
-    // Save the current DNS values on the context.
-    std::string prev_hostname = ctx.hostname_;
-    bool prev_fwd_dns_update = ctx.fwd_dns_update_;
-    bool prev_rev_dns_update = ctx.rev_dns_update_;
+    // Recalulate the FQDN if either the pool has DDNS parameters or the
+    // selected subnet was changed.
+    if (reprocess_client_name) {
+        // Save the current DNS values on the context.
+        std::string prev_hostname = ctx.hostname_;
+        bool prev_fwd_dns_update = ctx.fwd_dns_update_;
+        bool prev_rev_dns_update = ctx.rev_dns_update_;
 
-    // Remove the current FQDN option from the answer.
-    answer->delOption(D6O_CLIENT_FQDN);
+        // Remove the current FQDN option from the answer.
+        answer->delOption(D6O_CLIENT_FQDN);
 
-    // Recalculate the client's FQDN.  This will replace the FQDN option and
-    // update the context values for hostname_ and DNS directions.
-    processClientFqdn(question, answer, ctx);
+        // Recalculate the client's FQDN.  This will replace the FQDN option and
+        // update the context values for hostname_ and DNS directions.
+        processClientFqdn(question, answer, ctx);
 
-    // If this is a real allocation and the DNS values changed we need to
-    // update the leases.
-    if (!ctx.fake_allocation_ &&
-        ((prev_hostname != ctx.hostname_) ||
-        (prev_fwd_dns_update != ctx.fwd_dns_update_) ||
-        (prev_rev_dns_update != ctx.rev_dns_update_))) {
-        for (auto const& l : ctx.new_leases_) {
-            l->hostname_ = ctx.hostname_;
-            l->fqdn_fwd_ = ctx.fwd_dns_update_;
-            l->fqdn_rev_ = ctx.rev_dns_update_;
-            l->reuseable_valid_lft_ = 0;
-            LeaseMgrFactory::instance().updateLease6(l);
+        // If this is a real allocation and the DNS values changed we need to
+        // update the leases.
+        if (!ctx.fake_allocation_ &&
+            ((prev_hostname != ctx.hostname_) ||
+            (prev_fwd_dns_update != ctx.fwd_dns_update_) ||
+            (prev_rev_dns_update != ctx.rev_dns_update_))) {
+            for (auto const& l : ctx.new_leases_) {
+                l->hostname_ = ctx.hostname_;
+                l->fqdn_fwd_ = ctx.fwd_dns_update_;
+                l->fqdn_rev_ = ctx.rev_dns_update_;
+                l->reuseable_valid_lft_ = 0;
+                LeaseMgrFactory::instance().updateLease6(l);
+            }
         }
     }
 }

@@ -341,7 +341,6 @@ const SimpleKeywords SimpleParser4::POOL4_PARAMETERS = {
     { "evaluate-additional-classes",    Element::list },
     { "user-context",                   Element::map },
     { "comment",                        Element::string },
-    { "metadata",                       Element::map },
     { "ddns-send-updates",              Element::boolean },
     { "ddns-override-no-update",        Element::boolean },
     { "ddns-override-client-update",    Element::boolean },
@@ -355,7 +354,8 @@ const SimpleKeywords SimpleParser4::POOL4_PARAMETERS = {
     { "ddns-conflict-resolution-mode",  Element::string },
     { "ddns-ttl",                       Element::integer },
     { "ddns-ttl-min",                   Element::integer },
-    { "ddns-ttl-max",                   Element::integer }
+    { "ddns-ttl-max",                   Element::integer },
+    { "metadata",                       Element::map }
 };
 
 /// @brief This table defines all shared network parameters for DHCPv4.

@@ -100,49 +100,49 @@ public:
 	        __LINE__,
 	        R"^({
 	            "id": 1,
-	            "ddns-ttl-percent": 5.0 
+	            "ddns-ttl-percent": 5.0
 	        })^",
 	        5.0, 0, 0, 0
 	    },{
 	        __LINE__,
 	        R"^({
 	            "id": 1,
-	            "ddns-ttl-min": 25 
+	            "ddns-ttl-min": 25
 	        })^",
 	        0.0, 0, 25, 0
 	    },{
 	        __LINE__,
 	        R"^({
-	            "id": 1, 
-	            "ddns-ttl-max": 150 
+	            "id": 1,
+	            "ddns-ttl-max": 150
 	        })^",
-	        0.0, 0, 0, 150 
+	        0.0, 0, 0, 150
 	    },{
 	        __LINE__,
 	        R"^({
 	            "id": 1,
 	            "ddns-ttl-min": 25,
-	            "ddns-ttl-max": 150 
+	            "ddns-ttl-max": 150
 	        })^",
-	        0.0, 0, 25, 150 
+	        0.0, 0, 25, 150
 	    },{
 	        __LINE__,
 	        R"^({
 	            "id": 1, "subnet": "192.0.2.0/24",
 	            "ddns-ttl-percent": 5.0,
 	            "ddns-ttl-min": 25,
-	            "ddns-ttl-max": 150 
+	            "ddns-ttl-max": 150
 	        })^",
-	        5.0, 0, 25, 150 
+	        5.0, 0, 25, 150
 	    }};
 
         ElementPtr subnet_elem = Element::create(family == AF_INET ?
-                                                 "192.0.2.0/24" : "2001:db8::/64");	
+                                                 "192.0.2.0/24" : "2001:db8::/64");
 	    for (const auto& scenario : scenarios) {
-	        std::stringstream oss; 
+	        std::stringstream oss;
 	        oss << "scenario at " << scenario.line_no_;
 	        SCOPED_TRACE(oss.str());
-	
+
 	        // Parse configuration specified above.
 	        ElementPtr config_element;
 	        ASSERT_NO_THROW_LOG(config_element = Element::fromJSON(scenario.json_));
@@ -151,24 +151,24 @@ public:
 	        ParserType parser(family);
 
 	        NetworkPtrType subnet;
-	
+
 	        ASSERT_NO_THROW_LOG(subnet = parser.parse(config_element));
 	        ASSERT_TRUE(subnet);
-	
-	        EXPECT_EQ(subnet->getDdnsTtlPercent().unspecified(), (scenario.ddns_ttl_percent_ == 0.0)); 
-	        EXPECT_EQ(subnet->getDdnsTtlPercent(), scenario.ddns_ttl_percent_); 
-	
-	        EXPECT_EQ(subnet->getDdnsTtl().unspecified(), (scenario.ddns_ttl_ == 0)); 
-	        EXPECT_EQ(subnet->getDdnsTtl(), scenario.ddns_ttl_); 
-	
-	        EXPECT_EQ(subnet->getDdnsTtlMin().unspecified(), (scenario.ddns_ttl_min_ == 0)); 
-	        EXPECT_EQ(subnet->getDdnsTtlMin(), scenario.ddns_ttl_min_); 
-	
-	        EXPECT_EQ(subnet->getDdnsTtlMax().unspecified(), (scenario.ddns_ttl_max_ == 0)); 
-	        EXPECT_EQ(subnet->getDdnsTtlMax(), scenario.ddns_ttl_max_); 
+
+	        EXPECT_EQ(subnet->getDdnsTtlPercent().unspecified(), (scenario.ddns_ttl_percent_ == 0.0));
+	        EXPECT_EQ(subnet->getDdnsTtlPercent(), scenario.ddns_ttl_percent_);
+
+	        EXPECT_EQ(subnet->getDdnsTtl().unspecified(), (scenario.ddns_ttl_ == 0));
+	        EXPECT_EQ(subnet->getDdnsTtl(), scenario.ddns_ttl_);
+
+	        EXPECT_EQ(subnet->getDdnsTtlMin().unspecified(), (scenario.ddns_ttl_min_ == 0));
+	        EXPECT_EQ(subnet->getDdnsTtlMin(), scenario.ddns_ttl_min_);
+
+	        EXPECT_EQ(subnet->getDdnsTtlMax().unspecified(), (scenario.ddns_ttl_max_ == 0));
+	        EXPECT_EQ(subnet->getDdnsTtlMax(), scenario.ddns_ttl_max_);
 	    }
 	}
-	
+
 	// Verifies invalid permutations of ddns-ttl-percent, ddns-ttl,
 	// ddns-ttl-min, and ddns-ttl-max values for SubnetX.
     template<typename ParserType>
@@ -178,7 +178,7 @@ public:
 	        std::string json_;
 	        std::string exp_message_;
 	    };
-	
+
 	    std::list<Scenario> scenarios = {
 	    {
 	        __LINE__,
@@ -201,7 +201,7 @@ public:
 	        R"^({
 	            "id": 1,
 	            "ddns-ttl": 100,
-	            "ddns-ttl-max": 150 
+	            "ddns-ttl-max": 150
 	        })^",
 	        "subnet configuration failed: cannot specify both ddns-ttl-max and ddns-ttl"
 	    },{
@@ -209,18 +209,18 @@ public:
 	        R"^({
 	            "id": 1,
 	            "ddns-ttl-min": 150,
-	            "ddns-ttl-max": 25 
+	            "ddns-ttl-max": 25
 	        })^",
 	        "subnet configuration failed: ddns-ttl-max: 25 must be greater than ddns-ttl-min: 150"
 	    }};
-	
+
         ElementPtr subnet_elem = Element::create(family == AF_INET ?
-                                                 "192.0.2.0/24" : "2001:db8::/64");	
+                                                 "192.0.2.0/24" : "2001:db8::/64");
 	    for (const auto& scenario : scenarios) {
-	        std::stringstream oss; 
+	        std::stringstream oss;
 	        oss << "scenario at " << scenario.line_no_;
 	        SCOPED_TRACE(oss.str());
-	
+
 	        // Parse configuration specified above.
 	        ElementPtr config_element;
 	        ASSERT_NO_THROW_LOG(config_element = Element::fromJSON(scenario.json_));
@@ -229,6 +229,121 @@ public:
 	        ASSERT_THROW_MSG(parser.parse(config_element), DhcpConfigError, scenario.exp_message_);
 	    }
 	}
+
+    /// @brief Tests valid DDNS parameters in v4 or v6 pools.
+    ///
+    /// As this uses the
+    /// same parser as Network derivatives we skip retesting all the
+    /// invalid permuations. This test ensures all supported
+    /// parameters can be set.
+    /// @tparam PoolListParserType type of pool list parser to use, Pools4ListParser
+    /// or Pools6ListParser.
+    /// @param pool1 string pool specification for the first pool
+    /// @param pool2 string pool specification for the first pool
+    template<typename PoolListParserType>
+	void validPoolDdnsParmaters(const std::string& pool1, const std::string& pool2) {
+        std::stringstream ss;
+
+        ss <<
+           R"^([{ "pool": ")^" << pool1 << "\"," <<
+           R"^(
+                "ddns-send-updates": true,
+                "ddns-override-no-update": true,
+                "ddns-override-client-update": true,
+                "ddns-replace-client-name": "always",
+                "ddns-generated-prefix": "prefix",
+                "ddns-qualifying-suffix": "suffix",
+                "hostname-char-set": "[a-z]",
+                "hostname-char-replacement": "X",
+                "ddns-update-on-renew": true,
+                "ddns-ttl-percent": 0.5,
+                "ddns-conflict-resolution-mode": "check-with-dhcid",
+                "ddns-ttl-min": 200,
+                "ddns-ttl-max": 500
+            },
+            {
+                "pool": ")^" << pool2 << "\"," <<
+            R"^(
+                "ddns-ttl": 300
+            }])^";
+
+        ElementPtr config_element = Element::fromJSON(ss.str());
+
+        PoolStoragePtr pools(new PoolStorage());
+        PoolListParserType parser;
+        ASSERT_NO_THROW_LOG(parser.parse(pools, config_element));
+
+        // Should have two pools.
+        ASSERT_EQ(pools->size(), 2);
+
+        // First pool specifies all but ddns-ttl.
+        PoolPtr pool  = (*pools)[0];
+        ASSERT_TRUE(pool);
+
+        ASSERT_FALSE(pool->getDdnsSendUpdates().unspecified());
+        EXPECT_TRUE(pool->getDdnsSendUpdates().get());
+
+        ASSERT_FALSE(pool->getDdnsOverrideNoUpdate().unspecified());
+        EXPECT_TRUE(pool->getDdnsOverrideNoUpdate().get());
+
+        ASSERT_FALSE(pool->getDdnsOverrideClientUpdate().unspecified());
+        EXPECT_TRUE(pool->getDdnsOverrideClientUpdate().get());
+
+        ASSERT_FALSE(pool->getDdnsReplaceClientNameMode().unspecified());
+        EXPECT_EQ(pool->getDdnsReplaceClientNameMode().get(),
+                  D2ClientConfig::RCM_ALWAYS);
+
+        ASSERT_FALSE(pool->getDdnsGeneratedPrefix().unspecified());
+        EXPECT_EQ(pool->getDdnsGeneratedPrefix().get(), "prefix");
+
+        ASSERT_FALSE(pool->getDdnsQualifyingSuffix().unspecified());
+        EXPECT_EQ(pool->getDdnsQualifyingSuffix().get(), "suffix");
+
+        ASSERT_FALSE(pool->getHostnameCharSet().unspecified());
+        EXPECT_EQ(pool->getHostnameCharSet().get(), "[a-z]");
+
+        ASSERT_FALSE(pool->getHostnameCharReplacement().unspecified());
+        EXPECT_EQ(pool->getHostnameCharReplacement().get(), "X");
+
+        ASSERT_FALSE(pool->getDdnsUpdateOnRenew().unspecified());
+        EXPECT_TRUE(pool->getDdnsUpdateOnRenew().get());
+
+        ASSERT_FALSE(pool->getDdnsTtlPercent().unspecified());
+        EXPECT_EQ(pool->getDdnsTtlPercent().get(), 0.5);
+
+        ASSERT_FALSE(pool->getDdnsConflictResolutionMode().unspecified());
+        EXPECT_EQ(pool->getDdnsConflictResolutionMode().get(), "check-with-dhcid");
+
+        ASSERT_TRUE(pool->getDdnsTtl().unspecified());
+
+        ASSERT_FALSE(pool->getDdnsTtlMin().unspecified());
+        EXPECT_EQ(pool->getDdnsTtlMin().get(), 200);
+
+        ASSERT_FALSE(pool->getDdnsTtlMax().unspecified());
+        EXPECT_EQ(pool->getDdnsTtlMax().get(), 500);
+
+        // Second pool only specifies ddns-ttl.
+        pool = (*pools)[1];
+        ASSERT_TRUE(pool);
+
+        ASSERT_TRUE(pool->getDdnsSendUpdates().unspecified());
+        ASSERT_TRUE(pool->getDdnsOverrideNoUpdate().unspecified());
+        ASSERT_TRUE(pool->getDdnsOverrideClientUpdate().unspecified());
+        ASSERT_TRUE(pool->getDdnsReplaceClientNameMode().unspecified());
+        ASSERT_TRUE(pool->getDdnsGeneratedPrefix().unspecified());
+        ASSERT_TRUE(pool->getDdnsQualifyingSuffix().unspecified());
+        ASSERT_TRUE(pool->getHostnameCharSet().unspecified());
+        ASSERT_TRUE(pool->getHostnameCharReplacement().unspecified());
+        ASSERT_TRUE(pool->getDdnsUpdateOnRenew().unspecified());
+        ASSERT_TRUE(pool->getDdnsTtlPercent().unspecified());
+        ASSERT_TRUE(pool->getDdnsConflictResolutionMode().unspecified());
+        ASSERT_TRUE(pool->getDdnsTtlMin().unspecified());
+
+        ASSERT_FALSE(pool->getDdnsTtl().unspecified());
+        EXPECT_EQ(pool->getDdnsTtl().get(), 300);
+
+        ASSERT_TRUE(pool->getDdnsTtlMax().unspecified());
+    }
 };
 
 /// Verifies the code that parses mac sources and adds them to CfgMgr
@@ -4231,7 +4346,7 @@ TEST_F(DhcpParserTest, deprecatedClientClassSubnet6) {
 }
 
 // Verify that deprecated client-class is handled properly
-// by Pool4 parser. 
+// by Pool4 parser.
 TEST_F(DhcpParserTest, deprecatedClientClassPool4) {
     // Valid entry.
     std::string config =
@@ -4337,110 +4452,14 @@ TEST_F(DhcpParserTest, invalidDdnsTtlParmatersSubnet6) {
     invalidDdnsTtlParmatersSubnet<Subnet6ConfigParser>(AF_INET6);
 }
 
-// Verifies valid DDNS parameters in v4 pools.  As this uses the
-// same parser as Network derivatives we skip retesting all the
-// invalid permuations. This test ensures all supported
-// parameters can be set. 
+// Verifies valid DDNS parameters in v4 pools.
 TEST_F(DhcpParserTest, validDdnsParmatersPool4) {
+	validPoolDdnsParmaters<Pools4ListParser>("192.0.1.0/24", "192.0.2.0/24");
+}
 
-    std::string config =
-       R"^([{
-            "pool": "192.0.1.0/24",
-            "ddns-send-updates": true,
-            "ddns-override-no-update": true,
-            "ddns-override-client-update": true,
-            "ddns-replace-client-name": "always",
-            "ddns-generated-prefix": "prefix", 
-            "ddns-qualifying-suffix": "suffix", 
-            "hostname-char-set": "[a-z]",
-            "hostname-char-replacement": "X",
-            "ddns-update-on-renew": true, 
-            "ddns-ttl-percent": 0.5,
-            "ddns-conflict-resolution-mode": "check-with-dhcid",
-            "ddns-ttl-min": 200,
-            "ddns-ttl-max": 500 
-        },
-        {
-            "pool": "192.0.2.0/24",
-            "ddns-ttl": 300
-        }])^";
-
-    ElementPtr config_element = Element::fromJSON(config);
-
-    PoolStoragePtr pools(new PoolStorage());
-    Pools4ListParser parser;
-    ASSERT_NO_THROW_LOG(parser.parse(pools, config_element));
-
-    // Should have two pools.
-    ASSERT_EQ(pools->size(), 2);
-
-    // First pool specifies all but ddns-ttl.
-    PoolPtr pool  = (*pools)[0];
-    ASSERT_TRUE(pool);
-    
-    ASSERT_FALSE(pool->getDdnsSendUpdates().unspecified());
-    EXPECT_TRUE(pool->getDdnsSendUpdates().get());
-
-    ASSERT_FALSE(pool->getDdnsOverrideNoUpdate().unspecified());
-    EXPECT_TRUE(pool->getDdnsOverrideNoUpdate().get());
-
-    ASSERT_FALSE(pool->getDdnsOverrideClientUpdate().unspecified());
-    EXPECT_TRUE(pool->getDdnsOverrideClientUpdate().get());
-
-    ASSERT_FALSE(pool->getDdnsReplaceClientNameMode().unspecified());
-    EXPECT_EQ(pool->getDdnsReplaceClientNameMode().get(), 
-              D2ClientConfig::RCM_ALWAYS);
-
-    ASSERT_FALSE(pool->getDdnsGeneratedPrefix().unspecified());
-    EXPECT_EQ(pool->getDdnsGeneratedPrefix().get(), "prefix");
-
-    ASSERT_FALSE(pool->getDdnsQualifyingSuffix().unspecified());
-    EXPECT_EQ(pool->getDdnsQualifyingSuffix().get(), "suffix");
-
-    ASSERT_FALSE(pool->getHostnameCharSet().unspecified());
-    EXPECT_EQ(pool->getHostnameCharSet().get(), "[a-z]");
-
-    ASSERT_FALSE(pool->getHostnameCharReplacement().unspecified());
-    EXPECT_EQ(pool->getHostnameCharReplacement().get(), "X");
-
-    ASSERT_FALSE(pool->getDdnsUpdateOnRenew().unspecified());
-    EXPECT_TRUE(pool->getDdnsUpdateOnRenew().get());
-
-    ASSERT_FALSE(pool->getDdnsTtlPercent().unspecified());
-    EXPECT_EQ(pool->getDdnsTtlPercent().get(), 0.5);
-
-    ASSERT_FALSE(pool->getDdnsConflictResolutionMode().unspecified());
-    EXPECT_EQ(pool->getDdnsConflictResolutionMode().get(), "check-with-dhcid");
-
-    ASSERT_TRUE(pool->getDdnsTtl().unspecified());
-
-    ASSERT_FALSE(pool->getDdnsTtlMin().unspecified());
-    EXPECT_EQ(pool->getDdnsTtlMin().get(), 200);
-
-    ASSERT_FALSE(pool->getDdnsTtlMax().unspecified());
-    EXPECT_EQ(pool->getDdnsTtlMax().get(), 500);
-
-    // Second pool only specifies ddns-ttl.
-    pool = (*pools)[1];
-    ASSERT_TRUE(pool);
-    
-    ASSERT_TRUE(pool->getDdnsSendUpdates().unspecified());
-    ASSERT_TRUE(pool->getDdnsOverrideNoUpdate().unspecified());
-    ASSERT_TRUE(pool->getDdnsOverrideClientUpdate().unspecified());
-    ASSERT_TRUE(pool->getDdnsReplaceClientNameMode().unspecified());
-    ASSERT_TRUE(pool->getDdnsGeneratedPrefix().unspecified());
-    ASSERT_TRUE(pool->getDdnsQualifyingSuffix().unspecified());
-    ASSERT_TRUE(pool->getHostnameCharSet().unspecified());
-    ASSERT_TRUE(pool->getHostnameCharReplacement().unspecified());
-    ASSERT_TRUE(pool->getDdnsUpdateOnRenew().unspecified());
-    ASSERT_TRUE(pool->getDdnsTtlPercent().unspecified());
-    ASSERT_TRUE(pool->getDdnsConflictResolutionMode().unspecified());
-    ASSERT_TRUE(pool->getDdnsTtlMin().unspecified());
-
-    ASSERT_FALSE(pool->getDdnsTtl().unspecified());
-    EXPECT_EQ(pool->getDdnsTtl().get(), 300);
-
-    ASSERT_TRUE(pool->getDdnsTtlMax().unspecified());
+// Verifies valid DDNS parameters in v6 pools.
+TEST_F(DhcpParserTest, validDdnsParmatersPool6) {
+	validPoolDdnsParmaters<Pools6ListParser>("2001:db8:1::/64", "2001:db8:2::/64");
 }
 
 }  // Anonymous namespace

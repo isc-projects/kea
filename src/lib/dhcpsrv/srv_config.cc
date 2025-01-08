@@ -1244,7 +1244,8 @@ DdnsParams::setPoolFromAddress(const asiolink::IOAddress& address) {
                   "DdnsParams::setPoolFromAddress called without a subnet");
     }
 
-    pool_ = subnet_->getPool((address.isV4() ?  Lease::TYPE_V4 : Lease::TYPE_NA), address, false);
+    pool_ = subnet_->getPool((address.isV4() ?  Lease::TYPE_V4 : Lease::TYPE_NA),
+                              address, false);
     return (pool_);
 }
 
