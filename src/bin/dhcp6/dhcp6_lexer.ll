@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2016-2025 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -264,6 +264,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser6Context::DHCP6:
     case isc::dhcp::Parser6Context::SUBNET6:
     case isc::dhcp::Parser6Context::SHARED_NETWORK:
+    case isc::dhcp::Parser6Context::POOLS:
         return isc::dhcp::Dhcp6Parser::make_HOSTNAME_CHAR_SET(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("hostname-char-set", driver.loc_);
@@ -275,6 +276,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser6Context::DHCP6:
     case isc::dhcp::Parser6Context::SUBNET6:
     case isc::dhcp::Parser6Context::SHARED_NETWORK:
+    case isc::dhcp::Parser6Context::POOLS:
         return isc::dhcp::Dhcp6Parser::make_HOSTNAME_CHAR_REPLACEMENT(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("hostname-char-replacement", driver.loc_);
@@ -962,6 +964,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser6Context::DHCP6:
     case isc::dhcp::Parser6Context::SUBNET6:
     case isc::dhcp::Parser6Context::SHARED_NETWORK:
+    case isc::dhcp::Parser6Context::POOLS:
         return isc::dhcp::Dhcp6Parser::make_DDNS_SEND_UPDATES(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("ddns-send-updates", driver.loc_);
@@ -973,6 +976,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser6Context::DHCP6:
     case isc::dhcp::Parser6Context::SUBNET6:
     case isc::dhcp::Parser6Context::SHARED_NETWORK:
+    case isc::dhcp::Parser6Context::POOLS:
         return isc::dhcp::Dhcp6Parser::make_DDNS_OVERRIDE_NO_UPDATE(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("ddns-override-no-update", driver.loc_);
@@ -984,6 +988,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser6Context::DHCP6:
     case isc::dhcp::Parser6Context::SUBNET6:
     case isc::dhcp::Parser6Context::SHARED_NETWORK:
+    case isc::dhcp::Parser6Context::POOLS:
         return isc::dhcp::Dhcp6Parser::make_DDNS_OVERRIDE_CLIENT_UPDATE(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("ddns-override-client-update", driver.loc_);
@@ -995,6 +1000,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser6Context::DHCP6:
     case isc::dhcp::Parser6Context::SUBNET6:
     case isc::dhcp::Parser6Context::SHARED_NETWORK:
+    case isc::dhcp::Parser6Context::POOLS:
         return isc::dhcp::Dhcp6Parser::make_DDNS_REPLACE_CLIENT_NAME(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("ddns-replace-client-name", driver.loc_);
@@ -1006,6 +1012,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser6Context::DHCP6:
     case isc::dhcp::Parser6Context::SUBNET6:
     case isc::dhcp::Parser6Context::SHARED_NETWORK:
+    case isc::dhcp::Parser6Context::POOLS:
         return isc::dhcp::Dhcp6Parser::make_DDNS_GENERATED_PREFIX(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("ddns-generated-prefix", driver.loc_);
@@ -1017,6 +1024,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser6Context::DHCP6:
     case isc::dhcp::Parser6Context::SUBNET6:
     case isc::dhcp::Parser6Context::SHARED_NETWORK:
+    case isc::dhcp::Parser6Context::POOLS:
         return isc::dhcp::Dhcp6Parser::make_DDNS_QUALIFYING_SUFFIX(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("ddns-qualifying-suffix", driver.loc_);
@@ -1028,6 +1036,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser6Context::DHCP6:
     case isc::dhcp::Parser6Context::SUBNET6:
     case isc::dhcp::Parser6Context::SHARED_NETWORK:
+    case isc::dhcp::Parser6Context::POOLS:
         return isc::dhcp::Dhcp6Parser::make_DDNS_UPDATE_ON_RENEW(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("ddns-update-on-renew", driver.loc_);
@@ -1050,6 +1059,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser6Context::DHCP6:
     case isc::dhcp::Parser6Context::SUBNET6:
     case isc::dhcp::Parser6Context::SHARED_NETWORK:
+    case isc::dhcp::Parser6Context::POOLS:
         return isc::dhcp::Dhcp6Parser::make_DDNS_CONFLICT_RESOLUTION_MODE(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("ddns-conflict-resolution-mode", driver.loc_);
@@ -1097,6 +1107,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser6Context::DHCP6:
     case isc::dhcp::Parser6Context::SUBNET6:
     case isc::dhcp::Parser6Context::SHARED_NETWORK:
+    case isc::dhcp::Parser6Context::POOLS:
         return isc::dhcp::Dhcp6Parser::make_DDNS_TTL_PERCENT(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("ddns-ttl-percent", driver.loc_);
@@ -1108,6 +1119,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser6Context::DHCP6:
     case isc::dhcp::Parser6Context::SUBNET6:
     case isc::dhcp::Parser6Context::SHARED_NETWORK:
+    case isc::dhcp::Parser6Context::POOLS:
         return isc::dhcp::Dhcp6Parser::make_DDNS_TTL(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("ddns-ttl", driver.loc_);
@@ -1119,6 +1131,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser6Context::DHCP6:
     case isc::dhcp::Parser6Context::SUBNET6:
     case isc::dhcp::Parser6Context::SHARED_NETWORK:
+    case isc::dhcp::Parser6Context::POOLS:
         return isc::dhcp::Dhcp6Parser::make_DDNS_TTL_MIN(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("ddns-ttl-min", driver.loc_);
@@ -1130,6 +1143,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser6Context::DHCP6:
     case isc::dhcp::Parser6Context::SUBNET6:
     case isc::dhcp::Parser6Context::SHARED_NETWORK:
+    case isc::dhcp::Parser6Context::POOLS:
         return isc::dhcp::Dhcp6Parser::make_DDNS_TTL_MAX(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("ddns-ttl-max", driver.loc_);

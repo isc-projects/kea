@@ -9472,4 +9472,124 @@ TEST_F(Dhcp6ParserTest, ddnsTtlMax) {
     EXPECT_EQ(750, subnet->getDdnsTtlMax(Network::Inheritance::GLOBAL).get());
 }
 
+TEST_F(Dhcp6ParserTest, poolDdnsParameters) {
+    string config = R"(
+    {
+        "valid-lifetime": 4000,
+        "subnet6": [{
+            "id": 1,
+            "subnet": "2001:db8::/32",
+            "pools": [{
+                "pool": "2001:db8:1::/64",
+                "ddns-send-updates": true,
+                "ddns-override-no-update": true,
+                "ddns-override-client-update": true,
+                "ddns-replace-client-name": "always",
+                "ddns-generated-prefix": "prefix",
+                "ddns-qualifying-suffix": "suffix",
+                "hostname-char-set": "[a-z]",
+                "hostname-char-replacement": "X",
+                "ddns-update-on-renew": true,
+                "ddns-ttl-percent": 0.5,
+                "ddns-conflict-resolution-mode": "check-with-dhcid",
+                "ddns-ttl-min": 200,
+                "ddns-ttl-max": 500
+            },
+            {
+                "pool": "2001:db8:2::/64",
+                "ddns-ttl": 300
+            }]
+        }]
+    }
+    )";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
+    extractConfig(config);
+
+    ConstElementPtr status;
+    ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
+
+    // returned value should be 0 (success)
+    checkResult(status, 0);
+
+    // Commit it so global inheritance works.
+    CfgMgr::instance().commit();
+
+    ConstSubnet6Ptr subnet = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets6()->selectSubnet(IOAddress("2001:db8::"));
+    ASSERT_TRUE(subnet);
+
+    const PoolCollection pools = subnet->getPools(Lease::TYPE_NA);
+    ASSERT_GE(pools.size(), 2);
+
+    // First pool specifies all but ddns-ttl.
+    PoolPtr pool = pools.at(0);
+    ASSERT_TRUE(pool);
+
+    ASSERT_FALSE(pool->getDdnsSendUpdates().unspecified());
+    EXPECT_TRUE(pool->getDdnsSendUpdates().get());
+
+    ASSERT_FALSE(pool->getDdnsOverrideNoUpdate().unspecified());
+    EXPECT_TRUE(pool->getDdnsOverrideNoUpdate().get());
+
+    ASSERT_FALSE(pool->getDdnsOverrideClientUpdate().unspecified());
+    EXPECT_TRUE(pool->getDdnsOverrideClientUpdate().get());
+
+    ASSERT_FALSE(pool->getDdnsReplaceClientNameMode().unspecified());
+    EXPECT_EQ(pool->getDdnsReplaceClientNameMode().get(),
+              D2ClientConfig::RCM_ALWAYS);
+
+    ASSERT_FALSE(pool->getDdnsGeneratedPrefix().unspecified());
+    EXPECT_EQ(pool->getDdnsGeneratedPrefix().get(), "prefix");
+
+    ASSERT_FALSE(pool->getDdnsQualifyingSuffix().unspecified());
+    EXPECT_EQ(pool->getDdnsQualifyingSuffix().get(), "suffix");
+
+    ASSERT_FALSE(pool->getHostnameCharSet().unspecified());
+    EXPECT_EQ(pool->getHostnameCharSet().get(), "[a-z]");
+
+    ASSERT_FALSE(pool->getHostnameCharReplacement().unspecified());
+    EXPECT_EQ(pool->getHostnameCharReplacement().get(), "X");
+
+    ASSERT_FALSE(pool->getDdnsUpdateOnRenew().unspecified());
+    EXPECT_TRUE(pool->getDdnsUpdateOnRenew().get());
+
+    ASSERT_FALSE(pool->getDdnsTtlPercent().unspecified());
+    EXPECT_EQ(pool->getDdnsTtlPercent().get(), 0.5);
+
+    ASSERT_FALSE(pool->getDdnsConflictResolutionMode().unspecified());
+    EXPECT_EQ(pool->getDdnsConflictResolutionMode().get(), "check-with-dhcid");
+
+    ASSERT_TRUE(pool->getDdnsTtl().unspecified());
+
+    ASSERT_FALSE(pool->getDdnsTtlMin().unspecified());
+    EXPECT_EQ(pool->getDdnsTtlMin().get(), 200);
+
+    ASSERT_FALSE(pool->getDdnsTtlMax().unspecified());
+    EXPECT_EQ(pool->getDdnsTtlMax().get(), 500);
+
+    // Second pool only specifies ddns-ttl.
+    pool = pools.at(1);
+    ASSERT_TRUE(pool);
+
+    ASSERT_TRUE(pool->getDdnsSendUpdates().unspecified());
+    ASSERT_TRUE(pool->getDdnsOverrideNoUpdate().unspecified());
+    ASSERT_TRUE(pool->getDdnsOverrideClientUpdate().unspecified());
+    ASSERT_TRUE(pool->getDdnsReplaceClientNameMode().unspecified());
+    ASSERT_TRUE(pool->getDdnsGeneratedPrefix().unspecified());
+    ASSERT_TRUE(pool->getDdnsQualifyingSuffix().unspecified());
+    ASSERT_TRUE(pool->getHostnameCharSet().unspecified());
+    ASSERT_TRUE(pool->getHostnameCharReplacement().unspecified());
+    ASSERT_TRUE(pool->getDdnsUpdateOnRenew().unspecified());
+    ASSERT_TRUE(pool->getDdnsTtlPercent().unspecified());
+    ASSERT_TRUE(pool->getDdnsConflictResolutionMode().unspecified());
+    ASSERT_TRUE(pool->getDdnsTtlMin().unspecified());
+
+    ASSERT_FALSE(pool->getDdnsTtl().unspecified());
+    EXPECT_EQ(pool->getDdnsTtl().get(), 300);
+
+    ASSERT_TRUE(pool->getDdnsTtlMax().unspecified());
+}
+
 }  // namespace

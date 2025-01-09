@@ -3273,10 +3273,10 @@ DDNS-related parameters are split into two groups:
     These parameters influence behavior such as how client host names and
     FQDN options are handled. They have been moved out of the ``dhcp-ddns``
     section so that they may be specified at the global, shared-network,
-    and/or subnet levels. Furthermore, they are inherited downward from global to
-    shared-network to subnet. In other words, if a parameter is not specified at
-    a given level, the value for that level comes from the level above it.
-    The behavioral parameters are as follows:
+    subnet and/or pool levels. Furthermore, they are inherited downward from
+    global to shared-network to subnet to pool. In other words, if a parameter
+    is not specified at a given level, the value for that level comes from the
+    level above it.  The behavioral parameters are as follows:
 
     -  ``ddns-send-updates``
     -  ``ddns-override-no-update``
@@ -3292,6 +3292,11 @@ DDNS-related parameters are split into two groups:
     -  ``ddns-ttl-max``
     -  ``hostname-char-set``
     -  ``hostname-char-replacement``
+
+.. note::
+
+    Kea 2.7.6 added support for these parameters to the (address) pool level.  They
+    are not supported in pd-pools.
 
 .. note::
 

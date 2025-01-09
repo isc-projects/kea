@@ -8274,12 +8274,14 @@ TEST_F(Dhcp4ParserTest, deprecatedClientClassesCheck) {
                 " and 'client-classes'. Use only the latter.");
 }
 
+// Verifies ddns-ttl-percent is supported at global,
+// shared-network, and subnet scopes.
 TEST_F(Dhcp4ParserTest, ddnsTtlPercent) {
     string config = R"(
     {
         "ddns-ttl-percent": 0.75,
         "valid-lifetime": 4000,
-        "shared-networks": [{ 
+        "shared-networks": [{
             "name": "net",
             "ddns-ttl-percent": 0.50,
             "subnet4": [{
@@ -8318,12 +8320,14 @@ TEST_F(Dhcp4ParserTest, ddnsTtlPercent) {
     EXPECT_EQ(0.75, subnet->getDdnsTtlPercent(Network::Inheritance::GLOBAL).get());
 }
 
+// Verifies ddns-ttl is supported at global,
+// shared-network, and subnet scopes.
 TEST_F(Dhcp4ParserTest, ddnsTtl) {
     string config = R"(
     {
         "ddns-ttl": 750,
         "valid-lifetime": 4000,
-        "shared-networks": [{ 
+        "shared-networks": [{
             "name": "net",
             "ddns-ttl": 500,
             "subnet4": [{
@@ -8362,12 +8366,14 @@ TEST_F(Dhcp4ParserTest, ddnsTtl) {
     EXPECT_EQ(750, subnet->getDdnsTtl(Network::Inheritance::GLOBAL).get());
 }
 
+// Verifies ddns-ttl-min is supported at global,
+// shared-network, and subnet scopes.
 TEST_F(Dhcp4ParserTest, ddnsTtlMin) {
     string config = R"(
     {
         "ddns-ttl-min": 750,
         "valid-lifetime": 4000,
-        "shared-networks": [{ 
+        "shared-networks": [{
             "name": "net",
             "ddns-ttl-min": 500,
             "subnet4": [{
@@ -8406,12 +8412,14 @@ TEST_F(Dhcp4ParserTest, ddnsTtlMin) {
     EXPECT_EQ(750, subnet->getDdnsTtlMin(Network::Inheritance::GLOBAL).get());
 }
 
+// Verifies ddns-ttl-max is supported at global,
+// shared-network, and subnet scopes.
 TEST_F(Dhcp4ParserTest, ddnsTtlMax) {
     string config = R"(
     {
         "ddns-ttl-max": 750,
         "valid-lifetime": 4000,
-        "shared-networks": [{ 
+        "shared-networks": [{
             "name": "net",
             "ddns-ttl-max": 500,
             "subnet4": [{
@@ -8450,6 +8458,7 @@ TEST_F(Dhcp4ParserTest, ddnsTtlMax) {
     EXPECT_EQ(750, subnet->getDdnsTtlMax(Network::Inheritance::GLOBAL).get());
 }
 
+// Verifies that DDNS parameters are supported in pools.
 TEST_F(Dhcp4ParserTest, poolDdnsParameters) {
     string config = R"(
     {
@@ -8463,15 +8472,15 @@ TEST_F(Dhcp4ParserTest, poolDdnsParameters) {
                 "ddns-override-no-update": true,
                 "ddns-override-client-update": true,
                 "ddns-replace-client-name": "always",
-                "ddns-generated-prefix": "prefix", 
-                "ddns-qualifying-suffix": "suffix", 
+                "ddns-generated-prefix": "prefix",
+                "ddns-qualifying-suffix": "suffix",
                 "hostname-char-set": "[a-z]",
                 "hostname-char-replacement": "X",
-                "ddns-update-on-renew": true, 
+                "ddns-update-on-renew": true,
                 "ddns-ttl-percent": 0.5,
                 "ddns-conflict-resolution-mode": "check-with-dhcid",
                 "ddns-ttl-min": 200,
-                "ddns-ttl-max": 500 
+                "ddns-ttl-max": 500
             },
             {
                 "pool": "192.0.2.0/24",
@@ -8504,7 +8513,7 @@ TEST_F(Dhcp4ParserTest, poolDdnsParameters) {
     // First pool specifies all but ddns-ttl.
     PoolPtr pool = pools.at(0);
     ASSERT_TRUE(pool);
-    
+
     ASSERT_FALSE(pool->getDdnsSendUpdates().unspecified());
     EXPECT_TRUE(pool->getDdnsSendUpdates().get());
 
@@ -8515,7 +8524,7 @@ TEST_F(Dhcp4ParserTest, poolDdnsParameters) {
     EXPECT_TRUE(pool->getDdnsOverrideClientUpdate().get());
 
     ASSERT_FALSE(pool->getDdnsReplaceClientNameMode().unspecified());
-    EXPECT_EQ(pool->getDdnsReplaceClientNameMode().get(), 
+    EXPECT_EQ(pool->getDdnsReplaceClientNameMode().get(),
               D2ClientConfig::RCM_ALWAYS);
 
     ASSERT_FALSE(pool->getDdnsGeneratedPrefix().unspecified());
@@ -8550,7 +8559,7 @@ TEST_F(Dhcp4ParserTest, poolDdnsParameters) {
     // Second pool only specifies ddns-ttl.
     pool = pools.at(1);
     ASSERT_TRUE(pool);
-    
+
     ASSERT_TRUE(pool->getDdnsSendUpdates().unspecified());
     ASSERT_TRUE(pool->getDdnsOverrideNoUpdate().unspecified());
     ASSERT_TRUE(pool->getDdnsOverrideClientUpdate().unspecified());
@@ -8569,6 +8578,5 @@ TEST_F(Dhcp4ParserTest, poolDdnsParameters) {
 
     ASSERT_TRUE(pool->getDdnsTtlMax().unspecified());
 }
-
 
 }  // namespace

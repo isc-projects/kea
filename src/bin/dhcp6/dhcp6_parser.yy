@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2016-2025 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -2206,6 +2206,20 @@ pool_param: pool_entry
           | network_client_classes
           | require_client_classes
           | evaluate_additional_classes
+          | ddns_send_updates
+          | ddns_override_no_update
+          | ddns_override_client_update
+          | ddns_replace_client_name
+          | ddns_generated_prefix
+          | ddns_qualifying_suffix
+          | ddns_update_on_renew
+          | ddns_conflict_resolution_mode
+          | ddns_ttl_percent
+          | ddns_ttl
+          | ddns_ttl_min
+          | ddns_ttl_max
+          | hostname_char_set
+          | hostname_char_replacement
           | user_context
           | comment
           | unknown_map_entry

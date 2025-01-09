@@ -520,9 +520,10 @@ public:
         // FQDN option.
         OptionPtr srvid = srv_->getServerID();
         // Set the appropriate FQDN type. It must be partial if hostname is
-        // empty.
-        Option6ClientFqdn::DomainNameType fqdn_type = (hostname.empty() ?
+        // empty or if it does not end with dot '.'.
+        Option6ClientFqdn::DomainNameType fqdn_type = (hostname.back() != '.' ?
             Option6ClientFqdn::PARTIAL : Option6ClientFqdn::FULL);
+
         Pkt6Ptr req = generateMessage(msg_type, client_flags,
                                       hostname, fqdn_type, include_oro, srvid);
 
@@ -688,7 +689,7 @@ public:
         ASSERT_TRUE(subnet_);
 
         const PoolCollection& pool_col = subnet_->getPools(type);
-        ASSERT_EQ(pool_idx + 1, pool_col.size());
+        ASSERT_LE(pool_idx + 1, pool_col.size());
         PoolPtr pool = (subnet_->getPools(type)).at(pool_idx);
         ASSERT_TRUE(pool);
         pool_ = boost::dynamic_pointer_cast<Pool6>(pool);
@@ -2258,6 +2259,166 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsTtlMaxTest) {
                           Optional<uint32_t>(),     // ttl 
                           Optional<uint32_t>(),     // ttl-min
                           500);                     // ttl-max 
+}
+
+// Verify pool-level DDNS pararmeters are used.
+// We don't verify all of them, just enough
+// enough to ensure proper scoping of values.
+TEST_F(FqdnDhcpv6SrvTest, poolDdnsParametersTest) {
+
+    // A configuration with following pools:
+    // 1. Specifies a qualifying suffix
+    // 2. Specifes no DDNS parameters
+    // 3. Disables DDNS updates
+    // 4. Specifies a qualifying suffix but disables DDNS updates
+    std::string config = R"(
+    {
+        "interfaces-config": { "interfaces": [ "*" ] },
+        "dhcp-ddns": { "enable-updates": true },
+        "valid-lifetime": 4000,
+        "preferred-lifetime": 3000,
+        "rebind-timer": 2000,
+        "renew-timer": 1000,
+        "subnet6": [{
+            "subnet": "2001:db8::/64",
+            "interface": "eth0",
+            "id": 1,
+            "ddns-qualifying-suffix": "subfix.com",
+            "pools": [{
+                "pool": "2001:db8::1-2001:db8::1",
+                "ddns-qualifying-suffix": "poolfix.com",
+            },
+            {
+                "pool": "2001:db8::2-2001:db8::2",
+            },
+            {
+                "pool": "2001:db8::3-2001:db8::3",
+                "ddns-send-updates": false
+            },
+            {
+                "pool": "2001:db8::4-2001:db8::4",
+                "ddns-qualifying-suffix": "pool4fix.com",
+                "ddns-send-updates": false
+            }]
+          }]
+    })";
+
+    // Load the configuration with D2 enabled.
+    ASSERT_NO_FATAL_FAILURE(configure(config));
+    ASSERT_TRUE(CfgMgr::instance().ddnsEnabled());
+    ASSERT_NO_THROW(srv_->startD2());
+
+    struct Scenario {
+        std::vector<uint8_t> raw_duid_;
+        IOAddress expected_address_;
+        std::string client_fqdn_;
+        std::string expected_fqdn_;
+        bool expect_ncr_;
+        std::string expected_dhcid_;
+    };
+
+    std::list<Scenario> scenarios = {
+    {
+        { 0x01, 0x01, 0x01, 0x01 },
+        IOAddress("2001:db8::1"),
+        "myhost",
+        "myhost.poolfix.com.",
+        true,
+        "0002019572DE453862C45A48A5F8498C440BC8A3038B89CFA93E5E1ABACA7599EFDDE9"
+    },
+    {
+        { 0x02, 0x02, 0x02, 0x02 },
+        IOAddress("2001:db8::2"),
+        "myhost",
+        "myhost.subfix.com.",
+        true,
+        "000201EB88CE3092CF3F22758AD0AAA19CD5C10B3F45EC1883601F586A48E6E3768EE0"
+    },
+    {
+        { 0x03, 0x03, 0x03, 0x03 },
+        IOAddress("2001:db8::3"),
+        "myhost",
+        "myhost.subfix.com.",
+        false,
+        ""
+    },
+    {
+        { 0x04, 0x04, 0x04, 0x04 },
+        IOAddress("2001:db8::4"),
+        "myhost",
+        "myhost.pool4fix.com.",
+        false,
+        ""
+    }};
+
+    for (auto const& scenario : scenarios) {
+        // Build a REQUEST per the scenario.
+        Pkt6Ptr query = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234));
+        query->setIface("eth0");
+        query->setIndex(ETH0_INDEX);
+
+        // Add the client id.
+        OptionPtr client_id(new Option(Option::V6, D6O_CLIENTID, scenario.raw_duid_));
+        query->addOption(client_id);
+        query->addOption(srv_->getServerID());
+
+        // Add an IA requesting the expected address.
+        Option6IAPtr ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
+        OptionPtr hint_opt(new Option6IAAddr(D6O_IAADDR, scenario.expected_address_, 300, 500));
+        ia->addOption(hint_opt);
+        query->addOption(ia);
+
+        // Add an FQDN option. We set it to partial to ensure we qualify it with a suffix.
+        query->addOption(createClientFqdn(Option6ClientFqdn::FLAG_S, scenario.client_fqdn_,
+                                          Option6ClientFqdn::PARTIAL));
+
+        // Process the REQUEST.
+        Pkt6Ptr reply;
+        AllocEngine::ClientContext6 ctx;
+        bool drop = !srv_->earlyGHRLookup(query, ctx);
+        ASSERT_FALSE(drop);
+        ctx.subnet_ = srv_->selectSubnet(query, drop);
+        ASSERT_FALSE(drop);
+        srv_->initContext(ctx, drop);
+        ASSERT_FALSE(drop);
+        ASSERT_NO_THROW(reply = srv_->processRequest(ctx));
+        checkResponse(reply, DHCPV6_REPLY, 1234);
+
+        // Fetch the IA_NA from response.
+        OptionPtr tmp = reply->getOption(D6O_IA_NA);
+        ASSERT_TRUE(tmp);
+        ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
+        ASSERT_TRUE(ia);
+
+        // Check that we got the address we requested.
+        tmp = ia->getOption(D6O_IAADDR);
+        boost::shared_ptr<Option6IAAddr> addr = boost::dynamic_pointer_cast<Option6IAAddr>(tmp);
+        ASSERT_TRUE(addr);
+        EXPECT_EQ(addr->getAddress(), scenario.expected_address_);
+
+        // Check that the lease exists with the correct FDQN.
+        Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, addr->getAddress());
+        ASSERT_TRUE(lease);
+        EXPECT_EQ(lease->hostname_, scenario.expected_fqdn_);
+
+        // Verfiy the FQDN in the response is correct.
+        Option6ClientFqdnPtr fqdn;
+        ASSERT_TRUE(fqdn = boost::dynamic_pointer_cast<
+                        Option6ClientFqdn>(reply->getOption(D6O_CLIENT_FQDN)));
+        EXPECT_EQ(fqdn->getDomainName(), scenario.expected_fqdn_);
+
+        // Verify the NCR if we expect one.
+        if (!scenario.expect_ncr_) {
+            ASSERT_EQ(0, d2_mgr_.getQueueSize());
+        } else {
+            ASSERT_EQ(1, d2_mgr_.getQueueSize());
+            verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                                    scenario.expected_address_.toText(),
+                                    scenario.expected_dhcid_,
+                                    0, 4000, 
+                                    scenario.expected_fqdn_);
+        }
+    }
 }
 
 } // end of anonymous namespace

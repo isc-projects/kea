@@ -866,128 +866,6 @@ public:
                                 ddns_ttl_max);
     }
 
-    /// @brief Verifies that DDNS parameters specified at the pool level
-    /// are used when specified. We don't verify all of them, just enough
-    /// enough to ensure proper scoping of values.
-    void testPoolDdnsParameters() {
-        std::string config = R"(
-        {
-            "interfaces-config": { "interfaces": [ "*" ] },
-            "dhcp-ddns": { "enable-updates": true },
-            "subnet4": [{
-                "subnet": "10.0.0.0/24",
-                "interface": "eth1",
-                "id": 1,
-                "ddns-qualifying-suffix": "subfix.com",
-                "pools": [{
-                    "pool": "10.0.0.10-10.0.0.10",
-                    "ddns-qualifying-suffix": "poolfix.com",
-                },
-                {
-                    "pool": "10.0.0.11-10.0.0.11"
-                },
-                {
-                    "pool": "10.0.0.12-10.0.0.12",
-                    "ddns-send-updates": false
-                }]
-              }],
-              "valid-lifetime": 400
-        })";
-
-        // Load theconfiguration with D2 enabled.
-        ASSERT_NO_FATAL_FAILURE(configure(config, *srv_));
-        ASSERT_TRUE(CfgMgr::instance().ddnsEnabled());
-
-        // Create a client and get a lease.
-        Dhcp4Client client1(srv_, Dhcp4Client::SELECTING);
-        client1.setIfaceName("eth1");
-        client1.setIfaceIndex(ETH1_INDEX);
-        ASSERT_NO_THROW(client1.includeHostname("client1"));
-
-        // Do the DORA.
-        ASSERT_NO_THROW(client1.doDORA());
-        Pkt4Ptr resp = client1.getContext().response_;
-        ASSERT_TRUE(resp);
-        ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
-
-        // Make sure the lease is in the database and hostname uses the
-        // first pool's qualifying suffix.
-        Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(IOAddress("10.0.0.10"));
-        ASSERT_TRUE(lease);
-        EXPECT_EQ("client1.poolfix.com", lease->hostname_);
-
-        // Verify the hostname option sent in the response.
-        OptionStringPtr hostname;
-        hostname = boost::dynamic_pointer_cast<OptionString>(resp->getOption(DHO_HOST_NAME));
-        ASSERT_TRUE(hostname);
-        EXPECT_EQ("client1.poolfix.com", hostname->getValue());
-
-        // Verify that an NCR was generated correctly.
-        ASSERT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
-        verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
-                                resp->getYiaddr().toText(),
-                                "client1.poolfix.com.", "",
-                                time(NULL), lease->valid_lft_, true,
-                                CHECK_WITH_DHCID);
-
-        // Create another client and get a lease.
-        Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
-        client2.setIfaceName("eth1");
-        client2.setIfaceIndex(ETH1_INDEX);
-        ASSERT_NO_THROW(client2.includeHostname("client2"));
-
-        // Do the DORA.
-        ASSERT_NO_THROW(client2.doDORA());
-        resp = client2.getContext().response_;
-        ASSERT_TRUE(resp);
-        ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
-
-        // Make sure the lease is in the database and hostname uses the subnet's
-        // qualifying suffix.
-        lease = LeaseMgrFactory::instance().getLease4(IOAddress("10.0.0.11"));
-        ASSERT_TRUE(lease);
-        EXPECT_EQ("client2.subfix.com", lease->hostname_);
-
-        // Verify the hostname option sent in the response.
-        hostname = boost::dynamic_pointer_cast<OptionString>(resp->getOption(DHO_HOST_NAME));
-        ASSERT_TRUE(hostname);
-        EXPECT_EQ("client2.subfix.com", hostname->getValue());
-
-        // Verify that an NCR was generated correctly.
-        ASSERT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
-        verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
-                                resp->getYiaddr().toText(),
-                                "client2.subfix.com.", "",
-                                time(NULL), lease->valid_lft_, true,
-                                CHECK_WITH_DHCID);
-
-        // Create another third client and get a lease.
-        Dhcp4Client client3(srv_, Dhcp4Client::SELECTING);
-        client3.setIfaceName("eth1");
-        client3.setIfaceIndex(ETH1_INDEX);
-        ASSERT_NO_THROW(client3.includeHostname("client3"));
-
-        // Do the DORA.
-        ASSERT_NO_THROW(client3.doDORA());
-        resp = client3.getContext().response_;
-        ASSERT_TRUE(resp);
-        ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
-
-        // Make sure the lease is in the database and hostname uses the subnet suffix.
-        lease = LeaseMgrFactory::instance().getLease4(IOAddress("10.0.0.12"));
-        ASSERT_TRUE(lease);
-        EXPECT_EQ("client3.subfix.com", lease->hostname_);
-
-        // Verify the hostname option sent in the response.
-        hostname = boost::dynamic_pointer_cast<OptionString>(resp->getOption(DHO_HOST_NAME));
-        ASSERT_TRUE(hostname);
-        EXPECT_EQ("client3.subfix.com", hostname->getValue());
-
-        // There should not be an NCR in the queue since the third pool
-        // disables DDNS updates.
-        ASSERT_EQ(0, CfgMgr::instance().getD2ClientMgr().getQueueSize());
-    }
-
     ///@brief Verify that NameChangeRequest holds valid values.
     ///
     /// Pulls the NCR from the top of the send queue and checks its content
@@ -3216,9 +3094,117 @@ TEST_F(NameDhcpv4SrvTest, ddnsTtlMaxTest) {
                           500);                     // ttl-max
 }
 
-// Verify pool-level DDNS pararmeters are used.
+// Verifies that DDNS parameters specified at the pool level
+// are used when specified. We don't verify all of them, just enough
+// enough to ensure proper scoping of values.
 TEST_F(NameDhcpv4SrvTest, poolDdnsParametersTest) {
-    testPoolDdnsParameters();
+    // A configuration with following pools:
+    // 1. Specifies a qualifying suffix
+    // 2. Specifes no DDNS parameters
+    // 3. Disables DDNS updates
+    // 4. Specifies a qualifying suffix but disables DDNS updates
+    std::string config = R"(
+    {
+        "interfaces-config": { "interfaces": [ "*" ] },
+        "dhcp-ddns": { "enable-updates": true },
+        "subnet4": [{
+            "subnet": "10.0.0.0/24",
+            "interface": "eth1",
+            "id": 1,
+            "ddns-qualifying-suffix": "subfix.com",
+            "pools": [{
+                "pool": "10.0.0.10-10.0.0.10",
+                "ddns-qualifying-suffix": "poolfix.com",
+            },
+            {
+                "pool": "10.0.0.11-10.0.0.11"
+            },
+            {
+                "pool": "10.0.0.12-10.0.0.12",
+                "ddns-send-updates": false
+            },
+            {
+                "pool": "10.0.0.13-10.0.0.13",
+                "ddns-qualifying-suffix": "pool4fix.com",
+                "ddns-send-updates": false
+            }]
+        }],
+        "valid-lifetime": 400
+    })";
+
+    // Load theconfiguration with D2 enabled.
+    ASSERT_NO_FATAL_FAILURE(configure(config, *srv_));
+    ASSERT_TRUE(CfgMgr::instance().ddnsEnabled());
+
+    struct Scenario {
+        IOAddress expected_address_;
+        std::string client_hostname_;
+        std::string expected_hostname_;
+        bool expect_ncr_;
+    };
+
+    std::list<Scenario> scenarios = {
+    {
+        IOAddress("10.0.0.10"),
+        "myhost",
+        "myhost.poolfix.com",
+        true
+    },
+    {
+        IOAddress("10.0.0.11"),
+        "myhost",
+        "myhost.subfix.com",
+        true
+    },
+    {
+        IOAddress("10.0.0.12"),
+        "myhost",
+        "myhost.subfix.com",
+        false
+    },
+    {
+        IOAddress("10.0.0.13"),
+        "myhost",
+        "myhost.pool4fix.com",
+        false
+    }};
+
+    for (auto const& scenario : scenarios) {
+        // Create a client.
+        Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
+        client.setIfaceName("eth1");
+        client.setIfaceIndex(ETH1_INDEX);
+        ASSERT_NO_THROW(client.includeHostname("myhost"));
+
+        // Do a DORA.
+        ASSERT_NO_THROW(client.doDORA());
+        Pkt4Ptr resp = client.getContext().response_;
+        ASSERT_TRUE(resp);
+        ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+
+        // Make sure the lease is in the database and hostname is correct.
+        Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(scenario.expected_address_);
+        ASSERT_TRUE(lease) << "address: " << scenario.expected_address_;
+        EXPECT_EQ(lease->hostname_, scenario.expected_hostname_);
+
+        // Verify the hostname option sent in the response.
+        OptionStringPtr hostname;
+        hostname = boost::dynamic_pointer_cast<OptionString>(resp->getOption(DHO_HOST_NAME));
+        ASSERT_TRUE(hostname);
+        EXPECT_EQ(hostname->getValue(), scenario.expected_hostname_);
+
+        // Verify the NCR if we expect one.
+        if (!scenario.expect_ncr_) {
+            ASSERT_EQ(0, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+        } else {
+            ASSERT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+            verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                                    resp->getYiaddr().toText(),
+                                    (scenario.expected_hostname_ + "."), "",
+                                    time(NULL), lease->valid_lft_, true,
+                                    CHECK_WITH_DHCID);
+        }
+    }
 }
 
 } // end of anonymous namespace
