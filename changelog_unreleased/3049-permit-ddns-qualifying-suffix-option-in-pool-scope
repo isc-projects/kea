@@ -1,0 +1,4 @@
+[func]		tmark
+	Modified kea-dhcp4 and kea-dhcp6 to support
+	DDNS behavioral parameters at the pool level.
+	(Gitlab #3049)
