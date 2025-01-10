@@ -15,6 +15,7 @@ if test -e "${file}"; then
   exit 1
 fi
 content=$(cat .template)
-content="${content//author/${author}}"
-content="${content//#0000/#${gitlab_id}}"
+content="$(printf '%s' "${content}" | sed "s/author/${author}/")"
+content="$(printf '%s' "${content}" | sed "s/#0000/#${gitlab_id}/")"
 printf '%s\n' "${content}" > "${file}"
+printf 'File created: %s\n' "${basedir}/${file}"
