@@ -180,7 +180,7 @@ install-exec-hook:
 	mkdir -p $(DESTDIR)${runstatedir}/${PACKAGE_NAME}
 
 add-changelog-entry:
-	./changelog_unreleased/.add-entry.sh
+	@./changelog_unreleased/.add-entry.sh
 
 #### include external sources in the distributed tarball:
 EXTRA_DIST = ext/coroutine/coroutine.hpp
