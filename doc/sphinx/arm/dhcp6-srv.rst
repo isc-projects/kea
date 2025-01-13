@@ -5270,7 +5270,7 @@ it may be only assigned to a client via host reservation mechanism. The
 second class, ``unreserved_class``, is assigned to clients which do not
 belong to ``reserved_class``.
 
-The first pool with the subnet is used for clients not having such a reservation.
+The first pool in the subnet is used for clients not having such a reservation.
 The second pool is only used for clients having a reservation for ``reserved_class``.
 The third pool is an unrestricted pool for any clients, comprising of both
 ``reserved_class`` clients and ``unreserved_class``.
