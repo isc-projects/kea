@@ -709,10 +709,22 @@ lease_upload() {
         exit 1
     fi
 
-    # Invoke LFC on the input file.
-    log_info "Looking at ${input_file_line_length} lines of CSV in ${input_file}..."
+    if test "${backend}" = 'mysql'; then
+        function_call="CALL lease${dhcp_version}"
+    elif test "${backend}" = 'pgsql'; then
+        function_call="SELECT lease${dhcp_version}"
+    else
+        log_error "lease-upload not implemented for ${backend}"
+        exit 1
+    fi
+
     cleaned_up_csv="/tmp/$(basename "${input_file}").tmp"
     check_file_overwrite "${cleaned_up_csv}"
+    sql_statement_file="/tmp/$(basename "${input_file}").sql.tmp"
+    check_file_overwrite "${sql_statement_file}"
+
+    # Invoke LFC on the input file.
+    log_info "Looking at ${input_file_line_length} lines of CSV in ${input_file}..."
     cp "${input_file}" "${cleaned_up_csv}"
     "${KEA_LFC}" "-${dhcp_version}" -x "${cleaned_up_csv}" \
         -i "${cleaned_up_csv}.1" -o "${cleaned_up_csv}.output" \
@@ -738,29 +750,22 @@ lease_upload() {
 
     # Construct the SQL insert statements.
     header_parsed=false
-    sql_statement='START TRANSACTION;'
+    echo 'START TRANSACTION;' > "${sql_statement_file}"
     while read -r line; do
-        if "${header_parsed}"; then
-            line=$(stringify_positions_in_line "${string_positions}" "${line}")
-            if test "${backend}" = 'mysql'; then
-                sql_statement="${sql_statement} CALL lease${dhcp_version}Upload(${line}); "
-            elif test "${backend}" = 'pgsql'; then
-                sql_statement="${sql_statement} SELECT lease${dhcp_version}Upload(${line}); "
-            else
-                log_error "lease-upload not implemented for ${backend}"
-                exit 1
-            fi
-        else
+        if ! "${header_parsed}"; then
             header_parsed=true
+            continue
         fi
+        line=$(stringify_positions_in_line "${string_positions}" "${line}")
+        echo "${function_call}Upload(${line});" >> "${sql_statement_file}"
     done < "${cleaned_up_csv}"
-    sql_statement="${sql_statement} COMMIT;"
+    echo 'COMMIT;' >> "${sql_statement_file}"
 
     # Execute the SQL insert statements.
     if test "${backend}" = 'mysql'; then
-        output="$(mysql_execute "${sql_statement}")"
+        output="$(mysql_execute_script "${sql_statement_file}")"
     elif test "${backend}" = 'pgsql'; then
-        output="$(pgsql_execute "${sql_statement}")"
+        output="$(pgsql_execute_script "${sql_statement_file}")"
     else
         log_error "lease-upload not implemented for ${backend}"
         exit 1
@@ -768,7 +773,8 @@ lease_upload() {
 
     # Clean up the temporary CSV.
     rm -f "${cleaned_up_csv}"
-    log_info "Removed temporary file ${cleaned_up_csv}."
+    rm -f "${sql_statement_file}"
+    log_info "Removed temporary files: ${cleaned_up_csv}, ${sql_statement_file}."
 
     # Print a confirmation message.
     log_info "Successfully updated table lease${dhcp_version}."
