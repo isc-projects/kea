@@ -271,3 +271,6 @@ We have received the following contributions:
 
  - Philip Prindeville
    2024-09: Brought down the number of utilities keactrl depends on.
+
+ - q66
+   2025-01: Added support for building with Boost 1.87.
