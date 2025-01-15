@@ -160,7 +160,7 @@ private:
 class server
 {
 public:
-  server(boost::asio::io_contex& io_context,
+  server(boost::asio::io_context& io_context,
          unsigned short port,
          Botan::Credentials_Manager& creds_mgr,
          Botan::RandomNumberGenerator& rng,
