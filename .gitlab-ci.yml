@@ -19,7 +19,13 @@ variables:
   # Leave only bandit, flawfinder, semgrep.
   SAST_EXCLUDED_ANALYZERS: "eslint, spotbugs"
 
-image: 'registry.gitlab.isc.org/isc-projects/kea:latest'
+default:
+  image: 'registry.gitlab.isc.org/isc-projects/kea:latest'
+  tags:
+    - linux
+    - aws
+    - runner-manager
+    - amd64
 
 stages:
   - test
