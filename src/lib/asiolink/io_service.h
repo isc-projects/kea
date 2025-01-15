@@ -16,12 +16,7 @@
 #error "Boost ASIO older than 1.66 are not supported"
 #endif
 
-// Include boost/asio/io_context.hpp instead?
-namespace boost {
-namespace asio {
-class io_context;
-}
-}
+#include <boost/asio/io_context.hpp>
 
 namespace isc {
 namespace asiolink {
