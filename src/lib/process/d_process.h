@@ -83,7 +83,7 @@ public:
     /// @param cfg_mgr the configuration manager instance that handles
     /// configuration parsing.
     ///
-    /// @throw DProcessBaseError is io_service is NULL.
+    /// @throw DProcessBaseError if io_service is null.
     DProcessBase(const char* app_name, asiolink::IOServicePtr io_service,
                  DCfgMgrBasePtr cfg_mgr)
         : app_name_(app_name), io_service_(io_service), shut_down_flag_(false),
