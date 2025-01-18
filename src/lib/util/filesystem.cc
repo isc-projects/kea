@@ -195,6 +195,8 @@ TemporaryDirectory::~TemporaryDirectory() {
         return;
     }
 
+    std::unique_ptr<DIR, void(*)(DIR*)> defer(dir, [](DIR* d) { closedir(d); });
+
     struct dirent *i;
     string filepath;
     while ((i = readdir(dir))) {
@@ -205,7 +207,7 @@ TemporaryDirectory::~TemporaryDirectory() {
         filepath = dir_name_ + '/' + i->d_name;
         remove(filepath.c_str());
     }
-    closedir(dir);
+
     rmdir(dir_name_.c_str());
 }
 
