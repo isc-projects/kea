@@ -161,12 +161,12 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data,
         // Setup additional class list.
         getClientClassesElem(shared_network_data,
                              std::bind(&Network::allowClientClass,
-                                       shared_network, ph::_1));
+                                       boost::dynamic_pointer_cast<Network>(shared_network), ph::_1));
 
         // Setup additional class list.
         getAdditionalClassesElem(shared_network_data,
                                  std::bind(&Network::addAdditionalClass,
-                                           shared_network, ph::_1));
+                                           boost::dynamic_pointer_cast<Network>(shared_network), ph::_1));
 
         if (shared_network_data->contains("relay")) {
             auto relay_parms = shared_network_data->get("relay");
@@ -319,12 +319,12 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data,
         // Setup additional class list.
         getClientClassesElem(shared_network_data,
                              std::bind(&Network::allowClientClass,
-                                       shared_network, ph::_1));
+                                       boost::dynamic_pointer_cast<Network>(shared_network), ph::_1));
 
         // Setup additional class list.
         getAdditionalClassesElem(shared_network_data,
                                  std::bind(&Network::addAdditionalClass,
-                                           shared_network, ph::_1));
+                                           boost::dynamic_pointer_cast<Network>(shared_network), ph::_1));
 
         if (shared_network_data->contains("subnet6")) {
             auto json = shared_network_data->get("subnet6");

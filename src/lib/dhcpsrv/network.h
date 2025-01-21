@@ -151,7 +151,7 @@ typedef std::function<ConstCfgGlobalsPtr()> FetchNetworkGlobalsFn;
 /// in a well known form, so as the @c Network accessors can use them.
 class Network : public virtual isc::data::StampedElement,
                 public virtual isc::data::UserContext,
-                public isc::data::CfgToElement {
+                public virtual isc::data::CfgToElement {
 public:
     /// @brief Holds optional information about relay.
     ///

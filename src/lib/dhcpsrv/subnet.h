@@ -465,7 +465,7 @@ typedef boost::shared_ptr<Subnet4> Subnet4Ptr;
 /// This class represents an IPv4 subnet.
 /// @note Subnet and Network use virtual inheritance to avoid
 /// a diamond issue with UserContext
-class Subnet4 : public Subnet, public Network4, public boost::enable_shared_from_this<Subnet4> {
+class Subnet4 : public virtual Subnet, public virtual Network4, public boost::enable_shared_from_this<Subnet4> {
 public:
 
     /// @brief Constructor with all parameters.
@@ -630,7 +630,7 @@ typedef boost::shared_ptr<Subnet6> Subnet6Ptr;
 /// This class represents an IPv6 subnet.
 /// @note Subnet and Network use virtual inheritance to avoid
 /// a diamond issue with UserContext
-class Subnet6 : public Subnet, public Network6, public boost::enable_shared_from_this<Subnet6> {
+class Subnet6 : public virtual Subnet, public virtual Network6, public boost::enable_shared_from_this<Subnet6> {
 public:
 
     /// @brief Constructor with all parameters.

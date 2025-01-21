@@ -897,11 +897,11 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
 
     // Setup client class list.
     getClientClassesElem(params, std::bind(&Network::allowClientClass,
-                                           subnet4, ph::_1));
+                                           boost::dynamic_pointer_cast<Network>(subnet4), ph::_1));
 
     // Setup additional class list.
     getAdditionalClassesElem(params, std::bind(&Network::addAdditionalClass,
-                                               subnet4, ph::_1));
+                                               boost::dynamic_pointer_cast<Network>(subnet4), ph::_1));
 
     // 4o6 specific parameter: 4o6-interface.
     if (params->contains("4o6-interface")) {
@@ -1179,12 +1179,12 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool,
     // Setup client class list.
     BaseNetworkParser::getClientClassesElem(pd_pool,
                                             std::bind(&Pool::allowClientClass,
-                                                      pool_, ph::_1));
+                                                      boost::dynamic_pointer_cast<Pool>(pool_), ph::_1));
 
     // Setup additional class list.
     BaseNetworkParser::getAdditionalClassesElem(pd_pool,
                                                 std::bind(&Pool::addAdditionalClass,
-                                                          pool_, ph::_1));
+                                                          boost::dynamic_pointer_cast<Pool>(pool_), ph::_1));
 
     // Add the local pool to the external storage ptr.
     pools->push_back(pool_);
@@ -1415,11 +1415,11 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
 
     // Setup client class list.
     getClientClassesElem(params, std::bind(&Network::allowClientClass,
-                                           subnet6, ph::_1));
+                                           boost::dynamic_pointer_cast<Network>(subnet6), ph::_1));
 
     // Setup additional class list.
     getAdditionalClassesElem(params, std::bind(&Network::addAdditionalClass,
-                                               subnet6, ph::_1));
+                                               boost::dynamic_pointer_cast<Network>(subnet6), ph::_1));
 
     /// client-class processing is now generic and handled in the common
     /// code (see isc::data::SubnetConfigParser::createSubnet)
