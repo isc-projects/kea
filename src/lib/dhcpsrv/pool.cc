@@ -24,17 +24,17 @@ Pool::Pool(Lease::Type type, const isc::asiolink::IOAddress& first,
       cfg_option_(new CfgOption()) {
 }
 
-bool 
+bool
 Pool::inRange(const isc::asiolink::IOAddress& addr) const {
     return (first_ <= addr && addr <= last_);
 }
 
-bool 
+bool
 Pool::clientSupported(const ClientClasses& classes) const {
     return (client_classes_.empty() || client_classes_.intersects(classes));
 }
 
-void 
+void
 Pool::allowClientClass(const ClientClass& class_name) {
     if (!client_classes_.contains(class_name)) {
         client_classes_.insert(class_name);
@@ -57,7 +57,7 @@ Pool::toText() const {
 }
 
 bool
-Pool::hasDdnsParameters() {
+Pool::hasDdnsParameters() const {
     return (!(ddns_send_updates_.unspecified() &&
               ddns_override_no_update_.unspecified() &&
               ddns_override_client_update_.unspecified() &&
@@ -160,7 +160,7 @@ Pool::toElement() const {
         map->set("pool-id", Element::create(static_cast<long long>(id_)));
     }
 
-    // Add in DDNS paramters for non-prefix pools.
+    // Add in DDNS parameters for non-prefix pools.
     if (type_ != Lease::TYPE_PD) {
         if (!ddns_send_updates_.unspecified()) {
             map->set("ddns-send-updates", Element::create(ddns_send_updates_));

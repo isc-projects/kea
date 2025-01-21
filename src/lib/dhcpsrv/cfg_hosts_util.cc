@@ -55,7 +55,7 @@ void CfgHostsList::internalize(ConstElementPtr list) {
             isc_throw(BadValue, "internal error: CfgHostsList::internalize: "
                       "no reservations for subnet ID " << subnet_id);
         }
-        map_.insert(std::make_pair(subnet_id, 
+        map_.insert(std::make_pair(subnet_id,
                                    boost::const_pointer_cast<Element>(resvs)));
     }
 }

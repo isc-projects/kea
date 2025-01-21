@@ -132,44 +132,44 @@ public:
             __LINE__,
             R"^({
                 "name": "one",
-                "ddns-ttl-percent": 5.0 
+                "ddns-ttl-percent": 5.0
             })^",
             5.0, 0, 0, 0
         },{
             __LINE__,
             R"^({
                 "name": "one",
-                "ddns-ttl-min": 25 
+                "ddns-ttl-min": 25
             })^",
             0.0, 0, 25, 0
         },{
             __LINE__,
             R"^({
                 "name": "one",
-                "ddns-ttl-max": 150 
+                "ddns-ttl-max": 150
             })^",
-            0.0, 0, 0, 150 
+            0.0, 0, 0, 150
         },{
             __LINE__,
             R"^({
                 "name": "one",
                 "ddns-ttl-min": 25,
-                "ddns-ttl-max": 150 
+                "ddns-ttl-max": 150
             })^",
-            0.0, 0, 25, 150 
+            0.0, 0, 25, 150
         },{
             __LINE__,
             R"^({
                 "name": "one",
                 "ddns-ttl-percent": 5.0,
                 "ddns-ttl-min": 25,
-                "ddns-ttl-max": 150 
+                "ddns-ttl-max": 150
             })^",
-            5.0, 0, 25, 150 
+            5.0, 0, 25, 150
         }};
 
         for (const auto& scenario : scenarios) {
-            std::stringstream oss; 
+            std::stringstream oss;
             oss << "scenario at " << scenario.line_no_;
             SCOPED_TRACE(oss.str());
 
@@ -183,17 +183,17 @@ public:
             ASSERT_NO_THROW_LOG(network = parser.parse(config_element));
             ASSERT_TRUE(network);
 
-            EXPECT_EQ(network->getDdnsTtlPercent().unspecified(), (scenario.ddns_ttl_percent_ == 0.0)); 
-            EXPECT_EQ(network->getDdnsTtlPercent(), scenario.ddns_ttl_percent_); 
+            EXPECT_EQ(network->getDdnsTtlPercent().unspecified(), (scenario.ddns_ttl_percent_ == 0.0));
+            EXPECT_EQ(network->getDdnsTtlPercent(), scenario.ddns_ttl_percent_);
 
-            EXPECT_EQ(network->getDdnsTtl().unspecified(), (scenario.ddns_ttl_ == 0)); 
-            EXPECT_EQ(network->getDdnsTtl(), scenario.ddns_ttl_); 
-    
-            EXPECT_EQ(network->getDdnsTtlMin().unspecified(), (scenario.ddns_ttl_min_ == 0)); 
-            EXPECT_EQ(network->getDdnsTtlMin(), scenario.ddns_ttl_min_); 
+            EXPECT_EQ(network->getDdnsTtl().unspecified(), (scenario.ddns_ttl_ == 0));
+            EXPECT_EQ(network->getDdnsTtl(), scenario.ddns_ttl_);
 
-            EXPECT_EQ(network->getDdnsTtlMax().unspecified(), (scenario.ddns_ttl_max_ == 0)); 
-            EXPECT_EQ(network->getDdnsTtlMax(), scenario.ddns_ttl_max_); 
+            EXPECT_EQ(network->getDdnsTtlMin().unspecified(), (scenario.ddns_ttl_min_ == 0));
+            EXPECT_EQ(network->getDdnsTtlMin(), scenario.ddns_ttl_min_);
+
+            EXPECT_EQ(network->getDdnsTtlMax().unspecified(), (scenario.ddns_ttl_max_ == 0));
+            EXPECT_EQ(network->getDdnsTtlMax(), scenario.ddns_ttl_max_);
         }
     }
 
@@ -229,7 +229,7 @@ public:
             R"^({
                 "name": "one",
                 "ddns-ttl": 100,
-                "ddns-ttl-max": 150 
+                "ddns-ttl-max": 150
             })^",
             "cannot specify both ddns-ttl-max and ddns-ttl (<string>:1:2)"
         },{
@@ -237,13 +237,13 @@ public:
             R"^({
                 "name": "one",
                 "ddns-ttl-min": 150,
-                "ddns-ttl-max": 25 
+                "ddns-ttl-max": 25
             })^",
             "ddns-ttl-max: 25 must be greater than ddns-ttl-min: 150 (<string>:1:2)"
         }};
 
         for (const auto& scenario : scenarios) {
-            std::stringstream oss; 
+            std::stringstream oss;
             oss << "scenario at " << scenario.line_no_;
             SCOPED_TRACE(oss.str());
 

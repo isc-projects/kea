@@ -219,7 +219,7 @@ public:
           ddns_replace_client_name_mode_(), ddns_generated_prefix_(), ddns_qualifying_suffix_(),
           hostname_char_set_(), hostname_char_replacement_(), store_extended_info_(),
           cache_threshold_(), cache_max_age_(), ddns_update_on_renew_(),
-          ddns_conflict_resolution_mode_(), ddns_ttl_percent_(), 
+          ddns_conflict_resolution_mode_(), ddns_ttl_percent_(),
           ddns_ttl_(), ddns_ttl_min_(), ddns_ttl_max_(),
           allocator_type_(), default_allocator_type_() {
     }

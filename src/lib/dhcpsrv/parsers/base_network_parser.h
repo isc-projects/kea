@@ -160,12 +160,15 @@ public:
     /// - ddns-update-on-renew
     /// - ddns-ttl-percent
     /// - ddns-conflict-resolution-mode
+    /// - ddns-ttl
+    /// - ddns-ttl-min
+    /// - ddns-ttl-max
     ///
     /// Owner types are expected to have public setters for each of these
-    /// paramters.
+    /// parameters.
     ///
-    /// @tparam DdnsOwnerPtr pointer to the class type that owns the DDNS parameters  
-    /// @param config configuration element holding the DDNS paramters to parse.
+    /// @tparam DdnsOwnerPtr pointer to the class type that owns the DDNS parameters.
+    /// @param config configuration element holding the DDNS parameters to parse.
     /// @param owner Pointer to the DDNS parameter owner object into which parsed values
     /// should be stored.
     /// @throw BadValue for various invalid values.
@@ -263,7 +266,7 @@ public:
 
             uint32_t ddns_ttl_max = getInteger(config, "ddns-ttl-max");
             if (ddns_ttl_max < ddns_ttl_min) {
-                isc_throw(BadValue, "ddns-ttl-max: " << ddns_ttl_max 
+                isc_throw(BadValue, "ddns-ttl-max: " << ddns_ttl_max
                           << " must be greater than ddns-ttl-min: " <<  ddns_ttl_min);
             }
 

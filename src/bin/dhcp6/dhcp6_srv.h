@@ -1032,7 +1032,7 @@ protected:
     ///
     /// Updates the context DDNS parameters to include those from the pool
     /// associated with the first active NA lease address and then checks
-    /// to see if the subnet has been dynamicaly changed.  If either the
+    /// to see if the subnet has been dynamically changed.  If either the
     /// pool has DDNS parameters or the subnet has changed the FQDN and
     /// DDNS flags are recalculated in the event the pool or subnet change
     /// introduced different parameter values otherwise the function returns.

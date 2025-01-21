@@ -255,8 +255,8 @@ public:
     ///
     /// @param iaid IAID
     /// @param pkt A DHCPv6 message to which the IA option should be added.
-    /// @param cxt allocation engine context to which IA option should be 
-    /// added. 
+    /// @param cxt allocation engine context to which IA option should be
+    /// added.
     void addIA(const uint32_t iaid, const IOAddress& addr, Pkt6Ptr& pkt,
                AllocEngine::ClientContext6& ctx) {
         Option6IAPtr opt_ia = generateIA(D6O_IA_NA, iaid, 1500, 3000);
@@ -275,8 +275,8 @@ public:
     /// @param iaid IAID
     /// @param status_code Status code
     /// @param pkt A DHCPv6 message to which the option should be added.
-    /// @param cxt allocation engine context to which IA option should be 
-    /// added. 
+    /// @param cxt allocation engine context to which IA option should be
+    /// added.
     void addIA(const uint32_t iaid, const uint16_t status_code, Pkt6Ptr& pkt,
                AllocEngine::ClientContext6& ctx) {
         Option6IAPtr opt_ia = generateIA(D6O_IA_NA, iaid, 1500, 3000);
@@ -696,7 +696,7 @@ public:
         ASSERT_TRUE(pool);
     }
 
-    /// @brief Verifies that DDNS TTL parameters are used when specified. 
+    /// @brief Verifies that DDNS TTL parameters are used when specified.
     ///
     /// @param valid_flt lease life time
     /// @param ddns_ttl_percent expected configured value for ddns-ttl-percent
@@ -725,7 +725,7 @@ public:
 
         // Create an IA.
         Option6IAPtr opt_ia = generateIA(D6O_IA_NA, 1234, 1500, 3000);
-        Option6IAAddrPtr opt_iaaddr(new Option6IAAddr(D6O_IAADDR, 
+        Option6IAAddrPtr opt_iaaddr(new Option6IAAddr(D6O_IAADDR,
                                                       IOAddress("2001:db8:1::1"),
                                                       valid_lft, valid_lft));
         opt_ia->addOption(opt_iaaddr);
@@ -2239,7 +2239,7 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsTtlTest) {
     testDdnsTtlParameters(2100,                     // valid lft
                           Optional<double>(),       // percent
                           999,                      // ttl
-                          Optional<uint32_t>(),     // min 
+                          Optional<uint32_t>(),     // min
                           Optional<uint32_t>());    // max
 }
 
@@ -2247,7 +2247,7 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsTtlTest) {
 TEST_F(FqdnDhcpv6SrvTest, ddnsTtlMinTest) {
     testDdnsTtlParameters(2100,                     // valid lft
                           Optional<double>(),       // percent
-                          Optional<uint32_t>(),     // ttl 
+                          Optional<uint32_t>(),     // ttl
                           800,                      // ttl-min
                           Optional<uint32_t>());    // ttl-max
 }
@@ -2256,19 +2256,19 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsTtlMinTest) {
 TEST_F(FqdnDhcpv6SrvTest, ddnsTtlMaxTest) {
     testDdnsTtlParameters(2100,                     // valid lft
                           Optional<double>(),       // percent
-                          Optional<uint32_t>(),     // ttl 
+                          Optional<uint32_t>(),     // ttl
                           Optional<uint32_t>(),     // ttl-min
-                          500);                     // ttl-max 
+                          500);                     // ttl-max
 }
 
-// Verify pool-level DDNS pararmeters are used.
+// Verify pool-level DDNS parameters are used.
 // We don't verify all of them, just enough
 // enough to ensure proper scoping of values.
 TEST_F(FqdnDhcpv6SrvTest, poolDdnsParametersTest) {
 
     // A configuration with following pools:
     // 1. Specifies a qualifying suffix
-    // 2. Specifes no DDNS parameters
+    // 2. Specifies no DDNS parameters
     // 3. Disables DDNS updates
     // 4. Specifies a qualifying suffix but disables DDNS updates
     std::string config = R"(
@@ -2358,18 +2358,23 @@ TEST_F(FqdnDhcpv6SrvTest, poolDdnsParametersTest) {
         query->setIndex(ETH0_INDEX);
 
         // Add the client id.
-        OptionPtr client_id(new Option(Option::V6, D6O_CLIENTID, scenario.raw_duid_));
+        OptionPtr client_id(new Option(Option::V6, D6O_CLIENTID,
+                            scenario.raw_duid_));
         query->addOption(client_id);
         query->addOption(srv_->getServerID());
 
         // Add an IA requesting the expected address.
         Option6IAPtr ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
-        OptionPtr hint_opt(new Option6IAAddr(D6O_IAADDR, scenario.expected_address_, 300, 500));
+        OptionPtr hint_opt(new Option6IAAddr(D6O_IAADDR,
+                                             scenario.expected_address_,
+                                             300, 500));
         ia->addOption(hint_opt);
         query->addOption(ia);
 
-        // Add an FQDN option. We set it to partial to ensure we qualify it with a suffix.
-        query->addOption(createClientFqdn(Option6ClientFqdn::FLAG_S, scenario.client_fqdn_,
+        // Add an FQDN option. We set it to partial to ensure we qualify
+        // it with a suffix.
+        query->addOption(createClientFqdn(Option6ClientFqdn::FLAG_S,
+                                          scenario.client_fqdn_,
                                           Option6ClientFqdn::PARTIAL));
 
         // Process the REQUEST.
@@ -2392,16 +2397,18 @@ TEST_F(FqdnDhcpv6SrvTest, poolDdnsParametersTest) {
 
         // Check that we got the address we requested.
         tmp = ia->getOption(D6O_IAADDR);
-        boost::shared_ptr<Option6IAAddr> addr = boost::dynamic_pointer_cast<Option6IAAddr>(tmp);
+        boost::shared_ptr<Option6IAAddr> addr
+            = boost::dynamic_pointer_cast<Option6IAAddr>(tmp);
         ASSERT_TRUE(addr);
         EXPECT_EQ(addr->getAddress(), scenario.expected_address_);
 
         // Check that the lease exists with the correct FDQN.
-        Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, addr->getAddress());
+        Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                                addr->getAddress());
         ASSERT_TRUE(lease);
         EXPECT_EQ(lease->hostname_, scenario.expected_fqdn_);
 
-        // Verfiy the FQDN in the response is correct.
+        // Verify the FQDN in the response is correct.
         Option6ClientFqdnPtr fqdn;
         ASSERT_TRUE(fqdn = boost::dynamic_pointer_cast<
                         Option6ClientFqdn>(reply->getOption(D6O_CLIENT_FQDN)));
@@ -2415,7 +2422,7 @@ TEST_F(FqdnDhcpv6SrvTest, poolDdnsParametersTest) {
             verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                                     scenario.expected_address_.toText(),
                                     scenario.expected_dhcid_,
-                                    0, 4000, 
+                                    0, 4000,
                                     scenario.expected_fqdn_);
         }
     }

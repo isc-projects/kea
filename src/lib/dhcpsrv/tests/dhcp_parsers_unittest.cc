@@ -234,14 +234,14 @@ public:
     ///
     /// As this uses the
     /// same parser as Network derivatives we skip retesting all the
-    /// invalid permuations. This test ensures all supported
+    /// invalid permutations. This test ensures all supported
     /// parameters can be set.
     /// @tparam PoolListParserType type of pool list parser to use, Pools4ListParser
     /// or Pools6ListParser.
     /// @param pool1 string pool specification for the first pool
     /// @param pool2 string pool specification for the first pool
     template<typename PoolListParserType>
-	void validPoolDdnsParmaters(const std::string& pool1, const std::string& pool2) {
+	void validPoolDdnsParameters(const std::string& pool1, const std::string& pool2) {
         std::stringstream ss;
 
         ss <<
@@ -4454,12 +4454,12 @@ TEST_F(DhcpParserTest, invalidDdnsTtlParmatersSubnet6) {
 
 // Verifies valid DDNS parameters in v4 pools.
 TEST_F(DhcpParserTest, validDdnsParmatersPool4) {
-	validPoolDdnsParmaters<Pools4ListParser>("192.0.1.0/24", "192.0.2.0/24");
+	validPoolDdnsParameters<Pools4ListParser>("192.0.1.0/24", "192.0.2.0/24");
 }
 
 // Verifies valid DDNS parameters in v6 pools.
 TEST_F(DhcpParserTest, validDdnsParmatersPool6) {
-	validPoolDdnsParmaters<Pools6ListParser>("2001:db8:1::/64", "2001:db8:2::/64");
+	validPoolDdnsParameters<Pools6ListParser>("2001:db8:1::/64", "2001:db8:2::/64");
 }
 
 }  // Anonymous namespace

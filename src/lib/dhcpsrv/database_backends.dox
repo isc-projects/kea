@@ -128,26 +128,26 @@
 
   - <b>address</b> - IPv4 address \n
     type: string \n
-    example: 192.0.2.1	
+    example: 192.0.2.1
 
-  - <b>hwaddr</b> - hardware address (without the hardware type) \n 
-    type: string \n 
+  - <b>hwaddr</b> - hardware address (without the hardware type) \n
+    type: string \n
     example: 00:01:02:03:04:05
- 
-  - <b>client_id</b> - client identifier \n 
+
+  - <b>client_id</b> - client identifier \n
     type: string \n
     example: 01:02:03:03:04:aa:bb:cc
 
   - <b>valid_lifetime</b> - valid lifetime \n
-    type: uint32_t \n 
+    type: uint32_t \n
     example: 200
 
   - <b>expire</b> - expiration date \n
     type: uint64_t (cltt + valid lifetime) \n
     example: 1733517739
 
-  - <b>subnet_id</b> - DHCPv4 subnet identifier \n 
-    type: int32_t (0 and max excluded) \n 
+  - <b>subnet_id</b> - DHCPv4 subnet identifier \n
+    type: int32_t (0 and max excluded) \n
     example: 1
 
   - <b>fqdn_fwd</b> - FQDN forward DNS RR update flag \n
@@ -161,17 +161,17 @@
   - <b>hostname</b> - hostname \n
     type: string (separators are escaped) \n
     example: foo.bar
-    
+
   - <b>state</b> - lease state \n
     type: int32_t (0 = assigned, 1 = declined, 2 = expired-reclaimed, 3 = released) \n
     example: 0
 
   - <b>user_context</b> - user context \n
-    type: string (separators are escaped) \n 
+    type: string (separators are escaped) \n
     example: <tt>{ \"foo\": true }</tt>
 
-  - <b>pool_id</b> - pool identifier \n 
-    type: uint32_t \n 
+  - <b>pool_id</b> - pool identifier \n
+    type: uint32_t \n
     example: 0
 
   for instance:
@@ -244,11 +244,11 @@
     example: <tt>{ \"foo\": true }</tt>
 
   - <b>hwtype</b> - hardware type \n
-    type: uint16_t (can be empty/omitted) \n 
+    type: uint16_t (can be empty/omitted) \n
     example: 1
 
   - <b>hwaddr_source</b> - source of hardware address and type \n
-    tyoe: uint32_t (one bit from an 8 bit mask, can be empty/omitted) \n 
+    tyoe: uint32_t (one bit from an 8 bit mask, can be empty/omitted) \n
     example: 0
 
   - <b>pool_id</b> - pool identifier \n
@@ -259,7 +259,7 @@
 \verbatim
 2001:db8::1,00:01:02:03:04:05:06:0f,200,800,8,100,0,7,128,1,1,,,1,{ \"foo\": true },,,0\n
 \endverbatim
-  
+
   More examples can be found in unit tests.
 
   @section dhcpdb-host Host Backends

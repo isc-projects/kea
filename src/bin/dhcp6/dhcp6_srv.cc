@@ -5093,11 +5093,11 @@ Dhcpv6Srv::checkPostAssignmentChanges(const Pkt6Ptr& question, Pkt6Ptr& answer,
         }
     }
 
-    // Check if the subnet was dynamnically changed by the allocation engine.
+    // Check if the subnet was dynamically changed by the allocation engine.
     if (ctx.subnet_ && orig_subnet && (orig_subnet->getID() != ctx.subnet_->getID())) {
-        // We get the network for logging only. It should always be set as this a dynamic
-        // change should only happen within shared-networks.  Not having one might not be
-        // an error if a hook changed the subnet?
+        // We get the network for logging only. It should always be set as
+        // this a dynamic change should only happen within shared-networks.
+        // Not having one might not be an error if a hook changed the subnet?
         SharedNetwork6Ptr network;
         orig_subnet->getSharedNetwork(network);
         LOG_DEBUG(packet6_logger, DBG_DHCP6_BASIC_DATA, DHCP6_SUBNET_DYNAMICALLY_CHANGED)

@@ -795,7 +795,7 @@ TEST_F(NCRGenerator4Test, calculateDdnsTtlThroughQueueNcr) {
         SCOPED_TRACE(oss.str());
         testNCR(CHG_ADD, true, true, "MYHOST.example.com.",
                 "000001E356D43E5F0A496D65BCA24D982D646140813E3"
-                "B03AB370BFF46BFA309AE7BFD", CHECK_WITH_DHCID, 
+                "B03AB370BFF46BFA309AE7BFD", CHECK_WITH_DHCID,
                 scenario.ddns_ttl_percent_,
                 scenario.ddns_ttl_,
                 scenario.ddns_ttl_min_,

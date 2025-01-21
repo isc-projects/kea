@@ -2264,7 +2264,7 @@ TEST_F(ClientClassDefParserTest, addtionalWithLifetimes4) {
         }
 
         // Veriy we have the expected count of log messages.
-        ASSERT_EQ(countFile("DHCPSRV_CLASS_WITH_ADDITIONAL_AND_LIFETIMES"), 
+        ASSERT_EQ(countFile("DHCPSRV_CLASS_WITH_ADDITIONAL_AND_LIFETIMES"),
                             exp_log_count);
     }
 }

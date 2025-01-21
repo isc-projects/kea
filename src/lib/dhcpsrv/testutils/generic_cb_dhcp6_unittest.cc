@@ -147,9 +147,9 @@ GenericConfigBackendDHCPv6Test::initTestSubnets() {
     subnet->addPool(pdpool2);
 
     // Add several options to the subnet.
-    subnet->getCfgOption()->add(*test_options_[0], test_options_[0]->space_name_); 
-    subnet->getCfgOption()->add(*test_options_[1], test_options_[1]->space_name_); 
-    subnet->getCfgOption()->add(*test_options_[2], test_options_[2]->space_name_); 
+    subnet->getCfgOption()->add(*test_options_[0], test_options_[0]->space_name_);
+    subnet->getCfgOption()->add(*test_options_[1], test_options_[1]->space_name_);
+    subnet->getCfgOption()->add(*test_options_[2], test_options_[2]->space_name_);
 
     test_subnets_.push_back(subnet);
 

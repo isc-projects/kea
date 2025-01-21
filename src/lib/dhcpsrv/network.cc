@@ -138,7 +138,7 @@ Network::toElement() const {
 
     // Set evaluate-additional-classes
     if (!additional_classes_.empty()) {
-        map->set("evaluate-additional-classes", 
+        map->set("evaluate-additional-classes",
                  additional_classes_.toElement());
     }
 

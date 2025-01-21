@@ -362,7 +362,7 @@ public:
     /// @brief Checks if any of the DDNS parameters has a value.
     ///
     /// @return True if any of the DDNS parameters are specified.
-    bool hasDdnsParameters();
+    bool hasDdnsParameters() const;
 
 protected:
 

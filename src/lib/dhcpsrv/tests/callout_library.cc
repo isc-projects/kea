@@ -7,7 +7,7 @@
 /// @file
 /// @brief Callout Library
 ///
-/// This is the source of a test library for the basic DHCP parser 
+/// This is the source of a test library for the basic DHCP parser
 /// tests.  It just has to load - nothing else.
 
 #include <config.h>

@@ -69,6 +69,6 @@ PrefixRange::PrefixRange(const asiolink::IOAddress& start, const asiolink::IOAdd
                   << " must not be greater than 128");
     }
 }
- 
+
 } // end of namespace isc::dhcp
 } // end of namespace isc

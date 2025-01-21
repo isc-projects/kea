@@ -292,7 +292,7 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
         // depend_on_known is now allowed
     }
 
-    if (additional && 
+    if (additional &&
         (!valid_lft.unspecified() ||
          !preferred_lft.unspecified() ||
          !offer_lft.unspecified())) {

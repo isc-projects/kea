@@ -2296,7 +2296,7 @@ public:
     /// from the proper source.
     ///
     /// @param subnet Subnet under test.
-    /// @param address Address to locate the pool within the subnet via 
+    /// @param address Address to locate the pool within the subnet via
     /// DdnsParams::setPoolFromAddress().
     /// @param expected_pool expected Pool returned by setPoolFromAddress().
     void checkDdnsParameters(SubnetPtr subnet, IOAddress address, PoolPtr expected_pool) {
@@ -2327,7 +2327,7 @@ public:
         } else {
             EXPECT_EQ(params->getOverrideNoUpdate(), subnet->getDdnsOverrideNoUpdate().get());
         }
-        
+
         if (pool && !(pool->getDdnsOverrideClientUpdate().unspecified())) {
             EXPECT_EQ(params->getOverrideClientUpdate(), pool->getDdnsOverrideClientUpdate().get());
         } else {
@@ -2410,7 +2410,7 @@ TEST_F(DdnsParamsTest, checkDdnsParameters4) {
     subnet->setHostnameCharReplacement("X");
     subnet->setHostnameCharSet("[^A-Z]");
 
-    // Create a pool and add it to the subnet. 
+    // Create a pool and add it to the subnet.
     Pool4Ptr pool(new Pool4(IOAddress("192.0.2.1"), IOAddress("192.0.2.100")));
     ASSERT_NO_THROW(subnet->addPool(pool));
 
@@ -2470,8 +2470,8 @@ TEST_F(DdnsParamsTest, checkDdnsParameters6) {
     subnet->setHostnameCharReplacement("X");
     subnet->setHostnameCharSet("[^A-Z]");
 
-    // Create a pool and add it to the subnet. 
-    Pool6Ptr pool(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::"), 
+    // Create a pool and add it to the subnet.
+    Pool6Ptr pool(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::"),
                             IOAddress("2001:db8:1::100")));
     ASSERT_NO_THROW(subnet->addPool(pool));
 

@@ -3100,7 +3100,7 @@ TEST_F(NameDhcpv4SrvTest, ddnsTtlMaxTest) {
 TEST_F(NameDhcpv4SrvTest, poolDdnsParametersTest) {
     // A configuration with following pools:
     // 1. Specifies a qualifying suffix
-    // 2. Specifes no DDNS parameters
+    // 2. Specifies no DDNS parameters
     // 3. Disables DDNS updates
     // 4. Specifies a qualifying suffix but disables DDNS updates
     std::string config = R"(
