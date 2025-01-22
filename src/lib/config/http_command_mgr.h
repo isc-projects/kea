@@ -54,12 +54,15 @@ public:
     /// @param use_external True (default) add external sockets.
     void addExternalSockets(bool use_external = true);
 
-    /// @brief Configure http control socket from configuration.
+    /// @brief Open http control sockets using configuration.
     ///
-    /// @param config Configuration information for the http control socket.
+    /// @param config Configuration information for the http control sockets.
     void openCommandSockets(const isc::data::ConstElementPtr config);
 
-    /// @brief Configure http control socket from configuration.
+    /// @brief Open http control socket using configuration.
+    ///
+    /// Creates http/https listener, or reuses the existing one reapplying
+    /// changes.
     ///
     /// @param config Configuration information for the http control socket.
     void openCommandSocket(const isc::data::ConstElementPtr config);
@@ -70,7 +73,7 @@ public:
     /// @param remove When true remove the listeners immediately.
     void closeCommandSocket(HttpSocketInfoPtr info = HttpSocketInfoPtr(), bool remove = true);
 
-    /// @brief Close http control socket.
+    /// @brief Close http control sockets.
     void closeCommandSockets();
 
     /// @brief Returns a const pointer to the HTTP listener.

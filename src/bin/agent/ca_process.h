@@ -15,6 +15,8 @@
 namespace isc {
 namespace agent {
 
+/// @brief Structure used to store HTTP/HTTPS connection data.
+/// (configuration, listener, etc.)
 struct HttpSocketInfo {
     /// @brief Flag which indicates if socket can be reused.
     bool usable_;
@@ -143,7 +145,7 @@ public:
     /// @return true if the process is listening.
     bool isListening() const;
 
-    /// @brief Close http control socket.
+    /// @brief Close http control sockets.
     void closeCommandSockets();
 
 private:
@@ -154,7 +156,7 @@ private:
     /// @return Number of executed handlers.
     size_t runIO();
 
-    /// @brief The HTTP/HTTPS socket configurations.
+    /// @brief The HTTP/HTTPS socket data (configuration, listener, etc.).
     std::map<std::pair<isc::asiolink::IOAddress, uint16_t>, HttpSocketInfoPtr> sockets_;
 };
 

@@ -510,6 +510,8 @@ public:
 
     /// @brief Opens acceptor service allowing the control clients to connect.
     ///
+    /// Creates acceptor, or reuses the existing one.
+    ///
     /// @param config Configuration information for the control socket.
     /// @throw BadSocketInfo When socket configuration is invalid.
     /// @throw SocketError When socket operation fails.
@@ -544,7 +546,7 @@ public:
     /// @brief Pool of connections.
     ConnectionPool connection_pool_;
 
-    /// @brief The UNIX sockets.
+    /// @brief The UNIX socket data (configuration, acceptor, etc.).
     std::map<std::string, UnixSocketInfoPtr> sockets_;
 
     /// @brief Connection timeout.
@@ -587,12 +589,14 @@ UnixCommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr config) {
 
     UnixCommandConfigPtr cmd_config(new UnixCommandConfig(config));
 
+    // Search for the specific connection and reuse the existing one if found.
     auto it = sockets_.find(cmd_config->getSocketName());
     if (it != sockets_.end()) {
         it->second->usable_ = true;
         return;
     }
 
+    // Connection not found so it needs to be created.
     // First let's open lock file.
     std::string lock_name = cmd_config->getLockName();
     int lock_fd = open(lock_name.c_str(), O_RDONLY | O_CREAT, 0600);

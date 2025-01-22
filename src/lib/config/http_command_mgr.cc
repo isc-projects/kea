@@ -38,15 +38,18 @@ public:
           use_external_(true) {
     }
 
-    /// @brief Configure control socket from configuration.
+    /// @brief Open http control sockets using configuration.
     ///
-    /// @param config Configuration of the control socket.
-    void openCommandSocket(const isc::data::ConstElementPtr config);
-
-    /// @brief Configure control socket from configuration.
-    ///
-    /// @param config Configuration of the control socket.
+    /// @param config Configuration information for the http control sockets.
     void openCommandSockets(const isc::data::ConstElementPtr config);
+
+    /// @brief Open http control socket using configuration.
+    ///
+    /// Creates http/https listener, or reuses the existing one reapplying
+    /// changes.
+    ///
+    /// @param config Configuration information for the http control socket.
+    void openCommandSocket(const isc::data::ConstElementPtr config);
 
     /// @brief Close control socket.
     ///
@@ -74,7 +77,7 @@ public:
     /// @brief Idle connection timeout.
     long idle_timeout_;
 
-    /// @brief The HTTP/HTTPS socket configurations.
+    /// @brief The HTTP/HTTPS socket data (configuration, listener, etc.).
     std::map<std::pair<IOAddress, uint16_t>, HttpSocketInfoPtr> sockets_;
 
     /// @brief Use external sockets flag.
@@ -117,6 +120,7 @@ HttpCommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr config) {
     IOAddress server_address = cmd_config->getSocketAddress();
     uint16_t server_port = cmd_config->getSocketPort();
 
+    // Search for the specific connection and reuse the existing one if found.
     auto it = sockets_.find(std::make_pair(server_address, server_port));
     if (it != sockets_.end()) {
         if ((cmd_config->getTrustAnchor() != it->second->config_->getTrustAnchor()) ||
@@ -133,6 +137,8 @@ HttpCommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr config) {
         return;
     }
 
+    // Connection not found so it needs to be created.
+    // When TLS is enabled configure it.
     bool use_https = false;
     TlsContextPtr tls_context;
     if (!cmd_config->getCertFile().empty()) {

@@ -164,13 +164,14 @@ This informational message indicates that the server has started
 HTTP/HTTPS service on the specified address and port for receiving
 control commands.
 
-% HTTP_COMMAND_MGR_SERVICE_STOPPING stopping %1 service %2
+% HTTP_COMMAND_MGR_SERVICE_STOPPING Server is stopping %1 service %2
 This informational message indicates that the server has stopped
 HTTP/HTTPS service. When known the address and port are displayed.
 
-% HTTP_COMMAND_MGR_SERVICE_STOPPING_NO_DATA stopping %1 service %2
-This informational message indicates that the server has stopped
-HTTP/HTTPS service. When known the address and port are displayed.
+% HTTP_COMMAND_MGR_SERVICE_STOPPING_NO_DATA Server is stopping all services including %1 service %2
+This informational message indicates that the server is stopping all
+HTTP/HTTPS services. When known the address and port are displayed for
+each service.
 
 % HTTP_COMMAND_MGR_SERVICE_STOPPING_ALL stopping %1 service %2
 This informational message indicates that the server has stopped

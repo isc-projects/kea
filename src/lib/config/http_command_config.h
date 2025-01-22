@@ -232,6 +232,8 @@ private:
 /// @brief Pointer to a HttpCommandConfig object.
 typedef boost::shared_ptr<HttpCommandConfig> HttpCommandConfigPtr;
 
+/// @brief Structure used to store HTTP/HTTPS connection data.
+/// (configuration, listener, etc.)
 struct HttpSocketInfo {
     /// @brief Flag which indicates if socket can be reused.
     bool usable_;

@@ -71,6 +71,8 @@ public:
     /// @brief Opens unix control socket with parameters specified in socket_info
     /// (required parameters: socket-type: unix, socket-name:/unix/path).
     ///
+    /// Creates acceptor, or reuses the existing one.
+    ///
     /// @throw BadSocketInfo When socket configuration is invalid.
     /// @throw SocketError When socket operation fails.
     ///

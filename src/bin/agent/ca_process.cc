@@ -136,6 +136,7 @@ CtrlAgentProcess::configure(isc::data::ConstElementPtr config_set,
 
         uint16_t server_port = ctx->getHttpPort();
 
+        // Search for the specific connection and reuse the existing one if found.
         auto it = sockets_.find(std::make_pair(server_address, server_port));
         if (it != sockets_.end()) {
             auto listener = getHttpListener();
@@ -155,6 +156,8 @@ CtrlAgentProcess::configure(isc::data::ConstElementPtr config_set,
             return;
         }
 
+        // Connection not found so it needs to be created.
+        // When TLS is enabled configure it.
         bool use_https = false;
         TlsContextPtr tls_context;
         if (!ctx->getCertFile().empty()) {

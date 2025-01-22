@@ -7818,6 +7818,8 @@ operating system, i.e. the size of the ``sun_path`` field in the
 different operating systems, between 91 and 107 characters. Typical
 values are 107 on Linux and 103 on FreeBSD.
 
+Kea supports only one ``unix`` control socket in the "control-sockets" list.
+
 Communication over the control channel is conducted using JSON
 structures. See the
 `Control Channel section in the Kea Developer's Guide
@@ -7914,6 +7916,9 @@ password, these values can be read from files. The syntax is extended by:
 -  The ``user-file`` client parameter, which, with the ``directory`` parameter,
    specifies the path of a file where the user ID can be read.
 
+Since Kea-2.7.6 Kea supports multiple HTTP/HTTPS connections.
+Both IPv4 and IPv6 addresses can be used.
+
 When files are used, they are read when the configuration is loaded,
 to detect configuration errors as soon as possible.
 
@@ -7944,6 +7949,11 @@ to detect configuration errors as soon as possible.
                        "password": "1234"
                    } ]
                }
+           },
+           {
+               "socket-type": "http",
+               "socket-address": "2010:30:40::50",
+               "socket-port": 8004
            }
        ],
 
