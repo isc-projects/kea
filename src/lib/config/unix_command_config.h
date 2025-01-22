@@ -81,6 +81,8 @@ private:
 /// @brief Pointer to a UnixCommandConfig object.
 typedef boost::shared_ptr<UnixCommandConfig> UnixCommandConfigPtr;
 
+/// @brief Structure used to store UNIX connection data.
+/// (configuration, acceptor, etc.)
 struct UnixSocketInfo {
     /// @brief Flag which indicates if socket can be reused.
     bool usable_;
