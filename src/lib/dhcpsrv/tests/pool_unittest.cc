@@ -38,7 +38,7 @@ public:
     /// hasDdnsParameters() method.
     ///
     /// @param family sets the protocol to be used AF_INET or AF_INET6.
-    void checkDdnsParamters(uint16_t family) {
+    void checkDdnsParameters(uint16_t family) {
         PoolPtr pool;
         if (family == AF_INET) {
             pool.reset(new Pool4(IOAddress("192.0.2.0"), 25));
@@ -834,11 +834,11 @@ TEST(Pool6Test, additionalClasses) {
 }
 
 TEST_F(PoolTest, ddnsParameters4) {
-    checkDdnsParamters(AF_INET);
+    checkDdnsParameters(AF_INET);
 }
 
 TEST_F(PoolTest, ddnsParameters6) {
-    checkDdnsParamters(AF_INET6);
+    checkDdnsParameters(AF_INET6);
 }
 
 }  // end of anonymous namespace
