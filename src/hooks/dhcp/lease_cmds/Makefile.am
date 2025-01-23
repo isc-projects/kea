@@ -20,6 +20,7 @@ liblease_cmds_la_SOURCES += lease_cmds_exceptions.h
 liblease_cmds_la_SOURCES += lease_parser.h lease_parser.cc
 liblease_cmds_la_SOURCES += lease_cmds_log.cc lease_cmds_log.h
 liblease_cmds_la_SOURCES += lease_cmds_messages.cc lease_cmds_messages.h
+liblease_cmds_la_SOURCES += binding_variables.h binding_variables.cc
 liblease_cmds_la_SOURCES += version.cc
 
 liblease_cmds_la_CXXFLAGS = $(AM_CXXFLAGS)

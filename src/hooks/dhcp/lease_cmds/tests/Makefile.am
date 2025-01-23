@@ -30,6 +30,7 @@ lease_cmds_unittests_SOURCES = run_unittests.cc
 lease_cmds_unittests_SOURCES += lease_cmds_unittest.h lease_cmds_unittest.cc
 lease_cmds_unittests_SOURCES += lease_cmds4_unittest.cc
 lease_cmds_unittests_SOURCES += lease_cmds6_unittest.cc
+lease_cmds_unittests_SOURCES += binding_variables_unittest.cc
 
 lease_cmds_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
 
@@ -37,7 +38,8 @@ lease_cmds_unittests_LDFLAGS  = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS)
 
 lease_cmds_unittests_CXXFLAGS = $(AM_CXXFLAGS)
 
-lease_cmds_unittests_LDADD  = $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
+lease_cmds_unittests_LDADD  = $(top_builddir)/src/hooks/dhcp/lease_cmds/liblease_cmds.la
+lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 lease_cmds_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
