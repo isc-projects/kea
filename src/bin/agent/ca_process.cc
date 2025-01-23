@@ -153,58 +153,72 @@ CtrlAgentProcess::configure(isc::data::ConstElementPtr config_set,
                 }
             }
             it->second->usable_ = true;
-            return;
-        }
-
-        // Connection not found so it needs to be created.
-        // When TLS is enabled configure it.
-        bool use_https = false;
-        TlsContextPtr tls_context;
-        if (!ctx->getCertFile().empty()) {
-            TlsContext::configure(tls_context,
-                                  TlsRole::SERVER,
-                                  ctx->getTrustAnchor(),
-                                  ctx->getCertFile(),
-                                  ctx->getKeyFile(),
-                                  ctx->getCertRequired());
-            use_https = true;
-        }
-
-        // Create response creator factory first. It will be used to
-        // generate response creators. Each response creator will be
-        // used to generate answer to specific request.
-        HttpResponseCreatorFactoryPtr rcf(new CtrlAgentResponseCreatorFactory());
-
-        // Create HTTP listener. It will open up a TCP socket and be
-        // prepared to accept incoming connection.
-        HttpListenerPtr http_listener
-            (new HttpListener(getIOService(),
-                              server_address,
-                              server_port,
-                              tls_context,
-                              rcf,
-                              HttpListener::RequestTimeout(TIMEOUT_AGENT_RECEIVE_COMMAND),
-                              HttpListener::IdleTimeout(TIMEOUT_AGENT_IDLE_CONNECTION_TIMEOUT)));
-
-        // Instruct the HTTP listener to actually open socket, install
-        // callback and start listening.
-        http_listener->start();
-
-        HttpSocketInfoPtr socket_info(new HttpSocketInfo());
-        socket_info->config_ = ctx;
-        socket_info->listener_ = http_listener;
-
-        sockets_[std::make_pair(server_address, server_port)] = socket_info;
-
-        // Ok, seems we're good to go.
-        if (use_https) {
-          LOG_INFO(agent_logger, CTRL_AGENT_HTTPS_SERVICE_STARTED)
-              .arg(server_address.toText())
-              .arg(server_port);
         } else {
-            LOG_INFO(agent_logger, CTRL_AGENT_HTTP_SERVICE_STARTED)
-                .arg(server_address.toText())
-                .arg(server_port);
+
+            // Connection not found so it needs to be created.
+            // When TLS is enabled configure it.
+            bool use_https = false;
+            TlsContextPtr tls_context;
+            if (!ctx->getCertFile().empty()) {
+                TlsContext::configure(tls_context,
+                                      TlsRole::SERVER,
+                                      ctx->getTrustAnchor(),
+                                      ctx->getCertFile(),
+                                      ctx->getKeyFile(),
+                                      ctx->getCertRequired());
+                use_https = true;
+            }
+
+            // Create response creator factory first. It will be used to
+            // generate response creators. Each response creator will be
+            // used to generate answer to specific request.
+            HttpResponseCreatorFactoryPtr rcf(new CtrlAgentResponseCreatorFactory());
+
+            // Create HTTP listener. It will open up a TCP socket and be
+            // prepared to accept incoming connection.
+            HttpListenerPtr http_listener
+                (new HttpListener(getIOService(),
+                                  server_address,
+                                  server_port,
+                                  tls_context,
+                                  rcf,
+                                  HttpListener::RequestTimeout(TIMEOUT_AGENT_RECEIVE_COMMAND),
+                                  HttpListener::IdleTimeout(TIMEOUT_AGENT_IDLE_CONNECTION_TIMEOUT)));
+
+            // Instruct the HTTP listener to actually open socket, install
+            // callback and start listening.
+            http_listener->start();
+
+            HttpSocketInfoPtr socket_info(new HttpSocketInfo());
+            socket_info->config_ = ctx;
+            socket_info->listener_ = http_listener;
+
+            sockets_[std::make_pair(server_address, server_port)] = socket_info;
+
+            // Ok, seems we're good to go.
+            if (use_https) {
+              LOG_INFO(agent_logger, CTRL_AGENT_HTTPS_SERVICE_STARTED)
+                  .arg(server_address.toText())
+                  .arg(server_port);
+            } else {
+                LOG_INFO(agent_logger, CTRL_AGENT_HTTP_SERVICE_STARTED)
+                    .arg(server_address.toText())
+                    .arg(server_port);
+            }
+        }
+
+        auto copy = sockets_;
+        for (auto const& data : copy) {
+            if (data.second->usable_) {
+                data.second->usable_ = false;
+            } else {
+                data.second->listener_->stop();
+                auto it = sockets_.find(std::make_pair(data.second->config_->getHttpHost(),
+                                                       data.second->config_->getHttpPort()));
+                if (it != sockets_.end()) {
+                    sockets_.erase(it);
+                }
+            }
         }
     });
 
