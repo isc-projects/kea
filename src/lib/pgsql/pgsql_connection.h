@@ -252,7 +252,8 @@ public:
     getVersion(const ParameterMap& parameters,
                const IOServiceAccessorPtr& ac = IOServiceAccessorPtr(),
                const DbCallback& cb = DbCallback(),
-               const std::string& timer_name = std::string());
+               const std::string& timer_name = std::string(),
+               unsigned int id = 0);
 
     /// @brief Retrieve schema version, validate it against the hardcoded
     ///     version, and attempt to initialize the schema if there is an

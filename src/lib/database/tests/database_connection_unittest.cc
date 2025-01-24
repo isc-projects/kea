@@ -108,7 +108,7 @@ TEST_F(DatabaseConnectionCallbackTest, NoDbLostCallback) {
     pmap[std::string("max-reconnect-tries")] = std::string("3");
     pmap[std::string("reconnect-wait-time")] = std::string("60000");
     DatabaseConnection datasrc(pmap);
-    datasrc.makeReconnectCtl("timer");
+    datasrc.makeReconnectCtl("timer", 0);
 
     bool ret = false;
     ASSERT_NO_THROW(ret = DatabaseConnection::invokeDbLostCallback(datasrc.reconnectCtl()));
@@ -126,7 +126,7 @@ TEST_F(DatabaseConnectionCallbackTest, NoDbRecoveredCallback) {
     pmap[std::string("max-reconnect-tries")] = std::string("3");
     pmap[std::string("reconnect-wait-time")] = std::string("60000");
     DatabaseConnection datasrc(pmap);
-    datasrc.makeReconnectCtl("timer");
+    datasrc.makeReconnectCtl("timer", 0);
 
     bool ret = false;
     ASSERT_NO_THROW(ret = DatabaseConnection::invokeDbRecoveredCallback(datasrc.reconnectCtl()));
@@ -144,7 +144,7 @@ TEST_F(DatabaseConnectionCallbackTest, NoDbFailedCallback) {
     pmap[std::string("max-reconnect-tries")] = std::string("3");
     pmap[std::string("reconnect-wait-time")] = std::string("60000");
     DatabaseConnection datasrc(pmap);
-    datasrc.makeReconnectCtl("timer");
+    datasrc.makeReconnectCtl("timer", 0);
 
     bool ret = false;
     ASSERT_NO_THROW(ret = DatabaseConnection::invokeDbFailedCallback(datasrc.reconnectCtl()));
@@ -170,7 +170,7 @@ TEST_F(DatabaseConnectionCallbackTest, dbLostCallback) {
         std::bind(&DatabaseConnectionCallbackTest::dbLostCallback, this, ph::_1);
     /// Create the connection..
     DatabaseConnection datasrc(pmap);
-    datasrc.makeReconnectCtl("timer");
+    datasrc.makeReconnectCtl("timer", 0);
     bool ret = false;
 
     /// We should be able to invoke the callback and get
@@ -218,7 +218,7 @@ TEST_F(DatabaseConnectionCallbackTest, dbRecoveredCallback) {
         std::bind(&DatabaseConnectionCallbackTest::dbRecoveredCallback, this, ph::_1);
     /// Create the connection..
     DatabaseConnection datasrc(pmap);
-    datasrc.makeReconnectCtl("timer");
+    datasrc.makeReconnectCtl("timer", 0);
     bool ret = false;
 
     /// We should be able to invoke the callback and get
@@ -281,7 +281,7 @@ TEST_F(DatabaseConnectionCallbackTest, dbFailedCallback) {
         std::bind(&DatabaseConnectionCallbackTest::dbFailedCallback, this, ph::_1);
     /// Create the connection..
     DatabaseConnection datasrc(pmap);
-    datasrc.makeReconnectCtl("timer");
+    datasrc.makeReconnectCtl("timer", 0);
     bool ret = false;
 
     /// We should be able to invoke the callback and get

@@ -147,12 +147,13 @@ std::pair<uint32_t, uint32_t>
 PgSqlConnection::getVersion(const ParameterMap& parameters,
                             const IOServiceAccessorPtr& ac,
                             const DbCallback& cb,
-                            const string& timer_name) {
+                            const string& timer_name,
+                            unsigned int id) {
     // Get a connection.
     PgSqlConnection conn(parameters, ac, cb);
 
     if (!timer_name.empty()) {
-        conn.makeReconnectCtl(timer_name);
+        conn.makeReconnectCtl(timer_name, id);
     }
 
     // Open the database.

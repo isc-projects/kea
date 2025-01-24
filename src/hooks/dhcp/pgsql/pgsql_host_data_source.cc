@@ -17,9 +17,10 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/host_mgr.h>
+#include <dhcpsrv/network_state.h>
+#include <dhcpsrv/timer_mgr.h>
 #include <pgsql_hb_log.h>
 #include <pgsql_host_data_source.h>
-#include <dhcpsrv/timer_mgr.h>
 #include <util/buffer.h>
 #include <util/multi_threading_mgr.h>
 #include <util/optional.h>
@@ -2386,7 +2387,7 @@ PgSqlHostDataSourceImpl::createContext() const {
     ctx->host_option_exchange_.reset(new PgSqlOptionExchange());
 
     // Create ReconnectCtl for this connection.
-    ctx->conn_.makeReconnectCtl(timer_name_);
+    ctx->conn_.makeReconnectCtl(timer_name_, NetworkState::DB_CONNECTION + 12);
 
     return (ctx);
 }
@@ -2406,6 +2407,7 @@ PgSqlHostDataSourceImpl::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
     bool reopened = false;
 
     const std::string timer_name = db_reconnect_ctl->timerName();
+    bool check = db_reconnect_ctl->checkRetries();
 
     // At least one connection was lost.
     try {
@@ -2434,7 +2436,7 @@ PgSqlHostDataSourceImpl::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
             return (false);
         }
     } else {
-        if (!db_reconnect_ctl->checkRetries()) {
+        if (!check) {
             // We're out of retries, log it and initiate shutdown.
             LOG_ERROR(pgsql_hb_logger, PGSQL_HB_DB_RECONNECT_FAILED)
                     .arg(db_reconnect_ctl->maxRetries());
@@ -2660,7 +2662,7 @@ PgSqlHostDataSourceImpl::getVersion(const std::string& timer_name) const {
     IOServiceAccessorPtr ac(new IOServiceAccessor(&DatabaseConnection::getIOService));
     DbCallback cb(&PgSqlHostDataSourceImpl::dbReconnect);
 
-    return (PgSqlConnection::getVersion(parameters_, ac, cb, timer_name));
+    return (PgSqlConnection::getVersion(parameters_, ac, cb, timer_name, NetworkState::DB_CONNECTION + 12));
 }
 
 void
@@ -3339,7 +3341,7 @@ PgSqlHostDataSource::getDescription() const {
 
 std::pair<uint32_t, uint32_t>
 PgSqlHostDataSource::getVersion(const std::string& timer_name) const {
-    return(impl_->getVersion(timer_name));
+    return (impl_->getVersion(timer_name));
 }
 
 void

@@ -10,6 +10,7 @@
 #include <config_backend/constants.h>
 #include <database/db_exceptions.h>
 #include <dhcp/option_space.h>
+#include <dhcpsrv/network_state.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <pgsql/pgsql_exchange.h>
 #include <util/buffer.h>
@@ -113,7 +114,7 @@ PgSqlConfigBackendImpl::PgSqlConfigBackendImpl(const std::string& space,
     PgSqlConnection::ensureSchemaVersion(parameters, db_reconnect_callback, timer_name_);
 
     // Create ReconnectCtl for this connection.
-    conn_.makeReconnectCtl(timer_name_);
+    conn_.makeReconnectCtl(timer_name_, NetworkState::DB_CONNECTION + 22);
 
     // Open the database.
     conn_.openDatabase();

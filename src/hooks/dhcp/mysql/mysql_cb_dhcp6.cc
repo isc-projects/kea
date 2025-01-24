@@ -3309,6 +3309,7 @@ public:
         bool do_exit = false;
 
         const std::string timer_name = db_reconnect_ctl->timerName();
+        bool check = db_reconnect_ctl->checkRetries();
 
         // At least one connection was lost.
         try {
@@ -3351,7 +3352,7 @@ public:
                 return (false);
             }
         } else {
-            if (!db_reconnect_ctl->checkRetries()) {
+            if (!check) {
                 // We're out of retries, log it and initiate shutdown.
                 LOG_ERROR(mysql_cb_logger, MYSQL_CB_RECONNECT_FAILED6)
                         .arg(db_reconnect_ctl->maxRetries());

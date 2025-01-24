@@ -38,14 +38,20 @@ public:
     /// @param action which should be taken on connection loss.
     ReconnectCtl(const std::string& backend_type, const std::string& timer_name,
                  unsigned int max_retries, unsigned int retry_interval,
-                 OnFailAction action) :
+                 OnFailAction action, unsigned int id) :
           backend_type_(backend_type), timer_name_(timer_name),
           max_retries_(max_retries), retries_left_(max_retries),
-          retry_interval_(retry_interval), action_(action) {}
+          retry_interval_(retry_interval), action_(action), id_(id) {
+    }
 
     /// @brief Returns the type of the caller backend.
     std::string backendType() const {
         return (backend_type_);
+    }
+
+    /// @brief Returns the ID of the manager.
+    unsigned int id() const {
+        return (id_);
     }
 
     /// @brief Returns the associated timer name.
@@ -132,6 +138,9 @@ private:
 
     /// @brief Action to take on connection loss.
     OnFailAction action_;
+
+    /// @brief The ID of the backend.
+    unsigned int id_;
 };
 
 /// @brief Pointer to an instance of ReconnectCtl

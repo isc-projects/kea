@@ -11,6 +11,7 @@
 #include <asiolink/io_address.h>
 #include <config_backend/constants.h>
 #include <dhcp/option_space.h>
+#include <dhcpsrv/network_state.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <util/buffer.h>
 
@@ -68,7 +69,7 @@ MySqlConfigBackendImpl(const std::string& space,
     MySqlConnection::ensureSchemaVersion(parameters, db_reconnect_callback, timer_name_);
 
     // Create ReconnectCtl for this connection.
-    conn_.makeReconnectCtl(timer_name_);
+    conn_.makeReconnectCtl(timer_name_, NetworkState::DB_CONNECTION + 21);
 
     // Open the database.
     conn_.openDatabase();

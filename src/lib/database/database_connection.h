@@ -153,7 +153,7 @@ public:
     /// reconnect parameters
     ///
     /// @param timer_name of the timer used for the ReconnectCtl object.
-    virtual void makeReconnectCtl(const std::string& timer_name);
+    virtual void makeReconnectCtl(const std::string& timer_name, unsigned int id);
 
     /// @brief The reconnect settings.
     ///

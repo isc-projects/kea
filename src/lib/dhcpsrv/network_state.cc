@@ -30,7 +30,7 @@ public:
     /// @brief Constructor.
     NetworkStateImpl() : globally_disabled_(false), disabled_subnets_(),
           disabled_networks_(), timer_mgr_(TimerMgr::instance()),
-          disabled_by_origin_(), disabled_by_db_connection_(0) {
+          disabled_by_origin_() {
     }
 
     /// @brief Destructor.
@@ -56,23 +56,11 @@ public:
         if (disable) {
             // Disable the service for any flag.
             globally_disabled_ = true;
-            if (origin == NetworkState::DB_CONNECTION) {
-                ++disabled_by_db_connection_;
-            } else {
-                disabled_by_origin_.insert(origin);
-            }
+            disabled_by_origin_.insert(origin);
         } else {
-            if (origin == NetworkState::DB_CONNECTION) {
-                // Never go below 0 (using unsigned type).
-                // This should never happen anyway.
-                if (disabled_by_db_connection_) {
-                    --disabled_by_db_connection_;
-                }
-            } else {
-                disabled_by_origin_.erase(origin);
-            }
+            disabled_by_origin_.erase(origin);
             // Enable the service only if all flags have been cleared.
-            if (disabled_by_origin_.empty() && disabled_by_db_connection_ == 0) {
+            if (disabled_by_origin_.empty()) {
                 globally_disabled_ = false;
             }
         }
@@ -82,7 +70,12 @@ public:
     ///
     /// @note The dhcp service will remain disabled until all flags are cleared.
     void resetForDbConnection() {
-        disabled_by_db_connection_ = 0;
+        auto disabled_by_origin = disabled_by_origin_;
+        for (auto const& origin : disabled_by_origin) {
+            if (origin >= NetworkState::DB_CONNECTION) {
+                disabled_by_origin_.erase(origin);
+            }
+        }
         if (disabled_by_origin_.empty()) {
             globally_disabled_ = false;
         }
@@ -99,7 +92,7 @@ public:
                 disabled_by_origin_.erase(origin);
             }
         }
-        if (disabled_by_origin_.empty() && disabled_by_db_connection_ == 0) {
+        if (disabled_by_origin_.empty()) {
             globally_disabled_ = false;
         }
     }
@@ -115,7 +108,7 @@ public:
                 disabled_by_origin_.erase(origin);
             }
         }
-        if (disabled_by_origin_.empty() && disabled_by_db_connection_ == 0) {
+        if (disabled_by_origin_.empty()) {
             globally_disabled_ = false;
         }
     }
@@ -141,7 +134,7 @@ public:
     /// @param origin The origin of the state transition.
     void createTimer(const unsigned int seconds, unsigned int origin) {
         destroyTimer(origin);
-        if (origin == NetworkState::DB_CONNECTION) {
+        if (origin >= NetworkState::DB_CONNECTION) {
             isc_throw(BadValue, "DB connection does not support delayed enable");
         }
         auto timer_name = getTimerName(origin);
@@ -157,7 +150,7 @@ public:
     ///
     /// @param origin The origin of the state transition.
     void destroyTimer(unsigned int origin) {
-        if (origin == NetworkState::DB_CONNECTION) {
+        if (origin >= NetworkState::DB_CONNECTION) {
             return;
         }
         auto timer_name = getTimerName(origin);
@@ -182,10 +175,10 @@ public:
     virtual ElementPtr toElement() const {
         ElementPtr result = Element::createMap();
         result->set("globally-disabled", Element::create(globally_disabled_));
-        result->set("disabled-by-db-connection", Element::create(disabled_by_db_connection_ != 0));
         bool disabled_by_user = false;
         ElementPtr local_origin = Element::createList();
         ElementPtr remote_origin = Element::createList();
+        ElementPtr db_origin = Element::createList();
         std::set<unsigned int> ordered(disabled_by_origin_.begin(), disabled_by_origin_.end());
         for (auto const& origin : ordered) {
             if (origin == NetworkState::USER_COMMAND) {
@@ -197,10 +190,14 @@ public:
             if (origin >= NetworkState::HA_REMOTE_COMMAND && origin < NetworkState::DB_CONNECTION) {
                 remote_origin->add(Element::create(origin));
             }
+            if (origin >= NetworkState::DB_CONNECTION) {
+                db_origin->add(Element::create(origin));
+            }
         }
         result->set("disabled-by-user", Element::create(disabled_by_user));
         result->set("disabled-by-local-command", local_origin);
         result->set("disabled-by-remote-command", remote_origin);
+        result->set("disabled-by-db-connection", db_origin);
 
         return (result);
     }
@@ -222,10 +219,6 @@ public:
 
     /// @brief A set of requests to disable the service by origin.
     std::unordered_set<unsigned int> disabled_by_origin_;
-
-    /// @brief Flag which indicates the state has been disabled by a DB
-    /// connection loss.
-    uint32_t disabled_by_db_connection_;
 };
 
 NetworkState::NetworkState()
