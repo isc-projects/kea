@@ -2,7 +2,7 @@ SUBDIRS = .
 
 AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += -I$(top_builddir)/src/hooks/dhcp/lease_cmds -I$(top_srcdir)/src/hooks/dhcp/lease_cmds
-AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
 AM_CPPFLAGS += -DLIBDHCP_LEASE_CMDS_SO=\"$(abs_top_builddir)/src/hooks/dhcp/lease_cmds/.libs/libdhcp_lease_cmds.so\"
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -26,7 +26,7 @@ hook_load_unittests_SOURCES += load_unload_unittests.cc
 hook_load_unittests_SOURCES += run_unittests.cc
 hook_load_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
 hook_load_unittests_CXXFLAGS = $(AM_CXXFLAGS)
-hook_load_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
+hook_load_unittests_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS)
 
 hook_load_unittests_LDADD  = $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 hook_load_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la

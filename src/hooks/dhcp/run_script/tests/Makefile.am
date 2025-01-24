@@ -6,7 +6,7 @@ noinst_SCRIPTS = run_script_test.sh
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += -I$(top_builddir)/src/hooks/dhcp/run_script -I$(top_srcdir)/src/hooks/dhcp/run_script
-AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
 AM_CPPFLAGS += -DRUN_SCRIPT_LIB_SO=\"$(abs_top_builddir)/src/hooks/dhcp/run_script/.libs/libdhcp_run_script.so\"
 AM_CPPFLAGS += -DTEST_LOG_FILE=\"$(abs_top_builddir)/src/hooks/dhcp/run_script/tests/test.log\"
 AM_CPPFLAGS += -DRUN_SCRIPT_TEST_SH=\"$(abs_top_builddir)/src/hooks/dhcp/run_script/tests/run_script_test.sh\"

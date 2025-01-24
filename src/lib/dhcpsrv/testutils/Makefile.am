@@ -2,7 +2,7 @@ SUBDIRS = .
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += -DDATABASE_SCRIPTS_DIR=\"$(abs_top_srcdir)/src/share/database/scripts\"
-AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 

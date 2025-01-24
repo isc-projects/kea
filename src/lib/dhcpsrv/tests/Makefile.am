@@ -1,6 +1,6 @@
 SUBDIRS = .
 
-AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
+AM_CPPFLAGS = -I$(top_builddir)/s$(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/lib/dhcpsrv/tests\"
 AM_CPPFLAGS += -DDHCP_DATA_DIR=\"$(abs_top_builddir)/src/lib/dhcpsrv/tests\"

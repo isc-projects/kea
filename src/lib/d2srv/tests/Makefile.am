@@ -1,7 +1,7 @@
 SUBDIRS = .
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
-AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -25,7 +25,7 @@ libd2srv_unittests_SOURCES += dns_client_unittests.cc
 libd2srv_unittests_SOURCES += nc_trans_unittests.cc
 
 libd2srv_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
-libd2srv_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
+libd2srv_unittests_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS)
 
 libd2srv_unittests_LDADD  = $(top_builddir)/src/lib/d2srv/testutils/libd2srvtest.la
 libd2srv_unittests_LDADD += $(top_builddir)/src/lib/d2srv/libkea-d2srv.la
@@ -46,7 +46,8 @@ libd2srv_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 libd2srv_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 libd2srv_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 libd2srv_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-libd2srv_unittests_LDADD += $(LOG4CPLUS_LIBS) $(BOOST_LIBS) $(GTEST_LDADD)
+libd2srv_unittests_LDADD += $(LOG4CPLUS_LIBS) $(BOOST_LIBS) $(CRYPTO_LIBS)
+libd2srv_unittests_LDADD += $(GTEST_LDADD)
 
 endif
 

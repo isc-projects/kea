@@ -2,7 +2,7 @@ SUBDIRS = .
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += -I$(top_builddir)/src/hooks/dhcp/stat_cmds -I$(top_srcdir)/src/hooks/dhcp/stat_cmds
-AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
 AM_CPPFLAGS += -DSTAT_CMDS_LIB_SO=\"$(abs_top_builddir)/src/hooks/dhcp/stat_cmds/.libs/libdhcp_stat_cmds.so\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 
