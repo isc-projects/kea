@@ -123,8 +123,30 @@ TEST(BindingVariableTest, invalidConstructor) {
     }
 }
 
-TEST(BindingVariableCacheTest, basics) {
+/// @brief Tests BindingVariable::toElement().
+TEST(BindingVariableTest, toElement) {
+    BindingVariablePtr bv;
 
+    ASSERT_NO_THROW_LOG(bv.reset(new BindingVariable("myvar",
+                                                     "pkt4.mac",
+                                                     BindingVariable::QUERY,
+                                                     AF_INET)));
+    ASSERT_TRUE(bv);
+    ElementPtr elem;
+
+    ASSERT_NO_THROW_LOG(elem = bv->toElement());
+    std::stringstream ss;
+    elem->toJSON(ss);
+    std::string expected_json = "{ \"expression_str\": \"pkt4.mac\","
+                                " \"name\": \"myvar\", \"source\": \"query\" }";
+    EXPECT_EQ(ss.str(), expected_json);
+}
+
+/// @brief Verifies basic operation of the cache including
+/// construction, all getters and cache clearing.
+TEST(BindingVariableCacheTest, basics) {
+    // Save start time of test.  We use seconds because that's that
+    // BaseStampedElement uses.
     auto ref_time = boost::posix_time::second_clock::local_time();
 
     // Create a new cache.
@@ -229,6 +251,42 @@ TEST(BindingVariableCacheTest, basics) {
     EXPECT_EQ(cache->size(), 0);
 
     EXPECT_GT(cache->getLastFlushTime(), ref_time);
+}
+
+/// @brief Verifies cache behavior for handling duplicate
+/// entries.
+TEST(BindingVariableCacheTest, duplicateEntries) {
+    // Create a new cache.
+    BindingVariableCachePtr cache(new BindingVariableCache());
+
+
+    std::string valid_v4_exp = "pkt4.mac";
+    BindingVariablePtr var1(new BindingVariable("one", valid_v4_exp,
+                                                BindingVariable::QUERY,
+                                                AF_INET));
+
+    BindingVariablePtr var2(new BindingVariable("one", valid_v4_exp,
+                                                BindingVariable::RESPONSE,
+                                                AF_INET));
+
+    bool add_flag;
+    ASSERT_NO_THROW_LOG(add_flag = cache->cacheVariable(var1));
+    EXPECT_TRUE(add_flag);
+    EXPECT_EQ(cache->size(), 1);
+
+    // Make sure getByName returns the added variable.
+    BindingVariablePtr found_var;
+    ASSERT_NO_THROW_LOG(found_var = cache->getByName("one"));
+    ASSERT_EQ(found_var->getSource(), BindingVariable::QUERY);
+
+    // Adding a duplicate should fail.
+    ASSERT_NO_THROW_LOG(add_flag = cache->cacheVariable(var2));
+    EXPECT_FALSE(add_flag);
+    EXPECT_EQ(cache->size(), 1);
+
+    // Make sure getByName returns the original variable.
+    ASSERT_NO_THROW_LOG(found_var = cache->getByName("one"));
+    ASSERT_EQ(found_var->getSource(), BindingVariable::QUERY);
 }
 
 } // end of anonymous namespace

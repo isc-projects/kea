@@ -61,14 +61,12 @@ BindingVariable::evaluate(PktPtr packet) const {
     } 
 }
 
-/// @todo Not sure we need CfgElement derivation
 ElementPtr
 BindingVariable::toElement() const {
     ElementPtr map = Element::createMap();
     map->set("name", Element::create(name_));
     map->set("expression_str", Element::create(expression_str_));
     map->set("source", Element::create((source_ == QUERY ? "query" : "response")));
-    // family_ is contextual
     return (map);
 }
 
@@ -76,10 +74,11 @@ BindingVariableCache::BindingVariableCache()
     : variables_(), mutex_(new std::mutex) {
 }
 
-void
+bool
 BindingVariableCache::cacheVariable(BindingVariablePtr variable) {
     util::MultiThreadingLock lock(*mutex_);
-    variables_.push_back(variable);
+    auto retpair = variables_.push_back(variable);
+    return(retpair.second);
 }
 
 void 

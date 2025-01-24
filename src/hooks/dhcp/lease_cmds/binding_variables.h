@@ -99,7 +99,10 @@ public:
         return (family_);
     }
 
-    /// @todo Not sure we need CfgElement derivation
+    /// @brief Creates an Element tree for the variable's configurable
+    /// members.
+    ///
+    /// @return ElementPtr containing the configurable members.
     virtual data::ElementPtr toElement() const;
 
 private:
@@ -183,8 +186,13 @@ public:
 
     /// @brief Adds (or replaces) the variable in the cache.
     ///
+    /// Variables must be unique by name. If the variable to
+    /// be added is a duplicate, the add fails and the function
+    /// returns false.
+    ///
     /// @param variable pointer to the variable to store.
-    void cacheVariable(BindingVariablePtr variable);
+    /// @return true if the variable was added, false otherwise.
+    bool cacheVariable(BindingVariablePtr variable);
 
     /// @brief Delete all the entries in the cache.
     void clear();
