@@ -271,6 +271,7 @@ public:
     /// @param ac An IOServiceAccessor object.
     /// @param cb The dbReconnect callback.
     /// @param timer_name The DB reconnect timer name.
+    /// @param id the ID of the manager.
     ///
     /// @return Version number as a pair of unsigned integers.  "first" is the
     ///         major version number, "second" the minor number.

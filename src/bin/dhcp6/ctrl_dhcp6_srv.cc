@@ -1428,7 +1428,9 @@ ControlledDhcpv6Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
         network_state_->disableService(NetworkState::DB_CONNECTION + db_reconnect_ctl->id());
     }
 
-    LOG_INFO(dhcp6_logger, DHCP6_DB_RECONNECT_LOST_CONNECTION);
+    LOG_INFO(dhcp6_logger, DHCP6_DB_RECONNECT_LOST_CONNECTION)
+        .arg(db_reconnect_ctl->id())
+        .arg(db_reconnect_ctl->timerName());
 
     // If reconnect isn't enabled log it, initiate a shutdown if needed and
     // return false.
@@ -1436,7 +1438,9 @@ ControlledDhcpv6Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
         !db_reconnect_ctl->retryInterval()) {
         LOG_INFO(dhcp6_logger, DHCP6_DB_RECONNECT_DISABLED)
             .arg(db_reconnect_ctl->retriesLeft())
-            .arg(db_reconnect_ctl->retryInterval());
+            .arg(db_reconnect_ctl->retryInterval())
+            .arg(db_reconnect_ctl->id())
+            .arg(db_reconnect_ctl->timerName());
         if (db_reconnect_ctl->exitOnFailure()) {
             shutdownServer(EXIT_FAILURE);
         }
@@ -1460,7 +1464,9 @@ ControlledDhcpv6Srv::dbRecoveredCallback(ReconnectCtlPtr db_reconnect_ctl) {
         network_state_->enableService(NetworkState::DB_CONNECTION + db_reconnect_ctl->id());
     }
 
-    LOG_INFO(dhcp6_logger, DHCP6_DB_RECONNECT_SUCCEEDED);
+    LOG_INFO(dhcp6_logger, DHCP6_DB_RECONNECT_SUCCEEDED)
+        .arg(db_reconnect_ctl->id())
+        .arg(db_reconnect_ctl->timerName());
 
     db_reconnect_ctl->resetRetries();
 
@@ -1476,7 +1482,9 @@ ControlledDhcpv6Srv::dbFailedCallback(ReconnectCtlPtr db_reconnect_ctl) {
     }
 
     LOG_INFO(dhcp6_logger, DHCP6_DB_RECONNECT_FAILED)
-            .arg(db_reconnect_ctl->maxRetries());
+        .arg(db_reconnect_ctl->maxRetries())
+        .arg(db_reconnect_ctl->id())
+        .arg(db_reconnect_ctl->timerName());
 
     if (db_reconnect_ctl->exitOnFailure()) {
         shutdownServer(EXIT_FAILURE);

@@ -36,6 +36,7 @@ public:
     /// @param max_retries maximum number of reconnect attempts to make.
     /// @param retry_interval amount of time to between reconnect attempts.
     /// @param action which should be taken on connection loss.
+    /// @param id the ID of the manager.
     ReconnectCtl(const std::string& backend_type, const std::string& timer_name,
                  unsigned int max_retries, unsigned int retry_interval,
                  OnFailAction action, unsigned int id) :
@@ -139,7 +140,7 @@ private:
     /// @brief Action to take on connection loss.
     OnFailAction action_;
 
-    /// @brief The ID of the backend.
+    /// @brief The ID of the manager.
     unsigned int id_;
 };
 
