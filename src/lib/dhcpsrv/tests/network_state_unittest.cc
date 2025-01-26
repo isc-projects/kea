@@ -70,12 +70,14 @@ public:
     // 4. Disable using 'HA remote command' origin 2 times (expect disabled state).
     // 5. Disable using 'HA remote command' origin 1 time different id (expect disabled state).
     // 6. Disable using 'DB connection' origin 2 times (expect disabled state).
-    // 7. Enable using 'user command' origin 1 time (expect disabled state).
-    // 8. Enable using 'HA local command' origin 1 time (expect disabled state).
-    // 9. Enable using 'HA local command' origin 1 time different id (expect disabled state).
-    // 10. Enable using 'HA remote command' origin 1 time (expect disabled state).
-    // 11. Enable using 'HA remote command' origin 1 time different id (expect disabled state).
-    // 12. Enable using 'DB connection' origin 2 times (expect enabled state).
+    // 7. Disable using 'DB connection' origin 1 time different id (expect disabled state).
+    // 8. Enable using 'user command' origin 1 time (expect disabled state).
+    // 9. Enable using 'HA local command' origin 1 time (expect disabled state).
+    // 10. Enable using 'HA local command' origin 1 time different id (expect disabled state).
+    // 11. Enable using 'HA remote command' origin 1 time (expect disabled state).
+    // 12. Enable using 'HA remote command' origin 1 time different id (expect disabled state).
+    // 13. Enable using 'DB connection' origin 1 times (expect disabled state).
+    // 14. Enable using 'DB connection' origin 1 time different id (expect disabled state).
     void disableEnableServiceUsingMultipleOriginsTest();
 
     /// @brief This test verifies that reset works, so that internal state is reset after
@@ -152,14 +154,32 @@ public:
 
     /// @brief This test verifies that reset works, so that internal state is reset after
     /// all managers are recreated.
-    /// 1. Disable using 'user command' origin 1 time (expect disabled state).
-    /// 2. Disable using 'HA command' origin 1 time (expect disabled state).
-    /// 3. Disable using 'DB connection' origin 3 time (expect disabled state).
-    /// 4. Reset using 'DB connection' origin (expect disabled state).
-    /// 5. Enable using 'user command' origin 1 time (expect disabled state).
-    /// 6. Enable using 'DB connection' origin 1 time (expect enabled state).
-    /// 7. Disable using 'DB connection' origin 3 times (expect disabled state).
-    /// 8. Reset using 'DB connection' origin (expect enabled state).
+    // 1. Disable using 'user command' origin 1 time (expect disabled state).
+    // 2. Disable using 'DB connection' origin 3 times with same id (expect disabled state).
+    // 3. Disable using 'HA remote command' origin 1 time (expect disabled state).
+    // 4. Disable using 'HA local command' origin 1 time (expect disabled state).
+    // 5. Enable using 'DB connection' origin (expect disabled state).
+    // 6. Enable using 'user command' origin 1 time (expect disabled state).
+    // 7. Enable using 'HA local command' origin 1 time (expect disabled state).
+    // 8. Enable using 'HA remote command' origin 1 time (expect enabled state).
+    // 9. Disable using 'user command' origin 1 time (expect disabled state).
+    // 10. Disable using 'DB connection' origin 3 times with different ids (expect disabled state).
+    // 11. Disable using 'HA remote command' origin 1 time (expect disabled state).
+    // 12. Disable using 'HA local command' origin 1 time (expect disabled state).
+    // 13. Enable using 'user command' origin 1 time (expect disabled state).
+    // 14. Enable using 'HA local command' origin 1 time (expect disabled state).
+    // 15. Enable using 'HA remote command' origin 1 time (expect disabled state).
+    // 16. Enable using 'DB connection' origin 3 times with different ids (expect enabled state).
+    // 17. Disable using 'user command' origin 1 time (expect disabled state).
+    // 18. Disable using 'DB connection' origin 3 times with different ids (expect disabled state).
+    // 19. Disable using 'HA remote command' origin 1 time (expect disabled state).
+    // 20. Disable using 'HA local command' origin 1 time (expect disabled state).
+    // 21. Enable using 'user command' origin 1 time (expect disabled state).
+    // 22. Enable using 'HA local command' origin 1 time (expect disabled state).
+    // 23. Enable using 'HA remote command' origin 1 time (expect disabled state).
+    // 24. Reset using 'DB connection' origin (expect enabled state).
+    // 25. Disable using 'DB connection' origin 3 times (expect disabled state).
+    // 26. Enable using 'DB connection' origin (expect enabled state).
     void resetUsingDBConnectionOriginTest();
 
     /// @brief This test verifies that it is possible to setup delayed execution of enableAll
@@ -190,22 +210,30 @@ public:
     ///
     /// @brief state The network state to check.
     /// @brief user Flag which indicates if user command disabled the state.
-    /// @brief db_connection Flag which indicates if db connection disabled the
-    /// state.
     /// @brief local The list of local IDs which disabled the state.
     /// @brief remote The list of remote IDs which disabled the state.
+    /// @brief db The list of manager IDs which disabled the state because of a
+    /// db connection failure.
     /// @brief global Flag which indicates if the state is disabled.
     void checkNetworkState(const NetworkState& state,
                            bool user,
-                           bool db_connection,
                            std::vector<uint32_t> local,
                            std::vector<uint32_t> remote,
+                           std::vector<uint32_t> db,
                            bool global) {
         std::ostringstream data;
-        data << std::boolalpha
-             << "{ \"disabled-by-db-connection\": " << db_connection
-             << ", \"disabled-by-local-command\": [ ";
+        data << std::boolalpha;
+        data << "{ \"disabled-by-db-connection\": [ ";
         bool not_first = false;
+        for (auto const value : db) {
+            if (not_first) {
+                data << ", ";
+            }
+            data << value;
+            not_first = true;
+        }
+        data << " ], \"disabled-by-local-command\": [ ";
+        not_first = false;
         for (auto const value : local) {
             if (not_first) {
                 data << ", ";
@@ -240,7 +268,7 @@ void
 NetworkStateTest::defaultTest() {
     NetworkState state;
 
-    checkNetworkState(state, false, false, {}, {}, false);
+    checkNetworkState(state, false, {}, {}, {}, false);
 }
 
 // This test verifies that it is possible to disable and then enable
@@ -251,19 +279,19 @@ NetworkStateTest::disableEnableServiceUsingUserCommandOriginTest() {
 
     // Test that enable/disable using 'user command' origin works
     state.disableService(NetworkState::USER_COMMAND);
-    checkNetworkState(state, true, false, {}, {}, true);
+    checkNetworkState(state, true, {}, {}, {}, true);
     state.enableService(NetworkState::USER_COMMAND);
-    checkNetworkState(state, false, false, {}, {}, false);
+    checkNetworkState(state, false, {}, {}, {}, false);
 
     // Test that using 'user command' origin does not use internal counter
     state.disableService(NetworkState::USER_COMMAND);
-    checkNetworkState(state, true, false, {}, {}, true);
+    checkNetworkState(state, true, {}, {}, {}, true);
     state.disableService(NetworkState::USER_COMMAND);
-    checkNetworkState(state, true, false, {}, {}, true);
+    checkNetworkState(state, true, {}, {}, {}, true);
     state.enableService(NetworkState::USER_COMMAND);
-    checkNetworkState(state, false, false, {}, {}, false);
+    checkNetworkState(state, false, {}, {}, {}, false);
     state.enableService(NetworkState::USER_COMMAND);
-    checkNetworkState(state, false, false, {}, {}, false);
+    checkNetworkState(state, false, {}, {}, {}, false);
 }
 
 // This test verifies that it is possible to disable and then enable
@@ -274,33 +302,33 @@ NetworkStateTest::disableEnableServiceUsingHALocalCommandOriginTest() {
 
     // Test that enable/disable using 'HA local command' origin works
     state.disableService(NetworkState::HA_LOCAL_COMMAND);
-    checkNetworkState(state, false, false, { 1000 }, {}, true);
+    checkNetworkState(state, false, { 1000 }, {}, {}, true);
     state.enableService(NetworkState::HA_LOCAL_COMMAND);
-    checkNetworkState(state, false, false, {}, {}, false);
+    checkNetworkState(state, false, {}, {}, {}, false);
 
     // Test that using 'HA local command' origin does not use internal counter
     state.disableService(NetworkState::HA_LOCAL_COMMAND);
-    checkNetworkState(state, false, false, { 1000 }, {}, true);
+    checkNetworkState(state, false, { 1000 }, {}, {}, true);
     state.disableService(NetworkState::HA_LOCAL_COMMAND);
-    checkNetworkState(state, false, false, { 1000 }, {}, true);
+    checkNetworkState(state, false, { 1000 }, {}, {}, true);
     state.enableService(NetworkState::HA_LOCAL_COMMAND);
-    checkNetworkState(state, false, false, {}, {}, false);
+    checkNetworkState(state, false, {}, {}, {}, false);
     state.enableService(NetworkState::HA_LOCAL_COMMAND);
-    checkNetworkState(state, false, false, {}, {}, false);
+    checkNetworkState(state, false, {}, {}, {}, false);
 
     // Test that using 'HA local command' origin does consider id
     state.disableService(NetworkState::HA_LOCAL_COMMAND);
-    checkNetworkState(state, false, false, { 1000 }, {}, true);
+    checkNetworkState(state, false, { 1000 }, {}, {}, true);
     state.disableService(NetworkState::HA_LOCAL_COMMAND + 1);
-    checkNetworkState(state, false, false, { 1000, 1001 }, {}, true);
+    checkNetworkState(state, false, { 1000, 1001 }, {}, {}, true);
     state.disableService(NetworkState::HA_LOCAL_COMMAND + 2);
-    checkNetworkState(state, false, false, { 1000, 1001, 1002 }, {}, true);
+    checkNetworkState(state, false, { 1000, 1001, 1002 }, {}, {}, true);
     state.enableService(NetworkState::HA_LOCAL_COMMAND);
-    checkNetworkState(state, false, false, { 1001, 1002 }, {}, true);
+    checkNetworkState(state, false, { 1001, 1002 }, {}, {}, true);
     state.enableService(NetworkState::HA_LOCAL_COMMAND + 1);
-    checkNetworkState(state, false, false, { 1002 }, {}, true);
+    checkNetworkState(state, false, { 1002 }, {}, {}, true);
     state.enableService(NetworkState::HA_LOCAL_COMMAND + 2);
-    checkNetworkState(state, false, false, {}, {}, false);
+    checkNetworkState(state, false, {}, {}, {}, false);
 }
 
 // This test verifies that it is possible to disable and then enable
@@ -311,33 +339,33 @@ NetworkStateTest::disableEnableServiceUsingHARemoteCommandOriginTest() {
 
     // Test that enable/disable using 'HA remote command' origin works
     state.disableService(NetworkState::HA_REMOTE_COMMAND);
-    checkNetworkState(state, false, false, {}, { 2000 }, true);
+    checkNetworkState(state, false, {}, { 2000 }, {}, true);
     state.enableService(NetworkState::HA_REMOTE_COMMAND);
-    checkNetworkState(state, false, false, {}, {}, false);
+    checkNetworkState(state, false, {}, {}, {}, false);
 
     // Test that using 'HA remote command' origin does not use internal counter
     state.disableService(NetworkState::HA_REMOTE_COMMAND);
-    checkNetworkState(state, false, false, {}, { 2000 }, true);
+    checkNetworkState(state, false, {}, { 2000 }, {}, true);
     state.disableService(NetworkState::HA_REMOTE_COMMAND);
-    checkNetworkState(state, false, false, {}, { 2000 }, true);
+    checkNetworkState(state, false, {}, { 2000 }, {}, true);
     state.enableService(NetworkState::HA_REMOTE_COMMAND);
-    checkNetworkState(state, false, false, {}, {}, false);
+    checkNetworkState(state, false, {}, {}, {}, false);
     state.enableService(NetworkState::HA_REMOTE_COMMAND);
-    checkNetworkState(state, false, false, {}, {}, false);
+    checkNetworkState(state, false, {}, {}, {}, false);
 
     // Test that using 'HA remote command' origin does consider id
     state.disableService(NetworkState::HA_REMOTE_COMMAND);
-    checkNetworkState(state, false, false, {}, { 2000 }, true);
+    checkNetworkState(state, false, {}, { 2000 }, {}, true);
     state.disableService(NetworkState::HA_REMOTE_COMMAND + 1);
-    checkNetworkState(state, false, false, {}, { 2000, 2001 }, true);
+    checkNetworkState(state, false, {}, { 2000, 2001 }, {}, true);
     state.disableService(NetworkState::HA_REMOTE_COMMAND + 2);
-    checkNetworkState(state, false, false, {}, { 2000, 2001, 2002 }, true);
+    checkNetworkState(state, false, {}, { 2000, 2001, 2002 }, {}, true);
     state.enableService(NetworkState::HA_REMOTE_COMMAND);
-    checkNetworkState(state, false, false, {}, { 2001, 2002 }, true);
+    checkNetworkState(state, false, {}, { 2001, 2002 }, {}, true);
     state.enableService(NetworkState::HA_REMOTE_COMMAND + 1);
-    checkNetworkState(state, false, false, {}, { 2002 }, true);
+    checkNetworkState(state, false, {}, { 2002 }, {}, true);
     state.enableService(NetworkState::HA_REMOTE_COMMAND + 2);
-    checkNetworkState(state, false, false, {}, {}, false);
+    checkNetworkState(state, false, {}, {}, {}, false);
 }
 
 // This test verifies that it is possible to disable and then enable
@@ -348,78 +376,92 @@ NetworkStateTest::disableEnableServiceUsingDBConnectionOriginTest() {
 
     // Test that enable/disable using 'DB connection' origin works
     state.disableService(NetworkState::DB_CONNECTION);
-    checkNetworkState(state, false, true, {}, {}, true);
+    checkNetworkState(state, false, {}, {}, { 3000 }, true);
     state.enableService(NetworkState::DB_CONNECTION);
-    checkNetworkState(state, false, false, {}, {}, false);
+    checkNetworkState(state, false, {}, {}, {}, false);
 
-    // Test that using 'DB connection' origin uses internal counter
+    // Test that using 'DB connection' origin does not use internal counter
     state.disableService(NetworkState::DB_CONNECTION);
-    checkNetworkState(state, false, true, {}, {}, true);
+    checkNetworkState(state, false, {}, {}, { 3000 }, true);
     state.disableService(NetworkState::DB_CONNECTION);
-    checkNetworkState(state, false, true, {}, {}, true);
+    checkNetworkState(state, false, {}, {}, { 3000 }, true);
     state.enableService(NetworkState::DB_CONNECTION);
-    checkNetworkState(state, false, true, {}, {}, true);
+    checkNetworkState(state, false, {}, {}, {}, false);
     state.enableService(NetworkState::DB_CONNECTION);
-    checkNetworkState(state, false, false, {}, {}, false);
+    checkNetworkState(state, false, {}, {}, {}, false);
+
+    // Test that using 'DB connection' origin does consider id
     state.disableService(NetworkState::DB_CONNECTION);
-    checkNetworkState(state, false, true, {}, {}, true);
+    checkNetworkState(state, false, {}, {}, { 3000 }, true);
+    state.disableService(NetworkState::DB_CONNECTION + 1);
+    checkNetworkState(state, false, {}, {}, { 3000, 3001 }, true);
+    state.disableService(NetworkState::DB_CONNECTION + 2);
+    checkNetworkState(state, false, {}, {}, { 3000, 3001, 3002 }, true);
     state.enableService(NetworkState::DB_CONNECTION);
-    checkNetworkState(state, false, false, {}, {}, false);
+    checkNetworkState(state, false, {}, {}, { 3001, 3002 }, true);
+    state.enableService(NetworkState::DB_CONNECTION + 1);
+    checkNetworkState(state, false, {}, {}, { 3002 }, true);
+    state.enableService(NetworkState::DB_CONNECTION + 2);
+    checkNetworkState(state, false, {}, {}, {}, false);
 }
 
-// This test verifies that it is possible to disable and then enable
-// service using a combination of origins.
+/// @brief This test verifies that it is possible to disable and then enable
+/// service using a combination of origins.
 // 1. Disable using 'user command' origin 2 times (expect disabled state).
 // 2. Disable using 'HA local command' origin 2 times (expect disabled state).
 // 3. Disable using 'HA local command' origin 1 time different id (expect disabled state).
 // 4. Disable using 'HA remote command' origin 2 times (expect disabled state).
 // 5. Disable using 'HA remote command' origin 1 time different id (expect disabled state).
 // 6. Disable using 'DB connection' origin 2 times (expect disabled state).
-// 7. Enable using 'user command' origin 1 time (expect disabled state).
-// 8. Enable using 'HA local command' origin 1 time (expect disabled state).
-// 9. Enable using 'HA local command' origin 1 time different id (expect disabled state).
-// 10. Enable using 'HA remote command' origin 1 time (expect disabled state).
-// 11. Enable using 'HA remote command' origin 1 time different id (expect disabled state).
-// 12. Enable using 'DB connection' origin 2 times (expect enabled state).
+// 7. Disable using 'DB connection' origin 1 time different id (expect disabled state).
+// 8. Enable using 'user command' origin 1 time (expect disabled state).
+// 9. Enable using 'HA local command' origin 1 time (expect disabled state).
+// 10. Enable using 'HA local command' origin 1 time different id (expect disabled state).
+// 11. Enable using 'HA remote command' origin 1 time (expect disabled state).
+// 12. Enable using 'HA remote command' origin 1 time different id (expect disabled state).
+// 13. Enable using 'DB connection' origin 1 times (expect disabled state).
+// 14. Enable using 'DB connection' origin 1 time different id (expect disabled state).
 void
 NetworkStateTest::disableEnableServiceUsingMultipleOriginsTest() {
     NetworkState state;
 
     // Test that a combination properly affects the state
     state.disableService(NetworkState::USER_COMMAND);
-    checkNetworkState(state, true, false, {}, {}, true);
+    checkNetworkState(state, true, {}, {}, {}, true);
     state.disableService(NetworkState::USER_COMMAND);
-    checkNetworkState(state, true, false, {}, {}, true);
+    checkNetworkState(state, true, {}, {}, {}, true);
     state.disableService(NetworkState::HA_LOCAL_COMMAND);
-    checkNetworkState(state, true, false, { 1000 }, {}, true);
+    checkNetworkState(state, true, { 1000 }, {}, {}, true);
     state.disableService(NetworkState::HA_LOCAL_COMMAND);
-    checkNetworkState(state, true, false, { 1000 }, {}, true);
+    checkNetworkState(state, true, { 1000 }, {}, {}, true);
     state.disableService(NetworkState::HA_LOCAL_COMMAND + 1);
-    checkNetworkState(state, true, false, { 1000, 1001 }, {}, true);
+    checkNetworkState(state, true, { 1000, 1001 }, {}, {}, true);
     state.disableService(NetworkState::HA_REMOTE_COMMAND);
-    checkNetworkState(state, true, false, { 1000, 1001 }, { 2000 }, true);
+    checkNetworkState(state, true, { 1000, 1001 }, { 2000 }, {}, true);
     state.disableService(NetworkState::HA_REMOTE_COMMAND);
-    checkNetworkState(state, true, false, { 1000, 1001 }, { 2000 }, true);
+    checkNetworkState(state, true, { 1000, 1001 }, { 2000 }, {}, true);
     state.disableService(NetworkState::HA_REMOTE_COMMAND + 1);
-    checkNetworkState(state, true, false, { 1000, 1001 }, { 2000, 2001 }, true);
+    checkNetworkState(state, true, { 1000, 1001 }, { 2000, 2001 }, {}, true);
     state.disableService(NetworkState::DB_CONNECTION);
-    checkNetworkState(state, true, true, { 1000, 1001 }, { 2000, 2001 }, true);
+    checkNetworkState(state, true, { 1000, 1001 }, { 2000, 2001 }, { 3000 }, true);
     state.disableService(NetworkState::DB_CONNECTION);
-    checkNetworkState(state, true, true, { 1000, 1001 }, { 2000, 2001 }, true);
+    checkNetworkState(state, true, { 1000, 1001 }, { 2000, 2001 }, { 3000 }, true);
+    state.disableService(NetworkState::DB_CONNECTION + 1);
+    checkNetworkState(state, true, { 1000, 1001 }, { 2000, 2001 }, { 3000, 3001 }, true);
     state.enableService(NetworkState::USER_COMMAND);
-    checkNetworkState(state, false, true, { 1000, 1001 }, { 2000, 2001 }, true);
+    checkNetworkState(state, false, { 1000, 1001 }, { 2000, 2001 }, { 3000, 3001 }, true);
     state.enableService(NetworkState::HA_LOCAL_COMMAND);
-    checkNetworkState(state, false, true, { 1001 }, { 2000, 2001 }, true);
+    checkNetworkState(state, false, { 1001 }, { 2000, 2001 }, { 3000, 3001 }, true);
     state.enableService(NetworkState::HA_LOCAL_COMMAND + 1);
-    checkNetworkState(state, false, true, {}, { 2000, 2001 }, true);
+    checkNetworkState(state, false, {}, { 2000, 2001 }, { 3000, 3001 }, true);
     state.enableService(NetworkState::HA_REMOTE_COMMAND);
-    checkNetworkState(state, false, true, {}, { 2001 }, true);
+    checkNetworkState(state, false, {}, { 2001 }, { 3000, 3001 }, true);
     state.enableService(NetworkState::HA_REMOTE_COMMAND + 1);
-    checkNetworkState(state, false, true, {}, {}, true);
+    checkNetworkState(state, false, {}, {}, { 3000, 3001 }, true);
     state.enableService(NetworkState::DB_CONNECTION);
-    checkNetworkState(state, false, true, {}, {}, true);
-    state.enableService(NetworkState::DB_CONNECTION);
-    checkNetworkState(state, false, false, {}, {}, false);
+    checkNetworkState(state, false, {}, {}, { 3001 },true);
+    state.enableService(NetworkState::DB_CONNECTION + 1);
+    checkNetworkState(state, false, {}, {}, {}, false);
 }
 
 // This test verifies that reset works, so that internal state is reset after
@@ -438,35 +480,35 @@ NetworkStateTest::resetUsingUserCommandOriginTest() {
 
     // Test User COMMAND + HA COMMAND + DB CONNECTION origins
     state.disableService(NetworkState::USER_COMMAND);
-    checkNetworkState(state, true, false, {}, {}, true);
+    checkNetworkState(state, true, {}, {}, {}, true);
     state.disableService(NetworkState::USER_COMMAND);
-    checkNetworkState(state, true, false, {}, {}, true);
+    checkNetworkState(state, true, {}, {}, {}, true);
     state.disableService(NetworkState::USER_COMMAND);
-    checkNetworkState(state, true, false, {}, {}, true);
+    checkNetworkState(state, true, {}, {}, {}, true);
     state.disableService(NetworkState::HA_LOCAL_COMMAND);
-    checkNetworkState(state, true, false, { 1000 }, {}, true);
+    checkNetworkState(state, true, { 1000 }, {}, {}, true);
     state.disableService(NetworkState::HA_REMOTE_COMMAND);
-    checkNetworkState(state, true, false, { 1000 }, { 2000 }, true);
+    checkNetworkState(state, true, { 1000 }, { 2000 }, {}, true);
     state.disableService(NetworkState::DB_CONNECTION);
-    checkNetworkState(state, true, true, { 1000 }, { 2000 }, true);
+    checkNetworkState(state, true, { 1000 }, { 2000 }, { 3000 }, true);
     state.enableService(NetworkState::USER_COMMAND);
-    checkNetworkState(state, false, true, { 1000 }, { 2000 }, true);
+    checkNetworkState(state, false, { 1000 }, { 2000 }, { 3000 }, true);
     state.enableService(NetworkState::HA_LOCAL_COMMAND);
-    checkNetworkState(state, false, true, {}, { 2000 }, true);
+    checkNetworkState(state, false, {}, { 2000 }, { 3000 }, true);
     state.enableService(NetworkState::HA_REMOTE_COMMAND);
-    checkNetworkState(state, false, true, {}, {}, true);
+    checkNetworkState(state, false, {}, {}, { 3000 }, true);
     state.enableService(NetworkState::DB_CONNECTION);
-    checkNetworkState(state, false, false, {}, {}, false);
+    checkNetworkState(state, false, {}, {}, {}, false);
 
     // Test User COMMAND origin only
     state.disableService(NetworkState::USER_COMMAND);
-    checkNetworkState(state, true, false, {}, {}, true);
+    checkNetworkState(state, true, {}, {}, {}, true);
     state.disableService(NetworkState::USER_COMMAND);
-    checkNetworkState(state, true, false, {}, {}, true);
+    checkNetworkState(state, true, {}, {}, {}, true);
     state.disableService(NetworkState::USER_COMMAND);
-    checkNetworkState(state, true, false, {}, {}, true);
+    checkNetworkState(state, true, {}, {}, {}, true);
     state.enableService(NetworkState::USER_COMMAND);
-    checkNetworkState(state, false, false, {}, {}, false);
+    checkNetworkState(state, false, {}, {}, {}, false);
 }
 
 // This test verifies that reset works, so that internal state is reset after
@@ -501,85 +543,85 @@ void
 NetworkStateTest::resetUsingHALocalCommandOriginTest() {
     NetworkState state;
 
-    // Test HA LOCAL COMMAND + User COMMAND + DB CONNECTION origins
+    // Test HA COMMAND + User COMMAND + DB CONNECTION origins
     state.disableService(NetworkState::USER_COMMAND);
-    checkNetworkState(state, true, false, {}, {}, true);
+    checkNetworkState(state, true, {}, {}, {}, true);
     state.disableService(NetworkState::HA_LOCAL_COMMAND);
-    checkNetworkState(state, true, false, { 1000 }, {}, true);
+    checkNetworkState(state, true, { 1000 }, {}, {}, true);
     state.disableService(NetworkState::HA_LOCAL_COMMAND);
-    checkNetworkState(state, true, false, { 1000 }, {}, true);
+    checkNetworkState(state, true, { 1000 }, {}, {}, true);
     state.disableService(NetworkState::HA_LOCAL_COMMAND);
-    checkNetworkState(state, true, false, { 1000 }, {}, true);
+    checkNetworkState(state, true, { 1000 }, {}, {}, true);
     state.disableService(NetworkState::DB_CONNECTION);
-    checkNetworkState(state, true, true, { 1000 }, {}, true);
+    checkNetworkState(state, true, { 1000 }, {}, { 3000 }, true);
     state.disableService(NetworkState::HA_REMOTE_COMMAND);
-    checkNetworkState(state, true, true, { 1000 }, { 2000 }, true);
+    checkNetworkState(state, true, { 1000 }, { 2000 }, { 3000 }, true);
     state.enableService(NetworkState::HA_LOCAL_COMMAND);
-    checkNetworkState(state, true, true, {}, { 2000 }, true);
+    checkNetworkState(state, true, {}, { 2000 }, { 3000 }, true);
     state.enableService(NetworkState::USER_COMMAND);
-    checkNetworkState(state, false, true, {}, { 2000 }, true);
+    checkNetworkState(state, false, {}, { 2000 }, { 3000 }, true);
     state.enableService(NetworkState::HA_REMOTE_COMMAND);
-    checkNetworkState(state, false, true, {}, {}, true);
+    checkNetworkState(state, false, {}, {}, { 3000 }, true);
     state.enableService(NetworkState::DB_CONNECTION);
-    checkNetworkState(state, false, false, {}, {}, false);
+    checkNetworkState(state, false, {}, {}, {}, false);
 
-    // Test HA LOCAL COMMAND + User COMMAND + DB CONNECTION origins
+    // Test HA COMMAND + User COMMAND + DB CONNECTION origins
     state.disableService(NetworkState::USER_COMMAND);
-    checkNetworkState(state, true, false, {}, {}, true);
+    checkNetworkState(state, true, {}, {}, {}, true);
     state.disableService(NetworkState::HA_LOCAL_COMMAND);
-    checkNetworkState(state, true, false, { 1000 }, {}, true);
+    checkNetworkState(state, true, { 1000 }, {}, {}, true);
     state.disableService(NetworkState::HA_LOCAL_COMMAND + 1);
-    checkNetworkState(state, true, false, { 1000, 1001 }, {}, true);
+    checkNetworkState(state, true, { 1000, 1001 }, {}, {}, true);
     state.disableService(NetworkState::HA_LOCAL_COMMAND + 2);
-    checkNetworkState(state, true, false, { 1000, 1001, 1002 }, {}, true);
+    checkNetworkState(state, true, { 1000, 1001, 1002 }, {}, {}, true);
     state.disableService(NetworkState::DB_CONNECTION);
-    checkNetworkState(state, true, true, { 1000, 1001, 1002 }, {}, true);
+    checkNetworkState(state, true, { 1000, 1001, 1002 }, {}, { 3000 }, true);
     state.disableService(NetworkState::HA_REMOTE_COMMAND);
-    checkNetworkState(state, true, true, { 1000, 1001, 1002 }, { 2000 }, true);
+    checkNetworkState(state, true, { 1000, 1001, 1002 }, { 2000 }, { 3000 }, true);
     state.enableService(NetworkState::USER_COMMAND);
-    checkNetworkState(state, false, true, { 1000, 1001, 1002 }, { 2000 }, true);
+    checkNetworkState(state, false, { 1000, 1001, 1002 }, { 2000 }, { 3000 }, true);
     state.enableService(NetworkState::HA_REMOTE_COMMAND);
-    checkNetworkState(state, false, true, { 1000, 1001, 1002 }, {}, true);
+    checkNetworkState(state, false, { 1000, 1001, 1002 }, {}, { 3000 }, true);
     state.enableService(NetworkState::DB_CONNECTION);
-    checkNetworkState(state, false, false, { 1000, 1001, 1002 }, {}, true);
+    checkNetworkState(state, false, { 1000, 1001, 1002 }, {}, {}, true);
     state.enableService(NetworkState::HA_LOCAL_COMMAND);
-    checkNetworkState(state, false, false, { 1001, 1002 }, {}, true);
+    checkNetworkState(state, false, { 1001, 1002 }, {}, {}, true);
     state.enableService(NetworkState::HA_LOCAL_COMMAND + 1);
-    checkNetworkState(state, false, false, { 1002 }, {}, true);
+    checkNetworkState(state, false, { 1002 }, {}, {}, true);
     state.enableService(NetworkState::HA_LOCAL_COMMAND + 2);
-    checkNetworkState(state, false, false, {}, {}, false);
+    checkNetworkState(state, false, {}, {}, {}, false);
 
-    // Test HA LOCAL COMMAND + User COMMAND + DB CONNECTION origins
+    // Test HA COMMAND + User COMMAND + DB CONNECTION origins
     state.disableService(NetworkState::USER_COMMAND);
-    checkNetworkState(state, true, false, {}, {}, true);
+    checkNetworkState(state, true, {}, {}, {}, true);
     state.disableService(NetworkState::HA_LOCAL_COMMAND);
-    checkNetworkState(state, true, false, { 1000 }, {}, true);
+    checkNetworkState(state, true, { 1000 }, {}, {}, true);
     state.disableService(NetworkState::HA_LOCAL_COMMAND + 1);
-    checkNetworkState(state, true, false, { 1000, 1001 }, {}, true);
+    checkNetworkState(state, true, { 1000, 1001 }, {}, {}, true);
     state.disableService(NetworkState::HA_LOCAL_COMMAND + 2);
-    checkNetworkState(state, true, false, { 1000, 1001, 1002 }, {}, true);
+    checkNetworkState(state, true, { 1000, 1001, 1002 }, {}, {}, true);
     state.disableService(NetworkState::DB_CONNECTION);
-    checkNetworkState(state, true, true, { 1000, 1001, 1002 }, {}, true);
+    checkNetworkState(state, true, { 1000, 1001, 1002 }, {}, { 3000 }, true);
     state.disableService(NetworkState::HA_REMOTE_COMMAND);
-    checkNetworkState(state, true, true, { 1000, 1001, 1002 }, { 2000 }, true);
+    checkNetworkState(state, true, { 1000, 1001, 1002 }, { 2000 }, { 3000 }, true);
     state.enableService(NetworkState::USER_COMMAND);
-    checkNetworkState(state, false, true, { 1000, 1001, 1002 }, { 2000 }, true);
+    checkNetworkState(state, false, { 1000, 1001, 1002 }, { 2000 }, { 3000 }, true);
     state.enableService(NetworkState::HA_REMOTE_COMMAND);
-    checkNetworkState(state, false, true, { 1000, 1001, 1002 }, {}, true);
+    checkNetworkState(state, false, { 1000, 1001, 1002 }, {}, { 3000 }, true);
     state.enableService(NetworkState::DB_CONNECTION);
-    checkNetworkState(state, false, false, { 1000, 1001, 1002 }, {}, true);
+    checkNetworkState(state, false, { 1000, 1001, 1002 }, {}, {}, true);
     state.resetForLocalCommands();
-    checkNetworkState(state, false, false, {}, {}, false);
+    checkNetworkState(state, false, {}, {}, {}, false);
 
     // Test HA LOCAL COMMAND origin only
     state.disableService(NetworkState::HA_LOCAL_COMMAND);
-    checkNetworkState(state, false, false, { 1000 }, {}, true);
+    checkNetworkState(state, false, { 1000 }, {}, {}, true);
     state.disableService(NetworkState::HA_LOCAL_COMMAND);
-    checkNetworkState(state, false, false, { 1000 }, {}, true);
+    checkNetworkState(state, false, { 1000 }, {}, {}, true);
     state.disableService(NetworkState::HA_LOCAL_COMMAND);
-    checkNetworkState(state, false, false, { 1000 }, {}, true);
+    checkNetworkState(state, false, { 1000 }, {}, {}, true);
     state.enableService(NetworkState::HA_LOCAL_COMMAND);
-    checkNetworkState(state, false, false, {}, {}, false);
+    checkNetworkState(state, false, {}, {}, {}, false);
 }
 
 // This test verifies that reset works, so that internal state is reset after
@@ -614,132 +656,198 @@ void
 NetworkStateTest::resetUsingHARemoteCommandOriginTest() {
     NetworkState state;
 
-    // Test HA REMOTE COMMAND + User COMMAND + DB CONNECTION origins
+    // Test HA COMMAND + User COMMAND + DB CONNECTION origins
     state.disableService(NetworkState::USER_COMMAND);
-    checkNetworkState(state, true, false, {}, {}, true);
+    checkNetworkState(state, true, {}, {}, {}, true);
     state.disableService(NetworkState::HA_REMOTE_COMMAND);
-    checkNetworkState(state, true, false, {}, { 2000 }, true);
+    checkNetworkState(state, true, {}, { 2000 }, {}, true);
     state.disableService(NetworkState::HA_REMOTE_COMMAND);
-    checkNetworkState(state, true, false, {}, { 2000 }, true);
+    checkNetworkState(state, true, {}, { 2000 }, {}, true);
     state.disableService(NetworkState::HA_REMOTE_COMMAND);
-    checkNetworkState(state, true, false, {}, { 2000 }, true);
+    checkNetworkState(state, true, {}, { 2000 }, {}, true);
     state.disableService(NetworkState::DB_CONNECTION);
-    checkNetworkState(state, true, true, {}, { 2000 }, true);
+    checkNetworkState(state, true, {}, { 2000 }, { 3000 }, true);
     state.disableService(NetworkState::HA_LOCAL_COMMAND);
-    checkNetworkState(state, true, true, { 1000 }, { 2000 }, true);
+    checkNetworkState(state, true, { 1000 }, { 2000 }, { 3000 }, true);
     state.enableService(NetworkState::HA_REMOTE_COMMAND);
-    checkNetworkState(state, true, true, { 1000 }, {}, true);
+    checkNetworkState(state, true, { 1000 }, {}, { 3000 }, true);
     state.enableService(NetworkState::USER_COMMAND);
-    checkNetworkState(state, false, true, { 1000 }, {}, true);
+    checkNetworkState(state, false, { 1000 }, {}, { 3000 }, true);
     state.enableService(NetworkState::HA_LOCAL_COMMAND);
-    checkNetworkState(state, false, true, {}, {}, true);
+    checkNetworkState(state, false, {}, {}, { 3000 }, true);
     state.enableService(NetworkState::DB_CONNECTION);
-    checkNetworkState(state, false, false, {}, {}, false);
+    checkNetworkState(state, false, {}, {}, {}, false);
 
-    // Test HA REMOTE COMMAND + User COMMAND + DB CONNECTION origins
+    // Test HA COMMAND + User COMMAND + DB CONNECTION origins
     state.disableService(NetworkState::USER_COMMAND);
-    checkNetworkState(state, true, false, {}, {}, true);
+    checkNetworkState(state, true, {}, {}, {}, true);
     state.disableService(NetworkState::HA_REMOTE_COMMAND);
-    checkNetworkState(state, true, false, {}, { 2000 }, true);
+    checkNetworkState(state, true, {}, { 2000 }, {}, true);
     state.disableService(NetworkState::HA_REMOTE_COMMAND + 1);
-    checkNetworkState(state, true, false, {}, { 2000, 2001 }, true);
+    checkNetworkState(state, true, {}, { 2000, 2001 }, {}, true);
     state.disableService(NetworkState::HA_REMOTE_COMMAND + 2);
-    checkNetworkState(state, true, false, {}, { 2000, 2001, 2002 }, true);
+    checkNetworkState(state, true, {}, { 2000, 2001, 2002 }, {}, true);
     state.disableService(NetworkState::DB_CONNECTION);
-    checkNetworkState(state, true, true, {}, { 2000, 2001, 2002 }, true);
+    checkNetworkState(state, true, {}, { 2000, 2001, 2002 }, { 3000 }, true);
     state.disableService(NetworkState::HA_LOCAL_COMMAND);
-    checkNetworkState(state, true, true, { 1000 }, { 2000, 2001, 2002 }, true);
+    checkNetworkState(state, true, { 1000 }, { 2000, 2001, 2002 }, { 3000 }, true);
     state.enableService(NetworkState::USER_COMMAND);
-    checkNetworkState(state, false, true, { 1000 }, { 2000, 2001, 2002 }, true);
+    checkNetworkState(state, false, { 1000 }, { 2000, 2001, 2002 }, { 3000 }, true);
     state.enableService(NetworkState::HA_LOCAL_COMMAND);
-    checkNetworkState(state, false, true, {}, { 2000, 2001, 2002 }, true);
+    checkNetworkState(state, false, {}, { 2000, 2001, 2002 }, { 3000 }, true);
     state.enableService(NetworkState::DB_CONNECTION);
-    checkNetworkState(state, false, false, {}, { 2000, 2001, 2002 }, true);
+    checkNetworkState(state, false, {}, { 2000, 2001, 2002 }, {}, true);
     state.enableService(NetworkState::HA_REMOTE_COMMAND);
-    checkNetworkState(state, false, false, {}, { 2001, 2002 }, true);
+    checkNetworkState(state, false, {}, { 2001, 2002 }, {}, true);
     state.enableService(NetworkState::HA_REMOTE_COMMAND + 1);
-    checkNetworkState(state, false, false, {}, { 2002}, true);
+    checkNetworkState(state, false, {}, { 2002 }, {}, true);
     state.enableService(NetworkState::HA_REMOTE_COMMAND + 2);
-    checkNetworkState(state, false, false, {}, {}, false);
+    checkNetworkState(state, false, {}, {}, {}, false);
 
-    // Test HA REMOTE COMMAND + User COMMAND + DB CONNECTION origins
+    // Test HA COMMAND + User COMMAND + DB CONNECTION origins
     state.disableService(NetworkState::USER_COMMAND);
-    checkNetworkState(state, true, false, {}, {}, true);
+    checkNetworkState(state, true, {}, {}, {}, true);
     state.disableService(NetworkState::HA_REMOTE_COMMAND);
-    checkNetworkState(state, true, false, {}, { 2000 }, true);
+    checkNetworkState(state, true, {}, { 2000 }, {}, true);
     state.disableService(NetworkState::HA_REMOTE_COMMAND + 1);
-    checkNetworkState(state, true, false, {}, { 2000, 2001 }, true);
+    checkNetworkState(state, true, {}, { 2000, 2001 }, {}, true);
     state.disableService(NetworkState::HA_REMOTE_COMMAND + 2);
-    checkNetworkState(state, true, false, {}, { 2000, 2001, 2002 }, true);
+    checkNetworkState(state, true, {}, { 2000, 2001, 2002 }, {}, true);
     state.disableService(NetworkState::DB_CONNECTION);
-    checkNetworkState(state, true, true, {}, { 2000, 2001, 2002 }, true);
+    checkNetworkState(state, true, {}, { 2000, 2001, 2002 }, { 3000 }, true);
     state.disableService(NetworkState::HA_LOCAL_COMMAND);
-    checkNetworkState(state, true, true, { 1000 }, { 2000, 2001, 2002 }, true);
+    checkNetworkState(state, true, { 1000 }, { 2000, 2001, 2002 }, { 3000 }, true);
     state.enableService(NetworkState::USER_COMMAND);
-    checkNetworkState(state, false, true, { 1000 }, { 2000, 2001, 2002 }, true);
+    checkNetworkState(state, false, { 1000 }, { 2000, 2001, 2002 }, { 3000 }, true);
     state.enableService(NetworkState::HA_LOCAL_COMMAND);
-    checkNetworkState(state, false, true, {}, { 2000, 2001, 2002 }, true);
+    checkNetworkState(state, false, {}, { 2000, 2001, 2002 }, { 3000 }, true);
     state.enableService(NetworkState::DB_CONNECTION);
-    checkNetworkState(state, false, false, {}, { 2000, 2001, 2002 }, true);
+    checkNetworkState(state, false, {}, { 2000, 2001, 2002 }, {}, true);
     state.resetForRemoteCommands();
-    checkNetworkState(state, false, false, {}, {}, false);
+    checkNetworkState(state, false, {}, {}, {}, false);
 
-    // Test HA RELOTE COMMAND origin only
+    // Test HA REMOTE COMMAND origin only
     state.disableService(NetworkState::HA_REMOTE_COMMAND);
-    checkNetworkState(state, false, false, {}, { 2000 }, true);
+    checkNetworkState(state, false, {}, { 2000 }, {}, true);
     state.disableService(NetworkState::HA_REMOTE_COMMAND);
-    checkNetworkState(state, false, false, {}, { 2000 }, true);
+    checkNetworkState(state, false, {}, { 2000 }, {}, true);
     state.disableService(NetworkState::HA_REMOTE_COMMAND);
-    checkNetworkState(state, false, false, {}, { 2000 }, true);
+    checkNetworkState(state, false, {}, { 2000 }, {}, true);
     state.enableService(NetworkState::HA_REMOTE_COMMAND);
-    checkNetworkState(state, false, false, {}, {}, false);
+    checkNetworkState(state, false, {}, {}, {}, false);
 }
 
-// This test verifies that reset works, so that internal state is  reset after
-// all managers are recreated.
+/// @brief This test verifies that reset works, so that internal state is reset after
+/// all managers are recreated.
 // 1. Disable using 'user command' origin 1 time (expect disabled state).
-// 2. Disable using 'HA command' origin 1 time (expect disabled state).
-// 3. Disable using 'DB connection' origin 3 time (expect disabled state).
-// 4. Reset using 'DB connection' origin (expect disabled state).
-// 5. Enable using 'user command' origin 1 time (expect disabled state).
-// 6. Enable using 'DB connection' origin 1 time (expect enabled state).
-// 7. Disable using 'DB connection' origin 3 times (expect disabled state).
-// 8. Reset using 'DB connection' origin (expect enabled state).
+// 2. Disable using 'DB connection' origin 3 times with same id (expect disabled state).
+// 3. Disable using 'HA remote command' origin 1 time (expect disabled state).
+// 4. Disable using 'HA local command' origin 1 time (expect disabled state).
+// 5. Enable using 'DB connection' origin (expect disabled state).
+// 6. Enable using 'user command' origin 1 time (expect disabled state).
+// 7. Enable using 'HA local command' origin 1 time (expect disabled state).
+// 8. Enable using 'HA remote command' origin 1 time (expect enabled state).
+// 9. Disable using 'user command' origin 1 time (expect disabled state).
+// 10. Disable using 'DB connection' origin 3 times with different ids (expect disabled state).
+// 11. Disable using 'HA remote command' origin 1 time (expect disabled state).
+// 12. Disable using 'HA local command' origin 1 time (expect disabled state).
+// 13. Enable using 'user command' origin 1 time (expect disabled state).
+// 14. Enable using 'HA local command' origin 1 time (expect disabled state).
+// 15. Enable using 'HA remote command' origin 1 time (expect disabled state).
+// 16. Enable using 'DB connection' origin 3 times with different ids (expect enabled state).
+// 17. Disable using 'user command' origin 1 time (expect disabled state).
+// 18. Disable using 'DB connection' origin 3 times with different ids (expect disabled state).
+// 19. Disable using 'HA remote command' origin 1 time (expect disabled state).
+// 20. Disable using 'HA local command' origin 1 time (expect disabled state).
+// 21. Enable using 'user command' origin 1 time (expect disabled state).
+// 22. Enable using 'HA local command' origin 1 time (expect disabled state).
+// 23. Enable using 'HA remote command' origin 1 time (expect disabled state).
+// 24. Reset using 'DB connection' origin (expect enabled state).
+// 25. Disable using 'DB connection' origin 3 times (expect disabled state).
+// 26. Enable using 'DB connection' origin (expect enabled state).
 void
 NetworkStateTest::resetUsingDBConnectionOriginTest() {
     NetworkState state;
 
-    // Test DB CONNECTION + User COMMAND + HA COMMAND origins
+    // Test HA COMMAND + User COMMAND + DB CONNECTION origins
     state.disableService(NetworkState::USER_COMMAND);
-    checkNetworkState(state, true, false, {}, {}, true);
-    state.disableService(NetworkState::HA_LOCAL_COMMAND);
-    checkNetworkState(state, true, false, { 1000 }, {}, true);
+    checkNetworkState(state, true, {}, {}, {}, true);
+    state.disableService(NetworkState::DB_CONNECTION);
+    checkNetworkState(state, true, {}, {}, { 3000 }, true);
+    state.disableService(NetworkState::DB_CONNECTION);
+    checkNetworkState(state, true, {}, {}, { 3000 }, true);
+    state.disableService(NetworkState::DB_CONNECTION);
+    checkNetworkState(state, true, {}, {}, { 3000 }, true);
     state.disableService(NetworkState::HA_REMOTE_COMMAND);
-    checkNetworkState(state, true, false, { 1000 }, { 2000 }, true);
-    state.disableService(NetworkState::DB_CONNECTION);
-    checkNetworkState(state, true, true, { 1000 }, { 2000 }, true);
-    state.disableService(NetworkState::DB_CONNECTION);
-    checkNetworkState(state, true, true, { 1000 }, { 2000 }, true);
-    state.disableService(NetworkState::DB_CONNECTION);
-    checkNetworkState(state, true, true, { 1000 }, { 2000 }, true);
-    state.resetForDbConnection();
-    checkNetworkState(state, true, false, { 1000 }, { 2000 }, true);
+    checkNetworkState(state, true, {}, { 2000 }, { 3000 }, true);
+    state.disableService(NetworkState::HA_LOCAL_COMMAND);
+    checkNetworkState(state, true, { 1000 }, { 2000 }, { 3000 }, true);
+    state.enableService(NetworkState::DB_CONNECTION);
+    checkNetworkState(state, true, { 1000 }, { 2000 }, {}, true);
     state.enableService(NetworkState::USER_COMMAND);
-    checkNetworkState(state, false, false, { 1000 }, { 2000 }, true);
+    checkNetworkState(state, false, { 1000 }, { 2000 }, {}, true);
     state.enableService(NetworkState::HA_LOCAL_COMMAND);
-    checkNetworkState(state, false, false, {}, { 2000 }, true);
+    checkNetworkState(state, false, {}, { 2000 }, {}, true);
     state.enableService(NetworkState::HA_REMOTE_COMMAND);
-    checkNetworkState(state, false, false, {}, {}, false);
+    checkNetworkState(state, false, {}, {}, {}, false);
+
+    // Test HA COMMAND + User COMMAND + DB CONNECTION origins
+    state.disableService(NetworkState::USER_COMMAND);
+    checkNetworkState(state, true, {}, {}, {}, true);
+    state.disableService(NetworkState::DB_CONNECTION);
+    checkNetworkState(state, true, {}, {}, { 3000 }, true);
+    state.disableService(NetworkState::DB_CONNECTION + 1);
+    checkNetworkState(state, true, {}, {}, { 3000, 3001 }, true);
+    state.disableService(NetworkState::DB_CONNECTION + 2);
+    checkNetworkState(state, true, {}, {}, { 3000, 3001, 3002 }, true);
+    state.disableService(NetworkState::HA_REMOTE_COMMAND);
+    checkNetworkState(state, true, {}, { 2000 }, { 3000, 3001, 3002 }, true);
+    state.disableService(NetworkState::HA_LOCAL_COMMAND);
+    checkNetworkState(state, true, { 1000 }, { 2000 }, { 3000, 3001, 3002 }, true);
+    state.enableService(NetworkState::USER_COMMAND);
+    checkNetworkState(state, false, { 1000 }, { 2000 }, { 3000, 3001, 3002 }, true);
+    state.enableService(NetworkState::HA_LOCAL_COMMAND);
+    checkNetworkState(state, false, {}, { 2000 }, { 3000, 3001, 3002 }, true);
+    state.enableService(NetworkState::HA_REMOTE_COMMAND);
+    checkNetworkState(state, false, {}, {}, { 3000, 3001, 3002 }, true);
+    state.enableService(NetworkState::DB_CONNECTION);
+    checkNetworkState(state, false, {}, {}, { 3001, 3002 }, true);
+    state.enableService(NetworkState::DB_CONNECTION + 1);
+    checkNetworkState(state, false, {}, {}, { 3002 }, true);
+    state.enableService(NetworkState::DB_CONNECTION + 2);
+    checkNetworkState(state, false, {}, {}, {}, false);
+
+    // Test HA COMMAND + User COMMAND + DB CONNECTION origins
+    state.disableService(NetworkState::USER_COMMAND);
+    checkNetworkState(state, true, {}, {}, {}, true);
+    state.disableService(NetworkState::DB_CONNECTION);
+    checkNetworkState(state, true, {}, {}, { 3000 }, true);
+    state.disableService(NetworkState::DB_CONNECTION + 1);
+    checkNetworkState(state, true, {}, {}, { 3000, 3001 }, true);
+    state.disableService(NetworkState::DB_CONNECTION + 2);
+    checkNetworkState(state, true, {}, {}, { 3000, 3001, 3002 }, true);
+    state.disableService(NetworkState::HA_REMOTE_COMMAND);
+    checkNetworkState(state, true, {}, { 2000 }, { 3000, 3001, 3002 }, true);
+    state.disableService(NetworkState::HA_LOCAL_COMMAND);
+    checkNetworkState(state, true, { 1000 }, { 2000 }, { 3000, 3001, 3002 }, true);
+    state.enableService(NetworkState::USER_COMMAND);
+    checkNetworkState(state, false, { 1000 }, { 2000 }, { 3000, 3001, 3002 }, true);
+    state.enableService(NetworkState::HA_LOCAL_COMMAND);
+    checkNetworkState(state, false, {}, { 2000 }, { 3000, 3001, 3002 }, true);
+    state.enableService(NetworkState::HA_REMOTE_COMMAND);
+    checkNetworkState(state, false, {}, {}, { 3000, 3001, 3002 }, true);
+    state.resetForDbConnection();
+    checkNetworkState(state, false, {}, {}, {}, false);
 
     // Test DB CONNECTION origin only
     state.disableService(NetworkState::DB_CONNECTION);
-    checkNetworkState(state, false, true, {}, {}, true);
+    checkNetworkState(state, false, {}, {}, { 3000 }, true);
     state.disableService(NetworkState::DB_CONNECTION);
-    checkNetworkState(state, false, true, {}, {}, true);
+    checkNetworkState(state, false, {}, {}, { 3000 }, true);
     state.disableService(NetworkState::DB_CONNECTION);
-    checkNetworkState(state, false, true, {}, {}, true);
-    state.resetForDbConnection();
-    checkNetworkState(state, false, false, {}, {}, false);
+    checkNetworkState(state, false, {}, {}, { 3000 }, true);
+    state.enableService(NetworkState::DB_CONNECTION);
+    checkNetworkState(state, false, {}, {}, {}, false);
 }
 
 // This test verifies that it is possible to setup delayed execution of enableAll
