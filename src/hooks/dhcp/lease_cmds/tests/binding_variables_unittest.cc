@@ -18,12 +18,18 @@
 
 using namespace std;
 using namespace isc;
+using namespace isc::dhcp;
 using namespace isc::data;
 using namespace isc::test;
 
 using namespace isc::lease_cmds;
 
 namespace {
+
+#define SCOPED_LINE(line) \
+    std::stringstream ss; \
+    ss << "Scenario at line: " << line; \
+    SCOPED_TRACE(ss.str());
 
 /// @brief Test BindingVariable valid construction scenarios.
 TEST(BindingVariableTest, validConstructor) {
@@ -56,6 +62,7 @@ TEST(BindingVariableTest, validConstructor) {
     };
 
     for (auto const& scenario : scenarios) {
+        SCOPED_LINE(scenario.line_);
         ASSERT_NO_THROW_LOG(bv.reset(new BindingVariable(scenario.name_,
                                                          scenario.expression_str_,
                                                          scenario.source_,
@@ -115,6 +122,7 @@ TEST(BindingVariableTest, invalidConstructor) {
     };
 
     for (auto const& scenario : scenarios) {
+        SCOPED_LINE(scenario.line_);
         ASSERT_THROW_MSG(bv.reset(new BindingVariable(scenario.name_,
                                                       scenario.expression_str_,
                                                       BindingVariable::QUERY,
@@ -137,9 +145,110 @@ TEST(BindingVariableTest, toElement) {
     ASSERT_NO_THROW_LOG(elem = bv->toElement());
     std::stringstream ss;
     elem->toJSON(ss);
-    std::string expected_json = "{ \"expression_str\": \"pkt4.mac\","
+    std::string expected_json = "{ \"expression\": \"pkt4.mac\","
                                 " \"name\": \"myvar\", \"source\": \"query\" }";
     EXPECT_EQ(ss.str(), expected_json);
+}
+
+/// @brief Checks BindingVariable::parse with valid scenarios.
+TEST(BindingVariableTest, validParsing) {
+    struct Scenario {
+        uint32_t line_;
+        std::string config_;
+        uint32_t family_;
+        std::string expected_json_;
+    };
+
+    std::list<Scenario> scenarios = {
+        {
+           __LINE__,
+           R"({ "name": "one", "expression" : "pkt4.mac", "source": "query"})",
+            AF_INET,
+           "{ \"expression\": \"pkt4.mac\", \"name\": \"one\", \"source\": \"query\" }"
+        },
+        {
+           __LINE__,
+           R"({ "name": "two", "expression" : "pkt4.mac", "source": "response"})",
+            AF_INET,
+           "{ \"expression\": \"pkt4.mac\", \"name\": \"two\", \"source\": \"response\" }"
+        },
+        {
+           __LINE__,
+           R"({ "name": "three", "expression" : "pkt6.transid", "source": "query"})",
+            AF_INET6,
+           "{ \"expression\": \"pkt6.transid\", \"name\": \"three\", \"source\": \"query\" }"
+        },
+        {
+           __LINE__,
+           R"({ "name": "four", "expression" : "pkt6.transid", "source": "response"})",
+            AF_INET6,
+           "{ \"expression\": \"pkt6.transid\", \"name\": \"four\", \"source\": \"response\" }"
+        }
+    };
+
+    for (auto const& scenario : scenarios) {
+        SCOPED_LINE(scenario.line_);
+        BindingVariablePtr var;
+        ElementPtr config;
+        ASSERT_NO_THROW_LOG(config = Element::fromJSON(scenario.config_));
+        ASSERT_NO_THROW_LOG(var = BindingVariable::parse(config, scenario.family_));
+        ASSERT_TRUE(var);
+        std::stringstream js;
+        var->toElement()->toJSON(js);
+        EXPECT_EQ(js.str(), scenario.expected_json_);
+    }
+}
+
+/// @brief Checks BindingVariable::parse with invalid scenarios.
+TEST(BindingVariableTest, invalidParsing) {
+    struct Scenario {
+        uint32_t line_;
+        std::string config_;
+        uint32_t family_;
+        std::string expected_error_;
+    };
+
+    std::list<Scenario> scenarios = {
+        {
+            __LINE__,
+            R"({ "name": "", "expression" : "pkt4.mac", "source": "query"})",
+            AF_INET,
+            "invalid config: BindingVariable - name cannot be empty"
+        },
+        {
+            __LINE__,
+            R"({ "name": "myvar", "expression" : "", "source": "response"})",
+            AF_INET,
+            "invalid config: BindingVariable - 'myvar' expression_str cannot be empty"
+        },
+        {
+            __LINE__,
+            R"({ "name": "myvar", "expression" : "pkt5.bogus", "source": "query"})",
+            AF_INET,
+            "invalid config: BindingVariable - 'myvar', error parsing expression:"
+            " 'pkt5.bogus' : <string>:1.4: syntax error, unexpected integer, expecting ."
+        },
+        {
+            __LINE__,
+            R"({ "name": "myvar", "expression" : "pkt4.mac", "source": "BOGUS"})",
+            AF_INET,
+            "invalid config: invalid source 'BOGUS', must be either 'query' or 'response'"
+        },
+        {
+            __LINE__,
+            R"({ "name": "myvar", "expression" : "pkt4.mac", "source": "query", "bogus" : "foo" })",
+            AF_INET,
+            "spurious 'bogus' parameter"
+        }
+    };
+
+    for (auto const& scenario : scenarios) {
+        SCOPED_LINE(scenario.line_);
+        ElementPtr config;
+        ASSERT_NO_THROW_LOG(config = Element::fromJSON(scenario.config_));
+        ASSERT_THROW_MSG(BindingVariable::parse(config, scenario.family_),
+                         DhcpConfigError, scenario.expected_error_);
+    }
 }
 
 /// @brief Verifies basic operation of the cache including

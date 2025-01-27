@@ -10,6 +10,7 @@
 #include <cc/base_stamped_element.h>
 #include <cc/cfg_to_element.h>
 #include <cc/data.h>
+#include <cc/simple_parser.h>
 #include <eval/evaluate.h>
 #include <eval/token.h>
 #include <dhcp/pkt.h>
@@ -24,6 +25,13 @@
 namespace isc {
 namespace lease_cmds {
 
+
+// Forward declaration for pointer.
+class BindingVariable;
+
+/// @brief Defines a shared pointer to a BindingVariable.
+typedef boost::shared_ptr<BindingVariable> BindingVariablePtr;
+
 /// @brief Embodies a named expression, whose output when
 /// evaluated can be stored in a lease's user-context.
 class BindingVariable : public isc::data::CfgToElement {
@@ -34,6 +42,9 @@ public:
         QUERY,
         RESPONSE
     };
+
+    /// @brief List of valid configurable parameters for a BindingVariable.
+    static const data::SimpleKeywords CONFIG_KEYWORDS;
 
     /// @brief Constructor
     ///
@@ -56,6 +67,14 @@ public:
 
     /// @brief Destructor
     virtual ~BindingVariable() = default;
+
+    /// @brief Parses configuration elements into a BindingVarable instance.
+    ///
+    /// @param config Map Element containing parameters for a single binding variable.
+    /// @param family Protocol family of the variable, either AF_INET or AF_INET6.
+    /// @return Pointer to the newly created BindingVariable instacne.
+    /// @throw DhcpConfigError if configuration parameters are invalid.
+    static BindingVariablePtr parse(data::ConstElementPtr config, uint16_t family);
 
     /// @brief Evaluate the variable against the given packet.
     ///
@@ -125,9 +144,6 @@ private:
     /// @brief Parsed evaluation expression.
     dhcp::ExpressionPtr expression_;
 };
-
-/// @brief Defines a shared pointer to a BindingVariable.
-typedef boost::shared_ptr<BindingVariable> BindingVariablePtr;
 
 /// @brief Defines a list of BindingVariablePtr instances.
 typedef std::list<BindingVariablePtr> BindingVariableList;

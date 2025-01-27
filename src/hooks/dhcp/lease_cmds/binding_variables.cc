@@ -32,12 +32,12 @@ BindingVariable::BindingVariable(const std::string& name,
     /// @todo If we add socpes we may wish to allow higher order
     /// scopes to override lower scopes with empty expressions.
     if (expression_str_.empty()) {
-        isc_throw(BadValue, "BindingVariable - '" << name_ 
+        isc_throw(BadValue, "BindingVariable - '" << name_
                   << "' expression_str cannot be empty");
     }
 
     if (family_ != AF_INET && family_ != AF_INET6) {
-        isc_throw(BadValue, "BindingVariable - '" << name_ 
+        isc_throw(BadValue, "BindingVariable - '" << name_
                   << "', invalid family: " << family_);
     }
 
@@ -51,6 +51,42 @@ BindingVariable::BindingVariable(const std::string& name,
     }
 }
 
+const data::SimpleKeywords
+BindingVariable::CONFIG_KEYWORDS =
+{
+    {"name",        Element::string},
+    {"expression",  Element::string},
+    {"source",      Element::string}
+};
+
+BindingVariablePtr
+BindingVariable::parse(data::ConstElementPtr config, uint16_t family) {
+    // Note checkKeywords() will throw DhcpConfigError if there is a problem.
+    SimpleParser::checkKeywords(CONFIG_KEYWORDS, config);
+
+    // Parse members.
+    std::string name = SimpleParser::getString(config, "name");;
+    std::string expression = SimpleParser::getString(config, "expression");;
+    std::string source_str = SimpleParser::getString(config, "source");;
+
+    try {
+        Source source;
+        if (source_str == "query") {
+            source = QUERY;
+        } else if (source_str == "response") {
+            source = RESPONSE;
+        } else {
+            isc_throw(BadValue, "invalid source '" << source_str
+                      << "', must be either 'query' or 'response'");
+        }
+
+        // Attempt to create the variable.
+        return (BindingVariablePtr(new BindingVariable(name, expression, source, family)));
+    } catch (const std::exception& ex) {
+        isc_throw(DhcpConfigError, "invalid config: " << ex.what());
+    }
+}
+
 std::string
 BindingVariable::evaluate(PktPtr packet) const {
     try {
@@ -58,19 +94,19 @@ BindingVariable::evaluate(PktPtr packet) const {
     } catch (const std::exception& ex) {
         isc_throw(BadValue, "BindingVariable - " << name_ << ", error evaluating expression: ["
                   << expression_str_ << "] : " << ex.what());
-    } 
+    }
 }
 
 ElementPtr
 BindingVariable::toElement() const {
     ElementPtr map = Element::createMap();
     map->set("name", Element::create(name_));
-    map->set("expression_str", Element::create(expression_str_));
+    map->set("expression", Element::create(expression_str_));
     map->set("source", Element::create((source_ == QUERY ? "query" : "response")));
     return (map);
 }
 
-BindingVariableCache::BindingVariableCache() 
+BindingVariableCache::BindingVariableCache()
     : variables_(), mutex_(new std::mutex) {
 }
 
@@ -81,7 +117,7 @@ BindingVariableCache::cacheVariable(BindingVariablePtr variable) {
     return(retpair.second);
 }
 
-void 
+void
 BindingVariableCache::clear() {
     util::MultiThreadingLock lock(*mutex_);
     // Discard contents.
@@ -148,6 +184,6 @@ BindingVariableCache::getBySource(const BindingVariable::Source& source) {
 
     return (var_list);
 }
-    
+
 } // end of namespace lease_cmds
 } // end of namespace isc
