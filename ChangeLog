@@ -2,7 +2,7 @@
 	The kea-dhcp4, kea-dhcp6 and kea-dhcp-ddns servers now support
 	multiple http/https connections. The can be configured in the
 	"control-sockets" list.
-	(Gitlab #3082)
+	(Gitlab #3082, #3721)
 
 2315.	[func]		razvan
 	Kea can now load hook libraries specifying only the binary name.

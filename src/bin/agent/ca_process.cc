@@ -152,6 +152,7 @@ CtrlAgentProcess::configure(isc::data::ConstElementPtr config_set,
                         .arg(server_port);
                 }
             }
+            // If the connection can be reused, mark it as usable.
             it->second->usable_ = true;
         } else {
 
@@ -210,8 +211,12 @@ CtrlAgentProcess::configure(isc::data::ConstElementPtr config_set,
         auto copy = sockets_;
         for (auto const& data : copy) {
             if (data.second->usable_) {
+                // If the connection can be used (just created) or reused, keep it
+                // in the list and clear the flag. It will be marked again on next
+                // configuration event if needed.
                 data.second->usable_ = false;
             } else {
+                // If the connection can not be reused, stop it and remove it from the list.
                 data.second->listener_->stop();
                 auto it = sockets_.find(std::make_pair(data.second->config_->getHttpHost(),
                                                        data.second->config_->getHttpPort()));

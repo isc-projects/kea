@@ -102,8 +102,12 @@ HttpCommandMgrImpl::openCommandSockets(const isc::data::ConstElementPtr config) 
     auto copy = sockets_;
     for (auto const& data : copy) {
         if (data.second->usable_) {
+            // If the connection can be used (just created) or reused, keep it
+            // in the list and clear the flag. It will be marked again on next
+            // configuration event if needed.
             data.second->usable_ = false;
         } else {
+            // If the connection can not be reused, stop it and remove it from the list.
             closeCommandSocket(data.second, true);
         }
     }
@@ -133,6 +137,7 @@ HttpCommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr config) {
             it->second->config_->setAuthConfig(cmd_config->getAuthConfig());
             it->second->config_->setEmulateAgentResponse(cmd_config->getEmulateAgentResponse());
         }
+        // If the connection can be reused, mark it as usable.
         it->second->usable_ = true;
         return;
     }
