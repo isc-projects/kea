@@ -1,3 +1,14 @@
+2318.	[build]		razvan
+	The library version numbers have been bumped up for the Kea 2.7.6
+	development release.
+	(Gitlab #3724)
+
+2317.	[bug]		razvan
+	Fixed a bug related to database connection recovery which was
+	preventing the server to resume processing packets because the
+	dhcp state was never re-enabled.
+	(Gitlab #3727)
+
 2316.	[func]		razvan
 	The kea-dhcp4, kea-dhcp6 and kea-dhcp-ddns servers now support
 	multiple http/https connections. The can be configured in the
