@@ -743,6 +743,40 @@ Lease6::fromElement(const data::ConstElementPtr& element) {
     return (lease);
 }
 
+bool
+Lease::updateUserContextISC(const std::string elem_name,
+                                 ConstElementPtr new_values) {
+    // Get a mutable copy of the lease's current user context.
+    ConstElementPtr user_context = getContext();
+    ElementPtr mutable_user_context;
+    if (user_context && (user_context->getType() == Element::map)) {
+        mutable_user_context = copy(user_context, 0);
+    } else {
+        mutable_user_context = Element::createMap();
+    }
+
+    // Get a mutable copy of the ISC entry.
+    ConstElementPtr isc = mutable_user_context->get("ISC");
+    ElementPtr mutable_isc;
+    if (isc && (isc->getType() == Element::map)) {
+        mutable_isc = copy(isc, 0);
+    } else {
+        mutable_isc = Element::createMap();
+    }
+
+    // Add/replace the new_values entry
+    bool changed = false;
+    ConstElementPtr old_values = mutable_isc->get(elem_name);
+    if (!old_values || (*old_values != *new_values)) {
+        changed = true;
+        mutable_isc->set(elem_name, new_values);
+        mutable_user_context->set("ISC", mutable_isc);
+        setContext(mutable_user_context);
+    }
+
+    return(changed);
+}
+
 std::ostream&
 operator<<(std::ostream& os, const Lease& lease) {
     os << lease.toText();

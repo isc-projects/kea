@@ -221,5 +221,29 @@ BindingVariableMgr::configure(data::ConstElementPtr config) {
     }
 }
 
+bool
+BindingVariableMgr::evaluateVariables(PktPtr query, PktPtr response, LeasePtr lease) {
+    if (!cache_->size()) {
+        return(false);
+    }
+
+    auto const variables = cache_->getAll();
+    ElementPtr values = Element::createMap();
+    for (auto const& variable : *variables) {
+        try {
+            auto value = evaluateString(*(variable->getExpression()),
+                                        (variable->getSource() == BindingVariable::QUERY ?
+                                         *query : *response));
+            if (!value.empty()) {
+                values->set(variable->getName(), Element::create(value));
+            }
+        } catch (const std::exception& ex) {
+            isc_throw(Unexpected, "expression blew up: " << ex.what());
+        }
+    }
+
+    return (lease->updateUserContextISC("binding-variables", values));
+}
+
 } // end of namespace lease_cmds
 } // end of namespace isc

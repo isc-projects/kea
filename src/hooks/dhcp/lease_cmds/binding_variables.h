@@ -11,9 +11,10 @@
 #include <cc/cfg_to_element.h>
 #include <cc/data.h>
 #include <cc/simple_parser.h>
+#include <dhcp/pkt.h>
+#include <dhcpsrv/lease.h>
 #include <eval/evaluate.h>
 #include <eval/token.h>
-#include <dhcp/pkt.h>
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/multi_index_container.hpp>
@@ -286,8 +287,19 @@ public:
     /// @throw DhcpConfigError if the configuration is invalid.
     void configure(data::ConstElementPtr config);
 
-    /// @todo - place holder
-    // bool evaluateVariables(LeasePtr lease, PktPtr query, PktPtr response);
+    /// @brief Evaluates the binding variables for a given lease and packet pair.
+    ///
+    /// @param query Client packet which produced the lease. Variables whose source
+    /// is "query" will be evaluated against this packet.
+    /// @param response Server response conveying the lease. Variables whose source
+    /// is "response" will be evaluated against this packet.
+    /// @param lease Lease whose use-context will be updated with the evaluation
+    /// results.  If the results of the evaluation are idnentical the the lease's
+    /// exising binding-variables value, the lease is not altered. This allows
+    /// a subsequent lease store update to only occur when needed.
+    /// @return True if the lease's user-context was udpated, false otherwise.
+    bool evaluateVariables(dhcp::PktPtr query, dhcp::PktPtr response,
+                           dhcp::LeasePtr lease);
 
     /// @brief Fetches the current variables cache.
     ///
