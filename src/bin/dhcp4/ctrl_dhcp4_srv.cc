@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1696,9 +1696,9 @@ ControlledDhcpv4Srv::dbFailedCallback(ReconnectCtlPtr db_reconnect_ctl) {
     }
 
     LOG_INFO(dhcp4_logger, DHCP4_DB_RECONNECT_FAILED)
+        .arg(db_reconnect_ctl->maxRetries())
         .arg(db_reconnect_ctl->id())
-        .arg(db_reconnect_ctl->timerName())
-        .arg(db_reconnect_ctl->maxRetries());
+        .arg(db_reconnect_ctl->timerName());
 
     if (db_reconnect_ctl->exitOnFailure()) {
         shutdownServer(EXIT_FAILURE);
