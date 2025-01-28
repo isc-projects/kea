@@ -12,6 +12,7 @@
 
 #include <lease_cmds.h>
 #include <lease_cmds_log.h>
+#include <binding_variables.h>
 #include <cc/command_interpreter.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <hooks/hooks.h>
@@ -23,6 +24,16 @@ using namespace isc::dhcp;
 using namespace isc::hooks;
 using namespace isc::process;
 using namespace isc::lease_cmds;
+
+namespace isc {
+namespace lease_cmds {
+
+/// @brief Singleton that manages configured binding variables.
+BindingVariableMgrPtr binding_var_mgr;
+
+} // end of namespace lease_cmds
+} // end of namespace isc
+
 
 extern "C" {
 
@@ -338,6 +349,15 @@ int load(LibraryHandle& handle) {
     handle.registerCommandCallout("lease6-resend-ddns", lease6_resend_ddns);
     handle.registerCommandCallout("lease4-write", lease4_write);
     handle.registerCommandCallout("lease6-write", lease6_write);
+
+    // Instantiate the binding-variables manager singleton.
+    binding_var_mgr.reset(new BindingVariableMgr(family));
+
+    // Configure binding variable manager using the hook library's parameters.
+    ConstElementPtr json = handle.getParameters();
+    if (json) {
+        binding_var_mgr->configure(json);
+    }
 
     LOG_INFO(lease_cmds_logger, LEASE_CMDS_INIT_OK);
     return (0);

@@ -111,7 +111,7 @@ public:
         return (source_);
     }
 
-    /// @brief Fetches the variable's protocol family. 
+    /// @brief Fetches the variable's protocol family.
     ///
     /// @return Family of the packet i.e AF_INET or AF_INET6.
     uint32_t getFamily() const {
@@ -208,7 +208,7 @@ public:
     ///
     /// @param variable pointer to the variable to store.
     /// @return true if the variable was added, false otherwise.
-    bool cacheVariable(BindingVariablePtr variable);
+    bool add(BindingVariablePtr variable);
 
     /// @brief Delete all the entries in the cache.
     void clear();
@@ -249,6 +249,64 @@ private:
 
 /// @brief Defines a shared pointer to a BindingVariableCache.
 typedef boost::shared_ptr<BindingVariableCache> BindingVariableCachePtr;
+
+/// @brief Singleton which warehouses the configuraed binding variables,
+/// and evaluation of variables for a given lease and packet pair.
+class BindingVariableMgr {
+public:
+    /// @brief Constructor
+    ///
+    /// @param family Protocol family of the expression, either
+    /// AF_INET or AF_INET6.
+    explicit BindingVariableMgr(uint32_t family_);
+
+    /// @brief Destructor;
+    ~BindingVariableMgr() = default;
+
+    /// @brief Configures the manager based on the given configuration.
+    ///
+    /// This will clear the binding variable cache and then repopulate it
+    /// by parsing the configuration.  It expects to see a list of one or
+    /// more binding variable maps similar to the following:
+    ///
+    /// @code
+    /// "binding-variables": [{
+    ///     "name": "domain-name",
+    ///     "expression": "option[15].text",
+    ///      "source": "response"
+    ///  },{
+    ///     "name": "opt-222",
+    ///     "expression": "hexstring(option[222].hex, ':')"
+    ///     "source": "query"
+    ///  ..
+    ///  }]
+    ///
+    /// @endcode
+    /// @param config JSON element tree containing the binding-variable list.
+    /// @throw DhcpConfigError if the configuration is invalid.
+    void configure(data::ConstElementPtr config);
+
+    /// @todo - place holder
+    // bool evaluateVariables(LeasePtr lease, PktPtr query, PktPtr response);
+
+    /// @brief Fetches the current variables cache.
+    ///
+    /// @return Pointer to BindingVariableCache.
+    BindingVariableCachePtr getCache() {
+        return(cache_);
+    }
+
+private:
+    /// @brief Protocol family AF_INET or AF_INET6.
+    uint32_t family_;
+
+    /// @brief Currently configured set of binding variables.
+    BindingVariableCachePtr cache_;
+};
+
+/// @brief Defines a shared pointer to a BindingVariableMgr.
+typedef boost::shared_ptr<BindingVariableMgr> BindingVariableMgrPtr;
+
 
 } // end of namespace lease_cmds
 } // end of namespace isc

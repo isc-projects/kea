@@ -111,7 +111,7 @@ BindingVariableCache::BindingVariableCache()
 }
 
 bool
-BindingVariableCache::cacheVariable(BindingVariablePtr variable) {
+BindingVariableCache::add(BindingVariablePtr variable) {
     util::MultiThreadingLock lock(*mutex_);
     auto retpair = variables_.push_back(variable);
     return(retpair.second);
@@ -183,6 +183,42 @@ BindingVariableCache::getBySource(const BindingVariable::Source& source) {
     }
 
     return (var_list);
+}
+
+BindingVariableMgr::BindingVariableMgr(uint32_t family)
+    : family_(family) {
+    if (family_ != AF_INET && family_ != AF_INET6) {
+        isc_throw (BadValue, "BindingVariableMgr - invalid family: " << family_);
+    }
+
+    cache_.reset(new BindingVariableCache());
+}
+
+void
+BindingVariableMgr::configure(data::ConstElementPtr config) {
+    //  Always wipe the cache.
+    cache_->clear();
+
+    ConstElementPtr elem = config->get("binding-variables");
+    if (!elem) {
+        // Nothing to do.
+        return;
+    }
+
+    // binding-variables should be a list.
+    if (elem->getType() != Element::list) {
+        isc_throw(DhcpConfigError, "'binding-variables' must be a list");
+    }
+
+    // iterate over the list adding variables to the cache
+    for (auto const& var_elem : elem->listValue()) {
+        try {
+            BindingVariablePtr variable = BindingVariable::parse(var_elem, family_);
+            cache_->add(variable);
+        } catch (const std::exception& ex) {
+            isc_throw(DhcpConfigError, "cannot add BindingVariable to cache: " << ex.what());
+        }
+    }
 }
 
 } // end of namespace lease_cmds

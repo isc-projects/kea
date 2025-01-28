@@ -38,16 +38,36 @@ public:
     virtual ~LeaseCmdsCbLibLoadTest() {
         unloadLibraries();
     }
+
+    /// @brief Creates a set of configuration parameters valid for the library.
+    /// Note the expressions are protocol agnostic for simplicity.
+    virtual isc::data::ElementPtr validConfigParams() {
+        std::string valid_config =
+        R"({"binding-variables":[
+            {
+                "name": "one",
+                "expression": "'just a string'",
+                "source": "query"
+            },
+            {
+                "name": "two",
+                "expression": "'another string'",
+                "source": "response"
+            } ]})";
+
+        // Convert JSON texts to Element map.
+        return (Element::fromJSON(valid_config));
+    }
 };
 
 // Simple V4 test that checks the library can be loaded and unloaded several times.
 TEST_F(LeaseCmdsCbLibLoadTest, validLoad4) {
-    validDaemonTest("kea-dhcp4");
+    validDaemonTest("kea-dhcp4", AF_INET, valid_params_);
 }
 
 // Simple V6 test that checks the library can be loaded and unloaded several times.
 TEST_F(LeaseCmdsCbLibLoadTest, validLoad6) {
-    validDaemonTest("kea-dhcp6", AF_INET6);
+    validDaemonTest("kea-dhcp6", AF_INET6, valid_params_);
 }
 
 // Simple test that checks the library cannot by loaded by invalid daemons.

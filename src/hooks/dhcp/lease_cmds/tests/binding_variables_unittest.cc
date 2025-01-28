@@ -58,6 +58,9 @@ TEST(BindingVariableTest, validConstructor) {
         },
         {
            __LINE__,  "my-var", valid_v6_exp, BindingVariable::RESPONSE, AF_INET6
+        },
+        {
+           __LINE__,  "my-var", "'woo hoo'", BindingVariable::RESPONSE, AF_INET6
         }
     };
 
@@ -303,7 +306,7 @@ TEST(BindingVariableCacheTest, basics) {
                                                               AF_INET6)));
 
     for (auto const& ref_iter : ref_list) {
-        ASSERT_NO_THROW_LOG(cache->cacheVariable(ref_iter));
+        ASSERT_NO_THROW_LOG(cache->add(ref_iter));
     }
 
     // Make sure getAll() returns all four in order added.
@@ -379,7 +382,7 @@ TEST(BindingVariableCacheTest, duplicateEntries) {
                                                 AF_INET));
 
     bool add_flag;
-    ASSERT_NO_THROW_LOG(add_flag = cache->cacheVariable(var1));
+    ASSERT_NO_THROW_LOG(add_flag = cache->add(var1));
     EXPECT_TRUE(add_flag);
     EXPECT_EQ(cache->size(), 1);
 
@@ -389,13 +392,179 @@ TEST(BindingVariableCacheTest, duplicateEntries) {
     ASSERT_EQ(found_var->getSource(), BindingVariable::QUERY);
 
     // Adding a duplicate should fail.
-    ASSERT_NO_THROW_LOG(add_flag = cache->cacheVariable(var2));
+    ASSERT_NO_THROW_LOG(add_flag = cache->add(var2));
     EXPECT_FALSE(add_flag);
     EXPECT_EQ(cache->size(), 1);
 
     // Make sure getByName returns the original variable.
     ASSERT_NO_THROW_LOG(found_var = cache->getByName("one"));
     ASSERT_EQ(found_var->getSource(), BindingVariable::QUERY);
+}
+
+/// @brief Tests BindingVariableMgr::configure() with valid
+/// configuration scenarios.
+TEST(BindingVariableMgrTest, validConfigure) {
+    struct Scenario {
+        uint32_t line_;
+        uint32_t family_;
+        std::string config_;
+        std::list<std::string> expected_vars_;
+    };
+
+    std::list<Scenario> scenarios = {
+    {
+        __LINE__,
+        AF_INET,
+        R"({})",
+        {}
+    },{
+        __LINE__,
+        AF_INET,
+        R"({"binding-variables":[]})",
+        {}
+    },{
+        __LINE__,
+        AF_INET,
+        R"({"binding-variables":[
+            {
+                "name": "one",
+                "expression": "pkt4.mac",
+                "source": "query"
+            },
+            {
+                "name": "two",
+                "expression": "pkt4.mac",
+                "source": "response"
+            } ]})",
+        { "one", "two" }
+    },{
+        __LINE__,
+        AF_INET6,
+        R"({"binding-variables":[
+            {
+                "name": "three",
+                "expression": "pkt6.transid",
+                "source": "query"
+            },
+            {
+                "name": "four",
+                "expression": "pkt6.transid",
+                "source": "response"
+            } ]})",
+        { "three", "four" }
+    }};
+
+    for (auto const& scenario : scenarios) {
+        SCOPED_LINE(scenario.line_);
+        BindingVariableMgrPtr mgr;
+        ASSERT_NO_THROW_LOG(mgr.reset(new BindingVariableMgr(scenario.family_)));
+        ConstElementPtr config;
+        ASSERT_NO_THROW_LOG(config = Element::fromJSON(scenario.config_));
+        ASSERT_NO_THROW_LOG(mgr->configure(config));
+        auto cache = mgr->getCache();
+        ASSERT_TRUE(cache);
+        ASSERT_EQ(cache->size(), scenario.expected_vars_.size());
+        for (auto const& exp_name : scenario.expected_vars_) {
+            auto const& found_var = cache->getByName(exp_name);
+            ASSERT_TRUE(found_var);
+            EXPECT_EQ(found_var->getName(), exp_name);
+        }
+    }
+}
+
+/// @brief Verifies that BindingVariableMgr::configure() clears the
+/// cache first.
+TEST(BindingVariableMgrTest, clearOnConfigure) {
+    std::string cfg1 = 
+        R"({"binding-variables":[
+            {
+                "name": "one",
+                "expression": "pkt4.mac",
+                "source": "query"
+            },
+            {
+                "name": "two",
+                "expression": "pkt4.mac",
+                "source": "response"
+            } ]})";
+
+    std::string cfg2 = 
+        R"({"binding-variables":[
+            {
+                "name": "three",
+                "expression": "pkt4.mac",
+                "source": "query"
+            },
+            {
+                "name": "four",
+                "expression": "pkt4.mac",
+                "source": "response"
+            } ]})";
+
+    BindingVariableMgrPtr mgr;
+    ASSERT_NO_THROW_LOG(mgr.reset(new BindingVariableMgr(AF_INET)));
+
+    ConstElementPtr config;
+    ASSERT_NO_THROW_LOG(config = Element::fromJSON(cfg1));
+    ASSERT_NO_THROW_LOG(mgr->configure(config));
+    auto cache = mgr->getCache();
+    ASSERT_TRUE(cache);
+    ASSERT_EQ(cache->size(), 2);
+    ASSERT_TRUE(cache->getByName("one"));
+    ASSERT_TRUE(cache->getByName("two"));
+
+    ASSERT_NO_THROW_LOG(config = Element::fromJSON(cfg2));
+    ASSERT_NO_THROW_LOG(mgr->configure(config));
+    cache = mgr->getCache();
+    ASSERT_TRUE(cache);
+    ASSERT_EQ(cache->size(), 2);
+    ASSERT_FALSE(cache->getByName("one"));
+    ASSERT_FALSE(cache->getByName("two"));
+    ASSERT_TRUE(cache->getByName("three"));
+    ASSERT_TRUE(cache->getByName("four"));
+}
+
+/// @brief Tests BindingVariableMgr::configure() with valid
+/// configuration scenarios.
+TEST(BindingVariableMgrTest, invalidConfigure) {
+    struct Scenario {
+        uint32_t line_;
+        uint32_t family_;
+        std::string config_;
+        std::string expected_error_;
+    };
+
+    std::list<Scenario> scenarios = {
+    {
+        __LINE__,
+        AF_INET,
+        R"({"binding-variables": "bogus"})",
+        "'binding-variables' must be a list"
+    },{
+        __LINE__,
+        AF_INET,
+        R"({"binding-variables":[
+            {
+                "name": "",
+                "expression": "pkt4.mac",
+                "source": "query"
+            } ]})",
+        "cannot add BindingVariable to cache: invalid config:"
+        " BindingVariable - name cannot be empty"
+    }};
+
+    for (auto const& scenario : scenarios) {
+        SCOPED_LINE(scenario.line_);
+        BindingVariableMgrPtr mgr;
+        ASSERT_NO_THROW_LOG(mgr.reset(new BindingVariableMgr(scenario.family_)));
+        ConstElementPtr config;
+        ASSERT_NO_THROW_LOG(config = Element::fromJSON(scenario.config_));
+        ASSERT_THROW_MSG(mgr->configure(config), DhcpConfigError,
+                         scenario.expected_error_);
+        auto cache = mgr->getCache();
+        ASSERT_TRUE(cache);
+        EXPECT_EQ(cache->size(), 0);
+    }
 }
 
 } // end of anonymous namespace
