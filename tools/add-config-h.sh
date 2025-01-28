@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2020-2021 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2020-2025 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -99,6 +99,11 @@ mandatory_commands() {
 
 # Generated files will be filtered out.
 filtered_out=$("${root_path}/tools/print-generated-files.sh")
+
+# Exclude compiler-checks which are used at meson configure time.
+filtered_out="${filtered_out}
+compiler-checks
+"
 
 if "${name_only}"; then
   # Only display file names.
