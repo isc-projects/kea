@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2025 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -168,11 +168,11 @@ control commands.
 This informational message indicates that the server has stopped
 HTTP/HTTPS service. When known the address and port are displayed.
 
+% HTTP_COMMAND_MGR_SERVICE_STOPPING_ALL stopping %1 service %2
+This informational message indicates that the server has stopped
+HTTP/HTTPS service. When known the address and port are displayed.
+
 % HTTP_COMMAND_MGR_SERVICE_STOPPING_NO_DATA Server is stopping all services including %1 service %2
 This informational message indicates that the server is stopping all
 HTTP/HTTPS services. When known the address and port are displayed for
 each service.
-
-% HTTP_COMMAND_MGR_SERVICE_STOPPING_ALL stopping %1 service %2
-This informational message indicates that the server has stopped
-HTTP/HTTPS service. When known the address and port are displayed.

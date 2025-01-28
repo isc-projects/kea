@@ -1,4 +1,0 @@
-[bug]		marcin
-	Avoid conflicts in DNS cleanup performed by two servers in
-	the terminated state in HA.
-	(Gitlab #3649)

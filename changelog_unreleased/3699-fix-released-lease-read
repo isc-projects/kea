@@ -1,3 +1,0 @@
-[bug]		fdupont
-	Fixed a bug where lease in released state was not read properly.
-	(Gitlab #3699)

@@ -75,9 +75,9 @@ const char* values[] = {
     "COMMAND_WATCH_SOCKET_MARK_READY_ERROR", "watch socket failed to mark ready: %1",
     "HTTP_COMMAND_MGR_IGNORED_TLS_SETUP_CHANGES", "ignore a change in TLS setup of the http control socket",
     "HTTP_COMMAND_MGR_SERVICE_STARTED", "started %1 service bound to address %2 port %3",
-    "HTTP_COMMAND_MGR_SERVICE_STOPPING", "stopping %1 service %2",
+    "HTTP_COMMAND_MGR_SERVICE_STOPPING", "Server is stopping %1 service %2",
     "HTTP_COMMAND_MGR_SERVICE_STOPPING_ALL", "stopping %1 service %2",
-    "HTTP_COMMAND_MGR_SERVICE_STOPPING_NO_DATA", "stopping %1 service %2",
+    "HTTP_COMMAND_MGR_SERVICE_STOPPING_NO_DATA", "Server is stopping all services including %1 service %2",
     NULL
 };
 

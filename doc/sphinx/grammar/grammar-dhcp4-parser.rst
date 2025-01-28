@@ -143,6 +143,9 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                  | ddns_use_conflict_resolution
                  | ddns_conflict_resolution_mode
                  | ddns_ttl_percent
+                 | ddns_ttl
+                 | ddns_ttl_min
+                 | ddns_ttl_max
                  | store_extended_info
                  | statistic_default_sample_count
                  | statistic_default_sample_age
@@ -221,6 +224,12 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                                         | "no-check-without-dhcid"
 
      ddns_ttl_percent ::= "ddns-ttl-percent" ":" FLOAT
+
+     ddns_ttl ::= "ddns-ttl" ":" INTEGER
+
+     ddns_ttl_min ::= "ddns-ttl-min" ":" INTEGER
+
+     ddns_ttl_max ::= "ddns-ttl-mix" ":" INTEGER
 
      hostname_char_set ::= "hostname-char-set" ":" STRING
 
@@ -537,6 +546,9 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                   | ddns_use_conflict_resolution
                   | ddns_conflict_resolution_mode
                   | ddns_ttl_percent
+                  | ddns_ttl
+                  | ddns_ttl_min
+                  | ddns_ttl_max
                   | hostname_char_set
                   | hostname_char_replacement
                   | store_extended_info
@@ -624,6 +636,9 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                          | ddns_use_conflict_resolution
                          | ddns_conflict_resolution_mode
                          | ddns_ttl_percent
+                         | ddns_ttl
+                         | ddns_ttl_min
+                         | ddns_ttl_max
                          | hostname_char_set
                          | hostname_char_replacement
                          | store_extended_info
@@ -754,6 +769,20 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                | network_client_classes
                | require_client_classes
                | evaluate_additional_classes
+               | ddns_send_updates
+               | ddns_override_no_update
+               | ddns_override_client_update
+               | ddns_replace_client_name
+               | ddns_generated_prefix
+               | ddns_qualifying_suffix
+               | ddns_update_on_renew
+               | ddns_conflict_resolution_mode
+               | ddns_ttl_percent
+               | ddns_ttl
+               | ddns_ttl_min
+               | ddns_ttl_max
+               | hostname_char_set
+               | hostname_char_replacement
                | user_context
                | comment
                | unknown_map_entry

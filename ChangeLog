@@ -1,3 +1,31 @@
+Kea 2.7.6 (development) released on January 29, 2025
+
+2323.	[func]*		fdupont
+	Kea now refuses secrets and passwords taken from examples,
+	including when not built with unit tests "keatest".
+	(Gitlab #3398)
+
+2322.	[bug]		marcin
+	Avoid conflicts in DNS cleanup performed by two servers in
+	the terminated state in HA.
+	(Gitlab #3649)
+
+2321.	[func]		tmark
+	Modified kea-dhcp4 and kea-dhcp6 to support
+	DDNS behavioral parameters at the pool level.
+	(Gitlab #3049)
+
+2320.	[bug]		fdupont
+	Fixed a bug where the lease in the released state was not read
+	properly.
+	(Gitlab #3699)
+
+2319.	[build]		fdupont, q66
+	Kea can now build with Boost 1.87. The minimum supported Boost
+	version has been bumped up from 1.57 to 1.66. Thanks to q66
+	for the patch.
+	(Gitlab #3696)
+
 2318.	[build]		razvan
 	The library version numbers have been bumped up for the Kea 2.7.6
 	development release.

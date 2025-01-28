@@ -4047,7 +4047,7 @@ DHCP4_DB_RECONNECT_DISABLED
 
 .. code-block:: text
 
-    database reconnect is disabled: max-reconnect-tries %1, reconnect-wait-time %2
+    database reconnect is disabled: retries left: %1, reconnect wait time: %2, manager ID: %3, timer: %4
 
 This is an informational message indicating that connectivity to either the
 lease or host database or both and that automatic reconnect is not enabled.
@@ -4057,7 +4057,7 @@ DHCP4_DB_RECONNECT_FAILED
 
 .. code-block:: text
 
-    maximum number of database reconnect attempts: %1, has been exhausted without success
+    maximum number of database reconnect attempts: %1, has been exhausted without success, manager ID: %2, timer: %3
 
 This error indicates that the server failed to reconnect to the lease and/or
 host database(s) after making the maximum configured number of reconnect
@@ -4070,7 +4070,7 @@ DHCP4_DB_RECONNECT_LOST_CONNECTION
 
 .. code-block:: text
 
-    database connection lost.
+    database connection lost: manager ID: %1, timer: %2.
 
 This info message indicates that the connection has been lost and the dhcp
 service might have been disabled, as specified in the configuration, in order to
@@ -4093,7 +4093,7 @@ DHCP4_DB_RECONNECT_SUCCEEDED
 
 .. code-block:: text
 
-    database connection recovered.
+    database connection recovered: manager ID: %1, timer: %2.
 
 This info message indicates that the connection has been recovered and the dhcp
 service has been restored.
@@ -6241,7 +6241,7 @@ DHCP6_DB_RECONNECT_DISABLED
 
 .. code-block:: text
 
-    database reconnect is disabled: max-reconnect-tries %1, reconnect-wait-time %2
+    database reconnect is disabled: retries left: %1, reconnect wait time: %2, manager ID: %3, timer: %4
 
 This is an informational message indicating that connectivity to either the
 lease or host database or both and that automatic reconnect is not enabled.
@@ -6251,7 +6251,7 @@ DHCP6_DB_RECONNECT_FAILED
 
 .. code-block:: text
 
-    maximum number of database reconnect attempts: %1, has been exhausted without success
+    maximum number of database reconnect attempts: %1, has been exhausted without success, manager ID: %2, timer: %3
 
 This error indicates that the server failed to reconnect to the lease and/or
 host database(s) after making the maximum configured number of reconnect
@@ -6264,7 +6264,7 @@ DHCP6_DB_RECONNECT_LOST_CONNECTION
 
 .. code-block:: text
 
-    database connection lost.
+    database connection lost: manager ID: %1, timer: %2.
 
 This info message indicates that the connection has been lost and the dhcp
 service might have been disabled, as specified in the configuration, in order to
@@ -6287,7 +6287,7 @@ DHCP6_DB_RECONNECT_SUCCEEDED
 
 .. code-block:: text
 
-    database connection recovered.
+    database connection recovered: manager ID: %1, timer: %2.
 
 This info message indicates that the connection has been recovered and the dhcp
 service has been restored.
@@ -8585,6 +8585,21 @@ the database access parameters are changed: in the latter case, the
 server closes the currently open database, and opens a database using
 the new parameters.
 
+DHCPSRV_DDNS_TTL_TOO_LARGE
+==========================
+
+.. code-block:: text
+
+    %1 of lease life time %2 is %3, using maximum of %4 instead.
+
+Logged at debug log level 55.
+A debug message issued when the DDNS TTL value calculated using the
+ddns-ttl-percent if specified or (0.33 if not) is larger than the
+the specified value of ddns-ttl-max. Kea will ignore the value and
+use the specified maximum instead. The message details include
+the percentage, the lease life time, the calculated TTL, and the value
+actually used.
+
 DHCPSRV_DDNS_TTL_TOO_SMALL
 ==========================
 
@@ -10011,16 +10026,6 @@ Logged at debug log level 40.
 A debug message issued when one of the registered interval timers
 is unregistered from the Timer Manager. The name of the timer is
 included in the message.
-
-DHCPSRV_UNKNOWN_DB
-==================
-
-.. code-block:: text
-
-    unknown database type: %1
-
-The database access string specified a database type (given in the
-message) that is unknown to the software. This is a configuration error.
 
 ****
 DHCP
@@ -12808,6 +12813,44 @@ and this server is not running in the load balancing mode. The server may only
 transition to the load-balancing state when it runs in the load balancing mode.
 The HA mode of both servers must be the same.
 
+HA_LEASE4_EXPIRE_FAILED
+=======================
+
+.. code-block:: text
+
+    lease4_expire callout failed: %1
+
+This error message is issued when the callout for the lease4_expire hook
+point failed. This includes unexpected errors like wrong arguments provided to
+the callout by the DHCP server (unlikely internal server error).
+The argument contains a reason for the error.
+
+HA_LEASE4_EXPIRE_INVALID_HA_SERVER_NAME
+=======================================
+
+.. code-block:: text
+
+    %1: invalid ha-server-name value for subnet %2
+
+This error message is issued when the reclaimed DHCPv4 lease belongs to
+a subnet which includes ha-server-name value in the user-context but this
+value is not a string or is empty. It is a server's misconifguration.
+The first argument holds the lease information. The second argument is a
+subnet prefix.
+
+HA_LEASE4_EXPIRE_RECLAMATION_SKIP
+=================================
+
+.. code-block:: text
+
+    %1: skipping reclamation of the lease that belongs to a partner
+
+Logged at debug log level 40.
+This debug message is issued when the server is in the terminated state and
+skips reclamation of the lease that was probably allocated by another server,
+or is maintained by the other server while the servers are in the HA terminated
+state. The argument is the lease address.
+
 HA_LEASE4_SERVER_DECLINE_FAILED
 ===============================
 
@@ -12819,6 +12862,44 @@ This error message is issued when the callout for the lease4_server_decline hook
 point failed. This includes unexpected errors like wrong arguments provided to
 the callout by the DHCP server (unlikely internal server error).
 The argument contains a reason for the error.
+
+HA_LEASE6_EXPIRE_FAILED
+=======================
+
+.. code-block:: text
+
+    lease4_expire callout failed: %1
+
+This error message is issued when the callout for the lease4_expire hook
+point failed. This includes unexpected errors like wrong arguments provided to
+the callout by the DHCP server (unlikely internal server error).
+The argument contains a reason for the error.
+
+HA_LEASE6_EXPIRE_INVALID_HA_SERVER_NAME
+=======================================
+
+.. code-block:: text
+
+    %1: invalid ha-server-name value for subnet %2
+
+This error message is issued when the reclaimed DHCPv6 lease belongs to
+a subnet which includes ha-server-name value in the user-context but this
+value is not a string or is empty. It is a server's misconifguration.
+The first argument holds the lease information. The second argument is a
+subnet prefix.
+
+HA_LEASE6_EXPIRE_RECLAMATION_SKIP
+=================================
+
+.. code-block:: text
+
+    %1: skipping reclamation of the lease that belongs to a partner
+
+Logged at debug log level 40.
+This debug message is issued when the server is in the terminated state and
+skips reclamation of the lease that was probably allocated by another server,
+or is maintained by the other server while the servers are in the HA terminated
+state. The argument is the lease address.
 
 HA_LEASES4_COMMITTED_FAILED
 ===========================
@@ -13170,6 +13251,30 @@ This debug message is issued when the HA hook library was unable to load
 balance an incoming DHCPv4 query because neither client identifier nor
 HW address was included in the query. The query will be dropped. The
 sole argument contains transaction id.
+
+HA_LOAD_BALANCING_LEASE_DUID_MISSING
+====================================
+
+.. code-block:: text
+
+    %1: load balancing failed for the DHCPv6 lease %2 because DUID is missing
+
+Logged at debug log level 40.
+This debug message is issued when the HA hook library was unable to load
+balance a reclaimed DHCPv6 lease because client identifier was not included
+found in the lease.
+
+HA_LOAD_BALANCING_LEASE_IDENTIFIER_MISSING
+==========================================
+
+.. code-block:: text
+
+    %1: load balancing failed for the DHCPv4 lease %2 because HW address and client identifier are missing
+
+Logged at debug log level 40.
+This debug message is issued when the HA hook library was unable to load
+balance a reclaimed DHCPv4 lease because neither client identifier nor
+HW address was included in the query.
 
 HA_LOCAL_DHCP_DISABLE
 =====================
@@ -15853,6 +15958,26 @@ HTTP_COMMAND_MGR_SERVICE_STARTED
 This informational message indicates that the server has started
 HTTP/HTTPS service on the specified address and port for receiving
 control commands.
+
+HTTP_COMMAND_MGR_SERVICE_STOPPING
+=================================
+
+.. code-block:: text
+
+    Server is stopping %1 service %2
+
+This informational message indicates that the server has stopped
+HTTP/HTTPS service. When known the address and port are displayed.
+
+HTTP_COMMAND_MGR_SERVICE_STOPPING_ALL
+=====================================
+
+.. code-block:: text
+
+    stopping %1 service %2
+
+This informational message indicates that the server has stopped
+HTTP/HTTPS service. When known the address and port are displayed.
 
 HTTP_CONNECTION_CLOSE_CALLBACK_FAILED
 =====================================

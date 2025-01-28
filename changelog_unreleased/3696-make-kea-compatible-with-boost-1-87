@@ -1,5 +1,0 @@
-[build]		fdupont, q66
-	Kea can now build with Boost 1.87. The minimum supported Boost
-	version has been bumped up from 1.57 to 1.66. Thanks to q66
-	for the patch.
-	(Gitlab #3696)
