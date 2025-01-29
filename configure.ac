@@ -1712,7 +1712,6 @@ AC_CONFIG_FILES([src/lib/log/tests/logger_lock_test.sh],
                 [chmod +x src/lib/log/tests/logger_lock_test.sh])
 AC_CONFIG_FILES([src/lib/log/tests/severity_test.sh],
                 [chmod +x src/lib/log/tests/severity_test.sh])
-AC_CONFIG_FILES([src/lib/log/tests/tempdir.h])
 AC_CONFIG_FILES([src/lib/mysql/Makefile])
 AC_CONFIG_FILES([src/lib/mysql/testutils/Makefile])
 AC_CONFIG_FILES([src/lib/mysql/tests/Makefile])

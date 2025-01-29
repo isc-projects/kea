@@ -2,6 +2,7 @@ SUBDIRS = .
 
 # Define the flags used in each set of tests.
 AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
+AM_CPPFLAGS += -DTEMP_DIR=\"${build_dir}\"
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)

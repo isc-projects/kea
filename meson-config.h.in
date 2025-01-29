@@ -71,7 +71,7 @@
 #mesondefine HAVE_BOTAN_BUILD_H
 
 /* Whether getsockopt(IPV6_USE_MIN_MTU) does not work */
-#mesondefine HAVE_BROKEN_GET_IPV
+#mesondefine HAVE_BROKEN_GET_IPV6_USE_MIN_MTU
 
 /* Whether gtest defines edit_distance::CreateUnifiedDiff */
 #mesondefine HAVE_CREATE_UNIFIED_DIFF
@@ -104,7 +104,7 @@
 #mesondefine HAVE_GSSAPI_GSSAPI_H
 
 /* Whether you have the <gssapi/gssapi_krb5.h> header file. */
-#mesondefine HAVE_GSSAPI_GSSAPI_KRB
+#mesondefine HAVE_GSSAPI_GSSAPI_KRB5_H
 
 /* gss_str_to_oid is available */
 #mesondefine HAVE_GSS_STR_TO_OID
@@ -116,13 +116,13 @@
 #mesondefine HAVE_IS_BASE_OF
 
 /* Whether you have the <krb5.h> header file. */
-#mesondefine HAVE_KRB
+#mesondefine HAVE_KRB5_H
 
 /* Whether you have the <krb5/krb5.h> header file. */
-#mesondefine HAVE_KRB
+#mesondefine HAVE_KRB5_KRB5_H
 
 /* Whether you have the <log4cplus/logger.h> header file. */
-#mesondefine HAVE_LOG
+#mesondefine HAVE_LOG4CPLUS_LOGGER_H
 
 /* MySQL is present */
 #mesondefine HAVE_MYSQL
@@ -191,7 +191,7 @@
 #mesondefine HAVE_SYS_TYPES_H
 
 /* Whether boost::asio::ssl::context::tlsv12 is available */
-#mesondefine HAVE_TLS_
+#mesondefine HAVE_TLS_1_2_METHOD
 
 /* Whether you have the <unistd.h> header file. */
 #mesondefine HAVE_UNISTD_H
@@ -212,7 +212,7 @@
 #mesondefine LIBC_MUSL
 
 /* Explicit initialization of log4cplus possible */
-#mesondefine LOG
+#mesondefine LOG4CPLUS_INITIALIZER_H
 
 /* Define to the sub-directory where libtool stores uninstalled libraries. */
 #mesondefine LT_OBJDIR
