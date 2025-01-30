@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -552,7 +552,7 @@ def install_pkgs(pkgs, timeout=60, env=None, check_times=False, pkg_cache=None):
         env['DEBIAN_FRONTEND'] = 'noninteractive'
         cmd = 'sudo apt install --no-install-recommends -y'
     elif system == 'freebsd':
-        cmd = 'sudo pkg install -y'
+        cmd = 'sudo pkg install --no-repo-update --yes'
     elif system == 'alpine':
         cmd = 'sudo apk add'
     elif system == 'arch':
@@ -1021,7 +1021,7 @@ class VagrantEnv():
                 self.execute("sudo dnf install -y python36 rpm-build python3-virtualenv", attempts=3)
         elif self.system == 'freebsd':
             if self.revision.startswith('13'):
-                self.execute("sudo pkg install -y python3", attempts=3)
+                self.execute("sudo pkg install --no-repo-update --yes python3", attempts=3)
 
         # select proper python version for running Hammer inside Vagrant system
         if self.system == 'freebsd':
@@ -1960,13 +1960,6 @@ def install_packages_local(system, revision, features, check_times, ignore_error
 
     # prepare freebsd
     elif system == 'freebsd':
-        # Packages are already upgraded by default when installing a package,
-        # so to avoid mismatching dependency versions, inaccurate dynamic
-        # version fetching and other troubles, clean up local cache and
-        # install an arbitrary package to fetch remote first.
-        execute('sudo pkg clean -a -y')
-        execute('sudo pkg install -y pkg')
-
         packages = ['autoconf', 'automake', 'bison', 'flex', 'libtool', 'openssl', 'log4cplus', 'boost-libs', 'wget']
 
         if revision.startswith('14'):
