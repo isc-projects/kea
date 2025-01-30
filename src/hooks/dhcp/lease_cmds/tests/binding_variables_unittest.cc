@@ -10,6 +10,10 @@
 #include <binding_variables.h>
 #include <exceptions/exceptions.h>
 #include <cc/data.h>
+#include <dhcp/dhcp6.h>
+#include <dhcp/pkt4.h>
+#include <dhcp/pkt6.h>
+#include <dhcpsrv/lease.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/user_context_utils.h>
 #include <testutils/multi_threading_utils.h>
@@ -21,6 +25,7 @@ using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::data;
 using namespace isc::test;
+using namespace isc::asiolink;
 
 using namespace isc::lease_cmds;
 
@@ -475,7 +480,7 @@ TEST(BindingVariableMgrTest, validConfigure) {
 /// @brief Verifies that BindingVariableMgr::configure() clears the
 /// cache first.
 TEST(BindingVariableMgrTest, clearOnConfigure) {
-    std::string cfg1 = 
+    std::string cfg1 =
         R"({"binding-variables":[
             {
                 "name": "one",
@@ -488,7 +493,7 @@ TEST(BindingVariableMgrTest, clearOnConfigure) {
                 "source": "response"
             } ]})";
 
-    std::string cfg2 = 
+    std::string cfg2 =
         R"({"binding-variables":[
             {
                 "name": "three",
@@ -564,6 +569,250 @@ TEST(BindingVariableMgrTest, invalidConfigure) {
         auto cache = mgr->getCache();
         ASSERT_TRUE(cache);
         EXPECT_EQ(cache->size(), 0);
+    }
+}
+
+/// @brief Tests BindingVariableMgr::evaluateVariables() for V4 scenarios.
+TEST(BindingVariableMgrTest, evaluateVariables4) {
+    struct Scenario {
+        uint32_t line_;
+        std::string config_;
+        std::string orig_context_;
+        std::string exp_context_;
+    };
+
+    std::list<Scenario> scenarios = {
+    {
+        // No variables configured, nothing in lease context.
+        __LINE__,
+        R"({})",
+        R"({})",
+        R"({})"
+    },{
+        // lease context has no binding-variables, two configured
+        __LINE__,
+        R"^({"binding-variables":[
+            {
+                "name": "hwaddr",
+                "expression": "hexstring(pkt4.mac,':')",
+                "source": "query"
+            },
+            {
+                "name": "yiaddr",
+                "expression": "addrtotext(pkt4.yiaddr)",
+                "source": "response"
+            }]})^",
+        R"({})",
+        R"({"ISC":{
+            "binding-variables":{
+                "hwaddr": "01:02:03:04:05:06",
+                "yiaddr": "192.0.1.1"
+            }
+        }})",
+    },
+    {
+        // lease context has binding-variables, none configured
+        // Current logic leaves lease untouched.
+        __LINE__,
+        R"({})",
+        R"({"ISC":{
+            "binding-variables":{
+                "hwaddr": "01:02:03:04:05:06",
+                "yiaddr": "192.0.1.1"
+            }
+        }})",
+        R"({"ISC":{
+            "binding-variables":{
+                "hwaddr": "01:02:03:04:05:06",
+                "yiaddr": "192.0.1.1"
+            }
+        }})",
+    },
+    {
+        // Evaluated variable value is an empty string.
+        __LINE__,
+        R"^({"binding-variables":[
+            {
+                "name": "hwaddr",
+                "expression": "''",
+                "source": "query"
+            }]})^",
+        R"({"ISC":{
+            "binding-variables":{
+                "hwaddr": "01:02:03:04:05:06"
+            }
+        }})",
+        R"({"ISC":{
+            "binding-variables":{
+                "hwaddr": ""
+            }
+        }})",
+    }};
+
+    // Create packet pair and lease.
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 1234));
+    query->setHWAddr(1, 6, { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06 });
+
+    Pkt4Ptr response(new Pkt4(DHCPOFFER, 1234));
+    IOAddress yiaddr("192.0.1.1");
+    response->setYiaddr(yiaddr);
+
+    Lease4Ptr lease(new Lease4());
+
+    // Iterater over scenarios.
+    for (auto const& scenario : scenarios) {
+        SCOPED_LINE(scenario.line_);
+
+        // Create and configure the manager.
+        BindingVariableMgrPtr mgr;
+        ASSERT_NO_THROW_LOG(mgr.reset(new BindingVariableMgr(AF_INET)));
+        ConstElementPtr config;
+        ASSERT_NO_THROW_LOG(config = Element::fromJSON(scenario.config_));
+        ASSERT_NO_THROW_LOG(mgr->configure(config));
+
+        // Set the lease context to its original content.
+        ConstElementPtr orig_context;
+        ASSERT_NO_THROW_LOG(orig_context = Element::fromJSON(scenario.orig_context_));
+        lease->setContext(orig_context);
+
+        ConstElementPtr exp_context;
+        ASSERT_NO_THROW_LOG(exp_context = Element::fromJSON(scenario.exp_context_));
+
+        // Evaluate the variables.
+        bool changed;
+        ASSERT_NO_THROW_LOG(changed = mgr->evaluateVariables(query, response, lease));
+
+        // If the original and expected lease contexts the same the lease should
+        // not have been changed, otherwse its context should have been updated.
+        if (*orig_context == *exp_context) {
+            ASSERT_FALSE(changed);
+            ASSERT_EQ(*lease->getContext(), *orig_context);
+        } else {
+            ASSERT_TRUE(changed);
+            ASSERT_EQ(*lease->getContext(), *exp_context);
+        }
+    }
+}
+
+/// @brief Tests BindingVariableMgr::evaluateVariables() for V6 scenarios.
+TEST(BindingVariableMgrTest, evaluateVariables6) {
+    struct Scenario {
+        uint32_t line_;
+        std::string config_;
+        std::string orig_context_;
+        std::string exp_context_;
+    };
+
+    std::list<Scenario> scenarios = {
+    {
+        // No variables configured, nothing in lease context.
+        __LINE__,
+        R"({})",
+        R"({})",
+        R"({})"
+    },
+    {
+        // lease context has no binding-variables, two configured
+        __LINE__,
+        R"^({"binding-variables":[
+            {
+                "name": "client-id",
+                "expression": "hexstring(option[1].hex,':')",
+                "source": "query"
+            },
+            {
+                "name": "transid",
+                "expression": "uint32totext(pkt6.transid)",
+                "source": "response"
+            }]})^",
+        R"({})",
+        R"({"ISC":{
+            "binding-variables":{
+                "client-id": "05:06:07:08",
+                "transid": "4321"
+            }
+        }})",
+    },
+    {
+        // lease context has binding-variables, none configured
+        // Current logic leaves lease untouched.
+        __LINE__,
+        R"({})",
+        R"({"ISC":{
+            "binding-variables":{
+                "client-id": "05:06:07:08",
+                "transid": "4321"
+            }
+        }})",
+        R"({"ISC":{
+            "binding-variables":{
+                "client-id": "05:06:07:08",
+                "transid": "4321"
+            }
+        }})",
+    },
+    {
+        // Evaluated variable value is an empty string.
+        __LINE__,
+        R"^({"binding-variables":[
+            {
+                "name": "client-id",
+                "expression": "''",
+                "source": "query"
+            }]})^",
+        R"({"ISC":{
+            "binding-variables":{
+                "client-id": "05:06:07:08"
+            }
+        }})",
+        R"({"ISC":{
+            "binding-variables":{
+                "client-id": ""
+            }
+        }})",
+    }};
+
+    // Create packet pair and lease.
+    Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 1234));
+    query->addOption(OptionPtr(new Option(Option::V6,
+                                          D6O_CLIENTID,
+                                          { 0x05, 0x06, 0x07, 0x08 })));
+
+    Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, 4321));
+    Lease6Ptr lease(new Lease6());
+
+    // Iterater over scenarios.
+    for (auto const& scenario : scenarios) {
+        SCOPED_LINE(scenario.line_);
+
+        // Create and configure the manager.
+        BindingVariableMgrPtr mgr;
+        ASSERT_NO_THROW_LOG(mgr.reset(new BindingVariableMgr(AF_INET6)));
+        ConstElementPtr config;
+        ASSERT_NO_THROW_LOG(config = Element::fromJSON(scenario.config_));
+        ASSERT_NO_THROW_LOG(mgr->configure(config));
+
+        // Set the lease context to its original content.
+        ConstElementPtr orig_context;
+        ASSERT_NO_THROW_LOG(orig_context = Element::fromJSON(scenario.orig_context_));
+        lease->setContext(orig_context);
+
+        ConstElementPtr exp_context;
+        ASSERT_NO_THROW_LOG(exp_context = Element::fromJSON(scenario.exp_context_));
+
+        // Evaluate the variables.
+        bool changed;
+        ASSERT_NO_THROW_LOG(changed = mgr->evaluateVariables(query, response, lease));
+
+        // If the original and expected lease contexts the same the lease should
+        // not have been changed, otherwse its context should have been updated.
+        if (*orig_context == *exp_context) {
+            ASSERT_FALSE(changed);
+            ASSERT_EQ(*lease->getContext(), *orig_context);
+        } else {
+            ASSERT_TRUE(changed);
+            ASSERT_EQ(*lease->getContext(), *exp_context);
+        }
     }
 }
 

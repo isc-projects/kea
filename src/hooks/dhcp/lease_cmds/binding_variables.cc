@@ -224,6 +224,9 @@ BindingVariableMgr::configure(data::ConstElementPtr config) {
 bool
 BindingVariableMgr::evaluateVariables(PktPtr query, PktPtr response, LeasePtr lease) {
     if (!cache_->size()) {
+        /// @todo If the lease has binding-variables in its context from a prior
+        /// update, but config changed and now there are none defined, should we
+        /// removed them from the lease?
         return(false);
     }
 
@@ -234,9 +237,7 @@ BindingVariableMgr::evaluateVariables(PktPtr query, PktPtr response, LeasePtr le
             auto value = evaluateString(*(variable->getExpression()),
                                         (variable->getSource() == BindingVariable::QUERY ?
                                          *query : *response));
-            if (!value.empty()) {
-                values->set(variable->getName(), Element::create(value));
-            }
+            values->set(variable->getName(), Element::create(value));
         } catch (const std::exception& ex) {
             isc_throw(Unexpected, "expression blew up: " << ex.what());
         }

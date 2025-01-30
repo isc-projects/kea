@@ -745,7 +745,7 @@ Lease6::fromElement(const data::ConstElementPtr& element) {
 
 bool
 Lease::updateUserContextISC(const std::string elem_name,
-                                 ConstElementPtr new_values) {
+                            ConstElementPtr new_values) {
     // Get a mutable copy of the lease's current user context.
     ConstElementPtr user_context = getContext();
     ElementPtr mutable_user_context;
