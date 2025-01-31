@@ -1696,13 +1696,11 @@ def install_packages_local(system, revision, features, check_times, ignore_error
                              'texlive', 'texlive-collection-latexextra'])
 
         if 'mysql' in features:
-            execute('sudo dnf remove -y community-mysql-devel || true')
             packages.extend(['mariadb', 'mariadb-server', 'mariadb-connector-c-devel'])
 
         if 'pgsql' in features:
-            if int(revision) <= 34:
-                packages.extend(['postgresql-devel'])
-            packages.extend(['postgresql-server', 'postgresql-server-devel'])
+            execute('sudo dnf remove -y postgresql-private-devel', raise_error=False)
+            packages.extend(['libpq-devel', 'postgresql', 'postgresql-server'])
 
         if 'gssapi' in features:
             packages.extend(['krb5-devel'])
@@ -1808,7 +1806,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
                 packages.extend(['mariadb-connector-c-devel'])
 
         if 'pgsql' in features:
-            packages.extend(['postgresql', 'postgresql-server', 'postgresql-server-devel'])
+            packages.extend(['postgresql', 'postgresql-server'])
             if int(revision) <= 8:
                 packages.append('libpq-devel')
             else:
@@ -1847,7 +1845,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             packages.extend(['mariadb', 'mariadb-server', 'mariadb-connector-c-devel'])
 
         if 'pgsql' in features:
-            packages.extend(['postgresql', 'postgresql-server', 'postgresql-server-devel'])
+            packages.extend(['libpq-devel', 'postgresql', 'postgresql-server'])
 
         if 'gssapi' in features:
             packages.extend(['krb5-devel'])
@@ -1895,10 +1893,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
                 packages.extend(['mariadb-client', 'mariadb-server', 'libmariadb-dev-compat'])
 
         if 'pgsql' in features:
-            if revision == '16.04':
-                packages.extend(['postgresql-client', 'libpq-dev', 'postgresql', 'postgresql-server-dev-all'])
-            else:
-                packages.extend(['postgresql-client', 'libpq-dev', 'postgresql-all'])
+            packages.extend(['libpq-dev', 'postgresql', 'postgresql-client'])
 
         if 'gssapi' in features:
             packages.extend(['libkrb5-dev'])
@@ -1944,11 +1939,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
                 packages.append('mariadb-server')
 
         if 'pgsql' in features:
-            packages.extend(['postgresql-client', 'libpq-dev'])
-            if int(revision) <= 8:
-                packages.extend(['postgresql', 'postgresql-client'])
-            else:
-                packages.append('postgresql-all')
+            packages.extend(['libpq-dev', 'postgresql', 'postgresql-client'])
 
         if 'gssapi' in features:
             packages.extend(['libkrb5-dev'])
