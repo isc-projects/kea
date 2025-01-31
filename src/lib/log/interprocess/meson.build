@@ -12,3 +12,4 @@ kea_log_interprocess_lib = library(
     link_with: LIBS_BUILT_SO_FAR,
 )
 LIBS_BUILT_SO_FAR = [kea_log_interprocess_lib] + LIBS_BUILT_SO_FAR
+subdir('tests')

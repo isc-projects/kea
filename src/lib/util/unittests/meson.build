@@ -1,4 +1,4 @@
-kea_util_unittests_lib = library(
+kea_util_unittests_lib = static_library(
     'kea-util-unittests',
     'check_valgrind.cc',
     'check_valgrind.h',

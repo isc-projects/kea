@@ -1,3 +1,7 @@
+kea_cc_lib_cpp_args = []
+if gtest.found()
+    kea_cc_lib_cpp_args = ['-DALLOW_KEATEST']
+endif
 kea_cc_lib = library(
     'kea-cc',
     'base_stamped_element.cc',
@@ -23,6 +27,7 @@ kea_cc_lib = library(
     'stamped_value.h',
     'user_context.cc',
     'user_context.h',
+    cpp_args: kea_cc_lib_cpp_args,
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib',

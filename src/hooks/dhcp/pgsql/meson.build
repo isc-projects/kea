@@ -1,4 +1,4 @@
-if not postgresql.found() or not postgresql_server_header.found()
+if not postgresql.found()
     subdir_done()
 endif
 

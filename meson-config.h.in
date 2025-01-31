@@ -196,9 +196,6 @@
 /* Whether you have the <unistd.h> header file. */
 #mesondefine HAVE_UNISTD_H
 
-/* Whether you have the <utils/errcodes.h> header file. */
-#mesondefine HAVE_UTILS_ERRCODES_H
-
 /* Check valgrind headers */
 #mesondefine HAVE_VALGRIND_HEADERS
 

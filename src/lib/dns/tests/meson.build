@@ -43,7 +43,6 @@ kea_dns_tests = executable(
     'tsigrecord_unittest.cc',
     'tsig_unittest.cc',
     'unittest_util.cc',
-    'unittest_util.h',
     cpp_args: [
         f'-DTEST_DATA_BUILDDIR="@TOP_BUILD_DIR@/src/lib/dns/tests/testdata"',
         f'-DTEST_DATA_SRCDIR="@TOP_SOURCE_DIR@/src/lib/dns/tests/testdata"',

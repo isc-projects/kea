@@ -1,23 +1,12 @@
-kea_testutils_lib = library(
+kea_testutils_lib = static_library(
     'kea-testutils',
-    'gtest_utils.h',
     'io_utils.cc',
-    'io_utils.h',
     'log_utils.cc',
-    'log_utils.h',
-    'multi_threading_utils.h',
-    'sandbox.h',
     'test_to_element.cc',
-    'test_to_element.h',
     'threaded_test.cc',
-    'threaded_test.h',
     'unix_control_client.cc',
-    'unix_control_client.h',
     'user_context_utils.cc',
-    'user_context_utils.h',
     dependencies: [gtest],
     include_directories: [include_directories('.')] + INCLUDES,
-    install: true,
-    install_dir: 'lib',
-    link_with: LIBS_BUILT_SO_FAR,
+    link_with: LIBS_BUILT_SO_FAR + [kea_util_unittests_lib]
 )

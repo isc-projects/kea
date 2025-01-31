@@ -18,6 +18,7 @@ TOP_BUILD_DIR = meson.current_build_dir()
 TOP_SOURCE_DIR = meson.current_source_dir()
 KEA_ADMIN = f'@TOP_BUILD_DIR@/src/bin/admin/kea-admin'
 KEA_LFC = f'@TOP_BUILD_DIR@/src/bin/lfc/kea-lfc'
+TEST_CA_DIR = f'@TOP_SOURCE_DIR@/src/lib/asiolink/testutils/ca'
 
 #### Configuration Data
 
@@ -82,7 +83,6 @@ conf_data = configuration_data(
         # 'HAVE_SYS_TYPES_H': false,
         # 'HAVE_TLS_': false,
         # 'HAVE_UNISTD_H': false,
-        # 'HAVE_UTILS_ERRCODES_H': false,
         # 'HAVE_VALGRIND_HEADERS': false,
         # 'HAVE_VALGRIND_VALGRIND_H': false,
         # 'HAVE__BOOL': false,
@@ -119,21 +119,26 @@ log4cplus = dependency('log4cplus')
 # Cryptography
 crypto = disabler()
 botan = disabler()
-foreach dep : ['botan-2', 'botan', 'botan-3']
+foreach dep : ['botan-2', 'botan']
     botan = dependency(dep, required: false)
     if botan.found()
         break
     endif
 endforeach
 openssl = dependency('openssl', required: false)
-if botan.found() and false  # remove "or flase" when botan+mariadb gets fixes
-    crypto = botan
-    conf_data.set('WITH_BOTAN', true)
-    message('Using Botan.')
-elif openssl.found()
+if openssl.found()
     crypto = openssl
     conf_data.set('WITH_OPENSSL', true)
     message('Using OpenSSL.')
+elif botan.found()
+    crypto = botan
+    conf_data.set('WITH_BOTAN', true)
+    message('Using Botan.')
+    message('Checking Botan Boost support.')
+    cpp.has_header(
+        'botan/asio_stream.h',
+        dependencies: botan,
+        required: true)
 endif
 if not crypto.found()
     error('Build failed: Could not find neither botan nor openssl libraries.')
@@ -187,27 +192,12 @@ if not postgresql.found()
     cflags = run_command([pg_config, '--cflags'], check: false)
     libs = run_command([pg_config, '--libs'], check: false)
     if cflags.returncode() == 0 and libs.returncode() == 0
-        krb5 = declare_dependency(
+        postgresql = declare_dependency(
             compile_args: cflags.stdout().split(),
             link_args: libs.stdout().split(),
         )
     endif
 endif
-postgresql_server_header = disabler()
-foreach dir : ['/usr/include/pgsql/server', '/usr/include/postgresql/server']
-    if not fs.is_dir(dir)
-        continue
-    endif
-    exists = cpp.has_header(
-        'utils/errcodes.h',
-        include_directories: [include_directories(dir)],
-        required: false,
-    )
-    if exists
-        postgresql_server_header = declare_dependency(include_directories: dir)
-        break
-    endif
-endforeach
 if postgresql.found()
     conf_data.set('HAVE_PGSQL', true)
 endif

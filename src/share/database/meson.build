@@ -1,1 +1,1 @@
-
+subdir('scripts')

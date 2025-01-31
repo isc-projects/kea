@@ -52,3 +52,5 @@ kea_asiolink_lib = library(
     link_with: LIBS_BUILT_SO_FAR,
 )
 LIBS_BUILT_SO_FAR = [kea_asiolink_lib] + LIBS_BUILT_SO_FAR
+subdir('testutils')
+subdir('tests')

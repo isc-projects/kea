@@ -10,4 +10,5 @@ dhcp_bootp_lib = library(
     install: true,
     install_dir: 'lib/kea/hooks',
     link_with: LIBS_BUILT_SO_FAR,
+    name_suffix: 'so'
 )
