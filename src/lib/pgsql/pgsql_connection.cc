@@ -16,25 +16,8 @@
 #include <util/filesystem.h>
 
 #include <exception>
-#include <unordered_map>
-
-// PostgreSQL errors should be tested based on the SQL state code.  Each state
-// code is 5 decimal, ASCII, digits, the first two define the category of
-// error, the last three are the specific error.  PostgreSQL makes the state
-// code as a char[5].  Macros for each code are defined in PostgreSQL's
-// server/utils/errcodes.h, although they require a second macro,
-// MAKE_SQLSTATE for completion.  For example, duplicate key error as:
-//
-// #define ERRCODE_UNIQUE_VIOLATION MAKE_SQLSTATE('2','3','5','0','5')
-//
-// PostgreSQL deliberately omits the MAKE_SQLSTATE macro so callers can/must
-// supply their own.  We'll define it as an initialization list:
-#define MAKE_SQLSTATE(ch1,ch2,ch3,ch4,ch5) {ch1,ch2,ch3,ch4,ch5}
-// So we can use it like this: const char some_error[] = ERRCODE_xxxx;
-#define PGSQL_STATECODE_LEN 5
-#include <utils/errcodes.h>
-
 #include <sstream>
+#include <unordered_map>
 
 using namespace isc::asiolink;
 using namespace isc::data;
@@ -50,8 +33,12 @@ std::string PgSqlConnection::KEA_ADMIN_ = KEA_ADMIN;
 /// @todo: migrate this default timeout to src/bin/dhcpX/simple_parserX.cc
 const int PGSQL_DEFAULT_CONNECTION_TIMEOUT = 5; // seconds
 
-const char PgSqlConnection::DUPLICATE_KEY[] = ERRCODE_UNIQUE_VIOLATION;
-const char PgSqlConnection::NULL_KEY[] = ERRCODE_NOT_NULL_VIOLATION;
+// Length of error codes
+constexpr size_t PGSQL_STATECODE_LEN = 5;
+
+// Error codes from https://www.postgresql.org/docs/current/errcodes-appendix.html or utils/errcodes.h
+const char PgSqlConnection::DUPLICATE_KEY[] = "23505";
+const char PgSqlConnection::NULL_KEY[] = "23502";
 
 bool PgSqlConnection::warned_about_tls = false;
 
