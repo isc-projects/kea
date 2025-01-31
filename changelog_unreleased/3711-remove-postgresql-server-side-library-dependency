@@ -1,0 +1,3 @@
+[build]		andrei
+	Kea no longer depends on a PostgreSQL server development header.
+	(Gitlab #3711)
