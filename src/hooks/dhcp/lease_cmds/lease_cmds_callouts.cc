@@ -378,4 +378,26 @@ int multi_threading_compatible() {
     return (1);
 }
 
+/// @brief leases4_committed callout implementation.
+///
+/// @param handle callout handle.
+int leases4_committed(CalloutHandle& handle) {
+    CalloutHandle::CalloutNextStep status = handle.getStatus();
+    if (status == CalloutHandle::NEXT_STEP_DROP ||
+        status == CalloutHandle::NEXT_STEP_SKIP) {
+        return (0);
+    }
+
+    try {
+        LeaseCmds lease_cmds;
+        lease_cmds.leases4Committed(handle, binding_var_mgr);
+    } catch (const std::exception& ex) {
+        LOG_ERROR(lease_cmds_logger, LEASE_CMDS_LEASES4_COMMITTED_FAILED)
+            .arg(ex.what());
+        return (1);
+    }
+
+    return (0);
+}
+
 } // end extern "C"

@@ -289,6 +289,9 @@ public:
 
     /// @brief Evaluates the binding variables for a given lease and packet pair.
     ///
+    /// Iiterates over the variables in the cache evaluating each on and added its
+    /// name and value to the context.
+    ///
     /// @param query Client packet which produced the lease. Variables whose source
     /// is "query" will be evaluated against this packet.
     /// @param response Server response conveying the lease. Variables whose source

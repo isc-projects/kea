@@ -16,10 +16,12 @@
 #include <dhcpsrv/resource_handler.h>
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
+#include <lease_cmds.h>
 #include <lease_cmds_unittest.h>
 #include <stats/stats_mgr.h>
 #include <testutils/user_context_utils.h>
 #include <testutils/multi_threading_utils.h>
+#include <testutils/gtest_utils.h>
 
 #include <gtest/gtest.h>
 
@@ -36,6 +38,7 @@ using namespace isc::dhcp_ddns;
 using namespace isc::asiolink;
 using namespace isc::stats;
 using namespace isc::test;
+using namespace isc::lease_cmds;
 
 namespace {
 
@@ -444,6 +447,10 @@ public:
 
     /// @brief Check that lease4-write works as expected.
     void testLease4Write();
+
+    /// @brief Check that lease4-committed handler works as expected with
+    /// valid inputs.
+    void testValidLeases4Committed();
 };
 
 void Lease4CmdsTest::testLease4AddMissingParams() {
@@ -3482,6 +3489,141 @@ void Lease4CmdsTest::testLease4Write() {
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
+#define SCOPED_LINE(line) \
+    std::stringstream ss; \
+    ss << "Scenario at line: " << line; \
+    SCOPED_TRACE(ss.str());
+
+void Lease4CmdsTest::testValidLeases4Committed() {
+    // Initialize lease manager (false = v4, true = add leases)
+    initLeaseMgr(false, true);
+
+    struct Scenario {
+        uint32_t line_;
+        std::string config_;
+        std::string orig_context_;
+        std::string exp_context_;
+    };
+
+    std::list<Scenario> scenarios = {
+    {
+        // No variables configured, nothing in lease context.
+        __LINE__,
+        R"({})",
+        R"({})",
+        R"({})"
+    },{
+        // lease context has no binding-variables, two configured
+        __LINE__,
+        R"^({"binding-variables":[
+            {
+                "name": "hwaddr",
+                "expression": "hexstring(pkt4.mac,':')",
+                "source": "query"
+            },
+            {
+                "name": "yiaddr",
+                "expression": "addrtotext(pkt4.yiaddr)",
+                "source": "response"
+            }]})^",
+        R"({})",
+        R"({"ISC":{
+            "binding-variables":{
+                "hwaddr": "01:02:03:04:05:06",
+                "yiaddr": "192.0.2.1"
+            }
+        }})",
+    },
+    {
+        // lease context has binding-variables, none configured
+        // Current logic leaves lease untouched.
+        __LINE__,
+        R"({})",
+        R"({"ISC":{
+            "binding-variables":{
+                "hwaddr": "01:02:03:04:05:06",
+                "yiaddr": "192.0.2.1"
+            }
+        }})",
+        R"({"ISC":{
+            "binding-variables":{
+                "hwaddr": "01:02:03:04:05:06",
+                "yiaddr": "192.0.2.1"
+            }
+        }})",
+    },
+    {
+        // Evaluated variable value is an empty string.
+        __LINE__,
+        R"^({"binding-variables":[
+            {
+                "name": "hwaddr",
+                "expression": "''",
+                "source": "query"
+            }]})^",
+        R"({"ISC":{
+            "binding-variables":{
+                "hwaddr": "01:02:03:04:05:06"
+            }
+        }})",
+        R"({"ISC":{
+            "binding-variables":{
+                "hwaddr": ""
+            }
+        }})",
+    }};
+
+    // Create packet pair and lease.
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 1234));
+    query->setHWAddr(1, 6, { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06 });
+
+    Pkt4Ptr response(new Pkt4(DHCPOFFER, 1234));
+    IOAddress yiaddr("192.0.2.1");
+    response->setYiaddr(yiaddr);
+
+    // Iterater over scenarios.
+    for (auto const& scenario : scenarios) {
+        SCOPED_LINE(scenario.line_);
+
+        // Create and configure the manager.
+        BindingVariableMgrPtr mgr;
+        ASSERT_NO_THROW_LOG(mgr.reset(new BindingVariableMgr(AF_INET)));
+        ConstElementPtr config;
+        ASSERT_NO_THROW_LOG(config = Element::fromJSON(scenario.config_));
+        ASSERT_NO_THROW_LOG(mgr->configure(config));
+
+        // Fetch the lease and set its user-context to the original content.
+        Lease4Ptr orig_lease = lmptr_->getLease4(yiaddr);
+        ASSERT_TRUE(orig_lease);
+        ConstElementPtr orig_context;
+        ASSERT_NO_THROW_LOG(orig_context = Element::fromJSON(scenario.orig_context_));
+        orig_lease->setContext(orig_context);
+        ASSERT_NO_THROW_LOG(lmptr_->updateLease4(orig_lease));
+
+        Lease4CollectionPtr leases(new Lease4Collection());
+        leases->push_back(orig_lease);
+
+        // Create a callout handle and add the expected arguments.
+        CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+        callout_handle->setArgument("query4", query);
+        callout_handle->setArgument("response4", response);
+        callout_handle->setArgument("leases4", leases);
+
+        // Invoke the leases4Committed handler.
+        LeaseCmds cmds;
+        ASSERT_NO_THROW_LOG(cmds.leases4Committed(*callout_handle, mgr));
+
+        // Fetch the lease.
+        Lease4Ptr after_lease = lmptr_->getLease4(yiaddr);
+        ASSERT_TRUE(after_lease);
+
+        // Context contents should match the expected context content.
+        ConstElementPtr exp_context;
+        ASSERT_NO_THROW_LOG(exp_context = Element::fromJSON(scenario.exp_context_));
+        ASSERT_EQ(*(after_lease->getContext()), *exp_context);
+    }
+}
+
 TEST_F(Lease4CmdsTest, lease4AddMissingParams) {
     testLease4AddMissingParams();
 }
@@ -4208,6 +4350,15 @@ TEST_F(Lease4CmdsTest, lease4Write) {
 TEST_F(Lease4CmdsTest, lease4WriteMultiThreading) {
     MultiThreadingTest mt(true);
     testLease4Write();
+}
+
+TEST_F(Lease4CmdsTest, validLeases4Committed) {
+    testValidLeases4Committed();
+}
+
+TEST_F(Lease4CmdsTest, validLeases4CommittedMultiThreading) {
+    MultiThreadingTest mt(true);
+    testValidLeases4Committed();
 }
 
 } // end of anonymous namespace

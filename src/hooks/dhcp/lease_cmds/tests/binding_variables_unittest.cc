@@ -6,7 +6,6 @@
 
 #include <config.h>
 
-
 #include <binding_variables.h>
 #include <exceptions/exceptions.h>
 #include <cc/data.h>
@@ -14,6 +13,7 @@
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/lease.h>
+
 #include <testutils/gtest_utils.h>
 #include <testutils/user_context_utils.h>
 #include <testutils/multi_threading_utils.h>
@@ -26,6 +26,7 @@ using namespace isc::dhcp;
 using namespace isc::data;
 using namespace isc::test;
 using namespace isc::asiolink;
+using namespace isc::hooks;
 
 using namespace isc::lease_cmds;
 

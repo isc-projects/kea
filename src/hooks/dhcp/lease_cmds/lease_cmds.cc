@@ -43,6 +43,7 @@ using namespace isc::asiolink;
 using namespace isc::hooks;
 using namespace isc::stats;
 using namespace isc::util;
+using namespace isc::log;
 using namespace std;
 
 namespace isc {
@@ -471,6 +472,19 @@ public:
         }
         return (isc->get("relay-info"));
     }
+
+    /// @brief leases4-committed hookpoint handler.
+    ///
+    /// Evaluates the binding variables (if any), and updates the given lease's
+    /// user-context accordingly.  This includes updating the lease in the lease
+    /// back end.
+    ///
+    /// @param handle Callout context - which is expected to contain the query4, response4,
+    /// and leases4 argumeents.
+    /// @param mgr Pointer to the BindingVariableMgr singleton.
+    /// @throw 
+    static void leases4Committed(CalloutHandle& callout_handle, 
+                                 BindingVariableMgrPtr mgr);
 };
 
 void
@@ -2698,6 +2712,42 @@ LeaseCmdsImpl::leaseWriteHandler(CalloutHandle& handle) {
     return (0);
 }
 
+void
+LeaseCmdsImpl::leases4Committed(CalloutHandle& callout_handle,
+                                BindingVariableMgrPtr mgr) {
+    Pkt4Ptr query;
+    Pkt4Ptr response;
+    Lease4CollectionPtr leases;
+
+    // Get the necessary arguments.
+    callout_handle.getArgument("query4", query);
+    callout_handle.getArgument("response4", response);
+    callout_handle.getArgument("leases4", leases);
+
+    // In some cases we may have no leases, e.g. DHCPNAK.
+    if (leases->empty()) {
+        LOG_DEBUG(lease_cmds_logger, DBGLVL_TRACE_BASIC, 
+                  LEASE_CMDS_LEASES4_COMMITTED_NOTHING_TO_UPDATE)
+            .arg(query->getLabel());
+        return;
+    }
+
+    Lease4Ptr lease = (*leases)[0];
+    try {
+        if (mgr->evaluateVariables(query, response, lease)) {
+            LeaseMgrFactory::instance().updateLease4(lease);
+        }
+    } catch (const NoSuchLease&) {
+        isc_throw(LeaseCmdsConflict, "failed to update"
+                  " the lease with address " << lease->addr_ << 
+                  " either because the lease has been"
+                  " deleted or it has changed in the database");
+    } catch (const std::exception& ex) {
+        isc_throw(Unexpected, "evaluating binding variables failed for "
+                  << query->getLabel() << ", :" << ex.what());
+    }
+}
+
 int
 LeaseCmds::leaseAddHandler(CalloutHandle& handle) {
     return (impl_->leaseAddHandler(handle));
@@ -2791,6 +2841,13 @@ LeaseCmds::leaseWriteHandler(CalloutHandle& handle) {
 }
 
 LeaseCmds::LeaseCmds() : impl_(new LeaseCmdsImpl()) {
+}
+
+
+void
+LeaseCmds::leases4Committed(CalloutHandle& callout_handle,
+                            BindingVariableMgrPtr mgr) {
+    impl_->leases4Committed(callout_handle, mgr);
 }
 
 } // end of namespace lease_cmds

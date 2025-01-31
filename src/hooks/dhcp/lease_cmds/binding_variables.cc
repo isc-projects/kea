@@ -29,7 +29,7 @@ BindingVariable::BindingVariable(const std::string& name,
         isc_throw(BadValue, "BindingVariable - name cannot be empty");
     }
 
-    /// @todo If we add socpes we may wish to allow higher order
+    /// @todo If we add scopes we may wish to allow higher order
     /// scopes to override lower scopes with empty expressions.
     if (expression_str_.empty()) {
         isc_throw(BadValue, "BindingVariable - '" << name_
@@ -223,10 +223,14 @@ BindingVariableMgr::configure(data::ConstElementPtr config) {
 
 bool
 BindingVariableMgr::evaluateVariables(PktPtr query, PktPtr response, LeasePtr lease) {
+    if (!query || !response || !lease) {
+        isc_throw(BadValue, "evaluateVariables - missing query, response, and/or lease");
+    }
+
     if (!cache_->size()) {
         /// @todo If the lease has binding-variables in its context from a prior
         /// update, but config changed and now there are none defined, should we
-        /// removed them from the lease?
+        /// removed them from the lease? For now, we'll leave them.
         return(false);
     }
 

@@ -8,6 +8,7 @@
 #define LEASE_CMDS_H
 
 #include <cc/data.h>
+#include <binding_variables.h>
 #include <hooks/hooks.h>
 
 #include <boost/shared_ptr.hpp>
@@ -604,6 +605,19 @@ public:
     /// @return result of the operation
     int
     leaseWriteHandler(hooks::CalloutHandle& handle);
+
+    /// @brief leases4_committed hookpoint handler.
+    ///
+    /// Evaluates the binding variables (if any), and updates the given lease's
+    /// user-context accordingly.  This includes updating the lease in the lease
+    /// back end.
+    ///
+    /// @param handle Callout context - which is expected to contain the query4, response4,
+    /// and leases4 argumeents.
+    /// @param mgr Pointer to the BindingVariableMgr singleton.
+    void 
+    leases4Committed(hooks::CalloutHandle& callout_handle, 
+                     BindingVariableMgrPtr mgr);
 
 private:
     /// Pointer to the actual implementation
