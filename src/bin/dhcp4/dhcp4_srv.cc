@@ -1737,6 +1737,10 @@ Dhcpv4Srv::processLocalizedQuery4(AllocEngine::ClientContext4Ptr& ctx,
             // Also pass the corresponding query packet as argument
             callout_handle->setArgument("query4", query);
 
+            // Also pass the corresponding response packet as argument
+            ScopedEnableOptionsCopy<Pkt4> response4_options_copy(rsp);
+            callout_handle->setArgument("response4", rsp);
+
             Lease4CollectionPtr new_leases(new Lease4Collection());
             // Filter out the new lease if it was reused so not committed.
             if (ctx->new_lease_ && (ctx->new_lease_->reuseable_valid_lft_ == 0)) {

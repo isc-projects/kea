@@ -473,17 +473,35 @@ public:
         return (isc->get("relay-info"));
     }
 
-    /// @brief leases4-committed hookpoint handler.
+    /// @brief lease4_offer hookpoint handler.
+    ///
+    /// If the offer_lifetime argument is zero, it simply returns. Otherwise
+    /// it evaluates the binding variables (if any), and updates the given lease's
+    /// user-context accordingly.  This includes updating the lease in the lease
+    /// back end.
+    ///
+    /// @param handle Callout context - which is expected to contain the query4,
+    /// response4, leases4, offer_lifetime arguments.
+    /// @param mgr Pointer to the BindingVariableMgr singleton.
+    /// @throw Unexpected if there is no active lease or a processing error
+    /// occurs. LeaseCmdsConflict if the update fails because the lease
+    /// no longer exists in the back end.
+    static void lease4Offer(CalloutHandle& callout_handle,
+                            BindingVariableMgrPtr mgr);
+
+    /// @brief leases4_committed hookpoint handler.
     ///
     /// Evaluates the binding variables (if any), and updates the given lease's
     /// user-context accordingly.  This includes updating the lease in the lease
     /// back end.
     ///
-    /// @param handle Callout context - which is expected to contain the query4, response4,
-    /// and leases4 argumeents.
+    /// @param handle Callout context - which is expected to contain the query4,
+    /// response4, and leases4 arguments.
     /// @param mgr Pointer to the BindingVariableMgr singleton.
-    /// @throw 
-    static void leases4Committed(CalloutHandle& callout_handle, 
+    /// @throw Unexpected if there is no active lease or a processing error
+    /// occurs. LeaseCmdsConflict if the update fails because the lease
+    /// no longer exists in the back end.
+    static void leases4Committed(CalloutHandle& callout_handle,
                                  BindingVariableMgrPtr mgr);
 };
 
@@ -2713,6 +2731,45 @@ LeaseCmdsImpl::leaseWriteHandler(CalloutHandle& handle) {
 }
 
 void
+LeaseCmdsImpl::lease4Offer(CalloutHandle& callout_handle,
+                           BindingVariableMgrPtr mgr) {
+    uint32_t offer_lifetime;
+    callout_handle.getArgument("offer_lifetime", offer_lifetime);
+    if (!offer_lifetime) {
+        // Offers leases are not being persisted, nothing to do.
+        return;
+    }
+
+    // Get the remaining arguments we need.
+    Pkt4Ptr query;
+    Pkt4Ptr response;
+    Lease4CollectionPtr leases;
+
+    callout_handle.getArgument("query4", query);
+    callout_handle.getArgument("response4", response);
+    callout_handle.getArgument("leases4", leases);
+
+    if (leases->empty()) {
+        isc_throw(Unexpected, "lease4Offer - no lease!");
+    }
+
+    Lease4Ptr lease = (*leases)[0];
+    try {
+        if (mgr->evaluateVariables(query, response, lease)) {
+            LeaseMgrFactory::instance().updateLease4(lease);
+        }
+    } catch (const NoSuchLease&) {
+        isc_throw(LeaseCmdsConflict, "failed to update"
+                  " the lease with address " << lease->addr_ <<
+                  " either because the lease has been"
+                  " deleted or it has changed in the database");
+    } catch (const std::exception& ex) {
+        isc_throw(Unexpected, "evaluating binding variables failed for: "
+                  << query->getLabel() << ", :" << ex.what());
+    }
+}
+
+void
 LeaseCmdsImpl::leases4Committed(CalloutHandle& callout_handle,
                                 BindingVariableMgrPtr mgr) {
     Pkt4Ptr query;
@@ -2724,11 +2781,9 @@ LeaseCmdsImpl::leases4Committed(CalloutHandle& callout_handle,
     callout_handle.getArgument("response4", response);
     callout_handle.getArgument("leases4", leases);
 
-    // In some cases we may have no leases, e.g. DHCPNAK.
-    if (leases->empty()) {
-        LOG_DEBUG(lease_cmds_logger, DBGLVL_TRACE_BASIC, 
-                  LEASE_CMDS_LEASES4_COMMITTED_NOTHING_TO_UPDATE)
-            .arg(query->getLabel());
+    // In some cases we may have no lease, e.g. DHCPNAK,
+    // or no response e.g. DHCPRELEASE.
+    if (leases->empty() || !response || (response->getType() != DHCPACK)) {
         return;
     }
 
@@ -2739,11 +2794,11 @@ LeaseCmdsImpl::leases4Committed(CalloutHandle& callout_handle,
         }
     } catch (const NoSuchLease&) {
         isc_throw(LeaseCmdsConflict, "failed to update"
-                  " the lease with address " << lease->addr_ << 
+                  " the lease with address " << lease->addr_ <<
                   " either because the lease has been"
                   " deleted or it has changed in the database");
     } catch (const std::exception& ex) {
-        isc_throw(Unexpected, "evaluating binding variables failed for "
+        isc_throw(Unexpected, "evaluating binding variables failed for: "
                   << query->getLabel() << ", :" << ex.what());
     }
 }
@@ -2843,6 +2898,12 @@ LeaseCmds::leaseWriteHandler(CalloutHandle& handle) {
 LeaseCmds::LeaseCmds() : impl_(new LeaseCmdsImpl()) {
 }
 
+
+void
+LeaseCmds::lease4Offer(CalloutHandle& callout_handle,
+                            BindingVariableMgrPtr mgr) {
+    impl_->lease4Offer(callout_handle, mgr);
+}
 
 void
 LeaseCmds::leases4Committed(CalloutHandle& callout_handle,

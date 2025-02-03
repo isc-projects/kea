@@ -606,6 +606,20 @@ public:
     int
     leaseWriteHandler(hooks::CalloutHandle& handle);
 
+    /// @brief lease4_offer hookpoint handler.
+    ///
+    /// If the offer_lifetime callout argument is 0 the handler simply returns.
+    /// Otherwise it will evaluate the binding variables (if any) and update 
+    /// the given lease's user-context accordingly.  This includes updating the
+    /// lease in the lease back end.
+    ///
+    /// @param handle Callout context - which is expected to contain the query4, response4,
+    /// leases4 arguments, and offer_lifetime.
+    /// @param mgr Pointer to the BindingVariableMgr singleton.
+    void
+    lease4Offer(hooks::CalloutHandle& callout_handle,
+                BindingVariableMgrPtr mgr);
+
     /// @brief leases4_committed hookpoint handler.
     ///
     /// Evaluates the binding variables (if any), and updates the given lease's
@@ -613,10 +627,10 @@ public:
     /// back end.
     ///
     /// @param handle Callout context - which is expected to contain the query4, response4,
-    /// and leases4 argumeents.
+    /// and leases4 arguments.
     /// @param mgr Pointer to the BindingVariableMgr singleton.
-    void 
-    leases4Committed(hooks::CalloutHandle& callout_handle, 
+    void
+    leases4Committed(hooks::CalloutHandle& callout_handle,
                      BindingVariableMgrPtr mgr);
 
 private:

@@ -2157,6 +2157,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedRequest) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query4");
+    expected_argument_names.push_back("response4");
     expected_argument_names.push_back("deleted_leases4");
     expected_argument_names.push_back("leases4");
 
@@ -2272,6 +2273,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedDecline) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query4");
+    expected_argument_names.push_back("response4");
     expected_argument_names.push_back("deleted_leases4");
     expected_argument_names.push_back("leases4");
 
@@ -2320,6 +2322,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedRelease) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query4");
+    expected_argument_names.push_back("response4");
     expected_argument_names.push_back("deleted_leases4");
     expected_argument_names.push_back("leases4");
 
@@ -2367,6 +2370,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedCache) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query4");
+    expected_argument_names.push_back("response4");
     expected_argument_names.push_back("deleted_leases4");
     expected_argument_names.push_back("leases4");
 
@@ -2439,6 +2443,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedParkRequests) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query4");
+    expected_argument_names.push_back("response4");
     expected_argument_names.push_back("deleted_leases4");
     expected_argument_names.push_back("leases4");
 
@@ -3677,6 +3682,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4OfferDiscover) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query4");
+    expected_argument_names.push_back("response4");
     expected_argument_names.push_back("leases4");
     expected_argument_names.push_back("offer_lifetime");
     expected_argument_names.push_back("old_lease");
@@ -3830,6 +3836,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4OfferParkRequests) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query4");
+    expected_argument_names.push_back("response4");
     expected_argument_names.push_back("leases4");
     expected_argument_names.push_back("offer_lifetime");
     expected_argument_names.push_back("old_lease");
@@ -4046,6 +4053,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4OfferDiscoverDecline) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query4");
+    expected_argument_names.push_back("response4");
     expected_argument_names.push_back("leases4");
     expected_argument_names.push_back("offer_lifetime");
     expected_argument_names.push_back("old_lease");
