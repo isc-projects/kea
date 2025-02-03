@@ -145,7 +145,7 @@ CtrlAgentProcess::configure(isc::data::ConstElementPtr config_set,
                 if (listener->getTlsContext()) {
                     if (ctx->getTrustAnchor().empty()) {
                         // Can not switch from HTTPS to HTTP
-                        LOG_INFO(agent_logger, CTRL_AGENT_HTTPS_SERVICE_REUSED)
+                        LOG_ERROR(agent_logger, CTRL_AGENT_HTTPS_SERVICE_REUSED)
                             .arg(server_address.toText())
                             .arg(server_port);
                     } else {
@@ -161,10 +161,13 @@ CtrlAgentProcess::configure(isc::data::ConstElementPtr config_set,
                         it->second->config_->setAuthConfig(ctx->getAuthConfig());
                         it->second->config_->setHttpHeaders(ctx->getHttpHeaders());
                         getIOService()->post([listener, tls_context]() { listener->setTlsContext(tls_context); });
+                        LOG_INFO(agent_logger, CTRL_AGENT_HTTPS_SERVICE_UPDATED)
+                            .arg(server_address.toText())
+                            .arg(server_port);
                     }
                 } else if (!ctx->getTrustAnchor().empty()) {
                     // Can not switch from HTTP to HTTPS
-                    LOG_INFO(agent_logger, CTRL_AGENT_HTTP_SERVICE_REUSED)
+                    LOG_ERROR(agent_logger, CTRL_AGENT_HTTP_SERVICE_REUSED)
                         .arg(server_address.toText())
                         .arg(server_port);
                 }
@@ -270,7 +273,7 @@ CtrlAgentProcess::closeCommandSockets() {
     // We have stopped listeners but there may be some pending handlers
     // related to these listeners. Need to invoke these handlers.
     try {
-        getIOService()->pollOne();
+        getIOService()->poll();
     } catch (...) {
     }
 }

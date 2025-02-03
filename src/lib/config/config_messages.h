@@ -36,11 +36,10 @@ extern const isc::log::MessageID COMMAND_WATCH_SOCKET_CLEAR_ERROR;
 extern const isc::log::MessageID COMMAND_WATCH_SOCKET_CLOSE_ERROR;
 extern const isc::log::MessageID COMMAND_WATCH_SOCKET_MARK_READY_ERROR;
 extern const isc::log::MessageID HTTP_COMMAND_MGR_HTTPS_SERVICE_REUSED;
+extern const isc::log::MessageID HTTP_COMMAND_MGR_HTTPS_SERVICE_UPDATED;
 extern const isc::log::MessageID HTTP_COMMAND_MGR_HTTP_SERVICE_REUSED;
 extern const isc::log::MessageID HTTP_COMMAND_MGR_SERVICE_STARTED;
 extern const isc::log::MessageID HTTP_COMMAND_MGR_SERVICE_STOPPING;
-extern const isc::log::MessageID HTTP_COMMAND_MGR_SERVICE_STOPPING_ALL;
-extern const isc::log::MessageID HTTP_COMMAND_MGR_SERVICE_STOPPING_NO_DATA;
 
 } // namespace config
 } // namespace isc

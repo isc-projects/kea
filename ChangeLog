@@ -1,3 +1,9 @@
+2324.	[func]		razvan
+	It is not necessary to restart the server to apply changes in the
+	TLS configuration. Running the "config-reload" command is
+	sufficient.
+	(Gitlab #3694)
+
 Kea 2.7.6 (development) released on January 29, 2025
 
 2323.	[func]*		fdupont

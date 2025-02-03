@@ -53,6 +53,11 @@ This informational message indicates that the server has started HTTPS service
 on the specified address and port. All control commands should be sent to this
 address and port over a TLS channel.
 
+% CTRL_AGENT_HTTPS_SERVICE_UPDATED reused HTTPS service bound to address %1:%2 and updated TLS settings
+This informational message indicates that the server has reused existing
+HTTPS service on the specified address and port. Note that any change in
+the TLS setup has been applied.
+
 % CTRL_AGENT_HTTP_SERVICE_REUSED reused HTTP service bound to address %1:%2
 This informational message indicates that the server has reused existing
 HTTP service on the specified address and port.

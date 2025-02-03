@@ -58,7 +58,9 @@ public:
     void closeCommandSocket(HttpSocketInfoPtr info, bool remove);
 
     /// @brief Close control socket.
-    void closeCommandSockets();
+    ///
+    /// @param remove When true remove the listeners immediately.
+    void closeCommandSockets(bool remove = true);
 
     /// @brief Returns a const pointer to the HTTP listener.
     ///
@@ -133,7 +135,7 @@ HttpCommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr config) {
             if (listener->getTlsContext()) {
                 if (cmd_config->getTrustAnchor().empty()) {
                     // Can not switch from HTTPS to HTTP
-                    LOG_INFO(command_logger, HTTP_COMMAND_MGR_HTTPS_SERVICE_REUSED)
+                    LOG_ERROR(command_logger, HTTP_COMMAND_MGR_HTTPS_SERVICE_REUSED)
                         .arg(server_address.toText())
                         .arg(server_port);
                 } else {
@@ -151,10 +153,13 @@ HttpCommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr config) {
                     it->second->config_->setHttpHeaders(cmd_config->getHttpHeaders());
                     it->second->config_->setEmulateAgentResponse(cmd_config->getEmulateAgentResponse());
                     io_service_->post([listener, tls_context]() { listener->setTlsContext(tls_context); });
+                    LOG_INFO(command_logger, HTTP_COMMAND_MGR_HTTPS_SERVICE_UPDATED)
+                        .arg(server_address.toText())
+                        .arg(server_port);
                 }
             } else if (!cmd_config->getTrustAnchor().empty()) {
                 // Can not switch from HTTP to HTTPS
-                LOG_INFO(command_logger, HTTP_COMMAND_MGR_HTTP_SERVICE_REUSED)
+                LOG_ERROR(command_logger, HTTP_COMMAND_MGR_HTTP_SERVICE_REUSED)
                     .arg(server_address.toText())
                     .arg(server_port);
             }
@@ -233,50 +238,22 @@ HttpCommandMgrImpl::closeCommandSocket(HttpSocketInfoPtr info, bool remove) {
                 sockets_.erase(it);
             }
         }
+        // We have stopped listeners but there may be some pending handlers
+        // related to these listeners. Need to invoke these handlers.
+        try {
+            io_service_->pollOne();
+        } catch (...) {
+        }
     } else {
-        for (auto const& data : sockets_) {
-            ostringstream ep;
-            use_https = !data.second->config_->getCertFile().empty();
-            ep << "bound to address " << data.second->config_->getSocketAddress()
-               << " port " << data.second->config_->getSocketPort();
-
-            LOG_INFO(command_logger, HTTP_COMMAND_MGR_SERVICE_STOPPING_NO_DATA)
-                .arg(use_https ? "HTTPS" : "HTTP")
-                .arg(ep.str());
-            data.second->listener_->stop();
-        }
-        if (remove) {
-            sockets_.clear();
-        }
-    }
-    // We have stopped listeners but there may be some pending handlers
-    // related to these listeners. Need to invoke these handlers.
-    try {
-        io_service_->pollOne();
-    } catch (...) {
+        closeCommandSockets(remove);
     }
 }
 
 void
-HttpCommandMgrImpl::closeCommandSockets() {
-    bool use_https = false;
-    for (auto const& data : sockets_) {
-        ostringstream ep;
-        use_https = !data.second->config_->getCertFile().empty();
-        ep << "bound to address " << data.second->config_->getSocketAddress()
-           << " port " << data.second->config_->getSocketPort();
-
-        LOG_INFO(command_logger, HTTP_COMMAND_MGR_SERVICE_STOPPING_ALL)
-            .arg(use_https ? "HTTPS" : "HTTP")
-            .arg(ep.str());
-        data.second->listener_->stop();
-    }
-    sockets_.clear();
-    // We have stopped listeners but there may be some pending handlers
-    // related to these listeners. Need to invoke these handlers.
-    try {
-        io_service_->pollOne();
-    } catch (...) {
+HttpCommandMgrImpl::closeCommandSockets(bool remove) {
+    auto copy = sockets_;
+    for (auto const& data : copy) {
+        closeCommandSocket(data.second, remove);
     }
 }
 

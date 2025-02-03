@@ -17,6 +17,7 @@ extern const isc::log::MessageID CTRL_AGENT_CONFIG_SYNTAX_WARNING = "CTRL_AGENT_
 extern const isc::log::MessageID CTRL_AGENT_FAILED = "CTRL_AGENT_FAILED";
 extern const isc::log::MessageID CTRL_AGENT_HTTPS_SERVICE_REUSED = "CTRL_AGENT_HTTPS_SERVICE_REUSED";
 extern const isc::log::MessageID CTRL_AGENT_HTTPS_SERVICE_STARTED = "CTRL_AGENT_HTTPS_SERVICE_STARTED";
+extern const isc::log::MessageID CTRL_AGENT_HTTPS_SERVICE_UPDATED = "CTRL_AGENT_HTTPS_SERVICE_UPDATED";
 extern const isc::log::MessageID CTRL_AGENT_HTTP_SERVICE_REUSED = "CTRL_AGENT_HTTP_SERVICE_REUSED";
 extern const isc::log::MessageID CTRL_AGENT_HTTP_SERVICE_STARTED = "CTRL_AGENT_HTTP_SERVICE_STARTED";
 extern const isc::log::MessageID CTRL_AGENT_RUN_EXIT = "CTRL_AGENT_RUN_EXIT";
@@ -38,6 +39,7 @@ const char* values[] = {
     "CTRL_AGENT_FAILED", "application experienced a fatal error: %1",
     "CTRL_AGENT_HTTPS_SERVICE_REUSED", "reused HTTPS service bound to address %1:%2",
     "CTRL_AGENT_HTTPS_SERVICE_STARTED", "HTTPS service bound to address %1:%2",
+    "CTRL_AGENT_HTTPS_SERVICE_UPDATED", "reused HTTPS service bound to address %1:%2 and updated TLS settings",
     "CTRL_AGENT_HTTP_SERVICE_REUSED", "reused HTTP service bound to address %1:%2",
     "CTRL_AGENT_HTTP_SERVICE_STARTED", "HTTP service bound to address %1:%2",
     "CTRL_AGENT_RUN_EXIT", "application is exiting the event loop",

@@ -158,6 +158,11 @@ This informational message indicates that the server has reused existing
 HTTPS service on the specified address and port. Note that any change in
 the TLS setup was ignored.
 
+% HTTP_COMMAND_MGR_HTTPS_SERVICE_UPDATED reused HTTPS service bound to address %1:%2 and updated TLS settings
+This informational message indicates that the server has reused existing
+HTTPS service on the specified address and port. Note that any change in
+the TLS setup has been applied.
+
 % HTTP_COMMAND_MGR_HTTP_SERVICE_REUSED reused HTTP service bound to address %1:%2
 This informational message indicates that the server has reused existing
 HTTP service on the specified address and port.
@@ -170,12 +175,3 @@ control commands.
 % HTTP_COMMAND_MGR_SERVICE_STOPPING Server is stopping %1 service %2
 This informational message indicates that the server has stopped
 HTTP/HTTPS service. When known the address and port are displayed.
-
-% HTTP_COMMAND_MGR_SERVICE_STOPPING_ALL stopping %1 service %2
-This informational message indicates that the server has stopped
-HTTP/HTTPS service. When known the address and port are displayed.
-
-% HTTP_COMMAND_MGR_SERVICE_STOPPING_NO_DATA Server is stopping all services including %1 service %2
-This informational message indicates that the server is stopping all
-HTTP/HTTPS services. When known the address and port are displayed for
-each service.

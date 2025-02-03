@@ -523,7 +523,9 @@ public:
     void closeCommandSocket(UnixSocketInfoPtr info);
 
     /// @brief Shuts down any open unix control sockets
-    void closeCommandSockets();
+    ///
+    /// @param remove When true remove the listeners immediately.
+    void closeCommandSockets(bool remove = true);
 
     /// @brief Asynchronously accepts next connection.
     ///
@@ -679,61 +681,24 @@ UnixCommandMgrImpl::closeCommandSocket(UnixSocketInfoPtr info) {
         if (it != sockets_.end()) {
             sockets_.erase(it);
         }
-    } else {
-        for (auto const& data : sockets_) {
-            if (data.second->acceptor_ && data.second->acceptor_->isOpen()) {
-                if (use_external_) {
-                    IfaceMgr::instance().deleteExternalSocket(data.second->acceptor_->getNative());
-                }
-                data.second->acceptor_->close();
-                static_cast<void>(::remove(data.second->config_->getSocketName().c_str()));
-                static_cast<void>(::remove(data.second->config_->getLockName().c_str()));
-            }
-
-            // Stop all connections which can be closed. The only connection that won't
-            // be closed is the one over which we have received a request to reconfigure
-            // the server. This connection will be held until the UnixCommandMgr
-            // responds to such request.
-            connection_pool_.stopAll();
-            if (data.second->lock_fd_ != -1) {
-                close(data.second->lock_fd_);
-                data.second->lock_fd_ = -1;
-            }
+        try {
+            io_service_->pollOne();
+        } catch (...) {
         }
-    }
-    try {
-        io_service_->pollOne();
-    } catch (...) {
+    } else {
+        closeCommandSockets(false);
     }
 }
 
 void
-UnixCommandMgrImpl::closeCommandSockets() {
-    for (auto const& data : sockets_) {
-        if (data.second->acceptor_ && data.second->acceptor_->isOpen()) {
-            if (use_external_) {
-                IfaceMgr::instance().deleteExternalSocket(data.second->acceptor_->getNative());
-            }
-            data.second->acceptor_->close();
-            static_cast<void>(::remove(data.second->config_->getSocketName().c_str()));
-            static_cast<void>(::remove(data.second->config_->getLockName().c_str()));
-        }
-
-        // Stop all connections which can be closed. The only connection that won't
-        // be closed is the one over which we have received a request to reconfigure
-        // the server. This connection will be held until the UnixCommandMgr
-        // responds to such request.
-        connection_pool_.stopAll();
-        if (data.second->lock_fd_ != -1) {
-            close(data.second->lock_fd_);
-            data.second->lock_fd_ = -1;
-        }
+UnixCommandMgrImpl::closeCommandSockets(bool remove) {
+    auto copy = sockets_;
+    for (auto const& data : copy) {
+        closeCommandSocket(data.second);
     }
-    try {
-        io_service_->pollOne();
-    } catch (...) {
+    if (remove) {
+        sockets_.clear();
     }
-    sockets_.clear();
 }
 
 void

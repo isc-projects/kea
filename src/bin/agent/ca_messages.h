@@ -18,6 +18,7 @@ extern const isc::log::MessageID CTRL_AGENT_CONFIG_SYNTAX_WARNING;
 extern const isc::log::MessageID CTRL_AGENT_FAILED;
 extern const isc::log::MessageID CTRL_AGENT_HTTPS_SERVICE_REUSED;
 extern const isc::log::MessageID CTRL_AGENT_HTTPS_SERVICE_STARTED;
+extern const isc::log::MessageID CTRL_AGENT_HTTPS_SERVICE_UPDATED;
 extern const isc::log::MessageID CTRL_AGENT_HTTP_SERVICE_REUSED;
 extern const isc::log::MessageID CTRL_AGENT_HTTP_SERVICE_STARTED;
 extern const isc::log::MessageID CTRL_AGENT_RUN_EXIT;
