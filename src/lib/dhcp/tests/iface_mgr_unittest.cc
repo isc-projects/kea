@@ -1694,7 +1694,7 @@ TEST_F(IfaceMgrTest, setPacketFilter6) {
     EXPECT_NO_THROW(iface_mgr->setPacketFilter(custom_packet_filter));
 }
 
-#if defined OS_LINUX || OS_BSD
+#if defined(OS_LINUX) || defined(OS_BSD)
 
 // This test is only supported on Linux and BSD systems. It checks
 // if it is possible to use the IfaceMgr to select the packet filter
