@@ -20,6 +20,9 @@ KEA_ADMIN = f'@TOP_BUILD_DIR@/src/bin/admin/kea-admin'
 KEA_LFC = f'@TOP_BUILD_DIR@/src/bin/lfc/kea-lfc'
 TEST_CA_DIR = f'@TOP_SOURCE_DIR@/src/lib/asiolink/testutils/ca'
 
+# TODO: Control it via a build option.
+FUZZING_IN_CI = false
+
 #### Configuration Data
 
 conf_data = configuration_data(
@@ -287,12 +290,12 @@ message(f'Detected system "@SYSTEM@".')
 
 #### System-specific Compiler Flags
 
-prefix = get_option('prefix')
+PREFIX = get_option('prefix')
 if SYSTEM == 'darwin'
     add_project_arguments('-D__APPLE_USE_RFC_3542', language: 'cpp')
-    add_project_link_arguments(f'-Wl,-rpath,@prefix@/lib', language: 'cpp')
+    add_project_link_arguments(f'-Wl,-rpath,@PREFIX@/lib', language: 'cpp')
 else
-    add_project_link_arguments(f'-Wl,-rpath=@prefix@/lib', language: 'cpp')
+    add_project_link_arguments(f'-Wl,-rpath=@PREFIX@/lib', language: 'cpp')
 endif
 
 have_premium = fs.is_dir('premium')
@@ -332,6 +335,7 @@ INCLUDES = [
 
 LIBS_BUILT_SO_FAR = []
 subdir('src')
+subdir('fuzz')
 if have_premium
     subdir('premium')
 endif
