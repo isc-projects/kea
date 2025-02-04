@@ -6,6 +6,6 @@ kea_dhcp_ddns_tests = executable(
     'test_utils.cc',
     dependencies: [gtest],
     include_directories: [include_directories('.')] + INCLUDES,
-    link_with: LIBS_BUILT_SO_FAR + [kea_testutils_lib, kea_util_unittests_lib],
+    link_with: [kea_testutils_lib, kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )
 test('kea_dhcp_ddns_tests', kea_dhcp_ddns_tests, protocol: 'gtest')

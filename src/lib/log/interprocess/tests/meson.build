@@ -6,6 +6,6 @@ kea_log_interprocess_tests = executable(
     cpp_args: [f'-DTEST_DATA_TOPBUILDDIR="@TOP_BUILD_DIR@"'],
     dependencies: [gtest],
     include_directories: [include_directories('.')] + INCLUDES,
-    link_with: LIBS_BUILT_SO_FAR + [kea_util_unittests_lib],
+    link_with: [kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )
 test('kea_log_interprocess_tests', kea_log_interprocess_tests, protocol: 'gtest')

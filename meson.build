@@ -115,6 +115,7 @@ conf_data = configuration_data(
 boost = dependency('boost', version: '>=1.66')
 gtest = dependency('gtest', required: false)
 log4cplus = dependency('log4cplus')
+threads = dependency('threads')
 
 # Cryptography
 crypto = disabler()
@@ -135,10 +136,7 @@ elif botan.found()
     conf_data.set('WITH_BOTAN', true)
     message('Using Botan.')
     message('Checking Botan Boost support.')
-    cpp.has_header(
-        'botan/asio_stream.h',
-        dependencies: botan,
-        required: true)
+    cpp.has_header('botan/asio_stream.h', dependencies: [botan], required: true)
 endif
 if not crypto.found()
     error('Build failed: Could not find neither botan nor openssl libraries.')
@@ -213,7 +211,7 @@ foreach dep : ['yang', 'yang-cpp', 'sysrepo', 'sysrepo-cpp']
         if lib.found()
             netconf_deps = netconf_deps + {
                 dep: declare_dependency(
-                    dependencies: lib,
+                    dependencies: [lib],
                     include_directories: include_directories(
                         f'/opt/@dep@/include',
                     ),
@@ -309,6 +307,8 @@ configure_file(
     input: 'meson-config.h.in',
     output: 'config.h',
     configuration: conf_data,
+    install: true,
+    install_dir: 'include/kea',
 )
 
 # TODO: Change to kea_version.h.in when autotools are removed.
@@ -316,6 +316,8 @@ configure_file(
     input: 'meson-kea_version.h.in',
     output: 'kea_version.h',
     configuration: conf_data,
+    install: true,
+    install_dir: 'include/kea',
 )
 
 #### Default Includes

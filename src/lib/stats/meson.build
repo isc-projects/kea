@@ -1,11 +1,9 @@
 kea_stats_lib = library(
     'kea-stats',
     'context.cc',
-    'context.h',
     'observation.cc',
-    'observation.h',
     'stats_mgr.cc',
-    'stats_mgr.h',
+    dependencies: [boost],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib',
@@ -13,3 +11,5 @@ kea_stats_lib = library(
 )
 LIBS_BUILT_SO_FAR = [kea_stats_lib] + LIBS_BUILT_SO_FAR
 subdir('tests')
+kea_stats_headers = ['context.h', 'observation.h', 'stats_mgr.h']
+install_headers(kea_stats_headers, preserve_path: true, subdir: 'kea/stats')

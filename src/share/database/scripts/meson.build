@@ -1,2 +1,2 @@
 subdir('mysql')
-# subdir('pgsql')
+subdir('pgsql')

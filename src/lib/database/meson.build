@@ -1,24 +1,15 @@
 kea_database_lib = library(
     'kea-database',
     'audit_entry.cc',
-    'audit_entry.h',
     'backend_selector.cc',
-    'backend_selector.h',
     'database_connection.cc',
-    'database_connection.h',
     'dbaccess_parser.cc',
-    'dbaccess_parser.h',
-    'db_exceptions.h',
     'db_log.cc',
-    'db_log.h',
     'db_messages.cc',
-    'db_messages.h',
     'server.cc',
-    'server.h',
     'server_collection.cc',
-    'server_collection.h',
     'server_selector.cc',
-    'server_selector.h',
+    dependencies: [boost],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib',
@@ -27,3 +18,20 @@ kea_database_lib = library(
 LIBS_BUILT_SO_FAR = [kea_database_lib] + LIBS_BUILT_SO_FAR
 subdir('testutils')
 subdir('tests')
+kea_database_headers = [
+    'audit_entry.h',
+    'backend_selector.h',
+    'database_connection.h',
+    'dbaccess_parser.h',
+    'db_exceptions.h',
+    'db_log.h',
+    'db_messages.h',
+    'server_collection.h',
+    'server.h',
+    'server_selector.h',
+]
+install_headers(
+    kea_database_headers,
+    preserve_path: true,
+    subdir: 'kea/database',
+)

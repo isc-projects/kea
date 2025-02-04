@@ -19,11 +19,16 @@ kea_util_lib = library(
     'versioned_csv_file.cc',
     'watched_thread.cc',
     'watch_socket.cc',
+    dependencies: [boost, threads],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib',
     link_with: LIBS_BUILT_SO_FAR,
 )
+subdir('io')
+subdir('unittests')
+LIBS_BUILT_SO_FAR = [kea_util_lib] + LIBS_BUILT_SO_FAR
+subdir('tests')
 kea_util_headers = [
     'bigints.h',
     'boost_time_utils.h',
@@ -35,6 +40,9 @@ kea_util_headers = [
     'encode/encode.h',
     'encode/utf8.h',
     'filesystem.h',
+    'io/fd.h',
+    'io/pktinfo_utilities.h',
+    'io/sockaddr_util.h',
     'hash.h',
     'io.h',
     'labeled_value.h',
@@ -57,10 +65,6 @@ kea_util_headers = [
     'unlock_guard.h',
     'versioned_csv_file.h',
     'watched_thread.h',
-    'watch_socket.h'
+    'watch_socket.h',
 ]
 install_headers(kea_util_headers, preserve_path: true, subdir: 'kea/util')
-subdir('io')
-subdir('unittests')
-LIBS_BUILT_SO_FAR = [kea_util_lib] + LIBS_BUILT_SO_FAR
-subdir('tests')

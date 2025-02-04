@@ -14,7 +14,6 @@ kea_util_tests = executable(
     'io_unittests.cc',
     'labeled_value_unittest.cc',
     'memory_segment_common_unittest.cc',
-    'memory_segment_common_unittest.h',
     'memory_segment_local_unittest.cc',
     'multi_threading_mgr_unittest.cc',
     'optional_unittest.cc',
@@ -39,6 +38,6 @@ kea_util_tests = executable(
     ],
     dependencies: [gtest],
     include_directories: [include_directories('.')] + INCLUDES,
-    link_with: LIBS_BUILT_SO_FAR + [kea_util_unittests_lib],
+    link_with: [kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )
 test('kea_util_tests', kea_util_tests, protocol: 'gtest')

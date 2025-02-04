@@ -2,7 +2,7 @@ CURRENT_BUILD_DIR = meson.current_build_dir()
 configure_file(
     input: 'process_spawn_app.sh.in',
     output: 'process_spawn_app.sh',
-    copy: true
+    copy: true,
 )
 kea_asiolink_tests = executable(
     'kea-asiolink-tests',
@@ -28,11 +28,13 @@ kea_asiolink_tests = executable(
     'udp_endpoint_unittest.cc',
     'udp_socket_unittest.cc',
     'unix_domain_socket_unittest.cc',
-    cpp_args: [f'-DTEST_SCRIPT_SH="@CURRENT_BUILD_DIR@/process_spawn_app.sh"',
-               f'-DINVALID_TEST_SCRIPT_SH="@TOP_SOURCE_DIR@/README"',
-               f'-DTEST_CA_DIR="@TEST_CA_DIR@"'],
+    cpp_args: [
+        f'-DTEST_SCRIPT_SH="@CURRENT_BUILD_DIR@/process_spawn_app.sh"',
+        f'-DINVALID_TEST_SCRIPT_SH="@TOP_SOURCE_DIR@/README"',
+        f'-DTEST_CA_DIR="@TEST_CA_DIR@"',
+    ],
     dependencies: [gtest, crypto],
     include_directories: [include_directories('.')] + INCLUDES,
-    link_with: LIBS_BUILT_SO_FAR + [kea_asiolink_testutils_lib, kea_util_unittests_lib]
+    link_with: [kea_asiolink_testutils_lib, kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )
 test('kea_asiolink_tests', kea_asiolink_tests, protocol: 'gtest')

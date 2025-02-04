@@ -4,4 +4,5 @@
 int main() {
     struct sockaddr sa;
     sa.sa_len = 0;
+    return 0;
 }

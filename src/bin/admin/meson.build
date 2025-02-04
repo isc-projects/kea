@@ -13,11 +13,7 @@ kea_admin_conf_data.set('variables', 'variables')
 configure_file(
     input: 'kea-admin.in',
     output: 'kea-admin',
-    configuration: kea_admin_conf_data
+    configuration: kea_admin_conf_data,
 )
-configure_file(
-    input: 'admin-utils.sh.in',
-    output: 'admin-utils.sh',
-    copy: true
-)
+configure_file(input: 'admin-utils.sh.in', output: 'admin-utils.sh', copy: true)
 # install?

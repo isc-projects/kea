@@ -1,11 +1,9 @@
 kea_asiodns_lib = library(
     'kea-asiodns',
     'asiodns_messages.cc',
-    'asiodns_messages.h',
     'io_fetch.cc',
-    'io_fetch.h',
     'logger.cc',
-    'logger.h',
+    dependencies: [boost],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib',
@@ -13,3 +11,5 @@ kea_asiodns_lib = library(
 )
 LIBS_BUILT_SO_FAR = [kea_asiodns_lib] + LIBS_BUILT_SO_FAR
 subdir('tests')
+kea_asiodns_headers = ['asiodns_messages.h', 'io_fetch.h', 'logger.h']
+install_headers(kea_asiodns_headers, preserve_path: true, subdir: 'kea/asiodns')

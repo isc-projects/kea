@@ -8,5 +8,5 @@ kea_testutils_lib = static_library(
     'user_context_utils.cc',
     dependencies: [gtest],
     include_directories: [include_directories('.')] + INCLUDES,
-    link_with: LIBS_BUILT_SO_FAR + [kea_util_unittests_lib]
+    link_with: [kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )

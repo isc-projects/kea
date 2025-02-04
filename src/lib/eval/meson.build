@@ -1,21 +1,14 @@
 kea_eval_lib = library(
     'kea-eval',
     'dependency.cc',
-    'dependency.h',
     'evaluate.cc',
-    'evaluate.h',
     'eval_context.cc',
-    'eval_context.h',
-    'eval_context_decl.h',
     'eval_log.cc',
-    'eval_log.h',
     'eval_messages.cc',
-    'eval_messages.h',
     'lexer.cc',
     'parser.cc',
-    'parser.h',
     'token.cc',
-    'token.h',
+    dependencies: [boost],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib',
@@ -23,3 +16,14 @@ kea_eval_lib = library(
 )
 LIBS_BUILT_SO_FAR = [kea_eval_lib] + LIBS_BUILT_SO_FAR
 subdir('tests')
+kea_eval_headers = [
+    'dependency.h',
+    'eval_context_decl.h',
+    'eval_context.h',
+    'eval_log.h',
+    'eval_messages.h',
+    'evaluate.h',
+    'parser.h',
+    'token.h',
+]
+install_headers(kea_eval_headers, preserve_path: true, subdir: 'kea/eval')

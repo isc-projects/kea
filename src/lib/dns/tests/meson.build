@@ -29,7 +29,6 @@ kea_dns_tests = executable(
     'rdata_tsig_unittest.cc',
     'rdata_txt_like_unittest.cc',
     'rdata_unittest.cc',
-    'rdata_unittest.h',
     'rrclass_unittest.cc',
     'rrparamregistry_unittest.cc',
     'rrset_unittest.cc',
@@ -49,6 +48,6 @@ kea_dns_tests = executable(
     ],
     dependencies: [gtest],
     include_directories: [include_directories('.')] + INCLUDES,
-    link_with: LIBS_BUILT_SO_FAR + [kea_util_unittests_lib],
+    link_with: [kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )
 test('kea_dns_tests', kea_dns_tests, protocol: 'gtest')

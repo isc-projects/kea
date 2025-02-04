@@ -10,7 +10,6 @@ kea_log_tests = executable(
     'logger_unittest.cc',
     'log_formatter_unittest.cc',
     'log_test_messages.cc',
-    'log_test_messages.h',
     'message_dictionary_unittest.cc',
     'message_reader_unittest.cc',
     'output_option_unittest.cc',
@@ -18,6 +17,6 @@ kea_log_tests = executable(
     cpp_args: [f'-DTEMP_DIR="@TOP_BUILD_DIR@"'],
     dependencies: [gtest, log4cplus],
     include_directories: [include_directories('.')] + INCLUDES,
-    link_with: LIBS_BUILT_SO_FAR + [kea_util_unittests_lib],
+    link_with: [kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )
 test('kea_log_tests', kea_log_tests, protocol: 'gtest')

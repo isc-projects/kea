@@ -2,4 +2,5 @@
 
 int main() {
     auto _(boost::asio::ssl::error::stream_truncated);
+    return 0;
 }

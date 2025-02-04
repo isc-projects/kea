@@ -1,8 +1,6 @@
 kea_exceptions_lib = library(
     'kea-exceptions',
     'exceptions.cc',
-    'exceptions.h',
-    'isc_assert.h',
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib',
@@ -10,3 +8,9 @@ kea_exceptions_lib = library(
 )
 LIBS_BUILT_SO_FAR = [kea_exceptions_lib] + LIBS_BUILT_SO_FAR
 subdir('tests')
+kea_exceptions_headers = ['exceptions.h', 'isc_assert.h']
+install_headers(
+    kea_exceptions_headers,
+    preserve_path: true,
+    subdir: 'kea/exceptions',
+)

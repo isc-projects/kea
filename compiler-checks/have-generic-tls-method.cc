@@ -2,4 +2,5 @@
 
 int main() {
     auto _(boost::asio::ssl::context::tls);
+    return 0;
 }
