@@ -269,6 +269,18 @@ result = cpp.run(
 )
 conf_data.set('HAVE_STREAM_TRUNCATED_ERROR', result.returncode() == 0)
 
+ENVIRON_SHLIB_FLAGS = []
+if cpp.has_link_argument('-Wl,--no-undefined')
+    result = cpp.links(
+        fs.read('compiler-checks/environ-in-shlib.cc'),
+        name: 'ENVIRON_SHLIB_FLAGS',
+        args: ['--shared', '-fPIC', '-Wl,--no-undefined'],
+    )
+    if not result
+        ENVIRON_SHLIB_FLAGS += ['b_lundef=false']
+    endif
+endif
+
 #### System-specific Variables
 
 SYSTEM = build_machine.system()
