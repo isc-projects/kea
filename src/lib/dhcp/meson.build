@@ -61,6 +61,8 @@ kea_dhcp_lib = library(
     link_with: LIBS_BUILT_SO_FAR,
 )
 LIBS_BUILT_SO_FAR = [kea_dhcp_lib] + LIBS_BUILT_SO_FAR
+subdir('testutils')
+subdir('tests')
 kea_dhcp_headers = [
     'classify.h',
     'dhcp4.h',

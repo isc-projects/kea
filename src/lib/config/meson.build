@@ -20,6 +20,7 @@ kea_config_lib = library(
     link_with: LIBS_BUILT_SO_FAR,
 )
 LIBS_BUILT_SO_FAR = [kea_config_lib] + LIBS_BUILT_SO_FAR
+subdir('tests')
 kea_config_headers = [
     'base_command_mgr.h',
     'client_connection.h',

@@ -32,6 +32,7 @@ kea_http_lib = library(
     link_with: LIBS_BUILT_SO_FAR,
 )
 LIBS_BUILT_SO_FAR = [kea_http_lib] + LIBS_BUILT_SO_FAR
+subdir('tests')
 kea_http_headers = [
     'auth_config.h',
     'auth_log.h',
