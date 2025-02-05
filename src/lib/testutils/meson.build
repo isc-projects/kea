@@ -1,3 +1,7 @@
+if not gtest.found()
+    subdir_done()
+endif
+
 kea_testutils_lib = static_library(
     'kea-testutils',
     'io_utils.cc',

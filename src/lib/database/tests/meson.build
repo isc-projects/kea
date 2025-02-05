@@ -1,3 +1,7 @@
+if not gtest.found()
+    subdir_done()
+endif
+
 kea_database_tests = executable(
     'kea-database-tests',
     'audit_entry_unittest.cc',

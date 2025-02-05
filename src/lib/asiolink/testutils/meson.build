@@ -1,3 +1,7 @@
+if not gtest.found()
+    subdir_done()
+endif
+
 kea_asiolink_testutils_lib = static_library(
     'kea-asiolink-testutils',
     'test_tls.cc',

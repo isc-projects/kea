@@ -1,3 +1,7 @@
+if not gtest.found()
+    subdir_done()
+endif
+
 kea_util_tests = executable(
     'kea-util-tests',
     'bigint_unittest.cc',

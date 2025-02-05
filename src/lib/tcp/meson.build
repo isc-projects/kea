@@ -16,8 +16,8 @@ kea_tcp_lib = library(
 LIBS_BUILT_SO_FAR = [kea_tcp_lib] + LIBS_BUILT_SO_FAR
 kea_tcp_headers = [
     'mt_tcp_listener_mgr.h',
-    'tcp_connection_acceptor.h',
     'tcp_connection.h',
+    'tcp_connection_acceptor.h',
     'tcp_connection_pool.h',
     'tcp_listener.h',
     'tcp_log.h',

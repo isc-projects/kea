@@ -32,18 +32,18 @@ kea_yang_lib = library(
 )
 LIBS_BUILT_SO_FAR = [kea_yang_lib] + LIBS_BUILT_SO_FAR
 kea_yang_headers = [
-    'adaptor_config.h',
     'adaptor.h',
+    'adaptor_config.h',
     'adaptor_host.h',
     'adaptor_option.h',
     'adaptor_pool.h',
     'adaptor_subnet.h',
     'netconf_error.h',
+    'translator.h',
     'translator_class.h',
     'translator_config.h',
     'translator_control_socket.h',
     'translator_database.h',
-    'translator.h',
     'translator_host.h',
     'translator_logger.h',
     'translator_option_data.h',

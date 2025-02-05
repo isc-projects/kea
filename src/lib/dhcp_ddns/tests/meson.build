@@ -1,3 +1,7 @@
+if not gtest.found()
+    subdir_done()
+endif
+
 kea_dhcp_ddns_tests = executable(
     'kea-dhcp_ddns-tests',
     'ncr_udp_unittests.cc',

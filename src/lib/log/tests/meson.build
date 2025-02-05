@@ -1,3 +1,7 @@
+if not gtest.found()
+    subdir_done()
+endif
+
 kea_log_tests = executable(
     'kea-log-tests',
     'buffer_appender_unittest.cc',

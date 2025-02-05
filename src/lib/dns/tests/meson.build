@@ -1,3 +1,7 @@
+if not gtest.found()
+    subdir_done()
+endif
+
 kea_dns_tests = executable(
     'kea-dns-tests',
     'dns_exceptions_unittest.cc',

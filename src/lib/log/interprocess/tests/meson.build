@@ -1,3 +1,7 @@
+if not gtest.found()
+    subdir_done()
+endif
+
 kea_log_interprocess_tests = executable(
     'kea-log-interprocess-tests',
     'interprocess_sync_file_unittest.cc',

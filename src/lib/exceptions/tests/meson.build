@@ -1,3 +1,7 @@
+if not gtest.found()
+    subdir_done()
+endif
+
 kea_exceptions_tests = executable(
     'kea-exceptions-tests',
     'exceptions_unittest.cc',

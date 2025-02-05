@@ -1,3 +1,7 @@
+if not gtest.found()
+    subdir_done()
+endif
+
 CURRENT_BUILD_DIR = meson.current_build_dir()
 configure_file(
     input: 'process_spawn_app.sh.in',

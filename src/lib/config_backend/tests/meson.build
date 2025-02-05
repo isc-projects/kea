@@ -1,3 +1,7 @@
+if not gtest.found()
+    subdir_done()
+endif
+
 kea_config_backend_tests = executable(
     'kea-config_backend-tests',
     'config_backend_mgr_unittest.cc',

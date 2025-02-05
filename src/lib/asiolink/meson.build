@@ -25,8 +25,8 @@ subdir('testutils')
 subdir('tests')
 kea_asiolink_headers = [
     'addr_utilities.h',
-    'asiolink.h',
     'asio_wrapper.h',
+    'asiolink.h',
     'botan_tls.h',
     'botan_wrapper.h',
     'common_tls.h',
@@ -52,9 +52,9 @@ kea_asiolink_headers = [
     'tls_socket.h',
     'udp_endpoint.h',
     'udp_socket.h',
+    'unix_domain_socket.h',
     'unix_domain_socket_acceptor.h',
     'unix_domain_socket_endpoint.h',
-    'unix_domain_socket.h',
 ]
 install_headers(
     kea_asiolink_headers,

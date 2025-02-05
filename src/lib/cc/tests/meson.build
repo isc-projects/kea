@@ -1,3 +1,7 @@
+if not gtest.found()
+    subdir_done()
+endif
+
 kea_cc_tests = executable(
     'kea-cc-tests',
     'command_interpreter_unittests.cc',

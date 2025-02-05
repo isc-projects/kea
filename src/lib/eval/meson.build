@@ -18,8 +18,8 @@ LIBS_BUILT_SO_FAR = [kea_eval_lib] + LIBS_BUILT_SO_FAR
 subdir('tests')
 kea_eval_headers = [
     'dependency.h',
-    'eval_context_decl.h',
     'eval_context.h',
+    'eval_context_decl.h',
     'eval_log.h',
     'eval_messages.h',
     'evaluate.h',

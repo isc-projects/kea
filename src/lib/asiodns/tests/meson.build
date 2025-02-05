@@ -1,3 +1,7 @@
+if not gtest.found()
+    subdir_done()
+endif
+
 kea_asiodns_tests = executable(
     'kea-asiodns-tests',
     'io_fetch_unittest.cc',

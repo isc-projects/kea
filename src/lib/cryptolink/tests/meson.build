@@ -1,3 +1,7 @@
+if not gtest.found()
+    subdir_done()
+endif
+
 kea_cryptolink_tests = executable(
     'kea-cryptolink-tests',
     'crypto_unittests.cc',

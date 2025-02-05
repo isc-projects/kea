@@ -1,3 +1,7 @@
+if not gtest.found()
+    subdir_done()
+endif
+
 kea_util_unittests_lib = static_library(
     'kea-util-unittests',
     'check_valgrind.cc',

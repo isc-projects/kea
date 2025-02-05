@@ -1,3 +1,7 @@
+if not gtest.found()
+    subdir_done()
+endif
+
 kea_database_testutils_lib = static_library(
     'kea-database-testutils',
     'schema.cc',

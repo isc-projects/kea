@@ -19,6 +19,10 @@ TOP_SOURCE_DIR = meson.current_source_dir()
 KEA_ADMIN = f'@TOP_BUILD_DIR@/src/bin/admin/kea-admin'
 KEA_LFC = f'@TOP_BUILD_DIR@/src/bin/lfc/kea-lfc'
 TEST_CA_DIR = f'@TOP_SOURCE_DIR@/src/lib/asiolink/testutils/ca'
+DATABASE_SCRIPTS_DIR = f'@TOP_BUILD_DIR@/src/share/database/scripts'
+RUN_STATE_DIR = get_option('localstatedir')
+PREFIX = get_option('prefix')
+DHCP_DATA_DIR = f'@PREFIX@/@RUN_STATE_DIR@/run/kea'
 
 # TODO: Control it via a build option.
 FUZZING_IN_CI = false
@@ -290,7 +294,6 @@ message(f'Detected system "@SYSTEM@".')
 
 #### System-specific Compiler Flags
 
-PREFIX = get_option('prefix')
 if SYSTEM == 'darwin'
     add_project_arguments('-D__APPLE_USE_RFC_3542', language: 'cpp')
     add_project_link_arguments(f'-Wl,-rpath,@PREFIX@/lib', language: 'cpp')

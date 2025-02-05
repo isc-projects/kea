@@ -1,4 +1,7 @@
-DATABASE_SCRIPTS_DIR = f'@TOP_BUILD_DIR@/src/share/database/scripts'
+if not gtest.found()
+    subdir_done()
+endif
+
 kea_mysql_testutils_lib = static_library(
     'kea-mysql-testutils',
     'mysql_schema.cc',

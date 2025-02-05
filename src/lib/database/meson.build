@@ -22,12 +22,12 @@ kea_database_headers = [
     'audit_entry.h',
     'backend_selector.h',
     'database_connection.h',
-    'dbaccess_parser.h',
     'db_exceptions.h',
     'db_log.h',
     'db_messages.h',
-    'server_collection.h',
+    'dbaccess_parser.h',
     'server.h',
+    'server_collection.h',
     'server_selector.h',
 ]
 install_headers(

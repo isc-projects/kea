@@ -1,3 +1,7 @@
+if not gtest.found()
+    subdir_done()
+endif
+
 kea_eval_tests = executable(
     'kea-eval-tests',
     'boolean_unittest.cc',

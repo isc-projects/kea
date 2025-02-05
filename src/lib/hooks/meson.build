@@ -22,19 +22,19 @@ kea_hooks_lib = library(
 )
 LIBS_BUILT_SO_FAR = [kea_hooks_lib] + LIBS_BUILT_SO_FAR
 kea_hooks_headers = [
-    'callout_handle_associate.h',
     'callout_handle.h',
+    'callout_handle_associate.h',
     'callout_manager.h',
-    'hooks_config.h',
     'hooks.h',
+    'hooks_config.h',
     'hooks_log.h',
     'hooks_manager.h',
     'hooks_messages.h',
     'hooks_parser.h',
     'libinfo.h',
     'library_handle.h',
-    'library_manager_collection.h',
     'library_manager.h',
+    'library_manager_collection.h',
     'parking_lots.h',
     'pointer_converter.h',
     'server_hooks.h',

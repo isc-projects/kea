@@ -1,3 +1,7 @@
+if not gtest.found()
+    subdir_done()
+endif
+
 kea_stats_tests = executable(
     'kea-stats-tests',
     'context_unittest.cc',

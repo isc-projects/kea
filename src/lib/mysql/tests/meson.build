@@ -1,3 +1,7 @@
+if not gtest.found()
+    subdir_done()
+endif
+
 libs_testutils = [
     kea_mysql_testutils_lib,
     kea_database_testutils_lib,
