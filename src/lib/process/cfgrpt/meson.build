@@ -13,6 +13,7 @@ kea_cfgrpt_lib = library(
     link_with: LIBS_BUILT_SO_FAR,
 )
 LIBS_BUILT_SO_FAR = [kea_cfgrpt_lib] + LIBS_BUILT_SO_FAR
+subdir('tests')
 kea_cfgrpt_headers = ['config_report.h']
 install_headers(
     kea_cfgrpt_headers,

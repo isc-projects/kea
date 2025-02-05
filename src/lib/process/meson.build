@@ -20,6 +20,8 @@ kea_process_lib = library(
     link_with: LIBS_BUILT_SO_FAR,
 )
 LIBS_BUILT_SO_FAR = [kea_process_lib] + LIBS_BUILT_SO_FAR
+subdir('testutils')
+subdir('tests')
 kea_process_headers = [
     'cb_ctl_base.h',
     'config_base.h',

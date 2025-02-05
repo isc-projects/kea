@@ -89,13 +89,15 @@ kea_dhcpsrv_lib = library(
         f'-DDHCP_DATA_DIR="@DHCP_DATA_DIR@"',
         f'-DKEA_LFC_EXECUTABLE="@KEA_LFC@"',
     ],
-    dependencies: [crypto],
+    dependencies: [boost, crypto, threads],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib',
     link_with: LIBS_BUILT_SO_FAR,
 )
 LIBS_BUILT_SO_FAR = [kea_dhcpsrv_lib] + LIBS_BUILT_SO_FAR
+subdir('testutils')
+subdir('tests')
 kea_dhcpsrv_headers = [
     'alloc_engine.h',
     'alloc_engine_log.h',

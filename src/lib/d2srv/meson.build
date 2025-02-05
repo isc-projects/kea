@@ -18,6 +18,8 @@ kea_d2srv_lib = library(
     link_with: LIBS_BUILT_SO_FAR,
 )
 LIBS_BUILT_SO_FAR = [kea_d2srv_lib] + LIBS_BUILT_SO_FAR
+subdir('testutils')
+subdir('tests')
 kea_d2srv_headers = [
     'd2_cfg_mgr.h',
     'd2_config.h',

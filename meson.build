@@ -23,6 +23,7 @@ DATABASE_SCRIPTS_DIR = f'@TOP_BUILD_DIR@/src/share/database/scripts'
 RUN_STATE_DIR = get_option('localstatedir')
 PREFIX = get_option('prefix')
 DHCP_DATA_DIR = f'@PREFIX@/@RUN_STATE_DIR@/run/kea'
+DEFAULT_HOOKS_PATH = f'@PREFIX@/lib/kea/hooks'
 
 # TODO: Control it via a build option.
 FUZZING_IN_CI = false
