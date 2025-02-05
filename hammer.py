@@ -1806,11 +1806,8 @@ def install_packages_local(system, revision, features, check_times, ignore_error
                 packages.extend(['mariadb-connector-c-devel'])
 
         if 'pgsql' in features:
-            packages.extend(['postgresql', 'postgresql-server'])
-            if int(revision) <= 8:
-                packages.append('libpq-devel')
-            else:
-                packages.append('postgresql-private-devel')
+            execute('sudo dnf remove -y postgresql-private-devel', raise_error=False)
+            packages.extend(['libpq-devel', 'postgresql', 'postgresql-server'])
 
         if 'gssapi' in features:
             packages.extend(['krb5-devel'])
