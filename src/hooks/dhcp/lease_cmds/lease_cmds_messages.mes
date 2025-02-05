@@ -139,12 +139,14 @@ The lease6-wipe command is deprecated and it will be removed in the future.
 The lease6-wipe command has failed. Both the reason as well as the
 parameters passed are logged.
 
-% LEASE_CMDS_LEASE4_OFFER_FAILED processing error occurred evaluating binding variables for %1, %2
+% LEASE_CMDS_LEASE4_OFFER_FAILED processing error occurred evaluating binding variables:%1 
 This debug log is emitted when an error occurs in  the lease4_offer 
-handler is invoked. The arguments detail the query and the error. This
-error means binding-variable values were not added/updated for the lease.
+handler is invoked. The argument provides an explanation.
 
-% LEASE_CMDS_LEASES4_COMMITTED_FAILED processing error occurred evaluating binding variables for %1, %2
+% LEASE_CMDS_LEASES4_COMMITTED_FAILED processing error occurred evaluating binding variables: %1
 This debug log is emitted when an error occurs in  the leases4_committed 
-handler is invoked. The arguments detail the query and the error. This
-error means binding-variable values were not added/updated for the lease.
+handler is invoked. The argument provides an explanation.
+
+% LEASE_CMDS_LEASES6_COMMITTED_FAILED processing error occurred evaluating binding variables: %1
+This debug log is emitted when an error occurs in  the leases6_committed 
+handler is invoked. The argument provides an explanation.

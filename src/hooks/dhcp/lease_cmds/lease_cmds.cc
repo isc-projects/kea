@@ -498,10 +498,23 @@ public:
     /// @param handle Callout context - which is expected to contain the query4,
     /// response4, and leases4 arguments.
     /// @param mgr Pointer to the BindingVariableMgr singleton.
-    /// @throw Unexpected if there is no active lease or a processing error
-    /// occurs. LeaseCmdsConflict if the update fails because the lease
-    /// no longer exists in the back end.
+    /// @throw Unexpected if a processing error occurs. LeaseCmdsConflict if the
+    /// update fails because the lease no longer exists in the back end.
     static void leases4Committed(CalloutHandle& callout_handle,
+                                 BindingVariableMgrPtr mgr);
+
+    /// @brief leases6_committed hookpoint handler.
+    ///
+    /// Evaluates the binding variables (if any), and updates the leases'
+    /// user-context accordingly.  This includes updating the leases in the lease
+    /// back end.
+    ///
+    /// @param handle Callout context - which is expected to contain the query6,
+    /// response6, and leases6 arguments.
+    /// @param mgr Pointer to the BindingVariableMgr singleton.
+    /// @throw Unexpected if there a processing error occurs. LeaseCmdsConflict
+    /// if the update fails because the lease no longer exists in the back end.
+    static void leases6Committed(CalloutHandle& callout_handle,
                                  BindingVariableMgrPtr mgr);
 };
 
@@ -2803,6 +2816,52 @@ LeaseCmdsImpl::leases4Committed(CalloutHandle& callout_handle,
     }
 }
 
+void
+LeaseCmdsImpl::leases6Committed(CalloutHandle& callout_handle,
+                                BindingVariableMgrPtr mgr) {
+    Pkt6Ptr query;
+    Pkt6Ptr response;
+    Lease6CollectionPtr leases;
+
+    // Get the necessary arguments.
+    callout_handle.getArgument("query6", query);
+    callout_handle.getArgument("response6", response);
+    callout_handle.getArgument("leases6", leases);
+
+    // In some cases we may have no active leases or no response.
+    if (leases->empty() || !response) {
+        return;
+    }
+
+    for (auto lease : *leases) {
+        try {
+            /// @todo - Users might want to only update NA or PD leases.
+            /// This could be done via adding a lease type to the variable.
+            /// V4 would not use it, for V6 it would restrict a variable
+            /// to only that type of lease.  If unspecified (default) do
+            /// both NA and PD leases.
+            // Only update a lease if its active.
+            if (lease->valid_lft_) {
+                if (mgr->evaluateVariables(query, response, lease)) {
+                    LeaseMgrFactory::instance().updateLease6(lease);
+                }
+            }
+        /// @todo - for now if any leases fail we stop.  This could lead
+        /// to inconsistencies in user-context content for leases belonging
+        /// the the same response. The lease6BulkApplyHandler() accumlates
+        /// failures but iterates over all the leases..
+        } catch (const NoSuchLease&) {
+            isc_throw(LeaseCmdsConflict, "failed to update"
+                      " the lease with address " << lease->addr_ <<
+                      " either because the lease has been"
+                      " deleted or it has changed in the database");
+        } catch (const std::exception& ex) {
+            isc_throw(Unexpected, "evaluating binding variables failed for: "
+                      << query->getLabel() << ", :" << ex.what());
+        }
+    }
+}
+
 int
 LeaseCmds::leaseAddHandler(CalloutHandle& handle) {
     return (impl_->leaseAddHandler(handle));
@@ -2909,6 +2968,12 @@ void
 LeaseCmds::leases4Committed(CalloutHandle& callout_handle,
                             BindingVariableMgrPtr mgr) {
     impl_->leases4Committed(callout_handle, mgr);
+}
+
+void
+LeaseCmds::leases6Committed(CalloutHandle& callout_handle,
+                            BindingVariableMgrPtr mgr) {
+    impl_->leases6Committed(callout_handle, mgr);
 }
 
 } // end of namespace lease_cmds

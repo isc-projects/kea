@@ -23,6 +23,7 @@ extern const isc::log::MessageID LEASE_CMDS_GET6_FAILED;
 extern const isc::log::MessageID LEASE_CMDS_INIT_OK;
 extern const isc::log::MessageID LEASE_CMDS_LEASE4_OFFER_FAILED;
 extern const isc::log::MessageID LEASE_CMDS_LEASES4_COMMITTED_FAILED;
+extern const isc::log::MessageID LEASE_CMDS_LEASES6_COMMITTED_FAILED;
 extern const isc::log::MessageID LEASE_CMDS_RESEND_DDNS4;
 extern const isc::log::MessageID LEASE_CMDS_RESEND_DDNS4_FAILED;
 extern const isc::log::MessageID LEASE_CMDS_RESEND_DDNS6;

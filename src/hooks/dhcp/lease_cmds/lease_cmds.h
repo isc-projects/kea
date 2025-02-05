@@ -622,7 +622,7 @@ public:
 
     /// @brief leases4_committed hookpoint handler.
     ///
-    /// Evaluates the binding variables (if any), and updates the given lease's
+    /// Evaluates the binding variables (if any), and updates the active lease's
     /// user-context accordingly.  This includes updating the lease in the lease
     /// back end.
     ///
@@ -633,6 +633,18 @@ public:
     leases4Committed(hooks::CalloutHandle& callout_handle,
                      BindingVariableMgrPtr mgr);
 
+    /// @brief leases6_committed hookpoint handler.
+    ///
+    /// Evaluates the binding variables (if any), and updates the active leases'
+    /// user-context accordingly.  This includes updating the leases in the lease
+    /// back end.
+    ///
+    /// @param handle Callout context - which is expected to contain the query6, response6,
+    /// and leases6 arguments.
+    /// @param mgr Pointer to the BindingVariableMgr singleton.
+    void
+    leases6Committed(hooks::CalloutHandle& callout_handle,
+                     BindingVariableMgrPtr mgr);
 private:
     /// Pointer to the actual implementation
     boost::shared_ptr<LeaseCmdsImpl> impl_;

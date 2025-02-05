@@ -1246,6 +1246,10 @@ Dhcpv6Srv::processLocalizedQuery6(AllocEngine::ClientContext6& ctx) {
         // Also pass the corresponding query packet as argument
         callout_handle->setArgument("query6", query);
 
+        // Pass the response packet as an argument.
+        ScopedEnableOptionsCopy<Pkt6> rsp6_options_copy(rsp);
+        callout_handle->setArgument("response6", rsp);
+
         Lease6CollectionPtr new_leases(new Lease6Collection());
         if (!ctx.new_leases_.empty()) {
             // Filter out reused leases as they were not committed.

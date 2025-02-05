@@ -2126,6 +2126,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRapidCommit) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("response6");
     expected_argument_names.push_back("deleted_leases6");
     expected_argument_names.push_back("leases6");
 
@@ -2200,6 +2201,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedParkRapidCommitPrefixes) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("response6");
     expected_argument_names.push_back("deleted_leases6");
     expected_argument_names.push_back("leases6");
 
@@ -2304,6 +2306,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRequest) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("response6");
     expected_argument_names.push_back("deleted_leases6");
     expected_argument_names.push_back("leases6");
 
@@ -2482,6 +2485,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRequestPrefix) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("response6");
     expected_argument_names.push_back("deleted_leases6");
     expected_argument_names.push_back("leases6");
 
@@ -2661,6 +2665,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRenew) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("response6");
     expected_argument_names.push_back("deleted_leases6");
     expected_argument_names.push_back("leases6");
 
@@ -2836,6 +2841,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRenewPrefix) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("response6");
     expected_argument_names.push_back("deleted_leases6");
     expected_argument_names.push_back("leases6");
 
@@ -3012,6 +3018,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRebind) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("response6");
     expected_argument_names.push_back("deleted_leases6");
     expected_argument_names.push_back("leases6");
 
@@ -3190,6 +3197,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRebindPrefix) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("response6");
     expected_argument_names.push_back("deleted_leases6");
     expected_argument_names.push_back("leases6");
 
@@ -3371,6 +3379,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedDecline) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("response6");
     expected_argument_names.push_back("deleted_leases6");
     expected_argument_names.push_back("leases6");
 
@@ -3436,6 +3445,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedDeclineTwoNAs) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("response6");
     expected_argument_names.push_back("deleted_leases6");
     expected_argument_names.push_back("leases6");
 
@@ -3504,6 +3514,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRelease) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("response6");
     expected_argument_names.push_back("deleted_leases6");
     expected_argument_names.push_back("leases6");
 
@@ -3572,6 +3583,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedReleasePrefix) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("response6");
     expected_argument_names.push_back("deleted_leases6");
     expected_argument_names.push_back("leases6");
 
@@ -3647,6 +3659,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedReleaseMultiple) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("response6");
     expected_argument_names.push_back("deleted_leases6");
     expected_argument_names.push_back("leases6");
 
@@ -3709,6 +3722,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedCache) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("response6");
     expected_argument_names.push_back("deleted_leases6");
     expected_argument_names.push_back("leases6");
 
@@ -3802,6 +3816,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedCachePrefix) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("response6");
     expected_argument_names.push_back("deleted_leases6");
     expected_argument_names.push_back("leases6");
 
@@ -3896,6 +3911,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedParkRequests) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("response6");
     expected_argument_names.push_back("deleted_leases6");
     expected_argument_names.push_back("leases6");
 
@@ -4005,6 +4021,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedParkRequestsPrefixes) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("response6");
     expected_argument_names.push_back("deleted_leases6");
     expected_argument_names.push_back("leases6");
 

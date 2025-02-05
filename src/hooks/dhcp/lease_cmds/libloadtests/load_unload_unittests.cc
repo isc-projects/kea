@@ -57,9 +57,8 @@ public:
         ASSERT_NO_THROW_LOG(result = HooksManager::calloutsPresent(hook_index_lease4_offer_));
         EXPECT_EQ(result, (isc::dhcp::CfgMgr::instance().getFamily() == AF_INET));
 
-        /// @todo when v6 is ready, change to always expect true.
         ASSERT_NO_THROW_LOG(result = HooksManager::calloutsPresent(hook_index_leasesX_committed_));
-        EXPECT_EQ(result, (isc::dhcp::CfgMgr::instance().getFamily() == AF_INET));
+        EXPECT_EQ(result, true);
     }
 
     /// @brief Creates a set of configuration parameters valid for the library.

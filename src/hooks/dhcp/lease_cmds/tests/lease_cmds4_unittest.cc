@@ -3500,11 +3500,6 @@ void Lease4CmdsTest::testLease4Write() {
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
-#define SCOPED_LINE(line) \
-    std::stringstream ss; \
-    ss << "Scenario at line: " << line; \
-    SCOPED_TRACE(ss.str());
-
 void
 Lease4CmdsTest::testValidLease4Offer() {
     // Initialize lease manager (false = v4, true = add leases)

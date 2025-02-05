@@ -28,6 +28,11 @@
 
 namespace {
 
+#define SCOPED_LINE(line) \
+    std::stringstream ss; \
+    ss << "Scenario at line: " << line; \
+    SCOPED_TRACE(ss.str());
+
 /// @brief High valid lifetime used for leases in the tests below.
 constexpr uint32_t HIGH_VALID_LIFETIME = 0xFFFFFFFE;
 
