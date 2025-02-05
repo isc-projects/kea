@@ -14,11 +14,13 @@ kea_asiolink_lib = library(
     'openssl_tls.cc',
     'process_spawn.cc',
     'unix_domain_socket.cc',
-    dependencies: [crypto, threads],
+    dependencies: [boost, crypto, threads],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib',
     link_with: LIBS_BUILT_SO_FAR,
+    # The only way to avoid on FreeBSD: ld: error: undefined symbol: environ
+    override_options: ['b_lundef=false'],
 )
 LIBS_BUILT_SO_FAR = [kea_asiolink_lib] + LIBS_BUILT_SO_FAR
 subdir('testutils')

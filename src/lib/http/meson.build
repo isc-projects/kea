@@ -25,7 +25,7 @@ kea_http_lib = library(
     'response_json.cc',
     'response_parser.cc',
     'url.cc',
-    dependencies: [crypto],
+    dependencies: [crypto, threads],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib',

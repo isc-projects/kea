@@ -11,7 +11,7 @@ perfdhcplib_lib = static_library(
     'receiver.cc',
     'stats_mgr.cc',
     'test_control.cc',
-    dependencies: [boost],
+    dependencies: [boost, threads],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
 )

@@ -54,7 +54,7 @@ kea_dhcp_lib = library(
     'pkt_filter_inet6.cc',
     pkt_filter_cc,
     'protocol_util.cc',
-    dependencies: [boost],
+    dependencies: [boost, threads],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib',

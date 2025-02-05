@@ -7,7 +7,7 @@ kea_tcp_lib = library(
     'tcp_log.cc',
     'tcp_messages.cc',
     'tcp_stream_msg.cc',
-    dependencies: [crypto],
+    dependencies: [crypto, threads],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib',
