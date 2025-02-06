@@ -14,6 +14,13 @@ configure_file(
     output: 'test_kea_lfc_env.sh',
     copy: true,
 )
+kea_dhcpsrv_conf_data = configuration_data()
+kea_dhcpsrv_conf_data.set('abs_builddir', meson.current_build_dir())
+configure_file(
+    input: 'meson-test_libraries.h.in',
+    output: 'test_libraries.h',
+    configuration: kea_dhcpsrv_conf_data,
+)
 kea_dhcpsrv_tests = executable(
     'kea-dhcpsrv-tests',
     'alloc_engine4_unittest.cc',
@@ -46,7 +53,7 @@ kea_dhcpsrv_tests = executable(
     'd2_client_unittest.cc',
     'd2_udp_unittest.cc',
     'dhcp4o6_ipc_unittest.cc',
-    # 'dhcp_parsers_unittest.cc',
+    'dhcp_parsers_unittest.cc',
     'dhcp_queue_control_parser_unittest.cc',
     'duid_config_parser_unittest.cc',
     'expiration_config_parser_unittest.cc',
@@ -103,4 +110,29 @@ test(
     kea_dhcpsrv_tests,
     protocol: 'gtest',
     is_parallel: false,
+)
+
+shared_library(
+    'co1',
+    'callout_library.cc',
+    include_directories: [include_directories('.')] + INCLUDES,
+    link_with: LIBS_BUILT_SO_FAR,
+    build_rpath: '/nowhere',
+    name_suffix: 'so',
+)
+shared_library(
+    'co2',
+    'callout_library.cc',
+    include_directories: [include_directories('.')] + INCLUDES,
+    link_with: LIBS_BUILT_SO_FAR,
+    build_rpath: '/nowhere',
+    name_suffix: 'so',
+)
+shared_library(
+    'co3',
+    'callout_params_library.cc',
+    include_directories: [include_directories('.')] + INCLUDES,
+    link_with: LIBS_BUILT_SO_FAR,
+    build_rpath: '/nowhere',
+    name_suffix: 'so',
 )
