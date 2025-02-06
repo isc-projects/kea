@@ -16,7 +16,7 @@ configure_file(
 )
 
 mysql_script_conf_data = configuration_data()
-mysql_script_conf_data.set('prefix', get_option('prefix'))
+mysql_script_conf_data.set('prefix', PREFIX)
 mysql_script_conf_data.set('abs_top_builddir', TOP_BUILD_DIR)
 mysql_script_conf_data.set('datarootdir', '${prefix}/' + DATADIR)
 mysql_script_conf_data.set('PACKAGE_NAME', 'kea')

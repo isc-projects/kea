@@ -2,5 +2,5 @@
 
 for i in [a-z]*.json
 do
-    echo $i
+    echo "$i"
 done

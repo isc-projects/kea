@@ -16,7 +16,7 @@ configure_file(
 )
 
 pgsql_script_conf_data = configuration_data()
-pgsql_script_conf_data.set('prefix', get_option('prefix'))
+pgsql_script_conf_data.set('prefix', PREFIX)
 pgsql_script_conf_data.set('abs_top_builddir', TOP_BUILD_DIR)
 pgsql_script_conf_data.set('datarootdir', '${prefix}/' + DATADIR)
 pgsql_script_conf_data.set('PACKAGE_NAME', 'kea')

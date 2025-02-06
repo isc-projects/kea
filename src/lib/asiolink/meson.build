@@ -19,6 +19,7 @@ kea_asiolink_lib = library(
     install: true,
     install_dir: 'lib',
     link_with: LIBS_BUILT_SO_FAR,
+    # Avoids: ld: error: undefined symbol: environ on FreeBSD
     override_options: ENVIRON_SHLIB_FLAGS,
 )
 LIBS_BUILT_SO_FAR = [kea_asiolink_lib] + LIBS_BUILT_SO_FAR
