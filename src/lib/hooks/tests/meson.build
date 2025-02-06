@@ -37,6 +37,7 @@ configure_file(
 shared_library(
     'nvl',
     'no_version_library.cc',
+    dependencies: [boost],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
     build_rpath: '/nowhere',
@@ -45,6 +46,7 @@ shared_library(
 shared_library(
     'ivl',
     'incorrect_version_library.cc',
+    dependencies: [boost],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
     build_rpath: '/nowhere',
@@ -53,6 +55,7 @@ shared_library(
 shared_library(
     'fxl',
     'framework_exception_library.cc',
+    dependencies: [boost],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
     build_rpath: '/nowhere',
@@ -61,6 +64,7 @@ shared_library(
 shared_library(
     'bcl',
     'basic_callout_library.cc',
+    dependencies: [boost],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
     build_rpath: '/nowhere',
@@ -69,6 +73,7 @@ shared_library(
 shared_library(
     'lcl',
     'load_callout_library.cc',
+    dependencies: [boost],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
     build_rpath: '/nowhere',
@@ -77,6 +82,7 @@ shared_library(
 shared_library(
     'lecl',
     'load_error_callout_library.cc',
+    dependencies: [boost],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
     build_rpath: '/nowhere',
@@ -85,6 +91,7 @@ shared_library(
 shared_library(
     'ucl',
     'unload_callout_library.cc',
+    dependencies: [boost],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
     build_rpath: '/nowhere',
@@ -93,6 +100,7 @@ shared_library(
 shared_library(
     'fcl',
     'full_callout_library.cc',
+    dependencies: [boost],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
     build_rpath: '/nowhere',
@@ -101,6 +109,7 @@ shared_library(
 shared_library(
     'pcl',
     'callout_params_library.cc',
+    dependencies: [boost],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
     build_rpath: '/nowhere',
@@ -109,6 +118,7 @@ shared_library(
 shared_library(
     'acl',
     'async_callout_library.cc',
+    dependencies: [boost],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
     build_rpath: '/nowhere',

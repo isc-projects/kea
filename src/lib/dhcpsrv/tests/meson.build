@@ -115,6 +115,7 @@ test(
 shared_library(
     'co1',
     'callout_library.cc',
+    dependencies: [boost],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
     build_rpath: '/nowhere',
@@ -123,6 +124,7 @@ shared_library(
 shared_library(
     'co2',
     'callout_library.cc',
+    dependencies: [boost],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
     build_rpath: '/nowhere',
@@ -131,6 +133,7 @@ shared_library(
 shared_library(
     'co3',
     'callout_params_library.cc',
+    dependencies: [boost],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
     build_rpath: '/nowhere',
