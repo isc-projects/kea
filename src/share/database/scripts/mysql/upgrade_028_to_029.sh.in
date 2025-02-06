@@ -28,7 +28,7 @@ fi
 
 # Check version.
 version=$(mysql_version "${@}")
-if test "${version}" != "27.0"; then
+if test "${version}" != "28.0"; then
     printf 'This script upgrades 28.0 to 29.0. '
     printf 'Reported version is %s. Skipping upgrade.\n' "${version}"
     exit 0
