@@ -1,22 +1,31 @@
-pgsql_script_conf_data = configuration_data()
-pgsql_script_conf_data.set('prefix', get_option('prefix'))
-pgsql_script_conf_data.set('abs_top_builddir', TOP_BUILD_DIR)
-pgsql_script_conf_data.set('datarootdir', '${prefix}/' + get_option('datadir'))
-pgsql_script_conf_data.set('PACKAGE_NAME', 'kea')
-configure_file(
-    input: 'wipe_data.sh.in',
-    output: 'wipe_data.sh',
-    configuration: pgsql_script_conf_data,
-)
+DATADIR = get_option('datadir')
+INSTALL_DIR = f'@DATADIR@/kea/script/pgsql'
 configure_file(
     input: 'dhcpdb_create.pgsql',
     output: 'dhcpdb_create.pgsql',
     copy: true,
+    install: true,
+    install_dir: INSTALL_DIR,
 )
 configure_file(
     input: 'dhcpdb_drop.pgsql',
     output: 'dhcpdb_drop.pgsql',
     copy: true,
+    install: true,
+    install_dir: INSTALL_DIR,
+)
+
+pgsql_script_conf_data = configuration_data()
+pgsql_script_conf_data.set('prefix', get_option('prefix'))
+pgsql_script_conf_data.set('abs_top_builddir', TOP_BUILD_DIR)
+pgsql_script_conf_data.set('datarootdir', '${prefix}/' + DATADIR)
+pgsql_script_conf_data.set('PACKAGE_NAME', 'kea')
+configure_file(
+    input: 'wipe_data.sh.in',
+    output: 'wipe_data.sh',
+    configuration: pgsql_script_conf_data,
+    install: true,
+    install_dir: INSTALL_DIR,
 )
 upgrade_scripts = [
     'upgrade_001.0_to_002.0.sh',
@@ -58,6 +67,7 @@ foreach file : upgrade_scripts
         input: file + '.in',
         output: file,
         configuration: pgsql_script_conf_data,
+        install: true,
+        install_dir: INSTALL_DIR,
     )
 endforeach
-# install
