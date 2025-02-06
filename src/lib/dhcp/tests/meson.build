@@ -19,7 +19,7 @@ kea_dhcp_tests = executable(
     'duid_factory_unittest.cc',
     'duid_unittest.cc',
     'hwaddr_unittest.cc',
-    # 'iface_mgr_unittest.cc',
+    'iface_mgr_unittest.cc',
     'libdhcp++_unittest.cc',
     'opaque_data_tuple_unittest.cc',
     'option4_addrlst_unittest.cc',
