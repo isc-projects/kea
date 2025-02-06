@@ -276,7 +276,7 @@ public:
     /// Also ensured there is no lease manager leftovers from previous
     /// test.
     LeaseCmdsTest()
-        : LibLoadTest(LEASE_CMDS_LIB_SO),
+        : LibLoadTest(LIBDHCP_LEASE_CMDS_SO),
         d2_mgr_(isc::dhcp::CfgMgr::instance().getD2ClientMgr()) {
         isc::dhcp::LeaseMgrFactory::destroy();
         enableD2();

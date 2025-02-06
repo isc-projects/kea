@@ -27,10 +27,10 @@ if HAVE_GTEST
 TESTS += lease_cmds_unittests
 
 lease_cmds_unittests_SOURCES = run_unittests.cc
-lease_cmds_unittests_SOURCES += lease_cmds_unittest.h lease_cmds_unittest.cc
-lease_cmds_unittests_SOURCES += lease_cmds4_unittest.cc
-lease_cmds_unittests_SOURCES += lease_cmds6_unittest.cc
 lease_cmds_unittests_SOURCES += binding_variables_unittest.cc
+lease_cmds_unittests_SOURCES += lease_cmds_func_unittest.h
+lease_cmds_unittests_SOURCES += lease_cmds_func4_unittest.cc
+lease_cmds_unittests_SOURCES += lease_cmds_func6_unittest.cc
 
 lease_cmds_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
 

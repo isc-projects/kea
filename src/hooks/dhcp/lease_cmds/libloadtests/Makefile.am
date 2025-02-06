@@ -23,6 +23,9 @@ TESTS = hook_load_unittests
 
 hook_load_unittests_SOURCES  =
 hook_load_unittests_SOURCES += load_unload_unittests.cc
+hook_load_unittests_SOURCES += lease_cmds_unittest.cc lease_cmds_unittest.h
+hook_load_unittests_SOURCES += lease_cmds4_unittest.cc
+hook_load_unittests_SOURCES += lease_cmds6_unittest.cc
 hook_load_unittests_SOURCES += run_unittests.cc
 hook_load_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
 hook_load_unittests_CXXFLAGS = $(AM_CXXFLAGS)

@@ -481,6 +481,7 @@ public:
     /// @brief Check that lease6-write works as expected.
     void testLease6Write();
 
+#if 0
     /// @brief Check that leases6_committed handler works as expected with
     /// valid inputs.
     void testValidLeases6Committed();
@@ -491,6 +492,9 @@ public:
     /// 2. There are no leases
     /// 3. There are leases but none active
     void testNopLeases6Committed();
+
+    void testLeases6CommittedErrors();
+#endif
 };
 
 void Lease6CmdsTest::testLease6AddMissingParams() {
@@ -4232,9 +4236,10 @@ void Lease6CmdsTest::testLease6Write() {
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
+#if 0
 void
 Lease6CmdsTest::testValidLeases6Committed() {
-    // Initialize lease manager (false = v4, true = add leases)
+    // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
 
     struct Scenario {
@@ -4253,7 +4258,7 @@ Lease6CmdsTest::testValidLeases6Committed() {
         R"({})"
     },
     {
-        // lease context has no binding-variables, two configured
+        // Lease context has no binding-variables, two configured.
         __LINE__,
         R"^({"binding-variables":[
             {
@@ -4275,7 +4280,7 @@ Lease6CmdsTest::testValidLeases6Committed() {
         }})",
     },
     {
-        // lease context has binding-variables, none configured
+        // Lease context has binding-variables, none configured.
         // Current logic leaves lease untouched.
         __LINE__,
         R"({})",
@@ -4316,7 +4321,6 @@ Lease6CmdsTest::testValidLeases6Committed() {
 
     // Create packet pair and lease.
     Pkt6Ptr query(new Pkt6(DHCPV6_REQUEST, 1234));
-    // Add the client id.
     OptionPtr client_id(new Option(Option::V6, D6O_CLIENTID,
                                    { 0x01, 0x02, 0x03, 0x04 }));
     query->addOption(client_id);
@@ -4326,7 +4330,11 @@ Lease6CmdsTest::testValidLeases6Committed() {
                                        { 0x05, 0x06, 0x07, 0x08 }));
     response->addOption(subscriber_id);
 
-    IOAddress na_addr("2001:db8:1::1");
+    // Create a list of the lease addresses.
+    std::list<IOAddress> lease_addrs;
+    lease_addrs.push_back(IOAddress("2001:db8:1::1"));
+    lease_addrs.push_back(IOAddress("2001:db8:1::2"));
+    lease_addrs.push_back(IOAddress("2001:db8:2::2"));
 
     // Iterater over scenarios.
     for (auto const& scenario : scenarios) {
@@ -4340,42 +4348,46 @@ Lease6CmdsTest::testValidLeases6Committed() {
         ASSERT_NO_THROW_LOG(mgr->configure(config));
 
         // Fetch the lease and set its user-context to the original content.
-        Lease6Ptr orig_lease = lmptr_->getLease6(Lease::TYPE_NA, na_addr);
-        ASSERT_TRUE(orig_lease);
-        ASSERT_TRUE(orig_lease->valid_lft_ > 0);
+        Lease6CollectionPtr orig_leases(new Lease6Collection());
+        for (auto const& address : lease_addrs) {
+            Lease6Ptr orig_lease = lmptr_->getLease6(Lease::TYPE_NA, address);
+            ASSERT_TRUE(orig_lease);
+            ASSERT_TRUE(orig_lease->valid_lft_ > 0);
 
-        ConstElementPtr orig_context;
-        ASSERT_NO_THROW_LOG(orig_context = Element::fromJSON(scenario.orig_context_));
-        orig_lease->setContext(orig_context);
-        ASSERT_NO_THROW_LOG(lmptr_->updateLease6(orig_lease));
-
-        Lease6CollectionPtr leases(new Lease6Collection());
-        leases->push_back(orig_lease);
+            ConstElementPtr orig_context;
+            ASSERT_NO_THROW_LOG(orig_context = Element::fromJSON(scenario.orig_context_));
+            orig_lease->setContext(orig_context);
+            ASSERT_NO_THROW_LOG(lmptr_->updateLease6(orig_lease));
+            orig_leases->push_back(orig_lease);
+        }
 
         // Create a callout handle and add the expected arguments.
         CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
         callout_handle->setArgument("query6", query);
         callout_handle->setArgument("response6", response);
-        callout_handle->setArgument("leases6", leases);
+        callout_handle->setArgument("leases6", orig_leases);
 
-        // Invoke the leases4Committed handler.
+        // Invoke the leases6Committed handler.
         LeaseCmds cmds;
         ASSERT_NO_THROW_LOG(cmds.leases6Committed(*callout_handle, mgr));
 
-        // Fetch the lease.
-        Lease6Ptr after_lease = lmptr_->getLease6(Lease::TYPE_NA, na_addr);
-        ASSERT_TRUE(after_lease);
+        // Iterate over the leases and make sure the user-contexts are as expected.
+        for (auto const& lease : *orig_leases) {
+            // Fetch the lease.
+            Lease6Ptr after_lease = lmptr_->getLease6(Lease::TYPE_NA, lease->addr_);
+            ASSERT_TRUE(after_lease);
 
-        // Context contents should match the expected context content.
-        ConstElementPtr exp_context;
-        ASSERT_NO_THROW_LOG(exp_context = Element::fromJSON(scenario.exp_context_));
-        ASSERT_EQ(*(after_lease->getContext()), *exp_context);
+            // Context contents should match the expected context content.
+            ConstElementPtr exp_context;
+            ASSERT_NO_THROW_LOG(exp_context = Element::fromJSON(scenario.exp_context_));
+            ASSERT_EQ(*(after_lease->getContext()), *exp_context);
+        }
     }
 }
 
 void
 Lease6CmdsTest::testNopLeases6Committed() {
-    // Initialize lease manager (false = v4, true = add leases)
+    // Initialize lease manager (true = v6, true = add leases)
     initLeaseMgr(true, true);
 
     struct Scenario {
@@ -4433,6 +4445,7 @@ Lease6CmdsTest::testNopLeases6Committed() {
     for (auto const& scenario : scenarios) {
         SCOPED_LINE(scenario.line_);
 
+        // Create the response packet, if one.
         Pkt6Ptr response;
         if (scenario.response_type_ != DHCPV6_NOTYPE) {
             response.reset(new Pkt6(scenario.response_type_, 1234));
@@ -4456,7 +4469,7 @@ Lease6CmdsTest::testNopLeases6Committed() {
         callout_handle->setArgument("response6", response);
         callout_handle->setArgument("leases6", leases);
 
-        // Invoke the leases4Committed handler.
+        // Invoke the leases6Committed handler.
         LeaseCmds cmds;
         ASSERT_NO_THROW_LOG(cmds.leases6Committed(*callout_handle, mgr));
 
@@ -4466,6 +4479,100 @@ Lease6CmdsTest::testNopLeases6Committed() {
         ASSERT_FALSE(after_lease->getContext());
     }
 }
+
+void
+Lease6CmdsTest::testLeases6CommittedErrors() {
+    // Initialize lease manager (false = v4, true = add leases)
+    initLeaseMgr(true, true);
+
+    // Create a config with two binding variables.
+    std::string config_str =
+        R"^({"binding-variables":[
+            {
+                "name": "duid",
+                "expression": "hexstring(option[1].hex,':')",
+                "source": "query"
+            },
+            {
+                "name": "sub-id",
+                "expression": "hexstring(option[38].hex, ':')",
+                "source": "response"
+            }]})^";
+
+    ConstElementPtr config;
+    ASSERT_NO_THROW_LOG(config = Element::fromJSON(config_str));
+
+    // Create the expected context contents.
+    std::string exp_context_str =
+        R"({"ISC":{
+            "binding-variables":{
+                "duid": "01:02:03:04",
+                "sub-id": "05:06:07:08"
+            }
+        }})";
+
+
+    ConstElementPtr exp_context;
+    ASSERT_NO_THROW_LOG(exp_context = Element::fromJSON(exp_context_str));
+
+    // Create packet pair and lease.
+    Pkt6Ptr query(new Pkt6(DHCPV6_REQUEST, 1234));
+    OptionPtr client_id(new Option(Option::V6, D6O_CLIENTID,
+                                   { 0x01, 0x02, 0x03, 0x04 }));
+    query->addOption(client_id);
+
+    Pkt6Ptr response(new Pkt6(DHCPV6_REPLY, 7890));
+    OptionPtr subscriber_id(new Option(Option::V6, D6O_SUBSCRIBER_ID,
+                                       { 0x05, 0x06, 0x07, 0x08 }));
+    response->addOption(subscriber_id);
+
+    // Create and configure the manager.
+    BindingVariableMgrPtr mgr;
+    ASSERT_NO_THROW_LOG(mgr.reset(new BindingVariableMgr(AF_INET6)));
+    ASSERT_NO_THROW_LOG(mgr->configure(config));
+
+    // Fetch the leases.
+    std::list<IOAddress> lease_addrs;
+    lease_addrs.push_back(IOAddress("2001:db8:1::1"));
+    lease_addrs.push_back(IOAddress("2001:db8:1::2"));
+    lease_addrs.push_back(IOAddress("2001:db8:2::2"));
+
+    Lease6CollectionPtr orig_leases(new Lease6Collection());
+    for (auto const& address : lease_addrs) {
+        Lease6Ptr orig_lease = lmptr_->getLease6(Lease::TYPE_NA, address);
+        ASSERT_TRUE(orig_lease);
+        orig_leases->push_back(orig_lease);
+    }
+
+    // Delete the middle lease from the back end. This should cause a conflict error.
+    ASSERT_NO_THROW_LOG(lmptr_->deleteLease((*orig_leases)[1]));
+
+    // Create a callout handle and add the expected arguments.
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    callout_handle->setArgument("query6", query);
+    callout_handle->setArgument("response6", response);
+    callout_handle->setArgument("leases6", orig_leases);
+
+    // Invoke the leases6Committed handler.
+    LeaseCmds cmds;
+    ASSERT_THROW_MSG(cmds.leases6Committed(*callout_handle, mgr),
+                     Unexpected,
+                     "1 out of 3 leases failed to update for "
+                     "duid=[01:02:03:04], [no hwaddr info], tid=0x4d2");
+
+    for (auto const& lease : *orig_leases) {
+        // Fetch the lease.
+        Lease6Ptr after_lease = lmptr_->getLease6(Lease::TYPE_NA, lease->addr_);
+        if (after_lease) {
+            // Context contents should match the expected context content.
+            ASSERT_EQ(*(after_lease->getContext()), *exp_context);
+        } else {
+            // Middle lease should not be found.
+            EXPECT_EQ(lease->addr_, (*orig_leases)[1]->addr_);
+        }
+    }
+}
+#endif
 
 TEST_F(Lease6CmdsTest, lease6AddMissingParams) {
     testLease6AddMissingParams();
@@ -5248,6 +5355,7 @@ TEST_F(Lease6CmdsTest, lease6WriteMultiThreading) {
     testLease6Write();
 }
 
+#if 0
 TEST_F(Lease6CmdsTest, validLeases6Committed) {
     testValidLeases6Committed();
 }
@@ -5265,5 +5373,15 @@ TEST_F(Lease6CmdsTest, nopLeases6CommittedMultiThreading) {
     MultiThreadingTest mt(true);
     testNopLeases6Committed();
 }
+
+TEST_F(Lease6CmdsTest, leases6CommittedErrors) {
+    testLeases6CommittedErrors();
+}
+
+TEST_F(Lease6CmdsTest, leases6CommittedErrorsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLeases6CommittedErrors();
+}
+#endif
 
 } // end of anonymous namespace

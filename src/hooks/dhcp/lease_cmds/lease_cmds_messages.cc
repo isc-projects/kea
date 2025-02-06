@@ -22,7 +22,9 @@ extern const isc::log::MessageID LEASE_CMDS_GET6_FAILED = "LEASE_CMDS_GET6_FAILE
 extern const isc::log::MessageID LEASE_CMDS_INIT_OK = "LEASE_CMDS_INIT_OK";
 extern const isc::log::MessageID LEASE_CMDS_LEASE4_OFFER_FAILED = "LEASE_CMDS_LEASE4_OFFER_FAILED";
 extern const isc::log::MessageID LEASE_CMDS_LEASES4_COMMITTED_FAILED = "LEASE_CMDS_LEASES4_COMMITTED_FAILED";
+extern const isc::log::MessageID LEASE_CMDS_LEASES6_COMMITTED_CONFLICT = "LEASE_CMDS_LEASES6_COMMITTED_CONFLICT";
 extern const isc::log::MessageID LEASE_CMDS_LEASES6_COMMITTED_FAILED = "LEASE_CMDS_LEASES6_COMMITTED_FAILED";
+extern const isc::log::MessageID LEASE_CMDS_LEASES6_COMMITTED_LEASE_ERROR = "LEASE_CMDS_LEASES6_COMMITTED_LEASE_ERROR";
 extern const isc::log::MessageID LEASE_CMDS_RESEND_DDNS4 = "LEASE_CMDS_RESEND_DDNS4";
 extern const isc::log::MessageID LEASE_CMDS_RESEND_DDNS4_FAILED = "LEASE_CMDS_RESEND_DDNS4_FAILED";
 extern const isc::log::MessageID LEASE_CMDS_RESEND_DDNS6 = "LEASE_CMDS_RESEND_DDNS6";
@@ -59,9 +61,11 @@ const char* values[] = {
     "LEASE_CMDS_GET4_FAILED", "lease4-get command failed (parameters: %1, reason: %2)",
     "LEASE_CMDS_GET6_FAILED", "lease6-get command failed (parameters: %1, reason: %2)",
     "LEASE_CMDS_INIT_OK", "loading Lease Commands hooks library successful",
-    "LEASE_CMDS_LEASE4_OFFER_FAILED", "processing error occurred evaluating binding variables:%1",
+    "LEASE_CMDS_LEASE4_OFFER_FAILED", "processing error occurred evaluating binding variables: %1",
     "LEASE_CMDS_LEASES4_COMMITTED_FAILED", "processing error occurred evaluating binding variables: %1",
-    "LEASE_CMDS_LEASES6_COMMITTED_FAILED", "processing error occurred evaluating binding variables: %1",
+    "LEASE_CMDS_LEASES6_COMMITTED_CONFLICT", "could not updating lease: %1 for: %2",
+    "LEASE_CMDS_LEASES6_COMMITTED_FAILED", "reason: %1",
+    "LEASE_CMDS_LEASES6_COMMITTED_LEASE_ERROR", "evaluating binding-variables for lease: %1 for: %2, reason: %3",
     "LEASE_CMDS_RESEND_DDNS4", "lease4-resend-ddns command successful: %1",
     "LEASE_CMDS_RESEND_DDNS4_FAILED", "lease4-resend-ddns command failed: %1",
     "LEASE_CMDS_RESEND_DDNS6", "lease6-resend-ddns command successful: %1",

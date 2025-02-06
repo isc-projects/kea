@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -2833,6 +2833,8 @@ LeaseCmdsImpl::leases6Committed(CalloutHandle& callout_handle,
         return;
     }
 
+    int attempted = 0;
+    int failed = 0;
     for (auto lease : *leases) {
         try {
             /// @todo - Users might want to only update NA or PD leases.
@@ -2842,23 +2844,29 @@ LeaseCmdsImpl::leases6Committed(CalloutHandle& callout_handle,
             /// both NA and PD leases.
             // Only update a lease if its active.
             if (lease->valid_lft_) {
+                ++attempted;
                 if (mgr->evaluateVariables(query, response, lease)) {
                     LeaseMgrFactory::instance().updateLease6(lease);
                 }
             }
-        /// @todo - for now if any leases fail we stop.  This could lead
-        /// to inconsistencies in user-context content for leases belonging
-        /// the the same response. The lease6BulkApplyHandler() accumlates
-        /// failures but iterates over all the leases..
         } catch (const NoSuchLease&) {
-            isc_throw(LeaseCmdsConflict, "failed to update"
-                      " the lease with address " << lease->addr_ <<
-                      " either because the lease has been"
-                      " deleted or it has changed in the database");
+            ++failed;
+            LOG_ERROR(lease_cmds_logger, LEASE_CMDS_LEASES6_COMMITTED_CONFLICT)
+                .arg("WTF") //lease->addr_.toText())
+                .arg(query->getLabel());
         } catch (const std::exception& ex) {
-            isc_throw(Unexpected, "evaluating binding variables failed for: "
-                      << query->getLabel() << ", :" << ex.what());
+            ++failed;
+            LOG_ERROR(lease_cmds_logger, LEASE_CMDS_LEASES6_COMMITTED_LEASE_ERROR)
+                .arg(query->getLabel())
+                .arg(lease->addr_.toText())
+                .arg(ex.what());
         }
+    }
+
+    if (failed) {
+        isc_throw(Unexpected, failed << " out of " << attempted
+                              << " leases failed to update for "
+                              << query->getLabel());
     }
 }
 
