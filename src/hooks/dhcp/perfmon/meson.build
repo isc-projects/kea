@@ -1,4 +1,4 @@
-dhcp_perfmon_lib = library(
+dhcp_perfmon_lib = shared_library(
     'dhcp_perfmon',
     'alarm.cc',
     'alarm_store.cc',
@@ -17,3 +17,10 @@ dhcp_perfmon_lib = library(
     link_with: LIBS_BUILT_SO_FAR,
     name_suffix: 'so',
 )
+dhcp_perfmon_archive = static_library(
+    'dhcp_perfmon',
+    objects: dhcp_perfmon_lib.extract_all_objects(recursive: false),
+    link_with: LIBS_BUILT_SO_FAR,
+)
+subdir('libloadtests')
+subdir('tests')

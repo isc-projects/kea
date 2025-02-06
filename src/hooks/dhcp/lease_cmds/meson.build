@@ -1,4 +1,4 @@
-dhcp_lease_cmds_lib = library(
+dhcp_lease_cmds_lib = shared_library(
     'dhcp_lease_cmds',
     'lease_cmds.cc',
     'lease_cmds_callouts.cc',
@@ -13,3 +13,10 @@ dhcp_lease_cmds_lib = library(
     link_with: LIBS_BUILT_SO_FAR,
     name_suffix: 'so',
 )
+dhcp_lease_cmds_archive = static_library(
+    'dhcp_lease_cmds',
+    objects: dhcp_lease_cmds_lib.extract_all_objects(recursive: false),
+    link_with: LIBS_BUILT_SO_FAR,
+)
+subdir('libloadtests')
+subdir('tests')

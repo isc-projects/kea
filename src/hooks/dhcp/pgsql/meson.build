@@ -2,7 +2,7 @@ if not postgresql.found()
     subdir_done()
 endif
 
-dhcp_pgsql_lib = library(
+dhcp_pgsql_lib = shared_library(
     'dhcp_pgsql',
     'pgsql_callouts.cc',
     'pgsql_cb_dhcp4.cc',
@@ -24,3 +24,10 @@ dhcp_pgsql_lib = library(
     link_with: LIBS_BUILT_SO_FAR,
     name_suffix: 'so',
 )
+dhcp_pgsql_archive = static_library(
+    'dhcp_pgsql',
+    objects: dhcp_pgsql_lib.extract_all_objects(recursive: false),
+    link_with: LIBS_BUILT_SO_FAR,
+)
+subdir('libloadtests')
+subdir('tests')

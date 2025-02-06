@@ -1,4 +1,5 @@
-dhcp_user_chk_lib = library(
+# Not install it
+dhcp_user_chk_lib = shared_library(
     'dhcp_user_chk',
     'load_unload.cc',
     'pkt_receive_co.cc',
@@ -12,8 +13,14 @@ dhcp_user_chk_lib = library(
     'version.cc',
     dependencies: [boost],
     include_directories: [include_directories('.')] + INCLUDES,
-    install: true,
+    install: false,
     install_dir: 'lib/kea/hooks',
     link_with: LIBS_BUILT_SO_FAR,
     name_suffix: 'so',
 )
+dhcp_user_chk_archive = static_library(
+    'dhcp_user_chk',
+    objects: dhcp_user_chk_lib.extract_all_objects(recursive: false),
+    link_with: LIBS_BUILT_SO_FAR,
+)
+subdir('tests')

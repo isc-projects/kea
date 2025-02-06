@@ -1,5 +1,5 @@
-dhcp_high_availability_lib = library(
-    'dhcp_high_availability',
+dhcp_ha_lib = shared_library(
+    'dhcp_ha',
     'command_creator.cc',
     'communication_state.cc',
     'ha_callouts.cc',
@@ -21,3 +21,10 @@ dhcp_high_availability_lib = library(
     link_with: LIBS_BUILT_SO_FAR,
     name_suffix: 'so',
 )
+dhcp_ha_archive = static_library(
+    'dhcp_ha',
+    objects: dhcp_ha_lib.extract_all_objects(recursive: false),
+    link_with: LIBS_BUILT_SO_FAR,
+)
+subdir('libloadtests')
+subdir('tests')

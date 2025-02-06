@@ -2,7 +2,7 @@ if not mysql.found()
     subdir_done()
 endif
 
-dhcp_mysql_lib = library(
+dhcp_mysql_lib = shared_library(
     'dhcp_mysql',
     'mysql_callouts.cc',
     'mysql_cb_dhcp4.cc',
@@ -24,3 +24,10 @@ dhcp_mysql_lib = library(
     link_with: LIBS_BUILT_SO_FAR,
     name_suffix: 'so',
 )
+dhcp_mysql_archive = static_library(
+    'dhcp_mysql',
+    objects: dhcp_mysql_lib.extract_all_objects(recursive: false),
+    link_with: LIBS_BUILT_SO_FAR,
+)
+subdir('libloadtests')
+subdir('tests')

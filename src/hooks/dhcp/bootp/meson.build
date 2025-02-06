@@ -16,5 +16,5 @@ dhcp_bootp_archive = static_library(
     objects: dhcp_bootp_lib.extract_all_objects(recursive: false),
     link_with: LIBS_BUILT_SO_FAR,
 )
-subdir('tests')
 subdir('libloadtests')
+subdir('tests')
