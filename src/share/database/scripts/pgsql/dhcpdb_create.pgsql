@@ -6625,6 +6625,17 @@ UPDATE schema_version
 
 -- This line concludes the schema upgrade to version 28.0.
 
+-- This line starts the schema upgrade to version 29.0.
+
+-- New lease state for address registration
+INSERT INTO lease_state VALUES (4, 'registered');
+
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '29', minor = '0';
+
+-- This line concludes the schema upgrade to version 29.0.
+
 -- Commit the script transaction.
 COMMIT;
 

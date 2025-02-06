@@ -1020,6 +1020,9 @@ mysql_upgrade_27_to_28_test() {
     check_table_column ddns_ttl dhcp6_subnet
     check_table_column ddns_ttl_min dhcp6_subnet
     check_table_column ddns_ttl_max dhcp6_subnet
+}
+
+mysql_upgrade_28_to_29_test() {
 
     # check registered were added tp lease_state
     qry="SELECT name FROM lease_state WHERE state = 4"
@@ -1050,7 +1053,7 @@ mysql_upgrade_test() {
 
     # Verify that the upgraded schema reports the latest version.
     version=$("${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "28.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "29.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's check that the new tables are indeed there.
 
@@ -1730,6 +1733,9 @@ SET @disable_audit = 0"
 
     # Check upgrade from 27.0 to 28.0.
     mysql_upgrade_27_to_28_test
+
+    # Check upgrade from 28.0 to 29.0.
+    mysql_upgrade_28_to_29_test
 
     # Let's wipe the whole database
     mysql_wipe
