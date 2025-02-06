@@ -6616,9 +6616,6 @@ ALTER TABLE dhcp6_subnet
     ADD COLUMN ddns_ttl_min     BIGINT DEFAULT NULL,
     ADD COLUMN ddns_ttl_max     BIGINT DEFAULT NULL;
 
--- New lease state for address registration
-INSERT INTO lease_state VALUES (4, 'registered');
-
 -- Update the schema version number.
 UPDATE schema_version
     SET version = '28', minor = '0';
