@@ -93,7 +93,7 @@ StateModel::StateModel() : events_(), states_(), dictionaries_initted_(false),
                            paused_(false), mutex_(new std::mutex) {
 }
 
-StateModel::~StateModel(){
+StateModel::~StateModel() {
 }
 
 void
