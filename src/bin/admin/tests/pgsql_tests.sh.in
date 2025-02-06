@@ -158,7 +158,7 @@ pgsql_db_version_test() {
     run_command \
         "${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}"
     version="${OUTPUT}"
-    assert_str_eq "28.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "29.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     pgsql_wipe
@@ -1111,6 +1111,9 @@ pgsql_upgrade_27_to_28_test() {
     check_table_column ddns_ttl dhcp6_subnet
     check_table_column ddns_ttl_min dhcp6_subnet
     check_table_column ddns_ttl_max dhcp6_subnet
+}
+
+pgsql_upgrade_28_to_29_test() {
 
     # check registered were added tp lease_state
     query="SELECT name FROM lease_state WHERE state = 4"
@@ -1138,7 +1141,7 @@ pgsql_upgrade_test() {
 
     # Verify upgraded schema reports the latest version.
     version=$("${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "28.0" "${version}" 'Expected kea-admin to return %s, returned value was %s'
+    assert_str_eq "29.0" "${version}" 'Expected kea-admin to return %s, returned value was %s'
 
     # Check 1.0 to 2.0 upgrade
     pgsql_upgrade_1_0_to_2_0_test
@@ -1214,6 +1217,9 @@ pgsql_upgrade_test() {
 
     # Check 27 to 28 upgrade
     pgsql_upgrade_27_to_28_test
+
+    # Check 28 to 29 upgrade
+    pgsql_upgrade_28_to_29_test
 
     # Let's wipe the whole database
     pgsql_wipe
