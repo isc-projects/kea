@@ -16,3 +16,4 @@ executable(
     install_dir: 'sbin',
     link_with: [lfc_lib] + LIBS_BUILT_SO_FAR,
 )
+subdir('tests')
