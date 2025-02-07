@@ -1,0 +1,6 @@
+[func]		tmark
+	The lease-cmds hook library now supports storing
+    custom values, referred to as ``binding-variables``,
+    within the lease's ``user-context``.  Supported
+    in both kea-dhcp4 and kea-dhcp6.
+	(Gitlab #3463)
