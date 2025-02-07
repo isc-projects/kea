@@ -583,8 +583,8 @@ TEST_F(CtrlAgentControllerTest, noListenerChangeHttps) {
     EXPECT_FALSE(process->isListening());
 }
 
-// Verify that the reload will reuse listener
-TEST_F(CtrlAgentControllerTest, ignoreHttpToHttpsSwitch) {
+// Verify that the reload will issue an error
+TEST_F(CtrlAgentControllerTest, handleHttpToHttpsSwitch) {
     string ca_dir(string(TEST_CA_DIR));
 
     // This configuration should be used to override the initial configuration.
@@ -653,9 +653,9 @@ TEST_F(CtrlAgentControllerTest, ignoreHttpToHttpsSwitch) {
     EXPECT_EQ("127.0.0.1", ctx->getHttpHost());
     EXPECT_EQ(8081, ctx->getHttpPort());
 
-    // The forwarding configuration should have been updated.
-    testUnixSocketInfo("dhcp4", "/second/dhcp4/socket");
-    testUnixSocketInfo("dhcp6", "/second/dhcp6/socket");
+    // The forwarding configuration should have not been updated.
+    testUnixSocketInfo("dhcp4", "/first/dhcp4/socket");
+    testUnixSocketInfo("dhcp6", "/first/dhcp6/socket");
 
     CtrlAgentProcessPtr process = getCtrlAgentProcess();
     ASSERT_TRUE(process);
@@ -664,8 +664,8 @@ TEST_F(CtrlAgentControllerTest, ignoreHttpToHttpsSwitch) {
     EXPECT_FALSE(process->isListening());
 }
 
-// Verify that the reload will reuse listener
-TEST_F(CtrlAgentControllerTest, ignoreHttpsToHttpSwitch) {
+// Verify that the reload will issue an error
+TEST_F(CtrlAgentControllerTest, handleHttpsToHttpSwitch) {
     string ca_dir(string(TEST_CA_DIR));
     ostringstream agent_st;
     agent_st << "{"
@@ -753,9 +753,9 @@ TEST_F(CtrlAgentControllerTest, ignoreHttpsToHttpSwitch) {
     EXPECT_EQ("127.0.0.1", ctx->getHttpHost());
     EXPECT_EQ(8081, ctx->getHttpPort());
 
-    // The forwarding configuration should have been updated.
-    testUnixSocketInfo("dhcp4", "/second/dhcp4/socket");
-    testUnixSocketInfo("dhcp6", "/second/dhcp6/socket");
+    // The forwarding configuration should have not been updated.
+    testUnixSocketInfo("dhcp4", "/first/dhcp4/socket");
+    testUnixSocketInfo("dhcp6", "/first/dhcp6/socket");
 
     CtrlAgentProcessPtr process = getCtrlAgentProcess();
     ASSERT_TRUE(process);

@@ -428,6 +428,8 @@ password, these values can be read from files. The syntax is extended by:
 
 Since Kea-2.7.6 Kea supports multiple HTTP/HTTPS connections.
 Both IPv4 and IPv6 addresses can be used.
+A different address or port must be specified when using the "config-set"
+command to switch from HTTP to HTTPS or from HTTPS to HTTP.
 
 When files are used, they are read when the configuration is loaded,
 to detect configuration errors as soon as possible.

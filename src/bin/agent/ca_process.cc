@@ -145,9 +145,11 @@ CtrlAgentProcess::configure(isc::data::ConstElementPtr config_set,
                 if (listener->getTlsContext()) {
                     if (ctx->getTrustAnchor().empty()) {
                         // Can not switch from HTTPS to HTTP
-                        LOG_ERROR(agent_logger, CTRL_AGENT_HTTPS_SERVICE_REUSED)
+                        LOG_ERROR(agent_logger, CTRL_AGENT_HTTPS_SERVICE_REUSE_FAILED)
                             .arg(server_address.toText())
                             .arg(server_port);
+                        isc_throw(BadValue,
+                                  "Can not switch from HTTPS to HTTP sockets using the same address and port.");
                     } else {
                         // Apply TLS settings each time.
                         TlsContextPtr tls_context;
@@ -167,9 +169,11 @@ CtrlAgentProcess::configure(isc::data::ConstElementPtr config_set,
                     }
                 } else if (!ctx->getTrustAnchor().empty()) {
                     // Can not switch from HTTP to HTTPS
-                    LOG_ERROR(agent_logger, CTRL_AGENT_HTTP_SERVICE_REUSED)
+                    LOG_ERROR(agent_logger, CTRL_AGENT_HTTP_SERVICE_REUSE_FAILED)
                         .arg(server_address.toText())
                         .arg(server_port);
+                    isc_throw(BadValue,
+                              "Can not switch from HTTP to HTTPS sockets using the same address and port.");
                 }
             }
             // If the connection can be reused, mark it as usable.

@@ -2149,8 +2149,8 @@ TEST_F(HttpsCtrlChannelD2Test, noListenerChange) {
     EXPECT_EQ(1, keys->size());
 }
 
-// Verify that the "config-set" command will reuse listener
-TEST_F(HttpCtrlChannelD2Test, ignoreHttpToHttpsSwitch) {
+// Verify that the "config-set" command will exit with an error
+TEST_F(HttpCtrlChannelD2Test, handleHttpToHttpsSwitch) {
 
     string d2_cfg_txt =
         "    { \n"
@@ -2235,20 +2235,20 @@ TEST_F(HttpCtrlChannelD2Test, ignoreHttpToHttpsSwitch) {
     EXPECT_EQ(listener, HttpCommandMgr::instance().getHttpListener().get());
     ASSERT_FALSE(HttpCommandMgr::instance().getHttpListener()->getTlsContext());
 
-    // Verify the configuration was successful.
-    EXPECT_NE(response.find("\"result\": 0"), std::string::npos);
-    EXPECT_NE(response.find("\"text\": \"Configuration applied successfully.\""),
+    // Verify the configuration was rejected.
+    EXPECT_NE(response.find("\"result\": 1"), std::string::npos);
+    EXPECT_NE(response.find("\"text\": \"Can not switch from HTTP to HTTPS sockets using the same address and port.\""),
               std::string::npos);
 
-    // Check that the config was applied.
+    // Check that the config was not applied.
     d2_context = cfg_mgr->getD2CfgContext();
     keys = d2_context->getKeys();
     ASSERT_TRUE(keys);
     EXPECT_EQ(1, keys->size());
 }
 
-// Verify that the "config-set" command will reuse listener
-TEST_F(HttpsCtrlChannelD2Test, ignoreHttpsToHttpSwitch) {
+// Verify that the "config-set" command will exit with an error
+TEST_F(HttpsCtrlChannelD2Test, handleHttpsToHttpSwitch) {
 
     string ca_dir(string(TEST_CA_DIR));
     ostringstream d2_st;
@@ -2343,11 +2343,11 @@ TEST_F(HttpsCtrlChannelD2Test, ignoreHttpsToHttpSwitch) {
     // The TLS settings have not changed
     EXPECT_EQ(context, HttpCommandMgr::instance().getHttpListener()->getTlsContext().get());
 
-    // Verify the configuration was successful.
-    EXPECT_EQ("[ { \"arguments\": { \"hash\": \"029AE1208415D6911B5651A6F82D054F55B7877D2589CFD1DCEB5BFFCD3B13A3\" }, \"result\": 0, \"text\": \"Configuration applied successfully.\" } ]",
+    // Verify the configuration was rejected.
+    EXPECT_EQ("[ { \"result\": 1, \"text\": \"Can not switch from HTTPS to HTTP sockets using the same address and port.\" } ]",
               response);
 
-    // Check that the config was applied.
+    // Check that the config was not applied.
     d2_context = cfg_mgr->getD2CfgContext();
     keys = d2_context->getKeys();
     ASSERT_TRUE(keys);

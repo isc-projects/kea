@@ -3654,8 +3654,8 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, noListenerChange) {
     CfgMgr::instance().clear();
 }
 
-// Verify that the "config-set" command will reuse listener
-TEST_F(HttpCtrlChannelDhcpv4Test, ignoredHttpToHttpsSwitch) {
+// Verify that the "config-set" command will exit with an error
+TEST_F(HttpCtrlChannelDhcpv4Test, handleHttpToHttpsSwitch) {
     createHttpChannelServer();
 
     // Define strings to permutate the config arguments
@@ -3788,8 +3788,8 @@ TEST_F(HttpCtrlChannelDhcpv4Test, ignoredHttpToHttpsSwitch) {
     EXPECT_EQ(listener, HttpCommandMgr::instance().getHttpListener().get());
     ASSERT_FALSE(HttpCommandMgr::instance().getHttpListener()->getTlsContext());
 
-    EXPECT_NE(response.find("\"result\": 0"), std::string::npos);
-    EXPECT_NE(response.find("\"text\": \"Configuration successful.\""),
+    EXPECT_NE(response.find("\"result\": 1"), std::string::npos);
+    EXPECT_NE(response.find("\"text\": \"Can not switch from HTTP to HTTPS sockets using the same address and port.\""),
               std::string::npos);
 
     // Check that the config was not lost
@@ -3800,8 +3800,8 @@ TEST_F(HttpCtrlChannelDhcpv4Test, ignoredHttpToHttpsSwitch) {
     CfgMgr::instance().clear();
 }
 
-// Verify that the "config-set" command will reuse listener
-TEST_F(HttpsCtrlChannelDhcpv4Test, ignoreHttpsToHttpSwitch) {
+// Verify that the "config-set" command will exit with an error
+TEST_F(HttpsCtrlChannelDhcpv4Test, handleHttpsToHttpSwitch) {
     createHttpChannelServer();
 
     // Define strings to permutate the config arguments
@@ -3943,8 +3943,8 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, ignoreHttpsToHttpSwitch) {
     ASSERT_TRUE(HttpCommandMgr::instance().getHttpListener()->getTlsContext());
     EXPECT_EQ(context, HttpCommandMgr::instance().getHttpListener()->getTlsContext().get());
 
-    EXPECT_NE(response.find("\"result\": 0"), std::string::npos);
-    EXPECT_NE(response.find("\"text\": \"Configuration successful.\""),
+    EXPECT_NE(response.find("\"result\": 1"), std::string::npos);
+    EXPECT_NE(response.find("\"text\": \"Can not switch from HTTPS to HTTP sockets using the same address and port.\""),
               std::string::npos);
 
     // Check that the config was not lost

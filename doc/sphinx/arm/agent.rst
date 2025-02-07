@@ -259,6 +259,9 @@ Configuring only one or two string parameters results in an error.
    mutually authenticated, but there is no proof they are the same as
    for the HTTP authentication.
 
+A different address or port must be specified when using the "config-set"
+command to switch from HTTP to HTTPS or from HTTPS to HTTP.
+
 The :iscman:`kea-shell` tool also supports TLS.
 
 .. _agent-launch:

@@ -135,9 +135,11 @@ HttpCommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr config) {
             if (listener->getTlsContext()) {
                 if (cmd_config->getTrustAnchor().empty()) {
                     // Can not switch from HTTPS to HTTP
-                    LOG_ERROR(command_logger, HTTP_COMMAND_MGR_HTTPS_SERVICE_REUSED)
+                    LOG_ERROR(command_logger, HTTP_COMMAND_MGR_HTTPS_SERVICE_REUSE_FAILED)
                         .arg(server_address.toText())
                         .arg(server_port);
+                    isc_throw(BadValue,
+                              "Can not switch from HTTPS to HTTP sockets using the same address and port.");
                 } else {
                     // Apply TLS settings each time.
                     TlsContextPtr tls_context;
@@ -159,9 +161,11 @@ HttpCommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr config) {
                 }
             } else if (!cmd_config->getTrustAnchor().empty()) {
                 // Can not switch from HTTP to HTTPS
-                LOG_ERROR(command_logger, HTTP_COMMAND_MGR_HTTP_SERVICE_REUSED)
+                LOG_ERROR(command_logger, HTTP_COMMAND_MGR_HTTP_SERVICE_REUSE_FAILED)
                     .arg(server_address.toText())
                     .arg(server_port);
+                isc_throw(BadValue,
+                          "Can not switch from HTTP to HTTPS sockets using the same address and port.");
             }
         }
         // If the connection can be reused, mark it as usable.
