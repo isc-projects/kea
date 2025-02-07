@@ -1,5 +1,5 @@
-perfdhcplib_lib = static_library(
-    'perfdhcplib',
+perfdhcp_lib = static_library(
+    'perfdhcp',
     'avalanche_scen.cc',
     'basic_scen.cc',
     'command_options.cc',
@@ -22,5 +22,5 @@ executable(
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'sbin',
-    link_with: [perfdhcplib_lib] + LIBS_BUILT_SO_FAR,
+    link_with: [perfdhcp_lib] + LIBS_BUILT_SO_FAR,
 )

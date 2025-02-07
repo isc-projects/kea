@@ -118,6 +118,10 @@ conf_data = configuration_data(
     },
 )
 
+#### Programs
+
+python_exe = find_program('python3', 'python', required: false)
+
 #### Dependencies
 
 boost = dependency('boost', version: '>=1.66')
@@ -350,6 +354,7 @@ INCLUDES = [
 #### Build Starts Here
 
 LIBS_BUILT_SO_FAR = []
+subdir('tools')
 subdir('src')
 subdir('fuzz')
 if have_premium
