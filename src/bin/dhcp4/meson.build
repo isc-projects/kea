@@ -22,3 +22,4 @@ executable(
     install_dir: 'sbin',
     link_with: [dhcp4_lib] + LIBS_BUILT_SO_FAR,
 )
+# subdir('tests')
