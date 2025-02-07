@@ -20,7 +20,6 @@ dhcp_perfmon_lib = shared_library(
 dhcp_perfmon_archive = static_library(
     'dhcp_perfmon',
     objects: dhcp_perfmon_lib.extract_all_objects(recursive: false),
-    link_with: LIBS_BUILT_SO_FAR,
 )
 subdir('libloadtests')
 subdir('tests')

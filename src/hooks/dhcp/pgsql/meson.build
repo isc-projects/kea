@@ -27,7 +27,6 @@ dhcp_pgsql_lib = shared_library(
 dhcp_pgsql_archive = static_library(
     'dhcp_pgsql',
     objects: dhcp_pgsql_lib.extract_all_objects(recursive: false),
-    link_with: LIBS_BUILT_SO_FAR,
 )
 subdir('libloadtests')
 subdir('tests')

@@ -5,7 +5,6 @@ lfc_lib = static_library(
     'lfc_messages.cc',
     dependencies: [boost],
     include_directories: [include_directories('.')] + INCLUDES,
-    link_with: LIBS_BUILT_SO_FAR,
 )
 executable(
     'kea-lfc',

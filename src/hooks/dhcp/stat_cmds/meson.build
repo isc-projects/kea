@@ -15,7 +15,6 @@ dhcp_stat_cmds_lib = shared_library(
 dhcp_stat_cmds_archive = static_library(
     'dhcp_stat_cmds',
     objects: dhcp_stat_cmds_lib.extract_all_objects(recursive: false),
-    link_with: LIBS_BUILT_SO_FAR,
 )
 subdir('libloadtests')
 subdir('tests')

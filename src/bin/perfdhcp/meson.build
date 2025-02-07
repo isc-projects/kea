@@ -13,7 +13,6 @@ perfdhcp_lib = static_library(
     'test_control.cc',
     dependencies: [boost, threads],
     include_directories: [include_directories('.')] + INCLUDES,
-    link_with: LIBS_BUILT_SO_FAR,
 )
 executable(
     'perfdhcp',

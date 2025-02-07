@@ -3,7 +3,11 @@ if not gtest.found()
 endif
 
 HOOK_INCLUDES = [include_directories('..')]
-libs_testutils = [kea_dhcpsrv_testutils_lib, kea_mysql_testutils_lib]
+libs_testutils = [
+    kea_dhcpsrv_testutils_lib,
+    kea_mysql_testutils_lib,
+    kea_database_testutils_lib,
+]
 dhcp_mysql_lib_tests = executable(
     'dhcp-mysql-lib-tests',
     'mysql_bootp_unittest.cc',

@@ -11,5 +11,4 @@ kea_mysql_testutils_lib = static_library(
     ],
     dependencies: [boost, mysql],
     include_directories: [include_directories('.')] + INCLUDES,
-    link_with: [kea_database_testutils_lib] + LIBS_BUILT_SO_FAR,
 )

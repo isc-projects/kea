@@ -12,7 +12,6 @@ kea_testutils_lib = static_library(
     'user_context_utils.cc',
     dependencies: [gtest],
     include_directories: [include_directories('.')] + INCLUDES,
-    link_with: [kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )
 
 dhcp_test_lib_conf_data = configuration_data()

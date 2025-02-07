@@ -8,5 +8,4 @@ kea_process_testutils_lib = static_library(
     cpp_args: [f'-DDATABASE_SCRIPTS_DIR="@DATABASE_SCRIPTS_DIR@"'],
     dependencies: [boost, gtest],
     include_directories: [include_directories('.')] + INCLUDES,
-    link_with: LIBS_BUILT_SO_FAR,
 )

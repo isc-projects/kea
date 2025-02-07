@@ -13,7 +13,6 @@ agent_lib = static_library(
     'simple_parser.cc',
     dependencies: [crypto],
     include_directories: [include_directories('.')] + INCLUDES,
-    link_with: LIBS_BUILT_SO_FAR,
 )
 executable(
     'kea-ctrl-agent',

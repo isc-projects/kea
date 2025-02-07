@@ -10,7 +10,6 @@ kea_asiolink_testutils_lib = static_library(
     cpp_args: [f'-DTEST_CA_DIR="@TEST_CA_DIR@"'],
     dependencies: [gtest, crypto],
     include_directories: [include_directories('.')] + INCLUDES,
-    link_with: LIBS_BUILT_SO_FAR,
 )
 
 if crypto.name() == openssl.name()

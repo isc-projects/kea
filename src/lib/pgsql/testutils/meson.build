@@ -11,5 +11,4 @@ kea_pgsql_testutils_lib = static_library(
     ],
     dependencies: [postgresql],
     include_directories: [include_directories('.')] + INCLUDES,
-    link_with: [kea_database_testutils_lib] + LIBS_BUILT_SO_FAR,
 )

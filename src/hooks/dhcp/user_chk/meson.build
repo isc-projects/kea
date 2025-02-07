@@ -21,6 +21,5 @@ dhcp_user_chk_lib = shared_library(
 dhcp_user_chk_archive = static_library(
     'dhcp_user_chk',
     objects: dhcp_user_chk_lib.extract_all_objects(recursive: false),
-    link_with: LIBS_BUILT_SO_FAR,
 )
 subdir('tests')

@@ -8,5 +8,4 @@ kea_d2srv_testutils_lib = static_library(
     'stats_test_utils.cc',
     dependencies: [boost, crypto],
     include_directories: [include_directories('.')] + INCLUDES,
-    link_with: LIBS_BUILT_SO_FAR,
 )

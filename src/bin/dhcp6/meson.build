@@ -13,7 +13,6 @@ dhcp6_lib = static_library(
     'parser_context.cc',
     dependencies: [crypto],
     include_directories: [include_directories('.')] + INCLUDES,
-    link_with: LIBS_BUILT_SO_FAR,
 )
 executable(
     'kea-dhcp6',

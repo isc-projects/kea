@@ -11,5 +11,4 @@ kea_dhcp_testutils_lib = static_library(
     'pkt_filter_test_stub.cc',
     dependencies: [boost],
     include_directories: [include_directories('.')] + INCLUDES,
-    link_with: LIBS_BUILT_SO_FAR,
 )
