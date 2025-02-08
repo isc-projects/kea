@@ -62,6 +62,12 @@ upgrade_scripts = [
     'upgrade_026_to_027.sh',
     'upgrade_027_to_028.sh',
 ]
+list = run_command('../utils/grabber.sh', check: true)
+grabbed_upgrade_scripts = list.stdout().strip().split('\n')
+assert(
+    upgrade_scripts.length() == grabbed_upgrade_scripts.length(),
+    'incorrect list of upgrade scripts',
+)
 foreach file : upgrade_scripts
     configure_file(
         input: file + '.in',
