@@ -4,12 +4,32 @@ endif
 
 CURRENT_BUILD_DIR = meson.current_build_dir()
 CURRENT_SOURCE_DIR = meson.current_source_dir()
-libs_testutils = [
+dhcp4_tests_deps = [boost, crypto, gtest]
+dhcp4_tests_libs = [
     kea_dhcpsrv_testutils_lib,
     kea_dhcp_testutils_lib,
     kea_database_testutils_lib,
     kea_testutils_lib,
+    kea_util_unittests_lib,
+    kea_asiolink_testutils_lib,
 ]
+if mysql.found()
+    dhcp4_tests_deps += [mysql]
+    dhcp4_tests_libs += [
+        dhcp_mysql_archive,
+        kea_mysql_testutils_lib,
+        kea_mysql_lib,
+    ]
+endif
+if postgresql.found()
+    dhcp4_tests_deps += [postgresql]
+    dhcp4_tests_libs += [
+        dhcp_pgsql_archive,
+        kea_pgsql_testutils_lib,
+        kea_pgsql_lib,
+    ]
+endif
+
 dhcp4_tests_conf_data = configuration_data()
 dhcp4_tests_conf_data.set('abs_top_builddir', TOP_BUILD_DIR)
 dhcp4_tests_conf_data.set('abs_top_srcdir', TOP_SOURCE_DIR)
@@ -45,10 +65,9 @@ dhcp4_unittests = executable(
     'dhcp4_unittests',
     'classify_unittest.cc',
     'client_handler_unittest.cc',
-    'config_parser_unittest.cc',
     'config_backend_unittest.cc',
+    'config_parser_unittest.cc',
     'ctrl_dhcp4_srv_unittest.cc',
-    'http_control_socket_unittest.cc',
     'd2_unittest.cc',
     'decline_unittest.cc',
     'dhcp4_client.cc',
@@ -62,6 +81,17 @@ dhcp4_unittests = executable(
     'get_config_unittest.cc',
     'hooks_unittest.cc',
     'host_options_unittest.cc',
+    'host_unittest.cc',
+    'http_control_socket_unittest.cc',
+    'inform_unittest.cc',
+    'kea_controller_unittest.cc',
+    'marker_file.cc',
+    'out_of_range_unittest.cc',
+    'parser_unittest.cc',
+    'release_unittest.cc',
+    'shared_network_unittest.cc',
+    'simple_parser4_unittest.cc',
+    'vendor_opts_unittest.cc',
     cpp_args: [
         f'-DTEST_DATA_BUILDDIR="@CURRENT_BUILD_DIR@"',
         f'-DCFG_EXAMPLES="@TOP_SOURCE_DIR@/doc/examples/kea4"',
@@ -70,16 +100,16 @@ dhcp4_unittests = executable(
         f'-DKEA_LFC_EXECUTABLE="@KEA_LFC@"',
         f'-DTEST_CA_DIR="@TEST_CA_DIR@"',
     ],
-    dependencies: [boost, crypto, gtest],
+    dependencies: dhcp4_tests_deps,
     include_directories: [include_directories('.')] + INCLUDES,
-    link_with: [kea_util_unittests_lib] + libs_testutils + LIBS_BUILT_SO_FAR,
+    link_with: [dhcp4_lib] + dhcp4_tests_libs + LIBS_BUILT_SO_FAR,
 )
 test('dhcp4_unittests', dhcp4_unittests, protocol: 'gtest', is_parallel: false)
 
 shared_library(
     'co1',
     'callout_library_1.cc',
-    dependencies: [boost],
+    dependencies: dhcp4_tests_deps,
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
     build_rpath: '/nowhere',
@@ -88,7 +118,7 @@ shared_library(
 shared_library(
     'co2',
     'callout_library_2.cc',
-    dependencies: [boost],
+    dependencies: dhcp4_tests_deps,
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
     build_rpath: '/nowhere',
@@ -97,7 +127,7 @@ shared_library(
 shared_library(
     'co3',
     'callout_library_3.cc',
-    dependencies: [boost],
+    dependencies: dhcp4_tests_deps,
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
     build_rpath: '/nowhere',
@@ -106,7 +136,7 @@ shared_library(
 shared_library(
     'co4',
     'callout_library_4.cc',
-    dependencies: [boost],
+    dependencies: dhcp4_tests_deps,
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
     build_rpath: '/nowhere',

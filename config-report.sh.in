@@ -1,0 +1,116 @@
+#!/bin/sh
+
+# Print the report.
+cat > @TOP_BUILD_DIR@/config.report << END
+
+       Kea source configure results:
+    -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+Package:
+  Name:              @PACKAGE_NAME@
+  Version:           @PACKAGE_VERSION@
+  Extended version:  @EXTENDED_VERSION@
+  Version type:      @PACKAGE_VERSION_TYPE@
+  OS Family:         @OS_TYPE@
+
+  Prefix:            @PREFIX@
+  Hooks directory:   @HOOKS_DIR@
+  Premium hooks:     @PREMIUM@
+
+C++ Compiler:
+  CXX:             @CXX@
+  CXX_ID:          @CXX_ID@
+  CXX_VERSION:     @CXX_VERSION@
+  CXX_STANDARD:    @CXX_STANDARD@
+END
+
+if test "@HAVE_PYTHON@" != "no" ; then
+cat >> @TOP_BUILD_DIR@/config.report << END
+
+Python:
+  PYTHON:          @PYTHON_PATH@
+  PKGPYTHONDIR:    @PKGPYTHONDIR@
+
+END
+fi
+
+cat >> @TOP_BUILD_DIR@/config.report << END
+Boost:
+  BOOST_VERSION:   @BOOST_VERSION@
+  BOOST_CFLAGS:    @BOOST_CFLAGS@
+  BOOST_LIBS:      @BOOST_LIBS@
+
+@CRYPTO_NAME@:
+  CRYPTO_VERSION:  @CRYPTO_VERSION@
+  CRYPTO_CFLAGS:   @CRYPTO_CFLAGS@
+  CRYPTO_LIBS:     @CRYPTO_LIBS@
+
+Log4cplus:
+  LOG4CPLUS_VERSION:  @LOG4CPLUS_VERSION@
+  LOG4CPLUS_CFLAGS:   @LOG4CPLUS_CFLAGS@
+  LOG4CPLUS_LIBS:     @LOG4CPLUS_LIBS@
+
+Flex/bison:
+  FLEX:  @FLEX@
+  BISON: @BISON@
+END
+
+if test "@HAVE_MYSQL@" != "no" ; then
+cat >> @TOP_BUILD_DIR@/config.report << END
+
+MySQL:
+  MYSQL_VERSION:   @MYSQL_VERSION@
+  MYSQL_CFLAGS:    @MYSQL_CFLAGS@
+  MYSQL_LIBS:      @MYSQL_LIBS@
+END
+else
+cat >> @TOP_BUILD_DIR@/config.report << END
+
+MySQL:
+  no
+END
+fi
+
+if test "@HAVE_PGSQL@" != "no" ; then
+cat >> @TOP_BUILD_DIR@/config.report << END
+
+PostgreSQL:
+  PGSQL_VERSION:   @PGSQL_VERSION@
+  PGSQL_CFLAGS:    @PGSQL_CFLAGS@
+  PGSQL_LIBS:      @PGSQL_LIBS@
+END
+else
+cat >> @TOP_BUILD_DIR@/config.report << END
+
+PostgreSQL:
+  no
+END
+fi
+
+cat >> @TOP_BUILD_DIR@/config.report << END
+
+NETCONF:
+  @HAVE_NETCONF@
+END
+
+if test "@HAVE_GTEST@" != "no" ; then
+cat >> @TOP_BUILD_DIR@/config.report << END
+
+Google Test:
+  GTEST_VERSION:   @GTEST_VERSION@
+  GTEST_CFLAGS:    @GTEST_CFLAGS@
+  GTEST_LIBS:      @GTEST_LIBS@
+END
+else
+cat >> @TOP_BUILD_DIR@/config.report << END
+
+Google Test:
+  no
+END
+fi
+
+cat >> @TOP_BUILD_DIR@/config.report << END
+
+END
+
+# cat @TOP_BUILD_DIR@/config.report

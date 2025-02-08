@@ -1,7 +1,8 @@
-config_report_cc = configure_file(
-    input: 'config_report.cc.in',
+mk_cfgrpt = f'@TOP_SOURCE_DIR@/tools/mk_cfgrpt.sh'
+config_report_cc = custom_target(
+    input: config_report,
     output: 'config_report.cc',
-    configuration: conf_data,
+    command: [mk_cfgrpt, '@INPUT@', '@OUTPUT@'],
 )
 kea_cfgrpt_lib = library(
     'kea-cfgrpt',

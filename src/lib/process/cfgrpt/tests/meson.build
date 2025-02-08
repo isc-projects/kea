@@ -4,7 +4,7 @@ endif
 
 kea_process_cfgrpt_tests = executable(
     'kea-process-cfgrpt-tests',
-    # 'config_report_unittests.cc',
+    'config_report_unittests.cc',
     'run_unittests.cc',
     dependencies: [gtest],
     include_directories: [include_directories('.')] + INCLUDES,
