@@ -1,7 +1,9 @@
+# Ask mesion >= 1.1.0 for build options.
 project(
     'kea',
     'cpp',
     version: '2.7.7-git',
+    meson_version: '>=1.1.0',
     default_options: ['default_library=shared'],
 )
 
@@ -157,9 +159,12 @@ if not crypto.found()
 endif
 
 # Kerberos
+krb5_config = disabler()
 krb5 = dependency('krb5', required: false)
 if not krb5.found()
     krb5_config = find_program('krb5-config', required: false)
+endif
+if krb5_config.found()
     cflags = run_command([krb5_config, '--cflags'], check: false)
     libs = run_command([krb5_config, '--libs'], check: false)
     if cflags.returncode() == 0 and libs.returncode() == 0
@@ -175,20 +180,27 @@ mysql = dependency('mariadb', required: false)
 if not mysql.found()
     mysql = dependency('mysql', required: false)
 endif
-foreach mysql_config : ['mariadb_config', 'mysql_config']
+mysql_config = disabler()
+foreach mysql_config_file : ['mariadb_config', 'mysql_config']
     if mysql.found()
         continue
     endif
-    mysql_config = find_program(mysql_config, required: false)
+    mysql_config = find_program(mysql_config_file, required: false)
     if not mysql_config.found()
         continue
     endif
     cflags = run_command([mysql_config, '--cflags'], check: false)
     libs = run_command([mysql_config, '--libs'], check: false)
-    if cflags.returncode() == 0 and libs.returncode() == 0
+    version = run_command([mysql_config, '--version'], check: false)
+
+    if cflags.returncode() == 0 and libs.returncode() == 0 and version.returncode() == 0
+        mysql_compile_args = cflags.stdout().split()
+        mysql_link_args = libs.stdout().split()
+        mysql_version = version.stdout().strip()
         mysql = declare_dependency(
-            compile_args: cflags.stdout().split(),
-            link_args: libs.stdout().split(),
+            compile_args: mysql_compile_args,
+            link_args: mysql_link_args,
+            version: mysql_version,
         )
         break
     endif
@@ -199,14 +211,22 @@ endif
 
 # PostgreSQL
 postgresql = dependency('libpq', required: false)
+pg_config = disabler()
 if not postgresql.found()
     pg_config = find_program('pg_config', required: false)
+endif
+if pg_config.found()
     cflags = run_command([pg_config, '--cflags'], check: false)
     libs = run_command([pg_config, '--libs'], check: false)
-    if cflags.returncode() == 0 and libs.returncode() == 0
+    version = run_command([pg_config, '--version'], check: false)
+    if cflags.returncode() == 0 and libs.returncode() == 0 and version.returncode() == 0
+        pgsql_compile_args = cflags.stdout().split()
+        pgsql_link_args = libs.stdout().split()
+        pgsql_version = version.stdout().strip()
         postgresql = declare_dependency(
-            compile_args: cflags.stdout().split(),
-            link_args: libs.stdout().split(),
+            compile_args: pgsql_compile_args,
+            link_args: pgsql_link_args,
+            version: pgsql_version,
         )
     endif
 endif
@@ -319,11 +339,18 @@ message(f'Detected system "@SYSTEM@".')
 
 #### System-specific Compiler Flags
 
+compile_args = []
+link_args = []
 if SYSTEM == 'darwin'
+    compile_args += ['-D__APPLE_USE_RFC_3542']
     add_project_arguments('-D__APPLE_USE_RFC_3542', language: 'cpp')
-    add_project_link_arguments(f'-Wl,-rpath,@PREFIX@/lib', language: 'cpp')
+    link_arg = f'-Wl,-rpath,@PREFIX@/lib'
+    link_args += [link_arg]
+    add_project_link_arguments(link_arg, language: 'cpp')
 else
-    add_project_link_arguments(f'-Wl,-rpath=@PREFIX@/lib', language: 'cpp')
+    link_arg = f'-Wl,-rpath=@PREFIX@/lib'
+    link_args += [link_arg]
+    add_project_link_arguments(link_arg, language: 'cpp')
 endif
 
 have_premium = fs.is_dir('premium')
@@ -380,6 +407,8 @@ if have_premium
 else
     report_conf_data.set('PREMIUM', 'no')
 endif
+report_conf_data.set('BUILD_OPTIONS', meson.build_options())
+report_conf_data.set('MESON_VERSION', meson.version())
 report_conf_data.set('CXX', ' '.join(cpp.cmd_array()))
 report_conf_data.set('CXX_ID', cpp.get_id())
 result = run_command(cpp, '--version', check: false)
@@ -398,6 +427,9 @@ if result.returncode() == 0
 else
     report_conf_data.set('CXX_STANDARD', 'unknown')
 endif
+report_conf_data.set('CXX_ARGS', ' '.join(compile_args))
+report_conf_data.set('LD_ID', cpp.get_linker_id())
+report_conf_data.set('LD_ARGS', ' '.join(link_args))
 if python_exe.found()
     report_conf_data.set('HAVE_PYTHON', 'yes')
     report_conf_data.set('PYTHON_PATH', python_exe.full_path())
@@ -426,23 +458,23 @@ else
     report_conf_data.set('BOOST_VERSION', 'unknown')
 endif
 report_conf_data.set(
-    'BOOST_CFLAGS',
-    boost.get_variable('cflags', default_value: 'unknown'),
+    'BOOST_INCLUDE',
+    boost.get_variable('includedir', default_value: 'unknown'),
 )
 report_conf_data.set(
-    'BOOST_LIBS',
-    boost.get_variable('libs', default_value: 'unknown'),
-)
-report_conf_data.set('CRYPTO_NAME', crypto.name())
-report_conf_data.set(
-    'CRYPTO_CFLAGS',
-    crypto.get_variable('cflags', default_value: 'unknown'),
+    'BOOST_LIBDIR',
+    boost.get_variable('libdir', default_value: 'unknown'),
 )
 report_conf_data.set(
-    'CRYPTO_LIBS',
-    crypto.get_variable('libs', default_value: 'unknown'),
+    'CRYPTO_INCLUDE',
+    crypto.get_variable('includedir', default_value: 'unknown'),
+)
+report_conf_data.set(
+    'CRYPTO_LIBDIR',
+    crypto.get_variable('libdir', default_value: 'unknown'),
 )
 if crypto.name() == botan.name()
+    report_conf_data.set('CRYPTO_NAME', 'Botan')
     result = cpp.run(
         fs.read('compiler-checks/get-botan-version.cc'),
         name: 'Get Botan version',
@@ -451,9 +483,10 @@ if crypto.name() == botan.name()
     if result.returncode() == 0
         report_conf_data.set('CRYPTO_VERSION', result.stdout().strip())
     else
-        report_conf_data.set('CRYPTO_VERSION', botan.name())
+        report_conf_data.set('CRYPTO_VERSION', botan.version())
     endif
 elif crypto.name() == openssl.name()
+    report_conf_data.set('CRYPTO_NAME', 'OpenSSL')
     result = cpp.run(
         fs.read('compiler-checks/get-openssl-version.cc'),
         name: 'Get OpenSSL version',
@@ -462,16 +495,16 @@ elif crypto.name() == openssl.name()
     if result.returncode() == 0
         report_conf_data.set('CRYPTO_VERSION', result.stdout().strip())
     else
-        report_conf_data.set('CRYPTO_VERSION', botan.name())
+        report_conf_data.set('CRYPTO_VERSION', openssl.version())
     endif
 endif
 report_conf_data.set(
-    'LOG4CPLUS_CFLAGS',
-    log4cplus.get_variable('cflags', default_value: 'unknown'),
+    'LOG4CPLUS_INCLUDE',
+    log4cplus.get_variable('includedir', default_value: 'unknown'),
 )
 report_conf_data.set(
-    'LOG4CPLUS_LIBS',
-    log4cplus.get_variable('libs', default_value: 'unknown'),
+    'LOG4CPLUS_LIBDIR',
+    log4cplus.get_variable('libdir', default_value: 'unknown'),
 )
 result = cpp.run(
     fs.read('compiler-checks/get-log4cplus-version.cc'),
@@ -481,7 +514,7 @@ result = cpp.run(
 if result.returncode() == 0
     report_conf_data.set('LOG4CPLUS_VERSION', result.stdout().strip())
 else
-    report_conf_data.set('LOG4CPLUS_VERSION', 'unknown')
+    report_conf_data.set('LOG4CPLUS_VERSION', log4cplus.version())
 endif
 if flex_exe.found()
     report_conf_data.set('FLEX', flex_exe.full_path())
@@ -493,32 +526,69 @@ if bison_exe.found()
 else
     report_conf_data.set('BISON', 'unknown')
 endif
-#todo
-report_conf_data.set('HAVE_MYSQL', 'no')
-report_conf_data.set('MYSQL_VERSION', 'unknown')
-report_conf_data.set('MYSQL_CFLAGS', 'unknown')
-report_conf_data.set('MYSQL_LIBS', 'unknown')
-report_conf_data.set('HAVE_PGSQL', 'no')
-report_conf_data.set('PGSQL_VERSION', 'unknown')
-report_conf_data.set('PGSQL_CFLAGS', 'unknown')
-report_conf_data.set('PGSQL_LIBS', 'unknown')
+if mysql.found()
+    report_conf_data.set('HAVE_MYSQL', 'yes')
+    if not mysql_config.found()
+        report_conf_data.set('MYSQL_VERSION', mysql.version())
+        report_conf_data.set(
+            'MYSQL_INCLUDE',
+            mysql.get_variable('includedir', default_value: 'unknown'),
+        )
+        report_conf_data.set(
+            'MYSQL_LIBDIR',
+            mysql.get_variable('libdir', default_value: 'unknown'),
+        )
+    else
+        report_conf_data.set('MYSQL_VERSION', mysql_version)
+        report_conf_data.set('MYSQL_INCLUDE', ' '.join(mysql_compile_args))
+        report_conf_data.set('MYSQL_LIBDIR', ' '.join(mysql_link_args))
+    endif
+else
+    report_conf_data.set('HAVE_MYSQL', 'no')
+    report_conf_data.set('MYSQL_VERSION', 'unknown')
+    report_conf_data.set('MYSQL_INCLUDE', 'unknown')
+    report_conf_data.set('MYSQL_LIBDIR', 'unknown')
+endif
+if postgresql.found()
+    report_conf_data.set('HAVE_PGSQL', 'yes')
+    if not pg_config.found()
+        report_conf_data.set('PGSQL_VERSION', postgresql.version())
+        report_conf_data.set(
+            'PGSQL_INCLUDE',
+            postgresql.get_variable('includedir', default_value: 'unknown'),
+        )
+        report_conf_data.set(
+            'PGSQL_LIBDIR',
+            postgresql.get_variable('libdir', default_value: 'unknown'),
+        )
+    else
+        report_conf_data.set('PGSQL_VERSION', pgsql_version)
+        report_conf_data.set('PGSQL_INCLUDE', ' '.join(pgsql_compile_args))
+        report_conf_data.set('PGSQL_LIBDIR', ' '.join(pgsql_link_args))
+    endif
+else
+    report_conf_data.set('HAVE_PGSQL', 'no')
+    report_conf_data.set('PGSQL_VERSION', 'unknown')
+    report_conf_data.set('PGSQL_INCLUDE', 'unknown')
+    report_conf_data.set('PGSQL_LIBDIR', 'unknown')
+endif
 report_conf_data.set('HAVE_NETCONF', 'no')
 if gtest.found()
     report_conf_data.set('HAVE_GTEST', 'yes')
     report_conf_data.set(
-        'GTEST_CFLAGS',
-        gtest.get_variable('cflags', default_value: 'unknown'),
+        'GTEST_INCLUDE',
+        gtest.get_variable('includedir', default_value: 'unknown'),
     )
     report_conf_data.set(
-        'GTEST_LIBS',
-        gtest.get_variable('libs', default_value: 'unknown'),
+        'GTEST_LIBDIR',
+        gtest.get_variable('libdir', default_value: 'unknown'),
     )
     report_conf_data.set('GTEST_VERSION', gtest.version())
 else
     report_conf_data.set('HAVE_GTEST', 'no')
     report_conf_data.set('GTEST_VERSION', 'unknown')
-    report_conf_data.set('GTEST_CFLAGS', 'unknown')
-    report_conf_data.set('GTEST_LIBS', 'unknown')
+    report_conf_data.set('GTEST_INCLUDE', 'unknown')
+    report_conf_data.set('GTEST_LIBDIR', 'unknown')
 endif
 
 config_report_sh = configure_file(

@@ -17,16 +17,23 @@ Package:
   Hooks directory:   @HOOKS_DIR@
   Premium hooks:     @PREMIUM@
 
+Build Options:  @BUILD_OPTIONS@
+
+Meson Version:  @MESON_VERSION@
+
 C++ Compiler:
   CXX:             @CXX@
   CXX_ID:          @CXX_ID@
   CXX_VERSION:     @CXX_VERSION@
   CXX_STANDARD:    @CXX_STANDARD@
+  CXX_ARGS:        @CXX_ARGS@
+  LD_ID:           @LD_ID@
+  LD_ARGS:         @LD_ARGS@
+
 END
 
 if test "@HAVE_PYTHON@" != "no" ; then
 cat >> @TOP_BUILD_DIR@/config.report << END
-
 Python:
   PYTHON:          @PYTHON_PATH@
   PKGPYTHONDIR:    @PKGPYTHONDIR@
@@ -37,80 +44,75 @@ fi
 cat >> @TOP_BUILD_DIR@/config.report << END
 Boost:
   BOOST_VERSION:   @BOOST_VERSION@
-  BOOST_CFLAGS:    @BOOST_CFLAGS@
-  BOOST_LIBS:      @BOOST_LIBS@
+  BOOST_INCLUDE:   @BOOST_INCLUDE@
+  BOOST_LIBDIR:    @BOOST_LIBDIR@
 
 @CRYPTO_NAME@:
   CRYPTO_VERSION:  @CRYPTO_VERSION@
-  CRYPTO_CFLAGS:   @CRYPTO_CFLAGS@
-  CRYPTO_LIBS:     @CRYPTO_LIBS@
+  CRYPTO_INCLUDE:  @CRYPTO_INCLUDE@
+  CRYPTO_LIBDIR:   @CRYPTO_LIBDIR@
 
 Log4cplus:
   LOG4CPLUS_VERSION:  @LOG4CPLUS_VERSION@
-  LOG4CPLUS_CFLAGS:   @LOG4CPLUS_CFLAGS@
-  LOG4CPLUS_LIBS:     @LOG4CPLUS_LIBS@
+  LOG4CPLUS_INCLUDE:  @LOG4CPLUS_INCLUDE@
+  LOG4CPLUS_LIBDIR:   @LOG4CPLUS_LIBDIR@
 
 Flex/bison:
   FLEX:  @FLEX@
   BISON: @BISON@
+
 END
 
 if test "@HAVE_MYSQL@" != "no" ; then
 cat >> @TOP_BUILD_DIR@/config.report << END
-
 MySQL:
   MYSQL_VERSION:   @MYSQL_VERSION@
-  MYSQL_CFLAGS:    @MYSQL_CFLAGS@
-  MYSQL_LIBS:      @MYSQL_LIBS@
+  MYSQL_INCLUDE:   @MYSQL_INCLUDE@
+  MYSQL_LIBDIR:    @MYSQL_LIBDIR@
+
 END
 else
 cat >> @TOP_BUILD_DIR@/config.report << END
-
 MySQL:
   no
+
 END
 fi
 
 if test "@HAVE_PGSQL@" != "no" ; then
 cat >> @TOP_BUILD_DIR@/config.report << END
-
 PostgreSQL:
   PGSQL_VERSION:   @PGSQL_VERSION@
-  PGSQL_CFLAGS:    @PGSQL_CFLAGS@
-  PGSQL_LIBS:      @PGSQL_LIBS@
+  PGSQL_INCLUDE:   @PGSQL_INCLUDE@
+  PGSQL_LIBDIR:    @PGSQL_LIBDIR@
+
 END
 else
 cat >> @TOP_BUILD_DIR@/config.report << END
-
 PostgreSQL:
   no
+
 END
 fi
 
 cat >> @TOP_BUILD_DIR@/config.report << END
-
 NETCONF:
   @HAVE_NETCONF@
+
 END
 
 if test "@HAVE_GTEST@" != "no" ; then
 cat >> @TOP_BUILD_DIR@/config.report << END
-
 Google Test:
   GTEST_VERSION:   @GTEST_VERSION@
-  GTEST_CFLAGS:    @GTEST_CFLAGS@
-  GTEST_LIBS:      @GTEST_LIBS@
+  GTEST_INCLUDE:   @GTEST_INCLUDE@
+  GTEST_LIBDIR:    @GTEST_LIBDIR@
+
 END
 else
 cat >> @TOP_BUILD_DIR@/config.report << END
-
 Google Test:
   no
+
 END
 fi
-
-cat >> @TOP_BUILD_DIR@/config.report << END
-
-END
-
-# cat @TOP_BUILD_DIR@/config.report
