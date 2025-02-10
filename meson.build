@@ -18,14 +18,16 @@ fs = import('fs')
 
 TOP_BUILD_DIR = meson.current_build_dir()
 TOP_SOURCE_DIR = meson.current_source_dir()
+RUN_STATE_DIR = get_option('localstatedir')
+PREFIX = get_option('prefix')
+SYSCONFDIR = get_option('sysconfdir')
+
+DHCP_DATA_DIR = f'@PREFIX@/@RUN_STATE_DIR@/run/kea'
+DEFAULT_HOOKS_PATH = f'@PREFIX@/lib/kea/hooks'
 KEA_ADMIN = f'@TOP_BUILD_DIR@/src/bin/admin/kea-admin'
 KEA_LFC = f'@TOP_BUILD_DIR@/src/bin/lfc/kea-lfc'
 TEST_CA_DIR = f'@TOP_SOURCE_DIR@/src/lib/asiolink/testutils/ca'
 DATABASE_SCRIPTS_DIR = f'@TOP_BUILD_DIR@/src/share/database/scripts'
-RUN_STATE_DIR = get_option('localstatedir')
-PREFIX = get_option('prefix')
-DHCP_DATA_DIR = f'@PREFIX@/@RUN_STATE_DIR@/run/kea'
-DEFAULT_HOOKS_PATH = f'@PREFIX@/lib/kea/hooks'
 
 # TODO: Control it via a build option.
 FUZZING_IN_CI = false
