@@ -167,8 +167,8 @@ if not krb5.found()
     krb5_config = find_program('krb5-config', required: false)
 endif
 if krb5_config.found()
-    cflags = run_command([krb5_config, '--cflags'], check: false)
-    libs = run_command([krb5_config, '--libs'], check: false)
+    cflags = run_command([krb5_config, '--cflags', 'gssapi'], check: false)
+    libs = run_command([krb5_config, '--libs', 'gssapi'], check: false)
     if cflags.returncode() == 0 and libs.returncode() == 0
         krb5 = declare_dependency(
             compile_args: cflags.stdout().split(),
