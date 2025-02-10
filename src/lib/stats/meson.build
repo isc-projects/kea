@@ -3,7 +3,6 @@ kea_stats_lib = library(
     'context.cc',
     'observation.cc',
     'stats_mgr.cc',
-    dependencies: [boost],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib',

@@ -20,7 +20,7 @@ sources = [
     'test_config_backend_dhcp6.cc',
     'test_utils.cc',
 ]
-dependencies = [boost, crypto, gtest]
+dependencies = [crypto, gtest]
 if mysql.found()
     sources += ['mysql_generic_backend_unittest.cc']
     dependencies += [mysql]

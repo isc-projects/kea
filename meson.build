@@ -131,9 +131,11 @@ bison_exe = find_program('bison', required: false)
 #### Dependencies
 
 boost = dependency('boost', version: '>=1.66')
+threads = dependency('threads')
+add_project_dependencies(boost, threads, language: ['cpp'])
 gtest = dependency('gtest', required: false)
 log4cplus = dependency('log4cplus')
-threads = dependency('threads')
+
 
 # Cryptography
 crypto = disabler()

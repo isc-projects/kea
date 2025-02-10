@@ -9,6 +9,6 @@ kea_mysql_testutils_lib = static_library(
         f'-DDATABASE_SCRIPTS_DIR="@DATABASE_SCRIPTS_DIR@"',
         f'-DDATABASE_WIPE_DIR="@DATABASE_SCRIPTS_DIR@"',
     ],
-    dependencies: [boost, gtest, mysql],
+    dependencies: [gtest, mysql],
     include_directories: [include_directories('.')] + INCLUDES,
 )

@@ -89,7 +89,7 @@ kea_dhcpsrv_lib = library(
         f'-DDHCP_DATA_DIR="@DHCP_DATA_DIR@"',
         f'-DKEA_LFC_EXECUTABLE="@KEA_LFC@"',
     ],
-    dependencies: [boost, crypto, threads],
+    dependencies: [crypto],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib',

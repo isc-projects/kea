@@ -4,7 +4,6 @@ dhcp_bootp_lib = shared_library(
     'bootp_log.cc',
     'bootp_messages.cc',
     'version.cc',
-    dependencies: [boost],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib/kea/hooks',

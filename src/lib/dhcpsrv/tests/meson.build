@@ -101,7 +101,7 @@ kea_dhcpsrv_tests = executable(
         f'-DKEA_LFC_BUILD_DIR="@TOP_BUILD_DIR@/src/bin/lfc"',
         f'-DDEFAULT_HOOKS_PATH="@DEFAULT_HOOKS_PATH@"',
     ],
-    dependencies: [boost, crypto, gtest],
+    dependencies: [crypto],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [kea_util_unittests_lib] + libs_testutils + LIBS_BUILT_SO_FAR,
 )
@@ -115,7 +115,6 @@ test(
 shared_library(
     'co1',
     'callout_library.cc',
-    dependencies: [boost],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
     build_rpath: '/nowhere',
@@ -124,7 +123,6 @@ shared_library(
 shared_library(
     'co2',
     'callout_library.cc',
-    dependencies: [boost],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
     build_rpath: '/nowhere',
@@ -133,7 +131,6 @@ shared_library(
 shared_library(
     'co3',
     'callout_params_library.cc',
-    dependencies: [boost],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
     build_rpath: '/nowhere',

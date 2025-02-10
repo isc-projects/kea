@@ -3,7 +3,6 @@ kea_asiodns_lib = library(
     'asiodns_messages.cc',
     'io_fetch.cc',
     'logger.cc',
-    dependencies: [boost, threads],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib',

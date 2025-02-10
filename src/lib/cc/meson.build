@@ -15,7 +15,6 @@ kea_cc_lib = library(
     'stamped_value.cc',
     'user_context.cc',
     cpp_args: kea_cc_lib_cpp_args,
-    dependencies: [boost],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib',

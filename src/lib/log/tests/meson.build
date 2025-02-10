@@ -30,7 +30,7 @@ kea_log_init_tests = executable(
     'run_initializer_unittests.cc',
     'message_initializer_1_unittest.cc',
     'message_initializer_1a_unittest.cc',
-    dependencies: [boost, gtest, log4cplus],
+    dependencies: [gtest, log4cplus],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )
@@ -39,21 +39,18 @@ test('kea_log_init_tests', kea_log_init_tests, protocol: 'gtest')
 logger_example = executable(
     'logger_example',
     'logger_example.cc',
-    dependencies: [boost],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )
 init_logger_test = executable(
     'init_logger_test',
     'init_logger_test.cc',
-    dependencies: [boost],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )
 buffer_logger_test = executable(
     'buffer_logger_test',
     'buffer_logger_test.cc',
-    dependencies: [boost],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )
@@ -61,7 +58,6 @@ logger_lock_test = executable(
     'logger_lock_test',
     'logger_lock_test.cc',
     'log_test_messages.cc',
-    dependencies: [boost],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )

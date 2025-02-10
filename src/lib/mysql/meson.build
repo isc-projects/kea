@@ -7,7 +7,7 @@ kea_mysql_lib = library(
     'mysql_binding.cc',
     'mysql_connection.cc',
     cpp_args: [f'-DKEA_ADMIN="@KEA_ADMIN@"'],
-    dependencies: [boost, mysql],
+    dependencies: [mysql],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib',

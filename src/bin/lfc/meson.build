@@ -3,13 +3,11 @@ lfc_lib = static_library(
     'lfc_controller.cc',
     'lfc_log.cc',
     'lfc_messages.cc',
-    dependencies: [boost],
     include_directories: [include_directories('.')] + INCLUDES,
 )
 executable(
     'kea-lfc',
     'main.cc',
-    dependencies: [boost],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'sbin',

@@ -7,7 +7,7 @@ kea_pgsql_lib = library(
     'pgsql_connection.cc',
     'pgsql_exchange.cc',
     cpp_args: [f'-DKEA_ADMIN="@KEA_ADMIN@"'],
-    dependencies: [boost, postgresql],
+    dependencies: [postgresql],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib',

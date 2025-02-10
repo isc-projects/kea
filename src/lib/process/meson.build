@@ -13,7 +13,7 @@ kea_process_lib = library(
     'process_messages.cc',
     'redact_config.cc',
     cpp_args: [f'-DDATA_DIR="@DHCP_DATA_DIR@"'],
-    dependencies: [boost, gtest],
+    dependencies: [gtest],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib',

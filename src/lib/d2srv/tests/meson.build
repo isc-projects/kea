@@ -11,7 +11,7 @@ kea_d2srv_tests = executable(
     'd2_zone_unittests.cc',
     'dns_client_unittests.cc',
     'nc_trans_unittests.cc',
-    dependencies: [boost, crypto, gtest],
+    dependencies: [crypto, gtest],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [kea_util_unittests_lib] + libs_testutils + LIBS_BUILT_SO_FAR,
 )

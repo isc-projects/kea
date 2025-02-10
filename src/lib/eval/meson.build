@@ -8,7 +8,6 @@ kea_eval_lib = library(
     'lexer.cc',
     'parser.cc',
     'token.cc',
-    dependencies: [boost],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib',

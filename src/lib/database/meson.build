@@ -9,7 +9,6 @@ kea_database_lib = library(
     'server.cc',
     'server_collection.cc',
     'server_selector.cc',
-    dependencies: [boost],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib',

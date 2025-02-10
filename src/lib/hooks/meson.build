@@ -14,7 +14,6 @@ kea_hooks_lib = library(
     'library_manager_collection.cc',
     'server_hooks.cc',
     cpp_args: [f'-DDEFAULT_HOOKS_PATH="@DEFAULT_HOOKS_PATH@"'],
-    dependencies: [boost],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib',

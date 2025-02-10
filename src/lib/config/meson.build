@@ -13,7 +13,7 @@ kea_config_lib = library(
     'http_command_response_creator.cc',
     'unix_command_config.cc',
     'unix_command_mgr.cc',
-    dependencies: [crypto, threads],
+    dependencies: [crypto],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib',

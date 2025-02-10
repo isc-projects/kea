@@ -11,13 +11,11 @@ perfdhcp_lib = static_library(
     'receiver.cc',
     'stats_mgr.cc',
     'test_control.cc',
-    dependencies: [boost, threads],
     include_directories: [include_directories('.')] + INCLUDES,
 )
 executable(
     'perfdhcp',
     'main.cc',
-    dependencies: [boost],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'sbin',

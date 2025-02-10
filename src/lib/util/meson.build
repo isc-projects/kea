@@ -19,7 +19,6 @@ kea_util_lib = library(
     'versioned_csv_file.cc',
     'watched_thread.cc',
     'watch_socket.cc',
-    dependencies: [boost, threads],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib',

@@ -11,7 +11,6 @@ dhcp_user_chk_lib = shared_library(
     'user_file.cc',
     'user_registry.cc',
     'version.cc',
-    dependencies: [boost],
     include_directories: [include_directories('.')] + INCLUDES,
     install: false,
     install_dir: 'lib/kea/hooks',

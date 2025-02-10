@@ -5,7 +5,6 @@ kea_dhcp_ddns_lib = library(
     'ncr_io.cc',
     'ncr_msg.cc',
     'ncr_udp.cc',
-    dependencies: [boost, threads],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib',

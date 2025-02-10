@@ -26,7 +26,6 @@ kea_dns_lib = library(
     'tsigerror.cc',
     'tsigkey.cc',
     'tsigrecord.cc',
-    dependencies: [boost],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib',

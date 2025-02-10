@@ -20,7 +20,7 @@ kea_log_lib = library(
     'message_reader.cc',
     'output_option.cc',
     cpp_args: [f'-DTOP_BUILDDIR="@TOP_BUILD_DIR@"'],
-    dependencies: [boost, log4cplus],
+    dependencies: [log4cplus],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib',
