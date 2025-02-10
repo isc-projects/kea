@@ -1127,6 +1127,7 @@ client along with the domain-name sent by the server for each DCHPv4
 lease:
 
 .. code-block:: javascript
+
     {
         "hooks-libraries": [{
             "library": "lib/kea/hooks/libdhcp_lease_cmds.so",
