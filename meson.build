@@ -1,9 +1,9 @@
-# Ask mesion >= 1.1.0 for build options.
+# Require meson >= 0.63.0 for preserve_path arg in install_headers.
 project(
     'kea',
     'cpp',
     version: '2.7.7-git',
-    meson_version: '>=1.1.0',
+    meson_version: '>=0.63.0',
     default_options: ['default_library=shared'],
 )
 
@@ -413,7 +413,11 @@ if have_premium
 else
     report_conf_data.set('PREMIUM', 'no')
 endif
-report_conf_data.set('BUILD_OPTIONS', meson.build_options())
+if meson.version() >= '1.1.0'
+    report_conf_data.set('BUILD_OPTIONS', meson.build_options())
+else
+    report_conf_data.set('BUILD_OPTIONS', 'unknown')
+endif
 report_conf_data.set('MESON_VERSION', meson.version())
 report_conf_data.set('CXX', ' '.join(cpp.cmd_array()))
 report_conf_data.set('CXX_ID', cpp.get_id())
