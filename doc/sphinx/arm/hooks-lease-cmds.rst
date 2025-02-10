@@ -1127,22 +1127,22 @@ client along with the domain-name sent by the server for each DCHPv4
 lease:
 
 .. code-block:: javascript
-
-    "hooks-libraries": [{
-        "library": "lib/kea/hooks/libdhcp_lease_cmds.so",
-        "parameters": {
-            "binding-variables": [{
-                "name": "opt-222",
-                "expression": "hexstring(option[222].hex, ':')",
-                "source": "query"
-            },{
-
-                "name": "domain-name",
-                "expression": "option[15].text",
-                "source": "response"
-            }]
-        }
-    }]
+    {
+        "hooks-libraries": [{
+            "library": "lib/kea/hooks/libdhcp_lease_cmds.so",
+            "parameters": {
+                "binding-variables": [{
+                    "name": "opt-222",
+                    "expression": "hexstring(option[222].hex, ':')",
+                    "source": "query"
+                },{
+                    "name": "domain-name",
+                    "expression": "option[15].text",
+                    "source": "response"
+                }]
+            }
+        }]
+    }
 
 The values are stored as name-value pairs in the ``ISC`` map in the lease's ``user-context``
 contents would look similar to the following:
@@ -1153,7 +1153,7 @@ contents would look similar to the following:
         "ISC": {
             "binding-variables": [{
                 "domain-name": "example.org",
-                "opt-222": "01:02:03:04",
+                "opt-222": "01:02:03:04"
             }
         ]}
     }
