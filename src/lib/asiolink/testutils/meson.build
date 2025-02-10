@@ -8,7 +8,7 @@ kea_asiolink_testutils_lib = static_library(
     'test_server_unix_socket.cc',
     'timed_signal.cc',
     cpp_args: [f'-DTEST_CA_DIR="@TEST_CA_DIR@"'],
-    dependencies: [gtest, crypto],
+    dependencies: [crypto, gtest],
     include_directories: [include_directories('.')] + INCLUDES,
 )
 
