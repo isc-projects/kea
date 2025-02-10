@@ -289,6 +289,14 @@ conf_data.set('HAVE_GENERIC_TLS_METHOD', result.returncode() == 0)
 result = cpp.run(fs.read('compiler-checks/have-sa-len.cc'), name: 'HAVE_SA_LEN')
 conf_data.set('HAVE_SA_LEN', result.returncode() == 0)
 
+result = cpp.run(
+    fs.read('compiler-checks/log4cplus-initializer.cc'),
+    name: 'LOG4CPLUS_INITIALIZER_H',
+    dependencies: [log4cplus],
+)
+conf_data.set('LOG4CPLUS_INITIALIZER_H', result.returncode() == 0)
+
+
 if mysql.found()
     result = cpp.run(
         fs.read('compiler-checks/mysql-my-bool.cc'),
