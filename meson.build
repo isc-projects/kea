@@ -240,19 +240,30 @@ netconf_deps_array = []
 netconf_deps_found = true
 foreach dep : ['yang', 'yang-cpp', 'sysrepo', 'sysrepo-cpp']
     netconf_deps = netconf_deps + {dep: dependency(dep, required: false)}
-    if not netconf_deps[dep].found()
-        lib = cpp.find_library(dep, dirs: [f'/opt/@dep@/lib'], required: false)
-        if lib.found()
-            netconf_deps = netconf_deps + {
-                dep: declare_dependency(
-                    dependencies: [lib],
-                    include_directories: include_directories(
-                        f'/opt/@dep@/include',
-                    ),
-                ),
-            }
-        endif
+    if netconf_deps[dep].found()
+        continue
     endif
+
+    # Try adding lib to it. libyang and libyang-cpp define the wrong pkg-config.
+    netconf_deps = netconf_deps + {dep: dependency('lib' + dep, required: false)}
+    if netconf_deps[dep].found()
+        continue
+    endif
+
+    # Search in /opt.
+    lib = cpp.find_library(dep, dirs: [f'/opt/@dep@/lib'], required: false)
+    if lib.found()
+        netconf_deps = netconf_deps + {
+            dep: declare_dependency(
+                dependencies: [lib],
+                include_directories: include_directories(
+                    f'/opt/@dep@/include',
+                ),
+            ),
+        }
+    endif
+endforeach
+foreach dep : ['yang', 'yang-cpp', 'sysrepo', 'sysrepo-cpp']
     if netconf_deps[dep].found()
         netconf_deps_array += netconf_deps[dep]
     else
