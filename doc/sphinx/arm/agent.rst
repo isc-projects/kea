@@ -259,8 +259,13 @@ Configuring only one or two string parameters results in an error.
    mutually authenticated, but there is no proof they are the same as
    for the HTTP authentication.
 
+The server will issue an error when changing the socket type from HTTP to HTTPS
+or from HTTPS to HTTP using the same address and port. This action is not
+allowed as it might introduce a security issue accidentally caused by a user
+mistake.
 A different address or port must be specified when using the "config-set"
-command to switch from HTTP to HTTPS or from HTTPS to HTTP.
+command to switch from HTTP to HTTPS or from HTTPS to HTTP. The same applies
+when modyfying the configuration file and then running "config-reload" command.
 
 The :iscman:`kea-shell` tool also supports TLS.
 

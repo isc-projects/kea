@@ -7922,8 +7922,13 @@ password, these values can be read from files. The syntax is extended by:
 
 Since Kea-2.7.6 Kea supports multiple HTTP/HTTPS connections.
 Both IPv4 and IPv6 addresses can be used.
+The server will issue an error when changing the socket type from HTTP to HTTPS
+or from HTTPS to HTTP using the same address and port. This action is not
+allowed as it might introduce a security issue accidentally caused by a user
+mistake.
 A different address or port must be specified when using the "config-set"
-command to switch from HTTP to HTTPS or from HTTPS to HTTP.
+command to switch from HTTP to HTTPS or from HTTPS to HTTP. The same applies
+when modyfying the configuration file and then running "config-reload" command.
 
 When files are used, they are read when the configuration is loaded,
 to detect configuration errors as soon as possible.

@@ -20,6 +20,7 @@ extern const isc::log::MessageID CTRL_AGENT_HTTPS_SERVICE_STARTED = "CTRL_AGENT_
 extern const isc::log::MessageID CTRL_AGENT_HTTPS_SERVICE_UPDATED = "CTRL_AGENT_HTTPS_SERVICE_UPDATED";
 extern const isc::log::MessageID CTRL_AGENT_HTTP_SERVICE_REUSE_FAILED = "CTRL_AGENT_HTTP_SERVICE_REUSE_FAILED";
 extern const isc::log::MessageID CTRL_AGENT_HTTP_SERVICE_STARTED = "CTRL_AGENT_HTTP_SERVICE_STARTED";
+extern const isc::log::MessageID CTRL_AGENT_HTTP_SERVICE_UPDATED = "CTRL_AGENT_HTTP_SERVICE_UPDATED";
 extern const isc::log::MessageID CTRL_AGENT_RUN_EXIT = "CTRL_AGENT_RUN_EXIT";
 extern const isc::log::MessageID CTRL_AGENT_STARTED = "CTRL_AGENT_STARTED";
 
@@ -37,11 +38,12 @@ const char* values[] = {
     "CTRL_AGENT_CONFIG_FAIL", "Control Agent configuration failed: %1",
     "CTRL_AGENT_CONFIG_SYNTAX_WARNING", "Control Agent configuration syntax warning: %1",
     "CTRL_AGENT_FAILED", "application experienced a fatal error: %1",
-    "CTRL_AGENT_HTTPS_SERVICE_REUSE_FAILED", "failed to reuse HTTPS service bound to address %1:%2",
-    "CTRL_AGENT_HTTPS_SERVICE_STARTED", "HTTPS service bound to address %1:%2",
-    "CTRL_AGENT_HTTPS_SERVICE_UPDATED", "reused HTTPS service bound to address %1:%2 and updated TLS settings",
-    "CTRL_AGENT_HTTP_SERVICE_REUSE_FAILED", "failed to reused HTTP service bound to address %1:%2",
-    "CTRL_AGENT_HTTP_SERVICE_STARTED", "HTTP service bound to address %1:%2",
+    "CTRL_AGENT_HTTPS_SERVICE_REUSE_FAILED", "failed to reuse HTTPS service bound to address: %1 port: %2",
+    "CTRL_AGENT_HTTPS_SERVICE_STARTED", "HTTPS service bound to address: %1 port: %2",
+    "CTRL_AGENT_HTTPS_SERVICE_UPDATED", "reused HTTPS service bound to address: %1 port: %2 and updated TLS settings",
+    "CTRL_AGENT_HTTP_SERVICE_REUSE_FAILED", "failed to reused HTTP service bound to address: %1 port: %2",
+    "CTRL_AGENT_HTTP_SERVICE_STARTED", "HTTP service bound to address: %1 port: %2",
+    "CTRL_AGENT_HTTP_SERVICE_UPDATED", "reused HTTP service bound to address: %1 port: %2",
     "CTRL_AGENT_RUN_EXIT", "application is exiting the event loop",
     "CTRL_AGENT_STARTED", "Kea Control Agent version %1 started",
     NULL

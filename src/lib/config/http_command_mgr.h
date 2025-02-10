@@ -65,7 +65,7 @@ public:
     /// changes.
     ///
     /// @note This function in used internally by @ref openCommandSockets and it
-    /// should not be used directly, except for unittests.
+    /// should not be used directly, except for unit tests.
     ///
     /// @param config Configuration information for the http control socket.
     void openCommandSocket(const isc::data::ConstElementPtr config);
@@ -73,7 +73,7 @@ public:
     /// @brief Close http control socket.
     ///
     /// @note This function in used internally by @ref closeCommandSockets and it
-    /// should not be used directly, except for unittests.
+    /// should not be used directly, except for unit tests.
     ///
     /// @param info Configuration information for the http control socket.
     /// @param remove When true remove the listeners immediately.

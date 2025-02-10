@@ -421,6 +421,9 @@ TEST_F(CtrlAgentControllerTest, noListenerChangeHttp) {
         "  }"
         "}";
 
+    // Pointer used to store the listener instance. It is set after 50 ms the
+    // process has started (using a timer) and it's value is checked on server
+    // shutdown using the callback.
     const HttpListener* listener_ptr = 0;
 
     // This check callback is called before the shutdown.
@@ -522,6 +525,9 @@ TEST_F(CtrlAgentControllerTest, noListenerChangeHttps) {
              << "  }"
              << "}";
 
+    // Pointer used to store the listener instance. It is set after 50 ms the
+    // process has started (using a timer) and it's value is checked on server
+    // shutdown using the callback.
     const HttpListener* listener_ptr = 0;
     TlsContext* context = 0;
 
@@ -607,6 +613,9 @@ TEST_F(CtrlAgentControllerTest, handleHttpToHttpsSwitch) {
              << "  }"
              << "}";
 
+    // Pointer used to store the listener instance. It is set after 50 ms the
+    // process has started (using a timer) and it's value is checked on server
+    // shutdown using the callback.
     const HttpListener* listener_ptr = 0;
 
     // This check callback is called before the shutdown.
@@ -703,6 +712,9 @@ TEST_F(CtrlAgentControllerTest, handleHttpsToHttpSwitch) {
              << "  }"
              << "}";
 
+    // Pointer used to store the listener instance. It is set after 50 ms the
+    // process has started (using a timer) and it's value is checked on server
+    // shutdown using the callback.
     const HttpListener* listener_ptr = 0;
     TlsContext* context = 0;
 

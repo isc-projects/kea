@@ -162,18 +162,27 @@ CtrlAgentProcess::configure(isc::data::ConstElementPtr config_set,
                         // Overwrite the authentication setup and the http headers in the response creator config.
                         it->second->config_->setAuthConfig(ctx->getAuthConfig());
                         it->second->config_->setHttpHeaders(ctx->getHttpHeaders());
-                        getIOService()->post([listener, tls_context]() { listener->setTlsContext(tls_context); });
+                        listener->setTlsContext(tls_context);
                         LOG_INFO(agent_logger, CTRL_AGENT_HTTPS_SERVICE_UPDATED)
                             .arg(server_address.toText())
                             .arg(server_port);
                     }
-                } else if (!ctx->getTrustAnchor().empty()) {
-                    // Can not switch from HTTP to HTTPS
-                    LOG_ERROR(agent_logger, CTRL_AGENT_HTTP_SERVICE_REUSE_FAILED)
-                        .arg(server_address.toText())
-                        .arg(server_port);
-                    isc_throw(BadValue,
-                              "Can not switch from HTTP to HTTPS sockets using the same address and port.");
+                } else {
+                    if (!ctx->getTrustAnchor().empty()) {
+                        // Can not switch from HTTP to HTTPS
+                        LOG_ERROR(agent_logger, CTRL_AGENT_HTTP_SERVICE_REUSE_FAILED)
+                            .arg(server_address.toText())
+                            .arg(server_port);
+                        isc_throw(BadValue,
+                                  "Can not switch from HTTP to HTTPS sockets using the same address and port.");
+                    } else {
+                        // Overwrite the authentication setup and the http headers in the response creator config.
+                        it->second->config_->setAuthConfig(ctx->getAuthConfig());
+                        it->second->config_->setHttpHeaders(ctx->getHttpHeaders());
+                        LOG_INFO(agent_logger, CTRL_AGENT_HTTP_SERVICE_UPDATED)
+                            .arg(server_address.toText())
+                            .arg(server_port);
+                    }
                 }
             }
             // If the connection can be reused, mark it as usable.

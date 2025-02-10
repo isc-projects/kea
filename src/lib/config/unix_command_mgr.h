@@ -74,7 +74,7 @@ public:
     /// Creates acceptor, or reuses the existing one.
     ///
     /// @note This function in used internally by @ref openCommandSockets and it
-    /// should not be used directly, except for unittests.
+    /// should not be used directly, except for unit tests.
     ///
     /// @throw BadSocketInfo When socket configuration is invalid.
     /// @throw SocketError When socket operation fails.
@@ -85,7 +85,7 @@ public:
     /// @brief Shuts down any open unix control sockets.
     ///
     /// @note This function in used internally by @ref closeCommandSockets and it
-    /// should not be used directly, except for unittests.
+    /// should not be used directly, except for unit tests.
     ///
     /// @param config Configuration information for the unix control socket.
     void closeCommandSocket(UnixSocketInfoPtr info = UnixSocketInfoPtr());

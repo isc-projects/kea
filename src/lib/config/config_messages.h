@@ -38,6 +38,7 @@ extern const isc::log::MessageID COMMAND_WATCH_SOCKET_MARK_READY_ERROR;
 extern const isc::log::MessageID HTTP_COMMAND_MGR_HTTPS_SERVICE_REUSE_FAILED;
 extern const isc::log::MessageID HTTP_COMMAND_MGR_HTTPS_SERVICE_UPDATED;
 extern const isc::log::MessageID HTTP_COMMAND_MGR_HTTP_SERVICE_REUSE_FAILED;
+extern const isc::log::MessageID HTTP_COMMAND_MGR_HTTP_SERVICE_UPDATED;
 extern const isc::log::MessageID HTTP_COMMAND_MGR_SERVICE_STARTED;
 extern const isc::log::MessageID HTTP_COMMAND_MGR_SERVICE_STOPPING;
 

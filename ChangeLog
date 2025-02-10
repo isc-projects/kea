@@ -1,7 +1,8 @@
 2324.	[func]		razvan
 	It is not necessary to restart the server to apply changes in the
 	TLS configuration. Running the "config-reload" command is
-	sufficient.
+	sufficient. A different address or port must be specified when
+	switching from HTTP to HTTPS or from HTTPS to HTTP.
 	(Gitlab #3694)
 
 Kea 2.7.6 (development) released on January 29, 2025
