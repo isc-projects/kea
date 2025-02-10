@@ -283,13 +283,16 @@ result = cpp.run(
 conf_data.set('CHRONO_SAME_DURATION', result.returncode() == 0)
 
 ENVIRON_SHLIB_FLAGS = []
-result = cpp.links(
-    fs.read('compiler-checks/environ-in-shlib.cc'),
-    name: 'ENVIRON_SHLIB_FLAGS',
-    args: ['--shared', '-fPIC', '-Wl,--no-undefined'],
-)
-if not result
-    ENVIRON_SHLIB_FLAGS += ['b_lundef=false']
+# --no-undefined is not supported by all loaders.
+if cpp.has_link_argument('-Wl,--no-undefined')
+    result = cpp.links(
+        fs.read('compiler-checks/environ-in-shlib.cc'),
+        name: 'ENVIRON_SHLIB_FLAGS',
+        args: ['--shared', '-fPIC', '-Wl,--no-undefined'],
+    )
+    if not result
+        ENVIRON_SHLIB_FLAGS += ['b_lundef=false']
+    endif
 endif
 
 result = cpp.run(
