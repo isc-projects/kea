@@ -269,6 +269,16 @@ result = cpp.run(
 )
 conf_data.set('CHRONO_SAME_DURATION', result.returncode() == 0)
 
+ENVIRON_SHLIB_FLAGS = []
+result = cpp.links(
+    fs.read('compiler-checks/environ-in-shlib.cc'),
+    name: 'ENVIRON_SHLIB_FLAGS',
+    args: ['--shared', '-fPIC', '-Wl,--no-undefined'],
+)
+if not result
+    ENVIRON_SHLIB_FLAGS += ['b_lundef=false']
+endif
+
 result = cpp.run(
     fs.read('compiler-checks/have-generic-tls-method.cc'),
     name: 'HAVE_GENERIC_TLS_METHOD',
@@ -294,18 +304,6 @@ result = cpp.run(
     dependencies: [crypto],
 )
 conf_data.set('HAVE_STREAM_TRUNCATED_ERROR', result.returncode() == 0)
-
-ENVIRON_SHLIB_FLAGS = []
-if cpp.has_link_argument('-Wl,--no-undefined')
-    result = cpp.links(
-        fs.read('compiler-checks/environ-in-shlib.cc'),
-        name: 'ENVIRON_SHLIB_FLAGS',
-        args: ['--shared', '-fPIC', '-Wl,--no-undefined'],
-    )
-    if not result
-        ENVIRON_SHLIB_FLAGS += ['b_lundef=false']
-    endif
-endif
 
 #### System-specific Variables
 
