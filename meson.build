@@ -433,7 +433,7 @@ if have_premium
 else
     report_conf_data.set('PREMIUM', 'no')
 endif
-if meson.version() >= '1.1.0'
+if meson.version().version_compare('>=1.1.0')
     report_conf_data.set('BUILD_OPTIONS', meson.build_options())
 else
     report_conf_data.set('BUILD_OPTIONS', 'unknown')
