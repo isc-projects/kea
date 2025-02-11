@@ -56,3 +56,6 @@ kea_yang_headers = [
     'yang_revisions.h',
 ]
 install_headers(kea_yang_headers, preserve_path: true, subdir: 'kea/yang')
+subdir('testutils')
+subdir('pretests')
+subdir('tests')
