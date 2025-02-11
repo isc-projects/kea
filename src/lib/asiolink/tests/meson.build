@@ -2,7 +2,7 @@ if not gtest.found()
     subdir_done()
 endif
 
-CURRENT_BUILD_DIR = meson.current_build_dir()
+current_build_dir = meson.current_build_dir()
 configure_file(
     input: 'process_spawn_app.sh.in',
     output: 'process_spawn_app.sh',
@@ -33,7 +33,7 @@ kea_asiolink_tests = executable(
     'udp_socket_unittest.cc',
     'unix_domain_socket_unittest.cc',
     cpp_args: [
-        f'-DTEST_SCRIPT_SH="@CURRENT_BUILD_DIR@/process_spawn_app.sh"',
+        f'-DTEST_SCRIPT_SH="@current_build_dir@/process_spawn_app.sh"',
         f'-DINVALID_TEST_SCRIPT_SH="@TOP_SOURCE_DIR@/README"',
         f'-DTEST_CA_DIR="@TEST_CA_DIR@"',
     ],

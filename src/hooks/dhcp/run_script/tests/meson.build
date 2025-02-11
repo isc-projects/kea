@@ -10,19 +10,19 @@ configure_file(
     configuration: run_script_test_conf_data,
 )
 
-CURRENT_BUILD_DIR = meson.current_build_dir()
-HOOK_INCLUDES = [include_directories('..')]
+current_build_dir = meson.current_build_dir()
+hook_includes = [include_directories('..')]
 dhcp_run_script_lib_tests = executable(
     'dhcp-run-script-lib-tests',
     'run_script_unittests.cc',
     'run_unittests.cc',
     cpp_args: [
         f'-DRUN_SCRIPT_LIB_SO="@TOP_BUILD_DIR@/src/hooks/dhcp/run_script/libdhcp_run_script.so"',
-        f'-DTEST_LOG_FILE="@CURRENT_BUILD_DIR@/test.log"',
+        f'-DTEST_LOG_FILE="@current_build_dir@/test.log"',
         f'-DRUN_SCRIPT_TEST_SH="@CURRENT_BUILD_DIR@/run_script_test.sh"',
     ],
     dependencies: [gtest, crypto],
-    include_directories: [include_directories('.')] + INCLUDES + HOOK_INCLUDES,
+    include_directories: [include_directories('.')] + INCLUDES + hook_includes,
     link_with: [dhcp_run_script_archive] + LIBS_BUILT_SO_FAR,
 )
 test('dhcp_run_script_lib_tests', dhcp_run_script_lib_tests, protocol: 'gtest')

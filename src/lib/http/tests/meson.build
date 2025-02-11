@@ -2,7 +2,7 @@ if not gtest.found()
     subdir_done()
 endif
 
-CURRENT_SOURCE_DIR = meson.current_source_dir()
+current_source_dir = meson.current_source_dir()
 libs_testutils = [kea_testutils_lib, kea_asiolink_testutils_lib]
 kea_http_tests = executable(
     'kea-http-tests',
@@ -28,7 +28,7 @@ kea_http_tests = executable(
     'url_unittests.cc',
     cpp_args: [
         f'-DTEST_CA_DIR="@TEST_CA_DIR@"',
-        f'-DDATA_DIR="@CURRENT_SOURCE_DIR@/testdata"',
+        f'-DDATA_DIR="@current_source_dir@/testdata"',
     ],
     dependencies: [gtest, crypto],
     include_directories: [include_directories('.')] + INCLUDES,

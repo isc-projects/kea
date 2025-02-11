@@ -13,9 +13,9 @@ r = run_command(
     'import sysconfig; print(sysconfig.get_paths()[\'purelib\'])',
     check: true,
 )
-PYTHON_SITE_PACKAGE = r.stdout().strip()
-PKGPYTHONDIR = f'@PYTHON_SITE_PACKAGE@/kea'
-kea_shell_conf_data.set('PKGPYTHONDIR', PKGPYTHONDIR)
+python_site_package = r.stdout().strip()
+pkgpythondir = f'@python_site_package@/kea'
+kea_shell_conf_data.set('PKGPYTHONDIR', pkgpythondir)
 configure_file(
     input: 'kea-shell.in',
     output: 'kea-shell',
@@ -29,12 +29,12 @@ configure_file(
     output: 'kea_conn.py',
     copy: true,
     install: false,
-    install_dir: PKGPYTHONDIR,
+    install_dir: pkgpythondir,
 )
 configure_file(
     input: 'kea_connector3.py',
     output: 'kea_connector3.py',
     copy: true,
     install: false,
-    install_dir: PKGPYTHONDIR,
+    install_dir: pkgpythondir,
 )

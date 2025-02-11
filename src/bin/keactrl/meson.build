@@ -1,7 +1,7 @@
 keactrl_conf_data = configuration_data()
 keactrl_conf_data.set('prefix', PREFIX)
-SYSCONFDIR = get_option('sysconfdir')
-keactrl_conf_data.set('sysconfdir', '${prefix}/' + SYSCONFDIR)
+sysconfdir = get_option('sysconfdir')
+keactrl_conf_data.set('sysconfdir', '${prefix}/' + sysconfdir)
 keactrl_conf_data.set('PACKAGE', 'kea')
 keactrl_conf_data.set('exec_prefix', '${prefix}')
 keactrl_conf_data.set('sbindir', '${prefix}/' + get_option('sbindir'))
@@ -14,7 +14,7 @@ keactrl_conf_data.set('EXTENDED_VERSION', project_version + ' (tarball)')
 keactrl_conf_data.set('PACKAGE_VERSION', project_version)
 keactrl_conf_data.set('runstatedir', '${prefix}/' + RUN_STATE_DIR + '/run')
 keactrl_conf_data.set('localstatedir', '${prefix}/' + RUN_STATE_DIR)
-kea_configfiles_destdir = f'@SYSCONFDIR@/kea'
+kea_configfiles_destdir = f'@sysconfdir@/kea'
 configure_file(
     input: 'keactrl.conf.in',
     output: 'keactrl.conf',

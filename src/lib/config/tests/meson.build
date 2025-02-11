@@ -2,7 +2,7 @@ if not gtest.found()
     subdir_done()
 endif
 
-CURRENT_BUILD_DIR = meson.current_build_dir()
+current_build_dir = meson.current_build_dir()
 libs_testutils = [kea_testutils_lib, kea_asiolink_testutils_lib]
 kea_config_tests = executable(
     'kea-config-tests',
@@ -20,7 +20,7 @@ kea_config_tests = executable(
     'unix_command_mgr_unittests.cc',
     dependencies: [gtest, crypto],
     cpp_args: [
-        f'-DTEST_DATA_BUILDDIR="@CURRENT_BUILD_DIR@"',
+        f'-DTEST_DATA_BUILDDIR="@current_build_dir@"',
         f'-DTEST_CA_DIR="@TEST_CA_DIR@"',
     ],
     include_directories: [include_directories('.')] + INCLUDES,

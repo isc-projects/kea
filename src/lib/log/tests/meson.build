@@ -72,8 +72,8 @@ shtests = [
 ]
 shtests_conf_data = configuration_data()
 shtests_conf_data.set('abs_top_builddir', TOP_BUILD_DIR)
-CURRENT_BUILD_DIR = meson.current_build_dir()
-shtests_conf_data.set('abs_builddir', CURRENT_BUILD_DIR)
+current_build_dir = meson.current_build_dir()
+shtests_conf_data.set('abs_builddir', current_build_dir)
 foreach shtest : shtests
     shfile = configure_file(
         input: shtest + '.in',
@@ -81,5 +81,5 @@ foreach shtest : shtests
         configuration: shtests_conf_data,
     )
     name = 'kea_log_' + shtest
-    test(name, shfile, workdir: CURRENT_BUILD_DIR, is_parallel: false)
+    test(name, shfile, workdir: current_build_dir, is_parallel: false)
 endforeach

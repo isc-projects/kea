@@ -10,8 +10,7 @@ else
     error(f'Build failed: Unsupported system "@SYSTEM@".')
 endif
 
-CURRENT_BUILD_DIR = meson.current_build_dir()
-CURRENT_SOURCE_DIR = meson.current_source_dir()
+current_build_dir = meson.current_build_dir()
 libs_testutils = [kea_dhcp_testutils_lib, kea_testutils_lib]
 kea_dhcp_tests = executable(
     'kea-dhcp-tests',
@@ -63,7 +62,7 @@ kea_dhcp_tests = executable(
     'run_unittests.cc',
     pkt_filter_xpf_unittest_cc,
     dependencies: [gtest, crypto],
-    cpp_args: [f'-DTEST_DATA_BUILDDIR="@CURRENT_BUILD_DIR@"'],
+    cpp_args: [f'-DTEST_DATA_BUILDDIR="@current_build_dir@"'],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [kea_util_unittests_lib] + libs_testutils + LIBS_BUILT_SO_FAR,
 )

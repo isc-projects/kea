@@ -2,8 +2,8 @@ if not gtest.found()
     subdir_done()
 endif
 
-CURRENT_BUILD_DIR = meson.current_build_dir()
-CURRENT_SOURCE_DIR = meson.current_source_dir()
+current_build_dir = meson.current_build_dir()
+current_source_dir = meson.current_source_dir()
 dhcp4_tests_deps = [boost, crypto, gtest]
 dhcp4_tests_libs = [
     kea_dhcpsrv_testutils_lib,
@@ -42,7 +42,7 @@ dhcp4_process_tests = configure_file(
 test(
     'dhcp4_process_tests.sh',
     dhcp4_process_tests,
-    workdir: CURRENT_BUILD_DIR,
+    workdir: current_build_dir,
     is_parallel: false,
 )
 configure_file(
@@ -93,10 +93,10 @@ dhcp4_unittests = executable(
     'simple_parser4_unittest.cc',
     'vendor_opts_unittest.cc',
     cpp_args: [
-        f'-DTEST_DATA_BUILDDIR="@CURRENT_BUILD_DIR@"',
+        f'-DTEST_DATA_BUILDDIR="@current_build_dir@"',
         f'-DCFG_EXAMPLES="@TOP_SOURCE_DIR@/doc/examples/kea4"',
-        f'-DDHCP_DATA_DIR="@CURRENT_BUILD_DIR@"',
-        f'-DSYNTAX_FILE="@CURRENT_SOURCE_DIR@/../dhcp4_parser.yy"',
+        f'-DDHCP_DATA_DIR="@current_build_dir@"',
+        f'-DSYNTAX_FILE="@current_source_dir@/../dhcp4_parser.yy"',
         f'-DKEA_LFC_EXECUTABLE="@KEA_LFC@"',
         f'-DTEST_CA_DIR="@TEST_CA_DIR@"',
     ],

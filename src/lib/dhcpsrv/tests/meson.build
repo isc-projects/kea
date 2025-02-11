@@ -2,7 +2,7 @@ if not gtest.found()
     subdir_done()
 endif
 
-CURRENT_BUILD_DIR = meson.current_build_dir()
+current_build_dir = meson.current_build_dir()
 libs_testutils = [
     kea_dhcpsrv_testutils_lib,
     kea_dhcp_testutils_lib,
@@ -15,7 +15,7 @@ configure_file(
     copy: true,
 )
 kea_dhcpsrv_conf_data = configuration_data()
-kea_dhcpsrv_conf_data.set('abs_builddir', CURRENT_BUILD_DIR)
+kea_dhcpsrv_conf_data.set('abs_builddir', current_build_dir)
 configure_file(
     input: 'meson-test_libraries.h.in',
     output: 'test_libraries.h',
@@ -96,8 +96,8 @@ kea_dhcpsrv_tests = executable(
     'timer_mgr_unittest.cc',
     'tracking_lease_mgr_unittest.cc',
     cpp_args: [
-        f'-DTEST_DATA_BUILDDIR="@CURRENT_BUILD_DIR@"',
-        f'-DDHCP_DATA_DIR="@CURRENT_BUILD_DIR@"',
+        f'-DTEST_DATA_BUILDDIR="@current_build_dir@"',
+        f'-DDHCP_DATA_DIR="@current_build_dir@"',
         f'-DKEA_LFC_BUILD_DIR="@TOP_BUILD_DIR@/src/bin/lfc"',
         f'-DDEFAULT_HOOKS_PATH="@DEFAULT_HOOKS_PATH@"',
     ],

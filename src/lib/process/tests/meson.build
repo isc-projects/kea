@@ -2,7 +2,7 @@ if not gtest.found()
     subdir_done()
 endif
 
-CURRENT_BUILD_DIR = meson.current_build_dir()
+current_build_dir = meson.current_build_dir()
 libs_testutils = [kea_process_testutils_lib, kea_testutils_lib]
 configure_file(
     input: 'process_test.sh.in',
@@ -23,8 +23,8 @@ kea_process_tests = executable(
     'run_unittests.cc',
     dependencies: [gtest],
     cpp_args: [
-        f'-DTEST_DATA_BUILDDIR="@CURRENT_BUILD_DIR@"',
-        f'-DTEST_SCRIPT_SH="@CURRENT_BUILD_DIR@/process_test.sh"',
+        f'-DTEST_DATA_BUILDDIR="@current_build_dir@"',
+        f'-DTEST_SCRIPT_SH="@current_build_dir@/process_test.sh"',
         f'-DDATA_DIR="@DHCP_DATA_DIR@"',
     ],
     include_directories: [include_directories('.')] + INCLUDES,

@@ -10,8 +10,8 @@ configure_file(
     configuration: dhcp_user_chk_config_data,
 )
 
-HOOK_INCLUDES = [include_directories('..')]
-CURRENT_BUILD_DIR = meson.current_build_dir()
+hook_includes = [include_directories('..')]
+current_build_dir = meson.current_build_dir()
 dhcp_user_chk_lib_tests = executable(
     'dhcp-user-chk-lib-tests',
     'run_unittests.cc',
@@ -19,9 +19,9 @@ dhcp_user_chk_lib_tests = executable(
     'user_registry_unittests.cc',
     'user_unittests.cc',
     'userid_unittests.cc',
-    cpp_args: [f'-DTEST_DATA_BUILDDIR="@CURRENT_SOURCE_DIR@"'],
+    cpp_args: [f'-DTEST_DATA_BUILDDIR="@current_source_dir@"'],
     dependencies: [gtest],
-    include_directories: [include_directories('.')] + INCLUDES + HOOK_INCLUDES,
+    include_directories: [include_directories('.')] + INCLUDES + hook_includes,
     link_with: [dhcp_user_chk_archive] + LIBS_BUILT_SO_FAR,
 )
 test('dhcp_user_chk_lib_tests', dhcp_user_chk_lib_tests, protocol: 'gtest')
