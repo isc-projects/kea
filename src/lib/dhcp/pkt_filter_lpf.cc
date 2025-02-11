@@ -318,9 +318,14 @@ PktFilterLPF::receive(Iface& iface, const SocketInfo& socket_info) {
     decodeEthernetHeader(buf, dummy_pkt);
     decodeIpUdpHeader(buf, dummy_pkt);
 
+    auto v4_len = buf.getLength() - buf.getPosition();
+    if (v4_len <= 0) {
+        isc_throw(SocketReadError, "Pkt4FilterLpf:: packet has no DHCPv4 data");
+    }
+
     // Read the DHCP data.
     std::vector<uint8_t> dhcp_buf;
-    buf.readVector(dhcp_buf, buf.getLength() - buf.getPosition());
+    buf.readVector(dhcp_buf, v4_len);
 
     // Decode DHCP data into the Pkt4 object.
     Pkt4Ptr pkt = Pkt4Ptr(new Pkt4(&dhcp_buf[0], dhcp_buf.size()));
@@ -344,8 +349,7 @@ PktFilterLPF::receive(Iface& iface, const SocketInfo& socket_info) {
 
             struct timeval cmsg_time;
             memcpy(&cmsg_time, CMSG_DATA(cmsg), sizeof(cmsg_time));
-            pkt->addPktEvent(PktEvent::SOCKET_RECEIVED, cmsg_time);
-            break;
+            pkt->addPktEvent(PktEvent::SOCKET_RECEIVED, cmsg_time); break;
         }
 
         cmsg = CMSG_NXTHDR(&m, cmsg);
