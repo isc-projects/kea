@@ -1,18 +1,17 @@
-DATADIR = get_option('datadir')
-INSTALL_DIR = f'@DATADIR@/kea/scripts/mysql'
+install_dir = f'@DATADIR@/kea/scripts/mysql'
 configure_file(
     input: 'dhcpdb_create.mysql',
     output: 'dhcpdb_create.mysql',
     copy: true,
     install: true,
-    install_dir: INSTALL_DIR,
+    install_dir: install_dir,
 )
 configure_file(
     input: 'dhcpdb_drop.mysql',
     output: 'dhcpdb_drop.mysql',
     copy: true,
     install: true,
-    install_dir: INSTALL_DIR,
+    install_dir: install_dir,
 )
 
 mysql_scripts_conf_data = configuration_data()
@@ -25,7 +24,7 @@ configure_file(
     output: 'wipe_data.sh',
     configuration: mysql_scripts_conf_data,
     install: true,
-    install_dir: INSTALL_DIR,
+    install_dir: install_dir,
 )
 upgrade_scripts = [
     'upgrade_001.0_to_002.0.sh',
@@ -79,6 +78,6 @@ foreach file : upgrade_scripts
         output: file,
         configuration: mysql_scripts_conf_data,
         install: true,
-        install_dir: INSTALL_DIR,
+        install_dir: install_dir,
     )
 endforeach

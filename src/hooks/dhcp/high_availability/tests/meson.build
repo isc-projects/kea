@@ -2,7 +2,6 @@ if not gtest.found()
     subdir_done()
 endif
 
-HOOK_INCLUDES = [include_directories('..')]
 dhcp_ha_lib_tests = executable(
     'dhcp-ha-lib-tests',
     'command_creator_unittest.cc',
@@ -23,7 +22,7 @@ dhcp_ha_lib_tests = executable(
         f'-DTEST_HTTP_DIR="@TOP_SOURCE_DIR@/src/lib/http/tests/testdata"',
     ],
     dependencies: [gtest, crypto],
-    include_directories: [include_directories('.')] + INCLUDES + HOOK_INCLUDES,
+    include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
     link_with: [dhcp_ha_archive] + [kea_testutils_lib] + LIBS_BUILT_SO_FAR,
 )
 test(

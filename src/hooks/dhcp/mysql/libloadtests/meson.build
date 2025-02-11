@@ -2,7 +2,6 @@ if not gtest.found()
     subdir_done()
 endif
 
-HOOK_INCLUDES = [include_directories('..')]
 dhcp_mysql_libload_tests = executable(
     'dhcp-mysql-libload-tests',
     'load_unload_unittests.cc',
@@ -11,7 +10,7 @@ dhcp_mysql_libload_tests = executable(
         f'-DLIBDHCP_MYSQL_SO="@TOP_BUILD_DIR@/src/hooks/dhcp/mysql/libdhcp_mysql.so"',
     ],
     dependencies: [gtest, crypto],
-    include_directories: [include_directories('.')] + INCLUDES + HOOK_INCLUDES,
+    include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
 )
 test('dhcp_mysql_libload_tests', dhcp_mysql_libload_tests, protocol: 'gtest')

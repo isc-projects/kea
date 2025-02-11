@@ -1,18 +1,17 @@
-DATADIR = get_option('datadir')
-INSTALL_DIR = f'@DATADIR@/kea/scripts/pgsql'
+install_dir = f'@DATADIR@/kea/scripts/pgsql'
 configure_file(
     input: 'dhcpdb_create.pgsql',
     output: 'dhcpdb_create.pgsql',
     copy: true,
     install: true,
-    install_dir: INSTALL_DIR,
+    install_dir: install_dir,
 )
 configure_file(
     input: 'dhcpdb_drop.pgsql',
     output: 'dhcpdb_drop.pgsql',
     copy: true,
     install: true,
-    install_dir: INSTALL_DIR,
+    install_dir: install_dir,
 )
 
 pgsql_scripts_conf_data = configuration_data()
@@ -25,7 +24,7 @@ configure_file(
     output: 'wipe_data.sh',
     configuration: pgsql_scripts_conf_data,
     install: true,
-    install_dir: INSTALL_DIR,
+    install_dir: install_dir,
 )
 upgrade_scripts = [
     'upgrade_001.0_to_002.0.sh',
@@ -74,6 +73,6 @@ foreach file : upgrade_scripts
         output: file,
         configuration: pgsql_scripts_conf_data,
         install: true,
-        install_dir: INSTALL_DIR,
+        install_dir: install_dir,
     )
 endforeach

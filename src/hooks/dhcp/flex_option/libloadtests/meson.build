@@ -2,7 +2,6 @@ if not gtest.found()
     subdir_done()
 endif
 
-HOOK_INCLUDES = [include_directories('..')]
 dhcp_flex_option_libload_tests = executable(
     'dhcp-flex-option-libload-tests',
     'callout_unittests.cc',
@@ -12,7 +11,7 @@ dhcp_flex_option_libload_tests = executable(
         f'-DFLEX_OPTION_LIB_SO="@TOP_BUILD_DIR@/src/hooks/dhcp/flex_option/libdhcp_flex_option.so"',
     ],
     dependencies: [gtest, crypto],
-    include_directories: [include_directories('.')] + INCLUDES + HOOK_INCLUDES,
+    include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
 )
 test(

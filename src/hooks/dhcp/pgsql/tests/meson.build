@@ -2,7 +2,6 @@ if not gtest.found()
     subdir_done()
 endif
 
-HOOK_INCLUDES = [include_directories('..')]
 libs_testutils = [
     kea_dhcpsrv_testutils_lib,
     kea_pgsql_testutils_lib,
@@ -21,7 +20,7 @@ dhcp_pgsql_lib_tests = executable(
     'pgsql_lease_mgr_unittest.cc',
     'run_unittests.cc',
     dependencies: [gtest, crypto, postgresql],
-    include_directories: [include_directories('.')] + INCLUDES + HOOK_INCLUDES,
+    include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
     link_with: [dhcp_pgsql_archive] + libs_testutils + LIBS_BUILT_SO_FAR,
 )
 test(

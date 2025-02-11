@@ -2,7 +2,6 @@ if not gtest.found()
     subdir_done()
 endif
 
-HOOK_INCLUDES = [include_directories('..')]
 dhcp_ha_libload_tests = executable(
     'dhcp-ha-libload-tests',
     'close_unittests.cc',
@@ -12,7 +11,7 @@ dhcp_ha_libload_tests = executable(
         f'-DLIBDHCP_HA_SO="@TOP_BUILD_DIR@/src/hooks/dhcp/high_availability/libdhcp_ha.so"',
     ],
     dependencies: [gtest, crypto],
-    include_directories: [include_directories('.')] + INCLUDES + HOOK_INCLUDES,
+    include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
 )
 test('dhcp_ha_libload_tests', dhcp_ha_libload_tests, protocol: 'gtest')
