@@ -18,7 +18,7 @@ dhcp_user_chk_lib_tests = executable(
     'user_registry_unittests.cc',
     'user_unittests.cc',
     'userid_unittests.cc',
-    cpp_args: [f'-DTEST_DATA_BUILDDIR="@current_source_dir@"'],
+    cpp_args: [f'-DTEST_DATA_BUILDDIR="@current_build_dir@"'],
     dependencies: [gtest],
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
     link_with: [dhcp_user_chk_archive] + LIBS_BUILT_SO_FAR,

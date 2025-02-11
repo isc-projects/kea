@@ -1,9 +1,9 @@
-# Require meson >= 0.63.0 for preserve_path arg in install_headers.
+# Require meson >= 0.64.0 for preserve_path arg in install_data.
 project(
     'kea',
     'cpp',
     version: '2.7.7-git',
-    meson_version: '>=0.63.0',
+    meson_version: '>=0.64.0',
     default_options: ['default_library=shared'],
 )
 
@@ -29,7 +29,7 @@ KEA_ADMIN = f'@TOP_BUILD_DIR@/src/bin/admin/kea-admin'
 KEA_LFC = f'@TOP_BUILD_DIR@/src/bin/lfc/kea-lfc'
 TEST_CA_DIR = f'@TOP_SOURCE_DIR@/src/lib/asiolink/testutils/ca'
 DATABASE_SCRIPTS_DIR = f'@TOP_BUILD_DIR@/src/share/database/scripts'
-LEGAL_LOG_DIR=f'@PREFIX@/@RUN_STATE_DIR@/lib/kea'
+LEGAL_LOG_DIR = f'@PREFIX@/@RUN_STATE_DIR@/lib/kea'
 
 # TODO: Control it via a build option.
 FUZZING_IN_CI = false
@@ -42,8 +42,7 @@ conf_data = configuration_data(
         # 'ENABLE_DEBUG': false,
         # 'ENABLE_LOGGER_CHECKS': false,
         'EXTENDED_VERSION': '"tarball"',
-        # 'FUZZING': false,
-        # 'FUZZING_IN_CI': false,
+        'FUZZING': true,
         # 'HAS_UNDEFINED_PTHREAD_BEHAVIOR': false,
         # 'HAVE_AFL': false,
         # 'HAVE_BOOST_ASIO_COROUTINE_HPP': false,
@@ -165,11 +164,7 @@ if not crypto.found()
 endif
 
 # Kerberos
-krb5_config = disabler()
-krb5 = dependency('krb5', required: false)
-if not krb5.found()
-    krb5_config = find_program('krb5-config', required: false)
-endif
+krb5_config = find_program('krb5-config', required: false)
 if krb5_config.found()
     cflags = run_command([krb5_config, '--cflags', 'gssapi'], check: false)
     libs = run_command([krb5_config, '--libs', 'gssapi'], check: false)
@@ -179,6 +174,9 @@ if krb5_config.found()
             link_args: libs.stdout().split(),
         )
     endif
+endif
+if not krb5.found()
+    krb5 = dependency('krb5', required: false)
 endif
 
 # MySQL
@@ -251,7 +249,9 @@ foreach dep : ['yang', 'yang-cpp', 'sysrepo', 'sysrepo-cpp']
     endif
 
     # Try adding lib to it. libyang and libyang-cpp define the wrong pkg-config.
-    netconf_deps = netconf_deps + {dep: dependency('lib' + dep, required: false)}
+    netconf_deps = netconf_deps + {
+        dep: dependency('lib' + dep, required: false),
+    }
     if netconf_deps[dep].found()
         continue
     endif
@@ -262,9 +262,7 @@ foreach dep : ['yang', 'yang-cpp', 'sysrepo', 'sysrepo-cpp']
         netconf_deps = netconf_deps + {
             dep: declare_dependency(
                 dependencies: [lib],
-                include_directories: include_directories(
-                    f'/opt/@dep@/include',
-                ),
+                include_directories: include_directories(f'/opt/@dep@/include'),
             ),
         }
     endif
