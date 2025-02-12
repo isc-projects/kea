@@ -11,8 +11,8 @@ server.
 .. note::
 
     :ischooklib:`libdhcp_ha.so` is part of the open source code and is
-    available to every Kea user. It was previously available only to ISC
-    customers with a paid support contract.
+    available to every Kea user.
+    It was previously available only to ISC customers with a paid support contract.
 
 .. note::
 

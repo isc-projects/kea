@@ -2603,7 +2603,7 @@ COMMAND_HTTP_LISTENER_STARTED
 
 .. code-block:: text
 
-    Command HTTP listener started with %1 threads, listening on %2:%3, use TLS: %4
+    Command HTTP listener started with %1 threads, listening on address: %2 port: %3, use TLS: %4
 
 Logged at debug log level 10.
 This debug messages is issued when an HTTP listener has been started to
@@ -2617,7 +2617,7 @@ COMMAND_HTTP_LISTENER_STOPPED
 
 .. code-block:: text
 
-    Command HTTP listener for %1:%2 stopped.
+    Command HTTP listener for address: %1 port: %2 stopped.
 
 Logged at debug log level 10.
 This debug messages is issued when the Command HTTP listener, listening
@@ -2628,7 +2628,7 @@ COMMAND_HTTP_LISTENER_STOPPING
 
 .. code-block:: text
 
-    Stopping Command HTTP listener for %1:%2
+    Stopping Command HTTP listener for address: %1 port: %2
 
 Logged at debug log level 10.
 This debug messages is issued when the Command HTTP listener, listening
@@ -2948,48 +2948,70 @@ CTRL_AGENT_FAILED
 This is a fatal error message issued when the Control Agent application
 encounters an unrecoverable error from within the event loop.
 
-CTRL_AGENT_HTTPS_SERVICE_REUSED
-===============================
+CTRL_AGENT_HTTPS_SERVICE_REUSE_FAILED
+=====================================
 
 .. code-block:: text
 
-    reused HTTPS service bound to address %1:%2
+    failed to reuse HTTPS service bound to address: %1 port: %2
 
-This informational message indicates that the server has reused existing
-HTTPS service on the specified address and port. Note that any change in
-the TLS setup was ignored.
+This error message indicates that the server has failed reusing existing
+HTTPS service on the specified address and port. The server can not swith from
+HTTPS to HTTP sockets using the same address and port.
 
 CTRL_AGENT_HTTPS_SERVICE_STARTED
 ================================
 
 .. code-block:: text
 
-    HTTPS service bound to address %1:%2
+    HTTPS service bound to address: %1 port: %2
 
 This informational message indicates that the server has started HTTPS service
 on the specified address and port. All control commands should be sent to this
 address and port over a TLS channel.
 
-CTRL_AGENT_HTTP_SERVICE_REUSED
-==============================
+CTRL_AGENT_HTTPS_SERVICE_UPDATED
+================================
 
 .. code-block:: text
 
-    reused HTTP service bound to address %1:%2
+    reused HTTPS service bound to address: %1 port: %2 and updated TLS settings
 
 This informational message indicates that the server has reused existing
-HTTPS service on the specified address and port.
+HTTPS service on the specified address and port. Note that any change in
+the TLS setup has been applied.
+
+CTRL_AGENT_HTTP_SERVICE_REUSE_FAILED
+====================================
+
+.. code-block:: text
+
+    failed to reused HTTP service bound to address: %1 port: %2
+
+This error message indicates that the server has failed reusing existing
+HTTP service on the specified address and port. The server can not swith from
+HTTP to HTTPS sockets using the same address and port.
 
 CTRL_AGENT_HTTP_SERVICE_STARTED
 ===============================
 
 .. code-block:: text
 
-    HTTP service bound to address %1:%2
+    HTTP service bound to address: %1 port: %2
 
 This informational message indicates that the server has started HTTP service
 on the specified address and port. All control commands should be sent to this
 address and port.
+
+CTRL_AGENT_HTTP_SERVICE_UPDATED
+===============================
+
+.. code-block:: text
+
+    reused HTTP service bound to address: %1 port: %2
+
+This informational message indicates that the server has reused existing
+HTTP service on the specified address and port.
 
 CTRL_AGENT_RUN_EXIT
 ===================
@@ -15936,48 +15958,59 @@ This debug message is issued when the HTTP request timeout has occurred and
 the server is going to send a response with Http Request timeout status
 code.
 
-HTTP_COMMAND_MGR_IGNORED_TLS_SETUP_CHANGES
+HTTP_COMMAND_MGR_HTTPS_SERVICE_REUSE_FAILED
+===========================================
+
+.. code-block:: text
+
+    failed to reused HTTPS service bound to address: %1 port: %2
+
+This error message indicates that the server has failed reusing existing
+HTTPS service on the specified address and port. The server can not swith from
+HTTPS to HTTP sockets using the same address and port.
+
+HTTP_COMMAND_MGR_HTTPS_SERVICE_UPDATED
+======================================
+
+.. code-block:: text
+
+    reused HTTPS service bound to address: %1 port: %2 and updated TLS settings
+
+This informational message indicates that the server has reused existing
+HTTPS service on the specified address and port. Note that any change in
+the TLS setup has been applied.
+
+HTTP_COMMAND_MGR_HTTP_SERVICE_REUSE_FAILED
 ==========================================
 
 .. code-block:: text
 
-    ignore a change in TLS setup of the http control socket
+    failed to reused HTTP service bound to address: %1 port: %2
 
-The warning message is issued when the HTTP/HTTPS control socket was
-reconfigured with a different TLS setup but keeping the address and port.
-These changes are ignored because they can't be applied without opening a new
-socket which will conflict with the existing one.
+This error message indicates that the server has failed reusing existing
+HTTP service on the specified address and port. The server can not swith from
+HTTP to HTTPS sockets using the same address and port.
+
+HTTP_COMMAND_MGR_HTTP_SERVICE_UPDATED
+=====================================
+
+.. code-block:: text
+
+    reused HTTP service bound to address: %1 port: %2
+
+This informational message indicates that the server has reused existing
+HTTP service on the specified address and port.
 
 HTTP_COMMAND_MGR_SERVICE_STARTED
 ================================
 
 .. code-block:: text
 
-    started %1 service bound to address %2 port %3
+    started %1 service bound to address: %2 port: %3
 
 This informational message indicates that the server has started
 HTTP/HTTPS service on the specified address and port for receiving
 control commands.
-
-HTTP_COMMAND_MGR_SERVICE_STOPPING
-=================================
-
-.. code-block:: text
-
-    Server is stopping %1 service %2
-
-This informational message indicates that the server has stopped
-HTTP/HTTPS service. When known the address and port are displayed.
-
-HTTP_COMMAND_MGR_SERVICE_STOPPING_ALL
-=====================================
-
-.. code-block:: text
-
-    stopping %1 service %2
-
-This informational message indicates that the server has stopped
-HTTP/HTTPS service. When known the address and port are displayed.
 
 HTTP_CONNECTION_CLOSE_CALLBACK_FAILED
 =====================================
@@ -16408,6 +16441,61 @@ LEASE_CMDS_INIT_OK
 This info message indicates that the Lease Commands hooks library has been
 loaded successfully. Enjoy!
 
+LEASE_CMDS_LEASE4_OFFER_FAILED
+==============================
+
+.. code-block:: text
+
+    processing error occurred evaluating binding variables: %1
+
+This error log is emitted when an error occurs in  the lease4_offer
+handler is invoked. The argument provides an explanation.
+
+LEASE_CMDS_LEASES4_COMMITTED_FAILED
+===================================
+
+.. code-block:: text
+
+    processing error occurred evaluating binding variables: %1
+
+This error log is emitted when an error occurs in  the leases4_committed
+handler is invoked. The argument provides an explanation.
+
+LEASE_CMDS_LEASES6_COMMITTED_CONFLICT
+=====================================
+
+.. code-block:: text
+
+    could not updating lease: %1 for: %2
+
+This error log is emitted by the leases6_committed callback when attempting
+to update a lease with new binding-variable values but a conflicting change
+has occurred rendering the update invalid. The arguments provide the lease
+address and the query details.
+
+LEASE_CMDS_LEASES6_COMMITTED_FAILED
+===================================
+
+.. code-block:: text
+
+    reason: %1
+
+This error log is emitted when one or more leases associated with a client
+query failed to be updated with binding-variable values. The argument
+provides details. Individual errors for each lease should precede this log.
+
+LEASE_CMDS_LEASES6_COMMITTED_LEASE_ERROR
+========================================
+
+.. code-block:: text
+
+    evaluating binding-variables for lease: %1 for: %2, reason: %3
+
+This error log is emitted by the leases6_committed callback when an
+unexpected error occurs evaluating the binding-variables for a given
+lease. The arguments provide the lease address, the query details, and
+an error explanation.
+
 LEASE_CMDS_RESEND_DDNS4
 =======================
 
@@ -16561,6 +16649,16 @@ LEASE_CMDS_WIPE6_DEPRECATED
     lease6-wipe command is deprecated and it will be removed in the future.
 
 The lease6-wipe command is deprecated and it will be removed in the future.
+
+LEASE_CMDS_WIPE6_FAILED
+=======================
+
+.. code-block:: text
+
+    lease6-wipe command failed (parameters: %1, reason: %2)
+
+The lease6-wipe command has failed. Both the reason as well as the
+parameters passed are logged.
 
 LEASE_QUERY_LOAD_FAILED
 =======================

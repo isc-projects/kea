@@ -10,9 +10,9 @@ Leasequery as described in (`RFC 5007 <https://tools.ietf.org/html/rfc5007>`__).
 
 .. note::
 
-    :ischooklib:`libdhcp_lease_query.so` is available only to ISC customers with
-    a paid support contract. For more information on subscription options,
-    please complete the form at https://www.isc.org/contact.
+    :ischooklib:`libdhcp_lease_query.so` is part of the open source code and is
+    available to every Kea user.
+    It was previously available only to ISC customers with a paid support contract.
 
 .. note::
 

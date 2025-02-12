@@ -11,9 +11,9 @@ This hook library enables two types of limits:
 
 .. note::
 
-    :ischooklib:`libdhcp_limits.so` is available only to ISC customers with
-    a paid support contract. For more information on subscription options,
-    please complete the form at https://www.isc.org/contact.
+    :ischooklib:`libdhcp_limits.so` is part of the open source code and is
+    available to every Kea user.
+    It was previously available only to ISC customers with a paid support contract.
 
 .. _hooks-limits-configuration:
 

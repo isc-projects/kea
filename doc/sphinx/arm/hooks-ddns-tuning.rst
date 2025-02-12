@@ -10,10 +10,9 @@ performing DDNS updates for select clients.
 
 .. note::
 
-    :ischooklib:`libdhcp_ddns_tuning.so` is available as a premium
-    hook library from ISC. Please visit https://www.isc.org/shop/ to purchase
-    the premium hook libraries, or contact us at https://www.isc.org/contact for
-    more information.
+    :ischooklib:`libdhcp_ddns_tuning.so` is part of the open source code and is
+    available to every Kea user.
+    It was previously available only to ISC customers with a paid support contract.
 
 The library, which was added in Kea 2.1.5, can be loaded by the :iscman:`kea-dhcp4`
 and :iscman:`kea-dhcp6` daemons by adding it to the ``hooks-libraries`` element of the

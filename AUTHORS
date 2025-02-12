@@ -7,7 +7,8 @@ Primary developers:
                     host reservation, MAC extraction in DHCPv6,
                     statistics manager, kea-shell, netconf, flex/bison
                     parsers, flex-id, documentation, config backend,
-                    ddns_tuning, CI, documentation)
+                    ddns_tuning, CI, documentation, forensic logging,
+                    host commands)
  - Marcin Siodelski (DHCPv4, DHCPv6 components, options handling, perfdhcp,
                      host reservation, lease file cleanup, lease expiration,
                      control agent, shared networks, high availability,
@@ -46,6 +47,45 @@ Former developers who are no longer active:
 
 Main area of work mentioned in parentheses. The lists are in a roughly
 chronological order.
+
+ Forensic log (forensic_log)
+  - Thomas Markwalder, Tomek Mrugalski, Francis Dupont, Marcin Siodelski, Razvan Becheriu
+
+ Flex-id (flex_id)
+  - Tomek Mrugalski, Francis Dupont
+
+ Host commands (host_cmds)
+  - Tomek Mrugalski, Francis Dupont
+
+ Subnet commands (subnet_cmds)
+  - Marcin Siodelski, Thomas Markwalder, Tomek Mrugalski, Francis Dupont
+
+ RADIUS (radius)
+  - Francis Dupont, Andrei Pavel, Razvan Becheriu
+
+ Host Caching (host_cache)
+  - Francis Dupont
+
+ Class commands (class_cmds)
+  - Marcin Siodelski, Tomek Mrugalski, Francis Dupont
+
+ Config Backend Commands (cb_cmds)
+  - Marcin Siodelski, Francis Dupont
+
+ Lease Query (lease_query)
+  - Thomas Markwalder
+
+ GSS-TSIG (gss_tsig)
+  - Francis Dupont, Razvan Becheriu
+
+ DDNS-Tuning (ddns_tuning)
+ - Tomek Mrugalski, Thomas Markwalder
+
+ Lease Limiting, Rate Limiting (limits)
+  - Andrei Pavel
+
+ Role Based Access Control (rbac)
+  - Francis Dupont
 
 Kea uses parts of the code of the now-defunct BIND 10 project. The following
 people contributed to BIND 10 code:

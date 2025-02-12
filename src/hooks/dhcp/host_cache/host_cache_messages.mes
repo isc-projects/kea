@@ -1,0 +1,160 @@
+# Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+$NAMESPACE isc::host_cache
+
+% HOST_CACHE_ADD add host: %1
+Logged at debug log level 45.
+This debug message logs the details of the added host cache entry.
+
+% HOST_CACHE_ADD_DUPLICATE duplicate host: %1
+Logged at debug log level 45.
+The add operation failed because the entry conflicts with an already
+existing one. The details of the add operation argument are logged.
+
+% HOST_CACHE_COMMAND_CLEAR cache-clear command successful
+The cache-clear command has been successful.
+
+% HOST_CACHE_COMMAND_CLEAR_FAILED cache-clear command failed (reason: %1)
+The cache-clear command has failed. The reason is logged.
+
+% HOST_CACHE_COMMAND_FLUSH cache-flush command successful
+The cache-flush command has been successful.
+
+% HOST_CACHE_COMMAND_FLUSH_FAILED cache-flush command failed (parameters: %1, reason: %2)
+The cache-flush command has failed. Both the reason as well as the
+parameters passed are logged.
+
+% HOST_CACHE_COMMAND_GET cache-get command successful (returned: %1)
+The cache-get command has been successful. The number of returned entries
+is logged.
+
+% HOST_CACHE_COMMAND_GET_BY_ID cache-get-by-id command successful (returned: %1)
+The cache-get-by-id command has been successful. The number of returned entries
+is logged.
+
+% HOST_CACHE_COMMAND_GET_BY_ID_FAILED cache-get-by-id command failed (reason: %1)
+The cache-get-by-id command has failed. The reason is logged.
+
+% HOST_CACHE_COMMAND_GET_FAILED cache-get command failed (reason: %1)
+The cache-get command has failed. The reason is logged.
+
+% HOST_CACHE_COMMAND_INSERT cache-insert command successful (inserted: %1, overwritten: %2)
+The cache-insert command has been successful. The number of inserted entries
+and the number of entries overwritten by more recent entries are logged.
+
+% HOST_CACHE_COMMAND_INSERT_FAILED cache-insert command failed (parameters: %1, reason: %2)
+The cache-insert command has failed. Both the reason as well as the
+parameters passed are logged.
+
+% HOST_CACHE_COMMAND_LOAD cache-load command successful (loaded: %1, overwritten: %2)
+The cache-load command has been successful. The number of loaded entries
+and the number of entries overwritten by more recent entries are logged.
+
+% HOST_CACHE_COMMAND_LOAD_FAILED cache-load command failed (parameters: %1, reason: %2)
+The cache-load command has failed. Both the reason as well as the
+parameters passed are logged.
+
+% HOST_CACHE_COMMAND_REMOVE cache-remove command successful (parameters: %1)
+The cache-remove command has been successful. Parameters of the host
+deleted are logged.
+
+% HOST_CACHE_COMMAND_REMOVE_FAILED cache-remove command failed (parameters: %1, reason: %2)
+The cache-remove command has failed. Both the reason as well as the
+parameters passed are logged.
+
+% HOST_CACHE_COMMAND_SIZE cache-clear command successful: %1
+The cache-size command has been successful and returned the number of
+entries in the host cache.
+
+% HOST_CACHE_COMMAND_SIZE_FAILED cache-size command failed (reason: %1)
+The cache-size command has failed. The reason is logged.
+
+% HOST_CACHE_COMMAND_WRITE cache-write command successful (dumped: %1)
+The cache-write command has been successful. The number of dumped entries
+is logged.
+
+% HOST_CACHE_COMMAND_WRITE_FAILED cache-write command failed (parameters: %1, reason: %2)
+The cache-write command has failed. Both the reason as well as the
+parameters passed are logged.
+
+% HOST_CACHE_CONFIGURATION_FAILED failed to configure Host Cache hooks library: %1
+This error message is issued when there is an error configuring the Host
+Cache hooks library. The argument provides the detailed error message.
+
+% HOST_CACHE_DEINIT_OK unloading Host Cache hooks library successful
+This informational message indicates that the Host Cache hooks library
+has been unloaded successfully.
+
+% HOST_CACHE_DEL_SUBNET_ID_ADDRESS4 using subnet id %1 and address %2, delete host: %3
+Logged at debug log level 45.
+This debug message logs the details of the host cache entry deleted using
+the subnet id and IPv4 address.
+
+% HOST_CACHE_DEL_SUBNET_ID_ADDRESS6 using subnet id %1 and address %2, delete host: %3
+Logged at debug log level 45.
+This debug message logs the details of the host cache entry deleted using
+the subnet id and IPv6 address.
+
+% HOST_CACHE_DEL_SUBNET_ID_IDENTIFIER4 using subnet id %1 and identifier %2, delete host: %3
+Logged at debug log level 45.
+This debug message logs the details of the host cache entry deleted using a
+subnet id and specific host identifier.
+
+% HOST_CACHE_DEL_SUBNET_ID_IDENTIFIER6 using subnet id %1 and identifier %2, delete host: %3
+Logged at debug log level 45.
+This debug message logs the details of the host cache entry deleted using a
+subnet id and specific host identifier.
+
+% HOST_CACHE_GET_ONE_PREFIX get one host with reservation for prefix %1/%2
+Logged at debug log level 40.
+This debug message is issued when starting to retrieve a host cache entry
+having a reservation for a specified prefix. The arguments specify a prefix
+and prefix length.
+
+% HOST_CACHE_GET_ONE_PREFIX_HOST using prefix %1/%2, found host: %3
+Logged at debug log level 45.
+This debug message includes the details of the host cache entry found
+using the specific prefix/prefix length. The arguments specify prefix,
+prefix length and host details respectively.
+
+% HOST_CACHE_GET_ONE_SUBNET_ID_ADDRESS4 get one host with reservation for subnet id %1 and IPv4 address %2
+Logged at debug log level 40.
+This debug message is issued when starting to retrieve a host cache entry
+connected to the specific subnet and having the specific IPv4 address reserved.
+The arguments specify subnet id and IPv4 address respectively.
+
+% HOST_CACHE_GET_ONE_SUBNET_ID_ADDRESS4_HOST using subnet id %1 and address %2, found host: %3
+Logged at debug log level 45.
+This debug message logs the details of the host cache entry found using the
+subnet id and IPv4 address.
+
+% HOST_CACHE_GET_ONE_SUBNET_ID_ADDRESS6 get one host with reservation for subnet id %1 and including IPv6 address %2
+Logged at debug log level 40.
+This debug message is issued when starting to retrieve a host cache entry
+connected to the specific subnet and having the specific IPv6 address
+reserved. The arguments specify subnet id and IPv6 address respectively.
+
+% HOST_CACHE_GET_ONE_SUBNET_ID_ADDRESS6_HOST using subnet id %1 and address %2, found host: %3
+Logged at debug log level 45.
+This debug message logs the details of the host cache entry found using
+the subnet id and IPv6 address.
+
+% HOST_CACHE_GET_ONE_SUBNET_ID_IDENTIFIER get one host with %1 reservation for subnet id %2, identified by %3
+Logged at debug log level 40.
+This debug message is issued when starting to retrieve a host cache entry
+holding IPv4 or IPv6 reservations, which is connected to a specific subnet
+and is identified by a specific unique identifier. The first argument
+identifies if the IPv4 or IPv6 reservation is desired.
+
+% HOST_CACHE_GET_ONE_SUBNET_ID_IDENTIFIER_HOST using subnet id %1 and identifier %2, found host: %3
+Logged at debug log level 45.
+This debug message includes the details of a host cache entry found using a
+subnet id and specific host identifier.
+
+% HOST_CACHE_INIT_OK loading Host Cache hooks library successful
+This info message indicates that the Host Cache hooks library has been
+loaded successfully. Enjoy!

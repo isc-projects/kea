@@ -162,7 +162,7 @@ libraries), or hook libraries (open source or premium).
    |                                  |                                       | messages.                      |
    +----------------------------------+---------------------------------------+--------------------------------+
    | ``kea-ctrl-agent.rbac-hooks``    | :ischooklib:`libdhcp_rbac.so`         | Used to log messages related to|
-   |                                  | enterprise hook library               | the operation of the RBAC hook |
+   |                                  | premium hook library                  | the operation of the RBAC hook |
    |                                  |                                       | library.                       |
    +----------------------------------+---------------------------------------+--------------------------------+
    | ``kea-dhcp4``                    | core                                  | The root logger for the DHCPv4 |
@@ -209,11 +209,11 @@ libraries), or hook libraries (open source or premium).
    | ``kea-dhcp-ddns.callouts``       |                                       | hook point.                    |
    +----------------------------------+---------------------------------------+--------------------------------+
    | ``kea-dhcp4.cb-cmds-hooks``,     | :ischooklib:`libdhcp_cb_cmds.so`      | Used to log messages related to|
-   | ``kea-dhcp6.cb-cmds-hooks``      | subscription hook library             | the operation of the Config    |
+   | ``kea-dhcp6.cb-cmds-hooks``      | premium hook library                  | the operation of the Config    |
    |                                  |                                       | Backend Commands hook library. |
    +----------------------------------+---------------------------------------+--------------------------------+
    | ``kea-dhcp4.class-cmds-hooks``,  | :ischooklib:`libdhcp_class_cmds.so`   | Used to log messages related to|
-   | ``kea-dhcp6.class-cmds-hooks``   | subscription hook library             | the operation of the Class     |
+   | ``kea-dhcp6.class-cmds-hooks``   | open-source hook library              | the operation of the Class     |
    |                                  |                                       | Commands hook library.         |
    +----------------------------------+---------------------------------------+--------------------------------+
    | ``kea-dhcp4.commands``,          | core                                  | Used to log messages related to|
@@ -226,7 +226,7 @@ libraries), or hook libraries (open source or premium).
    |                                  |                                       | relational databases.          |
    +----------------------------------+---------------------------------------+--------------------------------+
    | ``kea-dhcp4.ddns-tuning-hooks``, | :ischooklib:`libdhcp_ddns_tuning.so`  | Used to log messages related to|
-   | ``kea-dhcp6.ddns-tuning-hooks``  | premium hook library                  | the operation of the DDNS      |
+   | ``kea-dhcp6.ddns-tuning-hooks``  | open-source hook library              | the operation of the DDNS      |
    |                                  |                                       | Tuning hook library.           |
    +----------------------------------+---------------------------------------+--------------------------------+
    | ``kea-dhcp4.ddns``,              | core                                  | Used by the DHCP  server to log|
@@ -247,7 +247,7 @@ libraries), or hook libraries (open source or premium).
    |                                  |                                       | expression evaluation code.    |
    +----------------------------------+---------------------------------------+--------------------------------+
    | ``kea-dhcp4.flex-id-hooks``,     | :ischooklib:`libdhcp_flex_id.so`      | Used to log messages related to|
-   | ``kea-dhcp6.flex-id-hooks``      | premium hook library                  | the operation of the Flexible  |
+   | ``kea-dhcp6.flex-id-hooks``      | open-source hook library              | the operation of the Flexible  |
    |                                  |                                       | Identifier hook library.       |
    +----------------------------------+---------------------------------------+--------------------------------+
    | ``kea-dhcp4.flex-option-hooks``, | :ischooklib:`libdhcp_flex_option.so`  | Used to log messages related to|
@@ -268,11 +268,11 @@ libraries), or hook libraries (open source or premium).
    |                                  |                                       | points within the DHCP server. |
    +----------------------------------+---------------------------------------+--------------------------------+
    | ``kea-dhcp4.host-cache-hooks``,  | :ischooklib:`libdhcp_host_cache.so`   | Used to log messages related to|
-   | ``kea-dhcp6.host-cache-hooks``   | subscription hook library             | the operation of the Host Cache|
+   | ``kea-dhcp6.host-cache-hooks``   | open-source hook library              | the operation of the Host Cache|
    |                                  |                                       | hook library.                  |
    +----------------------------------+---------------------------------------+--------------------------------+
    | ``kea-dhcp4.host-cmds-hooks``,   | :ischooklib:`libdhcp_host_cmds.so`    | Used to log messages related to|
-   | ``kea-dhcp6.host-cmds-hooks``    | premium hook library                  | the operation of the Host      |
+   | ``kea-dhcp6.host-cmds-hooks``    | open-source hook library              | the operation of the Host      |
    |                                  |                                       | Commands hook library. In      |
    |                                  |                                       | general, these pertain to the  |
    |                                  |                                       | loading and unloading of the   |
@@ -296,11 +296,11 @@ libraries), or hook libraries (open source or premium).
    |                                  |                                       | commands by the library.       |
    +----------------------------------+---------------------------------------+--------------------------------+
    | ``kea-dhcp4.limits-hooks``,      | :ischooklib:`libdhcp_limits.so`       | Used to log messages related to|
-   | ``kea-dhcp6.limits-hooks``       | subscription hook library             | the operation of the Limits    |
+   | ``kea-dhcp6.limits-hooks``       | open-source hook library              | the operation of the Limits    |
    |                                  |                                       | hook library.                  |
    +----------------------------------+---------------------------------------+--------------------------------+
    | ``kea-dhcp4.lease-query-hooks``, | :ischooklib:`libdhcp_lease_query.so`  | Used to log messages related to|
-   | ``kea-dhcp6.lease-query-hooks``  | premium hook library                  | the operation of the Leasequery|
+   | ``kea-dhcp6.lease-query-hooks``  | open-source hook library              | the operation of the Leasequery|
    |                                  |                                       | hook library.                  |
    +----------------------------------+---------------------------------------+--------------------------------+
    | ``kea-dhcp4.leases``,            | core                                  | Used by the DHCP server to log |
@@ -312,7 +312,7 @@ libraries), or hook libraries (open source or premium).
    |                                  |                                       | allocation, etc.               |
    +----------------------------------+---------------------------------------+--------------------------------+
    | ``kea-dhcp4.legal-log-hooks``,   | :ischooklib:`libdhcp_legal_log.so`    | Used to log messages related to|
-   | ``kea-dhcp6.legal-log-hooks``    | premium hook library                  | the operation of the Forensic  |
+   | ``kea-dhcp6.legal-log-hooks``    | open-source hook library              | the operation of the Forensic  |
    |                                  |                                       | Logging hook library.          |
    +----------------------------------+---------------------------------------+--------------------------------+
    | ``kea-dhcp4.mysql-cb-hooks``,    | :ischooklib:`libdhcp_mysql.so`        | Used to log messages related to|
@@ -363,7 +363,7 @@ libraries), or hook libraries (open source or premium).
    |                                  |                                       | library.                       |
    +----------------------------------+---------------------------------------+--------------------------------+
    | ``kea-dhcp4.ping-check-hooks``   | :ischooklib:`libdhcp_ping_check.so`   | Used to log messages related to|
-   |                                  | subscription hook library             | the operation of the Ping Check|
+   |                                  | open-source hook library              | the operation of the Ping Check|
    |                                  |                                       | hook library.                  |
    +----------------------------------+---------------------------------------+--------------------------------+
    | ``kea-dhcp4.pgsql-cb-hooks``,    | :ischooklib:`libdhcp_pgsql.so`        | Used to log messages related to|
@@ -384,7 +384,7 @@ libraries), or hook libraries (open source or premium).
    |                                  |                                       | hook library.                  |
    +----------------------------------+---------------------------------------+--------------------------------+
    | ``kea-dhcp4.radius-hooks``,      | :ischooklib:`libdhcp_radius.so`       | Used to log messages related to|
-   | ``kea-dhcp6.radius-hooks``       | premium hook library                  | the operation of the RADIUS    |
+   | ``kea-dhcp6.radius-hooks``       | open-source hook library              | the operation of the RADIUS    |
    |                                  |                                       | hook library.                  |
    +----------------------------------+---------------------------------------+--------------------------------+
    | ``kea-dhcp4.stat-cmds-hooks``,   | :ischooklib:`libdhcp_stat_cmds.so`    | Used to log messages related to|
@@ -396,7 +396,7 @@ libraries), or hook libraries (open source or premium).
    |                                  |                                       | commands by the library.       |
    +----------------------------------+---------------------------------------+--------------------------------+
    | ``kea-dhcp4.subnet-cmds-hooks``, | :ischooklib:`libdhcp_subnet_cmds.so`  | Used to log messages related to|
-   | ``kea-dhcp6.subnet-cmds-hooks``  | premium hook library                  | the operation of the Subnet    |
+   | ``kea-dhcp6.subnet-cmds-hooks``  | open-source hook library              | the operation of the Subnet    |
    |                                  |                                       | Commands hook library. In      |
    |                                  |                                       | general, these pertain to      |
    |                                  |                                       | loading and unloading the      |
@@ -407,7 +407,7 @@ libraries), or hook libraries (open source or premium).
    | ``kea-dhcp6.tcp``                |                                       | TCP traffic.                   |
    +----------------------------------+---------------------------------------+--------------------------------+
    | ``kea-dhcp4.user_chk``,          | :ischooklib:`libdhcp_user_chk.so`     | Used to log messages related to|
-   | ``kea-dhcp6.user_chk``           | hook library                          | the operation of the User Check|
+   | ``kea-dhcp6.user_chk``           | open-source hook library              | the operation of the User Check|
    |                                  |                                       | hook library.                  |
    +----------------------------------+---------------------------------------+--------------------------------+
    | ``kea-dhcp-ddns``                | core                                  | The root logger for the        |
@@ -448,7 +448,7 @@ libraries), or hook libraries (open source or premium).
    |                                  |                                       | the DNS servers.               |
    +----------------------------------+---------------------------------------+--------------------------------+
    | ``kea-dhcp-ddns.gss-tsig-hooks`` | :ischooklib:`libddns_gss_tsig.so`     | Used to log messages related to|
-   |                                  | subscription hook library             | the operation of the GSS-TSIG  |
+   |                                  | open-source hook library              | the operation of the GSS-TSIG  |
    |                                  |                                       | hook library.                  |
    +----------------------------------+---------------------------------------+--------------------------------+
    | ``kea-dhcp-ddns.libdhcp-ddns``   | core                                  | Used to log events related to  |

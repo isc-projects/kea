@@ -1,0 +1,222 @@
+# Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+$NAMESPACE isc::gss_tsig
+
+% BAD_CLIENT_CREDENTIALS bad client credentials: %1
+This error message is issued when the client credential processing failed,
+including when the credential remaining lifetime is shorter than the
+TKEY lifetime. The argument details the error.
+
+% GSS_TSIG_COMMAND_PROCESSED_FAILED command_processed callout failed: %1.
+This error message is issued when the callout for the command_processed
+callout point failed. The argument contains a reason for the error.
+
+% GSS_TSIG_LOAD_FAILED GSS-TSIG hooks library failed to load: %1.
+This error message indicates that an error occurred attempting to
+load the GSS-TSIG hooks library. The argument details the error.
+
+% GSS_TSIG_LOAD_OK GSS-TSIG hooks library loaded successfully.
+This info message indicates that the GSS-TSIG hooks library has
+been loaded successfully.
+
+% GSS_TSIG_MANAGER_STARTED hooks library GSS-TSIG key periodic manager started.
+Logged at debug log level 40.
+This debug message is issued when the GSS-TSIG key periodic manager has started.
+
+% GSS_TSIG_MANAGER_STOPPED hooks library GSS-TSIG key periodic manager stopped.
+Logged at debug log level 40.
+This debug message is issued when the GSS-TSIG key periodic manager has stopped.
+
+% GSS_TSIG_MANAGER_STOP_ERROR manager stop error: %1
+This error message is issued when the GSS-TSIG key periodic manager has stopped
+but an error is detected. The error message in the argument gives details about
+the problem.
+
+% GSS_TSIG_MANAGER_STOP_GENERAL_ERROR manager stop general error
+This error message is issued when the GSS-TSIG key periodic manager has stopped
+but a general error is detected.
+
+% GSS_TSIG_NEW_KEY new GSS-TSIG key '%1' was created.
+Logged at debug log level 40.
+This info message indicates that the GSS-TSIG hooks library has
+created a new GSS-TSIG key. The name of the new key is displayed.
+
+% GSS_TSIG_NEW_KEY_SETUP_FAILED new GSS-TSIG key '%1' setup failed: %2.
+This warning message is issued when the setup of a new GSS-TSIG key failed.
+The name of the new key and the error are displayed.
+
+% GSS_TSIG_NEW_KEY_SETUP_SUCCEED new GSS-TSIG key '%1' setup succeed.
+Logged at debug log level 40.
+This debug message is issued when the setup of a new GSS-TSIG key
+successfully finished. The name of the new key is displayed.
+
+% GSS_TSIG_OLD_KEY_REMOVED %1 old GSS-TSIG keys were removed
+Logged at debug log level 40.
+This debug message is issued when some old keys (older than 2 times the maximum
+TKEY lifetime) were removed. The number of removed keys is displayed.
+
+% GSS_TSIG_UNLOAD_OK GSS-TSIG hooks library unloaded successfully.
+This info message indicates that the GSS-TSIG hooks library has
+been unloaded successfully.
+
+% GSS_TSIG_VERIFIED GSS-TSIG verify successed.
+Logged at debug log level 40.
+A debug message issued when GSS-TSIG verification succeeded.
+
+% GSS_TSIG_VERIFY_FAILED GSS-TSIG verify failed: %1.
+This info message indicates that GSS-TSIG verification failed.
+The argument details the error.
+
+% KEY_LOOKUP_DISABLED hooks library lookup for a key: GSS-TSIG is not enabled for the current DNS server.
+Logged at debug log level 40.
+This debug message is issued when the lookup for a GSS-TSIG key was performed
+for a DNS server where GSS-TSIG is not enabled.
+
+% KEY_LOOKUP_FOUND hooks library lookup for a key: return GSS-TSIG key '%1'.
+Logged at debug log level 40.
+This debug message is issued when the lookup for a GSS-TSIG key returned
+an usable key for protecting the DNS update. The key name is displayed.
+
+% KEY_LOOKUP_NONE hooks library lookup for a key: found no usable key.
+Logged at debug log level 40.
+This debug message is issued when the lookup for a GSS-TSIG key failed
+to find an usable key.
+
+% KEY_PROCESSING_FAILED The GSS-TKEY processing for server %1 failed because of an error: %2
+This error message is issued when the key processing for a specific server has
+failed. The first argument specifies the server identifier and the second
+argument gives more information about the error.
+
+% KEY_PROCESSING_FAILED_UNSPECIFIED_ERROR The GSS-TKEY processing for server %1 failed because of an unspecified error
+This error message is issued when the key processing for a specific server has
+failed. The first argument specifies the server identifier.
+
+% START_REKEY_TIMER started timer handling rekey for server %1 in %2 seconds.
+Logged at debug log level 40.
+This debug message is issued when starting the rekey timer to handle new keys
+for this server when at least one key is currently available. The first argument
+specifies the server identifier and the second argument specifies the time
+interval when the next key processing will be attempted.
+
+% START_RETRY_TIMER started timer handling retry for server %1 in %2 seconds.
+Logged at debug log level 40.
+This debug message is issued when starting the retry timer to handle new keys
+for this server when there is no key currently available. The first argument
+specifies the server identifier and the second argument specifies the time
+interval when the next key processing will be attempted.
+
+% TKEY_EXCHANGE_ANSWER_CLASS GSS-TKEY exchange received a response with answer class: %1.
+Logged at debug log level 40.
+This debug message indicates that GSS-TKEY exchange received a response with
+specified answer class.
+
+% TKEY_EXCHANGE_FAILED_TO_VERIFY GSS-TKEY exchange failed because the response failed to verify.
+This error message indicated that GSS-TKEY exchange failed because the response
+failed to verify.
+
+% TKEY_EXCHANGE_FAIL_EMPTY_IN_TOKEN GSS-TKEY exchange failed because input token is empty.
+This error message indicated that GSS-TKEY exchange failed because input token
+is empty.
+
+% TKEY_EXCHANGE_FAIL_EMPTY_OUT_TOKEN GSS-TKEY exchange failed because output token is empty.
+This error message indicated that GSS-TKEY exchange failed because output token
+is empty.
+
+% TKEY_EXCHANGE_FAIL_EMPTY_RESPONSE GSS-TKEY exchange failed because the response is empty.
+This error message indicated that GSS-TKEY exchange failed because the response
+is empty.
+
+% TKEY_EXCHANGE_FAIL_IO_ERROR GSS-TKEY exchange failed because of the IO error: %1.
+This error message indicated that GSS-TKEY exchange failed because of an IO error.
+The argument details the IO error.
+
+% TKEY_EXCHANGE_FAIL_IO_STOPPED GSS-TKEY exchange failed because the IO service was stopped.
+This error message indicated that GSS-TKEY exchange failed because the IO
+service was stopped.
+
+% TKEY_EXCHANGE_FAIL_IO_TIMEOUT GSS-TKEY exchange failed because of IO timeout.
+This error message indicated that GSS-TKEY exchange failed because of IO
+timeout.
+
+% TKEY_EXCHANGE_FAIL_NOT_SIGNED GSS-TKEY exchange failed because the response is not signed.
+This error message indicated that GSS-TKEY exchange failed because the response
+is not signed.
+
+% TKEY_EXCHANGE_FAIL_NO_RDATA GSS-TKEY exchange failed because the response contains no rdata.
+This error message indicated that GSS-TKEY exchange failed because the response
+contains no rdata.
+
+% TKEY_EXCHANGE_FAIL_NO_RESPONSE_ANSWER GSS-TKEY exchange failed because the response contains no answer.
+This error message indicated that GSS-TKEY exchange failed because the response
+contains no answer.
+
+% TKEY_EXCHANGE_FAIL_NULL_RESPONSE GSS-TKEY exchange failed because the response is null.
+This error message indicated that GSS-TKEY exchange failed because the response
+is null.
+
+% TKEY_EXCHANGE_FAIL_RESPONSE_ERROR GSS-TKEY exchange failed because the response contains an error: %1.
+This error message indicated that GSS-TKEY exchange failed because the response
+contains an error. The argument details the reponse error.
+
+% TKEY_EXCHANGE_FAIL_TKEY_ERROR GSS-TKEY exchange failed because the response contains TKEY error: %1.
+This error message indicated that GSS-TKEY exchange failed because the response
+contains TKEY error. The argument details the TKEY error.
+
+% TKEY_EXCHANGE_FAIL_TO_INIT GSS-TKEY exchange failed to initialize because of the error: %1.
+This error message indicated that GSS-TKEY exchange failed in the
+initialization phase, for instance because the server principal does not
+exist. The argument details the error.
+
+% TKEY_EXCHANGE_FAIL_WRONG_RESPONSE_ANSWER_COUNT GSS-TKEY exchange failed because the response contains invalid number of RRs: %1.
+This error message indicated that GSS-TKEY exchange failed because the response
+contains invalid number of RRs. The argument contains the wrong number of RRs.
+
+% TKEY_EXCHANGE_FAIL_WRONG_RESPONSE_ANSWER_TYPE GSS-TKEY exchange failed because the response contains wrong answer type: %1.
+This error message indicated that GSS-TKEY exchange failed because the response
+contains wrong answer type. The argument contains the wrong answer type.
+
+% TKEY_EXCHANGE_FAIL_WRONG_RESPONSE_OPCODE GSS-TKEY exchange failed because the response contains invalid opcode: %1.
+This error message indicated that GSS-TKEY exchange failed because the response
+contains invalid opcode. The argument contains the wrong opcode.
+
+% TKEY_EXCHANGE_NOT_A_RESPONSE GSS-TKEY exchange received a non response type.
+Logged at debug log level 40.
+This debug message indicates that GSS-TKEY exchange received a non response
+type.
+
+% TKEY_EXCHANGE_OUT_TOKEN_NOT_EMPTY GSS-TKEY exchange output token is not empty.
+Logged at debug log level 40.
+This debug message indicates that GSS-TKEY exchange output token is not empty.
+
+% TKEY_EXCHANGE_RDATA_COUNT GSS-TKEY exchange received a response with rdata count: %1.
+Logged at debug log level 40.
+This debug message indicates that GSS-TKEY exchange received a response with
+specified rdata count.
+
+% TKEY_EXCHANGE_RECEIVE_MESSAGE GSS-TKEY exchange receives a message of size: %1.
+Logged at debug log level 40.
+This debug message indicates that GSS-TKEY exchange receives a message of
+specified size.
+
+% TKEY_EXCHANGE_RESPONSE_TTL GSS-TKEY exchange received a response with TTL of: %1 seconds.
+Logged at debug log level 40.
+This debug message indicates that GSS-TKEY exchange received a response with
+specified TTL.
+
+% TKEY_EXCHANGE_SEND_MESSAGE GSS-TKEY exchange sends a message of size: %1.
+Logged at debug log level 40.
+This debug message indicates that GSS-TKEY exchange sends a message of specified
+size.
+
+% TKEY_EXCHANGE_VALID GSS-TKEY exchange retrieved a TKEY valid for: %1 seconds.
+Logged at debug log level 40.
+This debug message indicates that GSS-TKEY exchange retrieved a TKEY valid for
+the specified time period expressed in seconds.
+
+% TKEY_EXCHANGE_VERIFIED GSS-TKEY exchange verified.
+Logged at debug log level 40.
+This debug message indicates that GSS-TKEY exchange is verified.

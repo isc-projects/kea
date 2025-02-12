@@ -1,0 +1,80 @@
+# Copyright (C) 2022-2024 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+$NAMESPACE isc::limits
+
+// -- Configuration messages --
+
+% LIMITS_CONFIGURATION_LEASE_BACKEND_NOT_AVAILABLE Lease backend not available. Could not check JSON support in the database. Continuing without checking...
+Warning message logged to notify that limits might not work if the recovering database does not have JSON support.
+
+% LIMITS_CONFIGURATION_LEASE_BACKEND_SHOULD_HAVE_BEEN_AVAILABLE Lease backend not available when configuration shows it should have been. This is likely a programmatic error. Continuing...
+Error message logged to notify about an unexpected situation where the lease backend was expected to be available, but it was not. Runtime errors might occur.
+
+% LIMITS_CONFIGURED_ADDRESS_LIMIT_BY_CLIENT_CLASS New lease limit of %1 addresses for client class %2 has been configured.
+Logged at debug log level 40.
+Debug message logged to notify about the successful configuration of an address limit per client class
+
+% LIMITS_CONFIGURED_ADDRESS_LIMIT_BY_SUBNET New lease limit of %1 addresses for subnet with ID %2 has been configured.
+Logged at debug log level 40.
+Debug message logged to notify about the successful configuration of an address limit per subnet
+
+% LIMITS_CONFIGURED_PREFIX_LIMIT_BY_CLIENT_CLASS New lease limit of %1 prefixes for client class %2 has been configured.
+Logged at debug log level 40.
+Debug message logged to notify about the successful configuration of a prefix limit per client class
+
+% LIMITS_CONFIGURED_PREFIX_LIMIT_BY_SUBNET New lease limit of %1 prefixes for subnet with ID %2 has been configured.
+Logged at debug log level 40.
+Debug message logged to notify about the successful configuration of a prefix limit per subnet
+
+% LIMITS_CONFIGURED_RATE_LIMIT_BY_CLIENT_CLASS New rate limit of %1 for client class %2 has been configured.
+Logged at debug log level 40.
+Debug message logged to notify about the successful configuration of a rate limit per client class
+
+% LIMITS_CONFIGURED_RATE_LIMIT_BY_SUBNET New rate limit of %1 for subnet with ID %2 has been configured.
+Logged at debug log level 40.
+Debug message logged to notify about the successful configuration of a rate limit per subnet
+
+// -- Lease limiting messages --
+
+% LIMITS_LEASE_LIMIT_EXCEEDED Lease was not allocated due to exceeding %1.
+Logged at debug log level 40.
+Debug message logged to indicate that the current number of leased addresses or
+prefixes for a client class or a subnet is exceeding the limit.
+
+% LIMITS_LEASE_WITHIN_LIMITS Lease with address %1 is within limits.
+Logged at debug log level 40.
+Debug message logged to indicate that the current number of leased addresses or
+prefixes for a client class or a subnet is exceeding the limit.
+
+// -- Rate limiting messages --
+
+% LIMITS_PACKET_WIIH_SUBNET_ID_RATE_NO_SUBNET Packet is not being rate limited due to no subnet specified.
+Logged at debug log level 55.
+Debug message logged to indicate that the current packet's subnet rate limit, if any, is not being
+checked due to the subnet not being set in the callout handle. This can happen e.g. if the subnet
+had been deleted after it was selected for the currently processed packet.
+
+% LIMITS_PACKET_WITH_CLIENT_CLASSES_RATE_LIMIT_DROPPED Packet assigned to client classes %1 is being dropped for exceeding the rate limit of %2 for client class %3.
+Logged at debug log level 40.
+Debug message logged to indicate that the current packet has exceeded one of the rate limits
+configured under at least one client class
+
+% LIMITS_PACKET_WITH_CLIENT_CLASSES_RATE_LIMIT_HONORED Packet assigned to client classes %1 is being honored.
+Logged at debug log level 55.
+Debug message logged to indicate that the current packet has not exceeded any of the rate limits
+configured under any client class
+
+% LIMITS_PACKET_WITH_SUBNET_ID_RATE_LIMIT_DROPPED Packet assigned to subnet with ID %1 is being dropped for exceeding the rate limit of %2.
+Logged at debug log level 40.
+Debug message logged to indicate that the current packet has exceeded the limit configured under
+the assigned subnet ID, if any is configured
+
+% LIMITS_PACKET_WITH_SUBNET_ID_RATE_LIMIT_HONORED Packet under subnet with ID %1 and limit %2 is being honored.
+Logged at debug log level 55.
+Debug message logged to indicate that the current packet has not exceeded the limit configured
+under the assigned subnet ID. This message is also logged when no rate limit is configured for this
+subnet ID.

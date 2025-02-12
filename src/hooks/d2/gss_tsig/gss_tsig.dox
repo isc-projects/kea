@@ -1,0 +1,165 @@
+// Copyright (C) 2021-2022 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+
+@mainpage Kea GSS-TSIG Hooks Library
+
+Welcome to Kea GSS-TSIG Hooks Library. This documentation is addressed
+at developers who are interested in internal operation of the
+library. This file provides information needed to understand and
+perhaps extend this library.
+
+This documentation is stand-alone: you should have read and
+understood <a href="https://reports.kea.isc.org/dev_guide/">Kea
+Developer's Guide</a> and in particular its section about hooks: <a
+href="https://reports.kea.isc.org/dev_guide/df/d46/hooksdgDevelopersGuide.html">
+Hooks Developer's Guide</a>.
+
+@section gssTsigOverview Overview
+
+The @c gss_tsig library provides support for GSS-TSIG.
+
+@section gssTsigReferences References
+
+GSS-TSIG is at the end of different protocols:
+ - Kerberos 5: a security protocol developed for the MIT Athena project
+  since 1983. The version 5 is the last one and was published in RFC 4120.
+ - GSS-API (Generic Security Services Application Program Interface) is
+  a protocol independent API even it is mainly used with Kerberos 5.
+  The last version of GSS-API with Kerberos 5 is specified in RFC 4121.
+ - The GSS-API itself is in RFC 2743 and its C bindings in RFC 2744
+  (C++ bindings are in the gss_tsig_api.h file).
+ - The protocol used to negotiate the security setup is SPNEGO
+  (SPNEGO Simple and Protected GSSAPI Negotiation Mechanism) described
+  in RFC 4178.
+ - The mechanism to protect DNS exchange is TSIG (RFC 2845 updated by
+  RFC 4635 and RFC 8945).
+ - The TKEY Resource Record defined in RFC 2930 transports opaque crypto
+  payloads between a client and a server.
+ - GSS-TSIG described in RFC 3645 is a reuse of TSIG using GSS-API to
+  setup a security context used to perform crypto signature creation and
+  verification.
+
+To summary the GSS-API with Kerberos 5 using SPNEGO establishes a security
+context using TKEY to transport opaque tokens between a client and a server.
+When the security context is established it is used to protect DNS exchanges,
+typically DNS dynamic updates using GSS-TSIG.
+
+For this hook:
+ - TSIG is implemented in the DNS++ library
+ - TKEY was added to the DNS++ library
+ - Kerberos 5 and SPNEGO are not directly used
+ - remains the GSS-API itself (using the C Kerberos 5 API)
+
+@section gssTsigGssApi GSS-API
+
+There are 3 important kinds of objects in GSS-API:
+ - names, here Kerberos 5 files
+ - credentials which are crypto data associated to a name, including
+  for the client / initiator side a notion of default credential
+ - security context which allows crypto signature creation and verification.
+
+So only important operation is to establish a security context.
+This operation is different in the initiator and the responser sides
+but is based on the same schema: a function (init for the initiator and
+accept for the responder) is called with input and output tokens until
+the returned status is "complete" vs "continue".
+The output token is sent to the other side which uses it as the input token.
+The first step is to provide an empty token to the init function.
+
+@section gssTsigGssCommands Commands
+
+The @c gss_tsig hooks library supports some commands:
+ - gss-tsig-list returns the ID of all configured DNS servers and the name
+  of all GSS-TSIG keys.
+ - gss-tsig-get-all returns all configured DNS servers with their GSS-TSIG keys.
+ - gss-tsig-get returns the configured DNS server with the given server-id.
+ - gss-tsig-key-get returns the GSS-TSIG key with the key-name FQDN.
+ - gss-tsig-key-expire changes the status of the GSS-TSIG key with the
+  key-name FQDN to expired.
+ - gss-tsig-key-del deletes the GSS-TSIG key with the key-name FQDN.
+ - gss-tsig-purge-all removes expired and in error GSS-TSIG keys.
+ - gss-tsig-purge removes expired and in error GSS-TSIG keys for the DNS
+  server with the given server-id.
+ - gss-tsig-rekey-all rekeys the GSS-TSIG keys for all configured DNS servers.
+ - gss-tsig-rekey rekeys the GSS-TSIG key for the DNS server with the given
+  server-id.
+
+@section gssTsigInternals Library Internals
+
+## Framework
+The structure of the library is very simple and contains:
+ - the hook library callouts (see @ref gss_tsig_callouts.cc).
+ - the single instance of the hook library implementation @c GssTsigImpl (see
+  @ref gss_tsig_impl.h).
+ - the configuration container @c GssTsigCfg which stores the mapping between
+  the hook configured DNS servers (@c DnsServer) and the kea-dhcp-ddns (D2)
+  configured DNS servers (@c d2::DnsServerInfoPtr) in addition to all hook
+  library parameters (see @ref gss_tsig_cfg.h). For a complete list of
+  parameters see the GSS-TSIG ARM section.
+ - the implementation of the @c ManagedKey which is the GSS-TSIG TKey managed
+  by the hook library (see @ref managed_key.h) and extends the @c GssTsigKey
+  (see @ref gss_tsig_key.h) which in turn extends the @c d2::D2TsigKey.
+ - the implementation of the @c TKeyExchange which manages the GSS-TSIG TKey
+  exchange with the DNS server (see @ref tkey_exchange.h).
+ - the implementation of the @c TSIGContext used to sign and verify GSS-TSIG
+  DNS messages, which extends the @c dns::TSIGContext (see
+  @ref gss_tsig_context.h).
+ - the implementation of the GSS-API C++ wrapper using the C Kerberos 5 API:
+  @c GssApiBuffer, @c GssApiName, @c GssApiCred, @c GssApiSecCtx, @c GssApiOid,
+  @c GssApiOidSet (see @ref gss_tsig_api.h).
+
+## Callouts
+The select_key hook point is used by the D2 server to select the key for the
+DNS update for the current server. If GSS-TSIG is not enforced (fallback is set
+to true), then non GSS-TSIG key (TSIG Key or none) will be used, but if GSS-TSIG
+is explicitly required (default: fallback is set to false), then the current
+server is skipped (by setting the NEXT_STEP_SKIP flag). If the current DNS
+server is not skipped, the respective TKey context (none, simple TSIG or
+GSS-TSIG) will be used to sign and verify the DNS updates.
+The d2_srv_configured hook point is used to set up internal io service and
+validate the hooks library configuration. At this stage the mapping between the
+hook configured DNS servers and the kea-dhcp-ddns (D2) configured DNS servers is
+done.
+The multi_threading_compatible indicate that the hook library is multi-threaded
+compatible, even though the D2 server does not currently use multiple threads to
+process DNS updates.
+The following hook points are used for commands only: get, get_all, lists,
+key_get, key_expire, key_del, purge, purge_all, rekey, rekey_all.
+
+## The automatic key expiration and rekey process
+The hook library will automatically check for expired keys after each
+``rekey-interval`` seconds. It will also check if any key has been created more
+than ``rekey-interval`` seconds ago so that a new key is created before the
+respective one expires. The ``rekey-interval`` is recommend between 50% and 80%
+of the ``tkey-lifetime`` value. If any error occurs, the process is scheduled
+again after ``retry-interval`` seconds. The ``retry-interval`` must be smaller
+than the ``rekey-interval`` value, and should be at most 1/3 of the difference
+between ``tkey-lifetime`` and ``rekey-interval``.
+The key expiration is also checked whenever a key is searched for the current
+DNS server, so that no expired key is used.
+
+@section gssTsigCpp11ChronoClock Choice of the C++11 chrono clock
+
+This stands for all other uses of the system C++11 chrono clock in Kea but
+for GSS-TSIG this choice raised some questions so the choice of the
+system clock vs steady clock or high resolution clock is explained here:
+ - the high resolution clock has only a nice property: its high resolution
+  which has no interest in the GSS-TSIG particular case where a second
+  granularity is enough.
+ - the steady clock is monotonic: this should have made it the best choice
+  for the code itself without a stronger argument.
+ - the system clock is real time i.e. it provides direct conversions to
+  and from the C time_t type including textual representations. This is
+  critical for user interface so for convenience it was chosen.
+
+@section gssTsigMTCompatibility Multi-Threading Compatibility
+
+The @c gss_tsig hooks library is compatible with multi-threading but
+can be used only by the D2 server which is not yet multi-threaded.
+
+*/

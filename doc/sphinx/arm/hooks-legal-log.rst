@@ -10,10 +10,10 @@ lease events into a set of log files.
 
 .. note::
 
-    :ischooklib:`libdhcp_legal_log.so` is available as a premium
-    hook library from ISC. Please visit https://www.isc.org/shop/ to purchase
-    the premium hook libraries, or contact us at https://www.isc.org/contact for
-    more information.
+    :ischooklib:`libdhcp_legal_log.so` is part of the open source code and is
+    available to every Kea user.
+    It was previously available only to ISC customers with a paid support contract.
+
 
 .. note::
 

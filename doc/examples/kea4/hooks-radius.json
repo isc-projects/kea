@@ -5,7 +5,7 @@
 // parameters available.
 //
 // To use this configuration file, you need to have both RADIUS and
-// Host Cache hooks. These are currently available to support customers only.
+// Host Cache hooks.
 //
 // clients get a wine name (option AOP code 250) divided into red and white.
 // Expensive brands have a host entry, i.e. a reserved address.

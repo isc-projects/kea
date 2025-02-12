@@ -1,0 +1,108 @@
+# Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+% HOST_CMDS_DEINIT_OK unloading Host Commands hooks library successful
+This info message indicates that the Host Commands hooks library has been
+removed successfully.
+
+% HOST_CMDS_INIT_FAILED loading Host Commands hooks library failed: %1
+This error message indicates an error during loading the Host Commands
+hooks library. The details of the error are provided as argument of
+the log message.
+
+% HOST_CMDS_INIT_OK loading Host Commands hooks library successful
+This info message indicates that the Host Commands hooks library has been
+loaded successfully. Enjoy!
+
+% HOST_CMDS_RESERV_ADD reservation-add command called (parameters: %1)
+The reservation-add command has been called. Parameters passed are logged.
+
+% HOST_CMDS_RESERV_ADD_FAILED reservation-add command failed (parameters: %1, reason: %2)
+The reservation-add command has failed. Both the reason as well as the
+parameters passed are logged.
+
+% HOST_CMDS_RESERV_ADD_SUCCESS reservation-add command success (parameters: %1)
+The reservation-add command has been successful. Parameters passed are logged.
+
+% HOST_CMDS_RESERV_DEL reservation-del command called (parameters: %1)
+The reservation-del command has been called. Parameters passed are logged.
+
+% HOST_CMDS_RESERV_DEL_FAILED reservation-del command failed (parameters: %1, reason: %2)
+The reservation-del command has failed. Both the reason as well as the
+parameters passed are logged.
+
+% HOST_CMDS_RESERV_DEL_SUCCESS reservation-del command success (parameters: %1)
+The reservation-del command has been successful. Parameters passed are logged.
+
+% HOST_CMDS_RESERV_GET reservation-get command called (parameters: %1)
+The reservation-get command has been called. Parameters passed are logged.
+
+% HOST_CMDS_RESERV_GET_ALL reservation-get-all command called (parameters: %1)
+The reservation-get-all command has been called. Parameters passed are logged.
+
+% HOST_CMDS_RESERV_GET_ALL_FAILED reservation-get-all command failed (parameters: %1, reason: %2)
+The reservation-get-all command has failed. Both the reason as well as the
+parameters passed are logged.
+
+% HOST_CMDS_RESERV_GET_ALL_SUCCESS reservation-get-all command success (parameters: %1)
+The reservation-get-all command has been successful. Parameters passed are logged.
+
+% HOST_CMDS_RESERV_GET_BY_ADDRESS reservation-get-by-address command called (parameters: %1)
+The reservation-get-by-address command has been called. Parameters passed are logged.
+
+% HOST_CMDS_RESERV_GET_BY_ADDRESS_FAILED reservation-get-by-address command failed (parameters: %1, reason: %2)
+The reservation-get-by-address command has failed. Both the reason as well as the
+parameters passed are logged.
+
+% HOST_CMDS_RESERV_GET_BY_ADDRESS_SUCCESS reservation-get-by-address command success (parameters: %1)
+The reservation-get-by-address command has been successful. Parameters passed are logged.
+
+% HOST_CMDS_RESERV_GET_BY_HOSTNAME reservation-get-by-hostname command called (parameters: %1)
+The reservation-get-by-hostname command has been called. Parameters passed are logged.
+
+% HOST_CMDS_RESERV_GET_BY_HOSTNAME_FAILED reservation-get-by-hostname command failed (parameters: %1, reason: %2)
+The reservation-get-by-hostname command has failed. Both the reason as well as the
+parameters passed are logged.
+
+% HOST_CMDS_RESERV_GET_BY_HOSTNAME_SUCCESS reservation-get-by-hostname command success (parameters: %1)
+The reservation-get-by-hostname command has been successful. Parameters passed are logged.
+
+% HOST_CMDS_RESERV_GET_BY_ID reservation-get-by-id command called (parameters: %1)
+The reservation-get-by-id command has been called. Parameters passed are logged.
+
+% HOST_CMDS_RESERV_GET_BY_ID_FAILED reservation-get-by-id command failed (parameters: %1, reason: %2)
+The reservation-get-by-id command has failed. Both the reason as well as the
+parameters passed are logged.
+
+% HOST_CMDS_RESERV_GET_BY_ID_SUCCESS reservation-get-by-id command success (parameters: %1)
+The reservation-get-by-id command has been successful. Parameters passed are logged.
+
+% HOST_CMDS_RESERV_GET_FAILED reservation-get command failed (parameters: %1, reason: %2)
+The reservation-add command has failed. Both the reason as well as the
+parameters passed are logged.
+
+% HOST_CMDS_RESERV_GET_PAGE reservation-get-page command called (parameters: %1)
+The reservation-get-page command has been called. Parameters passed are logged.
+
+% HOST_CMDS_RESERV_GET_PAGE_FAILED reservation-get-page command failed (parameters: %1, reason: %2)
+The reservation-get-page command has failed. Both the reason as well as the
+parameters passed are logged.
+
+% HOST_CMDS_RESERV_GET_PAGE_SUCCESS reservation-get-page command success (parameters: %1)
+The reservation-get-page command has been successful. Parameters passed are logged.
+
+% HOST_CMDS_RESERV_GET_SUCCESS reservation-get command success (parameters: %1)
+The reservation-get command has been successful. Parameters passed are logged.
+
+% HOST_CMDS_RESERV_UPDATE reservation-update command called (parameters: %1)
+The reservation-update command has been called. Parameters passed are logged.
+
+% HOST_CMDS_RESERV_UPDATE_FAILED reservation-update command failed (parameters: %1, reason: %2)
+The reservation-update command has failed. Both the reason as well as the
+parameters passed are logged.
+
+% HOST_CMDS_RESERV_UPDATE_SUCCESS reservation-update command success (parameters: %1)
+The reservation-update command has been successful. Parameters passed are logged.

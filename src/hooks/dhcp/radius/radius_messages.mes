@@ -1,0 +1,402 @@
+# Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+$NAMESPACE isc::radius
+
+% RADIUS_ACCESS_BUILD_FAILED building Access-Request failed: %1 for incoming message %2
+This error message is issued when an error was raised during building of
+Access-Request.
+
+% RADIUS_ACCESS_CACHE_GET host %1 with attributes %2 was retrieved from the cache
+Logged at debug log level 40.
+This debug message is issued when a host is retrieved from the host cache.
+
+% RADIUS_ACCESS_CACHE_INSERT host %1 with attributes %2 was inserted into the cache
+Logged at debug log level 40.
+This debug message is issued when a new host is inserted into the host cache.
+
+% RADIUS_ACCESS_CONFLICT query %1 triggers a conflict for %2
+Logged at debug log level 40.
+This debug message is issued when a query triggers a conflict with a pending
+access request for the same identifier.
+
+% RADIUS_ACCESS_DROP_PARKED_QUERY access request terminate callback decided to drop the parked query %1
+Logged at debug log level 40.
+This debug message is issued when an access request terminates with the
+decision to drop the parked query.
+
+% RADIUS_ACCESS_ERROR Access-Request failed with %1 (%2)
+This error message is issued when no valid Access-Accept or Access-Reject
+message was received. The return code and name are logged.
+
+% RADIUS_ACCESS_GET_IDENTIFIER identifier %1 of type %2 and User-Name %3 were set from incoming message %4
+Logged at debug log level 40.
+This debug message is issued when the host identifier and User-Name attribute were set from an incoming message.
+
+% RADIUS_ACCESS_GET_IDENTIFIER_FAILED no identifier of type %1 can be set from incoming message %2, reason: %3
+This error message is issued when it was not possible to build the host
+identifier from the incoming message.
+
+% RADIUS_ACCESS_HOST_BACKEND_ERROR Configuring access failed during host backend '%1' setup, reason: %2
+This error message is issued when access/authentication is enabled
+in the configuration but something in host backend setup went wrong.
+The name of the host backend and the reason are logged.
+
+% RADIUS_ACCESS_MAX_PENDING_REQUESTS query '%1' with identifier '%2' was dropped for too many pending access requests
+Logged at debug log level 40.
+This debug message is issued when the number of pending access requests is
+over the configured limit. The query and its identifier are displayed.
+
+% RADIUS_ACCESS_NO_HOST_CACHE Configuring access failed: host cache library not loaded.
+This error message is issued when access/authentication is enabled
+in the configuration but no host cache was found. The Radius hook requires
+Host Cache hook to be loaded to store (cache) parameters received from
+exchanges with RADIUS server.
+
+% RADIUS_ACCESS_ORPHAN orphan pending access request for %1
+This error message is issued when an access request terminates without
+the corresponding pending request for the identifier.
+
+% RADIUS_ACCESS_RESUME_PARKED_QUERY access request terminate callback resumes processing of parked query %1 in %2
+Logged at debug log level 40.
+This debug message is issued when access request terminate callback resumes the processing of a parked query after the subnet select callout point.
+
+% RADIUS_ACCESS_SUBNET_RESELECT subnet was reselected from 'ID %1' to 'ID %2'
+Logged at debug log level 40.
+This debug message is issued when access/authentication triggered a subnet
+reselect. The original and new subnet IDs are logged.
+
+% RADIUS_ACCESS_TERMINATE_ERROR access request terminate callback got an error: %1
+This error message is issued when an access request terminates with an
+unexpected internal error.
+
+% RADIUS_ACCOUNTING_ASYNC Asynchronous send Accounting-Request for NAS port %1 with %2
+Logged at debug log level 40.
+This debug message is issued when starting to send an
+Accounting-Request message to accounting servers. The NAS port and
+message attributes are logged.
+
+% RADIUS_ACCOUNTING_ASYNC_FAILED Asynchronous Accounting-Request failed: return code %1 (%2)
+Logged at debug log level 40.
+This debug message is issued when no valid Accounting-Response
+message was received.
+
+% RADIUS_ACCOUNTING_ASYNC_SUCCEED received valid Accounting-Response (asynchronously)
+Logged at debug log level 40.
+This debug message indicates that a valid Accounting-Response
+was received.
+
+% RADIUS_ACCOUNTING_ERROR Accounting-Request failed for %1 on event %2 (%3) failed with %4 (%5)
+This error message is issued when accounting communication failed.
+The session Id, the event code and name, and return code and name are logged.
+
+% RADIUS_ACCOUNTING_HISTORY_UPDATE_FAILED failed to insert a record for %1 in the history container
+This error message is issued when it was not possible to insert a
+record in the create timestamp aka history container. This should
+break the session, i.e. it will not be possible for instance to match
+start and stop status messages.
+
+% RADIUS_ACCOUNTING_NO_HISTORY failed to find the date the lease for %1 was created
+Logged at debug log level 40.
+This debug message is issued when an address was not found in create
+timestamp aka history container. This should lead to a accounting
+session without a start status message.
+
+% RADIUS_ACCOUNTING_SYNC Synchronous send Accounting-Request for NAS port %1 with %2
+Logged at debug log level 40.
+This debug message is issued when starting to send an
+Accounting-Request message to accounting servers. The NAS port and
+message attributes are logged.
+
+% RADIUS_ACCOUNTING_SYNC_FAILED Synchronous Accounting-Request failed: return code %1 (%2)
+Logged at debug log level 40.
+This debug message is issued when no valid Accounting-Response
+message was received.
+
+% RADIUS_ACCOUNTING_SYNC_SUCCEED received valid Accounting-Response (synchronously)
+Logged at debug log level 40.
+This debug message indicates that a valid Accounting-Response
+was received.
+
+% RADIUS_AUTHENTICATION_ASYNC send Access-Request for NAS port %1 with %2
+Logged at debug log level 40.
+This debug message is issued when starting to send an Access-Request
+message to access servers. The NAS port and message attributes are logged.
+
+% RADIUS_AUTHENTICATION_ASYNC_ACCEPTED received valid Access-Accept with %1
+Logged at debug log level 40.
+This debug message indicates that a valid Access-Accept
+message was received. Attributes from the message are logged.
+
+% RADIUS_AUTHENTICATION_ASYNC_FAILED Access-Request failed: return code %1 (%2)
+Logged at debug log level 40.
+This debug message is issued when no correct Access-Accept or
+Access-Reject message was received.
+
+% RADIUS_AUTHENTICATION_ASYNC_REJECTED received valid Access-Reject with %1
+Logged at debug log level 40.
+This debug message indicates that a valid Access-Reject
+message was received. Attributes from the message are logged.
+
+% RADIUS_AUTHENTICATION_SYNC send Access-Request for NAS port %1 with %2
+Logged at debug log level 40.
+This debug message is issued when starting to send an Access-Request
+message to access servers. The NAS port and message attributes are logged.
+
+% RADIUS_AUTHENTICATION_SYNC_ACCEPTED received valid Access-Accept with %1
+Logged at debug log level 40.
+This debug message indicates that a valid Access-Accept
+message was received. Attributes from the message are logged.
+
+% RADIUS_AUTHENTICATION_SYNC_FAILED Access-Request failed: return code %1 (%2)
+Logged at debug log level 40.
+This debug message is issued when no correct Access-Accept or
+Access-Reject message was received.
+
+% RADIUS_AUTHENTICATION_SYNC_REJECTED received valid Access-Reject with %1
+Logged at debug log level 40.
+This debug message indicates that a valid Access-Reject
+message was received. Attributes from the message are logged.
+
+% RADIUS_BACKEND_GET4 spurious lookup for IPv4 subnet %1 and id %2 of type %3
+Logged at debug log level 40.
+This debug message is issued when the radius host backend is unexpectedly
+called for looking for an IPv4 entry. Details of the lookup are logged.
+
+% RADIUS_BACKEND_GET6 spurious lookup for IPv6 subnet %1 and id %2 of type %3
+Logged at debug log level 40.
+This debug message is issued when the radius host backend is unexpectedly
+called for looking for an IPv6 entry. Details of the lookup are logged.
+
+% RADIUS_CLEANUP_EXCEPTION Exception on RADIUS cleanup: %1
+This warning message is issued when there is an exception thrown when destroying
+an object in the RADIUS hook library. The exception is not allowed to continue
+propagating to not obfuscate another exception, so it is logged. It generally
+means a programmatic error and should be reported to ISC, but could also be
+harmless. The argument provides the detailed error message.
+
+% RADIUS_CONFIGURATION_FAILED failed to configure Radius hooks library: %1
+This error message is issued when there is an error configuring the Radius
+hooks library. The argument provides the detailed error message.
+
+% RADIUS_DECODE_MESSAGE Decoded message '%1' (%2) id %3 length %4 with %5 attributes.
+Logged at debug log level 40.
+This debug message is issued when a message is decoded. The message type name
+and value, the identifier, the length and the number of attributes are
+displayed.
+
+% RADIUS_DEINIT_OK unloading Radius hooks library successful
+This informational message indicates that the Radius hooks library
+has been unloaded successfully.
+
+% RADIUS_ENCODE_MESSAGE Encoded message '%1' (%2) id %3 length %4 with %5 attributes.
+Logged at debug log level 40.
+This debug message is issued when a message is encoded. The message type name
+and value, the identifier, the length and the number of attributes are
+displayed.
+
+% RADIUS_EXCHANGE_FAILED Exchange %1 failed: %2
+This error message is issued when an exchange terminates with an error.
+The exchange identifier and the error message are displayed.
+
+% RADIUS_EXCHANGE_OPEN_FAILED Open socket for exchange %1 failed: %2
+This error message is issued when an exchange failed to open a new socket.
+The exchange identifier and the error message are displayed.
+
+% RADIUS_EXCHANGE_RECEIVED Exchange %1 received %2 bytes.
+Logged at debug log level 40.
+This debug message is issued when an exchange received a response.
+The exchange identifier and the response size are displayed.
+
+% RADIUS_EXCHANGE_RECEIVED_ACCESS_ACCEPT Exchange %1 received an Access-Accept.
+Logged at debug log level 40.
+This debug message is issued when an exchange received an Access-Accept
+response. The exchange identifier is displayed.
+
+% RADIUS_EXCHANGE_RECEIVED_ACCESS_REJECT Exchange %1 received an Access-Reject.
+Logged at debug log level 40.
+This debug message is issued when an exchange received an Access-Reject
+response. The exchange identifier is displayed.
+
+% RADIUS_EXCHANGE_RECEIVED_ACCOUNTING_RESPONSE Exchange %1 received an Accounting-Response.
+Logged at debug log level 40.
+This debug message is issued when an exchange received an Accounting-Response
+response. The exchange identifier is displayed.
+
+% RADIUS_EXCHANGE_RECEIVED_BAD_RESPONSE Exchange %1 received a bad response: %2
+This error message is issued when an exchange received a bad response.
+The exchange identifier and the error message are displayed.
+
+% RADIUS_EXCHANGE_RECEIVED_MISMATCH Exchange %1: received response with identifier %2 when %3 was expected.
+This error message is issued when the sent request and the received response
+have different identifiers. The exchange identifier and the two RADIUS message
+identifiers are displayed.
+
+% RADIUS_EXCHANGE_RECEIVED_RESPONSE Exchange %1 received response: %2
+Logged at debug log level 40.
+This debug message is issued at the end of the reception routine.
+The exchange identifier and the error code are displayed.
+
+% RADIUS_EXCHANGE_RECEIVED_UNEXPECTED Exchange %1: sent %2, received unexpected %3
+This error message is issued when the sent request and the received response
+do not match. The exchange identifier and the two RADIUS message codes are
+displayed.
+
+% RADIUS_EXCHANGE_RECEIVE_FAILED Receive for exchange %1 failed: %2
+This error message is issued when an exchange failed to receive a message.
+The exchange identifier and the error message are displayed.
+
+% RADIUS_EXCHANGE_SEND_FAILED Send for exchange %1 failed: %2
+This error message is issued when an exchange failed to send a message.
+The exchange identifier and the error message are displayed.
+
+% RADIUS_EXCHANGE_SEND_NEW Exchange %1 sends %2 bytes to new server[%3] %4 on port %5
+Logged at debug log level 40.
+This debug message is issued when an exchange sends a message to a new server.
+The exchange identifier, message size, server index, address and port
+are displayed.
+
+% RADIUS_EXCHANGE_SEND_RETRY Exchange %1 sends %2 bytes for the %3 try.
+Logged at debug log level 40.
+This debug message is issued when an exchange sends a message to a new server.
+The exchange identifier, message size and retry counter are displayed.
+
+% RADIUS_EXCHANGE_SENT Exchange %1 sent %2 bytes.
+Logged at debug log level 40.
+This debug message is issued when an exchange sent a request and is ready
+to receive the response. The exchange identifier and request size are
+displayed.
+
+% RADIUS_EXCHANGE_START Start exchange %1
+Logged at debug log level 40.
+This debug message is issued when an exchange starts. The exchange identifier
+is displayed.
+
+% RADIUS_EXCHANGE_SYNC_RETURN Synchronous exchange %1 returns with %2
+Logged at debug log level 40.
+This debug message is issued when a synchronous exchange returns.
+The exchange identifier and the error/return code are displayed.
+
+% RADIUS_EXCHANGE_TERMINATE Exchange %1 terminates with %2
+Logged at debug log level 40.
+This debug message is issued when an exchange terminates with success.
+The exchange identifier and the return code are displayed.
+
+% RADIUS_EXCHANGE_TIMEOUT Exchange %1 timeout
+This error message is issued when an exchange failed on timeout.
+The exchange identifier is displayed.
+
+% RADIUS_HOOK_FAILED processing for hook %1 failed: %2
+This error message is issued when processing at a standard hook point failed.
+The reason of the failure is displayed.
+
+% RADIUS_INIT_OK loading Radius hooks library successful
+This informational message indicates that the Radius hooks library has been
+loaded successfully. Enjoy!
+
+% RADIUS_INTEGER_ATTRIBUTE_FROM_BYTES_FAILED Creating an integer attribute %1 '%2' failed: %3
+This error message is issued when an integer attribute can't be
+created. Attribute type, name and error message are displayed.
+
+% RADIUS_INTEGER_ATTRIBUTE_FROM_TEXT_FAILED Creating an integer attribute %1 '%2' from %3 failed.
+This error message is issued when an integer attribute can't be
+created. Attribute type, name and bad submitted value are displayed.
+
+% RADIUS_IPADDR_ATTRIBUTE_FROM_BYTES_FAILED Creating an IP address attribute %1 '%2' failed: %3
+This error message is issued when an IP address attribute can't be
+created. Attribute type, name and error message are displayed.
+
+% RADIUS_IPADDR_ATTRIBUTE_FROM_TEXT_FAILED Creating an IP address attribute %1 '%2' from %3 failed.
+This error message is issued when an IP address attribute can't be
+created. Attribute type, name and bad submitted value are displayed.
+
+% RADIUS_IPV6ADDR_ATTRIBUTE_FROM_BYTES_FAILED Creating an IPv6 address attribute %1 '%2' failed: %3
+This error message is issued when an IPv6 address attribute can't be
+created. Attribute type, name and error message are displayed.
+
+% RADIUS_IPV6ADDR_ATTRIBUTE_FROM_TEXT_FAILED Creating an IPv6 address attribute %1 '%2' from %3 failed.
+This error message is issued when an IPv6 address attribute can't be
+created. Attribute type, name and bad submitted value are displayed.
+
+% RADIUS_IPV6PREFIX_ATTRIBUTE_FROM_BYTES_FAILED Creating an IPv6 prefix attribute %1 '%2' failed: %3
+This error message is issued when an IPv6 prefix attribute can't be
+created. Attribute type, name and error message are displayed.
+
+% RADIUS_IPV6PREFIX_ATTRIBUTE_FROM_TEXT_FAILED Creating an IPv6 prefix attribute %1 '%2' from %3 failed.
+This error message is issued when an IPv6 prefix attribute can't be
+created. Attribute type, name and bad submitted value are displayed.
+
+% RADIUS_PAUSE_FAILED Pausing the RADIUS thread pool failed: %1
+This error message is emitted when an unexpected error occurred while validating
+an attempt to pause the thread pool. This error is highly unlikely and indicates
+a programmatic issue that should be reported as a defect.
+
+% RADIUS_PAUSE_ILLEGAL Pausing the RADIUS thread pool not allowed: %1
+This error message is emitted when attempting to pause the thread pool.
+This indicates that a thread attempted to use a critical section which would
+result in a dead-lock. This error is highly unlikely and indicates a
+programmatic issue that should be reported as a defect.
+
+% RADIUS_PAUSE_PERMISSIONS_FAILED Checking for permissions to pause the RADIUS thread pool failed: %1
+This error message is emitted when an unexpected error occurred while validating
+an attempt to pause the thread pool. This error is highly unlikely and indicates
+a programmatic issue that should be reported as a defect.
+
+% RADIUS_REPLY_MESSAGE_ATTRIBUTE Message %1 on exchange %2 has a Reply-Message attribute with value '%3'.
+This informational message is issued when a Reply-Message attribute
+is found in a message received from the RADIUS server. One log
+message is printed per attribute. A log message can contain multiple
+attributes, so there can be multiple log messages per RADIUS message.
+It displays the message identifier, the exchange identifier and the
+value of the Reply-Message attribute.
+
+% RADIUS_RESUME_FAILED Resuming ithe RADIUS thread pool failed: %1
+This error message is emitted when an unexpected error occurred while attempting
+to resume the thread pool. This error is highly unlikely and indicates a
+programmatic issue that should be reported as defect.
+
+% RADIUS_SERVER_CONFIGURED configured an %1 server: %2
+This informational message is issued when a RADIUS server is
+configured. The kind of the server (access or accounting) and
+configuration details are logged with the secret replaced by stars.
+
+% RADIUS_SESSION_HISTORY_APPEND_FAILED appending of a new record for %1 to the session history file failed: %2
+This warning message is issued when appending a new record to the session
+history file failed. The address of the new record and the reason of
+the failure are displayed.
+
+% RADIUS_SESSION_HISTORY_LOADED loading of the session history file succeeded: read %1 records including %2 active records
+This informational message is issued when loading of the session history file
+completed with success. Numbers of loaded and active records are displayed.
+
+% RADIUS_SESSION_HISTORY_LOAD_FAILED loading of the session history file
+failed: loaded %1, skipped %2 and active %3 records.
+This error message is issued when loading of the session history file did
+not completed with success. Numbers of loaded, skipped and active records
+displayed.
+
+% RADIUS_SESSION_HISTORY_OPENED opening of the session history file %1 succeeded
+This informational message is issued when opening of the CSV file providing
+session history persistence succeeded. The name of the file is displayed.
+
+% RADIUS_SESSION_HISTORY_OPEN_FAILED opening of the session history file %1 failed: %2
+This error message is issued when opening of the CSV file providing
+session history persistence failed. The name of the file and the
+reason of the failure are displayed.
+
+% RADIUS_SESSION_HISTORY_STORED Storing to the session history file succeeded: stored %1 records
+This informational message is issued when writing to a new session history
+file completed with success. The number of stored records is displayed.
+
+% RADIUS_SESSION_HISTORY_STORE_FAILED Writing to the session history file %1 failed: %2 (stored %3 over %4 records)
+This error message is issued when writing to a new session history file
+failed. The name of the file, the reason of the failure, the number
+of stored records before the failure and the expected number of records
+are displayed.
+
+% RADIUS_THREAD_POOL_STARTED RADIUS thread pool started with %1 threads.
+This informational message is issued when the thread pool is starrted.
+The number of threads is displayed.

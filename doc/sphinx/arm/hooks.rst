@@ -506,8 +506,8 @@ loaded by the correct process per the table below.
    |                                                           |              | they are translated into DHCPREQUEST packets, put into the   |
    |                                                           |              | BOOTP client class, and receive infinite lifetime leases.    |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
-   | :ref:`Class Commands <hooks-class-cmds>`                  | ISC support  | This hook library allows configured DHCP client classes to   |
-   |                                                           | customers    | be added, updated, deleted, and fetched without              |
+   | :ref:`Class Commands <hooks-class-cmds>`                  | Kea open     | This hook library allows configured DHCP client classes to   |
+   |                                                           | source       | be added, updated, deleted, and fetched without              |
    |                                                           |              | needing to restart the DHCP server.                          |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
    | :ref:`Configuration Backend Commands <hooks-cb-cmds>`     | ISC support  | This hook                                                    |
@@ -516,13 +516,13 @@ loaded by the correct process per the table below.
    |                                                           |              | database. This library may only be used in conjunction with  |
    |                                                           |              | one of the supported Configuration Backend implementations.  |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
-   | :ref:`DDNS Tuning <hooks-ddns-tuning>`                    | ISC premium  | This hook library adds custom behaviors related to Dynamic   |
-   |                                                           | library      | DNS updates on a per-client basis. Its primary feature is to |
+   | :ref:`DDNS Tuning <hooks-ddns-tuning>`                    | Kea open     | This hook library adds custom behaviors related to Dynamic   |
+   |                                                           | source       | DNS updates on a per-client basis. Its primary feature is to |
    |                                                           |              | allow the host name used for DNS to be                       |
    |                                                           |              | calculated using an expression.                              |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
-   | :ref:`Flexible Identifier <hooks-flex-id>`                | ISC premium  | Kea software provides a way to handle host reservations that |
-   |                                                           | library      | include addresses, prefixes, options, client classes and     |
+   | :ref:`Flexible Identifier <hooks-flex-id>`                | Kea open     | Kea software provides a way to handle host reservations that |
+   |                                                           | source       | include addresses, prefixes, options, client classes and     |
    |                                                           |              | other features. The reservation can be based on hardware     |
    |                                                           |              | address, DUID, circuit-id, or client-id in DHCPv4 and on     |
    |                                                           |              | hardware address or DUID in DHCPv6. However, there are       |
@@ -543,8 +543,8 @@ loaded by the correct process per the table below.
    |                                                           |              | remove actions are applied on the response packet before     |
    |                                                           |              | it is sent using the evaluation result.                      |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
-   | :ref:`Forensic Logging <hooks-legal-log>`                 | ISC premium  | This library provides hooks that record a detailed log of    |
-   |                                                           | library      | lease assignments and renewals in a set of log files. In     |
+   | :ref:`Forensic Logging <hooks-legal-log>`                 | Kea open     | This library provides hooks that record a detailed log of    |
+   |                                                           | source       | lease assignments and renewals in a set of log files. In     |
    |                                                           |              | many legal jurisdictions, companies - especially ISPs - must |
    |                                                           |              | record information about the addresses they have leased to   |
    |                                                           |              | DHCP clients. This library is designed to help with that     |
@@ -556,8 +556,8 @@ loaded by the correct process per the table below.
    |                                                           |              | were added to give users more flexibility regarding          |
    |                                                           |              | what information should be logged.                           |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
-   | :ref:`GSS-TSIG <hooks-gss-tsig>`                          | ISC support  | This hook library adds support to the Kea D2 server          |
-   |                                                           | customers    | (kea-dhcp-ddns) for using GSS-TSIG to sign DNS updates.      |
+   | :ref:`GSS-TSIG <hooks-gss-tsig>`                          | Kea open     | This hook library adds support to the Kea D2 server          |
+   |                                                           | source       | (kea-dhcp-ddns) for using GSS-TSIG to sign DNS updates.      |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
    | :ref:`High Availability <hooks-high-availability>`        | Kea open     | The risk of DHCP service unavailability can be minimized     |
    |                                                           | source       | by setting up a pair of DHCP servers in a network. Two       |
@@ -578,8 +578,8 @@ loaded by the correct process per the table below.
    |                                                           |              | to send lease updates to external backup servers, making it  |
    |                                                           |              | much easier to have a replacement that is up to date.        |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
-   | :ref:`Host Cache <hooks-host-cache>`                      | ISC support  | Some database backends, such as RADIUS,                      |
-   |                                                           | customers    | may take a long time to respond. Since                       |
+   | :ref:`Host Cache <hooks-host-cache>`                      | Kea open     | Some database backends, such as RADIUS,                      |
+   |                                                           | source       | may take a long time to respond. Since                       |
    |                                                           |              | Kea in general is synchronous, backend performance           |
    |                                                           |              | directly affects DHCP performance. To minimize               |
    |                                                           |              | performance impact, this library                             |
@@ -587,8 +587,8 @@ loaded by the correct process per the table below.
    |                                                           |              | includes negative caching, i.e. the ability to remember that |
    |                                                           |              | there is no client information in the database.              |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
-   | :ref:`Host Commands <hooks-host-cmds>`                    | ISC premium  | Kea provides a way to store host reservations in a           |
-   |                                                           | library      | database. In many larger deployments it is useful to be able |
+   | :ref:`Host Commands <hooks-host-cmds>`                    | Kea open     | Kea provides a way to store host reservations in a           |
+   |                                                           | source       | database. In many larger deployments it is useful to be able |
    |                                                           |              | to manage that information while the server is running. This |
    |                                                           |              | library provides management commands for adding, querying,   |
    |                                                           |              | and deleting host reservations in a safe way without         |
@@ -613,12 +613,12 @@ loaded by the correct process per the table below.
    |                                                           |              | belong. This library allows easy management of user contexts |
    |                                                           |              | associated with leases.                                      |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
-   | :ref:`Leasequery <hooks-lease-query>`                     | ISC support  | This library adds support for DHCPv4 Leasequery (RFC 4388),  |
-   |                                                           | customers    | DHCPv4 Bulk Leasequery (RFC6926); DHCPv6 Leasequery          |
+   | :ref:`Leasequery <hooks-lease-query>`                     | Kea open     | This library adds support for DHCPv4 Leasequery (RFC 4388),  |
+   |                                                           | source       | DHCPv4 Bulk Leasequery (RFC6926); DHCPv6 Leasequery          |
    |                                                           |              | (RFC 5007), and DHCPv6 Bulk Leasequery (RFC5460).            |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
-   | :ref:`Limits <hooks-limits>`                              | ISC support  | With this hook library, :iscman:`kea-dhcp4` and              |
-   |                                                           | customers    | :iscman:`kea-dhcp6` servers can apply a limit to the rate at |
+   | :ref:`Limits <hooks-limits>`                              | Kea open     | With this hook library, :iscman:`kea-dhcp4` and              |
+   |                                                           | source       | :iscman:`kea-dhcp6` servers can apply a limit to the rate at |
    |                                                           |              | which packets receive a response. The limit can be applied   |
    |                                                           |              | per-client class or per-subnet.                              |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
@@ -633,9 +633,9 @@ loaded by the correct process per the table below.
    | CURRENTLY EXPERIMENTAL                                    | source       | :iscman:`kea-dhcp6` servers can track and report performance |
    |                                                           |              | data.                                                        |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
-   | :ref:`Ping Check <hooks-ping-check>`                      | ISC support  | With this hook library, the :iscman:`kea-dhcp4` server can   |
+   | :ref:`Ping Check <hooks-ping-check>`                      | Kea open     | With this hook library, the :iscman:`kea-dhcp4` server can   |
    |                                                           | source       | perform ping checks of candidate lease addresses before      |
-   |                                                           | customers    | offering them to clients.                                    |
+   |                                                           |              | offering them to clients.                                    |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
    | :ref:`PostgreSQL Database Backend <hooks-pgsql>`          | Kea open     | This hook library is an implementation of the Kea Lease,     |
    |                                                           | source       | Host and Configuration Backend for PostgreSQL. It uses a     |
@@ -644,8 +644,8 @@ loaded by the correct process per the table below.
    |                                                           |              | this library to fetch their configurations if Configuration  |
    |                                                           |              | Backend is used.                                             |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
-   | :ref:`RADIUS <hooks-radius>`                              | ISC support  | The RADIUS hook library allows Kea to interact with          |
-   |                                                           | customers    | RADIUS servers using access and accounting mechanisms. The   |
+   | :ref:`RADIUS <hooks-radius>`                              | Kea open     | The RADIUS hook library allows Kea to interact with          |
+   |                                                           | source       | RADIUS servers using access and accounting mechanisms. The   |
    |                                                           |              | access mechanism may be used for access control, assigning   |
    |                                                           |              | specific IPv4 or IPv6 addresses reserved by RADIUS,          |
    |                                                           |              | dynamically assigning addresses from designated pools chosen |
@@ -654,8 +654,9 @@ loaded by the correct process per the table below.
    |                                                           |              | track of device activity over time.                          |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
    | :ref:`RBAC <hooks-rbac>`                                  | ISC support  | This hook library adds support to the Kea Control Agent      |
-   |                                                           | customers    | (kea-ctrl-agent) for Role-Based Access Control filtering     |
-   |                                                           |              | of commands.                                                 |
+   |                                                           | customers    | (kea-ctrl-agent) and Kea servers (kea-dhcp4, kea-dhcp6 and   |
+   |                                                           |              | kea-dhcp-ddns) for Role-Based Access Control filtering of    |
+   |                                                           |              | commands.                                                    |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
    | :ref:`Run Script <hooks-run-script>`                      | Kea open     | This hook library adds support to run external               |
    |                                                           | source       | scripts for specific packet-processing hook points. There    |
@@ -671,8 +672,8 @@ loaded by the correct process per the table below.
    |                                                           |              | This hook library returns lease statistics                   |
    |                                                           |              | for each subnet.                                             |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
-   | :ref:`Subnet Commands <hooks-subnet-cmds>`                | ISC support  | In deployments in which subnet configuration needs to be     |
-   |                                                           | customers    | frequently updated, it is a hard requirement that such       |
+   | :ref:`Subnet Commands <hooks-subnet-cmds>`                | Kea open     | In deployments in which subnet configuration needs to be     |
+   |                                                           | source       | frequently updated, it is a hard requirement that such       |
    |                                                           |              | updates be performed without the need for a full DHCP server |
    |                                                           |              | reconfiguration or restart. This hook library allows for     |
    |                                                           |              | incremental changes to the subnet configuration such as      |

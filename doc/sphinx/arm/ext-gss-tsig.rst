@@ -15,7 +15,7 @@ Windows servers, have chosen to adopt a more complex GSS-TSIG approach that offe
 additional capabilities, such as using negotiated dynamic keys.
 
 Kea supports GSS-TSIG to protect DNS updates sent by
-the Kea DHCP-DDNS (D2) server in a premium hook, called :ischooklib:`libddns_gss_tsig.so`.
+the Kea DHCP-DDNS (D2) server in a hook, called :ischooklib:`libddns_gss_tsig.so`.
 
 GSS-TSIG is defined in `RFC 3645 <https://tools.ietf.org/html/rfc3645>`__.
 The GSS-TSIG protocol itself is an implementation of generic GSS-API v2
@@ -67,9 +67,7 @@ GSS-TSIG Compilation
 The following procedure was tested on Ubuntu 20.10 and 21.04. A similar
 approach can be applied to other systems.
 
-1.  Obtain the Kea sources and premium packages, extract the Kea sources,
-    and then extract the premium packages into the ``premium/`` directory within the Kea
-    source tree.
+1.  Obtain the Kea sources, extract the Kea sources.
 
 2. Run autoreconf:
 
@@ -117,7 +115,7 @@ detection, similar to this:
     available.
 
 7.  After compilation, :ischooklib:`libddns_gss_tsig.so` is available in the
-    ``premium/src/hooks/d2/gss_tsig`` directory. It can be loaded by :iscman:`kea-dhcp-ddns`.
+    ``src/hooks/d2/gss_tsig`` directory. It can be loaded by :iscman:`kea-dhcp-ddns`.
 
 :ischooklib:`libddns_gss_tsig.so` was developed using the MIT Kerberos 5 implementation, but
 Heimdal is also supported. Note that Heimdal is picky about

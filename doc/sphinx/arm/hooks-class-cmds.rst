@@ -12,9 +12,9 @@ list the client classes configured for a given server.
 
 .. note::
 
-    :ischooklib:`libdhcp_class_cmds.so` is available only to ISC customers with
-    a paid support contract. For more information on subscription options,
-    please complete the form at https://www.isc.org/contact.
+    :ischooklib:`libdhcp_class_cmds.so` is part of the open source code and is
+    available to every Kea user.
+    It was previously available only to ISC customers with a paid support contract.
 
 .. note::
 

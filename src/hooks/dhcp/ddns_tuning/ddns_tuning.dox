@@ -1,0 +1,61 @@
+// Copyright (C) 2022 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+
+@mainpage Kea DDNS Tuning Hooks Library
+
+Welcome to Kea DDNS Tuning Hooks Library. This documentation is
+addressed at developers who are interested in internal operation of the
+library. This file provides information needed to understand and perhaps
+extend this library.
+
+This documentation is stand-alone: you should have read and
+understood <a href="https://reports.kea.isc.org/dev_guide/">Kea
+Developer's Guide</a> and in particular its section about hooks: <a
+href="https://reports.kea.isc.org/dev_guide/df/d46/hooksdgDevelopersGuide.html">
+Hooks Developer's Guide</a>.
+
+@section cbDdnsTuningOverview Overview
+The @c ddns_tuning hooks library provides customized behavior regarding
+dynamic DNS updates request generation in kea-dhcp4 and kea-dhcp6.
+
+Currently the library provides two functions:
+
+1. The ability to generate host-names based on expressions. These expressions may
+be defined globally via hook library parameter, or per subnet via the user-context.
+
+2. The ability to skip DDNS updates for clients that belong to a dedicated,
+built-in "SKIP_DDNS".
+
+In order to improve runtime performance, the library maintains an internal cache
+of expressions keyed by subnet ID.  This cached is populated whenever the server
+is re-configured, a Config Back End update indicates subnets have changed, or
+a subnet is updated via subnet_cmds commands.
+
+@section cbDdnsTuningInternals Library Internals
+
+In addition to the requisite @ref load() and @ref unload() functions, the library
+implements the following callouts:
+
+- @ref cb4_updated() - updates the expression cache is subnets have changed
+- @ref dhcp4_srv_configured() - updates the cache when the server is reconfigured
+- @ref ddns4_update() - calculates a hostname and/or handles SKIP_DDNS clients
+- @ref cb6_updated() - updates the expression cache is subnets have changed
+- @ref dhcp6_srv_configured() - updates the cache when the server is reconfigured
+- @ref ddns6_update() - calculates a hostname and/or handles SKIP_DDNS clients
+
+The load() function instantiates an instance of @ref isc::ddns_tuning::DdnsTuningImpl.
+This class is the top level object that provides configuration processing and higher
+order hostname expression logic.  Expression caching is implemented by @ref
+isc::ddns_tuning::ExpressionCache.
+
+@section cbDdnsTuningMTCompatibility Multi-Threading Compatibility
+
+The @c ddns_tuning hooks library is compatible with multi-threading.
+(it is orthogonal to the DHCP service).
+
+*/

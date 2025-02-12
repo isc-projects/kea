@@ -1,0 +1,6 @@
+libdhcp_legal_log_unittests
+libdhcp_legal_log_unittests.log
+libdhcp_legal_log_unittests.trs
+test-suite.log
+forensic_prerotate_test.sh
+forensic_postrotate_test.sh

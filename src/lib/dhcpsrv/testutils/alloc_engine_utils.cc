@@ -220,7 +220,7 @@ AllocEngine6Test::initSubnet(const asiolink::IOAddress& subnet,
     }
     subnet_->addPool(pd_pool_);
 
-    cfg_mgr.getStagingCfg()->getCfgSubnets6()->add(subnet_);
+    EXPECT_NO_THROW_LOG(cfg_mgr.getStagingCfg()->getCfgSubnets6()->add(subnet_));
     cfg_mgr.commit();
 }
 
@@ -644,6 +644,7 @@ AllocEngine4Test::initSubnet(const asiolink::IOAddress& pool_start,
     subnet_->addPool(pool_);
 
     EXPECT_NO_THROW_LOG(cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet_));
+    cfg_mgr.commit();
 }
 
 AllocEngine4Test::AllocEngine4Test() {
@@ -669,12 +670,7 @@ AllocEngine4Test::AllocEngine4Test() {
     ++mac[sizeof(mac) - 1];
     hwaddr2_ = HWAddrPtr(new HWAddr(mac, sizeof (mac), HTYPE_FDDI));
 
-    // instantiate cfg_mgr
-    CfgMgr& cfg_mgr = CfgMgr::instance();
-
     initSubnet(IOAddress("192.0.2.100"), IOAddress("192.0.2.109"));
-    cfg_mgr.commit();
-
 
     // Create a default context. Note that remaining parameters must be
     // assigned when needed.

@@ -1,0 +1,74 @@
+Test tools and files:
+ - nsupdate: test tool doing the same as BIND 9 nsupdate -g in the tsiggss
+  system test
+ - dns.keytab: Kerberos 5 key table file from the BIND 9 tsiggss system test
+ - administrator.ccache: Kerberos 5 credential cache from the BIND 9 tsiggss
+  system test for the Administrator@EXAMPLE.NIL principal
+ - testdenied.ccache: Kerberos 5 credential cache from the BIND 9 tsiggss
+  system test for the testdenied@EXAMPLE.NIL principal
+
+The BIND 9 tsiggss system test can be found at bin/tests/system/tsiggss
+in the BIND 9 sources. There is no script to build them but the
+bin/tests/system/nsupdate/krb/setup.sh script builds various Kerberos 5
+key table and credential cache files.
+
+The KRB5_KTNAME and KRB5CCNAME environment variables instruct Kerberos 5
+support library how/where to find principal properties. To help writing
+of new unit tests gss_tsig_api_utils.h defines GssApiBaseTest class
+with methods to set and restore these environment variables.
+
+A typical credential cache file content is:
+
+Credentials cache: FILE:bin/tests/system/tsiggss/ns1/administrator.ccache
+        Principal: administrator@EXAMPLE.NIL
+
+  Issued                Expires               Principal
+Nov 30 11:51:16 2010  Apr  6 19:04:36 2036  krbtgt/EXAMPLE.NIL@EXAMPLE.NIL
+Nov 30 11:52:12 2010  Apr  6 19:04:36 2036  DNS/blu.example.nil@EXAMPLE.NIL
+
+And the key table is:
+
+Vno  Type                     Principal                        Date        Aliases
+  1  des-cbc-crc-deprecated   DNS/example.nil@EXAMPLE.NIL      2010-11-30
+  1  des-cbc-crc-deprecated   DNS/blu.example.nil@EXAMPLE.NIL  2010-11-30
+  1  des-cbc-crc-deprecated   dns-blu@EXAMPLE.NIL              2010-11-30
+  1  des-cbc-md5-deprecated   DNS/example.nil@EXAMPLE.NIL      2010-11-30
+  1  des-cbc-md5-deprecated   DNS/blu.example.nil@EXAMPLE.NIL  2010-11-30
+  1  des-cbc-md5-deprecated   dns-blu@EXAMPLE.NIL              2010-11-30
+  1  arcfour-hmac-md5         DNS/example.nil@EXAMPLE.NIL      2010-11-30
+  1  arcfour-hmac-md5         DNS/blu.example.nil@EXAMPLE.NIL  2010-11-30
+  1  arcfour-hmac-md5         dns-blu@EXAMPLE.NIL              2010-11-30
+  1  aes128-cts-hmac-sha1-96  DNS/example.nil@EXAMPLE.NIL      2010-11-30
+  1  aes128-cts-hmac-sha1-96  DNS/blu.example.nil@EXAMPLE.NIL  2010-11-30
+  1  aes128-cts-hmac-sha1-96  dns-blu@EXAMPLE.NIL              2010-11-30
+  1  aes256-cts-hmac-sha1-96  DNS/example.nil@EXAMPLE.NIL      2010-11-30
+  1  aes256-cts-hmac-sha1-96  DNS/blu.example.nil@EXAMPLE.NIL  2010-11-30
+  1  aes256-cts-hmac-sha1-96  dns-blu@EXAMPLE.NIL              2010-11-30
+
+nsupdate arguments are optional and are:
+ -s <addr>[/port]: DNS server address and port (default 10.53.0.1/5300)
+ -p <princ>: DNS server principal (default 'DNS/blu.example.nil@EXAMPLE.NIL')
+ -c <cred>: Client credential principal (default none: using default
+  credential)
+ -d <key-domain>: Key domain / prefix (default 'sig-blu.example.nil.')
+ -k <full-key-name>: Key name (default '<random>.sig-blu.example.nil.')
+  Random is a 32 bit unsigned. Note that a key name can't be reused.
+ -C <ccache>: Credential cache (default 'FILE:<pwd>/administrator.ccache')
+  where <pwd> is this directory name. When set to '' the environment
+  variable is not set by nsupdate.
+ -n <name>: DNS name to update (default 'testdc1.example.nil.')
+ -z <zone>: DNS zone to update (default 'example.nil.')
+  Note the name to update is supposed to be in the zone.
+ -a <addr4>: IPv4 address to update (default '10.53.0.10')
+ -t <ttl>: Time To Live of update (default 86400 (one day))
+ -l <lifetime>: TKEY key lifetime (default 3600 (one hour))
+ -w <wait>: I/O timeout in ms (default 2000 (2 seconds))
+ -q <qid>: Query ID base (default 0x1234)
+  Note the tool managing exchange resets the query id to a pseudo-random value.
+ -f <flags>: GSS-API flags (default 0x26 ie anti-replay, mutual authentication
+  and integrity check, but no sequence check)
+ -u: Use the UDP protocol (default is to use TCP)
+ -v: verbose flag (default is off)
+ -h: help (usage and defaults)
+All defaults are the same as nsupsate -g in the first tsiggss BIND 9 system
+test.

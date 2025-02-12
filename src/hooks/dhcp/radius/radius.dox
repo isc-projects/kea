@@ -1,0 +1,229 @@
+// Copyright (C) 2020-2023 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+
+@mainpage Kea RADIUS Hook Library
+
+Welcome to the Kea RADIUS Hook Library. This documentation is
+addressed at developers who are interested in the internal operation of the
+library. This file provides information needed to understand and perhaps
+extend this library.
+
+This documentation is stand-alone: you should have read and
+understood <a href="https://reports.kea.isc.org/dev_guide/">Kea
+Developer's Guide</a> and in particular its section about hooks: <a
+href="https://reports.kea.isc.org/dev_guide/df/d46/hooksdgDevelopersGuide.html">
+Hooks Developer's Guide</a>.
+
+@section radius_library_overview Overview
+## Introduction
+libdhcp_radius.so is a hook library which provides RADIUS client support.
+
+## Configuration
+
+Configuration flags are split into global, and service-specific.
+
+The global configuration flags are:
+
+ - bindaddr (default "*") specifies the address to be used by the hook
+   library in communication with RADIUS servers. The "*" special value
+   means to leave the kernel to choose it.
+
+ - canonical-mac-address (default false) specifies whether MAC addresses
+   in attributes follows the canonical RADIUS format (lowercase pairs
+   of hexadecimal digits separated by '-').
+
+ - client-id-pop0 (default false) used with flex-id removes the
+   leading zero (or pair of zeroes in DHCPv6) type in client-id (aka duid
+   in DHCPv6). Implied by client-id-printable.
+
+ - client-id-printable (default false) checks if the client-id / duid
+   content is printable and uses it as it instead of in hexadecimal.
+   Implies client-id-pop0 and extract-duid as 0 and 255 are not
+   printable.
+
+ - deadtime (default 0) is a mechanism that helps in sorting the servers
+   such that the servers that have proved responsive so far are inquired first,
+   and the servers that have proved unresponsive are left at the end. The
+   deadtime value specifies the number of seconds after which a server is
+   considered unresponsive. 0 disables the mechanism.
+
+ - dictionary (default set by configure at build time) is the attribute
+   and value dictionary. Note it is a critical parameter.
+
+ - extract-duid (default true) extracts the embedded duid from an
+   RFC-4361-compliant DHCPv4 client-id. Implied by client-id-printable.
+
+ - identifier-type4 (default client-id) specifies the identifier type
+   to build the User-Name attribute. It should be the same as the host
+   identifier. When libdhcp_flex_id.so is used,
+   replace-client-id must be set to true and client-id must be used
+   with client-id-pop0 enabled.
+
+ - identifier-type6 (default duid) specifies the identifier type
+   to build the User-Name attribute. It should be the same than host
+   identifier. When libdhcp_flex_id.so is used,
+   replace-client-id must be set to true and duid must be used with
+   client-id-pop0 enabled.
+
+ - nas-ports (default []), specifies the NAS port to use in place of
+   a subnet ID (default behavior). It is an array of maps, each map having two
+   elements at most: the mandatory NAS port value, and, optionally, a selector
+   consisting of either a subnet id, a subnet prefix, or a shared-network name.
+   If the selector is applied to the packet, the NAS port is used instead of the
+   subnet id. When the subnet id is 0 or missing, the specified NAS port acts as
+   a default. Its substition happens for all packets that did not match a
+   selector.
+
+ - reselect-subnet-* (default false) enables subnet reselection
+   according to the RADIUS access response. When enabled, if the returned
+   attribute value does not match the currently selected subnet, but matches
+   another selectable subnet, the latter is selected for
+   further lease assignment.
+
+   * reselect-subnet-address rejects subnets that do not have in range the
+     address messaged under the Framed-IP-Address or, respectively,
+     Framed-IPv6-Address attributes.
+
+   * reselect-subnet-pool rejects subnets that are unguarded by client class
+     messaged under the RADIUS Frame-Pool attribute. This reselection is
+     attempted first, and if successful, it prevents the function of
+     reselect-subnet-address from coming into effect.
+
+ - realm (default "") is the default realm.
+
+ - retries (default 3) is the number of retries before trying the next
+   server. Not supported for asynchronous communication.
+
+ - session-history (default "") is the name of the file providing
+   persistent storage for accounting session history.
+
+ - thread-pool-size (default 0) indicates the number of threads that
+   is used for sending RADIUS requests and processing RADIUS responses for both
+   access and accounting services before passing it to the core thread pool. A
+   value of 0 instructs the RADIUS hook library to use the same number of
+   threads used for core DHCP processing. This value is only relevant if Kea
+   core is configured as multi-threaded. Single-threaded Kea core results in
+   single-threaded RADIUS processing.
+
+ - timeout (default 10) is the number of seconds a response is waited for.
+
+Two services are supported:
+
+ - "access" the authentication service.
+
+ - "accounting" the accounting service.
+
+At the service level, three sections can be configured:
+
+ - servers with:
+   * name which specifies the IP address of the server (it is allowed
+     to use a name which will be resolved but it is not recommended).
+
+   * port (default RADIUS authentication or accounting service) which
+     specifies the UDP port of the server.
+
+   * secret which authenticates messages.
+
+   There may be up to 8 servers. Note when no server was specified
+   the service is disabled.
+
+ - attributes which define attributes which are used by the service with:
+   * name of the attribute.
+
+   * type of the attribute. Type or name is required, and the attribute
+     must be defined in the dictionary.
+
+   * data is one of the three ways to specify the attribute content.
+
+   * raw specifies the content in hexadecimal. Note it does not work
+     with integer content attributes (date, integer and IPv4 address),
+     a string content attribute (string. IPv6 address and IPv6 prefix)
+     is required.
+
+   * expr specifies an evaluation expression which must return a not
+     empty string when evaluated with the DHCP query packet.
+     A priori this is restricted to the access service.
+
+   Attributes are supported only for the access service.
+
+ - The peer-updates boolean flag (default true) controls whether lease
+   updates coming from an active High-Availability (HA) partner should result in
+   an accounting request. This may be desirable to remove duplicates if HA
+   partners are configured to send request to the same RADIUS server. The flag is
+   only supported by the accounting service. The lease synchronization process at
+   the startup of an HA node does not trigger a RADIUS ccounting request,
+   regardless of the value of this flag.
+
+ - The max-pending-requests positive integer (default 0) limits the
+   number of pending RADIUS requests. The value 0 means no limit. It is
+   supported only by the access service. ``64`` can be a good value to set it to.
+
+## RADIUS Attributes
+
+Attributes is the C++ view of RADIUS AVPs. Attribute constructor takes:
+ - a type (for instance 1 for the User-Name attribute)
+
+ - an integer value lvalue
+
+ - a string value strvalue
+
+ - a raw boolean flag which is used for configuration.
+
+## RADIUS Communication
+
+Constructors for synchronous and asynchronous authentication or
+accounting communication (Radius{Sync,Async}{Auth,Acct} classes) take:
+ - a subnet ID which is used as the NAS-Port by RADIUS
+
+ - a collection of attributes to put in the request.
+
+ - a callback called when the operation is finished taking the return code
+   and for authentication a collection of attributes which is filled
+   with the response message content.
+
+As an alternative to the callback getResponse and getResult methods
+are provided.
+
+An extra method must be called for asynchronous communication: setIOService.
+
+The operation is simple: call the start method and wait for the callback
+to be called.
+
+## Shared network support
+
+Shared networks are supported but with some constraints:
+ - the subnet selection aka localization selects in fact a shared network
+   so the selected subnet ID is not reliable.
+
+ - host reservations are by default per subnet: the RADIUS hook uses
+   them to store information returned by the RADIUS server so it is
+   REQUIRED to set the reservation mode to "global" for all subnets
+   belonging to a shared network.
+
+ - reserved addresses will not work well with global reservations. The
+   reselect mechanism can help but leaves some cases where the behavior
+   can be different than expected. Nevertheless It is recommended when
+   possible to configure only one shared network.
+
+ - for RADIUS server configurations where the NAS port matters a new
+   parameter is available to translate subnet ID into a specific NAS
+   port value; for example when using the same NAS port for a whole
+   shared network.
+
+ - the reselect mechanism can be used to reselect a different shared
+   network (same as different subnets when shared networks are not used)
+   or to reselect a different subnet inside the same shared network.
+   Note it scans all subnets until a subnet compatible with the class
+   (i.e. has a pool guard by the client class) or the address (i.e.
+   the address is in the subnet range) and returns the first candidate.
+
+@section radiusMTCompatibility Multi-Threading Compatibility
+
+libdhcp_radius.so reports it is not compatible with multi-threading.
+
+*/

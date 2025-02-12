@@ -11,9 +11,9 @@ to a behavior available in ISC DHCP and one suggested in `RFC
 
 .. note::
 
-    :ischooklib:`libdhcp_ping_check.so` is available only to ISC customers
-    with a paid support contract. For more information on subscription options,
-    please complete the form at https://www.isc.org/contact.
+    :ischooklib:`libdhcp_ping_check.so` is part of the open source code and is
+    available to every Kea user.
+    It was previously available only to ISC customers with a paid support contract.
 
 Overview
 ~~~~~~~~

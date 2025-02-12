@@ -6,9 +6,8 @@
 
 #include <config.h>
 
-#include <dhcpsrv/parsers/simple_parser4.h>
 #include <cc/data.h>
-#include <iostream>
+#include <dhcpsrv/parsers/simple_parser4.h>
 
 using namespace isc::data;
 
@@ -300,7 +299,7 @@ const SimpleDefaults SimpleParser4::SHARED_NETWORK4_DEFAULTS = {
     { "interface",        Element::string, "" }
 };
 
-/// @brief List of parameters that can be inherited to subnet4 scope.
+/// @brief List of parameters that can be inherited from the global to subnet4 scope.
 ///
 /// Some parameters may be defined on both global (directly in Dhcp4) and
 /// subnet (Dhcp4/subnet4/...) scope. If not defined in the subnet scope,
@@ -449,12 +448,10 @@ size_t SimpleParser4::setAllDefaults(ElementPtr global) {
     // Set global defaults first.
     cnt = setDefaults(global, GLOBAL4_DEFAULTS);
 
-    // Now set option definition defaults for each specified option definition
+    // Now set the defaults for each specified option definition
     ConstElementPtr option_defs = global->get("option-def");
     if (option_defs) {
-        for (auto const& option_def : option_defs->listValue()) {
-            cnt += SimpleParser::setDefaults(option_def, OPTION4_DEF_DEFAULTS);
-        }
+        cnt += setListDefaults(option_defs, OPTION4_DEF_DEFAULTS);
     }
 
     // Set the defaults for option data
@@ -490,8 +487,8 @@ size_t SimpleParser4::setAllDefaults(ElementPtr global) {
         }
     }
 
-    // Set the defaults for dhcp-queue-control.  If the element isn't
-    // there we'll add it.
+    // Set the defaults for dhcp-queue-control.  If the element isn't there
+    // we'll add it.
     ConstElementPtr queue_control = global->get("dhcp-queue-control");
     ElementPtr mutable_cfg;
     if (queue_control) {

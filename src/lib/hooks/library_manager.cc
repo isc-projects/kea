@@ -225,11 +225,11 @@ LibraryManager::runLoad() {
 
         if (status != 0) {
             LOG_ERROR(hooks_logger, HOOKS_LOAD_ERROR).arg(library_name_)
-                      .arg(status);
+                    .arg(status);
             return (false);
         } else {
-        LOG_DEBUG(hooks_logger, HOOKS_DBG_TRACE, HOOKS_LOAD_SUCCESS)
-            .arg(library_name_);
+            LOG_DEBUG(hooks_logger, HOOKS_DBG_TRACE, HOOKS_LOAD_SUCCESS)
+                    .arg(library_name_);
         }
 
     } else {
