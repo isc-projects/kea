@@ -1868,6 +1868,8 @@ AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_027_to_028.sh],
                 [chmod +x src/share/database/scripts/mysql/upgrade_027_to_028.sh])
 AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_028_to_029.sh],
                 [chmod +x src/share/database/scripts/mysql/upgrade_028_to_029.sh])
+AC_CONFIG_FILES([src/share/database/scripts/mysql/upgrade_029_to_030.sh],
+                [chmod +x src/share/database/scripts/mysql/upgrade_029_to_030.sh])
 AC_CONFIG_FILES([src/share/database/scripts/mysql/wipe_data.sh],
                 [chmod +x src/share/database/scripts/mysql/wipe_data.sh])
 AC_CONFIG_FILES([src/share/database/scripts/pgsql/Makefile])

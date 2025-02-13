@@ -157,7 +157,7 @@ mysql_db_version_test() {
     run_command \
         "${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}"
     version="${OUTPUT}"
-    assert_str_eq "29.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "30.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     mysql_wipe
@@ -840,106 +840,106 @@ mysql_upgrade_23_to_24_test() {
     assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
     assert_str_eq '18' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-    qry="select name from option_def_data_type where id = 0"
+    query="select name from option_def_data_type where id = 0"
     run_command \
-        mysql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+        mysql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}. (expected status code %d, returned %d)"
     assert_str_eq 'empty' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-    qry="select name from option_def_data_type where id = 1"
+    query="select name from option_def_data_type where id = 1"
     run_command \
-        mysql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+        mysql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}. (expected status code %d, returned %d)"
     assert_str_eq 'binary' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-    qry="select name from option_def_data_type where id = 2"
+    query="select name from option_def_data_type where id = 2"
     run_command \
-        mysql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+        mysql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}. (expected status code %d, returned %d)"
     assert_str_eq 'boolean' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-    qry="select name from option_def_data_type where id = 4"
+    query="select name from option_def_data_type where id = 4"
     run_command \
-        mysql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+        mysql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}. (expected status code %d, returned %d)"
     assert_str_eq 'int16' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-    qry="select name from option_def_data_type where id = 5"
+    query="select name from option_def_data_type where id = 5"
     run_command \
-        mysql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+        mysql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}. (expected status code %d, returned %d)"
     assert_str_eq 'int32' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-    qry="select name from option_def_data_type where id = 6"
+    query="select name from option_def_data_type where id = 6"
     run_command \
-        mysql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+        mysql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}. (expected status code %d, returned %d)"
     assert_str_eq 'uint8' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-    qry="select name from option_def_data_type where id = 7"
+    query="select name from option_def_data_type where id = 7"
     run_command \
-        mysql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+        mysql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}. (expected status code %d, returned %d)"
     assert_str_eq 'uint16' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-    qry="select name from option_def_data_type where id = 8"
+    query="select name from option_def_data_type where id = 8"
     run_command \
-        mysql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+        mysql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}. (expected status code %d, returned %d)"
     assert_str_eq 'uint32' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-    qry="select name from option_def_data_type where id = 10"
+    query="select name from option_def_data_type where id = 10"
     run_command \
-        mysql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+        mysql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}. (expected status code %d, returned %d)"
     assert_str_eq 'ipv4-address' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-    qry="select name from option_def_data_type where id = 11"
+    query="select name from option_def_data_type where id = 11"
     run_command \
-        mysql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+        mysql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}. (expected status code %d, returned %d)"
     assert_str_eq 'ipv6-address' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-    qry="select name from option_def_data_type where id = 12"
+    query="select name from option_def_data_type where id = 12"
     run_command \
-        mysql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+        mysql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}. (expected status code %d, returned %d)"
     assert_str_eq 'ipv6-prefix' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-    qry="select name from option_def_data_type where id = 13"
+    query="select name from option_def_data_type where id = 13"
     run_command \
-        mysql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+        mysql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}. (expected status code %d, returned %d)"
     assert_str_eq 'psid' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-    qry="select name from option_def_data_type where id = 14"
+    query="select name from option_def_data_type where id = 14"
     run_command \
-        mysql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+        mysql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}. (expected status code %d, returned %d)"
     assert_str_eq 'string' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-    qry="select name from option_def_data_type where id = 15"
+    query="select name from option_def_data_type where id = 15"
     run_command \
-        mysql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+        mysql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}. (expected status code %d, returned %d)"
     assert_str_eq 'tuple' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-    qry="select name from option_def_data_type where id = 16"
+    query="select name from option_def_data_type where id = 16"
     run_command \
-        mysql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+        mysql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}. (expected status code %d, returned %d)"
     assert_str_eq 'fqdn' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-    qry="select name from option_def_data_type where id = 17"
+    query="select name from option_def_data_type where id = 17"
     run_command \
-        mysql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+        mysql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}. (expected status code %d, returned %d)"
     assert_str_eq 'internal' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-    qry="select name from option_def_data_type where id = 254"
+    query="select name from option_def_data_type where id = 254"
     run_command \
-        mysql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+        mysql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}. (expected status code %d, returned %d)"
     assert_str_eq 'record' "${OUTPUT}" "${query}: expected output %s, returned %s"
 }
 
@@ -1033,6 +1033,130 @@ mysql_upgrade_28_to_29_test() {
     assert_str_eq 'registered' "${OUTPUT}" "${qry}: expected output %s, returned %s"
 }
 
+mysql_upgrade_29_to_30_test() {
+    # Test the amendment of the lease AUPD triggers used to populate stat_by_client_class tables.
+    # Blind test to a blind fix. The test probably passes prior to this schema change.
+
+    # Clear leases.
+    query='DELETE FROM lease4; DELETE FROM lease6;'
+    run_command \
+        mysql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+    assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+    # Insert a null user context.
+    query="INSERT INTO lease4 VALUES(10,20,30,40,(SELECT FROM_UNIXTIME(1678900000)),50,1,1,'one,example,com',0,NULL,NULL,NULL,0)"
+    run_command \
+        mysql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+    assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+    # Check the user context.
+    query="SELECT user_context FROM lease4"
+    run_command \
+        mysql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+    assert_str_eq 'NULL' "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+    # Update the user context explcitly to a valid JSON.
+    query="UPDATE lease4 SET user_context='{}'"
+    run_command \
+        mysql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+    assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+    # Check the user context.
+    query="SELECT user_context FROM lease4"
+    run_command \
+        mysql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+    assert_str_eq '{}' "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+    # Update the expiry time.
+    query="UPDATE lease4 SET expire=FROM_UNIXTIME(1789000000)"
+    run_command \
+        mysql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+    assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+    # Check the user context.
+    query="SELECT user_context FROM lease4"
+    run_command \
+        mysql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+    assert_str_eq '{}' "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+    # Update the user context explcitly to NULL.
+    query="UPDATE lease4 SET user_context=NULL"
+    run_command \
+        mysql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+    assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+    # Check the user context.
+    query="SELECT user_context FROM lease4"
+    run_command \
+        mysql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+    assert_str_eq 'NULL' "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+    # Insert a null user context.
+    query="INSERT INTO lease6 VALUES(inet6_aton('::10'),20,30,(SELECT FROM_UNIXTIME(1678900000)),40,50,1,60,70,1,1,'one,example,com',80,90,16,0,NULL,0)"
+    run_command \
+        mysql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" 'INSERT INTO lease6 failed, expected exit code %d, actual %d'
+    assert_str_eq '' "${OUTPUT}"
+
+    # Check the user context.
+    query="SELECT user_context FROM lease6"
+    run_command \
+        mysql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+    assert_str_eq 'NULL' "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+    # Update the user context explcitly to a valid JSON.
+    query="UPDATE lease6 SET user_context='{}'"
+    run_command \
+        mysql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+    assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+    # Check the user context.
+    query="SELECT user_context FROM lease6"
+    run_command \
+        mysql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+    assert_str_eq '{}' "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+    # Update the expiry time.
+    query="UPDATE lease6 SET expire=FROM_UNIXTIME(1789000000)"
+    run_command \
+        mysql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+    assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+    # Check the user context.
+    query="SELECT user_context FROM lease6"
+    run_command \
+        mysql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+    assert_str_eq '{}' "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+    # Update the user context explcitly to NULL.
+    query="UPDATE lease6 SET user_context=NULL"
+    run_command \
+        mysql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+    assert_str_eq '' "${OUTPUT}" "${query}: expected output %s, returned %s"
+
+    # Check the user context.
+    query="SELECT user_context FROM lease6"
+    run_command \
+        mysql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
+    assert_str_eq 'NULL' "${OUTPUT}" "${query}: expected output %s, returned %s"
+}
+
 mysql_upgrade_test() {
 
     test_start "mysql.upgrade"
@@ -1054,7 +1178,7 @@ mysql_upgrade_test() {
 
     # Verify that the upgraded schema reports the latest version.
     version=$("${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "29.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "30.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's check that the new tables are indeed there.
 
@@ -1737,6 +1861,9 @@ SET @disable_audit = 0"
 
     # Check upgrade from 28.0 to 29.0.
     mysql_upgrade_28_to_29_test
+
+    # Check upgrade from 29.0 to 30.0.
+    mysql_upgrade_29_to_30_test
 
     # Let's wipe the whole database
     mysql_wipe

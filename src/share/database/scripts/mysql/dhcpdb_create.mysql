@@ -6297,6 +6297,145 @@ UPDATE schema_version
 
 -- This line concludes the schema upgrade to version 29.0.
 
+-- This line starts the schema upgrade to version 30.0.
+
+-- Add continue handlers to the lease*_AUPD_lease*_stat_by_client_class.
+-- The same continue handlers existed in the AINS and ADEL triggers.
+
+DROP PROCEDURE IF EXISTS lease4_AUPD_lease4_stat_by_client_class;
+DELIMITER $$
+CREATE PROCEDURE lease4_AUPD_lease4_stat_by_client_class(IN old_state TINYINT,
+                                                         IN old_user_context TEXT,
+                                                         IN new_state TINYINT,
+                                                         IN new_user_context TEXT)
+BEGIN
+    -- Declarations
+    DECLARE old_client_classes TEXT;
+    DECLARE new_client_classes TEXT;
+    DECLARE class VARCHAR(255);
+    DECLARE length INT;
+    DECLARE i INT;
+
+    -- Ignore ERROR 3141 (22032) at line 1: Invalid JSON text in argument 1 to
+    --      function json_extract: "The document is empty." at position 0.
+    -- Ignore ERROR 4037 (HY000): Unexpected end of JSON text in argument 1 to function 'json_extract'
+    -- These situations are handled with a propagating NULL result from JSON_EXTRACT.
+    DECLARE CONTINUE HANDLER FOR 3141 BEGIN END;
+    DECLARE CONTINUE HANDLER FOR 4037 BEGIN END;
+
+    SET old_client_classes = JSON_EXTRACT(old_user_context, '$."ISC"."client-classes"');
+    SET new_client_classes = JSON_EXTRACT(new_user_context, '$."ISC"."client-classes"');
+
+    IF old_state != new_state OR old_client_classes != new_client_classes THEN
+        -- Check if it's moving away from a counted state.
+        IF old_state = 0 THEN
+            -- Dive into client classes.
+            SET length = JSON_LENGTH(old_client_classes);
+            SET i = 0;
+            label: WHILE i < length DO
+                SET class = JSON_UNQUOTE(JSON_EXTRACT(old_client_classes, CONCAT('\$[', i, ']')));
+
+                -- Decrement the lease count if the record exists.
+                UPDATE lease4_stat_by_client_class SET leases = IF(leases > 0, leases - 1, 0)
+                    WHERE client_class = class;
+
+                SET i = i + 1;
+            END WHILE label;
+        END IF;
+
+        -- Check if it's moving into a counted state.
+        IF new_state = 0 THEN
+            -- Dive into client classes.
+            SET length = JSON_LENGTH(new_client_classes);
+            SET i = 0;
+            label: WHILE i < length DO
+                SET class = JSON_UNQUOTE(JSON_EXTRACT(new_client_classes, CONCAT('\$[', i, ']')));
+
+                -- Upsert to increment the lease count.
+                UPDATE lease4_stat_by_client_class SET leases = leases + 1
+                    WHERE client_class = class;
+                IF ROW_COUNT() <= 0 THEN
+                    INSERT INTO lease4_stat_by_client_class VALUES (class, 1);
+                END IF;
+
+                SET i = i + 1;
+            END WHILE label;
+        END IF;
+    END IF;
+END $$
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS lease6_AUPD_lease6_stat_by_client_class;
+DELIMITER $$
+CREATE PROCEDURE lease6_AUPD_lease6_stat_by_client_class(IN old_state TINYINT,
+                                                         IN old_user_context TEXT,
+                                                         IN old_lease_type TINYINT,
+                                                         IN new_state TINYINT,
+                                                         IN new_user_context TEXT,
+                                                         IN new_lease_type TINYINT)
+BEGIN
+    -- Declarations
+    DECLARE old_client_classes TEXT;
+    DECLARE new_client_classes TEXT;
+    DECLARE class VARCHAR(255);
+    DECLARE length INT;
+    DECLARE i INT;
+
+    -- Ignore ERROR 3141 (22032) at line 1: Invalid JSON text in argument 1 to
+    --      function json_extract: "The document is empty." at position 0.
+    -- Ignore ERROR 4037 (HY000): Unexpected end of JSON text in argument 1 to function 'json_extract'
+    -- These situations are handled with a propagating NULL result from JSON_EXTRACT.
+    DECLARE CONTINUE HANDLER FOR 3141 BEGIN END;
+    DECLARE CONTINUE HANDLER FOR 4037 BEGIN END;
+
+    SET old_client_classes = JSON_EXTRACT(old_user_context, '$."ISC"."client-classes"');
+    SET new_client_classes = JSON_EXTRACT(new_user_context, '$."ISC"."client-classes"');
+
+    IF old_state != new_state OR old_client_classes != new_client_classes OR old_lease_type != new_lease_type THEN
+        -- Check if it's moving away from a counted state.
+        IF old_state = 0 THEN
+            -- Dive into client classes.
+            SET length = JSON_LENGTH(old_client_classes);
+            SET i = 0;
+            label: WHILE i < length DO
+                SET class = JSON_UNQUOTE(JSON_EXTRACT(old_client_classes, CONCAT('\$[', i, ']')));
+
+                -- Decrement the lease count if the record exists.
+                UPDATE lease6_stat_by_client_class SET leases = IF(leases > 0, leases - 1, 0)
+                    WHERE client_class = class AND lease_type = old_lease_type;
+
+                SET i = i + 1;
+            END WHILE label;
+        END IF;
+
+        -- Check if it's moving into a counted state.
+        IF new_state = 0 THEN
+            -- Dive into client classes.
+            SET length = JSON_LENGTH(new_client_classes);
+            SET i = 0;
+            label: WHILE i < length DO
+                SET class = JSON_UNQUOTE(JSON_EXTRACT(new_client_classes, CONCAT('\$[', i, ']')));
+
+                -- Upsert to increment the lease count.
+                UPDATE lease6_stat_by_client_class SET leases = leases + 1
+                    WHERE client_class = class AND lease_type = new_lease_type;
+                IF ROW_COUNT() <= 0 THEN
+                    INSERT INTO lease6_stat_by_client_class VALUES (class, new_lease_type, 1);
+                END IF;
+
+                SET i = i + 1;
+            END WHILE label;
+        END IF;
+    END IF;
+END $$
+DELIMITER ;
+
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '30', minor = '0';
+
+-- This line concludes the schema upgrade to version 30.0.
+
 # Notes:
 #
 # Indexes

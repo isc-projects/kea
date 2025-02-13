@@ -906,10 +906,10 @@ pgsql_upgrade_18_to_19_test() {
 pgsql_upgrade_19_to_20_test() {
     # Verify that lease6_by_subnet_id_address index on lease6 is keyed by
     # attributes number 5 and 1 (i.e. subnet-id and address)
-    qry="select ix.indkey as keys from pg_class t, pg_class i, pg_index ix \
+    query="select ix.indkey as keys from pg_class t, pg_class i, pg_index ix \
         where t.oid = ix.indrelid and i.oid = ix.indexrelid and \
         i.relname = 'lease6_by_subnet_id_address' and t.relname = 'lease6';"
-    run_statement "verify lease6_by_subnet_id_address" "$qry"
+    run_statement "verify lease6_by_subnet_id_address" "${query}"
     assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
     assert_str_eq '5 1' "${OUTPUT}" "${query}: expected output %s, returned %s"
 }
@@ -917,10 +917,10 @@ pgsql_upgrade_19_to_20_test() {
 pgsql_upgrade_20_to_21_test() {
     # Verify that dhcp4_server_modification_ts index on dhcp4_server is keyed by
     # attribute number 4, modification_ts
-    qry="select ix.indkey as keys from pg_class t, pg_class i, pg_index ix \
+    query="select ix.indkey as keys from pg_class t, pg_class i, pg_index ix \
         where t.oid = ix.indrelid and i.oid = ix.indexrelid and \
         i.relname = 'dhcp4_server_modification_ts' and t.relname = 'dhcp4_server';"
-    run_statement "verify lease6_by_subnet_id_address" "$qry"
+    run_statement "verify lease6_by_subnet_id_address" "${query}"
     assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
     assert_str_eq '4' "${OUTPUT}" "${query}: expected output %s, returned %s"
 }
@@ -940,106 +940,106 @@ pgsql_upgrade_23_to_24_test() {
     assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
     assert_str_eq '18' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-    qry="select name from option_def_data_type where id = 0"
+    query="select name from option_def_data_type where id = 0"
     run_command \
-        pgsql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+        pgsql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}. (expected status code %d, returned %d)"
     assert_str_eq 'empty' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-    qry="select name from option_def_data_type where id = 1"
+    query="select name from option_def_data_type where id = 1"
     run_command \
-        pgsql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+        pgsql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}. (expected status code %d, returned %d)"
     assert_str_eq 'binary' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-    qry="select name from option_def_data_type where id = 2"
+    query="select name from option_def_data_type where id = 2"
     run_command \
-        pgsql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+        pgsql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}. (expected status code %d, returned %d)"
     assert_str_eq 'boolean' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-    qry="select name from option_def_data_type where id = 4"
+    query="select name from option_def_data_type where id = 4"
     run_command \
-        pgsql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+        pgsql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}. (expected status code %d, returned %d)"
     assert_str_eq 'int16' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-    qry="select name from option_def_data_type where id = 5"
+    query="select name from option_def_data_type where id = 5"
     run_command \
-        pgsql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+        pgsql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}. (expected status code %d, returned %d)"
     assert_str_eq 'int32' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-    qry="select name from option_def_data_type where id = 6"
+    query="select name from option_def_data_type where id = 6"
     run_command \
-        pgsql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+        pgsql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}. (expected status code %d, returned %d)"
     assert_str_eq 'uint8' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-    qry="select name from option_def_data_type where id = 7"
+    query="select name from option_def_data_type where id = 7"
     run_command \
-        pgsql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+        pgsql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}. (expected status code %d, returned %d)"
     assert_str_eq 'uint16' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-    qry="select name from option_def_data_type where id = 8"
+    query="select name from option_def_data_type where id = 8"
     run_command \
-        pgsql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+        pgsql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}. (expected status code %d, returned %d)"
     assert_str_eq 'uint32' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-    qry="select name from option_def_data_type where id = 10"
+    query="select name from option_def_data_type where id = 10"
     run_command \
-        pgsql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+        pgsql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}. (expected status code %d, returned %d)"
     assert_str_eq 'ipv4-address' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-    qry="select name from option_def_data_type where id = 11"
+    query="select name from option_def_data_type where id = 11"
     run_command \
-        pgsql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+        pgsql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}. (expected status code %d, returned %d)"
     assert_str_eq 'ipv6-address' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-    qry="select name from option_def_data_type where id = 12"
+    query="select name from option_def_data_type where id = 12"
     run_command \
-        pgsql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+        pgsql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}. (expected status code %d, returned %d)"
     assert_str_eq 'ipv6-prefix' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-    qry="select name from option_def_data_type where id = 13"
+    query="select name from option_def_data_type where id = 13"
     run_command \
-        pgsql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+        pgsql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}. (expected status code %d, returned %d)"
     assert_str_eq 'psid' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-    qry="select name from option_def_data_type where id = 14"
+    query="select name from option_def_data_type where id = 14"
     run_command \
-        pgsql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+        pgsql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}. (expected status code %d, returned %d)"
     assert_str_eq 'string' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-    qry="select name from option_def_data_type where id = 15"
+    query="select name from option_def_data_type where id = 15"
     run_command \
-        pgsql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+        pgsql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}. (expected status code %d, returned %d)"
     assert_str_eq 'tuple' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-    qry="select name from option_def_data_type where id = 16"
+    query="select name from option_def_data_type where id = 16"
     run_command \
-        pgsql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+        pgsql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}. (expected status code %d, returned %d)"
     assert_str_eq 'fqdn' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-    qry="select name from option_def_data_type where id = 17"
+    query="select name from option_def_data_type where id = 17"
     run_command \
-        pgsql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+        pgsql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}. (expected status code %d, returned %d)"
     assert_str_eq 'internal' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-    qry="select name from option_def_data_type where id = 254"
+    query="select name from option_def_data_type where id = 254"
     run_command \
-        pgsql_execute "${qry}"
-    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+        pgsql_execute "${query}"
+    assert_eq 0 "${EXIT_CODE}" "${query}. (expected status code %d, returned %d)"
     assert_str_eq 'record' "${OUTPUT}" "${query}: expected output %s, returned %s"
 }
 
