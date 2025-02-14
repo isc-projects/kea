@@ -10,4 +10,4 @@ kea_exceptions_tests = executable(
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
 )
-test('kea_exceptions_tests', kea_exceptions_tests, protocol: 'gtest')
+test('kea-exceptions-tests', kea_exceptions_tests, protocol: 'gtest')

@@ -1,4 +1,4 @@
-if not gtest.found()
+if not gtest.found() or not postgresql.found()
     subdir_done()
 endif
 

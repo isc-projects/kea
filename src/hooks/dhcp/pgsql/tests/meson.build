@@ -1,4 +1,4 @@
-if not gtest.found()
+if not gtest.found() or not postgresql.found()
     subdir_done()
 endif
 
@@ -21,11 +21,13 @@ dhcp_pgsql_lib_tests = executable(
     'run_unittests.cc',
     dependencies: [gtest, crypto, postgresql],
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
-    link_with: [dhcp_pgsql_archive] + libs_testutils + LIBS_BUILT_SO_FAR,
+    link_with: [dhcp_pgsql_archive, libs_testutils] + LIBS_BUILT_SO_FAR,
 )
 test(
-    'dhcp_pgsql_lib_tests',
+    'dhcp-pgsql-lib-tests',
     dhcp_pgsql_lib_tests,
     protocol: 'gtest',
     is_parallel: false,
+    priority: -1,
+    timeout: 120,
 )

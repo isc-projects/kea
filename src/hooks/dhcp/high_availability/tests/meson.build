@@ -23,11 +23,13 @@ dhcp_ha_lib_tests = executable(
     ],
     dependencies: [gtest, crypto],
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
-    link_with: [dhcp_ha_archive] + [kea_testutils_lib] + LIBS_BUILT_SO_FAR,
+    link_with: [dhcp_ha_archive, [kea_testutils_lib]] + LIBS_BUILT_SO_FAR,
 )
 test(
-    'dhcp_ha_lib_tests',
+    'dhcp-ha-lib-tests',
     dhcp_ha_lib_tests,
     protocol: 'gtest',
     is_parallel: false,
+    priority: -1,
+    timeout: 60,
 )

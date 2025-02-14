@@ -24,4 +24,4 @@ dhcp_run_script_lib_tests = executable(
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
     link_with: [dhcp_run_script_archive] + LIBS_BUILT_SO_FAR,
 )
-test('dhcp_run_script_lib_tests', dhcp_run_script_lib_tests, protocol: 'gtest')
+test('dhcp-run-script-lib-tests', dhcp_run_script_lib_tests, protocol: 'gtest')

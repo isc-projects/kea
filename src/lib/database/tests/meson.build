@@ -16,4 +16,4 @@ kea_database_tests = executable(
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [kea_testutils_lib, kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )
-test('kea_database_tests', kea_database_tests, protocol: 'gtest')
+test('kea-database-tests', kea_database_tests, protocol: 'gtest')

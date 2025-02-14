@@ -15,7 +15,7 @@ dhcp_run_script_libload_tests = executable(
     link_with: LIBS_BUILT_SO_FAR,
 )
 test(
-    'dhcp_run_script_libload_tests',
+    'dhcp-run-script-libload-tests',
     dhcp_run_script_libload_tests,
     protocol: 'gtest',
 )

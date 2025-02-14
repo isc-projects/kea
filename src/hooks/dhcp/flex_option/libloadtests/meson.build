@@ -15,7 +15,7 @@ dhcp_flex_option_libload_tests = executable(
     link_with: LIBS_BUILT_SO_FAR,
 )
 test(
-    'dhcp_flex_option_libload_tests',
+    'dhcp-flex-option-libload-tests',
     dhcp_flex_option_libload_tests,
     protocol: 'gtest',
 )

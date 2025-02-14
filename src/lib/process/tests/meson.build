@@ -28,6 +28,6 @@ kea_process_tests = executable(
         f'-DDATA_DIR="@DHCP_DATA_DIR@"',
     ],
     include_directories: [include_directories('.')] + INCLUDES,
-    link_with: [kea_util_unittests_lib] + libs_testutils + LIBS_BUILT_SO_FAR,
+    link_with: [kea_util_unittests_lib, libs_testutils] + LIBS_BUILT_SO_FAR,
 )
-test('kea_process_tests', kea_process_tests, protocol: 'gtest')
+test('kea-process-tests', kea_process_tests, protocol: 'gtest')

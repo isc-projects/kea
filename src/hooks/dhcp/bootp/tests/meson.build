@@ -13,4 +13,4 @@ dhcp_bootp_lib_tests = executable(
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
     link_with: [dhcp_bootp_archive] + LIBS_BUILT_SO_FAR,
 )
-test('dhcp_bootp_lib_tests', dhcp_bootp_lib_tests, protocol: 'gtest')
+test('dhcp-bootp-lib-tests', dhcp_bootp_lib_tests, protocol: 'gtest')

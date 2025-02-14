@@ -1,4 +1,4 @@
-if not gtest.found()
+if not gtest.found() or not mysql.found()
     subdir_done()
 endif
 

@@ -12,4 +12,10 @@ kea_tcp_tests = executable(
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [kea_util_unittests_lib, kea_asiolink_testutils_lib] + LIBS_BUILT_SO_FAR,
 )
-test('kea_tcp_tests', kea_tcp_tests, protocol: 'gtest', is_parallel: false)
+test(
+    'kea-tcp-tests',
+    kea_tcp_tests,
+    protocol: 'gtest',
+    is_parallel: false,
+    priority: -1,
+)

@@ -64,6 +64,6 @@ kea_dhcp_tests = executable(
     dependencies: [gtest, crypto],
     cpp_args: [f'-DTEST_DATA_BUILDDIR="@current_build_dir@"'],
     include_directories: [include_directories('.')] + INCLUDES,
-    link_with: [kea_util_unittests_lib] + libs_testutils + LIBS_BUILT_SO_FAR,
+    link_with: [kea_util_unittests_lib, libs_testutils] + LIBS_BUILT_SO_FAR,
 )
-test('kea_dhcp_tests', kea_dhcp_tests, protocol: 'gtest')
+test('kea-dhcp-tests', kea_dhcp_tests, protocol: 'gtest')

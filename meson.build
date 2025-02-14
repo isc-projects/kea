@@ -164,6 +164,7 @@ if not crypto.found()
 endif
 
 # Kerberos
+krb5 = disabler()
 krb5_config = find_program('krb5-config', required: false)
 if krb5_config.found()
     cflags = run_command([krb5_config, '--cflags', 'gssapi'], check: false)
@@ -243,8 +244,8 @@ endif
 
 # NETCONF
 netconf_deps = {}
-netconf_deps_array = []
-netconf_deps_found = true
+NETCONF_DEPS_ARRAY = []
+NETCONF_DEPS_FOUND = true
 foreach dep : ['yang', 'yang-cpp', 'sysrepo', 'sysrepo-cpp']
     netconf_deps = netconf_deps + {dep: dependency(dep, required: false)}
     if netconf_deps[dep].found()
@@ -272,9 +273,9 @@ foreach dep : ['yang', 'yang-cpp', 'sysrepo', 'sysrepo-cpp']
 endforeach
 foreach dep : ['yang', 'yang-cpp', 'sysrepo', 'sysrepo-cpp']
     if netconf_deps[dep].found()
-        netconf_deps_array += netconf_deps[dep]
+        NETCONF_DEPS_ARRAY += netconf_deps[dep]
     else
-        netconf_deps_found = false
+        NETCONF_DEPS_FOUND = false
     endif
 endforeach
 

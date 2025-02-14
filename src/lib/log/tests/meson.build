@@ -23,7 +23,7 @@ kea_log_tests = executable(
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )
-test('kea_log_tests', kea_log_tests, protocol: 'gtest')
+test('kea-log-tests', kea_log_tests, protocol: 'gtest')
 
 kea_log_init_tests = executable(
     'kea-log-init-tests',
@@ -34,7 +34,7 @@ kea_log_init_tests = executable(
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )
-test('kea_log_init_tests', kea_log_init_tests, protocol: 'gtest')
+test('kea-log-init-tests', kea_log_init_tests, protocol: 'gtest')
 
 logger_example = executable(
     'logger_example',
@@ -80,6 +80,12 @@ foreach shtest : shtests
         output: shtest,
         configuration: shtests_conf_data,
     )
-    name = 'kea_log_' + shtest
-    test(name, shfile, workdir: current_build_dir, is_parallel: false)
+    name = 'kea-log-' + shtest
+    test(
+        name,
+        shfile,
+        workdir: current_build_dir,
+        is_parallel: false,
+        priority: -1,
+    )
 endforeach

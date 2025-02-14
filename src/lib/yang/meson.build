@@ -1,4 +1,4 @@
-if not netconf_deps_found
+if not NETCONF_DEPS_FOUND
     subdir_done()
 endif
 
@@ -23,7 +23,7 @@ kea_yang_lib = library(
     'translator_pool.cc',
     'translator_shared_network.cc',
     'translator_subnet.cc',
-    dependencies: netconf_deps_array,
+    dependencies: NETCONF_DEPS_ARRAY,
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib',

@@ -24,6 +24,6 @@ kea_config_tests = executable(
         f'-DTEST_CA_DIR="@TEST_CA_DIR@"',
     ],
     include_directories: [include_directories('.')] + INCLUDES,
-    link_with: [kea_util_unittests_lib] + libs_testutils + LIBS_BUILT_SO_FAR,
+    link_with: [kea_util_unittests_lib, libs_testutils] + LIBS_BUILT_SO_FAR,
 )
-test('kea_config_tests', kea_config_tests, protocol: 'gtest')
+test('kea-config-tests', kea_config_tests, protocol: 'gtest')

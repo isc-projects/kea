@@ -32,6 +32,12 @@ kea_http_tests = executable(
     ],
     dependencies: [gtest, crypto],
     include_directories: [include_directories('.')] + INCLUDES,
-    link_with: [kea_util_unittests_lib] + libs_testutils + LIBS_BUILT_SO_FAR,
+    link_with: [kea_util_unittests_lib, libs_testutils] + LIBS_BUILT_SO_FAR,
 )
-test('kea_http_tests', kea_http_tests, protocol: 'gtest', is_parallel: false)
+test(
+    'kea-http-tests',
+    kea_http_tests,
+    protocol: 'gtest',
+    is_parallel: false,
+    priority: -1,
+)

@@ -19,7 +19,7 @@ kea_hooks_tests = executable(
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )
-test('kea_hooks_tests', kea_hooks_tests, protocol: 'gtest')
+test('kea-hooks-tests', kea_hooks_tests, protocol: 'gtest')
 
 kea_hooks_conf_data = configuration_data()
 kea_hooks_conf_data.set('abs_builddir', meson.current_build_dir())

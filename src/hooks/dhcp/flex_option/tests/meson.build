@@ -14,4 +14,4 @@ dhcp_flex_option_lib_tests = executable(
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
     link_with: [dhcp_flex_option_archive] + LIBS_BUILT_SO_FAR,
 )
-test('dhcp_flex_option_lib_tests', dhcp_flex_option_lib_tests, protocol: 'gtest')
+test('dhcp-flex-option-lib-tests', dhcp_flex_option_lib_tests, protocol: 'gtest')

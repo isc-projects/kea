@@ -10,4 +10,4 @@ kea_config_backend_tests = executable(
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [kea_testutils_lib, kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )
-test('kea_config_backend_tests', kea_config_backend_tests, protocol: 'gtest')
+test('kea-config-backend-tests', kea_config_backend_tests, protocol: 'gtest')

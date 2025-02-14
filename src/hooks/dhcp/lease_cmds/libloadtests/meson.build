@@ -14,7 +14,7 @@ dhcp_lease_cmds_libload_tests = executable(
     link_with: LIBS_BUILT_SO_FAR,
 )
 test(
-    'dhcp_lease_cmds_libload_tests',
+    'dhcp-lease-cmds-libload-tests',
     dhcp_lease_cmds_libload_tests,
     protocol: 'gtest',
 )

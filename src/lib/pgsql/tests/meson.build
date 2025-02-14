@@ -1,4 +1,4 @@
-if not gtest.found()
+if not gtest.found() or not postgresql.found()
     subdir_done()
 endif
 
@@ -16,6 +16,12 @@ kea_pgsql_tests = executable(
     cpp_args: [f'-DTEST_CA_DIR="@TEST_CA_DIR@"', f'-DKEA_ADMIN="@KEA_ADMIN@"'],
     dependencies: [gtest, postgresql],
     include_directories: [include_directories('.')] + INCLUDES,
-    link_with: [kea_util_unittests_lib] + libs_testutils + LIBS_BUILT_SO_FAR,
+    link_with: [kea_util_unittests_lib, libs_testutils] + LIBS_BUILT_SO_FAR,
 )
-test('kea_pgsql_tests', kea_pgsql_tests, protocol: 'gtest')
+test(
+    'kea-pgsql-tests',
+    kea_pgsql_tests,
+    protocol: 'gtest',
+    is_parallel: false,
+    priority: -1,
+)

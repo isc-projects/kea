@@ -13,4 +13,4 @@ dhcp_perfmon_libload_tests = executable(
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
 )
-test('dhcp_perfmon_libload_tests', dhcp_perfmon_libload_tests, protocol: 'gtest')
+test('dhcp-perfmon-libload-tests', dhcp_perfmon_libload_tests, protocol: 'gtest')

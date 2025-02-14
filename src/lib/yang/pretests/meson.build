@@ -1,11 +1,12 @@
-if not gtest.found()
+if not gtest.found() or not NETCONF_DEPS_FOUND
     subdir_done()
 endif
 
 sysrepo_setup_tests = executable(
     'kea-sysrepo-setup-tests',
     'sysrepo_setup_tests.cc',
-    dependencies: netconf_deps_array,
+    dependencies: NETCONF_DEPS_ARRAY,
     include_directories: [include_directories('.')] + INCLUDES,
+    override_options: ['cpp_std=c++20'],
 )
-test('sysrepo_setup_tests', sysrepo_setup_tests)
+test('kea-sysrepo-setup-tests', sysrepo_setup_tests)

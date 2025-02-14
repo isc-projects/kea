@@ -4,7 +4,7 @@ keactrl_conf_data.set('sysconfdir', '${prefix}/' + SYSCONFDIR)
 keactrl_conf_data.set('PACKAGE', 'kea')
 keactrl_conf_data.set('exec_prefix', '${prefix}')
 keactrl_conf_data.set('sbindir', '${prefix}/' + get_option('sbindir'))
-if netconf_deps_found
+if NETCONF_DEPS_FOUND
     keactrl_conf_data.set('HAVE_NETCONF', 'yes')
 else
     keactrl_conf_data.set('HAVE_NETCONF', 'no')
@@ -59,6 +59,6 @@ custom_target(
     input: 'kea-netconf.conf.pre',
     output: 'kea-netconf.conf',
     command: [path_replacer, '@INPUT@', '@OUTPUT@'],
-    install: netconf_deps_found,
+    install: NETCONF_DEPS_FOUND,
     install_dir: kea_configfiles_destdir,
 )

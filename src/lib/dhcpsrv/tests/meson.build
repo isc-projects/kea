@@ -103,13 +103,15 @@ kea_dhcpsrv_tests = executable(
     ],
     dependencies: [crypto],
     include_directories: [include_directories('.')] + INCLUDES,
-    link_with: [kea_util_unittests_lib] + libs_testutils + LIBS_BUILT_SO_FAR,
+    link_with: [kea_util_unittests_lib, libs_testutils] + LIBS_BUILT_SO_FAR,
 )
 test(
-    'kea_dhcpsrv_tests',
+    'kea-dhcpsrv-tests',
     kea_dhcpsrv_tests,
     protocol: 'gtest',
     is_parallel: false,
+    priority: -1,
+    timeout: 60,
 )
 
 shared_library(

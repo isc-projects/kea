@@ -1,3 +1,7 @@
+if not gtest.found()
+    subdir_done()
+endif
+
 subdir('input')
 subdir('tests')
 

@@ -10,4 +10,4 @@ kea_asiodns_tests = executable(
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [kea_testutils_lib, kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )
-test('kea_asiodns_tests', kea_asiodns_tests, protocol: 'gtest')
+test('kea-asiodns-tests', kea_asiodns_tests, protocol: 'gtest')

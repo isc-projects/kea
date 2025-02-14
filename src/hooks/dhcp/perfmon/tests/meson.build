@@ -17,6 +17,6 @@ dhcp_perfmon_lib_tests = executable(
     ],
     dependencies: [gtest, crypto],
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
-    link_with: [dhcp_perfmon_archive] + [kea_testutils_lib] + LIBS_BUILT_SO_FAR,
+    link_with: [dhcp_perfmon_archive, [kea_testutils_lib]] + LIBS_BUILT_SO_FAR,
 )
-test('dhcp_perfmon_lib_tests', dhcp_perfmon_lib_tests, protocol: 'gtest')
+test('dhcp-perfmon-lib-tests', dhcp_perfmon_lib_tests, protocol: 'gtest')

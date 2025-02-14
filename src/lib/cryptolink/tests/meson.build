@@ -12,4 +12,4 @@ kea_cryptolink_tests = executable(
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )
-test('kea_cryptolink_tests', kea_cryptolink_tests, protocol: 'gtest')
+test('kea-cryptolink-tests', kea_cryptolink_tests, protocol: 'gtest')

@@ -3,8 +3,8 @@ if not gtest.found()
 endif
 
 current_build_dir = meson.current_build_dir()
-lfc_unittests = executable(
-    'lfc-unittests',
+kea_lfc_tests = executable(
+    'kea-lfc-tests',
     'lfc_controller_unittests.cc',
     'lfc_unittests.cc',
     cpp_args: [f'-DTEST_DATA_BUILDDIR="@current_build_dir@"'],
@@ -12,4 +12,4 @@ lfc_unittests = executable(
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [lfc_lib] + LIBS_BUILT_SO_FAR,
 )
-test('lfc_unittests', lfc_unittests, protocol: 'gtest')
+test('kea-lfc-tests', kea_lfc_tests, protocol: 'gtest')

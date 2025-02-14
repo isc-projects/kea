@@ -23,4 +23,4 @@ dhcp_user_chk_lib_tests = executable(
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
     link_with: [dhcp_user_chk_archive] + LIBS_BUILT_SO_FAR,
 )
-test('dhcp_user_chk_lib_tests', dhcp_user_chk_lib_tests, protocol: 'gtest')
+test('dhcp-user-chk-lib-tests', dhcp_user_chk_lib_tests, protocol: 'gtest')
