@@ -69,7 +69,7 @@ kea_d2_tests = executable(
         f'-DSYNTAX_FILE="@current_source_dir@/../d2_parser.yy"',
         f'-DTEST_CA_DIR="@TEST_CA_DIR@"',
     ],
-    dependencies: [gtest],
+    dependencies: [gtest, crypto],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [d2_lib] + kea_d2_tests_libs + LIBS_BUILT_SO_FAR,
 )
