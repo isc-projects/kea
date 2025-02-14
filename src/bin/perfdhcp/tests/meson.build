@@ -2,6 +2,7 @@ if not gtest.found()
     subdir_done()
 endif
 
+current_source_dir = meson.current_source_dir()
 perfdhcp_tests = executable(
     'perfdhcp-tests',
     'avalanche_scen_unittest.cc',
@@ -17,8 +18,9 @@ perfdhcp_tests = executable(
     'run_unittests.cc',
     'stats_mgr_unittest.cc',
     'test_control_unittest.cc',
+    cpp_args: [f'-DTEST_DATA_DIR="@current_source_dir@/testdata"'],
     dependencies: [gtest],
-    include_directories: [include_directories('.')] + INCLUDES,
-    link_with: LIBS_BUILT_SO_FAR,
+    include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
+    link_with: [perfdhcp_lib, kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )
 test('perfdhcp-tests', perfdhcp_tests, protocol: 'gtest')
