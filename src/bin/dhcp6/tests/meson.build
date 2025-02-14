@@ -4,7 +4,7 @@ endif
 
 current_build_dir = meson.current_build_dir()
 current_source_dir = meson.current_source_dir()
-dhcp6_tests_deps = [boost, crypto, gtest]
+dhcp6_tests_deps = [crypto, gtest]
 dhcp6_tests_libs = [
     kea_dhcpsrv_testutils_lib,
     kea_dhcp_testutils_lib,
@@ -33,7 +33,7 @@ endif
 dhcp6_tests_conf_data = configuration_data()
 dhcp6_tests_conf_data.set('abs_top_builddir', TOP_BUILD_DIR)
 dhcp6_tests_conf_data.set('abs_top_srcdir', TOP_SOURCE_DIR)
-dhcp6_tests_conf_data.set('abs_builddir', meson.current_build_dir())
+dhcp6_tests_conf_data.set('abs_builddir', current_build_dir)
 dhcp6_process_tests = configure_file(
     input: 'meson-dhcp6_process_tests.sh.in',
     output: 'dhcp6_process_tests.sh',
@@ -43,7 +43,8 @@ test(
     'dhcp6_process_tests.sh',
     dhcp6_process_tests,
     workdir: current_build_dir,
-    is_parallel: false, priority: -1,
+    is_parallel: false,
+    priority: -1,
 )
 configure_file(
     input: 'marker_file.h.in',
@@ -60,39 +61,40 @@ configure_file(
     output: 'test_libraries.h',
     configuration: dhcp6_tests_conf_data,
 )
-# Not yet used configs-list.txt
 kea_dhcp6_tests = executable(
     'kea-dhcp6-tests',
     'classify_unittest.cc',
     'client_handler_unittest.cc',
     'config_backend_unittest.cc',
     'config_parser_unittest.cc',
+    'confirm_unittest.cc',
     'ctrl_dhcp6_srv_unittest.cc',
     'd2_unittest.cc',
     'decline_unittest.cc',
     'dhcp6_client.cc',
+    'dhcp6_message_test.cc',
     'dhcp6_srv_unittest.cc',
     'dhcp6_test_utils.cc',
     'dhcp6_unittests.cc',
-    'dhcp6to6_ipc_unittest.cc',
-    'direct_client_unittest.cc',
-    'dora_unittest.cc',
+    'dhcp6to4_ipc_unittest.cc',
     'fqdn_unittest.cc',
     'get_config_unittest.cc',
     'hooks_unittest.cc',
-    'host_options_unittest.cc',
     'host_unittest.cc',
     'http_control_socket_unittest.cc',
-    'inform_unittest.cc',
+    'infrequest_unittest.cc',
     'kea_controller_unittest.cc',
     'marker_file.cc',
-    'out_of_range_unittest.cc',
     'parser_unittest.cc',
-    'release_unittest.cc',
+    'rebind_unittest.cc',
+    'renew_unittest.cc',
+    'sarr_unittest.cc',
     'shared_network_unittest.cc',
     'simple_parser6_unittest.cc',
+    'tee_times_unittest.cc',
     'vendor_opts_unittest.cc',
     cpp_args: [
+        f'-DTOP_BUILDDIR="@TOP_BUILD_DIR@"',
         f'-DTEST_DATA_BUILDDIR="@current_build_dir@"',
         f'-DCFG_EXAMPLES="@TOP_SOURCE_DIR@/doc/examples/kea6"',
         f'-DDHCP_DATA_DIR="@current_build_dir@"',
@@ -102,9 +104,15 @@ kea_dhcp6_tests = executable(
     ],
     dependencies: dhcp6_tests_deps,
     include_directories: [include_directories('.')] + INCLUDES,
-    link_with: [dhcp6_lib, dhcp6_tests_libs] + LIBS_BUILT_SO_FAR,
+    link_with: [dhcp6_lib] + dhcp6_tests_libs + LIBS_BUILT_SO_FAR,
 )
-test('kea-dhcp6-tests', kea_dhcp6_tests, protocol: 'gtest', is_parallel: false, priority: -1)
+test(
+    'kea-dhcp6-tests',
+    kea_dhcp6_tests,
+    protocol: 'gtest',
+    is_parallel: false,
+    priority: -1,
+)
 
 shared_library(
     'co1',

@@ -4,7 +4,7 @@ endif
 
 current_build_dir = meson.current_build_dir()
 current_source_dir = meson.current_source_dir()
-dhcp4_tests_deps = [boost, crypto, gtest]
+dhcp4_tests_deps = [crypto, gtest]
 dhcp4_tests_libs = [
     kea_dhcpsrv_testutils_lib,
     kea_dhcp_testutils_lib,
@@ -33,7 +33,7 @@ endif
 dhcp4_tests_conf_data = configuration_data()
 dhcp4_tests_conf_data.set('abs_top_builddir', TOP_BUILD_DIR)
 dhcp4_tests_conf_data.set('abs_top_srcdir', TOP_SOURCE_DIR)
-dhcp4_tests_conf_data.set('abs_builddir', meson.current_build_dir())
+dhcp4_tests_conf_data.set('abs_builddir', current_build_dir)
 dhcp4_process_tests = configure_file(
     input: 'meson-dhcp4_process_tests.sh.in',
     output: 'dhcp4_process_tests.sh',
@@ -103,7 +103,7 @@ kea_dhcp4_tests = executable(
     ],
     dependencies: dhcp4_tests_deps,
     include_directories: [include_directories('.')] + INCLUDES,
-    link_with: [dhcp4_lib, dhcp4_tests_libs] + LIBS_BUILT_SO_FAR,
+    link_with: [dhcp4_lib] + dhcp4_tests_libs + LIBS_BUILT_SO_FAR,
 )
 test(
     'kea-dhcp4-tests',
