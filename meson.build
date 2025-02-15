@@ -308,6 +308,12 @@ result = cpp.run(
 )
 conf_data.set('HAVE_GENERIC_TLS_METHOD', result.returncode() == 0)
 
+result = cpp.run(
+    fs.read('compiler-checks/have-optreset.cc'),
+    name: 'HAVE_OPTRESET',
+)
+conf_data.set('HAVE_OPTRESET', result.returncode() == 0)
+
 result = cpp.run(fs.read('compiler-checks/have-sa-len.cc'), name: 'HAVE_SA_LEN')
 conf_data.set('HAVE_SA_LEN', result.returncode() == 0)
 
