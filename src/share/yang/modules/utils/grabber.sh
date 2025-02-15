@@ -1,6 +1,6 @@
 #!/bin/sh
 
-for i in upgrade_*_to_*.sh.in
+for i in [a-z]*.yang
 do
     echo "$i"
 done
