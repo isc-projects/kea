@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -111,7 +111,8 @@ using ControlSocketBasePtr = std::shared_ptr<ControlSocketBase>;
 /// @param ctrl_sock The control socket configuration.
 /// @return A pointer to a control socket communication object.
 /// @throw NotImplemented if no specialization was called.
-template <CfgControlSocket::Type TYPE> ControlSocketBasePtr
+template <CfgControlSocket::Type TYPE>
+ControlSocketBasePtr
 createControlSocket(CfgControlSocketPtr ctrl_sock) {
     isc_throw(NotImplemented, "not specialized createControlSocket");
 }

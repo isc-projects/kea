@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,7 +10,6 @@
 #include <exceptions/exceptions.h>
 #include <netconf/netconf_cfg_mgr.h>
 #include <netconf/parser_context.h>
-#include <netconf/tests/test_libraries.h>
 #include <process/d_cfg_mgr.h>
 #include <process/testutils/d_test_stubs.h>
 #include <testutils/gtest_utils.h>

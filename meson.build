@@ -665,3 +665,5 @@ subdir('fuzz')
 if have_premium
     subdir('premium')
 endif
+
+install_emptydir('var/run/kea')

@@ -1,4 +1,2 @@
 /netconf_tests.sh
 netconf_unittests
-test_data_files_config.h
-test_libraries.h

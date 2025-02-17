@@ -1577,8 +1577,6 @@ AC_CONFIG_FILES([src/bin/netconf/tests/Makefile])
 AC_CONFIG_FILES([src/bin/netconf/tests/shtests/Makefile])
 AC_CONFIG_FILES([src/bin/netconf/tests/shtests/netconf_tests.sh],
                 [chmod +x src/bin/netconf/tests/shtests/netconf_tests.sh])
-AC_CONFIG_FILES([src/bin/netconf/tests/test_data_files_config.h])
-AC_CONFIG_FILES([src/bin/netconf/tests/test_libraries.h])
 AC_CONFIG_FILES([src/bin/perfdhcp/Makefile])
 AC_CONFIG_FILES([src/bin/perfdhcp/tests/Makefile])
 AC_CONFIG_FILES([src/bin/perfdhcp/tests/testdata/Makefile])

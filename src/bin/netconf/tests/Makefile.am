@@ -9,7 +9,9 @@ AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
 AM_CPPFLAGS += -DCFG_EXAMPLES=\"$(abs_top_srcdir)/doc/examples/netconf\"
 AM_CPPFLAGS += -DKEATEST_MODULE
 AM_CPPFLAGS += -DSYNTAX_FILE=\"$(abs_srcdir)/../netconf_parser.yy\"
+AM_CPPFLAGS += -DTEST_DATA_SOURCEDIR=\"$(abs_top_srcdir)/src/bin/netconf/tests\"
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/bin/netconf/tests\"
+AM_CPPFLAGS += -DBASIC_CALLOUT_LIBRARY=\"$(abs_top_builddir)/src/bin/netconf/tests/.libs/libbasic.so\"
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
 AM_CPPFLAGS += $(LIBYANG_CPPFLAGS)
 AM_CPPFLAGS += $(LIBYANG_INCLUDEDIR)
@@ -21,8 +23,6 @@ AM_CPPFLAGS += $(SYSREPOCPP_CPPFLAGS)
 AM_CPPFLAGS += $(SYSREPOCPP_INCLUDEDIR)
 
 CLEANFILES = *.json *.log
-
-DISTCLEANFILES = test_data_files_config.h test_libraries.h
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -86,7 +86,6 @@ libbasic_la_LIBADD  += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libbasic_la_LIBADD  += $(top_builddir)/src/lib/log/libkea-log.la
 libbasic_la_LDFLAGS  = -avoid-version -export-dynamic -module -rpath /nowhere
 
-nodist_netconf_unittests_SOURCES = test_data_files_config.h test_libraries.h
 endif
 
 noinst_EXTRA_DIST = configs-list.txt

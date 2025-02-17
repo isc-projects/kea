@@ -2,6 +2,9 @@ if not gtest.found() or not NETCONF_DEPS_FOUND
     subdir_done()
 endif
 
+current_build_dir = meson.current_build_dir()
+current_source_dir = meson.current_source_dir()
+
 kea_netconf_tests = executable(
     'kea-netconf-tests',
     'basic_library.cc',
@@ -13,9 +16,31 @@ kea_netconf_tests = executable(
     'netconf_unittests.cc',
     'parser_unittests.cc',
     'run_unittests.cc',
-    dependencies: NETCONF_DEPS_ARRAY + [gtest],
+    cpp_args: [
+        f'-DBASIC_CALLOUT_LIBRARY="@current_build_dir@/libbasic.so"',
+        f'-DCFG_EXAMPLES="@TOP_SOURCE_DIR@/doc/examples/netconf"',
+        '-DKEATEST_MODULE',
+        f'-DSYNTAX_FILE="@current_source_dir@/../netconf_parser.yy"',
+        f'-DTEST_DATA_SOURCEDIR="@current_source_dir@"',
+        f'-DTEST_DATA_BUILDDIR="@current_build_dir@"',
+    ],
+    dependencies: NETCONF_DEPS_ARRAY + [gtest, crypto],
     include_directories: [include_directories('.')] + INCLUDES,
-    link_with: [kea_yang_tests_lib] + LIBS_BUILT_SO_FAR,
+    link_with: [
+        netconf_lib,
+        kea_yang_testutils_lib,
+        kea_process_testutils_lib,
+        kea_testutils_lib,
+    ] + LIBS_BUILT_SO_FAR,
     override_options: ['cpp_std=c++20'],
 )
 test('kea-netconf-tests', kea_netconf_tests, protocol: 'gtest')
+
+shared_library(
+    'basic',
+    'basic_library.cc',
+    include_directories: [include_directories('.')] + INCLUDES,
+    link_with: LIBS_BUILT_SO_FAR,
+    build_rpath: '/nowhere',
+    name_suffix: 'so',
+)
