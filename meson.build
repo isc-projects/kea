@@ -123,6 +123,36 @@ conf_data = configuration_data(
     },
 )
 
+#### System-specific Variables
+
+SYSTEM = build_machine.system()
+if SYSTEM == 'linux'
+    conf_data.set('OS_LINUX', true)
+    OS_TYPE = 'Linux'
+elif SYSTEM == 'freebsd'
+    conf_data.set('OS_BSD', true)
+    conf_data.set('OS_FREEBSD', true)
+    OS_TYPE = 'BSD'
+elif SYSTEM == 'netbsd'
+    conf_data.set('OS_BSD', true)
+    conf_data.set('OS_NETBSD', true)
+    OS_TYPE = 'BSD'
+elif SYSTEM == 'openbsd'
+    conf_data.set('OS_BSD', true)
+    conf_data.set('OS_OPENBSD', true)
+    OS_TYPE = 'BSD'
+elif SYSTEM == 'sun'
+    conf_data.set('OS_SOLARIS', true)
+    OS_TYPE = 'Solaris'
+elif SYSTEM == 'darwin'
+    conf_data.set('OS_BSD', true)
+    conf_data.set('OS_OSX', true)
+    OS_TYPE = 'BSD'
+else
+    error(f'Build failed: Unsupported system "@SYSTEM@".')
+endif
+message(f'Detected system "@SYSTEM@".')
+
 #### Programs
 
 python_exe = find_program('python3', 'python', required: false)
@@ -261,15 +291,30 @@ foreach dep : ['yang', 'yang-cpp', 'sysrepo', 'sysrepo-cpp']
     endif
 
     # Search in /opt.
-    lib = cpp.find_library(dep, dirs: [f'/opt/@dep@/lib'], required: false)
-    if lib.found()
-        netconf_deps = netconf_deps + {
-            dep: declare_dependency(
-                dependencies: [lib],
-                include_directories: include_directories(f'/opt/@dep@/include'),
-            ),
-        }
-    endif
+    foreach prefix : ['', 'lib']
+        path = f'/opt/@prefix@@dep@'
+        lib = cpp.find_library(dep, dirs: [f'/@path@/lib'], required: false)
+        if lib.found()
+            netconf_deps = netconf_deps + {
+                dep: declare_dependency(
+                    dependencies: [lib],
+                    include_directories: include_directories(f'/@path@/include'),
+                    variables: {'prefix': f'@path@'},
+                ),
+            }
+            if SYSTEM == 'darwin'
+                add_project_link_arguments(
+                    f'-Wl,-rpath,@path@/lib',
+                    language: 'cpp',
+                )
+            else
+                add_project_link_arguments(
+                    f'-Wl,-rpath=@path@/lib',
+                    language: 'cpp',
+                )
+            endif
+        endif
+    endforeach
 endforeach
 foreach dep : ['yang', 'yang-cpp', 'sysrepo', 'sysrepo-cpp']
     if netconf_deps[dep].found()
@@ -340,36 +385,6 @@ result = cpp.run(
     dependencies: [crypto],
 )
 conf_data.set('HAVE_STREAM_TRUNCATED_ERROR', result.returncode() == 0)
-
-#### System-specific Variables
-
-SYSTEM = build_machine.system()
-if SYSTEM == 'linux'
-    conf_data.set('OS_LINUX', true)
-    OS_TYPE = 'Linux'
-elif SYSTEM == 'freebsd'
-    conf_data.set('OS_BSD', true)
-    conf_data.set('OS_FREEBSD', true)
-    OS_TYPE = 'BSD'
-elif SYSTEM == 'netbsd'
-    conf_data.set('OS_BSD', true)
-    conf_data.set('OS_NETBSD', true)
-    OS_TYPE = 'BSD'
-elif SYSTEM == 'openbsd'
-    conf_data.set('OS_BSD', true)
-    conf_data.set('OS_OPENBSD', true)
-    OS_TYPE = 'BSD'
-elif SYSTEM == 'sun'
-    conf_data.set('OS_SOLARIS', true)
-    OS_TYPE = 'Solaris'
-elif SYSTEM == 'darwin'
-    conf_data.set('OS_BSD', true)
-    conf_data.set('OS_OSX', true)
-    OS_TYPE = 'BSD'
-else
-    error(f'Build failed: Unsupported system "@SYSTEM@".')
-endif
-message(f'Detected system "@SYSTEM@".')
 
 #### System-specific Compiler Flags
 
