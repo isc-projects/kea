@@ -320,7 +320,7 @@ PktFilterLPF::receive(Iface& iface, const SocketInfo& socket_info) {
 
     auto v4_len = buf.getLength() - buf.getPosition();
     if (v4_len <= 0) {
-        isc_throw(SocketReadError, "Pkt4FilterLpf:: packet has no DHCPv4 data");
+        isc_throw(SocketReadError, "Pkt4FilterLpf packet has no DHCPv4 data");
     }
 
     // Read the DHCP data.
@@ -349,7 +349,8 @@ PktFilterLPF::receive(Iface& iface, const SocketInfo& socket_info) {
 
             struct timeval cmsg_time;
             memcpy(&cmsg_time, CMSG_DATA(cmsg), sizeof(cmsg_time));
-            pkt->addPktEvent(PktEvent::SOCKET_RECEIVED, cmsg_time); break;
+            pkt->addPktEvent(PktEvent::SOCKET_RECEIVED, cmsg_time);
+            break;
         }
 
         cmsg = CMSG_NXTHDR(&m, cmsg);
