@@ -12,12 +12,17 @@
 
 namespace {
 
+/// @brief Macro around SCOPED_TRACE() for emitting a message including
+/// a source line number.
+/// @param line line number to emit
 #define SCOPED_LINE(line) \
     std::stringstream ss; \
     ss << "Scenario at line: " << line; \
     SCOPED_TRACE(ss.str());
 
-class LeaseCmdsFuncTest :  public ::testing::Test { 
+/// @brief Text fixture for testing lease command functions and
+/// class methods. Provides an intialized lease manager.
+class LeaseCmdsFuncTest :  public ::testing::Test {
 public:
     /// @brief Constructor
     LeaseCmdsFuncTest() {
@@ -25,12 +30,12 @@ public:
         lmptr_ = 0;
     }
 
+    /// @brief Initializes the lease manager.
     virtual void SetUp() {
         initLeaseMgr();
     }
 
     /// @brief Destructor
-    ///
     virtual ~LeaseCmdsFuncTest() {
         isc::dhcp::LeaseMgrFactory::destroy();
         lmptr_ = 0;

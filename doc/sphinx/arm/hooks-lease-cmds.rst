@@ -17,7 +17,7 @@ of the subnet to which it is supposed to belong. The library also
 provides a non-programmatic way to manage user contexts associated with
 leases.
 
-As of Kea 2.7.7, the library also provides support for ``binding-varriables``. Binding
+As of Kea 2.7.7, the library also provides support for ``binding-variables``. Binding
 variables allow the user to store custom values for each lease. They are discussed here:
 :ref:`binding-variables`.
 
@@ -1130,7 +1130,7 @@ lease:
 
     {
         "hooks-libraries": [{
-            "library": "lib/kea/hooks/libdhcp_lease_cmds.so",
+            "library": "/path/libdhcp_lease_cmds.so"
             "parameters": {
                 "binding-variables": [{
                     "name": "opt-222",

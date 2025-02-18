@@ -54,9 +54,9 @@ BindingVariable::BindingVariable(const std::string& name,
 const data::SimpleKeywords
 BindingVariable::CONFIG_KEYWORDS =
 {
-    {"name",        Element::string},
-    {"expression",  Element::string},
-    {"source",      Element::string}
+    { "name",        Element::string },
+    { "expression",  Element::string },
+    { "source",      Element::string }
 };
 
 BindingVariablePtr
@@ -138,13 +138,6 @@ BindingVariableCache::getLastFlushTime() {
     return (BaseStampedElement::getModificationTime());
 }
 
-/// @brief Tag for the name index.
-//struct VariableNameTag { };
-
-/// @brief Tag for the source index.
-//struct VariableSourceTag { };
-
-
 BindingVariableListPtr
 BindingVariableCache::getAll() {
     util::MultiThreadingLock lock(*mutex_);
@@ -153,7 +146,7 @@ BindingVariableCache::getAll() {
     const auto& index = variables_.get<VariableSequenceTag>();
     for (auto const& variable : index) {
         /// For now we'll return the pointer, w/o making a copy
-        /// of the  varaiable itself.  We never updates variables
+        /// of the  variable itself.  We never updates variables
         /// so we should be OK.
         var_list->push_back(variable);
     }

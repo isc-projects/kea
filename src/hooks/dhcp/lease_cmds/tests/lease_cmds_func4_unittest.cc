@@ -32,19 +32,17 @@ using namespace isc::lease_cmds;
 
 namespace {
 
-class LeaseCmdsFuncTest4 :  public LeaseCmdsFuncTest { 
+/// @brief DHCPv4 Test fixture for testing lease commands hook library
+/// functions and class methods.
+class LeaseCmdsFuncTest4 :  public LeaseCmdsFuncTest {
 public:
     /// @brief Constructor
     LeaseCmdsFuncTest4() = default;
 
     /// @brief Destructor
-    ///
     virtual ~LeaseCmdsFuncTest4() = default;
 
     /// @brief Creates an IPv4 lease
-    ///
-    /// Lease parameters: valid lifetime = 0xFFFFFFFE, cltt = 1923222072, fqdn-fwd = false,
-    /// fqdn-rev = true, hostname = myhost.example.com
     ///
     /// @param ip_address IP address for the lease.
     /// @param subnet_id subnet identifier
@@ -71,13 +69,7 @@ public:
         return (lease);
     }
 
-    /// @brief Initializes lease manager (and optionally populates it with a lease)
-    ///
-    /// Creates a lease manager and initial leases.
-    /// only) and optionally can create a lease, which is useful for leaseX-get and
-    /// leaseX-del type of tests. For lease details, see @ref createLease and
-    /// @ref createLease6.
-    ///
+    /// @brief Initializes the lease manager and populates it with test leases.
     virtual void initLeaseMgr() {
         LeaseMgrFactory::destroy();
         LeaseMgrFactory::create("type=memfile persist=false universe=4");
@@ -99,9 +91,9 @@ public:
     void testValidLeases4Committed();
 
     /// @brief Check that leases4_committed handler does not throw or alter
-    /// the lease under NOP conditions: 
-    /// 1. There is no repsonse packet
-    /// 2. Response packet is a DHCPACK 
+    /// the lease under NOP conditions:
+    /// 1. There is no response packet
+    /// 2. Response packet is a DHCPACK
     /// 3. There is no active lease
     void testNopLeases4Committed();
 };
@@ -216,7 +208,7 @@ LeaseCmdsFuncTest4::testValidLease4Offer() {
     IOAddress yiaddr("192.0.2.1");
     response->setYiaddr(yiaddr);
 
-    // Iterater over scenarios.
+    // Iterates over scenarios.
     for (auto const& scenario : scenarios) {
         SCOPED_LINE(scenario.line_);
 
@@ -245,7 +237,7 @@ LeaseCmdsFuncTest4::testValidLease4Offer() {
         callout_handle->setArgument("leases4", leases);
         callout_handle->setArgument("offer_lifetime", scenario.offer_lifetime_);
 
-        // Invoke the leases4Committed handler.
+        // Invoke the lease4Offer handler.
         LeaseCmds cmds;
         ASSERT_NO_THROW_LOG(cmds.lease4Offer(*callout_handle, mgr));
 
@@ -346,7 +338,7 @@ LeaseCmdsFuncTest4::testValidLeases4Committed() {
     IOAddress yiaddr("192.0.2.1");
     response->setYiaddr(yiaddr);
 
-    // Iterater over scenarios.
+    // Iterates over scenarios.
     for (auto const& scenario : scenarios) {
         SCOPED_LINE(scenario.line_);
 
@@ -399,12 +391,12 @@ LeaseCmdsFuncTest4::testNopLeases4Committed() {
 
     // Configure a single variable.
     std::string config =
-    R"^({"binding-variables":[
-    {
-        "name": "hwaddr",
-        "expression": "hexstring(pkt4.mac,':')",
-        "source": "query"
-    }]})^";
+        R"^({"binding-variables":[
+        {
+            "name": "hwaddr",
+            "expression": "hexstring(pkt4.mac,':')",
+            "source": "query"
+        }]})^";
 
     // Create and configure the manager.
     BindingVariableMgrPtr mgr;

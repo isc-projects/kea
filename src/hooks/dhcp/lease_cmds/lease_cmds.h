@@ -609,11 +609,11 @@ public:
     /// @brief lease4_offer hookpoint handler.
     ///
     /// If the offer_lifetime callout argument is 0 the handler simply returns.
-    /// Otherwise it will evaluate the binding variables (if any) and update 
+    /// Otherwise it will evaluate the binding variables (if any) and update
     /// the given lease's user-context accordingly.  This includes updating the
     /// lease in the lease back end.
     ///
-    /// @param handle Callout context - which is expected to contain the query4, response4,
+    /// @param callout_handle Callout context - which is expected to contain the query4, response4,
     /// leases4 arguments, and offer_lifetime.
     /// @param mgr Pointer to the BindingVariableMgr singleton.
     void
@@ -626,7 +626,7 @@ public:
     /// user-context accordingly.  This includes updating the lease in the lease
     /// back end.
     ///
-    /// @param handle Callout context - which is expected to contain the query4, response4,
+    /// @param callout_handle Callout context - which is expected to contain the query4, response4,
     /// and leases4 arguments.
     /// @param mgr Pointer to the BindingVariableMgr singleton.
     void
@@ -639,7 +639,7 @@ public:
     /// user-context accordingly.  This includes updating the leases in the lease
     /// back end.
     ///
-    /// @param handle Callout context - which is expected to contain the query6, response6,
+    /// @param callout_handle Callout context - which is expected to contain the query6, response6,
     /// and leases6 arguments.
     /// @param mgr Pointer to the BindingVariableMgr singleton.
     void

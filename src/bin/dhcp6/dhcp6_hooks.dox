@@ -349,6 +349,7 @@ called before "subnet6_select".
 
  - @b Arguments:
    - name: @b query6, type: isc::dhcp::Pkt6Ptr, direction: <b>in</b>
+   - name: @b response6, type: isc::dhcp::Pkt6Ptr, direction: <b>in</b>
    - name: @b leases6, type: isc::dhcp::Lease6CollectionPtr, direction: <b>in</b>
    - name: @b deleted_leases6, type: isc::dhcp::Lease6CollectionPtr, direction: <b>in</b>
 

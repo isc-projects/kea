@@ -480,7 +480,7 @@ public:
     /// user-context accordingly.  This includes updating the lease in the lease
     /// back end.
     ///
-    /// @param handle Callout context - which is expected to contain the query4,
+    /// @param callout_handle Callout context - which is expected to contain the query4,
     /// response4, leases4, offer_lifetime arguments.
     /// @param mgr Pointer to the BindingVariableMgr singleton.
     /// @throw Unexpected if there is no active lease or a processing error
@@ -495,7 +495,7 @@ public:
     /// user-context accordingly.  This includes updating the lease in the lease
     /// back end.
     ///
-    /// @param handle Callout context - which is expected to contain the query4,
+    /// @param callout_handle Callout context - which is expected to contain the query4,
     /// response4, and leases4 arguments.
     /// @param mgr Pointer to the BindingVariableMgr singleton.
     /// @throw Unexpected if a processing error occurs. LeaseCmdsConflict if the
@@ -509,7 +509,7 @@ public:
     /// user-context accordingly.  This includes updating the leases in the lease
     /// back end.
     ///
-    /// @param handle Callout context - which is expected to contain the query6,
+    /// @param callout_handle Callout context - which is expected to contain the query6,
     /// response6, and leases6 arguments.
     /// @param mgr Pointer to the BindingVariableMgr singleton.
     /// @throw Unexpected if there a processing error occurs. LeaseCmdsConflict
@@ -2762,7 +2762,7 @@ LeaseCmdsImpl::lease4Offer(CalloutHandle& callout_handle,
     callout_handle.getArgument("response4", response);
     callout_handle.getArgument("leases4", leases);
 
-    if (leases->empty()) {
+    if (!leases || leases->empty() || !((*leases)[0])) {
         isc_throw(Unexpected, "lease4Offer - no lease!");
     }
 
@@ -2801,6 +2801,10 @@ LeaseCmdsImpl::leases4Committed(CalloutHandle& callout_handle,
     }
 
     Lease4Ptr lease = (*leases)[0];
+    if (!lease) {
+        isc_throw(Unexpected, "leases4Committed - no lease!");
+    }
+
     try {
         if (mgr->evaluateVariables(query, response, lease)) {
             LeaseMgrFactory::instance().updateLease4(lease);

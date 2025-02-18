@@ -87,7 +87,7 @@ public:
     /// @note This function in used internally by @ref closeCommandSockets and it
     /// should not be used directly, except for unit tests.
     ///
-    /// @param config Configuration information for the unix control socket.
+    /// @param info Configuration information for the unix control socket.
     void closeCommandSocket(UnixSocketInfoPtr info = UnixSocketInfoPtr());
 
     /// @brief Shuts down any open unix control sockets.
@@ -97,7 +97,7 @@ public:
     ///
     /// This method should be used only in tests.
     ///
-    /// @param config Configuration information for the unix control socket.
+    /// @param info Configuration information for the unix control socket.
     ///
     /// @return The file descriptor of the specified unix control socket.
     int getControlSocketFD(UnixSocketInfoPtr info = UnixSocketInfoPtr());

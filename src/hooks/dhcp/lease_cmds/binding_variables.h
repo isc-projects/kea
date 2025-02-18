@@ -26,7 +26,6 @@
 namespace isc {
 namespace lease_cmds {
 
-
 // Forward declaration for pointer.
 class BindingVariable;
 
@@ -61,10 +60,10 @@ public:
     /// protocol family.
     /// @throw BadValue if name if empty, or expression string fails
     /// to parse.
-    explicit BindingVariable(const std::string& name,
-                             const std::string& expression_str,
-                             const Source& source,
-                             uint32_t family);
+    BindingVariable(const std::string& name,
+                    const std::string& expression_str,
+                    const Source& source,
+                    uint32_t family);
 
     /// @brief Destructor
     virtual ~BindingVariable() = default;
@@ -73,7 +72,7 @@ public:
     ///
     /// @param config Map Element containing parameters for a single binding variable.
     /// @param family Protocol family of the variable, either AF_INET or AF_INET6.
-    /// @return Pointer to the newly created BindingVariable instacne.
+    /// @return Pointer to the newly created BindingVariable instance.
     /// @throw DhcpConfigError if configuration parameters are invalid.
     static BindingVariablePtr parse(data::ConstElementPtr config, uint16_t family);
 
@@ -176,7 +175,6 @@ typedef boost::multi_index_container<
                                               std::string,
                                               &BindingVariable::getName>
         >,
-
         // Third index is by source.
         boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<VariableSourceTag>,
@@ -251,7 +249,7 @@ private:
 /// @brief Defines a shared pointer to a BindingVariableCache.
 typedef boost::shared_ptr<BindingVariableCache> BindingVariableCachePtr;
 
-/// @brief Singleton which warehouses the configuraed binding variables,
+/// @brief Singleton which warehouses the configured binding variables,
 /// and evaluation of variables for a given lease and packet pair.
 class BindingVariableMgr {
 public:
@@ -259,7 +257,7 @@ public:
     ///
     /// @param family Protocol family of the expression, either
     /// AF_INET or AF_INET6.
-    explicit BindingVariableMgr(uint32_t family_);
+    explicit BindingVariableMgr(uint32_t family);
 
     /// @brief Destructor;
     ~BindingVariableMgr() = default;
@@ -297,8 +295,8 @@ public:
     /// @param response Server response conveying the lease. Variables whose source
     /// is "response" will be evaluated against this packet.
     /// @param lease Lease whose use-context will be updated with the evaluation
-    /// results.  If the results of the evaluation are idnentical the the lease's
-    /// exising binding-variables value, the lease is not altered. This allows
+    /// results.  If the results of the evaluation are identical the the lease's
+    /// existing binding-variables value, the lease is not altered. This allows
     /// a subsequent lease store update to only occur when needed.
     /// @return True if the lease's user-context was udpated, false otherwise.
     bool evaluateVariables(dhcp::PktPtr query, dhcp::PktPtr response,

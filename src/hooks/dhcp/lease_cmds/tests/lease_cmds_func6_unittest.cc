@@ -33,7 +33,9 @@ using namespace isc::lease_cmds;
 
 namespace {
 
-class LeaseCmdsFuncTest6 :  public LeaseCmdsFuncTest { 
+/// @brief DHCPv6 Test fixture for testing lease commands hook library
+/// functions and class methods.
+class LeaseCmdsFuncTest6 :  public LeaseCmdsFuncTest {
 public:
     /// @brief Constructor
     LeaseCmdsFuncTest6() = default;
@@ -41,10 +43,10 @@ public:
     /// @brief Destructor
     virtual ~LeaseCmdsFuncTest6() = default;
 
-    /// @brief Initializes lease manager (and optionally populates it with a lease)
+    /// @brief Initializes the lease manager and populates it with test leases.
     void initLeaseMgr() {
         LeaseMgrFactory::destroy();
-        LeaseMgrFactory::create("type=memfile persist=false " 
+        LeaseMgrFactory::create("type=memfile persist=false "
                                                "universe=6 extended-info-tables=true");
         lmptr_ = &(isc::dhcp::LeaseMgrFactory::instance());
         ASSERT_TRUE(lmptr_);
@@ -82,7 +84,7 @@ public:
 
     /// @brief Check that leases6_committed handler does not throw or alter
     /// leases under NOP conditions:
-    /// 1. There is no repsonse packet
+    /// 1. There is no response packet
     /// 2. There are no leases
     /// 3. There are leases but none active
     void testNopLeases6Committed();
@@ -188,7 +190,7 @@ LeaseCmdsFuncTest6::testValidLeases6Committed() {
     lease_addrs.push_back(IOAddress("2001:db8:1::2"));
     lease_addrs.push_back(IOAddress("2001:db8:2::2"));
 
-    // Iterater over scenarios.
+    // Iterates over scenarios.
     for (auto const& scenario : scenarios) {
         SCOPED_LINE(scenario.line_);
 

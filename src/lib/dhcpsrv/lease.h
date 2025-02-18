@@ -277,7 +277,7 @@ struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
     /// Update the ISC entry in the lease's user-context
     ///
     /// Adds or updates the named element within the "ISC" map
-    /// with the lease's "user-context".  The update occurs only if
+    /// with the lease's user context.  The update occurs only if
     /// the new value(s) are different than the existing values for the
     /// element.
     ///

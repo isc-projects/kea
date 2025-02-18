@@ -353,10 +353,16 @@ int load(LibraryHandle& handle) {
     // Instantiate the binding-variables manager singleton.
     binding_var_mgr.reset(new BindingVariableMgr(family));
 
-    // Configure binding variable manager using the hook library's parameters.
-    ConstElementPtr json = handle.getParameters();
-    if (json) {
-        binding_var_mgr->configure(json);
+    try {
+        // Configure binding variable manager using the hook library's parameters.
+        ConstElementPtr json = handle.getParameters();
+        if (json) {
+            binding_var_mgr->configure(json);
+        }
+    } catch (const std::exception& ex) {
+        LOG_ERROR(lease_cmds_logger, LEASE_CMDS_LOAD_ERROR)
+            .arg(ex.what());
+        return (1);
     }
 
     LOG_INFO(lease_cmds_logger, LEASE_CMDS_INIT_OK);

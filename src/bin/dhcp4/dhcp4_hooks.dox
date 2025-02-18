@@ -298,6 +298,7 @@ called before "subnet4_select".
 
  - @b Arguments:
    - name: @b query4, type: isc::dhcp::Pkt4Ptr, direction: <b>in</b>
+   - name: @b response4, type: isc::dhcp::Pkt4Ptr, direction: <b>in</b>
    - name: @b leases4, type: isc::dhcp::Lease4CollectionPtr, direction: <b>in</b>
    - name: @b deleted_leases4, type: isc::dhcp::Lease4CollectionPtr, direction: <b>in</b>
 
@@ -328,6 +329,7 @@ called before "subnet4_select".
 
  - @b Arguments:
    - name: @b query4, type: isc::dhcp::Pkt4Ptr, direction: <b>in</b>
+   - name: @b response4, type: isc::dhcp::Pkt4Ptr, direction: <b>in</b>
    - name: @b leases4, type: isc::dhcp::Lease4CollectionPtr, direction: <b>in</b>
    - name: @b offer_lifetime, type: uint32_t, direction: <b>in</b>
    - name: @b old_lease, type: isc::dhcp::Lease4Ptr, direction: <b>in</b>
@@ -336,6 +338,8 @@ called before "subnet4_select".
    DHCPDISCOVER from the client and the DHCPOFFER has been constructed but not
    yet sent back. The argument "query4" contains a pointer to an isc::dhcp::Pkt4
    object that contains all information regarding incoming DHCPDISCOVER packet.
+   The "response4" argument contains a pointer to an isc::dhcp::Pkt4 object that
+   contains all information regarding the outgoing::DHCPOFFER packet.
    The "leases4" object will hold the pointer to the new candidate lease for this
    client. The "offer_lifetime" argument comes from the context information for the
    DHCPv4 lease allocation. If "offer_lifetime" is not zero,  it indicates that temporary
