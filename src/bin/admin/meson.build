@@ -26,3 +26,4 @@ configure_file(
     install: true,
     install_dir: adminscriptsdir,
 )
+subdir('tests')

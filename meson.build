@@ -158,6 +158,16 @@ message(f'Detected system "@SYSTEM@".')
 python_exe = find_program('python3', 'python', required: false)
 flex_exe = find_program('flex', required: false)
 bison_exe = find_program('bison', required: false)
+awk_exe = find_program('gawk', 'awk', required: false)
+doxygen_exe = find_program('doxygen', required: false)
+sphinx_exe = find_program('sphinx-build', 'sphinx-build-3', required: false)
+pdflatex_exe = find_program('pdflatex', required: false)
+asciidoc_exe = find_program('asciidoc', required: false)
+plantuml_exe = find_program('plantuml', required: false)
+xmllint_exe = find_program('xmllint', required: false)
+pip_compile_exe = find_program('pip-compile', required: false)
+install_exe = find_program('install', required: true)
+valgrind_exe = find_program('valgrind', required: false)
 
 #### Dependencies
 
@@ -662,6 +672,7 @@ LIBS_BUILT_SO_FAR = []
 subdir('tools')
 subdir('src')
 subdir('fuzz')
+subdir('doc')
 if have_premium
     subdir('premium')
 endif

@@ -38,3 +38,4 @@ configure_file(
     install: false,
     install_dir: pkgpythondir,
 )
+subdir('tests')

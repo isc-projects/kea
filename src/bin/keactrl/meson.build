@@ -62,3 +62,4 @@ custom_target(
     install: NETCONF_DEPS_FOUND,
     install_dir: kea_configfiles_destdir,
 )
+subdir('tests')

@@ -44,3 +44,4 @@ shared_library(
     build_rpath: '/nowhere',
     name_suffix: 'so',
 )
+subdir('shtests')

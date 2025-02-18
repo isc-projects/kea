@@ -28,6 +28,7 @@ subdir('io')
 subdir('unittests')
 LIBS_BUILT_SO_FAR = [kea_util_lib] + LIBS_BUILT_SO_FAR
 subdir('tests')
+subdir('python')
 kea_util_headers = [
     'bigints.h',
     'boost_time_utils.h',
