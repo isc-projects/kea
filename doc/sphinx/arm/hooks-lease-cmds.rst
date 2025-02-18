@@ -1130,7 +1130,7 @@ lease:
 
     {
         "hooks-libraries": [{
-            "library": "/path/libdhcp_lease_cmds.so"
+            "library": "/path/libdhcp_lease_cmds.so",
             "parameters": {
                 "binding-variables": [{
                     "name": "opt-222",

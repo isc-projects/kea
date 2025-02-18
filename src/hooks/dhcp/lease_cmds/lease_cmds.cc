@@ -2856,7 +2856,7 @@ LeaseCmdsImpl::leases6Committed(CalloutHandle& callout_handle,
         } catch (const NoSuchLease&) {
             ++failed;
             LOG_ERROR(lease_cmds_logger, LEASE_CMDS_LEASES6_COMMITTED_CONFLICT)
-                .arg("WTF") //lease->addr_.toText())
+                .arg(lease->addr_.toText())
                 .arg(query->getLabel());
         } catch (const std::exception& ex) {
             ++failed;
