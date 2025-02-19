@@ -301,7 +301,7 @@ ControlledDhcpv4Srv::commandConfigWriteHandler(const string&,
         ConstElementPtr cfg = CfgMgr::instance().getCurrentCfg()->toElement();
         size = writeConfigFile(filename, cfg);
     } catch (const isc::Exception& ex) {
-        return (createAnswer(CONTROL_RESULT_ERROR, string("Error during write-config: ")
+        return (createAnswer(CONTROL_RESULT_ERROR, string("Error during config-write: ")
                              + ex.what()));
     }
     if (size == 0) {
@@ -799,6 +799,8 @@ ControlledDhcpv4Srv::commandStatusGetHandler(const string&,
     }
     status->set("sockets", sockets);
 
+    status->set("dhcp-state", network_state_->toElement());
+
     return (createAnswer(CONTROL_RESULT_SUCCESS, status));
 }
 
@@ -878,6 +880,8 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
         cfg_db->createManagers();
         // Reset counters related to connections as all managers have been recreated.
         srv->getNetworkState()->resetForDbConnection();
+        srv->getNetworkState()->resetForLocalCommands();
+        srv->getNetworkState()->resetForRemoteCommands();
     } catch (const std::exception& ex) {
         err << "Unable to open database: " << ex.what();
         return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
@@ -982,7 +986,6 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
     if (notify_libraries) {
         return (notify_libraries);
     }
-
 
     // Initialize the allocators. If the user selected a Free Lease Queue Allocator
     // for any of the subnets, the server will now populate free leases to the queue.
@@ -1259,10 +1262,12 @@ ControlledDhcpv4Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
     // Disable service until the connection is recovered.
     if (db_reconnect_ctl->retriesLeft() == db_reconnect_ctl->maxRetries() &&
         db_reconnect_ctl->alterServiceState()) {
-        network_state_->disableService(NetworkState::DB_CONNECTION);
+        network_state_->disableService(NetworkState::DB_CONNECTION + db_reconnect_ctl->id());
     }
 
-    LOG_INFO(dhcp4_logger, DHCP4_DB_RECONNECT_LOST_CONNECTION);
+    LOG_INFO(dhcp4_logger, DHCP4_DB_RECONNECT_LOST_CONNECTION)
+        .arg(db_reconnect_ctl->id())
+        .arg(db_reconnect_ctl->timerName());
 
     // If reconnect isn't enabled log it, initiate a shutdown if needed and
     // return false.
@@ -1270,7 +1275,9 @@ ControlledDhcpv4Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
         !db_reconnect_ctl->retryInterval()) {
         LOG_INFO(dhcp4_logger, DHCP4_DB_RECONNECT_DISABLED)
             .arg(db_reconnect_ctl->retriesLeft())
-            .arg(db_reconnect_ctl->retryInterval());
+            .arg(db_reconnect_ctl->retryInterval())
+            .arg(db_reconnect_ctl->id())
+            .arg(db_reconnect_ctl->timerName());
         if (db_reconnect_ctl->exitOnFailure()) {
             shutdownServer(EXIT_FAILURE);
         }
@@ -1289,11 +1296,14 @@ ControlledDhcpv4Srv::dbRecoveredCallback(ReconnectCtlPtr db_reconnect_ctl) {
     }
 
     // Enable service after the connection is recovered.
-    if (db_reconnect_ctl->alterServiceState()) {
-        network_state_->enableService(NetworkState::DB_CONNECTION);
+    if (db_reconnect_ctl->retriesLeft() != db_reconnect_ctl->maxRetries() &&
+        db_reconnect_ctl->alterServiceState()) {
+        network_state_->enableService(NetworkState::DB_CONNECTION + db_reconnect_ctl->id());
     }
 
-    LOG_INFO(dhcp4_logger, DHCP4_DB_RECONNECT_SUCCEEDED);
+    LOG_INFO(dhcp4_logger, DHCP4_DB_RECONNECT_SUCCEEDED)
+        .arg(db_reconnect_ctl->id())
+        .arg(db_reconnect_ctl->timerName());
 
     db_reconnect_ctl->resetRetries();
 
@@ -1309,7 +1319,9 @@ ControlledDhcpv4Srv::dbFailedCallback(ReconnectCtlPtr db_reconnect_ctl) {
     }
 
     LOG_INFO(dhcp4_logger, DHCP4_DB_RECONNECT_FAILED)
-            .arg(db_reconnect_ctl->maxRetries());
+        .arg(db_reconnect_ctl->maxRetries())
+        .arg(db_reconnect_ctl->id())
+        .arg(db_reconnect_ctl->timerName());
 
     if (db_reconnect_ctl->exitOnFailure()) {
         shutdownServer(EXIT_FAILURE);

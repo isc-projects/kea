@@ -7,6 +7,7 @@
 #ifndef NETWORK_STATE_H
 #define NETWORK_STATE_H
 
+#include <cc/cfg_to_element.h>
 #include <cc/data.h>
 #include <dhcpsrv/subnet_id.h>
 #include <boost/scoped_ptr.hpp>
@@ -57,10 +58,7 @@ class NetworkStateImpl;
 ///
 /// The DHCP state can also be altered by the database recovery mechanism, which
 /// disables the service on connection loss and re-enables it after the connection
-/// is restored. Unlike in HA, this is implemented using an internal counter. In
-/// this case, there is one origin for all database connections. The requests for
-/// the @c NetworkState::DB_CONNECTION are counted, and the DHCP service is
-/// re-enabled when the counter reaches 0.
+/// is restored.
 ///
 /// @todo We should consider migrating the database recovery to the same mechanism
 ///  we use for the HA. The reference counting works because the database connection
@@ -68,14 +66,8 @@ class NetworkStateImpl;
 /// corresponding request to enable the service. It prevents the situation that the
 /// service remains disabled because there were more requests to disable than to
 /// enable the service. It is hard to ensure the same consistency for the HA.
-class NetworkState {
+class NetworkState : public isc::data::CfgToElement {
 public:
-
-    /// @brief DHCP server type.
-    enum ServerType {
-        DHCPv4,
-        DHCPv6
-    };
 
     /// @brief Origin of the network state transition.
     ///
@@ -113,7 +105,7 @@ public:
     typedef std::set<std::string> Networks;
 
     /// @brief Constructor.
-    NetworkState(const ServerType& server_type);
+    NetworkState();
 
     /// @brief Disable the DHCP service state for respective transition origin.
     ///
@@ -138,6 +130,18 @@ public:
     /// It results in enabling the network service if network service for
     /// all other origins is enabled.
     void resetForDbConnection();
+
+    /// @brief Reset origins for local commands.
+    ///
+    /// It results in enabling the network service if network service for
+    /// all other origins is enabled.
+    void resetForLocalCommands();
+
+    /// @brief Reset origins for remote commands.
+    ///
+    /// It results in enabling the network service if network service for
+    /// all other origins is enabled.
+    void resetForRemoteCommands();
 
     /// @brief Schedules enabling DHCP service in the future.
     ///
@@ -195,6 +199,11 @@ public:
     ///
     /// @throw isc::NotImplemented
     void selectiveEnable(const NetworkState::Networks& networks);
+
+    /// @brief The network state as Element.
+    ///
+    /// @return The network state as Element.
+    virtual isc::data::ElementPtr toElement() const;
 
     //@}
 

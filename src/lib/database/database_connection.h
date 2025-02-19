@@ -56,7 +56,6 @@ public:
         isc::Exception(file, line, what) {}
 };
 
-
 /// @brief Invalid type exception
 ///
 /// Thrown when the factory doesn't recognize the type of the backend.
@@ -99,7 +98,6 @@ public:
     SchemaInitializationFailed(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
-
 
 /// @brief Defines a callback prototype for propagating events upward
 typedef std::function<bool (util::ReconnectCtlPtr db_reconnect_ctl)> DbCallback;
@@ -149,13 +147,14 @@ public:
     }
 
     /// @brief Destructor
-    virtual ~DatabaseConnection(){};
+    virtual ~DatabaseConnection(){}
 
     /// @brief Instantiates a ReconnectCtl based on the connection's
     /// reconnect parameters
     ///
     /// @param timer_name of the timer used for the ReconnectCtl object.
-    virtual void makeReconnectCtl(const std::string& timer_name);
+    /// @param id the ID of the manager.
+    virtual void makeReconnectCtl(const std::string& timer_name, unsigned int id);
 
     /// @brief The reconnect settings.
     ///
@@ -309,7 +308,7 @@ private:
     /// @brief Reconnect settings.
     util::ReconnectCtlPtr reconnect_ctl_;
 
-    /// The IOService object, used for all ASIO operations.
+    /// @brief The IOService object, used for all ASIO operations.
     static isc::asiolink::IOServicePtr io_service_;
 };
 

@@ -355,7 +355,7 @@ TEST_F(CloseHATest, close4) {
 
     // Prepare objects.
     IOServicePtr io_service(new IOService());
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    NetworkStatePtr network_state(new NetworkState());
     Pkt4Ptr query(new Pkt4(DHCPREQUEST, 12345));
     HWAddrPtr hwaddr(new HWAddr(std::vector<uint8_t>(6, 1), HTYPE_ETHER));
     query->setHWAddr(hwaddr);
@@ -501,7 +501,7 @@ TEST_F(CloseHATest, close4Backup) {
 
     // Prepare objects.
     IOServicePtr io_service(new IOService());
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    NetworkStatePtr network_state(new NetworkState());
 
     // Check that the state is computed on dhcp4_srv_configured.
     // It is first reset by the constructor and then adjusted by running the
@@ -592,7 +592,7 @@ TEST_F(CloseHATest, close6) {
 
     // Prepare objects.
     IOServicePtr io_service(new IOService());
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv6));
+    NetworkStatePtr network_state(new NetworkState());
     Pkt6Ptr query(new Pkt6(DHCPV6_REQUEST, 12345));
     DuidPtr duid(new DUID(std::vector<uint8_t>(8, 2)));
     OptionPtr opt_duid(new Option(Option::V6, D6O_CLIENTID, duid->getDuid()));
@@ -738,7 +738,7 @@ TEST_F(CloseHATest, close6Backup) {
 
     // Prepare objects.
     IOServicePtr io_service(new IOService());
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv6));
+    NetworkStatePtr network_state(new NetworkState());
 
     // Check that the state is computed on dhcp6_srv_configured.
     // It is first reset by the constructor and then adjusted by running the

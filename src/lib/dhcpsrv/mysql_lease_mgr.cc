@@ -14,6 +14,7 @@
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/mysql_lease_mgr.h>
+#include <dhcpsrv/network_state.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <mysql/mysql_connection.h>
 #include <util/multi_threading_mgr.h>
@@ -2204,6 +2205,7 @@ MySqlLeaseMgr::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
     bool reopened = false;
 
     const std::string timer_name = db_reconnect_ctl->timerName();
+    bool check = db_reconnect_ctl->checkRetries();
 
     // At least one connection was lost.
     try {
@@ -2226,7 +2228,7 @@ MySqlLeaseMgr::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
             return (false);
         }
     } else {
-        if (!db_reconnect_ctl->checkRetries()) {
+        if (!check) {
             // We're out of retries, log it and initiate shutdown.
             LOG_ERROR(dhcpsrv_logger, DHCPSRV_MYSQL_LEASE_DB_RECONNECT_FAILED)
                     .arg(db_reconnect_ctl->maxRetries());
@@ -2268,7 +2270,7 @@ MySqlLeaseMgr::createContext() const {
         &MySqlLeaseMgr::dbReconnect));
 
     // Create ReconnectCtl for this connection.
-    ctx->conn_.makeReconnectCtl(timer_name_);
+    ctx->conn_.makeReconnectCtl(timer_name_, NetworkState::DB_CONNECTION + 1);
 
     // Open the database.
     ctx->conn_.openDatabase();
@@ -3861,7 +3863,7 @@ MySqlLeaseMgr::getVersion(const string& timer_name) const {
     IOServiceAccessorPtr ac(new IOServiceAccessor(&DatabaseConnection::getIOService));
     DbCallback cb(&MySqlLeaseMgr::dbReconnect);
 
-    return (MySqlConnection::getVersion(parameters_, ac, cb, timer_name));
+    return (MySqlConnection::getVersion(parameters_, ac, cb, timer_name, NetworkState::DB_CONNECTION + 1));
 }
 
 void

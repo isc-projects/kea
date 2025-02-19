@@ -148,7 +148,7 @@ DatabaseConnection::configuredReadOnly() const {
 }
 
 void
-DatabaseConnection::makeReconnectCtl(const std::string& timer_name) {
+DatabaseConnection::makeReconnectCtl(const std::string& timer_name, unsigned int id) {
     string type = "unknown";
     unsigned int retries = 0;
     unsigned int interval = 0;
@@ -184,7 +184,7 @@ DatabaseConnection::makeReconnectCtl(const std::string& timer_name) {
     }
 
     reconnect_ctl_ = boost::make_shared<ReconnectCtl>(type, timer_name, retries,
-                                                      interval, action);
+                                                      interval, action, id);
 }
 
 bool

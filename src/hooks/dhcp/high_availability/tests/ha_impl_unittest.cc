@@ -121,7 +121,7 @@ public:
         ASSERT_NO_THROW(ha_impl_->configure(createValidJsonConfiguration()));
 
         // Starting the service is required prior to running any callouts.
-        NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+        NetworkStatePtr network_state(new NetworkState());
         ASSERT_NO_THROW(ha_impl_->startServices(network_state,
                                                 HAServerType::DHCPv4));
 
@@ -159,7 +159,7 @@ TEST_F(HAImplTest, startServices) {
     ASSERT_NO_THROW(test_ha_impl_->configure(createValidJsonConfiguration()));
 
     // Network state is also required.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    NetworkStatePtr network_state(new NetworkState());
 
     // Start the service for DHCPv4 server.
     ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
@@ -179,7 +179,7 @@ TEST_F(HAImplTest, startServices6) {
     ASSERT_NO_THROW(test_ha_impl_->configure(createValidJsonConfiguration()));
 
     // Network state is also required.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv6));
+    NetworkStatePtr network_state(new NetworkState());
 
     // Start the service for DHCPv4 server.
     ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
@@ -203,7 +203,7 @@ TEST_F(HAImplTest, buffer4Receive) {
     ASSERT_NO_THROW(test_ha_impl_->configure(ha_config));
 
     // Starting the service is required prior to running any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
                                                  HAServerType::DHCPv4));
 
@@ -317,7 +317,7 @@ TEST_F(HAImplTest, subnet4Select) {
     ASSERT_NO_THROW(test_ha_impl_->configure(ha_config));
 
     // Starting the service is required before any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
                                                  HAServerType::DHCPv4));
 
@@ -375,7 +375,7 @@ TEST_F(HAImplTest, subnet4SelectSharedNetwork) {
     ASSERT_NO_THROW(test_ha_impl_->configure(ha_config));
 
     // Starting the service is required before any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
                                                  HAServerType::DHCPv4));
 
@@ -436,7 +436,7 @@ TEST_F(HAImplTest, subnet4SelectSingleRelationship) {
     ASSERT_NO_THROW(test_ha_impl_->configure(ha_config));
 
     // Starting the service is required before any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
                                                  HAServerType::DHCPv4));
 
@@ -478,7 +478,7 @@ TEST_F(HAImplTest, subnet4SelectDropNoServerName) {
     ASSERT_NO_THROW(test_ha_impl_->configure(ha_config));
 
     // Starting the service is required before any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
                                                  HAServerType::DHCPv4));
 
@@ -524,7 +524,7 @@ TEST_F(HAImplTest, subnet4SelectDropInvalidServerNameType) {
     ASSERT_NO_THROW(test_ha_impl_->configure(ha_config));
 
     // Starting the service is required before any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
                                                  HAServerType::DHCPv4));
 
@@ -574,7 +574,7 @@ TEST_F(HAImplTest, subnet4SelectDropNotInScope) {
     ASSERT_NO_THROW(test_ha_impl_->configure(ha_config));
 
     // Starting the service is required before any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
                                                  HAServerType::DHCPv4));
 
@@ -627,7 +627,7 @@ TEST_F(HAImplTest, subnet4SelectNoSubnet) {
     ASSERT_NO_THROW(test_ha_impl_->configure(ha_config));
 
     // Starting the service is required before any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
                                                  HAServerType::DHCPv4));
 
@@ -674,7 +674,7 @@ TEST_F(HAImplTest, buffer6Receive) {
     ASSERT_NO_THROW(test_ha_impl_->configure(ha_config));
 
     // Starting the service is required prior to running any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv6));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
                                                  HAServerType::DHCPv6));
 
@@ -765,7 +765,7 @@ TEST_F(HAImplTest, subnet6Select) {
     ASSERT_NO_THROW(test_ha_impl_->configure(ha_config));
 
     // Starting the service is required before any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv6));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
                                                  HAServerType::DHCPv6));
 
@@ -820,7 +820,7 @@ TEST_F(HAImplTest, subnet6SelectSharedNetwork) {
     ASSERT_NO_THROW(test_ha_impl_->configure(ha_config));
 
     // Starting the service is required before any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv6));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
                                                  HAServerType::DHCPv6));
 
@@ -881,7 +881,7 @@ TEST_F(HAImplTest, subnet6SelectSingleRelationship) {
     ASSERT_NO_THROW(test_ha_impl_->configure(ha_config));
 
     // Starting the service is required before any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv6));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
                                                  HAServerType::DHCPv6));
 
@@ -923,7 +923,7 @@ TEST_F(HAImplTest, subnet6SelectDropNoServerName) {
     ASSERT_NO_THROW(test_ha_impl_->configure(ha_config));
 
     // Starting the service is required before any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv6));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
                                                  HAServerType::DHCPv6));
 
@@ -969,7 +969,7 @@ TEST_F(HAImplTest, subnet6SelectDropInvalidServerNameType) {
     ASSERT_NO_THROW(test_ha_impl_->configure(ha_config));
 
     // Starting the service is required before any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv6));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
                                                  HAServerType::DHCPv6));
 
@@ -1019,7 +1019,7 @@ TEST_F(HAImplTest, subnet6SelectDropNotInScope) {
     ASSERT_NO_THROW(test_ha_impl_->configure(ha_config));
 
     // Starting the service is required before any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv6));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
                                                  HAServerType::DHCPv6));
 
@@ -1072,7 +1072,7 @@ TEST_F(HAImplTest, subnet6SelectNoSubnet) {
     ASSERT_NO_THROW(test_ha_impl_->configure(ha_config));
 
     // Starting the service is required before any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv6));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
                                                  HAServerType::DHCPv6));
 
@@ -1115,7 +1115,7 @@ TEST_F(HAImplTest, leases4Committed) {
     ASSERT_NO_THROW(test_ha_impl_->configure(createValidJsonConfiguration()));
 
     // Starting the service is required prior to running any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
                                                  HAServerType::DHCPv4));
 
@@ -1202,7 +1202,7 @@ TEST_F(HAImplTest, leases4CommittedMultipleRelationships) {
     ASSERT_NO_THROW(test_ha_impl_->configure(createValidHubJsonConfiguration()));
 
     // Starting the service is required before running any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
                                                  HAServerType::DHCPv4));
 
@@ -1259,7 +1259,7 @@ TEST_F(HAImplTest, leases4CommittedMultipleRelationshipsNoServerName) {
     ASSERT_NO_THROW(test_ha_impl_->configure(createValidHubJsonConfiguration()));
 
     // Starting the service is required before running any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
                                                  HAServerType::DHCPv4));
 
@@ -1312,7 +1312,7 @@ TEST_F(HAImplTest, leases4CommittedMultipleRelationshipsInvalidServerName) {
     ASSERT_NO_THROW(test_ha_impl_->configure(createValidHubJsonConfiguration()));
 
     // Starting the service is required before running any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
                                                  HAServerType::DHCPv4));
 
@@ -1367,7 +1367,7 @@ TEST_F(HAImplTest, leases6Committed) {
     ASSERT_NO_THROW(test_ha_impl_->configure(createValidJsonConfiguration()));
 
     // Starting the service is required prior to running any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv6));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
                                                  HAServerType::DHCPv6));
 
@@ -1453,7 +1453,7 @@ TEST_F(HAImplTest, leases6CommittedMultipleRelationships) {
     ASSERT_NO_THROW(test_ha_impl_->configure(createValidHubJsonConfiguration()));
 
     // Starting the service is required before running any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv6));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
                                                  HAServerType::DHCPv6));
 
@@ -1509,7 +1509,7 @@ TEST_F(HAImplTest, leases6CommittedMultipleRelationshipsNoServerName) {
     ASSERT_NO_THROW(test_ha_impl_->configure(createValidHubJsonConfiguration()));
 
     // Starting the service is required before running any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv6));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
                                                  HAServerType::DHCPv6));
 
@@ -1561,7 +1561,7 @@ TEST_F(HAImplTest, leases6CommittedMultipleRelationshipsInvalidServerName) {
     ASSERT_NO_THROW(test_ha_impl_->configure(createValidHubJsonConfiguration()));
 
     // Starting the service is required before running any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv6));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
                                                  HAServerType::DHCPv6));
 
@@ -1693,7 +1693,7 @@ TEST_F(HAImplTest, continueHandler) {
     ASSERT_NO_THROW(ha_impl_->configure(createValidJsonConfiguration()));
 
     // Starting the service is required prior to running any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(ha_impl_->startServices(network_state,
                                             HAServerType::DHCPv4));
 
@@ -1723,7 +1723,7 @@ TEST_F(HAImplTest, continueHandlerWithNoServerName) {
     ASSERT_NO_THROW(ha_impl_->configure(createValidJsonConfiguration()));
 
     // Starting the service is required prior to running any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(ha_impl_->startServices(network_state,
                                             HAServerType::DHCPv4));
 
@@ -1748,7 +1748,7 @@ TEST_F(HAImplTest, continueHandlerWithWrongServerName) {
     ASSERT_NO_THROW(ha_impl_->configure(createValidJsonConfiguration()));
 
     // Starting the service is required prior to running any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(ha_impl_->startServices(network_state,
                                             HAServerType::DHCPv4));
 
@@ -1778,7 +1778,7 @@ TEST_F(HAImplTest, statusGet) {
     ASSERT_NO_THROW(ha_impl_->configure(createValidJsonConfiguration()));
 
     // Starting the service is required prior to running any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(ha_impl_->startServices(network_state,
                                             HAServerType::DHCPv4));
 
@@ -1841,7 +1841,7 @@ TEST_F(HAImplTest, statusGetBackupServer) {
     test_ha_impl_->config_->get()->setThisServerName("server3");
 
     // Starting the service is required prior to running any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
                                                  HAServerType::DHCPv4));
 
@@ -1891,7 +1891,7 @@ TEST_F(HAImplTest, statusGetPassiveBackup) {
     ASSERT_NO_THROW(test_ha_impl_->configure(createValidPassiveBackupJsonConfiguration()));
 
     // Starting the service is required prior to running any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
                                                  HAServerType::DHCPv4));
 
@@ -1941,7 +1941,7 @@ TEST_F(HAImplTest, statusGetHubAndSpoke) {
     ASSERT_NO_THROW(test_ha_impl_->configure(createValidHubJsonConfiguration()));
 
     // Starting the service is required prior to running any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
                                                  HAServerType::DHCPv4));
 
@@ -2027,7 +2027,7 @@ TEST_F(HAImplTest, maintenanceNotify) {
     ASSERT_NO_THROW(ha_impl_->configure(createValidJsonConfiguration()));
 
     // Starting the service is required prior to running any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(ha_impl_->startServices(network_state,
                                             HAServerType::DHCPv4));
 
@@ -2060,7 +2060,7 @@ TEST_F(HAImplTest, maintenanceNotifyNoServerName) {
     ASSERT_NO_THROW(ha_impl_->configure(createValidJsonConfiguration()));
 
     // Starting the service is required prior to running any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(ha_impl_->startServices(network_state,
                                             HAServerType::DHCPv4));
 
@@ -2092,7 +2092,7 @@ TEST_F(HAImplTest, maintenanceNotifyBadServerName) {
     ASSERT_NO_THROW(ha_impl_->configure(createValidJsonConfiguration()));
 
     // Starting the service is required prior to running any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(ha_impl_->startServices(network_state,
                                             HAServerType::DHCPv4));
 
@@ -2125,7 +2125,7 @@ TEST_F(HAImplTest, haReset) {
     ASSERT_NO_THROW(ha_impl_->configure(createValidJsonConfiguration()));
 
     // Starting the service is required prior to running any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(ha_impl_->startServices(network_state,
                                             HAServerType::DHCPv4));
 
@@ -2157,7 +2157,7 @@ TEST_F(HAImplTest, haResetNoServerName) {
     ASSERT_NO_THROW(ha_impl_->configure(createValidJsonConfiguration()));
 
     // Starting the service is required prior to running any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(ha_impl_->startServices(network_state,
                                             HAServerType::DHCPv4));
 
@@ -2186,7 +2186,7 @@ TEST_F(HAImplTest, haResetBadServerName) {
     ASSERT_NO_THROW(ha_impl_->configure(createValidJsonConfiguration()));
 
     // Starting the service is required prior to running any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(ha_impl_->startServices(network_state,
                                             HAServerType::DHCPv4));
 
@@ -2218,7 +2218,7 @@ TEST_F(HAImplTest, haHeartbeat) {
     ASSERT_NO_THROW(ha_impl_->configure(createValidJsonConfiguration()));
 
     // Starting the service is required prior to running any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(ha_impl_->startServices(network_state,
                                             HAServerType::DHCPv4));
 
@@ -2250,7 +2250,7 @@ TEST_F(HAImplTest, haHeartbeatNoServerName) {
     ASSERT_NO_THROW(ha_impl_->configure(createValidJsonConfiguration()));
 
     // Starting the service is required prior to running any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(ha_impl_->startServices(network_state,
                                             HAServerType::DHCPv4));
 
@@ -2279,7 +2279,7 @@ TEST_F(HAImplTest, haHeartbeatBadServerName) {
     ASSERT_NO_THROW(ha_impl_->configure(createValidJsonConfiguration()));
 
     // Starting the service is required prior to running any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(ha_impl_->startServices(network_state,
                                             HAServerType::DHCPv4));
 
@@ -2312,7 +2312,7 @@ TEST_F(HAImplTest, haSyncCompleteNotifyOriginId) {
     ASSERT_NO_THROW(ha_impl_->configure(createValidJsonConfiguration()));
 
     // Starting the service is required prior to running any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(ha_impl_->startServices(network_state,
                                             HAServerType::DHCPv4));
 
@@ -2357,7 +2357,7 @@ TEST_F(HAImplTest, haSyncCompleteNotifyOrigin) {
     ASSERT_NO_THROW(ha_impl_->configure(createValidJsonConfiguration()));
 
     // Starting the service is required prior to running any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(ha_impl_->startServices(network_state,
                                             HAServerType::DHCPv4));
 
@@ -2401,7 +2401,7 @@ TEST_F(HAImplTest, haSyncCompleteNotifyNoServerName) {
     ASSERT_NO_THROW(ha_impl_->configure(createValidJsonConfiguration()));
 
     // Starting the service is required prior to running any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(ha_impl_->startServices(network_state,
                                             HAServerType::DHCPv4));
 
@@ -2431,7 +2431,7 @@ TEST_F(HAImplTest, haSyncCompleteNotifyBadServerName) {
     ASSERT_NO_THROW(ha_impl_->configure(createValidJsonConfiguration()));
 
     // Starting the service is required prior to running any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(ha_impl_->startServices(network_state,
                                             HAServerType::DHCPv4));
 
@@ -2463,7 +2463,7 @@ TEST_F(HAImplTest, haScopes) {
     ASSERT_NO_THROW(ha_impl_->configure(createValidJsonConfiguration()));
 
     // Starting the service is required prior to running any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(ha_impl_->startServices(network_state,
                                             HAServerType::DHCPv4));
 
@@ -2496,7 +2496,7 @@ TEST_F(HAImplTest, haScopesNoServerName) {
     ASSERT_NO_THROW(ha_impl_->configure(createValidJsonConfiguration()));
 
     // Starting the service is required prior to running any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(ha_impl_->startServices(network_state,
                                             HAServerType::DHCPv4));
 
@@ -2528,7 +2528,7 @@ TEST_F(HAImplTest, haScopesBadServerName) {
     ASSERT_NO_THROW(ha_impl_->configure(createValidJsonConfiguration()));
 
     // Starting the service is required prior to running any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(ha_impl_->startServices(network_state,
                                             HAServerType::DHCPv4));
 
@@ -2562,7 +2562,7 @@ TEST_F(HAImplTest, lease4ServerDecline) {
     ASSERT_NO_THROW(test_ha_impl_->configure(createValidJsonConfiguration()));
 
     // Starting the service is required prior to running any callouts.
-    NetworkStatePtr network_state(new NetworkState(NetworkState::DHCPv4));
+    NetworkStatePtr network_state(new NetworkState());
     ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
                                                  HAServerType::DHCPv4));
 

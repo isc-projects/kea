@@ -52,7 +52,7 @@ namespace test {
 
 HATest::HATest()
     : io_service_(new IOService()),
-      network_state_(new NetworkState(NetworkState::DHCPv4)) {
+      network_state_(new NetworkState()) {
 }
 
 HATest::~HATest() {

@@ -215,7 +215,7 @@ ReconnectCtlPtr CfgIface::makeReconnectCtl() const {
     auto reconnect_ctl = boost::make_shared<ReconnectCtl>("Socket", timer_name,
                                                           CfgIface::getServiceSocketsMaxRetries(),
                                                           CfgIface::getServiceSocketsRetryWaitTime(),
-                                                          on_fail_action);
+                                                          on_fail_action, 0);
 
     return (reconnect_ctl);
 }
