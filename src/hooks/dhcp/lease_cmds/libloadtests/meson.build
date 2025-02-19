@@ -4,6 +4,9 @@ endif
 
 dhcp_lease_cmds_libload_tests = executable(
     'dhcp-lease-cmds-libload-tests',
+    'lease_cmds4_unittest.cc',
+    'lease_cmds6_unittest.cc',
+    'lease_cmds_unittest.cc',
     'load_unload_unittests.cc',
     'run_unittests.cc',
     cpp_args: [

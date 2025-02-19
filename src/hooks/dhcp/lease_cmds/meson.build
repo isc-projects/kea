@@ -1,5 +1,6 @@
 dhcp_lease_cmds_lib = shared_library(
     'dhcp_lease_cmds',
+    'binding_variables.cc',
     'lease_cmds.cc',
     'lease_cmds_callouts.cc',
     'lease_cmds_log.cc',
