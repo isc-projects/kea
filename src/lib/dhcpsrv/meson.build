@@ -205,3 +205,33 @@ kea_dhcpsrv_headers = [
     'writable_host_data_source.h',
 ]
 install_headers(kea_dhcpsrv_headers, preserve_path: true, subdir: 'kea/dhcpsrv')
+
+if HAS_KEA_MSG_COMPILER
+    current_source_dir = meson.current_source_dir()
+    target_gen_messages = run_target(
+        'src-lib-dhcpsrv-alloc_engine_messages',
+        command: [
+            kea_msg_compiler,
+            f'@current_source_dir@/alloc_engine_messages.mes',
+        ],
+    )
+    TARGETS_GEN_MESSAGES += [target_gen_messages]
+    target_gen_messages = run_target(
+        'src-lib-dhcpsrv-dhcpsrv_messages',
+        command: [
+            kea_msg_compiler,
+            f'@current_source_dir@/dhcpsrv_messages.mes',
+        ],
+    )
+    TARGETS_GEN_MESSAGES += [target_gen_messages]
+    target_gen_messages = run_target(
+        'src-lib-dhcpsrv-hosts_messages',
+        command: [kea_msg_compiler, f'@current_source_dir@/hosts_messages.mes'],
+    )
+    TARGETS_GEN_MESSAGES += [target_gen_messages]
+    target_gen_messages = run_target(
+        'src-lib-dhcpsrv-fuzz_messages',
+        command: [kea_msg_compiler, f'@current_source_dir@/fuzz_messages.mes'],
+    )
+    TARGETS_GEN_MESSAGES += [target_gen_messages]
+endif

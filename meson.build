@@ -669,6 +669,7 @@ config_report = custom_target(
 #### Build Starts Here
 
 LIBS_BUILT_SO_FAR = []
+TARGETS_GEN_MESSAGES = []
 subdir('tools')
 subdir('src')
 subdir('fuzz')
@@ -677,4 +678,17 @@ if have_premium
     subdir('premium')
 endif
 
+alias_target('all-targets-gen-messages', TARGETS_GEN_MESSAGES)
+
+top_docs = [
+    'AUTHORS',
+    'COPYING',
+    'ChangeLog',
+    'README',
+    'CONTRIBUTING.md',
+    'SECURITY.md',
+    'platforms.rst',
+    'code_of_conduct.md',
+]
+install_data(top_docs, install_dir: 'share/doc/kea')
 install_emptydir('var/run/kea')

@@ -19,3 +19,15 @@ dhcp_run_script_archive = static_library(
 # Do tests first
 subdir('tests')
 subdir('libloadtests')
+
+if HAS_KEA_MSG_COMPILER
+    current_source_dir = meson.current_source_dir()
+    target_gen_messages = run_target(
+        'src-hooks-dhcp-run_script-run_script_messages',
+        command: [
+            kea_msg_compiler,
+            f'@current_source_dir@/run_script_messages.mes',
+        ],
+    )
+    TARGETS_GEN_MESSAGES += [target_gen_messages]
+endif

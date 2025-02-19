@@ -30,3 +30,31 @@ dhcp_mysql_archive = static_library(
 )
 subdir('libloadtests')
 subdir('tests')
+
+if HAS_KEA_MSG_COMPILER
+    current_source_dir = meson.current_source_dir()
+    target_gen_messages = run_target(
+        'src-hooks-dhcp-mysql-mysql_cb_messages',
+        command: [
+            kea_msg_compiler,
+            f'@current_source_dir@/mysql_cb_messages.mes',
+        ],
+    )
+    TARGETS_GEN_MESSAGES += [target_gen_messages]
+    target_gen_messages = run_target(
+        'src-hooks-dhcp-mysql-mysql_hb_messages',
+        command: [
+            kea_msg_compiler,
+            f'@current_source_dir@/mysql_hb_messages.mes',
+        ],
+    )
+    TARGETS_GEN_MESSAGES += [target_gen_messages]
+    target_gen_messages = run_target(
+        'src-hooks-dhcp-mysql-mysql_lb_messages',
+        command: [
+            kea_msg_compiler,
+            f'@current_source_dir@/mysql_lb_messages.mes',
+        ],
+    )
+    TARGETS_GEN_MESSAGES += [target_gen_messages]
+endif

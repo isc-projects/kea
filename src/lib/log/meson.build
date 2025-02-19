@@ -27,6 +27,7 @@ kea_log_lib = library(
     link_with: LIBS_BUILT_SO_FAR,
 )
 LIBS_BUILT_SO_FAR = [kea_log_lib] + LIBS_BUILT_SO_FAR
+subdir('compiler')
 subdir('tests')
 kea_log_headers = [
     'buffer_appender_impl.h',
@@ -53,3 +54,20 @@ kea_log_headers = [
     'output_option.h',
 ]
 install_headers(kea_log_headers, preserve_path: true, subdir: 'kea/log')
+
+if HAS_KEA_MSG_COMPILER
+    current_source_dir = meson.current_source_dir()
+    target_gen_messages = run_target(
+        'src-lib-log-log_messages',
+        command: [kea_msg_compiler, f'@current_source_dir@/log_messages.mes'],
+    )
+    TARGETS_GEN_MESSAGES += [target_gen_messages]
+    target_gen_messages = run_target(
+        'src-lib-log-logimpl_messages',
+        command: [
+            kea_msg_compiler,
+            f'@current_source_dir@/logimpl_messages.mes',
+        ],
+    )
+    TARGETS_GEN_MESSAGES += [target_gen_messages]
+endif

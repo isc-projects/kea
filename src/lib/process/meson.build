@@ -38,3 +38,15 @@ kea_process_headers = [
     'redact_config.h',
 ]
 install_headers(kea_process_headers, preserve_path: true, subdir: 'kea/process')
+
+if HAS_KEA_MSG_COMPILER
+    current_source_dir = meson.current_source_dir()
+    target_gen_messages = run_target(
+        'src-lib-process-process_messages',
+        command: [
+            kea_msg_compiler,
+            f'@current_source_dir@/process_messages.mes',
+        ],
+    )
+    TARGETS_GEN_MESSAGES += [target_gen_messages]
+endif

@@ -34,3 +34,12 @@ kea_d2srv_headers = [
     'nc_trans.h',
 ]
 install_headers(kea_d2srv_headers, preserve_path: true, subdir: 'kea/d2srv')
+
+if HAS_KEA_MSG_COMPILER
+    current_source_dir = meson.current_source_dir()
+    target_gen_messages = run_target(
+        'src-lib-d2srv-d2_messages',
+        command: [kea_msg_compiler, f'@current_source_dir@/d2_messages.mes'],
+    )
+    TARGETS_GEN_MESSAGES += [target_gen_messages]
+endif
