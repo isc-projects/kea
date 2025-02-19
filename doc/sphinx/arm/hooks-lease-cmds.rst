@@ -1181,8 +1181,12 @@ The lease is only updated in the back end if the values have changed.
 
 .. note::
 
+    When used in conjunction with the Ping Check hook library, the
+    the lease-cmds hook library should be listed after Ping Check in
+    the server's ``hooks-libraries`` section of the configuration.
+
     When used in conjunction with the HA hook library, the lease-cmds
-    hook library must be listed before HA in the server's ``hooks``
-    configuration.  This ensures that the binding variables are evaluated
-    before HA sends lease updates to its peer(s).
+    hook library must be listed before HA in the server's ``hooks-libraries``
+    section of the configuration.  This ensures that the binding variables
+    are evaluated before HA sends lease updates to its peer(s).
 
