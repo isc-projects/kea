@@ -662,7 +662,7 @@ TEST(BindingVariableMgrTest, evaluateVariables4) {
 
     Lease4Ptr lease(new Lease4());
 
-    // Iterater over scenarios.
+    // Iterate over scenarios.
     for (auto const& scenario : scenarios) {
         SCOPED_LINE(scenario.line_);
 
@@ -784,7 +784,7 @@ TEST(BindingVariableMgrTest, evaluateVariables6) {
     Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, 4321));
     Lease6Ptr lease(new Lease6());
 
-    // Iterater over scenarios.
+    // Iterate over scenarios.
     for (auto const& scenario : scenarios) {
         SCOPED_LINE(scenario.line_);
 
