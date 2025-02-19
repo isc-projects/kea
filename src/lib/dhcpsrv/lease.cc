@@ -383,6 +383,7 @@ Lease4::decline(uint32_t probation_period) {
     fqdn_rev_ = false;
     state_ = STATE_DECLINED;
     valid_lft_ = probation_period;
+    setContext(ElementPtr());
 }
 
 isc::data::ElementPtr

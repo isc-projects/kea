@@ -2794,6 +2794,10 @@ LeaseCmdsImpl::leases4Committed(CalloutHandle& callout_handle,
     callout_handle.getArgument("response4", response);
     callout_handle.getArgument("leases4", leases);
 
+    if (!leases) {
+        isc_throw(Unexpected, "leases4Committed - leases is null");
+    }
+
     // In some cases we may have no lease, e.g. DHCPNAK,
     // or no response e.g. DHCPRELEASE.
     if (leases->empty() || !response || (response->getType() != DHCPACK)) {
@@ -2802,7 +2806,7 @@ LeaseCmdsImpl::leases4Committed(CalloutHandle& callout_handle,
 
     Lease4Ptr lease = (*leases)[0];
     if (!lease) {
-        isc_throw(Unexpected, "leases4Committed - no lease!");
+        isc_throw(Unexpected, "leases4Committed - lease is null");
     }
 
     try {
@@ -2832,6 +2836,10 @@ LeaseCmdsImpl::leases6Committed(CalloutHandle& callout_handle,
     callout_handle.getArgument("response6", response);
     callout_handle.getArgument("leases6", leases);
 
+    if (!leases) {
+        isc_throw(Unexpected, "leases6Committed - leases is null");
+    }
+
     // In some cases we may have no active leases or no response.
     if (leases->empty() || !response) {
         return;
@@ -2841,6 +2849,10 @@ LeaseCmdsImpl::leases6Committed(CalloutHandle& callout_handle,
     int failed = 0;
     for (auto lease : *leases) {
         try {
+            if (!lease) {
+                isc_throw(Unexpected, "leases6Committed - lease is null");
+            }
+
             /// @todo - Users might want to only update NA or PD leases.
             /// This could be done via adding a lease type to the variable.
             /// V4 would not use it, for V6 it would restrict a variable

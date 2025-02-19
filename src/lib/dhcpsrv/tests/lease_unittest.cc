@@ -593,6 +593,9 @@ TEST_F(Lease4Test, decline) {
     lease.fqdn_rev_ = true;
 
     time_t now = time(0);
+    ElementPtr context = Element::createMap();
+    context->set("bogus", Element::create("true"));
+    lease.setContext(context);
 
     // Move lease to declined state and set its valid-lifetime to 123 seconds
     lease.decline(123);
