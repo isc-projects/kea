@@ -23,6 +23,7 @@ extern const isc::log::MessageID DCTL_CONFIG_START;
 extern const isc::log::MessageID DCTL_CONFIG_STUB;
 extern const isc::log::MessageID DCTL_CONFIG_UPDATE;
 extern const isc::log::MessageID DCTL_DB_OPEN_CONNECTION_WITH_RETRY_FAILED;
+extern const isc::log::MessageID DCTL_DEPRECATED_OUTPUT_OPTIONS;
 extern const isc::log::MessageID DCTL_DEVELOPMENT_VERSION;
 extern const isc::log::MessageID DCTL_INIT_PROCESS;
 extern const isc::log::MessageID DCTL_INIT_PROCESS_FAIL;
