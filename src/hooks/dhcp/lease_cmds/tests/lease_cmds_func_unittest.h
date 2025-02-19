@@ -21,7 +21,7 @@ namespace {
     SCOPED_TRACE(ss.str());
 
 /// @brief Text fixture for testing lease command functions and
-/// class methods. Provides an intialized lease manager.
+/// class methods. Provides an initialized lease manager.
 class LeaseCmdsFuncTest :  public ::testing::Test {
 public:
     /// @brief Constructor
