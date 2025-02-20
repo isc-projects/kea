@@ -141,7 +141,10 @@ INCLUDED_HOOKS=
 PREMIUM=no
 PREMIUM_DIR=
 DISTCHECK_PREMIUM_CONFIGURE_FLAG=
-AC_DEFUN([AX_PREMIUM],[])
+AC_DEFUN([AX_PREMIUM],
+  [if test -f premium/config.m4; then
+    AC_MSG_ERROR([You appear to have added premium hooks after running autoreconf. Please run 'autoreconf -f -i' and then rerun this script.])
+  fi])
 # m4_sinclude includes the file if it exists at autoreconf time
 m4_sinclude(premium/config.m4)
 AC_SUBST(PREMIUM_DIR)
