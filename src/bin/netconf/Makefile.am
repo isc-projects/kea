@@ -96,7 +96,8 @@ messages: netconf_messages.h netconf_messages.cc
 	@echo Message files regenerated
 
 netconf_messages.h netconf_messages.cc: netconf_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/bin/netconf/netconf_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/bin/netconf/netconf_messages.mes)
 
 else
 

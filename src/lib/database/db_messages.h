@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/database/db_messages.mes
+// File created from src/lib/database/db_messages.mes
 
 #ifndef DB_MESSAGES_H
 #define DB_MESSAGES_H

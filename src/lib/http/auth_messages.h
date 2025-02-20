@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/http/auth_messages.mes
+// File created from src/lib/http/auth_messages.mes
 
 #ifndef AUTH_MESSAGES_H
 #define AUTH_MESSAGES_H

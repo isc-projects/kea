@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/http/auth_messages.mes
+// File created from src/lib/http/auth_messages.mes
 
 #include <cstddef>
 #include <log/message_types.h>

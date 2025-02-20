@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/perfmon/perfmon_messages.mes
+// File created from src/hooks/dhcp/perfmon/perfmon_messages.mes
 
 #ifndef PERFMON_MESSAGES_H
 #define PERFMON_MESSAGES_H

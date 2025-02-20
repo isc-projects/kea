@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/user_chk/user_chk_messages.mes
+// File created from src/hooks/dhcp/user_chk/user_chk_messages.mes
 
 #include <cstddef>
 #include <log/message_types.h>

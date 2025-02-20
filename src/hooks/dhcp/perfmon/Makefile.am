@@ -81,7 +81,8 @@ messages: perfmon_messages.h perfmon_messages.cc
 	@echo Message files regenerated
 
 perfmon_messages.h perfmon_messages.cc: perfmon_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/hooks/dhcp/perfmon/perfmon_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/hooks/dhcp/perfmon/perfmon_messages.mes
 
 else
 

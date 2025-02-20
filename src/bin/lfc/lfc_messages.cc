@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/lfc/lfc_messages.mes
+// File created from src/bin/lfc/lfc_messages.mes
 
 #include <cstddef>
 #include <log/message_types.h>

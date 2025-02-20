@@ -85,7 +85,8 @@ messages: dhcp6_messages.h dhcp6_messages.cc
 	@echo Message files regenerated
 
 dhcp6_messages.h dhcp6_messages.cc: dhcp6_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/bin/dhcp6/dhcp6_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/bin/dhcp6/dhcp6_messages.mes)
 
 else
 

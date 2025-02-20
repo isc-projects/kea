@@ -31,7 +31,12 @@ if HAS_KEA_MSG_COMPILER
     current_source_dir = meson.current_source_dir()
     target_gen_messages = run_target(
         'src-lib-tcp-tcp_messages',
-        command: [kea_msg_compiler, f'@current_source_dir@/tcp_messages.mes'],
+        command: [
+            CD_AND_RUN,
+            TOP_SOURCE_DIR,
+            KEA_MSG_COMPILER,
+            'src/lib/tcp/tcp_messages.mes',
+        ],
     )
     TARGETS_GEN_MESSAGES += [target_gen_messages]
 endif

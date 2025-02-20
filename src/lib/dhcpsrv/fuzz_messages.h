@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/dhcpsrv/fuzz_messages.mes
+// File created from src/lib/dhcpsrv/fuzz_messages.mes
 
 #ifndef FUZZ_MESSAGES_H
 #define FUZZ_MESSAGES_H

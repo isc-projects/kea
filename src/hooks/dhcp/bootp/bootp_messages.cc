@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/bootp/bootp_messages.mes
+// File created from src/hooks/dhcp/bootp/bootp_messages.mes
 
 #include <cstddef>
 #include <log/message_types.h>

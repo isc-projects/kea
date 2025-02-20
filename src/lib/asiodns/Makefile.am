@@ -55,7 +55,8 @@ messages: asiodns_messages.h asiodns_messages.cc
 	@echo Message files regenerated
 
 asiodns_messages.h asiodns_messages.cc: asiodns_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/asiodns/asiodns_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/lib/asiodns/asiodns_messages.mes)
 
 else
 

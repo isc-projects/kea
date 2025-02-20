@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/user_chk/user_chk_messages.mes
+// File created from src/hooks/dhcp/user_chk/user_chk_messages.mes
 
 #ifndef USER_CHK_MESSAGES_H
 #define USER_CHK_MESSAGES_H

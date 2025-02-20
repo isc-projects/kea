@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/run_script/run_script_messages.mes
+// File created from src/hooks/dhcp/run_script/run_script_messages.mes
 
 #ifndef RUN_SCRIPT_MESSAGES_H
 #define RUN_SCRIPT_MESSAGES_H

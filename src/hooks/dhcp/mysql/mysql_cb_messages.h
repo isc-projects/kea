@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/mysql/mysql_cb_messages.mes
+// File created from src/hooks/dhcp/mysql/mysql_cb_messages.mes
 
 #ifndef MYSQL_CB_MESSAGES_H
 #define MYSQL_CB_MESSAGES_H

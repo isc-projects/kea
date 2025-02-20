@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/mysql/mysql_cb_messages.mes
+// File created from src/hooks/dhcp/mysql/mysql_cb_messages.mes
 
 #include <cstddef>
 #include <log/message_types.h>

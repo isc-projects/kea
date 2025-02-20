@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/lfc/lfc_messages.mes
+// File created from src/bin/lfc/lfc_messages.mes
 
 #ifndef LFC_MESSAGES_H
 #define LFC_MESSAGES_H

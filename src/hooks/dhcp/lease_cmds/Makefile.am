@@ -79,7 +79,8 @@ messages: lease_cmds_messages.h lease_cmds_messages.cc
 	@echo Message files regenerated
 
 lease_cmds_messages.h lease_cmds_messages.cc: lease_cmds_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/hooks/dhcp/lease_cmds/lease_cmds_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/hooks/dhcp/lease_cmds/lease_cmds_messages.mes)
 
 else
 

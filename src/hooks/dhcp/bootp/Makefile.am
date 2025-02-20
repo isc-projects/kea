@@ -70,7 +70,8 @@ messages: bootp_messages.h bootp_messages.cc
 	@echo Message files regenerated
 
 bootp_messages.h bootp_messages.cc: bootp_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/hooks/dhcp/bootp/bootp_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/hooks/dhcp/bootp/bootp_messages.mes)
 
 else
 

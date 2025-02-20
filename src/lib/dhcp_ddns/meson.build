@@ -30,8 +30,10 @@ if HAS_KEA_MSG_COMPILER
     target_gen_messages = run_target(
         'src-lib-dhcp_ddns-dhcp_ddns_messages',
         command: [
-            kea_msg_compiler,
-            f'@current_source_dir@/dhcp_ddns_messages.mes',
+            CD_AND_RUN,
+            TOP_SOURCE_DIR,
+            KEA_MSG_COMPILER,
+            'src/lib/dhcp_ddns/dhcp_ddns_messages.mes',
         ],
     )
     TARGETS_GEN_MESSAGES += [target_gen_messages]

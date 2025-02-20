@@ -84,10 +84,12 @@ messages: auth_messages.cc auth_messages.h http_messages.h http_messages.cc
 	@echo Message files regenerated
 
 auth_messages.cc auth_messages.h: auth_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/http/auth_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/lib/http/auth_messages.mes)
 
 http_messages.h http_messages.cc: http_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/http/http_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/lib/http/http_messages.mes)
 
 else
 

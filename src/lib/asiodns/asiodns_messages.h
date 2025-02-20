@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/asiodns/asiodns_messages.mes
+// File created from src/lib/asiodns/asiodns_messages.mes
 
 #ifndef ASIODNS_MESSAGES_H
 #define ASIODNS_MESSAGES_H

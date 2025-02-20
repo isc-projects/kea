@@ -20,12 +20,13 @@ subdir('libloadtests')
 subdir('tests')
 
 if HAS_KEA_MSG_COMPILER
-    current_source_dir = meson.current_source_dir()
     target_gen_messages = run_target(
         'src-hooks-dhcp-flex_option-flex_option_messages',
         command: [
-            kea_msg_compiler,
-            f'@current_source_dir@/flex_option_messages.mes',
+            CD_AND_RUN,
+            TOP_SOURCE_DIR,
+            KEA_MSG_COMPILER,
+            'src/hooks/dhcp/flex_option/flex_option_messages.mes',
         ],
     )
     TARGETS_GEN_MESSAGES += [target_gen_messages]

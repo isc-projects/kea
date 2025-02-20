@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/lease_cmds/lease_cmds_messages.mes
+// File created from src/hooks/dhcp/lease_cmds/lease_cmds_messages.mes
 
 #ifndef LEASE_CMDS_MESSAGES_H
 #define LEASE_CMDS_MESSAGES_H

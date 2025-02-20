@@ -28,7 +28,12 @@ current_source_dir = meson.current_source_dir()
 if HAS_KEA_MSG_COMPILER
     target_gen_messages = run_target(
         'src-bin-dhcp4-dhcp4_messages',
-        command: [kea_msg_compiler, f'@current_source_dir@/dhcp4_messages.mes'],
+        command: [
+            CD_AND_RUN,
+            TOP_SOURCE_DIR,
+            KEA_MSG_COMPILER,
+            'src/bin/dhcp4/dhcp4_messages.mes',
+        ],
     )
     TARGETS_GEN_MESSAGES += [target_gen_messages]
 endif

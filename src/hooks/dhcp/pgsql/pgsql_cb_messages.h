@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/pgsql/pgsql_cb_messages.mes
+// File created from src/hooks/dhcp/pgsql/pgsql_cb_messages.mes
 
 #ifndef PGSQL_CB_MESSAGES_H
 #define PGSQL_CB_MESSAGES_H

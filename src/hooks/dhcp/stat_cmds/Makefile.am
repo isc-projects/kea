@@ -76,7 +76,8 @@ messages: stat_cmds_messages.h stat_cmds_messages.cc
 	@echo Message files regenerated
 
 stat_cmds_messages.h stat_cmds_messages.cc: stat_cmds_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/hooks/dhcp/stat_cmds/stat_cmds_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/hooks/dhcp/stat_cmds/stat_cmds_messages.mes)
 
 else
 

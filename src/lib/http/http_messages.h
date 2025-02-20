@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/http/http_messages.mes
+// File created from src/lib/http/http_messages.mes
 
 #ifndef HTTP_MESSAGES_H
 #define HTTP_MESSAGES_H

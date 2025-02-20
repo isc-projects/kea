@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/run_script/run_script_messages.mes
+// File created from src/hooks/dhcp/run_script/run_script_messages.mes
 
 #include <cstddef>
 #include <log/message_types.h>

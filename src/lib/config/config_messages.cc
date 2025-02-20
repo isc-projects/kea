@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/config/config_messages.mes
+// File created from src/lib/config/config_messages.mes
 
 #include <cstddef>
 #include <log/message_types.h>

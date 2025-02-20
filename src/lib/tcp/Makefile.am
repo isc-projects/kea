@@ -58,7 +58,8 @@ messages: tcp_messages.h tcp_messages.cc
 	@echo Message files regenerated
 
 tcp_messages.h tcp_messages.cc: tcp_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/tcp/tcp_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/lib/tcp/tcp_messages.mes)
 
 else
 

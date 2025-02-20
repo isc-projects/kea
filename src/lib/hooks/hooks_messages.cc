@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/hooks/hooks_messages.mes
+// File created from src/lib/hooks/hooks_messages.mes
 
 #include <cstddef>
 #include <log/message_types.h>

@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/hooks/hooks_messages.mes
+// File created from src/lib/hooks/hooks_messages.mes
 
 #ifndef HOOKS_MESSAGES_H
 #define HOOKS_MESSAGES_H

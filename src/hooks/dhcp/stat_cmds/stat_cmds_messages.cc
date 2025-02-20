@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/stat_cmds/stat_cmds_messages.mes
+// File created from src/hooks/dhcp/stat_cmds/stat_cmds_messages.mes
 
 #include <cstddef>
 #include <log/message_types.h>

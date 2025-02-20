@@ -211,27 +211,41 @@ if HAS_KEA_MSG_COMPILER
     target_gen_messages = run_target(
         'src-lib-dhcpsrv-alloc_engine_messages',
         command: [
-            kea_msg_compiler,
-            f'@current_source_dir@/alloc_engine_messages.mes',
+            CD_AND_RUN,
+            TOP_SOURCE_DIR,
+            KEA_MSG_COMPILER,
+            'src/lib/dhcpsrv/alloc_engine_messages.mes',
         ],
     )
     TARGETS_GEN_MESSAGES += [target_gen_messages]
     target_gen_messages = run_target(
         'src-lib-dhcpsrv-dhcpsrv_messages',
         command: [
-            kea_msg_compiler,
-            f'@current_source_dir@/dhcpsrv_messages.mes',
+            CD_AND_RUN,
+            TOP_SOURCE_DIR,
+            KEA_MSG_COMPILER,
+            'src/lib/dhcpsrv/dhcpsrv_messages.mes',
         ],
     )
     TARGETS_GEN_MESSAGES += [target_gen_messages]
     target_gen_messages = run_target(
         'src-lib-dhcpsrv-hosts_messages',
-        command: [kea_msg_compiler, f'@current_source_dir@/hosts_messages.mes'],
+        command: [
+            CD_AND_RUN,
+            TOP_SOURCE_DIR,
+            KEA_MSG_COMPILER,
+            'src/lib/dhcpsrv/hosts_messages.mes',
+        ],
     )
     TARGETS_GEN_MESSAGES += [target_gen_messages]
     target_gen_messages = run_target(
         'src-lib-dhcpsrv-fuzz_messages',
-        command: [kea_msg_compiler, f'@current_source_dir@/fuzz_messages.mes'],
+        command: [
+            CD_AND_RUN,
+            TOP_SOURCE_DIR,
+            KEA_MSG_COMPILER,
+            'src/lib/dhcpsrv/fuzz_messages.mes',
+        ],
     )
     TARGETS_GEN_MESSAGES += [target_gen_messages]
 endif

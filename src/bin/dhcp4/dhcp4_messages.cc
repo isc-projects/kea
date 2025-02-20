@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes
+// File created from src/bin/dhcp4/dhcp4_messages.mes
 
 #include <cstddef>
 #include <log/message_types.h>

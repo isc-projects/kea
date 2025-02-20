@@ -76,7 +76,8 @@ messages: flex_option_messages.h flex_option_messages.cc
 	@echo Message files regenerated
 
 flex_option_messages.h flex_option_messages.cc: flex_option_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/hooks/dhcp/flex_option/flex_option_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/hooks/dhcp/flex_option/flex_option_messages.mes)
 
 else
 

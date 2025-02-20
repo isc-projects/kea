@@ -59,7 +59,8 @@ messages: dhcp_ddns_messages.h dhcp_ddns_messages.cc
 	@echo Message files regenerated
 
 dhcp_ddns_messages.h dhcp_ddns_messages.cc: dhcp_ddns_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/dhcp_ddns/dhcp_ddns_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/lib/dhcp_ddns/dhcp_ddns_messages.mes)
 
 else
 

@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/dhcpsrv/hosts_messages.mes
+// File created from src/lib/dhcpsrv/hosts_messages.mes
 
 #ifndef HOSTS_MESSAGES_H
 #define HOSTS_MESSAGES_H

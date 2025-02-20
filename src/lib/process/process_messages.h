@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/process/process_messages.mes
+// File created from src/lib/process/process_messages.mes
 
 #ifndef PROCESS_MESSAGES_H
 #define PROCESS_MESSAGES_H

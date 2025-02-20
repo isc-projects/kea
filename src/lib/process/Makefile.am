@@ -69,7 +69,8 @@ messages: process_messages.h process_messages.cc
 	@echo Message files regenerated
 
 process_messages.h process_messages.cc: process_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/process/process_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/lib/process/process_messages.mes)
 
 else
 

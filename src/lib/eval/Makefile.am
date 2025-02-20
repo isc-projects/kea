@@ -61,7 +61,8 @@ messages: eval_messages.h eval_messages.cc
 	@echo Message files regenerated
 
 eval_messages.h eval_messages.cc: eval_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/eval/eval_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/lib/eval/eval_messages.mes)
 
 else
 

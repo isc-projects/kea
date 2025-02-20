@@ -55,7 +55,8 @@ messages: db_messages.h db_messages.cc
 	@echo Message files regenerated
 
 db_messages.h db_messages.cc: db_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/database/db_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/lib/database/db_messages.mes)
 
 else
 

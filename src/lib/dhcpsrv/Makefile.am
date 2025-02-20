@@ -238,16 +238,20 @@ messages: alloc_engine_messages.h alloc_engine_messages.cc \
 	@echo Message files regenerated
 
 alloc_engine_messages.h alloc_engine_messages.cc: alloc_engine_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/dhcpsrv/alloc_engine_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/lib/dhcpsrv/alloc_engine_messages.mes)
 
 dhcpsrv_messages.h dhcpsrv_messages.cc: dhcpsrv_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/dhcpsrv/dhcpsrv_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/lib/dhcpsrv/dhcpsrv_messages.mes)
 
 hosts_messages.h hosts_messages.cc: hosts_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/dhcpsrv/hosts_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/lib/dhcpsrv/hosts_messages.mes)
 
 fuzz_messages.h fuzz_messages.cc: fuzz_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/dhcpsrv/fuzz_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/lib/dhcpsrv/fuzz_messages.mes)
 
 else
 

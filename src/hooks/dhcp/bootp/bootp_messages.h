@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/bootp/bootp_messages.mes
+// File created from src/hooks/dhcp/bootp/bootp_messages.mes
 
 #ifndef BOOTP_MESSAGES_H
 #define BOOTP_MESSAGES_H

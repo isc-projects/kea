@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/mysql/mysql_lb_messages.mes
+// File created from src/hooks/dhcp/mysql/mysql_lb_messages.mes
 
 #ifndef MYSQL_LB_MESSAGES_H
 #define MYSQL_LB_MESSAGES_H

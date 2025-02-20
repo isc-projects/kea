@@ -92,13 +92,16 @@ messages: pgsql_cb_messages.h pgsql_cb_messages.cc \
 	@echo Message files regenerated
 
 pgsql_cb_messages.h pgsql_cb_messages.cc: pgsql_cb_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/hooks/dhcp/pgsql/pgsql_cb_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/hooks/dhcp/pgsql/pgsql_cb_messages.mes)
 
 pgsql_hb_messages.h pgsql_hb_messages.cc: pgsql_hb_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/hooks/dhcp/pgsql/pgsql_hb_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/hooks/dhcp/pgsql/pgsql_hb_messages.mes)
 
 pgsql_lb_messages.h pgsql_lb_messages.cc: pgsql_lb_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/hooks/dhcp/pgsql/pgsql_lb_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/hooks/dhcp/pgsql/pgsql_lb_messages.mes)
 
 else
 

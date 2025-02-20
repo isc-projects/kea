@@ -69,7 +69,8 @@ messages: config_messages.h config_messages.cc
 	@echo Message files regenerated
 
 config_messages.h config_messages.cc: config_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/config/config_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/lib/config/config_messages.mes)
 
 else
 

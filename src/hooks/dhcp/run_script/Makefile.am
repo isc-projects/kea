@@ -76,7 +76,8 @@ messages: run_script_messages.h run_script_messages.cc
 	@echo Message files regenerated
 
 run_script_messages.h run_script_messages.cc: run_script_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/hooks/dhcp/run_script/run_script_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/hooks/dhcp/run_script/run_script_messages.mes)
 
 else
 

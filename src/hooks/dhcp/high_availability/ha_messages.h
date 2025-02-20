@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/high_availability/ha_messages.mes
+// File created from src/hooks/dhcp/high_availability/ha_messages.mes
 
 #ifndef HA_MESSAGES_H
 #define HA_MESSAGES_H

@@ -92,13 +92,16 @@ messages: mysql_cb_messages.h mysql_cb_messages.cc \
 	@echo Message files regenerated
 
 mysql_cb_messages.h mysql_cb_messages.cc: mysql_cb_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/hooks/dhcp/mysql/mysql_cb_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/hooks/dhcp/mysql/mysql_cb_messages.mes)
 
 mysql_hb_messages.h mysql_hb_messages.cc: mysql_hb_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/hooks/dhcp/mysql/mysql_hb_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/hooks/dhcp/mysql/mysql_hb_messages.mes)
 
 mysql_lb_messages.h mysql_lb_messages.cc: mysql_lb_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/hooks/dhcp/mysql/mysql_lb_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/hooks/dhcp/mysql/mysql_lb_messages.mes)
 
 else
 

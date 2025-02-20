@@ -84,7 +84,8 @@ messages: ca_messages.h ca_messages.cc
 	@echo Message files regenerated
 
 ca_messages.h ca_messages.cc: ca_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/bin/agent/ca_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/bin/agent/ca_messages.mes)
 
 else
 

@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/asiodns/asiodns_messages.mes
+// File created from src/lib/asiodns/asiodns_messages.mes
 
 #include <cstddef>
 #include <log/message_types.h>

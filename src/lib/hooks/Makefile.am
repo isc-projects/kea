@@ -73,7 +73,8 @@ messages: hooks_messages.h hooks_messages.cc
 	@echo Message files regenerated
 
 hooks_messages.h hooks_messages.cc: hooks_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/hooks/hooks_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/lib/hooks/hooks_messages.mes)
 
 else
 
