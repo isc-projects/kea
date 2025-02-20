@@ -2,8 +2,7 @@
 
 set -v
 
-cd @srcdir@ || exit 1
 mkdir -p @builddir@/html
 
-(cat @srcdir@/Doxyfile; echo PROJECT_NUMBER=@PACKAGE_VERSION@) | doxygen - > @builddir@/html/doxygen.log 2> @builddir@/html/doxygen-error.log
+(cat Doxyfile; echo PROJECT_NUMBER=@PACKAGE_VERSION@) | doxygen - > @builddir@/html/doxygen.log 2> @builddir@/html/doxygen-error.log
 echo "$(grep -c ': warning:' @builddir@/html/doxygen-error.log)" warnings/errors detected.

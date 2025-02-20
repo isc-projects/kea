@@ -25,11 +25,43 @@ executable(
 )
 subdir('tests')
 
+current_source_dir = meson.current_source_dir()
 if HAS_KEA_MSG_COMPILER
-    current_source_dir = meson.current_source_dir()
     target_gen_messages = run_target(
         'src-bin-agent-ca_messages',
         command: [kea_msg_compiler, f'@current_source_dir@/ca_messages.mes'],
     )
     TARGETS_GEN_MESSAGES += [target_gen_messages]
+endif
+
+if flex_exe.found() and bison_exe.found()
+    target_parser = run_target(
+        'src-bin-agent-parser',
+        command: [
+            CD_AND_RUN,
+            current_source_dir,
+            BISON,
+            '-Wno-yacc',
+            '--defines=agent_parser.h',
+            '--report=all',
+            '--report-file=agent_parser.report',
+            '-o',
+            'agent_parser.cc',
+            'agent_parser.yy',
+        ],
+    )
+    target_lexer = run_target(
+        'src-bin-agent-lexer',
+        command: [
+            CD_AND_RUN,
+            current_source_dir,
+            FLEX,
+            '--prefix',
+            'agent_',
+            '-o',
+            'agent_lexer.cc',
+            'agent_lexer.ll',
+        ],
+    )
+    TARGETS_GEN_PARSER += [target_parser, target_lexer]
 endif

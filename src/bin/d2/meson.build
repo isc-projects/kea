@@ -28,3 +28,36 @@ executable(
     link_with: [d2_lib] + LIBS_BUILT_SO_FAR,
 )
 subdir('tests')
+
+if flex_exe.found() and bison_exe.found()
+    current_source_dir = meson.current_source_dir()
+    target_parser = run_target(
+        'src-bin-d2-parser',
+        command: [
+            CD_AND_RUN,
+            current_source_dir,
+            BISON,
+            '-Wno-yacc',
+            '--defines=d2_parser.h',
+            '--report=all',
+            '--report-file=d2_parser.report',
+            '-o',
+            'd2_parser.cc',
+            'd2_parser.yy',
+        ],
+    )
+    target_lexer = run_target(
+        'src-bin-d2-lexer',
+        command: [
+            CD_AND_RUN,
+            current_source_dir,
+            FLEX,
+            '--prefix',
+            'd2_parser_',
+            '-o',
+            'd2_lexer.cc',
+            'd2_lexer.ll',
+        ],
+    )
+    TARGETS_GEN_PARSER += [target_parser, target_lexer]
+endif

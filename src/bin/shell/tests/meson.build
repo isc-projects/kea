@@ -3,7 +3,7 @@ if not gtest.found()
 endif
 
 shell_tests_conf_data = configuration_data()
-shell_tests_conf_data.set('PYTHON', python_exe.full_path())
+shell_tests_conf_data.set('PYTHON', PYTHON)
 shell_tests_conf_data.set('abs_top_builddir', TOP_BUILD_DIR)
 shell_tests_conf_data.set('abs_top_srcdir', TOP_SOURCE_DIR)
 shell_unittest = configure_file(

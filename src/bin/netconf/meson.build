@@ -38,8 +38,8 @@ executable(
 
 subdir('tests')
 
+current_source_dir = meson.current_source_dir()
 if HAS_KEA_MSG_COMPILER
-    current_source_dir = meson.current_source_dir()
     target_gen_messages = run_target(
         'src-bin-netconf-netconf_messages',
         command: [
@@ -48,4 +48,36 @@ if HAS_KEA_MSG_COMPILER
         ],
     )
     TARGETS_GEN_MESSAGES += [target_gen_messages]
+endif
+
+if flex_exe.found() and bison_exe.found()
+    target_parser = run_target(
+        'src-bin-netconf-parser',
+        command: [
+            CD_AND_RUN,
+            current_source_dir,
+            BISON,
+            '-Wno-yacc',
+            '--defines=netconf_parser.h',
+            '--report=all',
+            '--report-file=netconf_parser.report',
+            '-o',
+            'netconf_parser.cc',
+            'netconf_parser.yy',
+        ],
+    )
+    target_lexer = run_target(
+        'src-bin-netconf-lexer',
+        command: [
+            CD_AND_RUN,
+            current_source_dir,
+            FLEX,
+            '--prefix',
+            'netconf_',
+            '-o',
+            'netconf_lexer.cc',
+            'netconf_lexer.ll',
+        ],
+    )
+    TARGETS_GEN_PARSER += [target_parser, target_lexer]
 endif

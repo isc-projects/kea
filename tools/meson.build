@@ -6,12 +6,12 @@ tools_conf_data.set('exec_prefix', '${prefix}')
 tools_conf_data.set('libdir', '${exec_prefix}/' + get_option('libdir'))
 tools_conf_data.set('SEP', '+')
 if bison_exe.found()
-    tools_conf_data.set('YACC', bison_exe.full_path())
+    tools_conf_data.set('YACC', BISON)
 else
     tools_conf_data.set('YACC', 'bison')
 endif
 if awk_exe.found()
-    tools_conf_data.set('AWK', awk_exe.full_path())
+    tools_conf_data.set('AWK', AWK)
 else
     tools_conf_data.set('AWK', 'awk')
 endif

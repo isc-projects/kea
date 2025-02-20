@@ -156,8 +156,8 @@ message(f'Detected system "@SYSTEM@".')
 #### Programs
 
 python_exe = find_program('python3', 'python', required: false)
-flex_exe = find_program('flex', required: false)
-bison_exe = find_program('bison', required: false)
+flex_exe = find_program('flex', version: '>=2.6.4', required: false)
+bison_exe = find_program('bison', version: '>=3.3.0', required: false)
 awk_exe = find_program('gawk', 'awk', required: false)
 doxygen_exe = find_program('doxygen', required: false)
 sphinx_exe = find_program('sphinx-build', 'sphinx-build-3', required: false)
@@ -168,6 +168,20 @@ xmllint_exe = find_program('xmllint', required: false)
 pip_compile_exe = find_program('pip-compile', required: false)
 install_exe = find_program('install', required: true)
 valgrind_exe = find_program('valgrind', required: false)
+
+if python_exe.found()
+    PYTHON = python_exe.full_path()
+endif
+if flex_exe.found()
+    FLEX = flex_exe.full_path()
+endif
+if bison_exe.found()
+    BISON = bison_exe.full_path()
+endif
+if awk_exe.found()
+    AWK = awk_exe.full_path()
+endif
+CD_AND_RUN = f'@TOP_SOURCE_DIR@/cd-and-run.sh'
 
 #### Dependencies
 
@@ -495,7 +509,7 @@ report_conf_data.set('LD_ID', cpp.get_linker_id())
 report_conf_data.set('LD_ARGS', ' '.join(link_args))
 if python_exe.found()
     report_conf_data.set('HAVE_PYTHON', 'yes')
-    report_conf_data.set('PYTHON_PATH', python_exe.full_path())
+    report_conf_data.set('PYTHON_PATH', PYTHON)
     result = run_command(
         python_exe,
         '-c',
@@ -580,12 +594,12 @@ else
     report_conf_data.set('LOG4CPLUS_VERSION', log4cplus.version())
 endif
 if flex_exe.found()
-    report_conf_data.set('FLEX', flex_exe.full_path())
+    report_conf_data.set('FLEX', FLEX)
 else
     report_conf_data.set('FLEX', 'unknown')
 endif
 if bison_exe.found()
-    report_conf_data.set('BISON', bison_exe.full_path())
+    report_conf_data.set('BISON', BISON)
 else
     report_conf_data.set('BISON', 'unknown')
 endif
@@ -670,6 +684,7 @@ config_report = custom_target(
 
 LIBS_BUILT_SO_FAR = []
 TARGETS_GEN_MESSAGES = []
+TARGETS_GEN_PARSER = []
 subdir('tools')
 subdir('src')
 subdir('fuzz')
@@ -679,6 +694,7 @@ if have_premium
 endif
 
 alias_target('all-targets-gen-messages', TARGETS_GEN_MESSAGES)
+alias_target('all-targets-gen-parser', TARGETS_GEN_PARSER)
 
 top_docs = [
     'AUTHORS',

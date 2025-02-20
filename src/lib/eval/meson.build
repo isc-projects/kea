@@ -27,11 +27,41 @@ kea_eval_headers = [
 ]
 install_headers(kea_eval_headers, preserve_path: true, subdir: 'kea/eval')
 
+current_source_dir = meson.current_source_dir()
 if HAS_KEA_MSG_COMPILER
-    current_source_dir = meson.current_source_dir()
     target_gen_messages = run_target(
         'src-lib-eval-eval_messages',
         command: [kea_msg_compiler, f'@current_source_dir@/eval_messages.mes'],
     )
     TARGETS_GEN_MESSAGES += [target_gen_messages]
+endif
+
+if flex_exe.found() and bison_exe.found()
+    target_parser = run_target(
+        'src-lib-eval-parser',
+        command: [
+            CD_AND_RUN,
+            current_source_dir,
+            BISON,
+            '-Wno-yacc',
+            '--defines=parser.h',
+            '-o',
+            'parser.cc',
+            'parser.yy',
+        ],
+    )
+    target_lexer = run_target(
+        'src-lib-eval-lexer',
+        command: [
+            CD_AND_RUN,
+            current_source_dir,
+            FLEX,
+            '--prefix',
+            'eval',
+            '-o',
+            'lexer.cc',
+            'lexer.ll',
+        ],
+    )
+    TARGETS_GEN_PARSER += [target_parser, target_lexer]
 endif
