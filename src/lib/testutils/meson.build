@@ -18,8 +18,9 @@ dhcp_test_lib_conf_data = configuration_data()
 dhcp_test_lib_conf_data.set('abs_top_builddir', TOP_BUILD_DIR)
 dhcp_test_lib_conf_data.set('prefix', PREFIX)
 dhcp_test_lib_conf_data.set('PACKAGE_VERSION', project_version)
+dhcp_test_lib_conf_data.set('dotlibs', '')
 configure_file(
-    input: 'meson-dhcp_test_lib.sh.in',
+    input: 'dhcp_test_lib.sh.in',
     output: 'dhcp_test_lib.sh',
     configuration: dhcp_test_lib_conf_data,
 )

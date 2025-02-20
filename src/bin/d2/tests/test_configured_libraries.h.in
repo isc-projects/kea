@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,7 +19,7 @@ namespace {
 // Configured library with d2_srv_configured testing: if there is a toplevel
 // user context with an error entry the returned status is DROP with the
 // content of the error entry.
-static const char* CONFIGURED_LIBRARY = "@abs_builddir@/.libs/libconfigured.so";
+static const char* CONFIGURED_LIBRARY = "@abs_builddir@/@dotlibs@libconfigured.so";
 
 } // anonymous namespace
 

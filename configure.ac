@@ -194,6 +194,10 @@ LT_INIT
 CFLAGS=$CFLAGS_SAVED
 CXXFLAGS=$CXXFLAGS_SAVED
 
+# Libtool puts libraries in .libs/ subdirs: substitute it outside Makefiles.
+dotlibs=".libs/"
+AC_SUBST(dotlibs)
+
 # Use C++ language
 AC_LANG([C++])
 

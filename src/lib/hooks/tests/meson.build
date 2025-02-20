@@ -23,13 +23,14 @@ test('kea-hooks-tests', kea_hooks_tests, protocol: 'gtest')
 
 kea_hooks_conf_data = configuration_data()
 kea_hooks_conf_data.set('abs_builddir', meson.current_build_dir())
+kea_hooks_conf_data.set('dotlibs', '')
 configure_file(
     input: 'marker_file.h.in',
     output: 'marker_file.h',
     configuration: kea_hooks_conf_data,
 )
 configure_file(
-    input: 'meson-test_libraries.h.in',
+    input: 'test_libraries.h.in',
     output: 'test_libraries.h',
     configuration: kea_hooks_conf_data,
 )

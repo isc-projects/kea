@@ -34,8 +34,9 @@ dhcp4_tests_conf_data = configuration_data()
 dhcp4_tests_conf_data.set('abs_top_builddir', TOP_BUILD_DIR)
 dhcp4_tests_conf_data.set('abs_top_srcdir', TOP_SOURCE_DIR)
 dhcp4_tests_conf_data.set('abs_builddir', current_build_dir)
+dhcp4_tests_conf_data.set('dotlibs', '')
 dhcp4_process_tests = configure_file(
-    input: 'meson-dhcp4_process_tests.sh.in',
+    input: 'dhcp4_process_tests.sh.in',
     output: 'dhcp4_process_tests.sh',
     configuration: dhcp4_tests_conf_data,
 )
@@ -57,7 +58,7 @@ configure_file(
     configuration: dhcp4_tests_conf_data,
 )
 configure_file(
-    input: 'meson-test_libraries.h.in',
+    input: 'test_libraries.h.in',
     output: 'test_libraries.h',
     configuration: dhcp4_tests_conf_data,
 )

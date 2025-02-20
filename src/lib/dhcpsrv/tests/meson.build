@@ -16,8 +16,9 @@ configure_file(
 )
 kea_dhcpsrv_conf_data = configuration_data()
 kea_dhcpsrv_conf_data.set('abs_builddir', current_build_dir)
+kea_dhcpsrv_conf_data.set('dotlibs', '')
 configure_file(
-    input: 'meson-test_libraries.h.in',
+    input: 'test_libraries.h.in',
     output: 'test_libraries.h',
     configuration: kea_dhcpsrv_conf_data,
 )

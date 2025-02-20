@@ -7,6 +7,7 @@ kea_d2_tests_data = configuration_data()
 kea_d2_tests_data.set('abs_top_builddir', TOP_BUILD_DIR)
 kea_d2_tests_data.set('abs_top_srcdir', TOP_SOURCE_DIR)
 kea_d2_tests_data.set('abs_builddir', current_build_dir)
+kea_d2_tests_data.set('dotlibs', '')
 d2_process_tests = configure_file(
     input: 'd2_process_tests.sh.in',
     output: 'd2_process_tests.sh',
@@ -20,7 +21,7 @@ test(
     priority: -1,
 )
 configure_file(
-    input: 'meson-test_callout_libraries.h.in',
+    input: 'test_callout_libraries.h.in',
     output: 'test_callout_libraries.h',
     configuration: kea_d2_tests_data,
 )
@@ -30,7 +31,7 @@ configure_file(
     configuration: kea_d2_tests_data,
 )
 configure_file(
-    input: 'meson-test_configured_libraries.h.in',
+    input: 'test_configured_libraries.h.in',
     output: 'test_configured_libraries.h',
     configuration: kea_d2_tests_data,
 )

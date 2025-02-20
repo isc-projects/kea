@@ -19,9 +19,9 @@ LEASE_FILE="@abs_top_builddir@/src/bin/dhcp4/tests/test_leases.csv"
 # Path to the Kea LFC application
 export KEA_LFC_EXECUTABLE="@abs_top_builddir@/src/bin/lfc/kea-lfc"
 # Path to test hooks library
-HOOK_FAIL_LOAD_PATH="@abs_top_builddir@/src/bin/dhcp4/tests/.libs/libco3.so"
+HOOK_FAIL_LOAD_PATH="@abs_top_builddir@/src/bin/dhcp4/tests/@dotlibs@libco3.so"
 # Path to test hooks library
-HOOK_FAIL_POLL_PATH="@abs_top_builddir@/src/bin/dhcp4/tests/.libs/libco4.so"
+HOOK_FAIL_POLL_PATH="@abs_top_builddir@/src/bin/dhcp4/tests/@dotlibs@libco4.so"
 # Kea configuration to be stored in the configuration file.
 CONFIG="{
     \"Dhcp4\":
