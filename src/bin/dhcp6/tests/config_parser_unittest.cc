@@ -739,6 +739,11 @@ public:
     /// test to make sure that contents of the database do not affect the
     /// results of subsequent tests.
     void resetConfiguration() {
+        // The default setting is to listen on all interfaces. In order to
+        // properly test interface configuration we disable listening on
+        // all interfaces before each test and later check that this setting
+        // has been overridden by the configuration used in the test.
+        CfgMgr::instance().clear();
         string config = "{ \"interfaces-config\": {"
             "    \"interfaces\": [ ]"
             "},"
@@ -751,14 +756,9 @@ public:
             "\"dhcp-ddns\": { \"enable-updates\" : false }, "
             "\"option-def\": [ ], "
             "\"option-data\": [ ] }";
-        CfgMgr::instance().rollback();
         static_cast<void>(executeConfiguration(config,
                                                "reset configuration database"));
-        // The default setting is to listen on all interfaces. In order to
-        // properly test interface configuration we disable listening on
-        // all interfaces before each test and later check that this setting
-        // has been overridden by the configuration used in the test.
-        CfgMgr::instance().clear();
+        CfgMgr::instance().clearStagingConfiguration();
     }
 
     /// @brief Retrieve an option associated with a host.

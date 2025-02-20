@@ -424,8 +424,8 @@ TEST_F(CfgMgrTest, d2ClientConfig) {
     ASSERT_NO_THROW(CfgMgr::instance().setD2ClientConfig(original_config));
 }
 
-// This test verifies that the configuration staging, commit and rollback works
-// as expected.
+// This test verifies that the configuration staging works as expected, including
+// committing it.
 TEST_F(CfgMgrTest, staging) {
     CfgMgr& cfg_mgr = CfgMgr::instance();
     // Initially, the current configuration is a default one. We are going
@@ -505,63 +505,14 @@ TEST_F(CfgMgrTest, staging) {
     // The modified staging configuration should have one logger configured.
     ASSERT_EQ(1, config->getLoggingInfo().size());
 
-    // Rollback should remove a staging configuration, including the logger.
-    ASSERT_NO_THROW(cfg_mgr.rollback());
+    // Remove the staging configuration, including the logger.
+    ASSERT_NO_THROW(cfg_mgr.clearStagingConfiguration());
 
     // Make sure that the logger is not set. This is an indication that the
     // rollback worked.
     config = cfg_mgr.getStagingCfg();
     ASSERT_TRUE(config);
     EXPECT_EQ(0, config->getLoggingInfo().size());
-}
-
-// This test verifies that it is possible to revert to an old configuration.
-TEST_F(CfgMgrTest, revert) {
-    CfgMgr& cfg_mgr = CfgMgr::instance();
-    // Let's create 5 unique configurations: differing by a debug level in the
-    // range of 10 to 14.
-    for (int i = 0; i < 5; ++i) {
-        SrvConfigPtr config = cfg_mgr.getStagingCfg();
-        LoggingInfo logging_info;
-        logging_info.debuglevel_ = i + 10;
-        config->addLoggingInfo(logging_info);
-        cfg_mgr.commit();
-    }
-
-    // Now we have 6 configurations with:
-    // - debuglevel = 99 (a default one)
-    // - debuglevel = 10
-    // - debuglevel = 11
-    // - debuglevel = 12
-    // - debuglevel = 13
-    // - debuglevel = 14 (current)
-
-    // Hence, the maximum index of the configuration to revert is 5 (which
-    // points to the configuration with debuglevel = 99). For the index greater
-    // than 5 we should get an exception.
-    ASSERT_THROW(cfg_mgr.revert(6), isc::OutOfRange);
-    // Value of 0 also doesn't make sense.
-    ASSERT_THROW(cfg_mgr.revert(0), isc::OutOfRange);
-
-    // We should be able to revert to configuration with debuglevel = 10.
-    ASSERT_NO_THROW(cfg_mgr.revert(4));
-    // And this configuration should be now the current one and the debuglevel
-    // of this configuration is 10.
-    EXPECT_EQ(10, cfg_mgr.getCurrentCfg()->getLoggingInfo()[0].debuglevel_);
-    EXPECT_NE(cfg_mgr.getCurrentCfg()->getSequence(), 1);
-
-    // The new set of configuration is now as follows:
-    // - debuglevel = 99
-    // - debuglevel = 10
-    // - debuglevel = 11
-    // - debuglevel = 12
-    // - debuglevel = 13
-    // - debuglevel = 14
-    // - debuglevel = 10 (current)
-    // So, reverting to configuration having index 3 means that the debug level
-    // of the current configuration will become 12.
-    ASSERT_NO_THROW(cfg_mgr.revert(3));
-    EXPECT_EQ(12, cfg_mgr.getCurrentCfg()->getLoggingInfo()[0].debuglevel_);
 }
 
 // This test verifies that the address family can be set and obtained

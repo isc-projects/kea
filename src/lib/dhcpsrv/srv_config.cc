@@ -419,7 +419,7 @@ SrvConfig::updateStatistics() {
     // a lease manager, such as D2. @todo We should probably examine why
     // "SrvConfig" is being used by D2.
     if (LeaseMgrFactory::haveInstance()) {
-        // Updates  statistics for v4 and v6 subnets
+        // Updates statistics for v4 and v6 subnets.
         getCfgSubnets4()->updateStatistics();
         getCfgSubnets6()->updateStatistics();
     }

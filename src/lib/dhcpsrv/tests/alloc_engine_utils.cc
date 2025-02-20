@@ -20,6 +20,7 @@
 
 #include <dhcpsrv/testutils/test_utils.h>
 #include <dhcpsrv/tests/alloc_engine_utils.h>
+#include <testutils/gtest_utils.h>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -219,7 +220,7 @@ AllocEngine6Test::initSubnet(const asiolink::IOAddress& subnet,
     }
     subnet_->addPool(pd_pool_);
 
-    cfg_mgr.getStagingCfg()->getCfgSubnets6()->add(subnet_);
+    EXPECT_NO_THROW_LOG(cfg_mgr.getStagingCfg()->getCfgSubnets6()->add(subnet_));
     cfg_mgr.commit();
 }
 
@@ -642,7 +643,8 @@ AllocEngine4Test::initSubnet(const asiolink::IOAddress& pool_start,
     pool_ = Pool4Ptr(new Pool4(pool_start, pool_end));
     subnet_->addPool(pool_);
 
-    cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet_);
+    EXPECT_NO_THROW_LOG(cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet_));
+    cfg_mgr.commit();
 }
 
 AllocEngine4Test::AllocEngine4Test() {
@@ -668,12 +670,7 @@ AllocEngine4Test::AllocEngine4Test() {
     ++mac[sizeof(mac) - 1];
     hwaddr2_ = HWAddrPtr(new HWAddr(mac, sizeof (mac), HTYPE_FDDI));
 
-    // instantiate cfg_mgr
-    CfgMgr& cfg_mgr = CfgMgr::instance();
-
     initSubnet(IOAddress("192.0.2.100"), IOAddress("192.0.2.109"));
-    cfg_mgr.commit();
-
 
     // Create a default context. Note that remaining parameters must be
     // assigned when needed.
