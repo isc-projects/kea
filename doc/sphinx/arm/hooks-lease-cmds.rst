@@ -1162,7 +1162,7 @@ contents would look similar to the following:
 When stored in database back ends, the user-context will not contain line breaks
 as shown above and would appear as follows:
 
-.. code-block::
+.. code-block:: text
 
     { "ISC": { "binding-variables": { "domain-name": "example.org", "opt-222": "01:02:03:04" } } }
 
@@ -1170,7 +1170,7 @@ When using memfile lease storage, the ``user-context`` is output with commas rep
 the escape sequence "&#x2c".  This is necessary to prevent interference with the lease file
 parsing.  The example output above would appear as follows in a memfile lease file:
 
-.. code-block::
+.. code-block:: text
 
     { "ISC": { "binding-variables": { "domain-name": "example.org"&#x2c "opt-222": "01:02:03:04" } } }
 
