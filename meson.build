@@ -694,8 +694,8 @@ if have_premium
     subdir('premium')
 endif
 
-alias_target('all-targets-gen-messages', TARGETS_GEN_MESSAGES)
-alias_target('all-targets-gen-parser', TARGETS_GEN_PARSER)
+alias_target('messages', TARGETS_GEN_MESSAGES)
+alias_target('parser', TARGETS_GEN_PARSER)
 
 top_docs = [
     'AUTHORS',
