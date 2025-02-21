@@ -1024,7 +1024,7 @@ mysql_upgrade_27_to_28_test() {
 
 mysql_upgrade_28_to_29_test() {
 
-    # check registered were added tp lease_state
+    # check registered was added tp lease_state
     qry="SELECT name FROM lease_state WHERE state = 4"
     run_command \
         mysql_execute "${qry}"
