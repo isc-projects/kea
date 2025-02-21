@@ -32,3 +32,16 @@ dhcp_forensic_log_archive = static_library(
 )
 subdir('libloadtests')
 subdir('tests')
+
+if KEA_MSG_COMPILER.found()
+    target_gen_messages = run_target(
+        'premium-src-hooks-dhcp-forensic_log-legal_log_messages',
+        command: [
+            CD_AND_RUN,
+            TOP_SOURCE_DIR,
+            KEA_MSG_COMPILER,
+            'src/hooks/dhcp/forensic_log/legal_log_messages.mes',
+        ],
+    )
+    TARGETS_GEN_MESSAGES += [target_gen_messages]
+endif

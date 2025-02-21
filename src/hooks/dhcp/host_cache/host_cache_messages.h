@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/host_cache/host_cache_messages.mes
+// File created from src/hooks/dhcp/host_cache/host_cache_messages.mes
 
 #ifndef HOST_CACHE_MESSAGES_H
 #define HOST_CACHE_MESSAGES_H

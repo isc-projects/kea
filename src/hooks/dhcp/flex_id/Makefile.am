@@ -88,7 +88,8 @@ messages: flex_id_messages.h flex_id_messages.cc
 	@echo Message files regenerated
 
 flex_id_messages.h flex_id_messages.cc: flex_id_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/hooks/dhcp/flex_id/flex_id_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/hooks/dhcp/flex_id/flex_id_messages.mes)
 
 else
 

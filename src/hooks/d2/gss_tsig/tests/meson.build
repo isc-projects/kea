@@ -28,3 +28,12 @@ ddns_gss_tsig_tests = executable(
     link_with: [ddns_gss_tsig_tests_libs] + LIBS_BUILT_SO_FAR,
 )
 test('ddns-gss-tsig-tests', ddns_gss_tsig_tests, protocol: 'gtest')
+
+executable(
+    'nsupdate',
+    'nsupdate.cc',
+    cpp_args: [f'-DTEST_DATA_DIR="@current_source_dir@"'],
+    dependencies: [krb5],
+    include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
+    link_with: [ddns_gss_tsig_archive] + LIBS_BUILT_SO_FAR,
+)

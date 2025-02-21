@@ -96,7 +96,8 @@ messages: lease_query_messages.h lease_query_messages.cc
 	@echo Message files regenerated
 
 lease_query_messages.h lease_query_messages.cc: lease_query_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/hooks/dhcp/lease_query/lease_query_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/hooks/dhcp/lease_query/lease_query_messages.mes)
 
 else
 

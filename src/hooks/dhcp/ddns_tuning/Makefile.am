@@ -87,7 +87,8 @@ messages: ddns_tuning_messages.h ddns_tuning_messages.cc
 	@echo Message files regenerated
 
 ddns_tuning_messages.h ddns_tuning_messages.cc: ddns_tuning_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/hooks/dhcp/ddns_tuning/ddns_tuning_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/hooks/dhcp/ddns_tuning/ddns_tuning_messages.mes)
 
 else
 

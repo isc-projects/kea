@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/ping_check/ping_check_messages.mes
+// File created from src/hooks/dhcp/ping_check/ping_check_messages.mes
 
 #ifndef PING_CHECK_MESSAGES_H
 #define PING_CHECK_MESSAGES_H

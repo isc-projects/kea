@@ -87,7 +87,8 @@ messages: gss_tsig_messages.h gss_tsig_messages.cc
 	@echo Message files regenerated
 
 gss_tsig_messages.h gss_tsig_messages.cc: gss_tsig_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/hooks/d2/gss_tsig/gss_tsig_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/hooks/d2/gss_tsig/gss_tsig_messages.mes)
 
 else
 

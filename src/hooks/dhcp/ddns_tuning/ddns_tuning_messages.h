@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/ddns_tuning/ddns_tuning_messages.mes
+// File created from src/hooks/dhcp/ddns_tuning/ddns_tuning_messages.mes
 
 #ifndef DDNS_TUNING_MESSAGES_H
 #define DDNS_TUNING_MESSAGES_H

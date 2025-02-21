@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/forensic_log/legal_log_messages.mes
+// File created from src/hooks/dhcp/forensic_log/legal_log_messages.mes
 
 #ifndef LEGAL_LOG_MESSAGES_H
 #define LEGAL_LOG_MESSAGES_H

@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/radius/radius_messages.mes
+// File created from src/hooks/dhcp/radius/radius_messages.mes
 
 #ifndef RADIUS_MESSAGES_H
 #define RADIUS_MESSAGES_H

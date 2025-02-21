@@ -82,7 +82,8 @@ messages: host_cmds_messages.h host_cmds_messages.cc
 	@echo Message files regenerated
 
 host_cmds_messages.h host_cmds_messages.cc: host_cmds_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/hooks/dhcp/host_cmds/host_cmds_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/hooks/dhcp/host_cmds/host_cmds_messages.mes)
 
 else
 

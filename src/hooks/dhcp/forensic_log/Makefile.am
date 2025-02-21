@@ -129,7 +129,8 @@ messages: legal_log_messages.h legal_log_messages.cc
 	@echo Message files regenerated
 
 legal_log_messages.h legal_log_messages.cc: legal_log_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/hooks/dhcp/forensic_log/legal_log_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/hooks/dhcp/forensic_log/legal_log_messages.mes)
 
 else
 

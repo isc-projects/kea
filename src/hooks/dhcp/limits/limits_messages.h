@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/limits/limits_messages.mes
+// File created from src/hooks/dhcp/limits/limits_messages.mes
 
 #ifndef LIMITS_MESSAGES_H
 #define LIMITS_MESSAGES_H

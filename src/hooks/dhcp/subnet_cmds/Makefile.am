@@ -81,7 +81,8 @@ messages: subnet_cmds_messages.h subnet_cmds_messages.cc
 	@echo Message files regenerated
 
 subnet_cmds_messages.h subnet_cmds_messages.cc: subnet_cmds_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/hooks/dhcp/subnet_cmds/subnet_cmds_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/hooks/dhcp/subnet_cmds/subnet_cmds_messages.mes)
 
 else
 

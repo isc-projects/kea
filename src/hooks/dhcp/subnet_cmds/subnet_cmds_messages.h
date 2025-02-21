@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/subnet_cmds/subnet_cmds_messages.mes
+// File created from src/hooks/dhcp/subnet_cmds/subnet_cmds_messages.mes
 
 #ifndef SUBNET_CMDS_MESSAGES_H
 #define SUBNET_CMDS_MESSAGES_H

@@ -29,3 +29,16 @@ ddns_gss_tsig_archive = static_library(
 subdir('testutils')
 subdir('libloadtests')
 subdir('tests')
+
+if KEA_MSG_COMPILER.found()
+    target_gen_messages = run_target(
+        'premium-src-hooks-d2-gss_tsig-gss_tsig_messages',
+        command: [
+            CD_AND_RUN,
+            TOP_SOURCE_DIR,
+            KEA_MSG_COMPILER,
+            'src/hooks/d2/gss_tsig/gss_tsig_messages.mes',
+        ],
+    )
+    TARGETS_GEN_MESSAGES += [target_gen_messages]
+endif

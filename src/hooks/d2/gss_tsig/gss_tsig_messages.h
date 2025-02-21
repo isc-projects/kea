@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/d2/gss_tsig/gss_tsig_messages.mes
+// File created from src/hooks/d2/gss_tsig/gss_tsig_messages.mes
 
 #ifndef GSS_TSIG_MESSAGES_H
 #define GSS_TSIG_MESSAGES_H

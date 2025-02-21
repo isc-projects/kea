@@ -93,7 +93,8 @@ messages: ping_check_messages.h ping_check_messages.cc
 	@echo Message files regenerated
 
 ping_check_messages.h ping_check_messages.cc: ping_check_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/hooks/dhcp/ping_check/ping_check_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/hooks/dhcp/ping_check/ping_check_messages.mes)
 
 else
 
