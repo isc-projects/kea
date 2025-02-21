@@ -13,7 +13,7 @@ subdir('tests')
 kea_asiodns_headers = ['asiodns_messages.h', 'io_fetch.h', 'logger.h']
 install_headers(kea_asiodns_headers, preserve_path: true, subdir: 'kea/asiodns')
 
-if HAS_KEA_MSG_COMPILER
+if KEA_MSG_COMPILER.found()
     current_source_dir = meson.current_source_dir()
     target_gen_messages = run_target(
         'src-lib-asiodns-asiodns_messages',

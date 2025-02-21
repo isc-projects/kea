@@ -21,13 +21,13 @@ dhcp_lease_cmds_archive = static_library(
 subdir('libloadtests')
 subdir('tests')
 
-if HAS_KEA_MSG_COMPILER
+if KEA_MSG_COMPILER.found()
     target_gen_messages = run_target(
         'src-hooks-dhcp-lease_cmds-lease_cmds_messages',
         command: [
             CD_AND_RUN,
             TOP_SOURCE_DIR,
-            kea_msg_compiler,
+            KEA_MSG_COMPILER,
             'src/hooks/dhcp/lease_cmds/lease_cmds_messages.mes',
         ],
     )

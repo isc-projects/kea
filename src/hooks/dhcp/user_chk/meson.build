@@ -23,7 +23,7 @@ dhcp_user_chk_archive = static_library(
 )
 subdir('tests')
 
-if HAS_KEA_MSG_COMPILER
+if KEA_MSG_COMPILER.found()
     target_gen_messages = run_target(
         'src-hooks-dhcp-user_chk-user_chk_messages',
         command: [

@@ -25,7 +25,7 @@ install_headers(
     subdir: 'kea/dhcp_ddns',
 )
 
-if HAS_KEA_MSG_COMPILER
+if KEA_MSG_COMPILER.found()
     current_source_dir = meson.current_source_dir()
     target_gen_messages = run_target(
         'src-lib-dhcp_ddns-dhcp_ddns_messages',

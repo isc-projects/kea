@@ -18,7 +18,7 @@ dhcp_stat_cmds_archive = static_library(
 )
 subdir('libloadtests')
 subdir('tests')
-if HAS_KEA_MSG_COMPILER
+if KEA_MSG_COMPILER.found()
     target_gen_messages = run_target(
         'src-hooks-dhcp-stat_cmds-stat_cmds_messages',
         command: [

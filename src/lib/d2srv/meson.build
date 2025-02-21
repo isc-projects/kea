@@ -35,7 +35,7 @@ kea_d2srv_headers = [
 ]
 install_headers(kea_d2srv_headers, preserve_path: true, subdir: 'kea/d2srv')
 
-if HAS_KEA_MSG_COMPILER
+if KEA_MSG_COMPILER.found()
     current_source_dir = meson.current_source_dir()
     target_gen_messages = run_target(
         'src-lib-d2srv-d2_messages',

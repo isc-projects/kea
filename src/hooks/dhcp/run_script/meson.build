@@ -20,7 +20,7 @@ dhcp_run_script_archive = static_library(
 subdir('tests')
 subdir('libloadtests')
 
-if HAS_KEA_MSG_COMPILER
+if KEA_MSG_COMPILER.found()
     target_gen_messages = run_target(
         'src-hooks-dhcp-run_script-run_script_messages',
         command: [

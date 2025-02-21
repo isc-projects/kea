@@ -39,7 +39,7 @@ executable(
 subdir('tests')
 
 current_source_dir = meson.current_source_dir()
-if HAS_KEA_MSG_COMPILER
+if KEA_MSG_COMPILER.found()
     target_gen_messages = run_target(
         'src-bin-netconf-netconf_messages',
         command: [

@@ -206,7 +206,7 @@ kea_dhcpsrv_headers = [
 ]
 install_headers(kea_dhcpsrv_headers, preserve_path: true, subdir: 'kea/dhcpsrv')
 
-if HAS_KEA_MSG_COMPILER
+if KEA_MSG_COMPILER.found()
     current_source_dir = meson.current_source_dir()
     target_gen_messages = run_target(
         'src-lib-dhcpsrv-alloc_engine_messages',

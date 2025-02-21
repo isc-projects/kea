@@ -181,8 +181,8 @@ endif
 if awk_exe.found()
     AWK = awk_exe.full_path()
 endif
-CD_AND_RUN = f'@TOP_SOURCE_DIR@/cd-and-run.sh'
-KEA_MSG_COMPILER = f'@TOP_BUILD_DIR@/src/lib/log/compiler/kea-msg-compiler'
+CD_AND_RUN = find_program(f'@TOP_SOURCE_DIR@/cd-and-run.sh')
+KEA_MSG_COMPILER = disabler()
 
 #### Dependencies
 
