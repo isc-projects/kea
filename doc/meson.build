@@ -96,4 +96,4 @@ make_grammar = configure_file(
     output: 'make-grammar.sh',
     configuration: {'TOP_SOURCE_DIR': TOP_SOURCE_DIR},
 )
-MAKE_GRAMMAR = run_target('make-grammar', command: [make_grammar])
+run_target('grammar', command: [make_grammar])
