@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -37,33 +37,38 @@ public:
     /// Removes files that may be left over from previous tests
     virtual ~RadiusLibLoadTest() {
     }
+
+    /// @brief Creates a valid set of radius parameters.
+    virtual ElementPtr validConfigParams() {
+        ElementPtr params = Element::createMap();
+        params->set("dictionary", Element::create(TEST_DICTIONARY));
+        return (params);
+    }
 };
 
 // Simple test that checks the library can be loaded and unloaded several times.
 TEST_F(RadiusLibLoadTest, validLoad) {
-    ElementPtr params = Element::createMap();
-    params->set("dictionary", Element::create(TEST_DICTIONARY));
-    validDaemonTest("kea-dhcp4", AF_INET, params);
-    validDaemonTest("kea-dhcp6", AF_INET6, params);
+    validDaemonTest("kea-dhcp4", AF_INET, valid_params_);
+    validDaemonTest("kea-dhcp6", AF_INET6, valid_params_);
 }
 
 // Simple test that checks the library cannot by loaded by invalid daemons.
 TEST_F(RadiusLibLoadTest, invalidDaemonLoad) {
     // V4 is invalid when family is AF_INET6
-    invalidDaemonTest("kea-dhcp4", AF_INET6);
+    invalidDaemonTest("kea-dhcp4", AF_INET6, valid_params_);
 
     // V6 is invalid when family is AF_INET
-    invalidDaemonTest("kea-dhcp6", AF_INET);
+    invalidDaemonTest("kea-dhcp6", AF_INET, valid_params_);
 
-    invalidDaemonTest("kea-ctrl-agent", AF_INET);
-    invalidDaemonTest("kea-dhcp-ddns", AF_INET);
-    invalidDaemonTest("bogus", AF_INET);
+    invalidDaemonTest("kea-ctrl-agent", AF_INET, valid_params_);
+    invalidDaemonTest("kea-dhcp-ddns", AF_INET, valid_params_);
+    invalidDaemonTest("bogus", AF_INET, valid_params_);
 }
 
 // Simple test that checks the library does not accept unknown parameters.
 TEST_F(RadiusLibLoadTest, unknown) {
     // Prepare parameters for the callout parameters library.
-    ElementPtr params = Element::createMap();
+    ElementPtr params = valid_params_;
     params->set("foobar", Element::create(1));
     invalidDaemonTest("kea-dhcp4", AF_INET, params);
 }
