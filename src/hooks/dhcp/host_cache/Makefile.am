@@ -53,7 +53,7 @@ libdhcp_host_cache_la_LIBADD += $(CRYPTO_LIBS)
 
 # Doxygen documentation
 
-EXTRA_DIST += host_cache.dox Doxyfile Doxyfile-xml
+EXTRA_DIST += host_cache.dox Doxyfile
 
 devel:
 	mkdir -p html

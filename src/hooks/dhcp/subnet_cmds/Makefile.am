@@ -47,7 +47,7 @@ libdhcp_subnet_cmds_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
 libdhcp_subnet_cmds_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libdhcp_subnet_cmds_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 
-EXTRA_DIST += subnet_cmds.dox Doxyfile Doxyfile-xml
+EXTRA_DIST += subnet_cmds.dox Doxyfile
 
 devel:
 	mkdir -p html

@@ -95,7 +95,7 @@ endif
 
 # Doxygen documentation
 
-EXTRA_DIST += libdhcp_legal_log.dox Doxyfile Doxyfile-xml
+EXTRA_DIST += libdhcp_legal_log.dox Doxyfile
 
 devel:
 	mkdir -p html

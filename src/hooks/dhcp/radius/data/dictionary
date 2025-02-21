@@ -1,8 +1,4 @@
 #
-#	From freeRADIUS client library.
-#
-
-#
 #	Following are the proper new names. Use these.
 #
 ATTRIBUTE	User-Name		1	string

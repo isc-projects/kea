@@ -53,7 +53,7 @@ libdhcp_ddns_tuning_la_LIBADD += $(CRYPTO_LIBS)
 libdhcp_ddns_tuning_la_LIBADD += $(BOOST_LIBS)
 
 # Doxygen documentation
-EXTRA_DIST += ddns_tuning.dox Doxyfile Doxyfile-xml
+EXTRA_DIST += ddns_tuning.dox Doxyfile
 
 devel:
 	mkdir -p html

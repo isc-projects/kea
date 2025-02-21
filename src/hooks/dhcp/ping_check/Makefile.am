@@ -59,7 +59,7 @@ libdhcp_ping_check_la_LIBADD += $(CRYPTO_LIBS)
 libdhcp_ping_check_la_LIBADD += $(BOOST_LIBS)
 
 # Doxygen documentation
-EXTRA_DIST += ping_check.dox Doxyfile Doxyfile-xml
+EXTRA_DIST += ping_check.dox Doxyfile
 
 devel:
 	mkdir -p html

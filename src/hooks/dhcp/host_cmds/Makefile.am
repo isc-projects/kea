@@ -48,7 +48,7 @@ libdhcp_host_cmds_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
 libdhcp_host_cmds_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libdhcp_host_cmds_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 
-EXTRA_DIST += host_cmds.dox Doxyfile Doxyfile-xml
+EXTRA_DIST += host_cmds.dox Doxyfile
 
 devel:
 	mkdir -p html

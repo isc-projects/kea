@@ -66,7 +66,7 @@ libdhcp_limits_la_LIBADD += $(LOG4CPLUS_LIBS)
 
 # Doxygen documentation
 
-EXTRA_DIST += libdhcp_limits.dox Doxyfile Doxyfile-xml
+EXTRA_DIST += libdhcp_limits.dox Doxyfile
 
 devel:
 	mkdir -p html

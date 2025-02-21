@@ -54,7 +54,7 @@ libdhcp_flex_id_la_LIBADD += $(BOOST_LIBS)
 
 # Doxygen documentation
 
-EXTRA_DIST += libdhcp_flex_id.dox Doxyfile Doxyfile-xml
+EXTRA_DIST += libdhcp_flex_id.dox Doxyfile
 
 devel:
 	mkdir -p html

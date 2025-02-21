@@ -8,7 +8,7 @@ AM_CXXFLAGS  = $(KEA_CXXFLAGS)
 
 # Ensure that the message file is included in the distribution
 EXTRA_DIST  = gss_tsig_messages.mes
-EXTRA_DIST += gss_tsig.dox Doxyfile Doxyfile-xml
+EXTRA_DIST += gss_tsig.dox Doxyfile
 
 CLEANFILES = *.gcno *.gcda
 

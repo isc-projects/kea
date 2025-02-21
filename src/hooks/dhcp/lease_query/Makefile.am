@@ -6,7 +6,7 @@ AM_CXXFLAGS  = $(KEA_CXXFLAGS)
 
 # Ensure that the message file is included in the distribution
 EXTRA_DIST  = lease_query_messages.mes
-EXTRA_DIST += lease_query.dox Doxyfile Doxyfile-xml
+EXTRA_DIST += lease_query.dox Doxyfile
 
 CLEANFILES = *.gcno *.gcda
 

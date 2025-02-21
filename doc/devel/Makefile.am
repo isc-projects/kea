@@ -1,5 +1,5 @@
 EXTRA_DIST  =
-EXTRA_DIST += Doxyfile Doxyfile-xml
+EXTRA_DIST += Doxyfile
 EXTRA_DIST += bison.dox
 EXTRA_DIST += changelog.dox
 EXTRA_DIST += config-backend.dox
