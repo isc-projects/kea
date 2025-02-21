@@ -36,25 +36,25 @@ kea_log_init_tests = executable(
 )
 test('kea-log-init-tests', kea_log_init_tests, protocol: 'gtest')
 
-logger_example = executable(
+executable(
     'logger_example',
     'logger_example.cc',
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )
-init_logger_test = executable(
+executable(
     'init_logger_test',
     'init_logger_test.cc',
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )
-buffer_logger_test = executable(
+executable(
     'buffer_logger_test',
     'buffer_logger_test.cc',
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )
-logger_lock_test = executable(
+executable(
     'logger_lock_test',
     'logger_lock_test.cc',
     'log_test_messages.cc',

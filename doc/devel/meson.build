@@ -13,4 +13,4 @@ configure_file(
     configuration: make_devel_conf_data,
 )
 make_devel = f'@current_build_dir@/make-devel.sh'
-run_target('make-devel', command: [CD_AND_RUN, current_source_dir, make_devel])
+MAKE_DEVEL = run_target('make-devel', command: [CD_AND_RUN, current_source_dir, make_devel])

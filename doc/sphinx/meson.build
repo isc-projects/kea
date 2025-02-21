@@ -120,23 +120,36 @@ mandir = get_option('mandir')
 mandir8 = f'@PREFIX@/@mandir@/man8/'
 make_conf_data.set('mandir8', mandir8)
 
+MAKE_DOC = disabler()
 if sphinx_exe.found()
     make_doc = configure_file(
         input: 'make-doc.sh.in',
         output: 'make-doc.sh',
         configuration: make_conf_data,
     )
-    run_target('make-doc', command: [make_doc])
+    MAKE_DOC = run_target('make-doc', command: [make_doc])
 endif
-regen_doc = configure_file(
-    input: 'regen-doc.sh.in',
-    output: 'regen-doc.sh',
-    configuration: make_conf_data,
-)
 make_install = configure_file(
     input: 'make-install.sh.in',
     output: 'make-install.sh',
     configuration: make_conf_data,
 )
-run_target('regen-doc', command: [regen_doc])
+make_mes_doc = configure_file(
+    input: 'make-mes-doc.sh.in',
+    output: 'make-mes-doc.sh',
+    configuration: make_conf_data,
+)
+make_uml = configure_file(
+    input: 'make-uml.sh.in',
+    output: 'make-uml.sh',
+    configuration: make_conf_data,
+)
+make_update_python_dependencies = configure_file(
+    input: 'make-update-python-dependencies.sh.in',
+    output: 'make-update-python-dependencies.sh',
+    configuration: make_conf_data,
+)
 meson.add_install_script(make_install)
+MAKE_MES_DOC = run_target('make-mes-doc', command: [make_mes_doc])
+MAKE_UML = run_target('make-uml', command: [make_uml])
+MAKE_UPDATE_PYTHON_DEPENDENCIES = run_target('make-update-python-dependencies', command: [make_update_python_dependencies])

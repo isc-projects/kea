@@ -1,0 +1,10 @@
+#!/bin/sh
+
+set -euv
+
+cd @srcdir@
+
+if test "@HAVE_PIP_COMPILE@" != "no" ; then
+    rm -f ./src/requirements.txt
+    pip-compile -r ./src/requirements.in
+fi

@@ -1,0 +1,21 @@
+#!/bin/sh
+
+# Expressions don't expand in single quotes, use double quotes for that. [SC2016]
+# shellcheck disable=SC2016
+
+set -euv
+
+cd @TOP_SOURCE_DIR@
+
+mkdir -p doc/sphinx/grammar
+
+./tools/extract_bnf.sh src/bin/dhcp4/dhcp4_parser \
+  --markdown ':ref:`dhcp4`' > doc/sphinx/grammar/grammar-dhcp4-parser.rst
+./tools/extract_bnf.sh src/bin/dhcp6/dhcp6_parser \
+  --markdown ':ref:`dhcp6`' > doc/sphinx/grammar/grammar-dhcp6-parser.rst
+./tools/extract_bnf.sh src/bin/d2/d2_parser \
+  --markdown ':ref:`dhcp-ddns-server`' > doc/sphinx/grammar/grammar-d2-parser.rst
+./tools/extract_bnf.sh src/bin/agent/agent_parser \
+  --markdown ':ref:`kea-ctrl-agent`' > doc/sphinx/grammar/grammar-ca-parser.rst
+./tools/extract_bnf.sh src/bin/netconf/netconf_parser \
+  --markdown ':ref:`netconf`' > doc/sphinx/grammar/grammar-netconf-parser.rst

@@ -162,7 +162,6 @@ awk_exe = find_program('gawk', 'awk', required: false)
 doxygen_exe = find_program('doxygen', required: false)
 sphinx_exe = find_program('sphinx-build', 'sphinx-build-3', required: false)
 pdflatex_exe = find_program('pdflatex', required: false)
-asciidoc_exe = find_program('asciidoc', required: false)
 plantuml_exe = find_program('plantuml', required: false)
 xmllint_exe = find_program('xmllint', required: false)
 pip_compile_exe = find_program('pip-compile', required: false)
@@ -436,26 +435,6 @@ else
     conf_data.set('PREMIUM_EXTENDED_VERSION', '"no"')
 endif
 
-#### Configuration Files
-
-# TODO: Change to config.h.in when autotools are removed.
-configure_file(
-    input: 'meson-config.h.in',
-    output: 'config.h',
-    configuration: conf_data,
-    install: true,
-    install_dir: 'include/kea',
-)
-
-# TODO: Change to kea_version.h.in when autotools are removed.
-configure_file(
-    input: 'meson-kea_version.h.in',
-    output: 'kea_version.h',
-    configuration: conf_data,
-    install: true,
-    install_dir: 'include/kea',
-)
-
 #### Default Includes
 
 INCLUDES = [
@@ -669,16 +648,92 @@ else
     report_conf_data.set('GTEST_LIBDIR', 'unknown')
 endif
 
+#### Configuration Files
+
 config_report_sh = configure_file(
     input: 'config-report.sh.in',
     output: 'config-report.sh',
     configuration: report_conf_data,
 )
-config_report = custom_target(
-    'config.report',
+
+# TODO: Change to config.h.in when autotools are removed.
+configure_file(
+    input: 'meson-config.h.in',
+    output: 'config.h',
+    configuration: conf_data,
+    install: true,
+    install_dir: 'include/kea',
+)
+
+# TODO: Change to kea_version.h.in when autotools are removed.
+configure_file(
+    input: 'meson-kea_version.h.in',
+    output: 'kea_version.h',
+    configuration: conf_data,
+    install: true,
+    install_dir: 'include/kea',
+)
+
+#### Custom Targets
+
+run_target(
+    'add-changelog-entry',
+    command: ['changelog_unreleased/.add-entry.sh'],
+)
+
+CONFIG_REPORT = custom_target(
     output: 'config.report',
-    depend_files: config_report_sh,
+    depend_files: [config_report_sh],
     command: [f'@TOP_BUILD_DIR@/config-report.sh'],
+)
+
+run_target(
+    'cppcheck',
+    command: [
+        'cppcheck',
+        '-I.',
+        '-I./src/lib',
+        '-I./src/bin',
+        '--error-exitcode=1',
+        '--inline-suppr',
+        '--quiet',
+        '--max-configs=256',
+        f'--suppressions-list=@TOP_SOURCE_DIR@/src/cppcheck-suppress.lst',
+        '--template={file}:{line}: check_fail: {message} ({severity},{id})',
+        '--xml',
+        '--xml-version=2',
+        '.',
+        '>',
+        'cppcheck-result.xml',
+        '2>&1',
+    ],
+)
+
+run_target(
+    'cppcheck-report',
+    command: [
+        'cppcheck-htmlreport',
+        '--file',
+        './cppcheck-result.xml',
+        '--report-dir',
+        './report',
+        '--title',
+        '"cppcheck report"',
+    ],
+)
+
+add_test_setup(
+    'valgrind',
+    exe_wrapper: [
+        valgrind_exe,
+        '--child-silent-after-fork=yes',
+        '--fullpath-after=',
+        '--leak-check=full',
+        '--num-callers=64',
+        '--quiet',
+        '--show-leak-kinds=all',
+        '--suppressions=src/valgrind.supp',
+    ],
 )
 
 #### Build Starts Here
@@ -694,18 +749,26 @@ if have_premium
     subdir('premium')
 endif
 
-alias_target('messages', TARGETS_GEN_MESSAGES)
-alias_target('parser', TARGETS_GEN_PARSER)
-
 top_docs = [
     'AUTHORS',
+    'CONTRIBUTING.md',
     'COPYING',
     'ChangeLog',
     'README',
-    'CONTRIBUTING.md',
     'SECURITY.md',
-    'platforms.rst',
     'code_of_conduct.md',
+    'platforms.rst',
 ]
 install_data(top_docs, install_dir: 'share/doc/kea')
 install_emptydir('var/run/kea')
+
+#### More Custom Targets
+
+alias_target('doc', MAKE_DOC)
+alias_target('devel', MAKE_DEVEL)
+alias_target('grammar', MAKE_GRAMMAR)
+alias_target('messages', TARGETS_GEN_MESSAGES)
+alias_target('mes-doc', MAKE_MES_DOC)
+alias_target('parser', TARGETS_GEN_PARSER)
+alias_target('uml', MAKE_UML)
+alias_target('update-python-dependencies', MAKE_UPDATE_PYTHON_DEPENDENCIES)

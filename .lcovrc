@@ -1,0 +1,1 @@
+ignore_errors = gcov,inconsistent,mismatch,source

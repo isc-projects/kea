@@ -1393,10 +1393,6 @@ AC_ARG_ENABLE(logger-checks,
 AM_CONDITIONAL(ENABLE_LOGGER_CHECKS, test x$enable_logger_checks != xno)
 AM_COND_IF([ENABLE_LOGGER_CHECKS], [AC_DEFINE([ENABLE_LOGGER_CHECKS], [1], [Check logger messages?])])
 
-# Check for asciidoc
-AC_PATH_PROG(ASCIIDOC, asciidoc, no)
-AM_CONDITIONAL(HAVE_ASCIIDOC, test "x$ASCIIDOC" != "xno")
-
 # Check for plantuml
 AC_PATH_PROG(PLANTUML, plantuml, no)
 AM_CONDITIONAL(HAVE_PLANTUML, test "x$PLANTUML" != "xno")

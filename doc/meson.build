@@ -78,13 +78,11 @@ examples = [
     'examples/netconf/comments.json',
     'examples/netconf/simple-dhcp4.json',
     'examples/netconf/simple-dhcp6.json',
-
     'examples/template-power-user-home/info.md',
     'examples/template-power-user-home/kea-ca-1.conf',
     'examples/template-power-user-home/kea-ca-2.conf',
     'examples/template-power-user-home/kea-dhcp4-1.conf',
     'examples/template-power-user-home/kea-dhcp4-2.conf',
-
     'examples/template-ha-mt-tls/info.md',
     'examples/template-ha-mt-tls/kea-ca-1.conf',
     'examples/template-ha-mt-tls/kea-ca-2.conf',
@@ -93,4 +91,9 @@ examples = [
 ]
 install_data(examples, preserve_path: true, install_dir: 'share/doc/kea')
 
-# grammar target
+make_grammar = configure_file(
+    input: 'make-grammar.sh.in',
+    output: 'make-grammar.sh',
+    configuration: {'TOP_SOURCE_DIR': TOP_SOURCE_DIR},
+)
+MAKE_GRAMMAR = run_target('make-grammar', command: [make_grammar])
