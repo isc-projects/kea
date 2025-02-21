@@ -65,6 +65,7 @@ upgrade_scripts = [
     'upgrade_025_to_026.sh',
     'upgrade_026_to_027.sh',
     'upgrade_027_to_028.sh',
+    'upgrade_028_to_029.sh',
 ]
 list = run_command('../utils/grabber.sh', check: true)
 grabbed_upgrade_scripts = list.stdout().strip().split('\n')
