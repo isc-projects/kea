@@ -606,7 +606,7 @@ void Lease6CmdsTest::testLease6AddBadParams() {
     exp_rsp = "Non-IPv6 address specified: 192.0.2.1";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
-    // Invalid state: the only supported values are 0,1,2.
+    // Invalid state: the only supported values are 0,1,2,3,4.
     txt =
         "{\n"
         "    \"command\": \"lease6-add\",\n"
@@ -615,11 +615,12 @@ void Lease6CmdsTest::testLease6AddBadParams() {
         "        \"ip-address\": \"2001:db8:1::1\",\n"
         "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
         "        \"iaid\": 1234\n,"
-        "        \"state\": 4\n"
+        "        \"state\": 5\n"
         "    }\n"
         "}";
-    exp_rsp = "Invalid state value: 4, supported values are: 0 (default), 1 "
-        "(declined), 2 (expired-reclaimed) and 3 (released)";
+    exp_rsp = "Invalid state value: 5, supported values are: 0 (default), 1 "
+        "(declined), 2 (expired-reclaimed), 3 (released)"
+         " and 4 (registered)";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
     // Bad user context: not a map.
