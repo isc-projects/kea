@@ -407,7 +407,7 @@ protected:
 
     /// @brief Processes incoming Rebind message.
     ///
-    /// @todo There are cases when the Rebind message should be  discarded
+    /// @todo There are cases when the Rebind message should be discarded
     /// by the DHCP server. One of those is when the server doesn't have a
     /// record of the client and it is unable to determine whether the
     /// client is on the appropriate link or not. We don't seem to do it
@@ -479,6 +479,13 @@ protected:
     /// @param dhcp4_query message received from client
     /// Does not throw
     void processDhcp4Query(const Pkt6Ptr& dhcp4_query);
+
+    /// @brief Processes incoming Add-reg-inform message.
+    ///
+    /// @param ctx Reference to client context
+    ///
+    /// @return Add-reg-reply message to be sent to the client.
+    Pkt6Ptr processAddRegInform(AllocEngine::ClientContext6& ctx);
 
     /// @brief Selects a subnet for a given client's packet.
     ///

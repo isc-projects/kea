@@ -1032,7 +1032,8 @@ Dhcpv6Srv::processDhcp6Query(Pkt6Ptr query) {
          (query->getType() == DHCPV6_RENEW) ||
          (query->getType() == DHCPV6_REBIND) ||
          (query->getType() == DHCPV6_RELEASE) ||
-         (query->getType() == DHCPV6_DECLINE))) {
+         (query->getType() == DHCPV6_DECLINE) ||
+         (query->getType() == DHCPV6_ADD_REG_INFORM))) {
         ContinuationPtr cont =
             makeContinuation(std::bind(&Dhcpv6Srv::processDhcp6QueryAndSendResponse,
                                        this, query));
@@ -1147,6 +1148,10 @@ Dhcpv6Srv::processLocalizedQuery6(AllocEngine::ClientContext6& ctx) {
 
         case DHCPV6_INFORMATION_REQUEST:
             rsp = processInfRequest(ctx);
+            break;
+
+        case DHCPV6_ADD_REG_INFORM:
+            rsp = processAddRegInform(ctx);
             break;
 
         default:
@@ -1978,6 +1983,7 @@ Dhcpv6Srv::sanityCheck(const Pkt6Ptr& pkt) {
         case DHCPV6_SOLICIT:
         case DHCPV6_REBIND:
         case DHCPV6_CONFIRM:
+        case DHCPV6_ADD_REG_INFORM:
             sanityCheck(pkt, MANDATORY, FORBIDDEN);
             return (true);
 
@@ -4465,6 +4471,167 @@ Dhcpv6Srv::processDhcp4Query(const Pkt6Ptr& dhcp4_query) {
     // the response via Dhcp6To4Ipc.
 }
 
+Pkt6Ptr
+Dhcpv6Srv::processAddRegInform(AllocEngine::ClientContext6& ctx) {
+
+    ConstSubnetPtr subnet = ctx.subnet_;
+    // Silently ignore message which can't be localized
+    if (!subnet) {
+        return (Pkt6Ptr());
+    }
+
+    Pkt6Ptr add_reg_inf = ctx.query_;
+
+    // Get the client source address.
+    IOAddress addr = add_reg_inf->getRemoteAddr();
+    // If there are some relays get the peer address of the closest relay
+    // to the client.
+    size_t relay_level = add_reg_inf->relay_info_.size();
+    if (relay_level > 0) {
+        addr = add_reg_inf->getRelay6LinkAddress(relay_level - 1);
+    }
+
+    Option6IAPtr ia;
+    Option6IAAddrPtr iaaddr;
+    Lease6Ptr old_lease;
+
+    // Check if the message is bad and shout be dropped.
+    try {
+        // Get IA_NA from the Address registration inform.
+        // There must be one.
+        OptionCollection ias = add_reg_inf->getOptions(D6O_IA_NA);
+        if (ias.size() != 1) {
+            isc_throw(RFCViolation, "Exactly 1 IA_NA option expected, but "
+                      << ias.size() << " received");
+        }
+        ia = boost::dynamic_pointer_cast<Option6IA>(ias.begin()->second);
+        if (!ia) {
+            isc_throw(Unexpected, "can't convert the IA_NA option");
+        }
+
+        // Set per-IA context values.
+        ctx.createIAContext();
+        ctx.currentIA().type_ = Lease::TYPE_NA;
+        ctx.currentIA().iaid_ = ia->getIAID();
+
+        // Get IAADDR from the IA_NA. There must be the only option.
+        OptionCollection iaaddrs = ia->getOptions();
+        if (iaaddrs.size() != 1) {
+            isc_throw(RFCViolation, "Exactly 1 IA_NA sub-option expected, but "
+                      << iaaddrs.size() << " received");
+        }
+        iaaddr = boost::dynamic_pointer_cast<Option6IAAddr>(iaaddrs.begin()->second);
+        if (!iaaddr) {
+            isc_throw(RFCViolation, "Can't get the IAADDR sub-option");
+        }
+        ctx.currentIA().addHint(iaaddr);
+
+        // Client and IADDR addresses must match.
+        if (addr != iaaddr->getAddress()) {
+            isc_throw(RFCViolation, "Address mismatch: client at " << addr
+                      << " wants to register " << iaaddr->getAddress());
+        }
+
+        // Should be in the subnet.
+        if (!subnet->inRange(addr)) {
+            isc_throw(RFCViolation, "Address " << addr << " is not in subnet "
+                      << subnet->toText() << " (id " << subnet->getID() << ")");
+        }
+
+        // Check if there is a lease for the address.
+        old_lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                          addr);
+
+        // Address registration can't be mixed with standard allocation.
+        if (old_lease && (old_lease->state_ != Lease6::STATE_REGISTERED)) {
+            isc_throw(RFCViolation, "Address " << addr << " already in use "
+                      << *old_lease);
+        }
+
+        // Address must not be reserved.
+        auto hosts = HostMgr::instance().getAll6(addr);
+        if (!hosts.empty()) {
+            isc_throw(RFCViolation, "Address " << addr << " is reserved");
+        }
+    } catch (const std::exception &ex) {
+        // log
+        return (Pkt6Ptr());
+    }
+
+    // Check if the client is the same.
+    if (old_lease && old_lease->duid_ && *ctx.duid_ != *(old_lease->duid_)) {
+        // log
+    }
+
+    // Build response.
+    Pkt6Ptr add_reg_rep(new Pkt6(DHCPV6_ADD_REG_REPLY,
+                                 add_reg_inf->getTransid()));
+    add_reg_rep->addOption(ia);
+
+    // Process FQDN.
+    processClientFqdn(add_reg_inf, add_reg_rep, ctx);
+
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, ctx.duid_,
+                               ia->getIAID(), iaaddr->getPreferred(),
+                               iaaddr->getValid(), subnet->getID(),
+                               ctx.hwaddr_));
+    lease->state_ = Lease6::STATE_REGISTERED;
+    lease->fqdn_fwd_ = ctx.fwd_dns_update_;
+    lease->fqdn_rev_ = ctx.rev_dns_update_;
+    lease->hostname_ = ctx.hostname_;
+
+    conditionallySetReservedClientClasses(add_reg_inf, ctx);
+    // Evaluate additional classes.
+    evaluateAdditionalClasses(add_reg_inf, ctx);
+
+    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASSES_ASSIGNED)
+        .arg(add_reg_inf->getLabel())
+        .arg(add_reg_inf->getName())
+        .arg(add_reg_inf->getClasses().toText());
+
+    copyClientOptions(add_reg_inf, add_reg_rep);
+    CfgOptionList co_list;
+    buildCfgOptionList(add_reg_inf, ctx, co_list);
+    // The RFC says to not do that...
+    appendDefaultOptions(add_reg_inf, add_reg_rep, co_list);
+    appendRequestedOptions(add_reg_inf, add_reg_rep, co_list);
+    appendRequestedVendorOptions(add_reg_inf, add_reg_rep, ctx, co_list);
+
+    // call the new callout
+
+    // Add stats
+    if (old_lease) {
+        // Save the old lease for the lease6_committed callout.
+        ctx.currentIA().old_leases_.push_back(old_lease);
+        if (!lease) {
+            if (!LeaseMgrFactory::instance().deleteLease(old_lease)) {
+                // Assume that stats and DNS were handled by someone else.
+                return (add_reg_rep);
+            }
+        } else {
+            try {
+                LeaseMgrFactory::instance().updateLease6(lease);
+            } catch (const std::exception&) {
+                // Assume that stats and DNS were handled by someone else.
+                return (add_reg_rep);
+            }
+        }
+    } else if (lease) {
+        if (!LeaseMgrFactory::instance().addLease(lease)) {
+            // Assume that stats and DNS were handled by someone else.
+            return (add_reg_rep);
+        }
+    }
+    if (lease) {
+        // Save the new lease for the lease6_committed callout.
+        ctx.new_leases_.push_back(lease);
+    }
+
+    updateReservedFqdn(ctx, add_reg_rep);
+
+    return (add_reg_rep);
+}
+
 void Dhcpv6Srv::classifyByVendor(const Pkt6Ptr& pkt) {
     OptionVendorClassPtr vclass;
     for (auto const& opt : pkt->getOptions(D6O_VENDOR_CLASS)) {
@@ -4929,6 +5096,13 @@ void Dhcpv6Srv::processStatsReceived(const Pkt6Ptr& query) {
         // Should not happen, but let's keep a counter for it
         stat_name = "pkt6-dhcpv4-response-received";
         break;
+    case DHCPV6_ADD_REG_INFORM:
+        stat_name = "pkt6-add-reg-inform-received";
+        break;
+    case DHCPV6_ADD_REG_REPLY:
+        // Should not happen, but let's keep a counter for it
+        stat_name = "pkt6-add-reg-reply-received";
+        break;
     default:
             ; // do nothing
     }
@@ -4951,6 +5125,9 @@ void Dhcpv6Srv::processStatsSent(const Pkt6Ptr& response) {
         break;
     case DHCPV6_DHCPV4_RESPONSE:
         stat_name = "pkt6-dhcpv4-response-sent";
+        break;
+    case DHCPV6_ADD_REG_REPLY:
+        stat_name = "pkt6-add-reg-reply-sent";
         break;
     default:
         // That should never happen

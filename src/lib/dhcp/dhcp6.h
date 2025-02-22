@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2006-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -226,7 +226,7 @@ enum DHCPv6MessageType {
    DHCPV6_LEASEQUERY_DATA      = 17,
    /* RFC 6977 */
    DHCPV6_RECONFIGURE_REQUEST  = 18,
-    DHCPV6_RECONFIGURE_REPLY   = 19,
+   DHCPV6_RECONFIGURE_REPLY    = 19,
    /* RFC 7341 */
    DHCPV6_DHCPV4_QUERY         = 20,
    DHCPV6_DHCPV4_RESPONSE      = 21,

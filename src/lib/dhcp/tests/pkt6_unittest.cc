@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -680,6 +680,14 @@ TEST_F(Pkt6Test, getName) {
 
         case DHCPV6_SOLICIT:
             EXPECT_STREQ("SOLICIT", Pkt6::getName(type));
+            break;
+
+        case DHCPV6_ADD_REG_INFORM:
+            EXPECT_STREQ("ADD_REG_INFORM", Pkt6::getName(type));
+            break;
+
+        case DHCPV6_ADD_REG_REPLY:
+            EXPECT_STREQ("ADD_REG_REPLY", Pkt6::getName(type));
             break;
 
         default:
