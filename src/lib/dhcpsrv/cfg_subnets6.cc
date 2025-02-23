@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -427,6 +427,12 @@ CfgSubnets6::removeStatistics() {
         stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
                                              "reclaimed-leases"));
 
+        stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
+                                             "cumulative-registered-nas"));
+
+        stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
+                                             "registered-nas"));
+
         for (auto const& pool : subnet6->getPools(Lease::TYPE_NA)) {
             stats_mgr.del(StatsMgr::generateName("subnet", subnet_id,
                                                  StatsMgr::generateName("pool", pool->getID(),
@@ -512,6 +518,13 @@ CfgSubnets6::updateStatistics() {
                                                                "v6-ia-pd-lease-reuses"));
         if (!stats_mgr.getObservation(name_ia_pd_reuses)) {
             stats_mgr.setValue(name_ia_pd_reuses, int64_t(0));
+        }
+
+        string const& name_registered(StatsMgr::generateName("subnet", subnet_id,
+                                                             "cumulative-registered-nas"));
+
+        if (!stats_mgr.getObservation(name_registered)) {
+            stats_mgr.setValue(name_registered, static_cast<int64_t>(0));
         }
 
         for (auto const& pool : subnet6->getPools(Lease::TYPE_NA)) {

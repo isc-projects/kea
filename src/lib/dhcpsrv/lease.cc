@@ -127,6 +127,11 @@ Lease::stateDeclined() const {
     return (state_ == STATE_DECLINED);
 }
 
+bool
+Lease::stateRegistered() const {
+    return (state_ == STATE_REGISTERED);
+}
+
 int64_t
 Lease::getExpirationTime() const {
     return (static_cast<int64_t>(cltt_) + valid_lft_);

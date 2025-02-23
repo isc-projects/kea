@@ -246,8 +246,8 @@ enum DHCPv6MessageType {
    DHCPV6_DISCONNECT           = 33,
    DHCPV6_STATE                = 34,
    DHCPV6_CONTACT              = 35,
-   DHCPV6_ADD_REG_INFORM       = 36,
-   DHCPV6_ADD_REG_REPLY        = 37,
+   DHCPV6_ADDR_REG_INFORM      = 36,
+   DHCPV6_ADDR_REG_REPLY       = 37,
    DHCPV6_TYPES_EOF
 };
 

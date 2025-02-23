@@ -345,7 +345,7 @@ called before "subnet6_select".
 
  - <b>Next step status</b>: Not applicable, its value will be ignored.
 
-@subsection dhcpv6HookRegister6 register6
+@subsection dhcpv6HookAddr6Register addr6_register
 
  - @b Arguments:
   - name: @b query6, type: isc::dhcp::Pkt6Ptr, direction: <b>in</b>

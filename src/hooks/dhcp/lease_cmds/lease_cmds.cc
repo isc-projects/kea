@@ -560,7 +560,11 @@ LeaseCmdsImpl::updateStatsOnAdd(const Lease4Ptr& lease) {
 
 void
 LeaseCmdsImpl::updateStatsOnAdd(const Lease6Ptr& lease) {
-    if (!lease->stateExpiredReclaimed()) {
+    if (lease->stateRegistered()) {
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", lease->subnet_id_, "registered-nas"),
+            static_cast<int64_t>(1));
+    } else if (!lease->stateExpiredReclaimed()) {
         StatsMgr::instance().addValue(
             StatsMgr::generateName("subnet", lease->subnet_id_,
                                    lease->type_ == Lease::TYPE_NA ?
@@ -733,7 +737,19 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease4Ptr& existing,
 void
 LeaseCmdsImpl::updateStatsOnUpdate(const Lease6Ptr& existing,
                                    const Lease6Ptr& lease) {
-    if (!existing->stateExpiredReclaimed()) {
+    // Does not cover registered <-> not registered transition.
+    if (existing->stateRegistered()) {
+        if (existing->subnet_id_ != lease->subnet_id_) {
+            StatsMgr::instance().addValue(
+                StatsMgr::generateName("subnet", existing->subnet_id_,
+                                       "registered-nas"),
+                static_cast<int64_t>(-1));
+            StatsMgr::instance().addValue(
+                StatsMgr::generateName("subnet", lease->subnet_id_,
+                                       "registered-nas"),
+                static_cast<int64_t>(1));
+        }
+    } else if (!existing->stateExpiredReclaimed()) {
         ConstSubnet6Ptr subnet;
         PoolPtr pool;
 
@@ -910,7 +926,12 @@ LeaseCmdsImpl::updateStatsOnDelete(const Lease4Ptr& lease) {
 
 void
 LeaseCmdsImpl::updateStatsOnDelete(const Lease6Ptr& lease) {
-    if (!lease->stateExpiredReclaimed()) {
+    if (lease->stateRegistered()) {
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", lease->subnet_id_,
+                                   "registered-nas"),
+            static_cast<int64_t>(-1));
+    } else if (!lease->stateExpiredReclaimed()) {
         StatsMgr::instance().addValue(
             StatsMgr::generateName("subnet", lease->subnet_id_,
                                    lease->type_ == Lease::TYPE_NA ?
@@ -996,6 +1017,15 @@ LeaseCmdsImpl::addOrUpdate6(Lease6Ptr lease, bool force_create) {
         return (true);
     }
     if (existing) {
+        // Refuse used <-> registered transitions.
+        if (existing->stateRegistered() && !lease->stateRegistered()) {
+            isc_throw(BadValue, "illegal reuse of registered address "
+                      << lease->addr_);
+        } else if (!existing->stateRegistered() && lease->stateRegistered()) {
+            isc_throw(BadValue, "address in use: " << lease->addr_
+                      << " can't be registered");
+        }
+
         // Update lease current expiration time with value received from the
         // database. Some database backends reject operations on the lease if
         // the current expiration time value does not match what is stored.
@@ -2410,6 +2440,10 @@ LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
                 StatsMgr::generateName("subnet", id, "declined-addresses"),
                 static_cast<int64_t>(0));
 
+            StatsMgr::instance().setValue(
+                StatsMgr::generateName("subnet", id, "registered-nas"),
+                static_cast<int64_t>(0));
+
             auto const& sub = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getBySubnetId(id);
             if (sub) {
                 for (auto const& pool : sub->getPools(Lease::TYPE_NA)) {
@@ -2459,6 +2493,10 @@ LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
 
                 StatsMgr::instance().setValue(
                     StatsMgr::generateName("subnet", sub->getID(), "declined-addresses"),
+                    static_cast<int64_t>(0));
+
+                StatsMgr::instance().setValue(
+                    StatsMgr::generateName("subnet", sub->getID(), "registered-nas"),
                     static_cast<int64_t>(0));
 
                 for (auto const& pool : sub->getPools(Lease::TYPE_NA)) {

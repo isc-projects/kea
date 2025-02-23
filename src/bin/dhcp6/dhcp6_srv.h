@@ -480,12 +480,12 @@ protected:
     /// Does not throw
     void processDhcp4Query(const Pkt6Ptr& dhcp4_query);
 
-    /// @brief Processes incoming Add-reg-inform message.
+    /// @brief Processes incoming Addr-reg-inform message.
     ///
     /// @param ctx Reference to client context
     ///
-    /// @return Add-reg-reply message to be sent to the client.
-    Pkt6Ptr processAddRegInform(AllocEngine::ClientContext6& ctx);
+    /// @return Addr-reg-reply message to be sent to the client.
+    Pkt6Ptr processAddrRegInform(AllocEngine::ClientContext6& ctx);
 
     /// @brief Selects a subnet for a given client's packet.
     ///

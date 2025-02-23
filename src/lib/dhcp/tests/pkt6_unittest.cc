@@ -682,12 +682,12 @@ TEST_F(Pkt6Test, getName) {
             EXPECT_STREQ("SOLICIT", Pkt6::getName(type));
             break;
 
-        case DHCPV6_ADD_REG_INFORM:
-            EXPECT_STREQ("ADD_REG_INFORM", Pkt6::getName(type));
+        case DHCPV6_ADDR_REG_INFORM:
+            EXPECT_STREQ("ADDR_REG_INFORM", Pkt6::getName(type));
             break;
 
-        case DHCPV6_ADD_REG_REPLY:
-            EXPECT_STREQ("ADD_REG_REPLY", Pkt6::getName(type));
+        case DHCPV6_ADDR_REG_REPLY:
+            EXPECT_STREQ("ADDR_REG_REPLY", Pkt6::getName(type));
             break;
 
         default:

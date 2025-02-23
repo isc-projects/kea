@@ -6846,6 +6846,29 @@ confusion, ISC decided not to decrease ``assigned-nas`` immediately after
 receiving DHCPDECLINE, but to do it later when Kea recovers the address
 back to the available pool.
 
+.. _dhcp6-address-registration:
+
+Address Registration (RFC 9686 Support)
+=======================================
+
+Kea version 2.7.7 introduces the support of self-generated address registration
+as defined in `RFC 9686 <https://tools.ietf.org/html/rfc9686>`__ i.e.
+when a valid ADDR-REG-INFORM (36) message in received a registered lease is
+added or updated and a ADDR-REG-REPLY (37) is sent back to the client.
+
+.. note::
+
+   Even if they share a common lease database with leases in other states,
+   registered leases are independent: when a lease in another state already
+   exists for an address this address in considered as in use and can't be
+   registered. In the other way a registered lease can't change to another
+   state, e.g. reclaimation of expired registered leases removes them.
+
+.. note::
+
+   Kea accepts and handles the Option Request option in the ADDR-REG-INFORM
+   message (the RFC specifies the client MUST NOT put such option in it).
+
 .. _dhcp6-stats:
 
 Statistics in the DHCPv6 Server
@@ -7011,6 +7034,26 @@ The DHCPv6 server supports the following statistics:
    |                                                   |                | the server rather than back to the |
    |                                                   |                | clients.                           |
    +---------------------------------------------------+----------------+------------------------------------+
+   | pkt6-addr-reg-inform-received                     | integer        | Number of ADDR-REG-INFORM packets  |
+   |                                                   |                | received. This statistic is        |
+   |                                                   |                | expected to grow if there are      |
+   |                                                   |                | devices that are using address     |
+   |                                                   |                | registration.                      |
+   +---------------------------------------------------+----------------+------------------------------------+
+   | pkt6-addr-reg-reply-received                      | integer        | Number of ADDR-REG-REPLY packets   |
+   |                                                   |                | received. This statistic is        |
+   |                                                   |                | expected to remain zero at all     |
+   |                                                   |                | times, as ADDR-REG-REPLY packets   |
+   |                                                   |                | are sent by the server and the     |
+   |                                                   |                | server is never expected to        |
+   |                                                   |                | receive them. A non-zero value     |
+   |                                                   |                | indicates an error. One likely     |
+   |                                                   |                | cause would be a misbehaving relay |
+   |                                                   |                | agent that incorrectly forwards    |
+   |                                                   |                | ADDR-REG-REPLY message towards the |
+   |                                                   |                | server rather than back to the     |
+   |                                                   |                | clients.                           |
+   +---------------------------------------------------+----------------+------------------------------------+
    | pkt6-unknown-received                             | integer        | Number of packets received of an   |
    |                                                   |                | unknown type. A non-zero value of  |
    |                                                   |                | this statistic indicates that the  |
@@ -7057,6 +7100,13 @@ The DHCPv6 server supports the following statistics:
    |                                                   |                | DHCPv4-QUERY is processed. There   |
    |                                                   |                | are certain cases where there is   |
    |                                                   |                | no response.                       |
+   +---------------------------------------------------+----------------+------------------------------------+
+   | pkt6-addr-reg-reply-sent                          | integer        | Number of ADDR-REG-REPLY packets   |
+   |                                                   |                | sent. This statistic is expected   |
+   |                                                   |                | to grow in most cases after a      |
+   |                                                   |                | ADDR-REG-INFORM is processed.      |
+   |                                                   |                | There are certain cases where      |
+   |                                                   |                | there is n response.               |
    +---------------------------------------------------+----------------+------------------------------------+
    | subnet[id].total-nas                              | big integer    | Total number of NA addresses       |
    |                                                   |                | available for DHCPv6 management    |
@@ -7526,6 +7576,38 @@ The DHCPv6 server supports the following statistics:
    |                                                   |                | This statistic is on a per-subnet  |
    |                                                   |                | basis. The *id* is the subnet ID   |
    |                                                   |                | of a given subnet.                 |
+   +---------------------------------------------------+----------------+------------------------------------+
+   | cumulative-registered                             | integer        | Cumulative number of NA addresses  |
+   |                                                   |                | that have been registered since    |
+   |                                                   |                | server startup. It is incremented  |
+   |                                                   |                | each time a NA address is          |
+   |                                                   |                | registered and is not reset when   |
+   |                                                   |                | the server is reconfigured.        |
+   +---------------------------------------------------+----------------+------------------------------------+
+   | subnet[id].cumulative-registered                  | integer        | Cumulative number of NA addresses  |
+   |                                                   |                | in a given subnet that were        |
+   |                                                   |                | registered. It increases every     |
+   |                                                   |                | a new address is registered (as a  |
+   |                                                   |                | result of receiving an             |
+   |                                                   |                | ADDR-REG-INFORM message) and is    |
+   |                                                   |                | never decreased. The *id* is the   |
+   |                                                   |                | subnet ID of a given subnet. This  |
+   |                                                   |                | statistic is exposed for each      |
+   |                                                   |                | subnet separately, and is reset    |
+   |                                                   |                | during a reconfiguration event.    |
+   +---------------------------------------------------+----------------+------------------------------------+
+   | subnet[id].registered                             | integer        | Number of NA addresses in a given  |
+   |                                                   |                | subnet that are registered. It     |
+   |                                                   |                | increases every time a new address |
+   |                                                   |                | registered (as a result of         |
+   |                                                   |                | receiving an ADDR-REG-INFORM       |
+   |                                                   |                | message) and is decreased every    |
+   |                                                   |                | time a registration expires. The   |
+   |                                                   |                | *id* is the the subnet ID of a     |
+   |                                                   |                | given subnet. This statistic is    |
+   |                                                   |                | exposed for each subnet            |
+   |                                                   |                | separately, and is reset during a  |
+   |                                                   |                | reconfiguration event.             |
    +---------------------------------------------------+----------------+------------------------------------+
 
 .. note::
@@ -8014,6 +8096,9 @@ The following standards are currently supported in Kea:
 -  *DHCP and Router Advertisement Options for the Discovery of Network-designated
    Resolvers (DNR)*, `RFC 9463 <https://tools.ietf.org/html/rfc9463>`__. The Kea server
    supports the DNR option.
+
+-  *Registering Self-Generated IPv6 Addresses Using DHCPv6*, `RFC 9686 <https://tools.ietf.org/html/rfc9686>`__. The Kea server supports self-generated address registration. See :ref:`dhcp6-address-registration` for details.
+
 
 .. _dhcp6-limit:
 

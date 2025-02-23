@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -214,6 +214,11 @@ struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
     ///
     /// @return true if the lease is in the "declined" state, false otherwise.
     bool stateDeclined() const;
+
+    /// @brief Indicates if the lease is in the "registered" state.
+    ///
+    /// @return true if the lease is in the "registered" state, false otherwise.
+    bool stateRegistered() const;
 
     /// @brief Returns true if the other lease has equal FQDN data.
     ///

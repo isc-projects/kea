@@ -44,22 +44,22 @@ Status Code option. The first argument includes the client and the
 transaction identification information. The second argument includes
 the details of the status code.
 
-% DHCP6_ADD_REG_INFORM_FAIL error on add-reg-inform from client %1: %2
-This information message is issued when the processing of an add-reg-inform
-message failed. The address of the client, usually also the address to
-register, and the description of the problem are printed.
-
-% DHCP6_ADD_REG_INFORM_CLIENT_CHANGE received an add-reg-inform for %1 from client '%2' but the address was registered by another client '%3'
-This information message is issued when a lease for another client already
-exists for an address being registered. The address, the new client and
-previous client identifiers are printed.
-
 % DHCP6_ADD_STATUS_CODE_FOR_IA %1: adding Status Code to IA with iaid=%2: %3
 Logged at debug log level 50.
 This message is logged when the server is adding the Status Code
 option to an IA. The first argument includes the client and the
 transaction identification information. The second argument specifies
 the IAID. The third argument includes the details of the status code.
+
+% DHCP6_ADDR_REG_INFORM_FAIL error on addr-reg-inform from client %1: %2
+This information message is issued when the processing of an addr-reg-inform
+message failed. The address of the client, usually also the address to
+register, and the description of the problem are printed.
+
+% DHCP6_ADDR_REG_INFORM_CLIENT_CHANGE received an addr-reg-inform for %1 from client '%2' but the address was registered by another client '%3'
+This information message is issued when a lease for another client already
+exists for an address being registered. The address, the new client and
+previous client identifiers are printed.
 
 % DHCP6_ALREADY_RUNNING %1 already running? %2
 This is an error message that occurs when the DHCPv6 server encounters
@@ -380,6 +380,13 @@ and the expression specified in its configuration generated (was evaluated to)
 an identifier for incoming packet. This debug message is mainly intended as a
 debugging assistance for flexible identifier.
 
+% DHCP6_HOOK_ADDR6_REGISTER_SKIP %1: addr-reg-inform for %2 is dropped, because a callout set the next step to SKIP
+Logged at debug log level 40.
+This debug message is printed when a callout installed on the addr6_register
+hook point sets the next step to SKIP. For this particular hook point, the
+value setting instructs the server to cancel the address registration and
+drop the packet.
+
 % DHCP6_HOOK_BUFFER_RCVD_DROP received buffer from %1 to %2 over interface %3 was dropped because a callout set the drop flag
 Logged at debug log level 15.
 This debug message is printed when a callout installed on buffer6_receive
@@ -493,13 +500,6 @@ point, the setting of the value by a callout instructs the server to
 not build the wire data (pack) because it was already done by the
 book. The argument specifies the client and transaction identification
 information.
-
-% DHCP6_HOOK_REGISTER6_SKIP %1: add-reg-inform for %2 is dropped, because a callout set the next step to SKIP
-Logged at debug log level 40.
-This debug message is printed when a callout installed on the register6
-hook point sets the next step to SKIP. For this particular hook point, the
-value setting instructs the server to cancel the address registration and
-drop the packet.
 
 % DHCP6_HOOK_SUBNET6_SELECT_DROP %1: packet was dropped because a callout set the drop flag
 Logged at debug log level 40.
@@ -920,6 +920,14 @@ specifies the client and transaction identification information.
 % DHCP6_RECLAIM_EXPIRED_LEASES_FAIL failed to reclaim expired leases: %1
 This error message indicates that the reclaim expired leases operation failed
 and provides the cause of failure.
+
+% DHCP6_REGISTERED_LEASE_ADD_FAIL error in registered lease add for %1
+This error message indicates that the registered lease add failed and
+provides the address being registered.
+
+% DHCP6_REGISTERED_LEASE_UPDATE_FAIL error in registered lease update for %1: %2
+This error message indicates that the registered lease update failed and
+provides the registered address and the cause of failure.
 
 % DHCP6_RELEASE_NA %1: binding for address %2 and iaid=%3 was released properly
 This informational message indicates that an address was released properly. It

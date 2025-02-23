@@ -488,8 +488,8 @@ Pkt6::unpackUDP() {
     case DHCPV6_INFORMATION_REQUEST:
     case DHCPV6_DHCPV4_QUERY:
     case DHCPV6_DHCPV4_RESPONSE:
-    case DHCPV6_ADD_REG_INFORM:
-    case DHCPV6_ADD_REG_REPLY:
+    case DHCPV6_ADDR_REG_INFORM:
+    case DHCPV6_ADDR_REG_REPLY:
     default: // assume that unknown messages are not using relay format
         {
             return (unpackMsg(data_.begin(), data_.end()));
@@ -801,8 +801,8 @@ Pkt6::getName(const uint8_t type) {
     static const char* SOLICIT = "SOLICIT";
     static const char* DHCPV4_QUERY = "DHCPV4_QUERY";
     static const char* DHCPV4_RESPONSE = "DHCPV4_RESPONSE";
-    static const char* ADD_REG_INFORM = "ADD_REG_INFORM";
-    static const char* ADD_REG_REPLY = "ADD_REG_REPLY";
+    static const char* ADDR_REG_INFORM = "ADDR_REG_INFORM";
+    static const char* ADDR_REG_REPLY = "ADDR_REG_REPLY";
     static const char* UNKNOWN = "UNKNOWN";
 
     switch (type) {
@@ -863,11 +863,11 @@ Pkt6::getName(const uint8_t type) {
     case DHCPV6_DHCPV4_RESPONSE:
         return (DHCPV4_RESPONSE);
 
-    case DHCPV6_ADD_REG_INFORM:
-        return (ADD_REG_INFORM);
+    case DHCPV6_ADDR_REG_INFORM:
+        return (ADDR_REG_INFORM);
 
-    case DHCPV6_ADD_REG_REPLY:
-        return (ADD_REG_REPLY);
+    case DHCPV6_ADDR_REG_REPLY:
+        return (ADDR_REG_REPLY);
 
     default:
         ;

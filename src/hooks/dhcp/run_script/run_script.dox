@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -89,8 +89,8 @@ point names. This library has several such functions: @ref lease4_renew,
 @ref lease4_expire, @ref lease4_recover, @ref leases4_committed,
 @ref lease4_release, @ref lease4_decline, @ref lease6_renew,
 @ref lease6_rebind, @ref lease6_expire, @ref lease6_recover,
-@ref leases6_committed, @ref lease6_release, @ref lease6_decline located
-in run_script_callouts.cc.
+@ref leases6_committed, @ref lease6_release, @ref lease6_decline,
+@ref addr6_register located in run_script_callouts.cc.
 
 Each hook point extracts the Kea internal data and exports it as string
 environment variables. These parameters are shared with the target script
@@ -160,6 +160,10 @@ lease6_decline () {
     ...
 }
 
+addr6_register() {
+    ...
+}
+
 case "$1" in
     "lease4_renew")
         lease4_renew
@@ -200,6 +204,9 @@ case "$1" in
     "lease6_decline")
         lease6_decline
         ;;
+    "addr6_register")
+        addr6_register
+	;;
     *)
         unknown_handle "${@}"
         ;;
@@ -663,6 +670,52 @@ LEASE6_IAID
 LEASE6_PREFERRED_LIFETIME
 LEASE6_PREFIX_LEN
 LEASE6_TYPE
+
+@endcode
+
+addr6_register
+
+@code
+
+QUERY6_TYPE
+QUERY6_TXID
+QUERY6_LOCAL_ADDR
+QUERY6_LOCAL_PORT
+QUERY6_REMOTE_ADDR
+QUERY6_REMOTE_PORT
+QUERY6_IFACE_INDEX
+QUERY6_IFACE_NAME
+QUERY6_REMOTE_HWADDR
+QUERY6_REMOTE_HWADDR_TYPE
+QUERY6_PROTO
+QUERY6_CLIENT_ID
+ADDRESS6
+OLD_LEASE6_ADDRESS
+OLD_LEASE6_CLTT
+OLD_LEASE6_HOSTNAME
+OLD_LEASE6_HWADDR
+OLD_LEASE6_HWADDR_TYPE
+OLD_LEASE6_STATE
+OLD_LEASE6_SUBNET_ID
+OLD_LEASE6_VALID_LIFETIME
+OLD_LEASE6_DUID
+OLD_LEASE6_IAID
+OLD_LEASE6_PREFERRED_LIFETIME
+OLD_LEASE6_PREFIX_LEN
+OLD_LEASE6_TYPE
+NEW_LEASE6_ADDRESS
+NEW_LEASE6_CLTT
+NEW_LEASE6_HOSTNAME
+NEW_LEASE6_HWADDR
+NEW_LEASE6_HWADDR_TYPE
+NEW_LEASE6_STATE
+NEW_LEASE6_SUBNET_ID
+NEW_LEASE6_VALID_LIFETIME
+NEW_LEASE6_DUID
+NEW_LEASE6_IAID
+NEW_LEASE6_PREFERRED_LIFETIME
+NEW_LEASE6_PREFIX_LEN
+NEW_LEASE6_TYPE
 
 @endcode
 

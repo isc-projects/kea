@@ -145,7 +145,7 @@ struct Dhcp6Hooks {
     int hook_index_lease6_decline_;   ///< index for "lease6_decline" hook point
     int hook_index_host6_identifier_; ///< index for "host6_identifier" hook point
     int hook_index_ddns6_update_;     ///< index for "ddns6_update" hook point
-    int hook_index_register6_;        ///< index for "register6" hook point
+    int hook_index_addr6_register_;   ///< index for "addr6_register" hook point
 
     /// Constructor that registers hook points for DHCPv6 engine
     Dhcp6Hooks() {
@@ -159,7 +159,7 @@ struct Dhcp6Hooks {
         hook_index_lease6_decline_    = HooksManager::registerHook("lease6_decline");
         hook_index_host6_identifier_  = HooksManager::registerHook("host6_identifier");
         hook_index_ddns6_update_      = HooksManager::registerHook("ddns6_update");
-        hook_index_register6_         = HooksManager::registerHook("register6");
+        hook_index_addr6_register_    = HooksManager::registerHook("addr6_register");
     }
 };
 
@@ -1035,7 +1035,7 @@ Dhcpv6Srv::processDhcp6Query(Pkt6Ptr query) {
          (query->getType() == DHCPV6_REBIND) ||
          (query->getType() == DHCPV6_RELEASE) ||
          (query->getType() == DHCPV6_DECLINE) ||
-         (query->getType() == DHCPV6_ADD_REG_INFORM))) {
+         (query->getType() == DHCPV6_ADDR_REG_INFORM))) {
         ContinuationPtr cont =
             makeContinuation(std::bind(&Dhcpv6Srv::processDhcp6QueryAndSendResponse,
                                        this, query));
@@ -1152,8 +1152,8 @@ Dhcpv6Srv::processLocalizedQuery6(AllocEngine::ClientContext6& ctx) {
             rsp = processInfRequest(ctx);
             break;
 
-        case DHCPV6_ADD_REG_INFORM:
-            rsp = processAddRegInform(ctx);
+        case DHCPV6_ADDR_REG_INFORM:
+            rsp = processAddrRegInform(ctx);
             break;
 
         default:
@@ -1985,7 +1985,7 @@ Dhcpv6Srv::sanityCheck(const Pkt6Ptr& pkt) {
         case DHCPV6_SOLICIT:
         case DHCPV6_REBIND:
         case DHCPV6_CONFIRM:
-        case DHCPV6_ADD_REG_INFORM:
+        case DHCPV6_ADDR_REG_INFORM:
             sanityCheck(pkt, MANDATORY, FORBIDDEN);
             return (true);
 
@@ -4474,7 +4474,7 @@ Dhcpv6Srv::processDhcp4Query(const Pkt6Ptr& dhcp4_query) {
 }
 
 Pkt6Ptr
-Dhcpv6Srv::processAddRegInform(AllocEngine::ClientContext6& ctx) {
+Dhcpv6Srv::processAddrRegInform(AllocEngine::ClientContext6& ctx) {
 
     ConstSubnetPtr subnet = ctx.subnet_;
     // Silently ignore message which can't be localized
@@ -4482,15 +4482,15 @@ Dhcpv6Srv::processAddRegInform(AllocEngine::ClientContext6& ctx) {
         return (Pkt6Ptr());
     }
 
-    Pkt6Ptr add_reg_inf = ctx.query_;
+    Pkt6Ptr addr_reg_inf = ctx.query_;
 
     // Get the client source address.
-    IOAddress addr = add_reg_inf->getRemoteAddr();
+    IOAddress addr = addr_reg_inf->getRemoteAddr();
     // If there are some relays get the peer address of the closest relay
     // to the client.
-    size_t relay_level = add_reg_inf->relay_info_.size();
+    size_t relay_level = addr_reg_inf->relay_info_.size();
     if (relay_level > 0) {
-        addr = add_reg_inf->getRelay6LinkAddress(relay_level - 1);
+        addr = addr_reg_inf->getRelay6LinkAddress(relay_level - 1);
     }
 
     Option6IAPtr ia;
@@ -4501,7 +4501,7 @@ Dhcpv6Srv::processAddRegInform(AllocEngine::ClientContext6& ctx) {
     try {
         // Get IA_NA from the Address registration inform.
         // There must be one.
-        OptionCollection ias = add_reg_inf->getOptions(D6O_IA_NA);
+        OptionCollection ias = addr_reg_inf->getOptions(D6O_IA_NA);
         if (ias.size() != 1) {
             isc_throw(RFCViolation, "Exactly 1 IA_NA option expected, but "
                       << ias.size() << " received");
@@ -4557,35 +4557,29 @@ Dhcpv6Srv::processAddRegInform(AllocEngine::ClientContext6& ctx) {
         }
     } catch (const std::exception &ex) {
         // Incoming processing failed.
-        LOG_INFO(packet6_logger, DHCP6_ADD_REG_INFORM_FAIL)
+        LOG_INFO(packet6_logger, DHCP6_ADDR_REG_INFORM_FAIL)
             .arg(addr)
             .arg(ex.what());
         return (Pkt6Ptr());
     }
 
-    // Record if it is a registration renewal.
-    bool renewal = !!old_lease;
-
     // Check if the client is the same.
     if (old_lease) {
         if (old_lease->duid_ && (*ctx.duid_ != *(old_lease->duid_))) {
-            LOG_INFO(packet6_logger, DHCP6_ADD_REG_INFORM_CLIENT_CHANGE)
+            LOG_INFO(packet6_logger, DHCP6_ADDR_REG_INFORM_CLIENT_CHANGE)
                 .arg(addr)
                 .arg(ctx.duid_->toText())
                 .arg(old_lease->duid_->toText());
         }
-        if (old_lease->subnet_id_ != subnet->getID()) {
-            renewal = false;
-        }
     }
 
     // Build response.
-    Pkt6Ptr add_reg_rep(new Pkt6(DHCPV6_ADD_REG_REPLY,
-                                 add_reg_inf->getTransid()));
-    add_reg_rep->addOption(ia);
+    Pkt6Ptr addr_reg_rep(new Pkt6(DHCPV6_ADDR_REG_REPLY,
+                                  addr_reg_inf->getTransid()));
+    addr_reg_rep->addOption(ia);
 
     // Process FQDN.
-    processClientFqdn(add_reg_inf, add_reg_rep, ctx);
+    processClientFqdn(addr_reg_inf, addr_reg_rep, ctx);
 
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, ctx.duid_,
                                ia->getIAID(), iaaddr->getPreferred(),
@@ -4596,35 +4590,35 @@ Dhcpv6Srv::processAddRegInform(AllocEngine::ClientContext6& ctx) {
     lease->fqdn_rev_ = ctx.rev_dns_update_;
     lease->hostname_ = ctx.hostname_;
 
-    conditionallySetReservedClientClasses(add_reg_inf, ctx);
+    conditionallySetReservedClientClasses(addr_reg_inf, ctx);
     // Evaluate additional classes.
-    evaluateAdditionalClasses(add_reg_inf, ctx);
+    evaluateAdditionalClasses(addr_reg_inf, ctx);
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASSES_ASSIGNED)
-        .arg(add_reg_inf->getLabel())
-        .arg(add_reg_inf->getName())
-        .arg(add_reg_inf->getClasses().toText());
+        .arg(addr_reg_inf->getLabel())
+        .arg(addr_reg_inf->getName())
+        .arg(addr_reg_inf->getClasses().toText());
 
-    copyClientOptions(add_reg_inf, add_reg_rep);
+    copyClientOptions(addr_reg_inf, addr_reg_rep);
     CfgOptionList co_list;
-    buildCfgOptionList(add_reg_inf, ctx, co_list);
+    buildCfgOptionList(addr_reg_inf, ctx, co_list);
     // The RFC says to not do that...
-    appendDefaultOptions(add_reg_inf, add_reg_rep, co_list);
-    appendRequestedOptions(add_reg_inf, add_reg_rep, co_list);
-    appendRequestedVendorOptions(add_reg_inf, add_reg_rep, ctx, co_list);
+    appendDefaultOptions(addr_reg_inf, addr_reg_rep, co_list);
+    appendRequestedOptions(addr_reg_inf, addr_reg_rep, co_list);
+    appendRequestedVendorOptions(addr_reg_inf, addr_reg_rep, ctx, co_list);
 
-    // Handle the "register6" callout point.
-    if (HooksManager::calloutsPresent(Hooks.hook_index_register6_)) {
-        CalloutHandlePtr callout_handle = getCalloutHandle(add_reg_inf);
+    // Handle the "addr6_register" callout point.
+    if (HooksManager::calloutsPresent(Hooks.hook_index_addr6_register_)) {
+        CalloutHandlePtr callout_handle = getCalloutHandle(addr_reg_inf);
         ScopedCalloutHandleState callout_handle_state(callout_handle);
 
         // Pass the query6 argument.
-        ScopedEnableOptionsCopy<Pkt6> query6_options_copy(add_reg_inf);
-        callout_handle->setArgument("query6", add_reg_inf);
+        ScopedEnableOptionsCopy<Pkt6> query6_options_copy(addr_reg_inf);
+        callout_handle->setArgument("query6", addr_reg_inf);
 
         // Pass the response6 argument.
-        ScopedEnableOptionsCopy<Pkt6> rsp6_options_copy(add_reg_rep);
-        callout_handle->setArgument("response6", add_reg_rep);
+        ScopedEnableOptionsCopy<Pkt6> rsp6_options_copy(addr_reg_rep);
+        callout_handle->setArgument("response6", addr_reg_rep);
 
         // Pass the address6 argument.
         callout_handle->setArgument("address6", addr);
@@ -4636,14 +4630,15 @@ Dhcpv6Srv::processAddRegInform(AllocEngine::ClientContext6& ctx) {
         callout_handle->setArgument("new_lease6", lease);
 
         // Call callouts
-        HooksManager::callCallouts(Hooks.hook_index_register6_, *callout_handle);
+        HooksManager::callCallouts(Hooks.hook_index_addr6_register_, *callout_handle);
 
         // Callouts decided to skip the next processing step. This means
         // cancel processing so drop.
         if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) ||
             (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP)) {
-            LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_REGISTER6_SKIP)
-                .arg(add_reg_inf->getLabel())
+            LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS,
+                      DHCP6_HOOK_ADDR6_REGISTER_SKIP)
+                .arg(addr_reg_inf->getLabel())
                 .arg(addr);
             return (Pkt6Ptr());
         }
@@ -4661,37 +4656,61 @@ Dhcpv6Srv::processAddRegInform(AllocEngine::ClientContext6& ctx) {
         if (old_lease) {
             try {
                 LeaseMgrFactory::instance().updateLease6(lease);
-            } catch (const std::exception&) {
+            } catch (const std::exception& ex) {
                 // Assume that stats and DNS were handled by someone else.
-                return (add_reg_rep);
+                LOG_ERROR(dhcp6_logger, DHCP6_REGISTERED_LEASE_UPDATE_FAIL)
+                    .arg(addr)
+                    .arg(ex.what());
+                return (Pkt6Ptr());
             }
             // Save the old lease for the lease6_committed callout.
             ctx.currentIA().old_leases_.push_back(old_lease);
-            if (!renewal) {
-                // -1 on stats.
-            } else  {
-                // Save the old lease for the DNS update.
-                ctx.currentIA().changed_leases_.push_back(old_lease);
+            // Save the old lease for the DNS update.
+            ctx.currentIA().changed_leases_.push_back(old_lease);
+            // Update stats when the subnet changed.
+            if (old_lease->subnet_id_ != lease->subnet_id_) {
+                StatsMgr::instance().addValue(
+                    StatsMgr::generateName("subnet", old_lease->subnet_id_,
+                                           "registered-nas"),
+                    static_cast<int64_t>(-1));
+                StatsMgr::instance().addValue(
+                    StatsMgr::generateName("subnet", lease->subnet_id_,
+                                           "registered-nas"),
+                    static_cast<int64_t>(1));
+                StatsMgr::instance().addValue(
+                    StatsMgr::generateName("subnet", lease->subnet_id_,
+                                           "cumulative-registered-nas"),
+                    static_cast<int64_t>(1));
             }
         } else {
             if (!LeaseMgrFactory::instance().addLease(lease)) {
                 // Assume that stats and DNS were handled by someone else.
-                return (add_reg_rep);
+                LOG_ERROR(dhcp6_logger, DHCP6_REGISTERED_LEASE_ADD_FAIL)
+                    .arg(addr);
+                return (Pkt6Ptr());
             }
+            // Update stats.
+            StatsMgr::instance().addValue(
+                StatsMgr::generateName("subnet", lease->subnet_id_,
+                                       "registered-nas"),
+                static_cast<int64_t>(1));
+            StatsMgr::instance().addValue(
+                StatsMgr::generateName("subnet", lease->subnet_id_,
+                                       "cumulative-registered-nas"),
+                static_cast<int64_t>(1));
+            StatsMgr::instance().addValue("cumulative-registered-nas",
+                                          static_cast<int64_t>(1));
         }
         // Save the new lease for the lease6_committed callout.
         ctx.new_leases_.push_back(lease);
-        if (!renewal) {
-            // +1 on stats
-        }
     }
 
     // Deal with FQDN.
-    updateReservedFqdn(ctx, add_reg_rep);
-    generateFqdn(add_reg_rep, ctx);
-    createNameChangeRequests(add_reg_rep, ctx);
+    updateReservedFqdn(ctx, addr_reg_rep);
+    generateFqdn(addr_reg_rep, ctx);
+    createNameChangeRequests(addr_reg_rep, ctx);
 
-    return (add_reg_rep);
+    return (addr_reg_rep);
 }
 
 void Dhcpv6Srv::classifyByVendor(const Pkt6Ptr& pkt) {
@@ -5158,12 +5177,12 @@ void Dhcpv6Srv::processStatsReceived(const Pkt6Ptr& query) {
         // Should not happen, but let's keep a counter for it
         stat_name = "pkt6-dhcpv4-response-received";
         break;
-    case DHCPV6_ADD_REG_INFORM:
-        stat_name = "pkt6-add-reg-inform-received";
+    case DHCPV6_ADDR_REG_INFORM:
+        stat_name = "pkt6-addr-reg-inform-received";
         break;
-    case DHCPV6_ADD_REG_REPLY:
+    case DHCPV6_ADDR_REG_REPLY:
         // Should not happen, but let's keep a counter for it
-        stat_name = "pkt6-add-reg-reply-received";
+        stat_name = "pkt6-addr-reg-reply-received";
         break;
     default:
             ; // do nothing
@@ -5188,8 +5207,8 @@ void Dhcpv6Srv::processStatsSent(const Pkt6Ptr& response) {
     case DHCPV6_DHCPV4_RESPONSE:
         stat_name = "pkt6-dhcpv4-response-sent";
         break;
-    case DHCPV6_ADD_REG_REPLY:
-        stat_name = "pkt6-add-reg-reply-sent";
+    case DHCPV6_ADDR_REG_REPLY:
+        stat_name = "pkt6-addr-reg-reply-sent";
         break;
     default:
         // That should never happen

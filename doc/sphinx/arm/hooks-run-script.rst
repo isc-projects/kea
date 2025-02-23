@@ -74,6 +74,7 @@ The dhcpv6 hook points:
    leases6_committed
    lease6_release
    lease6_decline
+   addr6_register
 
 Each hook point extracts the Kea internal data and exports it as string
 environment variables. These parameters are shared with the target script
@@ -145,6 +146,10 @@ An example of a script implementing all hook points is presented below:
        ...
    }
 
+   addr6_register () {
+       ...
+   }
+
    case "$1" in
        "lease4_renew")
            lease4_renew
@@ -184,6 +189,9 @@ An example of a script implementing all hook points is presented below:
            ;;
        "lease6_decline")
            lease6_decline
+           ;;
+       "addr6_register")
+           addr6_register
            ;;
        *)
            unknown_handle "${@}"
@@ -625,6 +633,52 @@ at 0.
    LEASE6_PREFERRED_LIFETIME
    LEASE6_PREFIX_LEN
    LEASE6_TYPE
+
+``addr6_register``
+
+::
+
+   QUERY6_TYPE
+   QUERY6_TXID
+   QUERY6_LOCAL_ADDR
+   QUERY6_LOCAL_PORT
+   QUERY6_REMOTE_ADDR
+   QUERY6_REMOTE_PORT
+   QUERY6_IFACE_INDEX
+   QUERY6_IFACE_NAME
+   QUERY6_REMOTE_HWADDR
+   QUERY6_REMOTE_HWADDR_TYPE
+   QUERY6_PROTO
+   QUERY6_CLIENT_ID
+   ADDRESS6
+   OLD_LEASE6_ADDRESS
+   OLD_LEASE6_CLTT
+   OLD_LEASE6_HOSTNAME
+   OLD_LEASE6_HWADDR
+   OLD_LEASE6_HWADDR_TYPE
+   OLD_LEASE6_STATE
+   OLD_LEASE6_SUBNET_ID
+   OLD_LEASE6_VALID_LIFETIME
+   OLD_LEASE6_DUID
+   OLD_LEASE6_IAID
+   OLD_LEASE6_PREFERRED_LIFETIME
+   OLD_LEASE6_PREFIX_LEN
+   OLD_LEASE6_TYPE
+   NEW_LEASE6_ADDRESS
+   NEW_LEASE6_CLTT
+   NEW_LEASE6_HOSTNAME
+   NEW_LEASE6_HWADDR
+   NEW_LEASE6_HWADDR_TYPE
+   NEW_LEASE6_STATE
+   NEW_LEASE6_SUBNET_ID
+   NEW_LEASE6_VALID_LIFETIME
+   NEW_LEASE6_DUID
+   NEW_LEASE6_IAID
+   NEW_LEASE6_PREFERRED_LIFETIME
+   NEW_LEASE6_PREFIX_LEN
+   NEW_LEASE6_TYPE
+
+The OLD_LEASE6 do not always exists.
 
 The leases4_committed hook point needs for loops to handle the list of addresses.
 This can be achived in the following way:

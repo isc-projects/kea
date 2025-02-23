@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -904,7 +904,8 @@ AllocEngine::allocateBestMatch(ClientContext6& ctx,
                     .arg(hint.toText());
             }
 
-        } else if (usable_hint_lease->expired()) {
+        } else if (usable_hint_lease->expired() &&
+                   (usable_hint_lease->state_ != Lease::STATE_REGISTERED)) {
 
             // If the lease is expired, we may likely reuse it, but...
             ConstHostCollection hosts;
@@ -1103,7 +1104,8 @@ AllocEngine::allocateBestMatch(ClientContext6& ctx,
                 // Although the address was free just microseconds ago, it may have
                 // been taken just now. If the lease insertion fails, we continue
                 // allocation attempts.
-            } else if (existing->expired()) {
+            } else if (existing->expired() &&
+                       (existing->state_ != Lease::STATE_REGISTERED)) {
                 // Make sure it's not reserved.
                 if (!check_reservation_first && in_subnet && !out_of_pool) {
                     auto hosts = getIPv6Resrv(subnet->getID(), candidate);
@@ -1731,6 +1733,10 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
 
     if (!expired->expired()) {
         isc_throw(BadValue, "Attempt to recycle lease that is still valid");
+    }
+
+    if (expired->state_ == Lease::STATE_REGISTERED) {
+        isc_throw(BadValue, "Attempt to recycle registered address");
     }
 
     if (expired->type_ != Lease::TYPE_PD) {
@@ -2903,6 +2909,12 @@ AllocEngine::reclaimExpiredLease(const Lease6Ptr& lease,
             // identifying information anymore.  So we'll flag it for
             // removal unless the hook has set the skip flag.
             remove_lease = reclaimDeclined(lease);
+        } else if (lease->state_ == Lease::STATE_REGISTERED) {
+            if (reclaim_mode == DB_RECLAIM_LEAVE_UNCHANGED) {
+                isc_throw(Unexpected, "attempt to reuse a registered lease");
+            }
+            // Remove (vs reclaim) expired registered leases.
+            remove_lease = true;
         }
 
         if (reclaim_mode != DB_RECLAIM_LEAVE_UNCHANGED) {
@@ -2931,13 +2943,18 @@ AllocEngine::reclaimExpiredLease(const Lease6Ptr& lease,
         return;
     }
 
-    // Decrease number of assigned leases.
-    if (lease->type_ == Lease::TYPE_NA) {
+    // Decrease number of registered or assigned leases.
+    if (lease->state_ == Lease::STATE_REGISTERED) {
+        StatsMgr::instance().addValue(StatsMgr::generateName("subnet",
+                                                             lease->subnet_id_,
+                                                             "registered-nas"),
+                                      static_cast<int64_t>(-1));
+    } else if (lease->type_ == Lease::TYPE_NA) {
         // IA_NA
         StatsMgr::instance().addValue(StatsMgr::generateName("subnet",
                                                              lease->subnet_id_,
                                                              "assigned-nas"),
-            static_cast<int64_t>(-1));
+                                      static_cast<int64_t>(-1));
 
         auto const& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getBySubnetId(lease->subnet_id_);
         if (subnet) {
