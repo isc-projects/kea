@@ -145,6 +145,7 @@ struct Dhcp6Hooks {
     int hook_index_lease6_decline_;   ///< index for "lease6_decline" hook point
     int hook_index_host6_identifier_; ///< index for "host6_identifier" hook point
     int hook_index_ddns6_update_;     ///< index for "ddns6_update" hook point
+    int hook_index_register6_;        ///< index for "register6" hook point
 
     /// Constructor that registers hook points for DHCPv6 engine
     Dhcp6Hooks() {
@@ -158,6 +159,7 @@ struct Dhcp6Hooks {
         hook_index_lease6_decline_    = HooksManager::registerHook("lease6_decline");
         hook_index_host6_identifier_  = HooksManager::registerHook("host6_identifier");
         hook_index_ddns6_update_      = HooksManager::registerHook("ddns6_update");
+        hook_index_register6_         = HooksManager::registerHook("register6");
     }
 };
 
@@ -4513,6 +4515,7 @@ Dhcpv6Srv::processAddRegInform(AllocEngine::ClientContext6& ctx) {
         ctx.createIAContext();
         ctx.currentIA().type_ = Lease::TYPE_NA;
         ctx.currentIA().iaid_ = ia->getIAID();
+        ctx.currentIA().ia_rsp_ = ia;
 
         // Get IAADDR from the IA_NA. There must be the only option.
         OptionCollection iaaddrs = ia->getOptions();
@@ -4524,7 +4527,6 @@ Dhcpv6Srv::processAddRegInform(AllocEngine::ClientContext6& ctx) {
         if (!iaaddr) {
             isc_throw(RFCViolation, "Can't get the IAADDR sub-option");
         }
-        ctx.currentIA().addHint(iaaddr);
 
         // Client and IADDR addresses must match.
         if (addr != iaaddr->getAddress()) {
@@ -4554,13 +4556,27 @@ Dhcpv6Srv::processAddRegInform(AllocEngine::ClientContext6& ctx) {
             isc_throw(RFCViolation, "Address " << addr << " is reserved");
         }
     } catch (const std::exception &ex) {
-        // log
+        // Incoming processing failed.
+        LOG_INFO(packet6_logger, DHCP6_ADD_REG_INFORM_FAIL)
+            .arg(addr)
+            .arg(ex.what());
         return (Pkt6Ptr());
     }
 
+    // Record if it is a registration renewal.
+    bool renewal = !!old_lease;
+
     // Check if the client is the same.
-    if (old_lease && old_lease->duid_ && *ctx.duid_ != *(old_lease->duid_)) {
-        // log
+    if (old_lease) {
+        if (old_lease->duid_ && (*ctx.duid_ != *(old_lease->duid_))) {
+            LOG_INFO(packet6_logger, DHCP6_ADD_REG_INFORM_CLIENT_CHANGE)
+                .arg(addr)
+                .arg(ctx.duid_->toText())
+                .arg(old_lease->duid_->toText());
+        }
+        if (old_lease->subnet_id_ != subnet->getID()) {
+            renewal = false;
+        }
     }
 
     // Build response.
@@ -4597,37 +4613,83 @@ Dhcpv6Srv::processAddRegInform(AllocEngine::ClientContext6& ctx) {
     appendRequestedOptions(add_reg_inf, add_reg_rep, co_list);
     appendRequestedVendorOptions(add_reg_inf, add_reg_rep, ctx, co_list);
 
-    // call the new callout
+    // Handle the "register6" callout point.
+    if (HooksManager::calloutsPresent(Hooks.hook_index_register6_)) {
+        CalloutHandlePtr callout_handle = getCalloutHandle(add_reg_inf);
+        ScopedCalloutHandleState callout_handle_state(callout_handle);
 
-    // Add stats
-    if (old_lease) {
-        // Save the old lease for the lease6_committed callout.
-        ctx.currentIA().old_leases_.push_back(old_lease);
-        if (!lease) {
-            if (!LeaseMgrFactory::instance().deleteLease(old_lease)) {
-                // Assume that stats and DNS were handled by someone else.
-                return (add_reg_rep);
-            }
-        } else {
+        // Pass the query6 argument.
+        ScopedEnableOptionsCopy<Pkt6> query6_options_copy(add_reg_inf);
+        callout_handle->setArgument("query6", add_reg_inf);
+
+        // Pass the response6 argument.
+        ScopedEnableOptionsCopy<Pkt6> rsp6_options_copy(add_reg_rep);
+        callout_handle->setArgument("response6", add_reg_rep);
+
+        // Pass the address6 argument.
+        callout_handle->setArgument("address6", addr);
+
+        // Pass the old_lease argument.
+        callout_handle->setArgument("old_lease6", old_lease);
+
+        // Pass the new_lease argument.
+        callout_handle->setArgument("new_lease6", lease);
+
+        // Call callouts
+        HooksManager::callCallouts(Hooks.hook_index_register6_, *callout_handle);
+
+        // Callouts decided to skip the next processing step. This means
+        // cancel processing so drop.
+        if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) ||
+            (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP)) {
+            LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_REGISTER6_SKIP)
+                .arg(add_reg_inf->getLabel())
+                .arg(addr);
+            return (Pkt6Ptr());
+        }
+
+        Lease6Ptr new_lease;
+        callout_handle->getArgument("new_lease6", new_lease);
+        if (!new_lease) {
+            // Stateless registration: skip lease code.
+            lease.reset();
+        }
+    }
+
+    if (lease) {
+        // Statefull registration.
+        if (old_lease) {
             try {
                 LeaseMgrFactory::instance().updateLease6(lease);
             } catch (const std::exception&) {
                 // Assume that stats and DNS were handled by someone else.
                 return (add_reg_rep);
             }
+            // Save the old lease for the lease6_committed callout.
+            ctx.currentIA().old_leases_.push_back(old_lease);
+            if (!renewal) {
+                // -1 on stats.
+            } else  {
+                // Save the old lease for the DNS update.
+                ctx.currentIA().changed_leases_.push_back(old_lease);
+            }
+        } else {
+            if (!LeaseMgrFactory::instance().addLease(lease)) {
+                // Assume that stats and DNS were handled by someone else.
+                return (add_reg_rep);
+            }
         }
-    } else if (lease) {
-        if (!LeaseMgrFactory::instance().addLease(lease)) {
-            // Assume that stats and DNS were handled by someone else.
-            return (add_reg_rep);
-        }
-    }
-    if (lease) {
         // Save the new lease for the lease6_committed callout.
         ctx.new_leases_.push_back(lease);
+        if (!renewal) {
+            // +1 on stats
+        }
     }
 
+    // Deal with FQDN.
     updateReservedFqdn(ctx, add_reg_rep);
+    generateFqdn(add_reg_rep, ctx);
+    createNameChangeRequests(add_reg_rep, ctx);
 
     return (add_reg_rep);
 }

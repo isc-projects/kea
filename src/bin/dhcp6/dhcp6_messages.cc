@@ -13,6 +13,8 @@ extern const isc::log::MessageID DHCP6_ADDITIONAL_CLASS_EVAL_RESULT = "DHCP6_ADD
 extern const isc::log::MessageID DHCP6_ADDITIONAL_CLASS_NO_TEST = "DHCP6_ADDITIONAL_CLASS_NO_TEST";
 extern const isc::log::MessageID DHCP6_ADDITIONAL_CLASS_UNDEFINED = "DHCP6_ADDITIONAL_CLASS_UNDEFINED";
 extern const isc::log::MessageID DHCP6_ADD_GLOBAL_STATUS_CODE = "DHCP6_ADD_GLOBAL_STATUS_CODE";
+extern const isc::log::MessageID DHCP6_ADD_REG_INFORM_CLIENT_CHANGE = "DHCP6_ADD_REG_INFORM_CLIENT_CHANGE";
+extern const isc::log::MessageID DHCP6_ADD_REG_INFORM_FAIL = "DHCP6_ADD_REG_INFORM_FAIL";
 extern const isc::log::MessageID DHCP6_ADD_STATUS_CODE_FOR_IA = "DHCP6_ADD_STATUS_CODE_FOR_IA";
 extern const isc::log::MessageID DHCP6_ALREADY_RUNNING = "DHCP6_ALREADY_RUNNING";
 extern const isc::log::MessageID DHCP6_BUFFER_RECEIVED = "DHCP6_BUFFER_RECEIVED";
@@ -77,6 +79,7 @@ extern const isc::log::MessageID DHCP6_HOOK_LEASES6_PARKING_LOT_FULL = "DHCP6_HO
 extern const isc::log::MessageID DHCP6_HOOK_PACKET_RCVD_SKIP = "DHCP6_HOOK_PACKET_RCVD_SKIP";
 extern const isc::log::MessageID DHCP6_HOOK_PACKET_SEND_DROP = "DHCP6_HOOK_PACKET_SEND_DROP";
 extern const isc::log::MessageID DHCP6_HOOK_PACKET_SEND_SKIP = "DHCP6_HOOK_PACKET_SEND_SKIP";
+extern const isc::log::MessageID DHCP6_HOOK_REGISTER6_SKIP = "DHCP6_HOOK_REGISTER6_SKIP";
 extern const isc::log::MessageID DHCP6_HOOK_SUBNET6_SELECT_DROP = "DHCP6_HOOK_SUBNET6_SELECT_DROP";
 extern const isc::log::MessageID DHCP6_HOOK_SUBNET6_SELECT_PARK = "DHCP6_HOOK_SUBNET6_SELECT_PARK";
 extern const isc::log::MessageID DHCP6_HOOK_SUBNET6_SELECT_SKIP = "DHCP6_HOOK_SUBNET6_SELECT_SKIP";
@@ -180,6 +183,8 @@ const char* values[] = {
     "DHCP6_ADDITIONAL_CLASS_NO_TEST", "additional class %1 has no test expression, adding it to client's classes unconditionally",
     "DHCP6_ADDITIONAL_CLASS_UNDEFINED", "additional class %1 has no definition",
     "DHCP6_ADD_GLOBAL_STATUS_CODE", "%1: adding Status Code to DHCPv6 packet: %2",
+    "DHCP6_ADD_REG_INFORM_CLIENT_CHANGE", "received an add-reg-inform for %1 from client '%2' but the address was registered by another client '%3'",
+    "DHCP6_ADD_REG_INFORM_FAIL", "error on add-reg-inform from client %1: %2",
     "DHCP6_ADD_STATUS_CODE_FOR_IA", "%1: adding Status Code to IA with iaid=%2: %3",
     "DHCP6_ALREADY_RUNNING", "%1 already running? %2",
     "DHCP6_BUFFER_RECEIVED", "received buffer from %1:%2 to %3:%4 over interface %5",
@@ -244,6 +249,7 @@ const char* values[] = {
     "DHCP6_HOOK_PACKET_RCVD_SKIP", "%1: packet is dropped, because a callout set the next step to SKIP",
     "DHCP6_HOOK_PACKET_SEND_DROP", "%1: prepared DHCPv6 response was not sent because a callout set the next ste to DROP",
     "DHCP6_HOOK_PACKET_SEND_SKIP", "%1: prepared DHCPv6 response is not built because a callout set the next step to SKIP",
+    "DHCP6_HOOK_REGISTER6_SKIP", "%1: add-reg-inform for %2 is dropped, because a callout set the next step to SKIP",
     "DHCP6_HOOK_SUBNET6_SELECT_DROP", "%1: packet was dropped because a callout set the drop flag",
     "DHCP6_HOOK_SUBNET6_SELECT_PARK", "%1: packet was parked",
     "DHCP6_HOOK_SUBNET6_SELECT_SKIP", "%1: no subnet was selected because a callout set the next step to SKIP",
