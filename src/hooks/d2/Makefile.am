@@ -1,1 +1,4 @@
-SUBDIRS = gss_tsig
+SUBDIRS =
+if HAVE_GSSAPI
+SUBDIRS += gss_tsig
+endif

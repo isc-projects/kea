@@ -24,7 +24,7 @@ subdir('tests')
 
 if KEA_MSG_COMPILER.found()
     target_gen_messages = run_target(
-        'premium-src-hooks-dhcp-limits-limits_messages',
+        'src-hooks-dhcp-limits-limits_messages',
         command: [
             CD_AND_RUN,
             TOP_SOURCE_DIR,

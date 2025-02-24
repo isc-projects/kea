@@ -1,4 +1,3 @@
-if HAVE_GSSAPI
 SUBDIRS = . testutils libloadtests tests
 
 AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
@@ -94,7 +93,5 @@ else
 
 messages gss_tsig_messages.h gss_tsig_messages.cc:
 	@echo Messages generation disabled. Configure with --enable-generate-messages to enable it.
-
-endif
 
 endif

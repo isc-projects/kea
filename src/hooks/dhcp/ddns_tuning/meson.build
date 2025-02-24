@@ -22,7 +22,7 @@ subdir('tests')
 
 if KEA_MSG_COMPILER.found()
     target_gen_messages = run_target(
-        'premium-src-hooks-dhcp-ddns_tuning-ddns_tuning_messages',
+        'src-hooks-dhcp-ddns_tuning-ddns_tuning_messages',
         command: [
             CD_AND_RUN,
             TOP_SOURCE_DIR,

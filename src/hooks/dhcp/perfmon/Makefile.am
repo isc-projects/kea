@@ -82,7 +82,7 @@ messages: perfmon_messages.h perfmon_messages.cc
 
 perfmon_messages.h perfmon_messages.cc: perfmon_messages.mes
 	(cd $(top_srcdir); \
-	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/hooks/dhcp/perfmon/perfmon_messages.mes
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/hooks/dhcp/perfmon/perfmon_messages.mes)
 
 else
 
