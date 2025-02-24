@@ -419,11 +419,11 @@ link_args = []
 if SYSTEM == 'darwin'
     compile_args += ['-D__APPLE_USE_RFC_3542']
     add_project_arguments('-D__APPLE_USE_RFC_3542', language: 'cpp')
-    link_arg = f'-Wl,-rpath,@PREFIX@/lib'
+    link_arg = '-Wl,-rpath,$ORIGIN/../lib'
     link_args += [link_arg]
     add_project_link_arguments(link_arg, language: 'cpp')
 else
-    link_arg = f'-Wl,-rpath=@PREFIX@/lib'
+    link_arg = '-Wl,-rpath=$ORIGIN/../lib'
     link_args += [link_arg]
     add_project_link_arguments(link_arg, language: 'cpp')
 endif
