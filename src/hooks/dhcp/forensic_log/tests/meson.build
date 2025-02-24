@@ -34,18 +34,6 @@ sources = [
     'run_unittests.cc',
 ]
 
-if mysql.found()
-    dependencies += [mysql]
-    dhcp_forensic_log_tests_libs += [kea_mysql_testutils_lib]
-    sources += ['mysql_unittests.cc']
-endif
-
-if postgresql.found()
-    dependencies += [postgresql]
-    dhcp_forensic_log_tests_libs += [kea_pgsql_testutils_lib]
-    sources += ['pgsql_unittests.cc']
-endif
-
 dhcp_forensic_log_tests = executable(
     sources,
     cpp_args: [
@@ -55,7 +43,6 @@ dhcp_forensic_log_tests = executable(
         f'-DFORENSIC_POSTROTATE_TEST_SH="@current_build_dir@/forensic_postrotate_test.sh"',
         f'-DINVALID_FORENSIC_POSTROTATE_TEST_SH="@TOP_SOURCE_DIR@/README"',
         f'-DLEGAL_LOG_DIR="@LEGAL_LOG_DIR@"',
-        f'-DTEST_CA_DIR="@TEST_CA_DIR@"',
     ],
     dependencies: dependencies,
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,

@@ -28,10 +28,6 @@ using namespace isc::dhcp;
 // Tests of the LeaseMgr create/instance/destroy are implicitly carried out
 // in the tests for the different concrete lease managers (e.g. MySqlLeaseMgr).
 
-// Currently there are no unit-tests as the sole testable method (parse)
-// was moved to its own class (DataSource). All existing unit-tests were
-// moved there.
-
 namespace {
 
 TrackingLeaseMgrPtr

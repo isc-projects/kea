@@ -15,7 +15,7 @@
 #include <hooks/hooks.h>
 #include <util/str.h>
 #include <legal_log_log.h>
-#include <backend_store.h>
+#include <dhcpsrv/backend_store_factory.h>
 #include <subnets_user_context.h>
 
 #include <sstream>
@@ -38,13 +38,13 @@ bool getCustomEntry(const Pkt4Ptr& query, const Pkt4Ptr& response,
                     const Lease4Ptr& /*lease*/, std::string& value) {
     bool using_custom_format = false;
 
-    auto expression = BackendStore::instance()->getRequestFormatExpression();
+    auto expression = BackendStoreFactory::instance()->getRequestFormatExpression();
     if (expression && query) {
         value = evaluateString(*expression, *query);
         using_custom_format = true;
     }
 
-    expression = BackendStore::instance()->getResponseFormatExpression();
+    expression = BackendStoreFactory::instance()->getResponseFormatExpression();
     if (expression && response) {
         value += evaluateString(*expression, *response);
         using_custom_format = true;
@@ -214,7 +214,7 @@ std::string genLease4Entry(const Pkt4Ptr& query,
 ///
 /// @return returns 0 upon success, non-zero otherwise
 int legalLog4Handler(CalloutHandle& handle, const Action& action) {
-    if (!BackendStore::instance()) {
+    if (!BackendStoreFactory::instance()) {
         LOG_ERROR(legal_log_logger,
                   LEGAL_LOG_LEASE4_NO_LEGAL_STORE);
         return (1);
@@ -239,7 +239,7 @@ int legalLog4Handler(CalloutHandle& handle, const Action& action) {
         ConstSubnet4Ptr subnet = cfg->getBySubnetId(lease->subnet_id_);
 
         if (!isLoggingDisabled(subnet)) {
-            BackendStore::instance()->writeln(genLease4Entry(query, response,
+            BackendStoreFactory::instance()->writeln(genLease4Entry(query, response,
                                                              lease, action),
                                               lease->addr_.toText());
         }

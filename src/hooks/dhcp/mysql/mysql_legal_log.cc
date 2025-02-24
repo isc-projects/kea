@@ -6,8 +6,10 @@
 
 #include <config.h>
 
-#include <legal_log_db_log.h>
+#include <mysql_fb_log.h>
 #include <mysql_legal_log.h>
+#include <dhcpsrv/backend_store_factory.h>
+#include <dhcpsrv/legal_log_db_log.h>
 #include <dhcpsrv/network_state.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <util/multi_threading_mgr.h>
@@ -25,7 +27,6 @@
 using namespace isc;
 using namespace isc::db;
 using namespace isc::dhcp;
-using namespace isc::legal_log;
 using namespace isc::util;
 using namespace std;
 
@@ -41,7 +42,7 @@ tagged_statements = { {
 };
 
 namespace isc {
-namespace legal_log {
+namespace dhcp {
 
 /// @brief Supports exchanging log entries with MySQL.
 class MySqlLegLExchange {
@@ -230,7 +231,7 @@ MySqlStoreContext::MySqlStoreContext(const DatabaseConnection::ParameterMap& par
 
 // MySqlStoreContextAlloc Constructor and Destructor
 
-MySqlStore::MySqlStoreContextAlloc::MySqlStoreContextAlloc(const MySqlStore& store)
+MySqlStore::MySqlStoreContextAlloc::MySqlStoreContextAlloc(MySqlStore& store)
     : ctx_(), store_(store) {
 
     if (MultiThreadingMgr::instance().getMode()) {
@@ -260,17 +261,18 @@ MySqlStore::MySqlStoreContextAlloc::~MySqlStoreContextAlloc() {
         // multi-threaded
         lock_guard<mutex> lock(store_.pool_->mutex_);
         store_.pool_->pool_.push_back(ctx_);
+        if (ctx_->conn_.isUnusable()) {
+            store_.unusable_ = true;
+        }
+    } else if (ctx_->conn_.isUnusable()) {
+        store_.unusable_ = true;
     }
-    // If running in single-threaded mode, there's nothing to do here.
 }
 
 // MySqlStore
 
 MySqlStore::MySqlStore(const DatabaseConnection::ParameterMap& parameters)
-    : timer_name_("") {
-
-    // Store connection parameters.
-    BackendStore::setParameters(parameters);
+    : BackendStore(parameters), timer_name_(""), unusable_(false) {
 
     // Create unique timer name per instance.
     timer_name_ = "MySqlLegalStore[";
@@ -279,14 +281,14 @@ MySqlStore::MySqlStore(const DatabaseConnection::ParameterMap& parameters)
 }
 
 void MySqlStore::open() {
-    LegalLogDbLogger pushed;
+    LegalLogDbLogger pushed(mysql_legal_log_db_logger);
 
     // Test schema version first.
     std::pair<uint32_t, uint32_t> code_version(MYSQL_SCHEMA_VERSION_MAJOR,
                                                MYSQL_SCHEMA_VERSION_MINOR);
 
-    BackendStorePtr store = BackendStore::instance();
-    BackendStore::instance().reset();
+    BackendStorePtr store = BackendStoreFactory::instance();
+    BackendStoreFactory::instance().reset();
 
     string timer_name;
     bool retry = false;
@@ -308,7 +310,7 @@ void MySqlStore::open() {
                   << db_version.second);
     }
 
-    BackendStore::instance() = store;
+    BackendStoreFactory::instance() = store;
 
     // Create an initial context.
     pool_.reset(new MySqlStoreContextPool());
@@ -319,8 +321,8 @@ void MySqlStore::open() {
 
 MySqlStoreContextPtr
 MySqlStore::createContext() const {
-    MySqlStoreContextPtr ctx(new MySqlStoreContext(BackendStore::getParameters(),
-        IOServiceAccessorPtr(new IOServiceAccessor(&MySqlStore::getIOService)),
+    MySqlStoreContextPtr ctx(new MySqlStoreContext(getParameters(),
+        IOServiceAccessorPtr(new IOServiceAccessor(&DatabaseConnection::getIOService)),
         &MySqlStore::dbReconnect));
 
     // Open the database.
@@ -330,9 +332,9 @@ MySqlStore::createContext() const {
     if (ctx->conn_.getTls()) {
         std::string cipher = ctx->conn_.getTlsCipher();
         if (cipher.empty()) {
-            LOG_ERROR(legal_log_logger, LEGAL_LOG_MYSQL_NO_TLS);
+            LOG_ERROR(mysql_fb_logger, LEGAL_LOG_MYSQL_NO_TLS);
         } else {
-            LOG_DEBUG(legal_log_logger, DB_DBG_TRACE_DETAIL,
+            LOG_DEBUG(mysql_fb_logger, DB_DBG_TRACE_DETAIL,
                       LEGAL_LOG_MYSQL_TLS_CIPHER)
                 .arg(cipher);
         }
@@ -367,10 +369,10 @@ MySqlStore::writeln(const string& text, const std::string& addr) {
         return;
     }
 
-    LOG_DEBUG(legal_log_logger, DB_DBG_TRACE_DETAIL,
+    LOG_DEBUG(mysql_fb_logger, DB_DBG_TRACE_DETAIL,
               LEGAL_LOG_MYSQL_INSERT_LOG).arg(text);
 
-    LegalLogDbLogger pushed;
+    LegalLogDbLogger pushed(mysql_legal_log_db_logger);
 
     // Get a context
     MySqlStoreContextAlloc get_context(*this);
@@ -395,15 +397,24 @@ MySqlStore::writeln(const string& text, const std::string& addr) {
 
 pair<uint32_t, uint32_t>
 MySqlStore::getVersion(const std::string& timer_name) const {
-    LOG_DEBUG(legal_log_logger, DB_DBG_TRACE_DETAIL,
+    LOG_DEBUG(mysql_fb_logger, DB_DBG_TRACE_DETAIL,
               LEGAL_LOG_MYSQL_GET_VERSION);
 
-    LegalLogDbLogger pushed;
+    LegalLogDbLogger pushed(mysql_legal_log_db_logger);
 
     IOServiceAccessorPtr ac(new IOServiceAccessor(&DatabaseConnection::getIOService));
     DbCallback cb(&MySqlStore::dbReconnect);
 
-    return (MySqlConnection::getVersion(BackendStore::getParameters(), ac, cb, timer_name, NetworkState::DB_CONNECTION + 31));
+    return (MySqlConnection::getVersion(getParameters(), ac, cb, timer_name, NetworkState::DB_CONNECTION + 31));
+}
+
+std::string
+MySqlStore::getDBVersion() {
+    std::stringstream tmp;
+    tmp << "MySQL backend " << MYSQL_SCHEMA_VERSION_MAJOR;
+    tmp << "." << MYSQL_SCHEMA_VERSION_MINOR;
+    tmp << ", library " << mysql_get_client_info();
+    return (tmp.str());
 }
 
 void
@@ -430,18 +441,15 @@ MySqlStore::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
 
     // At least one connection was lost.
     try {
-        auto parameters = BackendStore::getParameters();
-        // Set legal store to NULL
-        BackendStore::instance().reset();
-        // Create temporary legal store
-        BackendStorePtr store(new MySqlStore(parameters));
-        store->open();
-        // If everything is fine, set the legal store
-        BackendStore::instance() = store;
-        BackendStore::parseExtraParameters(BackendStore::getConfig());
+        auto pool = BackendStoreFactory::getPool();
+        for (auto backend : pool) {
+            if (BackendStoreFactory::delBackend(backend.first, true)) {
+                BackendStoreFactory::addBackend(backend.second.first, backend.first);
+            }
+        }
         reopened = true;
     } catch (const std::exception& ex) {
-        LOG_ERROR(legal_log_logger, LEGAL_LOG_MYSQL_DB_RECONNECT_ATTEMPT_FAILED)
+        LOG_ERROR(mysql_fb_logger, LEGAL_LOG_MYSQL_DB_RECONNECT_ATTEMPT_FAILED)
                 .arg(ex.what());
     }
 
@@ -458,7 +466,7 @@ MySqlStore::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
     } else {
         if (!check) {
             // We're out of retries, log it and initiate shutdown.
-            LOG_ERROR(legal_log_logger, LEGAL_LOG_MYSQL_DB_RECONNECT_FAILED)
+            LOG_ERROR(mysql_fb_logger, LEGAL_LOG_MYSQL_DB_RECONNECT_FAILED)
                     .arg(db_reconnect_ctl->maxRetries());
 
             // Cancel the timer.
@@ -471,7 +479,7 @@ MySqlStore::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
             return (false);
         }
 
-        LOG_INFO(legal_log_logger, LEGAL_LOG_MYSQL_DB_RECONNECT_ATTEMPT_SCHEDULE)
+        LOG_INFO(mysql_fb_logger, LEGAL_LOG_MYSQL_DB_RECONNECT_ATTEMPT_SCHEDULE)
                 .arg(db_reconnect_ctl->maxRetries() - db_reconnect_ctl->retriesLeft() + 1)
                 .arg(db_reconnect_ctl->maxRetries())
                 .arg(db_reconnect_ctl->retryInterval());
@@ -489,5 +497,17 @@ MySqlStore::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
     return (true);
 }
 
-} // end of isc::legal_log namespace
+bool
+MySqlStore::isUnusable() {
+    return (unusable_);
+}
+
+BackendStorePtr
+MySqlStore::factory(const isc::db::DatabaseConnection::ParameterMap& parameters) {
+    LOG_INFO(mysql_fb_logger, MYSQL_FB_DB)
+        .arg(isc::db::DatabaseConnection::redactedAccessString(parameters));
+    return (BackendStorePtr(new MySqlStore(parameters)));
+}
+
+} // end of isc::dhcp namespace
 } // end of isc namespace

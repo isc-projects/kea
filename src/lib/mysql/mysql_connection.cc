@@ -286,6 +286,9 @@ MySqlConnection::openDatabase() {
 
         auto const& rec = reconnectCtl();
         if (rec && DatabaseConnection::retry_) {
+            // Mark this connection as no longer usable.
+            markUnusable();
+
             // Start the connection recovery.
             startRecoverDbConnection();
 

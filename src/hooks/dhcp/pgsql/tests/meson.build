@@ -15,11 +15,12 @@ dhcp_pgsql_lib_tests = executable(
     'pgsql_cb_dhcp6_mgr_unittest.cc',
     'pgsql_cb_dhcp6_unittest.cc',
     'pgsql_cb_impl_unittest.cc',
+    'pgsql_forensic_unittest.cc',
     'pgsql_host_data_source_unittest.cc',
     'pgsql_lease_extended_info_unittest.cc',
     'pgsql_lease_mgr_unittest.cc',
     'run_unittests.cc',
-    dependencies: [gtest, crypto, postgresql],
+    dependencies: [gtest, crypto, postgresql, kea_testutils_lib],
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
     link_with: [dhcp_pgsql_archive, libs_testutils] + LIBS_BUILT_SO_FAR,
 )

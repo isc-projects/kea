@@ -28,41 +28,49 @@ namespace {
 
 /// @brief Tests the RotatingFile constructor.
 TEST_F(RotatingFileTest, invalidConstruction) {
+    db::DatabaseConnection::ParameterMap map;
+    BackendStorePtr p;
     // Verify that a RotatingFile with empty path is rejected.
-    ASSERT_THROW_MSG(RotatingFile("", "legal"), BackendStoreError,
+    map["path"] = "";
+    map["base"] = "legal";
+    ASSERT_THROW_MSG(p = BackendStorePtr(new RotatingFile(map)), BackendStoreError,
                      "path cannot be blank");
 
+    map["path"] = TEST_DATA_BUILDDIR;
+    map["base-name"] = "";
     // Verify that a RotatingFile with an empty base name is rejected.
-    ASSERT_THROW_MSG(RotatingFile(TEST_DATA_BUILDDIR, ""), BackendStoreError,
+    ASSERT_THROW_MSG(p = BackendStorePtr(new RotatingFile(map)), BackendStoreError,
                      "file name cannot be blank");
 
     std::string name = "invalid";
 
+    map["path"] = TEST_DATA_BUILDDIR;
+    map["base-name"] = "legal";
+    map["unit"] = "day";
+
+    map["prerotate"] = "invalid";
+    map["postrotate"] = "";
     // Verify that a RotatingFile with an invalid prerotate action is rejected.
-    ASSERT_THROW(RotatingFile(TEST_DATA_BUILDDIR, "legal",
-                              RotatingFile::TimeUnit::Day, 1, name, ""),
-                 BackendStoreError);
+    ASSERT_THROW(p = BackendStorePtr(new RotatingFile(map)), BackendStoreError);
 
+    map["prerotate"] = "";
+    map["postrotate"] = "invalid";
     // Verify that a RotatingFile with an invalid postrotate action is rejected.
-    ASSERT_THROW(RotatingFile(TEST_DATA_BUILDDIR, "legal",
-                              RotatingFile::TimeUnit::Day, 1, "", name),
-                 BackendStoreError);
+    ASSERT_THROW(p = BackendStorePtr(new RotatingFile(map)), BackendStoreError);
 
-    name = INVALID_FORENSIC_PREROTATE_TEST_SH;
+    map["prerotate"] = INVALID_FORENSIC_PREROTATE_TEST_SH;
+    map["postrotate"] = "";
 
     // Verify that a RotatingFile with a non executable prerotate action is
     // rejected.
-    ASSERT_THROW(RotatingFile(TEST_DATA_BUILDDIR, "legal",
-                              RotatingFile::TimeUnit::Day, 1, name, ""),
-                 BackendStoreError);
+    ASSERT_THROW(p = BackendStorePtr(new RotatingFile(map)), BackendStoreError);
 
-    name = INVALID_FORENSIC_POSTROTATE_TEST_SH;
+    map["prerotate"] = "";
+    map["postrotate"] = INVALID_FORENSIC_POSTROTATE_TEST_SH;
 
     // Verify that a RotatingFile with a non executable postrotate action is
     // rejected.
-    ASSERT_THROW(RotatingFile(TEST_DATA_BUILDDIR, "legal",
-                              RotatingFile::TimeUnit::Day, 1, "", name),
-                 BackendStoreError);
+    ASSERT_THROW(p = BackendStorePtr(new RotatingFile(map)), BackendStoreError);
 }
 
 /// @brief Tests #5579 fix.
@@ -151,10 +159,19 @@ TEST_F(RotatingFileTest, nowString) {
     // Try with an alternative format set via a load-time parameter. Use a few
     // of the more obscure strftime format specifiers to verify that it's
     // actually different from the "plain" %Y-%m-%d %M:%M:%S %Z format.
-    BackendStore::instance() = rotating_file_;
+    BackendStoreFactory::instance() = rotating_file_;
     data::ElementPtr params = data::Element::createMap();
     params->set("timestamp-format", data::Element::create("%A%t%w %F%%"));
-    ASSERT_NO_THROW_LOG(rotating_file_->parseExtraParameters(params));
+
+    db::DatabaseConnection::ParameterMap map;
+    EXPECT_NO_THROW(BackendStore::parseExtraParameters(params, map));
+    map["type"] = "logfile";
+    map["path"] = TEST_DATA_BUILDDIR;
+    EXPECT_NO_THROW(BackendStoreFactory::addBackend(map));
+    EXPECT_TRUE(BackendStoreFactory::instance());
+
+    rotating_file_->setTimestampFormat(BackendStoreFactory::instance()->getTimestampFormat());
+
     ASSERT_NO_THROW_LOG(now_string = rotating_file_->getNowString());
     EXPECT_EQ("Monday\t1 2016-05-02%", now_string);
 }
@@ -1114,7 +1131,7 @@ TEST_F(RotatingFileTest, prerotateActions) {
     ASSERT_NO_THROW_LOG(rotating_file_.reset(new TestableRotatingFile(time_, RotatingFile::TimeUnit::Second, 5,
                                                                   FORENSIC_PREROTATE_TEST_SH, "")));
 
-    BackendStore::instance() = rotating_file_;
+    BackendStoreFactory::instance() = rotating_file_;
 
     // Open the file
     ASSERT_NO_THROW_LOG(rotating_file_->open());
@@ -1156,7 +1173,7 @@ TEST_F(RotatingFileTest, postrotateActions) {
     ASSERT_NO_THROW_LOG(rotating_file_.reset(new TestableRotatingFile(time_, RotatingFile::TimeUnit::Second, 5,
                                                                   "", FORENSIC_POSTROTATE_TEST_SH)));
 
-    BackendStore::instance() = rotating_file_;
+    BackendStoreFactory::instance() = rotating_file_;
 
     // Open the file
     ASSERT_NO_THROW_LOG(rotating_file_->open());
@@ -1199,7 +1216,7 @@ TEST_F(RotatingFileTest, prerotateAndPostrotateActions) {
                                                                   FORENSIC_PREROTATE_TEST_SH,
                                                                   FORENSIC_POSTROTATE_TEST_SH)));
 
-    BackendStore::instance() = rotating_file_;
+    BackendStoreFactory::instance() = rotating_file_;
 
     // Open the file
     ASSERT_NO_THROW_LOG(rotating_file_->open());

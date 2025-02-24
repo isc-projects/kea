@@ -7,7 +7,7 @@
 #ifndef PGSQL_LEGAL_LOG_H
 #define PGSQL_LEGAL_LOG_H
 
-#include <backend_store.h>
+#include <dhcpsrv/backend_store_factory.h>
 #include <pgsql/pgsql_connection.h>
 #include <pgsql/pgsql_exchange.h>
 #include <util/reconnect_ctl.h>
@@ -18,7 +18,7 @@
 #include <vector>
 
 namespace isc {
-namespace legal_log {
+namespace dhcp {
 
 // Forward definitions (needed for shared_ptr definitions)
 // See pgsql_legal_log.cc file for for actual class definitions
@@ -165,6 +165,9 @@ public:
     ///        database has failed.
     virtual std::pair<uint32_t, uint32_t> getVersion(const std::string& timer_name = std::string()) const;
 
+    /// @brief Local version of getDBVersion() class method
+    static std::string getDBVersion();
+
     /// @brief Statement Tags
     ///
     /// The contents of the enum are indexes into the list of compiled SQL
@@ -173,6 +176,13 @@ public:
         INSERT_LOG,             // Add entry to logs table
         NUM_STATEMENTS          // Number of statements
     };
+
+    /// @brief Flag which indicates if the store has at least one
+    /// unusable connection.
+    ///
+    /// @return true if there is at least one unusable connection, false
+    /// otherwise
+    virtual bool isUnusable();
 
     /// @brief Context RAII Allocator.
     class PgSqlStoreContextAlloc {
@@ -184,7 +194,7 @@ public:
         /// or creates a new one.
         ///
         /// @param store A parent instance
-        PgSqlStoreContextAlloc(const PgSqlStore& store);
+        PgSqlStoreContextAlloc(PgSqlStore& store);
 
         /// @brief Destructor
         ///
@@ -196,7 +206,7 @@ public:
 
     private:
         /// @brief The store
-        const PgSqlStore& store_;
+        PgSqlStore& store_;
     };
 
 private:
@@ -206,9 +216,39 @@ private:
 
     /// @brief The pool of contexts
     PgSqlStoreContextPoolPtr pool_;
+
+    /// @brief Indicates if there is at least one connection that can no longer
+    /// be used for normal operations.
+    bool unusable_;
+
+public:
+    /// @brief Factory class method.
+    ///
+    /// @param parameters A data structure relating keywords and values
+    ///        concerned with the database.
+    ///
+    /// @return The PostgreSQL Store.
+    static BackendStorePtr
+    factory(const isc::db::DatabaseConnection::ParameterMap& parameters);
 };
 
-} // end of isc::legal_log namespace
+/// @brief Initialization structure used to register and deregister PostgreSQL Forensic Backend.
+struct PgSqlForensicBackendInit {
+    // Constructor registers
+    PgSqlForensicBackendInit() {
+        BackendStoreFactory::registerBackendFactory("postgresql",
+                                                    PgSqlStore::factory,
+                                                    true,
+                                                    PgSqlStore::getDBVersion);
+    }
+
+    // Destructor deregisters
+    ~PgSqlForensicBackendInit() {
+        BackendStoreFactory::unregisterBackendFactory("postgresql", true);
+    }
+};
+
+} // end of isc::dhcp namespace
 } // end of isc namespace
 
 #endif // PGSQL_LEGAL_LOG_H

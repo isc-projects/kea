@@ -7,6 +7,8 @@
 #ifndef ROTATING_FILE_H
 #define ROTATING_FILE_H
 
+#include <dhcpsrv/backend_store_factory.h>
+
 #include <mutex>
 
 /// @file rotating_file.h Defines the class, RotatingFile, which implements
@@ -45,7 +47,7 @@ namespace legal_log {
 ///
 /// The class implements virtual methods in facilitate unit testing
 /// and derives from @c BackendStore abstract class.
-class RotatingFile : public BackendStore {
+class RotatingFile : public isc::dhcp::BackendStore {
 public:
 
     /// @brief Time unit type used to rotate file.
@@ -74,17 +76,34 @@ public:
     /// @param postrotate The script to be run after opening the new file.
     ///
     /// @throw BackendStoreError if given file name is empty.
-    RotatingFile(const std::string& path,
-                 const std::string& base_name,
-                 const TimeUnit unit = TimeUnit::Day,
-                 const uint32_t count = 1,
-                 const std::string& prerotate = "",
-                 const std::string& postrotate = "");
+    RotatingFile(const isc::db::DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Destructor.
     ///
     /// The destructor does call the close method.
     virtual ~RotatingFile();
+
+    /// @brief Parse file specification and create forensic store backed.
+    ///
+    /// It supports the following parameters via the Hook Library Parameter
+    /// mechanism:
+    ///
+    /// @b path - Directory in which the legal file(s) will be written.
+    /// The default value is "<prefix>/var/lib/kea". The directory must exist.
+    ///
+    /// @b base-name - An arbitrary value which is used in conjunction
+    /// with current system date to form the current legal file name.
+    /// It defaults to "kea-legal".
+    ///
+    /// Legal file names will have the form:
+    ///
+    ///     <path>/<base-name>.<CCYYMMDD>.txt
+    ///     <path>/<base-name>.<TXXXXXXXXXXXXXXXXXXXX>.txt
+    ///
+    /// @param parameters The library parameters.
+    ///
+    /// @return The RotatingFile forensic store backend.
+    void apply(const isc::db::DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Opens the current file for writing.
     ///
@@ -148,6 +167,20 @@ public:
     /// @return The file name.
     std::string getFileName() const {
         return (file_name_);
+    }
+
+    /// @brief Returns the file base name.
+    ///
+    /// @return The file base name.
+    std::string getBaseName() const {
+        return (base_name_);
+    }
+
+    /// @brief Returns the file path.
+    ///
+    /// @return The file path.
+    std::string getPath() const {
+        return (path_);
     }
 
     /// @brief Build the year-month-day string from a date.
@@ -232,6 +265,29 @@ private:
 
     /// @brief Mutex to protect output.
     std::mutex mutex_;
+
+public:
+    /// @brief Factory class method.
+    ///
+    /// @param parameters A data structure relating keywords and values
+    ///        concerned with the database.
+    ///
+    /// @return The Rotating File Store Backend.
+    static isc::dhcp::BackendStorePtr
+    factory(const isc::db::DatabaseConnection::ParameterMap& parameters);
+};
+
+/// @brief Initialization structure used to register and deregister RotateFile Forensic Store.
+struct RotatingFileInit {
+    // Constructor registers
+    RotatingFileInit() {
+        isc::dhcp::BackendStoreFactory::registerBackendFactory("logfile", RotatingFile::factory);
+    }
+
+    // Destructor deregisters
+    ~RotatingFileInit() {
+        isc::dhcp::BackendStoreFactory::unregisterBackendFactory("logfile");
+    }
 };
 
 } // namespace legal_log

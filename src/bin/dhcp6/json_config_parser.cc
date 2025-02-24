@@ -21,7 +21,8 @@
 #include <dhcp6/json_config_parser.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/iface_mgr.h>
-#include <dhcpsrv/cb_ctl_dhcp4.h>
+#include <dhcpsrv/backend_store_factory.h>
+#include <dhcpsrv/cb_ctl_dhcp6.h>
 #include <dhcpsrv/cfg_multi_threading.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -1062,6 +1063,9 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
 
     // Log the list of known backends.
     HostDataSourceFactory::logRegistered();
+
+    // Log the list of known backends.
+    BackendStoreFactory::logRegistered();
 
     // Moved from the commit block to add the config backend indication.
     if (status_code == CONTROL_RESULT_SUCCESS && (!check_only || extra_checks)) {

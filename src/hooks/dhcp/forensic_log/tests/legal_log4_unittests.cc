@@ -8,7 +8,7 @@
 /// generation as well as tests which exercise v4 callouts: leases4_committed
 /// and pkt4_send.  These tests assume the legal log library
 /// is linked in, not loaded.  This allows a great deal more flexibility
-/// in testing, such as overriding and accessing the BackendStore::instance().
+/// in testing, such as overriding and accessing the BackendStoreFactory::instance().
 /// The load and unload callouts are exercised in ../libloadtests, which
 /// actually uses the HooksManager to load and unload the library.
 
@@ -317,7 +317,7 @@ struct CalloutTestv4 : CalloutTest {
 
 // Verifies legal entry content for directly connected clients
 TEST_F(CalloutTestv4, directClient4) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     std::string entry;
 
@@ -439,9 +439,9 @@ TEST_F(CalloutTestv4, directClient4) {
 
 // Verifies legal entry content for directly connected clients
 TEST_F(CalloutTestv4, directClient4CustomLoggingFormatRequestOnly) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
-    BackendStore::instance()->setRequestFormatExpression(request_format_only_);
+    BackendStoreFactory::instance()->setRequestFormatExpression(request_format_only_);
 
     std::string entry;
 
@@ -561,10 +561,10 @@ TEST_F(CalloutTestv4, directClient4CustomLoggingFormatRequestOnly) {
 
 // Verifies legal entry content for directly connected clients
 TEST_F(CalloutTestv4, directClient4CustomLoggingFormatRequestAndResponse) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
-    BackendStore::instance()->setRequestFormatExpression(request_format_);
-    BackendStore::instance()->setResponseFormatExpression(response_format_);
+    BackendStoreFactory::instance()->setRequestFormatExpression(request_format_);
+    BackendStoreFactory::instance()->setResponseFormatExpression(response_format_);
 
     std::string entry;
 
@@ -688,7 +688,7 @@ TEST_F(CalloutTestv4, directClient4CustomLoggingFormatRequestAndResponse) {
 // Verifies legal entry content for relayed clients
 // Checks with and without RAI and its suboptions
 TEST_F(CalloutTestv4, relayedClient4) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     std::string entry;
 
@@ -786,9 +786,9 @@ TEST_F(CalloutTestv4, relayedClient4) {
 // Verifies legal entry content for relayed clients
 // Checks with and without RAI and its suboptions
 TEST_F(CalloutTestv4, relayedClient4CustomLoggingFormatRequestOnly) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
-    BackendStore::instance()->setRequestFormatExpression(request_format_only_);
+    BackendStoreFactory::instance()->setRequestFormatExpression(request_format_only_);
 
     std::string entry;
 
@@ -881,10 +881,10 @@ TEST_F(CalloutTestv4, relayedClient4CustomLoggingFormatRequestOnly) {
 // Verifies legal entry content for relayed clients
 // Checks with and without RAI and its suboptions
 TEST_F(CalloutTestv4, relayedClient4CustomLoggingFormatRequestAndResponse) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
-    BackendStore::instance()->setRequestFormatExpression(request_format_);
-    BackendStore::instance()->setResponseFormatExpression(response_format_);
+    BackendStoreFactory::instance()->setRequestFormatExpression(request_format_);
+    BackendStoreFactory::instance()->setResponseFormatExpression(response_format_);
 
     std::string entry;
 
@@ -979,7 +979,7 @@ TEST_F(CalloutTestv4, relayedClient4CustomLoggingFormatRequestAndResponse) {
 
 // Verifies printable items
 TEST_F(CalloutTestv4, printable4) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     request_->setGiaddr(isc::asiolink::IOAddress("192.2.16.33"));
     const uint8_t clientid[] = { 0x66, 0x6f, 0x6f, 0x62, 0x61, 0x72 };
@@ -1030,14 +1030,14 @@ TEST_F(CalloutTestv4, printable4) {
               entry);
 }
 
-// Verifies that legalLog4Handler() detects a null BackendStore::instance()
+// Verifies that legalLog4Handler() detects a null BackendStoreFactory::instance()
 TEST_F(CalloutTestv4, noRotatingFileTest4) {
     // Make a callout handle
     CalloutHandle handle(getCalloutManager());
     handle.setArgument("lease4", lease_);
     handle.setArgument("query4", request_);
 
-    // The function should fail when there's no BackendStore::instance().
+    // The function should fail when there's no BackendStoreFactory::instance().
     int ret;
     ASSERT_NO_THROW(ret = legalLog4Handler(handle, Action::ASSIGN));
     EXPECT_EQ(1, ret);
@@ -1046,7 +1046,7 @@ TEST_F(CalloutTestv4, noRotatingFileTest4) {
 // Verifies that the pkt4_receive callout creates an empty context which can be
 // used in all other hook points.
 TEST_F(CalloutTestv4, pkt4_receive) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     // Make a callout handle
     CalloutHandlePtr handle = getCalloutHandle(discover_);
@@ -1132,12 +1132,12 @@ TEST_F(CalloutTestv4, pkt4_receive) {
     }
 
     // Close it to flush any unwritten data
-    BackendStore::instance()->close();
+    BackendStoreFactory::instance()->close();
 
     // Verify that the file content is correct. We should have no entry.
     std::vector<std::string>lines;
 
-    std::string today_now_string = BackendStore::instance()->getNowString();
+    std::string today_now_string = BackendStoreFactory::instance()->getNowString();
     checkFileNotCreated(genName(today()));
 }
 
@@ -1149,7 +1149,7 @@ TEST_F(CalloutTestv4, pkt4_receive) {
 // Note we don't bother testing multiple entries or rotation as this is done
 // during RotatingFile testing.
 TEST_F(CalloutTestv4, leases4_committed) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     // Make a callout handle
     CalloutHandlePtr handle = getCalloutHandle(request_);
@@ -1241,7 +1241,7 @@ TEST_F(CalloutTestv4, leases4_committed) {
     }
 
     // Close it to flush any unwritten data
-    BackendStore::instance()->close();
+    BackendStoreFactory::instance()->close();
 
     // Verify that the file content is correct. We should have two entries:
     // 192.2.1.111 and 192.2.3.122.
@@ -1256,14 +1256,14 @@ TEST_F(CalloutTestv4, leases4_committed) {
                     " to a device with hardware address:"
                     " hwtype=1 08:00:2b:02:3f:4e");
 
-    std::string today_now_string = BackendStore::instance()->getNowString();
+    std::string today_now_string = BackendStoreFactory::instance()->getNowString();
     checkFileLines(genName(today()), today_now_string, lines);
 }
 
 // Verifies that the lease4_renew callout generates the correct entry
 // in the legal file given a Pkt4 and Lease4
 TEST_F(CalloutTestv4, lease4_renew) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     // Make a callout handle
     CalloutHandlePtr handle = getCalloutHandle(request_);
@@ -1355,7 +1355,7 @@ TEST_F(CalloutTestv4, lease4_renew) {
     }
 
     // Close it to flush any unwritten data
-    BackendStore::instance()->close();
+    BackendStoreFactory::instance()->close();
 
     // Verify that the file content is correct.
     std::vector<std::string>lines;
@@ -1369,21 +1369,21 @@ TEST_F(CalloutTestv4, lease4_renew) {
                     " to a device with hardware address:"
                     " hwtype=1 08:00:2b:02:3f:4e");
 
-    std::string today_now_string = BackendStore::instance()->getNowString();
+    std::string today_now_string = BackendStoreFactory::instance()->getNowString();
     checkFileLines(genName(today()), today_now_string, lines);
 }
 
 // Verifies that the lease4_renew callout generates the correct entry
 // in the legal file given a Pkt4 and Lease4
 TEST_F(CalloutTestv4, customRequestLoggingFormat_lease4_renew) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     // Make a callout handle
     CalloutHandlePtr handle = getCalloutHandle(request_);
 
     std::string format = "ifelse(pkt4.msgtype == 5, concat('Assigned address: ', addrtotext(pkt4.yiaddr)), '')";
 
-    BackendStore::instance()->setResponseFormatExpression(format);
+    BackendStoreFactory::instance()->setResponseFormatExpression(format);
 
     int ret;
 
@@ -1413,20 +1413,20 @@ TEST_F(CalloutTestv4, customRequestLoggingFormat_lease4_renew) {
     }
 
     // Close it to flush any unwritten data
-    BackendStore::instance()->close();
+    BackendStoreFactory::instance()->close();
 
     // Verify that the file content is correct.
     std::vector<std::string>lines;
     lines.push_back("Assigned address: 192.2.1.100");
 
-    std::string today_now_string = BackendStore::instance()->getNowString();
+    std::string today_now_string = BackendStoreFactory::instance()->getNowString();
     checkFileLines(genName(today()), today_now_string, lines);
 }
 
 // Verifies that the lease4_release callout generates the correct entry
 // in the legal file given a Pkt4 and Lease4
 TEST_F(CalloutTestv4, lease4_release) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     // Make a callout handle
     CalloutHandlePtr handle = getCalloutHandle(release_);
@@ -1485,7 +1485,7 @@ TEST_F(CalloutTestv4, lease4_release) {
     }
 
     // Close it to flush any unwritten data
-    BackendStore::instance()->close();
+    BackendStoreFactory::instance()->close();
 
     // Verify that the file content is correct.
     std::vector<std::string>lines;
@@ -1497,21 +1497,21 @@ TEST_F(CalloutTestv4, lease4_release) {
                     " from a device with hardware address:"
                     " hwtype=1 08:00:2b:02:3f:4e");
 
-    std::string today_now_string = BackendStore::instance()->getNowString();
+    std::string today_now_string = BackendStoreFactory::instance()->getNowString();
     checkFileLines(genName(today()), today_now_string, lines);
 }
 
 // Verifies that the lease4_release callout generates the correct entry
 // in the legal file given a Pkt4 and Lease4
 TEST_F(CalloutTestv4, customRequestLoggingFormat_lease4_release) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     // Make a callout handle
     CalloutHandlePtr handle = getCalloutHandle(release_);
 
     std::string format = "ifelse(pkt4.msgtype == 7, concat('Released address: ', addrtotext(pkt4.ciaddr)), '')";
 
-    BackendStore::instance()->setRequestFormatExpression(format);
+    BackendStoreFactory::instance()->setRequestFormatExpression(format);
 
     int ret;
 
@@ -1528,20 +1528,20 @@ TEST_F(CalloutTestv4, customRequestLoggingFormat_lease4_release) {
     }
 
     // Close it to flush any unwritten data
-    BackendStore::instance()->close();
+    BackendStoreFactory::instance()->close();
 
     // Verify that the file content is correct.
     std::vector<std::string>lines;
     lines.push_back("Released address: 192.2.1.100");
 
-    std::string today_now_string = BackendStore::instance()->getNowString();
+    std::string today_now_string = BackendStoreFactory::instance()->getNowString();
     checkFileLines(genName(today()), today_now_string, lines);
 }
 
 // Verifies that the lease4_decline callout generates the correct entry
 // in the legal file given a Pkt4 and Lease4
 TEST_F(CalloutTestv4, lease4_decline) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     // Make a callout handle
     CalloutHandlePtr handle = getCalloutHandle(decline_);
@@ -1600,7 +1600,7 @@ TEST_F(CalloutTestv4, lease4_decline) {
     }
 
     // Close it to flush any unwritten data
-    BackendStore::instance()->close();
+    BackendStoreFactory::instance()->close();
 
     // Verify that the file content is correct.
     std::vector<std::string>lines;
@@ -1612,21 +1612,21 @@ TEST_F(CalloutTestv4, lease4_decline) {
                     " from a device with hardware address:"
                     " hwtype=1 08:00:2b:02:3f:4e");
 
-    std::string today_now_string = BackendStore::instance()->getNowString();
+    std::string today_now_string = BackendStoreFactory::instance()->getNowString();
     checkFileLines(genName(today()), today_now_string, lines);
 }
 
 // Verifies that the lease4_decline callout generates the correct entry
 // in the legal file given a Pkt4 and Lease4
 TEST_F(CalloutTestv4, customRequestLoggingFormat_lease4_decline) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     // Make a callout handle
     CalloutHandlePtr handle = getCalloutHandle(decline_);
 
     std::string format = "ifelse(pkt4.msgtype == 4, concat('Declined address: ', addrtotext(option[50].hex)), '')";
 
-    BackendStore::instance()->setRequestFormatExpression(format);
+    BackendStoreFactory::instance()->setRequestFormatExpression(format);
 
     int ret;
 
@@ -1643,26 +1643,26 @@ TEST_F(CalloutTestv4, customRequestLoggingFormat_lease4_decline) {
     }
 
     // Close it to flush any unwritten data
-    BackendStore::instance()->close();
+    BackendStoreFactory::instance()->close();
 
     // Verify that the file content is correct.
     std::vector<std::string>lines;
     lines.push_back("Declined address: 192.2.1.100");
 
-    std::string today_now_string = BackendStore::instance()->getNowString();
+    std::string today_now_string = BackendStoreFactory::instance()->getNowString();
     checkFileLines(genName(today()), today_now_string, lines);
 }
 
 // Verifies that the custom format logs on multiple lines.
 TEST_F(CalloutTestv4, customRequestLoggingFormatMultipleLines) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     // Make a callout handle
     CalloutHandlePtr handle = getCalloutHandle(decline_);
 
     std::string format = "ifelse(pkt4.msgtype == 4, 'first line' + 0x0a + 'second line', '')";
 
-    BackendStore::instance()->setRequestFormatExpression(format);
+    BackendStoreFactory::instance()->setRequestFormatExpression(format);
 
     int ret;
 
@@ -1679,14 +1679,14 @@ TEST_F(CalloutTestv4, customRequestLoggingFormatMultipleLines) {
     }
 
     // Close it to flush any unwritten data
-    BackendStore::instance()->close();
+    BackendStoreFactory::instance()->close();
 
     // Verify that the file content is correct.
     std::vector<std::string>lines;
     lines.push_back("first line");
     lines.push_back("second line");
 
-    std::string today_now_string = BackendStore::instance()->getNowString();
+    std::string today_now_string = BackendStoreFactory::instance()->getNowString();
     checkFileLines(genName(today()), today_now_string, lines);
 }
 

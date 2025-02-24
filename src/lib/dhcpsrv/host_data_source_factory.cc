@@ -154,9 +154,8 @@ HostDataSourceFactory::deregisterFactory(const string& db_type, bool no_log) {
                 .arg(db_type);
         }
         return (true);
-    } else {
-        return (false);
     }
+    return (false);
 }
 
 bool

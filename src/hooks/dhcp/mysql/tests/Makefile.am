@@ -4,6 +4,8 @@ AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += -I$(top_builddir)/src/hooks/dhcp/mysql -I$(top_srcdir)/src/hooks/dhcp/mysql
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(MYSQL_CPPFLAGS) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
+TEST_CA_DIR = $(top_srcdir)/src/lib/asiolink/testutils/ca
+AM_CPPFLAGS += -DTEST_CA_DIR=\"$(TEST_CA_DIR)\"
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -27,6 +29,7 @@ mysql_unittests_SOURCES += mysql_cb_dhcp4_unittest.cc
 mysql_unittests_SOURCES += mysql_cb_dhcp4_mgr_unittest.cc
 mysql_unittests_SOURCES += mysql_cb_dhcp6_unittest.cc
 mysql_unittests_SOURCES += mysql_cb_dhcp6_mgr_unittest.cc
+mysql_unittests_SOURCES += mysql_forensic_unittest.cc
 mysql_unittests_SOURCES += mysql_host_data_source_unittest.cc
 mysql_unittests_SOURCES += mysql_lease_mgr_unittest.cc
 mysql_unittests_SOURCES += mysql_lease_extended_info_unittest.cc
@@ -53,6 +56,7 @@ mysql_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 mysql_unittests_LDADD += $(top_builddir)/src/lib/mysql/testutils/libmysqltest.la
 mysql_unittests_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
 mysql_unittests_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
+mysql_unittests_LDADD += $(top_builddir)/src/lib/testutils/libkea-testutils.la
 mysql_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 mysql_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 mysql_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la

@@ -16,7 +16,8 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <process/daemon.h>
 #include <legal_log_log.h>
-#include <backend_store.h>
+#include <dhcpsrv/backend_store.h>
+#include <rotating_file.h>
 
 #include <boost/lexical_cast.hpp>
 
@@ -48,7 +49,7 @@ int load(LibraryHandle& handle) {
     try {
         // Make the hook library not loadable by d2 or ca.
         uint16_t family = CfgMgr::instance().getFamily();
-        const std::string& proc_name = Daemon::getProcName();
+        const string& proc_name = Daemon::getProcName();
         if (family == AF_INET) {
             if (proc_name != "kea-dhcp4") {
                 isc_throw(isc::Unexpected, "Bad process name: " << proc_name
@@ -61,26 +62,19 @@ int load(LibraryHandle& handle) {
             }
         }
 
+        BackendStoreFactory::registerBackendFactory("logfile", RotatingFile::factory);
+
         // Get and decode parameters.
         ConstElementPtr const& parameters(handle.getParameters());
-
-        if (!parameters || !parameters->get("type") ||
-            parameters->get("type")->stringValue() == "logfile") {
-            BackendStore::parseFile(parameters);
-        } else {
-            BackendStore::parseDatabase(parameters);
-        }
+        DatabaseConnection::ParameterMap map;
 
         try {
-            BackendStore::parseExtraParameters(parameters);
-
-            BackendStore::setConfig(parameters);
-
-            BackendStore::instance()->open();
+            BackendStore::parseConfig(parameters, map);
+            BackendStoreFactory::addBackend(map);
         } catch (const isc::db::DbOpenErrorWithRetry& err) {
-            std::string redacted;
+            string redacted;
             try {
-                redacted = DatabaseConnection::redactedAccessString(BackendStore::getParameters());
+                redacted = DatabaseConnection::redactedAccessString(map);
             } catch (...) {
             }
             LOG_INFO(legal_log_logger, LEGAL_LOG_DB_OPEN_CONNECTION_WITH_RETRY_FAILED)
@@ -108,13 +102,9 @@ int unload() {
         // Since it's "global" Let's explicitly destroy it now rather
         // than indeterminately. Note, BackendStore destructor will close
         // the store.
-        BackendStore::instance().reset();
-        IOServicePtr io_service = BackendStore::getIOService();
-        if (io_service) {
-            IOServiceMgr::instance().unregisterIOService(io_service);
-            io_service->stopAndPoll();
-            BackendStore::setIOService(IOServicePtr());
-        }
+        BackendStoreFactory::instance().reset();
+
+        BackendStoreFactory::unregisterBackendFactory("logfile");
     } catch (const std::exception& ex) {
         // On the off chance something goes awry, catch it and log it.
         // @todo Not sure if we should return a non-zero result or not.
@@ -128,40 +118,14 @@ int unload() {
 /// @brief dhcp4_srv_configured callout implementation.
 ///
 /// @param handle callout handle.
-int dhcp4_srv_configured(CalloutHandle& handle) {
-    try {
-        BackendStore::setIOService(IOServicePtr(new IOService()));
-        IOServiceMgr::instance().registerIOService(BackendStore::getIOService());
-    } catch (const std::exception& ex) {
-        LOG_ERROR(legal_log_logger, LEGAL_LOG_LOAD_ERROR)
-            .arg(ex.what());
-        handle.setStatus(isc::hooks::CalloutHandle::NEXT_STEP_DROP);
-        ostringstream os;
-        os << "Error: " << ex.what();
-        string error(os.str());
-        handle.setArgument("error", error);
-        return (1);
-    }
+int dhcp4_srv_configured(CalloutHandle& /* handle */) {
     return (0);
 }
 
 /// @brief dhcp6_srv_configured callout implementation.
 ///
 /// @param handle callout handle.
-int dhcp6_srv_configured(CalloutHandle& handle) {
-    try {
-        BackendStore::setIOService(IOServicePtr(new IOService()));
-        IOServiceMgr::instance().registerIOService(BackendStore::getIOService());
-    } catch (const std::exception& ex) {
-        LOG_ERROR(legal_log_logger, LEGAL_LOG_LOAD_ERROR)
-            .arg(ex.what());
-        handle.setStatus(isc::hooks::CalloutHandle::NEXT_STEP_DROP);
-        ostringstream os;
-        os << "Error: " << ex.what();
-        string error(os.str());
-        handle.setArgument("error", error);
-        return (1);
-    }
+int dhcp6_srv_configured(CalloutHandle& /* handle */) {
     return (0);
 }
 

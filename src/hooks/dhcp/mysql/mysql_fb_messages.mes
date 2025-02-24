@@ -1,0 +1,72 @@
+# Copyright (C) 2024 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+$NAMESPACE isc::dhcp
+
+% LEGAL_LOG_MYSQL_COMMIT committing to MySQL database
+The code has issued a commit call.  All outstanding transactions will be
+committed to the database.  Note that depending on the MySQL settings,
+the committal may not include a write to disk.
+
+% MYSQL_FB_DB opening MySQL log database: %1
+This informational message is logged when a legal log hook library is
+about to open a MySQL log database.  The parameters of the
+connection including database name and username needed to access it
+(but not the password if any) are logged.
+
+% LEGAL_LOG_MYSQL_DB_RECONNECT_ATTEMPT_FAILED database reconnect failed: %1
+An error message issued when an attempt to reconnect has failed.
+
+% LEGAL_LOG_MYSQL_DB_RECONNECT_ATTEMPT_SCHEDULE scheduling attempt %1 of %2 in %3 milliseconds
+An info message issued when the server is scheduling the next attempt to reconnect
+to the database.  This occurs when the server has lost database connectivity and
+is attempting to reconnect automatically.
+
+% LEGAL_LOG_MYSQL_DB_RECONNECT_FAILED maximum number of database reconnect attempts: %1, has been exhausted without success
+An error message issued when the server failed to reconnect.  Loss of connectivity
+is typically a network or database server issue.
+
+% LEGAL_LOG_MYSQL_FATAL_ERROR Unrecoverable MySQL error occurred: %1 for <%2>, reason: %3 (error code: %4).
+An error message indicating that communication with the MySQL database server
+has been lost.  When this occurs the server exits immediately with a non-zero
+exit code.  This is most likely due to a network issue.
+
+% LEGAL_LOG_MYSQL_GET_VERSION obtaining schema version information
+Logged at debug log level 50.
+A debug message issued when the server is about to obtain schema version
+information from the MySQL database.
+
+% LEGAL_LOG_MYSQL_INSERT_LOG Adding a log entry to the database: %1
+Logged at debug log level 50.
+An informational message logged when a log entry is inserted.
+
+% LEGAL_LOG_MYSQL_INVALID_ACCESS invalid database access string: %1
+This is logged when an attempt has been made to parse a database access string
+and the attempt ended in error.  The access string in question - which
+should be of the form 'keyword=value keyword=value...' is included in
+the message.
+
+% LEGAL_LOG_MYSQL_NO_TLS TLS was required but is not used
+This error message is issued when TLS for the connection was required but
+TLS is not used.
+
+% LEGAL_LOG_MYSQL_ROLLBACK rolling back MySQL database
+The code has issued a rollback call.  All outstanding transaction will
+be rolled back and not committed to the database.
+
+% LEGAL_LOG_MYSQL_START_TRANSACTION starting new MySQL transaction
+A debug message issued when a new MySQL transaction is being started.
+This message is typically not issued when inserting data into a
+single table because the server doesn't explicitly start
+transactions in this case. This message is issued when data is
+inserted into multiple tables with multiple INSERT statements
+and there may be a need to rollback the whole transaction if
+any of these INSERT statements fail.
+
+% LEGAL_LOG_MYSQL_TLS_CIPHER TLS cipher: %1
+Logged at debug log level 50.
+A debug message issued when a new MySQL connected is created with TLS.
+The TLS cipher name is logged.

@@ -22,6 +22,7 @@
 #include <mysql_cb_log.h>
 #include <mysql_hb_log.h>
 #include <mysql_host_data_source.h>
+#include <mysql_legal_log.h>
 #include <mysql_lb_log.h>
 #include <mysql_lease_mgr.h>
 
@@ -62,6 +63,12 @@ int load(LibraryHandle& /* handle */) {
     // Register MySQL CB factories with CB Managers
     MySqlConfigBackendDHCPv4::registerBackendType();
     MySqlConfigBackendDHCPv6::registerBackendType();
+
+    // Register MySQL FB factories with Backend Store managers.
+    BackendStoreFactory::registerBackendFactory("mysql",
+                                                MySqlStore::factory,
+                                                true,
+                                                MySqlStore::getDBVersion);
 
     // Register MySQL HB factories with Host Managers
     HostDataSourceFactory::registerFactory("mysql",
@@ -115,6 +122,9 @@ int unload() {
         io_service->stopAndPoll();
         MySqlConfigBackendImpl::setIOService(IOServicePtr());
     }
+
+    // Unregister the factories and remove MySQL backends
+    BackendStoreFactory::unregisterBackendFactory("mysql", true);
 
     // Unregister the factories and remove MySQL backends
     HostDataSourceFactory::deregisterFactory("mysql", true);

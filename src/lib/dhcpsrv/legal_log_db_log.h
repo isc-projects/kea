@@ -8,20 +8,11 @@
 #define LEGAL_LOG_DB_LOG_H
 
 #include <database/db_log.h>
-#include <legal_log_log.h>
 
 #include <boost/noncopyable.hpp>
 
 namespace isc {
-namespace legal_log {
-
-/// @brief Legal log database message map
-extern const isc::db::DbLogger::MessageMap legal_log_db_message_map;
-
-/// @brief Legal log database Logger
-///
-/// It is the default database logger.
-extern isc::db::DbLogger legal_log_db_logger;
+namespace dhcp {
 
 /// @brief Legal log database logger class in RAII style
 class LegalLogDbLogger : boost::noncopyable {
@@ -30,7 +21,7 @@ public:
     ///
     /// Push the legal log database logger on the database logger stack.
     ///
-    LegalLogDbLogger();
+    LegalLogDbLogger(isc::db::DbLogger& legal_log_db_logger);
 
     /// @brief Destructor
     ///
@@ -39,7 +30,7 @@ public:
     ~LegalLogDbLogger();
 };
 
-} // namespace legal_log
+} // namespace dhcp
 } // namespace isc
 
 #endif // LEGAL_LOG_DB_LOG_H

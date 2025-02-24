@@ -22,6 +22,7 @@
 #include <pgsql_cb_log.h>
 #include <pgsql_hb_log.h>
 #include <pgsql_host_data_source.h>
+#include <pgsql_legal_log.h>
 #include <pgsql_lb_log.h>
 #include <pgsql_lease_mgr.h>
 
@@ -62,6 +63,12 @@ int load(LibraryHandle& /* handle */) {
     // Register PostgreSQL CB factories with CB Managers
     PgSqlConfigBackendDHCPv4::registerBackendType();
     PgSqlConfigBackendDHCPv6::registerBackendType();
+
+    // Register PostgreSQL FB factories with Backend Store managers.
+    BackendStoreFactory::registerBackendFactory("postgresql",
+                                                PgSqlStore::factory,
+                                                true,
+                                                PgSqlStore::getDBVersion);
 
     // Register PostgreSQL HB factories with Host Managers
     HostDataSourceFactory::registerFactory("postgresql",
@@ -115,6 +122,9 @@ int unload() {
         io_service->stopAndPoll();
         PgSqlConfigBackendImpl::setIOService(IOServicePtr());
     }
+
+    // Unregister the factories and remove PostgreSQL backends
+    BackendStoreFactory::unregisterBackendFactory("postgresql", true);
 
     // Unregister the factories and remove PostgreSQL backends
     HostDataSourceFactory::deregisterFactory("postgresql", true);

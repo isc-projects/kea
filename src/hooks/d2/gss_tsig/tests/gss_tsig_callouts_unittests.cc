@@ -4,11 +4,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-/// @file This file contains tests which verify control command legal file entry
-/// generation and callout: command_processed.
-/// These tests assume the legal log library is linked in, not loaded.
-/// This allows a great deal more flexibility in testing, such as overriding
-/// and accessing the BackendStore::instance().
 /// The load and unload callouts are exercised in ../libloadtests, which
 /// actually uses the HooksManager to load and unload the library.
 

@@ -12,6 +12,7 @@
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/testutils/test_utils.h>
 #include <pgsql/testutils/pgsql_schema.h>
+#include <pgsql_legal_log.h>
 #include <test_utils.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/log_utils.h>
@@ -29,7 +30,7 @@ using namespace isc::data;
 using namespace isc::db;
 using namespace isc::db::test;
 using namespace isc::dhcp::test;
-using namespace isc::legal_log;
+using namespace isc::dhcp;
 using namespace isc::test;
 using namespace boost::posix_time;
 namespace ph = std::placeholders;
@@ -92,19 +93,19 @@ public:
         params["name"] = "keatest";
         params["user"] = "keatest";
         params["password"] = "keatest";
-        ASSERT_NO_THROW(store_.reset(new PgSqlStore(params)));
+        ASSERT_NO_THROW_LOG(store_.reset(new PgSqlStore(params)));
 
         // Open the database
-        ASSERT_NO_THROW(store_->open());
+        ASSERT_NO_THROW_LOG(store_->open());
     }
 
     /// @brief Close the store
     void closeStore() {
         // Close does nothing
-        EXPECT_NO_THROW(store_->close());
+        EXPECT_NO_THROW_LOG(store_->close());
 
         // Destructor close the database
-        EXPECT_NO_THROW(store_.reset());
+        EXPECT_NO_THROW_LOG(store_.reset());
     }
 
     /// @brief Fill some log entries
@@ -159,7 +160,7 @@ TEST_F(PgSqlTest, invalidConstruction) {
     DatabaseConnection::ParameterMap params;
     params["user"] = "keatest";
     params["password"] = "keatest";
-    ASSERT_NO_THROW(store_.reset(new PgSqlStore(params)));
+    ASSERT_NO_THROW_LOG(store_.reset(new PgSqlStore(params)));
     // Check params validity is done by open().
     EXPECT_THROW(store_->open(), NoDatabaseName);
 
@@ -167,7 +168,7 @@ TEST_F(PgSqlTest, invalidConstruction) {
     params["name"] = "keatest";
     // 2^64 should be greater than INT_MAX
     params["connect-timeout"] = "18446744073709551616";
-    ASSERT_NO_THROW(store_.reset(new PgSqlStore(params)));
+    ASSERT_NO_THROW_LOG(store_.reset(new PgSqlStore(params)));
     EXPECT_THROW(store_->open(), DbInvalidTimeout);
 }
 
@@ -178,19 +179,19 @@ TEST_F(PgSqlTest, open) {
     params["name"] = "keatest";
     params["user"] = "keatest";
     params["password"] = "keatest";
-    ASSERT_NO_THROW(store_.reset(new PgSqlStore(params)));
+    ASSERT_NO_THROW_LOG(store_.reset(new PgSqlStore(params)));
 
     // Check the type is postgresql
     EXPECT_EQ("postgresql", store_->getType());
 
     // Open the database
-    ASSERT_NO_THROW(store_->open());
+    ASSERT_NO_THROW_LOG(store_->open());
 
     // Close does nothing
-    EXPECT_NO_THROW(store_->close());
+    EXPECT_NO_THROW_LOG(store_->close());
 
     // Destructor close the database
-    EXPECT_NO_THROW(store_.reset());
+    EXPECT_NO_THROW_LOG(store_.reset());
 }
 
 /// @brief Check schema version
@@ -200,7 +201,7 @@ TEST_F(PgSqlTest, version) {
 
     // Check version using the API
     std::pair<uint32_t, uint32_t> version;
-    EXPECT_NO_THROW(version = store_->getVersion());
+    EXPECT_NO_THROW_LOG(version = store_->getVersion());
     EXPECT_EQ(PGSQL_SCHEMA_VERSION_MAJOR, version.first);
     EXPECT_EQ(PGSQL_SCHEMA_VERSION_MINOR, version.second);
 
@@ -212,7 +213,7 @@ TEST_F(PgSqlTest, version) {
     setQuery("SELECT version, minor FROM schema_version");
     setCommand("psql --set ON_ERROR_STOP=1 -A -t -h localhost -q "
                "-U keatest -d keatest -c ");
-    EXPECT_NO_THROW(execute());
+    EXPECT_NO_THROW_LOG(execute());
     EXPECT_EQ(0, getResult());
     vector<string> output;
     EXPECT_TRUE(getOutput(output));
@@ -245,7 +246,7 @@ TEST_F(PgSqlTest, addresses) {
     setQuery("SELECT address FROM logs");
     setCommand("psql --set ON_ERROR_STOP=1 -A -t -h localhost -q "
                "-U keatest -d keatest -c ");
-    EXPECT_NO_THROW(execute());
+    EXPECT_NO_THROW_LOG(execute());
     EXPECT_EQ(0, getResult());
     vector<string> output;
     EXPECT_TRUE(getOutput(output));
@@ -270,7 +271,7 @@ TEST_F(PgSqlTest, entries) {
     setQuery("SELECT log FROM logs");
     setCommand("psql --set ON_ERROR_STOP=1 -A -t -h localhost -q "
                "-U keatest -d keatest -c ");
-    EXPECT_NO_THROW(execute());
+    EXPECT_NO_THROW_LOG(execute());
     EXPECT_EQ(0, getResult());
     vector<string> output;
     EXPECT_TRUE(getOutput(output));
@@ -302,7 +303,7 @@ TEST_F(PgSqlTest, timestamps) {
     setQuery("SELECT EXTRACT(epoch FROM timestamp) FROM logs");
     setCommand("psql --set ON_ERROR_STOP=1 -A -t -h localhost -q "
                "-U keatest -d keatest -c ");
-    EXPECT_NO_THROW(execute());
+    EXPECT_NO_THROW_LOG(execute());
     EXPECT_EQ(0, getResult());
     vector<string> output;
     EXPECT_TRUE(getOutput(output));
@@ -311,7 +312,7 @@ TEST_F(PgSqlTest, timestamps) {
     for (size_t i = 0; i < output.size(); ++i) {
         // Get the timestamp as a double from epoch
         double ts_d = 0.0;
-        ASSERT_NO_THROW(ts_d = boost::lexical_cast<double>(output[i]));
+        ASSERT_NO_THROW_LOG(ts_d = boost::lexical_cast<double>(output[i]));
         // Extract seconds and microseconds;
         double ts_s;
         double ts_ms = modf(ts_d, &ts_s) * 1000000.;
@@ -339,10 +340,16 @@ class PgSqlLegalLogDbLostCallbackTest : public LegalLogDbLostCallbackTest {
 public:
 
     /// @brief Constructor.
-    PgSqlLegalLogDbLostCallbackTest() { }
+    PgSqlLegalLogDbLostCallbackTest() {
+        BackendStoreFactory::delAllBackends();
+        io_service_->poll();
+    }
 
     /// @brief Destructor.
-    virtual ~PgSqlLegalLogDbLostCallbackTest() { }
+    virtual ~PgSqlLegalLogDbLostCallbackTest() {
+        BackendStoreFactory::delAllBackends();
+        io_service_->poll();
+    }
 
     /// @brief Prepares the class for a test.
     ///
@@ -474,6 +481,9 @@ public:
     /// -# The registered DbFailedCallback was invoked after two reconnect
     /// attempts (once failing and second triggered by timer)
     virtual void testDbLostAndFailedAfterTimeoutCallback();
+
+    /// @brief Initializer.
+    PgSqlForensicBackendInit init_;
 };
 
 void
@@ -496,19 +506,19 @@ PgSqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndRecoveredCallback() {
     std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry());
     params.emplace("retry-on-startup", "true");
 
-    ASSERT_NO_THROW(BackendStore::instance().reset(new PgSqlStore(params)));
+    ASSERT_NO_THROW_LOG(BackendStoreFactory::instance().reset(new PgSqlStore(params)));
 
     // Check params validity is done by open().
-    EXPECT_THROW(BackendStore::instance()->open(), DbOpenErrorWithRetry);
+    EXPECT_THROW(BackendStoreFactory::instance()->open(), DbOpenErrorWithRetry);
 
     // Verify there is no instance.
-    ASSERT_FALSE(BackendStore::instance());
+    ASSERT_FALSE(BackendStoreFactory::instance());
 
     dbr.reset();
 
     params = db::DatabaseConnection::parse(validConnectString());
     params.emplace("retry-on-startup", "true");
-    BackendStore::setParameters(params);
+    BackendStoreFactory::setParameters(params);
 
     io_service_->poll();
 
@@ -517,7 +527,7 @@ PgSqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndRecoveredCallback() {
     EXPECT_EQ(1, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    ASSERT_TRUE(BackendStore::instance());
+    ASSERT_TRUE(BackendStoreFactory::instance());
 }
 
 void
@@ -540,13 +550,13 @@ PgSqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndFailedCallback() {
     std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry());
     params.emplace("retry-on-startup", "true");
 
-    ASSERT_NO_THROW(BackendStore::instance().reset(new PgSqlStore(params)));
+    ASSERT_NO_THROW_LOG(BackendStoreFactory::instance().reset(new PgSqlStore(params)));
 
     // Check params validity is done by open().
-    EXPECT_THROW(BackendStore::instance()->open(), DbOpenErrorWithRetry);
+    EXPECT_THROW(BackendStoreFactory::instance()->open(), DbOpenErrorWithRetry);
 
     // Verify there is no instance.
-    ASSERT_FALSE(BackendStore::instance());
+    ASSERT_FALSE(BackendStoreFactory::instance());
 
     dbr.reset();
 
@@ -557,7 +567,7 @@ PgSqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndFailedCallback() {
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(1, db_failed_callback_called_);
 
-    ASSERT_FALSE(BackendStore::instance());
+    ASSERT_FALSE(BackendStoreFactory::instance());
 }
 
 void
@@ -584,13 +594,13 @@ PgSqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndRecoveredAfterTimeoutCall
     std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry());
     params.emplace("retry-on-startup", "true");
 
-    ASSERT_NO_THROW(BackendStore::instance().reset(new PgSqlStore(params)));
+    ASSERT_NO_THROW_LOG(BackendStoreFactory::instance().reset(new PgSqlStore(params)));
 
     // Check params validity is done by open().
-    EXPECT_THROW(BackendStore::instance()->open(), DbOpenErrorWithRetry);
+    EXPECT_THROW(BackendStoreFactory::instance()->open(), DbOpenErrorWithRetry);
 
     // Verify there is no instance.
-    ASSERT_FALSE(BackendStore::instance());
+    ASSERT_FALSE(BackendStoreFactory::instance());
 
     dbr.reset();
 
@@ -601,13 +611,13 @@ PgSqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndRecoveredAfterTimeoutCall
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    ASSERT_FALSE(BackendStore::instance());
+    ASSERT_FALSE(BackendStoreFactory::instance());
 
     access = validConnectString();
     access += extra;
     params = db::DatabaseConnection::parse(access);
     params.emplace("retry-on-startup", "true");
-    BackendStore::setParameters(params);
+    BackendStoreFactory::setParameters(params);
 
     sleep(1);
 
@@ -618,7 +628,7 @@ PgSqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndRecoveredAfterTimeoutCall
     EXPECT_EQ(1, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    ASSERT_TRUE(BackendStore::instance());
+    ASSERT_TRUE(BackendStoreFactory::instance());
 
     sleep(1);
 
@@ -629,7 +639,7 @@ PgSqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndRecoveredAfterTimeoutCall
     EXPECT_EQ(1, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    ASSERT_TRUE(BackendStore::instance());
+    ASSERT_TRUE(BackendStoreFactory::instance());
 }
 
 void
@@ -656,13 +666,13 @@ PgSqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndFailedAfterTimeoutCallbac
     std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry());
     params.emplace("retry-on-startup", "true");
 
-    ASSERT_NO_THROW(BackendStore::instance().reset(new PgSqlStore(params)));
+    ASSERT_NO_THROW_LOG(BackendStoreFactory::instance().reset(new PgSqlStore(params)));
 
     // Check params validity is done by open().
-    EXPECT_THROW(BackendStore::instance()->open(), DbOpenErrorWithRetry);
+    EXPECT_THROW(BackendStoreFactory::instance()->open(), DbOpenErrorWithRetry);
 
     // Verify there is no instance.
-    ASSERT_FALSE(BackendStore::instance());
+    ASSERT_FALSE(BackendStoreFactory::instance());
 
     dbr.reset();
 
@@ -673,7 +683,7 @@ PgSqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndFailedAfterTimeoutCallbac
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    ASSERT_FALSE(BackendStore::instance());
+    ASSERT_FALSE(BackendStoreFactory::instance());
 
     sleep(1);
 
@@ -684,7 +694,7 @@ PgSqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndFailedAfterTimeoutCallbac
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    ASSERT_FALSE(BackendStore::instance());
+    ASSERT_FALSE(BackendStoreFactory::instance());
 
     sleep(1);
 
@@ -695,7 +705,7 @@ PgSqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndFailedAfterTimeoutCallbac
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(1, db_failed_callback_called_);
 
-    ASSERT_FALSE(BackendStore::instance());
+    ASSERT_FALSE(BackendStoreFactory::instance());
 }
 
 void
@@ -715,10 +725,10 @@ PgSqlLegalLogDbLostCallbackTest::testNoCallbackOnOpenFailure() {
     // Verify that a PgSqlStore with no database name is rejected.
     DatabaseConnection::ParameterMap params = db::DatabaseConnection::parse(invalidConnectString());
 
-    ASSERT_NO_THROW(BackendStore::instance().reset(new PgSqlStore(params)));
+    ASSERT_NO_THROW_LOG(BackendStoreFactory::instance().reset(new PgSqlStore(params)));
 
     // Check params validity is done by open().
-    EXPECT_THROW(BackendStore::instance()->open(), DbOpenError);
+    EXPECT_THROW(BackendStoreFactory::instance()->open(), DbOpenError);
 
     io_service_->poll();
 
@@ -726,7 +736,7 @@ PgSqlLegalLogDbLostCallbackTest::testNoCallbackOnOpenFailure() {
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    ASSERT_FALSE(BackendStore::instance());
+    ASSERT_FALSE(BackendStoreFactory::instance());
 }
 
 void
@@ -753,28 +763,29 @@ PgSqlLegalLogDbLostCallbackTest::testDbLostAndRecoveredCallback() {
     // Verify that a PgSqlStore with database name is not rejected.
     DatabaseConnection::ParameterMap params = db::DatabaseConnection::parse(validConnectString());
 
-    ASSERT_NO_THROW(BackendStore::instance().reset(new PgSqlStore(params)));
+    ASSERT_NO_THROW_LOG(BackendStoreFactory::instance().reset(new PgSqlStore(params)));
+    BackendStoreFactory::setParameters(params);
 
     // Check params validity is done by open().
-    EXPECT_NO_THROW(BackendStore::instance()->open());
+    EXPECT_NO_THROW_LOG(BackendStoreFactory::instance()->open());
 
-    ASSERT_TRUE(BackendStore::instance());
+    ASSERT_TRUE(BackendStoreFactory::instance());
 
     // Find the SQL client socket.
     int sql_socket = findLastSocketFd();
     ASSERT_TRUE(sql_socket > last_open_socket);
 
     // Verify we can execute a query.  We don't care about the answer.
-    ASSERT_NO_THROW(BackendStore::instance()->writeln("test", "192.2.1.100"));
+    ASSERT_NO_THROW_LOG(BackendStoreFactory::instance()->writeln("test", "192.2.1.100"));
 
     // Now close the sql socket out from under backend client
     ASSERT_EQ(0, close(sql_socket));
 
     // A query should fail with DbConnectionUnusable.
-    ASSERT_THROW(BackendStore::instance()->writeln("test", "192.2.1.101");,
+    ASSERT_THROW(BackendStoreFactory::instance()->writeln("test", "192.2.1.101");,
                  DbConnectionUnusable);
 
-    ASSERT_TRUE(BackendStore::instance());
+    ASSERT_TRUE(BackendStoreFactory::instance());
 
     io_service_->poll();
 
@@ -783,7 +794,7 @@ PgSqlLegalLogDbLostCallbackTest::testDbLostAndRecoveredCallback() {
     EXPECT_EQ(1, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    ASSERT_TRUE(BackendStore::instance());
+    ASSERT_TRUE(BackendStoreFactory::instance());
 }
 
 void
@@ -810,31 +821,31 @@ PgSqlLegalLogDbLostCallbackTest::testDbLostAndFailedCallback() {
     // Verify that a PgSqlStore with database name is not rejected.
     DatabaseConnection::ParameterMap params = db::DatabaseConnection::parse(validConnectString());
 
-    ASSERT_NO_THROW(BackendStore::instance().reset(new PgSqlStore(params)));
+    ASSERT_NO_THROW_LOG(BackendStoreFactory::instance().reset(new PgSqlStore(params)));
 
     // Check params validity is done by open().
-    EXPECT_NO_THROW(BackendStore::instance()->open());
+    EXPECT_NO_THROW_LOG(BackendStoreFactory::instance()->open());
 
-    ASSERT_TRUE(BackendStore::instance());
+    ASSERT_TRUE(BackendStoreFactory::instance());
 
     // Find the SQL client socket.
     int sql_socket = findLastSocketFd();
     ASSERT_TRUE(sql_socket > last_open_socket);
 
     // Verify we can execute a query.  We don't care about the answer.
-    ASSERT_NO_THROW(BackendStore::instance()->writeln("test", "192.2.1.100"));
+    ASSERT_NO_THROW_LOG(BackendStoreFactory::instance()->writeln("test", "192.2.1.100"));
 
     params = db::DatabaseConnection::parse(invalidConnectString());
-    BackendStore::setParameters(params);
+    BackendStoreFactory::setParameters(params);
 
     // Now close the sql socket out from under backend client
     ASSERT_EQ(0, close(sql_socket));
 
     // A query should fail with DbConnectionUnusable.
-    ASSERT_THROW(BackendStore::instance()->writeln("test", "192.2.1.101"),
+    ASSERT_THROW(BackendStoreFactory::instance()->writeln("test", "192.2.1.101"),
                  DbConnectionUnusable);
 
-    ASSERT_TRUE(BackendStore::instance());
+    ASSERT_TRUE(BackendStoreFactory::instance());
 
     io_service_->poll();
 
@@ -843,7 +854,7 @@ PgSqlLegalLogDbLostCallbackTest::testDbLostAndFailedCallback() {
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(1, db_failed_callback_called_);
 
-    ASSERT_FALSE(BackendStore::instance());
+    ASSERT_FALSE(BackendStoreFactory::instance());
 }
 
 void
@@ -874,33 +885,34 @@ PgSqlLegalLogDbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCallback() {
     // Verify that a PgSqlStore with database name is not rejected.
     DatabaseConnection::ParameterMap params = db::DatabaseConnection::parse(access);
 
-    ASSERT_NO_THROW(BackendStore::instance().reset(new PgSqlStore(params)));
+    ASSERT_NO_THROW_LOG(BackendStoreFactory::instance().reset(new PgSqlStore(params)));
+    BackendStoreFactory::setParameters(params);
 
     // Check params validity is done by open().
-    EXPECT_NO_THROW(BackendStore::instance()->open());
+    EXPECT_NO_THROW_LOG(BackendStoreFactory::instance()->open());
 
-    ASSERT_TRUE(BackendStore::instance());
+    ASSERT_TRUE(BackendStoreFactory::instance());
 
     // Find the SQL client socket.
     int sql_socket = findLastSocketFd();
     ASSERT_TRUE(sql_socket > last_open_socket);
 
     // Verify we can execute a query.  We don't care about the answer.
-    ASSERT_NO_THROW(BackendStore::instance()->writeln("test", "192.2.1.100"));
+    ASSERT_NO_THROW_LOG(BackendStoreFactory::instance()->writeln("test", "192.2.1.100"));
 
     access = invalidConnectString();
     access += extra;
     params = db::DatabaseConnection::parse(access);
-    BackendStore::setParameters(params);
+    BackendStoreFactory::setParameters(params);
 
     // Now close the sql socket out from under backend client
     ASSERT_EQ(0, close(sql_socket));
 
     // A query should fail with DbConnectionUnusable.
-    ASSERT_THROW(BackendStore::instance()->writeln("test", "192.2.1.101"),
+    ASSERT_THROW(BackendStoreFactory::instance()->writeln("test", "192.2.1.101"),
                  DbConnectionUnusable);
 
-    ASSERT_TRUE(BackendStore::instance());
+    ASSERT_TRUE(BackendStoreFactory::instance());
 
     io_service_->poll();
 
@@ -909,12 +921,12 @@ PgSqlLegalLogDbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCallback() {
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    ASSERT_FALSE(BackendStore::instance());
+    ASSERT_FALSE(BackendStoreFactory::instance());
 
     access = validConnectString();
     access += extra;
     params = db::DatabaseConnection::parse(access);
-    BackendStore::setParameters(params);
+    BackendStoreFactory::setParameters(params);
 
     sleep(1);
 
@@ -925,7 +937,7 @@ PgSqlLegalLogDbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCallback() {
     EXPECT_EQ(1, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    ASSERT_TRUE(BackendStore::instance());
+    ASSERT_TRUE(BackendStoreFactory::instance());
 
     sleep(1);
 
@@ -936,7 +948,7 @@ PgSqlLegalLogDbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCallback() {
     EXPECT_EQ(1, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    ASSERT_TRUE(BackendStore::instance());
+    ASSERT_TRUE(BackendStoreFactory::instance());
 }
 
 void
@@ -967,33 +979,33 @@ PgSqlLegalLogDbLostCallbackTest::testDbLostAndFailedAfterTimeoutCallback() {
     // Verify that a PgSqlStore with database name is not rejected.
     DatabaseConnection::ParameterMap params = db::DatabaseConnection::parse(access);
 
-    ASSERT_NO_THROW(BackendStore::instance().reset(new PgSqlStore(params)));
+    ASSERT_NO_THROW_LOG(BackendStoreFactory::instance().reset(new PgSqlStore(params)));
 
     // Check params validity is done by open().
-    EXPECT_NO_THROW(BackendStore::instance()->open());
+    EXPECT_NO_THROW_LOG(BackendStoreFactory::instance()->open());
 
-    ASSERT_TRUE(BackendStore::instance());
+    ASSERT_TRUE(BackendStoreFactory::instance());
 
     // Find the SQL client socket.
     int sql_socket = findLastSocketFd();
     ASSERT_TRUE(sql_socket > last_open_socket);
 
     // Verify we can execute a query.  We don't care about the answer.
-    ASSERT_NO_THROW(BackendStore::instance()->writeln("test", "192.2.1.100"));
+    ASSERT_NO_THROW_LOG(BackendStoreFactory::instance()->writeln("test", "192.2.1.100"));
 
     access = invalidConnectString();
     access += extra;
     params = db::DatabaseConnection::parse(access);
-    BackendStore::setParameters(params);
+    BackendStoreFactory::setParameters(params);
 
     // Now close the sql socket out from under backend client
     ASSERT_EQ(0, close(sql_socket));
 
     // A query should fail with DbConnectionUnusable.
-    ASSERT_THROW(BackendStore::instance()->writeln("test", "192.2.1.101"),
+    ASSERT_THROW(BackendStoreFactory::instance()->writeln("test", "192.2.1.101"),
                  DbConnectionUnusable);
 
-    ASSERT_TRUE(BackendStore::instance());
+    ASSERT_TRUE(BackendStoreFactory::instance());
 
     io_service_->poll();
 
@@ -1002,7 +1014,7 @@ PgSqlLegalLogDbLostCallbackTest::testDbLostAndFailedAfterTimeoutCallback() {
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    ASSERT_FALSE(BackendStore::instance());
+    ASSERT_FALSE(BackendStoreFactory::instance());
 
     sleep(1);
 
@@ -1013,7 +1025,7 @@ PgSqlLegalLogDbLostCallbackTest::testDbLostAndFailedAfterTimeoutCallback() {
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    ASSERT_FALSE(BackendStore::instance());
+    ASSERT_FALSE(BackendStoreFactory::instance());
 
     sleep(1);
 
@@ -1024,7 +1036,7 @@ PgSqlLegalLogDbLostCallbackTest::testDbLostAndFailedAfterTimeoutCallback() {
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(1, db_failed_callback_called_);
 
-    ASSERT_FALSE(BackendStore::instance());
+    ASSERT_FALSE(BackendStoreFactory::instance());
 }
 
 /// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.

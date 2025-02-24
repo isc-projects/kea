@@ -1,5 +1,7 @@
 /mysql_cb_messages.cc            -diff merge=ours
 /mysql_cb_messages.h             -diff merge=ours
+/mysql_fb_messages.cc            -diff merge=ours
+/mysql_fb_messages.h             -diff merge=ours
 /mysql_hb_messages.cc            -diff merge=ours
 /mysql_hb_messages.h             -diff merge=ours
 /mysql_lb_messages.cc            -diff merge=ours

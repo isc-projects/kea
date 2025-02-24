@@ -10,12 +10,15 @@ dhcp_pgsql_lib = shared_library(
     'pgsql_cb_impl.cc',
     'pgsql_cb_log.cc',
     'pgsql_cb_messages.cc',
+    'pgsql_fb_log.cc',
+    'pgsql_fb_messages.cc',
     'pgsql_hb_log.cc',
     'pgsql_hb_messages.cc',
     'pgsql_host_data_source.cc',
     'pgsql_lb_log.cc',
     'pgsql_lb_messages.cc',
     'pgsql_lease_mgr.cc',
+    'pgsql_legal_log.cc',
     'version.cc',
     dependencies: [crypto, postgresql],
     include_directories: [include_directories('.')] + INCLUDES,
@@ -39,6 +42,16 @@ if KEA_MSG_COMPILER.found()
             TOP_SOURCE_DIR,
             KEA_MSG_COMPILER,
             'src/hooks/dhcp/pgsql/pgsql_cb_messages.mes',
+        ],
+    )
+    TARGETS_GEN_MESSAGES += [target_gen_messages]
+    target_gen_messages = run_target(
+        'src-hooks-dhcp-pgsql-pgsql_fb_messages',
+        command: [
+            CD_AND_RUN,
+            TOP_SOURCE_DIR,
+            KEA_MSG_COMPILER,
+            'src/hooks/dhcp/pgsql/pgsql_fb_messages.mes',
         ],
     )
     TARGETS_GEN_MESSAGES += [target_gen_messages]

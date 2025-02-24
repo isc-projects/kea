@@ -1706,6 +1706,8 @@ public:
     MySqlIPv6ReservationExchange()
         : host_id_(0), prefix_len_(0), type_(0), iaid_(0),
           resv_(IPv6Resrv::TYPE_NA, asiolink::IOAddress("::"), 128),
+          addr6_length_(0),
+          excluded_prefix_length_(0),
           excluded_prefix_len_(0) {
 
         // Reset error table.

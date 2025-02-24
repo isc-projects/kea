@@ -17,15 +17,16 @@
 #include <dhcpsrv/testutils/lib_load_test_fixture.h>
 #include <exceptions/exceptions.h>
 #include <hooks/hooks_manager.h>
+#include <testutils/gtest_utils.h>
 
 #ifdef HAVE_MYSQL
 #include <mysql/testutils/mysql_schema.h>
+#include <hooks/dhcp/mysql/mysql_legal_log.h>
 #endif
 #ifdef HAVE_PGSQL
 #include <pgsql/testutils/pgsql_schema.h>
+#include <hooks/dhcp/pgsql/pgsql_legal_log.h>
 #endif
-
-#include <testutils/gtest_utils.h>
 
 #include <gtest/gtest.h>
 
@@ -37,6 +38,7 @@
 
 using namespace std;
 using namespace isc;
+using namespace isc::dhcp;
 using namespace hooks;
 
 namespace {
@@ -262,6 +264,9 @@ public:
         // If data wipe enabled, delete transient data otherwise destroy the schema
         isc::db::test::destroyPgSQLSchema();
     }
+
+    /// @brief Initializer.
+    PgSqlForensicBackendInit init_;
 };
 
 // Verifies that the load callout with correct PostgreSQL setup instantiates.
@@ -317,6 +322,9 @@ public:
         // If data wipe enabled, delete transient data otherwise destroy the schema
         isc::db::test::destroyMySQLSchema();
     }
+
+    /// @brief Initializer.
+    MySqlForensicBackendInit init_;
 };
 
 // Verifies that the load callout with correct MySQL setup instantiates.

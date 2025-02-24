@@ -6,8 +6,10 @@
 
 #include <config.h>
 
-#include <legal_log_db_log.h>
+#include <pgsql_fb_log.h>
 #include <pgsql_legal_log.h>
+#include <dhcpsrv/backend_store_factory.h>
+#include <dhcpsrv/legal_log_db_log.h>
 #include <dhcpsrv/network_state.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <util/multi_threading_mgr.h>
@@ -44,7 +46,7 @@ PgSqlTaggedStatement tagged_statements[] = {
 };
 
 namespace isc {
-namespace legal_log {
+namespace dhcp {
 
 /// @brief Supports exchanging log entries with PostgreSQL.
 class PgSqlLegLExchange : public PgSqlExchange {
@@ -123,7 +125,7 @@ PgSqlStoreContext::PgSqlStoreContext(const DatabaseConnection::ParameterMap& par
 
 // PgSqlStoreContextAlloc Constructor and Destructor
 
-PgSqlStore::PgSqlStoreContextAlloc::PgSqlStoreContextAlloc(const PgSqlStore& store)
+PgSqlStore::PgSqlStoreContextAlloc::PgSqlStoreContextAlloc(PgSqlStore& store)
     : ctx_(), store_(store) {
 
     if (MultiThreadingMgr::instance().getMode()) {
@@ -153,14 +155,18 @@ PgSqlStore::PgSqlStoreContextAlloc::~PgSqlStoreContextAlloc() {
         // multi-threaded
         lock_guard<mutex> lock(store_.pool_->mutex_);
         store_.pool_->pool_.push_back(ctx_);
+        if (ctx_->conn_.isUnusable()) {
+            store_.unusable_ = true;
+        }
+    } else if (ctx_->conn_.isUnusable()) {
+        store_.unusable_ = true;
     }
-    // If running in single-threaded mode, there's nothing to do here.
 }
 
 // PgSqlStore
 
 PgSqlStore::PgSqlStore(const DatabaseConnection::ParameterMap& parameters)
-    : timer_name_("") {
+    : BackendStore(parameters), timer_name_(""), unusable_(false) {
 
     // Store connection parameters.
     BackendStore::setParameters(parameters);
@@ -172,7 +178,7 @@ PgSqlStore::PgSqlStore(const DatabaseConnection::ParameterMap& parameters)
 }
 
 void PgSqlStore::open() {
-    LegalLogDbLogger pushed;
+    LegalLogDbLogger pushed(pgsql_legal_log_db_logger);
 
     // Check TLS support.
     size_t tls(0);
@@ -184,13 +190,13 @@ void PgSqlStore::open() {
 #ifdef HAVE_PGSQL_SSL
     if ((tls > 0) && !PgSqlConnection::warned_about_tls) {
         PgSqlConnection::warned_about_tls = true;
-        LOG_INFO(legal_log_logger, LEGAL_LOG_PGSQL_TLS_SUPPORT)
+        LOG_INFO(pgsql_fb_logger, LEGAL_LOG_PGSQL_TLS_SUPPORT)
             .arg(DatabaseConnection::redactedAccessString(parameters));
         PQinitSSL(1);
     }
 #else
     if (tls > 0) {
-        LOG_ERROR(legal_log_logger, LEGAL_LOG_PGSQL_NO_TLS_SUPPORT)
+        LOG_ERROR(pgsql_fb_logger, LEGAL_LOG_PGSQL_NO_TLS_SUPPORT)
             .arg(DatabaseConnection::redactedAccessString(parameters));
         isc_throw(DbOpenError, "Attempt to configure TLS for PostgreSQL "
                   << "backend (built with this feature disabled)");
@@ -201,8 +207,8 @@ void PgSqlStore::open() {
     pair<uint32_t, uint32_t> code_version(PGSQL_SCHEMA_VERSION_MAJOR,
                                           PGSQL_SCHEMA_VERSION_MINOR);
 
-    BackendStorePtr store = BackendStore::instance();
-    BackendStore::instance().reset();
+    BackendStorePtr store = BackendStoreFactory::instance();
+    BackendStoreFactory::instance().reset();
 
     string timer_name;
     bool retry = false;
@@ -224,7 +230,7 @@ void PgSqlStore::open() {
                   << db_version.second);
     }
 
-    BackendStore::instance() = store;
+    BackendStoreFactory::instance() = store;
 
     // Create an initial context.
     pool_.reset(new PgSqlStoreContextPool());
@@ -235,8 +241,8 @@ void PgSqlStore::open() {
 
 PgSqlStoreContextPtr
 PgSqlStore::createContext() const {
-    PgSqlStoreContextPtr ctx(new PgSqlStoreContext(BackendStore::getParameters(),
-        IOServiceAccessorPtr(new IOServiceAccessor(&PgSqlStore::getIOService)),
+    PgSqlStoreContextPtr ctx(new PgSqlStoreContext(getParameters(),
+        IOServiceAccessorPtr(new IOServiceAccessor(&DatabaseConnection::getIOService)),
         &PgSqlStore::dbReconnect));
 
     // Open the database.
@@ -275,10 +281,10 @@ PgSqlStore::writeln(const string& text, const std::string& addr) {
         return;
     }
 
-    LOG_DEBUG(legal_log_logger, DB_DBG_TRACE_DETAIL,
+    LOG_DEBUG(pgsql_fb_logger, DB_DBG_TRACE_DETAIL,
               LEGAL_LOG_PGSQL_INSERT_LOG).arg(text);
 
-    LegalLogDbLogger pushed;
+    LegalLogDbLogger pushed(pgsql_legal_log_db_logger);
 
     // Get a context
     PgSqlStoreContextAlloc get_context(*this);
@@ -303,15 +309,24 @@ PgSqlStore::writeln(const string& text, const std::string& addr) {
 
 pair<uint32_t, uint32_t>
 PgSqlStore::getVersion(const std::string& timer_name) const {
-    LOG_DEBUG(legal_log_logger, DB_DBG_TRACE_DETAIL,
+    LOG_DEBUG(pgsql_fb_logger, DB_DBG_TRACE_DETAIL,
               LEGAL_LOG_PGSQL_GET_VERSION);
 
-    LegalLogDbLogger pushed;
+    LegalLogDbLogger pushed(pgsql_legal_log_db_logger);
 
     IOServiceAccessorPtr ac(new IOServiceAccessor(&DatabaseConnection::getIOService));
     DbCallback cb(&PgSqlStore::dbReconnect);
 
-    return (PgSqlConnection::getVersion(BackendStore::getParameters(), ac, cb, timer_name, NetworkState::DB_CONNECTION + 32));
+    return (PgSqlConnection::getVersion(getParameters(), ac, cb, timer_name, NetworkState::DB_CONNECTION + 32));
+}
+
+std::string
+PgSqlStore::getDBVersion() {
+    std::stringstream tmp;
+    tmp << "PostgreSQL backend " << PGSQL_SCHEMA_VERSION_MAJOR;
+    tmp << "." << PGSQL_SCHEMA_VERSION_MINOR;
+    tmp << ", library " << PQlibVersion();
+    return (tmp.str());
 }
 
 bool
@@ -330,18 +345,15 @@ PgSqlStore::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
 
     // At least one connection was lost.
     try {
-        auto parameters = BackendStore::getParameters();
-        // Set legal store to NULL
-        BackendStore::instance().reset();
-        // Create temporary legal store
-        BackendStorePtr store(new PgSqlStore(parameters));
-        store->open();
-        // If everything is fine, set the legal store
-        BackendStore::instance() = store;
-        BackendStore::parseExtraParameters(BackendStore::getConfig());
+        auto pool = BackendStoreFactory::getPool();
+        for (auto backend : pool) {
+            if (BackendStoreFactory::delBackend(backend.first, true)) {
+                BackendStoreFactory::addBackend(backend.second.first, backend.first);
+            }
+        }
         reopened = true;
     } catch (const std::exception& ex) {
-        LOG_ERROR(legal_log_logger, LEGAL_LOG_PGSQL_DB_RECONNECT_ATTEMPT_FAILED)
+        LOG_ERROR(pgsql_fb_logger, LEGAL_LOG_PGSQL_DB_RECONNECT_ATTEMPT_FAILED)
                 .arg(ex.what());
     }
 
@@ -358,7 +370,7 @@ PgSqlStore::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
     } else {
         if (!check) {
             // We're out of retries, log it and initiate shutdown.
-            LOG_ERROR(legal_log_logger, LEGAL_LOG_PGSQL_DB_RECONNECT_FAILED)
+            LOG_ERROR(pgsql_fb_logger, LEGAL_LOG_PGSQL_DB_RECONNECT_FAILED)
                     .arg(db_reconnect_ctl->maxRetries());
 
             // Cancel the timer.
@@ -371,7 +383,7 @@ PgSqlStore::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
             return (false);
         }
 
-        LOG_INFO(legal_log_logger, LEGAL_LOG_PGSQL_DB_RECONNECT_ATTEMPT_SCHEDULE)
+        LOG_INFO(pgsql_fb_logger, LEGAL_LOG_PGSQL_DB_RECONNECT_ATTEMPT_SCHEDULE)
                 .arg(db_reconnect_ctl->maxRetries() - db_reconnect_ctl->retriesLeft() + 1)
                 .arg(db_reconnect_ctl->maxRetries())
                 .arg(db_reconnect_ctl->retryInterval());
@@ -389,5 +401,17 @@ PgSqlStore::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
     return (true);
 }
 
-} // end of isc::legal_log namespace
+bool
+PgSqlStore::isUnusable() {
+    return (unusable_);
+}
+
+BackendStorePtr
+PgSqlStore::factory(const isc::db::DatabaseConnection::ParameterMap& parameters) {
+    LOG_INFO(pgsql_fb_logger, PGSQL_FB_DB)
+        .arg(isc::db::DatabaseConnection::redactedAccessString(parameters));
+    return (BackendStorePtr(new PgSqlStore(parameters)));
+}
+
+} // end of isc::dhcp namespace
 } // end of isc namespace

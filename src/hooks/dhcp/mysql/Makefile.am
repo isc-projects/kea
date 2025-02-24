@@ -6,6 +6,7 @@ AM_CXXFLAGS  = $(KEA_CXXFLAGS)
 
 # Ensure that the message file is included in the distribution
 EXTRA_DIST  = mysql_cb_messages.mes
+EXTRA_DIST += mysql_fb_messages.mes
 EXTRA_DIST += mysql_hb_messages.mes
 EXTRA_DIST += mysql_lb_messages.mes
 
@@ -21,6 +22,8 @@ libmysql_la_SOURCES += mysql_cb_dhcp6.cc mysql_cb_dhcp6.h
 libmysql_la_SOURCES += mysql_cb_impl.cc mysql_cb_impl.h
 libmysql_la_SOURCES += mysql_cb_messages.cc mysql_cb_messages.h
 libmysql_la_SOURCES += mysql_cb_log.cc mysql_cb_log.h
+libmysql_la_SOURCES += mysql_fb_messages.cc mysql_fb_messages.h
+libmysql_la_SOURCES += mysql_fb_log.cc mysql_fb_log.h
 libmysql_la_SOURCES += mysql_query_macros_dhcp.h
 libmysql_la_SOURCES += mysql_hb_log.cc mysql_hb_log.h
 libmysql_la_SOURCES += mysql_hb_messages.cc mysql_hb_messages.h
@@ -28,6 +31,7 @@ libmysql_la_SOURCES += mysql_host_data_source.cc mysql_host_data_source.h
 libmysql_la_SOURCES += mysql_lb_log.cc mysql_lb_log.h
 libmysql_la_SOURCES += mysql_lb_messages.cc mysql_lb_messages.h
 libmysql_la_SOURCES += mysql_lease_mgr.cc mysql_lease_mgr.h
+libmysql_la_SOURCES += mysql_legal_log.cc mysql_legal_log.h
 libmysql_la_SOURCES += version.cc
 
 libmysql_la_CXXFLAGS = $(AM_CXXFLAGS)
@@ -72,6 +76,7 @@ libdhcp_mysql_la_LIBADD += $(BOOST_LIBS)
 # reconfigure, a new target messages-clean has been added.
 maintainer-clean-local:
 	rm -f mysql_cb_messages.h mysql_cb_messages.cc
+	rm -f mysql_fb_messages.h mysql_fb_messages.cc
 	rm -f mysql_hb_messages.h mysql_hb_messages.cc
 	rm -f mysql_lb_messages.h mysql_lb_messages.cc
 
@@ -87,6 +92,7 @@ if GENERATE_MESSAGES
 
 # Define rule to build logging source files from message file
 messages: mysql_cb_messages.h mysql_cb_messages.cc \
+	  mysql_fb_messages.h mysql_fb_messages.cc \
 	  mysql_hb_messages.h mysql_hb_messages.cc \
 	  mysql_lb_messages.h mysql_lb_messages.cc
 	@echo Message files regenerated
@@ -94,6 +100,10 @@ messages: mysql_cb_messages.h mysql_cb_messages.cc \
 mysql_cb_messages.h mysql_cb_messages.cc: mysql_cb_messages.mes
 	(cd $(top_srcdir); \
 	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/hooks/dhcp/mysql/mysql_cb_messages.mes)
+
+mysql_fb_messages.h mysql_fb_messages.cc: mysql_fb_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/hooks/dhcp/mysql/mysql_fb_messages.mes)
 
 mysql_hb_messages.h mysql_hb_messages.cc: mysql_hb_messages.mes
 	(cd $(top_srcdir); \
@@ -106,6 +116,7 @@ mysql_lb_messages.h mysql_lb_messages.cc: mysql_lb_messages.mes
 else
 
 messages: mysql_cb_messages.h mysql_cb_messages.cc \
+	  mysql_fb_messages.h mysql_fb_messages.cc \
 	  mysql_hb_messages.h mysql_hb_messages.cc \
 	  mysql_lb_messages.h mysql_lb_messages.cc
 	@echo Messages generation disabled. Configure with --enable-generate-messages to enable it.

@@ -22,7 +22,6 @@ if HAVE_OPENSSL
 libkea_cryptolink_la_SOURCES += openssl_link.cc
 libkea_cryptolink_la_SOURCES += openssl_common.h
 libkea_cryptolink_la_SOURCES += openssl_hash.cc
-libkea_cryptolink_la_SOURCES += openssl_compat.h
 libkea_cryptolink_la_SOURCES += openssl_hmac.cc
 endif
 
@@ -47,6 +46,5 @@ endif
 
 if HAVE_OPENSSL
 libkea_cryptolink_include_HEADERS += \
-	openssl_common.h \
-	openssl_compat.h
+	openssl_common.h
 endif

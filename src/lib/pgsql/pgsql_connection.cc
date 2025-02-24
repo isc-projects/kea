@@ -119,7 +119,7 @@ PgSqlTransaction::commit() {
 }
 
 PgSqlConnection::~PgSqlConnection() {
-    if (conn_) {
+    if (conn_ && !isUnusable()) {
         // Deallocate the prepared queries.
         if (PQstatus(conn_) == CONNECTION_OK) {
             PgSqlResult r(PQexec(conn_, "DEALLOCATE all"));
@@ -421,6 +421,9 @@ PgSqlConnection::openDatabaseInternal(bool logging) {
 
         auto const& rec = reconnectCtl();
         if (rec && DatabaseConnection::retry_) {
+            // Mark this connection as no longer usable.
+            markUnusable();
+
             // Start the connection recovery.
             startRecoverDbConnection();
 

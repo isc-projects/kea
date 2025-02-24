@@ -12,15 +12,6 @@ AM_CPPFLAGS += -DFORENSIC_POSTROTATE_TEST_SH=\"$(abs_top_builddir)/src/hooks/dhc
 AM_CPPFLAGS += -DINVALID_FORENSIC_POSTROTATE_TEST_SH=\"$(abs_top_srcdir)/README\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 AM_CPPFLAGS += -DLEGAL_LOG_DIR="\"$(legal_log_dir)\""
-TEST_CA_DIR = $(top_srcdir)/src/lib/asiolink/testutils/ca
-AM_CPPFLAGS += -DTEST_CA_DIR=\"$(TEST_CA_DIR)\"
-if HAVE_MYSQL
-AM_CPPFLAGS += $(MYSQL_CPPFLAGS)
-endif
-if HAVE_PGSQL
-AM_CPPFLAGS += $(PGSQL_CPPFLAGS)
-endif
-
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
 # Some versions of GCC warn about some versions of Boost regarding
@@ -52,13 +43,6 @@ libdhcp_legal_log_unittests_SOURCES += legal_log6_unittests.cc
 libdhcp_legal_log_unittests_SOURCES += rotating_file_unittests.cc
 libdhcp_legal_log_unittests_SOURCES += test_utils.h
 
-if HAVE_MYSQL
-libdhcp_legal_log_unittests_SOURCES += mysql_unittests.cc
-endif
-if HAVE_PGSQL
-libdhcp_legal_log_unittests_SOURCES += pgsql_unittests.cc
-endif
-
 libdhcp_legal_log_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
 
 libdhcp_legal_log_unittests_LDFLAGS  = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS)
@@ -73,17 +57,6 @@ libdhcp_legal_log_unittests_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 libdhcp_legal_log_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 libdhcp_legal_log_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 libdhcp_legal_log_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
-
-if HAVE_PGSQL
-libdhcp_legal_log_unittests_LDADD += $(top_builddir)/src/lib/pgsql/testutils/libpgsqltest.la
-libdhcp_legal_log_unittests_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
-endif
-
-if HAVE_MYSQL
-libdhcp_legal_log_unittests_LDADD += $(top_builddir)/src/lib/mysql/testutils/libmysqltest.la
-libdhcp_legal_log_unittests_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
-endif
-
 libdhcp_legal_log_unittests_LDADD += $(top_builddir)/src/lib/database/testutils/libdatabasetest.la
 libdhcp_legal_log_unittests_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 libdhcp_legal_log_unittests_LDADD += $(top_builddir)/src/lib/testutils/libkea-testutils.la
@@ -96,13 +69,6 @@ libdhcp_legal_log_unittests_LDADD += $(LOG4CPLUS_LIBS)
 libdhcp_legal_log_unittests_LDADD += $(CRYPTO_LIBS)
 libdhcp_legal_log_unittests_LDADD += $(BOOST_LIBS)
 libdhcp_legal_log_unittests_LDADD += $(GTEST_LDADD)
-
-if HAVE_MYSQL
-libdhcp_legal_log_unittests_LDADD += $(MYSQL_LIBS)
-endif
-if HAVE_PGSQL
-libdhcp_legal_log_unittests_LDADD += $(PGSQL_LIBS)
-endif
 endif
 
 noinst_PROGRAMS = $(TESTS)

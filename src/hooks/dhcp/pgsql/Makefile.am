@@ -6,6 +6,7 @@ AM_CXXFLAGS  = $(KEA_CXXFLAGS)
 
 # Ensure that the message file is included in the distribution
 EXTRA_DIST  = pgsql_cb_messages.mes
+EXTRA_DIST += pgsql_fb_messages.mes
 EXTRA_DIST += pgsql_hb_messages.mes
 EXTRA_DIST += pgsql_lb_messages.mes
 
@@ -21,6 +22,8 @@ libpgsql_la_SOURCES += pgsql_cb_dhcp6.cc pgsql_cb_dhcp6.h
 libpgsql_la_SOURCES += pgsql_cb_impl.cc pgsql_cb_impl.h
 libpgsql_la_SOURCES += pgsql_cb_messages.cc pgsql_cb_messages.h
 libpgsql_la_SOURCES += pgsql_cb_log.cc pgsql_cb_log.h
+libpgsql_la_SOURCES += pgsql_fb_messages.cc pgsql_fb_messages.h
+libpgsql_la_SOURCES += pgsql_fb_log.cc pgsql_fb_log.h
 libpgsql_la_SOURCES += pgsql_query_macros_dhcp.h
 libpgsql_la_SOURCES += pgsql_hb_log.cc pgsql_hb_log.h
 libpgsql_la_SOURCES += pgsql_hb_messages.cc pgsql_hb_messages.h
@@ -28,6 +31,7 @@ libpgsql_la_SOURCES += pgsql_host_data_source.cc pgsql_host_data_source.h
 libpgsql_la_SOURCES += pgsql_lb_log.cc pgsql_lb_log.h
 libpgsql_la_SOURCES += pgsql_lb_messages.cc pgsql_lb_messages.h
 libpgsql_la_SOURCES += pgsql_lease_mgr.cc pgsql_lease_mgr.h
+libpgsql_la_SOURCES += pgsql_legal_log.cc pgsql_legal_log.h
 libpgsql_la_SOURCES += version.cc
 
 libpgsql_la_CXXFLAGS = $(AM_CXXFLAGS)
@@ -72,6 +76,7 @@ libdhcp_pgsql_la_LIBADD += $(BOOST_LIBS)
 # reconfigure, a new target messages-clean has been added.
 maintainer-clean-local:
 	rm -f pgsql_cb_messages.h pgsql_cb_messages.cc
+	rm -f pgsql_fb_messages.h pgsql_fb_messages.cc
 	rm -f pgsql_hb_messages.h pgsql_hb_messages.cc
 	rm -f pgsql_lb_messages.h pgsql_lb_messages.cc
 
@@ -87,6 +92,7 @@ if GENERATE_MESSAGES
 
 # Define rule to build logging source files from message file
 messages: pgsql_cb_messages.h pgsql_cb_messages.cc \
+	  pgsql_fb_messages.h pgsql_fb_messages.cc \
 	  pgsql_hb_messages.h pgsql_hb_messages.cc \
 	  pgsql_lb_messages.h pgsql_lb_messages.cc
 	@echo Message files regenerated
@@ -94,6 +100,10 @@ messages: pgsql_cb_messages.h pgsql_cb_messages.cc \
 pgsql_cb_messages.h pgsql_cb_messages.cc: pgsql_cb_messages.mes
 	(cd $(top_srcdir); \
 	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/hooks/dhcp/pgsql/pgsql_cb_messages.mes)
+
+pgsql_fb_messages.h pgsql_fb_messages.cc: pgsql_fb_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/hooks/dhcp/pgsql/pgsql_fb_messages.mes)
 
 pgsql_hb_messages.h pgsql_hb_messages.cc: pgsql_hb_messages.mes
 	(cd $(top_srcdir); \
@@ -106,6 +116,7 @@ pgsql_lb_messages.h pgsql_lb_messages.cc: pgsql_lb_messages.mes
 else
 
 messages: pgsql_cb_messages.h pgsql_cb_messages.cc \
+	  pgsql_fb_messages.h pgsql_fb_messages.cc \
 	  pgsql_hb_messages.h pgsql_hb_messages.cc \
 	  pgsql_lb_messages.h pgsql_lb_messages.cc
 	@echo Messages generation disabled. Configure with --enable-generate-messages to enable it.

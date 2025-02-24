@@ -20,7 +20,7 @@
 #include <string>
 
 namespace isc {
-namespace legal_log {
+namespace dhcp {
 
 /// @brief Thrown if a BackendStore encounters an error.
 class BackendStoreError : public isc::Exception {
@@ -39,7 +39,9 @@ typedef boost::shared_ptr<BackendStore> BackendStorePtr;
 class BackendStore {
 public:
     /// @brief Constructor.
-    BackendStore() : timestamp_format_("%Y-%m-%d %H:%M:%S %Z") {
+    BackendStore(const isc::db::DatabaseConnection::ParameterMap parameters) :
+        timestamp_format_("%Y-%m-%d %H:%M:%S %Z"),
+        parameters_(parameters) {
     }
 
     /// @brief Destructor.
@@ -47,25 +49,14 @@ public:
     /// Derived destructors do call the close method.
     virtual ~BackendStore() = default;
 
-    /// @brief Parse file specification.
+    /// @brief Parse database specification.
     ///
-    /// It supports the following parameters via the Hook Library Parameter
-    /// mechanism:
-    ///
-    /// @b path - Directory in which the legal file(s) will be written.
-    /// The default value is "<prefix>/var/lib/kea". The directory must exist.
-    ///
-    /// @b base-name - An arbitrary value which is used in conjunction
-    /// with current system date to form the current legal file name.
-    /// It defaults to "kea-legal".
-    ///
-    /// Legal file names will have the form:
-    ///
-    ///     <path>/<base-name>.<CCYYMMDD>.txt
-    ///     <path>/<base-name>.<TXXXXXXXXXXXXXXXXXXXX>.txt
+    /// Parse the configuration and check that the various keywords are
+    /// consistent.
     ///
     /// @param parameters The library parameters.
-    static void parseFile(const isc::data::ConstElementPtr& parameters);
+    /// @param map The parameter map used by BackendStore objects.
+    static void parseConfig(const isc::data::ConstElementPtr& parameters, isc::db::DatabaseConnection::ParameterMap& map);
 
     /// @brief Parse database specification.
     ///
@@ -75,13 +66,22 @@ public:
     /// consistent.
     ///
     /// @param parameters The library parameters.
-    static void parseDatabase(const isc::data::ConstElementPtr& parameters);
+    /// @param map The parameter map used by BackendStore objects.
+    static void parseDatabase(const isc::data::ConstElementPtr& parameters, isc::db::DatabaseConnection::ParameterMap& map);
+
+    /// @brief Parse file specification.
+    ///
+    /// Parse the configuration and check that the various keywords are
+    /// consistent.
+    ///
+    /// @param parameters The library parameters.
+    static void parseFile(const isc::data::ConstElementPtr& parameters, isc::db::DatabaseConnection::ParameterMap& map);
 
     /// @brief Parse extra parameters which are not related to backend
     /// connection.
     ///
     /// @param parameters The library parameters.
-    static void parseExtraParameters(const isc::data::ConstElementPtr& parameters);
+    static void parseExtraParameters(const isc::data::ConstElementPtr& parameters, isc::db::DatabaseConnection::ParameterMap& map);
 
     /// @brief Opens the store.
     virtual void open() = 0;
@@ -185,56 +185,6 @@ public:
     /// @param bytes Vector of bytes to convert
     static std::string vectorDump(const std::vector<uint8_t>& bytes);
 
-    /// @brief Get the hook I/O service.
-    ///
-    /// @return the hook I/O service.
-    static isc::asiolink::IOServicePtr getIOService() {
-        return (io_service_);
-    }
-
-    /// @brief Set the hook I/O service.
-    ///
-    /// @param io_service the hook I/O service.
-    static void setIOService(isc::asiolink::IOServicePtr io_service) {
-        io_service_ = io_service;
-    }
-
-    /// @brief Set backend parameters.
-    ///
-    /// Set the backend parameters.
-    ///
-    /// @param parameters The backend parameters.
-    static void setParameters(const isc::db::DatabaseConnection::ParameterMap& parameters) {
-        parameters_ = parameters;
-    }
-
-    /// @brief Get backend parameters.
-    ///
-    /// Get the backend parameters.
-    ///
-    /// @return The backend parameters.
-    static isc::db::DatabaseConnection::ParameterMap getParameters() {
-        return (parameters_);
-    }
-
-    /// @brief Set hook configuration.
-    ///
-    /// Set the hook configuration.
-    ///
-    /// @param config The hook configuration.
-    static void setConfig(const isc::data::ConstElementPtr& config) {
-        config_ = config;
-    }
-
-    /// @brief Get hook configuration.
-    ///
-    /// Get the hook configuration.
-    ///
-    /// @return The hook configuration.
-    static isc::data::ConstElementPtr getConfig() {
-        return (config_);
-    }
-
     /// @brief Sets request extended format expression for custom logging.
     ///
     /// @param extended_format The request extended format expression.
@@ -275,24 +225,32 @@ public:
         return (timestamp_format_);
     }
 
-    /// @brief Return the BackendStore instance.
+    /// @brief Return backend parameters
     ///
-    /// @return The BackendStore instance.
-    static BackendStorePtr& instance() {
-        static BackendStorePtr backend_store;
-        return (backend_store);
+    /// Returns the backend parameters
+    ///
+    /// @return Parameters of the backend.
+    virtual isc::db::DatabaseConnection::ParameterMap getParameters() const {
+        return (parameters_);
     }
 
-protected:
+    /// @brief Sets backend parameters
+    ///
+    /// Sets the backend parameters
+    ///
+    /// @param parameter Parameters of the backend.
+    virtual void setParameters(isc::db::DatabaseConnection::ParameterMap parameters) {
+        parameters_ = parameters;
+    }
 
-    /// @brief The hook I/O service.
-    static isc::asiolink::IOServicePtr io_service_;
-
-    /// @brief The parameters used to connect to the backend.
-    static isc::db::DatabaseConnection::ParameterMap parameters_;
-
-    /// @brief The hook configuration.
-    static isc::data::ConstElementPtr config_;
+    /// @brief Flag which indicates if the forensic store backed has at least one
+    /// unusable connection.
+    ///
+    /// @return true if there is at least one unusable connection, false
+    /// otherwise
+    virtual bool isUnusable() {
+        return (false);
+    }
 
 private:
 
@@ -304,7 +262,16 @@ private:
 
     /// @brief The strftime format string for timestamps in the log file.
     std::string timestamp_format_;
+
+    /// @brief The configuration parameters.
+    isc::db::DatabaseConnection::ParameterMap parameters_;
 };
+
+/// @brief Manger ID used by hook libraries to retrieve respective BackendStore instance.
+typedef uint64_t ManagerID;
+
+/// @brief BackendStore pool
+typedef std::map<ManagerID, std::pair<isc::db::DatabaseConnection::ParameterMap, BackendStorePtr>> BackendStorePool;
 
 /// @brief Describe what kind of event is being logged.
 enum class Action { ASSIGN, RELEASE };
@@ -315,7 +282,7 @@ enum class Action { ASSIGN, RELEASE };
 /// @result the verb corresponding to the action.
 const std::string actionToVerb(Action action);
 
-} // namespace legal_log
+} // namespace dhcp
 } // namespace isc
 
 #endif

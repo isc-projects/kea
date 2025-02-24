@@ -10,15 +10,9 @@
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <hooks/callout_manager.h>
-#include <backend_store.h>
+#include <dhcpsrv/backend_store.h>
 #include <rotating_file.h>
 #include <util/reconnect_ctl.h>
-#ifdef HAVE_MYSQL
-#include <mysql_legal_log.h>
-#endif
-#ifdef HAVE_PGSQL
-#include <pgsql_legal_log.h>
-#endif
 
 #include <gtest/gtest.h>
 
@@ -29,11 +23,15 @@
 #include <cstdio>
 #include <locale>
 #include <fstream>
+#include <string>
 #include <sys/stat.h>
 
 using namespace isc;
+using namespace isc::data;
+using namespace isc::dhcp;
 using namespace hooks;
 using namespace legal_log;
+using namespace std;
 
 namespace isc {
 namespace legal_log {
@@ -60,10 +58,36 @@ public:
     TestableRotatingFile(struct tm time,
                          const TimeUnit unit = TimeUnit::Day,
                          const uint32_t count = 1,
-                         const std::string& prerotate = "",
-                         const std::string& postrotate = "")
-        : RotatingFile(TEST_DATA_BUILDDIR, "legal", unit, count, prerotate,
-                       postrotate), time_(time) {
+                         const string& prerotate = "",
+                         const string& postrotate = "",
+                         db::DatabaseConnection::ParameterMap map = db::DatabaseConnection::ParameterMap())
+        : RotatingFile(map),  time_(time) {
+        ElementPtr parameters = Element::createMap();
+        parameters->set("count", Element::create(count));
+        BackendStore::parseFile(parameters, map);
+        map["path"] = TEST_DATA_BUILDDIR;
+        map["base-name"] = "legal";
+        map["prerotate"] = prerotate;
+        map["postrotate"] = postrotate;
+        string time_unit = "day";
+        switch (unit) {
+            case RotatingFile::TimeUnit::Second:
+                time_unit = "second";
+                break;
+            case RotatingFile::TimeUnit::Day:
+                time_unit = "day";
+                break;
+            case RotatingFile::TimeUnit::Month:
+                time_unit = "month";
+                break;
+            case RotatingFile::TimeUnit::Year:
+                time_unit = "year";
+                break;
+            default:
+                break;
+        }
+        map["time-unit"] = time_unit;
+        apply(map);
     }
 
     /// @brief Destructor.
@@ -105,7 +129,7 @@ public:
     mutable struct tm time_;
 
     /// @brief List of created files that need to be removed after test ends
-    std::set<std::string> file_list_;
+    set<string> file_list_;
 
     /// @brief Make protected methods visible
     using RotatingFile::rotate;
@@ -126,7 +150,22 @@ public:
     }
 
     /// @brief Destructor
-    virtual ~RotatingFileTest() = default;
+    virtual ~RotatingFileTest() {
+        reset();
+    }
+
+    /// @brief Removes files that may be left over from previous tests
+    void reset() {
+        std::ostringstream stream;
+        stream << "rm " << TEST_DATA_BUILDDIR << "/" << "*-legal"
+               << ".*.txt 2>/dev/null";
+        int result = ::system(stream.str().c_str());
+        if (result != 0) {
+            // Ignore the result, because it may well be non-zero value when
+            // files to be removed don't exist.
+            ;
+        }
+    }
 
     /// @brief Single instance of IOService.
     static asiolink::IOServicePtr getIOService() {
@@ -135,8 +174,8 @@ public:
     }
 
     /// @brief Wait for file to be created or exit with timeout after 3 seconds.
-    void waitForFile(const std::string& name) {
-        std::ifstream test_log;
+    void waitForFile(const string& name) {
+        ifstream test_log;
         time_t now(time(0));
         while (true) {
             test_log.open(name);
@@ -151,8 +190,8 @@ public:
     /// @brief Called before each test
     virtual void SetUp() override {
         // Clean up from past tests.
-        BackendStore::instance().reset();
-        BackendStore::setIOService(getIOService());
+        BackendStoreFactory::instance().reset();
+        db::DatabaseConnection::setIOService(getIOService());
         asiolink::ProcessSpawn::setIOService(getIOService());
     }
 
@@ -206,7 +245,7 @@ public:
     /// @brief Checks if the given file exists
     ///
     /// @return true if the file exists, false if it does not
-    bool fileExists(const std::string& filename) {
+    bool fileExists(const string& filename) {
         struct stat statbuf;
         if (stat(filename.c_str(), &statbuf) == 0) {
             return (true);
@@ -228,12 +267,12 @@ public:
     ///
     /// @param day date to use in the file name
     /// @return the generated file name
-    std::string genName(const boost::gregorian::date& day) {
+    string genName(const boost::gregorian::date& day) {
         boost::gregorian::date::ymd_type ymd = day.year_month_day();
-        std::ostringstream stream;
+        ostringstream stream;
         stream << TEST_DATA_BUILDDIR << "/" << "legal" << "." << ymd.year
-               << std::right << std::setfill('0') << std::setw(2)
-               << ymd.month.as_number() << std::setw(2) << ymd.day << ".txt";
+               << right << setfill('0') << setw(2)
+               << ymd.month.as_number() << setw(2) << ymd.day << ".txt";
         return (stream.str());
     }
 
@@ -243,11 +282,11 @@ public:
     ///
     /// @param time - time to use in the file name
     /// @return - the generated file name
-    std::string genName(struct tm& time) {
+    string genName(struct tm& time) {
         time_t timestamp = mktime(&time);
-        std::ostringstream stream;
+        ostringstream stream;
         stream << TEST_DATA_BUILDDIR << "/" << "legal.T"
-               << std::right << std::setfill('0') << std::setw(20)
+               << right << setfill('0') << setw(20)
                << static_cast<uint64_t>(timestamp) << ".txt";
         return (stream.str());
     }
@@ -259,10 +298,10 @@ public:
     /// @param file_name name of the file to read
     /// @param expected_lines a vector of the lines expected to be found
     /// in the file (entries DO NOT include EOL)
-    void checkFileLines(const std::string& file_name,
-                        const std::string& now_string,
-                        const std::vector<std::string>& expected_lines) {
-        std::ifstream is;
+    void checkFileLines(const string& file_name,
+                        const string& now_string,
+                        const vector<string>& expected_lines) {
+        ifstream is;
         is.open(file_name.c_str());
         ASSERT_TRUE(is.good()) << "Could not open file: " << file_name;
 
@@ -275,7 +314,7 @@ public:
                 ASSERT_TRUE(i < expected_lines.size()) << "Too many entries in file: "
                                                        << file_name;
 
-                std::string cmp_line = now_string + " " + expected_lines[i];
+                string cmp_line = now_string + " " + expected_lines[i];
                 ASSERT_EQ(cmp_line, buf) << "line mismatch in: " << file_name
                                          << " at line:" << i;
 
@@ -292,8 +331,8 @@ public:
     /// Passes if the given file does not exist. Fails otherwise.
     ///
     /// @param file_name name of the file to check
-    void checkFileNotCreated(const std::string& file_name) {
-        std::ifstream is;
+    void checkFileNotCreated(const string& file_name) {
+        ifstream is;
         is.open(file_name.c_str());
         ASSERT_FALSE(is.good()) << "The file is present: " << file_name;
     }
@@ -303,14 +342,14 @@ public:
     /// @param use_time used instead of time() as the input time_t
     /// from which to derive the timezone
     /// @return The current timezone
-    std::string getTimezone(time_t use_time = 0) {
+    string getTimezone(time_t use_time = 0) {
         char buffer[16];
 
         struct tm time_info = RotatingFileTest::getTime(use_time);
 
         strftime(buffer, sizeof(buffer), "%Z", &time_info);
 
-        return (std::string(buffer));
+        return (string(buffer));
     }
 
     /// @brief Return current time
@@ -345,6 +384,9 @@ public:
 
     /// @brief The current date
     struct tm time_;
+
+    /// @brief Initializer.
+    RotatingFileInit init_;
 };
 
 /// @brief Test fixture for exercising Legal library callouts
@@ -357,7 +399,7 @@ public:
     /// over from previous tests
     CalloutTest() : RotatingFileTest(),
         co_manager_(new CalloutManager(1)) {
-        BackendStore::instance().reset();
+        BackendStoreFactory::instance().reset();
         isc::dhcp::CfgMgr::instance().clear();
         isc::dhcp::CfgMgr::instance().setFamily(AF_INET);
     }
@@ -365,7 +407,7 @@ public:
     /// @brief Destructor
     /// Removes files that may be left over from previous tests
     virtual ~CalloutTest() {
-        BackendStore::instance().reset();
+        BackendStoreFactory::instance().reset();
         isc::dhcp::CfgMgr::instance().clear();
         isc::dhcp::CfgMgr::instance().setFamily(AF_INET);
     }
@@ -378,291 +420,6 @@ public:
 private:
     /// Callout manager accessed by this CalloutHandle.
     boost::shared_ptr<CalloutManager> co_manager_;
-};
-
-/// @brief Helper class to execute a SQL tool and get results
-class runSQL {
-public:
-    /// @brief Constructor
-    runSQL() {
-        reset();
-    }
-
-    /// @brief Destructor
-    virtual ~runSQL() = default;
-
-    /// @brief Reset everything
-    void reset() {
-        command_ = "";
-        query_ = "";
-        result_ = 0;
-        output_.clear();
-    }
-
-    /// @brief Get command
-    /// @return the command
-    const std::string& getCommand() const {
-        return (command_);
-    }
-
-    /// @brief Set command
-    /// @param the command
-    void setCommand(const std::string& command) {
-        command_ = command;
-    }
-
-    /// @brief Get query
-    /// @return the query
-    const std::string& getQuery() const {
-        return (query_);
-    }
-
-    /// @brief Set query
-    /// @param the query
-    void setQuery(const std::string& query) {
-        query_ = query;
-    }
-
-    /// @brief Get result
-    /// @return the exit code
-    int getResult() const {
-        return (result_);
-    }
-
-    /// @brief Get raw output
-    /// @return the unprocessed output
-    std::vector<std::string> getRawOutput() {
-        return (output_);
-    }
-
-    /// @brief Process output
-    /// @param output reference to the string vector to fill with output
-    /// @return true if processing was successful
-    virtual bool getOutput(std::vector<std::string>& output) = 0;
-
-    /// @brief Execute
-    /// @throw std::system_error according to boost documentation
-    void execute() {
-        // Reading stream
-        FILE* istream;
-        size_t buffer_size = 1024;
-        char buffer[buffer_size + 1];
-
-        // Child process
-        std::string cmd = command_ + "\"" + query_ + "\"";
-        istream = popen(cmd.c_str(), "r");
-
-        // Check errors
-        if (!istream) {
-            result_ = -1;
-            return;
-        } else {
-            result_ = ferror(istream);
-            if (result_) {
-                return;
-            }
-        }
-
-        // Read output
-        while (!feof(istream) && fgets(buffer, buffer_size, istream)) {
-            output_.push_back(std::string(buffer));
-        }
-
-        // Wait for children to terminate and get its exit code
-        result_ = pclose(istream);
-    }
-
-private:
-    // @brief command
-    std::string command_;
-
-    // @brief query
-    std::string query_;
-
-    // @brief exit code aka result
-    int result_;
-
-    // @brief output
-    std::vector<std::string> output_;
-};
-
-/// @brief Test fixture for testing database backend connection recovery.
-class LegalLogDbLostCallbackTest : public ::testing::Test {
-public:
-
-    /// @brief Constructor.
-    LegalLogDbLostCallbackTest()
-        : db_lost_callback_called_(0), db_recovered_callback_called_(0),
-          db_failed_callback_called_(0),
-          io_service_(boost::make_shared<isc::asiolink::IOService>()) {
-        isc::db::DatabaseConnection::db_lost_callback_ = 0;
-        isc::db::DatabaseConnection::db_recovered_callback_ = 0;
-        isc::db::DatabaseConnection::db_failed_callback_ = 0;
-        isc::db::DatabaseConnection::setIOService(io_service_);
-        BackendStore::setIOService(io_service_);
-        isc::asiolink::ProcessSpawn::setIOService(io_service_);
-        isc::dhcp::TimerMgr::instance()->setIOService(io_service_);
-        BackendStore::instance().reset();
-    }
-
-    /// @brief Destructor.
-    virtual ~LegalLogDbLostCallbackTest() {
-        isc::db::DatabaseConnection::db_lost_callback_ = 0;
-        isc::db::DatabaseConnection::db_recovered_callback_ = 0;
-        isc::db::DatabaseConnection::db_failed_callback_ = 0;
-        isc::db::DatabaseConnection::setIOService(isc::asiolink::IOServicePtr());
-        BackendStore::setIOService(isc::asiolink::IOServicePtr());
-        isc::asiolink::ProcessSpawn::setIOService(isc::asiolink::IOServicePtr());
-        isc::dhcp::TimerMgr::instance()->unregisterTimers();
-        BackendStore::instance().reset();
-    }
-
-    /// @brief Prepares the class for a test.
-    ///
-    /// Invoked by gtest prior test entry, we create the
-    /// appropriate schema and create a basic DB manager to
-    /// wipe out any prior instance
-    virtual void SetUp() = 0;
-
-    /// @brief Pre-text exit clean up
-    ///
-    /// Invoked by gtest upon test exit, we destroy the schema
-    /// we created.
-    virtual void TearDown() = 0;
-
-    /// @brief Method which returns the back end specific connection
-    /// string
-    virtual std::string validConnectString() = 0;
-
-    /// @brief Method which returns invalid back end specific connection
-    /// string
-    virtual std::string invalidConnectString() = 0;
-
-    /// @brief Verifies the Backend Store behavior if DB connection can not be
-    /// established but succeeds on retry
-    ///
-    /// This function creates a Backend Store with a back end that supports
-    /// connectivity lost callback. It verifies that connectivity is unavailable
-    /// and then recovered on retry:
-    /// -# The registered DbLostCallback was invoked
-    /// -# The registered DbRecoveredCallback was invoked
-    virtual void testRetryOpenDbLostAndRecoveredCallback() = 0;
-
-    /// @brief Verifies the Backend Store behavior if DB connection can not be
-    /// established but fails on retry
-    ///
-    /// This function creates a Backend Store with a back end that supports
-    /// connectivity lost callback. It verifies that connectivity is unavailable
-    /// and then fails again on retry:
-    /// -# The registered DbLostCallback was invoked
-    /// -# The registered DbFailedCallback was invoked
-    virtual void testRetryOpenDbLostAndFailedCallback() = 0;
-
-    /// @brief Verifies the Backend Store behavior if DB connection can not be
-    /// established but succeeds on retry
-    ///
-    /// This function creates a Backend Store with a back end that supports
-    /// connectivity lost callback. It verifies that connectivity is unavailable
-    /// and then recovered on retry:
-    /// -# The registered DbLostCallback was invoked
-    /// -# The registered DbRecoveredCallback was invoked after two reconnect
-    /// attempts (once failing and second triggered by timer)
-    virtual void testRetryOpenDbLostAndRecoveredAfterTimeoutCallback() = 0;
-
-    /// @brief Verifies the Backend Store behavior if DB connection can not be
-    /// established but fails on retry
-    ///
-    /// This function creates a Backend Store with a back end that supports
-    /// connectivity lost callback. It verifies that connectivity is unavailable
-    /// and then fails again on retry:
-    /// -# The registered DbLostCallback was invoked
-    /// -# The registered DbFailedCallback was invoked after two reconnect
-    /// attempts (once failing and second triggered by timer)
-    virtual void testRetryOpenDbLostAndFailedAfterTimeoutCallback() = 0;
-
-    /// @brief Verifies open failures do NOT invoke db lost callback
-    ///
-    /// The db lost callback should only be invoked after successfully
-    /// opening the DB and then subsequently losing it. Failing to
-    /// open should be handled directly by the application layer.
-    virtual void testNoCallbackOnOpenFailure() = 0;
-
-    /// @brief Verifies the Backend Store behavior if DB connection is lost
-    ///
-    /// This function creates a Backend Store with a back end that supports
-    /// connectivity lost callback. It verifies connectivity by issuing a known
-    /// valid query. Next it simulates connectivity lost by identifying and
-    /// closing the socket connection to the Backend Store. It then reissues the
-    /// query and verifies that:
-    /// -# The Query throws DbOperationError (rather than exiting)
-    /// -# The registered DbLostCallback was invoked
-    /// -# The registered DbRecoveredCallback was invoked
-    virtual void testDbLostAndRecoveredCallback() = 0;
-
-    /// @brief Verifies the Backend Store behavior if DB connection is lost
-    ///
-    /// This function creates a Backend Store with a back end that supports
-    /// connectivity lost callback. It verifies connectivity by issuing a known
-    /// valid query. Next it simulates connectivity lost by identifying and
-    /// closing the socket connection to the Backend Store. It then reissues the
-    /// query and verifies that:
-    /// -# The Query throws DbOperationError (rather than exiting)
-    /// -# The registered DbLostCallback was invoked
-    /// -# The registered DbFailedCallback was invoked
-    virtual void testDbLostAndFailedCallback() = 0;
-
-    /// @brief Verifies the Backend Store behavior if DB connection is lost
-    ///
-    /// This function creates a Backend Store with a back end that supports
-    /// connectivity lost callback. It verifies connectivity by issuing a known
-    /// valid query. Next it simulates connectivity lost by identifying and
-    /// closing the socket connection to the Backend Store. It then reissues the
-    /// query and verifies that:
-    /// -# The Query throws DbOperationError (rather than exiting)
-    /// -# The registered DbLostCallback was invoked
-    /// -# The registered DbRecoveredCallback was invoked after two reconnect
-    /// attempts (once failing and second triggered by timer)
-    virtual void testDbLostAndRecoveredAfterTimeoutCallback() = 0;
-
-    /// @brief Verifies the Backend Store behavior if DB connection is lost
-    ///
-    /// This function creates a Backend Store with a back end that supports
-    /// connectivity lost callback. It verifies connectivity by issuing a known
-    /// valid query. Next it simulates connectivity lost by identifying and
-    /// closing the socket connection to the Backend Store. It then reissues the
-    /// query and verifies that:
-    /// -# The Query throws DbOperationError (rather than exiting)
-    /// -# The registered DbLostCallback was invoked
-    /// -# The registered DbFailedCallback was invoked after two reconnect
-    /// attempts (once failing and second triggered by timer)
-    virtual void testDbLostAndFailedAfterTimeoutCallback() = 0;
-
-    /// @brief Callback function registered with the Backend Store
-    bool db_lost_callback(util::ReconnectCtlPtr /* not_used */) {
-        return (++db_lost_callback_called_);
-    }
-
-    /// @brief Flag used to detect calls to db_lost_callback function
-    uint32_t db_lost_callback_called_;
-
-    /// @brief Callback function registered with the Backend Store
-    bool db_recovered_callback(util::ReconnectCtlPtr /* not_used */) {
-        return (++db_recovered_callback_called_);
-    }
-
-    /// @brief Flag used to detect calls to db_recovered_callback function
-    uint32_t db_recovered_callback_called_;
-
-    /// @brief Callback function registered with the Backend Store
-    bool db_failed_callback(util::ReconnectCtlPtr /* not_used */) {
-        return (++db_failed_callback_called_);
-    }
-
-    /// @brief Flag used to detect calls to db_failed_callback function
-    uint32_t db_failed_callback_called_;
-
-    /// The IOService object, used for all ASIO operations.
-    isc::asiolink::IOServicePtr io_service_;
 };
 
 } // namespace legal_log

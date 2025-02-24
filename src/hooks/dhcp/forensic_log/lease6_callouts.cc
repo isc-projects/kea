@@ -20,7 +20,7 @@
 #include <hooks/hooks.h>
 #include <util/str.h>
 #include <legal_log_log.h>
-#include <backend_store.h>
+#include <dhcpsrv/backend_store_factory.h>
 #include <subnets_user_context.h>
 
 #include <sstream>
@@ -475,6 +475,7 @@ void replaceTokensForLease(isc::dhcp::ExpressionPtr& expression,
 
 /// @brief Create custom log entry for the current lease.
 ///
+/// @param handle CalloutHandle which provides access to context.
 /// @param query The query received by the server.
 /// @param response The response of the server.
 /// @param lease The current lease generating this log entry.
@@ -483,7 +484,7 @@ bool getCustomEntry(const Pkt6Ptr& query, const Pkt6Ptr& response,
                     const Lease6Ptr& lease, std::string& value) {
     bool using_custom_format = false;
 
-    auto expression = BackendStore::instance()->getRequestFormatExpression();
+    auto expression = BackendStoreFactory::instance()->getRequestFormatExpression();
     if (expression && query) {
         replaceTokensForLease(expression, lease);
 
@@ -491,7 +492,7 @@ bool getCustomEntry(const Pkt6Ptr& query, const Pkt6Ptr& response,
         using_custom_format = true;
     }
 
-    expression = BackendStore::instance()->getResponseFormatExpression();
+    expression = BackendStoreFactory::instance()->getResponseFormatExpression();
     if (expression && response) {
         replaceTokensForLease(expression, lease);
 
@@ -668,7 +669,7 @@ std::string genLease6Entry(const Pkt6Ptr& query,
 ///
 /// @return returns 0 upon success, non-zero otherwise
 int legalLog6Handler(CalloutHandle& handle, const Action& action) {
-    if (!BackendStore::instance()) {
+    if (!BackendStoreFactory::instance()) {
         LOG_ERROR(legal_log_logger, LEGAL_LOG_LEASE6_NO_LEGAL_STORE);
         return (1);
     }
@@ -692,7 +693,7 @@ int legalLog6Handler(CalloutHandle& handle, const Action& action) {
         ConstSubnet6Ptr subnet = cfg->getBySubnetId(lease->subnet_id_);
 
         if (!isLoggingDisabled(subnet)) {
-            BackendStore::instance()->writeln(genLease6Entry(query, response,
+            BackendStoreFactory::instance()->writeln(genLease6Entry(query, response,
                                                              lease, action),
                                               genLease6Addr(lease));
         }

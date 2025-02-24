@@ -11,9 +11,11 @@
 
 #include <exceptions/exceptions.h>
 #include <cc/data.h>
-#include <test_utils.h>
 #include <testutils/gtest_utils.h>
-#include <legal_log_db_log.h>
+#include <dhcpsrv/backend_store_factory.h>
+#include <dhcpsrv/legal_log_db_log.h>
+#include <legal_log_log.h>
+#include <rotating_file.h>
 
 #include <gtest/gtest.h>
 
@@ -22,17 +24,50 @@
 using namespace isc;
 using namespace isc::data;
 using namespace isc::db;
+using namespace isc::dhcp;
 using namespace isc::legal_log;
+using namespace std;
 
 namespace {
 
+const DbLogger::MessageMap legal_log_db_message_map = {
+};
+
+DbLogger legal_log_db_logger(legal_log_logger, legal_log_db_message_map);
+
 /// @brief Test fixture
 struct BackendStoreTest : ::testing::Test {
-    /// @brief Called before each test
-    void SetUp() final override {
+    /// @brief Destructor.
+    virtual ~BackendStoreTest() = default;
+
+    /// @brief Called before each test.
+    virtual void SetUp() final override {
         // Clean up from past tests.
-        BackendStore::instance().reset();
+        BackendStoreFactory::delAllBackends();
     }
+
+    /// @brief Called after each test.
+    virtual void TearDown() {
+        // Clean up from past tests.
+        BackendStoreFactory::delAllBackends();
+        reset();
+    }
+
+    /// @brief Removes files that may be left over from previous tests
+    void reset() {
+        std::ostringstream stream;
+        stream << "rm " << TEST_DATA_BUILDDIR << "/" << "*-legal"
+               << ".*.txt 2>/dev/null";
+        int result = ::system(stream.str().c_str());
+        if (result != 0) {
+            // Ignore the result, because it may well be non-zero value when
+            // files to be removed don't exist.
+            ;
+        }
+    }
+
+    /// @brief Initializer.
+    RotatingFileInit init_;
 };
 
 // Verifies output of genDurationString()
@@ -60,7 +95,7 @@ TEST_F(BackendStoreTest, legalLogDbLogger) {
         EXPECT_EQ(1, db_logger_stack.size());
 
         // Push local logger
-        LegalLogDbLogger pushed;
+        LegalLogDbLogger pushed(legal_log_db_logger);
 
         // Check now we have a second logger
         EXPECT_EQ(2, db_logger_stack.size());
@@ -72,7 +107,7 @@ TEST_F(BackendStoreTest, legalLogDbLogger) {
     // Open a try block to check it works with it
     try {
         EXPECT_EQ(1, db_logger_stack.size());
-        LegalLogDbLogger pushed;
+        LegalLogDbLogger pushed(legal_log_db_logger);
         EXPECT_EQ(2, db_logger_stack.size());
     } catch (const std::exception&) {
         ADD_FAILURE() << "no exception was raised";
@@ -82,7 +117,7 @@ TEST_F(BackendStoreTest, legalLogDbLogger) {
     // Another check with an exception now
     try {
         EXPECT_EQ(1, db_logger_stack.size());
-        LegalLogDbLogger pushed;
+        LegalLogDbLogger pushed(legal_log_db_logger);
         EXPECT_EQ(2, db_logger_stack.size());
         isc_throw(Unexpected, "for testing");
         ADD_FAILURE() << "an exception was raised";
@@ -102,86 +137,105 @@ TEST_F(BackendStoreTest, emptyVectorDump) {
 
 // Verify that parsing extra parameters for rotate file works
 TEST_F(BackendStoreTest, parseExtraRotatingFileParameters) {
+    isc::db::DatabaseConnection::ParameterMap map;
+    EXPECT_NO_THROW(BackendStore::parseConfig(ConstElementPtr(), map));
+    map["path"] = TEST_DATA_BUILDDIR;
+    EXPECT_NO_THROW(BackendStoreFactory::addBackend(map));
+    EXPECT_TRUE(BackendStoreFactory::instance());
+    RotatingFile& rotating_file = dynamic_cast<RotatingFile&>(*BackendStoreFactory::instance());
+
     ElementPtr params = Element::createMap();
     params->set("path", Element::create("path"));
     params->set("base-name", Element::create("name"));
 
     params->set("time-unit", Element::create(0));
-    EXPECT_THROW(BackendStore::parseFile(params), TypeError);
-    EXPECT_FALSE(BackendStore::instance());
+    EXPECT_THROW(BackendStore::parseFile(params, map), TypeError);
 
     params->set("time-unit", Element::create("nothing"));
-    EXPECT_THROW(BackendStore::parseFile(params), BadValue);
-    EXPECT_FALSE(BackendStore::instance());
+    EXPECT_NO_THROW(BackendStore::parseFile(params, map));
+    EXPECT_THROW(rotating_file.apply(map), BadValue);
 
     params->set("time-unit", Element::create("second"));
     params->set("count", Element::create(""));
-    EXPECT_THROW(BackendStore::parseFile(params), TypeError);
-    EXPECT_FALSE(BackendStore::instance());
+    EXPECT_THROW(BackendStore::parseFile(params, map), TypeError);
 
     params->set("time-unit", Element::create("day"));
     params->set("count", Element::create(-1));
-    EXPECT_THROW(BackendStore::parseFile(params), OutOfRange);
-    EXPECT_FALSE(BackendStore::instance());
+    EXPECT_THROW(BackendStore::parseFile(params, map), OutOfRange);
 
     params->set("time-unit", Element::create("month"));
     params->set("count", Element::create(static_cast<int64_t>(1) << 32));
-    EXPECT_THROW(BackendStore::parseFile(params), OutOfRange);
-    EXPECT_FALSE(BackendStore::instance());
+    EXPECT_THROW(BackendStore::parseFile(params, map), OutOfRange);
 
     params->set("time-unit", Element::create("year"));
     params->set("count", Element::create(1));
     params->set("prerotate", Element::create(FORENSIC_PREROTATE_TEST_SH));
     params->set("postrotate", Element::create(FORENSIC_POSTROTATE_TEST_SH));
-    EXPECT_NO_THROW(BackendStore::parseFile(params));
-    EXPECT_TRUE(BackendStore::instance());
+    EXPECT_NO_THROW(BackendStore::parseFile(params, map));
+    EXPECT_NO_THROW(rotating_file.apply(map));
 }
 
 // Verify that parsing extra parameters works
 TEST_F(BackendStoreTest, parseExtraParameters) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new RotatingFile("path", "name")));
+    db::DatabaseConnection::ParameterMap map;
+    map["path"] = "path";
+    map["base-name"] = "name";
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new RotatingFile(map)));
     ElementPtr params = Element::createMap();
     params->set("request-parser-format", Element::create("'request'"));
     params->set("response-parser-format", Element::create("'response'"));
     params->set("timestamp-format", Element::create("timestamp"));
-    EXPECT_NO_THROW(BackendStore::parseExtraParameters(params));
 
-    auto request_format = BackendStore::instance()->getRequestFormatExpression();
+    map.clear();
+    map["type"] = "logfile";
+    map["path"] = TEST_DATA_BUILDDIR;
+    EXPECT_NO_THROW(BackendStore::parseExtraParameters(params, map));
+    EXPECT_NO_THROW(BackendStoreFactory::addBackend(map));
+    EXPECT_TRUE(BackendStoreFactory::instance());
+
+    auto request_format = BackendStoreFactory::instance()->getRequestFormatExpression();
     EXPECT_TRUE(request_format);
 
-    auto response_format = BackendStore::instance()->getResponseFormatExpression();
+    auto response_format = BackendStoreFactory::instance()->getResponseFormatExpression();
     EXPECT_TRUE(response_format);
 
     EXPECT_NE(request_format, response_format);
 
-    auto timestamp_format = BackendStore::instance()->getTimestampFormat();
+    auto timestamp_format = BackendStoreFactory::instance()->getTimestampFormat();
     EXPECT_EQ(timestamp_format, "timestamp");
 }
 
 TEST_F(BackendStoreTest, fileNoParameters) {
-    EXPECT_NO_THROW(BackendStore::parseFile(ConstElementPtr()));
-    EXPECT_TRUE(BackendStore::instance());
-    EXPECT_EQ(BackendStore::getParameters()["path"], LEGAL_LOG_DIR);
+    db::DatabaseConnection::ParameterMap map;
+    EXPECT_NO_THROW(BackendStore::parseFile(ConstElementPtr(), map));
+    map["path"] = TEST_DATA_BUILDDIR;
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new RotatingFile(map)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance()->open());
+    RotatingFile& rotating_file = dynamic_cast<RotatingFile&>(*BackendStoreFactory::instance());
+    map.clear();
+    rotating_file.apply(map);
+    EXPECT_EQ(rotating_file.getPath(), LEGAL_LOG_DIR);
+    EXPECT_EQ(rotating_file.getBaseName(), "kea-legal");
 }
 
 TEST_F(BackendStoreTest, databaseNoParameters) {
-    EXPECT_THROW(BackendStore::parseDatabase(ConstElementPtr()), BadValue);
-    EXPECT_FALSE(BackendStore::instance());
+    db::DatabaseConnection::ParameterMap map;
+    EXPECT_THROW(BackendStore::parseDatabase(ConstElementPtr(), map), BadValue);
 }
 
 TEST_F(BackendStoreTest, wrongDatabaseType) {
+    db::DatabaseConnection::ParameterMap map;
     ElementPtr parameters = Element::createMap();
     parameters->set("type", Element::create(""));
-    EXPECT_THROW_MSG(BackendStore::parseDatabase(parameters), InvalidType,
-                     "Database access parameter 'type' does not specify a "
-                     "supported database backend: ");
-    EXPECT_FALSE(BackendStore::instance());
+    EXPECT_NO_THROW(BackendStore::parseDatabase(parameters, map));
+    EXPECT_THROW_MSG(BackendStoreFactory::addBackend(map), InvalidType,
+                     "The type of the forensic store backend: '' is not supported");
+    EXPECT_FALSE(BackendStoreFactory::instance());
 
     parameters->set("type", Element::create("awesomesql"));
-    EXPECT_THROW_MSG(BackendStore::parseDatabase(parameters), InvalidType,
-                     "Database access parameter 'type' does not specify a "
-                     "supported database backend: awesomesql");
-    EXPECT_FALSE(BackendStore::instance());
+    EXPECT_NO_THROW(BackendStore::parseDatabase(parameters, map));
+    EXPECT_THROW_MSG(BackendStoreFactory::addBackend(map), InvalidType,
+                     "The type of the forensic store backend: 'awesomesql' is not supported");
 }
 
 } // end of anonymous namespace

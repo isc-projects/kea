@@ -12,6 +12,7 @@
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/testutils/test_utils.h>
 #include <mysql/testutils/mysql_schema.h>
+#include <mysql_legal_log.h>
 #include <test_utils.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/log_utils.h>
@@ -29,7 +30,7 @@ using namespace isc::data;
 using namespace isc::db;
 using namespace isc::db::test;
 using namespace isc::dhcp::test;
-using namespace isc::legal_log;
+using namespace isc::dhcp;
 using namespace isc::test;
 using namespace boost::posix_time;
 namespace ph = std::placeholders;
@@ -422,10 +423,16 @@ class MySqlLegalLogDbLostCallbackTest : public LegalLogDbLostCallbackTest {
 public:
 
     /// @brief Constructor.
-    MySqlLegalLogDbLostCallbackTest() { }
+    MySqlLegalLogDbLostCallbackTest() {
+        BackendStoreFactory::delAllBackends();
+        io_service_->poll();
+    }
 
     /// @brief Destructor.
-    virtual ~MySqlLegalLogDbLostCallbackTest() { }
+    virtual ~MySqlLegalLogDbLostCallbackTest() {
+        BackendStoreFactory::delAllBackends();
+        io_service_->poll();
+    }
 
     /// @brief Prepares the class for a test.
     ///
@@ -557,6 +564,9 @@ public:
     /// -# The registered DbFailedCallback was invoked after two reconnect
     /// attempts (once failing and second triggered by timer)
     virtual void testDbLostAndFailedAfterTimeoutCallback();
+
+    /// @brief Initializer.
+    MySqlForensicBackendInit init_;
 };
 
 void
@@ -579,19 +589,19 @@ MySqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndRecoveredCallback() {
     std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry());
     params.emplace("retry-on-startup", "true");
 
-    ASSERT_NO_THROW_LOG(BackendStore::instance().reset(new MySqlStore(params)));
+    ASSERT_NO_THROW_LOG(BackendStoreFactory::instance().reset(new MySqlStore(params)));
 
     // Check params validity is done by open().
-    EXPECT_THROW(BackendStore::instance()->open(), DbOpenErrorWithRetry);
+    EXPECT_THROW(BackendStoreFactory::instance()->open(), DbOpenErrorWithRetry);
 
     // Verify there is no instance.
-    ASSERT_FALSE(BackendStore::instance());
+    ASSERT_FALSE(BackendStoreFactory::instance());
 
     dbr.reset();
 
     params = db::DatabaseConnection::parse(validConnectString());
     params.emplace("retry-on-startup", "true");
-    BackendStore::setParameters(params);
+    BackendStoreFactory::setParameters(params);
 
     io_service_->poll();
 
@@ -600,7 +610,7 @@ MySqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndRecoveredCallback() {
     EXPECT_EQ(1, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    ASSERT_TRUE(BackendStore::instance());
+    ASSERT_TRUE(BackendStoreFactory::instance());
 }
 
 void
@@ -623,13 +633,13 @@ MySqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndFailedCallback() {
     std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry());
     params.emplace("retry-on-startup", "true");
 
-    ASSERT_NO_THROW_LOG(BackendStore::instance().reset(new MySqlStore(params)));
+    ASSERT_NO_THROW_LOG(BackendStoreFactory::instance().reset(new MySqlStore(params)));
 
     // Check params validity is done by open().
-    EXPECT_THROW(BackendStore::instance()->open(), DbOpenErrorWithRetry);
+    EXPECT_THROW(BackendStoreFactory::instance()->open(), DbOpenErrorWithRetry);
 
     // Verify there is no instance.
-    ASSERT_FALSE(BackendStore::instance());
+    ASSERT_FALSE(BackendStoreFactory::instance());
 
     dbr.reset();
 
@@ -640,7 +650,7 @@ MySqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndFailedCallback() {
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(1, db_failed_callback_called_);
 
-    ASSERT_FALSE(BackendStore::instance());
+    ASSERT_FALSE(BackendStoreFactory::instance());
 }
 
 void
@@ -667,13 +677,13 @@ MySqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndRecoveredAfterTimeoutCall
     std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry());
     params.emplace("retry-on-startup", "true");
 
-    ASSERT_NO_THROW_LOG(BackendStore::instance().reset(new MySqlStore(params)));
+    ASSERT_NO_THROW_LOG(BackendStoreFactory::instance().reset(new MySqlStore(params)));
 
     // Check params validity is done by open().
-    EXPECT_THROW(BackendStore::instance()->open(), DbOpenErrorWithRetry);
+    EXPECT_THROW(BackendStoreFactory::instance()->open(), DbOpenErrorWithRetry);
 
     // Verify there is no instance.
-    ASSERT_FALSE(BackendStore::instance());
+    ASSERT_FALSE(BackendStoreFactory::instance());
 
     dbr.reset();
 
@@ -684,13 +694,13 @@ MySqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndRecoveredAfterTimeoutCall
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    ASSERT_FALSE(BackendStore::instance());
+    ASSERT_FALSE(BackendStoreFactory::instance());
 
     access = validConnectString();
     access += extra;
     params = db::DatabaseConnection::parse(access);
     params.emplace("retry-on-startup", "true");
-    BackendStore::setParameters(params);
+    BackendStoreFactory::setParameters(params);
 
     sleep(1);
 
@@ -701,7 +711,7 @@ MySqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndRecoveredAfterTimeoutCall
     EXPECT_EQ(1, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    ASSERT_TRUE(BackendStore::instance());
+    ASSERT_TRUE(BackendStoreFactory::instance());
 
     sleep(1);
 
@@ -712,7 +722,7 @@ MySqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndRecoveredAfterTimeoutCall
     EXPECT_EQ(1, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    ASSERT_TRUE(BackendStore::instance());
+    ASSERT_TRUE(BackendStoreFactory::instance());
 }
 
 void
@@ -739,13 +749,13 @@ MySqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndFailedAfterTimeoutCallbac
     std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry());
     params.emplace("retry-on-startup", "true");
 
-    ASSERT_NO_THROW_LOG(BackendStore::instance().reset(new MySqlStore(params)));
+    ASSERT_NO_THROW_LOG(BackendStoreFactory::instance().reset(new MySqlStore(params)));
 
     // Check params validity is done by open().
-    EXPECT_THROW(BackendStore::instance()->open(), DbOpenErrorWithRetry);
+    EXPECT_THROW(BackendStoreFactory::instance()->open(), DbOpenErrorWithRetry);
 
     // Verify there is no instance.
-    ASSERT_FALSE(BackendStore::instance());
+    ASSERT_FALSE(BackendStoreFactory::instance());
 
     dbr.reset();
 
@@ -756,7 +766,7 @@ MySqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndFailedAfterTimeoutCallbac
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    ASSERT_FALSE(BackendStore::instance());
+    ASSERT_FALSE(BackendStoreFactory::instance());
 
     sleep(1);
 
@@ -767,7 +777,7 @@ MySqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndFailedAfterTimeoutCallbac
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    ASSERT_FALSE(BackendStore::instance());
+    ASSERT_FALSE(BackendStoreFactory::instance());
 
     sleep(1);
 
@@ -778,7 +788,7 @@ MySqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndFailedAfterTimeoutCallbac
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(1, db_failed_callback_called_);
 
-    ASSERT_FALSE(BackendStore::instance());
+    ASSERT_FALSE(BackendStoreFactory::instance());
 }
 
 void
@@ -798,10 +808,10 @@ MySqlLegalLogDbLostCallbackTest::testNoCallbackOnOpenFailure() {
     // Verify that a MySqlStore with no database name is rejected.
     DatabaseConnection::ParameterMap params = db::DatabaseConnection::parse(invalidConnectString());
 
-    ASSERT_NO_THROW_LOG(BackendStore::instance().reset(new MySqlStore(params)));
+    ASSERT_NO_THROW_LOG(BackendStoreFactory::instance().reset(new MySqlStore(params)));
 
     // Check params validity is done by open().
-    EXPECT_THROW(BackendStore::instance()->open(), DbOpenError);
+    EXPECT_THROW(BackendStoreFactory::instance()->open(), DbOpenError);
 
     io_service_->poll();
 
@@ -809,7 +819,7 @@ MySqlLegalLogDbLostCallbackTest::testNoCallbackOnOpenFailure() {
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    ASSERT_FALSE(BackendStore::instance());
+    ASSERT_FALSE(BackendStoreFactory::instance());
 }
 
 void
@@ -836,28 +846,29 @@ MySqlLegalLogDbLostCallbackTest::testDbLostAndRecoveredCallback() {
     // Verify that a MySqlStore with database name is not rejected.
     DatabaseConnection::ParameterMap params = db::DatabaseConnection::parse(validConnectString());
 
-    ASSERT_NO_THROW_LOG(BackendStore::instance().reset(new MySqlStore(params)));
+    ASSERT_NO_THROW_LOG(BackendStoreFactory::instance().reset(new MySqlStore(params)));
+    BackendStoreFactory::setParameters(params);
 
     // Check params validity is done by open().
-    EXPECT_NO_THROW_LOG(BackendStore::instance()->open());
+    EXPECT_NO_THROW_LOG(BackendStoreFactory::instance()->open());
 
-    ASSERT_TRUE(BackendStore::instance());
+    ASSERT_TRUE(BackendStoreFactory::instance());
 
     // Find the SQL client socket.
     int sql_socket = findLastSocketFd();
     ASSERT_TRUE(sql_socket > last_open_socket);
 
     // Verify we can execute a query.  We don't care about the answer.
-    ASSERT_NO_THROW_LOG(BackendStore::instance()->writeln("test", "192.2.1.100"));
+    ASSERT_NO_THROW_LOG(BackendStoreFactory::instance()->writeln("test", "192.2.1.100"));
 
     // Now close the sql socket out from under backend client
     ASSERT_EQ(0, close(sql_socket));
 
     // A query should fail with DbConnectionUnusable.
-    ASSERT_THROW(BackendStore::instance()->writeln("test", "192.2.1.101");,
+    ASSERT_THROW(BackendStoreFactory::instance()->writeln("test", "192.2.1.101");,
                  DbConnectionUnusable);
 
-    ASSERT_TRUE(BackendStore::instance());
+    ASSERT_TRUE(BackendStoreFactory::instance());
 
     io_service_->poll();
 
@@ -866,7 +877,7 @@ MySqlLegalLogDbLostCallbackTest::testDbLostAndRecoveredCallback() {
     EXPECT_EQ(1, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    ASSERT_TRUE(BackendStore::instance());
+    ASSERT_TRUE(BackendStoreFactory::instance());
 }
 
 void
@@ -893,31 +904,31 @@ MySqlLegalLogDbLostCallbackTest::testDbLostAndFailedCallback() {
     // Verify that a MySqlStore with database name is not rejected.
     DatabaseConnection::ParameterMap params = db::DatabaseConnection::parse(validConnectString());
 
-    ASSERT_NO_THROW_LOG(BackendStore::instance().reset(new MySqlStore(params)));
+    ASSERT_NO_THROW_LOG(BackendStoreFactory::instance().reset(new MySqlStore(params)));
 
     // Check params validity is done by open().
-    EXPECT_NO_THROW_LOG(BackendStore::instance()->open());
+    EXPECT_NO_THROW_LOG(BackendStoreFactory::instance()->open());
 
-    ASSERT_TRUE(BackendStore::instance());
+    ASSERT_TRUE(BackendStoreFactory::instance());
 
     // Find the SQL client socket.
     int sql_socket = findLastSocketFd();
     ASSERT_TRUE(sql_socket > last_open_socket);
 
     // Verify we can execute a query.  We don't care about the answer.
-    ASSERT_NO_THROW_LOG(BackendStore::instance()->writeln("test", "192.2.1.100"));
+    ASSERT_NO_THROW_LOG(BackendStoreFactory::instance()->writeln("test", "192.2.1.100"));
 
     params = db::DatabaseConnection::parse(invalidConnectString());
-    BackendStore::setParameters(params);
+    BackendStoreFactory::setParameters(params);
 
     // Now close the sql socket out from under backend client
     ASSERT_EQ(0, close(sql_socket));
 
     // A query should fail with DbConnectionUnusable.
-    ASSERT_THROW(BackendStore::instance()->writeln("test", "192.2.1.101"),
+    ASSERT_THROW(BackendStoreFactory::instance()->writeln("test", "192.2.1.101"),
                  DbConnectionUnusable);
 
-    ASSERT_TRUE(BackendStore::instance());
+    ASSERT_TRUE(BackendStoreFactory::instance());
 
     io_service_->poll();
 
@@ -926,7 +937,7 @@ MySqlLegalLogDbLostCallbackTest::testDbLostAndFailedCallback() {
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(1, db_failed_callback_called_);
 
-    ASSERT_FALSE(BackendStore::instance());
+    ASSERT_FALSE(BackendStoreFactory::instance());
 }
 
 void
@@ -957,33 +968,34 @@ MySqlLegalLogDbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCallback() {
     // Verify that a MySqlStore with database name is not rejected.
     DatabaseConnection::ParameterMap params = db::DatabaseConnection::parse(access);
 
-    ASSERT_NO_THROW_LOG(BackendStore::instance().reset(new MySqlStore(params)));
+    ASSERT_NO_THROW_LOG(BackendStoreFactory::instance().reset(new MySqlStore(params)));
+    BackendStoreFactory::setParameters(params);
 
     // Check params validity is done by open().
-    EXPECT_NO_THROW_LOG(BackendStore::instance()->open());
+    EXPECT_NO_THROW_LOG(BackendStoreFactory::instance()->open());
 
-    ASSERT_TRUE(BackendStore::instance());
+    ASSERT_TRUE(BackendStoreFactory::instance());
 
     // Find the SQL client socket.
     int sql_socket = findLastSocketFd();
     ASSERT_TRUE(sql_socket > last_open_socket);
 
     // Verify we can execute a query.  We don't care about the answer.
-    ASSERT_NO_THROW_LOG(BackendStore::instance()->writeln("test", "192.2.1.100"));
+    ASSERT_NO_THROW_LOG(BackendStoreFactory::instance()->writeln("test", "192.2.1.100"));
 
     access = invalidConnectString();
     access += extra;
     params = db::DatabaseConnection::parse(access);
-    BackendStore::setParameters(params);
+    BackendStoreFactory::setParameters(params);
 
     // Now close the sql socket out from under backend client
     ASSERT_EQ(0, close(sql_socket));
 
     // A query should fail with DbConnectionUnusable.
-    ASSERT_THROW(BackendStore::instance()->writeln("test", "192.2.1.101"),
+    ASSERT_THROW(BackendStoreFactory::instance()->writeln("test", "192.2.1.101"),
                  DbConnectionUnusable);
 
-    ASSERT_TRUE(BackendStore::instance());
+    ASSERT_TRUE(BackendStoreFactory::instance());
 
     io_service_->poll();
 
@@ -992,12 +1004,12 @@ MySqlLegalLogDbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCallback() {
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    ASSERT_FALSE(BackendStore::instance());
+    ASSERT_FALSE(BackendStoreFactory::instance());
 
     access = validConnectString();
     access += extra;
     params = db::DatabaseConnection::parse(access);
-    BackendStore::setParameters(params);
+    BackendStoreFactory::setParameters(params);
 
     sleep(1);
 
@@ -1008,7 +1020,7 @@ MySqlLegalLogDbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCallback() {
     EXPECT_EQ(1, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    ASSERT_TRUE(BackendStore::instance());
+    ASSERT_TRUE(BackendStoreFactory::instance());
 
     sleep(1);
 
@@ -1019,7 +1031,7 @@ MySqlLegalLogDbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCallback() {
     EXPECT_EQ(1, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    ASSERT_TRUE(BackendStore::instance());
+    ASSERT_TRUE(BackendStoreFactory::instance());
 }
 
 void
@@ -1050,33 +1062,33 @@ MySqlLegalLogDbLostCallbackTest::testDbLostAndFailedAfterTimeoutCallback() {
     // Verify that a MySqlStore with database name is not rejected.
     DatabaseConnection::ParameterMap params = db::DatabaseConnection::parse(access);
 
-    ASSERT_NO_THROW_LOG(BackendStore::instance().reset(new MySqlStore(params)));
+    ASSERT_NO_THROW_LOG(BackendStoreFactory::instance().reset(new MySqlStore(params)));
 
     // Check params validity is done by open().
-    EXPECT_NO_THROW_LOG(BackendStore::instance()->open());
+    EXPECT_NO_THROW_LOG(BackendStoreFactory::instance()->open());
 
-    ASSERT_TRUE(BackendStore::instance());
+    ASSERT_TRUE(BackendStoreFactory::instance());
 
     // Find the SQL client socket.
     int sql_socket = findLastSocketFd();
     ASSERT_TRUE(sql_socket > last_open_socket);
 
     // Verify we can execute a query.  We don't care about the answer.
-    ASSERT_NO_THROW_LOG(BackendStore::instance()->writeln("test", "192.2.1.100"));
+    ASSERT_NO_THROW_LOG(BackendStoreFactory::instance()->writeln("test", "192.2.1.100"));
 
     access = invalidConnectString();
     access += extra;
     params = db::DatabaseConnection::parse(access);
-    BackendStore::setParameters(params);
+    BackendStoreFactory::setParameters(params);
 
     // Now close the sql socket out from under backend client
     ASSERT_EQ(0, close(sql_socket));
 
     // A query should fail with DbConnectionUnusable.
-    ASSERT_THROW(BackendStore::instance()->writeln("test", "192.2.1.101"),
+    ASSERT_THROW(BackendStoreFactory::instance()->writeln("test", "192.2.1.101"),
                  DbConnectionUnusable);
 
-    ASSERT_TRUE(BackendStore::instance());
+    ASSERT_TRUE(BackendStoreFactory::instance());
 
     io_service_->poll();
 
@@ -1085,7 +1097,7 @@ MySqlLegalLogDbLostCallbackTest::testDbLostAndFailedAfterTimeoutCallback() {
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    ASSERT_FALSE(BackendStore::instance());
+    ASSERT_FALSE(BackendStoreFactory::instance());
 
     sleep(1);
 
@@ -1096,7 +1108,7 @@ MySqlLegalLogDbLostCallbackTest::testDbLostAndFailedAfterTimeoutCallback() {
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    ASSERT_FALSE(BackendStore::instance());
+    ASSERT_FALSE(BackendStoreFactory::instance());
 
     sleep(1);
 
@@ -1107,7 +1119,7 @@ MySqlLegalLogDbLostCallbackTest::testDbLostAndFailedAfterTimeoutCallback() {
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(1, db_failed_callback_called_);
 
-    ASSERT_FALSE(BackendStore::instance());
+    ASSERT_FALSE(BackendStoreFactory::instance());
 }
 
 /// @brief Verifies that loss of connectivity to MySQL is handled correctly.

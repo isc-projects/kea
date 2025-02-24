@@ -10,12 +10,15 @@ dhcp_mysql_lib = shared_library(
     'mysql_cb_impl.cc',
     'mysql_cb_log.cc',
     'mysql_cb_messages.cc',
+    'mysql_fb_log.cc',
+    'mysql_fb_messages.cc',
     'mysql_hb_log.cc',
     'mysql_hb_messages.cc',
     'mysql_host_data_source.cc',
     'mysql_lb_log.cc',
     'mysql_lb_messages.cc',
     'mysql_lease_mgr.cc',
+    'mysql_legal_log.cc',
     'version.cc',
     dependencies: [crypto, mysql],
     include_directories: [include_directories('.')] + INCLUDES,
@@ -39,6 +42,16 @@ if KEA_MSG_COMPILER.found()
             TOP_SOURCE_DIR,
             KEA_MSG_COMPILER,
             'src/hooks/dhcp/mysql/mysql_cb_messages.mes',
+        ],
+    )
+    TARGETS_GEN_MESSAGES += [target_gen_messages]
+    target_gen_messages = run_target(
+        'src-hooks-dhcp-mysql-mysql_fb_messages',
+        command: [
+            CD_AND_RUN,
+            TOP_SOURCE_DIR,
+            KEA_MSG_COMPILER,
+            'src/hooks/dhcp/mysql/mysql_fb_messages.mes',
         ],
     )
     TARGETS_GEN_MESSAGES += [target_gen_messages]

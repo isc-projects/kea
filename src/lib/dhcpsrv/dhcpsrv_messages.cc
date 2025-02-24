@@ -61,6 +61,9 @@ extern const isc::log::MessageID DHCPSRV_DHCP_DDNS_SENDER_STOPPED = "DHCPSRV_DHC
 extern const isc::log::MessageID DHCPSRV_DHCP_DDNS_SUSPEND_UPDATES = "DHCPSRV_DHCP_DDNS_SUSPEND_UPDATES";
 extern const isc::log::MessageID DHCPSRV_EVAL_ERROR = "DHCPSRV_EVAL_ERROR";
 extern const isc::log::MessageID DHCPSRV_EVAL_RESULT = "DHCPSRV_EVAL_RESULT";
+extern const isc::log::MessageID DHCPSRV_FORENSIC_BACKENDS_REGISTERED = "DHCPSRV_FORENSIC_BACKENDS_REGISTERED";
+extern const isc::log::MessageID DHCPSRV_FORENSIC_BACKEND_DEREGISTER = "DHCPSRV_FORENSIC_BACKEND_DEREGISTER";
+extern const isc::log::MessageID DHCPSRV_FORENSIC_BACKEND_REGISTER = "DHCPSRV_FORENSIC_BACKEND_REGISTER";
 extern const isc::log::MessageID DHCPSRV_HOOK_LEASE4_RECOVER_SKIP = "DHCPSRV_HOOK_LEASE4_RECOVER_SKIP";
 extern const isc::log::MessageID DHCPSRV_HOOK_LEASE4_RENEW_SKIP = "DHCPSRV_HOOK_LEASE4_RENEW_SKIP";
 extern const isc::log::MessageID DHCPSRV_HOOK_LEASE4_SELECT_SKIP = "DHCPSRV_HOOK_LEASE4_SELECT_SKIP";
@@ -233,6 +236,9 @@ const char* values[] = {
     "DHCPSRV_DHCP_DDNS_SUSPEND_UPDATES", "DHCP_DDNS updates are being suspended.",
     "DHCPSRV_EVAL_ERROR", "%1: Expression '%2' evaluated to %3",
     "DHCPSRV_EVAL_RESULT", "%1: Expression '%2' evaluated to %3",
+    "DHCPSRV_FORENSIC_BACKENDS_REGISTERED", "the following forensic backend types are available: %1",
+    "DHCPSRV_FORENSIC_BACKEND_DEREGISTER", "deregistered forensic backend type: %1",
+    "DHCPSRV_FORENSIC_BACKEND_REGISTER", "registered forensic backend type: %1",
     "DHCPSRV_HOOK_LEASE4_RECOVER_SKIP", "DHCPv4 lease %1 was not recovered from the declined state because a callout set the skip status.",
     "DHCPSRV_HOOK_LEASE4_RENEW_SKIP", "DHCPv4 lease was not renewed because a callout set the skip flag.",
     "DHCPSRV_HOOK_LEASE4_SELECT_SKIP", "Lease4 creation was skipped, because of callout skip flag.",

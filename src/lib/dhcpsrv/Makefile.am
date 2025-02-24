@@ -13,6 +13,8 @@ AM_CPPFLAGS += -DTOP_BUILDDIR="\"$(top_builddir)\""
 # Set location of the kea-lfc binary.
 AM_CPPFLAGS += -DKEA_LFC_EXECUTABLE="\"$(kea_lfc_location)\""
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
+legal_log_dir = @localstatedir@/lib/@PACKAGE@
+AM_CPPFLAGS += -DLEGAL_LOG_DIR="\"$(legal_log_dir)\""
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -60,6 +62,8 @@ libkea_dhcpsrv_la_SOURCES += alloc_engine.cc alloc_engine.h
 libkea_dhcpsrv_la_SOURCES += alloc_engine_log.cc alloc_engine_log.h
 libkea_dhcpsrv_la_SOURCES += alloc_engine_messages.h alloc_engine_messages.cc
 libkea_dhcpsrv_la_SOURCES += allocator.h allocator.cc
+libkea_dhcpsrv_la_SOURCES += backend_store_factory.h backend_store_factory.cc
+libkea_dhcpsrv_la_SOURCES += backend_store.h backend_store.cc
 libkea_dhcpsrv_la_SOURCES += base_host_data_source.h
 libkea_dhcpsrv_la_SOURCES += cache_host_data_source.h
 libkea_dhcpsrv_la_SOURCES += callout_handle_store.h
@@ -119,6 +123,7 @@ libkea_dhcpsrv_la_SOURCES += lease_file_loader.h
 libkea_dhcpsrv_la_SOURCES += lease_file_stats.h
 libkea_dhcpsrv_la_SOURCES += lease_mgr.cc lease_mgr.h
 libkea_dhcpsrv_la_SOURCES += lease_mgr_factory.cc lease_mgr_factory.h
+libkea_dhcpsrv_la_SOURCES += legal_log_db_log.cc legal_log_db_log.h
 libkea_dhcpsrv_la_SOURCES += memfile_lease_limits.cc memfile_lease_limits.h
 libkea_dhcpsrv_la_SOURCES += memfile_lease_mgr.cc memfile_lease_mgr.h
 libkea_dhcpsrv_la_SOURCES += memfile_lease_storage.h
@@ -275,6 +280,8 @@ libkea_dhcpsrv_include_HEADERS = \
 	alloc_engine_log.h \
 	alloc_engine_messages.h \
 	allocator.h \
+	backend_store_factory.h \
+	backend_store.h \
 	base_host_data_source.h \
 	cache_host_data_source.h \
 	callout_handle_store.h \
@@ -334,6 +341,7 @@ libkea_dhcpsrv_include_HEADERS = \
 	lease_file_stats.h \
 	lease_mgr.h \
 	lease_mgr_factory.h \
+	legal_log_db_log.h \
 	memfile_lease_limits.h \
 	memfile_lease_mgr.h \
 	memfile_lease_storage.h \

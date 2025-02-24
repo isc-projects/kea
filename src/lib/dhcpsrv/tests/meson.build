@@ -54,6 +54,7 @@ kea_dhcpsrv_tests = executable(
     'alloc_engine_expiration_unittest.cc',
     'alloc_engine_hooks_unittest.cc',
     'allocation_state_unittest.cc',
+    'backend_store_factory_unittest.cc',
     'callout_handle_store_unittest.cc',
     'cb_ctl_dhcp_unittest.cc',
     'cfg_db_access_unittest.cc',

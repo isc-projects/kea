@@ -1,11 +1,20 @@
 SUBDIRS = .
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
+AM_CPPFLAGS += -I$(top_builddir)/src -I$(top_srcdir)/src
 AM_CPPFLAGS += -I$(top_builddir)/src/hooks/dhcp/forensic_log -I$(top_srcdir)/src/hooks/dhcp/forensic_log
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/hooks/dhcp/forensic_log/libloadtests\"
 AM_CPPFLAGS += -DLEGAL_LOG_LIB_SO=\"$(abs_top_builddir)/src/hooks/dhcp/forensic_log/.libs/libdhcp_legal_log.so\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
+
+if HAVE_MYSQL
+AM_CPPFLAGS += $(MYSQL_CPPFLAGS)
+endif
+
+if HAVE_PGSQL
+AM_CPPFLAGS += $(PGSQL_CPPFLAGS)
+endif
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -39,7 +48,17 @@ libdhcp_legal_log_unittests_LDFLAGS  = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_L
 
 libdhcp_legal_log_unittests_CXXFLAGS = $(AM_CXXFLAGS)
 
-libdhcp_legal_log_unittests_LDADD  = $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la
+libdhcp_legal_log_unittests_LDADD =
+
+if HAVE_PGSQL
+libdhcp_legal_log_unittests_LDADD += $(top_builddir)/src/hooks/dhcp/pgsql/libpgsql.la
+endif
+
+if HAVE_MYSQL
+libdhcp_legal_log_unittests_LDADD += $(top_builddir)/src/hooks/dhcp/mysql/libmysql.la
+endif
+
+libdhcp_legal_log_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la
 libdhcp_legal_log_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 libdhcp_legal_log_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 libdhcp_legal_log_unittests_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la

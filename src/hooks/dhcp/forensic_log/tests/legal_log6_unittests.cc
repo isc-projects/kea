@@ -8,7 +8,7 @@
 /// generation as well as tests which exercise v6 callouts: leases6_committed
 /// and pkt6_send.  These tests assume the legal log library
 /// is linked in, not loaded.  This allows a great deal more flexibility
-/// in testing, such as overriding and accessing the BackendStore::instance().
+/// in testing, such as overriding and accessing the BackendStoreFactory::instance().
 /// The load and unload callouts are exercised in ../libloadtests, which
 /// actually uses the HooksManager to load and unload the library.
 
@@ -412,7 +412,7 @@ TEST(Lease6FuncTest, hwaddrSourceToString ) {
 
 // Verifies DHCPv6 entries for directly connected clients
 TEST_F(CalloutTestv6, directClient6NA) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     std::string entry;
 
@@ -468,11 +468,11 @@ TEST_F(CalloutTestv6, directClient6NA) {
 
 // Verifies DHCPv6 entries for directly connected clients
 TEST_F(CalloutTestv6, directClient6NACustomLoggingFormatRequestOnly) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     CfgMgr::instance().setFamily(AF_INET6);
 
-    BackendStore::instance()->setRequestFormatExpression(request_format_only_);
+    BackendStoreFactory::instance()->setRequestFormatExpression(request_format_only_);
 
     std::string entry;
 
@@ -513,12 +513,12 @@ TEST_F(CalloutTestv6, directClient6NACustomLoggingFormatRequestOnly) {
 
 // Verifies DHCPv6 entries for directly connected clients
 TEST_F(CalloutTestv6, directClient6NACustomLoggingFormatRequestAndResponse) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     CfgMgr::instance().setFamily(AF_INET6);
 
-    BackendStore::instance()->setRequestFormatExpression(request_format_);
-    BackendStore::instance()->setResponseFormatExpression(response_format_);
+    BackendStoreFactory::instance()->setRequestFormatExpression(request_format_);
+    BackendStoreFactory::instance()->setResponseFormatExpression(response_format_);
 
     std::string entry;
 
@@ -560,7 +560,7 @@ TEST_F(CalloutTestv6, directClient6NACustomLoggingFormatRequestAndResponse) {
 
 // Verifies DHCPv6 entries for relayed clients
 TEST_F(CalloutTestv6, relayedClient6NA) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     std::string entry;
 
@@ -677,11 +677,11 @@ TEST_F(CalloutTestv6, relayedClient6NA) {
 
 // Verifies DHCPv6 entries for relayed clients
 TEST_F(CalloutTestv6, relayedClient6NACustomLoggingFormatRequestOnly) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     CfgMgr::instance().setFamily(AF_INET6);
 
-    BackendStore::instance()->setRequestFormatExpression(request_format_only_);
+    BackendStoreFactory::instance()->setRequestFormatExpression(request_format_only_);
 
     std::string entry;
 
@@ -786,12 +786,12 @@ TEST_F(CalloutTestv6, relayedClient6NACustomLoggingFormatRequestOnly) {
 
 // Verifies DHCPv6 entries for relayed clients
 TEST_F(CalloutTestv6, relayedClient6NACustomLoggingFormatRequestAndResponse) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     CfgMgr::instance().setFamily(AF_INET6);
 
-    BackendStore::instance()->setRequestFormatExpression(request_format_);
-    BackendStore::instance()->setResponseFormatExpression(response_format_);
+    BackendStoreFactory::instance()->setRequestFormatExpression(request_format_);
+    BackendStoreFactory::instance()->setResponseFormatExpression(response_format_);
 
     std::string entry;
 
@@ -909,7 +909,7 @@ TEST_F(CalloutTestv6, relayedClient6NACustomLoggingFormatRequestAndResponse) {
 
 // Verifies DHCPv6 entries for directly connected clients
 TEST_F(CalloutTestv6, directClient6PD) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     std::string entry;
 
@@ -959,11 +959,11 @@ TEST_F(CalloutTestv6, directClient6PD) {
 
 // Verifies DHCPv6 entries for directly connected clients
 TEST_F(CalloutTestv6, directClient6PDCustomLoggingFormatRequestOnly) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     CfgMgr::instance().setFamily(AF_INET6);
 
-    BackendStore::instance()->setRequestFormatExpression(request_format_only_);
+    BackendStoreFactory::instance()->setRequestFormatExpression(request_format_only_);
 
     std::string entry;
 
@@ -998,12 +998,12 @@ TEST_F(CalloutTestv6, directClient6PDCustomLoggingFormatRequestOnly) {
 
 // Verifies DHCPv6 entries for directly connected clients
 TEST_F(CalloutTestv6, directClient6PDCustomLoggingFormatRequestAndResponse) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     CfgMgr::instance().setFamily(AF_INET6);
 
-    BackendStore::instance()->setRequestFormatExpression(request_format_);
-    BackendStore::instance()->setResponseFormatExpression(response_format_);
+    BackendStoreFactory::instance()->setRequestFormatExpression(request_format_);
+    BackendStoreFactory::instance()->setResponseFormatExpression(response_format_);
 
     std::string entry;
 
@@ -1039,7 +1039,7 @@ TEST_F(CalloutTestv6, directClient6PDCustomLoggingFormatRequestAndResponse) {
 
 // Verifies DHCPv6 entries for relayed clients
 TEST_F(CalloutTestv6, relayedClient6PD) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     std::string entry;
 
@@ -1156,11 +1156,11 @@ TEST_F(CalloutTestv6, relayedClient6PD) {
 
 // Verifies DHCPv6 entries for relayed clients
 TEST_F(CalloutTestv6, relayedClient6PDCustomLoggingFormatRequestOnly) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     CfgMgr::instance().setFamily(AF_INET6);
 
-    BackendStore::instance()->setRequestFormatExpression(request_format_only_);
+    BackendStoreFactory::instance()->setRequestFormatExpression(request_format_only_);
 
     std::string entry;
 
@@ -1265,12 +1265,12 @@ TEST_F(CalloutTestv6, relayedClient6PDCustomLoggingFormatRequestOnly) {
 
 // Verifies DHCPv6 entries for relayed clients
 TEST_F(CalloutTestv6, relayedClient6PDCustomLoggingFormatRequestAndResponse) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     CfgMgr::instance().setFamily(AF_INET6);
 
-    BackendStore::instance()->setRequestFormatExpression(request_format_);
-    BackendStore::instance()->setResponseFormatExpression(response_format_);
+    BackendStoreFactory::instance()->setRequestFormatExpression(request_format_);
+    BackendStoreFactory::instance()->setResponseFormatExpression(response_format_);
 
     std::string entry;
 
@@ -1388,7 +1388,7 @@ TEST_F(CalloutTestv6, relayedClient6PDCustomLoggingFormatRequestAndResponse) {
 
 // Verifies printable id handling
 TEST_F(CalloutTestv6, printable6) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     Pkt6::RelayInfo relay1;
     relay1.msg_type_ = DHCPV6_RELAY_FORW;
@@ -1430,14 +1430,14 @@ TEST_F(CalloutTestv6, printable6) {
               entry);
 }
 
-// Verifies that legalLog6Handler() detects a null BackendStore::instance()
+// Verifies that legalLog6Handler() detects a null BackendStoreFactory::instance()
 TEST_F(CalloutTestv6, noRotatingFileTest6) {
     // Make a callout handle
     CalloutHandle handle(getCalloutManager());
     handle.setArgument("lease6", lease_na_);
     handle.setArgument("query6", request_na_);
 
-    // The function should fail when there's no BackendStore::instance().
+    // The function should fail when there's no BackendStoreFactory::instance().
     int ret;
     ASSERT_NO_THROW(ret = legalLog6Handler(handle, Action::ASSIGN));
     EXPECT_EQ(1, ret);
@@ -1446,7 +1446,7 @@ TEST_F(CalloutTestv6, noRotatingFileTest6) {
 // Verifies that the pkt6_receive callout creates an empty context which can be
 // used in all other hook points.
 TEST_F(CalloutTestv6, pkt6_receive) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     // Make a callout handle
     CalloutHandlePtr handle = getCalloutHandle(solicit_na_);
@@ -1537,12 +1537,12 @@ TEST_F(CalloutTestv6, pkt6_receive) {
     }
 
     // Close it to flush any unwritten data
-    BackendStore::instance()->close();
+    BackendStoreFactory::instance()->close();
 
     // Verify that the file content is correct.
     std::vector<std::string>lines;
 
-    std::string today_now_string = BackendStore::instance()->getNowString();
+    std::string today_now_string = BackendStoreFactory::instance()->getNowString();
     checkFileNotCreated(genName(today()));
 }
 
@@ -1555,7 +1555,7 @@ TEST_F(CalloutTestv6, pkt6_receive) {
 // Note we don't bother testing multiple entries or rotation as this is done
 // during RotatingFile testing.
 TEST_F(CalloutTestv6, leases6_committed) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     // Make a callout handle
     CalloutHandlePtr handle = getCalloutHandle(request_na_);
@@ -1652,7 +1652,7 @@ TEST_F(CalloutTestv6, leases6_committed) {
     }
 
     // Close it to flush any unwritten data
-    BackendStore::instance()->close();
+    BackendStoreFactory::instance()->close();
 
     // Verify that the file content is correct.
     std::vector<std::string>lines;
@@ -1664,7 +1664,7 @@ TEST_F(CalloutTestv6, leases6_committed) {
                     " for 0 hrs 11 mins 53 secs"
                     " to a device with DUID: 17:34:e2:ff:09:92:54");
 
-    std::string today_now_string = BackendStore::instance()->getNowString();
+    std::string today_now_string = BackendStoreFactory::instance()->getNowString();
     checkFileLines(genName(today()), today_now_string, lines);
 }
 
@@ -1673,7 +1673,7 @@ TEST_F(CalloutTestv6, leases6_committed) {
 // Note we don't bother testing multiple entries or rotation as this is done
 // during RotatingFile testing.
 TEST_F(CalloutTestv6, lease6_renew) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     // Make a callout handle
     CalloutHandlePtr handle = getCalloutHandle(renew_na_);
@@ -1770,7 +1770,7 @@ TEST_F(CalloutTestv6, lease6_renew) {
     }
 
     // Close it to flush any unwritten data
-    BackendStore::instance()->close();
+    BackendStoreFactory::instance()->close();
 
     // Verify that the file content is correct.
     std::vector<std::string>lines;
@@ -1782,7 +1782,7 @@ TEST_F(CalloutTestv6, lease6_renew) {
                     " for 0 hrs 11 mins 53 secs"
                     " to a device with DUID: 17:34:e2:ff:09:92:54");
 
-    std::string today_now_string = BackendStore::instance()->getNowString();
+    std::string today_now_string = BackendStoreFactory::instance()->getNowString();
     checkFileLines(genName(today()), today_now_string, lines);
 }
 
@@ -1791,7 +1791,7 @@ TEST_F(CalloutTestv6, lease6_renew) {
 // Note we don't bother testing multiple entries or rotation as this is done
 // during RotatingFile testing.
 TEST_F(CalloutTestv6, customRequestLoggingFormat_lease6_renew) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     CfgMgr::instance().setFamily(AF_INET6);
 
@@ -1800,7 +1800,7 @@ TEST_F(CalloutTestv6, customRequestLoggingFormat_lease6_renew) {
 
     std::string format = "ifelse(pkt6.msgtype == 5, concat('Assigned address: ', addrtotext(substring(option[3].option[5].hex, 0, 16))), '')";
 
-    BackendStore::instance()->setRequestFormatExpression(format);
+    BackendStoreFactory::instance()->setRequestFormatExpression(format);
 
     int ret;
 
@@ -1831,13 +1831,13 @@ TEST_F(CalloutTestv6, customRequestLoggingFormat_lease6_renew) {
     }
 
     // Close it to flush any unwritten data
-    BackendStore::instance()->close();
+    BackendStoreFactory::instance()->close();
 
     // Verify that the file content is correct.
     std::vector<std::string>lines;
     lines.push_back("Assigned address: 2001:db8:1::");
 
-    std::string today_now_string = BackendStore::instance()->getNowString();
+    std::string today_now_string = BackendStoreFactory::instance()->getNowString();
     checkFileLines(genName(today()), today_now_string, lines);
 }
 
@@ -1846,7 +1846,7 @@ TEST_F(CalloutTestv6, customRequestLoggingFormat_lease6_renew) {
 // Note we don't bother testing multiple entries or rotation as this is done
 // during RotatingFile testing.
 TEST_F(CalloutTestv6, lease6_rebind) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     // Make a callout handle
     CalloutHandlePtr handle = getCalloutHandle(rebind_na_);
@@ -1943,7 +1943,7 @@ TEST_F(CalloutTestv6, lease6_rebind) {
     }
 
     // Close it to flush any unwritten data
-    BackendStore::instance()->close();
+    BackendStoreFactory::instance()->close();
 
     // Verify that the file content is correct.
     std::vector<std::string>lines;
@@ -1955,7 +1955,7 @@ TEST_F(CalloutTestv6, lease6_rebind) {
                     " for 0 hrs 11 mins 53 secs"
                     " to a device with DUID: 17:34:e2:ff:09:92:54");
 
-    std::string today_now_string = BackendStore::instance()->getNowString();
+    std::string today_now_string = BackendStoreFactory::instance()->getNowString();
     checkFileLines(genName(today()), today_now_string, lines);
 }
 
@@ -1964,7 +1964,7 @@ TEST_F(CalloutTestv6, lease6_rebind) {
 // Note we don't bother testing multiple entries or rotation as this is done
 // during RotatingFile testing.
 TEST_F(CalloutTestv6, customRequestLoggingFormat_lease6_rebind) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     CfgMgr::instance().setFamily(AF_INET6);
 
@@ -1973,7 +1973,7 @@ TEST_F(CalloutTestv6, customRequestLoggingFormat_lease6_rebind) {
 
     std::string format = "ifelse(pkt6.msgtype == 6, concat('Assigned address: ', addrtotext(substring(option[3].option[5].hex, 0, 16))), '')";
 
-    BackendStore::instance()->setRequestFormatExpression(format);
+    BackendStoreFactory::instance()->setRequestFormatExpression(format);
 
     int ret;
 
@@ -2004,13 +2004,13 @@ TEST_F(CalloutTestv6, customRequestLoggingFormat_lease6_rebind) {
     }
 
     // Close it to flush any unwritten data
-    BackendStore::instance()->close();
+    BackendStoreFactory::instance()->close();
 
     // Verify that the file content is correct.
     std::vector<std::string>lines;
     lines.push_back("Assigned address: 2001:db8:1::");
 
-    std::string today_now_string = BackendStore::instance()->getNowString();
+    std::string today_now_string = BackendStoreFactory::instance()->getNowString();
     checkFileLines(genName(today()), today_now_string, lines);
 }
 
@@ -2019,7 +2019,7 @@ TEST_F(CalloutTestv6, customRequestLoggingFormat_lease6_rebind) {
 // Note we don't bother testing multiple entries or rotation as this is done
 // during RotatingFile testing.
 TEST_F(CalloutTestv6, lease6_release) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     // Make a callout handle
     CalloutHandlePtr handle = getCalloutHandle(release_na_);
@@ -2104,7 +2104,7 @@ TEST_F(CalloutTestv6, lease6_release) {
     }
 
     // Close it to flush any unwritten data
-    BackendStore::instance()->close();
+    BackendStoreFactory::instance()->close();
 
     // Verify that the file content is correct.
     std::vector<std::string>lines;
@@ -2114,7 +2114,7 @@ TEST_F(CalloutTestv6, lease6_release) {
     lines.push_back("Address: 2001:db8:3::1 has been released"
                     " from a device with DUID: 17:34:e2:ff:09:92:54");
 
-    std::string today_now_string = BackendStore::instance()->getNowString();
+    std::string today_now_string = BackendStoreFactory::instance()->getNowString();
     checkFileLines(genName(today()), today_now_string, lines);
 }
 
@@ -2123,7 +2123,7 @@ TEST_F(CalloutTestv6, lease6_release) {
 // Note we don't bother testing multiple entries or rotation as this is done
 // during RotatingFile testing.
 TEST_F(CalloutTestv6, customRequestLoggingFormat_lease6_release) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     CfgMgr::instance().setFamily(AF_INET6);
 
@@ -2132,7 +2132,7 @@ TEST_F(CalloutTestv6, customRequestLoggingFormat_lease6_release) {
 
     std::string format = "ifelse(pkt6.msgtype == 8, concat('Released address: ', addrtotext(substring(option[3].option[5].hex, 0, 16))), '')";
 
-    BackendStore::instance()->setRequestFormatExpression(format);
+    BackendStoreFactory::instance()->setRequestFormatExpression(format);
 
     int ret;
 
@@ -2157,13 +2157,13 @@ TEST_F(CalloutTestv6, customRequestLoggingFormat_lease6_release) {
     }
 
     // Close it to flush any unwritten data
-    BackendStore::instance()->close();
+    BackendStoreFactory::instance()->close();
 
     // Verify that the file content is correct.
     std::vector<std::string>lines;
     lines.push_back("Released address: 2001:db8:1::");
 
-    std::string today_now_string = BackendStore::instance()->getNowString();
+    std::string today_now_string = BackendStoreFactory::instance()->getNowString();
     checkFileLines(genName(today()), today_now_string, lines);
 }
 
@@ -2172,7 +2172,7 @@ TEST_F(CalloutTestv6, customRequestLoggingFormat_lease6_release) {
 // Note we don't bother testing multiple entries or rotation as this is done
 // during RotatingFile testing.
 TEST_F(CalloutTestv6, lease6_decline) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     // Make a callout handle
     CalloutHandlePtr handle = getCalloutHandle(decline_);
@@ -2257,7 +2257,7 @@ TEST_F(CalloutTestv6, lease6_decline) {
     }
 
     // Close it to flush any unwritten data
-    BackendStore::instance()->close();
+    BackendStoreFactory::instance()->close();
 
     // Verify that the file content is correct.
     std::vector<std::string>lines;
@@ -2267,7 +2267,7 @@ TEST_F(CalloutTestv6, lease6_decline) {
     lines.push_back("Address: 2001:db8:3::1 has been released"
                     " from a device with DUID: 17:34:e2:ff:09:92:54");
 
-    std::string today_now_string = BackendStore::instance()->getNowString();
+    std::string today_now_string = BackendStoreFactory::instance()->getNowString();
     checkFileLines(genName(today()), today_now_string, lines);
 }
 
@@ -2276,7 +2276,7 @@ TEST_F(CalloutTestv6, lease6_decline) {
 // Note we don't bother testing multiple entries or rotation as this is done
 // during RotatingFile testing.
 TEST_F(CalloutTestv6, customRequestLoggingFormat_lease6_decline) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     CfgMgr::instance().setFamily(AF_INET6);
 
@@ -2285,7 +2285,7 @@ TEST_F(CalloutTestv6, customRequestLoggingFormat_lease6_decline) {
 
     std::string format = "ifelse(pkt6.msgtype == 9, concat('Declined address: ', addrtotext(substring(option[3].option[5].hex, 0, 16))), '')";
 
-    BackendStore::instance()->setRequestFormatExpression(format);
+    BackendStoreFactory::instance()->setRequestFormatExpression(format);
 
     int ret;
 
@@ -2310,19 +2310,19 @@ TEST_F(CalloutTestv6, customRequestLoggingFormat_lease6_decline) {
     }
 
     // Close it to flush any unwritten data
-    BackendStore::instance()->close();
+    BackendStoreFactory::instance()->close();
 
     // Verify that the file content is correct.
     std::vector<std::string>lines;
     lines.push_back("Declined address: 2001:db8:1::");
 
-    std::string today_now_string = BackendStore::instance()->getNowString();
+    std::string today_now_string = BackendStoreFactory::instance()->getNowString();
     checkFileLines(genName(today()), today_now_string, lines);
 }
 
 // Verifies that the custom format logs on multiple lines.
 TEST_F(CalloutTestv6, customRequestLoggingFormatMultipleLines) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     CfgMgr::instance().setFamily(AF_INET6);
 
@@ -2331,7 +2331,7 @@ TEST_F(CalloutTestv6, customRequestLoggingFormatMultipleLines) {
 
     std::string format = "ifelse(pkt6.msgtype == 9, 'first line' + 0x0a + 'second line', '')";
 
-    BackendStore::instance()->setRequestFormatExpression(format);
+    BackendStoreFactory::instance()->setRequestFormatExpression(format);
 
     int ret;
 
@@ -2356,26 +2356,26 @@ TEST_F(CalloutTestv6, customRequestLoggingFormatMultipleLines) {
     }
 
     // Close it to flush any unwritten data
-    BackendStore::instance()->close();
+    BackendStoreFactory::instance()->close();
 
     // Verify that the file content is correct.
     std::vector<std::string>lines;
     lines.push_back("first line");
     lines.push_back("second line");
 
-    std::string today_now_string = BackendStore::instance()->getNowString();
+    std::string today_now_string = BackendStoreFactory::instance()->getNowString();
     checkFileLines(genName(today()), today_now_string, lines);
 }
 
 TEST_F(CalloutTestv6, multipleAddressesAndPrefixesCustomLoggingFormatRequestOnly) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     // Make a callout handle
     CalloutHandlePtr handle = getCalloutHandle(request_na_);
 
     CfgMgr::instance().setFamily(AF_INET6);
 
-    BackendStore::instance()->setRequestFormatExpression(request_format_only_);
+    BackendStoreFactory::instance()->setRequestFormatExpression(request_format_only_);
 
     int ret;
 
@@ -2517,7 +2517,7 @@ TEST_F(CalloutTestv6, multipleAddressesAndPrefixesCustomLoggingFormatRequestOnly
     }
 
     // Close it to flush any unwritten data
-    BackendStore::instance()->close();
+    BackendStoreFactory::instance()->close();
 
     // Verify that the file content is correct.
     std::vector<std::string>lines;
@@ -2534,20 +2534,20 @@ TEST_F(CalloutTestv6, multipleAddressesAndPrefixesCustomLoggingFormatRequestOnly
     lines.push_back("Prefix: 2001:db8:2::/64 has been assigned for 256 seconds"
                     " to a device with DUID: 17:34:e2:ff:09:92:54");
 
-    std::string today_now_string = BackendStore::instance()->getNowString();
+    std::string today_now_string = BackendStoreFactory::instance()->getNowString();
     checkFileLines(genName(today()), today_now_string, lines);
 }
 
 TEST_F(CalloutTestv6, multipleAddressesAndPrefixesCustomLoggingFormatRequestAndResponse) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     // Make a callout handle
     CalloutHandlePtr handle = getCalloutHandle(request_na_);
 
     CfgMgr::instance().setFamily(AF_INET6);
 
-    BackendStore::instance()->setRequestFormatExpression(request_format_);
-    BackendStore::instance()->setResponseFormatExpression(response_format_);
+    BackendStoreFactory::instance()->setRequestFormatExpression(request_format_);
+    BackendStoreFactory::instance()->setResponseFormatExpression(response_format_);
 
     int ret;
 
@@ -2689,7 +2689,7 @@ TEST_F(CalloutTestv6, multipleAddressesAndPrefixesCustomLoggingFormatRequestAndR
     }
 
     // Close it to flush any unwritten data
-    BackendStore::instance()->close();
+    BackendStoreFactory::instance()->close();
 
     // Verify that the file content is correct.
     std::vector<std::string>lines;
@@ -2706,7 +2706,7 @@ TEST_F(CalloutTestv6, multipleAddressesAndPrefixesCustomLoggingFormatRequestAndR
     lines.push_back("Prefix: 2001:db8:4::/64 has been assigned for 512 seconds"
                     " to a device with DUID: 17:34:e2:ff:09:92:54");
 
-    std::string today_now_string = BackendStore::instance()->getNowString();
+    std::string today_now_string = BackendStoreFactory::instance()->getNowString();
     checkFileLines(genName(today()), today_now_string, lines);
 }
 

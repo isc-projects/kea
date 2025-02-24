@@ -7,7 +7,7 @@
 #ifndef MYSQL_LEGAL_LOG_H
 #define MYSQL_LEGAL_LOG_H
 
-#include <backend_store.h>
+#include <dhcpsrv/backend_store_factory.h>
 #include <mysql/mysql_connection.h>
 #include <util/reconnect_ctl.h>
 
@@ -18,7 +18,7 @@
 #include <vector>
 
 namespace isc {
-namespace legal_log {
+namespace dhcp {
 
 // Forward declaration of the exchange object. The class is defined in
 // the .cc file.
@@ -170,6 +170,9 @@ public:
     ///        database has failed.
     virtual std::pair<uint32_t, uint32_t> getVersion(const std::string& timer_name = std::string()) const;
 
+    /// @brief Local version of getDBVersion() class method.
+    static std::string getDBVersion();
+
     /// @brief Statement Tags
     ///
     /// The contents of the enum are indexes into the list of SQL statements
@@ -177,6 +180,13 @@ public:
         INSERT_LOG,             // Add entry to logs table
         NUM_STATEMENTS          // Number of statements
     };
+
+    /// @brief Flag which indicates if the store has at least one
+    /// unusable connection.
+    ///
+    /// @return true if there is at least one unusable connection, false
+    /// otherwise
+    virtual bool isUnusable();
 
     /// @brief Context RAII Allocator.
     class MySqlStoreContextAlloc {
@@ -188,7 +198,7 @@ public:
         /// or creates a new one.
         ///
         /// @param store A parent instance
-        MySqlStoreContextAlloc(const MySqlStore& store);
+        MySqlStoreContextAlloc(MySqlStore& store);
 
         /// @brief Destructor
         ///
@@ -200,7 +210,7 @@ public:
 
     private:
         /// @brief The store
-        const MySqlStore& store_;
+        MySqlStore& store_;
     };
 
 private:
@@ -228,9 +238,39 @@ private:
 
     /// @brief The pool of contexts
     MySqlStoreContextPoolPtr pool_;
+
+    /// @brief Indicates if there is at least one connection that can no longer
+    /// be used for normal operations.
+    bool unusable_;
+
+public:
+    /// @brief Factory class method.
+    ///
+    /// @param parameters A data structure relating keywords and values
+    ///        concerned with the database.
+    ///
+    /// @return The MySQL Store.
+    static BackendStorePtr
+    factory(const isc::db::DatabaseConnection::ParameterMap& parameters);
 };
 
-} // end of isc::legal_log namespace
+/// @brief Initialization structure used to register and deregister MySQL Forensic Backend.
+struct MySqlForensicBackendInit {
+    // Constructor registers
+    MySqlForensicBackendInit() {
+        BackendStoreFactory::registerBackendFactory("mysql",
+                                                    MySqlStore::factory,
+                                                    true,
+                                                    MySqlStore::getDBVersion);
+    }
+
+    // Destructor deregisters
+    ~MySqlForensicBackendInit() {
+        BackendStoreFactory::unregisterBackendFactory("mysql", true);
+    }
+};
+
+} // end of isc::dhcp namespace
 } // end of isc namespace
 
 #endif // MYSQL_LEGAL_LOG_H

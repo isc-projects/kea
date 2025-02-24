@@ -6,16 +6,8 @@
 
 #include <config.h>
 
-#include <legal_log_log.h>
 #include <backend_store.h>
-
-#include <rotating_file.h>
-#ifdef HAVE_MYSQL
-#include <mysql_legal_log.h>
-#endif
-#ifdef HAVE_PGSQL
-#include <pgsql_legal_log.h>
-#endif
+#include <backend_store_factory.h>
 
 #include <database/database_connection.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -30,7 +22,7 @@
 #include <time.h>
 
 namespace isc {
-namespace legal_log {
+namespace dhcp {
 
 using namespace isc::asiolink;
 using namespace isc::data;
@@ -39,69 +31,21 @@ using namespace isc::dhcp;
 using namespace isc::eval;
 using namespace isc::hooks;
 using namespace isc::util;
-
+using namespace std;
 
 void
-BackendStore::parseFile(const ConstElementPtr& parameters) {
-    // Defaults
-    std::string path(LEGAL_LOG_DIR);
-    std::string base("kea-legal");
-    RotatingFile::TimeUnit unit(RotatingFile::TimeUnit::Day);
-    int64_t count(1);
-    std::string prerotate;
-    std::string postrotate;
-
-    // Prioritize parameters.
-    if (parameters) {
-        if (parameters->get("path")) {
-            path = parameters->get("path")->stringValue();
-        }
-        if (parameters->get("base-name")) {
-            base = parameters->get("base-name")->stringValue();
-        }
-        if (parameters->get("time-unit")) {
-            std::string time_unit(parameters->get("time-unit")->stringValue());
-            if (time_unit == "second") {
-                unit = RotatingFile::TimeUnit::Second;
-            } else if (time_unit == "day") {
-                unit = RotatingFile::TimeUnit::Day;
-            } else if (time_unit == "month") {
-                unit = RotatingFile::TimeUnit::Month;
-            } else if (time_unit == "year") {
-                unit = RotatingFile::TimeUnit::Year;
-            } else {
-                isc_throw(BadValue, "unknown time unit type: " << time_unit
-                            << ", expected one of: second, day, month, year");
-            }
-        }
-        if (parameters->get("count")) {
-            count = parameters->get("count")->intValue();
-            if ((count < 0) ||
-                (count > std::numeric_limits<uint32_t>::max())) {
-                isc_throw(OutOfRange, "count value: " << count
-                        << " is out of range, expected value: 0.."
-                        << std::numeric_limits<uint32_t>::max());
-            }
-        }
-        if (parameters->get("prerotate")) {
-            prerotate = parameters->get("prerotate")->stringValue();
-        }
-        if (parameters->get("postrotate")) {
-            postrotate = parameters->get("postrotate")->stringValue();
-        }
+BackendStore::parseConfig(const ConstElementPtr& parameters, DatabaseConnection::ParameterMap& map) {
+    if (!parameters || !parameters->get("type") ||
+        parameters->get("type")->stringValue() == "logfile") {
+        parseFile(parameters, map);
+    } else {
+        parseDatabase(parameters, map);
     }
-
-    BackendStore::instance() = boost::make_shared<RotatingFile>(
-        path, base, unit, count, prerotate, postrotate);
-
-    DatabaseConnection::ParameterMap db_parameters;
-    db_parameters.emplace("path", path);
-    db_parameters.emplace("base-name", base);
-    BackendStore::setParameters(db_parameters);
+    parseExtraParameters(parameters, map);
 }
 
 void
-BackendStore::parseDatabase(const ConstElementPtr& parameters) {
+BackendStore::parseDatabase(const ConstElementPtr& parameters, DatabaseConnection::ParameterMap& map) {
     // Should never happen with the code flow at the time of writing, but
     // let's get this check out of the way.
     if (!parameters) {
@@ -126,7 +70,7 @@ BackendStore::parseDatabase(const ConstElementPtr& parameters) {
         ConstElementPtr const value(parameters->get(key));
         if (value) {
             int64_t integer_value(value->intValue());
-            auto const max(std::numeric_limits<uint32_t>::max());
+            auto const max(numeric_limits<uint32_t>::max());
             if (integer_value < 0 || max < integer_value) {
                 isc_throw(OutOfRange,
                           key << " value: " << integer_value
@@ -134,11 +78,11 @@ BackendStore::parseDatabase(const ConstElementPtr& parameters) {
                               << max);
             }
             db_parameters[key] =
-                boost::lexical_cast<std::string>(integer_value);
+                boost::lexical_cast<string>(integer_value);
         }
     }
 
-    std::string param_name = "tcp-nodelay";
+    string param_name = "tcp-nodelay";
     ConstElementPtr param = parameters->get(param_name);
     if (param) {
         db_parameters.emplace(param_name,
@@ -147,7 +91,7 @@ BackendStore::parseDatabase(const ConstElementPtr& parameters) {
 
     // Always set "on-fail" to "serve-retry-continue" if not explicitly
     // configured.
-    std::string on_fail_action = ReconnectCtl::onFailActionToText(OnFailAction::SERVE_RETRY_CONTINUE);
+    string on_fail_action = ReconnectCtl::onFailActionToText(OnFailAction::SERVE_RETRY_CONTINUE);
     param_name = "on-fail";
     param = parameters->get(param_name);
     if (param) {
@@ -168,71 +112,72 @@ BackendStore::parseDatabase(const ConstElementPtr& parameters) {
     param = parameters->get(param_name);
     if (param) {
         port = param->intValue();
-        if ((port < 0) || (port > std::numeric_limits<uint16_t>::max())) {
+        if ((port < 0) || (port > numeric_limits<uint16_t>::max())) {
             isc_throw(OutOfRange, param_name << " value: " << port
                       << " is out of range, expected value: 0.."
-                      << std::numeric_limits<uint16_t>::max());
+                      << numeric_limits<uint16_t>::max());
         }
         db_parameters.emplace(param_name,
-                              boost::lexical_cast<std::string>(port));
+                              boost::lexical_cast<string>(port));
     }
 
-    std::string redacted =
+    string redacted =
         DatabaseConnection::redactedAccessString(db_parameters);
 
-    std::string const dbtype(db_parameters["type"]);
-#ifdef HAVE_MYSQL
-    if (dbtype == "mysql") {
-        LOG_INFO(legal_log_logger, LEGAL_LOG_MYSQL_DB).arg(redacted);
-        BackendStore::instance().reset(new MySqlStore(db_parameters));
-        return;
-    }
-#endif
-#ifdef HAVE_PGSQL
-    if (dbtype == "postgresql") {
-        LOG_INFO(legal_log_logger, LEGAL_LOG_PGSQL_DB).arg(redacted);
-        BackendStore::instance().reset(new PgSqlStore(db_parameters));
-        return;
-    }
-#endif
-
-    if ((dbtype == "mysql") || (dbtype == "postgresql")) {
-        std::string with = (dbtype == "postgresql" ? "pgsql" : dbtype);
-        isc_throw(InvalidType, "The Kea server has not been compiled with "
-                  "support for database type: " << dbtype
-                  << ". Did you forget to use --with-"
-                  << with << " during compilation?");
-    }
-
-    isc_throw(InvalidType, "Database access parameter 'type' does "
-              "not specify a supported database backend: " << dbtype);
+    string const db_type(db_parameters["type"]);
+    map = db_parameters;
 }
 
 void
-BackendStore::parseExtraParameters(const ConstElementPtr& parameters) {
+BackendStore::parseFile(const ConstElementPtr& parameters, DatabaseConnection::ParameterMap& map) {
+    DatabaseConnection::ParameterMap file_parameters;
+    file_parameters["type"] = "logfile";
+
+    if (!parameters) {
+        map = file_parameters;
+        return;
+    }
+
+    // Strings
+    for (char const* const& key : { "path", "base-name", "time-unit", "prerotate", "postrotate" }) {
+        ConstElementPtr const value(parameters->get(key));
+        if (value) {
+            file_parameters.emplace(key, value->stringValue());
+        }
+    }
+
+    // uint32_t
+    for (char const* const& key : { "count" }) {
+        ConstElementPtr const value(parameters->get(key));
+        if (value) {
+            int64_t integer_value(value->intValue());
+            auto const max(numeric_limits<uint32_t>::max());
+            if (integer_value < 0 || max < integer_value) {
+                isc_throw(OutOfRange,
+                          key << " value: " << integer_value
+                              << " is out of range, expected value: 0.."
+                              << max);
+            }
+            file_parameters[key] = boost::lexical_cast<string>(integer_value);
+        }
+    }
+    map = file_parameters;
+}
+
+void
+BackendStore::parseExtraParameters(const ConstElementPtr& parameters, DatabaseConnection::ParameterMap& map) {
     if (!parameters) {
         return;
     }
 
-    ConstElementPtr param = parameters->get("request-parser-format");
-    if (param && !param->stringValue().empty()) {
-        BackendStore::instance()->setRequestFormatExpression(param->stringValue());
-    }
-
-    param = parameters->get("response-parser-format");
-    if (param && !param->stringValue().empty()) {
-        BackendStore::instance()->setResponseFormatExpression(param->stringValue());
-    }
-
-    param = parameters->get("timestamp-format");
-    if (param && !param->stringValue().empty()) {
-        BackendStore::instance()->setTimestampFormat(param->stringValue());
+    // Strings
+    for (char const* const& key : { "request-parser-format", "response-parser-format", "timestamp-format" }) {
+        ConstElementPtr const value(parameters->get(key));
+        if (value && !value->stringValue().empty()) {
+            map.emplace(key, value->stringValue());
+        }
     }
 }
-
-IOServicePtr BackendStore::io_service_;
-DatabaseConnection::ParameterMap BackendStore::parameters_;
-ConstElementPtr BackendStore::config_;
 
 struct tm
 BackendStore::currentTimeInfo() const {
@@ -249,35 +194,35 @@ BackendStore::now() const {
     return (now);
 }
 
-std::string
+string
 BackendStore::getNowString() const {
     // Get a text representation of the current time.
     return (getNowString(timestamp_format_));
 }
 
-std::string
-BackendStore::getNowString(const std::string& format) const {
+string
+BackendStore::getNowString(const string& format) const {
     // Get a text representation of the current time.
     return (getTimeString(now(), format));
 }
 
-std::string
-BackendStore::getTimeString(const struct timespec& time, const std::string& format) {
+string
+BackendStore::getTimeString(const struct timespec& time, const string& format) {
     // Get a text representation of the requested time.
 
     // First a quick and dirty support for fractional seconds: Replace any "%Q"
     // tokens in the format string with the microsecond count from the timespec,
     // before handing it off to strftime().
-    std::string tmp_format = format;
+    string tmp_format = format;
     for (auto it = tmp_format.begin(); it < tmp_format.end(); ++it) {
         if (*it == '%' && ((it + 1) < tmp_format.end())) {
             if (*(it + 1) == 'Q') {
                 // Save the current position.
-                std::string::size_type pos = it - tmp_format.begin();
+                string::size_type pos = it - tmp_format.begin();
                 // Render the microsecond count.
-                std::ostringstream usec;
-                usec << std::setw(6) << std::setfill('0') << (time.tv_nsec / 1000);
-                std::string microseconds = usec.str();
+                ostringstream usec;
+                usec << setw(6) << setfill('0') << (time.tv_nsec / 1000);
+                string microseconds = usec.str();
                 microseconds.insert(3, 1, '.');
                 tmp_format.replace(it, it + 2, microseconds);
                 // Reinitialize the iterator after manipulating the string.
@@ -299,10 +244,10 @@ BackendStore::getTimeString(const struct timespec& time, const std::string& form
                       << "' result is too long, maximum length allowed: "
                       << sizeof(buffer));
     }
-    return (std::string(buffer));
+    return (string(buffer));
 }
 
-std::string
+string
 BackendStore::genDurationString(const uint32_t secs) {
     // Because Kea handles lease lifetimes as uint32_t and supports
     // a value of 0xFFFFFFFF (infinite lifetime), we don't use things like
@@ -319,7 +264,7 @@ BackendStore::genDurationString(const uint32_t secs) {
     uint32_t hours = remainder % 24;
     uint32_t days = remainder / 24;
 
-    std::ostringstream os;
+    ostringstream os;
     // Only spit out days if we have em.
     if (days) {
         os << days << " days ";
@@ -332,32 +277,32 @@ BackendStore::genDurationString(const uint32_t secs) {
     return (os.str());
 }
 
-std::string
-BackendStore::vectorHexDump(const std::vector<uint8_t>& bytes,
-                         const std::string& delimiter) {
-    std::stringstream tmp;
-    tmp << std::hex;
+string
+BackendStore::vectorHexDump(const vector<uint8_t>& bytes,
+                         const string& delimiter) {
+    stringstream tmp;
+    tmp << hex;
     bool delim = false;
     for (auto const& it : bytes) {
         if (delim) {
             tmp << delimiter;
         }
-        tmp << std::setw(2) << std::setfill('0') << static_cast<unsigned int>(it);
+        tmp << setw(2) << setfill('0') << static_cast<unsigned int>(it);
         delim = true;
     }
     return (tmp.str());
 }
 
-std::string
-BackendStore::vectorDump(const std::vector<uint8_t>& bytes) {
+string
+BackendStore::vectorDump(const vector<uint8_t>& bytes) {
     if (bytes.empty()) {
-        return (std::string());
+        return (string());
     }
-    return (std::string(bytes.cbegin(), bytes.cend()));
+    return (string(bytes.cbegin(), bytes.cend()));
 }
 
 void
-BackendStore::setRequestFormatExpression(const std::string& extended_format) {
+BackendStore::setRequestFormatExpression(const string& extended_format) {
     Option::Universe universe;
     if (CfgMgr::instance().getFamily() == AF_INET) {
         universe = Option::V4;
@@ -370,7 +315,7 @@ BackendStore::setRequestFormatExpression(const std::string& extended_format) {
 }
 
 void
-BackendStore::setResponseFormatExpression(const std::string& extended_format) {
+BackendStore::setResponseFormatExpression(const string& extended_format) {
     Option::Universe universe;
     if (CfgMgr::instance().getFamily() == AF_INET) {
         universe = Option::V4;
@@ -383,11 +328,11 @@ BackendStore::setResponseFormatExpression(const std::string& extended_format) {
 }
 
 void
-BackendStore::setTimestampFormat(const std::string& timestamp_format) {
+BackendStore::setTimestampFormat(const string& timestamp_format) {
     timestamp_format_ = timestamp_format;
 }
 
-const std::string
+const string
 actionToVerb(Action action) {
     switch (action) {
     case Action::ASSIGN:
@@ -399,5 +344,5 @@ actionToVerb(Action action) {
     }
 }
 
-} // namespace legal_log
+} // namespace dhcp
 } // namespace isc

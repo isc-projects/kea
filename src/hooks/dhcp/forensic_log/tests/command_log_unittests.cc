@@ -8,7 +8,7 @@
 /// generation and callout: command_processed.
 /// These tests assume the legal log library is linked in, not loaded.
 /// This allows a great deal more flexibility in testing, such as overriding
-/// and accessing the BackendStore::instance().
+/// and accessing the BackendStoreFactory::instance().
 /// The load and unload callouts are exercised in ../libloadtests, which
 /// actually uses the HooksManager to load and unload the library.
 
@@ -557,7 +557,6 @@ TEST(CommandCalloutFuncs, getOptionalStringTest) {
     ASSERT_NO_THROW(ret = getOptionalString(arguments, "num", value));
     EXPECT_FALSE(ret);
     EXPECT_EQ("", value);
-
 }
 
 // Exercises the getOptionInt() function
@@ -582,7 +581,6 @@ TEST(CommandCalloutFuncs, getOptionalIntTest) {
     ASSERT_NO_THROW(ret = getOptionalInt(arguments, "not-there", value));
     EXPECT_FALSE(ret);
     EXPECT_EQ(0, value);
-
 }
 
 // Exercises the isPrefix() function
@@ -613,7 +611,7 @@ TEST(CommandCalloutFuncs, isPrefixTest) {
 
 // Exercises the addDuration() function
 TEST_F(CalloutTest, addDurationTest) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     // Should generate duration text of 1 day based on valid-lft
     ConstElementPtr arguments;
@@ -631,7 +629,7 @@ TEST_F(CalloutTest, addDurationTest) {
     EXPECT_EQ(os.str(), "");
 
     // Should have a duration of 2 days based on expire timestamp.
-    int64_t expire = BackendStore::instance()->now().tv_sec + 172800;
+    int64_t expire = BackendStoreFactory::instance()->now().tv_sec + 172800;
     os.str("");
     os << "{ \"expire\":" << expire << "}";
     ASSERT_NO_THROW(arguments = Element::fromJSON(os.str()));
@@ -643,7 +641,7 @@ TEST_F(CalloutTest, addDurationTest) {
 
 // Exercises the addContext() function
 TEST_F(CalloutTest, addContext) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     // Should not generate user context text.
     string args = "{ \"some-other\": 86400 }";
@@ -679,7 +677,7 @@ TEST_F(CalloutTest, addContext) {
 // Iterates over a list of valid command/argument combinations and verifies that
 // each produces the expected log in the log file
 TEST_F(CalloutTest, validCommandEntries) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     // Make a callout handle
     CalloutHandle handle(getCalloutManager());
@@ -717,17 +715,17 @@ TEST_F(CalloutTest, validCommandEntries) {
     }
 
     // Close it to flush any unwritten data
-    BackendStore::instance()->close();
+    BackendStoreFactory::instance()->close();
 
     // Verify that the file content is correct.
-    string today_now_string = BackendStore::instance()->getNowString();
+    string today_now_string = BackendStoreFactory::instance()->getNowString();
     checkFileLines(genName(today()), today_now_string, lines);
 }
 
 // Iterates over a list of valid command/argument combinations and verifies that
 // each produces the expected log in the log file
 TEST_F(CalloutTest, responseWithErrorsLease6BulkApplyCommandEntries) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     // Make a callout handle
     CalloutHandle handle(getCalloutManager());
@@ -828,17 +826,17 @@ TEST_F(CalloutTest, responseWithErrorsLease6BulkApplyCommandEntries) {
     }
 
     // Close it to flush any unwritten data
-    BackendStore::instance()->close();
+    BackendStoreFactory::instance()->close();
 
     // Verify that the file content is correct.
-    string today_now_string = BackendStore::instance()->getNowString();
+    string today_now_string = BackendStoreFactory::instance()->getNowString();
     checkFileLines(genName(today()), today_now_string, lines);
 }
 
 // This test verifies that it is possible to disable logging for selected IPv4
 // subnets.
 TEST_F(CalloutTest, disableLoggingForSubnet4) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     // Create a subnet with user context disabling legal logging.
     Subnet4Ptr subnet4(new Subnet4(IOAddress("192.0.2.0"), 24, 30, 40, 50,
@@ -903,17 +901,17 @@ TEST_F(CalloutTest, disableLoggingForSubnet4) {
     }
 
     // Close it to flush any unwritten data
-    BackendStore::instance()->close();
+    BackendStoreFactory::instance()->close();
 
     // Verify that the file content is correct.
-    string today_now_string = BackendStore::instance()->getNowString();
+    string today_now_string = BackendStoreFactory::instance()->getNowString();
     checkFileLines(genName(today()), today_now_string, lines);
 }
 
 // This test verifies that it is possible to disable logging for selected IPv6
 // subnets.
 TEST_F(CalloutTest, disableLoggingForSubnet6) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     // Create a subnet with user context disabling legal logging.
     Subnet6Ptr subnet6(new Subnet6(IOAddress("2001:db8::"), 48, 30, 40, 50, 60,
@@ -976,16 +974,16 @@ TEST_F(CalloutTest, disableLoggingForSubnet6) {
     }
 
     // Close it to flush any unwritten data
-    BackendStore::instance()->close();
+    BackendStoreFactory::instance()->close();
 
     // Verify that the file content is correct.
-    string today_now_string = BackendStore::instance()->getNowString();
+    string today_now_string = BackendStoreFactory::instance()->getNowString();
     checkFileLines(genName(today()), today_now_string, lines);
 }
 
 // Tests that a command with a failed result code does not generate a log entry
 TEST_F(CalloutTest, failedCommand) {
-    ASSERT_NO_THROW(BackendStore::instance().reset(new TestableRotatingFile(time_)));
+    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     // Make a callout handle
     CalloutHandle handle(getCalloutManager());
@@ -1018,10 +1016,10 @@ TEST_F(CalloutTest, failedCommand) {
     ASSERT_EQ(0, ret);
 
     // Close it to flush any unwritten data
-    BackendStore::instance()->close();
+    BackendStoreFactory::instance()->close();
 
     // Verify that the file content has only the one expected line.
-    string today_now_string = BackendStore::instance()->getNowString();
+    string today_now_string = BackendStoreFactory::instance()->getNowString();
     checkFileLines(genName(today()), today_now_string, lines);
 }
 

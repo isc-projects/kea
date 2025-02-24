@@ -28,7 +28,6 @@ kea_cryptolink_headers = [
     'cryptolink.h',
     'crypto_rng.h',
     'openssl_common.h',
-    'openssl_compat.h',
 ]
 install_headers(
     kea_cryptolink_headers,

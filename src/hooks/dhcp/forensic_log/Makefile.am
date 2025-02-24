@@ -5,12 +5,6 @@ legal_log_dir = @localstatedir@/lib/@PACKAGE@
 AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
 AM_CPPFLAGS += -DLEGAL_LOG_DIR="\"$(legal_log_dir)\""
-if HAVE_MYSQL
-AM_CPPFLAGS += $(MYSQL_CPPFLAGS)
-endif
-if HAVE_PGSQL
-AM_CPPFLAGS += $(PGSQL_CPPFLAGS)
-endif
 
 AM_CXXFLAGS  = $(KEA_CXXFLAGS)
 
@@ -38,19 +32,9 @@ liblegl_la_SOURCES += lease4_callouts.cc
 liblegl_la_SOURCES += lease6_callouts.cc
 liblegl_la_SOURCES += legal_log_log.cc legal_log_log.h
 liblegl_la_SOURCES += legal_log_messages.cc legal_log_messages.h
-liblegl_la_SOURCES += legal_log_db_log.cc legal_log_db_log.h
-liblegl_la_SOURCES += backend_store.cc backend_store.h
 liblegl_la_SOURCES += rotating_file.cc rotating_file.h
 liblegl_la_SOURCES += subnets_user_context.h
 liblegl_la_SOURCES += version.cc
-
-if HAVE_MYSQL
-liblegl_la_SOURCES += mysql_legal_log.cc mysql_legal_log.h
-endif
-
-if HAVE_PGSQL
-liblegl_la_SOURCES += pgsql_legal_log.cc pgsql_legal_log.h
-endif
 
 liblegl_la_CXXFLAGS = $(AM_CXXFLAGS)
 liblegl_la_CPPFLAGS = $(AM_CPPFLAGS)
@@ -69,14 +53,6 @@ libdhcp_legal_log_la_LIBADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 libdhcp_legal_log_la_LIBADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 libdhcp_legal_log_la_LIBADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 libdhcp_legal_log_la_LIBADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
-
-if HAVE_MYSQL
-libdhcp_legal_log_la_LIBADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
-endif
-if HAVE_PGSQL
-libdhcp_legal_log_la_LIBADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
-endif
-
 libdhcp_legal_log_la_LIBADD += $(top_builddir)/src/lib/database/libkea-database.la
 libdhcp_legal_log_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libdhcp_legal_log_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
@@ -86,12 +62,6 @@ libdhcp_legal_log_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-excepti
 libdhcp_legal_log_la_LIBADD += $(LOG4CPLUS_LIBS)
 libdhcp_legal_log_la_LIBADD += $(BOOST_LIBS)
 libdhcp_legal_log_la_LIBADD += $(CRYPTO_LIBS)
-if HAVE_MYSQL
-libdhcp_legal_log_la_LDFLAGS += $(MYSQL_LIBS)
-endif
-if HAVE_PGSQL
-libdhcp_legal_log_la_LDFLAGS += $(PGSQL_LIBS)
-endif
 
 # Doxygen documentation
 

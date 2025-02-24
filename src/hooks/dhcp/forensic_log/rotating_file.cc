@@ -8,7 +8,6 @@
 
 #include <asiolink/process_spawn.h>
 #include <legal_log_log.h>
-#include <backend_store.h>
 #include <rotating_file.h>
 #include <util/multi_threading_mgr.h>
 
@@ -23,19 +22,76 @@
 
 using namespace isc::asiolink;
 using namespace isc::util;
+using namespace isc::dhcp;
+using namespace isc::data;
+using namespace isc::db;
+using namespace std;
 
 namespace isc {
 namespace legal_log {
+RotatingFile::RotatingFile(const DatabaseConnection::ParameterMap& parameters)
+    : BackendStore(parameters), time_unit_(TimeUnit::Day), count_(1), timestamp_(0) {
+    apply(parameters);
+}
 
-RotatingFile::RotatingFile(const std::string& path,
-                           const std::string& base_name,
-                           const TimeUnit unit,
-                           const uint32_t count,
-                           const std::string& prerotate,
-                           const std::string& postrotate)
-    : path_(path), base_name_(base_name), time_unit_(unit), count_(count),
-      file_name_(), file_(), prerotate_(prerotate), postrotate_(postrotate),
-      timestamp_(0), mutex_() {
+void
+RotatingFile::apply(const DatabaseConnection::ParameterMap& parameters) {
+    string path(LEGAL_LOG_DIR);
+    string base("kea-legal");
+    RotatingFile::TimeUnit unit(RotatingFile::TimeUnit::Day);
+    int64_t count(1);
+    string count_str;
+    string prerotate;
+    string postrotate;
+
+    // Prioritize parameters.
+    if (parameters.find("path") != parameters.end()) {
+        path = parameters.at("path");
+    }
+    if (parameters.find("base-name") != parameters.end()) {
+        base = parameters.at("base-name");
+    }
+    if (parameters.find("time-unit") != parameters.end()) {
+        string time_unit(parameters.at("time-unit"));
+
+        if (time_unit == "second") {
+            unit = RotatingFile::TimeUnit::Second;
+        } else if (time_unit == "day") {
+            unit = RotatingFile::TimeUnit::Day;
+        } else if (time_unit == "month") {
+            unit = RotatingFile::TimeUnit::Month;
+        } else if (time_unit == "year") {
+            unit = RotatingFile::TimeUnit::Year;
+        } else {
+            isc_throw(BadValue, "unknown time unit type: " << time_unit
+                        << ", expected one of: second, day, month, year");
+        }
+    }
+    if (parameters.find("count") != parameters.end()) {
+        try {
+            count = boost::lexical_cast<int64_t>(parameters.at("count"));
+        } catch (...) {
+            isc_throw(BadValue, "bad value: " << parameters.at("count") << " for count parameter");
+        }
+        if ((count < 0) ||
+            (count > numeric_limits<uint32_t>::max())) {
+            isc_throw(OutOfRange, "count value: " << count
+                    << " is out of range, expected value: 0.."
+                    << numeric_limits<uint32_t>::max());
+        }
+    }
+    if (parameters.find("prerotate") != parameters.end()) {
+        prerotate = parameters.at("prerotate");
+    }
+    if (parameters.find("postrotate") != parameters.end()) {
+        postrotate = parameters.at("postrotate");
+    }
+    path_ = path;
+    base_name_ = base;
+    time_unit_ = unit;
+    count_ = static_cast<uint32_t>(count);
+    prerotate_ = prerotate;
+    postrotate_ = postrotate;
 
     if (path_.empty()) {
         isc_throw(BackendStoreError, "path cannot be blank");
@@ -45,17 +101,17 @@ RotatingFile::RotatingFile(const std::string& path,
         isc_throw(BackendStoreError, "file name cannot be blank");
     }
 
-    if (!prerotate.empty()) {
+    if (!prerotate_.empty()) {
         try {
-            ProcessSpawn process(ProcessSpawn::ASYNC, prerotate);
+            ProcessSpawn process(ProcessSpawn::ASYNC, prerotate_);
         } catch (const isc::Exception& ex) {
             isc_throw(BackendStoreError, "Invalid 'prerotate' parameter: " << ex.what());
         }
     }
 
-    if (!postrotate.empty()) {
+    if (!postrotate_.empty()) {
         try {
-            ProcessSpawn process(ProcessSpawn::ASYNC, postrotate);
+            ProcessSpawn process(ProcessSpawn::ASYNC, postrotate_);
         } catch (const isc::Exception& ex) {
             isc_throw(BackendStoreError, "Invalid 'postrotate' parameter: " << ex.what());
         }
@@ -66,24 +122,24 @@ RotatingFile::~RotatingFile() {
     close();
 };
 
-std::string
+string
 RotatingFile::getYearMonthDay(const struct tm& time_info) {
     char buffer[128];
     strftime(buffer, sizeof(buffer), "%Y%m%d", &time_info);
-    return (std::string(buffer));
+    return (string(buffer));
 }
 
 void
 RotatingFile::updateFileNameAndTimestamp(struct tm& time_info, bool use_existing) {
-    std::ostringstream stream;
-    std::string name = base_name_ + ".";
+    ostringstream stream;
+    string name = base_name_ + ".";
 
     stream << path_ << "/";
 
     if (time_unit_ == TimeUnit::Second) {
         time_t timestamp = mktime(&time_info);
-        std::ostringstream name_stream;
-        name_stream << std::right << std::setfill('0') << std::setw(20)
+        ostringstream name_stream;
+        name_stream << right << setfill('0') << setw(20)
                     << static_cast<uint64_t>(timestamp);
         name += "T";
         name += name_stream.str();
@@ -107,14 +163,14 @@ RotatingFile::useExistingFiles(struct tm& time_info) {
         return;
     }
 
-    std::unique_ptr<DIR, void(*)(DIR*)> defer(dir, [](DIR* d) { closedir(d); });
+    unique_ptr<DIR, void(*)(DIR*)> defer(dir, [](DIR* d) { closedir(d); });
 
     // Set of sorted files by name.
-    std::set<std::string> files;
+    set<string> files;
 
     // Add only files of interest that could be used to append logging data.
     for (struct dirent* dent = readdir(dir); dent; dent = readdir(dir)) {
-        std::string name(dent->d_name);
+        string name(dent->d_name);
         // Supported file formats are: 'base-name.YYYYMMDD.txt' and
         // 'base-name.TXXXXXXXXXXXXXXXXXXXX.txt'.
         if ((name.size() != (base_name_.size() + sizeof(".YYYYMMDD.txt") - 1)) &&
@@ -127,7 +183,7 @@ RotatingFile::useExistingFiles(struct tm& time_info) {
             continue;
         }
 
-        std::string file = name.substr(0, name.size() - 4);
+        string file = name.substr(0, name.size() - 4);
 
         // Skip files that are not beginning with base name.
         if (base_name_ != file.substr(0, base_name_.size())) {
@@ -148,7 +204,7 @@ RotatingFile::useExistingFiles(struct tm& time_info) {
             continue;
         }
         for (; index < tag_size; ++index) {
-            if (!std::isdigit(file.at(index))) {
+            if (!isdigit(file.at(index))) {
                 break;
             }
         }
@@ -162,7 +218,7 @@ RotatingFile::useExistingFiles(struct tm& time_info) {
         return;
     }
 
-    std::string file = *files.rbegin();
+    string file = *files.rbegin();
 
     if (time_unit_ == TimeUnit::Second) {
         time_t file_timestamp;
@@ -227,7 +283,7 @@ void
 RotatingFile::openInternal(struct tm& time_info, bool use_existing) {
     updateFileNameAndTimestamp(time_info, use_existing);
     // Open the file
-    file_.open(file_name_.c_str(), std::ofstream::app);
+    file_.open(file_name_.c_str(), ofstream::app);
     int sav_error = errno;
     if (!file_.is_open()) {
         isc_throw(BackendStoreError, "cannot open file:" << file_name_
@@ -310,9 +366,9 @@ RotatingFile::rotate() {
 }
 
 void
-RotatingFile::writeln(const std::string& text, const std::string&) {
+RotatingFile::writeln(const string& text, const string&) {
     if (util::MultiThreadingMgr::instance().getMode()) {
-        std::lock_guard<std::mutex> lock(mutex_);
+        lock_guard<mutex> lock(mutex_);
         writelnInternal(text);
     } else {
         writelnInternal(text);
@@ -320,7 +376,7 @@ RotatingFile::writeln(const std::string& text, const std::string&) {
 }
 
 void
-RotatingFile::writelnInternal(const std::string& text) {
+RotatingFile::writelnInternal(const string& text) {
     if (text.empty()) {
         return;
     }
@@ -328,10 +384,10 @@ RotatingFile::writelnInternal(const std::string& text) {
     // Call rotate in case we've crossed days since we last wrote.
     rotate();
 
-    std::string timestamp = getNowString();
-    std::stringstream ss(text);
-    for (std::string line; std::getline(ss, line, '\n');) {
-        file_ << timestamp << " " << line << std::endl;
+    string timestamp = getNowString();
+    stringstream ss(text);
+    for (string line; getline(ss, line, '\n');) {
+        file_ << timestamp << " " << line << endl;
     }
     int sav_error = errno;
     if (!file_.good()) {
@@ -354,12 +410,19 @@ RotatingFile::close() {
             file_.flush();
             file_.close();
         }
-    } catch (const std::exception& ex) {
+    } catch (const exception& ex) {
         // Highly unlikely to occur but let's at least spit out an error.
         // Beyond that we swallow it for tidiness.
         LOG_ERROR(legal_log_logger, LEGAL_LOG_STORE_CLOSE_ERROR)
                   .arg(file_name_).arg(ex.what());
     }
+}
+
+BackendStorePtr
+RotatingFile::factory(const DatabaseConnection::ParameterMap& parameters) {
+    LOG_INFO(legal_log_logger, LEGAL_LOG_STORE_OPEN)
+        .arg(DatabaseConnection::redactedAccessString(parameters));
+    return (BackendStorePtr(new RotatingFile(parameters)));
 }
 
 } // namespace legal_log
