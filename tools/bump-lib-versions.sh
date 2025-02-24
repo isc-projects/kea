@@ -6,10 +6,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-# Usage:
-#
-# ./tools/bump-lib-versions.sh Kea-1.9.1 Kea-1.9.2
-
 set -eu
 
 # Define some ANSI color codes.
@@ -26,12 +22,12 @@ fi
 # shellcheck disable=SC2016
 print_usage() {
   printf \
-'Usage: %s {{options}} $old_release_tag $new_release_tag
+'Usage: %s {{options}} [$new_release_tag]
 Options:
   [-d|--debug]                 enable debug mode, showing every executed command
   [-h|--help]                  print usage (this text)
 Example:
-  ./tools/bump_lib_versions.sh Kea-1.9.1 Kea-1.9.2
+  ./tools/bump_lib_versions.sh Kea-1.2.3
 ' \
     "$(basename "${0}")"
 }
@@ -52,7 +48,6 @@ while test ${#} -gt 0; do
     '-h'|'--help') print_usage; exit 0 ;;
 
     *)
-    test -z "${old_release_tag+x}" && old_release_tag=${1} && shift && continue
     test -z "${new_release_tag+x}" && new_release_tag=${1} && shift && continue
 
     # Unrecognized argument
@@ -60,12 +55,6 @@ while test ${#} -gt 0; do
   esac; shift
 done
 
-# Check for mandatory arguments.
-# Expressions don't expand in single quotes, use double quotes for that. [SC2016]
-# shellcheck disable=SC2016
-test -z "${old_release_tag+x}" && error '$old_release_tag is mandatory'
-# shellcheck disable=SC2016
-test -z "${new_release_tag+x}" && error '$new_release_tag is mandatory'
 
 is_stable_release() {
   version_number=$(printf '%s' "${1}" | cut -d . -f2)
@@ -85,6 +74,19 @@ find_latest_stable_release_tag() {
     fi
   done
 }
+
+old_release_tag=$(git describe --tags HEAD | grep -Eo 'Kea-[0-9]+\.[0-9]+\.[0-9]+')
+if test -z "${new_release_tag+x}"; then
+  patch_version=$(echo "${old_release_tag}" | grep -Eo '[0-9]+$')
+  patch_version=$((patch_version + 1))
+  new_release_tag=$(echo "${old_release_tag}" | sed "s/.[0-9]*$/.${patch_version}/")
+  printf 'No version provided. Assuming that the target version is "%s".' "${new_release_tag}"
+  if test -t 1; then
+    printf ' Press any key to continue... '
+    read -r _
+  fi
+  printf '\n'
+fi
 
 is_old_tag_stable_release=$(is_stable_release "${old_release_tag}" && printf true || printf false)
 is_new_tag_stable_release=$(is_stable_release "${new_release_tag}" && printf true || printf false)
