@@ -1,4 +1,4 @@
-kea_dns_lib = library(
+kea_dns_lib = shared_library(
     'kea-dns',
     'char_string.cc',
     'edns.cc',
@@ -30,6 +30,7 @@ kea_dns_lib = library(
     install: true,
     install_dir: 'lib',
     link_with: LIBS_BUILT_SO_FAR,
+    version: '68.0.0',
 )
 LIBS_BUILT_SO_FAR = [kea_dns_lib] + LIBS_BUILT_SO_FAR
 subdir('tests')

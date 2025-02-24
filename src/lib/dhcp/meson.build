@@ -10,7 +10,7 @@ else
     error(f'Build failed: Unsupported system "@SYSTEM@".')
 endif
 
-kea_dhcp_lib = library(
+kea_dhcp_lib = shared_library(
     'kea-dhcp',
     'classify.cc',
     'duid.cc',
@@ -58,6 +58,7 @@ kea_dhcp_lib = library(
     install: true,
     install_dir: 'lib',
     link_with: LIBS_BUILT_SO_FAR,
+    version: '106.0.0',
 )
 LIBS_BUILT_SO_FAR = [kea_dhcp_lib] + LIBS_BUILT_SO_FAR
 subdir('testutils')

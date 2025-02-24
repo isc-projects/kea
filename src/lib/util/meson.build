@@ -1,4 +1,4 @@
-kea_util_lib = library(
+kea_util_lib = shared_library(
     'kea-util',
     'boost_time_utils.cc',
     'chrono_time_utils.cc',
@@ -23,6 +23,7 @@ kea_util_lib = library(
     install: true,
     install_dir: 'lib',
     link_with: LIBS_BUILT_SO_FAR,
+    version: '98.0.0',
 )
 subdir('io')
 subdir('unittests')

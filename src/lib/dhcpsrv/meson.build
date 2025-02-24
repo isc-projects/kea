@@ -1,4 +1,4 @@
-kea_dhcpsrv_lib = library(
+kea_dhcpsrv_lib = shared_library(
     'kea-dhcpsrv',
     'allocation_state.cc',
     'allocator.cc',
@@ -94,6 +94,7 @@ kea_dhcpsrv_lib = library(
     install: true,
     install_dir: 'lib',
     link_with: LIBS_BUILT_SO_FAR,
+    version: '125.0.0',
 )
 LIBS_BUILT_SO_FAR = [kea_dhcpsrv_lib] + LIBS_BUILT_SO_FAR
 subdir('testutils')

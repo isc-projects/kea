@@ -1,4 +1,4 @@
-kea_tcp_lib = library(
+kea_tcp_lib = shared_library(
     'kea-tcp',
     'mt_tcp_listener_mgr.cc',
     'tcp_connection.cc',
@@ -12,6 +12,7 @@ kea_tcp_lib = library(
     install: true,
     install_dir: 'lib',
     link_with: LIBS_BUILT_SO_FAR,
+    version: '31.0.0',
 )
 LIBS_BUILT_SO_FAR = [kea_tcp_lib] + LIBS_BUILT_SO_FAR
 subdir('tests')

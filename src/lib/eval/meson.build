@@ -1,4 +1,4 @@
-kea_eval_lib = library(
+kea_eval_lib = shared_library(
     'kea-eval',
     'dependency.cc',
     'evaluate.cc',
@@ -12,6 +12,7 @@ kea_eval_lib = library(
     install: true,
     install_dir: 'lib',
     link_with: LIBS_BUILT_SO_FAR,
+    version: '81.0.0',
 )
 LIBS_BUILT_SO_FAR = [kea_eval_lib] + LIBS_BUILT_SO_FAR
 subdir('tests')

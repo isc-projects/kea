@@ -1,4 +1,4 @@
-kea_stats_lib = library(
+kea_stats_lib = shared_library(
     'kea-stats',
     'context.cc',
     'observation.cc',
@@ -7,6 +7,7 @@ kea_stats_lib = library(
     install: true,
     install_dir: 'lib',
     link_with: LIBS_BUILT_SO_FAR,
+    version: '51.0.0',
 )
 LIBS_BUILT_SO_FAR = [kea_stats_lib] + LIBS_BUILT_SO_FAR
 subdir('tests')

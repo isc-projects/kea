@@ -2,7 +2,7 @@ if not mysql.found()
     subdir_done()
 endif
 
-kea_mysql_lib = library(
+kea_mysql_lib = shared_library(
     'kea-mysql',
     'mysql_binding.cc',
     'mysql_connection.cc',
@@ -12,6 +12,7 @@ kea_mysql_lib = library(
     install: true,
     install_dir: 'lib',
     link_with: LIBS_BUILT_SO_FAR,
+    version: '85.0.0',
 )
 LIBS_BUILT_SO_FAR = [kea_mysql_lib] + LIBS_BUILT_SO_FAR
 subdir('testutils')

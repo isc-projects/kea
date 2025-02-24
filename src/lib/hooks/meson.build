@@ -1,4 +1,4 @@
-kea_hooks_lib = library(
+kea_hooks_lib = shared_library(
     'kea-hooks',
     'callout_handle.cc',
     'callout_handle_associate.cc',
@@ -18,6 +18,7 @@ kea_hooks_lib = library(
     install: true,
     install_dir: 'lib',
     link_with: LIBS_BUILT_SO_FAR,
+    version: '114.0.0',
 )
 LIBS_BUILT_SO_FAR = [kea_hooks_lib] + LIBS_BUILT_SO_FAR
 subdir('tests')

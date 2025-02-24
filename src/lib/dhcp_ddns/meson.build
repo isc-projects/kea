@@ -1,4 +1,4 @@
-kea_dhcp_ddns_lib = library(
+kea_dhcp_ddns_lib = shared_library(
     'kea-dhcp_ddns',
     'dhcp_ddns_log.cc',
     'dhcp_ddns_messages.cc',
@@ -9,6 +9,7 @@ kea_dhcp_ddns_lib = library(
     install: true,
     install_dir: 'lib',
     link_with: LIBS_BUILT_SO_FAR,
+    version: '66.0.0',
 )
 LIBS_BUILT_SO_FAR = [kea_dhcp_ddns_lib] + LIBS_BUILT_SO_FAR
 subdir('tests')

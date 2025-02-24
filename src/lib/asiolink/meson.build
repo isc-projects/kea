@@ -1,4 +1,4 @@
-kea_asiolink_lib = library(
+kea_asiolink_lib = shared_library(
     'kea-asiolink',
     'addr_utilities.cc',
     'botan_tls.cc',
@@ -19,6 +19,7 @@ kea_asiolink_lib = library(
     install: true,
     install_dir: 'lib',
     link_with: LIBS_BUILT_SO_FAR,
+    version: '83.0.0',
     # Avoids: ld: error: undefined symbol: environ on FreeBSD
     override_options: ENVIRON_SHLIB_FLAGS,
 )

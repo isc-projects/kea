@@ -1,4 +1,4 @@
-kea_http_lib = library(
+kea_http_lib = shared_library(
     'kea-http',
     'auth_log.cc',
     'auth_messages.cc',
@@ -30,6 +30,7 @@ kea_http_lib = library(
     install: true,
     install_dir: 'lib',
     link_with: LIBS_BUILT_SO_FAR,
+    version: '85.0.0',
 )
 LIBS_BUILT_SO_FAR = [kea_http_lib] + LIBS_BUILT_SO_FAR
 subdir('tests')

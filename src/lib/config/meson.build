@@ -1,4 +1,4 @@
-kea_config_lib = library(
+kea_config_lib = shared_library(
     'kea-config',
     'base_command_mgr.cc',
     'client_connection.cc',
@@ -18,6 +18,7 @@ kea_config_lib = library(
     install: true,
     install_dir: 'lib',
     link_with: LIBS_BUILT_SO_FAR,
+    version: '80.0.0',
 )
 LIBS_BUILT_SO_FAR = [kea_config_lib] + LIBS_BUILT_SO_FAR
 subdir('tests')

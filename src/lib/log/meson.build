@@ -1,5 +1,5 @@
 subdir('interprocess')
-kea_log_lib = library(
+kea_log_lib = shared_library(
     'kea-log',
     'buffer_appender_impl.cc',
     'logger.cc',
@@ -25,6 +25,7 @@ kea_log_lib = library(
     install: true,
     install_dir: 'lib',
     link_with: LIBS_BUILT_SO_FAR,
+    version: '72.0.0',
 )
 LIBS_BUILT_SO_FAR = [kea_log_lib] + LIBS_BUILT_SO_FAR
 subdir('compiler')

@@ -1,10 +1,11 @@
-kea_exceptions_lib = library(
+kea_exceptions_lib = shared_library(
     'kea-exceptions',
     'exceptions.cc',
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib',
     link_with: LIBS_BUILT_SO_FAR,
+    version: '43.0.0',
 )
 LIBS_BUILT_SO_FAR = [kea_exceptions_lib] + LIBS_BUILT_SO_FAR
 subdir('tests')

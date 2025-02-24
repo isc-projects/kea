@@ -2,7 +2,7 @@ kea_cc_lib_cpp_args = []
 if gtest.found()
     kea_cc_lib_cpp_args = ['-DALLOW_KEATEST']
 endif
-kea_cc_lib = library(
+kea_cc_lib = shared_library(
     'kea-cc',
     'base_stamped_element.cc',
     'command_interpreter.cc',
@@ -19,6 +19,7 @@ kea_cc_lib = library(
     install: true,
     install_dir: 'lib',
     link_with: LIBS_BUILT_SO_FAR,
+    version: '80.0.0',
 )
 LIBS_BUILT_SO_FAR = [kea_cc_lib] + LIBS_BUILT_SO_FAR
 subdir('tests')

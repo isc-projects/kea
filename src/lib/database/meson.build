@@ -1,4 +1,4 @@
-kea_database_lib = library(
+kea_database_lib = shared_library(
     'kea-database',
     'audit_entry.cc',
     'backend_selector.cc',
@@ -13,6 +13,7 @@ kea_database_lib = library(
     install: true,
     install_dir: 'lib',
     link_with: LIBS_BUILT_SO_FAR,
+    version: '74.0.0',
 )
 LIBS_BUILT_SO_FAR = [kea_database_lib] + LIBS_BUILT_SO_FAR
 subdir('testutils')

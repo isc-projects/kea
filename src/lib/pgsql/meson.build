@@ -2,7 +2,7 @@ if not postgresql.found()
     subdir_done()
 endif
 
-kea_pgsql_lib = library(
+kea_pgsql_lib = shared_library(
     'kea-pgsql',
     'pgsql_connection.cc',
     'pgsql_exchange.cc',
@@ -12,6 +12,7 @@ kea_pgsql_lib = library(
     install: true,
     install_dir: 'lib',
     link_with: LIBS_BUILT_SO_FAR,
+    version: '85.0.0',
 )
 LIBS_BUILT_SO_FAR = [kea_pgsql_lib] + LIBS_BUILT_SO_FAR
 subdir('testutils')

@@ -1,5 +1,5 @@
 subdir('cfgrpt')
-kea_process_lib = library(
+kea_process_lib = shared_library(
     'kea-process',
     'config_base.cc',
     'config_ctl_info.cc',
@@ -18,6 +18,7 @@ kea_process_lib = library(
     install: true,
     install_dir: 'lib',
     link_with: LIBS_BUILT_SO_FAR,
+    version: '86.0.0',
 )
 LIBS_BUILT_SO_FAR = [kea_process_lib] + LIBS_BUILT_SO_FAR
 subdir('testutils')

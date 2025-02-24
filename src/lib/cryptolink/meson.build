@@ -5,7 +5,7 @@ elif crypto.name() == openssl.name()
     sources += ['openssl_hash.cc', 'openssl_hmac.cc', 'openssl_link.cc']
 endif
 
-kea_cryptolink_lib = library(
+kea_cryptolink_lib = shared_library(
     'kea-cryptolink',
     'cryptolink.cc',
     'crypto_hash.cc',
@@ -17,6 +17,7 @@ kea_cryptolink_lib = library(
     install: true,
     install_dir: 'lib',
     link_with: LIBS_BUILT_SO_FAR,
+    version: '61.0.0',
 )
 LIBS_BUILT_SO_FAR = [kea_cryptolink_lib] + LIBS_BUILT_SO_FAR
 subdir('tests')

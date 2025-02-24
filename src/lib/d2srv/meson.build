@@ -1,4 +1,4 @@
-kea_d2srv_lib = library(
+kea_d2srv_lib = shared_library(
     'kea-d2srv',
     'd2_cfg_mgr.cc',
     'd2_config.cc',
@@ -16,6 +16,7 @@ kea_d2srv_lib = library(
     install: true,
     install_dir: 'lib',
     link_with: LIBS_BUILT_SO_FAR,
+    version: '61.0.0',
 )
 LIBS_BUILT_SO_FAR = [kea_d2srv_lib] + LIBS_BUILT_SO_FAR
 subdir('testutils')

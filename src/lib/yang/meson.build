@@ -2,7 +2,7 @@ if not NETCONF_DEPS_FOUND
     subdir_done()
 endif
 
-kea_yang_lib = library(
+kea_yang_lib = shared_library(
     'kea-yang',
     'adaptor.cc',
     'adaptor_config.cc',
@@ -28,6 +28,7 @@ kea_yang_lib = library(
     install: true,
     install_dir: 'lib',
     link_with: LIBS_BUILT_SO_FAR,
+    version: '71.0.0',
     override_options: ['cpp_std=c++20'],
 )
 LIBS_BUILT_SO_FAR = [kea_yang_lib] + LIBS_BUILT_SO_FAR
