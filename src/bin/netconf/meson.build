@@ -52,7 +52,7 @@ if KEA_MSG_COMPILER.found()
     TARGETS_GEN_MESSAGES += [target_gen_messages]
 endif
 
-if flex_exe.found() and bison_exe.found()
+if FLEX.found() and BISON.found()
     target_parser = run_target(
         'src-bin-netconf-parser',
         command: [

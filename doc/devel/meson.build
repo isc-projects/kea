@@ -1,4 +1,4 @@
-if not doxygen_exe.found()
+if not DOXYGEN.found()
     subdir_done()
 endif
 

@@ -29,7 +29,7 @@ executable(
 )
 subdir('tests')
 
-if flex_exe.found() and bison_exe.found()
+if FLEX.found() and BISON.found()
     current_source_dir = meson.current_source_dir()
     target_parser = run_target(
         'src-bin-d2-parser',

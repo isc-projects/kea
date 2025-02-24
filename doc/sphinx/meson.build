@@ -1,4 +1,4 @@
-if not python_exe.found()
+if not PYTHON.found()
     subdir_done()
 endif
 
@@ -76,21 +76,21 @@ make_conf_data.set('builddir', meson.current_build_dir())
 make_conf_data.set('srcdir', meson.current_source_dir())
 make_conf_data.set('sphinxbuilddir', sphinxbuilddir)
 make_conf_data.set('abs_sphinxbuilddir', abs_sphinxbuilddir)
-make_conf_data.set('PYTHON', python_exe.full_path())
+make_conf_data.set('PYTHON', PYTHON.full_path())
 make_conf_data.set('TOP_SOURCE_DIR', TOP_SOURCE_DIR)
-if pdflatex_exe.found()
+if PDFLATEX.found()
     make_conf_data.set('HAVE_PDFLATEX', 'yes')
-    pdflatex = pdflatex_exe.full_path()
+    pdflatex = PDFLATEX.full_path()
 else
     make_conf_data.set('HAVE_PDFLATEX', 'no')
     pdflatex = 'false'
 endif
 make_conf_data.set('PDFLATEX_AND_OPTS', pdflatex + ' -interaction nonstopmode')
-make_conf_data.set('SPHINXBUILD', sphinx_exe.full_path())
+make_conf_data.set('SPHINXBUILD', SPHINX.full_path())
 make_conf_data.set('sphinxopts', ' '.join(sphinxopts))
-if plantuml_exe.found()
+if PLANTUML.found()
     make_conf_data.set('HAVE_PLANTUML', 'yes')
-    plantuml = plantuml_exe.full_path()
+    plantuml = PLANTUML.full_path()
 else
     make_conf_data.set('HAVE_PLANTUML', 'no')
     plantuml = 'false'
@@ -98,7 +98,7 @@ endif
 make_conf_data.set('PLANTUML', plantuml)
 make_conf_data.set('umls', ' '.join(umls))
 make_conf_data.set('svgs', ' '.join(svgs))
-if xmllint_exe.found()
+if XMLLINT.found()
     make_conf_data.set('HAVE_XMLLINT', 'yes')
 else
     make_conf_data.set('HAVE_XMLLINT', 'no')
@@ -106,7 +106,7 @@ endif
 tumls = ['uml/tkey.uml', 'uml/update.uml']
 make_conf_data.set('tumls', ' '.join(tumls))
 make_conf_data.set('txts', ' '.join(txts))
-if pip_compile_exe.found()
+if PIP_COMPILE.found()
     make_conf_data.set('HAVE_PIP_COMPILE', 'yes')
 else
     make_conf_data.set('HAVE_PIP_COMPILE', 'no')
@@ -115,12 +115,12 @@ make_conf_data.set('man8s', ' '.join(man8s))
 make_conf_data.set('PREFIX', PREFIX)
 docdir = f'@PREFIX@/@DATADIR@/kea'
 make_conf_data.set('docdir', docdir)
-make_conf_data.set('INSTALL', install_exe.full_path())
+make_conf_data.set('INSTALL', INSTALL.full_path())
 mandir = get_option('mandir')
 mandir8 = f'@PREFIX@/@mandir@/man8/'
 make_conf_data.set('mandir8', mandir8)
 
-if sphinx_exe.found()
+if SPHINX.found()
     make_doc = configure_file(
         input: 'make-doc.sh.in',
         output: 'make-doc.sh',

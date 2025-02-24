@@ -1,14 +1,14 @@
-if not python_exe.found()
+if not PYTHON.found()
     subdir_done()
 endif
 
 kea_shell_conf_data = configuration_data()
-kea_shell_conf_data.set('PYTHON', PYTHON)
+kea_shell_conf_data.set('PYTHON', PYTHON.full_path())
 kea_shell_conf_data.set('PACKAGE_VERSION', project_version)
 kea_shell_conf_data.set('EXTENDED_VERSION', project_version + ' (tarball)')
 
 r = run_command(
-    python_exe,
+    PYTHON,
     '-c',
     'import sysconfig; print(sysconfig.get_paths()[\'purelib\'])',
     check: true,

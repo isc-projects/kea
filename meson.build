@@ -1,11 +1,5 @@
 # Require meson >= 0.64.0 for preserve_path arg in install_data.
-project(
-    'kea',
-    'cpp',
-    version: '2.7.7-git',
-    meson_version: '>=0.64.0',
-    default_options: ['default_library=shared'],
-)
+project('kea', 'cpp', version: '2.7.7-git', meson_version: '>=0.64.0')
 
 cpp = meson.get_compiler('cpp')
 project_version = meson.project_version()
@@ -155,33 +149,23 @@ message(f'Detected system "@SYSTEM@".')
 
 #### Programs
 
-python_exe = find_program('python3', 'python', required: false)
-flex_exe = find_program('flex', version: '>=2.6.4', required: false)
-bison_exe = find_program('bison', version: '>=3.3.0', required: false)
-awk_exe = find_program('gawk', 'awk', required: false)
-doxygen_exe = find_program('doxygen', required: false)
-sphinx_exe = find_program('sphinx-build', 'sphinx-build-3', required: false)
-pdflatex_exe = find_program('pdflatex', required: false)
-plantuml_exe = find_program('plantuml', required: false)
-xmllint_exe = find_program('xmllint', required: false)
-pip_compile_exe = find_program('pip-compile', required: false)
-install_exe = find_program('install', required: true)
-valgrind_exe = find_program('valgrind', required: false)
-cppcheck_exe = find_program('cppcheck', required: false)
-cppcheck_htmlreport_exe = find_program('cppcheck-htmlreport', required: false)
+# External programs used only in this file.
+cppcheck = find_program('cppcheck', required: false)
+cppcheck_htmlreport = find_program('cppcheck-htmlreport', required: false)
+valgrind = find_program('valgrind', required: false)
 
-if python_exe.found()
-    PYTHON = python_exe.full_path()
-endif
-if flex_exe.found()
-    FLEX = flex_exe.full_path()
-endif
-if bison_exe.found()
-    BISON = bison_exe.full_path()
-endif
-if awk_exe.found()
-    AWK = awk_exe.full_path()
-endif
+AWK = find_program('gawk', 'awk', required: false)
+BISON = find_program('bison', version: '>=3.3.0', required: false)
+DOXYGEN = find_program('doxygen', required: false)
+FLEX = find_program('flex', version: '>=2.6.4', required: false)
+INSTALL = find_program('install', required: true)
+PDFLATEX = find_program('pdflatex', required: false)
+PIP_COMPILE = find_program('pip-compile', required: false)
+PLANTUML = find_program('plantuml', required: false)
+PYTHON = find_program('python3', 'python', required: false)
+SPHINX = find_program('sphinx-build', 'sphinx-build-3', required: false)
+XMLLINT = find_program('xmllint', required: false)
+
 CD_AND_RUN = find_program(f'@TOP_SOURCE_DIR@/cd-and-run.sh')
 KEA_MSG_COMPILER = disabler()
 
@@ -489,11 +473,11 @@ endif
 report_conf_data.set('CXX_ARGS', ' '.join(compile_args))
 report_conf_data.set('LD_ID', cpp.get_linker_id())
 report_conf_data.set('LD_ARGS', ' '.join(link_args))
-if python_exe.found()
+if PYTHON.found()
     report_conf_data.set('HAVE_PYTHON', 'yes')
-    report_conf_data.set('PYTHON_PATH', PYTHON)
+    report_conf_data.set('PYTHON_PATH', PYTHON.full_path())
     result = run_command(
-        python_exe,
+        PYTHON,
         '-c',
         'import sysconfig; print(sysconfig.get_paths()[\'purelib\'])',
         check: false,
@@ -575,13 +559,13 @@ if result.returncode() == 0
 else
     report_conf_data.set('LOG4CPLUS_VERSION', log4cplus.version())
 endif
-if flex_exe.found()
-    report_conf_data.set('FLEX', FLEX)
+if FLEX.found()
+    report_conf_data.set('FLEX', FLEX.full_path())
 else
     report_conf_data.set('FLEX', 'unknown')
 endif
-if bison_exe.found()
-    report_conf_data.set('BISON', BISON)
+if BISON.found()
+    report_conf_data.set('BISON', BISON.full_path())
 else
     report_conf_data.set('BISON', 'unknown')
 endif
@@ -658,11 +642,11 @@ run_target(
 )
 
 # todo: remove redirections
-if cppcheck_exe.found()
+if cppcheck.found()
     run_target(
         'cppcheck',
         command: [
-            cppcheck_exe,
+            cppcheck,
             '-I.',
             '-I./src/lib',
             '-I./src/bin',
@@ -682,11 +666,11 @@ if cppcheck_exe.found()
     )
 endif
 
-if cppcheck_htmlreport_exe.found()
+if cppcheck_htmlreport.found()
     run_target(
         'cppcheck-report',
         command: [
-            cppcheck_htmlreport_exe,
+            cppcheck_htmlreport,
             '--file',
             './cppcheck-result.xml',
             '--report-dir',
@@ -697,11 +681,11 @@ if cppcheck_htmlreport_exe.found()
     )
 endif
 
-if valgrind_exe.found()
+if valgrind.found()
     add_test_setup(
         'valgrind',
         exe_wrapper: [
-            valgrind_exe,
+            valgrind,
             '--child-silent-after-fork=yes',
             '--fullpath-after=',
             '--leak-check=full',
