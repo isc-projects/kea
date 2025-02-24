@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1740,6 +1740,10 @@ TEST(CfgSubnets6Test, updateStatistics) {
     ASSERT_FALSE(observation);
 
     observation = StatsMgr::instance().getObservation(
+        "cumulative-registered-nas");
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
         "declined-addresses");
     ASSERT_FALSE(observation);
 
@@ -1793,6 +1797,11 @@ TEST(CfgSubnets6Test, updateStatistics) {
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
+                               "registered-nas"));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
                                "cumulative-assigned-nas"));
     ASSERT_FALSE(observation);
 
@@ -1809,6 +1818,11 @@ TEST(CfgSubnets6Test, updateStatistics) {
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
                                StatsMgr::generateName("pd-pool", 0, "cumulative-assigned-pds")));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               "cumulative-registered-nas"));
     ASSERT_FALSE(observation);
 
     observation = StatsMgr::instance().getObservation(
@@ -1859,6 +1873,11 @@ TEST(CfgSubnets6Test, updateStatistics) {
     ASSERT_EQ(0, observation->getInteger().first);
 
     observation = StatsMgr::instance().getObservation(
+        "cumulative-registered-nas");
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    observation = StatsMgr::instance().getObservation(
         "declined-addresses");
     ASSERT_TRUE(observation);
     ASSERT_EQ(0, observation->getInteger().first);
@@ -1923,6 +1942,12 @@ TEST(CfgSubnets6Test, updateStatistics) {
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
+                               "registered-nas"));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
                                "cumulative-assigned-nas"));
     ASSERT_TRUE(observation);
     ASSERT_EQ(0, observation->getInteger().first);
@@ -1942,6 +1967,12 @@ TEST(CfgSubnets6Test, updateStatistics) {
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
                                StatsMgr::generateName("pd-pool", 0, "cumulative-assigned-pds")));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               "cumulative-registered-nas"));
     ASSERT_TRUE(observation);
     ASSERT_EQ(0, observation->getInteger().first);
 
@@ -2066,6 +2097,17 @@ TEST(CfgSubnets6Test, removeStatistics) {
 
     StatsMgr::instance().setValue(
         StatsMgr::generateName("subnet", subnet_id,
+                               "registered-nas"),
+        int64_t(0));
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               "registered-nas"));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    StatsMgr::instance().setValue(
+        StatsMgr::generateName("subnet", subnet_id,
                                StatsMgr::generateName("pool", 0, "assigned-nas")),
         int64_t(0));
 
@@ -2105,6 +2147,17 @@ TEST(CfgSubnets6Test, removeStatistics) {
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
                                "cumulative-assigned-nas"));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    StatsMgr::instance().setValue(
+        StatsMgr::generateName("subnet", subnet_id,
+                               "cumulative-registered-nas"),
+        int64_t(0));
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               "cumulative-registered-nas"));
     ASSERT_TRUE(observation);
     ASSERT_EQ(0, observation->getInteger().first);
 
@@ -2248,6 +2301,11 @@ TEST(CfgSubnets6Test, removeStatistics) {
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
+                               "registered-nas"));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
                                StatsMgr::generateName("pool", 0, "assigned-nas")));
     ASSERT_FALSE(observation);
 
@@ -2264,6 +2322,11 @@ TEST(CfgSubnets6Test, removeStatistics) {
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
                                "cumulative-assigned-nas"));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               "cumulative-registered-nas"));
     ASSERT_FALSE(observation);
 
     observation = StatsMgr::instance().getObservation(

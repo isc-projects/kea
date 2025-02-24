@@ -485,6 +485,36 @@ lease6_decline () {
     ECHO_TO_FILE "SUCCESS"
 }
 
+addr6_register() {
+    TEST_EQ "QUERY6_TYPE" "UNKNOWN"
+    TEST_EQ "QUERY6_TXID" "0"
+    TEST_EQ "QUERY6_LOCAL_ADDR" "ff02::1:2"
+    TEST_EQ "QUERY6_LOCAL_PORT" "0"
+    TEST_EQ "QUERY6_REMOTE_ADDR" "fe80::21e:8cff:fe9b:7349"
+    TEST_EQ "QUERY6_REMOTE_PORT" "546"
+    TEST_EQ "QUERY6_IFACE_INDEX" "2"
+    TEST_EQ "QUERY6_IFACE_NAME" "eth1"
+    TEST_EQ "QUERY6_REMOTE_HWADDR" "00:01:02:03"
+    TEST_EQ "QUERY6_REMOTE_HWADDR_TYPE" "1"
+    TEST_EQ "QUERY6_PROTO" "UDP"
+    TEST_EQ "QUERY6_CLIENT_ID" "00:01:02:03:04:05:06"
+    TEST_EQ "ADDRESS6" "2003:db8::1"
+    TEST_EQ "NEW_LEASE6_ADDRESS" "2003:db8::1"
+    TEST_EQ "NEW_LEASE6_CLTT" "7"
+    TEST_EQ "NEW_LEASE6_HOSTNAME" "test.hostname"
+    TEST_EQ "NEW_LEASE6_HWADDR" "00:01:02:03"
+    TEST_EQ "NEW_LEASE6_HWADDR_TYPE" "1"
+    TEST_EQ "NEW_LEASE6_STATE" "default"
+    TEST_EQ "NEW_LEASE6_SUBNET_ID" "5"
+    TEST_EQ "NEW_LEASE6_VALID_LIFETIME" "4"
+    TEST_EQ "NEW_LEASE6_DUID" "00:01:02:03:04:05:06"
+    TEST_EQ "NEW_LEASE6_IAID" "2"
+    TEST_EQ "NEW_LEASE6_PREFERRED_LIFETIME" "3"
+    TEST_EQ "NEW_LEASE6_PREFIX_LEN" "128"
+    TEST_EQ "NEW_LEASE6_TYPE" "IA_NA"
+    ECHO_TO_FILE "SUCCESS"
+}
+
 case "$1" in
     "lease4_renew")
         lease4_renew
@@ -524,6 +554,9 @@ case "$1" in
         ;;
     "lease6_decline")
         lease6_decline
+        ;;
+    "addr6_register")
+        addr6_register
         ;;
     *)
         unknown_handle "${@}"

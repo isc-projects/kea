@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -3232,6 +3232,8 @@ GenericLeaseMgrTest::testRecountLeaseStats6() {
         expectedStats[i]["reclaimed-leases"] = 0;
         expectedStats[i]["assigned-pds"] = 0;
         expectedStats[i]["cumulative-assigned-pds"] = 0;
+        expectedStats[i]["registered-nas"] = SubnetPoolVal(0, false);
+        expectedStats[i]["cumulative-registered-nas"] = SubnetPoolVal(0, false);
     }
 
     // Stats should not be present because the subnet has no PD pool.
@@ -3256,6 +3258,7 @@ GenericLeaseMgrTest::testRecountLeaseStats6() {
     // Check that cumulative global stats always exist.
     EXPECT_TRUE(StatsMgr::instance().getObservation("cumulative-assigned-nas"));
     EXPECT_TRUE(StatsMgr::instance().getObservation("cumulative-assigned-pds"));
+    EXPECT_TRUE(StatsMgr::instance().getObservation("cumulative-registered-nas"));
 
     // Now let's insert some leases into subnet 1.
     subnet_id = 1;
@@ -3288,6 +3291,13 @@ GenericLeaseMgrTest::testRecountLeaseStats6() {
     makeLease6(Lease::TYPE_PD, "3001:1:2:0400::", 112, subnet_id,
                Lease::STATE_EXPIRED_RECLAIMED);
 
+    // Insert two registered NAs.
+    makeLease6(Lease::TYPE_NA, "3001:1::7", 128, subnet_id,
+               Lease::STATE_REGISTERED);
+    Lease6Ptr leaser = makeLease6(Lease::TYPE_NA, "3001:1::8", 128, subnet_id,
+                                  Lease::STATE_REGISTERED);
+    expectedStats[subnet_id - 1]["registered-nas"] = SubnetPoolVal(2, false);
+
     // Now let's add leases to subnet 2.
     subnet_id = 2;
 
@@ -3314,7 +3324,9 @@ GenericLeaseMgrTest::testRecountLeaseStats6() {
 
     // Delete some leases and update the expected stats.
     EXPECT_TRUE(lmptr_->deleteLease(lease2));
+    EXPECT_TRUE(lmptr_->deleteLease(leaser));
     expectedStats[0]["assigned-nas"] = 4;
+    expectedStats[0]["registered-nas"] = SubnetPoolVal(1, false);
 
     EXPECT_TRUE(lmptr_->deleteLease(lease3));
     expectedStats[1]["assigned-nas"] = 2;

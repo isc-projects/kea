@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -672,6 +672,7 @@ public:
     ///
     /// - Lease::STATE_DEFAULT (i.e. assigned)
     /// - Lease::STATE_DECLINED
+    /// - Lease::STATE_REGISTERED
     void start() {
         switch (getSelectMode()) {
         case ALL_SUBNETS:
@@ -701,6 +702,7 @@ private:
     ///
     /// - Lease::STATE_DEFAULT (i.e. assigned)
     /// - Lease::STATE_DECLINED
+    /// - Lease::STATE_REGISTERED
     virtual void startSubnets() {
         const Lease6StorageSubnetIdIndex& idx
             = storage6_.get<SubnetIdIndexTag>();
@@ -740,6 +742,7 @@ private:
         int64_t assigned = 0;
         int64_t declined = 0;
         int64_t assigned_pds = 0;
+        int64_t registered = 0;
         for (Lease6StorageSubnetIdIndex::const_iterator lease = lower;
              lease != upper; ++lease) {
             // If we've hit the next subnet, add rows for the current subnet
@@ -766,6 +769,13 @@ private:
                                                       assigned_pds));
                         assigned_pds = 0;
                     }
+
+                    if (registered > 0) {
+                        rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_NA,
+                                                      Lease::STATE_REGISTERED,
+                                                      registered));
+                        registered = 0;
+                    }
                 }
 
                 // Update current subnet id
@@ -789,6 +799,11 @@ private:
                 if (((*lease)->type_) == Lease::TYPE_NA) {
                     ++declined;
                 }
+            } else if ((*lease)->state_ == Lease::STATE_REGISTERED) {
+                // In theory only NAs can be registered
+                if (((*lease)->type_) == Lease::TYPE_NA) {
+                    ++registered;
+                }
             }
         }
 
@@ -806,6 +821,11 @@ private:
         if (assigned_pds > 0) {
             rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_PD,
                                           Lease::STATE_DEFAULT, assigned_pds));
+        }
+
+        if (registered > 0) {
+            rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_NA,
+                                          Lease::STATE_REGISTERED, registered));
         }
 
         // Set the next row position to the beginning of the rows.
