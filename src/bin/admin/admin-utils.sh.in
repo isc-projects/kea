@@ -219,7 +219,7 @@ START TRANSACTION; \
 DELETE FROM lease6_stat; \
 INSERT INTO lease6_stat (subnet_id, lease_type, state, leases) \
     SELECT subnet_id, lease_type, state, COUNT(*) \
-    FROM lease6 WHERE state = 0 OR state = 1 \
+    FROM lease6 WHERE state = 0 OR state = 1 OR state = 4 \
     GROUP BY subnet_id, lease_type, state; \
 DELETE FROM lease6_pool_stat; \
 INSERT INTO lease6_pool_stat (subnet_id, pool_id, lease_type, state, leases) \

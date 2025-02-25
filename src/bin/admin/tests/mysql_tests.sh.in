@@ -2542,7 +2542,9 @@ mysql_lease_stat_recount_test() {
  insert into lease6 (address, lease_type, subnet_id, state) values ('::333',1,40,0);\
  insert into lease6 (address, lease_type, subnet_id, state) values ('::444',1,50,0);\
  insert into lease6 (address, lease_type, subnet_id, pool_id, state) values ('::555',1,50,2,0);\
- insert into lease6 (address, lease_type, subnet_id, state) values ('::666',1,40,2)"
+ insert into lease6 (address, lease_type, subnet_id, state) values ('::666',1,40,2);\
+ insert into lease6 (address, lease_type, subnet_id, state) values ('::777',0,40,4);\
+ insert into lease6 (address, lease_type, subnet_id, state) values ('::888',0,40,4)"
     run_statement "insert v6 leases" "$qry"
 
     # Now we change some counters.
@@ -2556,19 +2558,21 @@ mysql_lease_stat_recount_test() {
 "insert into lease4_pool_stat (subnet_id, pool_id, state, leases) values (20,3,0,1);\
  update lease4_pool_stat set leases = 5 where subnet_id = 10 and pool_id = 0 and state = 0;\
  delete from lease4_pool_stat where subnet_id = 10 and pool_id = 0 and state = 2"
-    run_statement "change v4 stats" "$qry"
+    run_statement "change v4 pool stats" "$qry"
 
     qry=\
 "insert into lease6_stat (subnet_id, lease_type, state, leases) values (20,1,0,1);\
  update lease6_stat set leases = 5 where subnet_id = 40 and lease_type = 0 and state = 0;\
- delete from lease6_stat where subnet_id = 40 and lease_type = 1 and state = 2"
+ update lease6_stat set leases = 1 where subnet_id = 40 and lease_type = 0 and state = 4;\
+ delete from lease6_stat where subnet_id = 40 and lease_type = 1 and state = 2;\
+ delete from lease6_stat where subnet_id = 40 and lease_type = 0 and state = 4"
     run_statement "change v6 stats" "$qry"
 
     qry=\
 "insert into lease6_pool_stat (subnet_id, pool_id, lease_type, state, leases) values (20,3,1,0,1);\
  update lease6_pool_stat set leases = 5 where subnet_id = 40 and lease_type = 0 and pool_id = 0 and state = 0;\
  delete from lease6_pool_stat where subnet_id = 40 and lease_type = 1 and pool_id = 0 and state = 2"
-    run_statement "change v6 stats" "$qry"
+    run_statement "change v6 pool stats" "$qry"
 
     # Recount all statistics from scratch.
     run_command \
@@ -2583,11 +2587,11 @@ mysql_lease_stat_recount_test() {
     qry="select leases from lease4_stat where subnet_id = 10 and state = 0"
     run_statement "#4.1" "$qry" 2
 
-    # Assigned leases for subnet 10 should be 1
+    # Assigned leases for subnet 10 pool 0 should be 1
     qry="select leases from lease4_pool_stat where subnet_id = 10 and pool_id = 0 and state = 0"
     run_statement "#4.2" "$qry" 1
 
-    # Assigned leases for subnet 10 should be 1
+    # Assigned leases for subnet 10 pool 1 should be 1
     qry="select leases from lease4_pool_stat where subnet_id = 10 and pool_id = 1 and state = 0"
     run_statement "#4.3" "$qry" 1
 
@@ -2595,7 +2599,7 @@ mysql_lease_stat_recount_test() {
     qry="select leases from lease4_stat where subnet_id = 10 and state = 1"
     run_statement "#4.4" "$qry" 1
 
-    # Assigned leases for subnet 10 should be 1
+    # Declined leases for subnet 10 pool 0 should be 1
     qry="select leases from lease4_pool_stat where subnet_id = 10 and pool_id = 0 and state = 1"
     run_statement "#4.5" "$qry" 1
 
@@ -2603,7 +2607,7 @@ mysql_lease_stat_recount_test() {
     qry="select leases from lease4_stat where subnet_id = 77 and state = 0"
     run_statement "#4.6" "$qry" 1
 
-    # Assigned leases for subnet 77 should be 1
+    # Assigned leases for subnet 77 pool 2 should be 1
     qry="select leases from lease4_pool_stat where subnet_id = 77 and pool_id = 2 and state = 0"
     run_statement "#4.7" "$qry" 1
 
@@ -2615,6 +2619,14 @@ mysql_lease_stat_recount_test() {
     qry="select count(subnet_id) from lease4_pool_stat where state = 2"
     run_statement "#4.9" "$qry" 0
 
+    # Should be no records for RELEASED
+    qry="select count(subnet_id) from lease4_stat where state = 3"
+    run_statement "#4.10" "$qry" 0
+
+    # Should be no records for RELEASED
+    qry="select count(subnet_id) from lease4_pool_stat where state = 3"
+    run_statement "#4.11" "$qry" 0
+
     #
     # Next we'll verify lease6_stats are correct after recount.
     #
@@ -2623,7 +2635,7 @@ mysql_lease_stat_recount_test() {
     qry="select leases from lease6_stat where subnet_id = 40 and lease_type = 0 and state = 0"
     run_statement "#6.1" "$qry" 1
 
-    # Assigned leases for subnet 40 should be 1
+    # Assigned leases for subnet 40 pool 0 should be 1
     qry="select leases from lease6_pool_stat where subnet_id = 40 and lease_type = 0 and pool_id = 0 and state = 0"
     run_statement "#6.2" "$qry" 1
 
@@ -2631,7 +2643,7 @@ mysql_lease_stat_recount_test() {
     qry="select leases from lease6_stat where subnet_id = 40 and lease_type = 1 and state = 0"
     run_statement "#6.3" "$qry" 1
 
-    # Assigned (PD) leases for subnet 40 should be 1
+    # Assigned (PD) leases for subnet 40 pool 0 should be 1
     qry="select leases from lease6_pool_stat where subnet_id = 40 and lease_type = 1 and pool_id = 0 and state = 0"
     run_statement "#6.4" "$qry" 1
 
@@ -2639,7 +2651,7 @@ mysql_lease_stat_recount_test() {
     qry="select leases from lease6_stat where subnet_id = 40 and lease_type = 0 and state = 1"
     run_statement "#6.5" "$qry" 1
 
-    # Declined leases for subnet 40 should be 1
+    # Declined leases for subnet 40 pool 1 should be 1
     qry="select leases from lease6_pool_stat where subnet_id = 40 and lease_type = 0 and pool_id = 1 and state = 1"
     run_statement "#6.6" "$qry" 1
 
@@ -2647,11 +2659,11 @@ mysql_lease_stat_recount_test() {
     qry="select leases from lease6_stat where subnet_id = 50 and lease_type = 1 and state = 0"
     run_statement "#6.7" "$qry" 2
 
-    # Assigned (PD) leases for subnet 50 should be 1
+    # Assigned (PD) leases for subnet 50 pool 0 should be 1
     qry="select leases from lease6_pool_stat where subnet_id = 50 and lease_type = 1 and pool_id = 0 and state = 0"
     run_statement "#6.8" "$qry" 1
 
-    # Assigned (PD) leases for subnet 50 should be 1
+    # Assigned (PD) leases for subnet 50 pool 2 should be 1
     qry="select leases from lease6_pool_stat where subnet_id = 50 and lease_type = 1 and pool_id = 2 and state = 0"
     run_statement "#6.9" "$qry" 1
 
@@ -2662,6 +2674,18 @@ mysql_lease_stat_recount_test() {
     # Should be no records for EXPIRED
     qry="select count(subnet_id) from lease6_pool_stat where state = 2"
     run_statement "#6.11" "$qry" 0
+
+    # Should be no records for RELEASED
+    qry="select count(subnet_id) from lease6_stat where state = 3"
+    run_statement "#6.12" "$qry" 0
+
+    # Should be no records for RELEASED
+    qry="select count(subnet_id) from lease6_pool_stat where state = 3"
+    run_statement "#6.13" "$qry" 0
+
+    # Registered leases for subet 40 should be 2
+    qry="select leases from lease6_stat where subnet_id = 40 and lease_type = 0 and state = 4"
+    run_statement "#6.14" "$qry" 2
 
     # Let's wipe the whole database
     mysql_wipe
