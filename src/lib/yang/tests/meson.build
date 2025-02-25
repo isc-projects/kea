@@ -36,4 +36,10 @@ kea_yang_tests = executable(
     link_with: [kea_yang_tests_libs] + LIBS_BUILT_SO_FAR,
     override_options: ['cpp_std=c++20'],
 )
-test('kea-yang-tests', kea_yang_tests, protocol: 'gtest')
+test(
+    'kea-yang-tests',
+    kea_yang_tests,
+    protocol: 'gtest',
+    is_parallel: false,
+    priority: -1,
+)

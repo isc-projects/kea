@@ -19,4 +19,10 @@ dhcp_perfmon_lib_tests = executable(
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
     link_with: [dhcp_perfmon_archive, [kea_testutils_lib]] + LIBS_BUILT_SO_FAR,
 )
-test('dhcp-perfmon-lib-tests', dhcp_perfmon_lib_tests, protocol: 'gtest')
+test(
+    'dhcp-perfmon-lib-tests',
+    dhcp_perfmon_lib_tests,
+    protocol: 'gtest',
+    is_parallel: false,
+    priority: -1,
+)

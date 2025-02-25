@@ -41,4 +41,10 @@ kea_asiolink_tests = executable(
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [kea_asiolink_testutils_lib, kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )
-test('kea-asiolink-tests', kea_asiolink_tests, protocol: 'gtest')
+test(
+    'kea-asiolink-tests',
+    kea_asiolink_tests,
+    protocol: 'gtest',
+    is_parallel: false,
+    priority: -1,
+)

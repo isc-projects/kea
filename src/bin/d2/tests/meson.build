@@ -96,5 +96,7 @@ test(
     kea_d2_tests,
     depends: [callout, configured],
     protocol: 'gtest',
+    is_parallel: false,
+    priority: -1,
 )
 

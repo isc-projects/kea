@@ -43,6 +43,13 @@ kea_netconf_tests = executable(
     ] + LIBS_BUILT_SO_FAR,
     override_options: ['cpp_std=c++20'],
 )
-test('kea-netconf-tests', kea_netconf_tests, depends: [basic], protocol: 'gtest')
+test(
+    'kea-netconf-tests',
+    kea_netconf_tests,
+    depends: [basic],
+    protocol: 'gtest',
+    is_parallel: false,
+    priority: -1,
+)
 
 subdir('shtests')
