@@ -59,10 +59,6 @@ mysql "$@" <<EOF
 -- New lease state for address registration
 INSERT INTO lease_state VALUES (4, 'registered');
 
--- Update the schema version number.
-UPDATE schema_version
-    SET version = '29', minor = '0';
-
 -- Update *_lease6_stat stored procedures to count registered leases.
 -- Not *_lease6_pool_stat because a registered address in not from a pool
 -- Not *_lease6_stat_by_client_class because it is for state 0 only
@@ -185,6 +181,10 @@ BEGIN
     END IF;
 END $$
 DELIMITER ;
+
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '29', minor = '0';
 
 -- This line concludes the schema upgrade to version 29.0.
 
