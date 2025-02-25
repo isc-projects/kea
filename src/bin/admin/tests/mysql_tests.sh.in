@@ -2195,8 +2195,77 @@ mysql_lease6_stat_per_type() {
     run_statement "#19" "$qry" 1
 }
 
+# Verifies that lease6_stat triggers operate correctly
+# for registered (state 4) leases.
+# insert a lease, update it, and delete checking the
+# lease stat counts along the way.  It assumes the
+# database has been created but is empty.
+# param addr - address to use to add to subnet 1
+mysql_lease6_stat_registered() {
+    addr=$1;shift
+    addr1=$1;shift
+    addr2=$1
+
+    # insert a registered lease6 for addr
+    qry="insert into lease6 (address, lease_type, subnet_id, state, user_context) values (inet6_aton('$addr'),0,1,4,'{\"foo\": true}')"
+    run_statement "#2" "$qry"
+
+    # registered stat should be 1
+    qry="select leases from lease6_stat where subnet_id = 1 and lease_type = 0 and state = 4"
+    run_statement "#3" "$qry" 1
+
+    # update the lease, changing user context, keeping state.
+    qry="update lease6 set user_context = '{\"bar\": 1}' where address = inet6_aton('$addr')"
+    run_statement "#4" "$qry"
+
+    # leases count for registered state should be 1
+    qry="select leases from lease6_stat where subnet_id = 1 and lease_type = 0 and state = 4"
+    run_statement "#5" "$qry" 1
+
+    # delete the lease
+    qry="delete from lease6 where address = inet6_aton('$addr')"
+    run_statement "#6" "$qry"
+
+    # leases count for registered state should be 0
+    qry="select leases from lease6_stat where subnet_id = 1 and lease_type = 0 and state = 4"
+    run_statement "#7" "$qry" 0
+
+    # insert a registered lease6 for addr1
+    qry="insert into lease6 (address, lease_type, subnet_id, state) values (inet6_aton('$addr1'),0,1,4)"
+    run_statement "#8" "$qry"
+
+    # registered stat should be 1
+    qry="select leases from lease6_stat where subnet_id = 1 and lease_type = 0 and state = 4"
+    run_statement "#9" "$qry" 1
+
+    # update the lease, changing state
+    qry="update lease6 set state = 3 where address = inet6_aton('$addr1')"
+    run_statement "#10" "$qry"
+
+    # registered stat should be 0
+    qry="select leases from lease6_stat where subnet_id = 1 and lease_type = 0 and state = 4"
+    run_statement "#11" "$qry" 0
+
+    # insert a released lease6 for addr2
+    qry="insert into lease6 (address, lease_type, subnet_id, state) values (inet6_aton('$addr2'),0,1,3)"
+    run_statement "#12" "$qry"
+
+    # registered stat should be 0
+    qry="select leases from lease6_stat where subnet_id = 1 and lease_type = 0 and state = 4"
+    run_statement "#13" "$qry" 0
+
+    # update the lease, changing state
+    qry="update lease6 set state = 4 where address = inet6_aton('$addr2')"
+    run_statement "#14" "$qry"
+
+    # registered stat should be 1
+    qry="select leases from lease6_stat where subnet_id = 1 and lease_type = 0 and state = 4"
+    run_statement "#15" "$qry" 1
+}
+
 # Verifies that lease6_stat triggers operation correctly
 # for both NA and PD lease types, mysql_lease6_stat_per_type()
+# and for mysql_lease6_stat_registered()
 mysql_lease6_stat_test() {
 
     test_start "mysql.lease6_stat_test"
@@ -2218,6 +2287,9 @@ mysql_lease6_stat_test() {
 
     # Test for address ::22, PD lease type
     mysql_lease6_stat_per_type "::22" "::23" "::24" "1"
+
+    # Test for registered address ::33
+    mysql_lease6_stat_registered "::33" "::34" "::35"
 
     # Let's wipe the whole database
     mysql_wipe

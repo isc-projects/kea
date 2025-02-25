@@ -1,4 +1,4 @@
--- Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
+-- Copyright (C) 2012-2025 Internet Systems Consortium, Inc. ("ISC")
 
 -- This Source Code Form is subject to the terms of the Mozilla Public
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6626,6 +6626,84 @@ UPDATE schema_version
 
 -- New lease state for address registration
 INSERT INTO lease_state VALUES (4, 'registered');
+
+-- Update *_lease6_stat stored procedures to count registered leases.
+-- Not *_lease6_pool_stat because a registered address in not from a pool
+-- Not *_lease6_stat_by_client_class because it is for state 0 only
+
+CREATE OR REPLACE FUNCTION lease6_AINS_lease6_stat(IN new_state BIGINT,
+                                                   IN new_subnet_id BIGINT,
+                                                   IN new_lease_type SMALLINT)
+RETURNS VOID
+AS $$
+BEGIN
+    IF new_state = 0 OR new_state = 1 OR new_state = 4 THEN
+        -- Update the state count if it exists.
+        UPDATE lease6_stat SET leases = leases + 1
+            WHERE subnet_id = new_subnet_id AND lease_type = new_lease_type
+            AND state = new_state;
+
+        -- Insert the state count record if it does not exist.
+        IF NOT FOUND THEN
+            INSERT INTO lease6_stat VALUES (new_subnet_id, new_lease_type, new_state, 1);
+        END IF;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION lease6_AUPD_lease6_stat(IN old_state BIGINT,
+                                                   IN old_subnet_id BIGINT,
+                                                   IN old_lease_type SMALLINT,
+                                                   IN new_state BIGINT,
+                                                   IN new_subnet_id BIGINT,
+                                                   IN new_lease_type SMALLINT)
+RETURNS VOID
+AS $$
+BEGIN
+    IF old_subnet_id != new_subnet_id OR
+       old_lease_type != new_lease_type OR
+       old_state != new_state THEN
+        IF old_state = 0 OR old_state = 1 OR old_state = 4 THEN
+            -- Decrement the old state count if record exists.
+            UPDATE lease6_stat
+                SET leases = GREATEST(leases - 1, 0)
+                WHERE subnet_id = old_subnet_id AND lease_type = old_lease_type
+                AND state = old_state;
+        END IF;
+
+        IF new_state = 0 OR new_state = 1 OR new_state = 4 THEN
+            -- Increment the new state count if record exists
+            UPDATE lease6_stat SET leases = leases + 1
+                WHERE subnet_id = new_subnet_id AND lease_type = new_lease_type
+                AND state = new_state;
+
+            -- Insert new state record if it does not exist
+            IF NOT FOUND THEN
+                INSERT INTO lease6_stat
+                VALUES (new_subnet_id, new_lease_type, new_state, 1);
+            END IF;
+        END IF;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION lease6_ADEL_lease6_stat(IN old_state BIGINT,
+                                                   IN old_subnet_id BIGINT,
+                                                   IN old_lease_type SMALLINT)
+RETURNS VOID
+AS $$
+BEGIN
+    IF old_state = 0 OR old_state = 1 OR old_state = 4 THEN
+        -- Decrement the state count if record exists
+        UPDATE lease6_stat
+            SET leases = GREATEST(leases - 1, 0)
+            WHERE subnet_id = old_subnet_id AND lease_type = old_lease_type
+            AND state = old_state;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Not reinstall triggers: assume procedures are called by name.
 
 -- Update the schema version number.
 UPDATE schema_version
