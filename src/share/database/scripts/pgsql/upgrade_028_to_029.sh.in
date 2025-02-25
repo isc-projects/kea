@@ -50,7 +50,7 @@ CREATE OR REPLACE FUNCTION lease6_AINS_lease6_stat(IN new_state BIGINT,
                                                    IN new_subnet_id BIGINT,
                                                    IN new_lease_type SMALLINT)
 RETURNS VOID
-AS $$
+AS \$\$
 BEGIN
     IF new_state = 0 OR new_state = 1 OR new_state = 4 THEN
         -- Update the state count if it exists.
@@ -64,7 +64,7 @@ BEGIN
         END IF;
     END IF;
 END;
-$$ LANGUAGE plpgsql;
+\$\$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION lease6_AUPD_lease6_stat(IN old_state BIGINT,
                                                    IN old_subnet_id BIGINT,
@@ -73,7 +73,7 @@ CREATE OR REPLACE FUNCTION lease6_AUPD_lease6_stat(IN old_state BIGINT,
                                                    IN new_subnet_id BIGINT,
                                                    IN new_lease_type SMALLINT)
 RETURNS VOID
-AS $$
+AS \$\$
 BEGIN
     IF old_subnet_id != new_subnet_id OR
        old_lease_type != new_lease_type OR
@@ -100,13 +100,13 @@ BEGIN
         END IF;
     END IF;
 END;
-$$ LANGUAGE plpgsql;
+\$\$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION lease6_ADEL_lease6_stat(IN old_state BIGINT,
                                                    IN old_subnet_id BIGINT,
                                                    IN old_lease_type SMALLINT)
 RETURNS VOID
-AS $$
+AS \$\$
 BEGIN
     IF old_state = 0 OR old_state = 1 OR old_state = 4 THEN
         -- Decrement the state count if record exists
@@ -116,7 +116,7 @@ BEGIN
             AND state = old_state;
     END IF;
 END;
-$$ LANGUAGE plpgsql;
+\$\$ LANGUAGE plpgsql;
 
 -- Not reinstall triggers: assume procedures are called by name.
 
