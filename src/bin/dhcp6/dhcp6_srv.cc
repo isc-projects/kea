@@ -1710,9 +1710,10 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
         if (!answer->getOption(opt)) {
             // Iterate on the configured option list
             for (auto const& copts : co_list) {
-                OptionDescriptor desc = copts->get(DHCP6_OPTION_SPACE, opt);
-                // Got it: if allowed add it and jump to the outer loop.
-                if (desc.option_ && desc.allowedForClientClasses(cclasses)) {
+                OptionDescriptor desc = copts->allowedForClientClasses(DHCP6_OPTION_SPACE,
+                                                                       opt, cclasses);
+                // Got it: add it and jump to the outer loop.
+                if (desc.option_) {
                     answer->addOption(desc.option_);
                     break;
                 }
@@ -1777,7 +1778,7 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
         // Iterate on the configured option list
         for (auto const& copts : co_list) {
             for (auto const& desc : copts->getList(DHCP6_OPTION_SPACE, D6O_VENDOR_OPTS)) {
-                // Empty or not allowed, skip i.
+                // Empty or not allowed, skip it.
                 if (!desc.option_ || !desc.allowedForClientClasses(cclasses)) {
                     continue;
                 }
@@ -1950,9 +1951,10 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
             }
             if (!vendor_rsp->getOption(opt)) {
                 for (auto const& copts : co_list) {
-                    OptionDescriptor desc = copts->get(vendor_id, opt);
-                    // Got it: if allowed add it and jump to outer loop.
-                    if (desc.option_ && desc.allowedForClientClasses(cclasses)) {
+                    OptionDescriptor desc = copts->allowedForClientClasses(vendor_id,
+                                                                           opt, cclasses);
+                    // Got it: add it and jump to outer loop.
+                    if (desc.option_) {
                         vendor_rsp->addOption(desc.option_);
                         added = true;
                         break;

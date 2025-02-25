@@ -674,6 +674,53 @@ public:
         return (list);
     }
 
+    /// @brief Fetches an option for a given code if it is allowed for the given list
+    /// of client classes.
+    ///
+    /// @tparam Selector one of: @c std::string or @c uint32_t
+    /// @param option_code Code of the option to be returned.
+    /// @param cclasses list of ClientClasses to validate against
+    /// @return Descriptor of the option. If option hasn't been found, the
+    /// descriptor holds null option.
+    template<typename Selector>
+    OptionDescriptor allowedForClientClasses(const Selector& key,
+                                             const uint16_t option_code,
+                                             const ClientClasses& cclasses) const {
+        // Check for presence of options.
+        OptionContainerPtr options = getAll(key);
+        if (!options || options->empty()) {
+            return (OptionDescriptor(false, false));
+        }
+
+        // We treat the emtpy list case (if present) as a default. If we
+        // encounter it before we reach the end of the list remember it but
+        // keep checking the list for an acutal match. We do it this way
+        // to avoid expecting the entries in any particular order.
+        auto & index = options->get<1>();
+        auto range = index.equal_range(option_code);
+        auto otr = range.first;
+        auto default_opt = index.end();
+        while (otr != range.second) {
+            if ((*otr).allowedForClientClasses(cclasses)) {
+                if (!(*otr).client_classes_.empty()) {
+                    return (*otr);
+                }
+
+                default_opt = otr;
+            }
+
+            ++otr;
+        }
+
+        // If we have a default return it.
+        if (default_opt != index.end()) {
+            return (*default_opt);
+        }
+
+        // None allowed.
+        return (OptionDescriptor(false, false));
+    }
+
     /// @brief Deletes option for the specified option space and option code.
     ///
     /// If the option is encapsulated within some non top level option space,

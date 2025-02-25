@@ -209,6 +209,7 @@ public:
                                     static_cast<uint64_t>(code)));
         }
     }
+
 };
 
 // This test verifies the empty predicate.
@@ -1351,6 +1352,105 @@ TEST_F(CfgOptionTest, unparse) {
         "    \"space\": \"vendor-9999\"\n"
         "}]\n";
     isc::test::runToElementTest<CfgOption>(expected, cfg);
+}
+
+// Verifies CfgOption::allowedForClientClasses for scenarios
+// including multiple occurrences of the same option code.
+// This tests its ability to support an if-elseif-else
+// arrangement.  It uses V6 universe but the code
+// under test is common.
+TEST_F(CfgOptionTest, allowedForClientClasses) {
+    // Describes an option to create.
+    struct OptData {
+        uint16_t code_;
+        uint16_t value_;
+        std::string cclass_;
+    };
+
+    // List of options to create.
+    std::list<OptData> opts_to_make = {
+        { 900, 10, ""        },
+        { 777,  1, "cc-one"   },
+        { 901, 20, ""         },
+        { 902, 30, "cc-one"   },
+        { 902, 40, "cc-two"   },
+        { 777,  3, ""         },
+        { 903, 50, "cc-three" },
+        { 777,  2, "cc-two"   }
+    };
+
+    // Populate a CfgOption with test options.
+    CfgOption cfg;
+    for (const auto& opt_to_make : opts_to_make) {
+        OptionUint16Ptr opt(new OptionUint16(Option::V6, opt_to_make.code_,
+                                             opt_to_make.value_));
+        OptionDescriptor desc(opt, false, false);
+        desc.space_name_ = DHCP6_OPTION_SPACE;
+        if (!opt_to_make.cclass_.empty()) {
+            desc.addClientClass(opt_to_make.cclass_);
+        }
+
+        ASSERT_NO_THROW(cfg.add(desc, desc.space_name_));
+    }
+
+    // Verify we have the expected option counts.
+    auto options = cfg.getAll(DHCP6_OPTION_SPACE);
+    ASSERT_EQ(options->size(), opts_to_make.size());
+
+    // Describes a test scenario.
+    struct Scenario {
+        int line_;
+        std::string cclass_;
+        uint16_t code_;
+        bool exp_match_;
+        uint16_t exp_value_;
+    };
+
+    // List of scenarios to test.
+    std::list<Scenario> scenarios = {
+        { __LINE__, "",         900, true,  10 },
+        { __LINE__, "",         777, true,   3 },
+        { __LINE__, "",         902, false,  0 },
+        { __LINE__, "",         903, false,  0 },
+        { __LINE__, "cc-one",   900, true,  10 },
+        { __LINE__, "cc-one",   777, true,   1 },
+        { __LINE__, "cc-one",   902, true,  30 },
+        { __LINE__, "cc-one",   903, false,  0 },
+        { __LINE__, "cc-two",   900, true,  10 },
+        { __LINE__, "cc-two",   777, true,   2 },
+        { __LINE__, "cc-two",   902, true,  40 },
+        { __LINE__, "cc-two",   903, false,  0 },
+        { __LINE__, "cc-three", 900, true,  10 },
+        { __LINE__, "cc-three", 777, true,   3 },
+        { __LINE__, "cc-three", 902, false,  0 },
+        { __LINE__, "cc-three", 903, true,  50 },
+    };
+
+    // Iterate over the scenarios.
+    for (const auto& scenario : scenarios) {
+        std::ostringstream oss;
+        oss << "Scenario at line: " << scenario.line_;
+        SCOPED_TRACE(oss.str());
+
+        // Create the "packet" client class list.
+        ClientClasses cclasses;
+        if (!scenario.cclass_.empty()) {
+            cclasses.insert(scenario.cclass_);
+        }
+
+        // Invoke CfgOption::allowedForClientClasses().
+        auto found_desc = cfg.allowedForClientClasses(DHCP6_OPTION_SPACE,
+                                                      scenario.code_, cclasses);
+        // Verify we got the expected outcome.
+        if (!scenario.exp_match_) {
+            ASSERT_FALSE(found_desc.option_) << " option not empty!";
+        } else {
+            ASSERT_TRUE(found_desc.option_) << " option is empty!";
+            auto opt = boost::dynamic_pointer_cast<OptionUint16>(found_desc.option_);
+            ASSERT_TRUE(opt) << " option wrong type!";
+            EXPECT_EQ(opt->getValue(), scenario.exp_value_) << " option value is wrong!";
+        }
+    }
 }
 
 } // end of anonymous namespace

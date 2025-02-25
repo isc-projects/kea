@@ -2382,4 +2382,117 @@ TEST_F(ClassifyTest, networkScopeClientClasses) {
     }
 }
 
+// Verifies that mulitple occurences of an option with
+// different client class tags works properly.
+TEST_F(ClassifyTest, classTaggingList) {
+    IfaceMgrTestConfig test_config(true);
+
+    NakedDhcpv4Srv srv(0);
+
+    // Define a client-str option for classification, and server-str
+    // option to send in response.  Then define 3 possible values in 
+    // a subnet for sever-str based on class membership.
+    string config = R"^(
+    {
+        "interfaces-config": {
+            "interfaces": [ "*" ]
+        },
+        "option-def": [{
+            "name": "client-str",
+            "code": 222,
+            "type": "string"
+        },{
+            "name": "server-str",
+            "code": 223,
+            "type": "string"
+        }],
+        "client-classes": [{
+               "name": "class-one",
+               "test": "(option[222].text == 'one')"
+            },
+            {
+               "name": "class-two",
+               "test": "(option[222].text == 'two')"
+            },
+            {
+               "name": "class-neither",
+               "test": "not member('class-one') and not member('class-two')"
+            }
+        ],
+        "subnet4": [{
+           "id": 1,
+           "interface": "eth1",
+            "subnet": "192.0.1.0/24",
+           "pools": [{ "pool": "192.0.1.1 - 192.0.1.255" }],
+           "option-data": [{
+               "client-classes":  [ "class-one" ],
+               "name": "server-str",
+               "data": "string.one"
+           },{
+               "name": "server-str",
+               "data": "string.other"
+           },{
+               "client-classes":  [ "class-two" ],
+               "name": "server-str",
+               "data": "string.two"
+           }]
+        }],
+        "valid-lifetime": 4000
+    })^";
+
+    ASSERT_NO_THROW(configure(config));
+
+    struct Scenario {
+        int line_;
+        std::string client_str_;
+        std::string exp_class_;
+        std::string exp_server_str_;
+    };
+
+    std::list<Scenario> scenarios {
+        { __LINE__, "one",     "class-one",     "string.one" }, 
+        { __LINE__, "two",     "class-two",     "string.two" }, 
+        { __LINE__, "neither", "class-neither", "string.other" }
+    };
+
+    for (const auto& scenario : scenarios) {
+        std::ostringstream oss;
+        oss << "Scenario at line: " << scenario.line_;
+        SCOPED_TRACE(oss.str());
+
+        // Create DISCOVER.
+        Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 1234));
+        auto id = ClientId::fromText("31:31:31");
+        OptionPtr clientid = (OptionPtr(new Option(Option::V4,
+                                                   DHO_DHCP_CLIENT_IDENTIFIER,
+                                                   id->getClientId())));
+        query->addOption(clientid);
+        query->setIface("eth1");
+        query->setIndex(ETH1_INDEX);
+
+        // Add an PRL option requestion server-str option to the query.
+        OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                     DHO_DHCP_PARAMETER_REQUEST_LIST));
+        prl->addValue(223);
+        query->addOption(prl);
+
+        // Add client-str opt of "one" to the query.
+        OptionStringPtr client_str(new OptionString(Option::V4, 222, scenario.client_str_));
+        query->addOption(client_str);
+
+        // Classify the packet and verify class membership is as expected.
+        srv.classifyPacket(query);
+        ASSERT_TRUE(query->inClass(scenario.exp_class_));
+
+        // Process the query
+        Pkt4Ptr response = srv.processDiscover(query);
+        ASSERT_TRUE(response);
+
+        // Verify that server-str opt is as expected
+        OptionPtr server_opt = response->getOption(223);
+        ASSERT_TRUE(server_opt);
+        EXPECT_EQ(server_opt->toString(), scenario.exp_server_str_);
+    }
+}
+
 } // end of anonymous namespace

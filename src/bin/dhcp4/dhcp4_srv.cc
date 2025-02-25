@@ -2232,9 +2232,10 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
         if (!resp->getOption(opt)) {
             // Iterate on the configured option list
             for (auto const& copts : co_list) {
-                OptionDescriptor desc = copts->get(DHCP4_OPTION_SPACE, opt);
-                // Got it: add it and jump to the outer loop
-                if (desc.option_ && desc.allowedForClientClasses(cclasses)) {
+                OptionDescriptor desc = copts->allowedForClientClasses(DHCP4_OPTION_SPACE,
+                                                                       opt, cclasses);
+                if (desc.option_) {
+                    // Got it: add it and jump to the outer loop
                     resp->addOption(desc.option_);
                     break;
                 }
@@ -2477,8 +2478,9 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
             }
             if (!vendor_rsp->getOption(opt)) {
                 for (auto const& copts : co_list) {
-                    OptionDescriptor desc = copts->get(vendor_id, opt);
-                    if (desc.option_ && desc.allowedForClientClasses(cclasses)) {
+                    OptionDescriptor desc = copts->allowedForClientClasses(vendor_id,
+                                                                           opt, cclasses);
+                    if (desc.option_) {
                         vendor_rsp->addOption(desc.option_);
                         added = true;
                         break;
@@ -2527,8 +2529,9 @@ Dhcpv4Srv::appendBasicOptions(Dhcpv4Exchange& ex) {
         if (!opt) {
             // Check whether option has been configured.
             for (auto const& copts : co_list) {
-                OptionDescriptor desc = copts->get(DHCP4_OPTION_SPACE, required);
-                if (desc.option_ && desc.allowedForClientClasses(cclasses)) {
+                OptionDescriptor desc = copts->allowedForClientClasses(DHCP4_OPTION_SPACE,
+                                                                       required, cclasses);
+                if (desc.option_) {
                     resp->addOption(desc.option_);
                     break;
                 }
