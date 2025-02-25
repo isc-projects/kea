@@ -13,4 +13,9 @@ dhcp_mysql_libload_tests = executable(
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
 )
-test('dhcp-mysql-libload-tests', dhcp_mysql_libload_tests, protocol: 'gtest')
+test(
+    'dhcp-mysql-libload-tests',
+    dhcp_mysql_libload_tests,
+    depends: [dhcp_mysql_lib],
+    protocol: 'gtest',
+)

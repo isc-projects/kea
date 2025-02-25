@@ -22,6 +22,31 @@ configure_file(
     output: 'test_libraries.h',
     configuration: kea_dhcpsrv_conf_data,
 )
+co1 = shared_library(
+    'co1',
+    'callout_library.cc',
+    include_directories: [include_directories('.')] + INCLUDES,
+    link_with: LIBS_BUILT_SO_FAR,
+    build_rpath: '/nowhere',
+    name_suffix: 'so',
+)
+co2 = shared_library(
+    'co2',
+    'callout_library.cc',
+    include_directories: [include_directories('.')] + INCLUDES,
+    link_with: LIBS_BUILT_SO_FAR,
+    build_rpath: '/nowhere',
+    name_suffix: 'so',
+)
+co3 = shared_library(
+    'co3',
+    'callout_params_library.cc',
+    include_directories: [include_directories('.')] + INCLUDES,
+    link_with: LIBS_BUILT_SO_FAR,
+    build_rpath: '/nowhere',
+    name_suffix: 'so',
+)
+
 kea_dhcpsrv_tests = executable(
     'kea-dhcpsrv-tests',
     'alloc_engine4_unittest.cc',
@@ -109,33 +134,10 @@ kea_dhcpsrv_tests = executable(
 test(
     'kea-dhcpsrv-tests',
     kea_dhcpsrv_tests,
+    depends: [co1, co2, co3],
     protocol: 'gtest',
     is_parallel: false,
     priority: -1,
     timeout: 60,
 )
 
-shared_library(
-    'co1',
-    'callout_library.cc',
-    include_directories: [include_directories('.')] + INCLUDES,
-    link_with: LIBS_BUILT_SO_FAR,
-    build_rpath: '/nowhere',
-    name_suffix: 'so',
-)
-shared_library(
-    'co2',
-    'callout_library.cc',
-    include_directories: [include_directories('.')] + INCLUDES,
-    link_with: LIBS_BUILT_SO_FAR,
-    build_rpath: '/nowhere',
-    name_suffix: 'so',
-)
-shared_library(
-    'co3',
-    'callout_params_library.cc',
-    include_directories: [include_directories('.')] + INCLUDES,
-    link_with: LIBS_BUILT_SO_FAR,
-    build_rpath: '/nowhere',
-    name_suffix: 'so',
-)

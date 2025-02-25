@@ -16,5 +16,6 @@ dhcp_class_cmds_libloadtests = executable(
 test(
     'dhcp-class-cmds-libloadtests',
     dhcp_class_cmds_libloadtests,
+    depends: [dhcp_class_cmds_lib],
     protocol: 'gtest',
 )

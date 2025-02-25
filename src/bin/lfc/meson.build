@@ -5,7 +5,7 @@ lfc_lib = static_library(
     'lfc_messages.cc',
     include_directories: [include_directories('.')] + INCLUDES,
 )
-executable(
+kea_lfc = executable(
     'kea-lfc',
     'main.cc',
     include_directories: [include_directories('.')] + INCLUDES,

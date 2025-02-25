@@ -19,5 +19,6 @@ dhcp_lease_cmds_libload_tests = executable(
 test(
     'dhcp-lease-cmds-libload-tests',
     dhcp_lease_cmds_libload_tests,
+    depends: [dhcp_lease_cmds_lib],
     protocol: 'gtest',
 )

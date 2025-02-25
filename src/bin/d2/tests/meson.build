@@ -36,6 +36,23 @@ configure_file(
     configuration: kea_d2_tests_data,
 )
 
+callout = shared_library(
+    'callout',
+    'callout_library.cc',
+    include_directories: [include_directories('.')] + INCLUDES,
+    link_with: LIBS_BUILT_SO_FAR,
+    build_rpath: '/nowhere',
+    name_suffix: 'so',
+)
+configured = shared_library(
+    'configured',
+    'configured_library.cc',
+    include_directories: [include_directories('.')] + INCLUDES,
+    link_with: LIBS_BUILT_SO_FAR,
+    build_rpath: '/nowhere',
+    name_suffix: 'so',
+)
+
 current_source_dir = meson.current_source_dir()
 kea_d2_tests_libs = [
     kea_d2srv_testutils_lib,
@@ -74,21 +91,10 @@ kea_d2_tests = executable(
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [d2_lib] + kea_d2_tests_libs + LIBS_BUILT_SO_FAR,
 )
-test('kea-d2-tests', kea_d2_tests, protocol: 'gtest')
+test(
+    'kea-d2-tests',
+    kea_d2_tests,
+    depends: [callout, configured],
+    protocol: 'gtest',
+)
 
-shared_library(
-    'callout',
-    'callout_library.cc',
-    include_directories: [include_directories('.')] + INCLUDES,
-    link_with: LIBS_BUILT_SO_FAR,
-    build_rpath: '/nowhere',
-    name_suffix: 'so',
-)
-shared_library(
-    'configured',
-    'configured_library.cc',
-    include_directories: [include_directories('.')] + INCLUDES,
-    link_with: LIBS_BUILT_SO_FAR,
-    build_rpath: '/nowhere',
-    name_suffix: 'so',
-)

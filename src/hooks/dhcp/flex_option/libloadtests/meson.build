@@ -17,5 +17,6 @@ dhcp_flex_option_libload_tests = executable(
 test(
     'dhcp-flex-option-libload-tests',
     dhcp_flex_option_libload_tests,
+    depends: [dhcp_flex_option_lib],
     protocol: 'gtest',
 )

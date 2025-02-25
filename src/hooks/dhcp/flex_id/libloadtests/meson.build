@@ -15,4 +15,9 @@ dhcp_flex_id_libloadtests = executable(
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
 )
-test('dhcp-flex-id-libloadtests', dhcp_flex_id_libloadtests, protocol: 'gtest')
+test(
+    'dhcp-flex-id-libloadtests',
+    dhcp_flex_id_libloadtests,
+    depends: [dhcp_flex_id_lib],
+    protocol: 'gtest',
+)

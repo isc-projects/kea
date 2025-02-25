@@ -18,5 +18,6 @@ dhcp_host_cache_libloadtests = executable(
 test(
     'dhcp-host-cache-libloadtests',
     dhcp_host_cache_libloadtests,
+    depends: [dhcp_host_cache_lib],
     protocol: 'gtest',
 )

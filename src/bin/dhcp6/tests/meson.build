@@ -62,6 +62,44 @@ configure_file(
     output: 'test_libraries.h',
     configuration: dhcp6_tests_conf_data,
 )
+
+co1 = shared_library(
+    'co1',
+    'callout_library_1.cc',
+    dependencies: dhcp6_tests_deps,
+    include_directories: [include_directories('.')] + INCLUDES,
+    link_with: LIBS_BUILT_SO_FAR,
+    build_rpath: '/nowhere',
+    name_suffix: 'so',
+)
+co2 = shared_library(
+    'co2',
+    'callout_library_2.cc',
+    dependencies: dhcp6_tests_deps,
+    include_directories: [include_directories('.')] + INCLUDES,
+    link_with: LIBS_BUILT_SO_FAR,
+    build_rpath: '/nowhere',
+    name_suffix: 'so',
+)
+co3 = shared_library(
+    'co3',
+    'callout_library_3.cc',
+    dependencies: dhcp6_tests_deps,
+    include_directories: [include_directories('.')] + INCLUDES,
+    link_with: LIBS_BUILT_SO_FAR,
+    build_rpath: '/nowhere',
+    name_suffix: 'so',
+)
+co4 = shared_library(
+    'co4',
+    'callout_library_4.cc',
+    dependencies: dhcp6_tests_deps,
+    include_directories: [include_directories('.')] + INCLUDES,
+    link_with: LIBS_BUILT_SO_FAR,
+    build_rpath: '/nowhere',
+    name_suffix: 'so',
+)
+
 kea_dhcp6_tests = executable(
     'kea-dhcp6-tests',
     'classify_unittest.cc',
@@ -110,44 +148,13 @@ kea_dhcp6_tests = executable(
 test(
     'kea-dhcp6-tests',
     kea_dhcp6_tests,
+    # kea_dhcp6 is not really a dependency of this set of tests, but it is used
+    # in other tests such as memfile_tests.sh, and since it cannot be specified
+    # on the "depends" of a shell test, specify it here instead to have it
+    # created on "meson test".
+    depends: [co1, co2, co3, co4, kea_dhcp6],
     protocol: 'gtest',
     is_parallel: false,
     priority: -1,
 )
 
-shared_library(
-    'co1',
-    'callout_library_1.cc',
-    dependencies: dhcp6_tests_deps,
-    include_directories: [include_directories('.')] + INCLUDES,
-    link_with: LIBS_BUILT_SO_FAR,
-    build_rpath: '/nowhere',
-    name_suffix: 'so',
-)
-shared_library(
-    'co2',
-    'callout_library_2.cc',
-    dependencies: dhcp6_tests_deps,
-    include_directories: [include_directories('.')] + INCLUDES,
-    link_with: LIBS_BUILT_SO_FAR,
-    build_rpath: '/nowhere',
-    name_suffix: 'so',
-)
-shared_library(
-    'co3',
-    'callout_library_3.cc',
-    dependencies: dhcp6_tests_deps,
-    include_directories: [include_directories('.')] + INCLUDES,
-    link_with: LIBS_BUILT_SO_FAR,
-    build_rpath: '/nowhere',
-    name_suffix: 'so',
-)
-shared_library(
-    'co4',
-    'callout_library_4.cc',
-    dependencies: dhcp6_tests_deps,
-    include_directories: [include_directories('.')] + INCLUDES,
-    link_with: LIBS_BUILT_SO_FAR,
-    build_rpath: '/nowhere',
-    name_suffix: 'so',
-)

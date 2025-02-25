@@ -15,4 +15,9 @@ ddns_gss_tsig_libloadtests = executable(
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
 )
-test('ddns-gss-tsig-libloadtests', ddns_gss_tsig_libloadtests, protocol: 'gtest')
+test(
+    'ddns-gss-tsig-libloadtests',
+    ddns_gss_tsig_libloadtests,
+    depends: [ddns_gss_tsig_lib],
+    protocol: 'gtest',
+)

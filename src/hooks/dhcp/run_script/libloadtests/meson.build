@@ -17,5 +17,6 @@ dhcp_run_script_libload_tests = executable(
 test(
     'dhcp-run-script-libload-tests',
     dhcp_run_script_libload_tests,
+    depends: [dhcp_run_script_lib],
     protocol: 'gtest',
 )

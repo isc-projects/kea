@@ -15,4 +15,9 @@ dhcp_radius_libloadtests = executable(
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
 )
-test('dhcp-radius-libloadtests', dhcp_radius_libloadtests, protocol: 'gtest')
+test(
+    'dhcp-radius-libloadtests',
+    dhcp_radius_libloadtests,
+    depends: [dhcp_radius_lib],
+    protocol: 'gtest',
+)

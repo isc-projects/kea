@@ -14,7 +14,7 @@ dhcp6_lib = static_library(
     dependencies: [crypto],
     include_directories: [include_directories('.')] + INCLUDES,
 )
-executable(
+kea_dhcp6 = executable(
     'kea-dhcp6',
     'main.cc',
     dependencies: [crypto],

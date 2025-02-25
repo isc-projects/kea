@@ -5,6 +5,15 @@ endif
 current_build_dir = meson.current_build_dir()
 current_source_dir = meson.current_source_dir()
 
+basic = shared_library(
+    'basic',
+    'basic_library.cc',
+    include_directories: [include_directories('.')] + INCLUDES,
+    link_with: LIBS_BUILT_SO_FAR,
+    build_rpath: '/nowhere',
+    name_suffix: 'so',
+)
+
 kea_netconf_tests = executable(
     'kea-netconf-tests',
     'basic_library.cc',
@@ -34,14 +43,6 @@ kea_netconf_tests = executable(
     ] + LIBS_BUILT_SO_FAR,
     override_options: ['cpp_std=c++20'],
 )
-test('kea-netconf-tests', kea_netconf_tests, protocol: 'gtest')
+test('kea-netconf-tests', kea_netconf_tests, depends: [basic], protocol: 'gtest')
 
-shared_library(
-    'basic',
-    'basic_library.cc',
-    include_directories: [include_directories('.')] + INCLUDES,
-    link_with: LIBS_BUILT_SO_FAR,
-    build_rpath: '/nowhere',
-    name_suffix: 'so',
-)
 subdir('shtests')

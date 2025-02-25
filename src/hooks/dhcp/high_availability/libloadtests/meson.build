@@ -14,4 +14,9 @@ dhcp_ha_libload_tests = executable(
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
 )
-test('dhcp-ha-libload-tests', dhcp_ha_libload_tests, protocol: 'gtest')
+test(
+    'dhcp-ha-libload-tests',
+    dhcp_ha_libload_tests,
+    depends: [dhcp_ha_lib],
+    protocol: 'gtest',
+)

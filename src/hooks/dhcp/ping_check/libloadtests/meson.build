@@ -16,5 +16,6 @@ dhcp_ping_check_libloadtests = executable(
 test(
     'dhcp-ping-check-libloadtests',
     dhcp_ping_check_libloadtests,
+    depends: [dhcp_ping_check_lib],
     protocol: 'gtest',
 )

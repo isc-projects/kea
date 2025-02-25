@@ -13,7 +13,7 @@ dhcp4_lib = static_library(
     dependencies: [crypto],
     include_directories: [include_directories('.')] + INCLUDES,
 )
-executable(
+kea_dhcp4 = executable(
     'kea-dhcp4',
     'main.cc',
     dependencies: [crypto],

@@ -13,4 +13,9 @@ dhcp_limits_libloadtests = executable(
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
 )
-test('dhcp-limits-libloadtests', dhcp_limits_libloadtests, protocol: 'gtest')
+test(
+    'dhcp-limits-libloadtests',
+    dhcp_limits_libloadtests,
+    depends: [dhcp_limits_lib],
+    protocol: 'gtest',
+)

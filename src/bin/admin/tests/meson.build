@@ -16,7 +16,12 @@ memfile_tests = configure_file(
     output: 'memfile_tests.sh',
     configuration: kea_admin_tests_conf_data,
 )
-test('memfile_tests.sh', memfile_tests, is_parallel: false)
+test(
+    'memfile_tests.sh',
+    memfile_tests,
+    # depends: [kea_admin, kea_dhcp4, kea_dhcp6, kea_lfc],
+    is_parallel: false,
+)
 mysql_tests = configure_file(
     input: 'mysql_tests.sh.in',
     output: 'mysql_tests.sh',

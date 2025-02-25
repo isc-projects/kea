@@ -13,4 +13,9 @@ dhcp_pgsql_libload_tests = executable(
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
 )
-test('dhcp-pgsql-libload-tests', dhcp_pgsql_libload_tests, protocol: 'gtest')
+test(
+    'dhcp-pgsql-libload-tests',
+    dhcp_pgsql_libload_tests,
+    depends: [dhcp_pgsql_lib],
+    protocol: 'gtest',
+)
