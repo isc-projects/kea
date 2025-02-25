@@ -1,7 +1,6 @@
 #!/bin/sh
 
-set -v
-set -e
+set -euv
 
 mkdir -p @docdir@
 if test -d "@abs_sphinxbuilddir@/html" ; then
@@ -11,5 +10,5 @@ if test -d "@abs_sphinxbuilddir@/html" ; then
         @INSTALL@ -c -m 644 @abs_sphinxbuilddir@/latex/kea-messages.pdf @docdir@
     fi
     mkdir -p @mandir8@
-    @INSTALL@ -c -m     644 @abs_sphinxbuilddir@/man/*.8 @mandir8@
+    @INSTALL@ -c -m 644 @abs_sphinxbuilddir@/man/*.8 @mandir8@
 fi

@@ -1,7 +1,6 @@
 #!/bin/sh
 
-set -v
-set -e
+set -euv
 
 cd @builddir@
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -v
+set -euv
 
 mkdir -p @builddir@/html
 
