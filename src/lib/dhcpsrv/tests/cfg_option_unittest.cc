@@ -1408,6 +1408,7 @@ TEST_F(CfgOptionTest, allowedForClientClasses) {
 
     // List of scenarios to test.
     std::list<Scenario> scenarios = {
+        { __LINE__, "",         888, false,  0 },
         { __LINE__, "",         900, true,  10 },
         { __LINE__, "",         777, true,   3 },
         { __LINE__, "",         902, false,  0 },

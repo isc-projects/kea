@@ -692,30 +692,41 @@ public:
             return (OptionDescriptor(false, false));
         }
 
-        // We treat the emtpy list case (if present) as a default. If we
-        // encounter it before we reach the end of the list remember it but
-        // keep checking the list for an acutal match. We do it this way
-        // to avoid expecting the entries in any particular order.
+        // We treat the emtpy client-classes case (if present) as a default.
+        // If we encounter it before we reach the end of the list of options
+        // remember it but keep checking the list for an acutal match. We do 
+        // it this way to avoid expecting the entries in any particular order.
         auto & index = options->get<1>();
         auto range = index.equal_range(option_code);
-        auto otr = range.first;
-        auto default_opt = index.end();
-        while (otr != range.second) {
-            if ((*otr).allowedForClientClasses(cclasses)) {
-                if (!(*otr).client_classes_.empty()) {
-                    return (*otr);
-                }
-
-                default_opt = otr;
+        switch (std::distance(range.first, range.second)) {
+        case 0:
+            break;
+        case 1:
+            if ((*range.first).allowedForClientClasses(cclasses)) {
+                return (*range.first);
             }
-
-            ++otr;
-        }
-
-        // If we have a default return it.
-        if (default_opt != index.end()) {
-            return (*default_opt);
-        }
+            break;
+        default: 
+        {   
+            auto default_opt = index.end();
+            auto otr = range.first;
+            while (otr != range.second) {
+                if ((*otr).allowedForClientClasses(cclasses)) {
+                    if (!(*otr).client_classes_.empty()) {
+                        return (*otr);
+                    }
+                    
+                    default_opt = otr;
+                }
+                
+                ++otr;
+            }
+            
+            // If we have a default return it.
+            if (default_opt != index.end()) {
+                return (*default_opt);
+            }
+        }}  
 
         // None allowed.
         return (OptionDescriptor(false, false));

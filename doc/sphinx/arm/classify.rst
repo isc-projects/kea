@@ -1242,7 +1242,7 @@ example shows class-tagging used to give clients who belong to "GROUP1"
 a subnet-specific value for option "bar", while giving all members of "GROUP1"
 the same value for option "foo":
 
-::
+.. code-block:: javascript
 
     {
         "client-classes": [
@@ -1281,7 +1281,6 @@ any scope.  Option class-tagging is enforced at the time options are
 being added to the response which occurs after lease assignment just
 before the response is to be sent to the client.
 
-
 When ``never-send`` for an option is true at any scope, all
 ``client-classes`` entries for that option are ignored. The
 option will not be included.
@@ -1301,7 +1300,7 @@ example the option "foo" is specified for both the subnet and
 the pool.  The pool specification includes a class-tag that limits
 the option to members of class "melon":
 
-::
+.. code-block:: javascript
 
     {
         "id": 100,
@@ -1323,6 +1322,41 @@ the option to members of class "melon":
 Clients that match class "melon" will have a value of 123 for option "foo",
 while clients that do not match "melon" will have a value of 456 for option
 "foo".
+
+It is possible to achieve an if-elseif-else effect but specifying an option
+more than once with different class tags and values. Consider the following 
+configuration for a subnet which provides three possible values for the
+"server-str" option:
+
+.. code-block:: javascript
+
+    {
+        "id": 1,
+        "subnet": "192.0.1.0/24",
+        "pools": [{ "pool": "192.0.1.1 - 192.0.1.255" }],
+        "option-data": [{
+            "client-classes":  [ "class-one" ],
+            "name": "server-str",
+            "data": "string.one"
+        },{
+            "client-classes":  [ "class-two" ],
+            "name": "server-str",
+            "data": "string.two"
+        },{
+            "name": "server-str",
+            "data": "string.other"
+       }]
+    }
+
+Clients belonging to "class-one" will get a value of "string.one", clients 
+belonging to "class-two" will get a value of "string.two", and clients that
+belong to neither "class-one" nor "class-two" will get a value of 
+"string.other". 
+
+.. note::
+
+    The order that the options are tested is not guaranteed other than an option
+    with an empty "client-classes" list is checked last.
 
 .. note::
 
