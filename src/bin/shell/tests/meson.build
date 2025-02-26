@@ -2,6 +2,7 @@ if not gtest.found()
     subdir_done()
 endif
 
+
 shell_tests_conf_data = configuration_data()
 shell_tests_conf_data.set('PYTHON', PYTHON.full_path())
 shell_tests_conf_data.set('abs_top_builddir', TOP_BUILD_DIR)
@@ -11,7 +12,15 @@ shell_unittest = configure_file(
     output: 'shell_unittest.py',
     configuration: shell_tests_conf_data,
 )
-test('shell_unittest.py', shell_unittest, is_parallel: false, priority: -1)
+pythonpath = environment()
+pythonpath.append('PYTHONPATH', f'@TOP_BUILD_DIR@/src/bin/shell')
+test(
+    'shell_unittest.py',
+    shell_unittest,
+    is_parallel: false,
+    priority: -1,
+    env: pythonpath,
+)
 ca_basic_auth_tests = configure_file(
     input: 'ca_basic_auth_tests.sh.in',
     output: 'ca_basic_auth_tests.sh',
