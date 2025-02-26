@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -606,6 +606,20 @@ Dhcp6Client::doRelease() {
         config_.clear();
         applyRcvdConfiguration(context_.response_);
     }
+}
+
+void
+Dhcp6Client::doAddrRegInform() {
+    context_.query_ = createMsg(DHCPV6_ADDR_REG_INFORM);
+
+    // Append requested IAs.
+    appendRequestedIAs(context_.query_);
+
+    // Add Client FQDN if configured.
+    appendFQDN();
+
+    sendMsg(context_.query_);
+    context_.response_ = receiveOneMsg();
 }
 
 void

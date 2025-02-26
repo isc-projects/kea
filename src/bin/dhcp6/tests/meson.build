@@ -102,6 +102,7 @@ co4 = shared_library(
 
 kea_dhcp6_tests = executable(
     'kea-dhcp6-tests',
+    'addr_reg_unittest.cc',
     'classify_unittest.cc',
     'client_handler_unittest.cc',
     'config_backend_unittest.cc',

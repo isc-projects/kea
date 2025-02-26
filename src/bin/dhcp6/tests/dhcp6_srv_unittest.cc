@@ -3640,6 +3640,11 @@ TEST_F(Dhcpv6SrvTest, receiveDhcpv4QueryStat) {
     testReceiveStats(DHCPV6_DHCPV4_QUERY, "pkt6-dhcpv4-query-received");
 }
 
+// Test checks if pkt6-addr-reg-inform-received is bumped up correctly.
+TEST_F(Dhcpv6SrvTest, receiveAddrRegInformStat) {
+    testReceiveStats(DHCPV6_ADDR_REG_INFORM, "pkt6-addr-reg-inform-received");
+}
+
 // Test checks if reception of a malformed packet increases pkt-parse-failed
 // and pkt6-receive-drop
 TEST_F(Dhcpv6SrvTest, receiveParseFailedStat) {

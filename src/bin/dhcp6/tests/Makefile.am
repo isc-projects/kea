@@ -87,6 +87,7 @@ PROGRAM_TESTS = dhcp6_unittests
 # This list is ordered alphabetically. When adding new files, please maintain
 # this order.
 dhcp6_unittests_SOURCES  =
+dhcp6_unittests_SOURCES += addr_reg_unittest.cc
 dhcp6_unittests_SOURCES += classify_unittest.cc
 dhcp6_unittests_SOURCES += client_handler_unittest.cc
 dhcp6_unittests_SOURCES += config_parser_unittest.cc

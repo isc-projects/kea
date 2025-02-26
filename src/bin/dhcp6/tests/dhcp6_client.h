@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -310,6 +310,12 @@ public:
     /// This function simulates sending the Release message to the server
     /// and receiving server's response.
     void doRelease();
+
+    /// @brief This function generates Addr-reg-inform message, sends it
+    /// to the server and then receives the Addr-reg-reply.
+    /// This method does not process the response in any specific way,
+    /// just stores it.
+    void doAddrRegInform();
 
     /// @brief Removes the stateful configuration obtained from the server.
     ///

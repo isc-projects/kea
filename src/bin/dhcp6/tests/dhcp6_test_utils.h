@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -345,6 +345,27 @@ public:
         return (processDecline(ctx));
     }
 
+    /// @brief Processes incoming Addr-reg-inform message.
+    ///
+    /// @param addr_reg_inf a message received from client
+    /// @return Addr-reg-reply message or null
+    Pkt6Ptr processAddrRegInform(const Pkt6Ptr& decline) {
+        AllocEngine::ClientContext6 ctx;
+        bool drop = !earlyGHRLookup(decline, ctx);
+        if (drop) {
+            return (Pkt6Ptr());
+        }
+        ctx.subnet_ = selectSubnet(decline, drop);
+        if (drop) {
+            return (Pkt6Ptr());
+        }
+        initContext(ctx, drop);
+        if (drop) {
+            return (Pkt6Ptr());
+        }
+        return (processAddrRegInform(ctx));
+    }
+
     using Dhcpv6Srv::processSolicit;
     using Dhcpv6Srv::processRequest;
     using Dhcpv6Srv::processRenew;
@@ -353,6 +374,7 @@ public:
     using Dhcpv6Srv::processRelease;
     using Dhcpv6Srv::processDecline;
     using Dhcpv6Srv::processInfRequest;
+    using Dhcpv6Srv::processAddrRegInform;
     using Dhcpv6Srv::processClientFqdn;
     using Dhcpv6Srv::createNameChangeRequests;
     using Dhcpv6Srv::selectSubnet;
