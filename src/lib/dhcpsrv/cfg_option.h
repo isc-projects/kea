@@ -677,9 +677,11 @@ public:
     /// @brief Fetches an option for a given code if it is allowed for the given list
     /// of client classes.
     ///
-    /// @tparam Selector one of: @c std::string or @c uint32_t
+    /// @param key Option space name or vendor identifier.
     /// @param option_code Code of the option to be returned.
     /// @param cclasses list of ClientClasses to validate against
+    /// @tparam Selector one of: @c std::string or @c uint32_t
+    ///
     /// @return Descriptor of the option. If option hasn't been found, the
     /// descriptor holds null option.
     template<typename Selector>
