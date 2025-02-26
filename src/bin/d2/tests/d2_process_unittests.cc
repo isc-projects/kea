@@ -20,7 +20,6 @@
 #include <gtest/gtest.h>
 
 #include <functional>
-#include <sstream>
 
 using namespace std;
 using namespace isc;
@@ -74,6 +73,7 @@ public:
 
     /// @brief Destructor
     virtual ~D2ProcessTest() {
+        D2Controller::instance().reset();
     }
 
     /// @brief Callback that will invoke shutdown method.
