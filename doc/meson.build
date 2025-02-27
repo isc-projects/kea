@@ -94,6 +94,9 @@ install_data(examples, preserve_path: true, install_dir: 'share/doc/kea')
 make_grammar = configure_file(
     input: 'make-grammar.sh.in',
     output: 'make-grammar.sh',
-    configuration: {'TOP_SOURCE_DIR': TOP_SOURCE_DIR},
+    configuration: {
+        'TOP_BUILD_DIR': TOP_BUILD_DIR,
+        'TOP_SOURCE_DIR': TOP_SOURCE_DIR,
+    },
 )
 run_target('grammar', command: [make_grammar])
