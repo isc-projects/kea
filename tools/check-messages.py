@@ -261,7 +261,8 @@ def main():
 
                     # 2. Checks that no two messages share the same id.
                     if message_id in messages:
-                        print(f'Duplicate message id definition: {message_id}. Check in both core and premium.')
+                        print(f'Duplicate message id definition "{message_id}" in file "{mes_file}". '
+                              f'First found in file "{messages[message_id]["file"]}".')
                         failure = True
 
                     current_message_id = message_id
