@@ -86,16 +86,19 @@ else
     pdflatex = 'false'
 endif
 make_conf_data.set('PDFLATEX_AND_OPTS', pdflatex + ' -interaction nonstopmode')
-make_conf_data.set('SPHINXBUILD', SPHINX.full_path())
+if SPHINX.found()
+    make_conf_data.set('SPHINXBUILD', SPHINX.full_path())
+else
+    make_conf_data.set('SPHINXBUILD', 'false')
+endif
 make_conf_data.set('sphinxopts', ' '.join(sphinxopts))
 if PLANTUML.found()
     make_conf_data.set('HAVE_PLANTUML', 'yes')
-    plantuml = PLANTUML.full_path()
+    make_conf_data.set('PLANTUML', PLANTUML.full_path())
 else
     make_conf_data.set('HAVE_PLANTUML', 'no')
-    plantuml = 'false'
+    make_conf_data.set('PLANTUML', 'false')
 endif
-make_conf_data.set('PLANTUML', plantuml)
 make_conf_data.set('umls', ' '.join(umls))
 make_conf_data.set('svgs', ' '.join(svgs))
 if XMLLINT.found()
