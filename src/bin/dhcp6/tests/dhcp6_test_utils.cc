@@ -1093,7 +1093,7 @@ NakedDhcpv6SrvTest::~NakedDhcpv6SrvTest() {
     isc::hooks::HooksManager::preCalloutsLibraryHandle()
         .deregisterAllCallouts("pkt6_send");
     isc::hooks::HooksManager::preCalloutsLibraryHandle()
-        .deregisterAllCallouts("subnet6_select");
+        .deregisterAllCallouts("addr6_register");
 }
 
 // Generate IA_NA option with specified parameters

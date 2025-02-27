@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -71,6 +71,7 @@ TEST_F(Dhcpv6SrvTest, Hooks) {
     int hook_index_leases6_committed = -1;
     int hook_index_host6_identifier = -1;
     int hook_index_ddns6_update = -1;
+    int hook_index_addr6_register = -1;
 
     // check if appropriate indexes are set
     EXPECT_NO_THROW(hook_index_dhcp6_srv_configured = ServerHooks::getServerHooks()
@@ -99,6 +100,8 @@ TEST_F(Dhcpv6SrvTest, Hooks) {
                     .getIndex("host6_identifier"));
     EXPECT_NO_THROW(hook_index_ddns6_update = ServerHooks::getServerHooks()
                     .getIndex("ddns6_update"));
+    EXPECT_NO_THROW(hook_index_addr6_register = ServerHooks::getServerHooks()
+                    .getIndex("addr6_register"));
 
     EXPECT_TRUE(hook_index_dhcp6_srv_configured > 0);
     EXPECT_TRUE(hook_index_buffer6_receive > 0);
@@ -113,6 +116,7 @@ TEST_F(Dhcpv6SrvTest, Hooks) {
     EXPECT_TRUE(hook_index_leases6_committed > 0);
     EXPECT_TRUE(hook_index_host6_identifier > 0);
     EXPECT_TRUE(hook_index_ddns6_update > 0);
+    EXPECT_TRUE(hook_index_addr6_register > 0);
 }
 
 /// @brief a class dedicated to Hooks testing in DHCPv6 server
@@ -168,6 +172,7 @@ public:
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("lease6_decline");
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("host6_identifier");
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("ddns6_update");
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("addr6_register");
 
         HooksManager::setTestMode(false);
         bool status = HooksManager::unloadLibraries();

@@ -7,10 +7,13 @@
 #include <config.h>
 #include <asiolink/io_address.h>
 #include <cc/data.h>
+#include <dhcp/option6_addrlst.h>
 #include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/tests/dhcp6_message_test.h>
 #include <dhcpsrv/utils.h>
+#include <hooks/hooks_manager.h>
+#include <stats/stats_mgr.h>
 #include <sstream>
 
 using namespace isc;
@@ -18,6 +21,8 @@ using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
+using namespace isc::hooks;
+using namespace isc::stats;
 using namespace std;
 
 namespace {
@@ -27,9 +32,33 @@ class AddrRegTest : public Dhcpv6MessageTest {
 public:
 
     /// @brief Constructor.
-    ///
-    /// Sets up fake interfaces.
     AddrRegTest() : Dhcpv6MessageTest() {
+        reset();
+    }
+
+    /// @brief Destructor.
+    virtual ~AddrRegTest() {
+        reset();
+    }
+
+    /// @brief Reset hooks data.
+    virtual void reset() {
+        // Reset the query.
+        addr_reg_inf_.reset();
+
+        // Deregister the callout.
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("addr6_register");
+
+        // Unload any previously-loaded libraries.
+        HooksManager::setTestMode(false);
+        EXPECT_TRUE(HooksManager::unloadLibraries());
+
+        // Clear callout error message.
+        callout_errmsg_.clear();
+
+        // Reset callout status and reset new lease.
+        callout_status_ = CalloutHandle::NEXT_STEP_CONTINUE;
+        callout_reset_new_lease_ = false;
     }
 
     /// @brief Generate IAADDR option with specified parameters.
@@ -56,12 +85,106 @@ public:
         return (generateIAAddr(IOAddress(addr), preferred_lft, valid_lft));
     }
 
+    /// @brief Checks if the state of the callout handle associated
+    /// with a query was reset after the callout invocation.
+    ///
+    /// The check includes verification if the status was set to
+    /// 'continue' and that all arguments were deleted.
+    void checkCalloutHandleReset() {
+        CalloutHandlePtr callout_handle = addr_reg_inf_->getCalloutHandle();
+        ASSERT_TRUE(callout_handle);
+        EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+        EXPECT_TRUE(callout_handle->getArgumentNames().empty());
+    }
+
+    /// @brief Test callback for the addr6_register callout.
+    ///
+    /// @param callout_handle The handle passed by the hooks framework.
+    /// @return Always 0
+    static int addr6_register_callout(CalloutHandle& callout_handle) {
+        if (callout_handle.getStatus() != CalloutHandle::NEXT_STEP_CONTINUE) {
+            callout_errmsg_ = "bad status";
+            return (0);
+        }
+        Pkt6Ptr query6;
+        callout_handle.getArgument("query6", query6);
+        if (!query6) {
+            callout_errmsg_ = "no query6";
+            return (0);
+        }
+        if (query6->getType() != DHCPV6_ADDR_REG_INFORM) {
+            callout_errmsg_ = "bad query6";
+            return (0);
+        }
+        Pkt6Ptr response6;
+        callout_handle.getArgument("response6", response6);
+        if (!response6) {
+            callout_errmsg_ = "no response6";
+            return (0);
+        }
+        if (response6->getType() != DHCPV6_ADDR_REG_REPLY) {
+            callout_errmsg_ = "bad response6";
+            return (0);
+        }
+        IOAddress address6 = IOAddress::IPV6_ZERO_ADDRESS();
+        callout_handle.getArgument("address6", address6);
+        if (address6.isV6Zero()) {
+            callout_errmsg_ = "address6 == ::";
+            return (0);
+        }
+        Lease6Ptr old_lease6;
+        callout_handle.getArgument("old_lease6", old_lease6);
+        if (old_lease6) {
+            if (old_lease6->state_ != Lease::STATE_REGISTERED) {
+                callout_errmsg_ = "bad old_lease6 state";
+                return (0);
+            }
+            if (old_lease6->addr_ != address6) {
+                callout_errmsg_ = "bad old_lease6 address";
+                return (0);
+            }
+        }
+        Lease6Ptr new_lease6;
+        callout_handle.getArgument("new_lease6", new_lease6);
+        if (!new_lease6) {
+            callout_errmsg_ = "no new_lease6";
+            return (0);
+        }
+        if (new_lease6->state_ != Lease::STATE_REGISTERED) {
+            callout_errmsg_ = "bad new_lease6 state";
+            return (0);
+        }
+        if (new_lease6->addr_ != address6) {
+            callout_errmsg_ = "bad new_lease6 address";
+            return (0);
+        }
+        if (callout_reset_new_lease_) {
+            Lease6Ptr null_lease;
+            callout_handle.setArgument("new_lease6", null_lease);
+        }
+        callout_handle.setStatus(callout_status_);
+        return (0);
+    }
+
     /// @brief Check that when a not registered lease exits for the
     /// registering address the address is considered as already in use
     /// and the registration is rejected.
     ///
     /// @param state The state of the lease.
     void testAddressInUse(const uint32_t state);
+
+    /// @brief Test the basic positive scenario.
+    void testBasic();
+
+    /// @brief Test that the registration can be renewed.
+    void testRenew();
+
+    /// @brief Test that the registered lease is updated even it
+    /// belongs to another client.
+    void testAnother();
+
+    /// @brief Common part of skip/drop callout.
+    void commonSkipOrDrop();
 
     /// @brief Basic configuration.
     string config_ = "{\n"
@@ -79,10 +202,48 @@ public:
         "    \"duid\": \"01:02:03:04:05:0A:0B:0C:0D:0E\",\n"
         "    \"ip-addresses\": [ \"2001:db8:1::10\" ]\n"
         "} ],\n"
+        "\"option-data\": [ {\n"
+        "    \"name\": \"dns-servers\",\n"
+        "    \"data\": \"2001:db8:1::45, 2001:db8:1::100\"\n"
+        "} ],\n"
         "\"dhcp-ddns\": { \"enable-updates\": true },\n"
-        "\"ddns-qualifying-suffix\": \"example.com\"\n"
+        "\"ddns-qualifying-suffix\": \"example.com\",\n"
+        "\"ddns-update-on-renew\": false\n"
         "}\n";
+
+    /// @brief The addr-reg-inform packet.
+    Pkt6Ptr addr_reg_inf_;
+
+    /// @brief Callout error message.
+    static string callout_errmsg_;
+
+    /// @brief Callout next step.
+    static CalloutHandle::CalloutNextStep callout_status_;
+
+    /// @brief Callout resets new lease.
+    static bool callout_reset_new_lease_;
+
+    /// @brief The registered-nas statistic name.
+    static string registered_nas_name_;
+
+    /// @brief The cumulative-registered-nas statistic name.
+    static string cumulative_registered_nas_name_;
 };
+
+// Callout error message.
+string AddrRegTest::callout_errmsg_;
+
+// Callout next step.
+CalloutHandle::CalloutNextStep AddrRegTest::callout_status_;
+
+// Callout resets new lease.
+bool AddrRegTest::callout_reset_new_lease_;
+
+string AddrRegTest::registered_nas_name_ =
+    StatsMgr::generateName("subnet", 1, "registered-nas");
+
+string AddrRegTest::cumulative_registered_nas_name_ =
+    StatsMgr::generateName("subnet", 1, "cumulative-registered-nas");
 
 // Test that client-id is mandatory and server-id forbidden for
 // Addr-reg-inform messages
@@ -421,6 +582,41 @@ TEST_F(AddrRegTest, noInSubnet) {
     EXPECT_EQ(1, countFile(expected));
 }
 
+// Test that the registering address must be not reserved.
+TEST_F(AddrRegTest, reserved) {
+    IfaceMgrTestConfig test_config(true);
+
+    ASSERT_NO_THROW(configure(config_));
+
+    Pkt6Ptr addr_reg_inf = Pkt6Ptr(new Pkt6(DHCPV6_ADDR_REG_INFORM, 1234));
+    addr_reg_inf->setRemoteAddr(IOAddress("2001:db8:1::10"));
+    addr_reg_inf->setIface("eth0");
+    addr_reg_inf->setIndex(ETH0_INDEX);
+    OptionPtr clientid = generateClientId();
+    addr_reg_inf->addOption(clientid);
+    auto ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
+    ia->addOption(generateIAAddr("2001:db8:1::10", 3000, 4000));
+    addr_reg_inf->addOption(ia);
+
+    // Pass it to the server.
+    AllocEngine::ClientContext6 ctx;
+    bool drop = !srv_.earlyGHRLookup(addr_reg_inf, ctx);
+    ASSERT_FALSE(drop);
+    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf, drop);
+    ASSERT_FALSE(drop);
+    srv_.initContext(ctx, drop);
+    ASSERT_FALSE(drop);
+    ASSERT_TRUE(ctx.subnet_);
+
+    // Reserved address: no response.
+    EXPECT_FALSE(srv_.processAddrRegInform(ctx));
+
+    string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
+    expected += "error on addr-reg-inform from client 2001:db8:1::10: ";
+    expected += "Address 2001:db8:1::10 is reserved";
+    EXPECT_EQ(1, countFile(expected));
+}
+
 void
 AddrRegTest::testAddressInUse(const uint32_t state) {
     IfaceMgrTestConfig test_config(true);
@@ -495,63 +691,25 @@ TEST_F(AddrRegTest, addressInUseLease123) {
     testAddressInUse(123);
 }
 
-// Test that the registering address must be not reserved.
-TEST_F(AddrRegTest, reserved) {
-    IfaceMgrTestConfig test_config(true);
-
-    ASSERT_NO_THROW(configure(config_));
-
-    Pkt6Ptr addr_reg_inf = Pkt6Ptr(new Pkt6(DHCPV6_ADDR_REG_INFORM, 1234));
-    addr_reg_inf->setRemoteAddr(IOAddress("2001:db8:1::10"));
-    addr_reg_inf->setIface("eth0");
-    addr_reg_inf->setIndex(ETH0_INDEX);
-    OptionPtr clientid = generateClientId();
-    addr_reg_inf->addOption(clientid);
-    auto ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
-    ia->addOption(generateIAAddr("2001:db8:1::10", 3000, 4000));
-    addr_reg_inf->addOption(ia);
-
-    // Pass it to the server.
-    AllocEngine::ClientContext6 ctx;
-    bool drop = !srv_.earlyGHRLookup(addr_reg_inf, ctx);
-    ASSERT_FALSE(drop);
-    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf, drop);
-    ASSERT_FALSE(drop);
-    srv_.initContext(ctx, drop);
-    ASSERT_FALSE(drop);
-    ASSERT_TRUE(ctx.subnet_);
-
-    // Reserved address: no response.
-    EXPECT_FALSE(srv_.processAddrRegInform(ctx));
-
-    string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
-    expected += "error on addr-reg-inform from client 2001:db8:1::10: ";
-    expected += "Address 2001:db8:1::10 is reserved";
-    EXPECT_EQ(1, countFile(expected));
-}
-
 // Test the basic positive scenario.
-TEST_F(AddrRegTest, basic) {
-    IfaceMgrTestConfig test_config(true);
-
-    ASSERT_NO_THROW(configure(config_));
-
+void
+AddrRegTest::testBasic() {
     IOAddress addr("2001:db8:1::1");
-    Pkt6Ptr addr_reg_inf = Pkt6Ptr(new Pkt6(DHCPV6_ADDR_REG_INFORM, 1234));
-    addr_reg_inf->setRemoteAddr(addr);
-    addr_reg_inf->setIface("eth0");
-    addr_reg_inf->setIndex(ETH0_INDEX);
+    addr_reg_inf_ = Pkt6Ptr(new Pkt6(DHCPV6_ADDR_REG_INFORM, 1234));
+    addr_reg_inf_->setRemoteAddr(addr);
+    addr_reg_inf_->setIface("eth0");
+    addr_reg_inf_->setIndex(ETH0_INDEX);
     OptionPtr clientid = generateClientId();
-    addr_reg_inf->addOption(clientid);
+    addr_reg_inf_->addOption(clientid);
     auto ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
     ia->addOption(generateIAAddr(addr, 3000, 4000));
-    addr_reg_inf->addOption(ia);
+    addr_reg_inf_->addOption(ia);
 
     // Pass it to the server.
     AllocEngine::ClientContext6 ctx;
-    bool drop = !srv_.earlyGHRLookup(addr_reg_inf, ctx);
+    bool drop = !srv_.earlyGHRLookup(addr_reg_inf_, ctx);
     ASSERT_FALSE(drop);
-    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf, drop);
+    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf_, drop);
     ASSERT_FALSE(drop);
     srv_.initContext(ctx, drop);
     ASSERT_FALSE(drop);
@@ -562,7 +720,7 @@ TEST_F(AddrRegTest, basic) {
     ASSERT_TRUE(response);
 
     EXPECT_EQ(DHCPV6_ADDR_REG_REPLY, response->getType());
-    EXPECT_EQ(addr_reg_inf->getTransid(), response->getTransid());
+    EXPECT_EQ(addr_reg_inf_->getTransid(), response->getTransid());
     Option6IAAddrPtr iaaddr = checkIA_NA(response, 234, 1500, 3000);
     ASSERT_TRUE(iaaddr);
     EXPECT_EQ(addr, iaaddr->getAddress());
@@ -586,7 +744,16 @@ TEST_F(AddrRegTest, basic) {
     EXPECT_EQ(1, countFile(expected));
 }
 
-// Test the relayed positive scenario.
+// Test the basic positive scenario.
+TEST_F(AddrRegTest, basic) {
+    IfaceMgrTestConfig test_config(true);
+
+    ASSERT_NO_THROW(configure(config_));
+
+    testBasic();
+}
+
+// Test the relayed scenario.
 TEST_F(AddrRegTest, relayed) {
     IfaceMgrTestConfig test_config(true);
 
@@ -663,11 +830,8 @@ TEST_F(AddrRegTest, relayed) {
 }
 
 // Test that the registration can be renewed.
-TEST_F(AddrRegTest, renew) {
-    IfaceMgrTestConfig test_config(true);
-
-    ASSERT_NO_THROW(configure(config_));
-
+void
+AddrRegTest::testRenew() {
     // Create and add a lease.
     IOAddress addr("2001:db8:1::1");
     OptionPtr clientid = generateClientId();
@@ -676,20 +840,20 @@ TEST_F(AddrRegTest, renew) {
     lease->cltt_ = 1234;
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
-    Pkt6Ptr addr_reg_inf = Pkt6Ptr(new Pkt6(DHCPV6_ADDR_REG_INFORM, 1234));
-    addr_reg_inf->setRemoteAddr(addr);
-    addr_reg_inf->setIface("eth0");
-    addr_reg_inf->setIndex(ETH0_INDEX);
-    addr_reg_inf->addOption(clientid);
+    addr_reg_inf_ = Pkt6Ptr(new Pkt6(DHCPV6_ADDR_REG_INFORM, 1234));
+    addr_reg_inf_->setRemoteAddr(addr);
+    addr_reg_inf_->setIface("eth0");
+    addr_reg_inf_->setIndex(ETH0_INDEX);
+    addr_reg_inf_->addOption(clientid);
     auto ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
     ia->addOption(generateIAAddr(addr, 3000, 4000));
-    addr_reg_inf->addOption(ia);
+    addr_reg_inf_->addOption(ia);
 
     // Pass it to the server.
     AllocEngine::ClientContext6 ctx;
-    bool drop = !srv_.earlyGHRLookup(addr_reg_inf, ctx);
+    bool drop = !srv_.earlyGHRLookup(addr_reg_inf_, ctx);
     ASSERT_FALSE(drop);
-    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf, drop);
+    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf_, drop);
     ASSERT_FALSE(drop);
     srv_.initContext(ctx, drop);
     ASSERT_FALSE(drop);
@@ -718,12 +882,18 @@ TEST_F(AddrRegTest, renew) {
     EXPECT_EQ(0, countFile(expected));
 }
 
-// Test that the registered lease is updated even it belongs to another client.
-TEST_F(AddrRegTest, another) {
+// Test that the registration can be renewed.
+TEST_F(AddrRegTest, renew) {
     IfaceMgrTestConfig test_config(true);
 
     ASSERT_NO_THROW(configure(config_));
 
+    testRenew();
+}
+
+// Test that the registered lease is updated even it belongs to another client.
+void
+AddrRegTest::testAnother() {
     // Create and add a lease for another client.
     IOAddress addr("2001:db8:1::1");
     DuidPtr duid(new DUID(vector<uint8_t>(8, 0x44)));
@@ -732,21 +902,21 @@ TEST_F(AddrRegTest, another) {
     lease->cltt_ = 1234;
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
-    Pkt6Ptr addr_reg_inf = Pkt6Ptr(new Pkt6(DHCPV6_ADDR_REG_INFORM, 1234));
-    addr_reg_inf->setRemoteAddr(addr);
-    addr_reg_inf->setIface("eth0");
-    addr_reg_inf->setIndex(ETH0_INDEX);
+    addr_reg_inf_ = Pkt6Ptr(new Pkt6(DHCPV6_ADDR_REG_INFORM, 1234));
+    addr_reg_inf_->setRemoteAddr(addr);
+    addr_reg_inf_->setIface("eth0");
+    addr_reg_inf_->setIndex(ETH0_INDEX);
     OptionPtr clientid = generateClientId();
-    addr_reg_inf->addOption(clientid);
+    addr_reg_inf_->addOption(clientid);
     auto ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
     ia->addOption(generateIAAddr(addr, 3000, 4000));
-    addr_reg_inf->addOption(ia);
+    addr_reg_inf_->addOption(ia);
 
     // Pass it to the server.
     AllocEngine::ClientContext6 ctx;
-    bool drop = !srv_.earlyGHRLookup(addr_reg_inf, ctx);
+    bool drop = !srv_.earlyGHRLookup(addr_reg_inf_, ctx);
     ASSERT_FALSE(drop);
-    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf, drop);
+    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf_, drop);
     ASSERT_FALSE(drop);
     srv_.initContext(ctx, drop);
     ASSERT_FALSE(drop);
@@ -777,6 +947,15 @@ TEST_F(AddrRegTest, another) {
     expected += "' but the address was registered by another client ";
     expected += "'44:44:44:44:44:44:44:44'";
     EXPECT_EQ(1, countFile(expected));
+}
+
+// Test that the registered lease is updated even it belongs to another client.
+TEST_F(AddrRegTest, another) {
+    IfaceMgrTestConfig test_config(true);
+
+    ASSERT_NO_THROW(configure(config_));
+
+    testAnother();
 }
 
 // Test that the FQDN option is handled.
@@ -846,6 +1025,495 @@ TEST_F(AddrRegTest, fqdn) {
     expected += "], [no hwaddr info], tid=0x4d2: ";
     expected += "created name change request: Type: 0 (CHG_ADD)";
     EXPECT_EQ(1, countFile(expected));
+}
+
+// Test that DDNS is skipped on renew.
+TEST_F(AddrRegTest, renewDdns) {
+    IfaceMgrTestConfig test_config(true);
+
+    ASSERT_NO_THROW(configure(config_));
+    ASSERT_NO_THROW(srv_.startD2());
+
+    IOAddress addr("2001:db8:1::1");
+    Pkt6Ptr addr_reg_inf = Pkt6Ptr(new Pkt6(DHCPV6_ADDR_REG_INFORM, 1234));
+    addr_reg_inf->setRemoteAddr(addr);
+    addr_reg_inf->setIface("eth0");
+    addr_reg_inf->setIndex(ETH0_INDEX);
+    OptionPtr clientid = generateClientId();
+    addr_reg_inf->addOption(clientid);
+    auto ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
+    ia->addOption(generateIAAddr(addr, 3000, 4000));
+    addr_reg_inf->addOption(ia);
+
+    // Add an FQDN option.
+    Option6ClientFqdnPtr fqdn(new Option6ClientFqdn(Option6ClientFqdn::FLAG_S,
+                                                    "client.example.com",
+                                                    Option6ClientFqdn::FULL));
+    addr_reg_inf->addOption(fqdn);
+
+    // Pass it to the server.
+    AllocEngine::ClientContext6 ctx;
+    bool drop = !srv_.earlyGHRLookup(addr_reg_inf, ctx);
+    ASSERT_FALSE(drop);
+    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf, drop);
+    ASSERT_FALSE(drop);
+    srv_.initContext(ctx, drop);
+    ASSERT_FALSE(drop);
+    ASSERT_TRUE(ctx.subnet_);
+
+    // Verify the response.
+    Pkt6Ptr response = srv_.processAddrRegInform(ctx);
+    ASSERT_TRUE(response);
+
+    // There should be one name change request generated.
+    auto& d2_mgr = CfgMgr::instance().getD2ClientMgr();
+    EXPECT_EQ(1, d2_mgr.getQueueSize());
+
+    // Clear the queue.
+    ASSERT_NO_THROW(d2_mgr.runReadyIO());
+    EXPECT_EQ(0, d2_mgr.getQueueSize());
+
+    // Process it a second time.
+    AllocEngine::ClientContext6 ctx2;
+    drop = !srv_.earlyGHRLookup(addr_reg_inf, ctx2);
+    ASSERT_FALSE(drop);
+    ctx2.subnet_ = srv_.selectSubnet(addr_reg_inf, drop);
+    ASSERT_FALSE(drop);
+    srv_.initContext(ctx2, drop);
+    ASSERT_FALSE(drop);
+    ASSERT_TRUE(ctx2.subnet_);
+
+    response = srv_.processAddrRegInform(ctx2);
+    ASSERT_TRUE(response);
+
+    // DDNS is skipped when ddns-update-on-renew is false (default).
+    EXPECT_FALSE(ctx2.getDdnsParams()->getUpdateOnRenew());
+    EXPECT_EQ(0, d2_mgr.getQueueSize());
+
+    string expected = "DHCPSRV_MEMFILE_ADD_ADDR6 ";
+    expected += "adding IPv6 lease with address 2001:db8:1::1";
+    EXPECT_EQ(1, countFile(expected));
+    expected = "DHCPSRV_MEMFILE_UPDATE_ADDR6 ";
+    expected += "updating IPv6 lease for address 2001:db8:1::1";
+    EXPECT_EQ(1, countFile(expected));
+}
+
+// Test that DDNS is not skipped on renew when ddns-update-on-renew is true.
+TEST_F(AddrRegTest, renewDdnsUpdateOnRenew) {
+    IfaceMgrTestConfig test_config(true);
+
+    ASSERT_NO_THROW(configure(config_));
+    Subnet6Ptr subnet =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getSubnet(1);
+    ASSERT_TRUE(subnet);
+    ASSERT_NO_THROW(subnet->setDdnsUpdateOnRenew(true));
+    ASSERT_NO_THROW(srv_.startD2());
+
+    IOAddress addr("2001:db8:1::1");
+    Pkt6Ptr addr_reg_inf = Pkt6Ptr(new Pkt6(DHCPV6_ADDR_REG_INFORM, 1234));
+    addr_reg_inf->setRemoteAddr(addr);
+    addr_reg_inf->setIface("eth0");
+    addr_reg_inf->setIndex(ETH0_INDEX);
+    OptionPtr clientid = generateClientId();
+    addr_reg_inf->addOption(clientid);
+    auto ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
+    ia->addOption(generateIAAddr(addr, 3000, 4000));
+    addr_reg_inf->addOption(ia);
+
+    // Add an FQDN option.
+    Option6ClientFqdnPtr fqdn(new Option6ClientFqdn(Option6ClientFqdn::FLAG_S,
+                                                    "client.example.com",
+                                                    Option6ClientFqdn::FULL));
+    addr_reg_inf->addOption(fqdn);
+
+    // Pass it to the server.
+    AllocEngine::ClientContext6 ctx;
+    bool drop = !srv_.earlyGHRLookup(addr_reg_inf, ctx);
+    ASSERT_FALSE(drop);
+    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf, drop);
+    ASSERT_FALSE(drop);
+    srv_.initContext(ctx, drop);
+    ASSERT_FALSE(drop);
+    ASSERT_TRUE(ctx.subnet_);
+
+    // Verify the response.
+    Pkt6Ptr response = srv_.processAddrRegInform(ctx);
+    ASSERT_TRUE(response);
+
+    // There should be one name change request generated.
+    auto& d2_mgr = CfgMgr::instance().getD2ClientMgr();
+    EXPECT_EQ(1, d2_mgr.getQueueSize());
+
+    // Clear the queue.
+    ASSERT_NO_THROW(d2_mgr.runReadyIO());
+    EXPECT_EQ(0, d2_mgr.getQueueSize());
+
+    // Process it a second time.
+    AllocEngine::ClientContext6 ctx2;
+    drop = !srv_.earlyGHRLookup(addr_reg_inf, ctx2);
+    ASSERT_FALSE(drop);
+    ctx2.subnet_ = srv_.selectSubnet(addr_reg_inf, drop);
+    ASSERT_FALSE(drop);
+    srv_.initContext(ctx2, drop);
+    ASSERT_FALSE(drop);
+    ASSERT_TRUE(ctx2.subnet_);
+
+    response = srv_.processAddrRegInform(ctx2);
+    ASSERT_TRUE(response);
+
+    // DDNS is not skipped when ddns-update-on-renew is true.
+    EXPECT_TRUE(ctx2.getDdnsParams()->getUpdateOnRenew());
+    // One CHG_REMOVE and one CHG_ADD (no CHG_UPDATE).
+    EXPECT_EQ(2, d2_mgr.getQueueSize());
+
+    string expected = "DHCPSRV_MEMFILE_ADD_ADDR6 ";
+    expected += "adding IPv6 lease with address 2001:db8:1::1";
+    EXPECT_EQ(1, countFile(expected));
+    expected = "DHCPSRV_MEMFILE_UPDATE_ADDR6 ";
+    expected += "updating IPv6 lease for address 2001:db8:1::1";
+    EXPECT_EQ(1, countFile(expected));
+}
+
+// Test that DDNS is not skipped when the hostname changes.
+TEST_F(AddrRegTest, renewDdnsHostname) {
+    IfaceMgrTestConfig test_config(true);
+
+    ASSERT_NO_THROW(configure(config_));
+    ASSERT_NO_THROW(srv_.startD2());
+
+    IOAddress addr("2001:db8:1::1");
+    Pkt6Ptr addr_reg_inf = Pkt6Ptr(new Pkt6(DHCPV6_ADDR_REG_INFORM, 1234));
+    addr_reg_inf->setRemoteAddr(addr);
+    addr_reg_inf->setIface("eth0");
+    addr_reg_inf->setIndex(ETH0_INDEX);
+    OptionPtr clientid = generateClientId();
+    addr_reg_inf->addOption(clientid);
+    auto ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
+    ia->addOption(generateIAAddr(addr, 3000, 4000));
+    addr_reg_inf->addOption(ia);
+
+    // Add an FQDN option.
+    Option6ClientFqdnPtr fqdn(new Option6ClientFqdn(Option6ClientFqdn::FLAG_S,
+                                                    "client.example.com",
+                                                    Option6ClientFqdn::FULL));
+    addr_reg_inf->addOption(fqdn);
+
+    // Pass it to the server.
+    AllocEngine::ClientContext6 ctx;
+    bool drop = !srv_.earlyGHRLookup(addr_reg_inf, ctx);
+    ASSERT_FALSE(drop);
+    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf, drop);
+    ASSERT_FALSE(drop);
+    srv_.initContext(ctx, drop);
+    ASSERT_FALSE(drop);
+    ASSERT_TRUE(ctx.subnet_);
+
+    // Verify the response.
+    Pkt6Ptr response = srv_.processAddrRegInform(ctx);
+    ASSERT_TRUE(response);
+
+    // There should be one name change request generated.
+    auto& d2_mgr = CfgMgr::instance().getD2ClientMgr();
+    EXPECT_EQ(1, d2_mgr.getQueueSize());
+
+    // Clear the queue.
+    ASSERT_NO_THROW(d2_mgr.runReadyIO());
+    EXPECT_EQ(0, d2_mgr.getQueueSize());
+
+    // Change the hostname.
+    ASSERT_TRUE(addr_reg_inf->delOption(D6O_CLIENT_FQDN));
+    Option6ClientFqdnPtr fqdn2(new Option6ClientFqdn(Option6ClientFqdn::FLAG_S,
+                                                     "client2.example.com",
+                                                     Option6ClientFqdn::FULL));
+    addr_reg_inf->addOption(fqdn2);
+
+    // Process it a second time.
+    AllocEngine::ClientContext6 ctx2;
+    drop = !srv_.earlyGHRLookup(addr_reg_inf, ctx2);
+    ASSERT_FALSE(drop);
+    ctx2.subnet_ = srv_.selectSubnet(addr_reg_inf, drop);
+    ASSERT_FALSE(drop);
+    srv_.initContext(ctx2, drop);
+    ASSERT_FALSE(drop);
+    ASSERT_TRUE(ctx2.subnet_);
+
+    response = srv_.processAddrRegInform(ctx2);
+    ASSERT_TRUE(response);
+
+    // DDNS is not skipped when the hostname changed.
+    EXPECT_FALSE(ctx2.getDdnsParams()->getUpdateOnRenew());
+    // One CHG_REMOVE and one CHG_ADD (no CHG_UPDATE).
+    EXPECT_EQ(2, d2_mgr.getQueueSize());
+
+    string expected = "DHCPSRV_MEMFILE_ADD_ADDR6 ";
+    expected += "adding IPv6 lease with address 2001:db8:1::1";
+    EXPECT_EQ(1, countFile(expected));
+    expected = "DHCPSRV_MEMFILE_UPDATE_ADDR6 ";
+    expected += "updating IPv6 lease for address 2001:db8:1::1";
+    EXPECT_EQ(1, countFile(expected));
+}
+
+// Test that the ORO option is handled.
+TEST_F(AddrRegTest, oro) {
+    IfaceMgrTestConfig test_config(true);
+
+    ASSERT_NO_THROW(configure(config_));
+
+    IOAddress addr("2001:db8:1::1");
+    Pkt6Ptr addr_reg_inf = Pkt6Ptr(new Pkt6(DHCPV6_ADDR_REG_INFORM, 1234));
+    addr_reg_inf->setRemoteAddr(addr);
+    addr_reg_inf->setIface("eth0");
+    addr_reg_inf->setIndex(ETH0_INDEX);
+    OptionPtr clientid = generateClientId();
+    addr_reg_inf->addOption(clientid);
+    auto ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
+    ia->addOption(generateIAAddr(addr, 3000, 4000));
+    addr_reg_inf->addOption(ia);
+
+    // Add an ORO option for the dns-servers option.
+    OptionUint16ArrayPtr oro(new OptionUint16Array(Option::V6, D6O_ORO));
+    oro->addValue(D6O_NAME_SERVERS);
+    addr_reg_inf->addOption(oro);
+
+    // Pass it to the server.
+    AllocEngine::ClientContext6 ctx;
+    bool drop = !srv_.earlyGHRLookup(addr_reg_inf, ctx);
+    ASSERT_FALSE(drop);
+    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf, drop);
+    ASSERT_FALSE(drop);
+    srv_.initContext(ctx, drop);
+    ASSERT_FALSE(drop);
+    ASSERT_TRUE(ctx.subnet_);
+
+    // Verify the response.
+    Pkt6Ptr response = srv_.processAddrRegInform(ctx);
+    ASSERT_TRUE(response);
+
+    EXPECT_EQ(DHCPV6_ADDR_REG_REPLY, response->getType());
+    EXPECT_EQ(addr_reg_inf->getTransid(), response->getTransid());
+    Option6IAAddrPtr iaaddr = checkIA_NA(response, 234, 1500, 3000);
+    ASSERT_TRUE(iaaddr);
+    EXPECT_EQ(addr, iaaddr->getAddress());
+    EXPECT_EQ(3000, iaaddr->getPreferred());
+    EXPECT_EQ(4000, iaaddr->getValid());
+
+    // Check the name-servers option.
+    OptionPtr opt = response->getOption(D6O_NAME_SERVERS);
+    Option6AddrLstPtr ns = boost::dynamic_pointer_cast<Option6AddrLst>(opt);
+    ASSERT_TRUE(ns);
+    Option6AddrLst::AddressContainer ns_addrs = ns->getAddresses();
+    ASSERT_EQ(2, ns_addrs.size());
+    EXPECT_EQ("2001:db8:1::45", ns_addrs[0].toText());
+    EXPECT_EQ("2001:db8:1::100", ns_addrs[1].toText());
+
+    // Option processing is silent: nothing to check.
+}
+
+// Test the callout in the basic scenario.
+TEST_F(AddrRegTest, callout) {
+    IfaceMgrTestConfig test_config(true);
+
+    ASSERT_NO_THROW(configure(config_));
+
+    // Install addr6_register_callout.
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "addr6_register", addr6_register_callout));
+    testBasic();
+    EXPECT_TRUE(callout_errmsg_.empty()) << callout_errmsg_;
+    checkCalloutHandleReset();
+
+    string expected = "HOOKS_CALLOUTS_BEGIN ";
+    expected += "begin all callouts for hook addr6_register";
+    EXPECT_EQ(1, countFile(expected));
+}
+
+// Test the callout in the renew scenario.
+TEST_F(AddrRegTest, calloutRenew) {
+    IfaceMgrTestConfig test_config(true);
+
+    ASSERT_NO_THROW(configure(config_));
+
+    // Install addr6_register_callout.
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "addr6_register", addr6_register_callout));
+    testRenew();
+    EXPECT_TRUE(callout_errmsg_.empty()) << callout_errmsg_;
+    checkCalloutHandleReset();
+
+    string expected = "HOOKS_CALLOUTS_BEGIN ";
+    expected += "begin all callouts for hook addr6_register";
+    EXPECT_EQ(1, countFile(expected));
+}
+
+// Test the callout in the another scenario.
+TEST_F(AddrRegTest, calloutAnother) {
+    IfaceMgrTestConfig test_config(true);
+
+    ASSERT_NO_THROW(configure(config_));
+
+    // Install addr6_register_callout.
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "addr6_register", addr6_register_callout));
+    testAnother();
+    EXPECT_TRUE(callout_errmsg_.empty()) << callout_errmsg_;
+    checkCalloutHandleReset();
+
+    string expected = "HOOKS_CALLOUTS_BEGIN ";
+    expected += "begin all callouts for hook addr6_register";
+    EXPECT_EQ(1, countFile(expected));
+}
+
+// Common part of skip/drop callout.
+void
+AddrRegTest::commonSkipOrDrop() {
+    IfaceMgrTestConfig test_config(true);
+
+    ASSERT_NO_THROW(configure(config_));
+
+    // Install addr6_register_callout.
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "addr6_register", addr6_register_callout));
+
+    IOAddress addr("2001:db8:1::1");
+    addr_reg_inf_ = Pkt6Ptr(new Pkt6(DHCPV6_ADDR_REG_INFORM, 1234));
+    addr_reg_inf_->setRemoteAddr(addr);
+    addr_reg_inf_->setIface("eth0");
+    addr_reg_inf_->setIndex(ETH0_INDEX);
+    OptionPtr clientid = generateClientId();
+    addr_reg_inf_->addOption(clientid);
+    auto ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
+    ia->addOption(generateIAAddr(addr, 3000, 4000));
+    addr_reg_inf_->addOption(ia);
+
+    // Pass it to the server.
+    AllocEngine::ClientContext6 ctx;
+    bool drop = !srv_.earlyGHRLookup(addr_reg_inf_, ctx);
+    ASSERT_FALSE(drop);
+    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf_, drop);
+    ASSERT_FALSE(drop);
+    srv_.initContext(ctx, drop);
+    ASSERT_FALSE(drop);
+    ASSERT_TRUE(ctx.subnet_);
+
+    // Callout set the status to skip or drop: no response.
+    EXPECT_FALSE(srv_.processAddrRegInform(ctx));
+    EXPECT_TRUE(callout_errmsg_.empty()) << callout_errmsg_;
+    checkCalloutHandleReset();
+
+    string expected = "HOOKS_CALLOUTS_BEGIN ";
+    expected += "begin all callouts for hook addr6_register";
+    EXPECT_EQ(1, countFile(expected));
+    EXPECT_EQ(1, countFile("DHCP6_HOOK_ADDR6_REGISTER_SKIP"));
+}
+
+// Test that when the callout sets the status skip the query is dropped.
+TEST_F(AddrRegTest, calloutSkip) {
+    callout_status_ = CalloutHandle::NEXT_STEP_SKIP;
+    commonSkipOrDrop();
+}
+
+// Test that when the callout sets the status drop the query is dropped.
+TEST_F(AddrRegTest, calloutDrop) {
+    callout_status_ = CalloutHandle::NEXT_STEP_DROP;
+    commonSkipOrDrop();
+}
+
+// Test that the callout can reset the new lease.
+TEST_F(AddrRegTest, calloutResetNewLease) {
+    callout_reset_new_lease_ = true;
+
+    IfaceMgrTestConfig test_config(true);
+
+    ASSERT_NO_THROW(configure(config_));
+
+    // Install addr6_register_callout.
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "addr6_register", addr6_register_callout));
+
+    IOAddress addr("2001:db8:1::1");
+    addr_reg_inf_ = Pkt6Ptr(new Pkt6(DHCPV6_ADDR_REG_INFORM, 1234));
+    addr_reg_inf_->setRemoteAddr(addr);
+    addr_reg_inf_->setIface("eth0");
+    addr_reg_inf_->setIndex(ETH0_INDEX);
+    OptionPtr clientid = generateClientId();
+    addr_reg_inf_->addOption(clientid);
+    auto ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
+    ia->addOption(generateIAAddr(addr, 3000, 4000));
+    addr_reg_inf_->addOption(ia);
+
+    // Pass it to the server.
+    AllocEngine::ClientContext6 ctx;
+    bool drop = !srv_.earlyGHRLookup(addr_reg_inf_, ctx);
+    ASSERT_FALSE(drop);
+    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf_, drop);
+    ASSERT_FALSE(drop);
+    srv_.initContext(ctx, drop);
+    ASSERT_FALSE(drop);
+    ASSERT_TRUE(ctx.subnet_);
+
+    // Verify the response.
+    Pkt6Ptr response = srv_.processAddrRegInform(ctx);
+    ASSERT_TRUE(response);
+
+    EXPECT_EQ(DHCPV6_ADDR_REG_REPLY, response->getType());
+    EXPECT_EQ(addr_reg_inf_->getTransid(), response->getTransid());
+    Option6IAAddrPtr iaaddr = checkIA_NA(response, 234, 1500, 3000);
+    ASSERT_TRUE(iaaddr);
+    EXPECT_EQ(addr, iaaddr->getAddress());
+    EXPECT_EQ(3000, iaaddr->getPreferred());
+    EXPECT_EQ(4000, iaaddr->getValid());
+
+    // No lease was added.
+    EXPECT_FALSE(LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, addr));
+
+    string expected = "DHCPSRV_MEMFILE_ADD_ADDR6";
+    EXPECT_EQ(0, countFile(expected));
+}
+
+// Check the statictics for the basic scenario.
+TEST_F(AddrRegTest, stats) {
+    IfaceMgrTestConfig test_config(true);
+
+    ASSERT_NO_THROW(configure(config_));
+
+    StatsMgr::instance().setValue(registered_nas_name_,
+                                  static_cast<int64_t>(5));
+    StatsMgr::instance().setValue(cumulative_registered_nas_name_,
+                                  static_cast<int64_t>(10));
+
+    testBasic();
+
+    // Statistics should have been bumped by one.
+    ObservationPtr stat;
+    stat = StatsMgr::instance().getObservation(registered_nas_name_);
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(6, stat->getInteger().first);
+    stat = StatsMgr::instance().getObservation(cumulative_registered_nas_name_);
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(11, stat->getInteger().first);
+}
+
+// Check the statictics for the renew scenario.
+TEST_F(AddrRegTest, statsRenew) {
+    IfaceMgrTestConfig test_config(true);
+
+    ASSERT_NO_THROW(configure(config_));
+
+    StatsMgr::instance().setValue(registered_nas_name_,
+                                  static_cast<int64_t>(5));
+    StatsMgr::instance().setValue(cumulative_registered_nas_name_,
+                                  static_cast<int64_t>(10));
+
+    testRenew();
+
+    // Statistics should have been not touched.
+    ObservationPtr stat;
+    stat = StatsMgr::instance().getObservation(registered_nas_name_);
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(5, stat->getInteger().first);
+    stat = StatsMgr::instance().getObservation(cumulative_registered_nas_name_);
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(10, stat->getInteger().first);
 }
 
 } // end of anonymous namespace
