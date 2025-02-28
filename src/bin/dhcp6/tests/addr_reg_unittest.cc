@@ -262,6 +262,17 @@ TEST_F(AddrRegTest, sanityCheck) {
     EXPECT_FALSE(srv_.sanityCheck(addr_reg_inf));
 }
 
+// Test that more than one client-id are forbidden for Addr-reg-inform messages
+TEST_F(AddrRegTest, sanityCheck2) {
+    Pkt6Ptr addr_reg_inf = Pkt6Ptr(new Pkt6(DHCPV6_ADDR_REG_INFORM, 1234));
+
+    // A message with more than one client-id options should fail.
+    OptionPtr clientid = generateClientId();
+    addr_reg_inf->addOption(clientid);
+    addr_reg_inf->addOption(clientid);
+    EXPECT_FALSE(srv_.sanityCheck(addr_reg_inf));
+}
+
 // Test that subnet selection must return a subnet for processAddrRegInform.
 TEST_F(AddrRegTest, noSubnet) {
     Pkt6Ptr addr_reg_inf = Pkt6Ptr(new Pkt6(DHCPV6_ADDR_REG_INFORM, 1234));
@@ -312,7 +323,7 @@ TEST_F(AddrRegTest, noIA_NA) {
     EXPECT_FALSE(srv_.processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
-    expected += "error on addr-reg-inform from client fe80::abcd: ";
+    expected += "error on ADDR-REG-INFORM from client fe80::abcd: ";
     expected += "Exactly 1 IA_NA option expected, but 0 received";
     EXPECT_EQ(1, countFile(expected));
 }
@@ -346,7 +357,7 @@ TEST_F(AddrRegTest, twoIA_NAs) {
     EXPECT_FALSE(srv_.processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
-    expected += "error on addr-reg-inform from client fe80::abcd: ";
+    expected += "error on ADDR-REG-INFORM from client fe80::abcd: ";
     expected += "Exactly 1 IA_NA option expected, but 2 received";
     EXPECT_EQ(1, countFile(expected));
 }
@@ -379,7 +390,7 @@ TEST_F(AddrRegTest, noIA_NAsub) {
     EXPECT_FALSE(srv_.processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
-    expected += "error on addr-reg-inform from client fe80::abcd: ";
+    expected += "error on ADDR-REG-INFORM from client fe80::abcd: ";
     expected += "Exactly 1 IA_NA sub-option expected, but 0 received";
     EXPECT_EQ(1, countFile(expected));
 }
@@ -415,7 +426,7 @@ TEST_F(AddrRegTest, twoIA_NAsub) {
     EXPECT_FALSE(srv_.processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
-    expected += "error on addr-reg-inform from client fe80::abcd: ";
+    expected += "error on ADDR-REG-INFORM from client fe80::abcd: ";
     expected += "Exactly 1 IA_NA sub-option expected, but 2 received";
     EXPECT_EQ(1, countFile(expected));
 }
@@ -450,7 +461,7 @@ TEST_F(AddrRegTest, noAddrMatch) {
     EXPECT_FALSE(srv_.processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
-    expected += "error on addr-reg-inform from client fe80::abcd: ";
+    expected += "error on ADDR-REG-INFORM from client fe80::abcd: ";
     expected += "Address mismatch: client at fe80::abcd ";
     expected += "wants to register 2001:db8:1::1";
     EXPECT_EQ(1, countFile(expected));
@@ -492,7 +503,7 @@ TEST_F(AddrRegTest, noAddrMatchRelay) {
     EXPECT_FALSE(srv_.processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
-    expected += "error on addr-reg-inform from client fe80::ef01: ";
+    expected += "error on ADDR-REG-INFORM from client fe80::ef01: ";
     expected += "Address mismatch: client at fe80::ef01 ";
     expected += "wants to register 2001:db8:1::1";
     EXPECT_EQ(1, countFile(expected));
@@ -540,7 +551,7 @@ TEST_F(AddrRegTest, noAddrMatch2Relays) {
     EXPECT_FALSE(srv_.processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
-    expected += "error on addr-reg-inform from client fe80::2345: ";
+    expected += "error on ADDR-REG-INFORM from client fe80::2345: ";
     expected += "Address mismatch: client at fe80::2345 ";
     expected += "wants to register 2001:db8:1::1";
     EXPECT_EQ(1, countFile(expected));
@@ -576,7 +587,7 @@ TEST_F(AddrRegTest, noInSubnet) {
     EXPECT_FALSE(srv_.processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
-    expected += "error on addr-reg-inform from client 2001:db8::1: ";
+    expected += "error on ADDR-REG-INFORM from client 2001:db8::1: ";
     expected += "Address 2001:db8::1 is not in subnet ";
     expected += "2001:db8:1::/64 (id 1)";
     EXPECT_EQ(1, countFile(expected));
@@ -612,7 +623,7 @@ TEST_F(AddrRegTest, reserved) {
     EXPECT_FALSE(srv_.processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
-    expected += "error on addr-reg-inform from client 2001:db8:1::10: ";
+    expected += "error on ADDR-REG-INFORM from client 2001:db8:1::10: ";
     expected += "Address 2001:db8:1::10 is reserved";
     EXPECT_EQ(1, countFile(expected));
 }
@@ -655,7 +666,7 @@ AddrRegTest::testAddressInUse(const uint32_t state) {
     EXPECT_FALSE(srv_.processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
-    expected += "error on addr-reg-inform from client 2001:db8:1::1: ";
+    expected += "error on ADDR-REG-INFORM from client 2001:db8:1::1: ";
     expected +=  "Address 2001:db8:1::1 already in use Type:";
     EXPECT_EQ(1, countFile(expected));
 }
@@ -942,7 +953,7 @@ AddrRegTest::testAnother() {
     expected += "updating IPv6 lease for address 2001:db8:1::1";
     EXPECT_EQ(1, countFile(expected));
     expected = "DHCP6_ADDR_REG_INFORM_CLIENT_CHANGE ";
-    expected += "received an addr-reg-inform for 2001:db8:1::1 from client '";
+    expected += "received an ADDR-REG-INFORM for 2001:db8:1::1 from client '";
     expected += duid_->toText();
     expected += "' but the address was registered by another client ";
     expected += "'44:44:44:44:44:44:44:44'";
@@ -1480,6 +1491,8 @@ TEST_F(AddrRegTest, stats) {
                                   static_cast<int64_t>(5));
     StatsMgr::instance().setValue(cumulative_registered_nas_name_,
                                   static_cast<int64_t>(10));
+    StatsMgr::instance().setValue("cumulative-registered-nas",
+                                  static_cast<int64_t>(20));
 
     testBasic();
 
@@ -1491,6 +1504,8 @@ TEST_F(AddrRegTest, stats) {
     stat = StatsMgr::instance().getObservation(cumulative_registered_nas_name_);
     ASSERT_TRUE(stat);
     EXPECT_EQ(11, stat->getInteger().first);
+    stat = StatsMgr::instance().getObservation("cumulative-registered-nas");
+    EXPECT_EQ(21, stat->getInteger().first);
 }
 
 // Check the statictics for the renew scenario.
@@ -1503,6 +1518,8 @@ TEST_F(AddrRegTest, statsRenew) {
                                   static_cast<int64_t>(5));
     StatsMgr::instance().setValue(cumulative_registered_nas_name_,
                                   static_cast<int64_t>(10));
+    StatsMgr::instance().setValue("cumulative-registered-nas",
+                                  static_cast<int64_t>(20));
 
     testRenew();
 
@@ -1514,6 +1531,8 @@ TEST_F(AddrRegTest, statsRenew) {
     stat = StatsMgr::instance().getObservation(cumulative_registered_nas_name_);
     ASSERT_TRUE(stat);
     EXPECT_EQ(10, stat->getInteger().first);
+    stat = StatsMgr::instance().getObservation("cumulative-registered-nas");
+    EXPECT_EQ(20, stat->getInteger().first);
 }
 
 } // end of anonymous namespace
