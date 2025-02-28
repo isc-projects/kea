@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -233,7 +233,8 @@ public:
     /// @details If specified buffer is too short, it will be expanded using
     /// vector::resize() method. If the remaining length of the buffer
     /// is smaller than the specified length, an exception of class
-    /// @c isc::OutOfRange will be thrown.
+    /// @c isc::OutOfRange will be thrown.  Read length zero results
+    /// in an empty vector.
     ///
     /// @param data Reference to a buffer (data will be stored there).
     /// @param len Size specified number of bytes to read in a vector.
@@ -244,7 +245,9 @@ public:
         }
 
         data.resize(len);
-        peekData(&data[0], len);
+        if (len) {
+            peekData(&data[0], len);
+        }
     }
 
     /// @brief Read specified number of bytes as a vector.
