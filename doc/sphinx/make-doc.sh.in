@@ -2,18 +2,18 @@
 
 set -euv
 
-cd @builddir@
+cd '@builddir@'
 
 # api.rst is always generated via sphinx's conf.py
 @PYTHON@ @srcdir@/api2doc.py -o @srcdir@/api.rst
 
-rm -f @srcdir@/arm/platforms.rst
-cp @TOP_SOURCE_DIR@/platforms.rst @srcdir@/arm/platforms.rst
+rm -f '@srcdir@/arm/platforms.rst'
+cp '@TOP_SOURCE_DIR@/platforms.rst' '@srcdir@/arm/platforms.rst'
 
 # pdf
-if test "@HAVE_PDFLATEX@" != "no" ; then
+if test '@HAVE_PDFLATEX@' != 'no'; then
     @SPHINXBUILD@ -M latex @srcdir@ @sphinxbuilddir@ @sphinxopts@
-    cd @abs_sphinxbuilddir@/latex
+    cd '@abs_sphinxbuilddir@/latex'
     @PDFLATEX_AND_OPTS@ kea-arm.tex
     makeindex -s python.ist kea-arm.idx
     @PDFLATEX_AND_OPTS@ kea-arm.tex
@@ -22,7 +22,7 @@ if test "@HAVE_PDFLATEX@" != "no" ; then
     @PDFLATEX_AND_OPTS@ kea-messages.tex
 fi
 
-cd @builddir@
+cd '@builddir@'
 
 # html
 @SPHINXBUILD@ -M html @srcdir@ @sphinxbuilddir@ @sphinxopts@

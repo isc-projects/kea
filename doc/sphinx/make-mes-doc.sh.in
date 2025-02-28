@@ -2,7 +2,7 @@
 
 set -euv
 
-cd @TOP_SOURCE_DIR@
+cd '@TOP_SOURCE_DIR@'
 
 # api-files.txt
 find src/share/api -type f -name '[a-z]*.json' | sort -V > "@srcdir@/api-files.txt"
@@ -14,5 +14,5 @@ find . -type f -name '*.mes' | sort -V | sed 's#^./##g' > "@srcdir@/mes-files.tx
 @PYTHON@ ./tools/check-messages.py --generate-debug-messages-page
 
 # kea-messages.rst
-cd @srcdir@
+cd '@srcdir@'
 @PYTHON@ ./mes2doc.py -o kea-messages.rst

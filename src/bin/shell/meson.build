@@ -4,8 +4,8 @@ endif
 
 kea_shell_conf_data = configuration_data()
 kea_shell_conf_data.set('PYTHON', PYTHON.full_path())
-kea_shell_conf_data.set('PACKAGE_VERSION', project_version)
-kea_shell_conf_data.set('EXTENDED_VERSION', project_version + ' (tarball)')
+kea_shell_conf_data.set('PACKAGE_VERSION', PROJECT_VERSION)
+kea_shell_conf_data.set('EXTENDED_VERSION', PROJECT_VERSION + ' (tarball)')
 
 r = run_command(
     PYTHON,

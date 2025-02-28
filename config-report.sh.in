@@ -32,7 +32,7 @@ C++ Compiler:
 
 END
 
-if test "@HAVE_PYTHON@" != "no" ; then
+if test '@HAVE_PYTHON@' != 'no'; then
 cat >> @TOP_BUILD_DIR@/config.report << END
 Python:
   PYTHON:          @PYTHON_PATH@
@@ -63,7 +63,7 @@ Flex/bison:
 
 END
 
-if test "@HAVE_MYSQL@" != "no" ; then
+if test '@HAVE_MYSQL@' != 'no'; then
 cat >> @TOP_BUILD_DIR@/config.report << END
 MySQL:
   MYSQL_VERSION:   @MYSQL_VERSION@
@@ -79,7 +79,7 @@ MySQL:
 END
 fi
 
-if test "@HAVE_PGSQL@" != "no" ; then
+if test '@HAVE_PGSQL@' != 'no'; then
 cat >> @TOP_BUILD_DIR@/config.report << END
 PostgreSQL:
   PGSQL_VERSION:   @PGSQL_VERSION@
@@ -101,7 +101,7 @@ NETCONF:
 
 END
 
-if test "@HAVE_GTEST@" != "no" ; then
+if test '@HAVE_GTEST@' != 'no'; then
 cat >> @TOP_BUILD_DIR@/config.report << END
 Google Test:
   GTEST_VERSION:   @GTEST_VERSION@

@@ -9,8 +9,8 @@ if NETCONF_DEPS_FOUND
 else
     keactrl_conf_data.set('HAVE_NETCONF', 'no')
 endif
-keactrl_conf_data.set('EXTENDED_VERSION', project_version + ' (tarball)')
-keactrl_conf_data.set('PACKAGE_VERSION', project_version)
+keactrl_conf_data.set('EXTENDED_VERSION', PROJECT_VERSION + ' (tarball)')
+keactrl_conf_data.set('PACKAGE_VERSION', PROJECT_VERSION)
 keactrl_conf_data.set('runstatedir', '${prefix}/' + RUN_STATE_DIR + '/run')
 keactrl_conf_data.set('localstatedir', '${prefix}/' + RUN_STATE_DIR)
 kea_configfiles_destdir = f'@SYSCONFDIR@/kea'

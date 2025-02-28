@@ -2,7 +2,7 @@
 project('kea', 'cpp', version: '2.7.7-git', meson_version: '>=0.64.0')
 
 cpp = meson.get_compiler('cpp')
-project_version = meson.project_version()
+PROJECT_VERSION = meson.project_version()
 
 #### Imports
 
@@ -99,17 +99,17 @@ conf_data = configuration_data(
         # 'PACKAGE': 'kea',
         # 'PACKAGE_BUGREPORT': 'kea-dev@lists.isc.org',
         'PACKAGE_NAME': 'kea',
-        # 'PACKAGE_STRING': f'kea "@project_version@"',
+        # 'PACKAGE_STRING': f'kea "@PROJECT_VERSION@"',
         # 'PACKAGE_TARNAME': 'kea',
         # 'PACKAGE_URL': '',
-        'PACKAGE_VERSION': meson.project_version(),
+        'PACKAGE_VERSION': PROJECT_VERSION,
         'PACKAGE_VERSION_TYPE': '"development"',
         # 'PREMIUM': false,
         # 'PREMIUM_EXTENDED_VERSION': '"no"',
         # 'STDC_HEADERS': false,
         # 'TOP_BUILDDIR': false,
         # 'USE_STATIC_LINK': false,
-        'VERSION': f'"@project_version@"',
+        'VERSION': f'"@PROJECT_VERSION@"',
         # 'WITH_HEIMDAL': false,
         # 'YYTEXT_POINTER': false,
         # 'SIZE_T': 'size_t',
@@ -400,14 +400,17 @@ conf_data.set('HAVE_STREAM_TRUNCATED_ERROR', result.returncode() == 0)
 
 compile_args = []
 link_args = []
+
+# $ORIGIN documented at https://www.man7.org/linux/man-pages/man8/ld.so.8.html
+rpath = '$ORIGIN/../lib'
 if SYSTEM == 'darwin'
     compile_args += ['-D__APPLE_USE_RFC_3542']
     add_project_arguments('-D__APPLE_USE_RFC_3542', language: 'cpp')
-    link_arg = '-Wl,-rpath,$ORIGIN/../lib'
+    link_arg = f'-Wl,-rpath,@rpath@'
     link_args += [link_arg]
     add_project_link_arguments(link_arg, language: 'cpp')
 else
-    link_arg = '-Wl,-rpath=$ORIGIN/../lib'
+    link_arg = f'-Wl,-rpath=@rpath@'
     link_args += [link_arg]
     add_project_link_arguments(link_arg, language: 'cpp')
 endif
@@ -415,7 +418,7 @@ endif
 have_premium = fs.is_dir('premium')
 if have_premium
     conf_data.set('PREMIUM', 'yes')
-    conf_data.set('PREMIUM_EXTENDED_VERSION', f'"@project_version@"')
+    conf_data.set('PREMIUM_EXTENDED_VERSION', f'"@PROJECT_VERSION@"')
 else
     conf_data.set('PREMIUM', 'no')
     conf_data.set('PREMIUM_EXTENDED_VERSION', '"no"')
@@ -435,8 +438,8 @@ INCLUDES = [
 report_conf_data = configuration_data()
 report_conf_data.set('TOP_BUILD_DIR', TOP_BUILD_DIR)
 report_conf_data.set('PACKAGE_NAME', 'kea')
-report_conf_data.set('PACKAGE_VERSION', project_version)
-report_conf_data.set('EXTENDED_VERSION', project_version + ' (tarball)')
+report_conf_data.set('PACKAGE_VERSION', PROJECT_VERSION)
+report_conf_data.set('EXTENDED_VERSION', PROJECT_VERSION + ' (tarball)')
 report_conf_data.set('PACKAGE_VERSION_TYPE', 'development')
 report_conf_data.set('OS_TYPE', OS_TYPE)
 report_conf_data.set('PREFIX', PREFIX)

@@ -5,7 +5,7 @@
 
 set -euv
 
-cd @TOP_SOURCE_DIR@
+cd '@TOP_SOURCE_DIR@'
 
 extract_bnf="@TOP_BUILD_DIR@/tools/extract_bnf.sh"
 

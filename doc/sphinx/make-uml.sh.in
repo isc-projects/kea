@@ -2,9 +2,9 @@
 
 set -euv
 
-cd @srcdir@
+cd '@srcdir@'
 
-if test "@HAVE_PLANTUML@" = "no" ; then
+if test '@HAVE_PLANTUML@' = 'no'; then
     exit 0
 fi
 
@@ -15,7 +15,7 @@ for uml in @umls@; do @PLANTUML@ -tpng "$uml"; done
 # shellcheck disable=SC2043
 for uml in @umls@; do @PLANTUML@ -tsvg "$uml"; done
 # format-svgs
-if test "@HAVE_XMLLINT" != "no" ; then
+if test '@HAVE_XMLLINT' != 'no'; then
     # shellcheck disable=SC2043
     for svg in @svgs@; do xmllint --format "$svg" > tmp; mv tmp "$svg"; done
 else

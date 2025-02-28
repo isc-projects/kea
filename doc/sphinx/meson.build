@@ -111,8 +111,10 @@ make_conf_data.set('tumls', ' '.join(tumls))
 make_conf_data.set('txts', ' '.join(txts))
 if PIP_COMPILE.found()
     make_conf_data.set('HAVE_PIP_COMPILE', 'yes')
+    make_conf_data.set('PIP_COMPILE', PIP_COMPILE.full_path())
 else
     make_conf_data.set('HAVE_PIP_COMPILE', 'no')
+    make_conf_data.set('PIP_COMPILE', 'pip-compile')
 endif
 make_conf_data.set('man8s', ' '.join(man8s))
 make_conf_data.set('PREFIX', PREFIX)
