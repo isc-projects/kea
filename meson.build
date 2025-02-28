@@ -423,6 +423,7 @@ else
     conf_data.set('PREMIUM', 'no')
     conf_data.set('PREMIUM_EXTENDED_VERSION', '"no"')
 endif
+have_contrib = fs.is_dir('contrib')
 
 #### Default Includes
 
@@ -743,6 +744,9 @@ subdir('fuzz')
 subdir('doc')
 if have_premium
     subdir('premium')
+endif
+if have_contrib
+    subdir('contrib')
 endif
 
 #### More Custom Targets
