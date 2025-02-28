@@ -6853,7 +6853,7 @@ Address Registration (RFC 9686 Support)
 
 Kea version 2.7.7 introduces the support of self-generated address registration
 as defined in `RFC 9686 <https://tools.ietf.org/html/rfc9686>`__ i.e.
-when a valid ADDR-REG-INFORM (36) message in received a registered lease is
+when a valid ADDR-REG-INFORM (36) message is received a registered lease is
 added or updated and a ADDR-REG-REPLY (37) is sent back to the client.
 
 .. note::
@@ -6861,7 +6861,7 @@ added or updated and a ADDR-REG-REPLY (37) is sent back to the client.
    Even if they share a common lease database with leases in other states,
    registered leases are independent: when a lease in another state already
    exists for an address this address in considered as in use and can't be
-   registered. In the other way a registered lease can't change to another
+   registered. Similarly a registered lease can't change to another
    state, e.g. reclaimation of expired registered leases removes them.
 
 .. note::
@@ -7587,8 +7587,8 @@ The DHCPv6 server supports the following statistics:
    | subnet[id].cumulative-registered                  | integer        | Cumulative number of NA addresses  |
    |                                                   |                | in a given subnet that were        |
    |                                                   |                | registered. It increases every     |
-   |                                                   |                | a new address is registered (as a  |
-   |                                                   |                | result of receiving an             |
+   |                                                   |                | time a new address is registered   |
+   |                                                   |                | (as a result of receiving an       |
    |                                                   |                | ADDR-REG-INFORM message) and is    |
    |                                                   |                | never decreased. The *id* is the   |
    |                                                   |                | subnet ID of a given subnet. This  |

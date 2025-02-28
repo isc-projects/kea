@@ -349,13 +349,13 @@ public:
     ///
     /// @param addr_reg_inf a message received from client
     /// @return Addr-reg-reply message or null
-    Pkt6Ptr processAddrRegInform(const Pkt6Ptr& decline) {
+    Pkt6Ptr processAddrRegInform(const Pkt6Ptr& addr_reg_inf) {
         AllocEngine::ClientContext6 ctx;
-        bool drop = !earlyGHRLookup(decline, ctx);
+        bool drop = !earlyGHRLookup(addr_reg_inf, ctx);
         if (drop) {
             return (Pkt6Ptr());
         }
-        ctx.subnet_ = selectSubnet(decline, drop);
+        ctx.subnet_ = selectSubnet(addr_reg_inf, drop);
         if (drop) {
             return (Pkt6Ptr());
         }

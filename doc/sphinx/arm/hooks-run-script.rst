@@ -678,7 +678,7 @@ at 0.
    NEW_LEASE6_PREFIX_LEN
    NEW_LEASE6_TYPE
 
-The OLD_LEASE6 do not always exists.
+The OLD_LEASE6 does not always exist.
 
 The leases4_committed hook point needs for loops to handle the list of addresses.
 This can be achived in the following way:

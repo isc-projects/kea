@@ -311,7 +311,7 @@ public:
     /// and receiving server's response.
     void doRelease();
 
-    /// @brief This function generates Addr-reg-inform message, sends it
+    /// @brief This function generates an Addr-reg-inform message, sends it
     /// to the server and then receives the Addr-reg-reply.
     /// This method does not process the response in any specific way,
     /// just stores it.

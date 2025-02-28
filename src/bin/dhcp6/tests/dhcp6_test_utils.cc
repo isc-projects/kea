@@ -1093,6 +1093,8 @@ NakedDhcpv6SrvTest::~NakedDhcpv6SrvTest() {
     isc::hooks::HooksManager::preCalloutsLibraryHandle()
         .deregisterAllCallouts("pkt6_send");
     isc::hooks::HooksManager::preCalloutsLibraryHandle()
+        .deregisterAllCallouts("subnet6_select");
+    isc::hooks::HooksManager::preCalloutsLibraryHandle()
         .deregisterAllCallouts("addr6_register");
 }
 
