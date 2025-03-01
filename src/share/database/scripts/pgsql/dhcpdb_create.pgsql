@@ -6628,7 +6628,7 @@ UPDATE schema_version
 INSERT INTO lease_state VALUES (4, 'registered');
 
 -- Update *_lease6_stat stored procedures to count registered leases.
--- Not *_lease6_pool_stat because a registered address in not from a pool
+-- Not *_lease6_pool_stat because a registered address is not from a pool
 -- Not *_lease6_stat_by_client_class because it is for state 0 only
 
 CREATE OR REPLACE FUNCTION lease6_AINS_lease6_stat(IN new_state BIGINT,

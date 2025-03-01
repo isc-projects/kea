@@ -1076,6 +1076,7 @@ TEST_F(RunScriptTest, lease6Decline) {
     checkScriptResult();
 }
 
+// Check the addr6_register callout.
 TEST_F(RunScriptTest, add6Register) {
     impl.reset(new RunScriptImpl());
     impl->setName(RUN_SCRIPT_TEST_SH);

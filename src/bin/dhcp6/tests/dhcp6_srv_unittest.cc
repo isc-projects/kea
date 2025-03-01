@@ -2313,6 +2313,47 @@ TEST_F(Dhcpv6SrvTest, pdReleaseReject) {
     testReleaseReject(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"));
 }
 
+// This test verifies that RELEASE doesn't work on registered leases.
+TEST_F(Dhcpv6SrvTest, ReleaseRegistered) {
+    NakedDhcpv6Srv srv(0);
+
+    const IOAddress addr("2001:db8:1:2::");
+    const uint32_t transid = 1234;
+    const uint32_t iaid = 234;
+
+    // GenerateClientId() also sets duid_
+    OptionPtr clientid = generateClientId();
+
+    // Create a registered lease.
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid_, iaid, 501, 502,
+                               subnet_->getID(), HWAddrPtr()));
+    lease->state_ = Lease::STATE_REGISTERED;
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Let's create a RELEASE
+    Pkt6Ptr rel = createMessage(DHCPV6_RELEASE, Lease::TYPE_NA, addr, 128, iaid);
+    rel->addOption(clientid);
+    rel->addOption(srv.getServerID());
+
+    // Pass it to the server and hope for a REPLY
+    Pkt6Ptr reply = srv.processRelease(rel);
+
+    // Check if we get response at all
+    checkResponse(reply, DHCPV6_REPLY, transid);
+    OptionPtr tmp = reply->getOption(D6O_IA_NA);
+    ASSERT_TRUE(tmp);
+    // Check that IA_NA/IA_PD was returned and that there's status code in it
+    boost::shared_ptr<Option6IA> ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
+    ASSERT_TRUE(ia);
+    checkIA_NAStatusCode(ia, STATUS_NoBinding, 0, 0);
+    checkMsgStatusCode(reply, STATUS_NoBinding);
+
+    // Check that the lease is not there
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, addr);
+    ASSERT_TRUE(l);
+    ASSERT_EQ(Lease::STATE_REGISTERED, l->state_);
+}
+
 // This test verifies if the sanityCheck() really checks options presence.
 TEST_F(Dhcpv6SrvTest, sanityCheck) {
     NakedDhcpv6Srv srv(0);

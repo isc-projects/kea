@@ -3384,7 +3384,7 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
     Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
                                                             release_addr->getAddress());
 
-    if (!lease) {
+    if (!lease || (lease->state_ == Lease::STATE_REGISTERED)) {
         // client releasing a lease that we don't know about.
 
         // Insert status code NoBinding.

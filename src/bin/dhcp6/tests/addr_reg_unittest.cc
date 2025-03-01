@@ -181,7 +181,11 @@ public:
 
     /// @brief Test that the registered lease is updated even it
     /// belongs to another client.
-    void testAnother();
+    void testAnotherClient();
+
+    /// @brief Test that the registered lease is updated even it
+    /// belongs to another subnet.
+    void testAnotherSubnet();
 
     /// @brief Common part of skip/drop callout.
     void commonSkipOrDrop();
@@ -904,7 +908,7 @@ TEST_F(AddrRegTest, renew) {
 
 // Test that the registered lease is updated even it belongs to another client.
 void
-AddrRegTest::testAnother() {
+AddrRegTest::testAnotherClient() {
     // Create and add a lease for another client.
     IOAddress addr("2001:db8:1::1");
     DuidPtr duid(new DUID(vector<uint8_t>(8, 0x44)));
@@ -961,12 +965,75 @@ AddrRegTest::testAnother() {
 }
 
 // Test that the registered lease is updated even it belongs to another client.
-TEST_F(AddrRegTest, another) {
+TEST_F(AddrRegTest, anotherClient) {
     IfaceMgrTestConfig test_config(true);
 
     ASSERT_NO_THROW(configure(config_));
 
-    testAnother();
+    testAnotherClient();
+}
+
+// Test that the registratered lease is updated even it belongs to
+// another subnet.
+void
+AddrRegTest::testAnotherSubnet() {
+    // Create and add a lease.
+    IOAddress addr("2001:db8:1::1");
+    OptionPtr clientid = generateClientId();
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid_, 2345, 200, 300, 2));
+    lease->state_ = Lease::STATE_REGISTERED;
+    lease->cltt_ = 1234;
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    addr_reg_inf_ = Pkt6Ptr(new Pkt6(DHCPV6_ADDR_REG_INFORM, 1234));
+    addr_reg_inf_->setRemoteAddr(addr);
+    addr_reg_inf_->setIface("eth0");
+    addr_reg_inf_->setIndex(ETH0_INDEX);
+    addr_reg_inf_->addOption(clientid);
+    auto ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
+    ia->addOption(generateIAAddr(addr, 3000, 4000));
+    addr_reg_inf_->addOption(ia);
+
+    // Pass it to the server.
+    AllocEngine::ClientContext6 ctx;
+    bool drop = !srv_.earlyGHRLookup(addr_reg_inf_, ctx);
+    ASSERT_FALSE(drop);
+    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf_, drop);
+    ASSERT_FALSE(drop);
+    srv_.initContext(ctx, drop);
+    ASSERT_FALSE(drop);
+    ASSERT_TRUE(ctx.subnet_);
+
+    // Verify the response.
+    Pkt6Ptr response = srv_.processAddrRegInform(ctx);
+    ASSERT_TRUE(response);
+
+    // Verify the updated lease.
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, addr);
+    ASSERT_TRUE(l);
+    EXPECT_EQ(Lease::STATE_REGISTERED, l->state_);
+    EXPECT_EQ(addr, l->addr_);
+    ASSERT_TRUE(l->duid_);
+    EXPECT_TRUE(*l->duid_ == *duid_);
+    EXPECT_EQ(ia->getIAID(), l->iaid_);
+    EXPECT_EQ(1, l->subnet_id_);
+    EXPECT_FALSE(l->fqdn_fwd_);
+    EXPECT_FALSE(l->fqdn_rev_);
+
+    string expected = "DHCPSRV_MEMFILE_UPDATE_ADDR6 ";
+    expected += "updating IPv6 lease for address 2001:db8:1::1";
+    EXPECT_EQ(1, countFile(expected));
+    expected = "DHCP6_ADDR_REG_INFORM_CLIENT_CHANGE";
+    EXPECT_EQ(0, countFile(expected));
+}
+
+// Test that the registered lease is updated even it belongs to another subnet.
+TEST_F(AddrRegTest, anotherSubnet) {
+    IfaceMgrTestConfig test_config(true);
+
+    ASSERT_NO_THROW(configure(config_));
+
+    testAnotherSubnet();
 }
 
 // Test that the FQDN option is handled.
@@ -1357,7 +1424,7 @@ TEST_F(AddrRegTest, calloutRenew) {
 }
 
 // Test the callout in the another scenario.
-TEST_F(AddrRegTest, calloutAnother) {
+TEST_F(AddrRegTest, calloutAnotherClient) {
     IfaceMgrTestConfig test_config(true);
 
     ASSERT_NO_THROW(configure(config_));
@@ -1365,7 +1432,7 @@ TEST_F(AddrRegTest, calloutAnother) {
     // Install addr6_register_callout.
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "addr6_register", addr6_register_callout));
-    testAnother();
+    testAnotherClient();
     EXPECT_TRUE(callout_errmsg_.empty()) << callout_errmsg_;
     checkCalloutHandleReset();
 
@@ -1531,6 +1598,47 @@ TEST_F(AddrRegTest, statsRenew) {
     stat = StatsMgr::instance().getObservation(cumulative_registered_nas_name_);
     ASSERT_TRUE(stat);
     EXPECT_EQ(10, stat->getInteger().first);
+    stat = StatsMgr::instance().getObservation("cumulative-registered-nas");
+    EXPECT_EQ(20, stat->getInteger().first);
+}
+
+// Check the statictics for the another subnet scenario.
+TEST_F(AddrRegTest, statsAnotherSubnet) {
+    IfaceMgrTestConfig test_config(true);
+
+    ASSERT_NO_THROW(configure(config_));
+
+    string registered_nas_name2 =
+        StatsMgr::generateName("subnet", 2, "registered-nas");
+    StatsMgr::instance().setValue(registered_nas_name2,
+                                  static_cast<int64_t>(3));
+    StatsMgr::instance().setValue(registered_nas_name_,
+                                  static_cast<int64_t>(5));
+    string cumulative_registered_nas_name2 =
+        StatsMgr::generateName("subnet", 2, "cumulative-registered-nas");
+    StatsMgr::instance().setValue(cumulative_registered_nas_name2,
+                                  static_cast<int64_t>(8));
+    StatsMgr::instance().setValue(cumulative_registered_nas_name_,
+                                  static_cast<int64_t>(10));
+    StatsMgr::instance().setValue("cumulative-registered-nas",
+                                  static_cast<int64_t>(20));
+
+    testAnotherSubnet();
+
+    // Statistics should have been not touched.
+    ObservationPtr stat;
+    stat = StatsMgr::instance().getObservation(registered_nas_name2);
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(2, stat->getInteger().first);
+    stat = StatsMgr::instance().getObservation(registered_nas_name_);
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(6, stat->getInteger().first);
+    stat = StatsMgr::instance().getObservation(cumulative_registered_nas_name2);
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(8, stat->getInteger().first);
+    stat = StatsMgr::instance().getObservation(cumulative_registered_nas_name_);
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(11, stat->getInteger().first);
     stat = StatsMgr::instance().getObservation("cumulative-registered-nas");
     EXPECT_EQ(20, stat->getInteger().first);
 }

@@ -477,11 +477,12 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
                                                    ctx.currentIA().iaid_);
 
         // Iterate over the leases and eliminate those that are outside of
-        // our shared network.
+        // our shared network or registered.
         Lease6Collection leases;
         while (subnet) {
             for (auto const& l : all_leases) {
-                if ((l)->subnet_id_ == subnet->getID()) {
+                if (((l)->state_ != Lease::STATE_REGISTERED) &&
+                    ((l)->subnet_id_ == subnet->getID())) {
                     leases.push_back(l);
                 }
             }
@@ -2107,8 +2108,11 @@ AllocEngine::renewLeases6(ClientContext6& ctx) {
                                                        *ctx.duid_,
                                                        ctx.currentIA().iaid_,
                                                        subnet->getID());
-            leases.insert(leases.end(), leases_subnet.begin(), leases_subnet.end());
-
+            for (auto const& l : leases_subnet) {
+                if (l->state_ != Lease::STATE_REGISTERED) {
+                    leases.push_back(l);
+                }
+            }
             subnet = subnet->getNextSubnet(ctx.subnet_);
         }
 

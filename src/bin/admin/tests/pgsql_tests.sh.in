@@ -1753,7 +1753,7 @@ pgsql_lease6_stat_per_type() {
 # insert a lease, update it, and delete checking the
 # lease stat counts along the way.  It assumes the
 # database has been created but is empty.
-# param addr - address to use to add to subnet 1
+# param addr, addr1, addr2 - addresses to use to add to subnet 1
 pgsql_lease6_stat_registered() {
     addr=$1;shift
     addr1=$1;shift
@@ -1841,7 +1841,7 @@ pgsql_lease6_stat_test() {
     # Test for address 222, PD lease type
     pgsql_lease6_stat_per_type "::22" "::23" "::24" "1"
 
-    # Test for registered address ::33
+    # Test for registered addresses ::33, ::34 and ::35
     pgsql_lease6_stat_registered "::33" "::34" "::35"
 
     # Let's wipe the whole database

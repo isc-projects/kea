@@ -6869,6 +6869,13 @@ added or updated and a ADDR-REG-REPLY (37) is sent back to the client.
    Kea accepts and handles the Option Request option in the ADDR-REG-INFORM
    message (the RFC specifies the client MUST NOT put such option in it).
 
+.. note::
+
+   Kea currently only accepts addresses which are "appropriate to the link"
+   but not yet "within a prefix delegated to the client" which is not
+   compatible with the way the topology is described in the Kea
+   configuration.
+
 .. _dhcp6-stats:
 
 Statistics in the DHCPv6 Server

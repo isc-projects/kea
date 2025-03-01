@@ -737,6 +737,49 @@ TEST_F(AllocEngine6Test, solicitReuseExpiredRegisteredLease6) {
     EXPECT_FALSE(lease);
 }
 
+// This test checks a registered lease can't be reused in SOLICT.
+TEST_F(AllocEngine6Test, solicitReuseRegisteredLease6) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(100)));
+    ASSERT_TRUE(engine);
+
+    IOAddress addr("2001:db8:1::ad");
+
+    // Create one subnet with a pool holding one address.
+    initSubnet(IOAddress("2001:db8:1::"), addr, addr);
+
+    // Initialize FQDN data for the lease.
+    initFqdn("myhost.example.com", true, true);
+
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid_, iaid_,
+                               501, 502, subnet_->getID(), HWAddrPtr()));
+    lease->state_ = Lease::STATE_REGISTERED;
+    lease->cltt_ = time(0) - 200; // Registered 200 seconds ago
+    lease->valid_lft_ = 400; // Lease was valid for 400 seconds
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // CASE 1: Asking for any address
+    AllocEngine::ClientContext6 ctx1(subnet_, duid_, fqdn_fwd_, fqdn_rev_, hostname_,
+                                     true, Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234)));
+    ctx1.currentIA().iaid_ = iaid_;
+
+    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx1)));
+
+    // Check that we did not get this single lease.
+    EXPECT_FALSE(lease);
+
+    // CASE 2: Asking specifically for this address
+    AllocEngine::ClientContext6 ctx2(subnet_, duid_, false, false, "", true,
+                                     Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234)));
+    ctx2.currentIA().iaid_ = iaid_;
+    ctx2.currentIA().addHint(addr);
+
+    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx2)));
+
+    // Check that we did not get this single lease.
+    EXPECT_FALSE(lease);
+}
+
 // This test checks if an expired lease can be reused in REQUEST (actual allocation)
 TEST_F(AllocEngine6Test, requestReuseExpiredLease6) {
     boost::scoped_ptr<AllocEngine> engine;
@@ -851,6 +894,51 @@ TEST_F(AllocEngine6Test, requestReuseExpiredRegisteredLease6) {
     lease->state_ = Lease::STATE_REGISTERED;
     lease->cltt_ = time(0) - 500; // Registered 500 seconds ago
     lease->valid_lft_ = 495; // Lease was valid for 495 seconds
+    lease->fqdn_fwd_ = true;
+    lease->fqdn_rev_ = true;
+    lease->hostname_ = "myhost.example.com.";
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // A client comes along, asking specifically for this address
+    AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", false,
+                                    Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234)));
+    ctx.currentIA().iaid_ = iaid_;
+    ctx.currentIA().addHint(addr);
+
+    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
+
+    // Check that we did not get this single lease.
+    EXPECT_FALSE(lease);
+
+    // Check that no old lease has been returned.
+    Lease6Ptr old_lease = expectOneLease(ctx.currentIA().old_leases_);
+    EXPECT_FALSE(old_lease);
+}
+
+// This test checks a registered lease can't be reused in REQUEST.
+TEST_F(AllocEngine6Test, requestReuseRegisteredLease6) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(100)));
+    ASSERT_TRUE(engine);
+
+    IOAddress addr("2001:db8:1::ad");
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    cfg_mgr.clear(); // Get rid of the default test configuration
+
+    // Create configuration similar to other tests, but with a single address pool
+    subnet_ = Subnet6::create(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4, SubnetID(10));
+    pool_ = Pool6Ptr(new Pool6(Lease::TYPE_NA, addr, addr)); // just a single address
+    subnet_->addPool(pool_);
+    cfg_mgr.getStagingCfg()->getCfgSubnets6()->add(subnet_);
+    cfg_mgr.commit();
+
+    // Let's create a registered lease
+    const SubnetID other_subnetid = 999;
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid_, iaid_,
+                               501, 502, other_subnetid, HWAddrPtr()));
+    lease->state_ = Lease::STATE_REGISTERED;
+    lease->cltt_ = time(0) - 200; // Registered 200 seconds ago
+    lease->valid_lft_ = 400; // Lease was valid for 400 seconds
     lease->fqdn_fwd_ = true;
     lease->fqdn_rev_ = true;
     lease->hostname_ = "myhost.example.com.";
@@ -1040,6 +1128,37 @@ TEST_F(AllocEngine6Test, renewExtendLeaseLifetime) {
     // And the lease lifetime should be extended.
     EXPECT_GT(renewed[0]->cltt_, lease_cltt)
         << "Lease lifetime was not extended, but it should";
+}
+
+// Checks a registered lease can't be renewed.
+TEST_F(AllocEngine6Test, renewRegisteredLease6) {
+    // Create a registered lease for the client.
+    IOAddress addr("2001:db8:1::15");
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr,
+                               duid_, iaid_, 300, 400,
+                               subnet_->getID(), HWAddrPtr()));
+
+    lease->state_ = Lease::STATE_REGISTERED;
+    // Allocated 200 seconds ago - half of the lifetime.
+    time_t lease_cltt = time(0) - 200;
+    lease->cltt_ = lease_cltt;
+
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    AllocEngine engine(100);
+
+    // This is what the client will send in his renew message.
+    AllocEngine::HintContainer hints;
+    hints.push_back(AllocEngine::Resource(addr, 128));
+
+    // Get renewed leases.
+    Lease6Collection renewed = renewTest(engine, pool_, hints, IN_SUBNET, IN_POOL);
+    for (auto const& l : renewed) {
+        // Not registered.
+        EXPECT_EQ(0, l->state_);
+        // Another address.
+        EXPECT_NE(addr, l->addr_);
+    }
 }
 
 // Checks that a renewed lease uses default lifetimes.
