@@ -4611,6 +4611,7 @@ Dhcpv6Srv::processAddrRegInform(AllocEngine::ClientContext6& ctx) {
     appendRequestedVendorOptions(addr_reg_inf, addr_reg_rep, ctx, co_list);
 
     // Handle the "addr6_register" callout point.
+    bool skip = false;
     if (HooksManager::calloutsPresent(Hooks.hook_index_addr6_register_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(addr_reg_inf);
         ScopedCalloutHandleState callout_handle_state(callout_handle);
@@ -4636,25 +4637,27 @@ Dhcpv6Srv::processAddrRegInform(AllocEngine::ClientContext6& ctx) {
         HooksManager::callCallouts(Hooks.hook_index_addr6_register_, *callout_handle);
 
         // Callouts decided to skip the next processing step. This means
-        // cancel processing so drop.
-        if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) ||
-            (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP)) {
+        // to not perform the lease operation.
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
             LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS,
                       DHCP6_HOOK_ADDR6_REGISTER_SKIP)
+                .arg(addr_reg_inf->getLabel())
+                .arg(old_lease ? "update" : "add")
+                .arg(addr);
+            skip = true;
+        } else
+        // Callouts decided to drop the next processing step. This means
+        // cancel processing so drop the query.
+        if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP) {
+            LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS,
+                      DHCP6_HOOK_ADDR6_REGISTER_DROP)
                 .arg(addr_reg_inf->getLabel())
                 .arg(addr);
             return (Pkt6Ptr());
         }
-
-        Lease6Ptr new_lease;
-        callout_handle->getArgument("new_lease6", new_lease);
-        if (!new_lease) {
-            // Stateless registration: skip lease code.
-            lease.reset();
-        }
     }
 
-    if (lease) {
+    if (!skip) {
         // Statefull registration.
         if (old_lease) {
             try {
@@ -4666,8 +4669,6 @@ Dhcpv6Srv::processAddrRegInform(AllocEngine::ClientContext6& ctx) {
                     .arg(ex.what());
                 return (Pkt6Ptr());
             }
-            // Save the old lease for the lease6_committed callout.
-            ctx.currentIA().old_leases_.push_back(old_lease);
             // Save the old lease for the DNS update.
             ctx.currentIA().changed_leases_.push_back(old_lease);
             // Update stats when the subnet changed.
@@ -4704,7 +4705,7 @@ Dhcpv6Srv::processAddrRegInform(AllocEngine::ClientContext6& ctx) {
             StatsMgr::instance().addValue("cumulative-registered-nas",
                                           static_cast<int64_t>(1));
         }
-        // Save the new lease for the lease6_committed callout.
+        // Save the new lease for the leases6_committed callout.
         ctx.new_leases_.push_back(lease);
     }
 

@@ -65,6 +65,7 @@ extern const isc::log::MessageID DHCP6_DYNAMIC_RECONFIGURATION = "DHCP6_DYNAMIC_
 extern const isc::log::MessageID DHCP6_DYNAMIC_RECONFIGURATION_FAIL = "DHCP6_DYNAMIC_RECONFIGURATION_FAIL";
 extern const isc::log::MessageID DHCP6_DYNAMIC_RECONFIGURATION_SUCCESS = "DHCP6_DYNAMIC_RECONFIGURATION_SUCCESS";
 extern const isc::log::MessageID DHCP6_FLEX_ID = "DHCP6_FLEX_ID";
+extern const isc::log::MessageID DHCP6_HOOK_ADDR6_REGISTER_DROP = "DHCP6_HOOK_ADDR6_REGISTER_DROP";
 extern const isc::log::MessageID DHCP6_HOOK_ADDR6_REGISTER_SKIP = "DHCP6_HOOK_ADDR6_REGISTER_SKIP";
 extern const isc::log::MessageID DHCP6_HOOK_BUFFER_RCVD_DROP = "DHCP6_HOOK_BUFFER_RCVD_DROP";
 extern const isc::log::MessageID DHCP6_HOOK_BUFFER_RCVD_SKIP = "DHCP6_HOOK_BUFFER_RCVD_SKIP";
@@ -237,7 +238,8 @@ const char* values[] = {
     "DHCP6_DYNAMIC_RECONFIGURATION_FAIL", "dynamic server reconfiguration failed with file: %1",
     "DHCP6_DYNAMIC_RECONFIGURATION_SUCCESS", "dynamic server reconfiguration succeeded with file: %1",
     "DHCP6_FLEX_ID", "%1: flexible identifier generated for incoming packet: %2",
-    "DHCP6_HOOK_ADDR6_REGISTER_SKIP", "%1: ADDR-REG-INFORM for %2 is dropped, because a callout set the next step to SKIP",
+    "DHCP6_HOOK_ADDR6_REGISTER_DROP", "%1: ADDR-REG-INFORM for %2 is dropped, because a callout set the next step to DROP",
+    "DHCP6_HOOK_ADDR6_REGISTER_SKIP", "%1: lease %2 operation for %3 is skipped, because a callout set the next step to SKIP",
     "DHCP6_HOOK_BUFFER_RCVD_DROP", "received buffer from %1 to %2 over interface %3 was dropped because a callout set the drop flag",
     "DHCP6_HOOK_BUFFER_RCVD_SKIP", "received buffer from %1 to %2 over interface %3 is not parsed because a callout set the next step to SKIP",
     "DHCP6_HOOK_BUFFER_SEND_SKIP", "%1: prepared DHCPv6 response was dropped because a callout set the next step to SKIP",

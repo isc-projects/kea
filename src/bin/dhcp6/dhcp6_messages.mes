@@ -380,12 +380,19 @@ and the expression specified in its configuration generated (was evaluated to)
 an identifier for incoming packet. This debug message is mainly intended as a
 debugging assistance for flexible identifier.
 
-% DHCP6_HOOK_ADDR6_REGISTER_SKIP %1: ADDR-REG-INFORM for %2 is dropped, because a callout set the next step to SKIP
+% DHCP6_HOOK_ADDR6_REGISTER_DROP %1: ADDR-REG-INFORM for %2 is dropped, because a callout set the next step to DROP
+Logged at debug log level 40.
+This debug message is printed when a callout installed on the addr6_register
+hook point sets the next step to DROP. For this particular hook point, the
+value setting instructs the server to cancel the address registration and
+drop the packet.
+
+% DHCP6_HOOK_ADDR6_REGISTER_SKIP %1: lease %2 operation for %3 is skipped, because a callout set the next step to SKIP
 Logged at debug log level 40.
 This debug message is printed when a callout installed on the addr6_register
 hook point sets the next step to SKIP. For this particular hook point, the
-value setting instructs the server to cancel the address registration and
-drop the packet.
+value setting instructs the server to skip the lease add or update operation
+for the registered address so not maintaining the registration state.
 
 % DHCP6_HOOK_BUFFER_RCVD_DROP received buffer from %1 to %2 over interface %3 was dropped because a callout set the drop flag
 Logged at debug log level 15.

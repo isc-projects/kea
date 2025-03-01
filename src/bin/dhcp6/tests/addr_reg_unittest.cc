@@ -46,8 +46,9 @@ public:
         // Reset the query.
         addr_reg_inf_.reset();
 
-        // Deregister the callout.
+        // Deregister the callouts.
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("addr6_register");
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("leases6_committed");
 
         // Unload any previously-loaded libraries.
         HooksManager::setTestMode(false);
@@ -56,9 +57,9 @@ public:
         // Clear callout error message.
         callout_errmsg_.clear();
 
-        // Reset callout status and reset new lease.
+        // Reset callout status and old lease state.
         callout_status_ = CalloutHandle::NEXT_STEP_CONTINUE;
-        callout_reset_new_lease_ = false;
+        callout_has_old_lease_ = false;
     }
 
     /// @brief Generate IAADDR option with specified parameters.
@@ -135,6 +136,7 @@ public:
         Lease6Ptr old_lease6;
         callout_handle.getArgument("old_lease6", old_lease6);
         if (old_lease6) {
+            callout_has_old_lease_ = true;
             if (old_lease6->state_ != Lease::STATE_REGISTERED) {
                 callout_errmsg_ = "bad old_lease6 state";
                 return (0);
@@ -158,9 +160,62 @@ public:
             callout_errmsg_ = "bad new_lease6 address";
             return (0);
         }
-        if (callout_reset_new_lease_) {
-            Lease6Ptr null_lease;
-            callout_handle.setArgument("new_lease6", null_lease);
+        callout_handle.setStatus(callout_status_);
+        return (0);
+    }
+
+    /// @brief Test callback for the leases6_committed callout.
+    ///
+    /// @param callout_handle The handle passed by the hooks framework.
+    /// @return Always 0
+    static int leases6_committed_callout(CalloutHandle& callout_handle) {
+        if (callout_handle.getStatus() != CalloutHandle::NEXT_STEP_CONTINUE) {
+            callout_errmsg_ = "bad status";
+            return (0);
+        }
+        Pkt6Ptr query6;
+        callout_handle.getArgument("query6", query6);
+        if (!query6) {
+            callout_errmsg_ = "no query6";
+            return (0);
+        }
+        if (query6->getType() != DHCPV6_ADDR_REG_INFORM) {
+            callout_errmsg_ = "bad query6";
+            return (0);
+        }
+        Pkt6Ptr response6;
+        callout_handle.getArgument("response6", response6);
+        if (!response6) {
+            callout_errmsg_ = "no response6";
+            return (0);
+        }
+        if (response6->getType() != DHCPV6_ADDR_REG_REPLY) {
+            callout_errmsg_ = "bad response6";
+            return (0);
+        }
+        Lease6CollectionPtr leases6;
+        callout_handle.getArgument("leases6", leases6);
+        if (!leases6) {
+            callout_errmsg_ = "no leases6";
+            return (0);
+        }
+        if (leases6->size() != 1) {
+            callout_errmsg_ = "expected one lease in leases6";
+            return (0);
+        }
+        Lease6Ptr new_lease6 = (*leases6)[0];
+        if (!new_lease6) {
+            callout_errmsg_ = "no new_lease6";
+            return (0);
+        }
+        if (new_lease6->state_ != Lease::STATE_REGISTERED) {
+            callout_errmsg_ = "bad new_lease6 state";
+            return (0);
+        }
+        Lease6CollectionPtr deleted_leases6;
+        callout_handle.getArgument("deleted_leases6", deleted_leases6);
+        if (deleted_leases6 && !deleted_leases6->empty()) {
+            callout_has_old_lease_ = true;
         }
         callout_handle.setStatus(callout_status_);
         return (0);
@@ -186,9 +241,6 @@ public:
     /// @brief Test that the registered lease is updated even it
     /// belongs to another subnet.
     void testAnotherSubnet();
-
-    /// @brief Common part of skip/drop callout.
-    void commonSkipOrDrop();
 
     /// @brief Basic configuration.
     string config_ = "{\n"
@@ -224,8 +276,8 @@ public:
     /// @brief Callout next step.
     static CalloutHandle::CalloutNextStep callout_status_;
 
-    /// @brief Callout resets new lease.
-    static bool callout_reset_new_lease_;
+    /// @brief Callout old lease argument is not null / empty.
+    static bool callout_has_old_lease_;
 
     /// @brief The registered-nas statistic name.
     static string registered_nas_name_;
@@ -240,8 +292,8 @@ string AddrRegTest::callout_errmsg_;
 // Callout next step.
 CalloutHandle::CalloutNextStep AddrRegTest::callout_status_;
 
-// Callout resets new lease.
-bool AddrRegTest::callout_reset_new_lease_;
+// Callout old lease argument is not null / empty.
+bool AddrRegTest::callout_has_old_lease_;
 
 string AddrRegTest::registered_nas_name_ =
     StatsMgr::generateName("subnet", 1, "registered-nas");
@@ -1398,6 +1450,7 @@ TEST_F(AddrRegTest, callout) {
                         "addr6_register", addr6_register_callout));
     testBasic();
     EXPECT_TRUE(callout_errmsg_.empty()) << callout_errmsg_;
+    EXPECT_FALSE(callout_has_old_lease_);
     checkCalloutHandleReset();
 
     string expected = "HOOKS_CALLOUTS_BEGIN ";
@@ -1416,6 +1469,7 @@ TEST_F(AddrRegTest, calloutRenew) {
                         "addr6_register", addr6_register_callout));
     testRenew();
     EXPECT_TRUE(callout_errmsg_.empty()) << callout_errmsg_;
+    EXPECT_TRUE(callout_has_old_lease_);
     checkCalloutHandleReset();
 
     string expected = "HOOKS_CALLOUTS_BEGIN ";
@@ -1423,7 +1477,7 @@ TEST_F(AddrRegTest, calloutRenew) {
     EXPECT_EQ(1, countFile(expected));
 }
 
-// Test the callout in the another scenario.
+// Test the callout in the another client scenario.
 TEST_F(AddrRegTest, calloutAnotherClient) {
     IfaceMgrTestConfig test_config(true);
 
@@ -1434,6 +1488,7 @@ TEST_F(AddrRegTest, calloutAnotherClient) {
                         "addr6_register", addr6_register_callout));
     testAnotherClient();
     EXPECT_TRUE(callout_errmsg_.empty()) << callout_errmsg_;
+    EXPECT_TRUE(callout_has_old_lease_);
     checkCalloutHandleReset();
 
     string expected = "HOOKS_CALLOUTS_BEGIN ";
@@ -1441,9 +1496,8 @@ TEST_F(AddrRegTest, calloutAnotherClient) {
     EXPECT_EQ(1, countFile(expected));
 }
 
-// Common part of skip/drop callout.
-void
-AddrRegTest::commonSkipOrDrop() {
+// Test the callout in the another subnet scenario.
+TEST_F(AddrRegTest, calloutAnotherSubnet) {
     IfaceMgrTestConfig test_config(true);
 
     ASSERT_NO_THROW(configure(config_));
@@ -1451,54 +1505,20 @@ AddrRegTest::commonSkipOrDrop() {
     // Install addr6_register_callout.
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "addr6_register", addr6_register_callout));
-
-    IOAddress addr("2001:db8:1::1");
-    addr_reg_inf_ = Pkt6Ptr(new Pkt6(DHCPV6_ADDR_REG_INFORM, 1234));
-    addr_reg_inf_->setRemoteAddr(addr);
-    addr_reg_inf_->setIface("eth0");
-    addr_reg_inf_->setIndex(ETH0_INDEX);
-    OptionPtr clientid = generateClientId();
-    addr_reg_inf_->addOption(clientid);
-    auto ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
-    ia->addOption(generateIAAddr(addr, 3000, 4000));
-    addr_reg_inf_->addOption(ia);
-
-    // Pass it to the server.
-    AllocEngine::ClientContext6 ctx;
-    bool drop = !srv_.earlyGHRLookup(addr_reg_inf_, ctx);
-    ASSERT_FALSE(drop);
-    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf_, drop);
-    ASSERT_FALSE(drop);
-    srv_.initContext(ctx, drop);
-    ASSERT_FALSE(drop);
-    ASSERT_TRUE(ctx.subnet_);
-
-    // Callout set the status to skip or drop: no response.
-    EXPECT_FALSE(srv_.processAddrRegInform(ctx));
+    testAnotherSubnet();
     EXPECT_TRUE(callout_errmsg_.empty()) << callout_errmsg_;
+    EXPECT_TRUE(callout_has_old_lease_);
     checkCalloutHandleReset();
 
     string expected = "HOOKS_CALLOUTS_BEGIN ";
     expected += "begin all callouts for hook addr6_register";
     EXPECT_EQ(1, countFile(expected));
-    EXPECT_EQ(1, countFile("DHCP6_HOOK_ADDR6_REGISTER_SKIP"));
 }
 
-// Test that when the callout sets the status skip the query is dropped.
+// Test that when the callout sets the status skip the lease operation
+// is not performed.
 TEST_F(AddrRegTest, calloutSkip) {
     callout_status_ = CalloutHandle::NEXT_STEP_SKIP;
-    commonSkipOrDrop();
-}
-
-// Test that when the callout sets the status drop the query is dropped.
-TEST_F(AddrRegTest, calloutDrop) {
-    callout_status_ = CalloutHandle::NEXT_STEP_DROP;
-    commonSkipOrDrop();
-}
-
-// Test that the callout can reset the new lease.
-TEST_F(AddrRegTest, calloutResetNewLease) {
-    callout_reset_new_lease_ = true;
 
     IfaceMgrTestConfig test_config(true);
 
@@ -1532,6 +1552,8 @@ TEST_F(AddrRegTest, calloutResetNewLease) {
     // Verify the response.
     Pkt6Ptr response = srv_.processAddrRegInform(ctx);
     ASSERT_TRUE(response);
+    EXPECT_TRUE(callout_errmsg_.empty()) << callout_errmsg_;
+    checkCalloutHandleReset();
 
     EXPECT_EQ(DHCPV6_ADDR_REG_REPLY, response->getType());
     EXPECT_EQ(addr_reg_inf_->getTransid(), response->getTransid());
@@ -1546,6 +1568,51 @@ TEST_F(AddrRegTest, calloutResetNewLease) {
 
     string expected = "DHCPSRV_MEMFILE_ADD_ADDR6";
     EXPECT_EQ(0, countFile(expected));
+    EXPECT_EQ(1, countFile("DHCP6_HOOK_ADDR6_REGISTER_SKIP"));
+}
+
+// Test that when the callout sets the status drop the query is dropped.
+TEST_F(AddrRegTest, calloutDrop) {
+    callout_status_ = CalloutHandle::NEXT_STEP_DROP;
+
+    IfaceMgrTestConfig test_config(true);
+
+    ASSERT_NO_THROW(configure(config_));
+
+    // Install addr6_register_callout.
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "addr6_register", addr6_register_callout));
+
+    IOAddress addr("2001:db8:1::1");
+    addr_reg_inf_ = Pkt6Ptr(new Pkt6(DHCPV6_ADDR_REG_INFORM, 1234));
+    addr_reg_inf_->setRemoteAddr(addr);
+    addr_reg_inf_->setIface("eth0");
+    addr_reg_inf_->setIndex(ETH0_INDEX);
+    OptionPtr clientid = generateClientId();
+    addr_reg_inf_->addOption(clientid);
+    auto ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
+    ia->addOption(generateIAAddr(addr, 3000, 4000));
+    addr_reg_inf_->addOption(ia);
+
+    // Pass it to the server.
+    AllocEngine::ClientContext6 ctx;
+    bool drop = !srv_.earlyGHRLookup(addr_reg_inf_, ctx);
+    ASSERT_FALSE(drop);
+    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf_, drop);
+    ASSERT_FALSE(drop);
+    srv_.initContext(ctx, drop);
+    ASSERT_FALSE(drop);
+    ASSERT_TRUE(ctx.subnet_);
+
+    // Callout set the status to drop: no response.
+    EXPECT_FALSE(srv_.processAddrRegInform(ctx));
+    EXPECT_TRUE(callout_errmsg_.empty()) << callout_errmsg_;
+    checkCalloutHandleReset();
+
+    string expected = "HOOKS_CALLOUTS_BEGIN ";
+    expected += "begin all callouts for hook addr6_register";
+    EXPECT_EQ(1, countFile(expected));
+    EXPECT_EQ(1, countFile("DHCP6_HOOK_ADDR6_REGISTER_DROP"));
 }
 
 // Check the statictics for the basic scenario.
@@ -1641,6 +1708,109 @@ TEST_F(AddrRegTest, statsAnotherSubnet) {
     EXPECT_EQ(11, stat->getInteger().first);
     stat = StatsMgr::instance().getObservation("cumulative-registered-nas");
     EXPECT_EQ(20, stat->getInteger().first);
+}
+
+// Check the basic scenario with the client test tool.
+TEST_F(AddrRegTest, client) {
+    Dhcp6Client client;
+    DuidPtr duid = client.getDuid();
+    ASSERT_TRUE(duid);
+
+    ASSERT_NO_THROW(configure(config_, *client.getServer()));
+
+    // Install leases6_committed_callout.
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "leases6_committed", leases6_committed_callout));
+
+    // Do the address registration.
+    IOAddress addr("2001:db8:1::1");
+    client.setLinkLocal(addr);
+    client.requestAddress(234, addr);
+    ASSERT_NO_THROW(client.doAddrRegInform());
+
+    // Check the response.
+    Pkt6Ptr response = client.getContext().response_;
+    ASSERT_TRUE(response);
+    EXPECT_EQ(DHCPV6_ADDR_REG_REPLY, response->getType());
+    EXPECT_TRUE(callout_errmsg_.empty()) << callout_errmsg_;
+    EXPECT_FALSE(callout_has_old_lease_);
+    addr_reg_inf_ = client.getContext().query_;
+    checkCalloutHandleReset();
+
+    // Verify the added lease.
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, addr);
+    ASSERT_TRUE(l);
+    EXPECT_EQ(Lease::STATE_REGISTERED, l->state_);
+    EXPECT_EQ(addr, l->addr_);
+    ASSERT_TRUE(l->duid_);
+    EXPECT_TRUE(*l->duid_ == *duid);
+    EXPECT_EQ(234, l->iaid_);
+    EXPECT_EQ(1, l->subnet_id_);
+    // Can be considered as a bug but the client set lifetimes to 0.
+    EXPECT_EQ(0, l->preferred_lft_);
+    EXPECT_EQ(0, l->valid_lft_);
+
+    string expected = "DHCPSRV_MEMFILE_ADD_ADDR6 ";
+    expected += "adding IPv6 lease with address 2001:db8:1::1";
+    EXPECT_EQ(1, countFile(expected));
+    expected = "HOOKS_CALLOUTS_BEGIN ";
+    expected += "begin all callouts for hook leases6_committed";
+    EXPECT_EQ(1, countFile(expected));
+}
+
+// Check the renew scenario with the client test tool.
+TEST_F(AddrRegTest, clientRenew) {
+    Dhcp6Client client;
+    DuidPtr duid = client.getDuid();
+    ASSERT_TRUE(duid);
+
+    ASSERT_NO_THROW(configure(config_, *client.getServer()));
+
+    // Install leases6_committed_callout.
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "leases6_committed", leases6_committed_callout));
+
+    // Create and add a lease.
+    IOAddress addr("2001:db8:1::1");
+    uint32_t iaid = 234;
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid, iaid, 200, 300, 1));
+    lease->state_ = Lease::STATE_REGISTERED;
+    lease->cltt_ = 1234;
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Do the address registration.
+    client.setLinkLocal(addr);
+    client.requestAddress(iaid, addr);
+    ASSERT_NO_THROW(client.doAddrRegInform());
+
+    // Check the response.
+    Pkt6Ptr response = client.getContext().response_;
+    ASSERT_TRUE(response);
+    EXPECT_EQ(DHCPV6_ADDR_REG_REPLY, response->getType());
+    EXPECT_TRUE(callout_errmsg_.empty()) << callout_errmsg_;
+    EXPECT_FALSE(callout_has_old_lease_);
+    addr_reg_inf_ = client.getContext().query_;
+    checkCalloutHandleReset();
+
+    // Verify the updated lease.
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, addr);
+    ASSERT_TRUE(l);
+    EXPECT_EQ(Lease::STATE_REGISTERED, l->state_);
+    EXPECT_EQ(addr, l->addr_);
+    ASSERT_TRUE(l->duid_);
+    EXPECT_TRUE(*l->duid_ == *duid);
+    EXPECT_EQ(iaid, l->iaid_);
+    EXPECT_EQ(1, l->subnet_id_);
+    // Can be considered as a bug but the client set lifetimes to 0.
+    EXPECT_EQ(0, l->preferred_lft_);
+    EXPECT_EQ(0, l->valid_lft_);
+
+    string expected = "DHCPSRV_MEMFILE_UPDATE_ADDR6 ";
+    expected += "updating IPv6 lease for address 2001:db8:1::1";
+    EXPECT_EQ(1, countFile(expected));
+    expected = "HOOKS_CALLOUTS_BEGIN ";
+    expected += "begin all callouts for hook leases6_committed";
+    EXPECT_EQ(1, countFile(expected));
 }
 
 } // end of anonymous namespace

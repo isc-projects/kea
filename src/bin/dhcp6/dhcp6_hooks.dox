@@ -352,15 +352,16 @@ called before "subnet6_select".
   - name: @b response6, type: isc::dhcp::Pkt6Ptr, direction: <b>in</b>
   - name: @b address6, type: isc::asiolink::IOAddress, direction: <b>in</b>
   - name: @b old_lease6, type: isc::dhcp::Lease6Ptr, direction: <b>in</b>
-  - name: @b new_lease6, type: isc::dhcp::Lease6Ptr, direction: <b>in/out<b>
+  - name: @b new_lease6, type: isc::dhcp::Lease6Ptr, direction: <b>in<b>
 
  - @b Description: this callout is executed when an addr-reg-inform was
-   received and successfully processed. When the new_lease is cleared
-   this instructs the server to make stateless registration i.e. address
-   registration is used only for side effects and does not maintain state.
+   received and successfully processed before the lease operation which
+   maintains when not skipped the registration state.
 
- - <b>Next step status</b>: If any callout sets the status to SKIP or DROP,
-   the server will cancel current packet processing.
+ - <b>Next step status</b>: If any callout sets the status to SKIP, the
+   lease operation (add or update) will be skipped. If any callout sets the
+   status to DROP, the server will cancel current packet processing and
+   the query dropped.
 
 @subsection dhcpv6Leases6Committed leases6_committed
 

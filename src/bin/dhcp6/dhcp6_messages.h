@@ -66,6 +66,7 @@ extern const isc::log::MessageID DHCP6_DYNAMIC_RECONFIGURATION;
 extern const isc::log::MessageID DHCP6_DYNAMIC_RECONFIGURATION_FAIL;
 extern const isc::log::MessageID DHCP6_DYNAMIC_RECONFIGURATION_SUCCESS;
 extern const isc::log::MessageID DHCP6_FLEX_ID;
+extern const isc::log::MessageID DHCP6_HOOK_ADDR6_REGISTER_DROP;
 extern const isc::log::MessageID DHCP6_HOOK_ADDR6_REGISTER_SKIP;
 extern const isc::log::MessageID DHCP6_HOOK_BUFFER_RCVD_DROP;
 extern const isc::log::MessageID DHCP6_HOOK_BUFFER_RCVD_SKIP;

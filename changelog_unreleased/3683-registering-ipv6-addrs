@@ -1,0 +1,4 @@
+[func]		fdupont
+	Added experimental support for registering self-generated
+	IPv6 addresses using DHCPv6 (RFC 9686).
+	(Gitlab #3683)
