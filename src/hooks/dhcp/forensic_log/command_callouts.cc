@@ -19,6 +19,7 @@
 #include <util/str.h>
 #include <legal_log_log.h>
 #include <dhcpsrv/backend_store_factory.h>
+#include <rotating_file.h>
 #include <subnets_user_context.h>
 
 #include <sstream>
@@ -119,7 +120,7 @@ void addDuration(ostringstream& os, ConstElementPtr& arguments) {
     if (!getOptionalInt(arguments, "valid-lft", duration)) {
         int64_t expire = 0;
         if (getOptionalInt(arguments, "expire", expire)) {
-            duration = expire - BackendStoreFactory::instance()->now().tv_sec;
+            duration = expire - BackendStoreFactory::instance(managerID())->now().tv_sec;
         }
     }
 
@@ -187,7 +188,7 @@ bool checkLoggingEnabledSubnet4(ConstElementPtr& arguments) {
 /// @param response The command response.
 int handleLease4Cmds(string& name, ConstElementPtr& arguments,
                      ConstElementPtr& /*response*/) {
-    if (!BackendStoreFactory::instance()) {
+    if (!BackendStoreFactory::instance(managerID())) {
         LOG_ERROR(legal_log_logger,
                   LEGAL_LOG_COMMAND_NO_LEGAL_STORE);
         return (1);
@@ -245,7 +246,7 @@ int handleLease4Cmds(string& name, ConstElementPtr& arguments,
             }
         }
 
-        BackendStoreFactory::instance()->writeln(os.str(), osa.str());
+        BackendStoreFactory::instance(managerID())->writeln(os.str(), osa.str());
     } catch (const exception& ex) {
         LOG_ERROR(legal_log_logger, LEGAL_LOG_COMMAND_WRITE_ERROR)
                   .arg(ex.what());
@@ -287,7 +288,7 @@ bool checkLoggingEnabledSubnet6(ConstElementPtr& arguments) {
 /// @param response The command response.
 int handleLease6Cmds(string& name, ConstElementPtr& arguments,
                      ConstElementPtr& response) {
-    if (!BackendStoreFactory::instance()) {
+    if (!BackendStoreFactory::instance(managerID())) {
         LOG_ERROR(legal_log_logger,
                   LEGAL_LOG_COMMAND_NO_LEGAL_STORE);
         return (1);
@@ -457,7 +458,7 @@ int handleLease6Cmds(string& name, ConstElementPtr& arguments,
             return (status);
         }
 
-        BackendStoreFactory::instance()->writeln(os.str(), osa.str());
+        BackendStoreFactory::instance(managerID())->writeln(os.str(), osa.str());
     } catch (const exception& ex) {
         LOG_ERROR(legal_log_logger, LEGAL_LOG_COMMAND_WRITE_ERROR)
                   .arg(ex.what());
@@ -481,7 +482,7 @@ int handleLease6Cmds(string& name, ConstElementPtr& arguments,
 ///
 /// @return 0 upon success, non-zero otherwise.
 int command_processed(CalloutHandle& handle) {
-    if (!BackendStoreFactory::instance()) {
+    if (!BackendStoreFactory::instance(managerID())) {
         LOG_ERROR(legal_log_logger,
                   LEGAL_LOG_COMMAND_NO_LEGAL_STORE);
         return (1);

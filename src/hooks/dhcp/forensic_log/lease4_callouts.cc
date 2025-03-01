@@ -16,6 +16,7 @@
 #include <util/str.h>
 #include <legal_log_log.h>
 #include <dhcpsrv/backend_store_factory.h>
+#include <rotating_file.h>
 #include <subnets_user_context.h>
 
 #include <sstream>
@@ -38,13 +39,13 @@ bool getCustomEntry(const Pkt4Ptr& query, const Pkt4Ptr& response,
                     const Lease4Ptr& /*lease*/, std::string& value) {
     bool using_custom_format = false;
 
-    auto expression = BackendStoreFactory::instance()->getRequestFormatExpression();
+    auto expression = BackendStoreFactory::instance(managerID())->getRequestFormatExpression();
     if (expression && query) {
         value = evaluateString(*expression, *query);
         using_custom_format = true;
     }
 
-    expression = BackendStoreFactory::instance()->getResponseFormatExpression();
+    expression = BackendStoreFactory::instance(managerID())->getResponseFormatExpression();
     if (expression && response) {
         value += evaluateString(*expression, *response);
         using_custom_format = true;
@@ -214,7 +215,7 @@ std::string genLease4Entry(const Pkt4Ptr& query,
 ///
 /// @return returns 0 upon success, non-zero otherwise
 int legalLog4Handler(CalloutHandle& handle, const Action& action) {
-    if (!BackendStoreFactory::instance()) {
+    if (!BackendStoreFactory::instance(managerID())) {
         LOG_ERROR(legal_log_logger,
                   LEGAL_LOG_LEASE4_NO_LEGAL_STORE);
         return (1);
@@ -239,9 +240,9 @@ int legalLog4Handler(CalloutHandle& handle, const Action& action) {
         ConstSubnet4Ptr subnet = cfg->getBySubnetId(lease->subnet_id_);
 
         if (!isLoggingDisabled(subnet)) {
-            BackendStoreFactory::instance()->writeln(genLease4Entry(query, response,
-                                                             lease, action),
-                                              lease->addr_.toText());
+            BackendStoreFactory::instance(managerID())->writeln(genLease4Entry(query, response,
+                                                                               lease, action),
+                                                                lease->addr_.toText());
         }
 
     } catch (const std::exception& ex) {

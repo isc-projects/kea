@@ -275,20 +275,28 @@ public:
     /// @return The Rotating File Store Backend.
     static isc::dhcp::BackendStorePtr
     factory(const isc::db::DatabaseConnection::ParameterMap& parameters);
+
+    /// @brief Test mode flag (default false).
+    static bool test_mode_;
 };
 
 /// @brief Initialization structure used to register and deregister RotateFile Forensic Store.
 struct RotatingFileInit {
     // Constructor registers
     RotatingFileInit() {
+        RotatingFile::test_mode_ = true;
         isc::dhcp::BackendStoreFactory::registerBackendFactory("logfile", RotatingFile::factory);
     }
 
     // Destructor deregisters
     ~RotatingFileInit() {
         isc::dhcp::BackendStoreFactory::unregisterBackendFactory("logfile");
+        RotatingFile::test_mode_ = false;
     }
 };
+
+/// @brief Return library unique ManagerID.
+isc::dhcp::ManagerID managerID();
 
 } // namespace legal_log
 } // namespace isc

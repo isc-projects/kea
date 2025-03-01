@@ -29,6 +29,17 @@ using namespace std;
 
 namespace isc {
 namespace legal_log {
+
+bool RotatingFile::test_mode_ = false;
+
+isc::dhcp::ManagerID managerID() {
+    static boost::shared_ptr<void*> id = boost::shared_ptr<void*>(new void*);
+    if (RotatingFile::test_mode_) {
+        id.reset();
+    }
+    return (reinterpret_cast<isc::dhcp::ManagerID>(id.get()));
+}
+
 RotatingFile::RotatingFile(const DatabaseConnection::ParameterMap& parameters)
     : BackendStore(parameters), time_unit_(TimeUnit::Day), count_(1), timestamp_(0) {
     apply(parameters);

@@ -21,6 +21,7 @@
 #include <util/str.h>
 #include <legal_log_log.h>
 #include <dhcpsrv/backend_store_factory.h>
+#include <rotating_file.h>
 #include <subnets_user_context.h>
 
 #include <sstream>
@@ -484,7 +485,7 @@ bool getCustomEntry(const Pkt6Ptr& query, const Pkt6Ptr& response,
                     const Lease6Ptr& lease, std::string& value) {
     bool using_custom_format = false;
 
-    auto expression = BackendStoreFactory::instance()->getRequestFormatExpression();
+    auto expression = BackendStoreFactory::instance(managerID())->getRequestFormatExpression();
     if (expression && query) {
         replaceTokensForLease(expression, lease);
 
@@ -492,7 +493,7 @@ bool getCustomEntry(const Pkt6Ptr& query, const Pkt6Ptr& response,
         using_custom_format = true;
     }
 
-    expression = BackendStoreFactory::instance()->getResponseFormatExpression();
+    expression = BackendStoreFactory::instance(managerID())->getResponseFormatExpression();
     if (expression && response) {
         replaceTokensForLease(expression, lease);
 
@@ -669,7 +670,7 @@ std::string genLease6Entry(const Pkt6Ptr& query,
 ///
 /// @return returns 0 upon success, non-zero otherwise
 int legalLog6Handler(CalloutHandle& handle, const Action& action) {
-    if (!BackendStoreFactory::instance()) {
+    if (!BackendStoreFactory::instance(managerID())) {
         LOG_ERROR(legal_log_logger, LEGAL_LOG_LEASE6_NO_LEGAL_STORE);
         return (1);
     }
@@ -693,9 +694,9 @@ int legalLog6Handler(CalloutHandle& handle, const Action& action) {
         ConstSubnet6Ptr subnet = cfg->getBySubnetId(lease->subnet_id_);
 
         if (!isLoggingDisabled(subnet)) {
-            BackendStoreFactory::instance()->writeln(genLease6Entry(query, response,
-                                                             lease, action),
-                                              genLease6Addr(lease));
+            BackendStoreFactory::instance(managerID())->writeln(genLease6Entry(query, response,
+                                                                               lease, action),
+                                                                genLease6Addr(lease));
         }
 
     } catch (const std::exception& ex) {
