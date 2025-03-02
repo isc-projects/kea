@@ -42,7 +42,7 @@ extern bool getOptionalInt(ConstElementPtr& arguments, const string& name,
                            int64_t& value);
 extern bool isPrefix(ConstElementPtr arguments);
 extern int command_processed(CalloutHandle& handle);
-extern void addDuration(ostringstream& os, ConstElementPtr& arguments);
+extern void addDuration(CalloutHandle& handle, ostringstream& os, ConstElementPtr& arguments);
 extern void addContext(ostringstream& os, ConstElementPtr& arguments);
 }
 
@@ -611,13 +611,17 @@ TEST(CommandCalloutFuncs, isPrefixTest) {
 
 // Exercises the addDuration() function
 TEST_F(CalloutTest, addDurationTest) {
+    // Make a callout handle
+    CalloutHandle handle(getCalloutManager());
+    handle.setCurrentLibrary(0);
+
     ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     // Should generate duration text of 1 day based on valid-lft
     ConstElementPtr arguments;
     ASSERT_NO_THROW(arguments = Element::fromJSON("{ \"valid-lft\": 86400 }"));
     ostringstream os;
-    ASSERT_NO_THROW(addDuration(os, arguments));
+    ASSERT_NO_THROW(addDuration(handle, os, arguments));
     EXPECT_EQ(os.str(), " for 1 days 0 hrs 0 mins 0 secs");
 
     // Clear the stream
@@ -625,7 +629,7 @@ TEST_F(CalloutTest, addDurationTest) {
 
     // Should not generate duration text.
     ASSERT_NO_THROW(arguments = Element::fromJSON("{ \"some-other\": 86400 }"));
-    ASSERT_NO_THROW(addDuration(os, arguments));
+    ASSERT_NO_THROW(addDuration(handle, os, arguments));
     EXPECT_EQ(os.str(), "");
 
     // Should have a duration of 2 days based on expire timestamp.
@@ -635,7 +639,7 @@ TEST_F(CalloutTest, addDurationTest) {
     ASSERT_NO_THROW(arguments = Element::fromJSON(os.str()));
 
     os.str("");
-    ASSERT_NO_THROW(addDuration(os, arguments));
+    ASSERT_NO_THROW(addDuration(handle, os, arguments));
     EXPECT_EQ(os.str(), " for 2 days 0 hrs 0 mins 0 secs");
 }
 
@@ -681,6 +685,7 @@ TEST_F(CalloutTest, validCommandEntries) {
 
     // Make a callout handle
     CalloutHandle handle(getCalloutManager());
+    handle.setCurrentLibrary(0);
 
     ConstElementPtr response = createAnswer(CONTROL_RESULT_SUCCESS, "it works!");
 
@@ -729,6 +734,7 @@ TEST_F(CalloutTest, responseWithErrorsLease6BulkApplyCommandEntries) {
 
     // Make a callout handle
     CalloutHandle handle(getCalloutManager());
+    handle.setCurrentLibrary(0);
 
     vector<string>lines;
 
@@ -858,6 +864,7 @@ TEST_F(CalloutTest, disableLoggingForSubnet4) {
 
     // Make a callout handle
     CalloutHandle handle(getCalloutManager());
+    handle.setCurrentLibrary(0);
 
     ConstElementPtr response = createAnswer(CONTROL_RESULT_SUCCESS, "it works!");
 
@@ -933,6 +940,7 @@ TEST_F(CalloutTest, disableLoggingForSubnet6) {
 
     // Make a callout handle
     CalloutHandle handle(getCalloutManager());
+    handle.setCurrentLibrary(0);
 
     ConstElementPtr response = createAnswer(CONTROL_RESULT_SUCCESS, "it works!");
 
@@ -987,6 +995,7 @@ TEST_F(CalloutTest, failedCommand) {
 
     // Make a callout handle
     CalloutHandle handle(getCalloutManager());
+    handle.setCurrentLibrary(0);
 
     // First we use a known good command and success to generate
     // an entry (otherwise rotate file won't get created

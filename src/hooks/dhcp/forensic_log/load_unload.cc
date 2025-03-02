@@ -70,7 +70,7 @@ int load(LibraryHandle& handle) {
 
         try {
             BackendStore::parseConfig(parameters, map);
-            BackendStoreFactory::addBackend(map, managerID());
+            BackendStoreFactory::addBackend(map, handle.getLibraryIndex());
         } catch (const isc::db::DbOpenErrorWithRetry& err) {
             string redacted;
             try {
@@ -102,7 +102,7 @@ int unload() {
         // Since it's "global" Let's explicitly destroy it now rather
         // than indeterminately. Note, BackendStore destructor will close
         // the store.
-        BackendStoreFactory::instance(managerID()).reset();
+        BackendStoreFactory::delAllBackends();
 
         BackendStoreFactory::unregisterBackendFactory("logfile");
     } catch (const std::exception& ex) {

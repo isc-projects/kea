@@ -42,7 +42,8 @@ using namespace isc::dhcp;
 using namespace hooks;
 using namespace legal_log;
 
-extern std::string genLease4Entry(const Pkt4Ptr& query,
+extern std::string genLease4Entry(CalloutHandle& handle,
+                                  const Pkt4Ptr& query,
                                   const Pkt4Ptr& response,
                                   const Lease4Ptr& lease,
                                   const Action& action);
@@ -317,33 +318,36 @@ struct CalloutTestv4 : CalloutTest {
 
 // Verifies legal entry content for directly connected clients
 TEST_F(CalloutTestv4, directClient4) {
+    // Make a callout handle
+    CalloutHandle handle(getCalloutManager());
+    handle.setCurrentLibrary(0);
     ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     std::string entry;
 
     // Verify address and duration for an assignment (no client id)
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 1 hrs 52 mins 15 secs"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e",
               entry);
 
     // Verify address and duration for a renewal (no client id)
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 1 hrs 52 mins 15 secs"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e",
               entry);
 
     // Verify address for a release (no client id). No server response.
-    ASSERT_NO_THROW(entry = genLease4Entry(release_, Pkt4Ptr(), lease_, Action::RELEASE));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, release_, Pkt4Ptr(), lease_, Action::RELEASE));
     EXPECT_EQ("Address: 192.2.1.100 has been released"
               " from a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e",
               entry);
 
     // Verify address for a decline (no client id). No server response.
-    ASSERT_NO_THROW(entry = genLease4Entry(decline_, Pkt4Ptr(), lease_, Action::RELEASE));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, decline_, Pkt4Ptr(), lease_, Action::RELEASE));
     EXPECT_EQ("Address: 192.2.1.100 has been released"
               " from a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e",
@@ -352,7 +356,7 @@ TEST_F(CalloutTestv4, directClient4) {
     // Verify with a client id
     lease_->client_id_ = client_id_;
 
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 1 hrs 52 mins 15 secs"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54",
@@ -361,7 +365,7 @@ TEST_F(CalloutTestv4, directClient4) {
     // Verify a relayed request (no RAI)
     request_->setGiaddr(isc::asiolink::IOAddress("192.2.16.33"));
 
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 1 hrs 52 mins 15 secs"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54"
@@ -383,7 +387,7 @@ TEST_F(CalloutTestv4, directClient4) {
 
     request_->addOption(rai);
 
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 1 hrs 52 mins 15 secs"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54"
@@ -398,7 +402,7 @@ TEST_F(CalloutTestv4, directClient4) {
                                            + sizeof(subscriber_id))));
     rai->addOption(subscriber_id_opt);
 
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 1 hrs 52 mins 15 secs"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54"
@@ -413,7 +417,7 @@ TEST_F(CalloutTestv4, directClient4) {
                                        remote_id + sizeof(remote_id))));
     rai->addOption(remote_id_opt);
 
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 1 hrs 52 mins 15 secs"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54"
@@ -425,7 +429,7 @@ TEST_F(CalloutTestv4, directClient4) {
 
     lease_->setContext(Element::fromJSON("{ \"foo\": true }"));
 
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 1 hrs 52 mins 15 secs"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54"
@@ -439,6 +443,9 @@ TEST_F(CalloutTestv4, directClient4) {
 
 // Verifies legal entry content for directly connected clients
 TEST_F(CalloutTestv4, directClient4CustomLoggingFormatRequestOnly) {
+    // Make a callout handle
+    CalloutHandle handle(getCalloutManager());
+    handle.setCurrentLibrary(0);
     ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     BackendStoreFactory::instance()->setRequestFormatExpression(request_format_only_);
@@ -446,28 +453,28 @@ TEST_F(CalloutTestv4, directClient4CustomLoggingFormatRequestOnly) {
     std::string entry;
 
     // Verify address and duration for an assignment (no client id)
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 6735 seconds"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e",
               entry);
 
     // Verify address and duration for a renewal (no client id)
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 6735 seconds"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e",
               entry);
 
     // Verify address for a release (no client id). No server response.
-    ASSERT_NO_THROW(entry = genLease4Entry(release_, Pkt4Ptr(), lease_, Action::RELEASE));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, release_, Pkt4Ptr(), lease_, Action::RELEASE));
     EXPECT_EQ("Address: 192.2.1.100 has been released"
               " from a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e",
               entry);
 
     // Verify address for a decline (no client id). No server response.
-    ASSERT_NO_THROW(entry = genLease4Entry(decline_, Pkt4Ptr(), lease_, Action::RELEASE));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, decline_, Pkt4Ptr(), lease_, Action::RELEASE));
     EXPECT_EQ("Address: 192.2.1.100 has been released"
               " from a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e",
@@ -475,7 +482,7 @@ TEST_F(CalloutTestv4, directClient4CustomLoggingFormatRequestOnly) {
 
     // Verify address for a discover
     response_->setType(DHCPOFFER);
-    ASSERT_NO_THROW(entry = genLease4Entry(discover_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, discover_, response_, lease_, Action::ASSIGN));
     EXPECT_TRUE(entry.empty());
     response_->setType(DHCPACK);
 
@@ -487,7 +494,7 @@ TEST_F(CalloutTestv4, directClient4CustomLoggingFormatRequestOnly) {
 
     request_->addOption(client_id_option);
 
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 6735 seconds"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54",
@@ -496,7 +503,7 @@ TEST_F(CalloutTestv4, directClient4CustomLoggingFormatRequestOnly) {
     // Verify a relayed request (no RAI)
     request_->setGiaddr(isc::asiolink::IOAddress("192.2.16.33"));
 
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 6735 seconds"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54"
@@ -518,7 +525,7 @@ TEST_F(CalloutTestv4, directClient4CustomLoggingFormatRequestOnly) {
 
     request_->addOption(rai);
 
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 6735 seconds"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54"
@@ -533,7 +540,7 @@ TEST_F(CalloutTestv4, directClient4CustomLoggingFormatRequestOnly) {
                                            + sizeof(subscriber_id))));
     rai->addOption(subscriber_id_opt);
 
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 6735 seconds"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54"
@@ -548,7 +555,7 @@ TEST_F(CalloutTestv4, directClient4CustomLoggingFormatRequestOnly) {
                                        remote_id + sizeof(remote_id))));
     rai->addOption(remote_id_opt);
 
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 6735 seconds"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54"
@@ -561,6 +568,9 @@ TEST_F(CalloutTestv4, directClient4CustomLoggingFormatRequestOnly) {
 
 // Verifies legal entry content for directly connected clients
 TEST_F(CalloutTestv4, directClient4CustomLoggingFormatRequestAndResponse) {
+    // Make a callout handle
+    CalloutHandle handle(getCalloutManager());
+    handle.setCurrentLibrary(0);
     ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     BackendStoreFactory::instance()->setRequestFormatExpression(request_format_);
@@ -569,28 +579,28 @@ TEST_F(CalloutTestv4, directClient4CustomLoggingFormatRequestAndResponse) {
     std::string entry;
 
     // Verify address and duration for an assignment (no client id)
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 6735 seconds"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e",
               entry);
 
     // Verify address and duration for a renewal (no client id)
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 6735 seconds"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e",
               entry);
 
     // Verify address for a release (no client id). No server response.
-    ASSERT_NO_THROW(entry = genLease4Entry(release_, Pkt4Ptr(), lease_, Action::RELEASE));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, release_, Pkt4Ptr(), lease_, Action::RELEASE));
     EXPECT_EQ("Address: 192.2.1.100 has been released"
               " from a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e",
               entry);
 
     // Verify address for a decline (no client id). No server response.
-    ASSERT_NO_THROW(entry = genLease4Entry(decline_, Pkt4Ptr(), lease_, Action::RELEASE));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, decline_, Pkt4Ptr(), lease_, Action::RELEASE));
     EXPECT_EQ("Address: 192.2.1.100 has been released"
               " from a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e",
@@ -598,7 +608,7 @@ TEST_F(CalloutTestv4, directClient4CustomLoggingFormatRequestAndResponse) {
 
     // Verify address for a discover
     response_->setType(DHCPOFFER);
-    ASSERT_NO_THROW(entry = genLease4Entry(discover_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, discover_, response_, lease_, Action::ASSIGN));
     EXPECT_TRUE(entry.empty());
     response_->setType(DHCPACK);
 
@@ -611,7 +621,7 @@ TEST_F(CalloutTestv4, directClient4CustomLoggingFormatRequestAndResponse) {
     request_->addOption(client_id_option);
     response_->addOption(client_id_option);
 
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 6735 seconds"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54",
@@ -621,7 +631,7 @@ TEST_F(CalloutTestv4, directClient4CustomLoggingFormatRequestAndResponse) {
     request_->setGiaddr(isc::asiolink::IOAddress("192.2.16.33"));
     response_->setGiaddr(isc::asiolink::IOAddress("192.2.16.33"));
 
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 6735 seconds"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54"
@@ -644,7 +654,7 @@ TEST_F(CalloutTestv4, directClient4CustomLoggingFormatRequestAndResponse) {
     request_->addOption(rai);
     response_->addOption(rai);
 
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 6735 seconds"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54"
@@ -659,7 +669,7 @@ TEST_F(CalloutTestv4, directClient4CustomLoggingFormatRequestAndResponse) {
                                            + sizeof(subscriber_id))));
     rai->addOption(subscriber_id_opt);
 
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 6735 seconds"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54"
@@ -674,7 +684,7 @@ TEST_F(CalloutTestv4, directClient4CustomLoggingFormatRequestAndResponse) {
                                        remote_id + sizeof(remote_id))));
     rai->addOption(remote_id_opt);
 
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 6735 seconds"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54"
@@ -688,6 +698,9 @@ TEST_F(CalloutTestv4, directClient4CustomLoggingFormatRequestAndResponse) {
 // Verifies legal entry content for relayed clients
 // Checks with and without RAI and its suboptions
 TEST_F(CalloutTestv4, relayedClient4) {
+    // Make a callout handle
+    CalloutHandle handle(getCalloutManager());
+    handle.setCurrentLibrary(0);
     ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     std::string entry;
@@ -695,7 +708,7 @@ TEST_F(CalloutTestv4, relayedClient4) {
     // Verify a relayed request without client id or RAI
     request_->setGiaddr(isc::asiolink::IOAddress("192.2.16.33"));
 
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 1 hrs 52 mins 15 secs"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e"
@@ -705,7 +718,7 @@ TEST_F(CalloutTestv4, relayedClient4) {
     // Verify a relayed request with client id, but no RAI
     lease_->client_id_ = client_id_;
 
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 1 hrs 52 mins 15 secs"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54"
@@ -720,7 +733,7 @@ TEST_F(CalloutTestv4, relayedClient4) {
     request_->addOption(rai);
 
     // Verify a relayed request with RAI but has neither circuit id or remote id
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 1 hrs 52 mins 15 secs"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54"
@@ -736,7 +749,7 @@ TEST_F(CalloutTestv4, relayedClient4) {
     // Verify a relayed request with RAI with only circuit id
     rai->addOption(circuit_id_opt);
 
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 1 hrs 52 mins 15 secs"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54"
@@ -752,7 +765,7 @@ TEST_F(CalloutTestv4, relayedClient4) {
                                                     + sizeof(remote_id))));
     rai->addOption(remote_id_opt);
 
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 1 hrs 52 mins 15 secs"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54"
@@ -764,7 +777,7 @@ TEST_F(CalloutTestv4, relayedClient4) {
     // Verify a relayed request with RAI with only remote id
     rai->delOption(RAI_OPTION_AGENT_CIRCUIT_ID);
 
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 1 hrs 52 mins 15 secs"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54"
@@ -773,7 +786,7 @@ TEST_F(CalloutTestv4, relayedClient4) {
               entry);
 
     lease_->setContext(Element::fromJSON("{ \"bar\": false }"));
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 1 hrs 52 mins 15 secs"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54"
@@ -786,6 +799,9 @@ TEST_F(CalloutTestv4, relayedClient4) {
 // Verifies legal entry content for relayed clients
 // Checks with and without RAI and its suboptions
 TEST_F(CalloutTestv4, relayedClient4CustomLoggingFormatRequestOnly) {
+    // Make a callout handle
+    CalloutHandle handle(getCalloutManager());
+    handle.setCurrentLibrary(0);
     ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     BackendStoreFactory::instance()->setRequestFormatExpression(request_format_only_);
@@ -795,7 +811,7 @@ TEST_F(CalloutTestv4, relayedClient4CustomLoggingFormatRequestOnly) {
     // Verify a relayed request without client id or RAI
     request_->setGiaddr(isc::asiolink::IOAddress("192.2.16.33"));
 
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 6735 seconds"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e"
@@ -810,7 +826,7 @@ TEST_F(CalloutTestv4, relayedClient4CustomLoggingFormatRequestOnly) {
 
     request_->addOption(client_id_option);
 
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 6735 seconds"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54"
@@ -825,7 +841,7 @@ TEST_F(CalloutTestv4, relayedClient4CustomLoggingFormatRequestOnly) {
     request_->addOption(rai);
 
     // Verify a relayed request with RAI but has neither circuit id or remote id
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 6735 seconds"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54"
@@ -841,7 +857,7 @@ TEST_F(CalloutTestv4, relayedClient4CustomLoggingFormatRequestOnly) {
     // Verify a relayed request with RAI with only circuit id
     rai->addOption(circuit_id_opt);
 
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 6735 seconds"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54"
@@ -857,7 +873,7 @@ TEST_F(CalloutTestv4, relayedClient4CustomLoggingFormatRequestOnly) {
                                                     + sizeof(remote_id))));
     rai->addOption(remote_id_opt);
 
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 6735 seconds"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54"
@@ -869,7 +885,7 @@ TEST_F(CalloutTestv4, relayedClient4CustomLoggingFormatRequestOnly) {
     // Verify a relayed request with RAI with only remote id
     rai->delOption(RAI_OPTION_AGENT_CIRCUIT_ID);
 
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 6735 seconds"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54"
@@ -881,6 +897,9 @@ TEST_F(CalloutTestv4, relayedClient4CustomLoggingFormatRequestOnly) {
 // Verifies legal entry content for relayed clients
 // Checks with and without RAI and its suboptions
 TEST_F(CalloutTestv4, relayedClient4CustomLoggingFormatRequestAndResponse) {
+    // Make a callout handle
+    CalloutHandle handle(getCalloutManager());
+    handle.setCurrentLibrary(0);
     ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     BackendStoreFactory::instance()->setRequestFormatExpression(request_format_);
@@ -892,7 +911,7 @@ TEST_F(CalloutTestv4, relayedClient4CustomLoggingFormatRequestAndResponse) {
     request_->setGiaddr(isc::asiolink::IOAddress("192.2.16.33"));
     response_->setGiaddr(isc::asiolink::IOAddress("192.2.16.33"));
 
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 6735 seconds"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e"
@@ -908,7 +927,7 @@ TEST_F(CalloutTestv4, relayedClient4CustomLoggingFormatRequestAndResponse) {
     request_->addOption(client_id_option);
     response_->addOption(client_id_option);
 
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 6735 seconds"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54"
@@ -924,7 +943,7 @@ TEST_F(CalloutTestv4, relayedClient4CustomLoggingFormatRequestAndResponse) {
     response_->addOption(rai);
 
     // Verify a relayed request with RAI but has neither circuit id or remote id
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 6735 seconds"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54"
@@ -940,7 +959,7 @@ TEST_F(CalloutTestv4, relayedClient4CustomLoggingFormatRequestAndResponse) {
     // Verify a relayed request with RAI with only circuit id
     rai->addOption(circuit_id_opt);
 
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 6735 seconds"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54"
@@ -956,7 +975,7 @@ TEST_F(CalloutTestv4, relayedClient4CustomLoggingFormatRequestAndResponse) {
                                                     + sizeof(remote_id))));
     rai->addOption(remote_id_opt);
 
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 6735 seconds"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54"
@@ -968,7 +987,7 @@ TEST_F(CalloutTestv4, relayedClient4CustomLoggingFormatRequestAndResponse) {
     // Verify a relayed request with RAI with only remote id
     rai->delOption(RAI_OPTION_AGENT_CIRCUIT_ID);
 
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 6735 seconds"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: 17:34:e2:ff:09:92:54"
@@ -979,6 +998,9 @@ TEST_F(CalloutTestv4, relayedClient4CustomLoggingFormatRequestAndResponse) {
 
 // Verifies printable items
 TEST_F(CalloutTestv4, printable4) {
+    // Make a callout handle
+    CalloutHandle handle(getCalloutManager());
+    handle.setCurrentLibrary(0);
     ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     request_->setGiaddr(isc::asiolink::IOAddress("192.2.16.33"));
@@ -1018,7 +1040,7 @@ TEST_F(CalloutTestv4, printable4) {
     std::string entry;
 
     // Verify a relayed request with RAI.
-    ASSERT_NO_THROW(entry = genLease4Entry(request_, response_, lease_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease4Entry(handle, request_, response_, lease_, Action::ASSIGN));
     EXPECT_EQ("Address: 192.2.1.100 has been assigned for 1 hrs 52 mins 15 secs"
               " to a device with hardware address:"
               " hwtype=1 08:00:2b:02:3f:4e, client-id: "
@@ -1034,6 +1056,7 @@ TEST_F(CalloutTestv4, printable4) {
 TEST_F(CalloutTestv4, noRotatingFileTest4) {
     // Make a callout handle
     CalloutHandle handle(getCalloutManager());
+    handle.setCurrentLibrary(0);
     handle.setArgument("lease4", lease_);
     handle.setArgument("query4", request_);
 
@@ -1050,6 +1073,7 @@ TEST_F(CalloutTestv4, pkt4_receive) {
 
     // Make a callout handle
     CalloutHandlePtr handle = getCalloutHandle(discover_);
+    handle->setCurrentLibrary(0);
 
     // Create a subnet with user context disabling legal logging.
     Subnet4Ptr subnet2345(new Subnet4(IOAddress("192.2.2.0"), 24, 30, 40, 50, SubnetID(2345)));
@@ -1153,6 +1177,7 @@ TEST_F(CalloutTestv4, leases4_committed) {
 
     // Make a callout handle
     CalloutHandlePtr handle = getCalloutHandle(request_);
+    handle->setCurrentLibrary(0);
 
     // Create a subnet with user context disabling legal logging.
     Subnet4Ptr subnet2345(new Subnet4(IOAddress("192.2.2.0"), 24, 30, 40, 50, SubnetID(2345)));
@@ -1267,6 +1292,7 @@ TEST_F(CalloutTestv4, lease4_renew) {
 
     // Make a callout handle
     CalloutHandlePtr handle = getCalloutHandle(request_);
+    handle->setCurrentLibrary(0);
 
     // Create a subnet with user context disabling legal logging.
     Subnet4Ptr subnet2345(new Subnet4(IOAddress("192.2.2.0"), 24, 30, 40, 50, SubnetID(2345)));
@@ -1380,6 +1406,7 @@ TEST_F(CalloutTestv4, customRequestLoggingFormat_lease4_renew) {
 
     // Make a callout handle
     CalloutHandlePtr handle = getCalloutHandle(request_);
+    handle->setCurrentLibrary(0);
 
     std::string format = "ifelse(pkt4.msgtype == 5, concat('Assigned address: ', addrtotext(pkt4.yiaddr)), '')";
 
@@ -1430,6 +1457,7 @@ TEST_F(CalloutTestv4, lease4_release) {
 
     // Make a callout handle
     CalloutHandlePtr handle = getCalloutHandle(release_);
+    handle->setCurrentLibrary(0);
 
     // Create a subnet with user context disabling legal logging.
     Subnet4Ptr subnet2345(new Subnet4(IOAddress("192.2.2.0"), 24, 30, 40, 50, SubnetID(2345)));
@@ -1508,6 +1536,7 @@ TEST_F(CalloutTestv4, customRequestLoggingFormat_lease4_release) {
 
     // Make a callout handle
     CalloutHandlePtr handle = getCalloutHandle(release_);
+    handle->setCurrentLibrary(0);
 
     std::string format = "ifelse(pkt4.msgtype == 7, concat('Released address: ', addrtotext(pkt4.ciaddr)), '')";
 
@@ -1545,6 +1574,7 @@ TEST_F(CalloutTestv4, lease4_decline) {
 
     // Make a callout handle
     CalloutHandlePtr handle = getCalloutHandle(decline_);
+    handle->setCurrentLibrary(0);
 
     // Create a subnet with user context disabling legal logging.
     Subnet4Ptr subnet2345(new Subnet4(IOAddress("192.2.2.0"), 24, 30, 40, 50, SubnetID(2345)));
@@ -1623,6 +1653,7 @@ TEST_F(CalloutTestv4, customRequestLoggingFormat_lease4_decline) {
 
     // Make a callout handle
     CalloutHandlePtr handle = getCalloutHandle(decline_);
+    handle->setCurrentLibrary(0);
 
     std::string format = "ifelse(pkt4.msgtype == 4, concat('Declined address: ', addrtotext(option[50].hex)), '')";
 
@@ -1659,6 +1690,7 @@ TEST_F(CalloutTestv4, customRequestLoggingFormatMultipleLines) {
 
     // Make a callout handle
     CalloutHandlePtr handle = getCalloutHandle(decline_);
+    handle->setCurrentLibrary(0);
 
     std::string format = "ifelse(pkt4.msgtype == 4, 'first line' + 0x0a + 'second line', '')";
 

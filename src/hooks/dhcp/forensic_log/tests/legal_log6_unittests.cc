@@ -43,7 +43,8 @@ using namespace dhcp;
 
 extern std::string hwaddrSourceToString(uint32_t source);
 
-extern std::string genLease6Entry(const Pkt6Ptr& query,
+extern std::string genLease6Entry(CalloutHandle& handle,
+                                  const Pkt6Ptr& query,
                                   const Pkt6Ptr& response,
                                   const Lease6Ptr& lease,
                                   const Action& action);
@@ -412,36 +413,39 @@ TEST(Lease6FuncTest, hwaddrSourceToString ) {
 
 // Verifies DHCPv6 entries for directly connected clients
 TEST_F(CalloutTestv6, directClient6NA) {
+    // Make a callout handle
+    CalloutHandle handle(getCalloutManager());
+    handle.setCurrentLibrary(0);
     ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     std::string entry;
 
     // Verify address and duration for an assignment
-    ASSERT_NO_THROW(entry = genLease6Entry(request_na_, response_na_, lease_na_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_na_, response_na_, lease_na_, Action::ASSIGN));
     EXPECT_EQ("Address: 2001:db8:1:: has been assigned for 0 hrs 11 mins 53 secs"
               " to a device with DUID: 17:34:e2:ff:09:92:54",
               entry);
 
     // Verify address and duration for a renewal
-    ASSERT_NO_THROW(entry = genLease6Entry(renew_na_, response_na_, lease_na_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, renew_na_, response_na_, lease_na_, Action::ASSIGN));
     EXPECT_EQ("Address: 2001:db8:1:: has been assigned for 0 hrs 11 mins 53 secs"
               " to a device with DUID: 17:34:e2:ff:09:92:54",
               entry);
 
     // Verify address and duration for a rebind
-    ASSERT_NO_THROW(entry = genLease6Entry(rebind_na_, response_na_, lease_na_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, rebind_na_, response_na_, lease_na_, Action::ASSIGN));
     EXPECT_EQ("Address: 2001:db8:1:: has been assigned for 0 hrs 11 mins 53 secs"
               " to a device with DUID: 17:34:e2:ff:09:92:54",
               entry);
 
     // Verify address for a release
-    ASSERT_NO_THROW(entry = genLease6Entry(release_na_, response_, lease_na_, Action::RELEASE));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, release_na_, response_, lease_na_, Action::RELEASE));
     EXPECT_EQ("Address: 2001:db8:1:: has been released"
               " from a device with DUID: 17:34:e2:ff:09:92:54",
               entry);
 
     // Verify address for a decline
-    ASSERT_NO_THROW(entry = genLease6Entry(decline_, response_, lease_na_, Action::RELEASE));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, decline_, response_, lease_na_, Action::RELEASE));
     EXPECT_EQ("Address: 2001:db8:1:: has been released"
               " from a device with DUID: 17:34:e2:ff:09:92:54",
               entry);
@@ -450,7 +454,7 @@ TEST_F(CalloutTestv6, directClient6NA) {
     // possible value for hardware source as the function which converts it
     // is tested explicitly.
     lease_na_->hwaddr_ = hwaddr_;
-    ASSERT_NO_THROW(entry = genLease6Entry(request_na_, response_na_, lease_na_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_na_, response_na_, lease_na_, Action::ASSIGN));
     EXPECT_EQ("Address: 2001:db8:1:: has been assigned for 0 hrs 11 mins 53 secs"
               " to a device with DUID: 17:34:e2:ff:09:92:54 and hardware"
               " address: hwtype=1 08:00:2b:02:3f:4e (from Raw Socket)",
@@ -458,7 +462,7 @@ TEST_F(CalloutTestv6, directClient6NA) {
 
     // Add user context.
     lease_na_->setContext(Element::fromJSON("{ \"foo\": true }"));
-    ASSERT_NO_THROW(entry = genLease6Entry(request_na_, response_na_, lease_na_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_na_, response_na_, lease_na_, Action::ASSIGN));
     EXPECT_EQ("Address: 2001:db8:1:: has been assigned for 0 hrs 11 mins 53 secs"
               " to a device with DUID: 17:34:e2:ff:09:92:54 and hardware"
               " address: hwtype=1 08:00:2b:02:3f:4e (from Raw Socket),"
@@ -468,6 +472,9 @@ TEST_F(CalloutTestv6, directClient6NA) {
 
 // Verifies DHCPv6 entries for directly connected clients
 TEST_F(CalloutTestv6, directClient6NACustomLoggingFormatRequestOnly) {
+    // Make a callout handle
+    CalloutHandle handle(getCalloutManager());
+    handle.setCurrentLibrary(0);
     ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     CfgMgr::instance().setFamily(AF_INET6);
@@ -477,42 +484,45 @@ TEST_F(CalloutTestv6, directClient6NACustomLoggingFormatRequestOnly) {
     std::string entry;
 
     // Verify address and duration for an assignment
-    ASSERT_NO_THROW(entry = genLease6Entry(request_na_, response_na_, lease_na_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_na_, response_na_, lease_na_, Action::ASSIGN));
     EXPECT_EQ("Address: 2001:db8:1:: has been assigned for 713 seconds"
               " to a device with DUID: 17:34:e2:ff:09:92:54",
               entry);
 
     // Verify address and duration for a renewal
-    ASSERT_NO_THROW(entry = genLease6Entry(renew_na_, response_na_, lease_na_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, renew_na_, response_na_, lease_na_, Action::ASSIGN));
     EXPECT_EQ("Address: 2001:db8:1:: has been assigned for 713 seconds"
               " to a device with DUID: 17:34:e2:ff:09:92:54",
               entry);
 
     // Verify address and duration for a rebind
-    ASSERT_NO_THROW(entry = genLease6Entry(rebind_na_, response_na_, lease_na_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, rebind_na_, response_na_, lease_na_, Action::ASSIGN));
     EXPECT_EQ("Address: 2001:db8:1:: has been assigned for 713 seconds"
               " to a device with DUID: 17:34:e2:ff:09:92:54",
               entry);
 
     // Verify address for a release
-    ASSERT_NO_THROW(entry = genLease6Entry(release_na_, response_, lease_na_, Action::RELEASE));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, release_na_, response_, lease_na_, Action::RELEASE));
     EXPECT_EQ("Address: 2001:db8:1:: has been released"
               " from a device with DUID: 17:34:e2:ff:09:92:54",
               entry);
 
     // Verify address for a decline
-    ASSERT_NO_THROW(entry = genLease6Entry(decline_, response_, lease_na_, Action::RELEASE));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, decline_, response_, lease_na_, Action::RELEASE));
     EXPECT_EQ("Address: 2001:db8:1:: has been released"
               " from a device with DUID: 17:34:e2:ff:09:92:54",
               entry);
 
     // Verify address for a solicit
-    ASSERT_NO_THROW(entry = genLease6Entry(solicit_na_, response_na_, lease_na_, Action::RELEASE));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, solicit_na_, response_na_, lease_na_, Action::RELEASE));
     EXPECT_TRUE(entry.empty());
 }
 
 // Verifies DHCPv6 entries for directly connected clients
 TEST_F(CalloutTestv6, directClient6NACustomLoggingFormatRequestAndResponse) {
+    // Make a callout handle
+    CalloutHandle handle(getCalloutManager());
+    handle.setCurrentLibrary(0);
     ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     CfgMgr::instance().setFamily(AF_INET6);
@@ -523,43 +533,46 @@ TEST_F(CalloutTestv6, directClient6NACustomLoggingFormatRequestAndResponse) {
     std::string entry;
 
     // Verify address and duration for an assignment
-    ASSERT_NO_THROW(entry = genLease6Entry(request_na_, response_na_, lease_na_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_na_, response_na_, lease_na_, Action::ASSIGN));
     EXPECT_EQ("Address: 2001:db8:1:: has been assigned for 713 seconds"
               " to a device with DUID: 17:34:e2:ff:09:92:54",
               entry);
 
     // Verify address and duration for a renewal
-    ASSERT_NO_THROW(entry = genLease6Entry(renew_na_, response_na_, lease_na_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, renew_na_, response_na_, lease_na_, Action::ASSIGN));
     EXPECT_EQ("Address: 2001:db8:1:: has been assigned for 713 seconds"
               " to a device with DUID: 17:34:e2:ff:09:92:54",
               entry);
 
     // Verify address and duration for a rebind
-    ASSERT_NO_THROW(entry = genLease6Entry(rebind_na_, response_na_, lease_na_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, rebind_na_, response_na_, lease_na_, Action::ASSIGN));
     EXPECT_EQ("Address: 2001:db8:1:: has been assigned for 713 seconds"
               " to a device with DUID: 17:34:e2:ff:09:92:54",
               entry);
 
     // Verify address for a release
-    ASSERT_NO_THROW(entry = genLease6Entry(release_na_, response_, lease_na_, Action::RELEASE));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, release_na_, response_, lease_na_, Action::RELEASE));
     EXPECT_EQ("Address: 2001:db8:1:: has been released"
               " from a device with DUID: 17:34:e2:ff:09:92:54",
               entry);
 
     // Verify address for a decline
-    ASSERT_NO_THROW(entry = genLease6Entry(decline_, response_, lease_na_, Action::RELEASE));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, decline_, response_, lease_na_, Action::RELEASE));
     EXPECT_EQ("Address: 2001:db8:1:: has been released"
               " from a device with DUID: 17:34:e2:ff:09:92:54",
               entry);
 
     // Verify address for a solicit
     response_na_->setType(DHCPV6_ADVERTISE);
-    ASSERT_NO_THROW(entry = genLease6Entry(solicit_na_, response_na_, lease_na_, Action::RELEASE));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, solicit_na_, response_na_, lease_na_, Action::RELEASE));
     EXPECT_TRUE(entry.empty());
 }
 
 // Verifies DHCPv6 entries for relayed clients
 TEST_F(CalloutTestv6, relayedClient6NA) {
+    // Make a callout handle
+    CalloutHandle handle(getCalloutManager());
+    handle.setCurrentLibrary(0);
     ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     std::string entry;
@@ -573,7 +586,7 @@ TEST_F(CalloutTestv6, relayedClient6NA) {
 
     request_na_->addRelayInfo(relay1);
 
-    ASSERT_NO_THROW(entry = genLease6Entry(request_na_, response_na_, lease_na_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_na_, response_na_, lease_na_, Action::ASSIGN));
     EXPECT_EQ("Address: 2001:db8:1:: has been assigned for 0 hrs 11 mins 53 secs"
               " to a device with DUID: 17:34:e2:ff:09:92:54"
               " connected via relay at address: fe80::abcd"
@@ -595,7 +608,7 @@ TEST_F(CalloutTestv6, relayedClient6NA) {
     request_na_->addRelayInfo(relay1);
 
     // Verify relay info with REMOTE_ID
-    ASSERT_NO_THROW(entry = genLease6Entry(request_na_, response_na_, lease_na_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_na_, response_na_, lease_na_, Action::ASSIGN));
     EXPECT_EQ("Address: 2001:db8:1:: has been assigned for 0 hrs 11 mins 53 secs"
               " to a device with DUID: 17:34:e2:ff:09:92:54"
               " connected via relay at address: fe80::abcd"
@@ -617,7 +630,7 @@ TEST_F(CalloutTestv6, relayedClient6NA) {
     request_na_->addRelayInfo(relay1);
 
     // Verify relay info with REMOTE_ID and SUBSCRIBER_ID
-    ASSERT_NO_THROW(entry = genLease6Entry(request_na_, response_na_, lease_na_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_na_, response_na_, lease_na_, Action::ASSIGN));
     EXPECT_EQ("Address: 2001:db8:1:: has been assigned for 0 hrs 11 mins 53 secs"
               " to a device with DUID: 17:34:e2:ff:09:92:54"
               " connected via relay at address: fe80::abcd"
@@ -634,7 +647,7 @@ TEST_F(CalloutTestv6, relayedClient6NA) {
     request_na_->addRelayInfo(relay1);
 
     // Verify address and duration for an assignment
-    ASSERT_NO_THROW(entry = genLease6Entry(request_na_, response_na_, lease_na_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_na_, response_na_, lease_na_, Action::ASSIGN));
     EXPECT_EQ("Address: 2001:db8:1:: has been assigned for 0 hrs 11 mins 53 secs"
               " to a device with DUID: 17:34:e2:ff:09:92:54"
               " connected via relay at address: fe80::abcd"
@@ -653,7 +666,7 @@ TEST_F(CalloutTestv6, relayedClient6NA) {
     request_na_->addRelayInfo(relay1);
 
     // Verify address and duration for an assignment
-    ASSERT_NO_THROW(entry = genLease6Entry(request_na_, response_na_, lease_na_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_na_, response_na_, lease_na_, Action::ASSIGN));
     EXPECT_EQ("Address: 2001:db8:1:: has been assigned for 0 hrs 11 mins 53 secs"
               " to a device with DUID: 17:34:e2:ff:09:92:54"
               " connected via relay at address: fe80::abcd"
@@ -664,7 +677,7 @@ TEST_F(CalloutTestv6, relayedClient6NA) {
 
     // Verify user context
     lease_na_->setContext(Element::fromJSON("{ \"bar\": false }"));
-    ASSERT_NO_THROW(entry = genLease6Entry(request_na_, response_na_, lease_na_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_na_, response_na_, lease_na_, Action::ASSIGN));
     EXPECT_EQ("Address: 2001:db8:1:: has been assigned for 0 hrs 11 mins 53 secs"
               " to a device with DUID: 17:34:e2:ff:09:92:54"
               " connected via relay at address: fe80::abcd"
@@ -677,6 +690,9 @@ TEST_F(CalloutTestv6, relayedClient6NA) {
 
 // Verifies DHCPv6 entries for relayed clients
 TEST_F(CalloutTestv6, relayedClient6NACustomLoggingFormatRequestOnly) {
+    // Make a callout handle
+    CalloutHandle handle(getCalloutManager());
+    handle.setCurrentLibrary(0);
     ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     CfgMgr::instance().setFamily(AF_INET6);
@@ -694,7 +710,7 @@ TEST_F(CalloutTestv6, relayedClient6NACustomLoggingFormatRequestOnly) {
 
     request_na_->addRelayInfo(relay1);
 
-    ASSERT_NO_THROW(entry = genLease6Entry(request_na_, response_na_, lease_na_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_na_, response_na_, lease_na_, Action::ASSIGN));
     EXPECT_EQ("Address: 2001:db8:1:: has been assigned for 713 seconds"
               " to a device with DUID: 17:34:e2:ff:09:92:54"
               " connected via relay at address: fe80::abcd"
@@ -716,7 +732,7 @@ TEST_F(CalloutTestv6, relayedClient6NACustomLoggingFormatRequestOnly) {
     request_na_->addRelayInfo(relay1);
 
     // Verify relay info with REMOTE_ID
-    ASSERT_NO_THROW(entry = genLease6Entry(request_na_, response_na_, lease_na_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_na_, response_na_, lease_na_, Action::ASSIGN));
     EXPECT_EQ("Address: 2001:db8:1:: has been assigned for 713 seconds"
               " to a device with DUID: 17:34:e2:ff:09:92:54"
               " connected via relay at address: fe80::abcd"
@@ -738,7 +754,7 @@ TEST_F(CalloutTestv6, relayedClient6NACustomLoggingFormatRequestOnly) {
     request_na_->addRelayInfo(relay1);
 
     // Verify relay info with REMOTE_ID and SUBSCRIBER_ID
-    ASSERT_NO_THROW(entry = genLease6Entry(request_na_, response_na_, lease_na_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_na_, response_na_, lease_na_, Action::ASSIGN));
     EXPECT_EQ("Address: 2001:db8:1:: has been assigned for 713 seconds"
               " to a device with DUID: 17:34:e2:ff:09:92:54"
               " connected via relay at address: fe80::abcd"
@@ -755,7 +771,7 @@ TEST_F(CalloutTestv6, relayedClient6NACustomLoggingFormatRequestOnly) {
     request_na_->addRelayInfo(relay1);
 
     // Verify address and duration for an assignment
-    ASSERT_NO_THROW(entry = genLease6Entry(request_na_, response_na_, lease_na_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_na_, response_na_, lease_na_, Action::ASSIGN));
     EXPECT_EQ("Address: 2001:db8:1:: has been assigned for 713 seconds"
               " to a device with DUID: 17:34:e2:ff:09:92:54"
               " connected via relay at address: fe80::abcd"
@@ -774,7 +790,7 @@ TEST_F(CalloutTestv6, relayedClient6NACustomLoggingFormatRequestOnly) {
     request_na_->addRelayInfo(relay1);
 
     // Verify address and duration for an assignment
-    ASSERT_NO_THROW(entry = genLease6Entry(request_na_, response_na_, lease_na_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_na_, response_na_, lease_na_, Action::ASSIGN));
     EXPECT_EQ("Address: 2001:db8:1:: has been assigned for 713 seconds"
               " to a device with DUID: 17:34:e2:ff:09:92:54"
               " connected via relay at address: fe80::abcd"
@@ -786,6 +802,9 @@ TEST_F(CalloutTestv6, relayedClient6NACustomLoggingFormatRequestOnly) {
 
 // Verifies DHCPv6 entries for relayed clients
 TEST_F(CalloutTestv6, relayedClient6NACustomLoggingFormatRequestAndResponse) {
+    // Make a callout handle
+    CalloutHandle handle(getCalloutManager());
+    handle.setCurrentLibrary(0);
     ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     CfgMgr::instance().setFamily(AF_INET6);
@@ -805,7 +824,7 @@ TEST_F(CalloutTestv6, relayedClient6NACustomLoggingFormatRequestAndResponse) {
     request_na_->addRelayInfo(relay1);
     response_na_->addRelayInfo(relay1);
 
-    ASSERT_NO_THROW(entry = genLease6Entry(request_na_, response_na_, lease_na_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_na_, response_na_, lease_na_, Action::ASSIGN));
     EXPECT_EQ("Address: 2001:db8:1:: has been assigned for 713 seconds"
               " to a device with DUID: 17:34:e2:ff:09:92:54"
               " connected via relay at address: fe80::abcd"
@@ -830,7 +849,7 @@ TEST_F(CalloutTestv6, relayedClient6NACustomLoggingFormatRequestAndResponse) {
     response_na_->addRelayInfo(relay1);
 
     // Verify relay info with REMOTE_ID
-    ASSERT_NO_THROW(entry = genLease6Entry(request_na_, response_na_, lease_na_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_na_, response_na_, lease_na_, Action::ASSIGN));
     EXPECT_EQ("Address: 2001:db8:1:: has been assigned for 713 seconds"
               " to a device with DUID: 17:34:e2:ff:09:92:54"
               " connected via relay at address: fe80::abcd"
@@ -855,7 +874,7 @@ TEST_F(CalloutTestv6, relayedClient6NACustomLoggingFormatRequestAndResponse) {
     response_na_->addRelayInfo(relay1);
 
     // Verify relay info with REMOTE_ID and SUBSCRIBER_ID
-    ASSERT_NO_THROW(entry = genLease6Entry(request_na_, response_na_, lease_na_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_na_, response_na_, lease_na_, Action::ASSIGN));
     EXPECT_EQ("Address: 2001:db8:1:: has been assigned for 713 seconds"
               " to a device with DUID: 17:34:e2:ff:09:92:54"
               " connected via relay at address: fe80::abcd"
@@ -875,7 +894,7 @@ TEST_F(CalloutTestv6, relayedClient6NACustomLoggingFormatRequestAndResponse) {
     response_na_->addRelayInfo(relay1);
 
     // Verify address and duration for an assignment
-    ASSERT_NO_THROW(entry = genLease6Entry(request_na_, response_na_, lease_na_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_na_, response_na_, lease_na_, Action::ASSIGN));
     EXPECT_EQ("Address: 2001:db8:1:: has been assigned for 713 seconds"
               " to a device with DUID: 17:34:e2:ff:09:92:54"
               " connected via relay at address: fe80::abcd"
@@ -897,7 +916,7 @@ TEST_F(CalloutTestv6, relayedClient6NACustomLoggingFormatRequestAndResponse) {
     response_na_->addRelayInfo(relay1);
 
     // Verify address and duration for an assignment
-    ASSERT_NO_THROW(entry = genLease6Entry(request_na_, response_na_, lease_na_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_na_, response_na_, lease_na_, Action::ASSIGN));
     EXPECT_EQ("Address: 2001:db8:1:: has been assigned for 713 seconds"
               " to a device with DUID: 17:34:e2:ff:09:92:54"
               " connected via relay at address: fe80::abcd"
@@ -909,30 +928,33 @@ TEST_F(CalloutTestv6, relayedClient6NACustomLoggingFormatRequestAndResponse) {
 
 // Verifies DHCPv6 entries for directly connected clients
 TEST_F(CalloutTestv6, directClient6PD) {
+    // Make a callout handle
+    CalloutHandle handle(getCalloutManager());
+    handle.setCurrentLibrary(0);
     ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     std::string entry;
 
     // Verify address and duration for an assignment
-    ASSERT_NO_THROW(entry = genLease6Entry(request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
     EXPECT_EQ("Prefix: 2001:db8:1::/64 has been assigned for 0 hrs 11 mins 53 secs"
               " to a device with DUID: 17:34:e2:ff:09:92:54",
               entry);
 
     // Verify address and duration for a renewal
-    ASSERT_NO_THROW(entry = genLease6Entry(renew_pd_, response_pd_, lease_pd_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, renew_pd_, response_pd_, lease_pd_, Action::ASSIGN));
     EXPECT_EQ("Prefix: 2001:db8:1::/64 has been assigned for 0 hrs 11 mins 53 secs"
               " to a device with DUID: 17:34:e2:ff:09:92:54",
               entry);
 
     // Verify address and duration for a rebind
-    ASSERT_NO_THROW(entry = genLease6Entry(rebind_pd_, response_pd_, lease_pd_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, rebind_pd_, response_pd_, lease_pd_, Action::ASSIGN));
     EXPECT_EQ("Prefix: 2001:db8:1::/64 has been assigned for 0 hrs 11 mins 53 secs"
               " to a device with DUID: 17:34:e2:ff:09:92:54",
               entry);
 
     // Verify address for a release
-    ASSERT_NO_THROW(entry = genLease6Entry(release_pd_, response_, lease_pd_, Action::RELEASE));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, release_pd_, response_, lease_pd_, Action::RELEASE));
     EXPECT_EQ("Prefix: 2001:db8:1::/64 has been released"
               " from a device with DUID: 17:34:e2:ff:09:92:54",
               entry);
@@ -941,7 +963,7 @@ TEST_F(CalloutTestv6, directClient6PD) {
     // possible value for hardware source as the function which converts it
     // is tested explicitly.
     lease_pd_->hwaddr_ = hwaddr_;
-    ASSERT_NO_THROW(entry = genLease6Entry(request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
     EXPECT_EQ("Prefix: 2001:db8:1::/64 has been assigned for 0 hrs 11 mins 53 secs"
               " to a device with DUID: 17:34:e2:ff:09:92:54 and hardware"
               " address: hwtype=1 08:00:2b:02:3f:4e (from Raw Socket)",
@@ -949,7 +971,7 @@ TEST_F(CalloutTestv6, directClient6PD) {
 
     // Add user context.
     lease_pd_->setContext(Element::fromJSON("{ \"foo\": true }"));
-    ASSERT_NO_THROW(entry = genLease6Entry(request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
     EXPECT_EQ("Prefix: 2001:db8:1::/64 has been assigned for 0 hrs 11 mins 53 secs"
               " to a device with DUID: 17:34:e2:ff:09:92:54 and hardware"
               " address: hwtype=1 08:00:2b:02:3f:4e (from Raw Socket),"
@@ -959,6 +981,9 @@ TEST_F(CalloutTestv6, directClient6PD) {
 
 // Verifies DHCPv6 entries for directly connected clients
 TEST_F(CalloutTestv6, directClient6PDCustomLoggingFormatRequestOnly) {
+    // Make a callout handle
+    CalloutHandle handle(getCalloutManager());
+    handle.setCurrentLibrary(0);
     ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     CfgMgr::instance().setFamily(AF_INET6);
@@ -968,36 +993,39 @@ TEST_F(CalloutTestv6, directClient6PDCustomLoggingFormatRequestOnly) {
     std::string entry;
 
     // Verify address and duration for an assignment
-    ASSERT_NO_THROW(entry = genLease6Entry(request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
     EXPECT_EQ("Prefix: 2001:db8:1::/64 has been assigned for 713 seconds"
               " to a device with DUID: 17:34:e2:ff:09:92:54",
               entry);
 
     // Verify address and duration for a renewal
-    ASSERT_NO_THROW(entry = genLease6Entry(renew_pd_, response_pd_, lease_pd_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, renew_pd_, response_pd_, lease_pd_, Action::ASSIGN));
     EXPECT_EQ("Prefix: 2001:db8:1::/64 has been assigned for 713 seconds"
               " to a device with DUID: 17:34:e2:ff:09:92:54",
               entry);
 
     // Verify address and duration for a rebind
-    ASSERT_NO_THROW(entry = genLease6Entry(rebind_pd_, response_pd_, lease_pd_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, rebind_pd_, response_pd_, lease_pd_, Action::ASSIGN));
     EXPECT_EQ("Prefix: 2001:db8:1::/64 has been assigned for 713 seconds"
               " to a device with DUID: 17:34:e2:ff:09:92:54",
               entry);
 
     // Verify address for a release
-    ASSERT_NO_THROW(entry = genLease6Entry(release_pd_, response_, lease_pd_, Action::RELEASE));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, release_pd_, response_, lease_pd_, Action::RELEASE));
     EXPECT_EQ("Prefix: 2001:db8:1::/64 has been released"
               " from a device with DUID: 17:34:e2:ff:09:92:54",
               entry);
 
     // Verify address for a solicit
-    ASSERT_NO_THROW(entry = genLease6Entry(solicit_pd_, response_pd_, lease_pd_, Action::RELEASE));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, solicit_pd_, response_pd_, lease_pd_, Action::RELEASE));
     EXPECT_TRUE(entry.empty());
 }
 
 // Verifies DHCPv6 entries for directly connected clients
 TEST_F(CalloutTestv6, directClient6PDCustomLoggingFormatRequestAndResponse) {
+    // Make a callout handle
+    CalloutHandle handle(getCalloutManager());
+    handle.setCurrentLibrary(0);
     ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     CfgMgr::instance().setFamily(AF_INET6);
@@ -1008,37 +1036,40 @@ TEST_F(CalloutTestv6, directClient6PDCustomLoggingFormatRequestAndResponse) {
     std::string entry;
 
     // Verify address and duration for an assignment
-    ASSERT_NO_THROW(entry = genLease6Entry(request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
     EXPECT_EQ("Prefix: 2001:db8:1::/64 has been assigned for 713 seconds"
               " to a device with DUID: 17:34:e2:ff:09:92:54",
               entry);
 
     // Verify address and duration for a renewal
-    ASSERT_NO_THROW(entry = genLease6Entry(renew_pd_, response_pd_, lease_pd_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, renew_pd_, response_pd_, lease_pd_, Action::ASSIGN));
     EXPECT_EQ("Prefix: 2001:db8:1::/64 has been assigned for 713 seconds"
               " to a device with DUID: 17:34:e2:ff:09:92:54",
               entry);
 
     // Verify address and duration for a rebind
-    ASSERT_NO_THROW(entry = genLease6Entry(rebind_pd_, response_pd_, lease_pd_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, rebind_pd_, response_pd_, lease_pd_, Action::ASSIGN));
     EXPECT_EQ("Prefix: 2001:db8:1::/64 has been assigned for 713 seconds"
               " to a device with DUID: 17:34:e2:ff:09:92:54",
               entry);
 
     // Verify address for a release
-    ASSERT_NO_THROW(entry = genLease6Entry(release_pd_, response_, lease_pd_, Action::RELEASE));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, release_pd_, response_, lease_pd_, Action::RELEASE));
     EXPECT_EQ("Prefix: 2001:db8:1::/64 has been released"
               " from a device with DUID: 17:34:e2:ff:09:92:54",
               entry);
 
     // Verify address for a solicit
     response_pd_->setType(DHCPV6_ADVERTISE);
-    ASSERT_NO_THROW(entry = genLease6Entry(solicit_pd_, response_pd_, lease_pd_, Action::RELEASE));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, solicit_pd_, response_pd_, lease_pd_, Action::RELEASE));
     EXPECT_TRUE(entry.empty());
 }
 
 // Verifies DHCPv6 entries for relayed clients
 TEST_F(CalloutTestv6, relayedClient6PD) {
+    // Make a callout handle
+    CalloutHandle handle(getCalloutManager());
+    handle.setCurrentLibrary(0);
     ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     std::string entry;
@@ -1052,7 +1083,7 @@ TEST_F(CalloutTestv6, relayedClient6PD) {
 
     request_pd_->addRelayInfo(relay1);
 
-    ASSERT_NO_THROW(entry = genLease6Entry(request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
     EXPECT_EQ("Prefix: 2001:db8:1::/64 has been assigned for 0 hrs 11 mins 53 secs"
               " to a device with DUID: 17:34:e2:ff:09:92:54"
               " connected via relay at address: fe80::abcd"
@@ -1074,7 +1105,7 @@ TEST_F(CalloutTestv6, relayedClient6PD) {
     request_pd_->addRelayInfo(relay1);
 
     // Verify relay info with REMOTE_ID
-    ASSERT_NO_THROW(entry = genLease6Entry(request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
     EXPECT_EQ("Prefix: 2001:db8:1::/64 has been assigned for 0 hrs 11 mins 53 secs"
               " to a device with DUID: 17:34:e2:ff:09:92:54"
               " connected via relay at address: fe80::abcd"
@@ -1096,7 +1127,7 @@ TEST_F(CalloutTestv6, relayedClient6PD) {
     request_pd_->addRelayInfo(relay1);
 
     // Verify relay info with REMOTE_ID and SUBSCRIBER_ID
-    ASSERT_NO_THROW(entry = genLease6Entry(request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
     EXPECT_EQ("Prefix: 2001:db8:1::/64 has been assigned for 0 hrs 11 mins 53 secs"
               " to a device with DUID: 17:34:e2:ff:09:92:54"
               " connected via relay at address: fe80::abcd"
@@ -1113,7 +1144,7 @@ TEST_F(CalloutTestv6, relayedClient6PD) {
     request_pd_->addRelayInfo(relay1);
 
     // Verify address and duration for an assignment
-    ASSERT_NO_THROW(entry = genLease6Entry(request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
     EXPECT_EQ("Prefix: 2001:db8:1::/64 has been assigned for 0 hrs 11 mins 53 secs"
               " to a device with DUID: 17:34:e2:ff:09:92:54"
               " connected via relay at address: fe80::abcd"
@@ -1132,7 +1163,7 @@ TEST_F(CalloutTestv6, relayedClient6PD) {
     request_pd_->addRelayInfo(relay1);
 
     // Verify address and duration for an assignment
-    ASSERT_NO_THROW(entry = genLease6Entry(request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
     EXPECT_EQ("Prefix: 2001:db8:1::/64 has been assigned for 0 hrs 11 mins 53 secs"
               " to a device with DUID: 17:34:e2:ff:09:92:54"
               " connected via relay at address: fe80::abcd"
@@ -1143,7 +1174,7 @@ TEST_F(CalloutTestv6, relayedClient6PD) {
 
     // Verify user context
     lease_pd_->setContext(Element::fromJSON("{ \"bar\": false }"));
-    ASSERT_NO_THROW(entry = genLease6Entry(request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
     EXPECT_EQ("Prefix: 2001:db8:1::/64 has been assigned for 0 hrs 11 mins 53 secs"
               " to a device with DUID: 17:34:e2:ff:09:92:54"
               " connected via relay at address: fe80::abcd"
@@ -1156,6 +1187,9 @@ TEST_F(CalloutTestv6, relayedClient6PD) {
 
 // Verifies DHCPv6 entries for relayed clients
 TEST_F(CalloutTestv6, relayedClient6PDCustomLoggingFormatRequestOnly) {
+    // Make a callout handle
+    CalloutHandle handle(getCalloutManager());
+    handle.setCurrentLibrary(0);
     ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     CfgMgr::instance().setFamily(AF_INET6);
@@ -1173,7 +1207,7 @@ TEST_F(CalloutTestv6, relayedClient6PDCustomLoggingFormatRequestOnly) {
 
     request_pd_->addRelayInfo(relay1);
 
-    ASSERT_NO_THROW(entry = genLease6Entry(request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
     EXPECT_EQ("Prefix: 2001:db8:1::/64 has been assigned for 713 seconds"
               " to a device with DUID: 17:34:e2:ff:09:92:54"
               " connected via relay at address: fe80::abcd"
@@ -1195,7 +1229,7 @@ TEST_F(CalloutTestv6, relayedClient6PDCustomLoggingFormatRequestOnly) {
     request_pd_->addRelayInfo(relay1);
 
     // Verify relay info with REMOTE_ID
-    ASSERT_NO_THROW(entry = genLease6Entry(request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
     EXPECT_EQ("Prefix: 2001:db8:1::/64 has been assigned for 713 seconds"
               " to a device with DUID: 17:34:e2:ff:09:92:54"
               " connected via relay at address: fe80::abcd"
@@ -1217,7 +1251,7 @@ TEST_F(CalloutTestv6, relayedClient6PDCustomLoggingFormatRequestOnly) {
     request_pd_->addRelayInfo(relay1);
 
     // Verify relay info with REMOTE_ID and SUBSCRIBER_ID
-    ASSERT_NO_THROW(entry = genLease6Entry(request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
     EXPECT_EQ("Prefix: 2001:db8:1::/64 has been assigned for 713 seconds"
               " to a device with DUID: 17:34:e2:ff:09:92:54"
               " connected via relay at address: fe80::abcd"
@@ -1234,7 +1268,7 @@ TEST_F(CalloutTestv6, relayedClient6PDCustomLoggingFormatRequestOnly) {
     request_pd_->addRelayInfo(relay1);
 
     // Verify address and duration for an assignment
-    ASSERT_NO_THROW(entry = genLease6Entry(request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
     EXPECT_EQ("Prefix: 2001:db8:1::/64 has been assigned for 713 seconds"
               " to a device with DUID: 17:34:e2:ff:09:92:54"
               " connected via relay at address: fe80::abcd"
@@ -1253,7 +1287,7 @@ TEST_F(CalloutTestv6, relayedClient6PDCustomLoggingFormatRequestOnly) {
     request_pd_->addRelayInfo(relay1);
 
     // Verify address and duration for an assignment
-    ASSERT_NO_THROW(entry = genLease6Entry(request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
     EXPECT_EQ("Prefix: 2001:db8:1::/64 has been assigned for 713 seconds"
               " to a device with DUID: 17:34:e2:ff:09:92:54"
               " connected via relay at address: fe80::abcd"
@@ -1265,6 +1299,9 @@ TEST_F(CalloutTestv6, relayedClient6PDCustomLoggingFormatRequestOnly) {
 
 // Verifies DHCPv6 entries for relayed clients
 TEST_F(CalloutTestv6, relayedClient6PDCustomLoggingFormatRequestAndResponse) {
+    // Make a callout handle
+    CalloutHandle handle(getCalloutManager());
+    handle.setCurrentLibrary(0);
     ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     CfgMgr::instance().setFamily(AF_INET6);
@@ -1284,7 +1321,7 @@ TEST_F(CalloutTestv6, relayedClient6PDCustomLoggingFormatRequestAndResponse) {
     request_pd_->addRelayInfo(relay1);
     response_pd_->addRelayInfo(relay1);
 
-    ASSERT_NO_THROW(entry = genLease6Entry(request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
     EXPECT_EQ("Prefix: 2001:db8:1::/64 has been assigned for 713 seconds"
               " to a device with DUID: 17:34:e2:ff:09:92:54"
               " connected via relay at address: fe80::abcd"
@@ -1309,7 +1346,7 @@ TEST_F(CalloutTestv6, relayedClient6PDCustomLoggingFormatRequestAndResponse) {
     response_pd_->addRelayInfo(relay1);
 
     // Verify relay info with REMOTE_ID
-    ASSERT_NO_THROW(entry = genLease6Entry(request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
     EXPECT_EQ("Prefix: 2001:db8:1::/64 has been assigned for 713 seconds"
               " to a device with DUID: 17:34:e2:ff:09:92:54"
               " connected via relay at address: fe80::abcd"
@@ -1334,7 +1371,7 @@ TEST_F(CalloutTestv6, relayedClient6PDCustomLoggingFormatRequestAndResponse) {
     response_pd_->addRelayInfo(relay1);
 
     // Verify relay info with REMOTE_ID and SUBSCRIBER_ID
-    ASSERT_NO_THROW(entry = genLease6Entry(request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
     EXPECT_EQ("Prefix: 2001:db8:1::/64 has been assigned for 713 seconds"
               " to a device with DUID: 17:34:e2:ff:09:92:54"
               " connected via relay at address: fe80::abcd"
@@ -1354,7 +1391,7 @@ TEST_F(CalloutTestv6, relayedClient6PDCustomLoggingFormatRequestAndResponse) {
     response_pd_->addRelayInfo(relay1);
 
     // Verify address and duration for an assignment
-    ASSERT_NO_THROW(entry = genLease6Entry(request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
     EXPECT_EQ("Prefix: 2001:db8:1::/64 has been assigned for 713 seconds"
               " to a device with DUID: 17:34:e2:ff:09:92:54"
               " connected via relay at address: fe80::abcd"
@@ -1376,7 +1413,7 @@ TEST_F(CalloutTestv6, relayedClient6PDCustomLoggingFormatRequestAndResponse) {
     response_pd_->addRelayInfo(relay1);
 
     // Verify address and duration for an assignment
-    ASSERT_NO_THROW(entry = genLease6Entry(request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_pd_, response_pd_, lease_pd_, Action::ASSIGN));
     EXPECT_EQ("Prefix: 2001:db8:1::/64 has been assigned for 713 seconds"
               " to a device with DUID: 17:34:e2:ff:09:92:54"
               " connected via relay at address: fe80::abcd"
@@ -1388,6 +1425,9 @@ TEST_F(CalloutTestv6, relayedClient6PDCustomLoggingFormatRequestAndResponse) {
 
 // Verifies printable id handling
 TEST_F(CalloutTestv6, printable6) {
+    // Make a callout handle
+    CalloutHandle handle(getCalloutManager());
+    handle.setCurrentLibrary(0);
     ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new TestableRotatingFile(time_)));
 
     Pkt6::RelayInfo relay1;
@@ -1418,7 +1458,7 @@ TEST_F(CalloutTestv6, printable6) {
     std::string entry;
 
     // Verify address and duration for an assignment
-    ASSERT_NO_THROW(entry = genLease6Entry(request_na_, response_na_, lease_na_, Action::ASSIGN));
+    ASSERT_NO_THROW(entry = genLease6Entry(handle, request_na_, response_na_, lease_na_, Action::ASSIGN));
     EXPECT_EQ("Address: 2001:db8:1:: has been assigned for 0 hrs 11 mins 53 secs"
               " to a device with DUID: 17:34:e2:ff:09:92:54"
               " connected via relay at address: fe80::abcd"
@@ -1434,6 +1474,7 @@ TEST_F(CalloutTestv6, printable6) {
 TEST_F(CalloutTestv6, noRotatingFileTest6) {
     // Make a callout handle
     CalloutHandle handle(getCalloutManager());
+    handle.setCurrentLibrary(0);
     handle.setArgument("lease6", lease_na_);
     handle.setArgument("query6", request_na_);
 
@@ -1450,6 +1491,7 @@ TEST_F(CalloutTestv6, pkt6_receive) {
 
     // Make a callout handle
     CalloutHandlePtr handle = getCalloutHandle(solicit_na_);
+    handle->setCurrentLibrary(0);
 
     // Create a subnet with user context disabling legal logging.
     Subnet6Ptr subnet2345(new Subnet6(IOAddress("2001:db8:2::"), 64, 30, 40, 50, 60,
@@ -1559,6 +1601,7 @@ TEST_F(CalloutTestv6, leases6_committed) {
 
     // Make a callout handle
     CalloutHandlePtr handle = getCalloutHandle(request_na_);
+    handle->setCurrentLibrary(0);
 
     // Create a subnet with user context disabling legal logging.
     Subnet6Ptr subnet2345(new Subnet6(IOAddress("2001:db8:2::"), 64, 30, 40, 50, 60,
@@ -1677,6 +1720,7 @@ TEST_F(CalloutTestv6, lease6_renew) {
 
     // Make a callout handle
     CalloutHandlePtr handle = getCalloutHandle(renew_na_);
+    handle->setCurrentLibrary(0);
 
     // Create a subnet with user context disabling legal logging.
     Subnet6Ptr subnet2345(new Subnet6(IOAddress("2001:db8:2::"), 64, 30, 40, 50, 60,
@@ -1797,6 +1841,7 @@ TEST_F(CalloutTestv6, customRequestLoggingFormat_lease6_renew) {
 
     // Make a callout handle
     CalloutHandlePtr handle = getCalloutHandle(renew_na_);
+    handle->setCurrentLibrary(0);
 
     std::string format = "ifelse(pkt6.msgtype == 5, concat('Assigned address: ', addrtotext(substring(option[3].option[5].hex, 0, 16))), '')";
 
@@ -1850,6 +1895,7 @@ TEST_F(CalloutTestv6, lease6_rebind) {
 
     // Make a callout handle
     CalloutHandlePtr handle = getCalloutHandle(rebind_na_);
+    handle->setCurrentLibrary(0);
 
     // Create a subnet with user context disabling legal logging.
     Subnet6Ptr subnet2345(new Subnet6(IOAddress("2001:db8:2::"), 64, 30, 40, 50, 60,
@@ -1970,6 +2016,7 @@ TEST_F(CalloutTestv6, customRequestLoggingFormat_lease6_rebind) {
 
     // Make a callout handle
     CalloutHandlePtr handle = getCalloutHandle(rebind_na_);
+    handle->setCurrentLibrary(0);
 
     std::string format = "ifelse(pkt6.msgtype == 6, concat('Assigned address: ', addrtotext(substring(option[3].option[5].hex, 0, 16))), '')";
 
@@ -2023,6 +2070,7 @@ TEST_F(CalloutTestv6, lease6_release) {
 
     // Make a callout handle
     CalloutHandlePtr handle = getCalloutHandle(release_na_);
+    handle->setCurrentLibrary(0);
 
     // Create a subnet with user context disabling legal logging.
     Subnet6Ptr subnet2345(new Subnet6(IOAddress("2001:db8:2::"), 64, 30, 40, 50, 60,
@@ -2129,6 +2177,7 @@ TEST_F(CalloutTestv6, customRequestLoggingFormat_lease6_release) {
 
     // Make a callout handle
     CalloutHandlePtr handle = getCalloutHandle(release_na_);
+    handle->setCurrentLibrary(0);
 
     std::string format = "ifelse(pkt6.msgtype == 8, concat('Released address: ', addrtotext(substring(option[3].option[5].hex, 0, 16))), '')";
 
@@ -2176,6 +2225,7 @@ TEST_F(CalloutTestv6, lease6_decline) {
 
     // Make a callout handle
     CalloutHandlePtr handle = getCalloutHandle(decline_);
+    handle->setCurrentLibrary(0);
 
     // Create a subnet with user context disabling legal logging.
     Subnet6Ptr subnet2345(new Subnet6(IOAddress("2001:db8:2::"), 64, 30, 40, 50, 60,
@@ -2282,6 +2332,7 @@ TEST_F(CalloutTestv6, customRequestLoggingFormat_lease6_decline) {
 
     // Make a callout handle
     CalloutHandlePtr handle = getCalloutHandle(decline_);
+    handle->setCurrentLibrary(0);
 
     std::string format = "ifelse(pkt6.msgtype == 9, concat('Declined address: ', addrtotext(substring(option[3].option[5].hex, 0, 16))), '')";
 
@@ -2328,6 +2379,7 @@ TEST_F(CalloutTestv6, customRequestLoggingFormatMultipleLines) {
 
     // Make a callout handle
     CalloutHandlePtr handle = getCalloutHandle(decline_);
+    handle->setCurrentLibrary(0);
 
     std::string format = "ifelse(pkt6.msgtype == 9, 'first line' + 0x0a + 'second line', '')";
 
@@ -2372,6 +2424,7 @@ TEST_F(CalloutTestv6, multipleAddressesAndPrefixesCustomLoggingFormatRequestOnly
 
     // Make a callout handle
     CalloutHandlePtr handle = getCalloutHandle(request_na_);
+    handle->setCurrentLibrary(0);
 
     CfgMgr::instance().setFamily(AF_INET6);
 
@@ -2543,6 +2596,7 @@ TEST_F(CalloutTestv6, multipleAddressesAndPrefixesCustomLoggingFormatRequestAndR
 
     // Make a callout handle
     CalloutHandlePtr handle = getCalloutHandle(request_na_);
+    handle->setCurrentLibrary(0);
 
     CfgMgr::instance().setFamily(AF_INET6);
 

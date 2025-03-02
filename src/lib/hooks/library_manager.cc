@@ -211,17 +211,23 @@ LibraryManager::runLoad() {
         // afterwards.
 
         int status = -1;
+        int old_index = manager_->getLibraryHandle().getLibraryIndex();
         try {
             manager_->setLibraryIndex(index_);
+            manager_->getLibraryHandle().setLibraryIndex(index_);
             status = (*pc.loadPtr())(manager_->getLibraryHandle());
         } catch (const isc::Exception& ex) {
             LOG_ERROR(hooks_logger, HOOKS_LOAD_FRAMEWORK_EXCEPTION)
                 .arg(library_name_).arg(ex.what());
+            manager_->getLibraryHandle().setLibraryIndex(old_index);
             return (false);
         } catch (...) {
             LOG_ERROR(hooks_logger, HOOKS_LOAD_EXCEPTION).arg(library_name_);
+            manager_->getLibraryHandle().setLibraryIndex(old_index);
             return (false);
         }
+
+        manager_->getLibraryHandle().setLibraryIndex(old_index);
 
         if (status != 0) {
             LOG_ERROR(hooks_logger, HOOKS_LOAD_ERROR).arg(library_name_)

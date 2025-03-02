@@ -16,7 +16,6 @@
 #include <util/str.h>
 #include <legal_log_log.h>
 #include <dhcpsrv/backend_store_factory.h>
-#include <rotating_file.h>
 #include <subnets_user_context.h>
 
 #include <sstream>
@@ -31,21 +30,22 @@ using namespace std;
 
 /// @brief Create custom log entry for the current lease.
 ///
+/// @param handle CalloutHandle which provides access to context.
 /// @param query The query received by the server.
 /// @param response The response of the server.
 /// @param lease The current lease generating this log entry.
 /// @param [out] value The value of the custom log entry after parser execution.
-bool getCustomEntry(const Pkt4Ptr& query, const Pkt4Ptr& response,
+bool getCustomEntry(CalloutHandle& handle, const Pkt4Ptr& query, const Pkt4Ptr& response,
                     const Lease4Ptr& /*lease*/, std::string& value) {
     bool using_custom_format = false;
 
-    auto expression = BackendStoreFactory::instance(managerID())->getRequestFormatExpression();
+    auto expression = BackendStoreFactory::instance(handle.getCurrentLibrary())->getRequestFormatExpression();
     if (expression && query) {
         value = evaluateString(*expression, *query);
         using_custom_format = true;
     }
 
-    expression = BackendStoreFactory::instance(managerID())->getResponseFormatExpression();
+    expression = BackendStoreFactory::instance(handle.getCurrentLibrary())->getResponseFormatExpression();
     if (expression && response) {
         value += evaluateString(*expression, *response);
         using_custom_format = true;
@@ -87,16 +87,18 @@ bool getCustomEntry(const Pkt4Ptr& query, const Pkt4Ptr& response,
 ///  circuit-id: 68:6f:77:64:79 (howdy) and remote-id: 87:f6:79:77:ef"
 /// @endcode
 ///
+/// @param handle CalloutHandle which provides access to context.
 /// @param query DHCPv4 query packet for which the lease was generated
 /// @param response DHCPv4 response packet
 /// @param lease DHCPv4 lease for which the entry should be created
 /// @param action Kind of event to log.
-std::string genLease4Entry(const Pkt4Ptr& query,
+std::string genLease4Entry(CalloutHandle& handle,
+                           const Pkt4Ptr& query,
                            const Pkt4Ptr& response,
                            const Lease4Ptr& lease,
                            const Action& action) {
     std::string value;
-    if (getCustomEntry(query, response, lease, value)) {
+    if (getCustomEntry(handle, query, response, lease, value)) {
         return (value);
     }
 
@@ -215,7 +217,7 @@ std::string genLease4Entry(const Pkt4Ptr& query,
 ///
 /// @return returns 0 upon success, non-zero otherwise
 int legalLog4Handler(CalloutHandle& handle, const Action& action) {
-    if (!BackendStoreFactory::instance(managerID())) {
+    if (!BackendStoreFactory::instance(handle.getCurrentLibrary())) {
         LOG_ERROR(legal_log_logger,
                   LEGAL_LOG_LEASE4_NO_LEGAL_STORE);
         return (1);
@@ -240,9 +242,9 @@ int legalLog4Handler(CalloutHandle& handle, const Action& action) {
         ConstSubnet4Ptr subnet = cfg->getBySubnetId(lease->subnet_id_);
 
         if (!isLoggingDisabled(subnet)) {
-            BackendStoreFactory::instance(managerID())->writeln(genLease4Entry(query, response,
-                                                                               lease, action),
-                                                                lease->addr_.toText());
+            BackendStoreFactory::instance(handle.getCurrentLibrary())->writeln(genLease4Entry(handle, query, response,
+                                                                                              lease, action),
+                                                                               lease->addr_.toText());
         }
 
     } catch (const std::exception& ex) {

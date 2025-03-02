@@ -6,6 +6,10 @@
 
 $NAMESPACE isc::db
 
+% CONFIG_BACKENDS_REGISTERED the following config backend types are available: %1
+This informational message lists all possible config backends that could
+be used in config-database[s].
+
 % DATABASE_INVALID_ACCESS invalid database access string: %1
 This is logged when an attempt has been made to parse a database access string
 and the attempt ended in error.  The access string in question - which

@@ -10,6 +10,8 @@
 #include <config_backend/base_config_backend.h>
 #include <database/database_connection.h>
 #include <database/backend_selector.h>
+#include <database/db_log.h>
+#include <database/db_messages.h>
 #include <exceptions/exceptions.h>
 #include <boost/shared_ptr.hpp>
 #include <functional>
@@ -211,6 +213,25 @@ public:
     /// @brief Returns underlying config backend pool.
     ConfigBackendPoolPtr getPool() const {
         return (pool_);
+    }
+
+    /// @brief Logs out all registered backends.
+    ///
+    /// We need a dedicated method for this, because we sometimes can't log
+    /// the backend type when doing early initialization for backends
+    /// initialized statically.
+    void logRegistered() {
+        std::stringstream txt;
+
+        for (auto const& x : factories_) {
+            if (!txt.str().empty()) {
+                txt << " ";
+            }
+            txt << x.first;
+        }
+
+        LOG_INFO(isc::db::database_logger, isc::db::CONFIG_BACKENDS_REGISTERED)
+            .arg(txt.str());
     }
 
 protected:

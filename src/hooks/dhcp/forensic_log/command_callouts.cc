@@ -19,7 +19,6 @@
 #include <util/str.h>
 #include <legal_log_log.h>
 #include <dhcpsrv/backend_store_factory.h>
-#include <rotating_file.h>
 #include <subnets_user_context.h>
 
 #include <sstream>
@@ -112,15 +111,16 @@ bool isPrefix(ConstElementPtr arguments) {
 /// generate the duration text using @ref
 /// isc::legal_log::BackendStore::genDurationString().
 ///
+/// @param handle CalloutHandle which provides access to context.
 /// @param os output stream to which the text is output
 /// @param arguments element scope which may contain duration values
-void addDuration(ostringstream& os, ConstElementPtr& arguments) {
+void addDuration(CalloutHandle& handle, ostringstream& os, ConstElementPtr& arguments) {
 
     int64_t duration = 0;
     if (!getOptionalInt(arguments, "valid-lft", duration)) {
         int64_t expire = 0;
         if (getOptionalInt(arguments, "expire", expire)) {
-            duration = expire - BackendStoreFactory::instance(managerID())->now().tv_sec;
+            duration = expire - BackendStoreFactory::instance(handle.getCurrentLibrary())->now().tv_sec;
         }
     }
 
@@ -186,9 +186,9 @@ bool checkLoggingEnabledSubnet4(ConstElementPtr& arguments) {
 /// @param name The command name.
 /// @param arguments The command arguments.
 /// @param response The command response.
-int handleLease4Cmds(string& name, ConstElementPtr& arguments,
+int handleLease4Cmds(CalloutHandle& handle, string& name, ConstElementPtr& arguments,
                      ConstElementPtr& /*response*/) {
-    if (!BackendStoreFactory::instance(managerID())) {
+    if (!BackendStoreFactory::instance(handle.getCurrentLibrary())) {
         LOG_ERROR(legal_log_logger,
                   LEGAL_LOG_COMMAND_NO_LEGAL_STORE);
         return (1);
@@ -231,7 +231,7 @@ int handleLease4Cmds(string& name, ConstElementPtr& arguments,
                 }
             }
 
-            addDuration(os, arguments);
+            addDuration(handle, os, arguments);
             addContext(os, arguments);
         } else if (name == "lease4-del") {
             string ip_address;
@@ -246,7 +246,7 @@ int handleLease4Cmds(string& name, ConstElementPtr& arguments,
             }
         }
 
-        BackendStoreFactory::instance(managerID())->writeln(os.str(), osa.str());
+        BackendStoreFactory::instance(handle.getCurrentLibrary())->writeln(os.str(), osa.str());
     } catch (const exception& ex) {
         LOG_ERROR(legal_log_logger, LEGAL_LOG_COMMAND_WRITE_ERROR)
                   .arg(ex.what());
@@ -283,12 +283,13 @@ bool checkLoggingEnabledSubnet6(ConstElementPtr& arguments) {
 
 /// @brief Handle lease6 related commands.
 ///
+/// @param handle CalloutHandle which provides access to context.
 /// @param name The command name.
 /// @param arguments The command arguments.
 /// @param response The command response.
-int handleLease6Cmds(string& name, ConstElementPtr& arguments,
+int handleLease6Cmds(CalloutHandle& handle, string& name, ConstElementPtr& arguments,
                      ConstElementPtr& response) {
-    if (!BackendStoreFactory::instance(managerID())) {
+    if (!BackendStoreFactory::instance(handle.getCurrentLibrary())) {
         LOG_ERROR(legal_log_logger,
                   LEGAL_LOG_COMMAND_NO_LEGAL_STORE);
         return (1);
@@ -334,7 +335,7 @@ int handleLease6Cmds(string& name, ConstElementPtr& arguments,
                 os << ", hardware address: " << hw_address;
             }
 
-            addDuration(os, arguments);
+            addDuration(handle, os, arguments);
             addContext(os, arguments);
         } else if (name == "lease6-del") {
             string ip_address;
@@ -410,7 +411,7 @@ int handleLease6Cmds(string& name, ConstElementPtr& arguments,
                         ConstElementPtr args(copy);
                         ConstElementPtr resp;
                         string cmd_name("lease6-del");
-                        int result = handleLease6Cmds(cmd_name, args, resp);
+                        int result = handleLease6Cmds(handle, cmd_name, args, resp);
                         if (result) {
                             status = result;
                         }
@@ -448,7 +449,7 @@ int handleLease6Cmds(string& name, ConstElementPtr& arguments,
                         ConstElementPtr args(copy);
                         ConstElementPtr resp;
                         string cmd_name("lease6-update");
-                        int result = handleLease6Cmds(cmd_name, args, resp);
+                        int result = handleLease6Cmds(handle, cmd_name, args, resp);
                         if (result) {
                             status = result;
                         }
@@ -458,7 +459,7 @@ int handleLease6Cmds(string& name, ConstElementPtr& arguments,
             return (status);
         }
 
-        BackendStoreFactory::instance(managerID())->writeln(os.str(), osa.str());
+        BackendStoreFactory::instance(handle.getCurrentLibrary())->writeln(os.str(), osa.str());
     } catch (const exception& ex) {
         LOG_ERROR(legal_log_logger, LEGAL_LOG_COMMAND_WRITE_ERROR)
                   .arg(ex.what());
@@ -482,7 +483,7 @@ int handleLease6Cmds(string& name, ConstElementPtr& arguments,
 ///
 /// @return 0 upon success, non-zero otherwise.
 int command_processed(CalloutHandle& handle) {
-    if (!BackendStoreFactory::instance(managerID())) {
+    if (!BackendStoreFactory::instance(handle.getCurrentLibrary())) {
         LOG_ERROR(legal_log_logger,
                   LEGAL_LOG_COMMAND_NO_LEGAL_STORE);
         return (1);
@@ -515,9 +516,9 @@ int command_processed(CalloutHandle& handle) {
         // in v4 or v6 universe. The easiest way to check the universe is by the
         // command name.
         if (name.find("lease4-") != string::npos) {
-            return (handleLease4Cmds(name, arguments, response));
+            return (handleLease4Cmds(handle, name, arguments, response));
         } else if (name.find("lease6-") != string::npos) {
-            return (handleLease6Cmds(name, arguments, response));
+            return (handleLease6Cmds(handle, name, arguments, response));
         }
 
     } catch (const exception& ex) {

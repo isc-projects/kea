@@ -21,7 +21,6 @@
 #include <util/str.h>
 #include <legal_log_log.h>
 #include <dhcpsrv/backend_store_factory.h>
-#include <rotating_file.h>
 #include <subnets_user_context.h>
 
 #include <sstream>
@@ -481,11 +480,11 @@ void replaceTokensForLease(isc::dhcp::ExpressionPtr& expression,
 /// @param response The response of the server.
 /// @param lease The current lease generating this log entry.
 /// @param [out] value The value of the custom log entry after parser execution.
-bool getCustomEntry(const Pkt6Ptr& query, const Pkt6Ptr& response,
+bool getCustomEntry(CalloutHandle& handle, const Pkt6Ptr& query, const Pkt6Ptr& response,
                     const Lease6Ptr& lease, std::string& value) {
     bool using_custom_format = false;
 
-    auto expression = BackendStoreFactory::instance(managerID())->getRequestFormatExpression();
+    auto expression = BackendStoreFactory::instance(handle.getCurrentLibrary())->getRequestFormatExpression();
     if (expression && query) {
         replaceTokensForLease(expression, lease);
 
@@ -493,7 +492,7 @@ bool getCustomEntry(const Pkt6Ptr& query, const Pkt6Ptr& response,
         using_custom_format = true;
     }
 
-    expression = BackendStoreFactory::instance(managerID())->getResponseFormatExpression();
+    expression = BackendStoreFactory::instance(handle.getCurrentLibrary())->getResponseFormatExpression();
     if (expression && response) {
         replaceTokensForLease(expression, lease);
 
@@ -536,16 +535,18 @@ bool getCustomEntry(const Pkt6Ptr& query, const Pkt6Ptr& response,
 ///  and subscriber-id: 1a:2b:3c:4d:5e:6f"
 /// @endcode
 ///
+/// @param handle CalloutHandle which provides access to context.
 /// @param query DHCPv6 query packet for which the lease was generated
 /// @param response DHCPv6 response packet
 /// @param lease DHCPv6 lease for which the entry should be created
 /// @param action Kind of event to log.
-std::string genLease6Entry(const Pkt6Ptr& query,
+std::string genLease6Entry(CalloutHandle& handle,
+                           const Pkt6Ptr& query,
                            const Pkt6Ptr& response,
                            const Lease6Ptr& lease,
                            const Action& action) {
     std::string value;
-    if (getCustomEntry(query, response, lease, value)) {
+    if (getCustomEntry(handle, query, response, lease, value)) {
         return (value);
     }
 
@@ -670,7 +671,7 @@ std::string genLease6Entry(const Pkt6Ptr& query,
 ///
 /// @return returns 0 upon success, non-zero otherwise
 int legalLog6Handler(CalloutHandle& handle, const Action& action) {
-    if (!BackendStoreFactory::instance(managerID())) {
+    if (!BackendStoreFactory::instance(handle.getCurrentLibrary())) {
         LOG_ERROR(legal_log_logger, LEGAL_LOG_LEASE6_NO_LEGAL_STORE);
         return (1);
     }
@@ -694,9 +695,9 @@ int legalLog6Handler(CalloutHandle& handle, const Action& action) {
         ConstSubnet6Ptr subnet = cfg->getBySubnetId(lease->subnet_id_);
 
         if (!isLoggingDisabled(subnet)) {
-            BackendStoreFactory::instance(managerID())->writeln(genLease6Entry(query, response,
-                                                                               lease, action),
-                                                                genLease6Addr(lease));
+            BackendStoreFactory::instance(handle.getCurrentLibrary())->writeln(genLease6Entry(handle, query, response,
+                                                                                              lease, action),
+                                                                               genLease6Addr(lease));
         }
 
     } catch (const std::exception& ex) {
