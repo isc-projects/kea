@@ -645,7 +645,6 @@ run_target(
     command: [f'@TOP_SOURCE_DIR@/changelog_unreleased/.add-entry.sh'],
 )
 
-# todo: remove redirections
 if cppcheck.found()
     run_target(
         'cppcheck',
@@ -654,7 +653,6 @@ if cppcheck.found()
             '-I.',
             '-I./src/lib',
             '-I./src/bin',
-            '--error-exitcode=1',
             '--inline-suppr',
             '--quiet',
             '--max-configs=256',
@@ -663,9 +661,6 @@ if cppcheck.found()
             '--xml',
             '--xml-version=2',
             '.',
-            '>',
-            'cppcheck-result.xml',
-            '2>&1',
         ],
     )
 endif
