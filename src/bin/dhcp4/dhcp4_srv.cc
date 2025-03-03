@@ -44,7 +44,7 @@
 #include <dhcp_ddns/ncr_io.h>
 #include <dhcp_ddns/ncr_msg.h>
 #include <dhcpsrv/alloc_engine.h>
-#include <dhcpsrv/backend_store_factory.h>
+#include <dhcpsrv/legal_log_mgr_factory.h>
 #include <dhcpsrv/callout_handle_store.h>
 #include <dhcpsrv/cb_ctl_dhcp4.h>
 #include <dhcpsrv/cfg_expiration.h>
@@ -5131,7 +5131,7 @@ Dhcpv4Srv::getVersion(bool extended) {
                 tmp << endl << "- " << version;
             }
         }
-        info = BackendStoreFactory::getDBVersions();
+        info = LegalLogMgrFactory::getDBVersions();
         if (info.size()) {
             tmp << endl << "forensic backends:";
             for (auto const& version : info) {

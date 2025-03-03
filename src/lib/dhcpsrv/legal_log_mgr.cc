@@ -6,8 +6,8 @@
 
 #include <config.h>
 
-#include <backend_store.h>
-#include <backend_store_factory.h>
+#include <legal_log_mgr.h>
+#include <legal_log_mgr_factory.h>
 
 #include <database/database_connection.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -34,7 +34,7 @@ using namespace isc::util;
 using namespace std;
 
 void
-BackendStore::parseConfig(const ConstElementPtr& parameters, DatabaseConnection::ParameterMap& map) {
+LegalLogMgr::parseConfig(const ConstElementPtr& parameters, DatabaseConnection::ParameterMap& map) {
     if (!parameters || !parameters->get("type") ||
         parameters->get("type")->stringValue() == "logfile") {
         parseFile(parameters, map);
@@ -45,7 +45,7 @@ BackendStore::parseConfig(const ConstElementPtr& parameters, DatabaseConnection:
 }
 
 void
-BackendStore::parseDatabase(const ConstElementPtr& parameters, DatabaseConnection::ParameterMap& map) {
+LegalLogMgr::parseDatabase(const ConstElementPtr& parameters, DatabaseConnection::ParameterMap& map) {
     // Should never happen with the code flow at the time of writing, but
     // let's get this check out of the way.
     if (!parameters) {
@@ -129,7 +129,7 @@ BackendStore::parseDatabase(const ConstElementPtr& parameters, DatabaseConnectio
 }
 
 void
-BackendStore::parseFile(const ConstElementPtr& parameters, DatabaseConnection::ParameterMap& map) {
+LegalLogMgr::parseFile(const ConstElementPtr& parameters, DatabaseConnection::ParameterMap& map) {
     DatabaseConnection::ParameterMap file_parameters;
     file_parameters["type"] = "logfile";
 
@@ -165,7 +165,7 @@ BackendStore::parseFile(const ConstElementPtr& parameters, DatabaseConnection::P
 }
 
 void
-BackendStore::parseExtraParameters(const ConstElementPtr& parameters, DatabaseConnection::ParameterMap& map) {
+LegalLogMgr::parseExtraParameters(const ConstElementPtr& parameters, DatabaseConnection::ParameterMap& map) {
     if (!parameters) {
         return;
     }
@@ -180,7 +180,7 @@ BackendStore::parseExtraParameters(const ConstElementPtr& parameters, DatabaseCo
 }
 
 struct tm
-BackendStore::currentTimeInfo() const {
+LegalLogMgr::currentTimeInfo() const {
     struct tm time_info;
     struct timespec timestamp = now();
     localtime_r(&timestamp.tv_sec, &time_info);
@@ -188,26 +188,26 @@ BackendStore::currentTimeInfo() const {
 }
 
 struct timespec
-BackendStore::now() const {
+LegalLogMgr::now() const {
     struct timespec now;
     clock_gettime(CLOCK_REALTIME, &now);
     return (now);
 }
 
 string
-BackendStore::getNowString() const {
+LegalLogMgr::getNowString() const {
     // Get a text representation of the current time.
     return (getNowString(timestamp_format_));
 }
 
 string
-BackendStore::getNowString(const string& format) const {
+LegalLogMgr::getNowString(const string& format) const {
     // Get a text representation of the current time.
     return (getTimeString(now(), format));
 }
 
 string
-BackendStore::getTimeString(const struct timespec& time, const string& format) {
+LegalLogMgr::getTimeString(const struct timespec& time, const string& format) {
     // Get a text representation of the requested time.
 
     // First a quick and dirty support for fractional seconds: Replace any "%Q"
@@ -238,7 +238,7 @@ BackendStore::getTimeString(const struct timespec& time, const string& format) {
     localtime_r(&time.tv_sec, &time_info);
 
     if (!strftime(buffer, sizeof(buffer), tmp_format.c_str(), &time_info)) {
-        isc_throw(BackendStoreError,
+        isc_throw(LegalLogMgrError,
                   "strftime returned 0. Maybe the timestamp format '"
                       << tmp_format
                       << "' result is too long, maximum length allowed: "
@@ -248,7 +248,7 @@ BackendStore::getTimeString(const struct timespec& time, const string& format) {
 }
 
 string
-BackendStore::genDurationString(const uint32_t secs) {
+LegalLogMgr::genDurationString(const uint32_t secs) {
     // Because Kea handles lease lifetimes as uint32_t and supports
     // a value of 0xFFFFFFFF (infinite lifetime), we don't use things like
     // boost:posix_time::time_duration as they work on longs.  Therefore
@@ -278,7 +278,7 @@ BackendStore::genDurationString(const uint32_t secs) {
 }
 
 string
-BackendStore::vectorHexDump(const vector<uint8_t>& bytes,
+LegalLogMgr::vectorHexDump(const vector<uint8_t>& bytes,
                          const string& delimiter) {
     stringstream tmp;
     tmp << hex;
@@ -294,7 +294,7 @@ BackendStore::vectorHexDump(const vector<uint8_t>& bytes,
 }
 
 string
-BackendStore::vectorDump(const vector<uint8_t>& bytes) {
+LegalLogMgr::vectorDump(const vector<uint8_t>& bytes) {
     if (bytes.empty()) {
         return (string());
     }
@@ -302,7 +302,7 @@ BackendStore::vectorDump(const vector<uint8_t>& bytes) {
 }
 
 void
-BackendStore::setRequestFormatExpression(const string& extended_format) {
+LegalLogMgr::setRequestFormatExpression(const string& extended_format) {
     Option::Universe universe;
     if (CfgMgr::instance().getFamily() == AF_INET) {
         universe = Option::V4;
@@ -315,7 +315,7 @@ BackendStore::setRequestFormatExpression(const string& extended_format) {
 }
 
 void
-BackendStore::setResponseFormatExpression(const string& extended_format) {
+LegalLogMgr::setResponseFormatExpression(const string& extended_format) {
     Option::Universe universe;
     if (CfgMgr::instance().getFamily() == AF_INET) {
         universe = Option::V4;
@@ -328,7 +328,7 @@ BackendStore::setResponseFormatExpression(const string& extended_format) {
 }
 
 void
-BackendStore::setTimestampFormat(const string& timestamp_format) {
+LegalLogMgr::setTimestampFormat(const string& timestamp_format) {
     timestamp_format_ = timestamp_format;
 }
 

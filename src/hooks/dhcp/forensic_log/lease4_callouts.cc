@@ -15,7 +15,7 @@
 #include <hooks/hooks.h>
 #include <util/str.h>
 #include <legal_log_log.h>
-#include <dhcpsrv/backend_store_factory.h>
+#include <dhcpsrv/legal_log_mgr_factory.h>
 #include <subnets_user_context.h>
 
 #include <sstream>
@@ -39,13 +39,13 @@ bool getCustomEntry(CalloutHandle& handle, const Pkt4Ptr& query, const Pkt4Ptr& 
                     const Lease4Ptr& /*lease*/, std::string& value) {
     bool using_custom_format = false;
 
-    auto expression = BackendStoreFactory::instance(handle.getCurrentLibrary())->getRequestFormatExpression();
+    auto expression = LegalLogMgrFactory::instance(handle.getCurrentLibrary())->getRequestFormatExpression();
     if (expression && query) {
         value = evaluateString(*expression, *query);
         using_custom_format = true;
     }
 
-    expression = BackendStoreFactory::instance(handle.getCurrentLibrary())->getResponseFormatExpression();
+    expression = LegalLogMgrFactory::instance(handle.getCurrentLibrary())->getResponseFormatExpression();
     if (expression && response) {
         value += evaluateString(*expression, *response);
         using_custom_format = true;
@@ -109,7 +109,7 @@ std::string genLease4Entry(CalloutHandle& handle,
 
     if (action != Action::RELEASE) {
         // <duration>
-        stream << " for " << BackendStore::genDurationString(lease->valid_lft_) << " to";
+        stream << " for " << LegalLogMgr::genDurationString(lease->valid_lft_) << " to";
     } else {
         stream << " from";
     }
@@ -125,7 +125,7 @@ std::string genLease4Entry(CalloutHandle& handle,
         auto bin = lease->client_id_->getClientId();
 
         if (str::isPrintable(bin)) {
-            stream << " (" << BackendStore::vectorDump(bin) << ")";
+            stream << " (" << LegalLogMgr::vectorDump(bin) << ")";
         }
     }
 
@@ -143,10 +143,10 @@ std::string genLease4Entry(CalloutHandle& handle,
             if (opt) {
                 const OptionBuffer& id = opt->getData();
                 if (!id.empty()) {
-                    idstream << "circuit-id: " << BackendStore::vectorHexDump(id);
+                    idstream << "circuit-id: " << LegalLogMgr::vectorHexDump(id);
 
                     if (str::isPrintable(id)) {
-                        idstream << " (" << BackendStore::vectorDump(id) << ")";
+                        idstream << " (" << LegalLogMgr::vectorDump(id) << ")";
                     }
                 }
             }
@@ -160,10 +160,10 @@ std::string genLease4Entry(CalloutHandle& handle,
                         idstream << " and ";
                     }
 
-                    idstream << "remote-id: " << BackendStore::vectorHexDump(id);
+                    idstream << "remote-id: " << LegalLogMgr::vectorHexDump(id);
 
                     if (str::isPrintable(id)) {
-                        idstream << " (" << BackendStore::vectorDump(id) << ")";
+                        idstream << " (" << LegalLogMgr::vectorDump(id) << ")";
                     }
                 }
             }
@@ -177,10 +177,10 @@ std::string genLease4Entry(CalloutHandle& handle,
                         idstream << " and ";
                     }
 
-                    idstream << "subscriber-id: " << BackendStore::vectorHexDump(id);
+                    idstream << "subscriber-id: " << LegalLogMgr::vectorHexDump(id);
 
                     if (str::isPrintable(id)) {
-                        idstream << " (" << BackendStore::vectorDump(id) << ")";
+                        idstream << " (" << LegalLogMgr::vectorDump(id) << ")";
                     }
                 }
             }
@@ -217,7 +217,7 @@ std::string genLease4Entry(CalloutHandle& handle,
 ///
 /// @return returns 0 upon success, non-zero otherwise
 int legalLog4Handler(CalloutHandle& handle, const Action& action) {
-    if (!BackendStoreFactory::instance(handle.getCurrentLibrary())) {
+    if (!LegalLogMgrFactory::instance(handle.getCurrentLibrary())) {
         LOG_ERROR(legal_log_logger,
                   LEGAL_LOG_LEASE4_NO_LEGAL_STORE);
         return (1);
@@ -242,7 +242,7 @@ int legalLog4Handler(CalloutHandle& handle, const Action& action) {
         ConstSubnet4Ptr subnet = cfg->getBySubnetId(lease->subnet_id_);
 
         if (!isLoggingDisabled(subnet)) {
-            BackendStoreFactory::instance(handle.getCurrentLibrary())->writeln(genLease4Entry(handle, query, response,
+            LegalLogMgrFactory::instance(handle.getCurrentLibrary())->writeln(genLease4Entry(handle, query, response,
                                                                                               lease, action),
                                                                                lease->addr_.toText());
         }

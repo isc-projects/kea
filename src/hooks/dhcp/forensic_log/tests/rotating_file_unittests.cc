@@ -29,17 +29,17 @@ namespace {
 /// @brief Tests the RotatingFile constructor.
 TEST_F(RotatingFileTest, invalidConstruction) {
     db::DatabaseConnection::ParameterMap map;
-    BackendStorePtr p;
+    LegalLogMgrPtr p;
     // Verify that a RotatingFile with empty path is rejected.
     map["path"] = "";
     map["base"] = "legal";
-    ASSERT_THROW_MSG(p = BackendStorePtr(new RotatingFile(map)), BackendStoreError,
+    ASSERT_THROW_MSG(p = LegalLogMgrPtr(new RotatingFile(map)), LegalLogMgrError,
                      "path cannot be blank");
 
     map["path"] = TEST_DATA_BUILDDIR;
     map["base-name"] = "";
     // Verify that a RotatingFile with an empty base name is rejected.
-    ASSERT_THROW_MSG(p = BackendStorePtr(new RotatingFile(map)), BackendStoreError,
+    ASSERT_THROW_MSG(p = LegalLogMgrPtr(new RotatingFile(map)), LegalLogMgrError,
                      "file name cannot be blank");
 
     std::string name = "invalid";
@@ -51,26 +51,26 @@ TEST_F(RotatingFileTest, invalidConstruction) {
     map["prerotate"] = "invalid";
     map["postrotate"] = "";
     // Verify that a RotatingFile with an invalid prerotate action is rejected.
-    ASSERT_THROW(p = BackendStorePtr(new RotatingFile(map)), BackendStoreError);
+    ASSERT_THROW(p = LegalLogMgrPtr(new RotatingFile(map)), LegalLogMgrError);
 
     map["prerotate"] = "";
     map["postrotate"] = "invalid";
     // Verify that a RotatingFile with an invalid postrotate action is rejected.
-    ASSERT_THROW(p = BackendStorePtr(new RotatingFile(map)), BackendStoreError);
+    ASSERT_THROW(p = LegalLogMgrPtr(new RotatingFile(map)), LegalLogMgrError);
 
     map["prerotate"] = INVALID_FORENSIC_PREROTATE_TEST_SH;
     map["postrotate"] = "";
 
     // Verify that a RotatingFile with a non executable prerotate action is
     // rejected.
-    ASSERT_THROW(p = BackendStorePtr(new RotatingFile(map)), BackendStoreError);
+    ASSERT_THROW(p = LegalLogMgrPtr(new RotatingFile(map)), LegalLogMgrError);
 
     map["prerotate"] = "";
     map["postrotate"] = INVALID_FORENSIC_POSTROTATE_TEST_SH;
 
     // Verify that a RotatingFile with a non executable postrotate action is
     // rejected.
-    ASSERT_THROW(p = BackendStorePtr(new RotatingFile(map)), BackendStoreError);
+    ASSERT_THROW(p = LegalLogMgrPtr(new RotatingFile(map)), LegalLogMgrError);
 }
 
 /// @brief Tests #5579 fix.
@@ -154,23 +154,23 @@ TEST_F(RotatingFileTest, nowString) {
     // Try with one that's too long. This should throw.
     std::string format("%Y%m%d");
     format += std::string(256, '-');
-    ASSERT_THROW(rotating_file_->getNowString(format), BackendStoreError);
+    ASSERT_THROW(rotating_file_->getNowString(format), LegalLogMgrError);
 
     // Try with an alternative format set via a load-time parameter. Use a few
     // of the more obscure strftime format specifiers to verify that it's
     // actually different from the "plain" %Y-%m-%d %M:%M:%S %Z format.
-    BackendStoreFactory::instance() = rotating_file_;
+    LegalLogMgrFactory::instance() = rotating_file_;
     data::ElementPtr params = data::Element::createMap();
     params->set("timestamp-format", data::Element::create("%A%t%w %F%%"));
 
     db::DatabaseConnection::ParameterMap map;
-    EXPECT_NO_THROW(BackendStore::parseExtraParameters(params, map));
+    EXPECT_NO_THROW(LegalLogMgr::parseExtraParameters(params, map));
     map["type"] = "logfile";
     map["path"] = TEST_DATA_BUILDDIR;
-    EXPECT_NO_THROW(BackendStoreFactory::addBackend(map));
-    EXPECT_TRUE(BackendStoreFactory::instance());
+    EXPECT_NO_THROW(LegalLogMgrFactory::addBackend(map));
+    EXPECT_TRUE(LegalLogMgrFactory::instance());
 
-    rotating_file_->setTimestampFormat(BackendStoreFactory::instance()->getTimestampFormat());
+    rotating_file_->setTimestampFormat(LegalLogMgrFactory::instance()->getTimestampFormat());
 
     ASSERT_NO_THROW_LOG(now_string = rotating_file_->getNowString());
     EXPECT_EQ("Monday\t1 2016-05-02%", now_string);
@@ -1131,7 +1131,7 @@ TEST_F(RotatingFileTest, prerotateActions) {
     ASSERT_NO_THROW_LOG(rotating_file_.reset(new TestableRotatingFile(time_, RotatingFile::TimeUnit::Second, 5,
                                                                   FORENSIC_PREROTATE_TEST_SH, "")));
 
-    BackendStoreFactory::instance() = rotating_file_;
+    LegalLogMgrFactory::instance() = rotating_file_;
 
     // Open the file
     ASSERT_NO_THROW_LOG(rotating_file_->open());
@@ -1173,7 +1173,7 @@ TEST_F(RotatingFileTest, postrotateActions) {
     ASSERT_NO_THROW_LOG(rotating_file_.reset(new TestableRotatingFile(time_, RotatingFile::TimeUnit::Second, 5,
                                                                   "", FORENSIC_POSTROTATE_TEST_SH)));
 
-    BackendStoreFactory::instance() = rotating_file_;
+    LegalLogMgrFactory::instance() = rotating_file_;
 
     // Open the file
     ASSERT_NO_THROW_LOG(rotating_file_->open());
@@ -1216,7 +1216,7 @@ TEST_F(RotatingFileTest, prerotateAndPostrotateActions) {
                                                                   FORENSIC_PREROTATE_TEST_SH,
                                                                   FORENSIC_POSTROTATE_TEST_SH)));
 
-    BackendStoreFactory::instance() = rotating_file_;
+    LegalLogMgrFactory::instance() = rotating_file_;
 
     // Open the file
     ASSERT_NO_THROW_LOG(rotating_file_->open());

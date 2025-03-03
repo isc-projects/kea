@@ -7,7 +7,7 @@
 #ifndef PGSQL_LEGAL_LOG_H
 #define PGSQL_LEGAL_LOG_H
 
-#include <dhcpsrv/backend_store_factory.h>
+#include <dhcpsrv/legal_log_mgr_factory.h>
 #include <pgsql/pgsql_connection.h>
 #include <pgsql/pgsql_exchange.h>
 #include <util/reconnect_ctl.h>
@@ -77,11 +77,11 @@ typedef boost::shared_ptr<PgSqlStoreContextPool> PgSqlStoreContextPoolPtr;
 
 /// @brief PostgreSQL Store
 ///
-/// This class provides the @ref isc::legal_log::BackendStore
+/// This class provides the @ref isc::legal_log::LegalLogMgr
 /// interface to the PostgreSQL database. Use of this backend presupposes
 /// that a PostgreSQL database is available and that the Kea legal log
 /// schema has been created within it.
-class PgSqlStore : public BackendStore {
+class PgSqlStore : public LegalLogMgr {
 public:
 
     /// @brief Constructor
@@ -143,7 +143,7 @@ public:
     ///
     /// @param addr Address or prefix (ignored)
     /// @param text String to store
-    /// @throw BackendStoreError if the write fails
+    /// @throw LegalLogMgrError if the write fails
     virtual void writeln(const std::string& text, const std::string& addr);
 
     /// @brief Return backend type
@@ -228,7 +228,7 @@ public:
     ///        concerned with the database.
     ///
     /// @return The PostgreSQL Store.
-    static BackendStorePtr
+    static LegalLogMgrPtr
     factory(const isc::db::DatabaseConnection::ParameterMap& parameters);
 };
 
@@ -236,7 +236,7 @@ public:
 struct PgSqlForensicBackendInit {
     // Constructor registers
     PgSqlForensicBackendInit() {
-        BackendStoreFactory::registerBackendFactory("postgresql",
+        LegalLogMgrFactory::registerBackendFactory("postgresql",
                                                     PgSqlStore::factory,
                                                     true,
                                                     PgSqlStore::getDBVersion);
@@ -244,7 +244,7 @@ struct PgSqlForensicBackendInit {
 
     // Destructor deregisters
     ~PgSqlForensicBackendInit() {
-        BackendStoreFactory::unregisterBackendFactory("postgresql", true);
+        LegalLogMgrFactory::unregisterBackendFactory("postgresql", true);
     }
 };
 

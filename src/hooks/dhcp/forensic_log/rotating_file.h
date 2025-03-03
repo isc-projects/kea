@@ -7,7 +7,7 @@
 #ifndef ROTATING_FILE_H
 #define ROTATING_FILE_H
 
-#include <dhcpsrv/backend_store_factory.h>
+#include <dhcpsrv/legal_log_mgr_factory.h>
 
 #include <mutex>
 
@@ -46,8 +46,8 @@ namespace legal_log {
 /// date and time and appends an EOL.
 ///
 /// The class implements virtual methods in facilitate unit testing
-/// and derives from @c BackendStore abstract class.
-class RotatingFile : public isc::dhcp::BackendStore {
+/// and derives from @c LegalLogMgr abstract class.
+class RotatingFile : public isc::dhcp::LegalLogMgr {
 public:
 
     /// @brief Time unit type used to rotate file.
@@ -75,7 +75,7 @@ public:
     /// @param prerotate The script to be run before closing the old file.
     /// @param postrotate The script to be run after opening the new file.
     ///
-    /// @throw BackendStoreError if given file name is empty.
+    /// @throw LegalLogMgrError if given file name is empty.
     RotatingFile(const isc::db::DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Destructor.
@@ -83,7 +83,7 @@ public:
     /// The destructor does call the close method.
     virtual ~RotatingFile();
 
-    /// @brief Parse file specification and create forensic store backend.
+    /// @brief Parse file specification and create forensic log backend.
     ///
     /// It supports the following parameters via the Hook Library Parameter
     /// mechanism:
@@ -114,7 +114,7 @@ public:
     ///
     /// @param parameters The library parameters.
     ///
-    /// @return The RotatingFile forensic store backend.
+    /// @return The RotatingFile forensic log backend.
     void apply(const isc::db::DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Opens the current file for writing.
@@ -135,7 +135,7 @@ public:
     /// it is created.  If the file is already open, the method simply
     /// returns.
     ///
-    /// @throw BackendStoreError if the file cannot be opened.
+    /// @throw LegalLogMgrError if the file cannot be opened.
     virtual void open();
 
     /// @brief Closes the underlying file.
@@ -162,7 +162,7 @@ public:
     /// @param addr Address or prefix (ignored).
     /// @param text String to append.
     ///
-    /// @throw BackendStoreError if the write fails.
+    /// @throw LegalLogMgrError if the write fails.
     virtual void writeln(const std::string& text, const std::string& addr);
 
     /// @brief Return backend type.
@@ -243,7 +243,7 @@ private:
     ///
     /// @param text String to append.
     ///
-    /// @throw BackendStoreError if the write fails.
+    /// @throw LegalLogMgrError if the write fails.
     void writelnInternal(const std::string& text);
 
     /// @brief Directory in which the file(s) will be created.
@@ -285,20 +285,20 @@ public:
     ///        concerned with the database.
     ///
     /// @return The Rotating File Store Backend.
-    static isc::dhcp::BackendStorePtr
+    static isc::dhcp::LegalLogMgrPtr
     factory(const isc::db::DatabaseConnection::ParameterMap& parameters);
 };
 
-/// @brief Initialization structure used to register and deregister RotateFile Forensic Store.
+/// @brief Initialization structure used to register and deregister RotateFile Forensic Log Mgr.
 struct RotatingFileInit {
     // Constructor registers
     RotatingFileInit() {
-        isc::dhcp::BackendStoreFactory::registerBackendFactory("logfile", RotatingFile::factory);
+        isc::dhcp::LegalLogMgrFactory::registerBackendFactory("logfile", RotatingFile::factory);
     }
 
     // Destructor deregisters
     ~RotatingFileInit() {
-        isc::dhcp::BackendStoreFactory::unregisterBackendFactory("logfile");
+        isc::dhcp::LegalLogMgrFactory::unregisterBackendFactory("logfile");
     }
 };
 

@@ -36,7 +36,7 @@ if HAVE_GTEST
 TESTS += libdhcp_legal_log_unittests
 
 libdhcp_legal_log_unittests_SOURCES = run_unittests.cc
-libdhcp_legal_log_unittests_SOURCES += backend_store_unittests.cc
+libdhcp_legal_log_unittests_SOURCES += legal_log_mgr_unittests.cc
 libdhcp_legal_log_unittests_SOURCES += command_log_unittests.cc
 libdhcp_legal_log_unittests_SOURCES += legal_log4_unittests.cc
 libdhcp_legal_log_unittests_SOURCES += legal_log6_unittests.cc

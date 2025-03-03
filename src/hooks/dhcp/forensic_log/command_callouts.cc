@@ -18,7 +18,7 @@
 #include <hooks/hooks.h>
 #include <util/str.h>
 #include <legal_log_log.h>
-#include <dhcpsrv/backend_store_factory.h>
+#include <dhcpsrv/legal_log_mgr_factory.h>
 #include <subnets_user_context.h>
 
 #include <sstream>
@@ -109,7 +109,7 @@ bool isPrefix(ConstElementPtr arguments) {
 ///
 /// Looks for either a lease valid lifetime or expiry from which to
 /// generate the duration text using @ref
-/// isc::legal_log::BackendStore::genDurationString().
+/// isc::legal_log::LegalLogMgr::genDurationString().
 ///
 /// @param handle CalloutHandle which provides access to context.
 /// @param os output stream to which the text is output
@@ -120,12 +120,12 @@ void addDuration(CalloutHandle& handle, ostringstream& os, ConstElementPtr& argu
     if (!getOptionalInt(arguments, "valid-lft", duration)) {
         int64_t expire = 0;
         if (getOptionalInt(arguments, "expire", expire)) {
-            duration = expire - BackendStoreFactory::instance(handle.getCurrentLibrary())->now().tv_sec;
+            duration = expire - LegalLogMgrFactory::instance(handle.getCurrentLibrary())->now().tv_sec;
         }
     }
 
     if (duration > 0) {
-        os << " for " << BackendStore::genDurationString(duration);
+        os << " for " << LegalLogMgr::genDurationString(duration);
     }
 }
 
@@ -188,7 +188,7 @@ bool checkLoggingEnabledSubnet4(ConstElementPtr& arguments) {
 /// @param response The command response.
 int handleLease4Cmds(CalloutHandle& handle, string& name, ConstElementPtr& arguments,
                      ConstElementPtr& /*response*/) {
-    if (!BackendStoreFactory::instance(handle.getCurrentLibrary())) {
+    if (!LegalLogMgrFactory::instance(handle.getCurrentLibrary())) {
         LOG_ERROR(legal_log_logger,
                   LEGAL_LOG_COMMAND_NO_LEGAL_STORE);
         return (1);
@@ -224,7 +224,7 @@ int handleLease4Cmds(CalloutHandle& handle, string& name, ConstElementPtr& argum
                 try {
                     auto bin = ClientId::fromText(client_id)->getClientId();
                     if (str::isPrintable(bin)) {
-                        os << " (" << BackendStore::vectorDump(bin) << ")";
+                        os << " (" << LegalLogMgr::vectorDump(bin) << ")";
                     }
                 } catch (...) {
                     // Ignore any error
@@ -246,7 +246,7 @@ int handleLease4Cmds(CalloutHandle& handle, string& name, ConstElementPtr& argum
             }
         }
 
-        BackendStoreFactory::instance(handle.getCurrentLibrary())->writeln(os.str(), osa.str());
+        LegalLogMgrFactory::instance(handle.getCurrentLibrary())->writeln(os.str(), osa.str());
     } catch (const exception& ex) {
         LOG_ERROR(legal_log_logger, LEGAL_LOG_COMMAND_WRITE_ERROR)
                   .arg(ex.what());
@@ -289,7 +289,7 @@ bool checkLoggingEnabledSubnet6(ConstElementPtr& arguments) {
 /// @param response The command response.
 int handleLease6Cmds(CalloutHandle& handle, string& name, ConstElementPtr& arguments,
                      ConstElementPtr& response) {
-    if (!BackendStoreFactory::instance(handle.getCurrentLibrary())) {
+    if (!LegalLogMgrFactory::instance(handle.getCurrentLibrary())) {
         LOG_ERROR(legal_log_logger,
                   LEGAL_LOG_COMMAND_NO_LEGAL_STORE);
         return (1);
@@ -459,7 +459,7 @@ int handleLease6Cmds(CalloutHandle& handle, string& name, ConstElementPtr& argum
             return (status);
         }
 
-        BackendStoreFactory::instance(handle.getCurrentLibrary())->writeln(os.str(), osa.str());
+        LegalLogMgrFactory::instance(handle.getCurrentLibrary())->writeln(os.str(), osa.str());
     } catch (const exception& ex) {
         LOG_ERROR(legal_log_logger, LEGAL_LOG_COMMAND_WRITE_ERROR)
                   .arg(ex.what());
@@ -483,7 +483,7 @@ int handleLease6Cmds(CalloutHandle& handle, string& name, ConstElementPtr& argum
 ///
 /// @return 0 upon success, non-zero otherwise.
 int command_processed(CalloutHandle& handle) {
-    if (!BackendStoreFactory::instance(handle.getCurrentLibrary())) {
+    if (!LegalLogMgrFactory::instance(handle.getCurrentLibrary())) {
         LOG_ERROR(legal_log_logger,
                   LEGAL_LOG_COMMAND_NO_LEGAL_STORE);
         return (1);

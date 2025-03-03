@@ -31,7 +31,7 @@ namespace isc {
 namespace legal_log {
 
 RotatingFile::RotatingFile(const DatabaseConnection::ParameterMap& parameters)
-    : BackendStore(parameters), time_unit_(TimeUnit::Day), count_(1), timestamp_(0) {
+    : LegalLogMgr(parameters), time_unit_(TimeUnit::Day), count_(1), timestamp_(0) {
     apply(parameters);
 }
 
@@ -95,18 +95,18 @@ RotatingFile::apply(const DatabaseConnection::ParameterMap& parameters) {
     postrotate_ = postrotate;
 
     if (path_.empty()) {
-        isc_throw(BackendStoreError, "path cannot be blank");
+        isc_throw(LegalLogMgrError, "path cannot be blank");
     }
 
     if (base_name_.empty()) {
-        isc_throw(BackendStoreError, "file name cannot be blank");
+        isc_throw(LegalLogMgrError, "file name cannot be blank");
     }
 
     if (!prerotate_.empty()) {
         try {
             ProcessSpawn process(ProcessSpawn::ASYNC, prerotate_);
         } catch (const isc::Exception& ex) {
-            isc_throw(BackendStoreError, "Invalid 'prerotate' parameter: " << ex.what());
+            isc_throw(LegalLogMgrError, "Invalid 'prerotate' parameter: " << ex.what());
         }
     }
 
@@ -114,7 +114,7 @@ RotatingFile::apply(const DatabaseConnection::ParameterMap& parameters) {
         try {
             ProcessSpawn process(ProcessSpawn::ASYNC, postrotate_);
         } catch (const isc::Exception& ex) {
-            isc_throw(BackendStoreError, "Invalid 'postrotate' parameter: " << ex.what());
+            isc_throw(LegalLogMgrError, "Invalid 'postrotate' parameter: " << ex.what());
         }
     }
 }
@@ -287,7 +287,7 @@ RotatingFile::openInternal(struct tm& time_info, bool use_existing) {
     file_.open(file_name_.c_str(), ofstream::app);
     int sav_error = errno;
     if (!file_.is_open()) {
-        isc_throw(BackendStoreError, "cannot open file:" << file_name_
+        isc_throw(LegalLogMgrError, "cannot open file:" << file_name_
                   << " reason: " << strerror(sav_error));
     }
 
@@ -392,7 +392,7 @@ RotatingFile::writelnInternal(const string& text) {
     }
     int sav_error = errno;
     if (!file_.good()) {
-        isc_throw(BackendStoreError, "error writing to file:" << file_name_
+        isc_throw(LegalLogMgrError, "error writing to file:" << file_name_
                   << " reason: " << strerror(sav_error));
     }
 }
@@ -419,11 +419,11 @@ RotatingFile::close() {
     }
 }
 
-BackendStorePtr
+LegalLogMgrPtr
 RotatingFile::factory(const DatabaseConnection::ParameterMap& parameters) {
     LOG_INFO(legal_log_logger, LEGAL_LOG_STORE_OPEN)
         .arg(DatabaseConnection::redactedAccessString(parameters));
-    return (BackendStorePtr(new RotatingFile(parameters)));
+    return (LegalLogMgrPtr(new RotatingFile(parameters)));
 }
 
 } // namespace legal_log

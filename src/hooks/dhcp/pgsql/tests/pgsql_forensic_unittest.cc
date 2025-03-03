@@ -341,13 +341,13 @@ public:
 
     /// @brief Constructor.
     PgSqlLegalLogDbLostCallbackTest() {
-        BackendStoreFactory::delAllBackends();
+        LegalLogMgrFactory::delAllBackends();
         io_service_->poll();
     }
 
     /// @brief Destructor.
     virtual ~PgSqlLegalLogDbLostCallbackTest() {
-        BackendStoreFactory::delAllBackends();
+        LegalLogMgrFactory::delAllBackends();
         io_service_->poll();
     }
 
@@ -506,19 +506,19 @@ PgSqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndRecoveredCallback() {
     std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry());
     params.emplace("retry-on-startup", "true");
 
-    ASSERT_NO_THROW_LOG(BackendStoreFactory::instance().reset(new PgSqlStore(params)));
+    ASSERT_NO_THROW_LOG(LegalLogMgrFactory::instance().reset(new PgSqlStore(params)));
 
     // Check params validity is done by open().
-    EXPECT_THROW(BackendStoreFactory::instance()->open(), DbOpenErrorWithRetry);
+    EXPECT_THROW(LegalLogMgrFactory::instance()->open(), DbOpenErrorWithRetry);
 
     // Verify there is no instance.
-    ASSERT_FALSE(BackendStoreFactory::instance());
+    ASSERT_FALSE(LegalLogMgrFactory::instance());
 
     dbr.reset();
 
     params = db::DatabaseConnection::parse(validConnectString());
     params.emplace("retry-on-startup", "true");
-    BackendStoreFactory::setParameters(params);
+    LegalLogMgrFactory::setParameters(params);
 
     io_service_->poll();
 
@@ -527,7 +527,7 @@ PgSqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndRecoveredCallback() {
     EXPECT_EQ(1, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    ASSERT_TRUE(BackendStoreFactory::instance());
+    ASSERT_TRUE(LegalLogMgrFactory::instance());
 }
 
 void
@@ -550,13 +550,13 @@ PgSqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndFailedCallback() {
     std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry());
     params.emplace("retry-on-startup", "true");
 
-    ASSERT_NO_THROW_LOG(BackendStoreFactory::instance().reset(new PgSqlStore(params)));
+    ASSERT_NO_THROW_LOG(LegalLogMgrFactory::instance().reset(new PgSqlStore(params)));
 
     // Check params validity is done by open().
-    EXPECT_THROW(BackendStoreFactory::instance()->open(), DbOpenErrorWithRetry);
+    EXPECT_THROW(LegalLogMgrFactory::instance()->open(), DbOpenErrorWithRetry);
 
     // Verify there is no instance.
-    ASSERT_FALSE(BackendStoreFactory::instance());
+    ASSERT_FALSE(LegalLogMgrFactory::instance());
 
     dbr.reset();
 
@@ -567,7 +567,7 @@ PgSqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndFailedCallback() {
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(1, db_failed_callback_called_);
 
-    ASSERT_FALSE(BackendStoreFactory::instance());
+    ASSERT_FALSE(LegalLogMgrFactory::instance());
 }
 
 void
@@ -594,13 +594,13 @@ PgSqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndRecoveredAfterTimeoutCall
     std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry());
     params.emplace("retry-on-startup", "true");
 
-    ASSERT_NO_THROW_LOG(BackendStoreFactory::instance().reset(new PgSqlStore(params)));
+    ASSERT_NO_THROW_LOG(LegalLogMgrFactory::instance().reset(new PgSqlStore(params)));
 
     // Check params validity is done by open().
-    EXPECT_THROW(BackendStoreFactory::instance()->open(), DbOpenErrorWithRetry);
+    EXPECT_THROW(LegalLogMgrFactory::instance()->open(), DbOpenErrorWithRetry);
 
     // Verify there is no instance.
-    ASSERT_FALSE(BackendStoreFactory::instance());
+    ASSERT_FALSE(LegalLogMgrFactory::instance());
 
     dbr.reset();
 
@@ -611,13 +611,13 @@ PgSqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndRecoveredAfterTimeoutCall
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    ASSERT_FALSE(BackendStoreFactory::instance());
+    ASSERT_FALSE(LegalLogMgrFactory::instance());
 
     access = validConnectString();
     access += extra;
     params = db::DatabaseConnection::parse(access);
     params.emplace("retry-on-startup", "true");
-    BackendStoreFactory::setParameters(params);
+    LegalLogMgrFactory::setParameters(params);
 
     sleep(1);
 
@@ -628,7 +628,7 @@ PgSqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndRecoveredAfterTimeoutCall
     EXPECT_EQ(1, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    ASSERT_TRUE(BackendStoreFactory::instance());
+    ASSERT_TRUE(LegalLogMgrFactory::instance());
 
     sleep(1);
 
@@ -639,7 +639,7 @@ PgSqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndRecoveredAfterTimeoutCall
     EXPECT_EQ(1, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    ASSERT_TRUE(BackendStoreFactory::instance());
+    ASSERT_TRUE(LegalLogMgrFactory::instance());
 }
 
 void
@@ -666,13 +666,13 @@ PgSqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndFailedAfterTimeoutCallbac
     std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry());
     params.emplace("retry-on-startup", "true");
 
-    ASSERT_NO_THROW_LOG(BackendStoreFactory::instance().reset(new PgSqlStore(params)));
+    ASSERT_NO_THROW_LOG(LegalLogMgrFactory::instance().reset(new PgSqlStore(params)));
 
     // Check params validity is done by open().
-    EXPECT_THROW(BackendStoreFactory::instance()->open(), DbOpenErrorWithRetry);
+    EXPECT_THROW(LegalLogMgrFactory::instance()->open(), DbOpenErrorWithRetry);
 
     // Verify there is no instance.
-    ASSERT_FALSE(BackendStoreFactory::instance());
+    ASSERT_FALSE(LegalLogMgrFactory::instance());
 
     dbr.reset();
 
@@ -683,7 +683,7 @@ PgSqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndFailedAfterTimeoutCallbac
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    ASSERT_FALSE(BackendStoreFactory::instance());
+    ASSERT_FALSE(LegalLogMgrFactory::instance());
 
     sleep(1);
 
@@ -694,7 +694,7 @@ PgSqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndFailedAfterTimeoutCallbac
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    ASSERT_FALSE(BackendStoreFactory::instance());
+    ASSERT_FALSE(LegalLogMgrFactory::instance());
 
     sleep(1);
 
@@ -705,7 +705,7 @@ PgSqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndFailedAfterTimeoutCallbac
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(1, db_failed_callback_called_);
 
-    ASSERT_FALSE(BackendStoreFactory::instance());
+    ASSERT_FALSE(LegalLogMgrFactory::instance());
 }
 
 void
@@ -725,10 +725,10 @@ PgSqlLegalLogDbLostCallbackTest::testNoCallbackOnOpenFailure() {
     // Verify that a PgSqlStore with no database name is rejected.
     DatabaseConnection::ParameterMap params = db::DatabaseConnection::parse(invalidConnectString());
 
-    ASSERT_NO_THROW_LOG(BackendStoreFactory::instance().reset(new PgSqlStore(params)));
+    ASSERT_NO_THROW_LOG(LegalLogMgrFactory::instance().reset(new PgSqlStore(params)));
 
     // Check params validity is done by open().
-    EXPECT_THROW(BackendStoreFactory::instance()->open(), DbOpenError);
+    EXPECT_THROW(LegalLogMgrFactory::instance()->open(), DbOpenError);
 
     io_service_->poll();
 
@@ -736,7 +736,7 @@ PgSqlLegalLogDbLostCallbackTest::testNoCallbackOnOpenFailure() {
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    ASSERT_FALSE(BackendStoreFactory::instance());
+    ASSERT_FALSE(LegalLogMgrFactory::instance());
 }
 
 void
@@ -763,29 +763,29 @@ PgSqlLegalLogDbLostCallbackTest::testDbLostAndRecoveredCallback() {
     // Verify that a PgSqlStore with database name is not rejected.
     DatabaseConnection::ParameterMap params = db::DatabaseConnection::parse(validConnectString());
 
-    ASSERT_NO_THROW_LOG(BackendStoreFactory::instance().reset(new PgSqlStore(params)));
-    BackendStoreFactory::setParameters(params);
+    ASSERT_NO_THROW_LOG(LegalLogMgrFactory::instance().reset(new PgSqlStore(params)));
+    LegalLogMgrFactory::setParameters(params);
 
     // Check params validity is done by open().
-    EXPECT_NO_THROW_LOG(BackendStoreFactory::instance()->open());
+    EXPECT_NO_THROW_LOG(LegalLogMgrFactory::instance()->open());
 
-    ASSERT_TRUE(BackendStoreFactory::instance());
+    ASSERT_TRUE(LegalLogMgrFactory::instance());
 
     // Find the SQL client socket.
     int sql_socket = findLastSocketFd();
     ASSERT_TRUE(sql_socket > last_open_socket);
 
     // Verify we can execute a query.  We don't care about the answer.
-    ASSERT_NO_THROW_LOG(BackendStoreFactory::instance()->writeln("test", "192.2.1.100"));
+    ASSERT_NO_THROW_LOG(LegalLogMgrFactory::instance()->writeln("test", "192.2.1.100"));
 
     // Now close the sql socket out from under backend client
     ASSERT_EQ(0, close(sql_socket));
 
     // A query should fail with DbConnectionUnusable.
-    ASSERT_THROW(BackendStoreFactory::instance()->writeln("test", "192.2.1.101");,
+    ASSERT_THROW(LegalLogMgrFactory::instance()->writeln("test", "192.2.1.101");,
                  DbConnectionUnusable);
 
-    ASSERT_TRUE(BackendStoreFactory::instance());
+    ASSERT_TRUE(LegalLogMgrFactory::instance());
 
     io_service_->poll();
 
@@ -794,7 +794,7 @@ PgSqlLegalLogDbLostCallbackTest::testDbLostAndRecoveredCallback() {
     EXPECT_EQ(1, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    ASSERT_TRUE(BackendStoreFactory::instance());
+    ASSERT_TRUE(LegalLogMgrFactory::instance());
 }
 
 void
@@ -821,31 +821,31 @@ PgSqlLegalLogDbLostCallbackTest::testDbLostAndFailedCallback() {
     // Verify that a PgSqlStore with database name is not rejected.
     DatabaseConnection::ParameterMap params = db::DatabaseConnection::parse(validConnectString());
 
-    ASSERT_NO_THROW_LOG(BackendStoreFactory::instance().reset(new PgSqlStore(params)));
+    ASSERT_NO_THROW_LOG(LegalLogMgrFactory::instance().reset(new PgSqlStore(params)));
 
     // Check params validity is done by open().
-    EXPECT_NO_THROW_LOG(BackendStoreFactory::instance()->open());
+    EXPECT_NO_THROW_LOG(LegalLogMgrFactory::instance()->open());
 
-    ASSERT_TRUE(BackendStoreFactory::instance());
+    ASSERT_TRUE(LegalLogMgrFactory::instance());
 
     // Find the SQL client socket.
     int sql_socket = findLastSocketFd();
     ASSERT_TRUE(sql_socket > last_open_socket);
 
     // Verify we can execute a query.  We don't care about the answer.
-    ASSERT_NO_THROW_LOG(BackendStoreFactory::instance()->writeln("test", "192.2.1.100"));
+    ASSERT_NO_THROW_LOG(LegalLogMgrFactory::instance()->writeln("test", "192.2.1.100"));
 
     params = db::DatabaseConnection::parse(invalidConnectString());
-    BackendStoreFactory::setParameters(params);
+    LegalLogMgrFactory::setParameters(params);
 
     // Now close the sql socket out from under backend client
     ASSERT_EQ(0, close(sql_socket));
 
     // A query should fail with DbConnectionUnusable.
-    ASSERT_THROW(BackendStoreFactory::instance()->writeln("test", "192.2.1.101"),
+    ASSERT_THROW(LegalLogMgrFactory::instance()->writeln("test", "192.2.1.101"),
                  DbConnectionUnusable);
 
-    ASSERT_TRUE(BackendStoreFactory::instance());
+    ASSERT_TRUE(LegalLogMgrFactory::instance());
 
     io_service_->poll();
 
@@ -854,7 +854,7 @@ PgSqlLegalLogDbLostCallbackTest::testDbLostAndFailedCallback() {
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(1, db_failed_callback_called_);
 
-    ASSERT_FALSE(BackendStoreFactory::instance());
+    ASSERT_FALSE(LegalLogMgrFactory::instance());
 }
 
 void
@@ -885,34 +885,34 @@ PgSqlLegalLogDbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCallback() {
     // Verify that a PgSqlStore with database name is not rejected.
     DatabaseConnection::ParameterMap params = db::DatabaseConnection::parse(access);
 
-    ASSERT_NO_THROW_LOG(BackendStoreFactory::instance().reset(new PgSqlStore(params)));
-    BackendStoreFactory::setParameters(params);
+    ASSERT_NO_THROW_LOG(LegalLogMgrFactory::instance().reset(new PgSqlStore(params)));
+    LegalLogMgrFactory::setParameters(params);
 
     // Check params validity is done by open().
-    EXPECT_NO_THROW_LOG(BackendStoreFactory::instance()->open());
+    EXPECT_NO_THROW_LOG(LegalLogMgrFactory::instance()->open());
 
-    ASSERT_TRUE(BackendStoreFactory::instance());
+    ASSERT_TRUE(LegalLogMgrFactory::instance());
 
     // Find the SQL client socket.
     int sql_socket = findLastSocketFd();
     ASSERT_TRUE(sql_socket > last_open_socket);
 
     // Verify we can execute a query.  We don't care about the answer.
-    ASSERT_NO_THROW_LOG(BackendStoreFactory::instance()->writeln("test", "192.2.1.100"));
+    ASSERT_NO_THROW_LOG(LegalLogMgrFactory::instance()->writeln("test", "192.2.1.100"));
 
     access = invalidConnectString();
     access += extra;
     params = db::DatabaseConnection::parse(access);
-    BackendStoreFactory::setParameters(params);
+    LegalLogMgrFactory::setParameters(params);
 
     // Now close the sql socket out from under backend client
     ASSERT_EQ(0, close(sql_socket));
 
     // A query should fail with DbConnectionUnusable.
-    ASSERT_THROW(BackendStoreFactory::instance()->writeln("test", "192.2.1.101"),
+    ASSERT_THROW(LegalLogMgrFactory::instance()->writeln("test", "192.2.1.101"),
                  DbConnectionUnusable);
 
-    ASSERT_TRUE(BackendStoreFactory::instance());
+    ASSERT_TRUE(LegalLogMgrFactory::instance());
 
     io_service_->poll();
 
@@ -921,12 +921,12 @@ PgSqlLegalLogDbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCallback() {
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    ASSERT_FALSE(BackendStoreFactory::instance());
+    ASSERT_FALSE(LegalLogMgrFactory::instance());
 
     access = validConnectString();
     access += extra;
     params = db::DatabaseConnection::parse(access);
-    BackendStoreFactory::setParameters(params);
+    LegalLogMgrFactory::setParameters(params);
 
     sleep(1);
 
@@ -937,7 +937,7 @@ PgSqlLegalLogDbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCallback() {
     EXPECT_EQ(1, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    ASSERT_TRUE(BackendStoreFactory::instance());
+    ASSERT_TRUE(LegalLogMgrFactory::instance());
 
     sleep(1);
 
@@ -948,7 +948,7 @@ PgSqlLegalLogDbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCallback() {
     EXPECT_EQ(1, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    ASSERT_TRUE(BackendStoreFactory::instance());
+    ASSERT_TRUE(LegalLogMgrFactory::instance());
 }
 
 void
@@ -979,33 +979,33 @@ PgSqlLegalLogDbLostCallbackTest::testDbLostAndFailedAfterTimeoutCallback() {
     // Verify that a PgSqlStore with database name is not rejected.
     DatabaseConnection::ParameterMap params = db::DatabaseConnection::parse(access);
 
-    ASSERT_NO_THROW_LOG(BackendStoreFactory::instance().reset(new PgSqlStore(params)));
+    ASSERT_NO_THROW_LOG(LegalLogMgrFactory::instance().reset(new PgSqlStore(params)));
 
     // Check params validity is done by open().
-    EXPECT_NO_THROW_LOG(BackendStoreFactory::instance()->open());
+    EXPECT_NO_THROW_LOG(LegalLogMgrFactory::instance()->open());
 
-    ASSERT_TRUE(BackendStoreFactory::instance());
+    ASSERT_TRUE(LegalLogMgrFactory::instance());
 
     // Find the SQL client socket.
     int sql_socket = findLastSocketFd();
     ASSERT_TRUE(sql_socket > last_open_socket);
 
     // Verify we can execute a query.  We don't care about the answer.
-    ASSERT_NO_THROW_LOG(BackendStoreFactory::instance()->writeln("test", "192.2.1.100"));
+    ASSERT_NO_THROW_LOG(LegalLogMgrFactory::instance()->writeln("test", "192.2.1.100"));
 
     access = invalidConnectString();
     access += extra;
     params = db::DatabaseConnection::parse(access);
-    BackendStoreFactory::setParameters(params);
+    LegalLogMgrFactory::setParameters(params);
 
     // Now close the sql socket out from under backend client
     ASSERT_EQ(0, close(sql_socket));
 
     // A query should fail with DbConnectionUnusable.
-    ASSERT_THROW(BackendStoreFactory::instance()->writeln("test", "192.2.1.101"),
+    ASSERT_THROW(LegalLogMgrFactory::instance()->writeln("test", "192.2.1.101"),
                  DbConnectionUnusable);
 
-    ASSERT_TRUE(BackendStoreFactory::instance());
+    ASSERT_TRUE(LegalLogMgrFactory::instance());
 
     io_service_->poll();
 
@@ -1014,7 +1014,7 @@ PgSqlLegalLogDbLostCallbackTest::testDbLostAndFailedAfterTimeoutCallback() {
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    ASSERT_FALSE(BackendStoreFactory::instance());
+    ASSERT_FALSE(LegalLogMgrFactory::instance());
 
     sleep(1);
 
@@ -1025,7 +1025,7 @@ PgSqlLegalLogDbLostCallbackTest::testDbLostAndFailedAfterTimeoutCallback() {
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(0, db_failed_callback_called_);
 
-    ASSERT_FALSE(BackendStoreFactory::instance());
+    ASSERT_FALSE(LegalLogMgrFactory::instance());
 
     sleep(1);
 
@@ -1036,7 +1036,7 @@ PgSqlLegalLogDbLostCallbackTest::testDbLostAndFailedAfterTimeoutCallback() {
     EXPECT_EQ(0, db_recovered_callback_called_);
     EXPECT_EQ(1, db_failed_callback_called_);
 
-    ASSERT_FALSE(BackendStoreFactory::instance());
+    ASSERT_FALSE(LegalLogMgrFactory::instance());
 }
 
 /// @brief Verifies that loss of connectivity to PostgreSQL is handled correctly.

@@ -4,11 +4,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef BACKEND_STORE_FACTORY_H
-#define BACKEND_STORE_FACTORY_H
+#ifndef LEGAL_LOG_MGR_FACTORY_H
+#define LEGAL_LOG_MGR_FACTORY_H
 
 #include <database/database_connection.h>
-#include <dhcpsrv/backend_store.h>
+#include <dhcpsrv/legal_log_mgr.h>
 #include <exceptions/exceptions.h>
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -29,14 +29,14 @@ namespace dhcp {
 ///
 /// Strictly speaking these functions could be stand-alone functions.  However,
 /// it is convenient to encapsulate them in a class for naming purposes.
-class BackendStoreFactory : public boost::noncopyable {
+class LegalLogMgrFactory : public boost::noncopyable {
 private:
 
     /// @brief Type of the backend factory function.
     ///
     /// Factory function returns a pointer to the instance of the configuration
     /// backend created.
-    typedef std::function<BackendStorePtr (const db::DatabaseConnection::ParameterMap&)> Factory;
+    typedef std::function<LegalLogMgrPtr (const db::DatabaseConnection::ParameterMap&)> Factory;
 
     /// @brief Type of backend store version.
     typedef std::function<std::string ()> DBVersion;
@@ -69,10 +69,10 @@ public:
     bool static unregisterBackendFactory(const std::string& db_type,
                                          bool no_log = false);
 
-    /// @brief Create an instance of a forensic store backend.
+    /// @brief Create an instance of a forensic log backend.
     ///
     /// This method uses provided @c parameters map representing database
-    /// connection information to create an instance of the forensic store
+    /// connection information to create an instance of the forensic log
     /// backend. If the specified backend type is not supported, i.e. there
     /// is no relevant factory function registered, an exception is thrown.
     ///
@@ -96,7 +96,7 @@ public:
     /// @param id the forensic backend manager ID
     /// (default value is 0 and it is used only in unit tests).
     /// @return the forensic backend manager instance or null pointer.
-    static BackendStorePtr& instance(ManagerID id = 0);
+    static LegalLogMgrPtr& instance(ManagerID id = 0);
 
     /// @brief Deletes all backends of the given type from the pool.
     ///
@@ -174,8 +174,8 @@ public:
     /// @brief Return extended version info for registered backends.
     static std::list<std::string> getDBVersions();
 
-    /// @brief Returns underlying forensic store backend pool.
-    static BackendStorePool getPool() {
+    /// @brief Returns underlying forensic log backend pool.
+    static LegalLogMgrPool getPool() {
         return (pool_);
     }
 
@@ -211,13 +211,13 @@ protected:
     static isc::asiolink::IOServicePtr io_service_;
 
     /// @brief A map holding registered backend factory functions.
-    static std::map<std::string, std::pair<BackendStoreFactory::Factory, BackendStoreFactory::DBVersion>> map_;
+    static std::map<std::string, std::pair<LegalLogMgrFactory::Factory, LegalLogMgrFactory::DBVersion>> map_;
 
-    /// @brief Pointer to the forensic store backends pool.
-    static BackendStorePool pool_;
+    /// @brief Pointer to the forensic log backends pool.
+    static LegalLogMgrPool pool_;
 };
 
 } // end of namespace isc::dhcp
 } // end of namespace isc
 
-#endif // BASE_CONFIG_BACKEND_MGR_H
+#endif // LEGAL_LOG_MGR_FACTORY_H

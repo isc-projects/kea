@@ -16,7 +16,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <process/daemon.h>
 #include <legal_log_log.h>
-#include <dhcpsrv/backend_store.h>
+#include <dhcpsrv/legal_log_mgr.h>
 #include <rotating_file.h>
 
 #include <boost/lexical_cast.hpp>
@@ -41,7 +41,7 @@ extern "C" {
 
 /// @brief Called by the Hooks library manager when the library is loaded.
 ///
-/// Instantiates the BackendStore and then opens it. If there is no type
+/// Instantiates the LegalLogMgr and then opens it. If there is no type
 /// or type is logfile, use a RotatingFile else use a Database.
 ///
 /// @return 0 upon success, non-zero if the legal file cannot be opened
@@ -62,15 +62,15 @@ int load(LibraryHandle& handle) {
             }
         }
 
-        BackendStoreFactory::registerBackendFactory("logfile", RotatingFile::factory);
+        LegalLogMgrFactory::registerBackendFactory("logfile", RotatingFile::factory);
 
         // Get and decode parameters.
         ConstElementPtr const& parameters(handle.getParameters());
         DatabaseConnection::ParameterMap map;
 
         try {
-            BackendStore::parseConfig(parameters, map);
-            BackendStoreFactory::addBackend(map, handle.getLibraryIndex());
+            LegalLogMgr::parseConfig(parameters, map);
+            LegalLogMgrFactory::addBackend(map, handle.getLibraryIndex());
         } catch (const isc::db::DbOpenErrorWithRetry& err) {
             string redacted;
             try {
@@ -93,18 +93,18 @@ int load(LibraryHandle& handle) {
 
 /// @brief Called by the Hooks library manager when the library is unloaded.
 ///
-/// Explicitly destroys the BackendStore instance. Any errors are logged but
+/// Explicitly destroys the LegalLogMgr instance. Any errors are logged but
 /// swallowed.
 ///
 /// @return Always 0.
 int unload() {
     try {
         // Since it's "global" Let's explicitly destroy it now rather
-        // than indeterminately. Note, BackendStore destructor will close
+        // than indeterminately. Note, LegalLogMgr destructor will close
         // the store.
-        BackendStoreFactory::delAllBackends();
+        LegalLogMgrFactory::delAllBackends();
 
-        BackendStoreFactory::unregisterBackendFactory("logfile");
+        LegalLogMgrFactory::unregisterBackendFactory("logfile");
     } catch (const std::exception& ex) {
         // On the off chance something goes awry, catch it and log it.
         // @todo Not sure if we should return a non-zero result or not.

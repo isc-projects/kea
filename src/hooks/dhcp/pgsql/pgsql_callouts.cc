@@ -65,7 +65,7 @@ int load(LibraryHandle& /* handle */) {
     PgSqlConfigBackendDHCPv6::registerBackendType();
 
     // Register PostgreSQL FB factories with Backend Store managers.
-    BackendStoreFactory::registerBackendFactory("postgresql",
+    LegalLogMgrFactory::registerBackendFactory("postgresql",
                                                 PgSqlStore::factory,
                                                 true,
                                                 PgSqlStore::getDBVersion);
@@ -124,7 +124,7 @@ int unload() {
     }
 
     // Unregister the factories and remove PostgreSQL backends
-    BackendStoreFactory::unregisterBackendFactory("postgresql", true);
+    LegalLogMgrFactory::unregisterBackendFactory("postgresql", true);
 
     // Unregister the factories and remove PostgreSQL backends
     HostDataSourceFactory::deregisterFactory("postgresql", true);

@@ -7,7 +7,7 @@
 #ifndef MYSQL_LEGAL_LOG_H
 #define MYSQL_LEGAL_LOG_H
 
-#include <dhcpsrv/backend_store_factory.h>
+#include <dhcpsrv/legal_log_mgr_factory.h>
 #include <mysql/mysql_connection.h>
 #include <util/reconnect_ctl.h>
 
@@ -77,12 +77,12 @@ typedef boost::shared_ptr<MySqlStoreContextPool> MySqlStoreContextPoolPtr;
 
 /// @brief MySQL Store
 ///
-/// This class provides the @ref isc::legal_log::BackendStore
+/// This class provides the @ref isc::legal_log::LegalLogMgr
 /// interface to the MySQL database. Use of this backend presupposes
 /// that a MySQL database is available and that the Kea legal log
 /// schema has been created within it.
 
-class MySqlStore : public BackendStore {
+class MySqlStore : public LegalLogMgr {
 public:
 
     /// @brief Constructor
@@ -148,7 +148,7 @@ public:
     ///
     /// @param addr Address or prefix
     /// @param text String to store
-    /// @throw BackendStoreError if the write fails
+    /// @throw LegalLogMgrError if the write fails
     virtual void writeln(const std::string& text, const std::string& addr);
 
     /// @brief Return backend type
@@ -250,7 +250,7 @@ public:
     ///        concerned with the database.
     ///
     /// @return The MySQL Store.
-    static BackendStorePtr
+    static LegalLogMgrPtr
     factory(const isc::db::DatabaseConnection::ParameterMap& parameters);
 };
 
@@ -258,7 +258,7 @@ public:
 struct MySqlForensicBackendInit {
     // Constructor registers
     MySqlForensicBackendInit() {
-        BackendStoreFactory::registerBackendFactory("mysql",
+        LegalLogMgrFactory::registerBackendFactory("mysql",
                                                     MySqlStore::factory,
                                                     true,
                                                     MySqlStore::getDBVersion);
@@ -266,7 +266,7 @@ struct MySqlForensicBackendInit {
 
     // Destructor deregisters
     ~MySqlForensicBackendInit() {
-        BackendStoreFactory::unregisterBackendFactory("mysql", true);
+        LegalLogMgrFactory::unregisterBackendFactory("mysql", true);
     }
 };
 

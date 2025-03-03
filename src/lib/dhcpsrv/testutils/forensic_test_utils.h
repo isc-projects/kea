@@ -9,7 +9,7 @@
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <hooks/callout_manager.h>
-#include <dhcpsrv/backend_store_factory.h>
+#include <dhcpsrv/legal_log_mgr_factory.h>
 #include <util/reconnect_ctl.h>
 
 #include <gtest/gtest.h>
@@ -151,9 +151,9 @@ public:
         isc::db::DatabaseConnection::db_recovered_callback_ = 0;
         isc::db::DatabaseConnection::db_failed_callback_ = 0;
         isc::db::DatabaseConnection::setIOService(io_service_);
-        BackendStoreFactory::setIOService(io_service_);
+        LegalLogMgrFactory::setIOService(io_service_);
         isc::dhcp::TimerMgr::instance()->setIOService(io_service_);
-        BackendStoreFactory::delAllBackends();
+        LegalLogMgrFactory::delAllBackends();
     }
 
     /// @brief Destructor.
@@ -162,9 +162,9 @@ public:
         isc::db::DatabaseConnection::db_recovered_callback_ = 0;
         isc::db::DatabaseConnection::db_failed_callback_ = 0;
         isc::db::DatabaseConnection::setIOService(isc::asiolink::IOServicePtr());
-        BackendStoreFactory::setIOService(isc::asiolink::IOServicePtr());
+        LegalLogMgrFactory::setIOService(isc::asiolink::IOServicePtr());
         isc::dhcp::TimerMgr::instance()->unregisterTimers();
-        BackendStoreFactory::delAllBackends();
+        LegalLogMgrFactory::delAllBackends();
     }
 
     /// @brief Prepares the class for a test.

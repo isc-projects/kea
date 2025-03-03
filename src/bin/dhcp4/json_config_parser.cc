@@ -21,7 +21,7 @@
 #include <dhcp4/json_config_parser.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option_definition.h>
-#include <dhcpsrv/backend_store_factory.h>
+#include <dhcpsrv/legal_log_mgr_factory.h>
 #include <dhcpsrv/cb_ctl_dhcp4.h>
 #include <dhcpsrv/cfg_multi_threading.h>
 #include <dhcpsrv/cfg_option.h>
@@ -930,7 +930,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
     HostDataSourceFactory::logRegistered();
 
     // Log the list of known backends.
-    BackendStoreFactory::logRegistered();
+    LegalLogMgrFactory::logRegistered();
 
     // Log the list of known backends.
     ConfigBackendDHCPv4Mgr::instance().logRegistered();

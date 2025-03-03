@@ -26,7 +26,7 @@ dhcp_forensic_log_tests_libs = [
 
 sources = [
     'dhcp-forensic-log-tests',
-    'backend_store_unittests.cc',
+    'legal_log_mgr_unittests.cc',
     'command_log_unittests.cc',
     'legal_log4_unittests.cc',
     'legal_log6_unittests.cc',

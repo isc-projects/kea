@@ -8,7 +8,7 @@
 
 #include <pgsql_fb_log.h>
 #include <pgsql_legal_log.h>
-#include <dhcpsrv/backend_store_factory.h>
+#include <dhcpsrv/legal_log_mgr_factory.h>
 #include <dhcpsrv/legal_log_db_log.h>
 #include <dhcpsrv/network_state.h>
 #include <dhcpsrv/timer_mgr.h>
@@ -166,10 +166,10 @@ PgSqlStore::PgSqlStoreContextAlloc::~PgSqlStoreContextAlloc() {
 // PgSqlStore
 
 PgSqlStore::PgSqlStore(const DatabaseConnection::ParameterMap& parameters)
-    : BackendStore(parameters), timer_name_(""), unusable_(false) {
+    : LegalLogMgr(parameters), timer_name_(""), unusable_(false) {
 
     // Store connection parameters.
-    BackendStore::setParameters(parameters);
+    LegalLogMgr::setParameters(parameters);
 
     // Create unique timer name per instance.
     timer_name_ = "PgSqlLegalStore[";
@@ -182,7 +182,7 @@ void PgSqlStore::open() {
 
     // Check TLS support.
     size_t tls(0);
-    auto const& parameters = BackendStore::getParameters();
+    auto const& parameters = LegalLogMgr::getParameters();
     tls += parameters.count("trust-anchor");
     tls += parameters.count("cert-file");
     tls += parameters.count("key-file");
@@ -207,13 +207,13 @@ void PgSqlStore::open() {
     pair<uint32_t, uint32_t> code_version(PGSQL_SCHEMA_VERSION_MAJOR,
                                           PGSQL_SCHEMA_VERSION_MINOR);
 
-    BackendStorePtr store = BackendStoreFactory::instance();
-    BackendStoreFactory::instance().reset();
+    LegalLogMgrPtr store = LegalLogMgrFactory::instance();
+    LegalLogMgrFactory::instance().reset();
 
     string timer_name;
     bool retry = false;
-    if (BackendStore::getParameters().count("retry-on-startup")) {
-        if (BackendStore::getParameters().at("retry-on-startup") == "true") {
+    if (LegalLogMgr::getParameters().count("retry-on-startup")) {
+        if (LegalLogMgr::getParameters().at("retry-on-startup") == "true") {
             retry = true;
         }
     }
@@ -230,7 +230,7 @@ void PgSqlStore::open() {
                   << db_version.second);
     }
 
-    BackendStoreFactory::instance() = store;
+    LegalLogMgrFactory::instance() = store;
 
     // Create an initial context.
     pool_.reset(new PgSqlStoreContextPool());
@@ -345,10 +345,10 @@ PgSqlStore::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
 
     // At least one connection was lost.
     try {
-        auto pool = BackendStoreFactory::getPool();
+        auto pool = LegalLogMgrFactory::getPool();
         for (auto backend : pool) {
-            if (BackendStoreFactory::delBackend(backend.first, true)) {
-                BackendStoreFactory::addBackend(backend.second.first, backend.first);
+            if (LegalLogMgrFactory::delBackend(backend.first, true)) {
+                LegalLogMgrFactory::addBackend(backend.second.first, backend.first);
             }
         }
         reopened = true;
@@ -406,11 +406,11 @@ PgSqlStore::isUnusable() {
     return (unusable_);
 }
 
-BackendStorePtr
+LegalLogMgrPtr
 PgSqlStore::factory(const isc::db::DatabaseConnection::ParameterMap& parameters) {
     LOG_INFO(pgsql_fb_logger, PGSQL_FB_DB)
         .arg(isc::db::DatabaseConnection::redactedAccessString(parameters));
-    return (BackendStorePtr(new PgSqlStore(parameters)));
+    return (LegalLogMgrPtr(new PgSqlStore(parameters)));
 }
 
 } // end of isc::dhcp namespace

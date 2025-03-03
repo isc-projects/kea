@@ -4,10 +4,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef BACKEND_STORE_H
-#define BACKEND_STORE_H
+#ifndef LEGAL_LOG_MGR_H
+#define LEGAL_LOG_MGR_H
 
-/// @file backend_store.h Defines the abstract class for backend stores.
+/// @file legal_log_mgr.h Defines the abstract class for backend stores.
 
 #include <asiolink/io_service.h>
 #include <database/database_connection.h>
@@ -22,24 +22,24 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief Thrown if a BackendStore encounters an error.
-class BackendStoreError : public isc::Exception {
+/// @brief Thrown if a LegalLogMgr encounters an error.
+class LegalLogMgrError : public isc::Exception {
 public:
-    BackendStoreError(const char* file, size_t line, const char* what) :
+    LegalLogMgrError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what)
     {}
 };
 
-class BackendStore;
+class LegalLogMgr;
 
-/// @brief Defines a smart pointer to a BackendStore.
-typedef boost::shared_ptr<BackendStore> BackendStorePtr;
+/// @brief Defines a smart pointer to a LegalLogMgr.
+typedef boost::shared_ptr<LegalLogMgr> LegalLogMgrPtr;
 
-/// @brief BackendStore abstract class
-class BackendStore {
+/// @brief LegalLogMgr abstract class
+class LegalLogMgr {
 public:
     /// @brief Constructor.
-    BackendStore(const isc::db::DatabaseConnection::ParameterMap parameters) :
+    LegalLogMgr(const isc::db::DatabaseConnection::ParameterMap parameters) :
         timestamp_format_("%Y-%m-%d %H:%M:%S %Z"),
         parameters_(parameters) {
     }
@@ -47,7 +47,7 @@ public:
     /// @brief Destructor.
     ///
     /// Derived destructors do call the close method.
-    virtual ~BackendStore() = default;
+    virtual ~LegalLogMgr() = default;
 
     /// @brief Parse database specification.
     ///
@@ -55,7 +55,7 @@ public:
     /// consistent.
     ///
     /// @param parameters The library parameters.
-    /// @param map The parameter map used by BackendStore objects.
+    /// @param map The parameter map used by LegalLogMgr objects.
     static void parseConfig(const isc::data::ConstElementPtr& parameters, isc::db::DatabaseConnection::ParameterMap& map);
 
     /// @brief Parse database specification.
@@ -66,7 +66,7 @@ public:
     /// consistent.
     ///
     /// @param parameters The library parameters.
-    /// @param map The parameter map used by BackendStore objects.
+    /// @param map The parameter map used by LegalLogMgr objects.
     static void parseDatabase(const isc::data::ConstElementPtr& parameters, isc::db::DatabaseConnection::ParameterMap& map);
 
     /// @brief Parse file specification.
@@ -93,7 +93,7 @@ public:
     ///
     /// @param text String to append
     /// @param addr Address or prefix
-    /// @throw BackendStoreError if the write fails
+    /// @throw LegalLogMgrError if the write fails
     virtual void writeln(const std::string& text, const std::string& addr) = 0;
 
     /// @brief Return backend type
@@ -121,7 +121,7 @@ public:
     /// maximum length of the result is 128 bytes.
     ///
     /// @return std::string containing the formatted current date and time.
-    /// @throw BackendStoreError if the result string is larger than 128 bytes.
+    /// @throw LegalLogMgrError if the result string is larger than 128 bytes.
     virtual std::string getNowString() const;
 
     /// @brief Returns the current date and time as a string using a specific
@@ -135,7 +135,7 @@ public:
     /// microseconds subunits. The default is: "%Y-%m-%d %H:%M:%S %Z".
     ///
     /// @return std::string containing the formatted current date and time.
-    /// @throw BackendStoreError if the result string is larger than 128 bytes.
+    /// @throw LegalLogMgrError if the result string is larger than 128 bytes.
     virtual std::string getNowString(const std::string& format) const;
 
     /// @brief Returns a time as string.
@@ -149,7 +149,7 @@ public:
     /// microseconds subunits. The default is: "%Y-%m-%d %H:%M:%S %Z".
     ///
     /// @return std::string containing the formatted current date and time
-    /// @throw BackendStoreError if the result string is larger than 128 bytes.
+    /// @throw LegalLogMgrError if the result string is larger than 128 bytes.
     static std::string getTimeString(const struct timespec& time, const std::string& format);
 
     /// @brief Translates seconds into a text string of days, hours, minutes
@@ -243,7 +243,7 @@ public:
         parameters_ = parameters;
     }
 
-    /// @brief Flag which indicates if the forensic store backend has at least one
+    /// @brief Flag which indicates if the forensic log backend has at least one
     /// unusable connection.
     ///
     /// @return true if there is at least one unusable connection, false
@@ -267,11 +267,11 @@ private:
     isc::db::DatabaseConnection::ParameterMap parameters_;
 };
 
-/// @brief Manger ID used by hook libraries to retrieve respective BackendStore instance.
+/// @brief Manger ID used by hook libraries to retrieve respective LegalLogMgr instance.
 typedef uint64_t ManagerID;
 
-/// @brief BackendStore pool
-typedef std::map<ManagerID, std::pair<isc::db::DatabaseConnection::ParameterMap, BackendStorePtr>> BackendStorePool;
+/// @brief LegalLogMgr pool
+typedef std::map<ManagerID, std::pair<isc::db::DatabaseConnection::ParameterMap, LegalLogMgrPtr>> LegalLogMgrPool;
 
 /// @brief Describe what kind of event is being logged.
 enum class Action { ASSIGN, RELEASE };
@@ -285,4 +285,4 @@ const std::string actionToVerb(Action action);
 } // namespace dhcp
 } // namespace isc
 
-#endif
+#endif // LEGAL_LOG_MGR_H

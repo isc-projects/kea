@@ -8,7 +8,7 @@
 
 #include <mysql_fb_log.h>
 #include <mysql_legal_log.h>
-#include <dhcpsrv/backend_store_factory.h>
+#include <dhcpsrv/legal_log_mgr_factory.h>
 #include <dhcpsrv/legal_log_db_log.h>
 #include <dhcpsrv/network_state.h>
 #include <dhcpsrv/timer_mgr.h>
@@ -272,7 +272,7 @@ MySqlStore::MySqlStoreContextAlloc::~MySqlStoreContextAlloc() {
 // MySqlStore
 
 MySqlStore::MySqlStore(const DatabaseConnection::ParameterMap& parameters)
-    : BackendStore(parameters), timer_name_(""), unusable_(false) {
+    : LegalLogMgr(parameters), timer_name_(""), unusable_(false) {
 
     // Create unique timer name per instance.
     timer_name_ = "MySqlLegalStore[";
@@ -287,13 +287,13 @@ void MySqlStore::open() {
     std::pair<uint32_t, uint32_t> code_version(MYSQL_SCHEMA_VERSION_MAJOR,
                                                MYSQL_SCHEMA_VERSION_MINOR);
 
-    BackendStorePtr store = BackendStoreFactory::instance();
-    BackendStoreFactory::instance().reset();
+    LegalLogMgrPtr store = LegalLogMgrFactory::instance();
+    LegalLogMgrFactory::instance().reset();
 
     string timer_name;
     bool retry = false;
-    if (BackendStore::getParameters().count("retry-on-startup")) {
-        if (BackendStore::getParameters().at("retry-on-startup") == "true") {
+    if (LegalLogMgr::getParameters().count("retry-on-startup")) {
+        if (LegalLogMgr::getParameters().at("retry-on-startup") == "true") {
             retry = true;
         }
     }
@@ -310,7 +310,7 @@ void MySqlStore::open() {
                   << db_version.second);
     }
 
-    BackendStoreFactory::instance() = store;
+    LegalLogMgrFactory::instance() = store;
 
     // Create an initial context.
     pool_.reset(new MySqlStoreContextPool());
@@ -441,10 +441,10 @@ MySqlStore::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
 
     // At least one connection was lost.
     try {
-        auto pool = BackendStoreFactory::getPool();
+        auto pool = LegalLogMgrFactory::getPool();
         for (auto backend : pool) {
-            if (BackendStoreFactory::delBackend(backend.first, true)) {
-                BackendStoreFactory::addBackend(backend.second.first, backend.first);
+            if (LegalLogMgrFactory::delBackend(backend.first, true)) {
+                LegalLogMgrFactory::addBackend(backend.second.first, backend.first);
             }
         }
         reopened = true;
@@ -502,11 +502,11 @@ MySqlStore::isUnusable() {
     return (unusable_);
 }
 
-BackendStorePtr
+LegalLogMgrPtr
 MySqlStore::factory(const isc::db::DatabaseConnection::ParameterMap& parameters) {
     LOG_INFO(mysql_fb_logger, MYSQL_FB_DB)
         .arg(isc::db::DatabaseConnection::redactedAccessString(parameters));
-    return (BackendStorePtr(new MySqlStore(parameters)));
+    return (LegalLogMgrPtr(new MySqlStore(parameters)));
 }
 
 } // end of isc::dhcp namespace

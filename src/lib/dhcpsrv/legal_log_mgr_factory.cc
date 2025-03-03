@@ -6,7 +6,7 @@
 
 #include <config.h>
 
-#include <backend_store_factory.h>
+#include <legal_log_mgr_factory.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 
 using namespace isc::db;
@@ -15,12 +15,12 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
-isc::asiolink::IOServicePtr BackendStoreFactory::io_service_;
-map<string, pair<BackendStoreFactory::Factory, BackendStoreFactory::DBVersion>> BackendStoreFactory::map_;
-BackendStorePool BackendStoreFactory::pool_;
+isc::asiolink::IOServicePtr LegalLogMgrFactory::io_service_;
+map<string, pair<LegalLogMgrFactory::Factory, LegalLogMgrFactory::DBVersion>> LegalLogMgrFactory::map_;
+LegalLogMgrPool LegalLogMgrFactory::pool_;
 
 bool
-BackendStoreFactory::registerBackendFactory(const string& db_type,
+LegalLogMgrFactory::registerBackendFactory(const string& db_type,
                                             const Factory& factory,
                                             bool no_log,
                                             DBVersion db_version) {
@@ -50,7 +50,7 @@ BackendStoreFactory::registerBackendFactory(const string& db_type,
 }
 
 bool
-BackendStoreFactory::unregisterBackendFactory(const string& db_type, bool no_log) {
+LegalLogMgrFactory::unregisterBackendFactory(const string& db_type, bool no_log) {
     // Look for it.
     auto index = map_.find(db_type);
 
@@ -69,11 +69,11 @@ BackendStoreFactory::unregisterBackendFactory(const string& db_type, bool no_log
 }
 
 void
-BackendStoreFactory::addBackend(DatabaseConnection::ParameterMap& parameters, ManagerID id) {
+LegalLogMgrFactory::addBackend(DatabaseConnection::ParameterMap& parameters, ManagerID id) {
     // Get the database type to locate a factory function.
     auto it = parameters.find("type");
     if (it == parameters.end()) {
-        isc_throw(InvalidParameter, "Forensic store backend specification lacks the "
+        isc_throw(InvalidParameter, "Forensic log backend specification lacks the "
                   "'type' keyword");
     }
 
@@ -90,14 +90,14 @@ BackendStoreFactory::addBackend(DatabaseConnection::ParameterMap& parameters, Ma
                       << with << " during compilation or to load libdhcp_"
                       << with << " hook library?");
         }
-        isc_throw(InvalidType, "The type of the forensic store backend: '" <<
+        isc_throw(InvalidType, "The type of the forensic log backend: '" <<
                   db_type << "' is not supported");
     }
 
     // Call the factory and push the pointer on sources.
     auto backend = index->second.first(parameters);
     if (!backend) {
-        isc_throw(Unexpected, "Forensic store database " << db_type <<
+        isc_throw(Unexpected, "Forensic log database " << db_type <<
                   " factory returned NULL");
     }
 
@@ -115,33 +115,33 @@ BackendStoreFactory::addBackend(DatabaseConnection::ParameterMap& parameters, Ma
     }
 
     // Backend instance created successfully.
-    pool_[id] = pair<DatabaseConnection::ParameterMap, BackendStorePtr>(parameters, backend);
+    pool_[id] = pair<DatabaseConnection::ParameterMap, LegalLogMgrPtr>(parameters, backend);
 }
 
-BackendStorePtr&
-BackendStoreFactory::instance(ManagerID id) {
+LegalLogMgrPtr&
+LegalLogMgrFactory::instance(ManagerID id) {
     auto it = pool_.find(id);
     if (it != pool_.end()) {
         return (it->second.second);
     }
-    // Usually the unit tests do not create the instances using BackendStoreFactory::addBackend or by
+    // Usually the unit tests do not create the instances using LegalLogMgrFactory::addBackend or by
     // calling parseConfig or parseDatabase or parseFile, so an empty instance must be returned when
-    // calling BackendStoreFactory::instance() - this function returns a reference, so it can not be
+    // calling LegalLogMgrFactory::instance() - this function returns a reference, so it can not be
     // created on the stack, it must be stored as a static variable.
-    static BackendStorePtr backend;
+    static LegalLogMgrPtr backend;
     if (!id) {
         DatabaseConnection::ParameterMap parameters;
-        pool_[id] = pair<DatabaseConnection::ParameterMap, BackendStorePtr>(parameters, backend);
+        pool_[id] = pair<DatabaseConnection::ParameterMap, LegalLogMgrPtr>(parameters, backend);
         return (pool_[id].second);
     }
     return (backend);
 }
 
 void
-BackendStoreFactory::setParameters(DatabaseConnection::ParameterMap parameters, ManagerID id) {
-    // Call BackendStoreFactory::instance first so that unit tests can have access to the empty
+LegalLogMgrFactory::setParameters(DatabaseConnection::ParameterMap parameters, ManagerID id) {
+    // Call LegalLogMgrFactory::instance first so that unit tests can have access to the empty
     // entry in the pool.
-    BackendStoreFactory::instance(id);
+    LegalLogMgrFactory::instance(id);
     auto it = pool_.find(id);
     if (it != pool_.end()) {
         it->second.first = parameters;
@@ -150,7 +150,7 @@ BackendStoreFactory::setParameters(DatabaseConnection::ParameterMap parameters, 
 }
 
 DatabaseConnection::ParameterMap
-BackendStoreFactory::getParameters(ManagerID id) {
+LegalLogMgrFactory::getParameters(ManagerID id) {
     auto it = pool_.find(id);
     if (it != pool_.end()) {
         return (it->second.first);
@@ -159,7 +159,7 @@ BackendStoreFactory::getParameters(ManagerID id) {
 }
 
 bool
-BackendStoreFactory::delBackend(const string& db_type,
+LegalLogMgrFactory::delBackend(const string& db_type,
                                 DatabaseConnection::ParameterMap& parameters,
                                 bool if_unusable) {
     bool deleted = false;
@@ -175,14 +175,14 @@ BackendStoreFactory::delBackend(const string& db_type,
             deleted = false;
             continue;
         }
-        it->second.second = BackendStorePtr();
+        it->second.second = LegalLogMgrPtr();
         return (true);
     }
     return (deleted);
 }
 
 bool
-BackendStoreFactory::delBackend(ManagerID id,
+LegalLogMgrFactory::delBackend(ManagerID id,
                                 bool if_unusable) {
     bool deleted = false;
     if (if_unusable) {
@@ -194,20 +194,20 @@ BackendStoreFactory::delBackend(ManagerID id,
         if (if_unusable && it->second.second && !it->second.second->isUnusable()) {
             return (false);
         }
-        it->second.second = BackendStorePtr();
+        it->second.second = LegalLogMgrPtr();
         return (true);
     }
     return (deleted);
 }
 
 bool
-BackendStoreFactory::registeredFactory(const string& db_type) {
+LegalLogMgrFactory::registeredFactory(const string& db_type) {
     auto index = map_.find(db_type);
     return (index != map_.end());
 }
 
 void
-BackendStoreFactory::logRegistered() {
+LegalLogMgrFactory::logRegistered() {
     stringstream txt;
 
     for (auto const& x : map_) {
@@ -222,7 +222,7 @@ BackendStoreFactory::logRegistered() {
 }
 
 list<string>
-BackendStoreFactory::getDBVersions() {
+LegalLogMgrFactory::getDBVersions() {
     list<string> result;
     for (auto const& x : map_) {
         auto version = x.second.second();

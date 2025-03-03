@@ -10,7 +10,7 @@
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <hooks/callout_manager.h>
-#include <dhcpsrv/backend_store.h>
+#include <dhcpsrv/legal_log_mgr.h>
 #include <rotating_file.h>
 #include <util/reconnect_ctl.h>
 
@@ -54,7 +54,7 @@ public:
     /// @param prerotate The script to be run before closing the old file.
     /// @param postrotate The script to be run after opening the new file.
     ///
-    /// @throw BackendStoreError if given file name is empty.
+    /// @throw LegalLogMgrError if given file name is empty.
     TestableRotatingFile(struct tm time,
                          const TimeUnit unit = TimeUnit::Day,
                          const uint32_t count = 1,
@@ -64,7 +64,7 @@ public:
         : RotatingFile(map),  time_(time) {
         ElementPtr parameters = Element::createMap();
         parameters->set("count", Element::create(count));
-        BackendStore::parseFile(parameters, map);
+        LegalLogMgr::parseFile(parameters, map);
         map["path"] = TEST_DATA_BUILDDIR;
         map["base-name"] = "legal";
         map["prerotate"] = prerotate;
@@ -190,7 +190,7 @@ public:
     /// @brief Called before each test
     virtual void SetUp() override {
         // Clean up from past tests.
-        BackendStoreFactory::instance().reset();
+        LegalLogMgrFactory::instance().reset();
         db::DatabaseConnection::setIOService(getIOService());
         asiolink::ProcessSpawn::setIOService(getIOService());
     }
@@ -399,7 +399,7 @@ public:
     /// over from previous tests
     CalloutTest() : RotatingFileTest(),
         co_manager_(new CalloutManager(1)) {
-        BackendStoreFactory::instance().reset();
+        LegalLogMgrFactory::instance().reset();
         isc::dhcp::CfgMgr::instance().clear();
         isc::dhcp::CfgMgr::instance().setFamily(AF_INET);
     }
@@ -407,7 +407,7 @@ public:
     /// @brief Destructor
     /// Removes files that may be left over from previous tests
     virtual ~CalloutTest() {
-        BackendStoreFactory::instance().reset();
+        LegalLogMgrFactory::instance().reset();
         isc::dhcp::CfgMgr::instance().clear();
         isc::dhcp::CfgMgr::instance().setFamily(AF_INET);
     }

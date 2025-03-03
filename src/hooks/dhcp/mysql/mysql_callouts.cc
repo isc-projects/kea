@@ -65,7 +65,7 @@ int load(LibraryHandle& /* handle */) {
     MySqlConfigBackendDHCPv6::registerBackendType();
 
     // Register MySQL FB factories with Backend Store managers.
-    BackendStoreFactory::registerBackendFactory("mysql",
+    LegalLogMgrFactory::registerBackendFactory("mysql",
                                                 MySqlStore::factory,
                                                 true,
                                                 MySqlStore::getDBVersion);
@@ -124,7 +124,7 @@ int unload() {
     }
 
     // Unregister the factories and remove MySQL backends
-    BackendStoreFactory::unregisterBackendFactory("mysql", true);
+    LegalLogMgrFactory::unregisterBackendFactory("mysql", true);
 
     // Unregister the factories and remove MySQL backends
     HostDataSourceFactory::deregisterFactory("mysql", true);

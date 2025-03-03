@@ -12,7 +12,7 @@
 #include <exceptions/exceptions.h>
 #include <cc/data.h>
 #include <testutils/gtest_utils.h>
-#include <dhcpsrv/backend_store_factory.h>
+#include <dhcpsrv/legal_log_mgr_factory.h>
 #include <dhcpsrv/legal_log_db_log.h>
 #include <legal_log_log.h>
 #include <rotating_file.h>
@@ -36,20 +36,20 @@ const DbLogger::MessageMap legal_log_db_message_map = {
 DbLogger legal_log_db_logger(legal_log_logger, legal_log_db_message_map);
 
 /// @brief Test fixture
-struct BackendStoreTest : ::testing::Test {
+struct LegalLogMgrTest : ::testing::Test {
     /// @brief Destructor.
-    virtual ~BackendStoreTest() = default;
+    virtual ~LegalLogMgrTest() = default;
 
     /// @brief Called before each test.
     virtual void SetUp() final override {
         // Clean up from past tests.
-        BackendStoreFactory::delAllBackends();
+        LegalLogMgrFactory::delAllBackends();
     }
 
     /// @brief Called after each test.
     virtual void TearDown() {
         // Clean up from past tests.
-        BackendStoreFactory::delAllBackends();
+        LegalLogMgrFactory::delAllBackends();
         reset();
     }
 
@@ -71,23 +71,23 @@ struct BackendStoreTest : ::testing::Test {
 };
 
 // Verifies output of genDurationString()
-TEST_F(BackendStoreTest, genDurationString) {
-    EXPECT_EQ("0 hrs 0 mins 0 secs", BackendStore::genDurationString(0));
-    EXPECT_EQ("0 hrs 0 mins 1 secs", BackendStore::genDurationString(1));
-    EXPECT_EQ("0 hrs 1 mins 1 secs", BackendStore::genDurationString(61));
-    EXPECT_EQ("1 hrs 1 mins 1 secs", BackendStore::genDurationString(3661));
+TEST_F(LegalLogMgrTest, genDurationString) {
+    EXPECT_EQ("0 hrs 0 mins 0 secs", LegalLogMgr::genDurationString(0));
+    EXPECT_EQ("0 hrs 0 mins 1 secs", LegalLogMgr::genDurationString(1));
+    EXPECT_EQ("0 hrs 1 mins 1 secs", LegalLogMgr::genDurationString(61));
+    EXPECT_EQ("1 hrs 1 mins 1 secs", LegalLogMgr::genDurationString(3661));
     EXPECT_EQ("1 days 0 hrs 0 mins 0 secs",
-              BackendStore::genDurationString(24*60*60));
+              LegalLogMgr::genDurationString(24*60*60));
     EXPECT_EQ("1 days 1 hrs 1 mins 1 secs",
-              BackendStore::genDurationString(24*60*60 + 3661));
+              LegalLogMgr::genDurationString(24*60*60 + 3661));
     EXPECT_EQ("182 days 17 hrs 21 mins 11 secs",
-              BackendStore::genDurationString(15783671 + 3600));
+              LegalLogMgr::genDurationString(15783671 + 3600));
     EXPECT_EQ("infinite duration",
-              BackendStore::genDurationString(0xFFFFFFFF));
+              LegalLogMgr::genDurationString(0xFFFFFFFF));
 }
 
 // Verifies the LegalLogDbLogger class works as expected
-TEST_F(BackendStoreTest, legalLogDbLogger) {
+TEST_F(LegalLogMgrTest, legalLogDbLogger) {
     EXPECT_EQ(1, db_logger_stack.size());
 
     // Open a block
@@ -129,58 +129,58 @@ TEST_F(BackendStoreTest, legalLogDbLogger) {
 }
 
 // Verifies that vectorDump handles empty content (for static analyzers)
-TEST_F(BackendStoreTest, emptyVectorDump) {
+TEST_F(LegalLogMgrTest, emptyVectorDump) {
     std::vector<uint8_t> bytes;
-    EXPECT_TRUE(BackendStore::vectorDump(bytes).empty());
-    EXPECT_TRUE(BackendStore::vectorHexDump(bytes).empty());
+    EXPECT_TRUE(LegalLogMgr::vectorDump(bytes).empty());
+    EXPECT_TRUE(LegalLogMgr::vectorHexDump(bytes).empty());
 }
 
 // Verify that parsing extra parameters for rotate file works
-TEST_F(BackendStoreTest, parseExtraRotatingFileParameters) {
+TEST_F(LegalLogMgrTest, parseExtraRotatingFileParameters) {
     isc::db::DatabaseConnection::ParameterMap map;
-    EXPECT_NO_THROW(BackendStore::parseConfig(ConstElementPtr(), map));
+    EXPECT_NO_THROW(LegalLogMgr::parseConfig(ConstElementPtr(), map));
     map["path"] = TEST_DATA_BUILDDIR;
-    EXPECT_NO_THROW(BackendStoreFactory::addBackend(map));
-    EXPECT_TRUE(BackendStoreFactory::instance());
-    RotatingFile& rotating_file = dynamic_cast<RotatingFile&>(*BackendStoreFactory::instance());
+    EXPECT_NO_THROW(LegalLogMgrFactory::addBackend(map));
+    EXPECT_TRUE(LegalLogMgrFactory::instance());
+    RotatingFile& rotating_file = dynamic_cast<RotatingFile&>(*LegalLogMgrFactory::instance());
 
     ElementPtr params = Element::createMap();
     params->set("path", Element::create("path"));
     params->set("base-name", Element::create("name"));
 
     params->set("time-unit", Element::create(0));
-    EXPECT_THROW(BackendStore::parseFile(params, map), TypeError);
+    EXPECT_THROW(LegalLogMgr::parseFile(params, map), TypeError);
 
     params->set("time-unit", Element::create("nothing"));
-    EXPECT_NO_THROW(BackendStore::parseFile(params, map));
+    EXPECT_NO_THROW(LegalLogMgr::parseFile(params, map));
     EXPECT_THROW(rotating_file.apply(map), BadValue);
 
     params->set("time-unit", Element::create("second"));
     params->set("count", Element::create(""));
-    EXPECT_THROW(BackendStore::parseFile(params, map), TypeError);
+    EXPECT_THROW(LegalLogMgr::parseFile(params, map), TypeError);
 
     params->set("time-unit", Element::create("day"));
     params->set("count", Element::create(-1));
-    EXPECT_THROW(BackendStore::parseFile(params, map), OutOfRange);
+    EXPECT_THROW(LegalLogMgr::parseFile(params, map), OutOfRange);
 
     params->set("time-unit", Element::create("month"));
     params->set("count", Element::create(static_cast<int64_t>(1) << 32));
-    EXPECT_THROW(BackendStore::parseFile(params, map), OutOfRange);
+    EXPECT_THROW(LegalLogMgr::parseFile(params, map), OutOfRange);
 
     params->set("time-unit", Element::create("year"));
     params->set("count", Element::create(1));
     params->set("prerotate", Element::create(FORENSIC_PREROTATE_TEST_SH));
     params->set("postrotate", Element::create(FORENSIC_POSTROTATE_TEST_SH));
-    EXPECT_NO_THROW(BackendStore::parseFile(params, map));
+    EXPECT_NO_THROW(LegalLogMgr::parseFile(params, map));
     EXPECT_NO_THROW(rotating_file.apply(map));
 }
 
 // Verify that parsing extra parameters works
-TEST_F(BackendStoreTest, parseExtraParameters) {
+TEST_F(LegalLogMgrTest, parseExtraParameters) {
     db::DatabaseConnection::ParameterMap map;
     map["path"] = "path";
     map["base-name"] = "name";
-    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new RotatingFile(map)));
+    ASSERT_NO_THROW(LegalLogMgrFactory::instance().reset(new RotatingFile(map)));
     ElementPtr params = Element::createMap();
     params->set("request-parser-format", Element::create("'request'"));
     params->set("response-parser-format", Element::create("'response'"));
@@ -189,53 +189,53 @@ TEST_F(BackendStoreTest, parseExtraParameters) {
     map.clear();
     map["type"] = "logfile";
     map["path"] = TEST_DATA_BUILDDIR;
-    EXPECT_NO_THROW(BackendStore::parseExtraParameters(params, map));
-    EXPECT_NO_THROW(BackendStoreFactory::addBackend(map));
-    EXPECT_TRUE(BackendStoreFactory::instance());
+    EXPECT_NO_THROW(LegalLogMgr::parseExtraParameters(params, map));
+    EXPECT_NO_THROW(LegalLogMgrFactory::addBackend(map));
+    EXPECT_TRUE(LegalLogMgrFactory::instance());
 
-    auto request_format = BackendStoreFactory::instance()->getRequestFormatExpression();
+    auto request_format = LegalLogMgrFactory::instance()->getRequestFormatExpression();
     EXPECT_TRUE(request_format);
 
-    auto response_format = BackendStoreFactory::instance()->getResponseFormatExpression();
+    auto response_format = LegalLogMgrFactory::instance()->getResponseFormatExpression();
     EXPECT_TRUE(response_format);
 
     EXPECT_NE(request_format, response_format);
 
-    auto timestamp_format = BackendStoreFactory::instance()->getTimestampFormat();
+    auto timestamp_format = LegalLogMgrFactory::instance()->getTimestampFormat();
     EXPECT_EQ(timestamp_format, "timestamp");
 }
 
-TEST_F(BackendStoreTest, fileNoParameters) {
+TEST_F(LegalLogMgrTest, fileNoParameters) {
     db::DatabaseConnection::ParameterMap map;
-    EXPECT_NO_THROW(BackendStore::parseFile(ConstElementPtr(), map));
+    EXPECT_NO_THROW(LegalLogMgr::parseFile(ConstElementPtr(), map));
     map["path"] = TEST_DATA_BUILDDIR;
-    ASSERT_NO_THROW(BackendStoreFactory::instance().reset(new RotatingFile(map)));
-    ASSERT_NO_THROW(BackendStoreFactory::instance()->open());
-    RotatingFile& rotating_file = dynamic_cast<RotatingFile&>(*BackendStoreFactory::instance());
+    ASSERT_NO_THROW(LegalLogMgrFactory::instance().reset(new RotatingFile(map)));
+    ASSERT_NO_THROW(LegalLogMgrFactory::instance()->open());
+    RotatingFile& rotating_file = dynamic_cast<RotatingFile&>(*LegalLogMgrFactory::instance());
     map.clear();
     rotating_file.apply(map);
     EXPECT_EQ(rotating_file.getPath(), LEGAL_LOG_DIR);
     EXPECT_EQ(rotating_file.getBaseName(), "kea-legal");
 }
 
-TEST_F(BackendStoreTest, databaseNoParameters) {
+TEST_F(LegalLogMgrTest, databaseNoParameters) {
     db::DatabaseConnection::ParameterMap map;
-    EXPECT_THROW(BackendStore::parseDatabase(ConstElementPtr(), map), BadValue);
+    EXPECT_THROW(LegalLogMgr::parseDatabase(ConstElementPtr(), map), BadValue);
 }
 
-TEST_F(BackendStoreTest, wrongDatabaseType) {
+TEST_F(LegalLogMgrTest, wrongDatabaseType) {
     db::DatabaseConnection::ParameterMap map;
     ElementPtr parameters = Element::createMap();
     parameters->set("type", Element::create(""));
-    EXPECT_NO_THROW(BackendStore::parseDatabase(parameters, map));
-    EXPECT_THROW_MSG(BackendStoreFactory::addBackend(map), InvalidType,
-                     "The type of the forensic store backend: '' is not supported");
-    EXPECT_FALSE(BackendStoreFactory::instance());
+    EXPECT_NO_THROW(LegalLogMgr::parseDatabase(parameters, map));
+    EXPECT_THROW_MSG(LegalLogMgrFactory::addBackend(map), InvalidType,
+                     "The type of the forensic log backend: '' is not supported");
+    EXPECT_FALSE(LegalLogMgrFactory::instance());
 
     parameters->set("type", Element::create("awesomesql"));
-    EXPECT_NO_THROW(BackendStore::parseDatabase(parameters, map));
-    EXPECT_THROW_MSG(BackendStoreFactory::addBackend(map), InvalidType,
-                     "The type of the forensic store backend: 'awesomesql' is not supported");
+    EXPECT_NO_THROW(LegalLogMgr::parseDatabase(parameters, map));
+    EXPECT_THROW_MSG(LegalLogMgrFactory::addBackend(map), InvalidType,
+                     "The type of the forensic log backend: 'awesomesql' is not supported");
 }
 
 } // end of anonymous namespace
