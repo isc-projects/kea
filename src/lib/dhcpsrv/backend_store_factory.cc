@@ -124,6 +124,10 @@ BackendStoreFactory::instance(ManagerID id) {
     if (it != pool_.end()) {
         return (it->second.second);
     }
+    // Usually the unit tests do not create the instances using BackendStoreFactory::addBackend or by
+    // calling parseConfig or parseDatabase or parseFile, so an empty instance must be returned when
+    // calling BackendStoreFactory::instance() - this function returns a reference, so it can not be
+    // created on the stack, it must be stored as a static variable.
     static BackendStorePtr backend;
     if (!id) {
         DatabaseConnection::ParameterMap parameters;
@@ -135,14 +139,13 @@ BackendStoreFactory::instance(ManagerID id) {
 
 void
 BackendStoreFactory::setParameters(DatabaseConnection::ParameterMap parameters, ManagerID id) {
+    // Call BackendStoreFactory::instance first so that unit tests can have access to the empty
+    // entry in the pool.
+    BackendStoreFactory::instance(id);
     auto it = pool_.find(id);
     if (it != pool_.end()) {
         it->second.first = parameters;
         return;
-    }
-    if (!id) {
-        BackendStorePtr backend;
-        pool_[id] = pair<DatabaseConnection::ParameterMap, BackendStorePtr>(parameters, backend);
     }
 }
 

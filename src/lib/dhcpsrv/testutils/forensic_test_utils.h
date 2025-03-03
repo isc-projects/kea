@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -138,7 +138,7 @@ private:
     std::vector<std::string> output_;
 };
 
-/// @brief Test fixture for testing database backend connection recovery.
+/// @brief Test fixture for testing forensic log database backend connection recovery.
 class LegalLogDbLostCallbackTest : public ::testing::Test {
 public:
 

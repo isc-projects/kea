@@ -83,7 +83,7 @@ public:
     /// The destructor does call the close method.
     virtual ~RotatingFile();
 
-    /// @brief Parse file specification and create forensic store backed.
+    /// @brief Parse file specification and create forensic store backend.
     ///
     /// It supports the following parameters via the Hook Library Parameter
     /// mechanism:
@@ -99,6 +99,18 @@ public:
     ///
     ///     <path>/<base-name>.<CCYYMMDD>.txt
     ///     <path>/<base-name>.<TXXXXXXXXXXXXXXXXXXXX>.txt
+    ///
+    /// @b time-unit - The time unit used to rotate the log file. Valid values are:
+    /// "second", "day", "month", or "year". It defaults to "day".
+    ///
+    /// @b count - The number of time units that need to pass until the log file is rotated.
+    /// It can be any positive number, or 0, which disables log rotation. It defaults to 1.
+    ///
+    /// @b prerotate - An external executable or script called with the name of the file that
+    /// will be closed. Kea does not wait for the process to finish.
+    ///
+    /// @b postrotate - An external executable or script called with the name of the file that
+    /// was opened. Kea does not wait for the process to finish.
     ///
     /// @param parameters The library parameters.
     ///

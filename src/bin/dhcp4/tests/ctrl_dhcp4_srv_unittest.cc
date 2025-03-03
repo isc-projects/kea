@@ -1351,7 +1351,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configBackendPull) {
     std::string response;
     std::string expected;
 
-    // Send the config-backend-pull command. Note there is no configured backed.
+    // Send the config-backend-pull command. Note there is no configured backend.
     sendUnixCommand("{ \"command\": \"config-backend-pull\" }", response);
     expected = "{ \"result\": 3, \"text\": \"No config backend.\" }";
     EXPECT_EQ(expected, response);

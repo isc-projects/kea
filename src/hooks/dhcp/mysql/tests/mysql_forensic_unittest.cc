@@ -10,10 +10,10 @@
 #include <config.h>
 
 #include <exceptions/exceptions.h>
+#include <dhcpsrv/testutils/forensic_test_utils.h>
 #include <dhcpsrv/testutils/test_utils.h>
 #include <mysql/testutils/mysql_schema.h>
 #include <mysql_legal_log.h>
-#include <test_utils.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/log_utils.h>
 #include <testutils/multi_threading_utils.h>

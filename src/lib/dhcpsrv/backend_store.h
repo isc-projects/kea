@@ -243,7 +243,7 @@ public:
         parameters_ = parameters;
     }
 
-    /// @brief Flag which indicates if the forensic store backed has at least one
+    /// @brief Flag which indicates if the forensic store backend has at least one
     /// unusable connection.
     ///
     /// @return true if there is at least one unusable connection, false

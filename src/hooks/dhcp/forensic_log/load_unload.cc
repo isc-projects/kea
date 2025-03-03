@@ -115,20 +115,6 @@ int unload() {
     return (0);
 }
 
-/// @brief dhcp4_srv_configured callout implementation.
-///
-/// @param handle callout handle.
-int dhcp4_srv_configured(CalloutHandle& /* handle */) {
-    return (0);
-}
-
-/// @brief dhcp6_srv_configured callout implementation.
-///
-/// @param handle callout handle.
-int dhcp6_srv_configured(CalloutHandle& /* handle */) {
-    return (0);
-}
-
 /// @brief This function is called to retrieve the multi-threading compatibility.
 ///
 /// @return 1 which means compatible with multi-threading.
