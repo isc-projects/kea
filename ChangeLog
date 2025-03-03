@@ -1,3 +1,17 @@
+2254.	[bug]		razvan
+	Fixed a bug related to database connection recovery which was
+	preventing the server to resume processing packets because the
+	dhcp state was never re-enabled.
+	(Gitlab #3751, #3727)
+
+2253.	[bug]		razvan
+	Reset the local and remote disabled state when applying
+	configuration. The dhcp-state is now included in the 'status-get'
+	command. It indicates if the dhcp service is enabled or the
+	reason why it is disabled (user command, HA command or database
+	connection failure).
+	(Gitlab #3751, #3446)
+
 Kea 2.6.1 (stable) released on July 31, 2024
 
 2252.	[bug]		tmark, razvan
