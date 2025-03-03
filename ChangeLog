@@ -1,3 +1,7 @@
+2256.	[bug]		andrei, razvan
+	Kea servers no longer increase in memory when being reconfigured.
+	(Gitlab #3757, #3652)
+
 2255.  [bug]           razvan
 	Fixed applying 'output_options' when using the 'config-set'
 	command. Deprecated 'output_options' which will be removed in
