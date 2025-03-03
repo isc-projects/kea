@@ -1,4 +1,4 @@
-if not gtest.found()
+if FUZZ_OPT != 'enabled'
     subdir_done()
 endif
 
@@ -10,7 +10,7 @@ cpp_flags = [
     f'-DKEA_LFC_SOURCES="@KEA_LFC@"',
     f'-DKEA_LFC_INSTALLATION="@PREFIX@/sbin/kea-lfc"',
 ]
-if FUZZING_IN_CI
+if FUZZ_OPT == 'clusterfuzzlite'
     cpp_flags = ['-fsanitize=fuzzer', '-gdwarf-4']
 else
     fuzz_sources += ['main.cc']

@@ -1,5 +1,6 @@
 # Require meson >= 0.64.0 for preserve_path arg in install_data.
-project('kea', 'cpp', version: '2.7.7-git', meson_version: '>=0.64.0')
+# Require meson >= 1.1.0 for meson.options file.
+project('kea', 'cpp', version: '2.7.7-git', meson_version: '>=1.1.0')
 
 cpp = meson.get_compiler('cpp')
 PROJECT_VERSION = meson.project_version()
@@ -25,9 +26,6 @@ TEST_CA_DIR = f'@TOP_SOURCE_DIR@/src/lib/asiolink/testutils/ca'
 DATABASE_SCRIPTS_DIR = f'@TOP_BUILD_DIR@/src/share/database/scripts'
 LEGAL_LOG_DIR = f'@PREFIX@/@RUN_STATE_DIR@/lib/kea'
 
-# TODO: Control it via a build option.
-FUZZING_IN_CI = false
-
 #### Configuration Data
 
 conf_data = configuration_data(
@@ -36,7 +34,6 @@ conf_data = configuration_data(
         # 'ENABLE_DEBUG': false,
         # 'ENABLE_LOGGER_CHECKS': false,
         'EXTENDED_VERSION': '"tarball"',
-        'FUZZING': true,
         # 'HAS_UNDEFINED_PTHREAD_BEHAVIOR': false,
         # 'HAVE_AFL': false,
         # 'HAVE_BOOST_ASIO_COROUTINE_HPP': false,
@@ -143,7 +140,7 @@ elif SYSTEM == 'darwin'
     conf_data.set('OS_OSX', true)
     OS_TYPE = 'BSD'
 else
-    error(f'Build failed: Unsupported system "@SYSTEM@".')
+    error(f'Unsupported system "@SYSTEM@".')
 endif
 message(f'Detected system "@SYSTEM@".')
 
@@ -188,20 +185,6 @@ foreach dep : ['botan-2', 'botan']
     endif
 endforeach
 openssl = dependency('openssl', required: false)
-if openssl.found()
-    crypto = openssl
-    conf_data.set('WITH_OPENSSL', true)
-    message('Using OpenSSL.')
-elif botan.found()
-    crypto = botan
-    conf_data.set('WITH_BOTAN', true)
-    message('Using Botan.')
-    message('Checking Botan Boost support.')
-    cpp.has_header('botan/asio_stream.h', dependencies: [botan], required: true)
-endif
-if not crypto.found()
-    error('Build failed: Could not find neither botan nor openssl libraries.')
-endif
 
 # Kerberos
 krb5 = disabler()
@@ -253,9 +236,6 @@ foreach mysql_config_file : ['mariadb_config', 'mysql_config']
         break
     endif
 endforeach
-if mysql.found()
-    conf_data.set('HAVE_MYSQL', true)
-endif
 
 # PostgreSQL
 postgresql = dependency('libpq', required: false)
@@ -277,9 +257,6 @@ if pg_config.found()
             version: pgsql_version,
         )
     endif
-endif
-if postgresql.found()
-    conf_data.set('HAVE_PGSQL', true)
 endif
 
 # NETCONF
@@ -334,6 +311,153 @@ foreach dep : ['yang', 'yang-cpp', 'sysrepo', 'sysrepo-cpp']
     endif
 endforeach
 
+#### Build Options
+
+all_opt = get_option('all')
+crypto_opt = get_option('crypto')
+gtest_opt = get_option('gtest')
+krb5_opt = get_option('krb5')
+mysql_opt = get_option('mysql')
+netconf_opt = get_option('netconf')
+postgresql_opt = get_option('postgresql')
+
+# docs_opt = get_option('docs')
+# parser_opt = get_option('parser')
+
+FUZZ_OPT = get_option('fuzz')
+PERFDHCP_OPT = get_option('perfdhcp')
+SHELL_OPT = get_option('shell')
+if SHELL_OPT == 'enabled' and not PYTHON.found()
+    error('kea-shell requires python. Python not found.')
+endif
+
+if crypto_opt == 'auto'
+    if openssl.found()
+        crypto = openssl
+    elif botan.found()
+        crypto = botan
+    endif
+elif crypto_opt == 'botan'
+    if botan.found()
+        crypto = botan
+    endif
+elif crypto_opt == 'openssl'
+    if openssl.found()
+        crypto = openssl
+    endif
+endif
+
+if crypto.name() == botan.name()
+    message('Checking Botan Boost support.')
+    cpp.has_header('botan/asio_stream.h', dependencies: [botan], required: true)
+    conf_data.set('WITH_BOTAN', true)
+    message('Using Botan.')
+elif crypto.name() == openssl.name()
+    conf_data.set('WITH_OPENSSL', true)
+    message('Using OpenSSL.')
+else
+    error('Dependency not found: neither Botan nor OpenSSL.')
+endif
+
+if all_opt.enabled()
+    if gtest_opt == 'disabled'
+        gtest = disabler()
+    elif not gtest.found()
+        error('Dependency not found: GTest.')
+    endif
+    if krb5_opt == 'disabled'
+        krb5 = disabler()
+    elif not krb5.found()
+        error('Dependency not found: Kerberos 5 with GSSAPI.')
+    endif
+    if mysql_opt == 'disabled'
+        mysql = disabler()
+    elif not mysql.found()
+        error('Dependency not found: MySQL.')
+    endif
+    if netconf_opt == 'disabled'
+        NETCONF_DEPS_FOUND = false
+    elif not NETCONF_DEPS_FOUND
+        error('Dependency not found: NETCONF.')
+    endif
+    if postgresql_opt == 'disabled'
+        postgresql = disabler()
+    elif not postgresql.found()
+        error('Dependency not found: PostgreSQL.')
+    endif
+    if FUZZ_OPT != 'disabled'
+        FUZZ_OPT = 'enabled'
+    endif
+    if PERFDHCP_OPT != 'disabled'
+        PERFDHCP_OPT = 'enabled'
+    endif
+    if SHELL_OPT != 'disabled'
+        SHELL_OPT = 'enabled'
+    endif
+elif all_opt.disabled()
+    if gtest_opt != 'enabled'
+        gtest = disabler()
+    endif
+    if krb5_opt != 'enabled'
+        krb5 = disabler()
+    endif
+    if mysql_opt != 'enabled'
+        mysql = disabler()
+    endif
+    if netconf_opt != 'enabled'
+        NETCONF_DEPS_FOUND = false
+    endif
+    if postgresql_opt != 'enabled'
+        postgresql = disabler()
+    endif
+    if FUZZ_OPT != 'enabled'
+        FUZZ_OPT = 'disabled'
+    endif
+    if PERFDHCP_OPT != 'enabled'
+        PERFDHCP_OPT = 'disabled'
+    endif
+    if SHELL_OPT != 'enabled'
+        SHELL_OPT = 'disabled'
+    endif
+elif all_opt.auto()
+    if gtest_opt == 'enabled' and not gtest.found()
+        error('Dependency not found: GTest.')
+    endif
+
+    if krb5_opt == 'enabled' and not krb5.found()
+        error('Dependency not found: Kerberos 5 with GSSAPI.')
+    endif
+
+    if mysql_opt == 'enabled' and not mysql.found()
+        error('Dependency not found: MySQL.')
+    endif
+
+    if netconf_opt == 'enabled' and not NETCONF_DEPS_FOUND
+        error('Dependency not found: NETCONF.')
+    endif
+
+    if postgresql_opt == 'enabled' and not postgresql.found()
+        error('Dependency not found: PostgreSQL.')
+    endif
+else
+    error('Unknown value for -Dall')
+endif
+
+if FUZZ_OPT == 'enabled'
+    if not gtest.found()
+        error('Fuzzing requires gtest. Gtest not found.')
+    endif
+    conf_data.set('FUZZING', true)
+endif
+
+if mysql.found()
+    conf_data.set('HAVE_MYSQL', true)
+endif
+
+if postgresql.found()
+    conf_data.set('HAVE_PGSQL', true)
+endif
+
 #### Compiler Checks
 
 result = cpp.run(
@@ -378,7 +502,6 @@ result = cpp.run(
     dependencies: [log4cplus],
 )
 conf_data.set('LOG4CPLUS_INITIALIZER_H', result.returncode() == 0)
-
 
 if mysql.found()
     result = cpp.run(
@@ -437,6 +560,7 @@ INCLUDES = [
 #### Build report
 
 report_conf_data = configuration_data()
+report_conf_data.merge_from(conf_data)
 report_conf_data.set('TOP_BUILD_DIR', TOP_BUILD_DIR)
 report_conf_data.set('PACKAGE_NAME', 'kea')
 report_conf_data.set('PACKAGE_VERSION', PROJECT_VERSION)
@@ -450,11 +574,7 @@ if have_premium
 else
     report_conf_data.set('PREMIUM', 'no')
 endif
-if meson.version().version_compare('>=1.1.0')
-    report_conf_data.set('BUILD_OPTIONS', meson.build_options())
-else
-    report_conf_data.set('BUILD_OPTIONS', 'unknown')
-endif
+report_conf_data.set('BUILD_OPTIONS', meson.build_options())
 report_conf_data.set('MESON_VERSION', meson.version())
 report_conf_data.set('CXX', ' '.join(cpp.cmd_array()))
 report_conf_data.set('CXX_ID', cpp.get_id())
@@ -574,7 +694,6 @@ else
     report_conf_data.set('BISON', 'unknown')
 endif
 if mysql.found()
-    report_conf_data.set('HAVE_MYSQL', 'yes')
     if not mysql_config.found()
         report_conf_data.set('MYSQL_VERSION', mysql.version())
         report_conf_data.set(
@@ -746,8 +865,18 @@ endif
 
 #### More Custom Targets
 
-alias_target('messages', TARGETS_GEN_MESSAGES)
-alias_target('parser', TARGETS_GEN_PARSER)
+if TARGETS_GEN_MESSAGES.length() > 0
+    alias_target('messages', TARGETS_GEN_MESSAGES)
+else
+    error(
+        'No messages to generate. This is probably an error in the ' + 'meson.build files.',
+    )
+endif
+if TARGETS_GEN_PARSER.length() > 0
+    alias_target('parser', TARGETS_GEN_PARSER)
+else
+    run_target('parser', command: 'echo Parser generation is disabled.'.split())
+endif
 
 #### Installation
 

@@ -1,4 +1,4 @@
-if not PYTHON.found()
+if SHELL_OPT != 'enabled'
     subdir_done()
 endif
 
