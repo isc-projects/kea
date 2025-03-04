@@ -6,48 +6,52 @@
 
 #include <config.h>
 
-#include <arpa/inet.h>
-#include <gtest/gtest.h>
-
+#include <asiolink/addr_utilities.h>
 #include <cc/command_interpreter.h>
-#include <dhcp4/dhcp4_srv.h>
-#include <dhcp4/ctrl_dhcp4_srv.h>
-#include <dhcp4/json_config_parser.h>
+#include <dhcp/classify.h>
+#include <dhcp/docsis3_option_defs.h>
+#include <dhcp/iface_mgr.h>
+#include <dhcp/libdhcp++.h>
 #include <dhcp/option4_addrlst.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_int.h>
-#include <dhcp/docsis3_option_defs.h>
-#include <dhcp/classify.h>
 #include <dhcp/testutils/iface_mgr_test_config.h>
-#include <dhcpsrv/subnet.h>
-#include <dhcpsrv/cfgmgr.h>
+#include <dhcp4/ctrl_dhcp4_srv.h>
+#include <dhcp4/dhcp4_srv.h>
+#include <dhcp4/json_config_parser.h>
 #include <dhcpsrv/cfg_expiration.h>
 #include <dhcpsrv/cfg_hosts.h>
 #include <dhcpsrv/cfg_subnets4.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/parsers/simple_parser4.h>
+#include <dhcpsrv/subnet.h>
+#include <dhcpsrv/subnet_selector.h>
 #include <dhcpsrv/testutils/config_result_check.h>
 #include <dhcpsrv/testutils/test_config_backend_dhcp4.h>
-#include <process/config_ctl_info.h>
 #include <hooks/hooks_manager.h>
+#include <process/config_ctl_info.h>
 #include <stats/stats_mgr.h>
-#include <testutils/log_utils.h>
 #include <testutils/gtest_utils.h>
+#include <testutils/log_utils.h>
 #include <testutils/test_to_element.h>
 #include <util/chrono_time_utils.h>
 #include <util/doubles.h>
 
-#include "marker_file.h"
-#include "test_libraries.h"
-#include "test_data_files_config.h"
-#include "dhcp4_test_utils.h"
-#include "get_config_unittest.h"
-
 #include <boost/scoped_ptr.hpp>
 
 #include <iostream>
-#include <fstream>
 #include <sstream>
-#include <limits.h>
+#include <string>
+#include <vector>
+
+#include <arpa/inet.h>
+#include <gtest/gtest.h>
+#include <unistd.h>
+
+#include "dhcp4_test_utils.h"
+#include "get_config_unittest.h"
+#include "marker_file.h"
+#include "test_libraries.h"
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -62,7 +66,7 @@ using namespace std;
 namespace {
 
 const char* PARSER_CONFIGS[] = {
-    // CONFIGURATION 0: one subnet with one pool, no user contexts
+    // Configuration 0: one subnet with one pool, no user contexts
     "{"
     "    \"interfaces-config\": {"
     "        \"interfaces\": [\"*\" ]"
@@ -162,12 +166,39 @@ const char* PARSER_CONFIGS[] = {
     "        \"type\": \"mysql\","
     "        \"name\": \"keatest2\","
     "        \"user\": \"keatest\","
+    "        \"retry-on-startup\": true,"
     "        \"password\": \"keatest\""
     "      }"
     "    ]"
     "}",
 
-    // Configuration 5 for comments
+    // Configuration 5: config databases
+    "{ \n"
+    "    \"interfaces-config\": { \n"
+    "        \"interfaces\": [\"*\" ] \n"
+    "    }, \n"
+    "    \"valid-lifetime\": 4000, \n"
+    "    \"rebind-timer\": 2000, \n"
+    "    \"renew-timer\": 1000, \n"
+    "    \"config-control\": { \n"
+    "       \"config-fetch-wait-time\": 10, \n"
+    "       \"config-databases\": [ { \n"
+    "               \"type\": \"mysql\", \n"
+    "               \"name\": \"keatest1\", \n"
+    "               \"user\": \"keatest\", \n"
+    "               \"password\": \"keatest\" \n"
+    "           },{ \n"
+    "               \"type\": \"mysql\", \n"
+    "               \"name\": \"keatest2\", \n"
+    "               \"user\": \"keatest\", \n"
+    "               \"retry-on-startup\": true, \n"
+    "               \"password\": \"keatest\" \n"
+    "           } \n"
+    "       ] \n"
+    "   } \n"
+    "} \n",
+
+    // Configuration 6 for comments
     "{"
     "    \"comment\": \"A DHCPv4 server\","
     "    \"interfaces-config\": {"
@@ -241,32 +272,7 @@ const char* PARSER_CONFIGS[] = {
     "        \"comment\": \"No dynamic DNS\","
     "        \"enable-updates\": false"
     "    }"
-    "}",
-
-    // Configuration 6: config databases
-    "{ \n"
-    "    \"interfaces-config\": { \n"
-    "        \"interfaces\": [\"*\" ] \n"
-    "    }, \n"
-    "    \"valid-lifetime\": 4000, \n"
-    "    \"rebind-timer\": 2000, \n"
-    "    \"renew-timer\": 1000, \n"
-    "    \"config-control\": { \n"
-    "       \"config-fetch-wait-time\": 10, \n"
-    "       \"config-databases\": [ { \n"
-    "               \"type\": \"mysql\", \n"
-    "               \"name\": \"keatest1\", \n"
-    "               \"user\": \"keatest\", \n"
-    "               \"password\": \"keatest\" \n"
-    "           },{ \n"
-    "               \"type\": \"mysql\", \n"
-    "               \"name\": \"keatest2\", \n"
-    "               \"user\": \"keatest\", \n"
-    "               \"password\": \"keatest\" \n"
-    "           } \n"
-    "       ] \n"
-    "   } \n"
-    "} \n"
+    "}"
 };
 
 class Dhcp4ParserTest : public LogContentTest {
@@ -281,17 +287,40 @@ protected:
     }
 
 public:
-    Dhcp4ParserTest()
-    : rcode_(-1) {
-        // Open port 0 means to not do anything at all. We don't want to
+    Dhcp4ParserTest() : rcode_(-1) {
+        // Open port 0 means to not open any sockets. We don't want to
         // deal with sockets here, just check if configuration handling
         // is sane.
         srv_.reset(new ControlledDhcpv4Srv(0));
-        // Create fresh context.
+
+        const IfaceCollection& ifaces = IfaceMgr::instance().getIfaces();
+
+        // There must be some interface detected
+        if (ifaces.empty()) {
+            // We can't use ASSERT in constructor
+            ADD_FAILURE() << "No interfaces detected.";
+        }
+
+        valid_iface_ = (*ifaces.begin())->getName();
+        bogus_iface_ = "nonexisting0";
+
+        if (IfaceMgr::instance().getIface(bogus_iface_)) {
+            ADD_FAILURE() << "The '" << bogus_iface_ << "' exists on this system"
+                          << " while the test assumes that it doesn't, to execute"
+                          << " some negative scenarios. Can't continue this test.";
+        }
+        // Reset configuration for each test.
         resetConfiguration();
     }
 
-public:
+    ~Dhcp4ParserTest() {
+        // Reset configuration database after each test.
+        resetConfiguration();
+
+        // ... and delete the hooks library marker files if present
+        static_cast<void>(remove(LOAD_MARKER_FILE));
+        static_cast<void>(remove(UNLOAD_MARKER_FILE));
+    };
 
     // Checks if the result of DHCP server configuration has
     // expected code (0 for success, other for failures).
@@ -308,7 +337,7 @@ public:
     void checkResult(ConstElementPtr status, int expected_code,
                      string expected_txt) {
         ASSERT_TRUE(status);
-        comment_ = parseAnswer(rcode_, status);
+        comment_ = parseAnswerText(rcode_, status);
         EXPECT_EQ(expected_code, rcode_) << "error text:" << comment_->stringValue();
         ASSERT_TRUE(comment_);
         ASSERT_EQ(Element::string, comment_->getType());
@@ -325,11 +354,7 @@ public:
     void configure(std::string config, int expected_code,
                    std::string exp_error = "") {
         ConstElementPtr json;
-        try {
-            json = parseDHCP4(config, true);
-        } catch(const std::exception& ex) {
-            ADD_FAILURE() << "parseDHCP4 failed: " << ex.what();
-        }
+        ASSERT_NO_THROW_LOG(json = parseDHCP4(config, true));
 
         ConstElementPtr status;
         EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
@@ -353,14 +378,6 @@ public:
             }
         }
     }
-
-    ~Dhcp4ParserTest() {
-        resetConfiguration();
-
-        // ... and delete the hooks library marker files if present
-        static_cast<void>(remove(LOAD_MARKER_FILE));
-        static_cast<void>(remove(UNLOAD_MARKER_FILE));
-    };
 
     /// @brief Returns an interface configuration used by the most of the
     /// unit tests.
@@ -427,7 +444,8 @@ public:
     /// @params params map holding parameters and their values.
     /// @return configuration string containing custom values of parameters
     /// describing an option.
-    std::string createConfigWithOption(const std::map<std::string, std::string>& params) {
+    std::string createConfigWithOption(const std::map<std::string,
+                                       std::string>& params) {
         std::ostringstream stream;
         stream << "{ " << genIfaceConfig() << "," <<
             "\"rebind-timer\": 2000, "
@@ -450,7 +468,7 @@ public:
             } else if (param.first == "space") {
                 stream << "\"space\": \"" << param.second << "\"";
             } else if (param.first == "code") {
-                stream << "\"code\": " << param.second << "";
+                stream << "\"code\": " << param.second;
             } else if (param.first == "data") {
                 stream << "\"data\": \"" << param.second << "\"";
             } else if (param.first == "csv-format") {
@@ -486,10 +504,10 @@ public:
         Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
             getCfgSubnets4()->selectSubnet(subnet_address);
         if (!subnet) {
-            /// @todo replace toText() with the use of operator <<.
             ADD_FAILURE() << "A subnet for the specified address "
-                          << subnet_address.toText()
-                          << "does not exist in Config Manager";
+                          << subnet_address
+                          << " does not exist in Config Manager";
+            return (OptionDescriptor(false, false));
         }
         OptionContainerPtr options =
             subnet->getCfgOption()->getAll(DHCP4_OPTION_SPACE);
@@ -539,6 +557,7 @@ public:
         EXPECT_NO_THROW(x = Dhcpv4SrvTest::configure(*srv_, json));
         checkResult(x, 1);
         EXPECT_TRUE(errorContainsPosition(x, "<string>"));
+        CfgMgr::instance().clear();
     }
 
     /// @brief Test invalid option parameter value.
@@ -556,6 +575,7 @@ public:
         EXPECT_NO_THROW(x = Dhcpv4SrvTest::configure(*srv_, json));
         checkResult(x, 1);
         EXPECT_TRUE(errorContainsPosition(x, "<string>"));
+        CfgMgr::instance().clear();
     }
 
     /// @brief Test option against given code and data.
@@ -595,7 +615,8 @@ public:
         }
         // Verify that the data is correct. Do not verify suboptions and a header.
         const uint8_t* data = buf.getData();
-        EXPECT_EQ(0, memcmp(expected_data, data + option_desc.option_->getHeaderLen(),
+        EXPECT_EQ(0, memcmp(expected_data,
+                            data + option_desc.option_->getHeaderLen(),
                             expected_data_len));
     }
 
@@ -623,13 +644,17 @@ public:
                            const uint16_t option_code,
                            const uint8_t* expected_data,
                            const size_t expected_data_len) {
+        CfgMgr::instance().clear();
+
         std::string config = createConfigWithOption(params);
         ASSERT_TRUE(executeConfiguration(config, "parse option configuration"));
+
         // The subnet should now hold one option with the specified option code.
         OptionDescriptor desc =
             getOptionFromSubnet(IOAddress("192.0.2.24"), option_code);
         ASSERT_TRUE(desc.option_);
         testOption(desc, option_code, expected_data, expected_data_len);
+        CfgMgr::instance().clear();
     }
 
     /// @brief Parse and Execute configuration
@@ -687,19 +712,22 @@ public:
 
     /// @brief Reset configuration database.
     ///
-    /// This function resets configuration data base by
-    /// removing all subnets and option-data. Reset must
-    /// be performed after each test to make sure that
-    /// contents of the database do not affect result of
-    /// subsequent tests.
+    /// This function resets configuration data base by removing all subnets
+    /// option-data, and hooks libraries. The reset must be performed after each
+    /// test to make sure that contents of the database do not affect the
+    /// results of subsequent tests.
     void resetConfiguration() {
         // The default setting is to listen on all interfaces. In order to
         // properly test interface configuration we disable listening on
         // all interfaces before each test and later check that this setting
         // has been overridden by the configuration used in the test.
         CfgMgr::instance().clear();
-        string config = "{ " + genIfaceConfig() + "," +
-            "\"hooks-libraries\": [ ], "
+        string config = "{ \"interfaces-config\": {"
+            "    \"interfaces\": [ ]"
+            "},"
+            "\"hooks-libraries\": [ ],"
+            "\"rebind-timer\": 2000, "
+            "\"renew-timer\": 1000, "
             "\"valid-lifetime\": 4000, "
             "\"subnet4\": [ ], "
             "\"dhcp-ddns\": { \"enable-updates\" : false }, "
@@ -836,9 +864,11 @@ public:
                                                << isc::data::prettyPrint(exp_value);
     }
 
-    boost::scoped_ptr<Dhcpv4Srv> srv_;  ///< DHCP4 server under test
     int rcode_;                         ///< Return code from element parsing
-    ConstElementPtr comment_;           ///< Reason for parse fail
+    boost::scoped_ptr<Dhcpv4Srv> srv_;  ///< Instance of the Dhcpv4Srv used during tests
+    ConstElementPtr comment_; ///< Comment (see @ref isc::config::parseAnswer)
+    string valid_iface_; ///< Valid network interface name (present in system)
+    string bogus_iface_; ///< invalid network interface name (not in system)
     isc::dhcp::ClientClasses classify_; ///< used in client classification
 };
 
@@ -862,31 +892,10 @@ TEST_F(Dhcp4ParserTest, bogusCommand) {
 TEST_F(Dhcp4ParserTest, emptyInterfaceConfig) {
 
     ConstElementPtr json;
-    EXPECT_NO_THROW(json = parseDHCP4("{ \"rebind-timer\": 2000, "
+    EXPECT_NO_THROW(json = parseDHCP4("{ "
+                                      "\"rebind-timer\": 2000, "
                                       "\"renew-timer\": 1000, "
                                       "\"valid-lifetime\": 4000 }"));
-
-    ConstElementPtr status;
-    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
-
-    // returned value should be 0 (success)
-    checkResult(status, 0);
-}
-
-/// The goal of this test is to verify if wrongly defined subnet will
-/// be rejected. Properly defined subnet must include at least one
-/// pool definition.
-TEST_F(Dhcp4ParserTest, emptySubnet) {
-
-    std::string config = "{ " + genIfaceConfig() + "," +
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "\"subnet4\": [  ], "
-        "\"valid-lifetime\": 4000 }";
-
-    ConstElementPtr json;
-    EXPECT_NO_THROW(json = parseDHCP4(config));
-    extractConfig(config);
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
@@ -900,7 +909,7 @@ TEST_F(Dhcp4ParserTest, emptySubnet) {
 /// specified (boundary check is done when lifetimes are applied).
 TEST_F(Dhcp4ParserTest, outBoundValidLifetime) {
 
-    string too_small =  "{ " + genIfaceConfig() + "," +
+    string too_small =  "{ " + genIfaceConfig() + ","
         "\"subnet4\": [ { "
         "    \"id\": 1,"
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
@@ -918,7 +927,7 @@ TEST_F(Dhcp4ParserTest, outBoundValidLifetime) {
     checkResult(status, 1, expected);
     resetConfiguration();
 
-    string too_large =  "{ " + genIfaceConfig() + "," +
+    string too_large =  "{ " + genIfaceConfig() + ","
         "\"subnet4\": [ { "
         "    \"id\": 1,"
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
@@ -933,7 +942,7 @@ TEST_F(Dhcp4ParserTest, outBoundValidLifetime) {
     checkResult(status, 1, expected);
     resetConfiguration();
 
-    string before =  "{ " + genIfaceConfig() + "," +
+    string before =  "{ " + genIfaceConfig() + ","
         "\"subnet4\": [ { "
         "    \"id\": 1,"
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
@@ -949,7 +958,7 @@ TEST_F(Dhcp4ParserTest, outBoundValidLifetime) {
     checkResult(status, 1, expected);
     resetConfiguration();
 
-    string after =  "{ " + genIfaceConfig() + "," +
+    string after =  "{ " + genIfaceConfig() + ","
         "\"subnet4\": [ { "
         "    \"id\": 1,"
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
@@ -965,7 +974,7 @@ TEST_F(Dhcp4ParserTest, outBoundValidLifetime) {
     checkResult(status, 1, expected);
     resetConfiguration();
 
-    string crossed =  "{ " + genIfaceConfig() + "," +
+    string crossed =  "{ " + genIfaceConfig() + ","
         "\"subnet4\": [ { "
         "    \"id\": 1,"
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
@@ -986,7 +995,7 @@ TEST_F(Dhcp4ParserTest, outBoundValidLifetime) {
 /// parameters only.
 TEST_F(Dhcp4ParserTest, outBoundGlobalValidLifetime) {
 
-    string too_small =  "{ " + genIfaceConfig() + "," +
+    string too_small =  "{ " + genIfaceConfig() + ","
         "\"valid-lifetime\": 1000, \"min-valid-lifetime\": 2000 }";
 
     ConstElementPtr json;
@@ -1000,7 +1009,7 @@ TEST_F(Dhcp4ParserTest, outBoundGlobalValidLifetime) {
     checkResult(status, 1, expected);
     resetConfiguration();
 
-    string too_large =  "{ " + genIfaceConfig() + "," +
+    string too_large =  "{ " + genIfaceConfig() + ","
         "\"valid-lifetime\": 2000, \"max-valid-lifetime\": 1000 }";
 
     ASSERT_NO_THROW(json = parseDHCP4(too_large));
@@ -1011,7 +1020,7 @@ TEST_F(Dhcp4ParserTest, outBoundGlobalValidLifetime) {
     checkResult(status, 1, expected);
     resetConfiguration();
 
-    string before =  "{ " + genIfaceConfig() + "," +
+    string before =  "{ " + genIfaceConfig() + ","
         "\"valid-lifetime\": 1000, \"min-valid-lifetime\": 2000, "
         "\"max-valid-lifetime\": 4000 }";
 
@@ -1023,7 +1032,7 @@ TEST_F(Dhcp4ParserTest, outBoundGlobalValidLifetime) {
     checkResult(status, 1, expected);
     resetConfiguration();
 
-    string after =  "{ " + genIfaceConfig() + "," +
+    string after =  "{ " + genIfaceConfig() + ","
         "\"valid-lifetime\": 5000, \"min-valid-lifetime\": 1000, "
         "\"max-valid-lifetime\": 4000 }";
 
@@ -1035,7 +1044,7 @@ TEST_F(Dhcp4ParserTest, outBoundGlobalValidLifetime) {
     checkResult(status, 1, expected);
     resetConfiguration();
 
-    string crossed =  "{ " + genIfaceConfig() + "," +
+    string crossed =  "{ " + genIfaceConfig() + ","
         "\"valid-lifetime\": 1500, \"min-valid-lifetime\": 2000, "
         "\"max-valid-lifetime\": 1000 }";
 
@@ -1051,7 +1060,7 @@ TEST_F(Dhcp4ParserTest, outBoundGlobalValidLifetime) {
 /// it is marked unspecified in the Subnet.
 TEST_F(Dhcp4ParserTest, unspecifiedRenewTimer) {
 
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"subnet4\": [ { "
         "    \"id\": 1,"
@@ -1086,7 +1095,7 @@ TEST_F(Dhcp4ParserTest, unspecifiedRenewTimer) {
 /// it is marked unspecified in the Subnet.
 TEST_F(Dhcp4ParserTest, unspecifiedRebindTimer) {
 
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
         "    \"id\": 1,"
@@ -1116,11 +1125,32 @@ TEST_F(Dhcp4ParserTest, unspecifiedRebindTimer) {
     EXPECT_EQ(1, subnet->getID());
 }
 
+/// The goal of this test is to verify if configuration without any
+/// subnets defined can be accepted.
+TEST_F(Dhcp4ParserTest, emptySubnet) {
+
+    string config = "{ " + genIfaceConfig() + ","
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [  ], "
+        "\"valid-lifetime\": 4000 }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
+
+    // returned value should be 0 (success)
+    checkResult(status, 0);
+}
+
 /// The goal of this test is to verify if defined subnet uses global
 /// parameter timer definitions.
 TEST_F(Dhcp4ParserTest, subnetGlobalDefaults) {
 
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -1160,36 +1190,37 @@ TEST_F(Dhcp4ParserTest, subnetGlobalDefaults) {
 TEST_F(Dhcp4ParserTest, multipleSubnetsExplicitIDs) {
     ConstElementPtr x;
     // Four subnets with arbitrary subnet ids.
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\", "
-        "    \"id\": 1024 "
+        "    \"id\": 1024"
         " },"
         " {"
         "    \"pools\": [ { \"pool\": \"192.0.3.101 - 192.0.3.150\" } ],"
         "    \"subnet\": \"192.0.3.0/24\", "
-        "    \"id\": 100 "
+        "    \"id\": 100"
         " },"
         " {"
         "    \"pools\": [ { \"pool\": \"192.0.4.101 - 192.0.4.150\" } ],"
         "    \"subnet\": \"192.0.4.0/24\", "
-        "    \"id\": 1 "
+        "    \"id\": 1"
         " },"
         " {"
         "    \"pools\": [ { \"pool\": \"192.0.5.101 - 192.0.5.150\" } ],"
         "    \"subnet\": \"192.0.5.0/24\", "
-        "    \"id\": 34 "
+        "    \"id\": 34"
         " } ],"
         "\"valid-lifetime\": 4000 }";
+
+    int cnt = 0; // Number of reconfigurations
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
     extractConfig(config);
 
-    int cnt = 0; // Number of reconfigurations
     do {
         EXPECT_NO_THROW(x = Dhcpv4SrvTest::configure(*srv_, json));
         checkResult(x, 0);
@@ -1214,32 +1245,32 @@ TEST_F(Dhcp4ParserTest, multipleSubnetsExplicitIDs) {
     } while (++cnt < 3);
 }
 
-// Check that the configuration with two subnets having the same id is rejected.
+// Check that the configuration with two subnets having the same ID is rejected.
 TEST_F(Dhcp4ParserTest, multipleSubnetsOverlappingIDs) {
     ConstElementPtr x;
-    // Four subnets, two of them having the same id.
-    string config = "{ " + genIfaceConfig() + "," +
+    // Four subnets, two of them have the same id.
+    string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\", "
-        "    \"id\": 1024 "
+        "    \"id\": 1024"
         " },"
         " {"
         "    \"pools\": [ { \"pool\": \"192.0.3.101 - 192.0.3.150\" } ],"
         "    \"subnet\": \"192.0.3.0/24\", "
-        "    \"id\": 100 "
+        "    \"id\": 100"
         " },"
         " {"
         "    \"pools\": [ { \"pool\": \"192.0.4.101 - 192.0.4.150\" } ],"
         "    \"subnet\": \"192.0.4.0/24\", "
-        "    \"id\": 1024 "
+        "    \"id\": 1024"
         " },"
         " {"
         "    \"pools\": [ { \"pool\": \"192.0.5.101 - 192.0.5.150\" } ],"
         "    \"subnet\": \"192.0.5.0/24\", "
-        "    \"id\": 34 "
+        "    \"id\": 34"
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
@@ -1257,70 +1288,70 @@ TEST_F(Dhcp4ParserTest, reconfigureRemoveSubnet) {
     ConstElementPtr x;
 
     // All four subnets
-    string config4 = "{ " + genIfaceConfig() + "," +
+    string config4 = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\", "
-        "    \"id\": 1 "
+        "    \"id\": 1"
         " },"
         " {"
         "    \"pools\": [ { \"pool\": \"192.0.3.101 - 192.0.3.150\" } ],"
         "    \"subnet\": \"192.0.3.0/24\", "
-        "    \"id\": 2 "
+        "    \"id\": 2"
         " },"
         " {"
         "    \"pools\": [ { \"pool\": \"192.0.4.101 - 192.0.4.150\" } ],"
         "    \"subnet\": \"192.0.4.0/24\", "
-        "    \"id\": 3 "
+        "    \"id\": 3"
         " },"
         " {"
         "    \"pools\": [ { \"pool\": \"192.0.5.101 - 192.0.5.150\" } ],"
         "    \"subnet\": \"192.0.5.0/24\", "
-        "    \"id\": 4 "
+        "    \"id\": 4"
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
     // Three subnets (the last one removed)
-    string config_first3 = "{ " + genIfaceConfig() + "," +
+    string config_first3 = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\", "
-        "    \"id\": 1 "
+        "    \"id\": 1"
         " },"
         " {"
         "    \"pools\": [ { \"pool\":  \"192.0.3.101 - 192.0.3.150\" } ],"
         "    \"subnet\": \"192.0.3.0/24\", "
-        "    \"id\": 2 "
+        "    \"id\": 2"
         " },"
         " {"
         "    \"pools\": [ { \"pool\": \"192.0.4.101 - 192.0.4.150\" } ],"
         "    \"subnet\": \"192.0.4.0/24\", "
-        "    \"id\": 3 "
+        "    \"id\": 3"
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
     // Second subnet removed
-    string config_second_removed = "{ " + genIfaceConfig() + "," +
+    string config_second_removed = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
         "    \"subnet\": \"192.0.2.0/24\", "
-        "    \"id\": 1 "
+        "    \"id\": 1"
         " },"
         " {"
         "    \"pools\": [ { \"pool\": \"192.0.4.101 - 192.0.4.150\" } ],"
         "    \"subnet\": \"192.0.4.0/24\", "
-        "    \"id\": 3 "
+        "    \"id\": 3"
         " },"
         " {"
         "    \"pools\": [ { \"pool\": \"192.0.5.101 - 192.0.5.150\" } ],"
         "    \"subnet\": \"192.0.5.0/24\", "
-        "    \"id\": 4 "
+        "    \"id\": 4"
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
@@ -1329,11 +1360,14 @@ TEST_F(Dhcp4ParserTest, reconfigureRemoveSubnet) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config4));
+    extractConfig(config4);
     EXPECT_NO_THROW(x = Dhcpv4SrvTest::configure(*srv_, json));
     checkResult(x, 0);
 
+    CfgMgr::instance().commit();
+
     const Subnet4Collection* subnets =
-        CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->getAll();
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
     ASSERT_TRUE(subnets);
     ASSERT_EQ(4, subnets->size()); // We expect 4 subnets
 
@@ -1344,7 +1378,9 @@ TEST_F(Dhcp4ParserTest, reconfigureRemoveSubnet) {
     EXPECT_NO_THROW(x = Dhcpv4SrvTest::configure(*srv_, json));
     checkResult(x, 0);
 
-    subnets = CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->getAll();
+    CfgMgr::instance().commit();
+
+    subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
     ASSERT_TRUE(subnets);
     ASSERT_EQ(3, subnets->size()); // We expect 3 subnets now (4th is removed)
 
@@ -1362,22 +1398,24 @@ TEST_F(Dhcp4ParserTest, reconfigureRemoveSubnet) {
     EXPECT_NO_THROW(x = Dhcpv4SrvTest::configure(*srv_, json));
     checkResult(x, 0);
 
-    CfgMgr::instance().clear();
+    CfgMgr::instance().commit();
 
     // Do reconfiguration
     ASSERT_NO_THROW(json = parseDHCP4(config_second_removed));
     EXPECT_NO_THROW(x = Dhcpv4SrvTest::configure(*srv_, json));
     checkResult(x, 0);
 
-    subnets = CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->getAll();
+    CfgMgr::instance().commit();
+
+    subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
     ASSERT_TRUE(subnets);
     ASSERT_EQ(3, subnets->size()); // We expect 4 subnets
 
-    auto subnet_it = subnets->begin();
-    EXPECT_EQ(1, (*subnet_it)->getID());
+    subnet = subnets->begin();
+    EXPECT_EQ(1, (*subnet)->getID());
     // The second subnet (with subnet-id = 2) is no longer there
-    EXPECT_EQ(3, (*++subnet_it)->getID());
-    EXPECT_EQ(4, (*++subnet_it)->getID());
+    EXPECT_EQ(3, (*++subnet)->getID());
+    EXPECT_EQ(4, (*++subnet)->getID());
 }
 
 /// @todo: implement subnet removal test as part of #3281.
@@ -1386,7 +1424,7 @@ TEST_F(Dhcp4ParserTest, reconfigureRemoveSubnet) {
 // global parameter are taken into consideration.
 TEST_F(Dhcp4ParserTest, nextServerGlobal) {
 
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"next-server\": \"1.2.3.4\", "
@@ -1426,7 +1464,7 @@ TEST_F(Dhcp4ParserTest, nextServerGlobal) {
 // subnet parameter are taken into consideration.
 TEST_F(Dhcp4ParserTest, nextServerSubnet) {
 
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -1464,7 +1502,7 @@ TEST_F(Dhcp4ParserTest, nextServerNegative) {
     IfaceMgrTestConfig test_config(true);
 
     // Config with junk instead of next-server address
-    string config_bogus1 = "{ " + genIfaceConfig() + "," +
+    string config_bogus1 = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -1477,7 +1515,7 @@ TEST_F(Dhcp4ParserTest, nextServerNegative) {
         "\"valid-lifetime\": 4000 }";
 
     // Config with IPv6 next server address
-    string config_bogus2 = "{ " + genIfaceConfig() + "," +
+    string config_bogus2 = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -1490,7 +1528,7 @@ TEST_F(Dhcp4ParserTest, nextServerNegative) {
         "\"valid-lifetime\": 4000 }";
 
     // Config with empty next server address
-    string config_bogus3 = "{ " + genIfaceConfig() + "," +
+    string config_bogus3 = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -1504,7 +1542,7 @@ TEST_F(Dhcp4ParserTest, nextServerNegative) {
 
     // Config with too large server-hostname
     string bigsname(Pkt4::MAX_SNAME_LEN + 1, ' ');
-    string config_bogus4 = "{ " + genIfaceConfig() + "," +
+    string config_bogus4 = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -1518,7 +1556,7 @@ TEST_F(Dhcp4ParserTest, nextServerNegative) {
 
     // Config with too large boot-file-hostname
     string bigfilename(Pkt4::MAX_FILE_LEN + 1, ' ');
-    string config_bogus5 = "{ " + genIfaceConfig() + "," +
+    string config_bogus5 = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -1576,7 +1614,7 @@ TEST_F(Dhcp4ParserTest, nextServerNegative) {
 // specific value.
 TEST_F(Dhcp4ParserTest, nextServerOverride) {
 
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"next-server\": \"192.0.0.1\", "
@@ -1614,7 +1652,7 @@ TEST_F(Dhcp4ParserTest, nextServerOverride) {
 // Check whether it is possible to configure echo-client-id
 TEST_F(Dhcp4ParserTest, echoClientId) {
 
-    string config_false = "{ " + genIfaceConfig() + "," +
+    string config_false = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"echo-client-id\": false,"
@@ -1624,7 +1662,7 @@ TEST_F(Dhcp4ParserTest, echoClientId) {
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
 
-    string config_true = "{ " + genIfaceConfig() + "," +
+    string config_true = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"echo-client-id\": true,"
@@ -1663,7 +1701,7 @@ TEST_F(Dhcp4ParserTest, echoClientId) {
 
 // Check whether it is possible to configure compatibility flags.
 TEST_F(Dhcp4ParserTest, compatibility) {
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"compatibility\": { "
@@ -1701,7 +1739,7 @@ TEST_F(Dhcp4ParserTest, compatibility) {
 
 // Check that unknown compatibility flag raises error.
 TEST_F(Dhcp4ParserTest, compatibilityUnknown) {
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"compatibility\": { "
@@ -1728,7 +1766,7 @@ TEST_F(Dhcp4ParserTest, compatibilityUnknown) {
 
 // Check that not boolean compatibility flag value raises error.
 TEST_F(Dhcp4ParserTest, compatibilityNotBool) {
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"compatibility\": { "
@@ -1756,7 +1794,7 @@ TEST_F(Dhcp4ParserTest, compatibilityNotBool) {
 // This test checks that the global match-client-id parameter is optional
 // and that values under the subnet are used.
 TEST_F(Dhcp4ParserTest, matchClientIdNoGlobal) {
-    std::string config = "{ " + genIfaceConfig() + "," +
+    std::string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ "
@@ -1804,7 +1842,7 @@ TEST_F(Dhcp4ParserTest, matchClientIdNoGlobal) {
 // when there is no such parameter under subnet and that the parameter
 // specified for a subnet overrides the global setting.
 TEST_F(Dhcp4ParserTest, matchClientIdGlobal) {
-    std::string config = "{ " + genIfaceConfig() + "," +
+    std::string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"match-client-id\": true,"
@@ -1851,7 +1889,7 @@ TEST_F(Dhcp4ParserTest, matchClientIdGlobal) {
 // This test checks that the global authoritative parameter is optional
 // and that values under the subnet are used.
 TEST_F(Dhcp4ParserTest, authoritativeNoGlobal) {
-    std::string config = "{ " + genIfaceConfig() + "," +
+    std::string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ "
@@ -1899,7 +1937,7 @@ TEST_F(Dhcp4ParserTest, authoritativeNoGlobal) {
 // when there is no such parameter under subnet and that the parameter
 // specified for a subnet overrides the global setting.
 TEST_F(Dhcp4ParserTest, authoritativeGlobal) {
-    std::string config = "{ " + genIfaceConfig() + "," +
+    std::string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"authoritative\": true,"
@@ -1947,7 +1985,7 @@ TEST_F(Dhcp4ParserTest, authoritativeGlobal) {
 // on a per subnet basis.
 TEST_F(Dhcp4ParserTest, subnetLocal) {
 
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -1983,12 +2021,174 @@ TEST_F(Dhcp4ParserTest, subnetLocal) {
     EXPECT_EQ(5, subnet->getValid().getMax());
 }
 
+// This test checks if it is possible to define a subnet with an
+// interface defined.
+TEST_F(Dhcp4ParserTest, subnetInterface) {
+
+    // There should be at least one interface
+    // As far as I can tell, this is the first lambda in Kea code. Cool.
+    auto config = [this](string iface) {
+        return ("{ " + genIfaceConfig() + ","
+                "\"rebind-timer\": 2000, "
+                "\"renew-timer\": 1000, "
+                "\"subnet4\": [ { "
+                "    \"id\": 1,"
+                "    \"pools\": [ { "
+                "        \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+                "    \"interface\": \"" + iface + "\","
+                "    \"subnet\": \"192.0.2.0/24\" } ],"
+                "\"valid-lifetime\": 4000 }"); };
+    cout << config(valid_iface_) << endl;
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config(valid_iface_)));
+    extractConfig(config("eth0"));
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
+
+    // returned value should be 0 (configuration success)
+    checkResult(status, 0);
+
+    Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->
+        selectSubnet(IOAddress("192.0.2.200"), classify_);
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ(valid_iface_, subnet->getIface().get());
+}
+
+// This test checks if invalid interface name will be rejected in
+// Subnet4 definition.
+TEST_F(Dhcp4ParserTest, subnetInterfaceBogus) {
+
+    // There should be at least one interface
+
+    string config = "{ " + genIfaceConfig() + ","
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"id\": 1,"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"interface\": \"" + bogus_iface_ + "\","
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+    cout << config << endl;
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
+
+    // returned value should be 1 (configuration error)
+    checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+
+    Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->
+        selectSubnet(IOAddress("192.0.2.200"), classify_);
+    EXPECT_FALSE(subnet);
+}
+
+// This test checks if it is not allowed to define global interface
+// parameter.
+TEST_F(Dhcp4ParserTest, interfaceGlobal) {
+
+    string config = "{ " + genIfaceConfig() + ","
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"interface\": \"" + valid_iface_ + "\"," // Not valid. Can be defined in subnet only
+        "\"subnet4\": [ { "
+        "    \"id\": 1,"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+    cout << config << endl;
+
+    ConstElementPtr json = parseJSON(config);
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
+
+    // returned value should be 1 (parse error)
+    checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+
+    EXPECT_THROW(parseDHCP4(config), Dhcp4ParseError);
+}
+
+// Goal of this test is to verify that invalid subnet fails to be parsed.
+TEST_F(Dhcp4ParserTest, badSubnetValues) {
+
+    // Contains parts needed for a single test scenario.
+    struct Scenario {
+        std::string description_;
+        std::string config_json_;
+        std::string exp_error_msg_;
+    };
+
+    // Vector of scenarios.
+    std::vector<Scenario> scenarios = {
+        {
+        "IP is not an address",
+        "{ \"subnet4\": [ { "
+        "    \"subnet\": \"not an address/24\" } ],"
+        "\"valid-lifetime\": 4000 }",
+        "subnet configuration failed: "
+        "Failed to convert string to address 'notanaddress': Invalid argument"
+        },
+        {
+        "IP is Invalid",
+        "{ \"subnet4\": [ { "
+        "    \"subnet\": \"256.16.1.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }",
+        "subnet configuration failed: "
+        "Failed to convert string to address '256.16.1.0': Invalid argument"
+        },
+        {
+        "Missing prefix",
+        "{ \"subnet4\": [ { "
+        "    \"subnet\": \"192.0.2.0\" } ],"
+        "\"valid-lifetime\": 4000 }",
+        "subnet configuration failed: "
+        "Invalid subnet syntax (prefix/len expected):192.0.2.0 (<string>:1:32)"
+        },
+        {
+        "Prefix not an integer (2 slashes)",
+        "{ \"subnet4\": [ { "
+        "    \"subnet\": \"192.0.2.0//24\" } ],"
+        "\"valid-lifetime\": 4000 }",
+        "subnet configuration failed: "
+        "prefix length: '/24' is not an integer (<string>:1:32)"
+        },
+        {
+        "Prefix value is insane",
+        "{ \"subnet4\": [ { "
+        "    \"subnet\": \"192.0.2.0/45938\" } ],"
+        "\"valid-lifetime\": 4000 }",
+        "subnet configuration failed: "
+        "Invalid prefix length specified for subnet: 45938 (<string>:1:32)"
+        }
+    };
+
+    // Iterate over the list of scenarios.  Each should fail to parse with
+    // a specific error message.
+    for (auto const& scenario : scenarios) {
+        SCOPED_TRACE(scenario.description_);
+        ConstElementPtr config;
+        ASSERT_NO_THROW(config = parseDHCP4(scenario.config_json_))
+                        << "invalid json, broken test";
+        ConstElementPtr status;
+        EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, config));
+        checkResult(status, 1);
+        ASSERT_TRUE(comment_);
+        EXPECT_EQ(comment_->stringValue(), scenario.exp_error_msg_);
+    }
+}
+
 // This test checks that multiple pools can be defined and handled properly.
 // The test defines 2 subnets, each with 2 pools.
 TEST_F(Dhcp4ParserTest, multiplePools) {
-
     // Collection with two subnets, each with 2 pools.
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -2050,7 +2250,7 @@ TEST_F(Dhcp4ParserTest, multiplePools) {
 // pool are rejected.
 TEST_F(Dhcp4ParserTest, poolOutOfSubnet) {
 
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -2075,8 +2275,7 @@ TEST_F(Dhcp4ParserTest, poolOutOfSubnet) {
 // using prefix/length notation. There is no separate test for min-max
 // notation as it was tested in several previous tests.
 TEST_F(Dhcp4ParserTest, poolPrefixLen) {
-
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -2108,7 +2307,7 @@ TEST_F(Dhcp4ParserTest, poolPrefixLen) {
 TEST_F(Dhcp4ParserTest, badPools) {
 
     // not a prefix
-    string config_bogus1 = "{ " + genIfaceConfig() + "," +
+    string config_bogus1 = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -2118,7 +2317,7 @@ TEST_F(Dhcp4ParserTest, badPools) {
         "\"valid-lifetime\": 4000 }";
 
     // not a length
-    string config_bogus2 = "{ " + genIfaceConfig() + "," +
+    string config_bogus2 = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -2128,7 +2327,7 @@ TEST_F(Dhcp4ParserTest, badPools) {
         "\"valid-lifetime\": 4000 }";
 
     // invalid prefix length
-    string config_bogus3 = "{ " + genIfaceConfig() + "," +
+    string config_bogus3 = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -2138,7 +2337,7 @@ TEST_F(Dhcp4ParserTest, badPools) {
         "\"valid-lifetime\": 4000 }";
 
     // not a prefix nor a min-max
-    string config_bogus4 = "{ " + genIfaceConfig() + "," +
+    string config_bogus4 = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -2148,7 +2347,7 @@ TEST_F(Dhcp4ParserTest, badPools) {
         "\"valid-lifetime\": 4000 }";
 
     // not an address
-    string config_bogus5 = "{ " + genIfaceConfig() + "," +
+    string config_bogus5 = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -2158,7 +2357,7 @@ TEST_F(Dhcp4ParserTest, badPools) {
         "\"valid-lifetime\": 4000 }";
 
     // min > max
-    string config_bogus6 = "{ " + genIfaceConfig() + "," +
+    string config_bogus6 = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -2168,7 +2367,7 @@ TEST_F(Dhcp4ParserTest, badPools) {
         "\"valid-lifetime\": 4000 }";
 
     // out of range prefix length (new check)
-    string config_bogus7 = "{ " + genIfaceConfig() + "," +
+    string config_bogus7 = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -2241,7 +2440,7 @@ TEST_F(Dhcp4ParserTest, badPools) {
 TEST_F(Dhcp4ParserTest, noPools) {
 
     // Configuration string.
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -2253,81 +2452,13 @@ TEST_F(Dhcp4ParserTest, noPools) {
     EXPECT_THROW(parseDHCP4(config, true), Dhcp4ParseError);
 }
 
-// Goal of this test is to verify that invalid subnet fails to be parsed.
-TEST_F(Dhcp4ParserTest, badSubnetValues) {
-
-    // Contains parts needed for a single test scenario.
-    struct Scenario {
-        std::string description_;
-        std::string config_json_;
-        std::string exp_error_msg_;
-    };
-
-    // Vector of scenarios.
-    std::vector<Scenario> scenarios = {
-        {
-        "IP is not an address",
-        "{ \"subnet4\": [ { "
-        "    \"subnet\": \"not an address/24\" } ],"
-        "\"valid-lifetime\": 4000 }",
-        "subnet configuration failed: "
-        "Failed to convert string to address 'notanaddress': Invalid argument"
-        },
-        {
-        "IP is Invalid",
-        "{ \"subnet4\": [ { "
-        "    \"subnet\": \"256.16.1.0/24\" } ],"
-        "\"valid-lifetime\": 4000 }",
-        "subnet configuration failed: "
-        "Failed to convert string to address '256.16.1.0': Invalid argument"
-        },
-        {
-        "Missing prefix",
-        "{ \"subnet4\": [ { "
-        "    \"subnet\": \"192.0.2.0\" } ],"
-        "\"valid-lifetime\": 4000 }",
-        "subnet configuration failed: "
-        "Invalid subnet syntax (prefix/len expected):192.0.2.0 (<string>:1:32)"
-        },
-        {
-        "Prefix not an integer (2 slashes)",
-        "{ \"subnet4\": [ { "
-        "    \"subnet\": \"192.0.2.0//24\" } ],"
-        "\"valid-lifetime\": 4000 }",
-        "subnet configuration failed: "
-        "prefix length: '/24' is not an integer (<string>:1:32)"
-        },
-        {
-        "Prefix value is insane",
-        "{ \"subnet4\": [ { "
-        "    \"subnet\": \"192.0.2.0/45938\" } ],"
-        "\"valid-lifetime\": 4000 }",
-        "subnet configuration failed: "
-        "Invalid prefix length specified for subnet: 45938 (<string>:1:32)"
-        }
-    };
-
-    // Iterate over the list of scenarios.  Each should fail to parse with
-    // a specific error message.
-    for (auto const& scenario : scenarios) {
-        SCOPED_TRACE(scenario.description_);
-        ConstElementPtr config;
-        ASSERT_NO_THROW(config = parseDHCP4(scenario.config_json_))
-                        << "invalid json, broken test";
-        ConstElementPtr status;
-        EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, config));
-        checkResult(status, 1);
-        ASSERT_TRUE(comment_);
-        EXPECT_EQ(comment_->stringValue(), scenario.exp_error_msg_);
-    }
-}
 
 // Goal of this test is to verify that unknown interface fails
 // to be parsed.
 TEST_F(Dhcp4ParserTest, unknownInterface) {
 
     // Configuration string.
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -2854,8 +2985,9 @@ TEST_F(Dhcp4ParserTest, optionDefEncapsulateOwnSpace) {
 /// used by any of the standard options.
 TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
 
-    // Configuration string. The option code 109 is unassigned so it
-    // can be used for a custom option definition in dhcp4 option space.
+    // Configuration string. The option code 109 is unassigned
+    // so it can be used for a custom option definition in
+    // dhcp4 option space.
     std::string config =
         "{ \"option-def\": [ {"
         "      \"name\": \"foo\","
@@ -2889,9 +3021,9 @@ TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
     EXPECT_EQ(OPT_STRING_TYPE, def->getType());
     EXPECT_FALSE(def->getArrayType());
 
-    // The combination of option space and code is invalid. The 'dhcp4' option
-    // space groups standard options and the code 3 is reserved for one of
-    // them.
+    // The combination of option space and code is invalid. The 'dhcp4'
+    // option space groups standard options and the code 3 is reserved
+    // for one of them.
     config =
         "{ \"option-def\": [ {"
         "      \"name\": \"routers\","
@@ -2941,7 +3073,7 @@ TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
 // Goal of this test is to verify that global option data is configured
 TEST_F(Dhcp4ParserTest, optionDataDefaultsGlobal) {
     ConstElementPtr x;
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -3013,7 +3145,7 @@ TEST_F(Dhcp4ParserTest, optionDataDefaultsGlobal) {
 // Goal of this test is to verify that subnet option data is configured
 TEST_F(Dhcp4ParserTest, optionDataDefaultsSubnet) {
     ConstElementPtr x;
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"subnet4\": [ { "
@@ -3089,7 +3221,7 @@ TEST_F(Dhcp4ParserTest, optionDataTwoSpaces) {
     // The definition is not required for the option that
     // belongs to the 'dhcp4' option space as it is the
     // standard option.
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"valid-lifetime\": 4000,"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
@@ -3138,8 +3270,8 @@ TEST_F(Dhcp4ParserTest, optionDataTwoSpaces) {
     EXPECT_EQ(56, desc1.option_->getType());
     // Try to get the non-existing option from the non-existing
     // option space and  expect that option is not returned.
-    OptionDescriptor desc3 =
-        CfgMgr::instance().getStagingCfg()->getCfgOption()->get("non-existing", 56);
+    OptionDescriptor desc3 = CfgMgr::instance().getStagingCfg()->
+        getCfgOption()->get("non-existing", 56);
     ASSERT_FALSE(desc3.option_);
 }
 
@@ -3152,8 +3284,8 @@ TEST_F(Dhcp4ParserTest, optionDataTwoSpaces) {
 TEST_F(Dhcp4ParserTest, optionDataEncapsulate) {
 
     // @todo DHCP configurations has many dependencies between
-    // parameters. First of all, configuration for subnet was
-    // inherited from the global values. Thus subnet had to be
+    // parameters. First of all, configuration for subnet is
+    // inherited from the global values. Thus subnet has to be
     // configured when all global values have been configured.
     // Also, an option can encapsulate another option only
     // if the latter has been configured. For this reason in this
@@ -3164,7 +3296,7 @@ TEST_F(Dhcp4ParserTest, optionDataEncapsulate) {
     // at the very end (when all other parameters are configured).
 
     // Starting stage 1. Configure sub-options and their definitions.
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"valid-lifetime\": 4000,"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
@@ -3207,7 +3339,7 @@ TEST_F(Dhcp4ParserTest, optionDataEncapsulate) {
     // the configuration from the stage 2 is repeated because Kea
     // configuration manager sends whole configuration for the lists
     // where at least one element is being modified or added.
-    config = "{ " + genIfaceConfig() + "," +
+    config = "{ " + genIfaceConfig() + ","
         "\"valid-lifetime\": 3000,"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
@@ -3288,7 +3420,7 @@ TEST_F(Dhcp4ParserTest, optionDataEncapsulate) {
 // option setting.
 TEST_F(Dhcp4ParserTest, optionDataInSingleSubnet) {
     ConstElementPtr x;
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"option-data\": [ {"
@@ -3369,8 +3501,7 @@ TEST_F(Dhcp4ParserTest, optionDataBoolean) {
                                      " boolean value"));
 
     // The subnet should now hold one option with the code 19.
-    OptionDescriptor desc = getOptionFromSubnet(IOAddress("192.0.2.24"),
-                                                        19);
+    OptionDescriptor desc = getOptionFromSubnet(IOAddress("192.0.2.24"), 19);
     ASSERT_TRUE(desc.option_);
 
     // This option should be set to "true", represented as 0x1 in the option
@@ -3432,14 +3563,13 @@ TEST_F(Dhcp4ParserTest, optionDataBoolean) {
     params["data"] = "01";
     testConfiguration(params, 19, expected_option_data,
                       sizeof(expected_option_data));
-
 }
 
 // Goal of this test is to verify options configuration
 // for multiple subnets.
 TEST_F(Dhcp4ParserTest, optionDataInMultipleSubnets) {
     ConstElementPtr x;
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -3578,6 +3708,7 @@ TEST_F(Dhcp4ParserTest, optionDataSinglePool) {
     range = idx.equal_range(23);
     ASSERT_EQ(1, std::distance(range.first, range.second));
     // Do another round of testing with second option.
+
     const uint8_t foo2_expected[] = {
         0x01
     };
@@ -3692,10 +3823,17 @@ TEST_F(Dhcp4ParserTest, optionCodeNegative) {
 
 // Verify that out of bounds option code is rejected in the configuration.
 TEST_F(Dhcp4ParserTest, optionCodeNonUint8) {
-    // The valid option codes are uint16_t values so passing
-    // uint16_t maximum value incremented by 1 should result
+    // The valid option codes are uint8_t values so passing
+    // uint8_t maximum value incremented by 1 should result
     // in failure.
     testInvalidOptionParam("257", "code");
+}
+
+// Verify that out of bounds option code is rejected in the configuration.
+TEST_F(Dhcp4ParserTest, optionCodeHighNonUint8) {
+    // Another check for uint8_t overflow but this time
+    // let's pass even greater option code value.
+    testInvalidOptionParam("500", "code");
 }
 
 // Verify that zero option code is rejected in the configuration.
@@ -3748,7 +3886,9 @@ TEST_F(Dhcp4ParserTest, optionDataValidHexLiterals) {
         // returned but in theory we may have multiple options with the same
         // code so we get the range.
         std::pair<OptionContainerTypeIndex::const_iterator,
-                OptionContainerTypeIndex::const_iterator> range = idx.equal_range(56);
+                OptionContainerTypeIndex::const_iterator> range =
+                    idx.equal_range(56);
+
         // Expect single option with the code equal to 100.
         ASSERT_EQ(1, std::distance(range.first, range.second));
         const uint8_t foo_expected[] = { 0x0A, 0x0B, 0x0C, 0x0D };
@@ -3784,8 +3924,7 @@ TEST_F(Dhcp4ParserTest, stdOptionData) {
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.5"));
     ASSERT_TRUE(subnet);
-    OptionContainerPtr options =
-        subnet->getCfgOption()->getAll(DHCP4_OPTION_SPACE);
+    OptionContainerPtr options = subnet->getCfgOption()->getAll(DHCP4_OPTION_SPACE);
     ASSERT_TRUE(options);
     ASSERT_EQ(1, options->size());
 
@@ -3886,7 +4025,7 @@ TEST_F(Dhcp4ParserTest, domainSearchOption) {
 // slp-service-scope without option scope list
 TEST_F(Dhcp4ParserTest, slpOptions) {
     ConstElementPtr x;
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -3950,7 +4089,7 @@ TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
     // In the first stage we create definitions of suboptions
     // that we will add to the base option.
     // Let's create some dummy options: foo and foo2.
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"valid-lifetime\": 4000,"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
@@ -3997,7 +4136,7 @@ TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
     // We add our dummy options to this option space and thus
     // they should be included as sub-options in the
     // 'vendor-encapsulated-options' option.
-    config = "{ " + genIfaceConfig() + "," +
+    config = "{ " + genIfaceConfig() + ","
         "\"valid-lifetime\": 3000,"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
@@ -4085,13 +4224,13 @@ TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
 }
 
 // This test checks if vendor options can be specified in the config file
-// (in hex format), and later retrieved
+// (in hex format), and later retrieved from configured subnet
 TEST_F(Dhcp4ParserTest, vendorOptionsHex) {
 
     // This configuration string is to configure two options
     // sharing the code 1 and belonging to the different vendor spaces.
     // (different vendor-id values).
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"valid-lifetime\": 4000,"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
@@ -4125,6 +4264,7 @@ TEST_F(Dhcp4ParserTest, vendorOptionsHex) {
     ASSERT_TRUE(status);
     checkResult(status, 0);
 
+    // Options should be now available
     // Try to get the option from the vendor space 4491
     OptionDescriptor desc1 = CfgMgr::instance().getStagingCfg()->
         getCfgOption()->get(VENDOR_ID_CABLE_LABS, 100);
@@ -4144,13 +4284,13 @@ TEST_F(Dhcp4ParserTest, vendorOptionsHex) {
 }
 
 // This test checks if vendor options can be specified in the config file,
-// (in csv format), and later retrieved
+// (in csv format), and later retrieved from configured subnet
 TEST_F(Dhcp4ParserTest, vendorOptionsCsv) {
 
     // This configuration string is to configure two options
     // sharing the code 1 and belonging to the different vendor spaces.
     // (different vendor-id values).
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"valid-lifetime\": 4000,"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
@@ -4173,15 +4313,17 @@ TEST_F(Dhcp4ParserTest, vendorOptionsCsv) {
         " } ]"
         "}";
 
+    ConstElementPtr status;
+
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
     extractConfig(config);
 
-    ConstElementPtr status;
     EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
     ASSERT_TRUE(status);
     checkResult(status, 0);
 
+    // Options should be now available.
     // Try to get the option from the vendor space 4491
     OptionDescriptor desc1 = CfgMgr::instance().getStagingCfg()->
         getCfgOption()->get(VENDOR_ID_CABLE_LABS, 100);
@@ -4204,20 +4346,22 @@ TEST_F(Dhcp4ParserTest, vendorOptionsCsv) {
 std::string
 buildHooksLibrariesConfig(const std::vector<std::string>& libraries = {},
                           bool multi_threading = true) {
+    const string lbrace("{");
+    const string rbrace("}");
+    const string liblabel("\"library\": ");
+    const string quote("\"");
 
     // Create the first part of the configuration string.
     string config =
-        "{  \"interfaces-config\": {"
-            "    \"interfaces\": [ \"*\" ]"
-            "},"
-            "\"hooks-libraries\": [";
+        "{ \"interfaces-config\": { \"interfaces\": [] },"
+           "\"hooks-libraries\": [";
 
     // Append the libraries (separated by commas if needed)
     for (unsigned int i = 0; i < libraries.size(); ++i) {
         if (i > 0) {
             config += string(", ");
         }
-        config += (string("{ \"library\": \"") + libraries[i] + string("\" }"));
+        config += (lbrace + liblabel + quote + libraries[i] + quote + rbrace);
     }
 
     // Append the remainder of the configuration.
@@ -4282,6 +4426,7 @@ TEST_F(Dhcp4ParserTest, InvalidLibrary) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
+
     ConstElementPtr status;
     ASSERT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
 
@@ -4402,7 +4547,11 @@ TEST_F(Dhcp4ParserTest, IncompatibleLibrary3Specified) {
 TEST_F(Dhcp4ParserTest, selectedInterfaces) {
     IfaceMgrTestConfig test_config(true);
 
-    ConstElementPtr x;
+    // Make sure the config manager is clean and there is no hanging
+    // interface configuration.
+    ASSERT_FALSE(test_config.socketOpen("eth0", AF_INET));
+    ASSERT_FALSE(test_config.socketOpen("eth1", AF_INET));
+
     string config = "{ \"interfaces-config\": {"
         "  \"interfaces\": [ \"eth0\", \"eth1\" ]"
         "},"
@@ -4415,15 +4564,10 @@ TEST_F(Dhcp4ParserTest, selectedInterfaces) {
     extractConfig(config);
 
     ConstElementPtr status;
-
-    // Make sure the config manager is clean and there is no hanging
-    // interface configuration.
-    EXPECT_FALSE(test_config.socketOpen("eth0", AF_INET));
-    EXPECT_FALSE(test_config.socketOpen("eth1", AF_INET));
-
     // Apply configuration.
     EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
     ASSERT_TRUE(status);
+    // returned value must be 0 (configuration accepted)
     checkResult(status, 0);
 
     CfgMgr::instance().getStagingCfg()->getCfgIface()->openSockets(AF_INET, 10000);
@@ -4438,7 +4582,10 @@ TEST_F(Dhcp4ParserTest, selectedInterfaces) {
 TEST_F(Dhcp4ParserTest, allInterfaces) {
     IfaceMgrTestConfig test_config(true);
 
-    ConstElementPtr x;
+    // Make sure there is no old configuration.
+    ASSERT_FALSE(test_config.socketOpen("eth0", AF_INET));
+    ASSERT_FALSE(test_config.socketOpen("eth1", AF_INET));
+
     // This configuration specifies two interfaces on which server should listen
     // but it also includes asterisk. The asterisk switches server into the
     // mode when it listens on all interfaces regardless of what interface names
@@ -4455,10 +4602,6 @@ TEST_F(Dhcp4ParserTest, allInterfaces) {
     extractConfig(config);
 
     ConstElementPtr status;
-
-    // Make sure there is no old configuration.
-    ASSERT_FALSE(test_config.socketOpen("eth0", AF_INET));
-    ASSERT_FALSE(test_config.socketOpen("eth1", AF_INET));
 
     // Apply configuration.
     EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
@@ -4512,129 +4655,11 @@ TEST_F(Dhcp4ParserTest, selectedInterfacesAndAddresses) {
     EXPECT_FALSE(test_config.socketOpen("eth1", "192.0.2.5"));
 }
 
-// This test verifies that valid d2CliengConfig works correctly.
-TEST_F(Dhcp4ParserTest, d2ClientConfigValid) {
-    ConstElementPtr status;
-
-    // Verify that the D2 configuration can be fetched and is set to disabled.
-    D2ClientConfigPtr d2_client_config = CfgMgr::instance().getD2ClientConfig();
-    EXPECT_FALSE(d2_client_config->getEnableUpdates());
-
-    // Verify that the convenience method agrees.
-    ASSERT_FALSE(CfgMgr::instance().ddnsEnabled());
-
-    string config_str = "{ " + genIfaceConfig() + "," +
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "\"subnet4\": [ { "
-        "    \"id\": 1,"
-        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
-        "    \"subnet\": \"192.0.2.0/24\" } ],"
-        " \"dhcp-ddns\" : {"
-        "     \"enable-updates\" : true, "
-        "     \"server-ip\" : \"192.168.2.1\", "
-        "     \"server-port\" : 777, "
-        "     \"sender-ip\" : \"192.168.2.2\", "
-        "     \"sender-port\" : 778, "
-        "     \"max-queue-size\" : 2048, "
-        "     \"ncr-protocol\" : \"UDP\", "
-        "     \"ncr-format\" : \"JSON\"}, "
-        "\"valid-lifetime\": 4000 }";
-
-    // Convert the JSON string to configuration elements.
-    ConstElementPtr config;
-    ASSERT_NO_THROW(config = parseDHCP4(config_str, true));
-    extractConfig(config_str);
-
-    // Pass the configuration in for parsing.
-    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, config));
-
-    // check if returned status is OK
-    checkResult(status, 0);
-
-    // Verify that DHCP-DDNS updating is enabled.
-    EXPECT_TRUE(CfgMgr::instance().ddnsEnabled());
-
-    // Verify that the D2 configuration can be retrieved.
-    d2_client_config = CfgMgr::instance().getD2ClientConfig();
-    ASSERT_TRUE(d2_client_config);
-
-    // Verify that the configuration values are correct.
-    EXPECT_TRUE(d2_client_config->getEnableUpdates());
-    EXPECT_EQ("192.168.2.1", d2_client_config->getServerIp().toText());
-    EXPECT_EQ(777, d2_client_config->getServerPort());
-    EXPECT_EQ("192.168.2.2", d2_client_config->getSenderIp().toText());
-    EXPECT_EQ(778, d2_client_config->getSenderPort());
-    EXPECT_EQ(2048, d2_client_config->getMaxQueueSize());
-    EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_client_config->getNcrProtocol());
-    EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_client_config->getNcrFormat());
-
-    // ddns-send-updates should be global default
-    checkGlobal("ddns-send-updates", true);
-    checkGlobal("ddns-conflict-resolution-mode", "check-with-dhcid");
-
-    // The following, deprecated dhcp-ddns parameters,
-    // should all have global default values.
-    checkGlobal("ddns-override-no-update", false);
-    checkGlobal("ddns-override-client-update", false);
-    checkGlobal("ddns-replace-client-name", "never");
-    checkGlobal("ddns-generated-prefix", "myhost");
-    checkGlobal("ddns-qualifying-suffix", "");
-}
-
-// This test checks the ability of the server to handle a configuration
-// containing an invalid dhcp-ddns (D2ClientConfig) entry.
-TEST_F(Dhcp4ParserTest, invalidD2ClientConfig) {
-    ConstElementPtr status;
-
-    // Configuration string with an invalid D2 client config,
-    // "server-ip" is invalid.
-    string config_str = "{ " + genIfaceConfig() + "," +
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "\"ddns-override-no-update\" : true, "
-        "\"ddns-override-client-update\" : true, "
-        "\"ddns-replace-client-name\" : \"when-present\", "
-        "\"ddns-generated-prefix\" : \"test.prefix\", "
-        "\"ddns-qualifying-suffix\" : \"test.suffix.\", "
-        "\"subnet4\": [ { "
-        "    \"id\": 1,"
-        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
-        "    \"subnet\": \"192.0.2.0/24\" } ],"
-        " \"dhcp-ddns\" : {"
-        "     \"enable-updates\" : true, "
-        "     \"server-ip\" : \"bogus-value\", "
-        "     \"server-port\" : 5301, "
-        "     \"ncr-protocol\" : \"UDP\", "
-        "     \"ncr-format\" : \"JSON\"},"
-        "\"valid-lifetime\": 4000 }";
-
-    // Convert the JSON string to configuration elements.
-    ConstElementPtr config;
-    ASSERT_NO_THROW(config = parseDHCP4(config_str));
-
-    // Configuration should not throw, but should fail.
-    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, config));
-
-    // check if returned status is failed.
-    checkResult(status, 1);
-    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
-
-    // Verify that the D2 configuration can be fetched and is set to disabled.
-    D2ClientConfigPtr d2_client_config = CfgMgr::instance().getD2ClientConfig();
-    EXPECT_FALSE(d2_client_config->getEnableUpdates());
-
-    // Verify that the convenience method agrees.
-    ASSERT_FALSE(CfgMgr::instance().ddnsEnabled());
-}
-
 // This test checks if it is possible to specify relay information
 TEST_F(Dhcp4ParserTest, subnetRelayInfo) {
 
-    ConstElementPtr status;
-
     // A config with relay information.
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -4653,6 +4678,7 @@ TEST_F(Dhcp4ParserTest, subnetRelayInfo) {
     ASSERT_NO_THROW(json = parseDHCP4(config));
     extractConfig(config);
 
+    ConstElementPtr status;
     EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
 
     // returned value should be 0 (configuration success)
@@ -4668,11 +4694,8 @@ TEST_F(Dhcp4ParserTest, subnetRelayInfo) {
 
 // This test checks if it is possible to specify a list of relays
 TEST_F(Dhcp4ParserTest, subnetRelayInfoList) {
-
-    ConstElementPtr status;
-
     // A config with relay information.
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -4691,6 +4714,7 @@ TEST_F(Dhcp4ParserTest, subnetRelayInfoList) {
     ASSERT_NO_THROW(json = parseDHCP4(config));
     extractConfig(config);
 
+    ConstElementPtr status;
     EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
 
     // returned value should be 0 (configuration success)
@@ -4712,7 +4736,7 @@ TEST_F(Dhcp4ParserTest, subnetRelayInfoList) {
 // with defined client classes.
 TEST_F(Dhcp4ParserTest, classifySubnets) {
     ConstElementPtr x;
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -4808,7 +4832,7 @@ TEST_F(Dhcp4ParserTest, classifySubnets) {
 // with defined client classes.
 TEST_F(Dhcp4ParserTest, classifyPools) {
     ConstElementPtr x;
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -4857,7 +4881,7 @@ TEST_F(Dhcp4ParserTest, classifyPools) {
     EXPECT_TRUE(pools.at(3)->clientSupported(classes));
 
     // Let's check if client belonging to beta class is supported in pool[1]
-    // and not supported in any other pool  (except pools[3], which allows
+    // and not supported in any other pool  (except pool[3], which allows
     // everyone).
     classes.clear();
     classes.insert("beta");
@@ -4894,11 +4918,124 @@ TEST_F(Dhcp4ParserTest, classifyPools) {
     EXPECT_TRUE(pools.at(3)->clientSupported(classes));
 }
 
+// This test verifies that valid d2CliengConfig works correctly.
+TEST_F(Dhcp4ParserTest, d2ClientConfigValid) {
+    // Verify that the D2 configuration can be fetched and is set to disabled.
+    D2ClientConfigPtr d2_client_config = CfgMgr::instance().getD2ClientConfig();
+    EXPECT_FALSE(d2_client_config->getEnableUpdates());
+
+    // Verify that the convenience method agrees.
+    ASSERT_FALSE(CfgMgr::instance().ddnsEnabled());
+
+    string config_str = "{ " + genIfaceConfig() + ","
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"id\": 1,"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        " \"dhcp-ddns\" : {"
+        "     \"enable-updates\" : true, "
+        "     \"server-ip\" : \"192.168.2.1\", "
+        "     \"server-port\" : 777, "
+        "     \"sender-ip\" : \"192.168.2.2\", "
+        "     \"sender-port\" : 778, "
+        "     \"max-queue-size\" : 2048, "
+        "     \"ncr-protocol\" : \"UDP\", "
+        "     \"ncr-format\" : \"JSON\"}, "
+        "\"valid-lifetime\": 4000 }";
+
+    // Convert the JSON string to configuration elements.
+    ConstElementPtr config;
+    ASSERT_NO_THROW(config = parseDHCP4(config_str, true));
+    extractConfig(config_str);
+
+    // Pass the configuration in for parsing.
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, config));
+
+    // check if returned status is OK
+    checkResult(status, 0);
+
+    // Verify that DHCP-DDNS updating is enabled.
+    EXPECT_TRUE(CfgMgr::instance().ddnsEnabled());
+
+    // Verify that the D2 configuration can be retrieved.
+    d2_client_config = CfgMgr::instance().getD2ClientConfig();
+    ASSERT_TRUE(d2_client_config);
+
+    // Verify that the configuration values are correct.
+    EXPECT_TRUE(d2_client_config->getEnableUpdates());
+    EXPECT_EQ("192.168.2.1", d2_client_config->getServerIp().toText());
+    EXPECT_EQ(777, d2_client_config->getServerPort());
+    EXPECT_EQ("192.168.2.2", d2_client_config->getSenderIp().toText());
+    EXPECT_EQ(778, d2_client_config->getSenderPort());
+    EXPECT_EQ(2048, d2_client_config->getMaxQueueSize());
+    EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_client_config->getNcrProtocol());
+    EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_client_config->getNcrFormat());
+
+    // ddns-send-updates should be global default
+    checkGlobal("ddns-send-updates", true);
+    checkGlobal("ddns-conflict-resolution-mode", "check-with-dhcid");
+
+    // The following, deprecated dhcp-ddns parameters,
+    // should all have global default values.
+    checkGlobal("ddns-override-no-update", false);
+    checkGlobal("ddns-override-client-update", false);
+    checkGlobal("ddns-replace-client-name", "never");
+    checkGlobal("ddns-generated-prefix", "myhost");
+    checkGlobal("ddns-qualifying-suffix", "");
+}
+
+// This test checks the ability of the server to handle a configuration
+// containing an invalid dhcp-ddns (D2ClientConfig) entry.
+TEST_F(Dhcp4ParserTest, invalidD2ClientConfig) {
+    // Configuration string with an invalid D2 client config,
+    // "server-ip" is invalid.
+    string config_str = "{ " + genIfaceConfig() + ","
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"ddns-override-no-update\" : true, "
+        "\"ddns-override-client-update\" : true, "
+        "\"ddns-replace-client-name\" : \"when-present\", "
+        "\"ddns-generated-prefix\" : \"test.prefix\", "
+        "\"ddns-qualifying-suffix\" : \"test.suffix.\", "
+        "\"subnet4\": [ { "
+        "    \"id\": 1,"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        " \"dhcp-ddns\" : {"
+        "     \"enable-updates\" : true, "
+        "     \"server-ip\" : \"bogus-value\", "
+        "     \"server-port\" : 5301, "
+        "     \"ncr-protocol\" : \"UDP\", "
+        "     \"ncr-format\" : \"JSON\"},"
+        "\"valid-lifetime\": 4000 }";
+
+    // Convert the JSON string to configuration elements.
+    ConstElementPtr config;
+    ASSERT_NO_THROW(config = parseDHCP4(config_str));
+
+    // Configuration should not throw, but should fail.
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, config));
+
+    // check if returned status is failed.
+    checkResult(status, 1);
+    EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+
+    // Verify that the D2 configuration can be fetched and is set to disabled.
+    D2ClientConfigPtr d2_client_config = CfgMgr::instance().getD2ClientConfig();
+    EXPECT_FALSE(d2_client_config->getEnableUpdates());
+
+    // Verify that the convenience method agrees.
+    ASSERT_FALSE(CfgMgr::instance().ddnsEnabled());
+}
 // This test verifies that the host reservations can be specified for
 // respective IPv4 subnets.
 TEST_F(Dhcp4ParserTest, reservations) {
     ConstElementPtr x;
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ "
@@ -4977,7 +5114,8 @@ TEST_F(Dhcp4ParserTest, reservations) {
         "        \"hostname\": \"\""
         "      }"
         "    ]"
-        " } ],"
+        " } "
+        "], "
         "\"valid-lifetime\": 4000 }";
 
     ConstElementPtr json;
@@ -5057,6 +5195,7 @@ TEST_F(Dhcp4ParserTest, reservations) {
                            circuit_id.size());
     EXPECT_TRUE(host);
     EXPECT_EQ("192.0.4.102", host->getIPv4Reservation().toText());
+
     // This reservation must not belong to other subnets.
     EXPECT_FALSE(hosts_cfg->get4(123, Host::IDENT_CIRCUIT_ID,
                                  &circuit_id[0], circuit_id.size()));
@@ -5068,6 +5207,7 @@ TEST_F(Dhcp4ParserTest, reservations) {
     host = hosts_cfg->get4(542, Host::IDENT_DUID, &duid_r[0], duid_r.size());
     ASSERT_TRUE(host);
     EXPECT_EQ("192.0.4.101", host->getIPv4Reservation().toText());
+
     EXPECT_FALSE(hosts_cfg->get4(123, Host::IDENT_DUID,
                                  &duid_r[0], duid_r.size()));
     EXPECT_FALSE(hosts_cfg->get4(234, Host::IDENT_DUID,
@@ -5102,7 +5242,7 @@ TEST_F(Dhcp4ParserTest, reservationWithOptionDefinition) {
     // The following configuration contains host declaration in which
     // a non-standard option is used. This option has option definition
     // specified in the configuration.
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"option-def\": [ {"
@@ -5129,9 +5269,9 @@ TEST_F(Dhcp4ParserTest, reservationWithOptionDefinition) {
         "    \"pools\": [ { \"pool\": \"192.0.3.101 - 192.0.3.150\" } ],"
         "    \"subnet\": \"192.0.3.0/24\", "
         "    \"id\": 234"
-        " } ],"
-        "\"valid-lifetime\": 4000"
-        "}";
+        " }"
+        "],"
+        "\"valid-lifetime\": 4000 }";
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config, true));
@@ -5151,8 +5291,8 @@ TEST_F(Dhcp4ParserTest, reservationWithOptionDefinition) {
         duid.push_back(static_cast<uint8_t>(i));
     }
     // Retrieve the reservation and sanity check the address reserved.
-    ConstHostPtr host =
-        hosts_cfg->get4(234, Host::IDENT_DUID, &duid[0], duid.size());
+    ConstHostPtr host = hosts_cfg->get4(234, Host::IDENT_DUID,
+                                        &duid[0], duid.size());
     ASSERT_TRUE(host);
     EXPECT_EQ("192.0.3.112", host->getIPv4Reservation().toText());
 
@@ -5169,7 +5309,7 @@ TEST_F(Dhcp4ParserTest, reservationWithOptionDefinition) {
 TEST_F(Dhcp4ParserTest, reservationBogus) {
     // Case 1: misspelled hw-address parameter.
     ConstElementPtr x;
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ "
@@ -5184,7 +5324,8 @@ TEST_F(Dhcp4ParserTest, reservationBogus) {
         "        \"hostname\": \"\""
         "      }"
         "    ]"
-        " } ],"
+        " } "
+        "], "
         "\"valid-lifetime\": 4000 }";
 
     ConstElementPtr json;
@@ -5198,7 +5339,7 @@ TEST_F(Dhcp4ParserTest, reservationBogus) {
     EXPECT_THROW(parseDHCP4(config), Dhcp4ParseError);
 
     // Case 2: DUID and HW Address both specified.
-    config = "{ " + genIfaceConfig() + "," +
+    config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ "
@@ -5226,7 +5367,7 @@ TEST_F(Dhcp4ParserTest, reservationBogus) {
     checkResult(x, 1);
 
     // Case 3: Broken specification of option data.
-    config = "{ " + genIfaceConfig() + "," +
+    config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ "
@@ -5245,7 +5386,8 @@ TEST_F(Dhcp4ParserTest, reservationBogus) {
         "        ]"
         "      }"
         "    ]"
-        " } ],"
+        " } "
+        "], "
         "\"valid-lifetime\": 4000 }";
 
     ASSERT_NO_THROW(json = parseDHCP4(config));
@@ -5272,7 +5414,7 @@ TEST_F(Dhcp4ParserTest, hostReservationPerSubnet) {
     ///       - 192.0.6.0/24 (global + all enabled)
     ///       - 192.0.7.0/24 (global + out-of-pool enabled)
     const char* hr_config =
-        "{ "
+        "{"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -5331,14 +5473,16 @@ TEST_F(Dhcp4ParserTest, hostReservationPerSubnet) {
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(hr_config));
     extractConfig(hr_config);
-    ConstElementPtr result;
-    EXPECT_NO_THROW(result = Dhcpv4SrvTest::configure(*srv_, json));
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
 
     // returned value should be 0 (success)
-    checkResult(result, 0);
+    checkResult(status, 0);
+    CfgMgr::instance().commit();
 
     // Let's get all subnets and check that there are 7 of them.
-    ConstCfgSubnets4Ptr subnets = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
+    ConstCfgSubnets4Ptr subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4();
     ASSERT_TRUE(subnets);
     const Subnet4Collection* subnet_col = subnets->getAll();
     ASSERT_EQ(7, subnet_col->size()); // We expect 7 subnets
@@ -5406,7 +5550,7 @@ TEST_F(Dhcp4ParserTest, hostReservationGlobal) {
     ///       - 192.0.2.0/24 (all reservations enabled)
     ///       - 192.0.3.0/24 (reservations not specified)
     const char* hr_config =
-        "{ "
+        "{"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"reservations-global\": false,"
@@ -5430,14 +5574,16 @@ TEST_F(Dhcp4ParserTest, hostReservationGlobal) {
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(hr_config));
     extractConfig(hr_config);
-    ConstElementPtr result;
-    EXPECT_NO_THROW(result = Dhcpv4SrvTest::configure(*srv_, json));
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
 
     // returned value should be 0 (success)
-    checkResult(result, 0);
+    checkResult(status, 0);
+    CfgMgr::instance().commit();
 
     // Let's get all subnets and check that there are 4 of them.
-    ConstCfgSubnets4Ptr subnets = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
+    ConstCfgSubnets4Ptr subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4();
     ASSERT_TRUE(subnets);
     const Subnet4Collection* subnet_col = subnets->getAll();
     ASSERT_EQ(2, subnet_col->size()); // We expect 2 subnets
@@ -5450,7 +5596,7 @@ TEST_F(Dhcp4ParserTest, hostReservationGlobal) {
     ASSERT_TRUE(subnet);
     // Reset the fetch global function to staging (vs current) config.
     subnet->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
-        return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
+        return (CfgMgr::instance().getCurrentCfg()->getConfiguredGlobals());
     });
     EXPECT_FALSE(subnet->getReservationsGlobal());
     EXPECT_TRUE(subnet->getReservationsInSubnet());
@@ -5461,7 +5607,7 @@ TEST_F(Dhcp4ParserTest, hostReservationGlobal) {
     ASSERT_TRUE(subnet);
     // Reset the fetch global function to staging (vs current) config.
     subnet->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
-        return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
+        return (CfgMgr::instance().getCurrentCfg()->getConfiguredGlobals());
     });
     EXPECT_FALSE(subnet->getReservationsGlobal());
     EXPECT_TRUE(subnet->getReservationsInSubnet());
@@ -5471,16 +5617,16 @@ TEST_F(Dhcp4ParserTest, hostReservationGlobal) {
 /// Check that the decline-probation-period has a default value when not
 /// specified.
 TEST_F(Dhcp4ParserTest, declineTimerDefault) {
-    ConstElementPtr status;
 
-    string config = "{ " + genIfaceConfig() + "," +
-        "\"subnet4\": [ ]"
+    string config = "{ " + genIfaceConfig() + ","
+        "\"subnet4\": [  ] "
         "}";
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
     extractConfig(config);
 
+    ConstElementPtr status;
     EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
 
     // returned value should be 0 (success)
@@ -5517,9 +5663,7 @@ TEST_F(Dhcp4ParserTest, dhcp4o6portDefault) {
 
 /// Check that the decline-probation-period value can be set properly.
 TEST_F(Dhcp4ParserTest, declineTimer) {
-    ConstElementPtr status;
-
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"decline-probation-period\": 12345,"
         "\"subnet4\": [ ]"
         "}";
@@ -5528,6 +5672,7 @@ TEST_F(Dhcp4ParserTest, declineTimer) {
     ASSERT_NO_THROW(json = parseDHCP4(config));
     extractConfig(config);
 
+    ConstElementPtr status;
     EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
 
     // returned value should be 0 (success)
@@ -5541,9 +5686,7 @@ TEST_F(Dhcp4ParserTest, declineTimer) {
 
 /// Check that an incorrect decline-probation-period value will be caught.
 TEST_F(Dhcp4ParserTest, declineTimerError) {
-    ConstElementPtr status;
-
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"decline-probation-period\": \"soon\","
         "\"subnet4\": [ ]"
         "}";
@@ -5551,6 +5694,7 @@ TEST_F(Dhcp4ParserTest, declineTimerError) {
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseJSON(config));
 
+    ConstElementPtr status;
     EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
 
     // returned value should be 1 (error)
@@ -5567,7 +5711,7 @@ TEST_F(Dhcp4ParserTest, declineTimerError) {
 // specified.
 TEST_F(Dhcp4ParserTest, expiredLeasesProcessing) {
     // Create basic configuration with the expiration specific parameters.
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"expired-leases-processing\": "
         "{"
         "    \"reclaim-timer-wait-time\": 20,"
@@ -5609,7 +5753,7 @@ TEST_F(Dhcp4ParserTest, expiredLeasesProcessing) {
 TEST_F(Dhcp4ParserTest, expiredLeasesProcessingError) {
     // Create basic configuration with the expiration specific parameters.
     // One of the parameters holds invalid value.
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"expired-leases-processing\": "
         "{"
         "    \"reclaim-timer-wait-time\": -5,"
@@ -5642,7 +5786,7 @@ TEST_F(Dhcp4ParserTest, 4o6default) {
     ConstElementPtr status;
 
     // Just a plain v4 config (no 4o6 parameters)
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -5677,7 +5821,7 @@ TEST_F(Dhcp4ParserTest, 4o6subnet) {
     ConstElementPtr status;
 
     // Just a plain v4 config (no 4o6 parameters)
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -5717,7 +5861,7 @@ TEST_F(Dhcp4ParserTest, 4o6subnetBogus) {
     // Just a plain v4 config (no 4o6 parameters)
     string config[] = {
         // Bogus configuration 1: missing / in subnet
-        "{ " + genIfaceConfig() + "," +
+        "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -5728,7 +5872,7 @@ TEST_F(Dhcp4ParserTest, 4o6subnetBogus) {
         "\"valid-lifetime\": 4000 }",
 
         // Bogus configuration 2: incorrect address
-                "{ " + genIfaceConfig() + "," +
+                "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -5739,7 +5883,7 @@ TEST_F(Dhcp4ParserTest, 4o6subnetBogus) {
         "\"valid-lifetime\": 4000 }",
 
         // Bogus configuration 3: incorrect prefix length
-        "{ " + genIfaceConfig() + "," +
+        "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -5777,7 +5921,7 @@ TEST_F(Dhcp4ParserTest, 4o6iface) {
     ConstElementPtr status;
 
     // Just a plain v4 config (no 4o6 parameters)
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -5814,7 +5958,7 @@ TEST_F(Dhcp4ParserTest, 4o6subnetIface) {
     ConstElementPtr status;
 
     // Just a plain v4 config (no 4o6 parameters)
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -5855,7 +5999,7 @@ TEST_F(Dhcp4ParserTest, 4o6subnetInterfaceId) {
     ConstElementPtr status;
 
     // Just a plain v4 config (no 4o6 parameters)
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -5894,7 +6038,7 @@ TEST_F(Dhcp4ParserTest, 4o6subnetInterfaceId) {
 // Verifies that simple list of valid classes parses and
 // is staged for commit.
 TEST_F(Dhcp4ParserTest, validClientClassDictionary) {
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"valid-lifetime\": 4000, \n"
         "\"rebind-timer\": 2000, \n"
         "\"renew-timer\": 1000, \n"
@@ -5943,7 +6087,7 @@ TEST_F(Dhcp4ParserTest, validClientClassDictionary) {
 // Verifies that a class list containing an invalid
 // class definition causes a configuration error.
 TEST_F(Dhcp4ParserTest, invalidClientClassDictionary) {
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"valid-lifetime\": 4000, \n"
         "\"rebind-timer\": 2000, \n"
         "\"renew-timer\": 1000, \n"
@@ -5966,7 +6110,7 @@ TEST_F(Dhcp4ParserTest, invalidClientClassDictionary) {
 // Verifies that simple list of valid classes parses and
 // is staged for commit.
 TEST_F(Dhcp4ParserTest, clientClassValidLifetime) {
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"client-classes\" : [ \n"
         "   { \n"
         "       \"name\": \"one\", \n"
@@ -6022,7 +6166,7 @@ TEST_F(Dhcp4ParserTest, clientClassValidLifetime) {
 // Verifies that simple list of valid template classes parses and
 // is staged for commit.
 TEST_F(Dhcp4ParserTest, templateClientClassValidLifetime) {
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"client-classes\" : [ \n"
         "   { \n"
         "       \"name\": \"one\", \n"
@@ -6140,7 +6284,7 @@ TEST_F(Dhcp4ParserTest, poolUserContextData) {
 
 // Test verifies that it's possible to specify parameters in the user context
 // in the min-max address pool.
-TEST_F(Dhcp4ParserTest, pooMinMaxlUserContext) {
+TEST_F(Dhcp4ParserTest, poolMinMaxUserContext) {
     extractConfig(PARSER_CONFIGS[3]);
     PoolPtr pool;
     getPool(string(PARSER_CONFIGS[3]), 0, 0, pool);
@@ -6299,12 +6443,10 @@ TEST_F(Dhcp4ParserTest, sharedNetworksName) {
 }
 
 // Test verifies that a degenerated shared-network (just one subnet) is
-// accepted.
+// accepted. Also tests that, unless explicitly specified, the subnet
+// gets default values.
 TEST_F(Dhcp4ParserTest, sharedNetworks1subnet) {
     string config = "{\n"
-        "\"valid-lifetime\": 4000, \n"
-        "\"rebind-timer\": 2000, \n"
-        "\"renew-timer\": 1000, \n"
         "\"shared-networks\": [ {\n"
         "    \"name\": \"foo\"\n,"
         "    \"subnet4\": [ { \n"
@@ -6331,11 +6473,11 @@ TEST_F(Dhcp4ParserTest, sharedNetworks1subnet) {
     ASSERT_TRUE(net);
     EXPECT_EQ("foo", net->getName());
 
-    // It should have one subnet.
+    // It should have one subnet. The subnet should have default values.
     const Subnet4SimpleCollection* subs = net->getAllSubnets();
     ASSERT_TRUE(subs);
     EXPECT_EQ(1, subs->size());
-    checkSubnet(*subs, "192.0.2.0/24", 1000, 2000, 4000);
+    checkSubnet(*subs, "192.0.2.0/24", 0, 0, 7200);
 
     // Now make sure the subnet was added to global list of subnets.
     CfgSubnets4Ptr subnets4 = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
@@ -6343,7 +6485,7 @@ TEST_F(Dhcp4ParserTest, sharedNetworks1subnet) {
 
     const Subnet4Collection* gsubs = subnets4->getAll();
     ASSERT_TRUE(gsubs);
-    checkSubnet(*gsubs, "192.0.2.0/24", 1000, 2000, 4000);
+    checkSubnet(*gsubs, "192.0.2.0/24", 0, 0, 7200);
 }
 
 // Test verifies that a proper shared-network (three subnets) is
@@ -6359,8 +6501,8 @@ TEST_F(Dhcp4ParserTest, sharedNetworks3subnets) {
         "\"valid-lifetime\": 4000, \n"
         "\"min-valid-lifetime\": 3000, \n"
         "\"max-valid-lifetime\": 5000, \n"
-        "\"rebind-timer\": 2000, \n"
         "\"renew-timer\": 1000, \n"
+        "\"rebind-timer\": 2000, \n"
         "\"shared-networks\": [ {\n"
         "    \"name\": \"foo\"\n,"
         "    \"subnet4\": [\n"
@@ -6517,6 +6659,7 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
     ASSERT_TRUE(nets);
     ASSERT_EQ(2, nets->size());
 
+    // Let's check the first one.
     SharedNetwork4Ptr net = nets->at(0);
     ASSERT_TRUE(net);
 
@@ -6588,6 +6731,130 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
     EXPECT_FALSE(s->getReservationsOutOfPool());
 }
 
+// Since it is not allowed to define both interface-id and interface
+// for the same subnet, we need dedicated test that will check
+// interface separately.
+TEST_F(Dhcp4ParserTest, sharedNetworksDeriveInterfaces) {
+
+    // We need to fake the interfaces present, because we want to test
+    // interface names inheritance. However, there are sanity checks
+    // on subnet level that would refuse the value if the interface
+    // is not present.
+    IfaceMgrTestConfig iface_config(true);
+
+    string config = "{\n"
+        "\"shared-networks\": [ {\n"
+        "    \"name\": \"foo\"\n,"
+        "    \"interface\": \"eth0\",\n"
+        "    \"rebind-timer\": 10, \n"
+        "    \"subnet4\": [\n"
+        "    { \n"
+        "        \"id\": 1, \n"
+        "        \"subnet\": \"192.0.1.0/24\",\n"
+        "        \"pools\": [ { \"pool\": \"192.0.1.1-192.0.1.10\" } ]\n"
+        "    },\n"
+        "    { \n"
+        "        \"id\": 2, \n"
+        "        \"subnet\": \"192.0.2.0/24\",\n"
+        "        \"rebind-timer\": 100, \n"
+        "        \"pools\": [ { \"pool\": \"192.0.2.1-192.0.2.10\" } ],\n"
+        "        \"interface\": \"eth0\"\n"
+        "    }\n"
+        "    ]\n"
+        " },\n"
+        "{ // second shared-network starts here\n"
+        "    \"name\": \"bar\",\n"
+        "    \"subnet4\": [\n"
+        "    {\n"
+        "        \"id\": 3, \n"
+        "        \"subnet\": \"192.0.3.0/24\",\n"
+        "        \"pools\": [ { \"pool\": \"192.0.3.1-192.0.3.10\" } ]\n"
+        "    }\n"
+        "    ]\n"
+        "} ]\n"
+        "} \n";
+
+    configure(config, CONTROL_RESULT_SUCCESS, "");
+
+    // Now verify that the shared network was indeed configured.
+    CfgSharedNetworks4Ptr cfg_net = CfgMgr::instance().getStagingCfg()
+        ->getCfgSharedNetworks4();
+
+    // Two shared networks are expected.
+    ASSERT_TRUE(cfg_net);
+    const SharedNetwork4Collection* nets = cfg_net->getAll();
+    ASSERT_TRUE(nets);
+    ASSERT_EQ(2, nets->size());
+
+    // Let's check the first one.
+    SharedNetwork4Ptr net = nets->at(0);
+    ASSERT_TRUE(net);
+
+    const Subnet4SimpleCollection* subs = net->getAllSubnets();
+    ASSERT_TRUE(subs);
+    EXPECT_EQ(2, subs->size());
+
+    // For the first subnet, the rebind-timer should be 10, because it was
+    // derived from shared-network level. Other parameters a derived
+    // from global scope to shared-network level and later again to
+    // subnet4 level.
+    Subnet4Ptr s = checkSubnet(*subs, "192.0.1.0/24", 0, 10, 7200);
+    ASSERT_TRUE(s);
+    EXPECT_EQ("eth0", s->getIface().get());
+
+    // For the second subnet, the rebind-timer should be 100, because it
+    // was specified explicitly. Other parameters a derived
+    // from global scope to shared-network level and later again to
+    // subnet4 level.
+    checkSubnet(*subs, "192.0.2.0/24", 0, 100, 7200);
+    EXPECT_EQ("eth0", s->getIface().get());
+
+    // Ok, now check the second shared subnet.
+    net = nets->at(1);
+    ASSERT_TRUE(net);
+
+    subs = net->getAllSubnets();
+    ASSERT_TRUE(subs);
+    EXPECT_EQ(1, subs->size());
+
+    // This subnet should derive its rebind-timer from global scope.
+    s = checkSubnet(*subs, "192.0.3.0/24", 0, 0, 7200);
+    EXPECT_EQ("", s->getIface().get());
+}
+
+// It is not allowed to have different values for interfaces names is subnets
+// in the same shared network.
+TEST_F(Dhcp4ParserTest, sharedNetworksInterfacesMixed) {
+
+    // We need to fake the interfaces present, because we want to test
+    // interface names inheritance. However, there are sanity checks
+    // on subnet level that would refuse the value if the interface
+    // is not present.
+    IfaceMgrTestConfig iface_config(true);
+
+    string config = "{\n"
+        "\"shared-networks\": [ {\n"
+        "    \"name\": \"foo\"\n,"
+        "    \"subnet4\": [\n"
+        "    { \n"
+        "        \"id\": 1, \n"
+        "        \"subnet\": \"192.0.1.0/24\",\n"
+        "        \"interface\": \"eth0\"\n"
+        "    },\n"
+        "    { \n"
+        "        \"id\": 2, \n"
+        "        \"subnet\": \"192.0.2.0/24\",\n"
+        "        \"interface\": \"eth1\"\n"
+        "    }\n"
+        "    ]\n"
+        " } ]\n"
+        "} \n";
+
+    configure(config, CONTROL_RESULT_ERROR, "Subnet 192.0.2.0/24 has specified "
+              "interface eth1, but earlier subnet in the same shared-network "
+              "or the shared-network itself used eth0");
+}
+
 // This test checks if client-class is derived properly.
 TEST_F(Dhcp4ParserTest, sharedNetworksDeriveClientClass) {
 
@@ -6624,7 +6891,6 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDeriveClientClass) {
         "        \"pools\": [ { \"pool\": \"192.0.3.1-192.0.3.10\" } ]\n"
         "    }\n"
         "    ]\n"
-
         " } ]\n"
         "} \n";
 
@@ -6640,6 +6906,7 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDeriveClientClass) {
     ASSERT_TRUE(nets);
     ASSERT_EQ(2, nets->size());
 
+    // Let's check the first one.
     SharedNetwork4Ptr net = nets->at(0);
     ASSERT_TRUE(net);
 
@@ -6659,11 +6926,12 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDeriveClientClass) {
     // For the second subnet, the values are overridden on subnet level.
     // The value should not be inherited.
     s = checkSubnet(*subs, "192.0.2.0/24", 1, 2, 4);
+    ASSERT_TRUE(s);
     EXPECT_EQ("beta", s->getClientClass().get()); // beta defined on subnet level
 
-    // Ok, now check the second shared network. It doesn't have anything defined
-    // on shared-network or subnet level, so everything should have default
-    // values.
+    // Ok, now check the second shared network. It doesn't have
+    // anything defined on shared-network or subnet level, so
+    // everything should have default values.
     net = nets->at(1);
     ASSERT_TRUE(net);
 
@@ -6671,6 +6939,7 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDeriveClientClass) {
     ASSERT_TRUE(subs);
     EXPECT_EQ(1, subs->size());
 
+    // This subnet should derive its renew-timer from global scope.
     s = checkSubnet(*subs, "192.0.3.0/24", 1, 2, 4);
     EXPECT_TRUE(s->getClientClass().empty());
 }
@@ -6690,13 +6959,13 @@ TEST_F(Dhcp4ParserTest, hostsDatabases) {
     ASSERT_EQ(2, hal.size());
     // Keywords are in alphabetical order
     EXPECT_EQ("name=keatest1 password=keatest type=mysql user=keatest", hal.front());
-    EXPECT_EQ("name=keatest2 password=keatest type=mysql user=keatest", hal.back());
+    EXPECT_EQ("name=keatest2 password=keatest retry-on-startup=true type=mysql user=keatest", hal.back());
 }
 
 // This test checks comments. Please keep it last.
 TEST_F(Dhcp4ParserTest, comments) {
 
-    string config = PARSER_CONFIGS[5];
+    string config = PARSER_CONFIGS[6];
     extractConfig(config);
     configure(config, CONTROL_RESULT_SUCCESS, "");
 
@@ -6896,22 +7165,12 @@ TEST_F(Dhcp4ParserTest, comments) {
     ASSERT_EQ(1, ctx_d2->size());
     ASSERT_TRUE(ctx_d2->get("comment"));
     EXPECT_EQ("\"No dynamic DNS\"", ctx_d2->get("comment")->str());
-
-#if 0
-    // Loggers section supports comments too.
-
-    string logging = "{\n"
-        "\"loggers\": [ {\n"
-        "    \"comment\": \"A logger\",\n"
-        "    \"name\": \"kea-dhcp4\"\n"
-        "} ]\n";
-#endif
 }
 
-// This test verifies that the global host reservations can be specified
+// This test verifies that the global host reservations can be specified.
 TEST_F(Dhcp4ParserTest, globalReservations) {
     ConstElementPtr x;
-    string config = "{ " + genIfaceConfig() + "," +
+    string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, \n"
         "\"renew-timer\": 1000,\n"
         "\"reservations\": [\n"
@@ -6956,9 +7215,9 @@ TEST_F(Dhcp4ParserTest, globalReservations) {
         "    \"pools\": [ { \"pool\": \"192.0.4.101 - 192.0.4.150\" } ],\n"
         "    \"subnet\": \"192.0.4.0/24\",\n"
         "    \"id\": 542\n"
-        " } ],\n"
-        "\"valid-lifetime\": 4000"
-        "}\n";
+        " }\n"
+        "],\n"
+        "\"valid-lifetime\": 4000 }\n";
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
@@ -6991,7 +7250,14 @@ TEST_F(Dhcp4ParserTest, globalReservations) {
     ASSERT_TRUE(host);
     EXPECT_EQ("global2", host->getHostname());
 
-    // Check that options are stored correctly.
+    // This reservation should be solely assigned to the subnet 234,
+    // and not to other two.
+    EXPECT_FALSE(hosts_cfg->get4(123, Host::IDENT_HWADDR,
+                                 &hwaddr[0], hwaddr.size()));
+
+    EXPECT_FALSE(hosts_cfg->get4(542, Host::IDENT_HWADDR,
+                                 &hwaddr[0], hwaddr.size()));
+    // Check that options are assigned correctly.
     Option4AddrLstPtr opt_dns =
         retrieveOption<Option4AddrLstPtr>(*host, DHO_NAME_SERVERS);
     ASSERT_TRUE(opt_dns);
@@ -7002,14 +7268,6 @@ TEST_F(Dhcp4ParserTest, globalReservations) {
         retrieveOption<OptionUint8Ptr>(*host, DHO_DEFAULT_IP_TTL);
     ASSERT_TRUE(opt_ttl);
     EXPECT_EQ(11, static_cast<int>(opt_ttl->getValue()));
-
-    // This reservation should be global solely and not assigned to
-    // either subnet
-    EXPECT_FALSE(hosts_cfg->get4(123, Host::IDENT_HWADDR,
-                                 &hwaddr[0], hwaddr.size()));
-
-    EXPECT_FALSE(hosts_cfg->get4(542, Host::IDENT_HWADDR,
-                                 &hwaddr[0], hwaddr.size()));
 
     // Do the same test for the DUID based reservation.
     std::vector<uint8_t> duid;
@@ -7042,7 +7300,7 @@ TEST_F(Dhcp4ParserTest, globalReservations) {
 // reporting as disabled and thereby drawing attention to them.
 // This test verifies that configuration control with unsupported type fails
 TEST_F(Dhcp4ParserTest, configControlInfoNoFactory) {
-    string config = PARSER_CONFIGS[6];
+    string config = PARSER_CONFIGS[5];
 
     // Unregister "mysql" and ignore the return value.
     static_cast<void>(TestConfigBackendDHCPv4::
@@ -7058,7 +7316,7 @@ TEST_F(Dhcp4ParserTest, configControlInfoNoFactory) {
 
 // This test verifies that configuration control info gets populated.
 TEST_F(Dhcp4ParserTest, configControlInfo) {
-    string config = PARSER_CONFIGS[6];
+    string config = PARSER_CONFIGS[5];
 
     // Should be able to register a backend factory for "mysql".
     ASSERT_TRUE(TestConfigBackendDHCPv4::
@@ -7082,7 +7340,7 @@ TEST_F(Dhcp4ParserTest, configControlInfo) {
     //  alphabetical order).
     EXPECT_EQ("name=keatest1 password=keatest type=mysql user=keatest",
               dblist.front().getAccessString());
-    EXPECT_EQ("name=keatest2 password=keatest type=mysql user=keatest",
+    EXPECT_EQ("name=keatest2 password=keatest retry-on-startup=true type=mysql user=keatest",
               dblist.back().getAccessString());
 
     // Verify that the config-fetch-wait-time is correct.
@@ -7093,18 +7351,18 @@ TEST_F(Dhcp4ParserTest, configControlInfo) {
 // Check whether it is possible to configure server-tag
 TEST_F(Dhcp4ParserTest, serverTag) {
     // Config without server-tag
-    string config_no_tag = "{ " + genIfaceConfig() + "," +
+    string config_no_tag = "{ " + genIfaceConfig() + ","
         "\"subnet4\": [  ] "
         "}";
 
     // Config with server-tag
-    string config_tag = "{ " + genIfaceConfig() + "," +
+    string config_tag = "{ " + genIfaceConfig() + ","
         "\"server-tag\": \"boo\", "
         "\"subnet4\": [  ] "
         "}";
 
     // Config with an invalid server-tag
-    string bad_tag = "{ " + genIfaceConfig() + "," +
+    string bad_tag = "{ " + genIfaceConfig() + ","
         "\"server-tag\": 777, "
         "\"subnet4\": [  ] "
         "}";
@@ -7346,7 +7604,7 @@ TEST_F(Dhcp4ParserTest, calculateTeeTimesInheritence) {
         "        {  \n"
         "            \"id\": 200, \n"
         "            \"subnet\": \"192.0.2.0/24\", \n"
-        "            \"pools\": [ { \"pool\": \"192.0.2.1-192.0.2.10\"} ] \n"
+        "            \"pools\": [ { \"pool\": \"192.0.2.1-192.0.2.10\" } ] \n"
         "        } \n"
         "        ] \n"
         "     } ], \n"
@@ -7372,7 +7630,7 @@ TEST_F(Dhcp4ParserTest, calculateTeeTimesInheritence) {
     // Subnet 200 should use the shared-network values.
     subnet4 = subnets4->getBySubnetId(200);
     ASSERT_TRUE(subnet4);
-    EXPECT_EQ(true, subnet4->getCalculateTeeTimes());
+    EXPECT_TRUE(subnet4->getCalculateTeeTimes());
     EXPECT_TRUE(util::areDoublesEquivalent(0.4, subnet4->getT1Percent()));
     EXPECT_TRUE(util::areDoublesEquivalent(0.75, subnet4->getT2Percent()));
 
@@ -7387,7 +7645,7 @@ TEST_F(Dhcp4ParserTest, calculateTeeTimesInheritence) {
 // This test checks that the global store-extended-info parameter is optional
 // and that values under the subnet are used.
 TEST_F(Dhcp4ParserTest, storeExtendedInfoNoGlobal) {
-    std::string config = "{ " + genIfaceConfig() + "," +
+    const string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ "
@@ -7413,29 +7671,31 @@ TEST_F(Dhcp4ParserTest, storeExtendedInfoNoGlobal) {
     ASSERT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
     checkResult(status, 0);
 
+    // First subnet should use global default.
     CfgSubnets4Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
-    Subnet4Ptr subnet1 = cfg->selectSubnet(IOAddress("192.0.2.1"));
-    ASSERT_TRUE(subnet1);
+    Subnet4Ptr subnet = cfg->selectSubnet(IOAddress("192.0.2.1"));
+    ASSERT_TRUE(subnet);
     // Reset the fetch global function to staging (vs current) config.
-    subnet1->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
+    subnet->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
         return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
     });
-    EXPECT_TRUE(subnet1->getStoreExtendedInfo());
+    EXPECT_TRUE(subnet->getStoreExtendedInfo());
 
-    Subnet4Ptr subnet2 = cfg->selectSubnet(IOAddress("192.0.3.1"));
-    ASSERT_TRUE(subnet2);
+    // Second subnet should use its own value.
+    subnet = cfg->selectSubnet(IOAddress("192.0.3.1"));
+    ASSERT_TRUE(subnet);
     // Reset the fetch global function to staging (vs current) config.
-    subnet2->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
+    subnet->setFetchGlobalsFn([]() -> ConstCfgGlobalsPtr {
         return (CfgMgr::instance().getStagingCfg()->getConfiguredGlobals());
     });
-    EXPECT_FALSE(subnet2->getStoreExtendedInfo());
+    EXPECT_FALSE(subnet->getStoreExtendedInfo());
 }
 
 // This test checks that the global store-extended-info parameter is used
 // when there is no such parameter under subnet and that the parameter
 // specified for a subnet overrides the global setting.
 TEST_F(Dhcp4ParserTest, storeExtendedInfoGlobal) {
-    std::string config = "{ " + genIfaceConfig() + "," +
+    const string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"store-extended-info\": true,"
@@ -7461,6 +7721,7 @@ TEST_F(Dhcp4ParserTest, storeExtendedInfoGlobal) {
     ASSERT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
     checkResult(status, 0);
 
+    // First subnet should override the global value.
     CfgSubnets4Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
     Subnet4Ptr subnet1 = cfg->selectSubnet(IOAddress("192.0.2.1"));
     ASSERT_TRUE(subnet1);
@@ -7470,6 +7731,7 @@ TEST_F(Dhcp4ParserTest, storeExtendedInfoGlobal) {
     });
     EXPECT_FALSE(subnet1->getStoreExtendedInfo());
 
+    // Second subnet should use the global value.
     Subnet4Ptr subnet2 = cfg->selectSubnet(IOAddress("192.0.3.1"));
     ASSERT_TRUE(subnet2);
     // Reset the fetch global function to staging (vs current) config.
@@ -7482,7 +7744,7 @@ TEST_F(Dhcp4ParserTest, storeExtendedInfoGlobal) {
 /// This test checks that the statistic-default-sample-count and age
 /// global parameters are committed to the stats manager as expected.
 TEST_F(Dhcp4ParserTest, statsDefaultLimits) {
-    std::string config = "{ " + genIfaceConfig() + "," +
+    std::string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"statistic-default-sample-count\": 10, "
@@ -7507,7 +7769,7 @@ TEST_F(Dhcp4ParserTest, statsDefaultLimits) {
 
 // This test checks that using default multi threading settings works.
 TEST_F(Dhcp4ParserTest, multiThreadingDefaultSettings) {
-    std::string config = "{ " + genIfaceConfig() + "," +
+    std::string config = "{ " + genIfaceConfig() + ","
         "\"subnet4\": [  ]"
         "}";
 
@@ -7544,7 +7806,7 @@ TEST_F(Dhcp4ParserTest, multiThreadingSettings) {
         "    \"thread-pool-size\": 48,\n"
         "    \"packet-queue-size\": 1024\n"
         "}";
-    std::string config = "{ " + genIfaceConfig() + "," +
+    std::string config = "{ " + genIfaceConfig() + ","
         "\"subnet4\": [  ], "
         "\"multi-threading\": " + content_json + "}";
 
@@ -7571,18 +7833,18 @@ TEST_F(Dhcp4ParserTest, multiThreadingSettings) {
 // is correct.
 TEST_F(Dhcp4ParserTest, parkedPacketLimit) {
     // Config without parked-packet-limit
-    string config_no_limit = "{ " + genIfaceConfig() + "," +
+    string config_no_limit = "{ " + genIfaceConfig() + ","
         "\"subnet4\": [  ] "
         "}";
 
     // Config with parked-packet-limit
-    string config_limit = "{ " + genIfaceConfig() + "," +
+    string config_limit = "{ " + genIfaceConfig() + ","
         "\"parked-packet-limit\": 777, "
         "\"subnet4\": [  ] "
         "}";
 
     // Config with an invalid parked-packet-limit
-    string bad_limit = "{ " + genIfaceConfig() + "," +
+    string bad_limit = "{ " + genIfaceConfig() + ","
         "\"parked-packet-limit\": \"boo\", "
         "\"subnet4\": [  ] "
         "}";
@@ -7612,7 +7874,7 @@ TEST_F(Dhcp4ParserTest, parkedPacketLimit) {
 // This test checks that ddns-conflict-resolution-mode value can be specified at
 // global and subnet levels.
 TEST_F(Dhcp4ParserTest, storeDdnsConflictResolutionMode) {
-    std::string config = "{ " + genIfaceConfig() + "," +
+    std::string config = "{ " + genIfaceConfig() + ","
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ "

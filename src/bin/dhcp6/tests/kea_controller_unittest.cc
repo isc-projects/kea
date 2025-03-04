@@ -173,7 +173,7 @@ typedef boost::shared_ptr<TestCBControlDHCPv6> TestCBControlDHCPv6Ptr;
 ///
 /// Exposes internal fields and installs stub implementation of the
 /// @c CBControlDHCPv6 object.
-class NakedControlledDhcpv6Srv: public ControlledDhcpv6Srv {
+class NakedControlledDhcpv6Srv : public ControlledDhcpv6Srv {
 public:
 
     /// @brief Constructor.
@@ -185,7 +185,12 @@ public:
     }
 };
 
-
+/// @brief test class for Kea configuration backend.
+///
+/// This class is used for testing Kea configuration backend.
+/// It is very simple and currently focuses on reading
+/// config file from disk. It is expected to be expanded in the
+/// near future.
 class JSONFileBackendTest : public dhcp::test::BaseServerTest {
 public:
     JSONFileBackendTest() {
@@ -285,7 +290,6 @@ public:
         EXPECT_EQ(1, cb_control->getDatabaseTotalConfigFetchCalls());
         EXPECT_EQ(0, cb_control->getDatabaseCurrentConfigFetchCalls());
         EXPECT_EQ(1, cb_control->getDatabaseStagingConfigFetchCalls());
-
 
         if (call_command) {
             // The case where there is no backend is tested in the
@@ -796,7 +800,6 @@ TEST_F(JSONFileBackendTest, timers) {
                                        duid_expired, 1, 50, 60, SubnetID(1)));
     lease_expired->cltt_ = time(NULL) - 100;
 
-
     // Create expired-reclaimed lease. The lease has expired 1000 - 60 seconds
     // ago. It should be removed from the lease database when the "flush" timer
     // goes off.
@@ -1061,7 +1064,6 @@ testBackendReconfiguration(const std::string& backend_first,
     EXPECT_EQ(backend_second.empty() ? "memfile" : backend_second,
               LeaseMgrFactory::instance().getType());
 }
-
 
 // This test verifies that backend specification can be added on
 // server reconfiguration.

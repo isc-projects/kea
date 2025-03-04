@@ -241,7 +241,8 @@ DatabaseConnection::toElement(const ParameterMap& params) {
                     .arg(keyword).arg(value);
             }
         } else if ((keyword == "persist") ||
-                   (keyword == "readonly")) {
+                   (keyword == "readonly") ||
+                   (keyword == "retry-on-startup")) {
             if (value == "true") {
                 result->set(keyword, isc::data::Element::create(true));
             } else if (value == "false") {
@@ -256,7 +257,6 @@ DatabaseConnection::toElement(const ParameterMap& params) {
                    (keyword == "host") ||
                    (keyword == "name") ||
                    (keyword == "on-fail") ||
-                   (keyword == "retry-on-startup") ||
                    (keyword == "trust-anchor") ||
                    (keyword == "cert-file") ||
                    (keyword == "key-file") ||

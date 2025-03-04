@@ -176,7 +176,7 @@ typedef boost::shared_ptr<TestCBControlDHCPv4> TestCBControlDHCPv4Ptr;
 ///
 /// Exposes internal fields and installs stub implementation of the
 /// @c CBControlDHCPv4 object.
-class NakedControlledDhcpv4Srv: public ControlledDhcpv4Srv {
+class NakedControlledDhcpv4Srv : public ControlledDhcpv4Srv {
 public:
 
     /// @brief Constructor.
@@ -188,7 +188,7 @@ public:
     }
 };
 
-/// @brief test class for Kea configuration backend
+/// @brief test class for Kea configuration backend.
 ///
 /// This class is used for testing Kea configuration backend.
 /// It is very simple and currently focuses on reading
@@ -300,7 +300,6 @@ public:
         EXPECT_EQ(1, cb_control->getDatabaseTotalConfigFetchCalls());
         EXPECT_EQ(0, cb_control->getDatabaseCurrentConfigFetchCalls());
         EXPECT_EQ(1, cb_control->getDatabaseStagingConfigFetchCalls());
-
 
         if (call_command) {
             // The case where there is no backend is tested in the
@@ -1078,7 +1077,6 @@ testBackendReconfiguration(const std::string& backend_first,
     EXPECT_EQ(backend_second.empty() ? "memfile" : backend_second,
               LeaseMgrFactory::instance().getType());
 }
-
 
 // This test verifies that backend specification can be added on
 // server reconfiguration.
