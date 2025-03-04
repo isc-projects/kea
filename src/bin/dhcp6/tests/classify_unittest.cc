@@ -3407,7 +3407,7 @@ TEST_F(ClassifyTest, classTaggingAndNeverSend) {
 }
 
 
-// Verifies that mulitple occurences of an option with
+// Verifies that multiple occurrences of an option with
 // different client class tags works properly.
 TEST_F(ClassifyTest, classTaggingList) {
     IfaceMgrTestConfig test_config(true);
