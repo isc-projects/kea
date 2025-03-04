@@ -823,9 +823,9 @@ config_report_sh = configure_file(
     configuration: report_conf_data,
 )
 
-CONFIG_REPORT = custom_target(
+CONFIG_REPORT = configure_file(
     output: 'config.report',
-    depend_files: [config_report_sh],
+    input: config_report_sh,
     command: [f'@TOP_BUILD_DIR@/config-report.sh'],
 )
 
@@ -892,3 +892,7 @@ top_docs = [
 ]
 install_data(top_docs, install_dir: 'share/doc/kea')
 install_emptydir('var/run/kea')
+
+# Print the setup report.
+message(run_command(['cat', CONFIG_REPORT], check: true).stdout())
+

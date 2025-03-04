@@ -3,6 +3,7 @@
 # Print the report.
 cat > @TOP_BUILD_DIR@/config.report << END
 
+
        Kea source configure results:
     -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -29,19 +30,19 @@ C++ Compiler:
   CXX_ARGS:        @CXX_ARGS@
   LD_ID:           @LD_ID@
   LD_ARGS:         @LD_ARGS@
-
 END
 
 if test '@HAVE_PYTHON@' != 'no'; then
 cat >> @TOP_BUILD_DIR@/config.report << END
+
 Python:
   PYTHON:          @PYTHON_PATH@
   PKGPYTHONDIR:    @PKGPYTHONDIR@
-
 END
 fi
 
 cat >> @TOP_BUILD_DIR@/config.report << END
+
 Boost:
   BOOST_VERSION:   @BOOST_VERSION@
   BOOST_INCLUDE:   @BOOST_INCLUDE@
@@ -60,59 +61,58 @@ Log4cplus:
 Flex/bison:
   FLEX:  @FLEX@
   BISON: @BISON@
-
 END
 
 if test '@HAVE_MYSQL@' != 'no'; then
 cat >> @TOP_BUILD_DIR@/config.report << END
+
 MySQL:
   MYSQL_VERSION:   @MYSQL_VERSION@
   MYSQL_INCLUDE:   @MYSQL_INCLUDE@
   MYSQL_LIBDIR:    @MYSQL_LIBDIR@
-
 END
 else
 cat >> @TOP_BUILD_DIR@/config.report << END
+
 MySQL:
   no
-
 END
 fi
 
 if test '@HAVE_PGSQL@' != 'no'; then
 cat >> @TOP_BUILD_DIR@/config.report << END
+
 PostgreSQL:
   PGSQL_VERSION:   @PGSQL_VERSION@
   PGSQL_INCLUDE:   @PGSQL_INCLUDE@
   PGSQL_LIBDIR:    @PGSQL_LIBDIR@
-
 END
 else
 cat >> @TOP_BUILD_DIR@/config.report << END
+
 PostgreSQL:
   no
-
 END
 fi
 
 cat >> @TOP_BUILD_DIR@/config.report << END
+
 NETCONF:
   @HAVE_NETCONF@
-
 END
 
 if test '@HAVE_GTEST@' != 'no'; then
 cat >> @TOP_BUILD_DIR@/config.report << END
+
 Google Test:
   GTEST_VERSION:   @GTEST_VERSION@
   GTEST_INCLUDE:   @GTEST_INCLUDE@
   GTEST_LIBDIR:    @GTEST_LIBDIR@
-
 END
 else
 cat >> @TOP_BUILD_DIR@/config.report << END
+
 Google Test:
   no
-
 END
 fi

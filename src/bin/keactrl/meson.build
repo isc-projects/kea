@@ -27,35 +27,35 @@ configure_file(
     install_dir: get_option('sbindir'),
 )
 path_replacer = f'@TOP_BUILD_DIR@/tools/path_replacer.sh'
-custom_target(
+configure_file(
     input: 'kea-dhcp4.conf.pre',
     output: 'kea-dhcp4.conf',
     command: [path_replacer, '@INPUT@', '@OUTPUT@'],
     install: true,
     install_dir: kea_configfiles_destdir,
 )
-custom_target(
+configure_file(
     input: 'kea-dhcp6.conf.pre',
     output: 'kea-dhcp6.conf',
     command: [path_replacer, '@INPUT@', '@OUTPUT@'],
     install: true,
     install_dir: kea_configfiles_destdir,
 )
-custom_target(
+configure_file(
     input: 'kea-dhcp-ddns.conf.pre',
     output: 'kea-dhcp-ddns.conf',
     command: [path_replacer, '@INPUT@', '@OUTPUT@'],
     install: true,
     install_dir: kea_configfiles_destdir,
 )
-custom_target(
+configure_file(
     input: 'kea-ctrl-agent.conf.pre',
     output: 'kea-ctrl-agent.conf',
     command: [path_replacer, '@INPUT@', '@OUTPUT@'],
     install: true,
     install_dir: kea_configfiles_destdir,
 )
-custom_target(
+configure_file(
     input: 'kea-netconf.conf.pre',
     output: 'kea-netconf.conf',
     command: [path_replacer, '@INPUT@', '@OUTPUT@'],

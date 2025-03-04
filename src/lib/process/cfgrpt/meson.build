@@ -1,5 +1,5 @@
 mk_cfgrpt = f'@TOP_SOURCE_DIR@/tools/mk_cfgrpt.sh'
-config_report_cc = custom_target(
+config_report_cc = configure_file(
     input: CONFIG_REPORT,
     output: 'config_report.cc',
     command: [mk_cfgrpt, '@INPUT@', '@OUTPUT@'],
