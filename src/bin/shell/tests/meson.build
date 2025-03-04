@@ -20,6 +20,7 @@ test(
     is_parallel: false,
     priority: -1,
     env: pythonpath,
+    suite: 'python-tests',
 )
 ca_basic_auth_tests = configure_file(
     input: 'ca_basic_auth_tests.sh.in',
@@ -31,6 +32,7 @@ test(
     ca_basic_auth_tests,
     is_parallel: false,
     priority: -1,
+    suite: 'shell-tests',
 )
 d2_basic_auth_tests = configure_file(
     input: 'd2_basic_auth_tests.sh.in',
@@ -42,6 +44,7 @@ test(
     d2_basic_auth_tests,
     is_parallel: false,
     priority: -1,
+    suite: 'shell-tests',
 )
 dhcp4_basic_auth_tests = configure_file(
     input: 'dhcp4_basic_auth_tests.sh.in',
@@ -53,6 +56,7 @@ test(
     dhcp4_basic_auth_tests,
     is_parallel: false,
     priority: -1,
+    suite: 'shell-tests',
 )
 dhcp6_basic_auth_tests = configure_file(
     input: 'dhcp6_basic_auth_tests.sh.in',
@@ -64,6 +68,7 @@ test(
     dhcp6_basic_auth_tests,
     is_parallel: false,
     priority: -1,
+    suite: 'shell-tests',
 )
 shell_d2_process_tests = configure_file(
     input: 'shell_d2_process_tests.sh.in',
@@ -75,6 +80,7 @@ test(
     shell_d2_process_tests,
     is_parallel: false,
     priority: -1,
+    suite: 'shell-tests',
 )
 shell_dhcp4_process_tests = configure_file(
     input: 'shell_dhcp4_process_tests.sh.in',
@@ -86,6 +92,7 @@ test(
     shell_dhcp4_process_tests,
     is_parallel: false,
     priority: -1,
+    suite: 'shell-tests',
 )
 shell_dhcp6_process_tests = configure_file(
     input: 'shell_dhcp6_process_tests.sh.in',
@@ -97,6 +104,7 @@ test(
     shell_dhcp6_process_tests,
     is_parallel: false,
     priority: -1,
+    suite: 'shell-tests',
 )
 tls_ca_process_tests = configure_file(
     input: 'tls_ca_process_tests.sh.in',
@@ -108,6 +116,7 @@ test(
     tls_ca_process_tests,
     is_parallel: false,
     priority: -1,
+    suite: 'shell-tests',
 )
 tls_d2_process_tests = configure_file(
     input: 'tls_d2_process_tests.sh.in',
@@ -119,6 +128,7 @@ test(
     tls_d2_process_tests,
     is_parallel: false,
     priority: -1,
+    suite: 'shell-tests',
 )
 tls_dhcp4_process_tests = configure_file(
     input: 'tls_dhcp4_process_tests.sh.in',
@@ -130,6 +140,7 @@ test(
     tls_dhcp4_process_tests,
     is_parallel: false,
     priority: -1,
+    suite: 'shell-tests',
 )
 tls_dhcp6_process_tests = configure_file(
     input: 'tls_dhcp6_process_tests.sh.in',
@@ -141,4 +152,5 @@ test(
     tls_dhcp6_process_tests,
     is_parallel: false,
     priority: -1,
+    suite: 'shell-tests',
 )

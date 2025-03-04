@@ -9,4 +9,10 @@ netconf_shtests = configure_file(
     output: 'netconf_tests.sh',
     configuration: netconf_shtests_conf_data,
 )
-test('netconf_tests.sh', netconf_shtests, is_parallel: false, priority: -1)
+test(
+    'netconf_tests.sh',
+    netconf_shtests,
+    is_parallel: false,
+    priority: -1,
+    suite: 'shell-tests',
+)

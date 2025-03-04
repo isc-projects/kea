@@ -19,6 +19,7 @@ test(
     workdir: current_build_dir,
     is_parallel: false,
     priority: -1,
+    suite: 'shell-tests',
 )
 configure_file(
     input: 'test_basic_auth_libraries.h.in',

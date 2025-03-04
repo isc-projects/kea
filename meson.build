@@ -811,7 +811,26 @@ if valgrind.found()
             '--quiet',
             '--show-leak-kinds=all',
             '--suppressions=src/valgrind.supp',
+            '--xml=yes',
+            '--xml-file=valgrind-results-%p.xml',
         ],
+        exclude_suites: ['python-tests', 'shell-tests'],
+    )
+    add_test_setup(
+        'valgrind_gen_suppressions',
+        exe_wrapper: [
+            valgrind,
+            '--child-silent-after-fork=yes',
+            '--fullpath-after=',
+            '--leak-check=full',
+            '--num-callers=64',
+            '--quiet',
+            '--show-leak-kinds=all',
+            '--suppressions=src/valgrind.supp',
+            '--gen-suppressions=all',
+            '--log-file=valgrind.supp',
+        ],
+        exclude_suites: ['python-tests', 'shell-tests'],
     )
 endif
 

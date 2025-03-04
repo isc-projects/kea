@@ -10,7 +10,13 @@ admin_tests = configure_file(
     output: 'admin_tests.sh',
     configuration: kea_admin_tests_conf_data,
 )
-test('admin_tests.sh', admin_tests, is_parallel: false, priority: -1)
+test(
+    'admin_tests.sh',
+    admin_tests,
+    is_parallel: false,
+    priority: -1,
+    suite: 'shell-tests',
+)
 memfile_tests = configure_file(
     input: 'memfile_tests.sh.in',
     output: 'memfile_tests.sh',
@@ -22,6 +28,7 @@ test(
     # depends: [kea_admin, kea_dhcp4, kea_dhcp6, kea_lfc],
     is_parallel: false,
     priority: -1,
+    suite: 'shell-tests',
 )
 mysql_tests = configure_file(
     input: 'mysql_tests.sh.in',
@@ -34,6 +41,7 @@ if mysql.found()
         mysql_tests,
         is_parallel: false,
         priority: -1,
+        suite: 'shell-tests',
     )
 endif
 pgsql_tests = configure_file(
@@ -47,6 +55,7 @@ if postgresql.found()
         pgsql_tests,
         is_parallel: false,
         priority: -1,
+        suite: 'shell-tests',
     )
 endif
 # To create the output_dir
