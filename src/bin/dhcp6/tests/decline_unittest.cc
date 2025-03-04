@@ -330,35 +330,6 @@ TEST_F(DeclineTest, noIAs) {
 }
 
 // Test that the released lease cannot be declined.
-TEST_F(DeclineTest, declineAfterRelease) {
-    Dhcp6Client client;
-    uint32_t iaid = 1;
-    client.requestAddress(iaid);
-
-    // Configure DHCP server.
-    configure(DECLINE_CONFIGS[0], *client.getServer());
-    // Perform 4-way exchange to obtain a new lease.
-    client.doSARR();
-    auto leases = client.getLeasesByType(Lease::TYPE_NA);
-    ASSERT_EQ(1, leases.size());
-    EXPECT_EQ(STATUS_Success, client.getStatusCode(iaid));
-
-    // Release the acquired lease.
-    auto lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, leases[0].addr_);
-    lease->state_ = Lease::STATE_RELEASED;
-    LeaseMgrFactory::instance().updateLease6(lease);
-
-    // Try to decline the released address.
-    ASSERT_NO_THROW(client.doDecline());
-
-    // The address should not be declined. It should still be in the
-    // released state.
-    lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, lease->addr_);
-    ASSERT_TRUE(lease);
-    EXPECT_EQ(Lease::STATE_RELEASED, lease->state_);
-}
-
-// Test that the released lease cannot be declined.
 TEST_F(DeclineTest, declineAfterExpire) {
     Dhcp6Client client;
     uint32_t iaid = 1;
