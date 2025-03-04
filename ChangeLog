@@ -1,3 +1,8 @@
+2258.	[bug]		razvan
+	Fixed the serialization of 'retry-on-startup' database
+	configuration parameter as boolean instead of string.
+	(Gitlab #3755, #3578)
+
 2257.	[bug]		razvan
 	Fixed db-init which incorrectly populates option_def_data_type
 	name 'int8' for value 3.
