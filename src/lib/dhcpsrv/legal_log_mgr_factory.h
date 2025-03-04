@@ -87,9 +87,12 @@ public:
     static void addBackend(db::DatabaseConnection::ParameterMap& parameters, ManagerID id = 0);
 
     /// @brief Removes all backends from the pool.
-    static void delAllBackends() {
-        pool_.clear();
-    }
+    static void delAllBackends();
+
+    /// @brief Deletes all backends of the given type from the pool.
+    ///
+    /// @param db_type backend to remove.
+    static void delAllBackends(const std::string& db_type);
 
     /// @brief Returns the forensic backend manager with specified ID.
     ///
@@ -97,21 +100,6 @@ public:
     /// (default value is 0 and it is used only in unit tests).
     /// @return the forensic backend manager instance or null pointer.
     static LegalLogMgrPtr& instance(ManagerID id = 0);
-
-    /// @brief Deletes all backends of the given type from the pool.
-    ///
-    /// @param db_type backend to remove.
-    static void delAllBackends(const std::string& db_type) {
-        auto it = pool_.begin();
-
-        while (it != pool_.end()) {
-            if (it->second.second && it->second.second->getType() == db_type) {
-                it = pool_.erase(it);
-            } else {
-                ++it;
-            }
-        }
-    }
 
     /// @brief Sets the forensic backend manager parameters.
     ///
@@ -182,14 +170,7 @@ public:
     /// @brief Returns true is respective backend store is present, false otherwise.
     ///
     /// @param type the backend store type to check if it exists.
-    static bool haveInstance(std::string type) {
-        for (auto const& backend : pool_) {
-            if (backend.second.second && backend.second.second->getType() == type) {
-                return (true);
-            }
-        }
-        return (false);
-    }
+    static bool haveInstance(std::string type);
 
     /// @brief Get the hook I/O service.
     ///

@@ -118,6 +118,24 @@ LegalLogMgrFactory::addBackend(DatabaseConnection::ParameterMap& parameters, Man
     pool_[id] = pair<DatabaseConnection::ParameterMap, LegalLogMgrPtr>(parameters, backend);
 }
 
+void
+LegalLogMgrFactory::delAllBackends() {
+    pool_.clear();
+}
+
+void
+LegalLogMgrFactory::delAllBackends(const std::string& db_type) {
+    auto it = pool_.begin();
+
+    while (it != pool_.end()) {
+        if (it->second.second && it->second.second->getType() == db_type) {
+            it = pool_.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}
+
 LegalLogMgrPtr&
 LegalLogMgrFactory::instance(ManagerID id) {
     auto it = pool_.find(id);
@@ -232,6 +250,16 @@ LegalLogMgrFactory::getDBVersions() {
     }
 
     return (result);
+}
+
+bool
+LegalLogMgrFactory::haveInstance(std::string type) {
+    for (auto const& backend : pool_) {
+        if (backend.second.second && backend.second.second->getType() == type) {
+            return (true);
+        }
+    }
+    return (false);
 }
 
 } // end of namespace isc::dhcp

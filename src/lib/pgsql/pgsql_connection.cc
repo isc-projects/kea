@@ -414,6 +414,9 @@ PgSqlConnection::openDatabaseInternal(bool logging) {
     }
 
     if (PQstatus(new_conn) != CONNECTION_OK) {
+        // Mark this connection as no longer usable.
+        markUnusable();
+
         // If we have a connection object, we have to call finish
         // to release it, but grab the error message first.
         std::string error_message = PQerrorMessage(new_conn);
@@ -421,8 +424,6 @@ PgSqlConnection::openDatabaseInternal(bool logging) {
 
         auto const& rec = reconnectCtl();
         if (rec && DatabaseConnection::retry_) {
-            // Mark this connection as no longer usable.
-            markUnusable();
 
             // Start the connection recovery.
             startRecoverDbConnection();

@@ -282,12 +282,13 @@ MySqlConnection::openDatabase() {
     MYSQL* status = mysql_real_connect(mysql_, host, user, password, name,
                                        port, NULL, CLIENT_FOUND_ROWS);
     if (status != mysql_) {
+        // Mark this connection as no longer usable.
+        markUnusable();
+
         std::string error_message = mysql_error(mysql_);
 
         auto const& rec = reconnectCtl();
         if (rec && DatabaseConnection::retry_) {
-            // Mark this connection as no longer usable.
-            markUnusable();
 
             // Start the connection recovery.
             startRecoverDbConnection();
