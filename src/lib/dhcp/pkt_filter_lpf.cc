@@ -349,7 +349,8 @@ PktFilterLPF::receive(Iface& iface, const SocketInfo& socket_info) {
 
             struct timeval cmsg_time;
             memcpy(&cmsg_time, CMSG_DATA(cmsg), sizeof(cmsg_time));
-            pkt->addPktEvent(PktEvent::SOCKET_RECEIVED, cmsg_time); break;
+            pkt->addPktEvent(PktEvent::SOCKET_RECEIVED, cmsg_time);
+            break;
         }
 
         cmsg = CMSG_NXTHDR(&m, cmsg);
