@@ -19,7 +19,7 @@ namespace db {
 
 /// @brief Define the PostgreSQL backend version.
 const uint32_t PGSQL_SCHEMA_VERSION_MAJOR = 22;
-const uint32_t PGSQL_SCHEMA_VERSION_MINOR = 1;
+const uint32_t PGSQL_SCHEMA_VERSION_MINOR = 2;
 
 // Maximum number of parameters that can be used a statement
 // @todo This allows us to use an initializer list (since we can't

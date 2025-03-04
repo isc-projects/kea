@@ -6397,7 +6397,7 @@ INSERT INTO option_def_data_type VALUES
     (0, 'empty'),
     (1, 'binary'),
     (2, 'boolean'),
-    (3, 'int8"'),
+    (3, 'int8'),
     (4, 'int16'),
     (5, 'int32'),
     (6, 'uint8'),
@@ -6421,10 +6421,22 @@ ALTER TABLE dhcp6_option_def
     ADD CONSTRAINT fk_option_def_data_type6 FOREIGN KEY (type) REFERENCES option_def_data_type(id);
 
 SELECT set_config('kea.disable_audit', 'false', false);
+
+-- Update the schema version number.
 UPDATE schema_version
     SET version = '22', minor = '1';
 
 -- This line concludes the schema upgrade to version 22.1.
+
+-- This line starts the schema upgrade to version 22.2.
+
+UPDATE option_def_data_type SET name='int8' where id = 3;
+
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '22', minor = '2';
+
+-- This line concludes the schema upgrade to version 22.2.
 
 -- Commit the script transaction.
 COMMIT;
