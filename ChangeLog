@@ -1,3 +1,11 @@
+2259.	[bug]		marcin
+	Prevent the clients from declining expired or released leases.
+	Only a valid lease assigned to the declining client can now
+	be declined. When a misbehaving client declined a lease it did
+	not own it often led to inconsistent statistics of assigned and
+	declined leases.
+	(Gitlab #3758, #3565)
+
 2258.	[bug]		razvan
 	Fixed the serialization of 'retry-on-startup' database
 	configuration parameter as boolean instead of string.
