@@ -6430,7 +6430,7 @@ UPDATE schema_version
 
 -- This line starts the schema upgrade to version 22.2.
 
-UPDATE option_def_data_type SET name='int8' where id = 3;
+UPDATE option_def_data_type SET name='int8' WHERE id = 3;
 
 -- Update the schema version number.
 UPDATE schema_version

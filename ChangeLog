@@ -1,3 +1,8 @@
+2257.	[bug]		razvan
+	Fixed db-init which incorrectly populates option_def_data_type
+	name 'int8' for value 3.
+	(Gitlab #3753, #3631)
+
 2256.	[bug]		andrei, razvan
 	Kea servers no longer increase in memory when being reconfigured.
 	(Gitlab #3757, #3652)

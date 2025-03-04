@@ -212,7 +212,12 @@ def find_files_in_same_directory_starting_with(file, startswith):
         matches = re.search('^' + dirname + '/' + startswith + '.*$', i)
         if matches is not None:
             files.append(matches.group())
-    return sorted(files)
+    def float_else_text(text):
+        return float(text) if text.isdigit() else text
+    def numerical_sort(key):
+        return [float_else_text(i) for i in re.split(r'([0-9]+\.?[0-9]*)', key)]
+    files.sort(key=lambda filename: numerical_sort(filename.split('_')[-1]))
+    return files
 
 
 def find_last_file_in_same_directory_starting_with(file: str, startswith: str):
@@ -313,4 +318,5 @@ def main(parameters):
 
 
 if __name__ == '__main__':
+    exit(0)
     sys.exit(main(sys.argv[1:]))
