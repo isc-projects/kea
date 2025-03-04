@@ -694,9 +694,9 @@ public:
             return (OptionDescriptor(false, false));
         }
 
-        // We treat the emtpy client-classes case (if present) as a default.
+        // We treat the empty client-classes case (if present) as a default.
         // If we encounter it before we reach the end of the list of options
-        // remember it but keep checking the list for an acutal match. We do 
+        // remember it but keep checking the list for an actual match. We do 
         // it this way to avoid expecting the entries in any particular order.
         auto & index = options->get<1>();
         auto range = index.equal_range(option_code);

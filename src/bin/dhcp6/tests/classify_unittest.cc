@@ -3488,7 +3488,7 @@ TEST_F(ClassifyTest, classTaggingList) {
         // Create a SOLICIT
         Pkt6Ptr query = createSolicit();
 
-        // Add an ORO option requestion server-str option to the query.
+        // Add an ORO option requesting server-str option to the query.
         OptionUint16ArrayPtr oro(new OptionUint16Array(Option::V6, D6O_ORO));
         ASSERT_TRUE(oro);
         oro->addValue(701);
