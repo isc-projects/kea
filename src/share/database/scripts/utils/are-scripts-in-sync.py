@@ -318,5 +318,4 @@ def main(parameters):
 
 
 if __name__ == '__main__':
-    exit(0)
     sys.exit(main(sys.argv[1:]))

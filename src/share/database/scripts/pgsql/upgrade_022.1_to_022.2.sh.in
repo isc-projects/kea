@@ -41,6 +41,7 @@ START TRANSACTION;
 
 UPDATE option_def_data_type SET name='int8' WHERE id = 3;
 
+-- Update the schema version number.
 UPDATE schema_version
     SET version = '22', minor = '2';
 
