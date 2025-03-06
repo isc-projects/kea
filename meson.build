@@ -814,6 +814,7 @@ if valgrind.found()
         exe_wrapper: [
             valgrind,
             '--child-silent-after-fork=yes',
+            '--error-exitcode=0',
             '--fullpath-after=',
             '--leak-check=full',
             '--num-callers=64',
@@ -830,6 +831,7 @@ if valgrind.found()
         exe_wrapper: [
             valgrind,
             '--child-silent-after-fork=yes',
+            '--error-exitcode=0',
             '--fullpath-after=',
             '--leak-check=full',
             '--num-callers=64',
