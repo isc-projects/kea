@@ -171,9 +171,15 @@ KEA_MSG_COMPILER = disabler()
 boost = dependency('boost', version: '>=1.66')
 threads = dependency('threads')
 add_project_dependencies(boost, threads, language: ['cpp'])
-gtest = dependency('gtest', required: false)
-log4cplus = dependency('log4cplus')
 
+gtest = dependency('gtest', required: false)
+
+# Logging
+log4cplus = dependency('log4cplus', required: false)
+# TODO: leave only dependecy() when support for Ubuntu 20.04 gets removed.
+if not log4cplus.found()
+    log4cplus = cpp.find_library('log4cplus')
+endif
 
 # Cryptography
 crypto = disabler()
@@ -665,14 +671,17 @@ elif crypto.name() == openssl.name()
         report_conf_data.set('CRYPTO_VERSION', openssl.version())
     endif
 endif
-report_conf_data.set(
-    'LOG4CPLUS_INCLUDE',
-    log4cplus.get_variable('includedir', default_value: 'unknown'),
-)
-report_conf_data.set(
-    'LOG4CPLUS_LIBDIR',
-    log4cplus.get_variable('libdir', default_value: 'unknown'),
-)
+# TODO: remove if-condition when support for Ubuntu 20.04 gets removed.
+if log4cplus.type_name() == 'pkgconfig'
+    report_conf_data.set(
+        'LOG4CPLUS_INCLUDE',
+        log4cplus.get_variable('includedir', default_value: 'unknown'),
+    )
+    report_conf_data.set(
+        'LOG4CPLUS_LIBDIR',
+        log4cplus.get_variable('libdir', default_value: 'unknown'),
+    )
+endif
 result = cpp.run(
     fs.read('compiler-checks/get-log4cplus-version.cc'),
     name: 'Get Log4cplus version',
