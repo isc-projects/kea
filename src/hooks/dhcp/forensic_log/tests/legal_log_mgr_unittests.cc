@@ -41,13 +41,13 @@ struct LegalLogMgrTest : ::testing::Test {
     virtual ~LegalLogMgrTest() = default;
 
     /// @brief Called before each test.
-    virtual void SetUp() final override {
+    virtual void SetUp() override {
         // Clean up from past tests.
         LegalLogMgrFactory::delAllBackends();
     }
 
     /// @brief Called after each test.
-    virtual void TearDown() {
+    virtual void TearDown() override {
         // Clean up from past tests.
         LegalLogMgrFactory::delAllBackends();
         reset();

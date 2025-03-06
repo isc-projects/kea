@@ -72,7 +72,7 @@ struct CalloutTestv6 : CalloutTest {
     }
 
     /// @brief Called before each test.
-    virtual void SetUp() final override {
+    virtual void SetUp() override {
         RotatingFileTest::SetUp();
         // Various entities used in tests.
         duid_ = boost::make_shared<DUID>(DUID_DATA);

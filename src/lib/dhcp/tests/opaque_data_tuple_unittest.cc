@@ -22,7 +22,7 @@ using namespace isc::util;
 namespace {
 
 struct OpaqueDataTupleLenientParsing : ::testing::Test {
-    void SetUp() final override {
+    void SetUp() override {
         // Retain the current setting for future restoration.
         previous_ = Option::lenient_parsing_;
 
@@ -30,7 +30,7 @@ struct OpaqueDataTupleLenientParsing : ::testing::Test {
         Option::lenient_parsing_ = true;
     }
 
-    void TearDown() final override {
+    void TearDown() override {
         // Restore.
         Option::lenient_parsing_ = previous_;
     }
