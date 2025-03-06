@@ -1,9 +1,3 @@
-# todo: build without MySQL or PostgreSQL.
-
-if not mysql.found() or not postgresql.found()
-    subdir_done()
-endif
-
 dhcp_forensic_log_lib = shared_library(
     'dhcp_legal_log',
     'command_callouts.cc',

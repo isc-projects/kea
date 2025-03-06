@@ -3,22 +3,18 @@ if not gtest.found()
 endif
 
 current_build_dir = meson.current_build_dir()
-dhcp_forensic_log_lltests_libs = [
-    kea_mysql_testutils_lib,
-    kea_pgsql_testutils_lib,
-    kea_database_testutils_lib,
-]
+link_with = [kea_database_testutils_lib]
 
 dependencies = [gtest, crypto]
 
 if mysql.found()
     dependencies += [mysql]
-    dhcp_forensic_log_lltests_libs += [kea_mysql_testutils_lib]
+    link_with += [dhcp_mysql_lib, kea_mysql_testutils_lib]
 endif
 
 if postgresql.found()
     dependencies += [postgresql]
-    dhcp_forensic_log_lltests_libs += [kea_pgsql_testutils_lib]
+    link_with += [dhcp_pgsql_lib, kea_pgsql_testutils_lib]
 endif
 
 dhcp_forensic_log_libloadtests = executable(
@@ -31,7 +27,7 @@ dhcp_forensic_log_libloadtests = executable(
     ],
     dependencies: dependencies,
     include_directories: [include_directories('.'), include_directories('..'), include_directories('../..')] + INCLUDES,
-    link_with: [dhcp_forensic_log_lltests_libs] + LIBS_BUILT_SO_FAR,
+    link_with: [link_with] + LIBS_BUILT_SO_FAR,
 )
 
 test(
