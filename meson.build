@@ -337,13 +337,7 @@ if SHELL_OPT == 'enabled' and not PYTHON.found()
     error('kea-shell requires python. Python not found.')
 endif
 
-if crypto_opt == 'auto'
-    if openssl.found()
-        crypto = openssl
-    elif botan.found()
-        crypto = botan
-    endif
-elif crypto_opt == 'botan'
+if crypto_opt == 'botan'
     if botan.found()
         crypto = botan
     endif

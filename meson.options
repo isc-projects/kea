@@ -7,7 +7,7 @@ option(
 )
 
 # Dependency-related options
-option('crypto', type: 'combo', choices: ['auto', 'botan', 'openssl'], value: 'auto', description: 'Backend for cryptographical operations. Mandatory.')
+option('crypto', type: 'combo', choices: ['botan', 'openssl'], value: 'openssl', description: 'Backend for cryptographical operations. Mandatory.')
 option('krb5', type: 'combo', choices: ['', 'auto', 'enabled', 'disabled'], value: '', description: 'Support for GSS-TSIG. Requires krb5 with gssapi.')
 option('gtest', type: 'combo', choices: ['', 'auto', 'enabled', 'disabled'], value: '', description: 'Support for unit tests with GTest.')
 option('mysql', type: 'combo', choices: ['', 'auto', 'enabled', 'disabled'], value: '', description: 'Support for MySQL backends.')
