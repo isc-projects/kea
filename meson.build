@@ -178,7 +178,10 @@ gtest = dependency('gtest', required: false)
 log4cplus = dependency('log4cplus', required: false)
 # TODO: leave only dependecy() when support for Ubuntu 20.04 gets removed.
 if not log4cplus.found()
-    log4cplus = cpp.find_library('log4cplus')
+    log4cplus = cpp.find_library('log4cplus', required: false)
+endif
+if not log4cplus.found()
+    error('Dependency not found: log4cplus.')
 endif
 
 # Cryptography
