@@ -1,9 +1,12 @@
 #!/bin/sh
 
-# Print the report.
-cat > @TOP_BUILD_DIR@/config.report << END
+add_to_report() {
+    printf '%s' "${1}" >> '@TOP_BUILD_DIR@/config.report'
+}
 
+printf '' > '@TOP_BUILD_DIR@/config.report'
 
+add_to_report '
        Kea source configure results:
     -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -30,19 +33,17 @@ C++ Compiler:
   CXX_ARGS:        @CXX_ARGS@
   LD_ID:           @LD_ID@
   LD_ARGS:         @LD_ARGS@
-END
+'
 
 if test '@HAVE_PYTHON@' != 'no'; then
-cat >> @TOP_BUILD_DIR@/config.report << END
-
+add_to_report '
 Python:
   PYTHON:          @PYTHON_PATH@
   PKGPYTHONDIR:    @PKGPYTHONDIR@
-END
+'
 fi
 
-cat >> @TOP_BUILD_DIR@/config.report << END
-
+add_to_report '
 Boost:
   BOOST_VERSION:   @BOOST_VERSION@
   BOOST_INCLUDE:   @BOOST_INCLUDE@
@@ -61,58 +62,51 @@ Log4cplus:
 Flex/bison:
   FLEX:  @FLEX@
   BISON: @BISON@
-END
+'
 
 if test '@HAVE_MYSQL@' != 'no'; then
-cat >> @TOP_BUILD_DIR@/config.report << END
-
+add_to_report '
 MySQL:
   MYSQL_VERSION:   @MYSQL_VERSION@
   MYSQL_INCLUDE:   @MYSQL_INCLUDE@
   MYSQL_LIBDIR:    @MYSQL_LIBDIR@
-END
+'
 else
-cat >> @TOP_BUILD_DIR@/config.report << END
-
+add_to_report '
 MySQL:
   no
-END
+'
 fi
 
 if test '@HAVE_PGSQL@' != 'no'; then
-cat >> @TOP_BUILD_DIR@/config.report << END
-
+add_to_report '
 PostgreSQL:
   PGSQL_VERSION:   @PGSQL_VERSION@
   PGSQL_INCLUDE:   @PGSQL_INCLUDE@
   PGSQL_LIBDIR:    @PGSQL_LIBDIR@
-END
+'
 else
-cat >> @TOP_BUILD_DIR@/config.report << END
-
+add_to_report '
 PostgreSQL:
   no
-END
+'
 fi
 
-cat >> @TOP_BUILD_DIR@/config.report << END
-
+add_to_report '
 NETCONF:
   @HAVE_NETCONF@
-END
+'
 
 if test '@HAVE_GTEST@' != 'no'; then
-cat >> @TOP_BUILD_DIR@/config.report << END
-
+add_to_report '
 Google Test:
   GTEST_VERSION:   @GTEST_VERSION@
   GTEST_INCLUDE:   @GTEST_INCLUDE@
   GTEST_LIBDIR:    @GTEST_LIBDIR@
-END
+'
 else
-cat >> @TOP_BUILD_DIR@/config.report << END
-
+add_to_report '
 Google Test:
   no
-END
+'
 fi
