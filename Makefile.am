@@ -128,7 +128,6 @@ endif
 if HAVE_BOTAN
 			botan/\* \
 endif
-			ext/coroutine/\* \
 			gtest/\* \
 			include/\* \
 			lib/\eval/\* \
@@ -181,9 +180,6 @@ install-exec-hook:
 
 add-changelog-entry:
 	@./changelog_unreleased/.add-entry.sh
-
-#### include external sources in the distributed tarball:
-EXTRA_DIST = ext/coroutine/coroutine.hpp
 
 CLEANFILES = $(abs_top_builddir)/logger_lockfile
 

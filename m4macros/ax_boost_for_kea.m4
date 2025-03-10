@@ -80,6 +80,7 @@ fi
 AC_CHECK_HEADERS(
   [                                                             \
     boost/asio.hpp                                              \
+    boost/asio/coroutine.hpp                                    \
     boost/asio/ip/address.hpp                                   \
     boost/asio/signal_set.hpp                                   \
     boost/atomic.hpp                                            \
@@ -96,8 +97,6 @@ AC_CHECK_HEADERS(
     #include <utility>
   ]]
 )
-
-AC_CHECK_HEADERS(boost/asio/coroutine.hpp,,AC_MSG_RESULT(not found, using built-in header.))
 
 AC_CHECK_HEADERS(boost/integer/common_factor.hpp)
 
