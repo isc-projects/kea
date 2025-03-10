@@ -143,7 +143,7 @@ BaseCommandMgr::processCommand(const isc::data::ConstElementPtr& cmd) {
 
             // Call callouts
             HooksManager::callCallouts(Hooks.hook_index_command_processed_,
-                                        *callout_handle);
+                                       *callout_handle);
 
             // Refresh the response from the callout context in case it was modified.
             // @todo Should we allow this?

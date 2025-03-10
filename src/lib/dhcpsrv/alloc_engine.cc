@@ -2872,6 +2872,7 @@ AllocEngine::reclaimExpiredLease(const Lease6Ptr& lease,
     // it reclaims the lease itself. In this case the reclamation routine
     // will not update DNS nor update the database.
     bool skipped = false;
+    bool released = (lease->state_ == Lease::STATE_RELEASED);
     if (callout_handle) {
 
         // Use the RAII wrapper to make sure that the callout handle state is
@@ -2943,7 +2944,7 @@ AllocEngine::reclaimExpiredLease(const Lease6Ptr& lease,
     StatsMgr::instance().addValue("reclaimed-leases", static_cast<int64_t>(1));
 
     // Statistics must have been updated during the release.
-    if (lease->state_ == Lease::STATE_RELEASED) {
+    if (released) {
         return;
     }
 
@@ -3020,6 +3021,7 @@ AllocEngine::reclaimExpiredLease(const Lease4Ptr& lease,
     // it reclaims the lease itself. In this case the reclamation routine
     // will not update DNS nor update the database.
     bool skipped = false;
+    bool released = (lease->state_ == Lease::STATE_RELEASED);
     if (callout_handle) {
 
         // Use the RAII wrapper to make sure that the callout handle state is
@@ -3088,7 +3090,7 @@ AllocEngine::reclaimExpiredLease(const Lease4Ptr& lease,
         static_cast<int64_t>(1));
 
     // Statistics must have been updated during the release.
-    if (lease->state_ == Lease4::STATE_RELEASED) {
+    if (released) {
         return;
     }
 

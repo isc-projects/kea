@@ -1237,7 +1237,7 @@ public:
     /// @param stat_name Name of the statistics to be retrieved, e.g. subnet[1234].assigned-nas.
     /// @return Number of assigned leases for a subnet.
     int64_t getStatsAssignedLeases(const std::string& stat_name) const {
-        // Top element is a map with a subnet[id].assigned-addresses parameter.
+        // Top element is a map with a subnet[id].assigned-nas parameter.
         ConstElementPtr top_element = StatsMgr::instance().get(stat_name);
         if (top_element && (top_element->getType() == Element::map)) {
             // It contains two lists (nested).

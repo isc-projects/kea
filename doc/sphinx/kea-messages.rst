@@ -2859,6 +2859,20 @@ ready status after scheduling asynchronous send. This is programmatic error
 that should be reported. The command manager may or may not continue
 to operate correctly.
 
+******
+CONFIG
+******
+
+CONFIG_BACKENDS_REGISTERED
+==========================
+
+.. code-block:: text
+
+    the following config backend types are available: %1
+
+This informational message lists all possible config backends that could
+be used in config-database[s].
+
 ****
 CTRL
 ****
@@ -5989,6 +6003,28 @@ Logged at debug log level 40.
 This debug message informs that a class is listed for additional evaluation but
 has no definition. The class is ignored.
 
+DHCP6_ADDR_REG_INFORM_CLIENT_CHANGE
+===================================
+
+.. code-block:: text
+
+    received an ADDR-REG-INFORM for %1 from client '%2' but the address was registered by another client '%3'
+
+This information message is issued when a lease for another client already
+exists for an address being registered. The address, the new client and
+previous client identifiers are printed.
+
+DHCP6_ADDR_REG_INFORM_FAIL
+==========================
+
+.. code-block:: text
+
+    error on ADDR-REG-INFORM from client %1: %2
+
+This information message is issued when the processing of an ADDR-REG-INFORM
+message failed. The address of the client, usually also the address to
+register, and the description of the problem are printed.
+
 DHCP6_ADD_GLOBAL_STATUS_CODE
 ============================
 
@@ -6627,6 +6663,32 @@ This debug message is printed when host reservation type is set to flexible iden
 and the expression specified in its configuration generated (was evaluated to)
 an identifier for incoming packet. This debug message is mainly intended as a
 debugging assistance for flexible identifier.
+
+DHCP6_HOOK_ADDR6_REGISTER_DROP
+==============================
+
+.. code-block:: text
+
+    %1: ADDR-REG-INFORM for %2 is dropped, because a callout set the next step to DROP
+
+Logged at debug log level 40.
+This debug message is printed when a callout installed on the addr6_register
+hook point sets the next step to DROP. For this particular hook point, the
+value setting instructs the server to cancel the address registration and
+drop the packet.
+
+DHCP6_HOOK_ADDR6_REGISTER_SKIP
+==============================
+
+.. code-block:: text
+
+    %1: lease %2 operation for %3 is skipped, because a callout set the next step to SKIP
+
+Logged at debug log level 40.
+This debug message is printed when a callout installed on the addr6_register
+hook point sets the next step to SKIP. For this particular hook point, the
+value setting instructs the server to skip the lease add or update operation
+for the registered address so not maintaining the registration state.
 
 DHCP6_HOOK_BUFFER_RCVD_DROP
 ===========================
@@ -7716,6 +7778,26 @@ DHCP6_RECLAIM_EXPIRED_LEASES_FAIL
 This error message indicates that the reclaim expired leases operation failed
 and provides the cause of failure.
 
+DHCP6_REGISTERED_LEASE_ADD_FAIL
+===============================
+
+.. code-block:: text
+
+    error in registered lease add for %1
+
+This error message indicates that the registered lease add failed and
+provides the address being registered.
+
+DHCP6_REGISTERED_LEASE_UPDATE_FAIL
+==================================
+
+.. code-block:: text
+
+    error in registered lease update for %1: %2
+
+This error message indicates that the registered lease update failed and
+provides the registered address and the cause of failure.
+
 DHCP6_RELEASE_NA
 ================
 
@@ -8747,6 +8829,38 @@ Logged at debug log level 50.
 This debug message indicates that the expression of a client class has been
 successfully evaluated. The client class name and the result value of the
 evaluation are printed.
+
+DHCPSRV_FORENSIC_BACKENDS_REGISTERED
+====================================
+
+.. code-block:: text
+
+    the following forensic backend types are available: %1
+
+This informational message lists all possible forensic backends that could
+be used in forensic logging.
+
+DHCPSRV_FORENSIC_BACKEND_DEREGISTER
+===================================
+
+.. code-block:: text
+
+    deregistered forensic backend type: %1
+
+Logged at debug log level 40.
+This debug message is issued when a backend factory was deregistered.
+It is no longer possible to use forensic backend of this type.
+
+DHCPSRV_FORENSIC_BACKEND_REGISTER
+=================================
+
+.. code-block:: text
+
+    registered forensic backend type: %1
+
+Logged at debug log level 40.
+This debug message is issued when a backend factory was successfully
+registered. It is now possible to use forensic backend of this type.
 
 DHCPSRV_HOOK_LEASE4_RECOVER_SKIP
 ================================
@@ -16719,18 +16833,6 @@ the store database. The operation started a retry to connect procedure.
 The database access string with password redacted is logged, along with the
 error and details for the reconnect procedure.
 
-LEGAL_LOG_INVALID_ACCESS
-========================
-
-.. code-block:: text
-
-    invalid database access string: %1
-
-This is logged when an attempt has been made to parse a database access string
-and the attempt ended in error.  The access string in question - which
-should be of the form 'keyword=value keyword=value...' is included in
-the message.
-
 LEGAL_LOG_LEASE4_NO_LEGAL_STORE
 ===============================
 
@@ -16799,18 +16901,6 @@ The code has issued a commit call.  All outstanding transactions will be
 committed to the database.  Note that depending on the MySQL settings,
 the committal may not include a write to disk.
 
-LEGAL_LOG_MYSQL_DB
-==================
-
-.. code-block:: text
-
-    opening MySQL log database: %1
-
-This informational message is logged when a legal log hook library is
-about to open a MySQL log database.  The parameters of the
-connection including database name and username needed to access it
-(but not the password if any) are logged.
-
 LEGAL_LOG_MYSQL_DB_RECONNECT_ATTEMPT_FAILED
 ===========================================
 
@@ -16873,6 +16963,18 @@ LEGAL_LOG_MYSQL_INSERT_LOG
 Logged at debug log level 50.
 An informational message logged when a log entry is inserted.
 
+LEGAL_LOG_MYSQL_INVALID_ACCESS
+==============================
+
+.. code-block:: text
+
+    invalid database access string: %1
+
+This is logged when an attempt has been made to parse a database access string
+and the attempt ended in error.  The access string in question - which
+should be of the form 'keyword=value keyword=value...' is included in
+the message.
+
 LEGAL_LOG_MYSQL_NO_TLS
 ======================
 
@@ -16908,17 +17010,6 @@ inserted into multiple tables with multiple INSERT statements
 and there may be a need to rollback the whole transaction if
 any of these INSERT statements fail.
 
-LEGAL_LOG_MYSQL_TLS_CIPHER
-==========================
-
-.. code-block:: text
-
-    TLS cipher: %1
-
-Logged at debug log level 50.
-A debug message issued when a new MySQL connected is created with TLS.
-The TLS cipher name is logged.
-
 LEGAL_LOG_PGSQL_COMMIT
 ======================
 
@@ -16929,18 +17020,6 @@ LEGAL_LOG_PGSQL_COMMIT
 The code has issued a commit call.  All outstanding transactions will be
 committed to the database.  Note that depending on the PostgreSQL settings,
 the committal may not include a write to disk.
-
-LEGAL_LOG_PGSQL_DB
-==================
-
-.. code-block:: text
-
-    opening PostgreSQL log database: %1
-
-This informational message is logged when a legal log hook library is
-about to open a PostgreSQL log database.  The parameters of the
-connection including database name and username needed to access it
-(but not the password if any) are logged.
 
 LEGAL_LOG_PGSQL_DB_RECONNECT_ATTEMPT_FAILED
 ===========================================
@@ -16992,7 +17071,7 @@ LEGAL_LOG_PGSQL_FATAL_ERROR
 
     Unrecoverable PostgreSQL error occurred: Statement: <%1>, reason: %2 (error code: %3).
 
-An error message indicating that communication with the MySQL database server
+An error message indicating that communication with the PostgreSQL database server
 has been lost.  When this occurs the server exits immediately with a non-zero
 exit code.  This is most likely due to a network issue.
 
@@ -17016,6 +17095,18 @@ LEGAL_LOG_PGSQL_INSERT_LOG
 
 Logged at debug log level 50.
 An informational message logged when a log entry is inserted.
+
+LEGAL_LOG_PGSQL_INVALID_ACCESS
+==============================
+
+.. code-block:: text
+
+    invalid database access string: %1
+
+This is logged when an attempt has been made to parse a database access string
+and the attempt ended in error.  The access string in question - which
+should be of the form 'keyword=value keyword=value...' is included in
+the message.
 
 LEGAL_LOG_PGSQL_NO_TLS_SUPPORT
 ==============================
@@ -17053,18 +17144,6 @@ inserted into multiple tables with multiple INSERT statements
 and there may be a need to rollback the whole transaction if
 any of these INSERT statements fail.
 
-LEGAL_LOG_PGSQL_TLS_SUPPORT
-===========================
-
-.. code-block:: text
-
-    Attempt to configure TLS: %1
-
-This informational message is printed when TLS support was required in
-the Kea configuration: The TLS support in PostgreSQL will be initialized but
-its configuration is fully managed outside the C API.
-The parameters of the connection are logged.
-
 LEGAL_LOG_STORE_CLOSED
 ======================
 
@@ -17085,6 +17164,17 @@ LEGAL_LOG_STORE_CLOSE_ERROR
 This is an error message issued when the legal log library experienced an
 error attempting to close a legal store.  This is highly unlikely to occur and
 should not affect the store content or subsequent legal store operations.
+
+LEGAL_LOG_STORE_OPEN
+====================
+
+.. code-block:: text
+
+    opening Legal Log file: %1
+
+This informational message is logged when a DHCP server (either V4 or
+V6) is about to open a legal log file. The parameters of
+the backend are logged.
 
 LEGAL_LOG_STORE_OPENED
 ======================
@@ -19548,6 +19638,18 @@ MYSQL_DEINIT_OK
 
 This informational message indicates that the MySQL Backend hooks
 library has been unloaded successfully.
+
+MYSQL_FB_DB
+===========
+
+.. code-block:: text
+
+    opening MySQL log database: %1
+
+This informational message is logged when a legal log hook library is
+about to open a MySQL log database.  The parameters of the
+connection including database name and username needed to access it
+(but not the password if any) are logged.
 
 MYSQL_HB_DB
 ===========
@@ -22642,6 +22744,18 @@ PGSQL_DEINIT_OK
 
 This informational message indicates that the PostgreSQL Backend hooks
 library has been unloaded successfully.
+
+PGSQL_FB_DB
+===========
+
+.. code-block:: text
+
+    opening PostgreSQL log database: %1
+
+This informational message is logged when a legal log hook library is
+about to open a PostgreSQL log database.  The parameters of the
+connection including database name and username needed to access it
+(but not the password if any) are logged.
 
 PGSQL_HB_DB
 ===========
