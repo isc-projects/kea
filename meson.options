@@ -9,7 +9,6 @@ option(
 # Dependency-related options
 option('crypto', type: 'combo', choices: ['botan', 'openssl'], value: 'openssl', description: 'Backend for cryptographical operations. Mandatory.')
 option('krb5', type: 'combo', choices: ['', 'auto', 'enabled', 'disabled'], value: '', description: 'Support for GSS-TSIG. Requires krb5 with gssapi.')
-option('gtest', type: 'combo', choices: ['', 'auto', 'enabled', 'disabled'], value: '', description: 'Support for unit tests with GTest.')
 option('mysql', type: 'combo', choices: ['', 'auto', 'enabled', 'disabled'], value: '', description: 'Support for MySQL backends.')
 option('netconf', type: 'combo', choices: ['', 'auto', 'enabled', 'disabled'], value: '', description: 'Support for kea-netconf.')
 option('postgresql', type: 'combo', choices: ['', 'auto', 'enabled', 'disabled'], value: '', description: 'Support for PostgreSQL backends.')
@@ -19,8 +18,11 @@ option('postgresql', type: 'combo', choices: ['', 'auto', 'enabled', 'disabled']
 # option('parser', type: 'feature', choices: ['', 'auto', 'enabled', 'disabled'], value: '', description: 'Support for parser generation.')
 
 # Options for enabling various parts of code.
+# not only unit tests...
+option('gtest', type: 'combo', choices: ['enabled', 'disabled'], value: 'disabled', description: 'Support for tests.')
 # debug?
-# logger-checks?
+# logger-checks (uses assert so only for development).
+option('logger-checks', type: 'combo', choices: ['enabled', 'disabled'], value: 'disabled', description: 'Check logger messages.')
 option('fuzz', type: 'combo', choices: ['', 'auto', 'clusterfuzzlite', 'disabled', 'enabled'], value: '', description: 'Support for fuzz testing.')
 option('perfdhcp', type: 'combo', choices: ['', 'auto', 'disabled', 'enabled'], value: '', description: 'Builds perfdhcp.')
 option('shell', type: 'combo', choices: ['', 'auto', 'disabled', 'enabled'], value: '', description: 'Builds kea-shell.')

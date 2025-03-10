@@ -26,6 +26,21 @@ TEST_CA_DIR = f'@TOP_SOURCE_DIR@/src/lib/asiolink/testutils/ca'
 DATABASE_SCRIPTS_DIR = f'@TOP_BUILD_DIR@/src/share/database/scripts'
 LEGAL_LOG_DIR = f'@PREFIX@/@RUN_STATE_DIR@/lib/kea'
 
+#### Build Options
+
+all_opt = get_option('all')
+crypto_opt = get_option('crypto')
+gtest_opt = get_option('gtest')
+krb5_opt = get_option('krb5')
+mysql_opt = get_option('mysql')
+netconf_opt = get_option('netconf')
+postgresql_opt = get_option('postgresql')
+
+logger_checks_opt = get_option('logger-checks')
+FUZZ_OPT = get_option('fuzz')
+PERFDHCP_OPT = get_option('perfdhcp')
+SHELL_OPT = get_option('shell')
+
 #### Configuration Data
 
 conf_data = configuration_data(
@@ -172,7 +187,10 @@ boost = dependency('boost', version: '>=1.66')
 threads = dependency('threads')
 add_project_dependencies(boost, threads, language: ['cpp'])
 
-gtest = dependency('gtest', required: false)
+gtest = disabler()
+if gtest_opt == 'enabled'
+    gtest = dependency('gtest', required: true)
+endif
 
 # Logging
 log4cplus = dependency('log4cplus', required: false)
@@ -320,26 +338,12 @@ foreach dep : ['yang', 'yang-cpp', 'sysrepo', 'sysrepo-cpp']
     endif
 endforeach
 
-#### Build Options
-
-all_opt = get_option('all')
-crypto_opt = get_option('crypto')
-gtest_opt = get_option('gtest')
-krb5_opt = get_option('krb5')
-mysql_opt = get_option('mysql')
-netconf_opt = get_option('netconf')
-postgresql_opt = get_option('postgresql')
-
-# docs_opt = get_option('docs')
-# parser_opt = get_option('parser')
-
-FUZZ_OPT = get_option('fuzz')
-PERFDHCP_OPT = get_option('perfdhcp')
-SHELL_OPT = get_option('shell')
+# Kea shell
 if SHELL_OPT == 'enabled' and not PYTHON.found()
     error('kea-shell requires python. Python not found.')
 endif
 
+# Crypto
 if crypto_opt == 'botan'
     if botan.found()
         crypto = botan
@@ -362,12 +366,8 @@ else
     error('Dependency not found: neither Botan nor OpenSSL.')
 endif
 
+# All option.
 if all_opt.enabled()
-    if gtest_opt == 'disabled'
-        gtest = disabler()
-    elif not gtest.found()
-        error('Dependency not found: GTest.')
-    endif
     if krb5_opt == 'disabled'
         krb5 = disabler()
     elif not krb5.found()
@@ -398,9 +398,6 @@ if all_opt.enabled()
         SHELL_OPT = 'enabled'
     endif
 elif all_opt.disabled()
-    if gtest_opt != 'enabled'
-        gtest = disabler()
-    endif
     if krb5_opt != 'enabled'
         krb5 = disabler()
     endif
@@ -423,10 +420,6 @@ elif all_opt.disabled()
         SHELL_OPT = 'disabled'
     endif
 elif all_opt.auto()
-    if gtest_opt == 'enabled' and not gtest.found()
-        error('Dependency not found: GTest.')
-    endif
-
     if krb5_opt == 'enabled' and not krb5.found()
         error('Dependency not found: Kerberos 5 with GSSAPI.')
     endif
@@ -459,6 +452,10 @@ endif
 
 if postgresql.found()
     conf_data.set('HAVE_PGSQL', true)
+endif
+
+if logger_checks_opt == 'enabled'
+    conf_data.set('ENABLE_LOGGER_CHECKS', true)
 endif
 
 #### Compiler Checks
@@ -541,15 +538,21 @@ else
     add_project_link_arguments(link_arg, language: 'cpp')
 endif
 
-have_premium = fs.is_dir('premium')
-if have_premium
+# Use dependencies as meson format -r does not traverse subdir with if_found.
+if fs.is_dir('premium')
+    premium = declare_dependency()
     conf_data.set('PREMIUM', 'yes')
     conf_data.set('PREMIUM_EXTENDED_VERSION', f'"@PROJECT_VERSION@"')
 else
+    premium = disabler()
     conf_data.set('PREMIUM', 'no')
     conf_data.set('PREMIUM_EXTENDED_VERSION', '"no"')
 endif
-have_contrib = fs.is_dir('contrib')
+if fs.is_dir('contrib')
+    contrib = declare_dependency()
+else
+    contrib = disabler()
+endif
 
 #### Default Includes
 
@@ -572,7 +575,7 @@ report_conf_data.set('PACKAGE_VERSION_TYPE', 'development')
 report_conf_data.set('OS_TYPE', OS_TYPE)
 report_conf_data.set('PREFIX', PREFIX)
 report_conf_data.set('HOOKS_DIR', DEFAULT_HOOKS_PATH)
-if have_premium
+if premium.found()
     report_conf_data.set('PREMIUM', 'yes')
 else
     report_conf_data.set('PREMIUM', 'no')
@@ -883,12 +886,8 @@ subdir('tools')
 subdir('src')
 subdir('fuzz')
 subdir('doc')
-if have_premium
-    subdir('premium')
-endif
-if have_contrib
-    subdir('contrib')
-endif
+subdir('premium', if_found: premium)
+subdir('contrib', if_found: contrib)
 
 #### More Custom Targets
 
