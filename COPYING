@@ -383,10 +383,6 @@ Exhibit B - "Incompatible With Secondary Licenses" Notice
 
 ---end of MPL 2.0 license ---------------------------------------------------
 
-The ext/coroutine code is externally maintained and distributed under
-the Boost Software License, Version 1.0.  (See its accompanying file
-LICENSE_1_0.txt.)
-
 Sample TLS clients and servers are used for tests and are included in
 src/lib/asiolink/testutils. The Botan version was ported from the
 OpenSSL one with the help of the Botan team.  The files are

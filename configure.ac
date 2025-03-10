@@ -1085,7 +1085,7 @@ if test $enable_gtest != "no"; then
     CPPFLAGS=$CPPFLAGS_SAVED
 fi
 
-# Provide the ability to include our coroutine header or other headers from ext.
+# Provide the ability to include headers from ext.
 CPPFLAGS="$CPPFLAGS -I\$(top_srcdir) -I\$(top_builddir)"
 
 # Doesn't seem to be required?
@@ -1514,7 +1514,6 @@ AC_CONFIG_FILES([doc/sphinx/Makefile])
 AC_CONFIG_FILES([doc/devel/Makefile])
 AC_CONFIG_FILES([ext/Makefile])
 AC_CONFIG_FILES([ext/gtest/Makefile])
-AC_CONFIG_FILES([ext/coroutine/Makefile])
 AC_CONFIG_FILES([fuzz/Makefile])
 AC_CONFIG_FILES([fuzz/input/Makefile])
 AC_CONFIG_FILES([fuzz/tests/Makefile])
