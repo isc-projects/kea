@@ -16,9 +16,6 @@
 /* Fuzzing running in CI. */
 #mesondefine FUZZING_IN_CI
 
-/* Does this platform have some undefined pthreads behavior? */
-#mesondefine HAS_UNDEFINED_PTHREAD_BEHAVIOR
-
 /* AFL compiler enabled. */
 #mesondefine HAVE_AFL
 
@@ -67,35 +64,8 @@
 /* Whether you have the <botan/asio_stream.h> header file. */
 #mesondefine HAVE_BOTAN_ASIO_STREAM_H
 
-/* Whether you have the <botan/build.h> header file. */
-#mesondefine HAVE_BOTAN_BUILD_H
-
-/* Whether getsockopt(IPV6_USE_MIN_MTU) does not work */
-#mesondefine HAVE_BROKEN_GET_IPV6_USE_MIN_MTU
-
 /* Whether gtest defines edit_distance::CreateUnifiedDiff */
 #mesondefine HAVE_CREATE_UNIFIED_DIFF
-
-/* Whether you have the <dlfcn.h> header file. */
-#mesondefine HAVE_DLFCN_H
-
-/* Whether you have the 'EVP_MD_CTX_create' function. */
-#mesondefine HAVE_EVP_MD_CTX_CREATE
-
-/* Whether you have the 'EVP_MD_CTX_destroy' function. */
-#mesondefine HAVE_EVP_MD_CTX_DESTROY
-
-/* Whether you have the 'EVP_MD_CTX_free' function. */
-#mesondefine HAVE_EVP_MD_CTX_FREE
-
-/* Whether you have the 'EVP_MD_CTX_new' function. */
-#mesondefine HAVE_EVP_MD_CTX_NEW
-
-/* Whether you have the 'EVP_PKEY_new_mac_key' function. */
-#mesondefine HAVE_EVP_PKEY_NEW_MAC_KEY
-
-/* Whether you have the 'EVP_PKEY_new_raw_private_key' function. */
-#mesondefine HAVE_EVP_PKEY_NEW_RAW_PRIVATE_KEY
 
 /* Whether boost::asio::ssl::context::tls is available */
 #mesondefine HAVE_GENERIC_TLS_METHOD
@@ -108,21 +78,6 @@
 
 /* gss_str_to_oid is available */
 #mesondefine HAVE_GSS_STR_TO_OID
-
-/* Whether you have the <inttypes.h> header file. */
-#mesondefine HAVE_INTTYPES_H
-
-/* Whether std::is_base_of is available */
-#mesondefine HAVE_IS_BASE_OF
-
-/* Whether you have the <krb5.h> header file. */
-#mesondefine HAVE_KRB5_H
-
-/* Whether you have the <krb5/krb5.h> header file. */
-#mesondefine HAVE_KRB5_KRB5_H
-
-/* Whether you have the <log4cplus/logger.h> header file. */
-#mesondefine HAVE_LOG4CPLUS_LOGGER_H
 
 /* MySQL is present */
 #mesondefine HAVE_MYSQL
@@ -151,68 +106,26 @@
 /* PostgreSQL connection parameter tcp_user_timeout supported */
 #mesondefine HAVE_PGSQL_TCP_USER_TIMEOUT
 
-/* Whether you have the 'pselect' function. */
-#mesondefine HAVE_PSELECT
-
 /* Whether sockaddr has a sa_len member, and corresponding sin_len and sun_len */
 #mesondefine HAVE_SA_LEN
-
-/* Whether stdbool.h conforms to C99. */
-#mesondefine HAVE_STDBOOL_H
-
-/* Whether you have the <stdint.h> header file. */
-#mesondefine HAVE_STDINT_H
-
-/* Whether you have the <stdio.h> header file. */
-#mesondefine HAVE_STDIO_H
-
-/* Whether you have the <stdlib.h> header file. */
-#mesondefine HAVE_STDLIB_H
 
 /* Whether boost::asio::ssl::error::stream_truncated is available */
 #mesondefine HAVE_STREAM_TRUNCATED_ERROR
 
-/* Whether you have the <strings.h> header file. */
-#mesondefine HAVE_STRINGS_H
-
-/* Whether you have the <string.h> header file. */
-#mesondefine HAVE_STRING_H
-
-/* Whether you have the <sys/devpoll.h> header file. */
-#mesondefine HAVE_SYS_DEVPOLL_H
-
 /* Whether you have the <sys/filio.h> header file. */
 #mesondefine HAVE_SYS_FILIO_H
-
-/* Whether you have the <sys/stat.h> header file. */
-#mesondefine HAVE_SYS_STAT_H
-
-/* Whether you have the <sys/types.h> header file. */
-#mesondefine HAVE_SYS_TYPES_H
 
 /* Whether boost::asio::ssl::context::tlsv12 is available */
 #mesondefine HAVE_TLS_1_2_METHOD
 
-/* Whether you have the <unistd.h> header file. */
-#mesondefine HAVE_UNISTD_H
-
 /* Check valgrind headers */
 #mesondefine HAVE_VALGRIND_HEADERS
-
-/* Whether you have the <valgrind/valgrind.h> header file. */
-#mesondefine HAVE_VALGRIND_VALGRIND_H
-
-/* Whether the system has the type '_Bool'. */
-#mesondefine HAVE__BOOL
 
 /* Whether libc is musl */
 #mesondefine LIBC_MUSL
 
 /* Explicit initialization of log4cplus possible */
 #mesondefine LOG4CPLUS_INITIALIZER_H
-
-/* Define to the sub-directory where libtool stores uninstalled libraries. */
-#mesondefine LT_OBJDIR
 
 /* Running on BSD? */
 #mesondefine OS_BSD
@@ -259,11 +172,6 @@
 /* Kea-premium hooks found */
 #mesondefine PREMIUM
 
-/* Whether all of the C89 standard headers exist (not just the ones
-   required in a freestanding environment). This macro is provided for
-   backward compatibility; new code need not use it. */
-#mesondefine STDC_HEADERS
-
 #mesondefine TOP_BUILDDIR
 
 /* Was Kea statically linked? */
@@ -280,12 +188,3 @@
 
 /* Compile with OpenSSL crypto */
 #mesondefine WITH_OPENSSL
-
-/* Whether 'lex' declares 'yytext' as a 'char *' by default, not a 'char[]'. */
-#mesondefine YYTEXT_POINTER
-
-/* Define as 'unsigned int' if <stddef.h> doesn't define. */
-#mesondefine SIZE_T
-
-/* Define as 'int' if <sys/types.h> doesn't define. */
-#mesondefine SSIZE_T
