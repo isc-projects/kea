@@ -5,7 +5,7 @@ dhcp_subnet_cmds_lib = shared_library(
     'subnet_cmds_log.cc',
     'subnet_cmds_messages.cc',
     'version.cc',
-    dependencies: [crypto],
+    dependencies: [CRYPTO_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib/kea/hooks',

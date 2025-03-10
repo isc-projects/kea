@@ -1,4 +1,4 @@
-if not gtest.found()
+if not TESTS_OPT.enabled()
     subdir_done()
 endif
 
@@ -21,7 +21,7 @@ dhcp_ha_lib_tests = executable(
         f'-DTEST_CA_DIR="@TEST_CA_DIR@"',
         f'-DTEST_HTTP_DIR="@TOP_SOURCE_DIR@/src/lib/http/tests/testdata"',
     ],
-    dependencies: [gtest, crypto],
+    dependencies: [GTEST_DEP, CRYPTO_DEP],
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
     link_with: [dhcp_ha_archive, [kea_testutils_lib]] + LIBS_BUILT_SO_FAR,
 )

@@ -26,7 +26,7 @@ dhcp_radius_lib = shared_library(
     'radius_utils.cc',
     'version.cc',
     cpp_args: [f'-DDICTIONARY="@PREFIX@/@SYSCONFDIR@/kea/radius/dictionary"'],
-    dependencies: [crypto],
+    dependencies: [CRYPTO_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib/kea/hooks',

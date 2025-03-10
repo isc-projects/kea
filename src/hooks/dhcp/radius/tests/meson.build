@@ -1,4 +1,4 @@
-if not gtest.found()
+if not TESTS_OPT.enabled()
     subdir_done()
 endif
 
@@ -30,7 +30,7 @@ dhcp_radius_tests = executable(
         f'-DDICTIONARY="@PREFIX@/@SYSCONFDIR@/kea/radius/dictionary"',
         f'-DTEST_DICTIONARY="@TOP_SOURCE_DIR@/src/hooks/dhcp/radius/data/dictionary"',
     ],
-    dependencies: [gtest, crypto],
+    dependencies: [GTEST_DEP, CRYPTO_DEP],
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
     link_with: [dhcp_radius_tests_libs] + LIBS_BUILT_SO_FAR,
 )

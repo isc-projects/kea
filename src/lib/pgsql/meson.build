@@ -1,4 +1,4 @@
-if not postgresql.found()
+if not POSTGRESQL_DEP.found()
     subdir_done()
 endif
 
@@ -7,7 +7,7 @@ kea_pgsql_lib = shared_library(
     'pgsql_connection.cc',
     'pgsql_exchange.cc',
     cpp_args: [f'-DKEA_ADMIN="@KEA_ADMIN@"'],
-    dependencies: [postgresql],
+    dependencies: [POSTGRESQL_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib',

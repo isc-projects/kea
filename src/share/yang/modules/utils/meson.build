@@ -8,11 +8,11 @@ yang_utils_conf_data.set('datarootdir', f'@PREFIX@/@DATADIR@')
 yang_utils_conf_data.set('prefix', PREFIX)
 yang_utils_conf_data.set(
     'LIBYANG_PREFIX',
-    netconf_deps['yang'].get_variable('prefix'),
+    NETCONF_DEP.get_variable('libyang_prefix'),
 )
 yang_utils_conf_data.set(
     'SYSREPO_PREFIX',
-    netconf_deps['sysrepo'].get_variable('prefix'),
+    NETCONF_DEP.get_variable('sysrepo_prefix'),
 )
 
 configure_file(

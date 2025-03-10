@@ -1,4 +1,4 @@
-if not gtest.found()
+if not TESTS_OPT.enabled()
     subdir_done()
 endif
 
@@ -40,7 +40,7 @@ kea_util_tests = executable(
         f'-DABS_SRCDIR="@TOP_SOURCE_DIR@/src/lib/util/tests"',
         f'-DTEST_DATA_BUILDDIR="@TOP_BUILD_DIR@/src/lib/util/tests"',
     ],
-    dependencies: [gtest],
+    dependencies: [GTEST_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )

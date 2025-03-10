@@ -1,4 +1,4 @@
-if not gtest.found()
+if not TESTS_OPT.enabled()
     subdir_done()
 endif
 
@@ -20,7 +20,7 @@ dhcp_run_script_lib_tests = executable(
         f'-DTEST_LOG_FILE="@current_build_dir@/test.log"',
         f'-DRUN_SCRIPT_TEST_SH="@current_build_dir@/run_script_test.sh"',
     ],
-    dependencies: [gtest, crypto],
+    dependencies: [GTEST_DEP, CRYPTO_DEP],
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
     link_with: [dhcp_run_script_archive] + LIBS_BUILT_SO_FAR,
 )

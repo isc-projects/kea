@@ -7,7 +7,7 @@ dhcp_lease_cmds_lib = shared_library(
     'lease_cmds_messages.cc',
     'lease_parser.cc',
     'version.cc',
-    dependencies: [crypto],
+    dependencies: [CRYPTO_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib/kea/hooks',

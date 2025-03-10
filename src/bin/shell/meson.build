@@ -1,4 +1,4 @@
-if SHELL_OPT != 'enabled'
+if not SHELL_OPT.enabled()
     subdir_done()
 endif
 

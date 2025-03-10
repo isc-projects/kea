@@ -1,4 +1,4 @@
-if not gtest.found()
+if not TESTS_OPT.enabled()
     subdir_done()
 endif
 
@@ -19,7 +19,7 @@ perfdhcp_tests = executable(
     'stats_mgr_unittest.cc',
     'test_control_unittest.cc',
     cpp_args: [f'-DTEST_DATA_DIR="@current_source_dir@/testdata"'],
-    dependencies: [gtest],
+    dependencies: [GTEST_DEP],
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
     link_with: [perfdhcp_lib, kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )

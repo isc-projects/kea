@@ -5,7 +5,7 @@ dhcp_run_script_lib = shared_library(
     'run_script_log.cc',
     'run_script_messages.cc',
     'version.cc',
-    dependencies: [crypto],
+    dependencies: [CRYPTO_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib/kea/hooks',

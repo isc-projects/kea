@@ -1,17 +1,17 @@
-if not gtest.found()
+if not TESTS_OPT.enabled()
     subdir_done()
 endif
 
 current_build_dir = meson.current_build_dir()
-dhcp_lease_query_tests_dependencies = [gtest, crypto]
+dhcp_lease_query_tests_dependencies = [GTEST_DEP, CRYPTO_DEP]
 dhcp_lease_query_tests_libs = [dhcp_lease_query_archive]
-if mysql.found()
+if MYSQL_DEP.found()
     dhcp_lease_query_tests_libs += [dhcp_mysql_archive, kea_mysql_testutils_lib]
-    dhcp_lease_query_tests_dependencies += [mysql]
+    dhcp_lease_query_tests_dependencies += [MYSQL_DEP]
 endif
-if postgresql.found()
+if POSTGRESQL_DEP.found()
     dhcp_lease_query_tests_libs += [dhcp_pgsql_archive, kea_pgsql_testutils_lib]
-    dhcp_lease_query_tests_dependencies += [postgresql]
+    dhcp_lease_query_tests_dependencies += [POSTGRESQL_DEP]
 endif
 dhcp_lease_query_tests_libs += [
     kea_dhcp_testutils_lib,

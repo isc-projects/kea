@@ -8,7 +8,7 @@ dhcp_host_cache_lib = shared_library(
     'host_cache_messages.cc',
     'host_cache_parsers.cc',
     'version.cc',
-    dependencies: [crypto],
+    dependencies: [CRYPTO_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib/kea/hooks',

@@ -1,4 +1,4 @@
-if not gtest.found()
+if not TESTS_OPT.enabled()
     subdir_done()
 endif
 
@@ -12,7 +12,7 @@ dhcp_ddns_tuning_libloadtests = executable(
     cpp_args: [
         f'-DDDNS_TUNING_LIB_SO="@TOP_BUILD_DIR@/src/hooks/dhcp/ddns_tuning/libdhcp_ddns_tuning.so"',
     ],
-    dependencies: [gtest, crypto],
+    dependencies: [GTEST_DEP, CRYPTO_DEP],
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
 )

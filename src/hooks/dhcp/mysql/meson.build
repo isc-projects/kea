@@ -1,4 +1,4 @@
-if not mysql.found()
+if not MYSQL_DEP.found()
     subdir_done()
 endif
 
@@ -20,7 +20,7 @@ dhcp_mysql_lib = shared_library(
     'mysql_lease_mgr.cc',
     'mysql_legal_log.cc',
     'version.cc',
-    dependencies: [crypto, mysql],
+    dependencies: [CRYPTO_DEP, MYSQL_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib/kea/hooks',

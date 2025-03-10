@@ -11,13 +11,13 @@ agent_lib = static_library(
     'ca_response_creator.cc',
     'parser_context.cc',
     'simple_parser.cc',
-    dependencies: [crypto],
+    dependencies: [CRYPTO_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
 )
 executable(
     'kea-ctrl-agent',
     'main.cc',
-    dependencies: [crypto],
+    dependencies: [CRYPTO_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'sbin',

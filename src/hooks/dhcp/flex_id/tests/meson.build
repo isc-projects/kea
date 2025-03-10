@@ -1,4 +1,4 @@
-if not gtest.found()
+if not TESTS_OPT.enabled()
     subdir_done()
 endif
 
@@ -8,7 +8,7 @@ dhcp_flex_id_tests = executable(
     'callout_unittests.cc',
     'run_unittests.cc',
     cpp_args: [f'-DTEST_DATA_BUILDDIR="@current_build_dir@"'],
-    dependencies: [gtest],
+    dependencies: [GTEST_DEP],
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
     link_with: [dhcp_flex_id_archive] + LIBS_BUILT_SO_FAR,
 )

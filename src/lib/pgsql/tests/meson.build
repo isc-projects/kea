@@ -1,4 +1,4 @@
-if not gtest.found() or not postgresql.found()
+if not TESTS_OPT.enabled() or not POSTGRESQL_DEP.found()
     subdir_done()
 endif
 
@@ -14,7 +14,7 @@ kea_pgsql_tests = executable(
     'pgsql_exchange_unittest.cc',
     'run_unittests.cc',
     cpp_args: [f'-DTEST_CA_DIR="@TEST_CA_DIR@"', f'-DKEA_ADMIN="@KEA_ADMIN@"'],
-    dependencies: [gtest, postgresql],
+    dependencies: [GTEST_DEP, POSTGRESQL_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [kea_util_unittests_lib, libs_testutils] + LIBS_BUILT_SO_FAR,
 )

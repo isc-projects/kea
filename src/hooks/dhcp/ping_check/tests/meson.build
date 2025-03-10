@@ -1,4 +1,4 @@
-if not gtest.found()
+if not TESTS_OPT.enabled()
     subdir_done()
 endif
 
@@ -14,7 +14,7 @@ dhcp_ping_check_tests = executable(
     'ping_context_store_unittests.cc',
     'ping_context_unittests.cc',
     'run_unittests.cc',
-    dependencies: [crypto, gtest],
+    dependencies: [CRYPTO_DEP, GTEST_DEP],
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
     link_with: [dhcp_ping_check_archive] + LIBS_BUILT_SO_FAR,
 )

@@ -1,4 +1,4 @@
-if not gtest.found() or not krb5.found()
+if not TESTS_OPT.enabled() or not KRB5_DEP.found()
     subdir_done()
 endif
 
@@ -23,7 +23,7 @@ ddns_gss_tsig_tests = executable(
     'tkey_exchange_unittests.cc',
     'tkey_unittests.cc',
     cpp_args: [f'-DTEST_DATA_DIR="@current_source_dir@"'],
-    dependencies: [krb5, gtest, crypto],
+    dependencies: [KRB5_DEP, GTEST_DEP, CRYPTO_DEP],
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
     link_with: [ddns_gss_tsig_tests_libs] + LIBS_BUILT_SO_FAR,
 )
@@ -33,7 +33,7 @@ executable(
     'nsupdate',
     'nsupdate.cc',
     cpp_args: [f'-DTEST_DATA_DIR="@current_source_dir@"'],
-    dependencies: [krb5],
+    dependencies: [KRB5_DEP],
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
     link_with: [ddns_gss_tsig_archive] + LIBS_BUILT_SO_FAR,
 )

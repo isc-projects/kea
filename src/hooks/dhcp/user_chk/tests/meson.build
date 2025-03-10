@@ -1,4 +1,4 @@
-if not gtest.found()
+if not TESTS_OPT.enabled()
     subdir_done()
 endif
 
@@ -19,7 +19,7 @@ dhcp_user_chk_lib_tests = executable(
     'user_unittests.cc',
     'userid_unittests.cc',
     cpp_args: [f'-DTEST_DATA_BUILDDIR="@current_build_dir@"'],
-    dependencies: [gtest],
+    dependencies: [GTEST_DEP],
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
     link_with: [dhcp_user_chk_archive] + LIBS_BUILT_SO_FAR,
 )

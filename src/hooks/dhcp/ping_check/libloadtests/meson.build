@@ -1,4 +1,4 @@
-if not gtest.found()
+if not TESTS_OPT.enabled()
     subdir_done()
 endif
 
@@ -9,7 +9,7 @@ dhcp_ping_check_libloadtests = executable(
     cpp_args: [
         f'-DPING_CHECK_LIB_SO="@TOP_BUILD_DIR@/src/hooks/dhcp/ping_check/libdhcp_ping_check.so"',
     ],
-    dependencies: [gtest, crypto],
+    dependencies: [GTEST_DEP, CRYPTO_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
 )

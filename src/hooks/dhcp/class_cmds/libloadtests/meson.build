@@ -1,4 +1,4 @@
-if not gtest.found()
+if not TESTS_OPT.enabled()
     subdir_done()
 endif
 
@@ -9,7 +9,7 @@ dhcp_class_cmds_libloadtests = executable(
     cpp_args: [
         f'-DLIBDHCP_CLASS_CMDS_SO="@TOP_BUILD_DIR@/src/hooks/dhcp/class_cmds/libdhcp_class_cmds.so"',
     ],
-    dependencies: [gtest, crypto],
+    dependencies: [GTEST_DEP, CRYPTO_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
 )

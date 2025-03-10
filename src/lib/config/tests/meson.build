@@ -1,4 +1,4 @@
-if not gtest.found()
+if not TESTS_OPT.enabled()
     subdir_done()
 endif
 
@@ -18,7 +18,7 @@ kea_config_tests = executable(
     'run_unittests.cc',
     'unix_command_config_unittests.cc',
     'unix_command_mgr_unittests.cc',
-    dependencies: [gtest, crypto],
+    dependencies: [GTEST_DEP, CRYPTO_DEP],
     cpp_args: [
         f'-DTEST_DATA_BUILDDIR="@current_build_dir@"',
         f'-DTEST_CA_DIR="@TEST_CA_DIR@"',

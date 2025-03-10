@@ -25,7 +25,7 @@ kea_http_lib = shared_library(
     'response_json.cc',
     'response_parser.cc',
     'url.cc',
-    dependencies: [crypto],
+    dependencies: [CRYPTO_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib',

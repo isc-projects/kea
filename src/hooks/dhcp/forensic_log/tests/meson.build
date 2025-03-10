@@ -1,4 +1,4 @@
-if not gtest.found()
+if not TESTS_OPT.enabled()
     subdir_done()
 endif
 
@@ -15,7 +15,7 @@ configure_file(
 
 current_build_dir = meson.current_build_dir()
 
-dependencies = [gtest, crypto]
+dependencies = [GTEST_DEP, CRYPTO_DEP]
 
 dhcp_forensic_log_tests_libs = [
     dhcp_forensic_log_archive,

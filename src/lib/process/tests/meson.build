@@ -1,4 +1,4 @@
-if not gtest.found()
+if not TESTS_OPT.enabled()
     subdir_done()
 endif
 
@@ -21,7 +21,7 @@ kea_process_tests = executable(
     'log_parser_unittests.cc',
     'logging_info_unittests.cc',
     'run_unittests.cc',
-    dependencies: [gtest],
+    dependencies: [GTEST_DEP],
     cpp_args: [
         f'-DTEST_DATA_BUILDDIR="@current_build_dir@"',
         f'-DTEST_SCRIPT_SH="@current_build_dir@/process_test.sh"',

@@ -14,7 +14,7 @@ dhcp_ha_lib = shared_library(
     'lease_update_backlog.cc',
     'query_filter.cc',
     'version.cc',
-    dependencies: [crypto],
+    dependencies: [CRYPTO_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib/kea/hooks',

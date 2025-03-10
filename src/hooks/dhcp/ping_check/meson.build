@@ -11,7 +11,7 @@ dhcp_ping_check_lib = shared_library(
     'ping_context.cc',
     'ping_context_store.cc',
     'version.cc',
-    dependencies: [crypto],
+    dependencies: [CRYPTO_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib/kea/hooks',

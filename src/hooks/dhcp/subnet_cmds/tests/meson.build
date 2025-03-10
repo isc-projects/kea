@@ -1,4 +1,4 @@
-if not gtest.found()
+if not TESTS_OPT.enabled()
     subdir_done()
 endif
 
@@ -13,7 +13,7 @@ dhcp_subnet_cmds_tests = executable(
     cpp_args: [
         f'-DLIB_SO="@TOP_BUILD_DIR@/src/hooks/dhcp/subnet_cmds/libdhcp_subnet_cmds.so"',
     ],
-    dependencies: [crypto, gtest],
+    dependencies: [CRYPTO_DEP, GTEST_DEP],
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
     link_with: [dhcp_subnet_cmds_tests_libs] + LIBS_BUILT_SO_FAR,
 )

@@ -1,4 +1,4 @@
-if not gtest.found()
+if not TESTS_OPT.enabled()
     subdir_done()
 endif
 
@@ -12,6 +12,6 @@ kea_util_unittests_lib = static_library(
     'run_all.cc',
     'testdata.cc',
     'wiredata.cc',
-    dependencies: [gtest],
+    dependencies: [GTEST_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
 )

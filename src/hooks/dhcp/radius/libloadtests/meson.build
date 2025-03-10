@@ -1,4 +1,4 @@
-if not gtest.found()
+if not TESTS_OPT.enabled()
     subdir_done()
 endif
 
@@ -11,7 +11,7 @@ dhcp_radius_libloadtests = executable(
         f'-DLIB_SO="@TOP_BUILD_DIR@/src/hooks/dhcp/radius/libdhcp_radius.so"',
         f'-DTEST_DICTIONARY="@TOP_SOURCE_DIR@/src/hooks/dhcp/radius/data/dictionary"',
     ],
-    dependencies: [gtest, crypto],
+    dependencies: [GTEST_DEP, CRYPTO_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
 )

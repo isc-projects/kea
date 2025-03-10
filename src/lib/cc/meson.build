@@ -1,5 +1,5 @@
 kea_cc_lib_cpp_args = []
-if gtest.found()
+if TESTS_OPT.enabled()
     kea_cc_lib_cpp_args = ['-DALLOW_KEATEST']
 endif
 kea_cc_lib = shared_library(

@@ -1,4 +1,4 @@
-if not gtest.found()
+if not TESTS_OPT.enabled()
     subdir_done()
 endif
 
@@ -20,14 +20,14 @@ sources = [
     'test_config_backend_dhcp6.cc',
     'test_utils.cc',
 ]
-dependencies = [crypto, gtest]
-if mysql.found()
+dependencies = [CRYPTO_DEP, GTEST_DEP]
+if MYSQL_DEP.found()
     sources += ['mysql_generic_backend_unittest.cc']
-    dependencies += [mysql]
+    dependencies += [MYSQL_DEP]
 endif
-if postgresql.found()
+if POSTGRESQL_DEP.found()
     sources += ['pgsql_generic_backend_unittest.cc']
-    dependencies += [postgresql]
+    dependencies += [POSTGRESQL_DEP]
 endif
 kea_dhcpsrv_testutils_lib = static_library(
     'kea-dhcpsrv-testutils',

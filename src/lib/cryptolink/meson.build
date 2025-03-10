@@ -1,7 +1,7 @@
 sources = []
-if crypto.name() == botan.name()
+if CRYPTO_DEP.name() == botan.name()
     sources += ['botan_hash.cc', 'botan_hmac.cc', 'botan_link.cc']
-elif crypto.name() == openssl.name()
+elif CRYPTO_DEP.name() == openssl.name()
     sources += ['openssl_hash.cc', 'openssl_hmac.cc', 'openssl_link.cc']
 endif
 
@@ -12,7 +12,7 @@ kea_cryptolink_lib = shared_library(
     'crypto_hmac.cc',
     'crypto_rng.cc',
     sources,
-    dependencies: [crypto],
+    dependencies: [CRYPTO_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib',

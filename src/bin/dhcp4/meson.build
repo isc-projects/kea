@@ -10,13 +10,13 @@ dhcp4_lib = static_library(
     'dhcp4_srv.cc',
     'json_config_parser.cc',
     'parser_context.cc',
-    dependencies: [crypto],
+    dependencies: [CRYPTO_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
 )
 kea_dhcp4 = executable(
     'kea-dhcp4',
     'main.cc',
-    dependencies: [crypto],
+    dependencies: [CRYPTO_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'sbin',

@@ -1,4 +1,4 @@
-if not gtest.found() or not mysql.found()
+if not TESTS_OPT.enabled() or not MYSQL_DEP.found()
     subdir_done()
 endif
 
@@ -20,10 +20,8 @@ dhcp_mysql_lib_tests = executable(
     'mysql_lease_extended_info_unittest.cc',
     'mysql_lease_mgr_unittest.cc',
     'run_unittests.cc',
-    cpp_args: [
-        f'-DTEST_CA_DIR="@TEST_CA_DIR@"',
-    ],
-    dependencies: [gtest, crypto, mysql],
+    cpp_args: [f'-DTEST_CA_DIR="@TEST_CA_DIR@"'],
+    dependencies: [GTEST_DEP, CRYPTO_DEP, MYSQL_DEP],
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
     link_with: [dhcp_mysql_archive, libs_testutils, kea_testutils_lib] + LIBS_BUILT_SO_FAR,
 )

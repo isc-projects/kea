@@ -1,4 +1,4 @@
-if not gtest.found() or not NETCONF_DEPS_FOUND
+if not TESTS_OPT.enabled() or not NETCONF_DEP.found()
     subdir_done()
 endif
 
@@ -31,7 +31,7 @@ kea_yang_tests = executable(
     'translator_unittests.cc',
     'translator_utils_unittests.cc',
     cpp_args: [f'-DCFG_EXAMPLES="@TOP_SOURCE_DIR@/doc/examples"'],
-    dependencies: NETCONF_DEPS_ARRAY + [gtest],
+    dependencies: [NETCONF_DEP, GTEST_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [kea_yang_tests_libs] + LIBS_BUILT_SO_FAR,
     override_options: ['cpp_std=c++20'],

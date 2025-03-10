@@ -1,4 +1,4 @@
-if not gtest.found()
+if not TESTS_OPT.enabled()
     subdir_done()
 endif
 
@@ -61,7 +61,7 @@ kea_dhcp_tests = executable(
     'protocol_util_unittest.cc',
     'run_unittests.cc',
     pkt_filter_xpf_unittest_cc,
-    dependencies: [gtest, crypto],
+    dependencies: [GTEST_DEP, CRYPTO_DEP],
     cpp_args: [f'-DTEST_DATA_BUILDDIR="@current_build_dir@"'],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [kea_util_unittests_lib, libs_testutils] + LIBS_BUILT_SO_FAR,

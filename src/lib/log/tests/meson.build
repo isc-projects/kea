@@ -1,4 +1,4 @@
-if not gtest.found()
+if not TESTS_OPT.enabled()
     subdir_done()
 endif
 
@@ -19,7 +19,7 @@ kea_log_tests = executable(
     'output_option_unittest.cc',
     'run_unittests.cc',
     cpp_args: [f'-DTEMP_DIR="@TOP_BUILD_DIR@"'],
-    dependencies: [gtest, log4cplus],
+    dependencies: [GTEST_DEP, LOG4CPLUS_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )
@@ -30,7 +30,7 @@ kea_log_init_tests = executable(
     'run_initializer_unittests.cc',
     'message_initializer_1_unittest.cc',
     'message_initializer_1a_unittest.cc',
-    dependencies: [gtest, log4cplus],
+    dependencies: [GTEST_DEP, LOG4CPLUS_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )

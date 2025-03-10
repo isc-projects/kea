@@ -1,4 +1,4 @@
-if not gtest.found()
+if not TESTS_OPT.enabled()
     subdir_done()
 endif
 
@@ -15,7 +15,7 @@ kea_cc_tests = executable(
     'stamped_element_unittest.cc',
     'stamped_value_unittest.cc',
     'user_context_unittests.cc',
-    dependencies: [gtest],
+    dependencies: [GTEST_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )

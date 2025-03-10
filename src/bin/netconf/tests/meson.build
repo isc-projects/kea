@@ -1,4 +1,4 @@
-if not gtest.found() or not NETCONF_DEPS_FOUND
+if not TESTS_OPT.enabled() or not NETCONF_DEP.found()
     subdir_done()
 endif
 
@@ -33,7 +33,7 @@ kea_netconf_tests = executable(
         f'-DTEST_DATA_SOURCEDIR="@current_source_dir@"',
         f'-DTEST_DATA_BUILDDIR="@current_build_dir@"',
     ],
-    dependencies: NETCONF_DEPS_ARRAY + [gtest, crypto],
+    dependencies: [NETCONF_DEP, GTEST_DEP, CRYPTO_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [
         netconf_lib,

@@ -5,7 +5,7 @@ dhcp_stat_cmds_lib = shared_library(
     'stat_cmds_log.cc',
     'stat_cmds_messages.cc',
     'version.cc',
-    dependencies: [crypto],
+    dependencies: [CRYPTO_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib/kea/hooks',

@@ -1,4 +1,4 @@
-if not NETCONF_DEPS_FOUND
+if not NETCONF_DEP.found()
     subdir_done()
 endif
 
@@ -19,16 +19,16 @@ netconf_lib = static_library(
     'simple_parser.cc',
     'stdout_control_socket.cc',
     'unix_control_socket.cc',
-    dependencies: NETCONF_DEPS_ARRAY + [crypto],
+    dependencies: [NETCONF_DEP, CRYPTO_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
-    link_with: [kea_yang_testutils_lib, kea_process_testutils_lib] + LIBS_BUILT_SO_FAR,
+    link_with: LIBS_BUILT_SO_FAR,
     override_options: ['cpp_std=c++20'],
 )
 
 executable(
     'kea-netconf',
     'main.cc',
-    dependencies: NETCONF_DEPS_ARRAY + [crypto],
+    dependencies: [NETCONF_DEP, CRYPTO_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'sbin',

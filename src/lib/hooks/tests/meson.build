@@ -1,4 +1,4 @@
-if not gtest.found()
+if not TESTS_OPT.enabled()
     subdir_done()
 endif
 
@@ -110,7 +110,7 @@ kea_hooks_tests = executable(
     'parking_lots_unittest.cc',
     'run_unittests.cc',
     'server_hooks_unittest.cc',
-    dependencies: [gtest],
+    dependencies: [GTEST_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )

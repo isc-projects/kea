@@ -8,7 +8,7 @@ dhcp_limits_lib = shared_library(
     'limit_manager.cc',
     'load_unload.cc',
     'version.cc',
-    dependencies: [crypto],
+    dependencies: [CRYPTO_DEP],
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
     install: true,
     install_dir: 'lib/kea/hooks',

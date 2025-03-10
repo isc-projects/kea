@@ -11,7 +11,7 @@ kea_d2srv_lib = shared_library(
     'd2_zone.cc',
     'dns_client.cc',
     'nc_trans.cc',
-    dependencies: [crypto],
+    dependencies: [CRYPTO_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib',

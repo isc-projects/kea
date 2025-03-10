@@ -28,9 +28,7 @@ LEGAL_LOG_DIR = f'@PREFIX@/@RUN_STATE_DIR@/lib/kea'
 
 #### Build Options
 
-all_opt = get_option('all')
 crypto_opt = get_option('crypto')
-gtest_opt = get_option('gtest')
 krb5_opt = get_option('krb5')
 mysql_opt = get_option('mysql')
 netconf_opt = get_option('netconf')
@@ -38,8 +36,8 @@ postgresql_opt = get_option('postgresql')
 
 logger_checks_opt = get_option('logger-checks')
 FUZZ_OPT = get_option('fuzz')
-PERFDHCP_OPT = get_option('perfdhcp')
 SHELL_OPT = get_option('shell')
+TESTS_OPT = get_option('tests')
 
 #### Configuration Data
 
@@ -47,7 +45,6 @@ conf_data = configuration_data(
     {
         # 'CONFIG_H_WAS_INCLUDED': true,
         # 'ENABLE_DEBUG': false,
-        # 'ENABLE_LOGGER_CHECKS': false,
         'EXTENDED_VERSION': '"tarball"',
         # 'HAS_UNDEFINED_PTHREAD_BEHAVIOR': false,
         # 'HAVE_AFL': false,
@@ -85,7 +82,6 @@ conf_data = configuration_data(
         # 'HAVE_LOG': false,
         # 'HAVE_MYSQL_GET_OPTION': false,
         # 'HAVE_MYSQL_OPT_RECONNECT': false,
-        # 'HAVE_NETCONF': false,
         # 'HAVE_OPTRESET': false,
         # 'HAVE_PGSQL_SSL': false,
         # 'HAVE_PGSQL_TCP_USER_TIMEOUT': false,
@@ -183,27 +179,16 @@ KEA_MSG_COMPILER = disabler()
 
 #### Dependencies
 
-boost = dependency('boost', version: '>=1.66')
-threads = dependency('threads')
-add_project_dependencies(boost, threads, language: ['cpp'])
-
-gtest = disabler()
-if gtest_opt == 'enabled'
-    gtest = dependency('gtest', required: true)
-endif
+boost_dep = dependency('boost', version: '>=1.66')
+threads_dep = dependency('threads')
+add_project_dependencies(boost_dep, threads_dep, language: ['cpp'])
 
 # Logging
-log4cplus = dependency('log4cplus', required: false)
-# TODO: leave only dependecy() when support for Ubuntu 20.04 gets removed.
-if not log4cplus.found()
-    log4cplus = cpp.find_library('log4cplus', required: false)
-endif
-if not log4cplus.found()
-    error('Dependency not found: log4cplus.')
-endif
+# TODO: remove fallback when support for Ubuntu 20.04 gets removed.
+LOG4CPLUS_DEP = dependency('log4cplus', fallback: ['log4cplus', 'log4cplus'])
 
 # Cryptography
-crypto = disabler()
+CRYPTO_DEP = disabler()
 botan = disabler()
 foreach dep : ['botan-2', 'botan']
     botan = dependency(dep, required: false)
@@ -214,256 +199,79 @@ endforeach
 openssl = dependency('openssl', required: false)
 
 # Kerberos
-krb5 = disabler()
-krb5_config = find_program('krb5-config', required: false)
-if krb5_config.found()
-    cflags = run_command([krb5_config, '--cflags', 'gssapi'], check: false)
-    libs = run_command([krb5_config, '--libs', 'gssapi'], check: false)
-    version = run_command([krb5_config, '--version'], check: false)
-    if cflags.returncode() == 0 and libs.returncode() == 0 and version.returncode() == 0
-        krb5_version = version.stdout().strip()
-        krb5 = declare_dependency(
-            compile_args: cflags.stdout().split(),
-            link_args: libs.stdout().split(),
-            version: krb5_version,
-        )
-    endif
-endif
-if not krb5.found()
-    krb5 = dependency('krb5', required: false)
-endif
+KRB5_DEP = dependency(
+    'krb5-gssapi',
+    fallback: ['krb5', 'krb5'],
+    required: krb5_opt,
+)
 
 # MySQL
-mysql = dependency('mariadb', required: false)
-if not mysql.found()
-    mysql = dependency('mysql', required: false)
-endif
-mysql_config = disabler()
-foreach mysql_config_file : ['mariadb_config', 'mysql_config']
-    if mysql.found()
-        continue
-    endif
-    mysql_config = find_program(mysql_config_file, required: false)
-    if not mysql_config.found()
-        continue
-    endif
-    cflags = run_command([mysql_config, '--cflags'], check: false)
-    libs = run_command([mysql_config, '--libs'], check: false)
-    version = run_command([mysql_config, '--version'], check: false)
-
-    if cflags.returncode() == 0 and libs.returncode() == 0 and version.returncode() == 0
-        mysql_compile_args = cflags.stdout().split()
-        mysql_link_args = libs.stdout().split()
-        mysql_version = version.stdout().strip()
-        mysql = declare_dependency(
-            compile_args: mysql_compile_args,
-            link_args: mysql_link_args,
-            version: mysql_version,
-        )
-        break
-    endif
-endforeach
+MYSQL_DEP = dependency(
+    'mariadb',
+    fallback: ['mysql', 'mysql'],
+    required: mysql_opt,
+)
 
 # PostgreSQL
-postgresql = dependency('libpq', required: false)
-pg_config = disabler()
-if not postgresql.found()
-    pg_config = find_program('pg_config', required: false)
-endif
-if pg_config.found()
-    cflags = run_command([pg_config, '--cflags'], check: false)
-    libs = run_command([pg_config, '--libs'], check: false)
-    version = run_command([pg_config, '--version'], check: false)
-    if cflags.returncode() == 0 and libs.returncode() == 0 and version.returncode() == 0
-        pgsql_compile_args = cflags.stdout().split()
-        pgsql_link_args = libs.stdout().split()
-        pgsql_version = version.stdout().strip()
-        postgresql = declare_dependency(
-            compile_args: pgsql_compile_args,
-            link_args: pgsql_link_args,
-            version: pgsql_version,
-        )
-    endif
-endif
+POSTGRESQL_DEP = dependency(
+    'libpq',
+    fallback: ['postgresql', 'postgresql'],
+    required: postgresql_opt,
+)
 
 # NETCONF
-netconf_deps = {}
-NETCONF_DEPS_ARRAY = []
-NETCONF_DEPS_FOUND = true
-foreach dep : ['yang', 'yang-cpp', 'sysrepo', 'sysrepo-cpp']
-    netconf_deps = netconf_deps + {dep: dependency(dep, required: false)}
-    if netconf_deps[dep].found()
-        continue
-    endif
+NETCONF_DEP = dependency(
+    'yang,yang-cpp,sysrepo,sysrepo-cpp',
+    fallback: ['netconf', 'netconf'],
+    required: netconf_opt,
+)
+if netconf_opt.enabled() and NETCONF_DEP.get_variable('libyang_prefix', default_value: 'unknown') == 'unknown'
+    error('Dependency not found: NETCONF.')
+endif
 
-    # Try adding lib to it. libyang and libyang-cpp define the wrong pkg-config.
-    netconf_deps = netconf_deps + {
-        dep: dependency('lib' + dep, required: false),
-    }
-    if netconf_deps[dep].found()
-        continue
-    endif
-
-    # Search in /opt.
-    foreach prefix : ['', 'lib']
-        path = f'/opt/@prefix@@dep@'
-        lib = cpp.find_library(dep, dirs: [f'/@path@/lib'], required: false)
-        if lib.found()
-            netconf_deps = netconf_deps + {
-                dep: declare_dependency(
-                    dependencies: [lib],
-                    include_directories: include_directories(f'/@path@/include'),
-                    variables: {'prefix': f'@path@'},
-                ),
-            }
-            if SYSTEM == 'darwin'
-                add_project_link_arguments(
-                    f'-Wl,-rpath,@path@/lib',
-                    language: 'cpp',
-                )
-            else
-                add_project_link_arguments(
-                    f'-Wl,-rpath=@path@/lib',
-                    language: 'cpp',
-                )
-            endif
-        endif
-    endforeach
-endforeach
-foreach dep : ['yang', 'yang-cpp', 'sysrepo', 'sysrepo-cpp']
-    if netconf_deps[dep].found()
-        NETCONF_DEPS_ARRAY += netconf_deps[dep]
-    else
-        NETCONF_DEPS_FOUND = false
-    endif
-endforeach
+GTEST_DEP = dependency(
+    'gtest',
+    required: TESTS_OPT.enabled() or FUZZ_OPT.enabled(),
+)
 
 # Kea shell
-if SHELL_OPT == 'enabled' and not PYTHON.found()
+if SHELL_OPT.enabled() and not PYTHON.found()
     error('kea-shell requires python. Python not found.')
 endif
 
 # Crypto
 if crypto_opt == 'botan'
     if botan.found()
-        crypto = botan
+        CRYPTO_DEP = botan
     endif
 elif crypto_opt == 'openssl'
     if openssl.found()
-        crypto = openssl
+        CRYPTO_DEP = openssl
     endif
 endif
 
-if crypto.name() == botan.name()
+if CRYPTO_DEP.name() == botan.name()
     message('Checking Botan Boost support.')
     cpp.has_header('botan/asio_stream.h', dependencies: [botan], required: true)
     conf_data.set('WITH_BOTAN', true)
     message('Using Botan.')
-elif crypto.name() == openssl.name()
+elif CRYPTO_DEP.name() == openssl.name()
     conf_data.set('WITH_OPENSSL', true)
     message('Using OpenSSL.')
 else
     error('Dependency not found: neither Botan nor OpenSSL.')
 endif
 
-# All option.
-if all_opt.enabled()
-    if krb5_opt == 'disabled'
-        krb5 = disabler()
-    elif not krb5.found()
-        error('Dependency not found: Kerberos 5 with GSSAPI.')
-    endif
-    if mysql_opt == 'disabled'
-        mysql = disabler()
-    elif not mysql.found()
-        error('Dependency not found: MySQL.')
-    endif
-    if netconf_opt == 'disabled'
-        NETCONF_DEPS_FOUND = false
-    elif not NETCONF_DEPS_FOUND
-        error('Dependency not found: NETCONF.')
-    endif
-    if postgresql_opt == 'disabled'
-        postgresql = disabler()
-    elif not postgresql.found()
-        error('Dependency not found: PostgreSQL.')
-    endif
-    if FUZZ_OPT != 'disabled'
-        FUZZ_OPT = 'enabled'
-    endif
-    if PERFDHCP_OPT != 'disabled'
-        PERFDHCP_OPT = 'enabled'
-    endif
-    if SHELL_OPT != 'disabled'
-        SHELL_OPT = 'enabled'
-    endif
-elif all_opt.disabled()
-    if krb5_opt != 'enabled'
-        krb5 = disabler()
-    endif
-    if mysql_opt != 'enabled'
-        mysql = disabler()
-    endif
-    if netconf_opt != 'enabled'
-        NETCONF_DEPS_FOUND = false
-    endif
-    if postgresql_opt != 'enabled'
-        postgresql = disabler()
-    endif
-    if FUZZ_OPT != 'enabled'
-        FUZZ_OPT = 'disabled'
-    endif
-    if PERFDHCP_OPT != 'enabled'
-        PERFDHCP_OPT = 'disabled'
-    endif
-    if SHELL_OPT != 'enabled'
-        SHELL_OPT = 'disabled'
-    endif
-elif all_opt.auto()
-    if krb5_opt == 'enabled' and not krb5.found()
-        error('Dependency not found: Kerberos 5 with GSSAPI.')
-    endif
-
-    if mysql_opt == 'enabled' and not mysql.found()
-        error('Dependency not found: MySQL.')
-    endif
-
-    if netconf_opt == 'enabled' and not NETCONF_DEPS_FOUND
-        error('Dependency not found: NETCONF.')
-    endif
-
-    if postgresql_opt == 'enabled' and not postgresql.found()
-        error('Dependency not found: PostgreSQL.')
-    endif
-else
-    error('Unknown value for -Dall')
-endif
-
-if FUZZ_OPT == 'enabled'
-    if not gtest.found()
-        error('Fuzzing requires gtest. Gtest not found.')
-    endif
-    conf_data.set('FUZZING', true)
-endif
-
-if mysql.found()
-    conf_data.set('HAVE_MYSQL', true)
-endif
-
-if postgresql.found()
-    conf_data.set('HAVE_PGSQL', true)
-endif
-
-if logger_checks_opt == 'enabled'
-    conf_data.set('ENABLE_LOGGER_CHECKS', true)
-endif
+conf_data.set('ENABLE_LOGGER_CHECKS', logger_checks_opt.enabled())
+conf_data.set('FUZZING', FUZZ_OPT.enabled())
+conf_data.set('HAVE_MYSQL', MYSQL_DEP.found())
+conf_data.set('HAVE_PGSQL', POSTGRESQL_DEP.found())
 
 #### Compiler Checks
 
 result = cpp.run(
     fs.read('compiler-checks/chrono-same-duration.cc'),
     name: 'CHRONO_SAME_DURATION',
-    dependencies: [boost],
 )
 conf_data.set('CHRONO_SAME_DURATION', result.returncode() == 0)
 
@@ -483,7 +291,7 @@ endif
 result = cpp.run(
     fs.read('compiler-checks/have-generic-tls-method.cc'),
     name: 'HAVE_GENERIC_TLS_METHOD',
-    dependencies: [crypto],
+    dependencies: [CRYPTO_DEP],
 )
 conf_data.set('HAVE_GENERIC_TLS_METHOD', result.returncode() == 0)
 
@@ -499,15 +307,15 @@ conf_data.set('HAVE_SA_LEN', result.returncode() == 0)
 result = cpp.run(
     fs.read('compiler-checks/log4cplus-initializer.cc'),
     name: 'LOG4CPLUS_INITIALIZER_H',
-    dependencies: [log4cplus],
+    dependencies: [LOG4CPLUS_DEP],
 )
 conf_data.set('LOG4CPLUS_INITIALIZER_H', result.returncode() == 0)
 
-if mysql.found()
+if MYSQL_DEP.found()
     result = cpp.run(
         fs.read('compiler-checks/mysql-my-bool.cc'),
-        name: 'HAVE_MYSQL_MY_BOOL',
-        dependencies: [mysql],
+        name: 'MYSQL_MY_BOOL',
+        dependencies: [MYSQL_DEP],
     )
     conf_data.set('HAVE_MYSQL_MY_BOOL', result.returncode() == 0)
 endif
@@ -515,9 +323,16 @@ endif
 result = cpp.run(
     fs.read('compiler-checks/stream-truncated-error.cc'),
     name: 'HAVE_STREAM_TRUNCATED_ERROR',
-    dependencies: [crypto],
+    dependencies: [CRYPTO_DEP],
 )
 conf_data.set('HAVE_STREAM_TRUNCATED_ERROR', result.returncode() == 0)
+
+# TODO: implement when integrating with CI
+result = cpp.run(
+    fs.read('compiler-checks/fuzzing-with-clusterfuzzlite.cc'),
+    name: 'FUZZING_WITH_CLUSTERFUZZLITE',
+)
+FUZZING_WITH_CLUSTERFUZZLITE = result.returncode() == 0
 
 #### System-specific Compiler Flags
 
@@ -623,7 +438,6 @@ endif
 result = cpp.run(
     fs.read('compiler-checks/get-boost-version.cc'),
     name: 'Get Boost version',
-    dependencies: [boost],
 )
 if result.returncode() == 0
     report_conf_data.set('BOOST_VERSION', result.stdout().strip())
@@ -632,38 +446,38 @@ else
 endif
 report_conf_data.set(
     'BOOST_INCLUDE',
-    boost.get_variable('includedir', default_value: 'unknown'),
+    boost_dep.get_variable('includedir', default_value: 'unknown'),
 )
 report_conf_data.set(
     'BOOST_LIBDIR',
-    boost.get_variable('libdir', default_value: 'unknown'),
+    boost_dep.get_variable('libdir', default_value: 'unknown'),
 )
 report_conf_data.set(
     'CRYPTO_INCLUDE',
-    crypto.get_variable('includedir', default_value: 'unknown'),
+    CRYPTO_DEP.get_variable('includedir', default_value: 'unknown'),
 )
 report_conf_data.set(
     'CRYPTO_LIBDIR',
-    crypto.get_variable('libdir', default_value: 'unknown'),
+    CRYPTO_DEP.get_variable('libdir', default_value: 'unknown'),
 )
-if crypto.name() == botan.name()
+if CRYPTO_DEP.name() == botan.name()
     report_conf_data.set('CRYPTO_NAME', 'Botan')
     result = cpp.run(
         fs.read('compiler-checks/get-botan-version.cc'),
         name: 'Get Botan version',
-        dependencies: [crypto],
+        dependencies: [CRYPTO_DEP],
     )
     if result.returncode() == 0
         report_conf_data.set('CRYPTO_VERSION', result.stdout().strip())
     else
         report_conf_data.set('CRYPTO_VERSION', botan.version())
     endif
-elif crypto.name() == openssl.name()
+elif CRYPTO_DEP.name() == openssl.name()
     report_conf_data.set('CRYPTO_NAME', 'OpenSSL')
     result = cpp.run(
         fs.read('compiler-checks/get-openssl-version.cc'),
         name: 'Get OpenSSL version',
-        dependencies: [crypto],
+        dependencies: [CRYPTO_DEP],
     )
     if result.returncode() == 0
         report_conf_data.set('CRYPTO_VERSION', result.stdout().strip())
@@ -672,20 +486,23 @@ elif crypto.name() == openssl.name()
     endif
 endif
 # TODO: remove if-condition when support for Ubuntu 20.04 gets removed.
-if log4cplus.type_name() == 'pkgconfig'
+if LOG4CPLUS_DEP.type_name() == 'pkgconfig'
     report_conf_data.set(
         'LOG4CPLUS_INCLUDE',
-        log4cplus.get_variable('includedir', default_value: 'unknown'),
+        LOG4CPLUS_DEP.get_variable('includedir', default_value: 'unknown'),
     )
     report_conf_data.set(
         'LOG4CPLUS_LIBDIR',
-        log4cplus.get_variable('libdir', default_value: 'unknown'),
+        LOG4CPLUS_DEP.get_variable('libdir', default_value: 'unknown'),
     )
+else
+    report_conf_data.set('LOG4CPLUS_INCLUDE', 'unknown')
+    report_conf_data.set('LOG4CPLUS_LIBDIR', 'unknown')
 endif
 result = cpp.run(
     fs.read('compiler-checks/get-log4cplus-version.cc'),
     name: 'Get Log4cplus version',
-    dependencies: [log4cplus],
+    dependencies: [LOG4CPLUS_DEP],
 )
 if result.returncode() == 0
     report_conf_data.set('LOG4CPLUS_VERSION', result.stdout().strip())
@@ -702,63 +519,55 @@ if BISON.found()
 else
     report_conf_data.set('BISON', 'unknown')
 endif
-if mysql.found()
-    if not mysql_config.found()
-        report_conf_data.set('MYSQL_VERSION', mysql.version())
-        report_conf_data.set(
-            'MYSQL_INCLUDE',
-            mysql.get_variable('includedir', default_value: 'unknown'),
-        )
-        report_conf_data.set(
-            'MYSQL_LIBDIR',
-            mysql.get_variable('libdir', default_value: 'unknown'),
-        )
-    else
-        report_conf_data.set('MYSQL_VERSION', mysql_version)
-        report_conf_data.set('MYSQL_INCLUDE', ' '.join(mysql_compile_args))
-        report_conf_data.set('MYSQL_LIBDIR', ' '.join(mysql_link_args))
-    endif
+if MYSQL_DEP.found()
+    report_conf_data.set('MYSQL_VERSION', MYSQL_DEP.version())
+    report_conf_data.set(
+        'MYSQL_INCLUDE',
+        MYSQL_DEP.get_variable('includedir', default_value: 'unknown'),
+    )
+    report_conf_data.set(
+        'MYSQL_LIBDIR',
+        MYSQL_DEP.get_variable('libdir', default_value: 'unknown'),
+    )
 else
     report_conf_data.set('HAVE_MYSQL', 'no')
     report_conf_data.set('MYSQL_VERSION', 'unknown')
     report_conf_data.set('MYSQL_INCLUDE', 'unknown')
     report_conf_data.set('MYSQL_LIBDIR', 'unknown')
 endif
-if postgresql.found()
+if POSTGRESQL_DEP.found()
     report_conf_data.set('HAVE_PGSQL', 'yes')
-    if not pg_config.found()
-        report_conf_data.set('PGSQL_VERSION', postgresql.version())
-        report_conf_data.set(
-            'PGSQL_INCLUDE',
-            postgresql.get_variable('includedir', default_value: 'unknown'),
-        )
-        report_conf_data.set(
-            'PGSQL_LIBDIR',
-            postgresql.get_variable('libdir', default_value: 'unknown'),
-        )
-    else
-        report_conf_data.set('PGSQL_VERSION', pgsql_version)
-        report_conf_data.set('PGSQL_INCLUDE', ' '.join(pgsql_compile_args))
-        report_conf_data.set('PGSQL_LIBDIR', ' '.join(pgsql_link_args))
-    endif
+    report_conf_data.set('PGSQL_VERSION', POSTGRESQL_DEP.version())
+    report_conf_data.set(
+        'PGSQL_INCLUDE',
+        POSTGRESQL_DEP.get_variable('includedir', default_value: 'unknown'),
+    )
+    report_conf_data.set(
+        'PGSQL_LIBDIR',
+        POSTGRESQL_DEP.get_variable('libdir', default_value: 'unknown'),
+    )
 else
     report_conf_data.set('HAVE_PGSQL', 'no')
     report_conf_data.set('PGSQL_VERSION', 'unknown')
     report_conf_data.set('PGSQL_INCLUDE', 'unknown')
     report_conf_data.set('PGSQL_LIBDIR', 'unknown')
 endif
-report_conf_data.set('HAVE_NETCONF', 'no')
-if gtest.found()
+if NETCONF_DEP.found()
+    report_conf_data.set('HAVE_NETCONF', 'yes')
+else
+    report_conf_data.set('HAVE_NETCONF', 'no')
+endif
+if FUZZ_OPT.enabled() or TESTS_OPT.enabled()
     report_conf_data.set('HAVE_GTEST', 'yes')
     report_conf_data.set(
         'GTEST_INCLUDE',
-        gtest.get_variable('includedir', default_value: 'unknown'),
+        GTEST_DEP.get_variable('includedir', default_value: 'unknown'),
     )
     report_conf_data.set(
         'GTEST_LIBDIR',
-        gtest.get_variable('libdir', default_value: 'unknown'),
+        GTEST_DEP.get_variable('libdir', default_value: 'unknown'),
     )
-    report_conf_data.set('GTEST_VERSION', gtest.version())
+    report_conf_data.set('GTEST_VERSION', GTEST_DEP.version())
 else
     report_conf_data.set('HAVE_GTEST', 'no')
     report_conf_data.set('GTEST_VERSION', 'unknown')
@@ -887,7 +696,7 @@ subdir('src')
 subdir('fuzz')
 subdir('doc')
 subdir('premium', if_found: premium)
-subdir('contrib', if_found: contrib)
+subproject('contrib', required: false)
 
 #### More Custom Targets
 

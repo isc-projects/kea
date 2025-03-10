@@ -1,4 +1,4 @@
-if not gtest.found()
+if not TESTS_OPT.enabled()
     subdir_done()
 endif
 
@@ -11,7 +11,7 @@ dhcp_host_cache_libloadtests = executable(
         f'-DTEST_DATA_BUILDDIR="@current_build_dir@"',
         f'-DLIB_SO="@TOP_BUILD_DIR@/src/hooks/dhcp/host_cache/libdhcp_host_cache.so"',
     ],
-    dependencies: [gtest, crypto],
+    dependencies: [GTEST_DEP, CRYPTO_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
 )

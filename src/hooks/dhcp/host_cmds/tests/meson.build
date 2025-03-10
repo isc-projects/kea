@@ -1,4 +1,4 @@
-if not gtest.found()
+if not TESTS_OPT.enabled()
     subdir_done()
 endif
 
@@ -8,7 +8,7 @@ dhcp_host_cmds_tests = executable(
     'host_cmds_unittest.cc',
     'host_data_parser_unittest.cc',
     'run_unittests.cc',
-    dependencies: [gtest, crypto],
+    dependencies: [GTEST_DEP, CRYPTO_DEP],
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
     link_with: [dhcp_host_cmds_tests_libs] + LIBS_BUILT_SO_FAR,
 )

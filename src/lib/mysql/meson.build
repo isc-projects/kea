@@ -1,4 +1,4 @@
-if not mysql.found()
+if not MYSQL_DEP.found()
     subdir_done()
 endif
 
@@ -7,7 +7,7 @@ kea_mysql_lib = shared_library(
     'mysql_binding.cc',
     'mysql_connection.cc',
     cpp_args: [f'-DKEA_ADMIN="@KEA_ADMIN@"'],
-    dependencies: [mysql],
+    dependencies: [MYSQL_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib',

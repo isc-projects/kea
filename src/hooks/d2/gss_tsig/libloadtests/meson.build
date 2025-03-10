@@ -1,4 +1,4 @@
-if not gtest.found()
+if not TESTS_OPT.enabled()
     subdir_done()
 endif
 
@@ -11,7 +11,7 @@ ddns_gss_tsig_libloadtests = executable(
         f'-DTEST_DATA_BUILDDIR="@current_source_dir@"',
         f'-DLIBDHCP_GSS_TSIG_SO="@TOP_BUILD_DIR@/src/hooks/d2/gss_tsig/libddns_gss_tsig.so"',
     ],
-    dependencies: [gtest, crypto],
+    dependencies: [GTEST_DEP, CRYPTO_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
 )

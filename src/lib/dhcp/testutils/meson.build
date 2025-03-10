@@ -1,4 +1,4 @@
-if not gtest.found()
+if not TESTS_OPT.enabled()
     subdir_done()
 endif
 
@@ -9,6 +9,6 @@ kea_dhcp_testutils_lib = static_library(
     'pkt_captures6.cc',
     'pkt_filter6_test_stub.cc',
     'pkt_filter_test_stub.cc',
-    dependencies: [gtest],
+    dependencies: [GTEST_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
 )

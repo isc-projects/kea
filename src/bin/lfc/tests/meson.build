@@ -1,4 +1,4 @@
-if not gtest.found()
+if not TESTS_OPT.enabled()
     subdir_done()
 endif
 
@@ -8,7 +8,7 @@ kea_lfc_tests = executable(
     'lfc_controller_unittests.cc',
     'lfc_unittests.cc',
     cpp_args: [f'-DTEST_DATA_BUILDDIR="@current_build_dir@"'],
-    dependencies: [gtest],
+    dependencies: [GTEST_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [lfc_lib] + LIBS_BUILT_SO_FAR,
 )

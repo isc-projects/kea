@@ -1,4 +1,4 @@
-if not gtest.found()
+if not TESTS_OPT.enabled()
     subdir_done()
 endif
 
@@ -37,7 +37,7 @@ kea_asiolink_tests = executable(
         f'-DINVALID_TEST_SCRIPT_SH="@TOP_SOURCE_DIR@/README"',
         f'-DTEST_CA_DIR="@TEST_CA_DIR@"',
     ],
-    dependencies: [gtest, crypto],
+    dependencies: [GTEST_DEP, CRYPTO_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [kea_asiolink_testutils_lib, kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )

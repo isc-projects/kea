@@ -1,28 +1,31 @@
-# all
+# Dependency-related options
 option(
-    'all',
+    'crypto',
+    type: 'combo',
+    choices: ['botan', 'openssl'],
+    value: 'openssl',
+    description: 'Backend for cryptographical operations. Mandatory.',
+)
+option(
+    'krb5',
     type: 'feature',
-    value: 'disabled',
-    description: 'Requires that all C++ dependencies be enabled: crypto (either botan or openssl), krb5 with gssapi, mysql, netconf, postgresql. Also enables generation of docs and parser which requires bison, flex, and sphinx. Also enables all parts of code: debug, fuzzing, logger-checks, perfdhcp, shell. Overrides the other options.',
+    description: 'Support for GSS-TSIG. Requires krb5 with gssapi.',
+)
+option('mysql', type: 'feature', description: 'Support for MySQL backends.')
+option('netconf', type: 'feature', description: 'Support for kea-netconf.')
+option(
+    'postgresql',
+    type: 'feature',
+    description: 'Support for PostgreSQL backends.',
 )
 
-# Dependency-related options
-option('crypto', type: 'combo', choices: ['botan', 'openssl'], value: 'openssl', description: 'Backend for cryptographical operations. Mandatory.')
-option('krb5', type: 'combo', choices: ['', 'auto', 'enabled', 'disabled'], value: '', description: 'Support for GSS-TSIG. Requires krb5 with gssapi.')
-option('mysql', type: 'combo', choices: ['', 'auto', 'enabled', 'disabled'], value: '', description: 'Support for MySQL backends.')
-option('netconf', type: 'combo', choices: ['', 'auto', 'enabled', 'disabled'], value: '', description: 'Support for kea-netconf.')
-option('postgresql', type: 'combo', choices: ['', 'auto', 'enabled', 'disabled'], value: '', description: 'Support for PostgreSQL backends.')
-
-# Used for development.
-# option('docs', type: 'feature', choices: ['', 'auto', 'enabled', 'disabled'], value: '', description: 'Support for doc generation.')
-# option('parser', type: 'feature', choices: ['', 'auto', 'enabled', 'disabled'], value: '', description: 'Support for parser generation.')
-
 # Options for enabling various parts of code.
-# not only unit tests...
-option('gtest', type: 'combo', choices: ['enabled', 'disabled'], value: 'disabled', description: 'Support for tests.')
-# debug?
-# logger-checks (uses assert so only for development).
-option('logger-checks', type: 'combo', choices: ['enabled', 'disabled'], value: 'disabled', description: 'Check logger messages.')
-option('fuzz', type: 'combo', choices: ['', 'auto', 'clusterfuzzlite', 'disabled', 'enabled'], value: '', description: 'Support for fuzz testing.')
-option('perfdhcp', type: 'combo', choices: ['', 'auto', 'disabled', 'enabled'], value: '', description: 'Builds perfdhcp.')
-option('shell', type: 'combo', choices: ['', 'auto', 'disabled', 'enabled'], value: '', description: 'Builds kea-shell.')
+option('fuzz', type: 'feature', description: 'Support for fuzz testing.')
+option(
+    'logger-checks',
+    type: 'feature',
+    value: 'disabled',
+    description: 'Check logger messages.',
+)
+option('shell', type: 'feature', description: 'Builds kea-shell.')
+option('tests', type: 'feature', description: 'Support for tests.')

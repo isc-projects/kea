@@ -1,4 +1,4 @@
-if not gtest.found()
+if not TESTS_OPT.enabled()
     subdir_done()
 endif
 
@@ -77,7 +77,7 @@ kea_agent_tests = executable(
         f'-DSYNTAX_FILE="@current_source_dir@/../agent_parser.yy"',
         f'-DTEST_CA_DIR="@TEST_CA_DIR@"',
     ],
-    dependencies: [gtest, crypto],
+    dependencies: [GTEST_DEP, CRYPTO_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [agent_lib] + kea_agent_tests_libs + LIBS_BUILT_SO_FAR,
 )

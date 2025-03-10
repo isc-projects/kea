@@ -14,7 +14,7 @@ kea_asiolink_lib = shared_library(
     'openssl_tls.cc',
     'process_spawn.cc',
     'unix_domain_socket.cc',
-    dependencies: [crypto],
+    dependencies: [CRYPTO_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib',

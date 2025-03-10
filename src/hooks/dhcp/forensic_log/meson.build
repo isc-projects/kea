@@ -9,7 +9,7 @@ dhcp_forensic_log_lib = shared_library(
     'rotating_file.cc',
     'version.cc',
     cpp_args: [f'-DLEGAL_LOG_DIR="@LEGAL_LOG_DIR@"'],
-    dependencies: [crypto, mysql, postgresql],
+    dependencies: [CRYPTO_DEP, MYSQL_DEP, POSTGRESQL_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib/kea/hooks',

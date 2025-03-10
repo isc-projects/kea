@@ -1,7 +1,3 @@
-if PERFDHCP_OPT != 'enabled'
-    subdir_done()
-endif
-
 perfdhcp_lib = static_library(
     'perfdhcp',
     'avalanche_scen.cc',

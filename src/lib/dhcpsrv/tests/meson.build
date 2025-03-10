@@ -1,4 +1,4 @@
-if not gtest.found()
+if not TESTS_OPT.enabled()
     subdir_done()
 endif
 
@@ -128,7 +128,7 @@ kea_dhcpsrv_tests = executable(
         f'-DKEA_LFC_BUILD_DIR="@TOP_BUILD_DIR@/src/bin/lfc"',
         f'-DDEFAULT_HOOKS_PATH="@DEFAULT_HOOKS_PATH@"',
     ],
-    dependencies: [crypto, gtest],
+    dependencies: [CRYPTO_DEP, GTEST_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [kea_util_unittests_lib, libs_testutils] + LIBS_BUILT_SO_FAR,
 )

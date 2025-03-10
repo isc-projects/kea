@@ -5,7 +5,7 @@ dhcp_flex_option_lib = shared_library(
     'flex_option_log.cc',
     'flex_option_messages.cc',
     'version.cc',
-    dependencies: [crypto],
+    dependencies: [CRYPTO_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib/kea/hooks',

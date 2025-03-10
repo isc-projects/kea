@@ -1,10 +1,10 @@
-if not gtest.found()
+if not TESTS_OPT.enabled()
     subdir_done()
 endif
 
 current_build_dir = meson.current_build_dir()
 current_source_dir = meson.current_source_dir()
-dhcp6_tests_deps = [crypto, gtest]
+dhcp6_tests_deps = [CRYPTO_DEP, GTEST_DEP]
 dhcp6_tests_libs = [
     kea_dhcpsrv_testutils_lib,
     kea_dhcp_testutils_lib,
@@ -13,16 +13,16 @@ dhcp6_tests_libs = [
     kea_util_unittests_lib,
     kea_asiolink_testutils_lib,
 ]
-if mysql.found()
-    dhcp6_tests_deps += [mysql]
+if MYSQL_DEP.found()
+    dhcp6_tests_deps += [MYSQL_DEP]
     dhcp6_tests_libs += [
         dhcp_mysql_archive,
         kea_mysql_testutils_lib,
         kea_mysql_lib,
     ]
 endif
-if postgresql.found()
-    dhcp6_tests_deps += [postgresql]
+if POSTGRESQL_DEP.found()
+    dhcp6_tests_deps += [POSTGRESQL_DEP]
     dhcp6_tests_libs += [
         dhcp_pgsql_archive,
         kea_pgsql_testutils_lib,

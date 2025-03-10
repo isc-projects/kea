@@ -1,7 +1,6 @@
-if not gtest.found()
+if not TESTS_OPT.enabled()
     subdir_done()
 endif
-
 
 shell_tests_conf_data = configuration_data()
 shell_tests_conf_data.set('PYTHON', PYTHON.full_path())

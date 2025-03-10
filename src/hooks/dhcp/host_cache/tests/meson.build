@@ -1,4 +1,4 @@
-if not gtest.found()
+if not TESTS_OPT.enabled()
     subdir_done()
 endif
 
@@ -15,7 +15,7 @@ dhcp_host_cache_tests = executable(
     'host_data_source_unittests.cc',
     'run_unittests.cc',
     cpp_args: [f'-DTEST_DATA_BUILDDIR="@current_build_dir@"'],
-    dependencies: [gtest, crypto],
+    dependencies: [GTEST_DEP, CRYPTO_DEP],
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
     link_with: [dhcp_host_cache_tests_libs] + LIBS_BUILT_SO_FAR,
 )

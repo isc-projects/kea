@@ -1,4 +1,4 @@
-if not krb5.found()
+if not KRB5_DEP.found()
     subdir_done()
 endif
 
@@ -15,7 +15,7 @@ ddns_gss_tsig_lib = shared_library(
     'managed_key.cc',
     'tkey_exchange.cc',
     'version.cc',
-    dependencies: [krb5, crypto],
+    dependencies: [KRB5_DEP, CRYPTO_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib/kea/hooks',

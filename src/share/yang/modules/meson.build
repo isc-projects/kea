@@ -1,4 +1,4 @@
-if not NETCONF_DEPS_FOUND
+if not NETCONF_DEP.found()
     subdir_done()
 endif
 

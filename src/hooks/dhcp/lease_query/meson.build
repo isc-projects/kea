@@ -13,7 +13,7 @@ dhcp_lease_query_lib = shared_library(
     'lease_query_messages.cc',
     'mt_lease_query_mgr.cc',
     'version.cc',
-    dependencies: [crypto],
+    dependencies: [CRYPTO_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib/kea/hooks',

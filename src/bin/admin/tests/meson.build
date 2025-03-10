@@ -1,4 +1,4 @@
-if not gtest.found()
+if not TESTS_OPT.enabled()
     subdir_done()
 endif
 
@@ -35,7 +35,7 @@ mysql_tests = configure_file(
     output: 'mysql_tests.sh',
     configuration: kea_admin_tests_conf_data,
 )
-if mysql.found()
+if MYSQL_DEP.found()
     test(
         'kea_admin_mysql_tests.sh',
         mysql_tests,
@@ -49,7 +49,7 @@ pgsql_tests = configure_file(
     output: 'pgsql_tests.sh',
     configuration: kea_admin_tests_conf_data,
 )
-if postgresql.found()
+if POSTGRESQL_DEP.found()
     test(
         'kea_admin_pgsql_tests.sh',
         pgsql_tests,

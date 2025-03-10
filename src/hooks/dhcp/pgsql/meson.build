@@ -1,4 +1,4 @@
-if not postgresql.found()
+if not POSTGRESQL_DEP.found()
     subdir_done()
 endif
 
@@ -20,7 +20,7 @@ dhcp_pgsql_lib = shared_library(
     'pgsql_lease_mgr.cc',
     'pgsql_legal_log.cc',
     'version.cc',
-    dependencies: [crypto, postgresql],
+    dependencies: [CRYPTO_DEP, POSTGRESQL_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: 'lib/kea/hooks',

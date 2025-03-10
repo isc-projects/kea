@@ -1,4 +1,4 @@
-if not gtest.found() or not postgresql.found()
+if not TESTS_OPT.enabled() or not POSTGRESQL_DEP.found()
     subdir_done()
 endif
 
@@ -9,6 +9,6 @@ kea_pgsql_testutils_lib = static_library(
         f'-DDATABASE_SCRIPTS_DIR="@DATABASE_SCRIPTS_DIR@"',
         f'-DDATABASE_WIPE_DIR="@DATABASE_SCRIPTS_DIR@"',
     ],
-    dependencies: [gtest, postgresql],
+    dependencies: [GTEST_DEP, POSTGRESQL_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
 )
