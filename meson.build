@@ -254,6 +254,17 @@ conf_data.set('HAVE_PGSQL', POSTGRESQL_DEP.found())
 
 #### Compiler Checks
 
+if cpp.has_header('boost/regex.h', dependencies: [boost_dep], required: false)
+    result = cpp.run(
+        fs.read('compiler-checks/boost-regex.cc'),
+        dependencies: [boost_dep],
+        name: 'GET_SYSTEM_VS_BOOST_REGEX_HEADER',
+    )
+    if result.returncode() != 0
+        error('boost/regex.h is used in place of system regex.h')
+    endif
+endif
+
 result = cpp.run(
     fs.read('compiler-checks/chrono-same-duration.cc'),
     name: 'CHRONO_SAME_DURATION',
