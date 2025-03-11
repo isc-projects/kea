@@ -1,5 +1,5 @@
 [func]		tmark
 	Lease reclamation is now skipped and rescheduled
-    while DHCP service is disabled. This applies to
-    both kea-dhcp4 and kea-dhcp6.
+	while DHCP service is disabled. This applies to
+	both kea-dhcp4 and kea-dhcp6.
 	(Gitlab #3693)
