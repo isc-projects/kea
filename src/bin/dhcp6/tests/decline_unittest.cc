@@ -258,7 +258,7 @@ Dhcpv6SrvTest::acquireAndDecline(Dhcp6Client& client,
 
 // This test checks that the client can acquire and decline the lease.
 TEST_F(DeclineTest, basicMemfile) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     acquireAndDecline(client, "01:02:03:04:05:06", 1234, "01:02:03:04:05:06",
                       1234, VALID_ADDR, SHOULD_PASS);
 }
@@ -267,7 +267,7 @@ TEST_F(DeclineTest, basicMemfile) {
 // This test checks that the client can acquire and decline the lease.
 TEST_F(DeclineTest, basicMySQL) {
     MySqlLeaseMgrInit init;
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     acquireAndDecline(client, "01:02:03:04:05:06", 1234, "01:02:03:04:05:06",
                       1234, VALID_ADDR, SHOULD_PASS, 1);
 }
@@ -276,7 +276,7 @@ TEST_F(DeclineTest, basicMySQL) {
 #ifdef HAVE_PGSQL
 TEST_F(DeclineTest, basicPgSQL) {
     PgSqlLeaseMgrInit init;
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     acquireAndDecline(client, "01:02:03:04:05:06", 1234, "01:02:03:04:05:06",
                       1234, VALID_ADDR, SHOULD_PASS, 2);
 }
@@ -293,7 +293,7 @@ namespace {
 // - Client sends the DECLINE with duid, iaid, but uses wrong address.
 // - The server rejects Decline due to address mismatch
 TEST_F(DeclineTest, addressMismatch) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     acquireAndDecline(client, "01:02:03:04:05:06", 1234, "01:02:03:04:05:06",
                       1234, BOGUS_ADDR, SHOULD_FAIL);
 }
@@ -303,7 +303,7 @@ TEST_F(DeclineTest, addressMismatch) {
 // - Client sends the DECLINE with duid, iaid2
 // - The server rejects Decline due to IAID mismatch
 TEST_F(DeclineTest, iaidMismatch) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     acquireAndDecline(client, "01:02:03:04:05:06", 1234, "01:02:03:04:05:06",
                       1235, VALID_ADDR, SHOULD_FAIL);
 }
@@ -313,7 +313,7 @@ TEST_F(DeclineTest, iaidMismatch) {
 // - Client sends the DECLINE using duid2, iaid
 // - The server rejects the Decline due to DUID mismatch
 TEST_F(DeclineTest, duidMismatch) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     acquireAndDecline(client, "01:02:03:04:05:06", 1234,
                       "01:02:03:04:05:07", 1234,
                       VALID_ADDR, SHOULD_FAIL);
@@ -325,7 +325,7 @@ TEST_F(DeclineTest, duidMismatch) {
 //   include the address in it
 // - The server rejects the Decline due to missing address
 TEST_F(DeclineTest, noAddrsSent) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     acquireAndDecline(client, "01:02:03:04:05:06", 1234,
                       "01:02:03:04:05:06", 1234,
                       NO_ADDR, SHOULD_FAIL);
@@ -337,7 +337,7 @@ TEST_F(DeclineTest, noAddrsSent) {
 //   include IA_NA at all
 // - The server rejects the Decline due to missing IA_NA
 TEST_F(DeclineTest, noIAs) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     acquireAndDecline(client, "01:02:03:04:05:06", 1234,
                       "01:02:03:04:05:06", 1234,
                       NO_IA, SHOULD_FAIL);
@@ -345,7 +345,7 @@ TEST_F(DeclineTest, noIAs) {
 
 // Test that the released lease cannot be declined.
 TEST_F(DeclineTest, declineAfterRelease) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     uint32_t iaid = 1;
     client.requestAddress(iaid);
 
@@ -374,7 +374,7 @@ TEST_F(DeclineTest, declineAfterRelease) {
 
 // Test that the released lease cannot be declined.
 TEST_F(DeclineTest, declineAfterExpire) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     uint32_t iaid = 1;
     client.requestAddress(iaid);
 
@@ -403,7 +403,7 @@ TEST_F(DeclineTest, declineAfterExpire) {
 
 // Test that expired-reclaimed lease cannot be declined.
 TEST_F(DeclineTest, declineAfterReclamation) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     uint32_t iaid = 1;
     client.requestAddress(iaid);
 

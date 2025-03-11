@@ -15,6 +15,7 @@
 using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
+using namespace isc::stats;
 
 namespace {
 
@@ -141,7 +142,7 @@ public:
 /// Check that server processes correctly an incoming inf-request in a
 /// typical subnet that has also address and prefix pools.
 TEST_F(InfRequestTest, infRequestBasic) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
 
     // Configure client to request IA_PD.
     configure(CONFIGS[0], *client.getServer());
@@ -182,7 +183,7 @@ TEST_F(InfRequestTest, infRequestBasic) {
 /// that does not hold client-id. It's so called anonymous inf-request.
 /// Uncommon, but certainly valid behavior.
 TEST_F(InfRequestTest, infRequestAnonymous) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
 
     // Configure client to request IA_PD.
     configure(CONFIGS[0], *client.getServer());
@@ -213,7 +214,7 @@ TEST_F(InfRequestTest, infRequestAnonymous) {
 /// Check that server processes correctly an incoming inf-request
 /// if there is a subnet without any addresses or prefixes configured.
 TEST_F(InfRequestTest, infRequestStateless) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
 
     // Configure client to request IA_PD.
     configure(CONFIGS[1], *client.getServer());
@@ -242,7 +243,7 @@ TEST_F(InfRequestTest, infRequestStateless) {
 /// Check that server processes correctly an incoming inf-request
 /// if there are options defined at both global and subnet scope.
 TEST_F(InfRequestTest, infRequestSubnetAndGlobal) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
 
     // Configure client to request IA_PD.
     configure(CONFIGS[2], *client.getServer());
@@ -280,7 +281,7 @@ TEST_F(InfRequestTest, infRequestSubnetAndGlobal) {
 /// Check that server processes correctly an incoming inf-request
 /// if there are options defined at global scope only (no subnets).
 TEST_F(InfRequestTest, infRequestNoSubnets) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
 
     // Configure client to request IA_PD.
     configure(CONFIGS[3], *client.getServer());
@@ -310,7 +311,12 @@ TEST_F(InfRequestTest, infRequestNoSubnets) {
 /// Check that server processes correctly an incoming inf-request in a
 /// typical subnet that has also address and prefix pools.
 TEST_F(InfRequestTest, infRequestStats) {
-    Dhcp6Client client;
+    StatsMgr::instance().setValue("pkt6-received", int64_t(0));
+    StatsMgr::instance().setValue("pkt6-infrequest-received", int64_t(0));
+    StatsMgr::instance().setValue("pkt6-reply-sent", int64_t(0));
+    StatsMgr::instance().setValue("pkt6-sent", int64_t(0));
+
+    Dhcp6Client client(srv_);
 
     // Configure client to request IA_PD.
     configure(CONFIGS[0], *client.getServer());
@@ -320,7 +326,6 @@ TEST_F(InfRequestTest, infRequestStats) {
     ASSERT_EQ(1, subnets->size());
 
     // Check that the tested statistics is initially set to 0
-    using namespace isc::stats;
     StatsMgr& mgr = StatsMgr::instance();
     ObservationPtr pkt6_rcvd = mgr.getObservation("pkt6-received");
     ObservationPtr pkt6_infreq_rcvd = mgr.getObservation("pkt6-infrequest-received");

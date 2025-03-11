@@ -473,7 +473,7 @@ public:
     testFixedFields(const char* config, uint8_t msgtype, const OptionPtr& extra_opt,
                     const std::string& exp_next_server, const std::string& exp_sname,
                     const std::string& exp_filename) {
-         Dhcp4Client client(Dhcp4Client::SELECTING);
+         Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
          // Configure DHCP server.
          configure(config, *client.getServer());
@@ -631,7 +631,7 @@ TEST_F(ClassifyTest, fixedFieldsInformFile2) {
 // This test checks that it is possible to specify static reservations for
 // client classes.
 TEST_F(ClassifyTest, clientClassesInHostReservations) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Initially, the client uses hardware address for which there are
     // no reservations.
     client.setHWAddress("aa:bb:cc:dd:ee:fe");
@@ -846,7 +846,7 @@ TEST_F(ClassifyTest, fixedFieldsInformFile32) {
 
 // This test checks the complex membership from HA with server1 telephone.
 TEST_F(ClassifyTest, server1Telephone) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     // Configure DHCP server.
     configure(CONFIGS[4], *client.getServer());
@@ -871,7 +871,7 @@ TEST_F(ClassifyTest, server1Telephone) {
 
 // This test checks the complex membership from HA with server1 computer.
 TEST_F(ClassifyTest, server1computer) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     // Configure DHCP server.
     configure(CONFIGS[4], *client.getServer());
@@ -896,7 +896,7 @@ TEST_F(ClassifyTest, server1computer) {
 
 // This test checks the complex membership from HA with server2 telephone.
 TEST_F(ClassifyTest, server2Telephone) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     // Configure DHCP server.
     configure(CONFIGS[4], *client.getServer());
@@ -921,7 +921,7 @@ TEST_F(ClassifyTest, server2Telephone) {
 
 // This test checks the complex membership from HA with server2 computer.
 TEST_F(ClassifyTest, server2computer) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     // Configure DHCP server.
     configure(CONFIGS[4], *client.getServer());
@@ -995,7 +995,7 @@ TEST_F(ClassifyTest, precedenceNone) {
         "}";
 
     // Create a client requesting domain-name-servers option
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     client.requestOptions(DHO_DOMAIN_NAME_SERVERS);
 
     // Load the config and perform a DORA
@@ -1066,7 +1066,7 @@ TEST_F(ClassifyTest, precedencePool) {
         "}";
 
     // Create a client requesting domain-name-servers option
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     client.requestOptions(DHO_DOMAIN_NAME_SERVERS);
 
     // Load the config and perform a DORA
@@ -1142,7 +1142,7 @@ TEST_F(ClassifyTest, precedenceSubnet) {
         "}";
 
     // Create a client requesting domain-name-servers option
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     client.requestOptions(DHO_DOMAIN_NAME_SERVERS);
 
     // Load the config and perform a DORA
@@ -1217,7 +1217,7 @@ TEST_F(ClassifyTest, precedenceNetwork) {
         "}";
 
     // Create a client requesting domain-name-servers option
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     client.requestOptions(DHO_DOMAIN_NAME_SERVERS);
 
     // Load the config and perform a DORA
@@ -1272,7 +1272,7 @@ TEST_F(ClassifyTest, requiredNoTest) {
         "}";
 
     // Create a client requesting domain-name-servers option
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     client.requestOptions(DHO_DOMAIN_NAME_SERVERS);
 
     // Load the config and perform a DORA
@@ -1319,7 +1319,7 @@ TEST_F(ClassifyTest, requiredNotDefined) {
         "}";
 
     // Create a client requesting domain-name-servers option
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     client.requestOptions(DHO_DOMAIN_NAME_SERVERS);
 
     // Load the config and perform a DORA
@@ -1334,7 +1334,7 @@ TEST_F(ClassifyTest, requiredNotDefined) {
 
 // This test checks the handling for the DROP special class.
 TEST_F(ClassifyTest, dropClass) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     // Configure DHCP server.
     configure(CONFIGS[5], *client.getServer());
@@ -1346,7 +1346,7 @@ TEST_F(ClassifyTest, dropClass) {
     EXPECT_TRUE(client.getContext().response_);
 
     // Retry with an option matching the DROP class.
-    Dhcp4Client client2(Dhcp4Client::SELECTING);
+    Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
 
     // Add the pxe option.
     OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0009));
@@ -1370,7 +1370,7 @@ TEST_F(ClassifyTest, dropClass) {
 // This test checks the handling for the DROP special class at the host
 // reservation classification point with KNOWN / UNKNOWN.
 TEST_F(ClassifyTest, dropClassUnknown) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     // Configure DHCP server.
     configure(CONFIGS[6], *client.getServer());
@@ -1385,7 +1385,7 @@ TEST_F(ClassifyTest, dropClassUnknown) {
     EXPECT_TRUE(client.getContext().response_);
 
     // Retry with another HW address.
-    Dhcp4Client client2(Dhcp4Client::SELECTING);
+    Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
     client2.setHWAddress("aa:bb:cc:dd:ee:fe");
 
     // Send the discover.
@@ -1406,7 +1406,7 @@ TEST_F(ClassifyTest, dropClassUnknown) {
 // This test checks the handling for the DROP special class at the host
 // reservation classification point with a reserved class.
 TEST_F(ClassifyTest, dropClassReservedClass) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     // Configure DHCP server.
     configure(CONFIGS[7], *client.getServer());
@@ -1421,7 +1421,7 @@ TEST_F(ClassifyTest, dropClassReservedClass) {
     EXPECT_TRUE(client.getContext().response_);
 
     // Retry with another HW address.
-    Dhcp4Client client2(Dhcp4Client::SELECTING);
+    Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
     client2.setHWAddress("aa:bb:cc:dd:ee:fe");
 
     // Send the discover.
@@ -1442,7 +1442,7 @@ TEST_F(ClassifyTest, dropClassReservedClass) {
 // This test checks the early global reservations lookup for selecting
 // a guarded subnet.
 TEST_F(ClassifyTest, earlySubnet) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     // Configure DHCP server.
     configure(CONFIGS[8], *client.getServer());
@@ -1459,7 +1459,7 @@ TEST_F(ClassifyTest, earlySubnet) {
     EXPECT_EQ("10.0.0.10", resp->getYiaddr().toText());
 
     // Try with a different HW address.
-    Dhcp4Client client2(Dhcp4Client::SELECTING);
+    Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
 
     // Set the HW address to another value.
     client2.setHWAddress("aa:bb:cc:01:ee:ff");
@@ -1475,7 +1475,7 @@ TEST_F(ClassifyTest, earlySubnet) {
 
 // This test checks the early global reservations lookup for dropping.
 TEST_F(ClassifyTest, earlyDrop) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     // Configure DHCP server.
     configure(CONFIGS[9], *client.getServer());
@@ -1498,7 +1498,7 @@ TEST_F(ClassifyTest, earlyDrop) {
     EXPECT_EQ(1, drop_stat->getInteger().first);
 
     // Try with a different HW address.
-    Dhcp4Client client2(Dhcp4Client::SELECTING);
+    Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
 
     // Set the HW address to another value.
     client2.setHWAddress("aa:bb:cc:01:ee:ff");
@@ -1514,8 +1514,6 @@ TEST_F(ClassifyTest, earlyDrop) {
 TEST_F(ClassifyTest, subClassPrecedence) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
-
-    NakedDhcpv4Srv srv(0);
 
     string config = R"^(
     {
@@ -1565,7 +1563,7 @@ TEST_F(ClassifyTest, subClassPrecedence) {
     )^";
 
     // Configure DHCP server.
-    configure(config, srv);
+    configure(config, *srv_);
 
     // Create packets with enough to select the subnet
     auto id = ClientId::fromText("31:31:31");
@@ -1587,14 +1585,14 @@ TEST_F(ClassifyTest, subClassPrecedence) {
     query1->addOption(prl);
 
     // Classify packets
-    srv.classifyPacket(query1);
+    srv_->classifyPacket(query1);
 
     // Verify class membership is as expected.
     EXPECT_TRUE(query1->inClass("template-client-id"));
     EXPECT_TRUE(query1->inClass("SPAWN_template-client-id_111"));
 
     // Process query
-    Pkt4Ptr response1 = srv.processDiscover(query1);
+    Pkt4Ptr response1 = srv_->processDiscover(query1);
 
     // Verify that opt1 is inherited from the template.
     OptionPtr opt = response1->getOption(249);
@@ -1612,8 +1610,6 @@ TEST_F(ClassifyTest, subClassPrecedence) {
 TEST_F(ClassifyTest, requestedOptionClassTagTest) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
-
-    NakedDhcpv4Srv srv(0);
 
     string config = R"^(
     {
@@ -1667,7 +1663,7 @@ TEST_F(ClassifyTest, requestedOptionClassTagTest) {
     )^";
 
     // Configure DHCP server.
-    configure(config, srv);
+    configure(config, *srv_);
 
     // Create packets with enough to select the subnet
     auto id = ClientId::fromText("31:31:31");
@@ -1690,13 +1686,13 @@ TEST_F(ClassifyTest, requestedOptionClassTagTest) {
     query1->addOption(prl);
 
     // Classify packets
-    srv.classifyPacket(query1);
+    srv_->classifyPacket(query1);
 
     // Verify class membership is as expected.
     EXPECT_TRUE(query1->inClass("right"));
 
     // Process query
-    Pkt4Ptr response1 = srv.processDiscover(query1);
+    Pkt4Ptr response1 = srv_->processDiscover(query1);
 
     // Option without class tags should be included.
     OptionPtr opt = response1->getOption(249);
@@ -1716,8 +1712,6 @@ TEST_F(ClassifyTest, requestedOptionClassTagTest) {
 TEST_F(ClassifyTest, vendorOptionClassTagTest) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
-
-    NakedDhcpv4Srv srv(0);
 
     string config = R"^(
     {
@@ -1780,7 +1774,7 @@ TEST_F(ClassifyTest, vendorOptionClassTagTest) {
     )^";
 
     // Configure DHCP server.
-    configure(config, srv);
+    configure(config, *srv_);
 
     // Create a DISCOVER that matches class "melon" but not "ball".
     auto id = ClientId::fromText("31:31:31");
@@ -1807,14 +1801,14 @@ TEST_F(ClassifyTest, vendorOptionClassTagTest) {
     vendor->addOption(vendor_oro);
 
     // Classify query.
-    srv.classifyPacket(query1);
+    srv_->classifyPacket(query1);
 
     // Verify it belongs to "melon" but not "ball".
     EXPECT_TRUE(query1->inClass("melon"));
     EXPECT_FALSE(query1->inClass("ball"));
 
     // Process the query
-    Pkt4Ptr response1 = srv.processDiscover(query1);
+    Pkt4Ptr response1 = srv_->processDiscover(query1);
 
     // Check if there is a vendor option response
     OptionPtr tmp = response1->getOption(DHO_VIVSO_SUBOPTIONS);
@@ -1837,8 +1831,6 @@ TEST_F(ClassifyTest, vendorOptionClassTagTest) {
 TEST_F(ClassifyTest, vivcoOptionClassTagTest) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
-
-    NakedDhcpv4Srv srv(0);
 
     string config = R"^(
     {
@@ -1868,7 +1860,7 @@ TEST_F(ClassifyTest, vivcoOptionClassTagTest) {
     )^";
 
     // Configure DHCP server.
-    configure(config, srv);
+    configure(config, *srv_);
 
     // Create a DISCOVER that matches class "melon".
     auto id = ClientId::fromText("31:31:31");
@@ -1889,13 +1881,13 @@ TEST_F(ClassifyTest, vivcoOptionClassTagTest) {
     query1->addOption(prl);
 
     // Classify packet
-    srv.classifyPacket(query1);
+    srv_->classifyPacket(query1);
 
     // Verify it is a member of "melon".
     ASSERT_TRUE(query1->inClass("melon"));
 
     // Process query
-    Pkt4Ptr response1 = srv.processDiscover(query1);
+    Pkt4Ptr response1 = srv_->processDiscover(query1);
 
     // Check if there is a vendor option response
     OptionPtr tmp = response1->getOption(DHO_VIVCO_SUBOPTIONS);
@@ -1913,13 +1905,13 @@ TEST_F(ClassifyTest, vivcoOptionClassTagTest) {
     query1->addOption(prl);
 
     // Classify packet
-    srv.classifyPacket(query1);
+    srv_->classifyPacket(query1);
 
     // Verify it is not a member of "melon".
     ASSERT_FALSE(query1->inClass("melon"));
 
     // Process query
-    response1 = srv.processDiscover(query1);
+    response1 = srv_->processDiscover(query1);
 
     // VIVCO suboption should not be present.
     tmp = response1->getOption(DHO_VIVCO_SUBOPTIONS);
@@ -1931,8 +1923,6 @@ TEST_F(ClassifyTest, vivcoOptionClassTagTest) {
 TEST_F(ClassifyTest, vivsoOptionClassTagTest) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
-
-    NakedDhcpv4Srv srv(0);
 
     string config = R"^(
     {
@@ -1962,7 +1952,7 @@ TEST_F(ClassifyTest, vivsoOptionClassTagTest) {
     )^";
 
     // Configure DHCP server.
-    configure(config, srv);
+    configure(config, *srv_);
 
     // Create a DISCOVER that matches class "melon".
     auto id = ClientId::fromText("31:31:31");
@@ -1983,13 +1973,13 @@ TEST_F(ClassifyTest, vivsoOptionClassTagTest) {
     query1->addOption(prl);
 
     // Classify packet
-    srv.classifyPacket(query1);
+    srv_->classifyPacket(query1);
 
     // Verify it is a member of "melon".
     ASSERT_TRUE(query1->inClass("melon"));
 
     // Process query
-    Pkt4Ptr response1 = srv.processDiscover(query1);
+    Pkt4Ptr response1 = srv_->processDiscover(query1);
 
     // Verify the reponse contains the VIVSO sub-option
     OptionPtr tmp = response1->getOption(DHO_VIVSO_SUBOPTIONS);
@@ -2007,13 +1997,13 @@ TEST_F(ClassifyTest, vivsoOptionClassTagTest) {
     query1->addOption(prl);
 
     // Classify packet
-    srv.classifyPacket(query1);
+    srv_->classifyPacket(query1);
 
     // Verify it is not a member of "melon".
     ASSERT_FALSE(query1->inClass("melon"));
 
     // Process query
-    response1 = srv.processDiscover(query1);
+    response1 = srv_->processDiscover(query1);
 
     // VIVSO suboption should not be present.
     tmp = response1->getOption(DHO_VIVSO_SUBOPTIONS);
@@ -2025,8 +2015,6 @@ TEST_F(ClassifyTest, vivsoOptionClassTagTest) {
 TEST_F(ClassifyTest, basicOptionClassTagTest) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
-
-    NakedDhcpv4Srv srv(0);
 
     string config = R"^(
     {
@@ -2071,7 +2059,7 @@ TEST_F(ClassifyTest, basicOptionClassTagTest) {
     )^";
 
     // Configure DHCP server.
-    configure(config, srv);
+    configure(config, *srv_);
 
     // Create a DISCOVER that matches class "melon".
     auto id = ClientId::fromText("31:31:31");
@@ -2086,16 +2074,16 @@ TEST_F(ClassifyTest, basicOptionClassTagTest) {
     query1->setIndex(ETH1_INDEX);
 
     // Configure DHCP server.
-    configure(config, srv);
+    configure(config, *srv_);
 
     // Classify packet
-    srv.classifyPacket(query1);
+    srv_->classifyPacket(query1);
 
     // Verify it is a member of "melon".
     ASSERT_TRUE(query1->inClass("melon"));
 
     // Process query
-    Pkt4Ptr response1 = srv.processDiscover(query1);
+    Pkt4Ptr response1 = srv_->processDiscover(query1);
 
     // Verify that routers, domain-name, and domain-name-servers are present.
     OptionPtr tmp = response1->getOption(DHO_ROUTERS);
@@ -2119,13 +2107,13 @@ TEST_F(ClassifyTest, basicOptionClassTagTest) {
     query1->setIndex(ETH1_INDEX);
 
     // Classify packet
-    srv.classifyPacket(query1);
+    srv_->classifyPacket(query1);
 
     // Verify it is not a member of "melon".
     ASSERT_FALSE(query1->inClass("melon"));
 
     // Process query
-    response1 = srv.processDiscover(query1);
+    response1 = srv_->processDiscover(query1);
 
     // Verify that routers, domain-name, and domain-name-servers are not present.
     tmp = response1->getOption(DHO_ROUTERS);
@@ -2143,8 +2131,6 @@ TEST_F(ClassifyTest, basicOptionClassTagTest) {
 TEST_F(ClassifyTest, classTaggingAndAlwaysSend) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
-
-    NakedDhcpv4Srv srv(0);
 
     // Global host-name option disables always-send.  Subnet level
     // host-name enables always-send but has a non-matching class
@@ -2180,7 +2166,7 @@ TEST_F(ClassifyTest, classTaggingAndAlwaysSend) {
     )^";
 
     // Configure DHCP server.
-    configure(config, srv);
+    configure(config, *srv_);
 
     // Create a DISCOVER that matches class "melon".
     auto id = ClientId::fromText("31:31:31");
@@ -2195,7 +2181,7 @@ TEST_F(ClassifyTest, classTaggingAndAlwaysSend) {
     query1->setIndex(ETH1_INDEX);
 
     // Process query
-    Pkt4Ptr response = srv.processDiscover(query1);
+    Pkt4Ptr response = srv_->processDiscover(query1);
 
     // Verify that global host-name is present.
     OptionStringPtr hostname;
@@ -2208,8 +2194,6 @@ TEST_F(ClassifyTest, classTaggingAndAlwaysSend) {
 TEST_F(ClassifyTest, classTaggingAndNeverSend) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
-
-    NakedDhcpv4Srv srv(0);
 
     // Global host-name option enables always-send.  Subnet level
     // host-name enables never-send but has a non-matching class
@@ -2246,7 +2230,7 @@ TEST_F(ClassifyTest, classTaggingAndNeverSend) {
     )^";
 
     // Configure DHCP server.
-    configure(config, srv);
+    configure(config, *srv_);
 
     // Create a DISCOVER that matches class "melon".
     auto id = ClientId::fromText("31:31:31");
@@ -2261,7 +2245,7 @@ TEST_F(ClassifyTest, classTaggingAndNeverSend) {
     query1->setIndex(ETH1_INDEX);
 
     // Process query
-    Pkt4Ptr response = srv.processDiscover(query1);
+    Pkt4Ptr response = srv_->processDiscover(query1);
 
     // The response should not contain host-name.
     ASSERT_FALSE(response->getOption(DHO_HOST_NAME));
@@ -2272,8 +2256,6 @@ TEST_F(ClassifyTest, classTaggingAndNeverSend) {
 TEST_F(ClassifyTest, networkScopeClientClasses) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
-
-    NakedDhcpv4Srv srv(0);
 
     string config = R"^(
     {
@@ -2333,7 +2315,7 @@ TEST_F(ClassifyTest, networkScopeClientClasses) {
     )^";
 
     // Configure DHCP server.
-    configure(config, srv);
+    configure(config, *srv_);
 
     // Describes a single scenario.
     struct Scenario {
@@ -2366,10 +2348,10 @@ TEST_F(ClassifyTest, networkScopeClientClasses) {
         query->setIndex(ETH0_INDEX);
 
         // Classify packet
-        srv.classifyPacket(query);
+        srv_->classifyPacket(query);
 
         // Process query
-        Pkt4Ptr response = srv.processDiscover(query);
+        Pkt4Ptr response = srv_->processDiscover(query);
         if (scenario.exp_type_ == DHCP_NOTYPE) {
             EXPECT_FALSE(response);
         } else {
@@ -2386,8 +2368,6 @@ TEST_F(ClassifyTest, networkScopeClientClasses) {
 // different client class tags works properly.
 TEST_F(ClassifyTest, classTaggingList) {
     IfaceMgrTestConfig test_config(true);
-
-    NakedDhcpv4Srv srv(0);
 
     // Define a client-str option for classification, and server-str
     // option to send in response.  Then define 3 possible values in 
@@ -2481,11 +2461,11 @@ TEST_F(ClassifyTest, classTaggingList) {
         query->addOption(client_str);
 
         // Classify the packet and verify class membership is as expected.
-        srv.classifyPacket(query);
+        srv_->classifyPacket(query);
         ASSERT_TRUE(query->inClass(scenario.exp_class_));
 
         // Process the query
-        Pkt4Ptr response = srv.processDiscover(query);
+        Pkt4Ptr response = srv_->processDiscover(query);
         ASSERT_TRUE(response);
 
         // Verify that server-str opt is as expected

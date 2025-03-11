@@ -325,7 +325,7 @@ public:
 // This test verifies that the client can request the prefix delegation
 // while it is renewing an address lease.
 TEST_F(RenewTest, requestPrefixInRenew) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
 
     // Configure client to request IA_NA and IA_PD.
     client.requestAddress(na_iaid_);
@@ -392,7 +392,7 @@ TEST_F(RenewTest, requestPrefixInRenew) {
 // Test that it is possible to renew a prefix lease with a Prefix Exclude
 // option from PD pool being included during renew.
 TEST_F(RenewTest, renewWithExcludedPrefixPool) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
 
     // Configure client to request IA_NA and IA_PD.
     client.requestAddress(na_iaid_);
@@ -478,7 +478,7 @@ TEST_F(RenewTest, renewWithExcludedPrefixPool) {
 // Test that it is possible to renew a prefix lease with a Prefix Exclude
 // option from host reservation being included during renew.
 TEST_F(RenewTest, renewWithExcludedPrefixHost) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
 
     // Set DUID matching the one used to create host reservations.
     client.setDUID("01:02:03:05");
@@ -567,7 +567,7 @@ TEST_F(RenewTest, renewWithExcludedPrefixHost) {
 // This test verifies that the client can request a prefix delegation
 // with a hint, while it is renewing an address lease.
 TEST_F(RenewTest, requestPrefixInRenewUseHint) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
 
     // Configure client to request IA_NA and IA_PD.
     client.requestAddress(na_iaid_);
@@ -640,7 +640,7 @@ TEST_F(RenewTest, requestPrefixInRenewUseHint) {
 // This test verifies that the client can request the prefix delegation
 // while it is renewing an address lease.
 TEST_F(RenewTest, requestAddressInRenew) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
 
     // Configure client to request IA_NA and IA_PD.
     client.requestAddress(na_iaid_);
@@ -700,7 +700,7 @@ TEST_F(RenewTest, requestAddressInRenew) {
 // This test verifies that the client can request address assignment
 // while it is renewing an address lease, with a hint.
 TEST_F(RenewTest, requestAddressInRenewHint) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
 
     // Configure client to request IA_NA and IA_PD.
     client.requestAddress(na_iaid_);
@@ -764,7 +764,7 @@ TEST_F(RenewTest, requestAddressInRenewHint) {
 
 // This test verifies that the client can request the DOCSIS sub-options.
 TEST_F(RenewTest, docsisORO) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
 
     // Configure client to request IA_NA.
     client.requestAddress(na_iaid_);
@@ -840,7 +840,7 @@ TEST_F(RenewTest, docsisORO) {
 // level, subnet level and pool level. The options associated with pools
 // are used when the lease is handed out from these pools.
 TEST_F(RenewTest, optionsInheritance) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     // Request a single address and single prefix.
     ASSERT_NO_THROW(client.requestPrefix(0xabac, 64, IOAddress("2001:db8:4::")));
     ASSERT_NO_THROW(client.requestAddress(0xabca, IOAddress("3000::45")));

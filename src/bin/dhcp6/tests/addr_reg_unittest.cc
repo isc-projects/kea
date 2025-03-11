@@ -1712,7 +1712,7 @@ TEST_F(AddrRegTest, statsAnotherSubnet) {
 
 // Check the basic scenario with the client test tool.
 TEST_F(AddrRegTest, client) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     DuidPtr duid = client.getDuid();
     ASSERT_TRUE(duid);
 
@@ -1760,7 +1760,7 @@ TEST_F(AddrRegTest, client) {
 
 // Check the renew scenario with the client test tool.
 TEST_F(AddrRegTest, clientRenew) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     DuidPtr duid = client.getDuid();
     ASSERT_TRUE(duid);
 

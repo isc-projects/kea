@@ -360,7 +360,7 @@ DirectClientTest::renew() {
     ASSERT_NO_FATAL_FAILURE(configureSubnet("10.0.0.0"));
 
     // Create the DHCPv4 client.
-    Dhcp4Client client;
+    Dhcp4Client client(srv_);
     client.useRelay(false);
 
     // Obtain the lease using the 4-way exchange.
@@ -398,7 +398,7 @@ DirectClientTest::rebind() {
     ASSERT_NO_FATAL_FAILURE(configureSubnet("10.0.0.0"));
 
     // Create the DHCPv4 client.
-    Dhcp4Client client;
+    Dhcp4Client client(srv_);
     client.useRelay(false);
 
     // Obtain the lease using the 4-way exchange.

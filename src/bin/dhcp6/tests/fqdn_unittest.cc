@@ -74,7 +74,7 @@ public:
 
     /// @brief Constructor
     FqdnDhcpv6SrvTest()
-        : Dhcpv6SrvTest(), srv_(new NakedDhcpv6Srv(0)),
+        : Dhcpv6SrvTest(),
           d2_mgr_(CfgMgr::instance().getD2ClientMgr()),
           iface_mgr_test_config_(true) {
         // generateClientId assigns DUID to duid_.
@@ -755,9 +755,6 @@ public:
                                 ddns_ttl_min,
                                 ddns_ttl_max);
     }
-
-    /// Pointer to Dhcpv6Srv that is used in tests
-    boost::scoped_ptr<NakedDhcpv6Srv> srv_;
 
     // Reference to D2ClientMgr singleton
     D2ClientMgr& d2_mgr_;
@@ -1778,7 +1775,7 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsScopeTest) {
         " }\n"
     "}";
 
-    Dhcp6Client client1;
+    Dhcp6Client client1(srv_);
     client1.setInterface("eth0");
 
     // Load a configuration with D2 enabled
@@ -1806,7 +1803,7 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsScopeTest) {
     ASSERT_EQ(0, CfgMgr::instance().getD2ClientMgr().getQueueSize());
 
     // Now let's try with a client on subnet 2.
-    Dhcp6Client client2;
+    Dhcp6Client client2(srv_);
     client2.setInterface("eth1");
     client2.requestAddress();
 
@@ -1879,7 +1876,7 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsSharedNetworkTest) {
         " } \n"
     "}";
 
-    Dhcp6Client client1;
+    Dhcp6Client client1(srv_);
     client1.setInterface("eth0");
     client1.requestAddress();
 
@@ -1919,7 +1916,7 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsSharedNetworkTest) {
 
     // Now let's try with a different client. Subnet 1 is full so we should get an
     // address from subnet 2.
-    Dhcp6Client client2(client1.getServer());
+    Dhcp6Client client2(srv_);
     client2.setInterface("eth0");
     client2.requestAddress();
 
@@ -2036,7 +2033,7 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsSharedNetworkTest2) {
         " } \n"
     "}";
 
-    Dhcp6Client client1;
+    Dhcp6Client client1(srv_);
     client1.setInterface("eth0");
     client1.requestAddress();
 
@@ -2076,7 +2073,7 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsSharedNetworkTest2) {
 
     // Now let's try with a different client. Subnet 1 is full so we should get an
     // address from subnet 2.
-    Dhcp6Client client2(client1.getServer());
+    Dhcp6Client client2(srv_);
     client2.setInterface("eth0");
     client2.requestAddress();
 

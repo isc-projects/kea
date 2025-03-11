@@ -766,7 +766,7 @@ public:
 
     /// @brief Test what options a client can use to request vendor options.
     void testRequestingOfVendorOptions(vector<int16_t> const& client_options) {
-        Dhcp6Client client;
+        Dhcp6Client client(srv_);
 
         EXPECT_NO_THROW(configure(config_, *client.getServer()));
 
@@ -933,9 +933,6 @@ TEST_F(VendorOptsTest, docsisVendorOptionsParse) {
 
 // Checks if server is able to parse incoming docsis option and extract suboption 1 (docsis ORO)
 TEST_F(VendorOptsTest, docsisVendorORO) {
-
-    NakedDhcpv6Srv srv(0);
-
     // Let's get a traffic capture from DOCSIS3.0 modem
     Pkt6Ptr sol = PktCaptures::captureDocsisRelayedSolicit();
     ASSERT_NO_THROW(sol->unpack());
@@ -1486,16 +1483,14 @@ TEST_F(VendorOptsTest, vendorOptionsDocsisDefinitions) {
     ConstElementPtr json_valid;
     ASSERT_NO_THROW(json_valid = parseDHCP6(config_valid));
 
-    NakedDhcpv6Srv srv(0);
-
     // This should fail (missing option definition)
-    EXPECT_NO_THROW(x = configureDhcp6Server(srv, json_bogus));
+    EXPECT_NO_THROW(x = configureDhcp6Server(*srv_, json_bogus));
     ASSERT_TRUE(x);
     comment_ = isc::config::parseAnswer(rcode_, x);
     ASSERT_EQ(1, rcode_);
 
     // This should work (option definition present)
-    EXPECT_NO_THROW(x = configureDhcp6Server(srv, json_valid));
+    EXPECT_NO_THROW(x = configureDhcp6Server(*srv_, json_valid));
     ASSERT_TRUE(x);
     comment_ = isc::config::parseAnswer(rcode_, x);
     ASSERT_EQ(0, rcode_);
@@ -1504,22 +1499,20 @@ TEST_F(VendorOptsTest, vendorOptionsDocsisDefinitions) {
 // This test checks that the server will handle a Solicit with the Vendor Class
 // having a length of 4 (enterprise-id only).
 TEST_F(VendorOptsTest, cableLabsShortVendorClass) {
-    NakedDhcpv6Srv srv(0);
-
     // Create a simple Solicit with the 4-byte long vendor class option.
     Pkt6Ptr sol = PktCaptures::captureCableLabsShortVendorClass();
 
     // Simulate that we have received that traffic
-    srv.fakeReceive(sol);
+    srv_->fakeReceive(sol);
 
     // Server will now process to run its normal loop, but instead of calling
     // IfaceMgr::receive6(), it will read all packets from the list set by
     // fakeReceive()
-    srv.run();
+    srv_->run();
 
     // Get Advertise...
-    ASSERT_FALSE(srv.fake_sent_.empty());
-    Pkt6Ptr adv = srv.fake_sent_.front();
+    ASSERT_FALSE(srv_->fake_sent_.empty());
+    Pkt6Ptr adv = srv_->fake_sent_.front();
     ASSERT_TRUE(adv);
 
     // This is sent back to client, so port is 546
@@ -1530,7 +1523,7 @@ TEST_F(VendorOptsTest, cableLabsShortVendorClass) {
 // only. Once specific client (Genexis) sends only vendor-class info and
 // expects the server to include vendor opts in the response.
 TEST_F(VendorOptsTest, vendorOpsInResponseOnly) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
 
     // The config defines custom vendor (17) suboption 2 that conveys
     // a TFTP URL.  The client doesn't send vendor class (16) or
@@ -1623,7 +1616,7 @@ TEST_F(VendorOptsTest, vendorOpsInResponseOnly) {
 // Checks if it's possible to have 2 vendor-class options and 2 vendor-opts
 // options with different vendor IDs.
 TEST_F(VendorOptsTest, twoVendors) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
 
     // The config defines 2 vendors with for each a vendor-class option,
     // a vendor-opts option and a custom vendor suboption, all having
@@ -1781,7 +1774,7 @@ TEST_F(VendorOptsTest, twoVendors) {
 // different vendor IDs selected using the 3 ways (vendor-opts in
 // response, vendor-opts in query and vendor-class in query).
 TEST_F(VendorOptsTest, threeVendors) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
 
     // The config defines 2 vendors with for each a vendor-opts option
     // and a custom vendor suboption, and a suboption for DOCSIS.

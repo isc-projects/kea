@@ -222,12 +222,11 @@ public:
     /// be enabled or disabled.
     void configure(const std::string& config, Dhcp4Client& client,
                    const LeaseAffinity lease_affinity) {
-        NakedDhcpv4Srv& server = *client.getServer();
-        ASSERT_NO_FATAL_FAILURE(Dhcpv4SrvTest::configure(config, server, true,
+        ASSERT_NO_FATAL_FAILURE(Dhcpv4SrvTest::configure(config, *client.getServer(), true,
                                                          true, true, false,
                                                          lease_affinity));
         if (d2_mgr_.ddnsEnabled()) {
-            ASSERT_NO_THROW(server.startD2());
+            ASSERT_NO_THROW(client.getServer()->startD2());
         }
     }
 
@@ -310,7 +309,7 @@ OutOfRangeTest::oorRenewReleaseTest(CfgIndex cfg_idx,
     // STAGE ONE:
 
     // Step 1 is to acquire the lease
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     // Configure DHCP server.
     configure(OOR_CONFIGS[REF_CFG], client, lease_affinity);
@@ -536,7 +535,7 @@ TEST_F(OutOfRangeTest, dynamicHostOutOfSubnetNoDelete) {
 // b: Is deleted properly upon release, including DNS removal
 //
 TEST_F(OutOfRangeTest, dynamicHostReservationRemoved) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     std::string hwaddress = "dd:dd:dd:dd:dd:01";
     std::string expected_address = "";
@@ -553,7 +552,7 @@ TEST_F(OutOfRangeTest, dynamicHostReservationRemoved) {
 // b: Is expired properly upon release, including no DNS removal
 //
 TEST_F(OutOfRangeTest, dynamicHostReservationRemovedNoDelete) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     std::string hwaddress = "dd:dd:dd:dd:dd:01";
     std::string expected_address = "";
@@ -570,7 +569,7 @@ TEST_F(OutOfRangeTest, dynamicHostReservationRemovedNoDelete) {
 // b: Is deleted properly upon release, including DNS removal
 //
 TEST_F(OutOfRangeTest, dynamicHostOutOfSubnetReservationRemoved) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     std::string hwaddress = "dd:dd:dd:dd:dd:01";
     std::string expected_address = "";
@@ -587,7 +586,7 @@ TEST_F(OutOfRangeTest, dynamicHostOutOfSubnetReservationRemoved) {
 // b: Is expired properly upon release, including no DNS removal
 //
 TEST_F(OutOfRangeTest, dynamicHostOutOfSubnetReservationRemovedNoDelete) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     std::string hwaddress = "dd:dd:dd:dd:dd:01";
     std::string expected_address = "";

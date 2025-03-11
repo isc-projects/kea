@@ -349,9 +349,6 @@ public:
     // Reference to D2ClientMgr singleton
     D2ClientMgr& d2_mgr_;
 
-    /// @brief Pointer to the DHCP server instance.
-    boost::shared_ptr<NakedDhcpv4Srv> srv_;
-
     /// @brief Interface Manager's fake configuration control.
     IfaceMgrTestConfig iface_mgr_test_config_;
 
@@ -378,7 +375,6 @@ public:
         : Dhcpv4SrvTest(),
           d2_mgr_(CfgMgr::instance().getD2ClientMgr()),
           iface_mgr_test_config_(true) {
-        srv_ = boost::make_shared<NakedDhcpv4Srv>(0);
         IfaceMgr::instance().openSockets4();
         // Config DDNS to be enabled, all controls off
         enableD2();
@@ -1801,7 +1797,7 @@ TEST_F(NameDhcpv4SrvTest, processRequestReleaseUpdatesDisabled) {
 // This test verifies that the server sends the FQDN option to the client
 // with the reserved hostname.
 TEST_F(NameDhcpv4SrvTest, fqdnReservation) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Use HW address that matches the reservation entry in the configuration.
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
     // Configure DHCP server.
@@ -1916,7 +1912,7 @@ TEST_F(NameDhcpv4SrvTest, fqdnReservation) {
 // This test verifies that the server sends the Hostname option to the client
 // with the reserved hostname.
 TEST_F(NameDhcpv4SrvTest, hostnameReservation) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Use HW address that matches the reservation entry in the configuration.
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
     // Configure DHCP server.
@@ -2028,7 +2024,7 @@ TEST_F(NameDhcpv4SrvTest, hostnameReservation) {
 // with hostname reservation and which included hostname option code in the
 // Parameter Request List.
 TEST_F(NameDhcpv4SrvTest, hostnameReservationPRL) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Use HW address that matches the reservation entry in the configuration.
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
     // Configure DHCP server.
@@ -2068,7 +2064,7 @@ TEST_F(NameDhcpv4SrvTest, hostnameReservationPRL) {
 // This test verifies that the server sends the Hostname option to the client
 // with partial hostname reservation and with the global ddns-qualifying-suffix set.
 TEST_F(NameDhcpv4SrvTest, hostnameReservationNoDNSQualifyingSuffix) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Use HW address that matches the reservation entry in the configuration.
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
     // Configure DHCP server.
@@ -2110,7 +2106,7 @@ TEST_F(NameDhcpv4SrvTest, hostnameReservationNoDNSQualifyingSuffix) {
 // verifies that the lease is only in the database following a DHCPREQUEST and
 // that the lease contains the generated FQDN.
 TEST_F(NameDhcpv4SrvTest, emptyFqdn) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     isc::asiolink::IOAddress expected_address("10.0.0.10");
     std::string expected_fqdn("myhost-10-0-0-10.fake-suffix.isc.org.");
 
@@ -2220,7 +2216,7 @@ TEST_F(NameDhcpv4SrvTest, replaceClientNameModeTest) {
 // Verifies that default hostname-char-set sanitizes Hostname option
 // values received from clients.
 TEST_F(NameDhcpv4SrvTest, sanitizeHostDefault) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     // Configure DHCP server.
     configure(CONFIGS[2], *client.getServer());
@@ -2287,7 +2283,7 @@ TEST_F(NameDhcpv4SrvTest, sanitizeHostDefault) {
 // Verifies that setting hostname-char-set sanitizes Hostname option
 // values received from clients.
 TEST_F(NameDhcpv4SrvTest, sanitizeHost) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     // Configure DHCP server.
     configure(CONFIGS[6], *client.getServer());
@@ -2355,7 +2351,7 @@ TEST_F(NameDhcpv4SrvTest, sanitizeHost) {
 // Verifies that setting global hostname-char-set sanitizes Hostname option
 // values received from clients.
 TEST_F(NameDhcpv4SrvTest, sanitizeHostGlobal) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     // Configure DHCP server.
     configure(CONFIGS[7], *client.getServer());
@@ -2417,7 +2413,7 @@ TEST_F(NameDhcpv4SrvTest, sanitizeHostGlobal) {
 // Verifies that setting hostname-char-set sanitizes FQDN option
 // values received from clients.
 TEST_F(NameDhcpv4SrvTest, sanitizeFqdn) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     // Configure DHCP server.
     configure(CONFIGS[6], *client.getServer());
@@ -2486,7 +2482,7 @@ TEST_F(NameDhcpv4SrvTest, sanitizeFqdn) {
 // Verifies that setting global hostname-char-set sanitizes FQDN option
 // values received from clients.
 TEST_F(NameDhcpv4SrvTest, sanitizeFqdnGlobal) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     // Configure DHCP server.
     configure(CONFIGS[7], *client.getServer());
@@ -2561,7 +2557,7 @@ TEST_F(NameDhcpv4SrvTest, sanitizeFqdnGlobal) {
 // Specifically that D2 can be enabled with sending updates
 // disabled globally, and enabled at the subnet level.
 TEST_F(NameDhcpv4SrvTest, ddnsScopeTest) {
-    Dhcp4Client client1(Dhcp4Client::SELECTING);
+    Dhcp4Client client1(srv_, Dhcp4Client::SELECTING);
     client1.setIfaceName("eth0");
     client1.setIfaceIndex(ETH0_INDEX);
 
@@ -2591,7 +2587,7 @@ TEST_F(NameDhcpv4SrvTest, ddnsScopeTest) {
     ASSERT_EQ(0, CfgMgr::instance().getD2ClientMgr().getQueueSize());
 
     // Now let's try with a client on subnet 2.
-    Dhcp4Client client2(Dhcp4Client::SELECTING);
+    Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
     client2.setIfaceName("eth1");
     client2.setIfaceIndex(ETH1_INDEX);
 
@@ -2844,7 +2840,7 @@ TEST_F(NameDhcpv4SrvTest, ddnsSharedNetworkTest) {
 // Verifies the basic behavior for a DORA cycle when offer-lifetime is greater
 // than zero.
 TEST_F(NameDhcpv4SrvTest, withOfferLifetime) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Use HW address that matches the reservation entry in the configuration.
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
     // Configure DHCP server.

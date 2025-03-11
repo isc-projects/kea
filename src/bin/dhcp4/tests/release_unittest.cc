@@ -129,7 +129,7 @@ ReleaseTest::acquireAndRelease(const std::string& hw_address_1,
                                ExpectedResult expected_result,
                                const LeaseAffinity lease_affinity) {
     CfgMgr::instance().clear();
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Configure DHCP server.
     configure(RELEASE_CONFIGS[0], *client.getServer(), true, true, true, false, lease_affinity);
     // Explicitly set the client id.
@@ -321,7 +321,7 @@ TEST_F(ReleaseTest, releaseNoDeleteNonMatchingHWAddress) {
 // - Server determines that the client is trying to release a
 //   wrong address and will refuse to release.
 TEST_F(ReleaseTest, releaseNonMatchingIPAddress) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Configure DHCP server.
     configure(RELEASE_CONFIGS[0], *client.getServer());
     // Perform 4-way exchange to obtain a new lease.
@@ -348,7 +348,7 @@ TEST_F(ReleaseTest, releaseNonMatchingIPAddress) {
 // - Server determines that the client is trying to release a
 //   wrong address and will refuse to release.
 TEST_F(ReleaseTest, releaseNoDeleteNonMatchingIPAddress) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Configure DHCP server.
     configure(RELEASE_CONFIGS[0], *client.getServer(), true, true, true, false, LEASE_AFFINITY_ENABLED);
     // Perform 4-way exchange to obtain a new lease.
@@ -371,7 +371,7 @@ TEST_F(ReleaseTest, releaseNoDeleteNonMatchingIPAddress) {
 // This test verifies that an incoming RELEASE for an address within
 // a subnet that has been removed can still be released.
 TEST_F(ReleaseTest, releaseNoSubnet) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Configure DHCP server.
     configure(RELEASE_CONFIGS[0], *client.getServer());
     // Perform 4-way exchange to obtain a new lease.
@@ -394,7 +394,7 @@ TEST_F(ReleaseTest, releaseNoSubnet) {
 // This test verifies that an incoming RELEASE for an address within
 // a subnet that has been removed can still be released.
 TEST_F(ReleaseTest, releaseNoDeleteNoSubnet) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Configure DHCP server.
     configure(RELEASE_CONFIGS[0], *client.getServer(), true, true, true, false, LEASE_AFFINITY_ENABLED);
     // Perform 4-way exchange to obtain a new lease.

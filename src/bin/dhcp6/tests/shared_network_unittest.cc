@@ -1451,11 +1451,11 @@ public:
                          const std::string& exp_addr2) {
 
         // Create client #1. This clients wants to use rapid-commit.
-        Dhcp6Client client1;
+        Dhcp6Client client1(srv_);
         client1.setInterface("eth1");
         client1.useRapidCommit(true);
 
-        Dhcp6Client client2;
+        Dhcp6Client client2(srv_);
         client2.setInterface("eth1");
         client2.useRapidCommit(true);
 
@@ -1536,7 +1536,7 @@ public:
     /// @param ns_address expected name server address.
     void testPrecedence(const std::string& config, const std::string& ns_address) {
         // Create client and set DUID to the one that has a reservation.
-        Dhcp6Client client;
+        Dhcp6Client client(srv_);
         client.setInterface("eth1");
         client.setDUID("00:03:00:01:aa:bb:cc:dd:ee:ff");
         client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
@@ -1574,7 +1574,7 @@ public:
     /// two subnets. Each subnet should contain a prefix pool with 16 prefixes.
     void testDifferentAllocatorsInNetwork(const std::string& config) {
         // Create the base client and server configuration.
-        Dhcp6Client client;
+        Dhcp6Client client(srv_);
         ASSERT_NO_FATAL_FAILURE(configure(config, *client.getServer()));
 
         // Record what prefixes have been allocated.
@@ -1583,7 +1583,7 @@ public:
         // Simulate allocations from different clients.
         for (auto i = 0; i < 32; ++i) {
             // Create a client from the base client.
-            Dhcp6Client next_client(client.getServer());
+            Dhcp6Client next_client(srv_);
             next_client.setInterface("eth1");
             next_client.requestPrefix();
             // Run 4-way exchange.
@@ -1602,7 +1602,7 @@ public:
 
         // Try one more time. This time no leases should be allocated because
         // the pools are exhausted.
-        Dhcp6Client next_client(client.getServer());
+        Dhcp6Client next_client(srv_);
         next_client.setInterface("eth1");
         next_client.requestPrefix();
         ASSERT_NO_THROW(next_client.doSARR());
@@ -1623,7 +1623,7 @@ public:
 // Check user-context parsing
 TEST_F(Dhcpv6SharedNetworkTest, parse) {
     // Create client
-    Dhcp6Client client1;
+    Dhcp6Client client1(srv_);
 
     // Don't use configure from utils
     Parser6Context ctx;
@@ -1631,7 +1631,7 @@ TEST_F(Dhcpv6SharedNetworkTest, parse) {
     ASSERT_NO_THROW(json = parseDHCP6(NETWORKS_CONFIG[0], true));
     ConstElementPtr status;
     disableIfacesReDetect(json);
-    EXPECT_NO_THROW(status = configureDhcp6Server(*client1.getServer(), json));
+    EXPECT_NO_THROW(status = configureDhcp6Server(*srv_, json));
     ASSERT_TRUE(status);
     int rcode;
     ConstElementPtr comment = config::parseAnswer(rcode, status);
@@ -1650,7 +1650,7 @@ TEST_F(Dhcpv6SharedNetworkTest, parse) {
 // Running out of addresses within a subnet in a shared network.
 TEST_F(Dhcpv6SharedNetworkTest, addressPoolInSharedNetworkShortage) {
     // Create client #1.
-    Dhcp6Client client1;
+    Dhcp6Client client1(srv_);
     client1.setInterface("eth1");
 
     // Configure the server with one shared network including two subnets and
@@ -1666,7 +1666,7 @@ TEST_F(Dhcpv6SharedNetworkTest, addressPoolInSharedNetworkShortage) {
 
     // Client #2 The second client will request a lease and should be assigned
     // an address from the second subnet.
-    Dhcp6Client client2(client1.getServer());
+    Dhcp6Client client2(srv_);
     client2.setInterface("eth1");
     ASSERT_NO_THROW(client2.requestAddress(0xabca0));
     testAssigned([&client2] {
@@ -1676,7 +1676,7 @@ TEST_F(Dhcpv6SharedNetworkTest, addressPoolInSharedNetworkShortage) {
 
     // Client #3. It sends Solicit which should result in NoAddrsAvail status
     // code because all addresses available for this link have been assigned.
-    Dhcp6Client client3(client1.getServer());
+    Dhcp6Client client3(srv_);
     client3.setInterface("eth1");
     ASSERT_NO_THROW(client3.requestAddress(0xabca0));
     testAssigned([&client3] {
@@ -1710,7 +1710,7 @@ TEST_F(Dhcpv6SharedNetworkTest, addressPoolInSharedNetworkShortage) {
 TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectedByRelay) {
     // Create client #1. This is a relayed client which is using relay address
     // matching configured shared network.
-    Dhcp6Client client1;
+    Dhcp6Client client1(srv_);
     client1.useRelay(true, IOAddress("3001::1"));
 
     // Configure the server with one shared network and one subnet outside of the
@@ -1726,7 +1726,7 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectedByRelay) {
 
     // Create client #2. This is a relayed client which is using relay
     // address matching subnet outside of the shared network.
-    Dhcp6Client client2(client1.getServer());
+    Dhcp6Client client2(srv_);
     client2.useRelay(true, IOAddress("3001::2"));
     ASSERT_NO_THROW(client2.requestAddress(0xabca0));
     testAssigned([&client2] {
@@ -1738,7 +1738,7 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectedByRelay) {
 // Providing a hint for any address belonging to a shared network.
 TEST_F(Dhcpv6SharedNetworkTest, hintWithinSharedNetwork) {
     // Create client #1.
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setInterface("eth1");
 
     // Configure the server with one shared network including two subnets and
@@ -1784,7 +1784,7 @@ TEST_F(Dhcpv6SharedNetworkTest, hintWithinSharedNetwork) {
 // Shared network is selected based on the client class specified.
 TEST_F(Dhcpv6SharedNetworkTest, subnetInSharedNetworkSelectedByClass) {
     // Create client #1.
-    Dhcp6Client client1;
+    Dhcp6Client client1(srv_);
     client1.setInterface("eth1");
 
     // Configure the server with one shared network including two subnets and
@@ -1816,7 +1816,7 @@ TEST_F(Dhcpv6SharedNetworkTest, subnetInSharedNetworkSelectedByClass) {
     ASSERT_TRUE(hasLeaseForAddress(client1, IOAddress("2001:db8:1::20")));
 
     // Client 2 should be assigned an address from the unrestricted subnet.
-    Dhcp6Client client2(client1.getServer());
+    Dhcp6Client client2(srv_);
     client2.setInterface("eth1");
     ASSERT_NO_THROW(client2.requestAddress(0xabca0));
     testAssigned([&client2] {
@@ -1847,7 +1847,7 @@ TEST_F(Dhcpv6SharedNetworkTest, subnetInSharedNetworkSelectedByClass) {
 TEST_F(Dhcpv6SharedNetworkTest, reservationInSharedNetwork) {
     // Create client #1. Explicitly set client's DUID to the one that has a
     // reservation in the second subnet within shared network.
-    Dhcp6Client client1;
+    Dhcp6Client client1(srv_);
     client1.setInterface("eth1");
     client1.setDUID("00:03:00:01:11:22:33:44:55:66");
 
@@ -1862,8 +1862,11 @@ TEST_F(Dhcpv6SharedNetworkTest, reservationInSharedNetwork) {
     });
     ASSERT_TRUE(hasLeaseForAddress(client1, IOAddress("2001:db8:2::28")));
 
+    std::string memfile = "type=memfile universe=6 persist=false";
+    isc::dhcp::LeaseMgrFactory::create(memfile);
+
     // Create client #2.
-    Dhcp6Client client2;
+    Dhcp6Client client2(srv_);
     client2.setInterface("eth1");
     client2.setDUID("00:03:00:01:aa:bb:cc:dd:ee:ff");
 
@@ -1913,7 +1916,7 @@ TEST_F(Dhcpv6SharedNetworkTest, reservationInSharedNetwork) {
 TEST_F(Dhcpv6SharedNetworkTest, reservationAccessRestrictedByClass) {
     // Create client #1. Explicitly set client's DUID to the one that has a
     // reservation in the firstsubnet within shared network.
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setInterface("eth1");
     client.setDUID("00:03:00:01:aa:bb:cc:dd:ee:ff");
 
@@ -1944,7 +1947,7 @@ TEST_F(Dhcpv6SharedNetworkTest, reservationAccessRestrictedByClass) {
 // Subnet in which the client is renewing an address is restricted by classification.
 TEST_F(Dhcpv6SharedNetworkTest, renewalRestrictedByClass) {
     // Create client.
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setInterface("eth1");
 
     // Create server configuration with a shared network including two subnets. Access to
@@ -1979,7 +1982,7 @@ TEST_F(Dhcpv6SharedNetworkTest, renewalRestrictedByClass) {
 // subnets level.
 TEST_F(Dhcpv6SharedNetworkTest, optionsDerivation) {
     // Client #1.
-    Dhcp6Client client1;
+    Dhcp6Client client1(srv_);
     client1.setInterface("eth1");
 
     ASSERT_NO_FATAL_FAILURE(configure(NETWORKS_CONFIG[7], *client1.getServer()));
@@ -2014,7 +2017,7 @@ TEST_F(Dhcpv6SharedNetworkTest, optionsDerivation) {
     ASSERT_TRUE(client1.hasOptionWithAddress(D6O_SNTP_SERVERS, "4004::22"));
 
     // Client #2.
-    Dhcp6Client client2(client1.getServer());
+    Dhcp6Client client2(srv_);
     client2.setInterface("eth1");
 
     // Request an address from the second subnet within the shared network.
@@ -2041,7 +2044,7 @@ TEST_F(Dhcpv6SharedNetworkTest, optionsDerivation) {
     ASSERT_TRUE(client2.hasOptionWithAddress(D6O_NISP_SERVERS, "3002::34"));
 
     // Client #3.
-    Dhcp6Client client3(client1.getServer());
+    Dhcp6Client client3(srv_);
     client3.setInterface("eth0");
 
     // Request an address from the subnet outside of the shared network.
@@ -2071,7 +2074,7 @@ TEST_F(Dhcpv6SharedNetworkTest, optionsDerivation) {
 // same shared network.
 TEST_F(Dhcpv6SharedNetworkTest, optionsFromSelectedSubnet) {
     // Create a client.
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setInterface("eth1");
 
     // Create configuration with one shared network including three subnets with
@@ -2133,7 +2136,7 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectionByInterface) {
     // Create client #1. The server receives requests from this client
     // via interface eth1 and should assign shared network "frog" for
     // this client.
-    Dhcp6Client client1;
+    Dhcp6Client client1(srv_);
     client1.setInterface("eth1");
     client1.requestAddress(0xabca);
 
@@ -2152,7 +2155,7 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectionByInterface) {
     }
 
     // Client #2.
-    Dhcp6Client client2;
+    Dhcp6Client client2(srv_);
     client2.setInterface("eth0");
     client2.requestAddress(0xabca);
 
@@ -2170,7 +2173,7 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectionByInterface) {
 // Different shared network is selected for different relay address.
 TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectionByRelay) {
     // Create relayed client #1.
-    Dhcp6Client client1;
+    Dhcp6Client client1(srv_);
     client1.useRelay(true, IOAddress("3000::1"));
     client1.requestAddress(0xabcd);
 
@@ -2189,7 +2192,7 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectionByRelay) {
     }
 
     // Create relayed client #2.
-    Dhcp6Client client2;
+    Dhcp6Client client2(srv_);
     client2.useRelay(true, IOAddress("3000::2"));
     client2.requestAddress(0xabca);
 
@@ -2207,7 +2210,7 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectionByRelay) {
 // Host reservations include hostname and client class.
 TEST_F(Dhcpv6SharedNetworkTest, variousFieldsInReservation) {
     // Create client #1.
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setInterface("eth1");
     client.setDUID("00:03:00:01:11:22:33:44:55:66");
     ASSERT_NO_THROW(client.requestAddress(0xabcd));
@@ -2252,7 +2255,7 @@ TEST_F(Dhcpv6SharedNetworkTest, variousFieldsInReservation) {
 // Shared network is selected based on the client class specified.
 TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectedByClass) {
     // Create client #1.
-    Dhcp6Client client1;
+    Dhcp6Client client1(srv_);
     client1.setInterface("eth1");
     client1.requestAddress(0xabcd);
 
@@ -2273,7 +2276,7 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectedByClass) {
                                    LeaseOnServer::MUST_NOT_EXIST));
 
     // Create another client which will belong to a different class.
-    Dhcp6Client client2;
+    Dhcp6Client client2(srv_);
     client2.setInterface("eth1");
     client2.requestAddress(0xabcd);
 
@@ -2293,7 +2296,7 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectedByClass) {
 // different subnets.
 TEST_F(Dhcpv6SharedNetworkTest, assignmentsFromDifferentSubnets) {
     // Create client.
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setInterface("eth1");
     client.requestAddress(0xabcd);
     client.requestAddress(0x1234);
@@ -2330,7 +2333,7 @@ TEST_F(Dhcpv6SharedNetworkTest, assignmentsFromDifferentSubnets) {
 // reserved for the client.
 TEST_F(Dhcpv6SharedNetworkTest, reservedAddressAndPrefix) {
     // Create client.
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setInterface("eth1");
     client.setDUID("00:03:00:01:11:22:33:44:55:66");
 
@@ -2385,7 +2388,7 @@ TEST_F(Dhcpv6SharedNetworkTest, reservedAddressAndPrefix) {
 // Relay address is specified for each subnet within shared network.
 TEST_F(Dhcpv6SharedNetworkTest, relaySpecifiedForEachSubnet) {
     // Create client.
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.useRelay(true, IOAddress("3001::1"));
 
     // Client will request two addresses.
@@ -2414,7 +2417,7 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectedByInterfaceId) {
     // Create client #1. This is a relayed client for which interface id
     // has been specified and this interface id is matching the one specified
     // for the shared network.
-    Dhcp6Client client1;
+    Dhcp6Client client1(srv_);
     client1.useRelay(true, IOAddress("3001::1"));
     client1.useInterfaceId("vlan10");
 
@@ -2431,7 +2434,7 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectedByInterfaceId) {
 
     // Create client #2. This is a relayed client which is using interface id
     // matching a subnet outside of the shared network.
-    Dhcp6Client client2(client1.getServer());
+    Dhcp6Client client2(srv_);
     client2.useRelay(true, IOAddress("3001::2"));
     client2.useInterfaceId("vlan1000");
     ASSERT_NO_THROW(client2.requestAddress(0xabca0));
@@ -2447,7 +2450,7 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectedByInterfaceIdInSubnet) {
     // Create client #1. This is a relayed client for which interface id
     // has been specified and this interface id is matching the one specified
     // for the shared network.
-    Dhcp6Client client1;
+    Dhcp6Client client1(srv_);
     client1.useRelay(true, IOAddress("3001::1"));
     client1.useInterfaceId("vlan10");
 
@@ -2464,7 +2467,7 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkSelectedByInterfaceIdInSubnet) {
 
     // Create client #2. This is a relayed client which is using interface id
     // matching a subnet outside of the shared network.
-    Dhcp6Client client2(client1.getServer());
+    Dhcp6Client client2(srv_);
     client2.useRelay(true, IOAddress("3001::2"));
     client2.useInterfaceId("vlan1000");
     ASSERT_NO_THROW(client2.requestAddress(0xabca0));
@@ -2495,7 +2498,7 @@ TEST_F(Dhcpv6SharedNetworkTest, sharedNetworkRapidCommit3) {
 // Pool is selected based on the client class specified.
 TEST_F(Dhcpv6SharedNetworkTest, poolInSharedNetworkSelectedByClass) {
     // Create client #1.
-    Dhcp6Client client1;
+    Dhcp6Client client1(srv_);
     client1.setInterface("eth1");
 
     // Configure the server with one shared network including one subnet and
@@ -2528,7 +2531,7 @@ TEST_F(Dhcpv6SharedNetworkTest, poolInSharedNetworkSelectedByClass) {
     ASSERT_TRUE(hasLeaseForAddress(client1, IOAddress("2001:db8:1::20")));
 
     // Client 2 should be assigned an address from the unrestricted pool.
-    Dhcp6Client client2(client1.getServer());
+    Dhcp6Client client2(srv_);
     client2.setInterface("eth1");
     ASSERT_NO_THROW(client2.requestAddress(0xabca0));
     testAssigned([&client2] {
@@ -2559,7 +2562,7 @@ TEST_F(Dhcpv6SharedNetworkTest, poolInSharedNetworkSelectedByClass) {
 // Pool is selected based on the client class specified using a plain subnet.
 TEST_F(Dhcpv6SharedNetworkTest, poolInSubnetSelectedByClass) {
     // Create client #1.
-    Dhcp6Client client1;
+    Dhcp6Client client1(srv_);
     client1.setInterface("eth1");
 
     // Configure the server with one plain subnet including two pools.
@@ -2591,7 +2594,7 @@ TEST_F(Dhcpv6SharedNetworkTest, poolInSubnetSelectedByClass) {
     ASSERT_TRUE(hasLeaseForAddress(client1, IOAddress("2001:db8:1::20")));
 
     // Client 2 should be assigned an address from the unrestricted pool.
-    Dhcp6Client client2(client1.getServer());
+    Dhcp6Client client2(srv_);
     client2.setInterface("eth1");
     ASSERT_NO_THROW(client2.requestAddress(0xabca0));
     testAssigned([&client2] {

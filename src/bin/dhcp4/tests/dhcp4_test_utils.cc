@@ -631,7 +631,6 @@ Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
     IfaceMgr::instance().openSockets4();
 
     // Create an instance of the tested class.
-    boost::scoped_ptr<NakedDhcpv4Srv> srv(new NakedDhcpv4Srv(0));
 
     // Initialize the source HW address.
     vector<uint8_t> mac(6);
@@ -683,14 +682,14 @@ Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
     received->setIface("eth0");
     received->setIndex(ETH0_INDEX);
     if (msg_type == DHCPDISCOVER) {
-        ASSERT_NO_THROW(rsp = srv->processDiscover(received));
+        ASSERT_NO_THROW(rsp = srv_->processDiscover(received));
 
         // Should return OFFER
         ASSERT_TRUE(rsp);
         EXPECT_EQ(DHCPOFFER, rsp->getType());
 
     } else {
-        ASSERT_NO_THROW(rsp = srv->processRequest(received));
+        ASSERT_NO_THROW(rsp = srv_->processRequest(received));
 
         // Should return ACK
         ASSERT_TRUE(rsp);
@@ -719,14 +718,14 @@ Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
     received->setIndex(ETH0_INDEX);
 
     if (msg_type == DHCPDISCOVER) {
-        ASSERT_NO_THROW(rsp = srv->processDiscover(received));
+        ASSERT_NO_THROW(rsp = srv_->processDiscover(received));
 
         // Should return non-NULL packet.
         ASSERT_TRUE(rsp);
         EXPECT_EQ(DHCPOFFER, rsp->getType());
 
     } else {
-        ASSERT_NO_THROW(rsp = srv->processRequest(received));
+        ASSERT_NO_THROW(rsp = srv_->processRequest(received));
 
         // Should return non-NULL packet.
         ASSERT_TRUE(rsp);
@@ -757,12 +756,12 @@ Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
     received->setIndex(ETH0_INDEX);
 
     if (msg_type == DHCPDISCOVER) {
-        ASSERT_NO_THROW(rsp = srv->processDiscover(received));
+        ASSERT_NO_THROW(rsp = srv_->processDiscover(received));
         // Should return NULL packet.
         ASSERT_FALSE(rsp);
 
     } else {
-        ASSERT_NO_THROW(rsp = srv->processRequest(received));
+        ASSERT_NO_THROW(rsp = srv_->processRequest(received));
         // Should return non-NULL packet.
         ASSERT_TRUE(rsp);
         // We should get the NAK packet with yiaddr set to 0.

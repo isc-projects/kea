@@ -286,7 +286,7 @@ public:
 
 void
 HostOptionsTest::testOverrideRequestedOptions(const bool stateless) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
     client.requestOptions(DHO_DOMAIN_NAME_SERVERS, DHO_LOG_SERVERS,
                           DHO_COOKIE_SERVERS);
@@ -337,7 +337,7 @@ HostOptionsTest::testOverrideRequestedOptions(const bool stateless) {
 
 void
 HostOptionsTest::testOverrideDefaultOptions(const bool stateless) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
 
     client.requestOptions(DHO_LOG_SERVERS, DHO_COOKIE_SERVERS);
@@ -392,7 +392,7 @@ HostOptionsTest::testOverrideDefaultOptions(const bool stateless) {
 
 void
 HostOptionsTest::testHostOnlyOptions(const bool stateless) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
     client.requestOptions(DHO_COOKIE_SERVERS);
 
@@ -439,7 +439,7 @@ HostOptionsTest::testHostOnlyOptions(const bool stateless) {
 
 void
 HostOptionsTest::testOverrideVendorOptions(const bool stateless) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
 
     // Client needs to include V-I Vendor Specific Information option

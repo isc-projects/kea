@@ -500,7 +500,7 @@ public:
 
 void
 SARRTest::directClientPrefixHint() {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     // Configure client to request IA_PD.
     client.requestPrefix();
     configure(CONFIGS[0], *client.getServer());
@@ -565,7 +565,7 @@ TEST_F(SARRTest, directClientPrefixHintMultiThreading) {
 
 void
 SARRTest::directClientPrefixLengthHintRenewal() {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     // Configure client to request IA_PD.
     client.requestPrefix();
     configure(CONFIGS[0], *client.getServer());
@@ -623,7 +623,7 @@ TEST_F(SARRTest, directClientPrefixLengthHintRenewalMultiThreading) {
 
 void
 SARRTest::optionsInheritance() {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     // Request a single address and single prefix.
     ASSERT_NO_THROW(client.requestPrefix(0xabac, 64, IOAddress("2001:db8:4::")));
     ASSERT_NO_THROW(client.requestAddress(0xabca, IOAddress("3000::45")));
@@ -692,7 +692,7 @@ TEST_F(SARRTest, optionsInheritanceMultiThreading) {
 
 void
 SARRTest::directClientExcludedPrefixPool(bool request_pdx) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     // Configure client to request IA_PD.
     client.requestPrefix();
     // Request pd exclude option when wanted.
@@ -759,7 +759,7 @@ TEST_F(SARRTest, directClientExcludedPrefixPoolNoOroMultiThreading) {
 
 void
 SARRTest::directClientExcludedPrefixHost(bool request_pdx) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     // Set DUID matching the one used to create host reservations.
     client.setDUID("01:02:03:05");
     // Configure client to request IA_PD.
@@ -828,7 +828,7 @@ TEST_F(SARRTest, directClientExcludedPrefixHostNoOroMultiThreading) {
 
 void
 SARRTest::rapidCommitEnable() {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     // Configure client to request IA_NA
     client.requestAddress();
     configure(CONFIGS[1], *client.getServer());
@@ -875,7 +875,7 @@ TEST_F(SARRTest, rapidCommitEnableMultiThreading) {
 
 void
 SARRTest::rapidCommitNoOption() {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     // Configure client to request IA_NA
     client.requestAddress();
     configure(CONFIGS[1], *client.getServer());
@@ -914,7 +914,7 @@ TEST_F(SARRTest, rapidCommitNoOptionMultiThreading) {
 
 void
 SARRTest::rapidCommitDisable() {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     // The subnet assigned to eth1 has Rapid Commit disabled.
     client.setInterface("eth1");
     // Configure client to request IA_NA
@@ -957,10 +957,16 @@ TEST_F(SARRTest, rapidCommitDisableMultiThreading) {
 
 void
 SARRTest::sarrStats() {
+    StatsMgr::instance().setValue("pkt6-received", int64_t(0));
+    StatsMgr::instance().setValue("pkt6-solicit-received", int64_t(0));
+    StatsMgr::instance().setValue("pkt6-advertise-sent", int64_t(0));
+    StatsMgr::instance().setValue("pkt6-request-received", int64_t(0));
+    StatsMgr::instance().setValue("pkt6-reply-sent", int64_t(0));
+    StatsMgr::instance().setValue("pkt6-sent", int64_t(0));
 
     // Let's use one of the existing configurations and tell the client to
     // ask for an address.
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     configure(CONFIGS[1], *client.getServer());
     client.setInterface("eth1");
     client.requestAddress();
@@ -1039,7 +1045,7 @@ SARRTest::pkt6ReceiveDropStat1() {
 
     // Let's use one of the existing configurations and tell the client to
     // ask for an address.
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     configure(CONFIGS[1], *client.getServer());
     client.setInterface("eth1");
     client.requestAddress();
@@ -1073,7 +1079,7 @@ SARRTest::pkt6ReceiveDropStat2() {
 
     // Let's use one of the existing configurations and tell the client to
     // ask for an address.
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     configure(CONFIGS[1], *client.getServer());
     client.setInterface("eth1");
     client.requestAddress();
@@ -1106,7 +1112,7 @@ SARRTest::pkt6ReceiveDropStat3() {
 
     // Let's use one of the existing configurations and tell the client to
     // ask for an address.
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     configure(CONFIGS[1], *client.getServer());
     client.setInterface("eth1");
     client.requestAddress();
@@ -1141,7 +1147,7 @@ void
 SARRTest::reservationModeOutOfPool() {
     // Create the first client for which we have a reservation out of the
     // dynamic pool.
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     configure(CONFIGS[4], *client.getServer());
     client.setDUID("aa:bb:cc:dd:ee:ff");
     client.setInterface("eth0");
@@ -1186,7 +1192,7 @@ void
 SARRTest::reservationIgnoredInOutOfPoolMode() {
     // Create the first client for which we have a reservation out of the
     // dynamic pool.
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     configure(CONFIGS[4], *client.getServer());
     client.setDUID("12:34:56:78:9A:BC");
     client.setInterface("eth0");
@@ -1215,7 +1221,7 @@ TEST_F(SARRTest, reservationIgnoredInOutOfPoolModeMultiThreading) {
 void
 SARRTest::randomAddressAllocation() {
     // Create the base client and server configuration.
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     configure(CONFIGS[5], *client.getServer());
 
     // Record what addresses have been allocated and in what order.
@@ -1226,7 +1232,7 @@ SARRTest::randomAddressAllocation() {
     // Simulate allocations from different clients.
     for (auto i = 0; i < 30; ++i) {
         // Create a client from the base client.
-        Dhcp6Client next_client(client.getServer());
+        Dhcp6Client next_client(srv_);
         next_client.requestAddress();
         next_client.requestPrefix();
         // Run 4-way exchange.
@@ -1285,7 +1291,7 @@ TEST_F(SARRTest, randomAddressAllocationMultiThreading) {
 void
 SARRTest::randomPrefixAllocation() {
     // Create the base client and server configuration.
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     configure(CONFIGS[6], *client.getServer());
 
     // Record what addresses have been allocated and in what order.
@@ -1296,7 +1302,7 @@ SARRTest::randomPrefixAllocation() {
     // Simulate allocations from different clients.
     for (auto i = 0; i < 30; ++i) {
         // Create a client from the base client.
-        Dhcp6Client next_client(client.getServer());
+        Dhcp6Client next_client(srv_);
         next_client.requestAddress();
         next_client.requestPrefix();
         // Run 4-way exchange.
@@ -1354,8 +1360,14 @@ TEST_F(SARRTest, randomPrefixAllocationMultiThreading) {
 
 void
 SARRTest::leaseCaching() {
+    StatsMgr::instance().setValue("v6-ia-na-lease-reuses", int64_t(0));
+    StatsMgr::instance().setValue("subnet[1].v6-ia-na-lease-reuses", int64_t(0));
+    StatsMgr::instance().setValue("subnet[2].v6-ia-na-lease-reuses", int64_t(0));
+    StatsMgr::instance().setValue("v6-ia-pd-lease-reuses", int64_t(0));
+    StatsMgr::instance().setValue("subnet[1].v6-ia-pd-lease-reuses", int64_t(0));
+    StatsMgr::instance().setValue("subnet[2].v6-ia-pd-lease-reuses", int64_t(0));
     // Configure a DHCP client.
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
 
     // Configure a DHCP server.
     configure(CONFIGS[7], *client.getServer());

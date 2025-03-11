@@ -534,7 +534,7 @@ public:
         AllocEngine::ClientContext6 ctx;
         bool drop = !srv.earlyGHRLookup(query, ctx);
         ASSERT_FALSE(drop);
-        ctx.subnet_ = srv_->selectSubnet(query, drop);
+        ctx.subnet_ = srv.selectSubnet(query, drop);
         ASSERT_FALSE(drop);
         srv.initContext(ctx, drop);
         ASSERT_FALSE(drop);
@@ -547,16 +547,13 @@ public:
 
 // Checks if DOCSIS client packets are classified properly
 TEST_F(ClassifyTest, docsisClientClassification) {
-
-    NakedDhcpv6Srv srv(0);
-
     // Let's create a relayed SOLICIT. This particular relayed SOLICIT has
     // vendor-class set to docsis3.0
     Pkt6Ptr sol1;
     ASSERT_NO_THROW(sol1 = PktCaptures::captureDocsisRelayedSolicit());
     ASSERT_NO_THROW(sol1->unpack());
 
-    srv.classifyPacket(sol1);
+    srv_->classifyPacket(sol1);
 
     // It should belong to docsis3.0 class. It should not belong to eRouter1.0
     EXPECT_TRUE(sol1->inClass("VENDOR_CLASS_docsis3.0"));
@@ -568,19 +565,16 @@ TEST_F(ClassifyTest, docsisClientClassification) {
     ASSERT_NO_THROW(sol2 = PktCaptures::captureeRouterRelayedSolicit());
     ASSERT_NO_THROW(sol2->unpack());
 
-    srv.classifyPacket(sol2);
+    srv_->classifyPacket(sol2);
 
-    EXPECT_TRUE(sol2->inClass(srv.VENDOR_CLASS_PREFIX + "eRouter1.0"));
-    EXPECT_FALSE(sol2->inClass(srv.VENDOR_CLASS_PREFIX + "docsis3.0"));
+    EXPECT_TRUE(sol2->inClass(srv_->VENDOR_CLASS_PREFIX + "eRouter1.0"));
+    EXPECT_FALSE(sol2->inClass(srv_->VENDOR_CLASS_PREFIX + "docsis3.0"));
 }
 
 // Checks if client packets are classified properly using match expressions.
 // Note option names and definitions are used.
 TEST_F(ClassifyTest, matchClassification) {
     IfaceMgrTestConfig test_config(true);
-
-    NakedDhcpv6Srv srv(0);
-
     // The router class matches incoming packets with foo in a host-name
     // option (code 1234) and sets an ipv6-forwarding option in the response.
     std::string config = "{ \"interfaces-config\": {"
@@ -634,9 +628,9 @@ TEST_F(ClassifyTest, matchClassification) {
     query3->addOption(hostname);
 
     // Classify packets
-    srv.classifyPacket(query1);
-    srv.classifyPacket(query2);
-    srv.classifyPacket(query3);
+    srv_->classifyPacket(query1);
+    srv_->classifyPacket(query2);
+    srv_->classifyPacket(query3);
 
     EXPECT_EQ(query1->classes_.size(), 6);
     EXPECT_EQ(query2->classes_.size(), 3);
@@ -669,29 +663,29 @@ TEST_F(ClassifyTest, matchClassification) {
 
     // Process queries
     AllocEngine::ClientContext6 ctx1;
-    bool drop = !srv.earlyGHRLookup(query1, ctx1);
+    bool drop = !srv_->earlyGHRLookup(query1, ctx1);
     ASSERT_FALSE(drop);
     ctx1.subnet_ = srv_->selectSubnet(query1, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(ctx1, drop);
+    srv_->initContext(ctx1, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response1 = srv.processSolicit(ctx1);
+    Pkt6Ptr response1 = srv_->processSolicit(ctx1);
     AllocEngine::ClientContext6 ctx2;
-    drop = !srv.earlyGHRLookup(query2, ctx2);
+    drop = !srv_->earlyGHRLookup(query2, ctx2);
     ASSERT_FALSE(drop);
     ctx2.subnet_ = srv_->selectSubnet(query2, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(ctx2, drop);
+    srv_->initContext(ctx2, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response2 = srv.processSolicit(ctx2);
+    Pkt6Ptr response2 = srv_->processSolicit(ctx2);
     AllocEngine::ClientContext6 ctx3;
-    drop = !srv.earlyGHRLookup(query3, ctx3);
+    drop = !srv_->earlyGHRLookup(query3, ctx3);
     ASSERT_FALSE(drop);
     ctx3.subnet_ = srv_->selectSubnet(query3, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(ctx3, drop);
+    srv_->initContext(ctx3, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response3 = srv.processSolicit(ctx3);
+    Pkt6Ptr response3 = srv_->processSolicit(ctx3);
 
     // Classification processing should add an ip-forwarding option
     OptionPtr opt1 = response1->getOption(2345);
@@ -709,9 +703,6 @@ TEST_F(ClassifyTest, matchClassification) {
 // Check that only-in-additional-list classes are not evaluated by classifyPacket
 TEST_F(ClassifyTest, additional) {
     IfaceMgrTestConfig test_config(true);
-
-    NakedDhcpv6Srv srv(0);
-
     // The router class matches incoming packets with foo in a host-name
     // option (code 1234) and sets an ipv6-forwarding option in the response.
     std::string config = "{ \"interfaces-config\": {"
@@ -776,9 +767,9 @@ TEST_F(ClassifyTest, additional) {
     query3->addOption(hostname);
 
     // Classify packets
-    srv.classifyPacket(query1);
-    srv.classifyPacket(query2);
-    srv.classifyPacket(query3);
+    srv_->classifyPacket(query1);
+    srv_->classifyPacket(query2);
+    srv_->classifyPacket(query3);
 
     // No packet is in the router class
     EXPECT_FALSE(query1->inClass("router"));
@@ -787,29 +778,29 @@ TEST_F(ClassifyTest, additional) {
 
     // Process queries
     AllocEngine::ClientContext6 ctx1;
-    bool drop = !srv.earlyGHRLookup(query1, ctx1);
+    bool drop = !srv_->earlyGHRLookup(query1, ctx1);
     ASSERT_FALSE(drop);
     ctx1.subnet_ = srv_->selectSubnet(query1, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(ctx1, drop);
+    srv_->initContext(ctx1, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response1 = srv.processSolicit(ctx1);
+    Pkt6Ptr response1 = srv_->processSolicit(ctx1);
     AllocEngine::ClientContext6 ctx2;
-    drop = !srv.earlyGHRLookup(query2, ctx2);
+    drop = !srv_->earlyGHRLookup(query2, ctx2);
     ASSERT_FALSE(drop);
     ctx2.subnet_ = srv_->selectSubnet(query2, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(ctx2, drop);
+    srv_->initContext(ctx2, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response2 = srv.processSolicit(ctx2);
+    Pkt6Ptr response2 = srv_->processSolicit(ctx2);
     AllocEngine::ClientContext6 ctx3;
-    drop = !srv.earlyGHRLookup(query3, ctx3);
+    drop = !srv_->earlyGHRLookup(query3, ctx3);
     ASSERT_FALSE(drop);
     ctx3.subnet_ = srv_->selectSubnet(query3, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(ctx3, drop);
+    srv_->initContext(ctx3, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response3 = srv.processSolicit(ctx3);
+    Pkt6Ptr response3 = srv_->processSolicit(ctx3);
 
     // Classification processing should do nothing
     OptionPtr opt1 = response1->getOption(2345);
@@ -823,9 +814,6 @@ TEST_F(ClassifyTest, additional) {
 // Checks that when only-in-additional-list classes are still evaluated
 TEST_F(ClassifyTest, additionalClassification) {
     IfaceMgrTestConfig test_config(true);
-
-    NakedDhcpv6Srv srv(0);
-
     // The router class matches incoming packets with foo in a host-name
     // option (code 1234) and sets an ipv6-forwarding option in the response.
     std::string config = "{ \"interfaces-config\": {"
@@ -891,9 +879,9 @@ TEST_F(ClassifyTest, additionalClassification) {
     query3->addOption(hostname);
 
     // Classify packets
-    srv.classifyPacket(query1);
-    srv.classifyPacket(query2);
-    srv.classifyPacket(query3);
+    srv_->classifyPacket(query1);
+    srv_->classifyPacket(query2);
+    srv_->classifyPacket(query3);
 
     // No packet is in the router class yet
     EXPECT_FALSE(query1->inClass("router"));
@@ -902,29 +890,29 @@ TEST_F(ClassifyTest, additionalClassification) {
 
     // Process queries
     AllocEngine::ClientContext6 ctx1;
-    bool drop = !srv.earlyGHRLookup(query1, ctx1);
+    bool drop = !srv_->earlyGHRLookup(query1, ctx1);
     ASSERT_FALSE(drop);
     ctx1.subnet_ = srv_->selectSubnet(query1, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(ctx1, drop);
+    srv_->initContext(ctx1, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response1 = srv.processSolicit(ctx1);
+    Pkt6Ptr response1 = srv_->processSolicit(ctx1);
     AllocEngine::ClientContext6 ctx2;
-    drop = !srv.earlyGHRLookup(query2, ctx2);
+    drop = !srv_->earlyGHRLookup(query2, ctx2);
     ASSERT_FALSE(drop);
     ctx2.subnet_ = srv_->selectSubnet(query2, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(ctx2, drop);
+    srv_->initContext(ctx2, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response2 = srv.processSolicit(ctx2);
+    Pkt6Ptr response2 = srv_->processSolicit(ctx2);
     AllocEngine::ClientContext6 ctx3;
-    drop = !srv.earlyGHRLookup(query3, ctx3);
+    drop = !srv_->earlyGHRLookup(query3, ctx3);
     ASSERT_FALSE(drop);
     ctx3.subnet_ = srv_->selectSubnet(query3, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(ctx3, drop);
+    srv_->initContext(ctx3, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response3 = srv.processSolicit(ctx3);
+    Pkt6Ptr response3 = srv_->processSolicit(ctx3);
 
     // Classification processing should add an ip-forwarding option
     OptionPtr opt1 = response1->getOption(2345);
@@ -942,9 +930,6 @@ TEST_F(ClassifyTest, additionalClassification) {
 // Checks subnet options have the priority over class options
 TEST_F(ClassifyTest, subnetClassPriority) {
     IfaceMgrTestConfig test_config(true);
-
-    NakedDhcpv6Srv srv(0);
-
     // Subnet sets an ipv6-forwarding option in the response.
     // The router class matches incoming packets with foo in a host-name
     // option (code 1234) and sets an ipv6-forwarding option in the response.
@@ -993,20 +978,20 @@ TEST_F(ClassifyTest, subnetClassPriority) {
     query->addOption(hostname);
 
     // Classify the packet
-    srv.classifyPacket(query);
+    srv_->classifyPacket(query);
 
     // The packet should be in the router class
     EXPECT_TRUE(query->inClass("router"));
 
     // Process the query
     AllocEngine::ClientContext6 ctx;
-    bool drop = !srv.earlyGHRLookup(query, ctx);
+    bool drop = !srv_->earlyGHRLookup(query, ctx);
     ASSERT_FALSE(drop);
     ctx.subnet_ = srv_->selectSubnet(query, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(ctx, drop);
+    srv_->initContext(ctx, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response = srv.processSolicit(ctx);
+    Pkt6Ptr response = srv_->processSolicit(ctx);
 
     // Processing should add an ip-forwarding option
     OptionPtr opt = response->getOption(2345);
@@ -1020,9 +1005,6 @@ TEST_F(ClassifyTest, subnetClassPriority) {
 // Checks subnet options have the priority over global options
 TEST_F(ClassifyTest, subnetGlobalPriority) {
     IfaceMgrTestConfig test_config(true);
-
-    NakedDhcpv6Srv srv(0);
-
     // Subnet sets an ipv6-forwarding option in the response.
     // The router class matches incoming packets with foo in a host-name
     // option (code 1234) and sets an ipv6-forwarding option in the response.
@@ -1069,13 +1051,13 @@ TEST_F(ClassifyTest, subnetGlobalPriority) {
 
     // Process the query
     AllocEngine::ClientContext6 ctx;
-    bool drop = !srv.earlyGHRLookup(query, ctx);
+    bool drop = !srv_->earlyGHRLookup(query, ctx);
     ASSERT_FALSE(drop);
     ctx.subnet_ = srv_->selectSubnet(query, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(ctx, drop);
+    srv_->initContext(ctx, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response = srv.processSolicit(ctx);
+    Pkt6Ptr response = srv_->processSolicit(ctx);
 
     // Processing should add an ip-forwarding option
     OptionPtr opt = response->getOption(2345);
@@ -1089,9 +1071,6 @@ TEST_F(ClassifyTest, subnetGlobalPriority) {
 // Checks class options have the priority over global options
 TEST_F(ClassifyTest, classGlobalPriority) {
     IfaceMgrTestConfig test_config(true);
-
-    NakedDhcpv6Srv srv(0);
-
     // A global ipv6-forwarding option is set in the response.
     // The router class matches incoming packets with foo in a host-name
     // option (code 1234) and sets an ipv6-forwarding option in the response.
@@ -1140,20 +1119,20 @@ TEST_F(ClassifyTest, classGlobalPriority) {
     query->addOption(hostname);
 
     // Classify the packet
-    srv.classifyPacket(query);
+    srv_->classifyPacket(query);
 
     // The packet should be in the router class
     EXPECT_TRUE(query->inClass("router"));
 
     // Process the query
     AllocEngine::ClientContext6 ctx;
-    bool drop = !srv.earlyGHRLookup(query, ctx);
+    bool drop = !srv_->earlyGHRLookup(query, ctx);
     ASSERT_FALSE(drop);
     ctx.subnet_ = srv_->selectSubnet(query, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(ctx, drop);
+    srv_->initContext(ctx, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response = srv.processSolicit(ctx);
+    Pkt6Ptr response = srv_->processSolicit(ctx);
 
     // Processing should add an ip-forwarding option
     OptionPtr opt = response->getOption(2345);
@@ -1167,9 +1146,6 @@ TEST_F(ClassifyTest, classGlobalPriority) {
 // Checks class options have the priority over global persistent options
 TEST_F(ClassifyTest, classGlobalPersistency) {
     IfaceMgrTestConfig test_config(true);
-
-    NakedDhcpv6Srv srv(0);
-
     // Subnet sets an ipv6-forwarding option in the response.
     // The router class matches incoming packets with foo in a host-name
     // option (code 1234) and sets an ipv6-forwarding option in the response.
@@ -1220,13 +1196,13 @@ TEST_F(ClassifyTest, classGlobalPersistency) {
 
     // Process the query
     AllocEngine::ClientContext6 ctx;
-    bool drop = !srv.earlyGHRLookup(query, ctx);
+    bool drop = !srv_->earlyGHRLookup(query, ctx);
     ASSERT_FALSE(drop);
     ctx.subnet_ = srv_->selectSubnet(query, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(ctx, drop);
+    srv_->initContext(ctx, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response = srv.processSolicit(ctx);
+    Pkt6Ptr response = srv_->processSolicit(ctx);
 
     // Processing should add an ip-forwarding option
     OptionPtr opt = response->getOption(2345);
@@ -1240,9 +1216,6 @@ TEST_F(ClassifyTest, classGlobalPersistency) {
 // Checks class never-send options have the priority over everything else.
 TEST_F(ClassifyTest, classNeverSend) {
     IfaceMgrTestConfig test_config(true);
-
-    NakedDhcpv6Srv srv(0);
-
     // Subnet sets an ipv6-forwarding option in the response.
     // The router class matches incoming packets with foo in a host-name
     // option (code 1234) and sets an ipv6-forwarding option in the response.
@@ -1292,13 +1265,13 @@ TEST_F(ClassifyTest, classNeverSend) {
 
     // Process the query
     AllocEngine::ClientContext6 ctx;
-    bool drop = !srv.earlyGHRLookup(query, ctx);
+    bool drop = !srv_->earlyGHRLookup(query, ctx);
     ASSERT_FALSE(drop);
     ctx.subnet_ = srv_->selectSubnet(query, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(ctx, drop);
+    srv_->initContext(ctx, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response = srv.processSolicit(ctx);
+    Pkt6Ptr response = srv_->processSolicit(ctx);
 
     // Processing should not add an ip-forwarding option
     EXPECT_FALSE(response->getOption(2345));
@@ -1366,9 +1339,6 @@ TEST_F(ClassifyTest, clientClassifySubnet) {
 // Checks if the client-class field is indeed used for pool selection.
 TEST_F(ClassifyTest, clientClassifyPool) {
     IfaceMgrTestConfig test_config(true);
-
-    NakedDhcpv6Srv srv(0);
-
     // This test configures 2 pools.
     // The second pool does not play any role here. The client's
     // IP address belongs to the first pool, so only that first
@@ -1412,15 +1382,15 @@ TEST_F(ClassifyTest, clientClassifyPool) {
 
     // This discover does not belong to foo class, so it will not
     // be serviced
-    srv.classifyPacket(query1);
+    srv_->classifyPacket(query1);
     AllocEngine::ClientContext6 ctx1;
-    bool drop = !srv.earlyGHRLookup(query1, ctx1);
+    bool drop = !srv_->earlyGHRLookup(query1, ctx1);
     ASSERT_FALSE(drop);
     ctx1.subnet_ = srv_->selectSubnet(query1, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(ctx1, drop);
+    srv_->initContext(ctx1, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response1 = srv.processSolicit(ctx1);
+    Pkt6Ptr response1 = srv_->processSolicit(ctx1);
     ASSERT_TRUE(response1);
     OptionPtr ia_na1 = response1->getOption(D6O_IA_NA);
     ASSERT_TRUE(ia_na1);
@@ -1430,15 +1400,15 @@ TEST_F(ClassifyTest, clientClassifyPool) {
     // Let's add the packet to bar class and try again.
     query2->addClass("bar");
     // Still not supported, because it belongs to wrong class.
-    srv.classifyPacket(query2);
+    srv_->classifyPacket(query2);
     AllocEngine::ClientContext6 ctx2;
-    drop = !srv.earlyGHRLookup(query2, ctx2);
+    drop = !srv_->earlyGHRLookup(query2, ctx2);
     ASSERT_FALSE(drop);
     ctx2.subnet_ = srv_->selectSubnet(query2, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(ctx2, drop);
+    srv_->initContext(ctx2, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response2 = srv.processSolicit(ctx2);
+    Pkt6Ptr response2 = srv_->processSolicit(ctx2);
     ASSERT_TRUE(response2);
     OptionPtr ia_na2 = response2->getOption(D6O_IA_NA);
     ASSERT_TRUE(ia_na2);
@@ -1448,15 +1418,15 @@ TEST_F(ClassifyTest, clientClassifyPool) {
     // Let's add it to matching class.
     query3->addClass("foo");
     // This time it should work
-    srv.classifyPacket(query3);
+    srv_->classifyPacket(query3);
     AllocEngine::ClientContext6 ctx3;
-    drop = !srv.earlyGHRLookup(query3, ctx3);
+    drop = !srv_->earlyGHRLookup(query3, ctx3);
     ASSERT_FALSE(drop);
     ctx3.subnet_ = srv_->selectSubnet(query3, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(ctx3, drop);
+    srv_->initContext(ctx3, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response3 = srv.processSolicit(ctx3);
+    Pkt6Ptr response3 = srv_->processSolicit(ctx3);
     ASSERT_TRUE(response3);
     OptionPtr ia_na3 = response3->getOption(D6O_IA_NA);
     ASSERT_TRUE(ia_na3);
@@ -1467,9 +1437,6 @@ TEST_F(ClassifyTest, clientClassifyPool) {
 // Checks if the [UN]KNOWN built-in classes is indeed used for pool selection.
 TEST_F(ClassifyTest, clientClassifyPoolKnown) {
     IfaceMgrTestConfig test_config(true);
-
-    NakedDhcpv6Srv srv(0);
-
     // This test configures 2 pools.
     // The first one requires reservation, the second does the opposite.
     std::string config = "{ \"interfaces-config\": {"
@@ -1508,15 +1475,15 @@ TEST_F(ClassifyTest, clientClassifyPoolKnown) {
     query1->setIndex(ETH1_INDEX);
 
     // First pool requires reservation so the second will be used
-    srv.classifyPacket(query1);
+    srv_->classifyPacket(query1);
     AllocEngine::ClientContext6 ctx1;
-    bool drop = !srv.earlyGHRLookup(query1, ctx1);
+    bool drop = !srv_->earlyGHRLookup(query1, ctx1);
     ASSERT_FALSE(drop);
     ctx1.subnet_ = srv_->selectSubnet(query1, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(ctx1, drop);
+    srv_->initContext(ctx1, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response1 = srv.processSolicit(ctx1);
+    Pkt6Ptr response1 = srv_->processSolicit(ctx1);
     ASSERT_TRUE(response1);
     OptionPtr ia_na1 = response1->getOption(D6O_IA_NA);
     ASSERT_TRUE(ia_na1);
@@ -1540,15 +1507,15 @@ TEST_F(ClassifyTest, clientClassifyPoolKnown) {
     query2->setIndex(ETH1_INDEX);
 
     // Now the first pool will be used
-    srv.classifyPacket(query2);
+    srv_->classifyPacket(query2);
     AllocEngine::ClientContext6 ctx2;
-    drop = !srv.earlyGHRLookup(query2, ctx2);
+    drop = !srv_->earlyGHRLookup(query2, ctx2);
     ASSERT_FALSE(drop);
     ctx2.subnet_ = srv_->selectSubnet(query2, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(ctx2, drop);
+    srv_->initContext(ctx2, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response2 = srv.processSolicit(ctx2);
+    Pkt6Ptr response2 = srv_->processSolicit(ctx2);
     ASSERT_TRUE(response2);
     OptionPtr ia_na2 = response2->getOption(D6O_IA_NA);
     ASSERT_TRUE(ia_na2);
@@ -1564,8 +1531,6 @@ TEST_F(ClassifyTest, clientClassifyPoolKnown) {
 // Tests whether a packet with custom vendor-class (not erouter or docsis)
 // is classified properly.
 TEST_F(ClassifyTest, vendorClientClassification2) {
-    NakedDhcpv6Srv srv(0);
-
     // Let's create a SOLICIT.
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("2001:db8:1::3"));
@@ -1581,10 +1546,10 @@ TEST_F(ClassifyTest, vendorClientClassification2) {
     sol->addOption(vendor_class);
 
     // Now the server classifies the packet.
-    srv.classifyPacket(sol);
+    srv_->classifyPacket(sol);
 
     // The packet should now belong to VENDOR_CLASS_foo.
-    EXPECT_TRUE(sol->inClass(srv.VENDOR_CLASS_PREFIX + "foo"));
+    EXPECT_TRUE(sol->inClass(srv_->VENDOR_CLASS_PREFIX + "foo"));
 
     // It should not belong to "foo"
     EXPECT_FALSE(sol->inClass("foo"));
@@ -1663,7 +1628,7 @@ TEST_F(ClassifyTest, relayOverrideAndClientClass) {
 // This test checks that it is possible to specify static reservations for
 // client classes.
 TEST_F(ClassifyTest, clientClassesInHostReservations) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     // Initially use a DUID for which there are no reservations. As a result,
     // the client should be assigned a single class "router".
     client.setDUID("01:02:03:05");
@@ -1735,9 +1700,6 @@ TEST_F(ClassifyTest, clientClassesInHostReservations) {
 // Check classification using membership expressions.
 TEST_F(ClassifyTest, member) {
     IfaceMgrTestConfig test_config(true);
-
-    NakedDhcpv6Srv srv(0);
-
     // The router class matches incoming packets with foo in a host-name
     // option (code 1234) and sets an ipv6-forwarding option in the response.
     std::string config = "{ \"interfaces-config\": {"
@@ -1820,9 +1782,9 @@ TEST_F(ClassifyTest, member) {
     query3->addOption(hostname3);
 
     // Classify packets
-    srv.classifyPacket(query1);
-    srv.classifyPacket(query2);
-    srv.classifyPacket(query3);
+    srv_->classifyPacket(query1);
+    srv_->classifyPacket(query2);
+    srv_->classifyPacket(query3);
 
     // Check classes
     EXPECT_FALSE(query1->inClass("not-foo"));
@@ -1845,29 +1807,29 @@ TEST_F(ClassifyTest, member) {
 
     // Process queries
     AllocEngine::ClientContext6 ctx1;
-    bool drop = !srv.earlyGHRLookup(query1, ctx1);
+    bool drop = !srv_->earlyGHRLookup(query1, ctx1);
     ASSERT_FALSE(drop);
     ctx1.subnet_ = srv_->selectSubnet(query1, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(ctx1, drop);
+    srv_->initContext(ctx1, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response1 = srv.processSolicit(ctx1);
+    Pkt6Ptr response1 = srv_->processSolicit(ctx1);
     AllocEngine::ClientContext6 ctx2;
-    drop = !srv.earlyGHRLookup(query2, ctx2);
+    drop = !srv_->earlyGHRLookup(query2, ctx2);
     ASSERT_FALSE(drop);
     ctx2.subnet_ = srv_->selectSubnet(query2, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(ctx2, drop);
+    srv_->initContext(ctx2, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response2 = srv.processSolicit(ctx2);
+    Pkt6Ptr response2 = srv_->processSolicit(ctx2);
     AllocEngine::ClientContext6 ctx3;
-    drop = !srv.earlyGHRLookup(query3, ctx3);
+    drop = !srv_->earlyGHRLookup(query3, ctx3);
     ASSERT_FALSE(drop);
     ctx3.subnet_ = srv_->selectSubnet(query3, drop);
     ASSERT_FALSE(drop);
-    srv.initContext(ctx3, drop);
+    srv_->initContext(ctx3, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response3 = srv.processSolicit(ctx3);
+    Pkt6Ptr response3 = srv_->processSolicit(ctx3);
 
     // Classification processing should add an ip-forwarding option
     OptionPtr opt1 = response1->getOption(2345);
@@ -1945,7 +1907,7 @@ TEST_F(ClassifyTest, precedenceNone) {
         "}";
 
     // Create a client requesting dns-servers option
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setInterface("eth1");
     client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
     client.requestOption(D6O_NAME_SERVERS);
@@ -2019,7 +1981,7 @@ TEST_F(ClassifyTest, precedencePool) {
         "}";
 
     // Create a client requesting dns-servers option
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setInterface("eth1");
     client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
     client.requestOption(D6O_NAME_SERVERS);
@@ -2100,7 +2062,7 @@ TEST_F(ClassifyTest, precedencePdPool) {
         "}";
 
     // Create a client requesting dns-servers option
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setInterface("eth1");
     client.requestPrefix(0xabca);
     client.requestOption(D6O_NAME_SERVERS);
@@ -2179,7 +2141,7 @@ TEST_F(ClassifyTest, precedenceSubnet) {
         "}";
 
     // Create a client requesting dns-servers option
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setInterface("eth1");
     client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
     client.requestOption(D6O_NAME_SERVERS);
@@ -2257,7 +2219,7 @@ TEST_F(ClassifyTest, precedenceNetwork) {
         "}";
 
     // Create a client requesting dns-servers option
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setInterface("eth1");
     client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
     client.requestOption(D6O_NAME_SERVERS);
@@ -2315,7 +2277,7 @@ TEST_F(ClassifyTest, additionalNoTest) {
         "}";
 
     // Create a client requesting dns-servers option
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setInterface("eth1");
     client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
     client.requestOption(D6O_NAME_SERVERS);
@@ -2365,7 +2327,7 @@ TEST_F(ClassifyTest, additionalNotDefined) {
         "}";
 
     // Create a client requesting dns-servers option
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setInterface("eth1");
     client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
     client.requestOption(D6O_NAME_SERVERS);
@@ -2383,7 +2345,7 @@ TEST_F(ClassifyTest, additionalNotDefined) {
 // This test checks the complex membership from HA with server1 telephone.
 TEST_F(ClassifyTest, server1Telephone) {
     // Create a client.
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setInterface("eth1");
     ASSERT_NO_THROW(client.requestAddress(0xabca0));
 
@@ -2411,7 +2373,7 @@ TEST_F(ClassifyTest, server1Telephone) {
 // This test checks the complex membership from HA with server1 computer.
 TEST_F(ClassifyTest, server1Computer) {
     // Create a client.
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setInterface("eth1");
     ASSERT_NO_THROW(client.requestAddress(0xabca0));
 
@@ -2439,7 +2401,7 @@ TEST_F(ClassifyTest, server1Computer) {
 // This test checks the complex membership from HA with server2 telephone.
 TEST_F(ClassifyTest, server2Telephone) {
     // Create a client.
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setInterface("eth1");
     ASSERT_NO_THROW(client.requestAddress(0xabca0));
 
@@ -2467,7 +2429,7 @@ TEST_F(ClassifyTest, server2Telephone) {
 // This test checks the complex membership from HA with server2 computer.
 TEST_F(ClassifyTest, server2Computer) {
     // Create a client.
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setInterface("eth1");
     ASSERT_NO_THROW(client.requestAddress(0xabca0));
 
@@ -2496,7 +2458,7 @@ TEST_F(ClassifyTest, server2Computer) {
 // with prefixes.
 TEST_F(ClassifyTest, pDserver1Telephone) {
     // Create a client.
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setInterface("eth1");
     ASSERT_NO_THROW(client.requestPrefix(0xabca0));
 
@@ -2525,7 +2487,7 @@ TEST_F(ClassifyTest, pDserver1Telephone) {
 // with prefix.
 TEST_F(ClassifyTest, pDserver1Computer) {
     // Create a client.
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setInterface("eth1");
     ASSERT_NO_THROW(client.requestPrefix(0xabca0));
 
@@ -2554,7 +2516,7 @@ TEST_F(ClassifyTest, pDserver1Computer) {
 // with prefixes.
 TEST_F(ClassifyTest, pDserver2Telephone) {
     // Create a client.
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setInterface("eth1");
     ASSERT_NO_THROW(client.requestPrefix(0xabca0));
 
@@ -2583,7 +2545,7 @@ TEST_F(ClassifyTest, pDserver2Telephone) {
 // with prefix.
 TEST_F(ClassifyTest, pDserver2Computer) {
     // Create a client.
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setInterface("eth1");
     ASSERT_NO_THROW(client.requestPrefix(0xabca0));
 
@@ -2610,7 +2572,7 @@ TEST_F(ClassifyTest, pDserver2Computer) {
 
 // This test checks the handling for the DROP special class.
 TEST_F(ClassifyTest, dropClass) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setDUID("01:02:03:05");
     client.setInterface("eth1");
     client.requestAddress();
@@ -2625,7 +2587,7 @@ TEST_F(ClassifyTest, dropClass) {
     EXPECT_TRUE(client.getContext().response_);
 
     // Retry with an option matching the DROP class.
-    Dhcp6Client client2;
+    Dhcp6Client client2(srv_);
 
     // Add the host-name option.
     OptionStringPtr hostname(new OptionString(Option::V6, 1234, "foo"));
@@ -2650,7 +2612,7 @@ TEST_F(ClassifyTest, dropClass) {
 // This test checks the handling for the DROP special class at the host
 // reservation classification point with KNOWN / UNKNOWN.
 TEST_F(ClassifyTest, dropClassUnknown) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setDUID("01:02:03:04");
     client.setInterface("eth1");
     client.requestAddress();
@@ -2665,7 +2627,7 @@ TEST_F(ClassifyTest, dropClassUnknown) {
     EXPECT_TRUE(client.getContext().response_);
 
     // Retry with an option matching the DROP class.
-    Dhcp6Client client2;
+    Dhcp6Client client2(srv_);
 
     // Retry with another DUID.
     client2.setDUID("01:02:03:05");
@@ -2688,7 +2650,7 @@ TEST_F(ClassifyTest, dropClassUnknown) {
 // This test checks the handling for the DROP special class at the host
 // reservation classification point with a reserved class.
 TEST_F(ClassifyTest, dropClassReservedClass) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setDUID("01:02:03:04");
     client.setInterface("eth1");
     client.requestAddress();
@@ -2703,7 +2665,7 @@ TEST_F(ClassifyTest, dropClassReservedClass) {
     EXPECT_TRUE(client.getContext().response_);
 
     // Retry with an option matching the DROP class.
-    Dhcp6Client client2;
+    Dhcp6Client client2(srv_);
 
     // Retry with another DUID.
     client2.setDUID("01:02:03:05");
@@ -2726,7 +2688,7 @@ TEST_F(ClassifyTest, dropClassReservedClass) {
 // This test checks the early global reservations lookup for selecting
 // a guarded subnet.
 TEST_F(ClassifyTest, earlySubnet) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setDUID("01:02:03:04");
     client.setInterface("eth1");
     client.requestAddress();
@@ -2751,7 +2713,7 @@ TEST_F(ClassifyTest, earlySubnet) {
     EXPECT_EQ("2001:db8:1::", addr->getAddress().toText());
 
     // Retry with another DUID.
-    Dhcp6Client client2;
+    Dhcp6Client client2(srv_);
     client2.setDUID("01:02:03:05");
     client2.setInterface("eth1");
     client2.requestAddress();
@@ -2773,7 +2735,7 @@ TEST_F(ClassifyTest, earlySubnet) {
 
 // This test checks the early global reservations lookup for dropping.
 TEST_F(ClassifyTest, earlyDrop) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setDUID("01:02:03:04");
     client.setInterface("eth1");
     client.requestAddress();
@@ -2796,7 +2758,7 @@ TEST_F(ClassifyTest, earlyDrop) {
     EXPECT_EQ(1, drop_stat->getInteger().first);
 
     // Retry with another DUID.
-    Dhcp6Client client2;
+    Dhcp6Client client2(srv_);
     client2.setDUID("01:02:03:05");
     client2.setInterface("eth1");
     client2.requestAddress();
@@ -2810,9 +2772,6 @@ TEST_F(ClassifyTest, earlyDrop) {
 // Checks that sub-class options have precedence of template class options
 TEST_F(ClassifyTest, subClassPrecedence) {
     IfaceMgrTestConfig test_config(true);
-
-    NakedDhcpv6Srv srv(0);
-
     string config = R"^(
     {
         "interfaces-config": {
@@ -2875,7 +2834,7 @@ TEST_F(ClassifyTest, subClassPrecedence) {
     query1->addOption(oro);
 
     // Classify packets
-    srv.classifyPacket(query1);
+    srv_->classifyPacket(query1);
 
     // Verify class membership is as expected.
     EXPECT_TRUE(query1->inClass("template-client-id"));
@@ -2883,7 +2842,7 @@ TEST_F(ClassifyTest, subClassPrecedence) {
 
     // Process the query
     Pkt6Ptr response1;
-    processQuery(srv, query1, response1);
+    processQuery(*srv_, query1, response1);
 
     // Verify that opt1 is inherited from the template.
     OptionPtr opt = response1->getOption(1249);
@@ -2900,9 +2859,6 @@ TEST_F(ClassifyTest, subClassPrecedence) {
 // by option class tagging.
 TEST_F(ClassifyTest, requestedOptionClassTag) {
     IfaceMgrTestConfig test_config(true);
-
-    NakedDhcpv6Srv srv(0);
-
     string config = R"^(
     {
         "interfaces-config": {
@@ -2976,14 +2932,14 @@ TEST_F(ClassifyTest, requestedOptionClassTag) {
     query->addOption(oro);
 
     // Classify the query.
-    srv.classifyPacket(query);
+    srv_->classifyPacket(query);
 
     // Verify query is in class "right".
     ASSERT_TRUE(query->inClass("right"));
 
     // Process the solicit.
     Pkt6Ptr response;
-    processQuery(srv, query, response);
+    processQuery(*srv_, query, response);
 
     // Option without class tags should be included.
     OptionPtr opt = response->getOption(1249);
@@ -3002,9 +2958,6 @@ TEST_F(ClassifyTest, requestedOptionClassTag) {
 // by option class tagging.
 TEST_F(ClassifyTest, vendorClassOptionClassTag) {
     IfaceMgrTestConfig test_config(true);
-
-    NakedDhcpv6Srv srv(0);
-
     string config = R"^(
     {
         "interfaces-config": {
@@ -3049,14 +3002,14 @@ TEST_F(ClassifyTest, vendorClassOptionClassTag) {
     query->addOption(clientid2);
 
     // Classify the query.
-    srv.classifyPacket(query);
+    srv_->classifyPacket(query);
 
     // Verify query is in class "melon".
     ASSERT_TRUE(query->inClass("melon"));
 
     // Process the solicit.
     Pkt6Ptr response;
-    processQuery(srv, query, response);
+    processQuery(*srv_, query, response);
 
     const auto& vendor_classes = response->getOptions(D6O_VENDOR_CLASS);
     ASSERT_EQ(1, vendor_classes.size());
@@ -3065,13 +3018,13 @@ TEST_F(ClassifyTest, vendorClassOptionClassTag) {
     query = createSolicit();
 
     // Classify the query.
-    srv.classifyPacket(query);
+    srv_->classifyPacket(query);
 
     // Verify query is in not class "melon".
     ASSERT_FALSE(query->inClass("melon"));
 
     // Process the SOLICIT.
-    processQuery(srv, query, response);
+    processQuery(*srv_, query, response);
 
     // Should not have any vendor class options.
     const auto& vendor_classes2 = response->getOptions(D6O_VENDOR_CLASS);
@@ -3083,9 +3036,6 @@ TEST_F(ClassifyTest, vendorClassOptionClassTag) {
 // none of the vendor's sub-options are being returned.
 TEST_F(ClassifyTest, persistedVendorOptsOptionClassTag) {
     IfaceMgrTestConfig test_config(true);
-
-    NakedDhcpv6Srv srv(0);
-
     string config = R"^(
     {
         "interfaces-config": {
@@ -3123,14 +3073,14 @@ TEST_F(ClassifyTest, persistedVendorOptsOptionClassTag) {
     Pkt6Ptr query = createSolicit();
 
     // Classify the query.
-    srv.classifyPacket(query);
+    srv_->classifyPacket(query);
 
     // Verify query is not in class "melon".
     ASSERT_FALSE(query->inClass("melon"));
 
     // Process the solicit.
     Pkt6Ptr response;
-    processQuery(srv, query, response);
+    processQuery(*srv_, query, response);
 
     // The response should not have the D6O_VENDOR_OPTS option.
     const auto& vendor_opts = response->getOptions(D6O_VENDOR_OPTS);
@@ -3146,13 +3096,13 @@ TEST_F(ClassifyTest, persistedVendorOptsOptionClassTag) {
     query->addOption(clientid2);
 
     // Classify the query.
-    srv.classifyPacket(query);
+    srv_->classifyPacket(query);
 
     // Verify query is in class "melon".
     ASSERT_TRUE(query->inClass("melon"));
 
     // Process the solicit.
-    processQuery(srv, query, response);
+    processQuery(*srv_, query, response);
 
     // The response should have the D6O_VENDOR_OPTS option.
     const auto& vendor_opts2 = response->getOptions(D6O_VENDOR_OPTS);
@@ -3162,9 +3112,6 @@ TEST_F(ClassifyTest, persistedVendorOptsOptionClassTag) {
 // Verifies that vendor options can be gated by option class tagging.
 TEST_F(ClassifyTest, requestedVendorOptionsClassTag) {
     IfaceMgrTestConfig test_config(true);
-
-    NakedDhcpv6Srv srv(0);
-
     string config = R"^(
     {
         "interfaces-config": {
@@ -3252,14 +3199,14 @@ TEST_F(ClassifyTest, requestedVendorOptionsClassTag) {
     vendor->addOption(vendor_oro);
 
     // Classify the query.
-    srv.classifyPacket(query);
+    srv_->classifyPacket(query);
 
     // Verify query is in class "melon".
     ASSERT_TRUE(query->inClass("melon"));
 
     // Process the solicit.
     Pkt6Ptr response;
-    processQuery(srv, query, response);
+    processQuery(*srv_, query, response);
 
     // Should have 1 vendor response option.
     const auto& vendor_opts = response->getOptions(D6O_VENDOR_OPTS);
@@ -3282,9 +3229,6 @@ TEST_F(ClassifyTest, requestedVendorOptionsClassTag) {
 // Verifies that class-tagging does not subvert always-send.
 TEST_F(ClassifyTest, classTaggingAndAlwaysSend) {
     IfaceMgrTestConfig test_config(true);
-
-    NakedDhcpv6Srv srv(0);
-
     // Subnet level ipv6-forwarding enables always-send but with a non-matching
     // class-tag. Response should contain the global value for ip6-fowarding.
     std::string config = R"^(
@@ -3333,7 +3277,7 @@ TEST_F(ClassifyTest, classTaggingAndAlwaysSend) {
 
     // Process the query
     Pkt6Ptr response;
-    processQuery(srv, query, response);
+    processQuery(*srv_, query, response);
 
     // Processing should add the global ip-forwarding option.
     OptionPtr opt = response->getOption(2345);
@@ -3345,9 +3289,6 @@ TEST_F(ClassifyTest, classTaggingAndAlwaysSend) {
 // Verifies that option class-tagging does not subvert never-send.
 TEST_F(ClassifyTest, classTaggingAndNeverSend) {
     IfaceMgrTestConfig test_config(true);
-
-    NakedDhcpv6Srv srv(0);
-
     // Subnet sets an ipv6-forwarding option in the response.
     // The router class matches incoming packets with foo in a host-name
     // option (code 1234) and sets an ipv6-forwarding option in the response.
@@ -3399,7 +3340,7 @@ TEST_F(ClassifyTest, classTaggingAndNeverSend) {
 
     // Process the query
     Pkt6Ptr response;
-    processQuery(srv, query, response);
+    processQuery(*srv_, query, response);
 
     // Processing should not add an ip-forwarding option
     OptionPtr opt = response->getOption(2345);
@@ -3411,9 +3352,6 @@ TEST_F(ClassifyTest, classTaggingAndNeverSend) {
 // different client class tags works properly.
 TEST_F(ClassifyTest, classTaggingList) {
     IfaceMgrTestConfig test_config(true);
-
-    NakedDhcpv6Srv srv(0);
-
     // Define a client-str option for classification, and server-str
     // option to send in response.  Then define 3 possible values in 
     // a subnet for sever-str based on class membership.
@@ -3499,12 +3437,12 @@ TEST_F(ClassifyTest, classTaggingList) {
         query->addOption(client_str);
 
         // Classify the packet and verify class membership is as expected.
-        srv.classifyPacket(query);
+        srv_->classifyPacket(query);
         ASSERT_TRUE(query->inClass(scenario.exp_class_));
 
         // Process the query
         Pkt6Ptr response;
-        processQuery(srv, query, response);
+        processQuery(*srv_, query, response);
 
         // Verify that server-str opt is as expected
         OptionPtr server_opt = response->getOption(701);

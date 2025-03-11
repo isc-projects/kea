@@ -214,7 +214,7 @@ public:
 // Test that directly connected client's DHCPINFORM message is processed and
 // DHCPACK message is sent back.
 TEST_F(InformTest, directClientBroadcast) {
-    Dhcp4Client client;
+    Dhcp4Client client(srv_);
     // Configure DHCP server.
     configure(INFORM_CONFIGS[0], *client.getServer());
     // Request some configuration when DHCPINFORM is sent.
@@ -295,7 +295,7 @@ TEST_F(InformTest, directClientBroadcast) {
 // This test checks that the server drops DHCPINFORM message when the
 // source address and ciaddr is 0.
 TEST_F(InformTest, directClientBroadcastNoAddress) {
-    Dhcp4Client client;
+    Dhcp4Client client(srv_);
     // Configure DHCP server.
     configure(INFORM_CONFIGS[0], *client.getServer());
     // Request some configuration when DHCPINFORM is sent.
@@ -310,7 +310,7 @@ TEST_F(InformTest, directClientBroadcastNoAddress) {
 // is received and processed by the server and that the DHCPACK is
 // is sent.
 TEST_F(InformTest, directClientUnicast) {
-    Dhcp4Client client;
+    Dhcp4Client client(srv_);
     // Configure DHCP server.
     configure(INFORM_CONFIGS[0], *client.getServer());
     // Preconfigure the client with the IP address.
@@ -346,7 +346,7 @@ TEST_F(InformTest, directClientUnicast) {
 // packet received from the directly connected client if the client didn't
 // set the ciaddr.
 TEST_F(InformTest, directClientNoCiaddr) {
-    Dhcp4Client client;
+    Dhcp4Client client(srv_);
     // Configure DHCP server.
     configure(INFORM_CONFIGS[0], *client.getServer());
     // Preconfigure the client with the IP address.
@@ -381,7 +381,7 @@ TEST_F(InformTest, directClientNoCiaddr) {
 // This test checks that the server receiving DHCPINFORM via relay, unicasts the
 // DHCPACK to the client (ciaddr).
 TEST_F(InformTest, relayedClient) {
-    Dhcp4Client client;
+    Dhcp4Client client(srv_);
     // Configure DHCP server.
     configure(INFORM_CONFIGS[1], *client.getServer());
     // Message is relayed.
@@ -428,7 +428,7 @@ TEST_F(InformTest, relayedClient) {
 // This test checks that the server can respond to the DHCPINFORM message
 // received via relay when the ciaddr is not set.
 TEST_F(InformTest, relayedClientNoCiaddr) {
-    Dhcp4Client client;
+    Dhcp4Client client(srv_);
     // Configure DHCP server.
     configure(INFORM_CONFIGS[1], *client.getServer());
     // Message is relayed.
@@ -466,7 +466,7 @@ TEST_F(InformTest, relayedClientNoCiaddr) {
 // siaddr, sname and file fields carried within DHCPv4 message.
 TEST_F(InformTest, messageFieldsReservations) {
     // Client has a reservation.
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Message is relayed.
     client.useRelay();
     // Set explicit HW address so as it matches the reservation in the
@@ -492,7 +492,7 @@ TEST_F(InformTest, messageFieldsReservations) {
 // DHCPv4 message.
 TEST_F(InformTest, messageFieldsLongOptions) {
     // Client has a reservation.
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Message is relayed.
     client.useRelay();
     // Set explicit HW address so as it matches the reservation in the
@@ -601,7 +601,7 @@ TEST_F(InformTest, messageFieldsLongOptions) {
 /// This test verifies that after a client completes its INFORM exchange,
 /// appropriate statistics are updated.
 TEST_F(InformTest, statisticsInform) {
-    Dhcp4Client client;
+    Dhcp4Client client(srv_);
     // Configure DHCP server.
     configure(INFORM_CONFIGS[0], *client.getServer());
     // Request some configuration when DHCPINFORM is sent.

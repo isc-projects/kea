@@ -135,6 +135,10 @@ private:
 /// @brief "naked" Dhcpv6Srv class that exposes internal members
 class NakedDhcpv6Srv: public ControlledDhcpv6Srv {
 public:
+    /// @brief Constructor.
+    ///
+    /// @param port port number to listen on; the default value 0 indicates
+    /// that sockets should not be opened.
     NakedDhcpv6Srv(uint16_t port) : ControlledDhcpv6Srv(port) {
         // Open the "memfile" database for leases
         std::string memfile = "type=memfile universe=6 persist=false";
@@ -614,7 +618,7 @@ public:
 class Dhcp6Client;
 
 // Provides support for tests against a preconfigured subnet6
-// extends upon NakedDhcp6SrvTest
+// extends upon NakedDhcpv6SrvTest
 class Dhcpv6SrvTest : public NakedDhcpv6SrvTest {
 public:
     /// @brief Specifies expected outcome

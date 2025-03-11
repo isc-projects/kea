@@ -151,12 +151,6 @@ public:
     /// a sent packet during callout execution.
     static std::pair<bool, bool> callback_sent_pkt_options_copy_;
 
-    /// @brief reference to a controlled server
-    ///
-    /// Dhcp4to6Ipc::handler() uses the instance of the controlled server
-    /// so it has to be build. This reference does this.
-    ControlledDhcpv4Srv srv_;
-
 private:
 
     /// @brief Provides fake configuration of interfaces.
