@@ -34,7 +34,6 @@ mysql_opt = get_option('mysql')
 netconf_opt = get_option('netconf')
 postgresql_opt = get_option('postgresql')
 
-logger_checks_opt = get_option('logger-checks')
 FUZZ_OPT = get_option('fuzz')
 SHELL_OPT = get_option('shell')
 TESTS_OPT = get_option('tests')
@@ -43,7 +42,6 @@ TESTS_OPT = get_option('tests')
 
 conf_data = configuration_data(
     {
-        # 'ENABLE_DEBUG': false,
         'EXTENDED_VERSION': '"tarball"',
         # 'HAVE_AFL': false,
         # 'HAVE_BOTAN_ASIO_STREAM_H': false,
@@ -242,7 +240,10 @@ else
     error('Dependency not found: neither Botan nor OpenSSL.')
 endif
 
-conf_data.set('ENABLE_LOGGER_CHECKS', logger_checks_opt.enabled())
+if TESTS_OPT.enabled()
+    conf_data.set('ENABLE_DEBUG', true)
+    conf_data.set('ENABLE_LOGGER_CHECKS', true)
+endif
 conf_data.set('FUZZING', FUZZ_OPT.enabled())
 conf_data.set('HAVE_MYSQL', MYSQL_DEP.found())
 conf_data.set('HAVE_PGSQL', POSTGRESQL_DEP.found())

@@ -21,11 +21,5 @@ option(
 
 # Options for enabling various parts of code.
 option('fuzz', type: 'feature', description: 'Support for fuzz testing.')
-option(
-    'logger-checks',
-    type: 'feature',
-    value: 'disabled',
-    description: 'Check logger messages.',
-)
 option('shell', type: 'feature', description: 'Builds kea-shell.')
 option('tests', type: 'feature', description: 'Support for tests.')
