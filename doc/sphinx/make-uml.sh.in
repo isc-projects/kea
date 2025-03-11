@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -euv
+set -eu
 
 cd '@srcdir@'
 

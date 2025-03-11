@@ -71,92 +71,92 @@ svgs = list.stdout().strip().split('\n')
 list = run_command('grabber.sh', current_source_dir, 'uml', 'atxt', check: true)
 txts = list.stdout().strip().split('\n')
 
-make_conf_data = configuration_data()
-make_conf_data.set('builddir', meson.current_build_dir())
-make_conf_data.set('srcdir', meson.current_source_dir())
-make_conf_data.set('sphinxbuilddir', sphinxbuilddir)
-make_conf_data.set('abs_sphinxbuilddir', abs_sphinxbuilddir)
-make_conf_data.set('PYTHON', PYTHON.full_path())
-make_conf_data.set('TOP_SOURCE_DIR', TOP_SOURCE_DIR)
+doc_conf = configuration_data()
+doc_conf.set('builddir', meson.current_build_dir())
+doc_conf.set('srcdir', meson.current_source_dir())
+doc_conf.set('sphinxbuilddir', sphinxbuilddir)
+doc_conf.set('abs_sphinxbuilddir', abs_sphinxbuilddir)
+doc_conf.set('PYTHON', PYTHON.full_path())
+doc_conf.set('TOP_SOURCE_DIR', TOP_SOURCE_DIR)
 if PDFLATEX.found()
-    make_conf_data.set('HAVE_PDFLATEX', 'yes')
+    doc_conf.set('HAVE_PDFLATEX', 'yes')
     pdflatex = PDFLATEX.full_path()
 else
-    make_conf_data.set('HAVE_PDFLATEX', 'no')
+    doc_conf.set('HAVE_PDFLATEX', 'no')
     pdflatex = 'false'
 endif
-make_conf_data.set('PDFLATEX_AND_OPTS', pdflatex + ' -interaction nonstopmode')
+doc_conf.set('PDFLATEX_AND_OPTS', pdflatex + ' -interaction nonstopmode')
 if SPHINX.found()
-    make_conf_data.set('SPHINXBUILD', SPHINX.full_path())
+    doc_conf.set('SPHINXBUILD', SPHINX.full_path())
 else
-    make_conf_data.set('SPHINXBUILD', 'false')
+    doc_conf.set('SPHINXBUILD', 'false')
 endif
-make_conf_data.set('sphinxopts', ' '.join(sphinxopts))
+doc_conf.set('sphinxopts', ' '.join(sphinxopts))
 if PLANTUML.found()
-    make_conf_data.set('HAVE_PLANTUML', 'yes')
-    make_conf_data.set('PLANTUML', PLANTUML.full_path())
+    doc_conf.set('HAVE_PLANTUML', 'yes')
+    doc_conf.set('PLANTUML', PLANTUML.full_path())
 else
-    make_conf_data.set('HAVE_PLANTUML', 'no')
-    make_conf_data.set('PLANTUML', 'false')
+    doc_conf.set('HAVE_PLANTUML', 'no')
+    doc_conf.set('PLANTUML', 'false')
 endif
-make_conf_data.set('umls', ' '.join(umls))
-make_conf_data.set('svgs', ' '.join(svgs))
+doc_conf.set('umls', ' '.join(umls))
+doc_conf.set('svgs', ' '.join(svgs))
 if XMLLINT.found()
-    make_conf_data.set('HAVE_XMLLINT', 'yes')
+    doc_conf.set('HAVE_XMLLINT', 'yes')
 else
-    make_conf_data.set('HAVE_XMLLINT', 'no')
+    doc_conf.set('HAVE_XMLLINT', 'no')
 endif
 tumls = ['uml/tkey.uml', 'uml/update.uml']
-make_conf_data.set('tumls', ' '.join(tumls))
-make_conf_data.set('txts', ' '.join(txts))
+doc_conf.set('tumls', ' '.join(tumls))
+doc_conf.set('txts', ' '.join(txts))
 if PIP_COMPILE.found()
-    make_conf_data.set('HAVE_PIP_COMPILE', 'yes')
-    make_conf_data.set('PIP_COMPILE', PIP_COMPILE.full_path())
+    doc_conf.set('HAVE_PIP_COMPILE', 'yes')
+    doc_conf.set('PIP_COMPILE', PIP_COMPILE.full_path())
 else
-    make_conf_data.set('HAVE_PIP_COMPILE', 'no')
-    make_conf_data.set('PIP_COMPILE', 'pip-compile')
+    doc_conf.set('HAVE_PIP_COMPILE', 'no')
+    doc_conf.set('PIP_COMPILE', 'pip-compile')
 endif
-make_conf_data.set('man8s', ' '.join(man8s))
-make_conf_data.set('PREFIX', PREFIX)
-docdir = f'@PREFIX@/@DATADIR@/kea'
-make_conf_data.set('docdir', docdir)
-make_conf_data.set('INSTALL', INSTALL.full_path())
+doc_conf.set('man8s', ' '.join(man8s))
+doc_conf.set('PREFIX', PREFIX)
+docdir = f'@DATADIR@/doc/kea'
+doc_conf.set('docdir', docdir)
+doc_conf.set('INSTALL', INSTALL.full_path())
 mandir = get_option('mandir')
-mandir8 = f'@PREFIX@/@mandir@/man8/'
-make_conf_data.set('mandir8', mandir8)
+mandir8 = f'@mandir@/man8/'
+doc_conf.set('mandir8', mandir8)
 
-if SPHINX.found()
-    make_doc = configure_file(
-        input: 'make-doc.sh.in',
-        output: 'make-doc.sh',
-        configuration: make_conf_data,
-    )
-    run_target('doc', command: [make_doc])
-endif
+make_doc = configure_file(
+    input: 'make-doc.sh.in',
+    output: 'make-doc.sh',
+    configuration: doc_conf,
+)
 make_install = configure_file(
-    input: 'make-install.sh.in',
-    output: 'make-install.sh',
-    configuration: make_conf_data,
+    input: 'install-docs.sh.in',
+    output: 'install-docs.sh',
+    configuration: doc_conf,
 )
 make_mes_doc = configure_file(
     input: 'make-mes-doc.sh.in',
     output: 'make-mes-doc.sh',
-    configuration: make_conf_data,
+    configuration: doc_conf,
 )
 make_uml = configure_file(
     input: 'make-uml.sh.in',
     output: 'make-uml.sh',
-    configuration: make_conf_data,
+    configuration: doc_conf,
 )
 make_update_python_dependencies = configure_file(
-    input: 'make-update-python-dependencies.sh.in',
-    output: 'make-update-python-dependencies.sh',
-    configuration: make_conf_data,
+    input: 'update-python-dependencies.sh.in',
+    output: 'update-python-dependencies.sh',
+    configuration: doc_conf,
 )
+
+run_target('doc', command: [make_doc])
 run_target('mes-doc', command: [make_mes_doc])
 run_target('uml', command: [make_uml])
 run_target(
     'update-python-dependencies',
     command: [make_update_python_dependencies],
 )
+
 meson.add_install_script(make_install)

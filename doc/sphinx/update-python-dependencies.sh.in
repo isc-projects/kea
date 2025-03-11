@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -euv
+set -eu
 
 if test '@HAVE_PIP_COMPILE@' = 'no'; then
     exit 0
