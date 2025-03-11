@@ -916,6 +916,11 @@ the client and the transaction identification information.
 This error message indicates that the reclaim expired leases operation failed
 and provides the cause of failure.
 
+% DHCP4_RECLAIM_EXPIRED_LEASES_SKIPPED dhcp6 service is currently disabled. Try again in %1 seconds.
+This debug message is emitted when lease reclamation was scheduled to begin
+but skipped because DHCPv6 service was disabled. Reclamation will continue
+to be scheduled according to the configured value of reclaim-timer-wait-time.
+
 % DHCP4_RECOVERED_STASHED_RELAY_AGENT_INFO recovered for query %1 relay agent option from lease %2: %3
 Logged at debug log level 55.
 This debug message indicates that agent options were stashed in the lease for

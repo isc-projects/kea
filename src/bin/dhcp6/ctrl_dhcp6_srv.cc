@@ -1396,9 +1396,15 @@ ControlledDhcpv6Srv::reclaimExpiredLeases(const size_t max_leases,
                                           const bool remove_lease,
                                           const uint16_t max_unwarned_cycles) {
     try {
+        if (network_state_->isServiceEnabled()) {
         server_->alloc_engine_->reclaimExpiredLeases6(max_leases, timeout,
                                                       remove_lease,
                                                       max_unwarned_cycles);
+        } else {
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_RECLAIM_EXPIRED_LEASES_SKIPPED)
+                .arg(CfgMgr::instance().getCurrentCfg()->
+                     getCfgExpiration()->getReclaimTimerWaitTime());
+        }
     } catch (const std::exception& ex) {
         LOG_ERROR(dhcp6_logger, DHCP6_RECLAIM_EXPIRED_LEASES_FAIL)
             .arg(ex.what());
@@ -1409,7 +1415,10 @@ ControlledDhcpv6Srv::reclaimExpiredLeases(const size_t max_leases,
 
 void
 ControlledDhcpv6Srv::deleteExpiredReclaimedLeases(const uint32_t secs) {
-    server_->alloc_engine_->deleteExpiredReclaimedLeases6(secs);
+    if (network_state_->isServiceEnabled()) {
+        server_->alloc_engine_->deleteExpiredReclaimedLeases6(secs);
+    }
+
     // We're using the ONE_SHOT timer so there is a need to re-schedule it.
     TimerMgr::instance()->setup(CfgExpiration::FLUSH_RECLAIMED_TIMER_NAME);
 }

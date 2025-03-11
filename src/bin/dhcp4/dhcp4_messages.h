@@ -142,6 +142,7 @@ extern const isc::log::MessageID DHCP4_POST_ALLOCATION_NAME_UPDATE_FAIL;
 extern const isc::log::MessageID DHCP4_QUERY_DATA;
 extern const isc::log::MessageID DHCP4_QUERY_LABEL;
 extern const isc::log::MessageID DHCP4_RECLAIM_EXPIRED_LEASES_FAIL;
+extern const isc::log::MessageID DHCP4_RECLAIM_EXPIRED_LEASES_SKIPPED;
 extern const isc::log::MessageID DHCP4_RECOVERED_STASHED_RELAY_AGENT_INFO;
 extern const isc::log::MessageID DHCP4_RELEASE;
 extern const isc::log::MessageID DHCP4_RELEASE_DELETED;

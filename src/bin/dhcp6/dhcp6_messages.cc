@@ -141,6 +141,7 @@ extern const isc::log::MessageID DHCP6_QUERY_DATA = "DHCP6_QUERY_DATA";
 extern const isc::log::MessageID DHCP6_QUERY_LABEL = "DHCP6_QUERY_LABEL";
 extern const isc::log::MessageID DHCP6_RAPID_COMMIT = "DHCP6_RAPID_COMMIT";
 extern const isc::log::MessageID DHCP6_RECLAIM_EXPIRED_LEASES_FAIL = "DHCP6_RECLAIM_EXPIRED_LEASES_FAIL";
+extern const isc::log::MessageID DHCP6_RECLAIM_EXPIRED_LEASES_SKIPPED = "DHCP6_RECLAIM_EXPIRED_LEASES_SKIPPED";
 extern const isc::log::MessageID DHCP6_REGISTERED_LEASE_ADD_FAIL = "DHCP6_REGISTERED_LEASE_ADD_FAIL";
 extern const isc::log::MessageID DHCP6_REGISTERED_LEASE_UPDATE_FAIL = "DHCP6_REGISTERED_LEASE_UPDATE_FAIL";
 extern const isc::log::MessageID DHCP6_RELEASE_NA = "DHCP6_RELEASE_NA";
@@ -314,6 +315,7 @@ const char* values[] = {
     "DHCP6_QUERY_LABEL", "received query: %1",
     "DHCP6_RAPID_COMMIT", "%1: Rapid Commit option received, following 2-way exchange",
     "DHCP6_RECLAIM_EXPIRED_LEASES_FAIL", "failed to reclaim expired leases: %1",
+    "DHCP6_RECLAIM_EXPIRED_LEASES_SKIPPED", "dhcp6 service is currently disabled. Try again in %1 seconds.",
     "DHCP6_REGISTERED_LEASE_ADD_FAIL", "error in registered lease add for %1",
     "DHCP6_REGISTERED_LEASE_UPDATE_FAIL", "error in registered lease update for %1: %2",
     "DHCP6_RELEASE_NA", "%1: binding for address %2 and iaid=%3 was released properly",

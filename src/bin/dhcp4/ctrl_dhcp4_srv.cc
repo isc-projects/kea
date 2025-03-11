@@ -1610,9 +1610,15 @@ ControlledDhcpv4Srv::reclaimExpiredLeases(const size_t max_leases,
                                           const bool remove_lease,
                                           const uint16_t max_unwarned_cycles) {
     try {
-        server_->alloc_engine_->reclaimExpiredLeases4(max_leases, timeout,
-                                                      remove_lease,
-                                                      max_unwarned_cycles);
+        if (network_state_->isServiceEnabled()) {
+            server_->alloc_engine_->reclaimExpiredLeases4(max_leases, timeout,
+                                                          remove_lease,
+                                                          max_unwarned_cycles);
+        } else {
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_RECLAIM_EXPIRED_LEASES_SKIPPED)
+                .arg(CfgMgr::instance().getCurrentCfg()->
+                 getCfgExpiration()->getReclaimTimerWaitTime());
+        }
     } catch (const std::exception& ex) {
         LOG_ERROR(dhcp4_logger, DHCP4_RECLAIM_EXPIRED_LEASES_FAIL)
             .arg(ex.what());
@@ -1623,7 +1629,10 @@ ControlledDhcpv4Srv::reclaimExpiredLeases(const size_t max_leases,
 
 void
 ControlledDhcpv4Srv::deleteExpiredReclaimedLeases(const uint32_t secs) {
-    server_->alloc_engine_->deleteExpiredReclaimedLeases4(secs);
+    if (network_state_->isServiceEnabled()) {
+        server_->alloc_engine_->deleteExpiredReclaimedLeases4(secs);
+    }
+
     // We're using the ONE_SHOT timer so there is a need to re-schedule it.
     TimerMgr::instance()->setup(CfgExpiration::FLUSH_RECLAIMED_TIMER_NAME);
 }

@@ -928,6 +928,11 @@ specifies the client and transaction identification information.
 This error message indicates that the reclaim expired leases operation failed
 and provides the cause of failure.
 
+% DHCP6_RECLAIM_EXPIRED_LEASES_SKIPPED dhcp6 service is currently disabled. Try again in %1 seconds.
+This debug message is emitted when lease reclamation was scheduled to begin
+but skipped because DHCPv6 service was disabled. Reclamation will continue
+to be scheduled according to the configured value of reclaim-timer-wait-time.
+
 % DHCP6_REGISTERED_LEASE_ADD_FAIL error in registered lease add for %1
 This error message indicates that the registered lease add failed and
 provides the address being registered.
