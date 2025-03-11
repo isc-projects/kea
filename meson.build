@@ -46,24 +46,8 @@ conf_data = configuration_data(
         # 'ENABLE_DEBUG': false,
         'EXTENDED_VERSION': '"tarball"',
         # 'HAVE_AFL': false,
-        # 'HAVE_BOOST_ASIO_COROUTINE_HPP': false,
-        # 'HAVE_BOOST_ASIO_HPP': false,
-        # 'HAVE_BOOST_ASIO_IP_ADDRESS_HPP': false,
-        # 'HAVE_BOOST_ASIO_SIGNAL_SET_HPP': false,
-        # 'HAVE_BOOST_ASIO_SSL_HPP': false,
-        # 'HAVE_BOOST_ATOMIC_HPP': false,
-        # 'HAVE_BOOST_CIRCULAR_BUFFER_HPP': false,
-        # 'HAVE_BOOST_DATE_TIME_POSIX_TIME_POSIX_TIME_TYPES_HPP': false,
-        # 'HAVE_BOOST_FOREACH_HPP': false,
-        # 'HAVE_BOOST_FUNCTIONAL_HASH_HPP': false,
-        # 'HAVE_BOOST_INTEGER_COMMON_FACTOR_HPP': false,
-        # 'HAVE_BOOST_INTERPROCESS_SYNC_INTERPROCESS_UPGRADABLE_MUTEX_HPP': false,
-        # 'HAVE_BOOST_SHARED_PTR_HPP': false,
-        # 'HAVE_BOOST_SYSTEM_ERROR_CODE_HPP': false,
         # 'HAVE_BOTAN_ASIO_STREAM_H': false,
         # 'HAVE_CREATE_UNIFIED_DIFF': false,
-        # 'HAVE_GSSAPI_GSSAPI_H': false,
-        # 'HAVE_GSSAPI_GSSAPI_KRB': false,
         # 'HAVE_GSS_STR_TO_OID': false,
         # 'HAVE_MYSQL_GET_OPTION': false,
         # 'HAVE_MYSQL_OPT_RECONNECT': false,
@@ -71,8 +55,6 @@ conf_data = configuration_data(
         # 'HAVE_PGSQL_SSL': false,
         # 'HAVE_PGSQL_TCP_USER_TIMEOUT': false,
         # 'HAVE_SYS_FILIO_H': false,
-        # 'HAVE_TLS_1_2_METHOD': false,
-        # 'HAVE_UNISTD_H': false,
         # 'HAVE_VALGRIND_HEADERS': false,
         # 'LIBC_MUSL': false,
         # 'PACKAGE': 'kea',
@@ -150,6 +132,26 @@ boost_dep = dependency('boost', version: '>=1.66')
 threads_dep = dependency('threads')
 add_project_dependencies(boost_dep, threads_dep, language: ['cpp'])
 
+# check boost headers
+boost_headers = [
+    'boost/asio.hpp',
+    'boost/asio/coroutine.hpp',
+    'boost/asio/ip/address.hpp',
+    'boost/asio/signal_set.hpp',
+    'boost/asio/ssl.hpp',
+    'boost/circular_buffer.hpp',
+    'boost/date_time/posix_time/posix_time_types.hpp',
+    'boost/foreach.hpp',
+    'boost/functional/hash.hpp',
+    'boost/integer/common_factor.hpp',
+    'boost/interprocess/sync/interprocess_upgradable_mutex.hpp',
+    'boost/shared_ptr.hpp',
+    'boost/system/error_code.hpp',
+]
+foreach hdr : boost_headers
+    cpp.has_header(hdr, required: true)
+endforeach
+
 # Logging
 # TODO: remove fallback when support for Ubuntu 20.04 gets removed.
 LOG4CPLUS_DEP = dependency('log4cplus', fallback: ['log4cplus', 'log4cplus'])
@@ -171,6 +173,14 @@ KRB5_DEP = dependency(
     fallback: ['krb5', 'krb5'],
     required: krb5_opt,
 )
+if KRB5_DEP.found()
+    cpp.has_header('gssapi/gssapi.h', dependencies: [KRB5_DEP], required: true)
+    cpp.has_header(
+        'gssapi/gssapi_krb5.h',
+        dependencies: [KRB5_DEP],
+        required: true,
+    )
+endif
 
 # MySQL
 MYSQL_DEP = dependency(
@@ -192,7 +202,10 @@ NETCONF_DEP = dependency(
     fallback: ['netconf', 'netconf'],
     required: netconf_opt,
 )
-if netconf_opt.enabled() and NETCONF_DEP.get_variable('libyang_prefix', default_value: 'unknown') == 'unknown'
+if netconf_opt.enabled() and NETCONF_DEP.get_variable(
+    'libyang_prefix',
+    default_value: 'unknown',
+) == 'unknown'
     error('Dependency not found: NETCONF.')
 endif
 
@@ -285,6 +298,13 @@ if MYSQL_DEP.found()
         dependencies: [MYSQL_DEP],
     )
     conf_data.set('HAVE_MYSQL_MY_BOOL', result.returncode() == 0)
+
+    result = cpp.run(
+        fs.read('compiler-checks/mysql-get-option.cc'),
+        name: 'HAVE_MYSQL_GET_OPTION',
+        dependencies: [MYSQL_DEP],
+    )
+    conf_data.set('HAVE_MYSQL_GET_OPTION', result.returncode() == 0)
 endif
 
 result = cpp.run(
@@ -300,6 +320,55 @@ result = cpp.run(
     name: 'FUZZING_WITH_CLUSTERFUZZLITE',
 )
 FUZZING_WITH_CLUSTERFUZZLITE = result.returncode() == 0
+
+if FUZZ_OPT.enabled()
+    result = cpp.run(fs.read('compiler-checks/have-afl.cc'), name: 'HAVE_AFL')
+    conf_data.set('HAVE_AFL', result.returncode() == 0)
+endif
+
+if GTEST_DEP.found()
+    result = cpp.run(
+        fs.read('compiler-checks/have-create-unified-diff.cc'),
+        name: 'HAVE_CREATE_UNIFIED_DIFF',
+        dependencies: [GTEST_DEP],
+    )
+    conf_data.set('HAVE_CREATE_UNIFIED_DIFF', result.returncode() == 0)
+endif
+
+if KRB5_DEP.found()
+    result = cpp.run(
+        fs.read('compiler-checks/have-gss-str-to-oid.cc'),
+        name: 'HAVE_GSS_STR_TO_OID',
+        dependencies: [KRB5_DEP],
+    )
+    conf_data.set('HAVE_GSS_STR_TO_OID', result.returncode() == 0)
+endif
+
+#### Other checks.
+
+if POSTGRESQL_DEP.found()
+    version = POSTGRESQL_DEP.version()
+    conf_data.set(
+        'HAVE_PGSQL_TCP_USER_TIMEOUT',
+        version.version_compare('>=12.0'),
+    )
+endif
+
+# For Solaris.
+conf_data.set('HAVE_SYS_FILIO_H', cpp.has_header('sys/filio.h', required: false))
+
+if valgrind.found()
+    conf_data.set(
+        'HAVE_VALGRIND_HEADERS',
+        cpp.has_header('valgrind/valgrind.h', required: false),
+    )
+endif
+
+result = run_command(cpp, '-dumpmachine', check: false)
+if result.returncode() == 0
+    d = result.stdout().strip()
+    conf_data.set('LIBC_MUSL', d.endswith('-musl'))
+endif
 
 #### System-specific Compiler Flags
 
@@ -697,4 +766,3 @@ install_emptydir('var/run/kea')
 
 # Print the setup report.
 message(run_command(['cat', CONFIG_REPORT], check: true).stdout())
-
