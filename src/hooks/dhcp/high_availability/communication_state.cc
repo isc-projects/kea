@@ -169,7 +169,7 @@ CommunicationState::setPartnerScopesInternal(ConstElementPtr new_scopes) {
     }
 
     std::set<std::string> partner_scopes;
-    for (auto i = 0; i < new_scopes->size(); ++i) {
+    for (unsigned i = 0; i < new_scopes->size(); ++i) {
         auto scope = new_scopes->get(i);
         if (scope->getType() != Element::string) {
             isc_throw(BadValue, "unable to record partner's HA scopes because"

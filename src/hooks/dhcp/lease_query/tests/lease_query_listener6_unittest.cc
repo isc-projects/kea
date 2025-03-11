@@ -426,7 +426,7 @@ TEST_F(LeaseQueryListenerTest6, multipleQueries) {
     ASSERT_EQ(SERVER_PORT, listener->getLocalPort());
     size_t num_requests = 4;
     std::list<BlqQueryPtr> requests;
-    for (auto i = 0; i < num_requests; ++i) {
+    for (size_t i = 0; i < num_requests; ++i) {
         BlqQueryPtr request =
             makeBlqQueryByIpAddress(IOAddress("2001:db8::1"));
         requests.push_back(request);
@@ -460,7 +460,7 @@ TEST_F(LeaseQueryListenerTest6, multipleClientsListen) {
     ASSERT_EQ(SERVER_PORT, listener->getLocalPort());
     size_t num_clients = 5;
     std::list<BlqQueryPtr> requests;
-    for (auto i = 0; i < num_clients; ++i) {
+    for (size_t i = 0; i < num_clients; ++i) {
         BlqQueryPtr request =
             makeBlqQueryByIpAddress(IOAddress("2001:db8::1"));
         ASSERT_NO_THROW(startRequest(request));
@@ -494,9 +494,9 @@ TEST_F(LeaseQueryListenerTest6, multipleRequetsPerClients) {
     ASSERT_EQ(SERVER_PORT, listener->getLocalPort());
     size_t num_clients = 5;
     size_t num_requests = 4;
-    for (auto i = 0; i < num_clients; ++i) {
+    for (size_t i = 0; i < num_clients; ++i) {
         std::list<BlqQueryPtr> requests;
-        for (auto j = 0; j < num_requests; ++j) {
+        for (size_t j = 0; j < num_requests; ++j) {
             BlqQueryPtr request =
                 makeBlqQueryByIpAddress(IOAddress("2001:db8::1"));
             requests.push_back(request);
@@ -531,7 +531,7 @@ TEST_F(LeaseQueryListenerTest6, filterClientsTest) {
     ASSERT_EQ(SERVER_PORT, listener->getLocalPort());
     size_t num_clients = 5;
     std::list<BlqQueryPtr> requests;
-    for (auto i = 0; i < num_clients; ++i) {
+    for (size_t i = 0; i < num_clients; ++i) {
         // Every other client sends nothing (i.e. waits for EOF) as
         // we expect the filter to reject them.
         if (i % 2 == 0) {

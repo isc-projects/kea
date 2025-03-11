@@ -60,7 +60,7 @@ void OptionVendor::unpack(OptionBufferConstIter begin,
                           OptionBufferConstIter end) {
     // We throw SkipRemainingOptionsError so callers can
     // abandon further unpacking, if desired.
-    if (distance(begin, end) < sizeof(uint32_t)) {
+    if (static_cast<size_t>(distance(begin, end)) < sizeof(uint32_t)) {
         isc_throw(SkipRemainingOptionsError,
                   "Truncated vendor-specific information option"
                   << ", length=" << distance(begin, end));

@@ -319,7 +319,7 @@ TEST(ParserTest, file) {
                                "vivso.json",
                                "with-ddns.json" };
 
-    for (int i = 0; i<configs.size(); i++) {
+    for (unsigned i = 0; i<configs.size(); i++) {
         testFile(string(CFG_EXAMPLES) + "/" + configs[i]);
     }
 }

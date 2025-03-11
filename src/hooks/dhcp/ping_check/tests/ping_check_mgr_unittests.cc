@@ -535,7 +535,7 @@ public:
     /// @return last target address started.
     IOAddress startTargets(size_t num_targets, IOAddress start_address = IOAddress("127.0.0.1")) {
         IOAddress target = start_address;
-        for (auto i = 0; i < num_targets; ++i) {
+        for (size_t i = 0; i < num_targets; ++i) {
             auto lqp = makeLeaseQueryPair(IOAddress(target), i+1);
             HooksManager::park("lease4_offer", lqp.query_,
                 [this, lqp]() {
@@ -849,7 +849,7 @@ public:
         // Now let's start 3 contexts.
         size_t num_targets = 3;
         IOAddress target("127.0.0.1");
-        for (auto i = 0; i < num_targets; ++i) {
+        for (size_t i = 0; i < num_targets; ++i) {
             auto lqp = makeLeaseQueryPair(IOAddress(target), i+1);
 
             // Call startPing().
@@ -911,7 +911,7 @@ public:
         // Now let's start 3 contexts.
         size_t num_targets = 3;
         IOAddress target("127.0.0.1");
-        for (auto i = 0; i < num_targets; ++i) {
+        for (size_t i = 0; i < num_targets; ++i) {
             auto lqp = makeLeaseQueryPair(IOAddress(target), i+1);
 
             // Call startPing().
@@ -1295,7 +1295,7 @@ public:
         ASSERT_TRUE(mgr_);
 
         // Install a post reply received callback to stop the test if we're done.
-        int num_targets = 25;
+        size_t num_targets = 25;
         mgr_->post_reply_received_cb_ =
             [this, num_targets](const ICMPMsgPtr& /* reply */) {
                 MultiThreadingLock lock(*mutex_);

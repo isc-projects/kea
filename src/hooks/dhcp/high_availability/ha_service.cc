@@ -1652,7 +1652,7 @@ HAService::logFailedLeaseUpdates(const PktPtr& query,
         // The failed leases must be a list.
         if (failed_leases && (failed_leases->getType() == Element::list)) {
             // Go over the failed leases and log each of them.
-            for (int i = 0; i < failed_leases->size(); ++i) {
+            for (unsigned i = 0; i < failed_leases->size(); ++i) {
                 auto lease = failed_leases->get(i);
                 if (lease->getType() == Element::map) {
 
@@ -3260,7 +3260,7 @@ HAService::verifyAsyncResponse(const HttpResponsePtr& response, int& rcode) {
             }
             auto conflict = false;
             ConstElementPtr conflict_error_message;
-            for (auto i = 0; i < failed_leases->size(); ++i) {
+            for (unsigned i = 0; i < failed_leases->size(); ++i) {
                 auto lease = failed_leases->get(i);
                 if (!lease || lease->getType() != Element::map) {
                     continue;

@@ -423,7 +423,7 @@ TEST_F(LeaseQueryListenerTest4, multipleQueries) {
     ClientIdPtr cid(new ClientId(vector<uint8_t>{ 1, 2, 3, 4 }));
     size_t num_requests = 4;
     std::list<BlqQueryPtr> requests;
-    for (auto i = 0; i < num_requests; ++i) {
+    for (size_t i = 0; i < num_requests; ++i) {
         BlqQueryPtr request = makeBlqQueryByClientId(cid);
         requests.push_back(request);
     }
@@ -457,7 +457,7 @@ TEST_F(LeaseQueryListenerTest4, multipleClientsListen) {
     ClientIdPtr cid(new ClientId(vector<uint8_t>{ 1, 2, 3, 4 }));
     size_t num_clients = 5;
     std::list<BlqQueryPtr> requests;
-    for (auto i = 0; i < num_clients; ++i) {
+    for (size_t i = 0; i < num_clients; ++i) {
         BlqQueryPtr request = makeBlqQueryByClientId(cid);
         ASSERT_NO_THROW(startRequest(request));
         requests.push_back(request);
@@ -491,9 +491,9 @@ TEST_F(LeaseQueryListenerTest4, multipleRequetsPerClients) {
     ClientIdPtr cid(new ClientId(vector<uint8_t>{ 1, 2, 3, 4 }));
     size_t num_clients = 5;
     size_t num_requests = 4;
-    for (auto i = 0; i < num_clients; ++i) {
+    for (size_t i = 0; i < num_clients; ++i) {
         std::list<BlqQueryPtr> requests;
-        for (auto j = 0; j < num_requests; ++j) {
+        for (size_t j = 0; j < num_requests; ++j) {
             BlqQueryPtr request = makeBlqQueryByClientId(cid);
             requests.push_back(request);
         }
@@ -528,7 +528,7 @@ TEST_F(LeaseQueryListenerTest4, filterClientsTest) {
     ClientIdPtr cid(new ClientId(vector<uint8_t>{ 1, 2, 3, 4 }));
     size_t num_clients = 5;
     std::list<BlqQueryPtr> requests;
-    for (auto i = 0; i < num_clients; ++i) {
+    for (size_t i = 0; i < num_clients; ++i) {
         // Every other client sends nothing (i.e. waits for EOF) as
         // we expect the filter to reject them.
         if (i % 2 == 0) {

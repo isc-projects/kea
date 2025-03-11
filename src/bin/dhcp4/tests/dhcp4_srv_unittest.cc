@@ -2836,7 +2836,7 @@ void removeAuthFiles(ConstElementPtr elem) {
     ElementPtr mutable_clients = boost::const_pointer_cast<Element>(clients);
     for (;;) {
         bool found = false;
-        for (int i = 0; i < clients->size(); ++i) {
+        for (unsigned i = 0; i < clients->size(); ++i) {
             ConstElementPtr client = clients->get(i);
             if (client->contains("user-file") ||
                 client->contains("password-file")) {
@@ -2906,7 +2906,7 @@ Dhcpv4SrvTest::loadConfigFile(const string& path) {
     }
     control_sockets = dhcp4->get("control-sockets");
     if (control_sockets) {
-        for (int i = 0; i < control_sockets->size(); ++i) {
+        for (unsigned i = 0; i < control_sockets->size(); ++i) {
             removeAuthFiles(control_sockets->get(i));
         }
         control_sockets = redactConfig(control_sockets, { "*" }, "-----");

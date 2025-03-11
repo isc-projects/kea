@@ -122,7 +122,7 @@ TEST_F(Lease4Test, constructor) {
         0x00000000, 0x01020304, 0x7fffffff, 0x80000000, 0x80000001, 0xffffffff
     };
 
-    for (int i = 0; i < sizeof(ADDRESS) / sizeof(ADDRESS[0]); ++i) {
+    for (unsigned i = 0; i < sizeof(ADDRESS) / sizeof(ADDRESS[0]); ++i) {
 
         // Create the lease
         Lease4 lease(ADDRESS[i], hwaddr_, clientid_, VALID_LIFETIME,
@@ -657,7 +657,7 @@ TEST(Lease6Test, constructorDefault) {
     uint32_t iaid = IAID;   // Just a number
     SubnetID subnet_id = 8; // Just another number
 
-    for (int i = 0; i < sizeof(ADDRESS) / sizeof(ADDRESS[0]); ++i) {
+    for (unsigned i = 0; i < sizeof(ADDRESS) / sizeof(ADDRESS[0]); ++i) {
         IOAddress addr(ADDRESS[i]);
         Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr,
                                duid, iaid, 100, 200,
@@ -731,7 +731,7 @@ TEST(Lease6Test, constructorWithFQDN) {
     uint32_t iaid = IAID;   // Just a number
     SubnetID subnet_id = 8; // Just another number
 
-    for (int i = 0; i < sizeof(ADDRESS) / sizeof(ADDRESS[0]); ++i) {
+    for (unsigned i = 0; i < sizeof(ADDRESS) / sizeof(ADDRESS[0]); ++i) {
         IOAddress addr(ADDRESS[i]);
         Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr,
                                    duid, iaid, 100, 200, subnet_id,

@@ -367,7 +367,7 @@ TEST(SharedNetwork4Test, getNextSubnet) {
 
     // Subnets have unique IDs so they should successfully be added to the
     // network.
-    for (auto i = 0; i < subnets.size(); ++i) {
+    for (unsigned i = 0; i < subnets.size(); ++i) {
         ASSERT_NO_THROW(network->add(subnets[i]))
             << "failed to add subnet with id " << subnets[i]->getID()
             << " to shared network";
@@ -375,7 +375,7 @@ TEST(SharedNetwork4Test, getNextSubnet) {
 
     // Collect networks associated with our subnets in the vector.
     std::vector<SharedNetwork4Ptr> networks;
-    for (auto i = 0; i < subnets.size(); ++i) {
+    for (unsigned i = 0; i < subnets.size(); ++i) {
         SharedNetwork4Ptr net;
         subnets[i]->getSharedNetwork(net);
         ASSERT_TRUE(net) << "failed to retrieve shared network for a"
@@ -384,17 +384,17 @@ TEST(SharedNetwork4Test, getNextSubnet) {
     }
 
     // All subnets should be associated with the same network.
-    for (auto i = 1; i < networks.size(); ++i) {
+    for (unsigned i = 1; i < networks.size(); ++i) {
         EXPECT_TRUE(networks[0] == networks[i]);
     }
 
     // Perform the test 3 times where each subnet belonging to the shared
     // network is treated as a "first" subnet in the call to getNextSubnet.
-    for (auto i = 0; i < subnets.size(); ++i) {
+    for (unsigned i = 0; i < subnets.size(); ++i) {
         ConstSubnet4Ptr s = subnets[i];
 
         // Iterate over the subnets starting from the subnet with index i.
-        for (auto j = 0; j < subnets.size(); ++j) {
+        for (unsigned j = 0; j < subnets.size(); ++j) {
             // Get next subnet (following the one currently in s).
             s = networks[0]->getNextSubnet(subnets[i], s->getID());
             // The last iteration should return empty pointer to indicate end of
@@ -457,7 +457,7 @@ TEST(SharedNetwork4Test, getPreferredSubnet) {
 
     // Subnets have unique IDs so they should successfully be added to the
     // network.
-    for (auto i = 0; i < subnets.size(); ++i) {
+    for (unsigned i = 0; i < subnets.size(); ++i) {
         ASSERT_NO_THROW(network->add(subnets[i]))
             << "failed to add subnet with id " << subnets[i]->getID()
             << " to shared network";
@@ -467,7 +467,7 @@ TEST(SharedNetwork4Test, getPreferredSubnet) {
 
     // Initially, for every subnet we should get the same subnet as the preferred
     // one, because none of them have been used.
-    for (auto i = 0; i < subnets.size(); ++i) {
+    for (unsigned i = 0; i < subnets.size(); ++i) {
         preferred = network->getPreferredSubnet(subnets[i]);
         EXPECT_EQ(subnets[i]->getID(), preferred->getID());
     }
@@ -556,7 +556,7 @@ TEST(SharedNetwork4Test, getPreferredSubnetMultiThreading) {
 
     // Subnets have unique IDs so they should successfully be added to the
     // network.
-    for (auto i = 0; i < subnets.size(); ++i) {
+    for (unsigned i = 0; i < subnets.size(); ++i) {
         ASSERT_NO_THROW(network->add(subnets[i]))
             << "failed to add subnet with id " << subnets[i]->getID()
             << " to shared network";
@@ -566,7 +566,7 @@ TEST(SharedNetwork4Test, getPreferredSubnetMultiThreading) {
 
     // Initially, for every subnet we should get the same subnet as the preferred
     // one, because none of them have been used.
-    for (auto i = 0; i < subnets.size(); ++i) {
+    for (unsigned i = 0; i < subnets.size(); ++i) {
         preferred = network->getPreferredSubnet(subnets[i]);
         EXPECT_EQ(subnets[i]->getID(), preferred->getID());
     }
@@ -1116,7 +1116,7 @@ TEST(SharedNetwork6Test, getNextSubnet) {
 
     // Subnets have unique IDs so they should successfully be added to the
     // network.
-    for (auto i = 0; i < subnets.size(); ++i) {
+    for (unsigned i = 0; i < subnets.size(); ++i) {
         ASSERT_NO_THROW(network->add(subnets[i]))
             << "failed to add subnet with id " << subnets[i]->getID()
             << " to shared network";
@@ -1124,7 +1124,7 @@ TEST(SharedNetwork6Test, getNextSubnet) {
 
     // Collect networks associated with our subnets in the vector.
     std::vector<SharedNetwork6Ptr> networks;
-    for (auto i = 0; i < subnets.size(); ++i) {
+    for (unsigned i = 0; i < subnets.size(); ++i) {
         SharedNetwork6Ptr net;
         subnets[i]->getSharedNetwork(net);
         ASSERT_TRUE(net) << "failed to retrieve shared network for a"
@@ -1133,17 +1133,17 @@ TEST(SharedNetwork6Test, getNextSubnet) {
     }
 
     // All subnets should be associated with the same network.
-    for (auto i = 1; i < networks.size(); ++i) {
+    for (unsigned i = 1; i < networks.size(); ++i) {
         EXPECT_TRUE(networks[0] == networks[i]);
     }
 
     // Perform the test 3 times where each subnet belonging to the shared
     // network is treated as a "first" subnet in the call to getNextSubnet.
-    for (auto i = 0; i < subnets.size(); ++i) {
+    for (unsigned i = 0; i < subnets.size(); ++i) {
         ConstSubnet6Ptr s = subnets[i];
 
         // Iterate over the subnets starting from the subnet with index i.
-        for (auto j = 0; j < subnets.size(); ++j) {
+        for (unsigned j = 0; j < subnets.size(); ++j) {
             // Get next subnet (following the one currently in s).
             s = networks[0]->getNextSubnet(subnets[i], s->getID());
             // The last iteration should return empty pointer to indicate end of
@@ -1191,7 +1191,7 @@ TEST(SharedNetwork6Test, getPreferredSubnet) {
 
     // Subnets have unique IDs so they should successfully be added to the
     // network.
-    for (auto i = 0; i < subnets.size(); ++i) {
+    for (unsigned i = 0; i < subnets.size(); ++i) {
         ASSERT_NO_THROW(network->add(subnets[i]))
             << "failed to add subnet with id " << subnets[i]->getID()
             << " to shared network";
@@ -1201,7 +1201,7 @@ TEST(SharedNetwork6Test, getPreferredSubnet) {
 
     // Initially, for every subnet we should get the same subnet as the preferred
     // one, because none of them have been used.
-    for (auto i = 0; i < subnets.size(); ++i) {
+    for (unsigned i = 0; i < subnets.size(); ++i) {
         preferred = network->getPreferredSubnet(subnets[i], Lease::TYPE_NA);
         EXPECT_EQ(subnets[i]->getID(), preferred->getID());
         preferred = network->getPreferredSubnet(subnets[i], Lease::TYPE_TA);
@@ -1295,7 +1295,7 @@ TEST(SharedNetwork6Test, getPreferredSubnetMultiThreading) {
 
     // Subnets have unique IDs so they should successfully be added to the
     // network.
-    for (auto i = 0; i < subnets.size(); ++i) {
+    for (unsigned i = 0; i < subnets.size(); ++i) {
         ASSERT_NO_THROW(network->add(subnets[i]))
             << "failed to add subnet with id " << subnets[i]->getID()
             << " to shared network";
@@ -1305,7 +1305,7 @@ TEST(SharedNetwork6Test, getPreferredSubnetMultiThreading) {
 
     // Initially, for every subnet we should get the same subnet as the preferred
     // one, because none of them have been used.
-    for (auto i = 0; i < subnets.size(); ++i) {
+    for (unsigned i = 0; i < subnets.size(); ++i) {
         preferred = network->getPreferredSubnet(subnets[i], Lease::TYPE_NA);
         EXPECT_EQ(subnets[i]->getID(), preferred->getID());
         preferred = network->getPreferredSubnet(subnets[i], Lease::TYPE_TA);

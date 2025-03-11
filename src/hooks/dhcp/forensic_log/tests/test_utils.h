@@ -305,7 +305,7 @@ public:
         is.open(file_name.c_str());
         ASSERT_TRUE(is.good()) << "Could not open file: " << file_name;
 
-        int i = 0;
+        unsigned i = 0;
         while (!is.eof()) {
             char buf[1024];
 

@@ -88,7 +88,7 @@ public:
 
         // If we've hit the number we want stop the IOService. This will cause
         // run to exit.
-        if (processed_signals_.size() >= stop_at_count_) {
+        if (static_cast<int>(processed_signals_.size()) >= stop_at_count_) {
             io_service_->stop();
         }
     }
@@ -188,7 +188,7 @@ TEST_F(IOSignalTest, hammer) {
 
     // Now check that each signal value is correct. This is sort of a silly
     // check but it does ensure things didn't go off the rails somewhere.
-    for (int i = 0; i < processed_signals_.size(); ++i) {
+    for (unsigned i = 0; i < processed_signals_.size(); ++i) {
         EXPECT_EQ(SIGINT, processed_signals_[i]);
     }
 }

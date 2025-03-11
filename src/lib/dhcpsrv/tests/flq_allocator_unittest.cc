@@ -31,7 +31,7 @@ public:
     Lease4Ptr
     createLease4(const IOAddress& address, uint64_t hw_address_seed) const {
         vector<uint8_t> hw_address_vec(sizeof(hw_address_seed));
-        for (auto i = 0; i < sizeof(hw_address_seed); ++i) {
+        for (unsigned i = 0; i < sizeof(hw_address_seed); ++i) {
             hw_address_vec[i] = (hw_address_seed >> i) & 0xFF;
         }
         auto hw_address = boost::make_shared<HWAddr>(hw_address_vec, HTYPE_ETHER);
@@ -235,8 +235,8 @@ TEST_F(FreeLeaseQueueAllocatorTest4, manyPools) {
     // Verify that the addresses are returned in the random order.
     // Count how many times we found consecutive addresses. It should
     // be 0 or close to 0.
-    int consecutive_addresses = 0;
-    for (auto k = 0; k < addresses_vector.size()-1; ++k) {
+    size_t consecutive_addresses = 0;
+    for (unsigned k = 0; k < addresses_vector.size()-1; ++k) {
         if (addresses_vector[k].toUint32() == addresses_vector[k+1].toUint32()-1) {
             ++consecutive_addresses;
         }
@@ -247,8 +247,8 @@ TEST_F(FreeLeaseQueueAllocatorTest4, manyPools) {
 
     // Repeat similar check for pools. The pools should be picked in the
     // random order too.
-    int consecutive_pools = 0;
-    for (auto k = 0; k < pools_vector.size()-1; ++k) {
+    size_t consecutive_pools = 0;
+    for (unsigned k = 0; k < pools_vector.size()-1; ++k) {
         // Check if the pools are adjacent (i.e., last address of the
         // previous pool is a neighbor of the first address of the next
         // pool).
@@ -348,7 +348,7 @@ public:
     Lease6Ptr
     createLease6(Lease::Type type, const IOAddress& address, uint64_t duid_seed) const {
         vector<uint8_t> duid_vec(sizeof(duid_seed));
-        for (auto i = 0; i < sizeof(duid_seed); ++i) {
+        for (unsigned i = 0; i < sizeof(duid_seed); ++i) {
             duid_vec[i] = (duid_seed >> i) & 0xFF;
         }
         auto duid = boost::make_shared<DUID>(duid_vec);
@@ -566,8 +566,8 @@ TEST_F(FreeLeaseQueueAllocatorTest6, manyPools) {
     // Verify that the addresses are returned in the random order.
     // Count how many times we found consecutive addresses. It should
     // be 0 or close to 0.
-    int consecutive_addresses = 0;
-    for (auto k = 0; k < addresses_vector.size()-1; ++k) {
+    size_t consecutive_addresses = 0;
+    for (unsigned k = 0; k < addresses_vector.size()-1; ++k) {
         if (IOAddress::increase(addresses_vector[k]) == addresses_vector[k+1]) {
             ++consecutive_addresses;
         }
@@ -578,8 +578,8 @@ TEST_F(FreeLeaseQueueAllocatorTest6, manyPools) {
 
     // Repeat similar check for pools. The pools should be picked in the
     // random order too.
-    int consecutive_pools = 0;
-    for (auto k = 0; k < pools_vector.size()-1; ++k) {
+    size_t consecutive_pools = 0;
+    for (unsigned k = 0; k < pools_vector.size()-1; ++k) {
         if (IOAddress::increase(pools_vector[k]->getLastAddress()) ==
             pools_vector[k]->getFirstAddress()) {
             ++consecutive_pools;
@@ -858,7 +858,7 @@ TEST_F(FreeLeaseQueueAllocatorTest6, manyPdPools) {
     Pool6Ptr pool;
 
     std::set<IOAddress> prefixes;
-    for (auto i = 0; i < total; ++i) {
+    for (size_t i = 0; i < total; ++i) {
         IOAddress candidate = alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0);
         EXPECT_TRUE(pool);
         EXPECT_FALSE(candidate.isV6Zero());
@@ -894,7 +894,7 @@ TEST_F(FreeLeaseQueueAllocatorTest6, manyPdPoolsPreferLower) {
     Pool6Ptr pool;
 
     std::set<IOAddress> prefixes;
-    for (auto i = 0; i < total; ++i) {
+    for (size_t i = 0; i < total; ++i) {
         IOAddress candidate = alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_LOWER, IOAddress("::"), 120);
         EXPECT_FALSE(candidate.isV6Zero());
         EXPECT_TRUE(lease_mgr.addLease(createLease6(Lease::TYPE_PD, candidate, i)));
@@ -928,7 +928,7 @@ TEST_F(FreeLeaseQueueAllocatorTest6, manyPdPoolsPreferEqual) {
     Pool6Ptr pool;
 
     std::set<IOAddress> prefixes;
-    for (auto i = 0; i < total; ++i) {
+    for (size_t i = 0; i < total; ++i) {
         IOAddress candidate = alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_EQUAL, IOAddress("::"), 128);
         EXPECT_FALSE(candidate.isV6Zero());
         EXPECT_TRUE(lease_mgr.addLease(createLease6(Lease::TYPE_PD, candidate, i)));
@@ -962,7 +962,7 @@ TEST_F(FreeLeaseQueueAllocatorTest6, manyPdPoolsPreferHigher) {
     Pool6Ptr pool;
 
     std::set<IOAddress> prefixes;
-    for (auto i = 0; i < total; ++i) {
+    for (size_t i = 0; i < total; ++i) {
         IOAddress candidate = alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 64);
         EXPECT_FALSE(candidate.isV6Zero());
         EXPECT_TRUE(lease_mgr.addLease(createLease6(Lease::TYPE_PD, candidate, i)));

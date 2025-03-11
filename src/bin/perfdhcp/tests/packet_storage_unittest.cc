@@ -55,7 +55,7 @@ public:
 // empty() and size() functions.
 TEST_F(PacketStorageTest, getNext) {
     ASSERT_EQ(STORAGE_SIZE, storage_.size());
-    for (int i = 0; i < STORAGE_SIZE; ++i) {
+    for (unsigned i = 0; i < STORAGE_SIZE; ++i) {
         Pkt6Ptr packet = storage_.getNext();
         ASSERT_TRUE(packet) << "NULL packet returned by storage_.getNext() for"
                             << " iteration number " << i;
@@ -87,8 +87,8 @@ TEST_F(PacketStorageTest, getNext) {
 // empty() and size() functions.
 TEST_F(PacketStorageTest, getRandom) {
     ASSERT_EQ(STORAGE_SIZE, storage_.size());
-    int cnt_equals = 0;
-    for (int i = 0; i < STORAGE_SIZE; ++i) {
+    size_t cnt_equals = 0;
+    for (unsigned i = 0; i < STORAGE_SIZE; ++i) {
         Pkt6Ptr packet = storage_.getRandom();
         ASSERT_TRUE(packet) << "NULL packet returned by storage_.getRandom()"
             " for iteration number " << i;
@@ -126,7 +126,7 @@ TEST_F(PacketStorageTest, getRandom) {
 // each returned packet is removed from the storage.
 TEST_F(PacketStorageTest, getNextAndRandom) {
     ASSERT_EQ(STORAGE_SIZE, storage_.size());
-    for (int i = 0; i < STORAGE_SIZE / 2; ++i) {
+    for (unsigned i = 0; i < STORAGE_SIZE / 2; ++i) {
         Pkt6Ptr packet_random = storage_.getRandom();
         ASSERT_TRUE(packet_random) << "NULL packet returned by"
             " storage_.getRandom() for iteration number " << i;

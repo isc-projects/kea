@@ -466,7 +466,7 @@ public:
         // Calculate the expected number of requests.
         expected_requests_ = (num_batches_ * num_listeners_ * effective_threads);
 
-        for (auto i = 0; i < num_listeners_; ++i) {
+        for (unsigned i = 0; i < num_listeners_; ++i) {
             // Make a factory
             HttpResponseCreatorFactoryPtr factory(new TestHttpResponseCreatorFactory(SERVER_PORT + i));
             factories_.push_back(factory);
@@ -634,7 +634,7 @@ public:
         size_t total_requests = (num_batches_ * num_listeners_ * num_threads_);
 
         // Create the listeners.
-        for (auto i = 0; i < num_listeners_; ++i) {
+        for (unsigned i = 0; i < num_listeners_; ++i) {
             // Make a factory
             HttpResponseCreatorFactoryPtr factory(new TestHttpResponseCreatorFactory(SERVER_PORT + i));
             factories_.push_back(factory);

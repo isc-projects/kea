@@ -328,7 +328,7 @@ TEST(ParserTest, file) {
     configs.push_back("tee-times.json");
     configs.push_back("with-ddns.json");
 
-    for (int i = 0; i<configs.size(); i++) {
+    for (unsigned i = 0; i<configs.size(); i++) {
         testFile(string(CFG_EXAMPLES) + "/" + configs[i]);
     }
 }

@@ -203,7 +203,7 @@ FauxServer::requestHandler(const boost::system::error_code& error,
                                                  response_buf.getLength()),
                                           remote_);
         // Make sure we sent what we expect to send.
-        if (cnt != response_buf.getLength()) {
+        if (static_cast<size_t>(cnt) != response_buf.getLength()) {
             ADD_FAILURE() << "FauxServer sent: " << cnt << " expected: "
                           << response_buf.getLength();
         }
@@ -822,7 +822,7 @@ std::string
 toHexText(const uint8_t* data, size_t len) {
     std::ostringstream stream;
     stream << "Data length is: " << len << std::endl;
-    for (int i = 0; i < len; ++i) {
+    for (size_t i = 0; i < len; ++i) {
         if (i > 0 && ((i % 16) == 0)) {
             stream << std::endl;
         }
@@ -980,8 +980,8 @@ checkSimpleRemoveRevPtrsRequest(NameChangeTransaction& tran) {
 
 // Verifies the current state and next event in a transaction
 void
-checkContext(NameChangeTransactionPtr trans, const int exp_state,
-             const int exp_evt, const std::string& file, int line) {
+checkContext(NameChangeTransactionPtr trans, const unsigned int exp_state,
+             const unsigned int exp_evt, const std::string& file, int line) {
     ASSERT_TRUE(trans);
     ASSERT_TRUE(exp_state == trans->getCurrState() && exp_evt == trans->getNextEvent())
             << "expected state: " << trans->getStateLabel(exp_state)

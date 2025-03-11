@@ -189,7 +189,7 @@ TEST_F(RotatingFileTest, writeFile) {
     std::vector<std::string> today_lines;
     today_lines.push_back("one");
     today_lines.push_back("two");
-    for (int i = 0; i < today_lines.size(); i++) {
+    for (unsigned i = 0; i < today_lines.size(); i++) {
         ASSERT_NO_THROW(rotating_file_->writeln(today_lines[i], ""));
     }
 
@@ -204,7 +204,7 @@ TEST_F(RotatingFileTest, writeFile) {
     std::vector<std::string> tomorrow_lines;
     tomorrow_lines.push_back("three");
     tomorrow_lines.push_back("four");
-    for (int i = 0; i < today_lines.size(); i++) {
+    for (unsigned i = 0; i < today_lines.size(); i++) {
         ASSERT_NO_THROW(rotating_file_->writeln(tomorrow_lines[i], ""));
     }
 

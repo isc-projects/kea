@@ -326,7 +326,7 @@ PingChannelTest::sendReceiveTest(size_t num_threads, size_t num_targets /* = 25 
 
     //  Fill the send queue with num_target addresses to ping.
     IOAddress target("127.0.0.1");
-    for (auto i = 0; i < num_targets; ++i) {
+    for (size_t i = 0; i < num_targets; ++i) {
         send_queue_.push(target);
         target = IOAddress::increase(target);
     }
@@ -424,7 +424,7 @@ PingChannelTest::ioErrorTest(const std::function<void()>& set_error_trigger,
 
     //  Fill the send queue with target addresses to ping.
     IOAddress target("127.0.0.1");
-    for (auto i = 0; i < (num_targets / 2); ++i) {
+    for (size_t i = 0; i < (num_targets / 2); ++i) {
         send_queue_.push(target);
         target = IOAddress::increase(target);
     }
@@ -479,7 +479,7 @@ PingChannelTest::ioErrorTest(const std::function<void()>& set_error_trigger,
     };
 
     //  Fill the send queue with target addresses to ping.
-    for (auto i = 0; i < (num_targets / 2); ++i) {
+    for (size_t i = 0; i < (num_targets / 2); ++i) {
         send_queue_.push(target);
         target = IOAddress::increase(target);
     }

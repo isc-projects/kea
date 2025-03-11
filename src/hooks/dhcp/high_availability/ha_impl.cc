@@ -44,7 +44,7 @@ void
 HAImpl::startServices(const NetworkStatePtr& network_state,
                       const HAServerType& server_type) {
     auto configs = config_->getAll();
-    for (auto id = 0; id < configs.size(); ++id) {
+    for (unsigned id = 0; id < configs.size(); ++id) {
         // Create the HA service and crank up the state machine.
         auto service = boost::make_shared<HAService>(id, io_service_, network_state,
                                                      configs[id], server_type);

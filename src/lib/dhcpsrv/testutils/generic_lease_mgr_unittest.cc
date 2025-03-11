@@ -2215,7 +2215,7 @@ GenericLeaseMgrTest::testGetExpiredLeases4() {
 
     // This time let's reverse the expiration time and see if they will be returned
     // in the correct order.
-    for (int i = 0; i < leases.size(); ++i) {
+    for (unsigned i = 0; i < leases.size(); ++i) {
         // Update the time of expired leases with even indexes.
         if (i % 2 == 0) {
             leases[i]->cltt_ = current_time - leases[i]->valid_lft_ - 1000 + i;
@@ -2261,7 +2261,7 @@ GenericLeaseMgrTest::testGetExpiredLeases4() {
     }
 
     // Mark every other expired lease as reclaimed.
-    for (int i = 0; i < saved_expired_leases.size(); ++i) {
+    for (unsigned i = 0; i < saved_expired_leases.size(); ++i) {
         if (i % 2 != 0) {
             saved_expired_leases[i]->state_ = Lease::STATE_EXPIRED_RECLAIMED;
         }
@@ -2336,7 +2336,7 @@ GenericLeaseMgrTest::testGetExpiredLeases6() {
 
     // This time let's reverse the expiration time and see if they will be returned
     // in the correct order.
-    for (int i = 0; i < leases.size(); ++i) {
+    for (unsigned i = 0; i < leases.size(); ++i) {
         // Update the time of expired leases with even indexes.
         if (i % 2 == 0) {
             leases[i]->cltt_ = current_time - leases[i]->valid_lft_ - 1000 + i;
@@ -2381,7 +2381,7 @@ GenericLeaseMgrTest::testGetExpiredLeases6() {
     }
 
     // Mark every other expired lease as reclaimed.
-    for (int i = 0; i < saved_expired_leases.size(); ++i) {
+    for (unsigned i = 0; i < saved_expired_leases.size(); ++i) {
         if (i % 2 != 0) {
             saved_expired_leases[i]->state_ = Lease::STATE_EXPIRED_RECLAIMED;
         }
@@ -2729,7 +2729,7 @@ GenericLeaseMgrTest::testGetDeclinedLeases4() {
     // This time let's reverse the expiration time and see if they will be returned
     // in the correct order.
     leases = createLeases4();
-    for (int i = 0; i < leases.size(); ++i) {
+    for (unsigned i = 0; i < leases.size(); ++i) {
 
         // Mark the second half of the leases as DECLINED
         if (i >= leases.size()/2) {
@@ -2879,7 +2879,7 @@ GenericLeaseMgrTest::testGetDeclinedLeases6() {
     // This time let's reverse the expiration time and see if they will be returned
     // in the correct order.
     leases = createLeases6();
-    for (int i = 0; i < leases.size(); ++i) {
+    for (unsigned i = 0; i < leases.size(); ++i) {
 
         // Mark the second half of the leases as DECLINED
         if (i >= leases.size()/2) {
@@ -2948,7 +2948,7 @@ GenericLeaseMgrTest::checkLeaseStats(const StatValMapList& expectedStats) {
     int64_t reclaimed_declined_addresses = 0;
 
     // Iterate over all stats for each subnet
-    for (int subnet_idx = 0; subnet_idx < expectedStats.size(); ++subnet_idx) {
+    for (unsigned subnet_idx = 0; subnet_idx < expectedStats.size(); ++subnet_idx) {
         for (auto const& expectedStat : expectedStats[subnet_idx]) {
             // Verify the per subnet value.
             checkStat(stats::StatsMgr::generateName("subnet", subnet_idx + 1,

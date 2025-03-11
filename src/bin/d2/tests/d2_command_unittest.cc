@@ -1164,7 +1164,7 @@ TEST_F(CtrlChannelD2Test, longCommand) {
     // The actual size sent will be slightly greater than that.
     const size_t command_size = 1024 * 1000;
 
-    while (command.tellp() < command_size) {
+    while (command.tellp() < static_cast<std::streampos>(command_size)) {
 
         // We're sending command 'foo' with arguments being a list of
         // strings. If this is the first transmission, send command name
@@ -1183,7 +1183,7 @@ TEST_F(CtrlChannelD2Test, longCommand) {
 
             // If we have hit the limit of the command size, close braces to
             // get appropriate JSON.
-            if (command.tellp() > command_size) {
+            if (command.tellp() > static_cast<std::streampos>(command_size)) {
                 command << "] }";
             }
         }
@@ -1287,7 +1287,7 @@ TEST_F(CtrlChannelD2Test, longResponse) {
         ASSERT_TRUE(client->sendCommand(command));
 
         // Keep receiving response data until we have received the full answer.
-        while (response.tellp() < long_response_size) {
+        while (response.tellp() < static_cast<std::streampos>(long_response_size)) {
             std::string partial;
             const unsigned int timeout = 5;
             ASSERT_TRUE(client->getResponse(partial, timeout));

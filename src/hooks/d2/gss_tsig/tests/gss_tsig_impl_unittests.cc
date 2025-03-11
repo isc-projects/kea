@@ -120,7 +120,7 @@ public:
         } catch (...) {
         }
         if (expected_keys_ != -1) {
-            if (impl_->keys_.size() != expected_keys_) {
+            if (static_cast<int32_t>(impl_->keys_.size()) != expected_keys_) {
                 go_on_ = false;
                 FAIL() << "The number of expected keys " << expected_keys_
                        << " is different than actual " << impl_->keys_.size();

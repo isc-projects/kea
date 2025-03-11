@@ -317,7 +317,7 @@ TEST_F(D2ProcessTest, queueFullRecovery) {
     // Manually enqueue max requests.
     dhcp_ddns::NameChangeRequestPtr ncr;
     ASSERT_NO_THROW(ncr = dhcp_ddns::NameChangeRequest::fromJSON(test_msg));
-    for (int i = 0; i < max_queue_size; i++) {
+    for (size_t i = 0; i < max_queue_size; i++) {
         // Verify that the request can be added to the queue and queue
         // size increments accordingly.
         ASSERT_NO_THROW(queue_mgr->enqueue(ncr));
@@ -338,7 +338,7 @@ TEST_F(D2ProcessTest, queueFullRecovery) {
     // dequeue, until we reach the resume threshold.  This simulates update
     // manager consuming jobs.  Queue manager should remain stopped during
     // this loop.
-    int resume_threshold = (max_queue_size * QUEUE_RESTART_PERCENT);
+    size_t resume_threshold = (max_queue_size * QUEUE_RESTART_PERCENT);
     while (queue_mgr->getQueueSize() > resume_threshold) {
         checkQueueStatus();
         ASSERT_EQ(D2QueueMgr::STOPPED_QUEUE_FULL, queue_mgr->getMgrState());

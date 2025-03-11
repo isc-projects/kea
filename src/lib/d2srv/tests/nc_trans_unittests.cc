@@ -1133,7 +1133,7 @@ TEST_F(NameChangeTransactionTest, tsigAllValid) {
     algorithms.push_back(TSIGKeyInfo::HMAC_SHA384_STR);
     algorithms.push_back(TSIGKeyInfo::HMAC_SHA512_STR);
 
-    for (int i = 0; i < algorithms.size(); ++i) {
+    for (unsigned i = 0; i < algorithms.size(); ++i) {
         SCOPED_TRACE(algorithms[i]);
         TSIGKeyInfoPtr key;
         ASSERT_NO_THROW(key.reset(new TSIGKeyInfo("test_key",

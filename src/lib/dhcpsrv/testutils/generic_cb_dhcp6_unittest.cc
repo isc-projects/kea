@@ -544,7 +544,7 @@ GenericConfigBackendDHCPv6Test::createUpdateDeleteServerTest() {
 
 void
 GenericConfigBackendDHCPv6Test::getAndDeleteAllServersTest() {
-    for (auto i = 1; i < test_servers_.size(); ++i) {
+    for (unsigned i = 1; i < test_servers_.size(); ++i) {
         ASSERT_NO_THROW_LOG(cbptr_->createUpdateServer6(test_servers_[i]));
     }
 
@@ -1341,7 +1341,7 @@ GenericConfigBackendDHCPv6Test::getAllSubnets6Test() {
 
     // See if the subnets are returned ok.
     auto subnet_it = subnets.begin();
-    for (auto i = 0; i < subnets.size(); ++i, ++subnet_it) {
+    for (unsigned i = 0; i < subnets.size(); ++i, ++subnet_it) {
         ASSERT_EQ(1, (*subnet_it)->getServerTags().size());
         EXPECT_EQ("all", (*subnet_it)->getServerTags().begin()->get());
         EXPECT_EQ(test_subnets_[i + 1]->toElement()->str(),
@@ -1774,7 +1774,7 @@ GenericConfigBackendDHCPv6Test::getModifiedSubnets6Test() {
     test_subnets_[3]->setModificationTime(timestamps_["today"]);
 
     // Insert subnets into the database.
-    for (int i = 1; i < test_subnets_.size(); ++i) {
+    for (unsigned i = 1; i < test_subnets_.size(); ++i) {
         cbptr_->createUpdateSubnet6(ServerSelector::ALL(),
                                     test_subnets_[i]);
     }
@@ -2293,7 +2293,7 @@ GenericConfigBackendDHCPv6Test::getAllSharedNetworks6Test() {
     ASSERT_EQ(test_networks_.size() - 1, networks.size());
 
     // See if shared networks are returned ok.
-    for (auto i = 0; i < networks.size(); ++i) {
+    for (unsigned i = 0; i < networks.size(); ++i) {
         EXPECT_EQ(test_networks_[i + 1]->toElement()->str(),
                   networks[i]->toElement()->str());
         ASSERT_EQ(1, networks[i]->getServerTags().size());
@@ -2505,7 +2505,7 @@ GenericConfigBackendDHCPv6Test::getModifiedSharedNetworks6Test() {
     test_networks_[3]->setModificationTime(timestamps_["today"]);
 
     // Insert shared networks into the database.
-    for (int i = 1; i < test_networks_.size(); ++i) {
+    for (unsigned i = 1; i < test_networks_.size(); ++i) {
         cbptr_->createUpdateSharedNetwork6(ServerSelector::ALL(),
                                            test_networks_[i]);
     }
@@ -3211,7 +3211,7 @@ GenericConfigBackendDHCPv6Test::getAllOptionDefs6Test() {
         ASSERT_EQ(1, def->getServerTags().size());
         EXPECT_EQ("all", def->getServerTags().begin()->get());
         bool success = false;
-        for (auto i = 1; i < test_option_defs_.size(); ++i) {
+        for (unsigned i = 1; i < test_option_defs_.size(); ++i) {
             if (def->equals(*test_option_defs_[i])) {
                 success = true;
             }
@@ -3277,7 +3277,7 @@ GenericConfigBackendDHCPv6Test::getModifiedOptionDefs6Test() {
     test_option_defs_[3]->setModificationTime(timestamps_["today"]);
 
     // Insert option definitions into the database.
-    for (int i = 1; i < test_networks_.size(); ++i) {
+    for (unsigned i = 1; i < test_networks_.size(); ++i) {
         cbptr_->createUpdateOptionDef6(ServerSelector::ALL(),
                                        test_option_defs_[i]);
     }
@@ -4185,7 +4185,7 @@ GenericConfigBackendDHCPv6Test::sharedNetworkOptionIdOrderTest() {
     ASSERT_EQ(2, networks.size());
 
     // See if shared networks are returned ok.
-    for (auto i = 0; i < networks.size(); ++i) {
+    for (unsigned i = 0; i < networks.size(); ++i) {
         if (i == 0) {
             // level1_no_options
             EXPECT_EQ(level1_no_options->toElement()->str(),
@@ -4205,7 +4205,7 @@ GenericConfigBackendDHCPv6Test::sharedNetworkOptionIdOrderTest() {
     ASSERT_EQ(2, networks.size());
 
     // See if shared networks are returned ok.
-    for (auto i = 0; i < networks.size(); ++i) {
+    for (unsigned i = 0; i < networks.size(); ++i) {
         if (i == 0) {
             // level1_no_options
             EXPECT_EQ(level1_options->toElement()->str(),

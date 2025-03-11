@@ -1256,8 +1256,8 @@ SARRTest::randomAddressAllocation() {
     ASSERT_EQ(30, allocated_pd_vector.size());
 
     // Make sure that the addresses are not allocated iteratively.
-    int consecutives = 0;
-    for (auto i = 1; i < allocated_na_vector.size(); ++i) {
+    size_t consecutives = 0;
+    for (size_t i = 1; i < allocated_na_vector.size(); ++i) {
         // Record the cases when the previously allocated address is
         // lower by 1 (iterative allocation). Some cases like this are
         // possible even with the random allocation but they should be
@@ -1270,7 +1270,7 @@ SARRTest::randomAddressAllocation() {
 
     // Make sure that delegated prefixes have been allocated iteratively.
     consecutives = 0;
-    for (auto i = 1; i < allocated_pd_vector.size(); ++i) {
+    for (size_t i = 1; i < allocated_pd_vector.size(); ++i) {
         if (IOAddress::subtract(allocated_pd_vector[i], allocated_pd_vector[i-1]) == IOAddress("0:0:0:1::")) {
             ++consecutives;
         }
@@ -1326,8 +1326,8 @@ SARRTest::randomPrefixAllocation() {
     ASSERT_EQ(30, allocated_pd_vector.size());
 
     // Make sure that the addresses have been allocated iteratively.
-    int consecutives = 0;
-    for (auto i = 1; i < allocated_na_vector.size(); ++i) {
+    size_t consecutives = 0;
+    for (size_t i = 1; i < allocated_na_vector.size(); ++i) {
         // Record the cases when the previously allocated address is
         // lower by 1 (iterative allocation).
         if (IOAddress::increase(allocated_na_vector[i-1]) == allocated_na_vector[i]) {
@@ -1340,7 +1340,7 @@ SARRTest::randomPrefixAllocation() {
 
     // Make sure that delegated prefixes have been allocated randomly.
     consecutives = 0;
-    for (auto i = 1; i < allocated_pd_vector.size(); ++i) {
+    for (size_t i = 1; i < allocated_pd_vector.size(); ++i) {
         if (IOAddress::subtract(allocated_pd_vector[i], allocated_pd_vector[i-1]) == IOAddress("0:0:0:1::")) {
             ++consecutives;
         }

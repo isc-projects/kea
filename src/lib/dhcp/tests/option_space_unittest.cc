@@ -80,7 +80,7 @@ TEST(OptionSpaceTest, validateName) {
     const char specials[] = { '!', '@', '#', '$', '%', '^', '&', '*', '(', ')',
                               '+', '=', '[', ']', '{', '}', ';', ':', '"', '\'',
                               '\\', '|', '<','>', ',', '.', '?', '~', '`' };
-    for (int i = 0; i < sizeof(specials); ++i) {
+    for (unsigned i = 0; i < sizeof(specials); ++i) {
         std::ostringstream stream;
         // Concatenate valid option space name: "abc" with an invalid character.
         // That way we get option space names like: "abc!", "abc$" etc. It is

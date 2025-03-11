@@ -602,7 +602,7 @@ TestConfigBackendDHCPv6::createUpdateClientClass6(const db::ServerSelector& serv
                                                   const std::string& follow_class_name) {
     int follow_class_index = -1;
     if (!follow_class_name.empty()) {
-        for (auto i = 0; i < classes_.size(); ++i) {
+        for (unsigned i = 0; i < classes_.size(); ++i) {
             if (classes_[i]->getName() == follow_class_name) {
                 follow_class_index = i;
                 break;
@@ -617,7 +617,7 @@ TestConfigBackendDHCPv6::createUpdateClientClass6(const db::ServerSelector& serv
     mergeServerTags(client_class, server_selector);
 
     int existing_class_index = -1;
-    for (auto i = 0; i < classes_.size(); ++i) {
+    for (unsigned i = 0; i < classes_.size(); ++i) {
         if (classes_[i]->getName() == client_class->getName()) {
             existing_class_index = i;
             break;

@@ -502,7 +502,7 @@ public:
 
         // Iterate over the list of subnets in the list and make sure that
         // it contains expected parameters. It does not verify the values though.
-        for (auto index = 0; index != subnet_ids->size(); ++index) {
+        for (unsigned index = 0; index != subnet_ids->size(); ++index) {
             // Get the element in the list.
             isc::data::ConstElementPtr subnet_element = subnet_ids->get(index);
             ASSERT_TRUE(subnet_element);
@@ -556,7 +556,7 @@ public:
         }
 
         // Iterate over all returned subnet and try to find a match.
-        for (auto index = 0; index != subnet_ids->size(); ++index) {
+        for (unsigned index = 0; index != subnet_ids->size(); ++index) {
             isc::data::ConstElementPtr subnet_element = subnet_ids->get(index);
             if (!subnet_element) {
                 ADD_FAILURE() << "Malformed subnets list";
@@ -621,7 +621,7 @@ public:
         bool found = false;
 
         // Iterate over all returned subnet and try to find a match.
-        for (auto index = 0; index != networks->size(); ++index) {
+        for (unsigned index = 0; index != networks->size(); ++index) {
             isc::data::ConstElementPtr net = networks->get(index);
             if (!net) {
                 ADD_FAILURE() << "Malformed shared networks list";
@@ -671,7 +671,7 @@ public:
                 }
 
                 // Iterate over all returned subnet and try to find a match.
-                for (auto idx = 0; idx != subnets->size(); ++idx) {
+                for (unsigned idx = 0; idx != subnets->size(); ++idx) {
                     isc::data::ConstElementPtr subnet_element = subnets->get(idx);
                     if (!subnet_element) {
                         ADD_FAILURE() << "Malformed subnets list";

@@ -1044,7 +1044,7 @@ Dhcp6Client::printConfiguration() const {
               << " got " << getLeaseNum() << " lease(s): ";
 
     // Print leases
-    for (int i = 0; i < getLeaseNum(); i++) {
+    for (unsigned i = 0; i < getLeaseNum(); i++) {
         Lease6 lease = getLease(i);
         std::cout << lease.addr_.toText() << " ";
     }

@@ -91,7 +91,7 @@ TEST_F(AdaptorConfigTest, loadExamples4) {
 
     ElementPtr x;
 
-    for (int i = 0; i < configs.size(); i++) {
+    for (unsigned i = 0; i < configs.size(); i++) {
         x.reset();
         testFile(string(CFG_EXAMPLES) + "/kea4/" + configs[i], false, x);
         ASSERT_TRUE(x);
@@ -130,7 +130,7 @@ TEST_F(AdaptorConfigTest, loadExamples6) {
     };
     ElementPtr x;
 
-    for (int i = 0; i<configs.size(); i++) {
+    for (unsigned i = 0; i<configs.size(); i++) {
         x.reset();
         testFile(string(CFG_EXAMPLES) + "/kea6/" + configs[i], true, x);
         ASSERT_TRUE(x);

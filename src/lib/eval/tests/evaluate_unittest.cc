@@ -427,7 +427,7 @@ TEST_F(ExpressionsTest, expressionsPkt4Hlen) {
     const size_t hwaddr_len = 6;
     const uint16_t expected_htype = 123;
     std::vector<uint8_t> hw(hwaddr_len,0);
-    for (int i = 0; i < hwaddr_len; i++) {
+    for (unsigned i = 0; i < hwaddr_len; i++) {
         hw[i] = i + 1;
     }
     pkt4_->setHWAddr(expected_htype, hwaddr_len, hw);

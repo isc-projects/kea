@@ -6302,7 +6302,7 @@ public:
     /// after receiving such response.
     ///
     /// @param event an event which should trigger IO service to stop.
-    void waitForEvent(const int event) {
+    void waitForEvent(const unsigned int event) {
         ASSERT_NE(event, HAService::NOP_EVT);
 
         service_->postNextEvent(HAService::NOP_EVT);
@@ -6382,7 +6382,7 @@ public:
         // let's make sure it performs this transition.
         service_->runModel(HAService::NOP_EVT);
         // Simulate the rejected lease updates.
-        for (auto i = 0; i < leases_num; ++i) {
+        for (unsigned i = 0; i < leases_num; ++i) {
             // Create query with random HW address.
             Pkt4Ptr query4 = createQuery4(randomKey(HWAddr::ETHERNET_HWADDR_LEN));
             static_cast<void>(state_->reportRejectedLeaseUpdate(query4, 100));

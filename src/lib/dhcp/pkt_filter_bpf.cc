@@ -434,7 +434,7 @@ PktFilterBPF::receive(Iface& iface, const SocketInfo& socket_info) {
     while (offset < datalen) {
         // Check if the BPF header fits in the reminder of the buffer.
         // If it doesn't something is really wrong.
-        if (datalen - offset < sizeof(bpf_hdr)) {
+        if (datalen - offset < static_cast<int>(sizeof(bpf_hdr))) {
             isc_throw(SocketReadError, "packet received over the BPF device on"
                       " interface " << iface.getName() << " has a truncated "
                       " BPF header");
@@ -447,7 +447,7 @@ PktFilterBPF::receive(Iface& iface, const SocketInfo& socket_info) {
 
         // Check if the captured data fit into the reminder of the buffer.
         // Again, something is really wrong here if it doesn't fit.
-        if (offset + bpfh.bh_hdrlen + bpfh.bh_caplen > datalen) {
+        if (static_cast<int>(bpfh.bh_hdrlen + bpfh.bh_caplen) > datalen - offset) {
             isc_throw(SocketReadError, "packet received from the BPF device"
                       << " attached to interface " << iface.getName()
                       << " is truncated");

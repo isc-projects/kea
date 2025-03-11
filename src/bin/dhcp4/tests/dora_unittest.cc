@@ -3024,8 +3024,8 @@ DORATest::randomAllocation() {
     ASSERT_EQ(30, allocated_list.size());
 
     // Make sure that the addresses are not allocated iteratively.
-    int consecutives = 0;
-    for (auto i = 1; i < allocated_list.size(); ++i) {
+    size_t consecutives = 0;
+    for (size_t i = 1; i < allocated_list.size(); ++i) {
         // Record the cases when the previously allocated address is
         // lower by 1 (iterative allocation). Some cases like this are
         // possible even with the random allocation but they should be

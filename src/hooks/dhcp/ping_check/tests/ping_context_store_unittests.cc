@@ -48,7 +48,7 @@ public:
 
         // Add three contexts, one for each lease/query.
         auto now = PingContext::now();
-        for (int i = 0; i < leases_.size(); ++i) {
+        for (unsigned i = 0; i < leases_.size(); ++i) {
             ASSERT_NO_THROW_LOG(context = store.addContext(leases_[i], queries_[i], 2, 300));
             ASSERT_TRUE(context);
             EXPECT_EQ(leases_[i], context->getLease());
@@ -62,7 +62,7 @@ public:
         }
 
         // Make sure they can be fetched by address and by query individually.
-        for (int i = 0; i < leases_.size(); ++i) {
+        for (unsigned i = 0; i < leases_.size(); ++i) {
             ASSERT_NO_THROW_LOG(context = store.getContextByAddress(leases_[i]->addr_));
             ASSERT_TRUE(context);
             EXPECT_EQ(leases_[i], context->getLease());
@@ -106,7 +106,7 @@ public:
         PingContextStore store;
 
         // Add contexts to store.
-        for (int i = 0; i < leases_.size(); ++i) {
+        for (unsigned i = 0; i < leases_.size(); ++i) {
             PingContextPtr context;
             ASSERT_NO_THROW_LOG(context = store.addContext(leases_[i], queries_[i], 1, 100));
             ASSERT_TRUE(context);
@@ -146,7 +146,7 @@ public:
         auto test_start = PingContext::now();
 
         // Add contexts to store.
-        for (int i = 0; i < leases_.size(); ++i) {
+        for (unsigned i = 0; i < leases_.size(); ++i) {
             ASSERT_NO_THROW_LOG(context = store.addContext(leases_[i], queries_[i], 1, 100));
             ASSERT_TRUE(context);
             EXPECT_EQ(leases_[i], context->getLease());
@@ -186,7 +186,7 @@ public:
         auto start_time = PingContext::now();
 
         // Add contexts to store.
-        for (int i = 0; i < leases_.size(); ++i) {
+        for (unsigned i = 0; i < leases_.size(); ++i) {
             ASSERT_NO_THROW_LOG(context = store.addContext(leases_[i], queries_[i], 1, 100));
             ASSERT_TRUE(context);
             EXPECT_EQ(leases_[i], context->getLease());
@@ -242,7 +242,7 @@ public:
         PingContextPtr context;
 
         // Add contexts to store.
-        for (int i = 0; i < leases_.size(); ++i) {
+        for (unsigned i = 0; i < leases_.size(); ++i) {
             ASSERT_NO_THROW_LOG(context = store.addContext(leases_[i], queries_[i], 1, 100));
             ASSERT_TRUE(context);
             EXPECT_EQ(leases_[i], context->getLease());
@@ -325,7 +325,7 @@ public:
         PingContextStore store;
 
         // Add contexts to store.
-        for (int i = 0; i < leases_.size(); ++i) {
+        for (unsigned i = 0; i < leases_.size(); ++i) {
             PingContextPtr context;
             ASSERT_NO_THROW_LOG(context = store.addContext(leases_[i], queries_[i], 1, 100));
             ASSERT_TRUE(context);

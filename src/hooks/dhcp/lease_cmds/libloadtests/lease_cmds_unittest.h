@@ -496,7 +496,7 @@ public:
                           const std::string& expected_error_msg = "") {
         ASSERT_TRUE(failed_leases_list);
 
-        for (auto i = 0; i < failed_leases_list->size(); ++i) {
+        for (unsigned i = 0; i < failed_leases_list->size(); ++i) {
             auto failed_lease = failed_leases_list->get(i);
             ASSERT_TRUE(failed_lease);
             ASSERT_EQ(isc::data::Element::map, failed_lease->getType());
