@@ -226,7 +226,7 @@
             // This is a test. It is an expression that is being evaluated on
             // each incoming packet. It is supposed to evaluate to either
             // true or false. If it's true, the packet is added to specified
-            // class. See Section 12 for a list of available expressions. There
+            // class. See Section 15 for a list of available expressions. There
             // are several dozens. Section 8.2.18 for more details for DHCPv4
             // classification and Section 9.2.23 for DHCPv6.
             "test": "substring(option[60].hex,0,6) == 'Aastra'",
