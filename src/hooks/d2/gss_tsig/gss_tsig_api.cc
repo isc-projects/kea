@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -469,7 +469,7 @@ GssApiOid::GssApiOid(const vector<uint8_t>& elements) : oid_(GSS_C_NO_OID) {
 }
 
 GssApiOid::GssApiOid(const string& str) : oid_(GSS_C_NO_OID) {
-#if HAVE_GSS_STR_TO_OID
+#ifdef HAVE_GSS_STR_TO_OID
     GssApiBuffer buf(str);
     OM_uint32 minor = 0;
     OM_uint32 major = gss_str_to_oid(&minor, buf.getPtr(), &oid_);
