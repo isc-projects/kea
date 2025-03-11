@@ -6,6 +6,7 @@ KEA_MSG_COMPILER = executable(
     'kea-msg-compiler',
     'message.cc',
     include_directories: INCLUDES,
+    install: true,
     install_dir: 'bin',
     link_with: LIBS_BUILT_SO_FAR,
 )

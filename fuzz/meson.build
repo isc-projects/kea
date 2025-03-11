@@ -2,7 +2,6 @@ if not FUZZ_OPT.enabled()
     subdir_done()
 endif
 
-subdir('input')
 subdir('tests')
 
 fuzz_sources = ['fuzz.cc', 'fuzz.h']
