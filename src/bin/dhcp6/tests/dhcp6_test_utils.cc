@@ -10,6 +10,7 @@
 #include <dhcp/option6_status_code.h>
 #include <dhcp/testutils/pkt_captures.h>
 #include <dhcpsrv/cfg_multi_threading.h>
+#include <dhcp6/tests/dhcp6_client.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/json_config_parser.h>
 #include <log/logger_support.h>
@@ -56,7 +57,7 @@ BaseServerTest::~BaseServerTest() {
 }
 
 Dhcpv6SrvTest::Dhcpv6SrvTest()
-    : NakedDhcpv6SrvTest(), srv_(0), multi_threading_(false) {
+    : NakedDhcpv6SrvTest(), srv_(new NakedDhcpv6Srv(0)), multi_threading_(false) {
     subnet_ = Subnet6::create(isc::asiolink::IOAddress("2001:db8:1::"),
                               48, 1000, 2000, 3000, 4000, SubnetID(1));
     subnet_->setIface("eth0");
@@ -677,6 +678,163 @@ Dhcpv6SrvTest::testReleaseBasic(Lease::Type type, const IOAddress& existing,
 }
 
 void
+Dhcpv6SrvTest::testReleaseAndReclaim(Lease::Type type) {
+    IfaceMgrTestConfig iface_mgr_test_config_(true);
+
+    Dhcp6Client client(srv_);
+    client.setInterface("eth0");
+
+    // Configure DHCP server.
+    const char* RELEASE_CONFIG = {
+    // Configuration 0
+        "{ \"interfaces-config\": {"
+            "  \"interfaces\": [ \"*\" ]"
+            "},"
+            "\"preferred-lifetime\": 3,"
+            "\"rebind-timer\": 2, "
+            "\"renew-timer\": 1, "
+            "\"subnet6\": [ { "
+            "    \"id\": 1, "
+            "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+            "    \"pd-pools\": [ { \"prefix\": \"2001:db8:2::\", \"delegated-len\": 64, \"prefix-len\": 48 } ],"
+            "    \"subnet\": \"2001:db8::/32\", "
+            "    \"interface-id\": \"\","
+            "    \"interface\": \"eth0\""
+            " } ],"
+            "\"valid-lifetime\": 4,"
+            " \"expired-leases-processing\": {"
+            "    \"flush-reclaimed-timer-wait-time\": 3,"
+            "    \"hold-reclaimed-time\": 1,"
+            "    \"max-reclaim-leases\": 100,"
+            "    \"max-reclaim-time\": 250,"
+            "    \"reclaim-timer-wait-time\": 1,"
+            "    \"unwarned-reclaim-cycles\": 5"
+            "},"
+            "\"multi-threading\": { \"enable-multi-threading\": false }"
+        "}"
+    };
+
+    isc::dhcp::CfgMgr::instance().clear();
+    CfgMgr::instance().setFamily(AF_INET6);
+
+    setenv("KEA_LFC_EXECUTABLE", KEA_LFC_EXECUTABLE, 1);
+    ConstElementPtr json;
+    try {
+        json = parseJSON(RELEASE_CONFIG);
+    } catch (const std::exception& ex) {
+        // Fatal failure on parsing error
+        FAIL() << "parsing failure:"
+               << "config:" << RELEASE_CONFIG << std::endl
+               << "error: " << ex.what();
+    }
+
+    disableIfacesReDetect(json);
+
+    client.getServer()->processConfig(json);
+
+    CfgMgr::instance().commit();
+
+    const uint32_t iaid = 234;
+
+    uint32_t code; // option code of the container (IA_NA or IA_PD)
+    uint8_t prefix_len;
+    if (type == Lease::TYPE_NA) {
+        code = D6O_IA_NA;
+        prefix_len = 128;
+        client.requestAddress(iaid);
+    } else if (type == Lease::TYPE_PD) {
+        code = D6O_IA_PD;
+        prefix_len = pd_pool_->getLength();
+        client.requestPrefix(iaid);
+    } else {
+        isc_throw(BadValue, "Invalid lease type");
+    }
+
+    // Let's get the subnet-id and generate statistics name out of it
+    const Subnet6Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
+    ASSERT_EQ(1, subnets->size());
+
+    // And prepopulate the stats counter
+    std::string name = StatsMgr::generateName("subnet", (*subnets->begin())->getID(),
+                                              type == Lease::TYPE_NA ? "assigned-nas" :
+                                              "assigned-pds");
+
+    // Perform 4-way exchange.
+    ASSERT_NO_THROW(client.doSARR());
+
+    ObservationPtr stat = StatsMgr::instance().getObservation(name);
+    ASSERT_TRUE(stat);
+    uint64_t before = stat->getInteger().first;
+
+    // Make sure that the client has acquired NA lease.
+    std::vector<Lease6> leases = client.getLeasesByType(type);
+    ASSERT_EQ(1, leases.size());
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(iaid));
+
+    // Let's create a RELEASE
+    Pkt6Ptr rel = createMessage(DHCPV6_RELEASE, type, leases[0].addr_, prefix_len,
+                                iaid);
+    rel->addOption(client.getClientId());
+    rel->addOption(srv_->getServerID());
+
+    // Pass it to the server and hope for a REPLY
+    Pkt6Ptr reply = srv_->processRelease(rel);
+
+    // Check if we get response at all
+    checkResponse(reply, DHCPV6_REPLY, 1234);
+
+    OptionPtr tmp = reply->getOption(code);
+    ASSERT_TRUE(tmp);
+
+    // Check that IA_NA was returned and that there's an address included
+    boost::shared_ptr<Option6IA> ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
+    checkIA_NAStatusCode(ia, STATUS_Success, 0, 0);
+    checkMsgStatusCode(reply, STATUS_Success);
+
+    // There should be no address returned in RELEASE (see RFC 8415, 18.3.7)
+    // There should be no prefix
+    EXPECT_FALSE(tmp->getOption(D6O_IAADDR));
+    EXPECT_FALSE(tmp->getOption(D6O_IAPREFIX));
+
+    // Check DUIDs
+    checkServerId(reply, srv_->getServerID());
+    checkClientId(reply, client.getClientId());
+
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(type, leases[0].addr_);
+    ASSERT_TRUE(l);
+
+    EXPECT_EQ(l->valid_lft_, 0);
+    EXPECT_EQ(l->preferred_lft_, 0);
+
+    EXPECT_EQ(Lease6::STATE_RELEASED, l->state_);
+
+    stat = StatsMgr::instance().getObservation(name);
+    ASSERT_TRUE(stat);
+    uint64_t after = stat->getInteger().first;
+    ASSERT_EQ(after, before - 1);
+    sleep(1);
+    client.getServer()->getIOService()->poll();
+
+    /*
+    // get lease by subnetid/duid/iaid combination
+    l = LeaseMgrFactory::instance().getLease6(type, *duid_, iaid,
+                                              (*subnets->begin())->getID());
+    ASSERT_TRUE(l);
+
+    EXPECT_EQ(l->valid_lft_, 0);
+    EXPECT_EQ(l->preferred_lft_, 0);
+    EXPECT_EQ(Lease::STATE_DEFAULT, lease->state_);
+    */
+
+
+    stat = StatsMgr::instance().getObservation(name);
+    ASSERT_TRUE(stat);
+    uint64_t count = stat->getInteger().first;
+    ASSERT_EQ(count, after);
+}
+
+void
 Dhcpv6SrvTest::testReleaseNoDelete(Lease::Type type, const IOAddress& addr,
                                    uint8_t qtype) {
     NakedDhcpv6Srv srv(0);
@@ -975,7 +1133,7 @@ Dhcpv6SrvTest::configure(const std::string& config,
                          const bool create_managers,
                          const bool test,
                          const LeaseAffinity lease_affinity) {
-    configure(config, srv_, commit, open_sockets, create_managers, test,
+    configure(config, *srv_, commit, open_sockets, create_managers, test,
               lease_affinity);
 }
 

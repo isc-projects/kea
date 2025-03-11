@@ -534,7 +534,7 @@ public:
         AllocEngine::ClientContext6 ctx;
         bool drop = !srv.earlyGHRLookup(query, ctx);
         ASSERT_FALSE(drop);
-        ctx.subnet_ = srv_.selectSubnet(query, drop);
+        ctx.subnet_ = srv_->selectSubnet(query, drop);
         ASSERT_FALSE(drop);
         srv.initContext(ctx, drop);
         ASSERT_FALSE(drop);
@@ -671,7 +671,7 @@ TEST_F(ClassifyTest, matchClassification) {
     AllocEngine::ClientContext6 ctx1;
     bool drop = !srv.earlyGHRLookup(query1, ctx1);
     ASSERT_FALSE(drop);
-    ctx1.subnet_ = srv_.selectSubnet(query1, drop);
+    ctx1.subnet_ = srv_->selectSubnet(query1, drop);
     ASSERT_FALSE(drop);
     srv.initContext(ctx1, drop);
     ASSERT_FALSE(drop);
@@ -679,7 +679,7 @@ TEST_F(ClassifyTest, matchClassification) {
     AllocEngine::ClientContext6 ctx2;
     drop = !srv.earlyGHRLookup(query2, ctx2);
     ASSERT_FALSE(drop);
-    ctx2.subnet_ = srv_.selectSubnet(query2, drop);
+    ctx2.subnet_ = srv_->selectSubnet(query2, drop);
     ASSERT_FALSE(drop);
     srv.initContext(ctx2, drop);
     ASSERT_FALSE(drop);
@@ -687,7 +687,7 @@ TEST_F(ClassifyTest, matchClassification) {
     AllocEngine::ClientContext6 ctx3;
     drop = !srv.earlyGHRLookup(query3, ctx3);
     ASSERT_FALSE(drop);
-    ctx3.subnet_ = srv_.selectSubnet(query3, drop);
+    ctx3.subnet_ = srv_->selectSubnet(query3, drop);
     ASSERT_FALSE(drop);
     srv.initContext(ctx3, drop);
     ASSERT_FALSE(drop);
@@ -789,7 +789,7 @@ TEST_F(ClassifyTest, additional) {
     AllocEngine::ClientContext6 ctx1;
     bool drop = !srv.earlyGHRLookup(query1, ctx1);
     ASSERT_FALSE(drop);
-    ctx1.subnet_ = srv_.selectSubnet(query1, drop);
+    ctx1.subnet_ = srv_->selectSubnet(query1, drop);
     ASSERT_FALSE(drop);
     srv.initContext(ctx1, drop);
     ASSERT_FALSE(drop);
@@ -797,7 +797,7 @@ TEST_F(ClassifyTest, additional) {
     AllocEngine::ClientContext6 ctx2;
     drop = !srv.earlyGHRLookup(query2, ctx2);
     ASSERT_FALSE(drop);
-    ctx2.subnet_ = srv_.selectSubnet(query2, drop);
+    ctx2.subnet_ = srv_->selectSubnet(query2, drop);
     ASSERT_FALSE(drop);
     srv.initContext(ctx2, drop);
     ASSERT_FALSE(drop);
@@ -805,7 +805,7 @@ TEST_F(ClassifyTest, additional) {
     AllocEngine::ClientContext6 ctx3;
     drop = !srv.earlyGHRLookup(query3, ctx3);
     ASSERT_FALSE(drop);
-    ctx3.subnet_ = srv_.selectSubnet(query3, drop);
+    ctx3.subnet_ = srv_->selectSubnet(query3, drop);
     ASSERT_FALSE(drop);
     srv.initContext(ctx3, drop);
     ASSERT_FALSE(drop);
@@ -904,7 +904,7 @@ TEST_F(ClassifyTest, additionalClassification) {
     AllocEngine::ClientContext6 ctx1;
     bool drop = !srv.earlyGHRLookup(query1, ctx1);
     ASSERT_FALSE(drop);
-    ctx1.subnet_ = srv_.selectSubnet(query1, drop);
+    ctx1.subnet_ = srv_->selectSubnet(query1, drop);
     ASSERT_FALSE(drop);
     srv.initContext(ctx1, drop);
     ASSERT_FALSE(drop);
@@ -912,7 +912,7 @@ TEST_F(ClassifyTest, additionalClassification) {
     AllocEngine::ClientContext6 ctx2;
     drop = !srv.earlyGHRLookup(query2, ctx2);
     ASSERT_FALSE(drop);
-    ctx2.subnet_ = srv_.selectSubnet(query2, drop);
+    ctx2.subnet_ = srv_->selectSubnet(query2, drop);
     ASSERT_FALSE(drop);
     srv.initContext(ctx2, drop);
     ASSERT_FALSE(drop);
@@ -920,7 +920,7 @@ TEST_F(ClassifyTest, additionalClassification) {
     AllocEngine::ClientContext6 ctx3;
     drop = !srv.earlyGHRLookup(query3, ctx3);
     ASSERT_FALSE(drop);
-    ctx3.subnet_ = srv_.selectSubnet(query3, drop);
+    ctx3.subnet_ = srv_->selectSubnet(query3, drop);
     ASSERT_FALSE(drop);
     srv.initContext(ctx3, drop);
     ASSERT_FALSE(drop);
@@ -1002,7 +1002,7 @@ TEST_F(ClassifyTest, subnetClassPriority) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(query, ctx);
     ASSERT_FALSE(drop);
-    ctx.subnet_ = srv_.selectSubnet(query, drop);
+    ctx.subnet_ = srv_->selectSubnet(query, drop);
     ASSERT_FALSE(drop);
     srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
@@ -1071,7 +1071,7 @@ TEST_F(ClassifyTest, subnetGlobalPriority) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(query, ctx);
     ASSERT_FALSE(drop);
-    ctx.subnet_ = srv_.selectSubnet(query, drop);
+    ctx.subnet_ = srv_->selectSubnet(query, drop);
     ASSERT_FALSE(drop);
     srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
@@ -1149,7 +1149,7 @@ TEST_F(ClassifyTest, classGlobalPriority) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(query, ctx);
     ASSERT_FALSE(drop);
-    ctx.subnet_ = srv_.selectSubnet(query, drop);
+    ctx.subnet_ = srv_->selectSubnet(query, drop);
     ASSERT_FALSE(drop);
     srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
@@ -1222,7 +1222,7 @@ TEST_F(ClassifyTest, classGlobalPersistency) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(query, ctx);
     ASSERT_FALSE(drop);
-    ctx.subnet_ = srv_.selectSubnet(query, drop);
+    ctx.subnet_ = srv_->selectSubnet(query, drop);
     ASSERT_FALSE(drop);
     srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
@@ -1294,7 +1294,7 @@ TEST_F(ClassifyTest, classNeverSend) {
     AllocEngine::ClientContext6 ctx;
     bool drop = !srv.earlyGHRLookup(query, ctx);
     ASSERT_FALSE(drop);
-    ctx.subnet_ = srv_.selectSubnet(query, drop);
+    ctx.subnet_ = srv_->selectSubnet(query, drop);
     ASSERT_FALSE(drop);
     srv.initContext(ctx, drop);
     ASSERT_FALSE(drop);
@@ -1345,21 +1345,21 @@ TEST_F(ClassifyTest, clientClassifySubnet) {
     // This discover does not belong to foo class, so it will not
     // be serviced
     bool drop = false;
-    EXPECT_FALSE(srv_.selectSubnet(sol, drop));
+    EXPECT_FALSE(srv_->selectSubnet(sol, drop));
     EXPECT_FALSE(drop);
 
     // Let's add the packet to bar class and try again.
     sol->addClass("bar");
 
     // Still not supported, because it belongs to wrong class.
-    EXPECT_FALSE(srv_.selectSubnet(sol, drop));
+    EXPECT_FALSE(srv_->selectSubnet(sol, drop));
     EXPECT_FALSE(drop);
 
     // Let's add it to matching class.
     sol->addClass("foo");
 
     // This time it should work
-    EXPECT_TRUE(srv_.selectSubnet(sol, drop));
+    EXPECT_TRUE(srv_->selectSubnet(sol, drop));
     EXPECT_FALSE(drop);
 }
 
@@ -1416,7 +1416,7 @@ TEST_F(ClassifyTest, clientClassifyPool) {
     AllocEngine::ClientContext6 ctx1;
     bool drop = !srv.earlyGHRLookup(query1, ctx1);
     ASSERT_FALSE(drop);
-    ctx1.subnet_ = srv_.selectSubnet(query1, drop);
+    ctx1.subnet_ = srv_->selectSubnet(query1, drop);
     ASSERT_FALSE(drop);
     srv.initContext(ctx1, drop);
     ASSERT_FALSE(drop);
@@ -1434,7 +1434,7 @@ TEST_F(ClassifyTest, clientClassifyPool) {
     AllocEngine::ClientContext6 ctx2;
     drop = !srv.earlyGHRLookup(query2, ctx2);
     ASSERT_FALSE(drop);
-    ctx2.subnet_ = srv_.selectSubnet(query2, drop);
+    ctx2.subnet_ = srv_->selectSubnet(query2, drop);
     ASSERT_FALSE(drop);
     srv.initContext(ctx2, drop);
     ASSERT_FALSE(drop);
@@ -1452,7 +1452,7 @@ TEST_F(ClassifyTest, clientClassifyPool) {
     AllocEngine::ClientContext6 ctx3;
     drop = !srv.earlyGHRLookup(query3, ctx3);
     ASSERT_FALSE(drop);
-    ctx3.subnet_ = srv_.selectSubnet(query3, drop);
+    ctx3.subnet_ = srv_->selectSubnet(query3, drop);
     ASSERT_FALSE(drop);
     srv.initContext(ctx3, drop);
     ASSERT_FALSE(drop);
@@ -1512,7 +1512,7 @@ TEST_F(ClassifyTest, clientClassifyPoolKnown) {
     AllocEngine::ClientContext6 ctx1;
     bool drop = !srv.earlyGHRLookup(query1, ctx1);
     ASSERT_FALSE(drop);
-    ctx1.subnet_ = srv_.selectSubnet(query1, drop);
+    ctx1.subnet_ = srv_->selectSubnet(query1, drop);
     ASSERT_FALSE(drop);
     srv.initContext(ctx1, drop);
     ASSERT_FALSE(drop);
@@ -1544,7 +1544,7 @@ TEST_F(ClassifyTest, clientClassifyPoolKnown) {
     AllocEngine::ClientContext6 ctx2;
     drop = !srv.earlyGHRLookup(query2, ctx2);
     ASSERT_FALSE(drop);
-    ctx2.subnet_ = srv_.selectSubnet(query2, drop);
+    ctx2.subnet_ = srv_->selectSubnet(query2, drop);
     ASSERT_FALSE(drop);
     srv.initContext(ctx2, drop);
     ASSERT_FALSE(drop);
@@ -1650,13 +1650,13 @@ TEST_F(ClassifyTest, relayOverrideAndClientClass) {
     // subnet[1], because the subnet matches and there are no class
     // requirements.
     bool drop = false;
-    EXPECT_TRUE(subnet2 == srv_.selectSubnet(sol, drop));
+    EXPECT_TRUE(subnet2 == srv_->selectSubnet(sol, drop));
     EXPECT_FALSE(drop);
 
     // Now let's add this packet to class foo and recheck. This time it should
     // be accepted in the first subnet, because both class and relay-ip match.
     sol->addClass("foo");
-    EXPECT_TRUE(subnet1 == srv_.selectSubnet(sol, drop));
+    EXPECT_TRUE(subnet1 == srv_->selectSubnet(sol, drop));
     EXPECT_FALSE(drop);
 }
 
@@ -1847,7 +1847,7 @@ TEST_F(ClassifyTest, member) {
     AllocEngine::ClientContext6 ctx1;
     bool drop = !srv.earlyGHRLookup(query1, ctx1);
     ASSERT_FALSE(drop);
-    ctx1.subnet_ = srv_.selectSubnet(query1, drop);
+    ctx1.subnet_ = srv_->selectSubnet(query1, drop);
     ASSERT_FALSE(drop);
     srv.initContext(ctx1, drop);
     ASSERT_FALSE(drop);
@@ -1855,7 +1855,7 @@ TEST_F(ClassifyTest, member) {
     AllocEngine::ClientContext6 ctx2;
     drop = !srv.earlyGHRLookup(query2, ctx2);
     ASSERT_FALSE(drop);
-    ctx2.subnet_ = srv_.selectSubnet(query2, drop);
+    ctx2.subnet_ = srv_->selectSubnet(query2, drop);
     ASSERT_FALSE(drop);
     srv.initContext(ctx2, drop);
     ASSERT_FALSE(drop);
@@ -1863,7 +1863,7 @@ TEST_F(ClassifyTest, member) {
     AllocEngine::ClientContext6 ctx3;
     drop = !srv.earlyGHRLookup(query3, ctx3);
     ASSERT_FALSE(drop);
-    ctx3.subnet_ = srv_.selectSubnet(query3, drop);
+    ctx3.subnet_ = srv_->selectSubnet(query3, drop);
     ASSERT_FALSE(drop);
     srv.initContext(ctx3, drop);
     ASSERT_FALSE(drop);

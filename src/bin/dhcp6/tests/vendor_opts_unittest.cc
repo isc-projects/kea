@@ -176,13 +176,13 @@ public:
 
         // Pass it to the server and get an advertise.
         AllocEngine::ClientContext6 ctx;
-        bool drop = !srv_.earlyGHRLookup(sol, ctx);
+        bool drop = !srv_->earlyGHRLookup(sol, ctx);
         ASSERT_FALSE(drop);
-        ctx.subnet_ = srv_.selectSubnet(sol, drop);
+        ctx.subnet_ = srv_->selectSubnet(sol, drop);
         ASSERT_FALSE(drop);
-        srv_.initContext(ctx, drop);
+        srv_->initContext(ctx, drop);
         ASSERT_FALSE(drop);
-        Pkt6Ptr adv = srv_.processSolicit(ctx);
+        Pkt6Ptr adv = srv_->processSolicit(ctx);
 
         // Check if we get a response at all.
         ASSERT_TRUE(adv);
@@ -206,13 +206,13 @@ public:
 
         // Need to process SOLICIT again after requesting new option.
         AllocEngine::ClientContext6 ctx2;
-        drop = !srv_.earlyGHRLookup(sol, ctx2);
+        drop = !srv_->earlyGHRLookup(sol, ctx2);
         ASSERT_FALSE(drop);
-        ctx2.subnet_ = srv_.selectSubnet(sol, drop);
+        ctx2.subnet_ = srv_->selectSubnet(sol, drop);
         ASSERT_FALSE(drop);
-        srv_.initContext(ctx2, drop);
+        srv_->initContext(ctx2, drop);
         ASSERT_FALSE(drop);
-        adv = srv_.processSolicit(ctx2);
+        adv = srv_->processSolicit(ctx2);
         ASSERT_TRUE(adv);
 
         // Check if there is a vendor option in the response, if the Cable Labs
@@ -446,13 +446,13 @@ public:
 
         // Pass it to the server and get an advertise
         AllocEngine::ClientContext6 ctx;
-        bool drop = !srv_.earlyGHRLookup(sol, ctx);
+        bool drop = !srv_->earlyGHRLookup(sol, ctx);
         ASSERT_FALSE(drop);
-        ctx.subnet_ = srv_.selectSubnet(sol, drop);
+        ctx.subnet_ = srv_->selectSubnet(sol, drop);
         ASSERT_FALSE(drop);
-        srv_.initContext(ctx, drop);
+        srv_->initContext(ctx, drop);
         ASSERT_FALSE(drop);
-        Pkt6Ptr adv = srv_.processSolicit(ctx);
+        Pkt6Ptr adv = srv_->processSolicit(ctx);
 
         // check if we get response at all
         ASSERT_TRUE(adv);
@@ -684,13 +684,13 @@ public:
 
         // Pass it to the server and get an advertise
         AllocEngine::ClientContext6 ctx;
-        bool drop = !srv_.earlyGHRLookup(sol, ctx);
+        bool drop = !srv_->earlyGHRLookup(sol, ctx);
         ASSERT_FALSE(drop);
-        ctx.subnet_ = srv_.selectSubnet(sol, drop);
+        ctx.subnet_ = srv_->selectSubnet(sol, drop);
         ASSERT_FALSE(drop);
-        srv_.initContext(ctx, drop);
+        srv_->initContext(ctx, drop);
         ASSERT_FALSE(drop);
-        Pkt6Ptr adv = srv_.processSolicit(ctx);
+        Pkt6Ptr adv = srv_->processSolicit(ctx);
 
         // check if we get response at all
         ASSERT_TRUE(adv);
@@ -1389,13 +1389,13 @@ TEST_F(VendorOptsTest, vendorNeverSend) {
 
     // Pass it to the server and get an advertise
     AllocEngine::ClientContext6 ctx;
-    bool drop = !srv_.earlyGHRLookup(sol, ctx);
+    bool drop = !srv_->earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    ctx.subnet_ = srv_.selectSubnet(sol, drop);
+    ctx.subnet_ = srv_->selectSubnet(sol, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(ctx, drop);
+    srv_->initContext(ctx, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr adv = srv_.processSolicit(ctx);
+    Pkt6Ptr adv = srv_->processSolicit(ctx);
 
     // check if we get response at all
     ASSERT_TRUE(adv);
@@ -1415,13 +1415,13 @@ TEST_F(VendorOptsTest, vendorNeverSend) {
 
     // Need to process SOLICIT again after requesting new option.
     AllocEngine::ClientContext6 ctx3;
-    drop = !srv_.earlyGHRLookup(sol, ctx3);
+    drop = !srv_->earlyGHRLookup(sol, ctx3);
     ASSERT_FALSE(drop);
-    ctx3.subnet_ = srv_.selectSubnet(sol, drop);
+    ctx3.subnet_ = srv_->selectSubnet(sol, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(ctx3, drop);
+    srv_->initContext(ctx3, drop);
     ASSERT_FALSE(drop);
-    adv = srv_.processSolicit(ctx3);
+    adv = srv_->processSolicit(ctx3);
     ASSERT_TRUE(adv);
 
     // Check if there is vendor option response

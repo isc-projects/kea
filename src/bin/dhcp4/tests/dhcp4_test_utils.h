@@ -23,7 +23,7 @@
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <dhcp4/dhcp4_srv.h>
+#include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/parser_context.h>
 #include <asiolink/io_address.h>
 #include <cc/command_interpreter.h>
@@ -93,7 +93,7 @@ typedef boost::shared_ptr<PktFilterTest> PktFilterTestPtr;
 class Dhcp4Client;
 
 /// @brief "Naked" DHCPv4 server, exposes internal fields
-class NakedDhcpv4Srv: public Dhcpv4Srv {
+class NakedDhcpv4Srv: public ControlledDhcpv4Srv {
 public:
 
     /// @brief Constructor.
@@ -122,7 +122,7 @@ public:
     /// @param port port number to listen on; the default value 0 indicates
     /// that sockets should not be opened.
     NakedDhcpv4Srv(uint16_t port = 0)
-        : Dhcpv4Srv(port, false, false) {
+        : ControlledDhcpv4Srv(port) {
         // Create a default lease database backend.
         std::string dbconfig = "type=memfile universe=4 persist=false";
         isc::dhcp::LeaseMgrFactory::create(dbconfig);
@@ -744,7 +744,7 @@ public:
     isc::data::ConstElementPtr comment_;
 
     /// @brief Server object under test.
-    NakedDhcpv4Srv srv_;
+    boost::shared_ptr<NakedDhcpv4Srv> srv_;
 
     /// @brief The multi-threading flag.
     bool multi_threading_;

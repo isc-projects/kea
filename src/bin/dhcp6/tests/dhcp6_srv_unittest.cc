@@ -698,13 +698,13 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
 
     // Pass it to the server and get an advertise
     AllocEngine::ClientContext6 ctx;
-    bool drop = !srv_.earlyGHRLookup(sol, ctx);
+    bool drop = !srv_->earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    ctx.subnet_ = srv_.selectSubnet(sol, drop);
+    ctx.subnet_ = srv_->selectSubnet(sol, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(ctx, drop);
+    srv_->initContext(ctx, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr adv = srv_.processSolicit(ctx);
+    Pkt6Ptr adv = srv_->processSolicit(ctx);
 
     // check if we get response at all
     ASSERT_TRUE(adv);
@@ -729,13 +729,13 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
 
     // Need to process SOLICIT again after requesting new option.
     AllocEngine::ClientContext6 ctx2;
-    drop = !srv_.earlyGHRLookup(sol, ctx2);
+    drop = !srv_->earlyGHRLookup(sol, ctx2);
     ASSERT_FALSE(drop);
-    ctx2.subnet_ = srv_.selectSubnet(sol, drop);
+    ctx2.subnet_ = srv_->selectSubnet(sol, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(ctx2, drop);
+    srv_->initContext(ctx2, drop);
     ASSERT_FALSE(drop);
-    adv = srv_.processSolicit(ctx2);
+    adv = srv_->processSolicit(ctx2);
     ASSERT_TRUE(adv);
 
     OptionPtr tmp = adv->getOption(D6O_NAME_SERVERS);
@@ -2176,6 +2176,12 @@ TEST_F(Dhcpv6SrvTest, ReleaseBasic) {
                      IOAddress("2001:db8:1:1::cafe:babe"), LEASE_AFFINITY_DISABLED);
 }
 
+// This test verifies that an incoming RELEASE for an address within
+// a subnet can be reclaimed and does not cause counters to decrease below 0.
+TEST_F(Dhcpv6SrvTest, ReleaseAndReclaim) {
+    testReleaseAndReclaim(Lease::TYPE_NA);
+}
+
 // This test verifies that incoming (positive) RELEASE with address can be
 // handled properly, that a REPLY is generated, that the response has status
 // code and that the lease is expired and not removed from the database.
@@ -2232,6 +2238,12 @@ TEST_F(Dhcpv6SrvTest, ReleaseBasicNoDeleteRebind) {
 TEST_F(Dhcpv6SrvTest, pdReleaseBasic) {
     testReleaseBasic(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"),
                      IOAddress("2001:db8:1:2::"), LEASE_AFFINITY_DISABLED);
+}
+
+// This test verifies that an incoming RELEASE for an address within
+// a subnet can be reclaimed and does not cause counters to decrease below 0.
+TEST_F(Dhcpv6SrvTest, pdReleaseAndReclaim) {
+    testReleaseAndReclaim(Lease::TYPE_PD);
 }
 
 // This test verifies that incoming (positive) RELEASE with prefix can be
@@ -3117,13 +3129,13 @@ TEST_F(Dhcpv6SrvTest, prlPersistency) {
 
     // Let the server process it and generate a response.
     AllocEngine::ClientContext6 ctx;
-    bool drop = !srv_.earlyGHRLookup(sol, ctx);
+    bool drop = !srv_->earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    ctx.subnet_ = srv_.selectSubnet(sol, drop);
+    ctx.subnet_ = srv_->selectSubnet(sol, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(ctx, drop);
+    srv_->initContext(ctx, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response = srv_.processSolicit(ctx);
+    Pkt6Ptr response = srv_->processSolicit(ctx);
 
     // The server should add a subscriber-id option
     ASSERT_TRUE(response->getOption(D6O_SUBSCRIBER_ID));
@@ -3140,13 +3152,13 @@ TEST_F(Dhcpv6SrvTest, prlPersistency) {
     // Let the server process it again. This time the name-servers
     // option should be present.
     AllocEngine::ClientContext6 ctx2;
-    drop = !srv_.earlyGHRLookup(sol, ctx2);
+    drop = !srv_->earlyGHRLookup(sol, ctx2);
     ASSERT_FALSE(drop);
-    ctx2.subnet_ = srv_.selectSubnet(sol, drop);
+    ctx2.subnet_ = srv_->selectSubnet(sol, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(ctx2, drop);
+    srv_->initContext(ctx2, drop);
     ASSERT_FALSE(drop);
-    response = srv_.processSolicit(ctx2);
+    response = srv_->processSolicit(ctx2);
 
     // Processing should add a subscriber-id option
     ASSERT_TRUE(response->getOption(D6O_SUBSCRIBER_ID));
@@ -3164,13 +3176,13 @@ TEST_F(Dhcpv6SrvTest, prlPersistency) {
 
     // Let the server process it again.
     AllocEngine::ClientContext6 ctx3;
-    drop = !srv_.earlyGHRLookup(sol, ctx3);
+    drop = !srv_->earlyGHRLookup(sol, ctx3);
     ASSERT_FALSE(drop);
-    ctx3.subnet_ = srv_.selectSubnet(sol, drop);
+    ctx3.subnet_ = srv_->selectSubnet(sol, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(ctx3, drop);
+    srv_->initContext(ctx3, drop);
     ASSERT_FALSE(drop);
-    response = srv_.processSolicit(ctx3);
+    response = srv_->processSolicit(ctx3);
 
     // The subscriber-id option should be present but only once despite
     // it is both requested and has always-send.
@@ -3206,13 +3218,13 @@ TEST_F(Dhcpv6SrvTest, neverSend) {
 
     // Let the server process it and generate a response.
     AllocEngine::ClientContext6 ctx;
-    bool drop = !srv_.earlyGHRLookup(sol, ctx);
+    bool drop = !srv_->earlyGHRLookup(sol, ctx);
     ASSERT_FALSE(drop);
-    ctx.subnet_ = srv_.selectSubnet(sol, drop);
+    ctx.subnet_ = srv_->selectSubnet(sol, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(ctx, drop);
+    srv_->initContext(ctx, drop);
     ASSERT_FALSE(drop);
-    Pkt6Ptr response = srv_.processSolicit(ctx);
+    Pkt6Ptr response = srv_->processSolicit(ctx);
 
     // The server should not add a subscriber-id option
     ASSERT_FALSE(response->getOption(D6O_SUBSCRIBER_ID));
@@ -3229,13 +3241,13 @@ TEST_F(Dhcpv6SrvTest, neverSend) {
     // Let the server process it again. This time the name-servers
     // option should be present.
     AllocEngine::ClientContext6 ctx2;
-    drop = !srv_.earlyGHRLookup(sol, ctx2);
+    drop = !srv_->earlyGHRLookup(sol, ctx2);
     ASSERT_FALSE(drop);
-    ctx2.subnet_ = srv_.selectSubnet(sol, drop);
+    ctx2.subnet_ = srv_->selectSubnet(sol, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(ctx2, drop);
+    srv_->initContext(ctx2, drop);
     ASSERT_FALSE(drop);
-    response = srv_.processSolicit(ctx2);
+    response = srv_->processSolicit(ctx2);
 
     // Processing should not add a subscriber-id option
     ASSERT_FALSE(response->getOption(D6O_SUBSCRIBER_ID));
@@ -3253,13 +3265,13 @@ TEST_F(Dhcpv6SrvTest, neverSend) {
 
     // Let the server process it again.
     AllocEngine::ClientContext6 ctx3;
-    drop = !srv_.earlyGHRLookup(sol, ctx3);
+    drop = !srv_->earlyGHRLookup(sol, ctx3);
     ASSERT_FALSE(drop);
-    ctx3.subnet_ = srv_.selectSubnet(sol, drop);
+    ctx3.subnet_ = srv_->selectSubnet(sol, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(ctx3, drop);
+    srv_->initContext(ctx3, drop);
     ASSERT_FALSE(drop);
-    response = srv_.processSolicit(ctx3);
+    response = srv_->processSolicit(ctx3);
 
     // The subscriber-id option should still not be present.
     ASSERT_FALSE(response->getOption(D6O_SUBSCRIBER_ID));
@@ -3354,28 +3366,28 @@ TEST_F(Dhcpv6SrvTest, relayOverride) {
     // This is just a sanity check, we're using regular method: the relay
     // belongs to the first (2001:db8:1::/64) subnet, so it's an easy decision.
     bool drop = false;
-    EXPECT_TRUE(subnet1 == srv_.selectSubnet(sol, drop));
+    EXPECT_TRUE(subnet1 == srv_->selectSubnet(sol, drop));
     EXPECT_FALSE(drop);
 
     // Relay belongs to the second subnet, so it should be selected.
     sol->relay_info_.back().linkaddr_ = IOAddress("2001:db8:2::1");
-    EXPECT_TRUE(subnet2 == srv_.selectSubnet(sol, drop));
+    EXPECT_TRUE(subnet2 == srv_->selectSubnet(sol, drop));
     EXPECT_FALSE(drop);
 
     // Now let's check if the relay override for the first subnets works
     sol->relay_info_.back().linkaddr_ = IOAddress("2001:db8:3::1");
-    EXPECT_TRUE(subnet1 == srv_.selectSubnet(sol, drop));
+    EXPECT_TRUE(subnet1 == srv_->selectSubnet(sol, drop));
     EXPECT_FALSE(drop);
 
     // Now repeat that for relay matching the second subnet.
     sol->relay_info_.back().linkaddr_ = IOAddress("2001:db8:3::2");
-    EXPECT_TRUE(subnet2 == srv_.selectSubnet(sol, drop));
+    EXPECT_TRUE(subnet2 == srv_->selectSubnet(sol, drop));
     EXPECT_FALSE(drop);
 
     // Finally, let's check that completely mismatched relay will not get us
     // anything
     sol->relay_info_.back().linkaddr_ = IOAddress("2001:db8:1234::1");
-    EXPECT_FALSE(srv_.selectSubnet(sol, drop));
+    EXPECT_FALSE(srv_->selectSubnet(sol, drop));
     EXPECT_FALSE(drop);
 }
 

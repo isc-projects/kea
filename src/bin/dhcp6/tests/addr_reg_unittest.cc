@@ -306,16 +306,16 @@ string AddrRegTest::cumulative_registered_nas_name_ =
 TEST_F(AddrRegTest, sanityCheck) {
     // A message with no client-id should fail
     Pkt6Ptr addr_reg_inf = Pkt6Ptr(new Pkt6(DHCPV6_ADDR_REG_INFORM, 1234));
-    EXPECT_FALSE(srv_.sanityCheck(addr_reg_inf));
+    EXPECT_FALSE(srv_->sanityCheck(addr_reg_inf));
 
     // A message with a single client-id should succeed
     OptionPtr clientid = generateClientId();
     addr_reg_inf->addOption(clientid);
-    EXPECT_TRUE(srv_.sanityCheck(addr_reg_inf));
+    EXPECT_TRUE(srv_->sanityCheck(addr_reg_inf));
 
     // A message with server-id present should fail
-    addr_reg_inf->addOption(srv_.getServerID());
-    EXPECT_FALSE(srv_.sanityCheck(addr_reg_inf));
+    addr_reg_inf->addOption(srv_->getServerID());
+    EXPECT_FALSE(srv_->sanityCheck(addr_reg_inf));
 }
 
 // Test that more than one client-id are forbidden for Addr-reg-inform messages
@@ -326,7 +326,7 @@ TEST_F(AddrRegTest, sanityCheck2) {
     OptionPtr clientid = generateClientId();
     addr_reg_inf->addOption(clientid);
     addr_reg_inf->addOption(clientid);
-    EXPECT_FALSE(srv_.sanityCheck(addr_reg_inf));
+    EXPECT_FALSE(srv_->sanityCheck(addr_reg_inf));
 }
 
 // Test that subnet selection must return a subnet for processAddrRegInform.
@@ -338,16 +338,16 @@ TEST_F(AddrRegTest, noSubnet) {
 
     // Pass it to the server.
     AllocEngine::ClientContext6 ctx;
-    bool drop = !srv_.earlyGHRLookup(addr_reg_inf, ctx);
+    bool drop = !srv_->earlyGHRLookup(addr_reg_inf, ctx);
     ASSERT_FALSE(drop);
-    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf, drop);
+    ctx.subnet_ = srv_->selectSubnet(addr_reg_inf, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(ctx, drop);
+    srv_->initContext(ctx, drop);
     ASSERT_FALSE(drop);
     ASSERT_FALSE(ctx.subnet_);
 
     // No server: no response.
-    EXPECT_FALSE(srv_.processAddrRegInform(ctx));
+    EXPECT_FALSE(srv_->processAddrRegInform(ctx));
 
     // The query is silently rejected so no log to check.
 }
@@ -367,16 +367,16 @@ TEST_F(AddrRegTest, noIA_NA) {
 
     // Pass it to the server.
     AllocEngine::ClientContext6 ctx;
-    bool drop = !srv_.earlyGHRLookup(addr_reg_inf, ctx);
+    bool drop = !srv_->earlyGHRLookup(addr_reg_inf, ctx);
     ASSERT_FALSE(drop);
-    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf, drop);
+    ctx.subnet_ = srv_->selectSubnet(addr_reg_inf, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(ctx, drop);
+    srv_->initContext(ctx, drop);
     ASSERT_FALSE(drop);
     ASSERT_TRUE(ctx.subnet_);
 
     // No IA_NA: no response.
-    EXPECT_FALSE(srv_.processAddrRegInform(ctx));
+    EXPECT_FALSE(srv_->processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
     expected += "error on ADDR-REG-INFORM from client fe80::abcd: ";
@@ -401,16 +401,16 @@ TEST_F(AddrRegTest, twoIA_NAs) {
 
     // Pass it to the server.
     AllocEngine::ClientContext6 ctx;
-    bool drop = !srv_.earlyGHRLookup(addr_reg_inf, ctx);
+    bool drop = !srv_->earlyGHRLookup(addr_reg_inf, ctx);
     ASSERT_FALSE(drop);
-    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf, drop);
+    ctx.subnet_ = srv_->selectSubnet(addr_reg_inf, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(ctx, drop);
+    srv_->initContext(ctx, drop);
     ASSERT_FALSE(drop);
     ASSERT_TRUE(ctx.subnet_);
 
     // 2 IA_NA options: no response.
-    EXPECT_FALSE(srv_.processAddrRegInform(ctx));
+    EXPECT_FALSE(srv_->processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
     expected += "error on ADDR-REG-INFORM from client fe80::abcd: ";
@@ -434,16 +434,16 @@ TEST_F(AddrRegTest, noIA_NAsub) {
 
     // Pass it to the server.
     AllocEngine::ClientContext6 ctx;
-    bool drop = !srv_.earlyGHRLookup(addr_reg_inf, ctx);
+    bool drop = !srv_->earlyGHRLookup(addr_reg_inf, ctx);
     ASSERT_FALSE(drop);
-    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf, drop);
+    ctx.subnet_ = srv_->selectSubnet(addr_reg_inf, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(ctx, drop);
+    srv_->initContext(ctx, drop);
     ASSERT_FALSE(drop);
     ASSERT_TRUE(ctx.subnet_);
 
     // No IA_NA sub-options: no response.
-    EXPECT_FALSE(srv_.processAddrRegInform(ctx));
+    EXPECT_FALSE(srv_->processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
     expected += "error on ADDR-REG-INFORM from client fe80::abcd: ";
@@ -470,16 +470,16 @@ TEST_F(AddrRegTest, twoIA_NAsub) {
 
     // Pass it to the server.
     AllocEngine::ClientContext6 ctx;
-    bool drop = !srv_.earlyGHRLookup(addr_reg_inf, ctx);
+    bool drop = !srv_->earlyGHRLookup(addr_reg_inf, ctx);
     ASSERT_FALSE(drop);
-    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf, drop);
+    ctx.subnet_ = srv_->selectSubnet(addr_reg_inf, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(ctx, drop);
+    srv_->initContext(ctx, drop);
     ASSERT_FALSE(drop);
     ASSERT_TRUE(ctx.subnet_);
 
     // Two IA_NA sub-options: no response.
-    EXPECT_FALSE(srv_.processAddrRegInform(ctx));
+    EXPECT_FALSE(srv_->processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
     expected += "error on ADDR-REG-INFORM from client fe80::abcd: ";
@@ -505,16 +505,16 @@ TEST_F(AddrRegTest, noAddrMatch) {
 
     // Pass it to the server.
     AllocEngine::ClientContext6 ctx;
-    bool drop = !srv_.earlyGHRLookup(addr_reg_inf, ctx);
+    bool drop = !srv_->earlyGHRLookup(addr_reg_inf, ctx);
     ASSERT_FALSE(drop);
-    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf, drop);
+    ctx.subnet_ = srv_->selectSubnet(addr_reg_inf, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(ctx, drop);
+    srv_->initContext(ctx, drop);
     ASSERT_FALSE(drop);
     ASSERT_TRUE(ctx.subnet_);
 
     // Address mismatch: no response.
-    EXPECT_FALSE(srv_.processAddrRegInform(ctx));
+    EXPECT_FALSE(srv_->processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
     expected += "error on ADDR-REG-INFORM from client fe80::abcd: ";
@@ -547,16 +547,16 @@ TEST_F(AddrRegTest, noAddrMatchRelay) {
 
     // Pass it to the server.
     AllocEngine::ClientContext6 ctx;
-    bool drop = !srv_.earlyGHRLookup(addr_reg_inf, ctx);
+    bool drop = !srv_->earlyGHRLookup(addr_reg_inf, ctx);
     ASSERT_FALSE(drop);
-    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf, drop);
+    ctx.subnet_ = srv_->selectSubnet(addr_reg_inf, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(ctx, drop);
+    srv_->initContext(ctx, drop);
     ASSERT_FALSE(drop);
     ASSERT_TRUE(ctx.subnet_);
 
     // Address mismatch: no response.
-    EXPECT_FALSE(srv_.processAddrRegInform(ctx));
+    EXPECT_FALSE(srv_->processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
     expected += "error on ADDR-REG-INFORM from client fe80::ef01: ";
@@ -595,16 +595,16 @@ TEST_F(AddrRegTest, noAddrMatch2Relays) {
 
     // Pass it to the server.
     AllocEngine::ClientContext6 ctx;
-    bool drop = !srv_.earlyGHRLookup(addr_reg_inf, ctx);
+    bool drop = !srv_->earlyGHRLookup(addr_reg_inf, ctx);
     ASSERT_FALSE(drop);
-    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf, drop);
+    ctx.subnet_ = srv_->selectSubnet(addr_reg_inf, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(ctx, drop);
+    srv_->initContext(ctx, drop);
     ASSERT_FALSE(drop);
     ASSERT_TRUE(ctx.subnet_);
 
     // Address mismatch: no response.
-    EXPECT_FALSE(srv_.processAddrRegInform(ctx));
+    EXPECT_FALSE(srv_->processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
     expected += "error on ADDR-REG-INFORM from client fe80::2345: ";
@@ -631,16 +631,16 @@ TEST_F(AddrRegTest, noInSubnet) {
 
     // Pass it to the server.
     AllocEngine::ClientContext6 ctx;
-    bool drop = !srv_.earlyGHRLookup(addr_reg_inf, ctx);
+    bool drop = !srv_->earlyGHRLookup(addr_reg_inf, ctx);
     ASSERT_FALSE(drop);
-    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf, drop);
+    ctx.subnet_ = srv_->selectSubnet(addr_reg_inf, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(ctx, drop);
+    srv_->initContext(ctx, drop);
     ASSERT_FALSE(drop);
     ASSERT_TRUE(ctx.subnet_);
 
     // Not in subnet: no response.
-    EXPECT_FALSE(srv_.processAddrRegInform(ctx));
+    EXPECT_FALSE(srv_->processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
     expected += "error on ADDR-REG-INFORM from client 2001:db8::1: ";
@@ -667,16 +667,16 @@ TEST_F(AddrRegTest, reserved) {
 
     // Pass it to the server.
     AllocEngine::ClientContext6 ctx;
-    bool drop = !srv_.earlyGHRLookup(addr_reg_inf, ctx);
+    bool drop = !srv_->earlyGHRLookup(addr_reg_inf, ctx);
     ASSERT_FALSE(drop);
-    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf, drop);
+    ctx.subnet_ = srv_->selectSubnet(addr_reg_inf, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(ctx, drop);
+    srv_->initContext(ctx, drop);
     ASSERT_FALSE(drop);
     ASSERT_TRUE(ctx.subnet_);
 
     // Reserved address: no response.
-    EXPECT_FALSE(srv_.processAddrRegInform(ctx));
+    EXPECT_FALSE(srv_->processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
     expected += "error on ADDR-REG-INFORM from client 2001:db8:1::10: ";
@@ -710,16 +710,16 @@ AddrRegTest::testAddressInUse(const uint32_t state) {
 
     // Pass it to the server.
     AllocEngine::ClientContext6 ctx;
-    bool drop = !srv_.earlyGHRLookup(addr_reg_inf, ctx);
+    bool drop = !srv_->earlyGHRLookup(addr_reg_inf, ctx);
     ASSERT_FALSE(drop);
-    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf, drop);
+    ctx.subnet_ = srv_->selectSubnet(addr_reg_inf, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(ctx, drop);
+    srv_->initContext(ctx, drop);
     ASSERT_FALSE(drop);
     ASSERT_TRUE(ctx.subnet_);
 
     // Address in use: no response.
-    EXPECT_FALSE(srv_.processAddrRegInform(ctx));
+    EXPECT_FALSE(srv_->processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
     expected += "error on ADDR-REG-INFORM from client 2001:db8:1::1: ";
@@ -774,16 +774,16 @@ AddrRegTest::testBasic() {
 
     // Pass it to the server.
     AllocEngine::ClientContext6 ctx;
-    bool drop = !srv_.earlyGHRLookup(addr_reg_inf_, ctx);
+    bool drop = !srv_->earlyGHRLookup(addr_reg_inf_, ctx);
     ASSERT_FALSE(drop);
-    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf_, drop);
+    ctx.subnet_ = srv_->selectSubnet(addr_reg_inf_, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(ctx, drop);
+    srv_->initContext(ctx, drop);
     ASSERT_FALSE(drop);
     ASSERT_TRUE(ctx.subnet_);
 
     // Verify the response.
-    Pkt6Ptr response = srv_.processAddrRegInform(ctx);
+    Pkt6Ptr response = srv_->processAddrRegInform(ctx);
     ASSERT_TRUE(response);
 
     EXPECT_EQ(DHCPV6_ADDR_REG_REPLY, response->getType());
@@ -851,16 +851,16 @@ TEST_F(AddrRegTest, relayed) {
 
     // Pass it to the server.
     AllocEngine::ClientContext6 ctx;
-    bool drop = !srv_.earlyGHRLookup(addr_reg_inf, ctx);
+    bool drop = !srv_->earlyGHRLookup(addr_reg_inf, ctx);
     ASSERT_FALSE(drop);
-    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf, drop);
+    ctx.subnet_ = srv_->selectSubnet(addr_reg_inf, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(ctx, drop);
+    srv_->initContext(ctx, drop);
     ASSERT_FALSE(drop);
     ASSERT_TRUE(ctx.subnet_);
 
     // Verify the response.
-    Pkt6Ptr response = srv_.processAddrRegInform(ctx);
+    Pkt6Ptr response = srv_->processAddrRegInform(ctx);
     ASSERT_TRUE(response);
 
     EXPECT_EQ(DHCPV6_ADDR_REG_REPLY, response->getType());
@@ -918,16 +918,16 @@ AddrRegTest::testRenew() {
 
     // Pass it to the server.
     AllocEngine::ClientContext6 ctx;
-    bool drop = !srv_.earlyGHRLookup(addr_reg_inf_, ctx);
+    bool drop = !srv_->earlyGHRLookup(addr_reg_inf_, ctx);
     ASSERT_FALSE(drop);
-    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf_, drop);
+    ctx.subnet_ = srv_->selectSubnet(addr_reg_inf_, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(ctx, drop);
+    srv_->initContext(ctx, drop);
     ASSERT_FALSE(drop);
     ASSERT_TRUE(ctx.subnet_);
 
     // Verify the response.
-    Pkt6Ptr response = srv_.processAddrRegInform(ctx);
+    Pkt6Ptr response = srv_->processAddrRegInform(ctx);
     ASSERT_TRUE(response);
 
     // Verify the updated lease.
@@ -981,16 +981,16 @@ AddrRegTest::testAnotherClient() {
 
     // Pass it to the server.
     AllocEngine::ClientContext6 ctx;
-    bool drop = !srv_.earlyGHRLookup(addr_reg_inf_, ctx);
+    bool drop = !srv_->earlyGHRLookup(addr_reg_inf_, ctx);
     ASSERT_FALSE(drop);
-    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf_, drop);
+    ctx.subnet_ = srv_->selectSubnet(addr_reg_inf_, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(ctx, drop);
+    srv_->initContext(ctx, drop);
     ASSERT_FALSE(drop);
     ASSERT_TRUE(ctx.subnet_);
 
     // Verify the response.
-    Pkt6Ptr response = srv_.processAddrRegInform(ctx);
+    Pkt6Ptr response = srv_->processAddrRegInform(ctx);
     ASSERT_TRUE(response);
 
     // Verify the updated lease.
@@ -1048,16 +1048,16 @@ AddrRegTest::testAnotherSubnet() {
 
     // Pass it to the server.
     AllocEngine::ClientContext6 ctx;
-    bool drop = !srv_.earlyGHRLookup(addr_reg_inf_, ctx);
+    bool drop = !srv_->earlyGHRLookup(addr_reg_inf_, ctx);
     ASSERT_FALSE(drop);
-    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf_, drop);
+    ctx.subnet_ = srv_->selectSubnet(addr_reg_inf_, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(ctx, drop);
+    srv_->initContext(ctx, drop);
     ASSERT_FALSE(drop);
     ASSERT_TRUE(ctx.subnet_);
 
     // Verify the response.
-    Pkt6Ptr response = srv_.processAddrRegInform(ctx);
+    Pkt6Ptr response = srv_->processAddrRegInform(ctx);
     ASSERT_TRUE(response);
 
     // Verify the updated lease.
@@ -1093,7 +1093,7 @@ TEST_F(AddrRegTest, fqdn) {
     IfaceMgrTestConfig test_config(true);
 
     ASSERT_NO_THROW(configure(config_));
-    ASSERT_NO_THROW(srv_.startD2());
+    ASSERT_NO_THROW(srv_->startD2());
 
     IOAddress addr("2001:db8:1::1");
     Pkt6Ptr addr_reg_inf = Pkt6Ptr(new Pkt6(DHCPV6_ADDR_REG_INFORM, 1234));
@@ -1114,16 +1114,16 @@ TEST_F(AddrRegTest, fqdn) {
 
     // Pass it to the server.
     AllocEngine::ClientContext6 ctx;
-    bool drop = !srv_.earlyGHRLookup(addr_reg_inf, ctx);
+    bool drop = !srv_->earlyGHRLookup(addr_reg_inf, ctx);
     ASSERT_FALSE(drop);
-    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf, drop);
+    ctx.subnet_ = srv_->selectSubnet(addr_reg_inf, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(ctx, drop);
+    srv_->initContext(ctx, drop);
     ASSERT_FALSE(drop);
     ASSERT_TRUE(ctx.subnet_);
 
     // Verify the response.
-    Pkt6Ptr response = srv_.processAddrRegInform(ctx);
+    Pkt6Ptr response = srv_->processAddrRegInform(ctx);
     ASSERT_TRUE(response);
 
     EXPECT_EQ(DHCPV6_ADDR_REG_REPLY, response->getType());
@@ -1162,7 +1162,7 @@ TEST_F(AddrRegTest, renewDdns) {
     IfaceMgrTestConfig test_config(true);
 
     ASSERT_NO_THROW(configure(config_));
-    ASSERT_NO_THROW(srv_.startD2());
+    ASSERT_NO_THROW(srv_->startD2());
 
     IOAddress addr("2001:db8:1::1");
     Pkt6Ptr addr_reg_inf = Pkt6Ptr(new Pkt6(DHCPV6_ADDR_REG_INFORM, 1234));
@@ -1183,16 +1183,16 @@ TEST_F(AddrRegTest, renewDdns) {
 
     // Pass it to the server.
     AllocEngine::ClientContext6 ctx;
-    bool drop = !srv_.earlyGHRLookup(addr_reg_inf, ctx);
+    bool drop = !srv_->earlyGHRLookup(addr_reg_inf, ctx);
     ASSERT_FALSE(drop);
-    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf, drop);
+    ctx.subnet_ = srv_->selectSubnet(addr_reg_inf, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(ctx, drop);
+    srv_->initContext(ctx, drop);
     ASSERT_FALSE(drop);
     ASSERT_TRUE(ctx.subnet_);
 
     // Verify the response.
-    Pkt6Ptr response = srv_.processAddrRegInform(ctx);
+    Pkt6Ptr response = srv_->processAddrRegInform(ctx);
     ASSERT_TRUE(response);
 
     // There should be one name change request generated.
@@ -1205,15 +1205,15 @@ TEST_F(AddrRegTest, renewDdns) {
 
     // Process it a second time.
     AllocEngine::ClientContext6 ctx2;
-    drop = !srv_.earlyGHRLookup(addr_reg_inf, ctx2);
+    drop = !srv_->earlyGHRLookup(addr_reg_inf, ctx2);
     ASSERT_FALSE(drop);
-    ctx2.subnet_ = srv_.selectSubnet(addr_reg_inf, drop);
+    ctx2.subnet_ = srv_->selectSubnet(addr_reg_inf, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(ctx2, drop);
+    srv_->initContext(ctx2, drop);
     ASSERT_FALSE(drop);
     ASSERT_TRUE(ctx2.subnet_);
 
-    response = srv_.processAddrRegInform(ctx2);
+    response = srv_->processAddrRegInform(ctx2);
     ASSERT_TRUE(response);
 
     // DDNS is skipped when ddns-update-on-renew is false (default).
@@ -1237,7 +1237,7 @@ TEST_F(AddrRegTest, renewDdnsUpdateOnRenew) {
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getSubnet(1);
     ASSERT_TRUE(subnet);
     ASSERT_NO_THROW(subnet->setDdnsUpdateOnRenew(true));
-    ASSERT_NO_THROW(srv_.startD2());
+    ASSERT_NO_THROW(srv_->startD2());
 
     IOAddress addr("2001:db8:1::1");
     Pkt6Ptr addr_reg_inf = Pkt6Ptr(new Pkt6(DHCPV6_ADDR_REG_INFORM, 1234));
@@ -1258,16 +1258,16 @@ TEST_F(AddrRegTest, renewDdnsUpdateOnRenew) {
 
     // Pass it to the server.
     AllocEngine::ClientContext6 ctx;
-    bool drop = !srv_.earlyGHRLookup(addr_reg_inf, ctx);
+    bool drop = !srv_->earlyGHRLookup(addr_reg_inf, ctx);
     ASSERT_FALSE(drop);
-    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf, drop);
+    ctx.subnet_ = srv_->selectSubnet(addr_reg_inf, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(ctx, drop);
+    srv_->initContext(ctx, drop);
     ASSERT_FALSE(drop);
     ASSERT_TRUE(ctx.subnet_);
 
     // Verify the response.
-    Pkt6Ptr response = srv_.processAddrRegInform(ctx);
+    Pkt6Ptr response = srv_->processAddrRegInform(ctx);
     ASSERT_TRUE(response);
 
     // There should be one name change request generated.
@@ -1280,15 +1280,15 @@ TEST_F(AddrRegTest, renewDdnsUpdateOnRenew) {
 
     // Process it a second time.
     AllocEngine::ClientContext6 ctx2;
-    drop = !srv_.earlyGHRLookup(addr_reg_inf, ctx2);
+    drop = !srv_->earlyGHRLookup(addr_reg_inf, ctx2);
     ASSERT_FALSE(drop);
-    ctx2.subnet_ = srv_.selectSubnet(addr_reg_inf, drop);
+    ctx2.subnet_ = srv_->selectSubnet(addr_reg_inf, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(ctx2, drop);
+    srv_->initContext(ctx2, drop);
     ASSERT_FALSE(drop);
     ASSERT_TRUE(ctx2.subnet_);
 
-    response = srv_.processAddrRegInform(ctx2);
+    response = srv_->processAddrRegInform(ctx2);
     ASSERT_TRUE(response);
 
     // DDNS is not skipped when ddns-update-on-renew is true.
@@ -1309,7 +1309,7 @@ TEST_F(AddrRegTest, renewDdnsHostname) {
     IfaceMgrTestConfig test_config(true);
 
     ASSERT_NO_THROW(configure(config_));
-    ASSERT_NO_THROW(srv_.startD2());
+    ASSERT_NO_THROW(srv_->startD2());
 
     IOAddress addr("2001:db8:1::1");
     Pkt6Ptr addr_reg_inf = Pkt6Ptr(new Pkt6(DHCPV6_ADDR_REG_INFORM, 1234));
@@ -1330,16 +1330,16 @@ TEST_F(AddrRegTest, renewDdnsHostname) {
 
     // Pass it to the server.
     AllocEngine::ClientContext6 ctx;
-    bool drop = !srv_.earlyGHRLookup(addr_reg_inf, ctx);
+    bool drop = !srv_->earlyGHRLookup(addr_reg_inf, ctx);
     ASSERT_FALSE(drop);
-    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf, drop);
+    ctx.subnet_ = srv_->selectSubnet(addr_reg_inf, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(ctx, drop);
+    srv_->initContext(ctx, drop);
     ASSERT_FALSE(drop);
     ASSERT_TRUE(ctx.subnet_);
 
     // Verify the response.
-    Pkt6Ptr response = srv_.processAddrRegInform(ctx);
+    Pkt6Ptr response = srv_->processAddrRegInform(ctx);
     ASSERT_TRUE(response);
 
     // There should be one name change request generated.
@@ -1359,15 +1359,15 @@ TEST_F(AddrRegTest, renewDdnsHostname) {
 
     // Process it a second time.
     AllocEngine::ClientContext6 ctx2;
-    drop = !srv_.earlyGHRLookup(addr_reg_inf, ctx2);
+    drop = !srv_->earlyGHRLookup(addr_reg_inf, ctx2);
     ASSERT_FALSE(drop);
-    ctx2.subnet_ = srv_.selectSubnet(addr_reg_inf, drop);
+    ctx2.subnet_ = srv_->selectSubnet(addr_reg_inf, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(ctx2, drop);
+    srv_->initContext(ctx2, drop);
     ASSERT_FALSE(drop);
     ASSERT_TRUE(ctx2.subnet_);
 
-    response = srv_.processAddrRegInform(ctx2);
+    response = srv_->processAddrRegInform(ctx2);
     ASSERT_TRUE(response);
 
     // DDNS is not skipped when the hostname changed.
@@ -1407,16 +1407,16 @@ TEST_F(AddrRegTest, oro) {
 
     // Pass it to the server.
     AllocEngine::ClientContext6 ctx;
-    bool drop = !srv_.earlyGHRLookup(addr_reg_inf, ctx);
+    bool drop = !srv_->earlyGHRLookup(addr_reg_inf, ctx);
     ASSERT_FALSE(drop);
-    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf, drop);
+    ctx.subnet_ = srv_->selectSubnet(addr_reg_inf, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(ctx, drop);
+    srv_->initContext(ctx, drop);
     ASSERT_FALSE(drop);
     ASSERT_TRUE(ctx.subnet_);
 
     // Verify the response.
-    Pkt6Ptr response = srv_.processAddrRegInform(ctx);
+    Pkt6Ptr response = srv_->processAddrRegInform(ctx);
     ASSERT_TRUE(response);
 
     EXPECT_EQ(DHCPV6_ADDR_REG_REPLY, response->getType());
@@ -1541,16 +1541,16 @@ TEST_F(AddrRegTest, calloutSkip) {
 
     // Pass it to the server.
     AllocEngine::ClientContext6 ctx;
-    bool drop = !srv_.earlyGHRLookup(addr_reg_inf_, ctx);
+    bool drop = !srv_->earlyGHRLookup(addr_reg_inf_, ctx);
     ASSERT_FALSE(drop);
-    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf_, drop);
+    ctx.subnet_ = srv_->selectSubnet(addr_reg_inf_, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(ctx, drop);
+    srv_->initContext(ctx, drop);
     ASSERT_FALSE(drop);
     ASSERT_TRUE(ctx.subnet_);
 
     // Verify the response.
-    Pkt6Ptr response = srv_.processAddrRegInform(ctx);
+    Pkt6Ptr response = srv_->processAddrRegInform(ctx);
     ASSERT_TRUE(response);
     EXPECT_TRUE(callout_errmsg_.empty()) << callout_errmsg_;
     checkCalloutHandleReset();
@@ -1596,16 +1596,16 @@ TEST_F(AddrRegTest, calloutDrop) {
 
     // Pass it to the server.
     AllocEngine::ClientContext6 ctx;
-    bool drop = !srv_.earlyGHRLookup(addr_reg_inf_, ctx);
+    bool drop = !srv_->earlyGHRLookup(addr_reg_inf_, ctx);
     ASSERT_FALSE(drop);
-    ctx.subnet_ = srv_.selectSubnet(addr_reg_inf_, drop);
+    ctx.subnet_ = srv_->selectSubnet(addr_reg_inf_, drop);
     ASSERT_FALSE(drop);
-    srv_.initContext(ctx, drop);
+    srv_->initContext(ctx, drop);
     ASSERT_FALSE(drop);
     ASSERT_TRUE(ctx.subnet_);
 
     // Callout set the status to drop: no response.
-    EXPECT_FALSE(srv_.processAddrRegInform(ctx));
+    EXPECT_FALSE(srv_->processAddrRegInform(ctx));
     EXPECT_TRUE(callout_errmsg_.empty()) << callout_errmsg_;
     checkCalloutHandleReset();
 

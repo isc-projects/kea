@@ -1,3 +1,9 @@
+2325.	[bug]		razvan
+	Fixed a bug which was causing address allocation counters to be
+	negative when client released leases and the server has lease
+	affinity and lease reclamation enabled.
+	(Gitlab #1336)
+
 2324.	[func]		razvan
 	It is not necessary to restart the server to apply changes in the
 	TLS configuration. Running the "config-reload" command is

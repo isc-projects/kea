@@ -14,7 +14,7 @@
 #include <gtest/gtest.h>
 
 #include <asiolink/process_spawn.h>
-#include <dhcp6/dhcp6_srv.h>
+#include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/parser_context.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/option6_ia.h>
@@ -133,9 +133,9 @@ private:
 };
 
 /// @brief "naked" Dhcpv6Srv class that exposes internal members
-class NakedDhcpv6Srv: public isc::dhcp::Dhcpv6Srv {
+class NakedDhcpv6Srv: public ControlledDhcpv6Srv {
 public:
-    NakedDhcpv6Srv(uint16_t port) : isc::dhcp::Dhcpv6Srv(port) {
+    NakedDhcpv6Srv(uint16_t port) : ControlledDhcpv6Srv(port) {
         // Open the "memfile" database for leases
         std::string memfile = "type=memfile universe=6 persist=false";
         isc::dhcp::LeaseMgrFactory::create(memfile);
@@ -936,6 +936,15 @@ public:
                      const isc::asiolink::IOAddress& release_addr,
                      const LeaseAffinity lease_affinity);
 
+    /// @brief Performs RELEASE test for an address within a subnet
+    /// and does not cause counters to decrease below 0.
+    ///
+    /// This method does not throw, but uses gtest macros to signify failures.
+    ///
+    /// @param type type (TYPE_NA or TYPE_PD)
+    void
+    testReleaseAndReclaim(isc::dhcp::Lease::Type type);
+
     /// @brief Checks that reassignment of a released-expired lease
     /// does not lead to zero lifetimes.
     ///
@@ -992,7 +1001,7 @@ public:
     isc::dhcp::Pool6Ptr pd_pool_;
 
     /// @brief Server object under test.
-    NakedDhcpv6Srv srv_;
+    boost::shared_ptr<NakedDhcpv6Srv> srv_;
 
     /// @brief The multi-threading flag.
     bool multi_threading_;

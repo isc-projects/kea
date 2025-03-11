@@ -58,7 +58,7 @@ BaseServerTest::~BaseServerTest() {
 }
 
 Dhcpv4SrvTest::Dhcpv4SrvTest()
-    : rcode_(-1), srv_(0), multi_threading_(false), start_time_(PktEvent::now()) {
+    : rcode_(-1), srv_(new NakedDhcpv4Srv(0)), multi_threading_(false), start_time_(PktEvent::now()) {
 
     // Wipe any existing statistics
     isc::stats::StatsMgr::instance().removeAll();
@@ -795,7 +795,7 @@ Dhcpv4SrvTest::buildCfgOptionTest(IOAddress expected_server_id,
     query->addOption(makeServerIdOption(server_id));
 
     Pkt4Ptr response;
-    ASSERT_NO_THROW(response = srv_.processRequest(query));
+    ASSERT_NO_THROW(response = srv_->processRequest(query));
 
     checkServerIdOption(response, expected_server_id);
 
@@ -811,7 +811,7 @@ Dhcpv4SrvTest::configure(const std::string& config,
                          const bool create_managers,
                          const bool test,
                          const LeaseAffinity lease_affinity) {
-    configure(config, srv_, commit, open_sockets, create_managers, test,
+    configure(config, *srv_, commit, open_sockets, create_managers, test,
               lease_affinity);
 }
 
@@ -941,11 +941,11 @@ Dhcpv4SrvTest::configureWithStatus(const std::string& config, NakedDhcpv4Srv& sr
 Dhcpv4Exchange
 Dhcpv4SrvTest::createExchange(const Pkt4Ptr& query) {
     bool drop = false;
-    ConstSubnet4Ptr subnet = srv_.selectSubnet(query, drop);
+    ConstSubnet4Ptr subnet = srv_->selectSubnet(query, drop);
     EXPECT_FALSE(drop);
     AllocEngine::ClientContext4Ptr context(new AllocEngine::ClientContext4());
-    EXPECT_TRUE(srv_.earlyGHRLookup(query, context));
-    Dhcpv4Exchange ex(srv_.alloc_engine_, query, context, subnet, drop);
+    EXPECT_TRUE(srv_->earlyGHRLookup(query, context));
+    Dhcpv4Exchange ex(srv_->alloc_engine_, query, context, subnet, drop);
     EXPECT_FALSE(context);
     EXPECT_FALSE(drop);
     return (ex);

@@ -238,7 +238,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRelay) {
     resp->setHops(req->getHops());
 
     // This function never throws.
-    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
+    ASSERT_NO_THROW(srv_->adjustIfaceData(ex));
 
     // Now the destination address should be relay's address.
     EXPECT_EQ("192.0.1.1", resp->getRemoteAddr().toText());
@@ -265,19 +265,19 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRelay) {
     resp->setRemoteAddr(IOAddress("0.0.0.0"));
 
     // Set the client and server ports.
-    srv_.client_port_ = 1234;
-    srv_.server_port_ = 2345;
+    srv_->client_port_ = 1234;
+    srv_->server_port_ = 2345;
 
-    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
+    ASSERT_NO_THROW(srv_->adjustIfaceData(ex));
 
     // Response should be sent back to the relay address.
     EXPECT_EQ("192.0.1.50", resp->getRemoteAddr().toText());
 
     // Remote port was enforced to the client port.
-    EXPECT_EQ(srv_.client_port_, resp->getRemotePort());
+    EXPECT_EQ(srv_->client_port_, resp->getRemotePort());
 
     // Local port was enforced to the server port.
-    EXPECT_EQ(srv_.server_port_, resp->getLocalPort());
+    EXPECT_EQ(srv_->server_port_, resp->getLocalPort());
 }
 
 // This test verifies that the remote port is adjusted when
@@ -330,7 +330,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRelayPort) {
     resp->setRemotePort(67);
 
     // This function never throws.
-    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
+    ASSERT_NO_THROW(srv_->adjustIfaceData(ex));
 
     // Now the destination address should be relay's address.
     EXPECT_EQ("192.0.1.1", resp->getRemoteAddr().toText());
@@ -395,7 +395,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataUseRouting) {
     resp->setHops(req->getHops());
 
     // This function never throws.
-    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
+    ASSERT_NO_THROW(srv_->adjustIfaceData(ex));
 
     // Now the destination address should be relay's address.
     EXPECT_EQ("192.0.1.1", resp->getRemoteAddr().toText());
@@ -423,7 +423,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataUseRouting) {
     cfg_iface->setOutboundIface(CfgIface::SAME_AS_INBOUND);
     CfgMgr::instance().commit();
 
-    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
+    ASSERT_NO_THROW(srv_->adjustIfaceData(ex));
 
     EXPECT_EQ("192.0.2.5", resp->getLocalAddr().toText());
     EXPECT_EQ("eth1", resp->getIface());
@@ -470,10 +470,10 @@ TEST_F(Dhcpv4SrvTest, adjustRemoteAddressRelaySendToSourceTestingModeEnabled) {
     resp->setHops(req->getHops());
 
     // Set the testing mode.
-    srv_.setSendResponsesToSource(true);
+    srv_->setSendResponsesToSource(true);
 
     // This function never throws.
-    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
+    ASSERT_NO_THROW(srv_->adjustIfaceData(ex));
 
     // Now the destination address should be source address.
     EXPECT_EQ("192.0.2.1", resp->getRemoteAddr().toText());
@@ -527,7 +527,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRenew) {
     // Copy hops value from the query.
     resp->setHops(req->getHops());
 
-    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
+    ASSERT_NO_THROW(srv_->adjustIfaceData(ex));
 
     // Check that server responds to ciaddr
     EXPECT_EQ("192.0.1.15", resp->getRemoteAddr().toText());
@@ -594,9 +594,9 @@ TEST_F(Dhcpv4SrvTest, adjustRemoteAddressRenewSendToSourceTestingModeEnabled) {
     resp->setHops(req->getHops());
 
     // Set the testing mode.
-    srv_.setSendResponsesToSource(true);
+    srv_->setSendResponsesToSource(true);
 
-    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
+    ASSERT_NO_THROW(srv_->adjustIfaceData(ex));
 
     // Check that server responds to source address.
     EXPECT_EQ("192.0.2.1", resp->getRemoteAddr().toText());
@@ -657,7 +657,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataSelect) {
     // are zero and client has just got new lease, the assigned address is
     // carried in yiaddr. In order to send this address to the client,
     // server must broadcast its response.
-    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
+    ASSERT_NO_THROW(srv_->adjustIfaceData(ex));
 
     // Check that the response is sent to broadcast address as the
     // server doesn't have capability to respond directly.
@@ -686,7 +686,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataSelect) {
 
     // Now we expect that the server will send its response to the
     // address assigned for the client.
-    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
+    ASSERT_NO_THROW(srv_->adjustIfaceData(ex));
 
     EXPECT_EQ("192.0.1.13", resp->getRemoteAddr().toText());
 }
@@ -735,9 +735,9 @@ TEST_F(Dhcpv4SrvTest, adjustRemoteAddressSelectSendToSourceTestingModeEnabled) {
     test_config.setDirectResponse(false);
 
     // Set the testing mode.
-    srv_.setSendResponsesToSource(true);
+    srv_->setSendResponsesToSource(true);
 
-    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
+    ASSERT_NO_THROW(srv_->adjustIfaceData(ex));
 
     // Check that server responds to source address.
     EXPECT_EQ("192.0.2.1", resp->getRemoteAddr().toText());
@@ -748,7 +748,7 @@ TEST_F(Dhcpv4SrvTest, adjustRemoteAddressSelectSendToSourceTestingModeEnabled) {
     // Clear the remote address.
     resp->setRemoteAddr(IOAddress("0.0.0.0"));
 
-    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
+    ASSERT_NO_THROW(srv_->adjustIfaceData(ex));
 
     // Check that server still responds to source address.
     EXPECT_EQ("192.0.2.1", resp->getRemoteAddr().toText());
@@ -791,7 +791,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataBroadcast) {
     // Clear the remote address.
     resp->setRemoteAddr(IOAddress("0.0.0.0"));
 
-    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
+    ASSERT_NO_THROW(srv_->adjustIfaceData(ex));
 
     // Server must respond to broadcast address when client desired that
     // by setting the broadcast flag in its request.
@@ -849,9 +849,9 @@ TEST_F(Dhcpv4SrvTest, adjustRemoteAddressBroadcastSendToSourceTestingModeEnabled
     resp->setRemoteAddr(IOAddress("0.0.0.0"));
 
     // Set the testing mode.
-    srv_.setSendResponsesToSource(true);
+    srv_->setSendResponsesToSource(true);
 
-    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
+    ASSERT_NO_THROW(srv_->adjustIfaceData(ex));
 
     // Check that server responds to source address.
     EXPECT_EQ("192.0.2.1", resp->getRemoteAddr().toText());
@@ -3896,21 +3896,21 @@ TEST_F(Dhcpv4SrvTest, clientClassify) {
     // This discover does not belong to foo class, so it will not
     // be serviced
     bool drop = false;
-    EXPECT_FALSE(srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Let's add the packet to bar class and try again.
     dis->addClass("bar");
 
     // Still not supported, because it belongs to wrong class.
-    EXPECT_FALSE(srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Let's add it to matching class.
     dis->addClass("foo");
 
     // This time it should work
-    EXPECT_TRUE(srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 }
 
@@ -4232,7 +4232,7 @@ TEST_F(Dhcpv4SrvTest, prlPersistency) {
     query->addOption(hostname);
 
     // Let the server process it.
-    Pkt4Ptr response = srv_.processDiscover(query);
+    Pkt4Ptr response = srv_->processDiscover(query);
 
     // Processing should add an ip-forwarding option
     ASSERT_TRUE(response->getOption(DHO_IP_FORWARDING));
@@ -4247,7 +4247,7 @@ TEST_F(Dhcpv4SrvTest, prlPersistency) {
     query->addOption(prl);
 
     // Let the server process it again.
-    response = srv_.processDiscover(query);
+    response = srv_->processDiscover(query);
 
     // Processing should add an ip-forwarding option
     ASSERT_TRUE(response->getOption(DHO_IP_FORWARDING));
@@ -4285,7 +4285,7 @@ TEST_F(Dhcpv4SrvTest, neverSend) {
     query->addOption(hostname);
 
     // Let the server process it.
-    Pkt4Ptr response = srv_.processDiscover(query);
+    Pkt4Ptr response = srv_->processDiscover(query);
 
     // Processing should not add an ip-forwarding option
     ASSERT_FALSE(response->getOption(DHO_IP_FORWARDING));
@@ -4300,7 +4300,7 @@ TEST_F(Dhcpv4SrvTest, neverSend) {
     query->addOption(prl);
 
     // Let the server process it again.
-    response = srv_.processDiscover(query);
+    response = srv_->processDiscover(query);
 
     // Processing should not add an ip-forwarding option
     ASSERT_FALSE(response->getOption(DHO_IP_FORWARDING));
@@ -4366,28 +4366,28 @@ TEST_F(Dhcpv4SrvTest, relayOverride) {
     // belongs to the first subnet, so it is selected
     dis->setGiaddr(IOAddress("192.0.2.1"));
     bool drop = false;
-    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet1 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Relay belongs to the second subnet, so it should be selected.
     dis->setGiaddr(IOAddress("192.0.3.1"));
-    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet2 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Now let's check if the relay override for the first subnets works
     dis->setGiaddr(IOAddress("192.0.5.1"));
-    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet1 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // The same check for the second subnet...
     dis->setGiaddr(IOAddress("192.0.5.2"));
-    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet2 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // And finally, let's check if mis-matched relay address will end up
     // in not selecting a subnet at all
     dis->setGiaddr(IOAddress("192.0.5.3"));
-    EXPECT_FALSE(srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Finally, check that the relay override works only with relay address
@@ -4395,7 +4395,7 @@ TEST_F(Dhcpv4SrvTest, relayOverride) {
     dis->setGiaddr(IOAddress("0.0.0.0"));
     dis->setHops(0);
     dis->setCiaddr(IOAddress("192.0.5.1"));
-    EXPECT_FALSE(srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 }
 
@@ -4456,13 +4456,13 @@ TEST_F(Dhcpv4SrvTest, relayOverrideAndClientClass) {
     // subnet[1], because the subnet matches and there are no class
     // requirements.
     bool drop = false;
-    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet2 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Now let's add this packet to class foo and recheck. This time it should
     // be accepted in the first subnet, because both class and relay-ip match.
     dis->addClass("foo");
-    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet1 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 }
 
@@ -4535,18 +4535,18 @@ TEST_F(Dhcpv4SrvTest, relayLinkSelect) {
     // belongs to the second subnet, so it is selected
     dis->setGiaddr(IOAddress("192.0.3.1"));
     bool drop = false;
-    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet2 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Setup a relay override for the first subnet as it has a high precedence
     dis->setGiaddr(IOAddress("192.0.5.1"));
-    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet1 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Put a RAI to select back the second subnet as it has
     // the highest precedence
     dis->addOption(rai);
-    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet2 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Subnet select option has a lower precedence
@@ -4555,7 +4555,7 @@ TEST_F(Dhcpv4SrvTest, relayLinkSelect) {
     ASSERT_TRUE(sbnsel);
     sbnsel->writeAddress(IOAddress("192.0.2.3"));
     dis->addOption(sbnsel);
-    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet2 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // But, when RAI exists without the link selection option, we should
@@ -4564,7 +4564,7 @@ TEST_F(Dhcpv4SrvTest, relayLinkSelect) {
     dis->delOption(DHO_DHCP_AGENT_OPTIONS);
     dis->addOption(rai);
     dis->setGiaddr(IOAddress("192.0.4.1"));
-    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet1 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Check client-classification still applies
@@ -4577,11 +4577,11 @@ TEST_F(Dhcpv4SrvTest, relayLinkSelect) {
     dis->addOption(rai);
 
     // Note it shall fail (vs. try the next criterion).
-    EXPECT_FALSE(srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
     // Add the packet to the class and check again: now it shall succeed
     dis->addClass("foo");
-    EXPECT_TRUE(subnet3 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet3 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Check it fails with a bad address in the sub-option
@@ -4592,7 +4592,7 @@ TEST_F(Dhcpv4SrvTest, relayLinkSelect) {
     dis->delOption(DHO_DHCP_AGENT_OPTIONS);
     rai->addOption(ols);
     dis->addOption(rai);
-    EXPECT_FALSE(srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 }
 
@@ -4666,19 +4666,19 @@ TEST_F(Dhcpv4SrvTest, relayIgnoreLinkSelect) {
     // belongs to the second subnet, so it is selected
     dis->setGiaddr(IOAddress("192.0.3.1"));
     bool drop = false;
-    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet2 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Setup a relay override for the first subnet as it has a high precedence
     dis->setGiaddr(IOAddress("192.0.5.1"));
-    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet1 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Put a RAI to select back the second subnet as it has
     // the highest precedence, but it should be ignored due
     // to the ignore-rai-link-selection compatibility config
     dis->addOption(rai);
-    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet1 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Subnet select option has a lower precedence, but will succeed
@@ -4688,7 +4688,7 @@ TEST_F(Dhcpv4SrvTest, relayIgnoreLinkSelect) {
     ASSERT_TRUE(sbnsel);
     sbnsel->writeAddress(IOAddress("192.0.2.3"));
     dis->addOption(sbnsel);
-    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet1 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // But, when RAI exists without the link selection option, we should
@@ -4697,7 +4697,7 @@ TEST_F(Dhcpv4SrvTest, relayIgnoreLinkSelect) {
     dis->delOption(DHO_DHCP_AGENT_OPTIONS);
     dis->addOption(rai);
     dis->setGiaddr(IOAddress("192.0.4.1"));
-    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet1 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Check client-classification still applies
@@ -4710,11 +4710,11 @@ TEST_F(Dhcpv4SrvTest, relayIgnoreLinkSelect) {
     dis->addOption(rai);
 
     // Note it shall fail (vs. try the next criterion).
-    EXPECT_FALSE(srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
     // Add the packet to the class and check again: now it shall succeed
     dis->addClass("foo");
-    EXPECT_TRUE(subnet3 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet3 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Check it succeeds even with a bad address in the sub-option
@@ -4725,7 +4725,7 @@ TEST_F(Dhcpv4SrvTest, relayIgnoreLinkSelect) {
     dis->delOption(DHO_DHCP_AGENT_OPTIONS);
     rai->addOption(ols);
     dis->addOption(rai);
-    EXPECT_TRUE(srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 }
 
@@ -4793,33 +4793,33 @@ TEST_F(Dhcpv4SrvTest, subnetSelect) {
     // belongs to the second subnet, so it is selected
     dis->setGiaddr(IOAddress("192.0.3.1"));
     bool drop = false;
-    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet2 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Setup a relay override for the first subnet as it has a high precedence
     dis->setGiaddr(IOAddress("192.0.5.1"));
-    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet1 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Put a subnet select option to select back the second subnet as
     // it has the second highest precedence
     dis->addOption(sbnsel);
-    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet2 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Check client-classification still applies
     sbnsel->writeAddress(IOAddress("192.0.4.2"));
     // Note it shall fail (vs. try the next criterion).
-    EXPECT_FALSE(srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
     // Add the packet to the class and check again: now it shall succeed
     dis->addClass("foo");
-    EXPECT_TRUE(subnet3 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet3 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Check it fails with a bad address in the sub-option
     sbnsel->writeAddress(IOAddress("10.0.0.1"));
-    EXPECT_FALSE(srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 }
 
@@ -6476,7 +6476,7 @@ TEST_F(StashAgentOptionTest, basic) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     ASSERT_TRUE(rai_query);
     EXPECT_EQ(rai_query->toHexString(true), rai_->toHexString(true));
@@ -6494,7 +6494,7 @@ TEST_F(StashAgentOptionTest, clientId) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     ASSERT_TRUE(rai_query);
     EXPECT_EQ(rai_query->toHexString(true), rai_->toHexString(true));
@@ -6511,7 +6511,7 @@ TEST_F(StashAgentOptionTest, hardwareAddress) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     ASSERT_TRUE(rai_query);
     EXPECT_EQ(rai_query->toHexString(true), rai_->toHexString(true));
@@ -6526,7 +6526,7 @@ TEST_F(StashAgentOptionTest, oldExtendedInfo) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     ASSERT_TRUE(rai_query);
     EXPECT_EQ(rai_query->toHexString(true), rai_->toHexString(true));
@@ -6543,7 +6543,7 @@ TEST_F(StashAgentOptionTest, emptyRelayAgentInfo) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     ASSERT_TRUE(rai_query);
     EXPECT_FALSE(rai_query->getOptions().empty());
@@ -6559,7 +6559,7 @@ TEST_F(StashAgentOptionTest, clientAddress) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     EXPECT_FALSE(rai_query);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
@@ -6573,14 +6573,14 @@ TEST_F(StashAgentOptionTest, gatewayAddress) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     EXPECT_FALSE(rai_query);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
 
     // Even broadcast is not accepted.
     query_->setGiaddr(IOAddress::IPV4_BCAST_ADDRESS());
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     EXPECT_FALSE(rai_query);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
@@ -6592,7 +6592,7 @@ TEST_F(StashAgentOptionTest, stashAgentOption) {
 
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     EXPECT_FALSE(rai_query);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
@@ -6610,7 +6610,7 @@ TEST_F(StashAgentOptionTest, request) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     EXPECT_FALSE(rai_query);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
@@ -6624,7 +6624,7 @@ TEST_F(StashAgentOptionTest, notEmptyRelayAgentInfo) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
 }
 
@@ -6636,7 +6636,7 @@ TEST_F(StashAgentOptionTest, inClass) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     EXPECT_FALSE(rai_query);
     EXPECT_TRUE(query_->inClass("STASH_AGENT_OPTIONS"));
@@ -6647,7 +6647,7 @@ TEST_F(StashAgentOptionTest, lease) {
     CfgMgr::instance().commit();
     // Not add the lease.
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     EXPECT_FALSE(rai_query);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
@@ -6663,7 +6663,7 @@ TEST_F(StashAgentOptionTest, expired) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     EXPECT_FALSE(rai_query);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
@@ -6677,7 +6677,7 @@ TEST_F(StashAgentOptionTest, userContext) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     EXPECT_FALSE(rai_query);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
@@ -6696,7 +6696,7 @@ TEST_F(StashAgentOptionTest, iscEntry) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     EXPECT_FALSE(rai_query);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
@@ -6715,7 +6715,7 @@ TEST_F(StashAgentOptionTest, relayAgentInfoEntry) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     EXPECT_FALSE(rai_query);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
@@ -6730,7 +6730,7 @@ TEST_F(StashAgentOptionTest, badRelayAgentInfoEntry) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     EXPECT_FALSE(rai_query);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
@@ -6746,7 +6746,7 @@ TEST_F(StashAgentOptionTest, subOptionsEntry) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     EXPECT_FALSE(rai_query);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
@@ -6761,7 +6761,7 @@ TEST_F(StashAgentOptionTest, badSubOptionsEntry) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     EXPECT_FALSE(rai_query);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
@@ -6776,7 +6776,7 @@ TEST_F(StashAgentOptionTest, emptySubOptionsEntry) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     EXPECT_FALSE(rai_query);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
@@ -6791,7 +6791,7 @@ TEST_F(StashAgentOptionTest, hexString) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_THROW(srv_.recoverStashedAgentOption(query_), BadValue);
+    EXPECT_THROW(srv_->recoverStashedAgentOption(query_), BadValue);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
 }
 
@@ -6807,7 +6807,7 @@ TEST_F(StashAgentOptionTest, badRelayAgentInfo) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     EXPECT_FALSE(rai_query);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
@@ -6821,7 +6821,7 @@ TEST_F(StashAgentOptionTest, badRelayAgentInfo) {
     sub_options_ = Element::create(content);
     relay_agent_info_->set("sub-options", sub_options_);
 
-    EXPECT_THROW(srv_.recoverStashedAgentOption(query_), OptionParseError);
+    EXPECT_THROW(srv_->recoverStashedAgentOption(query_), OptionParseError);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
 }
 
@@ -6834,7 +6834,7 @@ TEST_F(StashAgentOptionTest, badClientId) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     EXPECT_FALSE(rai_query);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
@@ -6855,7 +6855,7 @@ TEST_F(StashAgentOptionTest, badHwareAddress) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     EXPECT_FALSE(rai_query);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
