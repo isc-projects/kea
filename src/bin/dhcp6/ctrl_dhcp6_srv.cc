@@ -1397,9 +1397,9 @@ ControlledDhcpv6Srv::reclaimExpiredLeases(const size_t max_leases,
                                           const uint16_t max_unwarned_cycles) {
     try {
         if (network_state_->isServiceEnabled()) {
-        server_->alloc_engine_->reclaimExpiredLeases6(max_leases, timeout,
-                                                      remove_lease,
-                                                      max_unwarned_cycles);
+            server_->alloc_engine_->reclaimExpiredLeases6(max_leases, timeout,
+                                                          remove_lease,
+                                                          max_unwarned_cycles);
         } else {
             LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_RECLAIM_EXPIRED_LEASES_SKIPPED)
                 .arg(CfgMgr::instance().getCurrentCfg()->
