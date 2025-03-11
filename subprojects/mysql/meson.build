@@ -1,10 +1,7 @@
 project('mysql')
-mysql = disabler()
-if not MYSQL_DEP.found()
-    mysql = dependency('mysql', required: false)
-endif
+mysql = dependency('mysql', required: false)
 foreach mysql_config_file : ['mariadb_config', 'mysql_config']
-    if MYSQL_DEP.found()
+    if mysql.found()
         continue
     endif
     mysql_config = find_program(mysql_config_file, required: false)
