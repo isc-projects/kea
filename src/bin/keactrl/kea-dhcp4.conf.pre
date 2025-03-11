@@ -127,9 +127,9 @@
     // are actually useful in your network.
     //
     // For a complete list of options currently supported by Kea, see
-    // Section 7.2.8 "Standard DHCPv4 Options". Kea also supports
-    // vendor options (see Section 7.2.10) and allows users to define their
-    // own custom options (see Section 7.2.9).
+    // Section 8.2.10 "Standard DHCPv4 Options". Kea also supports
+    // vendor options (see Section 8.2.13) and allows users to define their
+    // own custom options (see Section 8.2.11).
     "option-data": [
         // When specifying options, you typically need to specify
         // one of (name or code) and data. The full option specification
@@ -227,8 +227,8 @@
             // each incoming packet. It is supposed to evaluate to either
             // true or false. If it's true, the packet is added to specified
             // class. See Section 12 for a list of available expressions. There
-            // are several dozens. Section 8.2.14 for more details for DHCPv4
-            // classification and Section 9.2.19 for DHCPv6.
+            // are several dozens. Section 8.2.18 for more details for DHCPv4
+            // classification and Section 9.2.23 for DHCPv6.
             "test": "substring(option[60].hex,0,6) == 'Aastra'",
 
             // If a client belongs to this class, you can define extra behavior.
