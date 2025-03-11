@@ -21,9 +21,6 @@ using namespace isc::data;
 using namespace isc::dhcp;
 using namespace std;
 
-/// @brief Test timeout (ms).
-const long TEST_TIMEOUT = 10000;
-
 // Test class for Unix Command Manager
 class UnixCommandMgrTest : public ::testing::Test {
 public:

@@ -97,7 +97,7 @@ public:
     void execute() {
         // Reading stream
         FILE* istream;
-        size_t buffer_size = 1024;
+        size_t const buffer_size = 1024;
         char buffer[buffer_size + 1];
 
         // Child process
