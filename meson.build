@@ -146,7 +146,7 @@ boost_headers = [
     'boost/system/error_code.hpp',
 ]
 foreach hdr : boost_headers
-    cpp.has_header(hdr, required: true)
+    cpp.has_header(hdr, dependencies: [boost_dep], required: true)
 endforeach
 
 # Logging
@@ -234,7 +234,11 @@ if CRYPTO_DEP.name() == botan.name()
     message('Using Botan.')
 elif CRYPTO_DEP.name() == openssl.name()
     conf_data.set('WITH_OPENSSL', true)
-    cpp.has_header('boost/asio/ssl.hpp', required: true)
+    cpp.has_header(
+        'boost/asio/ssl.hpp',
+        dependencies: [boost_dep],
+        required: true,
+    )
     message('Using OpenSSL.')
 else
     error('Dependency not found: neither Botan nor OpenSSL.')
@@ -478,6 +482,7 @@ else
 endif
 result = cpp.run(
     fs.read('compiler-checks/get-boost-version.cc'),
+    dependencies: [boost_dep],
     name: 'Get Boost version',
 )
 if result.returncode() == 0
