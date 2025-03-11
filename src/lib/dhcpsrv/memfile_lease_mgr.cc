@@ -1411,7 +1411,8 @@ Memfile_LeaseMgr::getLeases4Internal(const asiolink::IOAddress& lower_bound_addr
 
     // Return all other leases being within the page size.
     for (auto lease = lb;
-         (lease != idx.end()) && (std::distance(lb, lease) < page_size.page_size_);
+         (lease != idx.end()) &&
+         (static_cast<size_t>(std::distance(lb, lease)) < page_size.page_size_);
          ++lease) {
         collection.push_back(Lease4Ptr(new Lease4(**lease)));
     }
@@ -1686,7 +1687,8 @@ Memfile_LeaseMgr::getLeases6Internal(const asiolink::IOAddress& lower_bound_addr
 
     // Return all other leases being within the page size.
     for (auto lease = lb;
-         (lease != idx.end()) && (std::distance(lb, lease) < page_size.page_size_);
+         (lease != idx.end()) &&
+         (static_cast<size_t>(std::distance(lb, lease)) < page_size.page_size_);
          ++lease) {
         collection.push_back(Lease6Ptr(new Lease6(**lease)));
     }
@@ -1789,8 +1791,9 @@ Memfile_LeaseMgr::getExpiredLeases4Internal(Lease4Collection& expired_leases,
 
     // Copy only the number of leases indicated by the max_leases parameter.
     for (Lease4StorageExpirationIndex::const_iterator lease = index.begin();
-         (lease != ub) && ((max_leases == 0) || (std::distance(index.begin(), lease) <
-                                                 max_leases));
+         (lease != ub) &&
+         ((max_leases == 0) ||
+          (static_cast<size_t>(std::distance(index.begin(), lease)) < max_leases));
          ++lease) {
         expired_leases.push_back(Lease4Ptr(new Lease4(**lease)));
     }
@@ -1825,8 +1828,9 @@ Memfile_LeaseMgr::getExpiredLeases6Internal(Lease6Collection& expired_leases,
 
     // Copy only the number of leases indicated by the max_leases parameter.
     for (Lease6StorageExpirationIndex::const_iterator lease = index.begin();
-         (lease != ub) && ((max_leases == 0) || (std::distance(index.begin(), lease) <
-                                                 max_leases));
+         (lease != ub) &&
+         ((max_leases == 0) ||
+          (static_cast<size_t>(std::distance(index.begin(), lease)) < max_leases));
          ++lease) {
         expired_leases.push_back(Lease6Ptr(new Lease6(**lease)));
     }
@@ -2718,7 +2722,7 @@ Memfile_LeaseMgr::checkLimits4(isc::data::ConstElementPtr const& user_context) c
     // an "address-limit", check its value against the class's lease count.
     ConstElementPtr classes = limits->get("client-classes");
     if (classes) {
-        for (int i = 0; i < classes->size(); ++i) {
+        for (unsigned i = 0; i < classes->size(); ++i) {
             ConstElementPtr class_elem = classes->get(i);
             // Get class name.
             ConstElementPtr name_elem = class_elem->get("name");
@@ -2776,7 +2780,7 @@ Memfile_LeaseMgr::checkLimits4(isc::data::ConstElementPtr const& user_context) c
             }
 
             // If we're over the limit, return the error.
-            if (lease_count >= limit) {
+            if (static_cast<uint64_t>(lease_count) >= limit) {
                 std::ostringstream ss;
                 ss << "address limit " << limit << " for subnet ID " << subnet_id
                    << ", current lease count " << lease_count;
@@ -2805,7 +2809,7 @@ Memfile_LeaseMgr::checkLimits6(isc::data::ConstElementPtr const& user_context) c
     // class lease count.
     ConstElementPtr classes = limits->get("client-classes");
     if (classes) {
-        for (int i = 0; i < classes->size(); ++i) {
+        for (unsigned i = 0; i < classes->size(); ++i) {
             ConstElementPtr class_elem = classes->get(i);
             // Get class name.
             ConstElementPtr name_elem = class_elem->get("name");
@@ -2877,7 +2881,7 @@ Memfile_LeaseMgr::checkLimits6(isc::data::ConstElementPtr const& user_context) c
         }
 
         // If we're over the limit, return the error.
-        if (lease_count >= limit) {
+        if (static_cast<uint64_t>(lease_count) >= limit) {
             std::ostringstream ss;
             ss << (ltype == Lease::TYPE_NA ? "address" : "prefix")
                << " limit " << limit << " for subnet ID " << subnet_id

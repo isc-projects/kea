@@ -295,7 +295,7 @@ PsqlBindArray::toText() const {
         return ("bindarray is empty");
     }
 
-    for (int i = 0; i < values_.size(); ++i) {
+    for (size_t i = 0; i < values_.size(); ++i) {
         stream << i << " : ";
 
         if (lengths_[i] == 0) {

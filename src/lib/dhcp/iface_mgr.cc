@@ -132,7 +132,7 @@ Iface::getPlainMac() const {
     ostringstream tmp;
     tmp.fill('0');
     tmp << hex;
-    for (int i = 0; i < mac_len_; i++) {
+    for (unsigned i = 0; i < mac_len_; i++) {
         tmp.width(2);
         tmp << static_cast<int>(mac_[i]);
         if (i < mac_len_-1) {

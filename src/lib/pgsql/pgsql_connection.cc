@@ -604,7 +604,7 @@ PgSqlConnection::executePreparedStatement(PgSqlTaggedStatement& statement,
                                           const PsqlBindArray& in_bindings) {
     checkUnusable();
 
-    if (statement.nbparams != in_bindings.size()) {
+    if (static_cast<size_t>(statement.nbparams) != in_bindings.size()) {
         isc_throw (InvalidOperation, "executePreparedStatement:"
                    << " expected: " << statement.nbparams
                    << " parameters, given: " << in_bindings.size()

@@ -153,7 +153,7 @@ void applyDelete(ConstElementPtr key, ElementPtr scope) {
             return;
         } else if (key->getType() == Element::integer) {
             int index = key->intValue();
-            if ((index >= 0) && (index < scope->size())) {
+            if ((index >= 0) && (static_cast<size_t>(index) < scope->size())) {
                 scope->remove(index);
             }
         } else if (key->getType() == Element::map) {
@@ -166,7 +166,7 @@ void applyDelete(ConstElementPtr key, ElementPtr scope) {
             if (name.empty()) {
                 return;
             }
-            for (int i = 0; i < scope->size(); ++i) {
+            for (unsigned i = 0; i < scope->size(); ++i) {
                 ElementPtr item = scope->getNonConst(i);
                 if (!item || (item->getType() != Element::map)) {
                     continue;
@@ -283,7 +283,7 @@ void applyDown(ConstElementPtr path, ConstElementPtr actions, ElementPtr scope,
             for (ElementPtr& down : downs) {
                 applyDown(path, actions, down, next);
             }
-        } else if ((index >= 0) && (index < scope->size())) {
+        } else if ((index >= 0) && (static_cast<size_t>(index) < scope->size())) {
             applyDown(path, actions, scope->getNonConst(index), next);
         }
     }

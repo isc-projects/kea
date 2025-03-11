@@ -1446,7 +1446,7 @@ public:
     /// rows to fetch.
     bool getNextRow(LeaseStatsRow& row) {
         // If we're past the end, punt.
-        if (next_row_ >= result_set_->getRows()) {
+        if (static_cast<int>(next_row_) >= result_set_->getRows()) {
             return (false);
         }
 

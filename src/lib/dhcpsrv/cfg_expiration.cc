@@ -100,7 +100,7 @@ CfgExpiration::rangeCheck(const int64_t value, const uint64_t max_value,
         isc_throw(OutOfRange, "value for configuration parameter '"
                   << config_parameter_name << "' must not be negative");
 
-    } else if (value > max_value) {
+    } else if (static_cast<uint64_t>(value) > max_value) {
         isc_throw(OutOfRange, "out range value '" << value << "' for configuration"
                   " parameter '" << config_parameter_name << "', expected maximum"
                   " value of '" << max_value << "'");

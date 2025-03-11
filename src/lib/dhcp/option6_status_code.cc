@@ -64,7 +64,7 @@ Option6StatusCode::pack(isc::util::OutputBuffer& buf, bool) const {
 void
 Option6StatusCode::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
     // Make sure that the option is not truncated.
-    if (std::distance(begin, end) < OPTION6_STATUS_CODE_MIN_LEN) {
+    if (static_cast<size_t>(std::distance(begin, end)) < OPTION6_STATUS_CODE_MIN_LEN) {
         isc_throw(OutOfRange, "Status Code option ("
                   << D6O_STATUS_CODE << ") truncated");
     }
@@ -174,7 +174,7 @@ Option4SlpServiceScope::pack(isc::util::OutputBuffer& buf, bool check) const {
 void
 Option4SlpServiceScope::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
     // Make sure that the option is not truncated.
-    if (std::distance(begin, end) < OPTION4_SLP_SERVICE_SCOPEMIN_LEN) {
+    if (static_cast<size_t>(std::distance(begin, end)) < OPTION4_SLP_SERVICE_SCOPEMIN_LEN) {
         isc_throw(OutOfRange, "SLP Service Scope option ("
                   << DHO_SERVICE_SCOPE << ") truncated");
     }

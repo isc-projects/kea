@@ -47,7 +47,7 @@ FreeLeaseQueueAllocator::pickAddressInternal(const ClientClasses& client_classes
     // Let's first iterate over the pools and identify the ones that
     // meet client class criteria and are not exhausted.
     std::vector<uint64_t> available;
-    for (auto i = 0; i < pools.size(); ++i) {
+    for (unsigned i = 0; i < pools.size(); ++i) {
         // Check if the pool is allowed for the client's classes.
         if (pools[i]->clientSupported(client_classes)) {
             // Get or create the pool state.
@@ -94,7 +94,7 @@ FreeLeaseQueueAllocator::pickPrefixInternal(const ClientClasses& client_classes,
     // Let's first iterate over the pools and identify the ones that
     // meet client class criteria and are not exhausted.
     std::vector<uint64_t> available;
-    for (auto i = 0; i < pools.size(); ++i) {
+    for (unsigned i = 0; i < pools.size(); ++i) {
         // Check if the pool is allowed for the client's classes.
         if (pools[i]->clientSupported(client_classes)) {
             if (!Allocator::isValidPrefixPool(prefix_length_match, pools[i],

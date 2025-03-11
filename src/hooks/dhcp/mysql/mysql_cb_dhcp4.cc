@@ -490,7 +490,7 @@ public:
                         isc_throw(BadValue, "invalid relay value "
                                   << out_bindings[12]->getString());
                     }
-                    for (auto i = 0; i < relay_element->size(); ++i) {
+                    for (unsigned i = 0; i < relay_element->size(); ++i) {
                         auto relay_address_element = relay_element->get(i);
                         if (relay_address_element->getType() != Element::string) {
                             isc_throw(BadValue, "relay address must be a string");
@@ -1414,7 +1414,7 @@ public:
                         isc_throw(BadValue, "invalid relay value "
                                   << out_bindings[7]->getString());
                     }
-                    for (auto i = 0; i < relay_element->size(); ++i) {
+                    for (unsigned i = 0; i < relay_element->size(); ++i) {
                         auto relay_address_element = relay_element->get(i);
                         if (relay_address_element->getType() != Element::string) {
                             isc_throw(BadValue, "relay address must be a string");

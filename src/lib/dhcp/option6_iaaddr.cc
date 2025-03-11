@@ -70,7 +70,7 @@ void Option6IAAddr::pack(isc::util::OutputBuffer& buf, bool) const {
 
 void Option6IAAddr::unpack(OptionBuffer::const_iterator begin,
                       OptionBuffer::const_iterator end) {
-    if ( distance(begin, end) < OPTION6_IAADDR_LEN) {
+    if (static_cast<size_t>(distance(begin, end)) < OPTION6_IAADDR_LEN) {
         isc_throw(OutOfRange, "Option " << type_ << " truncated");
     }
 

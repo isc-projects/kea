@@ -108,7 +108,7 @@ ClientClasses::fromElement(isc::data::ConstElementPtr cc_list) {
             isc_throw(BadValue, "not a List element");
         }
 
-        for (auto i = 0; i < cc_list->size(); ++i) {
+        for (unsigned i = 0; i < cc_list->size(); ++i) {
             auto cclass = cc_list->get(i);
             if (cclass->getType() != Element::string) {
                 isc_throw(BadValue, "elements of list must be valid strings");

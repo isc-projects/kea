@@ -927,7 +927,7 @@ MySqlConfigBackendImpl::processOptionDefRow(MySqlBindingCollection::iterator fir
 
         // This element must contain a list of integers specifying
         // types of the record fields.
-        for (auto i = 0; i < record_types_element->size(); ++i) {
+        for (unsigned i = 0; i < record_types_element->size(); ++i) {
             auto type_element = record_types_element->get(i);
             if (type_element->getType() != Element::integer) {
                 isc_throw(BadValue, "record type values must be integers");

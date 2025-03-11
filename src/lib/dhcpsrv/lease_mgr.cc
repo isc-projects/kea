@@ -868,7 +868,7 @@ LeaseMgr::upgradeLease6ExtendedInfo(const Lease6Ptr& lease,
             }
 
             verifying = "relay";
-            for (i = 0; i < relay_info->size(); ++i) {
+            for (i = 0; static_cast<size_t>(i) < relay_info->size(); ++i) {
                 ElementPtr relay = relay_info->getNonConst(i);
                 if (!relay) {
                     mutable_isc->remove("relay-info");
@@ -943,7 +943,7 @@ LeaseMgr::upgradeLease6ExtendedInfo(const Lease6Ptr& lease,
         }
 
         verifying = "relay";
-        for (i = 0; i < relay_info->size(); ++i) {
+        for (i = 0; static_cast<size_t>(i) < relay_info->size(); ++i) {
             ElementPtr relay = relay_info->getNonConst(i);
             if (!upgraded && !relay) {
                 mutable_isc->remove("relay-info");
@@ -1235,7 +1235,7 @@ LeaseMgr::addExtendedInfo6(const Lease6Ptr& lease) {
         return (added);
     }
 
-    for (int i = 0; i < relay_info->size(); ++i) {
+    for (unsigned i = 0; i < relay_info->size(); ++i) {
         ConstElementPtr relay = relay_info->get(i);
         if (!relay || (relay->getType() != Element::map) || relay->empty()) {
             continue;

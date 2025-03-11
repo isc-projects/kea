@@ -52,7 +52,7 @@ OpaqueDataTuple::getText() const {
 
 void
 OpaqueDataTuple::pack(isc::util::OutputBuffer& buf) const {
-    if ((1 << (getDataFieldSize() * 8)) <= getLength()) {
+    if ((1U << (getDataFieldSize() * 8)) <= getLength()) {
         isc_throw(OpaqueDataTupleError, "failed to create on-wire format of the"
                   " opaque data field, because current data length "
                   << getLength() << " exceeds the maximum size for the length"
@@ -130,7 +130,7 @@ OpaqueDataTuple::unpack(OpaqueDataTuple::InputIterator begin, OpaqueDataTuple::I
     // reminder of the buffer is long enough.
     begin += getDataFieldSize();
     // Attempt to parse as a length-value pair.
-    if (std::distance(begin, end) < len) {
+    if (static_cast<size_t>(std::distance(begin, end)) < len) {
         if (Option::lenient_parsing_) {
             // Fallback to parsing the rest of the option as a single value.
             len = std::distance(begin, end);

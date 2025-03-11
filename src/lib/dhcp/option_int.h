@@ -146,7 +146,7 @@ public:
     /// equal to 1, 2 or 4 bytes. The data type is not checked in this function
     /// because it is checked in a constructor.
     virtual void unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
-        if (distance(begin, end) < sizeof(T)) {
+        if (static_cast<size_t>(distance(begin, end)) < sizeof(T)) {
             isc_throw(OutOfRange, "OptionInt " << getType() << " truncated");
         }
         // @todo consider what to do if buffer is longer than data type.

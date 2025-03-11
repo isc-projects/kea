@@ -932,7 +932,7 @@ TokenSplit::evaluate(Pkt& pkt, ValueStack& values) {
                  boost::algorithm::token_compress_off);
 
     // Range check the field.
-    if (field < 1 || field > fields.size()) {
+    if (field < 1 || static_cast<size_t>(field) > fields.size()) {
         // Push an empty string if field is out of range.
         values.push("");
 
@@ -1367,7 +1367,7 @@ TokenVendorClass::evaluate(Pkt& pkt, ValueStack& values) {
     case DATA:
     {
         size_t max = vendor->getTuplesNum();
-        if (index_ + 1 > max) {
+        if (static_cast<size_t>(index_ + 1) > max) {
             // The index specified is out of bounds, e.g. there are only
             // 2 tuples and index specified is 5.
             LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_VENDOR_CLASS_DATA_NOT_FOUND)

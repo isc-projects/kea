@@ -91,7 +91,7 @@ bool UnixControlClient::sendCommand(const std::string& command) {
     }
     // Send command
     int bytes_sent = send(socket_fd_, command.c_str(), command.length(), 0);
-    if (bytes_sent < command.length()) {
+    if (bytes_sent < static_cast<int>(command.length())) {
         const char* errmsg = strerror(errno);
         ADD_FAILURE() << "Failed to send " << command.length()
                       << " bytes, send() returned " << bytes_sent

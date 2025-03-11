@@ -49,7 +49,7 @@ bool LogContentTest::checkFile() {
     ifstream file(LOG_FILE);
     EXPECT_TRUE(file.is_open());
     string line, exp_line;
-    int i = 0;
+    unsigned i = 0;
     bool found = true;
 
     using namespace std;

@@ -180,7 +180,7 @@ PacketFuzzer::transfer(uint8_t const* data, size_t size) const {
         // Now send the data to the UDP port on which Kea is listening.
         // Send the data to the main Kea thread.  Limit the size of the
         // packets that can be sent.
-        size_t send_len = (length < MAX_SEND_SIZE) ? length : MAX_SEND_SIZE;
+        size_t send_len = (size < MAX_SEND_SIZE) ? size : MAX_SEND_SIZE;
         ssize_t sent = sendto(sockfd_, buf, send_len, 0, sockaddr_ptr_,
                               sockaddr_len_);
         if (sent < 0) {

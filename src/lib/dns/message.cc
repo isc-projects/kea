@@ -154,7 +154,7 @@ MessageImpl::init() {
     edns_ = EDNSPtr();
     tsig_rr_ = ConstTSIGRecordPtr();
 
-    for (int i = 0; i < NUM_SECTIONS; ++i) {
+    for (unsigned int i = 0; i < NUM_SECTIONS; ++i) {
         counts_[i] = 0;
     }
 
@@ -491,7 +491,7 @@ Message::getTSIGRecord() const {
 
 unsigned int
 Message::getRRCount(const Section section) const {
-    if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
+    if (static_cast<unsigned int>(section) >= MessageImpl::NUM_SECTIONS) {
         isc_throw(OutOfRange, "Invalid message section: " << static_cast<int>(section));
     }
     return (impl_->counts_[section]);
@@ -507,7 +507,7 @@ Message::addRRset(const Section section, RRsetPtr rrset) {
         isc_throw(InvalidMessageOperation,
                   "addRRset performed in non-render mode");
     }
-    if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
+    if (static_cast<unsigned int>(section) >= MessageImpl::NUM_SECTIONS) {
         isc_throw(OutOfRange, "Invalid message section: " << static_cast<int>(section));
     }
 
@@ -519,7 +519,7 @@ Message::addRRset(const Section section, RRsetPtr rrset) {
 bool
 Message::hasRRset(const Section section, const Name& name,
                   const RRClass& rrclass, const RRType& rrtype) const {
-    if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
+    if (static_cast<unsigned int>(section) >= MessageImpl::NUM_SECTIONS) {
         isc_throw(OutOfRange, "Invalid message section: " << static_cast<int>(section));
     }
 
@@ -542,7 +542,7 @@ Message::hasRRset(const Section section, const RRsetPtr& rrset) const {
 
 bool
 Message::removeRRset(const Section section, RRsetIterator& iterator) {
-    if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
+    if (static_cast<unsigned int>(section) >= MessageImpl::NUM_SECTIONS) {
         isc_throw(OutOfRange, "Invalid message section: " << static_cast<int>(section));
     }
 
@@ -570,7 +570,7 @@ Message::clearSection(const Section section) {
         isc_throw(InvalidMessageOperation,
                   "clearSection performed in non-render mode");
     }
-    if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
+    if (static_cast<unsigned int>(section) >= MessageImpl::NUM_SECTIONS) {
         isc_throw(OutOfRange, "Invalid message section: " << static_cast<int>(section));
     }
     if (section == Message::SECTION_QUESTION) {
@@ -658,7 +658,7 @@ MessageImpl::parseQuestion(InputBuffer& buffer) {
     unsigned int added = 0;
 
     for (unsigned int count = 0;
-         count < counts_[Message::SECTION_QUESTION];
+         static_cast<int>(count) < counts_[Message::SECTION_QUESTION];
          ++count) {
         const Name name(buffer);
 
@@ -732,13 +732,15 @@ struct MatchRR {
 int
 MessageImpl::parseSection(const Message::Section section,
                           InputBuffer& buffer, Message::ParseOptions options) {
-    if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
+    if (static_cast<unsigned int>(section) >= MessageImpl::NUM_SECTIONS) {
         isc_throw(OutOfRange, "Invalid message section: " << static_cast<int>(section));
     }
 
     unsigned int added = 0;
 
-    for (unsigned int count = 0; count < counts_[section]; ++count) {
+    for (unsigned int count = 0;
+         static_cast<int>(count) < counts_[section];
+         ++count) {
         // We need to remember the start position for TSIG processing
         const size_t start_position = buffer.getPosition();
 
@@ -847,7 +849,7 @@ MessageImpl::addTSIG(Message::Section section, unsigned int count,
         isc_throw(DNSMessageFORMERR,
                   "TSIG RR found in an invalid section");
     }
-    if (count != counts_[section] - 1) {
+    if (static_cast<int>(count) != counts_[section] - 1) {
         isc_throw(DNSMessageFORMERR, "TSIG RR is not the last record");
     }
     // This check will never fail as the multiple TSIG RR case is
@@ -991,7 +993,7 @@ Message::clear(Mode mode) {
 
 void
 Message::appendSection(const Section section, const Message& source) {
-    if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
+    if (static_cast<unsigned int>(section) >= MessageImpl::NUM_SECTIONS) {
         isc_throw(OutOfRange, "Invalid message section: " << static_cast<int>(section));
     }
 
@@ -1135,7 +1137,7 @@ Message::endQuestion() const {
 ///
 const SectionIterator<RRsetPtr>
 Message::beginSection(const Section section) const {
-    if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
+    if (static_cast<unsigned int>(section) >= MessageImpl::NUM_SECTIONS) {
         isc_throw(OutOfRange, "Invalid message section: " << static_cast<int>(section));
     }
     if (section == SECTION_QUESTION) {
@@ -1148,7 +1150,7 @@ Message::beginSection(const Section section) const {
 
 const SectionIterator<RRsetPtr>
 Message::endSection(const Section section) const {
-    if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
+    if (static_cast<unsigned int>(section) >= MessageImpl::NUM_SECTIONS) {
         isc_throw(OutOfRange, "Invalid message section: " << static_cast<int>(section));
     }
     if (section == SECTION_QUESTION) {

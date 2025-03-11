@@ -83,7 +83,7 @@ LibraryHandle::getParameters() {
         index = callout_manager_.getLibraryIndex();
     }
 
-    if ((index > libinfo.size()) || (index <= 0)) {
+    if ((index > static_cast<int>(libinfo.size())) || (index <= 0)) {
         // Something is very wrong here. The library index is out of bounds.
         // However, this is user facing interface, so we should not throw here.
         return (isc::data::ConstElementPtr());

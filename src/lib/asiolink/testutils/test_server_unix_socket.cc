@@ -244,7 +244,7 @@ void
 TestServerUnixSocket::generateCustomResponse(const uint64_t response_size) {
     std::ostringstream s;
     s << "{";
-    while (s.tellp() < response_size) {
+    while (s.tellp() < static_cast<std::streampos>(response_size)) {
         s << "\"param\": \"value\",";
     }
     s << "}";

@@ -133,7 +133,8 @@ LabelSequence::serialize(void* buf, size_t buf_len) const {
     std::memcpy(bp, &data_[offsets_[first_label_]], ndata_len);
     bp += ndata_len;
 
-    isc_throw_assert(bp - reinterpret_cast<const uint8_t*>(buf) == expected_size);
+    isc_throw_assert(bp - reinterpret_cast<const uint8_t*>(buf) ==
+                     static_cast<const ssize_t>(expected_size));
 }
 
 bool

@@ -904,7 +904,7 @@ PgSqlConfigBackendImpl::processOptionDefRow(PgSqlResultRowWorker& worker,
 
         // This element must contain a list of integers specifying
         // types of the record fields.
-        for (auto i = 0; i < record_types_element->size(); ++i) {
+        for (unsigned i = 0; i < record_types_element->size(); ++i) {
             auto type_element = record_types_element->get(i);
             if (type_element->getType() != Element::integer) {
                 isc_throw(BadValue, "record type values must be integers");
@@ -1127,7 +1127,7 @@ PgSqlConfigBackendImpl::setRelays(PgSqlResultRowWorker& worker, size_t col, Netw
         isc_throw(BadValue, "invalid relay list: " << worker.getString(col));
     }
 
-    for (auto i = 0; i < relay_element->size(); ++i) {
+    for (unsigned i = 0; i < relay_element->size(); ++i) {
         auto relay_address_element = relay_element->get(i);
         if (relay_address_element->getType() != Element::string) {
             isc_throw(BadValue, "elements of relay_addresses list must"
