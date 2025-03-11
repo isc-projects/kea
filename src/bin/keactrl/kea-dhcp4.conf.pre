@@ -56,7 +56,7 @@
     // Depending on how Kea was compiled, it may also support SQL databases
     // (MySQL and/or PostgreSQL). Those database backends require more
     // parameters, like name, host and possibly user and password.
-    // There are dedicated examples for each backend. See Section 7.2.2 "Lease
+    // There are dedicated examples for each backend. See Section 8.2.2 "Lease
     // Storage" for details.
     "lease-database": {
         // Memfile is the simplest and easiest backend to use. It's an in-memory
