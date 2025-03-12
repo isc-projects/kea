@@ -7,15 +7,12 @@ kea_shell_conf_data.set('PYTHON', PYTHON.full_path())
 kea_shell_conf_data.set('PACKAGE_VERSION', PROJECT_VERSION)
 kea_shell_conf_data.set('EXTENDED_VERSION', PROJECT_VERSION + ' (tarball)')
 
-r = run_command(
-    PYTHON,
-    '-c',
-    'import sysconfig; print(sysconfig.get_paths()[\'purelib\'])',
-    check: true,
-)
-python_site_package = r.stdout().strip()
-pkgpythondir = f'@PREFIX@/@python_site_package@/kea'
+python = import('python')
+py_installation = python.find_installation('python3', required: true)
+python_install_dir = py_installation.get_install_dir(pure: true)
+pkgpythondir = python_install_dir / 'kea'
 kea_shell_conf_data.set('PKGPYTHONDIR', pkgpythondir)
+
 configure_file(
     input: 'kea-shell.in',
     output: 'kea-shell',
