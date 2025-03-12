@@ -54,6 +54,19 @@ foreach dep : ['yang', 'yang-cpp', 'sysrepo', 'sysrepo-cpp']
 endforeach
 
 if all_deps_found
+    variables = {}
+    if netconf_deps['yang'].found()
+        libyang_prefix = netconf_deps['yang'].get_variable('prefix')
+    else
+        libyang_prefix = 'unknown'
+    endif
+    variables += {'libyang_prefix': libyang_prefix}
+    if netconf_deps['sysrepo'].found()
+        sysrepo_prefix = netconf_deps['sysrepo'].get_variable('prefix')
+    else
+        sysrepo_prefix = 'unknown'
+    endif
+    variables += {'sysrepo_prefix': sysrepo_prefix}
     netconf = declare_dependency(
         dependencies: [
             netconf_deps['yang'],
@@ -61,12 +74,10 @@ if all_deps_found
             netconf_deps['sysrepo'],
             netconf_deps['sysrepo-cpp'],
         ],
-        variables: {
-            'libyang_prefix': netconf_deps['yang'].found() ? netconf_deps['yang'].get_variable('prefix') : 'unknown',
-            'sysrepo_prefix': netconf_deps['sysrepo'].found() ? netconf_deps['sysrepo'].get_variable('prefix') : 'unknown',
-        },
+        variables: variables,
     )
 else
-    netconf = disabler()
+    # Can't use a disabler here?
+    netconf = declare_dependency('', required: false)
 endif
 

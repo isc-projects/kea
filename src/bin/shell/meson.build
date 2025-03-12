@@ -1,7 +1,3 @@
-if not SHELL_OPT.enabled()
-    subdir_done()
-endif
-
 kea_shell_conf_data = configuration_data()
 kea_shell_conf_data.set('PYTHON', PYTHON.full_path())
 kea_shell_conf_data.set('PACKAGE_VERSION', PROJECT_VERSION)

@@ -35,7 +35,6 @@ netconf_opt = get_option('netconf')
 postgresql_opt = get_option('postgresql')
 
 FUZZ_OPT = get_option('fuzz')
-SHELL_OPT = get_option('shell')
 TESTS_OPT = get_option('tests')
 
 #### Configuration Data
@@ -117,7 +116,7 @@ INSTALL = find_program('install', required: true)
 PDFLATEX = find_program('pdflatex', required: false)
 PIP_COMPILE = find_program('pip-compile', required: false)
 PLANTUML = find_program('plantuml', required: false)
-PYTHON = find_program('python3', 'python', required: false)
+PYTHON = find_program('python3', 'python', required: true)
 SPHINX = find_program('sphinx-build', 'sphinx-build-3', required: false)
 XMLLINT = find_program('xmllint', required: false)
 
@@ -210,11 +209,6 @@ GTEST_DEP = dependency(
     'gtest',
     required: TESTS_OPT.enabled() or FUZZ_OPT.enabled(),
 )
-
-# Kea shell
-if SHELL_OPT.enabled() and not PYTHON.found()
-    error('kea-shell requires python. Python not found.')
-endif
 
 # Crypto
 if crypto_opt == 'botan'
@@ -337,9 +331,13 @@ result = cpp.run(
 )
 FUZZING_WITH_CLUSTERFUZZLITE = result.returncode() == 0
 
+have_afl = false
 if FUZZ_OPT.enabled()
     result = cpp.run(fs.read('compiler-checks/have-afl.cc'), name: 'HAVE_AFL')
-    conf_data.set('HAVE_AFL', result.returncode() == 0)
+    if result.returncode() == 0
+        have_afl = true
+    endif
+    conf_data.set('HAVE_AFL', have_afl)
 endif
 
 if GTEST_DEP.found()
@@ -474,22 +472,18 @@ endif
 report_conf_data.set('CXX_ARGS', ' '.join(compile_args))
 report_conf_data.set('LD_ID', cpp.get_linker_id())
 report_conf_data.set('LD_ARGS', ' '.join(link_args))
-if PYTHON.found()
-    report_conf_data.set('HAVE_PYTHON', 'yes')
-    report_conf_data.set('PYTHON_PATH', PYTHON.full_path())
-    result = run_command(
-        PYTHON,
-        '-c',
-        'import sysconfig; print(sysconfig.get_paths()[\'purelib\'])',
-        check: false,
-    )
-    if result.returncode() == 0
-        report_conf_data.set('PKGPYTHONDIR', result.stdout().strip() + '/kea')
-    else
-        report_conf_data.set('PKGPYTHONDIR', 'unknown')
-    endif
+report_conf_data.set('PYTHON_PATH', PYTHON.full_path())
+report_conf_data.set('PYTHON_VERSION', PYTHON.version())
+result = run_command(
+    PYTHON,
+    '-c',
+    'import sysconfig; print(sysconfig.get_paths()[\'purelib\'])',
+    check: false,
+)
+if result.returncode() == 0
+    report_conf_data.set('PKGPYTHONDIR', result.stdout().strip() + '/kea')
 else
-    report_conf_data.set('HAVE_PYTHON', 'no')
+    report_conf_data.set('PKGPYTHONDIR', 'unknown')
 endif
 result = cpp.run(
     fs.read('compiler-checks/get-boost-version.cc'),
@@ -501,14 +495,6 @@ if result.returncode() == 0
 else
     report_conf_data.set('BOOST_VERSION', 'unknown')
 endif
-report_conf_data.set(
-    'BOOST_INCLUDE',
-    boost_dep.get_variable('includedir', default_value: 'unknown'),
-)
-report_conf_data.set(
-    'BOOST_LIBDIR',
-    boost_dep.get_variable('libdir', default_value: 'unknown'),
-)
 report_conf_data.set(
     'CRYPTO_INCLUDE',
     CRYPTO_DEP.get_variable('includedir', default_value: 'unknown'),
@@ -611,8 +597,18 @@ else
 endif
 if NETCONF_DEP.found()
     report_conf_data.set('HAVE_NETCONF', 'yes')
+    report_conf_data.set(
+        'LIBYANG_PREFIX',
+        NETCONF_DEP.get_variable('libyang_prefix', default_value: 'unknown'),
+    )
+    report_conf_data.set(
+        'SYSREPO_PREFIX',
+        NETCONF_DEP.get_variable('sysrepo_prefix', default_value: 'unknown'),
+    )
 else
     report_conf_data.set('HAVE_NETCONF', 'no')
+    report_conf_data.set('LIBYANG_PREFIX', 'unknown')
+    report_conf_data.set('SYSREPO_PREFIX', 'unknown')
 endif
 if FUZZ_OPT.enabled() or TESTS_OPT.enabled()
     report_conf_data.set('HAVE_GTEST', 'yes')
@@ -630,6 +626,48 @@ else
     report_conf_data.set('GTEST_VERSION', 'unknown')
     report_conf_data.set('GTEST_INCLUDE', 'unknown')
     report_conf_data.set('GTEST_LIBDIR', 'unknown')
+endif
+if KRB5_DEP.found()
+    report_conf_data.set('HAVE_KRB5', 'yes')
+    report_conf_data.set('KRB5_GSSAPI_VERSION', KRB5_DEP.version())
+    report_conf_data.set(
+        'KRB5_GSSAPI_CFLAGS',
+        KRB5_DEP.get_variable('cflags', default_value: 'unknown'),
+    )
+    report_conf_data.set(
+        'KRB5_GSSAPI_LIBS',
+        KRB5_DEP.get_variable('libs', default_value: 'unknown'),
+    )
+    report_conf_data.set(
+        'KRB5_GSSAPI_VENDOR',
+        KRB5_DEP.get_variable('vendor', default_value: 'unknown'),
+    )
+else
+    report_conf_data.set('HAVE_KRB5', 'no')
+    report_conf_data.set('KRB5_GSSAPI_VERSION', 'unknown')
+    report_conf_data.set('KRB5_GSSAPI_CFLAGS', 'unknown')
+    report_conf_data.set('KRB5_GSSAPI_LIBS', 'unknown')
+    report_conf_data.set('KRB5_GSSAPI_VENDOR', 'unknown')
+endif
+if TESTS_OPT.enabled()
+    report_conf_data.set('TESTS_ENABLED', 'enabled')
+else
+    report_conf_data.set('TESTS_ENABLED', 'disabled')
+endif
+if valgrind.found()
+    report_conf_data.set('VALGRIND', valgrind.full_path())
+else
+    report_conf_data.set('VALGRIND', 'no')
+endif
+if FUZZ_OPT.enabled()
+    report_conf_data.set('FUZZ_ENABLED', 'enabled')
+else
+    report_conf_data.set('FUZZ_ENABLED', 'disabled')
+endif
+if have_afl
+    report_conf_data.set('HAVE_AFL', 'yes')
+else
+    report_conf_data.set('HAVE_AFL', 'no')
 endif
 
 #### Custom Targets

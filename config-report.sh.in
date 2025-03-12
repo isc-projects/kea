@@ -34,20 +34,14 @@ C++ Compiler:
   LD_ID:           @LD_ID@
   LD_ARGS:         @LD_ARGS@
 '
-
-if test '@HAVE_PYTHON@' != 'no'; then
 add_to_report '
 Python:
   PYTHON:          @PYTHON_PATH@
+  PYTHON_VERSION:  @PYTHON_VERSION@
   PKGPYTHONDIR:    @PKGPYTHONDIR@
-'
-fi
 
-add_to_report '
 Boost:
   BOOST_VERSION:   @BOOST_VERSION@
-  BOOST_INCLUDE:   @BOOST_INCLUDE@
-  BOOST_LIBDIR:    @BOOST_LIBDIR@
 
 @CRYPTO_NAME@:
   CRYPTO_VERSION:  @CRYPTO_VERSION@
@@ -92,10 +86,18 @@ PostgreSQL:
 '
 fi
 
+if test '@HAVE_NETCONF@' != 'no'; then
 add_to_report '
-NETCONF:
-  @HAVE_NETCONF@
+Netconf:
+  LIBYANG_PREFIX:  @LIBYANG_PREFIX@
+  SYSREPO_PREFIX:  @SYSREPO_PREFIX@
 '
+else
+add_to_report '
+Netconf:
+  no
+'
+fi
 
 if test '@HAVE_GTEST@' != 'no'; then
 add_to_report '
@@ -110,3 +112,26 @@ Google Test:
   no
 '
 fi
+
+if test '@HAVE_KRB5@' != 'no'; then
+add_to_report '
+Kerberos5 GSS-API support:
+  KRB5_GSSAPI_VERSION:  @KRB5_GSSAPI_VERSION@
+  KRB5_GSSAPI_CFLAGS:   @KRB5_GSSAPI_CFLAGS@
+  KRB5_GSSAPI_LIBS:     @KRB5_GSSAPI_LIBS@
+  KRB5_GSSAPI_VENDOR:   @KRB5_GSSAPI_VENDOR@
+'
+else
+add_to_report '
+Kerberos5 GSS-API support:
+  no
+'
+fi
+
+add_to_report '
+Developer:
+  Tests:            @TESTS_ENABLED@
+  Valgrind:         @VALGRIND@
+  Fuzzing:          @FUZZ_ENABLED@
+  AFL:              @HAVE_AFL@
+'
