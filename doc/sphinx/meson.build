@@ -130,7 +130,7 @@ make_doc = configure_file(
     output: 'make-doc.sh',
     configuration: doc_conf,
 )
-make_install = configure_file(
+install_docs = configure_file(
     input: 'install-docs.sh.in',
     output: 'install-docs.sh',
     configuration: doc_conf,
@@ -159,4 +159,4 @@ run_target(
     command: [make_update_python_dependencies],
 )
 
-meson.add_install_script(make_install)
+meson.add_install_script(install_docs)
