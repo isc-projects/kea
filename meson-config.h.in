@@ -40,9 +40,6 @@
 /* MySQL uses my_bool */
 #mesondefine HAVE_MYSQL_MY_BOOL
 
-/* MySQL has MYSQL_OPT_RECONNNECT */
-#mesondefine HAVE_MYSQL_OPT_RECONNECT
-
 /* NETCONF capabilities enabled */
 #mesondefine HAVE_NETCONF
 

@@ -47,9 +47,8 @@ conf_data = configuration_data(
         # 'HAVE_CREATE_UNIFIED_DIFF': false,
         # 'HAVE_GSS_STR_TO_OID': false,
         # 'HAVE_MYSQL_GET_OPTION': false,
-        # 'HAVE_MYSQL_OPT_RECONNECT': false,
         # 'HAVE_OPTRESET': false,
-        # 'HAVE_PGSQL_SSL': false,
+        'HAVE_PGSQL_SSL': true,
         # 'HAVE_PGSQL_TCP_USER_TIMEOUT': false,
         # 'HAVE_SYS_FILIO_H': false,
         # 'HAVE_VALGRIND_HEADERS': false,
@@ -799,7 +798,7 @@ if TARGETS_GEN_MESSAGES.length() > 0
     alias_target('messages', TARGETS_GEN_MESSAGES)
 else
     error(
-        'No messages to generate. This is probably an error in the ' + 'meson.build files.',
+        'No messages to generate. This is probably an error in the meson.build files.',
     )
 endif
 if TARGETS_GEN_PARSER.length() > 0
