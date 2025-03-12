@@ -4,7 +4,7 @@ config_report_cc = configure_file(
     output: 'config_report.cc',
     command: [mk_cfgrpt, '@INPUT@', '@OUTPUT@'],
 )
-kea_cfgrpt_lib = library(
+kea_cfgrpt_lib = shared_library(
     'kea-cfgrpt',
     'cfgrpt.cc',
     config_report_cc,
@@ -12,6 +12,7 @@ kea_cfgrpt_lib = library(
     install: true,
     install_dir: 'lib',
     link_with: LIBS_BUILT_SO_FAR,
+    version: '1.0.0',
 )
 LIBS_BUILT_SO_FAR = [kea_cfgrpt_lib] + LIBS_BUILT_SO_FAR
 subdir('tests')
