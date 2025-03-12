@@ -2213,6 +2213,7 @@ TEST_F(ClientClassDefParserTest, addtionalWithLifetimes4) {
                 "name": "boo",
                 "only-in-additional-list": true
             })",
+            false
         },{
             __LINE__,
             R"({
@@ -2288,6 +2289,7 @@ TEST_F(ClientClassDefParserTest, addtionalWithLifetimes6) {
                 "name": "boo",
                 "only-in-additional-list": true
             })",
+            false
         },{
             __LINE__,
             R"({

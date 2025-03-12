@@ -35,7 +35,8 @@ TEST_F(ExceptionTest, basicMethods) {
     } catch (const Exception& ex) {
         EXPECT_EQ(ex.getMessage(), std::string(teststring));
         EXPECT_EQ(ex.getFile(), std::string(__FILE__));
-        EXPECT_EQ(ex.getLine(), __LINE__ - 4);
+        size_t expected = 5;
+        EXPECT_EQ(expected, __LINE__ - ex.getLine());
     }
 }
 
@@ -46,7 +47,8 @@ TEST_F(ExceptionTest, string) {
     } catch (const Exception& ex) {
         EXPECT_EQ(ex.getMessage(), std::string(teststring));
         EXPECT_EQ(ex.getFile(), std::string(__FILE__));
-        EXPECT_EQ(ex.getLine(), __LINE__ - 4);
+        size_t expected = 5;
+        EXPECT_EQ(expected, __LINE__ - ex.getLine());
     }
 }
 
