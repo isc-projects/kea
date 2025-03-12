@@ -28,7 +28,7 @@ if test ! -d venv; then
         if command -V compgen >/dev/null; then
             # shellcheck disable=SC3044
             # SC3044 (warning): In POSIX sh, 'compgen' is undefined.
-            newer=$(compgen -c python3 | sort -V | tail -n 1)
+            newer=$(compgen -c python3 | grep -E '^python3.[0-9]+$' | sort -V | tail -n 1)
             if test -n "${newer}"; then
                 python3="${newer}"
             fi
