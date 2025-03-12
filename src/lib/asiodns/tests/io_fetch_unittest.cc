@@ -290,7 +290,7 @@ public:
         if (cumulative_ > 2) {
             uint16_t dns_length = readUint16(receive_buffer_,
                                              sizeof(receive_buffer_));
-            complete = ((dns_length + 2) == cumulative_);
+            complete = ((static_cast<size_t>(dns_length) + 2) == cumulative_);
         }
 
         if (!complete) {

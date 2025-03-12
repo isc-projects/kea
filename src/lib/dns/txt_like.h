@@ -52,7 +52,7 @@ public:
 
         do {
             const uint8_t len = buffer.readUint8();
-            if (rdata_len < len + 1) {
+            if (rdata_len < static_cast<size_t>(len) + 1) {
                 isc_throw(DNSMessageFORMERR, "Error in parsing " <<
                           RRType(typeCode) <<
                           " RDATA: character string length is too large: " <<

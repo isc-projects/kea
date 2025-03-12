@@ -211,7 +211,7 @@ OptionDataTypeUtil::readTuple(const std::vector<uint8_t>& buf,
                       << buf.size());
         }
         uint8_t len = buf[0];
-        if (buf.size() < 1 + len) {
+        if (buf.size() < 1 + static_cast<size_t>(len)) {
             isc_throw(BadDataTypeCast, "unable to read data from the buffer as"
                       << " tuple (length " << static_cast<unsigned>(len)
                       << "). Invalid buffer size: " << buf.size());
@@ -227,7 +227,7 @@ OptionDataTypeUtil::readTuple(const std::vector<uint8_t>& buf,
                       << buf.size());
         }
         uint16_t len = isc::util::readUint16(&buf[0], 2);
-        if (buf.size() < 2 + len) {
+        if (buf.size() < 2 + static_cast<size_t>(len)) {
             isc_throw(BadDataTypeCast, "unable to read data from the buffer as"
                       << " tuple (length " << len
                       << "). Invalid buffer size: " << buf.size());

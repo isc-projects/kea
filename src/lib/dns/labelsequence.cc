@@ -134,7 +134,7 @@ LabelSequence::serialize(void* buf, size_t buf_len) const {
     bp += ndata_len;
 
     isc_throw_assert(bp - reinterpret_cast<const uint8_t*>(buf) ==
-                     static_cast<const ssize_t>(expected_size));
+                     static_cast<ssize_t>(expected_size));
 }
 
 bool
