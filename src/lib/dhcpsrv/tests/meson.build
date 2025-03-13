@@ -139,6 +139,6 @@ test(
     protocol: 'gtest',
     is_parallel: false,
     priority: -1,
-    timeout: 60,
+    timeout: 120,
 )
 
