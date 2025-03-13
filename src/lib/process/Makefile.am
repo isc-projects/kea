@@ -1,8 +1,7 @@
 SUBDIRS = cfgrpt . testutils tests
-# DATA_DIR is the directory where to put PID files.
 dhcp_data_dir = @runstatedir@/@PACKAGE@
 AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
-AM_CPPFLAGS += -DDATA_DIR="\"$(dhcp_data_dir)\""
+AM_CPPFLAGS += -DPIDFILE_DIR="\"$(dhcp_data_dir)\""
 
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS  = $(KEA_CXXFLAGS)

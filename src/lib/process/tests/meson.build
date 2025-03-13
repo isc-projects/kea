@@ -25,7 +25,7 @@ kea_process_tests = executable(
     cpp_args: [
         f'-DTEST_DATA_BUILDDIR="@current_build_dir@"',
         f'-DTEST_SCRIPT_SH="@current_build_dir@/process_test.sh"',
-        f'-DDATA_DIR="@DHCP_DATA_DIR@"',
+        f'-DPIDFILE_DIR="@LOCALSTATEDIR@/run/kea"',
     ],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [kea_util_unittests_lib, libs_testutils] + LIBS_BUILT_SO_FAR,

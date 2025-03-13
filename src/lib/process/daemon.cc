@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -40,7 +40,7 @@ std::string Daemon::default_logger_name_("kea");
 
 Daemon::Daemon()
     : signal_set_(), config_file_(""),
-      pid_file_dir_(DATA_DIR), pid_file_(), am_file_author_(false),
+      pid_file_dir_(PIDFILE_DIR), pid_file_(), am_file_author_(false),
       exit_value_(EXIT_SUCCESS) {
 
     // The pid_file_dir can be overridden via environment variable

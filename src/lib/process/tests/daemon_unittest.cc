@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -89,7 +89,7 @@ TEST_F(DaemonTest, constructor) {
     // Check only instance values.
     Daemon instance2;
     EXPECT_TRUE(instance2.getConfigFile().empty());
-    EXPECT_EQ(std::string(DATA_DIR), instance2.getPIDFileDir());
+    EXPECT_EQ(std::string(PIDFILE_DIR), instance2.getPIDFileDir());
     EXPECT_TRUE(instance2.getPIDFileName().empty());
 }
 
