@@ -21,7 +21,7 @@ LOCALSTATEDIR = get_option('localstatedir')
 PREFIX = get_option('prefix')
 SYSCONFDIR = get_option('sysconfdir')
 
-DHCP_DATA_DIR = f'@PREFIX@/@LOCALSTATEDIR@/run/kea'
+DHCP_DATA_DIR = f'@LOCALSTATEDIR@/run/kea'
 DEFAULT_HOOKS_PATH = f'@PREFIX@/lib/kea/hooks'
 KEA_ADMIN = f'@TOP_BUILD_DIR@/src/bin/admin/kea-admin'
 KEA_LFC = f'@TOP_BUILD_DIR@/src/bin/lfc/kea-lfc'
