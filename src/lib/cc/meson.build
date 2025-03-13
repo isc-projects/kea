@@ -17,7 +17,7 @@ kea_cc_lib = shared_library(
     cpp_args: kea_cc_lib_cpp_args,
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
-    install_dir: 'lib',
+    install_dir: LIBDIR,
     link_with: LIBS_BUILT_SO_FAR,
     version: '80.0.0',
 )

@@ -10,7 +10,7 @@ kea_cfgrpt_lib = shared_library(
     config_report_cc,
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
-    install_dir: 'lib',
+    install_dir: LIBDIR,
     link_with: LIBS_BUILT_SO_FAR,
     version: '1.0.0',
 )

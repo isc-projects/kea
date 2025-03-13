@@ -26,7 +26,7 @@ kea_yang_lib = shared_library(
     dependencies: NETCONF_DEP,
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
-    install_dir: 'lib',
+    install_dir: LIBDIR,
     link_with: LIBS_BUILT_SO_FAR,
     version: '71.0.0',
     override_options: ['cpp_std=c++20'],

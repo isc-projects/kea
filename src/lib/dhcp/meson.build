@@ -56,7 +56,7 @@ kea_dhcp_lib = shared_library(
     'protocol_util.cc',
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
-    install_dir: 'lib',
+    install_dir: LIBDIR,
     link_with: LIBS_BUILT_SO_FAR,
     version: '106.0.0',
 )

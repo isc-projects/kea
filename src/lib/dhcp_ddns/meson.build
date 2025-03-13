@@ -7,7 +7,7 @@ kea_dhcp_ddns_lib = shared_library(
     'ncr_udp.cc',
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
-    install_dir: 'lib',
+    install_dir: LIBDIR,
     link_with: LIBS_BUILT_SO_FAR,
     version: '66.0.0',
 )

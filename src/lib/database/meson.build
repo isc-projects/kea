@@ -11,7 +11,7 @@ kea_database_lib = shared_library(
     'server_selector.cc',
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
-    install_dir: 'lib',
+    install_dir: LIBDIR,
     link_with: LIBS_BUILT_SO_FAR,
     version: '74.0.0',
 )

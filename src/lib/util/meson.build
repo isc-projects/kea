@@ -21,7 +21,7 @@ kea_util_lib = shared_library(
     'watch_socket.cc',
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
-    install_dir: 'lib',
+    install_dir: LIBDIR,
     link_with: LIBS_BUILT_SO_FAR,
     version: '98.0.0',
 )

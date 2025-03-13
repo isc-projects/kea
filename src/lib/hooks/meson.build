@@ -16,7 +16,7 @@ kea_hooks_lib = shared_library(
     cpp_args: [f'-DDEFAULT_HOOKS_PATH="@DEFAULT_HOOKS_PATH@"'],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
-    install_dir: 'lib',
+    install_dir: LIBDIR,
     link_with: LIBS_BUILT_SO_FAR,
     version: '114.0.0',
 )

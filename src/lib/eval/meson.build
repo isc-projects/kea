@@ -10,7 +10,7 @@ kea_eval_lib = shared_library(
     'token.cc',
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
-    install_dir: 'lib',
+    install_dir: LIBDIR,
     link_with: LIBS_BUILT_SO_FAR,
     version: '81.0.0',
 )

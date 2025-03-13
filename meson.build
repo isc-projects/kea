@@ -14,9 +14,11 @@ python_module = import('python')
 
 TOP_BUILD_DIR = meson.current_build_dir()
 TOP_SOURCE_DIR = meson.current_source_dir()
+
+DATADIR = get_option('datadir')
+LIBDIR = get_option('libdir')
 RUN_STATE_DIR = get_option('localstatedir')
 PREFIX = get_option('prefix')
-DATADIR = get_option('datadir')
 SYSCONFDIR = get_option('sysconfdir')
 
 DHCP_DATA_DIR = f'@PREFIX@/@RUN_STATE_DIR@/run/kea'

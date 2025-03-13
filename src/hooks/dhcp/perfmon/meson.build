@@ -13,7 +13,7 @@ dhcp_perfmon_lib = shared_library(
     dependencies: [CRYPTO_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
-    install_dir: 'lib/kea/hooks',
+    install_dir: LIBDIR / 'kea/hooks',
     link_with: LIBS_BUILT_SO_FAR,
     name_suffix: 'so',
 )

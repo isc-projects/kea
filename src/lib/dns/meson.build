@@ -28,7 +28,7 @@ kea_dns_lib = shared_library(
     'tsigrecord.cc',
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
-    install_dir: 'lib',
+    install_dir: LIBDIR,
     link_with: LIBS_BUILT_SO_FAR,
     version: '68.0.0',
 )
