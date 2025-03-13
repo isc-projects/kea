@@ -128,8 +128,9 @@ KEA_MSG_COMPILER = disabler()
 #### Dependencies
 
 boost_dep = dependency('boost', version: '>=1.66')
+dl_dep = dependency('dl')
 threads_dep = dependency('threads')
-add_project_dependencies(boost_dep, threads_dep, language: ['cpp'])
+add_project_dependencies(boost_dep, dl_dep, threads_dep, language: ['cpp'])
 
 # check boost headers
 boost_headers = [
