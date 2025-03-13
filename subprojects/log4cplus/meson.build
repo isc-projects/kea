@@ -1,2 +1,3 @@
 project('log4cplus')
-log4cplus = cpp.find_library('log4cplus', required: false)
+cpp = meson.get_compiler('cpp')
+log4cplus = cpp.find_library('log4cplus')
