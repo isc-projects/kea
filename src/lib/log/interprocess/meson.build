@@ -1,4 +1,4 @@
-kea_log_interprocess_lib = library(
+kea_log_interprocess_lib = shared_library(
     'kea-log-interprocess',
     'interprocess_sync_file.cc',
     'interprocess_sync_null.cc',
@@ -7,6 +7,7 @@ kea_log_interprocess_lib = library(
     install: true,
     install_dir: 'lib',
     link_with: LIBS_BUILT_SO_FAR,
+    version: '1.0.0',
 )
 LIBS_BUILT_SO_FAR = [kea_log_interprocess_lib] + LIBS_BUILT_SO_FAR
 subdir('tests')
