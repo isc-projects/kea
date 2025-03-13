@@ -101,7 +101,10 @@ LegalLogMgrFactory::addBackend(DatabaseConnection::ParameterMap& parameters, Man
                   " factory returned NULL");
     }
 
-    backend->open();
+    // Add the parameters and an empty instance in case retry on startup is configured.
+    pool_[id] = pair<DatabaseConnection::ParameterMap, LegalLogMgrPtr>(parameters, LegalLogMgrPtr());
+
+    backend->open(id);
 
     // Apply extra parameters.
     if (parameters.find("request-parser-format") != parameters.end()) {

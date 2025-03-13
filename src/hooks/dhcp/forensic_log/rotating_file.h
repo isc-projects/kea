@@ -135,8 +135,10 @@ public:
     /// it is created.  If the file is already open, the method simply
     /// returns.
     ///
+    /// @param id the forensic backend manager ID.
+    ///
     /// @throw LegalLogMgrError if the file cannot be opened.
-    virtual void open();
+    virtual void open(isc::dhcp::ManagerID id = 0);
 
     /// @brief Closes the underlying file.
     ///

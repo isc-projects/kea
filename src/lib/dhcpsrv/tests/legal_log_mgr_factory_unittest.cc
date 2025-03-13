@@ -38,7 +38,7 @@ public:
     }
 
     /// @brief Opens the store.
-    virtual void open() {
+    virtual void open(ManagerID) {
     }
 
     /// @brief Closes the store.

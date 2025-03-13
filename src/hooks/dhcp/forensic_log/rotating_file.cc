@@ -271,7 +271,7 @@ RotatingFile::useExistingFiles(struct tm& time_info) {
 }
 
 void
-RotatingFile::open() {
+RotatingFile::open(ManagerID) {
     if (isOpen() || MultiThreadingMgr::instance().isTestMode()) {
         return;
     }

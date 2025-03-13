@@ -280,15 +280,15 @@ MySqlStore::MySqlStore(const DatabaseConnection::ParameterMap& parameters)
     timer_name_ += "]DbReconnectTimer";
 }
 
-void MySqlStore::open() {
+void MySqlStore::open(ManagerID id) {
     LegalLogDbLogger pushed(mysql_legal_log_db_logger);
 
     // Test schema version first.
     std::pair<uint32_t, uint32_t> code_version(MYSQL_SCHEMA_VERSION_MAJOR,
                                                MYSQL_SCHEMA_VERSION_MINOR);
 
-    LegalLogMgrPtr store = LegalLogMgrFactory::instance();
-    LegalLogMgrFactory::instance().reset();
+    LegalLogMgrPtr store = LegalLogMgrFactory::instance(id);
+    LegalLogMgrFactory::instance(id).reset();
 
     string timer_name;
     bool retry = false;
@@ -310,7 +310,7 @@ void MySqlStore::open() {
                   << db_version.second);
     }
 
-    LegalLogMgrFactory::instance() = store;
+    LegalLogMgrFactory::instance(id) = store;
 
     // Create an initial context.
     pool_.reset(new MySqlStoreContextPool());
