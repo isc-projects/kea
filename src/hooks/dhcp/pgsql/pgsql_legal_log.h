@@ -131,12 +131,10 @@ public:
     ///
     /// Finally, all the SQL commands are pre-compiled.
     ///
-    /// @param id the forensic backend manager ID.
-    ///
     /// @throw isc::db::DbOpenError Error opening the database
     /// @throw isc::db::DbOperationError An operation on the open
     ///        database has failed.
-    virtual void open(ManagerID id = 0);
+    virtual void open();
 
     /// @brief Closes the store.
     virtual void close();

@@ -177,7 +177,7 @@ PgSqlStore::PgSqlStore(const DatabaseConnection::ParameterMap& parameters)
     timer_name_ += "]DbReconnectTimer";
 }
 
-void PgSqlStore::open(ManagerID id) {
+void PgSqlStore::open() {
     LegalLogDbLogger pushed(pgsql_legal_log_db_logger);
 
     // Check TLS support.
@@ -207,9 +207,6 @@ void PgSqlStore::open(ManagerID id) {
     pair<uint32_t, uint32_t> code_version(PGSQL_SCHEMA_VERSION_MAJOR,
                                           PGSQL_SCHEMA_VERSION_MINOR);
 
-    LegalLogMgrPtr store = LegalLogMgrFactory::instance(id);
-    LegalLogMgrFactory::instance(id).reset();
-
     string timer_name;
     bool retry = false;
     if (LegalLogMgr::getParameters().count("retry-on-startup")) {
@@ -229,8 +226,6 @@ void PgSqlStore::open(ManagerID id) {
                   << " found version:  " << db_version.first << "."
                   << db_version.second);
     }
-
-    LegalLogMgrFactory::instance(id) = store;
 
     // Create an initial context.
     pool_.reset(new PgSqlStoreContextPool());

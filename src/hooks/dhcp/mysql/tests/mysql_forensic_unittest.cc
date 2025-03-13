@@ -589,10 +589,7 @@ MySqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndRecoveredCallback() {
     std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry());
     params.emplace("retry-on-startup", "true");
 
-    ASSERT_NO_THROW_LOG(LegalLogMgrFactory::instance().reset(new MySqlStore(params)));
-
-    // Check params validity is done by open().
-    EXPECT_THROW(LegalLogMgrFactory::instance()->open(), DbOpenErrorWithRetry);
+    ASSERT_THROW(LegalLogMgrFactory::addBackend(params), DbOpenErrorWithRetry);
 
     // Verify there is no instance.
     ASSERT_FALSE(LegalLogMgrFactory::instance());
@@ -633,10 +630,7 @@ MySqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndFailedCallback() {
     std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry());
     params.emplace("retry-on-startup", "true");
 
-    ASSERT_NO_THROW_LOG(LegalLogMgrFactory::instance().reset(new MySqlStore(params)));
-
-    // Check params validity is done by open().
-    EXPECT_THROW(LegalLogMgrFactory::instance()->open(), DbOpenErrorWithRetry);
+    ASSERT_THROW(LegalLogMgrFactory::addBackend(params), DbOpenErrorWithRetry);
 
     // Verify there is no instance.
     ASSERT_FALSE(LegalLogMgrFactory::instance());
@@ -677,10 +671,7 @@ MySqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndRecoveredAfterTimeoutCall
     std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry());
     params.emplace("retry-on-startup", "true");
 
-    ASSERT_NO_THROW_LOG(LegalLogMgrFactory::instance().reset(new MySqlStore(params)));
-
-    // Check params validity is done by open().
-    EXPECT_THROW(LegalLogMgrFactory::instance()->open(), DbOpenErrorWithRetry);
+    ASSERT_THROW(LegalLogMgrFactory::addBackend(params), DbOpenErrorWithRetry);
 
     // Verify there is no instance.
     ASSERT_FALSE(LegalLogMgrFactory::instance());
@@ -749,10 +740,7 @@ MySqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndFailedAfterTimeoutCallbac
     std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry());
     params.emplace("retry-on-startup", "true");
 
-    ASSERT_NO_THROW_LOG(LegalLogMgrFactory::instance().reset(new MySqlStore(params)));
-
-    // Check params validity is done by open().
-    EXPECT_THROW(LegalLogMgrFactory::instance()->open(), DbOpenErrorWithRetry);
+    ASSERT_THROW(LegalLogMgrFactory::addBackend(params), DbOpenErrorWithRetry);
 
     // Verify there is no instance.
     ASSERT_FALSE(LegalLogMgrFactory::instance());
@@ -808,10 +796,7 @@ MySqlLegalLogDbLostCallbackTest::testNoCallbackOnOpenFailure() {
     // Verify that a MySqlStore with no database name is rejected.
     DatabaseConnection::ParameterMap params = db::DatabaseConnection::parse(invalidConnectString());
 
-    ASSERT_NO_THROW_LOG(LegalLogMgrFactory::instance().reset(new MySqlStore(params)));
-
-    // Check params validity is done by open().
-    EXPECT_THROW(LegalLogMgrFactory::instance()->open(), DbOpenError);
+    ASSERT_THROW(LegalLogMgrFactory::addBackend(params), DbOpenError);
 
     io_service_->poll();
 
@@ -846,11 +831,7 @@ MySqlLegalLogDbLostCallbackTest::testDbLostAndRecoveredCallback() {
     // Verify that a MySqlStore with database name is not rejected.
     DatabaseConnection::ParameterMap params = db::DatabaseConnection::parse(validConnectString());
 
-    ASSERT_NO_THROW_LOG(LegalLogMgrFactory::instance().reset(new MySqlStore(params)));
-    LegalLogMgrFactory::setParameters(params);
-
-    // Check params validity is done by open().
-    EXPECT_NO_THROW_LOG(LegalLogMgrFactory::instance()->open());
+    ASSERT_NO_THROW(LegalLogMgrFactory::addBackend(params));
 
     ASSERT_TRUE(LegalLogMgrFactory::instance());
 
@@ -904,10 +885,7 @@ MySqlLegalLogDbLostCallbackTest::testDbLostAndFailedCallback() {
     // Verify that a MySqlStore with database name is not rejected.
     DatabaseConnection::ParameterMap params = db::DatabaseConnection::parse(validConnectString());
 
-    ASSERT_NO_THROW_LOG(LegalLogMgrFactory::instance().reset(new MySqlStore(params)));
-
-    // Check params validity is done by open().
-    EXPECT_NO_THROW_LOG(LegalLogMgrFactory::instance()->open());
+    ASSERT_NO_THROW(LegalLogMgrFactory::addBackend(params));
 
     ASSERT_TRUE(LegalLogMgrFactory::instance());
 
@@ -968,11 +946,7 @@ MySqlLegalLogDbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCallback() {
     // Verify that a MySqlStore with database name is not rejected.
     DatabaseConnection::ParameterMap params = db::DatabaseConnection::parse(access);
 
-    ASSERT_NO_THROW_LOG(LegalLogMgrFactory::instance().reset(new MySqlStore(params)));
-    LegalLogMgrFactory::setParameters(params);
-
-    // Check params validity is done by open().
-    EXPECT_NO_THROW_LOG(LegalLogMgrFactory::instance()->open());
+    ASSERT_NO_THROW(LegalLogMgrFactory::addBackend(params));
 
     ASSERT_TRUE(LegalLogMgrFactory::instance());
 
@@ -1062,10 +1036,7 @@ MySqlLegalLogDbLostCallbackTest::testDbLostAndFailedAfterTimeoutCallback() {
     // Verify that a MySqlStore with database name is not rejected.
     DatabaseConnection::ParameterMap params = db::DatabaseConnection::parse(access);
 
-    ASSERT_NO_THROW_LOG(LegalLogMgrFactory::instance().reset(new MySqlStore(params)));
-
-    // Check params validity is done by open().
-    EXPECT_NO_THROW_LOG(LegalLogMgrFactory::instance()->open());
+    ASSERT_NO_THROW(LegalLogMgrFactory::addBackend(params));
 
     ASSERT_TRUE(LegalLogMgrFactory::instance());
 

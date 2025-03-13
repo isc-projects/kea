@@ -506,10 +506,7 @@ PgSqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndRecoveredCallback() {
     std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry());
     params.emplace("retry-on-startup", "true");
 
-    ASSERT_NO_THROW_LOG(LegalLogMgrFactory::instance().reset(new PgSqlStore(params)));
-
-    // Check params validity is done by open().
-    EXPECT_THROW(LegalLogMgrFactory::instance()->open(), DbOpenErrorWithRetry);
+    ASSERT_THROW(LegalLogMgrFactory::addBackend(params), DbOpenErrorWithRetry);
 
     // Verify there is no instance.
     ASSERT_FALSE(LegalLogMgrFactory::instance());
@@ -550,10 +547,7 @@ PgSqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndFailedCallback() {
     std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry());
     params.emplace("retry-on-startup", "true");
 
-    ASSERT_NO_THROW_LOG(LegalLogMgrFactory::instance().reset(new PgSqlStore(params)));
-
-    // Check params validity is done by open().
-    EXPECT_THROW(LegalLogMgrFactory::instance()->open(), DbOpenErrorWithRetry);
+    ASSERT_THROW(LegalLogMgrFactory::addBackend(params), DbOpenErrorWithRetry);
 
     // Verify there is no instance.
     ASSERT_FALSE(LegalLogMgrFactory::instance());
@@ -594,10 +588,7 @@ PgSqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndRecoveredAfterTimeoutCall
     std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry());
     params.emplace("retry-on-startup", "true");
 
-    ASSERT_NO_THROW_LOG(LegalLogMgrFactory::instance().reset(new PgSqlStore(params)));
-
-    // Check params validity is done by open().
-    EXPECT_THROW(LegalLogMgrFactory::instance()->open(), DbOpenErrorWithRetry);
+    ASSERT_THROW(LegalLogMgrFactory::addBackend(params), DbOpenErrorWithRetry);
 
     // Verify there is no instance.
     ASSERT_FALSE(LegalLogMgrFactory::instance());
@@ -666,10 +657,7 @@ PgSqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndFailedAfterTimeoutCallbac
     std::shared_ptr<DbConnectionInitWithRetry> dbr(new DbConnectionInitWithRetry());
     params.emplace("retry-on-startup", "true");
 
-    ASSERT_NO_THROW_LOG(LegalLogMgrFactory::instance().reset(new PgSqlStore(params)));
-
-    // Check params validity is done by open().
-    EXPECT_THROW(LegalLogMgrFactory::instance()->open(), DbOpenErrorWithRetry);
+    ASSERT_THROW(LegalLogMgrFactory::addBackend(params), DbOpenErrorWithRetry);
 
     // Verify there is no instance.
     ASSERT_FALSE(LegalLogMgrFactory::instance());
@@ -725,10 +713,7 @@ PgSqlLegalLogDbLostCallbackTest::testNoCallbackOnOpenFailure() {
     // Verify that a PgSqlStore with no database name is rejected.
     DatabaseConnection::ParameterMap params = db::DatabaseConnection::parse(invalidConnectString());
 
-    ASSERT_NO_THROW_LOG(LegalLogMgrFactory::instance().reset(new PgSqlStore(params)));
-
-    // Check params validity is done by open().
-    EXPECT_THROW(LegalLogMgrFactory::instance()->open(), DbOpenError);
+    ASSERT_THROW(LegalLogMgrFactory::addBackend(params), DbOpenError);
 
     io_service_->poll();
 
@@ -763,11 +748,7 @@ PgSqlLegalLogDbLostCallbackTest::testDbLostAndRecoveredCallback() {
     // Verify that a PgSqlStore with database name is not rejected.
     DatabaseConnection::ParameterMap params = db::DatabaseConnection::parse(validConnectString());
 
-    ASSERT_NO_THROW_LOG(LegalLogMgrFactory::instance().reset(new PgSqlStore(params)));
-    LegalLogMgrFactory::setParameters(params);
-
-    // Check params validity is done by open().
-    EXPECT_NO_THROW_LOG(LegalLogMgrFactory::instance()->open());
+    ASSERT_NO_THROW(LegalLogMgrFactory::addBackend(params));
 
     ASSERT_TRUE(LegalLogMgrFactory::instance());
 
@@ -821,10 +802,7 @@ PgSqlLegalLogDbLostCallbackTest::testDbLostAndFailedCallback() {
     // Verify that a PgSqlStore with database name is not rejected.
     DatabaseConnection::ParameterMap params = db::DatabaseConnection::parse(validConnectString());
 
-    ASSERT_NO_THROW_LOG(LegalLogMgrFactory::instance().reset(new PgSqlStore(params)));
-
-    // Check params validity is done by open().
-    EXPECT_NO_THROW_LOG(LegalLogMgrFactory::instance()->open());
+    ASSERT_NO_THROW(LegalLogMgrFactory::addBackend(params));
 
     ASSERT_TRUE(LegalLogMgrFactory::instance());
 
@@ -885,11 +863,7 @@ PgSqlLegalLogDbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCallback() {
     // Verify that a PgSqlStore with database name is not rejected.
     DatabaseConnection::ParameterMap params = db::DatabaseConnection::parse(access);
 
-    ASSERT_NO_THROW_LOG(LegalLogMgrFactory::instance().reset(new PgSqlStore(params)));
-    LegalLogMgrFactory::setParameters(params);
-
-    // Check params validity is done by open().
-    EXPECT_NO_THROW_LOG(LegalLogMgrFactory::instance()->open());
+    ASSERT_NO_THROW(LegalLogMgrFactory::addBackend(params));
 
     ASSERT_TRUE(LegalLogMgrFactory::instance());
 
@@ -979,10 +953,7 @@ PgSqlLegalLogDbLostCallbackTest::testDbLostAndFailedAfterTimeoutCallback() {
     // Verify that a PgSqlStore with database name is not rejected.
     DatabaseConnection::ParameterMap params = db::DatabaseConnection::parse(access);
 
-    ASSERT_NO_THROW_LOG(LegalLogMgrFactory::instance().reset(new PgSqlStore(params)));
-
-    // Check params validity is done by open().
-    EXPECT_NO_THROW_LOG(LegalLogMgrFactory::instance()->open());
+    ASSERT_NO_THROW(LegalLogMgrFactory::addBackend(params));
 
     ASSERT_TRUE(LegalLogMgrFactory::instance());
 

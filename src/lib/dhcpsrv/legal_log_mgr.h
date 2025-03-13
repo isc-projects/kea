@@ -35,9 +35,6 @@ class LegalLogMgr;
 /// @brief Defines a smart pointer to a LegalLogMgr.
 typedef boost::shared_ptr<LegalLogMgr> LegalLogMgrPtr;
 
-/// @brief Manger ID used by hook libraries to retrieve respective LegalLogMgr instance.
-typedef uint64_t ManagerID;
-
 /// @brief LegalLogMgr abstract class
 class LegalLogMgr {
 public:
@@ -87,9 +84,7 @@ public:
     static void parseExtraParameters(const isc::data::ConstElementPtr& parameters, isc::db::DatabaseConnection::ParameterMap& map);
 
     /// @brief Opens the store.
-    ///
-    /// @param id the forensic backend manager ID.
-    virtual void open(ManagerID id = 0) = 0;
+    virtual void open() = 0;
 
     /// @brief Closes the store.
     virtual void close() = 0;
@@ -271,6 +266,9 @@ private:
     /// @brief The configuration parameters.
     isc::db::DatabaseConnection::ParameterMap parameters_;
 };
+
+/// @brief Manger ID used by hook libraries to retrieve respective LegalLogMgr instance.
+typedef uint64_t ManagerID;
 
 /// @brief LegalLogMgr pool
 typedef std::map<ManagerID, std::pair<isc::db::DatabaseConnection::ParameterMap, LegalLogMgrPtr>> LegalLogMgrPool;
