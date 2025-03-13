@@ -827,7 +827,7 @@ top_docs = [
     'code_of_conduct.md',
     'platforms.rst',
 ]
-install_data(top_docs, install_dir: 'share/doc/kea')
+install_data(top_docs, install_dir: DATADIR / 'doc/kea')
 install_emptydir('var/run/kea')
 
 # Print the setup report.
