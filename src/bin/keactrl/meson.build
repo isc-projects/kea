@@ -11,8 +11,8 @@ else
 endif
 keactrl_conf_data.set('EXTENDED_VERSION', PROJECT_VERSION + ' (tarball)')
 keactrl_conf_data.set('PACKAGE_VERSION', PROJECT_VERSION)
-keactrl_conf_data.set('runstatedir', '${prefix}/' + RUN_STATE_DIR + '/run')
-keactrl_conf_data.set('localstatedir', '${prefix}/' + RUN_STATE_DIR)
+keactrl_conf_data.set('runstatedir', '${prefix}/' + LOCALSTATEDIR + '/run')
+keactrl_conf_data.set('localstatedir', '${prefix}/' + LOCALSTATEDIR)
 kea_configfiles_destdir = f'@SYSCONFDIR@/kea'
 configure_file(
     input: 'keactrl.conf.in',
