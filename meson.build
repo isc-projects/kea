@@ -48,7 +48,7 @@ conf_data = configuration_data(
         # 'HAVE_GSS_STR_TO_OID': false,
         # 'HAVE_MYSQL_GET_OPTION': false,
         # 'HAVE_OPTRESET': false,
-        'HAVE_PGSQL_SSL': true,
+        # 'HAVE_PGSQL_SSL': true,
         # 'HAVE_PGSQL_TCP_USER_TIMEOUT': false,
         # 'HAVE_SYS_FILIO_H': false,
         # 'HAVE_VALGRIND_HEADERS': false,
