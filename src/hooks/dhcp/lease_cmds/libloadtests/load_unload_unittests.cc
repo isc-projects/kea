@@ -31,7 +31,10 @@ namespace {
 class LeaseCmdsCbLibLoadTest : public isc::test::LibLoadTest {
 public:
     /// @brief Constructor
-    LeaseCmdsCbLibLoadTest() : LibLoadTest(LIBDHCP_LEASE_CMDS_SO) {
+    LeaseCmdsCbLibLoadTest()
+        : LibLoadTest(LIBDHCP_LEASE_CMDS_SO),
+          hook_index_lease4_offer_(0),
+          hook_index_leasesX_committed_(0) {
     }
 
     /// @brief Destructor
