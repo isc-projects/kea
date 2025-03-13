@@ -8,6 +8,7 @@ PROJECT_VERSION = meson.project_version()
 #### Imports
 
 fs = import('fs')
+python_module = import('python')
 
 #### Variables
 
@@ -235,6 +236,23 @@ elif CRYPTO_DEP.name() == openssl.name()
     message('Using OpenSSL.')
 else
     error('Dependency not found: neither Botan nor OpenSSL.')
+endif
+
+# Kea shell
+PKGPYTHONDIR = 'unknown'
+py_installation = python_module.find_installation('python3', required: false)
+if py_installation.found()
+    PKGPYTHONDIR = py_installation.get_install_dir(pure: true) / 'kea'
+else
+    result = run_command(
+        PYTHON,
+        '-c',
+        'import sysconfig; print(sysconfig.get_paths()[\'purelib\'])',
+        check: false,
+    )
+    if result.returncode() == 0
+        PKGPYTHONDIR = result.stdout().strip() / 'kea'
+    endif
 endif
 
 if TESTS_OPT.enabled()
@@ -473,17 +491,7 @@ report_conf_data.set('LD_ID', cpp.get_linker_id())
 report_conf_data.set('LD_ARGS', ' '.join(link_args))
 report_conf_data.set('PYTHON_PATH', PYTHON.full_path())
 report_conf_data.set('PYTHON_VERSION', PYTHON.version())
-result = run_command(
-    PYTHON,
-    '-c',
-    'import sysconfig; print(sysconfig.get_paths()[\'purelib\'])',
-    check: false,
-)
-if result.returncode() == 0
-    report_conf_data.set('PKGPYTHONDIR', result.stdout().strip() + '/kea')
-else
-    report_conf_data.set('PKGPYTHONDIR', 'unknown')
-endif
+report_conf_data.set('PKGPYTHONDIR', PKGPYTHONDIR)
 result = cpp.run(
     fs.read('compiler-checks/get-boost-version.cc'),
     dependencies: [boost_dep],
