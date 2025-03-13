@@ -121,6 +121,98 @@ struct sock_filter dhcp_sock_filter [] = {
     BPF_STMT(BPF_RET + BPF_K, 0),
 };
 
+/// The following structure defines a Berkeley Packet Filter program to perform
+/// packet filtering. The program operates on IPoIB pseudo packets. To help with
+/// interpretation of the program, for the types of packets we are interested
+/// in, the header layout is:
+///
+///  20 bytes  Source Interface Address
+///   2 bytes  Packet Type
+///   2 bytes  Reserved/Unused
+///
+///  The rest is identical to aboves Ethernet-Based packets
+///
+/// Each instruction is preceded with the comments giving the instruction
+/// number within a BPF program, in the following format: #123.
+
+struct sock_filter dhcp_sock_filter_ib [] = {
+    // Make sure this is an IP packet: check the half-word (two bytes)
+    // at offset 20 in the packet (the IPoIB pseudo packet type). If it
+    // is, advance to the next instruction. If not, advance 11
+    // instructions (which takes execution to the last instruction in
+    // the sequence: "drop it").
+    // #0
+    BPF_STMT(BPF_LD + BPF_H + BPF_ABS, IPOIB_PACKET_TYPE_OFFSET),
+    // #1
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, ETHERTYPE_IP, 0, 11),
+
+    // Make sure it's a UDP packet. The IP protocol is at offset
+    // 9 in the IP header so, adding the IPoIB packet header size
+    // of 24 bytes gives an absolute byte offset in the packet of 33.
+    // #2
+    BPF_STMT(BPF_LD + BPF_B + BPF_ABS,
+             IPOIB_HEADER_LEN + IP_PROTO_TYPE_OFFSET),
+    // #3
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, IPPROTO_UDP, 0, 9),
+
+    // Make sure this isn't a fragment by checking that the fragment
+    // offset field in the IP header is zero. This field is the
+    // least-significant 13 bits in the bytes at offsets 6 and 7 in
+    // the IP header, so the half-word at offset 30 (6 + size of
+    // IPoIB header) is loaded and an appropriate mask applied.
+    // #4
+    BPF_STMT(BPF_LD + BPF_H + BPF_ABS, IPOIB_HEADER_LEN + IP_FLAGS_OFFSET),
+    // #5
+    BPF_JUMP(BPF_JMP + BPF_JSET + BPF_K, 0x1fff, 7, 0),
+
+    // Check the packet's destination address. The program will only
+    // allow the packets sent to the broadcast address or unicast
+    // to the specific address on the interface. By default, this
+    // address is set to 0 and must be set to the specific value
+    // when the raw socket is created and the program is attached
+    // to it. The caller must assign the address to the
+    // prog.bf_insns[8].k in the network byte order.
+    // #6
+    BPF_STMT(BPF_LD + BPF_W + BPF_ABS,
+             IPOIB_HEADER_LEN + IP_DEST_ADDR_OFFSET),
+    // If this is a broadcast address, skip the next check.
+    // #7
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, 0xffffffff, 1, 0),
+    // If this is not broadcast address, compare it with the unicast
+    // address specified for the interface.
+    // #8
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, 0x00000000, 0, 4),
+
+    // Get the IP header length. This is achieved by the following
+    // (special) instruction that, given the offset of the start
+    // of the IP header (offset 24) loads the IP header length.
+    // #9
+    BPF_STMT(BPF_LDX + BPF_B + BPF_MSH, IPOIB_HEADER_LEN),
+
+    // Make sure it's to the right port. The following instruction
+    // adds the previously extracted IP header length to the given
+    // offset to locate the correct byte. The given offset of 26
+    // comprises the length of the IPoIB header (24) plus the offset
+    // of the UDP destination port (2) within the UDP header.
+    // #10
+    BPF_STMT(BPF_LD + BPF_H + BPF_IND, IPOIB_HEADER_LEN + UDP_DEST_PORT),
+    // The following instruction tests against the default DHCP server port,
+    // but the action port is actually set in PktFilterBPF::openSocket().
+    // N.B. The code in that method assumes that this instruction is at
+    // offset 11 in the program. If this is changed, openSocket() must be
+    // updated.
+    // #11
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, DHCP4_SERVER_PORT, 0, 1),
+
+    // If we passed all the tests, ask for the whole packet.
+    // #12
+    BPF_STMT(BPF_RET + BPF_K, (u_int)-1),
+
+    // Otherwise, drop it.
+    // #13
+    BPF_STMT(BPF_RET + BPF_K, 0),
+};
+
 }
 
 using namespace isc::util;
@@ -169,16 +261,30 @@ PktFilterLPF::openSocket(Iface& iface,
     struct sock_fprog filter_program;
     memset(&filter_program, 0, sizeof(filter_program));
 
-    filter_program.filter = dhcp_sock_filter;
-    filter_program.len = sizeof(dhcp_sock_filter) / sizeof(struct sock_filter);
+    if (iface.getHWType() == HTYPE_INFINIBAND) {
+        filter_program.filter = dhcp_sock_filter_ib;
+        filter_program.len = sizeof(dhcp_sock_filter_ib) / sizeof(struct sock_filter);
 
-    // Configure the filter program to receive unicast packets sent to the
-    // specified address. The program will also allow packets sent to the
-    // 255.255.255.255 broadcast address.
-    dhcp_sock_filter[8].k = addr.toUint32();
+        // Configure the filter program to receive unicast packets sent to the
+        // specified address. The program will also allow packets sent to the
+        // 255.255.255.255 broadcast address.
+        dhcp_sock_filter_ib[8].k = addr.toUint32();
 
-    // Override the default port value.
-    dhcp_sock_filter[11].k = port;
+        // Override the default port value.
+        dhcp_sock_filter_ib[11].k = port;
+    } else {
+        filter_program.filter = dhcp_sock_filter;
+        filter_program.len = sizeof(dhcp_sock_filter) / sizeof(struct sock_filter);
+
+        // Configure the filter program to receive unicast packets sent to the
+        // specified address. The program will also allow packets sent to the
+        // 255.255.255.255 broadcast address.
+        dhcp_sock_filter[8].k = addr.toUint32();
+
+        // Override the default port value.
+        dhcp_sock_filter[11].k = port;
+    }
+
     // Apply the filter.
     if (setsockopt(sock, SOL_SOCKET, SO_ATTACH_FILTER, &filter_program,
                    sizeof(filter_program)) < 0) {
@@ -315,7 +421,21 @@ PktFilterLPF::receive(Iface& iface, const SocketInfo& socket_info) {
     Pkt4Ptr dummy_pkt = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 0));
 
     // Decode ethernet, ip and udp headers.
-    decodeEthernetHeader(buf, dummy_pkt);
+    if (iface.getHWType() == HTYPE_INFINIBAND) {
+        decodeIPoIBHeader(buf, dummy_pkt);
+
+        // The IPoIB header does not contain the local address.
+        // Set it from the interface instead.
+        if (iface.getMacLen() != HWAddr::INFINIBAND_HWADDR_LEN) {
+            isc_throw(SocketReadError,
+                      "Invalid local hardware address size for IPoIB interface.");
+        }
+        HWAddrPtr hwaddr(new HWAddr(iface.getMac(), iface.getMacLen(),
+                                    iface.getHWType()));
+        dummy_pkt->setLocalHWAddr(hwaddr);
+    } else {
+        decodeEthernetHeader(buf, dummy_pkt);
+    }
     decodeIpUdpHeader(buf, dummy_pkt);
 
     auto v4_len = buf.getLength() - buf.getPosition();
@@ -379,11 +499,14 @@ PktFilterLPF::send(const Iface& iface, uint16_t sockfd, const Pkt4Ptr& pkt) {
         pkt->setLocalHWAddr(hwaddr);
     }
 
-
-    // Ethernet frame header.
-    // Note that we don't validate whether HW addresses in 'pkt'
-    // are valid because they are checked by the function called.
-    writeEthernetHeader(pkt, buf);
+    if (iface.getHWType() == HTYPE_INFINIBAND) {
+        writeIPoIBHeader(iface, pkt, buf);
+    } else {
+        // Ethernet frame header.
+        // Note that we don't validate whether HW addresses in 'pkt'
+        // are valid because they are checked by the function called.
+        writeEthernetHeader(pkt, buf);
+    }
 
     // IP and UDP header
     writeIpUdpHeader(pkt, buf);
