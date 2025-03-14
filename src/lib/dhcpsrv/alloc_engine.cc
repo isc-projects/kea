@@ -2952,30 +2952,14 @@ AllocEngine::reclaimExpiredLease(const Lease6Ptr& lease,
 
     auto const& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getBySubnetId(lease->subnet_id_);
 
-    if (lease->type_ == Lease::TYPE_NA) {
-        // IA_NA
+    if (lease->type_ == Lease::TYPE_NA || lease->type_ == Lease::TYPE_PD) {
         if (subnet) {
             auto const& pool = subnet->getPool(lease->type_, lease->addr_, false);
             if (pool) {
-
                 StatsMgr::instance().addValue(
                     StatsMgr::generateName("subnet", subnet->getID(),
-                                           StatsMgr::generateName("pool" , pool->getID(),
-                                                                  "reclaimed-leases")),
-                    static_cast<int64_t>(1));
-            }
-        }
-
-    } else if (lease->type_ == Lease::TYPE_PD) {
-        // IA_PD
-        if (subnet) {
-            auto const& pool = subnet->getPool(lease->type_, lease->addr_, false);
-            if (pool) {
-
-                StatsMgr::instance().addValue(
-                    StatsMgr::generateName("subnet", subnet->getID(),
-                                           StatsMgr::generateName("pd-pool" , pool->getID(),
-                                                                  "reclaimed-leases")),
+                                           StatsMgr::generateName(lease->type_ == Lease::TYPE_NA ? "pool" : "pd-pool",
+                                                                  pool->getID(), "reclaimed-leases")),
                     static_cast<int64_t>(1));
             }
         }
@@ -2993,11 +2977,10 @@ AllocEngine::reclaimExpiredLease(const Lease6Ptr& lease,
                                                              lease->subnet_id_,
                                                              "registered-nas"),
                                       static_cast<int64_t>(-1));
-    } else if (lease->type_ == Lease::TYPE_NA) {
-        // IA_NA
+    } else if (lease->type_ == Lease::TYPE_NA || lease->type_ == Lease::TYPE_PD) {
         StatsMgr::instance().addValue(StatsMgr::generateName("subnet",
                                                              lease->subnet_id_,
-                                                             "assigned-nas"),
+                                                             lease->type_ == Lease::TYPE_NA ? "assigned-nas" : "assigned-pds"),
                                       static_cast<int64_t>(-1));
 
         if (subnet) {
@@ -3005,26 +2988,8 @@ AllocEngine::reclaimExpiredLease(const Lease6Ptr& lease,
             if (pool) {
                 StatsMgr::instance().addValue(
                     StatsMgr::generateName("subnet", subnet->getID(),
-                                           StatsMgr::generateName("pool" , pool->getID(),
-                                                                  "assigned-nas")),
-                    static_cast<int64_t>(-1));
-            }
-        }
-
-    } else if (lease->type_ == Lease::TYPE_PD) {
-        // IA_PD
-        StatsMgr::instance().addValue(StatsMgr::generateName("subnet",
-                                                             lease->subnet_id_,
-                                                             "assigned-pds"),
-            static_cast<int64_t>(-1));
-
-        if (subnet) {
-            auto const& pool = subnet->getPool(lease->type_, lease->addr_, false);
-            if (pool) {
-                StatsMgr::instance().addValue(
-                    StatsMgr::generateName("subnet", subnet->getID(),
-                                           StatsMgr::generateName("pd-pool" , pool->getID(),
-                                                                  "assigned-pds")),
+                                           StatsMgr::generateName(lease->type_ == Lease::TYPE_NA ? "pool" : "pd-pool", pool->getID(),
+                                                                  lease->type_ == Lease::TYPE_NA ? "assigned-nas" : "assigned-pds")),
                     static_cast<int64_t>(-1));
             }
         }
