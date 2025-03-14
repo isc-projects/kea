@@ -3265,7 +3265,8 @@ MySqlLeaseMgr::updateLeaseCommon(MySqlLeaseContextPtr& ctx,
     // If no rows affected, lease doesn't exist.
     if (affected_rows == 0) {
         isc_throw(NoSuchLease, "unable to update lease for address " <<
-                  lease->addr_.toText() << " as it does not exist");
+                  lease->addr_.toText() << " either because the lease does not exist, "
+                      "it has been deleted or it has changed in the database.");
     }
 
     // Should not happen - primary key constraint should only have selected

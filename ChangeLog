@@ -1,3 +1,11 @@
+2260.	[bug]		razvan
+	Fixed a bug which was causing the allocation engine to reject the
+	lease if a data race caused by a different server updating the
+	shared database entries was detected. The entire packet is now
+	dropped in this particular case. This applies to both kea-dhp4
+	and kea-dhcp6 servers.
+	(Gitlab #3798, #3648)
+
 2259.	[bug]		marcin
 	Prevent the clients from declining expired or released leases.
 	Only a valid lease assigned to the declining client can now

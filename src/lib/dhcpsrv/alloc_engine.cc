@@ -15,6 +15,7 @@
 #include <dhcpsrv/alloc_engine.h>
 #include <dhcpsrv/alloc_engine_log.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/dhcpsrv_exceptions.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/host.h>
@@ -627,6 +628,9 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
             }
             return (leases);
         }
+
+    } catch (const NoSuchLease& e) {
+        isc_throw(NoSuchLease, "detected data race in AllocEngine::allocateLeases6: " << e.what());
 
     } catch (const isc::Exception& e) {
 
@@ -2172,6 +2176,9 @@ AllocEngine::renewLeases6(ClientContext6& ctx) {
 
         return (leases);
 
+    } catch (const NoSuchLease& e) {
+        isc_throw(NoSuchLease, "detected data race in AllocEngine::renewLeases6: " << e.what());
+
     } catch (const isc::Exception& e) {
 
         // Some other error, return an empty lease.
@@ -3703,6 +3710,9 @@ AllocEngine::allocateLease4(ClientContext4& ctx) {
         } else {
             ctx.new_lease_ = requestLease4(ctx);
         }
+
+    } catch (const NoSuchLease& e) {
+        isc_throw(NoSuchLease, "detected data race in AllocEngine::allocateLease4: " << e.what());
 
     } catch (const isc::Exception& e) {
         // Some other error, return an empty lease.
