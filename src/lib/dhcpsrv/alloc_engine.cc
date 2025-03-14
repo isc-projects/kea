@@ -15,6 +15,7 @@
 #include <dhcpsrv/alloc_engine.h>
 #include <dhcpsrv/alloc_engine_log.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/dhcpsrv_exceptions.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/host.h>
@@ -628,6 +629,9 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
             }
             return (leases);
         }
+
+    } catch (const NoSuchLease&) {
+        throw;
 
     } catch (const isc::Exception& e) {
 
@@ -2181,6 +2185,9 @@ AllocEngine::renewLeases6(ClientContext6& ctx) {
         }
 
         return (leases);
+
+    } catch (const NoSuchLease&) {
+        throw;
 
     } catch (const isc::Exception& e) {
 
@@ -3745,6 +3752,9 @@ AllocEngine::allocateLease4(ClientContext4& ctx) {
         } else {
             ctx.new_lease_ = requestLease4(ctx);
         }
+
+    } catch (const NoSuchLease&) {
+        throw;
 
     } catch (const isc::Exception& e) {
         // Some other error, return an empty lease.
