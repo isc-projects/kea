@@ -136,6 +136,7 @@ add_project_dependencies(boost_dep, dl_dep, threads_dep, language: ['cpp'])
 boost_headers = [
     'boost/asio.hpp',
     'boost/asio/coroutine.hpp',
+    'boost/asio/io_context.hpp',
     'boost/asio/ip/address.hpp',
     'boost/asio/signal_set.hpp',
     'boost/circular_buffer.hpp',
@@ -268,10 +269,19 @@ conf_data.set('HAVE_PGSQL', POSTGRESQL_DEP.found())
 
 #### Compiler Checks
 
+result = cpp.run(
+    fs.read('compiler-checks/boost-has-threads.cc'),
+    dependencies: [boost_dep, threads_dep],
+    name: 'BOOST_HAS_THREADS',
+)
+if result.returncode() != 0
+    error('boost is not configured to use threads')
+endif
+
 if cpp.has_header('boost/regex.h', dependencies: [boost_dep], required: false)
     result = cpp.run(
         fs.read('compiler-checks/boost-regex.cc'),
-        dependencies: [boost_dep],
+        dependencies: [boost_dep, threads_dep],
         name: 'GET_SYSTEM_VS_BOOST_REGEX_HEADER',
     )
     if result.returncode() != 0
@@ -427,20 +437,13 @@ else
     add_project_link_arguments(link_arg, language: 'cpp')
 endif
 
-# Use dependencies as meson format -r does not traverse subdir with if_found.
-if fs.is_dir('premium')
-    premium = declare_dependency()
+premium = fs.is_dir('premium')
+if premium
     conf_data.set('PREMIUM', 'yes')
     conf_data.set('PREMIUM_EXTENDED_VERSION', f'"@PROJECT_VERSION@"')
 else
-    premium = disabler()
     conf_data.set('PREMIUM', 'no')
     conf_data.set('PREMIUM_EXTENDED_VERSION', '"no"')
-endif
-if fs.is_dir('contrib')
-    contrib = declare_dependency()
-else
-    contrib = disabler()
 endif
 
 #### Default Includes
@@ -464,11 +467,7 @@ report_conf_data.set('PACKAGE_VERSION_TYPE', 'development')
 report_conf_data.set('OS_TYPE', OS_TYPE)
 report_conf_data.set('PREFIX', PREFIX)
 report_conf_data.set('HOOKS_DIR', DEFAULT_HOOKS_PATH)
-if premium.found()
-    report_conf_data.set('PREMIUM', 'yes')
-else
-    report_conf_data.set('PREMIUM', 'no')
-endif
+report_conf_data.set('PREMIUM', premium ? 'yes' : 'no')
 report_conf_data.set('BUILD_OPTIONS', meson.build_options())
 report_conf_data.set('MESON_VERSION', meson.version())
 report_conf_data.set('CXX', ' '.join(cpp.cmd_array()))
@@ -497,7 +496,7 @@ report_conf_data.set('PYTHON_VERSION', PYTHON.version())
 report_conf_data.set('PKGPYTHONDIR', PKGPYTHONDIR)
 result = cpp.run(
     fs.read('compiler-checks/get-boost-version.cc'),
-    dependencies: [boost_dep],
+    dependencies: [boost_dep, threads_dep],
     name: 'Get Boost version',
 )
 if result.returncode() == 0
@@ -800,8 +799,9 @@ subdir('tools')
 subdir('src')
 subdir('fuzz')
 subdir('doc')
-subdir('premium', if_found: premium)
-subproject('contrib', required: false)
+if premium
+    subdir('premium')
+endif
 
 #### More Custom Targets
 
