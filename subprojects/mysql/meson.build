@@ -8,12 +8,12 @@ foreach mysql_config_file : ['mariadb_config', 'mysql_config']
     if not mysql_config.found()
         continue
     endif
-    cxxflags = run_command([mysql_config, '--cxxflags'], check: false)
+    cflags = run_command([mysql_config, '--cflags'], check: false)
     libs = run_command([mysql_config, '--libs'], check: false)
     version = run_command([mysql_config, '--version'], check: false)
 
-    if cxxflags.returncode() == 0 and libs.returncode() == 0 and version.returncode() == 0
-        mysql_compile_args = cxxflags.stdout().split()
+    if cflags.returncode() == 0 and libs.returncode() == 0 and version.returncode() == 0
+        mysql_compile_args = cflags.stdout().split()
         mysql_link_args = libs.stdout().split()
         mysql_version = version.stdout().strip()
         mysql = declare_dependency(
