@@ -301,7 +301,7 @@ endif
 result = cpp.run(
     fs.read('compiler-checks/have-generic-tls-method.cc'),
     name: 'HAVE_GENERIC_TLS_METHOD',
-    dependencies: [CRYPTO_DEP],
+    dependencies: [boost_dep, CRYPTO_DEP, threads_dep],
 )
 conf_data.set('HAVE_GENERIC_TLS_METHOD', result.returncode() == 0)
 
@@ -340,7 +340,7 @@ endif
 result = cpp.run(
     fs.read('compiler-checks/stream-truncated-error.cc'),
     name: 'HAVE_STREAM_TRUNCATED_ERROR',
-    dependencies: [CRYPTO_DEP],
+    dependencies: [boost_dep, CRYPTO_DEP, threads_dep],
 )
 conf_data.set('HAVE_STREAM_TRUNCATED_ERROR', result.returncode() == 0)
 

@@ -78,6 +78,6 @@ if all_deps_found
     )
 else
     # Can't use a disabler here?
-    netconf = declare_dependency('', required: false)
+    netconf = declare_dependency('')
 endif
 
