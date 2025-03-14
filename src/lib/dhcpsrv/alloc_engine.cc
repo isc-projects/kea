@@ -630,8 +630,8 @@ AllocEngine::allocateLeases6(ClientContext6& ctx) {
             return (leases);
         }
 
-    } catch (const NoSuchLease&) {
-        throw;
+    } catch (const NoSuchLease& e) {
+        isc_throw(NoSuchLease, "detected data race in AllocEngine::allocateLeases6: " << e.what());
 
     } catch (const isc::Exception& e) {
 
@@ -2186,8 +2186,8 @@ AllocEngine::renewLeases6(ClientContext6& ctx) {
 
         return (leases);
 
-    } catch (const NoSuchLease&) {
-        throw;
+    } catch (const NoSuchLease& e) {
+        isc_throw(NoSuchLease, "detected data race in AllocEngine::renewLeases6: " << e.what());
 
     } catch (const isc::Exception& e) {
 
@@ -3753,8 +3753,8 @@ AllocEngine::allocateLease4(ClientContext4& ctx) {
             ctx.new_lease_ = requestLease4(ctx);
         }
 
-    } catch (const NoSuchLease&) {
-        throw;
+    } catch (const NoSuchLease& e) {
+        isc_throw(NoSuchLease, "detected data race in AllocEngine::allocateLease4: " << e.what());
 
     } catch (const isc::Exception& e) {
         // Some other error, return an empty lease.

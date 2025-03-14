@@ -1,3 +1,11 @@
+2326.	[bug]		razvan
+	Fixed a bug which was causing the allocation engine to reject the
+	lease if a data race caused by a different server updating the
+	shared database entries was detected. The entire packet is now
+	dropped in this particular case. This applies to both kea-dhp4
+	and kea-dhcp6 servers.
+	(Gitlab #3648)
+
 2325.	[bug]		razvan
 	Fixed a bug which was causing address allocation counters to be
 	negative when client released leases and the server has lease

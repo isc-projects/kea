@@ -1862,8 +1862,9 @@ Memfile_LeaseMgr::updateLease4Internal(const Lease4Ptr& lease) {
         ((*lease_it)->valid_lft_ != lease->current_valid_lft_))) {
         // For test purpose only: check that the lease has not changed in
         // the database.
-        isc_throw(NoSuchLease, "failed to update the lease with address "
-                  << lease->addr_ << " - lease has changed in database");
+        isc_throw(NoSuchLease, "unable to update lease for address " <<
+                  lease->addr_.toText() << " either because the lease does not exist, "
+                      "it has been deleted or it has changed in the database.");
     }
 
     // Try to write a lease to disk first. If this fails, the lease will
@@ -1925,8 +1926,9 @@ Memfile_LeaseMgr::updateLease6Internal(const Lease6Ptr& lease) {
         ((*lease_it)->valid_lft_ != lease->current_valid_lft_))) {
         // For test purpose only: check that the lease has not changed in
         // the database.
-        isc_throw(NoSuchLease, "failed to update the lease with address "
-                  << lease->addr_ << " - lease has changed in database");
+        isc_throw(NoSuchLease, "unable to update lease for address " <<
+                  lease->addr_.toText() << " either because the lease does not exist, "
+                      "it has been deleted or it has changed in the database.");
     }
 
     // Try to write a lease to disk first. If this fails, the lease will
