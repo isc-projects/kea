@@ -371,7 +371,7 @@ mysql_upgrade() {
     printf "Verifying upgrade permissions for %s\n" "$db_user"
     mysql_can_create
 
-    upgrade_scripts=$(find "${upgrade_scripts_dir}" -type f -name 'upgrade_*.sh' | sort -t'_' -k4 -V)
+    upgrade_scripts=$(find "${upgrade_scripts_dir}" -type f -name 'upgrade_*.sh' | sort -V)
     for script in ${upgrade_scripts}
     do
         echo "Processing $script file..."
@@ -419,7 +419,7 @@ pgsql_upgrade() {
     # thru an env
     export PGPASSWORD=$db_password
 
-    upgrade_scripts=$(find "${upgrade_scripts_dir}" -type f -name 'upgrade_*.sh' | sort -t'_' -k4 -V)
+    upgrade_scripts=$(find "${upgrade_scripts_dir}" -type f -name 'upgrade_*.sh' | sort -V)
     for script in ${upgrade_scripts}
     do
         echo "Processing $script file..."

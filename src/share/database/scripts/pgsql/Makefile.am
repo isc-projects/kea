@@ -36,7 +36,7 @@ pgsql_SCRIPTS += upgrade_018_to_019.sh
 pgsql_SCRIPTS += upgrade_019_to_020.sh
 pgsql_SCRIPTS += upgrade_020_to_021.sh
 pgsql_SCRIPTS += upgrade_021_to_022.sh
-pgsql_SCRIPTS += upgrade_022_to_022.1.sh
+pgsql_SCRIPTS += upgrade_022.0_to_022.1.sh
 pgsql_SCRIPTS += upgrade_022.1_to_022.2.sh
 pgsql_SCRIPTS += wipe_data.sh
 
