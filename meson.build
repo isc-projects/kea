@@ -1,6 +1,26 @@
+# Copyright (C) 2025 Internet Systems Consortium, Inc. ("ISC")
+#
+# SPDX-License-Identifier: MPL-2.0
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0.  If a copy of the MPL was not distributed with this
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# See the COPYING file distributed with this work for additional
+# information regarding copyright ownership.
+
 # Require meson >= 0.64.0 for preserve_path arg in install_data.
 # Require meson >= 1.1.0 for meson.options file.
-project('kea', 'cpp', version: '2.7.7-git', meson_version: '>=1.1.0')
+
+project(
+    'kea',
+    'cpp',
+    version: '2.7.7-git',
+    meson_version: '>=1.1.0',
+    license: 'MPL-2.0',
+    license_files: ['COPYING'],
+    default_options: ['b_pch=false', 'b_pie=true'],
+)
 
 cpp = meson.get_compiler('cpp')
 PROJECT_VERSION = meson.project_version()
