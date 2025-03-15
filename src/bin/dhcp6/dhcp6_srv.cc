@@ -4497,40 +4497,28 @@ Dhcpv6Srv::processAddrRegInform(AllocEngine::ClientContext6& ctx) {
         addr = addr_reg_inf->getRelay6LinkAddress(relay_level - 1);
     }
 
-    Option6IAPtr ia;
     Option6IAAddrPtr iaaddr;
     Lease6Ptr old_lease;
+    const uint32_t no_iaid = 0; /* there's no IAID in the ADDR-REG-INFORM */
 
     // Check if the message is bad and shout be dropped.
     try {
         // Get IA_NA from the Address registration inform.
         // There must be one.
-        OptionCollection ias = addr_reg_inf->getOptions(D6O_IA_NA);
-        if (ias.size() != 1) {
-            isc_throw(RFCViolation, "Exactly 1 IA_NA option expected, but "
-                      << ias.size() << " received");
+        OptionCollection addrs = addr_reg_inf->getOptions(D6O_IAADDR);
+        if (addrs.size() != 1) {
+            isc_throw(RFCViolation, "Exactly 1 IAADDRESS option expected, but "
+                      << addrs.size() << " received");
         }
-        ia = boost::dynamic_pointer_cast<Option6IA>(ias.begin()->second);
-        if (!ia) {
-            isc_throw(Unexpected, "can't convert the IA_NA option");
+        iaaddr = boost::dynamic_pointer_cast<Option6IAAddr>(addrs.begin()->second);
+        if (!iaaddr) {
+            isc_throw(Unexpected, "can't convert the IAAddress option");
         }
 
         // Set per-IA context values.
         ctx.createIAContext();
         ctx.currentIA().type_ = Lease::TYPE_NA;
-        ctx.currentIA().iaid_ = ia->getIAID();
-        ctx.currentIA().ia_rsp_ = ia;
-
-        // Get IAADDR from the IA_NA. There must be the only option.
-        OptionCollection iaaddrs = ia->getOptions();
-        if (iaaddrs.size() != 1) {
-            isc_throw(RFCViolation, "Exactly 1 IA_NA sub-option expected, but "
-                      << iaaddrs.size() << " received");
-        }
-        iaaddr = boost::dynamic_pointer_cast<Option6IAAddr>(iaaddrs.begin()->second);
-        if (!iaaddr) {
-            isc_throw(RFCViolation, "Can't get the IAADDR sub-option");
-        }
+        ctx.currentIA().iaid_ = no_iaid;
 
         // Client and IADDR addresses must match.
         if (addr != iaaddr->getAddress()) {
@@ -4580,13 +4568,13 @@ Dhcpv6Srv::processAddrRegInform(AllocEngine::ClientContext6& ctx) {
     // Build response.
     Pkt6Ptr addr_reg_rep(new Pkt6(DHCPV6_ADDR_REG_REPLY,
                                   addr_reg_inf->getTransid()));
-    addr_reg_rep->addOption(ia);
+    addr_reg_rep->addOption(iaaddr);
 
     // Process FQDN.
     processClientFqdn(addr_reg_inf, addr_reg_rep, ctx);
 
     Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, ctx.duid_,
-                               ia->getIAID(), iaaddr->getPreferred(),
+                               no_iaid, iaaddr->getPreferred(),
                                iaaddr->getValid(), subnet->getID(),
                                ctx.hwaddr_));
     lease->state_ = Lease6::STATE_REGISTERED;
