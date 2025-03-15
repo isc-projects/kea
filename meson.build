@@ -18,7 +18,9 @@ TOP_SOURCE_DIR = meson.current_source_dir()
 DATADIR = get_option('datadir')
 LIBDIR = get_option('libdir')
 LOCALSTATEDIR = get_option('localstatedir')
+MANDIR = get_option('mandir')
 PREFIX = get_option('prefix')
+SBINDIR = get_option('sbindir')
 SYSCONFDIR = get_option('sysconfdir')
 
 DHCP_DATA_DIR = f'@LOCALSTATEDIR@/run/kea'

@@ -121,8 +121,7 @@ doc_conf.set('PREFIX', PREFIX)
 docdir = f'@DATADIR@/doc/kea'
 doc_conf.set('docdir', docdir)
 doc_conf.set('INSTALL', INSTALL.full_path())
-mandir = get_option('mandir')
-mandir8 = f'@mandir@/man8/'
+mandir8 = f'@MANDIR@/man8/'
 doc_conf.set('mandir8', mandir8)
 
 make_doc = configure_file(

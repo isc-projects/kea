@@ -3,7 +3,7 @@ keactrl_conf_data.set('prefix', PREFIX)
 keactrl_conf_data.set('sysconfdir', '${prefix}/' + SYSCONFDIR)
 keactrl_conf_data.set('PACKAGE', 'kea')
 keactrl_conf_data.set('exec_prefix', '${prefix}')
-keactrl_conf_data.set('sbindir', '${prefix}/' + get_option('sbindir'))
+keactrl_conf_data.set('sbindir', '${prefix}/' + SBINDIR)
 if NETCONF_DEP.found()
     keactrl_conf_data.set('HAVE_NETCONF', 'yes')
 else
@@ -24,7 +24,7 @@ configure_file(
     input: 'keactrl.in',
     output: 'keactrl',
     configuration: keactrl_conf_data,
-    install_dir: get_option('sbindir'),
+    install_dir: SBINDIR,
 )
 path_replacer = f'@TOP_BUILD_DIR@/tools/path_replacer.sh'
 configure_file(

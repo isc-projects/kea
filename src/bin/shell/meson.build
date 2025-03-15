@@ -9,7 +9,7 @@ configure_file(
     output: 'kea-shell',
     configuration: kea_shell_conf_data,
     install: true,
-    install_dir: get_option('sbindir'),
+    install_dir: SBINDIR,
 )
 configure_file(
     input: 'kea_conn.py',
