@@ -106,19 +106,8 @@
 /* Define to the full name and version of this package. */
 #mesondefine PACKAGE_STRING
 
-/* Define to the one symbol short name of this package. */
-#mesondefine PACKAGE_TARNAME
-
-/* Define to the home page for this package. */
-#mesondefine PACKAGE_URL
-
 /* Define to the version of this package. */
 #mesondefine PACKAGE_VERSION
-
-/* Kea-premium hooks found */
-#mesondefine PREMIUM
-
-#mesondefine TOP_BUILDDIR
 
 /* Was Kea statically linked? */
 #mesondefine USE_STATIC_LINK
