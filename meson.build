@@ -62,11 +62,47 @@ postgresql_opt = get_option('postgresql')
 FUZZ_OPT = get_option('fuzz')
 TESTS_OPT = get_option('tests')
 
+SRCID_OPT = get_option('srcid')
+
+#### KEA_SRCID value
+
+CD_AND_RUN = find_program(f'@TOP_SOURCE_DIR@/cd-and-run.sh')
+
+# When set 'srcid' option should be the KEA_PKG_VERSION_IN_CONFIGURE and
+# KEA_PKG_TYPE_IN_CONFIGURE name pair with
+# for KEA_PKG_VERSION_IN_CONFIGURE date and timestamp of the package
+#                                  e.g. "isc20230921141113"
+# KEA_PKG_TYPE_IN_CONFIGURE type of the package "rpm", "deb" or "apk"
+if SRCID_OPT != ''
+    KEA_SRCID = SRCID_OPT
+else
+    KEA_SRCID = 'tarball'
+    git = disabler()
+    if fs.is_dir('.git')
+        git = find_program('git', required: false)
+    endif
+    if git.found()
+        result = run_command(
+            CD_AND_RUN,
+            TOP_SOURCE_DIR,
+            git.full_path(),
+            'rev-parse',
+            'HEAD',
+            check: false,
+        )
+        if result.returncode() == 0
+            KEA_SRCID = 'git ' + result.stdout().strip()
+        endif
+    endif
+endif
+
+message(f'Set KEA_SRCID to "@KEA_SRCID@"')
+
 #### Configuration Data
 
 conf_data = configuration_data(
     {
-        'EXTENDED_VERSION': '"tarball"',
+        'EXTENDED_VERSION': f'"@KEA_SRCID@"',
         # 'HAVE_AFL': false,
         # 'HAVE_BOTAN_ASIO_STREAM_H': false,
         # 'HAVE_CREATE_UNIFIED_DIFF': false,
@@ -140,7 +176,6 @@ PYTHON = find_program('python3', 'python', required: true)
 SPHINX = find_program('sphinx-build', 'sphinx-build-3', required: false)
 XMLLINT = find_program('xmllint', required: false)
 
-CD_AND_RUN = find_program(f'@TOP_SOURCE_DIR@/cd-and-run.sh')
 KEA_MSG_COMPILER = disabler()
 
 #### Dependencies
@@ -458,7 +493,7 @@ endif
 premium = fs.is_dir('premium')
 if premium
     conf_data.set('PREMIUM', 'yes')
-    conf_data.set('PREMIUM_EXTENDED_VERSION', f'"@PROJECT_VERSION@"')
+    conf_data.set('PREMIUM_EXTENDED_VERSION', f'"yes (@KEA_SRCID@)"')
 else
     conf_data.set('PREMIUM', 'no')
     conf_data.set('PREMIUM_EXTENDED_VERSION', '"no"')
@@ -480,7 +515,7 @@ report_conf_data.merge_from(conf_data)
 report_conf_data.set('TOP_BUILD_DIR', TOP_BUILD_DIR)
 report_conf_data.set('PACKAGE_NAME', 'kea')
 report_conf_data.set('PACKAGE_VERSION', PROJECT_VERSION)
-report_conf_data.set('EXTENDED_VERSION', PROJECT_VERSION + ' (tarball)')
+report_conf_data.set('EXTENDED_VERSION', f'@PROJECT_VERSION@ (@KEA_SRCID@)')
 report_conf_data.set('PACKAGE_VERSION_TYPE', 'development')
 report_conf_data.set('OS_TYPE', OS_TYPE)
 report_conf_data.set('PREFIX', PREFIX)

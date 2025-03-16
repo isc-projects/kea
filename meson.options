@@ -32,3 +32,6 @@ option(
     value: 'disabled',
     description: 'Support for tests.',
 )
+
+# Set the Kea srcid (default is 'git <HEAD>' or 'tarball').
+option('srcid', type: 'string', value: '', description: 'Set the Kea srcid.')
