@@ -19,7 +19,7 @@ project(
     meson_version: '>=1.1.0',
     license: 'MPL-2.0',
     license_files: ['COPYING'],
-    default_options: ['b_pch=false', 'b_pie=true'],
+    default_options: ['b_asneeded=true', 'b_pch=false', 'b_pie=true'],
 )
 
 cpp = meson.get_compiler('cpp')
@@ -814,9 +814,13 @@ configure_file(
 
 #### Build Starts Here
 
+# LIBS_BUILT_SO_FAR makes sense because the linker is called with
+# the --as-needed flag so ignores (i.e. does not link) unused libraries.
 LIBS_BUILT_SO_FAR = []
+
 TARGETS_GEN_MESSAGES = []
 TARGETS_GEN_PARSER = []
+
 subdir('tools')
 subdir('src')
 subdir('fuzz')
