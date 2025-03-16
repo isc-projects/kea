@@ -1,5 +1,4 @@
-kea_dhcpsrv_lib = shared_library(
-    'kea-dhcpsrv',
+sources = [
     'allocation_state.cc',
     'allocator.cc',
     'alloc_engine.cc',
@@ -43,8 +42,6 @@ kea_dhcpsrv_lib = shared_library(
     'dhcpsrv_messages.cc',
     'flq_allocation_state.cc',
     'flq_allocator.cc',
-    'fuzz_log.cc',
-    'fuzz_messages.cc',
     'host.cc',
     'hosts_log.cc',
     'hosts_messages.cc',
@@ -63,7 +60,6 @@ kea_dhcpsrv_lib = shared_library(
     'ncr_generator.cc',
     'network.cc',
     'network_state.cc',
-    'packet_fuzzer.cc',
     'parsers/base_network_parser.cc',
     'parsers/client_class_def_parser.cc',
     'parsers/dhcp_parsers.cc',
@@ -88,6 +84,13 @@ kea_dhcpsrv_lib = shared_library(
     'subnet.cc',
     'timer_mgr.cc',
     'tracking_lease_mgr.cc',
+]
+if FUZZ_OPT.enabled()
+    sources += ['fuzz_log.cc', 'fuzz_messages.cc', 'packet_fuzzer.cc']
+endif
+kea_dhcpsrv_lib = shared_library(
+    'kea-dhcpsrv',
+    sources,
     cpp_args: [
         f'-DDHCP_DATA_DIR="@DHCP_DATA_DIR@"',
         f'-DKEA_LFC_EXECUTABLE="@KEA_LFC@"',
@@ -154,8 +157,6 @@ kea_dhcpsrv_headers = [
     'dhcpsrv_messages.h',
     'flq_allocation_state.h',
     'flq_allocator.h',
-    'fuzz_log.h',
-    'fuzz_messages.h',
     'host.h',
     'host_container.h',
     'host_data_source_factory.h',
@@ -179,7 +180,6 @@ kea_dhcpsrv_headers = [
     'ncr_generator.h',
     'network.h',
     'network_state.h',
-    'packet_fuzzer.h',
     'parsers/base_network_parser.h',
     'parsers/client_class_def_parser.h',
     'parsers/dhcp_parsers.h',
@@ -211,6 +211,9 @@ kea_dhcpsrv_headers = [
     'utils.h',
     'writable_host_data_source.h',
 ]
+if FUZZ_OPT.enabled()
+    kea_dhcpsrv_headers += ['fuzz_log.h', 'fuzz_messages.h', 'packet_fuzzer.h']
+endif
 install_headers(kea_dhcpsrv_headers, preserve_path: true, subdir: 'kea/dhcpsrv')
 
 if KEA_MSG_COMPILER.found()

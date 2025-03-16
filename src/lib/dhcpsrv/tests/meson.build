@@ -47,8 +47,7 @@ co3 = shared_library(
     name_suffix: 'so',
 )
 
-kea_dhcpsrv_tests = executable(
-    'kea-dhcpsrv-tests',
+sources = [
     'alloc_engine4_unittest.cc',
     'alloc_engine6_unittest.cc',
     'alloc_engine_expiration_unittest.cc',
@@ -122,6 +121,13 @@ kea_dhcpsrv_tests = executable(
     'test_get_callout_handle.cc',
     'timer_mgr_unittest.cc',
     'tracking_lease_mgr_unittest.cc',
+]
+if FUZZ_OPT.enabled()
+    sources += ['packet_fuzzer_unittest.cc']
+endif
+kea_dhcpsrv_tests = executable(
+    'kea-dhcpsrv-tests',
+    sources,
     cpp_args: [
         f'-DTEST_DATA_BUILDDIR="@current_build_dir@"',
         f'-DDHCP_DATA_DIR="@current_build_dir@"',
