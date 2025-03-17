@@ -1336,6 +1336,7 @@ LibDHCP::initOptionDefs() {
     static_cast<void>(LibDHCP::D6O_NTP_SERVER_DEF());
     static_cast<void>(LibDHCP::D6O_BOOTFILE_URL_DEF());
     static_cast<void>(LibDHCP::D6O_RSOO_DEF());
+    static_cast<void>(LibDHCP::D6O_IAADDR_DEF());
 
     return (true);
 }
@@ -1658,6 +1659,24 @@ LibDHCP::D6O_RSOO_DEF() {
         isc_throw_assert(def->getType() == OPT_EMPTY_TYPE);
         isc_throw_assert(!def->getArrayType());
         isc_throw_assert(def->getEncapsulatedSpace() == "rsoo-opts");
+        isc_throw_assert(def->getOptionSpaceName() == DHCP6_OPTION_SPACE);
+        check_once = false;
+    }
+    return (*def);
+}
+
+const OptionDefinition&
+LibDHCP::D6O_IAADDR_DEF() {
+    static OptionDefinitionPtr def =
+        LibDHCP::getOptionDef(DHCP6_OPTION_SPACE, D6O_IAADDR);
+    static bool check_once(true);
+    if (check_once) {
+        isc_throw_assert(def);
+        isc_throw_assert(def->getName() == "iaaddr");
+        isc_throw_assert(def->getCode() == D6O_IAADDR);
+        isc_throw_assert(def->getType() == OPT_RECORD_TYPE);
+        isc_throw_assert(!def->getArrayType());
+        isc_throw_assert(def->getEncapsulatedSpace().empty());
         isc_throw_assert(def->getOptionSpaceName() == DHCP6_OPTION_SPACE);
         check_once = false;
     }

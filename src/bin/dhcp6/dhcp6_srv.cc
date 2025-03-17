@@ -4530,13 +4530,6 @@ Dhcpv6Srv::processAddrRegInform(AllocEngine::ClientContext6& ctx) {
             isc_throw(Unexpected, "can't convert the IAADDR option");
         }
 
-        // Set per-IA context values.
-        // Note the address is considered as not-temporary address.
-        
-        ctx.createIAContext();
-        ctx.currentIA().type_ = Lease::TYPE_NA;
-        ctx.currentIA().iaid_ = no_iaid;
-
         // Client and IADDR addresses must match.
         if (addr != iaaddr->getAddress()) {
             isc_throw(RFCViolation, "Address mismatch: client at " << addr
@@ -4586,6 +4579,15 @@ Dhcpv6Srv::processAddrRegInform(AllocEngine::ClientContext6& ctx) {
     Pkt6Ptr addr_reg_rep(new Pkt6(DHCPV6_ADDR_REG_REPLY,
                                   addr_reg_inf->getTransid()));
     addr_reg_rep->addOption(iaaddr);
+
+    // Set per-IA context values for DDNS.
+    // Note the address is considered as not-temporary address.
+    ctx.createIAContext();
+    ctx.currentIA().type_ = Lease::TYPE_NA;
+    ctx.currentIA().iaid_ = no_iaid;
+    Option6IAPtr ia(new Option6IA(D6O_IA_NA, no_iaid));
+    ia->addOption(iaaddr);
+    ctx.currentIA().ia_rsp_ = ia;
 
     // Process FQDN.
     processClientFqdn(addr_reg_inf, addr_reg_rep, ctx);

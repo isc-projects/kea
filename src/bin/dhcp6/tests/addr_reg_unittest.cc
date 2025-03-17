@@ -7,6 +7,7 @@
 #include <config.h>
 #include <asiolink/io_address.h>
 #include <cc/data.h>
+#include <dhcp/option_int.h>
 #include <dhcp/option6_addrlst.h>
 #include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp6/json_config_parser.h>
@@ -370,7 +371,7 @@ TEST_F(AddrRegTest, noSubnet) {
 }
 
 // Test that an IA_NA option is fordidden.
-TEST_F(AddrRegTest, iA_NA) {
+TEST_F(AddrRegTest, unexpectedIA_NA) {
     IfaceMgrTestConfig test_config(true);
 
     ASSERT_NO_THROW(configure(config_));
@@ -403,7 +404,7 @@ TEST_F(AddrRegTest, iA_NA) {
 }
 
 // Test that an IA_TA option is fordidden.
-TEST_F(AddrRegTest, iA_TA) {
+TEST_F(AddrRegTest, unexpectedIA_TA) {
     IfaceMgrTestConfig test_config(true);
 
     ASSERT_NO_THROW(configure(config_));
@@ -414,7 +415,7 @@ TEST_F(AddrRegTest, iA_TA) {
     addr_reg_inf->setIndex(ETH0_INDEX);
     OptionPtr clientid = generateClientId();
     addr_reg_inf->addOption(clientid);
-    Option6IAPtr ia(new Option6IA(D6O_IA_TA, 234));
+    OptionPtr ia(new OptionInt<uint32_t>(Option::V6, D6O_IA_TA, 234));
     addr_reg_inf->addOption(ia);
 
     // Pass it to the server.
@@ -437,7 +438,7 @@ TEST_F(AddrRegTest, iA_TA) {
 }
 
 // Test that an IA_PD option is fordidden.
-TEST_F(AddrRegTest, iA_PD) {
+TEST_F(AddrRegTest, unexpectedIA_PD) {
     IfaceMgrTestConfig test_config(true);
 
     ASSERT_NO_THROW(configure(config_));
@@ -497,7 +498,7 @@ TEST_F(AddrRegTest, noIAADDR) {
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
     expected += "error on ADDR-REG-INFORM from client fe80::abcd: ";
-    expected += "Exactly 1 IAADDRE option expected, but 0 received";
+    expected += "Exactly 1 IAADDR option expected, but 0 received";
     EXPECT_EQ(1, countFile(expected));
 }
 
@@ -532,6 +533,44 @@ TEST_F(AddrRegTest, twoIAADDR) {
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
     expected += "error on ADDR-REG-INFORM from client fe80::abcd: ";
     expected += "Exactly 1 IAADDR option expected, but 2 received";
+    EXPECT_EQ(1, countFile(expected));
+}
+
+// Test that a well formed IAADDR option is required.
+TEST_F(AddrRegTest, badIAADDR) {
+    IfaceMgrTestConfig test_config(true);
+
+    ASSERT_NO_THROW(configure(config_));
+
+    Pkt6Ptr addr_reg_inf = Pkt6Ptr(new Pkt6(DHCPV6_ADDR_REG_INFORM, 1234));
+    addr_reg_inf->setRemoteAddr(IOAddress("fe80::abcd"));
+    addr_reg_inf->setIface("eth0");
+    addr_reg_inf->setIndex(ETH0_INDEX);
+    OptionPtr clientid = generateClientId();
+    addr_reg_inf->addOption(clientid);
+    OptionCustomPtr iaddr(new OptionCustom(LibDHCP::D6O_IAADDR_DEF(),
+                                           Option::V6));
+    iaddr->writeAddress(IOAddress("2001:db8:1::1"), 0);
+    iaddr->writeInteger<uint32_t>(3000, 1);
+    iaddr->writeInteger<uint32_t>(4000, 2);
+    addr_reg_inf->addOption(iaddr);
+
+    // Pass it to the server.
+    AllocEngine::ClientContext6 ctx;
+    bool drop = !srv_->earlyGHRLookup(addr_reg_inf, ctx);
+    ASSERT_FALSE(drop);
+    ctx.subnet_ = srv_->selectSubnet(addr_reg_inf, drop);
+    ASSERT_FALSE(drop);
+    srv_->initContext(ctx, drop);
+    ASSERT_FALSE(drop);
+    ASSERT_TRUE(ctx.subnet_);
+
+    // Two IAADDR options: no response.
+    EXPECT_FALSE(srv_->processAddrRegInform(ctx));
+
+    string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
+    expected += "error on ADDR-REG-INFORM from client fe80::abcd: ";
+    expected += "can't convert the IAADDR option";
     EXPECT_EQ(1, countFile(expected));
 }
 

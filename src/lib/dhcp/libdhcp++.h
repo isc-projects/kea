@@ -464,6 +464,9 @@ public:
     /// @brief Get definition of D6O_RSOO option.
     static const OptionDefinition& D6O_RSOO_DEF();
 
+    /// @brief Get definition of D6O_IAADDR option.
+    static const OptionDefinition& D6O_IAADDR_DEF();
+
 private:
 
     /// Initialize DHCP option definitions.
