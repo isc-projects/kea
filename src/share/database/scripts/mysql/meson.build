@@ -1,4 +1,4 @@
-install_dir = f'@DATADIR@/kea/scripts/mysql'
+install_dir = DATADIR / 'kea/scripts/mysql'
 configure_file(
     input: 'dhcpdb_create.mysql',
     output: 'dhcpdb_create.mysql',
@@ -67,7 +67,12 @@ upgrade_scripts = [
     'upgrade_027_to_028.sh',
     'upgrade_028_to_029.sh',
 ]
-list = run_command('../utils/grabber.sh', check: true)
+list = run_command(
+    GRABBER,
+    TOP_SOURCE_DIR / 'src/share/database/scripts/mysql',
+    'upgrade_*_to_*.sh.in',
+    check: true,
+)
 grabbed_upgrade_scripts = list.stdout().strip().split('\n')
 assert(
     upgrade_scripts.length() == grabbed_upgrade_scripts.length(),

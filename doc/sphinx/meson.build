@@ -26,22 +26,16 @@ rst_arm_sources = [
     'kea-messages.rst',
 ]
 
-list = run_command('grabber.sh', current_source_dir, 'arm', 'rst', check: true)
+list = run_command(GRABBER, current_source_dir / 'arm', '*.rst', check: true)
 rst_arm_sources += list.stdout().strip().split('\n')
 
-list = run_command(
-    'grabber.sh',
-    current_source_dir,
-    'grammar',
-    'rst',
-    check: true,
-)
+list = run_command(GRABBER, current_source_dir / 'grammar', '*.rst', check: true)
 rst_arm_sources = list.stdout().strip().split('\n')
 
 main_sources = rst_arm_sources + ['conf.py'] + static_sources
 
 # mans
-list = run_command('grabber.sh', current_source_dir, 'man', 'rst', check: true)
+list = run_command(GRABBER, current_source_dir / 'man', '*.rst', check: true)
 rst_man_sources = list.stdout().strip().split('\n')
 
 man8s = []
@@ -53,22 +47,22 @@ endforeach
 man_sources = rst_man_sources + ['conf.py']
 
 api_dir = f'@TOP_SOURCE_DIR@/src/share/api'
-list = run_command('grabber.sh', '/', api_dir, 'json', check: true)
+list = run_command(GRABBER, api_dir, '*.json', check: true)
 api_files = list.stdout().strip().split('\n')
 
-list = run_command('grabber.sh', '/', TOP_SOURCE_DIR, 'mes', check: true)
+list = run_command(GRABBER, TOP_SOURCE_DIR, '*.mes', check: true)
 mes_files = list.stdout().strip().split('\n')
 
-list = run_command('grabber.sh', current_source_dir, 'uml', 'uml', check: true)
+list = run_command(GRABBER, current_source_dir / 'uml', '*.uml', check: true)
 umls = list.stdout().strip().split('\n')
 
-list = run_command('grabber.sh', current_source_dir, 'uml', 'png', check: true)
+list = run_command(GRABBER, current_source_dir / 'uml', '*.png', check: true)
 pngs = list.stdout().strip().split('\n')
 
-list = run_command('grabber.sh', current_source_dir, 'uml', 'svg', check: true)
+list = run_command(GRABBER, current_source_dir / 'uml', '*.svg', check: true)
 svgs = list.stdout().strip().split('\n')
 
-list = run_command('grabber.sh', current_source_dir, 'uml', 'atxt', check: true)
+list = run_command(GRABBER, current_source_dir / 'uml', '*.atxt', check: true)
 txts = list.stdout().strip().split('\n')
 
 doc_conf = configuration_data()

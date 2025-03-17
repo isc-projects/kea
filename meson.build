@@ -62,68 +62,42 @@ postgresql_opt = get_option('postgresql')
 FUZZ_OPT = get_option('fuzz')
 TESTS_OPT = get_option('tests')
 
-SRCID_OPT = get_option('srcid')
+#### Programs
 
-#### KEA_SRCID value
+# External programs used only in this file.
+cppcheck = find_program('cppcheck', required: false)
+cppcheck_htmlreport = find_program('cppcheck-htmlreport', required: false)
+git = find_program('git', required: false)
+valgrind = find_program('valgrind', required: false)
 
-CD_AND_RUN = find_program(f'@TOP_SOURCE_DIR@/cd-and-run.sh')
+AWK = find_program('gawk', 'awk', required: false)
+BISON = find_program('bison', version: '>=3.3.0', required: false)
+DOXYGEN = find_program('doxygen', required: false)
+FLEX = find_program('flex', version: '>=2.6.4', required: false)
+INSTALL = find_program('install', required: true)
+PDFLATEX = find_program('pdflatex', required: false)
+PIP_COMPILE = find_program('pip-compile', required: false)
+PLANTUML = find_program('plantuml', required: false)
+PYTHON = find_program('python3', 'python', required: true)
+SPHINX = find_program('sphinx-build', 'sphinx-build-3', required: false)
+XMLLINT = find_program('xmllint', required: false)
 
-# When set 'srcid' option should be the KEA_PKG_VERSION_IN_CONFIGURE and
-# KEA_PKG_TYPE_IN_CONFIGURE name pair with
-# for KEA_PKG_VERSION_IN_CONFIGURE date and timestamp of the package
-#                                  e.g. "isc20230921141113"
-# KEA_PKG_TYPE_IN_CONFIGURE type of the package "rpm", "deb" or "apk"
-if SRCID_OPT != ''
-    KEA_SRCID = SRCID_OPT
-else
-    KEA_SRCID = 'tarball'
-    git = disabler()
-    if fs.is_dir('.git')
-        git = find_program('git', required: false)
-    endif
-    if git.found()
-        result = run_command(
-            CD_AND_RUN,
-            TOP_SOURCE_DIR,
-            git.full_path(),
-            'rev-parse',
-            'HEAD',
-            check: false,
-        )
-        if result.returncode() == 0
-            KEA_SRCID = 'git ' + result.stdout().strip()
-        endif
-    endif
-endif
-
-message(f'Set KEA_SRCID to "@KEA_SRCID@"')
+CD_AND_RUN = find_program(f'@TOP_SOURCE_DIR@/scripts/cd-and-run.sh')
+ENV = find_program(f'@TOP_SOURCE_DIR@/scripts/env.sh')
+GRABBER = find_program(f'@TOP_SOURCE_DIR@/scripts/grabber.sh')
+KEA_MSG_COMPILER = disabler()
 
 #### Configuration Data
 
+# 'HAVE_BOTAN_ASIO_STREAM_H': false,
+# 'HAVE_PGSQL_SSL': false,
+# 'USE_STATIC_LINK': false,
 conf_data = configuration_data(
     {
-        'EXTENDED_VERSION': f'"@KEA_SRCID@"',
-        # 'HAVE_AFL': false,
-        # 'HAVE_BOTAN_ASIO_STREAM_H': false,
-        # 'HAVE_CREATE_UNIFIED_DIFF': false,
-        # 'HAVE_GSS_STR_TO_OID': false,
-        # 'HAVE_MYSQL_GET_OPTION': false,
-        # 'HAVE_OPTRESET': false,
-        # 'HAVE_PGSQL_SSL': false,
-        # 'HAVE_PGSQL_TCP_USER_TIMEOUT': false,
-        # 'HAVE_SYS_FILIO_H': false,
-        # 'HAVE_VALGRIND_HEADERS': false,
-        # 'LIBC_MUSL': false,
-        # 'PACKAGE': 'kea',
-        # 'PACKAGE_BUGREPORT': 'kea-dev@lists.isc.org',
+        'PACKAGE': 'kea',
         'PACKAGE_NAME': 'kea',
-        # 'PACKAGE_STRING': f'kea "@PROJECT_VERSION@"',
         'PACKAGE_VERSION': PROJECT_VERSION,
-        'PACKAGE_VERSION_TYPE': '"development"',
-        # 'PREMIUM_EXTENDED_VERSION': '"no"',
-        # 'USE_STATIC_LINK': false,
         'VERSION': f'"@PROJECT_VERSION@"',
-        # 'WITH_HEIMDAL': false,
     },
 )
 
@@ -156,27 +130,6 @@ else
     error(f'Unsupported system "@SYSTEM@".')
 endif
 message(f'Detected system "@SYSTEM@".')
-
-#### Programs
-
-# External programs used only in this file.
-cppcheck = find_program('cppcheck', required: false)
-cppcheck_htmlreport = find_program('cppcheck-htmlreport', required: false)
-valgrind = find_program('valgrind', required: false)
-
-AWK = find_program('gawk', 'awk', required: false)
-BISON = find_program('bison', version: '>=3.3.0', required: false)
-DOXYGEN = find_program('doxygen', required: false)
-FLEX = find_program('flex', version: '>=2.6.4', required: false)
-INSTALL = find_program('install', required: true)
-PDFLATEX = find_program('pdflatex', required: false)
-PIP_COMPILE = find_program('pip-compile', required: false)
-PLANTUML = find_program('plantuml', required: false)
-PYTHON = find_program('python3', 'python', required: true)
-SPHINX = find_program('sphinx-build', 'sphinx-build-3', required: false)
-XMLLINT = find_program('xmllint', required: false)
-
-KEA_MSG_COMPILER = disabler()
 
 #### Dependencies
 
@@ -444,6 +397,7 @@ endif
 #### Other checks.
 
 if POSTGRESQL_DEP.found()
+    # TODO: change to proper check, not version check.
     version = POSTGRESQL_DEP.version()
     conf_data.set(
         'HAVE_PGSQL_TCP_USER_TIMEOUT',
@@ -471,6 +425,46 @@ if KRB5_DEP.found() and KRB5_DEP.get_variable('vendor') == 'Heimdal'
     conf_data.set('WITH_HEIMDAL', true)
 endif
 
+# KEA_PKG_VERSION_IN_CONFIGURE: date and timestamp of the package e.g. "isc20230921141113"
+# KEA_PKG_TYPE_IN_CONFIGURE: type of the package "rpm", "deb" or "apk"
+kea_pkg_type_in_configure = run_command(
+    ENV,
+    'KEA_PKG_TYPE_IN_CONFIGURE',
+    check: true,
+).stdout().strip()
+kea_pkg_version_in_configure = run_command(
+    ENV,
+    'KEA_PKG_VERSION_IN_CONFIGURE',
+    check: true,
+).stdout().strip()
+if kea_pkg_type_in_configure != '' and kea_pkg_version_in_configure != ''
+    extended_version = f'@kea_pkg_version_in_configure@ @kea_pkg_type_in_configure@'
+else
+    if fs.is_dir('.git') and git.found()
+        result = run_command(
+            CD_AND_RUN,
+            TOP_SOURCE_DIR,
+            git,
+            'rev-parse',
+            'HEAD',
+            check: false,
+        )
+        if result.returncode() == 0
+            extended_version = 'git ' + result.stdout().strip()
+        endif
+    else
+        extended_version = 'tarball'
+    endif
+endif
+conf_data.set('EXTENDED_VERSION', f'"@PROJECT_VERSION@ (@extended_version@)"')
+
+if PROJECT_VERSION.split('.')[1].to_int() % 2 == 0
+    package_version_type = 'stable'
+else
+    package_version_type = 'stable'
+endif
+conf_data.set('PACKAGE_VERSION_TYPE', f'"@package_version_type@"')
+
 #### System-specific Compiler Flags
 
 compile_args = []
@@ -493,7 +487,7 @@ endif
 premium = fs.is_dir('premium')
 if premium
     conf_data.set('PREMIUM', 'yes')
-    conf_data.set('PREMIUM_EXTENDED_VERSION', f'"yes (@KEA_SRCID@)"')
+    conf_data.set('PREMIUM_EXTENDED_VERSION', f'"yes (@extended_version@)"')
 else
     conf_data.set('PREMIUM', 'no')
     conf_data.set('PREMIUM_EXTENDED_VERSION', '"no"')
@@ -515,8 +509,8 @@ report_conf_data.merge_from(conf_data)
 report_conf_data.set('TOP_BUILD_DIR', TOP_BUILD_DIR)
 report_conf_data.set('PACKAGE_NAME', 'kea')
 report_conf_data.set('PACKAGE_VERSION', PROJECT_VERSION)
-report_conf_data.set('EXTENDED_VERSION', f'@PROJECT_VERSION@ (@KEA_SRCID@)')
-report_conf_data.set('PACKAGE_VERSION_TYPE', 'development')
+report_conf_data.set('PACKAGE_VERSION_TYPE', package_version_type)
+report_conf_data.set('EXTENDED_VERSION', f'@PROJECT_VERSION@ (@extended_version@)')
 report_conf_data.set('OS_TYPE', OS_TYPE)
 report_conf_data.set('PREFIX', PREFIX)
 report_conf_data.set('HOOKS_DIR', DEFAULT_HOOKS_PATH)

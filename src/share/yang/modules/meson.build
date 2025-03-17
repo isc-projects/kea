@@ -22,7 +22,12 @@ yangmodules_list = [
     'kea-types@2019-08-12.yang',
     'keatest-module@2022-11-30.yang',
 ]
-list = run_command('utils/grabber.sh', check: true)
+list = run_command(
+    GRABBER,
+    TOP_SOURCE_DIR / 'src/share/yang/modules',
+    '*.yang',
+    check: true,
+)
 grabbed_modules = list.stdout().strip().split('\n')
 foreach file : grabbed_modules
     assert(
