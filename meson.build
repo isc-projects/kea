@@ -11,6 +11,8 @@
 
 # Require meson >= 0.64.0 for preserve_path arg in install_data.
 # Require meson >= 1.1.0 for meson.options file.
+# bug_report is not yet supported by meson,its value will be
+# 'kea-dev@lists.isc.org'
 
 project(
     'kea',
