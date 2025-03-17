@@ -84,7 +84,7 @@ XMLLINT = find_program('xmllint', required: false)
 
 CD_AND_RUN = find_program(f'@TOP_SOURCE_DIR@/scripts/cd-and-run.sh')
 ENV = find_program(f'@TOP_SOURCE_DIR@/scripts/env.sh')
-GRABBER = find_program(f'@TOP_SOURCE_DIR@/scripts/grabber.sh')
+GRABBER = find_program(f'@TOP_SOURCE_DIR@/scripts/grabber.py')
 KEA_MSG_COMPILER = disabler()
 
 #### Configuration Data
