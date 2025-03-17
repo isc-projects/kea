@@ -86,6 +86,23 @@ public:
         return (generateIAAddr(IOAddress(addr), preferred_lft, valid_lft));
     }
 
+    /// @brief Get IAADDR option from response.
+    ///
+    /// @param rsp The response.
+    /// @return The Option6IAAddrPtr to the unique IAADDR option or null.
+    Option6IAAddrPtr getIAAddr(const Pkt6Ptr& rsp) {
+        auto opts = rsp->getOptions(D6O_IAADDR);
+        if (opts.size() == 0) {
+            ADD_FAILURE() << "IAADDR option not present in response";
+            return (Option6IAAddrPtr());
+        }
+        if (opts.size() > 1) {
+            ADD_FAILURE() << "multiple IAADDR options present in response";
+            return (Option6IAAddrPtr());
+        }
+        return (boost::dynamic_pointer_cast<Option6IAAddr>(opts.begin()->second));
+    }
+
     /// @brief Checks if the state of the callout handle associated
     /// with a query was reset after the callout invocation.
     ///
@@ -352,74 +369,8 @@ TEST_F(AddrRegTest, noSubnet) {
     // The query is silently rejected so no log to check.
 }
 
-// Test that an IA_NA option is required.
-TEST_F(AddrRegTest, noIA_NA) {
-    IfaceMgrTestConfig test_config(true);
-
-    ASSERT_NO_THROW(configure(config_));
-
-    Pkt6Ptr addr_reg_inf = Pkt6Ptr(new Pkt6(DHCPV6_ADDR_REG_INFORM, 1234));
-    addr_reg_inf->setRemoteAddr(IOAddress("fe80::abcd"));
-    addr_reg_inf->setIface("eth0");
-    addr_reg_inf->setIndex(ETH0_INDEX);
-    OptionPtr clientid = generateClientId();
-    addr_reg_inf->addOption(clientid);
-
-    // Pass it to the server.
-    AllocEngine::ClientContext6 ctx;
-    bool drop = !srv_->earlyGHRLookup(addr_reg_inf, ctx);
-    ASSERT_FALSE(drop);
-    ctx.subnet_ = srv_->selectSubnet(addr_reg_inf, drop);
-    ASSERT_FALSE(drop);
-    srv_->initContext(ctx, drop);
-    ASSERT_FALSE(drop);
-    ASSERT_TRUE(ctx.subnet_);
-
-    // No IA_NA: no response.
-    EXPECT_FALSE(srv_->processAddrRegInform(ctx));
-
-    string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
-    expected += "error on ADDR-REG-INFORM from client fe80::abcd: ";
-    expected += "Exactly 1 IA_NA option expected, but 0 received";
-    EXPECT_EQ(1, countFile(expected));
-}
-
-// Test that exactly one IA_NA option is required.
-TEST_F(AddrRegTest, twoIA_NAs) {
-    IfaceMgrTestConfig test_config(true);
-
-    ASSERT_NO_THROW(configure(config_));
-
-    Pkt6Ptr addr_reg_inf = Pkt6Ptr(new Pkt6(DHCPV6_ADDR_REG_INFORM, 1234));
-    addr_reg_inf->setRemoteAddr(IOAddress("fe80::abcd"));
-    addr_reg_inf->setIface("eth0");
-    addr_reg_inf->setIndex(ETH0_INDEX);
-    OptionPtr clientid = generateClientId();
-    addr_reg_inf->addOption(clientid);
-    addr_reg_inf->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
-    addr_reg_inf->addOption(generateIA(D6O_IA_NA, 345, 1500, 3000));
-
-    // Pass it to the server.
-    AllocEngine::ClientContext6 ctx;
-    bool drop = !srv_->earlyGHRLookup(addr_reg_inf, ctx);
-    ASSERT_FALSE(drop);
-    ctx.subnet_ = srv_->selectSubnet(addr_reg_inf, drop);
-    ASSERT_FALSE(drop);
-    srv_->initContext(ctx, drop);
-    ASSERT_FALSE(drop);
-    ASSERT_TRUE(ctx.subnet_);
-
-    // 2 IA_NA options: no response.
-    EXPECT_FALSE(srv_->processAddrRegInform(ctx));
-
-    string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
-    expected += "error on ADDR-REG-INFORM from client fe80::abcd: ";
-    expected += "Exactly 1 IA_NA option expected, but 2 received";
-    EXPECT_EQ(1, countFile(expected));
-}
-
-// Test that an IA_NA sub-option is required.
-TEST_F(AddrRegTest, noIA_NAsub) {
+// Test that an IA_NA option is fordidden.
+TEST_F(AddrRegTest, iA_NA) {
     IfaceMgrTestConfig test_config(true);
 
     ASSERT_NO_THROW(configure(config_));
@@ -442,17 +393,17 @@ TEST_F(AddrRegTest, noIA_NAsub) {
     ASSERT_FALSE(drop);
     ASSERT_TRUE(ctx.subnet_);
 
-    // No IA_NA sub-options: no response.
+    // Unexpected IA_NA: no response.
     EXPECT_FALSE(srv_->processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
     expected += "error on ADDR-REG-INFORM from client fe80::abcd: ";
-    expected += "Exactly 1 IA_NA sub-option expected, but 0 received";
+    expected += "unexpected IA_NA option";
     EXPECT_EQ(1, countFile(expected));
 }
 
-// Test that an exactly one IA_NA sub-option is required.
-TEST_F(AddrRegTest, twoIA_NAsub) {
+// Test that an IA_TA option is fordidden.
+TEST_F(AddrRegTest, iA_TA) {
     IfaceMgrTestConfig test_config(true);
 
     ASSERT_NO_THROW(configure(config_));
@@ -463,9 +414,7 @@ TEST_F(AddrRegTest, twoIA_NAsub) {
     addr_reg_inf->setIndex(ETH0_INDEX);
     OptionPtr clientid = generateClientId();
     addr_reg_inf->addOption(clientid);
-    auto ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
-    ia->addOption(generateIAAddr("2001:db8:1::1", 3000, 4000));
-    ia->addOption(generateIAAddr("2001:db8:1::2", 3000, 4000));
+    Option6IAPtr ia(new Option6IA(D6O_IA_TA, 234));
     addr_reg_inf->addOption(ia);
 
     // Pass it to the server.
@@ -478,12 +427,111 @@ TEST_F(AddrRegTest, twoIA_NAsub) {
     ASSERT_FALSE(drop);
     ASSERT_TRUE(ctx.subnet_);
 
-    // Two IA_NA sub-options: no response.
+    // Unexpected IA_TA: no response.
     EXPECT_FALSE(srv_->processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
     expected += "error on ADDR-REG-INFORM from client fe80::abcd: ";
-    expected += "Exactly 1 IA_NA sub-option expected, but 2 received";
+    expected += "unexpected IA_TA option";
+    EXPECT_EQ(1, countFile(expected));
+}
+
+// Test that an IA_PD option is fordidden.
+TEST_F(AddrRegTest, iA_PD) {
+    IfaceMgrTestConfig test_config(true);
+
+    ASSERT_NO_THROW(configure(config_));
+
+    Pkt6Ptr addr_reg_inf = Pkt6Ptr(new Pkt6(DHCPV6_ADDR_REG_INFORM, 1234));
+    addr_reg_inf->setRemoteAddr(IOAddress("fe80::abcd"));
+    addr_reg_inf->setIface("eth0");
+    addr_reg_inf->setIndex(ETH0_INDEX);
+    OptionPtr clientid = generateClientId();
+    addr_reg_inf->addOption(clientid);
+    addr_reg_inf->addOption(generateIA(D6O_IA_PD, 234, 1500, 3000));
+
+    // Pass it to the server.
+    AllocEngine::ClientContext6 ctx;
+    bool drop = !srv_->earlyGHRLookup(addr_reg_inf, ctx);
+    ASSERT_FALSE(drop);
+    ctx.subnet_ = srv_->selectSubnet(addr_reg_inf, drop);
+    ASSERT_FALSE(drop);
+    srv_->initContext(ctx, drop);
+    ASSERT_FALSE(drop);
+    ASSERT_TRUE(ctx.subnet_);
+
+    // Unexpected IA_PD: no response.
+    EXPECT_FALSE(srv_->processAddrRegInform(ctx));
+
+    string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
+    expected += "error on ADDR-REG-INFORM from client fe80::abcd: ";
+    expected += "unexpected IA_PD option";
+    EXPECT_EQ(1, countFile(expected));
+}
+
+// Test that an IAADDR option is required.
+TEST_F(AddrRegTest, noIAADDR) {
+    IfaceMgrTestConfig test_config(true);
+
+    ASSERT_NO_THROW(configure(config_));
+
+    Pkt6Ptr addr_reg_inf = Pkt6Ptr(new Pkt6(DHCPV6_ADDR_REG_INFORM, 1234));
+    addr_reg_inf->setRemoteAddr(IOAddress("fe80::abcd"));
+    addr_reg_inf->setIface("eth0");
+    addr_reg_inf->setIndex(ETH0_INDEX);
+    OptionPtr clientid = generateClientId();
+    addr_reg_inf->addOption(clientid);
+
+    // Pass it to the server.
+    AllocEngine::ClientContext6 ctx;
+    bool drop = !srv_->earlyGHRLookup(addr_reg_inf, ctx);
+    ASSERT_FALSE(drop);
+    ctx.subnet_ = srv_->selectSubnet(addr_reg_inf, drop);
+    ASSERT_FALSE(drop);
+    srv_->initContext(ctx, drop);
+    ASSERT_FALSE(drop);
+    ASSERT_TRUE(ctx.subnet_);
+
+    // No IAADDR options: no response.
+    EXPECT_FALSE(srv_->processAddrRegInform(ctx));
+
+    string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
+    expected += "error on ADDR-REG-INFORM from client fe80::abcd: ";
+    expected += "Exactly 1 IAADDRE option expected, but 0 received";
+    EXPECT_EQ(1, countFile(expected));
+}
+
+// Test that an exactly one IAADDR option is required.
+TEST_F(AddrRegTest, twoIAADDR) {
+    IfaceMgrTestConfig test_config(true);
+
+    ASSERT_NO_THROW(configure(config_));
+
+    Pkt6Ptr addr_reg_inf = Pkt6Ptr(new Pkt6(DHCPV6_ADDR_REG_INFORM, 1234));
+    addr_reg_inf->setRemoteAddr(IOAddress("fe80::abcd"));
+    addr_reg_inf->setIface("eth0");
+    addr_reg_inf->setIndex(ETH0_INDEX);
+    OptionPtr clientid = generateClientId();
+    addr_reg_inf->addOption(clientid);
+    addr_reg_inf->addOption(generateIAAddr("2001:db8:1::1", 3000, 4000));
+    addr_reg_inf->addOption(generateIAAddr("2001:db8:1::2", 3000, 4000));
+
+    // Pass it to the server.
+    AllocEngine::ClientContext6 ctx;
+    bool drop = !srv_->earlyGHRLookup(addr_reg_inf, ctx);
+    ASSERT_FALSE(drop);
+    ctx.subnet_ = srv_->selectSubnet(addr_reg_inf, drop);
+    ASSERT_FALSE(drop);
+    srv_->initContext(ctx, drop);
+    ASSERT_FALSE(drop);
+    ASSERT_TRUE(ctx.subnet_);
+
+    // Two IAADDR options: no response.
+    EXPECT_FALSE(srv_->processAddrRegInform(ctx));
+
+    string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
+    expected += "error on ADDR-REG-INFORM from client fe80::abcd: ";
+    expected += "Exactly 1 IAADDR option expected, but 2 received";
     EXPECT_EQ(1, countFile(expected));
 }
 
@@ -499,9 +547,7 @@ TEST_F(AddrRegTest, noAddrMatch) {
     addr_reg_inf->setIndex(ETH0_INDEX);
     OptionPtr clientid = generateClientId();
     addr_reg_inf->addOption(clientid);
-    auto ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
-    ia->addOption(generateIAAddr("2001:db8:1::1", 3000, 4000));
-    addr_reg_inf->addOption(ia);
+    addr_reg_inf->addOption(generateIAAddr("2001:db8:1::1", 3000, 4000));
 
     // Pass it to the server.
     AllocEngine::ClientContext6 ctx;
@@ -535,9 +581,7 @@ TEST_F(AddrRegTest, noAddrMatchRelay) {
     addr_reg_inf->setIndex(ETH0_INDEX);
     OptionPtr clientid = generateClientId();
     addr_reg_inf->addOption(clientid);
-    auto ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
-    ia->addOption(generateIAAddr("2001:db8:1::1", 3000, 4000));
-    addr_reg_inf->addOption(ia);
+    addr_reg_inf->addOption(generateIAAddr("2001:db8:1::1", 3000, 4000));
 
     // Add a relay.
     Pkt6::RelayInfo relay;
@@ -577,9 +621,7 @@ TEST_F(AddrRegTest, noAddrMatch2Relays) {
     addr_reg_inf->setIndex(ETH0_INDEX);
     OptionPtr clientid = generateClientId();
     addr_reg_inf->addOption(clientid);
-    auto ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
-    ia->addOption(generateIAAddr("2001:db8:1::1", 3000, 4000));
-    addr_reg_inf->addOption(ia);
+    addr_reg_inf->addOption(generateIAAddr("2001:db8:1::1", 3000, 4000));
 
     // Add a relay: it will be the outer one.
     Pkt6::RelayInfo relay;
@@ -625,9 +667,7 @@ TEST_F(AddrRegTest, noInSubnet) {
     addr_reg_inf->setIndex(ETH0_INDEX);
     OptionPtr clientid = generateClientId();
     addr_reg_inf->addOption(clientid);
-    auto ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
-    ia->addOption(generateIAAddr("2001:db8::1", 3000, 4000));
-    addr_reg_inf->addOption(ia);
+    addr_reg_inf->addOption(generateIAAddr("2001:db8::1", 3000, 4000));
 
     // Pass it to the server.
     AllocEngine::ClientContext6 ctx;
@@ -661,9 +701,7 @@ TEST_F(AddrRegTest, reserved) {
     addr_reg_inf->setIndex(ETH0_INDEX);
     OptionPtr clientid = generateClientId();
     addr_reg_inf->addOption(clientid);
-    auto ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
-    ia->addOption(generateIAAddr("2001:db8:1::10", 3000, 4000));
-    addr_reg_inf->addOption(ia);
+    addr_reg_inf->addOption(generateIAAddr("2001:db8:1::10", 3000, 4000));
 
     // Pass it to the server.
     AllocEngine::ClientContext6 ctx;
@@ -693,7 +731,7 @@ AddrRegTest::testAddressInUse(const uint32_t state) {
     // Create and add a lease.
     IOAddress addr("2001:db8:1::1");
     DuidPtr duid(new DUID(vector<uint8_t>(8, 0x44)));
-    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid, 1234, 200, 300, 1));
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid, 234, 200, 300, 1));
     lease->state_ = state;
     lease->cltt_ = 1234;
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
@@ -704,9 +742,7 @@ AddrRegTest::testAddressInUse(const uint32_t state) {
     addr_reg_inf->setIndex(ETH0_INDEX);
     OptionPtr clientid = generateClientId();
     addr_reg_inf->addOption(clientid);
-    auto ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
-    ia->addOption(generateIAAddr(addr, 3000, 4000));
-    addr_reg_inf->addOption(ia);
+    addr_reg_inf->addOption(generateIAAddr(addr, 3000, 4000));
 
     // Pass it to the server.
     AllocEngine::ClientContext6 ctx;
@@ -768,9 +804,7 @@ AddrRegTest::testBasic() {
     addr_reg_inf_->setIndex(ETH0_INDEX);
     OptionPtr clientid = generateClientId();
     addr_reg_inf_->addOption(clientid);
-    auto ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
-    ia->addOption(generateIAAddr(addr, 3000, 4000));
-    addr_reg_inf_->addOption(ia);
+    addr_reg_inf_->addOption(generateIAAddr(addr, 3000, 4000));
 
     // Pass it to the server.
     AllocEngine::ClientContext6 ctx;
@@ -788,7 +822,7 @@ AddrRegTest::testBasic() {
 
     EXPECT_EQ(DHCPV6_ADDR_REG_REPLY, response->getType());
     EXPECT_EQ(addr_reg_inf_->getTransid(), response->getTransid());
-    Option6IAAddrPtr iaaddr = checkIA_NA(response, 234, 1500, 3000);
+    Option6IAAddrPtr iaaddr = getIAAddr(response);
     ASSERT_TRUE(iaaddr);
     EXPECT_EQ(addr, iaaddr->getAddress());
     EXPECT_EQ(3000, iaaddr->getPreferred());
@@ -801,7 +835,7 @@ AddrRegTest::testBasic() {
     EXPECT_EQ(addr, l->addr_);
     ASSERT_TRUE(l->duid_);
     EXPECT_TRUE(*l->duid_ == *duid_);
-    EXPECT_EQ(ia->getIAID(), l->iaid_);
+    EXPECT_EQ(0, l->iaid_);
     EXPECT_EQ(1, l->subnet_id_);
     EXPECT_FALSE(l->fqdn_fwd_);
     EXPECT_FALSE(l->fqdn_rev_);
@@ -833,9 +867,7 @@ TEST_F(AddrRegTest, relayed) {
     addr_reg_inf->setIndex(ETH0_INDEX);
     OptionPtr clientid = generateClientId();
     addr_reg_inf->addOption(clientid);
-    auto ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
-    ia->addOption(generateIAAddr(addr, 3000, 4000));
-    addr_reg_inf->addOption(ia);
+    addr_reg_inf->addOption(generateIAAddr(addr, 3000, 4000));
 
     // Add a relay: it will be the outer one.
     Pkt6::RelayInfo relay;
@@ -865,7 +897,7 @@ TEST_F(AddrRegTest, relayed) {
 
     EXPECT_EQ(DHCPV6_ADDR_REG_REPLY, response->getType());
     EXPECT_EQ(addr_reg_inf->getTransid(), response->getTransid());
-    Option6IAAddrPtr iaaddr = checkIA_NA(response, 234, 1500, 3000);
+    Option6IAAddrPtr iaaddr = getIAAddr(response);
     ASSERT_TRUE(iaaddr);
     EXPECT_EQ(addr, iaaddr->getAddress());
     EXPECT_EQ(3000, iaaddr->getPreferred());
@@ -886,7 +918,7 @@ TEST_F(AddrRegTest, relayed) {
     EXPECT_EQ(addr, l->addr_);
     ASSERT_TRUE(l->duid_);
     EXPECT_TRUE(*l->duid_ == *duid_);
-    EXPECT_EQ(ia->getIAID(), l->iaid_);
+    EXPECT_EQ(0, l->iaid_);
     EXPECT_EQ(1, l->subnet_id_);
     EXPECT_FALSE(l->fqdn_fwd_);
     EXPECT_FALSE(l->fqdn_rev_);
@@ -902,7 +934,7 @@ AddrRegTest::testRenew() {
     // Create and add a lease.
     IOAddress addr("2001:db8:1::1");
     OptionPtr clientid = generateClientId();
-    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid_, 2345, 200, 300, 1));
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid_, 0, 200, 300, 1));
     lease->state_ = Lease::STATE_REGISTERED;
     lease->cltt_ = 1234;
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
@@ -912,9 +944,7 @@ AddrRegTest::testRenew() {
     addr_reg_inf_->setIface("eth0");
     addr_reg_inf_->setIndex(ETH0_INDEX);
     addr_reg_inf_->addOption(clientid);
-    auto ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
-    ia->addOption(generateIAAddr(addr, 3000, 4000));
-    addr_reg_inf_->addOption(ia);
+    addr_reg_inf_->addOption(generateIAAddr(addr, 3000, 4000));
 
     // Pass it to the server.
     AllocEngine::ClientContext6 ctx;
@@ -937,7 +967,7 @@ AddrRegTest::testRenew() {
     EXPECT_EQ(addr, l->addr_);
     ASSERT_TRUE(l->duid_);
     EXPECT_TRUE(*l->duid_ == *duid_);
-    EXPECT_EQ(ia->getIAID(), l->iaid_);
+    EXPECT_EQ(0, l->iaid_);
     EXPECT_EQ(1, l->subnet_id_);
     EXPECT_FALSE(l->fqdn_fwd_);
     EXPECT_FALSE(l->fqdn_rev_);
@@ -964,7 +994,7 @@ AddrRegTest::testAnotherClient() {
     // Create and add a lease for another client.
     IOAddress addr("2001:db8:1::1");
     DuidPtr duid(new DUID(vector<uint8_t>(8, 0x44)));
-    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid, 2345, 200, 300, 1));
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid, 0, 200, 300, 1));
     lease->state_ = Lease::STATE_REGISTERED;
     lease->cltt_ = 1234;
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
@@ -975,9 +1005,7 @@ AddrRegTest::testAnotherClient() {
     addr_reg_inf_->setIndex(ETH0_INDEX);
     OptionPtr clientid = generateClientId();
     addr_reg_inf_->addOption(clientid);
-    auto ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
-    ia->addOption(generateIAAddr(addr, 3000, 4000));
-    addr_reg_inf_->addOption(ia);
+    addr_reg_inf_->addOption(generateIAAddr(addr, 3000, 4000));
 
     // Pass it to the server.
     AllocEngine::ClientContext6 ctx;
@@ -1000,7 +1028,7 @@ AddrRegTest::testAnotherClient() {
     EXPECT_EQ(addr, l->addr_);
     ASSERT_TRUE(l->duid_);
     EXPECT_TRUE(*l->duid_ == *duid_);
-    EXPECT_EQ(ia->getIAID(), l->iaid_);
+    EXPECT_EQ(0, l->iaid_);
     EXPECT_EQ(1, l->subnet_id_);
     EXPECT_FALSE(l->fqdn_fwd_);
     EXPECT_FALSE(l->fqdn_rev_);
@@ -1032,7 +1060,7 @@ AddrRegTest::testAnotherSubnet() {
     // Create and add a lease.
     IOAddress addr("2001:db8:1::1");
     OptionPtr clientid = generateClientId();
-    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid_, 2345, 200, 300, 2));
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid_, 0, 200, 300, 2));
     lease->state_ = Lease::STATE_REGISTERED;
     lease->cltt_ = 1234;
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
@@ -1042,9 +1070,7 @@ AddrRegTest::testAnotherSubnet() {
     addr_reg_inf_->setIface("eth0");
     addr_reg_inf_->setIndex(ETH0_INDEX);
     addr_reg_inf_->addOption(clientid);
-    auto ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
-    ia->addOption(generateIAAddr(addr, 3000, 4000));
-    addr_reg_inf_->addOption(ia);
+    addr_reg_inf_->addOption(generateIAAddr(addr, 3000, 4000));
 
     // Pass it to the server.
     AllocEngine::ClientContext6 ctx;
@@ -1067,7 +1093,7 @@ AddrRegTest::testAnotherSubnet() {
     EXPECT_EQ(addr, l->addr_);
     ASSERT_TRUE(l->duid_);
     EXPECT_TRUE(*l->duid_ == *duid_);
-    EXPECT_EQ(ia->getIAID(), l->iaid_);
+    EXPECT_EQ(0, l->iaid_);
     EXPECT_EQ(1, l->subnet_id_);
     EXPECT_FALSE(l->fqdn_fwd_);
     EXPECT_FALSE(l->fqdn_rev_);
@@ -1102,9 +1128,7 @@ TEST_F(AddrRegTest, fqdn) {
     addr_reg_inf->setIndex(ETH0_INDEX);
     OptionPtr clientid = generateClientId();
     addr_reg_inf->addOption(clientid);
-    auto ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
-    ia->addOption(generateIAAddr(addr, 3000, 4000));
-    addr_reg_inf->addOption(ia);
+    addr_reg_inf->addOption(generateIAAddr(addr, 3000, 4000));
 
     // Add an FQDN option.
     Option6ClientFqdnPtr fqdn(new Option6ClientFqdn(Option6ClientFqdn::FLAG_S,
@@ -1128,7 +1152,7 @@ TEST_F(AddrRegTest, fqdn) {
 
     EXPECT_EQ(DHCPV6_ADDR_REG_REPLY, response->getType());
     EXPECT_EQ(addr_reg_inf->getTransid(), response->getTransid());
-    Option6IAAddrPtr iaaddr = checkIA_NA(response, 234, 1500, 3000);
+    Option6IAAddrPtr iaaddr = getIAAddr(response);
     ASSERT_TRUE(iaaddr);
     EXPECT_EQ(addr, iaaddr->getAddress());
     EXPECT_EQ(3000, iaaddr->getPreferred());
@@ -1141,7 +1165,7 @@ TEST_F(AddrRegTest, fqdn) {
     EXPECT_EQ(addr, l->addr_);
     ASSERT_TRUE(l->duid_);
     EXPECT_TRUE(*l->duid_ == *duid_);
-    EXPECT_EQ(ia->getIAID(), l->iaid_);
+    EXPECT_EQ(0, l->iaid_);
     EXPECT_EQ(1, l->subnet_id_);
     EXPECT_EQ("client.example.com.", l->hostname_);
     EXPECT_TRUE(l->fqdn_fwd_);
@@ -1171,9 +1195,7 @@ TEST_F(AddrRegTest, renewDdns) {
     addr_reg_inf->setIndex(ETH0_INDEX);
     OptionPtr clientid = generateClientId();
     addr_reg_inf->addOption(clientid);
-    auto ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
-    ia->addOption(generateIAAddr(addr, 3000, 4000));
-    addr_reg_inf->addOption(ia);
+    addr_reg_inf->addOption(generateIAAddr(addr, 3000, 4000));
 
     // Add an FQDN option.
     Option6ClientFqdnPtr fqdn(new Option6ClientFqdn(Option6ClientFqdn::FLAG_S,
@@ -1246,9 +1268,7 @@ TEST_F(AddrRegTest, renewDdnsUpdateOnRenew) {
     addr_reg_inf->setIndex(ETH0_INDEX);
     OptionPtr clientid = generateClientId();
     addr_reg_inf->addOption(clientid);
-    auto ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
-    ia->addOption(generateIAAddr(addr, 3000, 4000));
-    addr_reg_inf->addOption(ia);
+    addr_reg_inf->addOption(generateIAAddr(addr, 3000, 4000));
 
     // Add an FQDN option.
     Option6ClientFqdnPtr fqdn(new Option6ClientFqdn(Option6ClientFqdn::FLAG_S,
@@ -1318,9 +1338,7 @@ TEST_F(AddrRegTest, renewDdnsHostname) {
     addr_reg_inf->setIndex(ETH0_INDEX);
     OptionPtr clientid = generateClientId();
     addr_reg_inf->addOption(clientid);
-    auto ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
-    ia->addOption(generateIAAddr(addr, 3000, 4000));
-    addr_reg_inf->addOption(ia);
+    addr_reg_inf->addOption(generateIAAddr(addr, 3000, 4000));
 
     // Add an FQDN option.
     Option6ClientFqdnPtr fqdn(new Option6ClientFqdn(Option6ClientFqdn::FLAG_S,
@@ -1396,9 +1414,7 @@ TEST_F(AddrRegTest, oro) {
     addr_reg_inf->setIndex(ETH0_INDEX);
     OptionPtr clientid = generateClientId();
     addr_reg_inf->addOption(clientid);
-    auto ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
-    ia->addOption(generateIAAddr(addr, 3000, 4000));
-    addr_reg_inf->addOption(ia);
+    addr_reg_inf->addOption(generateIAAddr(addr, 3000, 4000));
 
     // Add an ORO option for the dns-servers option.
     OptionUint16ArrayPtr oro(new OptionUint16Array(Option::V6, D6O_ORO));
@@ -1421,7 +1437,7 @@ TEST_F(AddrRegTest, oro) {
 
     EXPECT_EQ(DHCPV6_ADDR_REG_REPLY, response->getType());
     EXPECT_EQ(addr_reg_inf->getTransid(), response->getTransid());
-    Option6IAAddrPtr iaaddr = checkIA_NA(response, 234, 1500, 3000);
+    Option6IAAddrPtr iaaddr = getIAAddr(response);
     ASSERT_TRUE(iaaddr);
     EXPECT_EQ(addr, iaaddr->getAddress());
     EXPECT_EQ(3000, iaaddr->getPreferred());
@@ -1535,9 +1551,7 @@ TEST_F(AddrRegTest, calloutSkip) {
     addr_reg_inf_->setIndex(ETH0_INDEX);
     OptionPtr clientid = generateClientId();
     addr_reg_inf_->addOption(clientid);
-    auto ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
-    ia->addOption(generateIAAddr(addr, 3000, 4000));
-    addr_reg_inf_->addOption(ia);
+    addr_reg_inf_->addOption(generateIAAddr(addr, 3000, 4000));
 
     // Pass it to the server.
     AllocEngine::ClientContext6 ctx;
@@ -1557,7 +1571,7 @@ TEST_F(AddrRegTest, calloutSkip) {
 
     EXPECT_EQ(DHCPV6_ADDR_REG_REPLY, response->getType());
     EXPECT_EQ(addr_reg_inf_->getTransid(), response->getTransid());
-    Option6IAAddrPtr iaaddr = checkIA_NA(response, 234, 1500, 3000);
+    Option6IAAddrPtr iaaddr = getIAAddr(response);
     ASSERT_TRUE(iaaddr);
     EXPECT_EQ(addr, iaaddr->getAddress());
     EXPECT_EQ(3000, iaaddr->getPreferred());
@@ -1590,9 +1604,7 @@ TEST_F(AddrRegTest, calloutDrop) {
     addr_reg_inf_->setIndex(ETH0_INDEX);
     OptionPtr clientid = generateClientId();
     addr_reg_inf_->addOption(clientid);
-    auto ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
-    ia->addOption(generateIAAddr(addr, 3000, 4000));
-    addr_reg_inf_->addOption(ia);
+    addr_reg_inf_->addOption(generateIAAddr(addr, 3000, 4000));
 
     // Pass it to the server.
     AllocEngine::ClientContext6 ctx;
@@ -1725,7 +1737,7 @@ TEST_F(AddrRegTest, client) {
     // Do the address registration.
     IOAddress addr("2001:db8:1::1");
     client.setLinkLocal(addr);
-    client.requestAddress(234, addr);
+    client.addExtraOption(generateIAAddr(addr, 3000, 4000));
     ASSERT_NO_THROW(client.doAddrRegInform());
 
     // Check the response.
@@ -1744,11 +1756,10 @@ TEST_F(AddrRegTest, client) {
     EXPECT_EQ(addr, l->addr_);
     ASSERT_TRUE(l->duid_);
     EXPECT_TRUE(*l->duid_ == *duid);
-    EXPECT_EQ(234, l->iaid_);
+    EXPECT_EQ(0, l->iaid_);
     EXPECT_EQ(1, l->subnet_id_);
-    // Can be considered as a bug but the client set lifetimes to 0.
-    EXPECT_EQ(0, l->preferred_lft_);
-    EXPECT_EQ(0, l->valid_lft_);
+    EXPECT_EQ(3000, l->preferred_lft_);
+    EXPECT_EQ(4000, l->valid_lft_);
 
     string expected = "DHCPSRV_MEMFILE_ADD_ADDR6 ";
     expected += "adding IPv6 lease with address 2001:db8:1::1";
@@ -1772,15 +1783,14 @@ TEST_F(AddrRegTest, clientRenew) {
 
     // Create and add a lease.
     IOAddress addr("2001:db8:1::1");
-    uint32_t iaid = 234;
-    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid, iaid, 200, 300, 1));
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid, 0, 200, 300, 1));
     lease->state_ = Lease::STATE_REGISTERED;
     lease->cltt_ = 1234;
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
     // Do the address registration.
     client.setLinkLocal(addr);
-    client.requestAddress(iaid, addr);
+    client.addExtraOption(generateIAAddr(addr, 3000, 4000));
     ASSERT_NO_THROW(client.doAddrRegInform());
 
     // Check the response.
@@ -1799,11 +1809,10 @@ TEST_F(AddrRegTest, clientRenew) {
     EXPECT_EQ(addr, l->addr_);
     ASSERT_TRUE(l->duid_);
     EXPECT_TRUE(*l->duid_ == *duid);
-    EXPECT_EQ(iaid, l->iaid_);
+    EXPECT_EQ(0, l->iaid_);
     EXPECT_EQ(1, l->subnet_id_);
-    // Can be considered as a bug but the client set lifetimes to 0.
-    EXPECT_EQ(0, l->preferred_lft_);
-    EXPECT_EQ(0, l->valid_lft_);
+    EXPECT_EQ(3000, l->preferred_lft_);
+    EXPECT_EQ(4000, l->valid_lft_);
 
     string expected = "DHCPSRV_MEMFILE_UPDATE_ADDR6 ";
     expected += "updating IPv6 lease for address 2001:db8:1::1";

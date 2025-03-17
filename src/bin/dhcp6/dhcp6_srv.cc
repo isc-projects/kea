@@ -4503,19 +4503,36 @@ Dhcpv6Srv::processAddrRegInform(AllocEngine::ClientContext6& ctx) {
 
     // Check if the message is bad and shout be dropped.
     try {
-        // Get IA_NA from the Address registration inform.
+        // Check there is no IA_NA option.
+        if (addr_reg_inf->getOption(D6O_IA_NA)) {
+            isc_throw(RFCViolation, "unexpected IA_NA option");
+        }
+
+        // Check there is no IA_TA option.
+        if (addr_reg_inf->getOption(D6O_IA_TA)) {
+            isc_throw(RFCViolation, "unexpected IA_TA option");
+        }
+
+        // Check there is no IA_PD option.
+        if (addr_reg_inf->getOption(D6O_IA_PD)) {
+            isc_throw(RFCViolation, "unexpected IA_PD option");
+        }
+
+        // Get IAADDR from the Address registration inform.
         // There must be one.
         OptionCollection addrs = addr_reg_inf->getOptions(D6O_IAADDR);
         if (addrs.size() != 1) {
-            isc_throw(RFCViolation, "Exactly 1 IAADDRESS option expected, but "
+            isc_throw(RFCViolation, "Exactly 1 IAADDR option expected, but "
                       << addrs.size() << " received");
         }
         iaaddr = boost::dynamic_pointer_cast<Option6IAAddr>(addrs.begin()->second);
         if (!iaaddr) {
-            isc_throw(Unexpected, "can't convert the IAAddress option");
+            isc_throw(Unexpected, "can't convert the IAADDR option");
         }
 
         // Set per-IA context values.
+        // Note the address is considered as not-temporary address.
+        
         ctx.createIAContext();
         ctx.currentIA().type_ = Lease::TYPE_NA;
         ctx.currentIA().iaid_ = no_iaid;
