@@ -25,6 +25,8 @@ Build Options:  @BUILD_OPTIONS@
 
 Meson Version:  @MESON_VERSION@
 
+Meson info:     @MESON_INFO@
+
 C++ Compiler:
   CXX:             @CXX@
   CXX_ID:          @CXX_ID@
@@ -40,49 +42,33 @@ Python:
   PYTHON_VERSION:  @PYTHON_VERSION@
   PKGPYTHONDIR:    @PKGPYTHONDIR@
 
-Boost:
-  BOOST_VERSION:   @BOOST_VERSION@
+Boost:             @BOOST_VERSION@
 
-@CRYPTO_NAME@:
-  CRYPTO_VERSION:  @CRYPTO_VERSION@
-  CRYPTO_INCLUDE:  @CRYPTO_INCLUDE@
-  CRYPTO_LIBDIR:   @CRYPTO_LIBDIR@
+@CRYPTO_NAME@:     @CRYPTO_VERSION@
 
-Log4cplus:
-  LOG4CPLUS_VERSION:  @LOG4CPLUS_VERSION@
-  LOG4CPLUS_INCLUDE:  @LOG4CPLUS_INCLUDE@
-  LOG4CPLUS_LIBDIR:   @LOG4CPLUS_LIBDIR@
+Log4cplus:         @LOG4CPLUS_VERSION@
 
-Flex/bison:
-  FLEX:  @FLEX@
-  BISON: @BISON@
+flex:              @FLEX@
+Bison:             @BISON@
 '
 
 if test '@HAVE_MYSQL@' != 'no'; then
 add_to_report '
-MySQL:
-  MYSQL_VERSION:   @MYSQL_VERSION@
-  MYSQL_INCLUDE:   @MYSQL_INCLUDE@
-  MYSQL_LIBDIR:    @MYSQL_LIBDIR@
+MySQL:             @MYSQL_VERSION@
 '
 else
 add_to_report '
-MySQL:
-  no
+MySQL:             no
 '
 fi
 
 if test '@HAVE_PGSQL@' != 'no'; then
 add_to_report '
-PostgreSQL:
-  PGSQL_VERSION:   @PGSQL_VERSION@
-  PGSQL_INCLUDE:   @PGSQL_INCLUDE@
-  PGSQL_LIBDIR:    @PGSQL_LIBDIR@
+PostgreSQL:        @PGSQL_VERSION@
 '
 else
 add_to_report '
-PostgreSQL:
-  no
+PostgreSQL:        no
 '
 fi
 
@@ -94,22 +80,17 @@ Netconf:
 '
 else
 add_to_report '
-Netconf:
-  no
+Netconf:           no
 '
 fi
 
 if test '@HAVE_GTEST@' != 'no'; then
 add_to_report '
-Google Test:
-  GTEST_VERSION:   @GTEST_VERSION@
-  GTEST_INCLUDE:   @GTEST_INCLUDE@
-  GTEST_LIBDIR:    @GTEST_LIBDIR@
+Google Test:       @GTEST_VERSION@
 '
 else
 add_to_report '
-Google Test:
-  no
+Google Test:       no
 '
 fi
 
@@ -117,8 +98,6 @@ if test '@HAVE_KRB5@' != 'no'; then
 add_to_report '
 Kerberos5 GSS-API support:
   KRB5_GSSAPI_VERSION:  @KRB5_GSSAPI_VERSION@
-  KRB5_GSSAPI_CFLAGS:   @KRB5_GSSAPI_CFLAGS@
-  KRB5_GSSAPI_LIBS:     @KRB5_GSSAPI_LIBS@
   KRB5_GSSAPI_VENDOR:   @KRB5_GSSAPI_VENDOR@
 '
 else
@@ -131,7 +110,6 @@ fi
 add_to_report '
 Developer:
   Tests:            @TESTS_ENABLED@
-  Valgrind:         @VALGRIND@
   Fuzzing:          @FUZZ_ENABLED@
   AFL:              @HAVE_AFL@
 '

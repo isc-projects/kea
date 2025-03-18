@@ -524,6 +524,12 @@ report_conf_data.set('HOOKS_DIR', DEFAULT_HOOKS_PATH)
 report_conf_data.set('PREMIUM', premium ? 'yes' : 'no')
 report_conf_data.set('BUILD_OPTIONS', meson.build_options())
 report_conf_data.set('MESON_VERSION', meson.version())
+if fs.is_dir(TOP_BUILD_DIR / 'meson-info')
+    MESON_INFO = PREFIX / DATADIR / 'kea/meson-info'
+else
+    MESON_INFO = 'not installed'
+endif
+report_conf_data.set('MESON_INFO', MESON_INFO)
 report_conf_data.set('CXX', ' '.join(cpp.cmd_array()))
 report_conf_data.set('CXX_ID', cpp.get_id())
 result = run_command(cpp, '--version', check: false)
@@ -536,11 +542,10 @@ endif
 result = cpp.run(
     fs.read('compiler-checks/get-cpp-standard.cc'),
     name: 'Get cpp standard',
+    required: true,
 )
 if result.returncode() == 0
     report_conf_data.set('CXX_STANDARD', result.stdout().strip())
-else
-    report_conf_data.set('CXX_STANDARD', 'unknown')
 endif
 report_conf_data.set('CXX_ARGS', ' '.join(compile_args))
 report_conf_data.set('LD_ID', cpp.get_linker_id())
@@ -556,16 +561,8 @@ result = cpp.run(
 if result.returncode() == 0
     report_conf_data.set('BOOST_VERSION', result.stdout().strip())
 else
-    report_conf_data.set('BOOST_VERSION', 'unknown')
+    report_conf_data.set('BOOST_VERSION', 'unknown version')
 endif
-report_conf_data.set(
-    'CRYPTO_INCLUDE',
-    CRYPTO_DEP.get_variable('includedir', default_value: 'unknown'),
-)
-report_conf_data.set(
-    'CRYPTO_LIBDIR',
-    CRYPTO_DEP.get_variable('libdir', default_value: 'unknown'),
-)
 if CRYPTO_DEP.name() == botan.name()
     report_conf_data.set('CRYPTO_NAME', 'Botan')
     result = cpp.run(
@@ -574,10 +571,14 @@ if CRYPTO_DEP.name() == botan.name()
         dependencies: [CRYPTO_DEP],
     )
     if result.returncode() == 0
-        report_conf_data.set('CRYPTO_VERSION', result.stdout().strip())
+        version = result.stdout().strip()
     else
-        report_conf_data.set('CRYPTO_VERSION', botan.version())
+        version = botan.version()
     endif
+    if version == 'unknown'
+        version = 'unknown version'
+    endif
+    report_conf_data.set('CRYPTO_VERSION', version)
 elif CRYPTO_DEP.name() == openssl.name()
     report_conf_data.set('CRYPTO_NAME', 'OpenSSL')
     result = cpp.run(
@@ -586,24 +587,14 @@ elif CRYPTO_DEP.name() == openssl.name()
         dependencies: [CRYPTO_DEP],
     )
     if result.returncode() == 0
-        report_conf_data.set('CRYPTO_VERSION', result.stdout().strip())
+        version = result.stdout().strip()
     else
-        report_conf_data.set('CRYPTO_VERSION', openssl.version())
+        version = openssl.version()
     endif
-endif
-# TODO: remove if-condition when support for Ubuntu 20.04 gets removed.
-if LOG4CPLUS_DEP.type_name() == 'pkgconfig'
-    report_conf_data.set(
-        'LOG4CPLUS_INCLUDE',
-        LOG4CPLUS_DEP.get_variable('includedir', default_value: 'unknown'),
-    )
-    report_conf_data.set(
-        'LOG4CPLUS_LIBDIR',
-        LOG4CPLUS_DEP.get_variable('libdir', default_value: 'unknown'),
-    )
-else
-    report_conf_data.set('LOG4CPLUS_INCLUDE', 'unknown')
-    report_conf_data.set('LOG4CPLUS_LIBDIR', 'unknown')
+    if version == 'unknown'
+        version = 'unknown version'
+    endif
+    report_conf_data.set('CRYPTO_VERSION', version)
 endif
 result = cpp.run(
     fs.read('compiler-checks/get-log4cplus-version.cc'),
@@ -611,52 +602,45 @@ result = cpp.run(
     dependencies: [LOG4CPLUS_DEP],
 )
 if result.returncode() == 0
-    report_conf_data.set('LOG4CPLUS_VERSION', result.stdout().strip())
+    version = result.stdout().strip()
 else
-    report_conf_data.set('LOG4CPLUS_VERSION', log4cplus.version())
+    version = log4cplus.version()
 endif
+if version == 'unknown'
+    version = 'unknown version'
+endif
+report_conf_data.set('LOG4CPLUS_VERSION', version)
 if FLEX.found()
     report_conf_data.set('FLEX', FLEX.full_path())
 else
-    report_conf_data.set('FLEX', 'unknown')
+    report_conf_data.set('FLEX', 'no')
 endif
 if BISON.found()
     report_conf_data.set('BISON', BISON.full_path())
 else
-    report_conf_data.set('BISON', 'unknown')
+    report_conf_data.set('BISON', 'no')
 endif
 if MYSQL_DEP.found()
-    report_conf_data.set('MYSQL_VERSION', MYSQL_DEP.version())
-    report_conf_data.set(
-        'MYSQL_INCLUDE',
-        MYSQL_DEP.get_variable('includedir', default_value: 'unknown'),
-    )
-    report_conf_data.set(
-        'MYSQL_LIBDIR',
-        MYSQL_DEP.get_variable('libdir', default_value: 'unknown'),
-    )
+    report_conf_data.set('HAVE_MYSQL', 'yes')
+    version = MYSQL_DEP.version()
+    if version == 'unknown'
+        version = 'unknown version'
+    endif
+    report_conf_data.set('MYSQL_VERSION', version)
 else
     report_conf_data.set('HAVE_MYSQL', 'no')
-    report_conf_data.set('MYSQL_VERSION', 'unknown')
-    report_conf_data.set('MYSQL_INCLUDE', 'unknown')
-    report_conf_data.set('MYSQL_LIBDIR', 'unknown')
+    report_conf_data.set('MYSQL_VERSION', 'no')
 endif
 if POSTGRESQL_DEP.found()
     report_conf_data.set('HAVE_PGSQL', 'yes')
-    report_conf_data.set('PGSQL_VERSION', POSTGRESQL_DEP.version())
-    report_conf_data.set(
-        'PGSQL_INCLUDE',
-        POSTGRESQL_DEP.get_variable('includedir', default_value: 'unknown'),
-    )
-    report_conf_data.set(
-        'PGSQL_LIBDIR',
-        POSTGRESQL_DEP.get_variable('libdir', default_value: 'unknown'),
-    )
+    version = POSTGRESQL_DEP.version()
+    if version == 'unknown'
+        version = 'unknown version'
+    endif
+    report_conf_data.set('PGSQL_VERSION', version)
 else
     report_conf_data.set('HAVE_PGSQL', 'no')
-    report_conf_data.set('PGSQL_VERSION', 'unknown')
-    report_conf_data.set('PGSQL_INCLUDE', 'unknown')
-    report_conf_data.set('PGSQL_LIBDIR', 'unknown')
+    report_conf_data.set('PGSQL_VERSION', 'no')
 endif
 if NETCONF_DEP.found()
     report_conf_data.set('HAVE_NETCONF', 'yes')
@@ -670,37 +654,27 @@ if NETCONF_DEP.found()
     )
 else
     report_conf_data.set('HAVE_NETCONF', 'no')
-    report_conf_data.set('LIBYANG_PREFIX', 'unknown')
-    report_conf_data.set('SYSREPO_PREFIX', 'unknown')
+    report_conf_data.set('LIBYANG_PREFIX', 'no')
+    report_conf_data.set('SYSREPO_PREFIX', 'no')
 endif
 if FUZZ_OPT.enabled() or TESTS_OPT.enabled()
     report_conf_data.set('HAVE_GTEST', 'yes')
-    report_conf_data.set(
-        'GTEST_INCLUDE',
-        GTEST_DEP.get_variable('includedir', default_value: 'unknown'),
-    )
-    report_conf_data.set(
-        'GTEST_LIBDIR',
-        GTEST_DEP.get_variable('libdir', default_value: 'unknown'),
-    )
-    report_conf_data.set('GTEST_VERSION', GTEST_DEP.version())
+    version = GTEST_DEP.version()
+    if version == 'unknown'
+        version = 'unknown version'
+    endif
+    report_conf_data.set('GTEST_VERSION', version)
 else
     report_conf_data.set('HAVE_GTEST', 'no')
-    report_conf_data.set('GTEST_VERSION', 'unknown')
-    report_conf_data.set('GTEST_INCLUDE', 'unknown')
-    report_conf_data.set('GTEST_LIBDIR', 'unknown')
+    report_conf_data.set('GTEST_VERSION', 'no')
 endif
 if KRB5_DEP.found()
     report_conf_data.set('HAVE_KRB5', 'yes')
-    report_conf_data.set('KRB5_GSSAPI_VERSION', KRB5_DEP.version())
-    report_conf_data.set(
-        'KRB5_GSSAPI_CFLAGS',
-        KRB5_DEP.get_variable('cflags', default_value: 'unknown'),
-    )
-    report_conf_data.set(
-        'KRB5_GSSAPI_LIBS',
-        KRB5_DEP.get_variable('libs', default_value: 'unknown'),
-    )
+    version = KRB5_DEP.version()
+    if version == 'unknown'
+        version = 'unknown version'
+    endif
+    report_conf_data.set('KRB5_GSSAPI_VERSION', version)
     report_conf_data.set(
         'KRB5_GSSAPI_VENDOR',
         KRB5_DEP.get_variable('vendor', default_value: 'unknown'),
@@ -708,19 +682,12 @@ if KRB5_DEP.found()
 else
     report_conf_data.set('HAVE_KRB5', 'no')
     report_conf_data.set('KRB5_GSSAPI_VERSION', 'unknown')
-    report_conf_data.set('KRB5_GSSAPI_CFLAGS', 'unknown')
-    report_conf_data.set('KRB5_GSSAPI_LIBS', 'unknown')
     report_conf_data.set('KRB5_GSSAPI_VENDOR', 'unknown')
 endif
 if TESTS_OPT.enabled()
     report_conf_data.set('TESTS_ENABLED', 'enabled')
 else
     report_conf_data.set('TESTS_ENABLED', 'disabled')
-endif
-if valgrind.found()
-    report_conf_data.set('VALGRIND', valgrind.full_path())
-else
-    report_conf_data.set('VALGRIND', 'no')
 endif
 if FUZZ_OPT.enabled()
     report_conf_data.set('FUZZ_ENABLED', 'enabled')
@@ -893,3 +860,12 @@ install_emptydir('var/run/kea')
 
 # Print the setup report.
 message(run_command(['cat', CONFIG_REPORT], check: true).stdout())
+
+# Install meson-info
+if fs.is_dir(TOP_BUILD_DIR / 'meson-info')
+    install_subdir(
+        TOP_BUILD_DIR / 'meson-info',
+        install_dir: DATADIR / 'kea',
+        strip_directory: false,
+    )
+endif
