@@ -31,7 +31,7 @@ executable(
     dependencies: [NETCONF_DEP, CRYPTO_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
-    install_dir: 'sbin',
+    install_dir: SBINDIR,
     link_with: [netconf_lib] + LIBS_BUILT_SO_FAR,
     override_options: ['cpp_std=c++20'],
 )

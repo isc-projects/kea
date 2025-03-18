@@ -6,7 +6,7 @@ kea_pgsql_lib = shared_library(
     'kea-pgsql',
     'pgsql_connection.cc',
     'pgsql_exchange.cc',
-    cpp_args: [f'-DKEA_ADMIN="@PREFIX@/@SBINDIR@/kea-admin"'],
+    cpp_args: [f'-DKEA_ADMIN="@KEA_ADMIN_INSTALLED@"'],
     dependencies: [POSTGRESQL_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,

@@ -1,9 +1,9 @@
 keactrl_conf_data = configuration_data()
 keactrl_conf_data.set('prefix', PREFIX)
-keactrl_conf_data.set('sysconfdir', PREFIX / SYSCONFDIR)
+keactrl_conf_data.set('sysconfdir', '${prefix}/@SYSCONFDIR@')
 keactrl_conf_data.set('PACKAGE', 'kea')
-keactrl_conf_data.set('exec_prefix', PREFIX)
-keactrl_conf_data.set('sbindir', PREFIX / SBINDIR)
+keactrl_conf_data.set('exec_prefix', '${prefix}')
+keactrl_conf_data.set('sbindir', '${prefix}/' + SBINDIR)
 if NETCONF_DEP.found()
     keactrl_conf_data.set('HAVE_NETCONF', 'yes')
 else

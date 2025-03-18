@@ -6,7 +6,7 @@ kea_mysql_lib = shared_library(
     'kea-mysql',
     'mysql_binding.cc',
     'mysql_connection.cc',
-    cpp_args: [f'-DKEA_ADMIN="@PREFIX@/@SBINDIR@/kea-admin"'],
+    cpp_args: [f'-DKEA_ADMIN="@KEA_ADMIN_INSTALLED@"'],
     dependencies: [MYSQL_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,

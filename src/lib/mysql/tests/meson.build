@@ -14,7 +14,7 @@ kea_mysql_tests = executable(
     'run_unittests.cc',
     cpp_args: [
         f'-DTEST_CA_DIR="@TEST_CA_DIR@"',
-        f'-DKEA_ADMIN="@TOP_BUILD_DIR@/src/bin/admin/kea-admin"',
+        f'-DKEA_ADMIN="@KEA_ADMIN_BUILT@"',
     ],
     dependencies: [GTEST_DEP, MYSQL_DEP],
     include_directories: [include_directories('.')] + INCLUDES,

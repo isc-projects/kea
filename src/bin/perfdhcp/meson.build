@@ -18,7 +18,7 @@ executable(
     'main.cc',
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
-    install_dir: 'sbin',
+    install_dir: SBINDIR,
     link_with: [perfdhcp_lib] + LIBS_BUILT_SO_FAR,
 )
 subdir('tests')

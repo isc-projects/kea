@@ -45,11 +45,15 @@ PREFIX = get_option('prefix')
 SBINDIR = get_option('sbindir')
 SYSCONFDIR = get_option('sysconfdir')
 
-DHCP_DATA_DIR = LOCALSTATEDIR / 'run/kea'
-DEFAULT_HOOKS_PATH = PREFIX / 'lib/kea/hooks'
-TEST_CA_DIR = TOP_SOURCE_DIR / 'src/lib/asiolink/testutils/ca'
 DATABASE_SCRIPTS_DIR = TOP_BUILD_DIR / 'src/share/database/scripts'
+DHCP_DATA_DIR = LOCALSTATEDIR / 'run/kea'
+DEFAULT_HOOKS_PATH = PREFIX / LIBDIR / 'kea/hooks'
+KEA_ADMIN_BUILT = TOP_BUILD_DIR / 'src/bin/lfc/kea-admin'
+KEA_ADMIN_INSTALLED = PREFIX / SBINDIR / 'kea-admin'
+KEA_LFC_BUILT = TOP_BUILD_DIR / 'src/bin/lfc/kea-lfc'
+KEA_LFC_INSTALLED = PREFIX / SBINDIR / 'kea-lfc'
 LEGAL_LOG_DIR = PREFIX / LOCALSTATEDIR / 'lib/kea'
+TEST_CA_DIR = TOP_SOURCE_DIR / 'src/lib/asiolink/testutils/ca'
 
 #### Build Options
 

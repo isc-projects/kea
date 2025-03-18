@@ -6,8 +6,8 @@ subdir('tests')
 
 fuzz_sources = ['fuzz.cc', 'fuzz.h']
 cpp_flags = [
-    f'-DKEA_LFC_INSTALLATION="@PREFIX@/sbin/kea-lfc"',
-    f'-DKEA_LFC_SOURCES="@TOP_BUILD_DIR@/src/bin/lfc/kea-lfc"',
+    f'-DKEA_LFC_INSTALLATION="@KEA_LFC_INSTALLED@"',
+    f'-DKEA_LFC_SOURCES="@KEA_LFC_BUILT@"',
 ]
 if FUZZING_WITH_CLUSTERFUZZLITE
     cpp_flags = ['-fsanitize=fuzzer', '-gdwarf-4']
