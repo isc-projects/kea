@@ -471,15 +471,16 @@ compile_args = []
 link_args = []
 
 # $ORIGIN documented at https://www.man7.org/linux/man-pages/man8/ld.so.8.html
-rpath = '$ORIGIN/../lib'
+rpath1 = '$ORIGIN/../lib'  # rpath for executables
+rpath2 = '$ORIGIN/../..'  # rpath for hook libraries
 if SYSTEM == 'darwin'
     compile_args += ['-D__APPLE_USE_RFC_3542']
     add_project_arguments('-D__APPLE_USE_RFC_3542', language: 'cpp')
-    link_arg = f'-Wl,-rpath,@rpath@'
+    link_arg = f'-Wl,-rpath,@rpath1@,-rpath,@rpath2@'
     link_args += [link_arg]
     add_project_link_arguments(link_arg, language: 'cpp')
 else
-    link_arg = f'-Wl,-rpath=@rpath@'
+    link_arg = f'-Wl,-rpath=@rpath1@,-rpath=@rpath2@'
     link_args += [link_arg]
     add_project_link_arguments(link_arg, language: 'cpp')
 endif
