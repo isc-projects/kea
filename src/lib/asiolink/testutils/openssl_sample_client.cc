@@ -11,9 +11,6 @@
 #include <config.h>
 
 #include <iostream>
-
-#ifdef HAVE_GENERIC_TLS_METHOD
-
 #include <cstdlib>
 #include <cstring>
 #include <functional>
@@ -177,11 +174,3 @@ int main(int argc, char* argv[])
 
   return 0;
 }
-#else // !HAVE_GENERIC_TLS_METHOD
-
-int main()
-{
-  std::cerr << "this tool requires recent boost version (>= 1.64)\n";
-  return 0;
-}
-#endif

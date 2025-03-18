@@ -322,12 +322,20 @@ if cpp.has_link_argument('-Wl,--no-undefined')
     endif
 endif
 
-result = cpp.run(
-    fs.read('compiler-checks/have-generic-tls-method.cc'),
-    name: 'HAVE_GENERIC_TLS_METHOD',
-    dependencies: [boost_dep, CRYPTO_DEP, threads_dep],
-)
-conf_data.set('HAVE_GENERIC_TLS_METHOD', result.returncode() == 0)
+if CRYPTO_DEP.name() == openssl.name()
+    cpp.run(
+        fs.read('compiler-checks/have-generic-tls-method.cc'),
+        name: 'HAVE_GENERIC_TLS_METHOD',
+        dependencies: [boost_dep, CRYPTO_DEP, threads_dep],
+        required: true,
+    )
+    cpp.run(
+        fs.read('compiler-checks/stream-truncated-error.cc'),
+        name: 'HAVE_STREAM_TRUNCATED_ERROR',
+        dependencies: [boost_dep, CRYPTO_DEP, threads_dep],
+        required: true,
+    )
+endif
 
 result = cpp.run(
     fs.read('compiler-checks/have-optreset.cc'),
@@ -360,13 +368,6 @@ if MYSQL_DEP.found()
     )
     conf_data.set('HAVE_MYSQL_GET_OPTION', result.returncode() == 0)
 endif
-
-result = cpp.run(
-    fs.read('compiler-checks/stream-truncated-error.cc'),
-    name: 'HAVE_STREAM_TRUNCATED_ERROR',
-    dependencies: [boost_dep, CRYPTO_DEP, threads_dep],
-)
-conf_data.set('HAVE_STREAM_TRUNCATED_ERROR', result.returncode() == 0)
 
 # TODO: implement when integrating with CI
 result = cpp.run(

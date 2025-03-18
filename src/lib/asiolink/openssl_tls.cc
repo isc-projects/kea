@@ -29,15 +29,7 @@ namespace asiolink {
 // the boost version is older than 1.64.0).
 TlsContext::TlsContext(TlsRole role)
     : TlsContextBase(role), cert_required_(true),
-#ifdef HAVE_GENERIC_TLS_METHOD
       context_(context::method::tls)
-#else
-#ifdef HAVE_TLS_1_2_METHOD
-      context_(context::method::tlsv12)
-#else
-      context_(context::method::tlsv1)
-#endif
-#endif
 {
     // Not leave the verify mode to OpenSSL default.
     setCertRequired(true);

@@ -14,9 +14,6 @@
 #include <config.h>
 
 #include <iostream>
-
-#ifdef HAVE_GENERIC_TLS_METHOD
-
 #include <cstdlib>
 #include <boost/bind/bind.hpp>
 
@@ -181,13 +178,3 @@ int main(int argc, char* argv[])
 
   return 0;
 }
-
-#else // !HAVE_GENERIC_TLS_METHOD
-
-int main()
-{
-  std::cerr << "this tool requires recent boost version (>= 1.64)\n";
-  return 0;
-}
-#endif
-

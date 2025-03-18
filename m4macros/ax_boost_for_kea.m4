@@ -75,6 +75,9 @@ if test "${boost_include_path}" ; then
         CPPFLAGS="$CPPFLAGS $BOOST_INCLUDES"
 fi
 
+# Requiring boost >= 1.66.
+AC_CHECK_HEADERS(boost/asio/io_context.hpp,,AC_MSG_ERROR([Missing boost asio io_context header: boost version must be at least 1.66]))
+
 # Some boost headers need the <utility> header to be included for some Boost versions under C++20.
 # Include it in all situations for simplicity.
 AC_CHECK_HEADERS(
@@ -88,6 +91,7 @@ AC_CHECK_HEADERS(
     boost/date_time/posix_time/posix_time_types.hpp             \
     boost/foreach.hpp                                           \
     boost/functional/hash.hpp                                   \
+    boost/integer/common_factor.hpp                             \
     boost/interprocess/sync/interprocess_upgradable_mutex.hpp   \
     boost/shared_ptr.hpp                                        \
     boost/system/error_code.hpp                                 \
@@ -97,10 +101,6 @@ AC_CHECK_HEADERS(
     #include <utility>
   ]]
 )
-
-AC_CHECK_HEADERS(boost/integer/common_factor.hpp)
-
-AC_CHECK_HEADERS(boost/asio/io_context.hpp,,AC_MSG_ERROR([Missing boost asio io_context header: boost version must be at least 1.66]))
 
 # Verify that the path does not include standard headers by mistake.
 # There are two regex.h headers: one is a standard system header (usually

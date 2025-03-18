@@ -25,9 +25,6 @@
 /* Whether gtest defines edit_distance::CreateUnifiedDiff */
 #mesondefine HAVE_CREATE_UNIFIED_DIFF
 
-/* Whether boost::asio::ssl::context::tls is available */
-#mesondefine HAVE_GENERIC_TLS_METHOD
-
 /* gss_str_to_oid is available */
 #mesondefine HAVE_GSS_STR_TO_OID
 
@@ -57,9 +54,6 @@
 
 /* Whether sockaddr has a sa_len member, and corresponding sin_len and sun_len */
 #mesondefine HAVE_SA_LEN
-
-/* Whether boost::asio::ssl::error::stream_truncated is available */
-#mesondefine HAVE_STREAM_TRUNCATED_ERROR
 
 /* Whether you have the <sys/filio.h> header file. */
 #mesondefine HAVE_SYS_FILIO_H
