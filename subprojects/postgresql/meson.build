@@ -3,7 +3,7 @@ postgresql = disabler()
 pg_config = find_program('pg_config', required: false)
 if pg_config.found()
     cppflags = run_command([pg_config, '--cppflags'], check: false)
-    includedir = run(command[pg_config, '--includedir'], check: false)
+    includedir = run_command([pg_config, '--includedir'], check: false)
     libs = run_command([pg_config, '--libs'], check: false)
     version = run_command([pg_config, '--version'], check: false)
     if cppflags.returncode() == 0 and includedir.returncode() == 0 and libs.returncode() == 0 and version.returncode() == 0
