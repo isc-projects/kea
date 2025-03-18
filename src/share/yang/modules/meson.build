@@ -4,7 +4,7 @@ endif
 
 subdir('utils')
 
-yangmodulesdir = f'@DATADIR@/kea/yang/modules'
+yangmodulesdir = DATADIR / 'kea/yang/modules'
 yangmodules_list = [
     'ietf-dhcpv6-client@2018-09-04.yang',
     'ietf-dhcpv6-options@2018-09-04.yang',

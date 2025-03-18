@@ -1,4 +1,4 @@
-mk_cfgrpt = f'@TOP_SOURCE_DIR@/tools/mk_cfgrpt.sh'
+mk_cfgrpt = TOP_SOURCE_DIR / 'tools/mk_cfgrpt.sh'
 config_report_cc = configure_file(
     input: CONFIG_REPORT,
     output: 'config_report.cc',

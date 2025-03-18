@@ -1,9 +1,9 @@
 keactrl_conf_data = configuration_data()
 keactrl_conf_data.set('prefix', PREFIX)
-keactrl_conf_data.set('sysconfdir', '${prefix}/' + SYSCONFDIR)
+keactrl_conf_data.set('sysconfdir', PREFIX / SYSCONFDIR)
 keactrl_conf_data.set('PACKAGE', 'kea')
-keactrl_conf_data.set('exec_prefix', '${prefix}')
-keactrl_conf_data.set('sbindir', '${prefix}/' + SBINDIR)
+keactrl_conf_data.set('exec_prefix', PREFIX)
+keactrl_conf_data.set('sbindir', PREFIX / SBINDIR)
 if NETCONF_DEP.found()
     keactrl_conf_data.set('HAVE_NETCONF', 'yes')
 else
@@ -13,7 +13,7 @@ keactrl_conf_data.set('EXTENDED_VERSION', PROJECT_VERSION + ' (tarball)')
 keactrl_conf_data.set('PACKAGE_VERSION', PROJECT_VERSION)
 keactrl_conf_data.set('runstatedir', '${prefix}/' + LOCALSTATEDIR + '/run')
 keactrl_conf_data.set('localstatedir', '${prefix}/' + LOCALSTATEDIR)
-kea_configfiles_destdir = f'@SYSCONFDIR@/kea'
+kea_configfiles_destdir = SYSCONFDIR / 'kea'
 configure_file(
     input: 'keactrl.conf.in',
     output: 'keactrl.conf',
@@ -26,7 +26,7 @@ configure_file(
     configuration: keactrl_conf_data,
     install_dir: SBINDIR,
 )
-path_replacer = f'@TOP_BUILD_DIR@/tools/path_replacer.sh'
+path_replacer = TOP_BUILD_DIR / 'tools/path_replacer.sh'
 configure_file(
     input: 'kea-dhcp4.conf.pre',
     output: 'kea-dhcp4.conf',

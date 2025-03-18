@@ -4,7 +4,7 @@ krb5 = disabler()
 krb5_config = find_program('krb5-config', required: false)
 
 check_heimdal = find_program(
-    f'@current_source_dir@/check-heimdal.sh',
+    current_source_dir / 'check-heimdal.sh',
     required: true,
 )
 if krb5_config.found()

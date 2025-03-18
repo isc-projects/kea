@@ -12,7 +12,7 @@ shell_unittest = configure_file(
     configuration: shell_tests_conf_data,
 )
 pythonpath = environment()
-pythonpath.append('PYTHONPATH', f'@TOP_BUILD_DIR@/src/bin/shell')
+pythonpath.append('PYTHONPATH', TOP_BUILD_DIR / 'src/bin/shell')
 test(
     'shell_unittest.py',
     shell_unittest,

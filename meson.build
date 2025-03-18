@@ -82,9 +82,9 @@ PYTHON = find_program('python3', 'python', required: true)
 SPHINX = find_program('sphinx-build', 'sphinx-build-3', required: false)
 XMLLINT = find_program('xmllint', required: false)
 
-CD_AND_RUN = find_program(f'@TOP_SOURCE_DIR@/scripts/cd-and-run.sh')
-ENV = find_program(f'@TOP_SOURCE_DIR@/scripts/env.sh')
-GRABBER = find_program(f'@TOP_SOURCE_DIR@/scripts/grabber.py')
+CD_AND_RUN = find_program(TOP_SOURCE_DIR / 'scripts/cd-and-run.sh')
+ENV = find_program(TOP_SOURCE_DIR / 'scripts/env.sh')
+GRABBER = find_program(TOP_SOURCE_DIR / 'scripts/grabber.py')
 KEA_MSG_COMPILER = disabler()
 
 #### Configuration Data
@@ -510,7 +510,10 @@ report_conf_data.set('TOP_BUILD_DIR', TOP_BUILD_DIR)
 report_conf_data.set('PACKAGE_NAME', 'kea')
 report_conf_data.set('PACKAGE_VERSION', PROJECT_VERSION)
 report_conf_data.set('PACKAGE_VERSION_TYPE', package_version_type)
-report_conf_data.set('EXTENDED_VERSION', f'@PROJECT_VERSION@ (@extended_version@)')
+report_conf_data.set(
+    'EXTENDED_VERSION',
+    f'@PROJECT_VERSION@ (@extended_version@)',
+)
 report_conf_data.set('OS_TYPE', OS_TYPE)
 report_conf_data.set('PREFIX', PREFIX)
 report_conf_data.set('HOOKS_DIR', DEFAULT_HOOKS_PATH)
@@ -730,7 +733,7 @@ endif
 
 run_target(
     'add-changelog-entry',
-    command: [f'@TOP_SOURCE_DIR@/changelog_unreleased/.add-entry.sh'],
+    command: [TOP_SOURCE_DIR / 'changelog_unreleased/.add-entry.sh'],
 )
 
 if cppcheck.found()
@@ -816,7 +819,7 @@ config_report_sh = configure_file(
 CONFIG_REPORT = configure_file(
     output: 'config.report',
     input: config_report_sh,
-    command: [f'@TOP_BUILD_DIR@/config-report.sh'],
+    command: [TOP_BUILD_DIR / 'config-report.sh'],
 )
 
 # TODO: Change to config.h.in when autotools are removed.

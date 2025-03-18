@@ -6,7 +6,7 @@ current_build_dir = meson.current_build_dir()
 current_source_dir = meson.current_source_dir()
 
 sphinxbuilddir = './_build'
-abs_sphinxbuilddir = f'@current_build_dir@/_build'
+abs_sphinxbuilddir = current_build_dir / '_build'
 
 sphinxopts = ['-v', '-E', '-a', '-W', f'-c @current_source_dir@']
 
@@ -46,7 +46,7 @@ endforeach
 
 man_sources = rst_man_sources + ['conf.py']
 
-api_dir = f'@TOP_SOURCE_DIR@/src/share/api'
+api_dir = TOP_SOURCE_DIR / 'src/share/api'
 list = run_command(GRABBER, api_dir, '*.json', check: true)
 api_files = list.stdout().strip().split('\n')
 
@@ -112,10 +112,10 @@ else
 endif
 doc_conf.set('man8s', ' '.join(man8s))
 doc_conf.set('PREFIX', PREFIX)
-docdir = f'@DATADIR@/doc/kea'
+docdir = DATADIR / 'doc/kea'
 doc_conf.set('docdir', docdir)
 doc_conf.set('INSTALL', INSTALL.full_path())
-mandir8 = f'@MANDIR@/man8/'
+mandir8 = MANDIR / 'man8'
 doc_conf.set('mandir8', mandir8)
 
 make_doc = configure_file(

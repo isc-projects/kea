@@ -3,7 +3,7 @@ configure_file(
     output: 'dictionary',
     copy: true,
     install: true,
-    install_dir: f'@SYSCONFDIR@/kea/radius',
+    install_dir: SYSCONFDIR / 'kea/radius',
 )
 dhcp_radius_lib = shared_library(
     'dhcp_radius',
