@@ -1,0 +1,3 @@
+[build]		andrei, fdupont
+	Add meson as a build system.
+	(Gitlab #3443, #3729, #3730, #3731)
