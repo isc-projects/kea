@@ -421,7 +421,7 @@ if result.returncode() == 0
     conf_data.set('LIBC_MUSL', d.endswith('-musl'))
 endif
 
-if KRB5_DEP.found() and KRB5_DEP.get_variable('vendor') == 'Heimdal'
+if KRB5_DEP.found() and KRB5_DEP.get_variable('vendor').contains('Heimdal')
     conf_data.set('WITH_HEIMDAL', true)
 endif
 
