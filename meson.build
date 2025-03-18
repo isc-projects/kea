@@ -539,6 +539,7 @@ if result.returncode() == 0
 else
     report_conf_data.set('CXX_VERSION', 'unknown')
 endif
+# The required keyword in cpp.run() is an 1.5.0 feature.
 result = cpp.run(
     fs.read('compiler-checks/get-cpp-standard.cc'),
     name: 'Get cpp standard',
@@ -566,6 +567,7 @@ else
 endif
 if CRYPTO_DEP.name() == botan.name()
     report_conf_data.set('CRYPTO_NAME', 'Botan')
+    report_conf_data.set('SPACES', '             ')
     result = cpp.run(
         fs.read('compiler-checks/get-botan-version.cc'),
         name: 'Get Botan version',
@@ -582,6 +584,7 @@ if CRYPTO_DEP.name() == botan.name()
     report_conf_data.set('CRYPTO_VERSION', version)
 elif CRYPTO_DEP.name() == openssl.name()
     report_conf_data.set('CRYPTO_NAME', 'OpenSSL')
+    report_conf_data.set('SPACES', '           ')
     result = cpp.run(
         fs.read('compiler-checks/get-openssl-version.cc'),
         name: 'Get OpenSSL version',
@@ -726,6 +729,11 @@ if FUZZ_OPT.enabled()
     report_conf_data.set('FUZZ_ENABLED', 'enabled')
 else
     report_conf_data.set('FUZZ_ENABLED', 'disabled')
+endif
+if valgrind.found()
+    report_conf_data.set('VALGRIND', valgrind.full_path())
+else
+    report_conf_data.set('VALGRIND', 'no')
 endif
 if have_afl
     report_conf_data.set('HAVE_AFL', 'yes')

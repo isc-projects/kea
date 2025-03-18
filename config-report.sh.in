@@ -42,8 +42,7 @@ Python:
 
 Boost:             @BOOST_VERSION@
 
-@CRYPTO_NAME@:
-  VERSION:         @CRYPTO_VERSION@
+@CRYPTO_NAME@:@SPACES@@CRYPTO_VERSION@
 
 Log4cplus:         @LOG4CPLUS_VERSION@
 
@@ -111,7 +110,8 @@ fi
 
 add_to_report '
 Developer:
-  Tests:            @TESTS_ENABLED@
-  Fuzzing:          @FUZZ_ENABLED@
-  AFL:              @HAVE_AFL@
+  Tests:           @TESTS_ENABLED@
+  Fuzzing:         @FUZZ_ENABLED@
+  Valgrind:        @VALGRIND@
+  AFL:             @HAVE_AFL@
 '
