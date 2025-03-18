@@ -542,10 +542,11 @@ endif
 result = cpp.run(
     fs.read('compiler-checks/get-cpp-standard.cc'),
     name: 'Get cpp standard',
-    required: true,
 )
 if result.returncode() == 0
     report_conf_data.set('CXX_STANDARD', result.stdout().strip())
+else
+    error('Cpp standard is unknown')
 endif
 report_conf_data.set('CXX_ARGS', ' '.join(compile_args))
 report_conf_data.set('LD_ID', cpp.get_linker_id())
@@ -652,10 +653,42 @@ if NETCONF_DEP.found()
         'SYSREPO_PREFIX',
         NETCONF_DEP.get_variable('sysrepo_prefix', default_value: 'unknown'),
     )
+    report_conf_data.set(
+        'LIBYANG_VERSION',
+        NETCONF_DEP.get_variable(
+            'libyang_version',
+            default_value: 'unknown version',
+        ),
+    )
+    report_conf_data.set(
+        'LIBYANGCPP_VERSION',
+        NETCONF_DEP.get_variable(
+            'libyangcpp_version',
+            default_value: 'unknown version',
+        ),
+    )
+    report_conf_data.set(
+        'SYSREPO_VERSION',
+        NETCONF_DEP.get_variable(
+            'sysrepo_version',
+            default_value: 'unknown version',
+        ),
+    )
+    report_conf_data.set(
+        'SYSREPOCPP_VERSION',
+        NETCONF_DEP.get_variable(
+            'sysrepocpp_version',
+            default_value: 'unknown version',
+        ),
+    )
 else
     report_conf_data.set('HAVE_NETCONF', 'no')
     report_conf_data.set('LIBYANG_PREFIX', 'no')
     report_conf_data.set('SYSREPO_PREFIX', 'no')
+    report_conf_data.set('LIBYANG_VERSION', 'no')
+    report_conf_data.set('LIBYANGCPP_VERSION', 'no')
+    report_conf_data.set('SYSREPO_VERSION', 'no')
+    report_conf_data.set('SYSREPOCPP_VERSION', 'no')
 endif
 if FUZZ_OPT.enabled() or TESTS_OPT.enabled()
     report_conf_data.set('HAVE_GTEST', 'yes')
@@ -861,11 +894,14 @@ install_emptydir('var/run/kea')
 # Print the setup report.
 message(run_command(['cat', CONFIG_REPORT], check: true).stdout())
 
-# Install meson-info
-if fs.is_dir(TOP_BUILD_DIR / 'meson-info')
-    install_subdir(
-        TOP_BUILD_DIR / 'meson-info',
-        install_dir: DATADIR / 'kea',
-        strip_directory: false,
-    )
-endif
+# Copy the meson.info directory.
+copy_info_conf = configuration_data()
+copy_info_conf.set('SOURCE', TOP_BUILD_DIR / 'meson-info')
+copy_info_conf.set('TARGET', PREFIX / DATADIR / 'kea/meson-info')
+copy_info = configure_file(
+    input: 'tools/copy-dir.sh.in',
+    output: 'copy-meson-info.sh',
+    configuration: copy_info_conf,
+)
+meson.add_install_script(copy_info)
+
