@@ -7,6 +7,6 @@ KEA_MSG_COMPILER = executable(
     'message.cc',
     include_directories: INCLUDES,
     install: true,
-    install_dir: 'bin',
+    install_dir: BINDIR,
     link_with: LIBS_BUILT_SO_FAR,
 )

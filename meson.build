@@ -37,6 +37,7 @@ python_module = import('python')
 TOP_BUILD_DIR = meson.current_build_dir()
 TOP_SOURCE_DIR = meson.current_source_dir()
 
+BINDIR = get_option('bindir')
 DATADIR = get_option('datadir')
 LIBDIR = get_option('libdir')
 LOCALSTATEDIR = get_option('localstatedir')
