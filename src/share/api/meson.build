@@ -1,7 +1,7 @@
 list = run_command(
     GRABBER,
     TOP_SOURCE_DIR / 'src/share/api',
-    '*.json',
+    '[a-z]*.json',
     check: true,
 )
 api_files = list.stdout().strip().split('\n')
