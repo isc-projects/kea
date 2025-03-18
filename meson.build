@@ -894,14 +894,12 @@ install_emptydir('var/run/kea')
 # Print the setup report.
 message(run_command(['cat', CONFIG_REPORT], check: true).stdout())
 
-# Copy the meson.info directory.
-copy_info_conf = configuration_data()
-copy_info_conf.set('SOURCE', TOP_BUILD_DIR / 'meson-info')
-copy_info_conf.set('TARGET', PREFIX / DATADIR / 'kea/meson-info')
-copy_info = configure_file(
-    input: 'tools/copy-dir.sh.in',
-    output: 'copy-meson-info.sh',
-    configuration: copy_info_conf,
-)
-meson.add_install_script(copy_info)
-
+# Copy the meson.info directory during installation.
+if fs.is_dir(TOP_BUILD_DIR / 'meson-info')
+    meson.add_install_script(
+        'cp',
+        '-r',
+        TOP_BUILD_DIR / 'meson-info',
+        PREFIX / DATADIR / 'kea/meson-info',
+    )
+endif

@@ -1,7 +1,0 @@
-#!/bin/sh
-
-set -eu
-
-if test -d @SOURCE@; then
-    cp -r @SOURCE@ @TARGET@
-fi
