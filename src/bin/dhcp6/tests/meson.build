@@ -140,7 +140,7 @@ kea_dhcp6_tests = executable(
         f'-DCFG_EXAMPLES="@TOP_SOURCE_DIR@/doc/examples/kea6"',
         f'-DDHCP_DATA_DIR="@current_build_dir@"',
         f'-DSYNTAX_FILE="@current_source_dir@/../dhcp6_parser.yy"',
-        f'-DKEA_LFC_EXECUTABLE="@KEA_LFC@"',
+        f'-DKEA_LFC_EXECUTABLE="@TOP_BUILD_DIR@/src/bin/lfc/kea-lfc"',
         f'-DTEST_CA_DIR="@TEST_CA_DIR@"',
     ],
     dependencies: dhcp6_tests_deps,

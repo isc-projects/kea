@@ -93,7 +93,7 @@ kea_dhcpsrv_lib = shared_library(
     sources,
     cpp_args: [
         f'-DDHCP_DATA_DIR="@DHCP_DATA_DIR@"',
-        f'-DKEA_LFC_EXECUTABLE="@KEA_LFC@"',
+        f'-DKEA_LFC_EXECUTABLE="@PREFIX@/@SBINDIR@/kea-lfc"',
     ],
     dependencies: [CRYPTO_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
