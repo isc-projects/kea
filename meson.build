@@ -373,13 +373,11 @@ result = cpp.run(
 FUZZING_WITH_CLUSTERFUZZLITE = result.returncode() == 0
 
 have_afl = false
-if FUZZ_OPT.enabled()
-    result = cpp.run(fs.read('compiler-checks/have-afl.cc'), name: 'HAVE_AFL')
-    if result.returncode() == 0
-        have_afl = true
-    endif
-    conf_data.set('HAVE_AFL', have_afl)
+result = cpp.run(fs.read('compiler-checks/have-afl.cc'), name: 'HAVE_AFL')
+if result.returncode() == 0
+    have_afl = true
 endif
+conf_data.set('HAVE_AFL', have_afl)
 
 if GTEST_DEP.found()
     result = cpp.run(
