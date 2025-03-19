@@ -12,4 +12,4 @@ make_devel = configure_file(
     output: 'make-devel.sh',
     configuration: make_devel_conf_data,
 )
-run_target('devel', command: [CD_AND_RUN, current_source_dir, make_devel])
+run_target('devel', command: make_devel)

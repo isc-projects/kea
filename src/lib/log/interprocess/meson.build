@@ -2,7 +2,7 @@ kea_log_interprocess_lib = shared_library(
     'kea-log-interprocess',
     'interprocess_sync_file.cc',
     'interprocess_sync_null.cc',
-    cpp_args: [f'-DLOCKFILE_DIR="@PREFIX@/@LOCALSTATEDIR@/run/kea"'],
+    cpp_args: [f'-DLOCKFILE_DIR="@RUNSTATEDIR_INSTALLED@"'],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: LIBDIR,

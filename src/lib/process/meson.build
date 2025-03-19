@@ -12,7 +12,7 @@ kea_process_lib = shared_library(
     'log_parser.cc',
     'process_messages.cc',
     'redact_config.cc',
-    cpp_args: [f'-DPIDFILE_DIR="@PREFIX@/@LOCALSTATEDIR@/run/kea"'],
+    cpp_args: [f'-DPIDFILE_DIR="@RUNSTATEDIR_INSTALLED@"'],
     dependencies: [GTEST_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,

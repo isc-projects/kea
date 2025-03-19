@@ -48,13 +48,14 @@ SBINDIR = get_option('sbindir')
 SYSCONFDIR = get_option('sysconfdir')
 
 DATABASE_SCRIPTS_DIR = TOP_BUILD_DIR / 'src/share/database/scripts'
-DHCP_DATA_DIR = LOCALSTATEDIR / 'run/kea'
 DEFAULT_HOOKS_PATH = PREFIX / LIBDIR / 'kea/hooks'
 KEA_ADMIN_BUILT = TOP_BUILD_DIR / 'src/bin/lfc/kea-admin'
 KEA_ADMIN_INSTALLED = PREFIX / SBINDIR / 'kea-admin'
 KEA_LFC_BUILT = TOP_BUILD_DIR / 'src/bin/lfc/kea-lfc'
 KEA_LFC_INSTALLED = PREFIX / SBINDIR / 'kea-lfc'
 LEGAL_LOG_DIR = PREFIX / LOCALSTATEDIR / 'lib/kea'
+RUNSTATEDIR = LOCALSTATEDIR / 'run/kea'
+RUNSTATEDIR_INSTALLED = PREFIX / RUNSTATEDIR
 TEST_CA_DIR = TOP_SOURCE_DIR / 'src/lib/asiolink/testutils/ca'
 
 #### Build Options
@@ -465,7 +466,7 @@ conf_data.set('EXTENDED_VERSION', f'"@PROJECT_VERSION@ (@extended_version@)"')
 if PROJECT_VERSION.split('.')[1].to_int() % 2 == 0
     package_version_type = 'stable'
 else
-    package_version_type = 'stable'
+    package_version_type = 'development'
 endif
 conf_data.set('PACKAGE_VERSION_TYPE', f'"@package_version_type@"')
 
@@ -898,8 +899,7 @@ top_docs = [
     'platforms.rst',
 ]
 install_data(top_docs, install_dir: DATADIR / 'doc/kea')
-# No builtin option for 'var/run'.
-install_emptydir(LOCALSTATEDIR / 'run/kea')
+install_emptydir(RUNSTATEDIR)
 
 # Print the setup report.
 message(run_command(['cat', CONFIG_REPORT], check: true).stdout())

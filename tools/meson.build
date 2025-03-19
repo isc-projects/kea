@@ -15,7 +15,7 @@ if AWK.found()
 else
     tools_conf_data.set('AWK', 'awk')
 endif
-configure_file(
+PATH_REPLACER = configure_file(
     input: 'path_replacer.sh.in',
     output: 'path_replacer.sh',
     configuration: tools_conf_data,
