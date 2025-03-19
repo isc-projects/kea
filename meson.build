@@ -526,12 +526,7 @@ report_conf_data.set('HOOKS_DIR', DEFAULT_HOOKS_PATH)
 report_conf_data.set('PREMIUM', premium ? 'yes' : 'no')
 report_conf_data.set('BUILD_OPTIONS', meson.build_options())
 report_conf_data.set('MESON_VERSION', meson.version())
-if fs.is_dir(TOP_BUILD_DIR / 'meson-info')
-    MESON_INFO = PREFIX / DATADIR / 'kea/meson-info'
-else
-    MESON_INFO = 'not installed'
-endif
-report_conf_data.set('MESON_INFO', MESON_INFO)
+report_conf_data.set('MESON_INFO', DATADIR / 'kea/meson-info')
 report_conf_data.set('CXX', ' '.join(cpp.cmd_array()))
 report_conf_data.set('CXX_ID', cpp.get_id())
 result = run_command(cpp, '--version', check: false)
