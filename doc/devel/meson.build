@@ -6,6 +6,7 @@ current_build_dir = meson.current_build_dir()
 current_source_dir = meson.current_source_dir()
 make_devel_conf_data = configuration_data()
 make_devel_conf_data.set('builddir', current_build_dir)
+make_devel_conf_data.set('srcdir', current_source_dir)
 make_devel_conf_data.set('PACKAGE_VERSION', PROJECT_VERSION)
 make_devel = configure_file(
     input: 'make-devel.sh.in',
