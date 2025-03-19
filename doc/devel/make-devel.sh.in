@@ -2,9 +2,9 @@
 
 set -euv
 
-cd "@builddir@"
+cd '@srcdir@'
 
-mkdir -p html
+mkdir -p '@builddir@/html'
 
-(cat "@srcdir@/Doxyfile"; echo PROJECT_NUMBER=@PACKAGE_VERSION@) | doxygen - > html/doxygen.log 2> html/doxygen-error.log
-echo "$(grep -c ': warning:' html/doxygen-error.log)" warnings/errors detected.
+(cat '@srcdir@/Doxyfile'; echo PROJECT_NUMBER=@PACKAGE_VERSION@) | doxygen - > '@builddir@/html/doxygen.log' 2> '@builddir@/html/doxygen-error.log'
+echo "$(grep -c ': warning:' '@builddir@/html/doxygen-error.log')" warnings/errors detected.
