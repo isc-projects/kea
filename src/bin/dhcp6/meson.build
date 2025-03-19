@@ -21,6 +21,8 @@ kea_dhcp6 = executable(
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: SBINDIR,
+    install_rpath: INSTALL_RPATH,
+    build_rpath: BUILD_RPATH,
     link_with: [dhcp6_lib] + LIBS_BUILT_SO_FAR,
 )
 subdir('tests')

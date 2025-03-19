@@ -32,6 +32,8 @@ executable(
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: SBINDIR,
+    install_rpath: INSTALL_RPATH,
+    build_rpath: BUILD_RPATH,
     link_with: [netconf_lib] + LIBS_BUILT_SO_FAR,
     override_options: ['cpp_std=c++20'],
 )

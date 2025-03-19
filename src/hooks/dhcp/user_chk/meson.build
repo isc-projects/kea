@@ -13,7 +13,9 @@ dhcp_user_chk_lib = shared_library(
     'version.cc',
     include_directories: [include_directories('.')] + INCLUDES,
     install: false,
-    install_dir: LIBDIR / 'kea/hooks',
+    install_dir: HOOKS_PATH,
+    install_rpath: INSTALL_RPATH,
+    build_rpath: BUILD_RPATH,
     link_with: LIBS_BUILT_SO_FAR,
     name_suffix: 'so',
 )

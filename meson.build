@@ -48,7 +48,8 @@ SBINDIR = get_option('sbindir')
 SYSCONFDIR = get_option('sysconfdir')
 
 DATABASE_SCRIPTS_DIR = TOP_BUILD_DIR / 'src/share/database/scripts'
-DEFAULT_HOOKS_PATH = PREFIX / LIBDIR / 'kea/hooks'
+HOOKS_PATH = LIBDIR / 'kea/hooks'
+DEFAULT_HOOKS_PATH = PREFIX / HOOKS_PATH
 KEA_ADMIN_BUILT = TOP_BUILD_DIR / 'src/bin/lfc/kea-admin'
 KEA_ADMIN_INSTALLED = PREFIX / SBINDIR / 'kea-admin'
 KEA_LFC_BUILT = TOP_BUILD_DIR / 'src/bin/lfc/kea-lfc'
@@ -472,22 +473,18 @@ conf_data.set('PACKAGE_VERSION_TYPE', f'"@package_version_type@"')
 
 #### System-specific Compiler Flags
 
-compile_args = []
-link_args = []
+compile_args = get_option('cpp_args')
+link_args = get_option('cpp_link_args')
 
 # $ORIGIN documented at https://www.man7.org/linux/man-pages/man8/ld.so.8.html
-rpath1 = '$ORIGIN/../lib'  # rpath for executables
-rpath2 = '$ORIGIN/../..'  # rpath for hook libraries
+# EXECUTABLE_RPATH = f'$ORIGIN/../@LIBDIR@'
+# HOOK_RPATH = '$ORIGIN/../..'
+INSTALL_RPATH = PREFIX / LIBDIR
+BUILD_RPATH = TOP_BUILD_DIR / 'src/lib'
+
 if SYSTEM == 'darwin'
-    compile_args += ['-D__APPLE_USE_RFC_3542']
+    compile_args += '-D__APPLE_USE_RFC_3542'
     add_project_arguments('-D__APPLE_USE_RFC_3542', language: 'cpp')
-    link_arg = f'-Wl,-rpath,@rpath1@,-rpath,@rpath2@'
-    link_args += [link_arg]
-    add_project_link_arguments(link_arg, language: 'cpp')
-else
-    link_arg = f'-Wl,-rpath=@rpath1@,-rpath=@rpath2@'
-    link_args += [link_arg]
-    add_project_link_arguments(link_arg, language: 'cpp')
 endif
 
 premium = fs.is_dir('premium')

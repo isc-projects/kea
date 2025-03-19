@@ -12,7 +12,9 @@ dhcp_forensic_log_lib = shared_library(
     dependencies: [CRYPTO_DEP, MYSQL_DEP, POSTGRESQL_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
-    install_dir: LIBDIR / 'kea/hooks',
+    install_dir: HOOKS_PATH,
+    install_rpath: INSTALL_RPATH,
+    build_rpath: BUILD_RPATH,
     link_with: LIBS_BUILT_SO_FAR,
     name_suffix: 'so',
 )

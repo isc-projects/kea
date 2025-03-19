@@ -11,6 +11,8 @@ kea_lfc = executable(
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: SBINDIR,
+    install_rpath: INSTALL_RPATH,
+    build_rpath: BUILD_RPATH,
     link_with: [lfc_lib] + LIBS_BUILT_SO_FAR,
 )
 subdir('tests')
