@@ -30,5 +30,5 @@ configure_file(
     output: 'reinstall.sh',
     configuration: yang_utils_conf_data,
     install: true,
-    install_dir: 'share/kea/yang/modules/utils',
+    install_dir: DATADIR / 'kea/yang/modules/utils',
 )

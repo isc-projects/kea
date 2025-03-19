@@ -39,6 +39,7 @@ TOP_SOURCE_DIR = meson.current_source_dir()
 
 BINDIR = get_option('bindir')
 DATADIR = get_option('datadir')
+INCLUDEDIR = get_option('includedir')
 LIBDIR = get_option('libdir')
 LOCALSTATEDIR = get_option('localstatedir')
 MANDIR = get_option('mandir')
@@ -840,7 +841,7 @@ configure_file(
     output: 'config.h',
     configuration: conf_data,
     install: true,
-    install_dir: 'include/kea',
+    install_dir: INCLUDEDIR / 'kea',
 )
 
 # TODO: Change to kea_version.h.in when autotools are removed.
@@ -849,7 +850,7 @@ configure_file(
     output: 'kea_version.h',
     configuration: conf_data,
     install: true,
-    install_dir: 'include/kea',
+    install_dir: INCLUDEDIR / 'kea',
 )
 
 #### Build Starts Here
@@ -897,7 +898,8 @@ top_docs = [
     'platforms.rst',
 ]
 install_data(top_docs, install_dir: DATADIR / 'doc/kea')
-install_emptydir('var/run/kea')
+# No builtin option for 'var/run'.
+install_emptydir(LOCALSTATEDIR / 'run/kea')
 
 # Print the setup report.
 message(run_command(['cat', CONFIG_REPORT], check: true).stdout())
