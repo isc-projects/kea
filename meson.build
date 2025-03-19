@@ -323,18 +323,19 @@ if cpp.has_link_argument('-Wl,--no-undefined')
 endif
 
 if CRYPTO_DEP.name() == openssl.name()
-    cpp.run(
+    return1 = cpp.run(
         fs.read('compiler-checks/have-generic-tls-method.cc'),
         name: 'HAVE_GENERIC_TLS_METHOD',
         dependencies: [boost_dep, CRYPTO_DEP, threads_dep],
-        required: true,
     )
-    cpp.run(
+    return2 = cpp.run(
         fs.read('compiler-checks/stream-truncated-error.cc'),
         name: 'HAVE_STREAM_TRUNCATED_ERROR',
         dependencies: [boost_dep, CRYPTO_DEP, threads_dep],
-        required: true,
     )
+    if return1.returncode() != 0 or return2.returncode()
+        error("Boost TLS support broken.")
+    endif
 endif
 
 result = cpp.run(
