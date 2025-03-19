@@ -905,11 +905,16 @@ install_emptydir(RUNSTATEDIR)
 message(run_command(['cat', CONFIG_REPORT], check: true).stdout())
 
 # Copy the meson.info directory during installation.
-if fs.is_dir(TOP_BUILD_DIR / 'meson-info')
-    meson.add_install_script(
-        'cp',
-        '-r',
-        TOP_BUILD_DIR / 'meson-info',
-        PREFIX / DATADIR / 'kea/meson-info',
-    )
-endif
+install_meson_info = configure_file(
+    input: 'install-meson-info.sh.in',
+    output: 'install-meson-info.sh',
+    configuration: configuration_data(
+        {
+            'INSTALL': INSTALL.full_path(),
+            'PREFIX': PREFIX,
+            'TOP_BUILD_DIR': TOP_BUILD_DIR,
+            'DATADIR': DATADIR,
+        },
+    ),
+)
+meson.add_install_script(install_meson_info)

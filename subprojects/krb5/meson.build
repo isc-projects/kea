@@ -22,7 +22,7 @@ if krb5_config.found()
             compile_args: cflags.stdout().split(),
             link_args: libs.stdout().split(),
             version: krb5_version,
-            variables: { 'vendor': vendor, },
+            variables: {'vendor': vendor},
         )
     endif
 endif
