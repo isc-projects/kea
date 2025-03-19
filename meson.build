@@ -334,7 +334,7 @@ if CRYPTO_DEP.name() == openssl.name()
         dependencies: [boost_dep, CRYPTO_DEP, threads_dep],
     )
     if return1.returncode() != 0 or return2.returncode()
-        error("Boost TLS support broken.")
+        error('Boost TLS support broken.')
     endif
 endif
 
