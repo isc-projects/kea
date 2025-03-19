@@ -333,7 +333,7 @@ if CRYPTO_DEP.name() == openssl.name()
         name: 'HAVE_STREAM_TRUNCATED_ERROR',
         dependencies: [boost_dep, CRYPTO_DEP, threads_dep],
     )
-    if return1.returncode() != 0 or return2.returncode()
+    if return1.returncode() != 0 or return2.returncode() != 0
         error('Boost TLS support broken.')
     endif
 endif
