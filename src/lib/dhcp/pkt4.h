@@ -334,7 +334,7 @@ public:
     /// @brief Add an option.
     ///
     /// @note: to avoid throwing when adding multiple options
-    /// with the same type use @ref Pkt::addOption.
+    /// with the same type use @ref isc::dhcp::Pkt::addOption.
     ///
     /// @throw BadValue if option with that type is already present.
     ///

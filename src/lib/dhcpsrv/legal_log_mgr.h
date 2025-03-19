@@ -75,12 +75,14 @@ public:
     /// consistent.
     ///
     /// @param parameters The library parameters.
+    /// @param [out] map The parameter map.
     static void parseFile(const isc::data::ConstElementPtr& parameters, isc::db::DatabaseConnection::ParameterMap& map);
 
     /// @brief Parse extra parameters which are not related to backend
     /// connection.
     ///
     /// @param parameters The library parameters.
+    /// @param [out] map The parameter map.
     static void parseExtraParameters(const isc::data::ConstElementPtr& parameters, isc::db::DatabaseConnection::ParameterMap& map);
 
     /// @brief Opens the store.
@@ -211,9 +213,10 @@ public:
 
     /// @brief Sets the timestamp format used for logging.
     ///
-    /// @param format Desired format for the string. Permissible formatting is
-    /// the one supported by strftime plus the '%Q' extra format which adds the
-    /// microseconds subunits. The default is: "%Y-%m-%d %H:%M:%S %Z".
+    /// @param timestamp_format Desired format for the string.
+    /// Permissible formatting is the one supported by strftime plus
+    /// the '%Q' extra format which adds the microseconds subunits.
+    /// The default is: "%Y-%m-%d %H:%M:%S %Z".
     void setTimestampFormat(const std::string& timestamp_format);
 
     /// @brief Gets the timestamp format used for logging.
@@ -238,7 +241,7 @@ public:
     ///
     /// Sets the backend parameters
     ///
-    /// @param parameter Parameters of the backend.
+    /// @param parameters Parameters of the backend.
     virtual void setParameters(isc::db::DatabaseConnection::ParameterMap parameters) {
         parameters_ = parameters;
     }

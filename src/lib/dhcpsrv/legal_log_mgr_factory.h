@@ -111,9 +111,9 @@ public:
 
     /// @brief Gets the forensic backend manager parameters.
     ///
-    /// @param parameters database parameters.
     /// @param id the forensic backend manager ID
     /// (default value is 0 and it is used only in unit tests).
+    /// @return database parameters.
     static isc::db::DatabaseConnection::ParameterMap getParameters(ManagerID id = 0);
 
     /// @brief Delete a forensic backend manager.
