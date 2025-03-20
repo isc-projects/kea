@@ -30,7 +30,7 @@ list = run_command(GRABBER, current_source_dir / 'arm', '*.rst', check: true)
 rst_arm_sources += list.stdout().strip().split('\n')
 
 list = run_command(GRABBER, current_source_dir / 'grammar', '*.rst', check: true)
-rst_arm_sources = list.stdout().strip().split('\n')
+rst_arm_sources += list.stdout().strip().split('\n')
 
 main_sources = rst_arm_sources + ['conf.py'] + static_sources
 
