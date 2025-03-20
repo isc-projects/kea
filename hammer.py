@@ -277,6 +277,7 @@ def blue(txt):
 def get_system_revision():
     """Return tuple containing system name and its revision."""
     system = platform.system()
+    revision = 'unknown'
     if system == 'Linux':
         system, revision = None, None
         if not os.path.exists('/etc/os-release'):
@@ -369,10 +370,13 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
         # if sudo is used and env is overridden then to preserve env add -E to sudo
         cmd = cmd.replace('sudo', 'sudo -E')
 
+    log_file = None
     if log_file_path:
         with open(log_file_path, "wb", encoding='utf-8') as file:
             log_file = file.read()
 
+    exitcode = 1
+    output = ''
     for attempt in range(attempts):
         if interactive:
             # Issue: [B602:subprocess_popen_with_shell_equals_true] subprocess call with shell=True identified,
@@ -390,17 +394,20 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
                     if timeout is not None:
                         pipe.wait(timeout)
                     stdout, _ = pipe.communicate()
+                    if stdout is not None:
+                        output += stdout.decode('utf-8')
                 except subprocess.TimeoutExpired as e:
                     pipe.kill()
                     stdout2, _ = pipe.communicate()
-                    stdout += stdout2
+                    if stdout2 is not None:
+                        output += stdout2.decode('utf-8')
                     raise ExecutionError(f'Execution timeout: {e}, cmd: {cmd}') from e
                 exitcode = pipe.returncode
                 if capture:
                     output = stdout.decode('utf-8')
                 if not quiet:
                     print(stdout.decode('utf-8'))
-                if log_file_path is not None:
+                if log_file is not None:
                     log_file.write(stdout)
 
         if exitcode == 0:
@@ -408,14 +415,14 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
 
         if attempt < attempts - 1:
             txt = 'command failed, retry, attempt %d/%d' % (attempt, attempts)
-            if log_file_path:
+            if log_file is not None:
                 txt_to_file = '\n\n[HAMMER] %s\n\n\n' % txt
                 log_file.write(txt_to_file.encode('ascii'))
             log.info(txt)
             if sleep_time_after_attempt:
                 time.sleep(sleep_time_after_attempt)
 
-    if log_file_path:
+    if log_file is not None:
         log_file.close()
 
     if exitcode != 0 and raise_error:
@@ -424,7 +431,7 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
         raise ExecutionError("The command return non-zero exitcode %s, cmd: '%s'" % (exitcode, cmd))
 
     if capture:
-        return exitcode, output
+        return exitcode, output.strip()
     return exitcode
 
 
@@ -663,6 +670,8 @@ class VagrantEnv():
             vagrantfile_tpl = VBOX_VAGRANTFILE_TPL
         elif self.provider == "lxc":
             vagrantfile_tpl = LXC_VAGRANTFILE_TPL
+        else:
+            raise UnexpectedError('Unknown vagrantfile_tpl')
 
         vagrantfile = vagrantfile_tpl.format(image_tpl=self.image_tpl,
                                              name=self.name,
@@ -843,6 +852,7 @@ class VagrantEnv():
     def upload(self, src):
         """Upload src to Vagrant system, home folder."""
         attempt = 4
+        exitcode = 1
         while attempt > 0:
             exitcode = execute('vagrant upload %s' % src, cwd=self.vagrant_dir, dry_run=self.dry_run, raise_error=False)
             if exitcode == 0:
@@ -859,6 +869,7 @@ class VagrantEnv():
             return 0, 0
 
         # prepare tarball if needed and upload it to vagrant system
+        name_ver = None
         if not tarball_path:
             execute('mkdir -p ~/.hammer-tmp')
             name_ver = 'kea-%s' % pkg_version
@@ -905,6 +916,7 @@ class VagrantEnv():
             # copy results of _build_native_pkg
             execute('scp -F %s -r default:~/kea-pkg/* .' % ssh_cfg_path, cwd=pkgs_dir)
 
+            file_ext = None
             if upload:
                 repo_url = _get_full_repo_url(repository_url, self.system, self.revision)
                 if repo_url is None:
@@ -979,7 +991,7 @@ class VagrantEnv():
 
     def ssh(self):
         """Open interactive session to the VM."""
-        execute('vagrant ssh', cwd=self.vagrant_dir, timeout=None, dry_run=self.dry_run, interactive=True)
+        execute('vagrant ssh', cwd=self.vagrant_dir, dry_run=self.dry_run, interactive=True)
 
     def dump_ssh_config(self):
         """Dump ssh config that allows getting into Vagrant system via SSH."""
@@ -987,7 +999,7 @@ class VagrantEnv():
         execute('vagrant ssh-config > %s' % ssh_cfg_path, cwd=self.vagrant_dir)
         return ssh_cfg_path
 
-    def execute(self, cmd, timeout=None, raise_error=True, log_file_path=None, quiet=False, env=None, capture=False,
+    def execute(self, cmd, timeout=60, raise_error=True, log_file_path=None, quiet=False, env=None, capture=False,
                 attempts=1, sleep_time_after_attempt=None):
         """Execute provided command inside Vagrant system."""
         if not env:
@@ -2052,8 +2064,8 @@ def install_packages_local(system, revision, features, check_times, ignore_error
         else:
             execute('sudo adduser vagrant abuild')
 
+        current_user = getpass.getuser()
         try:
-            current_user = getpass.getuser()
             pwd.getpwnam(current_user)
             grp.getgrnam('abuild')
         except KeyError:
@@ -2104,6 +2116,8 @@ def _prepare_ccache_if_needed(system, ccache_dir, env):
         elif system == 'alpine':
             # TODO: it doesn't work yet, new abuild is needed and add 'USE_CCACHE=1' to /etc/abuild.conf
             ccache_bin_path = '/usr/lib/ccache/bin'
+        else:
+            raise UnexpectedError(f'Unknown system "{system}"')
         env['PATH'] = ccache_bin_path + ':' + env['PATH']
         env['CCACHE_DIR'] = ccache_dir
     return env
@@ -2636,6 +2650,8 @@ def ensure_hammer_deps():
         _install_vagrant()
     else:
         m = re.search(r'Installed Version: ([\d\.]+)', out, re.I)
+        if m is None:
+            raise UnexpectedError(r'No match for "Installed Version: ([\d\.\+)"')
         ver = m.group(1)
         vagrant = [int(v) for v in ver.split('.')]
         recommended_vagrant = [int(v) for v in RECOMMENDED_VAGRANT_VERSION.split('.')]
