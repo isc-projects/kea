@@ -15,19 +15,19 @@ foreach i : [
     'fuzz_unix_socket_kea_dhcp6',
     'fuzz_config_kea_dhcp4/doc-examples',
     'fuzz_config_kea_dhcp6/doc-examples',
-
 ]
-    command = run_command(
-        GRABBER,
-        f'input/@i@',
-        '*',
-        check: true,
-    )
+    command = run_command(GRABBER, f'input/@i@', '*', check: true)
     foreach j : command.stdout().strip().split('\n')
         # configure_file doesn't work with path segments in the output, so let
         # us simulate it with commands.
-        run_command([f'mkdir', '-p', f'@TOP_BUILD_DIR@/fuzz/input/@i@'], check: true)
-        run_command([f'cp', f'input/@i@/@j@', f'@TOP_BUILD_DIR@/fuzz/input/@i@/@j@'], check: true)
+        run_command(
+            ['mkdir', '-p', f'@TOP_BUILD_DIR@/fuzz/input/@i@'],
+            check: true,
+        )
+        run_command(
+            ['cp', f'input/@i@/@j@', f'@TOP_BUILD_DIR@/fuzz/input/@i@/@j@'],
+            check: true,
+        )
     endforeach
 endforeach
 
