@@ -818,7 +818,7 @@ class VagrantEnv():
             # copy lxc config from runtime container
             execute('sudo cp %s/config %s/lxc-config' % (lxc_container_path, lxc_box_dir))
             # remove mac address from eth0 - it should be dynamically assigned
-            execute("sudo sed -i '/lxc.net.0.hwaddr/d' %s/lxc-config" % lxc_box_dir)
+            execute("sudo sed -i'' '/lxc.net.0.hwaddr/d' %s/lxc-config" % lxc_box_dir)
             # correct files ownership
             execute('sudo chown `id -un`:`id -gn` *', cwd=lxc_box_dir)
             # and other metadata
@@ -1400,7 +1400,7 @@ ssl_key = {cert_dir}/kea-client.key
             sys.exit(exit_code)
 
     elif system == 'alpine':
-        execute('sudo sed -i "/^skip-networking$/d" /etc/my.cnf.d/mariadb-server.cnf')
+        execute('sudo sed -i'' "/^skip-networking$/d" /etc/my.cnf.d/mariadb-server.cnf')
         execute('sudo rc-update add mariadb')
         execute('sudo rc-service mariadb stop')
         wait_for_process_to_start('start-stop-daemon')  # mysqld_safe
@@ -2319,7 +2319,7 @@ def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_r
         for f in services_list:
             for k in ['RuntimeDirectory', 'RuntimeDirectoryPreserve', 'LogsDirectory', 'LogsDirectoryMode',
                       'StateDirectory', 'ConfigurationDirectory']:
-                cmd = r"sed -i -E 's/^(%s=.*)/#\1/' %s" % (k, f)
+                cmd = r"sed -i'' -E 's/^(%s=.*)/#\1/' %s" % (k, f)
                 execute(cmd, cwd=rpm_dir, check_times=check_times, dry_run=dry_run)
 
     # do rpm build
@@ -2378,11 +2378,11 @@ def _build_deb(system, revision, features, tarball_path, env, check_times, dry_r
     src_path = glob.glob('kea-src/*')[0]
 
     # update version, etc
-    execute('sed -i -e s/{VERSION}/%s/ changelog' % pkg_version, cwd='kea-src/kea-%s/debian' % pkg_version,
+    execute('sed -i"" s/{VERSION}/%s/ changelog' % pkg_version, cwd='kea-src/kea-%s/debian' % pkg_version,
             check_times=check_times, dry_run=dry_run)
-    execute('sed -i -e s/{ISC_VERSION}/%s/ changelog' % pkg_isc_version, cwd='kea-src/kea-%s/debian' % pkg_version,
+    execute('sed -i"" s/{ISC_VERSION}/%s/ changelog' % pkg_isc_version, cwd='kea-src/kea-%s/debian' % pkg_version,
             check_times=check_times, dry_run=dry_run)
-    execute('sed -i -e s/{ISC_VERSION}/%s/ rules' % pkg_isc_version, cwd='kea-src/kea-%s/debian' % pkg_version,
+    execute('sed -i"" s/{ISC_VERSION}/%s/ rules' % pkg_isc_version, cwd='kea-src/kea-%s/debian' % pkg_version,
             check_times=check_times, dry_run=dry_run)
 
     services_list = ['isc-kea-dhcp4.isc-kea-dhcp4-server.service', 'isc-kea-dhcp6.isc-kea-dhcp6-server.service',
@@ -2393,7 +2393,7 @@ def _build_deb(system, revision, features, tarball_path, env, check_times, dry_r
         for f in services_list:
             for k in ['RuntimeDirectory', 'RuntimeDirectoryPreserve', 'LogsDirectory', 'LogsDirectoryMode',
                       'StateDirectory', 'ConfigurationDirectory']:
-                cmd = "sed -i -E 's/^(%s=.*)/#\\1/' %s" % (k, f)
+                cmd = "sed -i'' -E 's/^(%s=.*)/#\\1/' %s" % (k, f)
                 execute(cmd, cwd='kea-src/kea-%s/debian' % pkg_version, check_times=check_times, dry_run=dry_run)
 
     # do deb build
@@ -2428,12 +2428,12 @@ def _build_alpine_apk(revision, features, tarball_path, check_times, dry_run,
     tardir = os.path.dirname(tarball_path)
     if not tardir:
         tardir = '.'
-    cmd = ('cd %s; export kea_chks=`sha512sum kea-%s.tar.gz`; cd -; '
-           'sed -i -e "s/KEA_CHECKSUM/${kea_chks}/" kea-src/APKBUILD' % (tardir, pkg_version))
+    _, kea_hashes = execute(f'cd {tardir}; sha512sum kea-{pkg_version}.tar.xz', capture=True)
+    cmd = f'sed -i"" "s/KEA_CHECKSUM/{kea_hashes}/" kea-src/APKBUILD'
     execute(cmd, check_times=check_times, dry_run=dry_run)
-    cmd = 'sed -i -e s/KEA_VERSION/%s/ kea-src/APKBUILD' % pkg_version
+    cmd = 'sed -i"" s/KEA_VERSION/%s/ kea-src/APKBUILD' % pkg_version
     execute(cmd, check_times=check_times, dry_run=dry_run)
-    cmd = 'sed -i -e s/KEA_ISC_VERSION/%s/ kea-src/APKBUILD' % pkg_isc_version[3:]
+    cmd = 'sed -i"" s/KEA_ISC_VERSION/%s/ kea-src/APKBUILD' % pkg_isc_version[3:]
     execute(cmd, check_times=check_times, dry_run=dry_run)
     log.info('Moving %s to kea-src folder', tarball_path)
     execute('mv %s kea-src' % tarball_path, check_times=check_times, dry_run=dry_run)
