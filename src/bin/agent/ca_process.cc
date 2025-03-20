@@ -251,10 +251,10 @@ CtrlAgentProcess::configure(isc::data::ConstElementPtr config_set,
             } else {
                 // If the connection can not be reused, stop it and remove it from the list.
                 data.second->listener_->stop();
-                auto it = sockets_.find(std::make_pair(data.second->config_->getHttpHost(),
+                auto it2 = sockets_.find(std::make_pair(data.second->config_->getHttpHost(),
                                                        data.second->config_->getHttpPort()));
-                if (it != sockets_.end()) {
-                    sockets_.erase(it);
+                if (it2 != sockets_.end()) {
+                    sockets_.erase(it2);
                 }
             }
         }
