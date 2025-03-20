@@ -1098,12 +1098,12 @@ TEST_F(CtrlChannelDhcpv4SrvTest, getVersion) {
     sendUnixCommand("{ \"command\": \"version-get\" }", response);
     EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
     EXPECT_TRUE(response.find("log4cplus") != string::npos);
-    EXPECT_FALSE(response.find("GTEST_VERSION") != string::npos);
+    EXPECT_FALSE(response.find("Hooks directory: ") != string::npos);
 
     // Send the build-report command
     sendUnixCommand("{ \"command\": \"build-report\" }", response);
     EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
-    EXPECT_TRUE(response.find("GTEST_VERSION") != string::npos);
+    EXPECT_TRUE(response.find("Hooks directory: ") != string::npos);
 }
 
 // This test verifies that the DHCP server handles server-tag-get command

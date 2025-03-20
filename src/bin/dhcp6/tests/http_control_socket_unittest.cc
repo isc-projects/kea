@@ -1777,12 +1777,12 @@ BaseCtrlChannelDhcpv6Test::testGetVersion() {
     sendHttpCommand("{ \"command\": \"version-get\" }", response);
     EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
     EXPECT_TRUE(response.find("log4cplus") != string::npos);
-    EXPECT_FALSE(response.find("GTEST_VERSION") != string::npos);
+    EXPECT_FALSE(response.find("Hooks directory: ") != string::npos);
 
     // Send the build-report command
     sendHttpCommand("{ \"command\": \"build-report\" }", response);
     EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
-    EXPECT_TRUE(response.find("GTEST_VERSION") != string::npos);
+    EXPECT_TRUE(response.find("Hooks directory: ") != string::npos);
 }
 
 TEST_F(HttpCtrlChannelDhcpv6Test, getVersion) {
@@ -3303,13 +3303,13 @@ TEST_F(HttpCtrlChannelDhcpv6Test, dualStack) {
     sendHttpCommand("{ \"command\": \"version-get\" }", response);
     EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
     EXPECT_TRUE(response.find("log4cplus") != string::npos);
-    EXPECT_FALSE(response.find("GTEST_VERSION") != string::npos);
+    EXPECT_FALSE(response.find("Hooks directory: ") != string::npos);
 
     // Send the version-get command
     sendHttpCommand("{ \"command\": \"version-get\" }", response, "127.0.0.1");
     EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
     EXPECT_TRUE(response.find("log4cplus") != string::npos);
-    EXPECT_FALSE(response.find("GTEST_VERSION") != string::npos);
+    EXPECT_FALSE(response.find("Hooks directory: ") != string::npos);
 
     // Clean up after the test.
     CfgMgr::instance().clear();
@@ -3367,13 +3367,13 @@ TEST_F(HttpsCtrlChannelDhcpv6Test, dualStack) {
     sendHttpCommand("{ \"command\": \"version-get\" }", response);
     EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
     EXPECT_TRUE(response.find("log4cplus") != string::npos);
-    EXPECT_FALSE(response.find("GTEST_VERSION") != string::npos);
+    EXPECT_FALSE(response.find("Hooks directory: ") != string::npos);
 
     // Send the version-get command
     sendHttpCommand("{ \"command\": \"version-get\" }", response, "127.0.0.1");
     EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
     EXPECT_TRUE(response.find("log4cplus") != string::npos);
-    EXPECT_FALSE(response.find("GTEST_VERSION") != string::npos);
+    EXPECT_FALSE(response.find("Hooks directory: ") != string::npos);
 
     // Clean up after the test.
     CfgMgr::instance().clear();

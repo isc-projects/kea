@@ -747,12 +747,12 @@ BaseCtrlChannelD2Test::testGetVersion() {
     sendHttpCommand("{ \"command\": \"version-get\" }", response);
     EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
     EXPECT_TRUE(response.find("log4cplus") != string::npos);
-    EXPECT_FALSE(response.find("GTEST_VERSION") != string::npos);
+    EXPECT_FALSE(response.find("Hooks directory: ") != string::npos);
 
     // Send the build-report command.
     sendHttpCommand("{ \"command\": \"build-report\" }", response);
     EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
-    EXPECT_TRUE(response.find("GTEST_VERSION") != string::npos);
+    EXPECT_TRUE(response.find("Hooks directory: ") != string::npos);
 }
 
 TEST_F(HttpCtrlChannelD2Test, getVersion) {
@@ -1883,13 +1883,13 @@ TEST_F(HttpCtrlChannelD2Test, dualStack) {
     sendHttpCommand("{ \"command\": \"version-get\" }", response);
     EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
     EXPECT_TRUE(response.find("log4cplus") != string::npos);
-    EXPECT_FALSE(response.find("GTEST_VERSION") != string::npos);
+    EXPECT_FALSE(response.find("Hooks directory: ") != string::npos);
 
     // Send the version-get command
     sendHttpCommand("{ \"command\": \"version-get\" }", response, "::1");
     EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
     EXPECT_TRUE(response.find("log4cplus") != string::npos);
-    EXPECT_FALSE(response.find("GTEST_VERSION") != string::npos);
+    EXPECT_FALSE(response.find("Hooks directory: ") != string::npos);
 }
 
 // Verify that the dual stack scenario works as expect.
@@ -1950,13 +1950,13 @@ TEST_F(HttpsCtrlChannelD2Test, dualStack) {
     sendHttpCommand("{ \"command\": \"version-get\" }", response);
     EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
     EXPECT_TRUE(response.find("log4cplus") != string::npos);
-    EXPECT_FALSE(response.find("GTEST_VERSION") != string::npos);
+    EXPECT_FALSE(response.find("Hooks directory: ") != string::npos);
 
     // Send the version-get command
     sendHttpCommand("{ \"command\": \"version-get\" }", response, "::1");
     EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
     EXPECT_TRUE(response.find("log4cplus") != string::npos);
-    EXPECT_FALSE(response.find("GTEST_VERSION") != string::npos);
+    EXPECT_FALSE(response.find("Hooks directory: ") != string::npos);
 }
 
 // This test verifies that the server signals timeout if the transmission
