@@ -415,7 +415,7 @@ TEST_F(ClassLeaseCounterTest, basicCountingTests6) {
     // Fetching the count for a non-existent class
     // should return 0.
     ASSERT_EQ(0, clc_.size(Lease::TYPE_NA));
-    size_t count;
+    size_t count = 0;
     ASSERT_NO_THROW(count = clc_.getClassCount(melon, Lease::TYPE_NA));
     EXPECT_EQ(0, count);
 
