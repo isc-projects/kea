@@ -13,6 +13,7 @@
 from __future__ import print_function
 
 import os
+import pathlib
 import random
 import re
 import sys
@@ -26,7 +27,6 @@ import binascii
 import argparse
 import textwrap
 import functools
-import multiprocessing
 import grp
 import pwd
 import getpass
@@ -403,10 +403,8 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
                         output += stdout2.decode('utf-8')
                     raise ExecutionError(f'Execution timeout: {e}, cmd: {cmd}') from e
                 exitcode = pipe.returncode
-                if capture:
-                    output = stdout.decode('utf-8')
                 if not quiet:
-                    print(stdout.decode('utf-8'))
+                    print(output)
                 if log_file is not None:
                     log_file.write(stdout)
 
@@ -456,6 +454,14 @@ def wait_for_process_to_exit(process_name):
 def _append_to_file(file_name, line):
     with open(file_name, encoding='utf-8', mode='a') as f:
         f.write(line + '\n')
+
+
+def replace_in_file(file_name, pattern, replacement):
+    with open(file_name, 'r', encoding='utf-8') as file:
+        content = file.read()
+        content = re.sub(pattern, replacement, content)
+    with open(file_name, 'w', encoding='utf-8') as file:
+        file.write(content)
 
 
 def _prepare_installed_packages_cache_for_debs():
@@ -863,14 +869,14 @@ class VagrantEnv():
             log.error(msg)
             raise ExecutionError(msg)
 
-    def run_build_and_test(self, tarball_path, jobs, pkg_version, pkg_isc_version, upload, repository_url):
+    def run_build_and_test(self, tarball_paths, jobs, pkg_version, pkg_isc_version, upload, repository_url):
         """Run build and unit tests inside Vagrant system."""
         if self.dry_run:
             return 0, 0
 
         # prepare tarball if needed and upload it to vagrant system
         name_ver = None
-        if not tarball_path:
+        if tarball_paths is None:
             execute('mkdir -p ~/.hammer-tmp')
             name_ver = 'kea-%s' % pkg_version
             cmd = 'tar --transform "flags=r;s|^|%s/|" --exclude hammer ' % name_ver
@@ -878,8 +884,8 @@ class VagrantEnv():
             cmd += ' --exclude .deps --exclude \'*.o\'  --exclude \'*.lo\' '
             cmd += ' -zcf ~/.hammer-tmp/%s.tar.gz .' % name_ver
             execute(cmd)
-            tarball_path = '~/.hammer-tmp/%s.tar.gz' % name_ver
-        self.upload(tarball_path)
+            tarball_paths = [f'~/.hammer-tmp/{name_ver}.tar.gz']
+        self.upload(tarball_paths)
         execute('rm -rf ~/.hammer-tmp')
 
         log_file_path = os.path.join(self.vagrant_dir, 'build.log')
@@ -1402,7 +1408,7 @@ ssl_key = {cert_dir}/kea-client.key
             sys.exit(exit_code)
 
     elif system == 'alpine':
-        execute('sudo sed -i'' "/^skip-networking$/d" /etc/my.cnf.d/mariadb-server.cnf')
+        execute('sudo sed -i"" "/^skip-networking$/d" /etc/my.cnf.d/mariadb-server.cnf')
         execute('sudo rc-update add mariadb')
         execute('sudo rc-service mariadb stop')
         wait_for_process_to_start('start-stop-daemon')  # mysqld_safe
@@ -1697,10 +1703,13 @@ def install_packages_local(system, revision, features, check_times, ignore_error
     if 'netconf' in features and 'netconf' not in ignore_errors_for:
         require_minimum_package_version('cmake', '3.19')
 
+    # Common packages
+    packages = ['autoconf', 'automake', 'bison', 'flex', 'libtool', 'meson']
+
     # prepare fedora
     if system == 'fedora':
-        packages = ['make', 'autoconf', 'automake', 'libtool', 'gcc-c++', 'openssl-devel',
-                    'log4cplus-devel', 'boost-devel', 'libpcap-devel', 'bison', 'flex']
+        packages.extend(['boost-devel', 'gcc-c++', 'openssl-devel',
+                         'log4cplus-devel', 'libpcap-devel', 'make', 'ninja-build'])
 
         if 'native-pkg' in features:
             packages.extend(['rpm-build', 'python3-devel'])
@@ -1737,9 +1746,8 @@ def install_packages_local(system, revision, features, check_times, ignore_error
     elif system == 'centos':
         install_pkgs('epel-release', env=env, check_times=check_times)
 
-        packages = ['autoconf', 'automake', 'boost-devel', 'gcc-c++',
-                    'libtool', 'log4cplus-devel', 'make',
-                    'openssl-devel', 'bison', 'flex']
+        packages.extend(['boost-devel', 'gcc-c++', 'log4cplus-devel', 'make', 'ninja-build',
+                         'openssl-devel'])
 
         if revision in ['7', '8']:
             # Install newer version of Boost in case users want to opt-in with:
@@ -1789,9 +1797,18 @@ def install_packages_local(system, revision, features, check_times, ignore_error
 
     # prepare rhel
     elif system == 'rhel':
-        packages = ['autoconf', 'automake', 'boost-devel', 'gcc-c++',
-                    'libtool', 'log4cplus-devel', 'make',
-                    'openssl-devel', 'bison', 'flex']
+        packages.remove('meson')
+        packages.extend(['boost-devel', 'gcc-c++', 'log4cplus-devel',
+                         'make', 'openssl-devel'])
+
+        # RHEL tends to stay behind on Python versions. Install the latest Python alongside the one running this
+        # hammer.py.
+        _, output = execute(r"sudo dnf search 'python3\.[0-9]*'", capture=True, env=env, check_times=check_times)
+        output = sorted(output.splitlines())
+        if len(output) > 0:
+            m = re.search(r'^(python3\.[0-9]+)\.', output[-1])
+            if m is not None:
+                packages.append(m.group(1))
 
         if revision in ['7', '8']:
             # Install newer version of Boost in case users want to opt-in with:
@@ -1799,15 +1816,9 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             packages.append('boost169-devel')
 
         if 'docs' in features:
-            # Conflict on the packaging python module between pip and rpm-build.
-            # So create venv instead of installing through package manager.
-            # kea-packaging points Kea to the venv using --with-sphinx.
-            execute('python3 -m venv ~/venv',
-                    env=env, timeout=60, check_times=check_times)
-            execute('~/venv/bin/pip install --upgrade pip',
-                    env=env, timeout=120, check_times=check_times)
-            execute('~/venv/bin/pip install sphinx sphinx-rtd-theme',
-                    env=env, timeout=120, check_times=check_times)
+            packages.extend(['python3-sphinx', 'python3-sphinx_rtd_theme', 'texlive', 'texlive-capt-of',
+                             'texlive-fncychap', 'texlive-framed', 'texlive-needspace', 'texlive-tabulary',
+                             'texlive-titlesec', 'texlive-upquote', 'texlive-wrapfig'])
 
         if 'native-pkg' in features:
             packages.extend(['python3-devel', 'rpm-build'])
@@ -1842,12 +1853,13 @@ def install_packages_local(system, revision, features, check_times, ignore_error
     elif system == 'rocky':
         install_pkgs('epel-release', env=env, check_times=check_times)
 
-        packages = ['autoconf', 'automake', 'bison', 'boost-devel', 'flex', 'gcc-c++',
-                    'libtool', 'log4cplus-devel', 'make',
-                    'openssl-devel']
+        packages.extend(['boost-devel', 'gcc-c++', 'log4cplus-devel', 'make',
+                         'openssl-devel', 'ninja-build'])
 
         if 'docs' in features:
-            packages.extend(['python3-sphinx', 'python3-sphinx_rtd_theme'])
+            packages.extend(['python3-sphinx', 'python3-sphinx_rtd_theme', 'texlive', 'texlive-capt-of',
+                             'texlive-fncychap', 'texlive-framed', 'texlive-needspace', 'texlive-tabulary',
+                             'texlive-titlesec', 'texlive-upquote', 'texlive-wrapfig'])
 
         if 'native-pkg' in features:
             packages.extend(['python3-devel', 'rpm-build'])
@@ -1878,8 +1890,9 @@ def install_packages_local(system, revision, features, check_times, ignore_error
     elif system == 'ubuntu':
         _apt_update(system, revision, env=env, check_times=check_times, attempts=3, sleep_time_after_attempt=10)
 
-        packages = ['gcc', 'g++', 'make', 'autoconf', 'automake', 'libtool', 'libssl-dev', 'liblog4cplus-dev',
-                    'libboost-system-dev', 'gnupg', 'libpcap-dev', 'bison', 'flex']
+        packages.extend(['gcc', 'g++', 'gnupg', 'libboost-system-dev',
+                         'liblog4cplus-dev',  'libpcap-dev', 'libssl-dev',
+                         'make', 'ninja-build'])
 
         if 'docs' in features:
             packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme',
@@ -1921,8 +1934,8 @@ def install_packages_local(system, revision, features, check_times, ignore_error
     elif system == 'debian':
         _apt_update(system, revision, env=env, check_times=check_times, attempts=3, sleep_time_after_attempt=10)
 
-        packages = ['gcc', 'g++', 'make', 'autoconf', 'automake', 'libtool', 'libssl-dev',
-                    'liblog4cplus-dev', 'libboost-system-dev', 'gnupg', 'bison', 'flex']
+        packages.extend(['gcc', 'g++',  'gnupg', 'libboost-system-dev',
+                         'liblog4cplus-dev', 'libssl-dev', 'make', 'ninja-build'])
 
         if 'docs' in features:
             packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme', 'doxygen', 'graphviz',
@@ -1962,7 +1975,8 @@ def install_packages_local(system, revision, features, check_times, ignore_error
 
     # prepare freebsd
     elif system == 'freebsd':
-        packages = ['autoconf', 'automake', 'bison', 'flex', 'libtool', 'openssl', 'log4cplus', 'boost-libs', 'wget']
+        packages.remove('meson')
+        packages.extend(['boost-libs', 'log4cplus', 'openssl'])
 
         if revision.startswith('14'):
             packages.extend(['bash', 'pkgconf'])
@@ -2011,6 +2025,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             packages.extend(['cmake', 'git', 'pcre2'])
 
         if 'unittest' in features:
+            packages.extend(['wget'])
             deferred_functions.append(_install_gtest_sources)
 
         install_pkgs(packages, env=env, timeout=6 * 60, check_times=check_times)
@@ -2025,10 +2040,9 @@ def install_packages_local(system, revision, features, check_times, ignore_error
 
     # prepare alpine
     elif system == 'alpine':
-
-        packages = ['gcc', 'g++', 'make', 'autoconf', 'automake', 'libtool', 'openssl-dev',
-                    'boost-libs', 'boost-dev', 'procps', 'tar', 'log4cplus', 'log4cplus-dev',
-                    'gzip', 'bison', 'flex']
+        packages.extend(['bison', 'boost-libs', 'boost-dev', 'flex', 'gcc',
+                         'g++', 'gzip',  'log4cplus', 'log4cplus-dev', 'make',
+                         'openssl-dev', 'procps', 'tar', 'ninja'])
 
         if 'docs' in features:
             packages.extend(['py3-sphinx py3-sphinx_rtd_theme'])
@@ -2054,6 +2068,9 @@ def install_packages_local(system, revision, features, check_times, ignore_error
         if 'unittest' in features:
             packages.append('wget')
             deferred_functions.append(_install_gtest_sources)
+
+        # Remove duplicates and sort.
+        packages = sorted(set(packages))
 
         install_pkgs(packages, env=env, timeout=6 * 60, check_times=check_times)
 
@@ -2125,55 +2142,40 @@ def _prepare_ccache_if_needed(system, ccache_dir, env):
     return env
 
 
-def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, check_times, jobs, dry_run,
-                               ccache_dir):
-    if tarball_path:
+def _build_binaries_and_run_ut(system, revision, features, tarball_paths, env, check_times, dry_run, ccache_dir):
+    if tarball_paths is not None:
         # unpack tarball with sources
         execute('sudo rm -rf kea-src')
         os.mkdir('kea-src')
-        execute('tar -zxf %s' % tarball_path, cwd='kea-src', check_times=check_times)
+        for i in tarball_paths:
+            execute(f'tar -Jxf {i}', cwd='kea-src', check_times=check_times)
         src_path = glob.glob('kea-src/*')[0]
     else:
         src_path = '.'
 
-    execute('autoreconf -f -i', cwd=src_path, env=env, dry_run=dry_run)
-
-    # prepare switches for ./configure
-    cmd = './configure'
     log.info('OS: %s Revision: %s', system, revision)
-    if 'mysql' in features:
-        cmd += ' --with-mysql'
-    if 'pgsql' in features:
-        cmd += ' --with-pgsql'
-    if 'unittest' in features:
-        cmd += ' --with-gtest-source=/usr/src/googletest'
-    if 'docs' in features and not system == 'rhel':
-        cmd += ' --enable-generate-docs'
-    if 'gssapi' in features:
-        cmd += ' --with-gssapi'
-    if 'shell' in features:
-        cmd += ' --enable-shell'
-    if 'perfdhcp' in features:
-        cmd += ' --enable-perfdhcp'
-    if 'netconf' in features:
-        cmd += ' --with-libyang --with-sysrepo --with-libyang-cpp --with-sysrepo-cpp'
 
-    # do ./configure
+    # Prepare build options.
+    cmd = 'meson setup build'
+    if 'all' in features:
+        cmd += ' --auto_features enabled -D cpp_std=c++20'
+    if 'mysql' in features:
+        cmd += ' -D mysql=enabled'
+    if 'pgsql' in features:
+        cmd += ' -D postgresql=enabled'
+    if 'unittest' in features:
+        cmd += ' -D tests=enabled'
+    if 'gssapi' in features:
+        cmd += ' -D krb5=enabled'
+    if 'netconf' in features:
+        cmd += ' -D netconf=enabled -D cpp_std=c++20'
+
+    # Set up the build.
     execute(cmd, cwd=src_path, env=env, timeout=120, check_times=check_times, dry_run=dry_run)
 
     if 'netconf' in features:
-        # ./configure has created reinstall.sh from reinstall.sh.in. Call it.
-        execute('./src/share/yang/modules/utils/reinstall.sh', cwd=src_path, env=env)
-
-    # estimate number of processes (jobs) to use in compilation if jobs are not provided
-    if jobs == 0:
-        cpus = multiprocessing.cpu_count() - 1
-        if system == 'centos':
-            cpus = cpus // 2
-        if cpus == 0:
-            cpus = 1
-    else:
-        cpus = jobs
+        # Install YANG modules.
+        execute('./build/src/share/yang/modules/utils/reinstall.sh', cwd=src_path, env=env)
 
     # enable ccache if requested
     env = _prepare_ccache_if_needed(system, ccache_dir, env)
@@ -2181,9 +2183,9 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
     # do build
     timeout = _calculate_build_timeout(features)
     if 'distcheck' in features:
-        cmd = 'make distcheck'
+        cmd = 'meson dist -C build'
     else:
-        cmd = 'make -j%s' % cpus
+        cmd = 'meson compile -C build'
     execute(cmd, cwd=src_path, env=env, timeout=timeout, check_times=check_times, dry_run=dry_run)
 
     if 'unittest' in features:
@@ -2194,7 +2196,7 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
         env['GTEST_OUTPUT'] = 'xml:%s/' % results_dir
         env['KEA_SOCKET_TEST_DIR'] = '/tmp/'
         # run unit tests
-        execute('make check -k',
+        execute('meson test -C build',
                 cwd=src_path, env=env, timeout=90 * 60, raise_error=False,
                 check_times=check_times, dry_run=dry_run)
 
@@ -2252,7 +2254,7 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
         aggr.write('aggregated_tests.xml')
 
     if 'install' in features:
-        execute('sudo make install', timeout=2 * 60,
+        execute('sudo meson install -C build', timeout=2 * 60,
                 cwd=src_path, env=env, check_times=check_times, dry_run=dry_run)
         if system != 'alpine':
             execute('sudo ldconfig', dry_run=dry_run, env=env)
@@ -2281,15 +2283,11 @@ def _check_installed_rpm_or_debs(services_list):
             raise UnexpectedError('_STARTED Kea not in logs')
 
 
-def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_run,
+def _build_rpm(system, revision, features, env, check_times, dry_run,
                pkg_version, pkg_isc_version):
 
     # unpack kea sources tarball
     _, arch = execute('arch', capture=True)
-    execute('sudo rm -rf kea-src', dry_run=dry_run)
-    os.mkdir('kea-src')
-    execute('tar -zxf %s' % tarball_path, cwd='kea-src', check_times=check_times, dry_run=dry_run)
-    src_path = glob.glob('kea-src/*')[0]
 
     # prepare folder for all pkgs
     if os.path.exists('pkgs'):
@@ -2304,7 +2302,7 @@ def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_r
     execute('mkdir -p %s/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}' % rpm_root_path)
 
     # get rpm.spec from tarball
-    rpm_dir = os.path.join(src_path, 'rpm')
+    rpm_dir = os.path.join('kea-src', 'rpm')
     for f in os.listdir(rpm_dir):
         if f == 'kea.spec':
             continue
@@ -2312,7 +2310,7 @@ def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_r
                 dry_run=dry_run)
     execute('cp %s %s/SPECS' % (os.path.join(rpm_dir, 'kea.spec'), rpm_root_path), check_times=check_times,
             dry_run=dry_run)
-    execute('cp %s %s/SOURCES' % (tarball_path, rpm_root_path), check_times=check_times, dry_run=dry_run)
+    execute(f'cp *.tar.xz {rpm_root_path}/SOURCES', cwd='kea-src', check_times=check_times, dry_run=dry_run)
 
     services_list = ['kea-dhcp4.service', 'kea-dhcp6.service', 'kea-dhcp-ddns.service', 'kea-ctrl-agent.service']
 
@@ -2321,8 +2319,7 @@ def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_r
         for f in services_list:
             for k in ['RuntimeDirectory', 'RuntimeDirectoryPreserve', 'LogsDirectory', 'LogsDirectoryMode',
                       'StateDirectory', 'ConfigurationDirectory']:
-                cmd = r"sed -i'' -E 's/^(%s=.*)/#\1/' %s" % (k, f)
-                execute(cmd, cwd=rpm_dir, check_times=check_times, dry_run=dry_run)
+                replace_in_file(f, fr'^({k}=.*)', r'# \1')
 
     # do rpm build
     cmd = "rpmbuild --define 'kea_version %s' --define 'isc_version %s' -ba %s/SPECS/kea.spec"
@@ -2344,7 +2341,7 @@ def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_r
     execute(f'mv {rpm_root_path}/RPMS/{arch.strip()}/*rpm pkgs', check_times=check_times, dry_run=dry_run)
 
 
-def _build_deb(system, revision, features, tarball_path, env, check_times, dry_run,
+def _build_deb(system, revision, features, env, check_times, dry_run,
                pkg_version, pkg_isc_version, repo_url):
 
     _, arch = execute('arch', capture=True)
@@ -2373,19 +2370,10 @@ def _build_deb(system, revision, features, tarball_path, env, check_times, dry_r
             break
         time.sleep(4)
 
-    # unpack tarball
-    execute('sudo rm -rf kea-src', check_times=check_times, dry_run=dry_run)
-    os.mkdir('kea-src')
-    execute('tar -zxf %s' % tarball_path, cwd='kea-src', check_times=check_times, dry_run=dry_run)
-    src_path = glob.glob('kea-src/*')[0]
-
     # update version, etc
-    execute('sed -i"" s/{VERSION}/%s/ changelog' % pkg_version, cwd='kea-src/kea-%s/debian' % pkg_version,
-            check_times=check_times, dry_run=dry_run)
-    execute('sed -i"" s/{ISC_VERSION}/%s/ changelog' % pkg_isc_version, cwd='kea-src/kea-%s/debian' % pkg_version,
-            check_times=check_times, dry_run=dry_run)
-    execute('sed -i"" s/{ISC_VERSION}/%s/ rules' % pkg_isc_version, cwd='kea-src/kea-%s/debian' % pkg_version,
-            check_times=check_times, dry_run=dry_run)
+    replace_in_file('kea-src/debian/changelog', '{VERSION}', pkg_version)
+    replace_in_file('kea-src/debian/changelog', '{ISC_VERSION}', pkg_isc_version)
+    replace_in_file('kea-src/debian/rules', '{ISC_VERSION}', pkg_isc_version)
 
     services_list = ['isc-kea-dhcp4.isc-kea-dhcp4-server.service', 'isc-kea-dhcp6.isc-kea-dhcp6-server.service',
                      'isc-kea-dhcp-ddns.isc-kea-dhcp-ddns-server.service', 'isc-kea-ctrl-agent.service']
@@ -2395,50 +2383,45 @@ def _build_deb(system, revision, features, tarball_path, env, check_times, dry_r
         for f in services_list:
             for k in ['RuntimeDirectory', 'RuntimeDirectoryPreserve', 'LogsDirectory', 'LogsDirectoryMode',
                       'StateDirectory', 'ConfigurationDirectory']:
-                cmd = "sed -i'' -E 's/^(%s=.*)/#\\1/' %s" % (k, f)
-                execute(cmd, cwd='kea-src/kea-%s/debian' % pkg_version, check_times=check_times, dry_run=dry_run)
+                replace_in_file(f, fr'^({k}=.*)', r'# \1')
+
+    # Extract tarballs.
+    for path in glob.glob('kea-src/*.tar.xz'):
+        # TODO:turn replace into glob.glob(root_dir=...) when Python 3.10+ is available everywhere.
+        tar = path.replace('kea-src/', '')
+        execute(f'tar -Jxf {tar}', cwd='kea-src', check_times=check_times, dry_run=dry_run)
+    tardir = [i for i in glob.glob(f'kea-src/kea-{pkg_version}*') if not i.endswith('.tar.xz')][0]
+    execute(f'mv {tardir}/* kea-src/', check_times=check_times, dry_run=dry_run)
 
     # do deb build
     env['LIBRARY_PATH'] = f'/usr/lib/{arch.strip()}-linux-gnu'
     env['LD_LIBRARY_PATH'] = f'/usr/lib/{arch.strip()}-linux-gnu'
-    cmd = ('debuild --preserve-envvar=LD_LIBRARY_PATH --preserve-envvar=LIBRARY_PATH --preserve-envvar=CCACHE_DIR '
-           '--prepend-path=/usr/lib/ccache -i -us -uc -b')
-    execute(cmd, env=env, cwd=src_path, timeout=60 * 40, check_times=check_times, dry_run=dry_run)
+    cmd = ('debuild --preserve-envvar=CCACHE_DIR --preserve-envvar=LD_LIBRARY_PATH --preserve-envvar=LIBRARY_PATH '
+           '--prepend-path=/usr/lib/ccache --prepend-path=/usr/local/bin -b -i -us -uc')
+    execute(cmd, env=env, cwd='kea-src', timeout=60 * 40, check_times=check_times, dry_run=dry_run)
 
     if 'install' in features:
         # install packages
-        execute('sudo dpkg -i kea-src/*deb', check_times=check_times, dry_run=dry_run)
+        execute('sudo dpkg -i *deb', check_times=check_times, dry_run=dry_run)
         # check if kea services can be started
         services_list = ['isc-kea-dhcp4-server.service', 'isc-kea-dhcp6-server.service',
                          'isc-kea-dhcp-ddns-server.service', 'isc-kea-ctrl-agent.service']
         _check_installed_rpm_or_debs(services_list)
 
 
-def _build_alpine_apk(revision, features, tarball_path, check_times, dry_run,
-                      pkg_version, pkg_isc_version):
+def _build_alpine_apk(features, check_times, dry_run, pkg_version, pkg_isc_version):
     _, arch = execute('arch', capture=True)
-    # unpack tarball
-    execute('sudo rm -rf kea-src packages', check_times=check_times, dry_run=dry_run)
-    os.makedirs('kea-src/src')
-    execute('tar -zxf %s' % tarball_path, check_times=check_times, dry_run=dry_run)
-    if revision == '3.10':
-        sys_suffix = '-3.10'
-    else:
-        sys_suffix = ''
-    execute('mv kea-%s/alpine%s/* kea-src' % (pkg_version, sys_suffix), check_times=check_times, dry_run=dry_run)
-    execute('rm -rf kea-%s' % pkg_version, check_times=check_times, dry_run=dry_run)
-    tardir = os.path.dirname(tarball_path)
-    if not tardir:
-        tardir = '.'
-    _, kea_hashes = execute(f'cd {tardir}; sha512sum kea-{pkg_version}.tar.xz', capture=True)
-    cmd = f'sed -i"" "s/KEA_CHECKSUM/{kea_hashes}/" kea-src/APKBUILD'
-    execute(cmd, check_times=check_times, dry_run=dry_run)
-    cmd = 'sed -i"" s/KEA_VERSION/%s/ kea-src/APKBUILD' % pkg_version
-    execute(cmd, check_times=check_times, dry_run=dry_run)
-    cmd = 'sed -i"" s/KEA_ISC_VERSION/%s/ kea-src/APKBUILD' % pkg_isc_version[3:]
-    execute(cmd, check_times=check_times, dry_run=dry_run)
-    log.info('Moving %s to kea-src folder', tarball_path)
-    execute('mv %s kea-src' % tarball_path, check_times=check_times, dry_run=dry_run)
+
+    execute('sudo rm -rf packages', check_times=check_times, dry_run=dry_run)
+    execute('cp kea-src/alpine/* kea-src/', check_times=check_times, dry_run=dry_run)
+
+    # Populate APKBUILD.
+    _, kea_hashes = execute('cd kea-src && sha512sum kea-*.tar.xz', capture=True)
+    replace_in_file('kea-src/APKBUILD', 'KEA_CHECKSUM', kea_hashes)
+    replace_in_file('kea-src/APKBUILD', 'KEA_VERSION', pkg_version)
+    replace_in_file('kea-src/APKBUILD', 'KEA_ISC_VERSION', pkg_isc_version[3:])
+
+    # Build packages.
     execute('abuild-keygen -n -a -i', check_times=check_times, dry_run=dry_run)
     execute('abuild -v -r', cwd='kea-src', check_times=check_times, dry_run=dry_run)
 
@@ -2465,11 +2448,11 @@ def _build_alpine_apk(revision, features, tarball_path, check_times, dry_run,
                 time.sleep(1)
             if '_STARTED Kea' not in logs:
                 print(logs)
-                raise UnexpectedError('_STARTED Kea not in logs')
+                raise UnexpectedError(f'"_STARTED Kea" not in logs for {svc}')
 
 
-def _build_native_pkg(system, revision, features, tarball_path, env, check_times, dry_run, ccache_dir,
-                      pkg_version, pkg_isc_version, repository_url, pkgs_dir):
+def _build_native_pkg(system, revision, features, tarball_paths, kea_packaging_path, env, check_times, dry_run,
+                      ccache_dir, pkg_version, pkg_isc_version, repository_url, pkgs_dir):
     """Build native (RPM or DEB or Alpine APK) packages."""
 
     # enable ccache if requested
@@ -2479,17 +2462,27 @@ def _build_native_pkg(system, revision, features, tarball_path, env, check_times
     if repo_url is None:
         raise ValueError('repo_url is None')
 
+    # Copy tarball to kea-src.
+    execute('sudo rm -rf kea-src', dry_run=dry_run)
+    os.mkdir('kea-src')
+    if tarball_paths is not None:
+        for i in tarball_paths:
+            execute(f'cp {i} kea-src/', check_times=check_times, dry_run=dry_run)
+
+    # Copy kea-packaging to kea-src.
+    if kea_packaging_path is not None:
+        execute(f'cp -r {kea_packaging_path}/* kea-src/', check_times=check_times, dry_run=dry_run)
+
     if system in ['fedora', 'centos', 'rhel', 'rocky']:
-        _build_rpm(system, revision, features, tarball_path, env, check_times, dry_run,
+        _build_rpm(system, revision, features, env, check_times, dry_run,
                    pkg_version, pkg_isc_version)
 
     elif system in ['ubuntu', 'debian']:
-        _build_deb(system, revision, features, tarball_path, env, check_times, dry_run,
+        _build_deb(system, revision, features, env, check_times, dry_run,
                    pkg_version, pkg_isc_version, repo_url)
 
     elif system in ['alpine']:
-        _build_alpine_apk(revision, features, tarball_path, check_times, dry_run,
-                          pkg_version, pkg_isc_version)
+        _build_alpine_apk(features, check_times, dry_run, pkg_version, pkg_isc_version)
 
     elif system in ['arch']:
         pass
@@ -2498,8 +2491,8 @@ def _build_native_pkg(system, revision, features, tarball_path, env, check_times
         raise NotImplementedError('no implementation for %s' % system)
 
     if system in ['ubuntu', 'debian']:
-        execute('mv kea-src/isc-kea_* %s' % pkgs_dir)
-        execute('mv kea-src/*deb %s' % pkgs_dir)
+        execute(f'mv isc-kea_* {pkgs_dir}')
+        execute(f'mv *deb {pkgs_dir}')
     elif system in ['fedora', 'centos', 'rhel', 'rocky']:
         execute('mv pkgs/* %s' % pkgs_dir)
     elif system in ['alpine']:
@@ -2512,11 +2505,11 @@ def _build_native_pkg(system, revision, features, tarball_path, env, check_times
         raise NotImplementedError('no implementation for %s' % system)
 
 
-def build_local(features, tarball_path, check_times, jobs, dry_run, ccache_dir, pkg_version, pkg_isc_version,
-                repository_url, pkgs_dir):
+def build_local(features, tarball_paths, kea_packaging_path, check_times, dry_run, ccache_dir, pkg_version,
+                pkg_isc_version, repository_url, pkgs_dir):
     """Prepare local system for Kea development based on requested features.
 
-    If tarball_path is provided then instead of Kea sources from current directory
+    If tarball_paths is provided then instead of Kea sources from current directory
     use provided tarball.
     """
     env = os.environ.copy()
@@ -2527,27 +2520,16 @@ def build_local(features, tarball_path, check_times, jobs, dry_run, ccache_dir, 
 
     execute('sudo df -h', dry_run=dry_run)
 
-    # NOTE: the old code expects having tarball in tarball_path
-    if not tarball_path:
-        name_ver = 'kea-%s' % pkg_version
-        cmd = 'tar --transform "flags=r;s|^|%s/|" --exclude hammer ' % name_ver
-        cmd += ' --exclude "*~" --exclude .git --exclude .libs '
-        cmd += ' --exclude .deps --exclude \'*.o\'  --exclude \'*.lo\' '
-        cmd += ' -zcf /tmp/%s.tar.gz .' % name_ver
-        execute(cmd)
-        tarball_path = '/tmp/%s.tar.gz' % name_ver
-
     if 'native-pkg' in features:
-        _build_native_pkg(system, revision, features, tarball_path, env, check_times, dry_run, ccache_dir,
-                          pkg_version, pkg_isc_version, repository_url, pkgs_dir)
+        _build_native_pkg(system, revision, features, tarball_paths, kea_packaging_path, env, check_times, dry_run,
+                          ccache_dir, pkg_version, pkg_isc_version, repository_url, pkgs_dir)
     else:
-        _build_binaries_and_run_ut(system, revision, features, tarball_path, env, check_times, jobs,
-                                   dry_run, ccache_dir)
+        _build_binaries_and_run_ut(system, revision, features, tarball_paths, env, check_times, dry_run, ccache_dir)
 
     execute('sudo df -h', dry_run=dry_run)
 
 
-def build_in_vagrant(provider, system, revision, features, leave_system, tarball_path,
+def build_in_vagrant(provider, system, revision, features, leave_system, tarball_paths,
                      dry_run, quiet, clean_start, check_times, jobs, ccache_dir,
                      pkg_version, pkg_isc_version, upload, repository_url):
     """Build Kea via Vagrant in specified system with specified features."""
@@ -2569,7 +2551,7 @@ def build_in_vagrant(provider, system, revision, features, leave_system, tarball
             ve.init_files()
         ve.bring_up_latest_box()
         ve.prepare_system()
-        total, passed = ve.run_build_and_test(tarball_path, jobs, pkg_version, pkg_isc_version, upload, repository_url)
+        total, passed = ve.run_build_and_test(tarball_paths, jobs, pkg_version, pkg_isc_version, upload, repository_url)
         msg = ' - ' + green('all ok')
     except KeyboardInterrupt as e:
         error = e
@@ -2791,10 +2773,11 @@ def parse_args():
     parser = subparsers.add_parser('build', help="Prepare system and run Kea build in indicated system.",
                                    parents=[parent_parser1, parent_parser2])
     parser.add_argument('-j', '--jobs', default=0,
-                        help='Number of processes used in compilation. Override make -j default value.')
-    parser.add_argument('-t', '--from-tarball', metavar='TARBALL_PATH',
-                        help='Instead of building sources in current folder use provided tarball '
-                        'package (e.g. tar.gz).')
+                        help='Number of processes used in compilation. Override make -j default value. Obsolete.')
+    parser.add_argument('--kea-packaging-path', metavar='KEA_PACKAGING_PATH',
+                        help='Path to the kea-packaging directory when building packages.')
+    parser.add_argument('-t', '--from-tarballs', metavar='TARBALL_PATHS', nargs='+', type=pathlib.Path,
+                        help='Instead of building sources in current folder use the provided tar.xz tarballs.')
     parser.add_argument('--ccache-dir', default=None,
                         help='Path to CCache directory on host system.')
     parser.add_argument('--pkg-version', default='0.0.1',
@@ -3097,13 +3080,13 @@ def build_cmd(args):
     features = _get_features(args)
     log.info('Enabled features: %s', ' '.join(features))
     if args.provider == 'local':
-        # NOTE: working dir is /tmp/workspace/kea-dev/pkg
         pkgs_dir = "kea-pkg"
         if os.path.exists(pkgs_dir):
             execute('rm -rf %s' % pkgs_dir)
         os.makedirs(pkgs_dir)
 
-        build_local(features, args.from_tarball, args.check_times, int(args.jobs), args.dry_run,
+        tarball_paths = None if args.from_tarballs is None else list(map(pathlib.Path.resolve, args.from_tarballs))
+        build_local(features, tarball_paths, args.kea_packaging_path, args.check_times, args.dry_run,
                     args.ccache_dir, args.pkg_version, args.pkg_isc_version, args.repository_url, pkgs_dir)
         # NOTE: upload the locally build packages and leave; the rest of the code is vagrant specific
         if args.upload:
@@ -3152,7 +3135,8 @@ def build_cmd(args):
     fail = False
     for provider, system, revision in plan:
         ccache_dir = _prepare_ccache_dir(args.ccache_dir, args.system, args.revision)
-        result = build_in_vagrant(provider, system, revision, features, args.leave_system, args.from_tarball,
+        tarball_paths = list(map(pathlib.Path.resolve, args.from_tarballs))
+        result = build_in_vagrant(provider, system, revision, features, args.leave_system, tarball_paths,
                                   args.dry_run, args.quiet, args.clean_start, args.check_times, int(args.jobs),
                                   ccache_dir, args.pkg_version, args.pkg_isc_version, args.upload, args.repository_url)
         results[(provider, system, revision)] = result
