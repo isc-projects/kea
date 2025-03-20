@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2024-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -36,7 +36,12 @@ main(int, char* argv[]) {
 
     // Determine some paths.
     Path const this_binary(argv[0]);
-    string const ancestor_path(Path(this_binary.parentPath()).parentPath());
+    string ancestor_path(this_binary.parentPath());
+    // TODO: remove kludgy if-condition when autotools gets removed.
+    if (Path(ancestor_path).filename() == ".libs") {
+        ancestor_path = Path(ancestor_path).parentPath();
+    }
+    cout << ancestor_path << endl;
     string const filename(this_binary.filename());
     stringstream ss;
     ss << ancestor_path << "/input/" << filename;
