@@ -370,7 +370,7 @@ TEST_F(AddrRegTest, noSubnet) {
     // The query is silently rejected so no log to check.
 }
 
-// Test that an IA_NA option is fordidden.
+// Test that an IA_NA option is forbidden.
 TEST_F(AddrRegTest, unexpectedIA_NA) {
     IfaceMgrTestConfig test_config(true);
 
@@ -403,7 +403,7 @@ TEST_F(AddrRegTest, unexpectedIA_NA) {
     EXPECT_EQ(1, countFile(expected));
 }
 
-// Test that an IA_TA option is fordidden.
+// Test that an IA_TA option is forbidden.
 TEST_F(AddrRegTest, unexpectedIA_TA) {
     IfaceMgrTestConfig test_config(true);
 
@@ -437,7 +437,7 @@ TEST_F(AddrRegTest, unexpectedIA_TA) {
     EXPECT_EQ(1, countFile(expected));
 }
 
-// Test that an IA_PD option is fordidden.
+// Test that an IA_PD option is forbidden.
 TEST_F(AddrRegTest, unexpectedIA_PD) {
     IfaceMgrTestConfig test_config(true);
 
@@ -548,12 +548,12 @@ TEST_F(AddrRegTest, badIAADDR) {
     addr_reg_inf->setIndex(ETH0_INDEX);
     OptionPtr clientid = generateClientId();
     addr_reg_inf->addOption(clientid);
-    OptionCustomPtr iaddr(new OptionCustom(LibDHCP::D6O_IAADDR_DEF(),
-                                           Option::V6));
-    iaddr->writeAddress(IOAddress("2001:db8:1::1"), 0);
-    iaddr->writeInteger<uint32_t>(3000, 1);
-    iaddr->writeInteger<uint32_t>(4000, 2);
-    addr_reg_inf->addOption(iaddr);
+    OptionCustomPtr iaaddr(new OptionCustom(LibDHCP::D6O_IAADDR_DEF(),
+                                            Option::V6));
+    iaaddr->writeAddress(IOAddress("2001:db8:1::1"), 0);
+    iaaddr->writeInteger<uint32_t>(3000, 1);
+    iaaddr->writeInteger<uint32_t>(4000, 2);
+    addr_reg_inf->addOption(iaaddr);
 
     // Pass it to the server.
     AllocEngine::ClientContext6 ctx;
