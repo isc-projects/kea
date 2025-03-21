@@ -473,7 +473,7 @@ else
 endif
 conf_data.set('PACKAGE_VERSION_TYPE', f'"@package_version_type@"')
 
-#### System-specific Compiler Flags
+#### Compiler Flags
 
 compile_args = []
 link_args = []
@@ -485,9 +485,44 @@ INSTALL_RPATH = PREFIX / LIBDIR
 BUILD_RPATH = TOP_BUILD_DIR / 'src/lib'
 
 if SYSTEM == 'darwin'
-    compile_args += '-D__APPLE_USE_RFC_3542'
+    compile_args += ['-D__APPLE_USE_RFC_3542']
     add_project_arguments('-D__APPLE_USE_RFC_3542', language: 'cpp')
 endif
+
+cpp_args_opt = get_option('cpp_args')
+werror_opt = get_option('werror')
+
+# List of warnings to add and to remove.
+warnings = [
+    '-Wnon-virtual-dtor',
+    '-Wwrite-strings',
+    '-Woverloaded-virtual',
+    '-Wno-missing-field-initializers',
+    #   '-Wshadow',
+]
+no_warnings = ['-Wno-sign-compare']
+# Clang++ specific settings.
+cxx_id = cpp.get_id()
+if cxx_id == 'clang' and cpp_args_opt.length() == 0
+    add_project_arguments('-Qunused-arguments', language: 'cpp')
+    compile_args += ['-Qunused-arguments']
+    no_warnings += ['-Wno-unused-variable', '-Wno-unused-parameter']
+endif
+if werror_opt
+    warnings += no_warnings
+endif
+if cpp_args_opt.length() == 0
+    foreach warning : warnings
+        if cpp.has_argument(warning)
+            add_project_arguments(warning, language: 'cpp')
+            compile_args += [warning]
+        else
+            message(f'@warning@ is not supported by the compiler')
+        endif
+    endforeach
+endif
+
+#### Premium hooks
 
 premium = fs.is_dir('premium')
 if premium
@@ -525,10 +560,10 @@ report_conf_data.set('HOOKS_DIR', DEFAULT_HOOKS_PATH)
 report_conf_data.set('PREMIUM', premium ? 'yes' : 'no')
 report_conf_data.set('MESON_VERSION', meson.version())
 report_conf_data.set('MESON_INFO', DATADIR / 'kea/meson-info')
-my_build_options = meson.build_options()
+build_options = meson.build_options()
 report_conf_data.set('BUILD_OPTIONS', build_options.replace('\'', '"'))
 report_conf_data.set('CXX', ' '.join(cpp.cmd_array()))
-report_conf_data.set('CXX_ID', cpp.get_id())
+report_conf_data.set('CXX_ID', cxx_id)
 result = run_command(cpp, '--version', check: false)
 if result.returncode() == 0
     v = result.stdout().strip().split('\n')
@@ -546,7 +581,7 @@ if result.returncode() == 0
 else
     error('Cpp standard is unknown')
 endif
-compile_args += get_option('cpp_args')
+compile_args += cpp_args_opt
 report_conf_data.set('CXX_ARGS', ' '.join(compile_args))
 report_conf_data.set('LD_ID', cpp.get_linker_id())
 link_args += get_option('cpp_link_args')
