@@ -475,8 +475,8 @@ conf_data.set('PACKAGE_VERSION_TYPE', f'"@package_version_type@"')
 
 #### System-specific Compiler Flags
 
-compile_args = get_option('cpp_args')
-link_args = get_option('cpp_link_args')
+compile_args = []
+link_args = []
 
 # $ORIGIN documented at https://www.man7.org/linux/man-pages/man8/ld.so.8.html
 # EXECUTABLE_RPATH = f'$ORIGIN/../@LIBDIR@'
@@ -523,9 +523,10 @@ report_conf_data.set('OS_TYPE', OS_TYPE)
 report_conf_data.set('PREFIX', PREFIX)
 report_conf_data.set('HOOKS_DIR', DEFAULT_HOOKS_PATH)
 report_conf_data.set('PREMIUM', premium ? 'yes' : 'no')
-report_conf_data.set('BUILD_OPTIONS', meson.build_options())
 report_conf_data.set('MESON_VERSION', meson.version())
 report_conf_data.set('MESON_INFO', DATADIR / 'kea/meson-info')
+my_build_options = meson.build_options()
+report_conf_data.set('BUILD_OPTIONS', build_options.replace('\'', '"'))
 report_conf_data.set('CXX', ' '.join(cpp.cmd_array()))
 report_conf_data.set('CXX_ID', cpp.get_id())
 result = run_command(cpp, '--version', check: false)
@@ -545,8 +546,10 @@ if result.returncode() == 0
 else
     error('Cpp standard is unknown')
 endif
+compile_args += get_option('cpp_args')
 report_conf_data.set('CXX_ARGS', ' '.join(compile_args))
 report_conf_data.set('LD_ID', cpp.get_linker_id())
+link_args += get_option('cpp_link_args')
 report_conf_data.set('LD_ARGS', ' '.join(link_args))
 report_conf_data.set('PYTHON_PATH', PYTHON.full_path())
 report_conf_data.set('PYTHON_VERSION', PYTHON.version())

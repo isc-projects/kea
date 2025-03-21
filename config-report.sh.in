@@ -21,10 +21,13 @@ Package:
   Hooks directory:   @HOOKS_DIR@
   Premium hooks:     @PREMIUM@
 
-Build Options:     @BUILD_OPTIONS@
 Meson Version:     @MESON_VERSION@
 Meson info:        @MESON_INFO@
+Build Options:     @BUILD_OPTIONS@
+'
+# Break after build options which can embed strange things..
 
+add_to_report '
 C++ Compiler:
   CXX:             @CXX@
   CXX_ID:          @CXX_ID@
