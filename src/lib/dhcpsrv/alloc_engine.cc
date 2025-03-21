@@ -4013,6 +4013,28 @@ AllocEngine::discoverLease4(AllocEngine::ClientContext4& ctx) {
     return (new_lease);
 }
 
+void deleteAssignedLease(Lease4Ptr lease) {
+    if (LeaseMgrFactory::instance().deleteLease(lease) &&
+        (lease->state_ != Lease4::STATE_RELEASED)) {
+        // Need to decrease statistic for assigned addresses.
+        StatsMgr::instance().addValue(StatsMgr::generateName("subnet", lease->subnet_id_,
+                                                             "assigned-addresses"),
+                                      static_cast<int64_t>(-1));
+
+        auto const& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()
+                             ->getBySubnetId(lease->subnet_id_);
+        if (subnet) {
+            auto const& pool = subnet->getPool(Lease::TYPE_V4, lease->addr_, false);
+            if (pool) {
+                StatsMgr::instance().addValue(StatsMgr::generateName("subnet", subnet->getID(),
+                                              StatsMgr::generateName("pool", pool->getID(),
+                                                                      "assigned-addresses")),
+                                              static_cast<int64_t>(-1));
+            }
+        }
+    }
+}
+
 Lease4Ptr
 AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
     // Find an existing lease for this client. This function will return null
@@ -4113,6 +4135,21 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
             ctx.unknown_requested_addr_ = true;
             return (Lease4Ptr());
         }
+
+        // During a prior discover the allocation engine deemed that the
+        // client's current lease (client_lease) should no longer be used and
+        // so offered a different lease (existing) that was temporarily
+        // allocated because offer-lifetime is greater than zero. We need to
+        // delete to unusable lease and renew the temporary lease.
+        if (((client_lease && existing) && (client_lease->addr_ != existing->addr_) &&
+             (existing->addr_ == ctx.requested_address_) &&
+             (existing->belongsToClient(ctx.hwaddr_, ctx.subnet_->getMatchClientId() ?
+                                        ctx.clientid_ : ClientIdPtr())))
+             && getOfferLft(ctx, false)) {
+            auto conflicted_lease = client_lease;
+            client_lease = existing;;
+            deleteAssignedLease(conflicted_lease);
+        }
     }
 
     // We have gone through all the checks, so we can now allocate the address
@@ -4161,7 +4198,6 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
         CalloutHandle::CalloutNextStep callout_status = CalloutHandle::NEXT_STEP_CONTINUE;
         new_lease = allocateOrReuseLease4(ctx.requested_address_, ctx,
                                           callout_status);
-
     } else {
 
         LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
@@ -4184,26 +4220,7 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
                   ALLOC_ENGINE_V4_REQUEST_REMOVE_LEASE)
             .arg(ctx.query_->getLabel())
             .arg(client_lease->addr_.toText());
-
-        if (LeaseMgrFactory::instance().deleteLease(client_lease) && (client_lease->state_ != Lease4::STATE_RELEASED)) {
-            // Need to decrease statistic for assigned addresses.
-            StatsMgr::instance().addValue(
-                StatsMgr::generateName("subnet", client_lease->subnet_id_,
-                                       "assigned-addresses"),
-                static_cast<int64_t>(-1));
-
-            auto const& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getBySubnetId(client_lease->subnet_id_);
-            if (subnet) {
-                auto const& pool = subnet->getPool(Lease::TYPE_V4, client_lease->addr_, false);
-                if (pool) {
-                    StatsMgr::instance().addValue(
-                        StatsMgr::generateName("subnet", subnet->getID(),
-                                               StatsMgr::generateName("pool", pool->getID(),
-                                                                      "assigned-addresses")),
-                        static_cast<int64_t>(-1));
-                }
-            }
-        }
+        deleteAssignedLease(client_lease);
     }
 
     // Return the allocated lease or NULL pointer if allocation was
@@ -4212,9 +4229,9 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
 }
 
 uint32_t
-AllocEngine::getOfferLft(const ClientContext4& ctx) {
+AllocEngine::getOfferLft(const ClientContext4& ctx, bool only_on_discover /* = true */) {
     // Not a DISCOVER or it's BOOTP, punt.
-    if ((!ctx.fake_allocation_) || (ctx.query_->inClass("BOOTP"))) {
+    if (only_on_discover && ((!ctx.fake_allocation_) || (ctx.query_->inClass("BOOTP")))) {
         return (0);
     }
 

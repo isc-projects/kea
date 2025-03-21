@@ -1548,9 +1548,13 @@ public:
     /// to the query.
     ///
     /// @param ctx Client context holding various information about the client.
+    /// @param only_on_discover when true (default) function will return
+    /// zero if the context is not for DISCOVER. When false it will search
+    /// scopes for offer-lifetime regardless of the context query type.
+    ///
     /// @return unsigned integer value of the offer lifetime to use.
-    static uint32_t getOfferLft(const ClientContext4& ctx);
-
+    static uint32_t getOfferLft(const ClientContext4& ctx,
+                                bool only_on_discover = true);
 private:
 
     /// @brief Offers the lease.

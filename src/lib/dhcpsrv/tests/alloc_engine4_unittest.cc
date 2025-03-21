@@ -2125,6 +2125,62 @@ TEST_F(AllocEngine4Test, requestOtherClientLease) {
     EXPECT_EQ("192.0.2.101", new_lease->addr_.toText());
 }
 
+// Allocation engine should remove a pre-existing lease
+// and renew the temporary lease when offer-lifetime > 0.
+// This can happen when a client gets a lease which is
+// later rendered invalid by the creation of host reservation,
+// either for the lease address or for the client with
+// a different address.
+TEST_F(AllocEngine4Test, existingLeasePlusTemporary) {
+    // Create the first lease.
+    Lease4Ptr lease(new Lease4(IOAddress("192.0.2.101"), hwaddr_,
+                               &clientid_->getClientId()[0],
+                               clientid_->getClientId().size(),
+                               100, time(NULL), subnet_->getID(),
+                               false, false, ""));
+
+    // Create the second lease.
+    Lease4Ptr lease2(new Lease4(IOAddress("192.0.2.102"), hwaddr_,
+                               &clientid_->getClientId()[0],
+                               clientid_->getClientId().size(),
+                               100, time(NULL), subnet_->getID(),
+                               false, false, ""));
+    // Add leases for both clients to the Lease Manager.
+    LeaseMgrFactory::instance().addLease(lease);
+    LeaseMgrFactory::instance().addLease(lease2);
+
+    // First when temporary allocations are off.
+
+    // Client requests the second lease.
+    AllocEngine engine(0);
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("192.0.2.102"),
+                                    false, false, "", false);
+    ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+    Lease4Ptr new_lease = engine.allocateLease4(ctx);
+
+    ASSERT_FALSE(new_lease);
+
+    // Both leases should still be there.
+    ASSERT_TRUE(LeaseMgrFactory::instance().getLease4(lease->addr_));
+    ASSERT_TRUE(LeaseMgrFactory::instance().getLease4(lease2->addr_));
+
+    // Now enable temporary allocations by setting offer lifetime > 0.
+    subnet_->setOfferLft(120);
+
+    // Client requests the second lease.
+    AllocEngine::ClientContext4 ctx2(subnet_, clientid_, hwaddr_, IOAddress("192.0.2.102"),
+                                     false, false, "", false);
+    ctx2.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+    new_lease = engine.allocateLease4(ctx2);
+
+    // Allocation should renew it and remove the original lease.
+    ASSERT_TRUE(new_lease);
+    EXPECT_EQ("192.0.2.102", new_lease->addr_.toText());
+
+    // Orignal lease should be gone.
+    ASSERT_FALSE(LeaseMgrFactory::instance().getLease4(lease->addr_));
+}
+
 // This test checks the behavior of the allocation engine in the following
 // scenario:
 // - Client has no lease in the database.

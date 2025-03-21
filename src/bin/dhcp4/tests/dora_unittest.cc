@@ -927,7 +927,9 @@ public:
     ///     allocating the address reserved for the Client B.
     /// 21. Client B uses 4-way exchange to obtain a new lease.
     /// 22. The server finally allocates a reserved address to the Client B.
-    void reservationsWithConflicts();
+    /// @param offer_lifetime value to use as the global value of offer-lietime
+    /// throughout the test.
+    void reservationsWithConflicts(int offer_lifetime = 0);
 
     /// @brief This test verifies that the allocation engine ignores
     /// reservations when reservations flags are set to "disabled".
@@ -2198,10 +2200,13 @@ TEST_F(DORATest, messageFieldsReservationsMultiThreading) {
 }
 
 void
-DORATest::reservationsWithConflicts() {
+DORATest::reservationsWithConflicts(int offer_lifetime /* = 0 */) {
+    ElementPtr offer_lft(Element::create(offer_lifetime));
     Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Configure DHCP server.
     configure(DORA_CONFIGS[0], *client.getServer());
+    CfgMgr::instance().getCurrentCfg()->addConfiguredGlobal("offer-lifetime", offer_lft);
+
     // Client A performs 4-way exchange and obtains a lease from the
     // dynamic pool.
     ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
@@ -2223,6 +2228,7 @@ DORATest::reservationsWithConflicts() {
                           SUBNET_ID_UNUSED, IOAddress("10.0.0.9")));
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
+    CfgMgr::instance().getCurrentCfg()->addConfiguredGlobal("offer-lifetime", offer_lft);
 
     // Let's transition the client to Renewing state.
     client.setState(Dhcp4Client::RENEWING);
@@ -2260,6 +2266,7 @@ DORATest::reservationsWithConflicts() {
 
     // By reconfiguring the server, we remove the existing reservations.
     configure(DORA_CONFIGS[0]);
+    CfgMgr::instance().getCurrentCfg()->addConfiguredGlobal("offer-lifetime", offer_lft);
 
     // Try to renew the existing lease again.
     ASSERT_NO_THROW(client.doRequest());
@@ -2303,6 +2310,7 @@ DORATest::reservationsWithConflicts() {
                         SUBNET_ID_UNUSED, in_pool_addr));
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
     CfgMgr::instance().commit();
+    CfgMgr::instance().getCurrentCfg()->addConfiguredGlobal("offer-lifetime", offer_lft);
 
     // Client B performs a DHCPDISCOVER.
     clientB.setState(Dhcp4Client::SELECTING);
@@ -2412,6 +2420,16 @@ TEST_F(DORATest, reservationsWithConflicts) {
 TEST_F(DORATest, reservationsWithConflictsMultiThreading) {
     Dhcpv4SrvMTTestGuard guard(*this, true);
     reservationsWithConflicts();
+}
+
+TEST_F(DORATest, reservationsWithConflictsOfferLft) {
+    Dhcpv4SrvMTTestGuard guard(*this, false);
+    reservationsWithConflicts(120);
+}
+
+TEST_F(DORATest, reservationsWithConflictsOfferLftMultiThreading) {
+    Dhcpv4SrvMTTestGuard guard(*this, true);
+    reservationsWithConflicts(120);
 }
 
 void
