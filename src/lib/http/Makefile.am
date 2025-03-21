@@ -48,7 +48,7 @@ libkea_http_la_SOURCES += cfg_http_header.h cfg_http_header.cc
 libkea_http_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_http_la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_http_la_LDFLAGS  = $(AM_LDFLAGS)
-libkea_http_la_LDFLAGS += -no-undefined -version-info 85:0:0
+libkea_http_la_LDFLAGS += -no-undefined -version-info 86:0:0
 
 libkea_http_la_LIBADD  = $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 libkea_http_la_LIBADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la

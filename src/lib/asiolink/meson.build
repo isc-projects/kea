@@ -21,7 +21,7 @@ kea_asiolink_lib = shared_library(
     install_rpath: INSTALL_RPATH,
     build_rpath: BUILD_RPATH,
     link_with: LIBS_BUILT_SO_FAR,
-    version: '83.0.0',
+    version: '84.0.0',
     # Avoids: ld: error: undefined symbol: environ on FreeBSD
     override_options: ENVIRON_SHLIB_FLAGS,
 )

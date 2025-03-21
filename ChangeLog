@@ -1,3 +1,8 @@
+2327.	[build]		mgodzina
+	The library version numbers have been bumped up for the Kea 2.7.7
+	development release.
+	(Gitlab #3817)
+
 2326.	[bug]		razvan
 	Fixed a bug which was causing the allocation engine to reject the
 	lease if a data race caused by a different server updating the

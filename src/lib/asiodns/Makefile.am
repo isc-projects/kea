@@ -13,7 +13,7 @@ EXTRA_DIST += asiodns_messages.mes
 
 lib_LTLIBRARIES = libkea-asiodns.la
 
-libkea_asiodns_la_LDFLAGS = -no-undefined -version-info 60:0:0
+libkea_asiodns_la_LDFLAGS = -no-undefined -version-info 61:0:0
 
 libkea_asiodns_la_SOURCES = io_fetch.cc io_fetch.h
 libkea_asiodns_la_SOURCES += logger.h logger.cc
