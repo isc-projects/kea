@@ -52,10 +52,11 @@ can be installed individually, with any of the following packages:
 
 - ``isc-kea-hooks`` — Kea open source DHCP hooks
 
-Kea premium hook packages are not included in the ``isc-kea-hooks`` package.
-For ISC customers with access to the premium hooks, those packages have the
-``isc-kea-premium-`` prefix. Users wishing to purchase the premium hooks
-can find them on ISC's website, at https://www.isc.org/shop/.
+The Kea subscriber hook packages are not included in the ``isc-kea-hooks`` package.
+For ISC customers with access to the subscriber hooks, those packages have the
+``isc-kea-subscriber-`` prefix. For users interested in purchasing professional
+support services from ISC and getting access to the subscriber hooks, please
+fill out our contact form at https://www.isc.org/contact.
 
 Once installed, the services can be managed through the distribution's
 service manager. The services are named: :iscman:`kea-dhcp4`, :iscman:`kea-dhcp6`,

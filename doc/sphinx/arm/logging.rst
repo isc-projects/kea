@@ -126,11 +126,11 @@ are logged according to the configuration set by the second entry.
 The currently defined loggers are listed in the following table. The
 "Software Package" column of this table specifies whether the particular
 loggers belong to the core Kea code (open source Kea binaries and
-libraries), or hook libraries (open source or premium).
+libraries), or hook libraries (open source or subscriber).
 
 .. tabularcolumns:: |p{0.2\linewidth}|p{0.2\linewidth}|p{0.6\linewidth}|
 
-.. table:: List of loggers supported by Kea servers and hook libraries shipped with Kea/premium packages
+.. table:: List of loggers supported by Kea servers and hook libraries shipped with Kea/subscriber packages
    :class: longtable
    :widths: 20 20 60
 
@@ -162,7 +162,7 @@ libraries), or hook libraries (open source or premium).
    |                                  |                                       | messages.                      |
    +----------------------------------+---------------------------------------+--------------------------------+
    | ``kea-ctrl-agent.rbac-hooks``    | :ischooklib:`libdhcp_rbac.so`         | Used to log messages related to|
-   |                                  | premium hook library                  | the operation of the RBAC hook |
+   |                                  | subscriber hook library               | the operation of the RBAC hook |
    |                                  |                                       | library.                       |
    +----------------------------------+---------------------------------------+--------------------------------+
    | ``kea-dhcp4``                    | core                                  | The root logger for the DHCPv4 |
@@ -209,7 +209,7 @@ libraries), or hook libraries (open source or premium).
    | ``kea-dhcp-ddns.callouts``       |                                       | hook point.                    |
    +----------------------------------+---------------------------------------+--------------------------------+
    | ``kea-dhcp4.cb-cmds-hooks``,     | :ischooklib:`libdhcp_cb_cmds.so`      | Used to log messages related to|
-   | ``kea-dhcp6.cb-cmds-hooks``      | premium hook library                  | the operation of the Config    |
+   | ``kea-dhcp6.cb-cmds-hooks``      | subscriber hook library               | the operation of the Config    |
    |                                  |                                       | Backend Commands hook library. |
    +----------------------------------+---------------------------------------+--------------------------------+
    | ``kea-dhcp4.class-cmds-hooks``,  | :ischooklib:`libdhcp_class_cmds.so`   | Used to log messages related to|
@@ -388,7 +388,7 @@ libraries), or hook libraries (open source or premium).
    |                                  |                                       | hook library.                  |
    +----------------------------------+---------------------------------------+--------------------------------+
    | ``kea-dhcp4.stat-cmds-hooks``,   | :ischooklib:`libdhcp_stat_cmds.so`    | Used to log messages related to|
-   | ``kea-dhcp6.stat-cmds-hooks``    | opens-source hook library             | the operation of the Statistics|
+   | ``kea-dhcp6.stat-cmds-hooks``    | open-source hook library              | the operation of the Statistics|
    |                                  |                                       | Commands hook library. In      |
    |                                  |                                       | general, these pertain to      |
    |                                  |                                       | loading and unloading the      |

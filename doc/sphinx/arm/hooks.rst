@@ -59,22 +59,21 @@ Installing Hook Packages
 
 .. note::
 
-   For more details about installing the Kea Premium Hooks package, please read
+   For more details about installing the Kea Subscriber Hooks, please read
    `this Knowledgebase article <https://kb.isc.org/docs/aa-01587>`__.
 
-Some hook packages are included in the base Kea sources. There is no
+Most hook packages are now included in the base Kea sources. There is no
 need to do anything special to compile or install them, as they are covered
 by the usual building and installation procedures. Please
 refer to :ref:`installation` for a general overview of the installation process.
 
-ISC provides several additional premium hooks in the form of packages, which
+ISC provides several additional subscriber-only hooks in the form of packages, which
 follow a similar installation procedure but with several additional steps.
-For our users' convenience, the premium hooks installation procedure is described in this section.
+For our users' convenience, the subscriber hooks' installation procedure is described in this section.
 
 1. Download the package; detailed instructions are provided in the KB article
 above. The package will be a file with a name similar to
-``kea-premium-|release|.tar.gz``. (The name may vary depending on the package
-purchased.)
+``kea-subscriber-|release|.tar.gz``.
 
 2. Administrators who have the sources for the corresponding version of the
 open-source Kea package on their system from the initial Kea installation
@@ -90,20 +89,19 @@ Unpack this tarball:
 This will unpack the tarball into the ``kea-|release|`` subdirectory of
 the current working directory.
 
-3. Unpack the Kea premium hooks tarball into the same directory where the
+3. Unpack the Kea subscriber hooks tarball into the same directory where the
 original Kea source is located. Once Kea |release| has been unpacked into a ``kea-|release|``
-subdirectory and the Kea premium tarball is in the current directory, the following
-steps will unpack the premium tarball into the correct location:
+subdirectory and the Kea subscriber tarball is in the current directory, the following
+steps will unpack the subscriber tarball into the correct location:
 
 .. parsed-literal::
 
      $ cd kea-|release|
-     $ tar -xvf ../kea-premium-|release|.tar.gz
+     $ tar -xvf ../kea-subscriber-|release|.tar.gz
 
-Note that unpacking the Kea premium package puts the files into a
+Note that unpacking the Kea subscriber package puts the files into a
 directory named ``premium``. Regardless of the name of the package, the
-directory is always called ``premium``, although its contents will vary
-depending on the hooks package.
+directory is always called ``premium``.
 
 4. Run the ``autoreconf`` tools. This step is necessary to update Kea's build
 script to include the additional directory. If this tool is not already
@@ -116,7 +114,7 @@ tools. To generate the configure script, please use:
 
 5. Rerun ``configure``, using the same configuration options that were used when
 originally building Kea. It is possible to verify that ``configure`` has detected the
-premium package by inspecting the summary printed when it exits. The
+subscriber package by inspecting the summary printed when it exits. The
 first section of the output should look something like this:
 
 .. parsed-literal::
@@ -128,7 +126,7 @@ first section of the output should look something like this:
      OS Family:        Linux
      Using GNU sed:    yes
      Premium package:  yes
-     Included Hooks:   forensic_log flex_id host_cmds
+     Included Hooks:   cb_cmds rbac
 
 The last line indicates which specific hooks were detected. Note that
 some hooks may require their own dedicated switches.
@@ -149,9 +147,6 @@ here is using the argument ``-j X``, where ``X`` is the number of available core
 
    $ sudo make install
 
-Note that as part of the installation procedure, the install script
-places additional hook libraries and associated files into the ``premium/`` directory.
-
 The installation location of the hook libraries depends on whether the
 ``--prefix`` parameter was specified in the ``configure`` script. If not,
 the default location is ``/usr/local/lib/kea/hooks``. The proper installation
@@ -160,13 +155,34 @@ of the libraries can be verified with this command:
 ::
 
    $ ls -l /usr/local/lib/kea/hooks/*.so
+   /usr/local/lib/kea/hooks/libddns_gss_tsig.so
+   /usr/local/lib/kea/hooks/libdhcp_bootp.so
    /usr/local/lib/kea/hooks/libdhcp_class_cmds.so
+   /usr/local/lib/kea/hooks/libdhcp_ddns_tuning.so
    /usr/local/lib/kea/hooks/libdhcp_flex_id.so
    /usr/local/lib/kea/hooks/libdhcp_flex_option.so
+   /usr/local/lib/kea/hooks/libdhcp_ha.so
+   /usr/local/lib/kea/hooks/libdhcp_host_cache.so
    /usr/local/lib/kea/hooks/libdhcp_host_cmds.so
    /usr/local/lib/kea/hooks/libdhcp_lease_cmds.so
+   /usr/local/lib/kea/hooks/libdhcp_lease_query.so
    /usr/local/lib/kea/hooks/libdhcp_legal_log.so
+   /usr/local/lib/kea/hooks/libdhcp_limits.so
+   /usr/local/lib/kea/hooks/libdhcp_mysql.so
+   /usr/local/lib/kea/hooks/libdhcp_perfmon.so
+   /usr/local/lib/kea/hooks/libdhcp_pgsql.so
+   /usr/local/lib/kea/hooks/libdhcp_ping_check.so
+   /usr/local/lib/kea/hooks/libdhcp_radius.so
+   /usr/local/lib/kea/hooks/libdhcp_run_script.so
+   /usr/local/lib/kea/hooks/libdhcp_stat_cmds.so
    /usr/local/lib/kea/hooks/libdhcp_subnet_cmds.so
+
+with the following subscriber libraries:
+
+::
+
+   /usr/local/lib/kea/hooks/libdhcp_rbac.so
+   /usr/local/lib/kea/hooks/libdhcp_cb_cmds.so
 
 The exact list returned depends on the packages installed. If the
 directory was specified via ``--prefix``, the hook libraries will be located in
@@ -229,7 +245,7 @@ The default hook libraries installation path is provided in the config report as
            }
        ]
 
-This snipper (on Ubuntu 24.04) is equivalent to:
+This snippet (on Ubuntu 24.04) is equivalent to:
 
 ::
 
@@ -324,7 +340,7 @@ User context can store configuration for multiple hooks and comments at once.
 Some hooks use user context for a configuration that can be easily edited
 without the need to restart the server.
 
-The DDNS Tuning Hook uses user context to configure per-subnet behavior. Here's an example:
+The DDNS Tuning hook uses user context to configure per-subnet behavior. Here's an example:
 
 ::
 
@@ -475,8 +491,8 @@ libraries, discussed in the following sections.
 
 .. note::
 
-   Some of these libraries are available at no cost with the open source base code; others are
-   premium libraries available for standalone purchase, while some are only available to organizations
+   As of Kea 3.0.0, most of these libraries are available at no cost with the open source base code;
+   a few are only available to organizations
    that contribute to Kea's development through paid ISC support contracts. Paid support
    includes professional engineering assistance, advance security notifications, input
    into ISC's roadmap planning, and many other benefits, while helping
