@@ -1,7 +1,0 @@
-[bug]		tmark
-	Added support for choosing from multiple
-	occurrences of the same option based on
-	class-tagging. Prior to this the last
-	occurrence listed was the only option
-	considered.
-	(Gitlab #3747)

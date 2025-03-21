@@ -1,3 +1,45 @@
+Kea 2.7.7 (development) released on March 26, 2025
+
+2334.	[func]		fdupont
+	Added experimental support for registering self-generated
+	IPv6 addresses using DHCPv6 (RFC 9686).
+	(Gitlab #3683, #3802)
+
+2333.	[build]		andrei, fdupont
+	Added meson as a build system.
+	(Gitlab #3443, #3729, #3730, #3731)
+
+2332.	[func]		tmark
+	Lease reclamation is now skipped and rescheduled
+	while DHCP service is disabled. This applies to
+	both kea-dhcp4 and kea-dhcp6.
+	(Gitlab #3693)
+
+2331.	[bug]		tmark
+	Added support for choosing from multiple
+	occurrences of the same option based on
+	class-tagging. Prior to this the last
+	occurrence listed was the only option
+	considered.
+	(Gitlab #3747)
+
+2330.	[func]		tmark
+	The lease-cmds hook library now supports storing
+	custom values, referred to as ``binding-variables``,
+	within the lease's ``user-context``.  Supported
+	in both kea-dhcp4 and kea-dhcp6.
+	(Gitlab #3463)
+
+2329.	[bug]		andrei
+	An "argument list too long" error message no longer appears when
+	the "kea-admin lease-upload" command tries to upload a large set
+	of leases. The command is also significantly faster now.
+	(Gitlab #3666)
+
+2328.	[build]		andrei
+	Kea no longer depends on a PostgreSQL server development header.
+	(Gitlab #3711)
+
 2327.	[build]		mgodzina
 	The library version numbers have been bumped up for the Kea 2.7.7
 	development release.

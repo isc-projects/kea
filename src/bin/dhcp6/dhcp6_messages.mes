@@ -37,6 +37,16 @@ Logged at debug log level 40.
 This debug message informs that a class is listed for additional evaluation but
 has no definition. The class is ignored.
 
+% DHCP6_ADDR_REG_INFORM_CLIENT_CHANGE received an ADDR-REG-INFORM for %1 from client '%2' but the address was registered by another client '%3'
+This information message is issued when a lease for another client already
+exists for an address being registered. The address, the new client and
+previous client identifiers are printed.
+
+% DHCP6_ADDR_REG_INFORM_FAIL error on ADDR-REG-INFORM from client %1: %2
+This information message is issued when the processing of an ADDR-REG-INFORM
+message failed. The address of the client, usually also the address to
+register, and the description of the problem are printed.
+
 % DHCP6_ADD_GLOBAL_STATUS_CODE %1: adding Status Code to DHCPv6 packet: %2
 Logged at debug log level 50.
 This message is logged when the server is adding the top-level
@@ -50,16 +60,6 @@ This message is logged when the server is adding the Status Code
 option to an IA. The first argument includes the client and the
 transaction identification information. The second argument specifies
 the IAID. The third argument includes the details of the status code.
-
-% DHCP6_ADDR_REG_INFORM_FAIL error on ADDR-REG-INFORM from client %1: %2
-This information message is issued when the processing of an ADDR-REG-INFORM
-message failed. The address of the client, usually also the address to
-register, and the description of the problem are printed.
-
-% DHCP6_ADDR_REG_INFORM_CLIENT_CHANGE received an ADDR-REG-INFORM for %1 from client '%2' but the address was registered by another client '%3'
-This information message is issued when a lease for another client already
-exists for an address being registered. The address, the new client and
-previous client identifiers are printed.
 
 % DHCP6_ALREADY_RUNNING %1 already running? %2
 This is an error message that occurs when the DHCPv6 server encounters

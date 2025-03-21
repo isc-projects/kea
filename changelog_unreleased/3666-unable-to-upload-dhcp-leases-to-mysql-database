@@ -1,5 +1,0 @@
-[bug]		andrei
-	An "argument list too long" error message no longer appears when
-	the "kea-admin lease-upload" command tries to upload a large set
-	of leases. The command is also significantly faster now.
-	(Gitlab #3666)

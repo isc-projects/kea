@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2016-2025 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -57,14 +57,14 @@ This is an error message issued when the legal log library experienced an
 error attempting to close a legal store.  This is highly unlikely to occur and
 should not affect the store content or subsequent legal store operations.
 
-% LEGAL_LOG_STORE_OPENED Legal store opened: %1
-This is an informational message issued when the Legal Log library
-has successfully opened the legal store.
-
 % LEGAL_LOG_STORE_OPEN opening Legal Log file: %1
 This informational message is logged when a DHCP server (either V4 or
 V6) is about to open a legal log file. The parameters of
 the backend are logged.
+
+% LEGAL_LOG_STORE_OPENED Legal store opened: %1
+This is an informational message issued when the Legal Log library
+has successfully opened the legal store.
 
 % LEGAL_LOG_UNLOAD_ERROR An error occurred unloading the library: %1
 This is an error message issued when an error occurs while unloading the

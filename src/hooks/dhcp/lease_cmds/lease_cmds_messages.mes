@@ -1,4 +1,4 @@
-# Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -100,6 +100,11 @@ unexpected error occurs evaluating the binding-variables for a given
 lease. The arguments provide the lease address, the query details, and
 an error explanation.
 
+% LEASE_CMDS_LOAD_ERROR loading Lease Commands hooks library failed: %1
+This error message indicates an error loading the Lease Commands
+hooks library. The details of the error are provided as argument of
+the log message.
+
 % LEASE_CMDS_RESEND_DDNS4 lease4-resend-ddns command successful: %1
 A request to update DNS for the requested IPv4 lease has been
 successfully queued for transmission to kea-dhcp-ddns.
@@ -167,9 +172,3 @@ The lease6-wipe command is deprecated and it will be removed in the future.
 % LEASE_CMDS_WIPE6_FAILED lease6-wipe command failed (parameters: %1, reason: %2)
 The lease6-wipe command has failed. Both the reason as well as the
 parameters passed are logged.
-
-% LEASE_CMDS_LOAD_ERROR loading Lease Commands hooks library failed: %1
-This error message indicates an error loading the Lease Commands
-hooks library. The details of the error are provided as argument of
-the log message.
-

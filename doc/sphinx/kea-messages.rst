@@ -5481,6 +5481,18 @@ DHCP4_RECLAIM_EXPIRED_LEASES_FAIL
 This error message indicates that the reclaim expired leases operation failed
 and provides the cause of failure.
 
+DHCP4_RECLAIM_EXPIRED_LEASES_SKIPPED
+====================================
+
+.. code-block:: text
+
+    dhcp6 service is currently disabled. Try again in %1 seconds.
+
+Logged at debug log level 40.
+This debug message is emitted when lease reclamation was scheduled to begin
+but skipped because DHCPv6 service was disabled. Reclamation will continue
+to be scheduled according to the configured value of reclaim-timer-wait-time.
+
 DHCP4_RECOVERED_STASHED_RELAY_AGENT_INFO
 ========================================
 
@@ -7777,6 +7789,18 @@ DHCP6_RECLAIM_EXPIRED_LEASES_FAIL
 
 This error message indicates that the reclaim expired leases operation failed
 and provides the cause of failure.
+
+DHCP6_RECLAIM_EXPIRED_LEASES_SKIPPED
+====================================
+
+.. code-block:: text
+
+    dhcp6 service is currently disabled. Try again in %1 seconds.
+
+Logged at debug log level 40.
+This debug message is emitted when lease reclamation was scheduled to begin
+but skipped because DHCPv6 service was disabled. Reclamation will continue
+to be scheduled according to the configured value of reclaim-timer-wait-time.
 
 DHCP6_REGISTERED_LEASE_ADD_FAIL
 ===============================
@@ -16610,6 +16634,17 @@ unexpected error occurs evaluating the binding-variables for a given
 lease. The arguments provide the lease address, the query details, and
 an error explanation.
 
+LEASE_CMDS_LOAD_ERROR
+=====================
+
+.. code-block:: text
+
+    loading Lease Commands hooks library failed: %1
+
+This error message indicates an error loading the Lease Commands
+hooks library. The details of the error are provided as argument of
+the log message.
+
 LEASE_CMDS_RESEND_DDNS4
 =======================
 
@@ -16763,16 +16798,6 @@ LEASE_CMDS_WIPE6_DEPRECATED
     lease6-wipe command is deprecated and it will be removed in the future.
 
 The lease6-wipe command is deprecated and it will be removed in the future.
-
-LEASE_CMDS_WIPE6_FAILED
-=======================
-
-.. code-block:: text
-
-    lease6-wipe command failed (parameters: %1, reason: %2)
-
-The lease6-wipe command has failed. Both the reason as well as the
-parameters passed are logged.
 
 LEASE_QUERY_LOAD_FAILED
 =======================
@@ -17010,6 +17035,17 @@ inserted into multiple tables with multiple INSERT statements
 and there may be a need to rollback the whole transaction if
 any of these INSERT statements fail.
 
+LEGAL_LOG_MYSQL_TLS_CIPHER
+==========================
+
+.. code-block:: text
+
+    TLS cipher: %1
+
+Logged at debug log level 50.
+A debug message issued when a new MySQL connected is created with TLS.
+The TLS cipher name is logged.
+
 LEGAL_LOG_PGSQL_COMMIT
 ======================
 
@@ -17143,6 +17179,18 @@ transactions in this case. This message is issued when data is
 inserted into multiple tables with multiple INSERT statements
 and there may be a need to rollback the whole transaction if
 any of these INSERT statements fail.
+
+LEGAL_LOG_PGSQL_TLS_SUPPORT
+===========================
+
+.. code-block:: text
+
+    Attempt to configure TLS: %1
+
+This informational message is printed when TLS support was required in
+the Kea configuration: The TLS support in PostgreSQL will be initialized but
+its configuration is fully managed outside the C API.
+The parameters of the connection are logged.
 
 LEGAL_LOG_STORE_CLOSED
 ======================
@@ -19638,18 +19686,6 @@ MYSQL_DEINIT_OK
 
 This informational message indicates that the MySQL Backend hooks
 library has been unloaded successfully.
-
-MYSQL_FB_DB
-===========
-
-.. code-block:: text
-
-    opening MySQL log database: %1
-
-This informational message is logged when a legal log hook library is
-about to open a MySQL log database.  The parameters of the
-connection including database name and username needed to access it
-(but not the password if any) are logged.
 
 MYSQL_HB_DB
 ===========
@@ -22744,18 +22780,6 @@ PGSQL_DEINIT_OK
 
 This informational message indicates that the PostgreSQL Backend hooks
 library has been unloaded successfully.
-
-PGSQL_FB_DB
-===========
-
-.. code-block:: text
-
-    opening PostgreSQL log database: %1
-
-This informational message is logged when a legal log hook library is
-about to open a PostgreSQL log database.  The parameters of the
-connection including database name and username needed to access it
-(but not the password if any) are logged.
 
 PGSQL_HB_DB
 ===========

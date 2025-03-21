@@ -163,14 +163,14 @@ This informational message indicates that the server has reused existing
 HTTPS service on the specified address and port. Note that any change in
 the TLS setup has been applied.
 
-% HTTP_COMMAND_MGR_HTTP_SERVICE_UPDATED reused HTTP service bound to address: %1 port: %2
-This informational message indicates that the server has reused existing
-HTTP service on the specified address and port.
-
 % HTTP_COMMAND_MGR_HTTP_SERVICE_REUSE_FAILED failed to reused HTTP service bound to address: %1 port: %2
 This error message indicates that the server has failed reusing existing
 HTTP service on the specified address and port. The server can not swith from
 HTTP to HTTPS sockets using the same address and port.
+
+% HTTP_COMMAND_MGR_HTTP_SERVICE_UPDATED reused HTTP service bound to address: %1 port: %2
+This informational message indicates that the server has reused existing
+HTTP service on the specified address and port.
 
 % HTTP_COMMAND_MGR_SERVICE_STARTED started %1 service bound to address: %2 port: %3
 This informational message indicates that the server has started

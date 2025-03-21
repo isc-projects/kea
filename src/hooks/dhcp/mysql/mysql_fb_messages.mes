@@ -11,12 +11,6 @@ The code has issued a commit call.  All outstanding transactions will be
 committed to the database.  Note that depending on the MySQL settings,
 the committal may not include a write to disk.
 
-% MYSQL_FB_DB opening MySQL log database: %1
-This informational message is logged when a legal log hook library is
-about to open a MySQL log database.  The parameters of the
-connection including database name and username needed to access it
-(but not the password if any) are logged.
-
 % LEGAL_LOG_MYSQL_DB_RECONNECT_ATTEMPT_FAILED database reconnect failed: %1
 An error message issued when an attempt to reconnect has failed.
 
@@ -70,3 +64,9 @@ any of these INSERT statements fail.
 Logged at debug log level 50.
 A debug message issued when a new MySQL connected is created with TLS.
 The TLS cipher name is logged.
+
+% MYSQL_FB_DB opening MySQL log database: %1
+This informational message is logged when a legal log hook library is
+about to open a MySQL log database.  The parameters of the
+connection including database name and username needed to access it
+(but not the password if any) are logged.

@@ -11,12 +11,6 @@ The code has issued a commit call.  All outstanding transactions will be
 committed to the database.  Note that depending on the PostgreSQL settings,
 the committal may not include a write to disk.
 
-% PGSQL_FB_DB opening PostgreSQL log database: %1
-This informational message is logged when a legal log hook library is
-about to open a PostgreSQL log database.  The parameters of the
-connection including database name and username needed to access it
-(but not the password if any) are logged.
-
 % LEGAL_LOG_PGSQL_DB_RECONNECT_ATTEMPT_FAILED database reconnect failed: %1
 An error message issued when an attempt to reconnect has failed.
 
@@ -79,3 +73,9 @@ This informational message is printed when TLS support was required in
 the Kea configuration: The TLS support in PostgreSQL will be initialized but
 its configuration is fully managed outside the C API.
 The parameters of the connection are logged.
+
+% PGSQL_FB_DB opening PostgreSQL log database: %1
+This informational message is logged when a legal log hook library is
+about to open a PostgreSQL log database.  The parameters of the
+connection including database name and username needed to access it
+(but not the password if any) are logged.
