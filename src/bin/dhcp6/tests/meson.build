@@ -101,6 +101,16 @@ co4 = shared_library(
     name_suffix: 'so',
 )
 
+dhcp6_tests_cpp_args = [
+    f'-DTOP_BUILDDIR="@TOP_BUILD_DIR@"',
+    f'-DTEST_DATA_BUILDDIR="@current_build_dir@"',
+    f'-DCFG_EXAMPLES="@TOP_SOURCE_DIR@/doc/examples/kea6"',
+    f'-DDHCP_DATA_DIR="@current_build_dir@"',
+    f'-DSYNTAX_FILE="@current_source_dir@/../dhcp6_parser.yy"',
+    f'-DKEA_LFC_EXECUTABLE="@KEA_LFC_BUILT@"',
+    f'-DTEST_CA_DIR="@TEST_CA_DIR@"',
+]
+
 kea_dhcp6_tests = executable(
     'kea-dhcp6-tests',
     'addr_reg_unittest.cc',
@@ -134,15 +144,7 @@ kea_dhcp6_tests = executable(
     'simple_parser6_unittest.cc',
     'tee_times_unittest.cc',
     'vendor_opts_unittest.cc',
-    cpp_args: [
-        f'-DTOP_BUILDDIR="@TOP_BUILD_DIR@"',
-        f'-DTEST_DATA_BUILDDIR="@current_build_dir@"',
-        f'-DCFG_EXAMPLES="@TOP_SOURCE_DIR@/doc/examples/kea6"',
-        f'-DDHCP_DATA_DIR="@current_build_dir@"',
-        f'-DSYNTAX_FILE="@current_source_dir@/../dhcp6_parser.yy"',
-        f'-DKEA_LFC_EXECUTABLE="@KEA_LFC_BUILT@"',
-        f'-DTEST_CA_DIR="@TEST_CA_DIR@"',
-    ],
+    cpp_args: dhcp6_tests_cpp_args,
     dependencies: dhcp6_tests_deps,
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [dhcp6_lib] + dhcp6_tests_libs + LIBS_BUILT_SO_FAR,
@@ -161,3 +163,55 @@ test(
     timeout: 60,
 )
 
+get_config_unittest_rebuild = configure_file(
+    input: 'get_config_unittest.cc.skel',
+    output: 'get_config_unittest_rebuild.cc',
+    copy: true,
+)
+kea_dhcp6_tests_extract = executable(
+    'kea-dhcp6-tests-extract',
+    get_config_unittest_rebuild,
+    'config_parser_unittest.cc',
+    objects: kea_dhcp6_tests.extract_objects(
+        'dhcp6_client.cc',
+        'dhcp6_test_utils.cc',
+        'dhcp6_unittests.cc',
+        'marker_file.cc',
+    ),
+    cpp_args: ['-DEXTRACT_CONFIG'] + dhcp6_tests_cpp_args,
+    dependencies: dhcp6_tests_deps,
+    include_directories: [include_directories('.')] + INCLUDES,
+    link_with: [dhcp6_lib] + dhcp6_tests_libs + LIBS_BUILT_SO_FAR,
+    build_by_default: false,
+)
+kea_dhcp6_tests_generate = executable(
+    'kea-dhcp6-tests-generate',
+    get_config_unittest_rebuild,
+    'config_parser_unittest.cc',
+    objects: kea_dhcp6_tests.extract_objects(
+        'dhcp6_client.cc',
+        'dhcp6_test_utils.cc',
+        'dhcp6_unittests.cc',
+        'marker_file.cc',
+    ),
+    cpp_args: ['-DGENERATE_ACTION'] + dhcp6_tests_cpp_args,
+    dependencies: dhcp6_tests_deps,
+    include_directories: [include_directories('.')] + INCLUDES,
+    link_with: [dhcp6_lib] + dhcp6_tests_libs + LIBS_BUILT_SO_FAR,
+    build_by_default: false,
+)
+
+make_rebuild_conf = configuration_data()
+make_rebuild_conf.set('builddir', current_build_dir)
+make_rebuild_conf.set('source', current_source_dir / 'get_config_unittest.cc')
+make_rebuild_conf.set(
+    'skeleton',
+    current_source_dir / 'get_config_unittest.cc.skel',
+)
+make_rebuild = configure_file(
+    input: 'make-rebuild.sh.in',
+    output: 'make-rebuild.sh',
+    configuration: make_rebuild_conf,
+)
+# Better when not use as a target.
+find_program(make_rebuild, required: true)
