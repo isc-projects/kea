@@ -22,7 +22,6 @@ netconf_lib = static_library(
     dependencies: [NETCONF_DEP, CRYPTO_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
-    override_options: ['cpp_std=c++20'],
 )
 
 executable(
@@ -35,7 +34,6 @@ executable(
     install_rpath: INSTALL_RPATH,
     build_rpath: BUILD_RPATH,
     link_with: [netconf_lib] + LIBS_BUILT_SO_FAR,
-    override_options: ['cpp_std=c++20'],
 )
 
 subdir('tests')

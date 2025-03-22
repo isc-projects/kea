@@ -34,7 +34,6 @@ kea_yang_tests = executable(
     dependencies: [NETCONF_DEP, GTEST_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [kea_yang_tests_libs] + LIBS_BUILT_SO_FAR,
-    override_options: ['cpp_std=c++20'],
 )
 test(
     'kea-yang-tests',
