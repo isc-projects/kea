@@ -101,6 +101,15 @@ co4 = shared_library(
     name_suffix: 'so',
 )
 
+dhcp4_tests_cpp_args = [
+    f'-DTEST_DATA_BUILDDIR="@current_build_dir@"',
+    f'-DCFG_EXAMPLES="@TOP_SOURCE_DIR@/doc/examples/kea4"',
+    f'-DDHCP_DATA_DIR="@current_build_dir@"',
+    f'-DSYNTAX_FILE="@current_source_dir@/../dhcp4_parser.yy"',
+    f'-DKEA_LFC_EXECUTABLE="@KEA_LFC_BUILT@"',
+    f'-DTEST_CA_DIR="@TEST_CA_DIR@"',
+]
+
 # Not yet used configs-list.txt
 kea_dhcp4_tests = executable(
     'kea-dhcp4-tests',
@@ -133,14 +142,7 @@ kea_dhcp4_tests = executable(
     'shared_network_unittest.cc',
     'simple_parser4_unittest.cc',
     'vendor_opts_unittest.cc',
-    cpp_args: [
-        f'-DTEST_DATA_BUILDDIR="@current_build_dir@"',
-        f'-DCFG_EXAMPLES="@TOP_SOURCE_DIR@/doc/examples/kea4"',
-        f'-DDHCP_DATA_DIR="@current_build_dir@"',
-        f'-DSYNTAX_FILE="@current_source_dir@/../dhcp4_parser.yy"',
-        f'-DKEA_LFC_EXECUTABLE="@KEA_LFC_BUILT@"',
-        f'-DTEST_CA_DIR="@TEST_CA_DIR@"',
-    ],
+    cpp_args: dhcp4_tests_cpp_args,
     dependencies: dhcp4_tests_deps,
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [dhcp4_lib] + dhcp4_tests_libs + LIBS_BUILT_SO_FAR,
@@ -159,3 +161,53 @@ test(
     timeout: 60,
 )
 
+get_config_unittest_rebuild = configure_file(
+    input: 'get_config_unittest.cc.skel',
+    output: 'get_config_unittest_rebuild.cc',
+    copy: true,
+)
+kea_dhcp4_tests_extract = executable(
+    'kea-dhcp4-tests-extract',
+    get_config_unittest_rebuild,
+    'config_parser_unittest.cc',
+    objects: kea_dhcp4_tests.extract_objects(
+        'dhcp4_test_utils.cc',
+        'dhcp4_unittests.cc',
+        'marker_file.cc',
+    ),
+    cpp_args: ['-DEXTRACT_CONFIG'] + dhcp4_tests_cpp_args,
+    dependencies: dhcp4_tests_deps,
+    include_directories: [include_directories('.')] + INCLUDES,
+    link_with: [dhcp4_lib] + dhcp4_tests_libs + LIBS_BUILT_SO_FAR,
+    build_by_default: false,
+)
+kea_dhcp4_tests_generate = executable(
+    'kea-dhcp4-tests-generate',
+    get_config_unittest_rebuild,
+    'config_parser_unittest.cc',
+    objects: kea_dhcp4_tests.extract_objects(
+        'dhcp4_test_utils.cc',
+        'dhcp4_unittests.cc',
+        'marker_file.cc',
+    ),
+    cpp_args: ['-DGENERATE_ACTION'] + dhcp4_tests_cpp_args,
+    dependencies: dhcp4_tests_deps,
+    include_directories: [include_directories('.')] + INCLUDES,
+    link_with: [dhcp4_lib] + dhcp4_tests_libs + LIBS_BUILT_SO_FAR,
+    build_by_default: false,
+)
+
+make_rebuild_conf = configuration_data()
+make_rebuild_conf.set('builddir', current_build_dir)
+make_rebuild_conf.set('source', current_source_dir / 'get_config_unittest.cc')
+make_rebuild_conf.set(
+    'skeleton',
+    current_source_dir / 'get_config_unittest.cc.skel',
+)
+make_rebuild = configure_file(
+    input: 'make-rebuild.sh.in',
+    output: 'make-rebuild.sh',
+    configuration: make_rebuild_conf,
+)
+# Better when not use as a target.
+find_program(make_rebuild, required: true)
