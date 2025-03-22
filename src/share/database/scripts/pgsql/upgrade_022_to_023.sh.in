@@ -28,7 +28,7 @@ fi
 
 VERSION=$(pgsql_version "$@")
 
-if [ "$VERSION" != "22.0" ] && [ "$VERSION" != "22.1" ]; then
+if [ "$VERSION" != "22.0" ] && [ "$VERSION" != "22.1" ] && [ "$VERSION" != "22.2" ]; then
     printf 'This script upgrades 22.0 or 22.1 to 23.0. '
     printf 'Reported version is %s. Skipping upgrade.\n' "${VERSION}"
     exit 0

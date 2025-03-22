@@ -148,20 +148,16 @@ mysql_db_version_test() {
         "${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}"
     assert_eq 1 "${EXIT_CODE}" "schema_version table still exists. (expected %d, exit code %d)"
 
-    # Ok, now let's create a version 1.7
+    # Create the database
     run_command \
-        mysql -u"${db_user}" -p"${db_password}" "${db_name}" -e \
-'CREATE TABLE schema_version (
-    version INT PRIMARY KEY NOT NULL,
-    minor INT
-);
-INSERT INTO schema_version VALUES (1, 7)'
-    assert_eq 0 "${EXIT_CODE}" "schema_version table cannot be created. (expected %d, exit code %d)"
+        "${kea_admin}" db-init mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
+    assert_eq 0 "${EXIT_CODE}" "cannot initialize the database, expected exit code: %d, actual: %d"
 
+    # Verify that kea-admin db-version returns the latest version.
     run_command \
         "${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}"
     version="${OUTPUT}"
-    assert_str_eq "1.7" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "29.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     mysql_wipe
@@ -962,6 +958,11 @@ mysql_upgrade_24_to_25_test() {
 }
 
 mysql_upgrade_25_to_26_test() {
+    qry="select name from option_def_data_type where id = 3"
+    run_command \
+        mysql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+    assert_str_eq 'int8' "${OUTPUT}" "${qry}: expected output %s, returned %s"
 
     # client_classes been added to dhcp4_options
     check_table_column client_classes dhcp4_options
@@ -1884,7 +1885,7 @@ mysql_lease4_upload_test() {
         input_file_cp=""
     fi
 
-    # Wipe the whole database.
+    # Let's wipe the whole database.
     mysql_wipe
 
     # Clean up any test files left from prior failed runs unless -y was provided in which case
@@ -1935,7 +1936,7 @@ mysql_lease4_upload_test() {
     rm -f "${output_file}"
     rm -f "${output_file}.tmp"
 
-    # Wipe the whole database.
+    # Let's wipe the whole database.
     mysql_wipe
 
     test_finish 0
@@ -1955,7 +1956,7 @@ mysql_lease6_upload_test() {
         input_file_cp=""
     fi
 
-    # Wipe the whole database.
+    # Let's wipe the whole database.
     mysql_wipe
 
     # Clean up any test files left from prior failed runs unless -y was provided in which case
@@ -2006,7 +2007,7 @@ mysql_lease6_upload_test() {
     rm -f "${output_file}"
     rm -f "${output_file}.tmp"
 
-    # Wipe the whole database.
+    # Let's wipe the whole database.
     mysql_wipe
 
     test_finish 0

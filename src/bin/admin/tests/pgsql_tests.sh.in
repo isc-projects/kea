@@ -140,7 +140,7 @@ pgsql_db_init_test() {
 pgsql_db_version_test() {
     test_start "pgsql.db-version"
 
-    # Wipe the whole database
+    # Let's wipe the whole database
     pgsql_wipe
 
     # Do not create any table so db-version will raise an error
@@ -1055,6 +1055,12 @@ pgsql_upgrade_24_to_25_test() {
 }
 
 pgsql_upgrade_25_to_26_test() {
+    qry="select name from option_def_data_type where id = 3"
+    run_command \
+        pgsql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "${qry}. (expected status code %d, returned %d)"
+    assert_str_eq 'int8' "${OUTPUT}" "${qry}: expected output %s, returned %s"
+
     # client_classes been added to dhcp4_options
     check_table_column client_classes dhcp4_options
 
@@ -1126,7 +1132,7 @@ pgsql_upgrade_28_to_29_test() {
 pgsql_upgrade_test() {
     test_start "pgsql.upgrade"
 
-    # Wipe the whole database
+    # Let's wipe the whole database
     pgsql_wipe
 
     # Initialize database to schema 1.0.
@@ -1390,7 +1396,7 @@ pgsql_lease4_upload_test() {
         input_file_cp=""
     fi
 
-    # Wipe the whole database.
+    # Let's wipe the whole database.
     pgsql_wipe
 
     # Clean up any test files left from prior failed runs unless -y was provided in which case
@@ -1439,7 +1445,7 @@ pgsql_lease4_upload_test() {
     rm -f "${output_file}"
     rm -f "${output_file}.tmp"
 
-    # Wipe the whole database.
+    # Let's wipe the whole database.
     pgsql_wipe
 
     test_finish 0
@@ -1458,7 +1464,7 @@ pgsql_lease6_upload_test() {
         input_file_cp=""
     fi
 
-    # Wipe the whole database.
+    # Let's wipe the whole database.
     pgsql_wipe
 
     # Clean up any test files left from prior failed runs unless -y was provided in which case
@@ -1507,7 +1513,7 @@ pgsql_lease6_upload_test() {
     rm -f "${output_file}"
     rm -f "${output_file}.tmp"
 
-    # Wipe the whole database.
+    # Let's wipe the whole database.
     pgsql_wipe
 
     test_finish 0
