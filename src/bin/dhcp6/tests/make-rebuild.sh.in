@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# shellcheck disable=SC2162
+# shellcheck disable=SC3045
+
 set -eu
 
 pwd=$(pwd -P)
