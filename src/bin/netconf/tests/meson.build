@@ -41,7 +41,6 @@ kea_netconf_tests = executable(
         kea_process_testutils_lib,
         kea_testutils_lib,
     ] + LIBS_BUILT_SO_FAR,
-    override_options: ['cpp_std=c++20'],
 )
 test(
     'kea-netconf-tests',

@@ -21,7 +21,12 @@ project(
     meson_version: '>=1.1.0',
     license: 'MPL-2.0',
     license_files: ['COPYING'],
-    default_options: ['b_asneeded=true', 'b_pch=false', 'b_pie=true'],
+    default_options: [
+        'b_asneeded=true',
+        'b_pch=false',
+        'b_pie=true',
+        'warning_level=2',
+    ],
 )
 
 cpp = meson.get_compiler('cpp')
@@ -283,6 +288,43 @@ conf_data.set('HAVE_PGSQL', POSTGRESQL_DEP.found())
 
 #### Compiler Checks
 
+# The required keyword in cpp.run() is an 1.5.0 feature.
+result = cpp.run(
+    fs.read('compiler-checks/get-cpp-standard.cc'),
+    name: 'Get cpp standard',
+)
+if result.returncode() == 0
+    cpp_standard = result.stdout().strip()
+else
+    error('C++ standard is unknown')
+endif
+message(f'Detected C++ standard (__cplusplus value) is @cpp_standard@.')
+cpp_std_opt = get_option('cpp_std')
+no_cpp_std_opt_msg = 'Please set a C++ standard by setting a CXX variable or by passing the -Dcpp_std argument to meson.'
+cpp_std_opt_msg = f'-Dcpp_std=@cpp_std_opt@ is not enough.'
+if cpp_standard.version_compare('<201100')
+    msgs = [
+        'Kea requires at least C++11 to build.',
+        'Recommended C++ standard is C++14 but some dependencies require at least C++20',
+    ]
+    if cpp_std_opt == 'none'
+        msgs += no_cpp_std_opt_msg
+    else
+        msgs += cpp_std_opt_msg
+    endif
+    error('\n'.join(msgs))
+endif
+# Add Botan 3 to this.
+if NETCONF_DEP.found() and cpp_standard.version_compare('<202000')
+    msgs = ['Netconf dependency requires at least C++20.']
+    if cpp_std_opt == 'none'
+        msgs += no_cpp_std_opt_msg
+    else
+        msgs += cpp_std_opt_msg
+    endif
+    error('\n'.join(msgs))
+endif
+
 result = cpp.run(
     fs.read('compiler-checks/boost-has-threads.cc'),
     dependencies: [boost_dep, threads_dep],
@@ -318,7 +360,7 @@ if cpp.has_link_argument('-Wl,--no-undefined')
         args: ['--shared', '-fPIC', '-Wl,--no-undefined'],
     )
     if not result
-        ENVIRON_SHLIB_FLAGS += ['b_lundef=false']
+        ENVIRON_SHLIB_FLAGS += 'b_lundef=false'
     endif
 endif
 
@@ -473,7 +515,7 @@ else
 endif
 conf_data.set('PACKAGE_VERSION_TYPE', f'"@package_version_type@"')
 
-#### Compiler Flags
+#### Compiler
 
 compile_args = []
 link_args = []
@@ -485,7 +527,7 @@ INSTALL_RPATH = PREFIX / LIBDIR
 BUILD_RPATH = TOP_BUILD_DIR / 'src/lib'
 
 if SYSTEM == 'darwin'
-    compile_args += ['-D__APPLE_USE_RFC_3542']
+    compile_args += '-D__APPLE_USE_RFC_3542'
     add_project_arguments('-D__APPLE_USE_RFC_3542', language: 'cpp')
 endif
 
@@ -505,7 +547,7 @@ no_warnings = ['-Wno-sign-compare']
 cxx_id = cpp.get_id()
 if cxx_id == 'clang' and cpp_args_opt.length() == 0
     add_project_arguments('-Qunused-arguments', language: 'cpp')
-    compile_args += ['-Qunused-arguments']
+    compile_args += '-Qunused-arguments'
     no_warnings += ['-Wno-unused-variable', '-Wno-unused-parameter']
 endif
 if werror_opt
@@ -515,7 +557,7 @@ if cpp_args_opt.length() == 0
     foreach warning : warnings
         if cpp.has_argument(warning)
             add_project_arguments(warning, language: 'cpp')
-            compile_args += [warning]
+            compile_args += warning
         else
             message(f'@warning@ is not supported by the compiler')
         endif
@@ -571,16 +613,7 @@ if result.returncode() == 0
 else
     report_conf_data.set('CXX_VERSION', 'unknown')
 endif
-# The required keyword in cpp.run() is an 1.5.0 feature.
-result = cpp.run(
-    fs.read('compiler-checks/get-cpp-standard.cc'),
-    name: 'Get cpp standard',
-)
-if result.returncode() == 0
-    report_conf_data.set('CXX_STANDARD', result.stdout().strip())
-else
-    error('Cpp standard is unknown')
-endif
+report_conf_data.set('CXX_STANDARD', cpp_standard)
 compile_args += cpp_args_opt
 report_conf_data.set('CXX_ARGS', ' '.join(compile_args))
 report_conf_data.set('LD_ID', cpp.get_linker_id())

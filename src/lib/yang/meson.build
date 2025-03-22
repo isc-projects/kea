@@ -31,7 +31,6 @@ kea_yang_lib = shared_library(
     build_rpath: BUILD_RPATH,
     link_with: LIBS_BUILT_SO_FAR,
     version: '72.0.0',
-    override_options: ['cpp_std=c++20'],
 )
 LIBS_BUILT_SO_FAR = [kea_yang_lib] + LIBS_BUILT_SO_FAR
 kea_yang_headers = [
