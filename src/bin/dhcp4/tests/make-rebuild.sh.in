@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# shellcheck disable=SC2162
+# shellcheck disable=SC3045
+
 set -eu
 
 pwd=$(pwd -P)
@@ -8,6 +11,7 @@ npwd=$(pwd -P)
 
 if test "$pwd" != "$npwd"; then
     echo "This script should be run from the build directory (@builddir@)"
+
     read -p "Press ENTER to continue anyway"
 fi
 
