@@ -164,6 +164,7 @@ boost_headers = [
     'boost/functional/hash.hpp',
     'boost/integer/common_factor.hpp',
     'boost/interprocess/sync/interprocess_upgradable_mutex.hpp',
+    'boost/multiprecision/cpp_int.hpp',
     'boost/shared_ptr.hpp',
     'boost/system/error_code.hpp',
 ]
@@ -314,6 +315,22 @@ if cpp_standard.version_compare('<201100')
     endif
     error('\n'.join(msgs))
 endif
+if cpp_standard.version_compare('<201400')
+    result = cpp.run(
+        fs.read('compiler-checks/boost-math-cpp14.cc'),
+        name: 'BOOST_MATH_REQUIRES_CPP14',
+        dependencies: [boost_dep, threads_dep],
+    )
+    if result.returncode() != 0
+        msgs = ['Boost Math requires at least C++14.']
+        if cpp_std_opt == 'none'
+            msgs += no_cpp_std_opt_msg
+        else
+            msgs += cpp_std_opt_msg
+        endif
+        error('\n'.join(msgs))
+    endif
+endif
 # Add Botan 3 to this.
 if NETCONF_DEP.found() and cpp_standard.version_compare('<202000')
     msgs = ['Netconf dependency requires at least C++20.']
@@ -365,17 +382,17 @@ if cpp.has_link_argument('-Wl,--no-undefined')
 endif
 
 if CRYPTO_DEP.name() == openssl.name()
-    return1 = cpp.run(
+    result1 = cpp.run(
         fs.read('compiler-checks/have-generic-tls-method.cc'),
         name: 'HAVE_GENERIC_TLS_METHOD',
         dependencies: [boost_dep, CRYPTO_DEP, threads_dep],
     )
-    return2 = cpp.run(
+    result2 = cpp.run(
         fs.read('compiler-checks/stream-truncated-error.cc'),
         name: 'HAVE_STREAM_TRUNCATED_ERROR',
         dependencies: [boost_dep, CRYPTO_DEP, threads_dep],
     )
-    if return1.returncode() != 0 or return2.returncode() != 0
+    if result1.returncode() != 0 or result2.returncode() != 0
         error('Boost TLS support broken.')
     endif
 endif
