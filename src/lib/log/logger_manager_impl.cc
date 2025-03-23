@@ -182,6 +182,7 @@ LoggerManagerImpl::createFileAppender(log4cplus::Logger& logger,
                                lexical_cast<string>(opt.maxver));
         properties.setProperty("ImmediateFlush", opt.flush ? "true" : "false");
         properties.setProperty("UseLockFile", "true");
+        properties.setProperty("ReopenDelay", "0");
         fileapp = log4cplus::SharedAppenderPtr(
             new log4cplus::RollingFileAppender(properties));
     }

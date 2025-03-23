@@ -1,8 +1,5 @@
 #!/bin/sh
 
-# shellcheck disable=SC2162
-# shellcheck disable=SC3045
-
 set -eu
 
 pwd=$(pwd -P)
@@ -11,8 +8,8 @@ npwd=$(pwd -P)
 
 if test "$pwd" != "$npwd"; then
     echo "This script should be run from the build directory (@builddir@)"
-
-    read -p "Press ENTER to continue anyway"
+    printf "Press ENTER to continue anyway"
+    read -r _
 fi
 
 # Initialize.
@@ -20,18 +17,21 @@ rm -f x u get_config_unittest_rebuild.cc
 cp -f "@skeleton@" get_config_unittest_rebuild.cc
 rm -f kea-dhcp4-tests-extract
 echo "Please recompile kea-dhcp4-tests-extract"
-read -p "Press ENTER when ready"
+printf "Press ENTER when ready"
+read -r _
 
 # Extract step.
 ./kea-dhcp4-tests-extract --gtest_filter="Dhcp4Parser*" > /dev/null 2> x
 rm -f kea-dhcp4-tests-generate
 echo "Please copy content of x file into EXTRACTED_CONFIGS in get_config_unittest_rebuild.cc and recompile kea-dhcp4-tests-generate"
-read -p "Press ENTER when ready"
+printf "Press ENTER when ready"
+read -r _
 
 # Generate step
 ./kea-dhcp4-tests-generate --gtest_filter="Dhcp4GetConfig*" > /dev/null 2> u
 echo "Please copy content of u file into UNPARSED_CONFIGS in get_config_unittest_rebuild.cc"
-read -p "Press ENTER when ready"
+printf "Press ENTER when ready"
+read -r _
 mv get_config_unittest_rebuild.cc get_config_unittest.cc
 cp -f get_config_unittest.cc "@source@"
 echo "Please recompile the kea_dhcp4_tests target"

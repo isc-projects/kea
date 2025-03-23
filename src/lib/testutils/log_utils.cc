@@ -30,6 +30,7 @@ LogContentTest::LogContentTest()
     OutputOption option;
     option.destination = OutputOption::DEST_FILE;
     option.filename = string(LogContentTest::LOG_FILE);
+    option.maxsize = 2000000000UL;
     spec.addOutputOption(option);
     LoggerManager manager;
     manager.process(spec);

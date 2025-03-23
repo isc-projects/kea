@@ -2774,7 +2774,7 @@ const char* EXTRACTED_CONFIGS[] = {
 
 /// @brief unparsed configurations
 const char* UNPARSED_CONFIGS[] = {
-///put this after const char* UNPARSED_CONFIGS[] = {
+/// put this after const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 0
 "{\n"
 "        \"allocator\": \"iterative\",\n"
