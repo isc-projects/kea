@@ -1,5 +1,17 @@
 Kea 2.7.7 (development) released on March 26, 2025
 
+2335.	[func]		razvan
+	The following hook libraries are now open source:
+	for the kea-dhcp4 and the kea-dhcp6 servers
+	'libdhcp_class_cmds', 'libdhcp_ddns_tuning',
+	'libdhcp_flex_id', 'libdhcp_legal_log',
+	'libdhcp_host_cache', 'libdhcp_host_cmds',
+	'libdhcp_lease_query', 'libdhcp_limits',
+	'libdhcp_ping_check', 'libdhcp_radius',
+	'libdhcp_subnet_cmds' and for the kea-dhcp-ddns server
+	'libddns_gss_tsig'.
+	(Gitlab #3333)
+
 2334.	[func]		fdupont
 	Added experimental support for registering self-generated
 	IPv6 addresses using DHCPv6 (RFC 9686).
