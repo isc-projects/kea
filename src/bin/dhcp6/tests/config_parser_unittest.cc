@@ -5037,6 +5037,9 @@ TEST_F(Dhcp6ParserTest, allInterfaces) {
     // All interfaces should be now active.
     ASSERT_TRUE(test_config.socketOpen("eth0", AF_INET6));
     ASSERT_TRUE(test_config.socketOpen("eth1", AF_INET6));
+
+    // Avoid log4cplus error message.
+    LogContentTest::reset();
 }
 
 // This test verifies that it is possible to select subset of interfaces
@@ -5074,6 +5077,9 @@ TEST_F(Dhcp6ParserTest, selectedInterfacesAndAddresses) {
     EXPECT_TRUE(test_config.socketOpen("eth0", AF_INET6));
     // The 2001:db8:1::1 address on eth1 was selected.
     EXPECT_TRUE(test_config.socketOpen("eth1", AF_INET6));
+
+    // Avoid log4cplus error message.
+    LogContentTest::reset();
 }
 
 // This test checks if it is possible to specify relay information
