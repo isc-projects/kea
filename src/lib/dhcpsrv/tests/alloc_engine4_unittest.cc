@@ -2149,9 +2149,8 @@ TEST_F(AllocEngine4Test, existingLeasePlusTemporary) {
     LeaseMgrFactory::instance().addLease(lease);
     LeaseMgrFactory::instance().addLease(lease2);
 
-    // First when temporary allocations are off.
-
-    // Client requests the second lease.
+    // When temporary allocations are off and client requests the
+    // second lease, the engine should not return a lease.
     AllocEngine engine(0);
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("192.0.2.102"),
                                     false, false, "", false);
@@ -2160,7 +2159,7 @@ TEST_F(AllocEngine4Test, existingLeasePlusTemporary) {
 
     ASSERT_FALSE(new_lease);
 
-    // Both leases should still be there.
+    // Both leases should still be in the lease back end.
     ASSERT_TRUE(LeaseMgrFactory::instance().getLease4(lease->addr_));
     ASSERT_TRUE(LeaseMgrFactory::instance().getLease4(lease2->addr_));
 
@@ -2173,11 +2172,11 @@ TEST_F(AllocEngine4Test, existingLeasePlusTemporary) {
     ctx2.query_.reset(new Pkt4(DHCPREQUEST, 1234));
     new_lease = engine.allocateLease4(ctx2);
 
-    // Allocation should renew it and remove the original lease.
+    // Allocation should return the second lease and remove the original lease.
     ASSERT_TRUE(new_lease);
     EXPECT_EQ("192.0.2.102", new_lease->addr_.toText());
 
-    // Orignal lease should be gone.
+    // Orignal lease should have been deleted from lease back.
     ASSERT_FALSE(LeaseMgrFactory::instance().getLease4(lease->addr_));
 }
 

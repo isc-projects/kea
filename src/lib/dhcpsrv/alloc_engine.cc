@@ -4140,7 +4140,7 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
         // client's current lease (client_lease) should no longer be used and
         // so offered a different lease (existing) that was temporarily
         // allocated because offer-lifetime is greater than zero. We need to
-        // delete to unusable lease and renew the temporary lease.
+        // delete the unusable lease and renew the temporary lease.
         if (((client_lease && existing) && (client_lease->addr_ != existing->addr_) &&
              (existing->addr_ == ctx.requested_address_) &&
              (existing->belongsToClient(ctx.hwaddr_, ctx.subnet_->getMatchClientId() ?
@@ -4172,7 +4172,6 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
                       ALLOC_ENGINE_V4_REQUEST_EXTEND_LEASE)
                 .arg(ctx.query_->getLabel())
                 .arg(ctx.requested_address_);
-
             return (renewLease4(client_lease, ctx));
         }
     }
