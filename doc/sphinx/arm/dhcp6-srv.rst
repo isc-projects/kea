@@ -3758,6 +3758,10 @@ qualifying suffix is "example.com", and the default value is used for
 
 ``myhost-3001-1--70E.example.com.``
 
+As of Kea 2.7.8, generated prefixes that would have ended in a hyphen
+will have a zero appended to the end. For example, the generated prefix
+for the address "2001:db8:1::" would be "myhost-2001-db8-1--0".
+
 .. _dhcp6-host-name-sanitization:
 
 Sanitizing Client FQDN Names

@@ -173,6 +173,10 @@ D2ClientMgr::generateFqdn(const asiolink::IOAddress& address,
     std::replace(hostname.begin(), hostname.end(),
                  (address.isV4() ? '.' : ':'), '-');
 
+    if (*(hostname.rbegin()) == '-') {
+        hostname.append("0");
+    }
+
     std::ostringstream gen_name;
     gen_name << ddns_params.getGeneratedPrefix() << "-" << hostname;
     return (qualifyName(gen_name.str(), ddns_params, trailing_dot));
