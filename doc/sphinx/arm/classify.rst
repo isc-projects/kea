@@ -134,17 +134,41 @@ The classification process is conducted in several steps:
 
 .. note::
 
-    The ``lease4_select``, ``lease4_renew``, ``lease6_select``, ``lease6_renew``, and ``lease6_rebind``
-    callouts are called here.
+    The ``lease4_select``, ``lease4_renew``, ``lease6_select``, ``lease6_renew``,
+    and ``lease6_rebind`` callouts are called here.
 
-12. Classes marked as "additional" are evaluated in the order in which
-    they are listed: first pools, then the subnet, and finally
-    the shared network that assigned resources belong to.
+12. The ``evaluate-additional-classes`` lists (if any) are evaluated first
+    for the pool, then the subnet, and the finally shared-network to which the
+    assigned resources belong. Classes are evaluated in the order they appear
+    within each list.
 
 13. Options are assigned, again possibly based on the class information
     in the order that classes were associated with the incoming packet.
-    For DHCPv4 private and code 43 options, this includes option
-    definitions specified within classes.
+    The first class matched to the packet which specifies a given
+    option wins. For DHCPv4 private and code 43 options, this includes
+    option definitions specified within classes.  The order of precedence
+    for options is as follows:
+
+    1. Host options
+    2. Pool options
+    3. Subnet options
+    4. Shared network options
+    5. Options from classes assigned during normal classification:
+
+        a. ``ALL`` class
+        b. Vendor classes
+        c. Host classes
+        d. Evaluated classes that do not depend on ``KNOWN`` class
+        e. ``KNOWN`` and ``UNKNOWN`` classes
+        f. Evaluated classes that depend on ``KNOWN`` class
+
+    6. Options from classes in ``evaluate-additional-classes`` from:
+
+        a. Pool
+        b. Subnet
+        c. Shared network
+
+    7. Global options
 
 .. note::
 
@@ -1324,7 +1348,7 @@ while clients that do not match "melon" will have a value of 456 for option
 "foo".
 
 It is possible to achieve an if-elseif-else effect but specifying an option
-more than once with different class tags and values. Consider the following 
+more than once with different class tags and values. Consider the following
 configuration for a subnet which provides three possible values for the
 "server-str" option:
 
@@ -1348,10 +1372,10 @@ configuration for a subnet which provides three possible values for the
        }]
     }
 
-Clients belonging to "class-one" will get a value of "string.one", clients 
+Clients belonging to "class-one" will get a value of "string.one", clients
 belonging to "class-two" will get a value of "string.two", and clients that
-belong to neither "class-one" nor "class-two" will get a value of 
-"string.other". 
+belong to neither "class-one" nor "class-two" will get a value of
+"string.other".
 
 .. note::
 
