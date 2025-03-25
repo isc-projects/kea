@@ -1,8 +1,8 @@
 [bug]		tmark
 	Corrected an issue which caused kea-dhcp4 to
 	NAK requests for an offered lease when a
-	conflicting host reservation exists and 
-	offer-lifetime is greater than zero. The 
+	conflicting host reservation exists and
+	offer-lifetime is greater than zero. The
 	server will now remove the unusable lease,
 	renew the temporary lease, and send it back
 	in a DHCPACK.
