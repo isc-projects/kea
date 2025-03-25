@@ -18,9 +18,7 @@
 #include <botan/data_src.h>
 #include <botan/pem.h>
 #include <botan/pkcs8.h>
-#if BOTAN_VERSION_MAJOR > 2
 #include <botan/tls_session_manager_noop.h>
-#endif
 
 using namespace isc::cryptolink;
 
@@ -56,28 +54,18 @@ public:
     // Certificate chain.
     std::vector<Botan::X509_Certificate>
     cert_chain(const std::vector<std::string>&,
-#if BOTAN_VERSION_MAJOR > 2
                const std::vector<Botan::AlgorithmIdentifier>&,
-#endif
                const std::string&,
                const std::string&) override {
         return (certs_);
     }
 
     // Private key.
-#if BOTAN_VERSION_MAJOR > 2
     std::shared_ptr<Botan::Private_Key>
-#else
-    Botan::Private_Key*
-#endif
     private_key_for(const Botan::X509_Certificate&,
                     const std::string&,
                     const std::string&) override {
-#if BOTAN_VERSION_MAJOR > 2
         return (key_);
-#else
-        return (key_.get());
-#endif
     }
 
     // Set the store from a path.
@@ -131,27 +119,15 @@ public:
 
     // Set the private key.
     void setPrivateKey(const std::string& file,
-#if BOTAN_VERSION_MAJOR > 2
                        Botan::RandomNumberGenerator&,
-#else
-                       Botan::RandomNumberGenerator& rng,
-#endif
                        bool& is_rsa) {
-#if BOTAN_VERSION_MAJOR > 2
         Botan::DataSource_Stream source(file);
         auto priv_key = Botan::PKCS8::load_key(source);
-#else
-        auto priv_key = Botan::PKCS8::load_key(file, rng);
-#endif
         if (!priv_key) {
             isc_throw(Unexpected,
                       "Botan::PKCS8::load_key failed but not threw?");
         }
-#if BOTAN_VERSION_MAJOR > 2
         key_ = std::move(priv_key);
-#else
-        key_.reset(priv_key);
-#endif
         is_rsa = (key_->algo_name() == "RSA");
     }
 
@@ -291,28 +267,16 @@ public:
         if (context_) {
             return;
         }
-#if BOTAN_VERSION_MAJOR > 2
         context_.reset(new Botan::TLS::Context(cred_mgr_,
                                                rng_,
                                                sess_mgr_,
                                                policy_));
-#else
-        context_.reset(new Botan::TLS::Context(*cred_mgr_,
-                                               *rng_,
-                                               *sess_mgr_,
-                                               *policy_));
-#endif
     }
 
-#if BOTAN_VERSION_MAJOR > 2
+    // Get the context.
     virtual std::shared_ptr<Botan::TLS::Context> get() {
         return (context_);
     }
-#else
-    virtual Botan::TLS::Context& get() {
-        return (*context_);
-    }
-#endif
 
     // Credentials Manager.
     std::shared_ptr<KeaCredentialsManager> cred_mgr_;
@@ -335,19 +299,11 @@ TlsContext::TlsContext(TlsRole role)
     : TlsContextBase(role), impl_(new TlsContextImpl()) {
 }
 
-#if BOTAN_VERSION_MAJOR > 2
 std::shared_ptr<Botan::TLS::Context>
 TlsContext::getContext() {
     impl_->build();
     return (impl_->get());
 }
-#else
-Botan::TLS::Context&
-TlsContext::getContext() {
-    impl_->build();
-    return (impl_->get());
-}
-#endif
 
 void
 TlsContext::setCertRequired(bool cert_required) {

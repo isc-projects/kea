@@ -21,14 +21,7 @@
 #pragma GCC diagnostic ignored "-Wnon-virtual-dtor"
 #endif
 
-/// MariaDB defines PROTOCOL_VERSION which is also in a Botan enum...
-
-#ifdef PROTOCOL_VERSION
-#define BOTAN_BACKUP_FOR_PROTOCOL_VERSION PROTOCOL_VERSION
-#undef PROTOCOL_VERSION
-#endif
-
-#include <botan/asio_error.h>
+#include <boost/beast/core/error.hpp>
 
 #ifdef BOTAN_BACKUP_FOR_PROTOCOL_VERSION
 #define PROTOCOL_VERSION BOTAN_BACKUP_FOR_PROTOCOL_VERSION

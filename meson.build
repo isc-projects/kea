@@ -222,10 +222,16 @@ LOG4CPLUS_DEP = dependency('log4cplus', fallback: ['log4cplus', 'log4cplus'])
 # Cryptography
 CRYPTO_DEP = disabler()
 botan = disabler()
-foreach dep : ['botan-2', 'botan']
+foreach dep : ['botan-3', 'botan']
     botan = dependency(dep, required: false)
     if botan.found()
-        break
+        version = botan.version()
+        if version.version_compare('<3.4.0')
+            message(f'Rejecting too old Botan (@version@ < 3.4.0)')
+            botan = disabler()
+        else
+            break
+        endif
     endif
 endforeach
 openssl = dependency('openssl', required: false)
