@@ -305,8 +305,8 @@ else
 endif
 message(f'Detected C++ standard (__cplusplus value) is @cpp_standard@.')
 cpp_std_opt = get_option('cpp_std')
-no_cpp_std_opt_msg = 'Please set a C++ standard by passing the -Dcpp_std argument to meson or by setting a CXX variable.'
-cpp_std_opt_msg = f'-Dcpp_std=@cpp_std_opt@ is not enough.'
+no_cpp_std_opt_msg = 'Please set a C++ standard by passing the -D cpp_std argument to meson.'
+cpp_std_opt_msg = f'-D cpp_std=@cpp_std_opt@ is not enough.'
 if cpp_standard.version_compare('<201100')
     msgs = [
         'Kea requires at least C++11 to build.',
