@@ -39,4 +39,6 @@ test(
     dhcp_forensic_log_libloadtests,
     depends: [dhcp_forensic_log_lib],
     protocol: 'gtest',
+    is_parallel: false,
+    priority: -1,
 )
