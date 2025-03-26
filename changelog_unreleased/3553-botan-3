@@ -1,0 +1,3 @@
+[build]*		fdupont
+	Moved Botan crypto backend support to version 3.
+	(Gitlab #3553)
