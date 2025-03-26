@@ -927,7 +927,7 @@ public:
     ///     allocating the address reserved for the Client B.
     /// 21. Client B uses 4-way exchange to obtain a new lease.
     /// 22. The server finally allocates a reserved address to the Client B.
-    /// @param offer_lifetime value to use as the global value of offer-lietime
+    /// @param offer_lifetime value to use as the global value of offer-lifetime
     /// throughout the test.
     void reservationsWithConflicts(int offer_lifetime = 0);
 

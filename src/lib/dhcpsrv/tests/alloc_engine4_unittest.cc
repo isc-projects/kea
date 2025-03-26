@@ -2176,7 +2176,7 @@ TEST_F(AllocEngine4Test, existingLeasePlusTemporary) {
     ASSERT_TRUE(new_lease);
     EXPECT_EQ("192.0.2.102", new_lease->addr_.toText());
 
-    // Orignal lease should have been deleted from lease back.
+    // Original lease should have been deleted from lease back.
     ASSERT_FALSE(LeaseMgrFactory::instance().getLease4(lease->addr_));
 }
 
