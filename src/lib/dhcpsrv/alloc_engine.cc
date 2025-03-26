@@ -4147,7 +4147,7 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
                                         ctx.clientid_ : ClientIdPtr())))
              && getOfferLft(ctx, false)) {
             auto conflicted_lease = client_lease;
-            client_lease = existing;;
+            client_lease = existing;
             deleteAssignedLease(conflicted_lease);
         }
     }
