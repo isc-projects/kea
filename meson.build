@@ -544,8 +544,14 @@ link_args = []
 # $ORIGIN documented at https://www.man7.org/linux/man-pages/man8/ld.so.8.html
 # EXECUTABLE_RPATH = f'$ORIGIN/../@LIBDIR@'
 # HOOK_RPATH = '$ORIGIN/../..'
-INSTALL_RPATH = PREFIX / LIBDIR
 BUILD_RPATH = TOP_BUILD_DIR / 'src/lib'
+INSTALL_RPATH = PREFIX / LIBDIR
+# rpmbuild complains about rpaths to standard locations so let us conform to
+# its liking and remove them. And let's do it consistently for all packages.
+if kea_pkg_type_in_configure != ''
+    BUILD_RPATH = ''
+    INSTALL_RPATH = ''
+endif
 
 if SYSTEM == 'darwin'
     compile_args += '-D__APPLE_USE_RFC_3542'
