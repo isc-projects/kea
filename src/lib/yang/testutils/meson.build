@@ -5,5 +5,6 @@ endif
 kea_yang_testutils_lib = static_library(
     'kea-yang-testutils',
     'translator_test.cc',
+    dependencies: [NETCONF_DEP, GTEST_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
 )
