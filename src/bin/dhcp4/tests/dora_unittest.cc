@@ -2227,8 +2227,8 @@ DORATest::reservationsWithConflicts(int offer_lifetime /* = 0 */) {
                           Host::IDENT_HWADDR, SubnetID(1),
                           SUBNET_ID_UNUSED, IOAddress("10.0.0.9")));
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().getStagingCfg()->addConfiguredGlobal("offer-lifetime", offer_lft);
     CfgMgr::instance().commit();
-    CfgMgr::instance().getCurrentCfg()->addConfiguredGlobal("offer-lifetime", offer_lft);
 
     // Let's transition the client to Renewing state.
     client.setState(Dhcp4Client::RENEWING);
@@ -2309,8 +2309,8 @@ DORATest::reservationsWithConflicts(int offer_lifetime /* = 0 */) {
                         Host::IDENT_HWADDR, SubnetID(1),
                         SUBNET_ID_UNUSED, in_pool_addr));
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().getStagingCfg()->addConfiguredGlobal("offer-lifetime", offer_lft);
     CfgMgr::instance().commit();
-    CfgMgr::instance().getCurrentCfg()->addConfiguredGlobal("offer-lifetime", offer_lft);
 
     // Client B performs a DHCPDISCOVER.
     clientB.setState(Dhcp4Client::SELECTING);
