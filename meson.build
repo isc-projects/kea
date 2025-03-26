@@ -223,15 +223,9 @@ LOG4CPLUS_DEP = dependency('log4cplus', fallback: ['log4cplus', 'log4cplus'])
 CRYPTO_DEP = disabler()
 botan = disabler()
 foreach dep : ['botan-3', 'botan']
-    botan = dependency(dep, required: false)
+    botan = dependency(dep, version: '>=3.4.0', required: false)
     if botan.found()
-        version = botan.version()
-        if version.version_compare('<3.4.0')
-            message(f'Rejecting too old Botan (@version@ < 3.4.0)')
-            botan = disabler()
-        else
-            break
-        endif
+        break
     endif
 endforeach
 openssl = dependency('openssl', required: false)
@@ -411,7 +405,6 @@ if cpp_standard.version_compare('<201400')
         error('\n'.join(msgs))
     endif
 endif
-# Add Botan 3 to this.
 if NETCONF_DEP.found() and cpp_standard.version_compare('<202000')
     msgs = ['NETCONF dependency requires at least C++20.']
     if cpp_std_opt == 'none'
@@ -426,6 +419,15 @@ if NETCONF_DEP.found() and cpp_standard.version_compare('<202000')
         warning('\n'.join(msgs))
         NETCONF_DEP = disabler()
     endif
+endif
+if CRYPTO_DEP.name() == botan.name() and cpp_standard.version_compare('<202000')
+    msgs = ['Botan dependency requires at least C++20.']
+    if cpp_std_opt == 'none'
+        msgs += no_cpp_std_opt_msg
+    else
+        msgs += cpp_std_opt_msg
+    endif
+    error('\n'.join(msgs))
 endif
 
 result = cpp.run(
@@ -467,6 +469,17 @@ if CRYPTO_DEP.name() == openssl.name()
     )
     if result1.returncode() != 0 or result2.returncode() != 0
         error('Boost TLS support broken.')
+    endif
+endif
+
+if CRYPTO_DEP.name() == botan.name()
+    result = cpp.run(
+        fs.read('compiler-checks/botan-hash.cc'),
+        name: 'CHECK_BOTAN_LIBRARY',
+        dependencies: [boost_dep, CRYPTO_DEP, threads_dep],
+    )
+    if result.returncode() != 0
+        error('Botan library does not work.')
     endif
 endif
 
