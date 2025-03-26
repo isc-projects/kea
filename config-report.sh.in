@@ -11,61 +11,61 @@ add_to_report <<HERE_DOCUMENT
     -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 Package:
-  Name:              @PACKAGE_NAME@
-  Version:           @PACKAGE_VERSION@
-  Extended version:  @EXTENDED_VERSION@
-  Version type:      @PACKAGE_VERSION_TYPE@
-  OS Family:         @OS_TYPE@
+  Name:               @PACKAGE_NAME@
+  Version:            @PACKAGE_VERSION@
+  Extended version:   @EXTENDED_VERSION@
+  Version type:       @PACKAGE_VERSION_TYPE@
+  OS Family:          @OS_TYPE@
 
-  Prefix:            @PREFIX@
-  Hooks directory:   @HOOKS_DIR@
-  Premium hooks:     @PREMIUM@
+  Prefix:             @PREFIX@
+  Hooks directory:    @HOOKS_DIR@
+  Premium hooks:      @PREMIUM@
 
-Meson Version:     @MESON_VERSION@
-Meson info:        @MESON_INFO@
-Build Options:     @BUILD_OPTIONS@
+Meson Version:        @MESON_VERSION@
+Meson info:           @MESON_INFO@
+Build Options:        @BUILD_OPTIONS@
 
 HERE_DOCUMENT
 
 add_to_report <<HERE_DOCUMENT
 C++ Compiler:
-  CXX:             @CXX@
-  CXX_ID:          @CXX_ID@
-  CXX_VERSION:     @CXX_VERSION@
-  CXX_STANDARD:    @CXX_STANDARD@
-  CXX_ARGS:        @CXX_ARGS@
-  LD_ID:           @LD_ID@
-  LD_ARGS:         @LD_ARGS@
+  CXX:                @CXX@
+  CXX_ID:             @CXX_ID@
+  CXX_VERSION:        @CXX_VERSION@
+  CXX_STANDARD:       @CXX_STANDARD@
+  CXX_ARGS:           @CXX_ARGS@
+  LD_ID:              @LD_ID@
+  LD_ARGS:            @LD_ARGS@
 
 HERE_DOCUMENT
 
 add_to_report <<HERE_DOCUMENT
 Python:
-  PYTHON:          @PYTHON_PATH@
-  PYTHON_VERSION:  @PYTHON_VERSION@
-  PKGPYTHONDIR:    @PKGPYTHONDIR@
+  PYTHON:             @PYTHON_PATH@
+  PYTHON_VERSION:     @PYTHON_VERSION@
+  PKGPYTHONDIR:       @PKGPYTHONDIR@
 
-Boost:             @BOOST_VERSION@
+Boost:                @BOOST_VERSION@
 
 @CRYPTO_NAME@:@SPACES@@CRYPTO_VERSION@
 
-Log4cplus:         @LOG4CPLUS_VERSION@
+Log4cplus:            @LOG4CPLUS_VERSION@
 
-Flex:              @FLEX@
-Bison:             @BISON@
+Flex:                 @FLEX@
+Bison:                @BISON@
 
 HERE_DOCUMENT
 
 if test '@HAVE_MYSQL@' != 'no'; then
 add_to_report <<HERE_DOCUMENT
-MySQL:             @MYSQL_VERSION@
+MySQL:                @MYSQL_VERSION@
 
 HERE_DOCUMENT
 
 else
 
 add_to_report <<HERE_DOCUMENT
-MySQL:             no
+MySQL:                no
 
 HERE_DOCUMENT
 fi
@@ -73,14 +73,14 @@ fi
 if test '@HAVE_PGSQL@' != 'no'; then
 
 add_to_report <<HERE_DOCUMENT
-PostgreSQL:        @PGSQL_VERSION@
+PostgreSQL:           @PGSQL_VERSION@
 
 HERE_DOCUMENT
 
 else
 
 add_to_report <<HERE_DOCUMENT
-PostgreSQL:        no
+PostgreSQL:           no
 
 HERE_DOCUMENT
 fi
@@ -88,29 +88,31 @@ fi
 if test '@HAVE_NETCONF@' != 'no'; then
 add_to_report <<HERE_DOCUMENT
 Netconf:
-  LIBYANG:         @LIBYANG_VERSION@
-  LIBYANGCPP:      @LIBYANGCPP_VERSION@
-  LIBYANG_PREFIX:  @LIBYANG_PREFIX@
-  SYSREPO:         @SYSREPO_VERSION@
-  SYSREPOCPP:      @SYSREPOCPP_VERSION@
-  SYSREPO_PREFIX:  @SYSREPO_PREFIX@
+  YANG:               @YANG_VERSION@
+  YANG_PREFIX:        @YANG_PREFIX@
+  YANGCPP:            @YANGCPP_VERSION@
+  YANGCPP_PREFIX:     @YANGCPP_PREFIX@
+  SYSREPO:            @SYSREPO_VERSION@
+  SYSREPO_PREFIX:     @SYSREPO_PREFIX@
+  SYSREPOCPP:         @SYSREPOCPP_VERSION@
+  SYSREPOCPP_PREFIX:  @SYSREPOCPP_PREFIX@
 
 HERE_DOCUMENT
 else
 add_to_report <<HERE_DOCUMENT
-Netconf:           no
+Netconf:              no
 
 HERE_DOCUMENT
 fi
 
 if test '@HAVE_GTEST@' != 'no'; then
 add_to_report <<HERE_DOCUMENT
-Google Test:       @GTEST_VERSION@
+Google Test:          @GTEST_VERSION@
 
 HERE_DOCUMENT
 else
 add_to_report <<HERE_DOCUMENT
-Google Test:       no
+Google Test:          no
 
 HERE_DOCUMENT
 fi
@@ -118,21 +120,21 @@ fi
 if test '@HAVE_KRB5@' != 'no'; then
 add_to_report <<HERE_DOCUMENT
 Kerberos5 GSS-API:
-  VERSION:         @KRB5_GSSAPI_VERSION@
-  VENDOR:          @KRB5_GSSAPI_VENDOR@
+  VERSION:            @KRB5_GSSAPI_VERSION@
+  VENDOR:             @KRB5_GSSAPI_VENDOR@
 
 HERE_DOCUMENT
 else
 add_to_report <<HERE_DOCUMENT
-Kerberos5 GSS-API: no
+Kerberos5 GSS-API:    no
 
 HERE_DOCUMENT
 fi
 
 add_to_report <<HERE_DOCUMENT
 Developer:
-  Tests:           @TESTS_ENABLED@
-  Fuzzing:         @FUZZ_ENABLED@
-  Valgrind:        @VALGRIND@
-  AFL:             @HAVE_AFL@
+  Tests:              @TESTS_ENABLED@
+  Fuzzing:            @FUZZ_ENABLED@
+  Valgrind:           @VALGRIND@
+  AFL:                @HAVE_AFL@
 HERE_DOCUMENT

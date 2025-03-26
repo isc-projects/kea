@@ -223,7 +223,7 @@ NETCONF_DEP = dependency(
     required: netconf_opt,
 )
 if netconf_opt.enabled() and NETCONF_DEP.get_variable(
-    'libyang_prefix',
+    'yang-prefix',
     default_value: 'unknown',
 ) == 'unknown'
     error('Dependency not found: NETCONF.')
@@ -541,11 +541,26 @@ conf_data.set('PACKAGE_VERSION_TYPE', f'"@package_version_type@"')
 compile_args = []
 link_args = []
 
+# TODO: Use $ORIGIN
 # $ORIGIN documented at https://www.man7.org/linux/man-pages/man8/ld.so.8.html
+# It is preferable since it would allow Kea to start even if the installation is moved.
+# We have to be careful at making executables work both in the build directory and in the installation directory.
+# Also, Meson might use it by default, but might not use it on all systems, so lots of variables...
 # EXECUTABLE_RPATH = f'$ORIGIN/../@LIBDIR@'
 # HOOK_RPATH = '$ORIGIN/../..'
+
 BUILD_RPATH = TOP_BUILD_DIR / 'src/lib'
 INSTALL_RPATH = PREFIX / LIBDIR
+
+# Add rpaths for NETCONF dependencies.
+if NETCONF_DEP.found()
+    foreach i : ['yang', 'yang-cpp', 'sysrepo', 'sysrepo-cpp']
+        libdir = NETCONF_DEP.get_variable(f'@i@-libdir')
+        BUILD_RPATH += f':@libdir@'
+        INSTALL_RPATH += f':@libdir@'
+    endforeach
+endif
+
 # rpmbuild complains about rpaths to standard locations so let us conform to
 # its liking and remove them. And let's do it consistently for all packages.
 if kea_pkg_type_in_configure != ''
@@ -661,7 +676,7 @@ else
 endif
 if CRYPTO_DEP.name() == botan.name()
     report_conf_data.set('CRYPTO_NAME', 'Botan')
-    report_conf_data.set('SPACES', '             ')
+    report_conf_data.set('SPACES', '                ')
     result = cpp.run(
         fs.read('compiler-checks/get-botan-version.cc'),
         name: 'Get Botan version',
@@ -678,7 +693,7 @@ if CRYPTO_DEP.name() == botan.name()
     report_conf_data.set('CRYPTO_VERSION', version)
 elif CRYPTO_DEP.name() == openssl.name()
     report_conf_data.set('CRYPTO_NAME', 'OpenSSL')
-    report_conf_data.set('SPACES', '           ')
+    report_conf_data.set('SPACES', '              ')
     result = cpp.run(
         fs.read('compiler-checks/get-openssl-version.cc'),
         name: 'Get OpenSSL version',
@@ -743,49 +758,59 @@ endif
 if NETCONF_DEP.found()
     report_conf_data.set('HAVE_NETCONF', 'yes')
     report_conf_data.set(
-        'LIBYANG_PREFIX',
-        NETCONF_DEP.get_variable('libyang_prefix', default_value: 'unknown'),
-    )
-    report_conf_data.set(
-        'SYSREPO_PREFIX',
-        NETCONF_DEP.get_variable('sysrepo_prefix', default_value: 'unknown'),
-    )
-    report_conf_data.set(
-        'LIBYANG_VERSION',
+        'YANG_VERSION',
         NETCONF_DEP.get_variable(
-            'libyang_version',
+            'yang-version',
             default_value: 'unknown version',
         ),
     )
     report_conf_data.set(
-        'LIBYANGCPP_VERSION',
+        'YANG_PREFIX',
+        NETCONF_DEP.get_variable('yang-prefix', default_value: 'unknown'),
+    )
+    report_conf_data.set(
+        'YANGCPP_VERSION',
         NETCONF_DEP.get_variable(
-            'libyangcpp_version',
+            'yang-cpp-version',
             default_value: 'unknown version',
         ),
+    )
+    report_conf_data.set(
+        'YANGCPP_PREFIX',
+        NETCONF_DEP.get_variable('yang-cpp-prefix', default_value: 'unknown'),
     )
     report_conf_data.set(
         'SYSREPO_VERSION',
         NETCONF_DEP.get_variable(
-            'sysrepo_version',
+            'sysrepo-version',
             default_value: 'unknown version',
         ),
     )
     report_conf_data.set(
+        'SYSREPO_PREFIX',
+        NETCONF_DEP.get_variable('sysrepo-prefix', default_value: 'unknown'),
+    )
+    report_conf_data.set(
         'SYSREPOCPP_VERSION',
         NETCONF_DEP.get_variable(
-            'sysrepocpp_version',
+            'sysrepo-cpp-version',
             default_value: 'unknown version',
         ),
     )
+    report_conf_data.set(
+        'SYSREPOCPP_PREFIX',
+        NETCONF_DEP.get_variable('sysrepo-cpp-prefix', default_value: 'unknown'),
+    )
 else
     report_conf_data.set('HAVE_NETCONF', 'no')
-    report_conf_data.set('LIBYANG_PREFIX', 'no')
-    report_conf_data.set('SYSREPO_PREFIX', 'no')
-    report_conf_data.set('LIBYANG_VERSION', 'no')
-    report_conf_data.set('LIBYANGCPP_VERSION', 'no')
+    report_conf_data.set('YANG_VERSION', 'no')
+    report_conf_data.set('YANG_PREFIX', 'no')
+    report_conf_data.set('YANGCPP_VERSION', 'no')
+    report_conf_data.set('YANGCPP_PREFIX', 'no')
     report_conf_data.set('SYSREPO_VERSION', 'no')
+    report_conf_data.set('SYSREPO_PREFIX', 'no')
     report_conf_data.set('SYSREPOCPP_VERSION', 'no')
+    report_conf_data.set('SYSREPOCPP_PREFIX', 'no')
 endif
 if FUZZ_OPT.enabled() or TESTS_OPT.enabled()
     report_conf_data.set('HAVE_GTEST', 'yes')
