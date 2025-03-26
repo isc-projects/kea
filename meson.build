@@ -238,10 +238,14 @@ GTEST_DEP = dependency(
 if crypto_opt == 'botan'
     if botan.found()
         CRYPTO_DEP = botan
+    else
+        error('botan required but not found')
     endif
 elif crypto_opt == 'openssl'
     if openssl.found()
         CRYPTO_DEP = openssl
+    else
+        error('openssl required but not found')
     endif
 endif
 
