@@ -34,5 +34,5 @@ printf "Press ENTER when ready"
 read -r _
 mv get_config_unittest_rebuild.cc get_config_unittest.cc
 cp -f get_config_unittest.cc "@source@"
-echo "Please recompile the kea_dhcp4_tests target"
+echo "Please recompile the kea-dhcp4-tests"
 echo "When done with success you can check it (test suite is Dhcp4GetConfigTest)"

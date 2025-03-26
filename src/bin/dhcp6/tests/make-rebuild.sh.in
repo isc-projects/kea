@@ -33,6 +33,6 @@ echo "Please copy content of u file into UNPARSED_CONFIGS in get_config_unittest
 printf "Press ENTER when ready"
 read -r _
 mv get_config_unittest_rebuild.cc get_config_unittest.cc
-cp -f get_config_unittest.cc "@source@"
-echo "Please recompile the kea_dhcp6_tests target"
+cp -f get_config_unittest.cc "@source@"_
+echo "Please recompile the kea-dhcp6-tests"
 echo "When done with success you can check it (test suite is Dhcp6GetConfigTest)"
