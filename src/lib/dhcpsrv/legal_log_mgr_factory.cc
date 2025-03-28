@@ -97,7 +97,7 @@ LegalLogMgrFactory::addBackend(DatabaseConnection::ParameterMap& parameters, Man
     // Call the factory and push the pointer on sources.
     auto backend = index->second.first(parameters);
     if (!backend) {
-        isc_throw(Unexpected, "Forensic log database " << db_type <<
+        isc_throw(Unexpected, "Forensic log backend " << db_type <<
                   " factory returned NULL");
     }
 

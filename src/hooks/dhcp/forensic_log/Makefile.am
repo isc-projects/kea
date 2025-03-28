@@ -32,6 +32,7 @@ liblegl_la_SOURCES += lease4_callouts.cc
 liblegl_la_SOURCES += lease6_callouts.cc
 liblegl_la_SOURCES += legal_log_log.cc legal_log_log.h
 liblegl_la_SOURCES += legal_log_messages.cc legal_log_messages.h
+liblegl_la_SOURCES += legal_syslog.cc legal_syslog.h
 liblegl_la_SOURCES += rotating_file.cc rotating_file.h
 liblegl_la_SOURCES += subnets_user_context.h
 liblegl_la_SOURCES += version.cc

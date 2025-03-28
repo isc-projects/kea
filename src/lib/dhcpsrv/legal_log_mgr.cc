@@ -38,6 +38,8 @@ LegalLogMgr::parseConfig(const ConstElementPtr& parameters, DatabaseConnection::
     if (!parameters || !parameters->get("type") ||
         parameters->get("type")->stringValue() == "logfile") {
         parseFile(parameters, map);
+    } else if (parameters->get("type")->stringValue() == "syslog") {
+        parseSyslog(parameters, map);
     } else {
         parseDatabase(parameters, map);
     }
@@ -126,6 +128,27 @@ LegalLogMgr::parseDatabase(const ConstElementPtr& parameters, DatabaseConnection
 
     string const db_type(db_parameters["type"]);
     map = db_parameters;
+}
+
+void
+LegalLogMgr::parseSyslog(const ConstElementPtr& parameters, DatabaseConnection::ParameterMap& map) {
+    // Should never happen with the code flow at the time of writing, but
+    // let's get this check out of the way.
+    if (!parameters) {
+        isc_throw(BadValue, "no parameters specified for the hook library");
+    }
+
+    DatabaseConnection::ParameterMap syslog_parameters;
+
+    // Strings
+    for (char const* const& key : { "type", "pattern", "facility" }) {
+        ConstElementPtr const value(parameters->get(key));
+        if (value) {
+            syslog_parameters.emplace(key, value->stringValue());
+        }
+    }
+
+    map = syslog_parameters;
 }
 
 void

@@ -497,6 +497,14 @@ Design notes:
  - the address (or prefix) column can be null / empty.
   This allows to insert no address related log entries.
 
+## Syslog
+
+Log entries can be inserted into syslog by setting the "type" to "syslog".
+When syslog type is configured, the "pattern" parameter specifies the details that
+are used for logging. If not configured, it defaults to: "%-5p [%c.%t] %m\n".
+
+The "facility" parameter specifies the syslog facility and it defaults to "local0".
+
 @section libdhcp_legal_logMTCompatibility Multi-Threading Compatibility
 
 The libdhcp_legal_log hooks library is compatible with multi-threading.

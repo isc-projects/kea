@@ -67,13 +67,8 @@ public:
     /// 'count' number of days, months or years (when the write function call
     /// detects that the day, month or year has changed).
     ///
-    /// @param path Directory in which file(s) will be created.
-    /// @param base_name Base file name to use when creating files.
-    /// @param unit The time unit used to rotate the file.
-    /// @param count The number of time units used to rotate the file (0 means
-    /// disabled).
-    /// @param prerotate The script to be run before closing the old file.
-    /// @param postrotate The script to be run after opening the new file.
+    /// @param parameters A data structure relating keywords and values
+    ///        concerned with the manager configuration.
     ///
     /// @throw LegalLogMgrError if given file name is empty.
     RotatingFile(const isc::db::DatabaseConnection::ParameterMap& parameters);

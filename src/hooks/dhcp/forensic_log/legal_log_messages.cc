@@ -17,6 +17,8 @@ extern const isc::log::MessageID LEGAL_LOG_STORE_CLOSE_ERROR = "LEGAL_LOG_STORE_
 extern const isc::log::MessageID LEGAL_LOG_STORE_OPEN = "LEGAL_LOG_STORE_OPEN";
 extern const isc::log::MessageID LEGAL_LOG_STORE_OPENED = "LEGAL_LOG_STORE_OPENED";
 extern const isc::log::MessageID LEGAL_LOG_UNLOAD_ERROR = "LEGAL_LOG_UNLOAD_ERROR";
+extern const isc::log::MessageID LEGAL_SYSLOG_LOG = "LEGAL_SYSLOG_LOG";
+extern const isc::log::MessageID LEGAL_SYSLOG_STORE_OPEN = "LEGAL_SYSLOG_STORE_OPEN";
 
 namespace {
 
@@ -34,6 +36,8 @@ const char* values[] = {
     "LEGAL_LOG_STORE_OPEN", "opening Legal Log file: %1",
     "LEGAL_LOG_STORE_OPENED", "Legal store opened: %1",
     "LEGAL_LOG_UNLOAD_ERROR", "An error occurred unloading the library: %1",
+    "LEGAL_SYSLOG_LOG", "%1",
+    "LEGAL_SYSLOG_STORE_OPEN", "opening Legal Syslog: %1",
     NULL
 };
 

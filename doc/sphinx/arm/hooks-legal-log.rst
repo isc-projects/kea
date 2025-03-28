@@ -1053,7 +1053,7 @@ table is part of the Kea database schemas.
 
 Configuration parameters are extended by standard lease database
 parameters as defined in :ref:`database-configuration4`. The ``type``
-parameter should be ``mysql``, ``postgresql`` or ``logfile``; when
+parameter should be ``mysql``, ``postgresql``, ``logfile`` or ``syslog``; when
 it is absent or set to ``logfile``, files are used.
 
 No specific tools are provided to operate the database, but standard
@@ -1091,3 +1091,19 @@ system allows nanny scripts to detect the problem.
 If ``retry-on-startup`` is set to ``true``, the server starts reconnection
 attempts even at server startup or on reconfigure events, and honors the
 action specified in the ``on-fail`` parameter.
+
+.. _forensic-log-syslog:
+
+Syslog Backend
+~~~~~~~~~~~~~~
+
+Log entries can be inserted into syslog by setting the ``type`` to ``syslog``.
+When syslog type is configured, the ``pattern`` parameter specifies the details that
+are used for logging. For more details see :ref:`logging`. If not configured, it defaults
+to:
+
+::
+
+    "%-5p [%c.%t] %m\n"
+
+The ``facility`` parameter specifies the syslog facility and it defaults to ``local0``.

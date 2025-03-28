@@ -16,6 +16,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <process/daemon.h>
 #include <legal_log_log.h>
+#include <legal_syslog.h>
 #include <dhcpsrv/legal_log_mgr.h>
 #include <rotating_file.h>
 
@@ -63,6 +64,7 @@ int load(LibraryHandle& handle) {
         }
 
         LegalLogMgrFactory::registerBackendFactory("logfile", RotatingFile::factory);
+        LegalLogMgrFactory::registerBackendFactory("syslog", LegalSyslog::factory);
 
         // Get and decode parameters.
         ConstElementPtr const& parameters(handle.getParameters());
@@ -105,6 +107,7 @@ int unload() {
         LegalLogMgrFactory::delAllBackends();
 
         LegalLogMgrFactory::unregisterBackendFactory("logfile");
+        LegalLogMgrFactory::unregisterBackendFactory("syslog");
     } catch (const std::exception& ex) {
         // On the off chance something goes awry, catch it and log it.
         // @todo Not sure if we should return a non-zero result or not.

@@ -5,6 +5,7 @@ dhcp_forensic_log_lib = shared_library(
     'lease6_callouts.cc',
     'legal_log_log.cc',
     'legal_log_messages.cc',
+    'legal_syslog.cc',
     'load_unload.cc',
     'rotating_file.cc',
     'version.cc',

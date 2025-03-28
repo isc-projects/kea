@@ -39,6 +39,9 @@ typedef boost::shared_ptr<LegalLogMgr> LegalLogMgrPtr;
 class LegalLogMgr {
 public:
     /// @brief Constructor.
+    ///
+    /// @param parameters A data structure relating keywords and values
+    ///        concerned with the manager configuration.
     LegalLogMgr(const isc::db::DatabaseConnection::ParameterMap parameters) :
         timestamp_format_("%Y-%m-%d %H:%M:%S %Z"),
         parameters_(parameters) {
@@ -77,6 +80,15 @@ public:
     /// @param parameters The library parameters.
     /// @param [out] map The parameter map.
     static void parseFile(const isc::data::ConstElementPtr& parameters, isc::db::DatabaseConnection::ParameterMap& map);
+
+    /// @brief Parse syslog specification.
+    ///
+    /// Parse the configuration and check that the various keywords are
+    /// consistent.
+    ///
+    /// @param parameters The library parameters.
+    /// @param [out] map The parameter map.
+    static void parseSyslog(const isc::data::ConstElementPtr& parameters, isc::db::DatabaseConnection::ParameterMap& map);
 
     /// @brief Parse extra parameters which are not related to backend
     /// connection.
