@@ -16,6 +16,11 @@ class LegalSyslog : public isc::dhcp::LegalLogMgr {
 public:
     /// @brief Constructor.
     ///
+    /// @note The supported parameters are:
+    /// - syslog parameters:
+    ///       - pattern
+    ///       - facility
+    ///
     /// @param parameters A data structure relating keywords and values
     ///        concerned with the manager configuration.
     LegalSyslog(const isc::db::DatabaseConnection::ParameterMap& parameters);

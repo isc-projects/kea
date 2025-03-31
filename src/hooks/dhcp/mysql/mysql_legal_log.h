@@ -87,17 +87,24 @@ public:
 
     /// @brief Constructor
     ///
-    /// The following keywords in the parameters passed to it will be used
-    /// to connect to the database:
-    /// - name - Name of the database to which to connect (mandatory)
-    /// - host - Host to which to connect (optional, defaults to "localhost")
-    /// - user - Username under which to connect (optional)
-    /// - password - Password for "user" on the database (optional)
-    /// - trust-anchor - Trust anchor aka certificate authority file
-    ///   or directory (optional)
-    /// - cert-file - Client certificate file name (optional)
-    /// - key-file - Private key file name (optional)
-    /// - cipher-list - Cipher list (optional)
+    /// @note The supported parameters are:
+    /// - database parameters:
+    ///       - name
+    ///       - host
+    ///       - password
+    ///       - port
+    ///       - user
+    ///       - trust-anchor (MySQL only)
+    ///       - cert-file (MySQL only)
+    ///       - key-file (MySQL only)
+    ///       - cipher-list (MySQL only)
+    ///       - reconnect-wait-time
+    ///       - max-reconnect-tries
+    ///       - on-fail
+    ///       - retry-on-startup
+    ///       - connect-timeout
+    ///       - read-timeout (MySQL only)
+    ///       - write-timeout (MySQL only)
     ///
     /// @param parameters A data structure relating keywords and values
     ///        concerned with the database.

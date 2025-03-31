@@ -67,6 +67,15 @@ public:
     /// 'count' number of days, months or years (when the write function call
     /// detects that the day, month or year has changed).
     ///
+    /// @note The supported parameters are:
+    /// - logfile parameters:
+    ///       - path
+    ///       - base-name
+    ///       - time-unit - one of: second, day, month, year
+    ///       - prerotate
+    ///       - postrotate
+    ///       - count
+    ///
     /// @param parameters A data structure relating keywords and values
     ///        concerned with the manager configuration.
     ///

@@ -86,13 +86,19 @@ public:
 
     /// @brief Constructor
     ///
-    /// The following keywords in the parameters passed to it will be used
-    /// to connect to the database:
-    /// - name - Name of the database to which to connect (mandatory)
-    /// - host - Host to which to connect (optional, defaults to "localhost")
-    /// - user - Username under which to connect (optional)
-    /// - password - Password for "user" on the database (optional)
-    /// - trust-anchor, cert-file, key-file and cipher-list (ignored)
+    /// @note The supported parameters are:
+    /// - database parameters:
+    ///       - name
+    ///       - host
+    ///       - password
+    ///       - port
+    ///       - user
+    ///       - reconnect-wait-time
+    ///       - max-reconnect-tries
+    ///       - on-fail
+    ///       - retry-on-startup
+    ///       - connect-timeout
+    ///       - tcp-user-timeout (PostgreSQL only)
     ///
     /// @param parameters A data structure relating keywords and values
     ///        concerned with the database.
