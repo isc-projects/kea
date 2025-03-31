@@ -57,6 +57,41 @@ public:
     /// Parse the configuration and check that the various keywords are
     /// consistent.
     ///
+    /// @note The supported parameters are:
+    /// - common parameters:
+    ///       - type - one of: logfile (default), syslog, mysql, postgresql
+    ///       - request-parser-format
+    ///       - response-parser-format
+    ///       - timestamp-format
+    /// - logfile parameters:
+    ///       - path
+    ///       - base-name
+    ///       - time-unit - one of: second, day, month, year
+    ///       - prerotate
+    ///       - postrotate
+    ///       - count
+    /// - syslog parameters:
+    ///       - pattern
+    ///       - facility
+    /// - database parameters:
+    ///       - name
+    ///       - host
+    ///       - password
+    ///       - port
+    ///       - user
+    ///       - trust-anchor (MySQL only)
+    ///       - cert-file (MySQL only)
+    ///       - key-file (MySQL only)
+    ///       - cipher-list (MySQL only)
+    ///       - reconnect-wait-time
+    ///       - max-reconnect-tries
+    ///       - on-fail
+    ///       - retry-on-startup
+    ///       - connect-timeout
+    ///       - read-timeout (MySQL only)
+    ///       - write-timeout (MySQL only)
+    ///       - tcp-user-timeout (PostgreSQL only)
+    ///
     /// @param parameters The library parameters.
     /// @param map The parameter map used by LegalLogMgr objects.
     static void parseConfig(const isc::data::ConstElementPtr& parameters, isc::db::DatabaseConnection::ParameterMap& map);
@@ -68,6 +103,26 @@ public:
     /// Parse the configuration and check that the various keywords are
     /// consistent.
     ///
+    /// @note The supported parameters are:
+    /// - database parameters:
+    ///       - name
+    ///       - host
+    ///       - password
+    ///       - port
+    ///       - user
+    ///       - trust-anchor (MySQL only)
+    ///       - cert-file (MySQL only)
+    ///       - key-file (MySQL only)
+    ///       - cipher-list (MySQL only)
+    ///       - reconnect-wait-time
+    ///       - max-reconnect-tries
+    ///       - on-fail
+    ///       - retry-on-startup
+    ///       - connect-timeout
+    ///       - read-timeout (MySQL only)
+    ///       - write-timeout (MySQL only)
+    ///       - tcp-user-timeout (PostgreSQL only)
+    ///
     /// @param parameters The library parameters.
     /// @param map The parameter map used by LegalLogMgr objects.
     static void parseDatabase(const isc::data::ConstElementPtr& parameters, isc::db::DatabaseConnection::ParameterMap& map);
@@ -76,6 +131,15 @@ public:
     ///
     /// Parse the configuration and check that the various keywords are
     /// consistent.
+    ///
+    /// @note The supported parameters are:
+    /// - logfile parameters:
+    ///       - path
+    ///       - base-name
+    ///       - time-unit - one of: second, day, month, year
+    ///       - prerotate
+    ///       - postrotate
+    ///       - count
     ///
     /// @param parameters The library parameters.
     /// @param [out] map The parameter map.
@@ -86,12 +150,23 @@ public:
     /// Parse the configuration and check that the various keywords are
     /// consistent.
     ///
+    /// @note The supported parameters are:
+    /// - syslog parameters:
+    ///       - pattern
+    ///       - facility
+    ///
     /// @param parameters The library parameters.
     /// @param [out] map The parameter map.
     static void parseSyslog(const isc::data::ConstElementPtr& parameters, isc::db::DatabaseConnection::ParameterMap& map);
 
     /// @brief Parse extra parameters which are not related to backend
     /// connection.
+    ///
+    /// @note The supported parameters are:
+    /// - common parameters:
+    ///       - request-parser-format
+    ///       - response-parser-format
+    ///       - timestamp-format
     ///
     /// @param parameters The library parameters.
     /// @param [out] map The parameter map.

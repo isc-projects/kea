@@ -17,8 +17,8 @@ extern const isc::log::MessageID LEGAL_LOG_STORE_CLOSED;
 extern const isc::log::MessageID LEGAL_LOG_STORE_CLOSE_ERROR;
 extern const isc::log::MessageID LEGAL_LOG_STORE_OPEN;
 extern const isc::log::MessageID LEGAL_LOG_STORE_OPENED;
+extern const isc::log::MessageID LEGAL_LOG_SYSLOG;
+extern const isc::log::MessageID LEGAL_LOG_SYSLOG_STORE_OPEN;
 extern const isc::log::MessageID LEGAL_LOG_UNLOAD_ERROR;
-extern const isc::log::MessageID LEGAL_SYSLOG_LOG;
-extern const isc::log::MessageID LEGAL_SYSLOG_STORE_OPEN;
 
 #endif // LEGAL_LOG_MESSAGES_H

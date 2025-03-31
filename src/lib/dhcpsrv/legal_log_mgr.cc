@@ -68,7 +68,8 @@ LegalLogMgr::parseDatabase(const ConstElementPtr& parameters, DatabaseConnection
 
     // uint32_t
     for (char const* const& key : {
-         "connect-timeout", "reconnect-wait-time", "max-reconnect-tries"}) {
+         "connect-timeout", "reconnect-wait-time", "max-reconnect-tries",
+         "read-timeout", "write-timeout", "tcp-user-timeout"}) {
         ConstElementPtr const value(parameters->get(key));
         if (value) {
             int64_t integer_value(value->intValue());

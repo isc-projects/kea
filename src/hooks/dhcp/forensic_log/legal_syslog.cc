@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -29,7 +29,7 @@ LegalSyslog::LegalSyslog(const DatabaseConnection::ParameterMap& parameters)
     LoggingInfo info;
     // Remove default destinations as we are going to replace them.
     info.clearDestinations();
-    info.name_ = "legal-log-syslog-";
+    info.name_ = "legal-log-";
     info.name_ += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
     logger_.reset(new Logger(info.name_.c_str()));
     LoggingDestination dest;
@@ -56,7 +56,7 @@ LegalSyslog::close() {
 
 void
 LegalSyslog::writeln(const string& text, const string&) {
-    LOG_INFO(*logger_, LEGAL_SYSLOG_LOG)
+    LOG_INFO(*logger_, LEGAL_LOG_SYSLOG)
         .arg(text);
 }
 
@@ -67,7 +67,7 @@ LegalSyslog::getType() const {
 
 LegalLogMgrPtr
 LegalSyslog::factory(const DatabaseConnection::ParameterMap& parameters) {
-    LOG_INFO(legal_log_logger, LEGAL_SYSLOG_STORE_OPEN)
+    LOG_INFO(legal_log_logger, LEGAL_LOG_SYSLOG_STORE_OPEN)
         .arg(DatabaseConnection::redactedAccessString(parameters));
     return (LegalLogMgrPtr(new LegalSyslog(parameters)));
 }

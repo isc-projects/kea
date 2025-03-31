@@ -238,4 +238,9 @@ TEST_F(LegalLogMgrTest, wrongDatabaseType) {
                      "The type of the forensic log backend: 'awesomesql' is not supported");
 }
 
+TEST_F(LegalLogMgrTest, syslogNoParameters) {
+    db::DatabaseConnection::ParameterMap map;
+    EXPECT_THROW(LegalLogMgr::parseSyslog(ConstElementPtr(), map), BadValue);
+}
+
 } // end of anonymous namespace

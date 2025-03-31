@@ -55,7 +55,7 @@ public:
     /// @param parameters A data structure relating keywords and values
     ///        concerned with the database.
     ///
-    /// @return The Rotating File Store Backend.
+    /// @return The Syslog File Store Backend.
     static isc::dhcp::LegalLogMgrPtr
     factory(const isc::db::DatabaseConnection::ParameterMap& parameters);
 };
