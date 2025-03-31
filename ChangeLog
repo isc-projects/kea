@@ -1,3 +1,7 @@
+2336.	[func]		razvan
+	Added support for syslog backend in forensic log hook library.
+	(Gitlab #3569)
+
 Kea 2.7.7 (development) released on March 26, 2025
 
 2335.	[func]		razvan
