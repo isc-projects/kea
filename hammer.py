@@ -1344,19 +1344,21 @@ def _configure_mysql(system, revision, features):
     if 'tls' in features:
         if not os.path.isdir(cert_dir):
             execute('sudo mkdir -p {}'.format(cert_dir))
+        # Parent dir of hammer.py.
+        p = os.path.dirname(os.path.realpath(os.path.abspath(sys.argv[0])))
         # Some systems, usually old ones, might require a cerain PKCS format
         # of the key. Try to regenerate it here, but don't stop if it fails.
         # If the key is wrong, it will fail later anyway.
-        exit_code = execute('openssl rsa -in src/lib/asiolink/testutils/ca/kea-server.key '
-                            '-out src/lib/asiolink/testutils/ca/kea-server.key', raise_error=False)
+        exit_code = execute(f'openssl rsa -in {p}/src/lib/asiolink/testutils/ca/kea-server.key '
+                            f'-out {p}/src/lib/asiolink/testutils/ca/kea-server.key', raise_error=False)
         if exit_code != 0:
             log.warning('openssl command failed with exit code %d, but continuing...', exit_code)
         for file in [
-            './src/lib/asiolink/testutils/ca/kea-ca.crt',
-            './src/lib/asiolink/testutils/ca/kea-client.crt',
-            './src/lib/asiolink/testutils/ca/kea-client.key',
-            './src/lib/asiolink/testutils/ca/kea-server.crt',
-            './src/lib/asiolink/testutils/ca/kea-server.key',
+            f'{p}/src/lib/asiolink/testutils/ca/kea-ca.crt',
+            f'{p}/src/lib/asiolink/testutils/ca/kea-client.crt',
+            f'{p}/src/lib/asiolink/testutils/ca/kea-client.key',
+            f'{p}/src/lib/asiolink/testutils/ca/kea-server.crt',
+            f'{p}/src/lib/asiolink/testutils/ca/kea-server.key',
         ]:
             if not os.path.exists(file):
                 print('ERROR: File {} is needed to prepare TLS.'.format(file), file=sys.stderr)
