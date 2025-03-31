@@ -59,7 +59,8 @@ KEA_ADMIN_BUILT = TOP_BUILD_DIR / 'src/bin/admin/kea-admin'
 KEA_ADMIN_INSTALLED = PREFIX / SBINDIR / 'kea-admin'
 KEA_LFC_BUILT = TOP_BUILD_DIR / 'src/bin/lfc/kea-lfc'
 KEA_LFC_INSTALLED = PREFIX / SBINDIR / 'kea-lfc'
-SHAREDSTATEDIR_INSTALLED = PREFIX / LOCALSTATEDIR / 'lib/kea'
+SHAREDSTATEDIR = LOCALSTATEDIR / 'lib/kea'
+SHAREDSTATEDIR_INSTALLED = PREFIX / SHAREDSTATEDIR
 RUNSTATEDIR = LOCALSTATEDIR / 'run/kea'
 RUNSTATEDIR_INSTALLED = PREFIX / RUNSTATEDIR
 TEST_CA_DIR = TOP_SOURCE_DIR / 'src/lib/asiolink/testutils/ca'
@@ -1021,6 +1022,7 @@ top_docs = [
     'platforms.rst',
 ]
 install_data(top_docs, install_dir: DATADIR / 'doc/kea')
+install_emptydir(SHAREDSTATEDIR)
 install_emptydir(RUNSTATEDIR)
 
 # Print the setup report.
