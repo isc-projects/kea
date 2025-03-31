@@ -464,6 +464,29 @@ def replace_in_file(file_name, pattern, replacement):
         file.write(content)
 
 
+def pyinstall_meson(python_v: str = 'python3'):
+    """ Install meson with pyinstaller.
+
+    :param python_v: python executable
+    :type python_v: str
+    """
+
+    execute('rm -fr .meson .meson-src .venv')
+    execute('git clone https://github.com/mesonbuild/meson .meson-src')
+    _, output = execute('git tag -l', cwd='.meson-src', capture=True, quiet=True)
+    if '1.8.0' in output.splitlines():
+        execute('git checkout 1.8.0', cwd='.meson-src')
+    execute(f'{python_v} -m venv .venv')
+    execute('.venv/bin/pip install --upgrade pip')
+    execute('.venv/bin/pip install ninja')
+    execute('.venv/bin/pip install pyinstaller')
+    execute('../.venv/bin/pyinstaller --additional-hooks-dir=packaging --clean --dist ../.meson --onefile ./meson.py',
+            cwd='.meson-src')
+    execute('sudo cp .meson/meson /usr/local/bin')
+    execute('sudo cp .venv/bin/ninja /usr/local/bin')
+    execute('rm -fr .meson .meson-src .venv')
+
+
 def _prepare_installed_packages_cache_for_debs():
     pkg_cache = {}
 
@@ -1704,19 +1727,18 @@ def install_packages_local(system, revision, features, check_times, ignore_error
         require_minimum_package_version('cmake', '3.19')
 
     # Common packages
-    packages = ['autoconf', 'automake', 'bison', 'flex', 'libtool', 'meson']
+    packages = ['autoconf', 'automake', 'bison', 'flex', 'libtool']
 
     # prepare fedora
     if system == 'fedora':
-        packages.extend(['boost-devel', 'gcc-c++', 'openssl-devel',
-                         'log4cplus-devel', 'libpcap-devel', 'make', 'ninja-build'])
+        packages.extend(['boost-devel', 'gcc-c++', 'openssl-devel', 'log4cplus-devel', 'libpcap-devel', 'make'])
+        deferred_functions.append(pyinstall_meson)
 
         if 'native-pkg' in features:
             packages.extend(['rpm-build', 'python3-devel'])
 
         if 'docs' in features:
-            packages.extend(['python3-sphinx', 'python3-sphinx_rtd_theme',
-                             'texlive', 'texlive-collection-latexextra'])
+            packages.extend(['python3-sphinx', 'python3-sphinx_rtd_theme', 'texlive', 'texlive-collection-latexextra'])
 
         if 'mysql' in features:
             packages.extend(['mariadb', 'mariadb-server', 'mariadb-connector-c-devel'])
@@ -1746,8 +1768,8 @@ def install_packages_local(system, revision, features, check_times, ignore_error
     elif system == 'centos':
         install_pkgs('epel-release', env=env, check_times=check_times)
 
-        packages.extend(['boost-devel', 'gcc-c++', 'log4cplus-devel', 'make', 'ninja-build',
-                         'openssl-devel'])
+        packages.extend(['boost-devel', 'gcc-c++', 'git', 'log4cplus-devel', 'make', 'openssl-devel'])
+        deferred_functions.append(pyinstall_meson)
 
         if revision in ['7', '8']:
             # Install newer version of Boost in case users want to opt-in with:
@@ -1797,18 +1819,20 @@ def install_packages_local(system, revision, features, check_times, ignore_error
 
     # prepare rhel
     elif system == 'rhel':
-        packages.remove('meson')
-        packages.extend(['boost-devel', 'gcc-c++', 'log4cplus-devel',
-                         'make', 'openssl-devel'])
+        packages.extend(['boost-devel', 'gcc-c++', 'log4cplus-devel', 'make', 'openssl-devel'])
 
         # RHEL tends to stay behind on Python versions. Install the latest Python alongside the one running this
         # hammer.py.
+        python_v = 'python3'
         _, output = execute(r"sudo dnf search 'python3\.[0-9]*'", capture=True, env=env, check_times=check_times)
         output = sorted(output.splitlines())
         if len(output) > 0:
             m = re.search(r'^(python3\.[0-9]+)\.', output[-1])
             if m is not None:
-                packages.append(m.group(1))
+                python_v = m.group(1)
+                packages.append(python_v)
+
+        deferred_functions.append(lambda: pyinstall_meson(python_v))
 
         if revision in ['7', '8']:
             # Install newer version of Boost in case users want to opt-in with:
@@ -1853,8 +1877,8 @@ def install_packages_local(system, revision, features, check_times, ignore_error
     elif system == 'rocky':
         install_pkgs('epel-release', env=env, check_times=check_times)
 
-        packages.extend(['boost-devel', 'gcc-c++', 'log4cplus-devel', 'make',
-                         'openssl-devel', 'ninja-build'])
+        packages.extend(['boost-devel', 'gcc-c++', 'log4cplus-devel', 'make', 'openssl-devel', 'ninja-build'])
+        deferred_functions.append(pyinstall_meson)
 
         if 'docs' in features:
             packages.extend(['python3-sphinx', 'python3-sphinx_rtd_theme', 'texlive', 'texlive-capt-of',
@@ -1890,9 +1914,9 @@ def install_packages_local(system, revision, features, check_times, ignore_error
     elif system == 'ubuntu':
         _apt_update(system, revision, env=env, check_times=check_times, attempts=3, sleep_time_after_attempt=10)
 
-        packages.extend(['gcc', 'g++', 'gnupg', 'libboost-system-dev',
-                         'liblog4cplus-dev',  'libpcap-dev', 'libssl-dev',
-                         'make', 'ninja-build'])
+        packages.extend(['gcc', 'g++', 'gnupg', 'libboost-system-dev', 'liblog4cplus-dev',  'libpcap-dev',
+                         'libssl-dev', 'make'])
+        deferred_functions.append(pyinstall_meson)
 
         if 'docs' in features:
             packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme',
@@ -1934,8 +1958,8 @@ def install_packages_local(system, revision, features, check_times, ignore_error
     elif system == 'debian':
         _apt_update(system, revision, env=env, check_times=check_times, attempts=3, sleep_time_after_attempt=10)
 
-        packages.extend(['gcc', 'g++',  'gnupg', 'libboost-system-dev',
-                         'liblog4cplus-dev', 'libssl-dev', 'make', 'ninja-build'])
+        packages.extend(['gcc', 'g++',  'gnupg', 'libboost-system-dev', 'liblog4cplus-dev', 'libssl-dev', 'make'])
+        deferred_functions.append(pyinstall_meson)
 
         if 'docs' in features:
             packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme', 'doxygen', 'graphviz',
@@ -1975,8 +1999,8 @@ def install_packages_local(system, revision, features, check_times, ignore_error
 
     # prepare freebsd
     elif system == 'freebsd':
-        packages.remove('meson')
-        packages.extend(['boost-libs', 'log4cplus', 'openssl'])
+        packages.extend(['boost-libs', 'git', 'log4cplus', 'openssl'])
+        deferred_functions.append(pyinstall_meson)
 
         if revision.startswith('14'):
             packages.extend(['bash', 'pkgconf'])
@@ -2040,9 +2064,9 @@ def install_packages_local(system, revision, features, check_times, ignore_error
 
     # prepare alpine
     elif system == 'alpine':
-        packages.extend(['bison', 'boost-libs', 'boost-dev', 'flex', 'gcc',
-                         'g++', 'gzip',  'log4cplus', 'log4cplus-dev', 'make',
-                         'openssl-dev', 'procps', 'tar', 'ninja'])
+        packages.extend(['bison', 'boost-libs', 'boost-dev', 'flex', 'gcc', 'g++', 'gzip',  'log4cplus',
+                         'log4cplus-dev', 'make', 'openssl-dev', 'procps', 'tar'])
+        deferred_functions.append(pyinstall_meson)
 
         if 'docs' in features:
             packages.extend(['py3-sphinx py3-sphinx_rtd_theme'])
