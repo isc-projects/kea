@@ -63,6 +63,14 @@ public:
     ///
     /// Creates a logger of the specific name.
     ///
+    /// \note The name of the logger may be no longer than MAX_LOGGER_NAME_SIZE
+    /// else the program will throw an exception.  This restriction allows
+    /// loggers to be declared statically: the name is stored in a fixed-size
+    /// array to avoid the need to allocate heap storage during program
+    /// initialization (which causes problems on some operating systems).
+    /// e.g. or error: '<logger-name>' is not a valid name for a logger:
+    ///                valid names must be between 1 and 31 characters in length.
+    ///
     /// \param name Name of the logger.
     LoggerImpl(const std::string& name);
 

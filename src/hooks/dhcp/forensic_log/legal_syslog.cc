@@ -29,6 +29,13 @@ LegalSyslog::LegalSyslog(const DatabaseConnection::ParameterMap& parameters)
     LoggingInfo info;
     // Remove default destinations as we are going to replace them.
     info.clearDestinations();
+    /// The name of the logger may be no longer than MAX_LOGGER_NAME_SIZE
+    /// else the program will throw an exception.  This restriction allows
+    /// loggers to be declared statically: the name is stored in a fixed-size
+    /// array to avoid the need to allocate heap storage during program
+    /// initialization (which causes problems on some operating systems).
+    /// e.g. or error: '<logger-name>' is not a valid name for a logger:
+    ///                valid names must be between 1 and 31 characters in length.
     info.name_ = "legal-log-";
     info.name_ += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
     logger_.reset(new Logger(info.name_.c_str()));
