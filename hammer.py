@@ -2087,8 +2087,11 @@ def install_packages_local(system, revision, features, check_times, ignore_error
 
     # prepare alpine
     elif system == 'alpine':
-        packages.extend(['bison', 'boost-libs', 'boost-dev', 'flex', 'gcc', 'g++', 'gzip',  'log4cplus',
-                         'log4cplus-dev', 'make', 'openssl-dev', 'procps', 'tar'])
+        if 0 != execute("grep -E '^ulimit -s unlimited$' ~/.profile", quiet=True, raise_error=False):
+            execute("echo 'ulimit -s unlimited' >> ~/.profile")
+        packages.extend(['bison', 'boost-libs', 'boost-dev', 'build-base', 'flex', 'gcompat', 'gcc', 'g++', 'gzip',
+                         'log4cplus', 'log4cplus-dev', 'make', 'musl-dev', 'openssl-dev', 'procps', 'python3-dev',
+                         'tar'])
         deferred_functions.append(pyinstall_meson)
 
         if 'docs' in features:
