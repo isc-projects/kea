@@ -343,7 +343,12 @@ if NETCONF_DEP.found() and cpp_standard.version_compare('<202000')
     else
         msgs += cpp_std_opt_msg
     endif
-    error('\n'.join(msgs))
+    if netconf_opt.enabled()
+        error('\n'.join(msgs))
+    else
+        warning('\n'.join(msgs))
+        NETCONF_DEP = disabler()
+    endif
 endif
 
 result = cpp.run(
