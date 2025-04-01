@@ -23,7 +23,7 @@ docdir="${target_path}/@docdir@"
 mandir8="${target_path}/@mandir8@"
 
 mkdir -p "${docdir}"
-cp -r @abs_sphinxbuilddir@/html "${docdir}"
+cp -Tr @abs_sphinxbuilddir@/html "${docdir}/html"
 if test '@HAVE_PDFLATEX@' != 'no'; then
     @INSTALL@ -c -m 644 @abs_sphinxbuilddir@/latex/kea-arm.pdf "${docdir}"
     @INSTALL@ -c -m 644 @abs_sphinxbuilddir@/latex/kea-messages.pdf "${docdir}"
