@@ -471,6 +471,9 @@ def pyinstall_meson(python_v: str = 'python3'):
     :type python_v: str
     """
 
+    exit_code = execute('meson --version', quiet=True, raise_error=False)
+    if exit_code == 0:
+        return
     execute('rm -fr .meson .meson-src .venv')
     execute('git clone https://github.com/mesonbuild/meson .meson-src')
     _, output = execute('git tag -l', cwd='.meson-src', capture=True, quiet=True)
@@ -485,6 +488,26 @@ def pyinstall_meson(python_v: str = 'python3'):
     execute('sudo cp .meson/meson /usr/local/bin')
     execute('sudo cp .venv/bin/ninja /usr/local/bin')
     execute('rm -fr .meson .meson-src .venv')
+
+
+def pyinstall_sphinx(python_v: str = 'python3'):
+    """ Install sphinx with pyinstaller.
+
+    :param python_v: python executable
+    :type python_v: str
+    """
+
+    exit_code = execute('sphinx-build --version', quiet=True, raise_error=False)
+    if exit_code == 0:
+        return
+    execute(f'{python_v} -m venv .venv')
+    execute('.venv/bin/pip install --upgrade pip')
+    execute('.venv/bin/pip install pyinstaller')
+    execute('.venv/bin/pip install sphinx')
+    execute('.venv/bin/pip install sphinx_rtd_theme')
+    execute('.venv/bin/pyinstaller --clean --collect-all sphinx_rtd_theme --collect-all sphinxcontrib --clean '
+            '--onefile .venv/bin/sphinx-build')
+    execute('sudo cp dist/sphinx-build /usr/local/bin')
 
 
 def _prepare_installed_packages_cache_for_debs():
@@ -1840,9 +1863,9 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             packages.append('boost169-devel')
 
         if 'docs' in features:
-            packages.extend(['python3-sphinx', 'python3-sphinx_rtd_theme', 'texlive', 'texlive-capt-of',
-                             'texlive-fncychap', 'texlive-framed', 'texlive-needspace', 'texlive-tabulary',
-                             'texlive-titlesec', 'texlive-upquote', 'texlive-wrapfig'])
+            packages.extend(['texlive', 'texlive-capt-of', 'texlive-fncychap', 'texlive-framed', 'texlive-needspace',
+                             'texlive-tabulary', 'texlive-titlesec', 'texlive-upquote', 'texlive-wrapfig'])
+            deferred_functions.append(lambda: pyinstall_sphinx(python_v))
 
         if 'native-pkg' in features:
             packages.extend(['python3-devel', 'rpm-build'])
@@ -1881,9 +1904,9 @@ def install_packages_local(system, revision, features, check_times, ignore_error
         deferred_functions.append(pyinstall_meson)
 
         if 'docs' in features:
-            packages.extend(['python3-sphinx', 'python3-sphinx_rtd_theme', 'texlive', 'texlive-capt-of',
-                             'texlive-fncychap', 'texlive-framed', 'texlive-needspace', 'texlive-tabulary',
-                             'texlive-titlesec', 'texlive-upquote', 'texlive-wrapfig'])
+            packages.extend(['texlive', 'texlive-capt-of', 'texlive-fncychap', 'texlive-framed', 'texlive-needspace',
+                             'texlive-tabulary', 'texlive-titlesec', 'texlive-upquote', 'texlive-wrapfig'])
+            deferred_functions.append(pyinstall_sphinx)
 
         if 'native-pkg' in features:
             packages.extend(['python3-devel', 'rpm-build'])
@@ -1962,8 +1985,8 @@ def install_packages_local(system, revision, features, check_times, ignore_error
         deferred_functions.append(pyinstall_meson)
 
         if 'docs' in features:
-            packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme', 'doxygen', 'graphviz',
-                             'tex-gyre', 'texlive', 'texlive-latex-extra'])
+            packages.extend(['doxygen', 'graphviz', 'tex-gyre', 'texlive', 'texlive-latex-extra'])
+            deferred_functions.append(pyinstall_sphinx)
 
         if 'unittest' in features:
             packages.append('googletest')
