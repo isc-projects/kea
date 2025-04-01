@@ -27,7 +27,7 @@ dhcp_radius_tests = executable(
     'utils_unittests.cc',
     cpp_args: [
         f'-DTEST_DATA_BUILDDIR="@current_build_dir@"',
-        f'-DDICTIONARY="@PREFIX@/@SYSCONFDIR@/kea/radius/dictionary"',
+        f'-DDICTIONARY="@SYSCONFDIR_INSTALLED@/kea/radius/dictionary"',
         f'-DTEST_DICTIONARY="@TOP_SOURCE_DIR@/src/hooks/dhcp/radius/data/dictionary"',
     ],
     dependencies: [GTEST_DEP, CRYPTO_DEP],

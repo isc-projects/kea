@@ -65,6 +65,15 @@ RUNSTATEDIR = LOCALSTATEDIR / 'run/kea'
 RUNSTATEDIR_INSTALLED = PREFIX / RUNSTATEDIR
 TEST_CA_DIR = TOP_SOURCE_DIR / 'src/lib/asiolink/testutils/ca'
 
+# Meson is annoying with its opinionated alteration of certain paths based on whether prefix is default or not.
+# So we revert what it does.
+# Prepend prefix only if the prefix was explicitly provided.
+if PREFIX == '/usr'
+    SYSCONFDIR_INSTALLED = SYSCONFDIR
+else
+    SYSCONFDIR_INSTALLED = PREFIX / SYSCONFDIR
+endif
+
 #### Build Options
 
 crypto_opt = get_option('crypto')
