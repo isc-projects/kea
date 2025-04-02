@@ -2449,8 +2449,7 @@ TEST_F(Subnet6CmdsTest, subnet6List) {
                                            CONTROL_RESULT_SUCCESS,
                                            "3 IPv6 subnets found");
 
-    // Verify that the response has appropriate structure and returned
-    // the expected arguments.
+    // Verify that the returned response has the expected subnets. 
     std::string exp_args=R"(
     {
         "subnets": [
@@ -2483,6 +2482,7 @@ TEST_F(Subnet6CmdsTest, noSubnet6List) {
     ConstElementPtr response = testCommand("{ \"command\": \"subnet6-list\" }",
                                            CONTROL_RESULT_EMPTY,
                                            "0 IPv6 subnets found");
+
     // Verify that the response has appropriate structure and no subnets
     // are included.
     std::string exp_args=R"(

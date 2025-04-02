@@ -491,7 +491,7 @@ public:
         }
     }
 
-    /// @brief Verifies that the content of the "args" element in the response.
+    /// @brief Verifies the content of the "args" element in the response.
     ///
     /// @param answer Server's response to a command.
     /// @param exp_args JSON map of the expected arguments contents.

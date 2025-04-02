@@ -1,6 +1,6 @@
 [func]		tmark
 	The subnet commands hook library was modified such that
 	the subnet's shared network name is now included for each
-    subnet returned by the subnet4-list and subnet6-list 
+	subnet returned by the subnet4-list and subnet6-list
 	commands.
 	(Gitlab #3811)

@@ -1758,8 +1758,7 @@ TEST_F(Subnet4CmdsTest, subnet4List) {
                                            CONTROL_RESULT_SUCCESS,
                                            "3 IPv4 subnets found");
 
-    // Verify that the response has appropriate structure and returned
-    // the expected arguments.
+    // Verify that the returned response has the expected subnets. 
     std::string exp_args=R"(
         {
           "subnets": [
