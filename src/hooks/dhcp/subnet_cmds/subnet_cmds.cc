@@ -347,7 +347,7 @@ public:
         // Iterate over all subnets and retrieve the information we're interested in.
         for (auto const& s : *subnets) {
             // Information for the individual subnets is held in the map.
-            subnet_list->add(subnetToElement(*s));
+            subnet_list->add(subnetToElement(*s, true));
         }
 
         // Generate the status message including the number of subnets found.
@@ -927,7 +927,7 @@ public:
 
         ElementPtr details = Element::createMap();
         ElementPtr lst = Element::createList();
-        lst->add(subnetToElement(*subnet));
+        lst->add(subnetToElement(*subnet, false));
         details->set("subnets", lst);
 
         // Create the response.
@@ -945,11 +945,22 @@ public:
     ///
     /// @brief subnet details of that subnet will be returned
     /// @return id and subnet in Element format
-    ElementPtr subnetToElement(const Subnet& subnet) const {
+    ElementPtr subnetToElement(const Subnet& subnet, bool include_shared_network) const {
         ElementPtr subnet_element = Element::createMap();
         subnet_element->set("id",
                             Element::create(static_cast<long int>(subnet.getID())));
         subnet_element->set("subnet", Element::create(subnet.toText()));
+
+        if (include_shared_network) {
+            std::string sn_name = subnet.getSharedNetworkName();
+            if (!sn_name.empty()) {
+                subnet_element->set("shared-network-name", data::Element::create(sn_name));
+            } else {
+                // Shared network name is null.
+                subnet_element->set("shared-network-name", data::Element::create());
+            }
+        }
+
         return (subnet_element);
     }
 

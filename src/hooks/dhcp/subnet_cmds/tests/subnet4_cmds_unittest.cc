@@ -1742,9 +1742,9 @@ public:
 // of sending the 'subnet4-list' command.
 TEST_F(Subnet4CmdsTest, subnet4List) {
     // Add several IPv4 subnets to the server configuration.
-    addSubnet("10.0.0.0/8", SubnetID(5));
+    addSubnet("10.0.0.0/8", SubnetID(5), "net1");
     addSubnet("192.168.50.0/24", SubnetID(10));
-    addSubnet("192.0.2.0/29", SubnetID(123));
+    addSubnet("192.0.2.0/29", SubnetID(123), "net2");
     // Add one IPv6 subnet to the configuration. We want to make sure that
     // this subnet is not returned within the response to the command.
     addSubnet("2001:db8:1::/64", SubnetID(17));
@@ -1758,15 +1758,31 @@ TEST_F(Subnet4CmdsTest, subnet4List) {
                                            CONTROL_RESULT_SUCCESS,
                                            "3 IPv4 subnets found");
 
-    // Verify that the response has appropriate structure.
-    ASSERT_NO_FATAL_FAILURE(checkSubnetListStructure(response, 3));
+    // Verify that the response has appropriate structure and returned
+    // the expected arguments.
+    std::string exp_args=R"(
+        {
+          "subnets": [
+            {
+              "id": 5,
+              "shared-network-name": "net1",
+              "subnet": "10.0.0.0/8"
+            },
+            {
+              "id": 10,
+              "shared-network-name": null,
+              "subnet": "192.168.50.0/24"
+            },
+            {
+              "id": 123,
+              "shared-network-name": "net2",
+              "subnet": "192.0.2.0/29"
+            }
+          ]
+        }
+    )";
 
-    // Our 3 IPv4 subnets should be returned in the response.
-    ASSERT_TRUE(hasSubnet(response, "10.0.0.0/8", SubnetID(5)));
-    ASSERT_TRUE(hasSubnet(response, "192.168.50.0/24", SubnetID(10)));
-    ASSERT_TRUE(hasSubnet(response, "192.0.2.0/29", SubnetID(123)));
-    // The IPv6 subnet should not be included.
-    ASSERT_FALSE(hasSubnet(response, "2001:db8:1::/64", SubnetID(17)));
+    ASSERT_NO_FATAL_FAILURE(checkResponseArgs(response, exp_args));
 }
 
 // This test verifies that 'subnet4-list' returns empty list of subnets when
@@ -1780,7 +1796,13 @@ TEST_F(Subnet4CmdsTest, noSubnet4List) {
 
     // Verify that the response has appropriate structure and no subnets
     // are included.
-    ASSERT_NO_FATAL_FAILURE(checkSubnetListStructure(response, 0));
+    std::string exp_args=R"(
+        {
+          "subnets": [ ]
+        }
+    )";
+
+    ASSERT_NO_FATAL_FAILURE(checkResponseArgs(response, exp_args));
 }
 
 // This test verifies that IPv4 subnet can be retrieved by subnet id

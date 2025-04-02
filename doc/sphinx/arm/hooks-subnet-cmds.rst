@@ -94,11 +94,13 @@ The list of subnets is returned in the following format:
        "subnets": [
            {
                "id": 10,
+               "shared-network-name": "net1",
                "subnet": "10.0.0.0/8"
            },
            {
                "id": 100,
-               "subnet": "192.0.2.0/24"
+               "shared-network-name": null,
+               "subnet": "192.0.2.0/24",
            }
        ]
        }
@@ -137,10 +139,12 @@ The list of subnets is returned in the following format:
        "subnets": [
            {
                "id": 11,
+               "shared-network-name": null,
                "subnet": "2001:db8:1::/64"
            },
            {
                "id": 233,
+               "shared-network-name": "some-net",
                "subnet": "3000::/16"
            }
        ]

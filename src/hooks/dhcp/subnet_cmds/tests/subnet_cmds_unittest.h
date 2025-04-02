@@ -16,6 +16,8 @@
 #include <dhcpsrv/subnet_id.h>
 #include <process/daemon.h>
 #include <stats/stats_mgr.h>
+#include <testutils/gtest_utils.h>
+#include <testutils/test_to_element.h>
 #include <boost/lexical_cast.hpp>
 #include <gtest/gtest.h>
 #include <sstream>
@@ -172,7 +174,9 @@ public:
     /// @param subnet_str Subnet in a textual form, e.g. 10.0.0.0/8 or
     /// 2001:db8::/64.
     /// @param subnet_id Subnet id.
-    void addSubnet(const std::string& subnet_str, const isc::dhcp::SubnetID& subnet_id) {
+    /// @param shared_network_name name of shared-network, defaults to empty string.
+    void addSubnet(const std::string& subnet_str, const isc::dhcp::SubnetID& subnet_id,
+                   const std::string& shared_network_name = "") {
         try {
             // Split prefix and prefix length.
             auto split_pos = subnet_str.find('/');
@@ -193,12 +197,20 @@ public:
             if (prefix.isV4()) {
                 isc::dhcp::CfgSubnets4Ptr cfg = isc::dhcp::CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
                 isc::dhcp::Subnet4Ptr subnet(new isc::dhcp::Subnet4(prefix, prefix_length, 30, 40, 60, subnet_id));
+                if (!shared_network_name.empty()) {
+                    subnet->setSharedNetworkName(shared_network_name);
+                }
+
                 cfg->add(subnet);
                 addReservations(subnet, isc::dhcp::CfgMgr::instance().getStagingCfg()->getCfgHosts());
 
             } else {
                 isc::dhcp::CfgSubnets6Ptr cfg = isc::dhcp::CfgMgr::instance().getStagingCfg()->getCfgSubnets6();
                 isc::dhcp::Subnet6Ptr subnet(new isc::dhcp::Subnet6(prefix, prefix_length, 30, 40, 50, 60, subnet_id));
+                if (!shared_network_name.empty()) {
+                    subnet->setSharedNetworkName(shared_network_name);
+                }
+
                 cfg->add(subnet);
                 addReservations(subnet, isc::dhcp::CfgMgr::instance().getStagingCfg()->getCfgHosts());
             }
@@ -479,49 +491,22 @@ public:
         }
     }
 
-    /// @brief Verifies that the structure of the list of subnets returned
-    /// contains allowed values.
+    /// @brief Verifies that the content of the "args" element in the response.
     ///
     /// @param answer Server's response to a command.
-    /// @param exp_list_size Expected number of subnets returned.
-    void checkSubnetListStructure(const isc::data::ConstElementPtr& answer,
-                                  const size_t exp_list_size) {
+    /// @param exp_args JSON map of the expected arguments contents.
+    void checkResponseArgs(const isc::data::ConstElementPtr& answer,
+                           const std::string exp_args) {
         // Retrieve "arguments" and make sure it is a map.
         int rcode = 0;
         isc::data::ConstElementPtr args = isc::config::parseAnswer(rcode, answer);
         ASSERT_TRUE(args);
         ASSERT_EQ(isc::data::Element::map, args->getType());
 
-        // Retrieve "subnets" list from "arguments".
-        isc::data::ConstElementPtr subnet_ids = args->get("subnets");
-        ASSERT_TRUE(subnet_ids);
-        EXPECT_EQ(isc::data::Element::list, subnet_ids->getType());
+        isc::data::ConstElementPtr exp_args_map;
+        ASSERT_NO_THROW_LOG(exp_args_map = isc::data::Element::fromJSON(exp_args));
 
-        // Make sure that the list contains expected number of subnets.
-        EXPECT_EQ(exp_list_size, subnet_ids->size());
-
-        // Iterate over the list of subnets in the list and make sure that
-        // it contains expected parameters. It does not verify the values though.
-        for (unsigned index = 0; index != subnet_ids->size(); ++index) {
-            // Get the element in the list.
-            isc::data::ConstElementPtr subnet_element = subnet_ids->get(index);
-            ASSERT_TRUE(subnet_element);
-
-            // There should be exactly two parameters: "id" and "subnet".
-            ASSERT_EQ(2, subnet_element->size());
-            ASSERT_TRUE(subnet_element->contains("id"));
-            ASSERT_TRUE(subnet_element->contains("subnet"));
-
-            // Subnet identifier is a number.
-            isc::data::ConstElementPtr subnet_id = subnet_element->get("id");
-            ASSERT_TRUE(subnet_id);
-            EXPECT_EQ(isc::data::Element::integer, subnet_id->getType());
-
-            // Subnet prefix is a string.
-            isc::data::ConstElementPtr subnet_value = subnet_element->get("subnet");
-            ASSERT_TRUE(subnet_value);
-            EXPECT_EQ(isc::data::Element::string, subnet_value->getType());
-        }
+        isc::test::expectEqWithDiff(args, exp_args_map);
     }
 
     /// @brief Checks that the response includes a given subnet.

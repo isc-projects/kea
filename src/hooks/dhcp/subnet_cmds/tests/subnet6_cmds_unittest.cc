@@ -2433,9 +2433,9 @@ public:
 // of sending the 'subnet6-list' command.
 TEST_F(Subnet6CmdsTest, subnet6List) {
     // Add several IPv6 subnets to the server configuration.
-    addSubnet("3000::/16", SubnetID(9));
+    addSubnet("3000::/16", SubnetID(9), "net1");
     addSubnet("3001:23::/92", SubnetID(11));
-    addSubnet("2001:db8:1::/64", SubnetID(1023));
+    addSubnet("2001:db8:1::/64", SubnetID(1023), "net2");
     // Add one IPv4 subnet to the configuration. We want to make sure that
     // this subnet is not returned within the response to the command.
     addSubnet("10.2.30.0/24", SubnetID(33));
@@ -2449,15 +2449,30 @@ TEST_F(Subnet6CmdsTest, subnet6List) {
                                            CONTROL_RESULT_SUCCESS,
                                            "3 IPv6 subnets found");
 
-    // Verify that the response has appropriate structure.
-    ASSERT_NO_FATAL_FAILURE(checkSubnetListStructure(response, 3));
+    // Verify that the response has appropriate structure and returned
+    // the expected arguments.
+    std::string exp_args=R"(
+    {
+        "subnets": [
+        {
+            "id": 9,
+            "shared-network-name": "net1",
+            "subnet": "3000::/16"
+        },
+        {
+            "id": 11,
+            "shared-network-name": null,
+            "subnet": "3001:23::/92"
+        },
+        {
+            "id": 1023,
+            "shared-network-name": "net2",
+            "subnet": "2001:db8:1::/64"
+        }]
+    }
+    )";
 
-    // Our 3 IPv6 subnets should be returned in the response.
-    ASSERT_TRUE(hasSubnet(response, "3000::/16", SubnetID(9)));
-    ASSERT_TRUE(hasSubnet(response, "3001:23::/92", SubnetID(11)));
-    ASSERT_TRUE(hasSubnet(response, "2001:db8:1::/64", SubnetID(1023)));
-    // The IPv4 subnet should not be included.
-    ASSERT_FALSE(hasSubnet(response, "10.2.30.0/24", SubnetID(33)));
+    ASSERT_NO_FATAL_FAILURE(checkResponseArgs(response, exp_args));
 }
 
 // This test verifies that 'subnet6-list' returns empty list of subnets when
@@ -2468,10 +2483,15 @@ TEST_F(Subnet6CmdsTest, noSubnet6List) {
     ConstElementPtr response = testCommand("{ \"command\": \"subnet6-list\" }",
                                            CONTROL_RESULT_EMPTY,
                                            "0 IPv6 subnets found");
-
     // Verify that the response has appropriate structure and no subnets
     // are included.
-    ASSERT_NO_FATAL_FAILURE(checkSubnetListStructure(response, 0));
+    std::string exp_args=R"(
+        {
+          "subnets": [ ]
+        }
+    )";
+
+    ASSERT_NO_FATAL_FAILURE(checkResponseArgs(response, exp_args));
 }
 
 // This test verifies that IPv6 subnet can be retrieved by subnet id
