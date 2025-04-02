@@ -1758,24 +1758,24 @@ TEST_F(Subnet4CmdsTest, subnet4List) {
                                            CONTROL_RESULT_SUCCESS,
                                            "3 IPv4 subnets found");
 
-    // Verify that the returned response has the expected subnets. 
+    // Verify that the returned response has the expected subnets.
     std::string exp_args=R"(
         {
-          "subnets": [
+            "subnets": [
             {
-              "id": 5,
-              "shared-network-name": "net1",
-              "subnet": "10.0.0.0/8"
+                "id": 5,
+                "shared-network-name": "net1",
+                "subnet": "10.0.0.0/8"
             },
             {
-              "id": 10,
-              "shared-network-name": null,
-              "subnet": "192.168.50.0/24"
+                "id": 10,
+                "shared-network-name": null,
+                "subnet": "192.168.50.0/24"
             },
             {
-              "id": 123,
-              "shared-network-name": "net2",
-              "subnet": "192.0.2.0/29"
+                "id": 123,
+                "shared-network-name": "net2",
+                "subnet": "192.0.2.0/29"
             }
           ]
         }

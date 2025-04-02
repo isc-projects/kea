@@ -2449,26 +2449,27 @@ TEST_F(Subnet6CmdsTest, subnet6List) {
                                            CONTROL_RESULT_SUCCESS,
                                            "3 IPv6 subnets found");
 
-    // Verify that the returned response has the expected subnets. 
+    // Verify that the returned response has the expected subnets.
     std::string exp_args=R"(
-    {
-        "subnets": [
         {
-            "id": 9,
-            "shared-network-name": "net1",
-            "subnet": "3000::/16"
-        },
-        {
-            "id": 11,
-            "shared-network-name": null,
-            "subnet": "3001:23::/92"
-        },
-        {
-            "id": 1023,
-            "shared-network-name": "net2",
-            "subnet": "2001:db8:1::/64"
-        }]
-    }
+            "subnets": [
+            {
+                "id": 9,
+                "shared-network-name": "net1",
+                "subnet": "3000::/16"
+            },
+            {
+                "id": 11,
+                "shared-network-name": null,
+                "subnet": "3001:23::/92"
+            },
+            {
+                "id": 1023,
+                "shared-network-name": "net2",
+                "subnet": "2001:db8:1::/64"
+            }
+          ]
+        }
     )";
 
     ASSERT_NO_FATAL_FAILURE(checkResponseArgs(response, exp_args));
