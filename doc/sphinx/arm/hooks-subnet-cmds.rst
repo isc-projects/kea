@@ -100,7 +100,7 @@ The list of subnets is returned in the following format:
            {
                "id": 100,
                "shared-network-name": null,
-               "subnet": "192.0.2.0/24",
+               "subnet": "192.0.2.0/24"
            }
        ]
        }
