@@ -59,16 +59,18 @@ KEA_ADMIN_BUILT = TOP_BUILD_DIR / 'src/bin/admin/kea-admin'
 KEA_ADMIN_INSTALLED = PREFIX / SBINDIR / 'kea-admin'
 KEA_LFC_BUILT = TOP_BUILD_DIR / 'src/bin/lfc/kea-lfc'
 KEA_LFC_INSTALLED = PREFIX / SBINDIR / 'kea-lfc'
-SHAREDSTATEDIR = LOCALSTATEDIR / 'lib/kea'
-SHAREDSTATEDIR_INSTALLED = PREFIX / SHAREDSTATEDIR
+LOGDIR = LOCALSTATEDIR / 'log'
+LOGDIR_INSTALLED = PREFIX / LOGDIR
 RUNSTATEDIR = LOCALSTATEDIR / 'run/kea'
 RUNSTATEDIR_INSTALLED = PREFIX / RUNSTATEDIR
+SHAREDSTATEDIR = LOCALSTATEDIR / 'lib/kea'
+SHAREDSTATEDIR_INSTALLED = PREFIX / SHAREDSTATEDIR
 TEST_CA_DIR = TOP_SOURCE_DIR / 'src/lib/asiolink/testutils/ca'
 
 # Meson is annoying with its opinionated alteration of certain paths based on whether prefix is default or not.
 # So we revert what it does.
 # Prepend prefix only if the prefix was explicitly provided.
-if PREFIX == '/usr'
+if PREFIX == '/usr/local'
     SYSCONFDIR_INSTALLED = SYSCONFDIR
 else
     SYSCONFDIR_INSTALLED = PREFIX / SYSCONFDIR
@@ -1031,8 +1033,23 @@ top_docs = [
     'platforms.rst',
 ]
 install_data(top_docs, install_dir: DATADIR / 'doc/kea')
-install_emptydir(SHAREDSTATEDIR)
+
+install_emptydir(LOGDIR)
 install_emptydir(RUNSTATEDIR)
+install_emptydir(SHAREDSTATEDIR)
+
+# Meson is annoying with its opinionated alteration of certain paths based on whether prefix is default or not.
+# So we revert what it does..
+# In case prefix is default, install to hardcoded path.
+if PREFIX == '/usr/local'
+    install_emptydir('/usr/local/lib/kea')
+    install_emptydir('/usr/local/log')
+    install_emptydir('/usr/local/run/kea')
+    install_emptydir('/usr/local/var/lib/kea')
+    install_emptydir('/usr/local/var/log')
+    install_emptydir('/usr/local/var/run/kea')
+    install_emptydir('/var/local/run/kea')
+endif
 
 # Print the setup report.
 message(run_command(['cat', CONFIG_REPORT], check: true).stdout())
