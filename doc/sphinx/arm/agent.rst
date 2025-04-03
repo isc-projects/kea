@@ -299,7 +299,7 @@ Starting and Stopping the Control Agent
    dynamically linked to Kea.
 
 -  ``-W`` - displays the Kea configuration report and exits. The report
-   is a copy of the ``config.report`` file produced by ``./configure``;
+   is a copy of the ``config.report`` file produced by ``meson setup``;
    it is embedded in the executable binary.
 
    The contents of the ``config.report`` file may also be accessed by examining

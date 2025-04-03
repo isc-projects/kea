@@ -8169,8 +8169,8 @@ TEST_F(Dhcp6ParserTest, configControlInfoNoFactory) {
     configure(config, CONTROL_RESULT_ERROR,
               "during update from config backend database: "
               "The Kea server has not been compiled with support for configuration "
-              "database type: mysql. Did you forget to use --with-mysql during "
-              "compilation or to load libdhcp_mysql hook library?");
+              "database type: mysql. Did you forget to use -Dmysql during "
+              "setup or to load libdhcp_mysql hook library?");
 }
 
 // This test verifies that configuration control info gets populated.
@@ -9303,7 +9303,7 @@ TEST_F(Dhcp6ParserTest, ddnsTtlPercent) {
     {
         "ddns-ttl-percent": 0.75,
         "valid-lifetime": 4000,
-        "shared-networks": [{ 
+        "shared-networks": [{
             "name": "net",
             "ddns-ttl-percent": 0.50,
             "subnet6": [{
@@ -9348,7 +9348,7 @@ TEST_F(Dhcp6ParserTest, ddnsTtl) {
     {
         "ddns-ttl": 750,
         "valid-lifetime": 4000,
-        "shared-networks": [{ 
+        "shared-networks": [{
             "name": "net",
             "ddns-ttl": 500,
             "subnet6": [{
@@ -9394,7 +9394,7 @@ TEST_F(Dhcp6ParserTest, ddnsTtlMin) {
     {
         "ddns-ttl-min": 750,
         "valid-lifetime": 4000,
-        "shared-networks": [{ 
+        "shared-networks": [{
             "name": "net",
             "ddns-ttl-min": 500,
             "subnet6": [{
@@ -9440,7 +9440,7 @@ TEST_F(Dhcp6ParserTest, ddnsTtlMax) {
     {
         "ddns-ttl-max": 750,
         "valid-lifetime": 4000,
-        "shared-networks": [{ 
+        "shared-networks": [{
             "name": "net",
             "ddns-ttl-max": 500,
             "subnet6": [{

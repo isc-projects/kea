@@ -669,7 +669,7 @@ public:
     /// @brief Updates inherited subnet and pool members
     ///
     /// Hack added to set subnet_ and pool_ members that are buried into lower
-    /// level tests such as checkLease(), so one can use "configure" functionality
+    /// level tests such as checkLease(), so one can use "meson setup" functionality
     /// rather than hand-building configured objects
     /// @param subnet_idx Element index of the desired subnet
     /// @param pool_idx Element index of the desired pool within the desired subnet

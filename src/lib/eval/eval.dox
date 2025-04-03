@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -103,7 +103,7 @@ When the actual case is determined, the respective C++ action
 is executed. For example, if the token is a string, the TokenString class is
 instantiated with the appropriate value and put onto the expression vector.
 
-@section dhcpEvalMakefile Generating parser files
+@section dhcpEval Generating parser files
 
  In the general case, we want to avoid generating parser files, so an
  average user interested in just compiling Kea would not need flex or
@@ -114,14 +114,9 @@ instantiated with the appropriate value and put onto the expression vector.
  to tweak the lexer.ll and parser.yy files and then regenerate
  the code. For this purpose, two makefile targets are defined:
  @code
- make parser
+ meson compile -C parser
  @endcode
- will generate the parsers and
- @code
- make parser-clean
- @endcode
- will remove the files. Generated files removal was also hooked
- into the maintainer-clean target.
+ will generate the parsers.
 
 @section dhcpEvalConfigure Configure options
 

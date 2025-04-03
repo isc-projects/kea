@@ -165,13 +165,13 @@ CB Components
 
 To use a MySQL configuration backend, :ischooklib:`libdhcp_mysql.so` must
 be compiled and the DHCP servers must be configured to load it. It is compiled
-when the ``--with-mysql`` configuration switch is used during the Kea build.
+when the ``-D mysql`` configuration switch is used during the Kea build.
 The MySQL C client libraries must be installed, as explained in
 :ref:`dhcp-install-configure`.
 
 To use a PostgreSQL configuration backend, :ischooklib:`libdhcp_pgsql.so` must
 be compiled and the DHCP servers must be configured to load it. It is compiled
-when the ``--with-pgsql`` configuration switch is used during the Kea build.
+when the ``-D pgsql`` configuration switch is used during the Kea build.
 The PostgreSQL C client libraries must be installed, as explained in
 :ref:`dhcp-install-configure`.
 

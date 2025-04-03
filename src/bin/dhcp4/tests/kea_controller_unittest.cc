@@ -970,8 +970,7 @@ TEST_F(JSONFileBackendTest, configBackendPullCommandWithTimer) {
 }
 
 // Starting tests which require MySQL backend availability. Those tests
-// will not be executed if Kea has been compiled without the
-// --with-mysql.
+// will not be executed if Kea has been compiled without MySQL support.
 #ifdef HAVE_MYSQL
 
 /// @brief Test fixture class for the tests utilizing MySQL database

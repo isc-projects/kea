@@ -191,29 +191,20 @@ such long periods, code tends to be refactored several times. The change you mad
 some other change or by the code that hasn't been written yet.
 
 See Building Kea with Unit Tests for instructions on how to run unit-tests. If you happen to touch
-any database related code, make sure you compile your code with –with-mysql and/or –with-pgsql as
+any database related code, make sure you compile your code with `–Dmysql` and/or `–Dpostgresql` as
 needed. For example, if you change something substantial, make sure the other compilation options
 still work.
 
-If you happen to add new files or have modified any Makefile.am files, it is also a good idea to
-check if you haven't broken the distribution process:
+Enabling tests automatically enables logger checks (sanity checks on logger parameters), enable debug symbols and
+various additional consistency checks that reduce performance but help during development.
 
-```bash
-make distcheck
-```
-
-There are other useful switches which can be passed to configure. It is always a good idea to use
-`–enable-logger-checks`, which does sanity checks on logger parameters. Use `–-enable-debug` to
-enable debug symbols and various additional consistency checks that reduce performance but help
-during development.
-If you happen to modify anything in the documentation, use `–-enable-generate-docs`. If you are
-modifying DHCP code, you are likely to be interested in enabling a non-default database backends for
-DHCP. Note that if the backend is not enabled, the database-specific unit-tests are skipped.  To
-enable the MySQL backend, use the switch `–with-mysql`; for PostgreSQL, use `–with-pgsql`.
+If you are modifying DHCP code, you are likely to be interested in enabling a non-default database backends for DHCP.
+Note that if the backend is not enabled, the database-specific unit-tests are skipped.  To
+enable the MySQL backend, use the switch `-Dmysql`; for PostgreSQL, use `–Dpostgresql`.
 A complete list of all switches can be obtained with the command:
 
 ```bash
-./configure --help
+meson configure
 ```
 
 ## Submitting Merge Request (also known as sending your patch the right way)

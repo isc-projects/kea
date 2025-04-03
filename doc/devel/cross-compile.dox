@@ -1,10 +1,12 @@
-// Copyright (C) 2020-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 /**
+
+ * @note Outdated.
 
  @page crossCompile Kea Cross-Compiling Example
 
@@ -195,7 +197,7 @@ Some explanations:
   cross-compiling and produce correct paths.
  - CONF_CMD contains the ./configure common arguments.
 
-The script can be used by:
+The script can be used to:
  - eventually run "autoreconf -i" (if sources are from git)
  - put its content in a file, e.g. ccenv
  - load the file by ". ccenv"

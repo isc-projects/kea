@@ -3370,8 +3370,7 @@ void DORATest::checkStat(string const& name,
 }
 
 // Starting tests which require MySQL backend availability. Those tests
-// will not be executed if Kea has been compiled without the
-// --with-mysql.
+// will not be executed if Kea has been compiled without MySQL support.
 #ifdef HAVE_MYSQL
 
 /// @brief Test fixture class for the test utilizing MySQL database backend.
@@ -3416,8 +3415,7 @@ TEST_F(DORAMySQLTest, multiStageBootMultiThreading) {
 #endif
 
 // Starting tests which require MySQL backend availability. Those tests
-// will not be executed if Kea has been compiled without the
-// --with-pgsql.
+// will not be executed if Kea has been compiled without PostgreSQL support.
 #ifdef HAVE_PGSQL
 
 /// @brief Test fixture class for the test utilizing PostgreSQL database backend.

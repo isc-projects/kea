@@ -172,34 +172,34 @@ the system:
 -  The development tools automake, libtool, and pkg-config.
 
 -  The MySQL client and the client development libraries, when using the
-   ``--with-mysql`` configuration flag to build the Kea MySQL database
+   ``-D mysql`` configuration flag to build the Kea MySQL database
    backend. In this case, an instance of the MySQL server running locally
    or on a machine reachable over a network is required. Note that running
    the unit tests requires a local MySQL server.
 
 -  The PostgreSQL client and the client development libraries, when using the
-   ``--with-pgsql`` configuration flag to build the Kea PostgreSQL database
+   ``-D postgresql`` configuration flag to build the Kea PostgreSQL database
    backend. In this case an instance of the PostgreSQL server running locally
    or on a machine reachable over a network is required. Note that running
    the unit tests requires a local PostgreSQL server.
 
 -  Sysrepo v1.4.140 and libyang v1.0.240, needed to connect to a Sysrepo
    datastore. Earlier versions are no longer supported. When compiling from
-   sources, the configure switches that can be used are ``--with-libyang`` and
-   ``--with-sysrepo`` without any parameters. If these dependencies were
-   installed in custom paths, point the switches to them.
+   sources, the configure switch that can be used is ``-D netconf``.
+   If these dependencies were installed in custom paths, point PKG_CONFIG_PATH
+   to them.
 
--  The MIT Kerberos 5 or Heimdal libraries are needed by Kea DDNS server to sign
-   and verify DNS updates using GSS-TSIG. The configuration switch which enables
-   this functionality is ``--with-gssapi``, without any parameters. If these
-   dependencies were installed in custom paths, point the switch to them.
+-  The MIT Kerberos 5 or Heimdal libraries are needed by Kea DDNS server to
+   sign and verify DNS updates using GSS-TSIG. The configuration switch which
+   enables this functionality is ``-D krb5``. If this dependency is installed
+   in a custom path, point PKG_CONFIG_PATH to the .pc file or PATH to the
+   krb5-config tool.
 
--  googletest (version 1.8 or later) is required when using the ``--with-gtest``
+-  googletest (version 1.8 or later) is required when using the ``-D tests``
    configuration option to build the unit tests.
 
 -  The documentation generation tools `Sphinx <https://www.sphinx-doc.org/>`_,
-   texlive with its extensions, and Doxygen, if using the
-   ``--enable-generate-docs`` configuration option to create the documentation.
+   texlive with its extensions, and Doxygen, to create the documentation.
    Specifically, with Fedora, ``python3-sphinx``, ``python3-sphinx_rtd_theme``,
    ``texlive``, and ``texlive-collection-latexextra`` are necessary.
    With Ubuntu, ``python3-sphinx``, ``python3-sphinx-rtd-theme``,
@@ -277,11 +277,8 @@ The code can be checked out from
 
    $ git clone https://gitlab.isc.org/isc-projects/kea.git
 
-The code checked out from the git repository does not include the
-generated configure script or the Makefile.in files, nor their related build
-files. Those can be created by running ``autoreconf`` with the
-``--install`` switch, which will run ``autoconf``, ``aclocal``,
-``libtoolize``, ``autoheader``, ``automake``, and related commands.
+The code checked out from the git repository does not include the build files.
+They can be created by running ``meson setup build``.
 
 Write access to the Kea repository is only granted to ISC staff.
 Developers planning to contribute to Kea should check our
@@ -292,144 +289,71 @@ Guide <https://reports.kea.isc.org/dev_guide/>`__ contains more
 information about the process, and describes the requirements for
 contributed code to be accepted by ISC.
 
-.. _configure:
+.. _setup:
 
-Configure Before the Build
---------------------------
+Set up the Build
+----------------
 
-Kea uses the GNU Build System to discover build environment details. To
-generate the makefiles using the defaults, simply run:
+Kea uses Meson to discover build environment details. To generate the ninja
+file using the defaults, simply run:
 
 .. code-block:: console
 
-   $ ./configure
+   $ meson setup build
 
-Run ``./configure`` with the ``--help`` switch to view the different
-options. Some commonly used options are:
+Run ``meson configure`` to view the different build options.
+Some commonly used options are:
 
  - ``--prefix``
    Define the installation location (the default is ``/usr/local``).
 
- - ``--with-mysql``
+ - ``-D mysql``
    Build Kea with code to allow it to store leases and host reservations
    in a MySQL database.
 
- - ``--with-pgsql``
+ - ``-D pgsql``
    Build Kea with code to allow it to store leases and host reservations
    in a PostgreSQL database.
 
- - ``--with-log4cplus``
-   Define the path to find the Log4cplus headers and libraries. Normally
-   this is not necessary.
+ - ``-D krb5``
+   Build Kea with Kerberos5 with GSS-API support required by
+   :ischooklib:`libddns_gss_tsig.so`.
 
- - ``--with-boost-include``
-   Define the path to find the Boost headers. Normally this is not
-   necessary.
+ - ``-D netconf``
+   Build Kea with libyang and sysrepo support required by
+   :iscman:`kea-netconf`.
 
- - ``--with-botan``
+ - ``-D crypto=botan``
    Specify the name of the Botan pkg-config library e.g. ``botan-2``
    to build with Botan for cryptographic functions. It is preferable
    to use OpenSSL (see below).
 
- - ``--with-openssl``
+ - ``--D crypto=openssl``
    Use the OpenSSL cryptographic library instead of Botan. By default
-   ``configure`` searches for a valid Botan installation; if one is not
+   Meson searches for a valid Botan installation; if one is not
    found, Kea searches for OpenSSL. Normally this is not necessary.
-
- - ``--enable-shell``
-   Build the optional :iscman:`kea-shell` tool (see :ref:`kea-shell`).
-   The default is to not build it.
-
- - ``--with-site-packages``
-   Install the kea-shell Python packages in the specified directory; this
-   is only useful when :iscman:`kea-shell` is enabled, and is
-   mostly helpful for Debian-related distributions. While most systems store
-   Python packages in ``${prefix}/usr/lib/pythonX/site-packages``, Debian
-   introduced a separate directory for packages installed from DEB. Such
-   Python packages are expected to be installed in
-   ``/usr/lib/python3/dist-packages``.
-
- - ``--enable-perfdhcp``
-   Build the optional :iscman:`perfdhcp` DHCP benchmarking tool. The default
-   is to not build it.
 
 .. note::
 
    For instructions concerning the installation and configuration of
    database backends for Kea, see :ref:`dhcp-install-configure`.
 
-There are many options that are typically not necessary for
-regular users. However, they may be useful for package maintainers,
-developers, or people who want to extend Kea code or send patches:
+If ``meson setup build`` fails, it may be due to missing or old dependencies.
 
- - ``--with-gtest``, ``--with-gtest-source``
-   Enable the building of C++ unit tests using the Google Test
-   framework. This option specifies the path to the gtest source. (If
-   the framework is not installed on the system, it can be downloaded
-   from https://github.com/google/googletest.)
-
- - ``--enable-generate-docs``
-   Enable the rebuilding of Kea documentation. ISC publishes Kea
-   documentation for each release; however, in some cases it may be
-   desirable to rebuild it: for example, to change something in the
-   docs, or to generate new ones from git sources that are not yet
-   released.
-
- - ``--enable-generate-parser``
-   Enable the generation of parsers using flex or bison. Kea sources include
-   .cc and .h parser files, pre-generated for users' convenience. By
-   default Kea does not use flex or bison, to avoid
-   requiring installation of unnecessary dependencies for users.
-   However, if anything in the parsers is changed (such as adding a new
-   parameter), flex and bison are required to regenerate
-   parsers. This option permits that.
-
- - ``--enable-generate-messages``
-   Enable the regeneration of messages files from their messages source
-   files, e.g. regenerate xxx_messages.h and xxx_messages.cc from
-   xxx_messages.mes using the Kea message compiler. By default Kea is
-   built using these .h and .cc files from the distribution. However, if
-   anything in a .mes file is changed (such as adding a new message),
-   the Kea message compiler needs to be built and used. This option
-   permits that.
-
-As an example, the following command configures Kea to find the Boost
-headers in /usr/pkg/include, specifies that PostgreSQL support should be
-enabled, and sets the installation location to /opt/kea:
-
-.. code-block:: console
-
-   $ ./configure \
-         --with-boost-include=/usr/pkg/include \
-         --with-pgsql=/usr/local/bin/pg_config \
-         --prefix=/opt/kea
-
-Users who have any problems with building Kea using the header-only Boost
-code, or who would like to use the Boost system library (assumed for the
-sake of this example to be located in /usr/pkg/lib), should issue these
-commands:
-
-.. code-block:: console
-
-   $ ./configure \
-         --with-boost-libs=-lboost_system \
-         --with-boost-lib-dir=/usr/pkg/lib
-
-If ``configure`` fails, it may be due to missing or old dependencies.
-
-When ``configure`` succeeds, it displays a report with the parameters used
-to build the code. This report is saved into the file ``config.report``
-and is also embedded into the executable binaries, e.g. :iscman:`kea-dhcp4`.
+When ``meson setup build`` succeeds, it displays a report with the parameters
+used to build the code. This report is saved into the file
+``build/config.report`` and is also embedded into the executable binaries, e.g.
+:iscman:`kea-dhcp6`.
 
 Build
 -----
 
-After the configure step is complete, build the executables from the C++
+After the setup step is complete, build the executables from the C++
 code and prepare the Python scripts by running the command:
 
 .. code-block:: console
 
-   $ make
+   $ meson compile -C build
 
 Install
 -------
@@ -439,33 +363,28 @@ the command:
 
 .. code-block:: console
 
-   $ make install
-
-Do not use any form of parallel or job server options (such as GNU
-make's ``-j`` option) when performing this step; doing so may cause
-errors.
+   $ meson install -C build
 
 .. note::
 
    The install step may require superuser privileges.
 
-If required, run ``ldconfig`` as root with ``/usr/local/lib`` (or with
-prefix/lib if configured with ``--prefix``) in ``/etc/ld.so.conf`` (or the
-relevant linker cache configuration file for the OS):
+It should not be required, but if shared libraries are not found at runtime,
+you can run ``ldconfig`` as root with ``/usr/local/lib`` (or with
+``${prefix}/lib`` if set up with ``--prefix``) in ``/etc/ld.so.conf`` (or
+the relevant linker cache configuration file for the OS):
 
 .. code-block:: console
 
    $ ldconfig
 
-.. note::
+If ``ldconfig`` is not run where required, users may see
+errors like the following:
 
-   If ``ldconfig`` is not run where required, users may see
-   errors like the following:
+::
 
-   ::
-
-       program: error while loading shared libraries: libkea-something.so.1:
-       cannot open shared object file: No such file or directory
+    program: error while loading shared libraries: libkea-something.so.1:
+    cannot open shared object file: No such file or directory
 
 
 Cross-Building
@@ -498,7 +417,7 @@ the creation of the lease database.
 
 .. note::
 
-   When unit tests are built with Kea (i.e. the ``--with-gtest`` configuration
+   When unit tests are built with Kea (i.e. the ``-D tests`` configuration
    option is specified), the databases must be manually pre-configured
    for the unit tests to run. The details of this configuration can be
    found in the `Kea Developer's
@@ -512,52 +431,44 @@ development libraries must be installed.
 
 Build and install Kea as described in :ref:`installation`,
 with the following modification. To enable the MySQL database code, at the
-"configure" step (see :ref:`configure`), the ``--with-mysql`` switch should be
-specified:
+setup step (see :ref:`setup`), the ``-D mysql`` switch should be specified:
 
 .. code-block:: console
 
-   $ ./configure [other-options] --with-mysql
+   $ meson setup build -D mysql=enabled
 
-If MySQL was not installed in the default location, the location of the
-MySQL configuration program "mysql_config" should be included with the
-switch:
+If MySQL was not installed in the default location, the location can be
+selected by setting ``PKG_CONFIG_PATH=/path/to/mariadb.pc:${PKG_CONFIG_PATH}``
+or ``PATH=/path/to/mariadb-config:${PATH}`` prior to ``meson setup``.
 
 .. code-block:: console
 
-   $ ./configure [other-options] --with-mysql=path-to-mysql_config
+   $ PKG_CONFIG_PATH=/opt/mariadb/lib/pkgconfig PATH=/opt/mariadb/bin meson setup build -D mysql=enabled
 
 See :ref:`mysql-database-create` for details regarding MySQL
 database configuration.
 
-Building with PostgreSQL support
+Building with PostgreSQL Support
 --------------------------------
 
 Install PostgreSQL according to the instructions for the system. The
 client development libraries must be installed. Client development
-libraries are often packaged as "libpq".
+libraries are often packaged as ``libpq``.
 
 Build and install Kea as described in :ref:`installation`,
 with the following modification. To enable the PostgreSQL database code, at the
-"configure" step (see :ref:`configure`), the ``--with-pgsql`` switch should be
-specified:
+setup step (see :ref:`setup`), the ``-D postgresql`` switch should be specified:
+
+If PostgreSQL was not installed in the default location, the location can be
+selected by setting ``PKG_CONFIG_PATH=/path/to/libpq.pc:${PKG_CONFIG_PATH}``
+or ``PATH=/path/to/pg_config:${PATH}`` prior to ``meson setup``.
 
 .. code-block:: console
 
-   $ ./configure [other-options] --with-pgsql
-
-If PostgreSQL was not installed in the default location, the location of
-the PostgreSQL configuration program "pg_config" should be included with
-the switch:
-
-.. code-block:: console
-
-   $ ./configure [other-options] --with-pgsql=path-to-pg_config
+   $ PKG_CONFIG_PATH=/opt/postgresql/lib/pkgconfig PATH=/opt/postgresql/bin meson setup build -D postgresql=enabled
 
 See :ref:`pgsql-database-create` for details regarding PostgreSQL
 database configuration.
-
-
 
 .. include:: hammer.rst
 

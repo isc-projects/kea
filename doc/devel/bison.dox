@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -103,9 +103,8 @@ when the .ll or .yy files are altered and are stored in the Kea repository. To g
 issue the following sequence of commands from the top-level Kea directory:
 
 @code
-./configure --enable-generate-parser
-cd src/bin/dhcp6
-make parser
+meson setup build
+meson compile -C build parser
 @endcode
 
 Strictly speaking, the comment "make parser" is not necessary. If you updated the .ll or .yy file,

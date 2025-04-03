@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -65,7 +65,7 @@ LeaseMgrFactory::create(const std::string& dbaccess) {
             string with = (db_type == "postgresql" ? "pgsql" : db_type);
             isc_throw(InvalidType, "The Kea server has not been compiled with "
                       "support for lease database type: " << db_type
-                      << ". Did you forget to use --with-"
+                      << ". Did you forget to use -D"
                       << with << " during compilation or to load libdhcp_"
                       << with << " hook library?");
         }

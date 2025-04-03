@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -31,23 +31,6 @@ While this section currently has no practical value, it may become useful
 one day to develop a minimalistic, stripped down Kea version that does
 not have any command interface at all. This could prove useful for running
 Kea in embedded regime.
-
-The following steps are needed for the DHCPv4 server to be able to
-process a new method of configuration. (It is assumed that the
-modified component is DHCPv4. Similar approach applies to the other
-components: DHCPv6 or DHCP-DDNS):
-
--# Write your own implementation of isc::dhcp::ControlledDhcpv4Srv::init(),
-   isc::dhcp::ControlledDhcpv4Srv::init() and isc::dhcp::ControlledDhcpv4Srv::cleanup(),
-   and put it in the src/bin/dhcp4 directory (e.g. as foo_controller.cc).
--# Modify src/bin/dhcp4/Makefile.am to include your file (e.g. foo_controller.cc) in
-   the build.
--# Modify the AC_ARG_WITH(kea-config,...) macro in configure.ac to include an
-   entry for your configuration backend.
--# Add your own AM_CONDITIONAL(CONFIG_BACKEND_FOO, ...) and
-   AC_DEFINE(CONFIG_BACKEND_FOO, ...) macros to configure.ac (following the
-   above-mentioned AC_ARG_WITH macro) to set the C++ macro for your backend.
--# Modify the sanity check in configure.ac to allow your configuration backend name.
 
 Optionally you can also:
 

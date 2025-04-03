@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -403,69 +403,52 @@ The appearance of such a message indicates a programming error.
 </li>
 </ol>
 
-@subsubsection logMakefile Include Message Compilation in Makefile
+@subsubsection logMeson Include Message Compilation in meson.build
 The source file for the messages is the ".mes" file, but the files
 used by the code which must be compiled and linked are the output of
 the message compiler.  (The compiler is produced very early on in the
 Kea build sequence, so is available for use in the building of
 subsequent components.)  To allow this, certain dependencies must be
-included in the Makefile.am for each component that uses logging.
+included in the meson.build file for each component that uses logging.
 
 <b>Including Message files in C++ Component Builds</b><br/>
-The following segment from the "hooks" Makefile.am illustrates
+The following segment from src/lib/log/meson.build illustrates
 the entries needed.
 @code
 # Ensure that the message file is included in the distribution
-EXTRA_DIST = hooks_messages.mes
-
-# If we want to get rid of all generated messages files, we need to use
-# make maintainer-clean. The proper way to introduce custom commands for
-# that operation is to define maintainer-clean-local target. However,
-# make maintainer-clean also removes Makefile, so running configure script
-# is required.  To make it easy to rebuild messages without going through
-# reconfigure, a new target messages-clean has been added.
-maintainer-clean-local:
-        rm -f hooks_messages.h hooks_messages.cc
-
-# To regenerate messages files, one can do:
-#
-# make messages-clean
-# make messages
-#
-# This is needed only when a .mes file is modified.
-messages-clean: maintainer-clean-local
-
-if GENERATE_MESSAGES
-
-# Define rule to build logging source files from message file
-messages: hooks_messages.h hooks_messages.cc
-        @echo Message files regenerated
-
-hooks_messages.h hooks_messages.cc: hooks_messages.mes
-        $(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/hooks/hooks_messages.mes
-
-else
-
-messages hooks_messages.h hooks_messages.cc:
-        @echo Messages generation disabled. Configure with --enable-generate-messages to enable it.
-
+if KEA_MSG_COMPILER.found()
+    current_source_dir = meson.current_source_dir()
+    target_gen_messages = run_target(
+        'src-lib-log-log_messages',
+        command: [
+            CD_AND_RUN,
+            TOP_SOURCE_DIR,
+            KEA_MSG_COMPILER,
+            'src/lib/log/log_messages.mes',
+        ],
+    )
+    TARGETS_GEN_MESSAGES += [target_gen_messages]
+    target_gen_messages = run_target(
+        'src-lib-log-logimpl_messages',
+        command: [
+            CD_AND_RUN,
+            TOP_SOURCE_DIR,
+            KEA_MSG_COMPILER,
+            'src/lib/log/logimpl_messages.mes',
+        ],
+    )
+    TARGETS_GEN_MESSAGES += [target_gen_messages]
 endif
 @endcode
+
+To regenerate messages files, one can do:
+@code@
+meson compile -C build messages
+@endcode@
+
 The first rule adds a hook to make maintainer-clean which is the standard
 way to regenerate all messages files. The second rule adds the new
 messages-clean target to regenerate local messages files.
-
-The GENERATE_MESSAGES conditional part is the (re)generation of
-the messages files. When configured with --enable-generate-messages
-and the source (.mes file) is newer these files are generated using
-the Kea message compiler. When configured without --enable-generate-messages
-(the default) and the source (.mes file) is newer a message is emitted.
-
-Not shown are the Makefile.am lines where the .h and .cc file are used.  These
-are the same as other lines specifying .h and .cc source files.
-
-And finally please note the message header (e.g. hooks_messages.h)
-should be installed, i.e. in the include_HEADERS list.
 
 @subsection logUsage Using Logging Files in Program Development
 

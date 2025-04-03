@@ -64,66 +64,51 @@ the SPNEGO library. Two implementations meet this criteria: MIT Kerberos
 GSS-TSIG Compilation
 --------------------
 
-The following procedure was tested on Ubuntu 20.10 and 21.04. A similar
-approach can be applied to other systems.
+The following procedure was tested on Debian 12. A similar approach can be
+applied to other systems.
 
-1.  Obtain the Kea sources, extract the Kea sources.
-
-2. Run autoreconf:
-
-.. code-block:: console
-
-    autoreconf -i
-
-3. Make sure ``./configure --help`` shows the ``--with-gssapi`` option.
-
-4. Install either the MIT (``libkrb5-dev``) or the Heimdal (``heimdal-dev``) library,
+1. Install either the MIT (``libkrb5-dev``) or the Heimdal (``heimdal-dev``) library,
    for instance:
 
 .. code-block:: console
 
     sudo apt install libkrb5-dev
 
-5. Run ``configure`` with the ``--with-gssapi`` option:
+2.  Obtain the Kea sources, extract the Kea sources.
+
+3. Set up the build:
 
 .. code-block:: console
 
-    ./configure --with-gssapi
+    meson setup build -D krb5=enabled
 
-.. note:
-
-    It is ``--with-gssapi`` (with no dash between "gss" and "api"), to maintain
-    consistency with the BIND 9 option.
-
-The ``--with-gssapi`` parameter requires the ``krb5-config`` tool to be present. This
-tool is provided by both MIT Kerberos 5 and Heimdal; however, on some systems
-where both Kerberos 5 and Heimdal are installed, it is a symbolic link
-to one of them. If the tool is not in the standard location, it can be specified
-with ``--with-gssapi=/path/to/krb5-config``. It is strongly recommended
-to use the default installation locations provided by the packages.
-
-The ``./configure`` script should complete with a successful GSS-API
-detection, similar to this:
+4. Make sure ``build/config.report`` shows the ``Kerberos5 GSS-API`` entry.
 
 ::
 
-    GSS-API support:
-      GSSAPI_CFLAGS:         -isystem /usr/include/mit-krb5
-      GSSAPI_LIBS:           -L/usr/lib/x86_64-linux-gnu/mit-krb5 -Wl,-Bsymbolic-functions -Wl,-z,relro -lgssapi_krb5 -lkrb5 -lk5crypto -lcom_err
+    Kerberos5 GSS-API:
+      VERSION:         1.20.1
+      VENDOR:          MIT
 
-6.  Compile ``make -jX``, where X is the number of CPU cores
-    available.
+Either the ``krb5.pc`` file or the ``krb5-config`` tool are required to be
+present. They are provided by both MIT Kerberos 5 and Heimdal; however, on some
+systems where both Kerberos 5 and Heimdal are installed, it is a symbolic link
+to one of them. If the tool is not in the standard location, it can be selected
+by setting ``PKG_CONFIG_PATH=/path/to/krb5.pc:${PKG_CONFIG_PATH}`` or
+``PATH=/path/to/krb5-config:${PATH}`` prior to ``meson setup``.
 
-7.  After compilation, :ischooklib:`libddns_gss_tsig.so` is available in the
-    ``src/hooks/d2/gss_tsig`` directory. It can be loaded by :iscman:`kea-dhcp-ddns`.
+6. Compile with ``meson compile -C build``.
 
-:ischooklib:`libddns_gss_tsig.so` was developed using the MIT Kerberos 5 implementation, but
-Heimdal is also supported. Note that Heimdal is picky about
-security-sensitive file permissions and is known to emit an unclear error message.
-It is a good idea to keep these files plain, with one link and no
-access for the group or other users.
+7. After compilation, :ischooklib:`libddns_gss_tsig.so` is available in the
+    ``build/src/hooks/d2/gss_tsig`` directory. It can be loaded by
+    :iscman:`kea-dhcp-ddns`.
 
-The ``krb5-config`` script should provide an ``--all`` option which
+:ischooklib:`libddns_gss_tsig.so` supports both MIT Kerberos 5 and Heimdal
+implementations. Heimdal is picky about security-sensitive file permissions and
+is known to emit an unclear error message. It is a good idea to keep these
+files plain, with one link and no access for the group or other users.
+
+The ``krb5-config`` script should provide an ``--vendor`` option which
 identifies the implementation.
 
 .. _gss-tsig-deployment:

@@ -32,20 +32,20 @@ Quick Start Guide Using tarball
     .. parsed-literal::
 
        $ cd kea-|release|
-       $ ./configure [your extra parameters]
+       $ meson setup build [your extra parameters]
 
 5.  Build it:
 
     .. code-block:: console
 
-       $ make
+       $ meson compile -C build
 
 6.  Install it (by default it will be placed in ``/usr/local/``, so
     root privileges are likely required for this step):
 
     .. code-block:: console
 
-       $ make install
+       $ meson install -C build
 
 .. _quick-start-repo:
 

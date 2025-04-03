@@ -86,7 +86,7 @@ LegalLogMgrFactory::addBackend(DatabaseConnection::ParameterMap& parameters, Man
             string with = (db_type == "postgresql" ? "pgsql" : db_type);
             isc_throw(InvalidType, "The Kea server has not been compiled with "
                       "support for configuration database type: " << db_type
-                      << ". Did you forget to use --with-"
+                      << ". Did you forget to use -D"
                       << with << " during compilation or to load libdhcp_"
                       << with << " hook library?");
         }

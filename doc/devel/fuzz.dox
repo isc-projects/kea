@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -49,8 +49,8 @@ Combining the binaries and the fuzzer types results in eight fuzzing binaries:
 Use the "--enable-fuzzing" during the configure step. Then just compile as usual.
 
 @code
-./configure --enable-fuzzing
-make
+meson setup build -D fuzz=enabled
+meson compile -C build
 @endcode
 
 You can check that `config.report` shows these lines:
@@ -171,11 +171,11 @@ for this are:
      compiler.
    - Specify a value of "--prefix" on the command line to set the directory
      into which Kea is installed.
-   - Add the "--enable-fuzzing" switch to the "configure" command line.
+   - Add the "-Dfuzz=enabled" switch to the "meson setup" command line.
    .
    For example:
    @code
-   CXX=afl-clang-fast ./configure --enable-fuzzing --prefix=$HOME/installed
+   CXX=afl-clang-fast meson setup build -D fuzz=enabled --prefix=$HOME/installed
    make
    @endcode
 
@@ -327,7 +327,7 @@ while (not shutting down) {
     Read and process one packet
 }
 @endcode
-When --enable-fuzzing is specified, this is conceptually modified to:
+When -Dfuzz=enabled is specified, this is conceptually modified to:
 @code{.unparsed}
 while (not shutting down) {
     Read stdin and copy data to address/port on which Kea is listening
@@ -374,7 +374,7 @@ leaks).
 No changes were required to Kea source code to fuzz configuration files. In
 fact, other than compiling with afl-clang++ and installing the resultant
 executable, no other steps are required.  In particular, there is no need to
-use the "--enable-fuzzing" switch in the configuration command line (although
+use the "-Dfuzz=enabled" switch in the configuration command line (although
 doing so will not cause any problems).
 
 @subsection fuzzThreads Changes Required for Multi-Threaded Kea
@@ -390,7 +390,7 @@ the AFL input in the background.
 
 @subsection fuzzNotesUnitTests Unit Test Failures
 
-If unit tests are built when --enable-fuzzing is specified and with the AFL
+If unit tests are built when -Dfuzz=enabled is specified and with the AFL
 compiler, note that tests which check or use the DHCP servers (i.e. the unit
 tests in src/bin/dhcp4, src/bin/dhcp6 and src/bin/kea-admin) will fail.
 With no AFL-related environment variables defined, a C++ exception will be

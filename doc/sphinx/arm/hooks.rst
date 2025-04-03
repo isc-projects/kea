@@ -59,8 +59,8 @@ Installing Hook Packages
 
 .. note::
 
-   For more details about installing the Kea Subscriber Hooks, please read
-   `this Knowledgebase article <https://kb.isc.org/docs/aa-01587>`__.
+    For more details about installing the Kea Subscriber Hooks, please read
+    `this Knowledgebase article <https://kb.isc.org/docs/aa-01587>`__.
 
 Most hook packages are now included in the base Kea sources. There is no
 need to do anything special to compile or install them, as they are covered
@@ -84,7 +84,7 @@ Unpack this tarball:
 
 .. parsed-literal::
 
-   $ tar -zxvf kea-|release|.tar.gz
+    $ tar -zxvf kea-|release|.tar.gz
 
 This will unpack the tarball into the ``kea-|release|`` subdirectory of
 the current working directory.
@@ -96,50 +96,38 @@ steps will unpack the subscriber tarball into the correct location:
 
 .. parsed-literal::
 
-     $ cd kea-|release|
-     $ tar -xvf ../kea-subscriber-|release|.tar.gz
+    $ cd kea-|release|
+    $ tar -xvf ../kea-subscriber-|release|.tar.gz
 
 Note that unpacking the Kea subscriber package puts the files into a
 directory named ``premium``. Regardless of the name of the package, the
 directory is always called ``premium``.
 
-4. Run the ``autoreconf`` tools. This step is necessary to update Kea's build
-script to include the additional directory. If this tool is not already
-available on the system, install the ``automake`` and ``autoconf``
-tools. To generate the configure script, please use:
+4. Set up the build. Make sure ``meson`` and ``ninja`` are installed on your
+   system. The first section of the output should look something like this:
 
-::
+.. code-block:: console
 
-     $ autoreconf -i
-
-5. Rerun ``configure``, using the same configuration options that were used when
-originally building Kea. It is possible to verify that ``configure`` has detected the
-subscriber package by inspecting the summary printed when it exits. The
-first section of the output should look something like this:
+     $ meson setup build
 
 .. parsed-literal::
 
-   Package:
-     Name:             kea
-     Version:          |release|
-     Extended version: |release| (tarball)
-     OS Family:        Linux
-     Using GNU sed:    yes
-     Premium package:  yes
-     Included Hooks:   cb_cmds rbac
+    Package:
+      Name:               kea
+      Version:            |release|
+      Extended version:   |release| (tarball)
+      Version type:       development
+      OS Family:          Linux
 
-The last line indicates which specific hooks were detected. Note that
-some hooks may require their own dedicated switches.
-Please consult later sections of this chapter for details.
+      Prefix:             /opt/kea
+      Hooks directory:    /opt/kea/lib/kea/hooks
+      Premium hooks:      yes
 
-6. Rebuild Kea.
+6. Compile Kea.
 
-::
+.. code-block:: console
 
-     $ make
-
-If the machine has multiple CPU cores, an interesting option to consider
-here is using the argument ``-j X``, where ``X`` is the number of available cores.
+    $ meson compile -C build
 
 7. Install Kea sources along with the hooks:
 
@@ -148,11 +136,11 @@ here is using the argument ``-j X``, where ``X`` is the number of available core
    $ sudo make install
 
 The installation location of the hook libraries depends on whether the
-``--prefix`` parameter was specified in the ``configure`` script. If not,
+``--prefix`` parameter was specified at the ``meson setup`` step. If not,
 the default location is ``/usr/local/lib/kea/hooks``. The proper installation
 of the libraries can be verified with this command:
 
-::
+.. code-block:: console
 
    $ ls -l /usr/local/lib/kea/hooks/*.so
    /usr/local/lib/kea/hooks/libddns_gss_tsig.so
@@ -179,17 +167,18 @@ of the libraries can be verified with this command:
 
 with the following subscriber libraries:
 
-::
+.. code-block:: console
 
-   /usr/local/lib/kea/hooks/libdhcp_rbac.so
+   /usr/local/lib/kea/hooks/libca_rbac.so -> libdhcp_rbac.so
    /usr/local/lib/kea/hooks/libdhcp_cb_cmds.so
+   /usr/local/lib/kea/hooks/libdhcp_rbac.so
 
 The exact list returned depends on the packages installed. If the
 directory was specified via ``--prefix``, the hook libraries will be located in
 ``{prefix directory}/lib/kea/hooks``.
 
 Configuring Hook Libraries
-===========================
+==========================
 
 The hook libraries for a given process are configured using the
 ``hooks-libraries`` keyword in the configuration for that process. (Note
@@ -198,65 +187,77 @@ of map structures, with each structure corresponding to a hook library. For
 example, to set up two hook libraries for the DHCPv4 server, the
 configuration would be:
 
-::
+.. code-block:: json
 
-   "Dhcp4": {
-       :
-       "hooks-libraries": [
-           {
-               "library": "/opt/first_custom_hooks_example.so"
-           },
-           {
-               "library": "/opt/local/second_custom_hooks_example.so",
-               "parameters": {
-                   "mail": "spam@example.com",
-                   "floor": 13,
-                   "debug": false,
-                   "users": [ "alice", "bob", "charlie" ],
-                   "languages": {
-                       "french": "bonjour",
-                       "klingon": "yl'el"
-                   }
-               }
-           }
-       ]
-       :
-   }
+    {
+        "Dhcp6": {
+            "hooks-libraries": [
+                {
+                    "library": "/opt/first_custom_hooks_example.so"
+                },
+                {
+                    "library": "/opt/local/second_custom_hooks_example.so",
+                    "parameters": {
+                        "mail": "spam@example.com",
+                        "floor": 13,
+                        "debug": false,
+                        "users": [
+                            "alice",
+                            "bob",
+                            "charlie"
+                        ],
+                        "languages": {
+                            "french": "bonjour",
+                            "klingon": "yl'el"
+                        }
+                    }
+                }
+            ]
+        }
+    }
 
 .. note::
 
-   Libraries are reloaded even if their lists have not changed,
-   because the parameters specified for the library (or the files those
-   parameters point to) may have changed.
+    Libraries are reloaded even if their lists have not changed,
+    because the parameters specified for the library (or the files those
+    parameters point to) may have changed.
 
 Since Kea-2.7.6, the server is able to load hook libraries specifying only the binary name,
 if they reside in the default installation directory (the path is OS specific).
 The default hook libraries installation path is provided in the config report as
 "Hooks directory".
 
-::
+.. code-block:: json
 
-       "hooks-libraries": [
-           {
-               "library": "first_custom_hooks_example.so"
-           },
-           {
-               "library": "second_custom_hooks_example.so"
-           }
-       ]
+    {
+        "Dhcp6": {
+            "hooks-libraries": [
+                {
+                    "library": "first_custom_hooks_example.so"
+                },
+                {
+                    "library": "second_custom_hooks_example.so"
+                }
+            ]
+        }
+    }
 
-This snippet (on Ubuntu 24.04) is equivalent to:
+This snippet (on Debian 12) is equivalent to:
 
-::
+.. code-block:: json
 
-       "hooks-libraries": [
-           {
-               "library": "/usr/lib/x86_64-linux-gnu/kea/hooks/first_custom_hooks_example.so"
-           },
-           {
-               "library": "/usr/lib/x86_64-linux-gnu/kea/hooks/second_custom_hooks_example.so"
-           }
-       ]
+    {
+        "Dhcp6": {
+            "hooks-libraries": [
+                {
+                    "library": "/usr/lib/x86_64-linux-gnu/kea/hooks/first_custom_hooks_example.so"
+                },
+                {
+                    "library": "/usr/lib/x86_64-linux-gnu/kea/hooks/second_custom_hooks_example.so"
+                }
+            ]
+        }
+    }
 
 Libraries may have additional parameters that are not mandatory, in the
 sense that there may be libraries that do not require them. However, for any
