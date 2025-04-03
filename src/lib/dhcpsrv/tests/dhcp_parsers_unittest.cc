@@ -3295,6 +3295,12 @@ TEST_F(ParseConfigTest, defaultSubnet4) {
 
     EXPECT_TRUE(subnet->getOfferLft().unspecified());
     EXPECT_EQ(0, subnet->getOfferLft().get());
+
+    EXPECT_TRUE(subnet->getCacheMaxAge().unspecified());
+    EXPECT_EQ(0, subnet->getCacheMaxAge().get());
+
+    EXPECT_TRUE(subnet->getCacheThreshold().unspecified());
+    EXPECT_EQ(0.0, subnet->getCacheThreshold().get());
 }
 
 // This test verifies that it is possible to parse an IPv6 subnet for which
@@ -3399,6 +3405,12 @@ TEST_F(ParseConfigTest, defaultSubnet6) {
 
     allocator = subnet->getAllocator(Lease::TYPE_PD);
     EXPECT_TRUE(boost::dynamic_pointer_cast<IterativeAllocator>(allocator));
+
+    EXPECT_TRUE(subnet->getCacheMaxAge().unspecified());
+    EXPECT_EQ(0, subnet->getCacheMaxAge().get());
+
+    EXPECT_TRUE(subnet->getCacheThreshold().unspecified());
+    EXPECT_EQ(0.0, subnet->getCacheThreshold().get());
 }
 
 // This test verifies that it is possible to parse an IPv4 shared network
@@ -3490,6 +3502,12 @@ TEST_F(ParseConfigTest, defaultSharedNetwork4) {
 
     EXPECT_TRUE(network->getOfferLft().unspecified());
     EXPECT_EQ(0, network->getOfferLft().get());
+
+    EXPECT_TRUE(network->getCacheMaxAge().unspecified());
+    EXPECT_EQ(0, network->getCacheMaxAge().get());
+
+    EXPECT_TRUE(network->getCacheThreshold().unspecified());
+    EXPECT_EQ(0.0, network->getCacheThreshold().get());
 }
 
 // This test verifies that it is possible to parse an IPv6 shared network
@@ -3582,6 +3600,12 @@ TEST_F(ParseConfigTest, defaultSharedNetwork6) {
 
     EXPECT_TRUE(network->getPdAllocatorType().unspecified());
     EXPECT_TRUE(network->getPdAllocatorType().get().empty());
+
+    EXPECT_TRUE(network->getCacheMaxAge().unspecified());
+    EXPECT_EQ(0, network->getCacheMaxAge().get());
+
+    EXPECT_TRUE(network->getCacheThreshold().unspecified());
+    EXPECT_EQ(0.0, network->getCacheThreshold().get());
 }
 
 // This test verifies a negative value for the subnet ID is rejected (v4).

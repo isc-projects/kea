@@ -176,7 +176,7 @@ TEST_F(NetworkTest, inheritanceSupport4) {
     globals_->set("hostname-char-set", Element::create("gc"));
     globals_->set("hostname-char-replacement", Element::create("gr"));
     globals_->set("store-extended-info", Element::create(true));
-    globals_->set("cache-threshold", Element::create(.25));
+    globals_->set("cache-threshold", Element::create(.35));
     globals_->set("cache-max-age", Element::create(20));
     globals_->set("ddns-update-on-renew", Element::create(true));
     globals_->set("ddns-conflict-resolution-mode", Element::create("check-with-dhcid"));
@@ -331,7 +331,7 @@ TEST_F(NetworkTest, inheritanceSupport4) {
         SCOPED_TRACE("cache-threshold");
         testNetworkInheritance<TestNetwork4>(&Network::getCacheThreshold,
                                              &Network::setCacheThreshold,
-                                             .1, .25);
+                                             .1, .35);
     }
     {
         SCOPED_TRACE("cache-max-age");
@@ -418,6 +418,8 @@ TEST_F(NetworkTest, inheritanceSupport6) {
     globals_->set("ddns-ttl", Element::create(400));
     globals_->set("ddns-ttl-min", Element::create(200));
     globals_->set("ddns-ttl-max", Element::create(600));
+    globals_->set("cache-threshold", Element::create(.35));
+    globals_->set("cache-max-age", Element::create(20));
 
     // For each parameter for which inheritance is supported run
     // the test that checks if the values are inherited properly.
@@ -543,6 +545,18 @@ TEST_F(NetworkTest, inheritanceSupport6) {
         testNetworkInheritance<TestNetwork6>(&Network::getDdnsTtlMax,
                                              &Network::setDdnsTtlMax,
                                              500, 600);
+    }
+    {
+        SCOPED_TRACE("cache-threshold");
+        testNetworkInheritance<TestNetwork4>(&Network::getCacheThreshold,
+                                             &Network::setCacheThreshold,
+                                             .1, .35);
+    }
+    {
+        SCOPED_TRACE("cache-max-age");
+        testNetworkInheritance<TestNetwork4>(&Network::getCacheMaxAge,
+                                             &Network::setCacheMaxAge,
+                                             10, 20);
     }
 
     // Interface-id requires special type of test.

@@ -141,6 +141,7 @@ const SimpleDefaults SimpleParser6::GLOBAL6_DEFAULTS = {
     { "allocator",                        Element::string,  "iterative" },
     { "pd-allocator",                     Element::string,  "iterative" },
     { "ddns-conflict-resolution-mode",    Element::string,  "check-with-dhcid" },
+    { "cache-threshold",                  Element::real,    "0.25" },
 };
 
 /// @brief This table defines all option definition parameters.

@@ -188,6 +188,7 @@ Scenario test_steps[] = {
                         "\"4o6-interface-id\": \"" FIRST_SUBNET_4O6_INTERFACE_ID "\", "
                         "\"4o6-subnet\": \"" FIRST_SUBNET_4O6_SUBNET "\", "
                         "\"allocator\": \"iterative\", "
+                        "\"cache-threshold\": 0.25, "
                         "\"id\": 101, "
                         "\"option-data\": [ "
                             "{ "
@@ -300,6 +301,7 @@ Scenario test_steps[] = {
                         "\"4o6-interface-id\": \"" FIRST_SUBNET_4O6_INTERFACE_ID "\", "
                         "\"4o6-subnet\": \"" FIRST_SUBNET_4O6_SUBNET "\", "
                         "\"allocator\": \"iterative\", "
+                        "\"cache-threshold\": 0.25, "
                         "\"calculate-tee-times\": false, "
                         "\"id\": 101, "
                         "\"max-valid-lifetime\": 60, "
@@ -480,6 +482,7 @@ Scenario test_steps[] = {
                         "\"4o6-interface-id\": \"" SECOND_SUBNET_4O6_INTERFACE_ID "\", "
                         "\"4o6-subnet\": \"" SECOND_SUBNET_4O6_SUBNET "\", "
                         "\"allocator\": \"iterative\", "
+                        "\"cache-threshold\": 0.25, "
                         "\"calculate-tee-times\": false, "
                         "\"id\": 5, "
                         "\"max-valid-lifetime\": 60, "
@@ -650,6 +653,7 @@ Scenario test_steps[] = {
                         "\"4o6-interface-id\": \"" FIRST_SUBNET_4O6_INTERFACE_ID "\", "
                         "\"4o6-subnet\": \"" FIRST_SUBNET_4O6_SUBNET "\", "
                         "\"allocator\": \"iterative\", "
+                        "\"cache-threshold\": 0.25, "
                         "\"calculate-tee-times\": false, "
                         "\"id\": 101, "
                         "\"max-valid-lifetime\": 60, "
@@ -796,6 +800,7 @@ Scenario test_steps[] = {
                         "\"4o6-interface-id\": \"" SECOND_SUBNET_4O6_INTERFACE_ID_CHANGED "\", "
                         "\"4o6-subnet\": \"" SECOND_SUBNET_4O6_SUBNET_CHANGED "\", "
                         "\"allocator\": \"iterative\", "
+                        "\"cache-threshold\": 0.25, "
                         "\"id\": 5, "
                         "\"option-data\": [ "
                             "{ "
@@ -943,6 +948,7 @@ Scenario test_steps[] = {
                         "\"4o6-interface-id\": \"" SECOND_SUBNET_4O6_INTERFACE_ID_CHANGED "\", "
                         "\"4o6-subnet\": \"" SECOND_SUBNET_4O6_SUBNET_CHANGED "\", "
                         "\"allocator\": \"iterative\", "
+                        "\"cache-threshold\": 0.25, "
                         "\"calculate-tee-times\": false, "
                         "\"id\": 5, "
                         "\"max-valid-lifetime\": 60, "
@@ -1089,6 +1095,7 @@ Scenario test_steps[] = {
                         "\"4o6-interface-id\": \"" FIRST_SUBNET_4O6_INTERFACE_ID "\", "
                         "\"4o6-subnet\": \"" FIRST_SUBNET_4O6_SUBNET "\", "
                         "\"allocator\": \"iterative\", "
+                        "\"cache-threshold\": 0.25, "
                         "\"id\": 101, "
                         "\"option-data\": [ "
                             "{ "
@@ -1176,6 +1183,7 @@ Scenario test_steps[] = {
                         "\"4o6-interface-id\": \"\", "
                         "\"4o6-subnet\": \"\", "
                         "\"allocator\": \"iterative\", "
+                        "\"cache-threshold\": 0.25, "
                         "\"calculate-tee-times\": false, "
                         "\"id\": 101, "
                         "\"max-valid-lifetime\": 60, "
@@ -1310,6 +1318,7 @@ Scenario test_steps[] = {
                         "\"4o6-interface-id\": \"" SECOND_SUBNET_4O6_INTERFACE_ID_CHANGED "\", "
                         "\"4o6-subnet\": \"" SECOND_SUBNET_4O6_SUBNET_CHANGED "\", "
                         "\"allocator\": \"iterative\", "
+                        "\"cache-threshold\": 0.25, "
                         "\"calculate-tee-times\": false, "
                         "\"id\": 5, "
                         "\"max-valid-lifetime\": 60, "
@@ -1420,6 +1429,7 @@ Scenario test_steps[] = {
                         "\"4o6-interface-id\": \"\", "
                         "\"4o6-subnet\": \"\", "
                         "\"allocator\": \"iterative\", "
+                        "\"cache-threshold\": 0.25, "
                         "\"calculate-tee-times\": false, "
                         "\"id\": 101, "
                         "\"max-valid-lifetime\": 60, "
@@ -1461,6 +1471,7 @@ Scenario test_steps[] = {
                         "\"4o6-interface-id\": \"" SECOND_SUBNET_4O6_INTERFACE_ID_CHANGED "\", "
                         "\"4o6-subnet\": \"" SECOND_SUBNET_4O6_SUBNET_CHANGED "\", "
                         "\"allocator\": \"iterative\", "
+                        "\"cache-threshold\": 0.25, "
                         "\"id\": 5, "
                         "\"option-data\": [ "
                             "{ "
@@ -1521,6 +1532,7 @@ Scenario test_steps[] = {
                         "\"4o6-interface-id\": \"\", "
                         "\"4o6-subnet\": \"\", "
                         "\"allocator\": \"iterative\", "
+                        "\"cache-threshold\": 0.25, "
                         "\"calculate-tee-times\": false, "
                         "\"id\": 5, "
                         "\"max-valid-lifetime\": 60, "
@@ -2947,10 +2959,8 @@ TEST_F(Subnet4CmdsTest, subnet4DeltaAddAndDelMultiple) {
                                                CONTROL_RESULT_SUCCESS,
                                                test.exp_text_);
         ASSERT_TRUE(response);
-        ASSERT_EQ(test.exp_response_, response->str());
-        EXPECT_TRUE(isEquivalent(Element::fromWire(test.exp_response_), response)) <<
-                "diff: " << generateDiff(prettyPrint(isc::data::Element::fromWire(test.exp_response_)),
-                                         prettyPrint(isc::data::Element::fromWire(response->str())));
+        assertEqWithDiff(Element::fromJSON(test.exp_response_), response);
+
         if (test.check_has_subnet_) {
             EXPECT_TRUE(hasSubnet(response, "192.0.2.0/24", 101));
             EXPECT_TRUE(hasSubnet(response, "10.0.0.0/8", 5));
@@ -2993,7 +3003,7 @@ TEST_F(Subnet4CmdsTest, subnet4DeltaAddAndDelMultiple) {
     handler = f;
 
     for (auto const& test : test_steps) {
-        f(test);
+        ASSERT_NO_FATAL_FAILURE(f(test));
     }
 }
 

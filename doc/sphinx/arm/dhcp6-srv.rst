@@ -4196,10 +4196,9 @@ modifications except for CLTT (Client Last Transmission Time), which
 does not require disk operations.
 
 The two parameters are the ``cache-threshold`` double and the
-``cache-max-age`` integer; they have no default setting, i.e. the lease caching
-feature must be explicitly enabled. These parameters can be configured
+``cache-max-age`` integer. These parameters can be configured
 at the global, shared-network, and subnet levels. The subnet level has
-the precedence over the shared-network level, while the global level is used
+precedence over the shared-network level, while the global level is used
 as a last resort. For example:
 
 ::
@@ -4217,6 +4216,14 @@ as a last resort. For example:
     ],
     ...
     }
+
+.. note:
+
+   Beginning with Kea 2.7.8, the default value for ``cache-threshold`` is
+   0.25 while ``cache-max-age`` is left unspecified.  This means that lease
+   caching is enabled by default.  It may be disabled at the desired scope
+   either by setting ``cache-threshold`` to 0.0 or setting ``cache-max-age``
+   to 0.
 
 When an already-assigned lease can fulfill a client query:
 

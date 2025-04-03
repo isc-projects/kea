@@ -28,6 +28,9 @@ expectEqWithDiff(isc::data::ConstElementPtr const& left, isc::data::ConstElement
 
 void
 expectEqWithDiff(isc::data::ElementPtr const& left, isc::data::ElementPtr const& right);
+
+void
+assertEqWithDiff(isc::data::ConstElementPtr const& left, isc::data::ConstElementPtr const& right);
 /// @}
 
 /// @brief Return the difference between two strings

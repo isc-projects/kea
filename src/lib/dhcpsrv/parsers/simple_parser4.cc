@@ -146,6 +146,7 @@ const SimpleDefaults SimpleParser4::GLOBAL4_DEFAULTS = {
     { "allocator",                        Element::string,  "iterative" },
     { "ddns-conflict-resolution-mode",    Element::string,  "check-with-dhcid" },
     { "stash-agent-options",              Element::boolean, "false" },
+    { "cache-threshold",                  Element::real,    "0.25" },
 };
 
 /// @brief This table defines all option definition parameters.

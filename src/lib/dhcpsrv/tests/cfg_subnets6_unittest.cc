@@ -1602,6 +1602,7 @@ TEST(CfgSubnets6Test, cacheParamValidation) {
     // Test Scenarios.
     std::vector<Scenario> tests = {
         {"valid", .25, ""},
+        {"valid", 0.0, ""},
         {"negative", -.25,
          "subnet configuration failed: cache-threshold:"
          " -0.25 is invalid, it must be greater than 0.0 and less than 1.0"

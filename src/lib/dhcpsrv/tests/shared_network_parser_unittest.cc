@@ -361,8 +361,8 @@ public:
                 "            \"calculate-tee-times\": false,"
                 "            \"t1-percent\": .40,"
                 "            \"t2-percent\": .80,"
-                "            \"cache-threshold\": .15,"
-                "            \"cache-max-age\": 5"
+                "            \"cache-threshold\": 0.0,"
+                "            \"cache-max-age\": 0"
                 "        }"
                 "    ]"
                 "}";

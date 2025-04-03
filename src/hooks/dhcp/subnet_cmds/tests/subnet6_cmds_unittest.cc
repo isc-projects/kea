@@ -392,6 +392,7 @@ Scenario test_steps[] = {
                 "\"subnet6\": [ "
                     "{ "
                         "\"allocator\": \"iterative\", "
+                        "\"cache-threshold\": 0.25, "
                         "\"calculate-tee-times\": true, "
                         "\"id\": 101, "
                         "\"max-preferred-lifetime\": " FIRST_SUBNET_MAX_PREFERRED_LIFETIME ", "
@@ -655,6 +656,7 @@ Scenario test_steps[] = {
                 "\"subnet6\": [ "
                     "{ "
                         "\"allocator\": \"iterative\", "
+                        "\"cache-threshold\": 0.25, "
                         "\"calculate-tee-times\": true, "
                         "\"id\": 5, "
                         "\"max-preferred-lifetime\": " SECOND_SUBNET_MAX_PREFERRED_LIFETIME ", "
@@ -900,6 +902,7 @@ Scenario test_steps[] = {
                 "\"subnet6\": [ "
                     "{ "
                         "\"allocator\": \"iterative\", "
+                        "\"cache-threshold\": 0.25, "
                         "\"calculate-tee-times\": true, "
                         "\"id\": 101, "
                         "\"max-preferred-lifetime\": " FIRST_SUBNET_MAX_PREFERRED_LIFETIME_CHANGED ", "
@@ -1371,6 +1374,7 @@ Scenario test_steps[] = {
                 "\"subnet6\": [ "
                     "{ "
                         "\"allocator\": \"iterative\", "
+                        "\"cache-threshold\": 0.25, "
                         "\"calculate-tee-times\": true, "
                         "\"id\": 5, "
                         "\"max-preferred-lifetime\": " SECOND_SUBNET_MAX_PREFERRED_LIFETIME_CHANGED ", "
@@ -1736,6 +1740,7 @@ Scenario test_steps[] = {
                 "\"subnet6\": [ "
                     "{ "
                         "\"allocator\": \"iterative\", "
+                        "\"cache-threshold\": 0.25, "
                         "\"calculate-tee-times\": true, "
                         "\"id\": 101, "
                         "\"max-valid-lifetime\": 60, "
@@ -1919,6 +1924,7 @@ Scenario test_steps[] = {
                 "\"subnet6\": [ "
                     "{ "
                         "\"allocator\": \"iterative\", "
+                        "\"cache-threshold\": 0.25, "
                         "\"calculate-tee-times\": true, "
                         "\"id\": 5, "
                         "\"max-preferred-lifetime\": " SECOND_SUBNET_MAX_PREFERRED_LIFETIME_CHANGED ", "
@@ -2069,6 +2075,7 @@ Scenario test_steps[] = {
                 "\"subnet6\": [ "
                     "{ "
                         "\"allocator\": \"iterative\", "
+                        "\"cache-threshold\": 0.25, "
                         "\"calculate-tee-times\": true, "
                         "\"id\": 101, "
                         "\"max-valid-lifetime\": 60, "
@@ -2190,6 +2197,7 @@ Scenario test_steps[] = {
                 "\"subnet6\": [ "
                     "{ "
                         "\"allocator\": \"iterative\", "
+                        "\"cache-threshold\": 0.25, "
                         "\"calculate-tee-times\": true, "
                         "\"id\": 5, "
                         "\"max-valid-lifetime\": 60, "
@@ -3669,10 +3677,8 @@ TEST_F(Subnet6CmdsTest, subnet6DeltaAddAndDelMultiple) {
                                                CONTROL_RESULT_SUCCESS,
                                                test.exp_text_);
         ASSERT_TRUE(response);
-        EXPECT_EQ(test.exp_response_, response->str());
-        EXPECT_TRUE(isEquivalent(Element::fromWire(test.exp_response_), response)) <<
-                "diff: " << generateDiff(prettyPrint(isc::data::Element::fromWire(test.exp_response_)),
-                                         prettyPrint(isc::data::Element::fromWire(response->str())));
+        assertEqWithDiff(Element::fromJSON(test.exp_response_), response);
+
         if (test.check_has_subnet_) {
             EXPECT_TRUE(hasSubnet(response, "3000::/16", 101));
             EXPECT_TRUE(hasSubnet(response, "2001:db8:1::/64", 5));
@@ -3715,7 +3721,7 @@ TEST_F(Subnet6CmdsTest, subnet6DeltaAddAndDelMultiple) {
     handler = f;
 
     for (auto const& test : test_steps) {
-        f(test);
+        ASSERT_NO_FATAL_FAILURE(f(test));
     }
 }
 

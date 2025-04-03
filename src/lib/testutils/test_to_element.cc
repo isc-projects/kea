@@ -40,6 +40,18 @@ void expectEqWithDiff(ElementPtr const& a, ElementPtr const& b) {
         << generateDiff(pretty_print_a, pretty_print_b) << endl;
 }
 
+void assertEqWithDiff(ConstElementPtr const& a, ConstElementPtr const& b) {
+    ASSERT_TRUE(a);
+    ASSERT_TRUE(b);
+    string const pretty_print_a(prettyPrint(a));
+    string const pretty_print_b(prettyPrint(b));
+    ASSERT_EQ(pretty_print_a, pretty_print_b)
+        << endl
+        << "Diff:" << endl
+        << generateDiff(pretty_print_a, pretty_print_b) << endl;
+}
+
+
 #ifdef HAVE_CREATE_UNIFIED_DIFF
 string generateDiff(string left, string right) {
     vector<string> left_lines;
