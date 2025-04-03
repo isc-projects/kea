@@ -7,6 +7,7 @@
 # http://www.sphinx-doc.org/en/master/config
 
 import os
+import re
 import sys
 from shutil import copyfile
 
@@ -30,29 +31,34 @@ copyright = '2019-2025, Internet Systems Consortium'  # pylint: disable=redefine
 author = 'Internet Systems Consortium'
 
 # get current kea version
-config_ac_path = '../../configure.ac'
+meson_build_path = '../../meson.build'
 changelog_path = '../../ChangeLog'
-release = 'UNRELEASED'
-with open(config_ac_path, encoding='utf-8') as f:
+with open(meson_build_path, encoding='utf-8') as f:
+    version = None
     for line in f.readlines():
-        if line.startswith('AC_INIT(kea'):
-            parts = line.split(',')
-            release = parts[1].strip()
-            # If the first line of the ChangeLog announces release, it means
-            # that this is the final release.
-            dash_parts = release.split('-')
-            candidate_release = dash_parts[0]
-            with open(changelog_path, encoding='utf-8') as changelog_file:
-                first_line = changelog_file.readline()
-                if candidate_release in first_line and "released" in first_line:
-                    release = candidate_release
+        m = re.search(r"version: '([0-9.]+)(|-git)',", line)
+        if m is not None:
+            version = m.group(1)
             break
-version = release
-dashed_version_series = '-'.join(version.split('.')[0:2])
+if version is None:
+    print('ERROR: Cannot determine Kea version from meson.build.')
+    sys.exit(1)
+release = version
+
+# If the first line of the ChangeLog announces release, it means
+# that this is the final release.
+dash_parts = version.split('-')
+candidate_release = dash_parts[0]
+with open(changelog_path, encoding='utf-8') as changelog_file:
+    first_line = changelog_file.readline()
+    if candidate_release in first_line and "released" in first_line:
+        version = candidate_release
+
+cloudsmith_series = '-'.join(version.split('.')[0:2])
 
 # now let's replace versions with odd minor number with dev
-if int(dashed_version_series[-1]) % 2 != 0:
-    dashed_version_series = 'dev'
+if int(cloudsmith_series[-1]) % 2 != 0:
+    cloudsmith_series = 'dev'
 
 # -- General configuration ---------------------------------------------------
 
@@ -245,13 +251,13 @@ todo_include_todos = True
 # -- Substitutions -----------------------------------------------------------
 
 rst_prolog = """
-.. |cloudsmith_repo| replace:: kea-{dashed_version_series}
-""".format(dashed_version_series=dashed_version_series)
+.. |cloudsmith_repo| replace:: kea-{cloudsmith_series}
+""".format(cloudsmith_series=cloudsmith_series)
 
 
 # -- Functions ---------------------------------------------------------------
 
-# Do generation of api.rst and kea-messages.rst here in conf.py instead of Makefile.am
+# Do generation of api.rst and kea-messages.rst here in conf.py instead of meson.build
 # so they are available on ReadTheDocs as there makefiles are not used for building docs.
 def run_generate_docs(_):
     with open(os.path.join(SRC_DIR, 'api-files.txt'), encoding='utf-8') as af:
@@ -263,7 +269,7 @@ def run_generate_docs(_):
     # in our case is src/sphinx. On the other hand, we need to have platforms.rst file
     # in top level directory, so it's easily accessible by prospective and first time
     # users. Furthermore, ReadTheDocs does not use the makefile system at all and they rely
-    # on sphinx-build only. As a result we need to conduct some Makefile-like operations
+    # on sphinx-build only. As a result we need to conduct some Meson-like operations
     # here. This requires us to copy (or link) the file from the top level to sphinx subdir.
     #
     # The first entry on this list is the actual file to copy, the second is a unique name

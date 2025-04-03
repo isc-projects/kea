@@ -20,7 +20,7 @@ instructions, please refer to this `Knowledgebase article <https://kb.isc.org/do
 
 ISC maintains two types of repositories: stable and development.
 The stable repositories contain a single stable release (e.g.,
-kea-2-4 or kea-2-6) along with all its maintenance updates.
+kea-2-6 or kea-3-0) along with all its maintenance updates.
 Separate repositories were introduced to minimize the risk of
 unintentionally upgrading from one stable release to another.
 

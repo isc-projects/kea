@@ -58,10 +58,10 @@ easier to install Kea using native packages.
 
 1. Go to `Kea on cloudsmith.io <https://cloudsmith.io/~isc/repos/>`__.
 
-2. Choose the Cloudsmith repository e.g. |cloudsmith_repo| for Kea |version|. Or kea-2-4 for Kea 2.4.
+2. Choose the Cloudsmith repository e.g. |cloudsmith_repo| for Kea |version|.
 
 .. note::
-  All stable releases are stored in separate repositories, such as kea-2-4, kea-2-6, and so on.
+  All stable releases are stored in separate repositories, such as kea-2-6, kea-3-0, and so on.
   All development releases, which are not recommended for production use,
   are located in the kea-dev repository.
 
@@ -71,8 +71,8 @@ easier to install Kea using native packages.
 4. Follow the onscreen instructions.
 
 .. note::
-  For example, the Debian setup instructions for Kea 2.4 can be found here:
-  https://cloudsmith.io/~isc/repos/kea-2-4/setup/#formats-deb
+  For example, the Debian setup instructions for Kea 3.0 can be found here:
+  https://cloudsmith.io/~isc/repos/kea-3-0/setup/#formats-deb
 
   The dropdown near the top of the page offers instructions for
   other operating systems.
