@@ -44,6 +44,9 @@ jobs:
     # If this step fails, then you should remove it and run the build manually (see below)
     - name: Install dependencies
       run: |
+        git clone https://gitlab.isc.org/isc-projects/kea.git /tmp/kea
+        cd /tmp/kea
+        git checkout 3812-switch-hammer-py-from-autotools-to-meson
         ./hammer.py prepare-system -p local -w all
 
     - name: Inspect system CPU
