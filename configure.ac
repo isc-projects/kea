@@ -1987,23 +1987,23 @@ cat > config.report << END
     -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 Package:
-  Name:              ${PACKAGE_NAME}
-  Version:           ${PACKAGE_VERSION}
-  Extended version:  ${EXTENDED_VERSION}
-  Version type:      ${PACKAGE_VERSION_TYPE}
-  OS Family:         ${OS_TYPE}
+  Name:               ${PACKAGE_NAME}
+  Version:            ${PACKAGE_VERSION}
+  Extended version:   ${EXTENDED_VERSION}
+  Version type:       ${PACKAGE_VERSION_TYPE}
+  OS Family:          ${OS_TYPE}
 
-  Prefix:            ${prefix}
-  Hooks directory:   ${libdir_real}/kea/hooks
+  Prefix:             ${prefix}
+  Hooks directory:    ${libdir_real}/kea/hooks
 END
 if test "$PREMIUM" != ""; then
 cat >> config.report << END
-  Premium hooks:     ${PREMIUM}
-  Included Hooks:   ${INCLUDED_HOOKS}
+  Premium hooks:      ${PREMIUM}
+  Included Hooks:    ${INCLUDED_HOOKS}
 END
 else
 cat >> config.report << END
-  Premium hooks:     no
+  Premium hooks:      no
 END
 fi
 
