@@ -349,7 +349,7 @@ if cpp_standard.version_compare('<201400')
 endif
 # Add Botan 3 to this.
 if NETCONF_DEP.found() and cpp_standard.version_compare('<202000')
-    msgs = ['Netconf dependency requires at least C++20.']
+    msgs = ['NETCONF dependency requires at least C++20.']
     if cpp_std_opt == 'none'
         msgs += no_cpp_std_opt_msg
     else
@@ -358,6 +358,7 @@ if NETCONF_DEP.found() and cpp_standard.version_compare('<202000')
     if netconf_opt.enabled()
         error('\n'.join(msgs))
     else
+        msgs += 'Disabling NETCONF.'
         warning('\n'.join(msgs))
         NETCONF_DEP = disabler()
     endif
