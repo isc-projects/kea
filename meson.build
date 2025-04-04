@@ -72,6 +72,9 @@ TEST_CA_DIR = TOP_SOURCE_DIR / 'src/lib/asiolink/testutils/ca'
 # Prepend prefix only if the prefix was explicitly provided.
 if PREFIX == '/usr/local'
     SYSCONFDIR_INSTALLED = SYSCONFDIR
+    LOGDIR_INSTALLED = '/usr/local/var/log'
+    RUNSTATEDIR_INSTALLED = '/usr/local/var/run/kea'
+    SHAREDSTATEDIR_INSTALLED = '/usr/local/var/lib/kea'
 else
     SYSCONFDIR_INSTALLED = PREFIX / SYSCONFDIR
 endif
