@@ -2,10 +2,10 @@ name: "CodeQL"
 
 on:
   push:
-    branches: [ "master", "ci" ]
+    branches: [ "master", "ci", "v*_*" ]
   pull_request:
     # The branches below must be a subset of the branches above
-    branches: [ "master", "ci" ]
+    branches: [ "master", "ci", "v*_*" ]
   schedule:
     - cron: '41 12 * * 0'
 
@@ -25,11 +25,11 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v2
+      uses: github/codeql-action/init@v3
       with:
         languages: ${{ matrix.language }}
         # If you wish to specify custom queries, you can do so here or in a config file.
@@ -44,7 +44,7 @@ jobs:
     # If this step fails, then you should remove it and run the build manually (see below)
     - name: Install dependencies
       run: |
-        ./hammer.py prepare-system -p local -w docs,netconf,perfdhcp,shell,tls,unittest
+        ./hammer.py prepare-system -p local -w all
 
     - name: Inspect system CPU
       run: cat /proc/cpuinfo
@@ -55,9 +55,8 @@ jobs:
     # Flags skipped: --with-gssapi --with-freeradius
     - name: Build Kea
       run: |
-        autoreconf -i
-        ./configure --enable-shell --enable-debug --enable-generate-docs --enable-generate-messages --enable-generate-parser --enable-logger-checks --enable-perfdhcp --enable-shell --with-libyang --with-libyang-cpp --with-openssl --with-sysrepo --with-sysrepo-cpp
-        make -j2
+        meson setup build --auto-features enabled -D fuzz=enabled -D tests=enabled -D cpp_std=c++20
+        meson compile -C build
 
     # ℹ️ Command-line programs to run using the OS shell.
     # 📚 See https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsrun
@@ -70,6 +69,6 @@ jobs:
     #     ./location_of_script_within_repo/buildscript.sh
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v2
+      uses: github/codeql-action/analyze@v3
       with:
         category: "/language:${{matrix.language}}"
