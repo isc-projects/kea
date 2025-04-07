@@ -1,12 +1,12 @@
 #!/bin/sh
 
-set -eu
-
 # Pulls the latest meson that has fix https://github.com/mesonbuild/meson/pull/13532
 # for issue https://github.com/mesonbuild/meson/issues/11322.
 #
 # Usage: just like meson
 # Example: ./meson.sh setup build
+
+set -eu
 
 # Check if ${1} < ${2}.
 lt() {
@@ -21,6 +21,40 @@ lt() {
     return 0
 }
 
+# Print usage.
+print_usage() {
+    printf \
+'Usage: %s {{options}}
+Options:
+    [-i|--install]                 install meson and ninja to gobal scope. attempts to acquire root privileges
+    [-p|--pyinstaller]             use pyinstaller instead of venv
+    [-h|--help]                    print usage (this text)
+' \
+    "$(basename "${0}")"
+}
+
+# Parse parameters.
+while test ${#} -gt 0; do
+    case "${1}" in
+        '-i'|'--install') install=true ;;
+        '-p'|'--pyinstaller') pyinstaller=true ;;
+        '-h'|'--help') print_usage; exit 0 ;;
+        *) break ;;
+    esac; shift
+done
+
+# Default parameters
+test -z "${install+x}" && install=false
+test -z "${pyinstaller+x}" && pyinstaller=false
+
+if "${install}" && ! "${pyinstaller}"; then
+    sudo='sudo'
+    venv='/usr/local/share/.venv'
+else
+    sudo=
+    venv='.venv'
+fi
+
 # Change directory to Kea's top level directory.
 top_level=$(cd "$(dirname "${0}")" && pwd)
 cd "${top_level}" || exit 1
@@ -29,7 +63,7 @@ if command -v meson > /dev/null 2>&1 && lt 1.7.98 "$(meson --version)"; then
     # Good to be used. Does not suffer from endless transitional dependency iteration.
     meson='meson'
 else
-    meson='./.meson/meson'
+    meson='.meson/meson'
     if test ! -f "${meson}"; then
         # Starting with Meson 0.62, Python 3.7 is required.
         python3=python3
@@ -49,26 +83,40 @@ else
         v=$("${python3}" -c 'import platform; print(platform.python_version())')
         printf 'Python version: %s\n' "${v}"
 
-        git clone https://github.com/mesonbuild/meson .meson-src
-        (
-            cd .meson-src || exit 1
-            if git tag -l | grep -E '^1.8.0$' > /dev/null 2>&1; then
-                git checkout 1.8.0
-            fi
-        )
+        ${sudo} "${python3}" -m venv "${venv}"
+        ${sudo} "${venv}/bin/pip" install --upgrade pip
+        ${sudo} "${venv}/bin/pip" install ninja
+        mkdir -p .meson
+        ${sudo} cp "${venv}/bin/ninja" .meson/ninja
 
-        "${python3}" -m venv ./.venv
-        ./.venv/bin/pip install --upgrade pip
-
-        ./.venv/bin/pip install ninja
-        ./.venv/bin/pip install pyinstaller
-        (
-            cd .meson-src || exit 1
-            "${top_level}/.venv/bin/pyinstaller" --additional-hooks-dir=packaging --clean --dist "${top_level}/.meson" --onefile ./meson.py
-        )
-        cp ./.venv/bin/ninja ./.meson/ninja
-        rm -fr ./.meson-src ./.venv
+        if "${pyinstaller}"; then
+            git clone https://github.com/mesonbuild/meson .meson-src
+            (
+                cd .meson-src || exit 1
+                # TODO: always checkout when 1.8.0 gets released.
+                if git tag -l | grep -E '^1.8.0$' > /dev/null 2>&1; then
+                    git checkout 1.8.0
+                fi
+            )
+            ${sudo} "${venv}/bin/pip" install pyinstaller
+            (
+                cd .meson-src || exit 1
+                "${top_level}/${venv}/bin/pyinstaller" --additional-hooks-dir=packaging --clean --dist "${top_level}/.meson" --onefile ./meson.py
+            )
+            rm -fr .meson-src "${venv}"
+        else
+            # TODO: change to this when 1.8.0 gets released.
+            # ${sudo} "${venv}/bin/pip" install meson==1.8.0
+            ${sudo} "${venv}/bin/pip" install git+https://github.com/mesonbuild/meson.git
+            ${sudo} cp "${venv}/bin/meson" .meson/meson
+        fi
     fi
+fi
+
+if "${install}"; then
+    sudo cp .meson/meson /usr/local/bin/meson
+    sudo cp .meson/ninja /usr/local/bin/ninja
+    exit 0
 fi
 
 if test -f "${top_level}/.meson/ninja"; then
