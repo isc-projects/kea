@@ -464,33 +464,48 @@ def replace_in_file(file_name, pattern, replacement):
         file.write(content)
 
 
-def pyinstall_meson(python_v: str = 'python3'):
-    """ Install meson with pyinstaller.
+def install_meson(python_v: str = 'python3', mode: str = 'pyinstaller'):
+    """ Install meson with pyinstaller or venv.
 
     :param python_v: python executable
     :type python_v: str
+    :param mode: whether installation is through pyinstaller or plain venv
+    :type mode: str
     """
 
     exit_code = execute('meson --version', quiet=True, raise_error=False)
     if exit_code == 0:
         return
-    execute('rm -fr .meson .meson-src .venv')
-    execute('git clone https://github.com/mesonbuild/meson .meson-src')
-    _, output = execute('git tag -l', cwd='.meson-src', capture=True, quiet=True)
-    if '1.8.0' in output.splitlines():
-        execute('git checkout 1.8.0', cwd='.meson-src')
-    execute(f'{python_v} -m venv .venv')
-    execute('.venv/bin/pip install --upgrade pip')
-    execute('.venv/bin/pip install ninja')
-    execute('.venv/bin/pip install pyinstaller')
-    execute('../.venv/bin/pyinstaller --additional-hooks-dir=packaging --clean --dist ../.meson --onefile ./meson.py',
-            cwd='.meson-src')
-    execute('sudo cp .meson/meson /usr/local/bin')
-    execute('sudo cp .venv/bin/ninja /usr/local/bin')
-    execute('rm -fr .meson .meson-src .venv')
+    execute('sudo rm -fr .meson-src')
+    execute(f'sudo {python_v} -m venv /usr/local/share/.venv')
+    execute('sudo /usr/local/share/.venv/bin/pip install --upgrade pip setuptools wheel')
+    execute('sudo /usr/local/share/.venv/bin/pip install ninja')
+    if mode == 'pyinstaller':
+        execute('git clone https://github.com/mesonbuild/meson .meson-src')
+        # TODO: always checkout when 1.8.0 gets released.
+        _, output = execute('git tag -l', cwd='.meson-src', capture=True, quiet=True)
+        if '1.8.0' in output.splitlines():
+            execute('git checkout 1.8.0', cwd='.meson-src')
+        execute('sudo /usr/local/share/.venv/bin/pip install pyinstaller')
+        execute('sudo /usr/local/share/.venv/bin/pyinstaller --additional-hooks-dir=packaging --clean '
+                '--dist ../.meson --onefile ./meson.py',
+                cwd='.meson-src')
+        execute('sudo cp .meson/meson /usr/local/bin')
+        execute('sudo cp /usr/local/share/.venv/bin/ninja /usr/local/bin')
+
+    elif mode == 'venv':
+        # TODO: change to this when 1.8.0 gets released.
+        # execute('/usr/local/share/.venv/bin/pip install meson==1.8.0')
+        execute('sudo /usr/local/share/.venv/bin/pip install git+https://github.com/mesonbuild/meson.git')
+        execute('sudo ln -s /usr/local/share/.venv/bin/meson /usr/local/bin/meson')
+        execute('sudo ln -s /usr/local/share/.venv/bin/ninja /usr/local/bin/ninja')
+    else:
+        raise UnexpectedError(f'Unknown mode in install_meson(mode={mode})')
+
+    execute('sudo rm -fr .meson-src')
 
 
-def pyinstall_sphinx(python_v: str = 'python3'):
+def install_sphinx(python_v: str = 'python3'):
     """ Install sphinx with pyinstaller.
 
     :param python_v: python executable
@@ -1755,7 +1770,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
     # prepare fedora
     if system == 'fedora':
         packages.extend(['boost-devel', 'gcc-c++', 'openssl-devel', 'log4cplus-devel', 'libpcap-devel', 'make'])
-        deferred_functions.append(pyinstall_meson)
+        deferred_functions.append(install_meson)
 
         if 'native-pkg' in features:
             packages.extend(['rpm-build', 'python3-devel'])
@@ -1792,7 +1807,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
         install_pkgs('epel-release', env=env, check_times=check_times)
 
         packages.extend(['boost-devel', 'gcc-c++', 'git', 'log4cplus-devel', 'make', 'openssl-devel'])
-        deferred_functions.append(pyinstall_meson)
+        deferred_functions.append(install_meson)
 
         if revision in ['7', '8']:
             # Install newer version of Boost in case users want to opt-in with:
@@ -1855,7 +1870,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
                 python_v = m.group(1)
                 packages.append(python_v)
 
-        deferred_functions.append(lambda: pyinstall_meson(python_v))
+        deferred_functions.append(lambda: install_meson(python_v))
 
         if revision in ['7', '8']:
             # Install newer version of Boost in case users want to opt-in with:
@@ -1865,7 +1880,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
         if 'docs' in features:
             packages.extend(['texlive', 'texlive-capt-of', 'texlive-fncychap', 'texlive-framed', 'texlive-needspace',
                              'texlive-tabulary', 'texlive-titlesec', 'texlive-upquote', 'texlive-wrapfig'])
-            deferred_functions.append(lambda: pyinstall_sphinx(python_v))
+            deferred_functions.append(lambda: install_sphinx(python_v))
 
         if 'native-pkg' in features:
             packages.extend(['python3-devel', 'rpm-build'])
@@ -1901,12 +1916,12 @@ def install_packages_local(system, revision, features, check_times, ignore_error
         install_pkgs('epel-release', env=env, check_times=check_times)
 
         packages.extend(['boost-devel', 'gcc-c++', 'log4cplus-devel', 'make', 'openssl-devel', 'ninja-build'])
-        deferred_functions.append(pyinstall_meson)
+        deferred_functions.append(install_meson)
 
         if 'docs' in features:
             packages.extend(['texlive', 'texlive-capt-of', 'texlive-fncychap', 'texlive-framed', 'texlive-needspace',
                              'texlive-tabulary', 'texlive-titlesec', 'texlive-upquote', 'texlive-wrapfig'])
-            deferred_functions.append(pyinstall_sphinx)
+            deferred_functions.append(install_sphinx)
 
         if 'native-pkg' in features:
             packages.extend(['python3-devel', 'rpm-build'])
@@ -1939,7 +1954,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
 
         packages.extend(['gcc', 'g++', 'gnupg', 'libboost-system-dev', 'liblog4cplus-dev',  'libpcap-dev',
                          'libssl-dev', 'make'])
-        deferred_functions.append(pyinstall_meson)
+        deferred_functions.append(install_meson)
 
         if 'docs' in features:
             packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme',
@@ -1982,11 +1997,11 @@ def install_packages_local(system, revision, features, check_times, ignore_error
         _apt_update(system, revision, env=env, check_times=check_times, attempts=3, sleep_time_after_attempt=10)
 
         packages.extend(['gcc', 'g++',  'gnupg', 'libboost-system-dev', 'liblog4cplus-dev', 'libssl-dev', 'make'])
-        deferred_functions.append(pyinstall_meson)
+        deferred_functions.append(install_meson)
 
         if 'docs' in features:
             packages.extend(['doxygen', 'graphviz', 'tex-gyre', 'texlive', 'texlive-latex-extra'])
-            deferred_functions.append(pyinstall_sphinx)
+            deferred_functions.append(install_sphinx)
 
         if 'unittest' in features:
             packages.append('googletest')
@@ -2023,7 +2038,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
     # prepare freebsd
     elif system == 'freebsd':
         packages.extend(['boost-libs', 'git', 'log4cplus', 'openssl'])
-        deferred_functions.append(pyinstall_meson)
+        deferred_functions.append(install_meson)
 
         if revision.startswith('14'):
             packages.extend(['bash', 'pkgconf'])
@@ -2092,7 +2107,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
         packages.extend(['bison', 'boost-libs', 'boost-dev', 'build-base', 'flex', 'gcompat', 'gcc', 'g++', 'gzip',
                          'log4cplus', 'log4cplus-dev', 'make', 'musl-dev', 'openssl-dev', 'procps', 'python3-dev',
                          'tar'])
-        deferred_functions.append(pyinstall_meson)
+        deferred_functions.append(install_meson)
 
         if 'docs' in features:
             packages.extend(['py3-sphinx py3-sphinx_rtd_theme'])
