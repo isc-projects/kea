@@ -38,7 +38,10 @@ else
     exit "${exit_code}"
 fi
 
-for m in *.yang; do
+# shellcheck disable=SC2044
+# SC2044 (warning): For loops over find output are fragile. Use find -exec or a while read loop.
+# reason: Involving IFS, and read, and input redirection is not less fragile.
+for m in $(find . -type f -name '*.yang'); do
     rev1=$("${yanglint}" -f yin "${m}" | grep '<revision date=' | head -1 | sed \
  's/.*<revision date="\([0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]\)".*/\1/')
     rev2=$(echo "${m}" | sed \

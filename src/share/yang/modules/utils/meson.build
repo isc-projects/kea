@@ -15,12 +15,12 @@ yang_utils_conf_data.set(
     NETCONF_DEP.get_variable('sysrepo-prefix'),
 )
 
-configure_file(
+check_hashes_sh = configure_file(
     input: 'check-hashes.sh.in',
     output: 'check-hashes.sh',
     configuration: yang_utils_conf_data,
 )
-configure_file(
+check_revisions_sh = configure_file(
     input: 'check-revisions.sh.in',
     output: 'check-revisions.sh',
     configuration: yang_utils_conf_data,
@@ -32,3 +32,7 @@ configure_file(
     install: true,
     install_dir: DATADIR / 'kea/yang/modules/utils',
 )
+
+test('check-hashes.sh', check_hashes_sh, suite: 'shell-tests')
+
+test('check-revisions.sh', check_revisions_sh, suite: 'shell-tests')

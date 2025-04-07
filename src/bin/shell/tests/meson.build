@@ -69,6 +69,18 @@ test(
     priority: -1,
     suite: 'shell-tests',
 )
+shell_ca_process_tests = configure_file(
+    input: 'shell_ca_process_tests.sh.in',
+    output: 'shell_ca_process_tests.sh',
+    configuration: shell_tests_conf_data,
+)
+test(
+    'shell_ca_process_tests.sh',
+    shell_ca_process_tests,
+    is_parallel: false,
+    priority: -1,
+    suite: 'shell-tests',
+)
 shell_d2_process_tests = configure_file(
     input: 'shell_d2_process_tests.sh.in',
     output: 'shell_d2_process_tests.sh',
