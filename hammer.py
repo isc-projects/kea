@@ -1793,6 +1793,10 @@ def install_packages_local(system, revision, features, check_times, ignore_error
 
         if 'netconf' in features:
             packages.extend(['cmake', 'git', 'pcre2-devel'])
+            # Even though meson sets rpath, it does not work in fedora.
+            # This is even more stupid since it's a fairly standard path that could have worked out of the box.
+            # Set it manually and persistently at a global level...
+            execute('echo /usr/local/lib64 | sudo tee /etc/ld.so.conf.d/netconf.conf')
 
         if 'unittest' in features:
             packages.append('wget')
