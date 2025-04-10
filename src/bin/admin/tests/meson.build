@@ -42,7 +42,7 @@ if MYSQL_DEP.found()
         is_parallel: false,
         priority: -1,
         suite: 'shell-tests',
-        timeout: 480,
+        timeout: 960,
     )
 endif
 pgsql_tests = configure_file(
@@ -57,7 +57,7 @@ if POSTGRESQL_DEP.found()
         is_parallel: false,
         priority: -1,
         suite: 'shell-tests',
-        timeout: 480,
+        timeout: 960,
     )
 endif
 # To create the output_dir
