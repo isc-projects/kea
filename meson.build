@@ -244,10 +244,15 @@ if netconf_opt.enabled() and NETCONF_DEP.get_variable(
     error('Dependency not found: NETCONF.')
 endif
 
-GTEST_DEP = dependency(
-    'gtest',
-    required: TESTS_OPT.enabled() or FUZZ_OPT.enabled(),
-)
+# GTEST_DEP = dependency(
+#     'gtest',
+#     required: TESTS_OPT.enabled() or FUZZ_OPT.enabled(),
+# )
+GTEST_DEP = disabler()
+if TESTS_OPT.enabled() or FUZZ_OPT.enabled()
+    gtest_proj = subproject('gtest')
+    GTEST_DEP = gtest_proj.get_variable('gtest_dep')
+endif
 
 # Crypto
 if crypto_opt == 'botan'
@@ -469,12 +474,15 @@ endif
 conf_data.set('HAVE_AFL', have_afl)
 
 if GTEST_DEP.found()
-    result = cpp.run(
-        fs.read('compiler-checks/have-create-unified-diff.cc'),
-        name: 'HAVE_CREATE_UNIFIED_DIFF',
-        dependencies: [GTEST_DEP],
-    )
-    conf_data.set('HAVE_CREATE_UNIFIED_DIFF', result.returncode() == 0)
+    # Wrap dependencies cannot be used in compiler checks: https://github.com/mesonbuild/meson/issues/11575
+    # We can safely assume that googletest 1.15.2 has CreateUnifiedDiff though.
+    # result = cpp.run(
+    #     fs.read('compiler-checks/have-create-unified-diff.cc'),
+    #     name: 'HAVE_CREATE_UNIFIED_DIFF',
+    #     dependencies: [GTEST_DEP],
+    # )
+    # conf_data.set('HAVE_CREATE_UNIFIED_DIFF', result.returncode() == 0)
+    conf_data.set('HAVE_CREATE_UNIFIED_DIFF', true)
 endif
 
 if KRB5_DEP.found()
