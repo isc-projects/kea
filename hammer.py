@@ -1190,7 +1190,7 @@ class VagrantEnv():
 def _install_gtest_sources():
     """Install gtest sources."""
     # download gtest sources only if it is not present as native package
-    gtest_version = '1.14.0'
+    gtest_version = '1.16.0'
     gtest_path = f'/usr/src/googletest-release-{gtest_version}/googletest'
     if os.path.exists(gtest_path):
         log.info('gtest is already installed in %s.', gtest_path)
