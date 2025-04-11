@@ -37,3 +37,12 @@ executable(
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
     link_with: [ddns_gss_tsig_archive] + LIBS_BUILT_SO_FAR,
 )
+
+# Heimdal requires restricted permissions on the credential cache files.
+foreach ccache : ['administrator.ccache', 'testdenied.ccache']
+    configure_file(
+        command: ['chmod', 'go-rw', f'@current_source_dir@/@ccache@'],
+        input: f'@ccache@',
+        output: f'@ccache@',
+    )
+endforeach
