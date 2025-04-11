@@ -27,7 +27,7 @@ print_usage() {
 'Usage: %s {{options}}
 Options:
     [-i|--install]                 install meson and ninja to gobal scope. attempts to acquire root privileges
-    [-p|--pyinstaller]             use pyinstaller instead of venv
+    [-p|--venv]                    use venv instead of pyinstaller
     [-h|--help]                    print usage (this text)
 ' \
     "$(basename "${0}")"
@@ -37,7 +37,7 @@ Options:
 while test ${#} -gt 0; do
     case "${1}" in
         '-i'|'--install') install=true ;;
-        '-p'|'--pyinstaller') pyinstaller=true ;;
+        '-p'|'--venv') venv=true ;;
         '-h'|'--help') print_usage; exit 0 ;;
         *) break ;;
     esac; shift
@@ -45,9 +45,9 @@ done
 
 # Default parameters
 test -z "${install+x}" && install=false
-test -z "${pyinstaller+x}" && pyinstaller=false
+test -z "${venv+x}" && venv=false
 
-if "${install}" && ! "${pyinstaller}"; then
+if "${install}" && "${venv}"; then
     sudo='sudo'
     venv='/usr/local/share/.venv'
 else
@@ -89,7 +89,12 @@ else
         mkdir -p .meson
         ${sudo} cp "${venv}/bin/ninja" .meson/ninja
 
-        if "${pyinstaller}"; then
+        if "${venv}"; then
+            # TODO: change to this when 1.8.0 gets released.
+            # ${sudo} "${venv}/bin/pip" install meson==1.8.0
+            ${sudo} "${venv}/bin/pip" install git+https://github.com/mesonbuild/meson.git
+            ${sudo} cp "${venv}/bin/meson" .meson/meson
+        else
             git clone https://github.com/mesonbuild/meson .meson-src
             (
                 cd .meson-src || exit 1
@@ -104,11 +109,6 @@ else
                 "${top_level}/${venv}/bin/pyinstaller" --additional-hooks-dir=packaging --clean --dist "${top_level}/.meson" --onefile ./meson.py
             )
             rm -fr .meson-src "${venv}"
-        else
-            # TODO: change to this when 1.8.0 gets released.
-            # ${sudo} "${venv}/bin/pip" install meson==1.8.0
-            ${sudo} "${venv}/bin/pip" install git+https://github.com/mesonbuild/meson.git
-            ${sudo} cp "${venv}/bin/meson" .meson/meson
         fi
     fi
 fi
