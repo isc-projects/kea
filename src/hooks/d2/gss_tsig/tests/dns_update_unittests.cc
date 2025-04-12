@@ -90,6 +90,9 @@ public:
     TKeyExchange::Status status_;
 };
 
+/// @brief Type of pointer to an NSUpdateTestCallback.
+typedef boost::shared_ptr<NSUpdateTestCallback> NSUpdateTestCallbackPtr;
+
 /// @brief Test fixture for testing the GSS-API GSS-TSIG DNS update with
 /// Kerberos 5.
 class GssTsigDNSUpdateTest : public GssApiBaseTest, public DNSClient::Callback,
@@ -195,6 +198,10 @@ public:
     /// successfully verified.
     bool success_;
 
+    /// @brief The callback called after the GSS-TSIG TKEY exchange has
+    /// succeeded so that the GSS-TSIG DNS update is performed.
+    NSUpdateTestCallbackPtr callback_;
+
     /// @brief The flag which indicates if the DNS update should fallback to non
     /// GSS-TSIG if the key is removed.
     bool use_fallback_;
@@ -214,13 +221,13 @@ TEST_F(GssTsigDNSUpdateTest, runGssTsigDNSUpdateTimeout) {
     setAdministratorCCache();
 
     DNSCallback dns_callback = std::bind(&GssTsigDNSUpdateTest::doGssTsigDNSUpdate, this);
-    NSUpdateTestCallback callback(io_service_, dns_callback);
+    callback_.reset(new NSUpdateTestCallback(io_service_, dns_callback));
 
     system_clock::time_point now = system_clock::now();
     key_->setInception(now);
     key_->setExpire(now + seconds(server->getKeyLifetime()));
     key_->getTKeyExchange().reset(new TKeyExchange(io_service_, server, key_,
-                                                   &callback));
+                                                   callback_.get()));
     key_->getTKeyExchange()->doExchange();
 
     // The server will sign the TKEY and stop responding to DNS updates.
@@ -260,13 +267,13 @@ TEST_F(GssTsigDNSUpdateTest, runGssTsigDNSUpdateFailure) {
     setAdministratorCCache();
 
     DNSCallback dns_callback = std::bind(&GssTsigDNSUpdateTest::doGssTsigDNSUpdate, this);
-    NSUpdateTestCallback callback(io_service_, dns_callback);
+    callback_.reset(new NSUpdateTestCallback(io_service_, dns_callback));
 
     system_clock::time_point now = system_clock::now();
     key_->setInception(now);
     key_->setExpire(now + seconds(server->getKeyLifetime()));
     key_->getTKeyExchange().reset(new TKeyExchange(io_service_, server, key_,
-                                                   &callback));
+                                                   callback_.get()));
     key_->getTKeyExchange()->doExchange();
 
     // The server will sign the TKEY, but not sign the DNS update.
@@ -305,13 +312,13 @@ TEST_F(GssTsigDNSUpdateTest, runGssTsigDNSUpdateSuccess) {
     setAdministratorCCache();
 
     DNSCallback dns_callback = std::bind(&GssTsigDNSUpdateTest::doGssTsigDNSUpdate, this);
-    NSUpdateTestCallback callback(io_service_, dns_callback);
+    callback_.reset(new NSUpdateTestCallback(io_service_, dns_callback));
 
     system_clock::time_point now = system_clock::now();
     key_->setInception(now);
     key_->setExpire(now + seconds(server->getKeyLifetime()));
     key_->getTKeyExchange().reset(new TKeyExchange(io_service_, server, key_,
-                                                   &callback));
+                                                   callback_.get()));
     key_->getTKeyExchange()->doExchange();
 
     // The server will sign both the TKEY and the DNS update.
@@ -351,13 +358,13 @@ TEST_F(GssTsigDNSUpdateTest, runGssTsigDNSUpdateSuccessWithFallback) {
     setAdministratorCCache();
 
     DNSCallback dns_callback = std::bind(&GssTsigDNSUpdateTest::doGssTsigDNSUpdate, this);
-    NSUpdateTestCallback callback(io_service_, dns_callback);
+    callback_.reset(new NSUpdateTestCallback(io_service_, dns_callback));
 
     system_clock::time_point now = system_clock::now();
     key_->setInception(now);
     key_->setExpire(now + seconds(server->getKeyLifetime()));
     key_->getTKeyExchange().reset(new TKeyExchange(io_service_, server, key_,
-                                                   &callback));
+                                                   callback_.get()));
     key_->getTKeyExchange()->doExchange();
 
     // The server will sign the TKEY, but not sign the DNS update.

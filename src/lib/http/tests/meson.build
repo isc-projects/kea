@@ -16,6 +16,7 @@ kea_http_tests = executable(
     'http_header_unittests.cc',
     'http_server_unittests.cc',
     'post_request_json_unittests.cc',
+    'post_request_unittests.cc',
     'request_parser_unittests.cc',
     'request_unittests.cc',
     'response_creator_unittests.cc',

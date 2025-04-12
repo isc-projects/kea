@@ -98,7 +98,7 @@ ManagedKey::toElement() const {
     case EXPIRED:
         // Security context lifetime.
         try {
-            if (sec_ctx_.get()) {
+            if (sec_ctx_.get() && sec_ctx_.get()->get()) {
                 uint32_t lifetime = sec_ctx_->getLifetime();
                 map->set("security-context-lifetime",
                          Element::create(static_cast<long long>(lifetime)));

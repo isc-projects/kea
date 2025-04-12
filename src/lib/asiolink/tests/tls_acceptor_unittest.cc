@@ -429,9 +429,11 @@ TEST_F(TLSAcceptorTest, getNative) {
 // macOS 10.12.3 has a bug which causes the connections to not enter
 // the TIME-WAIT state and they never get closed.
 #if !defined (OS_OSX)
-
 // Test that TLSAcceptor::close works properly.
 TEST_F(TLSAcceptorTest, close) {
+#else
+TEST_F(TLSAcceptorTest, DISABLED_close) {
+#endif
     // Initialize acceptor.
     acceptorOpen();
     acceptor_.bind(endpoint_);
@@ -456,7 +458,5 @@ TEST_F(TLSAcceptorTest, close) {
     EXPECT_EQ(1, aborted_connections_num_);
     EXPECT_EQ(1, connections_.size());
 }
-
-#endif
 
 }

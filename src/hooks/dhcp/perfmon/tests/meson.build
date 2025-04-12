@@ -5,9 +5,11 @@ endif
 dhcp_perfmon_lib_tests = executable(
     'dhcp-perfmon-lib-tests',
     'alarm_parser_unittests.cc',
+    'alarm_store_unittests.cc',
     'alarm_unittests.cc',
     'duration_key_parser_unittests.cc',
     'monitored_duration_unittests.cc',
+    'monitored_duration_store_unittests.cc',
     'perfmon_cmds_unittests.cc',
     'perfmon_config_unittests.cc',
     'perfmon_mgr_unittests.cc',

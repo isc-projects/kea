@@ -7,6 +7,7 @@ kea_tcp_tests = executable(
     'mt_tcp_listener_mgr_unittests.cc',
     'run_unittests.cc',
     'tcp_listener_unittests.cc',
+    'tls_listener_unittests.cc',
     cpp_args: [f'-DTEST_CA_DIR="@TEST_CA_DIR@"'],
     dependencies: [GTEST_DEP, CRYPTO_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
