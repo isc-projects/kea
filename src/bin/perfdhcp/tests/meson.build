@@ -23,4 +23,10 @@ perfdhcp_tests = executable(
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
     link_with: [perfdhcp_lib, kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )
-test('perfdhcp-tests', perfdhcp_tests, protocol: 'gtest')
+test(
+    'perfdhcp-tests',
+    perfdhcp_tests,
+    protocol: 'gtest',
+    is_parallel: false,
+    priority: -1,
+)
