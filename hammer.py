@@ -946,9 +946,9 @@ class VagrantEnv():
             cmd = 'tar --transform "flags=r;s|^|%s/|" --exclude hammer ' % name_ver
             cmd += ' --exclude "*~" --exclude .git --exclude .libs '
             cmd += ' --exclude .deps --exclude \'*.o\'  --exclude \'*.lo\' '
-            cmd += ' -zcf ~/.hammer-tmp/%s.tar.gz .' % name_ver
+            cmd += ' -Jcvf ~/.hammer-tmp/%s.tar.xz .' % name_ver
             execute(cmd)
-            tarball_paths = [f'~/.hammer-tmp/{name_ver}.tar.gz']
+            tarball_paths = [f'~/.hammer-tmp/{name_ver}.tar.xz']
         self.upload(tarball_paths)
         execute('rm -rf ~/.hammer-tmp')
 
@@ -965,7 +965,7 @@ class VagrantEnv():
                                  nofeatures=self.nofeatures_arg,
                                  check_times='-i' if self.check_times else '',
                                  ccache='--ccache-dir /ccache' if self.ccache_enabled else '',
-                                 tarball='-t ~/%s.tar.gz' % name_ver,
+                                 tarball='-t ~/%s.tar.xz' % name_ver,
                                  jobs='-j %d' % jobs,
                                  pkg_version='--pkg-version %s' % pkg_version,
                                  pkg_isc_version='--pkg-isc-version %s' % pkg_isc_version,
