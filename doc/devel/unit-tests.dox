@@ -17,11 +17,11 @@ be, but rather provide gtest as sources. This was further complicated
 with the fact that some Linux distributions packaged gtest and tried
 to mimic its installation. Meson tries its best to accommodate all typical
 situations and to locate gtest on its own. If it cannot be found, linking
-/usr/src/googletest to the custom location should do the trick. The `-D tests`
-flag has to be provided.
+/usr/src/googletest to the custom location should do the trick. If that does
+not work either, the Kea project has a gtest.wrap which instructs it how to
+fetch googletest on its own. The `-D tests` flag has to be provided.
 
 @code
-sudo apt install googletest
 meson setup build -D tests=enabled
 @endcode
 
