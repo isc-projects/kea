@@ -467,6 +467,9 @@ def replace_in_file(file_name, pattern, replacement):
 def install_meson(python_v: str = 'python3', mode: str = 'pyinstaller'):
     """ Install meson with pyinstaller or venv.
 
+    Pyinstaller is needed as opposed to venv to overcome package building errors such as:
+    venv/bin/python3 is needed by isc-kea-admin-2.7.7-isc20250320085254.el9.x86_64
+
     :param python_v: python executable
     :type python_v: str
     :param mode: whether installation is through pyinstaller or plain venv
