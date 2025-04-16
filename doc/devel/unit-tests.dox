@@ -25,6 +25,11 @@ fetch googletest on its own. The `-D tests` flag has to be provided.
 meson setup build -D tests=enabled
 @endcode
 
+@note When tests are enabled, Meson 1.8.0 or later is strongly recommended. It
+fixes a bug where "meson setup" takes a long time and a high amount of RAM:
+https://github.com/mesonbuild/meson/issues/11322. 'hammer.py prepare-system'
+or `./meson.sh --install` both install it.
+
 After that you run the unit tests with:
 
 @code
