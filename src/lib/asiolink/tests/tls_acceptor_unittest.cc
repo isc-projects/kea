@@ -5,19 +5,24 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_address.h>
 #include <asiolink/io_service.h>
 #include <asiolink/tcp_endpoint.h>
 #include <asiolink/tls_acceptor.h>
-#include <boost/noncopyable.hpp>
-#include <boost/shared_ptr.hpp>
-#include <gtest/gtest.h>
+#include <testutils/gtest_utils.h>
+
 #include <functional>
 #include <list>
-#include <netinet/in.h>
 #include <string>
+
+#include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include <gtest/gtest.h>
+#include <netinet/in.h>
 
 using namespace isc::asiolink;
 using namespace boost::asio;
@@ -426,13 +431,12 @@ TEST_F(TLSAcceptorTest, getNative) {
     EXPECT_GE(acceptor_.getNative(), 0);
 }
 
-// macOS 10.12.3 has a bug which causes the connections to not enter
-// the TIME-WAIT state and they never get closed.
-#if !defined (OS_OSX)
 // Test that TLSAcceptor::close works properly.
 TEST_F(TLSAcceptorTest, close) {
-#else
-TEST_F(TLSAcceptorTest, DISABLED_close) {
+#if defined (OS_OSX)
+    // macOS 10.12.3 has a bug which causes the connections to not enter
+    // the TIME-WAIT state and they never get closed.
+    SKIP_IF(true);
 #endif
     // Initialize acceptor.
     acceptorOpen();

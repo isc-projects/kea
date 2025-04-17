@@ -86,6 +86,8 @@ test(
     kea_agent_tests,
     depends: [callout, basic_auth],
     protocol: 'gtest',
+    is_parallel: false,
+    priority: -1,
 )
 
 

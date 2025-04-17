@@ -10,6 +10,7 @@
 #include <dhcp4/json_config_parser.h>
 #include <dhcp4/tests/d2_unittest.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <testutils/gtest_utils.h>
 
 #include <gtest/gtest.h>
 
@@ -298,11 +299,10 @@ TEST_F(Dhcp4SrvD2Test, simpleUDPSend) {
 // invoked as expected.  Note that this unit test relies on an attempt to send
 // to a server address of 0.0.0.0 port 0 fails, which it does under all OSes
 // except Solaris 11 and macOS 15.0.
-/// @todo Eventually we should find a way to test this under Solaris.
-#if (!defined(OS_SOLARIS) && !defined(OS_OSX))
 TEST_F(Dhcp4SrvD2Test, forceUDPSendFailure) {
-#else
-TEST_F(Dhcp4SrvD2Test, DISABLED_forceUDPSendFailure) {
+#if (defined(OS_SOLARIS) || defined(OS_OSX))
+    /// @todo Eventually we should find a way to test this under Solaris.
+    SKIP_IF(true);
 #endif
     // Grab the manager and verify that be default ddns is off
     // and a sender was not started.
