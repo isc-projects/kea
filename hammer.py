@@ -1419,9 +1419,11 @@ def _configure_mysql(system, revision, features):
         # Some systems, usually old ones, might require a cerain PKCS format
         # of the key. Try to regenerate it here, but don't stop if it fails.
         # If the key is wrong, it will fail later anyway.
-        exit_code = execute(f'openssl rsa -in {p}/src/lib/asiolink/testutils/ca/kea-server.key '
-                            f'-out {p}/src/lib/asiolink/testutils/ca/kea-server.key', raise_error=False)
-        if exit_code != 0:
+        exit_code = execute('openssl rsa -in kea-server.key -out kea-server.key.out',
+                            cwd=f'{p}/src/lib/asiolink/testutils/ca', raise_error=False)
+        if exit_code == 0:
+            execute('mv kea-server.key.out kea-sever.key', cwd=f'{p}/src/lib/asiolink/testutils/ca', raise_error=False)
+        else:
             log.warning('openssl command failed with exit code %d, but continuing...', exit_code)
         for file in [
             f'{p}/src/lib/asiolink/testutils/ca/kea-ca.crt',
