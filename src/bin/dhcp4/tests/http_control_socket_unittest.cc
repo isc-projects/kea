@@ -1101,7 +1101,7 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configSet) {
     // Send the config-set command
     std::string response;
     sendHttpCommand(os.str(), response);
-    EXPECT_EQ("[ { \"arguments\": { \"hash\": \"F6137301FF10D81585E041FD5FD8E91347ACADDE64F92ED03432FB100874DE02\" }, \"result\": 0, \"text\": \"Configuration successful.\" } ]",
+    EXPECT_EQ("[ { \"arguments\": { \"hash\": \"CEA228E014102D623F40E6E9C68EC166A6021A81E220A15276F8C87F68866FDF\" }, \"result\": 0, \"text\": \"Configuration successful.\" } ]",
               response);
 
     // Check that the config was indeed applied.
@@ -1165,7 +1165,7 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configSet) {
     EXPECT_FALSE(HttpCommandMgr::instance().getHttpListener());
 
     // With no command channel, should still receive the response.
-    EXPECT_EQ("[ { \"arguments\": { \"hash\": \"04D35DF3CE1A558C6CCA9EA48B0F355C392CA9071B08E90E80A34F33C5939507\" }, \"result\": 0, \"text\": \"Configuration successful.\" } ]",
+    EXPECT_EQ("[ { \"arguments\": { \"hash\": \"20B7D29A883976112AF6EEC12D5EEFDCD872AB207AA321E3C38CA4ACBE442FFF\" }, \"result\": 0, \"text\": \"Configuration successful.\" } ]",
               response);
 
     // Check that the config was not lost
@@ -1350,7 +1350,7 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, configSet) {
     EXPECT_FALSE(HttpCommandMgr::instance().getHttpListener());
 
     // With no command channel, should still receive the response.
-    EXPECT_EQ("[ { \"arguments\": { \"hash\": \"04D35DF3CE1A558C6CCA9EA48B0F355C392CA9071B08E90E80A34F33C5939507\" }, \"result\": 0, \"text\": \"Configuration successful.\" } ]",
+    EXPECT_EQ("[ { \"arguments\": { \"hash\": \"20B7D29A883976112AF6EEC12D5EEFDCD872AB207AA321E3C38CA4ACBE442FFF\" }, \"result\": 0, \"text\": \"Configuration successful.\" } ]",
               response);
 
     // Check that the config was not lost
@@ -1507,7 +1507,7 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configTest) {
     std::string response;
     sendHttpCommand(os.str(), response);
 
-    EXPECT_EQ("[ { \"arguments\": { \"hash\": \"16940B601E652CAAC99B643AB6DF18D3FE6216DD22F535EE0676FB28A5ED40C9\" }, \"result\": 0, \"text\": \"Configuration successful.\" } ]",
+    EXPECT_EQ("[ { \"arguments\": { \"hash\": \"A8315C1349C3EF19DBCC19577818FB70174133FA7093DBD8FAF9B62A0D4423C8\" }, \"result\": 0, \"text\": \"Configuration successful.\" } ]",
               response);
 
     // Check that the config was indeed applied.
@@ -2537,7 +2537,7 @@ BaseCtrlChannelDhcpv4Test::testConfigReloadValid() {
     // This command should reload test8.json config.
     sendHttpCommand("{ \"command\": \"config-reload\" }", response);
 
-    EXPECT_EQ("[ { \"arguments\": { \"hash\": \"5309678B9BC94F19D3A35D8BF7AC5E91B1C4FCAE86AE5B31FC85DE79DFFDCA2C\" }, \"result\": 0, \"text\": \"Configuration successful.\" } ]",
+    EXPECT_EQ("[ { \"arguments\": { \"hash\": \"919EAD559EE03E96A057CCABB5B6EA23FF08C5D4F3D8A6BA11A53C626D5521DA\" }, \"result\": 0, \"text\": \"Configuration successful.\" } ]",
               response);
 
     // Check that the config was indeed applied.
@@ -2617,7 +2617,7 @@ BaseCtrlChannelDhcpv4Test::testConfigReloadDetectInterfaces() {
     // This command should reload test8.json config.
     sendHttpCommand("{ \"command\": \"config-reload\" }", response);
 
-    EXPECT_EQ("[ { \"arguments\": { \"hash\": \"53FF817F06103B24149E83F3A36993ADF641A478F11930A4670D36BACC8E1DE1\" }, \"result\": 0, \"text\": \"Configuration successful.\" } ]",
+    EXPECT_EQ("[ { \"arguments\": { \"hash\": \"2E74C5444A48F5D9E6BDAB410DC5C257B7BE6F80CFCF2A33EE84EC1569848166\" }, \"result\": 0, \"text\": \"Configuration successful.\" } ]",
               response);
 
     // Check that the config was indeed applied.
@@ -3594,7 +3594,7 @@ TEST_F(HttpCtrlChannelDhcpv4Test, noListenerChange) {
     // Send the config-set command
     std::string response;
     sendHttpCommand(os.str(), response);
-    EXPECT_EQ("[ { \"arguments\": { \"hash\": \"F6137301FF10D81585E041FD5FD8E91347ACADDE64F92ED03432FB100874DE02\" }, \"result\": 0, \"text\": \"Configuration successful.\" } ]",
+    EXPECT_EQ("[ { \"arguments\": { \"hash\": \"CEA228E014102D623F40E6E9C68EC166A6021A81E220A15276F8C87F68866FDF\" }, \"result\": 0, \"text\": \"Configuration successful.\" } ]",
               response);
 
     // Check that the config was indeed applied.
@@ -3618,7 +3618,7 @@ TEST_F(HttpCtrlChannelDhcpv4Test, noListenerChange) {
     EXPECT_EQ(listener, HttpCommandMgr::instance().getHttpListener().get());
     ASSERT_FALSE(HttpCommandMgr::instance().getHttpListener()->getTlsContext());
 
-    EXPECT_EQ("[ { \"arguments\": { \"hash\": \"F6137301FF10D81585E041FD5FD8E91347ACADDE64F92ED03432FB100874DE02\" }, \"result\": 0, \"text\": \"Configuration successful.\" } ]",
+    EXPECT_EQ("[ { \"arguments\": { \"hash\": \"CEA228E014102D623F40E6E9C68EC166A6021A81E220A15276F8C87F68866FDF\" }, \"result\": 0, \"text\": \"Configuration successful.\" } ]",
               response);
 
     // Check that the config was not lost
@@ -3859,7 +3859,7 @@ TEST_F(HttpCtrlChannelDhcpv4Test, handleHttpToHttpsSwitch) {
     // Send the config-set command
     std::string response;
     sendHttpCommand(os.str(), response);
-    EXPECT_EQ("[ { \"arguments\": { \"hash\": \"F6137301FF10D81585E041FD5FD8E91347ACADDE64F92ED03432FB100874DE02\" }, \"result\": 0, \"text\": \"Configuration successful.\" } ]",
+    EXPECT_EQ("[ { \"arguments\": { \"hash\": \"CEA228E014102D623F40E6E9C68EC166A6021A81E220A15276F8C87F68866FDF\" }, \"result\": 0, \"text\": \"Configuration successful.\" } ]",
               response);
 
     // Check that the config was indeed applied.
