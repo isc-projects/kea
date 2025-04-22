@@ -1422,7 +1422,7 @@ def _configure_mysql(system, revision, features):
         exit_code = execute('openssl rsa -in kea-server.key -out kea-server.key.out',
                             cwd=f'{p}/src/lib/asiolink/testutils/ca', raise_error=False)
         if exit_code == 0:
-            execute('mv kea-server.key.out kea-sever.key', cwd=f'{p}/src/lib/asiolink/testutils/ca', raise_error=False)
+            execute('mv kea-server.key.out kea-server.key', cwd=f'{p}/src/lib/asiolink/testutils/ca', raise_error=False)
         else:
             log.warning('openssl command failed with exit code %d, but continuing...', exit_code)
         for file in [
