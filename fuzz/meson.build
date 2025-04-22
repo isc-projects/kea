@@ -2,7 +2,9 @@ if not FUZZ_OPT.enabled()
     subdir_done()
 endif
 
+current_build_dir = meson.current_build_dir()
 current_source_dir = meson.current_source_dir()
+
 list = []
 foreach i : [
     'fuzz_config_kea_dhcp4',
@@ -30,6 +32,22 @@ foreach i : [
         )
     endforeach
 endforeach
+foreach i : ['kea-dhcp4.conf', 'kea-dhcp6.conf']
+    run_command(
+        ['cp', f'input/@i@', f'@TOP_BUILD_DIR@/fuzz/input/@i@'],
+        check: true,
+    )
+endforeach
+
+
+install_input = configure_file(
+    input: 'install-input.sh.in',
+    output: 'install-input.sh',
+    configuration: configuration_data(
+        {'PREFIX': PREFIX, 'current_build_dir': current_build_dir},
+    ),
+)
+meson.add_install_script(install_input)
 
 fuzz_sources = ['fuzz.cc', 'fuzz.h']
 cpp_flags = [

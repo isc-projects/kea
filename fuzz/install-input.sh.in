@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -eu
+
+# Destdir is set everytime the installation happens through meson or ninja even when --destdir is not passed.
+# Set target path to prefix in case someone wants to run this script directly.
+target_path='@PREFIX@'
+if test -n "${MESON_INSTALL_DESTDIR_PREFIX+x}"; then
+    target_path="${MESON_INSTALL_DESTDIR_PREFIX}"
+fi
+
+cp -Tr @current_build_dir@/input "${target_path}/share/kea/fuzz"
