@@ -244,11 +244,22 @@ if netconf_opt.enabled() and NETCONF_DEP.get_variable(
     error('Dependency not found: NETCONF.')
 endif
 
-GTEST_DEP = dependency(
-    'gtest',
-    fallback: ['gtest', 'gtest_dep'],
-    required: TESTS_OPT.enabled() or FUZZ_OPT.enabled(),
-)
+# Google Test
+GTEST_DEP = dependency('gtest', required: TESTS_OPT.enabled() or FUZZ_OPT.enabled())
+if GTEST_DEP.found()
+    result = cpp.run(
+        fs.read('compiler-checks/gtest.cc'),
+        name: 'Check if a simple GTest test runs.',
+        dependencies: [GTEST_DEP],
+    )
+    if result.returncode() != 0
+        GTEST_DEP = disabler()
+        gtest_subproject = subproject('gtest', required: false)
+        if gtest_subproject.found()
+            GTEST_DEP = gtest_subproject.get_variable('gtest_dep')
+        endif
+    endif
+endif
 
 # Crypto
 if crypto_opt == 'botan'
