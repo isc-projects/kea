@@ -37,7 +37,7 @@ main(int, char* argv[]) {
     // Determine some paths.
     Path const this_binary(argv[0]);
     string ancestor_path(this_binary.parentPath());
-    // TODO: remove kludgy if-condition when autotools gets removed.
+    // TODO: remove kludgy if-condition when autotools are removed.
     if (Path(ancestor_path).filename() == ".libs") {
         ancestor_path = Path(ancestor_path).parentPath();
     }

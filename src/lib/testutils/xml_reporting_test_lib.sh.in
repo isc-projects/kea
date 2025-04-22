@@ -14,8 +14,8 @@ set -eu
 
 # Add an entry to the XML test report.
 report_test_result_in_xml() {
-    # If GTEST_OUTPUT is not defined...
-    if ! test -n "${GTEST_OUTPUT+x}"; then
+    # TODO: Remove this if-statemenet when autotools are removed.
+    if test ! -d "@TOP_BUILD_DIR@"; then
         # There is nowhere to report.
         return
     fi
@@ -32,12 +32,18 @@ report_test_result_in_xml() {
     test_suite=$(printf '%s' "${test_name}" | cut -d '.' -f 1)
     test_case=$(printf '%s' "${test_name}" | cut -d '.' -f 2-)
 
-    # Strip the 'xml:' at the start of GTEST_OUTPUT if it is there.
-    xml="${GTEST_OUTPUT}"
-    if test "$(printf '%s' "${xml}" | cut -c 1-4)" = 'xml:'; then
-        xml=$(printf '%s' "${xml}" | cut -c 5-)
+    # If GTEST_OUTPUT is defined...
+    if test -n "${GTEST_OUTPUT+x}"; then
+        # Strip the 'xml:' at the start of GTEST_OUTPUT if it is there.
+        xml="${GTEST_OUTPUT}"
+        if test "$(printf '%s' "${xml}" | cut -c 1-4)" = 'xml:'; then
+            xml=$(printf '%s' "${xml}" | cut -c 5-)
+        fi
+        xml="${xml}/${test_suite}.sh.xml"
+    else
+        # Report in the same place as the default meson test logs.
+        xml="@TOP_BUILD_DIR@/meson-logs/${test_suite}.sh.xml"
     fi
-    xml="${xml}/${test_suite}.sh.xml"
 
     # Convert to seconds, but keep the millisecond precision.
     duration=$(_calculate "${duration} / 1000.0")

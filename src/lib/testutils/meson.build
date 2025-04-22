@@ -27,5 +27,5 @@ configure_file(
 configure_file(
     input: 'xml_reporting_test_lib.sh.in',
     output: 'xml_reporting_test_lib.sh',
-    copy: true,
+    configuration: configuration_data({'TOP_BUILD_DIR': TOP_BUILD_DIR}),
 )
