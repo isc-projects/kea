@@ -66,4 +66,10 @@ kea_dhcp_tests = executable(
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [kea_util_unittests_lib, libs_testutils] + LIBS_BUILT_SO_FAR,
 )
-test('kea-dhcp-tests', kea_dhcp_tests, protocol: 'gtest')
+test(
+    'kea-dhcp-tests',
+    kea_dhcp_tests,
+    protocol: 'gtest',
+    is_parallel: false,
+    priority: -1,
+)
