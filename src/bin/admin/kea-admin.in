@@ -25,7 +25,7 @@
 # used.
 set -eu
 
-# Shell ${variables} derived from autoconf @variables@. Some depend on others, so mind the order.
+# Shell variables derived from meson variables. Some depend on others, so mind the order.
 prefix="@prefix@"
 export prefix
 exec_prefix="@exec_prefix@"

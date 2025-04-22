@@ -548,7 +548,7 @@ kea_pkg_version_in_configure = run_command(
     check: true,
 ).stdout().strip()
 if kea_pkg_type_in_configure != '' and kea_pkg_version_in_configure != ''
-    extended_version = f'@kea_pkg_version_in_configure@ @kea_pkg_type_in_configure@'
+    SOURCE_OF_INSTALLATION = f'@kea_pkg_version_in_configure@ @kea_pkg_type_in_configure@'
 else
     if fs.is_dir('.git') and git.found()
         result = run_command(
@@ -560,13 +560,16 @@ else
             check: false,
         )
         if result.returncode() == 0
-            extended_version = 'git ' + result.stdout().strip()
+            SOURCE_OF_INSTALLATION = 'git ' + result.stdout().strip()
         endif
     else
-        extended_version = 'tarball'
+        SOURCE_OF_INSTALLATION = 'tarball'
     endif
 endif
-conf_data.set('EXTENDED_VERSION', f'"@PROJECT_VERSION@ (@extended_version@)"')
+conf_data.set(
+    'EXTENDED_VERSION',
+    f'"@PROJECT_VERSION@ (@SOURCE_OF_INSTALLATION@)"',
+)
 
 if PROJECT_VERSION.split('.')[1].to_int() % 2 == 0
     package_version_type = 'stable'
@@ -650,7 +653,10 @@ endif
 premium = fs.is_dir('premium')
 if premium
     conf_data.set('PREMIUM', 'yes')
-    conf_data.set('PREMIUM_EXTENDED_VERSION', f'"yes (@extended_version@)"')
+    conf_data.set(
+        'PREMIUM_EXTENDED_VERSION',
+        f'"yes (@SOURCE_OF_INSTALLATION@)"',
+    )
 else
     conf_data.set('PREMIUM', 'no')
     conf_data.set('PREMIUM_EXTENDED_VERSION', '"no"')
@@ -675,7 +681,7 @@ report_conf_data.set('PACKAGE_VERSION', PROJECT_VERSION)
 report_conf_data.set('PACKAGE_VERSION_TYPE', package_version_type)
 report_conf_data.set(
     'EXTENDED_VERSION',
-    f'@PROJECT_VERSION@ (@extended_version@)',
+    f'@PROJECT_VERSION@ (@SOURCE_OF_INSTALLATION@)',
 )
 report_conf_data.set('OS_TYPE', OS_TYPE)
 report_conf_data.set('PREFIX', PREFIX)
