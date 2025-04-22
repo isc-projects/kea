@@ -52,6 +52,12 @@ PREFIX = get_option('prefix')
 SBINDIR = get_option('sbindir')
 SYSCONFDIR = get_option('sysconfdir')
 
+# Meson is annoying with its opinionated alteration of certain paths based on whether prefix is default or not.
+# So we revert what it does.
+if PREFIX == '/usr/local'
+    LOCALSTATEDIR = 'var'    # Otherwise, it would have been 'var/local'.
+endif
+
 DATABASE_SCRIPTS_DIR = TOP_BUILD_DIR / 'src/share/database/scripts'
 HOOKS_PATH = LIBDIR / 'kea/hooks'
 DEFAULT_HOOKS_PATH = PREFIX / HOOKS_PATH
@@ -65,18 +71,16 @@ RUNSTATEDIR = LOCALSTATEDIR / 'run/kea'
 RUNSTATEDIR_INSTALLED = PREFIX / RUNSTATEDIR
 SHAREDSTATEDIR = LOCALSTATEDIR / 'lib/kea'
 SHAREDSTATEDIR_INSTALLED = PREFIX / SHAREDSTATEDIR
+SYSCONFDIR_INSTALLED = PREFIX / SYSCONFDIR
 TEST_CA_DIR = TOP_SOURCE_DIR / 'src/lib/asiolink/testutils/ca'
 
 # Meson is annoying with its opinionated alteration of certain paths based on whether prefix is default or not.
 # So we revert what it does.
-# Prepend prefix only if the prefix was explicitly provided.
 if PREFIX == '/usr/local'
     SYSCONFDIR_INSTALLED = '/usr/local/etc'
     LOGDIR_INSTALLED = '/usr/local/var/log'
     RUNSTATEDIR_INSTALLED = '/usr/local/var/run/kea'
     SHAREDSTATEDIR_INSTALLED = '/usr/local/var/lib/kea'
-else
-    SYSCONFDIR_INSTALLED = PREFIX / SYSCONFDIR
 endif
 
 #### Build Options
