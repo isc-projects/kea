@@ -86,7 +86,7 @@ can save logs to a text file or to a database (created using
 :iscman:`kea-admin`; see :ref:`mysql-database-create` and :ref:`pgsql-database-create`).
 The library is installed alongside the Kea libraries in
 ``[kea-install-dir]/var/lib/kea``, where ``kea-install-dir`` is determined
-by the ``--prefix`` option of the configure script; it defaults to
+by the ``--prefix`` meson setup option which defaults to
 ``/usr/local``. Assuming the default value, :iscman:`kea-dhcp4` can be configured to load
 :ischooklib:`libdhcp_legal_log.so` like this:
 

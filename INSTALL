@@ -7,9 +7,9 @@ PostgreSQL), you will need to specify these as options to the command (run
 
    $ meson setup build
 
-If your environment is missing dependencies, the configure script will exit
+If your environment is missing dependencies, the command will exit
 with error and should emit sufficient information to guide you on how to
-proceed. A detailed account of the configure process is captured in
+proceed. A detailed account of the setup process is captured in
 build/meson-logs/meson-log.txt.
 
 2. Build it. Once you've successfully set up the build, run "meson compile" to

@@ -46,7 +46,7 @@ Combining the binaries and the fuzzer types results in eight fuzzing binaries:
 
 @subsection HowToBuild How to Build the LLVM Fuzzer
 
-Use the "--enable-fuzzing" during the configure step. Then just compile as usual.
+Use the "-D fuzz=enabled" during the meson setup step. Then just compile as usual.
 
 @code
 meson setup build -D fuzz=enabled
@@ -171,7 +171,7 @@ for this are:
      compiler.
    - Specify a value of "--prefix" on the command line to set the directory
      into which Kea is installed.
-   - Add the "-Dfuzz=enabled" switch to the "meson setup" command line.
+   - Add the "-D fuzz=enabled" switch to the "meson setup" command line.
    .
    For example:
    @code
@@ -327,7 +327,7 @@ while (not shutting down) {
     Read and process one packet
 }
 @endcode
-When -Dfuzz=enabled is specified, this is conceptually modified to:
+When -D fuzz=enabled is specified, this is conceptually modified to:
 @code{.unparsed}
 while (not shutting down) {
     Read stdin and copy data to address/port on which Kea is listening
@@ -374,7 +374,7 @@ leaks).
 No changes were required to Kea source code to fuzz configuration files. In
 fact, other than compiling with afl-clang++ and installing the resultant
 executable, no other steps are required.  In particular, there is no need to
-use the "-Dfuzz=enabled" switch in the configuration command line (although
+use the "-D fuzz=enabled" switch in the configuration command line (although
 doing so will not cause any problems).
 
 @subsection fuzzThreads Changes Required for Multi-Threaded Kea
@@ -390,7 +390,7 @@ the AFL input in the background.
 
 @subsection fuzzNotesUnitTests Unit Test Failures
 
-If unit tests are built when -Dfuzz=enabled is specified and with the AFL
+If unit tests are built when -D fuzz=enabled is specified and with the AFL
 compiler, note that tests which check or use the DHCP servers (i.e. the unit
 tests in src/bin/dhcp4, src/bin/dhcp6 and src/bin/kea-admin) will fail.
 With no AFL-related environment variables defined, a C++ exception will be

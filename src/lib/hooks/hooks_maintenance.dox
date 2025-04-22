@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -366,9 +366,7 @@
  This should be executed by any hooks library linking against a statically
  initialized Kea.  (In fact, running it against a dynamically-linked
  Kea should have no effect, as the load operation discards any duplicate
- message entries.)  The hooks library tests do this, the code being
- conditionally compiled within a test of the @c USE_STATIC_LINK macro, set
- by the configure script.
+ message entries.)
 
  @note Not everything is completely rosy with logging and static linking.
  In particular, there appears to be an issue with the scenario where a

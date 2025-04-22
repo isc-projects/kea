@@ -1358,7 +1358,7 @@ a name will conflict with any existing or future Kea argument names.
 
 @subsection hooksdgStaticallyLinkedKea Running Against a Statically-Linked Kea
 
-If Kea is built with the "-Ddefault_library=static" switch (set when
+If Kea is built with the "-D default_library=static" switch (set when
 running the "meson setup" script), no shared Kea libraries are built;
 instead, archive libraries are created and Kea is linked to them.
 If you create a hooks library also linked against these archive libraries,

@@ -248,7 +248,7 @@ following commands import the code-signing keys
 .. code-block:: console
 
    $ gpg --import isc-keyblock.asc
-   $ gpg --verify kea-X.Y.Z.tar.gz.asc kea-X.Y.Z.tar.gz
+   $ gpg --verify kea-X.Y.Z.tar.xz.asc kea-X.Y.Z.tar.xz
 
 The verification allows users to confirm that the tar file has not
 been tampered with and that it was created by ISC.
@@ -490,7 +490,7 @@ First, a regular user account must be created:
 
 Then, change the binaries' ownership and group to the new user. Note that
 the specific path may be different. Please refer to the ``--prefix``
-parameter passed to the configure script:
+parameter passed to ``meson setup``:
 
 .. code-block:: console
 

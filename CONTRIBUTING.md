@@ -191,7 +191,7 @@ such long periods, code tends to be refactored several times. The change you mad
 some other change or by the code that hasn't been written yet.
 
 See Building Kea with Unit Tests for instructions on how to run unit-tests. If you happen to touch
-any database related code, make sure you compile your code with `–Dmysql` and/or `–Dpostgresql` as
+any database related code, make sure you compile your code with `–D mysql=enabled` and/or `–D postgresql=enabled` as
 needed. For example, if you change something substantial, make sure the other compilation options
 still work.
 
@@ -200,7 +200,7 @@ various additional consistency checks that reduce performance but help during de
 
 If you are modifying DHCP code, you are likely to be interested in enabling a non-default database backends for DHCP.
 Note that if the backend is not enabled, the database-specific unit-tests are skipped.  To
-enable the MySQL backend, use the switch `-Dmysql`; for PostgreSQL, use `–Dpostgresql`.
+enable the MySQL backend, use the switch `-D mysql=enabled`; for PostgreSQL, use `–D postgresql=enabled`.
 A complete list of all switches can be obtained with the command:
 
 ```bash

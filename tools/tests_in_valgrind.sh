@@ -1,10 +1,9 @@
 #!/bin/sh
 
 ################################################################################
-# This script runs all tests in valgrind. Configure and compile kea the way
-# you want it to be tested (you should use --with-gtest or --with-gtest-source,
-# however, or you get no tests). Then run this script from the top build
-# directory.
+# This script runs all tests in valgrind. Set up and compile Kea the way
+# you want it to be tested (you should use "-D tests=enabled" however, or you
+# get no tests). Then run this script.
 #
 # Note that the test isn't what you would call "production quality" (it is
 # expected to be used by the kea developers, not end user) and might break,
@@ -23,10 +22,10 @@ script_path=$(cd "$(dirname "${0}")" && pwd)
 cd "${script_path}/.."
 
 # First, make sure the tests are up to date
-make
+meson compile -C build
 
 if test $? = 2; then
-    printf 'Did you run configure?\n'
+    printf 'Did you run meson setup?\n'
     exit 1
 fi
 
@@ -76,6 +75,6 @@ if test -n "$FAILED"; then
 fi
 
 if ! $FOUND_ANY; then
-    echo "No test was found. It is possible you configured without --with-gtest or you run it from wrong directory" >&2
+    echo "No test was found. Is it possible you configured without '-D tests=enabled'?" >&2
     exit 1
 fi

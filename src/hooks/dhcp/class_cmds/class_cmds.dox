@@ -105,7 +105,7 @@ in html/ directory.
 
 Similar to all other code in Kea, also this library comes with unit-tests that
 use googletest framework. Those tests are stored in tests/ directory. To build
-and run them, you need to pass -Dtests=enabled to the "meson setup" command
+and run them, you need to pass -D tests=enabled to the "meson setup" command
 line.  Once the code builds, you can run tests with "meson compile". This
 command can be run in top-level build directory (all tests will be run) or by
 running tests on this library only "meson test -C build dhcp-class-cmds-tests".

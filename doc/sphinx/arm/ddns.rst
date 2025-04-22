@@ -166,18 +166,21 @@ directly. It accepts the following command-line switches:
 Upon startup, the module loads its configuration and begins listening
 for NCRs based on that configuration.
 
-During startup, the server attempts to create a PID file of the form:
-``[runstatedir]/[conf name].kea-dhcp-ddns.pid`` where:
+During startup, the server attempts to create a PID file of the
+form: ``[pidfile_dir]/[conf name].kea-dhcp-ddns.pid`` where:
 
--  ``runstatedir`` - is the value as passed into the build configure
-   script; it defaults to "/usr/local/var/run". Note that this value may be
-   overridden at runtime by setting the environment variable
-   ``KEA_PIDFILE_DIR``. This is intended primarily for testing purposes.
+- ``pidfile_dir`` - is ``[prefix]/[localstatedir]/run/kea`` where
+  ``prefix`` and ``localstatedir`` are the values passed into meson setup using
+  ``--prefix`` and ``--localstatedir`` which default to ``/usr/local`` and
+  ``var`` respectively. So the whole ``pidfile_dir`` defaults to
+  ``/usr/local/var``. Note that this value may be overridden at runtime by
+  setting the environment variable  ``KEA_PIDFILE_DIR`` intended primarily for
+  testing purposes.
 
 -  ``conf name`` - is the configuration file name used to start the server,
    minus all preceding paths and the file extension. For example, given
-   a pathname of "/usr/local/etc/kea/myconf.txt", the portion used would
-   be "myconf".
+   a pathname of ``/usr/local/etc/kea/myconf.txt``, the portion used would
+   be ``myconf``.
 
 If the file already exists and contains the PID of a live process, the
 server issues a ``DHCP_DDNS_ALREADY_RUNNING`` log message and exits. It

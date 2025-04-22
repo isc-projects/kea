@@ -10,8 +10,7 @@
 
  There are several types of documentation for Kea. The primary one, intended to
  be read by users, is User's Guide. It comes in HTML, PDF and txt format. All
- of them generated from the same sources. To generate this doc, you need to
- run configure script with --enable-generate-docs option. sphinx and
+ of them generated from the same sources. To generate the documentation, sphinx and
  sphinx_rtd_theme have to be available on the system. texlive is also required
  if you want to create documentation in HTML format.
  You can generate this by doing:

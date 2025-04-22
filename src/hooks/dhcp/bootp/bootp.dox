@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -30,7 +30,7 @@ without vendor extensions are not supported.
 It must be configured as a hook library for the desired DHCP server
 modules. Note that the bootp library is installed alongside the
 Kea libraries in "<install-dir>/lib" where <install-dir> is determined
-by the --prefix option of the configure script.  It defaults to
+by the --prefix meson setup option.  It defaults to
 "/usr/local". Assuming the default value then, configuring kea-dhcp4
 to load the bootp library could be done with the following Kea4
 configuration:

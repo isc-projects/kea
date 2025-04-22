@@ -23,14 +23,14 @@
 
   - The MySQL lease manager uses the freely available MySQL as its backend
   database.  This is not included in Kea DHCP by default:
-  the \-Dmysql switch must be supplied to "meson setup" for support to be
+  the "-D mysql=enabled" switch must be supplied to "meson setup" for support to be
   compiled into the software. This will also compile the "libdhcp_mysql.so" hook
   library which must be loaded by adding it to the "hooks-libraries"
   configuration parameter.
 
   - The PostgreSQL lease manager uses the freely available PostgreSQL as its
   backend database.  This is not included in Kea DHCP by default:
-  the \-Dpostgresql switch must be supplied to "meson setup" for support to be
+  the "-D postgresql=enabled" switch must be supplied to "meson setup" for support to be
   compiled into the software. This will also compile the "libdhcp_pgsql.so" hook
   library which must be loaded by adding it to the "hooks-libraries"
   configuration parameter.

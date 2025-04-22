@@ -165,12 +165,12 @@ public:
         // No match?
         if (index == factories_.end()) {
             if ((db_type == "mysql") || (db_type == "postgresql")) {
-                std::string with = (db_type == "postgresql" ? "pgsql" : db_type);
+                std::string libdhcp(db_type == "postgresql" ? "pgsql" : db_type);
                 isc_throw(db::InvalidType, "The Kea server has not been compiled with "
                           "support for configuration database type: " << db_type
-                          << ". Did you forget to use -D"
-                          << with << " during compilation or to load libdhcp_"
-                          << with << " hook library?");
+                          << ". Did you forget to use -D "
+                          << db_type << "=enabled during setup or to load libdhcp_"
+                          << libdhcp << " hook library?");
             }
             isc_throw(db::InvalidType, "The type of the configuration backend: '" <<
                       db_type << "' is not supported");

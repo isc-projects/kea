@@ -73,18 +73,18 @@ For our users' convenience, the subscriber hooks' installation procedure is desc
 
 1. Download the package; detailed instructions are provided in the KB article
 above. The package will be a file with a name similar to
-``kea-subscriber-|release|.tar.gz``.
+``kea-subscriber-|release|.tar.xz``.
 
 2. Administrators who have the sources for the corresponding version of the
 open-source Kea package on their system from the initial Kea installation
 should skip this step. Otherwise, extract the Kea source from the original
 tarball that was downloaded. For example, with a download of Kea |release|,
-there should be a tarball called ``kea-|release|.tar.gz`` on the system.
+there should be a tarball called ``kea-|release|.tar.xz`` on the system.
 Unpack this tarball:
 
 .. parsed-literal::
 
-    $ tar -zxvf kea-|release|.tar.gz
+    $ tar -Jxvf kea-|release|.tar.xz
 
 This will unpack the tarball into the ``kea-|release|`` subdirectory of
 the current working directory.
@@ -97,7 +97,7 @@ steps will unpack the subscriber tarball into the correct location:
 .. parsed-literal::
 
     $ cd kea-|release|
-    $ tar -xvf ../kea-subscriber-|release|.tar.gz
+    $ tar -Jxvf ../kea-subscriber-|release|.tar.xz
 
 Note that unpacking the Kea subscriber package puts the files into a
 directory named ``premium``. Regardless of the name of the package, the

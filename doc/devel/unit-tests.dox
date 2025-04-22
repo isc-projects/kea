@@ -116,7 +116,7 @@ anything e.g. `DEBUG=true`. `unset DEBUG` to remove this behavior.
   different versions of Tsan).
 
   The simplest way to enable a sanitizer is to specify the flag on the setup
-  step with `meson setup build -Db_sanitize=thread`.
+  step with `meson setup build -D b_sanitize=thread`.
 
   When enabling lcov (code coverage), some gtest functions are detected as
   not being thread safe. It is recommended to disable lcov when enabling

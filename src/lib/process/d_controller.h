@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -243,8 +243,8 @@ public:
 
     /// @brief handler for 'build-report' command
     ///
-    /// This method handles build-report command. It returns the output printed
-    /// by configure script which contains most compilation parameters.
+    /// This method handles build-report command. It returns the config report
+    /// created by meson setup which contains the compilation parameters.
     ///
     /// @param command (ignored)
     /// @param args (ignored)

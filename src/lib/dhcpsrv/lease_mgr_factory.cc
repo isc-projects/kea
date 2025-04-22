@@ -62,12 +62,12 @@ LeaseMgrFactory::create(const std::string& dbaccess) {
     if (index == map_.end()) {
         if ((db_type == "mysql") || (db_type == "postgresql")) {
             LOG_ERROR(dhcpsrv_logger, DHCPSRV_UNKNOWN_DB).arg(db_type);
-            string with = (db_type == "postgresql" ? "pgsql" : db_type);
+            string libdhcp(db_type == "postgresql" ? "pgsql" : db_type);
             isc_throw(InvalidType, "The Kea server has not been compiled with "
                       "support for lease database type: " << db_type
-                      << ". Did you forget to use -D"
-                      << with << " during compilation or to load libdhcp_"
-                      << with << " hook library?");
+                      << ". Did you forget to use -D "
+                      << db_type << "=enabled during setup or to load libdhcp_"
+                      << libdhcp << " hook library?");
         }
         // Get here on no match
         LOG_ERROR(dhcpsrv_logger, DHCPSRV_UNKNOWN_DB).arg(parameters[type]);

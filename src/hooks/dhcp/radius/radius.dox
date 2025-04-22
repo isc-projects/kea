@@ -52,8 +52,9 @@ The global configuration flags are:
    deadtime value specifies the number of seconds after which a server is
    considered unresponsive. 0 disables the mechanism.
 
- - dictionary (default set by configure at build time) is the attribute
-   and value dictionary. Note it is a critical parameter.
+ - dictionary (set to "[prefix][sysconfdir}/kea/radius/dictionary" during meson
+   setup which defaults to "/usr/local/etc/kea/radius/dictionary") is the
+   attribute and value dictionary. Note it is a critical parameter.
 
  - extract-duid (default true) extracts the embedded duid from an
    RFC-4361-compliant DHCPv4 client-id. Implied by client-id-printable.

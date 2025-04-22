@@ -8169,7 +8169,7 @@ TEST_F(Dhcp6ParserTest, configControlInfoNoFactory) {
     configure(config, CONTROL_RESULT_ERROR,
               "during update from config backend database: "
               "The Kea server has not been compiled with support for configuration "
-              "database type: mysql. Did you forget to use -Dmysql during "
+              "database type: mysql. Did you forget to use -D mysql=enabled during "
               "setup or to load libdhcp_mysql hook library?");
 }
 

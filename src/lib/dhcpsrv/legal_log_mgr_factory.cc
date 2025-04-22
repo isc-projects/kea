@@ -83,12 +83,12 @@ LegalLogMgrFactory::addBackend(DatabaseConnection::ParameterMap& parameters, Man
     // No match?
     if (index == map_.end()) {
         if ((db_type == "mysql") || (db_type == "postgresql")) {
-            string with = (db_type == "postgresql" ? "pgsql" : db_type);
+            string libdhcp(db_type == "postgresql" ? "pgsql" : db_type);
             isc_throw(InvalidType, "The Kea server has not been compiled with "
                       "support for configuration database type: " << db_type
-                      << ". Did you forget to use -D"
-                      << with << " during compilation or to load libdhcp_"
-                      << with << " hook library?");
+                      << ". Did you forget to use -D "
+                      << db_type << "=enabled during setup or to load libdhcp_"
+                      << libdhcp << " hook library?");
         }
         isc_throw(InvalidType, "The type of the forensic log backend: '" <<
                   db_type << "' is not supported");

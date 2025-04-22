@@ -121,12 +121,11 @@ instantiated with the appropriate value and put onto the expression vector.
 @section dhcpEvalConfigure Configure options
 
  Since the flex/bison tools are not necessary for a regular compilation,
- checks are conducted during the configure script, but the lack of flex or
- bison tools does not stop the process. There is a flag
- (--enable-generate-parser) that tells configure script that the
- parser will be generated. With this flag, the checks for flex/bison
- are mandatory. If either tool is missing or at too early a version, the
- configure process will terminate with an error.
+ checks are conducted during meson setup, but the lack of flex or
+ bison tools does not stop the process. If either tool is missing or at too
+ early a version, it will be mentioned in the config report that can be found
+ at build/config.report that flex or bison are not available and the setup
+ process will continue.
 
 @section dhcpEvalToken Supported tokens
 
