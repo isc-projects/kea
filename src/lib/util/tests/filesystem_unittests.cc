@@ -138,6 +138,8 @@ TEST(PathTest, replaceParentPath) {
 }
 
 
+
+// Verifies FileManager::validatePath() when enforce_path is true.
 TEST(FileManager, validatePathEnforcePath) {
     std::string def_path(TEST_DATA_BUILDDIR);
     struct Scenario {
@@ -195,6 +197,7 @@ TEST(FileManager, validatePathEnforcePath) {
     }
 }
 
+// Verifies FileManager::validatePath() when enforce_path is false.
 TEST(FileManager, validatePathEnforcePathFalse) {
     std::string def_path(TEST_DATA_BUILDDIR);
     struct Scenario {
@@ -251,6 +254,5 @@ TEST(FileManager, validatePathEnforcePathFalse) {
         }
     }
 }
-
 
 }  // namespace

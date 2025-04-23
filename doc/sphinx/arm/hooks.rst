@@ -222,10 +222,10 @@ configuration would be:
     because the parameters specified for the library (or the files those
     parameters point to) may have changed.
 
-Since Kea-2.7.6, the server is able to load hook libraries specifying only the binary name,
-if they reside in the default installation directory (the path is OS specific).
-The default hook libraries installation path is provided in the config report as
-"Hooks directory".
+As of Kea 2.7.8, hook libriares may only be loaded from the default installation
+directory which is provided in the config report as "Hooks directory". If a path
+other than the default installation directory is specified Kea will emit an error
+and refuse to load the library. For ease of use the path may simply be omitted.
 
 .. code-block:: json
 
@@ -258,6 +258,7 @@ This snippet (on Debian 12) is equivalent to:
             ]
         }
     }
+
 
 Libraries may have additional parameters that are not mandatory, in the
 sense that there may be libraries that do not require them. However, for any

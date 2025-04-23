@@ -1079,6 +1079,7 @@ TEST_F(HooksManagerTest, UnloadBeforeUnpark) {
     EXPECT_FALSE(unparked);
 }
 
+// Verifies HooksParser::validatePath() when enforce_path is true.
 TEST(HooksParser, validatePathEnforcePath) {
     std::string def_path(HooksLibrariesParser::default_hooks_path_);
     struct Scenario {
@@ -1136,6 +1137,7 @@ TEST(HooksParser, validatePathEnforcePath) {
     }
 }
 
+// Verifies HooksParser::validatePath() when enforce_path is false.
 TEST(HooksParser, validatePathEnforcePathFalse) {
     std::string def_path(HooksLibrariesParser::default_hooks_path_);
     struct Scenario {
