@@ -14,10 +14,12 @@
 #include <cstdlib>
 #include <fstream>
 #include <string>
+#include <filesystem>
 
 #include <dirent.h>
 #include <fcntl.h>
 
+using namespace isc;
 using namespace isc::util::str;
 using namespace std;
 
@@ -213,6 +215,35 @@ TemporaryDirectory::~TemporaryDirectory() {
 
 string TemporaryDirectory::dirName() {
     return dir_name_;
+}
+
+std::string
+FileManager::validatePath(const std::string supported_path_str, const std::string input_path_str,
+                          bool enforce_path /* = false */) {
+    std::filesystem::path supported_path(supported_path_str);
+    auto input_path = std::filesystem::path(input_path_str);
+    if (!input_path.has_filename()) {
+        isc_throw(BadValue, "path: '" << input_path.string() << "' has no filename");
+    }
+
+    auto filename = input_path.filename();
+    if (input_path.has_parent_path()) {
+        if (!enforce_path) {
+            // Security set to lax, let it fly.
+            return (input_path_str);
+        }
+
+        // We only allow absolute path equal to default. Catch an invalid path.
+        input_path.remove_filename();
+        if (input_path != (supported_path / "")) {
+            isc_throw(BadValue, "invalid path specified: '"
+                      << input_path.string() << "', supported path is '"
+                      << supported_path.string() << "'");
+        }
+    }
+
+    auto valid_path = supported_path / filename;
+    return (valid_path.string());
 }
 
 }  // namespace file

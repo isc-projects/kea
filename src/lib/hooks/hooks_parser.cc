@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,13 +10,16 @@
 #include <cc/dhcp_config_error.h>
 #include <hooks/hooks_parser.h>
 #include <boost/algorithm/string.hpp>
+#include <util/filesystem.h>
 #include <util/str.h>
+
 #include <vector>
 
 using namespace std;
 using namespace isc::data;
 using namespace isc::hooks;
 using namespace isc::dhcp;
+using namespace isc::util::file;
 
 namespace isc {
 namespace hooks {
@@ -66,23 +69,7 @@ HooksLibrariesParser::parse(HooksConfig& libraries, ConstElementPtr value) {
 
                 // Get the name of the library and add it to the list after
                 // removing quotes.
-                libname = (entry_item.second)->stringValue();
-
-                // Remove leading/trailing quotes and any leading/trailing
-                // spaces.
-                boost::erase_all(libname, "\"");
-                libname = isc::util::str::trim(libname);
-                if (libname.empty()) {
-                    isc_throw(DhcpConfigError, "hooks library configuration"
-                        " error: value of 'library' element must not be"
-                        " blank (" <<
-                        entry_item.second->getPosition() << ")");
-                }
-
-                // If only the name of the library was provided, add the full path.
-                if (libname.find("/") == string::npos) {
-                    libname = HooksLibrariesParser::default_hooks_path_ + "/" + libname;
-                }
+                libname = validatePath((entry_item.second)->stringValue());
 
                 // Note we have found the library name.
                 lib_found = true;
@@ -110,6 +97,13 @@ HooksLibrariesParser::parse(HooksConfig& libraries, ConstElementPtr value) {
 
         libraries.add(libname, parameters);
     }
+}
+
+std::string
+HooksLibrariesParser::validatePath(const std::string libpath,
+                                   bool enforce_path /* = true */) {
+    return (FileManager::validatePath(HooksLibrariesParser::default_hooks_path_,
+                                      libpath, enforce_path));
 }
 
 }

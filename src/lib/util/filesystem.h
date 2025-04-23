@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,35 +16,35 @@ namespace file {
 
 /// @brief Get the content of a regular file.
 ///
-/// \param file_name The file name.
+/// @param file_name The file name.
 ///
-/// \return The content of the file.
-/// \throw BadValue when the file can't be opened or is not a regular one.
+/// @return The content of the file.
+/// @throw BadValue when the file can't be opened or is not a regular one.
 std::string
 getContent(const std::string& file_name);
 
 /// @brief Check if there is a file or directory at the given path.
 ///
-/// \param path The path being checked.
+/// @param path The path being checked.
 ///
-/// \return True if the path points to a file or a directory, false otherwise.
+/// @return True if the path points to a file or a directory, false otherwise.
 bool
 exists(const std::string& path);
 
 /// @brief Check if there is a directory at the given path.
 ///
-/// \param path The path being checked.
+/// @param path The path being checked.
 ///
-/// \return True if the path points to a directory, false otherwise including
+/// @return True if the path points to a directory, false otherwise including
 /// if the pointed location does not exist.
 bool
 isDir(const std::string& path);
 
 /// @brief Check if there is a file at the given path.
 ///
-/// \param path The path being checked.
+/// @param path The path being checked.
 ///
-/// \return True if the path points to a file, false otherwise including
+/// @return True if the path points to a file, false otherwise including
 /// if the pointed location does not exist.
 bool
 isFile(const std::string& path);
@@ -80,35 +80,35 @@ struct Path {
     ///
     /// Counterpart for std::filesystem::path::string.
     ///
-    /// \return stored filename.
+    /// @return stored filename.
     std::string str() const;
 
     /// @brief Get the parent path.
     ///
     /// Counterpart for std::filesystem::path::parent_path.
     ///
-    /// \return parent path of current path.
+    /// @return parent path of current path.
     std::string parentPath() const;
 
     /// @brief Get the base name of the file without the extension.
     ///
     /// Counterpart for std::filesystem::path::stem.
     ///
-    /// \return the base name of current path without the extension.
+    /// @return the base name of current path without the extension.
     std::string stem() const;
 
     /// @brief Get the extension of the file.
     ///
     /// Counterpart for std::filesystem::path::extension.
     ///
-    /// \return extension of current path.
+    /// @return extension of current path.
     std::string extension() const;
 
     /// @brief Get the name of the file, extension included.
     ///
     /// Counterpart for std::filesystem::path::filename.
     ///
-    /// \return name + extension of current path.
+    /// @return name + extension of current path.
     std::string filename() const;
 
     /// @brief Identifies the extension in {replacement}, trims it, and
@@ -119,9 +119,9 @@ struct Path {
     /// The change is done in the members and {this} is returned to allow call
     /// chaining.
     ///
-    /// \param replacement The extension to replace with.
+    /// @param replacement The extension to replace with.
     ///
-    /// \return The current instance after the replacement was done.
+    /// @return The current instance after the replacement was done.
     Path& replaceExtension(std::string const& replacement = std::string());
 
     /// @brief Trims {replacement} and replaces this instance's parent path with
@@ -130,9 +130,9 @@ struct Path {
     /// The change is done in the members and {this} is returned to allow call
     /// chaining.
     ///
-    /// \param replacement The parent path to replace with.
+    /// @param replacement The parent path to replace with.
     ///
-    /// \return The current instance after the replacement was done.
+    /// @return The current instance after the replacement was done.
     Path& replaceParentPath(std::string const& replacement = std::string());
 
 private:
@@ -152,6 +152,31 @@ struct TemporaryDirectory {
     std::string dirName();
 private:
     std::string dir_name_;
+};
+
+/// @brief Class that provides basic file related tasks.
+class FileManager {
+public:
+    /// @brief Validates a file path against a supported path.
+    ///
+    /// If the input path specifies a parent path and file name, the parent path
+    /// is validated against the supported path. If they match, the function returns
+    /// the validated path. If the input path contains only a file name the function
+    /// returns valid path using the supported path and the input path name.
+    ///
+    /// @param supported_path_str absolute path specifying the  supported path
+    /// of the file against which the input path is validated.
+    /// @param input_path_str file path to validate.
+    /// @param enforce_path enables validation against the supported path.  If false
+    /// verifies only that the path contains a file name.
+    ///
+    /// @return validated path as a string (supported path + input file name)
+    ///
+    /// @throw BadValue if the input path does not include a file name or if the
+    /// it the parent path does not path the supported path.
+    static std::string validatePath(const std::string supported_path_str,
+                                    const std::string input_path_str,
+                                    bool enforce_path = true);
 };
 
 }  // namespace file

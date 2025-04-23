@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,7 +8,9 @@
 
 #include <hooks/callout_handle.h>
 #include <hooks/hooks_manager.h>
+#include <hooks/hooks_parser.h>
 #include <hooks/server_hooks.h>
+#include <testutils/gtest_utils.h>
 
 #include <hooks/tests/common_test_class.h>
 #define TEST_ASYNC_CALLOUT
@@ -1077,5 +1079,118 @@ TEST_F(HooksManagerTest, UnloadBeforeUnpark) {
     EXPECT_FALSE(unparked);
 }
 
+TEST(HooksParser, validatePathEnforcePath) {
+    std::string def_path(HooksLibrariesParser::default_hooks_path_);
+    struct Scenario {
+        int line_;
+        std::string lib_path_;
+        std::string exp_path_;
+        std::string exp_error_;
+    };
+
+    std::list<Scenario> scenarios = {
+    {
+        // Invalid parent path.
+        __LINE__,
+        "/var/lib/bs/mylib.a",
+        "",
+        string("invalid path specified: '/var/lib/bs/', supported path is '" + def_path + "'")
+    },
+    {
+        // No file name.
+        __LINE__,
+        def_path + "/",
+        "",
+        string ("path: '" + def_path + "/' has no filename")
+    },
+    {
+        // File name only is valid.
+        __LINE__,
+        "mylib.a",
+        def_path + "/mylib.a",
+        ""
+    },
+    {
+        // Valid full path.
+        __LINE__,
+        def_path + "/mylib.a",
+        def_path + "/mylib.a",
+        ""
+    }
+    };
+
+    for (auto scenario : scenarios) {
+        std::ostringstream oss;
+        oss << " Scenario at line: " << scenario.line_;
+        SCOPED_TRACE(oss.str());
+        std::string validated_path;
+        if (scenario.exp_error_.empty()) {
+            ASSERT_NO_THROW_LOG(validated_path =
+                                HooksLibrariesParser::validatePath(scenario.lib_path_));
+            EXPECT_EQ(validated_path, scenario.exp_path_);
+        } else {
+            ASSERT_THROW_MSG(validated_path =
+                             HooksLibrariesParser::validatePath(scenario.lib_path_),
+                             BadValue, scenario.exp_error_);
+        }
+    }
+}
+
+TEST(HooksParser, validatePathEnforcePathFalse) {
+    std::string def_path(HooksLibrariesParser::default_hooks_path_);
+    struct Scenario {
+        int line_;
+        std::string lib_path_;
+        std::string exp_path_;
+        std::string exp_error_;
+    };
+
+    std::list<Scenario> scenarios = {
+    {
+        // Invalid parent path will fly.
+        __LINE__,
+        "/var/lib/bs/mylib.a",
+        "/var/lib/bs/mylib.a",
+        "",
+    },
+    {
+        // No file name.
+        __LINE__,
+        def_path + "/",
+        "",
+        string ("path: '" + def_path + "/' has no filename")
+    },
+    {
+        // File name only is valid.
+        __LINE__,
+        "mylib.a",
+        def_path + "/mylib.a",
+        ""
+    },
+    {
+        // Valid full path.
+        __LINE__,
+        def_path + "/mylib.a",
+        def_path + "/mylib.a",
+        ""
+    }
+    };
+
+    for (auto scenario : scenarios) {
+        std::ostringstream oss;
+        oss << " Scenario at line: " << scenario.line_;
+        SCOPED_TRACE(oss.str());
+        std::string validated_path;
+        if (scenario.exp_error_.empty()) {
+            ASSERT_NO_THROW_LOG(validated_path =
+                                HooksLibrariesParser::validatePath(scenario.lib_path_, false));
+            EXPECT_EQ(validated_path, scenario.exp_path_);
+        } else {
+            ASSERT_THROW_MSG(validated_path =
+                             HooksLibrariesParser::validatePath(scenario.lib_path_, false),
+                             BadValue, scenario.exp_error_);
+        }
+    }
+}
 
 } // Anonymous namespace

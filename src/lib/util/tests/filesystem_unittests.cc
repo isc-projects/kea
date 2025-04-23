@@ -11,6 +11,7 @@
 #include <util/filesystem.h>
 
 #include <fstream>
+#include <list>
 #include <string>
 
 #include <gtest/gtest.h>
@@ -135,5 +136,121 @@ TEST(PathTest, replaceParentPath) {
     EXPECT_EQ("/just/some/dir", fname.parentPath());
     EXPECT_EQ("/just/some/dir/a.b", fname.str());
 }
+
+
+TEST(FileManager, validatePathEnforcePath) {
+    std::string def_path(TEST_DATA_BUILDDIR);
+    struct Scenario {
+        int line_;
+        std::string lib_path_;
+        std::string exp_path_;
+        std::string exp_error_;
+    };
+
+    std::list<Scenario> scenarios = {
+    {
+        // Invalid parent path.
+        __LINE__,
+        "/var/lib/bs/mylib.a",
+        "",
+        string("invalid path specified: '/var/lib/bs/', supported path is '" + def_path + "'")
+    },
+    {
+        // No file name.
+        __LINE__,
+        def_path + "/",
+        "",
+        string ("path: '" + def_path + "/' has no filename")
+    },
+    {
+        // File name only is valid.
+        __LINE__,
+        "mylib.a",
+        def_path + "/mylib.a",
+        ""
+    },
+    {
+        // Valid full path.
+        __LINE__,
+        def_path + "/mylib.a",
+        def_path + "/mylib.a",
+        ""
+    }
+    };
+
+    for (auto scenario : scenarios) {
+        std::ostringstream oss;
+        oss << " Scenario at line: " << scenario.line_;
+        SCOPED_TRACE(oss.str());
+        std::string validated_path;
+        if (scenario.exp_error_.empty()) {
+            ASSERT_NO_THROW_LOG(validated_path =
+                                FileManager::validatePath(def_path, scenario.lib_path_));
+            EXPECT_EQ(validated_path, scenario.exp_path_);
+        } else {
+            ASSERT_THROW_MSG(validated_path =
+                             FileManager::validatePath(def_path, scenario.lib_path_),
+                             BadValue, scenario.exp_error_);
+        }
+    }
+}
+
+TEST(FileManager, validatePathEnforcePathFalse) {
+    std::string def_path(TEST_DATA_BUILDDIR);
+    struct Scenario {
+        int line_;
+        std::string lib_path_;
+        std::string exp_path_;
+        std::string exp_error_;
+    };
+
+    std::list<Scenario> scenarios = {
+    {
+        // Invalid parent path but shouldn't care.
+        __LINE__,
+        "/var/lib/bs/mylib.a",
+        "/var/lib/bs/mylib.a",
+        ""
+    },
+    {
+        // No file name.
+        __LINE__,
+        def_path + "/",
+        "",
+        string ("path: '" + def_path + "/' has no filename")
+    },
+    {
+        // File name only is valid.
+        __LINE__,
+        "mylib.a",
+        def_path + "/mylib.a",
+        ""
+    },
+    {
+        // Valid full path.
+        __LINE__,
+        def_path + "/mylib.a",
+        def_path + "/mylib.a",
+        ""
+    }
+    };
+
+    for (auto scenario : scenarios) {
+        std::ostringstream oss;
+        oss << " Scenario at line: " << scenario.line_;
+        SCOPED_TRACE(oss.str());
+        std::string validated_path;
+        if (scenario.exp_error_.empty()) {
+            ASSERT_NO_THROW_LOG(validated_path =
+                                FileManager::validatePath(def_path, scenario.lib_path_, false));
+            EXPECT_EQ(validated_path, scenario.exp_path_);
+        } else {
+            ASSERT_THROW_MSG(validated_path =
+                             FileManager::validatePath(def_path, scenario.lib_path_, false),
+                             BadValue, scenario.exp_error_);
+        }
+    }
+}
+
 
 }  // namespace

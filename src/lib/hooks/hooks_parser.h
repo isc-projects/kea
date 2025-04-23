@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -61,6 +61,15 @@ public:
     /// @brief The default installation path for hook libraries, used to generate
     /// full path if only the hook library binary name is provided.
     static std::string default_hooks_path_;
+
+    /// @brief Validates a library path against the supported path for hooks libraries.
+    ///
+    /// @param libpath library path to validate.
+    /// @param enforce_path enables validation against the supported path.  If false
+    /// verifies only that the path contains a file name.
+    ///
+    /// @return validated path
+    static std::string validatePath(const std::string libpath, bool enforce_path = true);
 };
 
 }  // namespace isc::hooks
