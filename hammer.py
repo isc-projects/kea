@@ -1416,6 +1416,9 @@ def _configure_mysql(system, revision, features):
             execute('sudo mkdir -p {}'.format(cert_dir))
         # Parent dir of hammer.py.
         p = os.path.dirname(os.path.realpath(os.path.abspath(sys.argv[0])))
+        if not os.path.isdir(f'{p}/src/lib/asiolink/testutils/ca'):
+            # Sometimes we call a standalone hammer.py on another Kea source tree. Let's use cwd in that case.
+            p = '.'
         for file in [
             f'{p}/src/lib/asiolink/testutils/ca/kea-ca.crt',
             f'{p}/src/lib/asiolink/testutils/ca/kea-client.crt',
