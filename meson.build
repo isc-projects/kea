@@ -249,19 +249,31 @@ if netconf_opt.enabled() and NETCONF_DEP.get_variable(
 endif
 
 # Google Test
-GTEST_DEP = dependency('gtest', required: TESTS_OPT.enabled() or FUZZ_OPT.enabled())
-if GTEST_DEP.found()
-    result = cpp.run(
-        fs.read('compiler-checks/gtest.cc'),
-        name: 'Check if a simple GTest test runs.',
-        dependencies: [GTEST_DEP],
-    )
-    if result.returncode() != 0
-        GTEST_DEP = disabler()
+GTEST_DEP = disabler()
+if FUZZ_OPT.enabled() or TESTS_OPT.enabled()
+    GTEST_DEP = dependency('gtest', required: false)
+    if GTEST_DEP.found()
+        # Wrap dependencies cannot be used in compiler checks: https://github.com/mesonbuild/meson/issues/11575
+        # Should never be a wrap dependency at this point, but somehow it happens on Alpine systems.
+        if GTEST_DEP.type_name() != 'internal'
+            result = cpp.run(
+                fs.read('compiler-checks/gtest.cc'),
+                name: 'Check if a simple GTest test runs.',
+                dependencies: [GTEST_DEP, threads_dep],
+            )
+            if result.returncode() != 0
+                GTEST_DEP = disabler()
+            endif
+        endif
+    endif
+    if not GTEST_DEP.found()
         gtest_subproject = subproject('gtest', required: false)
         if gtest_subproject.found()
             GTEST_DEP = gtest_subproject.get_variable('gtest_dep')
         endif
+    endif
+    if not GTEST_DEP.found()
+        error('Dependency not found: GTest.')
     endif
 endif
 
