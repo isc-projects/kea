@@ -20,7 +20,7 @@ if pg_config.found()
         pgsql_link_args = libs.stdout().split()
         pgsql_version = version.stdout().strip()
 
-        link_args = [pgsql_libdir] + pgsql_ldflags + pgsql_link_args
+        link_args = [f'-L@pgsql_libdir@'] + pgsql_ldflags + pgsql_link_args
         if libpq.found()
             link_args += ['-lpq']
         endif
