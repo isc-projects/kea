@@ -8,17 +8,17 @@
 
 set -eu
 
-# Check if ${1} < ${2}.
-lt() {
+# Check if ${1} <= ${2}.
+le() {
     # Sort numerically and check the first item.
     lesser=$(printf '%s\n%s\n' "${1}" "${2}" | sort -V | head -n 1)
-    if test "${lesser}" = "${2}"; then
-        # ${1} >= ${2}
-        return 1
+    if test "${lesser}" = "${1}"; then
+        # ${1} <= ${2}
+        return 0
     fi
 
-    # ${1} < ${2}
-    return 0
+    # ${1} > ${2}
+    return 1
 }
 
 # Print usage.
@@ -37,7 +37,7 @@ Options:
 while test ${#} -gt 0; do
     case "${1}" in
         '-i'|'--install') install=true ;;
-        '-p'|'--venv') venv=true ;;
+        '-p'|'--venv') use_venv=true ;;
         '-h'|'--help') print_usage; exit 0 ;;
         *) break ;;
     esac; shift
@@ -45,9 +45,9 @@ done
 
 # Default parameters
 test -z "${install+x}" && install=false
-test -z "${venv+x}" && venv=false
+test -z "${use_venv+x}" && use_venv=false
 
-if "${install}" && "${venv}"; then
+if "${install}" &&  "${use_venv}"; then
     sudo='sudo'
     venv='/usr/local/share/.venv'
 else
@@ -59,7 +59,7 @@ fi
 top_level=$(cd "$(dirname "${0}")" && pwd)
 cd "${top_level}" || exit 1
 
-if command -v meson > /dev/null 2>&1 && lt 1.7.98 "$(meson --version)"; then
+if command -v meson > /dev/null 2>&1 && le 1.8.0 "$(meson --version)"; then
     # Good to be used. Does not suffer from endless transitional dependency iteration.
     meson='meson'
 else
@@ -68,7 +68,7 @@ else
         # Starting with Meson 0.62, Python 3.7 is required.
         python3=python3
         v=$(python3 -c 'import platform; print(platform.python_version())')
-        if lt "${v}" 3.7.0; then
+        if ! le 3.7.0 "${v}"; then
             # Search for a newer Python.
             if command -V compgen >/dev/null; then
                 # shellcheck disable=SC3044
@@ -89,13 +89,15 @@ else
         mkdir -p .meson
         ${sudo} cp "${venv}/bin/ninja" .meson/ninja
 
-        if "${venv}"; then
+        if "${use_venv}"; then
             # TODO: change to this when 1.8.0 gets released.
             # ${sudo} "${venv}/bin/pip" install meson==1.8.0
             ${sudo} "${venv}/bin/pip" install git+https://github.com/mesonbuild/meson.git
             ${sudo} cp "${venv}/bin/meson" .meson/meson
         else
-            git clone https://github.com/mesonbuild/meson .meson-src
+            if test ! -d .meson-src; then
+                git clone https://github.com/mesonbuild/meson .meson-src
+            fi
             (
                 cd .meson-src || exit 1
                 # TODO: always checkout when 1.8.0 gets released.
