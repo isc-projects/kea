@@ -127,7 +127,7 @@ BaseNetworkParser::parseCacheParams(const ConstElementPtr& network_data,
         double cache_threshold = getDouble(network_data, "cache-threshold");
         if ((cache_threshold < 0.0) || (cache_threshold >= 1.0)) {
             isc_throw(DhcpConfigError, "cache-threshold: " << cache_threshold
-                      << " is invalid, it must be greater than 0.0 and less than 1.0");
+                      << " is invalid, it must be greater than or equal to 0.0 and less than 1.0");
         }
         network->setCacheThreshold(cache_threshold);
     }
