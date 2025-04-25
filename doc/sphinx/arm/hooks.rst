@@ -222,10 +222,13 @@ configuration would be:
     because the parameters specified for the library (or the files those
     parameters point to) may have changed.
 
-As of Kea 2.7.8, hook libriares may only be loaded from the default installation
-directory which is provided in the config report as "Hooks directory". If a path
-other than the default installation directory is specified Kea will emit an error
-and refuse to load the library. For ease of use the path may simply be omitted.
+As of Kea 2.7.8, hook libraries may only be loaded from the default installation
+directory determined during compilation and shown in the config report as
+"Hooks directory".  This value may be overridden at startup by setting the 
+enviornment variable ``KEA_HOOKS_PATH`` to the desired path.  If a path other
+than this value is used in a ``library`` element Kea will emit an error and refuse
+to load the library. For ease of use ``library`` elements may simply omit path 
+components, specifying the file name only as shown below:
 
 .. code-block:: json
 
@@ -259,6 +262,9 @@ This snippet (on Debian 12) is equivalent to:
         }
     }
 
+.. note::
+    The support for path components in ``library`` elements is deprecated as of 2.7.8, and will
+    eventually be removed.
 
 Libraries may have additional parameters that are not mandatory, in the
 sense that there may be libraries that do not require them. However, for any
