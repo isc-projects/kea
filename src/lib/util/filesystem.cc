@@ -15,6 +15,7 @@
 #include <fstream>
 #include <string>
 #include <filesystem>
+#include <iostream>
 
 #include <dirent.h>
 #include <fcntl.h>
@@ -219,31 +220,37 @@ string TemporaryDirectory::dirName() {
 
 std::string
 FileManager::validatePath(const std::string supported_path_str, const std::string input_path_str,
-                          bool enforce_path /* = false */) {
-    std::filesystem::path supported_path(supported_path_str);
-    auto input_path = std::filesystem::path(input_path_str);
-    if (!input_path.has_filename()) {
-        isc_throw(BadValue, "path: '" << input_path.string() << "' has no filename");
+                          bool enforce_path /* = true */) {
+    // Remove the trailing "/" if it present so comparision to
+    // input's parent path functions.
+    auto supported_path_copy(supported_path_str);
+    if (supported_path_copy.back() == '/') {
+        supported_path_copy.pop_back();
     }
 
+    Path input_path(trim(input_path_str));
     auto filename = input_path.filename();
-    if (input_path.has_parent_path()) {
-        if (!enforce_path) {
-            // Security set to lax, let it fly.
-            return (input_path_str);
-        }
-
-        // We only allow absolute path equal to default. Catch an invalid path.
-        input_path.remove_filename();
-        if (input_path != (supported_path / "")) {
-            isc_throw(BadValue, "invalid path specified: '"
-                      << input_path.string() << "', supported path is '"
-                      << supported_path.string() << "'");
-        }
-    }
-
-    auto valid_path = supported_path / filename;
-    return (valid_path.string());
+    if (filename.empty()) {
+        isc_throw(BadValue, "path: '" << input_path.str() << "' has no filename");
+     }
+ 
+    auto parent_path = input_path.parentPath();
+    if (!parent_path.empty()) {
+         if (!enforce_path) {
+             // Security set to lax, let it fly.
+             return (input_path_str);
+         }
+ 
+         // We only allow absolute path equal to default. Catch an invalid path.
+        if (parent_path != supported_path_copy) {
+             isc_throw(BadValue, "invalid path specified: '"
+                      << parent_path << "', supported path is '"
+                      << supported_path_copy << "'");
+         }
+     }
+ 
+    std::string valid_path(supported_path_copy + "/" +  filename);
+    return (valid_path);
 }
 
 }  // namespace file

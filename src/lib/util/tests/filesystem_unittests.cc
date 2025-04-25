@@ -141,7 +141,7 @@ TEST(PathTest, replaceParentPath) {
 
 // Verifies FileManager::validatePath() when enforce_path is true.
 TEST(FileManager, validatePathEnforcePath) {
-    std::string def_path(TEST_DATA_BUILDDIR);
+    std::string def_path(TEST_DATA_BUILDDIR + '/');
     struct Scenario {
         int line_;
         std::string lib_path_;
@@ -153,9 +153,9 @@ TEST(FileManager, validatePathEnforcePath) {
     {
         // Invalid parent path.
         __LINE__,
-        "/var/lib/bs/mylib.a",
+        "/var/lib/bs/mylib.so",
         "",
-        string("invalid path specified: '/var/lib/bs/', supported path is '" + def_path + "'")
+        string("invalid path specified: '/var/lib/bs', supported path is '" + def_path + "'")
     },
     {
         // No file name.
@@ -167,16 +167,23 @@ TEST(FileManager, validatePathEnforcePath) {
     {
         // File name only is valid.
         __LINE__,
-        "mylib.a",
-        def_path + "/mylib.a",
+        "mylib.so",
+        def_path + "/mylib.so",
         ""
     },
     {
         // Valid full path.
         __LINE__,
-        def_path + "/mylib.a",
-        def_path + "/mylib.a",
+        def_path + "/mylib.so",
+        def_path + "/mylib.so",
         ""
+    },
+    {
+        // White space for file name. 
+        __LINE__,
+        "      ",
+        "",
+        string("path: '' has no filename")
     }
     };
 
@@ -211,8 +218,8 @@ TEST(FileManager, validatePathEnforcePathFalse) {
     {
         // Invalid parent path but shouldn't care.
         __LINE__,
-        "/var/lib/bs/mylib.a",
-        "/var/lib/bs/mylib.a",
+        "/var/lib/bs/mylib.so",
+        "/var/lib/bs/mylib.so",
         ""
     },
     {
@@ -225,16 +232,23 @@ TEST(FileManager, validatePathEnforcePathFalse) {
     {
         // File name only is valid.
         __LINE__,
-        "mylib.a",
-        def_path + "/mylib.a",
+        "mylib.so",
+        def_path + "/mylib.so",
         ""
     },
     {
         // Valid full path.
         __LINE__,
-        def_path + "/mylib.a",
-        def_path + "/mylib.a",
+        def_path + "/mylib.so",
+        def_path + "/mylib.so",
         ""
+    },
+    {
+        // White space for file name. 
+        __LINE__,
+        "      ",
+        "",
+        string("path: '' has no filename")
     }
     };
 

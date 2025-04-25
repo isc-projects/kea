@@ -30,6 +30,7 @@
 #include <dhcpsrv/testutils/config_result_check.h>
 #include <dhcpsrv/testutils/test_config_backend_dhcp4.h>
 #include <hooks/hooks_manager.h>
+#include <hooks/hooks_parser.h>
 #include <process/config_ctl_info.h>
 #include <stats/stats_mgr.h>
 #include <testutils/gtest_utils.h>
@@ -334,6 +335,8 @@ public:
         }
         // Reset configuration for each test.
         resetConfiguration();
+
+        resetHooksPath();
     }
 
     ~Dhcp4ParserTest() {
@@ -343,7 +346,22 @@ public:
         // ... and delete the hooks library marker files if present
         static_cast<void>(remove(LOAD_MARKER_FILE));
         static_cast<void>(remove(UNLOAD_MARKER_FILE));
+
+        resetHooksPath();
     };
+
+    /// @brief Sets the Hooks path from which hooks can be loaded.
+    /// @param explicit_path path to use as the hooks path.
+    void setHooksTestPath(const std::string explicit_path = "") {
+        HooksLibrariesParser::getHooksPath(true,
+                                           (!explicit_path.empty() ?
+                                            explicit_path : DHCP4_HOOKS_TEST_PATH));
+    }
+
+    /// @brief Resets the hooks path to DEFAULT_HOOKS_PATH.
+    void resetHooksPath() {
+        HooksLibrariesParser::getHooksPath(true);
+    }
 
     // Checks if the result of DHCP server configuration has
     // expected code (0 for success, other for failures).
@@ -4472,6 +4490,8 @@ TEST_F(Dhcp4ParserTest, InvalidLibrary) {
 
 // Verify the configuration of hooks libraries with two being specified.
 TEST_F(Dhcp4ParserTest, LibrariesSpecified) {
+    setHooksTestPath();
+
     // Marker files should not be present.
     EXPECT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
     EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));

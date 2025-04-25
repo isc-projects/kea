@@ -25,6 +25,7 @@
 #include <string>
 
 #include <unistd.h>
+#include <stdlib.h>
 
 using namespace isc;
 using namespace isc::hooks;
@@ -1079,9 +1080,29 @@ TEST_F(HooksManagerTest, UnloadBeforeUnpark) {
     EXPECT_FALSE(unparked);
 }
 
+TEST(HooksParser, getHooksPath) {
+    ASSERT_FALSE(std::getenv("KEA_HOOKS_PATH"));
+    auto hooks_path = HooksLibrariesParser::getHooksPath(true);
+    EXPECT_EQ(hooks_path, DEFAULT_HOOKS_PATH);
+}
+
+TEST(HooksParser, getHooksPathWithEnv) {
+    std::string evar("KEA_HOOKS_PATH=/tmp");
+    putenv(const_cast<char*>(evar.c_str()));
+    ASSERT_TRUE(std::getenv("KEA_HOOKS_PATH"));
+    auto hooks_path = HooksLibrariesParser::getHooksPath(true);
+    EXPECT_EQ(hooks_path, "/tmp");
+}
+
+TEST(HooksParser, getHooksPathExplicit) {
+    auto hooks_path = HooksLibrariesParser::getHooksPath(true, "/explicit/path");
+    EXPECT_EQ(hooks_path, "/explicit/path");
+}
+
 // Verifies HooksParser::validatePath() when enforce_path is true.
 TEST(HooksParser, validatePathEnforcePath) {
-    std::string def_path(HooksLibrariesParser::default_hooks_path_);
+    HooksLibrariesParser::getHooksPath(true);
+    std::string def_path(HooksLibrariesParser::getHooksPath());
     struct Scenario {
         int line_;
         std::string lib_path_;
@@ -1093,9 +1114,9 @@ TEST(HooksParser, validatePathEnforcePath) {
     {
         // Invalid parent path.
         __LINE__,
-        "/var/lib/bs/mylib.a",
+        "/var/lib/bs/mylib.so",
         "",
-        string("invalid path specified: '/var/lib/bs/', supported path is '" + def_path + "'")
+        string("invalid path specified: '/var/lib/bs', supported path is '" + def_path + "'")
     },
     {
         // No file name.
@@ -1107,15 +1128,15 @@ TEST(HooksParser, validatePathEnforcePath) {
     {
         // File name only is valid.
         __LINE__,
-        "mylib.a",
-        def_path + "/mylib.a",
+        "mylib.so",
+        def_path + "/mylib.so",
         ""
     },
     {
         // Valid full path.
         __LINE__,
-        def_path + "/mylib.a",
-        def_path + "/mylib.a",
+        def_path + "/mylib.so",
+        def_path + "/mylib.so",
         ""
     }
     };
@@ -1139,7 +1160,8 @@ TEST(HooksParser, validatePathEnforcePath) {
 
 // Verifies HooksParser::validatePath() when enforce_path is false.
 TEST(HooksParser, validatePathEnforcePathFalse) {
-    std::string def_path(HooksLibrariesParser::default_hooks_path_);
+    HooksLibrariesParser::getHooksPath(true);
+    std::string def_path(HooksLibrariesParser::getHooksPath());
     struct Scenario {
         int line_;
         std::string lib_path_;
@@ -1151,8 +1173,8 @@ TEST(HooksParser, validatePathEnforcePathFalse) {
     {
         // Invalid parent path will fly.
         __LINE__,
-        "/var/lib/bs/mylib.a",
-        "/var/lib/bs/mylib.a",
+        "/var/lib/bs/mylib.so",
+        "/var/lib/bs/mylib.so",
         "",
     },
     {
@@ -1165,15 +1187,15 @@ TEST(HooksParser, validatePathEnforcePathFalse) {
     {
         // File name only is valid.
         __LINE__,
-        "mylib.a",
-        def_path + "/mylib.a",
+        "mylib.so",
+        def_path + "/mylib.so",
         ""
     },
     {
         // Valid full path.
         __LINE__,
-        def_path + "/mylib.a",
-        def_path + "/mylib.a",
+        def_path + "/mylib.so",
+        def_path + "/mylib.so",
         ""
     }
     };

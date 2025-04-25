@@ -24,9 +24,23 @@ using namespace isc::util::file;
 namespace isc {
 namespace hooks {
 
-// @todo use the flat style, split into list and item
+std::string
+HooksLibrariesParser::getHooksPath(bool reset /* = false */, const std::string explicit_path /* = "" */) {
+    static std::string default_hooks_path = ""; 
+    if (default_hooks_path.empty() || reset) {
+        if (explicit_path.empty()) {
+            default_hooks_path = std::string(std::getenv("KEA_HOOKS_PATH") ?
+                                             std::getenv("KEA_HOOKS_PATH")
+                                             : DEFAULT_HOOKS_PATH);
+        } else {
+            default_hooks_path = explicit_path;
+        }
+    }
 
-string HooksLibrariesParser::default_hooks_path_ = string(DEFAULT_HOOKS_PATH);
+    return (default_hooks_path);
+}
+
+// @todo use the flat style, split into list and item
 
 void
 HooksLibrariesParser::parse(HooksConfig& libraries, ConstElementPtr value) {
@@ -69,7 +83,13 @@ HooksLibrariesParser::parse(HooksConfig& libraries, ConstElementPtr value) {
 
                 // Get the name of the library and add it to the list after
                 // removing quotes.
-                libname = validatePath((entry_item.second)->stringValue());
+                try {
+                    libname = validatePath((entry_item.second)->stringValue());
+                } catch  (const std::exception& ex) {
+                    isc_throw(DhcpConfigError, "hooks library configuration"
+                        " error: " << ex.what() << " (" 
+                        << entry_item.second->getPosition() << ")");
+                }
 
                 // Note we have found the library name.
                 lib_found = true;
@@ -102,7 +122,7 @@ HooksLibrariesParser::parse(HooksConfig& libraries, ConstElementPtr value) {
 std::string
 HooksLibrariesParser::validatePath(const std::string libpath,
                                    bool enforce_path /* = true */) {
-    return (FileManager::validatePath(HooksLibrariesParser::default_hooks_path_,
+    return (FileManager::validatePath(HooksLibrariesParser::getHooksPath(),
                                       libpath, enforce_path));
 }
 

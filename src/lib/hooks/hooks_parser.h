@@ -58,10 +58,6 @@ public:
     /// @param value pointer to the content to be parsed
     void parse(HooksConfig& libraries, isc::data::ConstElementPtr value);
 
-    /// @brief The default installation path for hook libraries, used to generate
-    /// full path if only the hook library binary name is provided.
-    static std::string default_hooks_path_;
-
     /// @brief Validates a library path against the supported path for hooks libraries.
     ///
     /// @param libpath library path to validate.
@@ -70,6 +66,22 @@ public:
     ///
     /// @return validated path
     static std::string validatePath(const std::string libpath, bool enforce_path = true);
+
+    /// @brief Fetches the supported Hooks path.
+    ///
+    /// The first call to this function with no arguments will set the default 
+    /// hooks path to either the value of DEFAULT_HOOKS_PATH or the environment
+    /// variable KEA_HOOKS_PATH if it is defined.  Subsequent calls with no 
+    /// arguments will simply return this value.
+    /// 
+    /// @param reset recalculate when true, defaults to false. This is for
+    /// testing purposes only.
+    /// @param explicit_path set default hooks path to this value. This is 
+    /// for testing purposes only.
+    ///
+    /// @return String containing the default hooks path.
+    static std::string getHooksPath(bool reset = false,
+                                    const std::string explicit_path = "");
 };
 
 }  // namespace isc::hooks

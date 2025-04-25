@@ -31,7 +31,6 @@
 #include <util/chrono_time_utils.h>
 
 #include "marker_file.h"
-#include "test_libraries.h"
 
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>

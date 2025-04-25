@@ -27,6 +27,9 @@ const char* const CALLOUT_LIBRARY_4 = "@abs_builddir@/@dotlibs@libco4.so";
 // Name of a library which is not present.
 const char* const NOT_PRESENT_LIBRARY = "@abs_builddir@/@dotlibs@libnothere.so";
 
+// Test path to use for in place of DEFAULT_HOOKS_PATH
+static const char* DHCP4_HOOKS_TEST_PATH = "@abs_builddir@/@dotlibs@";
+
 } // anonymous namespace
 
 

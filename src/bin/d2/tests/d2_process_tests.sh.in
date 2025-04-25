@@ -15,6 +15,8 @@ CFG_FILE="@abs_top_builddir@/src/bin/d2/tests/test_config.json"
 # Path to the D2 log file.
 LOG_FILE="@abs_top_builddir@/src/bin/d2/tests/test.log"
 # D2 configuration to be stored in the configuration file.
+# Set env KEA_HOOKS_PATH  to override DEFAULT_HOOKS_PATH
+export KEA_HOOKS_PATH="@abs_top_builddir@/src/bin/d2/tests/@dotlibs@"
 CONFIG="{
     \"DhcpDdns\":
     {

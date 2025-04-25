@@ -27,5 +27,5 @@ TEST(ConfigReportTest, getConfigReport) {
     EXPECT_NE(std::string::npos, cfgReport.find(VERSION));
     EXPECT_NE(std::string::npos, cfgReport.find(EXTENDED_VERSION));
     EXPECT_NE(std::string::npos, cfgReport.find(std::string("Hooks directory:    ") +
-                                                HooksLibrariesParser::default_hooks_path_));
+                                                HooksLibrariesParser::getHooksPath()));
 }
