@@ -590,6 +590,12 @@ INSTALL_RPATH = PREFIX / LIBDIR
 
 # Add rpaths for NETCONF dependencies.
 if NETCONF_DEP.found()
+    # Flag needed to force use of rpath instead of runpath which is transitive
+    # e.g. sysrepo is able to find libyang.
+    if cpp.has_link_argument('-Wl,--disable-new-dtags')
+        add_project_link_arguments(['-Wl,--disable-new-dtags'], language: 'cpp')
+    endif
+
     foreach i : ['yang', 'yang-cpp', 'sysrepo', 'sysrepo-cpp']
         libdir = NETCONF_DEP.get_variable(f'@i@-libdir')
         BUILD_RPATH += f':@libdir@'
