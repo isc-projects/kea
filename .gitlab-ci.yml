@@ -7,7 +7,7 @@ variables:
   CFL_CACHE_DIR: '/ccache/cfl-cache'
   CFL_IMAGE: 'gcr.io/oss-fuzz-base/clusterfuzzlite-run-fuzzers'
   CFL_PLATFORM: gitlab
-  FUZZ_SECONDS: 600 # 10 min (ClusterFuzzLite defaults)
+  FUZZ_SECONDS: 600  # 10 min (ClusterFuzzLite defaults)
   FUZZING_ARGS: '-rss_limit_mb=8192'
   LD_LIBRARY_PATH: "/opt/kea/lib:/usr/lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu:/builds/isc-projects/kea"
   PARALLEL_FUZZING: true
@@ -167,8 +167,8 @@ fuzz:
     # Prevent duplicate pipelines.
     - if: $CI_OPEN_MERGE_REQUESTS && $CI_COMMIT_BRANCH == null
       when: never
-    # On merge request.
-    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+    # Make the job manual on the MR.
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS || $CI_PIPELINE_SOURCE == 'merge_request_event'
       variables:
         MODE: "code-change"
       when: manual
