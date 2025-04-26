@@ -1,3 +1,9 @@
+#include <cstdlib>
+
 int main() {
-    return 1;
+    if (getenv("CIFUZZ") && getenv("FUZZING_ENGINE") && getenv("FUZZING_LANGUAGE")) {
+        return 0;
+    } else {
+        return 1;
+    }
 }

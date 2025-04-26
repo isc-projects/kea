@@ -49,16 +49,11 @@ install_input = configure_file(
 )
 meson.add_install_script(install_input)
 
-fuzz_sources = ['fuzz.cc', 'fuzz.h']
+fuzz_sources = ['fuzz.cc', 'fuzz.h', 'main.cc']
 cpp_flags = [
     f'-DKEA_LFC_INSTALLATION="@KEA_LFC_INSTALLED@"',
     f'-DKEA_LFC_SOURCES="@KEA_LFC_BUILT@"',
 ]
-if FUZZING_WITH_CLUSTERFUZZLITE
-    cpp_flags += ['-fsanitize=fuzzer', '-gdwarf-4']
-else
-    fuzz_sources += ['main.cc']
-endif
 
 includes = [include_directories('.')] + INCLUDES
 

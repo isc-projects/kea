@@ -460,7 +460,6 @@ if MYSQL_DEP.found()
     conf_data.set('HAVE_MYSQL_GET_OPTION', result.returncode() == 0)
 endif
 
-# TODO: implement when integrating with CI
 result = cpp.run(
     fs.read('compiler-checks/fuzzing-with-clusterfuzzlite.cc'),
     name: 'FUZZING_WITH_CLUSTERFUZZLITE',
