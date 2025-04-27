@@ -111,6 +111,7 @@ kea_hooks_tests = executable(
     'run_unittests.cc',
     'server_hooks_unittest.cc',
     dependencies: [GTEST_DEP],
+    cpp_args: [f'-DDEFAULT_HOOKS_PATH="@DEFAULT_HOOKS_PATH@"'],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )

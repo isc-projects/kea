@@ -221,7 +221,7 @@ string TemporaryDirectory::dirName() {
 std::string
 FileManager::validatePath(const std::string supported_path_str, const std::string input_path_str,
                           bool enforce_path /* = true */) {
-    // Remove the trailing "/" if it present so comparision to
+    // Remove the trailing "/" if it present so comparison to
     // input's parent path functions.
     auto supported_path_copy(supported_path_str);
     if (supported_path_copy.back() == '/') {
