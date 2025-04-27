@@ -28,8 +28,8 @@ install_kea() {
   meson compile -C build
   meson install -C build
 
-  echo "${OUT}/lib" | sudo tee /etc/ld.so.conf.d/kea.conf
-  echo "${OUT}/lib/x86_64-linux-gnu" | sudo tee /etc/ld.so.conf.d/kea.conf
+  echo "${OUT}/lib" | sudo tee -a /etc/ld.so.conf.d/kea.conf
+  echo "${OUT}/lib/x86_64-linux-gnu" | sudo tee -a /etc/ld.so.conf.d/kea.conf
   ldconfig
   sudo ldconfig
 
