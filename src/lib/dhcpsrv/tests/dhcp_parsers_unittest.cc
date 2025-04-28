@@ -2410,47 +2410,6 @@ TEST_F(ParseConfigTest, oneHooksLibrary) {
     EXPECT_EQ(CALLOUT_LIBRARY_1, hooks_libraries[0]);
 }
 
-#if 0
-// hooks-libraries element that contains a single library with relative path.
-TEST_F(ParseConfigTest, oneHooksLibraryRelativePath) {
-    // Check that no libraries are currently loaded
-    vector<string> hooks_libraries = HooksManager::getLibraryNames();
-    EXPECT_TRUE(hooks_libraries.empty());
-
-    Path path(CALLOUT_LIBRARY_1);
-
-    HooksLibrariesParser::default_hooks_path_ = path.parentPath();
-
-    // Configuration with hooks-libraries set to a single library.
-    string config = setHooksLibrariesConfig(path.filename().c_str());
-
-    // Verify that the configuration string parses.
-    const int rcode = parseConfiguration(config);
-    ASSERT_TRUE(rcode == 0) << error_text_;
-
-    config = setHooksLibrariesConfig(CALLOUT_LIBRARY_1);
-
-    // Verify that the configuration object unparses.
-    ConstElementPtr expected;
-    ASSERT_NO_THROW(expected =
-                    Element::fromJSON(config)->get("hooks-libraries"));
-    ASSERT_TRUE(expected);
-    const HooksConfig& cfg =
-        CfgMgr::instance().getStagingCfg()->getHooksConfig();
-    runToElementTest<HooksConfig>(expected, cfg);
-
-    // Check that the parser recorded a single library.
-    isc::hooks::HookLibsCollection libraries = getLibraries();
-    ASSERT_EQ(1, libraries.size());
-    EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].first);
-
-    // Check that the change was propagated to the hooks manager.
-    hooks_libraries = HooksManager::getLibraryNames();
-    ASSERT_EQ(1, hooks_libraries.size());
-    EXPECT_EQ(CALLOUT_LIBRARY_1, hooks_libraries[0]);
-}
-#endif
-
 // hooks-libraries element that contains two libraries
 TEST_F(ParseConfigTest, twoHooksLibraries) {
     setHooksTestPath();
