@@ -61,22 +61,23 @@ public:
     /// @brief Validates a library path against the supported path for hooks libraries.
     ///
     /// @param libpath library path to validate.
-    /// @param enforce_path enables validation against the supported path.  If false
-    /// verifies only that the path contains a file name.
+    /// @param enforce_path enables validation against the supported path.
+    /// If false verifies only that the path contains a file name.
     ///
     /// @return validated path
-    static std::string validatePath(const std::string libpath, bool enforce_path = true);
+    static std::string validatePath(const std::string libpath,
+                                    bool enforce_path = true);
 
     /// @brief Fetches the supported Hooks path.
     ///
-    /// The first call to this function with no arguments will set the default 
+    /// The first call to this function with no arguments will set the default
     /// hooks path to either the value of DEFAULT_HOOKS_PATH or the environment
-    /// variable KEA_HOOKS_PATH if it is defined.  Subsequent calls with no 
+    /// variable KEA_HOOKS_PATH if it is defined.  Subsequent calls with no
     /// arguments will simply return this value.
-    /// 
+    ///
     /// @param reset recalculate when true, defaults to false. This is for
     /// testing purposes only.
-    /// @param explicit_path set default hooks path to this value. This is 
+    /// @param explicit_path set default hooks path to this value. This is
     /// for testing purposes only.
     ///
     /// @return String containing the default hooks path.

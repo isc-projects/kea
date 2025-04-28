@@ -25,7 +25,7 @@
 #include <string>
 
 #include <unistd.h>
-#include <stdlib.h>
+#include <cstdlib>
 
 using namespace isc;
 using namespace isc::hooks;
@@ -1080,13 +1080,42 @@ TEST_F(HooksManagerTest, UnloadBeforeUnpark) {
     EXPECT_FALSE(unparked);
 }
 
-TEST(HooksParser, getHooksPath) {
+/// @brief Test fixture for hooks parsing.
+class HooksParserTest : public ::testing::Test {
+public:
+    /// @brief Constructor
+    HooksParserTest() {
+        // Save current value of the environment path.
+        char* env_path = std::getenv("KEA_HOOKS_PATH");
+        if (env_path) {
+            original_path_ = std::string(env_path);
+        }
+
+        // Clear the environment path.
+        unsetenv("KEA_HOOKS_PATH");
+    }
+
+    /// @brief Destructor
+    ~HooksParserTest() {
+        // Restore the original environment path.
+        if (!original_path_.empty()) {
+            setenv("KEA_HOOKS_PATH", original_path_.c_str(), 1);
+        } else {
+            unsetenv("KEA_HOOKS_PATH");
+        }
+    }
+
+    /// @brief Retains the environment variable's original value.
+    std::string original_path_;
+};
+
+TEST_F(HooksParserTest, getHooksPath) {
     ASSERT_FALSE(std::getenv("KEA_HOOKS_PATH"));
     auto hooks_path = HooksLibrariesParser::getHooksPath(true);
     EXPECT_EQ(hooks_path, DEFAULT_HOOKS_PATH);
 }
 
-TEST(HooksParser, getHooksPathWithEnv) {
+TEST_F(HooksParserTest, getHooksPathWithEnv) {
     std::string evar("KEA_HOOKS_PATH=/tmp");
     putenv(const_cast<char*>(evar.c_str()));
     ASSERT_TRUE(std::getenv("KEA_HOOKS_PATH"));
@@ -1094,13 +1123,13 @@ TEST(HooksParser, getHooksPathWithEnv) {
     EXPECT_EQ(hooks_path, "/tmp");
 }
 
-TEST(HooksParser, getHooksPathExplicit) {
+TEST_F(HooksParserTest, getHooksPathExplicit) {
     auto hooks_path = HooksLibrariesParser::getHooksPath(true, "/explicit/path");
     EXPECT_EQ(hooks_path, "/explicit/path");
 }
 
 // Verifies HooksParser::validatePath() when enforce_path is true.
-TEST(HooksParser, validatePathEnforcePath) {
+TEST_F(HooksParserTest, validatePathEnforcePath) {
     HooksLibrariesParser::getHooksPath(true);
     std::string def_path(HooksLibrariesParser::getHooksPath());
     struct Scenario {
@@ -1159,7 +1188,7 @@ TEST(HooksParser, validatePathEnforcePath) {
 }
 
 // Verifies HooksParser::validatePath() when enforce_path is false.
-TEST(HooksParser, validatePathEnforcePathFalse) {
+TEST_F(HooksParserTest, validatePathEnforcePathFalse) {
     HooksLibrariesParser::getHooksPath(true);
     std::string def_path(HooksLibrariesParser::getHooksPath());
     struct Scenario {
