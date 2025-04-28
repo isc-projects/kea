@@ -167,13 +167,19 @@ fuzz:
     # Prevent duplicate pipelines.
     - if: $CI_OPEN_MERGE_REQUESTS && $CI_COMMIT_BRANCH == null
       when: never
-    # Make the job manual on the MR.
-    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS || $CI_PIPELINE_SOURCE == 'merge_request_event'
+    # Make the job manual on creating of MR.
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
       variables:
         MODE: "code-change"
       when: manual
       allow_failure: true
-    # Run on any other event, including push to MR branch and push to master.
+    # Make the job manual on push to MR.
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      variables:
+        MODE: "code-change"
+      when: manual
+      allow_failure: true
+    # Run on any other event, including push to master.
     - when: always
   before_script:
     # Get GitLab's container id.
