@@ -1,11 +1,8 @@
 #!/bin/sh
 
-set -euv
+set -eu
 
-cd '@TOP_SOURCE_DIR@'
+cd '@srcdir@'
 
-(cat '@srcdir@/Doxyfile'; echo PROJECT_NUMBER=@PACKAGE_VERSION@) | doxygen - > '@builddir@/html/doxygen.log' 2> '@builddir@/html/doxygen-error.log'
-echo "$(grep -c ': warning:' '@builddir@/html/doxygen-error.log')" warnings/errors detected.
-
-rm -fr '@builddir@/html'
-mv '@srcdir@/html' '@builddir@/html'
+(cat Doxyfile; echo OUTPUT_DIRECTORY = @builddir@/html; echo PROJECT_NUMBER = @PACKAGE_VERSION@) | doxygen - > '@builddir@/doxygen.log' 2> '@builddir@/doxygen-error.log'
+echo "$(grep -c ': warning:' '@builddir@/doxygen-error.log')" warnings/errors detected.

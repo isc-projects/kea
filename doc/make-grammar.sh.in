@@ -3,7 +3,7 @@
 # Expressions don't expand in single quotes, use double quotes for that. [SC2016]
 # shellcheck disable=SC2016
 
-set -euv
+set -eu
 
 cd '@TOP_SOURCE_DIR@'
 
