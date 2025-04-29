@@ -25,6 +25,10 @@
 # used.
 set -eu
 
+# Set no group write and no other access umask
+orig_umask=$(umask)
+umask $((orig_umask | 0027))
+
 # Shell variables derived from meson variables. Some depend on others, so mind the order.
 prefix="@prefix@"
 export prefix
