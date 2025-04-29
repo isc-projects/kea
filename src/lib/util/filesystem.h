@@ -7,7 +7,6 @@
 #ifndef KEA_UTIL_FILESYSTEM_H
 #define KEA_UTIL_FILESYSTEM_H
 
-#include <sys/stat.h>
 #include <string>
 
 namespace isc {
@@ -48,23 +47,6 @@ isDir(const std::string& path);
 /// if the pointed location does not exist.
 bool
 isFile(const std::string& path);
-
-/// @brief RAII device to limit access of created files.
-struct Umask {
-    /// @brief Constructor
-    ///
-    /// Set wanted bits in umask.
-    Umask(mode_t mask);
-
-    /// @brief Destructor.
-    ///
-    /// Restore umask.
-    ~Umask();
-
-private:
-    /// @brief Original umask.
-    mode_t orig_umask_;
-};
 
 bool
 isSocket(const std::string& path);

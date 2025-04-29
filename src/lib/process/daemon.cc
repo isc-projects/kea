@@ -231,9 +231,6 @@ Daemon::writeConfigFile(const std::string& config_file,
         isc_throw(Unexpected, "Can't write configuration: conversion to JSON failed");
     }
 
-    // Remove rights for other from the umask.
-    Umask mask(S_IRWXO);
-
     std::ofstream out(config_file, std::ios::trunc);
     if (!out.good()) {
         isc_throw(Unexpected, "Unable to open file " + config_file + " for writing");

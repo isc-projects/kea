@@ -10,11 +10,11 @@
 #include <util/filesystem.h>
 #include <util/str.h>
 
+#include <sys/stat.h>
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
 #include <string>
-#include <filesystem>
 #include <iostream>
 
 #include <dirent.h>
@@ -67,14 +67,6 @@ isFile(string const& path) {
         return (false);
     }
     return ((statbuf.st_mode & S_IFMT) == S_IFREG);
-}
-
-Umask::Umask(mode_t mask) : orig_umask_(umask(S_IWGRP | S_IWOTH)) {
-    umask(orig_umask_ | mask);
-}
-
-Umask::~Umask() {
-    umask(orig_umask_);
 }
 
 bool

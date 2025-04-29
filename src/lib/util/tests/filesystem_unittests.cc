@@ -10,6 +10,7 @@
 #include <testutils/gtest_utils.h>
 #include <util/filesystem.h>
 
+#include <sys/stat.h>
 #include <fstream>
 #include <list>
 #include <string>
@@ -68,18 +69,6 @@ TEST_F(FileUtilTest, isDir) {
 TEST_F(FileUtilTest, isFile) {
     EXPECT_TRUE(isFile(ABS_SRCDIR "/filesystem_unittests.cc"));
     EXPECT_FALSE(isFile(TEST_DATA_BUILDDIR));
-}
-
-/// @brief Check Umask.
-TEST_F(FileUtilTest, umask) {
-    // Protect the test itself assuming that Umask does what we expect...
-    Umask m0(0);
-    mode_t orig = umask(0);
-    {
-        Umask m(S_IROTH);
-        EXPECT_EQ(S_IROTH, umask(S_IRWXO));
-    }
-    EXPECT_EQ(0, umask(orig));
 }
 
 /// @brief Check that the components are split correctly.
@@ -141,7 +130,7 @@ TEST(PathTest, replaceParentPath) {
 
 // Verifies FileManager::validatePath() when enforce_path is true.
 TEST(FileManager, validatePathEnforcePath) {
-    std::string def_path(TEST_DATA_BUILDDIR + '/');
+    std::string def_path = std::string(TEST_DATA_BUILDDIR) + "/";
     struct Scenario {
         int line_;
         std::string lib_path_;
