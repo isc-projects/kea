@@ -161,7 +161,7 @@ TEST(PathTest, replaceParentPath) {
 
 // Verifies FileManager::validatePath() when enforce_path is true.
 TEST(FileManager, validatePathEnforcePath) {
-    std::string def_path = std::string(TEST_DATA_BUILDDIR) + "/";
+    std::string def_path(TEST_DATA_BUILDDIR);
     struct Scenario {
         int line_;
         std::string lib_path_;
