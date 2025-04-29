@@ -5,7 +5,7 @@
 	not load the hook library.  For ease of use, the path may be
 	omitted.
 	CVE:2025-32801
-	(Gitlab #3830)
+	(Gitlab #3837, #3830)
 
 Kea 2.4.1 (stable) released on November 29, 2023
 
