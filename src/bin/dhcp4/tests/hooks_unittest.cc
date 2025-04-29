@@ -21,6 +21,7 @@
 #include <dhcp4/tests/test_libraries.h>
 #include <hooks/server_hooks.h>
 #include <hooks/hooks_manager.h>
+#include <hooks/hooks_parser.h>
 #include <hooks/callout_manager.h>
 #include <stats/stats_mgr.h>
 #include <util/multi_threading_mgr.h>
@@ -1003,6 +1004,7 @@ public:
     LoadUnloadDhcpv4SrvTest() {
         reset();
         MultiThreadingMgr::instance().setMode(false);
+        resetHooksPath();
     }
 
     /// @brief Destructor
@@ -1010,6 +1012,7 @@ public:
         server_.reset();
         reset();
         MultiThreadingMgr::instance().setMode(false);
+        resetHooksPath();
     };
 
     /// @brief Reset hooks data
@@ -1026,6 +1029,19 @@ public:
         static_cast<void>(remove(SRV_CONFIG_MARKER_FILE));
 
         CfgMgr::instance().clear();
+    }
+
+    /// @brief Sets the Hooks path from which hooks can be loaded.
+    /// @param explicit_path path to use as the hooks path.
+    void setHooksTestPath(const std::string explicit_path = "") {
+        HooksLibrariesParser::getHooksPath(true,
+                                           (!explicit_path.empty() ?
+                                            explicit_path : DHCP4_HOOKS_TEST_PATH));
+    }
+
+    /// @brief Resets the hooks path to DEFAULT_HOOKS_PATH.
+    void resetHooksPath() {
+        HooksLibrariesParser::getHooksPath(true);
     }
 };
 
@@ -3220,6 +3236,7 @@ TEST_F(LoadUnloadDhcpv4SrvTest, failLoadIncompatibleLibraries) {
 // Checks if callouts installed on the dhcp4_srv_configured ared indeed called
 // and all the necessary parameters are passed.
 TEST_F(LoadUnloadDhcpv4SrvTest, Dhcpv4SrvConfigured) {
+    setHooksTestPath();
     for (string parameters : {
         "",
         R"(, "parameters": { "mode": "fail-without-error" } )",

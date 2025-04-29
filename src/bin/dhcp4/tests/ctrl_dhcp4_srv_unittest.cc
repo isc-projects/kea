@@ -449,6 +449,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, commands) {
 // Check that the "libreload" command will reload libraries
 TEST_F(CtrlChannelDhcpv4SrvTest, libreload) {
     createUnixChannelServer();
+    ASSERT_TRUE(DHCP4_HOOKS_TEST_PATH);  // suppress unused warning.
 
     // Ensure no marker files to start with.
     ASSERT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));

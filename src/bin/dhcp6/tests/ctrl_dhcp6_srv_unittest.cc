@@ -466,6 +466,7 @@ TEST_F(CtrlDhcpv6SrvTest, commands) {
 // Check that the "libreload" command will reload libraries
 TEST_F(CtrlChannelDhcpv6SrvTest, libreload) {
     createUnixChannelServer();
+    ASSERT_TRUE(DHCP6_HOOKS_TEST_PATH);  // suppress unused warning.
 
     // Ensure no marker files to start with.
     ASSERT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));

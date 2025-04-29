@@ -11,6 +11,7 @@
 #include <d2/parser_context.h>
 #include <d2srv/d2_cfg_mgr.h>
 #include <d2srv/d2_config.h>
+#include <hooks/hooks_parser.h>
 #include <process/testutils/d_test_stubs.h>
 #include <testutils/user_context_utils.h>
 #include <gtest/gtest.h>
@@ -27,6 +28,7 @@ using namespace isc::config;
 using namespace isc::d2;
 using namespace isc::data;
 using namespace isc::process;
+using namespace isc::hooks;
 using namespace isc::test;
 
 namespace {
@@ -114,6 +116,7 @@ class D2GetConfigTest : public ConfigParseTest {
 public:
     D2GetConfigTest()
     : rcode_(-1) {
+        resetHooksPath();
         srv_.reset(new D2CfgMgr());
         // Enforce not verbose mode.
         Daemon::setVerbose(false);
@@ -123,6 +126,20 @@ public:
 
     ~D2GetConfigTest() {
         resetConfiguration();
+        resetHooksPath();
+    }
+
+    /// @brief Sets the Hooks path from which hooks can be loaded.
+    /// @param explicit_path path to use as the hooks path.
+    void setHooksTestPath(const std::string explicit_path = "") {
+        HooksLibrariesParser::getHooksPath(true,
+                                           (!explicit_path.empty() ?
+                                            explicit_path : D2_HOOKS_TEST_PATH));
+    }
+
+    /// @brief Resets the hooks path to DEFAULT_HOOKS_PATH.
+    void resetHooksPath() {
+        HooksLibrariesParser::getHooksPath(true);
     }
 
     /// @brief Parse and Execute configuration
@@ -230,6 +247,7 @@ public:
 
 /// Test a configuration
 TEST_F(D2GetConfigTest, sample1) {
+    setHooksTestPath();
 
     // get the sample1 configuration
     std::string sample1_file = string(CFG_EXAMPLES) + "/" + "sample1.json";

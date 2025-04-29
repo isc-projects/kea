@@ -12,6 +12,7 @@
 #include <process/testutils/d_test_stubs.h>
 #include <agent/ca_cfg_mgr.h>
 #include <agent/parser_context.h>
+#include <hooks/hooks_parser.h>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
@@ -28,6 +29,7 @@ using namespace isc::config;
 using namespace isc::data;
 using namespace isc::process;
 using namespace isc::test;
+using namespace isc::hooks;
 
 namespace {
 
@@ -134,6 +136,7 @@ class CtrlAgentGetCfgTest : public ConfigParseTest {
 public:
     CtrlAgentGetCfgTest()
     : rcode_(-1) {
+        resetHooksPath();
         srv_.reset(new NakedAgentCfgMgr());
         // Create fresh context.
         resetConfiguration();
@@ -141,6 +144,20 @@ public:
 
     ~CtrlAgentGetCfgTest() {
         resetConfiguration();
+        resetHooksPath();
+    }
+
+    /// @brief Sets the Hooks path from which hooks can be loaded.
+    /// @param explicit_path path to use as the hooks path.
+    void setHooksTestPath(const std::string explicit_path = "") {
+        HooksLibrariesParser::getHooksPath(true,
+                                           (!explicit_path.empty() ?
+                                            explicit_path : CA_HOOKS_TEST_PATH));
+    }
+
+    /// @brief Resets the hooks path to DEFAULT_HOOKS_PATH.
+    void resetHooksPath() {
+        HooksLibrariesParser::getHooksPath(true);
     }
 
     /// @brief Parse and Execute configuration
@@ -245,6 +262,7 @@ public:
 
 /// Test a configuration
 TEST_F(CtrlAgentGetCfgTest, simple) {
+    setHooksTestPath();
 
     // get the simple configuration
     std::string simple_file = string(CFG_EXAMPLES) + "/" + "simple.json";

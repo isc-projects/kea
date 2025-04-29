@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -171,11 +171,26 @@ public:
     ParseConfigTest()
         :family_(AF_INET6) {
         reset_context();
+        resetHooksPath();
     }
 
     ~ParseConfigTest() {
         reset_context();
         CfgMgr::instance().clear();
+        resetHooksPath();
+    }
+
+    /// @brief Sets the Hooks path from which hooks can be loaded.
+    /// @param custom_path path to use as the hooks path.
+    void setHooksTestPath(const std::string explicit_path = "") {
+        HooksLibrariesParser::getHooksPath(true,
+                                           (!explicit_path.empty() ?
+                                           explicit_path : DHCPSRV_HOOKS_TEST_PATH));
+    }
+
+    /// @brief Resets the hooks path to DEFAULT_HOOKS_PATH.
+    void resetHooksPath() {
+        HooksLibrariesParser::getHooksPath(true);
     }
 
     /// @brief Parses a configuration.
@@ -1917,6 +1932,8 @@ TEST_F(ParseConfigTest, noHooksLibraries) {
 
 // hooks-libraries element that contains a single library.
 TEST_F(ParseConfigTest, oneHooksLibrary) {
+    setHooksTestPath();
+
     // Check that no libraries are currently loaded
     vector<string> hooks_libraries = HooksManager::getLibraryNames();
     EXPECT_TRUE(hooks_libraries.empty());
@@ -1950,6 +1967,8 @@ TEST_F(ParseConfigTest, oneHooksLibrary) {
 
 // hooks-libraries element that contains two libraries
 TEST_F(ParseConfigTest, twoHooksLibraries) {
+    setHooksTestPath();
+
     // Check that no libraries are currently loaded
     vector<string> hooks_libraries = HooksManager::getLibraryNames();
     EXPECT_TRUE(hooks_libraries.empty());
@@ -1986,6 +2005,8 @@ TEST_F(ParseConfigTest, twoHooksLibraries) {
 
 // Configure with two libraries, then reconfigure with the same libraries.
 TEST_F(ParseConfigTest, reconfigureSameHooksLibraries) {
+    setHooksTestPath();
+
     // Check that no libraries are currently loaded
     vector<string> hooks_libraries = HooksManager::getLibraryNames();
     EXPECT_TRUE(hooks_libraries.empty());
@@ -2037,6 +2058,8 @@ TEST_F(ParseConfigTest, reconfigureSameHooksLibraries) {
 // Configure the hooks with two libraries, then reconfigure with the same
 // libraries, but in reverse order.
 TEST_F(ParseConfigTest, reconfigureReverseHooksLibraries) {
+    setHooksTestPath();
+
     // Check that no libraries are currently loaded
     vector<string> hooks_libraries = HooksManager::getLibraryNames();
     EXPECT_TRUE(hooks_libraries.empty());
@@ -2074,6 +2097,8 @@ TEST_F(ParseConfigTest, reconfigureReverseHooksLibraries) {
 // Configure the hooks with two libraries, then reconfigure with
 // no libraries.
 TEST_F(ParseConfigTest, reconfigureZeroHooksLibraries) {
+    setHooksTestPath();
+
     // Check that no libraries are currently loaded
     vector<string> hooks_libraries = HooksManager::getLibraryNames();
     EXPECT_TRUE(hooks_libraries.empty());
@@ -2114,6 +2139,8 @@ TEST_F(ParseConfigTest, reconfigureZeroHooksLibraries) {
 
 // Check with a set of libraries, some of which are invalid.
 TEST_F(ParseConfigTest, invalidHooksLibraries) {
+    setHooksTestPath();
+
     // Check that no libraries are currently loaded
     vector<string> hooks_libraries = HooksManager::getLibraryNames();
     EXPECT_TRUE(hooks_libraries.empty());
@@ -2148,6 +2175,8 @@ TEST_F(ParseConfigTest, invalidHooksLibraries) {
 
 // Check that trying to reconfigure with an invalid set of libraries fails.
 TEST_F(ParseConfigTest, reconfigureInvalidHooksLibraries) {
+    setHooksTestPath();
+
     // Check that no libraries are currently loaded
     vector<string> hooks_libraries = HooksManager::getLibraryNames();
     EXPECT_TRUE(hooks_libraries.empty());
@@ -2192,6 +2221,7 @@ TEST_F(ParseConfigTest, reconfigureInvalidHooksLibraries) {
 
 // Check that if hooks-libraries contains invalid syntax, it is detected.
 TEST_F(ParseConfigTest, invalidSyntaxHooksLibraries) {
+    setHooksTestPath("/opt/lib");
 
     // Element holds a mixture of (valid) maps and non-maps.
     string config1 = "{ \"hooks-libraries\": [ "
@@ -2226,7 +2256,8 @@ TEST_F(ParseConfigTest, invalidSyntaxHooksLibraries) {
         "{ \"library\": \"/opt/lib/lib1\" }, "
         "{ \"library\": \"\" } "
         "] }";
-    string error3 = "value of 'library' element must not be blank";
+    string error3 = "Configuration parsing failed: hooks library configuration error:"
+                    " path: '' has no filename (<string>:1:69)";
 
     rcode = parseConfiguration(config3);
     ASSERT_NE(0, rcode);
@@ -2239,11 +2270,12 @@ TEST_F(ParseConfigTest, invalidSyntaxHooksLibraries) {
         "{ \"library\": \"/opt/lib/lib1\" }, "
         "{ \"library\": \"      \" } "
         "] }";
-    string error4 = "value of 'library' element must not be blank";
+    string error4 = "Configuration parsing failed: hooks library configuration error:"
+                    " path: '' has no filename (<string>:1:69)";
 
     rcode = parseConfiguration(config4);
     ASSERT_NE(0, rcode);
-    EXPECT_TRUE(error_text_.find(error3) != string::npos) <<
+    EXPECT_TRUE(error_text_.find(error4) != string::npos) <<
         "Error text returned from parse failure is " << error_text_;
 
     // Element holds valid maps, except one that does not contain a
@@ -2264,6 +2296,8 @@ TEST_F(ParseConfigTest, invalidSyntaxHooksLibraries) {
 
 // Check that some parameters may have configuration parameters configured.
 TEST_F(ParseConfigTest, HooksLibrariesParameters) {
+    setHooksTestPath();
+
     // Check that no libraries are currently loaded
     vector<string> hooks_libraries = HooksManager::getLibraryNames();
     EXPECT_TRUE(hooks_libraries.empty());

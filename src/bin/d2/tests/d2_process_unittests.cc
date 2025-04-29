@@ -12,6 +12,7 @@
 #include <d2/d2_process.h>
 #include <d2/tests/test_configured_libraries.h>
 #include <dhcp_ddns/ncr_io.h>
+#include <hooks/hooks_parser.h>
 #include <process/testutils/d_test_stubs.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -26,6 +27,7 @@ using namespace isc::config;
 using namespace isc::d2;
 using namespace isc::data;
 using namespace isc::process;
+using namespace isc::hooks;
 using namespace boost::posix_time;
 
 namespace {
@@ -64,10 +66,25 @@ public:
     D2ProcessTest() :
         D2Process("d2test",
                   asiolink::IOServicePtr(new isc::asiolink::IOService())) {
+        resetHooksPath();
     }
 
     /// @brief Destructor
     virtual ~D2ProcessTest() {
+        resetHooksPath();
+    }
+
+    /// @brief Sets the Hooks path from which hooks can be loaded.
+    /// @param explicit_path path to use as the hooks path.
+    void setHooksTestPath(const std::string explicit_path = "") {
+        HooksLibrariesParser::getHooksPath(true,
+                                           (!explicit_path.empty() ?
+                                            explicit_path : D2_HOOKS_TEST_PATH));
+    }
+
+    /// @brief Resets the hooks path to DEFAULT_HOOKS_PATH.
+    void resetHooksPath() {
+        HooksLibrariesParser::getHooksPath(true);
     }
 
     /// @brief Callback that will invoke shutdown method.
@@ -650,6 +667,8 @@ TEST_F(D2ProcessTest, v6LoopbackTest) {
 
 /// @brief Check the configured callout (positive case).
 TEST_F(D2ProcessTest, configuredNoFail) {
+    setHooksTestPath();
+
     const char* config = "{\n"
         "\"hooks-libraries\": [ {\n"
         " \"library\": \"%LIBRARY%\",\n"
@@ -669,6 +688,8 @@ TEST_F(D2ProcessTest, configuredNoFail) {
 
 /// @brief Check the configured callout (negative case).
 TEST_F(D2ProcessTest, configuredFail) {
+    setHooksTestPath();
+
     const char* config = "{\n"
         "\"user-context\": { \"error\": \"Fail!\" },\n"
         "\"hooks-libraries\": [ {\n"

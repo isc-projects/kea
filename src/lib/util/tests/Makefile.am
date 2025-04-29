@@ -2,6 +2,7 @@ SUBDIRS = .
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CPPFLAGS += -DABS_SRCDIR=\"$(abs_srcdir)\"
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_builddir)\"
 # XXX: we'll pollute the top builddir for creating a temporary test file
 # used to bind a UNIX domain socket so we can minimize the risk of exceeding
@@ -60,6 +61,7 @@ run_unittests_SOURCES += utf8_unittest.cc
 run_unittests_SOURCES += versioned_csv_file_unittest.cc
 run_unittests_SOURCES += watch_socket_unittests.cc
 run_unittests_SOURCES += watched_thread_unittest.cc
+run_unittests_SOURCES += filesystem_unittests.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)

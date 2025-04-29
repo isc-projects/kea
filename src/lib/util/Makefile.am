@@ -47,6 +47,7 @@ libkea_util_la_SOURCES += encode/base_n.cc encode/hex.h
 libkea_util_la_SOURCES += encode/binary_from_base32hex.h
 libkea_util_la_SOURCES += encode/binary_from_base16.h
 libkea_util_la_SOURCES += encode/utf8.cc encode/utf8.h
+libkea_util_la_SOURCES += filesystem.h filesystem.cc
 
 libkea_util_la_LIBADD = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 

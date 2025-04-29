@@ -8,7 +8,9 @@
 
 #include <hooks/callout_handle.h>
 #include <hooks/hooks_manager.h>
+#include <hooks/hooks_parser.h>
 #include <hooks/server_hooks.h>
+#include <testutils/gtest_utils.h>
 
 #include <hooks/tests/common_test_class.h>
 #define TEST_ASYNC_CALLOUT
@@ -1077,5 +1079,170 @@ TEST_F(HooksManagerTest, UnloadBeforeUnpark) {
     EXPECT_FALSE(unparked);
 }
 
+/// @brief Test fixture for hooks parsing.
+class HooksParserTest : public ::testing::Test {
+public:
+    /// @brief Constructor
+    HooksParserTest() {
+        // Save current value of the environment path.
+        char* env_path = std::getenv("KEA_HOOKS_PATH");
+        if (env_path) {
+            original_path_ = std::string(env_path);
+        }
+
+        // Clear the environment path.
+        unsetenv("KEA_HOOKS_PATH");
+    }
+
+    /// @brief Destructor
+    ~HooksParserTest() {
+        // Restore the original environment path.
+        if (!original_path_.empty()) {
+            setenv("KEA_HOOKS_PATH", original_path_.c_str(), 1);
+        } else {
+            unsetenv("KEA_HOOKS_PATH");
+        }
+    }
+
+    /// @brief Retains the environment variable's original value.
+    std::string original_path_;
+};
+
+TEST_F(HooksParserTest, getHooksPath) {
+    ASSERT_FALSE(std::getenv("KEA_HOOKS_PATH"));
+    auto hooks_path = HooksLibrariesParser::getHooksPath(true);
+    EXPECT_EQ(hooks_path, DEFAULT_HOOKS_PATH);
+}
+
+TEST_F(HooksParserTest, getHooksPathWithEnv) {
+    std::string evar("KEA_HOOKS_PATH=/tmp");
+    putenv(const_cast<char*>(evar.c_str()));
+    ASSERT_TRUE(std::getenv("KEA_HOOKS_PATH"));
+    auto hooks_path = HooksLibrariesParser::getHooksPath(true);
+    EXPECT_EQ(hooks_path, "/tmp");
+}
+
+TEST_F(HooksParserTest, getHooksPathExplicit) {
+    auto hooks_path = HooksLibrariesParser::getHooksPath(true, "/explicit/path");
+    EXPECT_EQ(hooks_path, "/explicit/path");
+}
+
+// Verifies HooksParser::validatePath() when enforce_path is true.
+TEST_F(HooksParserTest, validatePathEnforcePath) {
+    HooksLibrariesParser::getHooksPath(true);
+    std::string def_path(HooksLibrariesParser::getHooksPath());
+    struct Scenario {
+        int line_;
+        std::string lib_path_;
+        std::string exp_path_;
+        std::string exp_error_;
+    };
+
+    std::list<Scenario> scenarios = {
+    {
+        // Invalid parent path.
+        __LINE__,
+        "/var/lib/bs/mylib.so",
+        "",
+        string("invalid path specified: '/var/lib/bs', supported path is '" + def_path + "'")
+    },
+    {
+        // No file name.
+        __LINE__,
+        def_path + "/",
+        "",
+        string ("path: '" + def_path + "/' has no filename")
+    },
+    {
+        // File name only is valid.
+        __LINE__,
+        "mylib.so",
+        def_path + "/mylib.so",
+        ""
+    },
+    {
+        // Valid full path.
+        __LINE__,
+        def_path + "/mylib.so",
+        def_path + "/mylib.so",
+        ""
+    }
+    };
+
+    for (auto scenario : scenarios) {
+        std::ostringstream oss;
+        oss << " Scenario at line: " << scenario.line_;
+        SCOPED_TRACE(oss.str());
+        std::string validated_path;
+        if (scenario.exp_error_.empty()) {
+            ASSERT_NO_THROW_LOG(validated_path =
+                                HooksLibrariesParser::validatePath(scenario.lib_path_));
+            EXPECT_EQ(validated_path, scenario.exp_path_);
+        } else {
+            ASSERT_THROW_MSG(validated_path =
+                             HooksLibrariesParser::validatePath(scenario.lib_path_),
+                             BadValue, scenario.exp_error_);
+        }
+    }
+}
+
+// Verifies HooksParser::validatePath() when enforce_path is false.
+TEST_F(HooksParserTest, validatePathEnforcePathFalse) {
+    HooksLibrariesParser::getHooksPath(true);
+    std::string def_path(HooksLibrariesParser::getHooksPath());
+    struct Scenario {
+        int line_;
+        std::string lib_path_;
+        std::string exp_path_;
+        std::string exp_error_;
+    };
+
+    std::list<Scenario> scenarios = {
+    {
+        // Invalid parent path will fly.
+        __LINE__,
+        "/var/lib/bs/mylib.so",
+        "/var/lib/bs/mylib.so",
+        "",
+    },
+    {
+        // No file name.
+        __LINE__,
+        def_path + "/",
+        "",
+        string ("path: '" + def_path + "/' has no filename")
+    },
+    {
+        // File name only is valid.
+        __LINE__,
+        "mylib.so",
+        def_path + "/mylib.so",
+        ""
+    },
+    {
+        // Valid full path.
+        __LINE__,
+        def_path + "/mylib.so",
+        def_path + "/mylib.so",
+        ""
+    }
+    };
+
+    for (auto scenario : scenarios) {
+        std::ostringstream oss;
+        oss << " Scenario at line: " << scenario.line_;
+        SCOPED_TRACE(oss.str());
+        std::string validated_path;
+        if (scenario.exp_error_.empty()) {
+            ASSERT_NO_THROW_LOG(validated_path =
+                                HooksLibrariesParser::validatePath(scenario.lib_path_, false));
+            EXPECT_EQ(validated_path, scenario.exp_path_);
+        } else {
+            ASSERT_THROW_MSG(validated_path =
+                             HooksLibrariesParser::validatePath(scenario.lib_path_, false),
+                             BadValue, scenario.exp_error_);
+        }
+    }
+}
 
 } // Anonymous namespace
