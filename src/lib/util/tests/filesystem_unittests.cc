@@ -71,6 +71,39 @@ TEST_F(FileUtilTest, isFile) {
     EXPECT_FALSE(isFile(TEST_DATA_BUILDDIR));
 }
 
+/// @brief Test fixture class for testing operations on umask.
+struct UMaskUtilTest : ::testing::Test {
+    /// @brief Constructor.
+    ///
+    /// Cache the original umask value.
+    UMaskUtilTest() : orig_umask_(umask(S_IWGRP | S_IWOTH)) { }
+
+    /// @brief Destructor.
+    ///
+    /// Restore the original umask value.
+    virtual ~UMaskUtilTest() {
+        static_cast<void>(umask(orig_umask_));
+    }
+
+private:
+    /// @brief Original umask.
+    mode_t orig_umask_;
+};
+
+/// @brief Check setUmask from 0000.
+TEST_F(UMaskUtilTest, umask0) {
+    static_cast<void>(umask(0));
+    ASSERT_NO_THROW(setUmask());
+    EXPECT_EQ(S_IWGRP | S_IRWXO, umask(0));
+}
+
+/// @brief Check setUmask from no group access.
+TEST_F(UMaskUtilTest, umask077) {
+    static_cast<void>(umask(S_IRWXG | S_IRWXO));
+    ASSERT_NO_THROW(setUmask());
+    EXPECT_EQ(S_IRWXG | S_IRWXO, umask(0));
+}
+
 /// @brief Check that the components are split correctly.
 TEST(PathTest, components) {
     // Complete name
@@ -126,8 +159,6 @@ TEST(PathTest, replaceParentPath) {
     EXPECT_EQ("/just/some/dir/a.b", fname.str());
 }
 
-
-
 // Verifies FileManager::validatePath() when enforce_path is true.
 TEST(FileManager, validatePathEnforcePath) {
     std::string def_path = std::string(TEST_DATA_BUILDDIR) + "/";
@@ -168,7 +199,7 @@ TEST(FileManager, validatePathEnforcePath) {
         ""
     },
     {
-        // White space for file name. 
+        // White space for file name.
         __LINE__,
         "      ",
         "",
@@ -233,7 +264,7 @@ TEST(FileManager, validatePathEnforcePathFalse) {
         ""
     },
     {
-        // White space for file name. 
+        // White space for file name.
         __LINE__,
         "      ",
         "",

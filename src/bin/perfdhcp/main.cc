@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <util/filesystem.h>
 #include <perfdhcp/avalanche_scen.h>
 #include <perfdhcp/basic_scen.h>
 #include <perfdhcp/command_options.h>
@@ -19,6 +20,8 @@ using namespace isc::perfdhcp;
 
 int
 main(int argc, char* argv[]) {
+    isc::util::file::setUmask();
+
     int ret_code = 0;
     std::string diags;
     bool parser_error = true;

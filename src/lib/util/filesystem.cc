@@ -78,6 +78,17 @@ isSocket(string const& path) {
     return ((statbuf.st_mode & S_IFMT) == S_IFSOCK);
 }
 
+void
+setUmask() {
+    // No group write and no other access.
+    mode_t mask(S_IWGRP | S_IRWXO);
+    mode_t orig = umask(mask);
+    // Handle the case where the original umask was already more restrictive.
+    if ((orig | mask) != mask) {
+        static_cast<void>(umask(orig | mask));
+    }
+}
+
 Path::Path(string const& full_name) {
     if (!full_name.empty()) {
         bool dir_present = false;
@@ -225,14 +236,15 @@ FileManager::validatePath(const std::string supported_path_str, const std::strin
     if (filename.empty()) {
         isc_throw(BadValue, "path: '" << input_path.str() << "' has no filename");
      }
- 
+
     auto parent_path = input_path.parentPath();
     if (!parent_path.empty()) {
          if (!enforce_path) {
              // Security set to lax, let it fly.
              return (input_path_str);
          }
- 
+
+
          // We only allow absolute path equal to default. Catch an invalid path.
         if (parent_path != supported_path_copy) {
              isc_throw(BadValue, "invalid path specified: '"
@@ -240,7 +252,7 @@ FileManager::validatePath(const std::string supported_path_str, const std::strin
                       << supported_path_copy << "'");
          }
      }
- 
+
     std::string valid_path(supported_path_copy + "/" +  filename);
     return (valid_path);
 }

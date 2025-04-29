@@ -48,8 +48,18 @@ isDir(const std::string& path);
 bool
 isFile(const std::string& path);
 
+/// @brief Check if there is a socket at the given path.
+///
+/// @param path The path being checked.
+///
+/// @return True if the path points to a socket, false otherwise including
+/// if the pointed location does not exist.
 bool
 isSocket(const std::string& path);
+
+/// @brief Set umask (at least 0027 i.e. no group write and no other access).
+void
+setUmask();
 
 /// @brief Paths on a filesystem
 struct Path {
