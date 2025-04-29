@@ -1,3 +1,8 @@
+2337.	[build]		wlodek
+	The library version numbers have been bumped up for the Kea 2.7.8
+	development release.
+	(Gitlab #3863)
+
 2336.	[func]		razvan
 	Added support for syslog backend in forensic log hook library.
 	(Gitlab #3569)
