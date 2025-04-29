@@ -3448,9 +3448,9 @@ This is an error message that occurs when the server is unable to create
 its PID file.  The log message should contain details sufficient to
 determine the underlying cause.  The most likely culprits are that
 some portion of the pathname does not exist or a permissions issue. The
-default path is determined by ``--localstatedir`` and ``--prefix`` meson setup
-options but may be overridden by setting environment variable
-``KEA_PIDFILE_DIR``.  The first argument is the process name.
+default path is determined by --localstatedir and --prefix meson setup options
+but may be overridden by setting environment variable KEA_PIDFILE_DIR.
+The first argument is the process name.
 
 DCTL_PROCESS_FAILED
 ===================
@@ -17233,6 +17233,26 @@ LEGAL_LOG_STORE_OPENED
 
 This is an informational message issued when the Legal Log library
 has successfully opened the legal store.
+
+LEGAL_LOG_SYSLOG
+================
+
+.. code-block:: text
+
+    %1
+
+This informational message contains the message being logged to syslog.
+
+LEGAL_LOG_SYSLOG_STORE_OPEN
+===========================
+
+.. code-block:: text
+
+    opening Legal Syslog: %1
+
+This informational message is logged when a DHCP server (either V4 or
+V6) is about to open a legal syslog store. The parameters of
+the backend are logged.
 
 ***
 LFC
