@@ -1,5 +1,0 @@
-[bug]		tmark
-	When generating FQDNs from IP addresses for DDNS,
-	kea-dhcp6 will now append a zero to the end of
-	prefixes that would otherwise end in a hyphen.
-	(Gitlab #3781)

@@ -1,7 +1,49 @@
-2337.	[build]		wlodek
+Kea 2.7.8 (development) released on April 30, 2025
+
+2343.	[build]		wlodek
 	The library version numbers have been bumped up for the Kea 2.7.8
 	development release.
 	(Gitlab #3863)
+
+2342.	[bug]		andrei
+	A MySQL error that rarely occurs in unknown circumstances that
+	can prevent Kea from renewing leases that have null or invalid
+	JSON values in the user_context column is now handled in the
+	lease triggers.
+	(Gitlab #3763)
+
+2341.	[build]		andrei
+	Kea built with Meson is now officially tested. Some bugs related
+	to the Meson build system were fixed. Documentation about how to
+	build Kea with Meson was added.
+	(Gitlab #3732, #3812)
+
+2340.	[func]		tmark
+	The subnet commands hook library was modified such that
+	the subnet's shared network name is now included for each
+	subnet returned by the subnet4-list and subnet6-list
+	commands.
+	(Gitlab #3811)
+
+2339.	[bug]		tmark
+	Corrected an issue which caused kea-dhcp4 to
+	NAK requests for an offered lease when a
+	conflicting host reservation exists and
+	offer-lifetime is greater than zero. The
+	server will now remove the unusable lease,
+	renew the temporary lease, and send it back
+	in a DHCPACK.
+	(Gitlab #3555)
+
+2338.	[doc]		tmark
+	Clarified how classes impact option order precedence.
+	(Gitlab #3748)
+
+2337.	[bug]		tmark
+	When generating FQDNs from IP addresses for DDNS,
+	kea-dhcp6 will now append a zero to the end of
+	prefixes that would otherwise end in a hyphen.
+	(Gitlab #3781)
 
 2336.	[func]		razvan
 	Added support for syslog backend in forensic log hook library.

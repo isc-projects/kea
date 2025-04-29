@@ -1,6 +1,0 @@
-[bug]		andrei
-	A MySQL error that rarely occurs in unknown circumstances that
-	can prevent Kea from renewing leases that have null or invalid
-	JSON values in the user_context column is now handled in the
-	lease triggers.
-	(Gitlab #3763)

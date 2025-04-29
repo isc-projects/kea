@@ -62,17 +62,17 @@ This informational message is logged when a DHCP server (either V4 or
 V6) is about to open a legal log file. The parameters of
 the backend are logged.
 
-% LEGAL_LOG_SYSLOG_STORE_OPEN opening Legal Syslog: %1
-This informational message is logged when a DHCP server (either V4 or
-V6) is about to open a legal syslog store. The parameters of
-the backend are logged.
+% LEGAL_LOG_STORE_OPENED Legal store opened: %1
+This is an informational message issued when the Legal Log library
+has successfully opened the legal store.
 
 % LEGAL_LOG_SYSLOG %1
 This informational message contains the message being logged to syslog.
 
-% LEGAL_LOG_STORE_OPENED Legal store opened: %1
-This is an informational message issued when the Legal Log library
-has successfully opened the legal store.
+% LEGAL_LOG_SYSLOG_STORE_OPEN opening Legal Syslog: %1
+This informational message is logged when a DHCP server (either V4 or
+V6) is about to open a legal syslog store. The parameters of
+the backend are logged.
 
 % LEGAL_LOG_UNLOAD_ERROR An error occurred unloading the library: %1
 This is an error message issued when an error occurs while unloading the

@@ -1,5 +1,0 @@
-[build]		andrei
-	Kea built with Meson is now officially tested. Some bugs related
-	to the Meson build system were fixed. Documentation about how to
-	build Kea with Meson was added.
-	(Gitlab #3732, #3812)
