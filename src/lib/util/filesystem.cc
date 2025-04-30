@@ -239,19 +239,19 @@ FileManager::validatePath(const std::string supported_path_str, const std::strin
 
     auto parent_path = input_path.parentPath();
     if (!parent_path.empty()) {
-         if (!enforce_path) {
-             // Security set to lax, let it fly.
-             return (input_path_str);
-         }
+        if (!enforce_path) {
+            // Security set to lax, let it fly.
+            return (input_path_str);
+        }
 
 
-         // We only allow absolute path equal to default. Catch an invalid path.
+        // We only allow absolute path equal to default. Catch an invalid path.
         if (parent_path != supported_path_copy) {
-             isc_throw(BadValue, "invalid path specified: '"
+            isc_throw(BadValue, "invalid path specified: '"
                       << parent_path << "', supported path is '"
                       << supported_path_copy << "'");
-         }
-     }
+        }
+    }
 
     std::string valid_path(supported_path_copy + "/" +  filename);
     return (valid_path);
