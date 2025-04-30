@@ -18,6 +18,8 @@ set -eu
 CFG_FILE="@abs_top_builddir@/src/bin/agent/tests/test_config.json"
 # Path to the Control Agent log file.
 LOG_FILE="@abs_top_builddir@/src/bin/agent/tests/test.log"
+# Set env KEA_HOOKS_PATH  to override DEFAULT_HOOKS_PATH
+export KEA_HOOKS_PATH="@abs_top_builddir@/src/bin/agent/tests/.libs"
 
 # Control Agent configuration to be stored in the configuration file.
 CONFIG="{

@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 #include <process/testutils/d_test_stubs.h>
 #include <process/d_cfg_mgr.h>
 #include <http/basic_auth_config.h>
+#include <hooks/hooks_parser.h>
 #include <agent/tests/test_callout_libraries.h>
 #include <agent/tests/test_data_files_config.h>
 #include <boost/pointer_cast.hpp>
@@ -423,6 +424,28 @@ const char* AGENT_CONFIGS[] = {
 /// @brief Class used for testing CfgMgr
 class AgentParserTest : public isc::process::ConfigParseTest {
 public:
+    /// @brief Constructor.
+    AgentParserTest() {
+        resetHooksPath();
+    }
+
+    /// @brief Destructor.
+    virtual ~AgentParserTest() {
+        resetHooksPath();
+    }
+
+    /// @brief Sets the Hooks path from which hooks can be loaded.
+    /// @param explicit_path path to use as the hooks path.
+    void setHooksTestPath(const std::string explicit_path = "") {
+        HooksLibrariesParser::getHooksPath(true,
+                                           (!explicit_path.empty() ?
+                                            explicit_path : CA_HOOKS_TEST_PATH));
+    }
+
+    /// @brief Resets the hooks path to DEFAULT_HOOKS_PATH.
+    void resetHooksPath() {
+        HooksLibrariesParser::getHooksPath(true);
+    }
 
     /// @brief Tries to load input text as a configuration
     ///
@@ -544,6 +567,8 @@ TEST_F(AgentParserTest, configParse3Sockets) {
 // name. In particular, it checks if such a library exists. Therefore we
 // can't use AGENT_CONFIGS[4] as is, but need to run it through path replacer.
 TEST_F(AgentParserTest, configParseHooks) {
+    setHooksTestPath();
+
     // Create the configuration with proper lib path.
     std::string cfg = pathReplacer(AGENT_CONFIGS[4], CALLOUT_LIBRARY);
     // The configuration should be successful.

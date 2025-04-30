@@ -11,6 +11,7 @@
 #include <util/filesystem.h>
 
 #include <fstream>
+#include <list>
 #include <string>
 
 #include <gtest/gtest.h>
@@ -69,11 +70,24 @@ TEST_F(FileUtilTest, isFile) {
     EXPECT_FALSE(isFile(TEST_DATA_BUILDDIR));
 }
 
+/// @brief Check Umask.
+TEST_F(FileUtilTest, umask) {
+    // Protect the test itself assuming that Umask does what we expect...
+    Umask m0(0);
+    mode_t orig = umask(0);
+    {
+        Umask m(S_IROTH);
+        EXPECT_EQ(S_IROTH, umask(S_IRWXO));
+    }
+    EXPECT_EQ(0, umask(orig));
+}
+
 /// @brief Check that the components are split correctly.
 TEST(PathTest, components) {
     // Complete name
     Path fname("/alpha/beta/gamma.delta");
-    EXPECT_EQ("/alpha/beta/", fname.parentPath());
+    EXPECT_EQ("/alpha/beta/gamma.delta", fname.str());
+    EXPECT_EQ("/alpha/beta", fname.parentPath());
     EXPECT_EQ("gamma", fname.stem());
     EXPECT_EQ(".delta", fname.extension());
     EXPECT_EQ("gamma.delta", fname.filename());
@@ -82,6 +96,7 @@ TEST(PathTest, components) {
 /// @brief Check replaceExtension.
 TEST(PathTest, replaceExtension) {
     Path fname("a.b");
+    EXPECT_EQ("a.b", fname.str());
 
     EXPECT_EQ("a", fname.replaceExtension("").str());
     EXPECT_EQ("a.f", fname.replaceExtension(".f").str());
@@ -98,11 +113,11 @@ TEST(PathTest, replaceParentPath) {
     EXPECT_EQ("a.b", fname.str());
 
     fname.replaceParentPath("/just/some/dir/");
-    EXPECT_EQ("/just/some/dir/", fname.parentPath());
+    EXPECT_EQ("/just/some/dir", fname.parentPath());
     EXPECT_EQ("/just/some/dir/a.b", fname.str());
 
     fname.replaceParentPath("/just/some/dir");
-    EXPECT_EQ("/just/some/dir/", fname.parentPath());
+    EXPECT_EQ("/just/some/dir", fname.parentPath());
     EXPECT_EQ("/just/some/dir/a.b", fname.str());
 
     fname.replaceParentPath("/");
@@ -114,12 +129,144 @@ TEST(PathTest, replaceParentPath) {
     EXPECT_EQ("a.b", fname.str());
 
     fname = Path("/first/a.b");
-    EXPECT_EQ("/first/", fname.parentPath());
+    EXPECT_EQ("/first", fname.parentPath());
     EXPECT_EQ("/first/a.b", fname.str());
 
     fname.replaceParentPath("/just/some/dir");
-    EXPECT_EQ("/just/some/dir/", fname.parentPath());
+    EXPECT_EQ("/just/some/dir", fname.parentPath());
     EXPECT_EQ("/just/some/dir/a.b", fname.str());
+}
+
+
+
+// Verifies FileManager::validatePath() when enforce_path is true.
+TEST(FileManager, validatePathEnforcePath) {
+    std::string def_path(TEST_DATA_BUILDDIR + '/');
+    struct Scenario {
+        int line_;
+        std::string lib_path_;
+        std::string exp_path_;
+        std::string exp_error_;
+    };
+
+    std::list<Scenario> scenarios = {
+    {
+        // Invalid parent path.
+        __LINE__,
+        "/var/lib/bs/mylib.so",
+        "",
+        string("invalid path specified: '/var/lib/bs', supported path is '" + def_path + "'")
+    },
+    {
+        // No file name.
+        __LINE__,
+        def_path + "/",
+        "",
+        string ("path: '" + def_path + "/' has no filename")
+    },
+    {
+        // File name only is valid.
+        __LINE__,
+        "mylib.so",
+        def_path + "/mylib.so",
+        ""
+    },
+    {
+        // Valid full path.
+        __LINE__,
+        def_path + "/mylib.so",
+        def_path + "/mylib.so",
+        ""
+    },
+    {
+        // White space for file name.
+        __LINE__,
+        "      ",
+        "",
+        string("path: '' has no filename")
+    }
+    };
+
+    for (auto scenario : scenarios) {
+        std::ostringstream oss;
+        oss << " Scenario at line: " << scenario.line_;
+        SCOPED_TRACE(oss.str());
+        std::string validated_path;
+        if (scenario.exp_error_.empty()) {
+            ASSERT_NO_THROW_LOG(validated_path =
+                                FileManager::validatePath(def_path, scenario.lib_path_));
+            EXPECT_EQ(validated_path, scenario.exp_path_);
+        } else {
+            ASSERT_THROW_MSG(validated_path =
+                             FileManager::validatePath(def_path, scenario.lib_path_),
+                             BadValue, scenario.exp_error_);
+        }
+    }
+}
+
+// Verifies FileManager::validatePath() when enforce_path is false.
+TEST(FileManager, validatePathEnforcePathFalse) {
+    std::string def_path(TEST_DATA_BUILDDIR);
+    struct Scenario {
+        int line_;
+        std::string lib_path_;
+        std::string exp_path_;
+        std::string exp_error_;
+    };
+
+    std::list<Scenario> scenarios = {
+    {
+        // Invalid parent path but shouldn't care.
+        __LINE__,
+        "/var/lib/bs/mylib.so",
+        "/var/lib/bs/mylib.so",
+        ""
+    },
+    {
+        // No file name.
+        __LINE__,
+        def_path + "/",
+        "",
+        string ("path: '" + def_path + "/' has no filename")
+    },
+    {
+        // File name only is valid.
+        __LINE__,
+        "mylib.so",
+        def_path + "/mylib.so",
+        ""
+    },
+    {
+        // Valid full path.
+        __LINE__,
+        def_path + "/mylib.so",
+        def_path + "/mylib.so",
+        ""
+    },
+    {
+        // White space for file name.
+        __LINE__,
+        "      ",
+        "",
+        string("path: '' has no filename")
+    }
+    };
+
+    for (auto scenario : scenarios) {
+        std::ostringstream oss;
+        oss << " Scenario at line: " << scenario.line_;
+        SCOPED_TRACE(oss.str());
+        std::string validated_path;
+        if (scenario.exp_error_.empty()) {
+            ASSERT_NO_THROW_LOG(validated_path =
+                                FileManager::validatePath(def_path, scenario.lib_path_, false));
+            EXPECT_EQ(validated_path, scenario.exp_path_);
+        } else {
+            ASSERT_THROW_MSG(validated_path =
+                             FileManager::validatePath(def_path, scenario.lib_path_, false),
+                             BadValue, scenario.exp_error_);
+        }
+    }
 }
 
 }  // namespace

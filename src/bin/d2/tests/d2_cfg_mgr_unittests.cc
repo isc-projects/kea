@@ -13,6 +13,7 @@
 #include <d2srv/d2_config.h>
 #include <d2srv/d2_simple_parser.h>
 #include <dhcpsrv/testutils/config_result_check.h>
+#include <hooks/hooks_parser.h>
 #include <process/testutils/d_test_stubs.h>
 #include <test_data_files_config.h>
 #include <util/encode/encode.h>
@@ -47,10 +48,25 @@ public:
 
     /// @brief Constructor
     D2CfgMgrTest():cfg_mgr_(new D2CfgMgr()), d2_params_() {
+        resetHooksPath();
     }
 
     /// @brief Destructor
     ~D2CfgMgrTest() {
+        resetHooksPath();
+    }
+
+    /// @brief Sets the Hooks path from which hooks can be loaded.
+    /// @param explicit_path path to use as the hooks path.
+    void setHooksTestPath(const std::string explicit_path = "") {
+        HooksLibrariesParser::getHooksPath(true,
+                                           (!explicit_path.empty() ?
+                                            explicit_path : D2_HOOKS_TEST_PATH));
+    }
+
+    /// @brief Resets the hooks path to DEFAULT_HOOKS_PATH.
+    void resetHooksPath() {
+        HooksLibrariesParser::getHooksPath(true);
     }
 
     /// @brief Configuration manager instance.
@@ -460,6 +476,8 @@ TEST(D2CfgMgr, construction) {
 /// as it would be done by d2_process in response to a configuration update
 /// event.
 TEST_F(D2CfgMgrTest, fullConfig) {
+    setHooksTestPath();
+
     // Create a configuration with all of application level parameters, plus
     // both the forward and reverse ddns managers.  Both managers have two
     // domains with three servers per domain.

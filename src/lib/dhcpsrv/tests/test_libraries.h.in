@@ -29,6 +29,10 @@ static const char* CALLOUT_PARAMS_LIBRARY = "@abs_builddir@/.libs/libco3.so";
 // Name of a library which is not present.
 static const char* NOT_PRESENT_LIBRARY = "@abs_builddir@/.libs/libnothere.so";
 
+// Test path to use for in place of DEFAULT_HOOKS_PATH
+static const char* DHCPSRV_HOOKS_TEST_PATH = "@abs_builddir@/.libs";
+
+
 } // anonymous namespace
 
 
