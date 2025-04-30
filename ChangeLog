@@ -1,3 +1,12 @@
+2264.	[sec]*		tmark
+	kea-dhcp4, kea-dhcp6, kea-dhcp-ddns, and kea-ctrl-agent will
+	now only load hook libraries from the default installation
+	directory.  If a path other than this is specified Kea will
+	not load the hook library.  For ease of use, the path may be
+	omitted.
+	CVE:2025-32801
+	(Gitlab #3838, #3830)
+
 2263.	[build]		fdupont, q66
 	Kea can now build with Boost 1.87. The minimum supported Boost
 	version has been bumped up from 1.57 to 1.66. Thanks to q66
@@ -10,6 +19,7 @@
 	deprecated for a while in libc++, and has been completely
 	removed as of libc++ 19.
 	(Gitlab #3823, #3532)
+
 
 Kea 2.6.2 (stable) released on March 26, 2025
 

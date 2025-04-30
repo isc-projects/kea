@@ -213,7 +213,7 @@ configuration would be:
    because the parameters specified for the library (or the files those
    parameters point to) may have changed.
 
-As of Kea 2.6.2, hook libraries may only be loaded from the default installation
+As of Kea 2.6.3, hook libraries may only be loaded from the default installation
 directory determined during compilation and shown in the config report as
 "Hooks directory".  This value may be overridden at startup by setting the
 environment variable ``KEA_HOOKS_PATH`` to the desired path.  If a path other
