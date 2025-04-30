@@ -83,20 +83,15 @@ script_path=$(cd "$(dirname "${0}")" && pwd)
 # reason: prefix is used in datarootdir (@datarootdir@) below.
 prefix="@prefix@"
 
-# Find modules location.
+# Find modules location. Prioritize installation.
 # If script is in sources, use modules from sources.
 # If script is in installation, use modules from installation.
-for i in \
-  "@datarootdir@/kea/yang/modules" \
-  "@abs_top_builddir@/src/share/yang/modules" \
-; do
-  if test "${script_path}" = "${i}/utils"; then
-    modules="${i}"
-    break
-  fi
-done
+modules='@abs_top_srcdir@/src/share/yang/modules'
+if test "${script_path}" = '@datarootdir@/kea/yang/modules/utils'; then
+  modules='@datarootdir@/kea/yang/modules'
+fi
 if test -z "${modules+x}"; then
-  printf 'ERROR: cannot find location of modules. Use this script from sources or from installation.' >&2
+  printf 'ERROR: cannot find location of modules. Use this script from sources or from installation.\n' >&2
   exit 1
 fi
 

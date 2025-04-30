@@ -1,7 +1,7 @@
 yangdir = DATADIR / 'kea/yang/modules/utils'
 yang_utils_conf_data = configuration_data()
 # Comment says sources (vs build)
-yang_utils_conf_data.set('abs_top_builddir', TOP_BUILD_DIR)
+yang_utils_conf_data.set('abs_top_srcdir', TOP_SOURCE_DIR)
 # Beware that top_srcdir here must be a relative path.
 yang_utils_conf_data.set('top_srcdir', '../../../../..')
 yang_utils_conf_data.set('datarootdir', '${prefix}/' + DATADIR)
